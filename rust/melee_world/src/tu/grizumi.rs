@@ -101,35 +101,35 @@ pub mod ext {
     pub fn HSD_CObjEraseScreen(cobj: *mut HSD_CObj, enable_color: s32, enable_alpha: s32, enable_depth: s32) {
         match unsafe { HSD_COBJERASESCREEN } { Some(f) => f(cobj, enable_color, enable_alpha, enable_depth), None => { unsafe { let _ = melee_runtime::tu::cobj::HSD_CObjEraseScreen(cobj as _, enable_color as _, enable_alpha as _, enable_depth as _); } return; } }
     }
-    hook!(HSD_COBJGETAUTHOREDASPECT, HSD_CObjGetAuthoredAspect, (cobj: *mut HSD_CObj) -> f32);
-    hook!(HSD_COBJGETEYEPOSITION, HSD_CObjGetEyePosition, (cobj: *mut HSD_CObj, cam_pos: *mut Vec3));
+    hook_or!(HSD_COBJGETAUTHOREDASPECT, HSD_CObjGetAuthoredAspect, (cobj: *mut HSD_CObj) -> f32, |cobj: *mut HSD_CObj| unsafe { melee_runtime::tu::cobj_world::HSD_CObjGetAuthoredAspect(cobj as _) as _ });
+    hook_or!(HSD_COBJGETEYEPOSITION, HSD_CObjGetEyePosition, (cobj: *mut HSD_CObj, cam_pos: *mut Vec3), |cobj: *mut HSD_CObj, cam_pos: *mut Vec3| { unsafe { let _ = melee_runtime::tu::cobj_world::HSD_CObjGetEyePosition(cobj as _, cam_pos as _); } });
     pub static mut HSD_COBJGETFAR: Option<fn(*mut HSD_CObj) -> f32> = None;
     #[allow(non_snake_case)]
     pub fn HSD_CObjGetFar(a0: *mut HSD_CObj) -> f32 {
         match unsafe { HSD_COBJGETFAR } { Some(f) => f(a0), None => { return unsafe { melee_runtime::tu::cobj::HSD_CObjGetFar(a0 as _) as _ }; } }
     }
-    hook!(HSD_COBJGETFOV, HSD_CObjGetFov, (cobj: *mut HSD_CObj) -> f32);
-    hook!(HSD_COBJGETINTEREST, HSD_CObjGetInterest, (cobj: *mut HSD_CObj, interest: *mut Vec3));
+    hook_or!(HSD_COBJGETFOV, HSD_CObjGetFov, (cobj: *mut HSD_CObj) -> f32, |cobj: *mut HSD_CObj| unsafe { melee_runtime::tu::cobj_world::HSD_CObjGetFov(cobj as _) as _ });
+    hook_or!(HSD_COBJGETINTEREST, HSD_CObjGetInterest, (cobj: *mut HSD_CObj, interest: *mut Vec3), |cobj: *mut HSD_CObj, interest: *mut Vec3| { unsafe { let _ = melee_runtime::tu::cobj_world::HSD_CObjGetInterest(cobj as _, interest as _); } });
     pub static mut HSD_COBJGETNEAR: Option<fn(*mut HSD_CObj) -> f32> = None;
     #[allow(non_snake_case)]
     pub fn HSD_CObjGetNear(a0: *mut HSD_CObj) -> f32 {
         match unsafe { HSD_COBJGETNEAR } { Some(f) => f(a0), None => { return unsafe { melee_runtime::tu::cobj::HSD_CObjGetNear(a0 as _) as _ }; } }
     }
     hook!(HSD_COBJGETVIEWINGMTXPTR, HSD_CObjGetViewingMtxPtr, (cobj: *mut HSD_CObj) -> MtxPtr);
-    hook!(HSD_COBJSETASPECT, HSD_CObjSetAspect, (cobj: *mut HSD_CObj, aspect: f32));
+    hook_or!(HSD_COBJSETASPECT, HSD_CObjSetAspect, (cobj: *mut HSD_CObj, aspect: f32), |cobj: *mut HSD_CObj, aspect: f32| { unsafe { let _ = melee_runtime::tu::cobj_world::HSD_CObjSetAspect(cobj as _, aspect as _); } });
     pub static mut HSD_COBJSETCURRENT: Option<fn(*mut HSD_CObj) -> i32> = None;
     #[allow(non_snake_case)]
     pub fn HSD_CObjSetCurrent(a0: *mut HSD_CObj) -> i32 {
         match unsafe { HSD_COBJSETCURRENT } { Some(f) => f(a0), None => { return unsafe { melee_runtime::tu::cobj::HSD_CObjSetCurrent(a0 as _) as _ }; } }
     }
-    hook!(HSD_COBJSETEYEPOSITION, HSD_CObjSetEyePosition, (cobj: *mut HSD_CObj, a1: *mut Vec3));
+    hook_or!(HSD_COBJSETEYEPOSITION, HSD_CObjSetEyePosition, (cobj: *mut HSD_CObj, a1: *mut Vec3), |cobj: *mut HSD_CObj, a1: *mut Vec3| { unsafe { let _ = melee_runtime::tu::cobj_world::HSD_CObjSetEyePosition(cobj as _, a1 as _); } });
     pub static mut HSD_COBJSETFAR: Option<fn(*mut HSD_CObj, f32)> = None;
     #[allow(non_snake_case)]
     pub fn HSD_CObjSetFar(cobj: *mut HSD_CObj, far: f32) {
         match unsafe { HSD_COBJSETFAR } { Some(f) => f(cobj, far), None => { unsafe { let _ = melee_runtime::tu::cobj::HSD_CObjSetFar(cobj as _, far as _); } return; } }
     }
     hook!(HSD_COBJSETFOV, HSD_CObjSetFov, (a0: *mut HSD_CObj, a1: f32));
-    hook!(HSD_COBJSETINTEREST, HSD_CObjSetInterest, (cobj: *mut HSD_CObj, a1: *mut Vec3));
+    hook_or!(HSD_COBJSETINTEREST, HSD_CObjSetInterest, (cobj: *mut HSD_CObj, a1: *mut Vec3), |cobj: *mut HSD_CObj, a1: *mut Vec3| { unsafe { let _ = melee_runtime::tu::cobj_world::HSD_CObjSetInterest(cobj as _, a1 as _); } });
     pub static mut HSD_COBJSETNEAR: Option<fn(*mut HSD_CObj, f32)> = None;
     #[allow(non_snake_case)]
     pub fn HSD_CObjSetNear(cobj: *mut HSD_CObj, near: f32) {
@@ -157,9 +157,9 @@ pub mod ext {
     hook!(HSD_RANDI, HSD_Randi, (max_val: s32) -> s32);
     hook!(HSD_SETERASECOLOR, HSD_SetEraseColor, (r: u8, g: u8, b: u8, a: u8));
     hook!(HSD_STATESETPOINTSIZE, HSD_StateSetPointSize, (a0: u8, a1: i32));
-    hook!(MTXLIGHTPERSPECTIVE, MTXLightPerspective, (m: MtxPtr, fov_y: f32, aspect: f32, scale_s: f32, scale_t: f32, trans_s: f32, trans_t: f32));
+    hook_or!(MTXLIGHTPERSPECTIVE, MTXLightPerspective, (m: MtxPtr, fov_y: f32, aspect: f32, scale_s: f32, scale_t: f32, trans_s: f32, trans_t: f32), |m: MtxPtr, fov_y: f32, aspect: f32, scale_s: f32, scale_t: f32, trans_s: f32, trans_t: f32| { unsafe { let _ = melee_runtime::tu::mtx_pc::raw::MTXLightPerspective(m as _, fov_y as _, aspect as _, scale_s as _, scale_t as _, trans_s as _, trans_t as _); } });
     hook!(OSREPORT, OSReport, (a0: *mut i8));
-    hook!(PSMTXCONCAT, PSMTXConcat, (m_a: MtxPtr, m_b: MtxPtr, m_ab: MtxPtr));
+    hook_or!(PSMTXCONCAT, PSMTXConcat, (m_a: MtxPtr, m_b: MtxPtr, m_ab: MtxPtr), |m_a: MtxPtr, m_b: MtxPtr, m_ab: MtxPtr| { unsafe { let _ = melee_runtime::tu::mtx_pc::raw::PSMTXConcat(m_a as _, m_b as _, m_ab as _); } });
     hook!(PSMTXCOPY, PSMTXCopy, (src: MtxPtr, dst: MtxPtr));
     // The stage-slot (m-ex stage mod) context: the native build has none yet, so these answer 0 / do nothing.
     hook_or!(SCRIPTGAME_STAGESLOTNATIVECONTEXT, ScriptGame_StageSlotNativeContext, () -> i32, || 0);

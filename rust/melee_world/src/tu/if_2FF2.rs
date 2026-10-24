@@ -16,8 +16,12 @@ pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
     use core::ffi::c_void;
+    macro_rules! ext_none {
+        ($name:ident, ($($a:ident),*)) => { panic!(concat!("TODO: ", stringify!($name), " is not ported")) };
+        ($name:ident, ($($a:ident),*), $def:expr) => { ($def)($($a),*) };
+    }
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -25,34 +29,34 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => ext_none!($name, ($($a),*) $(, $def)?),
                 }
             } )*
         };
     }
     ext_fns! {
-    fn DevText_Setup(a0: i32, a1: i32, a2: i32, a3: i32, a4: i32, a5: u8) -> *mut HSD_GObj;
+    fn DevText_Setup(a0: i32, a1: i32, a2: i32, a3: i32, a4: i32, a5: u8) -> *mut HSD_GObj = |a0: i32, a1: i32, a2: i32, a3: i32, a4: i32, a5: u8| unsafe { crate::tu::textdraw::DevText_Setup(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _) as _ };
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
     fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32);
     fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32);
-    fn HSD_CObjLoadDesc(a0: *mut HSD_CObjDesc) -> *mut HSD_CObj;
+    fn HSD_CObjLoadDesc(a0: *mut HSD_CObjDesc) -> *mut HSD_CObj = |a0: *mut HSD_CObjDesc| unsafe { melee_runtime::tu::cobj::HSD_CObjLoadDesc(a0 as _) as _ };
     fn HSD_GObjFree(a0: *mut HSD_GObj);
     fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void);
     fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: i32);
-    fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: i32);
+    fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_LObjCallback(a0 as _, a1 as _); } };
     fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc;
     fn HSD_LObjLoadDesc(a0: *mut HSD_LightDesc) -> *mut HSD_LObj;
-    fn HSD_SisLib_803A5CC4(a0: *mut HSD_Text);
-    fn HSD_SisLib_803A611C(a0: i32, a1: *mut HSD_GObj, a2: u16, a3: u8, a4: u8, a5: u8, a6: u8, a7: u32) -> i32;
-    fn HSD_SisLib_803A6754(a0: i32, a1: i32) -> *mut HSD_Text;
+    fn HSD_SisLib_803A5CC4(a0: *mut HSD_Text) = |a0: *mut HSD_Text| { unsafe { let _ = melee_runtime::tu::sislib::HSD_SisLib_803A5CC4(a0 as _); } };
+    fn HSD_SisLib_803A611C(a0: i32, a1: *mut HSD_GObj, a2: u16, a3: u8, a4: u8, a5: u8, a6: u8, a7: u32) -> i32 = |a0: i32, a1: *mut HSD_GObj, a2: u16, a3: u8, a4: u8, a5: u8, a6: u8, a7: u32| unsafe { melee_runtime::tu::sislib::HSD_SisLib_803A611C(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _, a6 as _, a7 as _) as _ };
+    fn HSD_SisLib_803A6754(a0: i32, a1: i32) -> *mut HSD_Text = |a0: i32, a1: i32| unsafe { melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6754(a0 as _, a1 as _) as _ };
     fn HSD_SisLib_803A6B98(a0: *mut HSD_Text, a1: f32, a2: f32, a3: *const i8, a4: &[i32]) -> i32;
     fn HSD_SisLib_803A70A0(a0: *mut HSD_Text, a1: i32, a2: *const i8, a3: &[i32]) -> i32;
-    fn HSD_SisLib_803A7548(a0: *mut HSD_Text, a1: i32, a2: f32, a3: f32);
+    fn HSD_SisLib_803A7548(a0: *mut HSD_Text, a1: i32, a2: f32, a3: f32) = |a0: *mut HSD_Text, a1: i32, a2: f32, a3: f32| { unsafe { let _ = melee_runtime::tu::hsd_3A64::HSD_SisLib_803A7548(a0 as _, a1 as _, a2 as _, a3 as _); } };
     fn gm_8016B774() -> *mut MatchEnd;
     fn gm_GetMatchEndPlayerScore(a0: i32) -> i32;
-    fn ifAll_GetHUDGObj() -> *mut HSD_GObj;
-    fn ifAll_GetPlayerHUDPosition(a0: i32) -> *mut Vec;
-    fn un_80304138();
+    fn ifAll_GetHUDGObj() -> *mut HSD_GObj = || unsafe { crate::tu::ifall::ifAll_GetHUDGObj() as _ };
+    fn ifAll_GetPlayerHUDPosition(a0: i32) -> *mut Vec = |a0: i32| unsafe { crate::tu::ifall::ifAll_GetPlayerHUDPosition(a0 as _) as _ };
+    fn un_80304138() = || { unsafe { let _ = crate::tu::textlib_1::un_80304138(); } };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

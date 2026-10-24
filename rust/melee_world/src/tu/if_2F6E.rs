@@ -14,10 +14,10 @@ pub mod ext {
     use core::ffi::c_void;
     macro_rules! ext_none {
         ($name:ident, ($($a:ident),*)) => { panic!(concat!("TODO: ", stringify!($name), " is not ported")) };
-        ($name:ident, ($($a:ident),*), $def:path) => { $def($($a),*) };
+        ($name:ident, ($($a:ident),*), $def:expr) => { ($def)($($a),*) };
     }
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:path)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -35,19 +35,19 @@ pub mod ext {
     fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32);
     fn HSD_GObjFree(a0: *mut HSD_GObj);
     fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void);
-    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32);
+    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } };
     fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc;
     fn HSD_JObjAnimAll(a0: *mut HSD_JObj);
-    fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj;
+    fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj = |a0: *mut HSD_Joint| unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(a0 as _) as _ };
     fn HSD_JObjReqAnimAll(a0: *mut HSD_JObj, a1: f32);
     fn gmVs_GetSceneController() -> *mut VsSceneController;
-    fn ifAll_GetArchive() -> *mut *mut HSD_Archive;
+    fn ifAll_GetArchive() -> *mut *mut HSD_Archive = || unsafe { crate::tu::ifall::ifAll_GetArchive() as _ };
     fn if_802F73C4(a0: *mut HSD_GObj);
     fn if_802F74D0(a0: *mut HSD_GObj);
     fn lbArchive_LoadSections(a0: *mut HSD_Archive, a1: *mut c_void, a2: *const u8, rest: &[(*mut c_void, *const u8)]);
-    fn lbAudioAx_800237A8(a0: i32, a1: i32, a2: i32) -> i32;
+    fn lbAudioAx_800237A8(a0: i32, a1: i32, a2: i32) -> i32 = |a0: i32, a1: i32, a2: i32| unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800237A8(a0 as _, a1 as _, a2 as _) as _ };
     fn lb_8000C0E8(a0: *mut HSD_JObj, a1: i32, a2: *mut DynamicModelDesc);
-    fn lb_80011C18(a0: *mut HSD_JObj, a1: u32);
+    fn lb_80011C18(a0: *mut HSD_JObj, a1: u32) = |a0: *mut HSD_JObj, a1: u32| { unsafe { let _ = melee_runtime::tu::lbspdisplay::lb_80011C18(a0 as _, a1 as _); } };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

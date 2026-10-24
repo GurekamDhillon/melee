@@ -14,10 +14,10 @@ pub mod ext {
     use core::ffi::c_void;
     macro_rules! ext_none {
         ($name:ident, ($($a:ident),*)) => { panic!(concat!("TODO: ", stringify!($name), " is not ported")) };
-        ($name:ident, ($($a:ident),*), $def:path) => { $def($($a),*) };
+        ($name:ident, ($($a:ident),*), $def:expr) => { ($def)($($a),*) };
     }
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:path)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -49,35 +49,35 @@ pub mod ext {
     fn Ground_801C067C() -> *mut _GXColor;
     fn Ground_801C0690() -> *mut _GXColor;
     fn Ground_801C06A4() -> *mut _GXColor;
-    fn HSD_CObjEndCurrent();
-    fn HSD_CObjEraseScreen(a0: *mut HSD_CObj, a1: i32, a2: i32, a3: i32);
+    fn HSD_CObjEndCurrent() = || { unsafe { let _ = melee_runtime::tu::cobj::HSD_CObjEndCurrent(); } };
+    fn HSD_CObjEraseScreen(a0: *mut HSD_CObj, a1: i32, a2: i32, a3: i32) = |a0: *mut HSD_CObj, a1: i32, a2: i32, a3: i32| { unsafe { let _ = melee_runtime::tu::cobj::HSD_CObjEraseScreen(a0 as _, a1 as _, a2 as _, a3 as _); } };
     fn HSD_CObjGetOrtho(a0: *mut HSD_CObj, a1: *mut f32, a2: *mut f32, a3: *mut f32, a4: *mut f32);
-    fn HSD_CObjSetCurrent(a0: *mut HSD_CObj) -> i32;
-    fn HSD_CObjSetEyePosition(a0: *mut HSD_CObj, a1: *mut Vec);
-    fn HSD_CObjSetInterest(a0: *mut HSD_CObj, a1: *mut Vec);
-    fn HSD_CObjSetOrtho(a0: *mut HSD_CObj, a1: f32, a2: f32, a3: f32, a4: f32);
+    fn HSD_CObjSetCurrent(a0: *mut HSD_CObj) -> i32 = |a0: *mut HSD_CObj| unsafe { melee_runtime::tu::cobj::HSD_CObjSetCurrent(a0 as _) as _ };
+    fn HSD_CObjSetEyePosition(a0: *mut HSD_CObj, a1: *mut Vec) = |a0: *mut HSD_CObj, a1: *mut Vec| { unsafe { let _ = melee_runtime::tu::cobj_world::HSD_CObjSetEyePosition(a0 as _, a1 as _); } };
+    fn HSD_CObjSetInterest(a0: *mut HSD_CObj, a1: *mut Vec) = |a0: *mut HSD_CObj, a1: *mut Vec| { unsafe { let _ = melee_runtime::tu::cobj_world::HSD_CObjSetInterest(a0 as _, a1 as _); } };
+    fn HSD_CObjSetOrtho(a0: *mut HSD_CObj, a1: f32, a2: f32, a3: f32, a4: f32) = |a0: *mut HSD_CObj, a1: f32, a2: f32, a3: f32, a4: f32| { unsafe { let _ = melee_runtime::tu::cobj::HSD_CObjSetOrtho(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _); } };
     fn HSD_CObjSetScissorx4(a0: *mut HSD_CObj, a1: u16, a2: u16, a3: u16, a4: u16);
-    fn HSD_CObjSetViewport(a0: *mut HSD_CObj, a1: *mut _HSD_RectS16);
+    fn HSD_CObjSetViewport(a0: *mut HSD_CObj, a1: *mut _HSD_RectS16) = |a0: *mut HSD_CObj, a1: *mut _HSD_RectS16| { unsafe { let _ = melee_runtime::tu::cobj::HSD_CObjSetViewport(a0 as _, a1 as _); } };
     fn HSD_GObjFree(a0: *mut HSD_GObj);
     fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void);
     fn HSD_GObj_80390ED0(a0: *mut HSD_GObj, a1: u32);
-    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32);
-    fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj;
+    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } };
+    fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj = |a0: *mut HSD_Joint| unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(a0 as _) as _ };
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
-    fn HSD_MemAlloc(a0: i32) -> *mut c_void;
+    fn HSD_MemAlloc(a0: i32) -> *mut c_void = |a0: i32| unsafe { melee_runtime::tu::memory::HSD_MemAlloc(a0 as _) as _ };
     fn HSD_SetEraseColor(a0: u8, a1: u8, a2: u8, a3: u8);
     fn Player_80036978(a0: i32, a1: *mut Vec);
     fn Player_GetEntity(a0: i32) -> *mut HSD_GObj;
     fn Player_GetPlayerSlotType(a0: i32) -> Gm_PKind;
     fn Player_GetTeam(a0: i32) -> i32;
-    fn Stage_GetCamBoundsBottomOffset() -> f32;
-    fn Stage_GetCamBoundsLeftOffset() -> f32;
-    fn Stage_GetCamBoundsRightOffset() -> f32;
-    fn Stage_GetCamBoundsTopOffset() -> f32;
+    fn Stage_GetCamBoundsBottomOffset() -> f32 = || unsafe { crate::tu::stage::Stage_GetCamBoundsBottomOffset() as _ };
+    fn Stage_GetCamBoundsLeftOffset() -> f32 = || unsafe { crate::tu::stage::Stage_GetCamBoundsLeftOffset() as _ };
+    fn Stage_GetCamBoundsRightOffset() -> f32 = || unsafe { crate::tu::stage::Stage_GetCamBoundsRightOffset() as _ };
+    fn Stage_GetCamBoundsTopOffset() -> f32 = || unsafe { crate::tu::stage::Stage_GetCamBoundsTopOffset() as _ };
     fn Ui_RetailHidden(a0: i32) -> i32;
     fn View_AspectBits() -> i32;
     fn Wb_RenderActive() -> i32;
-    fn atan2f(a0: f32, a1: f32) -> f32;
+    fn atan2f(a0: f32, a1: f32) -> f32 = |a0: f32, a1: f32| unsafe { melee_runtime::lbtrigf::atan2f(a0 as _, a1 as _) as _ };
     fn ftDrawCommon_80080C28(a0: *mut HSD_GObj, a1: i32);
     fn ftLib_80086B64(a0: *mut HSD_GObj) -> i32;
     fn ftLib_80086B80(a0: *mut HSD_GObj) -> f32;
@@ -88,12 +88,12 @@ pub mod ext {
     fn gm_80160854(a0: u8, a1: u8, a2: u8, a3: u8) -> u32;
     fn gm_80160968(a0: u32) -> _GXColor;
     fn gm_8016B168() -> i32;
-    fn ifAll_GetArchive() -> *mut *mut HSD_Archive;
+    fn ifAll_GetArchive() -> *mut *mut HSD_Archive = || unsafe { crate::tu::ifall::ifAll_GetArchive() as _ };
     fn ifAll_IsHUDHidden() -> i32;
     fn lbArchive_LoadSections(a0: *mut HSD_Archive, a1: *mut c_void, a2: *const u8, rest: &[(*mut c_void, *const u8)]);
     fn lb_80011E24(a0: *mut HSD_JObj, a1: *mut *mut HSD_JObj, ids: &[i32]) -> i32;
-    fn lb_800122C8(a0: *mut HSD_ImageDesc, a1: u16, a2: u16, a3: i32);
-    fn lb_80013B14(a0: *mut HSD_CameraDescPerspective) -> *mut HSD_CObj;
+    fn lb_800122C8(a0: *mut HSD_ImageDesc, a1: u16, a2: u16, a3: i32) = |a0: *mut HSD_ImageDesc, a1: u16, a2: u16, a3: i32| unsafe { melee_runtime::tu::lbspdisplay::lb_800122C8(a0 as _, a1 as _, a2 as _, a3 != 0) };
+    fn lb_80013B14(a0: *mut HSD_CameraDescPerspective) -> *mut HSD_CObj = |a0: *mut HSD_CameraDescPerspective| unsafe { melee_runtime::tu::lbspdisplay::lb_80013B14(a0 as _) as _ };
     fn memzero(a0: *mut c_void, a1: i32) = super::memzero_default;
     fn un_802FD928(a0: u8, a1: u8, a2: *mut _GXColor);
     fn un_802FD9D8(a0: u8);

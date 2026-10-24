@@ -19,8 +19,12 @@ pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
     use core::ffi::c_void;
+    macro_rules! ext_none {
+        ($name:ident, ($($a:ident),*)) => { panic!(concat!("TODO: ", stringify!($name), " is not ported")) };
+        ($name:ident, ($($a:ident),*), $def:expr) => { ($def)($($a),*) };
+    }
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -28,7 +32,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => ext_none!($name, ($($a),*) $(, $def)?),
                 }
             } )*
         };
@@ -38,22 +42,22 @@ pub mod ext {
     fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32);
     fn HSD_GObjFree(a0: *mut HSD_GObj);
     fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void);
-    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32);
+    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } };
     fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc;
     fn HSD_JObjAnimAll(a0: *mut HSD_JObj);
-    fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj;
+    fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj = |a0: *mut HSD_Joint| unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(a0 as _) as _ };
     fn HSD_JObjReqAnimAll(a0: *mut HSD_JObj, a1: f32);
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
     fn Player_80036428(a0: i32) -> i32;
     fn gm_8016895C(a0: *mut HSD_JObj, a1: *mut DynamicModelDesc, a2: i32);
     fn gm_8016AEC8() -> i32;
-    fn ifAll_GetArchive() -> *mut *mut HSD_Archive;
-    fn ifAll_GetPlayerHUDPosition(a0: i32) -> *mut Vec;
-    fn ifStatus_GetHUDInfo() -> *mut HudIndex;
+    fn ifAll_GetArchive() -> *mut *mut HSD_Archive = || unsafe { crate::tu::ifall::ifAll_GetArchive() as _ };
+    fn ifAll_GetPlayerHUDPosition(a0: i32) -> *mut Vec = |a0: i32| unsafe { crate::tu::ifall::ifAll_GetPlayerHUDPosition(a0 as _) as _ };
+    fn ifStatus_GetHUDInfo() -> *mut HudIndex = || unsafe { crate::tu::ifstatus::ifStatus_GetHUDInfo() as _ };
     fn lbArchive_LoadSections(a0: *mut HSD_Archive, a1: *mut *mut c_void, a2: *const u8, a3: i32);
-    fn lbAudioAx_800237A8(a0: i32, a1: i32, a2: i32) -> i32;
-    fn lbGetJObjCurrFrame(a0: *mut HSD_JObj) -> f32;
-    fn lb_8000B09C(a0: *mut HSD_JObj) -> i32;
+    fn lbAudioAx_800237A8(a0: i32, a1: i32, a2: i32) -> i32 = |a0: i32, a1: i32, a2: i32| unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800237A8(a0 as _, a1 as _, a2 as _) as _ };
+    fn lbGetJObjCurrFrame(a0: *mut HSD_JObj) -> f32 = |a0: *mut HSD_JObj| unsafe { melee_runtime::tu::lb_00B0::lbGetJObjCurrFrame(a0 as _) as _ };
+    fn lb_8000B09C(a0: *mut HSD_JObj) -> i32 = |a0: *mut HSD_JObj| unsafe { melee_runtime::tu::lb_00B0::lb_8000B09C(a0 as _) as _ };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

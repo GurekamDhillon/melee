@@ -134,41 +134,101 @@ def load_specs(p):
     return specs
 
 
+def match_paren(s, i):
+    """s[i] == '(' -> index of the matching ')' (skipping '->' arrows)."""
+    d = 0
+    while i < len(s):
+        c = s[i]
+        if c == "-" and s[i + 1:i + 2] == ">":
+            i += 2
+            continue
+        if c == "(":
+            d += 1
+        elif c == ")":
+            d -= 1
+            if d == 0:
+                return i
+        i += 1
+    return -1
+
+
+def rewire_line(line, name, spec, in_ext_fns, counter):
+    """Return the rewritten line or None."""
+    st = line.lstrip()
+    ind = line[: len(line) - len(st)]
+    # F1: hook!(H, name, (params) -> R);
+    m = re.match(r"hook!\((\w+),\s*" + re.escape(name) + r",\s*\(", st)
+    if m:
+        op = m.end() - 1
+        cp = match_paren(st, op)
+        rest = st[cp + 1:]
+        rm = re.match(r"\s*(?:->\s*(.+?))?\);\s*$", rest)
+        if cp > 0 and rm:
+            plist = st[op + 1:cp]
+            ret = rm.group(1)
+            r = f" -> {ret}" if ret else ""
+            counter[0] += 1
+            return f"{ind}hook_or!({m.group(1)}, {name}, ({plist}){r}, {closure(spec, params_of(plist), ret)});"
+    # F2: fn name(params) -> R;   inside ext_fns!
+    if in_ext_fns:
+        m = re.match(r"fn " + re.escape(name) + r"\(", st)
+        if m:
+            op = m.end() - 1
+            cp = match_paren(st, op)
+            rest = st[cp + 1:]
+            rm = re.match(r"\s*(?:->\s*([^=;]+?))?\s*;\s*$", rest)
+            if cp > 0 and rm:
+                plist = st[op + 1:cp]
+                ret = rm.group(1)
+                r = f" -> {ret}" if ret else ""
+                counter[0] += 1
+                return f"{ind}fn {name}({plist}){r} = {closure(spec, params_of(plist), ret)};"
+    # F3: hand-written one-line hook function
+    m = re.search(r"fn " + re.escape(name) + r"\(", st)
+    if m and "None => panic!(\"TODO: " + name + " is not ported\")" in st:
+        op = m.end() - 1
+        cp = match_paren(st, op)
+        plist = st[op + 1:cp]
+        rm = re.match(r"\s*(?:->\s*([^{]+?))?\s*\{", st[cp + 1:])
+        ret = rm.group(1) if rm else None
+        counter[0] += 1
+        return ind + st.replace("None => panic!(\"TODO: " + name + " is not ported\")", "None => " + body_for(spec, params_of(plist), bool(ret)))
+    return None
+
+
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     dry = "--dry" in sys.argv
     specs = load_specs(args[0] if args else Path(__file__).with_name("ports.txt"))
-    total = {n: 0 for n in specs}
+    total = {n: [0] for n in specs}
     for f in sorted(SRC.rglob("*.rs")):
         pf = f.as_posix()
         if "/raw/" in pf or "/c2r/" in pf:
             continue
         raw = f.read_bytes().decode("utf8")
         crlf = CRLF in raw
-        t = raw.replace(CRLF, LF)
-        o = t
-        for name, spec in specs.items():
-            en = re.escape(name)
-
-            def f1(m):
-                total[name] += 1
-                ret = m.group(4)
-                r = f" -> {ret}" if ret else ""
-                return f"hook_or!({m.group(1)}, {name}, ({m.group(3)}){r}, {closure(spec, params_of(m.group(3)), ret)});"
-            t = re.sub(r"hook!\((\w+),\s*(" + en + r"),\s*\(([^\n]*?)\)(?:\s*->\s*([^;\n]+?))?\);", f1, t)
-            if "macro_rules! ext_fns" in t:
-                def f2(m):
-                    total[name] += 1
-                    ret = m.group(3)
-                    r = f" -> {ret}" if ret else ""
-                    return f"{m.group(1)}fn {name}({m.group(2)}){r} = {closure(spec, params_of(m.group(2)), ret)};"
-                t = re.sub(r"^([ \t]*)fn " + en + r"\(([^\n]*?)\)(?:[ \t]*->[ \t]*([^;\n=]+?))?;[ \t]*$", f2, t, flags=re.M)
-
-            def f3(m):
-                total[name] += 1
-                return m.group(1) + "None => " + body_for(spec, params_of(m.group(2)), bool(m.group(3)))
-            t = re.sub(r"(fn " + en + r"\(([^\n]*?)\)(?:\s*->\s*([^{\n]+?))?\s*\{[^\n]*?)None => panic!\(\"TODO: " + en + r" is not ported\"\)", f3, t)
-        if t != o:
+        lines = raw.replace(CRLF, LF).split(LF)
+        o = list(lines)
+        in_ext = False
+        for i, line in enumerate(lines):
+            s = line.strip()
+            if s.startswith("ext_fns!") and s.endswith("{"):
+                in_ext = True
+                continue
+            if in_ext and s == "}":
+                in_ext = False
+                continue
+            if not (s.startswith("fn ") or s.startswith("hook!(") or "is not ported" in s):
+                continue
+            for name, spec in specs.items():
+                if name not in s:
+                    continue
+                r = rewire_line(line, name, spec, in_ext, total[name])
+                if r is not None:
+                    lines[i] = r
+                    break
+        if lines != o:
+            t = LF.join(lines)
             if "macro_rules! ext_fns" in t and "$def:expr" not in t:
                 if "$(= $def:path)?" in t:
                     t = t.replace("$(= $def:path)?", "$(= $def:expr)?").replace(IF_ARM_OLD, IF_ARM_NEW)
@@ -182,7 +242,7 @@ def main():
                 f.write_bytes((t.replace(LF, CRLF) if crlf else t).encode("utf8"))
             print("rewrote", f.relative_to(ROOT).as_posix())
     for n, c in total.items():
-        print(f"{n}: {c} sites")
+        print(f"{n}: {c[0]} sites")
 
 
 if __name__ == "__main__":

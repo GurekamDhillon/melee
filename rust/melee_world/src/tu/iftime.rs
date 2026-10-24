@@ -14,10 +14,10 @@ pub mod ext {
     use core::ffi::c_void;
     macro_rules! ext_none {
         ($name:ident, ($($a:ident),*)) => { panic!(concat!("TODO: ", stringify!($name), " is not ported")) };
-        ($name:ident, ($($a:ident),*), $def:path) => { $def($($a),*) };
+        ($name:ident, ($($a:ident),*), $def:expr) => { ($def)($($a),*) };
     }
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:path)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -34,16 +34,16 @@ pub mod ext {
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
     fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32);
     fn HSD_AObjReqAnim(a0: *mut HSD_AObj, a1: f32);
-    fn HSD_AObjSetRate(a0: *mut HSD_AObj, a1: f32);
+    fn HSD_AObjSetRate(a0: *mut HSD_AObj, a1: f32) = |a0: *mut HSD_AObj, a1: f32| { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjSetRate(a0 as _, a1 as _); } };
     fn HSD_GObjFree(a0: *mut HSD_GObj);
     fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void);
-    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32);
+    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } };
     fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc;
     fn HSD_JObjAnimAll(a0: *mut HSD_JObj);
     fn HSD_JObjClearFlags(a0: *mut HSD_JObj, a1: u32);
     fn HSD_JObjClearFlagsAll(a0: *mut HSD_JObj, a1: u32);
     fn HSD_JObjGetFlags(a0: *mut HSD_JObj) -> u32;
-    fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj;
+    fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj = |a0: *mut HSD_Joint| unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(a0 as _) as _ };
     fn HSD_JObjRemoveAnimAll(a0: *mut HSD_JObj);
     fn HSD_JObjReqAnimAll(a0: *mut HSD_JObj, a1: f32);
     fn HSD_JObjSetFlags(a0: *mut HSD_JObj, a1: u32);
@@ -54,7 +54,7 @@ pub mod ext {
     fn gm_8016AF0C() -> u16;
     fn gm_8016B110() -> i32;
     fn gm_GetStartMeleeRules() -> *mut StartMeleeRules;
-    fn ifAll_GetArchive() -> *mut *mut HSD_Archive;
+    fn ifAll_GetArchive() -> *mut *mut HSD_Archive = || unsafe { crate::tu::ifall::ifAll_GetArchive() as _ };
     fn ifAll_GetTimerPosition() -> *mut Vec;
     fn lbArchive_LoadSections(a0: *mut HSD_Archive, a1: *mut c_void, a2: *const u8, rest: &[(*mut c_void, *const u8)]);
     fn lb_8000C07C(a0: *mut HSD_JObj, a1: i32, a2: *mut *mut HSD_AnimJoint, a3: *mut *mut HSD_MatAnimJoint, a4: *mut *mut HSD_ShapeAnimJoint);

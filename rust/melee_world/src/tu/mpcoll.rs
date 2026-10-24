@@ -54,8 +54,12 @@ unsafe fn lbVector_Diff(a: *mut Vec, b: *mut Vec, out: *mut Vec) -> *mut Vec {
 pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
+    macro_rules! ext_none {
+        ($name:ident, ($($a:ident),*)) => { panic!(concat!("TODO: ", stringify!($name), " is not ported")) };
+        ($name:ident, ($($a:ident),*), $def:expr) => { ($def)($($a),*) };
+    }
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -63,7 +67,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => ext_none!($name, ($($a),*) $(, $def)?),
                 }
             } )*
         };
@@ -73,9 +77,9 @@ pub mod ext {
     fn ftLib_80086960(a0: *mut HSD_GObj) -> i32;
     fn ftLib_80086BE0(a0: *mut HSD_GObj) -> u8;
     fn ftLib_800874BC(a0: *mut HSD_GObj) -> i32;
-    fn grDynamicAttr_801CA284(a0: *mut Vec, a1: i32) -> i32;
+    fn grDynamicAttr_801CA284(a0: *mut Vec, a1: i32) -> i32 = |a0: *mut Vec, a1: i32| unsafe { crate::tu::grdynamicattr::grDynamicAttr_801CA284(a0 as _, a1 as _) as _ };
     fn itGetKind(a0: *mut HSD_GObj) -> ItemKind;
-    fn lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec);
+    fn lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec) = |a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(a0 as _, a1 as _, a2 as _); } };
     fn OSReport(a0: &str);
     }
     pub static mut DbLevel: DbLKind = unsafe { core::mem::zeroed() };

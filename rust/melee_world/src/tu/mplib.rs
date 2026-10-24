@@ -35,8 +35,12 @@ unsafe fn PSMTXMultVec(m: *mut [f32; 4], src: *mut Vec, dst: *mut Vec) {
 pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
+    macro_rules! ext_none {
+        ($name:ident, ($($a:ident),*)) => { panic!(concat!("TODO: ", stringify!($name), " is not ported")) };
+        ($name:ident, ($($a:ident),*), $def:expr) => { ($def)($($a),*) };
+    }
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -44,7 +48,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => ext_none!($name, ($($a),*) $(, $def)?),
                 }
             } )*
         };
@@ -56,7 +60,7 @@ pub mod ext {
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
     fn GXBegin(a0: GXPrimitive, a1: GXVtxFmt, a2: u16);
     fn GXClearVtxDesc();
-    fn GXEnd();
+    fn GXEnd() = || { unsafe { let _ = melee_runtime::tu::sobjlib::GXEnd(); } };
     fn GXLoadPosMtxImm(a0: *mut [f32; 4], a1: u32);
     fn GXPosition3f32(a0: f32, a1: f32, a2: f32);
     fn GXSetCullMode(a0: GXCullMode);
@@ -67,13 +71,13 @@ pub mod ext {
     fn GXSetZMode(a0: u8, a1: GXCompare, a2: u8);
     fn Ground_801C0498() -> f32;
     fn Ground_801C2D24(a0: i32, a1: *mut Vec) -> i32;
-    fn HSD_CObjGetCurrent() -> *mut HSD_CObj;
+    fn HSD_CObjGetCurrent() -> *mut HSD_CObj = || unsafe { melee_runtime::tu::cobj::HSD_CObjGetCurrent() as _ };
     fn HSD_CObjGetViewingMtx(a0: *mut HSD_CObj, a1: *mut [f32; 4]);
     fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc;
     fn HSD_JObjGetFlags(a0: *mut HSD_JObj) -> u32;
     fn HSD_JObjSetupMatrixSub(a0: *mut HSD_JObj);
     fn HSD_LObjSetupInit(a0: *mut HSD_CObj);
-    fn HSD_MemAlloc(a0: i32) -> *mut c_void;
+    fn HSD_MemAlloc(a0: i32) -> *mut c_void = |a0: i32| unsafe { melee_runtime::tu::memory::HSD_MemAlloc(a0 as _) as _ };
     fn HSD_SetTevRegAll();
     fn HSD_SetupChannel(a0: *mut HSD_Chan);
     fn HSD_SetupPEMode(a0: u32, a1: *mut HSD_PEDesc);
@@ -91,17 +95,17 @@ pub mod ext {
     fn ScriptGame_StageJointCapacity() -> i32;
     fn ScriptGame_StageLineActive(a0: i32) -> i32;
     fn ScriptGame_StageSlotJointUpdate(a0: i32) -> i32;
-    fn Stage_GetBlastZoneBottomOffset() -> f32;
-    fn Stage_GetBlastZoneLeftOffset() -> f32;
-    fn Stage_GetBlastZoneRightOffset() -> f32;
-    fn Stage_GetBlastZoneTopOffset() -> f32;
-    fn Stage_GetCamBoundsBottomOffset() -> f32;
-    fn Stage_GetCamBoundsLeftOffset() -> f32;
-    fn Stage_GetCamBoundsRightOffset() -> f32;
-    fn Stage_GetCamBoundsTopOffset() -> f32;
+    fn Stage_GetBlastZoneBottomOffset() -> f32 = || unsafe { crate::tu::stage::Stage_GetBlastZoneBottomOffset() as _ };
+    fn Stage_GetBlastZoneLeftOffset() -> f32 = || unsafe { crate::tu::stage::Stage_GetBlastZoneLeftOffset() as _ };
+    fn Stage_GetBlastZoneRightOffset() -> f32 = || unsafe { crate::tu::stage::Stage_GetBlastZoneRightOffset() as _ };
+    fn Stage_GetBlastZoneTopOffset() -> f32 = || unsafe { crate::tu::stage::Stage_GetBlastZoneTopOffset() as _ };
+    fn Stage_GetCamBoundsBottomOffset() -> f32 = || unsafe { crate::tu::stage::Stage_GetCamBoundsBottomOffset() as _ };
+    fn Stage_GetCamBoundsLeftOffset() -> f32 = || unsafe { crate::tu::stage::Stage_GetCamBoundsLeftOffset() as _ };
+    fn Stage_GetCamBoundsRightOffset() -> f32 = || unsafe { crate::tu::stage::Stage_GetCamBoundsRightOffset() as _ };
+    fn Stage_GetCamBoundsTopOffset() -> f32 = || unsafe { crate::tu::stage::Stage_GetCamBoundsTopOffset() as _ };
     fn ftLib_80086984(a0: *mut HSD_GObj) -> *mut CollData;
-    fn grDynamicAttr_801CA0B4();
-    fn grDynamicAttr_801CA224();
+    fn grDynamicAttr_801CA0B4() = || { unsafe { let _ = crate::tu::grdynamicattr::grDynamicAttr_801CA0B4(); } };
+    fn grDynamicAttr_801CA224() = || { unsafe { let _ = crate::tu::grdynamicattr::grDynamicAttr_801CA224(); } };
     fn itGetKind(a0: *mut HSD_GObj) -> ItemKind;
     fn OSReport(a0: &str);
     }

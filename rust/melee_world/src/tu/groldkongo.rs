@@ -17,8 +17,12 @@ pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
     use core::ffi::c_void;
+    macro_rules! ext_none {
+        ($name:ident, ($($a:ident),*)) => { panic!(concat!("TODO: ", stringify!($name), " is not ported")) };
+        ($name:ident, ($($a:ident),*), $def:expr) => { ($def)($($a),*) };
+    }
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -26,7 +30,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => ext_none!($name, ($($a),*) $(, $def)?),
                 }
             } )*
         };
@@ -34,17 +38,17 @@ pub mod ext {
     ext_fns! {
     fn Camera_LogicBounds(a0: *mut f32, a1: *mut f32, a2: *mut f32) -> i32;
     fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32);
-    fn Ground_801C39C0();
-    fn Ground_801C3BB4();
-    fn Ground_801C3FA4(a0: *mut HSD_GObj, a1: i32) -> *mut HSD_JObj;
+    fn Ground_801C39C0() = || { unsafe { let _ = crate::tu::ground::Ground_801C39C0(); } };
+    fn Ground_801C3BB4() = || { unsafe { let _ = crate::tu::ground::Ground_801C3BB4(); } };
+    fn Ground_801C3FA4(a0: *mut HSD_GObj, a1: i32) -> *mut HSD_JObj = |a0: *mut HSD_GObj, a1: i32| unsafe { crate::tu::ground::Ground_801C3FA4(a0 as _, a1 as _) as _ };
     fn Ground_801C4D70(a0: *mut HSD_GObj, a1: *mut Vec, a2: f32) -> i32;
     fn Ground_801C4DA0(a0: *mut Vec, a1: *mut f32) -> i32;
     fn Ground_801C5440(a0: *mut Ground, a1: i32, a2: u32);
-    fn Ground_GetMapGObj(a0: i32) -> *mut HSD_GObj;
-    fn Ground_GetStageGObj(a0: i32) -> *mut HSD_GObj;
-    fn Ground_GetYakumonoParam() -> *mut c_void;
-    fn Ground_InitMapColl(a0: *mut HSD_JObj, a1: i32) -> i32;
-    fn Ground_UpdateMapColl(a0: *mut HSD_GObj) -> i32;
+    fn Ground_GetMapGObj(a0: i32) -> *mut HSD_GObj = |a0: i32| unsafe { crate::tu::ground::Ground_GetMapGObj(a0 as _) as _ };
+    fn Ground_GetStageGObj(a0: i32) -> *mut HSD_GObj = |a0: i32| unsafe { crate::tu::ground::Ground_GetStageGObj(a0 as _) as _ };
+    fn Ground_GetYakumonoParam() -> *mut c_void = || unsafe { crate::tu::ground::Ground_GetYakumonoParam() as _ };
+    fn Ground_InitMapColl(a0: *mut HSD_JObj, a1: i32) -> i32 = |a0: *mut HSD_JObj, a1: i32| unsafe { crate::tu::ground::Ground_InitMapColl(a0 as _, a1 as _) as _ };
+    fn Ground_UpdateMapColl(a0: *mut HSD_GObj) -> i32 = |a0: *mut HSD_GObj| unsafe { crate::tu::ground::Ground_UpdateMapColl(a0 as _) as _ };
     fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc;
     fn HSD_JObjClearFlagsAll(a0: *mut HSD_JObj, a1: u32);
     fn HSD_JObjSetFlagsAll(a0: *mut HSD_JObj, a1: u32);
@@ -57,17 +61,17 @@ pub mod ext {
     fn ftCo_800C0764(a0: *mut HSD_GObj, a1: u32, a2: *mut c_void);
     fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec);
     fn ftLib_80086C18(a0: *mut HSD_GObj, a1: i32, a2: i32);
-    fn grAnime_801C7A04(a0: *mut HSD_GObj, a1: i32, a2: u32, a3: f32);
-    fn grAnime_801C7FF8(a0: *mut HSD_GObj, a1: i32, a2: i32, a3: i32, a4: f32, a5: f32);
+    fn grAnime_801C7A04(a0: *mut HSD_GObj, a1: i32, a2: u32, a3: f32) = |a0: *mut HSD_GObj, a1: i32, a2: u32, a3: f32| { unsafe { let _ = crate::tu::granime::grAnime_801C7A04(a0 as _, a1 as _, a2 as _, a3 as _); } };
+    fn grAnime_801C7FF8(a0: *mut HSD_GObj, a1: i32, a2: i32, a3: i32, a4: f32, a5: f32) = |a0: *mut HSD_GObj, a1: i32, a2: i32, a3: i32, a4: f32, a5: f32| { unsafe { let _ = crate::tu::granime::grAnime_801C7FF8(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _); } };
     fn grAnime_801C8138(a0: *mut HSD_GObj, a1: i32, a2: i32);
-    fn grAnime_801C83D0(a0: *mut HSD_GObj, a1: i32, a2: i32) -> i32;
-    fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: i32);
-    fn grMaterial_801C94D8(a0: *mut c_void);
-    fn grMaterial_801C95C4(a0: *mut HSD_GObj);
-    fn grMaterial_801C9604(a0: *mut HSD_GObj, a1: *mut c_void, a2: i32);
+    fn grAnime_801C83D0(a0: *mut HSD_GObj, a1: i32, a2: i32) -> i32 = |a0: *mut HSD_GObj, a1: i32, a2: i32| unsafe { crate::tu::granime::grAnime_801C83D0(a0 as _, a1 as _, a2 as _) as _ };
+    fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { let _ = crate::tu::grdisplay::grDisplay_801C5DB0(a0 as _, a1 as _); } };
+    fn grMaterial_801C94D8(a0: *mut c_void) = |a0: *mut c_void| { unsafe { let _ = crate::tu::grmaterial::grMaterial_801C94D8(a0 as _); } };
+    fn grMaterial_801C95C4(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { let _ = crate::tu::grmaterial::grMaterial_801C95C4(a0 as _); } };
+    fn grMaterial_801C9604(a0: *mut HSD_GObj, a1: *mut c_void, a2: i32) = |a0: *mut HSD_GObj, a1: *mut c_void, a2: i32| unsafe { crate::tu::grmaterial::grMaterial_801C9604(a0 as _, a1 as _, a2 != 0) };
     fn grZakoGenerator_801CAE04(a0: *mut grZakoGenerator_SpawnDesc) -> *mut HSD_GObj;
-    fn lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec);
-    fn lb_800115F4();
+    fn lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec) = |a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(a0 as _, a1 as _, a2 as _); } };
+    fn lb_800115F4() = || { unsafe { let _ = melee_runtime::tu::lb_00F9::lb_800115F4(); } };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

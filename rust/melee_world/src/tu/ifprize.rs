@@ -14,10 +14,10 @@ pub mod ext {
     use core::ffi::c_void;
     macro_rules! ext_none {
         ($name:ident, ($($a:ident),*)) => { panic!(concat!("TODO: ", stringify!($name), " is not ported")) };
-        ($name:ident, ($($a:ident),*), $def:path) => { $def($($a),*) };
+        ($name:ident, ($($a:ident),*), $def:expr) => { ($def)($($a),*) };
     }
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:path)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -34,28 +34,28 @@ pub mod ext {
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
     fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32);
     fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32);
-    fn HSD_CObjLoadDesc(a0: *mut HSD_CObjDesc) -> *mut HSD_CObj;
+    fn HSD_CObjLoadDesc(a0: *mut HSD_CObjDesc) -> *mut HSD_CObj = |a0: *mut HSD_CObjDesc| unsafe { melee_runtime::tu::cobj::HSD_CObjLoadDesc(a0 as _) as _ };
     fn HSD_DObjReqAnimAll(a0: *mut HSD_DObj, a1: f32);
     fn HSD_GObjFree(a0: *mut HSD_GObj);
     fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void);
     fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: i32);
-    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32);
-    fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: i32);
+    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } };
+    fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_LObjCallback(a0 as _, a1 as _); } };
     fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc;
     fn HSD_JObjAnimAll(a0: *mut HSD_JObj);
-    fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj;
+    fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj = |a0: *mut HSD_Joint| unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(a0 as _) as _ };
     fn HSD_JObjReqAnimAll(a0: *mut HSD_JObj, a1: f32);
     fn HSD_Randi(a0: i32) -> i32;
-    fn HSD_SisLib_803A5ACC(a0: i32, a1: i32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32) -> *mut HSD_Text;
+    fn HSD_SisLib_803A5ACC(a0: i32, a1: i32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32) -> *mut HSD_Text = |a0: i32, a1: i32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32| unsafe { melee_runtime::tu::sislib::HSD_SisLib_803A5ACC(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _, a6 as _) as _ };
     fn HSD_SisLib_803A5F50(a0: i32);
-    fn HSD_SisLib_803A611C(a0: i32, a1: *mut HSD_GObj, a2: u16, a3: u8, a4: u8, a5: u8, a6: u8, a7: u32) -> i32;
+    fn HSD_SisLib_803A611C(a0: i32, a1: *mut HSD_GObj, a2: u16, a3: u8, a4: u8, a5: u8, a6: u8, a7: u32) -> i32 = |a0: i32, a1: *mut HSD_GObj, a2: u16, a3: u8, a4: u8, a5: u8, a6: u8, a7: u32| unsafe { melee_runtime::tu::sislib::HSD_SisLib_803A611C(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _, a6 as _, a7 as _) as _ };
     fn HSD_SisLib_803A62A0(a0: i32, a1: *mut i8, a2: *mut i8);
-    fn HSD_SisLib_803A6368(a0: *mut HSD_Text, a1: i32);
-    fn HSD_SisLib_803A6530(a0: i32, a1: i32, a2: i32) -> *mut u8;
-    fn HSD_SisLib_803A660C(a0: i32, a1: i32, a2: i32);
-    fn HSD_SisLib_803A6754(a0: i32, a1: i32) -> *mut HSD_Text;
+    fn HSD_SisLib_803A6368(a0: *mut HSD_Text, a1: i32) = |a0: *mut HSD_Text, a1: i32| { unsafe { let _ = melee_runtime::tu::sislib::HSD_SisLib_803A6368(a0 as _, a1 as _); } };
+    fn HSD_SisLib_803A6530(a0: i32, a1: i32, a2: i32) -> *mut u8 = |a0: i32, a1: i32, a2: i32| unsafe { melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6530(a0 as _, a1 as _, a2 as _) as _ };
+    fn HSD_SisLib_803A660C(a0: i32, a1: i32, a2: i32) = |a0: i32, a1: i32, a2: i32| { unsafe { let _ = melee_runtime::tu::hsd_3A64::HSD_SisLib_803A660C(a0 as _, a1 as _, a2 as _); } };
+    fn HSD_SisLib_803A6754(a0: i32, a1: i32) -> *mut HSD_Text = |a0: i32, a1: i32| unsafe { melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6754(a0 as _, a1 as _) as _ };
     fn HSD_SisLib_803A6B98(a0: *mut HSD_Text, a1: f32, a2: f32, a3: *const u8) -> i32;
-    fn HSD_SisLib_803A7664(a0: *mut HSD_Text);
+    fn HSD_SisLib_803A7664(a0: *mut HSD_Text) = |a0: *mut HSD_Text| { unsafe { let _ = melee_runtime::tu::hsd_3A64::HSD_SisLib_803A7664(a0 as _); } };
     fn Toy_803063D4(a0: i32, a1: i32, a2: i32) -> i32;
     fn Toy_803124BC();
     fn Ui_RetailHidden(a0: i32) -> i32;
@@ -66,10 +66,10 @@ pub mod ext {
     fn gm_GetButtonsTriggered(a0: u8) -> u64;
     fn lbArchive_80016DBC(a0: *const u8, a1: *mut c_void, a2: *const u8, rest: &[(*mut c_void, *const u8)]) -> *mut HSD_Archive;
     fn lbArchive_80016EFC(a0: *mut HSD_Archive);
-    fn lbAudioAx_800236DC() -> i32;
-    fn lbAudioAx_80023F28(a0: i32) -> i32;
-    fn lbLang_IsSavedLanguageUS() -> i32;
-    fn lb_80011AC4(a0: *mut *mut LightList) -> *mut HSD_LObj;
+    fn lbAudioAx_800236DC() -> i32 = || unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800236DC() as _ };
+    fn lbAudioAx_80023F28(a0: i32) -> i32 = |a0: i32| unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023F28(a0 as _) as _ };
+    fn lbLang_IsSavedLanguageUS() -> i32 = || unsafe { melee_runtime::tu::lblanguage::lbLang_IsSavedLanguageUS() as _ };
+    fn lb_80011AC4(a0: *mut *mut LightList) -> *mut HSD_LObj = |a0: *mut *mut LightList| unsafe { melee_runtime::tu::lbspdisplay::lb_80011AC4(a0 as _) as _ };
     fn lb_80011E24(a0: *mut HSD_JObj, a1: *mut *mut HSD_JObj, ids: &[i32]) -> i32;
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.

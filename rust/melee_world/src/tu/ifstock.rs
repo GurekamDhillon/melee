@@ -14,10 +14,10 @@ pub mod ext {
     use core::ffi::c_void;
     macro_rules! ext_none {
         ($name:ident, ($($a:ident),*)) => { panic!(concat!("TODO: ", stringify!($name), " is not ported")) };
-        ($name:ident, ($($a:ident),*), $def:path) => { $def($($a),*) };
+        ($name:ident, ($($a:ident),*), $def:expr) => { ($def)($($a),*) };
     }
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:path)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -44,22 +44,22 @@ pub mod ext {
     fn GxTex_Height(a0: i32) -> i32;
     fn GxTex_ImageSize(a0: i32) -> i32;
     fn GxTex_Width(a0: i32) -> i32;
-    fn HSD_AObjSetRate(a0: *mut HSD_AObj, a1: f32);
-    fn HSD_Free(a0: *mut c_void);
+    fn HSD_AObjSetRate(a0: *mut HSD_AObj, a1: f32) = |a0: *mut HSD_AObj, a1: f32| { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjSetRate(a0 as _, a1 as _); } };
+    fn HSD_Free(a0: *mut c_void) = |a0: *mut c_void| { unsafe { let _ = melee_runtime::tu::memory::HSD_Free(a0 as _); } };
     fn HSD_GObjFree(a0: *mut HSD_GObj);
     fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void);
     fn HSD_GObj_80390CAC(a0: *mut HSD_GObj);
-    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32);
+    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } };
     fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc;
     fn HSD_JObjAddAnimAll(a0: *mut HSD_JObj, a1: *mut HSD_AnimJoint, a2: *mut HSD_MatAnimJoint, a3: *mut HSD_ShapeAnimJoint);
     fn HSD_JObjAnimAll(a0: *mut HSD_JObj);
     fn HSD_JObjClearFlags(a0: *mut HSD_JObj, a1: u32);
     fn HSD_JObjClearFlagsAll(a0: *mut HSD_JObj, a1: u32);
-    fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj;
+    fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj = |a0: *mut HSD_Joint| unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(a0 as _) as _ };
     fn HSD_JObjReqAnimAll(a0: *mut HSD_JObj, a1: f32);
     fn HSD_JObjSetFlagsAll(a0: *mut HSD_JObj, a1: u32);
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
-    fn HSD_MemAlloc(a0: i32) -> *mut c_void;
+    fn HSD_MemAlloc(a0: i32) -> *mut c_void = |a0: i32| unsafe { melee_runtime::tu::memory::HSD_MemAlloc(a0 as _) as _ };
     fn HSD_TObjReqAnimAll(a0: *mut HSD_TObj, a1: f32);
     fn Player_800325C8(a0: u32, a1: i32) -> i8;
     fn Player_GetCoins(a0: i32) -> i32;
@@ -86,8 +86,8 @@ pub mod ext {
     fn gm_IsMultimanSmashMode() -> i32;
     fn gm_MexStockFrame(a0: i32, a1: i32) -> f32;
     fn gm_MexStockMatAnim() -> *mut HSD_MatAnimJoint;
-    fn ifAll_GetArchive() -> *mut *mut HSD_Archive;
-    fn ifAll_GetPlayerHUDPosition(a0: i32) -> *mut Vec;
+    fn ifAll_GetArchive() -> *mut *mut HSD_Archive = || unsafe { crate::tu::ifall::ifAll_GetArchive() as _ };
+    fn ifAll_GetPlayerHUDPosition(a0: i32) -> *mut Vec = |a0: i32| unsafe { crate::tu::ifall::ifAll_GetPlayerHUDPosition(a0 as _) as _ };
     fn ifStatus_GetHUDInfo() -> *mut HudIndex = super::hud_info_default;
     fn lbArchive_LoadSections(a0: *mut HSD_Archive, a1: *mut c_void, a2: *const u8, rest: &[(*mut c_void, *const u8)]);
     fn lbVector_8000DE38(a0: *mut c_void, a1: *mut Vec, a2: f32) -> *mut Vec;

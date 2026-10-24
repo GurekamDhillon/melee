@@ -120,7 +120,7 @@ pub mod ext {
     hook!(HSD_RANDF, HSD_Randf, () -> f32);
     hook!(HSD_RANDI, HSD_Randi, (max_val: s32) -> s32);
     hook!(OSREPORT, OSReport, (a0: *const i8, va: &[usize]));
-    hook!(PSVECCROSSPRODUCT, PSVECCrossProduct, (vec1: *mut Vec, vec2: *mut Vec, dst: *mut Vec));
+    hook_or!(PSVECCROSSPRODUCT, PSVECCrossProduct, (vec1: *mut Vec, vec2: *mut Vec, dst: *mut Vec), |vec1: *mut Vec, vec2: *mut Vec, dst: *mut Vec| { unsafe { let _ = melee_runtime::tu::mtx_pc::raw::PSVECCrossProduct(vec1 as _, vec2 as _, dst as _); } });
     hook_or!(ATAN2F, atan2f, (y: f32, x: f32) -> f32, melee_runtime::lbtrigf::atan2f);
     hook!(FTCO_800C06E8, ftCo_800C06E8, (a0: *mut HSD_GObj, a1: i32, a2: *mut c_void));
     hook!(FTLIB_80086644, ftLib_80086644, (a0: *mut HSD_GObj, a1: *mut Vec));

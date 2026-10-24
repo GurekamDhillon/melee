@@ -115,3 +115,4 @@ pub mod gmtoycollection;
 pub mod gm_1BFA;
 pub mod lb_013B;
 pub mod lb_0146;
+pub mod lb_0192;

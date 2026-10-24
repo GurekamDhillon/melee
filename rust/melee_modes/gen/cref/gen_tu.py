@@ -450,10 +450,10 @@ def build(stem, spec, want_ext):
     for n in names:
         decl, called, addr = stubs[n]
         ft = canon(decl.type)
-        ptys = list(ft.argument_types())
+        ptys = list(ft.argument_types()) if ft.kind == T.FUNCTIONPROTO else []  # K&R `f()`: no arguments
         rt = ft.get_result()
         rcls = arg_class(rt)
-        va = ft.is_function_variadic() or n in spec.get("custom_stubs", {})
+        va = (ft.kind == T.FUNCTIONPROTO and ft.is_function_variadic()) or n in spec.get("custom_stubs", {})
         if va:
             cs = spec.get("custom_stubs", {}).get(n)
             if cs:  # a variadic callee the spec models by hand (fixed-arity on the Rust side)
@@ -512,7 +512,7 @@ def build(stem, spec, want_ext):
         r_out.insert(5, "use super::m::{" + ", ".join(local_types) + "};")
 
     # the function table: stubs address-taken + the TU's own functions, sorted by name
-    fpn = [n for n in names if stubs[n][2] and not stubs[n][0].type.is_function_variadic()]
+    fpn = [n for n in names if stubs[n][2] and not (canon(stubs[n][0].type).kind == T.FUNCTIONPROTO and canon(stubs[n][0].type).is_function_variadic())]
     own = sorted(n for n in tu.defs if not tu.defs[n].storage_class == ci.StorageClass.NONE or True)
     c_out.append("static void freg_all(void)\n{")
     for n in fpn:

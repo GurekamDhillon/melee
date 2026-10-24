@@ -47,7 +47,7 @@ static void fill_HSD_JObj(HSD_JObj* p)
     p->mtx[i0][i1] = rg();
     }
     }
-    p->id = (((u64) fv() << 32) | fv());
+    p->id = fv64();
 }
 static void hash_HSD_JObj(const HSD_JObj* p)
 {

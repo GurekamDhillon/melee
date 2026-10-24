@@ -25,7 +25,6 @@ int main(void)
             zero(J, sizeof J);
             for (i = 0; i < 3; i++) {
                 fill_HSD_JObj(&J[i]);
-                J[i].id = (u32) J[i].id; /* melee_types has uintptr_t = u32 (GC); the native C one is 8 bytes */
                 J[i].flags = (rnd() % 3 == 0 ? JOBJ_MTX_DIRTY : 0) | (rnd() % 4 == 0 ? JOBJ_USER_DEF_MTX : 0) |
                              (rnd() % 2 ? JOBJ_USE_QUATERNION : 0) | (rnd() % 3 == 0 ? JOBJ_MTX_INDEP_SRT : 0) |
                              (fv() & 0xF);

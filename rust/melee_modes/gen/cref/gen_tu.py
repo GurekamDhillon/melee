@@ -249,7 +249,7 @@ def r_trace(cls, a):
 
 
 def c_ret(cls):
-    return {"i4": "fv()", "i8": "(((u64) fv() << 32) | fv())", "f4": "rg()", "f8": "(double) rg()",
+    return {"i4": "fv()", "i8": "fv64()", "f4": "rg()", "f8": "(double) rg()",
             "ptr": "0", "fp": "0", "str": "0"}.get(cls)
 
 
@@ -394,7 +394,7 @@ class Walk:
                 ch.append(f"HM((u32) {cexpr});")
                 rh.append(f"hm({rexpr} as u32);")
             elif sz == 8:
-                cf.append(f"{cexpr} = (((u64) fv() << 32) | fv());")
+                cf.append(f"{cexpr} = fv64();")
                 rf.append(f"{rexpr} = (((fv() as u64) << 32) | fv() as u64) as _;")
                 ch.append(f"HM((u32) {cexpr}); HM((u32) ((u64) {cexpr} >> 32));")
                 rh.append(f"hm({rexpr} as u32); hm((({rexpr} as u64) >> 32) as u32);")

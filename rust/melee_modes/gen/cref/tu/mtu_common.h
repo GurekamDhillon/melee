@@ -58,6 +58,13 @@ static u32 fv(void)
     default: return r >> 5;
     }
 }
+/* 64-bit draw, high word first: C leaves the operand order of `(a << 32) | b` unspecified (the msvc
+   front end evaluates right to left); the Rust side draws the high word first */
+static u64 fv64(void)
+{
+    u64 hi = fv();
+    return (hi << 32) | fv();
+}
 
 static u32 SRV[16];
 static u32 chk(int id) { return (SRV[id & 15] >> (id & 7)) & 1; }

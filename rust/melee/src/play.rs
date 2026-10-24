@@ -395,8 +395,8 @@ impl Play {
                 disc.mods = Some(crate::mods::Mods::open(std::path::Path::new(d), None)?);
             }
             let seed = 12345 + self.matches_played;
-            let sim = VsMatch::new(&mut disc, stage_file, &names, seed, 3)?;
-            let mr = MatchRender::new(&mut disc, stage_file, &names)?;
+            let mut sim = VsMatch::new(&mut disc, stage_file, &names, seed, 3)?;
+            let mr = MatchRender::new(&mut disc, stage_file, &names, &mut sim)?;
             Ok(Match { sim, mr, setup_names: names, paused: None, end_timer: None, quit_hold: 0 })
         })();
         match built {
@@ -460,7 +460,11 @@ impl Play {
             r.button &= !HSD_PAD_START;
         }
         m.sim.live_pads = Some(raws);
-        if !m.sim.step() {
+        let alive = m.sim.step();
+        if alive {
+            m.mr.step(&mut m.sim);
+        }
+        if !alive {
             log(&format!("simulation halted: {:?}", m.sim.stopped));
             m.end_timer = Some(0);
         } else if m.sim.frame >= self.time_secs * 60 {
@@ -689,7 +693,7 @@ impl Play {
         self.shim.set_copy_clear(GxColor::new(0, 0, 0, 255), 0xFF_FFFF);
         if self.scene == Scene::Match {
             if let Some(m) = self.m.as_mut() {
-                m.mr.draw(&mut self.shim, &m.sim, true);
+                m.mr.draw(&mut self.shim, &m.sim);
             }
             self.ui.clear();
             self.draw_match_hud();

@@ -26,6 +26,16 @@ pub mod itclimbersblizzard;
 pub mod itbombhei;
 pub mod itbox;
 
+// Shard 769-776: it/kinds itpeach*, itpikachu*, itpippi (same oracle as above: gen/kinds, tests/kinds_<stem>.rs).
+pub mod itpeachparasol;
+pub mod itpeachtoad;
+pub mod itpeachtoadspore;
+pub mod itpeachturnip;
+pub mod itpikachuthunder;
+pub mod itpikachutjoltair;
+pub mod itpikachutjoltground;
+pub mod itpippi;
+
 pub mod itegg;
 pub mod itentei;
 pub mod itevyoshiegg;

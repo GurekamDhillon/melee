@@ -210,6 +210,223 @@ CFG["itclimbersblizzard"] = dict(
     }"""),
 )
 
+# ============================================================================== shard 769-776
+_NOSPEC = [("        (void) i;", "            let _ = 0;")]
+
+
+def _all3(c_body, r_body):
+    """An attribute-buffer profile applied to the three SPEC buffers (j = 0..2; a = the buffer)."""
+    return ("        { int j; for (j = 0; j < 3; j++) {\n" + c_body + "\n        } }",
+            "            for j in 0..3 {\n" + r_body + "\n            }")
+
+
+# ------------------------------------------------------------------------------------ itpeachparasol
+CFG["itpeachparasol"] = dict(
+    spec=_NOSPEC,
+    tweak=("""    if (rnd() & 1) IT[0].msid = 2;
+    IT[0].x5CC_currentAnimFrame = (rnd() & 1) ? 16.0f : rw();""",
+           """    if rnd() & 1 != 0 {
+        IT[0].msid = 2;
+    }
+    IT[0].x5CC_currentAnimFrame = if rnd() & 1 != 0 { 16.0 } else { rw() };"""),
+    ptrs=("", ""),
+    # it_803F74F8[i].anim_id: -1 would index it_804D5518[-1] (UB), so the oracle keeps to rows 1 and 2
+    hints={"i": ("(int) (1 + rnd() % 2)", "(1 + rnd() % 2) as i32")},
+)
+
+# -------------------------------------------------------------------------------------- itpeachtoad
+CFG["itpeachtoad"] = dict(
+    spec=_NOSPEC,
+    c_decl="static const float FR[5] = { 7.0f, 53.0f, 60.0f, 59.0f, 0.0f };",
+    rs_decl="const FR: [f32; 5] = [7.0, 53.0, 60.0, 59.0, 0.0];",
+    tweak=("""    IT[0].kind = (rnd() & 1) ? It_Kind_Peach_Toad : It_Kind_Peach_Toad + 1 + (int) (rnd() % 40);
+    IT[0].x5CC_currentAnimFrame = (rnd() % 6 == 5) ? rw() : FR[rnd() % 5];""",
+           """    IT[0].kind = if rnd() & 1 != 0 { It_Kind_Peach_Toad } else { It_Kind_Peach_Toad + 1 + (rnd() % 40) as i32 };
+    IT[0].x5CC_currentAnimFrame = if rnd() % 6 == 5 { rw() } else { FR[(rnd() % 5) as usize] };"""),
+    ptrs=("", ""),
+)
+
+# ---------------------------------------------------------------------------------- itpeachtoadspore
+CFG["itpeachtoadspore"] = dict(
+    spec=[_all3("            float* a = (float*) SPEC[j];\n            a[0] = rw(); a[1] = rw(); a[2] = rw(); a[3] = rw();",
+                "                let a = SPECB.0[j].as_mut_ptr() as *mut f32;\n                *a = rw(); *a.add(1) = rw(); *a.add(2) = rw(); *a.add(3) = rw();")],
+    tweak=per_item("""        IT[k].xDAC_itcmd_var0 = (int) (rnd() & 1);
+        IT[k].xD44_lifeTimer = (rnd() & 1) ? 1.0f : rw();
+        IT[k].kind = (rnd() & 1) ? It_Kind_Peach_ToadSpore : (int) (rnd() % 150);""",
+                   """        IT[k].xDAC_itcmd_var0 = (rnd() & 1) as u32;
+        IT[k].xD44_lifeTimer = if rnd() & 1 != 0 { 1.0 } else { rw() };
+        IT[k].kind = if rnd() & 1 != 0 { It_Kind_Peach_ToadSpore } else { (rnd() % 150) as i32 };"""),
+    ptrs=("", ""),
+)
+
+# ----------------------------------------------------------------------------------- itpeachturnip
+_pt = "IT[k].xDD4_itemVar.peachturnip"
+CFG["itpeachturnip"] = dict(
+    spec=[_all3("""            int* w = (int*) SPEC[j];
+            int m;
+            ((float*) SPEC[j])[0] = rw();
+            w[1] = (int) (rnd() % 10) - 1;
+            for (m = 0; m < 9; m++) { w[2 + 2 * m] = (int) (rnd() % 6); w[3 + 2 * m] = (int) (rnd() % 20); }""",
+                """                let w = SPECB.0[j].as_mut_ptr() as *mut i32;
+                *(w as *mut f32) = rw();
+                *w.add(1) = (rnd() % 10) as i32 - 1;
+                for m in 0..9usize {
+                    *w.add(2 + 2 * m) = (rnd() % 6) as i32;
+                    *w.add(3 + 2 * m) = (rnd() % 20) as i32;
+                }""")],
+    c_decl="static const int KK[6] = { 99, 6, 7, 12, 5, 99 };",
+    rs_decl="const KK: [i32; 6] = [99, 6, 7, 12, 5, 99];",
+    tweak=per_item(
+        f"""        IT[k].kind = KK[rnd() % 6];
+        {_pt}.xDD8 = (int) (rnd() % 10) - 1;
+        {_pt}.xDD4.b0 = (int) (rnd() & 1);
+        {_pt}.xDDC_damage = (int) (rnd() % 30);
+        {_pt}.xDE0_scl = rw();
+        {_pt}.xDE4_owner = (rnd() & 1) ? &GO[(k + 1) % 3] : 0;
+        {_pt}.xDE8_scl = rw();
+        IT[k].xD44_lifeTimer = (rnd() & 1) ? 1.0f : rw();""",
+        """        IT[k].kind = KK[(rnd() % 6) as usize];
+        let pt = &mut IT[k].xDD4_itemVar.peachturnip;
+        pt.xDD8 = (rnd() % 10) as i32 - 1;
+        pt.xDD4.anon_0.set_b0((rnd() & 1) as u8);
+        pt.xDDC_damage = (rnd() % 30) as i32;
+        pt.xDE0_scl = rw();
+        pt.xDE4_owner = if rnd() & 1 != 0 { &raw mut GO[(k + 1) % 3] } else { null_mut() };
+        pt.xDE8_scl = rw();
+        IT[k].xD44_lifeTimer = if rnd() & 1 != 0 { 1.0 } else { rw() };"""),
+    ptrs=("""    for (k = 0; k < 3; k++) { HM(PI(%s.xDE4_owner)); %s.xDE4_owner = 0; HM(%s.xDD4.b0); zero(&%s.xDD4, sizeof %s.xDD4); }""" % ((_pt,) * 5),
+          """    for k in 0..3 {
+        let pt = &mut IT[k].xDD4_itemVar.peachturnip;
+        hm(pi(pt.xDE4_owner)); pt.xDE4_owner = null_mut();
+        hm(pt.xDD4.anon_0.b0() as u32);
+        core::ptr::write_bytes(&raw mut pt.xDD4 as *mut u8, 0, core::mem::size_of_val(&pt.xDD4));
+    }"""),
+    hints={"kind": ("KK[rnd() % 6]", "KK[(rnd() % 6) as usize]")},
+)
+
+# --------------------------------------------------------------------------------- itpikachuthunder
+_th = "IT[k].xDD4_itemVar.pikachuthunder"
+CFG["itpikachuthunder"] = dict(
+    spec=[_all3("""            float* a = (float*) SPEC[j];
+            a[0] = rw(); a[1] = (rnd() & 1) ? (float) (1 + rnd() % 40) : rw(); a[2] = rw();""",
+                """                let a = SPECB.0[j].as_mut_ptr() as *mut f32;
+                *a = rw(); *a.add(1) = if rnd() & 1 != 0 { (1 + rnd() % 40) as f32 } else { rw() }; *a.add(2) = rw();""")],
+    tweak=per_item(
+        f"""        {_th}.x0 = (int) (rnd() % 3);
+        {_th}.x4 = (int) (rnd() & 1);
+        {_th}.x8 = (int) (rnd() % 4) - 1;
+        {_th}.xC = (rnd() & 1) ? (float) (rnd() % 40) : rw();
+        {_th}.x10 = rw();
+        {_th}.x14 = (rnd() & 1) ? 3.0f : rw();
+        {_th}.x18 = rw();
+        {_th}.x1C.x = rw();
+        {_th}.x1C.y = (rnd() & 1) ? -(float) (rnd() % 8) : rw();
+        {_th}.x1C.z = rw();
+        {_th}.x28.x = rw(); {_th}.x28.y = rw(); {_th}.x28.z = rw();
+        {_th}.x34 = (rnd() & 1) ? &GO[(k + 1) % 3] : 0;
+        {_th}.x38 = (rnd() & 1) ? &GO[(k + 2) % 3] : 0;
+        IT[k].xD44_lifeTimer = (rnd() & 1) ? 1.0f : rw();""",
+        """        let th = &mut IT[k].xDD4_itemVar.pikachuthunder;
+        th.x0 = (rnd() % 3) as i32;
+        th.x4 = (rnd() & 1) as i32;
+        th.x8 = (rnd() % 4) as i32 - 1;
+        th.xC = if rnd() & 1 != 0 { (rnd() % 40) as f32 } else { rw() };
+        th.x10 = rw();
+        th.x14 = if rnd() & 1 != 0 { 3.0 } else { rw() };
+        th.x18 = rw();
+        th.x1C.x = rw();
+        th.x1C.y = if rnd() & 1 != 0 { -((rnd() % 8) as f32) } else { rw() };
+        th.x1C.z = rw();
+        th.x28.x = rw(); th.x28.y = rw(); th.x28.z = rw();
+        th.x34 = if rnd() & 1 != 0 { &raw mut GO[(k + 1) % 3] } else { null_mut() };
+        th.x38 = if rnd() & 1 != 0 { &raw mut GO[(k + 2) % 3] } else { null_mut() };
+        IT[k].xD44_lifeTimer = if rnd() & 1 != 0 { 1.0 } else { rw() };"""),
+    ptrs=("""    for (k = 0; k < 3; k++) { HM(PI(%s.x34)); HM(PI(%s.x38)); %s.x34 = 0; %s.x38 = 0; }""" % ((_th,) * 4),
+          """    for k in 0..3 {
+        let th = &mut IT[k].xDD4_itemVar.pikachuthunder;
+        hm(pi(th.x34)); hm(pi(th.x38)); th.x34 = null_mut(); th.x38 = null_mut();
+    }"""),
+    hints={"count": ("(int) (rnd() % 4)", "(rnd() % 4) as i32"), "delay": ("(int) (rnd() % 4)", "(rnd() % 4) as i32")},
+)
+
+# -------------------------------------------------------------------------------- itpikachutjoltair
+_ja = "IT[k].xDD4_itemVar.pikachujoltair"
+CFG["itpikachutjoltair"] = dict(
+    spec=_NOSPEC,
+    c_decl="static const int KJ[6] = { It_Kind_Kirby_PikachuTJolt_Air, It_Kind_Pikachu_TJolt_Air, It_Kind_Kirby_PichuTJolt_Air, It_Kind_Pichu_TJolt_Air, 5, 0 };",
+    rs_decl="const KJ: [i32; 6] = [It_Kind_Kirby_PikachuTJolt_Air, It_Kind_Pikachu_TJolt_Air, It_Kind_Kirby_PichuTJolt_Air, It_Kind_Pichu_TJolt_Air, 5, 0];",
+    tweak=per_item(
+        f"""        IT[k].kind = KJ[rnd() % 6];
+        {_ja}.xDD4 = (rnd() & 1) ? &GO[(k + 1) % 3] : 0;
+        {_ja}.xDD8 = (rnd() & 1) ? &GO[(k + 2) % 3] : 0;
+        {_ja}.xDE8.x = rw(); {_ja}.xDE8.y = rw(); {_ja}.xDE8.z = rw();
+        {_ja}.xDF4 = (int) (rnd() % 30) - 2;""",
+        """        IT[k].kind = KJ[(rnd() % 6) as usize];
+        let ja = &mut IT[k].xDD4_itemVar.pikachujoltair;
+        ja.xDD4 = if rnd() & 1 != 0 { &raw mut GO[(k + 1) % 3] } else { null_mut() };
+        ja.xDD8 = if rnd() & 1 != 0 { &raw mut GO[(k + 2) % 3] } else { null_mut() };
+        ja.xDE8.x = rw(); ja.xDE8.y = rw(); ja.xDE8.z = rw();
+        ja.xDF4 = (rnd() % 30) as i32 - 2;"""),
+    ptrs=("""    for (k = 0; k < 3; k++) { HM(PI(%s.xDD4)); HM(PI(%s.xDD8)); %s.xDD4 = 0; %s.xDD8 = 0; }""" % ((_ja,) * 4),
+          """    for k in 0..3 {
+        let ja = &mut IT[k].xDD4_itemVar.pikachujoltair;
+        hm(pi(ja.xDD4)); hm(pi(ja.xDD8)); ja.xDD4 = null_mut(); ja.xDD8 = null_mut();
+    }"""),
+    # the CollData the port copies: the (filled) one of item 1
+    hints={"coll": ("&IT[1].x378_itemColl", "(&raw mut IT[1].x378_itemColl)")},
+)
+
+# ------------------------------------------------------------------------------ itpikachutjoltground
+_jg = "IT[k].xDD4_itemVar.pikachujoltground"
+CFG["itpikachutjoltground"] = dict(
+    spec=[_all3("""            float* a = (float*) SPEC[j];
+            a[0] = rw(); a[1] = rw(); a[2] = rw(); a[3] = (rnd() & 1) ? 0.0f : rw();""",
+                """                let a = SPECB.0[j].as_mut_ptr() as *mut f32;
+                *a = rw(); *a.add(1) = rw(); *a.add(2) = rw(); *a.add(3) = if rnd() & 1 != 0 { 0.0 } else { rw() };""")],
+    c_decl="static const int KG[6] = { It_Kind_Pikachu_TJolt_Ground, It_Kind_Pichu_TJolt_Ground, It_Kind_Kirby_PikachuTJolt_Ground, It_Kind_Kirby_PichuTJolt_Ground, 5, 0 };",
+    rs_decl="const KG: [i32; 6] = [It_Kind_Pikachu_TJolt_Ground, It_Kind_Pichu_TJolt_Ground, It_Kind_Kirby_PikachuTJolt_Ground, It_Kind_Kirby_PichuTJolt_Ground, 5, 0];",
+    tweak=per_item(
+        f"""        IT[k].kind = KG[rnd() % 6];
+        {_jg}.xDD4 = rw();
+        {_jg}.xDD8 = (rnd() & 1) ? &GO[(k + 1) % 3] : 0;
+        {_jg}.xDDC = (rnd() & 1) ? &GO[(k + 2) % 3] : 0;
+        {_jg}.xDE0 = (int) (rnd() % 3);
+        {_jg}.xDE4 = (int) (rnd() % 5) - 2;
+        {_jg}.xDE8.x = rw(); {_jg}.xDE8.y = rw(); {_jg}.xDE8.z = rw();
+        {_jg}.xDF4.x = rw(); {_jg}.xDF4.y = rw(); {_jg}.xDF4.z = rw();
+        {_jg}.xE00.x = rw(); {_jg}.xE00.y = rw(); {_jg}.xE00.z = rw();""",
+        """        IT[k].kind = KG[(rnd() % 6) as usize];
+        let jg = &mut IT[k].xDD4_itemVar.pikachujoltground;
+        jg.xDD4 = rw();
+        jg.xDD8 = if rnd() & 1 != 0 { &raw mut GO[(k + 1) % 3] } else { null_mut() };
+        jg.xDDC = if rnd() & 1 != 0 { &raw mut GO[(k + 2) % 3] } else { null_mut() };
+        jg.xDE0 = (rnd() % 3) as i32;
+        jg.xDE4 = (rnd() % 5) as i32 - 2;
+        jg.xDE8.x = rw(); jg.xDE8.y = rw(); jg.xDE8.z = rw();
+        jg.xDF4.x = rw(); jg.xDF4.y = rw(); jg.xDF4.z = rw();
+        jg.xE00.x = rw(); jg.xE00.y = rw(); jg.xE00.z = rw();"""),
+    ptrs=("""    for (k = 0; k < 3; k++) { HM(PI(%s.xDD8)); HM(PI(%s.xDDC)); %s.xDD8 = 0; %s.xDDC = 0; }""" % ((_jg,) * 4),
+          """    for k in 0..3 {
+        let jg = &mut IT[k].xDD4_itemVar.pikachujoltground;
+        hm(pi(jg.xDD8)); hm(pi(jg.xDDC)); jg.xDD8 = null_mut(); jg.xDDC = null_mut();
+    }"""),
+)
+
+# --------------------------------------------------------------------------------------- itpippi
+CFG["itpippi"] = dict(
+    spec=[_all3("""            itPokemonAttributes* a = (itPokemonAttributes*) SPEC[j];
+            a->x0 = rw(); a->timer = (int) (rnd() % 5); a->max = (int) (rnd() % 12);
+            a->xC = (int) (rnd() % 5); a->x10 = (int) (rnd() % 5); a->x14 = (int) (rnd() % 5); a->x18 = (int) (rnd() % 5);""",
+                """                let a = SPECB.0[j].as_mut_ptr() as *mut itPokemonAttributes;
+                (*a).x0 = rw(); (*a).timer = (rnd() % 5) as i32; (*a).max = (rnd() % 12) as i32;
+                (*a).xC = (rnd() % 5) as i32; (*a).x10 = (rnd() % 5) as i32; (*a).x14 = (rnd() % 5) as i32; (*a).x18 = (rnd() % 5) as i32;""")],
+    tweak=per_item("""        IT[k].xDD4_itemVar.pokemon.timer = (int) (rnd() % 4) - 1;
+        IT[k].xDAC_itcmd_var0 = (int) (rnd() & 1);""",
+                   """        IT[k].xDD4_itemVar.pokemon.timer = (rnd() % 4) as i32 - 1;
+        IT[k].xDAC_itcmd_var0 = (rnd() & 1) as u32;"""),
+    ptrs=("", ""),
+)
+
 # ================================================================================ shard 721-728
 def tw_cat(a, b):
     return (a[0] + chr(10) + b[0], a[1] + chr(10) + b[1])

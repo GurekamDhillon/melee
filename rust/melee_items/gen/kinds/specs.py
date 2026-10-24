@@ -90,6 +90,40 @@ SPECS["itarwinglaser"]["custom_stubs"] = {"efSync_Spawn": _EFS3}
 SPECS["itbox"]["custom_stubs"] = {"efSync_Spawn": _EFS3}
 SPECS["itcerebi"]["custom_stubs"] = {"efSync_Spawn": _EFS4}
 
+# ---------------------------------------------------------------------------- shard 769-776
+for _n in ("itpeachparasol", "itpeachtoad", "itpeachtoadspore", "itpeachturnip", "itpikachuthunder",
+           "itpikachutjoltair", "itpikachutjoltground", "itpippi"):
+    SPECS[_n] = dict(src=f"{K}{_n}.c", types=_T, ret=dict(COMMON_RET), effects=dict(COMMON_EFF),
+                     null_ret_ok=["Item_80268B18", "Item_80268B5C", "it_8026F6BC", "HSD_Randi"])
+
+_GOX = ("(fv() % 3 == 0 ? &GO[0] : ((fv() & 1) ? &GO[1] : 0))",
+        "if fv() % 3 == 0 { &raw mut crate::GO[0] } else if fv() & 1 != 0 { &raw mut crate::GO[1] } else { core::ptr::null_mut() }")
+_N3 = lambda a: (f"if ({a}) {{ {a}->x = rw(); {a}->y = rw(); {a}->z = rw(); }}",
+                 f"if !{a}.is_null() {{ (*{a}).x = rw(); (*{a}).y = rw(); (*{a}).z = rw(); }}")
+for _n in ("it_8026DA70", "it_8026DAA8", "it_8026E9A4", "ftPe_8011D518", "ftPe_SpecialHi_NotActive", "ftPe_SpecialN_IsActive",
+           "ftKb_SpecialNPe_8010C4AC", "ftPk_SpecialLw_CheckProperty"):
+    for _s in ("itpeachparasol", "itpeachtoad", "itpeachturnip", "itpikachuthunder", "itpikachutjoltground"):
+        SPECS[_s]["ret"][_n] = _P
+for _s in ("itpikachutjoltair", "itpikachutjoltground"):
+    SPECS[_s]["ret"]["it_802B3368"] = _GOX
+    SPECS[_s]["ret"]["it_802B3EFC"] = _GOX
+    SPECS[_s]["ret"]["it_802B4224"] = _GO2
+    SPECS[_s]["ret"]["it_8026E9A4"] = _P
+    SPECS[_s]["effects"]["it_8026E9A4"] = _N3("a3")
+    SPECS[_s]["effects"]["it_802B3F20"] = _V("a1")
+    SPECS[_s]["skip_stubs"] = ["sinf", "cosf"]
+    SPECS[_s]["null_ret_ok"] += ["it_802B3368", "it_802B3EFC", "it_802B4224"]
+SPECS["itpeachtoadspore"]["skip_stubs"] = ["sinf", "cosf"]
+_EFSJ = dict(
+    c="void* efSync_Spawn(s32 a0, HSD_GObj* a1, ...) { __builtin_va_list ap; void* a2; __builtin_va_start(ap, a1); "
+      "a2 = __builtin_va_arg(ap, void*); __builtin_va_end(ap); T(@ID@); T((u32) a0); T(PI(a1)); T(PI(a2)); return 0; }",
+    ext="fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: *mut HSD_JObj) -> *mut c_void;",
+    hook="|a0, a1, a2| { t(@ID@); t(a0 as u32); t(pi(a1)); t(pi(a2)); core::ptr::null_mut() }")
+SPECS["itpeachtoadspore"]["custom_stubs"] = {"efSync_Spawn": _EFSJ}
+SPECS["itpikachutjoltground"]["custom_stubs"] = {"efSync_Spawn": _EFSJ}
+SPECS["itpeachturnip"]["ret"]["it_8026DAA8"] = ("(int) (fv() & 15)", "(fv() & 15) as i32")
+SPECS["itpikachutjoltground"]["effects"]["it_8026BB68"] = _V("a1")
+
 # shard 721-728
 for _n in ("itkyasarinegg", "itleadead", "itlgun", "itlgunbeam", "itlgunray", "itlikelike", "itlinkarrow", "itlinkbomb"):
     SPECS[_n] = dict(src=f"{K}{_n}.c", types=_T, ret=dict(COMMON_RET), effects=dict(COMMON_EFF),

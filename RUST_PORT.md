@@ -635,6 +635,15 @@ unported TUs are `ext` hooks (unset: panics "TODO"). The old snake_case forwarde
   not compare that return value. Ints that the C wraps (`-= 1`, sums of weights) use `wrapping_*` ops. Mutation checks
   (flipping fused sites, constants, comparison boundaries, state ids) fail the tests.
 
+## melee_items::tu: it/kinds itpeach*, itpikachu*, itpippi (shard 769-776)
+`rust/melee_items/src/tu/{itpeachparasol,itpeachtoad,itpeachtoadspore,itpeachturnip,itpikachuthunder,itpikachutjoltair,itpikachutjoltground,itpippi}.rs`
+port every function (131 incl. statics) with the shard 657-664 oracle (`bash rust/melee_items/gen/kinds/regen.sh <stem>`,
+`cargo test -p melee_items --test kinds_<stem>`, 400 seeded states per op). Fused sites: toadspore `speed` and `angle`
+(`fmadds`). Notes: the turnip odds table is read by raw offset (the C reads one entry past `x8[length-1]`);
+`peachturnip.xDD4.b0` is hashed by value (native bitfield order differs); `it_802BDA40` with state row -1 would index
+`it_804D5518[-1]` (UB, unknown sdata neighbour): the port returns 0 and the oracle only asks rows 1 and 2; `bool` is
+MSL `int`, so the ports return Rust `bool` and the oracle's stubs for int-returning callees used as booleans return 0/1.
+
 ## melee_items::tu: it/kinds set (shard 673-680)
 `rust/melee_items/src/tu/{itegg,itentei,itevyoshiegg,itfflower,itfflowerflame,itfire,itflipper,itfoods}.rs`
 port every function of those `src/melee/it/kinds` files (220 incl. the static-inline helpers) plus their

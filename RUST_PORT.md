@@ -1006,3 +1006,37 @@ rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_In
   below 4 GB because those files route pointers through `int`. Trap: a group named `LeftWall` has normal -x (hit while
   moving right), i.e. it is the stage's right-hand wall.
 - Write C driver edits with the Edit tool, not a Python string: `\n` inside a Python literal puts a real newline in the C.
+
+## Platform track: netplay on the real game loop (port/plat-net, 2026-10-24)
+- `melee netplay` (`rust/melee/src/netplay.rs`, `netmatch.rs`, `np_env.rs`) drives the native VS match
+  (`VsMatch`) through `melee_net::session::RbSession` over `melee_net::Net` on real UDP. `NetMatch` is the
+  `RbGame`: `save`/`load` = `VsMatch::rb_save/rb_load` (the `state_dump` component set, fighters restored in
+  place), the desync checksum = the neutral hash (`game_hash`), pads from the session replace the script
+  (`pad_feed`). `RbGame::halted` (new): a frame that died half-stepped in code that is not ported yet
+  (typically a mispredicted input) is neither snapshotted nor hashed; the next tick reloads the clean
+  snapshot of that frame (`iter_start`), so the confirmed inputs roll it back like any misprediction.
+- App layer, `melee_net::app` (gw_netplay.c, direct and server paths): `scene` (np_build_scene and its
+  parse), `lobby` (lb_apply_, S/L/A/J/N/C/G messages, strike 1-2-2, ban/pick, counterpick characters,
+  3 s countdown; 5 unit tests), `rdv` (the matchmaking client: REG/JOIN/PEER/CODE, hole punch `GDPH`,
+  relay `GDMD`, RAND/MATCH/QUEUED/TIMEOUT, STUN, LAN pick; unit test), `room` (np_start_session, np_poll,
+  guest hello, ACCEPT "J c0 c1 scene" blob, lobby enter/tick, lb_go, deferred session start for room codes
+  and random matches).
+- Proofs (all on this machine, UDP loopback, `GW_ISO_VANILLA`, pad_falcon_fox_fd, 1801 golden frames):
+  - `melee synctest --depth 12 --golden docs/rust-port/golden/pad_falcon_fox_fd.csv` (12 = the max rollback
+    depth, `maxb` clamp): 1802 frames, 21504 hash checks, 0 mismatches, 1801/1801 frames golden-equal
+    (the run stops at frame 1802: `ftCo_RunBrake_Enter` is not ported).
+  - two Rust instances, `melee netplay --host` / `--join`, 60 fps pacing: 0 rollbacks, 1801/1801 equal to the
+    golden on both, identical CSVs. With `--lag-ms 70 --loss-pct 5` (inbound, both sides): 78 rollbacks,
+    depth 6-7, 0 session or transport desyncs, still 1801/1801 golden-equal and identical CSVs
+    (`--lag-ms 90 --loss-pct 10` too).
+  - the same through the lobby (`--lobby`: blind character pick, strike, ready, countdown, `G`), through
+    `tools/netplay/server/gdmelee_server.py` room codes (`--host --server S` then `--room CODE --server S`) and
+    through random matchmaking (`--random --server S` on both): all golden-equal, identical CSVs, rollbacks
+    included when lag/loss are on.
+- `--live-rng`: the online per-frame RNG rule (`gw_Replay_ChecksumSeed`: a frame starts from
+  `seed + ((frame + 123) << 16)`), needed to match a C netplay match; the checksum uses it too. Off by default
+  (the golden CSVs are offline).
+- Not ported: UPnP, Envoy/stage-run/saved-run lobby messages, mod sync and the identity exchange (tokens are
+  `ck:N` / `ext:N`; the Rust sim plays Falcon, Fox on Final Destination, Battlefield is only a lobby stage),
+  controls words other than 0, Turbo rules, rematch/rejoin after a match, CPUs/items in the scene.
+- C interop: see the section below for what was measured.

@@ -529,3 +529,31 @@ pub unsafe fn HSD_PadMasterStatus_button(port: i32) -> u32 {
 pub unsafe fn HSD_AObjGetEndFrame(aobj: *mut HSD_AObj) -> f32 {
     melee_runtime::tu::aobj::HSD_AObjGetEndFrame(aobj)
 }
+
+// ---- ft/ftparts.c, ft/ftmaterial.c (melee_fighter) --------------------------------------------
+
+pub unsafe fn ftParts_8007487C(desc: *mut FtPartsDesc, vis: *mut FtPartsVis, costume_id: u32, a: *mut DObjList, b: *mut DObjList) {
+    melee_fighter::tu::ftparts::ftParts_8007487C(desc, vis, costume_id, a, b)
+}
+pub unsafe fn ftParts_800753D4<P: AsPtr>(fp: *mut Fighter, x0: *mut Fighter_804D6540_x0_t, joint: P) {
+    melee_fighter::tu::ftparts::ftParts_800753D4(fp, x0, joint.p() as *mut HSD_Joint)
+}
+pub unsafe fn ftParts_800755E8(fp: *mut Fighter, part: *mut Fighter_804D6540_x0_t) {
+    melee_fighter::tu::ftparts::ftParts_800755E8(fp, part)
+}
+pub unsafe fn ftParts_80075650(gobj: G, jobj: *mut HSD_JObj, list: *mut DObjList) {
+    melee_fighter::tu::ftparts::ftParts_80075650(gobj, jobj, list)
+}
+pub unsafe fn ftPartsPObjSetDefaultClass() {
+    melee_fighter::tu::ftparts::ftPartsPObjSetDefaultClass()
+}
+pub unsafe fn ftPartsPObjClearDefaultClass() {
+    melee_fighter::tu::ftparts::ftPartsPObjClearDefaultClass()
+}
+pub unsafe fn ftMaterial_800BFB4C(gobj: G, color: *const _GXColor) {
+    melee_fighter::tu::ftmaterial::ftMaterial_800BFB4C(gobj, color)
+}
+/// `hsdChangeClass(mobj, &ftMObj)`.
+pub unsafe fn hsdChangeClass_ftMObj(mobj: *mut HSD_MObj) {
+    melee_runtime::tu::class::hsdChangeClass(mobj.cast(), melee_fighter::tu::ftmaterial::ftMObj_ptr().cast());
+}

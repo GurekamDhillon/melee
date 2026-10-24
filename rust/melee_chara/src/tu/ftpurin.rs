@@ -101,8 +101,8 @@ pub mod ext {
                     None => { unsafe { let _ = melee_runtime::tu::objalloc::HSD_ObjFree(data as _, obj as _); } return; },
                 }
             }
-    hook!(FTPARTSPOBJSETDEFAULTCLASS, ftPartsPObjSetDefaultClass, ());
-    hook!(FTPARTSPOBJCLEARDEFAULTCLASS, ftPartsPObjClearDefaultClass, ());
+    crate::port_hook!(FTPARTSPOBJSETDEFAULTCLASS, ftPartsPObjSetDefaultClass, crate::adapt::ftPartsPObjSetDefaultClass, ());
+    crate::port_hook!(FTPARTSPOBJCLEARDEFAULTCLASS, ftPartsPObjClearDefaultClass, crate::adapt::ftPartsPObjClearDefaultClass, ());
     pub static mut HSD_JOBJLOADJOINT: Option<fn(*mut HSD_Joint) -> *mut HSD_JObj> = None;
             #[allow(non_snake_case)]
             pub fn HSD_JObjLoadJoint(joint: *mut HSD_Joint) -> *mut HSD_JObj {
@@ -112,8 +112,8 @@ pub mod ext {
                 }
             }
     crate::port_hook!(HSD_JOBJREMOVEALL, HSD_JObjRemoveAll, crate::adapt::HSD_JObjRemoveAll, (jobj: *mut HSD_JObj));
-    hook!(FTPARTS_80075650, ftParts_80075650, (gobj: *mut HSD_GObj, jobj: *mut HSD_JObj, list: *mut DObjList));
-    hook!(FTPARTS_8007487C, ftParts_8007487C,
+    crate::port_hook!(FTPARTS_80075650, ftParts_80075650, crate::adapt::ftParts_80075650, (gobj: *mut HSD_GObj, jobj: *mut HSD_JObj, list: *mut DObjList));
+    crate::port_hook!(FTPARTS_8007487C, ftParts_8007487C, crate::adapt::ftParts_8007487C,
         (desc: *mut FtPartsDesc, vis: *mut FtPartsVis, costume_id: u32, a: *mut DObjList, b: *mut DObjList));
     pub static mut FTPARTS_80074CA0: Option<fn(*mut FtPartsVis, i32, *mut DObjList)> = None;
     #[allow(non_snake_case)]

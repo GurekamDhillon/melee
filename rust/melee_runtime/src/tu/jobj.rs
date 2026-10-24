@@ -336,3 +336,5 @@ pub fn HSD_JObjSetDPtclCallback<X:JObjExt>(r:&mut JObjRt<X>,cb:Option<crate::job
 pub unsafe fn HSD_JObjSetupMatrix(j: *mut HSD_JObj) { native_setup(j) }
 /// `HSD_JObjRemoveAll` on a raw tree.
 pub unsafe fn HSD_JObjRemoveAll_ptr(j: *mut HSD_JObj) { native_remove_all(j) }
+/// `HSD_JObjRemove` on a raw JObj: unlink it from its tree and drop its reference.
+pub unsafe fn HSD_JObjRemove_ptr(j: *mut HSD_JObj) { if !j.is_null() { let (mut t, mut h) = snapshot(&[j]); t.remove(&mut h, Some(JObjId(0))); finish(&t, h); } }

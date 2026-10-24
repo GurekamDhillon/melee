@@ -1,9 +1,8 @@
 //! Calls out of the character code into group 3 (ft/ core: fighter.c, ftanim.c, ftcoll.c,
 //! ft_0877/ft_0881, ftCommon states) that group 3 has not ported yet.
 //!
-//! Each is a settable function pointer. Unset, it panics with `TODO(group3): <C name>`, so a
-//! missing port is loud, never a silent wrong value. When group 3 ports one, its default here
-//! becomes a call to that port (as `ftCommon_8007D5D4` / `ftCommon_8007D60C` already are).
+//! Each is a settable function pointer; unset, it calls the port in the crate below (every
+//! callee here has one).
 //! Return-valued C functions returning `bool` / `GroundOrAir` return `i32` here (MSL `bool` is int).
 //!
 //! Single-threaded game state, like the C globals: install before the match.
@@ -13,28 +12,7 @@ use melee_types::{Fighter, HSD_GObj};
 
 pub type G = *mut HSD_GObj;
 
-#[inline]
-fn need<T>(h: Option<T>, what: &str) -> T {
-    match h {
-        Some(f) => f,
-        None => panic!("TODO(group3): {what} is not ported; install melee_chara::stubs hook"),
-    }
-}
-
-macro_rules! stub {
-    ($(#[$m:meta])* $hook:ident, $name:ident, ($($a:ident: $t:ty),*) $(-> $r:ty)?) => {
-        $(#[$m])*
-        pub static mut $hook: Option<fn($($t),*) $(-> $r)?> = None;
-        $(#[$m])*
-        #[inline]
-        pub fn $name($($a: $t),*) $(-> $r)? {
-            need(unsafe { $hook }, stringify!($name))($($a),*)
-        }
-    };
-}
-
-/// Like `stub!`, but an unset hook falls back to group 3's verified port `$port` instead of
-/// panicking. The hook stays so the character oracle can install recording stubs.
+/// A settable hook that, unset, calls group 3's verified port `$port`. The hook stays so the character oracle can install recording stubs.
 macro_rules! stub_or {
     ($(#[$m:meta])* $hook:ident, $name:ident, $port:path, ($($a:ident: $t:ty),*) $(-> $r:ty)?) => {
         $(#[$m])*

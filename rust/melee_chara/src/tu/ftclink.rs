@@ -75,7 +75,7 @@ pub mod ext {
                     None => { unsafe { let _ = melee_items::tu::it_26B1::it_8026B3F8(article as _, kind as _); } return; },
                 }
             }
-    hook!(FTPARTS_800753D4, ftParts_800753D4, (fp: *mut Fighter, x0: *mut Fighter_804D6540_x0_t, item: *mut c_void));
+    crate::port_hook!(FTPARTS_800753D4, ftParts_800753D4, crate::adapt::ftParts_800753D4, (fp: *mut Fighter, x0: *mut Fighter_804D6540_x0_t, item: *mut c_void));
     pub static mut FTLK_INIT_LOADSPECIALATTRS: Option<fn(*mut HSD_GObj) > = None;
             #[allow(non_snake_case)]
             pub fn ftLk_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj)  {

@@ -109,7 +109,7 @@ pub mod ext {
     crate::port_hook!(HSD_DOBJREMOVEALL, HSD_DObjRemoveAll, crate::adapt::HSD_DObjRemoveAll, (dobj: *mut HSD_DObj));
 
     // `hsdChangeClass(mobj, &ftMObj)`.
-    hook!(HSDCHANGECLASS_FTMOBJ, hsdChangeClass_ftMObj, (mobj: *mut HSD_MObj));
+    crate::port_hook!(HSDCHANGECLASS_FTMOBJ, hsdChangeClass_ftMObj, crate::adapt::hsdChangeClass_ftMObj, (mobj: *mut HSD_MObj));
     pub static mut HSD_JOBJLOADJOINT: Option<fn(*mut HSD_Joint) -> *mut HSD_JObj> = None;
             #[allow(non_snake_case)]
             pub fn HSD_JObjLoadJoint(joint: *mut HSD_Joint) -> *mut HSD_JObj {
@@ -207,12 +207,12 @@ pub mod ext {
             }
     crate::port_hook!(FTANIM_GETNEXTJOINTINTREE, ftAnim_GetNextJointInTree, crate::adapt::ftAnim_GetNextJointInTree, (joint: *mut *mut HSD_Joint, idx: *mut i32));
     crate::port_hook!(FTANIM_GETNEXTMATANIMJOINTINTREE, ftAnim_GetNextMatAnimJointInTree, crate::adapt::ftAnim_GetNextMatAnimJointInTree, (joint: *mut *mut HSD_MatAnimJoint, idx: *mut i32));
-    hook!(FTPARTSPOBJSETDEFAULTCLASS, ftPartsPObjSetDefaultClass, ());
-    hook!(FTPARTSPOBJCLEARDEFAULTCLASS, ftPartsPObjClearDefaultClass, ());
-    hook!(FTPARTS_800753D4, ftParts_800753D4, (fp: *mut Fighter, parts: *mut Fighter_804D6540_x0_t, joint: *mut HSD_Joint));
-    hook!(FTPARTS_800755E8, ftParts_800755E8, (fp: *mut Fighter, part: *mut Fighter_804D6540_x0_t));
-    hook!(FTPARTS_80075650, ftParts_80075650, (gobj: *mut HSD_GObj, jobj: *mut HSD_JObj, list: *mut DObjList));
-    hook!(FTPARTS_8007487C, ftParts_8007487C, (desc: *mut FtPartsDesc, vis: *mut FtPartsVis, a: u32, l1: *mut DObjList, l2: *mut DObjList));
+    crate::port_hook!(FTPARTSPOBJSETDEFAULTCLASS, ftPartsPObjSetDefaultClass, crate::adapt::ftPartsPObjSetDefaultClass, ());
+    crate::port_hook!(FTPARTSPOBJCLEARDEFAULTCLASS, ftPartsPObjClearDefaultClass, crate::adapt::ftPartsPObjClearDefaultClass, ());
+    crate::port_hook!(FTPARTS_800753D4, ftParts_800753D4, crate::adapt::ftParts_800753D4, (fp: *mut Fighter, parts: *mut Fighter_804D6540_x0_t, joint: *mut HSD_Joint));
+    crate::port_hook!(FTPARTS_800755E8, ftParts_800755E8, crate::adapt::ftParts_800755E8, (fp: *mut Fighter, part: *mut Fighter_804D6540_x0_t));
+    crate::port_hook!(FTPARTS_80075650, ftParts_80075650, crate::adapt::ftParts_80075650, (gobj: *mut HSD_GObj, jobj: *mut HSD_JObj, list: *mut DObjList));
+    crate::port_hook!(FTPARTS_8007487C, ftParts_8007487C, crate::adapt::ftParts_8007487C, (desc: *mut FtPartsDesc, vis: *mut FtPartsVis, a: u32, l1: *mut DObjList, l2: *mut DObjList));
     // other Kirby TUs (copy-ability moves)
     pub static mut FTKB_SPECIALAIRLW_800F5524: Option<fn(*mut HSD_GObj) > = None;
             #[allow(non_snake_case)]

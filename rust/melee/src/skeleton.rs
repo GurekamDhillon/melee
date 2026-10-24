@@ -167,6 +167,7 @@ pub struct PartAnimData {
     pub x8: u32,
 }
 
+#[derive(Clone)]
 pub struct Skeleton {
     pub tree: Tree,
     pub root: JObjId,

@@ -12,7 +12,7 @@
 [workspace]
 resolver = "2"
 members = ["melee_core", "melee_types", "melee_runtime", "melee_world", "melee_fighter",
-           "melee_chara", "melee_items", "melee_modes", "melee_platform", "melee_gx", "melee_audio", "melee_net", "melee_data", "melee",
+           "melee_chara", "melee_items", "melee_modes", "melee_platform", "melee_gx", "melee_audio", "melee_net", "melee_data", "melee_script", "melee",
            "../tools/mex-import"]
 
 [workspace.package]
@@ -39,3 +39,8 @@ overflow-checks = false
 [profile.release]
 overflow-checks = false
 debug = 1
+
+# The C build embeds the vendored Lua 5.4.7 (pc/third_party/lua-5.4.7, unmodified). lua-src ships 5.4.9, so
+# the crate is patched to compile those exact sources: the scripting host runs the same Lua as the C build.
+[patch.crates-io]
+lua-src = { path = "third_party/lua-src" }

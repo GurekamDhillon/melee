@@ -37,6 +37,7 @@ mod attackair;
 mod dashrun;
 mod fox;
 mod rebirth;
+pub mod rollback;
 mod snapshot;
 mod snapshot_ps;
 mod snapshot_fx;
@@ -251,6 +252,8 @@ pub struct Player {
     /// The player's respawn data (rebirth.rs) and `ft_data->x24`, the idle animations
     /// (`{anim id, weight}` up to the -1 terminator).
     rb: PlayerRespawn,
+    /// The camera box snap `ftCamera_80076064` made this frame (Rebirth entry), taken before the fighter moved on.
+    pub cam_snap: Option<CmSubjectIn>,
     wait_anims: Vec<(i32, i32)>,
 }
 
@@ -353,6 +356,7 @@ struct EntryCommon {
 }
 
 /// One live effect from `efLib_Create` (EF_Effect + its JObj tree): only its particle tracks.
+#[derive(Clone)]
 struct Effect {
     lifetime: u16,
     /// Owner fighter slot (the RObj position constraint follows its root JObj).
@@ -368,6 +372,7 @@ struct Effect {
     rot_z: Option<f32>,
 }
 
+#[derive(Clone)]
 struct EffectTrack {
     joint: JObjRef,
     chain: Vec<u32>,
@@ -383,6 +388,7 @@ struct EffectRoot {
 }
 
 /// A stage particle track and its AObj (see `stage::dptcl_tracks`).
+#[derive(Clone)]
 struct DptclAnim {
     /// The map gobj (stage `map_head` entry) whose animation this track belongs to.
     map_gobj: u32,
@@ -397,9 +403,9 @@ pub struct VsMatch {
     pub cg: CollGlobals,
     /// `HSD_PadGameStatus[4]`.
     pub pads: [input::PadStatus; 4],
-    /// Live play (`melee play`): the raw pad samples the platform layer read for the next frame.
-    /// `None` = the golden harness's scripted pads (`input::pad_fixed`).
-    pub live_pads: Option<[input::RawPad; 4]>,
+    /// Platform input (netplay / rollback): the raw samples the next frame's `HSD_PadRenewStatus`
+    /// reads instead of the scenario's pad script. `None`: the script (`input::pad_fixed`).
+    pub pad_feed: Option<[input::RawPad; 4]>,
     /// The golden frame whose s_link 0 runs the GO callback (input unlock).
     go_frame: i32,
     pub rand: HsdRand,
@@ -556,7 +562,99 @@ fn fighter_kind(name: &str) -> Result<FighterKind, String> {
     }
 }
 
+/// How the fighter's motion state's camera callback (`ftmotionstates.c`, the `Cam` column) treats its camera box.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum CamKind {
+    /// `ftCamera_UpdateCameraBox` (nearly every state).
+    Update,
+    /// An empty callback (`ftCo_Dead{Down,Left,Right,Up}_Cam`): the box keeps its last values.
+    Hold,
+    /// `ftCamera_80076320` (`ftCo_DeadUpStar_Cam`, `ftCo_DeadUpFall_Cam`).
+    DeadUp,
+    /// `ftCo_Rebirth_Cam`: the box follows `mv.co.common.x4` (xy) at z = 0.
+    Rebirth,
+    /// `ftCamera_800762F4` (`ftCo_WarpStar*_Cam`, Kirby's ThrowHi): only the bone point.
+    BoneOnly,
+    /// `ftCo_Cliff_Cam`: Update, then `on_ledge` while airborne.
+    Cliff,
+}
+
+/// What `ftCamera_UpdateCameraBox` reads of one fighter (cm_drive.rs builds the camera subject).
+#[derive(Clone, Copy, Debug)]
+pub struct CmSubjectIn {
+    pub pos: [f32; 3],
+    pub facing: f32,
+    /// `fp->x34_scale.y`.
+    pub scale_y: f32,
+    /// `*ft_data->x3C` (`UnkFloat6_Camera`: x0 vec3, xC vec3).
+    pub x3c: [f32; 6],
+    /// `ftLib_800866DC`: the camera zoom bone's world point (`lb_8000B1CC(parts[bone], x170)`).
+    pub bone: [f32; 3],
+    pub kind: CamKind,
+    /// `fp->mv.co.common.x4` (Rebirth).
+    pub rebirth_target: [f32; 2],
+    /// `fp->ground_or_air == GA_Air`.
+    pub in_air: bool,
+    /// The box is `CmSubjectState_Inactive` (`ftCo_800BFD04`, Sleep).
+    pub inactive: bool,
+}
+
+impl Player {
+    fn cam_base(&self) -> CmSubjectIn {
+        let d = &self.files.dat.data;
+        let at = be32(d, self.files.ft_data + 0x3C);
+        let x3c = core::array::from_fn(|i| f32::from_bits(be32(d, at + 4 * i as u32)));
+        let pos = [self.fp.cur_pos.x, self.fp.cur_pos.y, self.fp.cur_pos.z];
+        CmSubjectIn {
+            pos,
+            facing: self.fp.facing_dir,
+            scale_y: self.fp.x34_scale.y,
+            x3c,
+            bone: pos,
+            kind: CamKind::Update,
+            rebirth_target: [self.rb.target.x, self.rb.target.y],
+            in_air: self.fp.ground_or_air != 0,
+            inactive: self.fp.motion_id == rebirth::FTCO_MS_SLEEP,
+        }
+    }
+
+    /// The camera box inputs of this fighter this frame (None for a Sheik/Zelda follower).
+    pub fn camera_subject_in(&mut self) -> Option<CmSubjectIn> {
+        if self.follower {
+            return None;
+        }
+        let mut c = self.cam_base();
+        let attrs = self.files.attrs();
+        let j = self.skel.part(attrs.camera_zoom_target_bone as usize);
+        let off = Vec3 { x: attrs.x170.x, y: attrs.x170.y, z: attrs.x170.z };
+        let b = self.skel.world_point(j, off);
+        c.bone = [b.x, b.y, b.z];
+        c.kind = match self.fp.motion_id {
+            0..=3 => CamKind::Hold,
+            4..=10 => CamKind::DeadUp,
+            12 => CamKind::Rebirth,
+            252..=259 => CamKind::Cliff,
+            // ftCo_WarpStar{Jump,Fall}: 
+            305 | 306 => CamKind::BoneOnly,
+            _ => CamKind::Update,
+        };
+        Some(c)
+    }
+
+    /// `ftCamera_80076064` made at this instant (called from the respawn code).
+    pub(crate) fn snap_camera(&mut self) {
+        if !self.follower {
+            self.cam_snap = Some(self.cam_base());
+        }
+    }
+}
+
 impl VsMatch {
+    /// `Stage_GetBlastZoneTopOffset()`.
+    pub fn blast_top(&self) -> f32 {
+        self.blast.top
+    }
+
     pub fn new(disc: &mut crate::disc::Disc, stage_file: &str, fighters: &[&str], seed: u32, stocks: i32) -> Result<Self, String> {
         let stkind = match stage_file {
             "GrNLa.dat" => STKIND_FD,
@@ -1008,6 +1106,7 @@ impl VsMatch {
                 keep_gfx: false,
                 blend_zero: false,
                 rb: PlayerRespawn::default(),
+                cam_snap: None,
             });
             // ... Fighter_ChangeMotionState(Entry): no animation, cur_anim_frame -1;
             // ftaction.c:1408 frame_count = cur_anim_frame + x898_unk. Then ft_80084CB0: the
@@ -1063,7 +1162,7 @@ impl VsMatch {
                 }
             });
         }
-        Ok(Self { players, ground, cg, pads: [input::PadStatus::default(); 4], live_pads: None, go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists, blast, fighter_jobjs: Vec::new(), items: Vec::new(), respawn_points: (4..8).filter_map(|id| points.iter().find(|p| p.id == id).map(|p| Vec3 { x: p.pos[0], y: p.pos[1], z: p.pos[2] })).collect(), respawn_busy: [0; 6], start_shield, stage_data: Arc::new(stage.data.clone()), stage_map_head: stage.public_offset("map_head").unwrap_or(0), keep_ref: Vec::new() })
+        Ok(Self { players, ground, cg, pads: [input::PadStatus::default(); 4], pad_feed: None, go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists, blast, fighter_jobjs: Vec::new(), items: Vec::new(), respawn_points: (4..8).filter_map(|id| points.iter().find(|p| p.id == id).map(|p| Vec3 { x: p.pos[0], y: p.pos[1], z: p.pos[2] })).collect(), respawn_busy: [0; 6], start_shield, stage_data: Arc::new(stage.data.clone()), stage_map_head: stage.public_offset("map_head").unwrap_or(0), keep_ref: Vec::new() })
     }
 
     /// The m-ex fighters' code-run report (crate::mex), one block per such fighter.
@@ -1125,8 +1224,8 @@ impl VsMatch {
         // The frame's HSD_PadRenewStatus (the pad script's sample for this frame).
         let g = self.frame + 1;
         for port in 0..4 {
-            let raw = match &self.live_pads {
-                Some(l) => l[port],
+            let raw = match &self.pad_feed {
+                Some(f) => f[port],
                 None => input::pad_fixed(port, g),
             };
             self.pads[port].renew(&raw);

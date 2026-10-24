@@ -900,6 +900,15 @@ fn make_texp(d: &Dat, rendermode: u32, mat: &MatDesc, tobjs: &[TObjRt]) -> Tev {
     t
 }
 
+/// An animated MObj (`mobj->mat`, `mobj->pe`, its TObjs' animated fields), as the animation system
+/// leaves it; the TObj entries are keyed by the TObj descriptor offset.
+#[derive(Clone, Debug)]
+pub struct MatOverride {
+    pub mat: MatDesc,
+    pub pe: Option<[u8; 12]>,
+    pub tobjs: Vec<(u32, crate::tobj::HsdTObj<u32>)>,
+}
+
 /// The `HSD_Material` + render mode + PE of an `HSD_MObjDesc`.
 #[derive(Clone, Copy, Debug)]
 pub struct MatDesc {
@@ -1005,15 +1014,33 @@ impl HsdRender {
         }
     }
 
-    /// `HSD_MObjSetup` for the MObj descriptor `mobj`. Returns the TObjs (for `HSD_MObjUnset`).
+    /// `HSD_MObjSetup` for the MObj descriptor `mobj`.
     pub fn mobj_setup<G: GxBackend>(&mut self, g: &mut G, d: &Dat, mobj: u32) {
+        self.mobj_setup_with(g, d, mobj, None)
+    }
+
+    /// `HSD_MObjSetup` for a MObj whose material / TObjs were animated (`ov`).
+    pub fn mobj_setup_with<G: GxBackend>(&mut self, g: &mut G, d: &Dat, mobj: u32, ov: Option<&MatOverride>) {
         self.state_init_tev();
-        let (rendermode, mat, pe) = mobj_load(d, mobj);
+        let (rendermode, mut mat, mut pe) = mobj_load(d, mobj);
+        if let Some(o) = ov {
+            mat = o.mat;
+            pe = o.pe;
+        }
         self.set_material_color(mat.ambient, mat.diffuse, mat.specular, mat.alpha);
         if rendermode & RENDER_SPECULAR != 0 {
             self.set_material_shininess(mat.shininess);
         }
         let mut tobjs = tt::load_desc_list(d, d.ptr(mobj + 8));
+        if let Some(o) = ov {
+            for t in tobjs.iter_mut() {
+                if let Some((_, a)) = o.tobjs.iter().find(|(desc, _)| *desc == t.desc) {
+                    t.obj = a.clone();
+                    t.obj.flags |= crate::tobj::TEX_MTX_DIRTY;
+                    t.image = a.imagedesc;
+                }
+            }
+        }
         self.tobj_kinds = tobjs.iter().fold(0, |k, o| k | 1 << o.coord_kind());
         self.tobj_setup(g, d, &mut tobjs);
         self.tobj_setup_texture_coord_gen(g, &tobjs);

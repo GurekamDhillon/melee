@@ -1,0 +1,116 @@
+//! `src/sysdolphin/baselib/gobj.c`: the per-frame proc walk, the camera / max-link render walks,
+//! the obj-kind callbacks and the library's kind-table setup.
+//!
+//! Native ports on [`GObjSystem`] (`crate::gobj`, oracle `tests/oracle_gobj.rs`): the C names for
+//! them are exposed here. The obj-kind callbacks below operate on the GameCube-layout record
+//! (`melee_types::HSD_GObj`), since they are what the obj-kind table holds for camera / light /
+//! jobj / fog objects. Callees in unported TUs are TODO stubs in [`ext`].
+//!
+//! Not ported (observability only): `gobj_trace_render`, the profiler zones.
+#![allow(non_snake_case, non_upper_case_globals, static_mut_refs, clippy::missing_safety_doc)]
+use crate::gobj::{hsd_gobj_803912a8, hsd_gobj_80390eb8, GObjHost, GObjId, GObjSystem, HsdGObjLibInitData, KindFunc};
+use melee_types::inline::ref_DEC;
+use melee_types::*;
+
+/// Callees outside gobj.c.
+pub mod ext {
+    use crate::tu::hookmac::hook;
+    use melee_types::*;
+    hook!(HSD_LOBJ_803668EC, HSD_LObj_803668EC, (lobj: *mut HSD_LObj));
+    hook!(HSD_LOBJSETUPINIT, HSD_LObjSetupInit, (cobj: *mut HSD_CObj));
+    hook!(HSD_COBJGETCURRENT, HSD_CObjGetCurrent, () -> *mut HSD_CObj);
+    hook!(HSD_COBJSETCURRENT, HSD_CObjSetCurrent, (cobj: *mut HSD_CObj) -> i32);
+    hook!(HSD_COBJENDCURRENT, HSD_CObjEndCurrent, ());
+    hook!(HSD_JOBJDISPALL, HSD_JObjDispAll, (jobj: *mut HSD_JObj, vmtx: *mut [f32; 4], flags: u32, rendermode: u32));
+    hook!(HSD_FOGSET, HSD_FogSet, (fog: *mut HSD_Fog));
+    hook!(HSDDELETE, hsdDelete, (obj: *mut core::ffi::c_void));
+}
+
+/// `HSD_GObj_80391120` (camera kind entry of the obj-kind table): HSD_Obj release. NULL is a
+/// no-op; otherwise `ref_DEC(obj)` and, when it reports the last reference, `hsdDelete(obj)`.
+pub unsafe fn HSD_GObj_80391120(obj: *mut HSD_Obj) {
+    if !obj.is_null() && ref_DEC(&mut *obj) {
+        ext::hsdDelete(obj as *mut core::ffi::c_void);
+    }
+}
+
+/// `HSD_GObj_803911C0`: the same release, as the fog kind's own table entry.
+pub unsafe fn HSD_GObj_803911C0(obj: *mut HSD_Obj) {
+    HSD_GObj_80391120(obj)
+}
+
+/// `HSD_GObj_LObjCallback`: render callback of a light GObj.
+pub unsafe fn HSD_GObj_LObjCallback(gobj: *mut HSD_GObj, _unused: i32) {
+    ext::HSD_LObj_803668EC((*gobj).hsd_obj as *mut HSD_LObj);
+    ext::HSD_LObjSetupInit(ext::HSD_CObjGetCurrent());
+}
+
+/// `HSD_GObj_JObjCallback`: render callback of a jobj GObj (flags from `HSD_GObj_80390EB8`).
+pub unsafe fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: i32) {
+    let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
+    ext::HSD_JObjDispAll(jobj, core::ptr::null_mut(), hsd_gobj_80390eb8(arg1), 0);
+}
+
+/// `HSD_GObj_FogCallback`.
+pub unsafe fn HSD_GObj_FogCallback(gobj: *mut HSD_GObj, _unused: i32) {
+    ext::HSD_FogSet((*gobj).hsd_obj as *mut HSD_Fog);
+}
+
+/// `HSD_GObj_803910D8`: render callback of a camera GObj; `walk` is
+/// `HSD_GObj_80390ED0(gobj, 7)` (the camera walk over the GObj system, which the caller owns).
+pub unsafe fn HSD_GObj_803910D8(gobj: *mut HSD_GObj, _renderpass: i32, walk: impl FnOnce()) {
+    if ext::HSD_CObjSetCurrent((*gobj).hsd_obj as *mut HSD_CObj) != 0 {
+        walk();
+        ext::HSD_CObjEndCurrent();
+    }
+}
+
+/// `HSD_GObj_80390C5C`..`80390CD4`: proc-pause helpers.
+pub fn HSD_GObj_80390C5C<F: Copy, O: Copy>(sys: &mut GObjSystem<F, O>, gobj: GObjId) {
+    sys.hsd_gobj_80390c5c(gobj)
+}
+pub fn HSD_GObj_80390C84<F: Copy, O: Copy>(sys: &mut GObjSystem<F, O>, gobj: GObjId) {
+    sys.hsd_gobj_80390c84(gobj)
+}
+pub fn HSD_GObj_80390CAC<F: Copy, O: Copy>(sys: &mut GObjSystem<F, O>, gobj: GObjId) {
+    sys.hsd_gobj_80390cac(gobj)
+}
+pub fn HSD_GObj_80390CD4<F: Copy, O: Copy>(sys: &mut GObjSystem<F, O>, gobj: GObjId) {
+    sys.hsd_gobj_80390cd4(gobj)
+}
+
+/// `HSD_GObj_RunProcs`.
+pub fn HSD_GObj_RunProcs<F: Copy, O: Copy>(sys: &mut GObjSystem<F, O>, host: &mut impl GObjHost<F, O>) {
+    sys.run_procs(host)
+}
+
+/// `HSD_GObj_80390EB8` (GObj_GetFlagFromArray).
+pub fn HSD_GObj_80390EB8(i: i32) -> u32 {
+    hsd_gobj_80390eb8(i)
+}
+
+/// `HSD_GObj_80390ED0` (GObj_SetTextureCamera).
+pub fn HSD_GObj_80390ED0<F: Copy, O: Copy>(
+    sys: &mut GObjSystem<F, O>,
+    host: &mut impl GObjHost<F, O>,
+    gobj: GObjId,
+    mask: u32,
+) {
+    sys.hsd_gobj_80390ed0(host, gobj, mask)
+}
+
+/// `HSD_GObj_80390FC0` (GObj_RunGXLinkMaxCallbacks).
+pub fn HSD_GObj_80390FC0<F: Copy, O: Copy>(sys: &mut GObjSystem<F, O>, host: &mut impl GObjHost<F, O>) {
+    sys.hsd_gobj_80390fc0(host)
+}
+
+/// `HSD_GObj_80391260`: append the built-in kind table and number the camera / light / jobj /
+/// fog kinds.
+pub fn HSD_GObj_80391260<F: Copy, O: Copy>(sys: &mut GObjSystem<F, O>, arg0: &mut HsdGObjLibInitData<F>) {
+    sys.hsd_gobj_80391260(arg0)
+}
+
+/// `HSD_GObj_803912A8`: append `arg1` to the funcs chain; returns the previous function count.
+pub fn HSD_GObj_803912A8<F>(arg0: &mut HsdGObjLibInitData<F>, arg1: std::vec::Vec<KindFunc<F>>) -> u8 {
+    hsd_gobj_803912a8(arg0, arg1)
+}

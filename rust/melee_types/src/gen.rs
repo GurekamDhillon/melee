@@ -5278,6 +5278,16 @@ pub const FE_DO_CONTINUE: FrontendAction = 0;
 pub const FE_DO_BACK: FrontendAction = 1;
 pub const FE_DO_CALL: FrontendAction = 2;
 
+/// C enum `RulePlusOption` (src/melee/mn/mnruleplus.h:9)
+pub type RulePlusOption = u32;
+pub const RULEPLUS_TIME_LIMIT: RulePlusOption = 0;
+pub const RULEPLUS_FRIENDLY_FIRE: RulePlusOption = 1;
+pub const RULEPLUS_PAUSE: RulePlusOption = 2;
+pub const RULEPLUS_SCORE: RulePlusOption = 3;
+pub const RULEPLUS_SD_PENALTY: RulePlusOption = 4;
+pub const RULEPLUS_STAGE_SELECT: RulePlusOption = 5;
+pub const RULEPLUS_COUNT: RulePlusOption = 6;
+
 // ---- #define / static const constants (group-0 headers) ----
 pub const HSD_A_S_W0: i32 = 2;  // src/sysdolphin/baselib/forward.h:120
 pub const HSD_DEFAULT_MAX_SHAPE_VERTICES: i32 = 2000;  // src/sysdolphin/baselib/forward.h:121
@@ -6069,6 +6079,11 @@ pub type ftPichuAttributes = _ftPichuAttributes;
 pub type ftSs_Fighter = Fighter;
 pub type StaticPlayer = _StaticPlayer;
 pub type it_MObjSetupFunc = Option<unsafe extern "C" fn(*mut HSD_MObj, u32, u32)>;
+pub type MainMenuData = _MainMenuData;
+pub type MainMenuPanelData = _MainMenuPanelData;
+pub type MenuFlow = _MenuFlow;
+pub type MenuInputState = _MenuInputState;
+pub type MenuRulesPlusData = _MenuRulesPlusData;
 
 /// C `__file_modes` (src/MSL/stdio.h:44); GameCube size 0x4, align 4.
 #[repr(C, align(4))]
@@ -91221,6 +91236,522 @@ impl GcLayout for lbl_803D9DD0_t {
 }
 const _: () = assert!(core::mem::size_of::<lbl_803D9DD0_t>() == 40);
 
+/// C `_MainMenuData` (src/melee/mn/mnmain.h:13); GameCube size 0xB0, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct _MainMenuData {
+    pub menu_kind: MenuKind8,
+    pub hovered_selection: MenuKind8,
+    pub state: MenuState8,
+    pub pad_3: u8,
+    pub tree: [*mut HSD_JObj; 42],
+    pub description: *mut HSD_Text,
+}
+impl _MainMenuData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for _MainMenuData {
+    const GC_BYTES: u32 = 0xB0;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.menu_kind = <MenuKind8 as GcDecode>::gc_decode(d, at + 0x0);
+        v.hovered_selection = <MenuKind8 as GcDecode>::gc_decode(d, at + 0x1);
+        v.state = <MenuState8 as GcDecode>::gc_decode(d, at + 0x2);
+        v.pad_3 = <u8 as GcDecode>::gc_decode(d, at + 0x3);
+        v.tree = <[*mut HSD_JObj; 42] as GcDecode>::gc_decode(d, at + 0x4);
+        v.description = <*mut HSD_Text as GcDecode>::gc_decode(d, at + 0xAC);
+        v
+    }
+}
+impl GcPointee for _MainMenuData { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<_MainMenuData>(t) } }
+impl GcLayout for _MainMenuData {
+    const GC_NAME: &'static str = "_MainMenuData";
+    const GC_SIZE: u32 = 0xB0;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("menu_kind", 0x0, 1, "MenuKind8"),
+        GcField::new("hovered_selection", 0x1, 1, "MenuKind8"),
+        GcField::new("state", 0x2, 1, "MenuState8"),
+        GcField::new("pad_3", 0x3, 1, "u8"),
+        GcField::new("tree", 0x4, 168, "HSD_JObj *[42]"),
+        GcField::new("description", 0xAC, 4, "HSD_Text *"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<_MainMenuData>() == 352);
+
+/// C `_MainMenuPanelData` (src/melee/mn/mnmain.h:22); GameCube size 0x4, align 1.
+#[repr(C, align(1))]
+#[derive(Clone, Copy)]
+pub struct _MainMenuPanelData {
+    pub cur_menu: MenuKind8,
+    pub prev_menu: MenuKind8,
+    pub x2: u8,
+    pub state: MenuState8,
+}
+impl _MainMenuPanelData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for _MainMenuPanelData {
+    const GC_BYTES: u32 = 0x4;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.cur_menu = <MenuKind8 as GcDecode>::gc_decode(d, at + 0x0);
+        v.prev_menu = <MenuKind8 as GcDecode>::gc_decode(d, at + 0x1);
+        v.x2 = <u8 as GcDecode>::gc_decode(d, at + 0x2);
+        v.state = <MenuState8 as GcDecode>::gc_decode(d, at + 0x3);
+        v
+    }
+}
+impl GcPointee for _MainMenuPanelData { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<_MainMenuPanelData>(t) } }
+impl GcLayout for _MainMenuPanelData {
+    const GC_NAME: &'static str = "_MainMenuPanelData";
+    const GC_SIZE: u32 = 0x4;
+    const GC_ALIGN: u32 = 1;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("cur_menu", 0x0, 1, "MenuKind8"),
+        GcField::new("prev_menu", 0x1, 1, "MenuKind8"),
+        GcField::new("x2", 0x2, 1, "u8"),
+        GcField::new("state", 0x3, 1, "MenuState8"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<_MainMenuPanelData>() == 4);
+
+/// C `_MenuFlow` (src/melee/mn/mnmain.h:29); GameCube size 0x18, align 8.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct _MenuFlow {
+    pub cur_menu: MenuKind8,
+    pub prev_menu: MenuKind8,
+    pub hovered_selection: u16,
+    pub confirmed_selection: u8,
+    pub pad_5: [u8; 3],
+    pub buttons: u64,
+    pub x10: u8,
+    pub entering_menu: u8,
+    pub light_lerp_frames: u8,
+    pub pad_13: u8,
+    pub light_color: *mut _GXColor,
+}
+impl _MenuFlow { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for _MenuFlow {
+    const GC_BYTES: u32 = 0x18;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.cur_menu = <MenuKind8 as GcDecode>::gc_decode(d, at + 0x0);
+        v.prev_menu = <MenuKind8 as GcDecode>::gc_decode(d, at + 0x1);
+        v.hovered_selection = <u16 as GcDecode>::gc_decode(d, at + 0x2);
+        v.confirmed_selection = <u8 as GcDecode>::gc_decode(d, at + 0x4);
+        v.pad_5 = <[u8; 3] as GcDecode>::gc_decode(d, at + 0x5);
+        v.buttons = <u64 as GcDecode>::gc_decode(d, at + 0x8);
+        v.x10 = <u8 as GcDecode>::gc_decode(d, at + 0x10);
+        v.entering_menu = <u8 as GcDecode>::gc_decode(d, at + 0x11);
+        v.light_lerp_frames = <u8 as GcDecode>::gc_decode(d, at + 0x12);
+        v.pad_13 = <u8 as GcDecode>::gc_decode(d, at + 0x13);
+        v.light_color = <*mut _GXColor as GcDecode>::gc_decode(d, at + 0x14);
+        v
+    }
+}
+impl GcPointee for _MenuFlow { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<_MenuFlow>(t) } }
+impl GcLayout for _MenuFlow {
+    const GC_NAME: &'static str = "_MenuFlow";
+    const GC_SIZE: u32 = 0x18;
+    const GC_ALIGN: u32 = 8;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("cur_menu", 0x0, 1, "MenuKind8"),
+        GcField::new("prev_menu", 0x1, 1, "MenuKind8"),
+        GcField::new("hovered_selection", 0x2, 2, "u16"),
+        GcField::new("confirmed_selection", 0x4, 1, "u8"),
+        GcField::new("pad_5", 0x5, 3, "u8[3]"),
+        GcField::new("buttons", 0x8, 8, "u64"),
+        GcField::new("x10", 0x10, 1, "u8"),
+        GcField::new("entering_menu", 0x11, 1, "u8"),
+        GcField::new("light_lerp_frames", 0x12, 1, "u8"),
+        GcField::new("pad_13", 0x13, 1, "u8"),
+        GcField::new("light_color", 0x14, 4, "GXColor *"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<_MenuFlow>() == 32);
+
+/// C `_MenuInputState` (src/melee/mn/mnmain.h:43); GameCube size 0x8, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct _MenuInputState {
+    pub cooldown: u16,
+    pub x2: u16,
+    pub x4: i32,
+}
+impl _MenuInputState { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for _MenuInputState {
+    const GC_BYTES: u32 = 0x8;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.cooldown = <u16 as GcDecode>::gc_decode(d, at + 0x0);
+        v.x2 = <u16 as GcDecode>::gc_decode(d, at + 0x2);
+        v.x4 = <i32 as GcDecode>::gc_decode(d, at + 0x4);
+        v
+    }
+}
+impl GcPointee for _MenuInputState { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<_MenuInputState>(t) } }
+impl GcLayout for _MenuInputState {
+    const GC_NAME: &'static str = "_MenuInputState";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("cooldown", 0x0, 2, "u16"),
+        GcField::new("x2", 0x2, 2, "u16"),
+        GcField::new("x4", 0x4, 4, "s32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<_MenuInputState>() == 8);
+
+/// C `_MenuRulesPlusData` (src/melee/mn/mnruleplus.h:19); GameCube size 0xE0, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct _MenuRulesPlusData {
+    pub menu_kind: MenuKind8,
+    pub hovered_selection: u8,
+    pub rule_values: _MenuRulesPlusData_rule_values,
+    pub x7: u8,
+    pub state: MenuState8,
+    pub xC: [*mut HSD_JObj; 10],
+    pub x34: [[*mut HSD_JObj; 7]; 6],
+    pub description: *mut HSD_Text,
+}
+impl _MenuRulesPlusData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for _MenuRulesPlusData {
+    const GC_BYTES: u32 = 0xE0;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.menu_kind = <MenuKind8 as GcDecode>::gc_decode(d, at + 0x0);
+        v.hovered_selection = <u8 as GcDecode>::gc_decode(d, at + 0x1);
+        v.rule_values = <_MenuRulesPlusData_rule_values as GcDecode>::gc_decode(d, at + 0x2);
+        v.x7 = <u8 as GcDecode>::gc_decode(d, at + 0x7);
+        v.state = <MenuState8 as GcDecode>::gc_decode(d, at + 0x8);
+        v.xC = <[*mut HSD_JObj; 10] as GcDecode>::gc_decode(d, at + 0xC);
+        v.x34 = <[[*mut HSD_JObj; 7]; 6] as GcDecode>::gc_decode(d, at + 0x34);
+        v.description = <*mut HSD_Text as GcDecode>::gc_decode(d, at + 0xDC);
+        v
+    }
+}
+impl GcPointee for _MenuRulesPlusData { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<_MenuRulesPlusData>(t) } }
+impl GcLayout for _MenuRulesPlusData {
+    const GC_NAME: &'static str = "_MenuRulesPlusData";
+    const GC_SIZE: u32 = 0xE0;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("menu_kind", 0x0, 1, "MenuKind8"),
+        GcField::new("hovered_selection", 0x1, 1, "u8"),
+        GcField::new("rule_values", 0x2, 5, "union (unnamed at src/melee/mn/mnruleplus.h:22:5)"),
+        GcField::new("x7", 0x7, 1, "u8"),
+        GcField::new("state", 0x8, 1, "MenuState8"),
+        GcField::new("xC", 0xC, 40, "HSD_JObj *[10]"),
+        GcField::new("x34", 0x34, 168, "HSD_JObj *[6][7]"),
+        GcField::new("description", 0xDC, 4, "HSD_Text *"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<_MenuRulesPlusData>() == 440);
+
+/// C `union (unnamed at src/melee/mn/mnruleplus.h:22:5)` (src/melee/mn/mnruleplus.h:22); GameCube size 0x5, align 1.
+#[repr(C, align(1))]
+#[derive(Clone, Copy)]
+pub union _MenuRulesPlusData_rule_values {
+    /// anonymous C member
+    pub anon_0: _MenuRulesPlusData_rule_values_anon_23,
+    pub values: [u8; 5],
+}
+impl _MenuRulesPlusData_rule_values { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for _MenuRulesPlusData_rule_values {
+    const GC_BYTES: u32 = 0x5;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.anon_0 = <_MenuRulesPlusData_rule_values_anon_23 as GcDecode>::gc_decode(d, at + 0x0);
+        v
+    }
+}
+impl GcPointee for _MenuRulesPlusData_rule_values { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<_MenuRulesPlusData_rule_values>(t) } }
+impl GcLayout for _MenuRulesPlusData_rule_values {
+    const GC_NAME: &'static str = "union (unnamed at src/melee/mn/mnruleplus.h:22:5)";
+    const GC_SIZE: u32 = 0x5;
+    const GC_ALIGN: u32 = 1;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("(anon)", 0x0, 5, "_MenuRulesPlusData_rule_values_anon_23"),
+        GcField::new("time_limit", 0x0, 1, "u8"),
+        GcField::new("friendly_fire", 0x1, 1, "u8"),
+        GcField::new("pause", 0x2, 1, "u8"),
+        GcField::new("score", 0x3, 1, "u8"),
+        GcField::new("sd_penalty", 0x4, 1, "u8"),
+        GcField::new("values", 0x0, 5, "u8[5]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<_MenuRulesPlusData_rule_values>() == 5);
+
+/// C `struct (anonymous at src/melee/mn/mnruleplus.h:23:9)` (src/melee/mn/mnruleplus.h:23); GameCube size 0x5, align 1.
+#[repr(C, align(1))]
+#[derive(Clone, Copy)]
+pub struct _MenuRulesPlusData_rule_values_anon_23 {
+    pub time_limit: u8,
+    pub friendly_fire: u8,
+    pub pause: u8,
+    pub score: u8,
+    pub sd_penalty: u8,
+}
+impl _MenuRulesPlusData_rule_values_anon_23 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for _MenuRulesPlusData_rule_values_anon_23 {
+    const GC_BYTES: u32 = 0x5;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.time_limit = <u8 as GcDecode>::gc_decode(d, at + 0x0);
+        v.friendly_fire = <u8 as GcDecode>::gc_decode(d, at + 0x1);
+        v.pause = <u8 as GcDecode>::gc_decode(d, at + 0x2);
+        v.score = <u8 as GcDecode>::gc_decode(d, at + 0x3);
+        v.sd_penalty = <u8 as GcDecode>::gc_decode(d, at + 0x4);
+        v
+    }
+}
+impl GcPointee for _MenuRulesPlusData_rule_values_anon_23 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<_MenuRulesPlusData_rule_values_anon_23>(t) } }
+impl GcLayout for _MenuRulesPlusData_rule_values_anon_23 {
+    const GC_NAME: &'static str = "struct (anonymous at src/melee/mn/mnruleplus.h:23:9)";
+    const GC_SIZE: u32 = 0x5;
+    const GC_ALIGN: u32 = 1;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("time_limit", 0x0, 1, "u8"),
+        GcField::new("friendly_fire", 0x1, 1, "u8"),
+        GcField::new("pause", 0x2, 1, "u8"),
+        GcField::new("score", 0x3, 1, "u8"),
+        GcField::new("sd_penalty", 0x4, 1, "u8"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<_MenuRulesPlusData_rule_values_anon_23>() == 5);
+
+/// C `mn_803ED1D0_t` (src/melee/mn/mnruleplus.h:39); GameCube size 0xA0, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct mn_803ED1D0_t {
+    pub x0: [u16; 7],
+    pub xE: [u16; 6],
+    pub text_start_frames: [f32; 12],
+    pub x4C: AnimLoopSettings,
+    pub x58: AnimLoopSettings,
+    pub x64: [AnimLoopSettings; 2],
+    pub x7C: [AnimLoopSettings; 2],
+    pub x94: AnimLoopSettings,
+}
+impl mn_803ED1D0_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for mn_803ED1D0_t {
+    const GC_BYTES: u32 = 0xA0;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.x0 = <[u16; 7] as GcDecode>::gc_decode(d, at + 0x0);
+        v.xE = <[u16; 6] as GcDecode>::gc_decode(d, at + 0xE);
+        v.text_start_frames = <[f32; 12] as GcDecode>::gc_decode(d, at + 0x1C);
+        v.x4C = <AnimLoopSettings as GcDecode>::gc_decode(d, at + 0x4C);
+        v.x58 = <AnimLoopSettings as GcDecode>::gc_decode(d, at + 0x58);
+        v.x64 = <[AnimLoopSettings; 2] as GcDecode>::gc_decode(d, at + 0x64);
+        v.x7C = <[AnimLoopSettings; 2] as GcDecode>::gc_decode(d, at + 0x7C);
+        v.x94 = <AnimLoopSettings as GcDecode>::gc_decode(d, at + 0x94);
+        v
+    }
+}
+impl GcPointee for mn_803ED1D0_t { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<mn_803ED1D0_t>(t) } }
+impl GcLayout for mn_803ED1D0_t {
+    const GC_NAME: &'static str = "mn_803ED1D0_t";
+    const GC_SIZE: u32 = 0xA0;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 14, "u16[7]"),
+        GcField::new("xE", 0xE, 12, "u16[6]"),
+        GcField::new("text_start_frames", 0x1C, 48, "float[12]"),
+        GcField::new("x4C", 0x4C, 12, "AnimLoopSettings"),
+        GcField::new("x58", 0x58, 12, "AnimLoopSettings"),
+        GcField::new("x64", 0x64, 24, "AnimLoopSettings[2]"),
+        GcField::new("x7C", 0x7C, 24, "AnimLoopSettings[2]"),
+        GcField::new("x94", 0x94, 12, "AnimLoopSettings"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<mn_803ED1D0_t>() == 160);
+
+/// C `stagelistinfo` (src/melee/mn/mnstagesel.static.h:57); GameCube size 0x20, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct stagelistinfo {
+    pub x0: *mut HSD_JObj,
+    pub x4: i32,
+    pub x8: u8,
+    pub x9: u8,
+    pub xA: u8,
+    pub stkind: i32,
+    pub xC: f32,
+    pub x10: f32,
+    pub x14: f32,
+    pub x18: f32,
+}
+impl stagelistinfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for stagelistinfo {
+    const GC_BYTES: u32 = 0x20;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.x0 = <*mut HSD_JObj as GcDecode>::gc_decode(d, at + 0x0);
+        v.x4 = <i32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.x8 = <u8 as GcDecode>::gc_decode(d, at + 0x8);
+        v.x9 = <u8 as GcDecode>::gc_decode(d, at + 0x9);
+        v.xA = <u8 as GcDecode>::gc_decode(d, at + 0xA);
+        v.stkind = <i32 as GcDecode>::gc_decode(d, at + 0xC);
+        v.xC = <f32 as GcDecode>::gc_decode(d, at + 0x10);
+        v.x10 = <f32 as GcDecode>::gc_decode(d, at + 0x14);
+        v.x14 = <f32 as GcDecode>::gc_decode(d, at + 0x18);
+        v.x18 = <f32 as GcDecode>::gc_decode(d, at + 0x1C);
+        v
+    }
+}
+impl GcPointee for stagelistinfo { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<stagelistinfo>(t) } }
+impl GcLayout for stagelistinfo {
+    const GC_NAME: &'static str = "stagelistinfo";
+    const GC_SIZE: u32 = 0x20;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 4, "HSD_JObj *"),
+        GcField::new("x4", 0x4, 4, "int"),
+        GcField::new("x8", 0x8, 1, "u8"),
+        GcField::new("x9", 0x9, 1, "u8"),
+        GcField::new("xA", 0xA, 1, "u8"),
+        GcField::new("stkind", 0xC, 4, "s32"),
+        GcField::new("xC", 0x10, 4, "f32"),
+        GcField::new("x10", 0x14, 4, "f32"),
+        GcField::new("x14", 0x18, 4, "f32"),
+        GcField::new("x18", 0x1C, 4, "f32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<stagelistinfo>() == 40);
+
+/// C `mnStageSel_804D6C98_t` (src/melee/mn/mnstagesel.static.h:105); GameCube size 0xC0, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct mnStageSel_804D6C98_t {
+    pub x0: StaticModelDesc,
+    pub x10: StaticModelDesc,
+    pub x20: StaticModelDesc,
+    pub x30: StaticModelDesc,
+    pub x40: StaticModelDesc,
+    pub x50: StaticModelDesc,
+    pub x60: StaticModelDesc,
+    pub x70: StaticModelDesc,
+    pub x80: StaticModelDesc,
+    pub x90: StaticModelDesc,
+    pub xA0: StaticModelDesc,
+    pub xB0: *mut HSD_Joint,
+    pub xB4: *mut HSD_AnimJoint,
+    pub xB8: *mut HSD_MatAnimJoint,
+    pub xBC: *mut HSD_ShapeAnimJoint,
+}
+impl mnStageSel_804D6C98_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for mnStageSel_804D6C98_t {
+    const GC_BYTES: u32 = 0xC0;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.x0 = <StaticModelDesc as GcDecode>::gc_decode(d, at + 0x0);
+        v.x10 = <StaticModelDesc as GcDecode>::gc_decode(d, at + 0x10);
+        v.x20 = <StaticModelDesc as GcDecode>::gc_decode(d, at + 0x20);
+        v.x30 = <StaticModelDesc as GcDecode>::gc_decode(d, at + 0x30);
+        v.x40 = <StaticModelDesc as GcDecode>::gc_decode(d, at + 0x40);
+        v.x50 = <StaticModelDesc as GcDecode>::gc_decode(d, at + 0x50);
+        v.x60 = <StaticModelDesc as GcDecode>::gc_decode(d, at + 0x60);
+        v.x70 = <StaticModelDesc as GcDecode>::gc_decode(d, at + 0x70);
+        v.x80 = <StaticModelDesc as GcDecode>::gc_decode(d, at + 0x80);
+        v.x90 = <StaticModelDesc as GcDecode>::gc_decode(d, at + 0x90);
+        v.xA0 = <StaticModelDesc as GcDecode>::gc_decode(d, at + 0xA0);
+        v.xB0 = <*mut HSD_Joint as GcDecode>::gc_decode(d, at + 0xB0);
+        v.xB4 = <*mut HSD_AnimJoint as GcDecode>::gc_decode(d, at + 0xB4);
+        v.xB8 = <*mut HSD_MatAnimJoint as GcDecode>::gc_decode(d, at + 0xB8);
+        v.xBC = <*mut HSD_ShapeAnimJoint as GcDecode>::gc_decode(d, at + 0xBC);
+        v
+    }
+}
+impl GcPointee for mnStageSel_804D6C98_t { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<mnStageSel_804D6C98_t>(t) } }
+impl GcLayout for mnStageSel_804D6C98_t {
+    const GC_NAME: &'static str = "mnStageSel_804D6C98_t";
+    const GC_SIZE: u32 = 0xC0;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 16, "StaticModelDesc"),
+        GcField::new("x10", 0x10, 16, "StaticModelDesc"),
+        GcField::new("x20", 0x20, 16, "StaticModelDesc"),
+        GcField::new("x30", 0x30, 16, "StaticModelDesc"),
+        GcField::new("x40", 0x40, 16, "StaticModelDesc"),
+        GcField::new("x50", 0x50, 16, "StaticModelDesc"),
+        GcField::new("x60", 0x60, 16, "StaticModelDesc"),
+        GcField::new("x70", 0x70, 16, "StaticModelDesc"),
+        GcField::new("x80", 0x80, 16, "StaticModelDesc"),
+        GcField::new("x90", 0x90, 16, "StaticModelDesc"),
+        GcField::new("xA0", 0xA0, 16, "StaticModelDesc"),
+        GcField::new("xB0", 0xB0, 4, "HSD_Joint *"),
+        GcField::new("xB4", 0xB4, 4, "HSD_AnimJoint *"),
+        GcField::new("xB8", 0xB8, 4, "HSD_MatAnimJoint *"),
+        GcField::new("xBC", 0xBC, 4, "HSD_ShapeAnimJoint *"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<mnStageSel_804D6C98_t>() == 384);
+
+/// C `StageSelUserData` (src/melee/mn/mnstagesel.static.h:146); GameCube size 0x8, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct StageSelUserData {
+    pub x0: u16,
+    pub x2: u16,
+    pub x4: i32,
+}
+impl StageSelUserData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for StageSelUserData {
+    const GC_BYTES: u32 = 0x8;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.x0 = <u16 as GcDecode>::gc_decode(d, at + 0x0);
+        v.x2 = <u16 as GcDecode>::gc_decode(d, at + 0x2);
+        v.x4 = <i32 as GcDecode>::gc_decode(d, at + 0x4);
+        v
+    }
+}
+impl GcPointee for StageSelUserData { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<StageSelUserData>(t) } }
+impl GcLayout for StageSelUserData {
+    const GC_NAME: &'static str = "StageSelUserData";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 2, "u16"),
+        GcField::new("x2", 0x2, 2, "u16"),
+        GcField::new("x4", 0x4, 4, "int"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<StageSelUserData>() == 8);
+
 /// Every generated GameCube record layout, for the DAT loader, serialisers and the m-ex map.
 pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[
     (<__file_modes as GcLayout>::GC_NAME, <__file_modes as GcLayout>::GC_SIZE, <__file_modes as GcLayout>::GC_ALIGN, <__file_modes as GcLayout>::GC_FIELDS),
@@ -92859,6 +93390,17 @@ pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[
     (<BracketSrcEntry as GcLayout>::GC_NAME, <BracketSrcEntry as GcLayout>::GC_SIZE, <BracketSrcEntry as GcLayout>::GC_ALIGN, <BracketSrcEntry as GcLayout>::GC_FIELDS),
     (<lbl_803D9DAC_t as GcLayout>::GC_NAME, <lbl_803D9DAC_t as GcLayout>::GC_SIZE, <lbl_803D9DAC_t as GcLayout>::GC_ALIGN, <lbl_803D9DAC_t as GcLayout>::GC_FIELDS),
     (<lbl_803D9DD0_t as GcLayout>::GC_NAME, <lbl_803D9DD0_t as GcLayout>::GC_SIZE, <lbl_803D9DD0_t as GcLayout>::GC_ALIGN, <lbl_803D9DD0_t as GcLayout>::GC_FIELDS),
+    (<_MainMenuData as GcLayout>::GC_NAME, <_MainMenuData as GcLayout>::GC_SIZE, <_MainMenuData as GcLayout>::GC_ALIGN, <_MainMenuData as GcLayout>::GC_FIELDS),
+    (<_MainMenuPanelData as GcLayout>::GC_NAME, <_MainMenuPanelData as GcLayout>::GC_SIZE, <_MainMenuPanelData as GcLayout>::GC_ALIGN, <_MainMenuPanelData as GcLayout>::GC_FIELDS),
+    (<_MenuFlow as GcLayout>::GC_NAME, <_MenuFlow as GcLayout>::GC_SIZE, <_MenuFlow as GcLayout>::GC_ALIGN, <_MenuFlow as GcLayout>::GC_FIELDS),
+    (<_MenuInputState as GcLayout>::GC_NAME, <_MenuInputState as GcLayout>::GC_SIZE, <_MenuInputState as GcLayout>::GC_ALIGN, <_MenuInputState as GcLayout>::GC_FIELDS),
+    (<_MenuRulesPlusData as GcLayout>::GC_NAME, <_MenuRulesPlusData as GcLayout>::GC_SIZE, <_MenuRulesPlusData as GcLayout>::GC_ALIGN, <_MenuRulesPlusData as GcLayout>::GC_FIELDS),
+    (<_MenuRulesPlusData_rule_values as GcLayout>::GC_NAME, <_MenuRulesPlusData_rule_values as GcLayout>::GC_SIZE, <_MenuRulesPlusData_rule_values as GcLayout>::GC_ALIGN, <_MenuRulesPlusData_rule_values as GcLayout>::GC_FIELDS),
+    (<_MenuRulesPlusData_rule_values_anon_23 as GcLayout>::GC_NAME, <_MenuRulesPlusData_rule_values_anon_23 as GcLayout>::GC_SIZE, <_MenuRulesPlusData_rule_values_anon_23 as GcLayout>::GC_ALIGN, <_MenuRulesPlusData_rule_values_anon_23 as GcLayout>::GC_FIELDS),
+    (<mn_803ED1D0_t as GcLayout>::GC_NAME, <mn_803ED1D0_t as GcLayout>::GC_SIZE, <mn_803ED1D0_t as GcLayout>::GC_ALIGN, <mn_803ED1D0_t as GcLayout>::GC_FIELDS),
+    (<stagelistinfo as GcLayout>::GC_NAME, <stagelistinfo as GcLayout>::GC_SIZE, <stagelistinfo as GcLayout>::GC_ALIGN, <stagelistinfo as GcLayout>::GC_FIELDS),
+    (<mnStageSel_804D6C98_t as GcLayout>::GC_NAME, <mnStageSel_804D6C98_t as GcLayout>::GC_SIZE, <mnStageSel_804D6C98_t as GcLayout>::GC_ALIGN, <mnStageSel_804D6C98_t as GcLayout>::GC_FIELDS),
+    (<StageSelUserData as GcLayout>::GC_NAME, <StageSelUserData as GcLayout>::GC_SIZE, <StageSelUserData as GcLayout>::GC_ALIGN, <StageSelUserData as GcLayout>::GC_FIELDS),
 ];
 
 /// Read `w` bits of a GameCube big-endian bitfield byte run, `shift` bits up from its LSB.

@@ -16,17 +16,17 @@ pub use crate::chars::r8::ftMasterHand::ftmasterhandentry::ftMh_Entry_IASA;
 pub mod ext {
     use melee_types::*;
     pub use crate::tu::ftmasterhanddamage0::ext::{ft_800881D8, ftMh_MS_389_80151018};
-    crate::ch_hook!(CAMERA_8002E6FC, Camera_8002E6FC, (arg0: i32));
-    crate::ch_hook!(CAMERA_8002ED9C, Camera_8002ED9C, (arg0: f32));
-    crate::ch_hook!(CAMERA_8002EEC8, Camera_8002EEC8, (arg0: f32));
-    crate::ch_hook!(CAMERA_8002EC7C, Camera_8002EC7C, (arg0: f32));
-    crate::ch_hook!(CAMERA_8002EB5C, Camera_8002EB5C, (arg0: f32));
-    crate::ch_hook!(CAMERA_8002EF14, Camera_8002EF14, ());
-    crate::ch_hook!(CAMERA_8002F0E4, Camera_8002F0E4, (arg0: i32));
-    crate::ch_hook!(CAMERA_8002F260, Camera_8002F260, () -> bool);
-    crate::ch_hook!(CAMERA_8002F274, Camera_8002F274, ());
-    crate::ch_hook!(CAMERA_8002E948, Camera_8002E948, (cb: unsafe extern "C" fn(*mut Vec3) -> bool));
-    crate::ch_hook!(CAMERA_SETMODETOSTANDARD, Camera_SetModeToStandard, ());
+    crate::port_hook!(CAMERA_8002E6FC, Camera_8002E6FC, crate::adapt::Camera_8002E6FC, (arg0: i32));
+    crate::port_hook!(CAMERA_8002ED9C, Camera_8002ED9C, crate::adapt::Camera_8002ED9C, (arg0: f32));
+    crate::port_hook!(CAMERA_8002EEC8, Camera_8002EEC8, crate::adapt::Camera_8002EEC8, (arg0: f32));
+    crate::port_hook!(CAMERA_8002EC7C, Camera_8002EC7C, crate::adapt::Camera_8002EC7C, (arg0: f32));
+    crate::port_hook!(CAMERA_8002EB5C, Camera_8002EB5C, crate::adapt::Camera_8002EB5C, (arg0: f32));
+    crate::port_hook!(CAMERA_8002EF14, Camera_8002EF14, crate::adapt::Camera_8002EF14, ());
+    crate::port_hook!(CAMERA_8002F0E4, Camera_8002F0E4, crate::adapt::Camera_8002F0E4, (arg0: i32));
+    crate::port_hook!(CAMERA_8002F260, Camera_8002F260, crate::adapt::Camera_8002F260, () -> bool);
+    crate::port_hook!(CAMERA_8002F274, Camera_8002F274, crate::adapt::Camera_8002F274, ());
+    crate::port_hook!(CAMERA_8002E948, Camera_8002E948, crate::adapt::Camera_8002E948, (cb: unsafe extern "C" fn(*mut Vec3) -> bool));
+    crate::port_hook!(CAMERA_SETMODETOSTANDARD, Camera_SetModeToStandard, crate::adapt::Camera_SetModeToStandard, ());
     fn ftLib_8008627C_port(pos: *mut Vec3, gobj: *mut HSD_GObj) -> *mut HSD_GObj {
         melee_fighter::ftlib::ftlib_8008627c(unsafe { &*pos }, gobj)
     }

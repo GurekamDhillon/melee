@@ -26,9 +26,9 @@ pub mod ext {
         };
     }
     // `lb_8000B1CC(jobj, offset, out)` (lb/lb_00B0.c): the world position of a joint.
-    hook!(LB_8000B1CC, lb_8000B1CC, (jobj: *mut core::ffi::c_void, off: Option<&Vec3>, out: &mut Vec3));
+    crate::port_hook!(LB_8000B1CC, lb_8000B1CC, crate::adapt::lb_8000B1CC, (jobj: *mut core::ffi::c_void, off: Option<&Vec3>, out: &mut Vec3));
     // `it_8029DD58(owner, pos, x10, part, facing_dir)` (it/kinds/itlinkbomb.c): spawn the bomb.
-    hook!(IT_8029DD58, it_8029DD58, (owner: *mut HSD_GObj, pos: &Vec3, x10: i32, part: i32, facing_dir: f32) -> *mut Item_GObj);
+    crate::port_hook!(IT_8029DD58, it_8029DD58, crate::adapt::it_8029DD58, (owner: *mut HSD_GObj, pos: &Vec3, x10: i32, part: i32, facing_dir: f32) -> *mut Item_GObj);
 }
 
 #[inline(always)]

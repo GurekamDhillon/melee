@@ -152,6 +152,17 @@ EXTRACTS = {
                     ("ftParts_GetBoneIndex", "ftPartsRemap", "ftParts_8007506C")]],
     "ftcommon": [("src/melee/ft/ftcommon.c", "void ftCommon_CalcGroundAccel_Deaccel(", "void ftCommon_UnlockECB("),
                  ("src/melee/ft/ftcommon.c", "void ftCommon_UpdateFacing(", "void ftCommon_8007DB24(")],
+    # tu/ftcoll.rs (the ftcoll.c capsule setters) + melee_runtime's script_hit.rs (hit-rule metadata table)
+    "ftcollset": [("src/melee/ft/ftchangeparam.c", "fn:ftCo_CalcYScaledKnockback", None),
+                  ("src/melee/ft/ft_0DF0.c", "fn:ftCo_800DEEB8", None),
+                  ("src/melee/ft/ft_0881.c", "fn:ft_80089228", None),
+                  ("pc/gameworld/script_hit_rules.inc", '#include "script_hit_rules_core.h"', "extern int Script_HitRulesInput"),
+                  ("pc/gameworld/script_hit_rules.inc", "static HRMeta* script_hit_metadata(", "int ScriptGame_HitRulesOwner("),
+                  ("pc/gameworld/script_hit_rules.inc", "void ScriptGame_HitRuleForget(", "void ScriptGame_HitRuleCreate("),
+                  ("pc/gameworld/script_hit_rules.inc", "void ScriptGame_HitRuleDamage(", "void ScriptGame_HitRuleRetire("),
+                  *[("src/melee/ft/ftcoll.c", "fn:ftColl_" + n, None) for n in
+                    ("8007ABD0", "8007AFF8", "8007B064", "8007B0C0", "8007B128", "8007B1B8", "8007B62C", "8007B760",
+                     "CreateAbsorbHit", "CreateReflectHit", "HurtboxInit")]],
 }
 
 
@@ -161,8 +172,17 @@ def extract(name):
         lines = (ROOT / src).read_text(encoding="utf-8").splitlines()
         if start.startswith("fn:"):
             pat = re.compile(r"\b" + re.escape(start[3:]) + r"\s*\(")
-            i = next(k for k, l in enumerate(lines) if pat.search(l) and not l.lstrip().startswith(("/", "*"))
-                     and not l.rstrip().endswith(";") and k + 1 < len(lines) and lines[k + 1] == "{")
+            # the signature may continue on up to two more lines before the brace line
+            def is_def(k):
+                for d in range(0, 4):
+                    if k + d >= len(lines):
+                        return False
+                    if lines[k + d] == "{":
+                        return True
+                    if lines[k + d].rstrip().endswith(";"):
+                        return False
+                return False
+            i = next(k for k, l in enumerate(lines) if pat.search(l) and not l.lstrip().startswith(("/", "*")) and is_def(k))
             j = next(k for k in range(i, len(lines)) if lines[k] == "}") + 1
             parts.append(f"/* extracted from {src}:{i + 1}-{j} by gen/cref/run.py */\n" + "\n".join(lines[i:j]) + "\n")
             continue

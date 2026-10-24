@@ -74,3 +74,12 @@ pub mod global {
         state().render_end()
     }
 }
+
+/// `HSD_Randi(max)` over the one process-wide state ([`global`]).
+pub unsafe fn HSD_Randi_global(max_val: i32) -> i32 {
+    global::HSD_Randi(max_val)
+}
+/// `HSD_Randf()` over the one process-wide state ([`global`]).
+pub unsafe fn HSD_Randf_global() -> f32 {
+    global::HSD_Randf()
+}

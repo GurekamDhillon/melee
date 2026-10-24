@@ -66,7 +66,7 @@ pub mod ext {
         }
     }
     // `efSync_Spawn(gfx_id, gobj, ...)` (ef/efsync.c, variadic): the trailing pointers as a slice.
-    hook!(EFSYNC_SPAWN, efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut c_void]) -> *mut c_void);
+    crate::port_hook!(EFSYNC_SPAWN, efSync_Spawn, crate::adapt::efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut c_void]) -> *mut c_void);
     pub static mut IT_802AB3F0: Option<fn(*mut HSD_GObj, *mut Vec3, i32) > = None;
             #[allow(non_snake_case)]
             pub fn it_802AB3F0(item: *mut HSD_GObj, out: *mut Vec3, which: i32)  {

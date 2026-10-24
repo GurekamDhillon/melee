@@ -41,9 +41,9 @@ pub mod ext {
             }
         };
     }
-    hook!(IT_802C17DC, it_802C17DC, (item: *mut HSD_GObj));
-    hook!(IT_802C16F8, it_802C16F8, (item: *mut HSD_GObj));
-    hook!(IT_802C1590, it_802C1590, (gobj: *mut HSD_GObj, pos: *mut Vec3, kind: i32, facing_dir: f32) -> *mut HSD_GObj);
+    crate::port_hook!(IT_802C17DC, it_802C17DC, crate::adapt::it_802C17DC, (item: *mut HSD_GObj));
+    crate::port_hook!(IT_802C16F8, it_802C16F8, crate::adapt::it_802C16F8, (item: *mut HSD_GObj));
+    crate::port_hook!(IT_802C1590, it_802C1590, crate::adapt::it_802C1590, (gobj: *mut HSD_GObj, pos: *mut Vec3, kind: i32, facing_dir: f32) -> *mut HSD_GObj);
     pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *const Vec3, *mut Vec3) > = None;
             #[allow(non_snake_case)]
             pub fn lb_8000B1CC(jobj: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3)  {
@@ -52,7 +52,7 @@ pub mod ext {
                     None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, off as _, out as _); } return; },
                 }
             }
-    hook!(FT_PLAYSFX, ft_PlaySFX, (fp: *mut Fighter, sfx: i32, vol: u8, pan: u8));
+    crate::port_hook!(FT_PLAYSFX, ft_PlaySFX, crate::adapt::ft_PlaySFX, (fp: *mut Fighter, sfx: i32, vol: u8, pan: u8));
     hook_or!(FT_800881D8, ft_800881D8, ft_800881d8_port, (fp: *mut Fighter, sfx: i32, vol: u8, pan: u8));
     fn ft_800881d8_port(fp: *mut Fighter, sfx: i32, vol: u8, pan: u8) {
         melee_fighter::ft0881::ft_800881d8(unsafe { &mut *fp }, sfx, vol, pan)

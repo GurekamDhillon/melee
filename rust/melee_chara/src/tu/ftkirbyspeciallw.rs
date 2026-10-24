@@ -42,7 +42,7 @@ pub mod ext {
             }
         };
     }
-    hook!(HSD_RANDI, HSD_Randi, (max: i32) -> i32);
+    crate::port_hook!(HSD_RANDI, HSD_Randi, crate::adapt::HSD_Randi, (max: i32) -> i32);
     hook_or!(FTCOMMON_8007F5CC, ftCommon_8007F5CC, melee_fighter::ftcommon3::ftcommon_8007f5cc,
         (gobj: *mut HSD_GObj, arg1: i32));
     hook_or!(FT_GETGROUNDFRICTIONMULTIPLIER, ft_GetGroundFrictionMultiplier,
@@ -58,8 +58,8 @@ pub mod ext {
             None => { unsafe { melee_world::tu::mplib::mpCheckAllRemap(pos_out as _, line_id_out as _, flags_out as _, normal_out as _, joint_id_skip as _, joint_id_only as _, x0 as _, y0 as _, x1 as _, y1 as _) != 0 } },
         }
     }
-    hook!(FT_PLAYSFX, ft_PlaySFX, (fp: *mut Fighter, sfx: i32, vol: u8, pan: u8));
-    hook!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, (kind: CmQuakeKind, pos: *mut Vec3));
+    crate::port_hook!(FT_PLAYSFX, ft_PlaySFX, crate::adapt::ft_PlaySFX, (fp: *mut Fighter, sfx: i32, vol: u8, pan: u8));
+    crate::port_hook!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, crate::adapt::Camera_RequestQuake, (kind: CmQuakeKind, pos: *mut Vec3));
     pub static mut EFLIB_DESTROYALL: Option<fn(*mut HSD_GObj)> = None;
     #[allow(non_snake_case)]
     pub fn efLib_DestroyAll(gobj: *mut HSD_GObj) {
@@ -73,7 +73,7 @@ pub mod ext {
     pub fn efSync_Spawn(id: i32, gobj: *mut HSD_GObj, va: &[usize]) -> *mut core::ffi::c_void {
         match unsafe { EFSYNC_SPAWN } {
             Some(f) => f(id, gobj, va),
-            None => panic!("TODO: efSync_Spawn is not ported"),
+            None => unsafe { crate::adapt::efSync_Spawn_usize(id, gobj, va) },
         }
     }
     /// Recording hook; unset, the native `melee_fighter::tu::ftparts` port runs.

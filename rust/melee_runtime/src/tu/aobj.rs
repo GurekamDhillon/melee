@@ -471,3 +471,9 @@ pub unsafe extern "C" fn HSD_AObjSetCurrentFrame(aobj: *mut HSD_AObj, frame: f32
 pub unsafe extern "C" fn _HSD_AObjForgetMemory(low: *mut c_void, high: *mut c_void) {
     endcallback_list = null_mut();
 }
+
+/// `HSD_AObjGetEndFrame` (aobj.h inline): the animation's last frame.
+pub unsafe fn HSD_AObjGetEndFrame(aobj: *mut HSD_AObj) -> f32 {
+    assert!(!aobj.is_null(), "aobj.h:0xAA aobj");
+    (*aobj).end_frame
+}

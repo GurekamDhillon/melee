@@ -34,7 +34,7 @@ pub mod ext {
                 }
             }
     // `HSD_JObjSetMtxDirtySub(jobj)` (baselib/jobj.c).
-    hook!(HSD_JOBJSETMTXDIRTYSUB, HSD_JObjSetMtxDirtySub, (jobj: *mut HSD_JObj));
+    crate::port_hook!(HSD_JOBJSETMTXDIRTYSUB, HSD_JObjSetMtxDirtySub, crate::adapt::HSD_JObjSetMtxDirtySub, (jobj: *mut HSD_JObj));
 }
 
 struct Dirty;

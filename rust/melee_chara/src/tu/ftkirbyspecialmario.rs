@@ -50,7 +50,7 @@ pub mod ext {
                     None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, off as _, out as _); } return; },
                 }
             }
-    hook!(HSD_RANDI, HSD_Randi, (max: i32) -> i32);
+    crate::port_hook!(HSD_RANDI, HSD_Randi, crate::adapt::HSD_Randi, (max: i32) -> i32);
     pub static mut IT_8029B6F8: Option<fn(*mut HSD_GObj, *mut Vec3, i32, f32) > = None;
             #[allow(non_snake_case)]
             pub fn it_8029B6F8(gobj: *mut HSD_GObj, pos: *mut Vec3, kind: i32, facing_dir: f32)  {
@@ -59,14 +59,14 @@ pub mod ext {
                     None => { unsafe { let _ = melee_items::tu::itmariofireball::it_8029B6F8(gobj as _, pos as _, kind as _, facing_dir as _); } return; },
                 }
             }
-    hook!(ITDRMARIOPILL_SPAWN, itDrMarioPill_Spawn,
+    crate::port_hook!(ITDRMARIOPILL_SPAWN, itDrMarioPill_Spawn, crate::adapt::itDrMarioPill_Spawn,
         (gobj: *mut HSD_GObj, pos: *mut Vec3, pick: i32, kind: i32, facing_dir: f32));
     /// `efSync_Spawn(gfx_id, gobj, ...)` (variadic in C; `va` are the extra word arguments).
     pub static mut EFSYNC_SPAWN: Option<fn(i32, *mut HSD_GObj, &[usize]) -> *mut core::ffi::c_void> = None;
     pub fn efSync_Spawn(id: i32, gobj: *mut HSD_GObj, va: &[usize]) -> *mut core::ffi::c_void {
         match unsafe { EFSYNC_SPAWN } {
             Some(f) => f(id, gobj, va),
-            None => panic!("TODO: efSync_Spawn is not ported"),
+            None => unsafe { crate::adapt::efSync_Spawn_usize(id, gobj, va) },
         }
     }
 }

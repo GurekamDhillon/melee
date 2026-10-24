@@ -92,7 +92,7 @@ pub mod ext {
                 }
             }
     // TARGET_PC `Slippi_Version()` (pc/platform); `Slippi_Codes()` is `melee_fighter::hooks`.
-    hook!(SLIPPI_VERSION, Slippi_Version, () -> i32);
+    crate::port_hook!(SLIPPI_VERSION, Slippi_Version, melee_runtime::tu::mex_data::Slippi_Version, () -> i32);
 }
 
 #[inline(always)]

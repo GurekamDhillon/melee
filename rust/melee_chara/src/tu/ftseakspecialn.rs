@@ -44,7 +44,7 @@ pub mod ext {
             }
         };
     }
-    hook!(HSD_RANDI, HSD_Randi, (max: i32) -> i32);
+    crate::port_hook!(HSD_RANDI, HSD_Randi, crate::adapt::HSD_Randi, (max: i32) -> i32);
     pub static mut FTCO_800BFFD0: Option<fn(*mut Fighter, i32, i32)> = None;
     #[allow(non_snake_case)]
     pub fn ftCo_800BFFD0(fp: *mut Fighter, a: i32, b: i32) {
@@ -57,7 +57,7 @@ pub mod ext {
         melee_fighter::tu::ftCo_Landing::ftCo_Landing_Enter_Basic);
     hook_or!(FT_PLAYSFX, ft_PlaySFX, (fp: *mut Fighter, sfx: i32, vol: i32, pan: i32),
         |fp: *mut Fighter, sfx: i32, vol: i32, pan: i32| unsafe { melee_fighter::hooks::play_sfx(&mut *fp, sfx, vol, pan) });
-    hook!(EFSYNC_SPAWN, efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut core::ffi::c_void]) -> *mut core::ffi::c_void);
+    crate::port_hook!(EFSYNC_SPAWN, efSync_Spawn, crate::adapt::efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut core::ffi::c_void]) -> *mut core::ffi::c_void);
     // Items (it/kinds/itseakneedlethrown.c, itseakneedleheld.c)
     pub static mut IT_802AFD8C: Option<fn(*mut HSD_GObj, *mut Vec3, ItemKind, f32) -> *mut HSD_GObj> = None;
             #[allow(non_snake_case)]

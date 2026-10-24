@@ -13,17 +13,17 @@ pub use crate::chars::r8::ftCrazyHand::ftcrazyhandgrabunk1b174::ftCh_TagFail_IAS
 /// Calls into TUs that are not ported yet (cm/camera.c). Each is a settable hook; unset it panics.
 pub mod ext {
     use melee_types::*;
-    crate::ch_hook!(CAMERA_8002E6FC, Camera_8002E6FC, (a: i32));
-    crate::ch_hook!(CAMERA_8002E948, Camera_8002E948, (cb: fn(*mut Vec3) -> bool));
-    crate::ch_hook!(CAMERA_8002EB5C, Camera_8002EB5C, (a: f32));
-    crate::ch_hook!(CAMERA_8002EC7C, Camera_8002EC7C, (a: f32));
-    crate::ch_hook!(CAMERA_8002ED9C, Camera_8002ED9C, (a: f32));
-    crate::ch_hook!(CAMERA_8002EEC8, Camera_8002EEC8, (a: f32));
-    crate::ch_hook!(CAMERA_8002EF14, Camera_8002EF14, ());
-    crate::ch_hook!(CAMERA_8002F0E4, Camera_8002F0E4, (a: i32));
-    crate::ch_hook!(CAMERA_8002F260, Camera_8002F260, () -> bool);
-    crate::ch_hook!(CAMERA_8002F274, Camera_8002F274, ());
-    crate::ch_hook!(CAMERA_SETMODETOSTANDARD, Camera_SetModeToStandard, ());
+    crate::port_hook!(CAMERA_8002E6FC, Camera_8002E6FC, crate::adapt::Camera_8002E6FC, (a: i32));
+    crate::port_hook!(CAMERA_8002E948, Camera_8002E948, crate::adapt::Camera_8002E948_rs, (cb: fn(*mut Vec3) -> bool));
+    crate::port_hook!(CAMERA_8002EB5C, Camera_8002EB5C, crate::adapt::Camera_8002EB5C, (a: f32));
+    crate::port_hook!(CAMERA_8002EC7C, Camera_8002EC7C, crate::adapt::Camera_8002EC7C, (a: f32));
+    crate::port_hook!(CAMERA_8002ED9C, Camera_8002ED9C, crate::adapt::Camera_8002ED9C, (a: f32));
+    crate::port_hook!(CAMERA_8002EEC8, Camera_8002EEC8, crate::adapt::Camera_8002EEC8, (a: f32));
+    crate::port_hook!(CAMERA_8002EF14, Camera_8002EF14, crate::adapt::Camera_8002EF14, ());
+    crate::port_hook!(CAMERA_8002F0E4, Camera_8002F0E4, crate::adapt::Camera_8002F0E4, (a: i32));
+    crate::port_hook!(CAMERA_8002F260, Camera_8002F260, crate::adapt::Camera_8002F260, () -> bool);
+    crate::port_hook!(CAMERA_8002F274, Camera_8002F274, crate::adapt::Camera_8002F274, ());
+    crate::port_hook!(CAMERA_SETMODETOSTANDARD, Camera_SetModeToStandard, crate::adapt::Camera_SetModeToStandard, ());
 }
 
 const M_PI: f64 = 3.14159265358979323846;

@@ -1,9 +1,8 @@
 //! Calls out of the character code into group 3 (ft/ core: fighter.c, ftanim.c, ftcoll.c,
 //! ft_0877/ft_0881, ftCommon states) that group 3 has not ported yet.
 //!
-//! Each is a settable function pointer. Unset, it panics with `TODO(group3): <C name>`, so a
-//! missing port is loud, never a silent wrong value. When group 3 ports one, its default here
-//! becomes a call to that port (as `ftCommon_8007D5D4` / `ftCommon_8007D60C` already are).
+//! Each is a settable function pointer; unset, it calls the port in the crate below (every
+//! callee here has one).
 //! Return-valued C functions returning `bool` / `GroundOrAir` return `i32` here (MSL `bool` is int).
 //!
 //! Single-threaded game state, like the C globals: install before the match.
@@ -13,28 +12,7 @@ use melee_types::{Fighter, HSD_GObj};
 
 pub type G = *mut HSD_GObj;
 
-#[inline]
-fn need<T>(h: Option<T>, what: &str) -> T {
-    match h {
-        Some(f) => f,
-        None => panic!("TODO(group3): {what} is not ported; install melee_chara::stubs hook"),
-    }
-}
-
-macro_rules! stub {
-    ($(#[$m:meta])* $hook:ident, $name:ident, ($($a:ident: $t:ty),*) $(-> $r:ty)?) => {
-        $(#[$m])*
-        pub static mut $hook: Option<fn($($t),*) $(-> $r)?> = None;
-        $(#[$m])*
-        #[inline]
-        pub fn $name($($a: $t),*) $(-> $r)? {
-            need(unsafe { $hook }, stringify!($name))($($a),*)
-        }
-    };
-}
-
-/// Like `stub!`, but an unset hook falls back to group 3's verified port `$port` instead of
-/// panicking. The hook stays so the character oracle can install recording stubs.
+/// A settable hook that, unset, calls group 3's verified port `$port`. The hook stays so the character oracle can install recording stubs.
 macro_rules! stub_or {
     ($(#[$m:meta])* $hook:ident, $name:ident, $port:path, ($($a:ident: $t:ty),*) $(-> $r:ty)?) => {
         $(#[$m])*
@@ -155,12 +133,12 @@ pub fn ftCommon_AirToGroundStateChange(g: G, fp: &mut Fighter, msid: i32, flags:
 // ---- Round 5 (gen/port_r5.py): more group-3 calls the character code makes. ----
 // `HSD_GObjEvent` arguments are `Option<unsafe extern "C" fn(*mut HSD_GObj)>` (chars::cb entries).
 use melee_types::HSD_GObjEvent;
-stub!(/// TODO(group3): `ft_80082C74(gobj, cb)` (ft/ftcoll.c, ground collision with edge callback).
-    FT_80082C74, ft_80082C74, (g: G, cb: HSD_GObjEvent));
-stub!(/// TODO(group3): `ft_8008403C(gobj, cb)` (ft/ft_0877.c, air collision with landing callback).
-    FT_8008403C, ft_8008403C, (g: G, cb: HSD_GObjEvent));
-stub!(/// TODO(group3): `ft_800841B8(gobj, cb)` (ft/ft_0877.c).
-    FT_800841B8, ft_800841B8, (g: G, cb: HSD_GObjEvent));
+stub_or!(/// TODO(group3): `ft_80082C74(gobj, cb)` (ft/ftcoll.c, ground collision with edge callback).
+    FT_80082C74, ft_80082C74, crate::adapt::ft_80082C74, (g: G, cb: HSD_GObjEvent));
+stub_or!(/// TODO(group3): `ft_8008403C(gobj, cb)` (ft/ft_0877.c, air collision with landing callback).
+    FT_8008403C, ft_8008403C, crate::adapt::ft_8008403C, (g: G, cb: HSD_GObjEvent));
+stub_or!(/// TODO(group3): `ft_800841B8(gobj, cb)` (ft/ft_0877.c).
+    FT_800841B8, ft_800841B8, crate::adapt::ft_800841B8, (g: G, cb: HSD_GObjEvent));
     /// TODO(group3): `ft_80084104(gobj)` (ft/ft_0877.c).
 pub static mut FT_80084104: Option<fn(G)> = None;
         /// TODO(group3): `ft_80084104(gobj)` (ft/ft_0877.c).
@@ -177,8 +155,8 @@ pub static mut FTPARTS_80074B0C: Option<fn(G, i32, i32)> = None;
     pub fn ftParts_80074B0C(g: G, model_idx: i32, val: i32) {
         match unsafe { FTPARTS_80074B0C } { Some(f) => f(g, model_idx, val), None => { unsafe { let _ = melee_fighter::tu::ftparts::ftParts_80074B0C(g as _, model_idx as _, val as _); } return; } }
     }
-stub!(/// TODO(group3): `ft_CheckGroundAndLedge(gobj, direction)` (ft/ftcoll.c; returns bool).
-    FT_CHECKGROUNDANDLEDGE, ft_CheckGroundAndLedge, (g: G, direction: i32) -> i32);
+stub_or!(/// TODO(group3): `ft_CheckGroundAndLedge(gobj, direction)` (ft/ftcoll.c; returns bool).
+    FT_CHECKGROUNDANDLEDGE, ft_CheckGroundAndLedge, crate::adapt::ft_CheckGroundAndLedge, (g: G, direction: i32) -> i32);
 stub_or!(/// `ftCommon_8007DB24(gobj)`: group 3's verified port (night 3) when the hook is unset.
     FTCOMMON_8007DB24, ftCommon_8007DB24, melee_fighter::ftcommon3::ftcommon_8007db24, (g: G));
 stub_or!(/// `ftCommon_8007D92C(gobj)`: group 3's verified port (night 3) when the hook is unset.
@@ -270,8 +248,8 @@ pub fn ftCommon_UpdateFacing(fp: &mut Fighter) {
 
 stub_or!(/// `ftColl_8007AEF8(gobj)` (ft/ftcoll.c): group 3's verified port (round 13, ft0df.rs) when the hook is unset.
     FTCOLL_8007AEF8, ftColl_8007AEF8, melee_fighter::ft0df::ftcoll_8007aef8, (g: G));
-stub!(/// TODO(group3): `ftCo_AirCatchHit_Coll(gobj)` (ft/ftcoll.c / ftCommon AirCatch).
-    FTCO_AIRCATCHHIT_COLL, ftCo_AirCatchHit_Coll, (g: G));
+stub_or!(/// TODO(group3): `ftCo_AirCatchHit_Coll(gobj)` (ft/ftcoll.c / ftCommon AirCatch).
+    FTCO_AIRCATCHHIT_COLL, ftCo_AirCatchHit_Coll, crate::adapt::ftCo_AirCatchHit_Coll, (g: G));
     /// TODO(group3): `ftAnim_ApplyPartAnim(gobj, a, b, frame)` (ft/ftanim.c).
 pub static mut FTANIM_APPLYPARTANIM: Option<fn(G, i32, i32, f32)> = None;
         /// TODO(group3): `ftAnim_ApplyPartAnim(gobj, a, b, frame)` (ft/ftanim.c).

@@ -57,8 +57,8 @@ pub mod ext {
         };
     }
     // `efSync_Spawn(gfx_id, gobj, ...)` (ef/efsync.c, variadic): the trailing arguments as a slice.
-    hook!(EFSYNC_SPAWN, efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut c_void]) -> *mut c_void);
-    hook!(FTCOLL_8007ABD0, ftColl_8007ABD0, (hit: *mut HitCapsule, damage_amount: u32, gobj: *mut HSD_GObj));
+    crate::port_hook!(EFSYNC_SPAWN, efSync_Spawn, crate::adapt::efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut c_void]) -> *mut c_void);
+    crate::port_hook!(FTCOLL_8007ABD0, ftColl_8007ABD0, crate::adapt::ftColl_8007ABD0, (hit: *mut HitCapsule, damage_amount: u32, gobj: *mut HSD_GObj));
     // `HSD_Randi(n)` (baselib/random.c).
     hook_or!(HSD_RANDI, HSD_Randi, melee_fighter::hooks::hsd_randi, (n: i32) -> i32);
 }

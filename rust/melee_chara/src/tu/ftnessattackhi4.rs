@@ -50,7 +50,7 @@ pub mod ext {
                     None => { unsafe { let _ = melee_runtime::tu::lbcollision::lbColl_80008434(hit as _); } return; },
                 }
             }
-    hook!(FTCOLL_8007ABD0, ftColl_8007ABD0, (hit: *mut HitCapsule, damage: u32, gobj: *mut HSD_GObj));
+    crate::port_hook!(FTCOLL_8007ABD0, ftColl_8007ABD0, crate::adapt::ftColl_8007ABD0, (hit: *mut HitCapsule, damage: u32, gobj: *mut HSD_GObj));
     pub static mut FTCO_800BFFD0: Option<fn(*mut Fighter, u32, u32)> = None;
     #[allow(non_snake_case)]
     pub fn ftCo_800BFFD0(fp: *mut Fighter, a: u32, b: u32) {

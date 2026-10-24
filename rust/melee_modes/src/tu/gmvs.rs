@@ -258,23 +258,13 @@ const PAD_TRIGGER_Z: u64 = 1 << 4;
 const PAD_BUTTON_A: i32 = 1 << 8;
 const PAD_BUTTON_START: i32 = 1 << 12;
 
+pub use melee_runtime::tu::gmvs_state::{controller, gmVs_GetSceneController, gmVs_GetSceneState, gm_8016B1D8, gm_GetStartMeleeRules};
 pub static lbl_803D5620: [u32; 4] = [0x7C859, 0x7C85A, 0x7C85B, 0x7C85C];
 pub static lbl_803D5630: [u32; 6] = [u32::MAX, 0x7C858, 0x7C862, 0x7C85F, 0x7C854, 0x7C853];
 
-/* 46B6A0 */
-pub static mut controller: VsSceneController = unsafe { core::mem::zeroed() };
 
-pub unsafe fn gmVs_GetSceneController() -> *mut VsSceneController {
-    addr_of_mut!(controller)
-}
 
-pub unsafe fn gmVs_GetSceneState() -> *mut VsSceneState {
-    addr_of_mut!(controller.state)
-}
 
-pub unsafe fn gm_GetStartMeleeRules() -> *mut StartMeleeRules {
-    addr_of_mut!(controller.start)
-}
 
 pub unsafe fn fn_8016AE60() -> *mut lbl_8046B488_t {
     ext::gm_1601_GetUnkData()
@@ -411,9 +401,6 @@ pub unsafe fn gm_8016B1C4() -> i32 {
     (*gm_GetStartMeleeRules()).x5_2() as i32
 }
 
-pub unsafe fn gm_8016B1D8() -> i32 {
-    (*gm_GetStartMeleeRules()).x5_3() as i32
-}
 
 pub unsafe fn gm_8016B1EC() -> bool {
     (*gmVs_GetSceneController()).state.unk_0 == 0

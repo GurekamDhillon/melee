@@ -43,7 +43,7 @@ pub mod ext {
             }
         };
     }
-    hook!(EFASYNC_SPAWN, efAsync_Spawn, (gobj: *mut HSD_GObj, q: *mut core::ffi::c_void, kind: u32, gfx: u32, jobj: *mut HSD_JObj, angle: *const f32));
+    crate::port_hook!(EFASYNC_SPAWN, efAsync_Spawn, crate::adapt::efAsync_Spawn_ptr, (gobj: *mut HSD_GObj, q: *mut core::ffi::c_void, kind: u32, gfx: u32, jobj: *mut HSD_JObj, angle: *const f32));
     pub static mut FTCOMMON_8007E5AC: Option<fn(*mut Fighter)> = None;
     #[allow(non_snake_case)]
     pub fn ftCommon_8007E5AC(fp: *mut Fighter) {

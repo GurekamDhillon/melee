@@ -83,7 +83,7 @@ pub mod ext {
                     None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, off as _, out as _); } return; },
                 }
             }
-    hook!(FTMATERIAL_800BFB4C, ftMaterial_800BFB4C, (gobj: *mut HSD_GObj, color: *const _GXColor));
+    crate::port_hook!(FTMATERIAL_800BFB4C, ftMaterial_800BFB4C, crate::adapt::ftMaterial_800BFB4C, (gobj: *mut HSD_GObj, color: *const _GXColor));
     pub static mut IT_8026B3F8: Option<fn(*mut c_void, i32) > = None;
             #[allow(non_snake_case)]
             pub fn it_8026B3F8(article: *mut c_void, kind: i32)  {

@@ -32,7 +32,7 @@ pub mod ext {
         |fp: *mut Fighter| unsafe { melee_fighter::ftcommon2::ftcommon_8007d5d4(&mut *fp) });
     hook_or!(FTCOMMON_8007D7FC, ftCommon_8007D7FC, (fp: *mut Fighter),
         |fp: *mut Fighter| unsafe { melee_fighter::ftcommon3::ftcommon_8007d7fc(&mut *fp) });
-    hook!(HSD_JOBJSETMTXDIRTYSUB, HSD_JObjSetMtxDirtySub, (jobj: *mut HSD_JObj));
+    crate::port_hook!(HSD_JOBJSETMTXDIRTYSUB, HSD_JObjSetMtxDirtySub, crate::adapt::HSD_JObjSetMtxDirtySub, (jobj: *mut HSD_JObj));
     // The ft/ callees shared by the ftYoshi / ftZelda TUs; each TU's `ext` re-exports the ones it calls.
     pub static mut FTANIM_8006EBA4: Option<fn(*mut HSD_GObj)> = None;
     #[allow(non_snake_case)]
@@ -62,9 +62,9 @@ pub mod ext {
     hook_or!(FT_80081D0C, ft_80081D0C, (gobj: *mut HSD_GObj) -> i32,
         |g: *mut HSD_GObj| melee_fighter::tu::ft_081b::ft_80081d0c(g) as i32);
     hook_or!(FT_800827A0, ft_800827A0, (gobj: *mut HSD_GObj) -> bool, melee_fighter::tu::ft_081b::ft_800827a0);
-    hook!(FT_8008403C, ft_8008403C, (gobj: *mut HSD_GObj, cb: HSD_GObjEvent));
-    hook!(FT_80082C74, ft_80082C74, (gobj: *mut HSD_GObj, cb: HSD_GObjEvent));
-    hook!(FT_80083A48, ft_80083A48, (gobj: *mut HSD_GObj, cb: HSD_GObjEvent));
+    crate::port_hook!(FT_8008403C, ft_8008403C, crate::adapt::ft_8008403C, (gobj: *mut HSD_GObj, cb: HSD_GObjEvent));
+    crate::port_hook!(FT_80082C74, ft_80082C74, crate::adapt::ft_80082C74, (gobj: *mut HSD_GObj, cb: HSD_GObjEvent));
+    crate::port_hook!(FT_80083A48, ft_80083A48, crate::adapt::ft_80083A48, (gobj: *mut HSD_GObj, cb: HSD_GObjEvent));
     hook_or!(FT_CHECKGROUNDANDLEDGE, ft_CheckGroundAndLedge, (gobj: *mut HSD_GObj, dir: i32) -> bool,
         melee_fighter::tu::ft_081b::ft_check_ground_and_ledge);
     hook_or!(FTCLIFFCOMMON_80081298, ftCliffCommon_80081298, (gobj: *mut HSD_GObj) -> bool,

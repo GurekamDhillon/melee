@@ -91,7 +91,7 @@ pub mod ext {
                     None => { unsafe { let _ = melee_items::tu::itpeachtoad::it_802BE100(item as _); } return; },
                 }
             }
-    hook!(FTCOLL_8007B1B8, ftColl_8007B1B8, (g: G, desc: *mut ShieldDesc, cb: HSD_GObjEvent));
+    crate::port_hook!(FTCOLL_8007B1B8, ftColl_8007B1B8, crate::adapt::ftColl_8007B1B8, (g: G, desc: *mut ShieldDesc, cb: HSD_GObjEvent));
     hook_or!(FTCOMMON_FALLBASIC, ftCommon_FallBasic, |fp: *mut Fighter| melee_fighter::ftcommon::fall_basic(unsafe { &mut *fp }), (fp: *mut Fighter));
     hook_or!(FTCOMMON_CALCSELFACCEL_DEACCEL, ftCommon_CalcSelfAccel_Deaccel, |fp: *mut Fighter, f| melee_fighter::ftcommon::calc_self_accel_deaccel(unsafe { &mut *fp }, f), (fp: *mut Fighter, friction: f32));
 }

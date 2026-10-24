@@ -81,10 +81,10 @@ pub mod ext {
         }
     }
     /// `CostumeListsForeachCharacter[kind].costume_list`.
-    hook!(COSTUMELIST, CostumeListsForeachCharacter_costume_list, (kind: i32) -> *mut UnkCostumeStruct);
-    hook!(HSD_ARCHIVEGETPUBLICADDRESS, HSD_ArchiveGetPublicAddress, (archive: *mut HSD_Archive, name: &str) -> *mut c_void);
+    crate::port_hook!(COSTUMELIST, CostumeListsForeachCharacter_costume_list, crate::adapt::CostumeListsForeachCharacter_costume_list, (kind: i32) -> *mut UnkCostumeStruct);
+    crate::port_hook!(HSD_ARCHIVEGETPUBLICADDRESS, HSD_ArchiveGetPublicAddress, crate::adapt::HSD_ArchiveGetPublicAddress, (archive: *mut HSD_Archive, name: &str) -> *mut c_void);
     /// `&fighter_x2040_alloc_data`.
-    hook!(FIGHTER_X2040_ALLOC_DATA, fighter_x2040_alloc_data, () -> *mut c_void);
+    crate::port_hook!(FIGHTER_X2040_ALLOC_DATA, fighter_x2040_alloc_data, crate::adapt::fighter_x2040_alloc_data, () -> *mut c_void);
     pub static mut HSD_OBJALLOC: Option<fn(*mut c_void) -> *mut c_void> = None;
             #[allow(non_snake_case)]
             pub fn HSD_ObjAlloc(data: *mut c_void) -> *mut c_void {
@@ -101,8 +101,8 @@ pub mod ext {
                     None => { unsafe { let _ = melee_runtime::tu::objalloc::HSD_ObjFree(data as _, obj as _); } return; },
                 }
             }
-    hook!(FTPARTSPOBJSETDEFAULTCLASS, ftPartsPObjSetDefaultClass, ());
-    hook!(FTPARTSPOBJCLEARDEFAULTCLASS, ftPartsPObjClearDefaultClass, ());
+    crate::port_hook!(FTPARTSPOBJSETDEFAULTCLASS, ftPartsPObjSetDefaultClass, crate::adapt::ftPartsPObjSetDefaultClass, ());
+    crate::port_hook!(FTPARTSPOBJCLEARDEFAULTCLASS, ftPartsPObjClearDefaultClass, crate::adapt::ftPartsPObjClearDefaultClass, ());
     pub static mut HSD_JOBJLOADJOINT: Option<fn(*mut HSD_Joint) -> *mut HSD_JObj> = None;
             #[allow(non_snake_case)]
             pub fn HSD_JObjLoadJoint(joint: *mut HSD_Joint) -> *mut HSD_JObj {
@@ -111,9 +111,9 @@ pub mod ext {
                     None => { return unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(joint as _) as _ }; },
                 }
             }
-    hook!(HSD_JOBJREMOVEALL, HSD_JObjRemoveAll, (jobj: *mut HSD_JObj));
-    hook!(FTPARTS_80075650, ftParts_80075650, (gobj: *mut HSD_GObj, jobj: *mut HSD_JObj, list: *mut DObjList));
-    hook!(FTPARTS_8007487C, ftParts_8007487C,
+    crate::port_hook!(HSD_JOBJREMOVEALL, HSD_JObjRemoveAll, crate::adapt::HSD_JObjRemoveAll, (jobj: *mut HSD_JObj));
+    crate::port_hook!(FTPARTS_80075650, ftParts_80075650, crate::adapt::ftParts_80075650, (gobj: *mut HSD_GObj, jobj: *mut HSD_JObj, list: *mut DObjList));
+    crate::port_hook!(FTPARTS_8007487C, ftParts_8007487C, crate::adapt::ftParts_8007487C,
         (desc: *mut FtPartsDesc, vis: *mut FtPartsVis, costume_id: u32, a: *mut DObjList, b: *mut DObjList));
     pub static mut FTPARTS_80074CA0: Option<fn(*mut FtPartsVis, i32, *mut DObjList)> = None;
     #[allow(non_snake_case)]
@@ -139,10 +139,10 @@ pub mod ext {
             None => { unsafe { let _ = melee_fighter::tu::ftdynamics::ftCo_8009DC54(&mut *(fp as *mut _)); } },
         }
     }
-    hook!(HSD_JOBJGETMTXPTR, HSD_JObjGetMtxPtr, (jobj: *mut HSD_JObj) -> *mut [f32; 4]);
-    hook!(HSD_JOBJCOPYMTX, HSD_JObjCopyMtx, (jobj: *mut HSD_JObj, mtx: *mut [f32; 4]));
+    crate::port_hook!(HSD_JOBJGETMTXPTR, HSD_JObjGetMtxPtr, crate::adapt::HSD_JObjGetMtxPtr, (jobj: *mut HSD_JObj) -> *mut [f32; 4]);
+    crate::port_hook!(HSD_JOBJCOPYMTX, HSD_JObjCopyMtx, crate::adapt::HSD_JObjCopyMtx, (jobj: *mut HSD_JObj, mtx: *mut [f32; 4]));
 
-    hook!(HSD_JOBJSETMTXDIRTYSUB, HSD_JObjSetMtxDirtySub, (jobj: *mut HSD_JObj));
+    crate::port_hook!(HSD_JOBJSETMTXDIRTYSUB, HSD_JObjSetMtxDirtySub, crate::adapt::HSD_JObjSetMtxDirtySub, (jobj: *mut HSD_JObj));
     pub static mut HSD_JOBJDISPALL: Option<fn(*mut HSD_JObj, *mut [f32; 4], u32, u32)> = None;
     #[allow(non_snake_case)]
     pub fn HSD_JObjDispAll(jobj: *mut HSD_JObj, vmtx: *mut [f32; 4], flags: u32, rendermode: u32) {
@@ -180,7 +180,7 @@ pub mod ext {
     pub fn efSync_Spawn(id: i32, gobj: *mut HSD_GObj, va: &[usize]) -> *mut c_void {
         match unsafe { EFSYNC_SPAWN } {
             Some(f) => f(id, gobj, va),
-            None => panic!("TODO: efSync_Spawn is not ported"),
+            None => unsafe { crate::adapt::efSync_Spawn_usize(id, gobj, va) },
         }
     }
 }

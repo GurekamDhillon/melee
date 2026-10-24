@@ -37,7 +37,7 @@ pub mod ext {
         };
     }
     // `efSync_Spawn(gfx_id, gobj, ...)` (ef/efsync.c, variadic): the trailing arguments as a slice.
-    hook!(EFSYNC_SPAWN, efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut c_void]) -> *mut c_void);
+    crate::port_hook!(EFSYNC_SPAWN, efSync_Spawn, crate::adapt::efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut c_void]) -> *mut c_void);
     hook_or!(FT_800824A0, ft_800824A0, melee_fighter::tu::ft_081b::ft_800824a0, (gobj: *mut HSD_GObj, ecb: *mut ftCollisionBox) -> bool);
     hook_or!(FT_80082888, ft_80082888, melee_fighter::tu::ft_081b::ft_80082888, (gobj: *mut HSD_GObj, ecb: *mut ftCollisionBox) -> bool);
     // Recording hook; unset, the native `melee_fighter::tu::ftparts` port runs.

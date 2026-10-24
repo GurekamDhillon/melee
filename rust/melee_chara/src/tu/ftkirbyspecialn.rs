@@ -85,7 +85,7 @@ pub mod ext {
             None => { unsafe { let _ = melee_world::tu::mpcoll::mpUpdateFloorSkip(coll as _); } },
         }
     }
-    hook!(HSD_RANDI, HSD_Randi, (n: i32) -> i32);
+    crate::port_hook!(HSD_RANDI, HSD_Randi, crate::adapt::HSD_Randi, (n: i32) -> i32);
     pub static mut KB_800F19AC: Option<fn(G) > = None;
             #[allow(non_snake_case)]
             pub fn ftKb_SpecialN_800F19AC(g: G)  {
@@ -150,7 +150,7 @@ pub mod ext {
                     None => { unsafe { let _ = melee_items::tu::itkirby_2F23::it_802F23EC(item as _, g as _, dir as _); } return; },
                 }
             }
-    hook!(IT_802F28C8, it_802F28C8, (item: *mut Item_GObj, flag: i32, f: f32));
+    crate::port_hook!(IT_802F28C8, it_802F28C8, crate::adapt::it_802F28C8, (item: *mut Item_GObj, flag: i32, f: f32));
 
     pub static mut IT_802F295C: Option<fn(G, *mut itUnk2_DatAttrs) -> f32> = None;
             #[allow(non_snake_case)]
@@ -160,7 +160,7 @@ pub mod ext {
                     None => { return unsafe { melee_items::tu::it_2F28::it_802F295C(g as _, attr as _) as _ }; },
                 }
             }
-    hook!(LBANIM_8001E8F8, lbAnim_8001E8F8, (tree: *mut FigaTree) -> f32);
+    crate::port_hook!(LBANIM_8001E8F8, lbAnim_8001E8F8, crate::adapt::lbAnim_8001E8F8, (tree: *mut FigaTree) -> f32);
     pub static mut LB_8000B1CC: Option<fn(*mut c_void, *const Vec3, *mut Vec3)> = None;
     #[allow(non_snake_case)]
     pub fn lb_8000B1CC(joint: *mut c_void, off: *const Vec3, out: *mut Vec3) {
@@ -170,7 +170,7 @@ pub mod ext {
         }
     }
     // `efAsync_Spawn(gobj, queue, kind, gfx_id, ...)` (ef/efasync.c, variadic): trailing pointers.
-    hook!(EFASYNC_SPAWN, efAsync_Spawn, (gobj: G, queue: *mut c_void, kind: u32, gfx_id: u32, args: &[*mut c_void]));
+    crate::port_hook!(EFASYNC_SPAWN, efAsync_Spawn, crate::adapt::efAsync_Spawn_slice, (gobj: G, queue: *mut c_void, kind: u32, gfx_id: u32, args: &[*mut c_void]));
     // Ported TUs (default = the port).
     hook_or!(FTCO_800BD1DC, ftCo_800BD1DC, melee_fighter::tu::ftCo_CaptureKirby::ftCo_800BD1DC, (g: G, victim: G));
     hook_or!(FTCO_800BD19C, ftCo_800BD19C, |g, p: *const Vec3| melee_fighter::tu::ftCo_CaptureKirby::ftCo_800BD19C(g, unsafe { &*p }), (g: G, pos: *const Vec3) -> f32);

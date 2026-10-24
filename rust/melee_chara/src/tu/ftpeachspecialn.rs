@@ -86,7 +86,7 @@ pub mod ext {
                     None => { unsafe { let _ = melee_items::tu::itpeachtoad::it_802BE100(toad as _); } return; },
                 }
             }
-    hook!(FTCOLL_8007B1B8, ftColl_8007B1B8,
+    crate::port_hook!(FTCOLL_8007B1B8, ftColl_8007B1B8, crate::adapt::ftColl_8007B1B8,
         (gobj: *mut HSD_GObj, shield: *mut core::ffi::c_void, cb: HSD_GObjEvent));
 }
 

@@ -46,12 +46,12 @@ pub mod ext {
     pub fn efSync_Spawn(id: i32, gobj: *mut HSD_GObj, va: &[usize]) -> *mut core::ffi::c_void {
         match unsafe { EFSYNC_SPAWN } {
             Some(f) => f(id, gobj, va),
-            None => panic!("TODO: efSync_Spawn is not ported"),
+            None => unsafe { crate::adapt::efSync_Spawn_usize(id, gobj, va) },
         }
     }
     // `ft_80459B88.hats[index]`, or NULL when `hats` is NULL.
-    hook!(FT_80459B88_HAT, ft_80459B88_hat, (index: i32) -> *mut KirbyHatStruct);
-    hook!(FTCOMMON_SETACCESSORY, ftCommon_SetAccessory, (fp: *mut Fighter, joint: *mut HSD_Joint));
+    crate::port_hook!(FT_80459B88_HAT, ft_80459B88_hat, crate::adapt::ft_80459B88_hat, (index: i32) -> *mut KirbyHatStruct);
+    crate::port_hook!(FTCOMMON_SETACCESSORY, ftCommon_SetAccessory, crate::adapt::ftCommon_SetAccessory, (fp: *mut Fighter, joint: *mut HSD_Joint));
     hook_or!(FTCOMMON_GETMODELSCALE, ftCommon_GetModelScale, ftcommon_get_model_scale_port, (fp: *mut Fighter) -> f32);
     fn ftcommon_get_model_scale_port(fp: *mut Fighter) -> f32 {
         melee_fighter::ftcommon2::get_model_scale(unsafe { &*fp })
@@ -80,7 +80,7 @@ pub mod ext {
             None => { unsafe { melee_fighter::tu::ftcolanim::ftco_800bffd0(&mut *(fp as *mut _), a as _, b as _) as _ } },
         }
     }
-    hook!(FTCOLL_8007ABD0, ftColl_8007ABD0, (hit: *mut HitCapsule, dmg: u32, gobj: *mut HSD_GObj));
+    crate::port_hook!(FTCOLL_8007ABD0, ftColl_8007ABD0, crate::adapt::ftColl_8007ABD0, (hit: *mut HitCapsule, dmg: u32, gobj: *mut HSD_GObj));
 }
 
 type G = *mut HSD_GObj;

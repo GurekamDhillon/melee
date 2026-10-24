@@ -6,12 +6,12 @@ use melee_types::{Fighter, HSD_GObj};
 
 /// `efLib_PauseAll` (defined in ext).
 pub unsafe extern "C" fn ext__efLib_PauseAll(g: *mut HSD_GObj) {
-    panic!("TODO(group3): efLib_PauseAll (outside ft/kinds) is not ported");
+    melee_world::tu::eflib::efLib_PauseAll(g);
 }
 
 /// `efLib_ResumeAll` (defined in ext).
 pub unsafe extern "C" fn ext__efLib_ResumeAll(g: *mut HSD_GObj) {
-    panic!("TODO(group3): efLib_ResumeAll (outside ft/kinds) is not ported");
+    melee_world::tu::eflib::efLib_ResumeAll(g);
 }
 
 /// `ftCa_Init_800E28C8` (defined in src/melee/ft/kinds/ftCaptain/ftcaptain.c).
@@ -21,17 +21,17 @@ pub unsafe extern "C" fn ftcaptain__ftCa_Init_800E28C8(g: *mut HSD_GObj) {
 
 /// `ftCa_SpecialHi_800E400C` (defined in src/melee/ft/kinds/ftCaptain/ftcaptainspeciallw.c).
 pub unsafe extern "C" fn ftcaptainspeciallw__ftCa_SpecialHi_800E400C(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftCa_SpecialHi_800E400C (src/melee/ft/kinds/ftCaptain/ftcaptainspeciallw.c) is not ported");
+    let _ = crate::tu::ftcaptainspeciallw::ftCa_SpecialHi_800E400C(g as _);
 }
 
 /// `ftCo_800DB464` (defined in src/melee/ft/kinds/ftCommon/ftCo_CapturePulled.c).
 pub unsafe extern "C" fn ftCo_CapturePulled__ftCo_800DB464(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftCo_800DB464 (src/melee/ft/kinds/ftCommon/ftCo_CapturePulled.c) is not ported");
+    melee_fighter::tu::ftCo_CapturePulled::ftCo_800DB464(g);
 }
 
 /// `ftCo_LandingAir_EnterWithLag` (defined in src/melee/ft/kinds/ftCommon/ftCo_LandingAir.c).
 pub unsafe extern "C" fn ftCo_LandingAir__ftCo_LandingAir_EnterWithLag(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftCo_LandingAir_EnterWithLag (src/melee/ft/kinds/ftCommon/ftCo_LandingAir.c) is not ported");
+    melee_fighter::tu::ftCo_LandingAir::ftCo_LandingAir_EnterWithLag(g);
 }
 
 /// `fn_801588B8` (defined in src/melee/ft/kinds/ftCrazyHand/ftcrazyhandfingerbeam0.c).
@@ -441,17 +441,17 @@ pub unsafe extern "C" fn ftlinkspecials__onAccessory4(g: *mut HSD_GObj) {
 
 /// `ftLg_SpecialN_FireSpawn` (defined in src/melee/ft/kinds/ftLuigi/ftluigispecialn.c).
 pub unsafe extern "C" fn ftluigispecialn__ftLg_SpecialN_FireSpawn(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftLg_SpecialN_FireSpawn (src/melee/ft/kinds/ftLuigi/ftluigispecialn.c) is not ported");
+    let _ = crate::tu::ftluigispecialn::ftLg_SpecialN_FireSpawn(g as _);
 }
 
 /// `updateRot` (defined in src/melee/ft/kinds/ftMario/ftmariospeciallw.c).
 pub unsafe extern "C" fn ftmariospeciallw__updateRot(g: *mut HSD_GObj) {
-    panic!("TODO(group4): updateRot (src/melee/ft/kinds/ftMario/ftmariospeciallw.c) is not ported");
+    let _ = crate::tu::ftmariospeciallw::updateRot(g as _);
 }
 
 /// `ftMr_SpecialN_ItemFireSpawn` (defined in src/melee/ft/kinds/ftMario/ftmariospecialn.c).
 pub unsafe extern "C" fn ftmariospecialn__ftMr_SpecialN_ItemFireSpawn(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftMr_SpecialN_ItemFireSpawn (src/melee/ft/kinds/ftMario/ftmariospecialn.c) is not ported");
+    let _ = crate::tu::ftmariospecialn::ftMr_SpecialN_ItemFireSpawn(g as _);
 }
 
 /// `ftMh_MS_362_80152E28` (defined in src/melee/ft/kinds/ftMasterHand/ftmasterhandfingerbeam.c).
@@ -461,22 +461,22 @@ pub unsafe extern "C" fn ftmasterhandfingerbeam__ftMh_MS_362_80152E28(g: *mut HS
 
 /// `ftMt_Init_OnDeath2` (defined in src/melee/ft/kinds/ftMewtwo/ftmewtwo.c).
 pub unsafe extern "C" fn ftmewtwo__ftMt_Init_OnDeath2(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftMt_Init_OnDeath2 (src/melee/ft/kinds/ftMewtwo/ftmewtwo.c) is not ported");
+    let _ = crate::tu::ftmewtwo::ftMt_Init_OnDeath2(g as _);
 }
 
 /// `ftMt_Init_OnTakeDamage` (defined in src/melee/ft/kinds/ftMewtwo/ftmewtwo.c).
 pub unsafe extern "C" fn ftmewtwo__ftMt_Init_OnTakeDamage(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftMt_Init_OnTakeDamage (src/melee/ft/kinds/ftMewtwo/ftmewtwo.c) is not ported");
+    let _ = crate::tu::ftmewtwo::ftMt_Init_OnTakeDamage(g as _);
 }
 
 /// `ftMt_SpecialHi_CreateGFX` (defined in src/melee/ft/kinds/ftMewtwo/ftmewtwospecialhi.c).
 pub unsafe extern "C" fn ftmewtwospecialhi__ftMt_SpecialHi_CreateGFX(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftMt_SpecialHi_CreateGFX (src/melee/ft/kinds/ftMewtwo/ftmewtwospecialhi.c) is not ported");
+    let _ = crate::tu::ftmewtwospecialhi::ftMt_SpecialHi_CreateGFX(g as _);
 }
 
 /// `ftMt_SpecialHi_SetEndGFX` (defined in src/melee/ft/kinds/ftMewtwo/ftmewtwospecialhi.c).
 pub unsafe extern "C" fn ftmewtwospecialhi__ftMt_SpecialHi_SetEndGFX(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftMt_SpecialHi_SetEndGFX (src/melee/ft/kinds/ftMewtwo/ftmewtwospecialhi.c) is not ported");
+    let _ = crate::tu::ftmewtwospecialhi::ftMt_SpecialHi_SetEndGFX(g as _);
 }
 
 /// `ftMt_SpecialAirLw_AirToGround` (defined in src/melee/ft/kinds/ftMewtwo/ftmewtwospeciallw.c).
@@ -486,7 +486,7 @@ pub unsafe extern "C" fn ftmewtwospeciallw__ftMt_SpecialAirLw_AirToGround(g: *mu
 
 /// `ftMt_SpecialLw_CreateDisable` (defined in src/melee/ft/kinds/ftMewtwo/ftmewtwospeciallw.c).
 pub unsafe extern "C" fn ftmewtwospeciallw__ftMt_SpecialLw_CreateDisable(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftMt_SpecialLw_CreateDisable (src/melee/ft/kinds/ftMewtwo/ftmewtwospeciallw.c) is not ported");
+    let _ = crate::tu::ftmewtwospeciallw::ftMt_SpecialLw_CreateDisable(g as _);
 }
 
 /// `ftMt_SpecialLw_GroundToAir` (defined in src/melee/ft/kinds/ftMewtwo/ftmewtwospeciallw.c).
@@ -496,27 +496,27 @@ pub unsafe extern "C" fn ftmewtwospeciallw__ftMt_SpecialLw_GroundToAir(g: *mut H
 
 /// `ftMt_SpecialAirS_AirToGround` (defined in src/melee/ft/kinds/ftMewtwo/ftmewtwospecials.c).
 pub unsafe extern "C" fn ftmewtwospecials__ftMt_SpecialAirS_AirToGround(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftMt_SpecialAirS_AirToGround (src/melee/ft/kinds/ftMewtwo/ftmewtwospecials.c) is not ported");
+    let _ = crate::tu::ftmewtwospecials::ftMt_SpecialAirS_AirToGround(g as _);
 }
 
 /// `ftMt_SpecialS_GroundToAir` (defined in src/melee/ft/kinds/ftMewtwo/ftmewtwospecials.c).
 pub unsafe extern "C" fn ftmewtwospecials__ftMt_SpecialS_GroundToAir(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftMt_SpecialS_GroundToAir (src/melee/ft/kinds/ftMewtwo/ftmewtwospecials.c) is not ported");
+    let _ = crate::tu::ftmewtwospecials::ftMt_SpecialS_GroundToAir(g as _);
 }
 
 /// `ftNn_Init_80122FAC` (defined in src/melee/ft/kinds/ftNana/ftnana.c).
 pub unsafe extern "C" fn ftnana__ftNn_Init_80122FAC(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftNn_Init_80122FAC (src/melee/ft/kinds/ftNana/ftnana.c) is not ported");
+    let _ = crate::tu::ftnana::ftNn_Init_80122FAC(g as _);
 }
 
 /// `fn_80123218` (defined in src/melee/ft/kinds/ftNana/ftnanaspecialhi.c).
 pub unsafe extern "C" fn ftnanaspecialhi__fn_80123218(g: *mut HSD_GObj) {
-    panic!("TODO(group4): fn_80123218 (src/melee/ft/kinds/ftNana/ftnanaspecialhi.c) is not ported");
+    let _ = crate::tu::ftnanaspecialhi::fn_80123218(g as _);
 }
 
 /// `ftPe_Init_OnDeath2` (defined in src/melee/ft/kinds/ftPeach/ftpeach.c).
 pub unsafe extern "C" fn ftpeach__ftPe_Init_OnDeath2(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftPe_Init_OnDeath2 (src/melee/ft/kinds/ftPeach/ftpeach.c) is not ported");
+    let _ = crate::tu::ftpeach::ftPe_Init_OnDeath2(g as _);
 }
 
 /// `handleAirColl` (defined in src/melee/ft/kinds/ftPeach/ftpeachspeciallw.c).
@@ -531,7 +531,7 @@ pub unsafe extern "C" fn ftpeachspeciallw__handleColl(g: *mut HSD_GObj) {
 
 /// `spawnVeg` (defined in src/melee/ft/kinds/ftPeach/ftpeachspeciallw.c).
 pub unsafe extern "C" fn ftpeachspeciallw__spawnVeg(g: *mut HSD_GObj) {
-    panic!("TODO(group4): spawnVeg (src/melee/ft/kinds/ftPeach/ftpeachspeciallw.c) is not ported");
+    let _ = crate::tu::ftpeachspeciallw::spawnVeg(g as _);
 }
 
 /// `onEnterHitlag` (defined in src/melee/ft/kinds/ftPeach/ftpeachspecialn.c).
@@ -616,42 +616,42 @@ pub unsafe extern "C" fn ftpopospecialn__ftPp_SpecialN_8011F500(g: *mut HSD_GObj
 
 /// `ftSs_Init_80128428` (defined in src/melee/ft/kinds/ftSamus/ftsamus.c).
 pub unsafe extern "C" fn ftsamus__ftSs_Init_80128428(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftSs_Init_80128428 (src/melee/ft/kinds/ftSamus/ftsamus.c) is not ported");
+    crate::tu::ftsamus::ftSs_Init_80128428(g);
 }
 
 /// `ftSs_SpecialLw_8012ADF0` (defined in src/melee/ft/kinds/ftSamus/ftsamusspeciallw1.c).
 pub unsafe extern "C" fn ftsamusspeciallw1__ftSs_SpecialLw_8012ADF0(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftSs_SpecialLw_8012ADF0 (src/melee/ft/kinds/ftSamus/ftsamusspeciallw1.c) is not ported");
+    crate::tu::ftsamusspeciallw1::ftSs_SpecialLw_8012ADF0(g);
 }
 
 /// `ftSs_SpecialS_8012A074` (defined in src/melee/ft/kinds/ftSamus/ftsamusspecialn.c).
 pub unsafe extern "C" fn ftsamusspecialn__ftSs_SpecialS_8012A074(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftSs_SpecialS_8012A074 (src/melee/ft/kinds/ftSamus/ftsamusspecialn.c) is not ported");
+    crate::tu::ftsamusspecialn::ftSs_SpecialS_8012A074(g);
 }
 
 /// `ftSk_Init_80110198` (defined in src/melee/ft/kinds/ftSeak/ftseak.c).
 pub unsafe extern "C" fn ftseak__ftSk_Init_80110198(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftSk_Init_80110198 (src/melee/ft/kinds/ftSeak/ftseak.c) is not ported");
+    let _ = crate::tu::ftseak::ftSk_Init_80110198(g as _);
 }
 
 /// `fn_80113038` (defined in src/melee/ft/kinds/ftSeak/ftseakspecialhi.c).
 pub unsafe extern "C" fn ftseakspecialhi__fn_80113038(g: *mut HSD_GObj) {
-    panic!("TODO(group4): fn_80113038 (src/melee/ft/kinds/ftSeak/ftseakspecialhi.c) is not ported");
+    let _ = crate::tu::ftseakspecialhi::fn_80113038(g as _);
 }
 
 /// `fn_80114034` (defined in src/melee/ft/kinds/ftSeak/ftseakspeciallw.c).
 pub unsafe extern "C" fn ftseakspeciallw__fn_80114034(g: *mut HSD_GObj) {
-    panic!("TODO(group4): fn_80114034 (src/melee/ft/kinds/ftSeak/ftseakspeciallw.c) is not ported");
+    let _ = crate::tu::ftseakspeciallw::fn_80114034(g as _);
 }
 
 /// `fn_801140B0` (defined in src/melee/ft/kinds/ftSeak/ftseakspeciallw.c).
 pub unsafe extern "C" fn ftseakspeciallw__fn_801140B0(g: *mut HSD_GObj) {
-    panic!("TODO(group4): fn_801140B0 (src/melee/ft/kinds/ftSeak/ftseakspeciallw.c) is not ported");
+    let _ = crate::tu::ftseakspeciallw::fn_801140B0(g as _);
 }
 
 /// `fn_8011412C` (defined in src/melee/ft/kinds/ftSeak/ftseakspeciallw.c).
 pub unsafe extern "C" fn ftseakspeciallw__fn_8011412C(g: *mut HSD_GObj) {
-    panic!("TODO(group4): fn_8011412C (src/melee/ft/kinds/ftSeak/ftseakspeciallw.c) is not ported");
+    let _ = crate::tu::ftseakspeciallw::fn_8011412C(g as _);
 }
 
 /// `ftSk_SpecialS_8011097C` (defined in src/melee/ft/kinds/ftSeak/ftseakspecials.c).
@@ -661,17 +661,17 @@ pub unsafe extern "C" fn ftseakspecials__ftSk_SpecialS_8011097C(g: *mut HSD_GObj
 
 /// `ftSk_SpecialS_80110EE8` (defined in src/melee/ft/kinds/ftSeak/ftseakspecials.c).
 pub unsafe extern "C" fn ftseakspecials__ftSk_SpecialS_80110EE8(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftSk_SpecialS_80110EE8 (src/melee/ft/kinds/ftSeak/ftseakspecials.c) is not ported");
+    let _ = crate::tu::ftseakspecials::ftSk_SpecialS_80110EE8(g as _);
 }
 
 /// `ftSk_SpecialS_ChainSomething` (defined in src/melee/ft/kinds/ftSeak/ftseakspecials.c).
 pub unsafe extern "C" fn ftseakspecials__ftSk_SpecialS_ChainSomething(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftSk_SpecialS_ChainSomething (src/melee/ft/kinds/ftSeak/ftseakspecials.c) is not ported");
+    let _ = crate::tu::ftseakspecials::ftSk_SpecialS_ChainSomething(g as _);
 }
 
 /// `ftYs_Init_8012BA8C` (defined in src/melee/ft/kinds/ftYoshi/ftyoshi.c).
 pub unsafe extern "C" fn ftyoshi__ftYs_Init_8012BA8C(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftYs_Init_8012BA8C (src/melee/ft/kinds/ftYoshi/ftyoshi.c) is not ported");
+    let _ = crate::tu::ftyoshi::ftYs_Init_8012BA8C(g as _);
 }
 
 /// `fn_8012E110` (defined in src/melee/ft/kinds/ftYoshi/ftyoshispecialhi.c).

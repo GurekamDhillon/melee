@@ -44,7 +44,7 @@ pub mod ext {
             None => { unsafe { let _ = crate::tu::ftcrazyhandtagcancel::ftCh_GrabUnk1_8015BC88(gobj as _); } },
         }
     }
-    ch_hook!(IT_802F0F6C, it_802F0F6C, (owner: *mut HSD_GObj, prev_pos: *mut Vec3, pos: *mut Vec3, kind: ItemKind, facing_dir: f32));
+    crate::port_hook!(IT_802F0F6C, it_802F0F6C, crate::adapt::it_802F0F6C, (owner: *mut HSD_GObj, prev_pos: *mut Vec3, pos: *mut Vec3, kind: ItemKind, facing_dir: f32));
 }
 
 pub fn ftCh_FingerBeamStart_Anim(gobj: *mut HSD_GObj) {

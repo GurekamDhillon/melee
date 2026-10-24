@@ -59,7 +59,7 @@ pub mod ext {
     }
     /// `efSync_Spawn(gfx_id, gobj, ...)` (ef/efsync.c, variadic): shared with ftCaptain's TU.
     pub use crate::tu::ftcaptainspecialn::ext::{efSync_Spawn, EFSYNC_SPAWN};
-    hook!(FTCOLL_8007ABD0, ftColl_8007ABD0, (hit: *mut HitCapsule, damage: u32, gobj: *mut HSD_GObj));
+    crate::port_hook!(FTCOLL_8007ABD0, ftColl_8007ABD0, crate::adapt::ftColl_8007ABD0, (hit: *mut HitCapsule, damage: u32, gobj: *mut HSD_GObj));
     fn ftco_800bffd0_port(fp: *mut Fighter, a: i32, b: i32) -> bool {
         melee_fighter::tu::ftcolanim::ftco_800bffd0(unsafe { &mut *fp }, a, b)
     }

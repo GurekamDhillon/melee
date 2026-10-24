@@ -56,12 +56,12 @@ pub mod ext {
         };
     }
     // m-ex / skin lookups (pc/platform).
-    hook!(SKINS_KIRBYROW, Skins_KirbyRow, (fk: i32, costume: i32) -> i32);
-    hook!(MEX_COSTUMEVISIDX, Mex_CostumeVisIdx, (fk: i32, costume: i32) -> i32);
-    hook!(MEX_INTERNALFORPORTKIND, Mex_InternalForPortKind, (fk: i32) -> i32);
-    hook!(MEX_FTBASEKIND, Mex_FtBaseKind, (k: i32) -> i32);
-    hook!(MEX_KIRBYFUNC, Mex_KirbyFunc, (slot: i32, internal: i32) -> *mut c_void);
-    hook!(MEX_KIRBYCOSTUMES, Mex_KirbyCostumes, (internal: i32) -> *mut c_void);
+    crate::port_hook!(SKINS_KIRBYROW, Skins_KirbyRow, melee_runtime::tu::mex_data::Skins_KirbyRow, (fk: i32, costume: i32) -> i32);
+    crate::port_hook!(MEX_COSTUMEVISIDX, Mex_CostumeVisIdx, melee_runtime::tu::mex_data::Mex_CostumeVisIdx, (fk: i32, costume: i32) -> i32);
+    crate::port_hook!(MEX_INTERNALFORPORTKIND, Mex_InternalForPortKind, melee_runtime::tu::mex_data::Mex_InternalForPortKind, (fk: i32) -> i32);
+    crate::port_hook!(MEX_FTBASEKIND, Mex_FtBaseKind, melee_runtime::tu::mex_data::Mex_FtBaseKind, (k: i32) -> i32);
+    crate::port_hook!(MEX_KIRBYFUNC, Mex_KirbyFunc, melee_runtime::tu::mex_data::Mex_KirbyFunc, (slot: i32, internal: i32) -> *mut c_void);
+    crate::port_hook!(MEX_KIRBYCOSTUMES, Mex_KirbyCostumes, melee_runtime::tu::mex_data::Mex_KirbyCostumes, (internal: i32) -> *mut c_void);
     // pl/player.c
     pub static mut PLAYER_GETFLAGSBIT1: Option<fn(i32) -> i32> = None;
             #[allow(non_snake_case)]
@@ -87,9 +87,9 @@ pub mod ext {
                     None => { return unsafe { melee_fighter::tu::player::Player_GetFlagsAEBit1(slot as _) as _ }; },
                 }
             }
-    hook!(PLAYER_80031DC8, Player_80031DC8, (cb: fn(i32, i32)));
+    crate::port_hook!(PLAYER_80031DC8, Player_80031DC8, crate::adapt::Player_80031DC8, (cb: fn(i32, i32)));
     // baselib
-    hook!(HSD_RANDI, HSD_Randi, (max: i32) -> i32);
+    crate::port_hook!(HSD_RANDI, HSD_Randi, crate::adapt::HSD_Randi, (max: i32) -> i32);
     pub static mut HSD_IDINSERTTOTABLE: Option<fn(*mut c_void, *mut c_void, *mut HSD_JObj) > = None;
             #[allow(non_snake_case)]
             pub fn HSD_IDInsertToTable(table: *mut c_void, key: *mut c_void, value: *mut HSD_JObj)  {
@@ -98,18 +98,18 @@ pub mod ext {
                     None => { unsafe { let _ = melee_runtime::tu::id::HSD_IDInsertToTable(table as _, key as _, value as _); } return; },
                 }
             }
-    hook!(HSD_DOBJLOADDESC, HSD_DObjLoadDesc, (desc: *mut HSD_DObjDesc) -> *mut HSD_DObj);
+    crate::port_hook!(HSD_DOBJLOADDESC, HSD_DObjLoadDesc, crate::adapt::HSD_DObjLoadDesc, (desc: *mut HSD_DObjDesc) -> *mut HSD_DObj);
 
-    hook!(HSD_JOBJGETDOBJ, HSD_JObjGetDObj, (jobj: *mut HSD_JObj) -> *mut HSD_DObj);
-    hook!(HSD_DOBJRESOLVEREFSALL, HSD_DObjResolveRefsAll, (dobj: *mut HSD_DObj, desc: *mut HSD_DObjDesc));
+    crate::port_hook!(HSD_JOBJGETDOBJ, HSD_JObjGetDObj, crate::adapt::HSD_JObjGetDObj, (jobj: *mut HSD_JObj) -> *mut HSD_DObj);
+    crate::port_hook!(HSD_DOBJRESOLVEREFSALL, HSD_DObjResolveRefsAll, crate::adapt::HSD_DObjResolveRefsAll, (dobj: *mut HSD_DObj, desc: *mut HSD_DObjDesc));
 
-    hook!(HSD_JOBJADDDOBJ, HSD_JObjAddDObj, (jobj: *mut HSD_JObj, dobj: *mut HSD_DObj));
-    hook!(HSD_DOBJADDANIMALL, HSD_DObjAddAnimAll, (dobj: *mut HSD_DObj, matanim: *mut c_void, aobj: *mut c_void));
+    crate::port_hook!(HSD_JOBJADDDOBJ, HSD_JObjAddDObj, crate::adapt::HSD_JObjAddDObj, (jobj: *mut HSD_JObj, dobj: *mut HSD_DObj));
+    crate::port_hook!(HSD_DOBJADDANIMALL, HSD_DObjAddAnimAll, crate::adapt::HSD_DObjAddAnimAll, (dobj: *mut HSD_DObj, matanim: *mut c_void, aobj: *mut c_void));
 
-    hook!(HSD_DOBJREMOVEALL, HSD_DObjRemoveAll, (dobj: *mut HSD_DObj));
+    crate::port_hook!(HSD_DOBJREMOVEALL, HSD_DObjRemoveAll, crate::adapt::HSD_DObjRemoveAll, (dobj: *mut HSD_DObj));
 
     // `hsdChangeClass(mobj, &ftMObj)`.
-    hook!(HSDCHANGECLASS_FTMOBJ, hsdChangeClass_ftMObj, (mobj: *mut HSD_MObj));
+    crate::port_hook!(HSDCHANGECLASS_FTMOBJ, hsdChangeClass_ftMObj, crate::adapt::hsdChangeClass_ftMObj, (mobj: *mut HSD_MObj));
     pub static mut HSD_JOBJLOADJOINT: Option<fn(*mut HSD_Joint) -> *mut HSD_JObj> = None;
             #[allow(non_snake_case)]
             pub fn HSD_JObjLoadJoint(joint: *mut HSD_Joint) -> *mut HSD_JObj {
@@ -118,9 +118,9 @@ pub mod ext {
                     None => { return unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(joint as _) as _ }; },
                 }
             }
-    hook!(HSD_JOBJREMOVEALL, HSD_JObjRemoveAll, (jobj: *mut HSD_JObj));
-    hook!(HSD_JOBJGETMTXPTR, HSD_JObjGetMtxPtr, (jobj: *mut HSD_JObj) -> MtxPtr);
-    hook!(HSD_JOBJCOPYMTX, HSD_JObjCopyMtx, (jobj: *mut HSD_JObj, mtx: MtxPtr));
+    crate::port_hook!(HSD_JOBJREMOVEALL, HSD_JObjRemoveAll, crate::adapt::HSD_JObjRemoveAll, (jobj: *mut HSD_JObj));
+    crate::port_hook!(HSD_JOBJGETMTXPTR, HSD_JObjGetMtxPtr, crate::adapt::HSD_JObjGetMtxPtr, (jobj: *mut HSD_JObj) -> MtxPtr);
+    crate::port_hook!(HSD_JOBJCOPYMTX, HSD_JObjCopyMtx, crate::adapt::HSD_JObjCopyMtx, (jobj: *mut HSD_JObj, mtx: MtxPtr));
     pub static mut HSD_JOBJSETMTXDIRTY: Option<fn(*mut HSD_JObj) > = None;
             #[allow(non_snake_case)]
             pub fn HSD_JObjSetMtxDirty(jobj: *mut HSD_JObj)  {
@@ -129,7 +129,7 @@ pub mod ext {
                     None => { unsafe { let _ = crate::tu::ftinl::HSD_JObjSetMtxDirty(jobj as _); } return; },
                 }
             }
-    hook!(HSD_JOBJDISPALL, HSD_JObjDispAll, (jobj: *mut HSD_JObj, mtx: MtxPtr, rmode: u32, flags: u32));
+    crate::port_hook!(HSD_JOBJDISPALL, HSD_JObjDispAll, crate::adapt::HSD_JObjDispAll, (jobj: *mut HSD_JObj, mtx: MtxPtr, rmode: u32, flags: u32));
     pub static mut HSD_GOBJ_80390EB8: Option<fn(i32) -> u32> = None;
             #[allow(non_snake_case)]
             pub fn HSD_GObj_80390EB8(arg: i32) -> u32 {
@@ -139,7 +139,7 @@ pub mod ext {
                 }
             }
     // `fighter_x2040_alloc_data` (the fighter's DObj-list pool).
-    hook!(FIGHTER_X2040_ALLOC_DATA, fighter_x2040_alloc_data, () -> *mut c_void);
+    crate::port_hook!(FIGHTER_X2040_ALLOC_DATA, fighter_x2040_alloc_data, crate::adapt::fighter_x2040_alloc_data, () -> *mut c_void);
     pub static mut HSD_OBJALLOC: Option<fn(*mut c_void) -> *mut c_void> = None;
             #[allow(non_snake_case)]
             pub fn HSD_ObjAlloc(data: *mut c_void) -> *mut c_void {
@@ -173,13 +173,13 @@ pub mod ext {
                     None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000CE40(a as _, b as _); } return; },
                 }
             }
-    hook!(LBDVD_800178E8, lbDvd_800178E8, (a: i32, filename: *const i8, b: i32, c: i32, d: i32, e: i32, f: i32, g: i32, h: i32));
+    crate::port_hook!(LBDVD_800178E8, lbDvd_800178E8, crate::adapt::lbDvd_800178E8, (a: i32, filename: *const i8, b: i32, c: i32, d: i32, e: i32, f: i32, g: i32, h: i32));
 
     // `lbArchive_80017040(NULL, filename, out, ...)`: the variadic tail without its 0 terminator.
-    hook!(LBARCHIVE_80017040, lbArchive_80017040, (a: *mut c_void, filename: *const i8, out: *mut c_void, rest: &[*mut c_void]));
-    hook!(EFASYNC_LOADASYNC, efAsync_LoadAsync, (id: i32));
-    hook!(EFASYNC_LOADSYNC, efAsync_LoadSync, (id: i32));
-    hook!(EFASYNC_SPAWN, efAsync_Spawn, (gobj: *mut HSD_GObj, head: *mut c_void, a: i32, id: i32, jobj: *mut HSD_JObj, pos: *mut Vec3));
+    crate::port_hook!(LBARCHIVE_80017040, lbArchive_80017040, crate::adapt::lbArchive_80017040, (a: *mut c_void, filename: *const i8, out: *mut c_void, rest: &[*mut c_void]));
+    crate::port_hook!(EFASYNC_LOADASYNC, efAsync_LoadAsync, crate::adapt::efAsync_LoadAsync, (id: i32));
+    crate::port_hook!(EFASYNC_LOADSYNC, efAsync_LoadSync, crate::adapt::efAsync_LoadSync, (id: i32));
+    crate::port_hook!(EFASYNC_SPAWN, efAsync_Spawn, crate::adapt::efAsync_Spawn_i32, (gobj: *mut HSD_GObj, head: *mut c_void, a: i32, id: i32, jobj: *mut HSD_JObj, pos: *mut Vec3));
     pub static mut IT_8026B3F8: Option<fn(*mut c_void, i32) > = None;
             #[allow(non_snake_case)]
             pub fn it_8026B3F8(article: *mut c_void, kind: i32)  {
@@ -205,14 +205,14 @@ pub mod ext {
                     None => { unsafe { let _ = melee_fighter::ftanim::ftanim_80070fb4(gobj as _, a as _, b as _); } return; },
                 }
             }
-    hook!(FTANIM_GETNEXTJOINTINTREE, ftAnim_GetNextJointInTree, (joint: *mut *mut HSD_Joint, idx: *mut i32));
-    hook!(FTANIM_GETNEXTMATANIMJOINTINTREE, ftAnim_GetNextMatAnimJointInTree, (joint: *mut *mut HSD_MatAnimJoint, idx: *mut i32));
-    hook!(FTPARTSPOBJSETDEFAULTCLASS, ftPartsPObjSetDefaultClass, ());
-    hook!(FTPARTSPOBJCLEARDEFAULTCLASS, ftPartsPObjClearDefaultClass, ());
-    hook!(FTPARTS_800753D4, ftParts_800753D4, (fp: *mut Fighter, parts: *mut Fighter_804D6540_x0_t, joint: *mut HSD_Joint));
-    hook!(FTPARTS_800755E8, ftParts_800755E8, (fp: *mut Fighter, part: *mut Fighter_804D6540_x0_t));
-    hook!(FTPARTS_80075650, ftParts_80075650, (gobj: *mut HSD_GObj, jobj: *mut HSD_JObj, list: *mut DObjList));
-    hook!(FTPARTS_8007487C, ftParts_8007487C, (desc: *mut FtPartsDesc, vis: *mut FtPartsVis, a: u32, l1: *mut DObjList, l2: *mut DObjList));
+    crate::port_hook!(FTANIM_GETNEXTJOINTINTREE, ftAnim_GetNextJointInTree, crate::adapt::ftAnim_GetNextJointInTree, (joint: *mut *mut HSD_Joint, idx: *mut i32));
+    crate::port_hook!(FTANIM_GETNEXTMATANIMJOINTINTREE, ftAnim_GetNextMatAnimJointInTree, crate::adapt::ftAnim_GetNextMatAnimJointInTree, (joint: *mut *mut HSD_MatAnimJoint, idx: *mut i32));
+    crate::port_hook!(FTPARTSPOBJSETDEFAULTCLASS, ftPartsPObjSetDefaultClass, crate::adapt::ftPartsPObjSetDefaultClass, ());
+    crate::port_hook!(FTPARTSPOBJCLEARDEFAULTCLASS, ftPartsPObjClearDefaultClass, crate::adapt::ftPartsPObjClearDefaultClass, ());
+    crate::port_hook!(FTPARTS_800753D4, ftParts_800753D4, crate::adapt::ftParts_800753D4, (fp: *mut Fighter, parts: *mut Fighter_804D6540_x0_t, joint: *mut HSD_Joint));
+    crate::port_hook!(FTPARTS_800755E8, ftParts_800755E8, crate::adapt::ftParts_800755E8, (fp: *mut Fighter, part: *mut Fighter_804D6540_x0_t));
+    crate::port_hook!(FTPARTS_80075650, ftParts_80075650, crate::adapt::ftParts_80075650, (gobj: *mut HSD_GObj, jobj: *mut HSD_JObj, list: *mut DObjList));
+    crate::port_hook!(FTPARTS_8007487C, ftParts_8007487C, crate::adapt::ftParts_8007487C, (desc: *mut FtPartsDesc, vis: *mut FtPartsVis, a: u32, l1: *mut DObjList, l2: *mut DObjList));
     // other Kirby TUs (copy-ability moves)
     pub static mut FTKB_SPECIALAIRLW_800F5524: Option<fn(*mut HSD_GObj) > = None;
             #[allow(non_snake_case)]
@@ -350,7 +350,7 @@ pub mod ext {
                     None => { unsafe { let _ = crate::tu::ftkirbyspecialyoshi::ftKb_SpecialNYs_8010A8BC(gobj as _); } return; },
                 }
             }
-    hook!(FTKB_SPECIALNPR_80100DE0, ftKb_SpecialNPr_80100DE0, (gobj: *mut HSD_GObj));
+    crate::port_hook!(FTKB_SPECIALNPR_80100DE0, ftKb_SpecialNPr_80100DE0, crate::adapt::ftKb_SpecialNPr_80100DE0, (gobj: *mut HSD_GObj));
 
     pub static mut FTKB_SPECIALNKP_800FA7D4: Option<fn(*mut HSD_GObj) > = None;
             #[allow(non_snake_case)]
@@ -457,7 +457,7 @@ unsafe fn hat_slot(k: usize) -> *mut *mut c_void {
 
 /// `ftKb_hatTable` (`ft_80459B88.hats`, an array: never NULL).
 #[inline(always)]
-unsafe fn hat_table(kind: usize) -> *mut KirbyHatStruct {
+pub unsafe fn hat_table(kind: usize) -> *mut KirbyHatStruct {
     ft_80459B88.hats[kind]
 }
 
@@ -538,45 +538,45 @@ pub mod cb {
     entry!(ftKb_SpecialNGw_8010D204, crate::tu::ftkirbyspecialgamewatch::ftKb_SpecialNGw_8010D204);
 }
 
-/// Table entries whose target TU is not ported yet: each panics `TODO` when the game calls it.
+/// Table entries for the per-character copy-ability TUs (each calls the Rust port of its target).
 pub mod ext_cb {
     use melee_types::HSD_GObj;
-    macro_rules! todo_cb {
-        ($name:ident) => {
+    macro_rules! entry {
+        ($name:ident, $target:path) => {
             #[allow(non_snake_case)]
-            pub unsafe extern "C" fn $name(_g: *mut HSD_GObj) {
-                panic!(concat!("TODO: ", stringify!($name), " is not ported"))
+            pub unsafe extern "C" fn $name(g: *mut HSD_GObj) {
+                $target(g)
             }
         };
     }
-    todo_cb!(ftKb_SpecialN_800F9110);
-    todo_cb!(ftKb_SpecialN_800F5F68);
-    todo_cb!(ftKb_SpecialNKp_800FA8B4);
-    todo_cb!(ftKb_SpecialNLk800FB880);
-    todo_cb!(ftKb_SpecialNSk_8010612C);
-    todo_cb!(ftKb_SpecialNNs_800FED38);
-    todo_cb!(ftKb_SpecialNPe_8010C4D4);
-    todo_cb!(ftKb_SpecialNIc_80108D64);
-    todo_cb!(ftKb_SpecialNPk_800F9FD4);
-    todo_cb!(ftKb_SpecialNYs_8010941C);
-    todo_cb!(ftKb_SpecialNPr_80101560);
-    todo_cb!(ftKb_SpecialNMt_80107568);
-    todo_cb!(ftKb_SpecialNMs_8010B2FC);
-    todo_cb!(ftKb_SpecialNZd_80105B2C);
-    todo_cb!(ftKb_SpecialNMr_800F93CC);
-    todo_cb!(ftKb_SpecialN_800F6070);
-    todo_cb!(ftKb_SpecialNKp_800FA958);
-    todo_cb!(ftKb_SpecialNLk800FBA00);
-    todo_cb!(ftKb_SpecialNSk_801061E4);
-    todo_cb!(ftKb_SpecialNNs_800FEDD0);
-    todo_cb!(ftKb_SpecialNPe_8010C560);
-    todo_cb!(ftKb_SpecialNIc_80108E14);
-    todo_cb!(ftKb_SpecialNPk_800FA064);
-    todo_cb!(ftKb_SpecialNYs_801094FC);
-    todo_cb!(ftKb_SpecialNPr_80101618);
-    todo_cb!(ftKb_SpecialNMt_80107638);
-    todo_cb!(ftKb_SpecialNMs_8010B4A0);
-    todo_cb!(ftKb_SpecialNZd_80105BA8);
+    entry!(ftKb_SpecialN_800F9110, crate::tu::ftkirbyspecialmario::ftKb_SpecialN_800F9110);
+    entry!(ftKb_SpecialN_800F5F68, crate::tu::ftkirbyspecialn::ftKb_SpecialN_800F5F68);
+    entry!(ftKb_SpecialNKp_800FA8B4, crate::tu::ftkirbyspecialkoopa::ftKb_SpecialNKp_800FA8B4);
+    entry!(ftKb_SpecialNLk800FB880, crate::tu::ftkirbyspeciallink::ftKb_SpecialNLk800FB880);
+    entry!(ftKb_SpecialNSk_8010612C, crate::tu::ftkirbyspecialseak::ftKb_SpecialNSk_8010612C);
+    entry!(ftKb_SpecialNNs_800FED38, crate::tu::ftkirbyspecialness::ftKb_SpecialNNs_800FED38);
+    entry!(ftKb_SpecialNPe_8010C4D4, crate::tu::ftkirbyspecialpeach::ftKb_SpecialNPe_8010C4D4);
+    entry!(ftKb_SpecialNIc_80108D64, crate::tu::ftkirbyspecialiceclimber::ftKb_SpecialNIc_80108D64);
+    entry!(ftKb_SpecialNPk_800F9FD4, crate::tu::ftkirbyspecialpikachu::ftKb_SpecialNPk_800F9FD4);
+    entry!(ftKb_SpecialNYs_8010941C, crate::tu::ftkirbyspecialyoshi::ftKb_SpecialNYs_8010941C);
+    entry!(ftKb_SpecialNPr_80101560, crate::tu::ftkirbyspecialpurin::ftKb_SpecialNPr_80101560);
+    entry!(ftKb_SpecialNMt_80107568, crate::tu::ftkirbyspecialmewtwo::ftKb_SpecialNMt_80107568);
+    entry!(ftKb_SpecialNMs_8010B2FC, crate::tu::ftkirbyspecialmars::ftKb_SpecialNMs_8010B2FC);
+    entry!(ftKb_SpecialNZd_80105B2C, crate::tu::ftkirbyspecialzelda::ftKb_SpecialNZd_80105B2C);
+    entry!(ftKb_SpecialNMr_800F93CC, crate::tu::ftkirbyspecialmario::ftKb_SpecialNMr_800F93CC);
+    entry!(ftKb_SpecialN_800F6070, crate::tu::ftkirbyspecialn::ftKb_SpecialN_800F6070);
+    entry!(ftKb_SpecialNKp_800FA958, crate::tu::ftkirbyspecialkoopa::ftKb_SpecialNKp_800FA958);
+    entry!(ftKb_SpecialNLk800FBA00, crate::tu::ftkirbyspeciallink::ftKb_SpecialNLk800FBA00);
+    entry!(ftKb_SpecialNSk_801061E4, crate::tu::ftkirbyspecialseak::ftKb_SpecialNSk_801061E4);
+    entry!(ftKb_SpecialNNs_800FEDD0, crate::tu::ftkirbyspecialness::ftKb_SpecialNNs_800FEDD0);
+    entry!(ftKb_SpecialNPe_8010C560, crate::tu::ftkirbyspecialpeach::ftKb_SpecialNPe_8010C560);
+    entry!(ftKb_SpecialNIc_80108E14, crate::tu::ftkirbyspecialiceclimber::ftKb_SpecialNIc_80108E14);
+    entry!(ftKb_SpecialNPk_800FA064, crate::tu::ftkirbyspecialpikachu::ftKb_SpecialNPk_800FA064);
+    entry!(ftKb_SpecialNYs_801094FC, crate::tu::ftkirbyspecialyoshi::ftKb_SpecialNYs_801094FC);
+    entry!(ftKb_SpecialNPr_80101618, crate::tu::ftkirbyspecialpurin::ftKb_SpecialNPr_80101618);
+    entry!(ftKb_SpecialNMt_80107638, crate::tu::ftkirbyspecialmewtwo::ftKb_SpecialNMt_80107638);
+    entry!(ftKb_SpecialNMs_8010B4A0, crate::tu::ftkirbyspecialmars::ftKb_SpecialNMs_8010B4A0);
+    entry!(ftKb_SpecialNZd_80105BA8, crate::tu::ftkirbyspecialzelda::ftKb_SpecialNZd_80105BA8);
 }
 
 /// `ftKb_Init_803C9CC8`: [kind * 2] = load hat, [kind * 2 + 1] = unload hat (m-ex MexKirbyFunction.OnLoad/OnDestroy).

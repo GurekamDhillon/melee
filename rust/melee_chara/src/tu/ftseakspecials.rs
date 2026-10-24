@@ -95,7 +95,7 @@ pub mod ext {
             None => { unsafe { let _ = melee_fighter::tu::ftanim::ftAnim_8006FB88(&mut *(fp as *mut _), part as _, joint as _); } },
         }
     }
-    hook!(HSD_JOBJANIMALL, HSD_JObjAnimAll, (jobj: *mut HSD_JObj));
+    crate::port_hook!(HSD_JOBJANIMALL, HSD_JObjAnimAll, crate::adapt::HSD_JObjAnimAll, (jobj: *mut HSD_JObj));
     pub static mut FTANIM_80070108: Option<fn(*mut Fighter, Fighter_Part, f32, f32, *mut HSD_Joint)> = None;
     #[allow(non_snake_case)]
     pub fn ftAnim_80070108(fp: *mut Fighter, part: Fighter_Part, a: f32, b: f32, joint: *mut HSD_Joint) {

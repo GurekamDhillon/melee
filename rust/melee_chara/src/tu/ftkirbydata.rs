@@ -22,9 +22,9 @@ pub mod ext {
             }
         };
     }
-    hook!(MEX_KIRBYCAPFILE, Mex_KirbyCapFile, (internal: i32) -> *mut i8);
-    hook!(MEX_KIRBYCAPSYMBOL, Mex_KirbyCapSymbol, (internal: i32) -> *mut i8);
-    hook!(MEX_KIRBYEFFECTID, Mex_KirbyEffectId, (internal: i32) -> i32);
+    crate::port_hook!(MEX_KIRBYCAPFILE, Mex_KirbyCapFile, melee_runtime::tu::mex_data::Mex_KirbyCapFile, (internal: i32) -> *mut i8);
+    crate::port_hook!(MEX_KIRBYCAPSYMBOL, Mex_KirbyCapSymbol, melee_runtime::tu::mex_data::Mex_KirbyCapSymbol, (internal: i32) -> *mut i8);
+    crate::port_hook!(MEX_KIRBYEFFECTID, Mex_KirbyEffectId, melee_runtime::tu::mex_data::Mex_KirbyEffectId, (internal: i32) -> i32);
 }
 
 /// `Ft_Kind_Max` table length.

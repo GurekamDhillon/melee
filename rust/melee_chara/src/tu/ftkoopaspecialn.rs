@@ -67,10 +67,10 @@ pub mod ext {
                     None => { unsafe { let _ = melee_fighter::ft0892::ft_80089824(gobj as _); } return; },
                 }
             }
-    hook!(FT_800892A0, ft_800892A0, (gobj: *mut HSD_GObj));
-    hook!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, (kind: CmQuakeKind, pos: *mut Vec3));
-    hook!(FTCOLL_8007B128, ftColl_8007B128, (gobj: *mut HSD_GObj, bone_id: i32, state: i32));
-    hook!(FTCOLL_8007B0C0, ftColl_8007B0C0, (gobj: *mut HSD_GObj, state: i32));
+    crate::port_hook!(FT_800892A0, ft_800892A0, crate::adapt::ft_800892A0, (gobj: *mut HSD_GObj));
+    crate::port_hook!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, crate::adapt::Camera_RequestQuake, (kind: CmQuakeKind, pos: *mut Vec3));
+    crate::port_hook!(FTCOLL_8007B128, ftColl_8007B128, crate::adapt::ftColl_8007B128, (gobj: *mut HSD_GObj, bone_id: i32, state: i32));
+    crate::port_hook!(FTCOLL_8007B0C0, ftColl_8007B0C0, crate::adapt::ftColl_8007B0C0, (gobj: *mut HSD_GObj, state: i32));
     pub static mut FTCOMMON_8007F5CC: Option<fn(*mut HSD_GObj, i32) > = None;
             #[allow(non_snake_case)]
             pub fn ftCommon_8007F5CC(gobj: *mut HSD_GObj, arg: i32)  {

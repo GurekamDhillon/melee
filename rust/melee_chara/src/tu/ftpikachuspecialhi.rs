@@ -67,7 +67,7 @@ pub mod ext {
                     None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, off as _, out as _); } return; },
                 }
             }
-    hook!(HSD_RANDF, HSD_Randf, () -> f32);
+    crate::port_hook!(HSD_RANDF, HSD_Randf, crate::adapt::HSD_Randf, () -> f32);
     pub static mut HSD_JOBJSETSCALE: Option<fn(*mut HSD_JObj, *const Vec3) > = None;
             #[allow(non_snake_case)]
             pub fn HSD_JObjSetScale(jobj: *mut HSD_JObj, scale: *const Vec3)  {
@@ -77,7 +77,7 @@ pub mod ext {
                 }
             }
     // `efSync_Spawn(gfx_id, gobj, ...)` (ef/efsync.c, variadic): the trailing pointers as a slice.
-    hook!(EFSYNC_SPAWN, efSync_Spawn,
+    crate::port_hook!(EFSYNC_SPAWN, efSync_Spawn, crate::adapt::efSync_Spawn,
         (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut core::ffi::c_void]) -> *mut core::ffi::c_void);
     hook_or!(FTCO_8009A134, ftCo_8009A134, melee_fighter::tu::ftCo_Pass::ftCo_8009A134,
         (gobj: *mut HSD_GObj) -> bool);

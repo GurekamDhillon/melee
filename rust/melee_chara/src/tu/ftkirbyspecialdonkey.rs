@@ -41,8 +41,8 @@ pub mod ext {
         };
     }
     // `efSync_Spawn(gfx_id, gobj, ...)` (ef/efsync.c, variadic): the trailing pointers as a slice.
-    hook!(EFSYNC_SPAWN, efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut c_void]) -> *mut c_void);
-    hook!(FTCOLL_8007ABD0, ftColl_8007ABD0, (hit: *mut HitCapsule, damage: i32, gobj: *mut HSD_GObj));
+    crate::port_hook!(EFSYNC_SPAWN, efSync_Spawn, crate::adapt::efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut c_void]) -> *mut c_void);
+    crate::port_hook!(FTCOLL_8007ABD0, ftColl_8007ABD0, crate::adapt::ftColl_8007ABD0, (hit: *mut HitCapsule, damage: i32, gobj: *mut HSD_GObj));
 
     /// `ftCo_800BFFD0(fp, a, b)` (colanim start): group 3's port when the hook is unset.
     pub static mut FTCO_800BFFD0: Option<fn(*mut melee_types::Fighter, i32, i32)> = None;

@@ -56,7 +56,7 @@ pub mod ext {
                     None => { unsafe { let _ = melee_runtime::tu::lb_00F9::lb_800119DC(v as _, a as _, b as _, c as _, d as _); } return; },
                 }
             }
-    hook!(FTCOMMON_8007EFC8, ftCommon_8007EFC8, (gobj: *mut HSD_GObj, cb: HSD_GObjEvent));
+    crate::port_hook!(FTCOMMON_8007EFC8, ftCommon_8007EFC8, crate::adapt::ftCommon_8007EFC8, (gobj: *mut HSD_GObj, cb: HSD_GObjEvent));
     /// `ftZd_SpecialLw_8013B4D8` (ftZelda/ftzeldaspeciallw.c), passed as a callback.
     pub static mut FTZD_SPECIALLW_8013B4D8: Option<fn(*mut HSD_GObj) > = None;
             #[allow(non_snake_case)]

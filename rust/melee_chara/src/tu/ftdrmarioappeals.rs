@@ -53,7 +53,7 @@ pub mod ext {
                     None => { return unsafe { crate::tu::ftmariospecialn::ftMr_SpecialN_VitaminRandom(gobj as _) as _ }; },
                 }
             }
-    hook!(ITDRMARIOPILL_APPEAL_SPAWN, itDrMarioPill_Appeal_Spawn,
+    crate::port_hook!(ITDRMARIOPILL_APPEAL_SPAWN, itDrMarioPill_Appeal_Spawn, crate::adapt::itDrMarioPill_Appeal_Spawn,
           (gobj: *mut Item_GObj, pos: *mut Vec3, vitamin_idx: i32, kind: i32, facing_dir: f32) -> *mut Item_GObj);
     pub use super::super::ftdrmario::ext::{itDrMarioPill_802C0DBC, ITDRMARIOPILL_802C0DBC};
     hook_or!(FTCO_APPEALS_IASA, ftCo_AppealS_IASA, melee_fighter::tu::ftCo_AppealS::ftCo_AppealS_IASA, (gobj: *mut HSD_GObj));

@@ -41,9 +41,9 @@ pub mod ext {
         };
     }
     /// `Mex_OnFloatDispatch(kind, gobj)` (pc/mex, TARGET_PC): the m-ex onFloat callback.
-    hook!(MEX_ONFLOATDISPATCH, Mex_OnFloatDispatch, (kind: i32, gobj: *mut HSD_GObj) -> i32);
+    crate::port_hook!(MEX_ONFLOATDISPATCH, Mex_OnFloatDispatch, crate::adapt::Mex_OnFloatDispatch, (kind: i32, gobj: *mut HSD_GObj) -> i32);
     /// `efAsync_Spawn(gobj, queue_head, spawn_kind, gfx_id, jobj, ...)` (ef/efasync.c).
-    hook!(EFASYNC_SPAWN, efAsync_Spawn, (gobj: *mut HSD_GObj, q: *mut core::ffi::c_void, kind: u32, gfx: u32, jobj: *mut HSD_JObj));
+    crate::port_hook!(EFASYNC_SPAWN, efAsync_Spawn, crate::adapt::efAsync_Spawn_plain, (gobj: *mut HSD_GObj, q: *mut core::ffi::c_void, kind: u32, gfx: u32, jobj: *mut HSD_JObj));
     /// `ftCo_SpecialAir_CheckInput(gobj)` (ftCommon/ftCo_SpecialAir.c).
     pub static mut FTCO_SPECIALAIR_CHECKINPUT: Option<fn(*mut HSD_GObj) -> bool> = None;
             #[allow(non_snake_case)]
@@ -54,7 +54,7 @@ pub mod ext {
                 }
             }
     /// `ft_800831CC(gobj, line_cb, coll_cb)` (ft/ft_081B.c): air collision with a landing-line filter.
-    hook!(FT_800831CC, ft_800831CC, (gobj: *mut HSD_GObj, line_cb: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> bool>, cb: HSD_GObjEvent));
+    crate::port_hook!(FT_800831CC, ft_800831CC, crate::adapt::ft_800831CC, (gobj: *mut HSD_GObj, line_cb: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> bool>, cb: HSD_GObjEvent));
     hook_or!(FTCO_80096CC8, ftCo_80096CC8, melee_fighter::tu::ftCo_FallSpecial::ftCo_80096CC8, (gobj: *mut HSD_GObj, line_id: i32) -> bool);
     /// `ft_80082B1C(gobj)` (ft/ft_081B.c), used as the landing callback.
     pub static mut FT_80082B1C: Option<fn(*mut HSD_GObj) > = None;

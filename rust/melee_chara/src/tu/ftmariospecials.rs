@@ -62,7 +62,7 @@ pub mod ext {
                     None => { unsafe { let _ = melee_items::tu::itmariocape::it_802B26E0(cape as _); } return; },
                 }
             }
-    hook!(FTCOLL_CREATEREFLECTHIT, ftColl_CreateReflectHit, (gobj: *mut HSD_GObj, desc: *mut ReflectDesc, arg: *mut core::ffi::c_void));
+    crate::port_hook!(FTCOLL_CREATEREFLECTHIT, ftColl_CreateReflectHit, crate::adapt::ftColl_CreateReflectHit, (gobj: *mut HSD_GObj, desc: *mut ReflectDesc, arg: *mut core::ffi::c_void));
 
     /// `ftMr_Init_OnTakeDamage` (ftmario.c, not ported yet): installed as `death2_cb` /
     /// `take_dmg_cb` while the cape is out.

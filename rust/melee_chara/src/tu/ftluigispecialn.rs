@@ -60,7 +60,7 @@ pub mod ext {
                 }
             }
     // `efSync_Spawn(gfx_id, gobj, ...)` (ef/efsync.c, variadic): the trailing arguments as a slice.
-    hook!(EFSYNC_SPAWN, efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut c_void]) -> *mut c_void);
+    crate::port_hook!(EFSYNC_SPAWN, efSync_Spawn, crate::adapt::efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut c_void]) -> *mut c_void);
     hook_or!(FTCO_FALL_IASA_INNER, ftCo_Fall_IASA_Inner, ftco_fall_iasa_inner_port, (gobj: *mut HSD_GObj));
     fn ftco_fall_iasa_inner_port(gobj: *mut HSD_GObj) {
         melee_fighter::tu::ftCo_Fall::ftCo_Fall_IASA_Inner(gobj);

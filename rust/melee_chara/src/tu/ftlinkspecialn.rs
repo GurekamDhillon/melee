@@ -48,10 +48,10 @@ pub mod ext {
                     None => { unsafe { let _ = melee_items::tu::itlinkbow::it_802AF304(bow as _); } return; },
                 }
             }
-    hook!(IT_802AF1A4, it_802AF1A4, (facing_dir: f32, owner: *mut HSD_GObj, pos: &Vec3, part: i32, x10: i32) -> *mut Item_GObj);
-    hook!(IT_802A83E0, it_802A83E0, (facing_dir: f32, owner: *mut HSD_GObj, pos: &Vec3, part: i32, xc: i32) -> *mut Item_GObj);
-    hook!(IT_802A8398, it_802A8398, (arrow: *mut Item_GObj, rpos: &Vec3, lpos: &Vec3));
-    hook!(ITLINKARROW_802A850C, itLinkArrow_802A850C, (arrow: *mut Item_GObj, rpos: &Vec3, lpos: &Vec3, angle: f32, charge: f32, max_charge: f32));
+    crate::port_hook!(IT_802AF1A4, it_802AF1A4, crate::adapt::it_802AF1A4, (facing_dir: f32, owner: *mut HSD_GObj, pos: &Vec3, part: i32, x10: i32) -> *mut Item_GObj);
+    crate::port_hook!(IT_802A83E0, it_802A83E0, crate::adapt::it_802A83E0, (facing_dir: f32, owner: *mut HSD_GObj, pos: &Vec3, part: i32, xc: i32) -> *mut Item_GObj);
+    crate::port_hook!(IT_802A8398, it_802A8398, crate::adapt::it_802A8398, (arrow: *mut Item_GObj, rpos: &Vec3, lpos: &Vec3));
+    crate::port_hook!(ITLINKARROW_802A850C, itLinkArrow_802A850C, crate::adapt::itLinkArrow_802A850C, (arrow: *mut Item_GObj, rpos: &Vec3, lpos: &Vec3, angle: f32, charge: f32, max_charge: f32));
 }
 
 const mf: u32 = (Ft_MF_SkipModel | Ft_MF_SkipItemVis) as u32;

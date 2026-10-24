@@ -246,6 +246,11 @@ ported_hooks! {
     PLAYER_GET_MORE_FLAGS_BIT4 player_get_more_flags_bit4(slot: i32) -> u8 = crate::player::get_more_flags_bit4;
 }
 
+/// TARGET_PC `Geno_DefineIsNone(kind)`. Unset (vanilla, no Geno defines): 0.
+pub static mut GENO_DEFINE_IS_NONE: Option<fn(kind: i32) -> i32> = None;
+pub fn geno_define_is_none(kind: i32) -> i32 {
+    match unsafe { GENO_DEFINE_IS_NONE } { Some(f) => f(kind), None => 0 }
+}
 /// TARGET_PC `Geno_DefineTemplateSkeleton(kind)`. Unset (vanilla, no Geno defines): 0.
 pub static mut GENO_DEFINE_TEMPLATE_SKELETON: Option<fn(kind: i32) -> i32> = None;
 pub fn geno_define_template_skeleton(kind: i32) -> i32 {

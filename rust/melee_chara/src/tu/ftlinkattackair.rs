@@ -28,9 +28,9 @@ pub mod ext {
         };
     }
     // ft/ftcoll.c
-    hook!(FTCOLL_8007AFF8, ftColl_8007AFF8, (gobj: *mut HSD_GObj));
-    hook!(FTCOLL_8007B064, ftColl_8007B064, (gobj: *mut HSD_GObj, idx: i32));
-    hook!(FTCOLL_8007ABD0, ftColl_8007ABD0, (hit: *mut HitCapsule, flags: u32, gobj: *mut HSD_GObj));
+    crate::port_hook!(FTCOLL_8007AFF8, ftColl_8007AFF8, crate::adapt::ftColl_8007AFF8, (gobj: *mut HSD_GObj));
+    crate::port_hook!(FTCOLL_8007B064, ftColl_8007B064, crate::adapt::ftColl_8007B064, (gobj: *mut HSD_GObj, idx: i32));
+    crate::port_hook!(FTCOLL_8007ABD0, ftColl_8007ABD0, crate::adapt::ftColl_8007ABD0, (hit: *mut HitCapsule, flags: u32, gobj: *mut HSD_GObj));
 }
 
 #[inline(always)]

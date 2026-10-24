@@ -330,3 +330,11 @@ pub fn resolveIKJoint1<X:JObjExt>(r:&mut JObjRt<X>,t:&mut JObjTree<X::D,u32>,j:J
 pub fn resolveIKJoint2<X:JObjExt>(r:&mut JObjRt<X>,t:&mut JObjTree<X::D,u32>,j:JObjId){r.resolve_ik_joint2(t,j)}
 pub fn jobj_get_effector_checked<X:JObjExt>(r:&JObjRt<X>,t:&JObjTree<X::D,u32>,j:Option<JObjId>)->Option<JObjId>{r.effector_checked(t,j)}
 pub fn HSD_JObjSetDPtclCallback<X:JObjExt>(r:&mut JObjRt<X>,cb:Option<crate::jobj_rt::DPtclCallback>){r.set_dptcl_callback(cb)}
+
+/// Raw-pointer entry points over the native bridge above (callers hold game `HSD_JObj*`).
+/// `HSD_JObjSetupMatrix` (jobj.h inline): rebuild the matrix when dirty.
+pub unsafe fn HSD_JObjSetupMatrix(j: *mut HSD_JObj) { native_setup(j) }
+/// `HSD_JObjRemoveAll` on a raw tree.
+pub unsafe fn HSD_JObjRemoveAll_ptr(j: *mut HSD_JObj) { native_remove_all(j) }
+/// `HSD_JObjRemove` on a raw JObj: unlink it from its tree and drop its reference.
+pub unsafe fn HSD_JObjRemove_ptr(j: *mut HSD_JObj) { if !j.is_null() { let (mut t, mut h) = snapshot(&[j]); t.remove(&mut h, Some(JObjId(0))); finish(&t, h); } }

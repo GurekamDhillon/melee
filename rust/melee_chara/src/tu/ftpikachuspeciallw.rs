@@ -47,10 +47,10 @@ pub mod ext {
             }
         };
     }
-    hook!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, (kind: CmQuakeKind, pos: *mut Vec3));
+    crate::port_hook!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, crate::adapt::Camera_RequestQuake, (kind: CmQuakeKind, pos: *mut Vec3));
     // `efSync_Spawn(gfx_id, gobj, ...)` (ef/efsync.c, variadic): the trailing pointers as a slice.
-    hook!(EFSYNC_SPAWN, efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut c_void]) -> *mut c_void);
-    hook!(EFASYNC_SPAWN, efAsync_Spawn,
+    crate::port_hook!(EFSYNC_SPAWN, efSync_Spawn, crate::adapt::efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut c_void]) -> *mut c_void);
+    crate::port_hook!(EFASYNC_SPAWN, efAsync_Spawn, crate::adapt::efAsync_Spawn_plain,
         (gobj: *mut HSD_GObj, queue: *mut c_void, kind: u32, gfx: u32, jobj: *mut HSD_JObj));
     pub static mut IT_802B1DEC: Option<fn(*mut Item_GObj) -> i32> = None;
             #[allow(non_snake_case)]

@@ -56,7 +56,7 @@ pub mod ext {
                     None => { unsafe { let _ = crate::tu::ftcrazyhandrockcrush0::ftCh_Init_80157DF8(gobj as _); } return; },
                 }
             }
-    hook!(FTCH_INIT_80158B3C, ftCh_Init_80158B3C, (gobj: *mut HSD_GObj));
+    crate::port_hook!(FTCH_INIT_80158B3C, ftCh_Init_80158B3C, crate::tu::ftcrazyhandfingerbeam::ftCh_Init_80158B3C, (gobj: *mut HSD_GObj));
     // `Stage_80225194()` (gr/stage.c).
     pub static mut STAGE_80225194: Option<fn() -> i32> = None;
     #[allow(non_snake_case)]
@@ -76,9 +76,9 @@ pub mod ext {
         }
     }
     // `HSD_PadMasterStatus[port].button` (baselib/controller.c).
-    hook!(HSD_PADMASTERSTATUS_BUTTON, HSD_PadMasterStatus_button, (port: i32) -> u32);
-    hook!(HSD_RANDI, HSD_Randi, (max: i32) -> i32);
-    hook!(HSD_RANDF, HSD_Randf, () -> f32);
+    crate::port_hook!(HSD_PADMASTERSTATUS_BUTTON, HSD_PadMasterStatus_button, crate::adapt::HSD_PadMasterStatus_button, (port: i32) -> u32);
+    crate::port_hook!(HSD_RANDI, HSD_Randi, crate::adapt::HSD_Randi, (max: i32) -> i32);
+    crate::port_hook!(HSD_RANDF, HSD_Randf, crate::adapt::HSD_Randf, () -> f32);
 }
 
 macro_rules! cb_wrap {

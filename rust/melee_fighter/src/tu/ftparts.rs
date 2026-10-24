@@ -168,3 +168,5 @@ pub fn ftPartGetRotX(f: &Fighter, part_idx: i32) -> f32 {
 pub fn ftPartGetRotZ(f: &Fighter, part_idx: i32) -> f32 {
     melee_types::inline::HSD_JObjGetRotationY(unsafe { &*rot_target(f, part_idx, "get fighter rot y") })
 }
+
+pub use super::ftparts_render::*;

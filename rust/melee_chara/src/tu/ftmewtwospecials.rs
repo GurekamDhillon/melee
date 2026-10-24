@@ -60,7 +60,7 @@ pub mod ext {
             }
         };
     }
-    hook!(FTCOLL_CREATEREFLECTHIT, ftColl_CreateReflectHit,
+    crate::port_hook!(FTCOLL_CREATEREFLECTHIT, ftColl_CreateReflectHit, crate::adapt::ftColl_CreateReflectHit,
           (gobj: *mut HSD_GObj, desc: *const ReflectDesc, cb: HSD_GObjEvent));
     hook_or!(FTCO_800DE2A8, ftCo_800DE2A8, melee_fighter::tu::ftCo_Throw::ftCo_800DE2A8,
              (gobj: *mut HSD_GObj, victim: *mut HSD_GObj));

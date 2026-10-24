@@ -81,11 +81,11 @@ pub mod ext {
                     None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, off as _, out as _); } return; },
                 }
             }
-    hook!(IT_802C3950, it_802C3950, (item: *mut HSD_GObj));
-    hook!(IT_802C3810, it_802C3810, (item: *mut HSD_GObj));
-    hook!(IT_802C3864, it_802C3864, (item: *mut HSD_GObj));
-    hook!(IT_802C2750, it_802C2750, (item: *mut HSD_GObj));
-    hook!(IT_802C27D4, it_802C27D4, (parent: *mut HSD_GObj, pos: *mut Vec3, motion_id: u32, dir: f32) -> *mut HSD_GObj);
+    crate::port_hook!(IT_802C3950, it_802C3950, crate::adapt::it_802C3950, (item: *mut HSD_GObj));
+    crate::port_hook!(IT_802C3810, it_802C3810, crate::adapt::it_802C3810, (item: *mut HSD_GObj));
+    crate::port_hook!(IT_802C3864, it_802C3864, crate::adapt::it_802C3864, (item: *mut HSD_GObj));
+    crate::port_hook!(IT_802C2750, it_802C2750, crate::adapt::it_802C2750, (item: *mut HSD_GObj));
+    crate::port_hook!(IT_802C27D4, it_802C27D4, crate::adapt::it_802C27D4, (parent: *mut HSD_GObj, pos: *mut Vec3, motion_id: u32, dir: f32) -> *mut HSD_GObj);
     /// Recording hook; unset, the native `melee_fighter::tu::ftparts` port runs.
     pub static mut FTPARTSETROTY: Option<fn(*mut Fighter, i32, f32)> = None;
     pub fn ftPartSetRotY(fp: *mut Fighter, part: i32, v: f32) {

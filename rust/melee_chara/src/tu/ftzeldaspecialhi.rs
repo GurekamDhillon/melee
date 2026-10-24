@@ -50,7 +50,7 @@ pub mod ext {
     pub fn lb_800119DC(pos: *mut Vec3, a: i32, b: f32, c: f32, d: f32) {
         match unsafe { LB_800119DC } { Some(f) => f(pos, a, b, c, d), None => { unsafe { let _ = melee_runtime::tu::lb_00F9::lb_800119DC(pos as _, a as _, b as _, c as _, d as _); } return; } }
     }
-    hook!(EFSYNC_SPAWN, efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut c_void]) -> *mut c_void);
+    crate::port_hook!(EFSYNC_SPAWN, efSync_Spawn, crate::adapt::efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut c_void]) -> *mut c_void);
     pub static mut FTANIM_SETANIMRATE: Option<fn(*mut HSD_GObj, f32)> = None;
     #[allow(non_snake_case)]
     pub fn ftAnim_SetAnimRate(gobj: *mut HSD_GObj, rate: f32) {
@@ -68,7 +68,7 @@ pub mod ext {
         |fp: *mut Fighter| unsafe { melee_fighter::ftcommon::update_facing(&mut *fp) });
     hook_or!(FTCOMMON_8007DA24, ftCommon_8007DA24, (fp: *mut Fighter),
         |fp: *mut Fighter| unsafe { melee_fighter::ftcommon::update_facing_outside_deadzone(&mut *fp) });
-    hook!(FTCOLL_8007B62C, ftColl_8007B62C, (gobj: *mut HSD_GObj, arg: i32));
+    crate::port_hook!(FTCOLL_8007B62C, ftColl_8007B62C, crate::adapt::ftColl_8007B62C, (gobj: *mut HSD_GObj, arg: i32));
     hook_or!(SCRIPTGAME_CAPSMAXJUMPS, ScriptGame_CapsMaxJumps, (fp: *mut Fighter) -> i32,
         |fp: *mut Fighter| unsafe { crate::chars::caps_max_jumps(&*fp) });
     pub static mut FTCO_80096900: Option<fn(*mut HSD_GObj, i32, i32, i32, f32, f32)> = None;

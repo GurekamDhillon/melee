@@ -76,7 +76,7 @@ pub mod ext {
     pub fn lb_8000B1CC(jobj: *mut HSD_JObj, pos0: *mut Vec3, pos1: *mut Vec3) {
         match unsafe { LB_8000B1CC } { Some(f) => f(jobj, pos0, pos1), None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, pos0 as _, pos1 as _); } return; } }
     }
-    hook!(EFSYNC_SPAWN, efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut c_void]) -> *mut c_void);
+    crate::port_hook!(EFSYNC_SPAWN, efSync_Spawn, crate::adapt::efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut c_void]) -> *mut c_void);
     hook_or!(FT_PLAYSFX, ft_PlaySFX, (fp: *mut Fighter, id: i32, vol: u8, pan: u8),
         |fp: *mut Fighter, id: i32, vol: u8, pan: u8| unsafe { melee_fighter::ft0877::play_sfx(&mut *fp, id, vol, pan) });
     pub static mut FT_80089824: Option<fn(*mut HSD_GObj)> = None;
@@ -84,9 +84,9 @@ pub mod ext {
     pub fn ft_80089824(gobj: *mut HSD_GObj) {
         match unsafe { FT_80089824 } { Some(f) => f(gobj), None => { unsafe { let _ = melee_fighter::ft0892::ft_80089824(gobj as _); } return; } }
     }
-    hook!(FT_800892A0, ft_800892A0, (gobj: *mut HSD_GObj));
-    hook!(FTCOLL_8007AFF8, ftColl_8007AFF8, (gobj: *mut HSD_GObj));
-    hook!(FTCOLL_8007ABD0, ftColl_8007ABD0, (hit: *mut HitCapsule, damage: u32, gobj: *mut HSD_GObj));
+    crate::port_hook!(FT_800892A0, ft_800892A0, crate::adapt::ft_800892A0, (gobj: *mut HSD_GObj));
+    crate::port_hook!(FTCOLL_8007AFF8, ftColl_8007AFF8, crate::adapt::ftColl_8007AFF8, (gobj: *mut HSD_GObj));
+    crate::port_hook!(FTCOLL_8007ABD0, ftColl_8007ABD0, crate::adapt::ftColl_8007ABD0, (hit: *mut HitCapsule, damage: u32, gobj: *mut HSD_GObj));
     pub static mut FT_80082888: Option<fn(*mut HSD_GObj, *mut ftCollisionBox) -> bool> = None;
     #[allow(non_snake_case)]
     pub fn ft_80082888(gobj: *mut HSD_GObj, ecb: *mut ftCollisionBox) -> bool {
@@ -109,7 +109,7 @@ pub mod ext {
     pub fn ftCo_80096900(gobj: *mut HSD_GObj, a: i32, b: i32, allow_interrupt: i32, mobility: f32, landing_lag: f32) {
         match unsafe { FTCO_80096900 } { Some(f) => f(gobj, a, b, allow_interrupt, mobility, landing_lag), None => { unsafe { let _ = melee_fighter::tu::ftCo_FallSpecial::ftCo_80096900(gobj as _, a as _, b as _, allow_interrupt as _, mobility as _, landing_lag as _); } return; } }
     }
-    hook!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, (kind: i32, pos: *mut Vec3));
+    crate::port_hook!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, crate::adapt::Camera_RequestQuake, (kind: i32, pos: *mut Vec3));
     pub static mut MPLIB_800569EC: Option<fn(u32) -> f32> = None;
     #[allow(non_snake_case)]
     pub fn mpLib_800569EC(flags: u32) -> f32 {

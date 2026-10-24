@@ -30,8 +30,8 @@ pub mod ext {
             }
         };
     }
-    hook!(EFASYNC_SPAWN, efAsync_Spawn, (gobj: *mut HSD_GObj, queue_head: *mut c_void, kind: u32, gfx_id: u32, jobj: *mut HSD_JObj));
-    hook!(FTCOLL_CREATEABSORBHIT, ftColl_CreateAbsorbHit, (gobj: *mut HSD_GObj, desc: *mut AbsorbDesc));
+    crate::port_hook!(EFASYNC_SPAWN, efAsync_Spawn, crate::adapt::efAsync_Spawn_plain, (gobj: *mut HSD_GObj, queue_head: *mut c_void, kind: u32, gfx_id: u32, jobj: *mut HSD_JObj));
+    crate::port_hook!(FTCOLL_CREATEABSORBHIT, ftColl_CreateAbsorbHit, crate::adapt::ftColl_CreateAbsorbHit, (gobj: *mut HSD_GObj, desc: *mut AbsorbDesc));
     pub static mut FTPARTSETROTY: Option<fn(*mut Fighter, i32, f32)> = None;
     #[allow(non_snake_case)]
     pub fn ftPartSetRotY(fp: *mut Fighter, part: i32, v: f32) {

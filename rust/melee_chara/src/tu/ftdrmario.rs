@@ -86,7 +86,7 @@ pub mod ext {
                     None => { unsafe { let _ = melee_items::tu::it_26B1::it_8026B3F8(article as _, kind as _); } return; },
                 }
             }
-    hook!(ITDRMARIOPILL_802C0DBC, itDrMarioPill_802C0DBC, (item: *mut Item_GObj));
+    crate::port_hook!(ITDRMARIOPILL_802C0DBC, itDrMarioPill_802C0DBC, crate::adapt::itDrMarioPill_802C0DBC, (item: *mut Item_GObj));
     hook_or!(FTCO_800DEAE8, ftCo_800DEAE8, melee_fighter::tu::ftCo_AppealS::ftCo_800DEAE8,
              (gobj: *mut HSD_GObj, msid0: i32, msid1: i32));
 }

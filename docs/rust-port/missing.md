@@ -26,7 +26,7 @@ Sites (distinct C names in parentheses).
 | `melee_world` | 318 (171) | 1242 (460) | 282 (182) | 1842 (813) |
 | `melee_items` | 311 (106) | 4321 (882) | 471 (280) | 5103 (1268) |
 | `melee_fighter` | 395 (276) | 376 (302) | 244 (188) | 1015 (766) |
-| `melee_chara` | 164 (92) | 149 (91) | 6 (5) | 319 (188) |
+| `melee_chara` | 0 (0) | 0 (0) | 0 (0) | 0 (0) |
 | `melee_modes` | 912 (608) | 2428 (1249) | 0 (0) | 3340 (1856) |
 | `melee` | 1 (1) | 3 (3) | 0 (0) | 4 (4) |
 | **total** | 2635 | 8985 | 1180 | 12800 (4572 distinct names overall) |
@@ -41,7 +41,7 @@ Per-crate figures count a name once per crate and tag; a name can be stubbed in 
 | `melee_world` | 0 | 1313 | 46 | 172 | 311 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `melee_items` | 0 | 4796 | 0 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 302 |
 | `melee_fighter` | 0 | 595 | 23 | 397 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| `melee_chara` | 25 | 0 | 10 | 31 | 220 | 0 | 0 | 0 | 5 | 28 | 0 | 0 |
+| `melee_chara` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `melee_modes` | 0 | 1142 | 60 | 8 | 341 | 323 | 0 | 1448 | 0 | 0 | 18 | 0 |
 | `melee` | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 
@@ -3730,204 +3730,13 @@ NO_PORT: 395 sites / 276 names, SIGNATURE: 376 sites / 302 names, CYCLE: 244 sit
 
 ## melee_chara
 
-NO_PORT: 164 sites / 92 names, SIGNATURE: 149 sites / 91 names, CYCLE: 6 sites / 5 names
+No panicking stubs remain (was NO_PORT 164 sites / 92 names, SIGNATURE 149 / 91, CYCLE 6 / 5; 2026-10-24, branch `port/fill-melee_chara`).
 
-### melee_chara - NO_PORT (164 sites, 92 names)
-
-- `blaster_assert` [fn-body] x1: tu/ftkirbyspecialfox.rs:422
-- `Camera_8002E6FC` [ch_hook!] x2: tu/ftcrazyhandgrabunk1b174.rs:16, tu/ftmasterhandentry.rs:19
-- `Camera_8002E948` [ch_hook!] x2: tu/ftcrazyhandgrabunk1b174.rs:17, tu/ftmasterhandentry.rs:28
-- `Camera_8002EB5C` [ch_hook!] x2: tu/ftcrazyhandgrabunk1b174.rs:18, tu/ftmasterhandentry.rs:23
-- `Camera_8002EC7C` [ch_hook!] x2: tu/ftcrazyhandgrabunk1b174.rs:19, tu/ftmasterhandentry.rs:22
-- `Camera_8002ED9C` [ch_hook!] x2: tu/ftcrazyhandgrabunk1b174.rs:20, tu/ftmasterhandentry.rs:20
-- `Camera_8002EF14` [ch_hook!] x2: tu/ftcrazyhandgrabunk1b174.rs:22, tu/ftmasterhandentry.rs:24
-- `Camera_8002F0E4` [ch_hook!] x2: tu/ftcrazyhandgrabunk1b174.rs:23, tu/ftmasterhandentry.rs:25
-- `Camera_8002F274` [ch_hook!] x2: tu/ftcrazyhandgrabunk1b174.rs:25, tu/ftmasterhandentry.rs:27
-- `Camera_RequestQuake` [hook!] x6: tu/ftkirbyspecialkoopa.rs:76, tu/ftkirbyspeciallw.rs:62, tu/ftkirbyspecialpurin.rs:85, tu/ftkoopaspecialn.rs:71, tu/ftpikachuspeciallw.rs:50, tu/ftyoshispecials.rs:112
-- `Camera_SetModeToStandard` [ch_hook!] x2: tu/ftcrazyhandgrabunk1b174.rs:26, tu/ftmasterhandentry.rs:29
-- `CostumeListsForeachCharacter_costume_list` [hook!] x1: tu/ftpurin.rs:84
-- `efAsync_Spawn` [hook!] x9: tu/ftcaptainspeciallw.rs:46, tu/ftdonkeyspeciallw.rs:43, tu/ftkirby.rs:182, tu/ftkirbyspecialn.rs:173, tu/ftkirbyyoshiegg.rs:68, tu/ftnessspeciallw.rs:33, tu/ftpeachfloat.rs:46, tu/ftpikachuspeciallw.rs:53, tu/ftyoshiguard.rs:54
-- `ext__efLib_PauseAll` [fn-body] x1: chars/cb.rs:8
-- `ext__efLib_ResumeAll` [fn-body] x1: chars/cb.rs:13
-- `fighter_x2040_alloc_data` [hook!] x2: tu/ftkirby.rs:142, tu/ftpurin.rs:87
-- `ft_800892A0` [fn+panic/hook!] x8: tu/ftdonkeyspeciallw.rs:44, tu/ftfoxspecialn.rs:59, tu/ftkirbyspecialfox.rs:43, tu/ftkirbyspecialkoopa.rs:75, tu/ftkirbyspecialpurin.rs:86, tu/ftkoopaspecialn.rs:70, tu/ftmarsspecials.rs:24, tu/ftyoshispecials.rs:87
-- `ft_80459B88_hat` [hook!] x3: tu/ftkirbyspecialiceclimber.rs:69, tu/ftkirbyspecialmars.rs:53, tu/ftkirbyspecialyoshi.rs:50
-- `ft_CheckGroundAndLedge` [stub!] x1: stubs.rs:180
-- `ft_PlaySFX` [hook!] x5: tu/ftkirbyspecialiceclimber.rs:46, tu/ftkirbyspecialkoopa.rs:73, tu/ftkirbyspeciallw.rs:61, tu/ftnessattacks4.rs:24, tu/ftpopospecialn.rs:55
-- `ftAnim_GetNextJointInTree` [hook!] x1: tu/ftkirby.rs:208
-- `ftAnim_GetNextMatAnimJointInTree` [hook!] x1: tu/ftkirby.rs:209
-- `ftcaptainspeciallw__ftCa_SpecialHi_800E400C` [fn-body] x1: chars/cb.rs:23
-- `ftCh_GrabUnk1_8015B800` [ch_hook!/hook!] x2: tu/ftcrazyhandslam.rs:18, tu/ftcrazyhandtaggrab.rs:51
-- `ftCh_Init_80158B3C` [hook!] x1: tu/ftcrazyhandwait10.rs:59
-- `ftCh_Init_8015A030` [ch_hook!] x1: tu/ftcrazyhandgrab.rs:14
-- `ftCo_AirCatchHit_Coll` [stub!] x1: stubs.rs:273
-- `ftCo_CapturePulled__ftCo_800DB464` [fn-body] x1: chars/cb.rs:28
-- `ftCo_LandingAir__ftCo_LandingAir_EnterWithLag` [fn-body] x1: chars/cb.rs:33
-- `ftColl_8007ABD0` [fn+panic/hook!] x11: tu/ftdonkeyspecialn.rs:62, tu/ftgamewatchspeciallw.rs:73, tu/ftkirbyspecialdonkey.rs:45, tu/ftkirbyspecialmars.rs:83, tu/ftkirbyspecialpurin.rs:76, tu/ftlinkattackair.rs:33, tu/ftluigispecials.rs:61, tu/ftmarsspeciallw.rs:26, tu/ftnessattackhi4.rs:53, tu/ftpikachuspecials.rs:48, tu/ftyoshispecials.rs:89
-- `ftColl_8007AFF8` [hook!] x3: tu/ftkirbyspecialpurin.rs:75, tu/ftlinkattackair.rs:31, tu/ftyoshispecials.rs:88
-- `ftColl_8007B064` [hook!] x1: tu/ftlinkattackair.rs:32
-- `ftColl_8007B0C0` [hook!] x3: tu/ftkirbyyoshiegg.rs:61, tu/ftkoopaspecialn.rs:73, tu/ftyoshiguard.rs:51
-- `ftColl_8007B128` [hook!] x1: tu/ftkoopaspecialn.rs:72
-- `ftColl_8007B1B8` [hook!] x3: tu/ftclink.rs:95, tu/ftkirbyspecialpeach.rs:94, tu/ftpeachspecialn.rs:89
-- `ftColl_8007B62C` [hook!] x4: tu/ftkirbycaptureyoshi.rs:24, tu/ftmewtwospecialhi.rs:76, tu/ftseakspecialhi.rs:76, tu/ftzeldaspecialhi.rs:71
-- `ftColl_8007B760` [hook!] x1: tu/ftkirbyyoshiegg.rs:63
-- `ftColl_CreateAbsorbHit` [hook!] x2: tu/ftgamewatchspeciallw.rs:72, tu/ftnessspeciallw.rs:34
-- `ftColl_CreateReflectHit` [hook!] x6: tu/ftfoxspeciallw.rs:79, tu/ftkirbyspecialzelda.rs:36, tu/ftmariospecials.rs:65, tu/ftmewtwospecials.rs:63, tu/ftnessattacks4.rs:41, tu/ftzeldaspecialn.rs:54
-- `ftColl_HurtboxInit` [hook!] x2: tu/ftkirbyyoshiegg.rs:62, tu/ftyoshiguard.rs:52
-- `ftCommon_8007DA24` [hook!] x2: tu/ftmewtwospecialhi.rs:77, tu/ftseakspecialhi.rs:75
-- `ftCommon_GrabMash` [hook!] x1: tu/ftkirbyyoshiegg.rs:66
-- `ftCommon_InitGrab` [hook!] x1: tu/ftkirbyyoshiegg.rs:65
-- `ftCommon_SetAccessory` [hook!] x3: tu/ftkirbyspecialiceclimber.rs:51, tu/ftkirbyspecialmars.rs:54, tu/ftkirbyyoshiegg.rs:64
-- `ftKb_Init_803B7548` [hook!] x1: tu/ftkirbyspeciallink.rs:96
-- `ftluigispecialn__ftLg_SpecialN_FireSpawn` [fn-body] x1: chars/cb.rs:443
-- `ftmariospeciallw__updateRot` [fn-body] x1: chars/cb.rs:448
-- `ftmariospecialn__ftMr_SpecialN_ItemFireSpawn` [fn-body] x1: chars/cb.rs:453
-- `ftMaterial_800BFB4C` [hook!] x1: tu/ftgamewatch.rs:86
-- `ftmewtwo__ftMt_Init_OnDeath2` [fn-body] x1: chars/cb.rs:463
-- `ftmewtwo__ftMt_Init_OnTakeDamage` [fn-body] x1: chars/cb.rs:468
-- `ftmewtwospecialhi__ftMt_SpecialHi_CreateGFX` [fn-body] x1: chars/cb.rs:473
-- `ftmewtwospecialhi__ftMt_SpecialHi_SetEndGFX` [fn-body] x1: chars/cb.rs:478
-- `ftmewtwospeciallw__ftMt_SpecialLw_CreateDisable` [fn-body] x1: chars/cb.rs:488
-- `ftmewtwospecials__ftMt_SpecialAirS_AirToGround` [fn-body] x1: chars/cb.rs:498
-- `ftmewtwospecials__ftMt_SpecialS_GroundToAir` [fn-body] x1: chars/cb.rs:503
-- `ftnana__ftNn_Init_80122FAC` [fn-body] x1: chars/cb.rs:508
-- `ftnanaspecialhi__fn_80123218` [fn-body] x1: chars/cb.rs:513
-- `ftParts_8007487C` [hook!] x2: tu/ftkirby.rs:215, tu/ftpurin.rs:116
-- `ftParts_800753D4` [hook!] x2: tu/ftclink.rs:78, tu/ftkirby.rs:212
-- `ftParts_800755E8` [hook!] x1: tu/ftkirby.rs:213
-- `ftParts_80075650` [hook!] x2: tu/ftkirby.rs:214, tu/ftpurin.rs:115
-- `ftParts_GetBoneIndex` [hook!] x1: tu/ftyoshiguard.rs:53
-- `ftPartsPObjClearDefaultClass` [hook!] x2: tu/ftkirby.rs:211, tu/ftpurin.rs:105
-- `ftPartsPObjSetDefaultClass` [hook!] x2: tu/ftkirby.rs:210, tu/ftpurin.rs:104
-- `ftpeach__ftPe_Init_OnDeath2` [fn-body] x1: chars/cb.rs:518
-- `ftpeachspeciallw__spawnVeg` [fn-body] x1: chars/cb.rs:533
-- `ftsamus__ftSs_Init_80128428` [fn-body] x1: chars/cb.rs:618
-- `ftsamusspeciallw1__ftSs_SpecialLw_8012ADF0` [fn-body] x1: chars/cb.rs:623
-- `ftsamusspecialn__ftSs_SpecialS_8012A074` [fn-body] x1: chars/cb.rs:628
-- `ftseak__ftSk_Init_80110198` [fn-body] x1: chars/cb.rs:633
-- `ftseakspecialhi__fn_80113038` [fn-body] x1: chars/cb.rs:638
-- `ftseakspeciallw__fn_80114034` [fn-body] x1: chars/cb.rs:643
-- `ftseakspeciallw__fn_801140B0` [fn-body] x1: chars/cb.rs:648
-- `ftseakspeciallw__fn_8011412C` [fn-body] x1: chars/cb.rs:653
-- `ftseakspecials__ftSk_SpecialS_80110EE8` [fn-body] x1: chars/cb.rs:663
-- `ftseakspecials__ftSk_SpecialS_ChainSomething` [fn-body] x1: chars/cb.rs:668
-- `ftyoshi__ftYs_Init_8012BA8C` [fn-body] x1: chars/cb.rs:673
-- `HSD_AObjGetEndFrame` [hook!] x1: tu/ftyoshi.rs:42
-- `HSD_PadMasterStatus_button` [hook!] x2: tu/ftcrazyhandwait10.rs:79, tu/ftmasterhandwait10.rs:53
-- `hsdChangeClass_ftMObj` [hook!] x1: tu/ftkirby.rs:112
-- `Mex_CostumeVisIdx` [hook!] x1: tu/ftkirby.rs:60
-- `Mex_FtBaseKind` [hook!] x1: tu/ftkirby.rs:62
-- `Mex_InternalForPortKind` [hook!] x1: tu/ftkirby.rs:61
-- `Mex_KirbyCapFile` [hook!] x1: tu/ftkirbydata.rs:25
-- `Mex_KirbyCapSymbol` [hook!] x1: tu/ftkirbydata.rs:26
-- `Mex_KirbyCostumes` [hook!] x1: tu/ftkirby.rs:64
-- `Mex_KirbyEffectId` [hook!] x1: tu/ftkirbydata.rs:27
-- `Mex_KirbyFunc` [hook!] x1: tu/ftkirby.rs:63
-- `Mex_OnFloatDispatch` [hook!] x1: tu/ftpeachfloat.rs:44
-- `Skins_KirbyRow` [hook!] x1: tu/ftkirby.rs:59
-- `Slippi_Version` [hook!] x1: tu/ftnanaspecials.rs:95
-
-### melee_chara - SIGNATURE (149 sites, 91 names)
-
-- `Camera_8002EEC8` [ch_hook!] x2: tu/ftcrazyhandgrabunk1b174.rs:21, tu/ftmasterhandentry.rs:21 -> port `melee_world::cm/camera.rs:895`
-- `Camera_8002F260` [ch_hook!] x2: tu/ftcrazyhandgrabunk1b174.rs:24, tu/ftmasterhandentry.rs:26 -> port `melee_world::cm/camera.rs:602`
-- `efAsync_LoadAsync` [hook!] x1: tu/ftkirby.rs:180 -> port `melee_world::tu/efasync.rs:935`
-- `efAsync_LoadSync` [hook!] x1: tu/ftkirby.rs:181 -> port `melee_world::tu/efasync.rs:959`
-- `efSync_Spawn` [fn+panic/hook!] x30: tu/ftcaptainspecialn.rs:40, tu/ftfoxspecialhi.rs:60, tu/ftfoxspeciallw.rs:62, tu/ftfoxspecials.rs:51, tu/ftkirbyspecialcaptain.rs:31, tu/ftkirbyspecialdonkey.rs:44, tu/ftkirbyspecialhi.rs:79, tu/ftkirbyspecialluigi.rs:64, tu/ftkirbyspeciallw.rs:73, tu/ftkirbyspecialmario.rs:66, tu/ftkirbyspecialmars.rs:46, tu/ftkirbyspecialseak.rs:45, tu/ftkirbyspecialzelda.rs:35, tu/ftkoopaspecialhi.rs:29, tu/ftkoopaspeciallw.rs:37, tu/ftluigispeciallw.rs:40, tu/ftluigispecialn.rs:63, tu/ftluigispecials.rs:60, tu/ftmariospeciallw.rs:44, tu/ftmariospecialn.rs:66, tu/ftnessspecialhi.rs:69, tu/ftpikachuspecialhi.rs:80, tu/ftpikachuspeciallw.rs:52, tu/ftpikachuspecialn.rs:43, tu/ftpopospeciallw.rs:70, tu/ftpurin.rs:180, tu/ftseakspecialhi.rs:74, tu/ftseakspecialn.rs:60, tu/ftyoshispecials.rs:79, tu/ftzeldaspecialhi.rs:53 -> port `melee_world::tu/efsync.rs:251`
-- `ft_80082C74` [hook!/stub!] x2: stubs.rs:158, tu/ftinl.rs:66 -> port `melee_fighter::tu/ft_081b.rs:416`
-- `ft_800831CC` [hook!] x1: tu/ftpeachfloat.rs:57 -> port `melee_fighter::tu/ft_081b.rs:519`
-- `ft_80083A48` [hook!] x1: tu/ftinl.rs:67 -> port `melee_fighter::tu/ft_081b.rs:581`
-- `ft_8008403C` [hook!/stub!] x2: stubs.rs:160, tu/ftinl.rs:65 -> port `melee_fighter::tu/ft_081b.rs:630`
-- `ft_800841B8` [stub!] x1: stubs.rs:162 -> port `melee_fighter::tu/ft_081b.rs:644`
-- `ftCo_8008D8E8` [hook!] x1: tu/ftdonkeyheavylanding.rs:40 -> port `melee_fighter::tu/ftCo_Damage.rs:209`
-- `ftCo_8008E908` [hook!] x1: tu/ftdonkeyheavylanding.rs:30 -> port `melee_fighter::tu/ftCo_Damage.rs:655`
-- `ftCo_ScaleBy154` [hook!] x1: tu/ftdonkeyheavylanding.rs:42 -> port `melee_fighter::tu/ftCo_Damage.rs:204`
-- `ftCommon_8007EFC8` [hook!] x1: tu/ftseakspeciallw.rs:59 -> port `melee_fighter::tu/ftcommon.rs:70`
-- `ftKb_SpecialN_800F5F68` [todo_cb!] x1: tu/ftkirby.rs:553 -> port `melee_chara::tu/ftkirbyspecialn.rs:528`
-- `ftKb_SpecialN_800F6070` [todo_cb!] x1: tu/ftkirby.rs:567 -> port `melee_chara::tu/ftkirbyspecialn.rs:532`
-- `ftKb_SpecialN_800F9110` [todo_cb!] x1: tu/ftkirby.rs:552 -> port `melee_chara::tu/ftkirbyspecialmario.rs:86`
-- `ftKb_SpecialNIc_80108D64` [todo_cb!] x1: tu/ftkirby.rs:559 -> port `melee_chara::tu/ftkirbyspecialiceclimber.rs:131`
-- `ftKb_SpecialNIc_80108E14` [todo_cb!] x1: tu/ftkirby.rs:573 -> port `melee_chara::tu/ftkirbyspecialiceclimber.rs:144`
-- `ftKb_SpecialNKp_800FA8B4` [todo_cb!] x1: tu/ftkirby.rs:554 -> port `melee_chara::tu/ftkirbyspecialkoopa.rs:226`
-- `ftKb_SpecialNKp_800FA958` [todo_cb!] x1: tu/ftkirby.rs:568 -> port `melee_chara::tu/ftkirbyspecialkoopa.rs:234`
-- `ftKb_SpecialNLk800FB880` [todo_cb!] x1: tu/ftkirby.rs:555 -> port `melee_chara::tu/ftkirbyspeciallink.rs:320`
-- `ftKb_SpecialNLk800FBA00` [todo_cb!] x1: tu/ftkirby.rs:569 -> port `melee_chara::tu/ftkirbyspeciallink.rs:344`
-- `ftKb_SpecialNMr_800F93CC` [todo_cb!] x1: tu/ftkirby.rs:566 -> port `melee_chara::tu/ftkirbyspecialmario.rs:152`
-- `ftKb_SpecialNMs_8010B2FC` [todo_cb!] x1: tu/ftkirby.rs:564 -> port `melee_chara::tu/ftkirbyspecialmars.rs:190`
-- `ftKb_SpecialNMs_8010B4A0` [todo_cb!] x1: tu/ftkirby.rs:578 -> port `melee_chara::tu/ftkirbyspecialmars.rs:209`
-- `ftKb_SpecialNMt_80107568` [todo_cb!] x1: tu/ftkirby.rs:563 -> port `melee_chara::tu/ftkirbyspecialmewtwo.rs:332`
-- `ftKb_SpecialNMt_80107638` [todo_cb!] x1: tu/ftkirby.rs:577 -> port `melee_chara::tu/ftkirbyspecialmewtwo.rs:350`
-- `ftKb_SpecialNNs_800FED38` [todo_cb!] x1: tu/ftkirby.rs:557 -> port `melee_chara::tu/ftkirbyspecialness.rs:100`
-- `ftKb_SpecialNNs_800FEDD0` [todo_cb!] x1: tu/ftkirby.rs:571 -> port `melee_chara::tu/ftkirbyspecialness.rs:111`
-- `ftKb_SpecialNPe_8010C4D4` [todo_cb!] x1: tu/ftkirby.rs:558 -> port `melee_chara::tu/ftkirbyspecialpeach.rs:211`
-- `ftKb_SpecialNPe_8010C560` [todo_cb!] x1: tu/ftkirby.rs:572 -> port `melee_chara::tu/ftkirbyspecialpeach.rs:219`
-- `ftKb_SpecialNPk_800F9FD4` [todo_cb!] x1: tu/ftkirby.rs:560 -> port `melee_chara::tu/ftkirbyspecialpikachu.rs:71`
-- `ftKb_SpecialNPk_800FA064` [todo_cb!] x1: tu/ftkirby.rs:574 -> port `melee_chara::tu/ftkirbyspecialpikachu.rs:75`
-- `ftKb_SpecialNPr_80100DE0` [hook!] x1: tu/ftkirby.rs:353 -> port `melee_chara::chars/r6/ftKirby.rs:27`
-- `ftKb_SpecialNPr_80101560` [todo_cb!] x1: tu/ftkirby.rs:562 -> port `melee_chara::tu/ftkirbyspecialpurin.rs:455`
-- `ftKb_SpecialNPr_80101618` [todo_cb!] x1: tu/ftkirby.rs:576 -> port `melee_chara::tu/ftkirbyspecialpurin.rs:472`
-- `ftKb_SpecialNSk_8010612C` [todo_cb!] x1: tu/ftkirby.rs:556 -> port `melee_chara::tu/ftkirbyspecialseak.rs:186`
-- `ftKb_SpecialNSk_801061E4` [todo_cb!] x1: tu/ftkirby.rs:570 -> port `melee_chara::tu/ftkirbyspecialseak.rs:194`
-- `ftKb_SpecialNYs_8010941C` [todo_cb!] x1: tu/ftkirby.rs:561 -> port `melee_chara::tu/ftkirbyspecialyoshi.rs:255`
-- `ftKb_SpecialNYs_801094FC` [todo_cb!] x1: tu/ftkirby.rs:575 -> port `melee_chara::tu/ftkirbyspecialyoshi.rs:272`
-- `ftKb_SpecialNZd_80105B2C` [todo_cb!] x1: tu/ftkirby.rs:565 -> port `melee_chara::tu/ftkirbyspecialzelda.rs:102`
-- `ftKb_SpecialNZd_80105BA8` [todo_cb!] x1: tu/ftkirby.rs:579 -> port `melee_chara::tu/ftkirbyspecialzelda.rs:112`
-- `HSD_ArchiveGetPublicAddress` [hook!] x1: tu/ftpurin.rs:85 -> port `melee_runtime::tu/archive.rs:84`
-- `HSD_DObjAddAnimAll` [hook!] x1: tu/ftkirby.rs:107 -> port `melee_runtime::tu/dobj.rs:222`
-- `HSD_DObjLoadDesc` [hook!] x1: tu/ftkirby.rs:101 -> port `melee_runtime::tu/dobj.rs:287`
-- `HSD_DObjRemoveAll` [hook!] x1: tu/ftkirby.rs:109 -> port `melee_runtime::tu/dobj.rs:307`
-- `HSD_DObjResolveRefsAll` [hook!] x1: tu/ftkirby.rs:104 -> port `melee_runtime::tu/dobj.rs:334`
-- `HSD_JObjAddAnimAll` [hook!] x1: tu/ftkirbyspecialyoshi.rs:60 -> port `melee_runtime::tu/jobj.rs:327`
-- `HSD_JObjAddDObj` [hook!] x1: tu/ftkirby.rs:106 -> port `melee_runtime::tu/jobj.rs:299`
-- `HSD_JObjAnimAll` [hook!] x2: tu/ftkirbyspecialyoshi.rs:62, tu/ftseakspecials.rs:98 -> port `melee_runtime::tu/jobj.rs:325`
-- `HSD_JObjClearFlagsAll` [hook!] x1: tu/ftpopospecials.rs:100 -> port `melee_runtime::tu/jobj.rs:306`
-- `HSD_JObjCopyMtx` [hook!] x2: tu/ftkirby.rs:123, tu/ftpurin.rs:143 -> port `melee_items::tu/inl_it.rs:259`
-- `HSD_JObjDispAll` [hook!] x1: tu/ftkirby.rs:132 -> port `melee_runtime::tu/jobj.rs:232`
-- `HSD_JObjGetDObj` [hook!] x1: tu/ftkirby.rs:103 -> port `melee_runtime::tu/jobj.rs:298`
-- `HSD_JObjRemoveAll` [hook!] x2: tu/ftkirby.rs:121, tu/ftpurin.rs:114 -> port `melee_runtime::tu/jobj.rs:314`
-- `HSD_JObjReqAnimAll` [hook!] x1: tu/ftkirbyspecialyoshi.rs:61 -> port `melee_runtime::tu/jobj.rs:322`
-- `HSD_JObjSetFlagsAll` [hook!] x1: tu/ftpopospecials.rs:101 -> port `melee_runtime::tu/jobj.rs:304`
-- `HSD_JObjSetMtxDirtySub` [fn+panic/hook!] x4: tu/ftcrazyhandwait11.rs:37, tu/ftinl.rs:35, tu/ftmasterhandbackcrush0.rs:20, tu/ftpurin.rs:145 -> port `melee_runtime::tu/jobj.rs:291`
-- `HSD_JObjSetRotationZ` [hook!] x1: tu/ftpopospecials.rs:102 -> port `melee_world::hud/jobj_inl.rs:37`
-- `HSD_JObjSetTranslate` [hook!] x2: tu/ftyoshi.rs:65, tu/ftyoshiguard.rs:55 -> port `melee_world::hud/jobj_inl.rs:70`
-- `HSD_Randf` [hook!] x3: tu/ftcrazyhandwait10.rs:81, tu/ftmasterhandwait10.rs:55, tu/ftpikachuspecialhi.rs:70 -> port `melee_runtime::tu/random.rs:30`
-- `HSD_Randi` [hook!] x10: tu/ftcrazyhandwait10.rs:80, tu/ftgamewatchspecialn.rs:30, tu/ftkirby.rs:92, tu/ftkirbyspecialgamewatch.rs:40, tu/ftkirbyspecialkoopa.rs:56, tu/ftkirbyspeciallw.rs:45, tu/ftkirbyspecialmario.rs:53, tu/ftkirbyspecialn.rs:88, tu/ftmasterhandwait10.rs:54, tu/ftseakspecialn.rs:47 -> port `melee_runtime::tu/random.rs:33`
-- `it_8029DD58` [hook!] x1: tu/ftlinkspeciallw.rs:31 -> port `melee_items::tu/itlinkbomb.rs:248`
-- `it_802A013C` [hook!] x1: tu/ftlinkspecials.rs:49 -> port `melee_items::tu/itlinkboomerang.rs:207`
-- `it_802A0534` [hook!] x1: tu/ftlinkspecials.rs:58 -> port `melee_items::tu/itlinkboomerang.rs:269`
-- `it_802A8398` [hook!] x1: tu/ftlinkspecialn.rs:53 -> port `melee_items::itkinds5.rs:262`
-- `it_802A83E0` [hook!] x1: tu/ftlinkspecialn.rs:52 -> port `melee_items::tu/itlinkarrow.rs:288`
-- `it_802AF1A4` [hook!] x1: tu/ftlinkspecialn.rs:51 -> port `melee_items::tu/itlinkbow.rs:72`
-- `it_802C1590` [hook!] x2: tu/ftkirbyspecialiceclimber.rs:45, tu/ftpopospecialn.rs:46 -> port `melee_items::tu/itclimbersice.rs:186`
-- `it_802C16F8` [hook!] x2: tu/ftkirbyspecialiceclimber.rs:44, tu/ftpopospecialn.rs:45 -> port `melee_items::tu/itclimbersice.rs:207`
-- `it_802C17DC` [hook!] x3: tu/ftkirbyspecialiceclimber.rs:43, tu/ftpopo.rs:60, tu/ftpopospecialn.rs:44 -> port `melee_items::tu/itclimbersice.rs:221`
-- `it_802C2750` [hook!] x1: tu/ftpopospecialhi.rs:87 -> port `melee_items::tu/itclimbersstring.rs:274`
-- `it_802C27D4` [hook!] x1: tu/ftpopospecialhi.rs:88 -> port `melee_items::tu/itclimbersstring.rs:295`
-- `it_802C3810` [hook!] x1: tu/ftpopospecialhi.rs:85 -> port `melee_items::tu/itclimbersstring.rs:646`
-- `it_802C3864` [hook!] x1: tu/ftpopospecialhi.rs:86 -> port `melee_items::tu/itclimbersstring.rs:654`
-- `it_802C3950` [hook!] x1: tu/ftpopospecialhi.rs:84 -> port `melee_items::tu/itclimbersstring.rs:670`
-- `it_802C8B28` [hook!] x1: tu/ftclinkappeals.rs:27 -> port `melee_items::tu/itclinkmilk.rs:86`
-- `it_802C8C34` [hook!] x1: tu/ftclink.rs:104 -> port `melee_items::tu/itclinkmilk.rs:106`
-- `it_802F0F6C` [ch_hook!] x1: tu/ftcrazyhandfingerbeam0.rs:47 -> port `melee_items::tu/itcrazyhandbomb.rs:96`
-- `it_802F28C8` [hook!] x1: tu/ftkirbyspecialn.rs:153 -> port `melee_items::tu/it_2F28.rs:71`
-- `itDrMarioPill_802C0DBC` [hook!] x1: tu/ftdrmario.rs:89 -> port `melee_items::tu/itdrmariopill.rs:287`
-- `itDrMarioPill_Appeal_Spawn` [hook!] x1: tu/ftdrmarioappeals.rs:56 -> port `melee_items::tu/itdrmariopill.rs:175`
-- `itDrMarioPill_Spawn` [hook!] x2: tu/ftkirbyspecialmario.rs:62, tu/ftmariospecialn.rs:67 -> port `melee_items::tu/itdrmariopill.rs:144`
-- `Item_8026ABD8` [hook!] x1: tu/ftdonkeyheavylanding.rs:28 -> port `melee_items::tu/item.rs:2069`
-- `itLinkArrow_802A850C` [hook!] x1: tu/ftlinkspecialn.rs:54 -> port `melee_items::tu/itlinkarrow.rs:345`
-- `lb_8000B1CC` [hook!] x1: tu/ftlinkspeciallw.rs:29 -> port `melee_runtime::tu/lb_00B0.rs:245`
-- `lbAnim_8001E8F8` [hook!] x3: tu/ftclink.rs:53, tu/ftkirbyspecialn.rs:163, tu/ftpeach.rs:66 -> port `melee_runtime::tu/lbanim.rs:205`
-- `lbArchive_80017040` [hook!] x1: tu/ftkirby.rs:179 -> port `melee_runtime::tu/lbarchive.rs:251`
-- `lbDvd_800178E8` [hook!] x1: tu/ftkirby.rs:176 -> port `melee_runtime::tu/lbdvd.rs:371`
-- `Player_80031DC8` [hook!] x1: tu/ftkirby.rs:90 -> port `melee_fighter::player.rs:131`
-
-### melee_chara - CYCLE (6 sites, 5 names)
-
-- `gm_8016B1D8` [hook!] x1: tu/ftpurinspecialhi.rs:27 -> port `melee_modes::tu/gmvs.rs:414`
-- `HSD_JObjGetMtxPtr` [hook!] x2: tu/ftkirby.rs:122, tu/ftpurin.rs:142 -> port `melee_modes::tu/lb_020A.rs:89`
-- `OSReport` [hook!] x1: tu/ftkirbyspecials.rs:57 -> port `melee_modes::tu/gm_17c0.rs:246`
-- `ScriptGame_CapsMaxJumps` [hook!] x1: tu/ftseakspecialhi.rs:77 -> port `melee_modes::tu/script_game.rs:12358`
-- `ScriptGame_HitRuleSpecial` [hook!] x1: tu/ftpurinspecialhi.rs:36 -> port `melee_modes::tu/script_game.rs:4103`
+- SIGNATURE: every stub is a `port_hook!` (hook, unset = the port) over a typed adapter in `melee_chara/src/adapt.rs`, or a direct call; the Kirby copy-ability callbacks (28) and the `chars/cb.rs` entries call the character ports.
+- NO_PORT: ported where the C file lives: `melee_fighter::tu::{ftcoll, ftmaterial, ftCo_09f4, ftparts_render (ftparts.c)}`, `melee_runtime::tu::{jobj_ptr (jobj.c on raw pointers), mex_data, os_report}` and `random::GLOBAL`, `melee_world::cm::camera_boss` (camera.c) and `NativeEfHost` (efasync.c), `melee_chara::tu::{ftsamus, ftsamusspeciallw1, ftsamusspecialn, ftcrazyhandcancel, ftcrazyhandcapturewaitcrazyhand, ftcrazyhandfingerbeam}`.
+- CYCLE: moved below `melee_modes` and re-exported there: `melee_runtime::tu::{script_hit (ScriptGame_HitRuleDamage/Special/Forget + the capsule table), gmvs_state (gm_8016B1D8 and the VS controller global)}`, `melee_fighter::script_caps` (ScriptGame_CapsMaxJumps and its entity lookup); `HSD_JObjGetMtxPtr` is `jobj_ptr`'s.
+- Not stubs (kept): `blaster_assert` in `tu/ftkirbyspecialfox.rs` is the C `HSD_ASSERT` failure path.
+- Callees that these ports reach and that are still hooks live in the lower crates' lists (GX matrix loads and `HSD_TExp*` in `melee_runtime`, `grLib_801C9CEC` in the camera, the `EfHost` services without a native port, the m-ex/skins tables until the host installs them).
 
 ## melee_modes
 

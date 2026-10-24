@@ -50,7 +50,7 @@ pub mod ext {
             }
         };
     }
-    hook!(LBANIM_8001E8F8, lbAnim_8001E8F8, (tree: *mut FigaTree) -> f32);
+    crate::port_hook!(LBANIM_8001E8F8, lbAnim_8001E8F8, crate::adapt::lbAnim_8001E8F8, (tree: *mut FigaTree) -> f32);
     pub static mut FTDATA_80085E50: Option<fn(*mut Fighter, i32) -> *mut FigaTree> = None;
             #[allow(non_snake_case)]
             pub fn ftData_80085E50(fp: *mut Fighter, msid: i32) -> *mut FigaTree {
@@ -75,7 +75,7 @@ pub mod ext {
                     None => { unsafe { let _ = melee_items::tu::it_26B1::it_8026B3F8(article as _, kind as _); } return; },
                 }
             }
-    hook!(FTPARTS_800753D4, ftParts_800753D4, (fp: *mut Fighter, x0: *mut Fighter_804D6540_x0_t, item: *mut c_void));
+    crate::port_hook!(FTPARTS_800753D4, ftParts_800753D4, crate::adapt::ftParts_800753D4, (fp: *mut Fighter, x0: *mut Fighter_804D6540_x0_t, item: *mut c_void));
     pub static mut FTLK_INIT_LOADSPECIALATTRS: Option<fn(*mut HSD_GObj) > = None;
             #[allow(non_snake_case)]
             pub fn ftLk_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj)  {
@@ -92,7 +92,7 @@ pub mod ext {
                     None => { return unsafe { melee_fighter::tu::ftCo_Guard::ftCo_80092ED8(a as _, b as _) as _ }; },
                 }
             }
-    hook!(FTCOLL_8007B1B8, ftColl_8007B1B8, (gobj: *mut HSD_GObj, shield: *mut c_void, cb: HSD_GObjEvent));
+    crate::port_hook!(FTCOLL_8007B1B8, ftColl_8007B1B8, crate::adapt::ftColl_8007B1B8, (gobj: *mut HSD_GObj, shield: *mut c_void, cb: HSD_GObjEvent));
     pub static mut FTCO_800DEAE8: Option<fn(*mut HSD_GObj, i32, i32) > = None;
             #[allow(non_snake_case)]
             pub fn ftCo_800DEAE8(gobj: *mut HSD_GObj, msid0: i32, msid1: i32)  {
@@ -101,7 +101,7 @@ pub mod ext {
                     None => { unsafe { let _ = melee_fighter::tu::ftCo_AppealS::ftCo_800DEAE8(gobj as _, msid0 as _, msid1 as _); } return; },
                 }
             }
-    hook!(IT_802C8C34, it_802C8C34, (item: *mut Item_GObj));
+    crate::port_hook!(IT_802C8C34, it_802C8C34, crate::adapt::it_802C8C34, (item: *mut Item_GObj));
 }
 
 #[inline(always)]

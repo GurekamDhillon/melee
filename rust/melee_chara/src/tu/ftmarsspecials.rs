@@ -24,7 +24,7 @@ pub mod ext {
     pub fn ft_800892A0(g: *mut HSD_GObj) {
         match unsafe { FT_800892A0 } {
             Some(f) => f(g),
-            None => panic!("TODO: ft_800892A0 is not ported"),
+            None => crate::adapt::ft_800892A0(g),
         }
     }
 }

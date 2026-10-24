@@ -79,7 +79,7 @@ pub mod ext {
     pub fn efSync_Spawn(id: i32, gobj: *mut HSD_GObj, va: &[usize]) -> *mut core::ffi::c_void {
         match unsafe { EFSYNC_SPAWN } {
             Some(f) => f(id, gobj, va),
-            None => panic!("TODO: efSync_Spawn is not ported"),
+            None => unsafe { crate::adapt::efSync_Spawn_usize(id, gobj, va) },
         }
     }
     /// Recording hook; unset, the native `melee_fighter::tu::ftparts` port runs.

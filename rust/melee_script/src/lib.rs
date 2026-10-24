@@ -7,6 +7,7 @@ pub mod gd;
 pub mod host;
 pub mod manifest;
 pub mod motion_names;
+pub mod pad;
 
 pub use engine::{Config, Engine};
 pub use game::{NoGame, ScriptGame};

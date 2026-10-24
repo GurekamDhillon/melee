@@ -75,8 +75,10 @@ fn enter_from_msid(p: &mut Player, msid: i32, rand: &mut HsdRand) -> Result<(), 
 
 /// `ftCo_AttackAir_Anim`.
 pub fn anim(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
-    if unsafe { p.fp.anon_2210.throw_flags } != 0 {
-        return Err(format!("player {}: aerial throw_flags (ftCheckThrowB3) not ported", p.slot + 1));
+    // ftCheckThrowB3: the back aerial's turnaround.
+    if unsafe { p.fp.anon_2210.anon_0.throw_flags_b3() } != 0 {
+        unsafe { p.fp.anon_2210.anon_0.set_throw_flags_b3(0) };
+        p.fp.facing_dir = -p.fp.facing_dir;
     }
     if !p.skel.frames_remaining() {
         fall_enter(p, rand)?;

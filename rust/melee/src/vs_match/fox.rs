@@ -42,6 +42,8 @@ pub enum ItemCmd {
     SpawnGun { owner: usize, kind: i32, pos: Vec3 },
     /// `it_8029C6A4(angle, vel, owner, &muzzle, kind)`: a laser shot.
     Laser { owner: usize, kind: i32, angle: f32, speed: f32, pos: Vec3, parent: Vec3 },
+    /// `it_802B19AC`: Sheik's held needle bundle, at the fighter's position.
+    SeakHeld { owner: usize, pos: Vec3 },
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -49,6 +51,11 @@ pub enum ItemClass {
     /// `flash`: `it_802AE1D0` armed the muzzle-flash accessory (`item->xDD4.foxblaster.gfx_spawn_var`).
     FoxGun { owner: usize, flash: bool },
     FoxLaser { angle: f32, speed: f32, life: f32 },
+    /// `It_Kind_Seak_NeedleHeld`: alive while the owner's `u.sk.x4` is set.
+    SeakHeld { owner: usize },
+    /// `It_Kind_Seak_NeedleThrow` in its flying state (msid 0): `fresh` = created this frame
+    /// (its anim / phys / coll procs ran before the fighter's accessory proc made it).
+    SeakThrown { owner: usize, life: f32, fresh: bool },
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -111,7 +118,7 @@ fn fire_shot(p: &mut Player) -> Result<(), String> {
 }
 
 /// `mpColl_80043754`'s position stepping from `last` to `cur` (no stage contact).
-fn spawn_step(last: Vec3, cur: Vec3) -> Vec3 {
+pub(super) fn spawn_step(last: Vec3, cur: Vec3) -> Vec3 {
     let mut vel = Vec3 { x: cur.x - last.x, y: cur.y - last.y, z: cur.z - last.z };
     let x = if vel.x.abs() > vel.y.abs() { vel.x.abs() } else { vel.y.abs() };
     let steps = if x > 6.0 {
@@ -230,6 +237,9 @@ impl VsMatch {
                     ItemCmd::SpawnGun { owner, kind, pos } => {
                         self.items.push(SimItem { kind, msid: 0, pos, vel: Vec3 { x: 0.0, y: 0.0, z: 0.0 }, class: ItemClass::FoxGun { owner, flash: false } });
                     }
+                    ItemCmd::SeakHeld { owner, pos } => {
+                        self.items.push(SimItem { kind: melee_types::It_Kind_Seak_NeedleHeld as i32, msid: 0, pos, vel: Vec3 { x: 0.0, y: 0.0, z: 0.0 }, class: ItemClass::SeakHeld { owner } });
+                    }
                     ItemCmd::Laser { owner: lo, kind, angle, speed, pos, parent } => {
                         // it_802AE1D0(fp->u.fx.x222C_blasterGObj): arm the gun's muzzle flash.
                         for g in &mut self.items {
@@ -291,6 +301,7 @@ impl VsMatch {
                         flashes.push(([ft_hold.x, ft_hold.y, ft_hold.z], angle, owner));
                     }
                 }
+                ItemClass::SeakHeld { .. } | ItemClass::SeakThrown { .. } => {} // sheik::item_proc, below
                 ItemClass::FoxLaser { angle, speed, life } => {
                     // itFoxlaser_UnkMotion1_Anim -> Item_UpdateRayAnimation: velocity from the angle.
                     it.vel.x = *speed * melee_runtime::gekko::cosf(*angle);
@@ -305,6 +316,9 @@ impl VsMatch {
                         it.pos.y += it.vel.y;
                     }
                 }
+            }
+            if let Some(d) = super::sheik::item_proc(self, &mut it)? {
+                dead = d;
             }
             if dead {
                 self.items.remove(k);

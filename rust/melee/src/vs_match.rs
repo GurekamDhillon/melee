@@ -37,6 +37,7 @@ mod attackair;
 mod dashrun;
 mod fox;
 mod rebirth;
+mod sheik;
 use fox::{ItemCmd, FoxVars, SimItem};
 use rebirth::{PlayerRespawn, RespawnCtx};
 
@@ -237,6 +238,11 @@ pub struct Player {
     item_cmds: Vec<ItemCmd>,
     /// `fp->dat_attrs` for Fox.
     fx_attrs: Option<melee_types::ftFox_DatAttrs>,
+    /// Sheik's Needle Storm state (sheik.rs) and `fp->dat_attrs`.
+    sk: sheik::SeakVars,
+    sk_attrs: Option<melee_types::ftSeakAttributes>,
+    /// The thrown needle's article (`ft_data->x48_items[0]`).
+    sk_needle: Option<sheik::NeedleAttrs>,
     /// The next `Fighter_ChangeMotionState` has `Ft_MF_KeepGfx`.
     keep_gfx: bool,
     /// The next one has `anim_blend == -1` (no blend frames).
@@ -881,6 +887,13 @@ impl VsMatch {
             if let Some(m) = &mut mex {
                 m.run(crate::mex::SLOT_ON_LOAD, slot, &mut fp);
             }
+            let sk_needle = if kind == melee_types::Ft_Kind_Seak { Some(sheik::NeedleAttrs::from_dat(&files.dat.data, files.ft_data)) } else { None };
+            let sk_attrs = if kind == melee_types::Ft_Kind_Seak {
+                let x4 = be32(&files.dat.data, files.ft_data + 4);
+                Some(*files.dat.load_at::<melee_types::ftSeakAttributes>(x4).get())
+            } else {
+                None
+            };
             players.push(Player {
                 slot,
                 follower,
@@ -959,6 +972,9 @@ impl VsMatch {
                 dash: dashrun::DashVars::default(),
                 run: dashrun::RunVars::default(),
                 fx: FoxVars::default(),
+                sk: sheik::SeakVars::default(),
+                sk_attrs,
+                sk_needle,
                 item_cmds: Vec::new(),
                 keep_gfx: false,
                 blend_zero: false,
@@ -1102,6 +1118,7 @@ impl VsMatch {
             // part-anim slots: none started here), ftCo_800DB500 (no item).
             ftaction_80073240(p, &mut self.rand)?;
             p.skel.part_anim_update(&p.part_anim)?;
+            let kind = p.fp.kind;
             let fp = &mut p.fp;
             match fp.motion_id {
                 FTCO_MS_ENTRY => {
@@ -1228,7 +1245,8 @@ impl VsMatch {
                 }
                 m if is_guard_motion(m) => guard_anim(p, &mut self.rand)?,
                 FTCO_MS_KNEE_BEND => kneebend_anim(p, &mut self.rand)?,
-                m if fox::is_fox_special_n(m) => fox::anim(p, &mut self.rand)?,
+                m if kind == Ft_Kind_Fox && fox::is_fox_special_n(m) => fox::anim(p, &mut self.rand)?,
+                m if kind == melee_types::Ft_Kind_Seak && sheik::is_sheik_special_n(m) => sheik::anim(p, &mut self.rand)?,
                 m if is_jump_motion(m) => {
                     // ftCo_Jump_Anim.
                     if !p.skel.frames_remaining() {
@@ -1448,7 +1466,8 @@ impl VsMatch {
                     rebirth::phys(p, &mut ctx)?;
                 }
                 rebirth::FTCO_MS_SLEEP => {}
-                FOX_AIR_N_START | FOX_AIR_N_LOOP | FOX_AIR_N_END => {
+                m if p.fp.kind == melee_types::Ft_Kind_Seak && sheik::is_sheik_special_n(m) => sheik::phys(p),
+                FOX_AIR_N_START | FOX_AIR_N_LOOP | FOX_AIR_N_END if p.fp.kind == Ft_Kind_Fox => {
                     // ftFx_SpecialAirN*_Phys -> ft_80084DB0.
                     let f = &mut *p.fp;
                     fc::check_fall_fast(f);
@@ -1460,7 +1479,7 @@ impl VsMatch {
                     }
                     fc::calc_self_accel_drift(f);
                 }
-                m if m == FTCO_MS_LANDING || m == FTCO_MS_TURN || m == FTCO_MS_WAIT || is_guard_motion(m) || m == FTCO_MS_KNEE_BEND || (fox::FX_MS_SPECIAL_N_START..=fox::FX_MS_SPECIAL_N_END).contains(&m) => {
+                m if m == FTCO_MS_LANDING || m == FTCO_MS_TURN || m == FTCO_MS_WAIT || is_guard_motion(m) || m == FTCO_MS_KNEE_BEND || (p.fp.kind == Ft_Kind_Fox && (fox::FX_MS_SPECIAL_N_START..=fox::FX_MS_SPECIAL_N_END).contains(&m)) => {
                     // (Wait: then ftColl_8007AEE0, a hurtbox reset; not hashed.)
                     // ftCo_Landing_Phys / ftCo_Turn_Phys -> ft_80084F3C: ground friction, then the
                     // self velocity along the floor.
@@ -1627,13 +1646,39 @@ impl VsMatch {
                         return Err("ftCo_8009EF68 (StopCeil) not ported".into());
                     }
                 }
-                FOX_AIR_N_START | FOX_AIR_N_LOOP | FOX_AIR_N_END => {
+                m if p.fp.kind == melee_types::Ft_Kind_Seak && sheik::is_sheik_special_n(m) => {
+                    // ftSk_Special*N*_Coll: ft_80082708 (ground, no floor -> GroundToAir) /
+                    // ft_80081D0C (air, a floor -> AirToGround).
+                    let joints = {
+                        let d = p.ecb_desc;
+                        ecb_joints(&mut p.skel, &d)
+                    };
+                    let fp = &mut *p.fp;
+                    fp.coll_data.last_pos = fp.coll_data.cur_pos;
+                    fp.coll_data.cur_pos = fp.cur_pos;
+                    if m >= sheik::SK_MS_SPECIAL_AIR_N_START {
+                        let r = mc::mp_coll_800471f8(&mut self.ground, &mut self.cg, &mut fp.coll_data, &joints)
+                            .map_err(|e| format!("{} not ported", e.0))?;
+                        fp.cur_pos = fp.coll_data.cur_pos;
+                        if r {
+                            return Err("Sheik SpecialAirN landing (ftCommon_AirToGroundStateChange) not ported".into());
+                        }
+                    } else {
+                        let r = mc::mp_coll_8004b108(&mut self.ground, &mut self.cg, &mut fp.coll_data, &joints)
+                            .map_err(|e| format!("{} not ported", e.0))?;
+                        fp.cur_pos = fp.coll_data.cur_pos;
+                        if !r {
+                            return Err("Sheik SpecialN off the floor (ftCommon_GroundToAirStateChange) not ported".into());
+                        }
+                    }
+                }
+                FOX_AIR_N_START | FOX_AIR_N_LOOP | FOX_AIR_N_END if p.fp.kind == Ft_Kind_Fox => {
                     // ftCo_AirCatchHit_Coll -> ft_80083090(gobj, ftCo_80096CC8, ftCo_80096D28).
                     if ft_800831cc(&mut self.ground, &mut self.cg, p)? {
                         return Err("ftCo_80096D28 (SpecialAirN landing) not ported".into());
                     }
                 }
-                m if m == FTCO_MS_TURN || m == FTCO_MS_KNEE_BEND || is_guard_motion(m) || (fox::FX_MS_SPECIAL_N_START..=fox::FX_MS_SPECIAL_N_END).contains(&m) => {
+                m if m == FTCO_MS_TURN || m == FTCO_MS_KNEE_BEND || is_guard_motion(m) || (p.fp.kind == Ft_Kind_Fox && (fox::FX_MS_SPECIAL_N_START..=fox::FX_MS_SPECIAL_N_END).contains(&m)) => {
                     // ftCo_Turn_Coll -> ft_80083F88 / the guard states' ft_800845B4: ft_80082708
                     // (mpColl_8004B108); no floor -> Fall (a ledge slip -> ftCo_8009F39C).
                     let joints = {
@@ -1708,6 +1753,7 @@ impl VsMatch {
             if self.players[i].fp.x221F_b3() == 0 && self.players[i].fp.x2219_b5() == 0 {
                 fox::accessory4(&mut self.players[i])?;
             }
+            self.seak_accessory(i)?;
         }
         // s_link 14, Fighter_ProcessHit_8006D1EC: the shield's regeneration / upkeep (no hit is
         // ported: hit_guard stops the run before one lands).
@@ -2298,10 +2344,11 @@ fn input_cb(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         rebirth::FTCO_MS_REBIRTH_WAIT => rebirth::wait_iasa(p, rand),
         m if is_guard_motion(m) => guard_iasa(p, rand),
         FTCO_MS_KNEE_BEND => kneebend_iasa(p),
-        m if fox::is_fox_special_n(m) => {
+        m if p.fp.kind == Ft_Kind_Fox && fox::is_fox_special_n(m) => {
             fox::iasa(p);
             Ok(())
         }
+        m if p.fp.kind == melee_types::Ft_Kind_Seak && sheik::is_sheik_special_n(m) => sheik::iasa(p, rand),
         m if is_jump_motion(m) || is_jump_aerial_motion(m) => jump_iasa(p, rand),
         FTCO_MS_FALL_AERIAL => fall_iasa(p, rand),
         m => Err(format!("player {}: input_cb of motion {m} not ported", p.slot + 1)),
@@ -2374,7 +2421,7 @@ fn landing_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     }
     // ftCo_Walk_CheckInput -> ftWalkCommon_800DFC70.
     if i.lstick[0].x * fp.facing_dir >= cd.walk_stick_threshold {
-        return Err(format!("player {}: ftCo_Walk_Enter not ported", p.slot + 1));
+        return walk_enter(p, 0.0, rand);
     }
     Ok(())
 }
@@ -2389,8 +2436,9 @@ fn ground_stick_gate(p: &mut Player, rand: &mut HsdRand, what: &str) -> Result<b
     let cd = melee_fighter::hooks::common_data();
     let fp = &*p.fp;
     let i = &fp.input;
-    if i.pressed_buttons & !PAD_STICK_DIRS != 0 || i.cstick[0].x != 0.0 || i.cstick[0].y != 0.0 || i.triggers[0] != 0.0 || i.held_buttons[0] & (input::HSD_PAD_Z | input::HSD_PAD_LR) != 0 {
-        return Err(format!("player {}: {what} with a button / C-stick / trigger: not ported", p.slot + 1));
+    // X / Y are read by the jump check below (nothing before it in the IASA order does).
+    if i.pressed_buttons & !(PAD_STICK_DIRS | input::HSD_PAD_XY) != 0 || i.cstick[0].x != 0.0 || i.cstick[0].y != 0.0 || i.triggers[0] != 0.0 || i.held_buttons[0] & (input::HSD_PAD_Z | input::HSD_PAD_LR) != 0 {
+        return Err(format!("player {}: {what} with a button / C-stick / trigger: not ported (pressed {:#x} held {:#x} c ({}, {}) trig {})", p.slot + 1, i.pressed_buttons, i.held_buttons[0], i.cstick[0].x, i.cstick[0].y, i.triggers[0]));
     }
     if jump_get_input(fp) {
         jump_check_input(p, rand)?;
@@ -2445,6 +2493,10 @@ fn special_checks(p: &mut Player, rand: &mut HsdRand) -> Result<bool, String> {
         return Err(format!("player {who}: ftCo_Attack100_CheckInput (up-B, kind {}) not ported", fp.kind));
     }
     if fp.x689 == 0 {
+        if fp.kind == melee_types::Ft_Kind_Seak {
+            sheik::special_n_enter(p, false, rand)?;
+            return Ok(true);
+        }
         return Err(format!("player {who}: ftCo_800D6824 (neutral B, kind {}) not ported", fp.kind));
     }
     if fp.x687 == 0 {
@@ -2905,7 +2957,7 @@ fn special_air_check(p: &mut Player, rand: &mut HsdRand) -> Result<bool, String>
     if fc::abs_c(fp.input.lstick[0].x) >= cd.x218 {
         return Err(format!("player {who}: side-B in the air (ftData_SpecialAirS) not ported"));
     }
-    if fp.kind != Ft_Kind_Fox {
+    if fp.kind != Ft_Kind_Fox && fp.kind != melee_types::Ft_Kind_Seak {
         return Err(format!("player {who}: neutral B in the air (kind {}) not ported", fp.kind));
     }
     // The turnaround on a fresh stick flick.
@@ -2913,7 +2965,11 @@ fn special_air_check(p: &mut Player, rand: &mut HsdRand) -> Result<bool, String>
     if (fp.active_duration.lstick.x as i32) < cd.x224 as i32 && ((fp.facing_dir == -1.0 && fp.x2228_b7() == 1) || (fp.facing_dir == 1.0 && fp.x2228_b7() == 0)) {
         fp.facing_dir = -fp.facing_dir;
     }
-    fox::special_n_enter(p, true, rand)?;
+    if p.fp.kind == melee_types::Ft_Kind_Seak {
+        sheik::special_n_enter(p, true, rand)?;
+    } else {
+        fox::special_n_enter(p, true, rand)?;
+    }
     p.fp.set_x2227_b5(1);
     Ok(true)
 }
@@ -4405,9 +4461,7 @@ fn ftcommon_8007d7fc(g: &mut GroundColl, p: &mut Player, c: EntryCommon) -> Resu
         if fp.cur_pos.x < c.crowd_horiz_margin + b.left || fp.cur_pos.x > b.right - c.crowd_horiz_margin {
             return Err("un_803224DC out of bounds -> un_8032201C (crowd) not ported".into());
         }
-        if fp.x2227_b0() != 0 && fp.x1968_jumpsUsed <= 1 {
-            return Err("pl_8003FC44 (stats) not ported".into());
-        }
+        // pl_8003FC44(player_id, is_sub_fighter): sets a stats bit (xDD0.bit0) nothing hashed reads.
     }
     // ftCommon_8007D6A4 (TARGET_PC floor guard: the floor line must be in range and enabled).
     let line = fp.coll_data.floor.index;

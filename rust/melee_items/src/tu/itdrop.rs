@@ -35,12 +35,12 @@ pub mod ext {
     fn gm_8016B0B4() -> i32;
     fn gm_8016B238() -> i32;
     fn it_8026B684(a0: *mut Vec) -> f32 => unsafe { crate::tu::it_26B1::it_8026B684(a0 as _) };
-    fn it_8026BB88(a0: *mut HSD_GObj, a1: *mut Vec);
-    fn it_8026C65C(a0: *mut ItemPickTable) -> i32;
+    fn it_8026BB88(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::it_26B1::it_8026BB88(a0, a1 as _) };
+    fn it_8026C65C(a0: *mut ItemPickTable) -> i32 => unsafe { crate::tu::itspawn::it_8026C65C(a0) };
     fn it_8026C704() -> i32 => unsafe { crate::tu::itspawn::it_8026C704() as _ };
     fn it_8026C75C(a0: *mut ItemPickTable) -> i32 => unsafe { crate::tu::itspawn::it_8026C75C(a0) };
     fn it_80274658(a0: *mut HSD_GObj, a1: f32) -> i32 => unsafe { crate::itlib3::it_80274658(&mut *((*a0).user_data as *mut Item), a1) };
-    fn it_80274ED8();
+    fn it_80274ED8() => unsafe { crate::tu::it_2725::it_80274ED8() };
     fn it_802E5F00(a0: *mut HSD_GObj, a1: *mut Vec, a2: *mut Vec, a3: i32) => unsafe { crate::tu::it_2E5A::it_802E5F00(a0 as _, a1 as _, a2 as _, a3) };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.

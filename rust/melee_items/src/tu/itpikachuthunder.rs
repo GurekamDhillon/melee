@@ -34,7 +34,7 @@ pub mod ext {
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
     fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj => unsafe { crate::tu::item::Item_80268B18(a0) };
     fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32) => unsafe { crate::tu::item::Item_80268E5C(a0, a1, a2) };
-    fn Item_8026AE60() -> u32;
+    fn Item_8026AE60() -> u32 => unsafe { crate::tu::item::Item_8026AE60() };
     fn db_80225DD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
     fn ftPk_SpecialLw_80127608(a0: *mut HSD_GObj);
     fn ftPk_SpecialLw_CheckProperty(a0: *mut HSD_GObj) -> i32;
@@ -44,7 +44,7 @@ pub mod ext {
     fn it_8026BB44(a0: *mut HSD_GObj) => unsafe { crate::tu::it_26B1::it_8026BB44(a0) };
     fn it_8026DA70(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itgroundcoll::it_8026DA70(a0) };
     fn it_80272AC4(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::it_2725::it_80272AC4(a0, a1 as _) };
-    fn it_80275158(a0: *mut HSD_GObj, a1: f32);
+    fn it_80275158(a0: *mut HSD_GObj, a1: f32) => unsafe { crate::tu::it_2725::it_80275158(a0, a1) };
     fn it_80275594(a0: *mut HSD_GObj, a1: i32, a2: f32) => unsafe { crate::itlib::it_80275594(&mut *((*a0).user_data as *mut Item), a1, a2) };
     fn it_802756D0(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_802756d0(&mut *((*a0).user_data as *mut Item)) };
     }

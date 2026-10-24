@@ -30,7 +30,7 @@ pub mod ext {
     }
     ext_fns! {
     fn HSD_Randi(a0: i32) -> i32;
-    fn Item_8026A8EC(a0: *mut HSD_GObj);
+    fn Item_8026A8EC(a0: *mut HSD_GObj) => unsafe { crate::tu::item::Item_8026A8EC(a0) };
     fn Item_8026ADC0(a0: *mut HSD_GObj) => unsafe { crate::tu::item::Item_8026ADC0(a0) };
     fn it_802725D4(a0: *mut HSD_GObj) => unsafe { crate::tu::it_2725::it_802725D4(a0) };
     fn it_80272F7C(a0: *mut HSD_JObj, a1: f32) => unsafe { crate::tu::it_2725::it_80272F7C(a0, a1) };
@@ -47,8 +47,8 @@ pub mod ext {
     fn it_80276CEC(a0: *mut HSD_GObj) => unsafe { crate::itlib3::it_80276cec(&mut *((*a0).user_data as *mut Item)) };
     fn it_80276D9C(a0: *mut HSD_GObj, a1: i32) -> i32 => unsafe { crate::tu::itmaplib::it_80276D9C(a0, a1 as _) as _ };
     fn it_80276FC4(a0: *mut HSD_GObj, a1: i32) => unsafe { crate::tu::itmaplib::it_80276FC4(a0, a1) };
-    fn it_80277040(a0: *mut HSD_GObj) -> i32;
-    fn it_80277544(a0: *mut HSD_GObj) -> i32;
+    fn it_80277040(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itmaplib::it_80277040(a0) as _ };
+    fn it_80277544(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itmaplib::it_80277544(a0) as _ };
     fn mpCheckAllRemap(a0: *mut Vec, a1: *mut i32, a2: *mut u32, a3: *mut Vec, a4: i32, a5: i32, a6: f32, a7: f32, a8: f32, a9: f32) -> i32 => unsafe { melee_world::tu::mplib::mpCheckAllRemap(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9) };
     fn mpColl_800471F8(a0: *mut CollData) -> i32 => unsafe { melee_world::tu::mpcoll::mpColl_800471F8(a0) };
     fn mpColl_800477E0(a0: *mut CollData) -> i32 => unsafe { melee_world::tu::mpcoll::mpColl_800477E0(a0) };

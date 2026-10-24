@@ -61,7 +61,7 @@ pub mod ext {
     fn it_8026DA08(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itgroundcoll::it_8026DA08(a0) };
     fn it_8026E15C(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>) => unsafe { crate::tu::itgroundcoll::it_8026E15C(a0, a1) };
     fn it_8026F3AC() -> i32 => unsafe { crate::tu::itdrop::it_8026F3AC() };
-    fn it_8026F53C(a0: *mut HSD_GObj, a1: *mut Vec, a2: i32);
+    fn it_8026F53C(a0: *mut HSD_GObj, a1: *mut Vec, a2: i32) => unsafe { crate::tu::itdrop::it_8026F53C(a0, a1 as _, a2) };
     fn it_8026F5C8(a0: *mut HSD_GObj, a1: i32, a2: *mut Vec) -> *mut HSD_GObj => unsafe { crate::tu::itdrop::it_8026F5C8(a0, a1, a2 as _) };
     fn it_8026F6BC(a0: *mut HSD_GObj, a1: *mut Vec, a2: *mut Vec, a3: i32) -> *mut HSD_GObj => unsafe { crate::tu::itdrop::it_8026F6BC(a0, a1 as _, a2 as _, a3) };
     fn it_8026F8B4(a0: *mut HSD_GObj, a1: *mut Vec, a2: *mut Vec, a3: i32) -> i32 => unsafe { crate::tu::itdrop::it_8026F8B4(a0, a1 as _, a2 as _, a3) };
@@ -69,7 +69,7 @@ pub mod ext {
     fn it_80272A3C(a0: *mut HSD_JObj) => unsafe { crate::tu::it_2725::it_80272A3C(a0) };
     fn it_80272C08(a0: *mut HSD_GObj) => unsafe { crate::tu::it_2725::it_80272C08(a0) };
     fn it_80274658(a0: *mut HSD_GObj, a1: f32) -> i32 => unsafe { crate::itlib3::it_80274658(&mut *((*a0).user_data as *mut Item), a1) };
-    fn it_80274ED8();
+    fn it_80274ED8() => unsafe { crate::tu::it_2725::it_80274ED8() };
     fn it_8027518C(a0: *mut HSD_GObj) => unsafe { crate::tu::it_2725::it_8027518C(a0) };
     fn it_802751D8(a0: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_802751d8(&mut *((*a0).user_data as *mut Item)) as _ };
     fn it_80275444(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_80275444(&mut *((*a0).user_data as *mut Item)) };

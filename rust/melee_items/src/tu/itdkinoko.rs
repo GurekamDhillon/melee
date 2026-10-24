@@ -40,7 +40,7 @@ pub mod ext {
     fn it_8026D78C(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>) => unsafe { crate::tu::itgroundcoll::it_8026D78C(a0, a1) };
     fn it_8026E414(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>) => unsafe { crate::tu::itgroundcoll::it_8026E414(a0, a1) };
     fn it_80272860(a0: *mut HSD_GObj, a1: f32, a2: f32) => unsafe { crate::itlib3::it_80272860(&mut *((*a0).user_data as *mut Item), a1, a2) };
-    fn it_80276408(a0: *mut HSD_GObj, a1: *mut CollData, a2: *mut Vec);
+    fn it_80276408(a0: *mut HSD_GObj, a1: *mut CollData, a2: *mut Vec) => unsafe { crate::tu::itmaplib::it_80276408(a0, a1, a2 as _) };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

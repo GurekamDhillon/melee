@@ -35,7 +35,7 @@ pub mod ext {
     fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj => unsafe { crate::tu::item::Item_80268B18(a0) };
     fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32) => unsafe { crate::tu::item::Item_80268E5C(a0, a1, a2) };
     fn Item_802694CC(a0: *mut HSD_GObj) => unsafe { crate::tu::item::Item_802694CC(a0) };
-    fn Item_8026A8EC(a0: *mut HSD_GObj);
+    fn Item_8026A8EC(a0: *mut HSD_GObj) => unsafe { crate::tu::item::Item_8026A8EC(a0) };
     fn Item_8026AB54(a0: *mut HSD_GObj, a1: *mut HSD_GObj, a2: u32) => unsafe { crate::tu::item::Item_8026AB54(a0, a1, a2) };
     fn ftPe_SpecialLw_UnsetVeg(a0: *mut HSD_GObj);
     fn itColl_BounceOffShield(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::it_2725::itColl_BounceOffShield(a0) as _ };
@@ -51,7 +51,7 @@ pub mod ext {
     fn it_80274484(a0: *mut HSD_GObj, a1: *mut HSD_JObj, a2: f32) => unsafe { crate::tu::it_2725::it_80274484(a0, a1, a2) };
     fn it_80274594(a0: *mut HSD_GObj) => unsafe { crate::tu::it_2725::it_80274594(a0) };
     fn it_80274658(a0: *mut HSD_GObj, a1: f32) -> i32 => unsafe { crate::itlib3::it_80274658(&mut *((*a0).user_data as *mut Item), a1) };
-    fn it_80275158(a0: *mut HSD_GObj, a1: f32);
+    fn it_80275158(a0: *mut HSD_GObj, a1: f32) => unsafe { crate::tu::it_2725::it_80275158(a0, a1) };
     fn it_80276FC4(a0: *mut HSD_GObj, a1: i32) => unsafe { crate::tu::itmaplib::it_80276FC4(a0, a1) };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.

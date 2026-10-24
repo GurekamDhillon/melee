@@ -36,8 +36,8 @@ pub mod ext {
         fn grLib_801C9A10() -> *mut Vec => unsafe { melee_world::tu::grlib::grLib_801C9A10() as _ };
         fn Item_80266FA8() => unsafe { crate::tu::item::Item_80266FA8() };
         fn Item_80266FCC() => unsafe { crate::tu::item::Item_80266FCC() };
-        fn Stage_8022524C();
-        fn Stage_8022532C(a0: StKind, a1: i32);
+        fn Stage_8022524C() => unsafe { melee_world::tu::stage::Stage_8022524C() };
+        fn Stage_8022532C(a0: StKind, a1: i32) => unsafe { melee_world::tu::stage::Stage_8022532C(a0, a1) };
         fn Stage_InitScene(a0: StKind, a1: i32);
         fn lb_80011AC4(a0: *mut *mut LightList) -> *mut HSD_LObj => unsafe { melee_runtime::tu::lbspdisplay::lb_80011AC4(a0) };
         fn lb_80013B14(a0: *mut HSD_CameraDescPerspective) -> *mut HSD_CObj => unsafe { melee_runtime::tu::lbspdisplay::lb_80013B14(a0) };
@@ -49,7 +49,7 @@ pub mod ext {
         fn lbAudioAx_80026E84(a0: CharacterKind) -> u64 => unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80026E84(a0 as _) };
         fn lbAudioAx_80026F2C(a0: i32) => unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80026F2C(a0 as _) };
         fn lbAudioAx_8002702C(a0: u32, a1: u64) => unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_8002702C(a0, a1) };
-        fn lbAudioAx_80027168();
+        fn lbAudioAx_80027168() => unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80027168() };
         fn lbAudioAx_80027648() => unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80027648() };
         fn lbShadow_8000F38C(a0: i32) => unsafe { melee_runtime::tu::lbshadow::lbShadow_8000F38C(a0) };
         fn Player_80032768(a0: i32, a1: *mut Vec);
@@ -79,7 +79,7 @@ pub mod ext {
         fn HSD_GObj_80390ED0(a0: *mut HSD_GObj, a1: u8);
         fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: i32) => unsafe { melee_runtime::tu::gobj::HSD_GObj_LObjCallback(a0, a1) };
         fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) => unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0, a1) };
-        fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8) -> *mut HSD_GObjProc;
+        fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8) -> *mut HSD_GObjProc => unsafe { melee_world::tu_ext::HSD_GObj_SetupProc(a0, a1, a2) };
         fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void);
         fn HSD_JObjAnimAll(a0: *mut HSD_JObj);
         fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj => unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(a0) };

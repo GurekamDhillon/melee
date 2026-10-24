@@ -39,8 +39,8 @@ pub mod ext {
     fn it_8026B3A8(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b3a8(&mut *((*a0).user_data as *mut Item)) };
     fn it_802725D4(a0: *mut HSD_GObj) => unsafe { crate::tu::it_2725::it_802725D4(a0) };
     fn it_80272940(a0: *mut HSD_GObj) => unsafe { crate::tu::it_2725::it_80272940(a0) };
-    fn it_802AB3F0(a0: *mut HSD_GObj, a1: *mut Vec, a2: i32);
-    fn it_802AB468(a0: *mut HSD_GObj, a1: *mut f32, a2: i32);
+    fn it_802AB3F0(a0: *mut HSD_GObj, a1: *mut Vec, a2: i32) => unsafe { crate::tu::itnesspkthunderball::it_802AB3F0(a0 as _, a1 as _, a2) };
+    fn it_802AB468(a0: *mut HSD_GObj, a1: *mut f32, a2: i32) => unsafe { crate::tu::itnesspkthunderball::it_802AB468(a0 as _, a1, a2) };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

@@ -29,14 +29,14 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn Ground_801C0498() -> f32;
+    fn Ground_801C0498() -> f32 => unsafe { melee_world::tu::ground::Ground_801C0498() };
     fn HSD_JObjClearFlagsAll(a0: *mut HSD_JObj, a1: u32);
     fn HSD_JObjSetFlagsAll(a0: *mut HSD_JObj, a1: u32);
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
     fn HSD_Randf() -> f32;
     fn HSD_Randi(a0: i32) -> i32;
     fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32) => unsafe { crate::tu::item::Item_80268E5C(a0, a1, a2) };
-    fn Item_8026A8EC(a0: *mut HSD_GObj);
+    fn Item_8026A8EC(a0: *mut HSD_GObj) => unsafe { crate::tu::item::Item_8026A8EC(a0) };
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_8026b894(&mut *((*a0).user_data as *mut Item), a1) as _ };
     fn it_8026D62C(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>) => unsafe { crate::tu::itgroundcoll::it_8026D62C(a0, a1) };
     fn it_8026D6F4(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>) => unsafe { crate::tu::itgroundcoll::it_8026D6F4(a0, a1) };
@@ -67,7 +67,7 @@ crate::kinds_jobj_inl!();
 
 /// `HSD_JObjSetScaleX` (baselib/jobj.h, static inline)
 #[inline]
-unsafe fn HSD_JObjSetScaleX(jobj: *mut HSD_JObj, x: f32) {
+pub unsafe fn HSD_JObjSetScaleX(jobj: *mut HSD_JObj, x: f32) {
     hsd_assert(!jobj.is_null(), "(jobj)");
     (*jobj).scale.x = x;
     if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {

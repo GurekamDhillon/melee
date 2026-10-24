@@ -36,7 +36,7 @@ pub mod ext {
     fn HSD_StateAssignTev() -> i32;
     fn HSD_StateInitTev();
     fn HSD_TExpSetReg(a0: *mut HSD_TExp) => unsafe { melee_runtime::tu::texp::HSD_TExpSetReg(a0) };
-    fn HSD_TObjSetup(a0: *mut HSD_TObj);
+    fn HSD_TObjSetup(a0: *mut HSD_TObj) => unsafe { melee_runtime::tu::tobj::HSD_TObjSetup(a0) };
     fn HSD_TObjSetupTextureCoordGen(a0: *mut HSD_TObj) => unsafe { melee_runtime::tu::tobj::HSD_TObjSetupTextureCoordGen(a0) };
     fn ftCo_800C0674(a0: *mut HSD_GObj) -> *mut ColorOverlay;
     fn hsdInitClassInfo(a0: *mut _HSD_ClassInfo, a1: *mut _HSD_ClassInfo, a2: *mut i8, a3: *mut i8, a4: i32, a5: i32) => unsafe { melee_runtime::tu::class::hsdInitClassInfo(a0 as _, a1 as _, a2 as _, a3 as _, a4, a5) };

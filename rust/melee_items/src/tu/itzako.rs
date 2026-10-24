@@ -32,7 +32,7 @@ pub mod ext {
     }
     ext_fns! {
     fn Camera_GetTransformPosition(a0: *mut Vec);
-    fn Ground_801C5840() -> i32;
+    fn Ground_801C5840() -> i32 => unsafe { melee_world::tu::ground::Ground_801C5840() };
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
     fn HSD_Randf() -> f32;
     fn HSD_Randi(a0: i32) -> i32;
@@ -47,13 +47,13 @@ pub mod ext {
     fn ftLib_80087744(a0: *mut HSD_GObj, a1: *mut c_void);
     fn ftLib_GetMotionId(a0: *mut HSD_GObj) -> i32;
     fn gm_IsCurrently1PMode() -> i32;
-    fn grLib_801C9E40() -> i32;
-    fn grLib_801C9E50(a0: i16);
+    fn grLib_801C9E40() -> i32 => unsafe { melee_world::tu::grlib::grLib_801C9E40() };
+    fn grLib_801C9E50(a0: i16) => unsafe { melee_world::tu::grlib::grLib_801C9E50(a0) };
     fn grZakoGenerator_801CAC14(a0: *mut HSD_GObj) => unsafe { melee_world::tu::grzakogenerator::grZakoGenerator_801CAC14(a0) };
     fn grZakoGenerator_801CACB8(a0: *mut HSD_GObj) => unsafe { melee_world::tu::grzakogenerator::grZakoGenerator_801CACB8(a0) };
     fn it_8026B3A8(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b3a8(&mut *((*a0).user_data as *mut Item)) };
     fn it_8026B684(a0: *mut Vec) -> f32 => unsafe { crate::tu::it_26B1::it_8026B684(a0 as _) };
-    fn it_8026BB88(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn it_8026BB88(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::it_26B1::it_8026BB88(a0, a1 as _) };
     fn it_8026C220(a0: *mut HSD_GObj, a1: *mut HSD_GObj) => unsafe { crate::tu::it_26B1::it_8026C220(a0, a1) };
     fn it_8026DAA8(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itgroundcoll::it_8026DAA8(a0) };
     fn it_80274594(a0: *mut HSD_GObj) => unsafe { crate::tu::it_2725::it_80274594(a0) };
@@ -743,7 +743,7 @@ pub unsafe extern "C" fn it_8027CC88(item_gobj_arg: *mut HSD_GObj) -> *mut HSD_G
 
 /// `gm_IsCurrently1PMode` returns bool in the C header.
 #[inline(always)]
-unsafe fn gm_IsCurrently1PMode() -> bool {
+pub unsafe fn gm_IsCurrently1PMode() -> bool {
     ext::gm_IsCurrently1PMode() != 0
 }
 

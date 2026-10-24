@@ -29,7 +29,7 @@ pub mod ext {
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
     fn PSVECAdd(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec);
     fn it_8026BB68(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::it_26B1::it_8026BB68(a0, a1 as _) };
-    fn it_8026BB88(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn it_8026BB88(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::it_26B1::it_8026BB88(a0, a1 as _) };
     fn it_8026BC90(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::it_26B1::it_8026BC90(a0, a1 as _) };
     fn it_8026C100(a0: *mut HSD_GObj) -> *mut CollData => unsafe { crate::tu::it_26B1::it_8026C100(a0) };
     fn it_80272CC0(a0: *mut HSD_GObj, a1: i32) -> *mut HSD_JObj => unsafe { crate::itkinds11::it_80272cc0(a0, a1) };
@@ -57,11 +57,11 @@ pub mod ext {
     fn mpColl_800436E4(a0: *mut CollData, a1: f32) => unsafe { melee_world::tu::mpcoll::mpColl_800436E4(a0, a1) };
     fn mpColl_800471F8(a0: *mut CollData) -> i32 => unsafe { melee_world::tu::mpcoll::mpColl_800471F8(a0) };
     fn mpColl_SetECBSource_Fixed(a0: *mut CollData, a1: *mut HSD_GObj, a2: f32, a3: f32, a4: f32, a5: f32) => unsafe { melee_world::tu::mpcoll::mpColl_SetECBSource_Fixed(a0, a1, a2, a3, a4, a5) };
-    fn mpLib_8004DD90_Floor(a0: i32, a1: *mut Vec, a2: *mut f32, a3: *mut u32, a4: *mut Vec) -> i32;
+    fn mpLib_8004DD90_Floor(a0: i32, a1: *mut Vec, a2: *mut f32, a3: *mut u32, a4: *mut Vec) -> i32 => unsafe { melee_world::tu::mplib::mpLib_8004DD90_Floor(a0, a1, a2, a3, a4) };
     fn mpLib_8005199C_Floor(a0: *mut Vec, a1: i32, a2: i32) -> i32 => unsafe { melee_world::tu::mplib::mpLib_8005199C_Floor(a0, a1, a2) };
     fn mpLib_80054ED8(a0: i32) -> i32 => unsafe { melee_world::tu::mplib::mpLib_80054ED8(a0) };
-    fn mpLineGetNormal(a0: i32, a1: *mut Vec) -> *mut Vec;
-    fn mpLinesConnected(a0: i32, a1: i32) -> i32;
+    fn mpLineGetNormal(a0: i32, a1: *mut Vec) -> *mut Vec => unsafe { melee_world::tu::mplib::mpLineGetNormal(a0, a1) };
+    fn mpLinesConnected(a0: i32, a1: i32) -> i32 => unsafe { melee_world::tu::mplib::mpLinesConnected(a0, a1) };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

@@ -50,7 +50,7 @@ pub mod ext {
     fn it_80272940(a0: *mut HSD_GObj) => unsafe { crate::tu::it_2725::it_80272940(a0) };
     fn it_80272C6C(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::it_2725::it_80272C6C(a0) };
     fn it_80273130(a0: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_80273130(&mut *((*a0).user_data as *mut Item)) as _ };
-    fn it_80275158(a0: *mut HSD_GObj, a1: f32);
+    fn it_80275158(a0: *mut HSD_GObj, a1: f32) => unsafe { crate::tu::it_2725::it_80275158(a0, a1) };
     fn it_802AF940(a0: *mut HSD_GObj, a1: *mut HSD_GObj, a2: *mut Vec, a3: i32, a4: f32, a5: f32) -> *mut HSD_GObj => unsafe { crate::tu::itnesspkflashexplode::it_802AF940(a0 as _, a1 as _, a2 as _, a3, a4, a5) as _ };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.

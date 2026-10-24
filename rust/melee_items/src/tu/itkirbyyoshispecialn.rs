@@ -29,7 +29,7 @@ pub mod ext {
     }
     ext_fns! {
     fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32) => unsafe { crate::tu::item::Item_80268E5C(a0, a1, a2) };
-    fn Item_8026A8EC(a0: *mut HSD_GObj);
+    fn Item_8026A8EC(a0: *mut HSD_GObj) => unsafe { crate::tu::item::Item_8026A8EC(a0) };
     fn ftKb_SpecialNYs_80109238(a0: *mut HSD_GObj) -> u32;
     fn ftLib_80086630(a0: *mut HSD_GObj, a1: u32) -> *mut HSD_JObj;
     fn it_8026BD54(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026bd54(&mut *((*a0).user_data as *mut Item)) };

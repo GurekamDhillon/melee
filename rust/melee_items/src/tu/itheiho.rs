@@ -32,35 +32,35 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn HSD_AObjSetFlags(a0: *mut HSD_AObj, a1: u32);
-    fn HSD_AObjSetRate(a0: *mut HSD_AObj, a1: f32);
+    fn HSD_AObjSetFlags(a0: *mut HSD_AObj, a1: u32) => unsafe { melee_world::tu_ext::HSD_AObjSetFlags(a0, a1) };
+    fn HSD_AObjSetRate(a0: *mut HSD_AObj, a1: f32) => unsafe { melee_runtime::tu::aobj::HSD_AObjSetRate(a0, a1) };
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
     fn HSD_Randf() -> f32;
     fn HSD_Randi(a0: i32) -> i32;
-    fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32);
-    fn Stage_GetBlastZoneBottomOffset() -> f32;
-    fn Stage_GetBlastZoneLeftOffset() -> f32;
-    fn Stage_GetBlastZoneRightOffset() -> f32;
-    fn Stage_GetBlastZoneTopOffset() -> f32;
-    fn Stage_UnkSetVec3TCam_Offset(a0: *mut Vec);
-    fn itFoods_Logic18_PickedUp(a0: *mut HSD_GObj);
-    fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;
-    fn it_8026DA70(a0: *mut HSD_GObj) -> i32;
-    fn it_80272860(a0: *mut HSD_GObj, a1: f32, a2: f32);
-    fn it_80272C6C(a0: *mut HSD_GObj) -> i32;
-    fn it_80274A64(a0: *mut HSD_GObj);
-    fn it_802762BC(a0: *mut Item);
-    fn it_80276308(a0: *mut HSD_GObj) -> i32;
-    fn it_8027B5B0(a0: i32, a1: *mut Vec, a2: *mut HSD_JObj, a3: *mut Vec, a4: i32) -> *mut HSD_GObj;
-    fn it_8027B730(a0: *mut HSD_GObj);
-    fn it_8027B798(a0: *mut HSD_GObj, a1: *mut Vec) -> i32;
-    fn it_8027CE44(a0: *mut HSD_GObj);
-    fn it_8028F8E4(a0: *mut HSD_GObj);
-    fn it_8028F968(a0: *mut HSD_GObj);
-    fn it_8028F9B8(a0: *mut HSD_GObj);
-    fn it_8028F9D8(a0: *mut HSD_GObj, a1: *mut Vec, a2: f32);
-    fn it_8028FAF4(a0: *mut HSD_GObj, a1: *mut Vec) -> *mut HSD_GObj;
-    fn it_8028FC5C(a0: *mut HSD_GObj);
+    fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32) => unsafe { crate::tu::item::Item_80268E5C(a0, a1, a2) };
+    fn Stage_GetBlastZoneBottomOffset() -> f32 => unsafe { melee_world::tu::stage::Stage_GetBlastZoneBottomOffset() };
+    fn Stage_GetBlastZoneLeftOffset() -> f32 => unsafe { melee_world::tu::stage::Stage_GetBlastZoneLeftOffset() };
+    fn Stage_GetBlastZoneRightOffset() -> f32 => unsafe { melee_world::tu::stage::Stage_GetBlastZoneRightOffset() };
+    fn Stage_GetBlastZoneTopOffset() -> f32 => unsafe { melee_world::tu::stage::Stage_GetBlastZoneTopOffset() };
+    fn Stage_UnkSetVec3TCam_Offset(a0: *mut Vec) => unsafe { melee_world::tu::stage::Stage_UnkSetVec3TCam_Offset(a0 as _) };
+    fn itFoods_Logic18_PickedUp(a0: *mut HSD_GObj) => unsafe { crate::tu::itfoods::itFoods_Logic18_PickedUp(a0 as _) };
+    fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::tu::it_26B1::it_8026B894(a0, a1) as _ };
+    fn it_8026DA70(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itgroundcoll::it_8026DA70(a0) };
+    fn it_80272860(a0: *mut HSD_GObj, a1: f32, a2: f32) => unsafe { crate::itlib3::it_80272860(&mut *((*a0).user_data as *mut Item), a1, a2) };
+    fn it_80272C6C(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::it_2725::it_80272C6C(a0) };
+    fn it_80274A64(a0: *mut HSD_GObj) => unsafe { crate::tu::it_2725::it_80274A64(a0) };
+    fn it_802762BC(a0: *mut Item) => unsafe { crate::tu::itmaplib::it_802762BC(a0) };
+    fn it_80276308(a0: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_80276308(&mut *((*a0).user_data as *mut Item)) };
+    fn it_8027B5B0(a0: i32, a1: *mut Vec, a2: *mut HSD_JObj, a3: *mut Vec, a4: i32) -> *mut HSD_GObj => unsafe { crate::tu::itzako::it_8027B5B0(a0, a1 as _, a2, a3 as _, a4) };
+    fn it_8027B730(a0: *mut HSD_GObj) => unsafe { crate::tu::itzako::it_8027B730(a0) };
+    fn it_8027B798(a0: *mut HSD_GObj, a1: *mut Vec) -> i32 => unsafe { crate::tu::itzako::it_8027B798(a0, a1 as _) as _ };
+    fn it_8027CE44(a0: *mut HSD_GObj) => unsafe { crate::tu::itzako::it_8027CE44(a0) };
+    fn it_8028F8E4(a0: *mut HSD_GObj) => unsafe { crate::tu::itfreeze::it_8028F8E4(a0 as _) };
+    fn it_8028F968(a0: *mut HSD_GObj) => unsafe { crate::tu::itfreeze::it_8028F968(a0 as _) };
+    fn it_8028F9B8(a0: *mut HSD_GObj) => unsafe { crate::tu::itfreeze::it_8028F9B8(a0 as _) };
+    fn it_8028F9D8(a0: *mut HSD_GObj, a1: *mut Vec, a2: f32) => unsafe { crate::tu::itfoods::it_8028F9D8(a0 as _, a1, a2) };
+    fn it_8028FAF4(a0: *mut HSD_GObj, a1: *mut Vec) -> *mut HSD_GObj => unsafe { crate::tu::itfoods::it_8028FAF4(a0 as _, a1) };
+    fn it_8028FC5C(a0: *mut HSD_GObj) => unsafe { crate::tu::itfoods::it_8028FC5C(a0) };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

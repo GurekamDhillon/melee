@@ -51,13 +51,13 @@ pub mod ext {
     fn it_80272560(a0: *mut HSD_GObj, a1: i32) => unsafe { crate::tu::it_2725::it_80272560(a0, a1) };
     fn it_80272940(a0: *mut HSD_GObj) => unsafe { crate::tu::it_2725::it_80272940(a0) };
     fn it_80273130(a0: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_80273130(&mut *((*a0).user_data as *mut Item)) as _ };
-    fn it_80275158(a0: *mut HSD_GObj, a1: f32);
+    fn it_80275158(a0: *mut HSD_GObj, a1: f32) => unsafe { crate::tu::it_2725::it_80275158(a0, a1) };
     fn it_802762BC(a0: *mut Item) => unsafe { crate::item::it_802762bc(&mut *a0) };
     fn lbVector_Mirror(a0: *mut Vec, a1: *mut Vec) => unsafe { melee_runtime::tu::lbvector::lbVector_Mirror(a0, a1) };
     fn mpColl_80043558(a0: *mut CollData, a1: i32) => unsafe { melee_world::tu::mpcoll::mpColl_80043558(a0, a1) };
-    fn mpGetSpeed(a0: i32, a1: *mut Vec, a2: *mut Vec) -> i32;
+    fn mpGetSpeed(a0: i32, a1: *mut Vec, a2: *mut Vec) -> i32 => unsafe { melee_world::tu::mplib::mpGetSpeed(a0, a1, a2) };
     fn mpLib_80054ED8(a0: i32) -> i32 => unsafe { melee_world::tu::mplib::mpLib_80054ED8(a0) };
-    fn mpLineGetNormal(a0: i32, a1: *mut Vec) -> *mut Vec;
+    fn mpLineGetNormal(a0: i32, a1: *mut Vec) -> *mut Vec => unsafe { melee_world::tu::mplib::mpLineGetNormal(a0, a1) };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

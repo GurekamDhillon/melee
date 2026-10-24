@@ -38,7 +38,7 @@ pub mod ext {
     fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32);
     fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32);
     fn Ground_801C0378(a0: i32) => unsafe { melee_world::tu::ground::Ground_801C0378(a0) };
-    fn Ground_SetParamY(a0: f32);
+    fn Ground_SetParamY(a0: f32) => unsafe { melee_world::tu::ground::Ground_SetParamY(a0) };
     fn HSD_CObjAddAnim(a0: *mut HSD_CObj, a1: *mut HSD_CameraAnim) => unsafe { melee_runtime::tu::cobj::HSD_CObjAddAnim(a0, a1) };
     fn HSD_CObjAnim(a0: *mut HSD_CObj) => unsafe { melee_runtime::tu::cobj::HSD_CObjAnim(a0) };
     fn HSD_CObjEndCurrent() => unsafe { melee_runtime::tu::cobj::HSD_CObjEndCurrent() };
@@ -51,7 +51,7 @@ pub mod ext {
     fn HSD_GObj_FogCallback(a0: *mut HSD_GObj, a1: i32) => unsafe { melee_runtime::tu::gobj::HSD_GObj_FogCallback(a0, a1) };
     fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) => unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0, a1) };
     fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: i32) => unsafe { melee_runtime::tu::gobj::HSD_GObj_LObjCallback(a0, a1) };
-    fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc;
+    fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc => unsafe { melee_world::tu_ext::HSD_GObj_SetupProc(a0, a1, a2) };
     fn HSD_JObjAnimAll(a0: *mut HSD_JObj);
     fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj => unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(a0) };
     fn HSD_JObjReqAnimAll(a0: *mut HSD_JObj, a1: f32);
@@ -68,9 +68,9 @@ pub mod ext {
     fn Player_SetPlayerCharacter(a0: i32, a1: u32);
     fn Player_SetPlayerId(a0: i32, a1: i32);
     fn Player_SetSlottype(a0: i32, a1: Gm_PKind);
-    fn Stage_802251E8(a0: u32, a1: *mut i32);
-    fn Stage_8022524C();
-    fn Stage_8022532C(a0: u32, a1: i32);
+    fn Stage_802251E8(a0: u32, a1: *mut i32) => unsafe { melee_world::tu::stage::Stage_802251E8(a0, a1) };
+    fn Stage_8022524C() => unsafe { melee_world::tu::stage::Stage_8022524C() };
+    fn Stage_8022532C(a0: u32, a1: i32) => unsafe { melee_world::tu::stage::Stage_8022532C(a0, a1) };
     fn efAsync_LoadSync(a0: i32);
     fn efLib_Init() => unsafe { melee_world::tu::eflib::efLib_Init() };
     fn ftDemo_ObjAllocInit();
@@ -81,7 +81,7 @@ pub mod ext {
     fn lbAudioAx_800237A8(a0: i32, a1: i32, a2: i32) -> i32 => unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800237A8(a0, a1, a2) };
     fn lbAudioAx_80026F2C(a0: u32) => unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80026F2C(a0) };
     fn lbAudioAx_8002702C(a0: u32, a1: u64) => unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_8002702C(a0, a1) };
-    fn lbAudioAx_80027168();
+    fn lbAudioAx_80027168() => unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80027168() };
     fn lbAudioAx_80027648() => unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80027648() };
     fn lbShadow_8000F38C(a0: i32) => unsafe { melee_runtime::tu::lbshadow::lbShadow_8000F38C(a0) };
     fn lb_8000FCDC() => unsafe { melee_runtime::tu::lb_00F9::lb_8000FCDC() };

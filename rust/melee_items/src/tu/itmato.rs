@@ -30,7 +30,7 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn Ground_801C4338();
+    fn Ground_801C4338() => unsafe { melee_world::tu::ground::Ground_801C4338() };
     fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32) => unsafe { crate::tu::item::Item_80268E5C(a0, a1, a2) };
     fn ScriptGame_TargetDestroyed(a0: *mut HSD_GObj) -> i32;
     fn ScriptGame_TargetPin(a0: *mut HSD_GObj) -> i32;

@@ -41,16 +41,16 @@ pub mod ext {
     }
     ext_fns! {
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
-    fn Ground_801C2AD8() -> *mut i32;
-    fn Ground_801C2AE8(a0: u32) -> f32;
-    fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc;
+    fn Ground_801C2AD8() -> *mut i32 => unsafe { melee_world::tu::ground::Ground_801C2AD8() };
+    fn Ground_801C2AE8(a0: u32) -> f32 => unsafe { melee_world::tu::ground::Ground_801C2AE8(a0) };
+    fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc => unsafe { melee_world::tu_ext::HSD_GObj_SetupProc(a0, a1, a2) };
     fn HSD_MemAlloc(a0: i32) -> *mut c_void => unsafe { melee_runtime::tu::memory::HSD_MemAlloc(a0) };
     fn HSD_Randf() -> f32;
     fn HSD_Randi(a0: i32) -> i32;
     fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj => unsafe { crate::tu::item::Item_80268B18(a0) };
     fn Item_80268B9C(a0: *mut SpawnItem) => unsafe { crate::tu::item::Item_80268B9C(a0) };
-    fn Stage_80224FDC(a0: *mut Vec) -> i32;
-    fn Stage_80225194() -> u32;
+    fn Stage_80224FDC(a0: *mut Vec) -> i32 => unsafe { melee_world::tu::stage::Stage_80224FDC(a0 as _) };
+    fn Stage_80225194() -> u32 => unsafe { melee_world::tu::stage::Stage_80225194() };
     fn db_AreItemSpawnsEnabled() -> i32;
     fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: &[EfArg]) -> *mut c_void;
     fn gm_8016AE80() -> i32;
@@ -58,8 +58,8 @@ pub mod ext {
     fn gm_8016AEA4() -> u64;
     fn gm_8016B238() -> i32;
     fn it_8026B684(a0: *mut Vec) -> f32 => unsafe { crate::tu::it_26B1::it_8026B684(a0 as _) };
-    fn it_80272828(a0: i32) -> *mut HSD_GObj;
-    fn it_80274ED8();
+    fn it_80272828(a0: i32) -> *mut HSD_GObj => unsafe { crate::tu::it_2725::it_80272828(a0) };
+    fn it_80274ED8() => unsafe { crate::tu::it_2725::it_80274ED8() };
     fn mpColl_8004D024(a0: *mut Vec) -> i32 => unsafe { melee_world::tu::mpcoll::mpColl_8004D024(a0) };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.

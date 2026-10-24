@@ -34,9 +34,9 @@ pub mod ext {
     fn HSD_JObjAnimAll(a0: *mut HSD_JObj);
     fn HSD_JObjRemoveAnimAll(a0: *mut HSD_JObj);
     fn HSD_JObjReqAnimAll(a0: *mut HSD_JObj, a1: f32);
-    fn Item_80267978(a0: *mut HSD_GObj);
+    fn Item_80267978(a0: *mut HSD_GObj) => unsafe { crate::tu::item::Item_80267978(a0) };
     fn Item_80268E40(a0: *mut Item, a1: *mut ItemStateDesc) => unsafe { crate::itlib3::item_80268e40(&mut *a0, &*a1) };
-    fn Item_8026A8EC(a0: *mut HSD_GObj);
+    fn Item_8026A8EC(a0: *mut HSD_GObj) => unsafe { crate::tu::item::Item_8026A8EC(a0) };
     fn Mex_IndexStageItem(a0: *mut c_void, a1: i32);
     fn Mex_ItRecord(a0: *mut Article, a1: i32) -> i32;
     fn ftLib_8008627C(a0: *mut Vec, a1: *mut HSD_GObj) -> *mut HSD_GObj;

@@ -54,7 +54,7 @@ pub mod ext {
     fn HSD_ObjFree(a0: *mut _HSD_ObjAllocData, a1: *mut c_void) => unsafe { melee_runtime::tu::objalloc::HSD_ObjFree(a0 as _, a1) };
     fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj => unsafe { crate::tu::item::Item_80268B18(a0) };
     fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32) => unsafe { crate::tu::item::Item_80268E5C(a0, a1, a2) };
-    fn Item_8026A8EC(a0: *mut HSD_GObj);
+    fn Item_8026A8EC(a0: *mut HSD_GObj) => unsafe { crate::tu::item::Item_8026A8EC(a0) };
     fn Item_8026AB54(a0: *mut HSD_GObj, a1: *mut HSD_GObj, a2: u32) => unsafe { crate::tu::item::Item_8026AB54(a0, a1, a2) };
     fn PSMTXConcat(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void);
     fn PSMTXCopy(a0: *mut c_void, a1: *mut c_void);
@@ -79,7 +79,7 @@ pub mod ext {
     fn mpColl_800471F8(a0: *mut CollData) -> i32 => unsafe { melee_world::tu::mpcoll::mpColl_800471F8(a0) };
     fn mpColl_8004B108(a0: *mut CollData) -> i32 => unsafe { melee_world::tu::mpcoll::mpColl_8004B108(a0) };
     fn mpColl_SetECBSource_Fixed(a0: *mut CollData, a1: *mut HSD_GObj, a2: f32, a3: f32, a4: f32, a5: f32) => unsafe { melee_world::tu::mpcoll::mpColl_SetECBSource_Fixed(a0, a1, a2, a3, a4, a5) };
-    fn mpGetSpeed(a0: i32, a1: *mut Vec, a2: *mut Vec) -> i32;
+    fn mpGetSpeed(a0: i32, a1: *mut Vec, a2: *mut Vec) -> i32 => unsafe { melee_world::tu::mplib::mpGetSpeed(a0, a1, a2) };
     fn mpIsland_8005AB54(a0: i32) -> *mut mp_UnkStruct0 => unsafe { melee_world::tu::mpisland::mpIsland_8005AB54(a0) };
     fn mpLib_80054ED8(a0: i32) -> i32 => unsafe { melee_world::tu::mplib::mpLib_80054ED8(a0) };
     }

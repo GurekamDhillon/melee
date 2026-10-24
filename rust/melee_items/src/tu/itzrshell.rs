@@ -77,7 +77,7 @@ pub mod ext {
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_8026b894(&mut *((*a0).user_data as *mut Item), a1) as _ };
     fn it_802762B0(a0: *mut Item) => unsafe { crate::item::it_802762b0(&mut *a0) };
     fn it_802762BC(a0: *mut Item) => unsafe { crate::item::it_802762bc(&mut *a0) };
-    fn it_80277040(a0: *mut HSD_GObj) -> i32;
+    fn it_80277040(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itmaplib::it_80277040(a0) as _ };
     fn it_8027B5B0(a0: i32, a1: *mut Vec, a2: *mut HSD_JObj, a3: *mut Vec, a4: i32) -> *mut HSD_GObj => unsafe { crate::tu::itzako::it_8027B5B0(a0, a1 as _, a2, a3 as _, a4) };
     fn it_8027C56C(a0: *mut HSD_GObj, a1: f32) => unsafe { crate::tu::itzako::it_8027C56C(a0, a1) };
     fn it_802DDA84(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itnokonoko::it_802DDA84(a0 as _) as _ };

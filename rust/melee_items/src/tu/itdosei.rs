@@ -45,7 +45,7 @@ pub mod ext {
     }
     ext_fns! {
     fn HSD_JObjClearFlagsAll(a0: *mut HSD_JObj, a1: u32);
-    fn HSD_JObjSetMtxDirty(a0: *mut HSD_JObj);
+    fn HSD_JObjSetMtxDirty(a0: *mut HSD_JObj) => unsafe { crate::tu::item::HSD_JObjSetMtxDirty(a0) };
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
     fn HSD_Randi(a0: i32) -> i32;
     fn Item_80268DD4(a0: *mut HSD_GObj, a1: f32) => unsafe { crate::tu::item::Item_80268DD4(a0, a1) };
@@ -97,7 +97,7 @@ unsafe fn HSD_JObjSetRotationXWithMtxDirty(jobj: *mut HSD_JObj, x: f32) {
     }
 }
 #[allow(dead_code)]
-unsafe fn HSD_JObjSetRotationYWithMtxDirty(jobj: *mut HSD_JObj, y: f32) {
+pub unsafe fn HSD_JObjSetRotationYWithMtxDirty(jobj: *mut HSD_JObj, y: f32) {
     assert!(!jobj.is_null(), "HSD_ASSERT(660, jobj)");
     assert!((*jobj).flags & JOBJ_USE_QUATERNION as u32 == 0, "HSD_ASSERT(661, !(jobj->flags & JOBJ_USE_QUATERNION))");
     (*jobj).rotate.y = y;

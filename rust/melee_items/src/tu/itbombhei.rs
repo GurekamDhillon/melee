@@ -34,7 +34,7 @@ pub mod ext {
     }
     ext_fns! {
     fn HSD_JObjSetFlagsAll(a0: *mut HSD_JObj, a1: u32);
-    fn HSD_JObjSetMtxDirty(a0: *mut HSD_JObj);
+    fn HSD_JObjSetMtxDirty(a0: *mut HSD_JObj) => unsafe { crate::tu::item::HSD_JObjSetMtxDirty(a0) };
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
     fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj => unsafe { crate::tu::item::Item_80268B18(a0) };
     fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32) => unsafe { crate::tu::item::Item_80268E5C(a0, a1, a2) };

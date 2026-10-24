@@ -29,19 +29,19 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn Ground_801C0498() -> f32;
+    fn Ground_801C0498() -> f32 => unsafe { melee_world::tu::ground::Ground_801C0498() };
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
-    fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj;
-    fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32);
+    fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj => unsafe { crate::tu::item::Item_80268B18(a0) };
+    fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32) => unsafe { crate::tu::item::Item_80268E5C(a0, a1, a2) };
     fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec);
-    fn it_8026B3A8(a0: *mut HSD_GObj);
-    fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;
-    fn it_80272460(a0: *mut HitCapsule, a1: u32, a2: *mut HSD_GObj);
-    fn it_80272C6C(a0: *mut HSD_GObj) -> i32;
-    fn it_8027542C(a0: *mut HSD_GObj);
-    fn it_8027B730(a0: *mut HSD_GObj);
-    fn it_8027C56C(a0: *mut HSD_GObj, a1: f32);
-    fn lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec);
+    fn it_8026B3A8(a0: *mut HSD_GObj) => unsafe { crate::tu::it_26B1::it_8026B3A8(a0) };
+    fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::tu::it_26B1::it_8026B894(a0, a1) as _ };
+    fn it_80272460(a0: *mut HitCapsule, a1: u32, a2: *mut HSD_GObj) => unsafe { crate::tu::itcoll::it_80272460(a0, a1, a2) };
+    fn it_80272C6C(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::it_2725::it_80272C6C(a0) };
+    fn it_8027542C(a0: *mut HSD_GObj) => unsafe { crate::tu::ithitbox::it_8027542C(a0) };
+    fn it_8027B730(a0: *mut HSD_GObj) => unsafe { crate::tu::itzako::it_8027B730(a0) };
+    fn it_8027C56C(a0: *mut HSD_GObj, a1: f32) => unsafe { crate::tu::itzako::it_8027C56C(a0, a1) };
+    fn lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec) => unsafe { melee_world::tu_ext::lb_8000B1CC(a0, a1 as _, a2 as _) };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

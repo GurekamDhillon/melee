@@ -37,7 +37,7 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn HSD_JObjSetMtxDirty(a0: *mut HSD_JObj);
+    fn HSD_JObjSetMtxDirty(a0: *mut HSD_JObj) => unsafe { crate::tu::item::HSD_JObjSetMtxDirty(a0) };
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
     fn HSD_Randf() -> f32;
     fn HSD_Randi(a0: i32) -> i32;

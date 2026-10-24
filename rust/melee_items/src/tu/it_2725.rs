@@ -49,7 +49,7 @@ pub mod ext {
     fn HSD_JObjRemoveAnimAll(a0: *mut HSD_JObj);
     fn HSD_JObjReqAnimAll(a0: *mut HSD_JObj, a1: f32);
     fn HSD_JObjSetFlagsAll(a0: *mut HSD_JObj, a1: u32);
-    fn HSD_JObjSetMtxDirty(a0: *mut HSD_JObj);
+    fn HSD_JObjSetMtxDirty(a0: *mut HSD_JObj) => unsafe { crate::tu::item::HSD_JObjSetMtxDirty(a0) };
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
     fn HSD_Randi(a0: i32) -> i32;
     fn Item_802680CC(a0: *mut HSD_GObj) => unsafe { crate::tu::item::Item_802680CC(a0) };
@@ -75,15 +75,15 @@ pub mod ext {
     fn it_8026B390(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b390(&mut *((*a0).user_data as *mut Item)) };
     fn it_8026B3A8(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b3a8(&mut *((*a0).user_data as *mut Item)) };
     fn it_8026B6C8(a0: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_8026b6c8(&*((*a0).user_data as *mut Item)) as _ };
-    fn it_8026BB88(a0: *mut HSD_GObj, a1: *mut Vec);
-    fn it_8026BBCC(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn it_8026BB88(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::it_26B1::it_8026BB88(a0, a1 as _) };
+    fn it_8026BBCC(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::it_26B1::it_8026BBCC(a0, a1 as _) };
     fn it_8026BDB4(a0: *mut HSD_GObj) => unsafe { crate::tu::it_26B1::it_8026BDB4(a0) };
     fn it_8027129C(a0: *mut HSD_GObj, a1: i32) => unsafe { crate::tu::itcoll::it_8027129C(a0, a1) };
     fn it_80275534(a0: *mut HSD_GObj, a1: f32) => unsafe { crate::itlib::it_80275534(&mut *((*a0).user_data as *mut Item), a1) };
     fn it_802756D0(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_802756d0(&mut *((*a0).user_data as *mut Item)) };
     fn it_802756E0(a0: *mut HSD_GObj) => unsafe { crate::itlib3::it_802756e0(&mut *((*a0).user_data as *mut Item)) };
     fn it_802758D4(a0: *mut HSD_GObj) -> f32 => unsafe { crate::itlib::it_802758d4(&*((*a0).user_data as *mut Item)) };
-    fn it_80275BC8(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn it_80275BC8(a0: *mut HSD_GObj, a1: *mut HSD_GObj) => unsafe { crate::tu::itmaplib::it_80275BC8(a0, a1) };
     fn it_802762BC(a0: *mut Item) => unsafe { crate::item::it_802762bc(&mut *a0) };
     fn it_802787B4(a0: *mut HSD_GObj, a1: i32) => unsafe { crate::tu::iteffect::it_802787B4(a0, a1) };
     fn it_80279BBC(a0: *mut Item) => unsafe { crate::tu::itanimlist::it_80279BBC(a0) };

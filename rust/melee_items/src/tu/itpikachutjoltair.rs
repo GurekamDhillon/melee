@@ -42,7 +42,7 @@ pub mod ext {
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_8026b894(&mut *((*a0).user_data as *mut Item), a1) as _ };
     fn it_802725D4(a0: *mut HSD_GObj) => unsafe { crate::tu::it_2725::it_802725D4(a0) };
     fn it_80272940(a0: *mut HSD_GObj) => unsafe { crate::tu::it_2725::it_80272940(a0) };
-    fn it_802B3368(a0: *mut HSD_GObj) -> *mut HSD_GObj;
+    fn it_802B3368(a0: *mut HSD_GObj) -> *mut HSD_GObj => unsafe { crate::tu::itpikachutjoltground::it_802B3368(a0 as _) as _ };
     fn it_802B3544(a0: *mut HSD_GObj) => unsafe { crate::itkinds5::it_802b3544(&mut *((*a0).user_data as *mut Item)) };
     fn lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec) => unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(a0, a1, a2) };
     }

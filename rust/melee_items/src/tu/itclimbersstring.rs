@@ -48,7 +48,7 @@ pub mod ext {
     fn HSD_ObjAlloc(a0: *mut _HSD_ObjAllocData) -> *mut c_void => unsafe { melee_runtime::tu::objalloc::HSD_ObjAlloc(a0 as _) };
     fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj => unsafe { crate::tu::item::Item_80268B18(a0) };
     fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32) => unsafe { crate::tu::item::Item_80268E5C(a0, a1, a2) };
-    fn Item_8026A8EC(a0: *mut HSD_GObj);
+    fn Item_8026A8EC(a0: *mut HSD_GObj) => unsafe { crate::tu::item::Item_8026A8EC(a0) };
     fn Item_8026AB54(a0: *mut HSD_GObj, a1: *mut HSD_GObj, a2: u32) => unsafe { crate::tu::item::Item_8026AB54(a0, a1, a2) };
     fn PSMTXConcat(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void);
     fn PSMTXCopy(a0: *mut c_void, a1: *mut c_void);
@@ -61,7 +61,7 @@ pub mod ext {
     fn it_80275328(a0: *mut HSD_GObj, a1: *mut ItemLink) => unsafe { crate::itlib3::it_80275328(a0, &mut *a1) };
     fn it_802A2474(a0: *mut c_void) => unsafe { crate::tu::itlinkhookshot::it_802A2474(a0) };
     fn it_802A24A0(a0: *mut HSD_GObj, a1: i32) => unsafe { crate::tu::itlinkhookshot::it_802A24A0(a0, a1) };
-    fn it_802A3C98(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) -> f32;
+    fn it_802A3C98(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) -> f32 => unsafe { crate::tu::itlinkhookshot::it_802A3C98(a0 as _, a1 as _, a2 as _) };
     fn it_802A4420(a0: *mut ItemLink) => unsafe { crate::itkinds6::it_802a4420(&mut *a0) };
     fn it_802A6DC8(a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec) => unsafe { crate::tu::itlinkhookshot::it_802A6DC8(a0, a1 as _, a2 as _) };
     fn lbVector_Normalize(a0: *mut Vec) -> f32 => unsafe { melee_runtime::tu::lbvector::lbVector_Normalize(a0) };

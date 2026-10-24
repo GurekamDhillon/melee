@@ -57,8 +57,8 @@ pub mod ext {
     fn it_80273030(a0: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_80273030(&mut *((*a0).user_data as *mut Item)) as _ };
     fn it_80274C88(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_80274c88(&mut *((*a0).user_data as *mut Item)) };
     fn it_80274CAC(a0: *mut HSD_GObj) => unsafe { crate::tu::it_2725::it_80274CAC(a0) };
-    fn it_80275158(a0: *mut HSD_GObj, a1: f32);
-    fn it_80275174(a0: *mut HSD_GObj, a1: f32);
+    fn it_80275158(a0: *mut HSD_GObj, a1: f32) => unsafe { crate::tu::it_2725::it_80275158(a0, a1) };
+    fn it_80275174(a0: *mut HSD_GObj, a1: f32) => unsafe { crate::tu::it_2725::it_80275174(a0, a1) };
     fn it_80275414(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_80275414(&mut *((*a0).user_data as *mut Item)) };
     fn it_80275444(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_80275444(&mut *((*a0).user_data as *mut Item)) };
     fn it_80275474(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_80275474(&mut *((*a0).user_data as *mut Item)) };
@@ -66,7 +66,7 @@ pub mod ext {
     fn it_802756E0(a0: *mut HSD_GObj) => unsafe { crate::itlib3::it_802756e0(&mut *((*a0).user_data as *mut Item)) };
     fn it_80275D5C(a0: *mut HSD_GObj, a1: *mut _itECB) => unsafe { crate::tu::itmaplib::it_80275D5C(a0, a1 as _) };
     fn it_802762BC(a0: *mut Item) => unsafe { crate::item::it_802762bc(&mut *a0) };
-    fn it_80276348(a0: *mut HSD_GObj, a1: *mut Vec) -> i32;
+    fn it_80276348(a0: *mut HSD_GObj, a1: *mut Vec) -> i32 => unsafe { crate::tu::itmaplib::it_80276348(a0, a1 as _) };
     fn it_80276CB8(a0: *mut HSD_GObj) => unsafe { crate::tu::itmaplib::it_80276CB8(a0) };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.

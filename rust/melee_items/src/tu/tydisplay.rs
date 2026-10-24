@@ -59,11 +59,11 @@ pub mod ext {
     }
     ext_fns! {
     fn DevText_80302AC0(a0: *mut DevText) => unsafe { melee_world::hud::textlib::devtext_80302ac0(&mut *a0) };
-    fn DevText_Create(a0: i8, a1: i32, a2: i32, a3: i32, a4: i32, a5: *mut i8) -> *mut DevText;
-    fn DevText_Erase(a0: *mut DevText);
+    fn DevText_Create(a0: i8, a1: i32, a2: i32, a3: i32, a4: i32, a5: *mut i8) -> *mut DevText => unsafe { melee_world::tu::textlib::DevText_Create(a0, a1, a2, a3, a4, a5) };
+    fn DevText_Erase(a0: *mut DevText) => unsafe { melee_world::tu::textlib::DevText_Erase(a0) };
     fn DevText_GetGObj() -> *mut HSD_GObj => unsafe { melee_world::tu::textdraw::DevText_GetGObj() };
     fn DevText_HideCursor(a0: *mut DevText) => unsafe { melee_world::tu::textlib::DevText_HideCursor(a0) };
-    fn DevText_Print(a0: *mut DevText, a1: *mut i8);
+    fn DevText_Print(a0: *mut DevText, a1: *mut i8) => unsafe { melee_world::tu::textlib::DevText_Print(a0, a1) };
     fn DevText_Remove(a0: *mut *mut DevText) => unsafe { melee_world::tu::textdraw::DevText_Remove(a0) };
     fn DevText_SetBGColor(a0: *mut DevText, a1: _GXColor) -> _GXColor => unsafe { melee_world::tu::textlib::DevText_SetBGColor(a0, a1) };
     fn DevText_SetCursorXY(a0: *mut DevText, a1: i32, a2: i32) => unsafe { melee_world::tu::textlib::DevText_SetCursorXY(a0, a1, a2) };
@@ -88,7 +88,7 @@ pub mod ext {
     fn HSD_GObj_80390CD4(a0: *mut HSD_GObj);
     fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) => unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0, a1) };
     fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: i32) => unsafe { melee_runtime::tu::gobj::HSD_GObj_LObjCallback(a0, a1) };
-    fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc;
+    fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc => unsafe { melee_world::tu_ext::HSD_GObj_SetupProc(a0, a1, a2) };
     fn HSD_JObjAddChild(a0: *mut HSD_JObj, a1: *mut HSD_JObj);
     fn HSD_JObjAlloc() -> *mut HSD_JObj => unsafe { melee_runtime::tu::jobj::HSD_JObjAlloc() };
     fn HSD_JObjClearFlagsAll(a0: *mut HSD_JObj, a1: u32);

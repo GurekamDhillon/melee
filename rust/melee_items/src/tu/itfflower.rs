@@ -34,7 +34,7 @@ pub mod ext {
     ext_fns! {
     fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj => unsafe { crate::tu::item::Item_80268B18(a0) };
     fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32) => unsafe { crate::tu::item::Item_80268E5C(a0, a1, a2) };
-    fn Item_8026AE60() -> u32;
+    fn Item_8026AE60() -> u32 => unsafe { crate::tu::item::Item_8026AE60() };
     fn efLib_DestroyAll(a0: *mut HSD_GObj);
     fn efSync_Spawn_N(a0: i32, a1: *mut HSD_GObj, a2: &[*mut c_void]) -> *mut c_void;
     fn itColl_BounceOffShield(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::it_2725::itColl_BounceOffShield(a0) as _ };

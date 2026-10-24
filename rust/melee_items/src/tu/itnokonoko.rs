@@ -34,7 +34,7 @@ pub mod ext {
     fn HSD_JObjAnimAll(a0: *mut HSD_JObj);
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
     fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32) => unsafe { crate::tu::item::Item_80268E5C(a0, a1, a2) };
-    fn Item_8026A8EC(a0: *mut HSD_GObj);
+    fn Item_8026A8EC(a0: *mut HSD_GObj) => unsafe { crate::tu::item::Item_8026A8EC(a0) };
     fn Item_8026AE84(a0: *mut Item, a1: i32, a2: u8, a3: u8) => unsafe { crate::tu::item::Item_8026AE84(a0, a1, a2, a3) };
     fn ScriptGame_EnemyDefeated(a0: *mut HSD_GObj) -> i32;
     fn ftLib_80086D40(a0: *mut HSD_GObj, a1: i32, a2: i32);
@@ -64,7 +64,7 @@ pub mod ext {
     fn it_80276308(a0: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_80276308(&mut *((*a0).user_data as *mut Item)) };
     fn it_8027B5B0(a0: i32, a1: *mut Vec, a2: *mut HSD_JObj, a3: *mut Vec, a4: i32) -> *mut HSD_GObj => unsafe { crate::tu::itzako::it_8027B5B0(a0, a1 as _, a2, a3 as _, a4) };
     fn it_8027B730(a0: *mut HSD_GObj) => unsafe { crate::itlib3::it_8027b730(&mut *((*a0).user_data as *mut Item)) };
-    fn it_8027B798(a0: *mut HSD_GObj, a1: *mut Vec) -> i32;
+    fn it_8027B798(a0: *mut HSD_GObj, a1: *mut Vec) -> i32 => unsafe { crate::tu::itzako::it_8027B798(a0, a1 as _) as _ };
     fn it_8027C0A8(a0: *mut HSD_GObj, a1: f32, a2: f32) => unsafe { crate::tu::itzako::it_8027C0A8(a0, a1, a2) };
     fn it_8027C56C(a0: *mut HSD_GObj, a1: f32) => unsafe { crate::tu::itzako::it_8027C56C(a0, a1) };
     fn it_8027C794(a0: *mut HSD_GObj) -> i32 => unsafe { crate::itfwd8::it_8027c794(&mut *((*a0).user_data as *mut Item)) as _ };
@@ -72,7 +72,7 @@ pub mod ext {
     fn it_8027CAD8(a0: *mut HSD_GObj) => unsafe { crate::tu::itzako::it_8027CAD8(a0) };
     fn it_8027CB3C(a0: *mut HSD_GObj) => unsafe { crate::tu::itzako::it_8027CB3C(a0) };
     fn it_8027CBA4(a0: *mut HSD_GObj) => unsafe { crate::tu::itzako::it_8027CBA4(a0) };
-    fn it_8027CBFC(a0: *mut HSD_GObj) -> f32;
+    fn it_8027CBFC(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::itzako::it_8027CBFC(a0) };
     fn it_8027CE44(a0: *mut HSD_GObj) => unsafe { crate::tu::itzako::it_8027CE44(a0) };
     fn it_802E0100(a0: i32, a1: *mut Vec, a2: i32) -> *mut HSD_GObj => unsafe { crate::tu::itzgshell::it_802E0100(a0, a1 as _, a2) as _ };
     fn it_802E0488(a0: i32, a1: *mut Vec, a2: i32) -> *mut HSD_GObj => unsafe { crate::tu::itzrshell::it_802E0488(a0, a1 as _, a2) as _ };

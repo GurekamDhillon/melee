@@ -36,8 +36,8 @@ pub mod ext {
     ext_fns! {
     fn Camera_GetTransformPosition(a0: *mut Vec);
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
-    fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32);
-    fn Item_8026AE84(a0: *mut Item, a1: i32, a2: u8, a3: u8);
+    fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32) => unsafe { crate::tu::item::Item_80268E5C(a0, a1, a2) };
+    fn Item_8026AE84(a0: *mut Item, a1: i32, a2: u8, a3: u8) => unsafe { crate::tu::item::Item_8026AE84(a0, a1, a2, a3) };
     fn atan2f(a0: f32, a1: f32) -> f32 => unsafe { melee_runtime::lbtrigf::atan2f(a0, a1) };
     fn efLib_PauseAll(a0: *mut HSD_GObj);
     fn efLib_ResumeAll(a0: *mut HSD_GObj);
@@ -45,25 +45,25 @@ pub mod ext {
     fn ftLib_800866DC(a0: *mut HSD_GObj, a1: *mut Vec);
     fn ftLib_80086FD4(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;
     fn gm_8016B168() -> i32;
-    fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;
-    fn it_8026D62C(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>);
-    fn it_8026E15C(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>);
-    fn it_80272860(a0: *mut HSD_GObj, a1: f32, a2: f32);
-    fn it_80272980(a0: *mut HSD_GObj);
-    fn it_80272C6C(a0: *mut HSD_GObj) -> i32;
-    fn it_80273454(a0: *mut HSD_GObj);
-    fn it_802762BC(a0: *mut Item);
-    fn it_80279C48(a0: *mut HSD_GObj);
-    fn it_80279CDC(a0: *mut HSD_GObj, a1: f32);
-    fn it_80279FF8(a0: *mut HSD_GObj);
-    fn it_8027A09C(a0: *mut HSD_GObj) -> i32;
-    fn it_8027A118(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>) -> i32;
-    fn it_8027A13C(a0: *mut HSD_GObj);
-    fn it_8027A160(a0: *mut HSD_JObj, a1: *mut Item);
-    fn it_8027A344(a0: *mut HSD_GObj);
-    fn lbVector_Diff(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) -> *mut Vec;
-    fn lbVector_Normalize(a0: *mut Vec) -> f32;
-    fn lbVector_Rotate(a0: *mut Vec, a1: i32, a2: f32);
+    fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::tu::it_26B1::it_8026B894(a0, a1) as _ };
+    fn it_8026D62C(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>) => unsafe { crate::tu::itgroundcoll::it_8026D62C(a0, a1) };
+    fn it_8026E15C(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>) => unsafe { crate::tu::itgroundcoll::it_8026E15C(a0, a1) };
+    fn it_80272860(a0: *mut HSD_GObj, a1: f32, a2: f32) => unsafe { crate::itlib3::it_80272860(&mut *((*a0).user_data as *mut Item), a1, a2) };
+    fn it_80272980(a0: *mut HSD_GObj) => unsafe { crate::tu::it_2725::it_80272980(a0) };
+    fn it_80272C6C(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::it_2725::it_80272C6C(a0) };
+    fn it_80273454(a0: *mut HSD_GObj) => unsafe { crate::tu::it_2725::it_80273454(a0) };
+    fn it_802762BC(a0: *mut Item) => unsafe { crate::tu::itmaplib::it_802762BC(a0) };
+    fn it_80279C48(a0: *mut HSD_GObj) => unsafe { crate::tu::it_279C::it_80279C48(a0) };
+    fn it_80279CDC(a0: *mut HSD_GObj, a1: f32) => unsafe { crate::tu::it_279C::it_80279CDC(a0, a1) };
+    fn it_80279FF8(a0: *mut HSD_GObj) => unsafe { crate::tu::it_279C::it_80279FF8(a0) };
+    fn it_8027A09C(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::it_279C::it_8027A09C(a0) as _ };
+    fn it_8027A118(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>) -> i32 => unsafe { crate::tu::it_279C::it_8027A118(a0, a1) as _ };
+    fn it_8027A13C(a0: *mut HSD_GObj) => unsafe { crate::tu::it_279C::it_8027A13C(a0) };
+    fn it_8027A160(a0: *mut HSD_JObj, a1: *mut Item) => unsafe { crate::tu::it_279C::it_8027A160(a0, a1) };
+    fn it_8027A344(a0: *mut HSD_GObj) => unsafe { crate::tu::it_279C::it_8027A344(a0) };
+    fn lbVector_Diff(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) -> *mut Vec => unsafe { melee_world::tu::mpcoll::lbVector_Diff(a0, a1, a2) };
+    fn lbVector_Normalize(a0: *mut Vec) -> f32 => unsafe { melee_world::tu_ext::lbVector_Normalize(a0 as _) };
+    fn lbVector_Rotate(a0: *mut Vec, a1: i32, a2: f32) => unsafe { melee_runtime::tu::lbvector::lbVector_Rotate(a0, a1, a2) };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

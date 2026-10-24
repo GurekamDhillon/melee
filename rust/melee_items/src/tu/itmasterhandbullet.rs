@@ -33,7 +33,7 @@ pub mod ext {
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
     fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj => unsafe { crate::tu::item::Item_80268B18(a0) };
     fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32) => unsafe { crate::tu::item::Item_80268E5C(a0, a1, a2) };
-    fn Item_8026AE60() -> u32;
+    fn Item_8026AE60() -> u32 => unsafe { crate::tu::item::Item_8026AE60() };
     fn db_80225DD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
     fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: *mut Vec) -> *mut c_void;
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_8026b894(&mut *((*a0).user_data as *mut Item), a1) as _ };

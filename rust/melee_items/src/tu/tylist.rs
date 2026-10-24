@@ -64,7 +64,7 @@ pub mod ext {
     fn HSD_GObj_80390ED0(a0: *mut HSD_GObj, a1: u32);
     fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) => unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0, a1) };
     fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: i32) => unsafe { melee_runtime::tu::gobj::HSD_GObj_LObjCallback(a0, a1) };
-    fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc;
+    fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc => unsafe { melee_world::tu_ext::HSD_GObj_SetupProc(a0, a1, a2) };
     fn HSD_JObjAddChild(a0: *mut HSD_JObj, a1: *mut HSD_JObj);
     fn HSD_JObjAnim(a0: *mut HSD_JObj);
     fn HSD_JObjAnimAll(a0: *mut HSD_JObj);
@@ -78,7 +78,7 @@ pub mod ext {
     fn HSD_SetEraseColor(a0: u8, a1: u8, a2: u8, a3: u8);
     fn HSD_SisLib_803A5ACC(a0: i32, a1: i32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32) -> *mut HSD_Text => unsafe { melee_runtime::tu::sislib::HSD_SisLib_803A5ACC(a0, a1, a2, a3, a4, a5, a6) };
     fn HSD_SisLib_803A5E70() => unsafe { melee_runtime::tu::sislib::HSD_SisLib_803A5E70() };
-    fn HSD_SisLib_803A611C(a0: i32, a1: *mut HSD_GObj, a2: u16, a3: u8, a4: u8, a5: u8, a6: u8, a7: u32) -> i32;
+    fn HSD_SisLib_803A611C(a0: i32, a1: *mut HSD_GObj, a2: u16, a3: u8, a4: u8, a5: u8, a6: u8, a7: u32) -> i32 => unsafe { melee_runtime::tu::sislib::HSD_SisLib_803A611C(a0, a1, a2, a3, a4, a5, a6, a7) };
     fn HSD_SisLib_803A6368(a0: *mut HSD_Text, a1: i32) => unsafe { melee_runtime::tu::sislib::HSD_SisLib_803A6368(a0, a1) };
     fn HSD_SisLib_803A6754(a0: i32, a1: i32) -> *mut HSD_Text => unsafe { melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6754(a0, a1) };
     fn Toy_803048C0(a0: i32) -> i32 => unsafe { crate::tu::toy::Toy_803048C0(a0) };

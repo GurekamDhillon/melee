@@ -66,7 +66,7 @@ pub mod ext {
     fn it_802762BC(a0: *mut Item) => unsafe { crate::item::it_802762bc(&mut *a0) };
     fn it_80276308(a0: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_80276308(&mut *((*a0).user_data as *mut Item)) };
     fn it_8027B730(a0: *mut HSD_GObj) => unsafe { crate::itlib3::it_8027b730(&mut *((*a0).user_data as *mut Item)) };
-    fn it_8027B798(a0: *mut HSD_GObj, a1: *mut Vec) -> i32;
+    fn it_8027B798(a0: *mut HSD_GObj, a1: *mut Vec) -> i32 => unsafe { crate::tu::itzako::it_8027B798(a0, a1 as _) as _ };
     fn it_8027B964(a0: *mut HSD_GObj, a1: i32) => unsafe { crate::tu::itzako::it_8027B964(a0, a1) };
     fn it_8027BA54(a0: *mut HSD_GObj, a1: *mut Vec) -> i32 => unsafe { crate::tu::itzako::it_8027BA54(a0, a1 as _) };
     fn it_8027C56C(a0: *mut HSD_GObj, a1: f32) => unsafe { crate::tu::itzako::it_8027C56C(a0, a1) };
@@ -78,14 +78,14 @@ pub mod ext {
     fn it_8027CAD8(a0: *mut HSD_GObj) => unsafe { crate::tu::itzako::it_8027CAD8(a0) };
     fn it_8027CB3C(a0: *mut HSD_GObj) => unsafe { crate::tu::itzako::it_8027CB3C(a0) };
     fn it_8027CBA4(a0: *mut HSD_GObj) => unsafe { crate::tu::itzako::it_8027CBA4(a0) };
-    fn it_8027CBFC(a0: *mut HSD_GObj) -> f32;
+    fn it_8027CBFC(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::itzako::it_8027CBFC(a0) };
     fn it_8027CE44(a0: *mut HSD_GObj) => unsafe { crate::tu::itzako::it_8027CE44(a0) };
-    fn it_8028EC98(a0: *mut HSD_GObj, a1: f32);
+    fn it_8028EC98(a0: *mut HSD_GObj, a1: f32) => unsafe { crate::tu::itfreeze::it_8028EC98(a0 as _, a1) };
     fn it_8028ECE0(a0: *mut HSD_GObj) => unsafe { crate::itkinds5::it_8028ece0(&mut *((*a0).user_data as *mut Item)) };
-    fn it_8028ECF0(a0: *mut HSD_GObj, a1: *mut Vec) -> *mut Item;
+    fn it_8028ECF0(a0: *mut HSD_GObj, a1: *mut Vec) -> *mut Item => unsafe { crate::tu::itfreeze::it_8028ECF0(a0 as _, a1) };
     fn mpCollSetFacingDir(a0: *mut CollData, a1: i32) => unsafe { melee_world::tu::mpcoll::mpCollSetFacingDir(a0, a1) };
     fn mpLib_80056A1C(a0: i32, a1: *mut i32) -> *mut i32 => unsafe { melee_world::tu::mplib::mpLib_80056A1C(a0, a1) };
-    fn mpLineGetFlags(a0: i32) -> u32;
+    fn mpLineGetFlags(a0: i32) -> u32 => unsafe { melee_world::tu::mplib::mpLineGetFlags(a0) };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

@@ -131,10 +131,10 @@ pub mod ext {
     fn it_2725_Logic42_Spawned(a0: *mut HSD_GObj) => unsafe { crate::tu::ithouou::it_2725_Logic42_Spawned(a0 as _) };
     fn it_2725_Logic43_Spawned(a0: *mut HSD_GObj) => unsafe { crate::tu::ithitodeman::it_2725_Logic43_Spawned(a0 as _) };
     fn it_8026B3A8(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b3a8(&mut *((*a0).user_data as *mut Item)) };
-    fn it_8026B3C0(a0: i32) -> i32;
+    fn it_8026B3C0(a0: i32) -> i32 => unsafe { crate::tu::it_26B1::it_8026B3C0(a0) };
     fn it_8026B6A8(a0: *mut Vec, a1: *mut HSD_GObj) -> f32 => unsafe { crate::tu::it_26B1::it_8026B6A8(a0 as _, a1) };
     fn it_8026B6C8(a0: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_8026b6c8(&*((*a0).user_data as *mut Item)) as _ };
-    fn it_8026BB88(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn it_8026BB88(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::it_26B1::it_8026BB88(a0, a1 as _) };
     fn it_8026BDB4(a0: *mut HSD_GObj) => unsafe { crate::tu::it_26B1::it_8026BDB4(a0) };
     fn it_8026E4D0(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>) => unsafe { crate::tu::itgroundcoll::it_8026E4D0(a0, a1) };
     fn it_8026EECC(a0: *mut HSD_GObj, a1: i32) => unsafe { crate::tu::itdraw::it_8026EECC(a0, a1) };

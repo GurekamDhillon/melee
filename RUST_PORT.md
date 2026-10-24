@@ -1006,3 +1006,17 @@ rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_In
   below 4 GB because those files route pointers through `int`. Trap: a group named `LeftWall` has normal -x (hit while
   moving right), i.e. it is the stage's right-hand wall.
 - Write C driver edits with the Edit tool, not a Python string: `\n` inside a Python literal puts a real newline in the C.
+
+## Platform track, audio proof (plat-audio, 2026-10-24)
+- C side: `MELEE_AUDIO_TRACE=<path>` (shim_ax.c `gw_ax_trace`) logs every game-facing axdriver.c / synth.c call
+  (`<sub-frame> OP args`; START with its returned handle, KO*, PAN/VOL/PITCH/MIX, MIXGRP, PAUSE/RESUME, PSTART,
+  UAV, SSV); calls made inside the synth callback are not logged. With `MELEE_TURBO=1` + `MELEE_AUDIO_DUMP` the C
+  mix is on the virtual 5 ms clock and run-to-run identical (two runs: identical trace and WAV).
+- Port side: `melee_audio::replay` + `sfx_replay` bin replay a trace into the Sound (boot, `lb_audio_ax_80028690`
+  scene init, `lb_load_announcer` = gm_LoadAnnouncer / nr_vs.ssm, match banks) and `--check` against the C WAV.
+- Result (pad_fixed.lua Falcon v Fox FD, 6106 sub-frames = 30.5 s): 1953920 samples, 0 differ, 176/176 voice handles
+  equal; `melee_audio/tests/replay.rs` pins the trace + C mix fingerprint (needs the disc).
+- Fix found by it: the C runs in sound mode 0 (mono, `OSGetSoundMode` shim); the port's boot forced stereo.
+- Not yet: the native sim's own SFX calls (golden --audio) match the C bit for bit only up to the first
+  game-driven sound (sub-frame ~2003; the sim does not issue the announcer/entry sounds yet), so the end-to-end
+  native capture is not equal; positional/KO/PAN paths unused in this scenario (no trace lines).

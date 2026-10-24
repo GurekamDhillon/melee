@@ -509,6 +509,14 @@ impl Sound {
         }
     }
 
+    /// `gm_LoadAnnouncer` (gm_1601.c): drop the scene-group requests and request nr_vs.ssm (the
+    /// announcer, countdown and VS-scene sounds). The VS scene runs it before 8002785C.
+    pub fn lb_load_announcer(&mut self) {
+        self.lb_audio_ax_80026f2c(0x12);
+        self.lb_audio_ax_8002702c(2, 0x20);
+        self.lb_audio_ax_80027168();
+    }
+
     /// lbAudioAx_8002785C's VS branch: the players' CharacterKinds, the stage's StKind and its
     /// GrKind (Stage_8022519C). Loads the banks and sets the stage echo byte.
     pub fn lb_load_match_banks(&mut self, ckinds: &[i32], stkind: i32, grkind: i32) {

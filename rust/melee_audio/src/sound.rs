@@ -332,7 +332,7 @@ impl Sound {
         for s in bank_sizes {
             self.sfx_allocate_bank(s);
         }
-        self.set_sound_mode(1); // lbAudioAx: sound_mode = 1 (stereo) unless the save says mono
+        // HSD_SynthInit (synth.c): sound mode = OSGetSoundMode(), which the PC shim (shim_os.c) answers 0 (mono); nothing in a match sets it.
         self.load_sem("/audio/us/smash2.sem")?;
         self.load_ssm("/audio/us/main.ssm", 0)?;
         Ok(())

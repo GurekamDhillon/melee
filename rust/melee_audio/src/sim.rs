@@ -101,6 +101,11 @@ pub fn play_bgm_id(id: i32) -> i32 {
     with(|s| s.lb_audio_ax_80023f28(id)).unwrap_or(1)
 }
 
+/// `gm_LoadAnnouncer`: nr_vs.ssm for the VS scene.
+pub fn load_announcer() {
+    with(|s| s.lb_load_announcer());
+}
+
 /// `lbAudioAx_8002785C` (VS): load the players' and the stage's SSM banks.
 pub fn load_match_banks(ckinds: &[i32], stkind: i32, grkind: i32) {
     with(|s| s.lb_load_match_banks(ckinds, stkind, grkind));

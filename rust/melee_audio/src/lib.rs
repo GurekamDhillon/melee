@@ -28,6 +28,7 @@ pub mod lbaudio;
 pub mod lbvol;
 pub mod output;
 pub mod posobj;
+pub mod replay;
 pub mod sem;
 pub mod sim;
 pub mod sound;

@@ -233,6 +233,8 @@ fn install_audio(iso: &str) -> Result<(), String> {
 /// The match's audio start (lbAudioAx_8002785C + the BGM): the players' and the stage's SSM
 /// banks, then the picked BGM.
 fn start_match_audio(sim: &vs_match::VsMatch, ckinds: &[i32]) {
+    melee_audio::sim::scene_init();
+    melee_audio::sim::load_announcer();
     melee_audio::sim::load_match_banks(ckinds, vs_match::STKIND_FD, melee_types::Gr_Kind_Last as i32);
     let r = melee_audio::sim::play_bgm_id(sim.bgm);
     let loaded = melee_audio::sim::with(|s| s.lb.state.iter().enumerate().filter(|(_, &x)| x == 2).map(|(i, _)| melee_audio::lbaudio::SSM_FILES[i]).collect::<Vec<_>>());

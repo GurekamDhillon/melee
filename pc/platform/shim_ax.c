@@ -1188,6 +1188,40 @@ static void gw_ax_mix_clips(void) {
     }
 }
 
+/* ---- call trace (MELEE_AUDIO_TRACE=<path>) ----------------------------------------------
+ * One text line per game-facing audio call (axdriver.c / synth.c, TARGET_PC): "<sub-frame> OP args".
+ * <sub-frame> counts the 5 ms DSP callbacks run so far, so a replay (rust: melee_audio sfx_replay)
+ * can run the same number of sub-frames before applying the call. Calls made from inside the
+ * synth callback (the script interpreter) are the engine's own and are not recorded. */
+static FILE* gw_ax_trc;
+static bool gw_ax_trc_tried;
+static uint32_t gw_ax_trc_sub;
+static int gw_ax_trc_in_cb;
+static int gw_ax_trc_muted;
+
+static bool gw_ax_trace_on(void) {
+    if (!gw_ax_trc_tried) {
+        const char* env = getenv("MELEE_AUDIO_TRACE");
+        gw_ax_trc_tried = true;
+        if (env != NULL && *env != 0) gw_ax_trc = fopen(env, "wb");
+    }
+    return gw_ax_trc != NULL && !gw_ax_trc_in_cb && !gw_ax_trc_muted;
+}
+
+void gw_ax_trace_mute(int on) { gw_ax_trc_muted = on; }
+
+void gw_ax_trace(const char* op, int a, int b, int c, int d, int e) {
+    if (!gw_ax_trace_on()) return;
+    fprintf(gw_ax_trc, "%u %s %d %d %d %d %d\n", gw_ax_trc_sub, op, a, b, c, d, e);
+    fflush(gw_ax_trc);
+}
+
+void gw_ax_trace_str(const char* op, const char* s, int a, int b) {
+    if (!gw_ax_trace_on()) return;
+    fprintf(gw_ax_trc, "%u %s %s %d %d\n", gw_ax_trc_sub, op, s != NULL ? s : "-", a, b);
+    fflush(gw_ax_trc);
+}
+
 static void gw_ax_run_frame(void) {
     int i;
     int active = 0;
@@ -1195,8 +1229,11 @@ static void gw_ax_run_frame(void) {
     static bool reported_first;
 
     if (gw_ax_cb != NULL) {
+        gw_ax_trc_in_cb = 1;
         gw_ax_cb();
+        gw_ax_trc_in_cb = 0;
     }
+    ++gw_ax_trc_sub;
 
     memset(gw_ax_acc, 0, sizeof gw_ax_acc);
     memset(gw_ax_aux_a.bus, 0, sizeof gw_ax_aux_a.bus);

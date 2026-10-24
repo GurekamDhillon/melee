@@ -42,3 +42,8 @@ pub mod itgamewatchpanic;
 pub mod itgamewatchparachute;
 pub mod itgamewatchrescue;
 pub mod itgamewatchturtle;
+pub mod vi0801;
+pub mod vi1101;
+pub mod vi1201v1;
+pub mod vi1201v2;
+pub mod vi1202;

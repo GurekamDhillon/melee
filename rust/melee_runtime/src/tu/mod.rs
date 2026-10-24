@@ -17,3 +17,6 @@ pub mod mobj;
 pub mod dobj;
 pub mod pobj;
 pub mod displayfunc;
+pub mod archive;
+pub mod aobj;
+pub mod axdriver;

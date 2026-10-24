@@ -256,6 +256,16 @@ impl OVal for crate::GXColor {
         crate::GXColor { r, g, b, a }
     }
 }
+impl OVal for melee_types::_GXColor {
+    const K: K = K::I(32);
+    fn to_bits(self) -> u64 {
+        u32::from_le_bytes([self.r, self.g, self.b, self.a]) as u64
+    }
+    fn from_bits(v: u64) -> Self {
+        let [r, g, b, a] = (v as u32).to_le_bytes();
+        Self { r, g, b, a }
+    }
+}
 impl OVal for () {
     const K: K = K::V;
     fn to_bits(self) -> u64 {

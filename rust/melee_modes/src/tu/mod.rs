@@ -154,3 +154,7 @@ pub mod mnnamenew;
 pub mod mnstagesel;
 pub mod mn_22EC;
 pub mod geno_lab_mode;
+pub mod geno_game;
+pub mod mex_tests;
+pub mod geno_tests;
+pub mod script_game;

@@ -1,0 +1,13 @@
+[package]
+name = "script-game-port-adapter"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+
+[dependencies]
+syn = { version = "2", features = ["full", "visit-mut", "extra-traits"] }
+quote = "1"
+proc-macro2 = { version = "1", features = ["span-locations"] }
+prettyplease = "0.2"
+serde_json = "1"

@@ -1018,6 +1018,11 @@ rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_In
   reason on unported fighter code (~107 sites: most button presses in IASAs, attacks, shield variants), so free live play ends early on such input.
   START is masked from the fighters (pause layer owns it).
 
+- Round 2: `tools/rust-port/play/full_loop.txt` runs the whole loop on live pads in one go (`--skip-intro --time-secs 12 --shots --quit-at-results`):
+  title, main, VS, CSS, SSS (Battlefield picked), loading, match, pause (START), resume, clock out, results; 1359 ticks. `--shots` now also
+  captures the pause (10 ticks in) and a live frame (tick 420). Match/pause shots hold disc art and are not committed; play_sss.png is.
+  Not tried: keyboard and gamepad input by hand (the GC adapter did open in the run, but the script drove the pads).
+
 ## Platform track, audio proof (plat-audio, 2026-10-24)
 - C side: `MELEE_AUDIO_TRACE=<path>` (shim_ax.c `gw_ax_trace`) logs every game-facing axdriver.c / synth.c call
   (`<sub-frame> OP args`; START with its returned handle, KO*, PAN/VOL/PITCH/MIX, MIXGRP, PAUSE/RESUME, PSTART,

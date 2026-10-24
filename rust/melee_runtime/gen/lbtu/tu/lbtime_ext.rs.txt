@@ -1,0 +1,25 @@
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/lbtu/gen_tu.py; the callees of the C TU)
+pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code, unreachable_code)]
+    use super::*;
+    use core::ffi::c_void;
+    pub mod hook {
+        use super::*;
+        pub static mut OSGetTime: Option<fn() -> i64> = None;
+        pub static mut OSTicksToCalendarTime: Option<fn(i64, *mut OSCalendarTime)> = None;
+    }
+    pub fn OSGetTime() -> i64 {
+        match unsafe { hook::OSGetTime } { Some(f) => f(), None => { panic!("TODO: OSGetTime is not ported") } }
+    }
+    pub fn OSTicksToCalendarTime(a0: i64, a1: *mut OSCalendarTime) {
+        match unsafe { hook::OSTicksToCalendarTime } { Some(f) => f(a0, a1), None => { panic!("TODO: OSTicksToCalendarTime is not ported") } }
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+        pub unsafe extern "C" fn OSGetTime() -> i64 { super::OSGetTime() }
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut __OSBusClock: u32 = unsafe { core::mem::zeroed() };
+}
+// END GENERATED EXT

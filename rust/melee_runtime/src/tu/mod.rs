@@ -36,3 +36,14 @@ pub mod lbcommand;
 pub mod lbdvd;
 pub mod lbcollision;
 pub mod lbaudio_ax;
+pub mod lbtime;
+#[allow(non_snake_case)]
+pub mod lb_00CE;
+pub mod lbtrigf;
+pub mod lbvector;
+#[allow(non_snake_case)]
+pub mod lb_00B0;
+pub mod lbsnap;
+#[allow(non_snake_case)]
+pub mod lb_00F9;
+pub mod lbspdisplay;

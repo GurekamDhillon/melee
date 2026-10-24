@@ -267,7 +267,7 @@ def ops_of(tu, stem, cfg, pools):
                 ce, re_ = ov[i]
             else:
                 ce, re_ = bind(p.type, pools)
-            ct = p.type.spelling
+            ct = "void*" if canon(p.type).kind == T.CONSTANTARRAY else p.type.spelling
             pre_c.append(f"{ct} a{i} = {ce};")
             pre_r.append(f"let a{i} = {re_};")
             args.append(f"a{i}")
@@ -338,7 +338,7 @@ def emit(stem):
          f"//! with `python rust/melee_runtime/gen/mtu/run_tu.py {stem}`).",
          "//! C functions of the TU this test covers (the private ones through their public callers): " + ", ".join(sorted(tu.defs)) + ".",
          "#![allow(static_mut_refs, non_snake_case, non_upper_case_globals, unused_imports, unused_mut, unused_assignments, unused_variables, unused_unsafe, dead_code)]",
-         *[f"const OP_{o['name']}: u32 = {i};" for i, o in enumerate(ops)], "mod mtu_harness;", "use core::ffi::c_void;", "use core::ptr::null_mut;", "use melee_types::*;", f"use melee_runtime::tu::{stem} as m;",
+         *[f"const OP_{o['name']}: u32 = {i};" for i, o in enumerate(ops)], "mod mtu_harness;", "use core::ffi::c_void;", "use core::ptr::null_mut;", "use melee_types::*;", f"use {cfg.get('rmod', 'melee_runtime::tu::' + stem)} as m;",
          "use mtu_harness::*;", f'#[path = "mtu/{stem}_gen.rs"]', "mod g;", "", cfg.get("rs_extra", ""), "",
          world_rs(pools),
          "// harness = false (Cargo.toml): a case that ends in a panic is cut off inside the hook (see mtu_harness::run_case),",

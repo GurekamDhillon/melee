@@ -56,117 +56,71 @@ pub mod hsd {
     #![allow(non_snake_case, non_upper_case_globals, static_mut_refs, clippy::missing_safety_doc)]
     use core::ptr::null_mut;
     use melee_types::*;
-
-    pub mod ext {
-        use crate::tu::hookmac::{hook, hook_or};
-        use melee_types::*;
-        pub static mut HSD_AOBJREMOVE: Option<fn(*mut HSD_AObj)> = None;
-    #[allow(non_snake_case)]
-    pub fn HSD_AObjRemove(aobj: *mut HSD_AObj) {
-        match unsafe { HSD_AOBJREMOVE } { Some(f) => f(aobj), None => { unsafe { let _ = crate::tu::aobj::HSD_AObjRemove(aobj as _); } return; } }
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/mtu/gen_tu.py; the callees of the C TU)
+pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    use super::*;
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
+                }
+            } )*
+        };
     }
-        pub static mut HSD_POBJREMOVEANIMALLBYFLAGS: Option<fn(*mut HSD_PObj, u32)> = None;
-    #[allow(non_snake_case)]
-    pub fn HSD_PObjRemoveAnimAllByFlags(pobj: *mut HSD_PObj, flags: u32) {
-        match unsafe { HSD_POBJREMOVEANIMALLBYFLAGS } { Some(f) => f(pobj, flags), None => { unsafe { let _ = crate::tu::pobj::HSD_PObjRemoveAnimAllByFlags(pobj as _, flags as _); } return; } }
+    ext_fns! {
+    fn HSD_AObjRemove(a0: *mut HSD_AObj) = crate::tu::aobj::HSD_AObjRemove(a0 as _);
+    fn HSD_MObjAddAnim(a0: *mut HSD_MObj, a1: *mut _HSD_MatAnim) = crate::tu::mobj::HSD_MObjAddAnim(a0 as _, a1 as _);
+    fn HSD_MObjAnim(a0: *mut HSD_MObj) = crate::tu::mobj::HSD_MObjAnim(a0 as _);
+    fn HSD_MObjLoadDesc(a0: *mut _HSD_MObjDesc) -> *mut HSD_MObj = crate::tu::mobj::HSD_MObjLoadDesc(a0 as _) as _;
+    fn HSD_MObjRemove(a0: *mut HSD_MObj) = crate::tu::mobj::HSD_MObjRemove(a0 as _);
+    fn HSD_MObjRemoveAnimByFlags(a0: *mut HSD_MObj, a1: u32) = crate::tu::mobj::HSD_MObjRemoveAnimByFlags(a0 as _, a1 as _);
+    fn HSD_MObjReqAnimByFlags(a0: *mut HSD_MObj, a1: f32, a2: u32) = crate::tu::mobj::HSD_MObjReqAnimByFlags(a0 as _, a1 as _, a2 as _);
+    fn HSD_MObjSetCurrent(a0: *mut HSD_MObj) = crate::tu::mobj::HSD_MObjSetCurrent(a0 as _);
+    fn HSD_PObjAddAnimAll(a0: *mut HSD_PObj, a1: *mut HSD_ShapeAnim) = crate::tu::pobj::HSD_PObjAddAnimAll(a0 as _, a1 as _);
+    fn HSD_PObjAnimAll(a0: *mut HSD_PObj) = crate::tu::pobj::HSD_PObjAnimAll(a0 as _);
+    fn HSD_PObjLoadDesc(a0: *mut HSD_PObjDesc) -> *mut HSD_PObj = crate::tu::pobj::HSD_PObjLoadDesc(a0 as _) as _;
+    fn HSD_PObjRemoveAll(a0: *mut HSD_PObj) = crate::tu::pobj::HSD_PObjRemoveAll(a0 as _);
+    fn HSD_PObjRemoveAnimAllByFlags(a0: *mut HSD_PObj, a1: u32) = crate::tu::pobj::HSD_PObjRemoveAnimAllByFlags(a0 as _, a1 as _);
+    fn HSD_PObjReqAnimAllByFlags(a0: *mut HSD_PObj, a1: f32, a2: u32) = crate::tu::pobj::HSD_PObjReqAnimAllByFlags(a0 as _, a1 as _, a2 as _);
+    fn HSD_PObjResolveRefsAll(a0: *mut HSD_PObj, a1: *mut HSD_PObjDesc) = crate::tu::pobj::HSD_PObjResolveRefsAll(a0 as _, a1 as _);
+    fn HSD_StateInvalidate(a0: i32);
+    fn ScriptParts_Draw(a0: *mut HSD_DObj) -> i32 = 0;
+    fn ScriptParts_Forget(a0: *mut HSD_DObj) = ();
+    fn ScriptParts_Tint(a0: *mut HSD_DObj) -> i32 = 0;
+    fn hsdInitClassInfo(a0: *mut _HSD_ClassInfo, a1: *mut _HSD_ClassInfo, a2: *mut i8, a3: *mut i8, a4: i32, a5: i32) = crate::tu::class::hsdInitClassInfo(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _);
+    fn hsdIsDescendantOf(a0: *mut c_void, a1: *mut c_void) -> i32 = crate::tu::class::hsdIsDescendantOf(a0 as _, a1 as _) as _;
+    fn hsdNew(a0: *mut _HSD_ClassInfo) -> *mut c_void = crate::tu::class::hsdNew(a0 as _) as _;
+    fn hsdSearchClassInfo(a0: *const i8) -> *mut _HSD_ClassInfo = crate::tu::class::hsdSearchClassInfo(a0 as _) as _;
     }
-        // rp3 HSD_MObjRemoveAnimByFlags
-        hook_or!(HSD_MOBJREMOVEANIMBYFLAGS, HSD_MObjRemoveAnimByFlags, (mobj: *mut HSD_MObj, flags: u32), |mobj: *mut HSD_MObj, flags: u32| unsafe { crate::tu::mobj::HSD_MObjRemoveAnimByFlags(mobj, flags); });
-        // rp3-end
-
-        pub static mut HSD_POBJADDANIMALL: Option<fn(*mut HSD_PObj, *mut HSD_ShapeAnim)> = None;
-    #[allow(non_snake_case)]
-    pub fn HSD_PObjAddAnimAll(pobj: *mut HSD_PObj, shapeanim: *mut HSD_ShapeAnim) {
-        match unsafe { HSD_POBJADDANIMALL } { Some(f) => f(pobj, shapeanim), None => { unsafe { let _ = crate::tu::pobj::HSD_PObjAddAnimAll(pobj as _, shapeanim as _); } return; } }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+        pub unsafe extern "C" fn hsdNew(a0: *mut _HSD_ClassInfo) -> *mut c_void { super::hsdNew(a0) }
     }
-        // rp3 HSD_MObjAddAnim
-        hook_or!(HSD_MOBJADDANIM, HSD_MObjAddAnim, (mobj: *mut HSD_MObj, mat_anim: *mut HSD_MatAnim), |mobj: *mut HSD_MObj, mat_anim: *mut HSD_MatAnim| unsafe { crate::tu::mobj::HSD_MObjAddAnim(mobj, mat_anim); });
-        // rp3-end
-
-        pub static mut HSD_POBJREQANIMALLBYFLAGS: Option<fn(*mut HSD_PObj, f32, u32)> = None;
-    #[allow(non_snake_case)]
-    pub fn HSD_PObjReqAnimAllByFlags(pobj: *mut HSD_PObj, startframe: f32, flags: u32) {
-        match unsafe { HSD_POBJREQANIMALLBYFLAGS } { Some(f) => f(pobj, startframe, flags), None => { unsafe { let _ = crate::tu::pobj::HSD_PObjReqAnimAllByFlags(pobj as _, startframe as _, flags as _); } return; } }
-    }
-        // rp3 HSD_MObjReqAnimByFlags
-        hook_or!(HSD_MOBJREQANIMBYFLAGS, HSD_MObjReqAnimByFlags, (mobj: *mut HSD_MObj, startframe: f32, flags: u32), |mobj: *mut HSD_MObj, startframe: f32, flags: u32| unsafe { crate::tu::mobj::HSD_MObjReqAnimByFlags(mobj, startframe, flags); });
-        // rp3-end
-
-        pub static mut HSD_POBJANIMALL: Option<fn(*mut HSD_PObj)> = None;
-    #[allow(non_snake_case)]
-    pub fn HSD_PObjAnimAll(pobj: *mut HSD_PObj) {
-        match unsafe { HSD_POBJANIMALL } { Some(f) => f(pobj), None => { unsafe { let _ = crate::tu::pobj::HSD_PObjAnimAll(pobj as _); } return; } }
-    }
-        // rp3 HSD_MObjAnim
-        hook_or!(HSD_MOBJANIM, HSD_MObjAnim, (mobj: *mut HSD_MObj), |mobj: *mut HSD_MObj| unsafe { crate::tu::mobj::HSD_MObjAnim(mobj); });
-        // rp3-end
-
-        // rp3 HSD_MObjLoadDesc
-        hook_or!(HSD_MOBJLOADDESC, HSD_MObjLoadDesc, (desc: *mut HSD_MObjDesc) -> *mut HSD_MObj, |desc: *mut HSD_MObjDesc| unsafe { crate::tu::mobj::HSD_MObjLoadDesc(desc) });
-        // rp3-end
-
-        pub static mut HSD_POBJLOADDESC: Option<fn(*mut HSD_PObjDesc) -> *mut HSD_PObj> = None;
-    #[allow(non_snake_case)]
-    pub fn HSD_PObjLoadDesc(desc: *mut HSD_PObjDesc) -> *mut HSD_PObj {
-        match unsafe { HSD_POBJLOADDESC } { Some(f) => f(desc), None => { return unsafe { crate::tu::pobj::HSD_PObjLoadDesc(desc as _) as _ }; } }
-    }
-        pub static mut HSD_POBJRESOLVEREFSALL: Option<fn(*mut HSD_PObj, *mut HSD_PObjDesc)> = None;
-    #[allow(non_snake_case)]
-    pub fn HSD_PObjResolveRefsAll(pobj: *mut HSD_PObj, desc: *mut HSD_PObjDesc) {
-        match unsafe { HSD_POBJRESOLVEREFSALL } { Some(f) => f(pobj, desc), None => { unsafe { let _ = crate::tu::pobj::HSD_PObjResolveRefsAll(pobj as _, desc as _); } return; } }
-    }
-        // rp3 HSD_MObjSetCurrent
-        hook_or!(HSD_MOBJSETCURRENT, HSD_MObjSetCurrent, (mobj: *mut HSD_MObj), |mobj: *mut HSD_MObj| unsafe { crate::tu::mobj::HSD_MObjSetCurrent(mobj); });
-        // rp3-end
-
-        // rp3 HSD_MObjRemove
-        hook_or!(HSD_MOBJREMOVE, HSD_MObjRemove, (mobj: *mut HSD_MObj), |mobj: *mut HSD_MObj| unsafe { crate::tu::mobj::HSD_MObjRemove(mobj); });
-        // rp3-end
-
-        pub static mut HSD_POBJREMOVEALL: Option<fn(*mut HSD_PObj)> = None;
-    #[allow(non_snake_case)]
-    pub fn HSD_PObjRemoveAll(pobj: *mut HSD_PObj) {
-        match unsafe { HSD_POBJREMOVEALL } { Some(f) => f(pobj), None => { unsafe { let _ = crate::tu::pobj::HSD_PObjRemoveAll(pobj as _); } return; } }
-    }
-        pub static mut HSDSEARCHCLASSINFO: Option<fn(*const i8) -> *mut HSD_ClassInfo> = None;
-    #[allow(non_snake_case)]
-    pub fn hsdSearchClassInfo(name: *const i8) -> *mut HSD_ClassInfo {
-        match unsafe { HSDSEARCHCLASSINFO } { Some(f) => f(name), None => { return unsafe { crate::tu::class::hsdSearchClassInfo(name as _) as _ }; } }
-    }
-        pub static mut HSDNEW: Option<fn(*mut HSD_ClassInfo) -> *mut HSD_Class> = None;
-    #[allow(non_snake_case)]
-    pub fn hsdNew(info: *mut HSD_ClassInfo) -> *mut HSD_Class {
-        match unsafe { HSDNEW } { Some(f) => f(info), None => { return unsafe { crate::tu::class::hsdNew(info as _) as _ }; } }
-    }
-        hook!(HSDDELETE, hsdDelete, (obj: *mut HSD_Class));
-        pub static mut HSDISDESCENDANTOF: Option<fn(*mut HSD_ClassInfo, *mut HSD_ClassInfo) -> i32> = None;
-    #[allow(non_snake_case)]
-    pub fn hsdIsDescendantOf(info: *mut HSD_ClassInfo, parent: *mut HSD_ClassInfo) -> i32 {
-        match unsafe { HSDISDESCENDANTOF } { Some(f) => f(info, parent), None => { return unsafe { crate::tu::class::hsdIsDescendantOf(info as _, parent as _) as _ }; } }
-    }
-        pub static mut HSDINITCLASSINFO: Option<fn(*mut HSD_ClassInfo, *mut HSD_ClassInfo, *const i8, *const i8, i32, i32)> = None;
-    #[allow(non_snake_case)]
-    pub fn hsdInitClassInfo(info: *mut HSD_ClassInfo, parent: *mut HSD_ClassInfo, lib: *const i8, name: *const i8, info_size: i32, obj_size: i32) {
-        match unsafe { HSDINITCLASSINFO } { Some(f) => f(info, parent, lib, name, info_size, obj_size), None => { unsafe { let _ = crate::tu::class::hsdInitClassInfo(info as _, parent as _, lib as _, name as _, info_size as _, obj_size as _); } return; } }
-    }
-        hook!(HSDCLASS, hsdClass, () -> *mut HSD_ClassInfo);
-        hook!(OSREPORT, OSReport, (msg: &str));
-        hook!(HSD_STATEINVALIDATE_ALL, HSD_StateInvalidate_All, ());
-        hook_or!(SCRIPTPARTS_DRAW, ScriptParts_Draw, (dobj: *mut HSD_DObj) -> i32, |_d| 0);
-        hook_or!(SCRIPTPARTS_TINT, ScriptParts_Tint, (dobj: *mut HSD_DObj) -> i32, |_d| 0);
-        hook_or!(SCRIPTPARTS_FORGET, ScriptParts_Forget, (dobj: *mut HSD_DObj), |_d| ());
-    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut hsdClass: HSD_ClassInfo = unsafe { core::mem::zeroed() };
+}
+// END GENERATED EXT
 
     /// `hsdDObj` (`{ DObjInfoInit }`), `default_class`, `current_dobj`.
-    pub static mut hsdDObj: HSD_DObjInfo = unsafe { core::mem::zeroed() };
-    static mut default_class: *mut HSD_ClassInfo = null_mut();
+    pub static mut hsdDObj: HSD_DObjInfo = {
+        let mut info: HSD_DObjInfo = unsafe { core::mem::zeroed() };
+        info.parent.head.info_init = Some(DObjInfoInit);
+        info
+    };
+    pub static mut default_class: *mut HSD_ClassInfo = null_mut();
     pub static mut current_dobj: *mut HSD_DObj = null_mut();
 
     pub unsafe fn init_dobj_statics() {
-        hsdDObj.parent.head.info_init = Some(DObjInfoInit_c);
-    }
-    unsafe extern "C" fn DObjInfoInit_c() {
-        DObjInfoInit()
+        hsdDObj.parent.head.info_init = Some(DObjInfoInit);
     }
 
     pub unsafe fn HSD_DObjSetCurrent(dobj: *mut HSD_DObj) {
@@ -276,7 +230,7 @@ pub mod hsd {
                 0x4000_0000 => HSD_DObjModifyFlags(dobj, 8, 0xE),
                 0x6000_0000 => HSD_DObjModifyFlags(dobj, 4, 0xE),
                 _ => {
-                    ext::OSReport(&format!("mobj has unexpected blending flags (0x{:x}).", rm));
+                    crate::tu::lbext::OSReport("mobj has unexpected blending flags (0x%x).", &[crate::tu::lbext::OsArg::U(rm)]);
                     panic!("dobj.c:312");
                 }
             }
@@ -301,8 +255,18 @@ pub mod hsd {
         dobj
     }
 
+    /// class.h `hsdDelete` (static inline): release then destroy through the object's class.
+    unsafe fn hsdDelete(object: *mut HSD_Class) {
+        if object.is_null() {
+            return;
+        }
+        let info = (*object).class_info;
+        ((*info).release.expect("hsdDelete: release"))(object);
+        ((*info).destroy.expect("hsdDelete: destroy"))(object);
+    }
+
     pub unsafe fn HSD_DObjRemove(dobj: *mut HSD_DObj) {
-        ext::hsdDelete(dobj as *mut HSD_Class);
+        hsdDelete(dobj as *mut HSD_Class);
     }
     pub unsafe fn HSD_DObjRemoveAll(mut dobj: *mut HSD_DObj) {
         while !dobj.is_null() {
@@ -313,7 +277,7 @@ pub mod hsd {
     }
 
     pub unsafe fn HSD_DObjSetDefaultClass(info: *mut HSD_ClassInfo) {
-        if !info.is_null() && ext::hsdIsDescendantOf(info, &mut hsdDObj.parent) == 0 {
+        if !info.is_null() && ext::hsdIsDescendantOf(info.cast(), (&raw mut hsdDObj.parent).cast()) == 0 {
             panic!("hsdIsDescendantOf(info, &hsdDObj)");
         }
         default_class = info;
@@ -374,7 +338,7 @@ pub mod hsd {
         }
         ext::HSD_MObjSetCurrent(null_mut());
         if lab_override != 0 {
-            ext::HSD_StateInvalidate_All();
+            ext::HSD_StateInvalidate(-1i32 as _);
         }
     }
 
@@ -403,14 +367,14 @@ pub mod hsd {
     }
 
     /// `DObjInfoInit`.
-    pub unsafe fn DObjInfoInit() {
+    pub unsafe extern "C" fn DObjInfoInit() {
         ext::hsdInitClassInfo(
             &mut hsdDObj.parent,
-            ext::hsdClass(),
-            b"sysdolphin_base_library\0".as_ptr() as *const i8,
-            b"hsd_dobj\0".as_ptr() as *const i8,
-            0x44,
-            <HSD_DObj as melee_core::gc::GcLayout>::GC_SIZE as i32,
+            &raw mut ext::hsdClass,
+            b"sysdolphin_base_library\0".as_ptr().cast_mut().cast(),
+            b"hsd_dobj\0".as_ptr().cast_mut().cast(),
+            core::mem::size_of::<HSD_DObjInfo>() as i32,
+            core::mem::size_of::<HSD_DObj>() as i32,
         );
         hsdDObj.parent.release = Some(DObjRelease);
         hsdDObj.parent.amnesia = Some(DObjAmnesia);

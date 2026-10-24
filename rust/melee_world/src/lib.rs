@@ -16,6 +16,7 @@ pub mod gekko;
 pub mod mp;
 pub mod pl;
 pub mod ftlib;
+pub mod gm;
 pub mod vec;
 pub mod tu;
 /// Generated hooks for callees outside the per-TU ports (gen/turef/tu_shard585.py).

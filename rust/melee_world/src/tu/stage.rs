@@ -73,7 +73,8 @@ pub mod ext {
                 }
             }
     hook!(H_HSD_Randi, HSD_Randi, (a0: i32) -> i32);
-    hook!(H_gm_8016B238, gm_8016B238, () -> i32);
+    pub static mut H_gm_8016B238: Option<unsafe extern "C" fn() -> i32> = None;
+    pub unsafe extern "C" fn gm_8016B238() -> i32 { match H_gm_8016B238 { Some(f) => f(), None => unsafe { crate::gm::gm_8016B238() as _ } } }
     hook!(H_gm_8016B3A0, gm_8016B3A0, () -> i32);
     pub static mut H_Ground_801C28AC: Option<unsafe extern "C" fn(u32, u32, *mut i32) -> i32> = None;
             pub unsafe extern "C" fn Ground_801C28AC(a0: u32, a1: u32, a2: *mut i32) -> i32 {

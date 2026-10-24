@@ -68,7 +68,7 @@ pub mod ext {
     fn UI_TextI4(a0: *const i8, a1: i32, a2: i32, a3: i32, a4: *mut c_void) -> i32;
     fn Ui_RetailHidden(a0: i32) -> i32;
     fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: *mut Vec3) -> *mut c_void;
-    fn gmVs_GetSceneState() -> *mut VsSceneState;
+    fn gmVs_GetSceneState() -> *mut VsSceneState = || unsafe { crate::gm::gmVs_GetSceneState() as _ };
     fn gm_8016895C(a0: *mut HSD_JObj, a1: *mut DynamicModelDesc, a2: i32);
     fn gm_80168B34(a0: u32, a1: i32, a2: i32) -> f32;
     fn gm_80168BF8(a0: i32) -> f32;
@@ -80,8 +80,8 @@ pub mod ext {
     fn gm_8016A944() -> i32;
     fn gm_8016A97C() -> *mut c_void;
     fn gm_8016A98C() -> *mut lbl_8046B668_t;
-    fn gm_8016B184() -> i32;
-    fn gm_8016B1A8() -> i32;
+    fn gm_8016B184() -> i32 = || unsafe { crate::gm::gm_8016B184() as _ };
+    fn gm_8016B1A8() -> i32 = || unsafe { crate::gm::gm_8016B1A8() as _ };
     fn gm_GenoStockFrame(a0: i32, a1: i32) -> f32;
     fn gm_IsMultimanSmashMode() -> i32;
     fn gm_MexStockFrame(a0: i32, a1: i32) -> f32;

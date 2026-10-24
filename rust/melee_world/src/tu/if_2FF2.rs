@@ -52,7 +52,7 @@ pub mod ext {
     fn HSD_SisLib_803A6B98(a0: *mut HSD_Text, a1: f32, a2: f32, a3: *const i8, a4: &[i32]) -> i32;
     fn HSD_SisLib_803A70A0(a0: *mut HSD_Text, a1: i32, a2: *const i8, a3: &[i32]) -> i32;
     fn HSD_SisLib_803A7548(a0: *mut HSD_Text, a1: i32, a2: f32, a3: f32) = |a0: *mut HSD_Text, a1: i32, a2: f32, a3: f32| { unsafe { let _ = melee_runtime::tu::hsd_3A64::HSD_SisLib_803A7548(a0 as _, a1 as _, a2 as _, a3 as _); } };
-    fn gm_8016B774() -> *mut MatchEnd;
+    fn gm_8016B774() -> *mut MatchEnd = || unsafe { crate::gm::gm_8016B774() as _ };
     fn gm_GetMatchEndPlayerScore(a0: i32) -> i32;
     fn ifAll_GetHUDGObj() -> *mut HSD_GObj = || unsafe { crate::tu::ifall::ifAll_GetHUDGObj() as _ };
     fn ifAll_GetPlayerHUDPosition(a0: i32) -> *mut Vec = |a0: i32| unsafe { crate::tu::ifall::ifAll_GetPlayerHUDPosition(a0 as _) as _ };

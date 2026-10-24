@@ -138,7 +138,7 @@ pub mod ext {
     hook!(FTCO_800C0764, ftCo_800C0764, (a0: *mut HSD_GObj, a1: u32, a2: *mut c_void));
     hook_or!(FTLIB_80086644, ftLib_80086644, (a0: *mut HSD_GObj, a1: *mut Vec3), |a0: *mut HSD_GObj, a1: *mut Vec3| { unsafe { let _ = crate::ftlib::ftLib_80086644(a0 as _, a1 as _); } });
     hook!(FTLIB_80086C18, ftLib_80086C18, (a0: *mut HSD_GObj, a1: s32, a2: s32));
-    hook!(GM_8016B238, gm_8016B238, () -> i32);
+    hook_or!(GM_8016B238, gm_8016B238, () -> i32, || unsafe { crate::gm::gm_8016B238() as _ });
     pub static mut GRANIME_801C78FC: Option<fn(*mut HSD_GObj, i32, u32)> = None;
     #[allow(non_snake_case)]
     pub fn grAnime_801C78FC(a0: *mut HSD_GObj, a1: i32, a2: u32) {

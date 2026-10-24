@@ -72,10 +72,10 @@ pub mod ext {
     fn Player_LoadPlayerCoords(a0: i32, a1: *mut Vec) = |a0: i32, a1: *mut Vec| { unsafe { let _ = crate::pl::Player_LoadPlayerCoords(a0 as _, a1 as _); } };
     fn Ui_RetailHidden(a0: i32) -> i32;
     fn Wb_RenderActive() -> i32;
-    fn gmVs_GetSceneController() -> *mut VsSceneController;
-    fn gm_8016B0E8() -> i32;
-    fn gm_8016B168() -> i32;
-    fn gm_8016B258(a0: i32) -> i32;
+    fn gmVs_GetSceneController() -> *mut VsSceneController = || unsafe { crate::gm::gmVs_GetSceneController() as _ };
+    fn gm_8016B0E8() -> i32 = || unsafe { crate::gm::gm_8016B0E8() as _ };
+    fn gm_8016B168() -> i32 = || unsafe { crate::gm::gm_8016B168() as _ };
+    fn gm_8016B258(a0: i32) -> i32 = |a0: i32| unsafe { crate::gm::gm_8016B258(a0 as _) as _ };
     fn ifAll_GetArchive() -> *mut *mut HSD_Archive = || unsafe { crate::tu::ifall::ifAll_GetArchive() as _ };
     fn ifAll_IsHUDHidden() -> i32 = || unsafe { crate::tu::ifall::ifAll_IsHUDHidden() as _ };
     fn lbArchive_LoadSections(a0: *mut HSD_Archive, a1: *mut c_void, a2: *const u8, rest: &[(*mut c_void, *const u8)]);

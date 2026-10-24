@@ -146,9 +146,9 @@ pub mod ext {
     fn ftLib_8008701C(a0: *mut HSD_GObj) -> i32 = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_8008701C(a0 as _) as _ };
     fn gm_80164600() -> i32;
     fn gm_80164ABC() -> i32;
-    fn gm_8016B238() -> i32;
+    fn gm_8016B238() -> i32 = || unsafe { crate::gm::gm_8016B238() as _ };
     fn gm_801B6320() -> *mut c_void;
-    fn gm_GetFrameCount() -> u32;
+    fn gm_GetFrameCount() -> u32 = || unsafe { crate::gm::gm_GetFrameCount() as _ };
     fn gm_IsCKindUnlocked(a0: u8) -> i32;
     fn gm_IsCurrently1PMode() -> i32;
     fn grCorneria_801E2A6C() = || { unsafe { let _ = crate::tu::grcorneria::grCorneria_801E2A6C(); } };

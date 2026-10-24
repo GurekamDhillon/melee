@@ -105,13 +105,13 @@ pub mod ext {
     fn gm_80160968(a0: u32) -> _GXColor;
     fn gm_80160A60(a0: i32) -> *const i8;
     fn gm_801694A0(a0: *mut HSD_GObj) -> i32;
-    fn gm_8016AEEC() -> u32;
-    fn gm_8016AF0C() -> u16;
-    fn gm_8016B168() -> i32;
-    fn gm_8016B184() -> i32;
+    fn gm_8016AEEC() -> u32 = || unsafe { crate::gm::gm_8016AEEC() as _ };
+    fn gm_8016AF0C() -> u16 = || unsafe { crate::gm::gm_8016AF0C() as _ };
+    fn gm_8016B168() -> i32 = || unsafe { crate::gm::gm_8016B168() as _ };
+    fn gm_8016B184() -> i32 = || unsafe { crate::gm::gm_8016B184() as _ };
     fn gm_8016C6C0(a0: *mut HSD_GObj) -> i32;
     fn gm_8018841C() -> i32;
-    fn gm_GetStartMeleeRules() -> *mut StartMeleeRules;
+    fn gm_GetStartMeleeRules() -> *mut StartMeleeRules = || unsafe { crate::gm::gm_GetStartMeleeRules() as _ };
     fn grAnime_801C65B0(a0: *mut UnkArchiveStruct) = |a0: *mut UnkArchiveStruct| { unsafe { let _ = crate::tu::granime::grAnime_801C65B0(a0 as _); } };
     fn grAnime_801C77FC(a0: *mut HSD_GObj, a1: i32, a2: u32) = |a0: *mut HSD_GObj, a1: i32, a2: u32| { unsafe { let _ = crate::tu::granime::grAnime_801C77FC(a0 as _, a1 as _, a2 as _); } };
     fn grAnime_801C7A04(a0: *mut HSD_GObj, a1: i32, a2: u32, a3: f32) = |a0: *mut HSD_GObj, a1: i32, a2: u32, a3: f32| { unsafe { let _ = crate::tu::granime::grAnime_801C7A04(a0 as _, a1 as _, a2 as _, a3 as _); } };

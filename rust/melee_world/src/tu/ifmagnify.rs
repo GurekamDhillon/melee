@@ -84,10 +84,10 @@ pub mod ext {
     fn ftLib_80086B90(a0: *mut HSD_GObj, a1: *mut Vec) = |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_80086B90(a0 as _, a1 as _); } };
     fn ftLib_80086ED0(a0: *mut HSD_GObj) -> i32;
     fn ftLib_UpdateLogicOffCamera(a0: *mut HSD_GObj);
-    fn gmVs_GetSceneController() -> *mut VsSceneController;
+    fn gmVs_GetSceneController() -> *mut VsSceneController = || unsafe { crate::gm::gmVs_GetSceneController() as _ };
     fn gm_80160854(a0: u8, a1: u8, a2: u8, a3: u8) -> u32;
     fn gm_80160968(a0: u32) -> _GXColor;
-    fn gm_8016B168() -> i32;
+    fn gm_8016B168() -> i32 = || unsafe { crate::gm::gm_8016B168() as _ };
     fn ifAll_GetArchive() -> *mut *mut HSD_Archive = || unsafe { crate::tu::ifall::ifAll_GetArchive() as _ };
     fn ifAll_IsHUDHidden() -> i32 = || unsafe { crate::tu::ifall::ifAll_IsHUDHidden() as _ };
     fn lbArchive_LoadSections(a0: *mut HSD_Archive, a1: *mut c_void, a2: *const u8, rest: &[(*mut c_void, *const u8)]);

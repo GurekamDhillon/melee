@@ -48,7 +48,7 @@ pub mod ext {
     fn Camera_800311DC(a0: f32) = |a0: f32| crate::cm::camera::world().camera_800311dc(a0);
     fn Camera_RequestQuake(a0: u32, a1: *mut Vec);
     fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32| { unsafe { let _ = melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } };
-    fn GetMatchTimer(a0: *mut i32) -> i32;
+    fn GetMatchTimer(a0: *mut i32) -> i32 = |a0: *mut i32| unsafe { crate::gm::GetMatchTimer(a0 as _) as _ };
     fn Ground_801C39C0() = || { unsafe { let _ = crate::tu::ground::Ground_801C39C0(); } };
     fn Ground_801C3BB4() = || { unsafe { let _ = crate::tu::ground::Ground_801C3BB4(); } };
     fn Ground_801C3FA4(a0: *mut HSD_GObj, a1: i32) -> *mut HSD_JObj = |a0: *mut HSD_GObj, a1: i32| unsafe { crate::tu::ground::Ground_801C3FA4(a0 as _, a1 as _) as _ };
@@ -72,8 +72,8 @@ pub mod ext {
     fn HSD_Randi(a0: i32) -> i32;
     fn Stage_GetBlastZoneBottomOffset() -> f32 = || unsafe { crate::tu::stage::Stage_GetBlastZoneBottomOffset() as _ };
     fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: *mut Vec) -> *mut c_void;
-    fn gm_8016AE80() -> i32;
-    fn gm_8016B238() -> i32;
+    fn gm_8016AE80() -> i32 = || unsafe { crate::gm::gm_8016AE80() as _ };
+    fn gm_8016B238() -> i32 = || unsafe { crate::gm::gm_8016B238() as _ };
     fn grAnime_801C8138(a0: *mut HSD_GObj, a1: i32, a2: i32) = |a0: *mut HSD_GObj, a1: i32, a2: i32| { unsafe { let _ = crate::tu::granime::grAnime_801C8138(a0 as _, a1 as _, a2 as _); } };
     fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { let _ = crate::tu::grdisplay::grDisplay_801C5DB0(a0 as _, a1 as _); } };
     fn grLib_801C9EE8(a0: *mut Vec, a1: f32) -> i32 = |a0: *mut Vec, a1: f32| unsafe { crate::tu::grlib::grLib_801C9EE8(a0 as _, a1 as _) as _ };

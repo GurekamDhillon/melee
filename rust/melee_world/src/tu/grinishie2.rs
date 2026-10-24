@@ -31,7 +31,7 @@ pub mod ext {
     };
     hook_or!(CAMERA_800311CC, Camera_800311CC, (a0: f32), |a0: f32| crate::cm::camera::world().camera_800311cc(a0));
     hook_or!(CAMERA_800311DC, Camera_800311DC, (a0: f32), |a0: f32| crate::cm::camera::world().camera_800311dc(a0));
-    hook!(GETMATCHTIMER, GetMatchTimer, (a0: *mut i32) -> i32);
+    hook_or!(GETMATCHTIMER, GetMatchTimer, (a0: *mut i32) -> i32, |a0: *mut i32| unsafe { crate::gm::GetMatchTimer(a0 as _) as _ });
     pub static mut GROUND_801C39C0: Option<fn()> = None;
     #[allow(non_snake_case)]
     pub fn Ground_801C39C0() {

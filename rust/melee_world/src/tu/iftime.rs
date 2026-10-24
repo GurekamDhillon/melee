@@ -50,10 +50,10 @@ pub mod ext {
     fn HSD_JObjSetFlagsAll(a0: *mut HSD_JObj, a1: u32) = |a0: *mut HSD_JObj, a1: u32| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetFlagsAll(a0 as _, a1 as _); } };
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) = |a0: *mut HSD_JObj| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetMtxDirtySub(a0 as _); } };
     fn Ui_RetailHidden(a0: i32) -> i32;
-    fn gm_8016AEEC() -> u32;
-    fn gm_8016AF0C() -> u16;
-    fn gm_8016B110() -> i32;
-    fn gm_GetStartMeleeRules() -> *mut StartMeleeRules;
+    fn gm_8016AEEC() -> u32 = || unsafe { crate::gm::gm_8016AEEC() as _ };
+    fn gm_8016AF0C() -> u16 = || unsafe { crate::gm::gm_8016AF0C() as _ };
+    fn gm_8016B110() -> i32 = || unsafe { crate::gm::gm_8016B110() as _ };
+    fn gm_GetStartMeleeRules() -> *mut StartMeleeRules = || unsafe { crate::gm::gm_GetStartMeleeRules() as _ };
     fn ifAll_GetArchive() -> *mut *mut HSD_Archive = || unsafe { crate::tu::ifall::ifAll_GetArchive() as _ };
     fn ifAll_GetTimerPosition() -> *mut Vec = || unsafe { crate::tu::ifall::ifAll_GetTimerPosition() as _ };
     fn lbArchive_LoadSections(a0: *mut HSD_Archive, a1: *mut c_void, a2: *const u8, rest: &[(*mut c_void, *const u8)]);

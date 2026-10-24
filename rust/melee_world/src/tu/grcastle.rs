@@ -129,8 +129,8 @@ pub mod ext {
     hook_or!(FTLIB_80086A4C, ftLib_80086A4C, (a0: *mut HSD_GObj, a1: f32), |a0: *mut HSD_GObj, a1: f32| { unsafe { let _ = crate::ftlib::ftLib_80086A4C(a0 as _, a1 as _); } });
     hook_or!(FTLIB_80086B80, ftLib_80086B80, (a0: *mut HSD_GObj) -> f32, |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_80086B80(a0 as _) as _ });
     hook_or!(FTLIB_80086BEC, ftLib_80086BEC, (a0: *mut HSD_GObj, a1: *mut Vec), |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_80086BEC(a0 as _, a1 as _); } });
-    hook!(GM_8016AE80, gm_8016AE80, () -> i32);
-    hook!(GM_8016B238, gm_8016B238, () -> i32);
+    hook_or!(GM_8016AE80, gm_8016AE80, () -> i32, || unsafe { crate::gm::gm_8016AE80() as _ });
+    hook_or!(GM_8016B238, gm_8016B238, () -> i32, || unsafe { crate::gm::gm_8016B238() as _ });
     pub static mut GRANIME_801C8138: Option<fn(*mut HSD_GObj, enum_t, i32)> = None;
     #[allow(non_snake_case)]
     pub fn grAnime_801C8138(a0: *mut HSD_GObj, a1: enum_t, a2: i32) {

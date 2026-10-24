@@ -18,7 +18,7 @@ pub mod ext {
         pub static mut atanf: Option<fn(f32) -> f32> = None;
     }
     pub fn atanf(a0: f32) -> f32 {
-        match unsafe { hook::atanf } { Some(f) => f(a0), None => { return crate::lbtrigf::atanf(a0) } }
+        match unsafe { hook::atanf } { Some(f) => f(a0), None => { return unsafe { crate::lbtrigf::atanf(a0) } } }
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

@@ -512,10 +512,10 @@ class Walk:
 
 def _split_top(txt):
     out, depth, cur = [], 0, ""
-    for ch in txt:
+    for i, ch in enumerate(txt):
         if ch in "<([":
             depth += 1
-        elif ch in ">)]" :
+        elif ch in ">)]" and not (ch == ">" and i > 0 and txt[i - 1] == "-"):
             depth -= 1
         if ch == "," and depth == 0:
             out.append(cur.strip())
@@ -600,7 +600,7 @@ def build(stem, spec, want_ext):
         rcls = arg_class(rt)
         va = ft.is_function_variadic()
         realcb = spec.get("real_cb", {})  # address-taken stubs whose address the port takes from a real Rust port
-        if va:
+        if va or n in spec.get("custom_stubs", {}):
             cs = spec.get("custom_stubs", {}).get(n)
             if cs:  # a variadic callee the spec models by hand (fixed-arity on the Rust side)
                 c_out.append(cs["c"].replace("@ID@", str(sid[n])))

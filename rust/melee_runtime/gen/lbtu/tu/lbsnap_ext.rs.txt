@@ -1,0 +1,88 @@
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/lbtu/gen_tu.py; the callees of the C TU)
+pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code, unreachable_code)]
+    use super::*;
+    use core::ffi::c_void;
+    pub mod hook {
+        use super::*;
+        pub static mut CARDProbe: Option<fn(i32) -> i32> = None;
+        pub static mut DCFlushRange: Option<fn(*mut c_void, u32)> = None;
+        pub static mut OSGetTime: Option<fn() -> i64> = None;
+        pub static mut OSTicksToCalendarTime: Option<fn(i64, *mut OSCalendarTime)> = None;
+        pub static mut ft_GetFtKindMask: Option<fn() -> i32> = None;
+        pub static mut gm_GetStKind: Option<fn() -> u16> = None;
+        pub static mut hsd_803B51C8: Option<fn(i32, i32, i32, *mut i8, i32) -> i32> = None;
+        pub static mut hsd_803B5C2C: Option<fn(i32)> = None;
+        pub static mut hsd_803B6BE4: Option<fn(*mut i8, i32, *mut c_void) -> i32> = None;
+        pub static mut it_8026C47C: Option<fn(*mut it_8026C47C_arg0_t)> = None;
+        pub static mut lbArchive_80016DBC: Option<fn(*const i8, *mut c_void, *const i8, i32) -> *mut HSD_Archive> = None;
+        pub static mut lbCardNew_DeleteSnap: Option<fn(i32, *const i8, *mut c_void) -> i32> = None;
+        pub static mut lbLang_IsSettingJP: Option<fn() -> i32> = None;
+        pub static mut lb_8001BB48: Option<fn(i32, *mut i8, *mut c_void, *mut c_void, *mut i8, *mut c_void, *mut c_void, *mut c_void) -> i32> = None;
+        pub static mut lb_8001BF04: Option<fn(i32, *mut i8, *mut c_void, *mut i8, *mut c_void, *mut c_void, *mut c_void) -> i32> = None;
+        pub static mut lb_8001BFD8: Option<fn(i32, *mut lbCardNew_SnapshotEntry, *mut i32, *mut i32) -> i32> = None;
+        pub static mut lb_8001C0F4: Option<fn(i32, *const i8, *const i8, *const i8, *mut c_void) -> i32> = None;
+        pub static mut lb_8001C4A8: Option<fn(*mut c_void, *mut c_void) -> i32> = None;
+    }
+    pub fn CARDProbe(a0: i32) -> i32 {
+        match unsafe { hook::CARDProbe } { Some(f) => f(a0), None => { panic!("TODO: CARDProbe is not ported") } }
+    }
+    pub fn DCFlushRange(a0: *mut c_void, a1: u32) {
+        match unsafe { hook::DCFlushRange } { Some(f) => f(a0, a1), None => { panic!("TODO: DCFlushRange is not ported") } }
+    }
+    pub fn OSGetTime() -> i64 {
+        match unsafe { hook::OSGetTime } { Some(f) => f(), None => { panic!("TODO: OSGetTime is not ported") } }
+    }
+    pub fn OSTicksToCalendarTime(a0: i64, a1: *mut OSCalendarTime) {
+        match unsafe { hook::OSTicksToCalendarTime } { Some(f) => f(a0, a1), None => { panic!("TODO: OSTicksToCalendarTime is not ported") } }
+    }
+    pub fn ft_GetFtKindMask() -> i32 {
+        match unsafe { hook::ft_GetFtKindMask } { Some(f) => f(), None => { panic!("TODO: ft_GetFtKindMask is not ported") } }
+    }
+    pub fn gm_GetStKind() -> u16 {
+        match unsafe { hook::gm_GetStKind } { Some(f) => f(), None => { panic!("TODO: gm_GetStKind is not ported") } }
+    }
+    pub fn hsd_803B51C8(a0: i32, a1: i32, a2: i32, a3: *mut i8, a4: i32) -> i32 {
+        match unsafe { hook::hsd_803B51C8 } { Some(f) => f(a0, a1, a2, a3, a4), None => { panic!("TODO: hsd_803B51C8 is not ported") } }
+    }
+    pub fn hsd_803B5C2C(a0: i32) {
+        match unsafe { hook::hsd_803B5C2C } { Some(f) => f(a0), None => { panic!("TODO: hsd_803B5C2C is not ported") } }
+    }
+    pub fn hsd_803B6BE4(a0: *mut i8, a1: i32, a2: *mut c_void) -> i32 {
+        match unsafe { hook::hsd_803B6BE4 } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: hsd_803B6BE4 is not ported") } }
+    }
+    pub fn it_8026C47C(a0: *mut it_8026C47C_arg0_t) {
+        match unsafe { hook::it_8026C47C } { Some(f) => f(a0), None => { panic!("TODO: it_8026C47C is not ported") } }
+    }
+    pub fn lbArchive_80016DBC(a0: *const i8, a1: *mut c_void, a2: *const i8, a3: i32) -> *mut HSD_Archive {
+        match unsafe { hook::lbArchive_80016DBC } { Some(f) => f(a0, a1, a2, a3), None => { panic!("TODO: lbArchive_80016DBC is not ported") } }
+    }
+    pub fn lbCardNew_DeleteSnap(a0: i32, a1: *const i8, a2: *mut c_void) -> i32 {
+        match unsafe { hook::lbCardNew_DeleteSnap } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: lbCardNew_DeleteSnap is not ported") } }
+    }
+    pub fn lbLang_IsSettingJP() -> i32 {
+        match unsafe { hook::lbLang_IsSettingJP } { Some(f) => f(), None => { panic!("TODO: lbLang_IsSettingJP is not ported") } }
+    }
+    pub fn lb_8001BB48(a0: i32, a1: *mut i8, a2: *mut c_void, a3: *mut c_void, a4: *mut i8, a5: *mut c_void, a6: *mut c_void, a7: *mut c_void) -> i32 {
+        match unsafe { hook::lb_8001BB48 } { Some(f) => f(a0, a1, a2, a3, a4, a5, a6, a7), None => { panic!("TODO: lb_8001BB48 is not ported") } }
+    }
+    pub fn lb_8001BF04(a0: i32, a1: *mut i8, a2: *mut c_void, a3: *mut i8, a4: *mut c_void, a5: *mut c_void, a6: *mut c_void) -> i32 {
+        match unsafe { hook::lb_8001BF04 } { Some(f) => f(a0, a1, a2, a3, a4, a5, a6), None => { panic!("TODO: lb_8001BF04 is not ported") } }
+    }
+    pub fn lb_8001BFD8(a0: i32, a1: *mut lbCardNew_SnapshotEntry, a2: *mut i32, a3: *mut i32) -> i32 {
+        match unsafe { hook::lb_8001BFD8 } { Some(f) => f(a0, a1, a2, a3), None => { panic!("TODO: lb_8001BFD8 is not ported") } }
+    }
+    pub fn lb_8001C0F4(a0: i32, a1: *const i8, a2: *const i8, a3: *const i8, a4: *mut c_void) -> i32 {
+        match unsafe { hook::lb_8001C0F4 } { Some(f) => f(a0, a1, a2, a3, a4), None => { panic!("TODO: lb_8001C0F4 is not ported") } }
+    }
+    pub fn lb_8001C4A8(a0: *mut c_void, a1: *mut c_void) -> i32 {
+        match unsafe { hook::lb_8001C4A8 } { Some(f) => f(a0, a1), None => { panic!("TODO: lb_8001C4A8 is not ported") } }
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut __OSBusClock: u32 = unsafe { core::mem::zeroed() };
+}
+// END GENERATED EXT

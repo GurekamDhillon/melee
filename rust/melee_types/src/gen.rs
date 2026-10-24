@@ -18,8 +18,6 @@ pub type c_bool = i32;
 impl GcPointee for _cobj_Unk1 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.issue(format!("pointer to incomplete _cobj_Unk1 at {t:#x}: read as null")); core::ptr::null_mut() } }
 #[repr(C)] pub struct ftDeviceUnk2 { _opaque: [u8; 0] }
 impl GcPointee for ftDeviceUnk2 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.issue(format!("pointer to incomplete ftDeviceUnk2 at {t:#x}: read as null")); core::ptr::null_mut() } }
-#[repr(C)] pub struct Unk80433380_48 { _opaque: [u8; 0] }
-impl GcPointee for Unk80433380_48 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.issue(format!("pointer to incomplete Unk80433380_48 at {t:#x}: read as null")); core::ptr::null_mut() } }
 #[repr(C)] pub struct unkCastle { _opaque: [u8; 0] }
 impl GcPointee for unkCastle { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.issue(format!("pointer to incomplete unkCastle at {t:#x}: read as null")); core::ptr::null_mut() } }
 #[repr(C)] pub struct ftMaterial_UnkTevStruct { _opaque: [u8; 0] }
@@ -5265,6 +5263,21 @@ pub const FLIPPER_MS_AIRBORNE: itFlipper_MotionState = 4;
 pub const FLIPPER_MS_ACTIVE: itFlipper_MotionState = 5;
 pub const FLIPPER_MS_SPINNING: itFlipper_MotionState = 6;
 
+/// C enum `lbCardResult` (src/melee/lb/lbcardnew.h:10)
+pub type lbCardResult = u32;
+pub const LbCardResult_Ready: lbCardResult = 0;
+pub const LbCardResult_2: lbCardResult = 2;
+pub const LbCardResult_NoFile: lbCardResult = 4;
+pub const LbCardResult_NullFilename: lbCardResult = 7;
+pub const LbCardResult_Malformed: lbCardResult = 9;
+pub const LbCardResult_10: lbCardResult = 10;
+pub const LbCardResult_Busy: lbCardResult = 11;
+pub const LbCardResult_BadSectorSize: lbCardResult = 12;
+pub const LbCardResult_Invalid: lbCardResult = 13;
+pub const LbCardResult_FatalError: lbCardResult = 14;
+pub const LbCardResult_DeviceError: lbCardResult = 15;
+pub const LbCardResult_16: lbCardResult = 16;
+
 /// C enum `FrontendItemKind` (src/melee/gm/gmfrontend_items.h:7)
 pub type FrontendItemKind = u32;
 pub const FE_ACTION: FrontendItemKind = 0;
@@ -6069,6 +6082,7 @@ pub type ftPichuAttributes = _ftPichuAttributes;
 pub type ftSs_Fighter = Fighter;
 pub type StaticPlayer = _StaticPlayer;
 pub type it_MObjSetupFunc = Option<unsafe extern "C" fn(*mut HSD_MObj, u32, u32)>;
+pub type LbCardOnFinishedCallback = Option<unsafe extern "C" fn(i32)>;
 
 /// C `__file_modes` (src/MSL/stdio.h:44); GameCube size 0x4, align 4.
 #[repr(C, align(4))]
@@ -90446,6 +90460,41 @@ impl GcLayout for FigaTree {
 }
 const _: () = assert!(core::mem::size_of::<FigaTree>() == 32);
 
+/// C `LbCardEntry` (src/melee/lb/lbcardnew.h:25); GameCube size 0xC, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct LbCardEntry {
+    pub file_size: i32,
+    pub file_flags: i32,
+    pub data: *mut c_void,
+}
+impl LbCardEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for LbCardEntry {
+    const GC_BYTES: u32 = 0xC;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.file_size = <i32 as GcDecode>::gc_decode(d, at + 0x0);
+        v.file_flags = <i32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.data = <*mut c_void as GcDecode>::gc_decode(d, at + 0x8);
+        v
+    }
+}
+impl GcPointee for LbCardEntry { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<LbCardEntry>(t) } }
+impl GcLayout for LbCardEntry {
+    const GC_NAME: &'static str = "LbCardEntry";
+    const GC_SIZE: u32 = 0xC;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("file_size", 0x0, 4, "int"),
+        GcField::new("file_flags", 0x4, 4, "int"),
+        GcField::new("data", 0x8, 4, "void *"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<LbCardEntry>() == 16);
+
 /// C `CharScaleEntry` (src/melee/gm/gmresultplayer.static.h:10); GameCube size 0x30, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
@@ -91220,6 +91269,251 @@ impl GcLayout for lbl_803D9DD0_t {
     ];
 }
 const _: () = assert!(core::mem::size_of::<lbl_803D9DD0_t>() == 40);
+
+/// C `Unk80433380_48` (rust/melee_types/gen/all_types.c:808); GameCube size 0x408, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct Unk80433380_48 {
+    pub card_result: i32,
+    pub num: i32,
+    pub free_blocks: i32,
+    pub free_files: i32,
+    pub entries: [lbCardNew_SnapshotEntry; 127],
+}
+impl Unk80433380_48 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for Unk80433380_48 {
+    const GC_BYTES: u32 = 0x408;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.card_result = <i32 as GcDecode>::gc_decode(d, at + 0x0);
+        v.num = <i32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.free_blocks = <i32 as GcDecode>::gc_decode(d, at + 0x8);
+        v.free_files = <i32 as GcDecode>::gc_decode(d, at + 0xC);
+        v.entries = <[lbCardNew_SnapshotEntry; 127] as GcDecode>::gc_decode(d, at + 0x10);
+        v
+    }
+}
+impl GcPointee for Unk80433380_48 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Unk80433380_48>(t) } }
+impl GcLayout for Unk80433380_48 {
+    const GC_NAME: &'static str = "Unk80433380_48";
+    const GC_SIZE: u32 = 0x408;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("card_result", 0x0, 4, "int"),
+        GcField::new("num", 0x4, 4, "int"),
+        GcField::new("free_blocks", 0x8, 4, "int"),
+        GcField::new("free_files", 0xC, 4, "int"),
+        GcField::new("entries", 0x10, 1016, "lbCardNew_SnapshotEntry[127]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<Unk80433380_48>() == 1032);
+
+/// C `Unk80433380_0` (rust/melee_types/gen/all_types.c:816); GameCube size 0x3C, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct Unk80433380_0 {
+    pub x0: i32,
+    pub width: u16,
+    pub height: u16,
+    pub x8: u8,
+    pub xC: i32,
+    pub stkind: u16,
+    pub x14: it_8026C47C_arg0_t,
+    pub x34: i32,
+    pub x38: [i8; 4],
+}
+impl Unk80433380_0 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for Unk80433380_0 {
+    const GC_BYTES: u32 = 0x3C;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.x0 = <i32 as GcDecode>::gc_decode(d, at + 0x0);
+        v.width = <u16 as GcDecode>::gc_decode(d, at + 0x4);
+        v.height = <u16 as GcDecode>::gc_decode(d, at + 0x6);
+        v.x8 = <u8 as GcDecode>::gc_decode(d, at + 0x8);
+        v.xC = <i32 as GcDecode>::gc_decode(d, at + 0xC);
+        v.stkind = <u16 as GcDecode>::gc_decode(d, at + 0x10);
+        v.x14 = <it_8026C47C_arg0_t as GcDecode>::gc_decode(d, at + 0x14);
+        v.x34 = <i32 as GcDecode>::gc_decode(d, at + 0x34);
+        v.x38 = <[i8; 4] as GcDecode>::gc_decode(d, at + 0x38);
+        v
+    }
+}
+impl GcPointee for Unk80433380_0 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Unk80433380_0>(t) } }
+impl GcLayout for Unk80433380_0 {
+    const GC_NAME: &'static str = "Unk80433380_0";
+    const GC_SIZE: u32 = 0x3C;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 4, "s32"),
+        GcField::new("width", 0x4, 2, "u16"),
+        GcField::new("height", 0x6, 2, "u16"),
+        GcField::new("x8", 0x8, 1, "u8"),
+        GcField::new("xC", 0xC, 4, "s32"),
+        GcField::new("stkind", 0x10, 2, "u16"),
+        GcField::new("x14", 0x14, 32, "struct it_8026C47C_arg0_t"),
+        GcField::new("x34", 0x34, 4, "s32"),
+        GcField::new("x38", 0x38, 4, "char[4]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<Unk80433380_0>() == 60);
+
+/// C `LbMcSnapMemSnapIconData` (rust/melee_types/gen/all_types.c:828); GameCube size 0x4, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub union LbMcSnapMemSnapIconData {
+    pub ptr: *mut u8,
+    pub offset: i32,
+    pub size: i32,
+}
+impl LbMcSnapMemSnapIconData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for LbMcSnapMemSnapIconData {
+    const GC_BYTES: u32 = 0x4;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        if d.is_reloc(at) { v.ptr = <*mut u8 as GcDecode>::gc_decode(d, at + 0x0); }
+        else { v.offset = <i32 as GcDecode>::gc_decode(d, at + 0x0); }
+        v
+    }
+}
+impl GcPointee for LbMcSnapMemSnapIconData { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<LbMcSnapMemSnapIconData>(t) } }
+impl GcLayout for LbMcSnapMemSnapIconData {
+    const GC_NAME: &'static str = "LbMcSnapMemSnapIconData";
+    const GC_SIZE: u32 = 0x4;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("ptr", 0x0, 4, "u8 *"),
+        GcField::new("offset", 0x0, 4, "int"),
+        GcField::new("size", 0x0, 4, "int"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<LbMcSnapMemSnapIconData>() == 8);
+
+/// C `Unk80433380` (rust/melee_types/gen/all_types.c:834); GameCube size 0x60, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct Unk80433380 {
+    pub snap: *mut Unk80433380_0,
+    pub filename: [i8; 64],
+    pub icon_data: *mut LbMcSnapMemSnapIconData,
+    pub slot: *mut Unk80433380_48,
+    pub card_state: [i32; 2],
+    pub state_changed: [i32; 3],
+}
+impl Unk80433380 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for Unk80433380 {
+    const GC_BYTES: u32 = 0x60;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.snap = <*mut Unk80433380_0 as GcDecode>::gc_decode(d, at + 0x0);
+        v.filename = <[i8; 64] as GcDecode>::gc_decode(d, at + 0x4);
+        v.icon_data = <*mut LbMcSnapMemSnapIconData as GcDecode>::gc_decode(d, at + 0x44);
+        v.slot = <*mut Unk80433380_48 as GcDecode>::gc_decode(d, at + 0x48);
+        v.card_state = <[i32; 2] as GcDecode>::gc_decode(d, at + 0x4C);
+        v.state_changed = <[i32; 3] as GcDecode>::gc_decode(d, at + 0x54);
+        v
+    }
+}
+impl GcPointee for Unk80433380 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Unk80433380>(t) } }
+impl GcLayout for Unk80433380 {
+    const GC_NAME: &'static str = "Unk80433380";
+    const GC_SIZE: u32 = 0x60;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("snap", 0x0, 4, "struct Unk80433380_0 *"),
+        GcField::new("filename", 0x4, 64, "char[64]"),
+        GcField::new("icon_data", 0x44, 4, "LbMcSnapMemSnapIconData *"),
+        GcField::new("slot", 0x48, 4, "struct Unk80433380_48 *"),
+        GcField::new("card_state", 0x4C, 8, "int[2]"),
+        GcField::new("state_changed", 0x54, 12, "int[3]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<Unk80433380>() == 112);
+
+/// C `Unk803BACC8` (rust/melee_types/gen/all_types.c:843); GameCube size 0x2C, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct Unk803BACC8 {
+    pub icon: [u8; 20],
+    pub entries: [LbCardEntry; 2],
+}
+impl Unk803BACC8 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for Unk803BACC8 {
+    const GC_BYTES: u32 = 0x2C;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.icon = <[u8; 20] as GcDecode>::gc_decode(d, at + 0x0);
+        v.entries = <[LbCardEntry; 2] as GcDecode>::gc_decode(d, at + 0x14);
+        v
+    }
+}
+impl GcPointee for Unk803BACC8 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Unk803BACC8>(t) } }
+impl GcLayout for Unk803BACC8 {
+    const GC_NAME: &'static str = "Unk803BACC8";
+    const GC_SIZE: u32 = 0x2C;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("icon", 0x0, 20, "u8[20]"),
+        GcField::new("entries", 0x14, 24, "LbCardEntry[2]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<Unk803BACC8>() == 56);
+
+/// C `lb_Collider` (rust/melee_types/gen/all_types.c:848); GameCube size 0x28, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct lb_Collider {
+    pub pad_00: [i8; 12],
+    pub radius: f32,
+    pub pad_10: [i8; 8],
+    pub position: Vec,
+    pub pad_24: [i8; 4],
+}
+impl lb_Collider { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for lb_Collider {
+    const GC_BYTES: u32 = 0x28;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.pad_00 = <[i8; 12] as GcDecode>::gc_decode(d, at + 0x0);
+        v.radius = <f32 as GcDecode>::gc_decode(d, at + 0xC);
+        v.pad_10 = <[i8; 8] as GcDecode>::gc_decode(d, at + 0x10);
+        v.position = <Vec as GcDecode>::gc_decode(d, at + 0x18);
+        v.pad_24 = <[i8; 4] as GcDecode>::gc_decode(d, at + 0x24);
+        v
+    }
+}
+impl GcPointee for lb_Collider { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<lb_Collider>(t) } }
+impl GcLayout for lb_Collider {
+    const GC_NAME: &'static str = "lb_Collider";
+    const GC_SIZE: u32 = 0x28;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("pad_00", 0x0, 12, "char[12]"),
+        GcField::new("radius", 0xC, 4, "f32"),
+        GcField::new("pad_10", 0x10, 8, "char[8]"),
+        GcField::new("position", 0x18, 12, "Vec3"),
+        GcField::new("pad_24", 0x24, 4, "char[4]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<lb_Collider>() == 40);
 
 /// Every generated GameCube record layout, for the DAT loader, serialisers and the m-ex map.
 pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[
@@ -92843,6 +93137,7 @@ pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[
     (<itSeakNeedleThrownAttributes as GcLayout>::GC_NAME, <itSeakNeedleThrownAttributes as GcLayout>::GC_SIZE, <itSeakNeedleThrownAttributes as GcLayout>::GC_ALIGN, <itSeakNeedleThrownAttributes as GcLayout>::GC_FIELDS),
     (<FigaTrack as GcLayout>::GC_NAME, <FigaTrack as GcLayout>::GC_SIZE, <FigaTrack as GcLayout>::GC_ALIGN, <FigaTrack as GcLayout>::GC_FIELDS),
     (<FigaTree as GcLayout>::GC_NAME, <FigaTree as GcLayout>::GC_SIZE, <FigaTree as GcLayout>::GC_ALIGN, <FigaTree as GcLayout>::GC_FIELDS),
+    (<LbCardEntry as GcLayout>::GC_NAME, <LbCardEntry as GcLayout>::GC_SIZE, <LbCardEntry as GcLayout>::GC_ALIGN, <LbCardEntry as GcLayout>::GC_FIELDS),
     (<CharScaleEntry as GcLayout>::GC_NAME, <CharScaleEntry as GcLayout>::GC_SIZE, <CharScaleEntry as GcLayout>::GC_ALIGN, <CharScaleEntry as GcLayout>::GC_FIELDS),
     (<ResultsRenderFuncs as GcLayout>::GC_NAME, <ResultsRenderFuncs as GcLayout>::GC_SIZE, <ResultsRenderFuncs as GcLayout>::GC_ALIGN, <ResultsRenderFuncs as GcLayout>::GC_FIELDS),
     (<ResultsPlayerConfig as GcLayout>::GC_NAME, <ResultsPlayerConfig as GcLayout>::GC_SIZE, <ResultsPlayerConfig as GcLayout>::GC_ALIGN, <ResultsPlayerConfig as GcLayout>::GC_FIELDS),
@@ -92859,6 +93154,12 @@ pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[
     (<BracketSrcEntry as GcLayout>::GC_NAME, <BracketSrcEntry as GcLayout>::GC_SIZE, <BracketSrcEntry as GcLayout>::GC_ALIGN, <BracketSrcEntry as GcLayout>::GC_FIELDS),
     (<lbl_803D9DAC_t as GcLayout>::GC_NAME, <lbl_803D9DAC_t as GcLayout>::GC_SIZE, <lbl_803D9DAC_t as GcLayout>::GC_ALIGN, <lbl_803D9DAC_t as GcLayout>::GC_FIELDS),
     (<lbl_803D9DD0_t as GcLayout>::GC_NAME, <lbl_803D9DD0_t as GcLayout>::GC_SIZE, <lbl_803D9DD0_t as GcLayout>::GC_ALIGN, <lbl_803D9DD0_t as GcLayout>::GC_FIELDS),
+    (<Unk80433380_48 as GcLayout>::GC_NAME, <Unk80433380_48 as GcLayout>::GC_SIZE, <Unk80433380_48 as GcLayout>::GC_ALIGN, <Unk80433380_48 as GcLayout>::GC_FIELDS),
+    (<Unk80433380_0 as GcLayout>::GC_NAME, <Unk80433380_0 as GcLayout>::GC_SIZE, <Unk80433380_0 as GcLayout>::GC_ALIGN, <Unk80433380_0 as GcLayout>::GC_FIELDS),
+    (<LbMcSnapMemSnapIconData as GcLayout>::GC_NAME, <LbMcSnapMemSnapIconData as GcLayout>::GC_SIZE, <LbMcSnapMemSnapIconData as GcLayout>::GC_ALIGN, <LbMcSnapMemSnapIconData as GcLayout>::GC_FIELDS),
+    (<Unk80433380 as GcLayout>::GC_NAME, <Unk80433380 as GcLayout>::GC_SIZE, <Unk80433380 as GcLayout>::GC_ALIGN, <Unk80433380 as GcLayout>::GC_FIELDS),
+    (<Unk803BACC8 as GcLayout>::GC_NAME, <Unk803BACC8 as GcLayout>::GC_SIZE, <Unk803BACC8 as GcLayout>::GC_ALIGN, <Unk803BACC8 as GcLayout>::GC_FIELDS),
+    (<lb_Collider as GcLayout>::GC_NAME, <lb_Collider as GcLayout>::GC_SIZE, <lb_Collider as GcLayout>::GC_ALIGN, <lb_Collider as GcLayout>::GC_FIELDS),
 ];
 
 /// Read `w` bits of a GameCube big-endian bitfield byte run, `shift` bits up from its LSB.

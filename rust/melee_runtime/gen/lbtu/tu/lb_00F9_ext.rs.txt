@@ -1,0 +1,170 @@
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/lbtu/gen_tu.py; the callees of the C TU)
+pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code, unreachable_code)]
+    use super::*;
+    use core::ffi::c_void;
+    pub mod hook {
+        use super::*;
+        pub static mut EulerToQuat: Option<fn(*mut Vec, *mut Quaternion) -> i32> = None;
+        pub static mut GXBegin: Option<fn(u32, u32, u16)> = None;
+        pub static mut GXColor4u8: Option<fn(u8, u8, u8, u8)> = None;
+        pub static mut GXLoadPosMtxImm: Option<fn(*mut [f32; 4], u32)> = None;
+        pub static mut GXPosition3f32: Option<fn(f32, f32, f32)> = None;
+        pub static mut GXSetLineWidth: Option<fn(u8, u32)> = None;
+        pub static mut HSD_CObjGetCurrent: Option<fn() -> *mut HSD_CObj> = None;
+        pub static mut HSD_CObjGetViewingMtx: Option<fn(*mut HSD_CObj, *mut [f32; 4])> = None;
+        pub static mut HSD_JObjClearFlagsAll: Option<fn(*mut HSD_JObj, u32)> = None;
+        pub static mut HSD_JObjGetDObj: Option<fn(*mut HSD_JObj) -> *mut HSD_DObj> = None;
+        pub static mut HSD_JObjSetMtxDirtySub: Option<fn(*mut HSD_JObj)> = None;
+        pub static mut HSD_JObjSetupMatrixSub: Option<fn(*mut HSD_JObj)> = None;
+        pub static mut HSD_MemAlloc: Option<fn(i32) -> *mut c_void> = None;
+        pub static mut HSD_QuatLib_8037EB28: Option<fn(*mut [f32; 4], *mut Vec) -> i32> = None;
+        pub static mut HSD_QuatLib_8037EC4C: Option<fn(*mut Quaternion, *mut Quaternion, *mut Quaternion) -> i32> = None;
+        pub static mut HSD_QuatLib_8037ECE0: Option<fn(*mut Vec, *mut Quaternion, f32) -> i32> = None;
+        pub static mut HSD_StateInitDirect: Option<fn(i32, u32)> = None;
+        pub static mut PSMTXConcat: Option<fn(*mut [f32; 4], *mut [f32; 4], *mut [f32; 4])> = None;
+        pub static mut PSMTXCopy: Option<fn(*mut [f32; 4], *mut [f32; 4])> = None;
+        pub static mut PSMTXIdentity: Option<fn(*mut [f32; 4])> = None;
+        pub static mut PSMTXMultVec: Option<fn(*mut [f32; 4], *mut Vec, *mut Vec)> = None;
+        pub static mut PSMTXQuat: Option<fn(*mut [f32; 4], *mut Quaternion)> = None;
+        pub static mut PSMTXScale: Option<fn(*mut [f32; 4], f32, f32, f32)> = None;
+        pub static mut PSMTXTrans: Option<fn(*mut [f32; 4], f32, f32, f32)> = None;
+        pub static mut PSMTXTranspose: Option<fn(*mut [f32; 4], *mut [f32; 4])> = None;
+        pub static mut PSVECCrossProduct: Option<fn(*mut Vec, *mut Vec, *mut Vec)> = None;
+        pub static mut __frsqrte: Option<fn(f64) -> f64> = None;
+        pub static mut atan2f: Option<fn(f32, f32) -> f32> = None;
+        pub static mut cosf: Option<fn(f32) -> f32> = None;
+        pub static mut lbColl_80005C44: Option<fn(*const Vec, *const Vec, *const Vec, *mut Vec, f32, f32) -> i32> = None;
+        pub static mut lbVector_Angle: Option<fn(*mut Vec, *mut Vec) -> f32> = None;
+        pub static mut lbVector_CreateEulerMatrix: Option<fn(*mut [f32; 4], *mut Quaternion)> = None;
+        pub static mut lbVector_Normalize: Option<fn(*mut Vec) -> f32> = None;
+        pub static mut lbVector_RotateAboutUnitAxis: Option<fn(*mut Vec, *mut Vec, f32)> = None;
+        pub static mut lb_80011B74: Option<fn(*mut HSD_DObj, u32)> = None;
+        pub static mut lb_80011C18: Option<fn(*mut HSD_JObj, u32)> = None;
+        pub static mut mpCheckFloor: Option<fn(f32, f32, f32, f32, f32, *mut Vec, *mut i32, *mut u32, *mut Vec, i32, i32, i32, Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> i32>, *mut HSD_GObj) -> i32> = None;
+        pub static mut sinf: Option<fn(f32) -> f32> = None;
+    }
+    pub fn EulerToQuat(a0: *mut Vec, a1: *mut Quaternion) -> i32 {
+        match unsafe { hook::EulerToQuat } { Some(f) => f(a0, a1), None => { panic!("TODO: EulerToQuat is not ported") } }
+    }
+    pub fn GXBegin(a0: u32, a1: u32, a2: u16) {
+        match unsafe { hook::GXBegin } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: GXBegin is not ported") } }
+    }
+    pub fn GXColor4u8(a0: u8, a1: u8, a2: u8, a3: u8) {
+        match unsafe { hook::GXColor4u8 } { Some(f) => f(a0, a1, a2, a3), None => { panic!("TODO: GXColor4u8 is not ported") } }
+    }
+    pub fn GXLoadPosMtxImm(a0: *mut [f32; 4], a1: u32) {
+        match unsafe { hook::GXLoadPosMtxImm } { Some(f) => f(a0, a1), None => { panic!("TODO: GXLoadPosMtxImm is not ported") } }
+    }
+    pub fn GXPosition3f32(a0: f32, a1: f32, a2: f32) {
+        match unsafe { hook::GXPosition3f32 } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: GXPosition3f32 is not ported") } }
+    }
+    pub fn GXSetLineWidth(a0: u8, a1: u32) {
+        match unsafe { hook::GXSetLineWidth } { Some(f) => f(a0, a1), None => { panic!("TODO: GXSetLineWidth is not ported") } }
+    }
+    pub fn HSD_CObjGetCurrent() -> *mut HSD_CObj {
+        match unsafe { hook::HSD_CObjGetCurrent } { Some(f) => f(), None => { panic!("TODO: HSD_CObjGetCurrent is not ported") } }
+    }
+    pub fn HSD_CObjGetViewingMtx(a0: *mut HSD_CObj, a1: *mut [f32; 4]) {
+        match unsafe { hook::HSD_CObjGetViewingMtx } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_CObjGetViewingMtx is not ported") } }
+    }
+    pub fn HSD_JObjClearFlagsAll(a0: *mut HSD_JObj, a1: u32) {
+        match unsafe { hook::HSD_JObjClearFlagsAll } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_JObjClearFlagsAll is not ported") } }
+    }
+    pub fn HSD_JObjGetDObj(a0: *mut HSD_JObj) -> *mut HSD_DObj {
+        match unsafe { hook::HSD_JObjGetDObj } { Some(f) => f(a0), None => { panic!("TODO: HSD_JObjGetDObj is not ported") } }
+    }
+    pub fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) {
+        match unsafe { hook::HSD_JObjSetMtxDirtySub } { Some(f) => f(a0), None => { panic!("TODO: HSD_JObjSetMtxDirtySub is not ported") } }
+    }
+    pub fn HSD_JObjSetupMatrixSub(a0: *mut HSD_JObj) {
+        match unsafe { hook::HSD_JObjSetupMatrixSub } { Some(f) => f(a0), None => { panic!("TODO: HSD_JObjSetupMatrixSub is not ported") } }
+    }
+    pub fn HSD_MemAlloc(a0: i32) -> *mut c_void {
+        match unsafe { hook::HSD_MemAlloc } { Some(f) => f(a0), None => { panic!("TODO: HSD_MemAlloc is not ported") } }
+    }
+    pub fn HSD_QuatLib_8037EB28(a0: *mut [f32; 4], a1: *mut Vec) -> i32 {
+        match unsafe { hook::HSD_QuatLib_8037EB28 } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_QuatLib_8037EB28 is not ported") } }
+    }
+    pub fn HSD_QuatLib_8037EC4C(a0: *mut Quaternion, a1: *mut Quaternion, a2: *mut Quaternion) -> i32 {
+        match unsafe { hook::HSD_QuatLib_8037EC4C } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: HSD_QuatLib_8037EC4C is not ported") } }
+    }
+    pub fn HSD_QuatLib_8037ECE0(a0: *mut Vec, a1: *mut Quaternion, a2: f32) -> i32 {
+        match unsafe { hook::HSD_QuatLib_8037ECE0 } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: HSD_QuatLib_8037ECE0 is not ported") } }
+    }
+    pub fn HSD_StateInitDirect(a0: i32, a1: u32) {
+        match unsafe { hook::HSD_StateInitDirect } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_StateInitDirect is not ported") } }
+    }
+    pub fn PSMTXConcat(a0: *mut [f32; 4], a1: *mut [f32; 4], a2: *mut [f32; 4]) {
+        match unsafe { hook::PSMTXConcat } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: PSMTXConcat is not ported") } }
+    }
+    pub fn PSMTXCopy(a0: *mut [f32; 4], a1: *mut [f32; 4]) {
+        match unsafe { hook::PSMTXCopy } { Some(f) => f(a0, a1), None => { panic!("TODO: PSMTXCopy is not ported") } }
+    }
+    pub fn PSMTXIdentity(a0: *mut [f32; 4]) {
+        match unsafe { hook::PSMTXIdentity } { Some(f) => f(a0), None => { panic!("TODO: PSMTXIdentity is not ported") } }
+    }
+    pub fn PSMTXMultVec(a0: *mut [f32; 4], a1: *mut Vec, a2: *mut Vec) {
+        match unsafe { hook::PSMTXMultVec } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: PSMTXMultVec is not ported") } }
+    }
+    pub fn PSMTXQuat(a0: *mut [f32; 4], a1: *mut Quaternion) {
+        match unsafe { hook::PSMTXQuat } { Some(f) => f(a0, a1), None => { panic!("TODO: PSMTXQuat is not ported") } }
+    }
+    pub fn PSMTXScale(a0: *mut [f32; 4], a1: f32, a2: f32, a3: f32) {
+        match unsafe { hook::PSMTXScale } { Some(f) => f(a0, a1, a2, a3), None => { panic!("TODO: PSMTXScale is not ported") } }
+    }
+    pub fn PSMTXTrans(a0: *mut [f32; 4], a1: f32, a2: f32, a3: f32) {
+        match unsafe { hook::PSMTXTrans } { Some(f) => f(a0, a1, a2, a3), None => { panic!("TODO: PSMTXTrans is not ported") } }
+    }
+    pub fn PSMTXTranspose(a0: *mut [f32; 4], a1: *mut [f32; 4]) {
+        match unsafe { hook::PSMTXTranspose } { Some(f) => f(a0, a1), None => { panic!("TODO: PSMTXTranspose is not ported") } }
+    }
+    pub fn PSVECCrossProduct(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) {
+        match unsafe { hook::PSVECCrossProduct } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: PSVECCrossProduct is not ported") } }
+    }
+    pub fn __frsqrte(a0: f64) -> f64 {
+        match unsafe { hook::__frsqrte } { Some(f) => f(a0), None => { panic!("TODO: __frsqrte is not ported") } }
+    }
+    pub fn atan2f(a0: f32, a1: f32) -> f32 {
+        match unsafe { hook::atan2f } { Some(f) => f(a0, a1), None => { panic!("TODO: atan2f is not ported") } }
+    }
+    pub fn cosf(a0: f32) -> f32 {
+        match unsafe { hook::cosf } { Some(f) => f(a0), None => { panic!("TODO: cosf is not ported") } }
+    }
+    pub fn lbColl_80005C44(a0: *const Vec, a1: *const Vec, a2: *const Vec, a3: *mut Vec, a4: f32, a5: f32) -> i32 {
+        match unsafe { hook::lbColl_80005C44 } { Some(f) => f(a0, a1, a2, a3, a4, a5), None => { panic!("TODO: lbColl_80005C44 is not ported") } }
+    }
+    pub fn lbVector_Angle(a0: *mut Vec, a1: *mut Vec) -> f32 {
+        match unsafe { hook::lbVector_Angle } { Some(f) => f(a0, a1), None => { panic!("TODO: lbVector_Angle is not ported") } }
+    }
+    pub fn lbVector_CreateEulerMatrix(a0: *mut [f32; 4], a1: *mut Quaternion) {
+        match unsafe { hook::lbVector_CreateEulerMatrix } { Some(f) => f(a0, a1), None => { panic!("TODO: lbVector_CreateEulerMatrix is not ported") } }
+    }
+    pub fn lbVector_Normalize(a0: *mut Vec) -> f32 {
+        match unsafe { hook::lbVector_Normalize } { Some(f) => f(a0), None => { panic!("TODO: lbVector_Normalize is not ported") } }
+    }
+    pub fn lbVector_RotateAboutUnitAxis(a0: *mut Vec, a1: *mut Vec, a2: f32) {
+        match unsafe { hook::lbVector_RotateAboutUnitAxis } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: lbVector_RotateAboutUnitAxis is not ported") } }
+    }
+    pub fn lb_80011B74(a0: *mut HSD_DObj, a1: u32) {
+        match unsafe { hook::lb_80011B74 } { Some(f) => f(a0, a1), None => { panic!("TODO: lb_80011B74 is not ported") } }
+    }
+    pub fn lb_80011C18(a0: *mut HSD_JObj, a1: u32) {
+        match unsafe { hook::lb_80011C18 } { Some(f) => f(a0, a1), None => { panic!("TODO: lb_80011C18 is not ported") } }
+    }
+    pub fn mpCheckFloor(a0: f32, a1: f32, a2: f32, a3: f32, a4: f32, a5: *mut Vec, a6: *mut i32, a7: *mut u32, a8: *mut Vec, a9: i32, a10: i32, a11: i32, a12: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> i32>, a13: *mut HSD_GObj) -> i32 {
+        match unsafe { hook::mpCheckFloor } { Some(f) => f(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13), None => { panic!("TODO: mpCheckFloor is not ported") } }
+    }
+    pub fn sinf(a0: f32) -> f32 {
+        match unsafe { hook::sinf } { Some(f) => f(a0), None => { panic!("TODO: sinf is not ported") } }
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        pub unsafe extern "C" fn atan2f(a0: f32, a1: f32) -> f32 { super::atan2f(a0, a1) }
+        pub unsafe extern "C" fn lbVector_Angle(a0: *mut Vec, a1: *mut Vec) -> f32 { super::lbVector_Angle(a0, a1) }
+    }
+    // Data defined in other TUs (the tests set them).
+}
+// END GENERATED EXT

@@ -800,6 +800,55 @@
 #include <melee/vi/vi1201v2.h>
 #include <melee/vi/vi1202.h>
 #include <melee/lb/lbanim.h>
+#include <melee/lb/lbcardnew.h>
 #include <melee/gm/gmresultplayer.static.h>
 #include <melee/gm/gmfrontend_items.h>
 #include <melee/gm/gmtoulib.static.h>
+/* Verbatim src/melee/lb/lbsnap.c:24. */
+struct Unk80433380_48 {
+    int card_result;
+    int num;
+    int free_blocks;
+    int free_files;
+    lbCardNew_SnapshotEntry entries[0x7F];
+};
+/* Verbatim src/melee/lb/lbsnap.c:33. */
+struct Unk80433380_0 {
+    s32 x0;
+    u16 width;
+    u16 height;
+    u8 x8;
+    s32 xC;
+    u16 stkind;
+    struct it_8026C47C_arg0_t x14;
+    s32 x34;
+    char x38[4];
+};
+/* Verbatim src/melee/lb/lbsnap.c:45. */
+typedef union LbMcSnapMemSnapIconData {
+    u8* ptr;
+    int offset;
+    int size;
+} LbMcSnapMemSnapIconData;
+/* Verbatim src/melee/lb/lbsnap.c:51. */
+struct Unk80433380 {
+    /* 0x00 */ struct Unk80433380_0* snap;
+    /* 0x04 */ char filename[64];
+    /* 0x44 */ LbMcSnapMemSnapIconData* icon_data;
+    /* 0x48 */ struct Unk80433380_48* slot;
+    /* 0x4C */ int card_state[2];
+    /* 0x54 */ int state_changed[3];
+};
+/* Verbatim src/melee/lb/lbsnap.c:62. */
+struct Unk803BACC8 {
+    /* 0x00 */ u8 icon[0x14];
+    /* 0x14 */ LbCardEntry entries[2];
+};
+/* Verbatim src/melee/lb/lb_00F9.c:29. */
+struct lb_Collider {
+    /* 0x00 */ char pad_00[0x0C];
+    /* 0x0C */ f32 radius;
+    /* 0x10 */ char pad_10[0x08];
+    /* 0x18 */ Vec3 position;
+    /* 0x24 */ char pad_24[0x04];
+};

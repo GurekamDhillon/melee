@@ -1,0 +1,95 @@
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/lbtu/gen_tu.py; the callees of the C TU)
+pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code, unreachable_code)]
+    use super::*;
+    use core::ffi::c_void;
+    pub mod hook {
+        use super::*;
+        pub static mut EulerToQuat: Option<fn(*mut Vec, *mut Quaternion) -> i32> = None;
+        pub static mut HSD_AObjReqAnim: Option<fn(*mut HSD_AObj, f32)> = None;
+        pub static mut HSD_AObjSetRate: Option<fn(*mut HSD_AObj, f32)> = None;
+        pub static mut HSD_JObjAddAnimAll: Option<fn(*mut HSD_JObj, *mut HSD_AnimJoint, *mut HSD_MatAnimJoint, *mut HSD_ShapeAnimJoint)> = None;
+        pub static mut HSD_JObjClearFlags: Option<fn(*mut HSD_JObj, u32)> = None;
+        pub static mut HSD_JObjDeleteRObj: Option<fn(*mut HSD_JObj, *mut HSD_RObj)> = None;
+        pub static mut HSD_JObjGetFlags: Option<fn(*mut HSD_JObj) -> u32> = None;
+        pub static mut HSD_JObjPrependRObj: Option<fn(*mut HSD_JObj, *mut HSD_RObj)> = None;
+        pub static mut HSD_JObjSetFlags: Option<fn(*mut HSD_JObj, u32)> = None;
+        pub static mut HSD_JObjSetMtxDirtySub: Option<fn(*mut HSD_JObj)> = None;
+        pub static mut HSD_JObjSetupMatrixSub: Option<fn(*mut HSD_JObj)> = None;
+        pub static mut HSD_JObjWalkTree: Option<fn(*mut HSD_JObj, Option<unsafe extern "C" fn(*mut HSD_JObj, *mut *mut f32, i32)>, *mut *mut f32)> = None;
+        pub static mut HSD_LObjGetFlags: Option<fn(*mut HSD_LObj) -> u32> = None;
+        pub static mut HSD_QuatLib_8037EF28: Option<fn(*mut Quaternion, *mut Quaternion, *mut Quaternion, f32) -> i32> = None;
+        pub static mut HSD_RObjAlloc: Option<fn() -> *mut HSD_RObj> = None;
+        pub static mut HSD_RObjGetByType: Option<fn(*mut HSD_RObj, u32, u32) -> *mut HSD_RObj> = None;
+        pub static mut HSD_RObjRemove: Option<fn(*mut HSD_RObj)> = None;
+        pub static mut HSD_RObjSetConstraintObj: Option<fn(*mut HSD_RObj, *mut c_void)> = None;
+        pub static mut HSD_RObjSetFlags: Option<fn(*mut HSD_RObj, u32)> = None;
+        pub static mut PSMTXMultVec: Option<fn(*mut [f32; 4], *mut Vec, *mut Vec)> = None;
+    }
+    pub fn EulerToQuat(a0: *mut Vec, a1: *mut Quaternion) -> i32 {
+        match unsafe { hook::EulerToQuat } { Some(f) => f(a0, a1), None => { panic!("TODO: EulerToQuat is not ported") } }
+    }
+    pub fn HSD_AObjReqAnim(a0: *mut HSD_AObj, a1: f32) {
+        match unsafe { hook::HSD_AObjReqAnim } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_AObjReqAnim is not ported") } }
+    }
+    pub fn HSD_AObjSetRate(a0: *mut HSD_AObj, a1: f32) {
+        match unsafe { hook::HSD_AObjSetRate } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_AObjSetRate is not ported") } }
+    }
+    pub fn HSD_JObjAddAnimAll(a0: *mut HSD_JObj, a1: *mut HSD_AnimJoint, a2: *mut HSD_MatAnimJoint, a3: *mut HSD_ShapeAnimJoint) {
+        match unsafe { hook::HSD_JObjAddAnimAll } { Some(f) => f(a0, a1, a2, a3), None => { panic!("TODO: HSD_JObjAddAnimAll is not ported") } }
+    }
+    pub fn HSD_JObjClearFlags(a0: *mut HSD_JObj, a1: u32) {
+        match unsafe { hook::HSD_JObjClearFlags } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_JObjClearFlags is not ported") } }
+    }
+    pub fn HSD_JObjDeleteRObj(a0: *mut HSD_JObj, a1: *mut HSD_RObj) {
+        match unsafe { hook::HSD_JObjDeleteRObj } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_JObjDeleteRObj is not ported") } }
+    }
+    pub fn HSD_JObjGetFlags(a0: *mut HSD_JObj) -> u32 {
+        match unsafe { hook::HSD_JObjGetFlags } { Some(f) => f(a0), None => { panic!("TODO: HSD_JObjGetFlags is not ported") } }
+    }
+    pub fn HSD_JObjPrependRObj(a0: *mut HSD_JObj, a1: *mut HSD_RObj) {
+        match unsafe { hook::HSD_JObjPrependRObj } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_JObjPrependRObj is not ported") } }
+    }
+    pub fn HSD_JObjSetFlags(a0: *mut HSD_JObj, a1: u32) {
+        match unsafe { hook::HSD_JObjSetFlags } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_JObjSetFlags is not ported") } }
+    }
+    pub fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) {
+        match unsafe { hook::HSD_JObjSetMtxDirtySub } { Some(f) => f(a0), None => { panic!("TODO: HSD_JObjSetMtxDirtySub is not ported") } }
+    }
+    pub fn HSD_JObjSetupMatrixSub(a0: *mut HSD_JObj) {
+        match unsafe { hook::HSD_JObjSetupMatrixSub } { Some(f) => f(a0), None => { panic!("TODO: HSD_JObjSetupMatrixSub is not ported") } }
+    }
+    pub fn HSD_JObjWalkTree(a0: *mut HSD_JObj, a1: Option<unsafe extern "C" fn(*mut HSD_JObj, *mut *mut f32, i32)>, a2: *mut *mut f32) {
+        match unsafe { hook::HSD_JObjWalkTree } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: HSD_JObjWalkTree is not ported") } }
+    }
+    pub fn HSD_LObjGetFlags(a0: *mut HSD_LObj) -> u32 {
+        match unsafe { hook::HSD_LObjGetFlags } { Some(f) => f(a0), None => { panic!("TODO: HSD_LObjGetFlags is not ported") } }
+    }
+    pub fn HSD_QuatLib_8037EF28(a0: *mut Quaternion, a1: *mut Quaternion, a2: *mut Quaternion, a3: f32) -> i32 {
+        match unsafe { hook::HSD_QuatLib_8037EF28 } { Some(f) => f(a0, a1, a2, a3), None => { panic!("TODO: HSD_QuatLib_8037EF28 is not ported") } }
+    }
+    pub fn HSD_RObjAlloc() -> *mut HSD_RObj {
+        match unsafe { hook::HSD_RObjAlloc } { Some(f) => f(), None => { panic!("TODO: HSD_RObjAlloc is not ported") } }
+    }
+    pub fn HSD_RObjGetByType(a0: *mut HSD_RObj, a1: u32, a2: u32) -> *mut HSD_RObj {
+        match unsafe { hook::HSD_RObjGetByType } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: HSD_RObjGetByType is not ported") } }
+    }
+    pub fn HSD_RObjRemove(a0: *mut HSD_RObj) {
+        match unsafe { hook::HSD_RObjRemove } { Some(f) => f(a0), None => { panic!("TODO: HSD_RObjRemove is not ported") } }
+    }
+    pub fn HSD_RObjSetConstraintObj(a0: *mut HSD_RObj, a1: *mut c_void) {
+        match unsafe { hook::HSD_RObjSetConstraintObj } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_RObjSetConstraintObj is not ported") } }
+    }
+    pub fn HSD_RObjSetFlags(a0: *mut HSD_RObj, a1: u32) {
+        match unsafe { hook::HSD_RObjSetFlags } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_RObjSetFlags is not ported") } }
+    }
+    pub fn PSMTXMultVec(a0: *mut [f32; 4], a1: *mut Vec, a2: *mut Vec) {
+        match unsafe { hook::PSMTXMultVec } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: PSMTXMultVec is not ported") } }
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+    }
+    // Data defined in other TUs (the tests set them).
+}
+// END GENERATED EXT

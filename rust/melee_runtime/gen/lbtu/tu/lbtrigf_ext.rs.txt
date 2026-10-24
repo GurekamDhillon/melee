@@ -1,0 +1,17 @@
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/lbtu/gen_tu.py; the callees of the C TU)
+pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code, unreachable_code)]
+    use super::*;
+    use core::ffi::c_void;
+    pub mod hook {
+        use super::*;
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut MSL_TrigF_80400770: [f32; 1] = unsafe { core::mem::zeroed() };
+    pub static mut MSL_TrigF_80400774: [f32; 1] = unsafe { core::mem::zeroed() };
+}
+// END GENERATED EXT

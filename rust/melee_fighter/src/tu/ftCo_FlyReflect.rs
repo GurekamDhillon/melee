@@ -43,7 +43,7 @@ pub mod ext {
         ft_80081F2C(g: G) -> bool = crate::tu::ft_081b::ft_80081f2c;
         ft_80082084(g: G) -> bool = crate::tu::ft_081b::ft_80082084;
         ftCommon_8007EBAC(fp: &mut Fighter, a: u32, b: u32) = crate::ftcommon2::ftcommon_8007ebac;
-        ftColl_8007B760(g: G, v: i32) = |_, _| todo!("TODO(port) ftColl_8007B760 (ftcoll.c)");
+        ftColl_8007B760(g: G, v: i32) = |g: G, v: i32| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007b760(g as _, v as _); } };
         ftCo_80097630(fp: &mut Fighter, sfx_ids: &[i32; 4], threshold: f32) = crate::tu::ftCo_DownBound::ftCo_80097630;
         ft_80084DB0(g: G) = crate::ft084e::ft_80084db0;
         ftCo_80090184(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_Damage::ftCo_80090184(g as _); } };

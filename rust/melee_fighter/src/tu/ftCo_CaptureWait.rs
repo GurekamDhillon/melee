@@ -34,7 +34,7 @@ pub mod ext {
         };
     }
     ext_fns! {
-        ftColl_8007B0C0(g: G, kind: i32) = |_, _| todo!("TODO(port) ftColl_8007B0C0 (ftcoll.c)");
+        ftColl_8007B0C0(g: G, kind: i32) = |g: G, kind: i32| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007b0c0(g as _, kind as _); } };
         ftParts_GetBoneIndex(f: &Fighter, part: i32) -> i32 = crate::ftdmgfall::ftparts_get_bone_index;
         ftYs_Init_8012BAC0(f: &mut Fighter) -> f32 = |_| todo!("TODO(port) ftYs_Init_8012BAC0 (ftyoshi.c)");
         ftCommon_GetModelScale(f: &Fighter) -> f32 = crate::ftcommon2::get_model_scale;

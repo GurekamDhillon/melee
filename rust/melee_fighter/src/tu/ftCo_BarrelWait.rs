@@ -48,7 +48,7 @@ pub mod ext {
         ftCamera_80076064(fp: *mut Fighter) = |fp: *mut Fighter| unsafe { crate::tu::ftcamera::ftcamera_80076064(&mut *(fp as *mut _)); };
         // rp3-end
         lbColl_80008D30(hit: *mut HitCapsule, a: *mut lbColl_80008D30_arg1) = |hit: *mut HitCapsule, a: *mut lbColl_80008D30_arg1| { unsafe { let _ = melee_runtime::tu::lbcollision::lbColl_80008D30(hit as _, a as _); } };
-        ftColl_800788D4(g: G) = |_| todo!("TODO(port) ftColl_800788D4 (ftcoll.c)");
+        ftColl_800788D4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftcoll::ftcoll_800788d4(g as _); } };
         // rp3 Fighter_UnkTakeDamage_8006CC30
         Fighter_UnkTakeDamage_8006CC30(fp: *mut Fighter, dmg: f32) = |fp: *mut Fighter, dmg: f32| unsafe { crate::tu::fighter::Fighter_UnkTakeDamage_8006CC30(&mut *(fp as *mut _), dmg); };
         // rp3-end

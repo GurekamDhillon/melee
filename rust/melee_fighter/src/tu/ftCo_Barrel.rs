@@ -44,7 +44,7 @@ pub mod ext {
         ftCommon_8007E2FC(g: G) = |g| crate::ftcommon2::ftcommon_8007e2fc(super::fp(g));
         ftCommon_8007E2F4(fp: &mut Fighter, v: i16) = crate::ftcommon2::ftcommon_8007e2f4;
         ftCommon_8007EFC0(fp: &mut Fighter, v: u32) = crate::ftcommon2::ftcommon_8007efc0;
-        ftColl_800787B4(i: I, g: G, v: i32) = |_, _, _| todo!("TODO(port) ftColl_800787B4 (ftcoll.c)");
+        ftColl_800787B4(i: I, g: G, v: i32) = |i: I, g: G, v: i32| { unsafe { let _ = crate::tu::ftcoll::ftcoll_800787b4(i as _, g as _, v as _); } };
         ftLib_80086960(g: G) -> bool = crate::ftlib::ftlib_80086960;
         ftColl_8007B8CC(fp: *mut Fighter, owner: G) = |fp: *mut Fighter, owner: G| { unsafe { let _ = crate::ft0df::ftcoll_8007b8cc(&mut *(fp as *mut _), owner as _); } };
         ftLib_800866DC(g: G, v: &mut Vec3) = crate::ftlib::ftlib_800866dc;
@@ -52,7 +52,7 @@ pub mod ext {
         mpColl_80043680(c: *mut CollData, v: *mut Vec3) = |c: *mut CollData, v: *mut Vec3| unsafe { melee_world::tu::mpcoll::mpColl_80043680(c, v as _); };
         // rp3-end
         lbColl_80008D30(hit: *mut HitCapsule, a: *mut lbColl_80008D30_arg1) = |hit: *mut HitCapsule, a: *mut lbColl_80008D30_arg1| { unsafe { let _ = melee_runtime::tu::lbcollision::lbColl_80008D30(hit as _, a as _); } };
-        ftColl_80079EA8(fp: *mut Fighter, hit: *mut HitCapsule, n: u32) -> f32 = |_, _, _| todo!("TODO(port) ftColl_80079EA8 (ftcoll.c)");
+        ftColl_80079EA8(fp: *mut Fighter, hit: *mut HitCapsule, n: u32) -> f32 = |fp: *mut Fighter, hit: *mut HitCapsule, n: u32| -> f32 { unsafe { crate::tu::ftcoll::ftcoll_80079ea8(&*(fp as *const _), &*(hit as *const _), n as _) } };
         ftCo_8008DCE0(g: G, a: i32, facing: f32) = |g: G, a: i32, facing: f32| { unsafe { let _ = crate::tu::ftCo_Damage::ftCo_8008DCE0(g as _, a as _, facing as _); } };
     }
 }

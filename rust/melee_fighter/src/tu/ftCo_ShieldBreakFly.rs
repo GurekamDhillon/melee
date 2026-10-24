@@ -39,7 +39,7 @@ pub mod ext {
         efAsync_Spawn(g: G, queue_head: *mut core::ffi::c_void, kind: u32, gfx: u32, jobj: *mut HSD_JObj) = |_, _, _, _, _| todo!("TODO(port) efAsync_Spawn (efasync.c)");
         ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |_, _, _, _| todo!("TODO(port) ft_PlaySFX (ft_0877.c)");
         ftCommon_8007EBAC(f: &mut Fighter, a: u32, b: u32) = crate::ftcommon2::ftcommon_8007ebac;
-        ftColl_8007B62C(g: G, n: i32) = |_, _| todo!("TODO(port) ftColl_8007B62C (ftcoll.c)");
+        ftColl_8007B62C(g: G, n: i32) = |g: G, n: i32| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007b62c(g as _, n as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ftCo_80098D90(g: G) = crate::tu::ftCo_ShieldBreakFall::ftCo_80098D90;
         ft_80084EEC(g: G) = crate::ft084e::ft_80084eec;

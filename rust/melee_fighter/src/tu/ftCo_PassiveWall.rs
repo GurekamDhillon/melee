@@ -39,7 +39,7 @@ pub mod ext {
         ftCommon_8007EBAC(fp: &mut Fighter, a: u32, b: u32) = |fp: &mut Fighter, a: u32, b: u32| { unsafe { let _ = crate::ftcommon2::ftcommon_8007ebac(fp as _, a as _, b as _); } };
         ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |_, _, _, _| todo!("TODO(port) ft_PlaySFX (ft_0881.c)");
         ftCo_800BFFD0(fp: &mut Fighter, a: i32, b: bool) -> bool = |fp: &mut Fighter, a: i32, b: bool| -> bool { unsafe { crate::tu::ftcolanim::ftco_800bffd0(fp as _, a as _, b as _) as _ } };
-        ftColl_8007B760(g: G, v: i32) = |_, _| todo!("TODO(port) ftColl_8007B760 (ftcoll.c)");
+        ftColl_8007B760(g: G, v: i32) = |g: G, v: i32| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007b760(g as _, v as _); } };
         ftAnim_SetAnimRate(g: G, r: f32) = |g: G, r: f32| { unsafe { let _ = crate::tu::ftanim::ftAnim_SetAnimRate(g as _, r as _); } };
         powf(x: f32, y: f32) -> f32 = |x: f32, y: f32| -> f32 { unsafe { melee_runtime::lb_00ce::powf(x as _, y as _) as _ } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;

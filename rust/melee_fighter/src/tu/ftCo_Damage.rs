@@ -88,7 +88,7 @@ pub mod ext {
         Replay_UcfVersion(port: i32) -> i32 = |_| todo!("TODO(pc replay) Replay_UcfVersion");
         ftUcf_PadRaw(port: i32, which_y: i32, back: i32) -> i32 = crate::fighter::ftucf_pad_raw;
         Mex_Enabled(name: &str) -> i32 = |_| todo!("TODO(pc mex) Mex_Enabled");
-        ftColl_8007AC68(kb_angle: u32) -> bool = |_| todo!("TODO(port) ftColl_8007AC68 (ftcoll.c)");
+        ftColl_8007AC68(kb_angle: u32) -> bool = |kb_angle: u32| -> bool { unsafe { crate::tu::ftcoll::ftcoll_8007ac68(kb_angle as _) } };
         ftCo_CalcYScaledKnockback(a: f32, scale: f32, b: f32) -> f32 = crate::tu::ftchangeparam::ftco_calc_y_scaled_knockback;
         Fighter_804D6524_x0() -> f32 = || crate::tu::ftchangeparam::ext::d6524().x0;
         ftCo_800BFFD0(fp: &mut Fighter, a: i32, b: i32) -> bool = crate::tu::ftcolanim::ftco_800bffd0;
@@ -106,13 +106,13 @@ pub mod ext {
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftAnim_8006EBA4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
         gm_8016B014() -> bool = || todo!("TODO(port) gm_8016B014 (gmvs.c)");
-        ftColl_8007B6A0(g: G) = |_| todo!("TODO(port) ftColl_8007B6A0 (ftcoll.c)");
+        ftColl_8007B6A0(g: G) = |g: G| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007b6a0(g as _); } };
         ftCommon_8007EFC0(fp: &mut Fighter, v: u32) = crate::ftcommon2::ftcommon_8007efc0;
         Camera_RequestQuake(kind: u32, pos: &Vec3) = |_, _| todo!("TODO(group2 camera) Camera_RequestQuake");
         ftCommon_8007F824(g: G) = crate::ftcommon3::ftcommon_8007f824;
         ftCo_DamageIce_Init(g: G) = crate::tu::ftCo_DamageIce::ftCo_DamageIce_Init;
         ftCo_800DF608(fp: &Fighter) -> bool = crate::ft0df::ftco_800df608;
-        ftColl_8007B7A4(g: G, v: i32) = |_, _| todo!("TODO(port) ftColl_8007B7A4 (ftcoll.c)");
+        ftColl_8007B7A4(g: G, v: i32) = |g: G, v: i32| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007b7a4(g as _, v as _); } };
         ftCo_800C318C(g: G, v: bool) = crate::tu::ftCo_DamageSong::ftCo_800C318C;
         ftCo_800C8D00(g: G) = crate::tu::ft_0c8c::ftco_800c8d00;
         ftCo_800DC284(g: G) = crate::tu::ftco_0dc2::ftco_800dc284;
@@ -158,7 +158,7 @@ pub mod ext {
         ftCo_80097D40(g: G) = crate::tu::ftCo_DownBound::ftCo_80097D40;
         ftCo_Landing_Enter_Basic(g: G) = crate::tu::ftCo_Landing::ftCo_Landing_Enter_Basic;
         ftCommon_8007D7FC(fp: &mut Fighter) = crate::ftcommon3::ftcommon_8007d7fc;
-        ftColl_8007AFF8(g: G) = |_| todo!("TODO(port) ftColl_8007AFF8 (ftcoll.c)");
+        ftColl_8007AFF8(g: G) = |g: G| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007aff8(g as _); } };
         ftCo_800C1D38(g: G) -> bool = crate::tu::ftCo_PassiveWall::ftCo_800C1D38;
         ftCo_800C23A0(g: G) -> bool = crate::tu::ftCo_PassiveCeil::ftCo_800C23A0;
         ftCo_800C17CC(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_FlyReflect::ftCo_800C17CC(g as _) as _ } };

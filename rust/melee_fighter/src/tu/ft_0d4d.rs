@@ -44,7 +44,7 @@ pub mod ext {
     pub static mut H_mpColl_80043680: Option<fn(&mut CollData, &Vec3)> = None;
     pub fn mpColl_80043680(c: &mut CollData, v: &Vec3) { match unsafe { H_mpColl_80043680 } { Some(f) => f(c, v), None => unsafe { melee_world::tu::mpcoll::mpColl_80043680(c as *mut _ as *mut _, v as *const _ as *mut _) } } }
     pub static mut H_ftColl_8007B7A4: Option<fn(*mut HSD_GObj, i32)> = None;
-    pub fn ftColl_8007B7A4(g: *mut HSD_GObj, n: i32) { match unsafe { H_ftColl_8007B7A4 } { Some(f) => f(g, n), None => panic!("TODO(group3 ftcoll) ftColl_8007B7A4") } }
+    pub fn ftColl_8007B7A4(g: *mut HSD_GObj, n: i32) { match unsafe { H_ftColl_8007B7A4 } { Some(f) => f(g, n), None => unsafe { crate::tu::ftcoll::ftcoll_8007b7a4(g as _, n as _) } } }
     pub static mut H_ftCo_SpecialAir_CheckInput: Option<fn(*mut HSD_GObj) -> bool> = None;
     pub fn ftCo_SpecialAir_CheckInput(g: *mut HSD_GObj) -> bool { match unsafe { H_ftCo_SpecialAir_CheckInput } { Some(f) => f(g), None => { return unsafe { crate::tu::ftCo_SpecialAir::ftCo_SpecialAir_CheckInput(g as _) as _ }; } } }
     pub static mut H_ftCo_800D7100: Option<fn(*mut HSD_GObj) -> bool> = None;

@@ -3,7 +3,8 @@
 use melee_fighter::types::*;
 
 pub static mut TR: u32 = 0;
-pub fn t(v: u32) { unsafe { TR = TR.wrapping_mul(31).wrapping_add(v) } }
+pub static mut DBGT: bool = false;
+pub fn t(v: u32) { unsafe { TR = TR.wrapping_mul(31).wrapping_add(v); if DBGT { println!("T {}", v); } } }
 pub fn b(f: f32) -> u32 { f.to_bits() }
 pub static mut SRV: [u32; 16] = [0; 16];
 pub fn sr(i: usize) -> bool { unsafe { (SRV[i & 15] >> (i >> 4)) & 1 != 0 } }
@@ -82,6 +83,19 @@ impl Check {
         let got = format!("{} {} {:08X} {:08X} {:08X}", op, k, ret, hash, unsafe { TR });
         let want = self.lines.next().expect("expected file too short");
         assert_eq!(got, want, "op {op} case {k}");
+        self.n += 1;
+    }
+    /// Four-field line `op k H TR` (drivers that print their own state hash H).
+    pub fn line2(&mut self, op: u32, k: u32, hash: u32) {
+        let got = format!("{} {} {:08X} {:08X}", op, k, hash, unsafe { TR });
+        let want = self.lines.next().expect("expected file too short");
+        assert_eq!(got, want, "op {op} case {k}");
+        self.n += 1;
+    }
+    /// The C case hit an HSD_ASSERTREPORT: the line is `op k ASSERT`.
+    pub fn assert_line(&mut self, op: u32, k: u32) {
+        let want = self.lines.next().expect("expected file too short");
+        assert_eq!(format!("{} {} ASSERT", op, k), want, "op {op} case {k}");
         self.n += 1;
     }
     pub fn done(mut self) -> u32 { assert!(self.lines.next().is_none(), "expected file has extra lines"); self.n }

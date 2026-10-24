@@ -42,15 +42,15 @@ pub mod ext {
     type G = *mut HSD_GObj;
     type F = *mut Fighter;
     pub fn ftCo_8009F834(_g: G, _gfx: i32, _bone: i32, _common: i32, _destroy: i32, _off: *const Vec3, _range: *const Vec3, _unk: f32) { todo!("ftCo_8009F834 (ftCommon/ftCo_09F7.c)") }
-    pub fn ftColl_800768A0(_fp: F, _h: *mut HitCapsule) { todo!("ftColl_800768A0 (ft/ftcoll.c)") }
-    pub fn ftColl_8007ABD0(_h: *mut HitCapsule, _dmg: u32, _g: G) { todo!("ftColl_8007ABD0 (ft/ftcoll.c)") }
-    pub fn ftColl_8007AC9C(_h: *mut HitCapsule, _angle: u32, _g: G) { todo!("ftColl_8007AC9C (ft/ftcoll.c)") }
-    pub fn ftColl_8007AD18(_fp: F, _h: *mut HitCapsule) { todo!("ftColl_8007AD18 (ft/ftcoll.c)") }
-    pub fn ftColl_8007AFC8(_g: G, _i: u32) { todo!("ftColl_8007AFC8 (ft/ftcoll.c)") }
-    pub fn ftColl_8007AFF8(_g: G) { todo!("ftColl_8007AFF8 (ft/ftcoll.c)") }
-    pub fn ftColl_8007B62C(_g: G, _s: u32) { todo!("ftColl_8007B62C (ft/ftcoll.c)") }
-    pub fn ftColl_8007B0C0(_g: G, _s: u32) { todo!("ftColl_8007B0C0 (ft/ftcoll.c)") }
-    pub fn ftColl_8007B128(_g: G, _b: u32, _s: u32) { todo!("ftColl_8007B128 (ft/ftcoll.c)") }
+    pub fn ftColl_800768A0(_fp: F, _h: *mut HitCapsule) { unsafe { let _ = crate::tu::ftcoll::ftcoll_800768a0(_fp as _, _h as _); } }
+    pub fn ftColl_8007ABD0(_h: *mut HitCapsule, _dmg: u32, _g: G) { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007abd0(_h as _, _dmg as _, _g as _); } }
+    pub fn ftColl_8007AC9C(_h: *mut HitCapsule, _angle: u32, _g: G) { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007ac9c(_h as _, _angle as _, _g as _); } }
+    pub fn ftColl_8007AD18(_fp: F, _h: *mut HitCapsule) { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007ad18(&*(_fp as *const _), &mut *(_h as *mut _)); } }
+    pub fn ftColl_8007AFC8(_g: G, _i: u32) { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007afc8(_g as _, _i as _); } }
+    pub fn ftColl_8007AFF8(_g: G) { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007aff8(_g as _); } }
+    pub fn ftColl_8007B62C(_g: G, _s: u32) { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007b62c(_g as _, _s as _); } }
+    pub fn ftColl_8007B0C0(_g: G, _s: u32) { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007b0c0(_g as _, _s as _); } }
+    pub fn ftColl_8007B128(_g: G, _b: u32, _s: u32) { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007b128(_g as _, _b as _, _s as _); } }
     pub fn ftCommon_80080484(_fp: F) { unsafe { let _ = crate::ftcommon2::ftcommon_80080484(&mut *(_fp as *mut _)); } }
     pub fn ftCommon_8007D7FC(_fp: F) { unsafe { let _ = crate::ftcommon3::ftcommon_8007d7fc(&mut *(_fp as *mut _)); } }
     pub fn ftCommon_8007D5D4(_fp: F) { unsafe { let _ = crate::ftcommon2::ftcommon_8007d5d4(&mut *(_fp as *mut _)); } }
@@ -79,7 +79,7 @@ pub mod ext {
     pub fn ftAnim_800704F0(g: G, idx: i32, frame: f32) { unsafe { crate::tu::ftanim::ftAnim_800704F0(g, idx, frame) } }
     pub fn ftAnim_ApplyPartAnim(g: G, a: i32, b: i32, c: f32) { unsafe { crate::tu::ftanim::ftAnim_ApplyPartAnim(g, a, b, c) } }
     pub fn ftCo_800BFFD0(_fp: F, _a: u32, _b: u32) { unsafe { let _ = crate::tu::ftcolanim::ftco_800bffd0(&mut *(_fp as *mut _), _a as _, _b as _); } }
-    pub fn ftCo_800C0200(_fp: F, _a: u32) { todo!("ftCo_800C0200 (ft/ft_0C88.c)") }
+    pub fn ftCo_800C0200(_fp: F, _a: u32) { unsafe { let _ = crate::tu::ftcolanim::ftco_800c0200(&mut *(_fp as *mut _), _a as _); } }
     pub fn ftCo_8009E318(_g: G, _a: i32, _f: f32) { unsafe { let _ = crate::tu::ftdynamics::ftCo_8009E318(_g as _, _a as _, _f as _); } }
     pub fn Fighter_TakeDamage_8006CC7C(_fp: F, _d: f32) { unsafe { let _ = crate::tu::fighter::Fighter_TakeDamage_8006CC7C(&mut *(_fp as *mut _), _d as _); } }
     pub fn ftCo_800DEE84(_g: G, _color: i32, _frames: f32, _mult: f32) { unsafe { let _ = crate::ft0df::ftco_800dee84(_g as _, _color as _, _frames as _, _mult as _); } }

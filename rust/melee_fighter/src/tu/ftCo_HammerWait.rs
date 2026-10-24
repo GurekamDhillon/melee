@@ -32,7 +32,7 @@ pub mod ext {
         ft_8008A1FC(g: G) -> bool = crate::ft084e::ft_8008a1fc;
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftCommon_8007EBAC(f: &mut Fighter, a: u32, b: u32) = crate::ftcommon2::ftcommon_8007ebac;
-        ftColl_8007AFF8(g: G) = |_| todo!("TODO(port) ftColl_8007AFF8 (ftcoll.c)");
+        ftColl_8007AFF8(g: G) = |g: G| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007aff8(g as _); } };
         ft_800892A0(g: G) = |_| todo!("TODO(port) ft_800892A0 (ft_0892.c)");
         ft_80089824(g: G) = crate::ft0892::ft_80089824;
         it_8027B070(i: I, g: G) = |i: I, g: G| { unsafe { let _ = melee_items::tu::it_279C::it_8027B070(i as _, g as _); } };

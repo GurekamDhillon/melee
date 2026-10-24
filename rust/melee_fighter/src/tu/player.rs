@@ -38,7 +38,7 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn Fighter_Create(a0: *mut plAllocInfo) -> *mut HSD_GObj;
+    fn Fighter_Create(a0: *mut plAllocInfo) -> *mut HSD_GObj => unsafe { crate::tu::fighter::Fighter_Create(&*(a0 as *const _)) as _ };
     fn Fighter_FirstInitialize_80067A84() => unsafe { let _ = crate::tu::fighter::Fighter_FirstInitialize_80067A84(); };
     fn GenoDefine_InitKinds();
     fn HSD_GObjFree(a0: *mut HSD_GObj);

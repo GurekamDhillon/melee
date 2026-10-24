@@ -32,10 +32,10 @@ pub mod ext {
         };
     }
     ext_fns! {
-        ftColl_8007B62C(g: G, v: i32) = |_, _| todo!("TODO(port) ftColl_8007B62C (ftcoll.c)");
+        ftColl_8007B62C(g: G, v: i32) = |g: G, v: i32| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007b62c(g as _, v as _); } };
         Fighter_UpdateModelScale(g: G) = |g: G| { unsafe { let _ = crate::tu::fighter::Fighter_UpdateModelScale(g as _); } };
         HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjSetMtxDirtySub (jobj.c)");
-        ftColl_8007B0C0(g: G, s: i32) = |_, _| todo!("TODO(port) ftColl_8007B0C0 (ftcoll.c)");
+        ftColl_8007B0C0(g: G, s: i32) = |g: G, s: i32| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007b0c0(g as _, s as _); } };
         ftParts_GetBoneIndex(f: &Fighter, part: i32) -> i32 = crate::ftdmgfall::ftparts_get_bone_index;
         ftColl_HurtboxInit(f: &mut Fighter, c: *mut FighterHurtCapsule, h: &ftHurtboxInit) = |_, _, _| todo!("TODO(port) ftColl_HurtboxInit (ftcoll.c)");
         ftCommon_8007D5D4(f: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
@@ -63,7 +63,7 @@ pub mod ext {
         ft_PlaySFX(f: &mut Fighter, id: i32, vol: u8, pan: u8) = crate::ft0877::play_sfx;
         efAsync_Spawn(g: G, q: *mut c_void, kind: u32, gfx: u32, j: *mut HSD_JObj, arg: *const c_void) = |_, _, _, _, _, _| todo!("TODO(port) efAsync_Spawn (efasync.c)");
         ftYs_SpecialN_8012CD88(v: &mut Vec3) = |_| todo!("TODO(port) ftYs_SpecialN_8012CD88 (ftyoshispecialn.c)");
-        ftColl_8007B760(g: G, v: i32) = |_, _| todo!("TODO(port) ftColl_8007B760 (ftcoll.c)");
+        ftColl_8007B760(g: G, v: i32) = |g: G, v: i32| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007b760(g as _, v as _); } };
         ftCo_Fall_Enter_YoshiEgg(g: G) = crate::tu::ftCo_Fall::ftCo_Fall_Enter_YoshiEgg;
         ftAnim_SetAnimRate(g: G, r: f32) = |g, r| unsafe { crate::tu::ftanim::ftAnim_SetAnimRate(g, r) };
         ft_80084F3C(g: G) = crate::ft084e::ft_80084f3c;

@@ -2,12 +2,14 @@
  * tests/tu_common/mod.rs: same xorshift, same fill order. */
 #include <sysdolphin/baselib/gobj.h>
 ftCommonData* p_ftCommonData;
-void __assert(const char* file, u32 line, const char* cond) { (void) file; (void) line; (void) cond; for (;;) {} }
+static int asrt_hit;
+void __assert(const char* file, u32 line, const char* cond) { (void) file; (void) line; (void) cond; asrt_hit = 1; }
 void OSReport(char* f, ...) { (void) f; }
 int printf(const char*, ...);
 
 static u32 TR;
-static void T(u32 v) { TR = TR * 31u + v; }
+static int dbgT;
+static void T(u32 v) { TR = TR * 31u + v; if (dbgT) { printf("T %u", v); printf("%c", 10); } }
 static u32 B(float f) { union { float f; u32 u; } c; c.f = f; return c.u; }
 static u32 H;
 static void HM(u32 v) { H = H * 0x01000193u ^ v; }

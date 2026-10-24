@@ -129,8 +129,8 @@ pub mod ext {
     pub fn ftCo_800C8438(g: G) { unsafe { let _ = crate::tu::ftmetal::ftCo_800C8438(g); } }
     pub fn ftCo_800C89A0(g: G) { unsafe { let _ = crate::tu::ft_0c88::ftco_800c89a0(g); } }
     pub fn ftCo_800C8FC4(g: G) { unsafe { let _ = crate::tu::ft_0c8c::ftco_800c8fc4(g); } }
-    pub fn ftColl_8007AFF8(g: G) { todo!("ftColl_8007AFF8 (ft/ftcoll.c)") }
-    pub fn ftColl_8007B0C0(g: G, s: i32) { todo!("ftColl_8007B0C0 (ft/ftcoll.c)") }
+    pub fn ftColl_8007AFF8(g: G) { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007aff8(g as _); } }
+    pub fn ftColl_8007B0C0(g: G, s: i32) { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007b0c0(g as _, s as _); } }
     pub fn Mex_OnDeathDispatch(kind: i32, g: G) { todo!("Mex_OnDeathDispatch (pc/platform m-ex (ftData_OnDeath))") }
     pub fn ftCo_800A101C(fp: F, cpu_type: i32, level: i32, z: i32) { todo!("ftCo_800A101C (ftCommon/ftCo_0A01.c)") }
     pub fn efAsync_QueueClear(q: *mut *mut core::ffi::c_void) { todo!("efAsync_QueueClear (ef/efasync.c)") }
@@ -172,7 +172,7 @@ pub mod ext {
     pub fn ftCo_8009CF84(fp: F) { unsafe { let _ = crate::tu::ftdynamics::ftCo_8009CF84(&mut *fp); } }
     pub fn ftCo_8009F578(fp: F) { todo!("ftCo_8009F578 (ftCommon/ftCo_09F4.c)") }
     pub fn Mex_OnLoadDispatch(kind: i32, g: G) { todo!("Mex_OnLoadDispatch (pc/platform m-ex (ftData_OnLoad))") }
-    pub fn ftColl_8007B320(g: G) { todo!("ftColl_8007B320 (ft/ftcoll.c)") }
+    pub fn ftColl_8007B320(g: G) { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007b320(g as _); } }
     pub fn Camera_80029020() -> *mut core::ffi::c_void { todo!("Camera_80029020 (cm/camera.c)") }
     pub fn lbShadow_8000ED54(s: *mut core::ffi::c_void, j: J) { unsafe { let _ = melee_runtime::tu::lbshadow::lbShadow_8000ED54(s as _, j as _); } }
     pub fn HSD_GObj_SetupProc(g: G, f: fn(G), prio: u8) { todo!("HSD_GObj_SetupProc (baselib/gobjproc.c)") }
@@ -192,10 +192,10 @@ pub mod ext {
     pub fn Script_GameEvent(what: i32, a: i32, b: i32, c: i32, d: i32) { todo!("Script_GameEvent (pc/platform gw_script.c)") }
     pub fn Geno_OnActionChange(g: G) { todo!("Geno_OnActionChange (pc/geno)") }
     pub fn ft_8007C114(g: G) { unsafe { let _ = crate::tu::ft_07c1::ft_8007c114(g); } }
-    pub fn ftColl_8007B62C(g: G, s: i32) { todo!("ftColl_8007B62C (ft/ftcoll.c)") }
-    pub fn ftColl_8007B4E0(g: G) { todo!("ftColl_8007B4E0 (ft/ftcoll.c)") }
-    pub fn ftColl_8007B6EC(g: G) { todo!("ftColl_8007B6EC (ft/ftcoll.c)") }
-    pub fn ftColl_8007B760(g: G, v: i32) { todo!("ftColl_8007B760 (ft/ftcoll.c)") }
+    pub fn ftColl_8007B62C(g: G, s: i32) { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007b62c(g as _, s as _); } }
+    pub fn ftColl_8007B4E0(g: G) { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007b4e0(g as _); } }
+    pub fn ftColl_8007B6EC(g: G) { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007b6ec(g as _); } }
+    pub fn ftColl_8007B760(g: G, v: i32) { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007b760(g as _, v as _); } }
     pub fn ftColl_8007B8CC(fp: F, g: G) { unsafe { let _ = crate::ft0df::ftcoll_8007b8cc(&mut *fp, g); } }
     pub fn ftGetParasolStatus(g: G) -> i32 { unsafe { crate::ftcommon3::ft_get_parasol_status(g) } }
     pub fn ftCommon_8007E83C(g: G, a: i32, b: f32) { unsafe { let _ = crate::ftcommon3::ftcommon_8007e83c(g, a, b); } }
@@ -262,7 +262,7 @@ pub mod ext {
     pub fn Mex_OnFrameDispatch(kind: i32, g: G) { todo!("Mex_OnFrameDispatch (pc/platform m-ex (ftData_UnkMotionStates3))") }
     pub fn Geno_OnFrame(g: G) { todo!("Geno_OnFrame (pc/geno)") }
     pub fn ftCo_800D71D8(g: G) { unsafe { let _ = crate::tu::ftCo_Attack100::ftCo_800D71D8(g); } }
-    pub fn ftColl_800764DC(g: G) { todo!("ftColl_800764DC (ft/ftcoll.c)") }
+    pub fn ftColl_800764DC(g: G) { unsafe { let _ = crate::tu::ftcoll::ftcoll_800764dc(g as _); } }
     pub fn pl_800411C4(slot: i32, sub: i32) { unsafe { let _ = crate::plbonus::pl_800411c4(slot, sub); } }
     pub fn ftCo_800DEF38(g: G) { unsafe { let _ = crate::ft0df::ftco_800def38(g); } }
     pub fn Geno_PreAnim(g: G) -> i32 { todo!("Geno_PreAnim (pc/geno)") }
@@ -319,7 +319,7 @@ pub mod ext {
     pub fn ftCommon_ApplyShieldKnockbackFriction(fp: F, f: f32) { unsafe { let _ = crate::ftcommon::apply_shield_knockback_friction(&mut *fp, f); } }
     pub fn ft_GetGroundFrictionMultiplier(fp: F) -> f32 { unsafe { crate::tu::ft_081b::ft_get_ground_friction_multiplier(&mut *fp) } }
     pub fn ftColl_GetWindOffsetVec(g: G, out: *mut Vec3) { todo!("ftColl_GetWindOffsetVec (ft/ftcoll.c)") }
-    pub fn ftColl_80076528(g: G) { todo!("ftColl_80076528 (ft/ftcoll.c)") }
+    pub fn ftColl_80076528(g: G) { unsafe { let _ = crate::tu::ftcoll::ftcoll_80076528(g as _); } }
     pub fn mpGetSpeed(floor: i32, pos: *const Vec3, out: *mut Vec3) -> bool { todo!("mpGetSpeed (mp/mplib.c)") }
     pub fn ftCo_800D3158(g: G) { unsafe { let _ = crate::tu::ft_0d31::ftCo_800D3158(g); } }
     pub fn Stage_CalcUnkCamYBounds() -> f32 { unsafe { melee_world::tu::stage::Stage_CalcUnkCamYBounds() } }
@@ -348,27 +348,27 @@ pub mod ext {
     pub fn Snap_CuratedRegion(tag: i32, va: usize, len: u32) { todo!("Snap_CuratedRegion (pc/platform/gw_snap.c)") }
     pub fn ft_80089B08(g: G) { unsafe { let _ = crate::tu::ft_0899::ft_80089B08(g); } }
     pub fn Mex_FighterCallbackDispatch(g: G, cb: HSD_GObjEvent) { todo!("Mex_FighterCallbackDispatch (pc/platform m-ex)") }
-    pub fn ftColl_8007AE80(g: G) { todo!("ftColl_8007AE80 (ft/ftcoll.c)") }
+    pub fn ftColl_8007AE80(g: G) { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007ae80(g as _); } }
     pub fn ft_8007C224(g: G) { unsafe { let _ = crate::tu::ft_07c1::ft_8007c224(g); } }
     pub fn ft_8007C6DC(g: G) { unsafe { let _ = crate::tu::ft_07c6::ft_8007c6dc(g); } }
     pub fn HSD_JObjAnimAll(j: J) { todo!("HSD_JObjAnimAll (baselib/jobj.c)") }
     pub fn ifMagnify_802FB6E8(slot: i32) -> i32 { unsafe { melee_world::tu::ifmagnify::ifMagnify_802FB6E8(slot as _) } }
     pub fn Stage_UnkSetVec3TCam_Offset(out: *mut Vec3) { unsafe { let _ = melee_world::tu::stage::Stage_UnkSetVec3TCam_Offset(out as _); } }
     pub fn gm_8016B1C4() -> bool { todo!("gm_8016B1C4 (gm)") }
-    pub fn ftColl_8007BA0C(g: G) { todo!("ftColl_8007BA0C (ft/ftcoll.c)") }
-    pub fn ftColl_80078A2C(g: G) { todo!("ftColl_80078A2C (ft/ftcoll.c)") }
-    pub fn ftColl_80078754(g: G, v: G, a: i32) { todo!("ftColl_80078754 (ft/ftcoll.c)") }
-    pub fn ftColl_8007BC90(g: G) { todo!("ftColl_8007BC90 (ft/ftcoll.c)") }
+    pub fn ftColl_8007BA0C(g: G) { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007ba0c(g as _); } }
+    pub fn ftColl_80078A2C(g: G) { unsafe { let _ = crate::tu::ftcoll::ftcoll_80078a2c(g as _); } }
+    pub fn ftColl_80078754(g: G, v: G, a: i32) { unsafe { let _ = crate::tu::ftcoll::ftcoll_80078754(g as _, v as _, (a != 0 as _)); } }
+    pub fn ftColl_8007BC90(g: G) { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007bc90(g as _); } }
     pub fn it_8027B4A4(g: G, item: G) { unsafe { let _ = melee_items::tu::it_279C::it_8027B4A4(g as _, item as _); } }
     pub fn ftColl_800765E0() { unsafe { let _ = crate::ftcoll::ftcoll_800765e0(); } }
-    pub fn ftColl_80078C70(g: G) { todo!("ftColl_80078C70 (ft/ftcoll.c)") }
+    pub fn ftColl_80078C70(g: G) { unsafe { let _ = crate::tu::ftcoll::ftcoll_80078c70(g as _); } }
     pub fn ft_8007C77C(g: G) { unsafe { let _ = crate::tu::ft_07c6::ft_8007c77c(g); } }
-    pub fn ftColl_8007925C(g: G) { todo!("ftColl_8007925C (ft/ftcoll.c)") }
-    pub fn ftColl_8007BAC0(g: G) { todo!("ftColl_8007BAC0 (ft/ftcoll.c)") }
+    pub fn ftColl_8007925C(g: G) { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007925c(g as _); } }
+    pub fn ftColl_8007BAC0(g: G) { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007bac0(g as _); } }
     pub fn ft_8007C4BC(g: G) { unsafe { let _ = crate::tu::ft_07c1::ft_8007c4bc(g); } }
-    pub fn ftColl_8007AB48(g: G) { todo!("ftColl_8007AB48 (ft/ftcoll.c)") }
-    pub fn ftColl_8007AB80(g: G) { todo!("ftColl_8007AB80 (ft/ftcoll.c)") }
-    pub fn ftColl_8007BBCC(g: G) -> f32 { todo!("ftColl_8007BBCC (ft/ftcoll.c)") }
+    pub fn ftColl_8007AB48(g: G) { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007ab48(g as _); } }
+    pub fn ftColl_8007AB80(g: G) { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007ab80(g as _); } }
+    pub fn ftColl_8007BBCC(g: G) -> f32 { unsafe { crate::tu::ftcoll::ftcoll_8007bbcc(g as _) } }
     pub fn ftCommon_8007FC7C(g: G, f: f32) { unsafe { let _ = crate::ftcommon3::ftcommon_8007fc7c(g, f); } }
     pub fn ScriptGame_HitRulePercentCommit(fp: F, d: f32) -> f32 { todo!("ScriptGame_HitRulePercentCommit (pc/gameworld)") }
     pub fn ftCommon_8007EA90(fp: F, d: f32) { unsafe { let _ = crate::ftcommon3::ftcommon_8007ea90(&mut *fp, melee_runtime::cabi::f2i32(d as f64)); } }
@@ -385,7 +385,7 @@ pub mod ext {
     pub fn Geno_OnHit(g: G) -> i32 { todo!("Geno_OnHit (pc/geno)") }
     pub fn Geno_HitReact(fp: F) -> i32 { todo!("Geno_HitReact (pc/geno)") }
     pub fn pl_8003E058(a: i32, b: i32, slot: i32, sub: i32) { unsafe { let _ = crate::plbonus2::pl_8003e058(a, b, slot, sub); } }
-    pub fn ftColl_8007BE3C(g: G) { todo!("ftColl_8007BE3C (ft/ftcoll.c)") }
+    pub fn ftColl_8007BE3C(g: G) { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007be3c(g as _); } }
     pub fn ftCo_Damage_CalcKnockback(fp: F) { unsafe { let _ = crate::tu::ftCo_Damage::ftCo_Damage_CalcKnockback(&mut *(fp as *mut _)); } }
     pub fn ftKb_SpecialN_800F5BA4(fp: F) { todo!("ftKb_SpecialN_800F5BA4 (ftKirby)") }
     pub fn ftKb_SpecialN_800F5C34(fp: F) { todo!("ftKb_SpecialN_800F5C34 (ftKirby)") }
@@ -417,11 +417,11 @@ pub mod ext {
     pub fn Player_SetFacingDirectionConditional(slot: i32, sub: i32, f: f32) { unsafe { let _ = crate::player::set_facing_direction_conditional(slot, sub, f); } }
     pub fn pl_8003FAA8(slot: i32, sub: i32, a: *const Vec3, b: *const Vec3) { unsafe { let _ = crate::tu::plbonuslib::pl_8003FAA8(slot as _, sub as _, a as _, b as _); } }
     pub fn Mex_OnDestroyDispatch(kind: i32, g: G) { todo!("Mex_OnDestroyDispatch (pc/platform m-ex (ftData_OnUserDataRemove))") }
-    pub fn ftColl_8007B8E8(g: G) { todo!("ftColl_8007B8E8 (ft/ftcoll.c)") }
+    pub fn ftColl_8007B8E8(g: G) { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007b8e8(g as _); } }
     pub fn it_8026B7F8(g: G) { unsafe { let _ = melee_items::tu::it_26B1::it_8026B7F8(g as _); } }
     pub fn Camera_800290D4(c: *mut core::ffi::c_void) { todo!("Camera_800290D4 (cm/camera.c)") }
     pub fn ftCo_UnloadDynamicBones(fp: F) { unsafe { let _ = crate::tu::ftdynamics::ftCo_UnloadDynamicBones(&mut *fp); } }
-    pub fn ftColl_800765AC(g: G) { todo!("ftColl_800765AC (ft/ftcoll.c)") }
+    pub fn ftColl_800765AC(g: G) { unsafe { let _ = crate::tu::ftcoll::ftcoll_800765ac(g as _); } }
     pub fn ft_80088C5C(g: G) { unsafe { let _ = crate::ft0881::ft_80088c5c(g); } }
     pub fn lbShadow_8000EE8C(s: *mut core::ffi::c_void) { unsafe { let _ = melee_runtime::tu::lbshadow::lbShadow_8000EE8C(s as _); } }
     pub fn HSD_JObjUnref(j: J) { unsafe { let _ = melee_runtime::tu::jobj::HSD_JObjUnref(j as _); } }

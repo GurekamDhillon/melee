@@ -40,11 +40,11 @@ pub mod ext {
     type FH = *mut FighterHurtCapsule;
     ext_fns! {
         ftCo_8009EB18(g: G) = crate::tu::ftCo_BarrelWait::ftCo_8009EB18;
-        ftColl_800765F0(fp: *mut Fighter, victim: G, v: f32) -> f32 = |_, _, _| todo!("TODO(port) ftColl_800765F0 (ftcoll.c)");
-        ftColl_80076640(fp: *mut Fighter, f: *mut f32) -> bool = |_, _| todo!("TODO(port) ftColl_80076640 (ftcoll.c)");
-        ftColl_80076764(a: i32, b: i32, g: G, d: D, fp: *mut Fighter, h: FH) = |_, _, _, _, _, _| todo!("TODO(port) ftColl_80076764 (ftcoll.c)");
+        ftColl_800765F0(fp: *mut Fighter, victim: G, v: f32) -> f32 = |fp: *mut Fighter, victim: G, v: f32| -> f32 { unsafe { crate::tu::ftcoll::ftcoll_800765f0(&*(fp as *const _), victim as _, v as _) } };
+        ftColl_80076640(fp: *mut Fighter, f: *mut f32) -> bool = |fp: *mut Fighter, f: *mut f32| -> bool { unsafe { crate::tu::ftcoll::ftcoll_80076640(&mut *(fp as *mut _), &mut *(f as *mut _)) } };
+        ftColl_80076764(a: i32, b: i32, g: G, d: D, fp: *mut Fighter, h: FH) = |a: i32, b: i32, g: G, d: D, fp: *mut Fighter, h: FH| { unsafe { let _ = crate::tu::ftcoll::ftcoll_80076764(a as _, b as _, g as _, d as _, &*(fp as *const _), h as _); } };
         lbColl_80008D30(hit: *mut HitCapsule, a: *mut lbColl_80008D30_arg1) = |hit: *mut HitCapsule, a: *mut lbColl_80008D30_arg1| { unsafe { let _ = melee_runtime::tu::lbcollision::lbColl_80008D30(hit as _, a as _); } };
-        ftColl_80078384(fp: *mut Fighter, h: FH, hit: *mut HitCapsule) = |_, _, _| todo!("TODO(port) ftColl_80078384 (ftcoll.c)");
+        ftColl_80078384(fp: *mut Fighter, h: FH, hit: *mut HitCapsule) = |fp: *mut Fighter, h: FH, hit: *mut HitCapsule| { unsafe { let _ = crate::tu::ftcoll::ftcoll_80078384(fp as _, h as _, hit as _); } };
         pl_8003EC30(slot: i32, sub: i32, kind: i32, f: f32) = |slot: i32, sub: i32, kind: i32, f: f32| { unsafe { let _ = crate::tu::plbonuslib::pl_8003EC30(slot as _, sub as _, kind as _, f as _); } };
         stage_info_grkind() -> i32 = || todo!("TODO(port) stage_info.grkind (ground.c global)");
         Ground_801C5700(i: i32) -> D = |_| todo!("TODO(port) Ground_801C5700 (ground.c)");
@@ -71,7 +71,7 @@ pub mod ext {
         ftCo_800C5240(g: G) -> bool = t!("ftCo_800C5240 (ftCo_HammerWait.c)");
         ftCo_800C5A98(g: G) = t!("ftCo_800C5A98 (ftCo_HammerJump.c)");
         ftCommon_8007D5D4(fp: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
-        ftColl_8007B7A4(g: G, v: i32) = |_, _| todo!("TODO(port) ftColl_8007B7A4 (ftcoll.c)");
+        ftColl_8007B7A4(g: G, v: i32) = |g: G, v: i32| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007b7a4(g as _, v as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ftCo_Fall_Enter(g: G) = t!("ftCo_Fall_Enter (ftCo_Fall.c)");
         ftCo_SpecialAir_CheckInput(g: G) -> bool = t!("ftCo_SpecialAir_CheckInput (ftCo_SpecialAir.c)");

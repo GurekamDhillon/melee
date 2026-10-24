@@ -48,8 +48,8 @@ pub mod ext {
         Item_8026ABD8(item: *mut Item_GObj, pos: *mut Vec3, v: f32) = |item: *mut Item_GObj, pos: *mut Vec3, v: f32| { unsafe { let _ = melee_items::tu::item::Item_8026ABD8(item as _, pos as _, v as _); } };
         ftCommon_8007D5D4(f: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
-        ftColl_8007B6A0(g: G) = |_| todo!("TODO(port) ftColl_8007B6A0 (ftcoll.c)");
-        ftColl_8007B6EC(g: G) = |_| todo!("TODO(port) ftColl_8007B6EC (ftcoll.c)");
+        ftColl_8007B6A0(g: G) = |g: G| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007b6a0(g as _); } };
+        ftColl_8007B6EC(g: G) = |g: G| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007b6ec(g as _); } };
         ftCommon_8007E2FC(g: G) = |g| crate::ftcommon2::ftcommon_8007e2fc(super::fp(g));
         HSD_JObjAddAnim(j: *mut HSD_JObj, an: *mut HSD_AnimJoint, mat: *mut HSD_MatAnimJoint, sh: *mut HSD_ShapeAnimJoint) = |_, _, _, _| todo!("TODO(port) HSD_JObjAddAnim (jobj.c)");
         ftAnim_80070734(j: *mut HSD_JObj, frame: f32) = |j: *mut HSD_JObj, frame: f32| { unsafe { let _ = crate::tu::ftanim::ftAnim_80070734(j as _, frame as _); } };

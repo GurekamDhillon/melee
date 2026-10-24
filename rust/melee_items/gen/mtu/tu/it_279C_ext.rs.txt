@@ -1,0 +1,349 @@
+// BEGIN GENERATED EXT (rust/melee_items/gen/mtu/gen_tu.py; the callees of the C TU)
+pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    use super::*;
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
+    fn HSD_Randi(a0: i32) -> i32;
+    fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj;
+    fn db_80225DD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn db_GetCurrentlySelectedPokemon() -> i32;
+    fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: &[EfArg]) -> *mut c_void;
+    fn ftLib_800860C4() -> i32;
+    fn ftLib_8008627C(a0: *mut Vec, a1: *mut HSD_GObj) -> *mut HSD_GObj;
+    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_80086BE0(a0: *mut HSD_GObj) -> u8;
+    fn ftLib_800874BC(a0: *mut HSD_GObj) -> i32;
+    fn ft_80089768(a0: *mut Vec2);
+    fn ft_80089884(a0: *mut HSD_GObj) -> *mut Struct2070;
+    fn ft_800898A8(a0: *mut HSD_GObj) -> *mut Struct2074;
+    fn gm_80164ABC() -> i32;
+    fn gm_80165084() -> i32;
+    fn gm_8016AEB8() -> i32;
+    fn gm_80172BC4() -> i32;
+    fn gm_80172C04() -> i32;
+    fn gm_8018841C() -> i32;
+    fn gm_801BEC54() -> *mut c_void;
+    fn gm_GetCurrentGameMode() -> u8;
+    fn itCerebi_Logic23_Spawned(a0: *mut HSD_GObj);
+    fn itChicoritaLeaf_Logic30_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn itChicoritaLeaf_Logic30_HitShield(a0: *mut HSD_GObj) -> i32;
+    fn itChicoritaLeaf_Logic30_Reflected(a0: *mut HSD_GObj) -> i32;
+    fn itChicoritaLeaf_Logic30_Spawned(a0: *mut HSD_GObj);
+    fn itChicorita_Logic1_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn itFire_Logic6_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn itFire_Logic6_Spawned(a0: *mut HSD_GObj);
+    fn itFreezer_802CCF9C(a0: *mut HSD_GObj);
+    fn itFreezer_802CD000(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn itFushigibana_Logic29_Spawned(a0: *mut HSD_GObj);
+    fn itHassam_802CDBE0(a0: *mut HSD_GObj);
+    fn itHassam_802CDC60(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn itHitodeman_Logic43_Absorbed(a0: *mut HSD_GObj) -> i32;
+    fn itKabigon_Logic2_Destroyed(a0: *mut HSD_GObj);
+    fn itKamex_Logic31_DmgDealt(a0: *mut HSD_GObj) -> i32;
+    fn itKamex_Logic31_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn itKamex_Logic31_HitShield(a0: *mut HSD_GObj) -> i32;
+    fn itKireihana_Logic15_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn itKireihana_Logic15_Spawned(a0: *mut HSD_GObj);
+    fn itLizardon_Logic34_Spawned(a0: *mut HSD_GObj);
+    fn itLizardon_Logic35_Spawned(a0: *mut HSD_GObj);
+    fn itLizardon_Logic36_Spawned(a0: *mut HSD_GObj);
+    fn itLizardon_Logic37_Absorbed(a0: *mut HSD_GObj) -> i32;
+    fn itLizardon_Logic37_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn itLizardon_Logic37_HitShield(a0: *mut HSD_GObj) -> i32;
+    fn itLizardon_Logic37_Reflected(a0: *mut HSD_GObj) -> i32;
+    fn itLizardon_Logic37_Spawned(a0: *mut HSD_GObj);
+    fn itLucky_Logic44_Dropped(a0: *mut HSD_GObj);
+    fn itLucky_Logic44_EnteredAir(a0: *mut HSD_GObj);
+    fn itLucky_Logic44_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn itLucky_Logic44_PickedUp(a0: *mut HSD_GObj);
+    fn itLucky_Logic44_Spawned(a0: *mut HSD_GObj);
+    fn itLugia_Logic17_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn itLugia_Logic39_Spawned(a0: *mut HSD_GObj);
+    fn itLugia_Logic40_Spawned(a0: *mut HSD_GObj);
+    fn itLugia_Logic41_Spawned(a0: *mut HSD_GObj);
+    fn itMaril_Logic28_Spawned(a0: *mut HSD_GObj);
+    fn itMarumine_Logic16_Spawned(a0: *mut HSD_GObj);
+    fn itMatadogas_Logic33_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn itMetamon_Logic19_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn itMew_Logic22_Spawned(a0: *mut HSD_GObj);
+    fn itOldKuri_Logic29_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn itPippi_Logic20_Spawned(a0: *mut HSD_GObj);
+    fn itPorygon2_Logic26_Spawned(a0: *mut HSD_GObj);
+    fn itSonans_Logic9_DmgDealt(a0: *mut HSD_GObj) -> i32;
+    fn itSuikun_Logic14_Spawned(a0: *mut HSD_GObj);
+    fn itThunder_Logic7_Spawned(a0: *mut HSD_GObj);
+    fn itTogepy_Logic21_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn itTogepy_Logic21_Spawned(a0: *mut HSD_GObj);
+    fn itTosakinto_Logic0_Destroyed(a0: *mut HSD_GObj);
+    fn itUnknown_Logic38_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn it_2725_Logic17_Spawned(a0: *mut HSD_GObj);
+    fn it_2725_Logic18_Spawned(a0: *mut HSD_GObj);
+    fn it_2725_Logic24_Spawned(a0: *mut HSD_GObj);
+    fn it_2725_Logic27_DmgReceived(a0: *mut HSD_GObj) -> i32;
+    fn it_2725_Logic31_Spawned(a0: *mut HSD_GObj);
+    fn it_2725_Logic32_Spawned(a0: *mut HSD_GObj);
+    fn it_2725_Logic33_Spawned(a0: *mut HSD_GObj);
+    fn it_2725_Logic38_Spawned(a0: *mut HSD_GObj);
+    fn it_2725_Logic42_Spawned(a0: *mut HSD_GObj);
+    fn it_2725_Logic43_Spawned(a0: *mut HSD_GObj);
+    fn it_8026B3A8(a0: *mut HSD_GObj);
+    fn it_8026B3C0(a0: i32) -> i32;
+    fn it_8026B6A8(a0: *mut Vec, a1: *mut HSD_GObj) -> f32;
+    fn it_8026B6C8(a0: *mut HSD_GObj) -> i32;
+    fn it_8026BB88(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn it_8026BDB4(a0: *mut HSD_GObj);
+    fn it_8026E4D0(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>);
+    fn it_8026EECC(a0: *mut HSD_GObj, a1: i32);
+    fn it_80272860(a0: *mut HSD_GObj, a1: f32, a2: f32);
+    fn it_80272980(a0: *mut HSD_GObj);
+    fn it_80272DE4(a0: *mut HSD_JObj, a1: f32);
+    fn it_80272F7C(a0: *mut HSD_JObj, a1: f32);
+    fn it_802756D0(a0: *mut HSD_GObj);
+    fn it_8027B964(a0: *mut HSD_GObj, a1: i32);
+    fn it_802C8F4C(a0: *mut HSD_GObj);
+    fn it_802C8FC4(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn it_802C9588(a0: *mut HSD_GObj);
+    fn it_802C9D40(a0: *mut HSD_GObj);
+    fn it_802C9E24(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn it_802CA49C(a0: *mut HSD_GObj);
+    fn it_802CA538(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn it_802CAFD4(a0: *mut HSD_GObj);
+    fn it_802CB0F8(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn it_802CB8AC(a0: *mut HSD_GObj);
+    fn it_802CB940(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn it_802CCB14(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn it_802CD44C(a0: *mut HSD_GObj);
+    fn it_802CD4DC(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn it_802CD7D4(a0: *mut HSD_GObj) -> i32;
+    fn it_802CE710(a0: *mut HSD_GObj);
+    fn it_802CE7D0(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn it_802CF3E0(a0: *mut HSD_GObj);
+    fn it_802CF450(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn it_802CF814(a0: *mut HSD_GObj);
+    fn it_802CF884(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn it_802CFCB8(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn it_802D0AB0(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn it_802D0AD0(a0: *mut HSD_GObj) -> i32;
+    fn it_802D0D18(a0: *mut HSD_GObj);
+    fn it_802D0E30(a0: *mut HSD_GObj);
+    fn it_802D0E90(a0: *mut HSD_GObj);
+    fn it_802D23D4(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn it_802D25BC(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn it_802D2ED0(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn it_802D3008(a0: *mut HSD_GObj);
+    fn it_802D32DC(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn it_802D3B6C(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn it_802D3F4C(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn it_802D43B0(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn it_802D4EF4(a0: *mut HSD_GObj) -> i32;
+    fn it_802D4F08(a0: *mut HSD_GObj) -> i32;
+    fn it_802D4F28(a0: *mut HSD_GObj) -> i32;
+    fn it_802D4F50(a0: *mut HSD_GObj) -> i32;
+    fn it_802D4F58(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn it_802D5050(a0: *mut HSD_GObj);
+    fn it_802D5648(a0: *mut HSD_GObj) -> i32;
+    fn it_802D56F0(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn it_802D5CD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn it_802D5CF8(a0: *mut HSD_GObj);
+    fn it_802D61A8(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn it_802D6808(a0: *mut HSD_GObj) -> i32;
+    fn it_802D6810(a0: *mut HSD_GObj) -> i32;
+    fn it_802D6830(a0: *mut HSD_GObj) -> i32;
+    fn it_802D6838(a0: *mut HSD_GObj) -> i32;
+    fn it_802D6840(a0: *mut HSD_GObj) -> i32;
+    fn it_802D6848(a0: *mut HSD_GObj) -> i32;
+    fn it_802D6850(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn it_802D6F00(a0: *mut HSD_GObj) -> i32;
+    fn it_802D6FB0(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn lbVector_Mirror(a0: *mut Vec, a1: *mut Vec);
+    fn plAttack_80037B08() -> u16;
+    fn plStale_IncrementAttackInstance() -> u16;
+    fn pl_80037DF4(a0: *mut HSD_GObj, a1: *mut Struct2070);
+    fn pl_800384DC(a0: *mut HSD_GObj, a1: i32, a2: *mut c_void);
+    fn pl_8003E70C(a0: *mut HSD_GObj);
+    fn pl_8003EB30(a0: f32, a1: i32, a2: i32, a3: i32, a4: i32, a5: i32);
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        pub unsafe extern "C" fn itCerebi_Logic23_Spawned(a0: *mut HSD_GObj) { super::itCerebi_Logic23_Spawned(a0) }
+        pub unsafe extern "C" fn itChicoritaLeaf_Logic30_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::itChicoritaLeaf_Logic30_EvtUnk(a0, a1) }
+        pub unsafe extern "C" fn itChicoritaLeaf_Logic30_HitShield(a0: *mut HSD_GObj) -> i32 { super::itChicoritaLeaf_Logic30_HitShield(a0) }
+        pub unsafe extern "C" fn itChicoritaLeaf_Logic30_Reflected(a0: *mut HSD_GObj) -> i32 { super::itChicoritaLeaf_Logic30_Reflected(a0) }
+        pub unsafe extern "C" fn itChicoritaLeaf_Logic30_Spawned(a0: *mut HSD_GObj) { super::itChicoritaLeaf_Logic30_Spawned(a0) }
+        pub unsafe extern "C" fn itChicorita_Logic1_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::itChicorita_Logic1_EvtUnk(a0, a1) }
+        pub unsafe extern "C" fn itFire_Logic6_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::itFire_Logic6_EvtUnk(a0, a1) }
+        pub unsafe extern "C" fn itFire_Logic6_Spawned(a0: *mut HSD_GObj) { super::itFire_Logic6_Spawned(a0) }
+        pub unsafe extern "C" fn itFreezer_802CCF9C(a0: *mut HSD_GObj) { super::itFreezer_802CCF9C(a0) }
+        pub unsafe extern "C" fn itFreezer_802CD000(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::itFreezer_802CD000(a0, a1) }
+        pub unsafe extern "C" fn itFushigibana_Logic29_Spawned(a0: *mut HSD_GObj) { super::itFushigibana_Logic29_Spawned(a0) }
+        pub unsafe extern "C" fn itHassam_802CDBE0(a0: *mut HSD_GObj) { super::itHassam_802CDBE0(a0) }
+        pub unsafe extern "C" fn itHassam_802CDC60(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::itHassam_802CDC60(a0, a1) }
+        pub unsafe extern "C" fn itHitodeman_Logic43_Absorbed(a0: *mut HSD_GObj) -> i32 { super::itHitodeman_Logic43_Absorbed(a0) }
+        pub unsafe extern "C" fn itKabigon_Logic2_Destroyed(a0: *mut HSD_GObj) { super::itKabigon_Logic2_Destroyed(a0) }
+        pub unsafe extern "C" fn itKamex_Logic31_DmgDealt(a0: *mut HSD_GObj) -> i32 { super::itKamex_Logic31_DmgDealt(a0) }
+        pub unsafe extern "C" fn itKamex_Logic31_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::itKamex_Logic31_EvtUnk(a0, a1) }
+        pub unsafe extern "C" fn itKamex_Logic31_HitShield(a0: *mut HSD_GObj) -> i32 { super::itKamex_Logic31_HitShield(a0) }
+        pub unsafe extern "C" fn itKireihana_Logic15_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::itKireihana_Logic15_EvtUnk(a0, a1) }
+        pub unsafe extern "C" fn itKireihana_Logic15_Spawned(a0: *mut HSD_GObj) { super::itKireihana_Logic15_Spawned(a0) }
+        pub unsafe extern "C" fn itLizardon_Logic34_Spawned(a0: *mut HSD_GObj) { super::itLizardon_Logic34_Spawned(a0) }
+        pub unsafe extern "C" fn itLizardon_Logic35_Spawned(a0: *mut HSD_GObj) { super::itLizardon_Logic35_Spawned(a0) }
+        pub unsafe extern "C" fn itLizardon_Logic36_Spawned(a0: *mut HSD_GObj) { super::itLizardon_Logic36_Spawned(a0) }
+        pub unsafe extern "C" fn itLizardon_Logic37_Absorbed(a0: *mut HSD_GObj) -> i32 { super::itLizardon_Logic37_Absorbed(a0) }
+        pub unsafe extern "C" fn itLizardon_Logic37_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::itLizardon_Logic37_EvtUnk(a0, a1) }
+        pub unsafe extern "C" fn itLizardon_Logic37_HitShield(a0: *mut HSD_GObj) -> i32 { super::itLizardon_Logic37_HitShield(a0) }
+        pub unsafe extern "C" fn itLizardon_Logic37_Reflected(a0: *mut HSD_GObj) -> i32 { super::itLizardon_Logic37_Reflected(a0) }
+        pub unsafe extern "C" fn itLizardon_Logic37_Spawned(a0: *mut HSD_GObj) { super::itLizardon_Logic37_Spawned(a0) }
+        pub unsafe extern "C" fn itLucky_Logic44_Dropped(a0: *mut HSD_GObj) { super::itLucky_Logic44_Dropped(a0) }
+        pub unsafe extern "C" fn itLucky_Logic44_EnteredAir(a0: *mut HSD_GObj) { super::itLucky_Logic44_EnteredAir(a0) }
+        pub unsafe extern "C" fn itLucky_Logic44_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::itLucky_Logic44_EvtUnk(a0, a1) }
+        pub unsafe extern "C" fn itLucky_Logic44_PickedUp(a0: *mut HSD_GObj) { super::itLucky_Logic44_PickedUp(a0) }
+        pub unsafe extern "C" fn itLucky_Logic44_Spawned(a0: *mut HSD_GObj) { super::itLucky_Logic44_Spawned(a0) }
+        pub unsafe extern "C" fn itLugia_Logic17_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::itLugia_Logic17_EvtUnk(a0, a1) }
+        pub unsafe extern "C" fn itLugia_Logic39_Spawned(a0: *mut HSD_GObj) { super::itLugia_Logic39_Spawned(a0) }
+        pub unsafe extern "C" fn itLugia_Logic40_Spawned(a0: *mut HSD_GObj) { super::itLugia_Logic40_Spawned(a0) }
+        pub unsafe extern "C" fn itLugia_Logic41_Spawned(a0: *mut HSD_GObj) { super::itLugia_Logic41_Spawned(a0) }
+        pub unsafe extern "C" fn itMaril_Logic28_Spawned(a0: *mut HSD_GObj) { super::itMaril_Logic28_Spawned(a0) }
+        pub unsafe extern "C" fn itMarumine_Logic16_Spawned(a0: *mut HSD_GObj) { super::itMarumine_Logic16_Spawned(a0) }
+        pub unsafe extern "C" fn itMatadogas_Logic33_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::itMatadogas_Logic33_EvtUnk(a0, a1) }
+        pub unsafe extern "C" fn itMetamon_Logic19_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::itMetamon_Logic19_EvtUnk(a0, a1) }
+        pub unsafe extern "C" fn itMew_Logic22_Spawned(a0: *mut HSD_GObj) { super::itMew_Logic22_Spawned(a0) }
+        pub unsafe extern "C" fn itOldKuri_Logic29_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::itOldKuri_Logic29_EvtUnk(a0, a1) }
+        pub unsafe extern "C" fn itPippi_Logic20_Spawned(a0: *mut HSD_GObj) { super::itPippi_Logic20_Spawned(a0) }
+        pub unsafe extern "C" fn itPorygon2_Logic26_Spawned(a0: *mut HSD_GObj) { super::itPorygon2_Logic26_Spawned(a0) }
+        pub unsafe extern "C" fn itSonans_Logic9_DmgDealt(a0: *mut HSD_GObj) -> i32 { super::itSonans_Logic9_DmgDealt(a0) }
+        pub unsafe extern "C" fn itSuikun_Logic14_Spawned(a0: *mut HSD_GObj) { super::itSuikun_Logic14_Spawned(a0) }
+        pub unsafe extern "C" fn itThunder_Logic7_Spawned(a0: *mut HSD_GObj) { super::itThunder_Logic7_Spawned(a0) }
+        pub unsafe extern "C" fn itTogepy_Logic21_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::itTogepy_Logic21_EvtUnk(a0, a1) }
+        pub unsafe extern "C" fn itTogepy_Logic21_Spawned(a0: *mut HSD_GObj) { super::itTogepy_Logic21_Spawned(a0) }
+        pub unsafe extern "C" fn itTosakinto_Logic0_Destroyed(a0: *mut HSD_GObj) { super::itTosakinto_Logic0_Destroyed(a0) }
+        pub unsafe extern "C" fn itUnknown_Logic38_EvtUnk(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::itUnknown_Logic38_EvtUnk(a0, a1) }
+        pub unsafe extern "C" fn it_2725_Logic17_Spawned(a0: *mut HSD_GObj) { super::it_2725_Logic17_Spawned(a0) }
+        pub unsafe extern "C" fn it_2725_Logic18_Spawned(a0: *mut HSD_GObj) { super::it_2725_Logic18_Spawned(a0) }
+        pub unsafe extern "C" fn it_2725_Logic24_Spawned(a0: *mut HSD_GObj) { super::it_2725_Logic24_Spawned(a0) }
+        pub unsafe extern "C" fn it_2725_Logic27_DmgReceived(a0: *mut HSD_GObj) -> i32 { super::it_2725_Logic27_DmgReceived(a0) }
+        pub unsafe extern "C" fn it_2725_Logic31_Spawned(a0: *mut HSD_GObj) { super::it_2725_Logic31_Spawned(a0) }
+        pub unsafe extern "C" fn it_2725_Logic32_Spawned(a0: *mut HSD_GObj) { super::it_2725_Logic32_Spawned(a0) }
+        pub unsafe extern "C" fn it_2725_Logic33_Spawned(a0: *mut HSD_GObj) { super::it_2725_Logic33_Spawned(a0) }
+        pub unsafe extern "C" fn it_2725_Logic38_Spawned(a0: *mut HSD_GObj) { super::it_2725_Logic38_Spawned(a0) }
+        pub unsafe extern "C" fn it_2725_Logic42_Spawned(a0: *mut HSD_GObj) { super::it_2725_Logic42_Spawned(a0) }
+        pub unsafe extern "C" fn it_2725_Logic43_Spawned(a0: *mut HSD_GObj) { super::it_2725_Logic43_Spawned(a0) }
+        pub unsafe extern "C" fn it_8026EECC(a0: *mut HSD_GObj, a1: i32) { super::it_8026EECC(a0, a1) }
+        pub unsafe extern "C" fn it_802C8F4C(a0: *mut HSD_GObj) { super::it_802C8F4C(a0) }
+        pub unsafe extern "C" fn it_802C8FC4(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802C8FC4(a0, a1) }
+        pub unsafe extern "C" fn it_802C9588(a0: *mut HSD_GObj) { super::it_802C9588(a0) }
+        pub unsafe extern "C" fn it_802C9D40(a0: *mut HSD_GObj) { super::it_802C9D40(a0) }
+        pub unsafe extern "C" fn it_802C9E24(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802C9E24(a0, a1) }
+        pub unsafe extern "C" fn it_802CA49C(a0: *mut HSD_GObj) { super::it_802CA49C(a0) }
+        pub unsafe extern "C" fn it_802CA538(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802CA538(a0, a1) }
+        pub unsafe extern "C" fn it_802CAFD4(a0: *mut HSD_GObj) { super::it_802CAFD4(a0) }
+        pub unsafe extern "C" fn it_802CB0F8(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802CB0F8(a0, a1) }
+        pub unsafe extern "C" fn it_802CB8AC(a0: *mut HSD_GObj) { super::it_802CB8AC(a0) }
+        pub unsafe extern "C" fn it_802CB940(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802CB940(a0, a1) }
+        pub unsafe extern "C" fn it_802CCB14(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802CCB14(a0, a1) }
+        pub unsafe extern "C" fn it_802CD44C(a0: *mut HSD_GObj) { super::it_802CD44C(a0) }
+        pub unsafe extern "C" fn it_802CD4DC(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802CD4DC(a0, a1) }
+        pub unsafe extern "C" fn it_802CD7D4(a0: *mut HSD_GObj) -> i32 { super::it_802CD7D4(a0) }
+        pub unsafe extern "C" fn it_802CE710(a0: *mut HSD_GObj) { super::it_802CE710(a0) }
+        pub unsafe extern "C" fn it_802CE7D0(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802CE7D0(a0, a1) }
+        pub unsafe extern "C" fn it_802CF3E0(a0: *mut HSD_GObj) { super::it_802CF3E0(a0) }
+        pub unsafe extern "C" fn it_802CF450(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802CF450(a0, a1) }
+        pub unsafe extern "C" fn it_802CF814(a0: *mut HSD_GObj) { super::it_802CF814(a0) }
+        pub unsafe extern "C" fn it_802CF884(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802CF884(a0, a1) }
+        pub unsafe extern "C" fn it_802CFCB8(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802CFCB8(a0, a1) }
+        pub unsafe extern "C" fn it_802D0AB0(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802D0AB0(a0, a1) }
+        pub unsafe extern "C" fn it_802D0AD0(a0: *mut HSD_GObj) -> i32 { super::it_802D0AD0(a0) }
+        pub unsafe extern "C" fn it_802D0D18(a0: *mut HSD_GObj) { super::it_802D0D18(a0) }
+        pub unsafe extern "C" fn it_802D0E30(a0: *mut HSD_GObj) { super::it_802D0E30(a0) }
+        pub unsafe extern "C" fn it_802D0E90(a0: *mut HSD_GObj) { super::it_802D0E90(a0) }
+        pub unsafe extern "C" fn it_802D23D4(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802D23D4(a0, a1) }
+        pub unsafe extern "C" fn it_802D25BC(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802D25BC(a0, a1) }
+        pub unsafe extern "C" fn it_802D2ED0(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802D2ED0(a0, a1) }
+        pub unsafe extern "C" fn it_802D3008(a0: *mut HSD_GObj) { super::it_802D3008(a0) }
+        pub unsafe extern "C" fn it_802D32DC(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802D32DC(a0, a1) }
+        pub unsafe extern "C" fn it_802D3B6C(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802D3B6C(a0, a1) }
+        pub unsafe extern "C" fn it_802D3F4C(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802D3F4C(a0, a1) }
+        pub unsafe extern "C" fn it_802D43B0(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802D43B0(a0, a1) }
+        pub unsafe extern "C" fn it_802D4EF4(a0: *mut HSD_GObj) -> i32 { super::it_802D4EF4(a0) }
+        pub unsafe extern "C" fn it_802D4F08(a0: *mut HSD_GObj) -> i32 { super::it_802D4F08(a0) }
+        pub unsafe extern "C" fn it_802D4F28(a0: *mut HSD_GObj) -> i32 { super::it_802D4F28(a0) }
+        pub unsafe extern "C" fn it_802D4F50(a0: *mut HSD_GObj) -> i32 { super::it_802D4F50(a0) }
+        pub unsafe extern "C" fn it_802D4F58(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802D4F58(a0, a1) }
+        pub unsafe extern "C" fn it_802D5050(a0: *mut HSD_GObj) { super::it_802D5050(a0) }
+        pub unsafe extern "C" fn it_802D5648(a0: *mut HSD_GObj) -> i32 { super::it_802D5648(a0) }
+        pub unsafe extern "C" fn it_802D56F0(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802D56F0(a0, a1) }
+        pub unsafe extern "C" fn it_802D5CD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802D5CD8(a0, a1) }
+        pub unsafe extern "C" fn it_802D5CF8(a0: *mut HSD_GObj) { super::it_802D5CF8(a0) }
+        pub unsafe extern "C" fn it_802D61A8(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802D61A8(a0, a1) }
+        pub unsafe extern "C" fn it_802D6808(a0: *mut HSD_GObj) -> i32 { super::it_802D6808(a0) }
+        pub unsafe extern "C" fn it_802D6810(a0: *mut HSD_GObj) -> i32 { super::it_802D6810(a0) }
+        pub unsafe extern "C" fn it_802D6830(a0: *mut HSD_GObj) -> i32 { super::it_802D6830(a0) }
+        pub unsafe extern "C" fn it_802D6838(a0: *mut HSD_GObj) -> i32 { super::it_802D6838(a0) }
+        pub unsafe extern "C" fn it_802D6840(a0: *mut HSD_GObj) -> i32 { super::it_802D6840(a0) }
+        pub unsafe extern "C" fn it_802D6848(a0: *mut HSD_GObj) -> i32 { super::it_802D6848(a0) }
+        pub unsafe extern "C" fn it_802D6850(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802D6850(a0, a1) }
+        pub unsafe extern "C" fn it_802D6F00(a0: *mut HSD_GObj) -> i32 { super::it_802D6F00(a0) }
+        pub unsafe extern "C" fn it_802D6FB0(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802D6FB0(a0, a1) }
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut Item_804A0E24: PokemonSelectionState = unsafe { core::mem::zeroed() };
+    pub static mut it_803F7A48: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F7A98: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F7AC8: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F7AD8: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F7B08: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F7B48: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F7B58: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F7BB0: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F7BC0: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F7C00: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F7C10: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F7C40: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F7C70: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F7CA0: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F7CF8: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F7D60: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F7DC8: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F7DE8: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F7E08: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F7E28: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F7E78: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F7EE8: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F7F48: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F7F58: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F7FB8: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F7FC8: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F7FF8: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F8058: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F80C8: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F80F8: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F8128: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F8180: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F8190: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F8200: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F8250: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F8270: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F82A0: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F82B0: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F82F0: [ItemStateTable; 1] = unsafe { core::mem::zeroed() };
+    pub static mut result: i32 = unsafe { core::mem::zeroed() };
+}
+// END GENERATED EXT

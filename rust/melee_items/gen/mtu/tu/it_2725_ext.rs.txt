@@ -1,0 +1,97 @@
+// BEGIN GENERATED EXT (rust/melee_items/gen/mtu/gen_tu.py; the callees of the C TU)
+pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    use super::*;
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn HSD_GObjObject_80390B0C(a0: *mut HSD_GObj);
+    fn HSD_JObjAddAnimAll(a0: *mut HSD_JObj, a1: *mut HSD_AnimJoint, a2: *mut HSD_MatAnimJoint, a3: *mut HSD_ShapeAnimJoint);
+    fn HSD_JObjAnimAll(a0: *mut HSD_JObj);
+    fn HSD_JObjClearFlagsAll(a0: *mut HSD_JObj, a1: u32);
+    fn HSD_JObjRemoveAnimAll(a0: *mut HSD_JObj);
+    fn HSD_JObjReqAnimAll(a0: *mut HSD_JObj, a1: f32);
+    fn HSD_JObjSetFlagsAll(a0: *mut HSD_JObj, a1: u32);
+    fn HSD_JObjSetMtxDirty(a0: *mut HSD_JObj);
+    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
+    fn HSD_Randi(a0: i32) -> i32;
+    fn Item_802680CC(a0: *mut HSD_GObj);
+    fn Item_8026849C(a0: *mut HSD_GObj);
+    fn Item_802697D4(a0: *mut HSD_GObj);
+    fn Item_80269978(a0: *mut HSD_GObj);
+    fn Item_8026A848(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn Item_8026AE84(a0: *mut Item, a1: i32, a2: u8, a3: u8);
+    fn Item_8026AFA0(a0: *mut Item, a1: i32, a2: u8, a3: u8);
+    fn Item_8026B074(a0: *mut Item);
+    fn db_80225DD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn db_ShowEnemyStompRange() -> u32;
+    fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: &[EfArg]) -> *mut c_void;
+    fn ftLib_80086630(a0: *mut HSD_GObj, a1: u32) -> *mut HSD_JObj;
+    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_80086A0C(a0: *mut HSD_GObj) -> f32;
+    fn ftLib_80086BE0(a0: *mut HSD_GObj) -> u8;
+    fn ftLib_80086D40(a0: *mut HSD_GObj, a1: i32, a2: i32);
+    fn ftLib_80086DC4(a0: i32, a1: i32);
+    fn ftLib_80086E68(a0: *mut HSD_GObj);
+    fn ftLib_80086EB4(a0: *mut HSD_GObj) -> i32;
+    fn itIsHeavy(a0: *mut HSD_GObj) -> i32;
+    fn it_8026B390(a0: *mut HSD_GObj);
+    fn it_8026B3A8(a0: *mut HSD_GObj);
+    fn it_8026B6C8(a0: *mut HSD_GObj) -> i32;
+    fn it_8026BB88(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn it_8026BBCC(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn it_8026BDB4(a0: *mut HSD_GObj);
+    fn it_8027129C(a0: *mut HSD_GObj, a1: i32);
+    fn it_80275534(a0: *mut HSD_GObj, a1: f32);
+    fn it_802756D0(a0: *mut HSD_GObj);
+    fn it_802756E0(a0: *mut HSD_GObj);
+    fn it_802758D4(a0: *mut HSD_GObj) -> f32;
+    fn it_80275BC8(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn it_802762BC(a0: *mut Item);
+    fn it_802787B4(a0: *mut HSD_GObj, a1: i32);
+    fn it_80279BBC(a0: *mut Item);
+    fn it_8027B070(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn it_8027B378(a0: *mut HSD_GObj, a1: *mut HSD_GObj, a2: f32);
+    fn it_8027B4A4(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn lbAudioAx_80023870(a0: i32, a1: i32, a2: i32, a3: i32) -> i32;
+    fn lbAudioAx_80024DC4(a0: i32);
+    fn lbColl_80008428(a0: *mut HitCapsule);
+    fn lbColl_80008434(a0: *mut HitCapsule);
+    fn lbVector_Add(a0: *mut Vec, a1: *mut Vec) -> *mut Vec;
+    fn lbVector_Mirror(a0: *mut Vec, a1: *mut Vec);
+    fn lb_8000B09C(a0: *mut HSD_JObj) -> i32;
+    fn lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec);
+    fn lb_8000B804(a0: *mut HSD_JObj, a1: *mut HSD_Joint);
+    fn lb_8000BA0C(a0: *mut HSD_JObj, a1: f32);
+    fn lb_8000C1C0(a0: *mut HSD_JObj, a1: *mut HSD_JObj);
+    fn lb_8000C2F8(a0: *mut HSD_JObj, a1: *mut HSD_JObj);
+    fn lb_8000C390(a0: *mut HSD_JObj);
+    fn mpCollSetFacingDir(a0: *mut CollData, a1: i32);
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirty(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirty(a0) }
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = unsafe { core::mem::zeroed() };
+    pub static mut it_804D6D08: i32 = unsafe { core::mem::zeroed() };
+    pub static mut it_804D6D0C: i32 = unsafe { core::mem::zeroed() };
+    pub static mut it_804D6D28: *mut ItemCommonData = unsafe { core::mem::zeroed() };
+    pub static mut result: i32 = unsafe { core::mem::zeroed() };
+}
+// END GENERATED EXT

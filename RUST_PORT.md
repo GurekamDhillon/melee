@@ -653,3 +653,20 @@ port every function of those `src/melee/it/kinds` files (220 incl. the static-in
   hash. (3) `itFoodsAttributes[]` is indexed with the native 24-byte stride (GC: 16); the port mirrors the native
   struct like the rest of melee_types. (4) `ABS(x)` is `x < 0 ? -x : x`; `-1.0f * y + c` is a (non-discriminating)
   fma site, kept as `fmadds`.
+
+## melee_items::tu: it TUs with a stateful C oracle (shard 649-656)
+`rust/melee_items/src/tu/{itspawn,itmaterial,itzako,it_26B1,it_2725,it_279C}.rs` (271 functions incl. 18 static inlines, all
+present; it_3F14 / it_3F2F hold only data tables and have no functions; their tables are not ported). Oracle (generator copy kept in gen/mtu649, since gen/mtu was taken by another shard's variant; the generated gen/mtu/tu files stay where they are): `python
+rust/melee_items/gen/mtu649/{gen_tu,mk_driver,run_tu}.py <stem>` (same design as melee_world's gen/mtu: the game `.c` verbatim,
+shipping contraction, recording stubs, seeded synthetic state, field-by-field hash) -> `tests/data/mtu_<stem>.txt`,
+`tests/tu_<stem>.rs`. Per-TU fixtures live in `gen/mtu/stems.py` / `specs.py`; the shared world is `tests/mtu_w/world.rs`.
+New generator features: `xpools` (stem-private record pools), `gen_extra`, `paren_stubs`, `skip_freg`, `post_all`, `noret`.
+- Bugs the oracle found in the first-pass ports: invented RENDER_* constants (itmaterial); missed fused multiply-adds
+  (itzako product_xyz/sqrt structure, it_26B1 it_8026B344); `M_PI_2` is a double (it_2725); `1 << n` with n >= 32 needs
+  `cabi::shl`; C `bool` is int (parameters and pass-through returns are i32); dropped TARGET_PC paths (Mex_ItRecord);
+  argument evaluation order (itspawn: HSD_Randf before gm_8016AE80); calls into sibling TUs must go through `ext`;
+  header inlines must be local, not `ext`; 27 functions the first pass left to itlib were missing from the TU files.
+- Oracle traps: unions with pointers or bitfield views (xDD4_itemVar, xD90) alias differently native vs GC bit order, so
+  fixtures normalise them (`post_all`); `HM_LINE` (MTU_DBG builds) prints the gen.h line of each hashed word.
+- Not measured: branch coverage (llvm-cov profile versions do not match rustc's); `chars_ref` (melee_chara) does not
+  terminate in this checkout, unrelated.

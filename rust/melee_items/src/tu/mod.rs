@@ -42,3 +42,13 @@ pub mod itgamewatchpanic;
 pub mod itgamewatchparachute;
 pub mod itgamewatchrescue;
 pub mod itgamewatchturtle;
+
+// Shard 649-656 (generator copy under gen/mtu649).
+pub mod itmaterial;
+pub mod itspawn;
+pub mod itzako;
+pub mod it_26B1;
+pub mod it_2725;
+pub mod it_279C;
+pub mod it_3F14;
+pub mod it_3F2F;

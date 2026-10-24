@@ -11,28 +11,7 @@ use melee_core::fp::fmadds;
 use melee_types as mt;
 use mt::{CommandInfo, HSD_DObj, HSD_JObj, HitCapsule, Vec as Vec3};
 
-/// `FigaTree` (lb/lbanim.h). melee_types only has it opaque. TODO(group0): generate it.
-#[repr(C)]
-#[derive(Clone, Copy, Debug)]
-pub struct FigaTree {
-    pub r#type: i32,
-    pub flags: u32,
-    pub frames: f32,
-    pub nodes: *mut i8,
-    pub tracks: *mut c_void,
-}
-melee_core::gc_layout!(FigaTree, "FigaTree", size 0x14, align 4, [
-    r#type @ 0x0: 4 "int",
-    flags @ 0x4: 4 "u32",
-    frames @ 0x8: 4 "f32",
-    nodes @ 0xC: 4 "s8*",
-    tracks @ 0x10: 4 "FigaTrack*",
-]);
-
-/// lbanim.c `lbAnim_8001E8F8`.
-pub fn lbAnim_8001E8F8(tree: Option<&FigaTree>) -> f32 {
-    tree.map_or(0.0, |t| t.frames)
-}
+pub use melee_runtime::tu::lbanim::{FigaTree, lbAnim_8001E8F8};
 
 /// lbcardnew.c `readCardFileSize` (a `volatile` read).
 pub fn readCardFileSize(file_size: &i32) -> i32 {

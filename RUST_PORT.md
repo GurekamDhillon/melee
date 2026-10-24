@@ -1073,8 +1073,12 @@ rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_In
   stable id `39ebc1bd1de2fc58` equals the C build's. Found: the C `geno_registry_v2` test asserts phys "none" < 0 but the table returns
   GENO_CBID_NONE (4); the port follows the table. **Not ported**: native `define` entries (geno_define_*.inc; every shipped mod is one, so
   the shipped geno.json files parse to 0 entries), fighter Lua (geno_lua_registry.inc), combo/meter, controls schema, the game half.
-- **Not ported yet** (next rounds, in order): rec_* (gw_script_rec.inc),
-  hot_reload, kb_preview, combo, perf/prof, `gd.kit` / `gd.ui` (tables are empty), entity refs (`entity_ref` is nil), items/fx/echo/
+- Round 4: `gd/combo.rs` (gd.combo, gd.combo_ki; reads through `ScriptGame::combo_*`), `gd/perf.rs` (gd.perf incl. shader block and
+  profiler block, gd.prof; via `Host::perf_snapshot/prof_snapshot/prof_command`), `gd/rec.rs` (all gd.rec_* Lua halves: gr_gate, gr_name_ok, argument
+  shapes, status/list tables; the recorder state machine and .gdlp files stay behind `ScriptGame::rec_*`, NOT ported, default impls refuse).
+  `tests/combo_perf_rec.rs` (4 tests). Every `gd.*` that lab.lua calls is now registered; 279 names are in the C table, ~150 remain (see below).
+- **Not ported yet** (next rounds, in order): the .gdlp recorder itself, the caps family (nearest_opponent, give_item, fighter_*),
+  hitstop, cpu_* scripts, hot_reload, kb_preview, `gd.kit` / `gd.ui` (tables are empty), entity refs (`entity_ref` is nil), items/fx/echo/
   afterimage/tracer, stage_*/model_*/shader/area/warm/launch/1P/netplay/modsync/sim/hit_rules/enemy*, the Geno registry (geno_registry.c,
   geno_lua_core.h, fighter Lua), `lab.lua`'s remaining calls. `gdscript pc/geno/mods/geno-lab` lists what lab.lua still lacks at load.
 - Proof so far: `cargo test -p melee_script` (7 unit + 18 engine + 6 lab_api tests); `rust/melee_script/tools/standalone_parity.sh` runs

@@ -63,6 +63,92 @@ pub trait Host {
     fn mode_name(&self, mode: i32) -> String {
         format!("mode {mode}")
     }
+    /// `gw_perf_snapshot` + `gw_surface_stats` + `gw_Shader_Perf`: host frame diagnostics (never game state).
+    fn perf_snapshot(&mut self, _want: usize) -> PerfSnapshot {
+        PerfSnapshot::default()
+    }
+    /// `gw_prof_*` readers for the profiler block of `gd.perf`.
+    fn prof_snapshot(&mut self) -> ProfSnapshot {
+        ProfSnapshot::default()
+    }
+    /// `gw_prof_command`: (ok, message)
+    fn prof_command(&mut self, _args: &str) -> (bool, String) {
+        (false, "prof on|off|reset|report|perf|summary on|off|trace <frames>|hitch <ms>".into())
+    }
+}
+
+/// `GW_PERF_HISTORY`
+pub const GW_PERF_HISTORY: usize = 240;
+
+/// `GwPerfFrame`
+#[derive(Clone, Copy, Default, Debug)]
+pub struct PerfFrame {
+    pub total_ms: f32,
+    pub logic_ms: f32,
+    pub gx_ms: f32,
+    pub submit_ms: f32,
+    pub worker_ms: f32,
+    pub draw_calls: u32,
+    pub vertices: u32,
+    pub fx_particles: u32,
+}
+
+/// `GwShaderPerf`
+#[derive(Clone, Copy, Default, Debug)]
+pub struct ShaderPerf {
+    pub compiles: i64,
+    pub cache_hits: i64,
+    pub errors: i64,
+    pub reloads: i64,
+    pub draws: i64,
+    pub passes: i64,
+    pub resolves: i64,
+    pub skipped: i64,
+    pub pixels: f64,
+    pub uniform_bytes: f64,
+    pub vertex_bytes: f64,
+    pub record_ms: f64,
+}
+
+#[derive(Clone, Default, Debug)]
+pub struct PerfSnapshot {
+    pub fps: f32,
+    pub target: i32,
+    /// load calls, fifo commands, selections
+    pub surface: [u64; 3],
+    /// oldest to newest
+    pub frames: Vec<PerfFrame>,
+    pub shaders: ShaderPerf,
+}
+
+/// `GwProfStats`
+#[derive(Clone, Copy, Default, Debug)]
+pub struct ProfStats {
+    pub count: u64,
+    pub mean: f64,
+    pub p50: f64,
+    pub p95: f64,
+    pub p99: f64,
+    pub max: f64,
+}
+
+/// `GwProfDetailStats` (`port_kind` is set for the fighter zones, which carry port and kind in `detail`)
+#[derive(Clone, Debug, Default)]
+pub struct ProfDetail {
+    pub zone: String,
+    pub name: String,
+    pub detail: u32,
+    pub stats: ProfStats,
+    pub port_kind: bool,
+}
+
+#[derive(Clone, Default, Debug)]
+pub struct ProfSnapshot {
+    pub enabled: bool,
+    pub frames: u64,
+    pub zones: Vec<(String, ProfStats)>,
+    pub counters: Vec<(String, ProfStats)>,
+    pub details: Vec<ProfDetail>,
 }
 
 /// A host that keeps its log in memory; used by tests and the `gdscript` runner.

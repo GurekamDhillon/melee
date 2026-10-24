@@ -12,5 +12,5 @@ pub mod pad;
 pub mod rewind;
 
 pub use engine::{Config, Engine};
-pub use game::{NoGame, ScriptGame};
+pub use game::{NoGame, RecRead, RecRow, RecStatus, ScriptGame};
 pub use host::{Host, MemHost};

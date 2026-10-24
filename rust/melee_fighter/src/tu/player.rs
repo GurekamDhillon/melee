@@ -876,8 +876,9 @@ pub fn Player_8003544C(slot: i32, condition: bool) -> bool {
     false
 }
 
-pub fn Player_SetFlagsBit0(slot: i32, bit0: bool) {
-    sp(slot).flags.set_b0(bit0 as u8);
+/// `bool` is `int` in the C build: the whole value goes through the 1-bit store.
+pub fn Player_SetFlagsBit0(slot: i32, bit0: i32) {
+    sp(slot).flags.set_b0((bit0 & 1) as u8);
 }
 
 

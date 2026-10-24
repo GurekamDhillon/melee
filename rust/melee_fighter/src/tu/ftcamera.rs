@@ -108,3 +108,16 @@ pub fn ftcamera_80076320(gobj: *mut HSD_GObj) {
     cb.pos.x = (cb.pos.x * t1) / t31;
     cb.pos.y = ext::blast_top();
 }
+
+// ---- C names (the bodies above are the oracle-checked ports; tests/tu_ftcamera.rs calls these)
+
+/// `ftCamera_80076018`.
+pub fn ftCamera_80076018(inp: &UnkFloat6_Camera, out: &mut UnkFloat6_Camera, mul: f32) { ftcamera_80076018(inp, out, mul) }
+/// `ftCamera_80076064`.
+pub fn ftCamera_80076064(fp: &mut Fighter) { ftcamera_80076064(fp) }
+/// `ftCamera_UpdateCameraBox` (Fighter_UpdateCameraBox).
+pub fn ftCamera_UpdateCameraBox(gobj: *mut HSD_GObj) { ftcamera_update_camera_box(gobj) }
+/// `ftCamera_800762F4`.
+pub fn ftCamera_800762F4(gobj: *mut HSD_GObj) { ftcamera_800762f4(gobj) }
+/// `ftCamera_80076320`.
+pub fn ftCamera_80076320(gobj: *mut HSD_GObj) { ftcamera_80076320(gobj) }

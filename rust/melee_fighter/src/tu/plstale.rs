@@ -9,10 +9,14 @@
 
 use crate::types::*;
 
-pub use crate::stale::{
-    increment_attack_instance as plStale_IncrementAttackInstance, init_attack_instance as plStale_InitAttackInstance,
-    reset_stale_move_table as plStale_ResetStaleMoveTableForPlayer, STALE_ATTACK_INSTANCE as staleAttackInstance,
-};
+pub use crate::stale::STALE_ATTACK_INSTANCE as staleAttackInstance;
+
+/// `plStale_InitAttackInstance`
+pub fn plStale_InitAttackInstance() { crate::stale::init_attack_instance() }
+/// `plStale_ResetStaleMoveTableForPlayer`
+pub fn plStale_ResetStaleMoveTableForPlayer(slot: i32) { crate::stale::reset_stale_move_table(slot) }
+/// `plStale_IncrementAttackInstance`: the old counter; 0 is skipped on wrap.
+pub fn plStale_IncrementAttackInstance() -> u16 { crate::stale::increment_attack_instance() }
 
 type G = *mut HSD_GObj;
 

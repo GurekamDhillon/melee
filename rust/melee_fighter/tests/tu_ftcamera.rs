@@ -66,13 +66,13 @@ fn ftcamera_vs_c() {
             let g: *mut HSD_GObj = &mut *go;
             unsafe { GOP = g as usize };
             match op {
-                0 => c::ftcamera_80076018(&inp, &mut out, f.x34_scale.y),
-                1 => c::ftcamera_80076064(&mut f),
-                2 => c::ftcamera_update_camera_box(g),
-                3 => c::ftcamera_800762f4(g),
+                0 => c::ftCamera_80076018(&inp, &mut out, f.x34_scale.y),
+                1 => c::ftCamera_80076064(&mut f),
+                2 => c::ftCamera_UpdateCameraBox(g),
+                3 => c::ftCamera_800762F4(g),
                 _ => unsafe {
                     if BT - TC != 0.0 {
-                        c::ftcamera_80076320(g)
+                        c::ftCamera_80076320(g)
                     }
                 },
             }

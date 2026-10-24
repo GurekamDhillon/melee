@@ -53,6 +53,8 @@ use melee_world::gr::grlast::LastBg;
 use std::collections::HashMap;
 use std::sync::Arc;
 
+/// `ftCo_MS_DeadDown`.
+const FTCO_MS_DEAD_DOWN: i32 = 0;
 /// `ftCo_MS_Entry` / `EntryStart` / `EntryEnd` (ftmotionstates.c: 322-324).
 const FTCO_MS_ENTRY: i32 = 322;
 const FTCO_MS_ENTRY_START: i32 = 323;
@@ -186,6 +188,11 @@ pub struct Player {
     hitboxes: [Option<Hitbox>; 4],
     /// `fp->mv.co.attack1.x0` (A pressed again inside the jab window).
     attack1_x0: bool,
+    /// `fp->mv.co.unk_800D3680.x40`: the frames left in a Dead* state (`p_ftCommonData->x500`).
+    dead_timer: i32,
+    /// The player's HUD `IfDamageFlags.randomize_velocity` (set by `ifStatus_802F6C04`, a self
+    /// destruct): the HUD proc's next run draws 8 `HSD_Randf`s (`ifStatus_PercentOnDeathAnimationThink`).
+    hud_randomize: bool,
 }
 
 /// A live `HitCapsule` (`ftAction_8007121C`): its part, size and offset.
@@ -264,12 +271,22 @@ struct Effect {
     tracks: Vec<EffectTrack>,
     /// `efLib_Create_Attach_Pos`: the root's fixed translation (None: follows the owner).
     fixed_pos: Option<[f32; 3]>,
+    /// `HSD_JObjSetRotationZ(root, z)` by the spawner (None: the model's own rotation).
+    rot_z: Option<f32>,
 }
 
 struct EffectTrack {
     joint: JObjRef,
     chain: Vec<u32>,
     aobj: HsdAObj<()>,
+}
+
+/// The root JObj of a live effect, as the particle callbacks read it (`efLib_SpawnParticleEffect`).
+#[derive(Clone, Copy, Debug)]
+struct EffectRoot {
+    pos: [f32; 3],
+    rot_z: Option<f32>,
+    scale: f32,
 }
 
 /// A stage particle track and its AObj (see `stage::dptcl_tracks`).
@@ -307,6 +324,36 @@ pub struct VsMatch {
     next_effect_instance: u32,
     /// Bank 0's command lists that `efLib_Cb_PtclAppSRTHook` acts on (0x96, 0x97, 0x98, 0x21B).
     appsrt_hook_lists: Vec<CmdRef>,
+    /// `Stage_GetBlastZone{Left,Right,Top,Bottom}Offset()` (the stage's dead range).
+    blast: BlastZone,
+}
+
+/// `Stage_GetBlastZone*Offset()`: `stage_info.blast_zone.* + cam_info.cam_{x,y}_offset`
+/// (`Ground_801C39C0` reads the camera range points 0x94-0x96, `Ground_801C3BB4` the dead range
+/// points 0x97/0x98; the stage code overrides neither on Final Destination).
+#[derive(Clone, Copy, Debug)]
+pub struct BlastZone {
+    pub left: f32,
+    pub right: f32,
+    pub top: f32,
+    pub bottom: f32,
+}
+
+impl BlastZone {
+    fn from_points(points: &[crate::stage::SpawnPoint]) -> Result<Self, String> {
+        let pt = |id: i32| points.iter().find(|p| p.id == id).map(|p| p.pos);
+        let (a, b, c) = (pt(0x95), pt(0x96), pt(0x94));
+        let (cam_x, cam_y) = match (a, b, c) {
+            (Some(_), Some(_), Some(c)) => (c[0], c[1]),
+            _ => return Err("stage: no camera range points (Ground_801C39C0 dummy range not wired)".into()),
+        };
+        let (Some(p1), Some(p2)) = (pt(0x97), pt(0x98)) else {
+            return Err("stage: no dead range points (Ground_801C3BB4 dummy range not wired)".into());
+        };
+        let (lft, rgt) = if p1[0] < p2[0] { (p1[0] - cam_x, p2[0] - cam_x) } else { (p2[0] - cam_x, p1[0] - cam_x) };
+        let (bot, top) = if p1[1] < p2[1] { (p1[1] - cam_y, p2[1] - cam_y) } else { (p2[1] - cam_y, p1[1] - cam_y) };
+        Ok(BlastZone { left: lft + cam_x, right: rgt + cam_x, top: top + cam_y, bottom: bot + cam_y })
+    }
 }
 
 /// The particle system's view of the match: the RNG and the stage joint matrices.
@@ -382,6 +429,12 @@ impl VsMatch {
         }
         let stage_bytes = disc.read(stage_file)?;
         let points = crate::stage::spawn_points(&stage_bytes)?;
+        let blast = BlastZone::from_points(&points)?;
+        if std::env::var_os("MELEE_GOLDEN_DUMP").is_some() {
+            for p in &points {
+                eprintln!("stage point {:#x}: {:?} exact {}", p.id, p.pos, p.exact);
+            }
+        }
         let stage = DatArchive::parse(&stage_bytes).map_err(|e| format!("{stage_file}: {e}"))?;
         let plco = DatArchive::parse(&disc.read("PlCo.dat")?).map_err(|e| format!("PlCo.dat: {e}"))?;
         let common = plco.public_offset("ftLoadCommonData").ok_or("PlCo.dat: no ftLoadCommonData")?;
@@ -569,6 +622,9 @@ impl VsMatch {
             fp.shield_health = start_shield;
             fp.x680 = 255;
             fp.x67F = 255;
+            // Fighter_UnkInitReset: no last attacker (fighter.c 455, 654).
+            fp.dmg.x18c4_source_ply = 6;
+            fp.x2180 = 6;
             fp.cur_pos.x = sp.pos[0];
             fp.cur_pos.y = sp.pos[1];
             fp.cur_pos.z = sp.pos[2];
@@ -698,6 +754,8 @@ impl VsMatch {
                 ca_lw_friction: 1.0,
                 hitboxes: [None; 4],
                 attack1_x0: false,
+                dead_timer: 0,
+                hud_randomize: false,
             });
             // ... Fighter_ChangeMotionState(Entry): no animation, cur_anim_frame -1;
             // ftaction.c:1408 frame_count = cur_anim_frame + x898_unk. Then ft_80084CB0: the
@@ -711,6 +769,12 @@ impl VsMatch {
             input::reset_input(&mut p.fp);
             p.input_locked = true;
             change_motion_state(p, FTCO_MS_ENTRY, None, &mut rand)?;
+            // ftCo_Entry_Enter (ft_0C31.c:42).
+            p.fp.set_invisible(1);
+            p.fp.set_x2219_b1(1);
+            p.fp.set_x221E_b1(1);
+            p.fp.set_x221E_b2(1);
+            p.fp.set_x221F_b1(1);
             p.fp.x3E4_fighterCmdScript.frame_count = p.fp.cur_anim_frame + p.fp.x898_unk;
             let e = p.fp.coll_data.ecb;
             p.entry.x2c = ftCollisionBox { top: e.top.y, bottom: e.bottom.y, left: e.left, right: e.right };
@@ -724,7 +788,7 @@ impl VsMatch {
             eprintln!("bgm {} alt {:?}; seed before frame 0 {:08X}; particle tracks {}", pick.bgm, pick.alt_flag, rand.logic_seed(), dptcl.len());
         }
 
-        Ok(Self { players, ground, cg, pads: [input::PadStatus::default(); 4], go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists })
+        Ok(Self { players, ground, cg, pads: [input::PadStatus::default(); 4], go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists, blast })
     }
 
     /// The m-ex fighters' code-run report (crate::mex), one block per such fighter.
@@ -764,7 +828,7 @@ impl VsMatch {
             let mut upd: melee_runtime::fobj::ObjUpdate<'_> = Some(&mut cb);
             t.aobj.interpret_anim(&mut self.aobj_globals, &mut upd);
         }
-        self.dptcl_spawns(spawns)
+        self.dptcl_spawns(spawns, None)
     }
 
     /// The fighters' s_link 1..9 procs for one frame, in proc order (every fighter's s_link 1
@@ -913,6 +977,13 @@ impl VsMatch {
                         } else {
                             ft_8008a2bc(p, &mut self.rand)?;
                         }
+                    }
+                }
+                FTCO_MS_DEAD_DOWN => {
+                    // ftCo_DeadDown_Anim: the countdown, then ftCo_800BFD9C (Sleep + the respawn).
+                    p.dead_timer -= 1;
+                    if p.dead_timer == 0 {
+                        return Err(format!("player {}: ftCo_800BFD9C (Dead -> Sleep, respawn) not ported", p.slot + 1));
                     }
                 }
                 m => return Err(format!("player {}: motion {m} not ported", p.slot + 1)),
@@ -1096,6 +1167,10 @@ impl VsMatch {
                 }
             }
         }
+        // The rest of Fighter_procUpdate: ftCo_800D3158, the blast zone check.
+        for i in 0..self.players.len() {
+            self.blast_check(i)?;
+        }
         // s_link 6, Fighter_procMap (x221F_b3 clear): the ECB lock countdown, the root JObj to
         // cur_pos, the state's coll_cb, the root JObj to cur_pos again.
         let c_common = self.common;
@@ -1241,6 +1316,7 @@ impl VsMatch {
                         fall_enter(p, &mut self.rand)?;
                     }
                 }
+                FTCO_MS_DEAD_DOWN => {} // coll_cb NULL
                 m => return Err(format!("player {}: coll_cb of motion {m} not ported", p.slot + 1)),
             }
             let c = p.fp.cur_pos;
@@ -1328,22 +1404,132 @@ impl VsMatch {
                 }
                 let j = p.skel.part(q.part);
                 let pos = p.skel.world_pos(j);
-                self.ef_create(0x18, i, 1.0, Some([pos.x, pos.y, pos.z]))
+                self.ef_create(0x18, i, 1.0, Some([pos.x, pos.y, pos.z]), None)
             }
             (EF_SPAWN_ATTACH_PARAM, 0x43E) => {
                 // EF_SPAWN_ATTACH_PARAM: efLib_Create_Attach(0x24, gobj, fighter jobj), then
                 // efAsync_SetEffectScaleXYZ(effect, entry.x8.x), the fighter JObj's scale x
                 // (taken as co_attrs.model_scaling: positions only).
                 let scale = self.players[i].model_scaling;
-                self.ef_create(EF_ENTRY_BEAM, i, scale, None)
+                self.ef_create(EF_ENTRY_BEAM, i, scale, None, None)
             }
             (EF_SPAWN_ATTACH_PARAM, 0x490) => {
                 // efAlt_Spawn: efLib_Create_Attach(0xFA2, gobj, foot joint), params.z = the
                 // angle, update = efLib_Cb_SetRotYZ_FromParamZ_FighterDir (rotation: render only).
-                self.ef_create(0xFA2, i, 1.0, None)
+                self.ef_create(0xFA2, i, 1.0, None, None)
             }
             (k, g) => Err(format!("efAsync_Dispatch kind {k} gfx {g:#x} is not ported")),
         }
+    }
+
+    /// `ftCo_800D3158(gobj)`: the blast zone check at the end of `Fighter_procUpdate`.
+    fn blast_check(&mut self, i: usize) -> Result<(), String> {
+        let b = self.blast;
+        let p = &mut self.players[i];
+        let fp = &*p.fp;
+        if fp.x222A_b1() != 0 || fp.x2228_b5() != 0 || fp.is_sandbag() != 0 || fp.x2219_b2() != 0 || fp.x2219_b1() != 0 {
+            return Ok(());
+        }
+        if fp.cur_pos.x > b.right {
+            return Err(format!("player {}: right blast zone (ftCo_800D3950) not ported", p.slot + 1));
+        }
+        if fp.cur_pos.x < b.left {
+            return Err(format!("player {}: left blast zone (ftCo_800D3680) not ported", p.slot + 1));
+        }
+        if fp.cur_pos.y > b.top && (fp.ground_or_air == melee_types::GA_Ground || fp.x2222_b3() != 0 || fp.x8c_kb_vel.y > melee_fighter::hooks::common_data().x4F0) {
+            return Err(format!("player {}: top blast zone (star KO) not ported", p.slot + 1));
+        }
+        if fp.cur_pos.y < b.bottom {
+            return self.dead_down(i);
+        }
+        Ok(())
+    }
+
+    /// `ftCo_800D331C`: what every death does first (the grab / item / metal / sfx cleanups the
+    /// match has not reached are refused).
+    fn dead_common(&mut self, i: usize) -> Result<(), String> {
+        let p = &mut self.players[i];
+        let fp = &mut *p.fp;
+        if !fp.victim_gobj.is_null() {
+            return Err("ftCo_800D331C: a fighter in a grab (ftCo_800DC920) not ported".into());
+        }
+        if fp.death1_cb.is_some() || fp.death2_cb.is_some() || fp.death3_cb.is_some() {
+            return Err("ftCo_800D331C: death callbacks not ported".into());
+        }
+        if !fp.item_gobj.is_null() || !fp.x197C.is_null() || !fp.x1980.is_null() || fp.is_metal() != 0 || fp.x2226_b4() != 0 {
+            return Err("ftCo_800D331C: item / metal / x2226_b4 cleanup not ported".into());
+        }
+        // ftCommon_8007E2FC.
+        fp.xE4_ground_accel_1 = 0.0;
+        fp.xE8_ground_accel_2 = 0.0;
+        fp.x74_self_accel = melee_types::Vec { x: 0.0, y: 0.0, z: 0.0 };
+        fp.gr_vel = 0.0;
+        fp.self_vel = melee_types::Vec { x: 0.0, y: 0.0, z: 0.0 };
+        fp.xF0_ground_kb_vel = 0.0;
+        fp.x8c_kb_vel = melee_types::Vec { x: 0.0, y: 0.0, z: 0.0 };
+        fp.xF4_ground_attacker_shield_kb_vel = 0.0;
+        fp.x98_atk_shield_kb = melee_types::Vec { x: 0.0, y: 0.0, z: 0.0 };
+        fp.xD4_unk_vel = melee_types::Vec { x: 0.0, y: 0.0, z: 0.0 };
+        // ftCommon_8007DB24.
+        ftcommon_8007db24(p);
+        Ok(())
+    }
+
+    /// `ftCo_800D34E0`: the death's bookkeeping. Only what feeds the hash is kept: the stock
+    /// (`Player_LoseStock` when the rules count stocks), the rest is statistics
+    /// (falls, KOs, the stale-move table) and the HUD.
+    fn dead_bookkeeping(&mut self, i: usize) -> Result<(), String> {
+        let p = &mut self.players[i];
+        // gm_8016B094() / gm_8016B0E8(): this match is a time match (match_kind 0, x4_2 clear).
+        stale::reset_stale_move_table(p.slot);
+        // x18c4_source_ply == 6 (no last attacker): Player_IncSelfDestructs -> ifStatus_802F6C04
+        // -> the HUD's explode animation + randomize_velocity.
+        if p.fp.dmg.x18c4_source_ply != 6 {
+            return Err("ftCo_800D34E0: a KO credited to another player (Player_UpdateKOsBySlot) not ported".into());
+        }
+        p.hud_randomize = true;
+        Ok(())
+    }
+
+    /// `ftCo_800D3BC8`: the bottom blast zone KO (DeadDown).
+    fn dead_down(&mut self, i: usize) -> Result<(), String> {
+        let (cd_x500, cd_x4f4) = {
+            let cd = melee_fighter::hooks::common_data();
+            (cd.x500, cd.x4F4)
+        };
+        self.dead_common(i)?;
+        let b = self.blast;
+        let p = &mut self.players[i];
+        p.dead_timer = cd_x500;
+        change_motion_state(p, FTCO_MS_DEAD_DOWN, None, &mut self.rand)?;
+        {
+            let fp = &mut *p.fp;
+            if fp.x221D_b6() != 0 {
+                return Err("ftCo_800D3BC8: ft_800880D8 (looping sfx) not ported".into());
+            }
+            fp.set_x2219_b1(1);
+            fp.set_x221E_b1(1);
+            fp.set_x221E_b2(1);
+            // pl_8003DF44 (the stale-move table's last-KO stamp), ft_PlaySFX and the quake are not hashed.
+            fp.set_invisible(1);
+            fp.set_x221F_b1(1);
+        }
+        self.dead_bookkeeping(i)?;
+        // efSync_Spawn(0x42B or 0x42C, gobj, &pos, &rot_z, &p_ftCommonData->x4F4, color1, color2):
+        // efLib_Create_Attach_Pos(0x19) (0x1A in a stamina match) at the clamped position, root
+        // rot Z = 0, scale x4F4 (the tev colours are render only).
+        let c = self.players[i].fp.cur_pos;
+        let mut x = c.x;
+        if x > b.right {
+            x = b.right;
+        }
+        if x < b.left {
+            x = b.left;
+        }
+        let pos = [x, b.bottom, c.z];
+        self.ef_create(0x19, i, cd_x4f4, Some(pos), Some(0.0))?;
+        // ftCo_800D4E50: coins (not a coin match).
+        Ok(())
     }
 
     /// `efLib_DestroyAll(gobj)`: every effect of player `i` freed after
@@ -1365,7 +1551,7 @@ impl VsMatch {
 
     /// `efLib_Create(gfx_id)` + `efLib_Create_Attach`: the effect's tracks and lifetime, then
     /// efAsync_Dispatch's anim queue (`HSD_JObjAnimAll` right away).
-    fn ef_create(&mut self, gfx_id: u32, owner: usize, scale: f32, fixed_pos: Option<[f32; 3]>) -> Result<(), String> {
+    fn ef_create(&mut self, gfx_id: u32, owner: usize, scale: f32, fixed_pos: Option<[f32; 3]>, rot_z: Option<f32>) -> Result<(), String> {
         let bank = (gfx_id / 1000) as usize;
         let b = self.effect_banks.get(bank).and_then(|b| b.as_ref()).ok_or(format!("effect bank {bank} not loaded"))?;
         let desc = b.desc(gfx_id % 1000);
@@ -1386,7 +1572,7 @@ impl VsMatch {
         if lifetime != 0 {
             lifetime += 1;
         }
-        self.effects.push(Effect { lifetime, owner, scale, bank, tracks, fixed_pos });
+        self.effects.push(Effect { lifetime, owner, scale, bank, tracks, fixed_pos, rot_z });
         self.effect_anim(self.effects.len() - 1)
     }
 
@@ -1406,6 +1592,8 @@ impl VsMatch {
     fn effect_anim(&mut self, k: usize) -> Result<(), String> {
         self.effect_matrices(k);
         let mut spawns = Vec::new();
+        let e = &self.effects[k];
+        let root = e.fixed_pos.map(|p| EffectRoot { pos: p, rot_z: e.rot_z, scale: e.scale });
         for t in &mut self.effects[k].tracks {
             let joint = t.joint;
             let mut cb = |ty: u8, fv: f32| {
@@ -1417,11 +1605,12 @@ impl VsMatch {
             let mut upd: melee_runtime::fobj::ObjUpdate<'_> = Some(&mut cb);
             t.aobj.interpret_anim(&mut self.aobj_globals, &mut upd);
         }
-        self.dptcl_spawns(spawns)
+        self.dptcl_spawns(spawns, root)
     }
 
-    /// `efLib_Cb_DPtcl(0, bank, id, jobj)` for each key.
-    fn dptcl_spawns(&mut self, spawns: Vec<(i32, i32, JObjRef)>) -> Result<(), String> {
+    /// `efLib_Cb_DPtcl(0, bank, id, jobj)` for each key. `root` is the root JObj of the effect
+    /// the track belongs to (None for a stage track).
+    fn dptcl_spawns(&mut self, spawns: Vec<(i32, i32, JObjRef)>, root: Option<EffectRoot>) -> Result<(), String> {
         for (bank, id, joint) in spawns {
             let mut host = Host { rand: &mut self.rand, joint_mtx: &self.joint_mtx, appsrt_hook_lists: &self.appsrt_hook_lists };
             if bank == 0x1E {
@@ -1432,8 +1621,27 @@ impl VsMatch {
             // efLib_SpawnParticleEffect(bank, id, jobj, 1): the special-cased ids are not ported;
             // the rest take the default hsd_8039EFAC(chk, bank, id, jobj).
             match id {
+                0xD4 | 0x243 => {
+                    // standalone generator on link 2: the effect root's rot.z + translation
+                    // (+ scale for 0xD4).
+                    let r = root.ok_or("efLib_SpawnParticleEffect 0xD4/0x243 outside a fixed-position effect")?;
+                    let rot_z = r.rot_z.ok_or("efLib_SpawnParticleEffect: the root's own rotation is needed")?;
+                    if let Some(gen) = self.ps.gen_create(&mut host, 2, bank, id) {
+                        let srt = match self.ps.gen(gen).appsrt {
+                            Some(a) => a,
+                            None => self.ps.add_generator_appsrt_begin(gen, 1),
+                        };
+                        let a = self.ps.srt_mut(srt);
+                        a.rot.z = rot_z;
+                        a.translate = Vec3 { x: r.pos[0], y: r.pos[1], z: r.pos[2] };
+                        if id == 0xD4 {
+                            a.scale = Vec3 { x: r.scale, y: r.scale, z: r.scale };
+                        }
+                    }
+                    continue;
+                }
                 0x4A38..=0x4A3A | 0xB798..=0xB79A | 0x2D | 0x2E | 0x31 | 0x127 | 0x2 | 0x6 | 0xA3 | 0xA7 | 0xAA | 0xF2
-                | 0x12A | 0x132 | 0x133 | 0x16D..=0x170 | 0x7E2 | 0xD4 | 0x243 | 0xE3 => {
+                | 0x12A | 0x132 | 0x133 | 0x16D..=0x170 | 0x7E2 | 0xE3 => {
                     return Err(format!("efLib_SpawnParticleEffect bank {bank} id {id:#x}: special case not ported"));
                 }
                 _ => {}
@@ -1599,6 +1807,7 @@ fn input_cb(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         FTCA_MS_SPECIAL_LW | FTCA_MS_SPECIAL_LW_END | FTCA_MS_SPECIAL_LW_END_AIR => Ok(()), // input_cb NULL
         m if (FTCO_MS_ATTACK11..=FTCO_MS_ATTACK11 + 2).contains(&m) => attack1_iasa(p, rand),
         FTCO_MS_CATCH => Ok(()), // ftCo_Catch_IASA is empty
+        FTCO_MS_DEAD_DOWN => Ok(()), // input_cb NULL
         m => Err(format!("player {}: input_cb of motion {m} not ported", p.slot + 1)),
     }
 }
@@ -2689,6 +2898,7 @@ fn entry_start(p: &mut Player, c: EntryCommon, rand: &mut HsdRand) -> Result<(),
     p.entry.timer = c.x6bc;
     let row = p.row_entry_start.clone();
     change_motion_state(p, FTCO_MS_ENTRY_START, row.as_ref(), rand)?;
+    p.fp.set_x2219_b1(1);
     // temp_f0 = x34_scale.y * co_attrs.trophy_scale (x34_scale.y = Player_GetModelScale = 1 in VS).
     let s = 1.0f32 * p.trophy_scale;
     p.entry.x24 = s;
@@ -2711,7 +2921,9 @@ fn entry_end(p: &mut Player, c: EntryCommon, rand: &mut HsdRand) -> Result<(), S
     p.skel.set_scale(root, p.entry.x8);
     p.fp.cur_pos.y = p.entry.x4 + p.entry.x20;
     // Fighter_ChangeMotionState(EntryEnd, 0x3000, 0, 1, 0): no animation row.
-    change_motion_state(p, FTCO_MS_ENTRY_END, None, rand)
+    change_motion_state(p, FTCO_MS_ENTRY_END, None, rand)?;
+    p.fp.set_x2219_b1(1);
+    Ok(())
 }
 
 /// What `Fighter_ChangeMotionState(gobj, msid, flags, 0.0, 1.0, 0.0, NULL)` does to the hashed
@@ -2754,6 +2966,15 @@ fn change_motion_state_full(p: &mut Player, msid: i32, row: Option<&(AnimRow, Fi
         fp.hitlag_mul = 0.0;
     }
     fp.motion_id = msid;
+    // The flags Fighter_ChangeMotionState clears (fighter.c ~1381): the entry / death states set
+    // them again right after the change.
+    fp.set_x221F_b3(0);
+    fp.set_x2219_b1(0);
+    fp.set_x2219_b2(0);
+    fp.set_invisible(0);
+    fp.set_x221E_b1(0);
+    fp.set_x221E_b2(0);
+    fp.set_x221F_b1(0);
     let root = p.skel.root;
     p.skel.set_translate(root, melee_runtime::mtx::Vec3 { x: fp.cur_pos.x, y: fp.cur_pos.y, z: fp.cur_pos.z });
     // ftAnim_80070F28 (end the hand poses), ftAnim_80070E74 (restart the slots with a default
@@ -3008,6 +3229,16 @@ impl Sim for VsMatch {
         for mask in [PTCL_MASK_MAIN, PTCL_MASK_AUX] {
             self.ps.particles_update_all(&mut host, mask);
             self.ps.gen_update_all(&mut host, mask);
+        }
+        // The HUD's procs (p_link 14+, after the particles): ifStatus_PercentOnDeathAnimationThink
+        // on its first run draws two HSD_Randf per damage digit (4 digits): 8 draws.
+        for p in &mut self.players {
+            if p.hud_randomize {
+                for _ in 0..8 {
+                    self.rand.randf();
+                }
+                p.hud_randomize = false;
+            }
         }
         self.frame += 1;
         true

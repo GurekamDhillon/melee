@@ -907,3 +907,12 @@ not confirmed whether pre-existing.
    callbacks; fix the GrSv/GrBx/GrMVb/PlSn type-guess blockers; investigate the release-mode ppc_oracle diff.
 7. Audio leftovers (ducking, positional SFX, boot banks, 1P branches) and the user-only checks (visuals, audio by ear, adapter,
    netplay).
+## melee_items::tu: it/kinds set (shard 665-672)
+`itclimbersice itclimbersstring itclinkmilk itcoin itcrazyhandbomb itdkinoko itdosei itdrmariopill`: every function
+(incl. static inlines) checked by the mtu state oracle (`python rust/melee_items/gen/mtu/run_tu.py <stem>`, driver from
+`mk_driver.py`, per-TU fixtures in `gen/mtu/stems.py`, stub effects in `specs.py`). Header inlines (HSD_JObj setters,
+spawn helpers) are local ports via the `jobj_inl!`/`spawn_inl!` macros in `tu/mod.rs`; every out-of-TU callee goes through
+`ext`. Traps: C `bool` is `int` (pass-through returns are `i32`), `ext` callbacks need `ext::cb::*` (C ABI), itemVar unions
+holding pointers or aliasing bitfield members are hashed by field and cleared after each op, `HSD_ASSERT` is an infinite
+loop in the C driver so fixtures clear JOBJ_USE_QUATERNION. The double-precision Newton steps of `my_sqrtf` cannot be
+told apart from unfused ones through the f32 result.

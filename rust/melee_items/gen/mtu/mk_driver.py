@@ -282,6 +282,10 @@ PTR = {  # pointee record -> (C expr, Rust expr)
     "SpawnItem": ("&SP", "&raw mut SP"),
     "HSD_JObj": ("&JO[rnd() % 8]", "&raw mut JO[(rnd() % 8) as usize]"),
     "ItemStateDesc": ("&SDS[rnd() % 3]", "&raw mut SDS[(rnd() % 3) as usize]"),
+    "itDoseiAttributes": ("(itDoseiAttributes*) SATTR[rnd() & 1]", "(&raw mut SATTR[(rnd() & 1) as usize]) as *mut itDoseiAttributes"),
+    "HSD_JObj": ("&JO[rnd() % 8]", "&raw mut JO[(rnd() % 8) as usize]"),
+    "ItemLink": ("&LK[rnd() % 6]", "&raw mut g::LK[(rnd() % 6) as usize]"),
+    "itClimbersStringAttributes": ("(itClimbersStringAttributes*) SATTR[rnd() & 1]", "(&raw mut SATTR[(rnd() & 1) as usize]) as *mut itClimbersStringAttributes"),
 }
 FNK = {"void (struct HSD_GObj *)": 1, "int (struct HSD_GObj *)": 2, "void (struct HSD_GObj *, struct HSD_GObj *)": 3}
 
@@ -361,7 +365,7 @@ def ops_of(tu, stem, cfg):
             sc, sr = f"ret = PI({call_c});", f"ret = pi({call_r});"
         else:
             sc, sr = f"ret = (u32) {call_c};", f"ret = {call_r} as u32;"
-        post_c, post_r = cfg.get("post", {}).get(name, ("", ""))
+        post_c, post_r = cfg.get("post", {}).get(name, cfg.get("post_all", ("", "")))
         ops.append(dict(name=name, c=" ".join(pre_c) + " " + sc + " " + post_c, r="\n".join(pre_r) + "\n" + sr + "\n" + post_r,
                         n=cfg.get("n", {}).get(name, cfg.get("ncases", 300)),
                         ft=name in cfg.get("hash_ft", ()) or cfg.get("hash_ft_all", False)))

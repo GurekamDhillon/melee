@@ -320,3 +320,187 @@ STEMS["item"] = dict(
                           3: ("((rnd() & 3) ? &SJ[rnd() % 4] : 0)", "if rnd() & 3 != 0 { &raw mut SJ[(rnd() % 4) as usize] } else { null_mut() }")},
         "Item_8026AE84": {1: _SFX}, "Item_8026AF0C": {1: _SFX}, "Item_8026AFA0": {1: _SFX}},
 )
+
+STEMS["itmaterial"] = dict(
+    c_extra="static unsigned char TBOG[16]; static GXColor GCOL[2]; static HSD_TExp TX[3];\n"
+            "static void cb_stev(HSD_MObj* m, HSD_TObj* t, u32 r) { T(7010); T(PI(m)); T(PI(t)); T(r); }\n"
+            "static void* IT0P;",
+    rs_extra="static mut TBOG: [u8; 16] = [0; 16]; static mut GCOL: [GXColor; 2] = unsafe { core::mem::zeroed() }; static mut TX: [HSD_TExp; 3] = unsafe { core::mem::zeroed() };\n"
+             "unsafe extern \"C\" fn cb_stev(m: *mut HSD_MObj, t: *mut HSD_TObj, r: u32) { t_(7010); t_pi(m); t_pi(t); t_(r); }\n"
+             "fn t_(v: u32) { t(v) } fn t_pi<T>(p: *mut T) { t(pi(p)) }",
+    pregs=("preg_xpools(); preg(TBOG, sizeof TBOG); preg(GCOL, sizeof GCOL); preg(TX, sizeof TX); freg((const void*) cb_stev);",
+           "g::preg_xpools(); preg(&raw const TBOG, 16); preg(&raw const GCOL, 8); preg(&raw const TX, core::mem::size_of_val(&TX)); freg(cb_stev as usize);"),
+    setup=("{ static int init; static struct it_MObjInfo p0; int q; if (!init) { p0 = it_mobj; init = 1; } it_mobj = p0; setup_xpools();"
+           " zero(TX, sizeof TX); for (q = 0; q < 3; q++) fill_HSD_TECnst(&TX[q].cnst); for (q = 0; q < 16; q++) TBOG[q] = (u8) rnd(); for (q = 0; q < 2; q++) { GCOL[q].r = rnd(); GCOL[q].g = rnd(); GCOL[q].b = rnd(); GCOL[q].a = rnd(); }"
+           " for (q = 0; q < 2; q++) MO[q].parent.class_info = (HSD_ClassInfo*) &MI[0];"
+           " MI[0].setup_tev = cb_stev;"
+           " hsdMObj.parent.release = (void*) cbev1; hsdMObj.parent.amnesia = (void*) cbev2; hsdMObj.load = (void*) cbp1; hsdMObj.make_texp = (void*) cbev3;"
+           " for (q = 0; q < 5; q++) TO[q].next = (q < 2 && (rnd() & 1)) ? &TO[q + 1] : 0;"
+           " TO[4].imagedesc = (rnd() & 1) ? (void*) TBOG : 0;"
+           " for (q = 0; q < 2; q++) MO[q].tobj = (rnd() & 3) ? &TO[rnd() % 3] : 0;"
+           " tobj_shadows = (rnd() & 1) ? &TO[3] : 0; tobj_toon = (rnd() & 1) ? &TO[4] : 0;"
+           " for (q = 0; q < 2; q++) MO[q].mat = (rnd() % 5) ? &MA[rnd() & 1] : &MA[0];"
+           " for (q = 0; q < 2; q++) MO[q].pe = (rnd() & 1) ? &PE[rnd() & 1] : 0;"
+           " for (q = 0; q < 3; q++) DO[q].next = (q < 2 && (rnd() & 1)) ? &DO[q + 1] : 0;"
+           " for (q = 0; q < 3; q++) DO[q].mobj = (rnd() % 4) ? &MO[rnd() & 1] : 0;"
+           " HSD_GObj_804D7814 = &GO[rnd() % 4]; if (HDBG) printf(\"S %08X %08X %08X %08X%c\", PI(MO[0].tobj), PI(MO[1].tobj), PI(tobj_shadows), PI(tobj_toon), 10); }",
+           "{ let q: usize; m::it_mobj_static_init(); g::setup_xpools();"
+           " TX = core::mem::zeroed(); for q in 0..3usize { g::fill_HSD_TECnst(&mut TX[q].cnst); } for q in 0..16usize { TBOG[q] = rnd() as u8; } for q in 0..2usize { GCOL[q].r = rnd() as u8; GCOL[q].g = rnd() as u8; GCOL[q].b = rnd() as u8; GCOL[q].a = rnd() as u8; }"
+           " for q in 0..2usize { g::MO[q].parent.class_info = (&raw mut g::MI[0]) as *mut HSD_ClassInfo; }"
+           " g::MI[0].setup_tev = Some(cb_stev);"
+           " m::ext::hsdMObj.parent.release = core::mem::transmute::<usize, _>(cbev1 as usize); m::ext::hsdMObj.parent.amnesia = core::mem::transmute::<usize, _>(cbev2 as usize);"
+           " m::ext::hsdMObj.load = core::mem::transmute::<usize, _>(cbp1 as usize); m::ext::hsdMObj.make_texp = core::mem::transmute::<usize, _>(cbev3 as usize);"
+           " for q in 0..5usize { g::TO[q].next = if q < 2 && (rnd() & 1) != 0 { &raw mut g::TO[q + 1] } else { null_mut() }; }"
+           " g::TO[4].imagedesc = if rnd() & 1 != 0 { (&raw mut TBOG) as *mut _ } else { null_mut() };"
+           " for q in 0..2usize { g::MO[q].tobj = if rnd() & 3 != 0 { &raw mut g::TO[(rnd() % 3) as usize] } else { null_mut() }; }"
+           " m::ext::tobj_shadows = if rnd() & 1 != 0 { &raw mut g::TO[3] } else { null_mut() }; m::ext::tobj_toon = if rnd() & 1 != 0 { &raw mut g::TO[4] } else { null_mut() };"
+           " for q in 0..2usize { g::MO[q].mat = if rnd() % 5 != 0 { &raw mut g::MA[(rnd() & 1) as usize] } else { &raw mut g::MA[0] }; }"
+           " for q in 0..2usize { g::MO[q].pe = if rnd() & 1 != 0 { &raw mut g::PE[(rnd() & 1) as usize] } else { null_mut() }; }"
+           " for q in 0..3usize { g::DO[q].next = if q < 2 && (rnd() & 1) != 0 { &raw mut g::DO[q + 1] } else { null_mut() }; }"
+           " for q in 0..3usize { g::DO[q].mobj = if rnd() % 4 != 0 { &raw mut g::MO[(rnd() & 1) as usize] } else { null_mut() }; }"
+           " m::ext::HSD_GObj_804D7814 = &raw mut GO[(rnd() % 4) as usize]; if HDBG { println!(\"S {:08X} {:08X} {:08X} {:08X}\", pi(g::MO[0].tobj), pi(g::MO[1].tobj), pi(m::ext::tobj_shadows), pi(m::ext::tobj_toon)); } }"),
+    hash=("hash_xpools(); hash_it_MObjInfo(&it_mobj); hash_GXColor(&GCOL[0]); hash_GXColor(&GCOL[1]); for (int q = 0; q < 3; q++) hash_HSD_TECnst(&TX[q].cnst);", "g::hash_xpools(); g::hash_it_MObjInfo(&m::it_mobj); g::hash_GXColor(&GCOL[0]); g::hash_GXColor(&GCOL[1]); for q in 0..3usize { g::hash_HSD_TECnst(&TX[q].cnst); }"),
+    ov={"fn_80277D8C": {0: ("&MO[rnd() & 1]", "&raw mut g::MO[(rnd() & 1) as usize]"), 1: ("fv()", "fv()"), 2: ("fv()", "fv()")},
+        "it_80277F90": {1: ("&MO[rnd() & 1]", "&raw mut g::MO[(rnd() & 1) as usize]"), 2: ("&TX[rnd() % 3]", "&raw mut TX[(rnd() % 3) as usize]")},
+        "it_80278108": {1: ("&MO[rnd() & 1]", "&raw mut g::MO[(rnd() & 1) as usize]"), 2: ("(rnd() & 1) ? &TX[rnd() % 3] : 0", "if rnd() & 1 != 0 { &raw mut TX[(rnd() % 3) as usize] } else { null_mut() }")},
+        "it_80278574": {1: ("&GCOL[rnd() & 1]", "&raw mut GCOL[(rnd() & 1) as usize]")}},
+)
+
+_VP = ("&VA[rnd() % 4]", "&raw mut VA[(rnd() % 4) as usize]")
+_VPN = ("((rnd() & 3) ? &VA[rnd() % 4] : 0)", "if rnd() & 3 != 0 { &raw mut VA[(rnd() % 4) as usize] } else { null_mut() }")
+_F64 = ("(double) rw()", "rw() as f64")
+STEMS["itzako"] = dict(
+    skip_static=["it_8027B798_CalcAngle", "product_xyz", "itzako_sqrtf", "return_sqrt_value3"],
+    c_extra="static it_804D6D40_t D40; static ftCommonData FCD;",
+    rs_extra="static mut D40: it_804D6D40_t = unsafe { core::mem::zeroed() }; static mut FCD: ftCommonData = unsafe { core::mem::zeroed() };",
+    pregs=("preg(&D40, sizeof D40); preg(&FCD, sizeof FCD);", "preg(&raw const D40, core::mem::size_of_val(&D40)); preg(&raw const FCD, core::mem::size_of_val(&FCD));"),
+    setup=("{ int q; zero(&D40, sizeof D40); zero(&FCD, sizeof FCD); fill_it_804D6D40_t(&D40); fill_ftCommonData(&FCD); it_804D6D40 = &D40; p_ftCommonData = &FCD;"
+           " D40.x0 = (s32) (fv() % 8); D40.x14 = (float) (fv() % 6); D40.x18 = (float) (fv() % 8);"
+           " for (q = 0; q < 8; q++) JO[q].flags &= ~JOBJ_USE_QUATERNION; }",
+           "{ D40 = core::mem::zeroed(); FCD = core::mem::zeroed(); g::fill_it_804D6D40_t(&mut D40); g::fill_ftCommonData(&mut FCD); m::ext::it_804D6D40 = &raw mut D40; m::ext::p_ftCommonData = &raw mut FCD;"
+           " D40.x0 = (fv() % 8) as i32; D40.x14 = (fv() % 6) as f32; D40.x18 = (fv() % 8) as f32;"
+           " for q in 0..8usize { JO[q].flags &= !(JOBJ_USE_QUATERNION as u32); } }"),
+    hash=("hash_it_804D6D40_t(&D40);", "g::hash_it_804D6D40_t(&D40);"),
+    noret=["it_8027BA54"],
+    ov={"it_8027B5B0": {1: _VPN, 2: ("&JO[rnd() % 8]", "&raw mut JO[(rnd() % 8) as usize]"), 3: _VPN, 4: ("(int) (fv() % 3)", "(fv() % 3) as i32")},
+        "it_8027BBF4": {2: _F64}, "it_8027C0F0": {1: _VPN, 2: _F64},
+        "it_8027C824": {1: ("(s32 (*)(Item_GObj*)) pick_fn(2)", "unsafe { core::mem::transmute::<usize, _>(pick_fn(2)) }")}},
+)
+
+STEMS["itzako"]["post"] = {"it_8027B5B0": (
+    "{ int q; for (q = 0; q < 4; q++) { HM(PI(*(void**) &IT[q].xDD4_itemVar)); *(void**) &IT[q].xDD4_itemVar = 0; } }",
+    "for q in 0..4usize { let pp = (&raw mut IT[q].xDD4_itemVar) as *mut *mut c_void; hm(pi(*pp)); *pp = null_mut(); }")}
+STEMS["itzako"]["post"]["it_8027CE64"] = STEMS["itzako"]["post"]["it_8027B5B0"]
+STEMS["itzako"]["n"] = {"it_8027C8D0": 6000, "it_8027BB1C": 1500}
+
+
+def attrs_stem(words=16, ints=()):
+    """Stem pieces for TUs that read ART[i].x4_specialAttributes: two attribute blocks of `words` 32-bit words,
+    random floats (rw), except the word indexes in `ints` (small integers)."""
+    ci = "".join(f" if (w == {i}) {{ ((int*) SATTR[q])[w] = (int) (fv() % 6); }}" + (" else" if False else "") for i in ints)
+    c_fill = "((float*) SATTR[q])[w] = rw();"
+    r_fill = "*(&raw mut SATTR[q] as *mut f32).add(w) = rw();"
+    if ints:
+        cond = " || ".join(f"w == {i}" for i in ints)
+        c_fill = f"if ({cond}) ((int*) SATTR[q])[w] = (int) (fv() % 6); else ((float*) SATTR[q])[w] = rw();"
+        r_fill = f"if {cond} {{ *(&raw mut SATTR[q] as *mut i32).add(w) = (fv() % 6) as i32; }} else {{ *(&raw mut SATTR[q] as *mut f32).add(w) = rw(); }}"
+    return dict(
+        c_extra=f"static u32 SATTR[2][{words}];",
+        rs_extra=f"static mut SATTR: [[u32; {words}]; 2] = [[0; {words}]; 2];",
+        pregs=("preg(SATTR, sizeof SATTR);", "preg(&raw const SATTR, core::mem::size_of_val(&SATTR));"),
+        setup=(f"{{ int q, w; for (q = 0; q < 2; q++) {{ ART[q].x4_specialAttributes = SATTR[q]; for (w = 0; w < {words}; w++) {{ {c_fill} }} }} }}",
+               f"{{ for q in 0..2usize {{ ART[q].x4_specialAttributes = (&raw mut SATTR[q]) as *mut c_void; for w in 0..{words}usize {{ {r_fill} }} }} }}"),
+        hash=(f"{{ int q, w; for (q = 0; q < 2; q++) for (w = 0; w < {words}; w++) HM(SATTR[q][w]); }}",
+              f"{{ for q in 0..2usize {{ for w in 0..{words}usize {{ hm(SATTR[q][w]); }} }} }}"),
+    )
+
+STEMS["itdkinoko"] = attrs_stem(4)
+
+# union itemVar whose first word is a pointer: hashed by region id and cleared after the call (raw bytes hold addresses)
+PTR_POST = ("{ int q; for (q = 0; q < 4; q++) { HM(PI(*(void**) &IT[q].xDD4_itemVar)); *(void**) &IT[q].xDD4_itemVar = 0; } }",
+            "for q in 0..4usize { let pp = (&raw mut IT[q].xDD4_itemVar) as *mut *mut c_void; hm(pi(*pp)); *pp = null_mut(); }")
+STEMS["itclinkmilk"] = dict(
+    post_all=PTR_POST,
+    setup=("{ int q; for (q = 0; q < 4; q++) { u32 r = rnd(); void* p = (r & 3) == 0 ? (void*) 0 : (void*) &GO[4 + (r >> 8) % 3];"
+           " *(void**) &IT[q].xDD4_itemVar = p; IT[q].owner = (r & 16) ? (HSD_GObj*) p : pick_fgo(); } }",
+           "{ for q in 0..4usize { let r = rnd(); let p: *mut c_void = if r & 3 == 0 { null_mut() } else { &raw mut GO[4 + ((r >> 8) % 3) as usize] as *mut c_void };"
+           " *((&raw mut IT[q].xDD4_itemVar) as *mut *mut c_void) = p; IT[q].owner = if r & 16 != 0 { p as *mut HSD_GObj } else { pick_fgo() }; } }"),
+)
+STEMS["itcrazyhandbomb"] = attrs_stem(3)
+
+_COIN_PC = ("{ int q; for (q = 0; q < 4; q++) { HM(PI(IT[q].xDD4_itemVar.coin.x14)); IT[q].xDD4_itemVar.coin.x14 = 0; } }",
+            "for q in 0..4usize { hm(pi(IT[q].xDD4_itemVar.coin.x14)); IT[q].xDD4_itemVar.coin.x14 = null_mut(); }")
+def merge(*cfgs):
+    out = {}
+    for c in cfgs:
+        for k, v in c.items():
+            if k in out and isinstance(v, tuple):
+                out[k] = (out[k][0] + " " + v[0], out[k][1] + " " + v[1])
+            elif k in out and isinstance(v, str):
+                out[k] = out[k] + chr(10) + v
+            else:
+                out[k] = v
+    return out
+
+# the HSD_JObjSetRotation* asserts (C: __assert never returns) need non-quaternion jobjs
+NOQUAT = dict(setup=("{ int q; for (q = 0; q < 8; q++) JO[q].flags &= ~JOBJ_USE_QUATERNION; }",
+                     "{ for q in 0..8usize { JO[q].flags &= !(JOBJ_USE_QUATERNION as u32); } }"))
+STEMS["itcoin"] = merge(attrs_stem(19), NOQUAT, {"post_all": _COIN_PC})
+
+_PILL_PC = ("{ int q; for (q = 0; q < 4; q++) { HM(PI(IT[q].xDD4_itemVar.drmariopill.x4)); IT[q].xDD4_itemVar.drmariopill.x4 = 0; } }",
+            "for q in 0..4usize { hm(pi(IT[q].xDD4_itemVar.drmariopill.x4)); IT[q].xDD4_itemVar.drmariopill.x4 = null_mut(); }")
+_PILL_SETUP = ("{ int q; for (q = 0; q < 4; q++) { u32 r = rnd(); HSD_GObj* p = (r & 3) == 0 ? (HSD_GObj*) 0 : &GO[4 + (r >> 8) % 3];"
+               " IT[q].xDD4_itemVar.drmariopill.x4 = p; IT[q].owner = (r & 16) ? p : pick_fgo(); } }",
+               "{ for q in 0..4usize { let r = rnd(); let p: *mut HSD_GObj = if r & 3 == 0 { null_mut() } else { &raw mut GO[4 + ((r >> 8) % 3) as usize] };"
+               " IT[q].xDD4_itemVar.drmariopill.x4 = p; IT[q].owner = if r & 16 != 0 { p } else { pick_fgo() }; } }")
+STEMS["itdrmariopill"] = merge(attrs_stem(6), NOQUAT, {"setup": _PILL_SETUP, "post_all": _PILL_PC})
+
+_ICE_SETUP = ("{ int q; for (q = 0; q < 4; q++) { u32 r = rnd(); IT[q].kind = It_Kind_IceClimber_Ice + (r & 1);"
+              " *(void**) &IT[q].xDD4_itemVar = (r & 6) == 0 ? (void*) 0 : (void*) &GO[4 + (r >> 8) % 3]; } }",
+              "{ for q in 0..4usize { let r = rnd(); IT[q].kind = It_Kind_IceClimber_Ice + (r & 1) as i32;"
+              " *((&raw mut IT[q].xDD4_itemVar) as *mut *mut c_void) = if r & 6 == 0 { null_mut() } else { &raw mut GO[4 + ((r >> 8) % 3) as usize] as *mut c_void }; } }")
+from specs_ef import EF_PRE as _EFPRE2
+STEMS["itclimbersice"] = merge(attrs_stem(13, ints=(11, 12)), {"c_pre": _EFPRE2, "setup": _ICE_SETUP, "post_all": PTR_POST})
+
+_CS_PC = ("{ int q; for (q = 0; q < 4; q++) { HM(PI(IT[q].xDD4_itemVar.climbersstring.x4)); HM(PI(IT[q].xDD4_itemVar.climbersstring.x8)); HM(PI(IT[q].xDD4_itemVar.climbersstring.xC)); HM(PI(IT[q].xDD4_itemVar.climbersstring.x14));"
+          " IT[q].xDD4_itemVar.climbersstring.x4 = 0; IT[q].xDD4_itemVar.climbersstring.x8 = 0; IT[q].xDD4_itemVar.climbersstring.xC = 0; IT[q].xDD4_itemVar.climbersstring.x14 = 0; } }",
+          "for q in 0..4usize { let v = &mut IT[q].xDD4_itemVar.climbersstring; hm(pi(v.x4)); hm(pi(v.x8)); hm(pi(v.xC)); hm(pi(v.x14)); v.x4 = null_mut(); v.x8 = null_mut(); v.xC = null_mut(); v.x14 = null_mut(); }")
+_CS_SETUP = ("{ int q, j; setup_xpools(); LKN = 0; zero(PARTS, sizeof PARTS); zero(OUTP, sizeof OUTP); zero(MXA, sizeof MXA);"
+             " for (q = 0; q < 12; q++) MXA[q] = rw();"
+             " for (q = 0; q < 32; q++) PARTS[q].joint = &JO[rnd() % 8];"
+             " for (q = 0; q < 3; q++) { FT[q].parts = PARTS; FT[q].u.pp.x2240.x = (rnd() & 1) ? 0.0f : rw(); FT[q].u.pp.x2240.y = (rnd() & 1) ? 0.0f : rw(); }"
+             " for (j = 0; j < 6; j++) { LK[j].next = j ? &LK[j - 1] : 0; LK[j].prev = j < 5 ? &LK[j + 1] : 0; LK[j].gobj = &GO[7 + (rnd() & 1)]; LK[j].jobj = &JO[rnd() % 8]; }"
+             " LK[5].x2C_b0 = 1;"
+             " for (q = 0; q < 4; q++) { u32 r = rnd(); IT[q].xDD4_itemVar.climbersstring.x0 = rw(); IT[q].xDD4_itemVar.climbersstring.x4 = &LK[5]; IT[q].xDD4_itemVar.climbersstring.x8 = &LK[0];"
+             " IT[q].xDD4_itemVar.climbersstring.xC = &GO[4 + (r >> 8) % 3]; IT[q].xDD4_itemVar.climbersstring.x14 = &JO[(r >> 12) % 8]; } }",
+             "{ setup_xpools_(); LKN = 0; PARTS = core::mem::zeroed(); OUTP = [null_mut(); 2]; MXA = [0.0; 12];"
+             " for q in 0..12usize { MXA[q] = rw(); }"
+             " for q in 0..32usize { PARTS[q].joint = &raw mut JO[(rnd() % 8) as usize]; }"
+             " for q in 0..3usize { FT[q].parts = (&raw mut PARTS) as *mut FighterBone; FT[q].u.pp.x2240.x = if rnd() & 1 != 0 { 0.0 } else { rw() }; FT[q].u.pp.x2240.y = if rnd() & 1 != 0 { 0.0 } else { rw() }; }"
+             " for j in 0..6usize { g::LK[j].next = if j != 0 { &raw mut g::LK[j - 1] } else { null_mut() }; g::LK[j].prev = if j < 5 { &raw mut g::LK[j + 1] } else { null_mut() }; g::LK[j].gobj = &raw mut GO[7 + (rnd() & 1) as usize]; g::LK[j].jobj = &raw mut JO[(rnd() % 8) as usize]; }"
+             " g::LK[5].set_x2C_b0(1);"
+             " for q in 0..4usize { let r = rnd(); let v = &mut IT[q].xDD4_itemVar.climbersstring; v.x0 = rw(); v.x4 = &raw mut g::LK[5]; v.x8 = &raw mut g::LK[0];"
+             " v.xC = &raw mut GO[4 + ((r >> 8) % 3) as usize]; v.x14 = &raw mut JO[((r >> 12) % 8) as usize]; } }")
+STEMS["itclimbersstring"] = merge(attrs_stem(14, ints=(0, 1, 6, 7, 8)), NOQUAT, dict(
+    c_pre="static int LKN;", c_extra="static FighterBone PARTS[32]; static ItemLink* OUTP[2]; static float MXA[12];",
+    rs_extra="static mut LKN: usize = 0; static mut PARTS: [FighterBone; 32] = unsafe { core::mem::zeroed() }; static mut OUTP: [*mut ItemLink; 2] = [null_mut(); 2]; static mut MXA: [f32; 12] = [0.0; 12];"
+             " unsafe fn setup_xpools_() { g::setup_xpools(); }",
+    pregs=("preg_xpools(); preg(PARTS, sizeof PARTS); preg(OUTP, sizeof OUTP); preg(MXA, sizeof MXA);",
+           "g::preg_xpools(); preg(&raw const PARTS, core::mem::size_of_val(&PARTS)); preg(&raw const OUTP, core::mem::size_of_val(&OUTP)); preg(&raw const MXA, core::mem::size_of_val(&MXA));"),
+    setup=_CS_SETUP, post_all=_CS_PC,
+    hash=("hash_xpools(); { int q; for (q = 0; q < 32; q++) HM(PI(PARTS[q].joint)); HM(PI(OUTP[0])); HM(PI(OUTP[1])); for (q = 0; q < 12; q++) HM(B(MXA[q])); }",
+          "g::hash_xpools(); { for q in 0..32usize { hm(pi(PARTS[q].joint)); } hm(pi(OUTP[0])); hm(pi(OUTP[1])); for q in 0..12usize { hm(MXA[q].to_bits()); } }"),
+    ov={"it_802C248C_setupGObj": {2: ("(GObj_RenderFunc) pick_cb(1)", "core::mem::transmute::<usize, _>(pick_cb(1))")},
+        "Item_InitLinkMtx": {0: ("(float (*)[4]) MXA", "(&raw mut MXA) as *mut Mtx")},
+        "it_802C27D4": {0: ("&GO[4 + rnd() % 3]", "&raw mut GO[4 + (rnd() % 3) as usize]")},
+        "it_2725_Logic70_EvtUnk": {1: ("&GO[rnd() % 7]", "&raw mut GO[(rnd() % 7) as usize]")}},
+))
+
+# itemVar is hashed raw here (dosei view only) and cleared, so bitfield-bearing union members cannot alias the dosei floats
+_RAWVAR = ("{ int q; for (q = 0; q < 4; q++) { itDosei_ItemVars* v = &IT[q].xDD4_itemVar.dosei; HM(v->xDD4); HM(v->xDD8); HM(B(v->xDDC)); HM(B(v->xDE0)); HM(B(v->xDE4.x)); HM(B(v->xDE4.y)); HM(B(v->xDE4.z)); HM(v->xDF0); HM(B(v->xDF4)); HM(B(v->xDF8.x)); HM(B(v->xDF8.y)); HM(B(v->xDF8.z)); zero(&IT[q].xDD4_itemVar, sizeof IT[q].xDD4_itemVar); } }",
+           "for q in 0..4usize { let v = IT[q].xDD4_itemVar.dosei; hm(v.xDD4 as u32); hm(v.xDD8 as u32); hm(v.xDDC.to_bits()); hm(v.xDE0.to_bits()); hm(v.xDE4.x.to_bits()); hm(v.xDE4.y.to_bits()); hm(v.xDE4.z.to_bits()); hm(v.xDF0 as u32); hm(v.xDF4.to_bits()); hm(v.xDF8.x.to_bits()); hm(v.xDF8.y.to_bits()); hm(v.xDF8.z.to_bits()); core::ptr::write_bytes(&raw mut IT[q].xDD4_itemVar as *mut u8, 0, core::mem::size_of_val(&IT[q].xDD4_itemVar)); }")
+_DOSEI_SETUP = ("{ int q; for (q = 0; q < 4; q++) { itDosei_ItemVars* v = &IT[q].xDD4_itemVar.dosei; v->xDD4 = (int) (fv() % 5); v->xDD8 = (int) (fv() % 4); v->xDDC = rw(); v->xDE0 = rw();"
+                " v->xDE4.x = rw(); v->xDE4.y = rw(); v->xDE4.z = rw(); v->xDF0 = (int) (fv() % 4); v->xDF4 = rw(); v->xDF8.x = rw(); v->xDF8.y = rw(); v->xDF8.z = rw(); } }",
+                "{ for q in 0..4usize { let v = &mut IT[q].xDD4_itemVar.dosei; v.xDD4 = (fv() % 5) as i32; v.xDD8 = (fv() % 4) as i32; v.xDDC = rw(); v.xDE0 = rw();"
+                " v.xDE4.x = rw(); v.xDE4.y = rw(); v.xDE4.z = rw(); v.xDF0 = (fv() % 4) as i32; v.xDF4 = rw(); v.xDF8.x = rw(); v.xDF8.y = rw(); v.xDF8.z = rw(); } }")
+STEMS["itdosei"] = merge(attrs_stem(6, ints=(1, 3, 4, 5)), NOQUAT, {"setup": _DOSEI_SETUP, "post_all": _RAWVAR})

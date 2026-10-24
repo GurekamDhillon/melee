@@ -45,6 +45,7 @@ def world_c(tu, pools):
         "static void cbev3(HSD_GObj* g, HSD_GObj* h) { T(7005); T(PI(g)); T(PI(h)); }",
         "static void cbi1(int a) { T(7006); T((u32) a); }",
         "static void cbi2(int a) { T(7007); T((u32) a); }",
+        *autocb_defs()[0],
         "static void* pick_fn(int kind)",
         "{",
         "    u32 r = rnd();",
@@ -58,7 +59,7 @@ def world_c(tu, pools):
         "    return 0;",
         "}",
         "static void* pick_cb(int kind) { void* f = pick_fn(kind); return f ? f : (kind == 2 ? (void*) cbp1 : kind == 3 ? (void*) cbev3 : kind == 4 ? (void*) cbi1 : (void*) cbev1); }",
-        "static void freg_world(void) { freg((const void*) cbev1); freg((const void*) cbev2); freg((const void*) cbp1); freg((const void*) cbp2); freg((const void*) cbev3); freg((const void*) cbi1); freg((const void*) cbi2); }",
+        "static void freg_world(void) { freg((const void*) cbev1); freg((const void*) cbev2); freg((const void*) cbp1); freg((const void*) cbp2); freg((const void*) cbev3); freg((const void*) cbi1); freg((const void*) cbi2); " + " ".join(autocb_defs()[2]) + " }",
         "@@SPLIT@@",
         "static void preg_world(void)",
         "{",
@@ -104,6 +105,7 @@ def world_rs(pools):
         "pub unsafe extern \"C\" fn cbev3(g: *mut HSD_GObj, h: *mut HSD_GObj) { t(7005); t(pi(g)); t(pi(h)); }",
         "pub unsafe extern \"C\" fn cbi1(a: i32) { t(7006); t(a as u32); }",
         "pub unsafe extern \"C\" fn cbi2(a: i32) { t(7007); t(a as u32); }",
+        *autocb_defs()[1],
         "pub fn pick_fn(kind: i32) -> usize {",
         "    let r = rnd();",
         "    if r & 3 == 0 { return 0; }",
@@ -116,7 +118,7 @@ def world_rs(pools):
         "    }",
         "}",
         "pub fn pick_cb(kind: i32) -> usize { let f = pick_fn(kind); if f != 0 { f } else if kind == 2 { cbp1 as usize } else if kind == 3 { cbev3 as usize } else if kind == 4 { cbi1 as usize } else { cbev1 as usize } }",
-        "pub fn freg_world() { freg(cbev1 as usize); freg(cbev2 as usize); freg(cbp1 as usize); freg(cbp2 as usize); freg(cbev3 as usize); freg(cbi1 as usize); freg(cbi2 as usize); }",
+        "pub fn freg_world() { freg(cbev1 as usize); freg(cbev2 as usize); freg(cbp1 as usize); freg(cbp2 as usize); freg(cbev3 as usize); freg(cbi1 as usize); freg(cbi2 as usize); " + " ".join(autocb_defs()[3]) + " }",
         "pub fn preg_world() {",
         "    unsafe {",
     ]
@@ -144,6 +146,32 @@ def world_rs(pools):
     return "\n".join(r)
 
 
+AUTOCB = {}  # signature spelling -> (index, function type)
+
+
+def autocb_defs():
+    """C and Rust definitions of the generated callbacks: trace id 9000+N, every argument, a shared-stream return."""
+    from gen_tu import arg_class, c_trace, r_trace, c_ret, r_ret, rust_ty
+    cc, rr, reg_c, reg_r = [], [], [], []
+    for sp, (n, ft) in AUTOCB.items():
+        ats = list(ft.argument_types())
+        rt = ft.get_result()
+        rcls = arg_class(rt)
+        cps = ", ".join(f"{a.spelling} a{i}" for i, a in enumerate(ats)) or "void"
+        body = [f"T({9000 + n});"] + [c_trace(arg_class(a), f"a{i}") for i, a in enumerate(ats)]
+        rps = ", ".join(f"a{i}: {rust_ty(a)}" for i, a in enumerate(ats))
+        rbody = [f"t({9000 + n});"] + [r_trace(arg_class(a), f"a{i}") for i, a in enumerate(ats)]
+        if rcls == "void":
+            cc.append(f"static void autocb_{n}({cps}) {{ " + " ".join(body) + " }")
+            rr.append(f"pub unsafe extern \"C\" fn autocb_{n}({rps}) {{ " + " ".join(rbody) + " }")
+        else:
+            cc.append(f"static {rt.spelling} autocb_{n}({cps}) {{ " + " ".join(body) + f" return ({rt.spelling}) ({c_ret(rcls)}); }}")
+            rr.append(f"pub unsafe extern \"C\" fn autocb_{n}({rps}) -> {rust_ty(rt)} {{ " + " ".join(rbody) + f" {r_ret(rcls, rt)} }}")
+        reg_c.append(f"freg((const void*) autocb_{n});")
+        reg_r.append(f"freg(autocb_{n} as usize);")
+    return cc, rr, reg_c, reg_r
+
+
 FNK = {"void (int)": 4, "void (struct HSD_GObj *)": 1, "int (struct HSD_GObj *)": 2, "void (struct HSD_GObj *, struct HSD_GObj *)": 3}
 
 
@@ -161,7 +189,11 @@ def bind(ptype, pools):
         if pt.kind in (T.FUNCTIONPROTO, T.FUNCTIONNOPROTO):
             kind = FNK.get(pt.spelling)
             if kind is None:
-                raise SystemExit(f"no callback pool for {pt.spelling}")
+                # a callback of any other signature: a generated recording function (autocb_N), one per signature
+                if pt.spelling not in AUTOCB:
+                    AUTOCB[pt.spelling] = (len(AUTOCB), pt)
+                n = AUTOCB[pt.spelling][0]
+                return (f"({ptype.spelling}) autocb_{n}", f"Some(autocb_{n} as _)")
             return (f"({ptype.spelling}) pick_cb({kind})", f"unsafe {{ core::mem::transmute::<usize, _>(pick_cb({kind})) }}")
         if pt.kind == T.RECORD:
             n = pt.get_declaration().spelling

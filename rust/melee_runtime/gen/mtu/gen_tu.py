@@ -540,8 +540,10 @@ def build(stem, spec, want_ext):
         _DEFAULTS = json.loads(dj.read_text(encoding="utf-8"))
     tu = Tu(patched_source(stem, spec), spec.get("args", ()), (ROOT / spec["src"]).parent)
     stubs, inlines, data = tu.uses()
-    for n in ("__assert", "OSReport", "printf", "HSD_Panic", "OSPanic"):
+    for n in ("__assert", "OSReport", "printf", "HSD_Panic", "OSPanic", "__va_arg"):
         stubs.pop(n, None)
+    for n in [n for n in stubs if n.startswith("__builtin")]:
+        stubs.pop(n)
     for n in spec.get("skip_stubs", ()):
         stubs.pop(n, None)
     for n in list(data):

@@ -1,0 +1,37 @@
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/mtu/gen_tu.py; the callees of the C TU)
+pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    use super::*;
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn HSD_AObjAlloc() -> *mut HSD_AObj = crate::tu::aobj::HSD_AObjAlloc() as _;
+    fn HSD_AObjRemove(a0: *mut HSD_AObj) = crate::tu::aobj::HSD_AObjRemove(a0 as _);
+    fn HSD_AObjSetEndFrame(a0: *mut HSD_AObj, a1: f32) = crate::tu::aobj::HSD_AObjSetEndFrame(a0 as _, a1 as _);
+    fn HSD_AObjSetFObj(a0: *mut HSD_AObj, a1: *mut HSD_FObj) = crate::tu::aobj::HSD_AObjSetFObj(a0 as _, a1 as _);
+    fn HSD_AObjSetFlags(a0: *mut HSD_AObj, a1: u32) = crate::tu::aobj::HSD_AObjSetFlags(a0 as _, a1 as _);
+    fn HSD_AObjSetRewindFrame(a0: *mut HSD_AObj, a1: f32) = crate::tu::aobj::HSD_AObjSetRewindFrame(a0 as _, a1 as _);
+    fn HSD_FObjAlloc() -> *mut HSD_FObj = crate::tu::fobj::HSD_FObjAlloc() as _;
+    fn HSD_JObjClearFlags(a0: *mut HSD_JObj, a1: u32) = crate::tu::jobj_world::HSD_JObjClearFlags(a0, a1);
+    fn HSD_JObjSetFlags(a0: *mut HSD_JObj, a1: u32) = crate::tu::jobj_world::HSD_JObjSetFlags(a0, a1);
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+    }
+    // Data defined in other TUs (the tests set them).
+}
+// END GENERATED EXT

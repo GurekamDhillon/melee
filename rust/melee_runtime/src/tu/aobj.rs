@@ -15,32 +15,46 @@ use core::ptr::null_mut;
 use melee_types::*;
 
 pub use crate::aobj::{AOBJ_FIRST_PLAY, AOBJ_LOOP, AOBJ_NO_ANIM, AOBJ_NO_UPDATE, AOBJ_REWINDED};
-
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
-    #![allow(non_snake_case, unused_variables, dead_code)]
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
-    macro_rules! todo_fns {
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
         ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
-            $( pub unsafe extern "C" fn $name($($a: $t),*) $(-> $r)? {
-                crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?)
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
+                }
             } )*
         };
     }
-    todo_fns! {
-        fn HSD_ObjAllocInit(a0: *mut HSD_ObjAllocData, a1: usize, a2: u32) = crate::tu::objalloc::HSD_ObjAllocInit(a0, a1, a2);
-        fn HSD_ObjAlloc(a0: *mut HSD_ObjAllocData) -> *mut c_void = crate::tu::objalloc::HSD_ObjAlloc(a0);
-        fn HSD_ObjFree(a0: *mut HSD_ObjAllocData, a1: *mut c_void) = crate::tu::objalloc::HSD_ObjFree(a0, a1);
-        fn HSD_FObjRemoveAll(a0: *mut HSD_FObj) = crate::tu::fobj::HSD_FObjRemoveAll(a0);
-        fn HSD_FObjReqAnimAll(a0: *mut HSD_FObj, a1: f32) = crate::tu::fobj::HSD_FObjReqAnimAll(a0, a1);
-        fn HSD_FObjStopAnimAll(a0: *mut HSD_FObj, a1: *mut c_void, a2: HSD_ObjUpdateFunc, a3: f32) = crate::tu::fobj::HSD_FObjStopAnimAll(a0, a1, a2, a3);
-        fn HSD_FObjInterpretAnimAll(a0: *mut HSD_FObj, a1: *mut c_void, a2: HSD_ObjUpdateFunc, a3: f32) = crate::tu::fobj::HSD_FObjInterpretAnimAll(a0 as _, a1, a2, a3);
-        fn HSD_FObjLoadDesc(a0: *mut _HSD_FObjDesc) -> *mut HSD_FObj = crate::tu::fobj::HSD_FObjLoadDesc(a0 as _);
-        fn HSD_IDGetDataFromTable(a0: u32, a1: HSD_IDKey, a2: *mut i32) -> *mut c_void = crate::tu::id::HSD_IDGetDataFromTable(a0 as _, a1, a2);
-        fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj = crate::tu::jobj::HSD_JObjLoadJoint(a0);
-        fn HSD_JObjUnref(a0: *mut HSD_JObj) = crate::tu::jobj::HSD_JObjUnref(a0);
-        fn HSD_Panic(a0: *const i8, a1: u32, a2: *const i8) = crate::tu::debug::HSD_Panic(a0 as _, a1, a2 as _);
+    ext_fns! {
+    fn HSD_FObjInterpretAnimAll(a0: *mut c_void, a1: *mut c_void, a2: Option<unsafe extern "C" fn(*mut c_void, i32, *mut HSD_ObjData)>, a3: f32) = { let (a0, a1, a2, a3) = (a0, a1, a2, a3); crate::tu::fobj::HSD_FObjInterpretAnimAll(a0 as _, a1, a2, a3) };
+    fn HSD_FObjLoadDesc(a0: *mut _HSD_FObjDesc) -> *mut HSD_FObj = { let (a0,) = (a0,); crate::tu::fobj::HSD_FObjLoadDesc(a0 as _) };
+    fn HSD_FObjRemoveAll(a0: *mut HSD_FObj) = { let (a0,) = (a0,); crate::tu::fobj::HSD_FObjRemoveAll(a0) };
+    fn HSD_FObjReqAnimAll(a0: *mut HSD_FObj, a1: f32) = { let (a0, a1) = (a0, a1); crate::tu::fobj::HSD_FObjReqAnimAll(a0, a1) };
+    fn HSD_FObjStopAnimAll(a0: *mut HSD_FObj, a1: *mut c_void, a2: Option<unsafe extern "C" fn(*mut c_void, i32, *mut HSD_ObjData)>, a3: f32) = { let (a0, a1, a2, a3) = (a0, a1, a2, a3); crate::tu::fobj::HSD_FObjStopAnimAll(a0, a1, a2, a3) };
+    fn HSD_IDGetDataFromTable(a0: *mut _HSD_IDTable, a1: u64, a2: *mut i32) -> *mut c_void = crate::tu::id::HSD_IDGetDataFromTable(a0 as usize as _, a1 as _, a2);
+    fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj = { let (a0,) = (a0,); crate::tu::jobj::HSD_JObjLoadJoint(a0) };
+    fn HSD_JObjUnref(a0: *mut HSD_JObj) = { let (a0,) = (a0,); crate::tu::jobj::HSD_JObjUnref(a0) };
+    fn HSD_ObjAlloc(a0: *mut _HSD_ObjAllocData) -> *mut c_void = { let (a0,) = (a0,); crate::tu::objalloc::HSD_ObjAlloc(a0) };
+    fn HSD_ObjAllocInit(a0: *mut _HSD_ObjAllocData, a1: u32, a2: u32) = crate::tu::objalloc::HSD_ObjAllocInit(a0, a1 as _, a2);
+    fn HSD_ObjFree(a0: *mut _HSD_ObjAllocData, a1: *mut c_void) = { let (a0, a1) = (a0, a1); crate::tu::objalloc::HSD_ObjFree(a0, a1) };
+    fn fabsf(a0: f32) -> f32;
     }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+    }
+    // Data defined in other TUs (the tests set them).
 }
+// END GENERATED EXT
 
 /// `union callbackArg` (aobj.h).
 #[derive(Clone, Copy)]
@@ -53,10 +67,10 @@ pub union CallbackArg {
 
 pub static mut aobj_alloc_data: HSD_ObjAllocData = unsafe { core::mem::zeroed() };
 
-static mut endcallback_list: *mut HSD_SList = null_mut();
+pub static mut endcallback_list: *mut HSD_SList = null_mut();
 
-static mut HSD_AObj_804D762C: i32 = 0;
-static mut HSD_AObj_804D7630: i32 = 0;
+pub static mut HSD_AObj_804D762C: i32 = 0;
+pub static mut HSD_AObj_804D7630: i32 = 0;
 
 #[inline]
 fn hsd_assert(cond: bool, line: u32) {
@@ -66,7 +80,7 @@ fn hsd_assert(cond: bool, line: u32) {
 }
 
 pub unsafe extern "C" fn HSD_AObjInitAllocData() {
-    ext::HSD_ObjAllocInit(&raw mut aobj_alloc_data, core::mem::size_of::<HSD_AObj>(), 4);
+    ext::HSD_ObjAllocInit(&raw mut aobj_alloc_data, core::mem::size_of::<HSD_AObj>() as u32, 4);
 }
 
 pub unsafe extern "C" fn HSD_AObjGetAllocData() -> *mut HSD_ObjAllocData {
@@ -175,9 +189,9 @@ pub unsafe extern "C" fn HSD_AObjInterpretAnim(aobj: *mut HSD_AObj, obj: *mut c_
     }
 
     if (*aobj).flags & AOBJ_NO_UPDATE != 0 {
-        ext::HSD_FObjInterpretAnimAll((*aobj).fobj, obj, None, rate);
+        ext::HSD_FObjInterpretAnimAll((*aobj).fobj.cast(), obj, None, rate);
     } else {
-        ext::HSD_FObjInterpretAnimAll((*aobj).fobj, obj, update_func, rate);
+        ext::HSD_FObjInterpretAnimAll((*aobj).fobj.cast(), obj, update_func, rate);
     }
 
     if (*aobj).flags & AOBJ_LOOP == 0 && (*aobj).end_frame <= (*aobj).curr_frame {
@@ -204,7 +218,7 @@ pub unsafe extern "C" fn HSD_AObjLoadDesc(aobjdesc: *mut HSD_AObjDesc) -> *mut H
     HSD_AObjSetFObj(aobj, fobj);
     let id = (*aobjdesc).obj_id;
     if id as usize != 0 {
-        let hsd_obj = ext::HSD_IDGetDataFromTable(0, id, null_mut()) as *mut HSD_Obj;
+        let hsd_obj = ext::HSD_IDGetDataFromTable(null_mut(), id as u64, null_mut()) as *mut HSD_Obj;
         let mut phi_r30 = hsd_obj;
         if !hsd_obj.is_null() {
             // ref_INC
@@ -408,7 +422,7 @@ pub unsafe extern "C" fn HSD_ForeachAnim(obj: *mut c_void, type_: HSD_Type, mask
         AOBJ_ARG_AV | AOBJ_ARG_AOV | AOBJ_ARG_AOTV => {}
         AOBJ_ARG_AU | AOBJ_ARG_AOU | AOBJ_ARG_AOTU => {}
         _ => {
-            ext::HSD_Panic(c"aobj.c".as_ptr(), 826, c"unexpected argument format.\n".as_ptr());
+            crate::tu::debug::HSD_Panic(c"aobj.c".as_ptr(), 826, c"unexpected argument format.\n".as_ptr());
         }
     }
 
@@ -425,7 +439,7 @@ pub unsafe extern "C" fn HSD_ForeachAnim(obj: *mut c_void, type_: HSD_Type, mask
         WOBJ_TYPE => WObjForeachAnim(obj as *mut HSD_WObj, mask, func, arg_type, argp),
         FOG_TYPE => FogForeachAnim(obj as *mut HSD_Fog, mask, func, arg_type, argp),
         _ => {
-            ext::HSD_Panic(c"aobj.c".as_ptr(), 862, c"unexpected type of object.\n".as_ptr());
+            crate::tu::debug::HSD_Panic(c"aobj.c".as_ptr(), 862, c"unexpected type of object.\n".as_ptr());
         }
     }
 }

@@ -1189,6 +1189,7 @@ impl VsMatch {
                         ft_8008a2bc(p, &mut self.rand)?;
                     }
                 }
+                FTMS_MS_SPECIAL_LW => ftms_speciallw_anim(p, &mut self.rand)?,
                 FTCA_MS_SPECIAL_LW => {
                     // ftCa_SpecialLw_Anim: at the end, SpecialLwEnd (ground) or EndAir.
                     if !p.skel.frames_remaining() {
@@ -1352,6 +1353,16 @@ impl VsMatch {
                     } else {
                         fc::calc_ground_accel_deaccel(f, fr);
                     }
+                    fc::set_self_movement_from_grounded_movement(f);
+                }
+                FTMS_MS_SPECIAL_LW => {
+                    // ftMs_SpecialLw_Phys: ft_80084F3C, ftColl_8007AEE0 (shield capsule updates).
+                    let f = &mut *p.fp;
+                    let mut friction = f.co_attrs.ground_friction;
+                    if fc::abs_c(f.gr_vel) > f.co_attrs.walk_max_vel {
+                        friction *= melee_fighter::hooks::common_data().friction_when_above_walk_speed;
+                    }
+                    fc::calc_ground_accel_deaccel(f, friction);
                     fc::set_self_movement_from_grounded_movement(f);
                 }
                 FTCA_MS_SPECIAL_LW | FTCA_MS_SPECIAL_LW_END | FTCA_MS_SPECIAL_LW_END_AIR if p.fp.ground_or_air != melee_types::GA_Ground => {
@@ -1521,6 +1532,23 @@ impl VsMatch {
                             return Err("Catch off the floor: fn_800D949C / fn_800D9C64 not ported".into());
                         }
                         fall_enter(p, &mut self.rand)?;
+                    }
+                }
+                FTMS_MS_SPECIAL_LW => {
+                    // ftMs_SpecialLw_Coll: ft_800827A0 (mpColl_8004B2DC); off the floor the C goes
+                    // to SpecialAirLw (ftCommon_GroundToAirStateChange), not ported.
+                    let joints = {
+                        let d = p.ecb_desc;
+                        ecb_joints(&mut p.skel, &d)
+                    };
+                    let fp = &mut *p.fp;
+                    fp.coll_data.last_pos = fp.coll_data.cur_pos;
+                    fp.coll_data.cur_pos = fp.cur_pos;
+                    let r = mc::mp_coll_8004b2dc(&mut self.ground, &mut self.cg, &mut fp.coll_data, &joints)
+                        .map_err(|e| format!("{} not ported", e.0))?;
+                    fp.cur_pos = fp.coll_data.cur_pos;
+                    if !r {
+                        return Err("ftMs_SpecialLw_80138D38 (Counter off the floor -> SpecialAirLw) not ported".into());
                     }
                 }
                 FTCA_MS_SPECIAL_LW | FTCA_MS_SPECIAL_LW_END | FTCA_MS_SPECIAL_LW_END_AIR if p.fp.ground_or_air != melee_types::GA_Ground => {
@@ -1707,7 +1735,8 @@ impl VsMatch {
                 let w = pa.skel.world_pos(j);
                 let reach = h.scale + (h.offset.x * h.offset.x + h.offset.y * h.offset.y + h.offset.z * h.offset.z).sqrt() + HIT_GUARD_MARGIN;
                 for b in 0..self.players.len() {
-                    if b == a {
+                    // The hidden partner fighter (Zelda, Sleep) has no hurtboxes.
+                    if b == a || self.players[b].follower {
                         continue;
                     }
                     let c = self.players[b].fp.cur_pos;
@@ -1724,7 +1753,7 @@ impl VsMatch {
     /// efAsync_QueueProcessDeferred -> efSync_Spawn -> efAsync_Dispatch, for player `i`.
     fn ef_dispatch(&mut self, i: usize, q: QueuedEffect) -> Result<(), String> {
         match (q.kind, q.gfx) {
-            (EF_SPAWN_POS_OFFSET_PARAM, g @ (0x400 | 0x401)) => {
+            (EF_SPAWN_POS_OFFSET_PARAM, g @ (0x3FE | 0x400 | 0x401)) => {
                 // lb_8000B1CC(jobj, &params, &pos), then efAsync_Dispatch:
                 // efLib_CreateGenerator_Translate_FacingDir(0x5A, &pos, 0x401 ? dir : -dir):
                 // hsd_8039F05C(0, 0, 0x5A) + an AppSRT (status 1) at pos, rot.y = +-pi/2 and
@@ -1732,9 +1761,11 @@ impl VsMatch {
                 let p = &mut self.players[i];
                 let j = p.skel.part(q.part);
                 let pos = p.skel.world_point(j, q.params);
-                let dir = if g == 0x401 { q.extra1 } else { -q.extra1 };
+                // 0x3FE: the same with id 0x107 and the direction as is.
+                let dir = if g == 0x400 { -q.extra1 } else { q.extra1 };
+                let gen_id = if g == 0x3FE { 0x107 } else { 0x5A };
                 let mut host = Host { rand: &mut self.rand, joint_mtx: &self.joint_mtx, appsrt_hook_lists: &self.appsrt_hook_lists };
-                if let Some(gen) = self.ps.gen_create(&mut host, 0, 0, 0x5A) {
+                if let Some(gen) = self.ps.gen_create(&mut host, 0, 0, gen_id) {
                     let srt = match self.ps.gen(gen).appsrt {
                         Some(a) => Some(a),
                         None => Some(self.ps.add_generator_appsrt_begin(gen, 1)),
@@ -2235,6 +2266,7 @@ fn input_cb(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         FTCO_MS_WAIT => wait_iasa(p, rand),
         m if (FTCO_MS_WALK_SLOW..=FTCO_MS_WALK_FAST).contains(&m) => walk_iasa(p, rand),
         FTCA_MS_SPECIAL_LW | FTCA_MS_SPECIAL_LW_END | FTCA_MS_SPECIAL_LW_END_AIR => Ok(()), // input_cb NULL
+        FTMS_MS_SPECIAL_LW => Ok(()), // ftMs_SpecialLw_IASA is empty
         m if (FTCO_MS_ATTACK11..=FTCO_MS_ATTACK11 + 2).contains(&m) => attack1_iasa(p, rand),
         FTCO_MS_CATCH => Ok(()), // ftCo_Catch_IASA is empty
         FTCO_MS_DEAD_DOWN => Ok(()), // input_cb NULL
@@ -2394,6 +2426,7 @@ fn special_checks(p: &mut Player, rand: &mut HsdRand) -> Result<bool, String> {
     if fp.x687 == 0 {
         return match fp.kind {
             Ft_Kind_Captain => ftca_speciallw_enter(p, rand).map(|_| true),
+            melee_types::Ft_Kind_Mars => ftms_speciallw_enter(p, rand).map(|_| true),
             k => Err(format!("player {who}: ftCo_800D68C0 (down-B, kind {k}) not ported")),
         };
     }
@@ -3295,6 +3328,39 @@ fn load_row(p: &mut Player, smid: u32) -> Result<Option<(AnimRow, FigaTree)>, St
     Ok(r)
 }
 
+/// Marth's Counter (`ftMs_MS_SpecialLw` 369 .. `SpecialAirLwHit` 372) and its rows (`ftMs_SM_*` 323..326).
+const FTMS_MS_SPECIAL_LW: i32 = 369;
+const FTMS_MS_SPECIAL_LW_HIT: i32 = 370;
+const FTMS_MS_SPECIAL_AIR_LW: i32 = 371;
+const FTMS_MS_SPECIAL_AIR_LW_HIT: i32 = 372;
+const FTMS_SM_SPECIAL_LW: u32 = 323;
+
+/// `ftMs_SpecialLw_Enter`: `self_vel.y = 0`, SpecialLw, `ftAnim_8006EBA4`, `cmd_vars[1] = 0`
+/// (`mv.ms.speciallw.x0 = 0` only feeds the counter-hit damage).
+fn ftms_speciallw_enter(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    p.fp.self_vel.y = 0.0;
+    let row = load_row(p, FTMS_SM_SPECIAL_LW)?;
+    change_motion_state(p, FTMS_MS_SPECIAL_LW, row.as_ref(), rand)?;
+    anim_step(p, rand)?;
+    p.fp.cmd_vars[1] = 0;
+    Ok(())
+}
+
+/// `ftMs_SpecialLw_Anim`: the script's `cmd_vars[1]` opens the counter window (`ftColl_8007B1B8`:
+/// the shield-hit capsule, which only matters once a hit can land: `hit_guard` stops first), and
+/// the end of the animation returns to Wait.
+fn ftms_speciallw_anim(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    let fp = &mut *p.fp;
+    if fp.cmd_vars[1] == 1 {
+        fp.cmd_vars[1] = 2;
+        // (x221B_b0 / b1, shield_unk0 / 1: the counter capsule's flags, read only by hit detection.)
+    }
+    if !p.skel.frames_remaining() {
+        ft_8008a2bc(p, rand)?;
+    }
+    Ok(())
+}
+
 /// `ftParts_GetBoneIndex(fp, part)`.
 fn bone_index(p: &Player, part: u32) -> usize {
     p.part_to_joint[part as usize] as usize
@@ -3540,6 +3606,9 @@ fn ftaction_run(p: &mut Player, rand: &mut HsdRand, skip: bool) -> Result<(), St
                 p.skel.apply_part_anim(&pdat, &pd, slot, anim, blend)?;
                 p.script += 4;
             }
+            // ftAction_80072A5C: ftCo_800BFFD0 (start a colour-overlay animation, fp->x408 / x488 /
+            // x508: render only); ftAction_80072AAC (skip table) just steps. One word.
+            0x2E => p.script += 4,
             // ftAction_800726F4: TObj (eye texture) animation. Render only.
             0x28 => p.script += 4,
             // ftAction_800728F8: rumble (ftCommon_8007EC30 / 8007EBAC). No sim effect.

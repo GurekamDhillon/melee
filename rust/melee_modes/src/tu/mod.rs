@@ -70,6 +70,7 @@ pub mod gm_17c0;
 // state oracle (`crate::oracle`, `gen/tu/run.py`) against the C compiled natively.
 pub mod gmfrontend;
 pub mod gmfrontend_atlas_toy;
+pub mod gmmode_init;
 pub mod gmprogressivemode;
 pub mod gmregcommon;
 pub mod gmregtyfall;

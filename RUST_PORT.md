@@ -1031,3 +1031,34 @@ rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_In
 - Not yet: the native sim's own SFX calls (golden --audio) match the C bit for bit only up to the first
   game-driven sound (sub-frame ~2003; the sim does not issue the announcer/entry sounds yet), so the end-to-end
   native capture is not equal; positional/KO/PAN paths unused in this scenario (no trace lines).
+
+## Platform track: scripting, `melee_script` (2026-10-24, port/plat-script, round 1)
+- Crate `rust/melee_script` on mlua (lua54, vendored). **Same Lua as the C build**: `rust/third_party/lua-src` is a patched `lua-src` that
+  compiles the unmodified `pc/third_party/lua-5.4.7` sources (`[patch.crates-io]` in `rust/Cargo.toml`); stock lua-src ships 5.4.9.
+- `engine.rs` ports gw_script.c's plumbing: `gs_build_base` / `gs_new_env` (sandbox: base subset, private copies of every library table
+  and `gd`, `string.dump` removed, string metatable locked, `math.randomseed(0)`), script slots (128) with up to 16 coroutine tasks,
+  `-- @key:` headers and `mod.json` fields (`manifest.rs` keeps the `strstr`-style reader and its quirks), `gs_pcall` (per-call 2,000,000
+  instruction / 500 ms budget through a **raw** C count hook), `gs_run_tasks` (`gd.wait(n)` yields n), 20 errors switch a script off,
+  `load_named` / `scan_scripts_dir` / `scan_mods` / `boot` (`MELEE_SCRIPT`, `MELEE_SCRIPTS`), the console (`exec`: `= expr`, help, scripts,
+  load/unload/reload, script commands, Lua), FramePre/FramePost/Tick/SceneBegin hook order, camera-completion hook.
+- **mlua trap**: an error raised by a Rust callback reaches Lua's `pcall` as a userdata, and a hook error likewise; the C build raises
+  strings with the caller's position. So natives never raise: `Engine::native` returns `(sentinel, msg)` and a small Lua trampoline does
+  `error(msg, 2)`; the budget hook is a raw `lua_sethook` + `luaL_error` (threads inherit it; mlua's hook callback does not reach coroutines).
+- The game is reached through `game::ScriptGame`, the `gw_ScriptGame_*` scalar interface with the C field numbers (script_lab.h, SI_/SF_),
+  every method defaulting to "nothing there". The platform through `host::Host`. `pad::ScriptPads` is gw_script_pad.c section 3.
+- gd functions ported (~120 of 440): core (log/print, frame, time, rng, rgb, label, text/box/fill/line, key/key_pressed/mouse, command,
+  run + prelude wait/wait_until/press/tilt, gd.comm, data_read/exists/write/write_atomic, script, quit, pause/resume/step/paused,
+  safe_area), mod_read/list/stamp, input/release/pad/input_mask/input_chord/mirror_pad, scene/match/players/player/char_name,
+  hitboxes/hurtboxes/joints/dobjs/project/attrs/motion_name/debug_draw/debug_stage, camera_* (9), set_percent/set_damage/set_stocks/hit/
+  impulse/cpu_mode(s)/fly/teleport/fly_speed/fly_solid/hold_hitbox/play_sound, timeline/motion_list/set_motion/anim_rows/anim_preview,
+  lab_request/lab_mode/lab_leave/lab_now/lab_common/lab_env/floor_below/set_shield/set_scale/rollbacks(_clear).
+- **Not ported yet** (next rounds, in order): history/step_back/rewind_* (savestate/loadstate slots are done), state_* library, rec_* (gw_script_rec.inc),
+  hot_reload, kb_preview, combo, perf/prof, `gd.kit` / `gd.ui` (tables are empty), entity refs (`entity_ref` is nil), items/fx/echo/
+  afterimage/tracer, stage_*/model_*/shader/area/warm/launch/1P/netplay/modsync/sim/hit_rules/enemy*, the Geno registry (geno_registry.c,
+  geno_lua_core.h, fighter Lua), `lab.lua`'s remaining calls. `gdscript pc/geno/mods/geno-lab` lists what lab.lua still lacks at load.
+- Proof so far: `cargo test -p melee_script` (7 unit + 18 engine + 6 lab_api tests); `rust/melee_script/tools/standalone_parity.sh` runs
+  every engine-less script of pc/tests, pc/geno/tools, pc/gameworld, pc/scripts under the system `lua` 5.4.7 and under `luarun`
+  (this host's interpreter): 82 identical exit status and output (incl. atlas_ui_stub_test, envoy_*, campaign-save-unit, lab_stage_d_check's
+  own 9 pre-existing data-dependent failures), 0 different, 58 need the engine (`gd` global) and are not run.
+- Traps: write files with the Write/Edit tools (a bash heredoc dropped a backslash and wrote NUL bytes); target dir is `build/cargo` at
+  the repo root, not `rust/target`.

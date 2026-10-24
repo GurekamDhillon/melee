@@ -17,3 +17,12 @@ pub mod mobj;
 pub mod dobj;
 pub mod pobj;
 pub mod displayfunc;
+pub mod id;
+pub mod list;
+pub mod initialize;
+pub mod leak;
+pub mod jobj;
+#[allow(non_snake_case)]
+pub mod hsd_3B34;
+#[allow(non_snake_case)]
+pub mod hsd_3B5C;

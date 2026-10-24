@@ -265,7 +265,7 @@ impl<D: Copy + PartialEq, R: Copy + PartialEq> JObjTree<D, R> {
     }
 
     /// `HSD_JObjWalkTree0`; `cb(jobj, type)` with type 1 = first child, 2 = later sibling.
-    fn walk_tree0(&self, j: JObjId, cb: &mut dyn FnMut(JObjId, u32)) {
+    pub fn walk_tree0(&self, j: JObjId, cb: &mut dyn FnMut(JObjId, u32)) {
         let parent = self.get(j).parent.expect("HSD_JObjWalkTree0: jobj->parent");
         let ty = if self.get(parent).child == Some(j) { 1 } else { 2 };
         cb(j, ty);
@@ -461,7 +461,7 @@ impl<D: Copy + PartialEq, R: Copy + PartialEq> JObjTree<D, R> {
     }
 
     /// `UpdateParentTrspBits` (static).
-    fn update_parent_trsp_bits(&mut self, mut j: Option<JObjId>, child: JObjId) {
+    pub fn update_parent_trsp_bits(&mut self, mut j: Option<JObjId>, child: JObjId) {
         let cf = self.get(child).flags;
         let flags = (cf | cf << 10) & JOBJ_ROOT_MASK;
         while let Some(x) = j {

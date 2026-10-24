@@ -803,3 +803,73 @@
 #include <melee/gm/gmresultplayer.static.h>
 #include <melee/gm/gmfrontend_items.h>
 #include <melee/gm/gmtoulib.static.h>
+#line 12 "src/sysdolphin/baselib/hsd_3B34.c"
+typedef struct JpegByteBuffer {
+    u8 data[1];
+} JpegByteBuffer;
+#line 16 "src/sysdolphin/baselib/hsd_3B34.c"
+typedef struct JpegComment {
+    char data[0x15];
+} JpegComment;
+#line 20 "src/sysdolphin/baselib/hsd_3B34.c"
+typedef struct JpegHuffDc {
+    u8 data[0x1C];
+} JpegHuffDc;
+#line 24 "src/sysdolphin/baselib/hsd_3B34.c"
+typedef struct JpegHuffAc {
+    u8 data[0xB2];
+} JpegHuffAc;
+#line 28 "src/sysdolphin/baselib/hsd_3B34.c"
+typedef struct JpegMetadata {
+    JpegComment comment;
+    u8 comment_pad[3];
+    JpegHuffDc huff_dc_luma;
+    JpegHuffDc huff_dc_chroma;
+    JpegHuffAc huff_ac_luma;
+    u8 huff_ac_luma_pad[2];
+    JpegHuffAc huff_ac_chroma;
+} JpegMetadata;
+#line 421 "src/sysdolphin/baselib/hsd_3B34.c"
+typedef struct JpegEncodeTables {
+    u8 quant_luma[0x40];
+    u8 quant_chroma[0x40];
+    u16 ac_code_luma[0xA2];
+    u8 ac_length_luma[0xA2];
+    u8 pad_266[2];
+    u16 ac_code_chroma[0xA2];
+    u8 ac_length_chroma[0xA2];
+    u8 pad_44E[2];
+} JpegEncodeTables;
+#line 9 "src/sysdolphin/baselib/hsd_3B5C.c"
+typedef struct JpegWorkData {
+    s32 luma[0x100];
+    s32 cb[0x40];
+    s32 cr[0x40];
+    s32 coeff[0x40];
+    s32 prev_dc[3];
+} JpegWorkData;
+#line 17 "src/sysdolphin/baselib/hsd_3B5C.c"
+typedef struct JpegState {
+    jmp_buf jmp;
+    JpegWorkData work;
+} JpegState;
+#line 22 "src/sysdolphin/baselib/hsd_3B5C.c"
+typedef struct JpegQuantTables {
+    u8 luma[0x40];
+    u8 chroma[0x40];
+} JpegQuantTables;
+#line 488 "src/sysdolphin/baselib/hsd_3B5C.c"
+typedef struct {
+    u16* pixels;
+} JpegOutput;
+#line 7 "src/sysdolphin/baselib/leak.c"
+typedef struct HSD_LeakChecker {
+    u32* table;   /* 0x00 */
+    u32 x04;      /* 0x04 */
+    u32 used;     /* 0x08 */
+    u32 capacity; /* 0x0C */
+    u32 x10;      /* 0x10 */
+    u32 x14;      /* 0x14 */
+    u32 peak;     /* 0x18 */
+    s32 x1C;      /* 0x1C */
+} HSD_LeakChecker;

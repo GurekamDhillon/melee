@@ -1183,6 +1183,12 @@ impl VsMatch {
                         ft_8008a2bc(p, &mut self.rand)?;
                     }
                 }
+                m if is_tilt_motion(m) => {
+                    // ftCo_AttackS3_Anim / ftCo_AttackHi3_Anim: ft_8008A2BC at the end.
+                    if !p.skel.frames_remaining() {
+                        ft_8008a2bc(p, &mut self.rand)?;
+                    }
+                }
                 m if (FTCO_MS_ATTACK11..=FTCO_MS_ATTACK11 + 2).contains(&m) => {
                     // ftCo_Attack11/12/13_Anim: ft_8008A2BC when the animation ends.
                     if !p.skel.frames_remaining() {
@@ -1339,6 +1345,16 @@ impl VsMatch {
                     let f = &mut *p.fp;
                     let fr = melee_fighter::hooks::common_data().x64 * f.co_attrs.ground_friction;
                     fc::calc_ground_accel_deaccel(f, fr);
+                    fc::set_self_movement_from_grounded_movement(f);
+                }
+                m if is_tilt_motion(m) => {
+                    // ftCo_AttackS3_Phys / ftCo_AttackHi3_Phys: ft_80084F3C.
+                    let f = &mut *p.fp;
+                    let mut friction = f.co_attrs.ground_friction;
+                    if fc::abs_c(f.gr_vel) > f.co_attrs.walk_max_vel {
+                        friction *= melee_fighter::hooks::common_data().friction_when_above_walk_speed;
+                    }
+                    fc::calc_ground_accel_deaccel(f, friction);
                     fc::set_self_movement_from_grounded_movement(f);
                 }
                 m if (FTCO_MS_ATTACK11..=FTCO_MS_ATTACK11 + 2).contains(&m) => {
@@ -1514,7 +1530,7 @@ impl VsMatch {
                         ft_80082b1c(&mut self.ground, p, c_common, &mut self.rand)?;
                     }
                 }
-                m if m == FTCO_MS_CATCH || (FTCO_MS_ATTACK11..=FTCO_MS_ATTACK11 + 2).contains(&m) => {
+                m if m == FTCO_MS_CATCH || is_tilt_motion(m) || (FTCO_MS_ATTACK11..=FTCO_MS_ATTACK11 + 2).contains(&m) => {
                     // ftCo_Attack1x_Coll -> ft_80084104: ft_800827A0 (mpColl_8004B2DC), else Fall;
                     // ftCo_Catch_Coll -> ft_800841B8(fn_800D8E30): the same, the grab cleanup first.
                     let joints = {
@@ -2267,6 +2283,14 @@ fn input_cb(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         m if (FTCO_MS_WALK_SLOW..=FTCO_MS_WALK_FAST).contains(&m) => walk_iasa(p, rand),
         FTCA_MS_SPECIAL_LW | FTCA_MS_SPECIAL_LW_END | FTCA_MS_SPECIAL_LW_END_AIR => Ok(()), // input_cb NULL
         FTMS_MS_SPECIAL_LW => Ok(()), // ftMs_SpecialLw_IASA is empty
+        m if is_tilt_motion(m) => {
+            // ftCo_AttackS3_IASA / ftCo_AttackHi3_IASA: ftCo_Wait_IASA once allowed.
+            if p.fp.allow_interrupt() != 0 {
+                wait_iasa(p, rand)
+            } else {
+                Ok(())
+            }
+        }
         m if (FTCO_MS_ATTACK11..=FTCO_MS_ATTACK11 + 2).contains(&m) => attack1_iasa(p, rand),
         FTCO_MS_CATCH => Ok(()), // ftCo_Catch_IASA is empty
         FTCO_MS_DEAD_DOWN => Ok(()), // input_cb NULL
@@ -2452,7 +2476,40 @@ fn attack_checks(p: &mut Player, rand: &mut HsdRand) -> Result<bool, String> {
         return Ok(false);
     }
     if i.lstick[0].x != 0.0 || i.lstick[0].y != 0.0 {
-        return Err(format!("player {}: A with the stick held (smash / tilt checks) not ported", p.slot + 1));
+        // ftCo_AttackS4 / Hi4 / Lw4_CheckInput (the smash flicks): a stick that passed the
+        // threshold inside the window stops the run; ftCo_AttackS3 / Hi3 / Lw3_CheckInput (tilts).
+        let cd = melee_fighter::hooks::common_data();
+        let who = p.slot + 1;
+        if fc::abs_c(i.lstick[0].x) >= cd.dash_smash_stick_threshold && (fp.active_timer.lstick.x as i32) < cd.dash_smash_window as i32 {
+            return Err(format!("player {who}: ftCo_AttackS4 (forward smash) not ported"));
+        }
+        if i.lstick[0].y >= cd.xCC && (fp.active_timer.lstick.y as i32) < cd.xD0 as i32 {
+            return Err(format!("player {who}: ftCo_AttackHi4 (up smash) not ported"));
+        }
+        if i.lstick[0].y <= cd.xD4 && (fp.active_timer.lstick.y as i32) < cd.xD8 as i32 {
+            return Err(format!("player {who}: ftCo_AttackLw4 (down smash) not ported"));
+        }
+        // ftCo_GetLStickAngle: atan2f(y, |x|).
+        let angle = melee_runtime::lbtrigf::atan2f(i.lstick[0].y, fc::abs_c(i.lstick[0].x));
+        if i.lstick[0].x * fp.facing_dir >= cd.x98 && fc::abs_c(angle) < cd.x20_radians {
+            if !fp.item_gobj.is_null() {
+                return Err("ftCo_AttackS3 with an item not ported".into());
+            }
+            return attack_s3_enter(p, angle, rand).map(|_| true);
+        }
+        if i.lstick[0].y >= cd.attackhi3_stick_threshold_y && angle > cd.x20_radians {
+            if !fp.item_gobj.is_null() {
+                return Err("ftCo_AttackHi3 with an item not ported".into());
+            }
+            fp.set_allow_interrupt(0);
+            let row = load_row(p, melee_types::ftCo_SM_AttackHi3 as u32)?;
+            change_motion_state(p, melee_types::ftCo_MS_AttackHi3 as i32, row.as_ref(), rand)?;
+            anim_step(p, rand)?;
+            return Ok(true);
+        }
+        if i.lstick[0].y <= cd.xB0 && angle < -cd.x20_radians {
+            return Err(format!("player {who}: ftCo_AttackLw3 (down tilt) not ported"));
+        }
     }
     // ftCo_Attack1_CheckInput.
     if !fp.item_gobj.is_null() {
@@ -2466,6 +2523,35 @@ fn attack_checks(p: &mut Player, rand: &mut HsdRand) -> Result<bool, String> {
     }
     attack11_enter(p, rand)?;
     Ok(true)
+}
+
+/// `ftCo_AttackS3.c decideAngle`: the angled forward tilt. `ftData_80085FD4(fp, msid)->x8` is the
+/// size of `ftData->xC[msid]`'s animation (the table is indexed by the motion id as is).
+fn attack_s3_enter(p: &mut Player, angle: f32, rand: &mut HsdRand) -> Result<(), String> {
+    use melee_types::{ftCo_MS_AttackHi3, ftCo_MS_AttackLw3, ftCo_MS_AttackS3Hi, ftCo_MS_AttackS3HiS, ftCo_MS_AttackS3Lw, ftCo_MS_AttackS3LwS, ftCo_MS_AttackS3S};
+    let cd = melee_fighter::hooks::common_data();
+    let has = |p: &Player, m: u32| -> Result<bool, String> { Ok(p.files.anim_row(m)?.is_some()) };
+    let msid = if angle > cd.x9C_radians && has(p, ftCo_MS_AttackS3S as u32)? {
+        ftCo_MS_AttackS3Hi
+    } else if angle > cd.xA0_radians && has(p, ftCo_MS_AttackS3LwS as u32)? {
+        ftCo_MS_AttackS3HiS
+    } else if angle < cd.xA8_radians && has(p, ftCo_MS_AttackLw3 as u32)? {
+        ftCo_MS_AttackS3Lw
+    } else if angle < cd.xA4_radians && has(p, ftCo_MS_AttackHi3 as u32)? {
+        ftCo_MS_AttackS3LwS
+    } else {
+        ftCo_MS_AttackS3S
+    } as i32;
+    p.fp.set_allow_interrupt(0);
+    // The submotion rows follow the motion states by two (ftCo_SM_AttackS3Hi = 53 = MS 51 + 2).
+    let row = load_row(p, (msid + 2) as u32)?;
+    change_motion_state(p, msid, row.as_ref(), rand)?;
+    anim_step(p, rand)
+}
+
+/// The grounded forward / up tilts (`ftCo_AttackS3` x5, `ftCo_AttackHi3`).
+fn is_tilt_motion(m: i32) -> bool {
+    (melee_types::ftCo_MS_AttackS3Hi as i32..=melee_types::ftCo_MS_AttackHi3 as i32).contains(&m)
 }
 
 /// `checkAttack11` (ftCo_Attack1.c): no item to pick up (`ftpickupitem_80094790`: no items
@@ -2876,7 +2962,7 @@ fn guard_check(p: &mut Player, rand: &mut HsdRand) -> Result<bool, String> {
 
 fn guard_kind_check(p: &Player) -> Result<(), String> {
     match p.fp.kind {
-        melee_types::Ft_Kind_Yoshi | melee_types::Ft_Kind_Mars => Err(format!("player {}: ftCo_Guard for Yoshi / Marth not ported", p.slot + 1)),
+        melee_types::Ft_Kind_Yoshi => Err(format!("player {}: ftCo_Guard for Yoshi not ported", p.slot + 1)),
         _ => Ok(()),
     }
 }
@@ -2922,6 +3008,11 @@ fn ftco_800923b4(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     p.guard.x14 = 0.0;
     p.guard.x18 = 0.0;
     guard_shield_up(p);
+    if p.fp.kind == melee_types::Ft_Kind_Mars {
+        // ftCo_800923B4's Marth case: ftParts_80074B0C(gobj, 1, 1) (the sword's model part,
+        // x221D_b2) and the shield sound (ft_PlaySFX 190115): render and audio only.
+        p.fp.set_x221D_b2(1);
+    }
     ftco_800921dc(p)
 }
 
@@ -3609,6 +3700,9 @@ fn ftaction_run(p: &mut Player, rand: &mut HsdRand, skip: bool) -> Result<(), St
             // ftAction_80072A5C: ftCo_800BFFD0 (start a colour-overlay animation, fp->x408 / x488 /
             // x508: render only); ftAction_80072AAC (skip table) just steps. One word.
             0x2E => p.script += 4,
+            // ftAction_80072B3C: the afterimage (sword trail) setup, x2100 / x2101 (ftafterimage.c:
+            // render only); ftAction_80072B84 (skip table) just steps. One word.
+            0x31 => p.script += 4,
             // ftAction_800726F4: TObj (eye texture) animation. Render only.
             0x28 => p.script += 4,
             // ftAction_800728F8: rumble (ftCommon_8007EC30 / 8007EBAC). No sim effect.

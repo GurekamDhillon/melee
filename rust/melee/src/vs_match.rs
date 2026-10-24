@@ -406,6 +406,10 @@ pub struct VsMatch {
     /// Platform input (netplay / rollback): the raw samples the next frame's `HSD_PadRenewStatus`
     /// reads instead of the scenario's pad script. `None`: the script (`input::pad_fixed`).
     pub pad_feed: Option<[input::RawPad; 4]>,
+    /// MELEE_SLP playback (`golden --slp`): the replay's processed inputs for the frame about to
+    /// run, written into each human fighter where `Fighter_Spaghetti_8006AD10` reads the pad
+    /// (`Replay_StickX` & co. in fighter.c). `None`: the pad path.
+    pub replay_in: Option<[Option<melee_net::pad::RbInput>; 4]>,
     /// The golden frame whose s_link 0 runs the GO callback (input unlock).
     go_frame: i32,
     pub rand: HsdRand,
@@ -1162,7 +1166,7 @@ impl VsMatch {
                 }
             });
         }
-        Ok(Self { players, ground, cg, pads: [input::PadStatus::default(); 4], pad_feed: None, go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists, blast, fighter_jobjs: Vec::new(), items: Vec::new(), respawn_points: (4..8).filter_map(|id| points.iter().find(|p| p.id == id).map(|p| Vec3 { x: p.pos[0], y: p.pos[1], z: p.pos[2] })).collect(), respawn_busy: [0; 6], start_shield, stage_data: Arc::new(stage.data.clone()), stage_map_head: stage.public_offset("map_head").unwrap_or(0), keep_ref: Vec::new() })
+        Ok(Self { players, ground, cg, pads: [input::PadStatus::default(); 4], pad_feed: None, replay_in: None, go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists, blast, fighter_jobjs: Vec::new(), items: Vec::new(), respawn_points: (4..8).filter_map(|id| points.iter().find(|p| p.id == id).map(|p| Vec3 { x: p.pos[0], y: p.pos[1], z: p.pos[2] })).collect(), respawn_busy: [0; 6], start_shield, stage_data: Arc::new(stage.data.clone()), stage_map_head: stage.public_offset("map_head").unwrap_or(0), keep_ref: Vec::new() })
     }
 
     /// The m-ex fighters' code-run report (crate::mex), one block per such fighter.
@@ -1432,7 +1436,8 @@ impl VsMatch {
             let pad = self.pads[port];
             let p = &mut self.players[i];
             let locked = p.input_locked;
-            input::fighter_input(&mut p.fp, &pad, &mut p.x221d_b3, locked);
+            let rin = self.replay_in.as_ref().and_then(|r| r[port].as_ref());
+            input::fighter_input(&mut p.fp, &pad, &mut p.x221d_b3, locked, rin);
             if p.fp.x2219_b5() == 0 {
                 if !p.fp.x1980.is_null() {
                     return Err("ftCommon_8007FFD8 (x1980 item) not ported".into());

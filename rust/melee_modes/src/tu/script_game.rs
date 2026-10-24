@@ -6,9 +6,9 @@ pub mod ext { use super::*; crate::oext_fns! {fn ProfBegin(a0 : :: core :: ffi :
 crate::oext_fns! {fn ProfEnd() -> ();}
 crate::oext_fns! {fn ProfActive() -> :: core :: ffi :: c_int;}
 crate::oext_fns! {fn PSMTXCopy(a0 : * mut [:: core :: ffi :: c_float ; 4], a1 : * mut [:: core :: ffi :: c_float ; 4]) -> ();}
-crate::oext_fns! {fn PSMTXConcat(a0 : * mut [:: core :: ffi :: c_float ; 4], a1 : * mut [:: core :: ffi :: c_float ; 4], a2 : * mut [:: core :: ffi :: c_float ; 4]) -> ();}
-crate::oext_fns! {fn PSMTXInverse(a0 : * mut [:: core :: ffi :: c_float ; 4], a1 : * mut [:: core :: ffi :: c_float ; 4]) -> :: core :: ffi :: c_uint;}
-crate::oext_fns! {fn PSMTXMultVec(a0 : * mut [:: core :: ffi :: c_float ; 4], a1 : * mut Vec, a2 : * mut Vec) -> ();}
+crate::oext_fns! {fn PSMTXConcat(a0 : * mut [:: core :: ffi :: c_float ; 4], a1 : * mut [:: core :: ffi :: c_float ; 4], a2 : * mut [:: core :: ffi :: c_float ; 4]) -> () = crate::tu::adapt::PSMTXConcat__6707f0;}
+crate::oext_fns! {fn PSMTXInverse(a0 : * mut [:: core :: ffi :: c_float ; 4], a1 : * mut [:: core :: ffi :: c_float ; 4]) -> :: core :: ffi :: c_uint = crate::tu::adapt::PSMTXInverse__c61344;}
+crate::oext_fns! {fn PSMTXMultVec(a0 : * mut [:: core :: ffi :: c_float ; 4], a1 : * mut Vec, a2 : * mut Vec) -> () = crate::tu::adapt::PSMTXMultVec__416c01;}
 crate::oext_fns! {fn OSCheckHeap(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_long;}
 crate::oext_fns! {fn DVDConvertPathToEntrynum(a0 : * const :: core :: ffi :: c_char) -> s32;}
 crate::ext_va! {fn OSReport(a0 : * mut :: core :: ffi :: c_char) va 0 -> ();}

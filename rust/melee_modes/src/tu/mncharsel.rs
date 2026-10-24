@@ -112,7 +112,7 @@ pub mod ext {
         fn HSD_SisLib_803A746C(a0: *mut HSD_Text, a1: i32, a2: f32, a3: f32) -> () = crate::tu::adapt::HSD_SisLib_803A746C__8945a6;
         fn HSD_SisLib_803A74F0(a0: *mut HSD_Text, a1: i32, a2: *mut _GXColor) -> () = crate::tu::adapt::HSD_SisLib_803A74F0__610e18;
         fn IsNameListFull() -> i32 = crate::tu::adapt::IsNameListFull__2029e6;
-        fn MTXOrtho(a0: *mut c_void, a1: f32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32) -> ();
+        fn MTXOrtho(a0: *mut c_void, a1: f32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32) -> () = crate::tu::adapt::MTXOrtho__214174;
         fn Mex_CssCursorScaleEnabled() -> i32;
         fn Mex_CssIconCount() -> i32;
         fn Mex_CssIconTable() -> *mut c_void;

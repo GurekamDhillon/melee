@@ -317,7 +317,6 @@ pub fn gm_ModeState_Prize_OnExit__253ddf(a0: *mut GameModeState) { unsafe { crat
 pub fn HSD_MemAlloc__c2b3bc(a0: i32) -> *mut c_void { unsafe { melee_runtime::tu::memory::HSD_MemAlloc(a0) } }
 pub fn HSD_SisLib_803A5CC4__6c7e38(a0: *mut HSD_Text) { unsafe { melee_runtime::tu::sislib::HSD_SisLib_803A5CC4(a0) } }
 pub fn HSD_SisLib_803A6754__02fb41(a0: i32, a1: i32) -> *mut HSD_Text { unsafe { melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6754(a0, a1) } }
-pub fn HSD_SisLib_803A74F0__d8e5f3(a0: *mut HSD_Text, a1: i32, a2: *mut GXColor) { unsafe { melee_runtime::tu::hsd_3A64::HSD_SisLib_803A74F0(a0, a1, a2 as _) } }
 pub fn HSD_SisLib_SetWideCanvas__9bb4fb(a0: i32, a1: i32) { unsafe { melee_runtime::tu::sislib::HSD_SisLib_SetWideCanvas(a0, a1) } }
 pub fn gmMainLib_GetGamePrefs__12f16c() -> *mut GamePrefs { unsafe { crate::tu::gmmain_lib::gmMainLib_GetGamePrefs() } }
 pub fn gmMainLib_GetGameRules__34f6cb() -> *mut GameRules { unsafe { crate::tu::gmmain_lib::gmMainLib_GetGameRules() } }
@@ -1180,3 +1179,17 @@ pub fn HSD_StartRender__c91577(a0: u32) { unsafe { melee_runtime::tu::initialize
 pub fn HSD_VICopyXFBAsync__35ed8e(a0: u32) { unsafe { melee_runtime::tu::video::HSD_VICopyXFBAsync(core::mem::transmute(a0)) } }
 pub fn lbCardNew_CompleteNextTask__ebb0f7() -> enum_t { unsafe { core::mem::transmute(melee_runtime::tu::lbcardnew::lbCardNew_CompleteNextTask()) } }
 pub fn ftCo_AttackAir_GetMsidFromCStick__a36195(a0: * mut Fighter) -> FtMotionId { unsafe { core::mem::transmute(melee_fighter::tu::ftCo_AttackAir::ftCo_AttackAir_GetMsidFromCStick(&*a0)) } }
+pub fn MTXRotRad__bc3d39(a0: *mut c_void, a1: i8, a2: f32) { unsafe { melee_runtime::mtx::rot_rad(&mut *(a0 as *mut melee_runtime::mtx::Mtx), a1 as u8, a2) } }
+pub fn PSMTXConcat__e4df5b(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void) { unsafe { *(a2 as *mut melee_runtime::mtx::Mtx) = melee_runtime::mtx::concat(&*(a0 as *const melee_runtime::mtx::Mtx), &*(a1 as *const melee_runtime::mtx::Mtx)) } }
+pub fn PSMTXMultVec__aeae10(a0: *mut c_void, a1: *mut Vec, a2: *mut Vec) { unsafe { *(a2 as *mut melee_runtime::mtx::Vec3) = melee_runtime::mtx::mult_vec(core::slice::from_raw_parts(a0 as *const [f32; 4], 3), &*(a1 as *const melee_runtime::mtx::Vec3)) } }
+pub fn PSMTXQuat__fb47a1(a0: *mut c_void, a1: *mut Quaternion) { unsafe { *(a0 as *mut melee_runtime::mtx::Mtx) = melee_runtime::mtx::quat(&*(a1 as *const melee_runtime::mtx::Quaternion)) } }
+pub fn PSMTXRotAxisRad__437995(a0: *mut c_void, a1: *mut Vec, a2: f32) { unsafe { *(a0 as *mut melee_runtime::mtx::Mtx) = melee_runtime::mtx::rot_axis_rad(&*(a1 as *const melee_runtime::mtx::Vec3), a2) } }
+pub fn PSMTXTranspose__cc6675(a0: *mut c_void, a1: *mut c_void) { unsafe { *(a1 as *mut melee_runtime::mtx::Mtx) = melee_runtime::mtx::transpose(&*(a0 as *const melee_runtime::mtx::Mtx)) } }
+pub fn PSVECMag__307672(a0: *mut Vec) -> f32 { unsafe { melee_runtime::mtx::vec_mag(&*(a0 as *const melee_runtime::mtx::Vec3)) } }
+pub fn MTXOrtho__214174(a0: *mut c_void, a1: f32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32) { unsafe { *(a0 as *mut melee_runtime::mtx::Mtx44) = melee_runtime::mtx::ortho(a1, a2, a3, a4, a5, a6) } }
+pub fn PSVECSubtract__594d9f(a0: *mut Vec3, a1: *mut Vec3, a2: *mut Vec3) { unsafe { *(a2 as *mut melee_runtime::mtx::Vec3) = melee_runtime::mtx::vec_sub(&*(a0 as *const melee_runtime::mtx::Vec3), &*(a1 as *const melee_runtime::mtx::Vec3)) } }
+pub fn PSVECNormalize__01cbbc(a0: *mut Vec3, a1: *mut Vec3) { unsafe { *(a1 as *mut melee_runtime::mtx::Vec3) = melee_runtime::mtx::vec_normalize(&*(a0 as *const melee_runtime::mtx::Vec3)) } }
+pub fn PSVECCrossProduct__0fba16(a0: *mut Vec3, a1: *mut Vec3, a2: *mut Vec3) { unsafe { *(a2 as *mut melee_runtime::mtx::Vec3) = melee_runtime::mtx::vec_cross(&*(a0 as *const melee_runtime::mtx::Vec3), &*(a1 as *const melee_runtime::mtx::Vec3)) } }
+pub fn PSMTXConcat__6707f0(a0: * mut [:: core :: ffi :: c_float ; 4], a1: * mut [:: core :: ffi :: c_float ; 4], a2: * mut [:: core :: ffi :: c_float ; 4]) { unsafe { *(a2 as *mut melee_runtime::mtx::Mtx) = melee_runtime::mtx::concat(&*(a0 as *const melee_runtime::mtx::Mtx), &*(a1 as *const melee_runtime::mtx::Mtx)) } }
+pub fn PSMTXInverse__c61344(a0: * mut [:: core :: ffi :: c_float ; 4], a1: * mut [:: core :: ffi :: c_float ; 4]) -> :: core :: ffi :: c_uint { unsafe { match melee_runtime::mtx::inverse(&*(a0 as *const melee_runtime::mtx::Mtx)) { Some(m) => { *(a1 as *mut melee_runtime::mtx::Mtx) = m; 1 } None => 0 } } }
+pub fn PSMTXMultVec__416c01(a0: * mut [:: core :: ffi :: c_float ; 4], a1: * mut Vec, a2: * mut Vec) { unsafe { *(a2 as *mut melee_runtime::mtx::Vec3) = melee_runtime::mtx::mult_vec(core::slice::from_raw_parts(a0 as *const [f32; 4], 3), &*(a1 as *const melee_runtime::mtx::Vec3)) } }

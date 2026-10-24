@@ -40,11 +40,11 @@ use melee_types::*;
 
 // BEGIN GENERATED EXT (rust/melee_items/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
-    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    #![allow(unreachable_code, non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(=> $fb:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -52,67 +52,67 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => { $( return $fb; )? panic!(concat!("TODO: ", stringify!($name), " is not ported")) }
                 }
             } )*
         };
     }
     ext_fns! {
-    fn DevText_80302AC0(a0: *mut DevText);
-    fn DevText_Create(a0: i8, a1: i32, a2: i32, a3: i32, a4: i32, a5: *mut i8) -> *mut DevText;
-    fn DevText_Erase(a0: *mut DevText);
-    fn DevText_GetGObj() -> *mut HSD_GObj;
-    fn DevText_HideCursor(a0: *mut DevText);
-    fn DevText_Print(a0: *mut DevText, a1: *mut i8);
-    fn DevText_Remove(a0: *mut *mut DevText);
-    fn DevText_SetBGColor(a0: *mut DevText, a1: _GXColor) -> _GXColor;
-    fn DevText_SetCursorXY(a0: *mut DevText, a1: i32, a2: i32);
-    fn DevText_SetScale(a0: *mut DevText, a1: f32, a2: f32);
-    fn DevText_SetTextColor(a0: *mut DevText, a1: _GXColor) -> _GXColor;
-    fn DevText_Show(a0: *mut HSD_GObj, a1: *mut DevText);
-    fn DevText_StoreColorIndex(a0: *mut DevText, a1: u8) -> u8;
+    fn DevText_80302AC0(a0: *mut DevText) => unsafe { melee_world::hud::textlib::devtext_80302ac0(&mut *a0) };
+    fn DevText_Create(a0: i8, a1: i32, a2: i32, a3: i32, a4: i32, a5: *mut i8) -> *mut DevText => unsafe { melee_world::tu::textlib::DevText_Create(a0, a1, a2, a3, a4, a5) };
+    fn DevText_Erase(a0: *mut DevText) => unsafe { melee_world::tu::textlib::DevText_Erase(a0) };
+    fn DevText_GetGObj() -> *mut HSD_GObj => unsafe { melee_world::tu::textdraw::DevText_GetGObj() };
+    fn DevText_HideCursor(a0: *mut DevText) => unsafe { melee_world::tu::textlib::DevText_HideCursor(a0) };
+    fn DevText_Print(a0: *mut DevText, a1: *mut i8) => unsafe { melee_world::tu::textlib::DevText_Print(a0, a1) };
+    fn DevText_Remove(a0: *mut *mut DevText) => unsafe { melee_world::tu::textdraw::DevText_Remove(a0) };
+    fn DevText_SetBGColor(a0: *mut DevText, a1: _GXColor) -> _GXColor => unsafe { melee_world::tu::textlib::DevText_SetBGColor(a0, a1) };
+    fn DevText_SetCursorXY(a0: *mut DevText, a1: i32, a2: i32) => unsafe { melee_world::tu::textlib::DevText_SetCursorXY(a0, a1, a2) };
+    fn DevText_SetScale(a0: *mut DevText, a1: f32, a2: f32) => unsafe { melee_world::tu::textlib::DevText_SetScale(a0, a1, a2) };
+    fn DevText_SetTextColor(a0: *mut DevText, a1: _GXColor) -> _GXColor => unsafe { melee_world::tu::textlib::DevText_SetTextColor(a0, a1) };
+    fn DevText_Show(a0: *mut HSD_GObj, a1: *mut DevText) => unsafe { melee_world::tu::textdraw::DevText_Show(a0, a1) };
+    fn DevText_StoreColorIndex(a0: *mut DevText, a1: u8) -> u8 => unsafe { melee_world::tu::textlib::DevText_StoreColorIndex(a0, a1) };
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
     fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32);
     fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32);
-    fn HSD_ArchiveGetPublicAddress(a0: *mut HSD_Archive, a1: *const i8) -> *mut c_void;
-    fn HSD_CObjGetEyePosition(a0: *mut HSD_CObj, a1: *mut Vec);
-    fn HSD_CObjGetFov(a0: *mut HSD_CObj) -> f32;
-    fn HSD_CObjGetInterest(a0: *mut HSD_CObj, a1: *mut Vec);
-    fn HSD_CObjSetEyePosition(a0: *mut HSD_CObj, a1: *mut Vec);
-    fn HSD_CObjSetFov(a0: *mut HSD_CObj, a1: f32);
-    fn HSD_CObjSetInterest(a0: *mut HSD_CObj, a1: *mut Vec);
+    fn HSD_ArchiveGetPublicAddress(a0: *mut HSD_Archive, a1: *const i8) -> *mut c_void => unsafe { melee_runtime::tu::archive::HSD_ArchiveGetPublicAddress(a0, a1) };
+    fn HSD_CObjGetEyePosition(a0: *mut HSD_CObj, a1: *mut Vec) => unsafe { crate::tu::cobj::HSD_CObjGetEyePosition(a0, a1) };
+    fn HSD_CObjGetFov(a0: *mut HSD_CObj) -> f32 => unsafe { crate::tu::cobj::HSD_CObjGetFov(a0) };
+    fn HSD_CObjGetInterest(a0: *mut HSD_CObj, a1: *mut Vec) => unsafe { crate::tu::cobj::HSD_CObjGetInterest(a0, a1) };
+    fn HSD_CObjSetEyePosition(a0: *mut HSD_CObj, a1: *mut Vec) => unsafe { crate::tu::cobj::HSD_CObjSetEyePosition(a0, a1) };
+    fn HSD_CObjSetFov(a0: *mut HSD_CObj, a1: f32) => unsafe { crate::tu::cobj::HSD_CObjSetFov(a0, a1) };
+    fn HSD_CObjSetInterest(a0: *mut HSD_CObj, a1: *mut Vec) => unsafe { crate::tu::cobj::HSD_CObjSetInterest(a0, a1) };
     fn HSD_FogLoadDesc(a0: *mut HSD_FogDesc) -> *mut HSD_Fog;
     fn HSD_GObjFree(a0: *mut HSD_GObj);
     fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void);
     fn HSD_GObjProc_RemoveAllProcs(a0: *mut HSD_GObj);
     fn HSD_GObj_80390CD4(a0: *mut HSD_GObj);
-    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32);
-    fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: i32);
-    fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc;
-    fn HSD_JObjAddChild(a0: *mut HSD_JObj, a1: *mut HSD_JObj);
-    fn HSD_JObjAlloc() -> *mut HSD_JObj;
-    fn HSD_JObjClearFlagsAll(a0: *mut HSD_JObj, a1: u32);
-    fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj;
+    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) => unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0, a1) };
+    fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: i32) => unsafe { melee_runtime::tu::gobj::HSD_GObj_LObjCallback(a0, a1) };
+    fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc => unsafe { melee_world::tu_ext::HSD_GObj_SetupProc(a0, a1, a2) };
+    fn HSD_JObjAddChild(a0: *mut HSD_JObj, a1: *mut HSD_JObj) => unsafe { crate::tu::jobj::HSD_JObjAddChild(a0, a1) };
+    fn HSD_JObjAlloc() -> *mut HSD_JObj => unsafe { melee_runtime::tu::jobj::HSD_JObjAlloc() };
+    fn HSD_JObjClearFlagsAll(a0: *mut HSD_JObj, a1: u32) => unsafe { crate::tu::jobj::HSD_JObjClearFlagsAll(a0, a1) };
+    fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj => unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(a0) };
     fn HSD_JObjRemoveAnimAll(a0: *mut HSD_JObj);
-    fn HSD_JObjSetFlagsAll(a0: *mut HSD_JObj, a1: u32);
-    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
-    fn HSD_LObjSetColor(a0: *mut HSD_LObj, a1: _GXColor);
-    fn HSD_MemAlloc(a0: i32) -> *mut c_void;
-    fn HSD_Randf() -> f32;
-    fn HSD_Randi(a0: i32) -> i32;
+    fn HSD_JObjSetFlagsAll(a0: *mut HSD_JObj, a1: u32) => unsafe { crate::tu::jobj::HSD_JObjSetFlagsAll(a0, a1) };
+    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) => unsafe { crate::tu::jobj::HSD_JObjSetMtxDirtySub(a0) };
+    fn HSD_LObjSetColor(a0: *mut HSD_LObj, a1: _GXColor) => unsafe { melee_runtime::tu::lobj::HSD_LObjSetColor(a0, a1) };
+    fn HSD_MemAlloc(a0: i32) -> *mut c_void => unsafe { melee_runtime::tu::memory::HSD_MemAlloc(a0) };
+    fn HSD_Randf() -> f32 => unsafe { melee_runtime::tu::random::global::HSD_Randf() };
+    fn HSD_Randi(a0: i32) -> i32 => unsafe { melee_runtime::tu::random::global::HSD_Randi(a0) };
     fn gm_801A4B60();
-    fn lbArchive_80016EFC(a0: *mut HSD_Archive);
-    fn lbAudioAx_80024030(a0: i32);
-    fn lbLang_IsSavedLanguageJP() -> i32;
-    fn lbLang_IsSettingUS() -> i32;
-    fn lbVector_ApplyEulerRotation(a0: *mut Vec, a1: *mut Vec) -> *mut Vec;
-    fn lb_8000D008(a0: f32, a1: f32) -> f32;
-    fn lb_8001204C(a0: *mut HSD_JObj, a1: *mut *mut HSD_JObj, a2: *mut u16, a3: i32) -> i32;
-    fn lb_80013B14(a0: *mut HSD_CameraDescPerspective) -> *mut HSD_CObj;
-    fn lbArchive_LoadSymbols(a0: *const i8, a1: &[*mut c_void]) -> *mut HSD_Archive;
+    fn lbArchive_80016EFC(a0: *mut HSD_Archive) => unsafe { melee_runtime::tu::lbarchive::lbArchive_80016EFC(a0) };
+    fn lbAudioAx_80024030(a0: i32) => unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80024030(a0) };
+    fn lbLang_IsSavedLanguageJP() -> i32 => unsafe { melee_runtime::tu::lblanguage::lbLang_IsSavedLanguageJP() as _ };
+    fn lbLang_IsSettingUS() -> i32 => unsafe { melee_runtime::tu::lblanguage::lbLang_IsSettingUS() as _ };
+    fn lbVector_ApplyEulerRotation(a0: *mut Vec, a1: *mut Vec) -> *mut Vec => unsafe { melee_runtime::tu::lbvector::lbVector_ApplyEulerRotation(a0, a1) };
+    fn lb_8000D008(a0: f32, a1: f32) -> f32 => unsafe { melee_runtime::tu::lb_00CE::lb_8000D008(a0, a1) };
+    fn lb_8001204C(a0: *mut HSD_JObj, a1: *mut *mut HSD_JObj, a2: *mut u16, a3: i32) -> i32 => unsafe { melee_runtime::tu::lbspdisplay::lb_8001204C(a0, a1, a2, a3) };
+    fn lb_80013B14(a0: *mut HSD_CameraDescPerspective) -> *mut HSD_CObj => unsafe { melee_runtime::tu::lbspdisplay::lb_80013B14(a0) };
+    fn lbArchive_LoadSymbols(a0: *const i8, a1: &[*mut c_void]) -> *mut HSD_Archive => unsafe { melee_runtime::tu::lbarchive::lbArchive_LoadSymbols(a0 as _, a1) };
     fn lbArchive_80016DBC(a0: *const i8, a1: *mut c_void, a2: *const i8, a3: i32) -> *mut HSD_Archive;
     fn DevText_Printf(a0: *mut DevText, a1: &str);
-    fn memzero(a0: *mut c_void, a1: i32);
+    fn memzero(a0: *mut c_void, a1: i32) => unsafe { melee_runtime::tu::lb_00B0::memzero(a0, a1) };
     fn mn_8022F218() -> i32;
     fn mn_8022F268();
     }

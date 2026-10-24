@@ -22,11 +22,11 @@ pub enum EfArg {
 
 // BEGIN GENERATED EXT (rust/melee_items/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
-    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    #![allow(unreachable_code, non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(=> $fb:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -34,33 +34,33 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => { $( return $fb; )? panic!(concat!("TODO: ", stringify!($name), " is not ported")) }
                 }
             } )*
         };
     }
     ext_fns! {
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
-    fn Ground_801C2AD8() -> *mut i32;
-    fn Ground_801C2AE8(a0: u32) -> f32;
-    fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc;
-    fn HSD_MemAlloc(a0: i32) -> *mut c_void;
-    fn HSD_Randf() -> f32;
-    fn HSD_Randi(a0: i32) -> i32;
-    fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj;
-    fn Item_80268B9C(a0: *mut SpawnItem);
-    fn Stage_80224FDC(a0: *mut Vec) -> i32;
-    fn Stage_80225194() -> u32;
-    fn db_AreItemSpawnsEnabled() -> i32;
+    fn Ground_801C2AD8() -> *mut i32 => unsafe { melee_world::tu::ground::Ground_801C2AD8() };
+    fn Ground_801C2AE8(a0: u32) -> f32 => unsafe { melee_world::tu::ground::Ground_801C2AE8(a0) };
+    fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc => unsafe { melee_world::tu_ext::HSD_GObj_SetupProc(a0, a1, a2) };
+    fn HSD_MemAlloc(a0: i32) -> *mut c_void => unsafe { melee_runtime::tu::memory::HSD_MemAlloc(a0) };
+    fn HSD_Randf() -> f32 => unsafe { melee_runtime::tu::random::global::HSD_Randf() };
+    fn HSD_Randi(a0: i32) -> i32 => unsafe { melee_runtime::tu::random::global::HSD_Randi(a0) };
+    fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj => unsafe { crate::tu::item::Item_80268B18(a0) };
+    fn Item_80268B9C(a0: *mut SpawnItem) => unsafe { crate::tu::item::Item_80268B9C(a0) };
+    fn Stage_80224FDC(a0: *mut Vec) -> i32 => unsafe { melee_world::tu::stage::Stage_80224FDC(a0 as _) };
+    fn Stage_80225194() -> u32 => unsafe { melee_world::tu::stage::Stage_80225194() };
+    fn db_AreItemSpawnsEnabled() -> i32 => unsafe { crate::tu::dbitem::db_AreItemSpawnsEnabled() };
     fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: &[EfArg]) -> *mut c_void;
     fn gm_8016AE80() -> i32;
     fn gm_8016AE94() -> f32;
     fn gm_8016AEA4() -> u64;
     fn gm_8016B238() -> i32;
-    fn it_8026B684(a0: *mut Vec) -> f32;
-    fn it_80272828(a0: i32) -> *mut HSD_GObj;
-    fn it_80274ED8();
-    fn mpColl_8004D024(a0: *mut Vec) -> i32;
+    fn it_8026B684(a0: *mut Vec) -> f32 => unsafe { crate::tu::it_26B1::it_8026B684(a0 as _) };
+    fn it_80272828(a0: i32) -> *mut HSD_GObj => unsafe { crate::tu::it_2725::it_80272828(a0) };
+    fn it_80274ED8() => unsafe { crate::tu::it_2725::it_80274ED8() };
+    fn mpColl_8004D024(a0: *mut Vec) -> i32 => unsafe { melee_world::tu::mpcoll::mpColl_8004D024(a0) };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

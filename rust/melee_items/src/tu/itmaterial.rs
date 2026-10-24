@@ -10,11 +10,11 @@ use melee_types::*;
 
 // BEGIN GENERATED EXT (rust/melee_items/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
-    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    #![allow(unreachable_code, non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(=> $fb:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -22,29 +22,29 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => { $( return $fb; )? panic!(concat!("TODO: ", stringify!($name), " is not ported")) }
                 }
             } )*
         };
     }
     ext_fns! {
-    fn HSD_JObjGetDObj(a0: *mut HSD_JObj) -> *mut HSD_DObj;
+    fn HSD_JObjGetDObj(a0: *mut HSD_JObj) -> *mut HSD_DObj => unsafe { crate::tu::jobj::HSD_JObjGetDObj(a0) as _ };
     fn HSD_SetMaterialColor(a0: _GXColor, a1: _GXColor, a2: _GXColor, a3: f32);
     fn HSD_SetMaterialShininess(a0: f32);
     fn HSD_SetupRenderModeWithCustomPE(a0: u32, a1: *mut HSD_PEDesc);
     fn HSD_SetupTevStage(a0: *mut _HSD_TevDesc);
     fn HSD_StateAssignTev() -> i32;
     fn HSD_StateInitTev();
-    fn HSD_TExpSetReg(a0: *mut HSD_TExp);
-    fn HSD_TObjSetup(a0: *mut HSD_TObj);
-    fn HSD_TObjSetupTextureCoordGen(a0: *mut HSD_TObj);
+    fn HSD_TExpSetReg(a0: *mut HSD_TExp) => unsafe { melee_runtime::tu::texp::HSD_TExpSetReg(a0) };
+    fn HSD_TObjSetup(a0: *mut HSD_TObj) => unsafe { melee_runtime::tu::tobj::HSD_TObjSetup(a0) };
+    fn HSD_TObjSetupTextureCoordGen(a0: *mut HSD_TObj) => unsafe { melee_runtime::tu::tobj::HSD_TObjSetupTextureCoordGen(a0) };
     fn ftCo_800C0674(a0: *mut HSD_GObj) -> *mut ColorOverlay;
-    fn hsdInitClassInfo(a0: *mut _HSD_ClassInfo, a1: *mut _HSD_ClassInfo, a2: *mut i8, a3: *mut i8, a4: i32, a5: i32);
-    fn lbGetFreeColorRegister(a0: i32, a1: *mut HSD_MObj, a2: *mut HSD_TExp) -> i32;
-    fn lb_8000CC8C(a0: i32) -> i32;
-    fn lb_8000CCA4(a0: i32) -> i32;
-    fn lb_8000CD90(a0: i32) -> i32;
-    fn lb_8000CDA8(a0: i32) -> i32;
+    fn hsdInitClassInfo(a0: *mut _HSD_ClassInfo, a1: *mut _HSD_ClassInfo, a2: *mut i8, a3: *mut i8, a4: i32, a5: i32) => unsafe { melee_runtime::tu::class::hsdInitClassInfo(a0 as _, a1 as _, a2 as _, a3 as _, a4, a5) };
+    fn lbGetFreeColorRegister(a0: i32, a1: *mut HSD_MObj, a2: *mut HSD_TExp) -> i32 => unsafe { melee_runtime::tu::lb_00B0::lbGetFreeColorRegister(a0, a1, a2) };
+    fn lb_8000CC8C(a0: i32) -> i32 => unsafe { melee_runtime::tu::lb_00B0::lb_8000CC8C(a0) };
+    fn lb_8000CCA4(a0: i32) -> i32 => unsafe { melee_runtime::tu::lb_00B0::lb_8000CCA4(a0) };
+    fn lb_8000CD90(a0: i32) -> i32 => unsafe { melee_runtime::tu::lb_00B0::lb_8000CD90(a0) };
+    fn lb_8000CDA8(a0: i32) -> i32 => unsafe { melee_runtime::tu::lb_00B0::lb_8000CDA8(a0) };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

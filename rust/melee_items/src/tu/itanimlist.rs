@@ -22,11 +22,11 @@ use melee_types::*;
 
 // BEGIN GENERATED EXT (rust/melee_world/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
-    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    #![allow(unreachable_code, non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(=> $fb:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -34,30 +34,30 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => { $( return $fb; )? panic!(concat!("TODO: ", stringify!($name), " is not ported")) }
                 }
             } )*
         };
     }
     ext_fns! {
-    fn Command_Execute(a0: *mut CommandInfo, a1: u32) -> i32;
-    fn Item_8026AE84(a0: *mut Item, a1: i32, a2: u8, a3: u8);
-    fn Item_8026AF0C(a0: *mut Item, a1: i32, a2: u8, a3: u8);
-    fn Item_8026AFA0(a0: *mut Item, a1: i32, a2: u8, a3: u8);
-    fn Item_8026B034(a0: *mut Item);
-    fn Item_8026B074(a0: *mut Item);
+    fn Command_Execute(a0: *mut CommandInfo, a1: u32) -> i32 => unsafe { melee_runtime::tu::lbcommand::Command_Execute(a0, a1) as _ };
+    fn Item_8026AE84(a0: *mut Item, a1: i32, a2: u8, a3: u8) => unsafe { crate::tu::item::Item_8026AE84(a0, a1, a2, a3) };
+    fn Item_8026AF0C(a0: *mut Item, a1: i32, a2: u8, a3: u8) => unsafe { crate::tu::item::Item_8026AF0C(a0, a1, a2, a3) };
+    fn Item_8026AFA0(a0: *mut Item, a1: i32, a2: u8, a3: u8) => unsafe { crate::tu::item::Item_8026AFA0(a0, a1, a2, a3) };
+    fn Item_8026B034(a0: *mut Item) => unsafe { crate::tu::item::Item_8026B034(a0) };
+    fn Item_8026B074(a0: *mut Item) => unsafe { crate::tu::item::Item_8026B074(a0) };
     fn ScriptGame_HitRuleForget(a0: *mut HitCapsule);
     fn ScriptGame_HitRuleItemCreate(a0: *mut Item, a1: *mut HitCapsule);
-    fn it_8026FCF8(a0: *mut Item, a1: *mut HitCapsule);
-    fn it_8027129C(a0: *mut HSD_GObj, a1: i32);
-    fn it_80272460(a0: *mut HitCapsule, a1: u32, a2: *mut HSD_GObj);
-    fn it_80272560(a0: *mut HSD_GObj, a1: i32);
-    fn it_802725D4(a0: *mut HSD_GObj);
-    fn it_80273598(a0: *mut HSD_GObj, a1: i32, a2: i32);
-    fn it_80273600(a0: *mut HSD_GObj);
-    fn it_80273648(a0: *mut HSD_GObj, a1: i32, a2: i32);
-    fn it_80275594(a0: *mut HSD_GObj, a1: i32, a2: f32);
-    fn it_80278800(a0: *mut HSD_GObj, a1: i32, a2: i32, a3: *mut Vec, a4: *mut Vec, a5: i32, a6: f32);
+    fn it_8026FCF8(a0: *mut Item, a1: *mut HitCapsule) => unsafe { crate::tu::itcoll::it_8026FCF8(a0, a1) };
+    fn it_8027129C(a0: *mut HSD_GObj, a1: i32) => unsafe { crate::tu::itcoll::it_8027129C(a0, a1) };
+    fn it_80272460(a0: *mut HitCapsule, a1: u32, a2: *mut HSD_GObj) => unsafe { crate::tu::itcoll::it_80272460(a0, a1, a2) };
+    fn it_80272560(a0: *mut HSD_GObj, a1: i32) => unsafe { crate::tu::it_2725::it_80272560(a0, a1) };
+    fn it_802725D4(a0: *mut HSD_GObj) => unsafe { crate::tu::it_2725::it_802725D4(a0) };
+    fn it_80273598(a0: *mut HSD_GObj, a1: i32, a2: i32) => unsafe { crate::tu::it_2725::it_80273598(a0, a1, a2) };
+    fn it_80273600(a0: *mut HSD_GObj) => unsafe { crate::tu::it_2725::it_80273600(a0) };
+    fn it_80273648(a0: *mut HSD_GObj, a1: i32, a2: i32) => unsafe { crate::tu::it_2725::it_80273648(a0, a1, a2) };
+    fn it_80275594(a0: *mut HSD_GObj, a1: i32, a2: f32) => unsafe { crate::itlib::it_80275594(&mut *((*a0).user_data as *mut Item), a1, a2) };
+    fn it_80278800(a0: *mut HSD_GObj, a1: i32, a2: i32, a3: *mut Vec, a4: *mut Vec, a5: i32, a6: f32) => unsafe { crate::tu::iteffect::it_80278800(a0, a1, a2, a3 as _, a4 as _, a5, a6) };
     fn lb_80014258(a0: *mut HSD_GObj, a1: *mut c_void, a2: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut CommandInfo, i32)>) -> i32;
     fn lb_80014498(a0: *mut ColorOverlay);
     fn lb_800144C8(a0: *mut ColorOverlay, a1: *mut Fighter_804D653C_t, a2: i32, a3: i32) -> i32;

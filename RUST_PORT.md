@@ -1021,3 +1021,11 @@ rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_In
   below 4 GB because those files route pointers through `int`. Trap: a group named `LeftWall` has normal -x (hit while
   moving right), i.e. it is the stage's right-hand wall.
 - Write C driver edits with the Edit tool, not a Python string: `\n` inside a Python literal puts a real newline in the C.
+
+## melee_world trace verification (port/pre-melee_world, 2026-10-24)
+All 93 `melee_world` rows of `docs/rust-port/trace/pad_falcon_fox_fd.csv` that were stub, missing or ported-unverified are now
+`ported+verified`: camera.c (`tu::cmcamera`, `tests/tu_cm.rs`), eflib/efasync/efdata (`tu::efn`, `tests/tu_ef.rs`) and
+mplib/mpcoll/mpisland (`tu::{mplib,mpcoll,mpisland}`, `tests/tu_mp.rs` plus melee_chara's `tu_mpcoll_c`) each have a state oracle against the
+shipping-contraction C. `Camera_SetQuakeOffset` / `Camera_SetBackgroundColor` of grlib, grlast, ground and grpura now default to
+`tu::cmcamera` (they wrote the hand-port `cm::camera::world()` state, a different `game_camera` from the one tu::cmcamera renders).
+Rows that are static helpers (`update_bounds`, `cm_script_update`, `fn_801C8EF8_inline`, ...) are verified through their callers' ops.

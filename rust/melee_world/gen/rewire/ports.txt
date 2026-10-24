@@ -624,3 +624,5 @@ Camera_PCMainCObj = crate::tu::cmcamera::Camera_PCMainCObj
 Camera_SetQuakeScale = crate::tu::cmcamera::Camera_SetQuakeScale
 Camera_LogicToScreen = crate::tu::cmcamera::Camera_LogicToScreen
 Camera_ProjectToScreen = crate::tu::cmcamera::Camera_ProjectToScreen
+Camera_SetQuakeOffset = crate::tu::cmcamera::Camera_SetQuakeOffset
+Camera_SetBackgroundColor = crate::tu::cmcamera::Camera_SetBackgroundColor

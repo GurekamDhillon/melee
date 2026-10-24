@@ -70,16 +70,19 @@ const MANTISSA_MASK: i64 = (1 << 52) - 1;
 const SIGN_BIT: u64 = 1 << 63;
 const QUIET_BIT: u64 = 1 << 51;
 
+/// Preserve a double's payload and sign while setting the Gekko quiet-NaN bit.
 #[inline]
-fn make_quiet(v: f64) -> f64 {
+pub fn make_quiet(v: f64) -> f64 {
     f64::from_bits(v.to_bits() | QUIET_BIT)
 }
+/// Construct the signed infinity used by the Gekko estimate instructions.
 #[inline]
-fn infinity(negative: bool) -> f64 {
+pub fn infinity(negative: bool) -> f64 {
     f64::from_bits(if negative { SIGN_BIT | EXP_MASK as u64 } else { EXP_MASK as u64 })
 }
+/// Construct the canonical positive quiet NaN used by the Gekko estimates.
 #[inline]
-fn nan() -> f64 {
+pub fn nan() -> f64 {
     f64::from_bits(EXP_MASK as u64 | QUIET_BIT)
 }
 

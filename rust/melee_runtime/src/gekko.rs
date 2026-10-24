@@ -35,7 +35,7 @@ static SINCOS_POLY: [f32; 10] = [
 static FOUR_OVER_PI_M1: [f32; 4] = [0.25, 0.0232393741608, 1.70555722434e-7, 1.86736494323e-11];
 const SINCOS_EPSILON: f32 = 3.45266983e-4;
 
-fn sincos_reduce(x: f32) -> (f32, i32) {
+pub fn sincos_reduce(x: f32) -> (f32, i32) {
     // `(2.0f / 3.14159265358979323846f) * x`: a float constant (folded in f32), f32 multiply.
     let z = (2.0f32 / 3.14159265358979323846f32) * x;
     // `(int)` saturates in the C build (gwtool: fptosi.sat, like fctiwz), as Rust `as` does.
@@ -48,7 +48,7 @@ fn sincos_reduce(x: f32) -> (f32, i32) {
     (y, n & 3)
 }
 
-fn sincos_even(ysq: f32) -> f32 {
+pub fn sincos_even(ysq: f32) -> f32 {
     let p = &SINCOS_POLY;
     let mut z = gk_fmadds(p[0], ysq, p[2]);
     z = gk_fmadds(z, ysq, p[4]);
@@ -56,7 +56,7 @@ fn sincos_even(ysq: f32) -> f32 {
     gk_fmadds(z, ysq, p[8])
 }
 
-fn sincos_odd_head(ysq: f32) -> f32 {
+pub fn sincos_odd_head(ysq: f32) -> f32 {
     let p = &SINCOS_POLY;
     let mut z = gk_fmadds(p[1], ysq, p[3]);
     z = gk_fmadds(z, ysq, p[5]);

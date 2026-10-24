@@ -95,10 +95,10 @@ fn fobj_util_crypt_match_c_build() {
                     let v = bytes(s);
                     GxColor { r: v[0], g: v[1], b: v[2], a: v[3] }
                 };
-                let r = hu::mul_color(&c(t[1]), &c(t[2]));
+                let r = melee_runtime::tu::util::HSD_MulColor(&c(t[1]), &c(t[2]));
                 eq("HSD_MulColor", ln, vec![r.r as u32, r.g as u32, r.b as u32, r.a as u32], bytes(t[3]).iter().map(|&b| b as u32).collect());
-                eq("HSD_GetNbBits", ln, vec![hu::get_nb_bits(hx(t[4]))], vec![hx(t[5])]);
-                eq("HSD_Index2PosNrmMtx", ln, vec![hu::index_to_pos_nrm_mtx(hx(t[6])) as u32], vec![hx(t[7])]);
+                eq("HSD_GetNbBits", ln, vec![melee_runtime::tu::util::HSD_GetNbBits(hx(t[4]))], vec![hx(t[5])]);
+                eq("HSD_Index2PosNrmMtx", ln, vec![melee_runtime::tu::util::HSD_Index2PosNrmMtx(hx(t[6])) as u32], vec![hx(t[7])]);
             }
             "E" => {
                 let mut d = bytes(t[2]);

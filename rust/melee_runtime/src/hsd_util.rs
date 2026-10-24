@@ -27,9 +27,10 @@ pub fn get_nb_bits(c: u32) -> u32 {
     c.count_ones()
 }
 
-/// `HSD_Index2PosNrmMtx` (C asserts on > 9 and then returns 0).
+/// `HSD_Index2PosNrmMtx` (C's default branch calls the nonreturning assertion).
 pub fn index_to_pos_nrm_mtx(i: u32) -> i32 {
-    if i <= 9 { (i * 3) as i32 } else { 0 }
+    assert!(i <= 9, "HSD_Index2PosNrmMtx: index outside 0..=9");
+    (i * 3) as i32
 }
 
 /// `HSD_identityMtx`.

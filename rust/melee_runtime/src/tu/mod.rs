@@ -17,3 +17,7 @@ pub mod mobj;
 pub mod dobj;
 pub mod pobj;
 pub mod displayfunc;
+pub mod gekko_fp;
+pub mod mtx44;
+pub mod mtx_pc;
+pub mod util;

@@ -197,3 +197,5 @@ pub mod ftdrawcommon;
 pub mod ftdynamics;
 pub mod ftCo_FlyReflect;
 pub mod fighter;
+pub mod player;
+pub mod plattack;

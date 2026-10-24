@@ -704,3 +704,22 @@ records. Bitfield unions (UnkFlagStruct, flag32) are hashed by value; the item-v
 hinoarashi's Vec3-over-flags pun (`it_802D61C8` / `it_802D6310`) is compared as raw bytes. `efSync_Spawn` (variadic) is an
 ext taking `&[*const c_void]`, its extras traced by gfx id. Mutation checks (flipping fused sites, boundaries, constants) fail
 the tests; `-1.0 * x + z` fused vs unfused is bit-equal, so that site is not distinguishable.
+## melee_items::tu: it/kinds set 721-728 (itkyasarinegg itleadead itlgun itlgunbeam itlgunray itlikelike itlinkarrow itlinkbomb)
+`rust/melee_items/src/tu/<stem>.rs` ports all 344 functions of those `src/melee/it/kinds` files (static inlines included; header inlines are
+local `#[inline]` copies) with the C names and signatures, checked by the shard 657-664 kinds oracle (`bash rust/melee_items/gen/kinds/regen.sh
+<stem>`, tests `kinds_<stem>.rs`, 400 seeded cases per function, whole world hashed after every call, call trace hashed).
+- Raw-int `bool`s: `bool` is the MSL `int`, so a callback that `return`s a callee's int (`return it_8027C794(gobj);`) must return that
+  value unnormalised: those ports return `i32` (state-table slot `Some(f)` instead of `pred_b(f)`), found by the oracle (random stub returns).
+- Fused sites (checked in the IR, every one caught by an unfused mutation unless noted): `itlgunbeam` `diff * r + lo` x2; `itlinkarrow`
+  `arg4 * ((x8-x4)/arg5) + x4` x2, the `lookup[8] * rand + lookup[0]` terms (cases 0/2/4/6 and 1/3/5, both in `802A81C4` and `Motion4_Anim`),
+  `xD4 * cosf/sinf + xC8/xCC` (`Motion2_Phys`, `Logic98_HitShield`); `itlinkbomb` `Motion4_Phys`; `itleadead` `neg_dot` is
+  `fmuladd(-ax, bx, -(ay*by))` then `fmuladd(-az, bz, .)` (clang folds the negated products; IR-checked, the branch outcome it feeds is
+  not sensitive to the rounding in the random cases, so no mutation of it is caught). Use `melee_core::fp::fmadds` (f64 multiply-add), never `mul_add`.
+- Oracle additions: `all3()` in `specs_cfg.py` fills the special-attribute block of all three items (spawned items read `ART[2]`);
+  `deep_ecb` spec flag traces the pointee of `itECB*` stub arguments (`TECB` / `tecb`; off for the older TUs so their data files stay valid);
+  bitfield words inside an item-var union are zeroed before their bits are set and hashed by value (native C is LSB-first, melee_types MSB-first).
+- No `return` in the C (UB, PPC leaves r3): `itKyasarinegg_UnkMotion4_Anim` (returns the `it_802751D8` int), `itLinkArrow_802A81C4`
+  (returns the new `x9C`) and the fall-off path of `itLinkArrow_802A850C` (returns 0); the oracle skips those return values (state, trace
+  and the defined path of 802A850C are compared). Boundary constants that random stub returns never straddle (for example `dx <= x10`,
+  `ad > 3.0` in leadead, `var_f1 < 15.0` in likelike) are matched by reading, not by mutation.
+- 274 callee hooks across the eight files are `ext` TODO stubs (unset: panic "TODO: name is not ported").

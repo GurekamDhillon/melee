@@ -14,3 +14,8 @@ static void TSPAWN(const SpawnItem* s)
     TFL(s->x44_flag); TFL(s->x45_flag); TFL(s->x46_flag); TFL(s->x47_flag);
     T((u32) s->x48_ground_or_air);
 }
+
+static void TECB(const itECB* e)
+{
+    if (e) { T(B(e->top)); T(B(e->bottom)); T(B(e->right)); T(B(e->left)); }
+}

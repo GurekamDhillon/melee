@@ -89,3 +89,12 @@ pub mod itklap;
 pub mod itkoopaflame;
 pub mod itkyasarin;
 pub mod itkusudama;
+// Shard 721-728
+pub mod itkyasarinegg;
+pub mod itlgun;
+pub mod itlgunray;
+pub mod itlgunbeam;
+pub mod itleadead;
+pub mod itlikelike;
+pub mod itlinkarrow;
+pub mod itlinkbomb;

@@ -768,3 +768,22 @@ fixed-arity custom stubs; `it_802C4D10` has no `return` in the C (port returns 0
 lerps and `0.5*(x18/x1C)+0.5` (`fmadds`), and `x3C += (M_PI/4)*(2*(rand-0.5))` (f64 `fma`). Mutation checks (unfusing the
 msbomb and sinf sites, a constant, a comparison boundary) fail the tests; the f64 `x3C` fma and the exact `0.5*q+0.5` lerp are
 indistinguishable after the f32 store, as with itbox's f64 sites. Regenerate: `bash rust/melee_items/gen/kinds/regen.sh itmato ...`.
+
+## melee_items::tu: it/kinds set 2 (shard 777-784)
+`itporygon2 itrabbitc itraikou itrshell itsamusbomb itsamuschargeshot itsamusgrapple itsamusmissile` ported with the
+shard 657-664 generator (`bash rust/melee_items/gen/kinds/regen.sh [stem...]`; tests `tests/kinds_<stem>.rs`, 400
+seeded cases per function, every function of each TU incl. the state tables).
+- Traps: (1) `bool` parameters are C `int` (`typedef int bool`), so extern fns take `i32`; (2) `typedef`-less local
+  records (`itRShell_Attrs`) are plain `#[repr(C)]` in the port; (3) raw-byte comparison of unions that hold a pointer
+  or a bitfield differs between the two executables (address bytes, LSB- vs MSB-first): `itrshell` clears the item
+  var union / flag byte after hashing the fields by value, `itsamusgrapple` does the same for `Fighter.u` and
+  `HitCapsule.owner`/`hit_grabbed_victim_only`; (4) `itSamusChargeshot` item vars `xDEC/xDF0/xDF8/xDFC` are ints, so
+  float values are converted when stored; (5) `ftSs_DatAttrs.xA0/xB0/xC0` are ints compared to a float.
+- `itsamusgrapple.c` reads two packed bitfields of the hitbox command by byte offset (`*(u16*)(data+2) & 0x3FF`,
+  `(flags+3)->hit_grounded`). On the GameCube (MSB-first) those are the `damage` and `hit_grounded` fields; the port
+  reads them by name and the oracle compiles a copy of the TU with the same two substitutions (`patch` in
+  `gen/kinds/specs.py`). The world is custom (`gen/kinds/specs_cfg_grapple.py`): a 2-6 link chain wired into
+  `ItemLink` pool entries, an owner fighter with `ftSs_DatAttrs`, a bone table, the beam attributes and a hitbox
+  record; the pool stubs (`GObj_Create`, `HSD_ObjAlloc`, `HSD_JObjLoadJoint`) hand out pool entries.
+- Fusion: each contracted `a*b + c` is `fmadds` (f32) or `mul_add` (f64); mutating the sites in missile/bomb/
+  chargeshot/rshell/grapple fails the tests except where the product is exact (`1.0f * x`).

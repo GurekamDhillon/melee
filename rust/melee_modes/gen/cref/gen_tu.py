@@ -533,11 +533,14 @@ def build(stem, spec, want_ext):
     raws = [x[1] for x in r_out if isinstance(x, tuple) and x[0] == "@@RAW@@"]
     head = [x for x in r_out if isinstance(x, str)]
     rtxt = "\n".join(head) + "\n\n"
-    rtxt += "pub fn install() {\n    use m::ext::hook::*;\n    unsafe {\n" + "\n".join(h.replace("m::ext::hook::", "") for h in hooks) + "\n    }\n}\n\n"
+    if spec.get("hand_hooks"):  # the port's ext is not the generated shape: the test installs hooks by hand
+        rtxt += "pub fn install() {}\n\n"
+    else:
+        rtxt += "pub fn install() {\n    use m::ext::hook::*;\n    unsafe {\n" + "\n".join(h.replace("m::ext::hook::", "") for h in hooks) + "\n    }\n}\n\n"
     rtxt += "pub fn freg_all() {\n"
-    for n in fpn:
+    for n in ([] if spec.get("hand_hooks") else fpn):
         rtxt += f"    freg(m::ext::cb::{n} as *const () as usize);\n"
-    for n in own:
+    for n in ([] if spec.get("hand_hooks") else own):
         rtxt += f"    freg(m::{n} as *const () as usize);\n"
     rtxt += "}\n\n" + "\n".join(raws)
     rfile = ROOT / "rust/melee_modes/tests/mtu" / f"{stem}_gen.rs"

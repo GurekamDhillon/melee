@@ -172,6 +172,18 @@ SPECS["gmscenelaunch"] = dict(
 )
 for _s in SPECS.values():
     _s["common_ret"] = COMMON_RET
+
+SPECS["gmmain_lib"] = dict(
+    hand_hooks=True,
+    src="src/melee/gm/gmmain_lib.c",
+    types=["gmm_x0", "GameRules", "GamePrefs", "gmMainLib_8046B0F0_t"],
+    ret={"Mex_Enabled": ("(fv() & 1)", "(fv() & 1) as i32"),
+         "OSGetResetCode": ("((fv() & 1) ? 0x80000000u : fv())", "if fv() & 1 != 0 { 0x8000_0000 } else { fv() }"),
+         "mnName_8023749C": ("((fv() & 1) ? (char*) 0 : NAMES[fv() % 4])", "if fv() & 1 != 0 { core::ptr::null_mut() } else { super::NAMES[(fv() % 4) as usize].as_mut_ptr() as *mut i8 }")},
+    skip_stubs=["memzero"],  # the driver defines the real one (zeroing, untraced: the port's is a plain function)
+)
+for _s in SPECS.values():
+    _s["common_ret"] = COMMON_RET
 # shard 849-856 (lb_013B ... mncharsel): kept in their own file
 try:
     from specs_s849 import SPECS as _S849

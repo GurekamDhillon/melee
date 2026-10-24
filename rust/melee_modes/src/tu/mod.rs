@@ -118,3 +118,4 @@ pub mod mnstagesw;
 pub mod mnruleplus;
 pub mod mnsoundtest;
 pub mod mnvibration;
+pub mod mnsnap;

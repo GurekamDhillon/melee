@@ -556,12 +556,7 @@ pub unsafe extern "C" fn mnVibration_HandleInput(mut gobj: *mut HSD_GObj) {
                         }
                         var_ctr -= 1;
                     }
-                    lb_80011E24(
-                        jobj,
-                        &raw mut panel_jobj2,
-                        2,
-                        -1,
-                    );
+                    lb_80011E24(jobj, &raw mut panel_jobj2, &[2, -1]);
                     HSD_JObjReqAnimAll(panel_jobj2, rumble_setting as f32);
                     HSD_JObjAnimAll(panel_jobj2);
                     HSD_PadRumbleRemoveAll();
@@ -587,12 +582,7 @@ pub unsafe extern "C" fn mnVibration_HandleInput(mut gobj: *mut HSD_GObj) {
                         }
                         var_ctr -= 1;
                     }
-                    lb_80011E24(
-                        jobj,
-                        &raw mut panel_jobj3,
-                        2,
-                        -1,
-                    );
+                    lb_80011E24(jobj, &raw mut panel_jobj3, &[2, -1]);
                     HSD_JObjReqAnimAll(panel_jobj3, rumble_setting as f32);
                     HSD_JObjAnimAll(panel_jobj3);
                     HSD_PadRumbleAdd(
@@ -792,12 +782,7 @@ pub unsafe extern "C" fn mnVibration_UpdatePortPanel(
     let mut sp10: *mut HSD_JObj = null_mut();
     let mut temp_ret: u8 = 0;
     let mut floats: *mut MnVibrationDataLayout = &raw mut mnVibration_PcLayout;
-    lb_80011E24(
-        arg0,
-        &raw mut sp14,
-        1,
-        -1,
-    );
+    lb_80011E24(arg0, &raw mut sp14, &[1, -1]);
     if arg2 as i32 != 0 {
         HSD_JObjReqAnimAll(sp14, arg1 as f32);
         HSD_JObjAnimAll(sp14);
@@ -815,12 +800,7 @@ pub unsafe extern "C" fn mnVibration_UpdatePortPanel(
         mn_8022F3D8(sp14, 0xff, MOBJ_MASK);
         HSD_JObjAnimAll(sp14);
     }
-    lb_80011E24(
-        arg0,
-        &raw mut sp14,
-        3,
-        -1,
-    );
+    lb_80011E24(arg0, &raw mut sp14, &[3, -1]);
     if arg2 as i32 != 0 {
         HSD_JObjReqAnimAll(
             sp14,
@@ -832,22 +812,12 @@ pub unsafe extern "C" fn mnVibration_UpdatePortPanel(
     HSD_JObjAnimAll(sp14);
     if arg2 as i32 != 0 {
         temp_ret = GetRumbleSettingOfPort(arg1 as isize) as u8;
-        lb_80011E24(
-            arg0,
-            &raw mut sp10,
-            2,
-            -1,
-        );
+        lb_80011E24(arg0, &raw mut sp10, &[2, -1]);
         HSD_JObjReqAnimAll(sp10, temp_ret as f32);
         HSD_JObjAnimAll(sp10);
         return;
     }
-    lb_80011E24(
-        arg0,
-        &raw mut sp14,
-        2,
-        -1,
-    );
+    lb_80011E24(arg0, &raw mut sp14, &[2, -1]);
     HSD_JObjReqAnimAll(sp14, 20.0_f32);
     HSD_JObjAnimAll(sp14);
 }
@@ -1042,12 +1012,7 @@ pub unsafe extern "C" fn mnVibration_Think(mut gobj: *mut HSD_GObj) {
     port = 0 as i32;
     while port < 4 {
         port_child = mnVibration_GetPortChildAt(gobj, port);
-        lb_80011E24(
-            port_child,
-            &raw mut port_anim_jobj,
-            1,
-            -1,
-        );
+        lb_80011E24(port_child, &raw mut port_anim_jobj, &[1, -1]);
         if GetRumbleSettingOfPort(port as isize) != 0 {
             mn_8022EC18(port_anim_jobj, &raw mut mnVibration_803EECF8, MOBJ_MASK);
         } else {
@@ -1387,13 +1352,8 @@ pub unsafe extern "C" fn mnVibration_CreateScreen(mut arg0: i32) {
     let mut k: i32 = 0;
     k = 0 as i32;
     while k < 0x19 {
-        lb_80011E24(
-            jobj,
-            (&raw mut (*data).jobjs as *mut *mut HSD_JObj).offset(k as isize)
-                as *mut *mut HSD_JObj,
-            k,
-            -1,
-        );
+        lb_80011E24(jobj, (&raw mut (*data).jobjs as *mut *mut HSD_JObj).offset(k as isize)
+                as *mut *mut HSD_JObj, &[k, -1]);
         k += 1;
     }
     HSD_JObjSetFlagsAll(

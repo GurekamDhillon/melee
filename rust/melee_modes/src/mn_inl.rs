@@ -27,7 +27,6 @@ ext_fns! {
     fn HSD_SisLib_803A5ACC(a: i32, b: i32, x: f32, y: f32, z: f32, w: f32, h: f32) -> *mut HSD_Text;
     fn HSD_SisLib_803A6368(text: *mut HSD_Text, id: i32);
     // C varargs, fixed here to the arity every mn caller uses.
-    fn lb_80011E24(jobj: *mut HSD_JObj, out: *mut *mut HSD_JObj, idx: i32, end: i32) -> i32;
     fn OSReport(fmt: *const c_char);
 }
 
@@ -41,6 +40,19 @@ pub unsafe fn HSD_SisLib_803A6B98(text: *mut HSD_Text, x: f32, y: f32, fmt: *con
             h("HSD_SisLib_803A6B98", &a) as i32
         }
         None => panic!("TODO ext: HSD_SisLib_803A6B98 is in a TU that is not ported yet"),
+    }
+}
+
+/// `lb_80011E24(jobj, &out, idx0, idx1, ..., -1)` (lb/lb_00B0.c, not ported): finds the joint at the
+/// child-index path; `path` includes the `-1` terminator.
+pub unsafe fn lb_80011E24(jobj: *mut HSD_JObj, out: *mut *mut HSD_JObj, path: &[i32]) -> i32 {
+    match crate::tu::ext_hook::EXT_HOOK {
+        Some(h) => {
+            let mut a: std::vec::Vec<u64> = std::vec![jobj as usize as u64, out as usize as u64];
+            a.extend(path.iter().map(|v| *v as i64 as u64));
+            h("lb_80011E24", &a) as i32
+        }
+        None => panic!("TODO ext: lb_80011E24 is in a TU that is not ported yet"),
     }
 }
 

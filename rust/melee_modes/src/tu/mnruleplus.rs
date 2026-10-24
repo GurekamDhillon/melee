@@ -1239,13 +1239,8 @@ pub unsafe extern "C" fn mn_80233218(mut state: MenuState) -> *mut HSD_GObj {
     (*user_data).description = null_mut();
     i = 0 as i32;
     while i < 10 {
-        lb_80011E24(
-            root_jobj as *mut HSD_JObj,
-            (&raw mut (*user_data).xC as *mut *mut HSD_JObj).offset(i as isize)
-                as *mut *mut HSD_JObj,
-            i,
-            -1,
-        );
+        lb_80011E24(root_jobj as *mut HSD_JObj, (&raw mut (*user_data).xC as *mut *mut HSD_JObj).offset(i as isize)
+                as *mut *mut HSD_JObj, &[i, -1]);
         i += 1;
     }
     mn_804A04F0.confirmed_selection = (*user_data)
@@ -1399,14 +1394,9 @@ pub unsafe extern "C" fn mn_80233218(mut state: MenuState) -> *mut HSD_GObj {
                 HSD_JObjAnimAll(value_jobj);
                 j = 0 as i32;
                 while j < *sub_count_ptr.offset(i as isize) as i32 {
-                    lb_80011E24(
-                        value_jobj as *mut HSD_JObj,
-                        (&raw mut *(&raw mut (*user_data).x34 as *mut [*mut HSD_JObj; 7])
+                    lb_80011E24(value_jobj as *mut HSD_JObj, (&raw mut *(&raw mut (*user_data).x34 as *mut [*mut HSD_JObj; 7])
                             .offset(i as isize) as *mut *mut HSD_JObj)
-                            .offset(j as isize) as *mut *mut HSD_JObj,
-                        j,
-                        -1,
-                    );
+                            .offset(j as isize) as *mut *mut HSD_JObj, &[j, -1]);
                     j += 1;
                 }
                 match i {

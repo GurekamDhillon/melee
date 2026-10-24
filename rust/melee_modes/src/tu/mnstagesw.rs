@@ -610,22 +610,12 @@ unsafe extern "C" fn mnStageSw_80236548(
     data = (*gobj).user_data as *mut MnStageSwData;
     if arg1 as i32 != 0 {
         jobj = mnStageSw_802364A0_noinline(data, (*data).x1);
-        lb_80011E24(
-            jobj as *mut HSD_JObj,
-            &raw mut hover_anim_jobj,
-            3,
-            -1,
-        );
+        lb_80011E24(jobj as *mut HSD_JObj, &raw mut hover_anim_jobj, &[3, -1]);
         HSD_JObjSetFlagsAll(hover_anim_jobj, JOBJ_HIDDEN as u32);
         frame = mn_8022F298(hover_anim_jobj as *mut HSD_JObj);
         sel = mn_804A04F0.hovered_selection as u8;
         jobj = mnStageSw_802364A0_noinline(data, sel);
-        lb_80011E24(
-            jobj as *mut HSD_JObj,
-            &raw mut hover_anim_jobj,
-            3,
-            -1,
-        );
+        lb_80011E24(jobj as *mut HSD_JObj, &raw mut hover_anim_jobj, &[3, -1]);
         HSD_JObjClearFlagsAll(hover_anim_jobj, JOBJ_HIDDEN as u32);
         HSD_JObjReqAnimAll(hover_anim_jobj, frame);
         HSD_JObjAnimAll(hover_anim_jobj);
@@ -653,12 +643,7 @@ unsafe extern "C" fn mnStageSw_80236548(
         let mut sp3C: *mut HSD_JObj = null_mut();
         arg2 = mn_804A04F0.confirmed_selection;
         jobj = mnStageSw_802364A0_noinline(data, mn_804A04F0.hovered_selection as u8);
-        lb_80011E24(
-            jobj as *mut HSD_JObj,
-            &raw mut sp3C,
-            2,
-            -1,
-        );
+        lb_80011E24(jobj as *mut HSD_JObj, &raw mut sp3C, &[2, -1]);
         HSD_JObjReqAnimAll(sp3C, mnStageSw_804D4BB8[arg2 as usize]);
         HSD_JObjAnimAll(sp3C);
     }
@@ -668,12 +653,7 @@ unsafe extern "C" fn mnStageSw_80236548(
         hovered = (*data).x1 as u16;
     }
     sel = hovered as u8;
-    lb_80011E24(
-        mnStageSw_802364A0_noinline(data, sel) as *mut HSD_JObj,
-        &raw mut hover_anim_jobj,
-        3,
-        -1,
-    );
+    lb_80011E24(mnStageSw_802364A0_noinline(data, sel) as *mut HSD_JObj, &raw mut hover_anim_jobj, &[3, -1]);
     mn_8022ED6C(
         hover_anim_jobj as *mut HSD_JObj,
         &raw mut mnStageSw_803ED488 as *mut AnimLoopSettings,
@@ -701,12 +681,7 @@ unsafe extern "C" fn mnStageSw_FinishEnter(
     while i < NUM_STAGES {
         jobj = mnStageSw_802364A0(menu_gobj as *mut MnStageSwData, i as u8);
         if i != (*(menu_gobj as *mut MnStageSwData)).x1 as i32 {
-            lb_80011E24(
-                jobj as *mut HSD_JObj,
-                child as *mut *mut HSD_JObj,
-                3,
-                -1,
-            );
+            lb_80011E24(jobj as *mut HSD_JObj, child as *mut *mut HSD_JObj, &[3, -1]);
             HSD_JObjSetFlagsAll(*child, JOBJ_HIDDEN as u32);
         }
         i += 1;
@@ -903,12 +878,7 @@ unsafe extern "C" fn mnStageSw_SetCursorAnim(
     let mut enabled: u8 = 0;
     *cursor_index = index as u8 as u32;
     enabled = (*user_data).x2[*cursor_index as usize];
-    lb_80011E24(
-        cursor_jobj as *mut HSD_JObj,
-        cursor_anim_jobj as *mut *mut HSD_JObj,
-        2,
-        -1,
-    );
+    lb_80011E24(cursor_jobj as *mut HSD_JObj, cursor_anim_jobj as *mut *mut HSD_JObj, &[2, -1]);
     HSD_JObjReqAnimAll(*cursor_anim_jobj, mnStageSw_804D4BB8[enabled as usize]);
 }
 unsafe extern "C" fn mnStageSw_CreateCursor(
@@ -937,12 +907,7 @@ unsafe extern "C" fn mnStageSw_CreateCursor(
         &raw mut cursor_anim_jobj,
     );
     HSD_JObjAnimAll(cursor_anim_jobj);
-    lb_80011E24(
-        cursor_jobj as *mut HSD_JObj,
-        &raw mut hover_anim_jobj,
-        3,
-        -1,
-    );
+    lb_80011E24(cursor_jobj as *mut HSD_JObj, &raw mut hover_anim_jobj, &[3, -1]);
     if idx == hovered as u32 {
         HSD_JObjReqAnimAll(
             hover_anim_jobj,
@@ -1012,12 +977,7 @@ unsafe extern "C" fn mnStageSw_80236CBC(mut arg0: i8) -> *mut HSD_GObj {
     mnStageSw_InitUserData(user_data, arg0);
     i = 0 as i32;
     while i < 6 {
-        lb_80011E24(
-            jobj as *mut HSD_JObj,
-            (&raw mut (*user_data).x20).offset(i as isize),
-            i,
-            -1,
-        );
+        lb_80011E24(jobj as *mut HSD_JObj, (&raw mut (*user_data).x20).offset(i as isize), &[i, -1]);
         i += 1;
     }
     mn_804A04F0.confirmed_selection = (*user_data).x2[(*user_data).x1 as usize];

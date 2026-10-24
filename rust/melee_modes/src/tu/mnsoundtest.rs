@@ -833,18 +833,8 @@ pub unsafe extern "C" fn mnSoundTest_8024AA70(
         as *mut HSD_JObj;
     let mut user_data: *mut soundtest_user_data = (*arg0).user_data
         as *mut soundtest_user_data;
-    lb_80011E24(
-        jobj as *mut HSD_JObj,
-        &raw mut sp38,
-        0x13,
-        -1,
-    );
-    lb_80011E24(
-        jobj as *mut HSD_JObj,
-        &raw mut sp34,
-        0x14,
-        -1,
-    );
+    lb_80011E24(jobj as *mut HSD_JObj, &raw mut sp38, &[0x13, -1]);
+    lb_80011E24(jobj as *mut HSD_JObj, &raw mut sp34, &[0x14, -1]);
     if arg1 as i32 == 2 {
         let mut temp_r30_2_0: *mut soundtest_user_data = (*arg0).user_data
             as *mut soundtest_user_data;
@@ -905,24 +895,9 @@ pub unsafe extern "C" fn mnSoundTest_8024ABF8(
     let mut temp_f31: f32 = 0.;
     let mut temp_f30: f32 = 0.;
     temp_r31 = HSD_GObjGetHSDObj(arg0 as *mut HSD_GObj) as *mut HSD_JObj;
-    lb_80011E24(
-        temp_r31 as *mut HSD_JObj,
-        &raw mut sp18,
-        2,
-        -1,
-    );
-    lb_80011E24(
-        temp_r31 as *mut HSD_JObj,
-        &raw mut sp1C,
-        5,
-        -1,
-    );
-    lb_80011E24(
-        temp_r31 as *mut HSD_JObj,
-        &raw mut sp14,
-        4,
-        -1,
-    );
+    lb_80011E24(temp_r31 as *mut HSD_JObj, &raw mut sp18, &[2, -1]);
+    lb_80011E24(temp_r31 as *mut HSD_JObj, &raw mut sp1C, &[5, -1]);
+    lb_80011E24(temp_r31 as *mut HSD_JObj, &raw mut sp14, &[4, -1]);
     temp_f31 = mn_8022F298(sp18 as *mut HSD_JObj);
     temp_f30 = mn_8022F298(sp14 as *mut HSD_JObj);
     HSD_JObjReqAnimAll(sp18, arg1 as f32);
@@ -952,24 +927,9 @@ pub unsafe extern "C" fn mnSoundTest_8024AD58(
     let mut temp_f31: f32 = 0.;
     let mut temp_r0: u8 = 0;
     temp_r30 = HSD_GObjGetHSDObj(arg0 as *mut HSD_GObj) as *mut HSD_JObj;
-    lb_80011E24(
-        temp_r30 as *mut HSD_JObj,
-        &raw mut sp18,
-        0xb,
-        -1,
-    );
-    lb_80011E24(
-        temp_r30 as *mut HSD_JObj,
-        &raw mut sp1C,
-        0xe,
-        -1,
-    );
-    lb_80011E24(
-        temp_r30 as *mut HSD_JObj,
-        &raw mut sp14,
-        0xd,
-        -1,
-    );
+    lb_80011E24(temp_r30 as *mut HSD_JObj, &raw mut sp18, &[0xb, -1]);
+    lb_80011E24(temp_r30 as *mut HSD_JObj, &raw mut sp1C, &[0xe, -1]);
+    lb_80011E24(temp_r30 as *mut HSD_JObj, &raw mut sp14, &[0xd, -1]);
     temp_r0 = (arg1 != 0) as i32 as u8;
     temp_f31 = mn_8022F298(sp18 as *mut HSD_JObj);
     HSD_JObjReqAnimAll(sp18, temp_r0 as f32);
@@ -1111,12 +1071,7 @@ pub unsafe extern "C" fn fn_8024AED0(mut arg0: *mut mnSoundTest_GObj) {
             ) as i32;
             lbAudioAx_80023694();
             lbAudioAx_80023B24(audio_id as i32);
-            lb_80011E24(
-                jobj as *mut HSD_JObj,
-                &raw mut sp7C,
-                0xd,
-                -1,
-            );
+            lb_80011E24(jobj as *mut HSD_JObj, &raw mut sp7C, &[0xd, -1]);
             HSD_JObjReqAnimAll(sp7C, vec_5.start_frame);
             mn_8022F3D8(sp7C as *mut HSD_JObj, 0xff, MOBJ_MASK);
             HSD_JObjAnimAll(sp7C);
@@ -1174,12 +1129,7 @@ unsafe extern "C" fn mnSoundTest_PlaySampleAnim(
     mut p: *const u8,
 ) {
     let mut sound_kind: i32 = 0;
-    lb_80011E24(
-        jobj as *mut HSD_JObj,
-        pj as *mut *mut HSD_JObj,
-        4,
-        -1,
-    );
+    lb_80011E24(jobj as *mut HSD_JObj, pj as *mut *mut HSD_JObj, &[4, -1]);
     HSD_JObjReqAnimAll(*pj, mn_8022F298(*pj));
     mn_8022F3D8(*pj, 0xff, MOBJ_MASK);
     HSD_JObjAnimAll(*pj);
@@ -1195,12 +1145,7 @@ unsafe extern "C" fn mnSoundTest_UpdateCategoryAnim(
     let mut selection: u8 = 0;
     (*ud).unk4 = 0;
     selection = data_3[(*ud).unk3 as usize];
-    lb_80011E24(
-        HSD_GObjGetHSDObj(mnSoundTest_804D6C40 as *mut HSD_GObj) as *mut HSD_JObj,
-        pj as *mut *mut HSD_JObj,
-        0x15,
-        -1,
-    );
+    lb_80011E24(HSD_GObjGetHSDObj(mnSoundTest_804D6C40 as *mut HSD_GObj) as *mut HSD_JObj, pj as *mut *mut HSD_JObj, &[0x15, -1]);
     HSD_JObjReqAnimAll(*pj, data_4[selection as usize] as f32);
     mn_8022F3D8(*pj, 0xff, 160 as HSD_TypeMask);
     HSD_JObjAnimAll(*pj);
@@ -1362,24 +1307,9 @@ pub unsafe extern "C" fn fn_8024B7E4(mut arg0: *mut mnSoundTest_GObj) {
     let mut temp_f31: f32 = 0.;
     let mut pad1: u32 = 0;
     temp_r30 = HSD_GObjGetHSDObj(arg0 as *mut HSD_GObj) as *mut HSD_JObj;
-    lb_80011E24(
-        temp_r30 as *mut HSD_JObj,
-        &raw mut sp20,
-        0xb,
-        -1,
-    );
-    lb_80011E24(
-        temp_r30 as *mut HSD_JObj,
-        &raw mut sp1C,
-        2,
-        -1,
-    );
-    lb_80011E24(
-        temp_r30 as *mut HSD_JObj,
-        &raw mut sp18,
-        1,
-        -1,
-    );
+    lb_80011E24(temp_r30 as *mut HSD_JObj, &raw mut sp20, &[0xb, -1]);
+    lb_80011E24(temp_r30 as *mut HSD_JObj, &raw mut sp1C, &[2, -1]);
+    lb_80011E24(temp_r30 as *mut HSD_JObj, &raw mut sp18, &[1, -1]);
     temp_f31 = mn_8022EFD8(sp20 as *mut HSD_JObj, &raw mut vec_1) as f32;
     mn_8022EFD8(sp1C as *mut HSD_JObj, &raw mut vec_1);
     mn_8022EFD8(sp18 as *mut HSD_JObj, &raw mut vec_1);
@@ -1436,24 +1366,9 @@ pub unsafe extern "C" fn fn_8024B8B4(mut arg0: *mut mnSoundTest_GObj, mut farg0:
             HSD_SisLib_803A5CC4(text);
             (*user_data).unk1C = null_mut();
         }
-        lb_80011E24(
-            jobj as *mut HSD_JObj,
-            &raw mut sp1C,
-            0xb,
-            -1,
-        );
-        lb_80011E24(
-            jobj as *mut HSD_JObj,
-            &raw mut sp18,
-            2,
-            -1,
-        );
-        lb_80011E24(
-            jobj as *mut HSD_JObj,
-            &raw mut sp14,
-            1,
-            -1,
-        );
+        lb_80011E24(jobj as *mut HSD_JObj, &raw mut sp1C, &[0xb, -1]);
+        lb_80011E24(jobj as *mut HSD_JObj, &raw mut sp18, &[2, -1]);
+        lb_80011E24(jobj as *mut HSD_JObj, &raw mut sp14, &[1, -1]);
         HSD_JObjReqAnim(sp1C, vec_1.start_frame);
         HSD_JObjAnim(sp1C);
         HSD_JObjReqAnim(sp18, vec_1.start_frame);
@@ -1463,38 +1378,18 @@ pub unsafe extern "C" fn fn_8024B8B4(mut arg0: *mut mnSoundTest_GObj, mut farg0:
         return;
     }
     if (*user_data).unk0 as i32 == 0 {
-        lb_80011E24(
-            jobj as *mut HSD_JObj,
-            &raw mut sp20,
-            5,
-            -1,
-        );
+        lb_80011E24(jobj as *mut HSD_JObj, &raw mut sp20, &[5, -1]);
         var_f1 = mn_8022EC18(sp20 as *mut HSD_JObj, &raw mut vec_2, MOBJ_MASK) as f32;
     }
     if (*user_data).unk0 as i32 != 0 {
-        lb_80011E24(
-            jobj as *mut HSD_JObj,
-            &raw mut sp20,
-            0xe,
-            -1,
-        );
+        lb_80011E24(jobj as *mut HSD_JObj, &raw mut sp20, &[0xe, -1]);
         var_f1 = mn_8022EC18(sp20 as *mut HSD_JObj, &raw mut vec_2, MOBJ_MASK) as f32;
     }
     if (*user_data).unk2 as i32 != 0x50 {
-        lb_80011E24(
-            jobj as *mut HSD_JObj,
-            &raw mut sp10,
-            4,
-            -1,
-        );
+        lb_80011E24(jobj as *mut HSD_JObj, &raw mut sp10, &[4, -1]);
         var_f1 = mn_8022EC18(sp10 as *mut HSD_JObj, &raw mut vec_4, MOBJ_MASK) as f32;
     }
-    lb_80011E24(
-        jobj as *mut HSD_JObj,
-        &raw mut sp10,
-        0xd,
-        -1,
-    );
+    lb_80011E24(jobj as *mut HSD_JObj, &raw mut sp10, &[0xd, -1]);
     mn_8022EC18(sp10 as *mut HSD_JObj, &raw mut vec_5, MOBJ_MASK);
 }
 pub unsafe extern "C" fn fn_8024BAF0(mut arg0: *mut mnSoundTest_GObj) {
@@ -1511,24 +1406,9 @@ pub unsafe extern "C" fn fn_8024BAF0(mut arg0: *mut mnSoundTest_GObj) {
     let mut temp_f31: f32 = 0.;
     let mut pad1: u32 = 0;
     jobj = HSD_GObjGetHSDObj(arg0 as *mut HSD_GObj) as *mut HSD_JObj;
-    lb_80011E24(
-        jobj as *mut HSD_JObj,
-        &raw mut sp1C,
-        0xb,
-        -1,
-    );
-    lb_80011E24(
-        jobj as *mut HSD_JObj,
-        &raw mut sp18,
-        2,
-        -1,
-    );
-    lb_80011E24(
-        jobj as *mut HSD_JObj,
-        &raw mut sp14,
-        1,
-        -1,
-    );
+    lb_80011E24(jobj as *mut HSD_JObj, &raw mut sp1C, &[0xb, -1]);
+    lb_80011E24(jobj as *mut HSD_JObj, &raw mut sp18, &[2, -1]);
+    lb_80011E24(jobj as *mut HSD_JObj, &raw mut sp14, &[1, -1]);
     if mn_804A04F0.cur_menu as i32 != 0x1b {
         HSD_GObjProc_RemoveProc(HSD_GObj_CurrentInvokedProc);
         proc_0 = HSD_GObj_SetupProc(
@@ -1685,12 +1565,7 @@ pub unsafe extern "C" fn mnSoundTest_8024BCA0(mut arg0: i32) {
     );
     mnSoundTest_8024AD58(gobj, selection);
     selection = data_3[(*user_data).unk3 as usize];
-    lb_80011E24(
-        HSD_GObjGetHSDObj(gobj as *mut HSD_GObj) as *mut HSD_JObj,
-        &raw mut category_jobj,
-        0x15,
-        -1,
-    );
+    lb_80011E24(HSD_GObjGetHSDObj(gobj as *mut HSD_GObj) as *mut HSD_JObj, &raw mut category_jobj, &[0x15, -1]);
     HSD_JObjReqAnimAll(category_jobj, data_4[selection as usize] as f32);
     mn_8022F3D8(category_jobj as *mut HSD_JObj, 0xff, 160 as HSD_TypeMask);
     HSD_JObjAnimAll(category_jobj);

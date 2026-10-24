@@ -111,24 +111,9 @@ unsafe extern "C" fn updateVolumeAnim(jobj: *mut HSD_JObj,
     jobj_anim_1: *mut *mut HSD_JObj,
     jobj_anim_2: *mut *mut HSD_JObj,
 ) {
-    lb_80011E24(
-        jobj as *mut HSD_JObj,
-        jobj_anim_0 as *mut *mut HSD_JObj,
-        6,
-        -1,
-    );
-    lb_80011E24(
-        jobj as *mut HSD_JObj,
-        jobj_anim_1 as *mut *mut HSD_JObj,
-        3,
-        -1,
-    );
-    lb_80011E24(
-        jobj as *mut HSD_JObj,
-        jobj_anim_2 as *mut *mut HSD_JObj,
-        4,
-        -1,
-    );
+    lb_80011E24(jobj as *mut HSD_JObj, jobj_anim_0 as *mut *mut HSD_JObj, &[6, -1]);
+    lb_80011E24(jobj as *mut HSD_JObj, jobj_anim_1 as *mut *mut HSD_JObj, &[3, -1]);
+    lb_80011E24(jobj as *mut HSD_JObj, jobj_anim_2 as *mut *mut HSD_JObj, &[4, -1]);
     HSD_JObjGetTranslation(*jobj_anim_1, pos_0);
     HSD_JObjGetTranslation(*jobj_anim_2, pos_1);
     HSD_JObjSetTranslateX(
@@ -155,24 +140,9 @@ unsafe extern "C" fn updateChannelAnim(jobj: *mut HSD_JObj,
 ) {
     let mut right_frame: f32 = 0.;
     let mut left_frame: f32 = 0.;
-    lb_80011E24(
-        jobj as *mut HSD_JObj,
-        jobj_anim_0 as *mut *mut HSD_JObj,
-        8,
-        -1,
-    );
-    lb_80011E24(
-        jobj as *mut HSD_JObj,
-        jobj_anim_1 as *mut *mut HSD_JObj,
-        10,
-        -1,
-    );
-    lb_80011E24(
-        jobj as *mut HSD_JObj,
-        jobj_anim_2 as *mut *mut HSD_JObj,
-        9,
-        -1,
-    );
+    lb_80011E24(jobj as *mut HSD_JObj, jobj_anim_0 as *mut *mut HSD_JObj, &[8, -1]);
+    lb_80011E24(jobj as *mut HSD_JObj, jobj_anim_1 as *mut *mut HSD_JObj, &[10, -1]);
+    lb_80011E24(jobj as *mut HSD_JObj, jobj_anim_2 as *mut *mut HSD_JObj, &[9, -1]);
     left_frame = mn_8022F298(*jobj_anim_1);
     right_frame = mn_8022F298(*jobj_anim_2);
     HSD_JObjReqAnimAll(*jobj_anim_0, channel as f32);
@@ -328,19 +298,9 @@ unsafe extern "C" fn animateSelectedChannel(gobj: *mut HSD_GObj,
     let mut jobj: *mut HSD_JObj = HSD_GObjGetHSDObj(gobj) as *mut HSD_JObj;
     if (*menu).unk2 as i32 == 0 {
         if (*menu).unk1 as i32 == 0 {
-            lb_80011E24(
-                jobj as *mut HSD_JObj,
-                jobj_out as *mut *mut HSD_JObj,
-                0xa,
-                -1,
-            );
+            lb_80011E24(jobj as *mut HSD_JObj, jobj_out as *mut *mut HSD_JObj, &[0xa, -1]);
         } else {
-            lb_80011E24(
-                jobj as *mut HSD_JObj,
-                jobj_out as *mut *mut HSD_JObj,
-                9,
-                -1,
-            );
+            lb_80011E24(jobj as *mut HSD_JObj, jobj_out as *mut *mut HSD_JObj, &[9, -1]);
         }
         mn_8022EC18(*jobj_out, anim, MOBJ_MASK);
     }
@@ -390,31 +350,16 @@ pub unsafe extern "C" fn fn_80249A1C(gobj: *mut HSD_GObj) {
         return;
     }
     animateSelectedChannel(gobj, &raw mut selected_channel_jobj);
-    lb_80011E24(
-        (*gobj).hsd_obj as *mut HSD_JObj,
-        &raw mut volume_cursor_jobj,
-        6,
-        -1,
-    );
+    lb_80011E24((*gobj).hsd_obj as *mut HSD_JObj, &raw mut volume_cursor_jobj, &[6, -1]);
     chooseVolumeAnim(volume_cursor_jobj, &raw mut volume_anim);
     mn_8022ED6C(volume_cursor_jobj as *mut HSD_JObj, &raw mut volume_anim);
-    lb_80011E24(
-        jobj as *mut HSD_JObj,
-        &raw mut sound_selection_jobj,
-        0xe,
-        -1,
-    );
+    lb_80011E24(jobj as *mut HSD_JObj, &raw mut sound_selection_jobj, &[0xe, -1]);
     temp = anim.offset((*menu).unk2 as isize) as *mut AnimLoopSettings;
     mn_8022ED6C(
         sound_selection_jobj as *mut HSD_JObj,
         temp.offset(1 as i32 as isize),
     );
-    lb_80011E24(
-        jobj as *mut HSD_JObj,
-        &raw mut channel_selection_jobj,
-        0xb,
-        -1,
-    );
+    lb_80011E24(jobj as *mut HSD_JObj, &raw mut channel_selection_jobj, &[0xb, -1]);
     let mut temp_0: *mut AnimLoopSettings = anim.offset((*menu).unk1 as isize)
         as *mut AnimLoopSettings;
     mn_8022ED6C(
@@ -508,12 +453,7 @@ pub unsafe extern "C" fn mnSound_80249C08(unused: i32) {
         &raw mut channel_anim_1,
         &raw mut channel_anim_2,
     );
-    lb_80011E24(
-        jobj as *mut HSD_JObj,
-        &raw mut volume_cursor_jobj,
-        6,
-        -1,
-    );
+    lb_80011E24(jobj as *mut HSD_JObj, &raw mut volume_cursor_jobj, &[6, -1]);
     HSD_JObjReqAnimAll(volume_cursor_jobj, volume_left.end_frame);
     HSD_JObjAnimAll(volume_cursor_jobj);
     let mut pos_1: Vec3 = Vec3 { x: 0., y: 0., z: 0. };
@@ -531,24 +471,14 @@ pub unsafe extern "C" fn mnSound_80249C08(unused: i32) {
         &raw mut jobj_anim_1,
         &raw mut jobj_anim_2,
     );
-    lb_80011E24(
-        jobj as *mut HSD_JObj,
-        &raw mut sound_selection_jobj,
-        0xe,
-        -1,
-    );
+    lb_80011E24(jobj as *mut HSD_JObj, &raw mut sound_selection_jobj, &[0xe, -1]);
     let mut anim: *mut AnimLoopSettings = anims.offset((*user_data).unk2 as isize)
         as *mut AnimLoopSettings;
     mn_8022ED6C(
         sound_selection_jobj as *mut HSD_JObj,
         anim.offset(1 as i32 as isize),
     );
-    lb_80011E24(
-        jobj as *mut HSD_JObj,
-        &raw mut channel_selection_jobj,
-        0xb,
-        -1,
-    );
+    lb_80011E24(jobj as *mut HSD_JObj, &raw mut channel_selection_jobj, &[0xb, -1]);
     HSD_JObjReqAnimAll(
         channel_selection_jobj,
         (*anims

@@ -381,6 +381,22 @@ pub trait ScriptGame {
     fn geno_state_count(&self, _profile: i32) -> i32 {
         0
     }
+    // ---- snapshots (gw_snap.c)
+    fn stage_slots_active(&self) -> bool {
+        false
+    }
+    fn onep_state_active(&self) -> bool {
+        false
+    }
+    /// `gw_snap_reserve(slots)`: the number of slots now available
+    fn snap_reserve(&mut self, _slots: i32) -> i32 {
+        0
+    }
+    fn snap_save_index(&mut self, _slot: i32, _tag: i32) {}
+    /// 0 on success
+    fn snap_load_index(&mut self, _slot: i32) -> i32 {
+        -1
+    }
     // ---- LAB mode, constants and edits
     fn geno_lab_mode_active(&self) -> bool {
         false

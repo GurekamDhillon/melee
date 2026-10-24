@@ -183,7 +183,9 @@ pub mod ext {
         Camera_800310E8() = || todo!("TODO(port) Camera_800310E8 (camera.c)");
         Player_GetFlagsBit1(a0: i32) -> i32 = |a0: i32| -> i32 { unsafe { melee_fighter::tu::player::Player_GetFlagsBit1(a0 as _) as _ } };
         gm_8016A1F8() -> bool = || -> bool { unsafe { crate::tu::gm_16A2::gm_8016A1F8() as _ } };
-        fn_80169444(a0: i32) -> bool = |_| todo!("TODO(port) fn_80169444 (gm_16A2.c)");
+        // rp3 fn_80169444
+        fn_80169444(a0: i32) -> bool = |a0: i32| -> bool { unsafe { crate::tu::gm_16A2::fn_80169444((a0 != 0)) } };
+        // rp3-end
         ifStatus_802F6788(a0: u8) = |a0: u8| { unsafe { let _ = melee_world::tu::ifstatus::ifStatus_802F6788(a0 as _); } };
         Player_80031EBC(a0: i32) = |a0: i32| { unsafe { let _ = melee_fighter::tu::player::Player_80031EBC(a0 as _); } };
         Player_SetSlottype(a0: i32, a1: Gm_PKind) = |a0: i32, a1: Gm_PKind| { unsafe { let _ = melee_fighter::tu::player::Player_SetSlottype(a0 as _, a1 as _); } };

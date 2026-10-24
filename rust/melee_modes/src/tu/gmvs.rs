@@ -90,7 +90,9 @@ pub mod ext {
         gmMainLib_8015D450(a0: u8) -> *mut i32 = |a0: u8| -> *mut i32 { unsafe { crate::tu::gmmain_lib::gmMainLib_8015D450(a0 as _) as _ } };
         gmMainLib_8015D48C(a0: u8) -> bool = |a0: u8| -> bool { unsafe { crate::tu::gmmain_lib::gmMainLib_8015D48C(a0 as _) as _ } };
         fn_80182B5C() = || { unsafe { let _ = crate::tu::gm_181A::fn_80182B5C(); } };
-        lbAudioAx_80024E84(a0: i32) = |_| todo!("TODO(port) lbAudioAx_80024E84 (lbaudio_ax.c)");
+        // rp3 lbAudioAx_80024E84
+        lbAudioAx_80024E84(a0: i32) = |a0: i32| unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80024E84((a0 != 0)); };
+        // rp3-end
         lbAudioAx_80024030(a0: i32) = |a0: i32| { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80024030(a0 as _); } };
         ifAll_802F3394() = || { unsafe { let _ = melee_world::tu::ifall::ifAll_802F3394(); } };
         ifTime_ShowTimers() = || { unsafe { let _ = melee_world::tu::iftime::ifTime_ShowTimers(); } };

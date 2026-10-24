@@ -44,8 +44,12 @@ pub mod ext {
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ftCommon_8007D92C(g: G) = crate::ftcommon3::ftcommon_8007d92c;
         mpLib_80054ED8(line: i32) -> bool = |_| todo!("TODO(port) mpLib_80054ED8 (mplib.c)");
-        mpLib_80053ECC_Floor(line: i32, v: &mut Vec3) = |_, _| todo!("TODO(port) mpLib_80053ECC_Floor (mplib.c)");
-        mpLib_80053DA4_Floor(line: i32, v: &mut Vec3) = |_, _| todo!("TODO(port) mpLib_80053DA4_Floor (mplib.c)");
+        // rp3 mpLib_80053ECC_Floor
+        mpLib_80053ECC_Floor(line: i32, v: &mut Vec3) = |line: i32, v: &mut Vec3| unsafe { melee_world::tu::mplib::mpLib_80053ECC_Floor(line, v as _); };
+        // rp3-end
+        // rp3 mpLib_80053DA4_Floor
+        mpLib_80053DA4_Floor(line: i32, v: &mut Vec3) = |line: i32, v: &mut Vec3| unsafe { melee_world::tu::mplib::mpLib_80053DA4_Floor(line, v as _); };
+        // rp3-end
         ftCommon_8007D7FC(fp: &mut Fighter) = crate::ftcommon3::ftcommon_8007d7fc;
         ft_80084FA8(g: G) = crate::ft084e::ft_80084fa8;
         ft_800821DC(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ft_081b::ft_800821dc(g as _) as _ } };

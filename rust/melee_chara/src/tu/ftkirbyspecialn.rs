@@ -151,6 +151,7 @@ pub mod ext {
                 }
             }
     hook!(IT_802F28C8, it_802F28C8, (item: *mut Item_GObj, flag: i32, f: f32));
+
     pub static mut IT_802F295C: Option<fn(G, *mut itUnk2_DatAttrs) -> f32> = None;
             #[allow(non_snake_case)]
             pub fn it_802F295C(g: G, attr: *mut itUnk2_DatAttrs) -> f32 {

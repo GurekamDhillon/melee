@@ -164,7 +164,17 @@ pub mod ext {
             }
     hook!(H_HSD_GObjObject_80390A70, HSD_GObjObject_80390A70, (a0: *mut melee_types::HSD_GObj, a1: u8, a2: *mut core::ffi::c_void));
     hook!(H_GObj_SetupGXLinkMax, GObj_SetupGXLinkMax, (a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, a2: u32));
-    hook!(H_HSD_LObjLoadDesc, HSD_LObjLoadDesc, (a0: *mut melee_types::HSD_LightDesc) -> *mut melee_types::HSD_LObj);
+    // rp3 HSD_LObjLoadDesc
+    pub static mut H_HSD_LObjLoadDesc: Option<unsafe extern "C" fn(*mut melee_types::HSD_LightDesc) -> *mut melee_types::HSD_LObj> = None;
+    #[allow(non_snake_case, unused_unsafe)]
+    pub unsafe extern "C" fn HSD_LObjLoadDesc(a0: *mut melee_types::HSD_LightDesc) -> *mut melee_types::HSD_LObj {
+        match unsafe { H_HSD_LObjLoadDesc } {
+            Some(f) => f(a0),
+            None => unsafe { melee_runtime::tu::lobj::HSD_LObjLoadDesc(a0 as _) as _ },
+        }
+    }
+    // rp3-end
+
     hook!(H_GObj_SetupGXLink, GObj_SetupGXLink, (a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, a2: u8, a3: u32));
     pub static mut H_HSD_GObj_LObjCallback: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32) > = None;
             pub unsafe extern "C" fn HSD_GObj_LObjCallback(a0: *mut melee_types::HSD_GObj, a1: i32)  {

@@ -15,7 +15,7 @@ use melee_types::*;
 
 /// Callees in TUs that are not ported yet. An unset hook panics.
 pub mod ext {
-    use crate::tu::hookmac::hook;
+    use crate::tu::hookmac::{hook, hook_or};
     use core::ffi::c_void;
     use melee_types::*;
     pub static mut HSD_IDINSERTTOTABLE: Option<fn(*mut HSD_IDTable, HSD_IDKey, *mut c_void)> = None;
@@ -24,8 +24,14 @@ pub mod ext {
         match unsafe { HSD_IDINSERTTOTABLE } { Some(f) => f(table, id, data), None => { unsafe { let _ = melee_runtime::tu::id::HSD_IDInsertToTable(table as _, id as _, data as _); } return; } }
     }
     hook!(HSD_JOBJGETDOBJ, HSD_JObjGetDObj, (jobj: *mut HSD_JObj) -> *mut HSD_DObj);
-    hook!(HSD_MOBJCLEARFLAGS, HSD_MObjClearFlags, (mobj: *mut HSD_MObj, flags: u32));
-    hook!(HSD_MOBJSETFLAGS, HSD_MObjSetFlags, (mobj: *mut HSD_MObj, flags: u32));
+    // rp3 HSD_MObjClearFlags
+    hook_or!(HSD_MOBJCLEARFLAGS, HSD_MObjClearFlags, (mobj: *mut HSD_MObj, flags: u32), |mobj: *mut HSD_MObj, flags: u32| unsafe { melee_runtime::tu::mobj::HSD_MObjClearFlags(mobj, flags); });
+    // rp3-end
+
+    // rp3 HSD_MObjSetFlags
+    hook_or!(HSD_MOBJSETFLAGS, HSD_MObjSetFlags, (mobj: *mut HSD_MObj, flags: u32), |mobj: *mut HSD_MObj, flags: u32| unsafe { melee_runtime::tu::mobj::HSD_MObjSetFlags(mobj, flags); });
+    // rp3-end
+
     hook!(HSD_SETMATERIALCOLOR, HSD_SetMaterialColor, (ambient: GXColor, diffuse: GXColor, specular: GXColor, alpha: f32));
     hook!(HSD_SETMATERIALSHININESS, HSD_SetMaterialShininess, (shininess: f32));
     hook!(HSD_SETUPRENDERMODEWITHCUSTOMPE, HSD_SetupRenderModeWithCustomPE, (rendermode: u32, pe: *mut HSD_PEDesc));

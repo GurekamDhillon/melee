@@ -28,7 +28,9 @@ macro_rules! ext_fns {
 pub mod ext {
     use super::*;
     ext_fns! {
-        ftCo_800DB368(victim: *mut Fighter, fp: *mut Fighter) = |_, _| todo!("TODO(port) ftCo_800DB368 (ftCo_CatchCut.c)");
+        // rp3 ftCo_800DB368
+        ftCo_800DB368(victim: *mut Fighter, fp: *mut Fighter) = |victim: *mut Fighter, fp: *mut Fighter| unsafe { crate::tu::ftCo_CapturePulled::ftCo_800DB368(&mut *(victim as *mut _), &mut *(fp as *mut _)); };
+        // rp3-end
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         Fighter_UpdateModelScale(g: G) = crate::hooks::fighter_update_model_scale;
         ftCo_800DB464(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_CapturePulled::ftCo_800DB464(g as _); } };

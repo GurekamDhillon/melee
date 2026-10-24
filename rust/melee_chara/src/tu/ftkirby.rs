@@ -99,11 +99,15 @@ pub mod ext {
                 }
             }
     hook!(HSD_DOBJLOADDESC, HSD_DObjLoadDesc, (desc: *mut HSD_DObjDesc) -> *mut HSD_DObj);
+
     hook!(HSD_JOBJGETDOBJ, HSD_JObjGetDObj, (jobj: *mut HSD_JObj) -> *mut HSD_DObj);
     hook!(HSD_DOBJRESOLVEREFSALL, HSD_DObjResolveRefsAll, (dobj: *mut HSD_DObj, desc: *mut HSD_DObjDesc));
+
     hook!(HSD_JOBJADDDOBJ, HSD_JObjAddDObj, (jobj: *mut HSD_JObj, dobj: *mut HSD_DObj));
     hook!(HSD_DOBJADDANIMALL, HSD_DObjAddAnimAll, (dobj: *mut HSD_DObj, matanim: *mut c_void, aobj: *mut c_void));
+
     hook!(HSD_DOBJREMOVEALL, HSD_DObjRemoveAll, (dobj: *mut HSD_DObj));
+
     // `hsdChangeClass(mobj, &ftMObj)`.
     hook!(HSDCHANGECLASS_FTMOBJ, hsdChangeClass_ftMObj, (mobj: *mut HSD_MObj));
     pub static mut HSD_JOBJLOADJOINT: Option<fn(*mut HSD_Joint) -> *mut HSD_JObj> = None;
@@ -170,6 +174,7 @@ pub mod ext {
                 }
             }
     hook!(LBDVD_800178E8, lbDvd_800178E8, (a: i32, filename: *const i8, b: i32, c: i32, d: i32, e: i32, f: i32, g: i32, h: i32));
+
     // `lbArchive_80017040(NULL, filename, out, ...)`: the variadic tail without its 0 terminator.
     hook!(LBARCHIVE_80017040, lbArchive_80017040, (a: *mut c_void, filename: *const i8, out: *mut c_void, rest: &[*mut c_void]));
     hook!(EFASYNC_LOADASYNC, efAsync_LoadAsync, (id: i32));
@@ -346,6 +351,7 @@ pub mod ext {
                 }
             }
     hook!(FTKB_SPECIALNPR_80100DE0, ftKb_SpecialNPr_80100DE0, (gobj: *mut HSD_GObj));
+
     pub static mut FTKB_SPECIALNKP_800FA7D4: Option<fn(*mut HSD_GObj) > = None;
             #[allow(non_snake_case)]
             pub fn ftKb_SpecialNKp_800FA7D4(gobj: *mut HSD_GObj)  {

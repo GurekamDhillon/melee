@@ -5335,7 +5335,17 @@ pub mod ext {
     hook!(H_GObj_SetupGXLinkMax, GObj_SetupGXLinkMax, (a0: *mut HSD_GObj, a1: GObj_RenderFunc, a2: u32_0));
     hook!(H_HSD_GObjFree, HSD_GObjFree, (a0: *mut HSD_GObj));
     hook!(H_GObj_InitUserData, GObj_InitUserData, (a0: *mut HSD_GObj, a1: u8_0, a2: Option<unsafe extern "C" fn(*mut ::core::ffi::c_void) -> ()>, a3: *mut ::core::ffi::c_void));
-    hook!(H_HSD_LObjAnimAll, HSD_LObjAnimAll, (a0: *mut HSD_LObj));
+    // rp3 HSD_LObjAnimAll
+    pub static mut H_HSD_LObjAnimAll: Option<unsafe extern "C" fn(*mut HSD_LObj)> = None;
+    #[allow(non_snake_case, unused_unsafe)]
+    pub unsafe extern "C" fn HSD_LObjAnimAll(a0: *mut HSD_LObj) {
+        match unsafe { H_HSD_LObjAnimAll } {
+            Some(f) => f(a0),
+            None => unsafe { melee_runtime::tu::lobj::HSD_LObjAnimAll(a0); },
+        }
+    }
+    // rp3-end
+
     pub static mut H_HSD_Free: Option<unsafe extern "C" fn(*mut ::core::ffi::c_void) > = None;
             pub unsafe extern "C" fn HSD_Free(a0: *mut ::core::ffi::c_void)  {
                 match H_HSD_Free {

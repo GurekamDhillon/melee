@@ -11,10 +11,13 @@ use core::ffi::c_void;
 use melee_types::*;
 
 pub mod ext {
-    use crate::tu::hookmac::hook;
+    use crate::tu::hookmac::{hook, hook_or};
     use melee_types::*;
     hook!(HSD_JOBJSETMTXDIRTYSUB, HSD_JObjSetMtxDirtySub, (jobj: *mut HSD_JObj));
-    hook!(HSD_JOBJSETMTXDIRTY, HSD_JObjSetMtxDirty, (jobj: *mut HSD_JObj));
+    // rp3 HSD_JObjSetMtxDirty
+    hook_or!(HSD_JOBJSETMTXDIRTY, HSD_JObjSetMtxDirty, (jobj: *mut HSD_JObj), |jobj: *mut HSD_JObj| unsafe { crate::tu::grinl::HSD_JObjSetMtxDirty(jobj); });
+    // rp3-end
+
     hook!(HSD_JOBJSETUPMATRIXSUB, HSD_JObjSetupMatrixSub, (jobj: *mut HSD_JObj));
     // The C global `stage_info` (gr/ground.c, 49E6C8): its address.
     hook!(STAGE_INFO, stage_info, () -> *mut StageInfo);

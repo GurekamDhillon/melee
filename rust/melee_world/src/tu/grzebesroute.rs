@@ -139,12 +139,62 @@ pub mod ext {
                     None => { return unsafe { crate::tu::ground::Ground_801C0498() as _ }; },
                 }
             }
-    hook!(H_HSD_LObjGetPosition, HSD_LObjGetPosition, (a0: *mut melee_types::HSD_LObj, a1: *mut melee_types::Vec) -> i32);
+    // rp3 HSD_LObjGetPosition
+    pub static mut H_HSD_LObjGetPosition: Option<unsafe extern "C" fn(*mut melee_types::HSD_LObj, *mut melee_types::Vec) -> i32> = None;
+    #[allow(non_snake_case, unused_unsafe)]
+    pub unsafe extern "C" fn HSD_LObjGetPosition(a0: *mut melee_types::HSD_LObj, a1: *mut melee_types::Vec) -> i32 {
+        match unsafe { H_HSD_LObjGetPosition } {
+            Some(f) => f(a0, a1),
+            None => unsafe { melee_runtime::tu::lobj::HSD_LObjGetPosition(a0 as _, a1) },
+        }
+    }
+    // rp3-end
+
     hook!(H_HSD_LObjSetColor, HSD_LObjSetColor, (a0: *mut melee_types::HSD_LObj, a1: melee_types::GXColor));
-    hook!(H_HSD_LObjSetPosition, HSD_LObjSetPosition, (a0: *mut melee_types::HSD_LObj, a1: *mut melee_types::Vec));
-    hook!(H_HSD_LObjSetInterest, HSD_LObjSetInterest, (a0: *mut melee_types::HSD_LObj, a1: *mut melee_types::Vec));
-    hook!(H_HSD_LObjSetSpot, HSD_LObjSetSpot, (a0: *mut melee_types::HSD_LObj, a1: f32, a2: i32));
-    hook!(H_HSD_LObjSetDistAttn, HSD_LObjSetDistAttn, (a0: *mut melee_types::HSD_LObj, a1: f32, a2: f32, a3: i32));
+    // rp3 HSD_LObjSetPosition
+    pub static mut H_HSD_LObjSetPosition: Option<unsafe extern "C" fn(*mut melee_types::HSD_LObj, *mut melee_types::Vec)> = None;
+    #[allow(non_snake_case, unused_unsafe)]
+    pub unsafe extern "C" fn HSD_LObjSetPosition(a0: *mut melee_types::HSD_LObj, a1: *mut melee_types::Vec) {
+        match unsafe { H_HSD_LObjSetPosition } {
+            Some(f) => f(a0, a1),
+            None => unsafe { melee_runtime::tu::lobj::HSD_LObjSetPosition(a0 as _, a1 as _); },
+        }
+    }
+    // rp3-end
+
+    // rp3 HSD_LObjSetInterest
+    pub static mut H_HSD_LObjSetInterest: Option<unsafe extern "C" fn(*mut melee_types::HSD_LObj, *mut melee_types::Vec)> = None;
+    #[allow(non_snake_case, unused_unsafe)]
+    pub unsafe extern "C" fn HSD_LObjSetInterest(a0: *mut melee_types::HSD_LObj, a1: *mut melee_types::Vec) {
+        match unsafe { H_HSD_LObjSetInterest } {
+            Some(f) => f(a0, a1),
+            None => unsafe { melee_runtime::tu::lobj::HSD_LObjSetInterest(a0 as _, a1 as _); },
+        }
+    }
+    // rp3-end
+
+    // rp3 HSD_LObjSetSpot
+    pub static mut H_HSD_LObjSetSpot: Option<unsafe extern "C" fn(*mut melee_types::HSD_LObj, f32, i32)> = None;
+    #[allow(non_snake_case, unused_unsafe)]
+    pub unsafe extern "C" fn HSD_LObjSetSpot(a0: *mut melee_types::HSD_LObj, a1: f32, a2: i32) {
+        match unsafe { H_HSD_LObjSetSpot } {
+            Some(f) => f(a0, a1, a2),
+            None => unsafe { melee_runtime::tu::lobj::HSD_LObjSetSpot(a0 as _, a1, a2); },
+        }
+    }
+    // rp3-end
+
+    // rp3 HSD_LObjSetDistAttn
+    pub static mut H_HSD_LObjSetDistAttn: Option<unsafe extern "C" fn(*mut melee_types::HSD_LObj, f32, f32, i32)> = None;
+    #[allow(non_snake_case, unused_unsafe)]
+    pub unsafe extern "C" fn HSD_LObjSetDistAttn(a0: *mut melee_types::HSD_LObj, a1: f32, a2: f32, a3: i32) {
+        match unsafe { H_HSD_LObjSetDistAttn } {
+            Some(f) => f(a0, a1, a2, a3),
+            None => unsafe { melee_runtime::tu::lobj::HSD_LObjSetDistAttn(a0 as _, a1, a2, a3); },
+        }
+    }
+    // rp3-end
+
     pub static mut H_Ground_GetStageGObj: Option<unsafe extern "C" fn(i32) -> *mut melee_types::HSD_GObj> = None;
             pub unsafe extern "C" fn Ground_GetStageGObj(a0: i32) -> *mut melee_types::HSD_GObj {
                 match H_Ground_GetStageGObj {

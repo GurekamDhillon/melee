@@ -14,10 +14,16 @@ use melee_types::*;
 
 /// Callees outside gobj.c.
 pub mod ext {
-    use crate::tu::hookmac::hook;
+    use crate::tu::hookmac::{hook, hook_or};
     use melee_types::*;
-    hook!(HSD_LOBJ_803668EC, HSD_LObj_803668EC, (lobj: *mut HSD_LObj));
-    hook!(HSD_LOBJSETUPINIT, HSD_LObjSetupInit, (cobj: *mut HSD_CObj));
+    // rp3 HSD_LObj_803668EC
+    hook_or!(HSD_LOBJ_803668EC, HSD_LObj_803668EC, (lobj: *mut HSD_LObj), |lobj: *mut HSD_LObj| unsafe { crate::tu::lobj::HSD_LObj_803668EC(lobj); });
+    // rp3-end
+
+    // rp3 HSD_LObjSetupInit
+    hook_or!(HSD_LOBJSETUPINIT, HSD_LObjSetupInit, (cobj: *mut HSD_CObj), |cobj: *mut HSD_CObj| unsafe { crate::tu::lobj::HSD_LObjSetupInit(cobj); });
+    // rp3-end
+
     pub static mut HSD_COBJGETCURRENT: Option<fn() -> *mut HSD_CObj> = None;
     #[allow(non_snake_case)]
     pub fn HSD_CObjGetCurrent() -> *mut HSD_CObj {

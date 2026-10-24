@@ -27,7 +27,9 @@ pub mod ext {
         SceneLaunch_Active() -> i32 = || todo!("TODO(port) SceneLaunch_Active (pc/platform)");
         SceneLaunch_EntryStateId() -> i32 = || todo!("TODO(port) SceneLaunch_EntryStateId (pc/platform)");
         SceneLaunch_PlayerStocks(slot: i32) -> i32 = |_| todo!("TODO(port) SceneLaunch_PlayerStocks (pc/platform)");
-        SceneLaunch_HudCount(start: *mut StartMeleeData) = |_| todo!("TODO(port) SceneLaunch_HudCount (gmscenelaunch.h, TARGET_PC)");
+        // rp3 SceneLaunch_HudCount
+        SceneLaunch_HudCount(start: *mut StartMeleeData) = |start: *mut StartMeleeData| unsafe { crate::tu::gm_1B03::SceneLaunch_HudCount(&mut *(start as *mut _)); };
+        // rp3-end
         OSReport(msg: &str) = |_| todo!("TODO(port) OSReport");
         gm_GetGameModeStateEnterData(state: *mut GameModeState) -> *mut c_void = |state: *mut GameModeState| -> *mut c_void { unsafe { crate::tu::gm_1A3F::gm_GetGameModeStateEnterData(state as _) as _ } };
         gm_GetGameModeStateExitData(state: *mut GameModeState) -> *mut c_void = |state: *mut GameModeState| -> *mut c_void { unsafe { crate::tu::gm_1A3F::gm_GetGameModeStateExitData(state as _) as _ } };
@@ -47,7 +49,9 @@ pub mod ext {
         lbAudioAx_80026EBC(stkind: StKind) -> u64 = |stkind: StKind| -> u64 { unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80026EBC(stkind as _) as _ } };
         gm_80167FC4(sss: *mut SSSData) = |sss: *mut SSSData| { unsafe { let _ = crate::tu::gm_1601::gm_80167FC4(sss as _); } };
         gm_80167BC8(vs: *mut VsModeData) = |vs: *mut VsModeData| { unsafe { let _ = crate::tu::gm_1601::gm_80167BC8(vs as _); } };
-        gm_SetupSubColors(start: *mut StartMeleeData) = |_| todo!("TODO(port) gm_SetupSubColors (gm_1601.c)");
+        // rp3 gm_SetupSubColors
+        gm_SetupSubColors(start: *mut StartMeleeData) = |start: *mut StartMeleeData| unsafe { crate::tu::gm_1B03::gm_SetupSubColors(&mut *(start as *mut _)); };
+        // rp3-end
         gm_LoadRumbleEnabled(start: *mut StartMeleeData) = |start: *mut StartMeleeData| { unsafe { let _ = crate::tu::gmvs::gm_LoadRumbleEnabled(start as _); } };
         gm_LoadAnnouncer() = || { unsafe { let _ = crate::tu::gm_1601::gm_LoadAnnouncer(); } };
         Netplay_StageEnd(winner: i32, s0: i32, s1: i32) = |_, _, _| todo!("TODO(port) Netplay_StageEnd (gw_netplay.c)");
@@ -62,9 +66,15 @@ pub mod ext {
         gm_SetupHumanResultsScreen(match_kind: u8, outcome: u8) = |match_kind: u8, outcome: u8| { unsafe { let _ = crate::tu::gm_1601::gm_SetupHumanResultsScreen(match_kind as _, outcome as _); } };
         gm_SetupResultsScreenPlayTime(seconds: u32, arg: u32) = |seconds: u32, arg: u32| { unsafe { let _ = crate::tu::gm_1601::gm_SetupResultsScreenPlayTime(seconds as _, arg as _); } };
         gm_80162800(end: *mut MatchEnd) -> u32 = |end: *mut MatchEnd| -> u32 { unsafe { crate::tu::gm_1601::gm_80162800(end as _) as _ } };
-        gm_SetupSuddenDeath(start: *mut StartMeleeData, end: *mut MatchEnd) = |_, _| todo!("TODO(port) gm_SetupSuddenDeath (gm_1601.c)");
-        gm_80166CCC(a: *mut MatchEnd, b: *mut MatchEnd) = |_, _| todo!("TODO(port) gm_80166CCC (gm_1601.c)");
-        gm_80177724(info: *mut ResultsMatchInfo) = |_| todo!("TODO(port) gm_80177724 (gmresult.c)");
+        // rp3 gm_SetupSuddenDeath
+        gm_SetupSuddenDeath(start: *mut StartMeleeData, end: *mut MatchEnd) = |start: *mut StartMeleeData, end: *mut MatchEnd| unsafe { crate::tu::gm_1B03::gm_SetupSuddenDeath(&mut *(start as *mut _), &*(end as *const _)); };
+        // rp3-end
+        // rp3 gm_80166CCC
+        gm_80166CCC(a: *mut MatchEnd, b: *mut MatchEnd) = |a: *mut MatchEnd, b: *mut MatchEnd| unsafe { crate::gm_ptr::gm_80166CCC(&mut *(a as *mut _), &mut *(b as *mut _)); };
+        // rp3-end
+        // rp3 gm_80177724
+        gm_80177724(info: *mut ResultsMatchInfo) = |info: *mut ResultsMatchInfo| unsafe { crate::gm_r7::gm_80177724(&mut *(info as *mut _)); };
+        // rp3-end
         gm_80168638(end: *mut MatchEnd) = |end: *mut MatchEnd| { unsafe { let _ = crate::tu::gm_1601::gm_80168638(end as _); } };
         gm_80168710(end: *mut MatchEnd, vs: *mut VsModeData) = |end: *mut MatchEnd, vs: *mut VsModeData| { unsafe { let _ = crate::tu::gm_1601::gm_80168710(end as _, vs as _); } };
         gm_8016247C(arg: i32) -> i32 = |arg: i32| -> i32 { unsafe { crate::tu::gm_1601::gm_8016247C(arg as _) as _ } };
@@ -72,8 +82,9 @@ pub mod ext {
         gm_GetVsPlayMatchTotal() -> u32 = || -> u32 { unsafe { crate::tu::gm_1601::gm_GetVsPlayMatchTotal() as _ } };
         gm_80172DD4(arg: u32) -> u8 = |arg: u32| -> u8 { unsafe { crate::tu::gm_16f1::gm_80172DD4(arg as _) as _ } };
         gmMainLib_8015ED98() -> *mut gmm_retval_ED98 = || -> *mut gmm_retval_ED98 { unsafe { crate::tu::gmmain_lib::gmMainLib_8015ED98() as _ } };
-        gm_InitChallengerData(human_ckind: u8, human_color: u8, human_slot: u8, human_nametag: u8, cpu_ckind: u8, curr_mode: u8)
-            = |_, _, _, _, _, _| todo!("TODO(port) gm_InitChallengerData (gm_16F1.c)");
+        // rp3 gm_InitChallengerData
+        gm_InitChallengerData(human_ckind: u8, human_color: u8, human_slot: u8, human_nametag: u8, cpu_ckind: u8, curr_mode: u8) = |human_ckind: u8, human_color: u8, human_slot: u8, human_nametag: u8, cpu_ckind: u8, curr_mode: u8| unsafe { crate::tu::gm_1736::gm_InitChallengerData(human_ckind, human_color, human_slot, human_nametag, cpu_ckind, curr_mode); };
+        // rp3-end
         gm_80172D78() -> u8 = || -> u8 { unsafe { crate::tu::gm_16f1::gm_80172D78() as _ } };
         gm_80172E74() -> u8 = || -> u8 { unsafe { crate::tu::gm_16f1::gm_80172E74() as _ } };
         gm_80172F00(arg: u32) -> u16 = |arg: u32| -> u16 { unsafe { crate::tu::gm_16f1::gm_80172F00(arg as _) as _ } };

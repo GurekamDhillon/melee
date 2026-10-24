@@ -53,6 +53,7 @@ pub mod ext {
     hook!(FTPARTS_GETBONEINDEX, ftParts_GetBoneIndex, (fp: *mut Fighter, part: i32) -> Fighter_Part);
     hook!(EFASYNC_SPAWN, efAsync_Spawn, (gobj: *mut HSD_GObj, slot: *mut core::ffi::c_void, part: i32, id: i32, jobj: *mut HSD_JObj, xbc: *mut core::ffi::c_void));
     hook!(HSD_JOBJSETTRANSLATE, HSD_JObjSetTranslate, (jobj: *mut HSD_JObj, v: *const Vec3));
+
     pub static mut FTANIM_8006FA58: Option<fn(*mut Fighter, i32, *mut HSD_Joint)> = None;
     #[allow(non_snake_case)]
     pub fn ftAnim_8006FA58(fp: *mut Fighter, part: i32, joint: *mut HSD_Joint) {

@@ -63,9 +63,15 @@ pub mod ext {
         mpLinesConnected(a: i32, b: i32) -> bool = |_, _| todo!("TODO(port) mpLinesConnected (mplib.c)");
         mpLib_8004DD90_Floor(index: i32, pos: &mut Vec3, out: &mut f32, a: i32, b: *mut Vec3) -> bool = |_, _, _, _, _| todo!("TODO(port) mpLib_8004DD90_Floor (mplib.c)");
         mpColl_80043680(coll: &mut CollData, pos: &Vec3) = |_, _| todo!("TODO(port) mpColl_80043680 (mpcoll.c)");
-        mpColl_80043670(coll: &mut CollData) = |_| todo!("TODO(port) mpColl_80043670 (mpcoll.c)");
-        mpColl_80048654(coll: &mut CollData) -> bool = |_| todo!("TODO(port) mpColl_80048654 (mpcoll.c)");
-        mpColl_800477E0(coll: &mut CollData) -> bool = |_| todo!("TODO(port) mpColl_800477E0 (mpcoll.c)");
+        // rp3 mpColl_80043670
+        mpColl_80043670(coll: &mut CollData) = |coll: &mut CollData| unsafe { melee_world::tu::mpcoll::mpColl_80043670(coll as _); };
+        // rp3-end
+        // rp3 mpColl_80048654
+        mpColl_80048654(coll: &mut CollData) -> bool = |coll: &mut CollData| -> bool { unsafe { (melee_world::tu::mpcoll::mpColl_80048654(coll as _) != 0) } };
+        // rp3-end
+        // rp3 mpColl_800477E0
+        mpColl_800477E0(coll: &mut CollData) -> bool = |coll: &mut CollData| -> bool { unsafe { (melee_world::tu::mpcoll::mpColl_800477E0(coll as _) != 0) } };
+        // rp3-end
         Mex_Enabled(name: &str) -> i32 = |_| todo!("TODO(pc mex) Mex_Enabled");
         ftColl_8007B62C(g: G, n: i32) = |_, _| todo!("TODO(port) ftColl_8007B62C (ftcoll.c)");
         ftColl_8007891C(victim: G, g: G, damage: f32) = |_, _, _| todo!("TODO(port) ftColl_8007891C (ftcoll.c)");

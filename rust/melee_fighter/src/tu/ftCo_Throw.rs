@@ -95,7 +95,9 @@ pub mod ext {
         ftCommon_8007D5D4(f: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
         lb_8000C390(j: *mut HSD_JObj) = |j: *mut HSD_JObj| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000C390(j as _); } };
         HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjSetMtxDirtySub (jobj.c)");
-        mpColl_80043670(coll: &mut CollData) = |_| todo!("TODO(port) mpColl_80043670 (mpcoll.c)");
+        // rp3 mpColl_80043670
+        mpColl_80043670(coll: &mut CollData) = |coll: &mut CollData| unsafe { melee_world::tu::mpcoll::mpColl_80043670(coll as _); };
+        // rp3-end
         ftCommon_UnlockECB(f: &mut Fighter) = crate::ftcommon2::unlock_ecb;
         mpColl_800471F8(coll: &mut CollData) -> bool = |_| todo!("TODO(port) mpColl_800471F8 (mpcoll.c)");
         lbColl_80008D30(hit: &mut HitCapsule, arg: *const lbColl_80008D30_arg1) = |hit: &mut HitCapsule, arg: *const lbColl_80008D30_arg1| { unsafe { let _ = melee_runtime::tu::lbcollision::lbColl_80008D30(hit as _, arg as _); } };

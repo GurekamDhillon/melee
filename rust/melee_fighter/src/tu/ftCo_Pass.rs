@@ -31,7 +31,9 @@ pub mod ext {
     }
     ext_fns! {
         mpColl_IsOnPlatform(coll: &mut CollData) -> bool = |_| todo!("TODO(port) mpColl_IsOnPlatform (mpcoll.c)");
-        mpUpdateFloorSkip(coll: &mut CollData) = |_| todo!("TODO(port) mpUpdateFloorSkip (mpcoll.c)");
+        // rp3 mpUpdateFloorSkip
+        mpUpdateFloorSkip(coll: &mut CollData) = |coll: &mut CollData| unsafe { melee_world::tu::mpcoll::mpUpdateFloorSkip(coll as _); };
+        // rp3-end
         ftCo_800C5240(g: G) -> bool = crate::tu::ftCo_HammerWait::ftCo_800C5240;
         ftCo_800C60C8(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftco_0c60::ftco_800c60c8(g as _) as _ } };
         Replay_UcfVersion(port: i32) -> i32 = |_| todo!("TODO(port) Replay_UcfVersion (pc replay)");

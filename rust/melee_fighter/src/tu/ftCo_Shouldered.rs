@@ -48,8 +48,12 @@ pub mod ext {
         ScriptGame_HitRuleContact(hit: *mut HitCapsule, f: *mut Fighter, value: f32, kb: i32) -> f32 = |_, _, _, _| todo!("TODO(pc script) ScriptGame_HitRuleContact");
         ScriptGame_HitRuleReport(attacker: *mut Fighter, victim: *mut Fighter, hit: *mut HitCapsule, damage: f32) = |_, _, _, _| todo!("TODO(pc script) ScriptGame_HitRuleReport");
         ScriptGame_HitRulePercentQueue(hit: *mut HitCapsule, victim: *mut Fighter, damage: f32) = |_, _, _| todo!("TODO(pc script) ScriptGame_HitRulePercentQueue");
-        Fighter_UnkTakeDamage_8006CC30(f: *mut Fighter, dmg: f32) = |_, _| todo!("TODO(port) Fighter_UnkTakeDamage_8006CC30 (fighter.c)");
-        ftCo_Damage_CalcKnockback(f: *mut Fighter) = |_| todo!("TODO(port) ftCo_Damage_CalcKnockback (ftCo_Damage.c)");
+        // rp3 Fighter_UnkTakeDamage_8006CC30
+        Fighter_UnkTakeDamage_8006CC30(f: *mut Fighter, dmg: f32) = |f: *mut Fighter, dmg: f32| unsafe { crate::tu::fighter::Fighter_UnkTakeDamage_8006CC30(&mut *(f as *mut _), dmg); };
+        // rp3-end
+        // rp3 ftCo_Damage_CalcKnockback
+        ftCo_Damage_CalcKnockback(f: *mut Fighter) = |f: *mut Fighter| unsafe { crate::tu::ftCo_Damage::ftCo_Damage_CalcKnockback(&mut *(f as *mut _)); };
+        // rp3-end
         ftCo_8008E908(g: G, v: f32) = |g: G, v: f32| { unsafe { let _ = crate::tu::ftCo_Damage::ftCo_8008E908(g as _, v as _); } };
         ftAnim_SetAnimRate(g: G, rate: f32) = |g: G, rate: f32| { unsafe { let _ = crate::tu::ftanim::ftAnim_SetAnimRate(g as _, rate as _); } };
     }

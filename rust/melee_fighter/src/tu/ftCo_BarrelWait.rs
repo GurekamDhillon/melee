@@ -41,11 +41,17 @@ pub mod ext {
         ftCommon_8007EFC0(fp: &mut Fighter, v: u32) = crate::ftcommon2::ftcommon_8007efc0;
         Ground_801C4DD0() -> bool = || todo!("TODO(port) Ground_801C4DD0 (ground.c)");
         Ground_801C4DA0(pos: *mut Vec3, out: *mut f32) -> bool = |_, _| todo!("TODO(port) Ground_801C4DA0 (ground.c)");
-        mpColl_80043680(c: *mut CollData, v: *mut Vec3) = |_, _| todo!("TODO(port) mpColl_80043680 (mpcoll.c)");
-        ftCamera_80076064(fp: *mut Fighter) = |_| todo!("TODO(port) ftCamera_80076064 (ftcamera.c)");
+        // rp3 mpColl_80043680
+        mpColl_80043680(c: *mut CollData, v: *mut Vec3) = |c: *mut CollData, v: *mut Vec3| unsafe { melee_world::tu::mpcoll::mpColl_80043680(c, v as _); };
+        // rp3-end
+        // rp3 ftCamera_80076064
+        ftCamera_80076064(fp: *mut Fighter) = |fp: *mut Fighter| unsafe { crate::tu::ftcamera::ftcamera_80076064(&mut *(fp as *mut _)); };
+        // rp3-end
         lbColl_80008D30(hit: *mut HitCapsule, a: *mut lbColl_80008D30_arg1) = |hit: *mut HitCapsule, a: *mut lbColl_80008D30_arg1| { unsafe { let _ = melee_runtime::tu::lbcollision::lbColl_80008D30(hit as _, a as _); } };
         ftColl_800788D4(g: G) = |_| todo!("TODO(port) ftColl_800788D4 (ftcoll.c)");
-        Fighter_UnkTakeDamage_8006CC30(fp: *mut Fighter, dmg: f32) = |_, _| todo!("TODO(port) Fighter_UnkTakeDamage_8006CC30 (fighter.c)");
+        // rp3 Fighter_UnkTakeDamage_8006CC30
+        Fighter_UnkTakeDamage_8006CC30(fp: *mut Fighter, dmg: f32) = |fp: *mut Fighter, dmg: f32| unsafe { crate::tu::fighter::Fighter_UnkTakeDamage_8006CC30(&mut *(fp as *mut _), dmg); };
+        // rp3-end
         ftCo_8008DCE0(g: G, a: i32, facing: f32) = |g: G, a: i32, facing: f32| { unsafe { let _ = crate::tu::ftCo_Damage::ftCo_8008DCE0(g as _, a as _, facing as _); } };
     }
 }

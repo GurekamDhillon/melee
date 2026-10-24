@@ -30,7 +30,9 @@ pub mod ext {
         ftCommon_8007DB58(g: G) = crate::ftcommon3::ftcommon_8007db58;
         ftCo_8009750C(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_Lift::ftCo_8009750C(g as _); } };
         ftCo_800DD168(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_Throw::ftCo_800DD168(g as _); } };
-        ftCo_800DB368(victim: *mut Fighter, fp: *mut Fighter) = |_, _| todo!("TODO(port) ftCo_800DB368 (ftCo_CatchCut.c)");
+        // rp3 ftCo_800DB368
+        ftCo_800DB368(victim: *mut Fighter, fp: *mut Fighter) = |victim: *mut Fighter, fp: *mut Fighter| unsafe { crate::tu::ftCo_CapturePulled::ftCo_800DB368(&mut *(victim as *mut _), &mut *(fp as *mut _)); };
+        // rp3-end
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftCo_800DB464(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_CapturePulled::ftCo_800DB464(g as _); } };
         ftCommon_8007D5D4(f: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;

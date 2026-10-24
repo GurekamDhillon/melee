@@ -57,7 +57,9 @@ pub mod ext {
         HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjSetMtxDirtySub (jobj.c)");
         Stage_GetBlastZoneTopOffset() -> f32 = || todo!("TODO(port) Stage_GetBlastZoneTopOffset (stage.c)");
         ftCamera_800762F4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftcamera::ftcamera_800762f4(g as _); } };
-        mpColl_80043680(c: *mut CollData, pos: *mut Vec3) = |_, _| todo!("TODO(port) mpColl_80043680 (mpcoll.c)");
+        // rp3 mpColl_80043680
+        mpColl_80043680(c: *mut CollData, pos: *mut Vec3) = |c: *mut CollData, pos: *mut Vec3| unsafe { melee_world::tu::mpcoll::mpColl_80043680(c, pos as _); };
+        // rp3-end
         ftCommon_Fall(f: &mut Fighter, a: f32, b: f32) = |_, _, _| todo!("TODO(port) ftCommon_Fall (ftcommon.c)");
         ftCommon_CalcSelfAccel_AccelToVelClampedFrom(f: &mut Fighter, vel: f32, accel: f32, target: f32, fr: f32) = crate::ftcommon::calc_self_accel_accel_to_vel_clamped_from;
         ft_80083E64(g: G, ecb: *mut ftCollisionBox, cb: HSD_GObjEvent) = |_, _, _| todo!("TODO(port) ft_80083E64 (ft_081B.c)");

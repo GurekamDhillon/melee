@@ -53,8 +53,12 @@ pub mod ext {
         ftCo_Walk_CheckInput_Ottotto(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Walk::ftCo_Walk_CheckInput_Ottotto(g as _) as _ } };
         ft_800827A0(g: G) -> bool = crate::tu::ft_081b::ft_800827a0;
         ftCo_Fall_Enter(g: G) = crate::tu::ftCo_Fall::ftCo_Fall_Enter;
-        mpFloorGetRight(line_id: i32, pos: &mut Vec3) = |_, _| todo!("TODO(port) mpFloorGetRight (mplib.c)");
-        mpFloorGetLeft(line_id: i32, pos: &mut Vec3) = |_, _| todo!("TODO(port) mpFloorGetLeft (mplib.c)");
+        // rp3 mpFloorGetRight
+        mpFloorGetRight(line_id: i32, pos: &mut Vec3) = |line_id: i32, pos: &mut Vec3| unsafe { melee_world::tu::mplib::mpFloorGetRight(line_id, pos as _); };
+        // rp3-end
+        // rp3 mpFloorGetLeft
+        mpFloorGetLeft(line_id: i32, pos: &mut Vec3) = |line_id: i32, pos: &mut Vec3| unsafe { melee_world::tu::mplib::mpFloorGetLeft(line_id, pos as _); };
+        // rp3-end
         ft_8008A2BC(g: G) = crate::hooks::ft_8008a2bc;
         ft_80088770(fp: &mut Fighter) = |fp: &mut Fighter| { unsafe { let _ = crate::ft0881::ft_80088770(fp as _); } };
         ft_800887CC(fp: &mut Fighter) = |fp: &mut Fighter| { unsafe { let _ = crate::ft0881::ft_800887cc(fp as _); } };

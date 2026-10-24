@@ -40,9 +40,30 @@ pub mod ext {
                 }
             }
     hook!(HSD_AOBJGETENDFRAME, HSD_AObjGetEndFrame, (aobj: *mut HSD_AObj) -> f32);
-    hook!(HSD_MOBJREQANIM, HSD_MObjReqAnim, (mobj: *mut HSD_MObj, frame: f32));
-    hook!(HSD_MOBJANIM, HSD_MObjAnim, (mobj: *mut HSD_MObj));
+    // rp3 HSD_MObjReqAnim
+    pub static mut HSD_MOBJREQANIM: Option<fn(*mut HSD_MObj, f32)> = None;
+    #[allow(non_snake_case, unused_unsafe)]
+    pub fn HSD_MObjReqAnim(mobj: *mut HSD_MObj, frame: f32) {
+        match unsafe { HSD_MOBJREQANIM } {
+            Some(f) => f(mobj, frame),
+            None => unsafe { melee_runtime::tu::mobj::HSD_MObjReqAnim(mobj, frame); },
+        }
+    }
+    // rp3-end
+
+    // rp3 HSD_MObjAnim
+    pub static mut HSD_MOBJANIM: Option<fn(*mut HSD_MObj)> = None;
+    #[allow(non_snake_case, unused_unsafe)]
+    pub fn HSD_MObjAnim(mobj: *mut HSD_MObj) {
+        match unsafe { HSD_MOBJANIM } {
+            Some(f) => f(mobj),
+            None => unsafe { melee_runtime::tu::mobj::HSD_MObjAnim(mobj); },
+        }
+    }
+    // rp3-end
+
     hook!(HSD_JOBJSETTRANSLATE, HSD_JObjSetTranslate, (jobj: *mut HSD_JObj, v: *const Vec3));
+
     pub static mut IT_8026B3F8: Option<fn(*mut core::ffi::c_void, i32) > = None;
             #[allow(non_snake_case)]
             pub fn it_8026B3F8(article: *mut core::ffi::c_void, kind: i32)  {

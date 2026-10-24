@@ -26,7 +26,9 @@ pub mod ext {
         };
     }
     hook!(ITEM_8026ABD8, Item_8026ABD8, (gobj: *mut Item_GObj, pos: *mut Vec3, f: f32));
+
     hook!(FTCO_8008E908, ftCo_8008E908, (gobj: G, f: f32));
+
     pub static mut FTCO_8008E984: Option<fn(*mut Fighter) -> bool> = None;
     #[allow(non_snake_case)]
     pub fn ftCo_8008E984(fp: *mut Fighter) -> bool {
@@ -36,7 +38,9 @@ pub mod ext {
         }
     }
     hook!(FTCO_8008D8E8, ftCo_8008D8E8, (f: f32) -> i32);
+
     hook!(FTCO_SCALEBY154, ftCo_ScaleBy154, (f: f32) -> f32);
+
     pub static mut FTCO_8008DCE0: Option<fn(G, i32, f32)> = None;
     #[allow(non_snake_case)]
     pub fn ftCo_8008DCE0(gobj: G, a: i32, facing: f32) {

@@ -141,6 +141,7 @@ pub mod ext {
     }
     hook!(HSD_JOBJGETMTXPTR, HSD_JObjGetMtxPtr, (jobj: *mut HSD_JObj) -> *mut [f32; 4]);
     hook!(HSD_JOBJCOPYMTX, HSD_JObjCopyMtx, (jobj: *mut HSD_JObj, mtx: *mut [f32; 4]));
+
     hook!(HSD_JOBJSETMTXDIRTYSUB, HSD_JObjSetMtxDirtySub, (jobj: *mut HSD_JObj));
     pub static mut HSD_JOBJDISPALL: Option<fn(*mut HSD_JObj, *mut [f32; 4], u32, u32)> = None;
     #[allow(non_snake_case)]

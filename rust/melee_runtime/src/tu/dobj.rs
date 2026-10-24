@@ -70,26 +70,41 @@ pub mod hsd {
     pub fn HSD_PObjRemoveAnimAllByFlags(pobj: *mut HSD_PObj, flags: u32) {
         match unsafe { HSD_POBJREMOVEANIMALLBYFLAGS } { Some(f) => f(pobj, flags), None => { unsafe { let _ = crate::tu::pobj::HSD_PObjRemoveAnimAllByFlags(pobj as _, flags as _); } return; } }
     }
-        hook!(HSD_MOBJREMOVEANIMBYFLAGS, HSD_MObjRemoveAnimByFlags, (mobj: *mut HSD_MObj, flags: u32));
+        // rp3 HSD_MObjRemoveAnimByFlags
+        hook_or!(HSD_MOBJREMOVEANIMBYFLAGS, HSD_MObjRemoveAnimByFlags, (mobj: *mut HSD_MObj, flags: u32), |mobj: *mut HSD_MObj, flags: u32| unsafe { crate::tu::mobj::HSD_MObjRemoveAnimByFlags(mobj, flags); });
+        // rp3-end
+
         pub static mut HSD_POBJADDANIMALL: Option<fn(*mut HSD_PObj, *mut HSD_ShapeAnim)> = None;
     #[allow(non_snake_case)]
     pub fn HSD_PObjAddAnimAll(pobj: *mut HSD_PObj, shapeanim: *mut HSD_ShapeAnim) {
         match unsafe { HSD_POBJADDANIMALL } { Some(f) => f(pobj, shapeanim), None => { unsafe { let _ = crate::tu::pobj::HSD_PObjAddAnimAll(pobj as _, shapeanim as _); } return; } }
     }
-        hook!(HSD_MOBJADDANIM, HSD_MObjAddAnim, (mobj: *mut HSD_MObj, mat_anim: *mut HSD_MatAnim));
+        // rp3 HSD_MObjAddAnim
+        hook_or!(HSD_MOBJADDANIM, HSD_MObjAddAnim, (mobj: *mut HSD_MObj, mat_anim: *mut HSD_MatAnim), |mobj: *mut HSD_MObj, mat_anim: *mut HSD_MatAnim| unsafe { crate::tu::mobj::HSD_MObjAddAnim(mobj, mat_anim); });
+        // rp3-end
+
         pub static mut HSD_POBJREQANIMALLBYFLAGS: Option<fn(*mut HSD_PObj, f32, u32)> = None;
     #[allow(non_snake_case)]
     pub fn HSD_PObjReqAnimAllByFlags(pobj: *mut HSD_PObj, startframe: f32, flags: u32) {
         match unsafe { HSD_POBJREQANIMALLBYFLAGS } { Some(f) => f(pobj, startframe, flags), None => { unsafe { let _ = crate::tu::pobj::HSD_PObjReqAnimAllByFlags(pobj as _, startframe as _, flags as _); } return; } }
     }
-        hook!(HSD_MOBJREQANIMBYFLAGS, HSD_MObjReqAnimByFlags, (mobj: *mut HSD_MObj, startframe: f32, flags: u32));
+        // rp3 HSD_MObjReqAnimByFlags
+        hook_or!(HSD_MOBJREQANIMBYFLAGS, HSD_MObjReqAnimByFlags, (mobj: *mut HSD_MObj, startframe: f32, flags: u32), |mobj: *mut HSD_MObj, startframe: f32, flags: u32| unsafe { crate::tu::mobj::HSD_MObjReqAnimByFlags(mobj, startframe, flags); });
+        // rp3-end
+
         pub static mut HSD_POBJANIMALL: Option<fn(*mut HSD_PObj)> = None;
     #[allow(non_snake_case)]
     pub fn HSD_PObjAnimAll(pobj: *mut HSD_PObj) {
         match unsafe { HSD_POBJANIMALL } { Some(f) => f(pobj), None => { unsafe { let _ = crate::tu::pobj::HSD_PObjAnimAll(pobj as _); } return; } }
     }
-        hook!(HSD_MOBJANIM, HSD_MObjAnim, (mobj: *mut HSD_MObj));
-        hook!(HSD_MOBJLOADDESC, HSD_MObjLoadDesc, (desc: *mut HSD_MObjDesc) -> *mut HSD_MObj);
+        // rp3 HSD_MObjAnim
+        hook_or!(HSD_MOBJANIM, HSD_MObjAnim, (mobj: *mut HSD_MObj), |mobj: *mut HSD_MObj| unsafe { crate::tu::mobj::HSD_MObjAnim(mobj); });
+        // rp3-end
+
+        // rp3 HSD_MObjLoadDesc
+        hook_or!(HSD_MOBJLOADDESC, HSD_MObjLoadDesc, (desc: *mut HSD_MObjDesc) -> *mut HSD_MObj, |desc: *mut HSD_MObjDesc| unsafe { crate::tu::mobj::HSD_MObjLoadDesc(desc) });
+        // rp3-end
+
         pub static mut HSD_POBJLOADDESC: Option<fn(*mut HSD_PObjDesc) -> *mut HSD_PObj> = None;
     #[allow(non_snake_case)]
     pub fn HSD_PObjLoadDesc(desc: *mut HSD_PObjDesc) -> *mut HSD_PObj {
@@ -100,8 +115,14 @@ pub mod hsd {
     pub fn HSD_PObjResolveRefsAll(pobj: *mut HSD_PObj, desc: *mut HSD_PObjDesc) {
         match unsafe { HSD_POBJRESOLVEREFSALL } { Some(f) => f(pobj, desc), None => { unsafe { let _ = crate::tu::pobj::HSD_PObjResolveRefsAll(pobj as _, desc as _); } return; } }
     }
-        hook!(HSD_MOBJSETCURRENT, HSD_MObjSetCurrent, (mobj: *mut HSD_MObj));
-        hook!(HSD_MOBJREMOVE, HSD_MObjRemove, (mobj: *mut HSD_MObj));
+        // rp3 HSD_MObjSetCurrent
+        hook_or!(HSD_MOBJSETCURRENT, HSD_MObjSetCurrent, (mobj: *mut HSD_MObj), |mobj: *mut HSD_MObj| unsafe { crate::tu::mobj::HSD_MObjSetCurrent(mobj); });
+        // rp3-end
+
+        // rp3 HSD_MObjRemove
+        hook_or!(HSD_MOBJREMOVE, HSD_MObjRemove, (mobj: *mut HSD_MObj), |mobj: *mut HSD_MObj| unsafe { crate::tu::mobj::HSD_MObjRemove(mobj); });
+        // rp3-end
+
         pub static mut HSD_POBJREMOVEALL: Option<fn(*mut HSD_PObj)> = None;
     #[allow(non_snake_case)]
     pub fn HSD_PObjRemoveAll(pobj: *mut HSD_PObj) {

@@ -19,8 +19,9 @@ pub mod ext {
         lbCardNew_AllocWorkArea() = || { unsafe { let _ = melee_runtime::tu::lbcardnew::lbCardNew_AllocWorkArea(); } };
         lbCardGame_LoadArchive(arg: i32) = |arg: i32| { unsafe { let _ = melee_runtime::tu::lbcardgame::lbCardGame_LoadArchive(arg as _); } };
         lbCardGame_SaveChanges() = || { unsafe { let _ = melee_runtime::tu::lbcardgame::lbCardGame_SaveChanges(); } };
-        gm_801B06B0(css: *mut CSSData, match_type: u8, ckind: i8, stocks: i8, color: i8, nametag: u8, cpu_level: u8, slot: u8)
-            = |_, _, _, _, _, _, _, _| todo!("TODO(port) gm_801B06B0 (gm_1B03.c)");
+        // rp3 gm_801B06B0
+        gm_801B06B0(css: *mut CSSData, match_type: u8, ckind: i8, stocks: i8, color: i8, nametag: u8, cpu_level: u8, slot: u8) = |css: *mut CSSData, match_type: u8, ckind: i8, stocks: i8, color: i8, nametag: u8, cpu_level: u8, slot: u8| unsafe { crate::tu::gm_1B03::gm_801B06B0(&mut *(css as *mut _), match_type, ckind, stocks, color, nametag, cpu_level, slot); };
+        // rp3-end
         gm_801B07B4(css: *mut CSSData, ckind: i8, stocks: i8, color: i8, nametag: u8, level: u8, slot: u8)
             = |css, ckind, stocks, color, nametag, level, slot| crate::gm_ptr::gm_801B07B4(unsafe { &mut *css }, ckind, stocks, color, nametag, level, slot);
         lbDvd_SetupVsPreloadCache() = || { unsafe { let _ = melee_runtime::tu::lbdvd::lbDvd_SetupVsPreloadCache(); } };

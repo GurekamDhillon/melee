@@ -144,7 +144,10 @@ pub mod ext {
     hook!(HSD_JOBJGETFLAGS, HSD_JObjGetFlags, (jobj: *mut HSD_JObj) -> u32);
     hook!(HSD_JOBJREMOVEANIMALL, HSD_JObjRemoveAnimAll, (jobj: *mut HSD_JObj));
     hook!(HSD_JOBJSETFLAGSALL, HSD_JObjSetFlagsAll, (a0: *mut HSD_JObj, flags: u32));
-    hook!(HSD_LOBJDELETECURRENTALL, HSD_LObjDeleteCurrentAll, (lobj: *mut HSD_LObj));
+    // rp3 HSD_LObjDeleteCurrentAll
+    hook_or!(HSD_LOBJDELETECURRENTALL, HSD_LObjDeleteCurrentAll, (lobj: *mut HSD_LObj), |lobj: *mut HSD_LObj| unsafe { melee_runtime::tu::lobj::HSD_LObjDeleteCurrentAll(lobj); });
+    // rp3-end
+
     pub static mut HSD_MEMALLOC: Option<fn(ssize_t) -> *mut c_void> = None;
     #[allow(non_snake_case)]
     pub fn HSD_MemAlloc(size: ssize_t) -> *mut c_void {

@@ -22,7 +22,7 @@ use core::ptr::{addr_of, addr_of_mut, null, null_mut};
 use std::vec::Vec;
 
 use melee_core::fp::fmadds;
-use melee_runtime::cabi::{f2i32, srem};
+use melee_runtime::cabi::{f2i32, sdiv, srem};
 use melee_runtime::gekko::{cosf, sinf};
 use melee_runtime::lbtrigf::{atan2f, atanf};
 use melee_types::*;
@@ -1828,7 +1828,7 @@ unsafe fn dobj_mobj(j: *mut HSD_JObj) -> *mut HSD_MObj {
 
 /// The CSS background's per-frame update: icon and door animation timers, the handicap sliders,
 /// the CPU level scroll and the portrait alpha.
-pub unsafe fn fn_8025F0E0(gobj: *mut HSD_GObj) {
+pub unsafe extern "C" fn fn_8025F0E0(gobj: *mut HSD_GObj) {
     let jobj = get_jobj(gobj);
     let mut sp54: *mut HSD_JObj = null_mut();
     let mut sp4C: *mut HSD_JObj = null_mut();
@@ -2057,7 +2057,7 @@ pub unsafe fn fn_8025F0E0(gobj: *mut HSD_GObj) {
     ext::HSD_JObjAnimAll(jobj);
 }
 
-pub unsafe fn fn_8025FAC0(gobj: *mut HSD_GObj) {
+pub unsafe extern "C" fn fn_8025FAC0(gobj: *mut HSD_GObj) {
     let jobj = get_jobj(gobj);
 
     if mnCharSel_804D6CEC % 40 == 0 {
@@ -2067,7 +2067,7 @@ pub unsafe fn fn_8025FAC0(gobj: *mut HSD_GObj) {
     ext::HSD_JObjAnimAll(jobj);
 }
 
-pub unsafe fn fn_8025FB2C(gobj: *mut HSD_GObj) {
+pub unsafe extern "C" fn fn_8025FB2C(gobj: *mut HSD_GObj) {
     ext::HSD_JObjAnimAll(get_jobj(gobj));
 }
 
@@ -2412,7 +2412,7 @@ pub unsafe fn cycleTeam(cursor: *mut CSSCursorData, dp: *mut CSSDoor, di: i32) {
 /// The cursor token / hand of one port: reads the port's pad, moves the cursor, and performs the
 /// click actions (pick / drop a token, costume change, door toggles, sliders, team box, name tag
 /// list, stock and CPU level buttons, start / back).
-pub unsafe fn mnCharSel_CursorThink(gobj: *mut HSD_GObj) {
+pub unsafe extern "C" fn mnCharSel_CursorThink(gobj: *mut HSD_GObj) {
     let mut sp98: *mut HSD_JObj = null_mut();
     let mut sp88: Vec3 = core::mem::zeroed();
     let mut sp74: *mut HSD_JObj = null_mut();
@@ -3165,5 +3165,1209 @@ pub unsafe fn mnCharSel_CursorThink(gobj: *mut HSD_GObj) {
         }
     }
     updateCursorDisplay(jobj, cursor, &mut state_jobj, &mut color_jobj);
+}
+
+
+// ------------------------------------------------------------------------------------------
+// token models, start button, name tag list
+// ------------------------------------------------------------------------------------------
+
+/// `getDoorCount`.
+pub unsafe fn getDoorCount(css: *mut CSSData) -> i32 {
+    if (*css).match_type as u32 == TRAINING_MODE {
+        return 2;
+    }
+    mnCharSel_804D6CF5 as i32
+}
+
+/// `animateCharModel`: freeze the token model's joint 4 on `frame`.
+pub unsafe fn animateCharModel(jobj: *mut HSD_JObj, frame: f32) {
+    let mut child: *mut HSD_JObj = null_mut();
+
+    lb_find(jobj, &mut child, 4);
+    {
+        let anim_jobj = child;
+        req_anim(anim_jobj, TOBJ_MASK, frame);
+    }
+    ext::HSD_JObjAnimAll(child);
+    stop_anim(child, TOBJ_MASK);
+}
+
+/// `atanf(dx / dy)` based heading used by the token physics: `(f32) ((dy < 0 ? 0 : pi) + atanf(dx/dy))`,
+/// or +-pi/2 when `dy` is within 0.01 of zero.
+#[inline]
+unsafe fn heading(dx: f32, dy: f32) -> f32 {
+    if dy < 0.01f32 && dy > -0.01f32 {
+        (if dx < 0.0f32 { 1.5707963267948966f64 } else { -1.5707963267948966f64 }) as f32
+    } else {
+        ((if dy < 0.0f32 { 0.0f64 } else { 3.141592653589793f64 }) + atanf(dx / dy) as f64) as f32
+    }
+}
+
+/// The per-frame callback of a fighter token (hand-held icon model): chooses its colour, keeps it
+/// away from the other tokens, steers it onto its icon and eases the displayed position towards it.
+pub unsafe extern "C" fn fn_80262648(gobj: *mut HSD_GObj) {
+    let mut sp24: *mut HSD_JObj = null_mut();
+    let model = (*gobj).user_data as *mut CSSCharModel;
+    let jobj = get_jobj(gobj);
+    let prev_port: u8 = (*model).x6;
+    let css = mnCharSel_804D6CB0;
+    let n_doors = getDoorCount(css);
+
+    {
+        let p_kind: u8;
+        let door_i: u8 = (*model).x4;
+
+        p_kind = (*door(door_i as usize)).p_kind;
+        if p_kind == 3 || (*door(door_i as usize)).sel_icon as u32 >= MNCS_NUM_U() {
+            ext::HSD_JObjSetFlagsAll(jobj, JOBJ_HIDDEN as u32);
+            return;
+        }
+
+        if mnCharSel_804D6CF5 == 1 {
+            if door_i != 0 {
+                (*model).x6 = 8;
+            } else {
+                (*model).x6 = mnCharSel_804D6CF0 as u8;
+            }
+        } else if (*css).vs.start.rules.is_teams == 0 {
+            if p_kind == 1 {
+                (*model).x6 = 8;
+            } else {
+                (*model).x6 = door_i;
+            }
+        } else if p_kind == 1 {
+            (*model).x6 = mnCharSel_804D50E0[(*door(door_i as usize)).team as usize].wrapping_add(4);
+        } else {
+            (*model).x6 = mnCharSel_804D50E0[(*door(door_i as usize)).team as usize];
+        }
+    }
+
+    ext::HSD_JObjClearFlagsAll(jobj, JOBJ_HIDDEN as u32);
+    (*model).x7 = (*model).x7.wrapping_add(1);
+
+    {
+        let port: u8 = (*model).x6;
+        if prev_port != port || (*model).x7 as u32 > 0x27 {
+            if (port as u32) < 4 {
+                if mnCharSel_804D6CF5 == 1 {
+                    animateCharModel(jobj, (mnCharSel_804D6CF0 as i32 * 4) as f32);
+                } else {
+                    animateCharModel(jobj, ((*model).x4 as i32 * 4) as f32);
+                }
+            } else {
+                animateCharModel(jobj, 16.0f32);
+            }
+            lb_find(jobj, &mut sp24, 3);
+            {
+                let anim_jobj = sp24;
+                req_anim(anim_jobj, MOBJ_MASK, ((*model).x6 as i32 * 0x28) as f32);
+            }
+            (*model).x7 = 0;
+        }
+    }
+
+    {
+        let status: u8 = (*model).x5;
+        if status == 0 {
+            let mut iter: i32 = 0;
+            while iter < 0x14 {
+                let mut bdp = addr_of_mut!(mnCharSel_804A0BD0) as *mut *mut CSSCharModel;
+                let mut dp = door(0);
+                let mut j: i32 = 0;
+
+                while j < n_doors {
+                    if j != (*model).x4 as i32 && (**bdp).x5 == 0 && (*dp).p_kind != 3 && (*dp).sel_icon as u32 >= MNCS_NUM_U() {
+                        let mut dx: f32;
+                        let mut dy: f32;
+                        let angle: f32;
+                        loop {
+                            dx = fmadds(0.1f32, ext::HSD_Randf() - 0.5f32, (*model).x8 - (**bdp).x8);
+                            if !(dx == 0.0f32) {
+                                break;
+                            }
+                        }
+
+                        loop {
+                            let rand = ext::HSD_Randf();
+                            dy = fmadds(0.1f32, rand - 0.5f32, (*model).xC - (**bdp).xC);
+                            if !(dy == 0.0f32) {
+                                break;
+                            }
+                        }
+
+                        if fmadds(dx, dx, dy * dy) < 8.0f32 {
+                            angle = heading(dx, dy);
+                            (*model).x8 = -(fmadds(0.01f32, sinf(angle), -(*model).x8));
+                            (*model).xC = -(fmadds(0.01f32, cosf(angle), -(*model).xC));
+                        }
+                    }
+                    bdp = bdp.add(1);
+                    dp = dp.add(1);
+                    j += 1;
+                }
+
+                {
+                    let sel = (*door((*model).x4 as usize)).sel_icon as usize;
+                    let ic = icon_at(sel);
+                    let mut x: f32;
+
+                    x = (*model).x8;
+                    if x < 1.5f32 + (*ic).bound_l {
+                        (*model).x8 += 0.02f32;
+                        if (*model).x8 < (*ic).bound_l {
+                            (*model).x8 = (*ic).bound_l;
+                        }
+                    }
+
+                    x = (*model).x8;
+                    if x > (*ic).bound_r - 1.5f32 {
+                        (*model).x8 = x - 0.02f32;
+                        if (*model).x8 > (*ic).bound_r {
+                            (*model).x8 = (*ic).bound_r;
+                        }
+                    }
+
+                    x = (*model).xC;
+                    if x > (*ic).bound_u - 1.5f32 {
+                        (*model).xC = x - 0.02f32;
+                        if (*model).xC > (*ic).bound_u {
+                            (*model).xC = (*ic).bound_u;
+                        }
+                    }
+
+                    x = (*model).xC;
+                    if x < 1.5f32 + (*ic).bound_d {
+                        (*model).xC += 0.02f32;
+                        if (*model).xC < (*ic).bound_d {
+                            (*model).xC = (*ic).bound_d;
+                        }
+                    }
+                }
+                iter += 1;
+            }
+        } else {
+            (*model).x8 = 2.7f32 + (*mnCharSel_804A0BC0[status as usize - 1]).xC;
+            (*model).xC = -2.0f32 + (*mnCharSel_804A0BC0[(*model).x5 as usize - 1]).x10;
+        }
+    }
+
+    {
+        let dx: f32;
+        let tx: f32;
+        let dy: f32;
+
+        tx = (*model).x8;
+        dx = (*model).x10 - tx;
+        dy = (*model).x14 - (*model).xC;
+
+        if fmadds(dx, dx, dy * dy) < 4.0f32 {
+            (*model).x10 = tx;
+            (*model).x14 = (*model).xC;
+        } else {
+            let angle = heading(dx, dy);
+            (*model).x10 = fmadds(3.0f32, sinf(angle), (*model).x10);
+            (*model).x14 = fmadds(3.0f32, cosf(angle), (*model).x14);
+        }
+    }
+
+    super::hsd::HSD_JObjSetTranslateX(jobj, (*model).x10);
+    super::hsd::HSD_JObjSetTranslateY(jobj, (*model).x14);
+    super::hsd::HSD_JObjSetTranslateZ(jobj, 1.0f32);
+    ext::HSD_JObjAnimAll(jobj);
+}
+
+/// The "Start" banner's per-frame callback: shows it when every open door has picked a fighter (and
+/// the teams are valid), and handles the Start button.
+pub unsafe extern "C" fn fn_80262F44(gobj: *mut HSD_GObj) {
+    let jobj = get_jobj(gobj);
+    let mut i: i32;
+    let mut valid_count: i32 = 0;
+    let mut hide = false;
+
+    if (*mnCharSel_804D6CB0).match_type as u32 == VS_CAMERA {
+        if (*pad(3)).err != 0 {
+            ext::HSD_JObjClearFlagsAll(if mnCharSel_804D6CCC.is_null() { null_mut() } else { (*mnCharSel_804D6CCC).child }, JOBJ_HIDDEN as u32);
+            hide = true;
+        } else {
+            ext::HSD_JObjSetFlagsAll(if mnCharSel_804D6CCC.is_null() { null_mut() } else { (*mnCharSel_804D6CCC).child }, JOBJ_HIDDEN as u32);
+        }
+    }
+
+    if !hide {
+        if mnCharSel_804D6CF5 == 1 {
+            if (*mnCharSel_804A0BC0[0]).x5 == 1 || (*door(0)).sel_icon as i32 >= MNCS_NUM() {
+                mnCharSel_804D6CF7 = 0;
+            } else {
+                mnCharSel_804D6CF7 = 1;
+            }
+            ext::HSD_JObjSetFlagsAll(jobj, JOBJ_HIDDEN as u32);
+        } else {
+            valid_count = 0;
+
+            i = 0;
+            while i < mnCharSel_804D6CF5 as i32 {
+                if (*door(i as usize)).p_kind != 3 {
+                    if (*door(i as usize)).sel_icon as i32 >= MNCS_NUM() {
+                        hide = true;
+                        break;
+                    }
+                    valid_count += 1;
+                }
+                i += 1;
+            }
+
+            let mut teams_ok = false;
+            if !hide {
+                // the online lobby sends one player here to pick a fighter: one is enough, and teams
+                // (from the local rules) do not apply
+                if ext::Frontend_OnlinePick() == 1 && valid_count == 1 {
+                    teams_ok = true;
+                } else if valid_count >= 2 {
+                    if (*mnCharSel_804D6CB0).vs.start.rules.is_teams == 1 {
+                        'search: {
+                            i = 0;
+                            while i < mnCharSel_804D6CF5 as i32 - 1 {
+                                if (*door(i as usize)).p_kind == 3 {
+                                    i += 1;
+                                    continue;
+                                }
+                                let mut j = i;
+                                while j < mnCharSel_804D6CF5 as i32 {
+                                    if (*door(j as usize)).p_kind != 3 && (*door(i as usize)).team != (*door(j as usize)).team {
+                                        teams_ok = true;
+                                        break 'search;
+                                    }
+                                    j += 1;
+                                }
+                                i += 1;
+                            }
+                            hide = true;
+                        }
+                    } else {
+                        teams_ok = true;
+                    }
+                } else {
+                    hide = true;
+                }
+            }
+            if teams_ok {
+                let tag = addr_of_mut!(mnCharSel_803F0E8C) as *mut CSSTag;
+                i = 0;
+                while i < mnCharSel_804D6CF5 as i32 {
+                    if (*mnCharSel_804A0BC0[i as usize]).x5 == 1 || (*(*tag.add(i as usize)).data).state != 0 {
+                        hide = true;
+                        break;
+                    }
+                    i += 1;
+                }
+
+                if !hide {
+                    if mnCharSel_804D6CF7 == 0 {
+                        ext::HSD_ForeachAnim(jobj.cast(), JOBJ_TYPE as u32, ALL_TYPE_MASK, ext::HSD_AObjReqAnim as *const () as *mut c_void, AOBJ_ARG_AF, &[Va::D(0.0)]);
+                    } else if mnCharSel_804D6CF7 > 100 {
+                        ext::HSD_ForeachAnim(jobj.cast(), JOBJ_TYPE as u32, ALL_TYPE_MASK, ext::HSD_AObjReqAnim as *const () as *mut c_void, AOBJ_ARG_AF, &[Va::D(10.0)]);
+                        mnCharSel_804D6CF7 = 10;
+                    }
+                    mnCharSel_804D6CF7 = mnCharSel_804D6CF7.wrapping_add(1);
+                    ext::HSD_JObjClearFlagsAll(jobj, JOBJ_HIDDEN as u32);
+                    ext::HSD_JObjAnimAll(jobj);
+                }
+            }
+        }
+    }
+    if hide {
+        mnCharSel_804D6CF7 = 0;
+        mnCharSel_804D6CF2 = 10;
+        ext::HSD_JObjSetFlagsAll(jobj, JOBJ_HIDDEN as u32);
+    }
+
+    {
+        let mut p: u32;
+        let mut trigger: u32;
+        if mnCharSel_804D6CF5 == 1 {
+            trigger = (*pad((mnCharSel_804D6CF0 as u8) as usize)).trigger;
+        } else {
+            p = 0;
+            trigger = 0;
+            i = 0;
+            while i < mnCharSel_804D6CF5 as i32 {
+                if (*mnCharSel_804A0BC0[i as usize]).x5 != 3 {
+                    let tmp = p as u8;
+                    trigger |= (*pad(tmp as usize)).trigger;
+                }
+                i += 1;
+                p += 1;
+            }
+        }
+
+        if mnCharSel_804D6CF2 == 0 && (trigger & HSD_PAD_START as u32) != 0 {
+            if mnCharSel_804D6CF7 != 0 {
+                mnCharSel_804D6CF6 = 1;
+                mnCharSel_804D6CF2 = 0xFF;
+                if mnCharSel_804D6CF5 == 1 {
+                    if ext::gm_RumbleEnabledForPlayer(
+                        mnCharSel_804D6CF0 as i32,
+                        (*player_at(mnCharSel_804D6CB0, mnCharSel_804D6CF0 as usize)).nametag as i32,
+                    ) != 0
+                    {
+                        ext::lb_80014574(mnCharSel_804D6CF0 as u8, 0, 0xB, 0x1E);
+                    }
+                } else {
+                    i = 0;
+                    while i < mnCharSel_804D6CF5 as i32 {
+                        if (*door(i as usize)).p_kind == 0
+                            && ext::gm_RumbleEnabledForPlayer(i, (*player_at(mnCharSel_804D6CB0, i as usize)).nametag as i32) != 0
+                        {
+                            ext::lb_80014574(i as u8, 0, 0xB, 0x1E);
+                        }
+                        i += 1;
+                    }
+                }
+            } else {
+                ext::lbAudioAx_80024030(3);
+            }
+        }
+    }
+}
+
+pub unsafe extern "C" fn fn_80263354(gobj: *mut HSD_GObj) {
+    let jobj = get_jobj(gobj);
+    if mnCharSel_804D6CEC % 200 == 0 {
+        ext::HSD_JObjReqAnimAll(jobj, 0.0f32);
+    }
+    ext::HSD_JObjAnimAll(jobj);
+}
+
+/// `static const GXColor mnCharSel_804DC560`.
+pub const mnCharSel_804DC560: _GXColor = _GXColor { r: 255, g: 255, b: 255, a: 255 };
+/// `static const GXColor mnCharSel_804DC564`.
+pub const mnCharSel_804DC564: _GXColor = _GXColor { r: 100, g: 100, b: 100, a: 255 };
+
+/// The "clear the K.O. count" decision of the nametag pick: modes 0 and 3..0xA reset it.
+#[inline]
+fn tag_clears_kos(match_type: u8) -> bool {
+    if (match_type as i32) < 3 {
+        (match_type as i32) == 0
+    } else {
+        (match_type as i32) < 0xB
+    }
+}
+
+/// Nametag list think callback: handles scrolling through the nametag list.
+pub unsafe extern "C" fn fn_802633B0(gobj: *mut HSD_GObj) {
+    let mut list_jobj: *mut HSD_JObj = null_mut();
+    let mut arrow_jobj: *mut HSD_JObj = null_mut();
+    let mut list_origin_jobj: *mut HSD_JObj = null_mut();
+    let mut list_origin: Vec3 = core::mem::zeroed();
+    let mut handicap_slider_jobj: *mut HSD_JObj = null_mut();
+    let page: i32;
+    let new_page: i32;
+    let mut num_entries: i32;
+    let trigger: u32;
+
+    let tag = (*gobj).user_data as *mut CSSTagData;
+    let mut port: i32 = (*tag).port as i32;
+
+    if mnCharSel_804D6CF5 == 1 {
+        if port != 0 {
+            port = mnCharSel_804D6CF1 as i32;
+        } else {
+            port = mnCharSel_804D6CF0 as i32;
+        }
+    }
+
+    let white = mnCharSel_804DC560;
+    let gray = mnCharSel_804DC564;
+    num_entries = (*tag).next_tag as i32;
+
+    if num_entries as u32 > 0x78 {
+        num_entries -= 8;
+    } else {
+        num_entries -= 7;
+    }
+
+    if mnCharSel_804D6CF5 == 1 {
+        lb_find(mnCharSel_804D6CC0, &mut list_jobj, mnCharSel_803F0EBC.xc4 as i32);
+        trigger = (*pad((mnCharSel_804D6CF0 as u8) as usize)).trigger;
+    } else {
+        lb_find(mnCharSel_804D6CC0, &mut list_jobj, (*tag_at((*tag).port as usize)).x4 as i32);
+        trigger = (*pad((*tag).port as usize)).trigger;
+    }
+
+    match (*tag).state as i32 {
+        1 => {
+            mnCharSel_8025D1C4((*tag).port as i32, 1);
+            if ((*door((*tag).port as usize)).sel_icon as u32) < MNCS_NUM_U() {
+                if ext::lbLang_IsSavedLanguageUS() != 0 && (*door((*tag).port as usize)).sel_icon == 0x16 {
+                    ext::HSD_SisLib_803A70A0((*tag).name_ls, 0, addr_of!(mnCharSel_803F0A48.gnw_name) as *const i8, &[]);
+                } else {
+                    ext::HSD_SisLib_803A70A0(
+                        (*tag).name_ls,
+                        0,
+                        ext::gm_80160980((*icon_at((*door((*tag).port as usize)).sel_icon as usize)).char_kind),
+                        &[],
+                    );
+                }
+            } else {
+                ext::HSD_SisLib_803A70A0(
+                    (*tag).name_ls,
+                    0,
+                    c"\x82\x6d\x82\x60\x82\x6c\x82\x64\x81\x40\x82\x62\x82\x60\x82\x6d\x82\x62\x82\x64\x82\x6b".as_ptr(),
+                    &[],
+                );
+            }
+            let mut gray_copy = gray;
+            ext::HSD_SisLib_803A74F0((*tag).text, 0, &mut gray_copy);
+            req_anim(list_jobj, ALL_TYPE_MASK, 0.0f32);
+            (*tag).state = 2;
+            (*tag).timer = 0;
+            sfxMove();
+            return;
+        }
+        2 => {
+            let t: u32 = ((*tag).timer as u32).wrapping_add(1);
+            (*tag).timer = t as i32;
+            if t > 0xA {
+                stop_anim(list_jobj, ALL_TYPE_MASK);
+                (*(*tag).name_ls).hidden = 0;
+                (*tag).state = 3;
+            }
+            return;
+        }
+        3 => 'case3: {
+            let vel = (*tag).scroll_amt;
+            if vel != 0.0f32 {
+                (*tag).scroll_force = fmadds(10.0f32, vel, if vel < 0.0f32 { -1.0f32 } else { 1.0f32 });
+            }
+            if (*tag).scroll_force != 0.0f32 {
+                let scroll_pos = (*tag).x8;
+                let new_pos = scroll_pos + (*tag).scroll_force;
+                page = f2i32((scroll_pos / 32.0f32) as f64);
+                (*tag).x8 = new_pos;
+                new_page = f2i32(((*tag).x8 / 32.0f32) as f64);
+                if (*tag).x8 > 0.0f32 {
+                    (*tag).x8 = 0.0f32;
+                }
+                if (*tag).next_tag > 7 {
+                    if (*tag).x8 < -32.0f32 * num_entries as f32 {
+                        (*tag).x8 = -32.0f32 * num_entries as f32;
+                    }
+                } else {
+                    (*tag).x8 = 0.0f32;
+                }
+                if (*tag).scroll_amt == 0.0f32 {
+                    if page < new_page {
+                        (*tag).x8 = 32.0f32 * page as f32;
+                        (*tag).scroll_force = 0.0f32;
+                    } else if page > new_page {
+                        (*tag).x8 = 32.0f32 * new_page as f32;
+                        (*tag).scroll_force = 0.0f32;
+                    }
+                }
+            }
+
+            if mnCharSel_804D6CF5 == 1 {
+                lb_find(mnCharSel_804D6CC0, &mut arrow_jobj, mnCharSel_803F0EBC.xc7 as i32);
+            } else {
+                lb_find(mnCharSel_804D6CC0, &mut arrow_jobj, (*tag_at((*tag).port as usize)).x7 as i32);
+            }
+
+            if (*tag).x8 == 0.0f32 {
+                ext::HSD_JObjSetFlags(arrow_jobj, JOBJ_HIDDEN as u32);
+            } else {
+                ext::HSD_JObjClearFlags(arrow_jobj, JOBJ_HIDDEN as u32);
+            }
+
+            if mnCharSel_804D6CF5 == 1 {
+                lb_find(mnCharSel_804D6CC0, &mut arrow_jobj, mnCharSel_803F0EBC.xc8 as i32);
+            } else {
+                lb_find(mnCharSel_804D6CC0, &mut arrow_jobj, (*tag_at((*tag).port as usize)).kostar_text_joint as i32);
+            }
+
+            if (*tag).next_tag > 7 {
+                if (*tag).x8 == (-32.0f32 * num_entries as f32) {
+                    ext::HSD_JObjSetFlags(arrow_jobj, JOBJ_HIDDEN as u32);
+                } else {
+                    ext::HSD_JObjClearFlags(arrow_jobj, JOBJ_HIDDEN as u32);
+                }
+            } else {
+                ext::HSD_JObjSetFlags(arrow_jobj, JOBJ_HIDDEN as u32);
+            }
+
+            ext::HSD_SisLib_803A746C((*tag).name_ls, 0, 0.0f32, (*tag).x8);
+            ext::HSD_SisLib_803A746C((*tag).name_ls, 1, 0.0f32, fmadds(32.0f32, (*tag).next_tag as f32, (*tag).x8));
+            {
+                let mut row_color_v: _GXColor = white;
+                let mut used_row_color_v: _GXColor = gray;
+                let page_off: i32 = sdiv(f2i32((*tag).x8 as f64), 32) + 1;
+                let mut j: i32 = 0;
+                while j < 9 {
+                    let row_idx = j - page_off;
+                    if row_idx < 0 {
+                        ext::HSD_SisLib_803A70A0((*tag).name_ls, j + 2, null(), &[]);
+                    } else {
+                        ext::HSD_SisLib_803A70A0((*tag).name_ls, j + 2, ext::GetNameText((row_idx as u8) as i32), &[]);
+                        row_color_v = white;
+                        ext::HSD_SisLib_803A74F0((*tag).name_ls, j + 2, &mut row_color_v);
+                        {
+                            let mut p2: i32 = 0;
+                            while p2 < mnCharSel_804D6CF5 as i32 {
+                                if p2 != (*tag).port as i32 && (*player_at(mnCharSel_804D6CB0, p2 as usize)).nametag as i32 == row_idx {
+                                    used_row_color_v = gray;
+                                    ext::HSD_SisLib_803A74F0((*tag).name_ls, j + 2, &mut used_row_color_v);
+                                    break;
+                                }
+                                p2 += 1;
+                            }
+                        }
+                    }
+                    ext::HSD_SisLib_803A746C(
+                        (*tag).name_ls,
+                        j + 2,
+                        10.0f32,
+                        fmadds(32.0f32, (j + 1) as f32, (srem(f2i32((*tag).x8 as f64), 32) - 0x20) as f32),
+                    );
+                    j += 1;
+                }
+            }
+
+            'check_cancel: {
+                if trigger & PAD_A != 0 {
+                    if mnCharSel_804D6CF5 == 1 {
+                        lb_find(mnCharSel_804D6CC0, &mut list_origin_jobj, mnCharSel_803F0EBC.name_list_joint as i32);
+                    } else {
+                        lb_find(mnCharSel_804D6CC0, &mut list_origin_jobj, (*tag_at((*tag).port as usize)).list_joint as i32);
+                    }
+                    ext::lb_8000B1CC(list_origin_jobj, null_mut(), &mut list_origin);
+                    let cursor_row: f32 = fmadds(0.5f32, 0.8f32 + (list_origin.y - (*mnCharSel_804A0BC0[(*tag).port as usize]).x10), -((*tag).x8 / 32.0f32));
+                    let row: i32 = f2i32(cursor_row as f64);
+
+                    if f2i32(cursor_row as f64) == 0 {
+                        if ext::lbLang_IsSavedLanguageUS() != 0 && (*door((*tag).port as usize)).sel_icon == 0x16 {
+                            ext::HSD_SisLib_803A70A0((*tag).text, 0, addr_of!(mnCharSel_803F0A48.gnw_name) as *const i8, &[]);
+                        } else {
+                            ext::HSD_SisLib_803A70A0(
+                                (*tag).text,
+                                0,
+                                ext::gm_80160980((*icon_at((*door((*tag).port as usize)).sel_icon as usize)).char_kind),
+                                &[],
+                            );
+                        }
+                        (*(*tag).text).default_kerning = 1;
+                        if ((*door((*tag).port as usize)).sel_icon as u32) < MNCS_NUM_U() {
+                            (*(*tag).text).hidden = 0;
+                        } else {
+                            (*(*tag).text).hidden = 1;
+                        }
+                        {
+                            if (*player_at(mnCharSel_804D6CB0, port as usize)).nametag != 0x78 {
+                                let match_type = (*mnCharSel_804D6CB0).match_type;
+                                if tag_clears_kos(match_type) {
+                                    *(*mnCharSel_804D6CB0).ko_counts.add((*tag).port as usize) = 0;
+                                }
+                            }
+                        }
+                        (*player_at(mnCharSel_804D6CB0, port as usize)).nametag = 0x78;
+                        (*tag).use_tag = 0;
+                        (*tag).state = 4;
+                        sfxMove();
+                        break 'check_cancel;
+                    }
+
+                    if (*tag).next_tag as i32 == row {
+                        if ext::IsNameListFull() == 0 {
+                            if mnCharSel_804D6CF5 == 1 {
+                                mnCharSel_804D6CF9 = mnCharSel_804D6CF0;
+                            } else {
+                                mnCharSel_804D6CF9 = (*tag).port as i8;
+                            }
+                            mnCharSel_804D6CF6 = 4;
+                            {
+                                let mut k: i32 = 0;
+                                while k < mnCharSel_804D6CF5 as i32 {
+                                    if (*mnCharSel_804A0BC0[k as usize]).x5 == 1 && mnCharSel_8025FDEC(k as u8) == 0 {
+                                        mnCharSel_8025DB34(k as u8);
+                                        (*mnCharSel_804A0BC0[k as usize]).x5 = 2;
+                                    }
+                                    k += 1;
+                                }
+                            }
+                            return;
+                        }
+                        break 'check_cancel;
+                    }
+
+                    if (*tag).next_tag as i32 > row {
+                        {
+                            let mut p: i32 = 0;
+                            while p < mnCharSel_804D6CF5 as i32 {
+                                if p != port && (*player_at(mnCharSel_804D6CB0, p as usize)).nametag as i32 == row - 1 {
+                                    break 'check_cancel;
+                                }
+                                p += 1;
+                            }
+                            {
+                                ext::HSD_SisLib_803A70A0((*tag).text, 0, ext::GetNameText(row - 1), &[]);
+                                (*(*tag).text).default_kerning = 0;
+                                (*(*tag).text).hidden = 0;
+                                {
+                                    if (*player_at(mnCharSel_804D6CB0, port as usize)).nametag as i32 != row - 1 {
+                                        let match_type = (*mnCharSel_804D6CB0).match_type;
+                                        if tag_clears_kos(match_type) {
+                                            *(*mnCharSel_804D6CB0).ko_counts.add((*tag).port as usize) = 0;
+                                        }
+                                    }
+                                }
+                                (*player_at(mnCharSel_804D6CB0, port as usize)).nametag = (row - 1) as u8;
+                                (*tag).use_tag = 1;
+                                (*tag).state = 4;
+                                sfxMove();
+                            }
+                        }
+                    }
+                }
+            }
+            // check_cancel:
+            if trigger & PAD_B != 0 {
+                (*tag).state = 4;
+                sfxBack();
+                return;
+            }
+            break 'case3;
+        },
+        4 => {
+            req_anim(list_jobj, ALL_TYPE_MASK, 20.0f32);
+            (*(*tag).name_ls).hidden = 1;
+            if (*ext::gmMainLib_GetGameRules()).handicap != 0 && mnCharSel_804D6CF5 == 4 {
+                {
+                    let mut hval: i32;
+                    let mut hval_f: f32;
+                    hval = getHandicapValue((*tag).port as i32);
+                    hval_f = hval as f32;
+                    lb_find(mnCharSel_804D6CC0, &mut handicap_slider_jobj, (*door(port as usize)).cpuslider_joint as i32);
+                    {
+                        let anim_jobj = handicap_slider_jobj;
+                        req_anim(anim_jobj, TOBJ_MASK, hval_f);
+                    }
+                    ext::HSD_JObjAnimAll(handicap_slider_jobj);
+                    stop_anim(handicap_slider_jobj, TOBJ_MASK);
+                    list_jobj = handicap_slider_jobj;
+                    hval = getHandicapValue((*tag).port as i32);
+                    hval_f = 1.25f32 * (hval - 1) as f32;
+                    super::hsd::HSD_JObjSetTranslateX(list_jobj, hval_f);
+                }
+            }
+            (*tag).state = 5;
+            (*tag).timer = 0;
+            return;
+        }
+        5 => {
+            let t2: u32 = ((*tag).timer as u32).wrapping_add(1);
+            (*tag).timer = t2 as i32;
+            if t2 > 0xA {
+                mnCharSel_8025D1C4((*tag).port as i32, 2);
+                let mut white_copy = white;
+                ext::HSD_SisLib_803A74F0((*tag).text, 0, &mut white_copy);
+                (*tag).state = 0;
+            }
+        }
+        _ => {}
+    }
+}
+
+pub unsafe fn mnCharSel_80264070() {
+    mnCharSel_804D6CF4 = 1;
+}
+
+pub unsafe extern "C" fn fn_8026407C(gobj: *mut HSD_GObj) {
+    ext::HSD_FogSet((*gobj).hsd_obj as *mut HSD_Fog);
+}
+
+pub const mnCharSel_804DC580: _GXColor = _GXColor { r: 255, g: 255, b: 0, a: 255 };
+pub const mnCharSel_804DC584: _GXColor = _GXColor { r: 20, g: 80, b: 160, a: 255 };
+pub const mnCharSel_804DC588: _GXColor = _GXColor { r: 60, g: 140, b: 80, a: 255 };
+pub const mnCharSel_804DC58C: _GXColor = _GXColor { r: 160, g: 160, b: 0, a: 255 };
+pub const mnCharSel_804DC590: _GXColor = _GXColor { r: 180, g: 80, b: 0, a: 255 };
+pub const mnCharSel_804DC594: _GXColor = _GXColor { r: 220, g: 0, b: 0, a: 255 };
+
+
+// ------------------------------------------------------------------------------------------
+// m-ex CSS (TARGET_PC)
+// ------------------------------------------------------------------------------------------
+
+/// Give one portrait slot m-ex's art: the portrait joint's DObj gets mexSelectChr's CSP material
+/// animation, the emblem joint's SECOND DObj IfAll's Eblm_matanim_joint animation - the same shape
+/// in every m-ex patch that does it (Replace CSS VS / SinglePlayer / Training Emblem).
+unsafe fn mnCharSel_MexAttach(mex: *mut MexSelectChr, root: *mut HSD_JObj, csp_joint: i32, emblem_joint: i32) {
+    let ifall: *mut HSD_Archive = ext::lbDvd_8001819C(c"IfAll".as_ptr());
+    let eblm: *mut HSD_MatAnimJoint =
+        if !ifall.is_null() { ext::HSD_ArchiveGetPublicAddress(ifall, c"Eblm_matanim_joint".as_ptr()) as *mut HSD_MatAnimJoint } else { null_mut() };
+    let mut j: *mut HSD_JObj;
+    if root.is_null() {
+        return;
+    }
+    j = null_mut();
+    lb_find(root, &mut j, csp_joint);
+    let ok = |b: bool| -> Va { Va::P(if b { c"ok".as_ptr() } else { c"MISSING".as_ptr() }.cast()) };
+    if trace_on() {
+        ext::OSReport(
+            c"mexcss: attach csp joint %d: jobj %s dobj %s matanim %s\n".as_ptr(),
+            &[Va::I32(csp_joint), ok(!j.is_null()), ok(!j.is_null() && !(*j).u.dobj.is_null()), ok(!(*mex).csp_matanim.is_null())],
+        );
+    }
+    if !j.is_null() && !(*j).u.dobj.is_null() && !(*mex).csp_matanim.is_null() {
+        ext::HSD_DObjAddAnimAll((*j).u.dobj, (*mex).csp_matanim, null_mut());
+    }
+    j = null_mut();
+    lb_find(root, &mut j, emblem_joint);
+    if trace_on() {
+        ext::OSReport(
+            c"mexcss: attach eblm joint %d: jobj %s dobj %s next %s eblm %s\n".as_ptr(),
+            &[
+                Va::I32(emblem_joint),
+                ok(!j.is_null()),
+                ok(!j.is_null() && !(*j).u.dobj.is_null()),
+                ok(!j.is_null() && !(*j).u.dobj.is_null() && !(*(*j).u.dobj).next.is_null()),
+                ok(!eblm.is_null()),
+            ],
+        );
+    }
+    if !j.is_null() && !(*j).u.dobj.is_null() && !(*(*j).u.dobj).next.is_null() && !eblm.is_null() {
+        ext::HSD_DObjAddAnimAll((*(*j).u.dobj).next, (*eblm).matanim, null_mut());
+    }
+}
+
+// ---- PNG -> GX texture -> HSD scene ------------------------------------------------------------
+//
+// The smallest end-to-end proof that the port can put its own art on screen: read a `.gxtex`
+// (MELEE_MENUTEX_DIR / MELEE_MENUTEX, opened by GxTex_OpenEnv), hand the bytes to HSD as an
+// HSD_ImageDesc (+ HSD_Tlut for a colour-indexed format) and draw it as one textured HSD_SObj on
+// the GXLinkMax list (priority 0xFF). Unset, GxTex_OpenEnv fails and this is a no-op.
+
+static mut mnCharSel_MenuTexImage: HSD_ImageDesc = unsafe { core::mem::zeroed() };
+static mut mnCharSel_MenuTexTlut: HSD_Tlut = unsafe { core::mem::zeroed() };
+static mut mnCharSel_MenuTexDesc: HSD_SObjDesc = unsafe { core::mem::zeroed() };
+
+unsafe extern "C" fn mnCharSel_MenuTexDraw(gobj: *mut HSD_GObj, pass: i32) {
+    let mut proj: Mtx44 = [[0.0; 4]; 4];
+    let mut view: Mtx = [[0.0; 4]; 3];
+
+    // 640x480 in screen pixels with Y growing downwards, which is the space HSD_SObj's quad is
+    // written in: it emits GXPosition2f32(x, -y). Near/far 0..2 with the view matrix one unit down
+    // the -Z axis puts the quad inside the frustum.
+    ext::GXSetViewport(0.0f32, 0.0f32, 640.0f32, 480.0f32, 0.0f32, 1.0f32);
+    ext::GXSetScissor(0, 0, 640, 480);
+    ext::MTXOrtho(proj.as_mut_ptr().cast(), 0.0f32, -480.0f32, 0.0f32, 640.0f32, 0.0f32, 2.0f32);
+    ext::GXSetProjection(proj.as_mut_ptr().cast(), GX_ORTHOGRAPHIC);
+    view[0][0] = 1.0f32;
+    view[0][1] = 0.0f32;
+    view[0][2] = 0.0f32;
+    view[0][3] = 0.0f32;
+    view[1][0] = 0.0f32;
+    view[1][1] = 1.0f32;
+    view[1][2] = 0.0f32;
+    view[1][3] = 0.0f32;
+    view[2][0] = 0.0f32;
+    view[2][1] = 0.0f32;
+    view[2][2] = 1.0f32;
+    view[2][3] = -1.0f32;
+    ext::GXLoadPosMtxImm(view.as_mut_ptr().cast(), GX_PNMTX0);
+    ext::GXSetCurrentMtx(GX_PNMTX0);
+
+    // HSD_SObj's draw sets its own TEV stages, vertex descriptor and blend mode but inherits the
+    // texgen and the colour channel, so those are established here.
+    ext::GXSetNumChans(1);
+    ext::GXSetChanCtrl(GX_COLOR0A0, 0, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL, GX_DF_NONE, GX_AF_NONE);
+    {
+        let white = crate::GXColor { r: 255, g: 255, b: 255, a: 255 };
+        ext::GXSetChanMatColor(GX_COLOR0A0, white);
+    }
+    ext::GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY, 0, GX_PTIDENTITY);
+
+    ext::HSD_SObjLib_803A49E0(gobj, pass);
+}
+
+unsafe fn mnCharSel_MenuTexSetup() {
+    let gobj: *mut HSD_GObj;
+    let sobj: *mut HSD_SObj;
+    let image: *mut c_void;
+    let lut: *mut c_void;
+    let handle: i32;
+    let (w, h, fmt, tfmt, tents): (i32, i32, i32, i32, i32);
+    let mut scale_shift: i32;
+    let mut scale: f32;
+
+    handle = ext::GxTex_OpenEnv();
+    if handle < 0 {
+        return;
+    }
+    w = ext::GxTex_Width(handle);
+    h = ext::GxTex_Height(handle);
+    fmt = ext::GxTex_Format(handle);
+    tfmt = ext::GxTex_TlutFormat(handle);
+    tents = ext::GxTex_TlutEntries(handle);
+
+    // The texture data is copied into the game heap because that is what an HSD_ImageDesc points at
+    // and what GXInitTexObj records; the loader's own copy is released immediately after.
+    image = ext::HSD_MemAlloc(ext::GxTex_ImageSize(handle));
+    if image.is_null() {
+        ext::GxTex_Close(handle);
+        return;
+    }
+    ext::GxTex_CopyImage(handle, image);
+
+    mnCharSel_MenuTexImage.image_ptr = image;
+    mnCharSel_MenuTexImage.width = w as u16;
+    mnCharSel_MenuTexImage.height = h as u16;
+    mnCharSel_MenuTexImage.format = fmt as _GXTexFmt;
+    mnCharSel_MenuTexImage.mipmap = 0;
+    mnCharSel_MenuTexImage.minLOD = 0.0f32;
+    mnCharSel_MenuTexImage.maxLOD = 0.0f32;
+    mnCharSel_MenuTexDesc.image = addr_of_mut!(mnCharSel_MenuTexImage);
+    mnCharSel_MenuTexDesc.tlut = null_mut();
+
+    if tfmt >= 0 {
+        lut = ext::HSD_MemAlloc(ext::GxTex_TlutSize(handle));
+        if lut.is_null() {
+            ext::GxTex_Close(handle);
+            return;
+        }
+        ext::GxTex_CopyTlut(handle, lut);
+        mnCharSel_MenuTexTlut.lut = lut;
+        mnCharSel_MenuTexTlut.fmt = tfmt as _GXTlutFmt;
+        mnCharSel_MenuTexTlut.n_entries = tents as u16;
+        // GX_TLUT0, because HSD_SObj's draw hardcodes GXLoadTlut(..., GX_TLUT0) for a CI texture.
+        mnCharSel_MenuTexTlut.tlut_name = GX_TLUT0 as u32;
+        mnCharSel_MenuTexDesc.tlut = addr_of_mut!(mnCharSel_MenuTexTlut);
+    }
+    ext::GxTex_Close(handle);
+
+    gobj = ext::GObj_Create(0xE, 0xF, 0);
+    ext::HSD_GObjObject_80390A70(gobj, HSD_SObjLib_804D7960, null_mut());
+    ext::GObj_SetupGXLinkMax(gobj, Some(mnCharSel_MenuTexDraw), 0xFF);
+    sobj = ext::HSD_SObjLib_803A477C(gobj, addr_of_mut!(mnCharSel_MenuTexDesc), GX_CLAMP as u32, GX_CLAMP as u32, 0x80, 0);
+
+    // Fit inside 640x480 and centre it: the art is authored at 2x, so a 1024x512 panel is a 512x256
+    // rectangle on a 640x480 screen.
+    scale_shift = 0;
+    while (w >> scale_shift) > 640 || (h >> scale_shift) > 480 {
+        scale_shift += 1;
+    }
+    scale = 1.0f32;
+    while scale_shift > 0 {
+        scale_shift -= 1;
+        scale *= 0.5f32;
+    }
+    (*sobj).x1C = scale;
+    (*sobj).x20 = scale;
+    (*sobj).x10 = fmadds(-(w as f32), scale, 640.0f32) * 0.5f32;
+    (*sobj).x14 = fmadds(-(h as f32), scale, 480.0f32) * 0.5f32;
+    // Integers only (see the C: the bridge's float-vararg path).
+    ext::OSReport(
+        c"menutex: %dx%d fmt %d tlut fmt %d entries %d -> quad at %d,%d size %dx%d\n".as_ptr(),
+        &[
+            Va::I32(w),
+            Va::I32(h),
+            Va::I32(fmt),
+            Va::I32(tfmt),
+            Va::I32(tents),
+            Va::I32(f2i32((*sobj).x10 as f64)),
+            Va::I32(f2i32((*sobj).x14 as f64)),
+            Va::I32(f2i32((w as f32 * scale) as f64)),
+            Va::I32(f2i32((h as f32 * scale) as f64)),
+        ],
+    );
+}
+
+/// Slot positions and bounds of the m-ex icon grid, captured before anything moves (the C's
+/// function-local `static` arrays).
+static mut MEX_POS: [Vec3; CSS_ICON_MAX] = unsafe { core::mem::zeroed() };
+static mut MEX_BL: [f32; CSS_ICON_MAX] = [0.0; CSS_ICON_MAX];
+static mut MEX_BR: [f32; CSS_ICON_MAX] = [0.0; CSS_ICON_MAX];
+static mut MEX_BU: [f32; CSS_ICON_MAX] = [0.0; CSS_ICON_MAX];
+static mut MEX_BD: [f32; CSS_ICON_MAX] = [0.0; CSS_ICON_MAX];
+/// `static int captured` / `static CSSIcon retail_none` / `static u8 retail_vs[], retail_1p[]` of
+/// `mnCharSel_MexSetup`.
+static mut MEX_CAPTURED: i32 = 0;
+static mut MEX_RETAIL_NONE: CSSIcon = ICON_NONE;
+static mut MEX_RETAIL_VS: [u8; SELKIND_COUNT as usize] = [0; SELKIND_COUNT as usize];
+static mut MEX_RETAIL_1P: [u8; SELKIND_COUNT as usize] = [0; SELKIND_COUNT as usize];
+
+/// Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/CSS Expansion/ - the data-driven
+/// CSS, re-expressed natively. When the MnSlChr archive carries `mexSelectChr` (Akaneia does) and
+/// mexData has a CSS icon table: the icon table and count come from mexData, with each icon's m-ex
+/// EXTERNAL id translated to the port's CharacterKind (an icon whose fighter the port does not have
+/// is marked unavailable: hidden, never selectable); the icons are drawn by mexSelectChr's own icon
+/// model, and every icon-joint lookup resolves in it (`MNCS_ICON_ROOT`); the retail menu model's 25
+/// icon joints are hidden. Returns silently on retail, leaving the retail CSS untouched.
+unsafe fn mnCharSel_MexSetup() {
+    let mex: *mut MexSelectChr;
+    let tbl: *mut CSSIcon;
+    let gobj: *mut HSD_GObj;
+    let root: *mut HSD_JObj;
+    let mut j: *mut HSD_JObj;
+    let n: i32;
+    let mut i: i32;
+
+    if MEX_CAPTURED == 0 {
+        MEX_RETAIL_NONE = *icon_at(SELKIND_COUNT as usize);
+        i = 0;
+        while i < SELKIND_COUNT as i32 {
+            MEX_RETAIL_VS[i as usize] = (*icon_at(i as usize)).joint_id_vs;
+            MEX_RETAIL_1P[i as usize] = (*icon_at(i as usize)).joint_id_1p;
+            i += 1;
+        }
+        MEX_CAPTURED = 1;
+    }
+    mnCharSel_Mex = null_mut();
+    mnCharSel_IconRoot = null_mut();
+    mnCharSel_StcAttached = 0;
+    mnCharSel_IconCount = SELKIND_COUNT as u8;
+
+    mex = ext::HSD_ArchiveGetPublicAddress(mnCharSel_804D6CD0, c"mexSelectChr".as_ptr()) as *mut MexSelectChr;
+    n = if !mex.is_null() { ext::Mex_CssIconCount() } else { 0 };
+    tbl = if n > 0 && n <= CSS_ICON_MAX as i32 { ext::Mex_CssIconTable() as *mut CSSIcon } else { null_mut() };
+    if tbl.is_null() {
+        return;
+    }
+
+    // hide the retail icons: the m-ex model replaces them
+    i = 0;
+    while i < SELKIND_COUNT as i32 {
+        j = null_mut();
+        lb_find(
+            mnCharSel_804D6CC0,
+            &mut j,
+            (if mnCharSel_804D6CF5 == 1 { MEX_RETAIL_1P[i as usize] } else { MEX_RETAIL_VS[i as usize] }) as i32,
+        );
+        if !j.is_null() {
+            ext::HSD_JObjSetFlagsAll(j, JOBJ_HIDDEN as u32);
+        }
+        i += 1;
+    }
+
+    i = 0;
+    while i < n {
+        let ck: i32;
+        *icon_at(i as usize) = *tbl.add(i as usize);
+        ck = ext::Mex_ExtToPortCKind((*icon_at(i as usize)).char_kind as i32);
+        // not available = the port lacks the fighter, OR it is still locked on this save (locked
+        // fighters are hidden, as on retail). Both are excluded from the packed grid below, so
+        // neither leaves a hole.
+        mnCharSel_IconUnavail[i as usize] = ((ck < 0) || ext::gm_IsCKindUnlocked(ck as u8) == 0) as u8;
+        // Stub: m-ex fighters have no single-player STORY support in the port, so they are hidden in
+        // the three story modes; they stay in Training and the Stadium modes.
+        if ck >= ChKind_Mex0 as i32
+            && ((*mnCharSel_804D6CB0).match_type as u32 == REG_CLASSIC
+                || (*mnCharSel_804D6CB0).match_type as u32 == REG_ADVENTURE
+                || (*mnCharSel_804D6CB0).match_type as u32 == REG_ALLSTAR)
+        {
+            mnCharSel_IconUnavail[i as usize] = 1;
+        }
+        if trace_on() {
+            let ic = icon_at(i as usize);
+            ext::OSReport(
+                c"mexcss: icon %2d ext %2d -> CKind %3d  unavail %d  joint vs %2d 1p %2d  bounds [%d..%d, %d..%d]\n".as_ptr(),
+                &[
+                    Va::I32(i),
+                    Va::I32((*ic).char_kind as i32),
+                    Va::I32(ck),
+                    Va::I32(mnCharSel_IconUnavail[i as usize] as i32),
+                    Va::I32((*ic).joint_id_vs as i32),
+                    Va::I32((*ic).joint_id_1p as i32),
+                    Va::I32(f2i32((*ic).bound_l as f64)),
+                    Va::I32(f2i32((*ic).bound_r as f64)),
+                    Va::I32(f2i32((*ic).bound_d as f64)),
+                    Va::I32(f2i32((*ic).bound_u as f64)),
+                ],
+            );
+        }
+        (*icon_at(i as usize)).char_kind = if ck < 0 { MEX_RETAIL_NONE.char_kind } else { ck as u8 };
+        (*icon_at(i as usize)).anim_timer = 0;
+        i += 1;
+    }
+    if trace_on() {
+        ext::OSReport(
+            c"mexcss: %d icons, mode %d (1 = 1P/Training, 4 = VS), match_type %d\n".as_ptr(),
+            &[Va::I32(n), Va::I32(mnCharSel_804D6CF5 as i32), Va::I32((*mnCharSel_804D6CB0).match_type as i32)],
+        );
+    }
+    *icon_at(n as usize) = MEX_RETAIL_NONE;
+    mnCharSel_IconCount = n as u8;
+
+    gobj = ext::GObj_Create(4, 5, 0x80);
+    root = ext::HSD_JObjLoadJoint((*mex).icon_joint);
+    ext::HSD_JObjAddAnimAll(root, (*mex).icon_animjoint, (*mex).icon_matanim, null_mut());
+    ext::HSD_GObjObject_80390A70(gobj, HSD_GObj_JObjKind, root.cast());
+    ext::GObj_SetupGXLink(gobj, Some(ext::HSD_GObj_JObjCallback), 1, 0x80);
+    ext::HSD_JObjReqAnimAll(root, 0.0f32);
+    ext::HSD_JObjAnimAll(root);
+    stop_anim(root, ALL_TYPE_MASK);
+
+    // Pack the grid. Akaneia's layout has a slot for each of its fighters; the ones the port does not
+    // have are hidden, which left holes in the grid. Keep Akaneia's slot positions and order, but
+    // slide the available icons into consecutive slots, row by row, centring a partial last row. An
+    // icon moves by moving its own joint (the joint carries that fighter's art) and taking the
+    // slot's bounds (the cursor hit-tests bounds). Every slot's position and bounds are captured
+    // BEFORE anything moves.
+    {
+        let mut row_start = [0i32; CSS_ICON_MAX];
+        let mut row_cap = [0i32; CSS_ICON_MAX];
+        let mut row_take = [0i32; CSS_ICON_MAX];
+        let mut rows: i32 = 0;
+        let mut avail = [0i32; CSS_ICON_MAX];
+        let mut n_avail: i32 = 0;
+        let mut placed: i32 = 0;
+        let mut r: i32;
+        let mut k: i32;
+        i = 0;
+        while i < n {
+            let iu = i as usize;
+            j = null_mut();
+            lb_find(
+                root,
+                &mut j,
+                (if mnCharSel_804D6CF5 == 1 { (*icon_at(iu)).joint_id_1p } else { (*icon_at(iu)).joint_id_vs }) as i32,
+            );
+            if !j.is_null() {
+                super::hsd::HSD_JObjGetTranslation(j, addr_of_mut!(MEX_POS[iu]));
+            }
+            MEX_BL[iu] = (*icon_at(iu)).bound_l;
+            MEX_BR[iu] = (*icon_at(iu)).bound_r;
+            MEX_BU[iu] = (*icon_at(iu)).bound_u;
+            MEX_BD[iu] = (*icon_at(iu)).bound_d;
+            // a new row starts where the slot's top bound changes by more than rounding
+            if i == 0 || MEX_BU[iu] - MEX_BU[iu - 1] > 1.0f32 || MEX_BU[iu - 1] - MEX_BU[iu] > 1.0f32 {
+                row_start[rows as usize] = i;
+                row_cap[rows as usize] = 0;
+                rows += 1;
+            }
+            row_cap[rows as usize - 1] += 1;
+            if mnCharSel_IconUnavail[iu] == 0 {
+                avail[n_avail as usize] = i;
+                n_avail += 1;
+            }
+            i += 1;
+        }
+        if trace_on() {
+            ext::OSReport(c"mexcss: packing %d of %d icons over %d rows\n".as_ptr(), &[Va::I32(n_avail), Va::I32(n), Va::I32(rows)]);
+        }
+        r = 0;
+        while r < rows {
+            if trace_on() {
+                ext::OSReport(
+                    c"mexcss:   row %d: slots %d..%d (%d wide)\n".as_ptr(),
+                    &[Va::I32(r), Va::I32(row_start[r as usize]), Va::I32(row_start[r as usize] + row_cap[r as usize] - 1), Va::I32(row_cap[r as usize])],
+                );
+            }
+            r += 1;
+        }
+        // Each row's share (see mnCharSel_MexPackRows), then each row centred in its slots.
+        {
+            let total = mnCharSel_MexPackRows(&row_cap, rows, n_avail, &mut row_take);
+            if total != n_avail {
+                if trace_on() {
+                    ext::OSReport(c"mexcss: only %d of %d icons fit the %d-row grid\n".as_ptr(), &[Va::I32(total), Va::I32(n_avail), Va::I32(rows)]);
+                }
+            }
+        }
+        r = 0;
+        while r < rows && placed < n_avail {
+            let take = row_take[r as usize];
+            let off = (row_cap[r as usize] - take) / 2;
+            k = 0;
+            while k < take {
+                let icon_i = avail[placed as usize];
+                let slot = row_start[r as usize] + off + k;
+                j = null_mut();
+                lb_find(
+                    root,
+                    &mut j,
+                    (if mnCharSel_804D6CF5 == 1 { (*icon_at(icon_i as usize)).joint_id_1p } else { (*icon_at(icon_i as usize)).joint_id_vs }) as i32,
+                );
+                if trace_on() {
+                    ext::OSReport(
+                        c"mexcss:   icon %2d -> slot %2d  joint %s\n".as_ptr(),
+                        &[Va::I32(icon_i), Va::I32(slot), Va::P(if !j.is_null() { c"ok".as_ptr() } else { c"MISSING".as_ptr() }.cast())],
+                    );
+                }
+                if !j.is_null() {
+                    super::hsd::HSD_JObjSetTranslate(j, addr_of!(MEX_POS[slot as usize]));
+                }
+                (*icon_at(icon_i as usize)).bound_l = MEX_BL[slot as usize];
+                (*icon_at(icon_i as usize)).bound_r = MEX_BR[slot as usize];
+                (*icon_at(icon_i as usize)).bound_u = MEX_BU[slot as usize];
+                (*icon_at(icon_i as usize)).bound_d = MEX_BD[slot as usize];
+                k += 1;
+                placed += 1;
+            }
+            r += 1;
+        }
+    }
+
+    // Portraits and emblems (VS doors): as m-ex's "Replace CSS VS Emblem" does, give each door's
+    // portrait joint's DObj the CSP material animation, and each emblem joint's SECOND DObj IfAll's
+    // Eblm_matanim_joint animation. Frames are picked per selection in mnCharSel_MexPortrait.
+    if mnCharSel_804D6CF5 != 1 {
+        let mut d: i32 = 0;
+        while d < 4 {
+            mnCharSel_MexAttach(mex, mnCharSel_804D6CC0, (*door(d as usize)).costume_joint as i32, (*door(d as usize)).emblem_joint as i32);
+            d += 1;
+        }
+    } else {
+        // 1P / Training: the regend model's portrait is joint 45, its emblem joint 43. The Training
+        // CPU door is a separate model, attached where it is built.
+        let stc = ext::gm_MexStockMatAnim();
+        mnCharSel_MexAttach(mex, mnCharSel_804D6CC0, 0x2D, 0x2B);
+        // m-ex "Replace CSS SinglePlayer Stock And Emblem": the five stock dots use Stc_icns
+        if !stc.is_null() {
+            let mut d: usize = 0;
+            while d < 5 {
+                j = null_mut();
+                lb_find(mnCharSel_804D6CC0, &mut j, data2.xf0[d] as i32);
+                if !j.is_null() {
+                    ext::HSD_JObjAddAnimAll(j, null_mut(), stc, null_mut());
+                }
+                d += 1;
+            }
+            mnCharSel_StcAttached = 1;
+        }
+    }
+
+    mnCharSel_IconRoot = root;
+    mnCharSel_Mex = mex;
+}
+
+/// Ported from m-ex (https://github.com/akaneia/m-ex): CSS Expansion/mexSelectChr/CursorScale -
+/// Hand.asm and - Puck.asm. mexSelectChr's icon grid is denser than retail's 25 icons, so both
+/// cursors are scaled by mexData's menu param 0 (Akaneia: 0.95). The hand's graphic hangs off a
+/// child joint while the joint itself is the hot spot, so m-ex compensates by translating the child
+/// by (1 - scale) * the hand's tip offset. The puck has no child and needs no shift. Retail (no
+/// mexSelectChr) is untouched.
+unsafe fn mnCharSel_MexScaleCursor(jobj: *mut HSD_JObj, is_hand: i32) {
+    if mnCharSel_Mex.is_null() || jobj.is_null() {
+        return;
+    }
+    // MELEE_CSS_CURSOR_SCALE=0 turns this off.
+    if ext::Mex_CssCursorScaleEnabled() == 0 {
+        return;
+    }
+    let s: f32 = ext::Mex_MenuParamF(0);
+    if !(s > 0.0f32) || s == 1.0f32 {
+        return;
+    }
+    let target = if is_hand != 0 { (*jobj).child } else { jobj };
+    if target.is_null() {
+        return;
+    }
+    (*target).scale.x *= s;
+    (*target).scale.y *= s;
+    (*target).scale.z *= s;
+    if is_hand != 0 {
+        (*target).translate.x = (1.0f32 - s) * 2.7f32;
+        (*target).translate.y = (1.0f32 - s) * -2.0f32;
+        ext::HSD_JObjSetMtxDirtySub(jobj);
+    }
 }
 

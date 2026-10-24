@@ -318,7 +318,7 @@ pub mod ext {
     pub fn ftCommon_ApplyGroundedKnockbackFriction(fp: F, f: f32) { unsafe { let _ = crate::ftcommon::apply_grounded_knockback_friction(&mut *fp, f); } }
     pub fn ftCommon_ApplyShieldKnockbackFriction(fp: F, f: f32) { unsafe { let _ = crate::ftcommon::apply_shield_knockback_friction(&mut *fp, f); } }
     pub fn ft_GetGroundFrictionMultiplier(fp: F) -> f32 { unsafe { crate::tu::ft_081b::ft_get_ground_friction_multiplier(&mut *fp) } }
-    pub fn ftColl_GetWindOffsetVec(g: G, out: *mut Vec3) { todo!("ftColl_GetWindOffsetVec (ft/ftcoll.c)") }
+    pub fn ftColl_GetWindOffsetVec(g: G, out: *mut Vec3) { unsafe { let _ = crate::tu::ftcoll::ftcoll_get_wind_offset_vec(g as _, &mut *(out as *mut _)); } }
     pub fn ftColl_80076528(g: G) { unsafe { let _ = crate::tu::ftcoll::ftcoll_80076528(g as _); } }
     pub fn mpGetSpeed(floor: i32, pos: *const Vec3, out: *mut Vec3) -> bool { todo!("mpGetSpeed (mp/mplib.c)") }
     pub fn ftCo_800D3158(g: G) { unsafe { let _ = crate::tu::ft_0d31::ftCo_800D3158(g); } }
@@ -443,7 +443,7 @@ pub mod ext {
     pub fn Netplay_Enabled() -> i32 { todo!("Netplay_Enabled (pc/platform/gw_net.c)") }
     pub fn RB_Enabled() -> i32 { todo!("RB_Enabled (pc/platform/gw_rollback.c)") }
     pub fn Replay_Active() -> i32 { todo!("Replay_Active (pc/platform/gw_replay.c)") }
-    pub fn Player_GetPlayerSlotType(slot: i32) -> i32 { todo!("Player_GetPlayerSlotType (pl/player.c)") }
+    pub fn Player_GetPlayerSlotType(slot: i32) -> i32 { unsafe { crate::tu::player::Player_GetPlayerSlotType(slot as _) as _ } }
     pub fn Player_GetEntity(slot: i32) -> G { unsafe { crate::player::get_entity(slot) } }
     pub fn mpCheckFloor(ax: f32, ay: f32, bx: f32, by: f32, y_off: f32, floor: *mut Vec3, line: *mut i32, flags: *mut u32, normal: *mut Vec3, floor_skip: i32, joint_skip: i32, joint_only: i32, cb: *mut core::ffi::c_void, gobj: G) -> bool { todo!("mpCheckFloor (mp/mpcoll.c)") }
 }

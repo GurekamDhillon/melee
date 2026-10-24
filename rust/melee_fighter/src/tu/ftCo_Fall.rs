@@ -40,7 +40,7 @@ pub mod ext {
         ftCo_80090780(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_DamageFall::ftCo_80090780(g as _); } };
         ftCo_800C5240(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_HammerWait::ftCo_800C5240(g as _) as _ } };
         ftCo_800C5D34(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_HammerFall::ftCo_800C5D34(g as _); } };
-        ftLib_GetKind(g: G) -> u32 = |_| todo!("TODO(port) ftLib_GetKind (ftlib.c)");
+        ftLib_GetKind(g: G) -> u32 = |g: G| -> u32 { unsafe { crate::ftlib::get_kind(g as _) as _ } };
         ftMh_MS_389_80151018(g: G) = |_| todo!("TODO(port) ftMh_MS_389_80151018 (ftmasterhand)");
         ftCh_GrabUnk1_8015BC88(g: G) = |_| todo!("TODO(port) ftCh_GrabUnk1_8015BC88 (ftcrazyhand)");
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };

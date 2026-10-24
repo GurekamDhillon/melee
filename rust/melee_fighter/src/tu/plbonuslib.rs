@@ -85,7 +85,7 @@ pub mod ext {
     fn gm_8016F2F8(a0: i32, a1: u8) -> i32;
     fn gm_GetFrameCount() -> u32;
     fn ifMagnify_802FB6E8(a0: i32) -> i32 => unsafe { melee_world::tu::ifmagnify::ifMagnify_802FB6E8(a0 as _) };
-    fn itGetKind(a0: *mut HSD_GObj) -> i32;
+    fn itGetKind(a0: *mut HSD_GObj) -> i32 => unsafe { melee_items::tu::it_26B1::itGetKind(a0 as _) as _ };
     fn itGetOwner(a0: *mut HSD_GObj) -> *mut HSD_GObj => unsafe { melee_items::tu::it_26B1::itGetOwner(a0 as _) as _ };
     fn it_8026B30C(a0: *mut HSD_GObj) -> i32 => unsafe { melee_items::itlib::it_8026b30c(&*(a0 as *const _)) };
     fn it_8026B774(a0: *mut HSD_GObj, a1: u8) -> bool => unsafe { melee_items::itlib::it_8026b774(&*(a0 as *const _), a1 as _) };

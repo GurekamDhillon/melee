@@ -49,7 +49,7 @@ pub mod ext {
     fn ft_80087BEC(a0: *mut HSD_GObj, a1: i32) => unsafe { let _ = crate::ft0877::ft_80087bec(a0 as _, a1 as _); };
     fn ftCo_800D4F24(a0: *mut HSD_GObj, a1: i32) => unsafe { let _ = crate::tu::ft_0d4d::ftCo_800D4F24(a0 as _, a1 as _); };
     fn ftCo_800D4FF4(a0: *mut HSD_GObj) => unsafe { let _ = crate::tu::ft_0d4d::ftCo_800D4FF4(a0 as _); };
-    fn ftData_800855C8(a0: FighterKind, a1: u8);
+    fn ftData_800855C8(a0: FighterKind, a1: u8) => unsafe { let _ = crate::tu::ftdata::ftData_800855C8(a0 as _, a1 as _); };
     fn ftData_8008578C(a0: i32, a1: u8) => unsafe { let _ = crate::tu::ftdata::ftData_8008578C(a0 as _, a1 as _); };
     fn ftDemo_CreateFighter(a0: *mut plAllocInfo2) -> *mut HSD_GObj => unsafe { crate::tu::ftdemo::ftdemo_create_fighter(&*(a0 as *const _)) as _ };
     fn ftDemo_SetArchiveData(a0: i32, a1: *mut HSD_Archive, a2: i32) => unsafe { let _ = crate::tu::ftdemo::ftdemo_set_archive_data(a0 as _, a1 as _, a2 as _); };

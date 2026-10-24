@@ -55,7 +55,7 @@ pub mod ext {
         ftKb_SpecialN_800F5898(g: G) -> *mut HSD_Joint = |_| todo!("TODO(port) ftKb_SpecialN_800F5898 (ftKb_Init.c)");
         HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjSetMtxDirtySub (jobj.c)");
         lb_8000C2F8(a: *mut HSD_JObj, b: *mut HSD_JObj) = |a: *mut HSD_JObj, b: *mut HSD_JObj| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000C2F8(a as _, b as _); } };
-        ftParts_GetBoneIndex(f: &mut Fighter, part: i32) -> i32 = |_, _| todo!("TODO(port) ftParts_GetBoneIndex (ftparts.c)");
+        ftParts_GetBoneIndex(f: &mut Fighter, part: i32) -> i32 = |f: &mut Fighter, part: i32| -> i32 { unsafe { crate::ftdmgfall::ftparts_get_bone_index(f, part as _) } };
         ftColl_8007ABD0(hit: *mut HitCapsule, dmg: u32, g: G) = |hit: *mut HitCapsule, dmg: u32, g: G| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007abd0(hit as _, dmg as _, g as _); } };
         ftColl_8007AFF8(g: G) = |g: G| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007aff8(g as _); } };
         ftKb_SpecialN_800F5820(g: G, b: *mut ftCollisionBox, s: f32) = |_, _, _| todo!("TODO(port) ftKb_SpecialN_800F5820 (ftKb_Init.c)");

@@ -66,7 +66,7 @@ pub mod ext {
         ftCommon_8007E2F4(fp: &mut Fighter, v: i16) = crate::ftcommon2::ftcommon_8007e2f4;
         HSD_Randf() -> f32 = || todo!("TODO(port) HSD_Randf (baselib/random.c)");
         ftColl_8007B0C0(g: G, state: i32) = |g: G, state: i32| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007b0c0(g as _, state as _); } };
-        ftColl_HurtboxInit(fp: &mut Fighter, hurt: *mut FighterHurtCapsule, init: &ftHurtboxInit) = |_, _, _| todo!("TODO(port) ftColl_HurtboxInit (ftcoll.c)");
+        ftColl_HurtboxInit(fp: &mut Fighter, hurt: *mut FighterHurtCapsule, init: &ftHurtboxInit) = |fp: &mut Fighter, hurt: *mut FighterHurtCapsule, init: &ftHurtboxInit| { unsafe { let _ = crate::tu::ftcoll::ftcoll_hurtbox_init(fp, hurt as _, init); } };
         ftCommon_8007EBAC(fp: &mut Fighter, a: u32, b: u32) = crate::ftcommon2::ftcommon_8007ebac;
         ftCo_800886D8(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |fp: &mut Fighter, id: i32, vol: u8, pan: u8| { unsafe { let _ = crate::ft0881::ftco_800886d8(fp as _, id as _, vol as _, pan as _); } };
         ftCommon_GrabMash(fp: &mut Fighter, v: f32) -> bool = crate::ftcommon2::grab_mash;

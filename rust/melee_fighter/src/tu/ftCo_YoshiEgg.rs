@@ -37,7 +37,7 @@ pub mod ext {
         HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjSetMtxDirtySub (jobj.c)");
         ftColl_8007B0C0(g: G, s: i32) = |g: G, s: i32| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007b0c0(g as _, s as _); } };
         ftParts_GetBoneIndex(f: &Fighter, part: i32) -> i32 = crate::ftdmgfall::ftparts_get_bone_index;
-        ftColl_HurtboxInit(f: &mut Fighter, c: *mut FighterHurtCapsule, h: &ftHurtboxInit) = |_, _, _| todo!("TODO(port) ftColl_HurtboxInit (ftcoll.c)");
+        ftColl_HurtboxInit(f: &mut Fighter, c: *mut FighterHurtCapsule, h: &ftHurtboxInit) = |f: &mut Fighter, c: *mut FighterHurtCapsule, h: &ftHurtboxInit| { unsafe { let _ = crate::tu::ftcoll::ftcoll_hurtbox_init(f, c as _, h); } };
         ftCommon_8007D5D4(f: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftCo_800BC438(g: G) = crate::tu::ftCo_CaptureKoopa::ftCo_800BC438;

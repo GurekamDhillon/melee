@@ -809,3 +809,78 @@
 #include <melee/mn/mndiagram2.h>
 #include <melee/mn/mndiagram3.static.h>
 #include <melee/mn/mnevent.h>
+#line 29 "src/melee/mn/mngallery.c"
+struct mnGallery_804D6C88_userdata {
+    u8 unk0;
+    u8 unk1;
+    u8 unk2;
+    HSD_GObj* gobj4;
+    HSD_GObj* gobj8;
+    HSD_SObj* sobj;
+    HSD_Text* text;
+    u8 state;
+    u8 unk15;
+    s32 frame;
+    HSD_GObj* gobjs[2];
+};
+#line 46 "src/melee/mn/mngallery.c"
+struct mnGallery_child_userdata {
+    HSD_GObj* parent_gobj;
+    s32 index;
+};
+#line 40 "src/melee/mn/mndiagram.c"
+typedef struct mnDiagram_Assets {
+    /* 0x00 */ u8 sorted_fighters[0x19];
+    /* 0x19 */ u8 pad_19[3];
+    /* 0x1C */ u8 sorted_names[0x78];
+    /* 0x94 */ void* SubB1[4];
+    /* 0xA4 */ void* NmB[4];
+    /* 0xB4 */ void* FaceB[4];
+    /* 0xC4 */ void* CursorB1[4];
+    /* 0xD4 */ void* ConB1[4];
+    /* 0xE4 */ void* ConB2[4];
+    /* 0xF4 */ void* ConB3[4];
+    /* 0x104 */ void* CursorB3[5];
+} mnDiagram_Assets;
+#line 57 "src/melee/mn/mndiagram.c"
+typedef struct mnDiagram_CleanupData {
+    /* 0x00 */ char jobjs_reserved[0x38]; ///< JObj array (unused by cleanup)
+    /* 0x38 */ HSD_Text* text[6];         ///< Text objects to free
+} mnDiagram_CleanupData;
+#line 64 "src/melee/mn/mndiagram.c"
+typedef struct mnDiagram_AnimData {
+    /* 0x00 */ char header_reserved[0x0C]; ///< menu state (unused by anim)
+    /* 0x0C */ HSD_JObj* jobj;             ///< JObj for exit animation
+} mnDiagram_AnimData;
+#line 70 "src/melee/mn/mndiagram.c"
+typedef struct mnDiagram_PopupAnimTableHead {
+    /* 0x00 */ Point3d points[3];
+} mnDiagram_PopupAnimTableHead;
+#line 114 "src/melee/mn/mndiagram.c"
+typedef struct mnDiagram_AnimTable {
+    /* 0x00 */ Point3d points[3]; ///< mnDiagram_PopupTextOffsets
+    /* 0x24 */ u8
+        default_fighter_order[0x1C];         ///< mnDiagram_DefaultFighterOrder
+    /* 0x40 */ AnimLoopSettings intro_anim;  ///< mnDiagram_IntroAnim
+    /* 0x4C */ AnimLoopSettings exit_anim;   ///< mnDiagram_PopupExitAnim
+    /* 0x58 */ AnimLoopSettings arrow_anim;  ///< mnDiagram_ArrowAnim
+    /* 0x64 */ AnimLoopSettings cursor_anim; ///< mnDiagram_CursorAnim
+    /* 0x70 */ char user_data_error[0x18];   ///< "Can't get user_data.\n"
+    /* 0x88 */ char file_name[0xC];          ///< "mndiagram.c"
+    /* 0x94 */ char user_data_name[0x14];    ///< "user_data"
+} mnDiagram_AnimTable;
+#line 538 "src/melee/mn/mndiagram.c"
+typedef struct RankEntry {
+    u8 selkind; ///< SelectableCharacterKind
+    u32 value;
+} RankEntry;
+#line 1596 "src/melee/mn/mndiagram.c"
+typedef struct mnDiagram_PopupData {
+    /* 0x00 */ HSD_JObj* jobjs[14];
+    /* 0x38 */ HSD_Text* text[5];
+} mnDiagram_PopupData;
+#line 1602 "src/melee/mn/mndiagram.c"
+typedef struct mnDiagram_MainOverlay {
+    /* 0x00 */ HSD_JObj* jobjs[14];
+    /* 0x38 */ HSD_Text* text[6];
+} mnDiagram_MainOverlay;

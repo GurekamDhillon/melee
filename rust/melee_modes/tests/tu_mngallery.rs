@@ -251,6 +251,7 @@ fn b_enter(c: &mut Case) {
 #[test]
 fn mngallery_vs_c() {
     let funcs = [
+        fd!("float_order_helper", "p", "v", 80, |c| { let p = c.obj::<HSD_SObj>(); c.arg(p); }, |a| { tu::float_order_helper(&mut *p(a, 0)); 0 }),
         fd!("mnGallery_80258940", "", "v", 4, b_none, |a| { tu::mnGallery_80258940(); 0 }),
         fd!("mnGallery_8025896C", "pi", "v", 40, b_render, |a| { tu::mnGallery_8025896C(p(a, 0), ai32(a, 1)); 0 }),
         fd!("mnGallery_80258A08", "piii", "v", 20, b_camera, |a| { tu::mnGallery_80258A08(p(a, 0), au32(a, 1) as u16, au32(a, 2) as u16, au32(a, 3)); 0 }),

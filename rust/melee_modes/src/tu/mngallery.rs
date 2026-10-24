@@ -15,7 +15,8 @@ use melee_types::{
     MenuFlow, MenuInputState, StaticModelDesc, Vec3, _HSD_RectS16, _Scissor, gmMainLib_8046B0F0_t,
 };
 
-use super::hsd::{jobj_child, jobj_next, set_mtx_dirty_macro, sfxBack, sfxMove};
+use super::hsd::{jobj_child, jobj_next, sfxBack, sfxMove};
+use super::mninl::{HSD_JObjGetTranslationX, HSD_JObjGetTranslationY, HSD_JObjGetTranslationZ, HSD_JObjSetTranslateX, HSD_JObjSetTranslateY, HSD_JObjSetTranslateZ};
 use crate::oracle::Va;
 
 /// `MenuInput_*` (mn/inlines.h).
@@ -97,47 +98,8 @@ pub mod ext {
     }
 }
 
-/// `struct mnGallery_804D6C88_userdata` (0x24 on the GC; native layout here).
-#[repr(C)]
-#[derive(Clone, Copy)]
-pub struct mnGallery_804D6C88_userdata {
-    pub unk0: u8,
-    pub unk1: u8,
-    pub unk2: u8,
-    pub gobj4: *mut HSD_GObj,
-    pub gobj8: *mut HSD_GObj,
-    pub sobj: *mut HSD_SObj,
-    pub text: *mut HSD_Text,
-    pub state: u8,
-    pub unk15: u8,
-    pub frame: i32,
-    pub gobjs: [*mut HSD_GObj; 2],
-}
-melee_core::gc_layout!(mnGallery_804D6C88_userdata, "mnGallery_804D6C88_userdata", size 0x24, align 4, [
-    unk0 @ 0x0: 1 "u8",
-    unk1 @ 0x1: 1 "u8",
-    unk2 @ 0x2: 1 "u8",
-    gobj4 @ 0x4: 4 "HSD_GObj*",
-    gobj8 @ 0x8: 4 "HSD_GObj*",
-    sobj @ 0xC: 4 "HSD_SObj*",
-    text @ 0x10: 4 "HSD_Text*",
-    state @ 0x14: 1 "u8",
-    unk15 @ 0x15: 1 "u8",
-    frame @ 0x18: 4 "s32",
-    gobjs @ 0x1C: 8 "HSD_GObj*[2]",
-]);
-
-/// `struct mnGallery_child_userdata` (8 on the GC).
-#[repr(C)]
-#[derive(Clone, Copy)]
-pub struct mnGallery_child_userdata {
-    pub parent_gobj: *mut HSD_GObj,
-    pub index: i32,
-}
-melee_core::gc_layout!(mnGallery_child_userdata, "mnGallery_child_userdata", size 8, align 4, [
-    parent_gobj @ 0x0: 4 "HSD_GObj*",
-    index @ 0x4: 4 "s32",
-]);
+pub use melee_types::{mnGallery_804D6C88_userdata, mnGallery_child_userdata};
+pub use crate::mn_ptr::float_order_helper;
 
 const HEAP_SIZE: u32 = 0x271000;
 
@@ -169,45 +131,6 @@ crate::globals! {
 #[inline]
 unsafe fn get_804d6c88(g: *mut HSD_GObj) -> *mut mnGallery_804D6C88_userdata {
     (*g).user_data.cast()
-}
-
-/// jobj.h `HSD_JObjSetTranslateX/Y/Z`, `HSD_JObjGetTranslationX/Y/Z` (asserts included).
-unsafe fn jobj_assert(jobj: *mut HSD_JObj, line: u32) {
-    if jobj.is_null() {
-        ext::__assert(c"jobj.h".as_ptr(), line, c"jobj".as_ptr());
-    }
-}
-unsafe fn dirty(jobj: *mut HSD_JObj) {
-    if (*jobj).flags & melee_types::JOBJ_MTX_INDEP_SRT as u32 == 0 {
-        set_mtx_dirty_macro(jobj);
-    }
-}
-unsafe fn HSD_JObjSetTranslateX(jobj: *mut HSD_JObj, x: f32) {
-    jobj_assert(jobj, 932);
-    (*jobj).translate.x = x;
-    dirty(jobj);
-}
-unsafe fn HSD_JObjSetTranslateY(jobj: *mut HSD_JObj, y: f32) {
-    jobj_assert(jobj, 947);
-    (*jobj).translate.y = y;
-    dirty(jobj);
-}
-unsafe fn HSD_JObjSetTranslateZ(jobj: *mut HSD_JObj, z: f32) {
-    jobj_assert(jobj, 962);
-    (*jobj).translate.z = z;
-    dirty(jobj);
-}
-unsafe fn HSD_JObjGetTranslationX(jobj: *mut HSD_JObj) -> f32 {
-    jobj_assert(jobj, 993);
-    (*jobj).translate.x
-}
-unsafe fn HSD_JObjGetTranslationY(jobj: *mut HSD_JObj) -> f32 {
-    jobj_assert(jobj, 1006);
-    (*jobj).translate.y
-}
-unsafe fn HSD_JObjGetTranslationZ(jobj: *mut HSD_JObj) -> f32 {
-    jobj_assert(jobj, 1019);
-    (*jobj).translate.z
 }
 
 /// 258940: allocate the movie heap.
@@ -282,9 +205,7 @@ pub unsafe fn mnGallery_80258BC4(data: *mut mnGallery_804D6C88_userdata) {
     if (*data).unk2 == 0 {
         let sobj = ext::lbMthp_8001F624(gobj, 0x1C0, 0x150);
         (*data).sobj = sobj;
-        // float_order_helper
-        (*sobj).x10 = 96.0;
-        (*sobj).x14 = 72.0;
+        float_order_helper(&mut *sobj);
     } else if (*data).unk2 == 1 {
         let sobj = ext::lbMthp_8001F624(gobj, 0x280, 0x1E0);
         (*data).sobj = sobj;
@@ -539,7 +460,7 @@ pub unsafe extern "C" fn mnGallery_8025963C() {
     let user_data = ext::HSD_MemAlloc(core::mem::size_of::<mnGallery_804D6C88_userdata>() as i32) as *mut mnGallery_804D6C88_userdata;
     if user_data.is_null() {
         ext::OSReport(c"Can't get user_data.\n".as_ptr(), &[]);
-        ext::__assert(c"mngallery.c".as_ptr(), 0x214, c"user_data".as_ptr());
+        ext::__assert(c"mngallery.c".as_ptr(), 439, c"user_data".as_ptr());
     }
 
     mnGallery_80259604(user_data);
@@ -561,7 +482,7 @@ pub unsafe extern "C" fn mnGallery_8025963C() {
         let cursor_user_data = ext::HSD_MemAlloc(core::mem::size_of::<mnGallery_child_userdata>() as i32) as *mut mnGallery_child_userdata;
         if cursor_user_data.is_null() {
             ext::OSReport(c"Can't get user_data.\n".as_ptr(), &[]);
-            ext::__assert(c"mngallery.c".as_ptr(), 0x22c, c"cursor_user_data".as_ptr());
+            ext::__assert(c"mngallery.c".as_ptr(), 459, c"cursor_user_data".as_ptr());
         }
 
         (*cursor_user_data).parent_gobj = gobj;

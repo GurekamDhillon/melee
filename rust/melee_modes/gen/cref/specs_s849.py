@@ -74,6 +74,33 @@ SPECS["lb_01F8"] = dict(
                            "t(rh(&*(a0 as *const [u8; 0x1C]))); *(a1 as *mut i32) = fv() as i32;"),
     },
 )
+SPECS["lb_0219"] = dict(
+    src="src/melee/lb/lb_0219.c",
+    types=["BgFlashUserData", "HSD_ObjAllocData", "HSD_GObj"],
+    null_ret_ok=["HSD_GObj_SetupProc"],
+    ret={
+        "GObj_Create": ("((rnd() % 4 == 0) ? 0 : &GNEW)", "if rnd() % 4 == 0 { core::ptr::null_mut() } else { &raw mut super::GNEW }"),
+        "HSD_ObjAlloc": ("((rnd() % 4 == 0) ? 0 : &UD)", "if rnd() % 4 == 0 { core::ptr::null_mut() } else { &raw mut super::UD as *mut c_void }"),
+        "lb_80014258": ("(int) (rnd() % 3 == 0)", "(rnd() % 3 == 0) as i32"),
+        "lb_800144C8": ("(int) (fv() & 1)", "(fv() & 1) as i32"),
+    },
+    effects={
+        "GObj_InitUserData": ("a0->user_data_kind = a1; a0->user_data_remove_func = a2; a0->user_data = a3;",
+                              "(*a0).user_data_kind = a1; (*a0).user_data_remove_func = a2; (*a0).user_data = a3;"),
+        "lbBgFlash_InitState": ("T(a0->r); T(a0->g); T(a0->b); T(a0->a);",
+                                "t((*a0).r as u32); t((*a0).g as u32); t((*a0).b as u32); t((*a0).a as u32);"),
+    },
+    custom_stubs={
+        "lbArchive_LoadSymbols": dict(
+            c="HSD_Archive* lbArchive_LoadSymbols(const char* a0, void* a1, ...) { __builtin_va_list ap; "
+              "const char* sym; int z; __builtin_va_start(ap, a1); sym = __builtin_va_arg(ap, const char*); "
+              "z = __builtin_va_arg(ap, int); __builtin_va_end(ap); T(@ID@); T(SH(a0)); T(PI(a1)); T(SH(sym)); "
+              "T((u32) z); *(void**) a1 = (rnd() & 1) ? LBF : 0; return 0; }",
+            ext="fn lbArchive_LoadSymbols(a0: *const u8, a1: *mut c_void, a2: *const u8, a3: i32) -> *mut c_void;",
+            hook="|a0, a1, a2, a3| { t(@ID@); t(sh(a0)); t(pi(a1)); t(sh(a2)); t(a3 as u32); "
+                 "unsafe { *(a1 as *mut *mut c_void) = if rnd() & 1 != 0 { (&raw mut super::LBF) as *mut c_void } else { core::ptr::null_mut() }; } core::ptr::null_mut() }"),
+    },
+)
 for _s in SPECS.values():
     _s.setdefault("narrow_si", True)
     _s.setdefault("common_ret", {})

@@ -1,0 +1,26 @@
+# melee play scripted run (MELEE_PAD_SCRIPT, port 1): title -> main menu -> VS -> Melee -> CSS
+# (Falcon v Fox) -> SSS (Final Destination) -> match (25 s:
+# --time-secs 25 --golden-pads) -> results -> A back to the CSS.
+# frames buttons(hex) stickX stickY
+40 0000 0 0
+3 1000 0 0
+12 0000 0 0
+3 0100 0 0
+12 0000 0 0
+3 0100 0 0
+12 0000 0 0
+3 0100 0 0
+12 0000 0 0
+3 0100 0 0
+12 0000 0 0
+3 0100 0 0
+12 0000 0 0
+3 0100 0 0
+12 0000 0 0
+3 0100 0 0
+# loading + READY/GO, then the match plays (with --golden-pads the harness's own pad cycles drive both
+# fighters; live pads would be port 1 only)
+1790 0000 0 0
+# results: A back to the character select
+3 0100 0 0
+200 0000 0 0

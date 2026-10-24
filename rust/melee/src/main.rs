@@ -35,6 +35,8 @@ mod stage;
 mod vs_match;
 mod gx_backend;
 mod view;
+mod ui;
+mod play;
 mod snap;
 mod fighter_fields;
 
@@ -174,6 +176,7 @@ fn main() -> ExitCode {
         }
         Some("golden") => golden(&args),
         Some("view-golden") => view::view_golden(&args),
+        Some("play") => play::play(&args),
         Some(x) => {
             eprintln!("melee: unknown command {x:?} (selftest | hashlog | golden | view-golden)");
             ExitCode::from(2)

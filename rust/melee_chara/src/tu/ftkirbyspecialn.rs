@@ -170,7 +170,7 @@ pub mod ext {
         }
     }
     // `efAsync_Spawn(gobj, queue, kind, gfx_id, ...)` (ef/efasync.c, variadic): trailing pointers.
-    hook!(EFASYNC_SPAWN, efAsync_Spawn, (gobj: G, queue: *mut c_void, kind: u32, gfx_id: u32, args: &[*mut c_void]));
+    crate::port_hook!(EFASYNC_SPAWN, efAsync_Spawn, crate::adapt::efAsync_Spawn_slice, (gobj: G, queue: *mut c_void, kind: u32, gfx_id: u32, args: &[*mut c_void]));
     // Ported TUs (default = the port).
     hook_or!(FTCO_800BD1DC, ftCo_800BD1DC, melee_fighter::tu::ftCo_CaptureKirby::ftCo_800BD1DC, (g: G, victim: G));
     hook_or!(FTCO_800BD19C, ftCo_800BD19C, |g, p: *const Vec3| melee_fighter::tu::ftCo_CaptureKirby::ftCo_800BD19C(g, unsafe { &*p }), (g: G, pos: *const Vec3) -> f32);

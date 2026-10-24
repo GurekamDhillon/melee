@@ -20,7 +20,7 @@ pub mod ext {
     pub fn HSD_JObjSetMtxDirtySub(jobj: *mut HSD_JObj) {
         match unsafe { HSD_JOBJSETMTXDIRTYSUB } {
             Some(f) => f(jobj),
-            None => panic!("TODO: HSD_JObjSetMtxDirtySub is not ported"),
+            None => unsafe { crate::adapt::HSD_JObjSetMtxDirtySub(jobj) },
         }
     }
 }

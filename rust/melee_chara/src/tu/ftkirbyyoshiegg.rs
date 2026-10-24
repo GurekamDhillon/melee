@@ -65,7 +65,7 @@ pub mod ext {
     hook!(FTCOMMON_INITGRAB, ftCommon_InitGrab, (fp: *mut Fighter, a: i32, b: f32));
     hook!(FTCOMMON_GRABMASH, ftCommon_GrabMash, (fp: *mut Fighter, decrement: f32) -> i32);
     // `efAsync_Spawn(gobj, queue, kind, gfx_id, ...)` (ef/efasync.c, variadic): trailing args as a slice.
-    hook!(EFASYNC_SPAWN, efAsync_Spawn, (gobj: *mut HSD_GObj, queue: *mut *mut c_void, kind: u32, gfx_id: u32, args: &[*mut c_void]));
+    crate::port_hook!(EFASYNC_SPAWN, efAsync_Spawn, crate::adapt::efAsync_Spawn_slice_pp, (gobj: *mut HSD_GObj, queue: *mut *mut c_void, kind: u32, gfx_id: u32, args: &[*mut c_void]));
     /// Recording hook; unset, the native `melee_fighter::tu::fighter` port runs.
     pub static mut FIGHTER_UPDATEMODELSCALE: Option<fn(*mut HSD_GObj)> = None;
     #[allow(non_snake_case)]

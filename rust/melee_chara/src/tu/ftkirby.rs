@@ -177,9 +177,9 @@ pub mod ext {
 
     // `lbArchive_80017040(NULL, filename, out, ...)`: the variadic tail without its 0 terminator.
     crate::port_hook!(LBARCHIVE_80017040, lbArchive_80017040, crate::adapt::lbArchive_80017040, (a: *mut c_void, filename: *const i8, out: *mut c_void, rest: &[*mut c_void]));
-    hook!(EFASYNC_LOADASYNC, efAsync_LoadAsync, (id: i32));
-    hook!(EFASYNC_LOADSYNC, efAsync_LoadSync, (id: i32));
-    hook!(EFASYNC_SPAWN, efAsync_Spawn, (gobj: *mut HSD_GObj, head: *mut c_void, a: i32, id: i32, jobj: *mut HSD_JObj, pos: *mut Vec3));
+    crate::port_hook!(EFASYNC_LOADASYNC, efAsync_LoadAsync, crate::adapt::efAsync_LoadAsync, (id: i32));
+    crate::port_hook!(EFASYNC_LOADSYNC, efAsync_LoadSync, crate::adapt::efAsync_LoadSync, (id: i32));
+    crate::port_hook!(EFASYNC_SPAWN, efAsync_Spawn, crate::adapt::efAsync_Spawn_i32, (gobj: *mut HSD_GObj, head: *mut c_void, a: i32, id: i32, jobj: *mut HSD_JObj, pos: *mut Vec3));
     pub static mut IT_8026B3F8: Option<fn(*mut c_void, i32) > = None;
             #[allow(non_snake_case)]
             pub fn it_8026B3F8(article: *mut c_void, kind: i32)  {

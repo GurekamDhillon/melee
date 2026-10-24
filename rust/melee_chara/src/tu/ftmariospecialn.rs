@@ -63,7 +63,7 @@ pub mod ext {
                 }
             }
     // `efSync_Spawn(gfx_id, gobj, ...)` (ef/efsync.c, variadic): the trailing arguments as a slice.
-    hook!(EFSYNC_SPAWN, efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut c_void]) -> *mut c_void);
+    crate::port_hook!(EFSYNC_SPAWN, efSync_Spawn, crate::adapt::efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut c_void]) -> *mut c_void);
     crate::port_hook!(ITDRMARIOPILL_SPAWN, itDrMarioPill_Spawn, crate::adapt::itDrMarioPill_Spawn, (gobj: *mut HSD_GObj, pos: *mut Vec3, color: i32, kind: i32, facing: f32));
     // TARGET_PC `Geno_DefineBaseKind(kind)` (pc/geno).
     hook_or!(GENO_DEFINE_BASE_KIND, Geno_DefineBaseKind, melee_fighter::hooks::geno_define_base_kind, (kind: i32) -> i32);

@@ -73,7 +73,7 @@ pub mod ext {
     hook!(FT_PLAYSFX, ft_PlaySFX, (fp: *mut Fighter, sfx: i32, vol: u8, pan: u8));
     hook_or!(FT_80089824, ft_80089824, melee_fighter::ft0892::ft_80089824, (gobj: *mut HSD_GObj));
     hook!(FT_800892A0, ft_800892A0, (gobj: *mut HSD_GObj));
-    hook!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, (kind: CmQuakeKind, pos: *mut Vec3));
+    crate::port_hook!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, crate::adapt::Camera_RequestQuake, (kind: CmQuakeKind, pos: *mut Vec3));
 }
 
 type G = *mut HSD_GObj;

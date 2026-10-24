@@ -114,6 +114,9 @@ pub struct CameraWorld {
     /// Stand-in for the non-NULL `quake_gobj` handle `grLib_801C9CEC` returns.
     pub quake_gobj_token: usize,
     pub stubs: CameraStubLog,
+    /// `ftLib_80086B74(Player_GetEntity(slot))->bone_pos`, `None` when the slot has no fighter
+    /// (installed by the owner of the world: both calls live above this crate).
+    pub subject_bone_pos: Option<fn(i32) -> Option<Vec3>>,
 }
 
 impl Default for CameraWorld {
@@ -130,6 +133,7 @@ impl Default for CameraWorld {
             debug_last_mode: 0,
             quake_gobj_token: 0x1000,
             stubs: CameraStubLog::default(),
+            subject_bone_pos: None,
         }
     }
 }

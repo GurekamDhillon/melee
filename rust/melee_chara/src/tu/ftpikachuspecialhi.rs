@@ -77,7 +77,7 @@ pub mod ext {
                 }
             }
     // `efSync_Spawn(gfx_id, gobj, ...)` (ef/efsync.c, variadic): the trailing pointers as a slice.
-    hook!(EFSYNC_SPAWN, efSync_Spawn,
+    crate::port_hook!(EFSYNC_SPAWN, efSync_Spawn, crate::adapt::efSync_Spawn,
         (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut core::ffi::c_void]) -> *mut core::ffi::c_void);
     hook_or!(FTCO_8009A134, ftCo_8009A134, melee_fighter::tu::ftCo_Pass::ftCo_8009A134,
         (gobj: *mut HSD_GObj) -> bool);

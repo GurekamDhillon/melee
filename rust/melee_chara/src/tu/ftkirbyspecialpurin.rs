@@ -82,7 +82,7 @@ pub mod ext {
             None => { unsafe { melee_world::tu::mplib::mpLib_800569EC(flags as _) as _ } },
         }
     }
-    hook!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, (kind: CmQuakeKind, pos: *const Vec3));
+    crate::port_hook!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, crate::adapt::Camera_RequestQuake, (kind: CmQuakeKind, pos: *const Vec3));
     hook!(FT_800892A0, ft_800892A0, (g: G));
     hook_or!(FTPARTSETROTX, ftPartSetRotX, |fp: *mut Fighter, i, v| melee_fighter::tu::ftparts::ftPartSetRotX(unsafe { &*fp }, i, v), (fp: *mut Fighter, part_idx: i32, rot: f32));
     hook_or!(FTPARTSETROTY, ftPartSetRotY, |fp: *mut Fighter, i, v| melee_fighter::tu::ftparts::ftPartSetRotY(unsafe { &*fp }, i, v), (fp: *mut Fighter, part_idx: i32, rot: f32));

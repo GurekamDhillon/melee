@@ -68,7 +68,7 @@ pub mod ext {
                 }
             }
     hook!(FT_800892A0, ft_800892A0, (gobj: *mut HSD_GObj));
-    hook!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, (kind: CmQuakeKind, pos: *mut Vec3));
+    crate::port_hook!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, crate::adapt::Camera_RequestQuake, (kind: CmQuakeKind, pos: *mut Vec3));
     hook!(FTCOLL_8007B128, ftColl_8007B128, (gobj: *mut HSD_GObj, bone_id: i32, state: i32));
     hook!(FTCOLL_8007B0C0, ftColl_8007B0C0, (gobj: *mut HSD_GObj, state: i32));
     pub static mut FTCOMMON_8007F5CC: Option<fn(*mut HSD_GObj, i32) > = None;

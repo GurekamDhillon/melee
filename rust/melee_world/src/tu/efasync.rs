@@ -1298,3 +1298,61 @@ pub unsafe fn efAsync_MexProcessDeferred<H: EfHost + ?Sized>(h: &mut H, gobj: *m
         _ => {}
     }
 }
+
+// ---- the native host ----
+
+static mut NATIVE_EF_DATA: Option<EfData> = None;
+static mut NATIVE_EF_ASYNC: Option<EfAsyncState> = None;
+
+/// The `EfHost` for the real game: efdata.c's / efasync.c's globals live in statics, and the
+/// services that have native ports in the crates below are wired to them (the rest keep the
+/// trait defaults, i.e. the `ext` hooks of this TU).
+pub struct NativeEfHost;
+
+unsafe impl EfHost for NativeEfHost {
+    fn ef_data(&mut self) -> &mut EfData {
+        unsafe { (*(&raw mut NATIVE_EF_DATA)).get_or_insert_with(Default::default) }
+    }
+    fn ef_async(&mut self) -> &mut EfAsyncState {
+        unsafe { (*(&raw mut NATIVE_EF_ASYNC)).get_or_insert_with(Default::default) }
+    }
+    unsafe fn HSD_Randf(&mut self) -> f32 { melee_runtime::tu::random::HSD_Randf_global() }
+    unsafe fn HSD_Randi(&mut self, max: i32) -> i32 { melee_runtime::tu::random::HSD_Randi_global(max) }
+    unsafe fn HSD_JObjAnimAll(&mut self, j: *mut HSD_JObj) { melee_runtime::tu::jobj_ptr::HSD_JObjAnimAll(j) }
+    unsafe fn HSD_JObjSetMtxDirtySub(&mut self, j: *mut HSD_JObj) { melee_runtime::tu::jobj_ptr::HSD_JObjSetMtxDirtySub(j) }
+    unsafe fn lb_8000B1CC(&mut self, j: *mut HSD_JObj, o: *const Vec3, out: *mut Vec3) {
+        melee_runtime::tu::lb_00B0::lb_8000B1CC(j, o as *mut Vec3, out)
+    }
+    unsafe fn lbDvd_800178E8(&mut self, a: i32, n: *const c_char, b: i32, c: i32, d: i32, e: i32, f: i32, g: u8, idx: i32) {
+        melee_runtime::tu::lbdvd::lbDvd_800178E8(a, n, b, c, d, e, f, g, idx)
+    }
+    unsafe fn HSD_ArchiveGetPublicAddress(&mut self, ar: *mut c_void, sym: *const c_char) -> *mut c_void {
+        melee_runtime::tu::archive::HSD_ArchiveGetPublicAddress(ar.cast(), sym)
+    }
+    unsafe fn lbArchive_80017040(&mut self, dst: *mut *mut c_void, file: *const c_char, out: *mut *mut EF_DAT_Entry, sym: *const c_char) -> bool {
+        let rest: [*mut c_void; 3] = [out.cast(), sym as *mut c_void, null_mut()];
+        melee_runtime::tu::lbarchive::lbArchive_80017040(dst.cast(), file, &rest)
+    }
+}
+
+/// `efAsync_LoadAsync(index)` on the game's globals.
+pub unsafe fn efAsync_LoadAsync_native(index: i32) {
+    efAsync_LoadAsync(&mut NativeEfHost, index)
+}
+/// `efAsync_LoadSync(index)` on the game's globals.
+pub unsafe fn efAsync_LoadSync_native(index: i32) {
+    efAsync_LoadSync(&mut NativeEfHost, index)
+}
+/// `efAsync_Spawn(gobj, head, spawn_kind, gfx_id, jobj, ...)` on the game's globals; `tail` is the
+/// variadic pointers in `va_arg` order.
+pub unsafe fn efAsync_Spawn_native(
+    gobj: *mut HSD_GObj,
+    head: *mut EF_QueuedEffect,
+    spawn_kind: u32,
+    gfx_id: u32,
+    jobj: *mut HSD_JObj,
+    tail: &[*mut c_void],
+) {
+    let args: std::vec::Vec<VaArg> = tail.iter().map(|&p| VaArg::Ptr(p)).collect();
+    efAsync_Spawn(&mut NativeEfHost, gobj, head, spawn_kind, gfx_id, jobj, VaList::new(&args))
+}

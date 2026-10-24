@@ -50,7 +50,7 @@ pub mod ext {
     pub fn lb_800119DC(pos: *mut Vec3, a: i32, b: f32, c: f32, d: f32) {
         match unsafe { LB_800119DC } { Some(f) => f(pos, a, b, c, d), None => { unsafe { let _ = melee_runtime::tu::lb_00F9::lb_800119DC(pos as _, a as _, b as _, c as _, d as _); } return; } }
     }
-    hook!(EFSYNC_SPAWN, efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut c_void]) -> *mut c_void);
+    crate::port_hook!(EFSYNC_SPAWN, efSync_Spawn, crate::adapt::efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut c_void]) -> *mut c_void);
     pub static mut FTANIM_SETANIMRATE: Option<fn(*mut HSD_GObj, f32)> = None;
     #[allow(non_snake_case)]
     pub fn ftAnim_SetAnimRate(gobj: *mut HSD_GObj, rate: f32) {

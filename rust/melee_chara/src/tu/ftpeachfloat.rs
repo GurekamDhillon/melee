@@ -43,7 +43,7 @@ pub mod ext {
     /// `Mex_OnFloatDispatch(kind, gobj)` (pc/mex, TARGET_PC): the m-ex onFloat callback.
     hook!(MEX_ONFLOATDISPATCH, Mex_OnFloatDispatch, (kind: i32, gobj: *mut HSD_GObj) -> i32);
     /// `efAsync_Spawn(gobj, queue_head, spawn_kind, gfx_id, jobj, ...)` (ef/efasync.c).
-    hook!(EFASYNC_SPAWN, efAsync_Spawn, (gobj: *mut HSD_GObj, q: *mut core::ffi::c_void, kind: u32, gfx: u32, jobj: *mut HSD_JObj));
+    crate::port_hook!(EFASYNC_SPAWN, efAsync_Spawn, crate::adapt::efAsync_Spawn_plain, (gobj: *mut HSD_GObj, q: *mut core::ffi::c_void, kind: u32, gfx: u32, jobj: *mut HSD_JObj));
     /// `ftCo_SpecialAir_CheckInput(gobj)` (ftCommon/ftCo_SpecialAir.c).
     pub static mut FTCO_SPECIALAIR_CHECKINPUT: Option<fn(*mut HSD_GObj) -> bool> = None;
             #[allow(non_snake_case)]

@@ -250,3 +250,119 @@ pub unsafe fn HSD_DObjRemoveAll(dobj: *mut HSD_DObj) {
 pub unsafe fn HSD_DObjResolveRefsAll(dobj: *mut HSD_DObj, desc: *mut HSD_DObjDesc) {
     melee_runtime::tu::dobj::hsd::HSD_DObjResolveRefsAll(dobj, desc)
 }
+
+// ---- effects ----------------------------------------------------------------------------------
+
+/// `efSync_Spawn(gfx_id, gobj, ...)`: `args` is the variadic tail (pointers, in `va_arg` order).
+pub unsafe fn efSync_Spawn(id: i32, gobj: G, args: &[*mut c_void]) -> *mut c_void {
+    let mut va = melee_world::tu::efsync::Va::new(args);
+    melee_world::tu::efsync::efSync_Spawn(id, gobj, &mut va)
+}
+/// Same, for the TUs that carry the tail as register-width integers.
+pub unsafe fn efSync_Spawn_usize(id: i32, gobj: G, args: &[usize]) -> *mut c_void {
+    let v: std::vec::Vec<*mut c_void> = args.iter().map(|&a| a as *mut c_void).collect();
+    efSync_Spawn(id, gobj, &v)
+}
+
+type QPtr = *mut melee_types::EF_QueuedEffect;
+pub unsafe fn efAsync_LoadAsync(id: i32) {
+    melee_world::tu::efasync::efAsync_LoadAsync_native(id)
+}
+pub unsafe fn efAsync_LoadSync(id: i32) {
+    melee_world::tu::efasync::efAsync_LoadSync_native(id)
+}
+/// `efAsync_Spawn(gobj, head, kind, gfx, jobj)` with no variadic tail.
+pub unsafe fn efAsync_Spawn_plain(gobj: G, q: *mut c_void, kind: u32, gfx: u32, jobj: *mut HSD_JObj) {
+    melee_world::tu::efasync::efAsync_Spawn_native(gobj, q as QPtr, kind, gfx, jobj, &[])
+}
+/// ... with one pointer tail argument.
+pub unsafe fn efAsync_Spawn_ptr<T>(gobj: G, q: *mut c_void, kind: u32, gfx: u32, jobj: *mut HSD_JObj, arg: *const T) {
+    melee_world::tu::efasync::efAsync_Spawn_native(gobj, q as QPtr, kind, gfx, jobj, &[arg as *mut c_void])
+}
+/// ... the `(gobj, head, i32 kind, i32 id, jobj, pos)` shape.
+pub unsafe fn efAsync_Spawn_i32<T>(gobj: G, q: *mut c_void, kind: i32, id: i32, jobj: *mut HSD_JObj, arg: *mut T) {
+    melee_world::tu::efasync::efAsync_Spawn_native(gobj, q as QPtr, kind as u32, id as u32, jobj, &[arg as *mut c_void])
+}
+/// ... the shape whose trailing slice starts with the JObj.
+pub unsafe fn efAsync_Spawn_slice(gobj: G, q: *mut c_void, kind: u32, gfx: u32, args: &[*mut c_void]) {
+    melee_world::tu::efasync::efAsync_Spawn_native(gobj, q as QPtr, kind, gfx, args[0] as *mut HSD_JObj, &args[1..])
+}
+/// ... the slice shape with the queue head passed as `*mut *mut c_void`.
+pub unsafe fn efAsync_Spawn_slice_pp(gobj: G, q: *mut *mut c_void, kind: u32, gfx: u32, args: &[*mut c_void]) {
+    efAsync_Spawn_slice(gobj, q as *mut c_void, kind, gfx, args)
+}
+
+// ---- cm/camera.c (game_camera) ----------------------------------------------------------------
+
+fn subject_bone_pos(slot: i32) -> Option<Vec3> {
+    unsafe {
+        let g = melee_fighter::player::get_entity(slot);
+        if g.is_null() {
+            return None;
+        }
+        let s = melee_fighter::ftlib::ftlib_80086b74(g);
+        if s.is_null() {
+            None
+        } else {
+            Some((*s).bone_pos)
+        }
+    }
+}
+/// The game's `game_camera` with the fighter lookup installed.
+fn cam() -> &'static mut melee_world::cm::camera::CameraWorld {
+    let w = melee_world::cm::camera_boss::global();
+    if w.subject_bone_pos.is_none() {
+        w.subject_bone_pos = Some(subject_bone_pos);
+    }
+    w
+}
+pub fn Camera_8002E6FC(slot: i32) {
+    cam().camera_8002e6fc(slot)
+}
+pub fn Camera_8002E948(cb: unsafe extern "C" fn(*mut Vec3) -> bool) {
+    cam().camera_8002e948(cb)
+}
+pub fn Camera_8002EB5C(v: f32) {
+    cam().camera_8002eb5c(v)
+}
+pub fn Camera_8002EC7C(v: f32) {
+    cam().camera_8002ec7c(v)
+}
+pub fn Camera_8002ED9C(v: f32) {
+    cam().camera_8002ed9c(v)
+}
+pub fn Camera_8002EEC8(fov: f32) {
+    cam().camera_8002eec8(fov)
+}
+pub fn Camera_8002EF14() {
+    cam().camera_8002ef14()
+}
+pub fn Camera_8002F0E4(frames: i32) {
+    cam().camera_8002f0e4(frames)
+}
+pub fn Camera_8002F260() -> bool {
+    cam().camera_8002f260()
+}
+pub fn Camera_8002F274() {
+    cam().camera_8002f274()
+}
+pub fn Camera_SetModeToStandard() {
+    cam().camera_set_mode_to_standard()
+}
+pub unsafe fn Camera_RequestQuake<P>(kind: impl Into<i64>, pos: *const P) {
+    let p = if pos.is_null() { None } else { Some(*(pos as *const Vec3)) };
+    cam().camera_request_quake(kind.into() as u32, p)
+}
+/// `Camera_8002E948` for TUs whose callback is a Rust `fn`: the camera keeps the callback and
+/// calls it every frame, and there is one boss-intro anchor at a time, so a slot is enough.
+static mut CAM_RS_CB: Option<fn(*mut Vec3) -> bool> = None;
+unsafe extern "C" fn cam_rs_tramp(p: *mut Vec3) -> bool {
+    match CAM_RS_CB {
+        Some(f) => f(p),
+        None => false,
+    }
+}
+pub fn Camera_8002E948_rs(cb: fn(*mut Vec3) -> bool) {
+    unsafe { CAM_RS_CB = Some(cb) };
+    cam().camera_8002e948(cam_rs_tramp)
+}

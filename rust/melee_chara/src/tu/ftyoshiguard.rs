@@ -51,7 +51,7 @@ pub mod ext {
     hook!(FTCOLL_8007B0C0, ftColl_8007B0C0, (g: *mut HSD_GObj, state: i32));
     hook!(FTCOLL_HURTBOXINIT, ftColl_HurtboxInit, (fp: *mut Fighter, capsule: *mut FighterHurtCapsule, hurt: *const ftHurtboxInit));
     hook!(FTPARTS_GETBONEINDEX, ftParts_GetBoneIndex, (fp: *mut Fighter, part: i32) -> Fighter_Part);
-    hook!(EFASYNC_SPAWN, efAsync_Spawn, (gobj: *mut HSD_GObj, slot: *mut core::ffi::c_void, part: i32, id: i32, jobj: *mut HSD_JObj, xbc: *mut core::ffi::c_void));
+    crate::port_hook!(EFASYNC_SPAWN, efAsync_Spawn, crate::adapt::efAsync_Spawn_i32, (gobj: *mut HSD_GObj, slot: *mut core::ffi::c_void, part: i32, id: i32, jobj: *mut HSD_JObj, xbc: *mut core::ffi::c_void));
     crate::port_hook!(HSD_JOBJSETTRANSLATE, HSD_JObjSetTranslate, crate::adapt::HSD_JObjSetTranslate, (jobj: *mut HSD_JObj, v: *const Vec3));
 
     pub static mut FTANIM_8006FA58: Option<fn(*mut Fighter, i32, *mut HSD_Joint)> = None;

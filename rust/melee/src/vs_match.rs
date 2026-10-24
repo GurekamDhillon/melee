@@ -129,6 +129,7 @@ const EF_ENTRY_BEAM: u32 = 0x24;
 pub const STKIND_FD: i32 = 0x20;
 pub const STKIND_BF: i32 = 0x1F;
 pub const STKIND_GREENS: i32 = 0x11;
+pub const STKIND_STORY: i32 = 0x08;
 /// efLib's particle procs (eflib.c `efLib_particles_proc_main` / `_aux`, TARGET_PC masks).
 const PTCL_MASK_MAIN: u32 = 0x20000 | 0x40000;
 const PTCL_MASK_AUX: u32 = 0x10000 | 0x80000;
@@ -537,6 +538,8 @@ fn fighter_kind(name: &str) -> Result<FighterKind, String> {
         "falcon" => Ok(Ft_Kind_Captain),
         "fox" => Ok(Ft_Kind_Fox),
         "falco" => Ok(melee_types::Ft_Kind_Falco),
+        "peach" => Ok(melee_types::Ft_Kind_Peach),
+        "samus" => Ok(melee_types::Ft_Kind_Samus),
         "marth" => Ok(melee_types::Ft_Kind_Mars),
         "sheik" => Ok(melee_types::Ft_Kind_Seak),
         "zelda" => Ok(melee_types::Ft_Kind_Zelda),
@@ -554,6 +557,7 @@ impl VsMatch {
             "GrNLa.dat" => STKIND_FD,
             "GrNBa.dat" => STKIND_BF,
             "GrGr.dat" => STKIND_GREENS,
+            "GrSt.dat" => STKIND_STORY,
             _ => return Err(format!("{stage_file}: only Final Destination's and Battlefield's stage code is wired")),
         };
         let stage_bytes = disc.read(stage_file)?;
@@ -640,6 +644,8 @@ impl VsMatch {
             let (file, table, idx) = match *name {
                 "falcon" => ("EfCaData.dat", "effCaptainDataTable", 4),
                 "fox" => ("EfFxData.dat", "effFoxDataTable", 3),
+                "peach" => ("EfPeData.dat", "effPeachDataTable", 15),
+                "samus" => ("EfSsData.dat", "effSamusDataTable", 2),
                 "marth" => ("EfMsData.dat", "effMarsDataTable", 16),
                 "sheik" => ("EfZdData.dat", "effZeldaDataTable", 17),
                 // Wolf's own bank takes Fox's index: a match here has one Fox-kind fighter.
@@ -686,7 +692,7 @@ impl VsMatch {
 
         // grLast_OnInit -> grLast_8021A9C4 (map gobj 3) -> grLast_8021B920(1): the level gobjs
         // 4..8 are created in order; gobj 7's on_init is grLast_8021AC30.
-        let last_bg = if stkind == STKIND_GREENS {
+        let last_bg = if stkind == STKIND_GREENS || stkind == STKIND_STORY {
             // Green Greens: no grLast sway; its own stage logic (Whispy, blocks) is not ported.
             None
         } else if stkind == STKIND_BF {
@@ -709,7 +715,7 @@ impl VsMatch {
         let mut seen = std::collections::HashSet::new();
         // FD's grLast animation table; Battlefield's grBattle_OnInit starts gobj 0 and 1's anim 0
         // (grBattle_GObj0/1_Callback0 -> grAnime_801C8138), whose particle tracks are the 4 stage gens.
-        let dptcl_rows: &[(u32, u32)] = if stkind == STKIND_GREENS { &[] } else if stkind == STKIND_BF { &[(0, 0), (1, 0)] } else { &[(4, 0), (5, 4), (6, 6), (7, 8), (8, 10), (4, 0), (5, 0), (6, 0), (7, 0), (8, 0)] };
+        let dptcl_rows: &[(u32, u32)] = if stkind == STKIND_GREENS || stkind == STKIND_STORY { &[] } else if stkind == STKIND_BF { &[(0, 0), (1, 0)] } else { &[(4, 0), (5, 4), (6, 6), (7, 8), (8, 10), (4, 0), (5, 0), (6, 0), (7, 0), (8, 0)] };
         for &(g, anim) in dptcl_rows {
             if !seen.insert((g, anim)) {
                 continue;

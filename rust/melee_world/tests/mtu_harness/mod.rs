@@ -159,6 +159,11 @@ pub fn pi<T>(p: *const T) -> u32 {
 }
 /// A pointer slot inside a union that other views overwrite byte-wise: only an exact region base counts.
 pub fn pib<T>(p: *const T) -> u32 {
+    // a pointer slot whose low half was overwritten by a 32-bit view is a stale half pointer: the high half
+    // depends on where the image is mapped, so it counts as null on both sides
+    if (p as usize) & 0xFFFF_FFFF == 0 {
+        return 0;
+    }
     let v = pi(p);
     if v == 0 || v == 0xFFFF_FFFF || (v & 0xFFFF) == 0 {
         v
@@ -228,18 +233,34 @@ pub fn case(op: u32, k: u32) {
 pub struct Check {
     lines: std::str::Lines<'static>,
     pub n: u32,
+    bad: Vec<(u32, u32)>,
 }
 impl Check {
     pub fn new(s: &'static str) -> Self {
-        Check { lines: s.lines(), n: 0 }
+        Check { lines: s.lines(), n: 0, bad: Vec::new() }
     }
     pub fn line(&mut self, op: u32, k: u32, ret: u32) {
         let got = format!("{} {} {:08X} {:08X} {:08X}", op, k, ret, unsafe { H }, unsafe { TR });
         let want = self.lines.next().expect("expected file too short");
-        assert_eq!(got, want, "op {op} case {k}");
+        // MTU_ALL=1: do not stop at the first differing case, list the differing ops at the end (see done())
+        if std::env::var("MTU_ALL").is_ok() {
+            if got != want {
+                self.bad.push((op, k));
+            }
+        } else {
+            assert_eq!(got, want, "op {op} case {k}");
+        }
         self.n += 1;
     }
     pub fn done(mut self) -> u32 {
+        if !self.bad.is_empty() {
+            let mut per: std::collections::BTreeMap<u32, (u32, u32)> = Default::default();
+            for &(op, k) in &self.bad {
+                let e = per.entry(op).or_insert((k, 0));
+                e.1 += 1;
+            }
+            panic!("MTU_ALL: differing cases per op (first case, count): {:?}", per);
+        }
         assert!(self.lines.next().is_none(), "expected file has extra lines");
         self.n
     }

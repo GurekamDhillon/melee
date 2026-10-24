@@ -102,6 +102,7 @@ pub fn freg_all() {
 }
 
 pub fn fill_HSD_GObj(p: &mut HSD_GObj) {
+    unsafe {
     p.classifier = fv() as _;
     p.p_link = fv() as _;
     p.gx_link = fv() as _;
@@ -110,9 +111,11 @@ pub fn fill_HSD_GObj(p: &mut HSD_GObj) {
     p.obj_kind = fv() as _;
     p.user_data_kind = fv() as _;
     p.gxlink_prios = fv64() as _;
+    }
 }
 pub fn hash_HSD_GObj(p: &HSD_GObj) {
-    unsafe { if HDBG { println!("B HSD_GObj"); } }
+    unsafe {
+    if HDBG { println!("B HSD_GObj"); }
     hm(p.classifier as u32);
     hm(p.p_link as u32);
     hm(p.gx_link as u32);
@@ -131,9 +134,11 @@ pub fn hash_HSD_GObj(p: &HSD_GObj) {
     hm(pi(p.user_data));
     hm(fi(p.user_data_remove_func));
     hm(pi(p.x34_unk));
+    }
 }
 
 pub fn fill_Ground(p: &mut Ground) {
+    unsafe {
     p.x0 = fv() as _;
     p.x10_flags.set_b0(fv() as _);
     p.x10_flags.set_b1(fv() as _);
@@ -197,9 +202,11 @@ pub fn fill_Ground(p: &mut Ground) {
     p.color_overlay.set_x7C_flag8(fv() as _);
     p.xC0 = rg();
     for i0 in 0..400 { unsafe { *(&mut p.u as *mut _ as *mut u8).add(i0) = rnd() as u8; } }
+    }
 }
 pub fn hash_Ground(p: &Ground) {
-    unsafe { if HDBG { println!("B Ground"); } }
+    unsafe {
+    if HDBG { println!("B Ground"); }
     hm(p.x0 as u32);
     hm(pi(p.gobj));
     hm(fi(p.x8_callback));
@@ -271,9 +278,11 @@ pub fn hash_Ground(p: &Ground) {
     hm(p.color_overlay.x7C_flag8() as u32);
     hm(p.xC0.to_bits());
     for i0 in 0..400 { unsafe { hm(*(&p.u as *const _ as *const u8).add(i0) as u32); } }
+    }
 }
 
 pub fn fill_StageInfo(p: &mut StageInfo) {
+    unsafe {
     p.cam_info.cam_bounds.left = rg();
     p.cam_info.cam_bounds.right = rg();
     p.cam_info.cam_bounds.top = rg();
@@ -378,9 +387,11 @@ pub fn fill_StageInfo(p: &mut StageInfo) {
     for i0 in 0..4 {
     p.x744_pad[i0] = fv() as _;
     }
+    }
 }
 pub fn hash_StageInfo(p: &StageInfo) {
-    unsafe { if HDBG { println!("B StageInfo"); } }
+    unsafe {
+    if HDBG { println!("B StageInfo"); }
     hm(p.cam_info.cam_bounds.left.to_bits());
     hm(p.cam_info.cam_bounds.right.to_bits());
     hm(p.cam_info.cam_bounds.top.to_bits());
@@ -505,27 +516,35 @@ pub fn hash_StageInfo(p: &StageInfo) {
     for i0 in 0..4 {
     hm(p.x744_pad[i0] as u32);
     }
+    }
 }
 
 pub fn fill_StageCallbacks(p: &mut StageCallbacks) {
+    unsafe {
     for j0 in 0..4 { unsafe { *(base(p) as *mut u8).add(32 + j0) = rnd() as u8; } }
+    }
 }
 pub fn hash_StageCallbacks(p: &StageCallbacks) {
-    unsafe { if HDBG { println!("B StageCallbacks"); } }
+    unsafe {
+    if HDBG { println!("B StageCallbacks"); }
     hm(fi(p.on_init));
     hm(fi(p.callback1));
     hm(fi(p.gobj_proc));
     hm(fi(p.callback3));
     for j0 in 0..4 { unsafe { hm(*base(p).add(32 + j0) as u32); } }
+    }
 }
 
 pub fn fill_StageData(p: &mut StageData) {
+    unsafe {
     p.grkind = fv() as _;
     p.flags2 = fv() as _;
     p.joint_count = fv() as _;
+    }
 }
 pub fn hash_StageData(p: &StageData) {
-    unsafe { if HDBG { println!("B StageData"); } }
+    unsafe {
+    if HDBG { println!("B StageData"); }
     hm(p.grkind as u32);
     hm(pi(p.callbacks));
     hm(pi(p.data1));
@@ -539,9 +558,11 @@ pub fn hash_StageData(p: &StageData) {
     hm(p.flags2 as u32);
     hm(pi(p.joints));
     hm(p.joint_count as u32);
+    }
 }
 
 pub fn fill_grFourside_YakumonoParam(p: &mut grFourside_YakumonoParam) {
+    unsafe {
     p.heli_wait = fv() as _;
     p.heli_wait_add = fv() as _;
     p.heli_stay_time = fv() as _;
@@ -562,9 +583,11 @@ pub fn fill_grFourside_YakumonoParam(p: &mut grFourside_YakumonoParam) {
     p.ufo_challenge = fv() as _;
     p.x46 = fv() as _;
     p.x48 = fv() as _;
+    }
 }
 pub fn hash_grFourside_YakumonoParam(p: &grFourside_YakumonoParam) {
-    unsafe { if HDBG { println!("B grFourside_YakumonoParam"); } }
+    unsafe {
+    if HDBG { println!("B grFourside_YakumonoParam"); }
     hm(p.heli_wait as u32);
     hm(p.heli_wait_add as u32);
     hm(p.heli_stay_time as u32);
@@ -585,9 +608,11 @@ pub fn hash_grFourside_YakumonoParam(p: &grFourside_YakumonoParam) {
     hm(p.ufo_challenge as u32);
     hm(p.x46 as u32);
     hm(p.x48 as u32);
+    }
 }
 
 pub fn fill_HSD_JObj(p: &mut HSD_JObj) {
+    unsafe {
     p.object.ref_count = fv() as _;
     p.object.ref_count_individual = fv() as _;
     p.flags = fv() as _;
@@ -608,9 +633,11 @@ pub fn fill_HSD_JObj(p: &mut HSD_JObj) {
     }
     }
     p.id = fv() as _;
+    }
 }
 pub fn hash_HSD_JObj(p: &HSD_JObj) {
-    unsafe { if HDBG { println!("B HSD_JObj"); } }
+    unsafe {
+    if HDBG { println!("B HSD_JObj"); }
     hm(pi(p.object.parent.class_info));
     hm(p.object.ref_count as u32);
     hm(p.object.ref_count_individual as u32);
@@ -639,9 +666,11 @@ pub fn hash_HSD_JObj(p: &HSD_JObj) {
     hm(pi(p.aobj));
     hm(pi(p.robj));
     hm(p.id as u32);
+    }
 }
 
 pub fn fill_CmSubject(p: &mut CmSubject) {
+    unsafe {
     p.state = fv() as _;
     p.set_on_ledge(fv() as _);
     p.set_force_inactive(fv() as _);
@@ -670,9 +699,11 @@ pub fn fill_CmSubject(p: &mut CmSubject) {
     p.x60.x = rg();
     p.x60.y = rg();
     p.x60.z = rg();
+    }
 }
 pub fn hash_CmSubject(p: &CmSubject) {
-    unsafe { if HDBG { println!("B CmSubject"); } }
+    unsafe {
+    if HDBG { println!("B CmSubject"); }
     hm(pi(p.next));
     hm(pi(p.prev));
     hm(p.state as u32);
@@ -703,9 +734,11 @@ pub fn hash_CmSubject(p: &CmSubject) {
     hm(p.x60.x.to_bits());
     hm(p.x60.y.to_bits());
     hm(p.x60.z.to_bits());
+    }
 }
 
 pub fn fill_CollData(p: &mut CollData) {
+    unsafe {
     p.cur_pos.x = rg();
     p.cur_pos.y = rg();
     p.cur_pos.z = rg();
@@ -812,9 +845,11 @@ pub fn fill_CollData(p: &mut CollData) {
     p.ceiling.normal.x = rg();
     p.ceiling.normal.y = rg();
     p.ceiling.normal.z = rg();
+    }
 }
 pub fn hash_CollData(p: &CollData) {
-    unsafe { if HDBG { println!("B CollData"); } }
+    unsafe {
+    if HDBG { println!("B CollData"); }
     hm(pi(p.x0_gobj));
     hm(p.cur_pos.x.to_bits());
     hm(p.cur_pos.y.to_bits());
@@ -922,16 +957,21 @@ pub fn hash_CollData(p: &CollData) {
     hm(p.ceiling.normal.x.to_bits());
     hm(p.ceiling.normal.y.to_bits());
     hm(p.ceiling.normal.z.to_bits());
+    }
 }
 
 pub fn fill_GrJoint(p: &mut GrJoint) {
+    unsafe {
     p.x = fv() as _;
     p.y = fv() as _;
     p.z = fv() as _;
+    }
 }
 pub fn hash_GrJoint(p: &GrJoint) {
-    unsafe { if HDBG { println!("B GrJoint"); } }
+    unsafe {
+    if HDBG { println!("B GrJoint"); }
     hm(p.x as u32);
     hm(p.y as u32);
     hm(p.z as u32);
+    }
 }

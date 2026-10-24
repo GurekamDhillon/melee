@@ -103,7 +103,7 @@ static u32 PI(const void* p)
     return 0xFFFFFFFFu;
 }
 /* a pointer slot inside a union that other views overwrite byte-wise: only an exact region base counts */
-static u32 PIB(const void* p) { u32 v = PI(p); return (v == 0 || v == 0xFFFFFFFFu || (v & 0xFFFFu) == 0) ? v : 0xFFFFFFFEu; }
+static u32 PIB(const void* p) { u32 v; if (((unsigned long long) p & 0xFFFFFFFFull) == 0) return 0; /* stale half pointer: the high half depends on the image base */ v = PI(p); return (v == 0 || v == 0xFFFFFFFFu || (v & 0xFFFFu) == 0) ? v : 0xFFFFFFFEu; }
 static u32 SH(const char* s)
 {
     u32 h = 0x811C9DC5u;

@@ -43,3 +43,4 @@ pub mod itgamewatchparachute;
 pub mod itgamewatchrescue;
 pub mod itgamewatchturtle;
 pub mod toy;
+pub mod tydisplay;

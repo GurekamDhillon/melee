@@ -817,3 +817,29 @@ Fused sites (IR): yoshistar `vel.x += accel*dir`, yoshiegglay timer `-= xCA0*x0`
 whitebea distance. The test catches the yoshistar mutation; the whitebea distance (only compared against thresholds)
 and zelda steering (rarely reached) are not discriminated by the current inputs.
 `x28_entries` (itwstar) and the yaku `while (true)` hang are handled as noted in the file headers.
+## Shard 881-888: pl/player.c plattack.c plbonus.c plbonuslib.c, mn/mn_22EC.c, mp/mpisland.c mplib.c mpcoll.c
+No oracle was run for this shard (no C oracle, no cargo test): the ports are checked by construction.
+- `melee_fighter::tu::{player,plattack,plbonus,plbonuslib}` and `melee_modes::tu::mn_22EC` are hand ports with the C
+  names and signatures (`bool` is MSL `int`, so `bool` parameters that the C compares with `== 1` are `i32`). `player_slots` /
+  `ftMapping_list` / `unk_804D6480` are the existing statics (`crate::stale`, `crate::player`) re-exported under the C
+  names. `pl_800386D8` / `pl_8003E70C` / `pl_8003E7D4` index past the member they name (into `x504..`, `x848[]`), so
+  they use byte-offset pointer reads. Fused sites (`fma_sites.py`): plbonuslib `pl_8003ED0C` (1), `fn_8003F294` (1),
+  `fn_8003F654` (3), `pl_8003FAA8` (1); everything else in these files has none.
+- `melee_world::tu::{mplib,mpcoll,mpisland}` are generated: `python rust/melee_world/gen/mtu/c2rs.py` translates the
+  functions of one C file with libclang (the AST carries every implicit conversion, so the integer / float / pointer
+  semantics are the C ones; ints use plain ops because the workspace builds with overflow-checks off (-fwrapv),
+  `/ % <<` with variable operands go through `melee_runtime::cabi`, float->int uses the saturating `as`). Contraction
+  follows clang's `-ffp-contract=on` rule (a `+`/`-` whose left, else right, operand is a same-type multiply, or the
+  negation of one, becomes `fmadds` / `mul_add`); `--check` compares the per-function count with `tools/rust-port/fma_sites.py`
+  (all translated functions agree; the hand ports and the `sqrtf` alias are covered by hand), and spot checks against
+  the LLVM IR (`-Xclang -disable-llvm-passes`) agreed on operand order and negation. `bash rust/melee_world/gen/mtu/regen_mp.sh`
+  regenerates the three files (heads in `gen/mtu/mp/`, goto state machines the tool cannot structure in `gen/mtu/hand/`:
+  `mpIsland_8005AE1C`, `mpLib_80053DA4_Floor`, `mpLib_80053ECC_Floor`, `mpLib_80056C54`). Forward / backward / loop-entry
+  gotos (`block_8`, `again`, `after0`...) are turned into labeled blocks / loops by the tool.
+- Traps: (1) `(CollLine*) ((int) groundCollLine + line_offset)` is a PPC-ism (pointer through an `int`); it is a byte offset
+  from the base pointer here, and `line - groundCollLine` is `offset_from`. (2) `mpLib_80056C54` passes `sqrt_tmp - 4` as the
+  volatile store slot of `sqrtf_store` (stack layout hack): a scratch float here. (3) `HSD_ASSERT` / `__assert` panic;
+  `OSReport` diagnostics go to `ext::OSReport(&str)`. (4) The TARGET_PC script hooks (`ScriptGame_Stage*`) are ext hooks
+  like every other callee outside the three files (unset: panic "TODO"); `ScriptGame_ModValue` (player.c) falls back to
+  the crate's neutral `SCRIPT_MOD_VALUE` hook. (5) `lbVector_Add/Diff`, `PSMTXMultVec`, `sinf`, `cosf`, `sqrtf` and
+  `PSVECNormalize` call the existing `melee_runtime` ports.

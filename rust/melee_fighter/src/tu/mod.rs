@@ -202,3 +202,7 @@ pub mod pltrick;
 pub mod pl_040d;
 pub mod crowdsfx;
 pub mod sfx_unk;
+pub mod player;
+pub mod plattack;
+pub mod plbonus;
+pub mod plbonuslib;

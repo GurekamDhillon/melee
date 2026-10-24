@@ -152,3 +152,4 @@ pub mod mnvibration;
 pub mod mnsnap;
 pub mod mnnamenew;
 pub mod mnstagesel;
+pub mod mn_22EC;

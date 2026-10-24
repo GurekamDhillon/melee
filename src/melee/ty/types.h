@@ -517,7 +517,10 @@ struct TyListData {
 };
 
 struct SisFontData {
-    u8 pad[0x4E8];
+    u8 pad[0x4B8];
+    /* The list edits twelve per-row glyph strings at 0x4B8. Describe the
+     * pointer slots so the native type generator can widen them with digits. */
+    u8* rows[12];
     u8* digits;
 };
 

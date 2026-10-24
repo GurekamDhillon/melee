@@ -803,3 +803,10 @@
 #include <melee/gm/gmresultplayer.static.h>
 #include <melee/gm/gmfrontend_items.h>
 #include <melee/gm/gmtoulib.static.h>
+#line 36 "src/melee/vi/vi0502.c"
+typedef struct Vi0502Data {
+    Vec3 initial_pos;
+    char vi0502_dat[12];
+    char visual0502_scene[16];
+    char irals_dat[16];
+} Vi0502Data;

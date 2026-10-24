@@ -87438,7 +87438,8 @@ const _: () = assert!(core::mem::size_of::<TyListData>() == 48);
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct SisFontData {
-    pub pad: [u8; 1256],
+    pub pad: [u8; 1208],
+    pub rows: [*mut u8; 12],
     pub digits: *mut u8,
 }
 impl SisFontData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
@@ -87449,7 +87450,8 @@ impl GcDecode for SisFontData {
     #[allow(unused_variables, unused_mut, unused_unsafe)]
     fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
         let mut v = Self::zeroed();
-        v.pad = <[u8; 1256] as GcDecode>::gc_decode(d, at + 0x0);
+        v.pad = <[u8; 1208] as GcDecode>::gc_decode(d, at + 0x0);
+        v.rows = <[*mut u8; 12] as GcDecode>::gc_decode(d, at + 0x4B8);
         v.digits = <*mut u8 as GcDecode>::gc_decode(d, at + 0x4E8);
         v
     }
@@ -87460,13 +87462,14 @@ impl GcLayout for SisFontData {
     const GC_SIZE: u32 = 0x4EC;
     const GC_ALIGN: u32 = 4;
     const GC_FIELDS: &'static [GcField] = &[
-        GcField::new("pad", 0x0, 1256, "u8[1256]"),
+        GcField::new("pad", 0x0, 1208, "u8[1208]"),
+        GcField::new("rows", 0x4B8, 48, "u8 *[12]"),
         GcField::new("digits", 0x4E8, 4, "u8 *"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<SisFontData>() == 1264);
+const _: () = assert!(core::mem::size_of::<SisFontData>() == 1312);
 
-/// C `TyListWaitData` (src/melee/ty/types.h:524); GameCube size 0x28, align 4.
+/// C `TyListWaitData` (src/melee/ty/types.h:527); GameCube size 0x28, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct TyListWaitData {
@@ -87501,7 +87504,7 @@ impl GcLayout for TyListWaitData {
 }
 const _: () = assert!(core::mem::size_of::<TyListWaitData>() == 40);
 
-/// C `ToyED8Data` (src/melee/ty/types.h:533); GameCube size 0x5C, align 4.
+/// C `ToyED8Data` (src/melee/ty/types.h:536); GameCube size 0x5C, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct ToyED8Data {
@@ -87563,7 +87566,7 @@ impl GcLayout for ToyED8Data {
 }
 const _: () = assert!(core::mem::size_of::<ToyED8Data>() == 144);
 
-/// C `TyArchiveData` (src/melee/ty/types.h:555); GameCube size 0x54, align 4.
+/// C `TyArchiveData` (src/melee/ty/types.h:558); GameCube size 0x54, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct TyArchiveData {
@@ -87598,7 +87601,7 @@ impl GcLayout for TyArchiveData {
 }
 const _: () = assert!(core::mem::size_of::<TyArchiveData>() == 96);
 
-/// C `TyFiguponInner` (src/melee/ty/types.h:561); GameCube size 0x4E, align 1.
+/// C `TyFiguponInner` (src/melee/ty/types.h:564); GameCube size 0x4E, align 1.
 #[repr(C, align(1))]
 #[derive(Clone, Copy)]
 pub struct TyFiguponInner {
@@ -87630,7 +87633,7 @@ impl GcLayout for TyFiguponInner {
 }
 const _: () = assert!(core::mem::size_of::<TyFiguponInner>() == 78);
 
-/// C `TyFiguponUD` (src/melee/ty/types.h:566); GameCube size 0x58, align 4.
+/// C `TyFiguponUD` (src/melee/ty/types.h:569); GameCube size 0x58, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct TyFiguponUD {
@@ -87698,7 +87701,7 @@ impl GcLayout for TyFiguponUD {
 }
 const _: () = assert!(core::mem::size_of::<TyFiguponUD>() == 88);
 
-/// C `ToyParamEditor` (src/melee/ty/types.h:583); GameCube size 0x18, align 4.
+/// C `ToyParamEditor` (src/melee/ty/types.h:586); GameCube size 0x18, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct ToyParamEditor {
@@ -87736,7 +87739,7 @@ impl GcLayout for ToyParamEditor {
 }
 const _: () = assert!(core::mem::size_of::<ToyParamEditor>() == 32);
 
-/// C `ToyTable` (src/melee/ty/types.h:590); GameCube size 0x48, align 4.
+/// C `ToyTable` (src/melee/ty/types.h:593); GameCube size 0x48, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct ToyTable {
@@ -87765,7 +87768,7 @@ impl GcLayout for ToyTable {
 }
 const _: () = assert!(core::mem::size_of::<ToyTable>() == 72);
 
-/// C `ToyEntryData` (src/melee/ty/types.h:594); GameCube size 0x18, align 4.
+/// C `ToyEntryData` (src/melee/ty/types.h:597); GameCube size 0x18, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct ToyEntryData {
@@ -87809,7 +87812,7 @@ impl GcLayout for ToyEntryData {
 }
 const _: () = assert!(core::mem::size_of::<ToyEntryData>() == 40);
 
-/// C `PosArray` (src/melee/ty/types.h:603); GameCube size 0x8, align 4.
+/// C `PosArray` (src/melee/ty/types.h:606); GameCube size 0x8, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct PosArray {
@@ -87838,7 +87841,7 @@ impl GcLayout for PosArray {
 }
 const _: () = assert!(core::mem::size_of::<PosArray>() == 8);
 
-/// C `PosArrayFull` (src/melee/ty/types.h:607); GameCube size 0x38, align 4.
+/// C `PosArrayFull` (src/melee/ty/types.h:610); GameCube size 0x38, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct PosArrayFull {
@@ -87867,7 +87870,7 @@ impl GcLayout for PosArrayFull {
 }
 const _: () = assert!(core::mem::size_of::<PosArrayFull>() == 56);
 
-/// C `lbl_803FDDE4_t` (src/melee/ty/types.h:611); GameCube size 0x78, align 4.
+/// C `lbl_803FDDE4_t` (src/melee/ty/types.h:614); GameCube size 0x78, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct lbl_803FDDE4_t {
@@ -87893,13 +87896,13 @@ impl GcLayout for lbl_803FDDE4_t {
     const GC_SIZE: u32 = 0x78;
     const GC_ALIGN: u32 = 4;
     const GC_FIELDS: &'static [GcField] = &[
-        GcField::new("symbols", 0x0, 48, "struct (unnamed at src/melee/ty/types.h:612:5)[6]"),
-        GcField::new("values", 0x30, 72, "struct (unnamed at src/melee/ty/types.h:616:5)[6]"),
+        GcField::new("symbols", 0x0, 48, "struct (unnamed at src/melee/ty/types.h:615:5)[6]"),
+        GcField::new("values", 0x30, 72, "struct (unnamed at src/melee/ty/types.h:619:5)[6]"),
     ];
 }
 const _: () = assert!(core::mem::size_of::<lbl_803FDDE4_t>() == 168);
 
-/// C `struct (unnamed at src/melee/ty/types.h:612:5)` (src/melee/ty/types.h:612); GameCube size 0x8, align 4.
+/// C `struct (unnamed at src/melee/ty/types.h:615:5)` (src/melee/ty/types.h:615); GameCube size 0x8, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct lbl_803FDDE4_t_symbols {
@@ -87921,7 +87924,7 @@ impl GcDecode for lbl_803FDDE4_t_symbols {
 }
 impl GcPointee for lbl_803FDDE4_t_symbols { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<lbl_803FDDE4_t_symbols>(t) } }
 impl GcLayout for lbl_803FDDE4_t_symbols {
-    const GC_NAME: &'static str = "struct (unnamed at src/melee/ty/types.h:612:5)";
+    const GC_NAME: &'static str = "struct (unnamed at src/melee/ty/types.h:615:5)";
     const GC_SIZE: u32 = 0x8;
     const GC_ALIGN: u32 = 4;
     const GC_FIELDS: &'static [GcField] = &[
@@ -87931,7 +87934,7 @@ impl GcLayout for lbl_803FDDE4_t_symbols {
 }
 const _: () = assert!(core::mem::size_of::<lbl_803FDDE4_t_symbols>() == 16);
 
-/// C `struct (unnamed at src/melee/ty/types.h:616:5)` (src/melee/ty/types.h:616); GameCube size 0xC, align 4.
+/// C `struct (unnamed at src/melee/ty/types.h:619:5)` (src/melee/ty/types.h:619); GameCube size 0xC, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct lbl_803FDDE4_t_values {
@@ -87955,7 +87958,7 @@ impl GcDecode for lbl_803FDDE4_t_values {
 }
 impl GcPointee for lbl_803FDDE4_t_values { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<lbl_803FDDE4_t_values>(t) } }
 impl GcLayout for lbl_803FDDE4_t_values {
-    const GC_NAME: &'static str = "struct (unnamed at src/melee/ty/types.h:616:5)";
+    const GC_NAME: &'static str = "struct (unnamed at src/melee/ty/types.h:619:5)";
     const GC_SIZE: u32 = 0xC;
     const GC_ALIGN: u32 = 4;
     const GC_FIELDS: &'static [GcField] = &[
@@ -91221,6 +91224,44 @@ impl GcLayout for lbl_803D9DD0_t {
 }
 const _: () = assert!(core::mem::size_of::<lbl_803D9DD0_t>() == 40);
 
+/// C `Vi0502Data` (rust/melee_types/gen/all_types.c:807); GameCube size 0x38, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct Vi0502Data {
+    pub initial_pos: Vec,
+    pub vi0502_dat: [i8; 12],
+    pub visual0502_scene: [i8; 16],
+    pub irals_dat: [i8; 16],
+}
+impl Vi0502Data { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for Vi0502Data {
+    const GC_BYTES: u32 = 0x38;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.initial_pos = <Vec as GcDecode>::gc_decode(d, at + 0x0);
+        v.vi0502_dat = <[i8; 12] as GcDecode>::gc_decode(d, at + 0xC);
+        v.visual0502_scene = <[i8; 16] as GcDecode>::gc_decode(d, at + 0x18);
+        v.irals_dat = <[i8; 16] as GcDecode>::gc_decode(d, at + 0x28);
+        v
+    }
+}
+impl GcPointee for Vi0502Data { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Vi0502Data>(t) } }
+impl GcLayout for Vi0502Data {
+    const GC_NAME: &'static str = "Vi0502Data";
+    const GC_SIZE: u32 = 0x38;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("initial_pos", 0x0, 12, "Vec3"),
+        GcField::new("vi0502_dat", 0xC, 12, "char[12]"),
+        GcField::new("visual0502_scene", 0x18, 16, "char[16]"),
+        GcField::new("irals_dat", 0x28, 16, "char[16]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<Vi0502Data>() == 56);
+
 /// Every generated GameCube record layout, for the DAT loader, serialisers and the m-ex map.
 pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[
     (<__file_modes as GcLayout>::GC_NAME, <__file_modes as GcLayout>::GC_SIZE, <__file_modes as GcLayout>::GC_ALIGN, <__file_modes as GcLayout>::GC_FIELDS),
@@ -92859,6 +92900,7 @@ pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[
     (<BracketSrcEntry as GcLayout>::GC_NAME, <BracketSrcEntry as GcLayout>::GC_SIZE, <BracketSrcEntry as GcLayout>::GC_ALIGN, <BracketSrcEntry as GcLayout>::GC_FIELDS),
     (<lbl_803D9DAC_t as GcLayout>::GC_NAME, <lbl_803D9DAC_t as GcLayout>::GC_SIZE, <lbl_803D9DAC_t as GcLayout>::GC_ALIGN, <lbl_803D9DAC_t as GcLayout>::GC_FIELDS),
     (<lbl_803D9DD0_t as GcLayout>::GC_NAME, <lbl_803D9DD0_t as GcLayout>::GC_SIZE, <lbl_803D9DD0_t as GcLayout>::GC_ALIGN, <lbl_803D9DD0_t as GcLayout>::GC_FIELDS),
+    (<Vi0502Data as GcLayout>::GC_NAME, <Vi0502Data as GcLayout>::GC_SIZE, <Vi0502Data as GcLayout>::GC_ALIGN, <Vi0502Data as GcLayout>::GC_FIELDS),
 ];
 
 /// Read `w` bits of a GameCube big-endian bitfield byte run, `shift` bits up from its LSB.

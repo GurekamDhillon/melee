@@ -42,3 +42,13 @@ pub mod itgamewatchpanic;
 pub mod itgamewatchparachute;
 pub mod itgamewatchrescue;
 pub mod itgamewatchturtle;
+
+// Shard 897-904: whole-TU native ports of the vi (visual scenes) and ty/tylist TUs.
+pub mod vi;
+pub mod vi0102;
+pub mod vi0401;
+pub mod vi0402;
+pub mod vi0501;
+pub mod vi0502;
+pub mod vi0601;
+pub mod tylist;

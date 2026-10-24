@@ -5278,6 +5278,24 @@ pub const FE_DO_CONTINUE: FrontendAction = 0;
 pub const FE_DO_BACK: FrontendAction = 1;
 pub const FE_DO_CALL: FrontendAction = 2;
 
+pub const AUDIO_MODE_UNK0: u32 = 0;
+pub const AUDIO_MODE_UNK1: u32 = 1;
+
+/// C enum `_MenuInput` (src/melee/mn/inlines.h:12)
+pub type _MenuInput = u32;
+pub const MenuInput_Up: _MenuInput = 1;
+pub const MenuInput_Down: _MenuInput = 2;
+pub const MenuInput_Left: _MenuInput = 4;
+pub const MenuInput_Right: _MenuInput = 8;
+pub const MenuInput_Confirm: _MenuInput = 16;
+pub const MenuInput_Back: _MenuInput = 32;
+pub const MenuInput_LTrigger: _MenuInput = 64;
+pub const MenuInput_RTrigger: _MenuInput = 128;
+pub const MenuInput_StartButton: _MenuInput = 256;
+pub const MenuInput_AButton: _MenuInput = 512;
+pub const MenuInput_XButton: _MenuInput = 1024;
+pub const MenuInput_YButton: _MenuInput = 2048;
+
 /// C enum `RulePlusOption` (src/melee/mn/mnruleplus.h:9)
 pub type RulePlusOption = u32;
 pub const RULEPLUS_TIME_LIMIT: RulePlusOption = 0;
@@ -6083,6 +6101,7 @@ pub type MainMenuData = _MainMenuData;
 pub type MainMenuPanelData = _MainMenuPanelData;
 pub type MenuFlow = _MenuFlow;
 pub type MenuInputState = _MenuInputState;
+pub type MenuInput = _MenuInput;
 pub type MenuRulesPlusData = _MenuRulesPlusData;
 
 /// C `__file_modes` (src/MSL/stdio.h:44); GameCube size 0x4, align 4.

@@ -28,6 +28,7 @@ ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "rust/melee_types/gen"))
 os.chdir(ROOT)
 import gen_types as g  # noqa: E402
+import native_hdr  # noqa: E402  (shadow headers with the widened native slots, see there)
 
 ci, K, T = g.ci, g.K, g.T
 # The oracle compiles the cut C for x86_64-pc-windows-gnu with -mno-ms-bitfields (build_ptr.sh):
@@ -35,6 +36,7 @@ ci, K, T = g.ci, g.K, g.T
 # fields after a bitfield run at the GameCube offsets melee_types uses (MSVC packing moves
 # them: StartMeleeRules.x6 is at 8 under msvc, 6 on the GC, in melee_types and here).
 NAT = [a.replace("x86_64-pc-windows-msvc", "x86_64-pc-windows-gnu") for a in g.NAT] + ["-mno-ms-bitfields"]
+NAT = native_hdr.force_include_flags() + NAT
 
 FUNCS = {
     "src/melee/gm/gmcamera.c": ["gmCamera_801A2BF0_get_translate_x"],

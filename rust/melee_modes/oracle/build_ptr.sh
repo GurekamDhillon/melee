@@ -15,7 +15,7 @@ F=(--target=x86_64-pc-windows-gnu -mno-ms-bitfields -std=c99 -nostdinc -fno-buil
    -fsigned-char -mlong-double-64 -fno-strict-aliasing -fwrapv -fcommon -fgnu89-inline
    -ftrivial-auto-var-init=zero -ffp-contract=on -O2 -Xclang -disable-llvm-passes -S -emit-llvm -w
    -I. -Isrc -Ipc -Ipc/gameworld -isystem src/MSL -isystem libs/dolphin/include -isystem libs/dolphin/src
-   -isystem "$GALE" -include src/MSL/math_ppc.h "-D_Static_assert(a,b)=" -Dsize_t=gc_size_t)
+   -isystem "$GALE" -include src/MSL/math_ppc.h -include "$WT/rust/target/native_inc/melee/if/types.h" -include "$WT/rust/target/native_inc/melee/ty/types.h" "-D_Static_assert(a,b)=" -Dsize_t=gc_size_t)
 LL=()
 for f in "$OUT"/o_*.c; do
   n=$(basename "$f" .c)

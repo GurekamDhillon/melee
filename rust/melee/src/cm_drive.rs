@@ -14,7 +14,7 @@
 //! quake is requested (the sim does not run `efAsync` camera shakes); VS mode only (no 1P
 //! sub-stick zoom); no stage-specific eye floor (`Camera_8002AF68` only clamps on Castle,
 //! Corneria, Zebes, Garden, Kinoko route and Home-run).
-use crate::vs_match::CmSubjectIn;
+use crate::vs_match::{CamKind, CmSubjectIn};
 use melee_runtime::lbtrigf::atan2f;
 use melee_runtime::lbvector as lbv;
 use melee_runtime::mtx::Vec3;
@@ -58,17 +58,18 @@ pub struct CamPose {
 pub struct CmDrive {
     fixed_zoom: f32,
     smooth: f32,
+    /// `Stage_GetBlastZoneTopOffset()`.
+    blast_top: f32,
 }
 
 /// `Ground_801C0800` + `Ground_801C39C0`: the stage's camera info from its file. `stage` is the
 /// DAT data section, `points` the stage's points (already scaled by `grGroundParam->y`).
-pub fn stage_cam(stage: &[u8], ground_param: u32, points: &[crate::stage::SpawnPoint]) -> Result<(CamStage, f32, f32), String> {
+pub fn stage_cam(stage: &[u8], ground_param: u32, points: &[crate::stage::SpawnPoint]) -> Result<(CamStage, f32, f32, f32), String> {
     let g = ground_param;
     let s16 = |at: u32| i16::from_be_bytes(stage[at as usize..at as usize + 2].try_into().unwrap()) as f32;
     let s32 = |at: u32| be32(stage, at) as i32 as f32;
     let (tilt, zoom, depth, pan) = (s16(g + 8), s32(g + 0xC), s32(g + 0x10), s32(g + 0x14));
     let (x18, x1c, ratio, fixed_zoom, smooth) = (bef(stage, g + 0x18), bef(stage, g + 0x1C), bef(stage, g + 0x20), bef(stage, g + 0x24), bef(stage, g + 0x28));
-    let _ = tilt;
     let pt = |id: i32| points.iter().find(|p| p.id == id).map(|p| p.pos);
     let (Some(a), Some(b), Some(c)) = (pt(0x95), pt(0x96), pt(0x94)) else {
         return Err("stage: no camera range points (Ground_801C39C0 dummy range not wired)".into());
@@ -97,6 +98,7 @@ pub fn stage_cam(stage: &[u8], ground_param: u32, points: &[crate::stage::SpawnP
         },
         fixed_zoom,
         smooth,
+        tilt,
     ))
 }
 
@@ -229,9 +231,12 @@ fn camera_8002a768(w: &CameraWorld, t: &mut CameraTransformState) {
 
 impl CmDrive {
     /// `Camera_Init` + `Camera_Create` + the stage's camera info, then one `Camera_8002F3AC`.
-    pub fn new(stage: CamStage, fixed_zoom: f32, smooth: f32, subjects: &[CmSubjectIn]) -> Self {
+    pub fn new(stage: CamStage, fixed_zoom: f32, smooth: f32, tilt: f32, blast_top: f32, subjects: &[CmSubjectIn]) -> Self {
         let w = world();
         *w = CameraWorld::default();
+        // gmvs seeds the standard FOV from the stage's `cam_vertical_tilt` (Ground_801C20D0) into
+        // cm_803BCCA0.x40 at match start (Camera_80030730).
+        w.globals.x40 = tilt;
         w.stage = stage;
         let gc = &mut w.game_camera;
         let (eye, int) = (TVec { x: DESC_EYE[0], y: DESC_EYE[1], z: DESC_EYE[2] }, TVec { x: DESC_INTEREST[0], y: DESC_INTEREST[1], z: DESC_INTEREST[2] });
@@ -249,7 +254,7 @@ impl CmDrive {
         gc.quake_scale = 1.0;
         gc.x2BC = 1.0;
         gc.x2C0 = -1.0;
-        let mut d = CmDrive { fixed_zoom, smooth };
+        let mut d = CmDrive { fixed_zoom, smooth, blast_top };
         // Player creation order p1, p2: the list `cm_804D6468 -> prev` walks last-created first.
         w.subjects = subjects.iter().map(|_| CmSubject::zeroed()).collect();
         for (i, s) in subjects.iter().enumerate() {
@@ -305,17 +310,53 @@ impl CmDrive {
         world().subjects[i] = cb;
     }
 
-    /// `ftCamera_UpdateCameraBox` for every fighter (`ins` in player order).
-    fn update_subjects(&mut self, ins: &[CmSubjectIn]) {
+    /// The motion state's camera callback (`Cam` column of ftmotionstates.c) for every fighter, after any
+    /// `ftCamera_80076064` snap (`snaps`) of this frame.
+    fn update_subjects(&mut self, ins: &[CmSubjectIn], snaps: &[Option<CmSubjectIn>]) {
         let n = ins.len();
         for (i, s) in ins.iter().enumerate() {
+            let idx = n - 1 - i;
+            if let Some(Some(sn)) = snaps.get(i) {
+                self.snap_subject(idx, sn);
+            } else if s.inactive {
+                // ftCo_800BFD04: the box is Inactive while the fighter sleeps between stocks.
+                world().subjects[idx].state = melee_types::CmSubjectState_Inactive;
+            }
             let sp = Self::scaled(s);
-            let mut cb = world().subjects[n - 1 - i];
-            self.set_h(&mut cb, &sp, s.facing);
-            cb.pos = TVec { x: s.pos[0], y: s.pos[1] + sp[0], z: s.pos[2] };
-            cb.set_on_ledge(0);
-            cb.bone_pos = TVec { x: s.bone[0], y: s.bone[1], z: s.bone[2] };
-            world().subjects[n - 1 - i] = cb;
+            let mut cb = world().subjects[idx];
+            let update = |d: &Self, cb: &mut CmSubject| {
+                d.set_h(cb, &sp, s.facing);
+                cb.pos = TVec { x: s.pos[0], y: s.pos[1] + sp[0], z: s.pos[2] };
+                cb.set_on_ledge(0);
+                cb.bone_pos = TVec { x: s.bone[0], y: s.bone[1], z: s.bone[2] };
+            };
+            match s.kind {
+                CamKind::Update => update(self, &mut cb),
+                CamKind::Hold => {}
+                CamKind::DeadUp => {
+                    update(self, &mut cb);
+                    // ftCamera_80076320: pull the box up to the blast zone ceiling, x scaled by the ratio of heights.
+                    let w = world();
+                    let c = w.stage.tcam_offset;
+                    let f31 = self.blast_top - c[1];
+                    let f1 = w.stage.top - c[1];
+                    cb.pos.x = (cb.pos.x * f1) / f31;
+                    cb.pos.y = self.blast_top;
+                }
+                CamKind::Rebirth => {
+                    // ftCo_Rebirth_Cam
+                    cb.pos = TVec { x: s.rebirth_target[0], y: s.rebirth_target[1] + sp[0], z: 0.0 };
+                    cb.bone_pos = TVec { x: s.bone[0], y: s.bone[1], z: s.bone[2] };
+                }
+                CamKind::BoneOnly => cb.bone_pos = TVec { x: s.bone[0], y: s.bone[1], z: s.bone[2] },
+                CamKind::Cliff => {
+                    update(self, &mut cb);
+                    if s.in_air {
+                        cb.set_on_ledge(1);
+                    }
+                }
+            }
+            world().subjects[idx] = cb;
         }
     }
 
@@ -375,14 +416,17 @@ impl CmDrive {
         let delta = ts.target_fov - ts.fov;
         ts.fov += delta * w.globals.x44;
         w.camera_80029bc4(bounds, ts);
+        if std::env::var("MELEE_VIEW_CAMLOG").is_ok() {
+            eprintln!("RCAMB x {:.2}..{:.2} y {:.2}..{:.2} z {:.2} n {} subj {:?}", bounds.x_min, bounds.x_max, bounds.y_min, bounds.y_max, bounds.z_pos, bounds.total_subjects, w.subjects.iter().map(|s| (s.ext.h.x, s.ext.h.y, s.ext.v.x, s.ext.v.y, s.pos.x, s.pos.y)).collect::<Vec<_>>());
+        }
         // fighter_z_out_of_range: Camera_80030AF8 is false in VS.
         w.camera_80029cf8(bounds, ts);
         camera_8002a768(w, ts);
     }
 
     /// One frame: the fighters' camera boxes, then the camera proc.
-    pub fn step(&mut self, ins: &[CmSubjectIn]) {
-        self.update_subjects(ins);
+    pub fn step(&mut self, ins: &[CmSubjectIn], snaps: &[Option<CmSubjectIn>]) {
+        self.update_subjects(ins, snaps);
         self.standard_update();
     }
 

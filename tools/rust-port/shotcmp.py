@@ -6,6 +6,9 @@ import sys, os
 import numpy as np
 from PIL import Image
 
+# The C pad script counts frames from 1 in on_frame_pre: its shot n shows the world of sim frame n - 1.
+OFFSET = int(os.environ.get('SHOT_OFFSET', '1'))
+
 def load(p, size=None):
     im = Image.open(p).convert("RGB")
     if size and im.size != size:
@@ -19,10 +22,10 @@ def main():
         i = a.index("--diff-dir"); diffdir = a[i + 1]; del a[i:i + 2]
     cd, rd, frames = a[0], a[1], a[2:]
     if not frames:
-        frames = sorted(f[7:11] for f in os.listdir(rd) if f.startswith("native_"))
+        frames = sorted(int(f[7:11]) + OFFSET for f in os.listdir(rd) if f.startswith("native_"))
     for f in frames:
         f = int(f)
-        cp, rp = f"{cd}/c_{f:04d}.png", f"{rd}/native_{f:04d}.png"
+        cp, rp = f"{cd}/c_{f:04d}.png", f"{rd}/native_{f - OFFSET:04d}.png"
         if not (os.path.exists(cp) and os.path.exists(rp)):
             continue
         r = load(rp); c = load(cp, (r.shape[1], r.shape[0]))

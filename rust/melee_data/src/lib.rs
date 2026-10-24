@@ -5,6 +5,8 @@
 //! Everything here is checked against the C build's own code or files; see tests/.
 
 pub mod cfmt;
+pub mod gdlp;
+pub mod modreg;
 pub mod player;
 pub mod replay;
 pub mod slippi_pad;

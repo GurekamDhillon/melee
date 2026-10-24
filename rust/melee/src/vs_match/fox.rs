@@ -46,7 +46,8 @@ pub enum ItemCmd {
 
 #[derive(Clone, Copy, Debug)]
 pub enum ItemClass {
-    FoxGun { owner: usize },
+    /// `flash`: `it_802AE1D0` armed the muzzle-flash accessory (`item->xDD4.foxblaster.gfx_spawn_var`).
+    FoxGun { owner: usize, flash: bool },
     FoxLaser { angle: f32, speed: f32, life: f32 },
 }
 
@@ -201,9 +202,17 @@ impl VsMatch {
             for c in std::mem::take(&mut self.players[i].item_cmds) {
                 match c {
                     ItemCmd::SpawnGun { owner, kind, pos } => {
-                        self.items.push(SimItem { kind, msid: 0, pos, vel: Vec3 { x: 0.0, y: 0.0, z: 0.0 }, class: ItemClass::FoxGun { owner } });
+                        self.items.push(SimItem { kind, msid: 0, pos, vel: Vec3 { x: 0.0, y: 0.0, z: 0.0 }, class: ItemClass::FoxGun { owner, flash: false } });
                     }
-                    ItemCmd::Laser { kind, angle, speed, pos, .. } => {
+                    ItemCmd::Laser { owner: lo, kind, angle, speed, pos } => {
+                        // it_802AE1D0(fp->u.fx.x222C_blasterGObj): arm the gun's muzzle flash.
+                        for g in &mut self.items {
+                            if let ItemClass::FoxGun { owner, flash } = &mut g.class {
+                                if *owner == lo {
+                                    *flash = true;
+                                }
+                            }
+                        }
                         // it_8029C504: Item_NormalizeAngle(&angle), the spawn at the muzzle.
                         let mut a = angle;
                         while a < 0.0 {
@@ -217,12 +226,13 @@ impl VsMatch {
                 }
             }
         }
+        let mut flashes: Vec<([f32; 3], f32, usize)> = Vec::new();
         let mut k = 0;
         while k < self.items.len() {
             let mut it = self.items[k];
             let mut dead = false;
             match &mut it.class {
-                ItemClass::FoxGun { owner } => {
+                ItemClass::FoxGun { owner, flash } => {
                     let p = &mut self.players[*owner];
                     // itFoxblaster_UnkMotion8_Anim: follow the fighter's SpecialN phase.
                     if !matches!(it.msid, 2 | 5..=8) {
@@ -236,6 +246,19 @@ impl VsMatch {
                         // clear_blaster: the fighter forgets it, the item is destroyed.
                         p.fx.blaster = false;
                         dead = true;
+                    } else if *flash {
+                        // it_802ADF10 (the item's accessory): the muzzle flash, efSync_Spawn(1166 = 0x48E)
+                        // -> efLib_Create_Attach_Pos(0xBBD) at the fighter's hold joint, rot Y = pi/2,
+                        // rot Z = the angle from the item's hold point to the fighter's.
+                        *flash = false;
+                        let owner = *owner;
+                        let part = bone_index(&self.players[owner], FT_PART_RTHUMBNB);
+                        let pl = &mut self.players[owner];
+                        let j = pl.skel.part(part);
+                        let ft_hold = pl.skel.world_point(j, Vec3 { x: 0.0, y: 1.2325000762939453, z: 4.263599872589111 });
+                        let it_hold = pl.skel.world_point(j, Vec3 { x: 0.0, y: 1.2325000762939453, z: 0.013600001111626625 });
+                        let angle = melee_runtime::lbtrigf::atan2f(ft_hold.y - it_hold.y, ft_hold.x - it_hold.x);
+                        flashes.push(([ft_hold.x, ft_hold.y, ft_hold.z], angle, owner));
                     }
                 }
                 ItemClass::FoxLaser { angle, speed, life } => {
@@ -254,6 +277,9 @@ impl VsMatch {
                 self.items[k] = it;
                 k += 1;
             }
+        }
+        for (pos, angle, owner) in flashes {
+            self.ef_create_rot(0xBBD, owner, 1.0, Some(pos), Some(core::f32::consts::FRAC_PI_2), Some(angle))?;
         }
         Ok(())
     }

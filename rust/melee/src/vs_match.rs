@@ -308,6 +308,8 @@ pub struct QueuedEffect {
     pub part: usize,
     pub params: Vec3,
     pub extra1: f32,
+    /// A second float argument (`EF_SPAWN_POS_OFFSET_PARAM2`'s rotation).
+    pub extra2: f32,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -320,6 +322,8 @@ pub enum EfOp {
 /// `EF_SPAWN_ATTACH_PARAM` / `EF_SPAWN_POS_OFFSET_PARAM` (ef/types.h spawn kinds 3 and 5).
 const EF_SPAWN_ATTACH_PARAM: u8 = 3;
 const EF_SPAWN_POS_OFFSET_PARAM: u8 = 5;
+/// `EF_SPAWN_POS_OFFSET_PARAM2`.
+const EF_SPAWN_POS_OFFSET_PARAM2: u8 = 6;
 /// A direct `efSync_Spawn` (not queued): kind 0 here.
 const EF_SPAWN_SYNC: u8 = 99;
 /// `EF_SPAWN_ATTACH` (ef/types.h): `(jobj)`.
@@ -345,7 +349,8 @@ struct Effect {
     tracks: Vec<EffectTrack>,
     /// `efLib_Create_Attach_Pos`: the root's fixed translation (None: follows the owner).
     fixed_pos: Option<[f32; 3]>,
-    /// `HSD_JObjSetRotationZ(root, z)` by the spawner (None: the model's own rotation).
+    /// `HSD_JObjSetRotationY/Z(root, ..)` by the spawner (None: the model's own rotation).
+    rot_y: Option<f32>,
     rot_z: Option<f32>,
 }
 
@@ -1633,6 +1638,22 @@ impl VsMatch {
                 let pos = p.skel.world_pos(j);
                 self.ef_create(0x18, i, 1.0, Some([pos.x, pos.y, pos.z]), None)
             }
+            (EF_SPAWN_POS_OFFSET_PARAM2, g @ (0x3F7 | 0x3F8 | 0x3F9 | 0x3FD | 0x3FF)) => {
+                // lb_8000B1CC(jobj, &offset, &pos), then efLib_Create_Attach_Pos(id, gobj, &pos) with
+                // the facing (rot Y) and the floor angle (rot Z).
+                let id = match g {
+                    0x3F7 => 0x12,
+                    0x3F8 => 0x13,
+                    0x3F9 => 0x14,
+                    0x3FD => 3,
+                    _ => 5,
+                };
+                let p = &mut self.players[i];
+                let j = p.skel.part(q.part);
+                let pos = p.skel.world_point(j, q.params);
+                let ry = if q.extra1 < 0.0 { -core::f32::consts::FRAC_PI_2 } else { core::f32::consts::FRAC_PI_2 };
+                self.ef_create_rot(id, i, 1.0, Some([pos.x, pos.y, pos.z]), Some(ry), Some(q.extra2))
+            }
             (EF_SPAWN_ATTACH_PARAM, 0x43E) => {
                 // EF_SPAWN_ATTACH_PARAM: efLib_Create_Attach(0x24, gobj, fighter jobj), then
                 // efAsync_SetEffectScaleXYZ(effect, entry.x8.x), the fighter JObj's scale x
@@ -1810,6 +1831,11 @@ impl VsMatch {
     /// `efLib_Create(gfx_id)` + `efLib_Create_Attach`: the effect's tracks and lifetime, then
     /// efAsync_Dispatch's anim queue (`HSD_JObjAnimAll` right away).
     fn ef_create(&mut self, gfx_id: u32, owner: usize, scale: f32, fixed_pos: Option<[f32; 3]>, rot_z: Option<f32>) -> Result<(), String> {
+        self.ef_create_rot(gfx_id, owner, scale, fixed_pos, None, rot_z)
+    }
+
+    /// As [`Self::ef_create`], with the root's Y rotation too (`efAsync_SetEffectFacingDir`).
+    fn ef_create_rot(&mut self, gfx_id: u32, owner: usize, scale: f32, fixed_pos: Option<[f32; 3]>, rot_y: Option<f32>, rot_z: Option<f32>) -> Result<(), String> {
         let bank = (gfx_id / 1000) as usize;
         let b = self.effect_banks.get(bank).and_then(|b| b.as_ref()).ok_or(format!("effect bank {bank} not loaded"))?;
         let desc = b.desc(gfx_id % 1000);
@@ -1830,7 +1856,7 @@ impl VsMatch {
         if lifetime != 0 {
             lifetime += 1;
         }
-        self.effects.push(Effect { lifetime, owner, scale, bank, tracks, fixed_pos, rot_z });
+        self.effects.push(Effect { lifetime, owner, scale, bank, tracks, fixed_pos, rot_y, rot_z });
         self.effect_anim(self.effects.len() - 1)
     }
 
@@ -1841,7 +1867,7 @@ impl VsMatch {
         let d = &self.effect_banks[e.bank].as_ref().unwrap().archive.data;
         let pos = e.fixed_pos.unwrap_or([fp.cur_pos.x, fp.cur_pos.y, fp.cur_pos.z]);
         for t in &e.tracks {
-            let m = crate::stage::bind_pose_matrix_rooted(d, &t.chain, pos, [e.scale; 3]);
+            let m = crate::stage::bind_pose_matrix_rooted(d, &t.chain, pos, [e.scale; 3], e.rot_y, e.rot_z);
             self.joint_mtx.insert(t.joint, m);
         }
     }
@@ -2723,7 +2749,7 @@ fn ftco_800923b4(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
 /// `ftCo_800921DC`: the shield's variables and bubble (effect 1047 = 0x417, `efLib_Create_Attach(0xB)`).
 fn ftco_800921dc(p: &mut Player) -> Result<(), String> {
     let cd = melee_fighter::hooks::common_data();
-    p.ef_ops.push(EfOp::Spawn(QueuedEffect { kind: EF_SPAWN_SYNC, gfx: 1047, part: 0, params: Vec3 { x: 0.0, y: 0.0, z: 0.0 }, extra1: 0.0 }));
+    p.ef_ops.push(EfOp::Spawn(QueuedEffect { kind: EF_SPAWN_SYNC, gfx: 1047, part: 0, params: Vec3 { x: 0.0, y: 0.0, z: 0.0 }, extra1: 0.0, extra2: 0.0 }));
     let fp = &mut *p.fp;
     fp.set_x2219_b0(1);
     let g = &mut p.guard;
@@ -2799,7 +2825,7 @@ fn guard_on_anim(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         guard_kind_check(p)?;
         let row = load_row(p, FTCO_SM_GUARD_ON + 1)?;
         change_motion_state_ext(p, FTCO_MS_GUARD, row.as_ref(), 0.0, 1.0, true, rand)?;
-        p.ef_ops.push(EfOp::Spawn(QueuedEffect { kind: EF_SPAWN_SYNC, gfx: 1048, part: 0, params: Vec3 { x: 0.0, y: 0.0, z: 0.0 }, extra1: 0.0 }));
+        p.ef_ops.push(EfOp::Spawn(QueuedEffect { kind: EF_SPAWN_SYNC, gfx: 1048, part: 0, params: Vec3 { x: 0.0, y: 0.0, z: 0.0 }, extra1: 0.0, extra2: 0.0 }));
         p.fp.set_x2219_b0(1);
         guard_shield_up(p);
     }
@@ -3187,7 +3213,7 @@ fn ftca_800e3eac(p: &mut Player) -> Result<(), String> {
     };
     fp.set_x2219_b0(1);
     let part = bone_index(p, part);
-    p.ef_queue.push(QueuedEffect { kind: EF_SPAWN_ATTACH_PARAM, gfx: 0x490, part, params: Vec3 { x: angle, y: 0.0, z: 0.0 }, extra1: 0.0 });
+    p.ef_queue.push(QueuedEffect { kind: EF_SPAWN_ATTACH_PARAM, gfx: 0x490, part, params: Vec3 { x: angle, y: 0.0, z: 0.0 }, extra1: 0.0, extra2: 0.0 });
     Ok(())
 }
 
@@ -3698,7 +3724,7 @@ fn ftco_8009f834(p: &mut Player, rand: &mut HsdRand, gfx_id: u32, part: usize, o
     }
     if matches!(gfx_id, 0x402 | 0x403 | 0x409 | 0x412 | 0x413 | 0x414 | 0x422 | 0x487 | 0x4D1 | 0x4E5 | 0x4E6 | 0x4FE | 0x500 | 0x501 | 0x502) {
         // efAsync_Spawn(gobj, &x60C, EF_SPAWN_ATTACH, gfx_id, joint).
-        p.ef_queue.push(QueuedEffect { kind: EF_SPAWN_ATTACH, gfx: gfx_id, part, params: Vec3 { x: 0.0, y: 0.0, z: 0.0 }, extra1: 0.0 });
+        p.ef_queue.push(QueuedEffect { kind: EF_SPAWN_ATTACH, gfx: gfx_id, part, params: Vec3 { x: 0.0, y: 0.0, z: 0.0 }, extra1: 0.0, extra2: 0.0 });
         return Ok(());
     }
     // block_70: the jitter.
@@ -3720,13 +3746,27 @@ fn ftco_8009f834(p: &mut Player, rand: &mut HsdRand, gfx_id: u32, part: usize, o
             } else {
                 0.0
             };
-            p.ef_queue.push(QueuedEffect { kind: EF_SPAWN_POS_OFFSET_PARAM, gfx: gfx_id, part, params: sp84, extra1: sp80 });
+            p.ef_queue.push(QueuedEffect { kind: EF_SPAWN_POS_OFFSET_PARAM, gfx: gfx_id, part, params: sp84, extra1: sp80, extra2: 0.0 });
+            Ok(())
+        }
+        0x3F7 | 0x3F8 | 0x3F9 | 0x3FD | 0x3FF => {
+            // sp7C = the floor angle when grounded; EF_SPAWN_POS_OFFSET_PARAM2(gfx, joint, &sp84,
+            // &fp->facing_dir, &sp7C).
+            let fp = &*p.fp;
+            let sp7c = if fp.ground_or_air == melee_types::GA_Ground {
+                let n = fp.coll_data.floor.normal;
+                melee_runtime::lbtrigf::atan2f(-n.x, n.y)
+            } else {
+                0.0
+            };
+            let extra1 = fp.facing_dir;
+            p.ef_queue.push(QueuedEffect { kind: EF_SPAWN_POS_OFFSET_PARAM2, gfx: gfx_id, part, params: sp84, extra1, extra2: sp7c });
             Ok(())
         }
         0x3ED | 0x3EF | 0x3F0 | 0x3F1 | 0x3F2 | 0x3F5 | 0x3FE | 0x400 | 0x401 | 0x4D9 => {
             // EF_SPAWN_POS_OFFSET_PARAM(gfx, joint, &sp84, &fp->facing_dir).
             let extra1 = p.fp.facing_dir;
-            p.ef_queue.push(QueuedEffect { kind: EF_SPAWN_POS_OFFSET_PARAM, gfx: gfx_id, part, params: sp84, extra1 });
+            p.ef_queue.push(QueuedEffect { kind: EF_SPAWN_POS_OFFSET_PARAM, gfx: gfx_id, part, params: sp84, extra1, extra2: 0.0 });
             Ok(())
         }
         // efAsync_Spawn(.., EF_SPAWN_CAMERA_SHAKE, 2 / 3 / 4, joint, &sp84): a camera quake at
@@ -3755,7 +3795,7 @@ fn entry_start(p: &mut Player, c: EntryCommon, rand: &mut HsdRand) -> Result<(),
     // efAsync_Spawn(gobj, &fp->x60C, EF_SPAWN_ATTACH_PARAM, 0x43E, gobj->hsd_obj, &entry.x8):
     // queued (the current proc's s_link is below 9).
     let x8 = p.entry.x8;
-    p.ef_queue.push(QueuedEffect { kind: EF_SPAWN_ATTACH_PARAM, gfx: 0x43E, part: 0, params: Vec3 { x: x8.x, y: 0.0, z: 0.0 }, extra1: 0.0 });
+    p.ef_queue.push(QueuedEffect { kind: EF_SPAWN_ATTACH_PARAM, gfx: 0x43E, part: 0, params: Vec3 { x: x8.x, y: 0.0, z: 0.0 }, extra1: 0.0, extra2: 0.0 });
     Ok(())
 }
 
@@ -4100,6 +4140,9 @@ impl Sim for VsMatch {
         }
         let mut host = Host { rand: &mut self.rand, joint_mtx: &self.joint_mtx, appsrt_hook_lists: &self.appsrt_hook_lists };
         for mask in [PTCL_MASK_MAIN, PTCL_MASK_AUX] {
+            if std::env::var_os("MELEE_GOLDEN_RAND").is_some() {
+                eprintln!("R {} PHASE {mask:#x}", unsafe { TRACE_FRAME });
+            }
             self.ps.particles_update_all(&mut host, mask);
             self.ps.gen_update_all(&mut host, mask);
         }

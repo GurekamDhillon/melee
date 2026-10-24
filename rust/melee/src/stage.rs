@@ -216,15 +216,21 @@ pub fn ground_param(a: &DatArchive) -> Option<u32> {
 
 /// As [`bind_pose_matrix`], with the root joint's translation and scale replaced (an effect root
 /// positioned by its RObj constraint, `lb_8000C1C0`, and scaled by `efAsync_SetEffectScaleXYZ`).
-pub fn bind_pose_matrix_rooted(d: &[u8], chain: &[u32], root_t: [f32; 3], root_s: [f32; 3]) -> melee_runtime::mtx::Mtx {
+pub fn bind_pose_matrix_rooted(d: &[u8], chain: &[u32], root_t: [f32; 3], root_s: [f32; 3], rot_y: Option<f32>, rot_z: Option<f32>) -> melee_runtime::mtx::Mtx {
     use melee_runtime::mtx::{self, Vec3};
     let v = |a: [f32; 3]| Vec3 { x: a[0], y: a[1], z: a[2] };
     let mut m = mtx::identity();
     for (i, &j) in chain.iter().enumerate() {
-        let (r, mut s, mut t) = srt(d, j);
+        let (mut r, mut s, mut t) = srt(d, j);
         if i == 0 {
             s = root_s;
             t = root_t;
+            if let Some(y) = rot_y {
+                r[1] = y;
+            }
+            if let Some(z) = rot_z {
+                r[2] = z;
+            }
         }
         let l = melee_runtime::hsd_mtx::srt(&v(s), &v(r), &v(t), None);
         m = mtx::concat(&m, &l);

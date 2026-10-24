@@ -289,3 +289,13 @@ pub fn ftco_800b4a78(fp: &mut Fighter) {
     data.command_duration = 0;
     ftco_800b462c(fp);
 }
+
+// C-named entry points for the generated CPU AI (tu::ftCo_0A01_ai).
+pub unsafe fn ftCo_800B3E04(fp: *mut Fighter) { ftco_800b3e04(&mut *fp) }
+pub unsafe fn ftCo_800B462C(fp: *mut Fighter) { ftco_800b462c(&mut *fp) }
+pub unsafe fn ftCo_800B463C(fp: *mut Fighter, cmd: u8) { ftco_800b463c(&mut *fp, cmd) }
+pub unsafe fn ftCo_800B46B8(fp: *mut Fighter, cmd: u8, arg: u8) { ftco_800b46b8(&mut *fp, cmd, arg) }
+pub unsafe fn ftCo_800B4778(fp: *mut Fighter, cmd: u8, a1: u8, a2: u8) { ftco_800b4778(&mut *fp, cmd, a1, a2) }
+pub unsafe fn ftCo_800B4880(fp: *mut Fighter, idx: i32) { ftco_800b4880(&mut *fp, idx) }
+pub unsafe fn ftCo_800B49F4(fp: *mut Fighter) { ftco_800b49f4(&mut *fp) }
+pub unsafe fn ftCo_800B4A78(fp: *mut Fighter) { ftco_800b4a78(&mut *fp) }

@@ -236,6 +236,8 @@ fn golden(args: &[String]) -> ExitCode {
         "pad_falcon_wolf_fd" => ("GrNLa.dat", &["falcon", "wolf"]),
         // CPU level 9 Fox (P1) v Falco (P2); the scene's "dreamland" is StKind 17 (GrGr.dat).
         "cpu_fox_falco_dl" => ("GrGr.dat", &["fox", "falco"]),
+        // CPU level 9 Peach (P1) v Samus (P2) on Yoshi's Story (StKind 8), item frequency 4.
+        "cpu_peach_samus_ys_items" => ("GrSt.dat", &["peach", "samus"]),
         s => {
             eprintln!("melee: scenario {s:?} not wired (pad_falcon_fox_fd)");
             return ExitCode::from(2);

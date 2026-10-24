@@ -119,4 +119,5 @@ pub mod lb_0192;
 pub mod lb_0195;
 pub mod lb_01F8;
 pub mod lb_0219;
+pub mod mncharsel;
 pub mod lb_020A;

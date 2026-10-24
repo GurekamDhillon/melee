@@ -22,3 +22,4 @@ pub mod lbcardgame;
 pub mod lbcardnew;
 pub mod lbarq;
 pub mod lbcommand;
+pub mod lbdvd;

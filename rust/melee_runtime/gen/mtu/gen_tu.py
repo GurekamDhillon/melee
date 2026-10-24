@@ -127,8 +127,9 @@ class Tu:
                             self.scan(d, stubs, inlines, data)
                 elif r is not None and r.kind == K.VAR_DECL:
                     d = r.get_definition()
-                    if d is None and r.linkage == ci.LinkageKind.EXTERNAL or \
-                       (d is not None and not self.in_main(d) and not r.type.is_const_qualified()):
+                    if (r.semantic_parent.kind == K.TRANSLATION_UNIT and
+                        (d is None and r.linkage == ci.LinkageKind.EXTERNAL or
+                         d is not None and not self.in_main(d) and not r.type.is_const_qualified())):
                         data[r.spelling] = r
             for ch in c.get_children():
                 visit(ch, c)
@@ -565,11 +566,12 @@ def build(stem, spec, want_ext):
         ret_t = "void" if rcls == "void" else f"__typeof__({rt.spelling})"
         f32a = spec.get("fn32_args", {}).get(n, [])
         p32a = spec.get("ptr32_args", {}).get(n, [])
-        body_c = [f"T({sid[n]});"] + [(f"T(FI32((u32) a{i}));" if i in f32a else f"T(PI32((u32) a{i}));" if i in p32a else c_trace(arg_class(p), f"a{i}"))
+        nta = spec.get("notrace_args", {}).get(n, [])
+        body_c = [f"T({sid[n]});"] + [("" if i in nta else f"T(FI32((u32) a{i}));" if i in f32a else f"T(PI32((u32) a{i}));" if i in p32a else c_trace(arg_class(p), f"a{i}"))
                                       for i, p in enumerate(ptys)]
         rparams = ", ".join(f"a{i}: {rust_ty(p)}" for i, p in enumerate(ptys))
         rret = "" if rcls == "void" else f" -> {rust_ty(rt)}"
-        body_r = [f"t({sid[n]});"] + [(f"t(fi32(a{i} as u32));" if i in f32a else f"t(pi32(a{i} as u32));" if i in p32a else r_trace(arg_class(p), f"a{i}"))
+        body_r = [f"t({sid[n]});"] + [("" if i in nta else f"t(fi32(a{i} as u32));" if i in f32a else f"t(pi32(a{i} as u32));" if i in p32a else r_trace(arg_class(p), f"a{i}"))
                                       for i, p in enumerate(ptys)]
         if n in eff:
             body_c.append(eff[n][0])
@@ -640,7 +642,7 @@ def build(stem, spec, want_ext):
     oc_f, oc_h, or_f, or_h = [], [], [], []
     own_v = {}
     for c in tu.tu.cursor.get_children():
-        if c.kind == K.VAR_DECL and tu.in_main(c) and c.storage_class != ci.StorageClass.EXTERN:
+        if c.kind == K.VAR_DECL and (tu.in_main(c) or (c.location.file is not None and Path(c.location.file.name).name in spec.get("own_files", ()))) and c.storage_class != ci.StorageClass.EXTERN:
             own_v[c.spelling] = c
     for n in list(spec.get("own_fill", ())) + list(spec.get("own_hash", ())):
         if n not in own_v:

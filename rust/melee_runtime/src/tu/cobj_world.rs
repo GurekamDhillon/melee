@@ -11,7 +11,6 @@
 
 use super::cobj::HSD_CObjUpdateView;
 use super::debug::__assert;
-use super::wobj::{HSD_WObjGetPosition, HSD_WObjSetPosition};
 use crate::mtx::{self, Vec3};
 use melee_types::{HSD_CObj, _HSD_RectF32, _Scissor, Vec};
 
@@ -118,25 +117,41 @@ pub unsafe fn HSD_CObjSetProjectionType(cobj: *mut HSD_CObj, proj_type: u32) {
 /// `HSD_CObjGetInterest`.
 pub unsafe fn HSD_CObjGetInterest(cobj: *mut HSD_CObj, interest: *mut Vec) {
     assert_cobj(709, cobj);
-    HSD_WObjGetPosition((*cobj).interest, interest);
+    cx::HSD_WObjGetPosition((*cobj).interest.cast(), interest.cast());
 }
 
 /// `HSD_CObjSetInterest`.
 pub unsafe fn HSD_CObjSetInterest(cobj: *mut HSD_CObj, interest: *mut Vec) {
     assert_cobj(721, cobj);
-    HSD_WObjSetPosition((*cobj).interest, interest);
+    cx::HSD_WObjSetPosition((*cobj).interest.cast(), interest.cast());
 }
 
 /// `HSD_CObjGetEyePosition`.
 pub unsafe fn HSD_CObjGetEyePosition(cobj: *mut HSD_CObj, position: *mut Vec) {
     assert_cobj(733, cobj);
-    HSD_WObjGetPosition((*cobj).eyepos, position);
+    cx::HSD_WObjGetPosition((*cobj).eyepos.cast(), position.cast());
 }
 
 /// `HSD_CObjSetEyePosition`.
 pub unsafe fn HSD_CObjSetEyePosition(cobj: *mut HSD_CObj, position: *mut Vec) {
     assert_cobj(745, cobj);
-    HSD_WObjSetPosition((*cobj).eyepos, position);
+    cx::HSD_WObjSetPosition((*cobj).eyepos.cast(), position.cast());
+}
+
+/// util.h `vec_normalize_check` (inline): -1 if `src` is within `FLT_MIN` of 0 on every axis, else
+/// `PSVECNormalize(src, dst)` and 0.
+unsafe fn vec_normalize_check(src: *mut Vec, dst: *mut Vec) -> i32 {
+    if src.is_null() || dst.is_null() {
+        return -1;
+    }
+    if crate::hsd_mtx::fabsf_bitwise((*src).x) <= FLT_MIN_
+        && crate::hsd_mtx::fabsf_bitwise((*src).y) <= FLT_MIN_
+        && crate::hsd_mtx::fabsf_bitwise((*src).z) <= FLT_MIN_
+    {
+        return -1;
+    }
+    cx::PSVECNormalize(src, dst);
+    0
 }
 
 /// `HSD_CObjGetEyeVector`: 0 and the unit view direction, or -1 and (0, 0, -1).
@@ -146,16 +161,8 @@ pub unsafe fn HSD_CObjGetEyeVector(cobj: *mut HSD_CObj, eye: *mut Vec) -> i32 {
         let mut interest: Vec = core::mem::zeroed();
         HSD_CObjGetEyePosition(cobj, &mut eyepos);
         HSD_CObjGetInterest(cobj, &mut interest);
-        let v3 = |v: &Vec| Vec3 { x: v.x, y: v.y, z: v.z };
-        let d = mtx::vec_sub(&v3(&interest), &v3(&eyepos));
-        (*eye).x = d.x;
-        (*eye).y = d.y;
-        (*eye).z = d.z;
-        let mut out = d;
-        if crate::cobj::vec_normalize_check(&d, &mut out) == 0 {
-            (*eye).x = out.x;
-            (*eye).y = out.y;
-            (*eye).z = out.z;
+        cx::PSVECSubtract(&mut interest, &mut eyepos, eye);
+        if vec_normalize_check(eye, eye) == 0 {
             return 0;
         }
     }
@@ -169,26 +176,6 @@ pub unsafe fn HSD_CObjGetEyeVector(cobj: *mut HSD_CObj, eye: *mut Vec) -> i32 {
 
 // --- up vector, roll, viewing matrix ------------------------------------------------------------------
 
-#[inline]
-fn n3(v: &Vec) -> Vec3 {
-    Vec3 { x: v.x, y: v.y, z: v.z }
-}
-#[inline]
-fn g3(v: Vec3) -> Vec {
-    Vec { x: v.x, y: v.y, z: v.z }
-}
-
-/// util.h `vec_normalize_check` on raw vectors: -1 (`dst` untouched) if every component is within
-/// `FLT_MIN` of 0, else `*dst = normalize(*src)` and 0.
-unsafe fn vec_normalize_check(src: *const Vec, dst: *mut Vec) -> i32 {
-    let mut d = n3(&*dst);
-    let r = crate::cobj::vec_normalize_check(&n3(&*src), &mut d);
-    if r == 0 {
-        *dst = g3(d);
-    }
-    r
-}
-
 /// Callees of cobj.c in other TUs that this part reaches (the oracle supplies the C `HSD_MtxAlloc` pool).
 pub mod ext {
     use melee_types::Mtx;
@@ -197,34 +184,42 @@ pub mod ext {
     pub unsafe fn mtx_alloc() -> *mut Mtx {
         match HSD_MtxAlloc {
             Some(f) => f(),
-            None => crate::tu::mtx::HSD_MtxAlloc() as *mut Mtx,
+            None => super::cx::HSD_MtxAlloc() as *mut Mtx,
         }
     }
 }
+use super::cobj::ext as cx;
 
 const FLT_MIN_: f32 = crate::cobj::FLT_MIN;
 const COBJ_UP_VECTOR_: u32 = 1;
 
+static mut ORIG: Vec = Vec { x: 0.0, y: 0.0, z: 0.0 };
+static mut UY: Vec = Vec { x: 0.0, y: 1.0, z: 0.0 };
+
 /// `upvec2roll` (static).
 unsafe fn upvec2roll(cobj: *mut HSD_CObj, up: *mut Vec) -> f32 {
     let mut eye: Vec = core::mem::zeroed();
+    let mut v: Vec = core::mem::zeroed();
+    let mut vmtx = [[0.0f32; 4]; 3];
+    let mut dot;
     if HSD_CObjGetEyeVector(cobj, &mut eye) != 0 {
-        return 0.0;
-    }
-    let mut dot = mtx::vec_dot(&n3(&*up), &n3(&eye)).abs();
-    dot = 1.0 - dot;
-    if dot < FLT_MIN_ {
-        return 0.0;
-    }
-    let orig = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
-    let uy = Vec3 { x: 0.0, y: 1.0, z: 0.0 };
-    let vmtx = mtx::look_at(&orig, &uy, &n3(&eye));
-    let v = mtx::mult_vec_sr(&vmtx, &n3(&*up));
-    if crate::hsd_mtx::fabsf_bitwise(v.y) == 0.0 {
-        if -v.x >= 0.0 { 1.5707963267948966f64 as f32 } else { -1.5707963267948966f64 as f32 }
+        dot = 0.0;
     } else {
-        crate::lbtrigf::atan2f(-v.x, v.y)
+        dot = cx::fabsf(cx::PSVECDotProduct(up, &mut eye));
+        dot = 1.0 - dot;
+        if dot < FLT_MIN_ {
+            dot = 0.0;
+        } else {
+            cx::C_MTXLookAt(vmtx.as_mut_ptr().cast(), &raw mut ORIG, &raw mut UY, &mut eye);
+            cx::PSMTXMultVecSR(vmtx.as_mut_ptr().cast(), up, &mut v);
+            if crate::hsd_mtx::fabsf_bitwise(v.y) == 0.0 {
+                dot = if -v.x >= 0.0 { 1.5707963267948966f64 as f32 } else { -1.5707963267948966f64 as f32 };
+            } else {
+                dot = cx::atan2f(-v.x, v.y);
+            }
+        }
     }
+    dot
 }
 
 /// `roll2upvec` (static): 0 and `*up` written, or the nonzero `HSD_CObjGetEyeVector` result with `up` untouched.
@@ -234,7 +229,9 @@ unsafe fn roll2upvec(cobj: *mut HSD_CObj, up: *mut Vec, roll: f32) -> i32 {
     if res != 0 {
         return res;
     }
-    let mut v0 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
+    let mut v0: Vec = core::mem::zeroed();
+    let mut v1: Vec = core::mem::zeroed();
+    let mut m = [[0.0f32; 4]; 3];
     if 1.0 - (eye.y.abs() as f64) < 0.0001 {
         v0.x = crate::gekko::sqrtf(fmadds(eye.y, eye.y, eye.z * eye.z));
         v0.y = eye.y * (-eye.x / v0.x);
@@ -244,9 +241,9 @@ unsafe fn roll2upvec(cobj: *mut HSD_CObj, up: *mut Vec, roll: f32) -> i32 {
         v0.x = eye.x * (-eye.y / v0.y);
         v0.z = eye.z * (-eye.y / v0.y);
     }
-    let m = mtx::rot_axis_rad(&n3(&eye), -roll);
-    let v1 = mtx::mult_vec_sr(&m, &v0);
-    *up = g3(mtx::vec_normalize(&v1));
+    cx::PSMTXRotAxisRad(m.as_mut_ptr().cast(), &mut eye, -roll);
+    cx::PSMTXMultVecSR(m.as_mut_ptr().cast(), &mut v0, &mut v1);
+    cx::PSVECNormalize(&mut v1, up);
     0
 }
 
@@ -269,6 +266,8 @@ pub unsafe fn HSD_CObjGetUpVector(cobj: *mut HSD_CObj, up: *mut Vec) -> i32 {
     -1
 }
 
+static mut UY2: Vec = Vec { x: 0.0, y: 1.0, z: 0.0 };
+
 /// `HSD_CObjSetUpVector`.
 pub unsafe fn HSD_CObjSetUpVector(cobj: *mut HSD_CObj, mut up: *mut Vec) {
     if cobj.is_null() || up.is_null() {
@@ -276,8 +275,7 @@ pub unsafe fn HSD_CObjSetUpVector(cobj: *mut HSD_CObj, mut up: *mut Vec) {
     }
     if (*cobj).flags & COBJ_UP_VECTOR_ != 0 {
         let mut v: Vec = core::mem::zeroed();
-        let mut uy2 = Vec { x: 0.0, y: 1.0, z: 0.0 };
-        up = if vec_normalize_check(up, &mut v) != 0 { &mut uy2 } else { &mut v };
+        up = if vec_normalize_check(up, &mut v) != 0 { &raw mut UY2 } else { &mut v };
         if (*cobj).u.up.x != (*up).x || (*cobj).u.up.y != (*up).y || (*cobj).u.up.z != (*up).z {
             super::cobj::HSD_CObjSetMtxDirty(cobj);
         }
@@ -320,7 +318,7 @@ unsafe fn rebuild_view_mtx(cobj: *mut HSD_CObj) {
         HSD_CObjGetEyePosition(cobj, &mut eyepos);
         HSD_CObjGetUpVector(cobj, &mut up_vec);
         HSD_CObjGetInterest(cobj, &mut interest);
-        (*cobj).view_mtx = mtx::look_at(&n3(&eyepos), &n3(&up_vec), &n3(&interest));
+        cx::C_MTXLookAt((&raw mut (*cobj).view_mtx).cast(), &mut eyepos, &mut up_vec, &mut interest);
         super::wobj::HSD_WObjClearFlags((*cobj).eyepos, 2);
         super::wobj::HSD_WObjClearFlags((*cobj).interest, 2);
         super::cobj::HSD_CObjClearFlags(cobj, 0x4000_0000);
@@ -340,10 +338,7 @@ pub unsafe fn HSD_CObjGetInvViewingMtxPtrDirect(cobj: *mut HSD_CObj) -> *mut [f3
         if (*cobj).proj_mtx.is_null() {
             (*cobj).proj_mtx = ext::mtx_alloc();
         }
-        // PSMTXInverse leaves the destination untouched for a singular matrix.
-        if let Some(inv) = mtx::inverse(&(*cobj).view_mtx) {
-            *(*cobj).proj_mtx = inv;
-        }
+        cx::PSMTXInverse((&raw mut (*cobj).view_mtx).cast(), (*cobj).proj_mtx.cast());
         super::cobj::HSD_CObjClearFlags(cobj, 1 << 31);
     }
     (*cobj).proj_mtx.cast()

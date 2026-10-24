@@ -82,6 +82,25 @@ pub mod raw {
         let r = mtx::mult_vec_sr(core::slice::from_raw_parts(m, 3), &v3(src));
         put(dst, r);
     }
+    /// `PSVECSubtract(a, b, ab)`: `*ab = *a - *b`.
+    pub unsafe fn PSVECSubtract(a: *mut Vec, b: *mut Vec, ab: *mut Vec) {
+        let r = mtx::vec_sub(&v3(a), &v3(b));
+        put(ab, r);
+    }
+    /// `PSMTXInverse(src, inv)`: 0 and `inv` untouched for a singular matrix, else 1.
+    pub unsafe fn PSMTXInverse(src: *mut [f32; 4], inv: *mut [f32; 4]) -> u32 {
+        match mtx::inverse(&rd(src)) {
+            Some(r) => {
+                inv.cast::<Mtx>().write(r);
+                1
+            }
+            None => 0,
+        }
+    }
+    /// `PSMTXRotAxisRad(m, axis, rad)`.
+    pub unsafe fn PSMTXRotAxisRad(m: *mut [f32; 4], axis: *mut Vec, rad: f32) {
+        m.cast::<Mtx>().write(mtx::rot_axis_rad(&v3(axis), rad));
+    }
     /// `PSMTXTranspose(src, xPose)` (the 3x3 part; the translation column is cleared).
     pub unsafe fn PSMTXTranspose(src: *mut [f32; 4], x_pose: *mut [f32; 4]) {
         let r = mtx::transpose(&rd(src));

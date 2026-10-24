@@ -180,6 +180,8 @@ def bind(ptype, pools):
     k = c.kind
     pm = {t: (f"picko_{t}()", f"picko_{t}()") for t, a, n in pools}
     pn = {t: (f"pick_{t}()", f"pick_{t}()") for t, a, n in pools}
+    if k == T.CONSTANTARRAY:
+        return "(void*) BUF", "(&raw mut BUF) as *mut _"
     if k == T.FLOAT:
         return "rw()", "rw()"
     if k == T.DOUBLE:

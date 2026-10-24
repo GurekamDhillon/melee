@@ -25,8 +25,22 @@ pub mod ext {
         };
     }
     hook!(IT_802C8B28, it_802C8B28, (gobj: *mut HSD_GObj, pos: *mut Vec3, bone: u32, facing: f32) -> *mut HSD_GObj);
-    hook!(FTCO_APPEALS_IASA, ftCo_AppealS_IASA, (gobj: *mut HSD_GObj));
-    hook!(FT_80084280, ft_80084280, (gobj: *mut HSD_GObj));
+    pub static mut FTCO_APPEALS_IASA: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftCo_AppealS_IASA(gobj: *mut HSD_GObj)  {
+                match unsafe { FTCO_APPEALS_IASA } {
+                    Some(f) => f(gobj),
+                    None => { unsafe { let _ = melee_fighter::tu::ftCo_AppealS::ftCo_AppealS_IASA(gobj as _); } return; },
+                }
+            }
+    pub static mut FT_80084280: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn ft_80084280(gobj: *mut HSD_GObj)  {
+                match unsafe { FT_80084280 } {
+                    Some(f) => f(gobj),
+                    None => { unsafe { let _ = melee_fighter::tu::ft_081b::ft_80084280(gobj as _); } return; },
+                }
+            }
 }
 
 pub fn ftCl_AppealS_Anim(gobj: *mut HSD_GObj) {

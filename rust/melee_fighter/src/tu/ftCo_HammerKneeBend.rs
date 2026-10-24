@@ -31,15 +31,15 @@ pub mod ext {
         };
     }
     ext_fns! {
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
-        ftCo_800C54C4(fp: &mut Fighter) -> u32 = |_| todo!("TODO(port) ftCo_800C54C4 (ftCo_HammerWait.c)");
-        ftCo_800C548C(fp: &mut Fighter) -> f32 = |_| todo!("TODO(port) ftCo_800C548C (ftCo_HammerWait.c)");
-        ftCo_800C4E94(fp: &mut Fighter) = |_| todo!("TODO(port) ftCo_800C4E94 (ftCo_HammerWait.c)");
-        ftCo_800C4F64(g: G) = |_| todo!("TODO(port) ftCo_800C4F64 (ftCo_HammerWait.c)");
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        ftCo_800C54C4(fp: &mut Fighter) -> u32 = |fp: &mut Fighter| -> u32 { unsafe { crate::tu::ftCo_HammerWait::ftCo_800C54C4(fp as _) as _ } };
+        ftCo_800C548C(fp: &mut Fighter) -> f32 = |fp: &mut Fighter| -> f32 { unsafe { crate::tu::ftCo_HammerWait::ftCo_800C548C(fp as _) as _ } };
+        ftCo_800C4E94(fp: &mut Fighter) = |fp: &mut Fighter| { unsafe { let _ = crate::tu::ftCo_HammerWait::ftCo_800C4E94(fp as _); } };
+        ftCo_800C4F64(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_HammerWait::ftCo_800C4F64(g as _); } };
         ftCo_800C5A98(g: G) = crate::tu::ftCo_HammerJump::ftCo_800C5A98;
-        ftCo_KneeBend_Check_ShortHop(g: G) = |_| todo!("TODO(port) ftCo_KneeBend_Check_ShortHop (ftCo_KneeBend.c)");
+        ftCo_KneeBend_Check_ShortHop(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_KneeBend::ftCo_KneeBend_Check_ShortHop(g as _); } };
         ft_80084F3C(g: G) = crate::ft084e::ft_80084f3c;
-        ftCo_HammerWait_Coll(g: G) = |_| todo!("TODO(port) ftCo_HammerWait_Coll (ftCo_HammerWait.c)");
+        ftCo_HammerWait_Coll(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_HammerWait::ftCo_HammerWait_Coll(g as _); } };
     }
 }
 

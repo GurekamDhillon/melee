@@ -30,16 +30,44 @@ pub mod ext {
             }
         };
     }
-    hook!(IT_802B2560, it_802B2560, (gobj: *mut HSD_GObj, facing_dir: f32, pos: *mut Vec3, bone: i32, kind: ItemKind) -> *mut HSD_GObj);
-    hook!(IT_802B2674, it_802B2674, (cape: *mut HSD_GObj));
-    hook!(IT_802B26C0, it_802B26C0, (cape: *mut HSD_GObj));
-    hook!(IT_802B26E0, it_802B26E0, (cape: *mut HSD_GObj));
+    pub static mut IT_802B2560: Option<fn(*mut HSD_GObj, f32, *mut Vec3, i32, ItemKind) -> *mut HSD_GObj> = None;
+            #[allow(non_snake_case)]
+            pub fn it_802B2560(gobj: *mut HSD_GObj, facing_dir: f32, pos: *mut Vec3, bone: i32, kind: ItemKind) -> *mut HSD_GObj {
+                match unsafe { IT_802B2560 } {
+                    Some(f) => f(gobj, facing_dir, pos, bone, kind),
+                    None => { return unsafe { melee_items::tu::itmariocape::it_802B2560(gobj as _, facing_dir as _, pos as _, bone as _, kind as _) as _ }; },
+                }
+            }
+    pub static mut IT_802B2674: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802B2674(cape: *mut HSD_GObj)  {
+                match unsafe { IT_802B2674 } {
+                    Some(f) => f(cape),
+                    None => { unsafe { let _ = melee_items::tu::itmariocape::it_802B2674(cape as _); } return; },
+                }
+            }
+    pub static mut IT_802B26C0: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802B26C0(cape: *mut HSD_GObj)  {
+                match unsafe { IT_802B26C0 } {
+                    Some(f) => f(cape),
+                    None => { unsafe { let _ = melee_items::tu::itmariocape::it_802B26C0(cape as _); } return; },
+                }
+            }
+    pub static mut IT_802B26E0: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802B26E0(cape: *mut HSD_GObj)  {
+                match unsafe { IT_802B26E0 } {
+                    Some(f) => f(cape),
+                    None => { unsafe { let _ = melee_items::tu::itmariocape::it_802B26E0(cape as _); } return; },
+                }
+            }
     hook!(FTCOLL_CREATEREFLECTHIT, ftColl_CreateReflectHit, (gobj: *mut HSD_GObj, desc: *mut ReflectDesc, arg: *mut core::ffi::c_void));
 
     /// `ftMr_Init_OnTakeDamage` (ftmario.c, not ported yet): installed as `death2_cb` /
     /// `take_dmg_cb` while the cape is out.
     pub unsafe extern "C" fn ftMr_Init_OnTakeDamage(_g: *mut HSD_GObj) {
-        panic!("TODO: ftMr_Init_OnTakeDamage is not ported");
+        { unsafe { let _ = crate::tu::ftmario::ftMr_Init_OnTakeDamage(_g as _); } return; };
     }
 }
 

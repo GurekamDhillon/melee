@@ -31,10 +31,31 @@ pub mod ext {
             }
         };
     }
-    hook!(FTCH_GRABUNK1_8015B174, ftCh_GrabUnk1_8015B174, (gobj: *mut HSD_GObj));
+    pub static mut FTCH_GRABUNK1_8015B174: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftCh_GrabUnk1_8015B174(gobj: *mut HSD_GObj)  {
+                match unsafe { FTCH_GRABUNK1_8015B174 } {
+                    Some(f) => f(gobj),
+                    None => { unsafe { let _ = crate::tu::ftcrazyhandgrabunk1b174::ftCh_GrabUnk1_8015B174(gobj as _); } return; },
+                }
+            }
     // `ftCh_GrabUnk1_8015BA34(gobj, cb, pos)` (ftcrazyhandtagcancel.c).
-    hook!(FTCH_GRABUNK1_8015BA34, ftCh_GrabUnk1_8015BA34, (gobj: *mut HSD_GObj, cb: HSD_GObjEvent, pos: *const Vec3));
-    hook!(FTCH_INIT_80157DF8, ftCh_Init_80157DF8, (gobj: *mut HSD_GObj));
+    pub static mut FTCH_GRABUNK1_8015BA34: Option<fn(*mut HSD_GObj, HSD_GObjEvent, *const Vec3) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftCh_GrabUnk1_8015BA34(gobj: *mut HSD_GObj, cb: HSD_GObjEvent, pos: *const Vec3)  {
+                match unsafe { FTCH_GRABUNK1_8015BA34 } {
+                    Some(f) => f(gobj, cb, pos),
+                    None => { unsafe { let _ = crate::tu::ftcrazyhandtagcancel::ftCh_GrabUnk1_8015BA34(gobj as _, cb as _, pos as _); } return; },
+                }
+            }
+    pub static mut FTCH_INIT_80157DF8: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftCh_Init_80157DF8(gobj: *mut HSD_GObj)  {
+                match unsafe { FTCH_INIT_80157DF8 } {
+                    Some(f) => f(gobj),
+                    None => { unsafe { let _ = crate::tu::ftcrazyhandrockcrush0::ftCh_Init_80157DF8(gobj as _); } return; },
+                }
+            }
     hook!(FTCH_INIT_80158B3C, ftCh_Init_80158B3C, (gobj: *mut HSD_GObj));
     // `Stage_80225194()` (gr/stage.c).
     hook!(STAGE_80225194, Stage_80225194, () -> i32);

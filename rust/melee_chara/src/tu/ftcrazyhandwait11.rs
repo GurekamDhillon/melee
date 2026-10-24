@@ -25,7 +25,14 @@ pub mod ext {
             }
         };
     }
-    hook!(FTCH_GRABUNK1_8015BC88, ftCh_GrabUnk1_8015BC88, (gobj: *mut HSD_GObj));
+    pub static mut FTCH_GRABUNK1_8015BC88: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftCh_GrabUnk1_8015BC88(gobj: *mut HSD_GObj)  {
+                match unsafe { FTCH_GRABUNK1_8015BC88 } {
+                    Some(f) => f(gobj),
+                    None => { unsafe { let _ = crate::tu::ftcrazyhandtagcancel::ftCh_GrabUnk1_8015BC88(gobj as _); } return; },
+                }
+            }
     // `HSD_JObjSetMtxDirtySub(jobj)` (baselib/jobj.c).
     hook!(HSD_JOBJSETMTXDIRTYSUB, HSD_JObjSetMtxDirtySub, (jobj: *mut HSD_JObj));
 }

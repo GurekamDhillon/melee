@@ -56,8 +56,22 @@ pub mod ext {
             }
         };
     }
-    hook!(IT_8026B3F8, it_8026B3F8, (article: *mut c_void, kind: i32));
-    hook!(FTCO_800DE2A8, ftCo_800DE2A8, (gobj: *mut HSD_GObj, vic: *mut HSD_GObj));
+    pub static mut IT_8026B3F8: Option<fn(*mut c_void, i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_8026B3F8(article: *mut c_void, kind: i32)  {
+                match unsafe { IT_8026B3F8 } {
+                    Some(f) => f(article, kind),
+                    None => { unsafe { let _ = melee_items::tu::it_26B1::it_8026B3F8(article as _, kind as _); } return; },
+                }
+            }
+    pub static mut FTCO_800DE2A8: Option<fn(*mut HSD_GObj, *mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftCo_800DE2A8(gobj: *mut HSD_GObj, vic: *mut HSD_GObj)  {
+                match unsafe { FTCO_800DE2A8 } {
+                    Some(f) => f(gobj, vic),
+                    None => { unsafe { let _ = melee_fighter::tu::ftCo_Throw::ftCo_800DE2A8(gobj as _, vic as _); } return; },
+                }
+            }
     hook!(FTCO_800DE7C0, ftCo_800DE7C0, (gobj: *mut HSD_GObj, a: i32, b: i32));
 }
 

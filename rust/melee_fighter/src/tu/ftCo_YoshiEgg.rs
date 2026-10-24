@@ -33,18 +33,18 @@ pub mod ext {
     }
     ext_fns! {
         ftColl_8007B62C(g: G, v: i32) = |_, _| todo!("TODO(port) ftColl_8007B62C (ftcoll.c)");
-        Fighter_UpdateModelScale(g: G) = |_| todo!("TODO(port) Fighter_UpdateModelScale (fighter.c)");
+        Fighter_UpdateModelScale(g: G) = |g: G| { unsafe { let _ = crate::tu::fighter::Fighter_UpdateModelScale(g as _); } };
         HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjSetMtxDirtySub (jobj.c)");
         ftColl_8007B0C0(g: G, s: i32) = |_, _| todo!("TODO(port) ftColl_8007B0C0 (ftcoll.c)");
         ftParts_GetBoneIndex(f: &Fighter, part: i32) -> i32 = crate::ftdmgfall::ftparts_get_bone_index;
         ftColl_HurtboxInit(f: &mut Fighter, c: *mut FighterHurtCapsule, h: &ftHurtboxInit) = |_, _, _| todo!("TODO(port) ftColl_HurtboxInit (ftcoll.c)");
         ftCommon_8007D5D4(f: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftCo_800BC438(g: G) = crate::tu::ftCo_CaptureKoopa::ftCo_800BC438;
         ftCommon_8007E2F4(f: &mut Fighter, v: i16) = crate::ftcommon2::ftcommon_8007e2f4;
         ftCommon_SetAccessory(f: &mut Fighter, j: *mut HSD_Joint) = |_, _| todo!("TODO(port) ftCommon_SetAccessory (ftcommon.c)");
         ftYs_SpecialN_8012CDD4(g: G) -> *mut HSD_Joint = |_| todo!("TODO(port) ftYs_SpecialN_8012CDD4 (ftyoshispecialn.c)");
-        lb_8000C2F8(a: *mut HSD_JObj, b: *mut HSD_JObj) = |_, _| todo!("TODO(port) lb_8000C2F8 (lb_00B0.c)");
+        lb_8000C2F8(a: *mut HSD_JObj, b: *mut HSD_JObj) = |a: *mut HSD_JObj, b: *mut HSD_JObj| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000C2F8(a as _, b as _); } };
         ftYs_SpecialN_SetupItemVel(g: G, out: &mut Vec3) = |_, _| todo!("TODO(port) ftYs_SpecialN_SetupItemVel (ftyoshispecialn.c; melee_chara has a &Fighter form)");
         ftYs_SpecialN_GetFacingDir(g: G) -> f32 = |_| todo!("TODO(port) ftYs_SpecialN_GetFacingDir (ftyoshispecialn.c; melee_chara has a &Fighter form)");
         ftYs_SpecialN_GetDatAttr18(g: G) -> f32 = |_| todo!("TODO(port) ftYs_SpecialN_GetDatAttr18 (ftyoshispecialn.c; melee_chara has a &Fighter form)");

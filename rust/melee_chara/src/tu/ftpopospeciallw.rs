@@ -41,8 +41,22 @@ pub mod ext {
             }
         };
     }
-    hook!(LB_8000B1CC, lb_8000B1CC, (jobj: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3));
-    hook!(ITCLIMBERSBLIZZARD_SPAWN, itClimbersBlizzard_Spawn, (parent: *mut HSD_GObj, pos: *mut Vec3, facing_dir: f32));
+    pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *const Vec3, *mut Vec3) > = None;
+            #[allow(non_snake_case)]
+            pub fn lb_8000B1CC(jobj: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3)  {
+                match unsafe { LB_8000B1CC } {
+                    Some(f) => f(jobj, off, out),
+                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, off as _, out as _); } return; },
+                }
+            }
+    pub static mut ITCLIMBERSBLIZZARD_SPAWN: Option<fn(*mut HSD_GObj, *mut Vec3, f32) > = None;
+            #[allow(non_snake_case)]
+            pub fn itClimbersBlizzard_Spawn(parent: *mut HSD_GObj, pos: *mut Vec3, facing_dir: f32)  {
+                match unsafe { ITCLIMBERSBLIZZARD_SPAWN } {
+                    Some(f) => f(parent, pos, facing_dir),
+                    None => { unsafe { let _ = melee_items::tu::itclimbersblizzard::itClimbersBlizzard_Spawn(parent as _, pos as _, facing_dir as _); } return; },
+                }
+            }
     hook_or!(FT_800881D8, ft_800881D8, ft_800881d8_port, (fp: *mut Fighter, sfx: i32, vol: u8, pan: u8));
     fn ft_800881d8_port(fp: *mut Fighter, sfx: i32, vol: u8, pan: u8) {
         melee_fighter::ft0881::ft_800881d8(unsafe { &mut *fp }, sfx, vol, pan)

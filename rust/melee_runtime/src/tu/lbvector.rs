@@ -47,7 +47,7 @@ pub mod ext {
         match unsafe { hook::HSD_CObjGetInterest } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_CObjGetInterest is not ported") } }
     }
     pub fn HSD_CObjGetProjectionType(a0: *mut HSD_CObj) -> i32 {
-        match unsafe { hook::HSD_CObjGetProjectionType } { Some(f) => f(a0), None => { panic!("TODO: HSD_CObjGetProjectionType is not ported") } }
+        match unsafe { hook::HSD_CObjGetProjectionType } { Some(f) => f(a0), None => { { return unsafe { crate::tu::cobj::HSD_CObjGetProjectionType(a0 as _) as _ }; } } }
     }
     pub fn HSD_CObjGetUpVector(a0: *mut HSD_CObj, a1: *mut Vec) -> i32 {
         match unsafe { hook::HSD_CObjGetUpVector } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_CObjGetUpVector is not ported") } }

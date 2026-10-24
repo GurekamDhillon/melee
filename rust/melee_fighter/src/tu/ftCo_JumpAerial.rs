@@ -41,32 +41,32 @@ pub mod ext {
         HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(group1 jobj) HSD_JObjSetMtxDirtySub");
         ftCo_800C5240(g: G) -> bool = |g| crate::tu::ftCo_Jump::ext::ftCo_800C5240(g);
         ftCo_800D730C(g: G, arg1: bool) -> bool = crate::tu::ftCo_JumpAerialF1::ftCo_800D730C;
-        ft_800D2D0C(g: G) -> bool = |_| todo!("TODO(port) ft_800D2D0C (ft_0D27.c)");
+        ft_800D2D0C(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ft_0d27::ft_800d2d0c(g as _) as _ } };
         ft_800D2E7C(g: G, v: &mut Vec3) = crate::tu::ftCo_ItemScrew::ft_800D2E7C;
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ft_80088770(fp: &mut Fighter) = crate::ft0881::ft_80088770;
-        ft_80088328(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |_, _, _, _| todo!("TODO(port) ft_80088328 (ft_0881.c)");
+        ft_80088328(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |fp: &mut Fighter, id: i32, vol: u8, pan: u8| { unsafe { let _ = crate::ft0881::ft_80088328(fp as _, id as _, vol as _, pan as _); } };
         ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |_, _, _, _| todo!("TODO(port) ft_PlaySFX (ft_0881.c)");
         ftCommon_8007D5D4(fp: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
-        ftCo_FallAerial_Enter(g: G) = |_| todo!("TODO(port) ftCo_FallAerial_Enter (ftCo_FallAerial.c)");
-        ftCo_SpecialAir_CheckInput(g: G) -> bool = |_| todo!("TODO(port) ftCo_SpecialAir_CheckInput (ftCo_SpecialAir.c)");
+        ftCo_FallAerial_Enter(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_FallAerial::ftCo_FallAerial_Enter(g as _); } };
+        ftCo_SpecialAir_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_SpecialAir::ftCo_SpecialAir_CheckInput(g as _) as _ } };
         ftCo_80095328(g: G, out: *mut bool) -> bool = crate::tu::ftCo_ItemThrow::ftCo_80095328;
-        ftCo_800D7100(g: G) -> bool = |_| todo!("TODO(port) ftCo_800D7100 (ftCo_Attack100.c)");
-        ftCo_800C3B10(g: G) -> bool = |_| todo!("TODO(port) ftCo_800C3B10 (ftCo_HammerWait.c)");
-        ftCo_80099A58(g: G) -> bool = |_| todo!("TODO(port) ftCo_80099A58 (ftCo_EscapeAir.c)");
-        ftCo_AttackAir_CheckItemThrowInput(g: G) -> bool = |_| todo!("TODO(port) ftCo_AttackAir_CheckItemThrowInput (ftCo_AttackAir.c)");
-        ftCo_800D705C(g: G) -> bool = |_| todo!("TODO(port) ftCo_800D705C (ftCo_AirCatch.c)");
+        ftCo_800D7100(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Attack100::ftCo_800D7100(g as _) as _ } };
+        ftCo_800C3B10(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftco_aircatch::ftco_800c3b10(g as _) as _ } };
+        ftCo_80099A58(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_EscapeAir::ftCo_80099A58(g as _) as _ } };
+        ftCo_AttackAir_CheckItemThrowInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_AttackAir::ftCo_AttackAir_CheckItemThrowInput(g as _) as _ } };
+        ftCo_800D705C(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Attack100::ftCo_800D705C(g as _) as _ } };
         ftPe_8011BA54(g: G) -> bool = |_| todo!("TODO(port) ftPe_8011BA54 (ftpeachfloat.c)");
         ftPe_8011BAD8(g: G) -> bool = |_| todo!("TODO(port) ftPe_8011BAD8 (ftpeachfloat.c)");
-        ftCo_800CEE70(g: G) -> bool = |_| todo!("TODO(port) ftCo_800CEE70 (ftCo_ItemParasolOpen.c)");
+        ftCo_800CEE70(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_ItemParasolOpen::ftCo_800CEE70(g as _) as _ } };
         ft_80084DB0(g: G) = crate::ft084e::ft_80084db0;
         ftCommon_CalcSelfAccel_DriftFrom(fp: &mut Fighter, v: f32) = |_, _| todo!("TODO(port) ftCommon_CalcSelfAccel_DriftFrom (ftcommon.c)");
         ftCommon_CalcSelfAccel_Drift(fp: &mut Fighter) = |_| todo!("TODO(port) ftCommon_CalcSelfAccel_Drift (ftcommon.c)");
         ft_800851D0(g: G) = crate::ft084e::ft_800851d0;
-        ft_800835B0(g: G, a: fn(G, i32) -> bool, b: fn(G)) = |_, _, _| todo!("TODO(port) ft_800835B0 (ft_081B.c)");
-        ftCo_80096CC8(g: G, line: i32) -> bool = |_, _| todo!("TODO(port) ftCo_80096CC8 (ftCo_FallSpecial.c)");
-        ft_80082B1C(g: G) = |_| todo!("TODO(port) ft_80082B1C (ft_081B.c)");
+        ft_800835B0(g: G, a: fn(G, i32) -> bool, b: fn(G)) = |g: G, a: fn(G, i32) -> bool, b: fn(G)| { unsafe { let _ = crate::tu::ft_081b::ft_800835b0(g as _, a as _, b as _); } };
+        ftCo_80096CC8(g: G, line: i32) -> bool = |g: G, line: i32| -> bool { unsafe { crate::tu::ftCo_FallSpecial::ftCo_80096CC8(g as _, line as _) as _ } };
+        ft_80082B1C(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_081b::ft_80082b1c(g as _); } };
     }
 }
 

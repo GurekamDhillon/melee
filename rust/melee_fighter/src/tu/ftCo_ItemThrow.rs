@@ -40,29 +40,29 @@ pub mod ext {
         };
     }
     ext_fns! {
-        it_8026B30C(item: *mut HSD_GObj) -> i32 = |_| todo!("TODO(port) it_8026B30C (it_26B1.c)");
+        it_8026B30C(item: *mut HSD_GObj) -> i32 = |item: *mut HSD_GObj| -> i32 { unsafe { melee_items::tu::it_26B1::it_8026B30C(item as _) as _ } };
         ftCo_GetLStickAngle(fp: &mut Fighter) -> f32 = |f| crate::ftcommon3::ftco_get_lstick_angle(f);
         ftCo_GetCStickAngle(fp: &mut Fighter) -> f32 = |f| crate::ftcommon3::ftco_get_cstick_angle(f);
-        ftCo_800DF50C(fp: &mut Fighter) -> bool = |_| todo!("TODO(port) ftCo_800DF50C (ft_0DF1.c)");
+        ftCo_800DF50C(fp: &mut Fighter) -> bool = |fp: &mut Fighter| -> bool { unsafe { crate::ft0df::ftco_800df50c(fp as _) as _ } };
         ftGetParasolStatus(g: G) -> i32 = crate::ftcommon3::ft_get_parasol_status;
-        ftCo_800968C8(g: G) = |_| todo!("TODO(port) ftCo_800968C8 (ftCo_FallSpecial.c)");
+        ftCo_800968C8(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_FallSpecial::ftCo_800968C8(g as _); } };
         ftCo_Fall_Enter(g: G) = |g| crate::tu::ftCo_Jump::ext::ftCo_Fall_Enter(g);
-        Item_8026ABD8(item: *mut HSD_GObj, pos: &mut Vec3, f: f32) = |_, _, _| todo!("TODO(port) Item_8026ABD8 (item.c)");
-        itGetDamageMultiplier(item: *mut HSD_GObj) -> f32 = |_| todo!("TODO(port) itGetDamageMultiplier (it_26B1.c)");
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
-        ftAnim_8006EBA4(g: G) = |_| todo!("TODO(port) ftAnim_8006EBA4 (ftanim.c)");
-        ftCo_800974C4(g: G) = |_| todo!("TODO(port) ftCo_800974C4 (ftCo_FallSpecial.c)");
-        ftCo_80096E68(g: G) = |_| todo!("TODO(port) ftCo_80096E68 (ftCo_FallSpecial.c)");
+        Item_8026ABD8(item: *mut HSD_GObj, pos: &mut Vec3, f: f32) = |item: *mut HSD_GObj, pos: &mut Vec3, f: f32| { unsafe { let _ = melee_items::tu::item::Item_8026ABD8(item as _, pos as _, f as _); } };
+        itGetDamageMultiplier(item: *mut HSD_GObj) -> f32 = |item: *mut HSD_GObj| -> f32 { unsafe { melee_items::tu::it_26B1::itGetDamageMultiplier(item as _) as _ } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
+        ftCo_800974C4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_Lift::ftCo_800974C4(g as _); } };
+        ftCo_80096E68(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_Lift::ftCo_80096E68(g as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ftCommon_8007D92C(g: G) = crate::ftcommon3::ftcommon_8007d92c;
-        it_80272C90(item: *mut HSD_GObj) -> *mut HSD_JObj = |_| todo!("TODO(port) it_80272C90 (it_2725.c)");
-        lb_8000B1CC(j: *mut HSD_JObj, pos0: *const Vec3, pos1: &mut Vec3) = |_, _, _| todo!("TODO(port) lb_8000B1CC (lb_00B0.c)");
+        it_80272C90(item: *mut HSD_GObj) -> *mut HSD_JObj = |item: *mut HSD_GObj| -> *mut HSD_JObj { unsafe { melee_items::tu::it_2725::it_80272C90(item as _) as _ } };
+        lb_8000B1CC(j: *mut HSD_JObj, pos0: *const Vec3, pos1: &mut Vec3) = |j: *mut HSD_JObj, pos0: *const Vec3, pos1: &mut Vec3| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(j as _, pos0 as _, pos1 as _); } };
         // `Fighter_804D6550` (fighter.c): the item-throw attribute table, 12-byte rows.
         Fighter_804D6550() -> *mut u8 = || todo!("TODO(port) Fighter_804D6550 (fighter.c)");
-        pl_8003E978(slot: i32, sub: bool, item: *mut HSD_GObj) = |_, _, _| todo!("TODO(port) pl_8003E978 (plbonuslib.c)");
-        Item_8026AC74(item: *mut HSD_GObj, pos: &mut Vec3, vel: &mut Vec3, f: f32) = |_, _, _, _| todo!("TODO(port) Item_8026AC74 (item.c)");
-        Item_8026AD20(item: *mut HSD_GObj, pos: &mut Vec3, vel: &mut Vec3, f: f32, smash: bool) = |_, _, _, _, _| todo!("TODO(port) Item_8026AD20 (item.c)");
-        itIsHeavy(item: *mut HSD_GObj) -> i32 = |_| todo!("TODO(port) itIsHeavy (it_26B1.c)");
+        pl_8003E978(slot: i32, sub: bool, item: *mut HSD_GObj) = |slot: i32, sub: bool, item: *mut HSD_GObj| { unsafe { let _ = crate::tu::plbonuslib::pl_8003E978(slot as _, sub as _, item as _); } };
+        Item_8026AC74(item: *mut HSD_GObj, pos: &mut Vec3, vel: &mut Vec3, f: f32) = |item: *mut HSD_GObj, pos: &mut Vec3, vel: &mut Vec3, f: f32| { unsafe { let _ = melee_items::tu::item::Item_8026AC74(item as _, pos as _, vel as _, f as _); } };
+        Item_8026AD20(item: *mut HSD_GObj, pos: &mut Vec3, vel: &mut Vec3, f: f32, smash: bool) = |item: *mut HSD_GObj, pos: &mut Vec3, vel: &mut Vec3, f: f32, smash: bool| { unsafe { let _ = melee_items::tu::item::Item_8026AD20(item as _, pos as _, vel as _, f as _, smash as _); } };
+        itIsHeavy(item: *mut HSD_GObj) -> i32 = |item: *mut HSD_GObj| -> i32 { unsafe { melee_items::tu::it_26B1::itIsHeavy(item as _) as _ } };
         ftCommon_8007EBAC(fp: &mut Fighter, a: u32, b: u32) = crate::ftcommon2::ftcommon_8007ebac;
         ft_80084F3C(g: G) = crate::ft084e::ft_80084f3c;
         ft_80085030(g: G, friction: f32, facing: f32) = crate::ft084e::ft_80085030;

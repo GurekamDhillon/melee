@@ -321,32 +321,122 @@ pub mod ext {
     hook!(H_OSReport, OSReport, (a0: *mut ::core::ffi::c_char, va: &[usize]));
     hook!(H___assert, __assert, (a0: *const ::core::ffi::c_char, a1: u32_0, a2: *const ::core::ffi::c_char) -> !);
     hook!(H_GObj_Create, GObj_Create, (a0: u16_0, a1: u8_0, a2: u8_0) -> *mut HSD_GObj);
-    hook!(H_HSD_GObj_JObjCallback, HSD_GObj_JObjCallback, (a0: *mut HSD_GObj, a1: ::core::ffi::c_int));
-    hook!(H_lbAudioAx_80024030, lbAudioAx_80024030, (a0: ::core::ffi::c_int));
-    hook!(H_lbAudioAx_80027AB0, lbAudioAx_80027AB0, (a0: ::core::ffi::c_int));
+    pub static mut H_HSD_GObj_JObjCallback: Option<unsafe extern "C" fn(*mut HSD_GObj, ::core::ffi::c_int) > = None;
+            pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: ::core::ffi::c_int)  {
+                match H_HSD_GObj_JObjCallback {
+                    Some(f) => f(a0, a1),
+                    None => { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } return; },
+                }
+            }
+    pub static mut H_lbAudioAx_80024030: Option<unsafe extern "C" fn(::core::ffi::c_int) > = None;
+            pub unsafe extern "C" fn lbAudioAx_80024030(a0: ::core::ffi::c_int)  {
+                match H_lbAudioAx_80024030 {
+                    Some(f) => f(a0),
+                    None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80024030(a0 as _); } return; },
+                }
+            }
+    pub static mut H_lbAudioAx_80027AB0: Option<unsafe extern "C" fn(::core::ffi::c_int) > = None;
+            pub unsafe extern "C" fn lbAudioAx_80027AB0(a0: ::core::ffi::c_int)  {
+                match H_lbAudioAx_80027AB0 {
+                    Some(f) => f(a0),
+                    None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80027AB0(a0 as _); } return; },
+                }
+            }
     hook!(H_lb_80011E24, lb_80011E24, (a0: *mut HSD_JObj, a1: *mut *mut HSD_JObj, va: &[usize]) -> ::core::ffi::c_int);
-    hook!(H_mn_8022EC18, mn_8022EC18, (a0: *mut HSD_JObj, a1: *mut AnimLoopSettings, a2: HSD_TypeMask) -> ::core::ffi::c_float);
-    hook!(H_mn_8022F1A8, mn_8022F1A8, (a0: u16_0, a1: u16_0));
-    hook!(H_mn_8022F3D8, mn_8022F3D8, (a0: *mut HSD_JObj, a1: u8_0, a2: HSD_TypeMask));
+    pub static mut H_mn_8022EC18: Option<unsafe extern "C" fn(*mut HSD_JObj, *mut AnimLoopSettings, HSD_TypeMask) -> ::core::ffi::c_float> = None;
+            pub unsafe extern "C" fn mn_8022EC18(a0: *mut HSD_JObj, a1: *mut AnimLoopSettings, a2: HSD_TypeMask) -> ::core::ffi::c_float {
+                match H_mn_8022EC18 {
+                    Some(f) => f(a0, a1, a2),
+                    None => { return unsafe { crate::tu::mn_22EC::mn_8022EC18(a0 as _, a1 as _, a2 as _) as _ }; },
+                }
+            }
+    pub static mut H_mn_8022F1A8: Option<unsafe extern "C" fn(u16_0, u16_0) > = None;
+            pub unsafe extern "C" fn mn_8022F1A8(a0: u16_0, a1: u16_0)  {
+                match H_mn_8022F1A8 {
+                    Some(f) => f(a0, a1),
+                    None => { unsafe { let _ = crate::tu::mn_22EC::mn_8022F1A8(a0 as _, a1 as _); } return; },
+                }
+            }
+    pub static mut H_mn_8022F3D8: Option<unsafe extern "C" fn(*mut HSD_JObj, u8_0, HSD_TypeMask) > = None;
+            pub unsafe extern "C" fn mn_8022F3D8(a0: *mut HSD_JObj, a1: u8_0, a2: HSD_TypeMask)  {
+                match H_mn_8022F3D8 {
+                    Some(f) => f(a0, a1, a2),
+                    None => { unsafe { let _ = crate::tu::mn_22EC::mn_8022F3D8(a0 as _, a1 as _, a2 as _); } return; },
+                }
+            }
     hook!(H_HSD_JObjReqAnimAll, HSD_JObjReqAnimAll, (a0: *mut HSD_JObj, a1: f32_0));
-    hook!(H_HSD_JObjLoadJoint, HSD_JObjLoadJoint, (a0: *mut HSD_Joint) -> *mut HSD_JObj);
+    pub static mut H_HSD_JObjLoadJoint: Option<unsafe extern "C" fn(*mut HSD_Joint) -> *mut HSD_JObj> = None;
+            pub unsafe extern "C" fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj {
+                match H_HSD_JObjLoadJoint {
+                    Some(f) => f(a0),
+                    None => { return unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(a0 as _) as _ }; },
+                }
+            }
     hook!(H_HSD_JObjAddAnimAll, HSD_JObjAddAnimAll, (a0: *mut HSD_JObj, a1: *mut HSD_AnimJoint, a2: *mut HSD_MatAnimJoint, a3: *mut HSD_ShapeAnimJoint));
     hook!(H_HSD_JObjAnimAll, HSD_JObjAnimAll, (a0: *mut HSD_JObj));
-    hook!(H_HSD_SisLib_803A6368, HSD_SisLib_803A6368, (a0: *mut HSD_Text, a1: s32));
-    hook!(H_HSD_SisLib_803A5ACC, HSD_SisLib_803A5ACC, (a0: ::core::ffi::c_int, a1: s32, a2: f32_0, a3: f32_0, a4: f32_0, a5: f32_0, a6: f32_0) -> *mut HSD_Text);
-    hook!(H_HSD_SisLib_803A5CC4, HSD_SisLib_803A5CC4, (a0: *mut HSD_Text));
+    pub static mut H_HSD_SisLib_803A6368: Option<unsafe extern "C" fn(*mut HSD_Text, s32) > = None;
+            pub unsafe extern "C" fn HSD_SisLib_803A6368(a0: *mut HSD_Text, a1: s32)  {
+                match H_HSD_SisLib_803A6368 {
+                    Some(f) => f(a0, a1),
+                    None => { unsafe { let _ = melee_runtime::tu::sislib::HSD_SisLib_803A6368(a0 as _, a1 as _); } return; },
+                }
+            }
+    pub static mut H_HSD_SisLib_803A5ACC: Option<unsafe extern "C" fn(::core::ffi::c_int, s32, f32_0, f32_0, f32_0, f32_0, f32_0) -> *mut HSD_Text> = None;
+            pub unsafe extern "C" fn HSD_SisLib_803A5ACC(a0: ::core::ffi::c_int, a1: s32, a2: f32_0, a3: f32_0, a4: f32_0, a5: f32_0, a6: f32_0) -> *mut HSD_Text {
+                match H_HSD_SisLib_803A5ACC {
+                    Some(f) => f(a0, a1, a2, a3, a4, a5, a6),
+                    None => { return unsafe { melee_runtime::tu::sislib::HSD_SisLib_803A5ACC(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _, a6 as _) as _ }; },
+                }
+            }
+    pub static mut H_HSD_SisLib_803A5CC4: Option<unsafe extern "C" fn(*mut HSD_Text) > = None;
+            pub unsafe extern "C" fn HSD_SisLib_803A5CC4(a0: *mut HSD_Text)  {
+                match H_HSD_SisLib_803A5CC4 {
+                    Some(f) => f(a0),
+                    None => { unsafe { let _ = melee_runtime::tu::sislib::HSD_SisLib_803A5CC4(a0 as _); } return; },
+                }
+            }
     hook!(H_lbArchive_LoadSections, lbArchive_LoadSections, (a0: *mut HSD_Archive, a1: *mut *mut ::core::ffi::c_void, va: &[usize]));
-    hook!(H_lbCardGame_SaveChanges, lbCardGame_SaveChanges, ());
-    hook!(H_lbLang_GetSavedLanguage, lbLang_GetSavedLanguage, () -> enum_t);
-    hook!(H_lbLang_SetSavedLanguage, lbLang_SetSavedLanguage, (a0: enum_t));
+    pub static mut H_lbCardGame_SaveChanges: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn lbCardGame_SaveChanges()  {
+                match H_lbCardGame_SaveChanges {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = melee_runtime::tu::lbcardgame::lbCardGame_SaveChanges(); } return; },
+                }
+            }
+    pub static mut H_lbLang_GetSavedLanguage: Option<unsafe extern "C" fn() -> enum_t> = None;
+            pub unsafe extern "C" fn lbLang_GetSavedLanguage() -> enum_t {
+                match H_lbLang_GetSavedLanguage {
+                    Some(f) => f(),
+                    None => { return unsafe { melee_runtime::tu::lblanguage::lbLang_GetSavedLanguage() as _ }; },
+                }
+            }
+    pub static mut H_lbLang_SetSavedLanguage: Option<unsafe extern "C" fn(enum_t) > = None;
+            pub unsafe extern "C" fn lbLang_SetSavedLanguage(a0: enum_t)  {
+                match H_lbLang_SetSavedLanguage {
+                    Some(f) => f(a0),
+                    None => { unsafe { let _ = melee_runtime::tu::lblanguage::lbLang_SetSavedLanguage(a0 as _); } return; },
+                }
+            }
     hook!(H_GObj_SetupGXLink, GObj_SetupGXLink, (a0: *mut HSD_GObj, a1: GObj_RenderFunc, a2: u8_0, a3: u32_0));
     hook!(H_HSD_GObjObject_80390A70, HSD_GObjObject_80390A70, (a0: *mut HSD_GObj, a1: u8_0, a2: *mut ::core::ffi::c_void));
     hook!(H_HSD_GObjFree, HSD_GObjFree, (a0: *mut HSD_GObj));
     hook!(H_HSD_GObj_SetupProc, HSD_GObj_SetupProc, (a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8_0) -> *mut HSD_GObjProc);
     hook!(H_HSD_GObjProc_RemoveProc, HSD_GObjProc_RemoveProc, (a0: *mut HSD_GObjProc));
     hook!(H_GObj_InitUserData, GObj_InitUserData, (a0: *mut HSD_GObj, a1: u8_0, a2: Option<unsafe extern "C" fn(*mut ::core::ffi::c_void) -> ()>, a3: *mut ::core::ffi::c_void));
-    hook!(H_HSD_Free, HSD_Free, (a0: *mut ::core::ffi::c_void));
-    hook!(H_HSD_MemAlloc, HSD_MemAlloc, (a0: ssize_t) -> *mut ::core::ffi::c_void);
+    pub static mut H_HSD_Free: Option<unsafe extern "C" fn(*mut ::core::ffi::c_void) > = None;
+            pub unsafe extern "C" fn HSD_Free(a0: *mut ::core::ffi::c_void)  {
+                match H_HSD_Free {
+                    Some(f) => f(a0),
+                    None => { unsafe { let _ = melee_runtime::tu::memory::HSD_Free(a0 as _); } return; },
+                }
+            }
+    pub static mut H_HSD_MemAlloc: Option<unsafe extern "C" fn(ssize_t) -> *mut ::core::ffi::c_void> = None;
+            pub unsafe extern "C" fn HSD_MemAlloc(a0: ssize_t) -> *mut ::core::ffi::c_void {
+                match H_HSD_MemAlloc {
+                    Some(f) => f(a0),
+                    None => { return unsafe { melee_runtime::tu::memory::HSD_MemAlloc(a0 as _) as _ }; },
+                }
+            }
     pub static mut HSD_GObj_CurrentInvokedProc: *mut HSD_GObjProc = unsafe { core::mem::zeroed() };
     pub static mut HSD_GObj_804D783C: s32 = unsafe { core::mem::zeroed() };
     pub static mut HSD_GObj_JObjKind: u8_0 = unsafe { core::mem::zeroed() };

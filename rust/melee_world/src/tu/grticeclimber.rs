@@ -44,20 +44,20 @@ pub mod ext {
         pub grAnime_801C7FF8: unsafe fn(g: *mut HSD_GObj, a: i32, b: i32, c: i32, d: f32, e: f32),
     }
     unsafe fn todo_OSReport(_fmt: &CStr, _file: &CStr, _line: i32, _id: i32) { panic!("TODO(os: OSReport (varargs: fmt, __FILE__, line, id)) OSReport") }
-    unsafe fn todo_Ground_GetStageGObj(_id: i32) -> *mut HSD_GObj { panic!("TODO(group2: gr/ground.c) Ground_GetStageGObj") }
-    unsafe fn todo_grZakoGenerator_801CAE04(_d: *mut c_void) { panic!("TODO(group2: gr/grzakogenerator.c) grZakoGenerator_801CAE04") }
-    unsafe fn todo_Ground_801C3FA4(_g: *mut HSD_GObj, _depth: i32) -> *mut HSD_JObj { panic!("TODO(group2: gr/ground.c) Ground_801C3FA4") }
+    unsafe fn todo_Ground_GetStageGObj(_id: i32) -> *mut HSD_GObj { { return unsafe { crate::tu::ground::Ground_GetStageGObj(_id as _) as _ }; } }
+    unsafe fn todo_grZakoGenerator_801CAE04(_d: *mut c_void) { { unsafe { let _ = crate::tu::grzakogenerator::grZakoGenerator_801CAE04(_d as _); } return; } }
+    unsafe fn todo_Ground_801C3FA4(_g: *mut HSD_GObj, _depth: i32) -> *mut HSD_JObj { { return unsafe { crate::tu::ground::Ground_801C3FA4(_g as _, _depth as _) as _ }; } }
     unsafe fn todo_HSD_JObjSetFlagsAll(_j: *mut HSD_JObj, _f: u32) { panic!("TODO(group1: baselib/jobj.c) HSD_JObjSetFlagsAll") }
-    unsafe fn todo_Ground_801C33C0(_a: i32, _b: i32) -> i32 { panic!("TODO(group2: gr/ground.c) Ground_801C33C0") }
+    unsafe fn todo_Ground_801C33C0(_a: i32, _b: i32) -> i32 { { return unsafe { crate::tu::ground::Ground_801C33C0(_a as _, _b as _) as _ }; } }
     unsafe fn todo_grMaterial_801C8CFC(_a: i32, _b: i32, _gp: *mut Ground, _j: *mut HSD_JObj, _cb4: *const c_void, _cb5: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut Ground, *mut Vec3, *mut HSD_GObj, f32)>, _cb6: *const c_void) -> *mut HSD_GObj { panic!("TODO(group2: gr/grmaterial.c) grMaterial_801C8CFC") }
-    unsafe fn todo_grMaterial_801C8DE0(_g: *mut HSD_GObj, _a: f32, _b: f32, _c: f32, _d: f32, _e: f32, _f: f32, _h: f32) { panic!("TODO(group2: gr/grmaterial.c) grMaterial_801C8DE0") }
-    unsafe fn todo_grMaterial_801C8E08(_g: *mut HSD_GObj) { panic!("TODO(group2: gr/grmaterial.c) grMaterial_801C8E08") }
-    unsafe fn todo_grMaterial_801C8CDC(_g: *mut HSD_GObj) { panic!("TODO(group2: gr/grmaterial.c) grMaterial_801C8CDC") }
-    unsafe fn todo_Ground_801C53EC(_a: u32) { panic!("TODO(group2: gr/ground.c) Ground_801C53EC") }
+    unsafe fn todo_grMaterial_801C8DE0(_g: *mut HSD_GObj, _a: f32, _b: f32, _c: f32, _d: f32, _e: f32, _f: f32, _h: f32) { { unsafe { let _ = crate::tu::grmaterial::grMaterial_801C8DE0(_g as _, _a as _, _b as _, _c as _, _d as _, _e as _, _f as _, _h as _); } return; } }
+    unsafe fn todo_grMaterial_801C8E08(_g: *mut HSD_GObj) { { unsafe { let _ = crate::tu::grmaterial::grMaterial_801C8E08(_g as _); } return; } }
+    unsafe fn todo_grMaterial_801C8CDC(_g: *mut HSD_GObj) { { unsafe { let _ = crate::tu::grmaterial::grMaterial_801C8CDC(_g as _); } return; } }
+    unsafe fn todo_Ground_801C53EC(_a: u32) { { unsafe { let _ = crate::tu::ground::Ground_801C53EC(_a as _); } return; } }
     unsafe fn todo_Camera_RequestQuake(_kind: i32, _pos: *mut Vec3) { panic!("TODO(group2: cm/camera.c) Camera_RequestQuake") }
     unsafe fn todo_efSync_Spawn(_id: i32, _g: *mut HSD_GObj, _pos: *mut Vec3) { panic!("TODO(group2: ef/efsync.c (varargs: Vec3*)) efSync_Spawn") }
-    unsafe fn todo_lb_8000B1CC(_j: *mut HSD_JObj, _a: *const Vec3, _out: *mut Vec3) { panic!("TODO(group1: lb/lb_00B0.c) lb_8000B1CC") }
-    unsafe fn todo_grAnime_801C7FF8(_g: *mut HSD_GObj, _a: i32, _b: i32, _c: i32, _d: f32, _e: f32) { panic!("TODO(group2: gr/granime.c) grAnime_801C7FF8") }
+    unsafe fn todo_lb_8000B1CC(_j: *mut HSD_JObj, _a: *const Vec3, _out: *mut Vec3) { { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(_j as _, _a as _, _out as _); } return; } }
+    unsafe fn todo_grAnime_801C7FF8(_g: *mut HSD_GObj, _a: i32, _b: i32, _c: i32, _d: f32, _e: f32) { { unsafe { let _ = crate::tu::granime::grAnime_801C7FF8(_g as _, _a as _, _b as _, _c as _, _d as _, _e as _); } return; } }
     impl Hooks {
         pub const fn todo() -> Hooks {
             Hooks {

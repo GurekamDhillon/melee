@@ -116,35 +116,196 @@ pub mod ext {
     /// The digit table `HSD_SisLib_804D1124` (a `SisLibUnkStruct` chain whose `x08_arr` the TU reads).
     hook!(HSD_SISLIB_804D1124_ARR, HSD_SisLib_804D1124_arr, () -> *const u8);
     // sysdolphin/baselib/sislib.c
-    hook!(HSD_SISLIB_803A5ACC, HSD_SisLib_803A5ACC, (a: i32, b: i32, x: f32, y: f32, w: f32, h: f32, s: f32) -> *mut HSD_Text);
-    hook!(HSD_SISLIB_803A6530, HSD_SisLib_803A6530, (a: i32, b: i32, c: i32) -> *mut u8);
-    hook!(HSD_SISLIB_803A660C, HSD_SisLib_803A660C, (a: i32, b: i32, c: i32));
-    hook!(HSD_SISLIB_803A6368, HSD_SisLib_803A6368, (text: *mut HSD_Text, v: i32));
+    pub static mut HSD_SISLIB_803A5ACC: Option<fn(i32, i32, f32, f32, f32, f32, f32) -> *mut HSD_Text> = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_SisLib_803A5ACC(a: i32, b: i32, x: f32, y: f32, w: f32, h: f32, s: f32) -> *mut HSD_Text {
+                match unsafe { HSD_SISLIB_803A5ACC } {
+                    Some(f) => f(a, b, x, y, w, h, s),
+                    None => { return unsafe { melee_runtime::tu::sislib::HSD_SisLib_803A5ACC(a as _, b as _, x as _, y as _, w as _, h as _, s as _) as _ }; },
+                }
+            }
+    pub static mut HSD_SISLIB_803A6530: Option<fn(i32, i32, i32) -> *mut u8> = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_SisLib_803A6530(a: i32, b: i32, c: i32) -> *mut u8 {
+                match unsafe { HSD_SISLIB_803A6530 } {
+                    Some(f) => f(a, b, c),
+                    None => { return unsafe { melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6530(a as _, b as _, c as _) as _ }; },
+                }
+            }
+    pub static mut HSD_SISLIB_803A660C: Option<fn(i32, i32, i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_SisLib_803A660C(a: i32, b: i32, c: i32)  {
+                match unsafe { HSD_SISLIB_803A660C } {
+                    Some(f) => f(a, b, c),
+                    None => { unsafe { let _ = melee_runtime::tu::hsd_3A64::HSD_SisLib_803A660C(a as _, b as _, c as _); } return; },
+                }
+            }
+    pub static mut HSD_SISLIB_803A6368: Option<fn(*mut HSD_Text, i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_SisLib_803A6368(text: *mut HSD_Text, v: i32)  {
+                match unsafe { HSD_SISLIB_803A6368 } {
+                    Some(f) => f(text, v),
+                    None => { unsafe { let _ = melee_runtime::tu::sislib::HSD_SisLib_803A6368(text as _, v as _); } return; },
+                }
+            }
     hook!(HSD_SISLIB_803A62A0, HSD_SisLib_803A62A0, (a: i32, b: &str, c: &str));
     hook!(HSD_SISLIB_803A611C, HSD_SisLib_803A611C, (a: i32, g: *mut HSD_GObj, b: u16, c: u8, d: u8, e: u8, f: u8, h: u32) -> i32);
     hook!(HSD_SISLIB_803A5CC4, HSD_SisLib_803A5CC4, (text: *mut HSD_Text));
     // lb/lbsnap.c
-    hook!(LBSNAP_8001D40C, lbSnap_8001D40C, (i: i32) -> i32);
-    hook!(LBSNAP_8001D3B0, lbSnap_8001D3B0, (i: i32) -> i32);
-    hook!(LBSNAP_8001D3CC, lbSnap_8001D3CC, (i: i32) -> i32);
-    hook!(LBSNAP_8001D338, lbSnap_8001D338, (i: i32) -> i32);
-    hook!(LBSNAP_8001DC0C, lbSnap_8001DC0C, (img: *mut u8) -> i32);
-    hook!(LBSNAP_8001DF20, lbSnap_8001DF20, () -> i32);
-    hook!(LBSNAP_8001DF6C, lbSnap_8001DF6C, (chan: i32) -> i32);
+    pub static mut LBSNAP_8001D40C: Option<fn(i32) -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn lbSnap_8001D40C(i: i32) -> i32 {
+                match unsafe { LBSNAP_8001D40C } {
+                    Some(f) => f(i),
+                    None => { return unsafe { melee_runtime::tu::lbsnap::lbSnap_8001D40C(i as _) as _ }; },
+                }
+            }
+    pub static mut LBSNAP_8001D3B0: Option<fn(i32) -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn lbSnap_8001D3B0(i: i32) -> i32 {
+                match unsafe { LBSNAP_8001D3B0 } {
+                    Some(f) => f(i),
+                    None => { return unsafe { melee_runtime::tu::lbsnap::lbSnap_8001D3B0(i as _) as _ }; },
+                }
+            }
+    pub static mut LBSNAP_8001D3CC: Option<fn(i32) -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn lbSnap_8001D3CC(i: i32) -> i32 {
+                match unsafe { LBSNAP_8001D3CC } {
+                    Some(f) => f(i),
+                    None => { return unsafe { melee_runtime::tu::lbsnap::lbSnap_8001D3CC(i as _) as _ }; },
+                }
+            }
+    pub static mut LBSNAP_8001D338: Option<fn(i32) -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn lbSnap_8001D338(i: i32) -> i32 {
+                match unsafe { LBSNAP_8001D338 } {
+                    Some(f) => f(i),
+                    None => { return unsafe { melee_runtime::tu::lbsnap::lbSnap_8001D338(i as _) as _ }; },
+                }
+            }
+    pub static mut LBSNAP_8001DC0C: Option<fn(*mut u8) -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn lbSnap_8001DC0C(img: *mut u8) -> i32 {
+                match unsafe { LBSNAP_8001DC0C } {
+                    Some(f) => f(img),
+                    None => { return unsafe { melee_runtime::tu::lbsnap::lbSnap_8001DC0C(img as _) as _ }; },
+                }
+            }
+    pub static mut LBSNAP_8001DF20: Option<fn() -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn lbSnap_8001DF20() -> i32 {
+                match unsafe { LBSNAP_8001DF20 } {
+                    Some(f) => f(),
+                    None => { return unsafe { melee_runtime::tu::lbsnap::lbSnap_8001DF20() as _ }; },
+                }
+            }
+    pub static mut LBSNAP_8001DF6C: Option<fn(i32) -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn lbSnap_8001DF6C(chan: i32) -> i32 {
+                match unsafe { LBSNAP_8001DF6C } {
+                    Some(f) => f(chan),
+                    None => { return unsafe { melee_runtime::tu::lbsnap::lbSnap_8001DF6C(chan as _) as _ }; },
+                }
+            }
     // gm/gm_16AE38.c (the VS scene controller), gm/gmscene.c (pause flags), gm/gm_1A0FEC.c
-    hook!(GMVS_GETSCENECONTROLLER, gmVs_GetSceneController, () -> *mut VsSceneController);
-    hook!(GM_GETDBPAUSEFLAG, gm_GetDbPauseFlag, (bit: i32) -> bool);
-    hook!(GM_CLEARDBPAUSEFLAG, gm_ClearDbPauseFlag, (bit: i32));
-    hook!(GM_SETDBPAUSEFLAG, gm_SetDbPauseFlag, (bit: i32));
-    hook!(GM_801A0FEC, gm_801A0FEC, (a: i32, b: u8));
-    hook!(GM_801A10FC, gm_801A10FC, (a: i32));
+    pub static mut GMVS_GETSCENECONTROLLER: Option<fn() -> *mut VsSceneController> = None;
+            #[allow(non_snake_case)]
+            pub fn gmVs_GetSceneController() -> *mut VsSceneController {
+                match unsafe { GMVS_GETSCENECONTROLLER } {
+                    Some(f) => f(),
+                    None => { return unsafe { crate::tu::gmvs::gmVs_GetSceneController() as _ }; },
+                }
+            }
+    pub static mut GM_GETDBPAUSEFLAG: Option<fn(i32) -> bool> = None;
+            #[allow(non_snake_case)]
+            pub fn gm_GetDbPauseFlag(bit: i32) -> bool {
+                match unsafe { GM_GETDBPAUSEFLAG } {
+                    Some(f) => f(bit),
+                    None => { return unsafe { crate::tu::gmscene::gm_GetDbPauseFlag(bit as _) != 0 }; },
+                }
+            }
+    pub static mut GM_CLEARDBPAUSEFLAG: Option<fn(i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_ClearDbPauseFlag(bit: i32)  {
+                match unsafe { GM_CLEARDBPAUSEFLAG } {
+                    Some(f) => f(bit),
+                    None => { unsafe { let _ = crate::tu::gmscene::gm_ClearDbPauseFlag(bit as _); } return; },
+                }
+            }
+    pub static mut GM_SETDBPAUSEFLAG: Option<fn(i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_SetDbPauseFlag(bit: i32)  {
+                match unsafe { GM_SETDBPAUSEFLAG } {
+                    Some(f) => f(bit),
+                    None => { unsafe { let _ = crate::tu::gmscene::gm_SetDbPauseFlag(bit as _); } return; },
+                }
+            }
+    pub static mut GM_801A0FEC: Option<fn(i32, u8) > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_801A0FEC(a: i32, b: u8)  {
+                match unsafe { GM_801A0FEC } {
+                    Some(f) => f(a, b),
+                    None => { unsafe { let _ = crate::tu::gmpause::gm_801A0FEC(a as _, b as _); } return; },
+                }
+            }
+    pub static mut GM_801A10FC: Option<fn(i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_801A10FC(a: i32)  {
+                match unsafe { GM_801A10FC } {
+                    Some(f) => f(a),
+                    None => { unsafe { let _ = crate::tu::gmpause::gm_801A10FC(a as _); } return; },
+                }
+            }
     // lb/lbaudio_ax.c, if/ifall.c, sysdolphin/baselib/controller.c (rumble), cm/cmsnap.c
-    hook!(LBAUDIOAX_80024E84, lbAudioAx_80024E84, (v: bool));
-    hook!(LBAUDIOAX_80024030, lbAudioAx_80024030, (id: i32));
-    hook!(IFALL_802F33CC, ifAll_802F33CC, ());
-    hook!(IFALL_802F3394, ifAll_802F3394, ());
-    hook!(HSD_PADRUMBLEUNPAUSEALL, HSD_PadRumbleUnpauseAll, ());
-    hook!(HSD_PADRUMBLEPAUSEALL, HSD_PadRumblePauseAll, ());
+    pub static mut LBAUDIOAX_80024E84: Option<fn(bool) > = None;
+            #[allow(non_snake_case)]
+            pub fn lbAudioAx_80024E84(v: bool)  {
+                match unsafe { LBAUDIOAX_80024E84 } {
+                    Some(f) => f(v),
+                    None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80024E84(v as _); } return; },
+                }
+            }
+    pub static mut LBAUDIOAX_80024030: Option<fn(i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn lbAudioAx_80024030(id: i32)  {
+                match unsafe { LBAUDIOAX_80024030 } {
+                    Some(f) => f(id),
+                    None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80024030(id as _); } return; },
+                }
+            }
+    pub static mut IFALL_802F33CC: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn ifAll_802F33CC()  {
+                match unsafe { IFALL_802F33CC } {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = melee_world::tu::ifall::ifAll_802F33CC(); } return; },
+                }
+            }
+    pub static mut IFALL_802F3394: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn ifAll_802F3394()  {
+                match unsafe { IFALL_802F3394 } {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = melee_world::tu::ifall::ifAll_802F3394(); } return; },
+                }
+            }
+    pub static mut HSD_PADRUMBLEUNPAUSEALL: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_PadRumbleUnpauseAll()  {
+                match unsafe { HSD_PADRUMBLEUNPAUSEALL } {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = melee_runtime::tu::rumble::HSD_PadRumbleUnpauseAll(); } return; },
+                }
+            }
+    pub static mut HSD_PADRUMBLEPAUSEALL: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_PadRumblePauseAll()  {
+                match unsafe { HSD_PADRUMBLEPAUSEALL } {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = melee_runtime::tu::rumble::HSD_PadRumblePauseAll(); } return; },
+                }
+            }
     hook!(CMSNAP_800315C8, cmSnap_800315C8, ());
     hook!(CMSNAP_80031618, cmSnap_80031618, () -> *mut c_void);
     hook!(CMSNAP_800316B4, cmSnap_800316B4, ());
@@ -154,7 +315,14 @@ pub mod ext {
     hook!(HSD_JOBJCLEARFLAGSALL, HSD_JObjClearFlagsAll, (j: *mut HSD_JObj, f: u32));
     hook!(HSD_JOBJSETMTXDIRTYSUB, HSD_JObjSetMtxDirtySub, (j: *mut HSD_JObj));
     hook!(HSD_FOREACHANIM, HSD_ForeachAnim, (obj: *mut c_void, ty: u32, mask: u32, func: usize, arg_type: i32, a: i32, b: i32));
-    hook!(LBCARDNEW_COMPLETENEXTTASK, lbCardNew_CompleteNextTask, () -> i32);
+    pub static mut LBCARDNEW_COMPLETENEXTTASK: Option<fn() -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn lbCardNew_CompleteNextTask() -> i32 {
+                match unsafe { LBCARDNEW_COMPLETENEXTTASK } {
+                    Some(f) => f(),
+                    None => { return unsafe { melee_runtime::tu::lbcardnew::lbCardNew_CompleteNextTask() as _ }; },
+                }
+            }
     hook!(LBARCHIVE_LOADARCHIVE, lbArchive_LoadArchive, (name: &str) -> *mut HSD_Archive);
     hook!(HSD_ARCHIVEGETPUBLICADDRESS, HSD_ArchiveGetPublicAddress, (a: *mut HSD_Archive, name: &str) -> *mut c_void);
     hook!(GOBJ_CREATE, GObj_Create, (classifier: u16, p_link: u8, priority: u8) -> *mut HSD_GObj);
@@ -172,7 +340,7 @@ pub mod ext {
 
     /// `HSD_GObj_JObjCallback` (sysdolphin/baselib/gobj.c): the GX link's render callback; address only.
     pub unsafe extern "C" fn HSD_GObj_JObjCallback(_gobj: *mut HSD_GObj, _code: i32) {
-        panic!("TODO(sysdolphin): HSD_GObj_JObjCallback is not ported");
+        { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_JObjCallback(_gobj as _, _code as _); } return; };
     }
     /// `HSD_AObjStopAnim` (sysdolphin/baselib/aobj.c): passed as a callback address only.
     pub fn HSD_AObjStopAnim() {

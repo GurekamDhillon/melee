@@ -22,8 +22,22 @@ pub mod ext {
         };
     }
     hook!(FT_PLAYSFX, ft_PlaySFX, (fp: *mut Fighter, sfx: i32, vol: u8, pan: u8));
-    hook!(IT_802AD478, it_802AD478, (gobj: *mut HSD_GObj, pos: *mut Vec3, bone: i32, facing: f32) -> *mut HSD_GObj);
-    hook!(IT_802AD6B8, it_802AD6B8, (bat: *mut HSD_GObj));
+    pub static mut IT_802AD478: Option<fn(*mut HSD_GObj, *mut Vec3, i32, f32) -> *mut HSD_GObj> = None;
+            #[allow(non_snake_case)]
+            pub fn it_802AD478(gobj: *mut HSD_GObj, pos: *mut Vec3, bone: i32, facing: f32) -> *mut HSD_GObj {
+                match unsafe { IT_802AD478 } {
+                    Some(f) => f(gobj, pos, bone, facing),
+                    None => { return unsafe { melee_items::tu::itnessbat::it_802AD478(gobj as _, pos as _, bone as _, facing as _) as _ }; },
+                }
+            }
+    pub static mut IT_802AD6B8: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802AD6B8(bat: *mut HSD_GObj)  {
+                match unsafe { IT_802AD6B8 } {
+                    Some(f) => f(bat),
+                    None => { unsafe { let _ = melee_items::tu::itnessbat::it_802AD6B8(bat as _); } return; },
+                }
+            }
     hook!(FTCOLL_CREATEREFLECTHIT, ftColl_CreateReflectHit, (gobj: *mut HSD_GObj, desc: *mut ReflectDesc, cb: HSD_GObjEvent));
 }
 

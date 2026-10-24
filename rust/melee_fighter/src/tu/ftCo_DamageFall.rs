@@ -41,25 +41,25 @@ pub mod ext {
     ext_fns! {
         ftCommon_8007D5D4(fp: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
         ftGetParasolStatus(g: G) -> i32 = crate::ftcommon3::ft_get_parasol_status;
-        ftCo_800CF4DC(g: G) = |_| todo!("TODO(port) ftCo_800CF4DC (ftCo_ItemParasolDamageFall.c)");
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
+        ftCo_800CF4DC(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_ItemParasolDamageFall::ftCo_800CF4DC(g as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftCommon_ClampAirDrift(fp: &mut Fighter) = crate::ftcommon::clamp_air_drift;
         ftCommon_8007EBAC(fp: &mut Fighter, a: u32, b: u32) = crate::ftcommon2::ftcommon_8007ebac;
         Replay_UcfVersion(port: i32) -> i32 = |_| todo!("TODO(port) Replay_UcfVersion (pc replay)");
         ftUcf_PadRaw(port: i32, which_y: i32, back: i32) -> i32 = crate::fighter::ftucf_pad_raw;
-        ftCo_800C5240(g: G) -> bool = |_| todo!("TODO(port) ftCo_800C5240 (ftCo_HammerWait.c)");
-        ftCo_SpecialAir_CheckInput(g: G) -> bool = |_| todo!("TODO(port) ftCo_SpecialAir_CheckInput (ftCo_SpecialAir.c)");
-        ftCo_80095328(g: G, out: *mut i32) -> bool = |_, _| todo!("TODO(port) ftCo_80095328 (ftCo_ItemThrow.c)");
-        ftCo_800D7100(g: G) -> bool = |_| todo!("TODO(port) ftCo_800D7100 (ftCo_AirCatch.c)");
-        ftCo_800C3B10(g: G) -> bool = |_| todo!("TODO(port) ftCo_800C3B10 (ftCo_Attack100.c)");
-        ftCo_AttackAir_CheckItemThrowInput(g: G) -> bool = |_| todo!("TODO(port) ftCo_AttackAir_CheckItemThrowInput (ftCo_AttackAir.c)");
-        ftCo_800D705C(g: G) -> bool = |_| todo!("TODO(port) ftCo_800D705C (ftCo_AirCatch.c)");
-        ftCo_800CB870(g: G) -> bool = |_| todo!("TODO(port) ftCo_800CB870 (ftCo_JumpAerial.c)");
+        ftCo_800C5240(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_HammerWait::ftCo_800C5240(g as _) as _ } };
+        ftCo_SpecialAir_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_SpecialAir::ftCo_SpecialAir_CheckInput(g as _) as _ } };
+        ftCo_80095328(g: G, out: *mut i32) -> bool = |g: G, out: *mut i32| -> bool { unsafe { crate::tu::ftCo_ItemThrow::ftCo_80095328(g as _, out as _) as _ } };
+        ftCo_800D7100(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Attack100::ftCo_800D7100(g as _) as _ } };
+        ftCo_800C3B10(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftco_aircatch::ftco_800c3b10(g as _) as _ } };
+        ftCo_AttackAir_CheckItemThrowInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_AttackAir::ftCo_AttackAir_CheckItemThrowInput(g as _) as _ } };
+        ftCo_800D705C(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Attack100::ftCo_800D705C(g as _) as _ } };
+        ftCo_800CB870(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_JumpAerial::ftCo_800CB870(g as _) as _ } };
         ftCo_Fall_Enter(g: G) = crate::hooks::ftco_fall_enter;
-        ftCo_800C5DDC(g: G) -> bool = |_| todo!("TODO(port) ftCo_800C5DDC (ftCo_HammerWait.c)");
-        ftCo_800C5CD4(g: G) -> bool = |_| todo!("TODO(port) ftCo_800C5CD4 (ftCo_HammerWait.c)");
+        ftCo_800C5DDC(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_HammerFall::ftCo_800C5DDC(g as _) as _ } };
+        ftCo_800C5CD4(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_HammerFall::ftCo_800C5CD4(g as _) as _ } };
         ft_8008370C(g: G, cb: fn(G)) = crate::tu::ft_081b::ft_8008370c;
-        ftCo_80090984(g: G) = |_| todo!("TODO(port) ftCo_80090984 (ftCo_DamageIce.c)");
+        ftCo_80090984(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_DamageIce::ftCo_80090984(g as _); } };
     }
 }
 

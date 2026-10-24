@@ -30,16 +30,16 @@ pub mod ext {
     }
     type I = *mut Item_GObj;
     ext_fns! {
-        ftCommon_8007DB58(g: G) = |_| todo!("TODO(port) ftCommon_8007DB58 (ftcommon.c)");
-        ftCo_8009750C(g: G) = |_| todo!("TODO(port) ftCo_8009750C (ftCo_ItemThrow.c)");
-        ftCo_800DD168(g: G) = |_| todo!("TODO(port) ftCo_800DD168 (ftCo_Attack100.c)");
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
-        ftAnim_8006EBA4(g: G) = |_| todo!("TODO(port) ftAnim_8006EBA4 (ftanim.c)");
-        it_802960B8(i: I) -> i32 = |_| todo!("TODO(port) it_802960B8 (ittarucann.c)");
-        it_802960CC(i: I) -> i32 = |_| todo!("TODO(port) it_802960CC (ittarucann.c)");
-        it_80295F38(i: I) = |_| todo!("TODO(port) it_80295F38 (ittarucann.c)");
-        it_8026C334(i: I, pos: *mut Vec3) = |_, _| todo!("TODO(port) it_8026C334 (itlib.c)");
-        itGetOwner(i: I) -> G = |_| todo!("TODO(port) itGetOwner (itlib.c)");
+        ftCommon_8007DB58(g: G) = |g: G| { unsafe { let _ = crate::ftcommon3::ftcommon_8007db58(g as _); } };
+        ftCo_8009750C(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_Lift::ftCo_8009750C(g as _); } };
+        ftCo_800DD168(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_Throw::ftCo_800DD168(g as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
+        it_802960B8(i: I) -> i32 = |i: I| -> i32 { unsafe { melee_items::tu::ittarucann::it_802960B8(i as _) as _ } };
+        it_802960CC(i: I) -> i32 = |i: I| -> i32 { unsafe { melee_items::tu::ittarucann::it_802960CC(i as _) as _ } };
+        it_80295F38(i: I) = |i: I| { unsafe { let _ = melee_items::tu::ittarucann::it_80295F38(i as _); } };
+        it_8026C334(i: I, pos: *mut Vec3) = |i: I, pos: *mut Vec3| { unsafe { let _ = melee_items::tu::it_26B1::it_8026C334(i as _, pos as _); } };
+        itGetOwner(i: I) -> G = |i: I| -> G { unsafe { melee_items::tu::it_26B1::itGetOwner(i as _) as _ } };
         ftCommon_8007D5D4(fp: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
         ftCommon_8007E2FC(g: G) = |g| crate::ftcommon2::ftcommon_8007e2fc(super::fp(g));
         ftCommon_8007E2F4(fp: &mut Fighter, v: i16) = crate::ftcommon2::ftcommon_8007e2f4;
@@ -49,9 +49,9 @@ pub mod ext {
         ftColl_8007B8CC(fp: *mut Fighter, owner: G) = |_, _| todo!("TODO(port) ftColl_8007B8CC (ftcoll.c)");
         ftLib_800866DC(g: G, v: &mut Vec3) = crate::ftlib::ftlib_800866dc;
         mpColl_80043680(c: *mut CollData, v: *mut Vec3) = |_, _| todo!("TODO(port) mpColl_80043680 (mpcoll.c)");
-        lbColl_80008D30(hit: *mut HitCapsule, a: *mut lbColl_80008D30_arg1) = |_, _| todo!("TODO(port) lbColl_80008D30 (lbcollision.c)");
+        lbColl_80008D30(hit: *mut HitCapsule, a: *mut lbColl_80008D30_arg1) = |hit: *mut HitCapsule, a: *mut lbColl_80008D30_arg1| { unsafe { let _ = melee_runtime::tu::lbcollision::lbColl_80008D30(hit as _, a as _); } };
         ftColl_80079EA8(fp: *mut Fighter, hit: *mut HitCapsule, n: u32) -> f32 = |_, _, _| todo!("TODO(port) ftColl_80079EA8 (ftcoll.c)");
-        ftCo_8008DCE0(g: G, a: i32, facing: f32) = |_, _, _| todo!("TODO(port) ftCo_8008DCE0 (ftCo_Damage.c)");
+        ftCo_8008DCE0(g: G, a: i32, facing: f32) = |g: G, a: i32, facing: f32| { unsafe { let _ = crate::tu::ftCo_Damage::ftCo_8008DCE0(g as _, a as _, facing as _); } };
     }
 }
 

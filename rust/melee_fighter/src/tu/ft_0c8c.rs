@@ -18,14 +18,14 @@ pub static mut ft_804D6588: *mut HSD_MObj = core::ptr::null_mut();
 /// Callees outside this TU that have no port yet. Each panics until rewired.
 pub mod ext {
     use crate::types::*;
-    pub fn Fighter_ResetInputData_80068854(_g: *mut HSD_GObj) { todo!("TODO(group3 fighter) Fighter_ResetInputData_80068854") }
+    pub fn Fighter_ResetInputData_80068854(_g: *mut HSD_GObj) { { unsafe { let _ = crate::tu::fighter::Fighter_ResetInputData_80068854(_g as _); } return; } }
     pub fn lbBgFlash_80021C48(_a: u32, _b: u32) { todo!("TODO(group1 lb) lbBgFlash_80021C48") }
     pub fn gm_80167470(_slot: i32, _sub: i32) { todo!("TODO(group6 gm) gm_80167470") }
-    pub fn ftCo_8009750C(_g: *mut HSD_GObj) { todo!("TODO(group3 ftCo) ftCo_8009750C") }
-    pub fn ftCo_CaptureCut_Enter(_g: *mut HSD_GObj) { todo!("TODO(group3 ftCo) ftCo_CaptureCut_Enter") }
-    pub fn ftCo_800DA698(_g: *mut HSD_GObj, _b: bool) { todo!("TODO(group3 ftCo) ftCo_800DA698") }
-    pub fn ftCo_80090780(_g: *mut HSD_GObj) { todo!("TODO(group3 ftCo) ftCo_80090780") }
-    pub fn ftCo_DownSpot_Enter(_g: *mut HSD_GObj) { todo!("TODO(group3 ftCo) ftCo_DownSpot_Enter") }
+    pub fn ftCo_8009750C(_g: *mut HSD_GObj) { { unsafe { let _ = crate::tu::ftCo_Lift::ftCo_8009750C(_g as _); } return; } }
+    pub fn ftCo_CaptureCut_Enter(_g: *mut HSD_GObj) { { unsafe { let _ = crate::tu::ftCo_CaptureCut::ftCo_CaptureCut_Enter(_g as _); } return; } }
+    pub fn ftCo_800DA698(_g: *mut HSD_GObj, _b: bool) { { unsafe { let _ = crate::tu::ftCo_CatchCut::ftCo_800DA698(_g as _, _b as _); } return; } }
+    pub fn ftCo_80090780(_g: *mut HSD_GObj) { { unsafe { let _ = crate::tu::ftCo_DamageFall::ftCo_80090780(_g as _); } return; } }
+    pub fn ftCo_DownSpot_Enter(_g: *mut HSD_GObj) { { unsafe { let _ = crate::tu::ftCo_DownSpot::ftCo_DownSpot_Enter(_g as _); } return; } }
     pub fn ftMh_MS_343_80151484(_g: *mut HSD_GObj) { todo!("TODO(group4 ftMh) ftMh_MS_343_80151484") }
     pub fn ftCh_GrabUnk1_8015ADD0(_g: *mut HSD_GObj) { todo!("TODO(group4 ftCh) ftCh_GrabUnk1_8015ADD0") }
     /// `HSD_JObjGetDObj(HSD_JObjLoadJoint(Fighter_804D6504))`.

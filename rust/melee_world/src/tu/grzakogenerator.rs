@@ -41,22 +41,112 @@ pub mod ext {
         };
     }
     // ---- callee hooks ----
-    hook!(H_HSD_Free, HSD_Free, (a0: *mut core::ffi::c_void));
-    hook!(H_HSD_MemAlloc, HSD_MemAlloc, (a0: i32) -> *mut core::ffi::c_void);
-    hook!(H_lb_8000B1CC, lb_8000B1CC, (a0: *mut melee_types::HSD_JObj, a1: *mut melee_types::Vec, a2: *mut melee_types::Vec));
+    pub static mut H_HSD_Free: Option<unsafe extern "C" fn(*mut core::ffi::c_void) > = None;
+            pub unsafe extern "C" fn HSD_Free(a0: *mut core::ffi::c_void)  {
+                match H_HSD_Free {
+                    Some(f) => f(a0),
+                    None => { unsafe { let _ = melee_runtime::tu::memory::HSD_Free(a0 as _); } return; },
+                }
+            }
+    pub static mut H_HSD_MemAlloc: Option<unsafe extern "C" fn(i32) -> *mut core::ffi::c_void> = None;
+            pub unsafe extern "C" fn HSD_MemAlloc(a0: i32) -> *mut core::ffi::c_void {
+                match H_HSD_MemAlloc {
+                    Some(f) => f(a0),
+                    None => { return unsafe { melee_runtime::tu::memory::HSD_MemAlloc(a0 as _) as _ }; },
+                }
+            }
+    pub static mut H_lb_8000B1CC: Option<unsafe extern "C" fn(*mut melee_types::HSD_JObj, *mut melee_types::Vec, *mut melee_types::Vec) > = None;
+            pub unsafe extern "C" fn lb_8000B1CC(a0: *mut melee_types::HSD_JObj, a1: *mut melee_types::Vec, a2: *mut melee_types::Vec)  {
+                match H_lb_8000B1CC {
+                    Some(f) => f(a0, a1, a2),
+                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(a0 as _, a1 as _, a2 as _); } return; },
+                }
+            }
     hook!(H_HSD_Randf, HSD_Randf, () -> f32);
-    hook!(H_grLib_801C9874, grLib_801C9874, (a0: *mut melee_types::HSD_Generator));
-    hook!(H___assert, __assert, (a0: *const i8, a1: u32, a2: *const i8));
-    hook!(H_Stage_GetBlastZoneRightOffset, Stage_GetBlastZoneRightOffset, () -> f32);
-    hook!(H_Stage_GetBlastZoneLeftOffset, Stage_GetBlastZoneLeftOffset, () -> f32);
-    hook!(H_Stage_GetBlastZoneTopOffset, Stage_GetBlastZoneTopOffset, () -> f32);
-    hook!(H_Stage_GetBlastZoneBottomOffset, Stage_GetBlastZoneBottomOffset, () -> f32);
-    hook!(H_Stage_GetCamBoundsRightOffset, Stage_GetCamBoundsRightOffset, () -> f32);
-    hook!(H_Stage_GetCamBoundsLeftOffset, Stage_GetCamBoundsLeftOffset, () -> f32);
-    hook!(H_Stage_GetCamBoundsTopOffset, Stage_GetCamBoundsTopOffset, () -> f32);
-    hook!(H_Stage_GetCamBoundsBottomOffset, Stage_GetCamBoundsBottomOffset, () -> f32);
-    hook!(H_Ground_801C2D24, Ground_801C2D24, (a0: i32, a1: *mut melee_types::Vec) -> i32);
-    hook!(H_Ground_801C58E0, Ground_801C58E0, (a0: i32, a1: i32) -> *mut melee_types::HSD_GObj);
+    pub static mut H_grLib_801C9874: Option<unsafe extern "C" fn(*mut melee_types::HSD_Generator) > = None;
+            pub unsafe extern "C" fn grLib_801C9874(a0: *mut melee_types::HSD_Generator)  {
+                match H_grLib_801C9874 {
+                    Some(f) => f(a0),
+                    None => { unsafe { let _ = crate::tu::grlib::grLib_801C9874(a0 as _); } return; },
+                }
+            }
+    pub static mut H___assert: Option<unsafe extern "C" fn(*const i8, u32, *const i8) > = None;
+            pub unsafe extern "C" fn __assert(a0: *const i8, a1: u32, a2: *const i8)  {
+                match H___assert {
+                    Some(f) => f(a0, a1, a2),
+                    None => { unsafe { let _ = melee_runtime::tu::debug::__assert(a0 as _, a1 as _, a2 as _); } return; },
+                }
+            }
+    pub static mut H_Stage_GetBlastZoneRightOffset: Option<unsafe extern "C" fn() -> f32> = None;
+            pub unsafe extern "C" fn Stage_GetBlastZoneRightOffset() -> f32 {
+                match H_Stage_GetBlastZoneRightOffset {
+                    Some(f) => f(),
+                    None => { return unsafe { crate::tu::stage::Stage_GetBlastZoneRightOffset() as _ }; },
+                }
+            }
+    pub static mut H_Stage_GetBlastZoneLeftOffset: Option<unsafe extern "C" fn() -> f32> = None;
+            pub unsafe extern "C" fn Stage_GetBlastZoneLeftOffset() -> f32 {
+                match H_Stage_GetBlastZoneLeftOffset {
+                    Some(f) => f(),
+                    None => { return unsafe { crate::tu::stage::Stage_GetBlastZoneLeftOffset() as _ }; },
+                }
+            }
+    pub static mut H_Stage_GetBlastZoneTopOffset: Option<unsafe extern "C" fn() -> f32> = None;
+            pub unsafe extern "C" fn Stage_GetBlastZoneTopOffset() -> f32 {
+                match H_Stage_GetBlastZoneTopOffset {
+                    Some(f) => f(),
+                    None => { return unsafe { crate::tu::stage::Stage_GetBlastZoneTopOffset() as _ }; },
+                }
+            }
+    pub static mut H_Stage_GetBlastZoneBottomOffset: Option<unsafe extern "C" fn() -> f32> = None;
+            pub unsafe extern "C" fn Stage_GetBlastZoneBottomOffset() -> f32 {
+                match H_Stage_GetBlastZoneBottomOffset {
+                    Some(f) => f(),
+                    None => { return unsafe { crate::tu::stage::Stage_GetBlastZoneBottomOffset() as _ }; },
+                }
+            }
+    pub static mut H_Stage_GetCamBoundsRightOffset: Option<unsafe extern "C" fn() -> f32> = None;
+            pub unsafe extern "C" fn Stage_GetCamBoundsRightOffset() -> f32 {
+                match H_Stage_GetCamBoundsRightOffset {
+                    Some(f) => f(),
+                    None => { return unsafe { crate::tu::stage::Stage_GetCamBoundsRightOffset() as _ }; },
+                }
+            }
+    pub static mut H_Stage_GetCamBoundsLeftOffset: Option<unsafe extern "C" fn() -> f32> = None;
+            pub unsafe extern "C" fn Stage_GetCamBoundsLeftOffset() -> f32 {
+                match H_Stage_GetCamBoundsLeftOffset {
+                    Some(f) => f(),
+                    None => { return unsafe { crate::tu::stage::Stage_GetCamBoundsLeftOffset() as _ }; },
+                }
+            }
+    pub static mut H_Stage_GetCamBoundsTopOffset: Option<unsafe extern "C" fn() -> f32> = None;
+            pub unsafe extern "C" fn Stage_GetCamBoundsTopOffset() -> f32 {
+                match H_Stage_GetCamBoundsTopOffset {
+                    Some(f) => f(),
+                    None => { return unsafe { crate::tu::stage::Stage_GetCamBoundsTopOffset() as _ }; },
+                }
+            }
+    pub static mut H_Stage_GetCamBoundsBottomOffset: Option<unsafe extern "C" fn() -> f32> = None;
+            pub unsafe extern "C" fn Stage_GetCamBoundsBottomOffset() -> f32 {
+                match H_Stage_GetCamBoundsBottomOffset {
+                    Some(f) => f(),
+                    None => { return unsafe { crate::tu::stage::Stage_GetCamBoundsBottomOffset() as _ }; },
+                }
+            }
+    pub static mut H_Ground_801C2D24: Option<unsafe extern "C" fn(i32, *mut melee_types::Vec) -> i32> = None;
+            pub unsafe extern "C" fn Ground_801C2D24(a0: i32, a1: *mut melee_types::Vec) -> i32 {
+                match H_Ground_801C2D24 {
+                    Some(f) => f(a0, a1),
+                    None => { return unsafe { crate::tu::ground::Ground_801C2D24(a0 as _, a1 as _) as _ }; },
+                }
+            }
+    pub static mut H_Ground_801C58E0: Option<unsafe extern "C" fn(i32, i32) -> *mut melee_types::HSD_GObj> = None;
+            pub unsafe extern "C" fn Ground_801C58E0(a0: i32, a1: i32) -> *mut melee_types::HSD_GObj {
+                match H_Ground_801C58E0 {
+                    Some(f) => f(a0, a1),
+                    None => { return unsafe { crate::tu::ground::Ground_801C58E0(a0 as _, a1 as _) as _ }; },
+                }
+            }
     hook!(H_it_8027B5B0, it_8027B5B0, (a0: i32, a1: *mut melee_types::Vec, a2: *mut melee_types::HSD_JObj, a3: *mut melee_types::Vec, a4: i32) -> *mut melee_types::HSD_GObj);
     hook!(H_it_802EA9FC, it_802EA9FC, (a0: *mut melee_types::Vec, a1: i32) -> *mut melee_types::HSD_GObj);
     hook!(H_it_802DD7F0, it_802DD7F0, (a0: i32, a1: *mut melee_types::Vec, a2: *mut melee_types::Vec, a3: i32) -> *mut melee_types::HSD_GObj);

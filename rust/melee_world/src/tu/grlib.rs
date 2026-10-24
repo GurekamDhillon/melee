@@ -18,30 +18,70 @@ pub mod ext {
     pub use crate::tu::grinl::ext::stage_info;
     hook!(CAMERA_SETQUAKEOFFSET, Camera_SetQuakeOffset, (x: f32, y: f32));
     hook!(GOBJ_CREATE, GObj_Create, (classifier: u16, p_link: u8, priority: u8) -> *mut HSD_GObj);
-    hook!(GROUND_801C0498, Ground_801C0498, () -> f32);
-    hook!(GROUND_801C2D24, Ground_801C2D24, (a0: enum_t, a1: *mut Vec3) -> i32);
-    hook!(HSD_AOBJSETFLAGS, HSD_AObjSetFlags, (aobj: *mut HSD_AObj, flags: u32));
+    pub static mut GROUND_801C0498: Option<fn() -> f32> = None;
+    #[allow(non_snake_case)]
+    pub fn Ground_801C0498() -> f32 {
+        match unsafe { GROUND_801C0498 } { Some(f) => f(), None => { return unsafe { crate::tu::ground::Ground_801C0498() as _ }; } }
+    }
+    pub static mut GROUND_801C2D24: Option<fn(enum_t, *mut Vec3) -> i32> = None;
+    #[allow(non_snake_case)]
+    pub fn Ground_801C2D24(a0: enum_t, a1: *mut Vec3) -> i32 {
+        match unsafe { GROUND_801C2D24 } { Some(f) => f(a0, a1), None => { return unsafe { crate::tu::ground::Ground_801C2D24(a0 as _, a1 as _) as _ }; } }
+    }
+    pub static mut HSD_AOBJSETFLAGS: Option<fn(*mut HSD_AObj, u32)> = None;
+    #[allow(non_snake_case)]
+    pub fn HSD_AObjSetFlags(aobj: *mut HSD_AObj, flags: u32) {
+        match unsafe { HSD_AOBJSETFLAGS } { Some(f) => f(aobj, flags), None => { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjSetFlags(aobj as _, flags as _); } return; } }
+    }
     hook!(HSD_FOREACHANIM, HSD_ForeachAnim, (obj: *mut c_void, ty: HSD_Type, mask: HSD_TypeMask, func: *mut c_void, arg_type: AObj_Arg_Type));
     hook!(HSD_GOBJFREE, HSD_GObjFree, (a0: *mut HSD_GObj));
     hook!(HSD_GOBJOBJECT_80390A70, HSD_GObjObject_80390A70, (gobj: *mut HSD_GObj, kind: u8, obj: *mut c_void));
     hook!(HSD_GOBJ_SETUPPROC, HSD_GObj_SetupProc, (a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8) -> *mut HSD_GObjProc);
     hook!(HSD_JOBJADDANIMALL, HSD_JObjAddAnimAll, (a0: *mut HSD_JObj, a1: *mut HSD_AnimJoint, a2: *mut HSD_MatAnimJoint, a3: *mut HSD_ShapeAnimJoint));
     hook!(HSD_JOBJANIMALL, HSD_JObjAnimAll, (a0: *mut HSD_JObj));
-    hook!(HSD_JOBJLOADJOINT, HSD_JObjLoadJoint, (a0: *mut HSD_Joint) -> *mut HSD_JObj);
+    pub static mut HSD_JOBJLOADJOINT: Option<fn(*mut HSD_Joint) -> *mut HSD_JObj> = None;
+    #[allow(non_snake_case)]
+    pub fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj {
+        match unsafe { HSD_JOBJLOADJOINT } { Some(f) => f(a0), None => { return unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(a0 as _) as _ }; } }
+    }
     hook!(HSD_JOBJREQANIMALL, HSD_JObjReqAnimAll, (a0: *mut HSD_JObj, a1: f32));
-    hook!(GRBIGBLUE_801EF7D8, grBigBlue_801EF7D8, (a0: *mut Vec3));
-    hook!(GRICEMT_801FA728, grIceMt_801FA728, (a0: *mut Vec3));
-    hook!(GRRCRUISE_80201918, grRCruise_80201918, (a0: *mut Vec3));
+    pub static mut GRBIGBLUE_801EF7D8: Option<fn(*mut Vec3)> = None;
+    #[allow(non_snake_case)]
+    pub fn grBigBlue_801EF7D8(a0: *mut Vec3) {
+        match unsafe { GRBIGBLUE_801EF7D8 } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::grbigblue::grBigBlue_801EF7D8(a0 as _); } return; } }
+    }
+    pub static mut GRICEMT_801FA728: Option<fn(*mut Vec3)> = None;
+    #[allow(non_snake_case)]
+    pub fn grIceMt_801FA728(a0: *mut Vec3) {
+        match unsafe { GRICEMT_801FA728 } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::gricemt::grIceMt_801FA728(a0 as _); } return; } }
+    }
+    pub static mut GRRCRUISE_80201918: Option<fn(*mut Vec3)> = None;
+    #[allow(non_snake_case)]
+    pub fn grRCruise_80201918(a0: *mut Vec3) {
+        match unsafe { GRRCRUISE_80201918 } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::grrcruise::grRCruise_80201918(a0 as _); } return; } }
+    }
     hook!(HSD_8039D4DC, hsd_8039D4DC, (a0: *mut HSD_Generator));
     hook!(HSD_8039D5DC, hsd_8039D5DC, (a0: *mut HSD_JObj));
     hook!(HSD_8039EFAC, hsd_8039EFAC, (linkNo: s32, bank: s32, gfx_id: s32, a3: *mut HSD_JObj) -> *mut HSD_Generator);
     hook!(HSD_8039F05C, hsd_8039F05C, (linkNo: s32, bank: s32, idx: s32) -> *mut HSD_Generator);
     hook!(HSD_8039F6CC, hsd_8039F6CC, (linkNo: s32, bank: s32, gfx_id: s32, a3: *mut HSD_JObj) -> *mut HSD_Generator);
     hook!(ITGETKIND, itGetKind, (gobj: *mut HSD_GObj) -> ItemKind);
-    hook!(LB_8000FD18, lb_8000FD18, (a0: *mut DynamicsDesc));
-    hook!(LB_8000FD48, lb_8000FD48, (a0: *mut HSD_JObj, a1: *mut DynamicsDesc, a2: u32));
+    pub static mut LB_8000FD18: Option<fn(*mut DynamicsDesc)> = None;
+    #[allow(non_snake_case)]
+    pub fn lb_8000FD18(a0: *mut DynamicsDesc) {
+        match unsafe { LB_8000FD18 } { Some(f) => f(a0), None => { unsafe { let _ = melee_runtime::tu::lb_00F9::lb_8000FD18(a0 as _); } return; } }
+    }
+    pub static mut LB_8000FD48: Option<fn(*mut HSD_JObj, *mut DynamicsDesc, u32)> = None;
+    #[allow(non_snake_case)]
+    pub fn lb_8000FD48(a0: *mut HSD_JObj, a1: *mut DynamicsDesc, a2: u32) {
+        match unsafe { LB_8000FD48 } { Some(f) => f(a0, a1, a2), None => { unsafe { let _ = melee_runtime::tu::lb_00F9::lb_8000FD48(a0 as _, a1 as _, a2 as _); } return; } }
+    }
     hook!(LB_8001044C, lb_8001044C, (a0: *mut DynamicsDesc, a1: *mut c_void, a2: i32, pos_y: f32, a4: i32, part: Fighter_Part, a6: i32, a7: i32));
-    hook!(LB_80011710, lb_80011710, (a0: *mut DynamicsDesc, a1: *mut DynamicsDesc));
+    pub static mut LB_80011710: Option<fn(*mut DynamicsDesc, *mut DynamicsDesc)> = None;
+    #[allow(non_snake_case)]
+    pub fn lb_80011710(a0: *mut DynamicsDesc, a1: *mut DynamicsDesc) {
+        match unsafe { LB_80011710 } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_runtime::tu::lb_00F9::lb_80011710(a0 as _, a1 as _); } return; } }
+    }
     hook!(PSADDGENERATORAPPSRT_BEGIN, psAddGeneratorAppSRT_begin, (a0: *mut HSD_Generator, a1: s32) -> *mut HSD_psAppSRT);
     // Externs that are data, not code: `HSD_GObj** HSD_GObjPLinkHead` (the C global is a pointer to
     // the array of per-p_link list heads) and `HSD_Generator* hsd_804D78FC` (generator list head).

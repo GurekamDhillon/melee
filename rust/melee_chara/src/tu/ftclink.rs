@@ -51,14 +51,56 @@ pub mod ext {
         };
     }
     hook!(LBANIM_8001E8F8, lbAnim_8001E8F8, (tree: *mut FigaTree) -> f32);
-    hook!(FTDATA_80085E50, ftData_80085E50, (fp: *mut Fighter, msid: i32) -> *mut FigaTree);
-    hook!(FTLK_INIT_ONLOADFORCLINK, ftLk_Init_OnLoadForCLink, (fp: *mut Fighter));
-    hook!(IT_8026B3F8, it_8026B3F8, (article: *mut c_void, kind: i32));
+    pub static mut FTDATA_80085E50: Option<fn(*mut Fighter, i32) -> *mut FigaTree> = None;
+            #[allow(non_snake_case)]
+            pub fn ftData_80085E50(fp: *mut Fighter, msid: i32) -> *mut FigaTree {
+                match unsafe { FTDATA_80085E50 } {
+                    Some(f) => f(fp, msid),
+                    None => { return unsafe { melee_fighter::tu::ftdata::ftData_80085E50(fp as _, msid as _) as _ }; },
+                }
+            }
+    pub static mut FTLK_INIT_ONLOADFORCLINK: Option<fn(*mut Fighter) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftLk_Init_OnLoadForCLink(fp: *mut Fighter)  {
+                match unsafe { FTLK_INIT_ONLOADFORCLINK } {
+                    Some(f) => f(fp),
+                    None => { unsafe { let _ = crate::tu::ftlink::ftLk_Init_OnLoadForCLink(fp as _); } return; },
+                }
+            }
+    pub static mut IT_8026B3F8: Option<fn(*mut c_void, i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_8026B3F8(article: *mut c_void, kind: i32)  {
+                match unsafe { IT_8026B3F8 } {
+                    Some(f) => f(article, kind),
+                    None => { unsafe { let _ = melee_items::tu::it_26B1::it_8026B3F8(article as _, kind as _); } return; },
+                }
+            }
     hook!(FTPARTS_800753D4, ftParts_800753D4, (fp: *mut Fighter, x0: *mut Fighter_804D6540_x0_t, item: *mut c_void));
-    hook!(FTLK_INIT_LOADSPECIALATTRS, ftLk_Init_LoadSpecialAttrs, (gobj: *mut HSD_GObj));
-    hook!(FTCO_80092ED8, ftCo_80092ED8, (a: i32, b: f32) -> f32);
+    pub static mut FTLK_INIT_LOADSPECIALATTRS: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftLk_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj)  {
+                match unsafe { FTLK_INIT_LOADSPECIALATTRS } {
+                    Some(f) => f(gobj),
+                    None => { unsafe { let _ = crate::tu::ftlink::ftLk_Init_LoadSpecialAttrs(gobj as _); } return; },
+                }
+            }
+    pub static mut FTCO_80092ED8: Option<fn(i32, f32) -> f32> = None;
+            #[allow(non_snake_case)]
+            pub fn ftCo_80092ED8(a: i32, b: f32) -> f32 {
+                match unsafe { FTCO_80092ED8 } {
+                    Some(f) => f(a, b),
+                    None => { return unsafe { melee_fighter::tu::ftCo_Guard::ftCo_80092ED8(a as _, b as _) as _ }; },
+                }
+            }
     hook!(FTCOLL_8007B1B8, ftColl_8007B1B8, (gobj: *mut HSD_GObj, shield: *mut c_void, cb: HSD_GObjEvent));
-    hook!(FTCO_800DEAE8, ftCo_800DEAE8, (gobj: *mut HSD_GObj, msid0: i32, msid1: i32));
+    pub static mut FTCO_800DEAE8: Option<fn(*mut HSD_GObj, i32, i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftCo_800DEAE8(gobj: *mut HSD_GObj, msid0: i32, msid1: i32)  {
+                match unsafe { FTCO_800DEAE8 } {
+                    Some(f) => f(gobj, msid0, msid1),
+                    None => { unsafe { let _ = melee_fighter::tu::ftCo_AppealS::ftCo_800DEAE8(gobj as _, msid0 as _, msid1 as _); } return; },
+                }
+            }
     hook!(IT_802C8C34, it_802C8C34, (item: *mut Item_GObj));
 }
 

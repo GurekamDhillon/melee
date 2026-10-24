@@ -1198,36 +1198,225 @@ pub mod ext {
             }
         };
     }
-    hook!(LBTIME_GETTIMEINSECONDS, lbTime_GetTimeInSeconds, () -> u32);
-    hook!(LB_8001B6E0, lb_8001B6E0, (i: i32) -> i32);
-    hook!(TOY_80311960, Toy_80311960, ());
-    hook!(TOY_803124BC, Toy_803124BC, ());
-    hook!(TOY_80305058, Toy_80305058, (a: i32, b: i32, c: i32, d: f32) -> i16);
-    hook!(TOY_SETUNLOCKSTATE, Toy_SetUnlockState, (a: i32, b: i32));
-    hook!(TOY_803048C0, Toy_803048C0, (a: i32) -> i32);
-    hook!(GM_INCREMENTPOWERCOUNT, gm_IncrementPowerCount, ());
-    hook!(GM_801623FC, gm_801623FC, (a: i32));
-    hook!(GM_80164430, gm_80164430, (a: u32) -> i32);
-    hook!(GM_80164504, gm_80164504, (a: u32));
-    hook!(GM_80164F18, gm_80164F18, ());
-    hook!(GM_8016468C, gm_8016468C, ());
-    hook!(GM_8017297C, gm_8017297C, ());
-    hook!(GM_801741FC, gm_801741FC, ());
-    hook!(GM_8016505C, gm_8016505C, ());
-    hook!(GM_801647D0, gm_801647D0, ());
-    hook!(GM_801729EC, gm_801729EC, ());
-    hook!(GM_80174238, gm_80174238, ());
-    hook!(GM_80164600, gm_80164600, () -> bool);
-    hook!(GM_80164ABC, gm_80164ABC, () -> bool);
+    pub static mut LBTIME_GETTIMEINSECONDS: Option<fn() -> u32> = None;
+            #[allow(non_snake_case)]
+            pub fn lbTime_GetTimeInSeconds() -> u32 {
+                match unsafe { LBTIME_GETTIMEINSECONDS } {
+                    Some(f) => unsafe { f() },
+                    None => { return unsafe { melee_runtime::tu::lbtime::lbTime_GetTimeInSeconds() as _ }; },
+                }
+            }
+    pub static mut LB_8001B6E0: Option<fn(i32) -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn lb_8001B6E0(i: i32) -> i32 {
+                match unsafe { LB_8001B6E0 } {
+                    Some(f) => unsafe { f(i) },
+                    None => { return unsafe { melee_runtime::tu::lbcardnew::lb_8001B6E0(i as _) as _ }; },
+                }
+            }
+    pub static mut TOY_80311960: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn Toy_80311960()  {
+                match unsafe { TOY_80311960 } {
+                    Some(f) => unsafe { f() },
+                    None => { unsafe { let _ = melee_items::tu::toy::Toy_80311960(); } return; },
+                }
+            }
+    pub static mut TOY_803124BC: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn Toy_803124BC()  {
+                match unsafe { TOY_803124BC } {
+                    Some(f) => unsafe { f() },
+                    None => { unsafe { let _ = melee_items::tu::toy::Toy_803124BC(); } return; },
+                }
+            }
+    pub static mut TOY_80305058: Option<fn(i32, i32, i32, f32) -> i16> = None;
+            #[allow(non_snake_case)]
+            pub fn Toy_80305058(a: i32, b: i32, c: i32, d: f32) -> i16 {
+                match unsafe { TOY_80305058 } {
+                    Some(f) => unsafe { f(a, b, c, d) },
+                    None => { return unsafe { melee_items::tu::toy::Toy_80305058(a as _, b as _, c as _, d as _) as _ }; },
+                }
+            }
+    pub static mut TOY_SETUNLOCKSTATE: Option<fn(i32, i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn Toy_SetUnlockState(a: i32, b: i32)  {
+                match unsafe { TOY_SETUNLOCKSTATE } {
+                    Some(f) => unsafe { f(a, b) },
+                    None => { unsafe { let _ = melee_items::tu::toy::Toy_SetUnlockState(a as _, b as _); } return; },
+                }
+            }
+    pub static mut TOY_803048C0: Option<fn(i32) -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn Toy_803048C0(a: i32) -> i32 {
+                match unsafe { TOY_803048C0 } {
+                    Some(f) => unsafe { f(a) },
+                    None => { return unsafe { melee_items::tu::toy::Toy_803048C0(a as _) as _ }; },
+                }
+            }
+    pub static mut GM_INCREMENTPOWERCOUNT: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_IncrementPowerCount()  {
+                match unsafe { GM_INCREMENTPOWERCOUNT } {
+                    Some(f) => unsafe { f() },
+                    None => { unsafe { let _ = crate::tu::gm_1601::gm_IncrementPowerCount(); } return; },
+                }
+            }
+    pub static mut GM_801623FC: Option<fn(i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_801623FC(a: i32)  {
+                match unsafe { GM_801623FC } {
+                    Some(f) => unsafe { f(a) },
+                    None => { unsafe { let _ = crate::tu::gm_1601::gm_801623FC(a as _); } return; },
+                }
+            }
+    pub static mut GM_80164430: Option<fn(u32) -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn gm_80164430(a: u32) -> i32 {
+                match unsafe { GM_80164430 } {
+                    Some(f) => unsafe { f(a) },
+                    None => { return unsafe { crate::tu::gm_1601::gm_80164430(a as _) as _ }; },
+                }
+            }
+    pub static mut GM_80164504: Option<fn(u32) > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_80164504(a: u32)  {
+                match unsafe { GM_80164504 } {
+                    Some(f) => unsafe { f(a) },
+                    None => { unsafe { let _ = crate::tu::gm_1601::gm_80164504(a as _); } return; },
+                }
+            }
+    pub static mut GM_80164F18: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_80164F18()  {
+                match unsafe { GM_80164F18 } {
+                    Some(f) => unsafe { f() },
+                    None => { unsafe { let _ = crate::tu::gm_1601::gm_80164F18(); } return; },
+                }
+            }
+    pub static mut GM_8016468C: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_8016468C()  {
+                match unsafe { GM_8016468C } {
+                    Some(f) => unsafe { f() },
+                    None => { unsafe { let _ = crate::tu::gm_1601::gm_8016468C(); } return; },
+                }
+            }
+    pub static mut GM_8017297C: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_8017297C()  {
+                match unsafe { GM_8017297C } {
+                    Some(f) => unsafe { f() },
+                    None => { unsafe { let _ = crate::tu::gm_16f1::gm_8017297C(); } return; },
+                }
+            }
+    pub static mut GM_801741FC: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_801741FC()  {
+                match unsafe { GM_801741FC } {
+                    Some(f) => unsafe { f() },
+                    None => { unsafe { let _ = crate::tu::gm_1736::gm_801741FC(); } return; },
+                }
+            }
+    pub static mut GM_8016505C: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_8016505C()  {
+                match unsafe { GM_8016505C } {
+                    Some(f) => unsafe { f() },
+                    None => { unsafe { let _ = crate::tu::gm_1601::gm_8016505C(); } return; },
+                }
+            }
+    pub static mut GM_801647D0: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_801647D0()  {
+                match unsafe { GM_801647D0 } {
+                    Some(f) => unsafe { f() },
+                    None => { unsafe { let _ = crate::tu::gm_1601::gm_801647D0(); } return; },
+                }
+            }
+    pub static mut GM_801729EC: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_801729EC()  {
+                match unsafe { GM_801729EC } {
+                    Some(f) => unsafe { f() },
+                    None => { unsafe { let _ = crate::tu::gm_16f1::gm_801729EC(); } return; },
+                }
+            }
+    pub static mut GM_80174238: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_80174238()  {
+                match unsafe { GM_80174238 } {
+                    Some(f) => unsafe { f() },
+                    None => { unsafe { let _ = crate::tu::gm_1736::gm_80174238(); } return; },
+                }
+            }
+    pub static mut GM_80164600: Option<fn() -> bool> = None;
+            #[allow(non_snake_case)]
+            pub fn gm_80164600() -> bool {
+                match unsafe { GM_80164600 } {
+                    Some(f) => unsafe { f() },
+                    None => { return unsafe { crate::tu::gm_1601::gm_80164600() as _ }; },
+                }
+            }
+    pub static mut GM_80164ABC: Option<fn() -> bool> = None;
+            #[allow(non_snake_case)]
+            pub fn gm_80164ABC() -> bool {
+                match unsafe { GM_80164ABC } {
+                    Some(f) => unsafe { f() },
+                    None => { return unsafe { crate::tu::gm_1601::gm_80164ABC() as _ }; },
+                }
+            }
     hook!(HSD_RANDI, HSD_Randi, (max: i32) -> i32);
-    hook!(MNNAME_8023749C, mnName_8023749C, (idx: i32) -> *const i8);
-    hook!(LBLANG_GETLANGUAGESETTING, lbLang_GetLanguageSetting, () -> i32);
-    hook!(LBLANG_SETSAVEDLANGUAGE, lbLang_SetSavedLanguage, (v: i32));
-    hook!(LBLANG_SETLANGUAGESETTING, lbLang_SetLanguageSetting, (v: i32));
-    hook!(LBAUDIOAX_80028690, lbAudioAx_80028690, ());
+    pub static mut MNNAME_8023749C: Option<fn(i32) -> *const i8> = None;
+            #[allow(non_snake_case)]
+            pub fn mnName_8023749C(idx: i32) -> *const i8 {
+                match unsafe { MNNAME_8023749C } {
+                    Some(f) => unsafe { f(idx) },
+                    None => { return unsafe { crate::tu::mnname::mnName_8023749C(idx as _) as _ }; },
+                }
+            }
+    pub static mut LBLANG_GETLANGUAGESETTING: Option<fn() -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn lbLang_GetLanguageSetting() -> i32 {
+                match unsafe { LBLANG_GETLANGUAGESETTING } {
+                    Some(f) => unsafe { f() },
+                    None => { return unsafe { melee_runtime::tu::lblanguage::lbLang_GetLanguageSetting() as _ }; },
+                }
+            }
+    pub static mut LBLANG_SETSAVEDLANGUAGE: Option<fn(i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn lbLang_SetSavedLanguage(v: i32)  {
+                match unsafe { LBLANG_SETSAVEDLANGUAGE } {
+                    Some(f) => unsafe { f(v) },
+                    None => { unsafe { let _ = melee_runtime::tu::lblanguage::lbLang_SetSavedLanguage(v as _); } return; },
+                }
+            }
+    pub static mut LBLANG_SETLANGUAGESETTING: Option<fn(i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn lbLang_SetLanguageSetting(v: i32)  {
+                match unsafe { LBLANG_SETLANGUAGESETTING } {
+                    Some(f) => unsafe { f(v) },
+                    None => { unsafe { let _ = melee_runtime::tu::lblanguage::lbLang_SetLanguageSetting(v as _); } return; },
+                }
+            }
+    pub static mut LBAUDIOAX_80028690: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn lbAudioAx_80028690()  {
+                match unsafe { LBAUDIOAX_80028690 } {
+                    Some(f) => unsafe { f() },
+                    None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80028690(); } return; },
+                }
+            }
     hook!(DVDCONVERTPATHTOENTRYNUM, DVDConvertPathToEntrynum, (path: &str) -> i32);
     hook!(OSGETRESETCODE, OSGetResetCode, () -> u32);
-    hook!(HSD_VISETCONFIGURE, HSD_VISetConfigure, (mode: *mut c_void));
+    pub static mut HSD_VISETCONFIGURE: Option<fn(*mut c_void) > = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_VISetConfigure(mode: *mut c_void)  {
+                match unsafe { HSD_VISETCONFIGURE } {
+                    Some(f) => unsafe { f(mode) },
+                    None => { unsafe { let _ = melee_runtime::tu::video::HSD_VISetConfigure(mode as _); } return; },
+                }
+            }
     hook!(GXNTSC480PROG, GXNtsc480Prog, () -> *mut c_void);
     hook!(GXNTSC480INTDF, GXNtsc480IntDf, () -> *mut c_void);
     hook!(GXNTSC480INT, GXNtsc480Int, () -> *mut c_void);

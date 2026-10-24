@@ -14,50 +14,50 @@ pub mod ext {
     use core::ffi::c_void;
     use melee_types::*;
     ext_fns! {
-        gm_GetGameModeStateEnterData(state: *mut GameModeState) -> *mut c_void = |_| todo!("TODO(port) gm_GetGameModeStateEnterData (gm_1A3F.c)");
-        gm_GetGameModeStateExitData(state: *mut GameModeState) -> *mut c_void = |_| todo!("TODO(port) gm_GetGameModeStateExitData (gm_1A3F.c)");
-        lbCardNew_AllocWorkArea() = || todo!("TODO(port) lbCardNew_AllocWorkArea (lbcardnew.c)");
-        lbCardGame_LoadArchive(arg: i32) = |_| todo!("TODO(port) lbCardGame_LoadArchive (lbcardgame.c)");
-        lbCardGame_SaveChanges() = || todo!("TODO(port) lbCardGame_SaveChanges (lbcardgame.c)");
+        gm_GetGameModeStateEnterData(state: *mut GameModeState) -> *mut c_void = |state: *mut GameModeState| -> *mut c_void { unsafe { crate::tu::gm_1A3F::gm_GetGameModeStateEnterData(state as _) as _ } };
+        gm_GetGameModeStateExitData(state: *mut GameModeState) -> *mut c_void = |state: *mut GameModeState| -> *mut c_void { unsafe { crate::tu::gm_1A3F::gm_GetGameModeStateExitData(state as _) as _ } };
+        lbCardNew_AllocWorkArea() = || { unsafe { let _ = melee_runtime::tu::lbcardnew::lbCardNew_AllocWorkArea(); } };
+        lbCardGame_LoadArchive(arg: i32) = |arg: i32| { unsafe { let _ = melee_runtime::tu::lbcardgame::lbCardGame_LoadArchive(arg as _); } };
+        lbCardGame_SaveChanges() = || { unsafe { let _ = melee_runtime::tu::lbcardgame::lbCardGame_SaveChanges(); } };
         gm_801B06B0(css: *mut CSSData, match_type: u8, ckind: i8, stocks: i8, color: i8, nametag: u8, cpu_level: u8, slot: u8)
             = |_, _, _, _, _, _, _, _| todo!("TODO(port) gm_801B06B0 (gm_1B03.c)");
         gm_801B07B4(css: *mut CSSData, ckind: i8, stocks: i8, color: i8, nametag: u8, level: u8, slot: u8)
             = |css, ckind, stocks, color, nametag, level, slot| crate::gm_ptr::gm_801B07B4(unsafe { &mut *css }, ckind, stocks, color, nametag, level, slot);
-        lbDvd_SetupVsPreloadCache() = || todo!("TODO(port) lbDvd_SetupVsPreloadCache (lbdvd.c)");
+        lbDvd_SetupVsPreloadCache() = || { unsafe { let _ = melee_runtime::tu::lbdvd::lbDvd_SetupVsPreloadCache(); } };
         lbTime_8000AF74(a: u32, b: i32) -> u32 = crate::lb::lbTime_8000AF74;
-        gmFrontend_TrainingSelect(state: *mut GameModeState, sss: i32) = |_, _| todo!("TODO(port) gmFrontend_TrainingSelect (gmfrontend.c)");
+        gmFrontend_TrainingSelect(state: *mut GameModeState, sss: i32) = |state: *mut GameModeState, sss: i32| { unsafe { let _ = crate::tu::gmfrontend::gmFrontend_TrainingSelect(state as _, sss as _); } };
         gm_801B0730(css: *mut CSSData, ckind: *mut i8, stocks: *mut u8, color: *mut u8, nametag: *mut u8, cpu_level: *mut u8)
             = |css, ckind, stocks, color, nametag, level| crate::gm_ptr::gm_801B0730(unsafe { &*css }, unsafe { ckind.as_mut() }, unsafe { stocks.as_mut() }, unsafe { color.as_mut() }, unsafe { nametag.as_mut() }, unsafe { level.as_mut() });
         gm_801B07E8(css: *mut CSSData, ckind: *mut i8, stocks: *mut i8, color: *mut i8, arg4: *mut i8, level: *mut u8)
             = |css, ckind, stocks, color, arg4, level| crate::gm_ptr::gm_801B07E8(unsafe { &*css }, unsafe { ckind.as_mut() }, unsafe { stocks.as_mut() }, unsafe { color.as_mut() }, unsafe { arg4.as_mut() }, unsafe { level.as_mut() });
-        gm_ChangeGameModeAfterCurrentScene(pending_mode: i32) = |_| todo!("TODO(port) gm_ChangeGameModeAfterCurrentScene (gm_1A3F.c)");
-        gm_SetupAllPlayerDefaults(players: *mut PlayerInitData) = |_| todo!("TODO(port) gm_SetupAllPlayerDefaults (gm_1B03.c)");
-        gm_GetNumCostumesForCKind(ckind: u8) -> u8 = |_| todo!("TODO(port) gm_GetNumCostumesForCKind (gm_1B03.c)");
-        lbDvd_GetPreloadCacheScene() -> *mut PreloadedGameModeState = || todo!("TODO(port) lbDvd_GetPreloadCacheScene (lbdvd.c)");
-        lbDvd_80018254() = || todo!("TODO(port) lbDvd_80018254 (lbdvd.c)");
-        lbAudioAx_80026E84(ckind: CharacterKind) -> u64 = |_| todo!("TODO(port) lbAudioAx_80026E84 (lbaudio_ax.c)");
-        lbAudioAx_80026F2C(arg: u32) = |_| todo!("TODO(port) lbAudioAx_80026F2C (lbaudio_ax.c)");
-        lbAudioAx_8002702C(flags: u32, mask: u64) = |_, _| todo!("TODO(port) lbAudioAx_8002702C (lbaudio_ax.c)");
-        lbAudioAx_80027168() = || todo!("TODO(port) lbAudioAx_80027168 (lbaudio_ax.c)");
-        gm_SetNextGameModeStateId(id: u8) = |_| todo!("TODO(port) gm_SetNextGameModeStateId (gm_1A3F.c)");
-        lbAudioAx_80026EBC(stkind: StKind) -> u64 = |_| todo!("TODO(port) lbAudioAx_80026EBC (lbaudio_ax.c)");
-        gm_SetupRulesDefaults(rules: *mut StartMeleeRules) = |_| todo!("TODO(port) gm_SetupRulesDefaults (gm_1B03.c)");
+        gm_ChangeGameModeAfterCurrentScene(pending_mode: i32) = |pending_mode: i32| { unsafe { let _ = crate::tu::gm_1A3F::gm_ChangeGameModeAfterCurrentScene(pending_mode as _); } };
+        gm_SetupAllPlayerDefaults(players: *mut PlayerInitData) = |players: *mut PlayerInitData| { unsafe { let _ = crate::tu::gm_1601::gm_SetupAllPlayerDefaults(players as _); } };
+        gm_GetNumCostumesForCKind(ckind: u8) -> u8 = |ckind: u8| -> u8 { unsafe { crate::tu::gm_1601::gm_GetNumCostumesForCKind(ckind as _) as _ } };
+        lbDvd_GetPreloadCacheScene() -> *mut PreloadedGameModeState = || -> *mut PreloadedGameModeState { unsafe { melee_runtime::tu::lbdvd::lbDvd_GetPreloadCacheScene() as _ } };
+        lbDvd_80018254() = || { unsafe { let _ = melee_runtime::tu::lbdvd::lbDvd_80018254(); } };
+        lbAudioAx_80026E84(ckind: CharacterKind) -> u64 = |ckind: CharacterKind| -> u64 { unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80026E84(ckind as _) as _ } };
+        lbAudioAx_80026F2C(arg: u32) = |arg: u32| { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80026F2C(arg as _); } };
+        lbAudioAx_8002702C(flags: u32, mask: u64) = |flags: u32, mask: u64| { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_8002702C(flags as _, mask as _); } };
+        lbAudioAx_80027168() = || { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80027168(); } };
+        gm_SetNextGameModeStateId(id: u8) = |id: u8| { unsafe { let _ = crate::tu::gm_1A3F::gm_SetNextGameModeStateId(id as _); } };
+        lbAudioAx_80026EBC(stkind: StKind) -> u64 = |stkind: StKind| -> u64 { unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80026EBC(stkind as _) as _ } };
+        gm_SetupRulesDefaults(rules: *mut StartMeleeRules) = |rules: *mut StartMeleeRules| { unsafe { let _ = crate::tu::gm_1601::gm_SetupRulesDefaults(rules as _); } };
         gm_SetupHumanPlayer(p: *mut PlayerInitData, ckind: u8, color: u8, stocks: u8, slot: u8)
             = |p, ckind, color, stocks, slot| crate::gm_r4::gm_SetupHumanPlayer(unsafe { &mut *p }, ckind, color, stocks, slot);
         gm_SetupCpuPlayer(p: *mut PlayerInitData, ckind: u8, color: u8, stocks: u8, slot: u8)
             = |p, ckind, color, stocks, slot| crate::gm_r4::gm_SetupCpuPlayer(unsafe { &mut *p }, ckind, color, stocks, slot);
-        gm_LoadRumbleEnabled(data: *mut StartMeleeData) = |_| todo!("TODO(port) gm_LoadRumbleEnabled (gm_1B03.c)");
-        gm_80189CDC(data: *mut StartMeleeData) = |_| todo!("TODO(port) gm_80189CDC (gm_1884.c)");
-        gm_80162968(seconds: u32) -> i32 = |_| todo!("TODO(port) gm_80162968 (gm_1601.c)");
-        gm_8016247C(arg: i32) -> i32 = |_| todo!("TODO(port) gm_8016247C (gm_1601.c)");
-        gm_80163298(ckind: i8, arg: u16) -> bool = |_, _| todo!("TODO(port) gm_80163298 (gm_1601.c)");
-        gm_80188454(idx: i32) -> i32 = |_| todo!("TODO(port) gm_80188454 (gm_1884.c)");
-        gm_80173BC4(ckind: i8) = |_| todo!("TODO(port) gm_80173BC4 (gm_16F1.c)");
-        gm_80173EEC() = || todo!("TODO(port) gm_80173EEC (gm_16F1.c)");
-        gm_80173754(a: u8, b: u8) -> bool = |_, _| todo!("TODO(port) gm_80173754 (gm_16F1.c)");
-        lbAudioAx_80024030(arg: i32) = |_| todo!("TODO(port) lbAudioAx_80024030 (lbaudio_ax.c)");
-        gm_InitVsMode(vs: *mut VsModeData) = |_| todo!("TODO(port) gm_InitVsMode (gm_1B03.c)");
-        gm_801677F0() -> u8 = || todo!("TODO(port) gm_801677F0 (gm_1601.c)");
+        gm_LoadRumbleEnabled(data: *mut StartMeleeData) = |data: *mut StartMeleeData| { unsafe { let _ = crate::tu::gmvs::gm_LoadRumbleEnabled(data as _); } };
+        gm_80189CDC(data: *mut StartMeleeData) = |data: *mut StartMeleeData| { unsafe { let _ = crate::tu::gm_1884::gm_80189CDC(data as _); } };
+        gm_80162968(seconds: u32) -> i32 = |seconds: u32| -> i32 { unsafe { crate::tu::gm_1601::gm_80162968(seconds as _) as _ } };
+        gm_8016247C(arg: i32) -> i32 = |arg: i32| -> i32 { unsafe { crate::tu::gm_1601::gm_8016247C(arg as _) as _ } };
+        gm_80163298(ckind: i8, arg: u16) -> bool = |ckind: i8, arg: u16| -> bool { unsafe { crate::tu::gm_1601::gm_80163298(ckind as _, arg as _) as _ } };
+        gm_80188454(idx: i32) -> i32 = |idx: i32| -> i32 { unsafe { crate::tu::gm_1884::gm_80188454(idx as _) as _ } };
+        gm_80173BC4(ckind: i8) = |ckind: i8| { unsafe { let _ = crate::tu::gm_1736::gm_80173BC4(ckind as _); } };
+        gm_80173EEC() = || { unsafe { let _ = crate::tu::gm_1736::gm_80173EEC(); } };
+        gm_80173754(a: u8, b: u8) -> bool = |a: u8, b: u8| -> bool { unsafe { crate::tu::gm_1736::gm_80173754(a as _, b as _) != 0 } };
+        lbAudioAx_80024030(arg: i32) = |arg: i32| { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80024030(arg as _); } };
+        gm_InitVsMode(vs: *mut VsModeData) = |vs: *mut VsModeData| { unsafe { let _ = crate::tu::gm_1601::gm_InitVsMode(vs as _); } };
+        gm_801677F0() -> u8 = || -> u8 { unsafe { crate::tu::gm_1601::gm_801677F0() as _ } };
         SceneLaunch_SeedVs(vs: *mut VsModeData, dummy_fallback: bool) -> bool = |_, _| todo!("TODO(port) SceneLaunch_SeedVs (gmscenelaunch.h, TARGET_PC)");
     }
 }

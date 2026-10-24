@@ -45,11 +45,11 @@ pub mod ext {
         ftCommon_8007D7FC(f: &mut Fighter) = crate::ftcommon3::ftcommon_8007d7fc;
         ftCommon_UnlockECB(f: &mut Fighter) = crate::ftcommon2::unlock_ecb;
         ftCommon_GrabMash(f: &mut Fighter, v: f32) -> bool = crate::ftcommon2::grab_mash;
-        it_802A7840(item: G) = |_| todo!("TODO(port) it_802A7840 (itlinkhookshot.c)");
-        it_802BAA94(item: G) = |_| todo!("TODO(port) it_802BAA94 (itsamusgrapple.c)");
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
-        ftCo_800DA698(g: G, b: bool) = |_, _| todo!("TODO(port) ftCo_800DA698 (ftCo_CatchCut.c)");
-        ftAnim_SetAnimRate(g: G, rate: f32) = |_, _| todo!("TODO(port) ftAnim_SetAnimRate (ftanim.c)");
+        it_802A7840(item: G) = |item: G| { unsafe { let _ = melee_items::tu::itlinkhookshot::it_802A7840(item as _); } };
+        it_802BAA94(item: G) = |item: G| { unsafe { let _ = melee_items::tu::itsamusgrapple::it_802BAA94(item as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        ftCo_800DA698(g: G, b: bool) = |g: G, b: bool| { unsafe { let _ = crate::tu::ftCo_CatchCut::ftCo_800DA698(g as _, b as _); } };
+        ftAnim_SetAnimRate(g: G, rate: f32) = |g: G, rate: f32| { unsafe { let _ = crate::tu::ftanim::ftAnim_SetAnimRate(g as _, rate as _); } };
         ft_80083C00(g: G, cb: HSD_GObjEvent) = |_, _| todo!("TODO(port) ft_80083C00 (ft_081B.c)");
         ft_8008403C(g: G, cb: HSD_GObjEvent) = |_, _| todo!("TODO(port) ft_8008403C (ft_081B.c)");
     }

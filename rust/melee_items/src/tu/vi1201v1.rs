@@ -112,7 +112,7 @@ pub mod ext {
     }
     /// Variadic in C: `(filename, (void** out, const char* name)..., NULL)`; `args` follows `filename`.
     pub unsafe fn lbArchive_LoadSymbols(filename: *const i8, args: &[*mut c_void]) -> *mut HSD_Archive {
-        panic!("TODO: lbArchive_LoadSymbols is not ported")
+        { return unsafe { melee_runtime::tu::lbarchive::lbArchive_LoadSymbols(filename as _, args as _) as _ }; }
     }
     pub static mut HSD_GObj_JObjKind: u8 = 0;
     pub static mut HSD_GObj_CameraKind: u8 = 0;

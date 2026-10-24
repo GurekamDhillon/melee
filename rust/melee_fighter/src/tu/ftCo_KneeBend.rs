@@ -27,13 +27,13 @@ pub mod ext {
         };
     }
     ext_fns! {
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ft_800D2D0C(g: G) -> bool = crate::tu::ft_0d27::ft_800d2d0c;
-        ftCo_ItemScrew_Enter(g: G) = |_| todo!("TODO(port) ftCo_ItemScrew_Enter (ftCo_ItemScrew.c)");
-        ftCo_Jump_Enter(g: G) = |_| todo!("TODO(port) ftCo_Jump_Enter (ftCo_Jump.c)");
+        ftCo_ItemScrew_Enter(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_ItemScrew::ftCo_ItemScrew_Enter(g as _); } };
+        ftCo_Jump_Enter(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_Jump::ftCo_Jump_Enter(g as _); } };
         ftCo_Attack100_CheckInput(g: G) -> bool = crate::tu::ftCo_Attack100::ftCo_Attack100_CheckInput;
-        ftCo_Catch_CheckInput(g: G) -> bool = |_| todo!("TODO(port) ftCo_Catch_CheckInput (ftCo_Catch.c)");
+        ftCo_Catch_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Catch::ftCo_Catch_CheckInput(g as _) as _ } };
         ftCo_AttackHi4_CheckInputNoD0(g: G) -> bool = crate::tu::ftCo_AttackHi4::ftCo_AttackHi4_CheckInputNoD0;
         ft_80084F3C(g: G) = crate::ft084e::ft_80084f3c;
         ft_80083F88(g: G) = crate::tu::ft_081b::ft_80083f88;

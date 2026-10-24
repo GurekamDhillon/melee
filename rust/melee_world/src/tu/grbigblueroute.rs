@@ -29,32 +29,120 @@ pub mod ext {
     hook!(CAMERA_80030AE0, Camera_80030AE0, (a0: i32));
     hook!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, (a0: CmQuakeKind, a1: *mut Vec));
     hook!(GOBJ_SETUPGXLINK, GObj_SetupGXLink, (gobj: *mut HSD_GObj, render_cb: GObj_RenderFunc, gx_link: u8, priority: u32));
-    hook!(GROUND_801C0498, Ground_801C0498, () -> f32);
-    hook!(GROUND_801C10B8, Ground_801C10B8, (a0: *mut HSD_GObj, a1: HSD_GObjEvent));
-    hook!(GROUND_801C247C, Ground_801C247C, (a0: s32, a1: s32) -> *mut HSD_Spline);
-    hook!(GROUND_801C2CF4, Ground_801C2CF4, (a0: s32) -> *mut HSD_JObj);
-    hook!(GROUND_801C2D24, Ground_801C2D24, (a0: enum_t, a1: *mut Vec) -> i32);
-    hook!(GROUND_801C38BC, Ground_801C38BC, (x: f32, y: f32));
-    hook!(GROUND_801C39C0, Ground_801C39C0, ());
-    hook!(GROUND_801C3BB4, Ground_801C3BB4, ());
-    hook!(GROUND_801C3D44, Ground_801C3D44, (a0: *mut c_void, a1: f32, a2: f32) -> s32);
-    hook!(GROUND_801C3FA4, Ground_801C3FA4, (gobj: *mut HSD_GObj, depth: i32) -> *mut HSD_JObj);
-    hook!(GROUND_801C4A08, Ground_801C4A08, (gobj: *mut HSD_GObj));
-    hook!(GROUND_801C4E70, Ground_801C4E70, (a0: *mut HSD_JObj, a1: *mut HSD_JObj, a2: *mut HSD_JObj, a3: *mut HSD_JObj, a4: *mut HSD_JObj, a5: *mut HSD_JObj));
-    hook!(GROUND_801C53EC, Ground_801C53EC, (a0: u32));
-    hook!(GROUND_801C5840, Ground_801C5840, () -> s32);
-    hook!(GROUND_801C5940, Ground_801C5940, () -> i32);
-    hook!(GROUND_801C5AEC, Ground_801C5AEC, (v: *mut Vec, a1: *mut Vec, a2: *mut Vec, a3: *mut Vec));
-    hook!(GROUND_GETMAPGOBJ, Ground_GetMapGObj, (map_id: i32) -> *mut HSD_GObj);
-    hook!(GROUND_GETP1FIGHTER, Ground_GetP1Fighter, () -> *mut HSD_GObj);
-    hook!(GROUND_GETSTAGEGOBJ, Ground_GetStageGObj, (a0: i32) -> *mut HSD_GObj);
-    hook!(GROUND_GETYAKUMONOPARAM, Ground_GetYakumonoParam, () -> *mut c_void);
-    hook!(HSD_FREE, HSD_Free, (ptr: *mut c_void));
+    pub static mut GROUND_801C0498: Option<fn() -> f32> = None;
+    #[allow(non_snake_case)]
+    pub fn Ground_801C0498() -> f32 {
+        match unsafe { GROUND_801C0498 } { Some(f) => f(), None => { return unsafe { crate::tu::ground::Ground_801C0498() as _ }; } }
+    }
+    pub static mut GROUND_801C10B8: Option<fn(*mut HSD_GObj, HSD_GObjEvent)> = None;
+    #[allow(non_snake_case)]
+    pub fn Ground_801C10B8(a0: *mut HSD_GObj, a1: HSD_GObjEvent) {
+        match unsafe { GROUND_801C10B8 } { Some(f) => f(a0, a1), None => { unsafe { let _ = crate::tu::ground::Ground_801C10B8(a0 as _, a1 as _); } return; } }
+    }
+    pub static mut GROUND_801C247C: Option<fn(s32, s32) -> *mut HSD_Spline> = None;
+    #[allow(non_snake_case)]
+    pub fn Ground_801C247C(a0: s32, a1: s32) -> *mut HSD_Spline {
+        match unsafe { GROUND_801C247C } { Some(f) => f(a0, a1), None => { return unsafe { crate::tu::ground::Ground_801C247C(a0 as _, a1 as _) as _ }; } }
+    }
+    pub static mut GROUND_801C2CF4: Option<fn(s32) -> *mut HSD_JObj> = None;
+    #[allow(non_snake_case)]
+    pub fn Ground_801C2CF4(a0: s32) -> *mut HSD_JObj {
+        match unsafe { GROUND_801C2CF4 } { Some(f) => f(a0), None => { return unsafe { crate::tu::ground::Ground_801C2CF4(a0 as _) as _ }; } }
+    }
+    pub static mut GROUND_801C2D24: Option<fn(enum_t, *mut Vec) -> i32> = None;
+    #[allow(non_snake_case)]
+    pub fn Ground_801C2D24(a0: enum_t, a1: *mut Vec) -> i32 {
+        match unsafe { GROUND_801C2D24 } { Some(f) => f(a0, a1), None => { return unsafe { crate::tu::ground::Ground_801C2D24(a0 as _, a1 as _) as _ }; } }
+    }
+    pub static mut GROUND_801C38BC: Option<fn(f32, f32)> = None;
+    #[allow(non_snake_case)]
+    pub fn Ground_801C38BC(x: f32, y: f32) {
+        match unsafe { GROUND_801C38BC } { Some(f) => f(x, y), None => { unsafe { let _ = crate::tu::ground::Ground_801C38BC(x as _, y as _); } return; } }
+    }
+    pub static mut GROUND_801C39C0: Option<fn()> = None;
+    #[allow(non_snake_case)]
+    pub fn Ground_801C39C0() {
+        match unsafe { GROUND_801C39C0 } { Some(f) => f(), None => { unsafe { let _ = crate::tu::ground::Ground_801C39C0(); } return; } }
+    }
+    pub static mut GROUND_801C3BB4: Option<fn()> = None;
+    #[allow(non_snake_case)]
+    pub fn Ground_801C3BB4() {
+        match unsafe { GROUND_801C3BB4 } { Some(f) => f(), None => { unsafe { let _ = crate::tu::ground::Ground_801C3BB4(); } return; } }
+    }
+    pub static mut GROUND_801C3D44: Option<fn(*mut c_void, f32, f32) -> s32> = None;
+    #[allow(non_snake_case)]
+    pub fn Ground_801C3D44(a0: *mut c_void, a1: f32, a2: f32) -> s32 {
+        match unsafe { GROUND_801C3D44 } { Some(f) => f(a0, a1, a2), None => { return unsafe { crate::tu::ground::Ground_801C3D44(a0 as _, a1 as _, a2 as _) as _ }; } }
+    }
+    pub static mut GROUND_801C3FA4: Option<fn(*mut HSD_GObj, i32) -> *mut HSD_JObj> = None;
+    #[allow(non_snake_case)]
+    pub fn Ground_801C3FA4(gobj: *mut HSD_GObj, depth: i32) -> *mut HSD_JObj {
+        match unsafe { GROUND_801C3FA4 } { Some(f) => f(gobj, depth), None => { return unsafe { crate::tu::ground::Ground_801C3FA4(gobj as _, depth as _) as _ }; } }
+    }
+    pub static mut GROUND_801C4A08: Option<fn(*mut HSD_GObj)> = None;
+    #[allow(non_snake_case)]
+    pub fn Ground_801C4A08(gobj: *mut HSD_GObj) {
+        match unsafe { GROUND_801C4A08 } { Some(f) => f(gobj), None => { unsafe { let _ = crate::tu::ground::Ground_801C4A08(gobj as _); } return; } }
+    }
+    pub static mut GROUND_801C4E70: Option<fn(*mut HSD_JObj, *mut HSD_JObj, *mut HSD_JObj, *mut HSD_JObj, *mut HSD_JObj, *mut HSD_JObj)> = None;
+    #[allow(non_snake_case)]
+    pub fn Ground_801C4E70(a0: *mut HSD_JObj, a1: *mut HSD_JObj, a2: *mut HSD_JObj, a3: *mut HSD_JObj, a4: *mut HSD_JObj, a5: *mut HSD_JObj) {
+        match unsafe { GROUND_801C4E70 } { Some(f) => f(a0, a1, a2, a3, a4, a5), None => { unsafe { let _ = crate::tu::ground::Ground_801C4E70(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _); } return; } }
+    }
+    pub static mut GROUND_801C53EC: Option<fn(u32)> = None;
+    #[allow(non_snake_case)]
+    pub fn Ground_801C53EC(a0: u32) {
+        match unsafe { GROUND_801C53EC } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::ground::Ground_801C53EC(a0 as _); } return; } }
+    }
+    pub static mut GROUND_801C5840: Option<fn() -> s32> = None;
+    #[allow(non_snake_case)]
+    pub fn Ground_801C5840() -> s32 {
+        match unsafe { GROUND_801C5840 } { Some(f) => f(), None => { return unsafe { crate::tu::ground::Ground_801C5840() as _ }; } }
+    }
+    pub static mut GROUND_801C5940: Option<fn() -> i32> = None;
+    #[allow(non_snake_case)]
+    pub fn Ground_801C5940() -> i32 {
+        match unsafe { GROUND_801C5940 } { Some(f) => f(), None => { return unsafe { crate::tu::ground::Ground_801C5940() as _ }; } }
+    }
+    pub static mut GROUND_801C5AEC: Option<fn(*mut Vec, *mut Vec, *mut Vec, *mut Vec)> = None;
+    #[allow(non_snake_case)]
+    pub fn Ground_801C5AEC(v: *mut Vec, a1: *mut Vec, a2: *mut Vec, a3: *mut Vec) {
+        match unsafe { GROUND_801C5AEC } { Some(f) => f(v, a1, a2, a3), None => { unsafe { let _ = crate::tu::ground::Ground_801C5AEC(v as _, a1 as _, a2 as _, a3 as _); } return; } }
+    }
+    pub static mut GROUND_GETMAPGOBJ: Option<fn(i32) -> *mut HSD_GObj> = None;
+    #[allow(non_snake_case)]
+    pub fn Ground_GetMapGObj(map_id: i32) -> *mut HSD_GObj {
+        match unsafe { GROUND_GETMAPGOBJ } { Some(f) => f(map_id), None => { return unsafe { crate::tu::ground::Ground_GetMapGObj(map_id as _) as _ }; } }
+    }
+    pub static mut GROUND_GETP1FIGHTER: Option<fn() -> *mut HSD_GObj> = None;
+    #[allow(non_snake_case)]
+    pub fn Ground_GetP1Fighter() -> *mut HSD_GObj {
+        match unsafe { GROUND_GETP1FIGHTER } { Some(f) => f(), None => { return unsafe { crate::tu::ground::Ground_GetP1Fighter() as _ }; } }
+    }
+    pub static mut GROUND_GETSTAGEGOBJ: Option<fn(i32) -> *mut HSD_GObj> = None;
+    #[allow(non_snake_case)]
+    pub fn Ground_GetStageGObj(a0: i32) -> *mut HSD_GObj {
+        match unsafe { GROUND_GETSTAGEGOBJ } { Some(f) => f(a0), None => { return unsafe { crate::tu::ground::Ground_GetStageGObj(a0 as _) as _ }; } }
+    }
+    pub static mut GROUND_GETYAKUMONOPARAM: Option<fn() -> *mut c_void> = None;
+    #[allow(non_snake_case)]
+    pub fn Ground_GetYakumonoParam() -> *mut c_void {
+        match unsafe { GROUND_GETYAKUMONOPARAM } { Some(f) => f(), None => { return unsafe { crate::tu::ground::Ground_GetYakumonoParam() as _ }; } }
+    }
+    pub static mut HSD_FREE: Option<fn(*mut c_void)> = None;
+    #[allow(non_snake_case)]
+    pub fn HSD_Free(ptr: *mut c_void) {
+        match unsafe { HSD_FREE } { Some(f) => f(ptr), None => { unsafe { let _ = melee_runtime::tu::memory::HSD_Free(ptr as _); } return; } }
+    }
     hook!(HSD_GOBJ_SETUPPROC, HSD_GObj_SetupProc, (a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8) -> *mut HSD_GObjProc);
     hook!(HSD_JOBJCLEARFLAGSALL, HSD_JObjClearFlagsAll, (a0: *mut HSD_JObj, flags: u32));
     hook!(HSD_JOBJREPARENT, HSD_JObjReparent, (jobj: *mut HSD_JObj, parent: *mut HSD_JObj) -> *mut HSD_JObj);
     hook!(HSD_JOBJSETFLAGSALL, HSD_JObjSetFlagsAll, (a0: *mut HSD_JObj, flags: u32));
-    hook!(HSD_MEMALLOC, HSD_MemAlloc, (size: ssize_t) -> *mut c_void);
+    pub static mut HSD_MEMALLOC: Option<fn(ssize_t) -> *mut c_void> = None;
+    #[allow(non_snake_case)]
+    pub fn HSD_MemAlloc(size: ssize_t) -> *mut c_void {
+        match unsafe { HSD_MEMALLOC } { Some(f) => f(size), None => { return unsafe { melee_runtime::tu::memory::HSD_MemAlloc(size as _) as _ }; } }
+    }
     hook!(HSD_RANDF, HSD_Randf, () -> f32);
     hook!(HSD_RANDI, HSD_Randi, (max_val: s32) -> s32);
     hook!(OSREPORT, OSReport, (a0: *const i8, va: &[usize]));
@@ -63,30 +151,106 @@ pub mod ext {
     hook!(FTLIB_80086644, ftLib_80086644, (a0: *mut HSD_GObj, a1: *mut Vec));
     hook!(FTLIB_80086EC0, ftLib_80086EC0, (a0: *mut HSD_GObj) -> i32);
     hook!(GM_8016B3D8, gm_8016B3D8, () -> i32);
-    hook!(GRANIME_801C77FC, grAnime_801C77FC, (a0: *mut HSD_GObj, a1: i32, a2: u32));
-    hook!(GRANIME_801C8138, grAnime_801C8138, (a0: *mut HSD_GObj, a1: enum_t, a2: i32));
-    hook!(GRDATFILES_801C6330, grDatFiles_801C6330, (a0: s32) -> *mut UnkArchiveStruct);
-    hook!(GRFZEROCAR_801CAFBC, grFZeroCar_801CAFBC, (a0: *mut HSD_GObj, a1: *mut c_void, a2: s32, a3: s32));
-    hook!(GRMATERIAL_801C8CFC, grMaterial_801C8CFC, (a0: i32, a1: i32, a2: *mut Ground, a3: *mut HSD_JObj, arg4: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut Ground)>, arg5: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut Ground, *mut Vec, *mut HSD_GObj, f32)>, arg6: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut Ground, *mut HSD_GObj)>) -> *mut HSD_GObj);
-    hook!(GRMATERIAL_801C8E28, grMaterial_801C8E28, (a0: *mut HSD_GObj));
-    hook!(GRZAKOGENERATOR_801CAE04, grZakoGenerator_801CAE04, (a0: *mut grZakoGenerator_SpawnDesc) -> *mut HSD_GObj);
-    hook!(GRZAKOGENERATOR_801CAEB0, grZakoGenerator_801CAEB0, (a0: i32, a1: i32));
+    pub static mut GRANIME_801C77FC: Option<fn(*mut HSD_GObj, i32, u32)> = None;
+    #[allow(non_snake_case)]
+    pub fn grAnime_801C77FC(a0: *mut HSD_GObj, a1: i32, a2: u32) {
+        match unsafe { GRANIME_801C77FC } { Some(f) => f(a0, a1, a2), None => { unsafe { let _ = crate::tu::granime::grAnime_801C77FC(a0 as _, a1 as _, a2 as _); } return; } }
+    }
+    pub static mut GRANIME_801C8138: Option<fn(*mut HSD_GObj, enum_t, i32)> = None;
+    #[allow(non_snake_case)]
+    pub fn grAnime_801C8138(a0: *mut HSD_GObj, a1: enum_t, a2: i32) {
+        match unsafe { GRANIME_801C8138 } { Some(f) => f(a0, a1, a2), None => { unsafe { let _ = crate::tu::granime::grAnime_801C8138(a0 as _, a1 as _, a2 as _); } return; } }
+    }
+    pub static mut GRDATFILES_801C6330: Option<fn(s32) -> *mut UnkArchiveStruct> = None;
+    #[allow(non_snake_case)]
+    pub fn grDatFiles_801C6330(a0: s32) -> *mut UnkArchiveStruct {
+        match unsafe { GRDATFILES_801C6330 } { Some(f) => f(a0), None => { return unsafe { crate::tu::grdatfiles::grDatFiles_801C6330(a0 as _) as _ }; } }
+    }
+    pub static mut GRFZEROCAR_801CAFBC: Option<fn(*mut HSD_GObj, *mut c_void, s32, s32)> = None;
+    #[allow(non_snake_case)]
+    pub fn grFZeroCar_801CAFBC(a0: *mut HSD_GObj, a1: *mut c_void, a2: s32, a3: s32) {
+        match unsafe { GRFZEROCAR_801CAFBC } { Some(f) => f(a0, a1, a2, a3), None => { unsafe { let _ = crate::tu::grfzerocar::grFZeroCar_801CAFBC(a0 as _, a1 as _, a2 as _, a3 as _); } return; } }
+    }
+    pub static mut GRMATERIAL_801C8CFC: Option<fn(i32, i32, *mut Ground, *mut HSD_JObj, Option<unsafe extern "C" fn(*mut HSD_GObj, *mut Ground)>, Option<unsafe extern "C" fn(*mut HSD_GObj, *mut Ground, *mut Vec, *mut HSD_GObj, f32)>, Option<unsafe extern "C" fn(*mut HSD_GObj, *mut Ground, *mut HSD_GObj)>) -> *mut HSD_GObj> = None;
+    #[allow(non_snake_case)]
+    pub fn grMaterial_801C8CFC(a0: i32, a1: i32, a2: *mut Ground, a3: *mut HSD_JObj, arg4: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut Ground)>, arg5: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut Ground, *mut Vec, *mut HSD_GObj, f32)>, arg6: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut Ground, *mut HSD_GObj)>) -> *mut HSD_GObj {
+        match unsafe { GRMATERIAL_801C8CFC } { Some(f) => f(a0, a1, a2, a3, arg4, arg5, arg6), None => { return unsafe { crate::tu::grmaterial::grMaterial_801C8CFC(a0 as _, a1 as _, a2 as _, a3 as _, arg4 as _, arg5 as _, arg6 as _) as _ }; } }
+    }
+    pub static mut GRMATERIAL_801C8E28: Option<fn(*mut HSD_GObj)> = None;
+    #[allow(non_snake_case)]
+    pub fn grMaterial_801C8E28(a0: *mut HSD_GObj) {
+        match unsafe { GRMATERIAL_801C8E28 } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::grmaterial::grMaterial_801C8E28(a0 as _); } return; } }
+    }
+    pub static mut GRZAKOGENERATOR_801CAE04: Option<fn(*mut grZakoGenerator_SpawnDesc) -> *mut HSD_GObj> = None;
+    #[allow(non_snake_case)]
+    pub fn grZakoGenerator_801CAE04(a0: *mut grZakoGenerator_SpawnDesc) -> *mut HSD_GObj {
+        match unsafe { GRZAKOGENERATOR_801CAE04 } { Some(f) => f(a0), None => { return unsafe { crate::tu::grzakogenerator::grZakoGenerator_801CAE04(a0 as _) as _ }; } }
+    }
+    pub static mut GRZAKOGENERATOR_801CAEB0: Option<fn(i32, i32)> = None;
+    #[allow(non_snake_case)]
+    pub fn grZakoGenerator_801CAEB0(a0: i32, a1: i32) {
+        match unsafe { GRZAKOGENERATOR_801CAEB0 } { Some(f) => f(a0, a1), None => { unsafe { let _ = crate::tu::grzakogenerator::grZakoGenerator_801CAEB0(a0 as _, a1 as _); } return; } }
+    }
     hook!(LBSHADOW_8000E9F0, lbShadow_8000E9F0, (a0: *mut Vec, a1: *mut HSD_Spline, a2: f32));
-    hook!(LBVECTOR_ADD, lbVector_Add, (a: *mut Vec, b: *mut Vec) -> *mut Vec);
-    hook!(LBVECTOR_DIFF, lbVector_Diff, (a: *mut Vec, b: *mut Vec, result: *mut Vec) -> *mut Vec);
-    hook!(LBVECTOR_NORMALIZE, lbVector_Normalize, (vec: *mut Vec) -> f32);
-    hook!(LBVECTOR_ROTATEABOUTUNITAXIS, lbVector_RotateAboutUnitAxis, (v: *mut Vec, axis: *mut Vec, angle: f32));
-    hook!(LBVECTOR_SUB, lbVector_Sub, (a: *mut Vec, b: *mut Vec) -> *mut Vec);
-    hook!(LB_8000B1CC, lb_8000B1CC, (jobj: *mut HSD_JObj, pos0: *mut Vec, pos1: *mut Vec));
-    hook!(LB_800115F4, lb_800115F4, ());
-    hook!(MEMZERO, memzero, (mem: *mut c_void, size: ssize_t));
+    pub static mut LBVECTOR_ADD: Option<fn(*mut Vec, *mut Vec) -> *mut Vec> = None;
+    #[allow(non_snake_case)]
+    pub fn lbVector_Add(a: *mut Vec, b: *mut Vec) -> *mut Vec {
+        match unsafe { LBVECTOR_ADD } { Some(f) => f(a, b), None => { return unsafe { melee_runtime::tu::lbvector::lbVector_Add(a as _, b as _) as _ }; } }
+    }
+    pub static mut LBVECTOR_DIFF: Option<fn(*mut Vec, *mut Vec, *mut Vec) -> *mut Vec> = None;
+    #[allow(non_snake_case)]
+    pub fn lbVector_Diff(a: *mut Vec, b: *mut Vec, result: *mut Vec) -> *mut Vec {
+        match unsafe { LBVECTOR_DIFF } { Some(f) => f(a, b, result), None => { return unsafe { melee_runtime::tu::lbvector::lbVector_Diff(a as _, b as _, result as _) as _ }; } }
+    }
+    pub static mut LBVECTOR_NORMALIZE: Option<fn(*mut Vec) -> f32> = None;
+    #[allow(non_snake_case)]
+    pub fn lbVector_Normalize(vec: *mut Vec) -> f32 {
+        match unsafe { LBVECTOR_NORMALIZE } { Some(f) => f(vec), None => { return unsafe { melee_runtime::tu::lbvector::lbVector_Normalize(vec as _) as _ }; } }
+    }
+    pub static mut LBVECTOR_ROTATEABOUTUNITAXIS: Option<fn(*mut Vec, *mut Vec, f32)> = None;
+    #[allow(non_snake_case)]
+    pub fn lbVector_RotateAboutUnitAxis(v: *mut Vec, axis: *mut Vec, angle: f32) {
+        match unsafe { LBVECTOR_ROTATEABOUTUNITAXIS } { Some(f) => f(v, axis, angle), None => { unsafe { let _ = melee_runtime::tu::lbvector::lbVector_RotateAboutUnitAxis(v as _, axis as _, angle as _); } return; } }
+    }
+    pub static mut LBVECTOR_SUB: Option<fn(*mut Vec, *mut Vec) -> *mut Vec> = None;
+    #[allow(non_snake_case)]
+    pub fn lbVector_Sub(a: *mut Vec, b: *mut Vec) -> *mut Vec {
+        match unsafe { LBVECTOR_SUB } { Some(f) => f(a, b), None => { return unsafe { melee_runtime::tu::lbvector::lbVector_Sub(a as _, b as _) as _ }; } }
+    }
+    pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *mut Vec, *mut Vec)> = None;
+    #[allow(non_snake_case)]
+    pub fn lb_8000B1CC(jobj: *mut HSD_JObj, pos0: *mut Vec, pos1: *mut Vec) {
+        match unsafe { LB_8000B1CC } { Some(f) => f(jobj, pos0, pos1), None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, pos0 as _, pos1 as _); } return; } }
+    }
+    pub static mut LB_800115F4: Option<fn()> = None;
+    #[allow(non_snake_case)]
+    pub fn lb_800115F4() {
+        match unsafe { LB_800115F4 } { Some(f) => f(), None => { unsafe { let _ = melee_runtime::tu::lb_00F9::lb_800115F4(); } return; } }
+    }
+    pub static mut MEMZERO: Option<fn(*mut c_void, ssize_t)> = None;
+    #[allow(non_snake_case)]
+    pub fn memzero(mem: *mut c_void, size: ssize_t) {
+        match unsafe { MEMZERO } { Some(f) => f(mem, size), None => { unsafe { let _ = melee_runtime::tu::lb_00B0::memzero(mem as _, size as _); } return; } }
+    }
     hook!(SPLGETSPLINEPOINT, splGetSplinePoint, (a0: *mut Vec, a1: *mut HSD_Spline, a2: f32));
-    hook!(UN_802FD604, un_802FD604, (a0: i32));
-    hook!(UN_802FD65C, un_802FD65C, ());
-    hook!(UN_802FD8E8, un_802FD8E8, (a0: *mut DynamicModelDesc));
+    pub static mut UN_802FD604: Option<fn(i32)> = None;
+    #[allow(non_snake_case)]
+    pub fn un_802FD604(a0: i32) {
+        match unsafe { UN_802FD604 } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::ifhazard::un_802FD604(a0 as _); } return; } }
+    }
+    pub static mut UN_802FD65C: Option<fn()> = None;
+    #[allow(non_snake_case)]
+    pub fn un_802FD65C() {
+        match unsafe { UN_802FD65C } { Some(f) => f(), None => { unsafe { let _ = crate::tu::ifhazard::un_802FD65C(); } return; } }
+    }
+    pub static mut UN_802FD8E8: Option<fn(*mut DynamicModelDesc)> = None;
+    #[allow(non_snake_case)]
+    pub fn un_802FD8E8(a0: *mut DynamicModelDesc) {
+        match unsafe { UN_802FD8E8 } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::ifhazard::un_802FD8E8(a0 as _); } return; } }
+    }
     /// `grDisplay_801C5DB0` is only ever passed as a render callback (its address is the argument).
     pub unsafe extern "C" fn grDisplay_801C5DB0(_gobj: *mut HSD_GObj, _pass: i32) {
-        panic!("TODO: grDisplay_801C5DB0 is not ported")
+        { unsafe { let _ = crate::tu::grdisplay::grDisplay_801C5DB0(_gobj as _, _pass as _); } return; }
     }
 }
 

@@ -60,26 +60,74 @@ pub mod hsd {
     pub mod ext {
         use crate::tu::hookmac::{hook, hook_or};
         use melee_types::*;
-        hook!(HSD_AOBJREMOVE, HSD_AObjRemove, (aobj: *mut HSD_AObj));
-        hook!(HSD_POBJREMOVEANIMALLBYFLAGS, HSD_PObjRemoveAnimAllByFlags, (pobj: *mut HSD_PObj, flags: u32));
+        pub static mut HSD_AOBJREMOVE: Option<fn(*mut HSD_AObj)> = None;
+    #[allow(non_snake_case)]
+    pub fn HSD_AObjRemove(aobj: *mut HSD_AObj) {
+        match unsafe { HSD_AOBJREMOVE } { Some(f) => f(aobj), None => { unsafe { let _ = crate::tu::aobj::HSD_AObjRemove(aobj as _); } return; } }
+    }
+        pub static mut HSD_POBJREMOVEANIMALLBYFLAGS: Option<fn(*mut HSD_PObj, u32)> = None;
+    #[allow(non_snake_case)]
+    pub fn HSD_PObjRemoveAnimAllByFlags(pobj: *mut HSD_PObj, flags: u32) {
+        match unsafe { HSD_POBJREMOVEANIMALLBYFLAGS } { Some(f) => f(pobj, flags), None => { unsafe { let _ = crate::tu::pobj::HSD_PObjRemoveAnimAllByFlags(pobj as _, flags as _); } return; } }
+    }
         hook!(HSD_MOBJREMOVEANIMBYFLAGS, HSD_MObjRemoveAnimByFlags, (mobj: *mut HSD_MObj, flags: u32));
-        hook!(HSD_POBJADDANIMALL, HSD_PObjAddAnimAll, (pobj: *mut HSD_PObj, shapeanim: *mut HSD_ShapeAnim));
+        pub static mut HSD_POBJADDANIMALL: Option<fn(*mut HSD_PObj, *mut HSD_ShapeAnim)> = None;
+    #[allow(non_snake_case)]
+    pub fn HSD_PObjAddAnimAll(pobj: *mut HSD_PObj, shapeanim: *mut HSD_ShapeAnim) {
+        match unsafe { HSD_POBJADDANIMALL } { Some(f) => f(pobj, shapeanim), None => { unsafe { let _ = crate::tu::pobj::HSD_PObjAddAnimAll(pobj as _, shapeanim as _); } return; } }
+    }
         hook!(HSD_MOBJADDANIM, HSD_MObjAddAnim, (mobj: *mut HSD_MObj, mat_anim: *mut HSD_MatAnim));
-        hook!(HSD_POBJREQANIMALLBYFLAGS, HSD_PObjReqAnimAllByFlags, (pobj: *mut HSD_PObj, startframe: f32, flags: u32));
+        pub static mut HSD_POBJREQANIMALLBYFLAGS: Option<fn(*mut HSD_PObj, f32, u32)> = None;
+    #[allow(non_snake_case)]
+    pub fn HSD_PObjReqAnimAllByFlags(pobj: *mut HSD_PObj, startframe: f32, flags: u32) {
+        match unsafe { HSD_POBJREQANIMALLBYFLAGS } { Some(f) => f(pobj, startframe, flags), None => { unsafe { let _ = crate::tu::pobj::HSD_PObjReqAnimAllByFlags(pobj as _, startframe as _, flags as _); } return; } }
+    }
         hook!(HSD_MOBJREQANIMBYFLAGS, HSD_MObjReqAnimByFlags, (mobj: *mut HSD_MObj, startframe: f32, flags: u32));
-        hook!(HSD_POBJANIMALL, HSD_PObjAnimAll, (pobj: *mut HSD_PObj));
+        pub static mut HSD_POBJANIMALL: Option<fn(*mut HSD_PObj)> = None;
+    #[allow(non_snake_case)]
+    pub fn HSD_PObjAnimAll(pobj: *mut HSD_PObj) {
+        match unsafe { HSD_POBJANIMALL } { Some(f) => f(pobj), None => { unsafe { let _ = crate::tu::pobj::HSD_PObjAnimAll(pobj as _); } return; } }
+    }
         hook!(HSD_MOBJANIM, HSD_MObjAnim, (mobj: *mut HSD_MObj));
         hook!(HSD_MOBJLOADDESC, HSD_MObjLoadDesc, (desc: *mut HSD_MObjDesc) -> *mut HSD_MObj);
-        hook!(HSD_POBJLOADDESC, HSD_PObjLoadDesc, (desc: *mut HSD_PObjDesc) -> *mut HSD_PObj);
-        hook!(HSD_POBJRESOLVEREFSALL, HSD_PObjResolveRefsAll, (pobj: *mut HSD_PObj, desc: *mut HSD_PObjDesc));
+        pub static mut HSD_POBJLOADDESC: Option<fn(*mut HSD_PObjDesc) -> *mut HSD_PObj> = None;
+    #[allow(non_snake_case)]
+    pub fn HSD_PObjLoadDesc(desc: *mut HSD_PObjDesc) -> *mut HSD_PObj {
+        match unsafe { HSD_POBJLOADDESC } { Some(f) => f(desc), None => { return unsafe { crate::tu::pobj::HSD_PObjLoadDesc(desc as _) as _ }; } }
+    }
+        pub static mut HSD_POBJRESOLVEREFSALL: Option<fn(*mut HSD_PObj, *mut HSD_PObjDesc)> = None;
+    #[allow(non_snake_case)]
+    pub fn HSD_PObjResolveRefsAll(pobj: *mut HSD_PObj, desc: *mut HSD_PObjDesc) {
+        match unsafe { HSD_POBJRESOLVEREFSALL } { Some(f) => f(pobj, desc), None => { unsafe { let _ = crate::tu::pobj::HSD_PObjResolveRefsAll(pobj as _, desc as _); } return; } }
+    }
         hook!(HSD_MOBJSETCURRENT, HSD_MObjSetCurrent, (mobj: *mut HSD_MObj));
         hook!(HSD_MOBJREMOVE, HSD_MObjRemove, (mobj: *mut HSD_MObj));
-        hook!(HSD_POBJREMOVEALL, HSD_PObjRemoveAll, (pobj: *mut HSD_PObj));
-        hook!(HSDSEARCHCLASSINFO, hsdSearchClassInfo, (name: *const i8) -> *mut HSD_ClassInfo);
-        hook!(HSDNEW, hsdNew, (info: *mut HSD_ClassInfo) -> *mut HSD_Class);
+        pub static mut HSD_POBJREMOVEALL: Option<fn(*mut HSD_PObj)> = None;
+    #[allow(non_snake_case)]
+    pub fn HSD_PObjRemoveAll(pobj: *mut HSD_PObj) {
+        match unsafe { HSD_POBJREMOVEALL } { Some(f) => f(pobj), None => { unsafe { let _ = crate::tu::pobj::HSD_PObjRemoveAll(pobj as _); } return; } }
+    }
+        pub static mut HSDSEARCHCLASSINFO: Option<fn(*const i8) -> *mut HSD_ClassInfo> = None;
+    #[allow(non_snake_case)]
+    pub fn hsdSearchClassInfo(name: *const i8) -> *mut HSD_ClassInfo {
+        match unsafe { HSDSEARCHCLASSINFO } { Some(f) => f(name), None => { return unsafe { crate::tu::class::hsdSearchClassInfo(name as _) as _ }; } }
+    }
+        pub static mut HSDNEW: Option<fn(*mut HSD_ClassInfo) -> *mut HSD_Class> = None;
+    #[allow(non_snake_case)]
+    pub fn hsdNew(info: *mut HSD_ClassInfo) -> *mut HSD_Class {
+        match unsafe { HSDNEW } { Some(f) => f(info), None => { return unsafe { crate::tu::class::hsdNew(info as _) as _ }; } }
+    }
         hook!(HSDDELETE, hsdDelete, (obj: *mut HSD_Class));
-        hook!(HSDISDESCENDANTOF, hsdIsDescendantOf, (info: *mut HSD_ClassInfo, parent: *mut HSD_ClassInfo) -> i32);
-        hook!(HSDINITCLASSINFO, hsdInitClassInfo, (info: *mut HSD_ClassInfo, parent: *mut HSD_ClassInfo, lib: *const i8, name: *const i8, info_size: i32, obj_size: i32));
+        pub static mut HSDISDESCENDANTOF: Option<fn(*mut HSD_ClassInfo, *mut HSD_ClassInfo) -> i32> = None;
+    #[allow(non_snake_case)]
+    pub fn hsdIsDescendantOf(info: *mut HSD_ClassInfo, parent: *mut HSD_ClassInfo) -> i32 {
+        match unsafe { HSDISDESCENDANTOF } { Some(f) => f(info, parent), None => { return unsafe { crate::tu::class::hsdIsDescendantOf(info as _, parent as _) as _ }; } }
+    }
+        pub static mut HSDINITCLASSINFO: Option<fn(*mut HSD_ClassInfo, *mut HSD_ClassInfo, *const i8, *const i8, i32, i32)> = None;
+    #[allow(non_snake_case)]
+    pub fn hsdInitClassInfo(info: *mut HSD_ClassInfo, parent: *mut HSD_ClassInfo, lib: *const i8, name: *const i8, info_size: i32, obj_size: i32) {
+        match unsafe { HSDINITCLASSINFO } { Some(f) => f(info, parent, lib, name, info_size, obj_size), None => { unsafe { let _ = crate::tu::class::hsdInitClassInfo(info as _, parent as _, lib as _, name as _, info_size as _, obj_size as _); } return; } }
+    }
         hook!(HSDCLASS, hsdClass, () -> *mut HSD_ClassInfo);
         hook!(OSREPORT, OSReport, (msg: &str));
         hook!(HSD_STATEINVALIDATE_ALL, HSD_StateInvalidate_All, ());

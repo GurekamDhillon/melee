@@ -36,25 +36,25 @@ pub mod ext {
         };
     }
     ext_fns! {
-        Player_80033BB8(slot: i32) -> i32 = |_| todo!("TODO(port) Player_80033BB8 (player.c)");
-        Player_GetHandicap(slot: i32) -> i32 = |_| todo!("TODO(port) Player_GetHandicap (player.c)");
+        Player_80033BB8(slot: i32) -> i32 = |slot: i32| -> i32 { unsafe { crate::tu::player::Player_80033BB8(slot as _) as _ } };
+        Player_GetHandicap(slot: i32) -> i32 = |slot: i32| -> i32 { unsafe { crate::tu::player::Player_GetHandicap(slot as _) as _ } };
         ftCo_ReleaseItemAndVictim(g: G) = crate::tu::ftco_800c7590::ftco_release_item_and_victim;
         ftCommon_InitGrab(f: &mut Fighter, a: i32, timer: f32) = crate::ftcommon2::init_grab;
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
-        ftAnim_8006EBA4(g: G) = |_| todo!("TODO(port) ftAnim_8006EBA4 (ftanim.c)");
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
         ftCommon_8007E2FC(g: G) = |g| crate::ftcommon2::ftcommon_8007e2fc(super::fp(g));
         ftCommon_8007E2F4(f: &mut Fighter, v: i16) = crate::ftcommon2::ftcommon_8007e2f4;
         ftCommon_8007D5D4(f: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
         ftCommon_8007D7FC(f: &mut Fighter) = crate::ftcommon3::ftcommon_8007d7fc;
         ftCommon_UnlockECB(f: &mut Fighter) = crate::ftcommon2::unlock_ecb;
         ftParts_GetBoneIndex(f: &Fighter, part: i32) -> i32 = crate::ftdmgfall::ftparts_get_bone_index;
-        lb_8000B1CC(j: *mut HSD_JObj, off: *const Vec3, out: &mut Vec3) = |_, _, _| todo!("TODO(port) lb_8000B1CC (lb_00B0.c)");
-        lb_8000C1C0(j: *mut HSD_JObj, constraint: *mut HSD_JObj) = |_, _| todo!("TODO(port) lb_8000C1C0 (lb_00B0.c)");
-        ftParts_JObjSetRotation(j: *mut HSD_JObj, q: &Quaternion) = |_, _| todo!("TODO(port) ftParts_JObjSetRotation (ftparts.c)");
+        lb_8000B1CC(j: *mut HSD_JObj, off: *const Vec3, out: &mut Vec3) = |j: *mut HSD_JObj, off: *const Vec3, out: &mut Vec3| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(j as _, off as _, out as _); } };
+        lb_8000C1C0(j: *mut HSD_JObj, constraint: *mut HSD_JObj) = |j: *mut HSD_JObj, constraint: *mut HSD_JObj| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000C1C0(j as _, constraint as _); } };
+        ftParts_JObjSetRotation(j: *mut HSD_JObj, q: &Quaternion) = |j: *mut HSD_JObj, q: &Quaternion| { unsafe { let _ = crate::tu::ftparts::ftParts_JObjSetRotation(j as _, q as _); } };
         ft_80083C00(g: G, cb: HSD_GObjEvent) = |_, _| todo!("TODO(port) ft_80083C00 (ft_081B.c)");
         ft_8008403C(g: G, cb: HSD_GObjEvent) = |_, _| todo!("TODO(port) ft_8008403C (ft_081B.c)");
-        ftAnim_8006F368(f: &mut Fighter, idx: i32) -> bool = |_, _| todo!("TODO(port) ftAnim_8006F368 (ftanim.c)");
-        ftAnim_8006DF0C(f: &mut Fighter) = |_| todo!("TODO(port) ftAnim_8006DF0C (ftanim.c)");
+        ftAnim_8006F368(f: &mut Fighter, idx: i32) -> bool = |f: &mut Fighter, idx: i32| -> bool { unsafe { crate::tu::ftanim::ftAnim_8006F368(f as _, idx as _) as _ } };
+        ftAnim_8006DF0C(f: &mut Fighter) = |f: &mut Fighter| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006DF0C(f as _); } };
     }
 }
 

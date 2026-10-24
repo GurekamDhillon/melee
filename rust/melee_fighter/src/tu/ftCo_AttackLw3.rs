@@ -34,28 +34,28 @@ pub mod ext {
     ext_fns! {
         ftCo_GetLStickAngle(fp: &Fighter) -> f32 = crate::ftcommon3::ftco_get_lstick_angle;
         ftCo_80094E54(fp: &Fighter) -> bool = |_| todo!("TODO(port) ftCo_80094E54 (ftCo_ItemThrow.c)");
-        ftCo_800957F4(g: G, msid: i32) = |_, _| todo!("TODO(port) ftCo_800957F4 (ftCo_ItemThrow.c)");
+        ftCo_800957F4(g: G, msid: i32) = |g: G, msid: i32| { unsafe { let _ = crate::tu::ftCo_ItemThrow::ftCo_800957F4(g as _, msid as _); } };
         ft_800892A0(g: G) = |_| todo!("TODO(port) ft_800892A0 (ft_0881.c)");
         ft_80089824(g: G) = crate::ft0892::ft_80089824;
         ftGw_AttackLw3_Enter(g: G) = |_| todo!("TODO(port) ftGw_AttackLw3_Enter (ftgamewatch)");
-        ftpickupitem_80094790(g: G) -> bool = |_| todo!("TODO(port) ftpickupitem_80094790 (ftpickupitem.c)");
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
-        ftAnim_8006EBA4(g: G) = |_| todo!("TODO(port) ftAnim_8006EBA4 (ftanim.c)");
+        ftpickupitem_80094790(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftpickupitem::ftpickupitem_80094790(g as _) as _ } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
-        ftCo_800D638C(g: G) = |_| todo!("TODO(port) ftCo_800D638C (ftCo_Squat.c)");
+        ftCo_800D638C(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_SquatWait::ftCo_800D638C(g as _); } };
         ftCo_AttackS4_CheckInput(g: G) -> bool = crate::tu::ftCo_AttackS4::ftCo_AttackS4_CheckInput;
         ftCo_AttackHi4_CheckInput(g: G) -> bool = crate::tu::ftCo_AttackHi4::ftCo_AttackHi4_CheckInput;
         ftCo_AttackLw4_CheckInput(g: G) -> bool = crate::tu::ftCo_AttackLw4::ftCo_AttackLw4_CheckInput;
         ftCo_AttackS3_CheckInput(g: G) -> bool = crate::tu::ftCo_AttackS3::ftCo_AttackS3_CheckInput;
         ftCo_AttackHi3_CheckInput(g: G) -> bool = crate::tu::ftCo_AttackHi3::ftCo_AttackHi3_CheckInput;
         ftCo_Attack1_CheckInput(g: G) -> bool = crate::tu::ftCo_Attack1::ftCo_Attack1_CheckInput;
-        ftCo_Jump_CheckInput(g: G) -> bool = |_| todo!("TODO(port) ftCo_Jump_CheckInput (ftCo_Jump.c)");
-        ftCo_Dash_CheckInput(g: G) -> bool = |_| todo!("TODO(port) ftCo_Dash_CheckInput (ftCo_Dash.c)");
-        ftCo_Squat_CheckInput(g: G) -> bool = |_| todo!("TODO(port) ftCo_Squat_CheckInput (ftCo_Squat.c)");
-        ftCo_Turn_CheckInput(g: G) -> bool = |_| todo!("TODO(port) ftCo_Turn_CheckInput (ftCo_Turn.c)");
-        ftCo_Walk_CheckInput(g: G) -> bool = |_| todo!("TODO(port) ftCo_Walk_CheckInput (ftCo_Walk.c)");
+        ftCo_Jump_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Jump::ftCo_Jump_CheckInput(g as _) as _ } };
+        ftCo_Dash_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Dash::ftCo_Dash_CheckInput(g as _) as _ } };
+        ftCo_Squat_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Squat::ftCo_Squat_CheckInput(g as _) as _ } };
+        ftCo_Turn_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Turn::ftCo_Turn_CheckInput(g as _) as _ } };
+        ftCo_Walk_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Walk::ftCo_Walk_CheckInput(g as _) as _ } };
         ft_80084F3C(g: G) = crate::ft084e::ft_80084f3c;
-        ft_80084104(g: G) = |_| todo!("TODO(port) ft_80084104 (ft_081B.c)");
+        ft_80084104(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_081b::ft_80084104(g as _); } };
     }
 }
 

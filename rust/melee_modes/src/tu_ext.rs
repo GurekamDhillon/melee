@@ -163,47 +163,47 @@ pub fn GXSetZMode(a0: u8, a1: i32, a2: u8) {
 pub static mut HOOK_GetNameText: Option<fn(i32) -> *mut core::ffi::c_char> = None;
 /// C `GetNameText` (melee/mn/mnname.h).
 pub fn GetNameText(a0: i32) -> *mut core::ffi::c_char {
-    match unsafe { HOOK_GetNameText } { Some(f) => f(a0), None => panic!("TODO: GetNameText is not ported") }
+    match unsafe { HOOK_GetNameText } { Some(f) => f(a0), None => { return unsafe { crate::tu::mnname::GetNameText(a0 as _) as _ }; } }
 }
 pub static mut HOOK_Ground_801C0378: Option<fn(i32)> = None;
 /// C `Ground_801C0378` (melee/gr/ground.h).
 pub fn Ground_801C0378(a0: i32) {
-    match unsafe { HOOK_Ground_801C0378 } { Some(f) => f(a0), None => panic!("TODO: Ground_801C0378 is not ported") }
+    match unsafe { HOOK_Ground_801C0378 } { Some(f) => f(a0), None => { unsafe { let _ = melee_world::tu::ground::Ground_801C0378(a0 as _); } return; } }
 }
 pub static mut HOOK_Ground_801C0498: Option<fn() -> f32> = None;
 /// C `Ground_801C0498` (melee/gr/ground.h).
 pub fn Ground_801C0498() -> f32 {
-    match unsafe { HOOK_Ground_801C0498 } { Some(f) => f(), None => panic!("TODO: Ground_801C0498 is not ported") }
+    match unsafe { HOOK_Ground_801C0498 } { Some(f) => f(), None => { return unsafe { melee_world::tu::ground::Ground_801C0498() as _ }; } }
 }
 pub static mut HOOK_Ground_801C1DC0: Option<fn() -> u32> = None;
 /// C `Ground_801C1DC0` (melee/gr/ground.h).
 pub fn Ground_801C1DC0() -> u32 {
-    match unsafe { HOOK_Ground_801C1DC0 } { Some(f) => f(), None => panic!("TODO: Ground_801C1DC0 is not ported") }
+    match unsafe { HOOK_Ground_801C1DC0 } { Some(f) => f(), None => { return unsafe { melee_world::tu::ground::Ground_801C1DC0() as _ }; } }
 }
 pub static mut HOOK_Ground_801C57F0: Option<fn(i32) -> f32> = None;
 /// C `Ground_801C57F0` (melee/gr/ground.h).
 pub fn Ground_801C57F0(a0: i32) -> f32 {
-    match unsafe { HOOK_Ground_801C57F0 } { Some(f) => f(a0), None => panic!("TODO: Ground_801C57F0 is not ported") }
+    match unsafe { HOOK_Ground_801C57F0 } { Some(f) => f(a0), None => { return unsafe { melee_world::tu::ground::Ground_801C57F0(a0 as _) as _ }; } }
 }
 pub static mut HOOK_HSD_AObjSetRate: Option<fn(*mut HSD_AObj, f32)> = None;
 /// C `HSD_AObjSetRate` (sysdolphin/baselib/aobj.h).
 pub fn HSD_AObjSetRate(a0: *mut HSD_AObj, a1: f32) {
-    match unsafe { HOOK_HSD_AObjSetRate } { Some(f) => f(a0, a1), None => panic!("TODO: HSD_AObjSetRate is not ported") }
+    match unsafe { HOOK_HSD_AObjSetRate } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjSetRate(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_HSD_CObjAddAnim: Option<fn(*mut HSD_CObj, *mut HSD_CameraAnim)> = None;
 /// C `HSD_CObjAddAnim` (sysdolphin/baselib/cobj.h).
 pub fn HSD_CObjAddAnim(a0: *mut HSD_CObj, a1: *mut HSD_CameraAnim) {
-    match unsafe { HOOK_HSD_CObjAddAnim } { Some(f) => f(a0, a1), None => panic!("TODO: HSD_CObjAddAnim is not ported") }
+    match unsafe { HOOK_HSD_CObjAddAnim } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_runtime::tu::cobj::HSD_CObjAddAnim(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_HSD_CObjAnim: Option<fn(*mut HSD_CObj)> = None;
 /// C `HSD_CObjAnim` (sysdolphin/baselib/cobj.h).
 pub fn HSD_CObjAnim(a0: *mut HSD_CObj) {
-    match unsafe { HOOK_HSD_CObjAnim } { Some(f) => f(a0), None => panic!("TODO: HSD_CObjAnim is not ported") }
+    match unsafe { HOOK_HSD_CObjAnim } { Some(f) => f(a0), None => { unsafe { let _ = melee_runtime::tu::cobj::HSD_CObjAnim(a0 as _); } return; } }
 }
 pub static mut HOOK_HSD_CObjEndCurrent: Option<fn()> = None;
 /// C `HSD_CObjEndCurrent` (sysdolphin/baselib/cobj.h).
 pub fn HSD_CObjEndCurrent() {
-    match unsafe { HOOK_HSD_CObjEndCurrent } { Some(f) => f(), None => panic!("TODO: HSD_CObjEndCurrent is not ported") }
+    match unsafe { HOOK_HSD_CObjEndCurrent } { Some(f) => f(), None => { unsafe { let _ = melee_runtime::tu::cobj::HSD_CObjEndCurrent(); } return; } }
 }
 pub static mut HOOK_HSD_CObjGetEyePosition: Option<fn(*mut HSD_CObj, *mut Vec3)> = None;
 /// C `HSD_CObjGetEyePosition` (sysdolphin/baselib/cobj.h).
@@ -218,22 +218,22 @@ pub fn HSD_CObjGetInterest(a0: *mut HSD_CObj, a1: *mut Vec3) {
 pub static mut HOOK_HSD_CObjLoadDesc: Option<fn(*mut HSD_CObjDesc) -> *mut HSD_CObj> = None;
 /// C `HSD_CObjLoadDesc` (sysdolphin/baselib/cobj.h).
 pub fn HSD_CObjLoadDesc(a0: *mut HSD_CObjDesc) -> *mut HSD_CObj {
-    match unsafe { HOOK_HSD_CObjLoadDesc } { Some(f) => f(a0), None => panic!("TODO: HSD_CObjLoadDesc is not ported") }
+    match unsafe { HOOK_HSD_CObjLoadDesc } { Some(f) => f(a0), None => { return unsafe { melee_runtime::tu::cobj::HSD_CObjLoadDesc(a0 as _) as _ }; } }
 }
 pub static mut HOOK_HSD_CObjRemoveAnim: Option<fn(*mut HSD_CObj)> = None;
 /// C `HSD_CObjRemoveAnim` (sysdolphin/baselib/cobj.h).
 pub fn HSD_CObjRemoveAnim(a0: *mut HSD_CObj) {
-    match unsafe { HOOK_HSD_CObjRemoveAnim } { Some(f) => f(a0), None => panic!("TODO: HSD_CObjRemoveAnim is not ported") }
+    match unsafe { HOOK_HSD_CObjRemoveAnim } { Some(f) => f(a0), None => { unsafe { let _ = melee_runtime::tu::cobj::HSD_CObjRemoveAnim(a0 as _); } return; } }
 }
 pub static mut HOOK_HSD_CObjReqAnim: Option<fn(*mut HSD_CObj, f32)> = None;
 /// C `HSD_CObjReqAnim` (sysdolphin/baselib/cobj.h).
 pub fn HSD_CObjReqAnim(a0: *mut HSD_CObj, a1: f32) {
-    match unsafe { HOOK_HSD_CObjReqAnim } { Some(f) => f(a0, a1), None => panic!("TODO: HSD_CObjReqAnim is not ported") }
+    match unsafe { HOOK_HSD_CObjReqAnim } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_runtime::tu::cobj::HSD_CObjReqAnim(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_HSD_CObjSetCurrent: Option<fn(*mut HSD_CObj) -> i32> = None;
 /// C `HSD_CObjSetCurrent` (sysdolphin/baselib/cobj.h).
 pub fn HSD_CObjSetCurrent(a0: *mut HSD_CObj) -> i32 {
-    match unsafe { HOOK_HSD_CObjSetCurrent } { Some(f) => f(a0), None => panic!("TODO: HSD_CObjSetCurrent is not ported") }
+    match unsafe { HOOK_HSD_CObjSetCurrent } { Some(f) => f(a0), None => { return unsafe { melee_runtime::tu::cobj::HSD_CObjSetCurrent(a0 as _) as _ }; } }
 }
 pub static mut HOOK_HSD_CObjSetEyePosition: Option<fn(*mut HSD_CObj, *mut Vec3)> = None;
 /// C `HSD_CObjSetEyePosition` (sysdolphin/baselib/cobj.h).
@@ -278,17 +278,17 @@ pub unsafe extern "C" fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: i32) {
 pub static mut HOOK_HSD_GObj_FogCallback: Option<fn(*mut HSD_GObj, i32)> = None;
 /// C `HSD_GObj_FogCallback` (sysdolphin/baselib/gobj.h); referenced as a function value, so it is `extern "C"`.
 pub unsafe extern "C" fn HSD_GObj_FogCallback(a0: *mut HSD_GObj, a1: i32) {
-    match HOOK_HSD_GObj_FogCallback { Some(f) => f(a0, a1), None => panic!("TODO: HSD_GObj_FogCallback is not ported") }
+    match HOOK_HSD_GObj_FogCallback { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_FogCallback(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_HSD_GObj_JObjCallback: Option<fn(*mut HSD_GObj, i32)> = None;
 /// C `HSD_GObj_JObjCallback` (sysdolphin/baselib/gobj.h); referenced as a function value, so it is `extern "C"`.
 pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) {
-    match HOOK_HSD_GObj_JObjCallback { Some(f) => f(a0, a1), None => panic!("TODO: HSD_GObj_JObjCallback is not ported") }
+    match HOOK_HSD_GObj_JObjCallback { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_HSD_GObj_LObjCallback: Option<fn(*mut HSD_GObj, i32)> = None;
 /// C `HSD_GObj_LObjCallback` (sysdolphin/baselib/gobj.h); referenced as a function value, so it is `extern "C"`.
 pub unsafe extern "C" fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: i32) {
-    match HOOK_HSD_GObj_LObjCallback { Some(f) => f(a0, a1), None => panic!("TODO: HSD_GObj_LObjCallback is not ported") }
+    match HOOK_HSD_GObj_LObjCallback { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_LObjCallback(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_HSD_GObj_SetupProc: Option<fn(*mut HSD_GObj, HSD_GObjEvent, u8) -> *mut HSD_GObjProc> = None;
 /// C `HSD_GObj_SetupProc` (sysdolphin/baselib/gobjproc.h).
@@ -298,7 +298,7 @@ pub fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8) -> *mut 
 pub static mut HOOK_HSD_ImageDescCopyFromEFB: Option<fn(*mut HSD_ImageDesc, u16, u16, u8, i32)> = None;
 /// C `HSD_ImageDescCopyFromEFB` (sysdolphin/baselib/tobj.h).
 pub fn HSD_ImageDescCopyFromEFB(a0: *mut HSD_ImageDesc, a1: u16, a2: u16, a3: u8, a4: i32) {
-    match unsafe { HOOK_HSD_ImageDescCopyFromEFB } { Some(f) => f(a0, a1, a2, a3, a4), None => panic!("TODO: HSD_ImageDescCopyFromEFB is not ported") }
+    match unsafe { HOOK_HSD_ImageDescCopyFromEFB } { Some(f) => f(a0, a1, a2, a3, a4), None => { unsafe { let _ = melee_runtime::tu::tobj::HSD_ImageDescCopyFromEFB(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _); } return; } }
 }
 pub static mut HOOK_HSD_JObjAnimAll: Option<fn(*mut HSD_JObj)> = None;
 /// C `HSD_JObjAnimAll` (sysdolphin/baselib/jobj.h).
@@ -318,7 +318,7 @@ pub fn HSD_JObjClearFlagsAll(a0: *mut HSD_JObj, a1: u32) {
 pub static mut HOOK_HSD_JObjLoadJoint: Option<fn(*mut HSD_Joint) -> *mut HSD_JObj> = None;
 /// C `HSD_JObjLoadJoint` (sysdolphin/baselib/jobj.h).
 pub fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj {
-    match unsafe { HOOK_HSD_JObjLoadJoint } { Some(f) => f(a0), None => panic!("TODO: HSD_JObjLoadJoint is not ported") }
+    match unsafe { HOOK_HSD_JObjLoadJoint } { Some(f) => f(a0), None => { return unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(a0 as _) as _ }; } }
 }
 pub static mut HOOK_HSD_JObjReqAnimAll: Option<fn(*mut HSD_JObj, f32)> = None;
 /// C `HSD_JObjReqAnimAll` (sysdolphin/baselib/jobj.h).
@@ -363,47 +363,47 @@ pub fn HSD_Randi(a0: i32) -> i32 {
 pub static mut HOOK_HSD_SObjLib_803A477C: Option<fn(*mut HSD_GObj, *mut HSD_SObjDesc, i32, i32, u8, u8) -> *mut HSD_SObj> = None;
 /// C `HSD_SObjLib_803A477C` (sysdolphin/baselib/sobjlib.h).
 pub fn HSD_SObjLib_803A477C(a0: *mut HSD_GObj, a1: *mut HSD_SObjDesc, a2: i32, a3: i32, a4: u8, a5: u8) -> *mut HSD_SObj {
-    match unsafe { HOOK_HSD_SObjLib_803A477C } { Some(f) => f(a0, a1, a2, a3, a4, a5), None => panic!("TODO: HSD_SObjLib_803A477C is not ported") }
+    match unsafe { HOOK_HSD_SObjLib_803A477C } { Some(f) => f(a0, a1, a2, a3, a4, a5), None => { return unsafe { melee_runtime::tu::sobjlib::HSD_SObjLib_803A477C(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _) as _ }; } }
 }
 pub static mut HOOK_HSD_SObjLib_803A49E0: Option<fn(*mut HSD_GObj, i32)> = None;
 /// C `HSD_SObjLib_803A49E0` (sysdolphin/baselib/sobjlib.h); referenced as a function value, so it is `extern "C"`.
 pub unsafe extern "C" fn HSD_SObjLib_803A49E0(a0: *mut HSD_GObj, a1: i32) {
-    match HOOK_HSD_SObjLib_803A49E0 { Some(f) => f(a0, a1), None => panic!("TODO: HSD_SObjLib_803A49E0 is not ported") }
+    match HOOK_HSD_SObjLib_803A49E0 { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_runtime::tu::sobjlib::HSD_SObjLib_803A49E0(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_HSD_SObjLib_803A54EC: Option<fn(*mut HSD_GObj, i32)> = None;
 /// C `HSD_SObjLib_803A54EC` (sysdolphin/baselib/sobjlib.h).
 pub fn HSD_SObjLib_803A54EC(a0: *mut HSD_GObj, a1: i32) {
-    match unsafe { HOOK_HSD_SObjLib_803A54EC } { Some(f) => f(a0, a1), None => panic!("TODO: HSD_SObjLib_803A54EC is not ported") }
+    match unsafe { HOOK_HSD_SObjLib_803A54EC } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_runtime::tu::sobjlib::HSD_SObjLib_803A54EC(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_HSD_SObjLib_803A55DC: Option<fn(*mut HSD_GObj, u16, u16, i32)> = None;
 /// C `HSD_SObjLib_803A55DC` (sysdolphin/baselib/sobjlib.h).
 pub fn HSD_SObjLib_803A55DC(a0: *mut HSD_GObj, a1: u16, a2: u16, a3: i32) {
-    match unsafe { HOOK_HSD_SObjLib_803A55DC } { Some(f) => f(a0, a1, a2, a3), None => panic!("TODO: HSD_SObjLib_803A55DC is not ported") }
+    match unsafe { HOOK_HSD_SObjLib_803A55DC } { Some(f) => f(a0, a1, a2, a3), None => { unsafe { let _ = melee_runtime::tu::sobjlib::HSD_SObjLib_803A55DC(a0 as _, a1 as _, a2 as _, a3 as _); } return; } }
 }
 pub static mut HOOK_HSD_SisLib_803A5ACC: Option<fn(i32, i32, f32, f32, f32, f32, f32) -> *mut HSD_Text> = None;
 /// C `HSD_SisLib_803A5ACC` (sysdolphin/baselib/sislib.h).
 pub fn HSD_SisLib_803A5ACC(a0: i32, a1: i32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32) -> *mut HSD_Text {
-    match unsafe { HOOK_HSD_SisLib_803A5ACC } { Some(f) => f(a0, a1, a2, a3, a4, a5, a6), None => panic!("TODO: HSD_SisLib_803A5ACC is not ported") }
+    match unsafe { HOOK_HSD_SisLib_803A5ACC } { Some(f) => f(a0, a1, a2, a3, a4, a5, a6), None => { return unsafe { melee_runtime::tu::sislib::HSD_SisLib_803A5ACC(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _, a6 as _) as _ }; } }
 }
 pub static mut HOOK_HSD_SisLib_803A611C: Option<fn(i32, *mut HSD_GObj, u16, u8, u8, u8, u8, u32) -> i32> = None;
 /// C `HSD_SisLib_803A611C` (sysdolphin/baselib/sislib.h).
 pub fn HSD_SisLib_803A611C(a0: i32, a1: *mut HSD_GObj, a2: u16, a3: u8, a4: u8, a5: u8, a6: u8, a7: u32) -> i32 {
-    match unsafe { HOOK_HSD_SisLib_803A611C } { Some(f) => f(a0, a1, a2, a3, a4, a5, a6, a7), None => panic!("TODO: HSD_SisLib_803A611C is not ported") }
+    match unsafe { HOOK_HSD_SisLib_803A611C } { Some(f) => f(a0, a1, a2, a3, a4, a5, a6, a7), None => { return unsafe { melee_runtime::tu::sislib::HSD_SisLib_803A611C(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _, a6 as _, a7 as _) as _ }; } }
 }
 pub static mut HOOK_HSD_SisLib_803A62A0: Option<fn(i32, *mut core::ffi::c_char, *mut core::ffi::c_char)> = None;
 /// C `HSD_SisLib_803A62A0` (sysdolphin/baselib/sislib.h).
 pub fn HSD_SisLib_803A62A0(a0: i32, a1: *mut core::ffi::c_char, a2: *mut core::ffi::c_char) {
-    match unsafe { HOOK_HSD_SisLib_803A62A0 } { Some(f) => f(a0, a1, a2), None => panic!("TODO: HSD_SisLib_803A62A0 is not ported") }
+    match unsafe { HOOK_HSD_SisLib_803A62A0 } { Some(f) => f(a0, a1, a2), None => { unsafe { let _ = melee_runtime::tu::sislib::HSD_SisLib_803A62A0(a0 as _, a1 as _, a2 as _); } return; } }
 }
 pub static mut HOOK_HSD_SisLib_803A6368: Option<fn(*mut HSD_Text, i32)> = None;
 /// C `HSD_SisLib_803A6368` (sysdolphin/baselib/sislib.h).
 pub fn HSD_SisLib_803A6368(a0: *mut HSD_Text, a1: i32) {
-    match unsafe { HOOK_HSD_SisLib_803A6368 } { Some(f) => f(a0, a1), None => panic!("TODO: HSD_SisLib_803A6368 is not ported") }
+    match unsafe { HOOK_HSD_SisLib_803A6368 } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_runtime::tu::sislib::HSD_SisLib_803A6368(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_HSD_SisLib_803A6754: Option<fn(i32, i32) -> *mut HSD_Text> = None;
 /// C `HSD_SisLib_803A6754` (sysdolphin/baselib/sislib.h).
 pub fn HSD_SisLib_803A6754(a0: i32, a1: i32) -> *mut HSD_Text {
-    match unsafe { HOOK_HSD_SisLib_803A6754 } { Some(f) => f(a0, a1), None => panic!("TODO: HSD_SisLib_803A6754 is not ported") }
+    match unsafe { HOOK_HSD_SisLib_803A6754 } { Some(f) => f(a0, a1), None => { return unsafe { melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6754(a0 as _, a1 as _) as _ }; } }
 }
 pub static mut HOOK_HSD_SisLib_803A6B98: Option<fn(*mut HSD_Text, f32, f32, *const core::ffi::c_char) -> i32> = None;
 /// C `HSD_SisLib_803A6B98(text, x, y, fmt, ...)` (printf-like; the gm callers pass a plain string).
@@ -418,12 +418,12 @@ pub fn HSD_SisLib_803A70A0(text: *mut HSD_Text, index: i32, fmt: *const core::ff
 pub static mut HOOK_HSD_SisLib_803A7548: Option<fn(*mut HSD_Text, i32, f32, f32)> = None;
 /// C `HSD_SisLib_803A7548` (sysdolphin/baselib/sislib.h).
 pub fn HSD_SisLib_803A7548(a0: *mut HSD_Text, a1: i32, a2: f32, a3: f32) {
-    match unsafe { HOOK_HSD_SisLib_803A7548 } { Some(f) => f(a0, a1, a2, a3), None => panic!("TODO: HSD_SisLib_803A7548 is not ported") }
+    match unsafe { HOOK_HSD_SisLib_803A7548 } { Some(f) => f(a0, a1, a2, a3), None => { unsafe { let _ = melee_runtime::tu::hsd_3A64::HSD_SisLib_803A7548(a0 as _, a1 as _, a2 as _, a3 as _); } return; } }
 }
 pub static mut HOOK_HSD_SisLib_803A7664: Option<fn(*mut HSD_Text)> = None;
 /// C `HSD_SisLib_803A7664` (sysdolphin/baselib/sislib.h).
 pub fn HSD_SisLib_803A7664(a0: *mut HSD_Text) {
-    match unsafe { HOOK_HSD_SisLib_803A7664 } { Some(f) => f(a0), None => panic!("TODO: HSD_SisLib_803A7664 is not ported") }
+    match unsafe { HOOK_HSD_SisLib_803A7664 } { Some(f) => f(a0), None => { unsafe { let _ = melee_runtime::tu::hsd_3A64::HSD_SisLib_803A7664(a0 as _); } return; } }
 }
 pub static mut HOOK_HSD_StateInvalidate: Option<fn(i32)> = None;
 /// C `HSD_StateInvalidate` (sysdolphin/baselib/state.h).
@@ -433,22 +433,22 @@ pub fn HSD_StateInvalidate(a0: i32) {
 pub static mut HOOK_HSD_TObjReqAnimAll: Option<fn(*mut HSD_TObj, f32)> = None;
 /// C `HSD_TObjReqAnimAll` (sysdolphin/baselib/tobj.h).
 pub fn HSD_TObjReqAnimAll(a0: *mut HSD_TObj, a1: f32) {
-    match unsafe { HOOK_HSD_TObjReqAnimAll } { Some(f) => f(a0, a1), None => panic!("TODO: HSD_TObjReqAnimAll is not ported") }
+    match unsafe { HOOK_HSD_TObjReqAnimAll } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_runtime::tu::tobj::HSD_TObjReqAnimAll(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_Item_80266F70: Option<fn()> = None;
 /// C `Item_80266F70` (melee/it/item.h).
 pub fn Item_80266F70() {
-    match unsafe { HOOK_Item_80266F70 } { Some(f) => f(), None => panic!("TODO: Item_80266F70 is not ported") }
+    match unsafe { HOOK_Item_80266F70 } { Some(f) => f(), None => { unsafe { let _ = melee_items::tu::item::Item_80266F70(); } return; } }
 }
 pub static mut HOOK_Item_80266FA8: Option<fn()> = None;
 /// C `Item_80266FA8` (melee/it/item.h).
 pub fn Item_80266FA8() {
-    match unsafe { HOOK_Item_80266FA8 } { Some(f) => f(), None => panic!("TODO: Item_80266FA8 is not ported") }
+    match unsafe { HOOK_Item_80266FA8 } { Some(f) => f(), None => { unsafe { let _ = melee_items::tu::item::Item_80266FA8(); } return; } }
 }
 pub static mut HOOK_Item_80266FCC: Option<fn()> = None;
 /// C `Item_80266FCC` (melee/it/item.h).
 pub fn Item_80266FCC() {
-    match unsafe { HOOK_Item_80266FCC } { Some(f) => f(), None => panic!("TODO: Item_80266FCC is not ported") }
+    match unsafe { HOOK_Item_80266FCC } { Some(f) => f(), None => { unsafe { let _ = melee_items::tu::item::Item_80266FCC(); } return; } }
 }
 pub static mut HOOK_MTXOrtho: Option<fn(*mut [f32; 4], f32, f32, f32, f32, f32, f32)> = None;
 /// C `MTXOrtho(Mtx44, t, b, l, r, n, f)` (dolphin/mtx; the port's `Mtx44` form, see fn_80185408).
@@ -463,162 +463,162 @@ pub fn Mex_Enabled(a0: *const core::ffi::c_char) -> i32 {
 pub static mut HOOK_Player_80031790: Option<fn(i32)> = None;
 /// C `Player_80031790` (melee/pl/player.h).
 pub fn Player_80031790(a0: i32) {
-    match unsafe { HOOK_Player_80031790 } { Some(f) => f(a0), None => panic!("TODO: Player_80031790 is not ported") }
+    match unsafe { HOOK_Player_80031790 } { Some(f) => f(a0), None => { unsafe { let _ = melee_fighter::tu::player::Player_80031790(a0 as _); } return; } }
 }
 pub static mut HOOK_Player_80032768: Option<fn(i32, *mut Vec3)> = None;
 /// C `Player_80032768` (melee/pl/player.h).
 pub fn Player_80032768(a0: i32, a1: *mut Vec3) {
-    match unsafe { HOOK_Player_80032768 } { Some(f) => f(a0, a1), None => panic!("TODO: Player_80032768 is not ported") }
+    match unsafe { HOOK_Player_80032768 } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_fighter::tu::player::Player_80032768(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_Player_80032828: Option<fn(i32, i32, *mut Vec3)> = None;
 /// C `Player_80032828` (melee/pl/player.h).
 pub fn Player_80032828(a0: i32, a1: i32, a2: *mut Vec3) {
-    match unsafe { HOOK_Player_80032828 } { Some(f) => f(a0, a1, a2), None => panic!("TODO: Player_80032828 is not ported") }
+    match unsafe { HOOK_Player_80032828 } { Some(f) => f(a0, a1, a2), None => { unsafe { let _ = melee_fighter::tu::player::Player_80032828(a0 as _, a1 as _, a2 as _); } return; } }
 }
 pub static mut HOOK_Player_800328D4: Option<fn(i32, *mut Vec3)> = None;
 /// C `Player_800328D4` (melee/pl/player.h).
 pub fn Player_800328D4(a0: i32, a1: *mut Vec3) {
-    match unsafe { HOOK_Player_800328D4 } { Some(f) => f(a0, a1), None => panic!("TODO: Player_800328D4 is not ported") }
+    match unsafe { HOOK_Player_800328D4 } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_fighter::tu::player::Player_800328D4(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_Player_800366DC: Option<fn(i32, i32)> = None;
 /// C `Player_800366DC` (melee/pl/player.h).
 pub fn Player_800366DC(a0: i32, a1: i32) {
-    match unsafe { HOOK_Player_800366DC } { Some(f) => f(a0, a1), None => panic!("TODO: Player_800366DC is not ported") }
+    match unsafe { HOOK_Player_800366DC } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_fighter::tu::player::Player_800366DC(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_Player_800368F8: Option<fn(i32) -> i32> = None;
 /// C `Player_800368F8` (melee/pl/player.h).
 pub fn Player_800368F8(a0: i32) -> i32 {
-    match unsafe { HOOK_Player_800368F8 } { Some(f) => f(a0), None => panic!("TODO: Player_800368F8 is not ported") }
+    match unsafe { HOOK_Player_800368F8 } { Some(f) => f(a0), None => { return unsafe { melee_fighter::tu::player::Player_800368F8(a0 as _) as _ }; } }
 }
 pub static mut HOOK_Player_80036CF0: Option<fn(i32)> = None;
 /// C `Player_80036CF0` (melee/pl/player.h).
 pub fn Player_80036CF0(a0: i32) {
-    match unsafe { HOOK_Player_80036CF0 } { Some(f) => f(a0), None => panic!("TODO: Player_80036CF0 is not ported") }
+    match unsafe { HOOK_Player_80036CF0 } { Some(f) => f(a0), None => { unsafe { let _ = melee_fighter::tu::player::Player_80036CF0(a0 as _); } return; } }
 }
 pub static mut HOOK_Player_80036E20: Option<fn(i32, *mut HSD_Archive, i32)> = None;
 /// C `Player_80036E20` (melee/pl/player.h).
 pub fn Player_80036E20(a0: i32, a1: *mut HSD_Archive, a2: i32) {
-    match unsafe { HOOK_Player_80036E20 } { Some(f) => f(a0, a1, a2), None => panic!("TODO: Player_80036E20 is not ported") }
+    match unsafe { HOOK_Player_80036E20 } { Some(f) => f(a0, a1, a2), None => { unsafe { let _ = melee_fighter::tu::player::Player_80036E20(a0 as _, a1 as _, a2 as _); } return; } }
 }
 pub static mut HOOK_Player_80036F34: Option<fn(i32, i32)> = None;
 /// C `Player_80036F34` (melee/pl/player.h).
 pub fn Player_80036F34(a0: i32, a1: i32) {
-    match unsafe { HOOK_Player_80036F34 } { Some(f) => f(a0, a1), None => panic!("TODO: Player_80036F34 is not ported") }
+    match unsafe { HOOK_Player_80036F34 } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_fighter::tu::player::Player_80036F34(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_Player_80037054: Option<fn(i32, i32)> = None;
 /// C `Player_80037054` (melee/pl/player.h).
 pub fn Player_80037054(a0: i32, a1: i32) {
-    match unsafe { HOOK_Player_80037054 } { Some(f) => f(a0, a1), None => panic!("TODO: Player_80037054 is not ported") }
+    match unsafe { HOOK_Player_80037054 } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_fighter::tu::player::Player_80037054(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_Player_GetDamage: Option<fn(i32) -> i32> = None;
 /// C `Player_GetDamage` (melee/pl/player.h).
 pub fn Player_GetDamage(a0: i32) -> i32 {
-    match unsafe { HOOK_Player_GetDamage } { Some(f) => f(a0), None => panic!("TODO: Player_GetDamage is not ported") }
+    match unsafe { HOOK_Player_GetDamage } { Some(f) => f(a0), None => { return unsafe { melee_fighter::tu::player::Player_GetDamage(a0 as _) as _ }; } }
 }
 pub static mut HOOK_Player_GetEntity: Option<fn(i32) -> *mut HSD_GObj> = None;
 /// C `Player_GetEntity` (melee/pl/player.h).
 pub fn Player_GetEntity(a0: i32) -> *mut HSD_GObj {
-    match unsafe { HOOK_Player_GetEntity } { Some(f) => f(a0), None => panic!("TODO: Player_GetEntity is not ported") }
+    match unsafe { HOOK_Player_GetEntity } { Some(f) => f(a0), None => { return unsafe { melee_fighter::tu::player::Player_GetEntity(a0 as _) as _ }; } }
 }
 pub static mut HOOK_Player_GetEntityAtIndex: Option<fn(i32, i32) -> *mut HSD_GObj> = None;
 /// C `Player_GetEntityAtIndex` (melee/pl/player.h).
 pub fn Player_GetEntityAtIndex(a0: i32, a1: i32) -> *mut HSD_GObj {
-    match unsafe { HOOK_Player_GetEntityAtIndex } { Some(f) => f(a0, a1), None => panic!("TODO: Player_GetEntityAtIndex is not ported") }
+    match unsafe { HOOK_Player_GetEntityAtIndex } { Some(f) => f(a0, a1), None => { return unsafe { melee_fighter::tu::player::Player_GetEntityAtIndex(a0 as _, a1 as _) as _ }; } }
 }
 pub static mut HOOK_Player_GetFalls: Option<fn(i32) -> i32> = None;
 /// C `Player_GetFalls` (melee/pl/player.h).
 pub fn Player_GetFalls(a0: i32) -> i32 {
-    match unsafe { HOOK_Player_GetFalls } { Some(f) => f(a0), None => panic!("TODO: Player_GetFalls is not ported") }
+    match unsafe { HOOK_Player_GetFalls } { Some(f) => f(a0), None => { return unsafe { melee_fighter::tu::player::Player_GetFalls(a0 as _) as _ }; } }
 }
 pub static mut HOOK_Player_GetNametagSlotID: Option<fn(i32) -> u8> = None;
 /// C `Player_GetNametagSlotID` (melee/pl/player.h).
 pub fn Player_GetNametagSlotID(a0: i32) -> u8 {
-    match unsafe { HOOK_Player_GetNametagSlotID } { Some(f) => f(a0), None => panic!("TODO: Player_GetNametagSlotID is not ported") }
+    match unsafe { HOOK_Player_GetNametagSlotID } { Some(f) => f(a0), None => { return unsafe { melee_fighter::tu::player::Player_GetNametagSlotID(a0 as _) as _ }; } }
 }
 pub static mut HOOK_Player_GetPlayerCharacter: Option<fn(i32) -> i32> = None;
 /// C `Player_GetPlayerCharacter` (melee/pl/player.h).
 pub fn Player_GetPlayerCharacter(a0: i32) -> i32 {
-    match unsafe { HOOK_Player_GetPlayerCharacter } { Some(f) => f(a0), None => panic!("TODO: Player_GetPlayerCharacter is not ported") }
+    match unsafe { HOOK_Player_GetPlayerCharacter } { Some(f) => f(a0), None => { return unsafe { melee_fighter::tu::player::Player_GetPlayerCharacter(a0 as _) as _ }; } }
 }
 pub static mut HOOK_Player_GetPlayerId: Option<fn(i32) -> i32> = None;
 /// C `Player_GetPlayerId` (melee/pl/player.h).
 pub fn Player_GetPlayerId(a0: i32) -> i32 {
-    match unsafe { HOOK_Player_GetPlayerId } { Some(f) => f(a0), None => panic!("TODO: Player_GetPlayerId is not ported") }
+    match unsafe { HOOK_Player_GetPlayerId } { Some(f) => f(a0), None => { return unsafe { melee_fighter::tu::player::Player_GetPlayerId(a0 as _) as _ }; } }
 }
 pub static mut HOOK_Player_GetPlayerSlotType: Option<fn(i32) -> i32> = None;
 /// C `Player_GetPlayerSlotType` (melee/pl/player.h).
 pub fn Player_GetPlayerSlotType(a0: i32) -> i32 {
-    match unsafe { HOOK_Player_GetPlayerSlotType } { Some(f) => f(a0), None => panic!("TODO: Player_GetPlayerSlotType is not ported") }
+    match unsafe { HOOK_Player_GetPlayerSlotType } { Some(f) => f(a0), None => { return unsafe { melee_fighter::tu::player::Player_GetPlayerSlotType(a0 as _) as _ }; } }
 }
 pub static mut HOOK_Player_GetTeam: Option<fn(i32) -> i32> = None;
 /// C `Player_GetTeam` (melee/pl/player.h).
 pub fn Player_GetTeam(a0: i32) -> i32 {
-    match unsafe { HOOK_Player_GetTeam } { Some(f) => f(a0), None => panic!("TODO: Player_GetTeam is not ported") }
+    match unsafe { HOOK_Player_GetTeam } { Some(f) => f(a0), None => { return unsafe { melee_fighter::tu::player::Player_GetTeam(a0 as _) as _ }; } }
 }
 pub static mut HOOK_Player_InitAllPlayers: Option<fn()> = None;
 /// C `Player_InitAllPlayers` (melee/pl/player.h).
 pub fn Player_InitAllPlayers() {
-    match unsafe { HOOK_Player_InitAllPlayers } { Some(f) => f(), None => panic!("TODO: Player_InitAllPlayers is not ported") }
+    match unsafe { HOOK_Player_InitAllPlayers } { Some(f) => f(), None => { unsafe { let _ = melee_fighter::tu::player::Player_InitAllPlayers(); } return; } }
 }
 pub static mut HOOK_Player_SetCostumeId: Option<fn(i32, i32)> = None;
 /// C `Player_SetCostumeId` (melee/pl/player.h).
 pub fn Player_SetCostumeId(a0: i32, a1: i32) {
-    match unsafe { HOOK_Player_SetCostumeId } { Some(f) => f(a0, a1), None => panic!("TODO: Player_SetCostumeId is not ported") }
+    match unsafe { HOOK_Player_SetCostumeId } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_fighter::tu::player::Player_SetCostumeId(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_Player_SetFacingDirection: Option<fn(i32, f32)> = None;
 /// C `Player_SetFacingDirection` (melee/pl/player.h).
 pub fn Player_SetFacingDirection(a0: i32, a1: f32) {
-    match unsafe { HOOK_Player_SetFacingDirection } { Some(f) => f(a0, a1), None => panic!("TODO: Player_SetFacingDirection is not ported") }
+    match unsafe { HOOK_Player_SetFacingDirection } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_fighter::tu::player::Player_SetFacingDirection(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_Player_SetFalls: Option<fn(i32, i32)> = None;
 /// C `Player_SetFalls` (melee/pl/player.h).
 pub fn Player_SetFalls(a0: i32, a1: i32) {
-    match unsafe { HOOK_Player_SetFalls } { Some(f) => f(a0, a1), None => panic!("TODO: Player_SetFalls is not ported") }
+    match unsafe { HOOK_Player_SetFalls } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_fighter::tu::player::Player_SetFalls(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_Player_SetFlagsBit5: Option<fn(i32, u8)> = None;
 /// C `Player_SetFlagsBit5` (melee/pl/player.h).
 pub fn Player_SetFlagsBit5(a0: i32, a1: u8) {
-    match unsafe { HOOK_Player_SetFlagsBit5 } { Some(f) => f(a0, a1), None => panic!("TODO: Player_SetFlagsBit5 is not ported") }
+    match unsafe { HOOK_Player_SetFlagsBit5 } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_fighter::tu::player::Player_SetFlagsBit5(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_Player_SetHUDDamage: Option<fn(i32, i32)> = None;
 /// C `Player_SetHUDDamage` (melee/pl/player.h).
 pub fn Player_SetHUDDamage(a0: i32, a1: i32) {
-    match unsafe { HOOK_Player_SetHUDDamage } { Some(f) => f(a0, a1), None => panic!("TODO: Player_SetHUDDamage is not ported") }
+    match unsafe { HOOK_Player_SetHUDDamage } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_fighter::tu::player::Player_SetHUDDamage(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_Player_SetModelScale: Option<fn(i32, f32)> = None;
 /// C `Player_SetModelScale` (melee/pl/player.h).
 pub fn Player_SetModelScale(a0: i32, a1: f32) {
-    match unsafe { HOOK_Player_SetModelScale } { Some(f) => f(a0, a1), None => panic!("TODO: Player_SetModelScale is not ported") }
+    match unsafe { HOOK_Player_SetModelScale } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_fighter::tu::player::Player_SetModelScale(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_Player_SetMoreFlagsBit4: Option<fn(i32, u8)> = None;
 /// C `Player_SetMoreFlagsBit4` (melee/pl/player.h).
 pub fn Player_SetMoreFlagsBit4(a0: i32, a1: u8) {
-    match unsafe { HOOK_Player_SetMoreFlagsBit4 } { Some(f) => f(a0, a1), None => panic!("TODO: Player_SetMoreFlagsBit4 is not ported") }
+    match unsafe { HOOK_Player_SetMoreFlagsBit4 } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_fighter::tu::player::Player_SetMoreFlagsBit4(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_Player_SetNametagSlotID: Option<fn(i32, i32)> = None;
 /// C `Player_SetNametagSlotID` (melee/pl/player.h).
 pub fn Player_SetNametagSlotID(a0: i32, a1: i32) {
-    match unsafe { HOOK_Player_SetNametagSlotID } { Some(f) => f(a0, a1), None => panic!("TODO: Player_SetNametagSlotID is not ported") }
+    match unsafe { HOOK_Player_SetNametagSlotID } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_fighter::tu::player::Player_SetNametagSlotID(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_Player_SetPlayerAndEntityCpuLevel: Option<fn(i32, i32)> = None;
 /// C `Player_SetPlayerAndEntityCpuLevel` (melee/pl/player.h).
 pub fn Player_SetPlayerAndEntityCpuLevel(a0: i32, a1: i32) {
-    match unsafe { HOOK_Player_SetPlayerAndEntityCpuLevel } { Some(f) => f(a0, a1), None => panic!("TODO: Player_SetPlayerAndEntityCpuLevel is not ported") }
+    match unsafe { HOOK_Player_SetPlayerAndEntityCpuLevel } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_fighter::tu::player::Player_SetPlayerAndEntityCpuLevel(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_Player_SetPlayerAndEntityCpuType: Option<fn(i32, i32)> = None;
 /// C `Player_SetPlayerAndEntityCpuType` (melee/pl/player.h).
 pub fn Player_SetPlayerAndEntityCpuType(a0: i32, a1: i32) {
-    match unsafe { HOOK_Player_SetPlayerAndEntityCpuType } { Some(f) => f(a0, a1), None => panic!("TODO: Player_SetPlayerAndEntityCpuType is not ported") }
+    match unsafe { HOOK_Player_SetPlayerAndEntityCpuType } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_fighter::tu::player::Player_SetPlayerAndEntityCpuType(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_Player_SetPlayerCharacter: Option<fn(i32, i32)> = None;
 /// C `Player_SetPlayerCharacter` (melee/pl/player.h).
 pub fn Player_SetPlayerCharacter(a0: i32, a1: i32) {
-    match unsafe { HOOK_Player_SetPlayerCharacter } { Some(f) => f(a0, a1), None => panic!("TODO: Player_SetPlayerCharacter is not ported") }
+    match unsafe { HOOK_Player_SetPlayerCharacter } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_fighter::tu::player::Player_SetPlayerCharacter(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_Player_SetPlayerId: Option<fn(i32, i32)> = None;
 /// C `Player_SetPlayerId` (melee/pl/player.h).
 pub fn Player_SetPlayerId(a0: i32, a1: i32) {
-    match unsafe { HOOK_Player_SetPlayerId } { Some(f) => f(a0, a1), None => panic!("TODO: Player_SetPlayerId is not ported") }
+    match unsafe { HOOK_Player_SetPlayerId } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_fighter::tu::player::Player_SetPlayerId(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_Player_SetSelfDestructs: Option<fn(i32, u32)> = None;
 /// C `Player_SetSelfDestructs` (melee/pl/player.h).
@@ -628,37 +628,37 @@ pub fn Player_SetSelfDestructs(a0: i32, a1: u32) {
 pub static mut HOOK_Player_SetSlottype: Option<fn(i32, i32)> = None;
 /// C `Player_SetSlottype` (melee/pl/player.h).
 pub fn Player_SetSlottype(a0: i32, a1: i32) {
-    match unsafe { HOOK_Player_SetSlottype } { Some(f) => f(a0, a1), None => panic!("TODO: Player_SetSlottype is not ported") }
+    match unsafe { HOOK_Player_SetSlottype } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_fighter::tu::player::Player_SetSlottype(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_Stage_80224E64: Option<fn(i32, *mut Vec3)> = None;
 /// C `Stage_80224E64` (melee/gr/stage.h).
 pub fn Stage_80224E64(a0: i32, a1: *mut Vec3) {
-    match unsafe { HOOK_Stage_80224E64 } { Some(f) => f(a0, a1), None => panic!("TODO: Stage_80224E64 is not ported") }
+    match unsafe { HOOK_Stage_80224E64 } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_world::tu::stage::Stage_80224E64(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_Stage_802251E8: Option<fn(i32, *mut i32)> = None;
 /// C `Stage_802251E8` (melee/gr/stage.h).
 pub fn Stage_802251E8(a0: i32, a1: *mut i32) {
-    match unsafe { HOOK_Stage_802251E8 } { Some(f) => f(a0, a1), None => panic!("TODO: Stage_802251E8 is not ported") }
+    match unsafe { HOOK_Stage_802251E8 } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_world::tu::stage::Stage_802251E8(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_Stage_8022524C: Option<fn()> = None;
 /// C `Stage_8022524C` (melee/gr/stage.h).
 pub fn Stage_8022524C() {
-    match unsafe { HOOK_Stage_8022524C } { Some(f) => f(), None => panic!("TODO: Stage_8022524C is not ported") }
+    match unsafe { HOOK_Stage_8022524C } { Some(f) => f(), None => { unsafe { let _ = melee_world::tu::stage::Stage_8022524C(); } return; } }
 }
 pub static mut HOOK_Toy_803060BC: Option<fn(i32, i32) -> f32> = None;
 /// C `Toy_803060BC` (melee/ty/toy.h).
 pub fn Toy_803060BC(a0: i32, a1: i32) -> f32 {
-    match unsafe { HOOK_Toy_803060BC } { Some(f) => f(a0, a1), None => panic!("TODO: Toy_803060BC is not ported") }
+    match unsafe { HOOK_Toy_803060BC } { Some(f) => f(a0, a1), None => { return unsafe { melee_items::tu::toy::Toy_803060BC(a0 as _, a1 as _) as _ }; } }
 }
 pub static mut HOOK_Toy_803102D0: Option<fn()> = None;
 /// C `Toy_803102D0` (melee/ty/toy.h).
 pub fn Toy_803102D0() {
-    match unsafe { HOOK_Toy_803102D0 } { Some(f) => f(), None => panic!("TODO: Toy_803102D0 is not ported") }
+    match unsafe { HOOK_Toy_803102D0 } { Some(f) => f(), None => { unsafe { let _ = melee_items::tu::toy::Toy_803102D0(); } return; } }
 }
 pub static mut HOOK_Toy_803124BC: Option<fn()> = None;
 /// C `Toy_803124BC` (melee/ty/toy.h).
 pub fn Toy_803124BC() {
-    match unsafe { HOOK_Toy_803124BC } { Some(f) => f(), None => panic!("TODO: Toy_803124BC is not ported") }
+    match unsafe { HOOK_Toy_803124BC } { Some(f) => f(), None => { unsafe { let _ = melee_items::tu::toy::Toy_803124BC(); } return; } }
 }
 pub static mut HOOK_efAsync_LoadSync: Option<fn(i32)> = None;
 /// C `efAsync_LoadSync` (melee/ef/efasync.h).
@@ -668,62 +668,62 @@ pub fn efAsync_LoadSync(a0: i32) {
 pub static mut HOOK_efLib_Init: Option<fn()> = None;
 /// C `efLib_Init` (melee/ef/eflib.h).
 pub fn efLib_Init() {
-    match unsafe { HOOK_efLib_Init } { Some(f) => f(), None => panic!("TODO: efLib_Init is not ported") }
+    match unsafe { HOOK_efLib_Init } { Some(f) => f(), None => { unsafe { let _ = melee_world::tu::eflib::efLib_Init(); } return; } }
 }
 pub static mut HOOK_fn_80160DE8: Option<fn(*mut HSD_JObj, u8, i32, u8, f32, f32)> = None;
 /// C `fn_80160DE8` (melee/gm/gm_1601.h).
 pub fn fn_80160DE8(a0: *mut HSD_JObj, a1: u8, a2: i32, a3: u8, a4: f32, a5: f32) {
-    match unsafe { HOOK_fn_80160DE8 } { Some(f) => f(a0, a1, a2, a3, a4, a5), None => panic!("TODO: fn_80160DE8 is not ported") }
+    match unsafe { HOOK_fn_80160DE8 } { Some(f) => f(a0, a1, a2, a3, a4, a5), None => { unsafe { let _ = crate::tu::gm_1601::fn_80160DE8(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _); } return; } }
 }
 pub static mut HOOK_fn_80160F58: Option<fn(u8) -> f32> = None;
 /// C `fn_80160F58` (melee/gm/gm_1601.h).
 pub fn fn_80160F58(a0: u8) -> f32 {
-    match unsafe { HOOK_fn_80160F58 } { Some(f) => f(a0), None => panic!("TODO: fn_80160F58 is not ported") }
+    match unsafe { HOOK_fn_80160F58 } { Some(f) => f(a0), None => { return unsafe { crate::tu::gm_1601::fn_80160F58(a0 as _) as _ }; } }
 }
 pub static mut HOOK_fn_801650E8: Option<fn()> = None;
 /// C `fn_801650E8` (melee/gm/gm_1601.h).
 pub fn fn_801650E8() {
-    match unsafe { HOOK_fn_801650E8 } { Some(f) => f(), None => panic!("TODO: fn_801650E8 is not ported") }
+    match unsafe { HOOK_fn_801650E8 } { Some(f) => f(), None => { unsafe { let _ = crate::tu::gm_1601::fn_801650E8(); } return; } }
 }
 pub static mut HOOK_fn_80165190: Option<fn(i32, i32)> = None;
 /// C `fn_80165190` (melee/gm/gm_1601.h).
 pub fn fn_80165190(a0: i32, a1: i32) {
-    match unsafe { HOOK_fn_80165190 } { Some(f) => f(a0, a1), None => panic!("TODO: fn_80165190 is not ported") }
+    match unsafe { HOOK_fn_80165190 } { Some(f) => f(a0, a1), None => { unsafe { let _ = crate::tu::gm_1601::fn_80165190(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_fn_801651FC: Option<fn(i32, i32)> = None;
 /// C `fn_801651FC` (melee/gm/gm_1601.h).
 pub fn fn_801651FC(a0: i32, a1: i32) {
-    match unsafe { HOOK_fn_801651FC } { Some(f) => f(a0, a1), None => panic!("TODO: fn_801651FC is not ported") }
+    match unsafe { HOOK_fn_801651FC } { Some(f) => f(a0, a1), None => { unsafe { let _ = crate::tu::gm_1601::fn_801651FC(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_fn_801652B0: Option<fn(i32, i32)> = None;
 /// C `fn_801652B0` (melee/gm/gm_1601.h).
 pub fn fn_801652B0(a0: i32, a1: i32) {
-    match unsafe { HOOK_fn_801652B0 } { Some(f) => f(a0, a1), None => panic!("TODO: fn_801652B0 is not ported") }
+    match unsafe { HOOK_fn_801652B0 } { Some(f) => f(a0, a1), None => { unsafe { let _ = crate::tu::gm_1601::fn_801652B0(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_fn_80168F2C: Option<fn(i8)> = None;
 /// C `fn_80168F2C` (melee/gm/gm_1601.h).
 pub fn fn_80168F2C(a0: i8) {
-    match unsafe { HOOK_fn_80168F2C } { Some(f) => f(a0), None => panic!("TODO: fn_80168F2C is not ported") }
+    match unsafe { HOOK_fn_80168F2C } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::gm_1601::fn_80168F2C(a0 as _); } return; } }
 }
 pub static mut HOOK_fn_80168F7C: Option<fn()> = None;
 /// C `fn_80168F7C` (melee/gm/gm_1601.h).
 pub fn fn_80168F7C() {
-    match unsafe { HOOK_fn_80168F7C } { Some(f) => f(), None => panic!("TODO: fn_80168F7C is not ported") }
+    match unsafe { HOOK_fn_80168F7C } { Some(f) => f(), None => { unsafe { let _ = crate::tu::gm_1601::fn_80168F7C(); } return; } }
 }
 pub static mut HOOK_fn_8016B388: Option<fn(i32, i32)> = None;
 /// C `fn_8016B388` (melee/gm/gmvs.h).
 pub fn fn_8016B388(a0: i32, a1: i32) {
-    match unsafe { HOOK_fn_8016B388 } { Some(f) => f(a0, a1), None => panic!("TODO: fn_8016B388 is not ported") }
+    match unsafe { HOOK_fn_8016B388 } { Some(f) => f(a0, a1), None => { unsafe { let _ = crate::tu::gmvs::fn_8016B388(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_fn_8016EF98: Option<fn(i32) -> i32> = None;
 /// C `fn_8016EF98` (melee/gm/gmvs.h).
 pub fn fn_8016EF98(a0: i32) -> i32 {
-    match unsafe { HOOK_fn_8016EF98 } { Some(f) => f(a0), None => panic!("TODO: fn_8016EF98 is not ported") }
+    match unsafe { HOOK_fn_8016EF98 } { Some(f) => f(a0), None => { return unsafe { crate::tu::gmvs::fn_8016EF98(a0 as _) as _ }; } }
 }
 pub static mut HOOK_fn_8017E318: Option<fn() -> i32> = None;
 /// C `fn_8017E318` (melee/gm/gmregclear.h).
 pub fn fn_8017E318() -> i32 {
-    match unsafe { HOOK_fn_8017E318 } { Some(f) => f(), None => panic!("TODO: fn_8017E318 is not ported") }
+    match unsafe { HOOK_fn_8017E318 } { Some(f) => f(), None => { return unsafe { crate::tu::gm_17c0::fn_8017E318() as _ }; } }
 }
 pub static mut HOOK_ftDemo_ObjAllocInit: Option<fn()> = None;
 /// C `ftDemo_ObjAllocInit` (melee/ft/ftdemo.h).
@@ -733,373 +733,373 @@ pub fn ftDemo_ObjAllocInit() {
 pub static mut HOOK_gmMainLib_8015CDE0: Option<fn() -> *mut gmm_x0_528_t> = None;
 /// C `gmMainLib_8015CDE0` (melee/gm/gmmain_lib.h).
 pub fn gmMainLib_8015CDE0() -> *mut gmm_x0_528_t {
-    match unsafe { HOOK_gmMainLib_8015CDE0 } { Some(f) => f(), None => panic!("TODO: gmMainLib_8015CDE0 is not ported") }
+    match unsafe { HOOK_gmMainLib_8015CDE0 } { Some(f) => f(), None => { return unsafe { crate::tu::gmmain_lib::gmMainLib_8015CDE0() as _ }; } }
 }
 pub static mut HOOK_gmMainLib_8015D06C: Option<fn(u8) -> *mut i32> = None;
 /// C `gmMainLib_8015D06C` (melee/gm/gmmain_lib.h).
 pub fn gmMainLib_8015D06C(a0: u8) -> *mut i32 {
-    match unsafe { HOOK_gmMainLib_8015D06C } { Some(f) => f(a0), None => panic!("TODO: gmMainLib_8015D06C is not ported") }
+    match unsafe { HOOK_gmMainLib_8015D06C } { Some(f) => f(a0), None => { return unsafe { crate::tu::gmmain_lib::gmMainLib_8015D06C(a0 as _) as _ }; } }
 }
 pub static mut HOOK_gmMainLib_8015D6BC: Option<fn(u8) -> i32> = None;
 /// C `gmMainLib_8015D6BC` (melee/gm/gmmain_lib.h).
 pub fn gmMainLib_8015D6BC(a0: u8) -> i32 {
-    match unsafe { HOOK_gmMainLib_8015D6BC } { Some(f) => f(a0), None => panic!("TODO: gmMainLib_8015D6BC is not ported") }
+    match unsafe { HOOK_gmMainLib_8015D6BC } { Some(f) => f(a0), None => { return unsafe { crate::tu::gmmain_lib::gmMainLib_8015D6BC(a0 as _) as _ }; } }
 }
 pub static mut HOOK_gmMainLib_8015D710: Option<fn(u8) -> i32> = None;
 /// C `gmMainLib_8015D710` (melee/gm/gmmain_lib.h).
 pub fn gmMainLib_8015D710(a0: u8) -> i32 {
-    match unsafe { HOOK_gmMainLib_8015D710 } { Some(f) => f(a0), None => panic!("TODO: gmMainLib_8015D710 is not ported") }
+    match unsafe { HOOK_gmMainLib_8015D710 } { Some(f) => f(a0), None => { return unsafe { crate::tu::gmmain_lib::gmMainLib_8015D710(a0 as _) as _ }; } }
 }
 pub static mut HOOK_gmMainLib_8015DB00: Option<fn() -> u8> = None;
 /// C `gmMainLib_8015DB00` (melee/gm/gmmain_lib.h).
 pub fn gmMainLib_8015DB00() -> u8 {
-    match unsafe { HOOK_gmMainLib_8015DB00 } { Some(f) => f(), None => panic!("TODO: gmMainLib_8015DB00 is not ported") }
+    match unsafe { HOOK_gmMainLib_8015DB00 } { Some(f) => f(), None => { return unsafe { crate::tu::gmmain_lib::gmMainLib_8015DB00() as _ }; } }
 }
 pub static mut HOOK_gmMainLib_8015DB18: Option<fn()> = None;
 /// C `gmMainLib_8015DB18` (melee/gm/gmmain_lib.h).
 pub fn gmMainLib_8015DB18() {
-    match unsafe { HOOK_gmMainLib_8015DB18 } { Some(f) => f(), None => panic!("TODO: gmMainLib_8015DB18 is not ported") }
+    match unsafe { HOOK_gmMainLib_8015DB18 } { Some(f) => f(), None => { unsafe { let _ = crate::tu::gmmain_lib::gmMainLib_8015DB18(); } return; } }
 }
 pub static mut HOOK_gm_80160474: Option<fn(i32, i32) -> i32> = None;
 /// C `gm_80160474` (melee/gm/gm_1601.h).
 pub fn gm_80160474(a0: i32, a1: i32) -> i32 {
-    match unsafe { HOOK_gm_80160474 } { Some(f) => f(a0, a1), None => panic!("TODO: gm_80160474 is not ported") }
+    match unsafe { HOOK_gm_80160474 } { Some(f) => f(a0, a1), None => { return unsafe { crate::tu::gm_1601::gm_80160474(a0 as _, a1 as _) as _ }; } }
 }
 pub static mut HOOK_gm_801604DC: Option<fn(i32, i32) -> *mut core::ffi::c_char> = None;
 /// C `gm_801604DC` (melee/gm/gm_1601.h).
 pub fn gm_801604DC(a0: i32, a1: i32) -> *mut core::ffi::c_char {
-    match unsafe { HOOK_gm_801604DC } { Some(f) => f(a0, a1), None => panic!("TODO: gm_801604DC is not ported") }
+    match unsafe { HOOK_gm_801604DC } { Some(f) => f(a0, a1), None => { return unsafe { crate::tu::gm_1601::gm_801604DC(a0 as _, a1 as _) as _ }; } }
 }
 pub static mut HOOK_gm_80160564: Option<fn(i32, i32) -> *mut core::ffi::c_char> = None;
 /// C `gm_80160564` (melee/gm/gm_1601.h).
 pub fn gm_80160564(a0: i32, a1: i32) -> *mut core::ffi::c_char {
-    match unsafe { HOOK_gm_80160564 } { Some(f) => f(a0, a1), None => panic!("TODO: gm_80160564 is not ported") }
+    match unsafe { HOOK_gm_80160564 } { Some(f) => f(a0, a1), None => { return unsafe { crate::tu::gm_1601::gm_80160564(a0 as _, a1 as _) as _ }; } }
 }
 pub static mut HOOK_gm_80160980: Option<fn(u8) -> *const core::ffi::c_char> = None;
 /// C `gm_80160980` (melee/gm/gm_1601.h).
 pub fn gm_80160980(a0: u8) -> *const core::ffi::c_char {
-    match unsafe { HOOK_gm_80160980 } { Some(f) => f(a0), None => panic!("TODO: gm_80160980 is not ported") }
+    match unsafe { HOOK_gm_80160980 } { Some(f) => f(a0), None => { return unsafe { crate::tu::gm_1601::gm_80160980(a0 as _) as _ }; } }
 }
 pub static mut HOOK_gm_80167858: Option<fn(i32, i32, i32, i32)> = None;
 /// C `gm_80167858` (melee/gm/gm_1601.h).
 pub fn gm_80167858(a0: i32, a1: i32, a2: i32, a3: i32) {
-    match unsafe { HOOK_gm_80167858 } { Some(f) => f(a0, a1, a2, a3), None => panic!("TODO: gm_80167858 is not ported") }
+    match unsafe { HOOK_gm_80167858 } { Some(f) => f(a0, a1, a2, a3), None => { unsafe { let _ = crate::tu::gm_1601::gm_80167858(a0 as _, a1 as _, a2 as _, a3 as _); } return; } }
 }
 pub static mut HOOK_gm_8016895C: Option<fn(*mut HSD_JObj, *mut DynamicModelDesc, i32)> = None;
 /// C `gm_8016895C` (melee/gm/gm_1601.h).
 pub fn gm_8016895C(a0: *mut HSD_JObj, a1: *mut DynamicModelDesc, a2: i32) {
-    match unsafe { HOOK_gm_8016895C } { Some(f) => f(a0, a1, a2), None => panic!("TODO: gm_8016895C is not ported") }
+    match unsafe { HOOK_gm_8016895C } { Some(f) => f(a0, a1, a2), None => { unsafe { let _ = crate::tu::gm_1601::gm_8016895C(a0 as _, a1 as _, a2 as _); } return; } }
 }
 pub static mut HOOK_gm_80168C5C: Option<fn(u32)> = None;
 /// C `gm_80168C5C` (melee/gm/gm_1601.h).
 pub fn gm_80168C5C(a0: u32) {
-    match unsafe { HOOK_gm_80168C5C } { Some(f) => f(a0), None => panic!("TODO: gm_80168C5C is not ported") }
+    match unsafe { HOOK_gm_80168C5C } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::gm_1601::gm_80168C5C(a0 as _); } return; } }
 }
 pub static mut HOOK_gm_80168F88: Option<fn()> = None;
 /// C `gm_80168F88` (melee/gm/gm_1601.h).
 pub fn gm_80168F88() {
-    match unsafe { HOOK_gm_80168F88 } { Some(f) => f(), None => panic!("TODO: gm_80168F88 is not ported") }
+    match unsafe { HOOK_gm_80168F88 } { Some(f) => f(), None => { unsafe { let _ = crate::tu::gm_1601::gm_80168F88(); } return; } }
 }
 pub static mut HOOK_gm_8016AEEC: Option<fn() -> u32> = None;
 /// C `gm_8016AEEC` (melee/gm/gmvs.h).
 pub fn gm_8016AEEC() -> u32 {
-    match unsafe { HOOK_gm_8016AEEC } { Some(f) => f(), None => panic!("TODO: gm_8016AEEC is not ported") }
+    match unsafe { HOOK_gm_8016AEEC } { Some(f) => f(), None => { return unsafe { crate::tu::gmvs::gm_8016AEEC() as _ }; } }
 }
 pub static mut HOOK_gm_8016AEFC: Option<fn() -> u16> = None;
 /// C `gm_8016AEFC` (melee/gm/gmvs.h).
 pub fn gm_8016AEFC() -> u16 {
-    match unsafe { HOOK_gm_8016AEFC } { Some(f) => f(), None => panic!("TODO: gm_8016AEFC is not ported") }
+    match unsafe { HOOK_gm_8016AEFC } { Some(f) => f(), None => { return unsafe { crate::tu::gmvs::gm_8016AEFC() as _ }; } }
 }
 pub static mut HOOK_gm_8016B328: Option<fn()> = None;
 /// C `gm_8016B328` (melee/gm/gmvs.h).
 pub fn gm_8016B328() {
-    match unsafe { HOOK_gm_8016B328 } { Some(f) => f(), None => panic!("TODO: gm_8016B328 is not ported") }
+    match unsafe { HOOK_gm_8016B328 } { Some(f) => f(), None => { unsafe { let _ = crate::tu::gmvs::gm_8016B328(); } return; } }
 }
 pub static mut HOOK_gm_8016B33C: Option<fn(i32)> = None;
 /// C `gm_8016B33C` (melee/gm/gmvs.h).
 pub fn gm_8016B33C(a0: i32) {
-    match unsafe { HOOK_gm_8016B33C } { Some(f) => f(a0), None => panic!("TODO: gm_8016B33C is not ported") }
+    match unsafe { HOOK_gm_8016B33C } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::gmvs::gm_8016B33C(a0 as _); } return; } }
 }
 pub static mut HOOK_gm_8016B350: Option<fn(i32)> = None;
 /// C `gm_8016B350` (melee/gm/gmvs.h).
 pub fn gm_8016B350(a0: i32) {
-    match unsafe { HOOK_gm_8016B350 } { Some(f) => f(a0), None => panic!("TODO: gm_8016B350 is not ported") }
+    match unsafe { HOOK_gm_8016B350 } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::gmvs::gm_8016B350(a0 as _); } return; } }
 }
 pub static mut HOOK_gm_8016B364: Option<fn(i32)> = None;
 /// C `gm_8016B364` (melee/gm/gmvs.h).
 pub fn gm_8016B364(a0: i32) {
-    match unsafe { HOOK_gm_8016B364 } { Some(f) => f(a0), None => panic!("TODO: gm_8016B364 is not ported") }
+    match unsafe { HOOK_gm_8016B364 } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::gmvs::gm_8016B364(a0 as _); } return; } }
 }
 pub static mut HOOK_gm_8016B378: Option<fn(i8)> = None;
 /// C `gm_8016B378` (melee/gm/gmvs.h).
 pub fn gm_8016B378(a0: i8) {
-    match unsafe { HOOK_gm_8016B378 } { Some(f) => f(a0), None => panic!("TODO: gm_8016B378 is not ported") }
+    match unsafe { HOOK_gm_8016B378 } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::gmvs::gm_8016B378(a0 as _); } return; } }
 }
 pub static mut HOOK_gm_8016EDDC: Option<fn(i32, *mut PlayerInitData) -> i32> = None;
 /// C `gm_8016EDDC` (melee/gm/gmvs.h).
 pub fn gm_8016EDDC(a0: i32, a1: *mut PlayerInitData) -> i32 {
-    match unsafe { HOOK_gm_8016EDDC } { Some(f) => f(a0, a1), None => panic!("TODO: gm_8016EDDC is not ported") }
+    match unsafe { HOOK_gm_8016EDDC } { Some(f) => f(a0, a1), None => { return unsafe { crate::tu::gmvs::gm_8016EDDC(a0 as _, a1 as _) as _ }; } }
 }
 pub static mut HOOK_gm_801A36C0: Option<fn(u8) -> u64> = None;
 /// C `gm_801A36C0` (melee/gm/gm_1A36.h).
 pub fn gm_801A36C0(a0: u8) -> u64 {
-    match unsafe { HOOK_gm_801A36C0 } { Some(f) => f(a0), None => panic!("TODO: gm_801A36C0 is not ported") }
+    match unsafe { HOOK_gm_801A36C0 } { Some(f) => f(a0), None => { return unsafe { crate::tu::gm_1A36::gm_801A36C0(a0 as _) as _ }; } }
 }
 pub static mut HOOK_gm_801A36E0: Option<fn(i32, i32)> = None;
 /// C `gm_801A36E0` (melee/gm/gm_1A36.h).
 pub fn gm_801A36E0(a0: i32, a1: i32) {
-    match unsafe { HOOK_gm_801A36E0 } { Some(f) => f(a0, a1), None => panic!("TODO: gm_801A36E0 is not ported") }
+    match unsafe { HOOK_gm_801A36E0 } { Some(f) => f(a0, a1), None => { unsafe { let _ = crate::tu::gm_1A36::gm_801A36E0(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_gm_801A4624: Option<fn() -> i32> = None;
 /// C `gm_801A4624` (melee/gm/gmscene.h).
 pub fn gm_801A4624() -> i32 {
-    match unsafe { HOOK_gm_801A4624 } { Some(f) => f(), None => panic!("TODO: gm_801A4624 is not ported") }
+    match unsafe { HOOK_gm_801A4624 } { Some(f) => f(), None => { return unsafe { crate::tu::gmscene::gm_801A4624() as _ }; } }
 }
 pub static mut HOOK_gm_801A4B60: Option<fn()> = None;
 /// C `gm_801A4B60` (melee/gm/gmscene.h).
 pub fn gm_801A4B60() {
-    match unsafe { HOOK_gm_801A4B60 } { Some(f) => f(), None => panic!("TODO: gm_801A4B60 is not ported") }
+    match unsafe { HOOK_gm_801A4B60 } { Some(f) => f(), None => { unsafe { let _ = crate::tu::gmscene::gm_801A4B60(); } return; } }
 }
 pub static mut HOOK_gm_801A4BA8: Option<fn() -> u32> = None;
 /// C `gm_801A4BA8` (melee/gm/gmscene.h).
 pub fn gm_801A4BA8() -> u32 {
-    match unsafe { HOOK_gm_801A4BA8 } { Some(f) => f(), None => panic!("TODO: gm_801A4BA8 is not ported") }
+    match unsafe { HOOK_gm_801A4BA8 } { Some(f) => f(), None => { return unsafe { crate::tu::gmscene::gm_801A4BA8() as _ }; } }
 }
 pub static mut HOOK_gm_801BF6D8: Option<fn() -> i32> = None;
 /// C `gm_801BF6D8` (melee/gm/gmevent.h).
 pub fn gm_801BF6D8() -> i32 {
-    match unsafe { HOOK_gm_801BF6D8 } { Some(f) => f(), None => panic!("TODO: gm_801BF6D8 is not ported") }
+    match unsafe { HOOK_gm_801BF6D8 } { Some(f) => f(), None => { return unsafe { crate::tu::gmopeningmode::gm_801BF6D8() as _ }; } }
 }
 pub static mut HOOK_gm_801BF6F8: Option<fn() -> i32> = None;
 /// C `gm_801BF6F8` (melee/gm/gmevent.h).
 pub fn gm_801BF6F8() -> i32 {
-    match unsafe { HOOK_gm_801BF6F8 } { Some(f) => f(), None => panic!("TODO: gm_801BF6F8 is not ported") }
+    match unsafe { HOOK_gm_801BF6F8 } { Some(f) => f(), None => { return unsafe { crate::tu::gmopeningmode::gm_801BF6F8() as _ }; } }
 }
 pub static mut HOOK_gm_CKindToSelKind: Option<fn(u8) -> u8> = None;
 /// C `gm_CKindToSelKind` (melee/gm/gm_1601.h).
 pub fn gm_CKindToSelKind(a0: u8) -> u8 {
-    match unsafe { HOOK_gm_CKindToSelKind } { Some(f) => f(a0), None => panic!("TODO: gm_CKindToSelKind is not ported") }
+    match unsafe { HOOK_gm_CKindToSelKind } { Some(f) => f(a0), None => { return unsafe { crate::gm::gm_CKindToSelKind(a0 as _) as _ }; } }
 }
 pub static mut HOOK_gm_GetButtonsTriggered: Option<fn(u8) -> u64> = None;
 /// C `gm_GetButtonsTriggered` (melee/gm/gm_1A36.h).
 pub fn gm_GetButtonsTriggered(a0: u8) -> u64 {
-    match unsafe { HOOK_gm_GetButtonsTriggered } { Some(f) => f(a0), None => panic!("TODO: gm_GetButtonsTriggered is not ported") }
+    match unsafe { HOOK_gm_GetButtonsTriggered } { Some(f) => f(a0), None => { return unsafe { crate::tu::gm_1A36::gm_GetButtonsTriggered(a0 as _) as _ }; } }
 }
 pub static mut HOOK_gm_GetCurrentGameMode: Option<fn() -> u8> = None;
 /// C `gm_GetCurrentGameMode` (melee/gm/gm_1A3F.h).
 pub fn gm_GetCurrentGameMode() -> u8 {
-    match unsafe { HOOK_gm_GetCurrentGameMode } { Some(f) => f(), None => panic!("TODO: gm_GetCurrentGameMode is not ported") }
+    match unsafe { HOOK_gm_GetCurrentGameMode } { Some(f) => f(), None => { return unsafe { crate::tu::gm_1A3F::gm_GetCurrentGameMode() as _ }; } }
 }
 pub static mut HOOK_gm_GetCurrentSceneIndex: Option<fn() -> u8> = None;
 /// C `gm_GetCurrentSceneIndex` (melee/gm/gm_1A3F.h).
 pub fn gm_GetCurrentSceneIndex() -> u8 {
-    match unsafe { HOOK_gm_GetCurrentSceneIndex } { Some(f) => f(), None => panic!("TODO: gm_GetCurrentSceneIndex is not ported") }
+    match unsafe { HOOK_gm_GetCurrentSceneIndex } { Some(f) => f(), None => { return unsafe { crate::tu::gm_1A3F::gm_GetCurrentSceneIndex() as _ }; } }
 }
 pub static mut HOOK_gm_GetDbPauseFlag: Option<fn(i32) -> i32> = None;
 /// C `gm_GetDbPauseFlag` (melee/gm/gmscene.h).
 pub fn gm_GetDbPauseFlag(a0: i32) -> i32 {
-    match unsafe { HOOK_gm_GetDbPauseFlag } { Some(f) => f(a0), None => panic!("TODO: gm_GetDbPauseFlag is not ported") }
+    match unsafe { HOOK_gm_GetDbPauseFlag } { Some(f) => f(a0), None => { return unsafe { crate::tu::gmscene::gm_GetDbPauseFlag(a0 as _) as _ }; } }
 }
 pub static mut HOOK_gm_GetFrameCount: Option<fn() -> u32> = None;
 /// C `gm_GetFrameCount` (melee/gm/gmvs.h).
 pub fn gm_GetFrameCount() -> u32 {
-    match unsafe { HOOK_gm_GetFrameCount } { Some(f) => f(), None => panic!("TODO: gm_GetFrameCount is not ported") }
+    match unsafe { HOOK_gm_GetFrameCount } { Some(f) => f(), None => { return unsafe { crate::tu::gmvs::gm_GetFrameCount() as _ }; } }
 }
 pub static mut HOOK_gm_GetNumCostumesForCKind: Option<fn(u8) -> u8> = None;
 /// C `gm_GetNumCostumesForCKind` (melee/gm/gm_1601.h).
 pub fn gm_GetNumCostumesForCKind(a0: u8) -> u8 {
-    match unsafe { HOOK_gm_GetNumCostumesForCKind } { Some(f) => f(a0), None => panic!("TODO: gm_GetNumCostumesForCKind is not ported") }
+    match unsafe { HOOK_gm_GetNumCostumesForCKind } { Some(f) => f(a0), None => { return unsafe { crate::tu::gm_1601::gm_GetNumCostumesForCKind(a0 as _) as _ }; } }
 }
 pub static mut HOOK_gm_GetStartMeleeRules: Option<fn() -> *mut StartMeleeRules> = None;
 /// C `gm_GetStartMeleeRules` (melee/gm/gmvs.h).
 pub fn gm_GetStartMeleeRules() -> *mut StartMeleeRules {
-    match unsafe { HOOK_gm_GetStartMeleeRules } { Some(f) => f(), None => panic!("TODO: gm_GetStartMeleeRules is not ported") }
+    match unsafe { HOOK_gm_GetStartMeleeRules } { Some(f) => f(), None => { return unsafe { crate::tu::gmvs::gm_GetStartMeleeRules() as _ }; } }
 }
 pub static mut HOOK_gm_MexVanillaKind: Option<fn(i32, i32) -> i32> = None;
 /// C `gm_MexVanillaKind` (melee/gm/gm_1601.h).
 pub fn gm_MexVanillaKind(a0: i32, a1: i32) -> i32 {
-    match unsafe { HOOK_gm_MexVanillaKind } { Some(f) => f(a0, a1), None => panic!("TODO: gm_MexVanillaKind is not ported") }
+    match unsafe { HOOK_gm_MexVanillaKind } { Some(f) => f(a0, a1), None => { return unsafe { crate::tu::gm_1601::gm_MexVanillaKind(a0 as _, a1 as _) as _ }; } }
 }
 pub static mut HOOK_gm_SetNewGameModePending: Option<fn()> = None;
 /// C `gm_SetNewGameModePending` (melee/gm/gm_1A3F.h).
 pub fn gm_SetNewGameModePending() {
-    match unsafe { HOOK_gm_SetNewGameModePending } { Some(f) => f(), None => panic!("TODO: gm_SetNewGameModePending is not ported") }
+    match unsafe { HOOK_gm_SetNewGameModePending } { Some(f) => f(), None => { unsafe { let _ = crate::tu::gm_1A3F::gm_SetNewGameModePending(); } return; } }
 }
 pub static mut HOOK_gm_SetNextGameModeStateId: Option<fn(u8)> = None;
 /// C `gm_SetNextGameModeStateId` (melee/gm/gm_1A3F.h).
 pub fn gm_SetNextGameModeStateId(a0: u8) {
-    match unsafe { HOOK_gm_SetNextGameModeStateId } { Some(f) => f(a0), None => panic!("TODO: gm_SetNextGameModeStateId is not ported") }
+    match unsafe { HOOK_gm_SetNextGameModeStateId } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::gm_1A3F::gm_SetNextGameModeStateId(a0 as _); } return; } }
 }
 pub static mut HOOK_gm_SetPendingGameMode: Option<fn(u8)> = None;
 /// C `gm_SetPendingGameMode` (melee/gm/gm_1A3F.h).
 pub fn gm_SetPendingGameMode(a0: u8) {
-    match unsafe { HOOK_gm_SetPendingGameMode } { Some(f) => f(a0), None => panic!("TODO: gm_SetPendingGameMode is not ported") }
+    match unsafe { HOOK_gm_SetPendingGameMode } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::gm_1A3F::gm_SetPendingGameMode(a0 as _); } return; } }
 }
 pub static mut HOOK_gm_SetupPlayerDefaults: Option<fn(*mut PlayerInitData)> = None;
 /// C `gm_SetupPlayerDefaults` (melee/gm/gm_1601.h).
 pub fn gm_SetupPlayerDefaults(a0: *mut PlayerInitData) {
-    match unsafe { HOOK_gm_SetupPlayerDefaults } { Some(f) => f(a0), None => panic!("TODO: gm_SetupPlayerDefaults is not ported") }
+    match unsafe { HOOK_gm_SetupPlayerDefaults } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::gm_1601::gm_SetupPlayerDefaults(a0 as _); } return; } }
 }
 pub static mut HOOK_ifAll_GetHUDGObj: Option<fn() -> *mut HSD_GObj> = None;
 /// C `ifAll_GetHUDGObj` (melee/if/ifall.h).
 pub fn ifAll_GetHUDGObj() -> *mut HSD_GObj {
-    match unsafe { HOOK_ifAll_GetHUDGObj } { Some(f) => f(), None => panic!("TODO: ifAll_GetHUDGObj is not ported") }
+    match unsafe { HOOK_ifAll_GetHUDGObj } { Some(f) => f(), None => { return unsafe { melee_world::tu::ifall::ifAll_GetHUDGObj() as _ }; } }
 }
 pub static mut HOOK_ifStatus_802F6508: Option<fn(i32)> = None;
 /// C `ifStatus_802F6508` (melee/if/ifstatus.h).
 pub fn ifStatus_802F6508(a0: i32) {
-    match unsafe { HOOK_ifStatus_802F6508 } { Some(f) => f(a0), None => panic!("TODO: ifStatus_802F6508 is not ported") }
+    match unsafe { HOOK_ifStatus_802F6508 } { Some(f) => f(a0), None => { unsafe { let _ = melee_world::tu::ifstatus::ifStatus_802F6508(a0 as _); } return; } }
 }
 pub static mut HOOK_ifStock_802FA2D0: Option<fn(i32)> = None;
 /// C `ifStock_802FA2D0` (melee/if/ifstock.h).
 pub fn ifStock_802FA2D0(a0: i32) {
-    match unsafe { HOOK_ifStock_802FA2D0 } { Some(f) => f(a0), None => panic!("TODO: ifStock_802FA2D0 is not ported") }
+    match unsafe { HOOK_ifStock_802FA2D0 } { Some(f) => f(a0), None => { unsafe { let _ = melee_world::tu::ifstock::ifStock_802FA2D0(a0 as _); } return; } }
 }
 pub static mut HOOK_ifTime_HideTimers: Option<fn()> = None;
 /// C `ifTime_HideTimers` (melee/if/iftime.h).
 pub fn ifTime_HideTimers() {
-    match unsafe { HOOK_ifTime_HideTimers } { Some(f) => f(), None => panic!("TODO: ifTime_HideTimers is not ported") }
+    match unsafe { HOOK_ifTime_HideTimers } { Some(f) => f(), None => { unsafe { let _ = melee_world::tu::iftime::ifTime_HideTimers(); } return; } }
 }
 pub static mut HOOK_it_8026D258: Option<fn(*mut Vec3, i32) -> i32> = None;
 /// C `it_8026D258` (melee/it/itspawn.h).
 pub fn it_8026D258(a0: *mut Vec3, a1: i32) -> i32 {
-    match unsafe { HOOK_it_8026D258 } { Some(f) => f(a0, a1), None => panic!("TODO: it_8026D258 is not ported") }
+    match unsafe { HOOK_it_8026D258 } { Some(f) => f(a0, a1), None => { return unsafe { melee_items::tu::itspawn::it_8026D258(a0 as _, a1 as _) as _ }; } }
 }
 pub static mut HOOK_lbArchive_80016DBC: Option<fn(*const core::ffi::c_char, &[*mut core::ffi::c_void]) -> *mut HSD_Archive> = None;
 /// C `lbArchive_80016DBC(file, dst0, name0, dst1, name1, ..., 0)` (melee/lb/lbarchive.h) is variadic:
 /// `rest` is the flat (dst, name, dst, name, ...) list without the terminating 0.
 pub fn lbArchive_80016DBC(file: *const core::ffi::c_char, rest: &[*mut core::ffi::c_void]) -> *mut HSD_Archive {
-    match unsafe { HOOK_lbArchive_80016DBC } { Some(f) => f(file, rest), None => panic!("TODO: lbArchive_80016DBC is not ported") }
+    match unsafe { HOOK_lbArchive_80016DBC } { Some(f) => f(file, rest), None => { return unsafe { melee_runtime::tu::lbarchive::lbArchive_80016DBC(file as _, rest as _) as _ }; } }
 }
 pub static mut HOOK_lbArchive_80016EFC: Option<fn(*mut HSD_Archive)> = None;
 /// C `lbArchive_80016EFC` (melee/lb/lbarchive.h).
 pub fn lbArchive_80016EFC(a0: *mut HSD_Archive) {
-    match unsafe { HOOK_lbArchive_80016EFC } { Some(f) => f(a0), None => panic!("TODO: lbArchive_80016EFC is not ported") }
+    match unsafe { HOOK_lbArchive_80016EFC } { Some(f) => f(a0), None => { unsafe { let _ = melee_runtime::tu::lbarchive::lbArchive_80016EFC(a0 as _); } return; } }
 }
 pub static mut HOOK_lbArchive_LoadSymbols: Option<fn(*const core::ffi::c_char, &[*mut core::ffi::c_void]) -> *mut HSD_Archive> = None;
 /// C `lbArchive_LoadSymbols(file, dst0, name0, ..., 0)` (melee/lb/lbarchive.h), variadic like `lbArchive_80016DBC`.
 pub fn lbArchive_LoadSymbols(file: *const core::ffi::c_char, rest: &[*mut core::ffi::c_void]) -> *mut HSD_Archive {
-    match unsafe { HOOK_lbArchive_LoadSymbols } { Some(f) => f(file, rest), None => panic!("TODO: lbArchive_LoadSymbols is not ported") }
+    match unsafe { HOOK_lbArchive_LoadSymbols } { Some(f) => f(file, rest), None => { return unsafe { melee_runtime::tu::lbarchive::lbArchive_LoadSymbols(file as _, rest as _) as _ }; } }
 }
 pub static mut HOOK_lbAudioAx_80023694: Option<fn() -> i32> = None;
 /// C `lbAudioAx_80023694` (melee/lb/lbaudio_ax.h).
 pub fn lbAudioAx_80023694() -> i32 {
-    match unsafe { HOOK_lbAudioAx_80023694 } { Some(f) => f(), None => panic!("TODO: lbAudioAx_80023694 is not ported") }
+    match unsafe { HOOK_lbAudioAx_80023694 } { Some(f) => f(), None => { return unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023694() as _ }; } }
 }
 pub static mut HOOK_lbAudioAx_800236B8: Option<fn(i32) -> i32> = None;
 /// C `lbAudioAx_800236B8` (melee/lb/lbaudio_ax.h).
 pub fn lbAudioAx_800236B8(a0: i32) -> i32 {
-    match unsafe { HOOK_lbAudioAx_800236B8 } { Some(f) => f(a0), None => panic!("TODO: lbAudioAx_800236B8 is not ported") }
+    match unsafe { HOOK_lbAudioAx_800236B8 } { Some(f) => f(a0), None => { return unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800236B8(a0 as _) as _ }; } }
 }
 pub static mut HOOK_lbAudioAx_800236DC: Option<fn() -> i32> = None;
 /// C `lbAudioAx_800236DC` (melee/lb/lbaudio_ax.h).
 pub fn lbAudioAx_800236DC() -> i32 {
-    match unsafe { HOOK_lbAudioAx_800236DC } { Some(f) => f(), None => panic!("TODO: lbAudioAx_800236DC is not ported") }
+    match unsafe { HOOK_lbAudioAx_800236DC } { Some(f) => f(), None => { return unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800236DC() as _ }; } }
 }
 pub static mut HOOK_lbAudioAx_800237A8: Option<fn(i32, i32, i32) -> i32> = None;
 /// C `lbAudioAx_800237A8` (melee/lb/lbaudio_ax.h).
 pub fn lbAudioAx_800237A8(a0: i32, a1: i32, a2: i32) -> i32 {
-    match unsafe { HOOK_lbAudioAx_800237A8 } { Some(f) => f(a0, a1, a2), None => panic!("TODO: lbAudioAx_800237A8 is not ported") }
+    match unsafe { HOOK_lbAudioAx_800237A8 } { Some(f) => f(a0, a1, a2), None => { return unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800237A8(a0 as _, a1 as _, a2 as _) as _ }; } }
 }
 pub static mut HOOK_lbAudioAx_80023870: Option<fn(i32, i32, i32, i32) -> i32> = None;
 /// C `lbAudioAx_80023870` (melee/lb/lbaudio_ax.h).
 pub fn lbAudioAx_80023870(a0: i32, a1: i32, a2: i32, a3: i32) -> i32 {
-    match unsafe { HOOK_lbAudioAx_80023870 } { Some(f) => f(a0, a1, a2, a3), None => panic!("TODO: lbAudioAx_80023870 is not ported") }
+    match unsafe { HOOK_lbAudioAx_80023870 } { Some(f) => f(a0, a1, a2, a3), None => { return unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023870(a0 as _, a1 as _, a2 as _, a3 as _) as _ }; } }
 }
 pub static mut HOOK_lbAudioAx_80023F28: Option<fn(i32) -> i32> = None;
 /// C `lbAudioAx_80023F28` (melee/lb/lbaudio_ax.h).
 pub fn lbAudioAx_80023F28(a0: i32) -> i32 {
-    match unsafe { HOOK_lbAudioAx_80023F28 } { Some(f) => f(a0), None => panic!("TODO: lbAudioAx_80023F28 is not ported") }
+    match unsafe { HOOK_lbAudioAx_80023F28 } { Some(f) => f(a0), None => { return unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023F28(a0 as _) as _ }; } }
 }
 pub static mut HOOK_lbAudioAx_80024030: Option<fn(i32)> = None;
 /// C `lbAudioAx_80024030` (melee/lb/lbaudio_ax.h).
 pub fn lbAudioAx_80024030(a0: i32) {
-    match unsafe { HOOK_lbAudioAx_80024030 } { Some(f) => f(a0), None => panic!("TODO: lbAudioAx_80024030 is not ported") }
+    match unsafe { HOOK_lbAudioAx_80024030 } { Some(f) => f(a0), None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80024030(a0 as _); } return; } }
 }
 pub static mut HOOK_lbAudioAx_80024C84: Option<fn()> = None;
 /// C `lbAudioAx_80024C84` (melee/lb/lbaudio_ax.h).
 pub fn lbAudioAx_80024C84() {
-    match unsafe { HOOK_lbAudioAx_80024C84 } { Some(f) => f(), None => panic!("TODO: lbAudioAx_80024C84 is not ported") }
+    match unsafe { HOOK_lbAudioAx_80024C84 } { Some(f) => f(), None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80024C84(); } return; } }
 }
 pub static mut HOOK_lbAudioAx_80026E84: Option<fn(i32) -> u64> = None;
 /// C `lbAudioAx_80026E84` (melee/lb/lbaudio_ax.h).
 pub fn lbAudioAx_80026E84(a0: i32) -> u64 {
-    match unsafe { HOOK_lbAudioAx_80026E84 } { Some(f) => f(a0), None => panic!("TODO: lbAudioAx_80026E84 is not ported") }
+    match unsafe { HOOK_lbAudioAx_80026E84 } { Some(f) => f(a0), None => { return unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80026E84(a0 as _) as _ }; } }
 }
 pub static mut HOOK_lbAudioAx_80026F2C: Option<fn(u32)> = None;
 /// C `lbAudioAx_80026F2C` (melee/lb/lbaudio_ax.h).
 pub fn lbAudioAx_80026F2C(a0: u32) {
-    match unsafe { HOOK_lbAudioAx_80026F2C } { Some(f) => f(a0), None => panic!("TODO: lbAudioAx_80026F2C is not ported") }
+    match unsafe { HOOK_lbAudioAx_80026F2C } { Some(f) => f(a0), None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80026F2C(a0 as _); } return; } }
 }
 pub static mut HOOK_lbAudioAx_8002702C: Option<fn(u32, u64)> = None;
 /// C `lbAudioAx_8002702C` (melee/lb/lbaudio_ax.h).
 pub fn lbAudioAx_8002702C(a0: u32, a1: u64) {
-    match unsafe { HOOK_lbAudioAx_8002702C } { Some(f) => f(a0, a1), None => panic!("TODO: lbAudioAx_8002702C is not ported") }
+    match unsafe { HOOK_lbAudioAx_8002702C } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_8002702C(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_lbAudioAx_80027168: Option<fn()> = None;
 /// C `lbAudioAx_80027168` (melee/lb/lbaudio_ax.h).
 pub fn lbAudioAx_80027168() {
-    match unsafe { HOOK_lbAudioAx_80027168 } { Some(f) => f(), None => panic!("TODO: lbAudioAx_80027168 is not ported") }
+    match unsafe { HOOK_lbAudioAx_80027168 } { Some(f) => f(), None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80027168(); } return; } }
 }
 pub static mut HOOK_lbAudioAx_80027648: Option<fn()> = None;
 /// C `lbAudioAx_80027648` (melee/lb/lbaudio_ax.h).
 pub fn lbAudioAx_80027648() {
-    match unsafe { HOOK_lbAudioAx_80027648 } { Some(f) => f(), None => panic!("TODO: lbAudioAx_80027648 is not ported") }
+    match unsafe { HOOK_lbAudioAx_80027648 } { Some(f) => f(), None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80027648(); } return; } }
 }
 pub static mut HOOK_lbBgFlash_8002063C: Option<fn(i32)> = None;
 /// C `lbBgFlash_8002063C` (melee/lb/lbbgflash.h).
 pub fn lbBgFlash_8002063C(a0: i32) {
-    match unsafe { HOOK_lbBgFlash_8002063C } { Some(f) => f(a0), None => panic!("TODO: lbBgFlash_8002063C is not ported") }
+    match unsafe { HOOK_lbBgFlash_8002063C } { Some(f) => f(a0), None => { unsafe { let _ = melee_runtime::tu::lbbgflash::lbBgFlash_8002063C(a0 as _); } return; } }
 }
 pub static mut HOOK_lbBgFlash_800209F4: Option<fn()> = None;
 /// C `lbBgFlash_800209F4` (melee/lb/lbbgflash.h).
 pub fn lbBgFlash_800209F4() {
-    match unsafe { HOOK_lbBgFlash_800209F4 } { Some(f) => f(), None => panic!("TODO: lbBgFlash_800209F4 is not ported") }
+    match unsafe { HOOK_lbBgFlash_800209F4 } { Some(f) => f(), None => { unsafe { let _ = melee_runtime::tu::lbbgflash::lbBgFlash_800209F4(); } return; } }
 }
 pub static mut HOOK_lbLang_IsSavedLanguageUS: Option<fn() -> i32> = None;
 /// C `lbLang_IsSavedLanguageUS` (melee/lb/lblanguage.h).
 pub fn lbLang_IsSavedLanguageUS() -> i32 {
-    match unsafe { HOOK_lbLang_IsSavedLanguageUS } { Some(f) => f(), None => panic!("TODO: lbLang_IsSavedLanguageUS is not ported") }
+    match unsafe { HOOK_lbLang_IsSavedLanguageUS } { Some(f) => f(), None => { return unsafe { melee_runtime::tu::lblanguage::lbLang_IsSavedLanguageUS() as _ }; } }
 }
 pub static mut HOOK_lbLang_IsSettingUS: Option<fn() -> i32> = None;
 /// C `lbLang_IsSettingUS` (melee/lb/lblanguage.h).
 pub fn lbLang_IsSettingUS() -> i32 {
-    match unsafe { HOOK_lbLang_IsSettingUS } { Some(f) => f(), None => panic!("TODO: lbLang_IsSettingUS is not ported") }
+    match unsafe { HOOK_lbLang_IsSettingUS } { Some(f) => f(), None => { return unsafe { melee_runtime::tu::lblanguage::lbLang_IsSettingUS() as _ }; } }
 }
 pub static mut HOOK_lb_8000B09C: Option<fn(*mut HSD_JObj) -> i32> = None;
 /// C `lb_8000B09C` (melee/lb/lb_00B0.h).
 pub fn lb_8000B09C(a0: *mut HSD_JObj) -> i32 {
-    match unsafe { HOOK_lb_8000B09C } { Some(f) => f(a0), None => panic!("TODO: lb_8000B09C is not ported") }
+    match unsafe { HOOK_lb_8000B09C } { Some(f) => f(a0), None => { return unsafe { crate::lb_r8::lb_8000B09C(a0 as _) as _ }; } }
 }
 pub static mut HOOK_lb_8000C0E8: Option<fn(*mut HSD_JObj, i32, *mut DynamicModelDesc)> = None;
 /// C `lb_8000C0E8` (melee/lb/lb_00B0.h).
 pub fn lb_8000C0E8(a0: *mut HSD_JObj, a1: i32, a2: *mut DynamicModelDesc) {
-    match unsafe { HOOK_lb_8000C0E8 } { Some(f) => f(a0, a1, a2), None => panic!("TODO: lb_8000C0E8 is not ported") }
+    match unsafe { HOOK_lb_8000C0E8 } { Some(f) => f(a0, a1, a2), None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000C0E8(a0 as _, a1 as _, a2 as _); } return; } }
 }
 pub static mut HOOK_lb_8000C1C0: Option<fn(*mut HSD_JObj, *mut HSD_JObj)> = None;
 /// C `lb_8000C1C0` (melee/lb/lb_00B0.h).
 pub fn lb_8000C1C0(a0: *mut HSD_JObj, a1: *mut HSD_JObj) {
-    match unsafe { HOOK_lb_8000C1C0 } { Some(f) => f(a0, a1), None => panic!("TODO: lb_8000C1C0 is not ported") }
+    match unsafe { HOOK_lb_8000C1C0 } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000C1C0(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_lb_8000C290: Option<fn(*mut HSD_JObj, *mut HSD_JObj)> = None;
 /// C `lb_8000C290` (melee/lb/lb_00B0.h).
 pub fn lb_8000C290(a0: *mut HSD_JObj, a1: *mut HSD_JObj) {
-    match unsafe { HOOK_lb_8000C290 } { Some(f) => f(a0, a1), None => panic!("TODO: lb_8000C290 is not ported") }
+    match unsafe { HOOK_lb_8000C290 } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000C290(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_lb_8000FCDC: Option<fn()> = None;
 /// C `lb_8000FCDC` (melee/lb/lb_00F9.h).
 pub fn lb_8000FCDC() {
-    match unsafe { HOOK_lb_8000FCDC } { Some(f) => f(), None => panic!("TODO: lb_8000FCDC is not ported") }
+    match unsafe { HOOK_lb_8000FCDC } { Some(f) => f(), None => { unsafe { let _ = melee_runtime::tu::lb_00F9::lb_8000FCDC(); } return; } }
 }
 pub static mut HOOK_lb_80011AC4: Option<fn(*mut *mut LightList) -> *mut HSD_LObj> = None;
 /// C `lb_80011AC4` (melee/lb/lbspdisplay.h).
 pub fn lb_80011AC4(a0: *mut *mut LightList) -> *mut HSD_LObj {
-    match unsafe { HOOK_lb_80011AC4 } { Some(f) => f(a0), None => panic!("TODO: lb_80011AC4 is not ported") }
+    match unsafe { HOOK_lb_80011AC4 } { Some(f) => f(a0), None => { return unsafe { melee_runtime::tu::lbspdisplay::lb_80011AC4(a0 as _) as _ }; } }
 }
 pub static mut HOOK_lb_80011C18: Option<fn(*mut HSD_JObj, u32)> = None;
 /// C `lb_80011C18` (melee/lb/lbspdisplay.h).
 pub fn lb_80011C18(a0: *mut HSD_JObj, a1: u32) {
-    match unsafe { HOOK_lb_80011C18 } { Some(f) => f(a0, a1), None => panic!("TODO: lb_80011C18 is not ported") }
+    match unsafe { HOOK_lb_80011C18 } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_runtime::tu::lbspdisplay::lb_80011C18(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_lb_80011E24: Option<fn(*mut HSD_JObj, *mut *mut HSD_JObj, i32, i32) -> i32> = None;
 /// C `lb_80011E24(jobj, out, id, ...)` (melee/lb/lb_00F9.h): find joint `id`; the gm callers pass exactly `-1` after it.
@@ -1109,42 +1109,42 @@ pub fn lb_80011E24(jobj: *mut HSD_JObj, out: *mut *mut HSD_JObj, id: i32, end: i
 pub static mut HOOK_lb_800121FC: Option<fn(*mut HSD_ImageDesc, i32, i32, i32, i16) -> *mut HSD_ImageDesc> = None;
 /// C `lb_800121FC` (melee/lb/lbspdisplay.h).
 pub fn lb_800121FC(a0: *mut HSD_ImageDesc, a1: i32, a2: i32, a3: i32, a4: i16) -> *mut HSD_ImageDesc {
-    match unsafe { HOOK_lb_800121FC } { Some(f) => f(a0, a1, a2, a3, a4), None => panic!("TODO: lb_800121FC is not ported") }
+    match unsafe { HOOK_lb_800121FC } { Some(f) => f(a0, a1, a2, a3, a4), None => { return unsafe { melee_runtime::tu::lbspdisplay::lb_800121FC(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _) as _ }; } }
 }
 pub static mut HOOK_lb_80019880: Option<fn(u64)> = None;
 /// C `lb_80019880` (melee/lb/lb_0195.h).
 pub fn lb_80019880(a0: u64) {
-    match unsafe { HOOK_lb_80019880 } { Some(f) => f(a0), None => panic!("TODO: lb_80019880 is not ported") }
+    match unsafe { HOOK_lb_80019880 } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::lb_0195::lb_80019880(a0 as _); } return; } }
 }
 pub static mut HOOK_memzero: Option<fn(*mut core::ffi::c_void, i32)> = None;
 /// C `memzero` (melee/lb/lb_00B0.h).
 pub fn memzero(a0: *mut core::ffi::c_void, a1: i32) {
-    match unsafe { HOOK_memzero } { Some(f) => f(a0, a1), None => panic!("TODO: memzero is not ported") }
+    match unsafe { HOOK_memzero } { Some(f) => f(a0, a1), None => { unsafe { let _ = crate::tu::ext_hook::memzero(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_mpColl_80041C78: Option<fn()> = None;
 /// C `mpColl_80041C78` (melee/mp/mpcoll.h).
 pub fn mpColl_80041C78() {
-    match unsafe { HOOK_mpColl_80041C78 } { Some(f) => f(), None => panic!("TODO: mpColl_80041C78 is not ported") }
+    match unsafe { HOOK_mpColl_80041C78 } { Some(f) => f(), None => { unsafe { let _ = melee_world::tu::mpcoll::mpColl_80041C78(); } return; } }
 }
 pub static mut HOOK_pl_800412D0: Option<fn(i32) -> i32> = None;
 /// C `pl_800412D0` (melee/pl/pl_040D.h).
 pub fn pl_800412D0(a0: i32) -> i32 {
-    match unsafe { HOOK_pl_800412D0 } { Some(f) => f(a0), None => panic!("TODO: pl_800412D0 is not ported") }
+    match unsafe { HOOK_pl_800412D0 } { Some(f) => f(a0), None => { return unsafe { melee_fighter::plbonus::pl_800412d0(a0 as _) as _ }; } }
 }
 pub static mut HOOK_pl_80041300: Option<fn(i32) -> i32> = None;
 /// C `pl_80041300` (melee/pl/pl_040D.h).
 pub fn pl_80041300(a0: i32) -> i32 {
-    match unsafe { HOOK_pl_80041300 } { Some(f) => f(a0), None => panic!("TODO: pl_80041300 is not ported") }
+    match unsafe { HOOK_pl_80041300 } { Some(f) => f(a0), None => { return unsafe { melee_fighter::plbonus::pl_80041300(a0 as _) as _ }; } }
 }
 pub static mut HOOK_pl_8004134C: Option<fn(i32) -> i32> = None;
 /// C `pl_8004134C` (melee/pl/pl_040D.h).
 pub fn pl_8004134C(a0: i32) -> i32 {
-    match unsafe { HOOK_pl_8004134C } { Some(f) => f(a0), None => panic!("TODO: pl_8004134C is not ported") }
+    match unsafe { HOOK_pl_8004134C } { Some(f) => f(a0), None => { return unsafe { melee_fighter::plbonus::pl_8004134c(a0 as _) as _ }; } }
 }
 pub static mut HOOK_un_802FD28C: Option<fn(i32)> = None;
 /// C `un_802FD28C` (melee/if/ifnametag.h).
 pub fn un_802FD28C(a0: i32) {
-    match unsafe { HOOK_un_802FD28C } { Some(f) => f(a0), None => panic!("TODO: un_802FD28C is not ported") }
+    match unsafe { HOOK_un_802FD28C } { Some(f) => f(a0), None => { unsafe { let _ = melee_world::tu::ifnametag::un_802FD28C(a0 as _); } return; } }
 }
 
 /// extern global `HSD_GObj_804D783C` (owner TU is elsewhere)

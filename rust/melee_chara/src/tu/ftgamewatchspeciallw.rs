@@ -36,10 +36,38 @@ pub mod ext {
         };
     }
     // itgamewatchpanic.c
-    hook!(IT_802C7D60, it_802C7D60, (owner: *mut HSD_GObj, pos: *const Vec3, kind: i32, facing: f32) -> *mut HSD_GObj);
-    hook!(IT_802C7E94, it_802C7E94, (item: *mut HSD_GObj));
-    hook!(IT_802C7EE0, it_802C7EE0, (item: *mut HSD_GObj));
-    hook!(IT_802C7F00, it_802C7F00, (item: *mut HSD_GObj));
+    pub static mut IT_802C7D60: Option<fn(*mut HSD_GObj, *const Vec3, i32, f32) -> *mut HSD_GObj> = None;
+            #[allow(non_snake_case)]
+            pub fn it_802C7D60(owner: *mut HSD_GObj, pos: *const Vec3, kind: i32, facing: f32) -> *mut HSD_GObj {
+                match unsafe { IT_802C7D60 } {
+                    Some(f) => f(owner, pos, kind, facing),
+                    None => { return unsafe { melee_items::tu::itgamewatchpanic::it_802C7D60(owner as _, pos as _, kind as _, facing as _) as _ }; },
+                }
+            }
+    pub static mut IT_802C7E94: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802C7E94(item: *mut HSD_GObj)  {
+                match unsafe { IT_802C7E94 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itgamewatchpanic::it_802C7E94(item as _); } return; },
+                }
+            }
+    pub static mut IT_802C7EE0: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802C7EE0(item: *mut HSD_GObj)  {
+                match unsafe { IT_802C7EE0 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itgamewatchpanic::it_802C7EE0(item as _); } return; },
+                }
+            }
+    pub static mut IT_802C7F00: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802C7F00(item: *mut HSD_GObj)  {
+                match unsafe { IT_802C7F00 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itgamewatchpanic::it_802C7F00(item as _); } return; },
+                }
+            }
     // ft/ftcoll.c
     hook!(FTCOLL_CREATEABSORBHIT, ftColl_CreateAbsorbHit, (gobj: *mut HSD_GObj, desc: *const AbsorbDesc));
     hook!(FTCOLL_8007ABD0, ftColl_8007ABD0, (hit: *mut HitCapsule, dmg: u32, gobj: *mut HSD_GObj));

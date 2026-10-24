@@ -27,7 +27,7 @@ macro_rules! ext_fns {
 pub mod ext {
     use super::*;
     ext_fns! {
-        ftCo_SpecialS_CheckInput(g: G) -> bool = |_| todo!("TODO(port) ftCo_SpecialS_CheckInput (ftCo_SpecialS.c)");
+        ftCo_SpecialS_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_SpecialS::ftCo_SpecialS_CheckInput(g as _) as _ } };
         ftCo_Attack100_CheckInput(g: G) -> bool = crate::tu::ftCo_Attack100::ftCo_Attack100_CheckInput;
         ftCo_800D6824(g: G) -> bool = crate::tu::ftCo_Attack100::ftCo_800D6824;
         ftCo_800D68C0(g: G) -> bool = crate::tu::ftCo_Attack100::ftCo_800D68C0;
@@ -40,18 +40,18 @@ pub mod ext {
         ftCo_AttackLw3_CheckInput(g: G) -> bool = crate::tu::ftCo_AttackLw3::ftCo_AttackLw3_CheckInput;
         ftCo_Attack1_CheckInput(g: G) -> bool = crate::tu::ftCo_Attack1::ftCo_Attack1_CheckInput;
         ftCo_80099794(g: G) -> bool = crate::tu::ftCo_Escape::ftCo_80099794;
-        ftCo_80091A4C(g: G) -> bool = |_| todo!("TODO(port) ftCo_80091A4C (ftCo_Guard.c)");
+        ftCo_80091A4C(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Guard::ftCo_80091A4C(g as _) as _ } };
         ftFx_AppealS_CheckInput(g: G) -> bool = |_| todo!("TODO(port) ftFx_AppealS_CheckInput (ftfoxappeals.c)");
         ftCo_800DE9D8(g: G) -> bool = crate::tu::ftCo_AppealS::ftCo_800DE9D8;
         ftCo_Jump_CheckInput(g: G) -> bool = crate::tu::ftCo_Jump::ftCo_Jump_CheckInput;
         ftCo_Dash_CheckInput(g: G) -> bool = crate::tu::ftCo_Dash::ftCo_Dash_CheckInput;
-        ftCo_800D5FB0(g: G) -> bool = |_| todo!("TODO(port) ftCo_800D5FB0 (ftCo_Squat.c)");
+        ftCo_800D5FB0(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Squat::ftCo_800D5FB0(g as _) as _ } };
         ftCo_Turn_CheckInput(g: G) -> bool = crate::tu::ftCo_Turn::ftCo_Turn_CheckInput;
         ftCo_Walk_CheckInput(g: G) -> bool = crate::tu::ftCo_Walk::ftCo_Walk_CheckInput;
         ftCo_DownSpot_Enter(g: G) = crate::tu::ftCo_DownSpot::ftCo_DownSpot_Enter;
         ftCo_8008A7A8(g: G, ws: *mut core::ffi::c_void) = |g, ws| crate::tu::ftwaitanim::ftCo_8008A7A8(g, ws as *const _);
-        ft_80084F3C(g: G) = |_| todo!("TODO(port) ft_80084F3C (ft_081B.c)");
-        ftColl_8007AEE0(g: G) = |_| todo!("TODO(port) ftColl_8007AEE0 (ftcoll.c)");
+        ft_80084F3C(g: G) = |g: G| { unsafe { let _ = crate::ft084e::ft_80084f3c(g as _); } };
+        ftColl_8007AEE0(g: G) = |g: G| { unsafe { let _ = crate::ft0df::ftcoll_8007aee0(g as _); } };
         ft_80084280(g: G) = crate::tu::ft_081b::ft_80084280;
     }
 }

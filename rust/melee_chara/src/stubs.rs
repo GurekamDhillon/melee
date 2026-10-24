@@ -60,29 +60,78 @@ stub_or!(/// `ft_80084DB0(gobj)`: group 3's verified port (night 3 round 12, ft0
     FT_80084DB0, ft_80084DB0, melee_fighter::ft084e::ft_80084db0, (g: G));
 stub_or!(/// `ft_80084FA8(gobj)`: group 3's verified port (night 3 round 12, ft084e.rs) when the hook is unset.
     FT_80084FA8, ft_80084FA8, melee_fighter::ft084e::ft_80084fa8, (g: G));
-stub!(/// TODO(group3): `ft_80083F88(gobj)` (ft/ft_0877.c, collision).
-    FT_80083F88, ft_80083F88, (g: G));
-stub!(/// TODO(group3): `ftAnim_IsFramesRemaining(gobj)` (ft/ftanim.c).
-    FTANIM_ISFRAMESREMAINING, ftAnim_IsFramesRemaining, (g: G) -> i32);
-stub!(/// TODO(group3): `ftAnim_8006EBA4(gobj)` (ft/ftanim.c).
-    FTANIM_8006EBA4, ftAnim_8006EBA4, (g: G));
-stub!(/// TODO(group3): `Fighter_ChangeMotionState(gobj, msid, flags, anim_start, anim_speed, anim_blend, arg3)` (ft/fighter.c).
-    FIGHTER_CHANGEMOTIONSTATE, Fighter_ChangeMotionState,
-    (g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, arg3: G));
-stub!(/// TODO(group3): `ft_8008A2BC(gobj)` (ftCommon Wait enter).
-    FT_8008A2BC, ft_8008A2BC, (g: G));
-stub!(/// TODO(group3): `ftCo_Fall_Enter(gobj)` (ftCommon/ftCo_Fall.c).
-    FTCO_FALL_ENTER, ftCo_Fall_Enter, (g: G));
-stub!(/// TODO(group3): `ft_80081D0C(gobj)` (ft/ftcoll.c, air collision; returns GroundOrAir/bool).
-    FT_80081D0C, ft_80081D0C, (g: G) -> i32);
-stub!(/// TODO(group3): `ft_80082708(gobj)` (ft/ftcoll.c, ground collision).
-    FT_80082708, ft_80082708, (g: G) -> i32);
-stub!(/// TODO(group3): `ft_800827A0(gobj)` (ft/ftcoll.c).
-    FT_800827A0, ft_800827A0, (g: G) -> i32);
+    /// TODO(group3): `ft_80083F88(gobj)` (ft/ft_0877.c, collision).
+pub static mut FT_80083F88: Option<fn(G)> = None;
+        /// TODO(group3): `ft_80083F88(gobj)` (ft/ft_0877.c, collision).
+#[allow(non_snake_case)]
+    pub fn ft_80083F88(g: G) {
+        match unsafe { FT_80083F88 } { Some(f) => f(g), None => { unsafe { let _ = melee_fighter::tu::ft_081b::ft_80083f88(g as _); } return; } }
+    }
+    /// TODO(group3): `ftAnim_IsFramesRemaining(gobj)` (ft/ftanim.c).
+pub static mut FTANIM_ISFRAMESREMAINING: Option<fn(G) -> i32> = None;
+        /// TODO(group3): `ftAnim_IsFramesRemaining(gobj)` (ft/ftanim.c).
+#[allow(non_snake_case)]
+    pub fn ftAnim_IsFramesRemaining(g: G) -> i32 {
+        match unsafe { FTANIM_ISFRAMESREMAINING } { Some(f) => f(g), None => { return unsafe { melee_fighter::tu::ftanim::ftAnim_IsFramesRemaining(g as _) as _ }; } }
+    }
+    /// TODO(group3): `ftAnim_8006EBA4(gobj)` (ft/ftanim.c).
+pub static mut FTANIM_8006EBA4: Option<fn(G)> = None;
+        /// TODO(group3): `ftAnim_8006EBA4(gobj)` (ft/ftanim.c).
+#[allow(non_snake_case)]
+    pub fn ftAnim_8006EBA4(g: G) {
+        match unsafe { FTANIM_8006EBA4 } { Some(f) => f(g), None => { unsafe { let _ = melee_fighter::tu::ftanim::ftAnim_8006EBA4(g as _); } return; } }
+    }
+    /// TODO(group3): `Fighter_ChangeMotionState(gobj, msid, flags, anim_start, anim_speed, anim_blend, arg3)` (ft/fighter.c).
+pub static mut FIGHTER_CHANGEMOTIONSTATE: Option<fn(G, i32, u32, f32, f32, f32, G)> = None;
+        /// TODO(group3): `Fighter_ChangeMotionState(gobj, msid, flags, anim_start, anim_speed, anim_blend, arg3)` (ft/fighter.c).
+#[allow(non_snake_case)]
+    pub fn Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, arg3: G) {
+        match unsafe { FIGHTER_CHANGEMOTIONSTATE } { Some(f) => f(g, msid, flags, start, speed, blend, arg3), None => { unsafe { let _ = melee_fighter::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, arg3 as _); } return; } }
+    }
+    /// TODO(group3): `ft_8008A2BC(gobj)` (ftCommon Wait enter).
+pub static mut FT_8008A2BC: Option<fn(G)> = None;
+        /// TODO(group3): `ft_8008A2BC(gobj)` (ftCommon Wait enter).
+#[allow(non_snake_case)]
+    pub fn ft_8008A2BC(g: G) {
+        match unsafe { FT_8008A2BC } { Some(f) => f(g), None => { unsafe { let _ = melee_fighter::tu::ft_08a1::ft_8008A2BC(g as _); } return; } }
+    }
+    /// TODO(group3): `ftCo_Fall_Enter(gobj)` (ftCommon/ftCo_Fall.c).
+pub static mut FTCO_FALL_ENTER: Option<fn(G)> = None;
+        /// TODO(group3): `ftCo_Fall_Enter(gobj)` (ftCommon/ftCo_Fall.c).
+#[allow(non_snake_case)]
+    pub fn ftCo_Fall_Enter(g: G) {
+        match unsafe { FTCO_FALL_ENTER } { Some(f) => f(g), None => { unsafe { let _ = melee_fighter::tu::ftCo_Fall::ftCo_Fall_Enter(g as _); } return; } }
+    }
+    /// TODO(group3): `ft_80081D0C(gobj)` (ft/ftcoll.c, air collision; returns GroundOrAir/bool).
+pub static mut FT_80081D0C: Option<fn(G) -> i32> = None;
+        /// TODO(group3): `ft_80081D0C(gobj)` (ft/ftcoll.c, air collision; returns GroundOrAir/bool).
+#[allow(non_snake_case)]
+    pub fn ft_80081D0C(g: G) -> i32 {
+        match unsafe { FT_80081D0C } { Some(f) => f(g), None => { return unsafe { melee_fighter::tu::ft_081b::ft_80081d0c(g as _) as _ }; } }
+    }
+    /// TODO(group3): `ft_80082708(gobj)` (ft/ftcoll.c, ground collision).
+pub static mut FT_80082708: Option<fn(G) -> i32> = None;
+        /// TODO(group3): `ft_80082708(gobj)` (ft/ftcoll.c, ground collision).
+#[allow(non_snake_case)]
+    pub fn ft_80082708(g: G) -> i32 {
+        match unsafe { FT_80082708 } { Some(f) => f(g), None => { return unsafe { melee_fighter::tu::ft_081b::ft_80082708(g as _) as _ }; } }
+    }
+    /// TODO(group3): `ft_800827A0(gobj)` (ft/ftcoll.c).
+pub static mut FT_800827A0: Option<fn(G) -> i32> = None;
+        /// TODO(group3): `ft_800827A0(gobj)` (ft/ftcoll.c).
+#[allow(non_snake_case)]
+    pub fn ft_800827A0(g: G) -> i32 {
+        match unsafe { FT_800827A0 } { Some(f) => f(g), None => { return unsafe { melee_fighter::tu::ft_081b::ft_800827a0(g as _) as _ }; } }
+    }
 stub_or!(/// `ftCommon_8007D7FC(fp)`: group 3's verified port (night 3) when the hook is unset.
     FTCOMMON_8007D7FC, ftCommon_8007D7FC, melee_fighter::ftcommon3::ftcommon_8007d7fc, (fp: &mut Fighter));
-stub!(/// TODO(group3): `ftCo_80096900(gobj, a, b, allow_interrupt, mobility, landing_lag)` (FallSpecial enter).
-    FTCO_80096900, ftCo_80096900, (g: G, a: i32, b: i32, allow_interrupt: i32, mobility: f32, landing_lag: f32));
+    /// TODO(group3): `ftCo_80096900(gobj, a, b, allow_interrupt, mobility, landing_lag)` (FallSpecial enter).
+pub static mut FTCO_80096900: Option<fn(G, i32, i32, i32, f32, f32)> = None;
+        /// TODO(group3): `ftCo_80096900(gobj, a, b, allow_interrupt, mobility, landing_lag)` (FallSpecial enter).
+#[allow(non_snake_case)]
+    pub fn ftCo_80096900(g: G, a: i32, b: i32, allow_interrupt: i32, mobility: f32, landing_lag: f32) {
+        match unsafe { FTCO_80096900 } { Some(f) => f(g, a, b, allow_interrupt, mobility, landing_lag), None => { unsafe { let _ = melee_fighter::tu::ftCo_FallSpecial::ftCo_80096900(g as _, a as _, b as _, allow_interrupt as _, mobility as _, landing_lag as _); } return; } }
+    }
 
 stub_or!(/// `ftCommon_8007D5D4(fp)`: group 3's port when the hook is unset (the oracle installs recorders).
     FTCOMMON_8007D5D4, ftCommon_8007D5D4, melee_fighter::ftcommon2::ftcommon_8007d5d4, (fp: &mut Fighter));
@@ -112,26 +161,51 @@ stub!(/// TODO(group3): `ft_8008403C(gobj, cb)` (ft/ft_0877.c, air collision wit
     FT_8008403C, ft_8008403C, (g: G, cb: HSD_GObjEvent));
 stub!(/// TODO(group3): `ft_800841B8(gobj, cb)` (ft/ft_0877.c).
     FT_800841B8, ft_800841B8, (g: G, cb: HSD_GObjEvent));
-stub!(/// TODO(group3): `ft_80084104(gobj)` (ft/ft_0877.c).
-    FT_80084104, ft_80084104, (g: G));
+    /// TODO(group3): `ft_80084104(gobj)` (ft/ft_0877.c).
+pub static mut FT_80084104: Option<fn(G)> = None;
+        /// TODO(group3): `ft_80084104(gobj)` (ft/ft_0877.c).
+#[allow(non_snake_case)]
+    pub fn ft_80084104(g: G) {
+        match unsafe { FT_80084104 } { Some(f) => f(g), None => { unsafe { let _ = melee_fighter::tu::ft_081b::ft_80084104(g as _); } return; } }
+    }
 stub_or!(/// `ftParts_80074A4C(gobj, model_idx, val)` (ft/ftparts.c): group 3's verified port (round 13, ft0df.rs) when the hook is unset.
     FTPARTS_80074A4C, ftParts_80074A4C, melee_fighter::ft0df::ftparts_80074a4c, (g: G, model_idx: i32, val: i32));
-stub!(/// TODO(group3): `ftParts_80074B0C(gobj, model_idx, val)` (ft/ftparts.c).
-    FTPARTS_80074B0C, ftParts_80074B0C, (g: G, model_idx: i32, val: i32));
+    /// TODO(group3): `ftParts_80074B0C(gobj, model_idx, val)` (ft/ftparts.c).
+pub static mut FTPARTS_80074B0C: Option<fn(G, i32, i32)> = None;
+        /// TODO(group3): `ftParts_80074B0C(gobj, model_idx, val)` (ft/ftparts.c).
+#[allow(non_snake_case)]
+    pub fn ftParts_80074B0C(g: G, model_idx: i32, val: i32) {
+        match unsafe { FTPARTS_80074B0C } { Some(f) => f(g, model_idx, val), None => { unsafe { let _ = melee_fighter::tu::ftparts::ftParts_80074B0C(g as _, model_idx as _, val as _); } return; } }
+    }
 stub!(/// TODO(group3): `ft_CheckGroundAndLedge(gobj, direction)` (ft/ftcoll.c; returns bool).
     FT_CHECKGROUNDANDLEDGE, ft_CheckGroundAndLedge, (g: G, direction: i32) -> i32);
 stub_or!(/// `ftCommon_8007DB24(gobj)`: group 3's verified port (night 3) when the hook is unset.
     FTCOMMON_8007DB24, ftCommon_8007DB24, melee_fighter::ftcommon3::ftcommon_8007db24, (g: G));
 stub_or!(/// `ftCommon_8007D92C(gobj)`: group 3's verified port (night 3) when the hook is unset.
     FTCOMMON_8007D92C, ftCommon_8007D92C, melee_fighter::ftcommon3::ftcommon_8007d92c, (g: G));
-stub!(/// TODO(group3): `ftCo_Wait_IASA(gobj)` (ftCommon/ftCo_Wait.c).
-    FTCO_WAIT_IASA, ftCo_Wait_IASA, (g: G));
+    /// TODO(group3): `ftCo_Wait_IASA(gobj)` (ftCommon/ftCo_Wait.c).
+pub static mut FTCO_WAIT_IASA: Option<fn(G)> = None;
+        /// TODO(group3): `ftCo_Wait_IASA(gobj)` (ftCommon/ftCo_Wait.c).
+#[allow(non_snake_case)]
+    pub fn ftCo_Wait_IASA(g: G) {
+        match unsafe { FTCO_WAIT_IASA } { Some(f) => f(g), None => { unsafe { let _ = melee_fighter::tu::ftCo_Wait::ftCo_Wait_IASA(g as _); } return; } }
+    }
 stub_or!(/// `ftCommon_8007EBAC(fp, u32, u32)`: group 3's verified port (night 3) when the hook is unset.
     FTCOMMON_8007EBAC, ftCommon_8007EBAC, melee_fighter::ftcommon2::ftcommon_8007ebac, (fp: &mut Fighter, a: u32, b: u32));
-stub!(/// TODO(group3): `ftAnim_SetAnimRate(gobj, rate)` (ft/ftanim.c).
-    FTANIM_SETANIMRATE, ftAnim_SetAnimRate, (g: G, rate: f32));
-stub!(/// TODO(group3): `ftAnim_800704F0(gobj, tobj_idx, frame)` (ft/ftanim.c).
-    FTANIM_800704F0, ftAnim_800704F0, (g: G, tobj_idx: i32, frame: f32));
+    /// TODO(group3): `ftAnim_SetAnimRate(gobj, rate)` (ft/ftanim.c).
+pub static mut FTANIM_SETANIMRATE: Option<fn(G, f32)> = None;
+        /// TODO(group3): `ftAnim_SetAnimRate(gobj, rate)` (ft/ftanim.c).
+#[allow(non_snake_case)]
+    pub fn ftAnim_SetAnimRate(g: G, rate: f32) {
+        match unsafe { FTANIM_SETANIMRATE } { Some(f) => f(g, rate), None => { unsafe { let _ = melee_fighter::tu::ftanim::ftAnim_SetAnimRate(g as _, rate as _); } return; } }
+    }
+    /// TODO(group3): `ftAnim_800704F0(gobj, tobj_idx, frame)` (ft/ftanim.c).
+pub static mut FTANIM_800704F0: Option<fn(G, i32, f32)> = None;
+        /// TODO(group3): `ftAnim_800704F0(gobj, tobj_idx, frame)` (ft/ftanim.c).
+#[allow(non_snake_case)]
+    pub fn ftAnim_800704F0(g: G, tobj_idx: i32, frame: f32) {
+        match unsafe { FTANIM_800704F0 } { Some(f) => f(g, tobj_idx, frame), None => { unsafe { let _ = melee_fighter::tu::ftanim::ftAnim_800704F0(g as _, tobj_idx as _, frame as _); } return; } }
+    }
 stub!(/// TODO(group3): `ftCo_LandingFallSpecial_Enter(gobj, allow_interrupt, landing_lag)`.
     FTCO_LANDINGFALLSPECIAL_ENTER, ftCo_LandingFallSpecial_Enter, (g: G, allow_interrupt: i32, landing_lag: f32));
 stub_or!(/// `Fighter_UnkSetFlag_8006CFBC(gobj)` (ft/fighter.c): group 3's verified port (night 3) when the hook is unset.
@@ -186,12 +260,27 @@ stub_or!(/// `ftColl_8007AEF8(gobj)` (ft/ftcoll.c): group 3's verified port (rou
     FTCOLL_8007AEF8, ftColl_8007AEF8, melee_fighter::ft0df::ftcoll_8007aef8, (g: G));
 stub!(/// TODO(group3): `ftCo_AirCatchHit_Coll(gobj)` (ft/ftcoll.c / ftCommon AirCatch).
     FTCO_AIRCATCHHIT_COLL, ftCo_AirCatchHit_Coll, (g: G));
-stub!(/// TODO(group3): `ftAnim_ApplyPartAnim(gobj, a, b, frame)` (ft/ftanim.c).
-    FTANIM_APPLYPARTANIM, ftAnim_ApplyPartAnim, (g: G, a: i32, b: i32, frame: f32));
-stub!(/// TODO(group3): `ftAnim_80070C48(gobj, flag)` (ft/ftanim.c; reached through Fighter_OnItemVisible).
-    FTANIM_80070C48, ftAnim_80070C48, (g: G, flag: i32));
-stub!(/// TODO(group3): `ftAnim_80070CC4(gobj, flag)` (ft/ftanim.c; reached through Fighter_OnItemInvisible).
-    FTANIM_80070CC4, ftAnim_80070CC4, (g: G, flag: i32));
+    /// TODO(group3): `ftAnim_ApplyPartAnim(gobj, a, b, frame)` (ft/ftanim.c).
+pub static mut FTANIM_APPLYPARTANIM: Option<fn(G, i32, i32, f32)> = None;
+        /// TODO(group3): `ftAnim_ApplyPartAnim(gobj, a, b, frame)` (ft/ftanim.c).
+#[allow(non_snake_case)]
+    pub fn ftAnim_ApplyPartAnim(g: G, a: i32, b: i32, frame: f32) {
+        match unsafe { FTANIM_APPLYPARTANIM } { Some(f) => f(g, a, b, frame), None => { unsafe { let _ = melee_fighter::tu::ftanim::ftAnim_ApplyPartAnim(g as _, a as _, b as _, frame as _); } return; } }
+    }
+    /// TODO(group3): `ftAnim_80070C48(gobj, flag)` (ft/ftanim.c; reached through Fighter_OnItemVisible).
+pub static mut FTANIM_80070C48: Option<fn(G, i32)> = None;
+        /// TODO(group3): `ftAnim_80070C48(gobj, flag)` (ft/ftanim.c; reached through Fighter_OnItemVisible).
+#[allow(non_snake_case)]
+    pub fn ftAnim_80070C48(g: G, flag: i32) {
+        match unsafe { FTANIM_80070C48 } { Some(f) => f(g, flag), None => { unsafe { let _ = melee_fighter::tu::ftanim::ftAnim_80070C48(g as _, flag as _); } return; } }
+    }
+    /// TODO(group3): `ftAnim_80070CC4(gobj, flag)` (ft/ftanim.c; reached through Fighter_OnItemInvisible).
+pub static mut FTANIM_80070CC4: Option<fn(G, i32)> = None;
+        /// TODO(group3): `ftAnim_80070CC4(gobj, flag)` (ft/ftanim.c; reached through Fighter_OnItemInvisible).
+#[allow(non_snake_case)]
+    pub fn ftAnim_80070CC4(g: G, flag: i32) {
+        match unsafe { FTANIM_80070CC4 } { Some(f) => f(g, flag), None => { unsafe { let _ = melee_fighter::tu::ftanim::ftAnim_80070CC4(g as _, flag as _); } return; } }
+    }
 stub!(/// TODO(ef): `efLib_DestroyAll(gobj)` (ef/eflib.c; no group owns ef/ yet).
     EFLIB_DESTROYALL, efLib_DestroyAll, (g: G));
 /// Group 5's verified `itIsHeavy` port (melee_items::itlib::it_is_heavy, reached through group 3's
@@ -226,15 +315,25 @@ pub fn Fighter_OnItemInvisible(g: G, flag: i32) {
 }
 
 // round 8 (gen/port_r8.py)
-stub!(/// TODO(group3): `Player_GetPlayerSlotType(slot)` (pl/player.c; returns Gm_PKind, as i32).
-    PLAYER_GETPLAYERSLOTTYPE, Player_GetPlayerSlotType, (slot: i32) -> i32);
+    /// TODO(group3): `Player_GetPlayerSlotType(slot)` (pl/player.c; returns Gm_PKind, as i32).
+pub static mut PLAYER_GETPLAYERSLOTTYPE: Option<fn(i32) -> i32> = None;
+        /// TODO(group3): `Player_GetPlayerSlotType(slot)` (pl/player.c; returns Gm_PKind, as i32).
+#[allow(non_snake_case)]
+    pub fn Player_GetPlayerSlotType(slot: i32) -> i32 {
+        match unsafe { PLAYER_GETPLAYERSLOTTYPE } { Some(f) => f(slot), None => { return unsafe { melee_fighter::tu::player::Player_GetPlayerSlotType(slot as _) as _ }; } }
+    }
 
 /// `ftBossLib_8015BD20(gobj)` (ft/ftbosslib.c): the C body is `return;`. Ported as is.
 #[inline]
 pub fn ftBossLib_8015BD20(_g: G) {}
 
-stub!(/// TODO(group3): `ftCliffCommon_80081298(gobj)` (ft/ftcliffcommon.c, ledge grab check; returns bool).
-    FTCLIFFCOMMON_80081298, ftCliffCommon_80081298, (g: G) -> i32);
+    /// TODO(group3): `ftCliffCommon_80081298(gobj)` (ft/ftcliffcommon.c, ledge grab check; returns bool).
+pub static mut FTCLIFFCOMMON_80081298: Option<fn(G) -> i32> = None;
+        /// TODO(group3): `ftCliffCommon_80081298(gobj)` (ft/ftcliffcommon.c, ledge grab check; returns bool).
+#[allow(non_snake_case)]
+    pub fn ftCliffCommon_80081298(g: G) -> i32 {
+        match unsafe { FTCLIFFCOMMON_80081298 } { Some(f) => f(g), None => { return unsafe { melee_fighter::tu::ftcliffcommon::ftcliffcommon_80081298(g as _) as _ }; } }
+    }
 
 // ---- Round 13 (gen/port_r13.py): group 3's verified gobj-only ports the character code calls. ----
 stub_or!(/// `ftColl_8007AEE0(gobj)` (ft/ftcoll.c): group 3's verified port (round 13, ft0df.rs) when the hook is unset.

@@ -36,7 +36,14 @@ pub mod ext {
     hook!(EFASYNC_SPAWN, efAsync_Spawn, (g: G, q: *mut core::ffi::c_void, kind: u32, gfx: u32, jobj: *mut HSD_JObj));
     hook!(FT_800892A0, ft_800892A0, (g: G));
     // TODO: ftdonkey.c (`ftDk_Init_8010DB3C`) is not ported.
-    hook!(FTDK_INIT_8010DB3C, ftDk_Init_8010DB3C, (g: G));
+    pub static mut FTDK_INIT_8010DB3C: Option<fn(G) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftDk_Init_8010DB3C(g: G)  {
+                match unsafe { FTDK_INIT_8010DB3C } {
+                    Some(f) => f(g),
+                    None => { unsafe { let _ = crate::tu::ftdonkey::ftDk_Init_8010DB3C(g as _); } return; },
+                }
+            }
 
     pub static mut FT_80089824: Option<fn(G)> = None;
     pub fn ft_80089824(g: G) {

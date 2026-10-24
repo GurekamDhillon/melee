@@ -24,9 +24,9 @@ pub mod ext {
     pub fn HSD_JObjSetRotation(jobj: *mut HSD_JObj, q: *const Vec4) { panic!("TODO(group1 jobj) HSD_JObjSetRotation") }
     pub fn HSD_JObjClearFlags(jobj: *mut HSD_JObj, flags: u32) { panic!("TODO(group1 jobj) HSD_JObjClearFlags") }
     pub fn HSD_JObjSetRotationX(jobj: *mut HSD_JObj, v: f32) { panic!("TODO(group1 jobj) HSD_JObjSetRotationX") }
-    pub fn HSD_JObjSetRotationY(jobj: *mut HSD_JObj, v: f32) { panic!("TODO(group1 jobj) HSD_JObjSetRotationY") }
+    pub fn HSD_JObjSetRotationY(jobj: *mut HSD_JObj, v: f32) { { unsafe { let _ = crate::tu::ftCo_Lift::HSD_JObjSetRotationY(jobj as _, v as _); } return; } }
     pub fn HSD_JObjSetRotationZ(jobj: *mut HSD_JObj, v: f32) { panic!("TODO(group1 jobj) HSD_JObjSetRotationZ") }
-    pub fn HSD_ObjAlloc(data: *mut c_void) -> *mut c_void { panic!("TODO(group1 objalloc) HSD_ObjAlloc") }
+    pub fn HSD_ObjAlloc(data: *mut c_void) -> *mut c_void { { return unsafe { melee_runtime::tu::objalloc::HSD_ObjAlloc(data as _) as _ }; } }
     pub fn fighter_parts_alloc_data() -> *mut c_void { panic!("TODO(fighter.c) fighter_parts_alloc_data") }
     pub fn fighter_dobj_list_alloc_data() -> *mut c_void { panic!("TODO(fighter.c) fighter_dobj_list_alloc_data") }
 }

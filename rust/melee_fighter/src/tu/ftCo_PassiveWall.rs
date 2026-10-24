@@ -32,26 +32,26 @@ pub mod ext {
         ftCo_800986B0(g: G) -> bool = crate::tu::ftCo_DownAttack::ftCo_800986B0;
         ftCommon_8007E2FC(g: G) = |_| todo!("TODO(port) ftCommon_8007E2FC (ftcommon.c)");
         ftKb_SpecialN_800F1F1C(g: G, ofs: &mut Vec3) = |_, _| todo!("TODO(port) ftKb_SpecialN_800F1F1C (ftKb_SpecialN.c)");
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         efAsync_Spawn(g: G, queue: *mut core::ffi::c_void, kind: u32, gfx: u32, jobj: *mut HSD_JObj, pos: *mut Vec3) = |_, _, _, _, _, _| todo!("TODO(port) efAsync_Spawn (efasync.c)");
-        ft_80081F2C(g: G) -> bool = |_| todo!("TODO(port) ft_80081F2C (ft_081B.c)");
-        ft_800881D8(fp: &mut Fighter, sfx: i32, vol: u8, pan: u8) = |_, _, _, _| todo!("TODO(port) ft_800881D8 (ft_0881.c)");
-        ftCommon_8007EBAC(fp: &mut Fighter, a: u32, b: u32) = |_, _, _| todo!("TODO(port) ftCommon_8007EBAC (ftcommon.c)");
+        ft_80081F2C(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ft_081b::ft_80081f2c(g as _) as _ } };
+        ft_800881D8(fp: &mut Fighter, sfx: i32, vol: u8, pan: u8) = |fp: &mut Fighter, sfx: i32, vol: u8, pan: u8| { unsafe { let _ = crate::ft0881::ft_800881d8(fp as _, sfx as _, vol as _, pan as _); } };
+        ftCommon_8007EBAC(fp: &mut Fighter, a: u32, b: u32) = |fp: &mut Fighter, a: u32, b: u32| { unsafe { let _ = crate::ftcommon2::ftcommon_8007ebac(fp as _, a as _, b as _); } };
         ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |_, _, _, _| todo!("TODO(port) ft_PlaySFX (ft_0881.c)");
-        ftCo_800BFFD0(fp: &mut Fighter, a: i32, b: bool) -> bool = |_, _, _| todo!("TODO(port) ftCo_800BFFD0 (ftCo_Damage.c)");
+        ftCo_800BFFD0(fp: &mut Fighter, a: i32, b: bool) -> bool = |fp: &mut Fighter, a: i32, b: bool| -> bool { unsafe { crate::tu::ftcolanim::ftco_800bffd0(fp as _, a as _, b as _) as _ } };
         ftColl_8007B760(g: G, v: i32) = |_, _| todo!("TODO(port) ftColl_8007B760 (ftcoll.c)");
-        ftAnim_SetAnimRate(g: G, r: f32) = |_, _| todo!("TODO(port) ftAnim_SetAnimRate (ftanim.c)");
-        powf(x: f32, y: f32) -> f32 = |_, _| todo!("TODO(port) powf (MSL math, GameCube libm)");
+        ftAnim_SetAnimRate(g: G, r: f32) = |g: G, r: f32| { unsafe { let _ = crate::tu::ftanim::ftAnim_SetAnimRate(g as _, r as _); } };
+        powf(x: f32, y: f32) -> f32 = |x: f32, y: f32| -> f32 { unsafe { melee_runtime::lb_00ce::powf(x as _, y as _) as _ } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ftCo_Fall_Enter(g: G) = crate::tu::ftCo_Fall::ftCo_Fall_Enter;
-        ftCo_SpecialAir_CheckInput(g: G) -> bool = |_| todo!("TODO(port) ftCo_SpecialAir_CheckInput (ftCo_SpecialAir.c)");
-        ftCo_80095328(g: G, b: *mut bool) -> bool = |_, _| todo!("TODO(port) ftCo_80095328 (ftCo_ItemThrow.c)");
+        ftCo_SpecialAir_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_SpecialAir::ftCo_SpecialAir_CheckInput(g as _) as _ } };
+        ftCo_80095328(g: G, b: *mut bool) -> bool = |g: G, b: *mut bool| -> bool { unsafe { crate::tu::ftCo_ItemThrow::ftCo_80095328(g as _, b as _) as _ } };
         ftCo_800D7100(g: G) -> bool = crate::tu::ftCo_Attack100::ftCo_800D7100;
-        ftCo_800C3B10(g: G) -> bool = |_| todo!("TODO(port) ftCo_800C3B10 (ftCo_Guard.c)");
+        ftCo_800C3B10(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftco_aircatch::ftco_800c3b10(g as _) as _ } };
         ftCo_80099A58(g: G) -> bool = crate::tu::ftCo_EscapeAir::ftCo_80099A58;
         ftCo_AttackAir_CheckItemThrowInput(g: G) -> bool = crate::tu::ftCo_AttackAir::ftCo_AttackAir_CheckItemThrowInput;
         ftCo_800D705C(g: G) -> bool = crate::tu::ftCo_Attack100::ftCo_800D705C;
-        ftCo_800CB870(g: G) -> bool = |_| todo!("TODO(port) ftCo_800CB870 (ftCo_JumpAerial.c)");
+        ftCo_800CB870(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_JumpAerial::ftCo_800CB870(g as _) as _ } };
         ftCo_800CEE70(g: G) -> bool = crate::tu::ftCo_ItemParasolOpen::ftCo_800CEE70;
         ftCommon_CheckFallFast(fp: &mut Fighter) -> bool = crate::ftcommon::check_fall_fast;
         ftCommon_FallFast(fp: &mut Fighter) = crate::ftcommon::fall_fast;
@@ -59,7 +59,7 @@ pub mod ext {
         ftCommon_CalcSelfAccel_AccelToVelClamped(fp: &mut Fighter, a: f32, b: f32, c: f32) = |_, _, _, _| todo!("TODO(port) ftCommon_CalcSelfAccel_AccelToVelClamped (ftcommon.c)");
         ft_80083318(g: G, a: fn(G, i32) -> bool, b: fn(G)) = crate::tu::ft_081b::ft_80083318;
         ft_800831CC(g: G, a: fn(G, i32) -> bool, b: fn(G)) = crate::tu::ft_081b::ft_800831cc;
-        ftCo_80096CC8(g: G, line_id: i32) -> bool = |_, _| todo!("TODO(port) ftCo_80096CC8 (ftCo_FallSpecial.c)");
+        ftCo_80096CC8(g: G, line_id: i32) -> bool = |g: G, line_id: i32| -> bool { unsafe { crate::tu::ftCo_FallSpecial::ftCo_80096CC8(g as _, line_id as _) as _ } };
         ft_80082B1C(g: G) = crate::tu::ft_081b::ft_80082b1c;
     }
 }

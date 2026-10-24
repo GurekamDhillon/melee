@@ -56,8 +56,22 @@ pub mod ext {
     fn ftcommon_get_model_scale_port(fp: *mut Fighter) -> f32 {
         melee_fighter::ftcommon2::get_model_scale(unsafe { &*fp })
     }
-    hook!(HSD_JOBJSETSCALE, HSD_JObjSetScale, (jobj: *mut HSD_JObj, scale: *const Vec3));
-    hook!(LB_8000C2F8, lb_8000C2F8, (jobj: *mut HSD_JObj, parent: *mut HSD_JObj));
+    pub static mut HSD_JOBJSETSCALE: Option<fn(*mut HSD_JObj, *const Vec3) > = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_JObjSetScale(jobj: *mut HSD_JObj, scale: *const Vec3)  {
+                match unsafe { HSD_JOBJSETSCALE } {
+                    Some(f) => f(jobj, scale),
+                    None => { unsafe { let _ = crate::tu::ftinl::HSD_JObjSetScale(jobj as _, scale as _); } return; },
+                }
+            }
+    pub static mut LB_8000C2F8: Option<fn(*mut HSD_JObj, *mut HSD_JObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn lb_8000C2F8(jobj: *mut HSD_JObj, parent: *mut HSD_JObj)  {
+                match unsafe { LB_8000C2F8 } {
+                    Some(f) => f(jobj, parent),
+                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000C2F8(jobj as _, parent as _); } return; },
+                }
+            }
     hook!(FTCO_800BFFD0, ftCo_800BFFD0, (fp: *mut Fighter, a: i32, b: i32) -> bool);
     hook!(FTCOLL_8007ABD0, ftColl_8007ABD0, (hit: *mut HitCapsule, dmg: u32, gobj: *mut HSD_GObj));
 }

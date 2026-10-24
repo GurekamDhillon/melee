@@ -46,7 +46,14 @@ pub mod ext {
             }
         };
     }
-    hook!(FTPP_INIT_ONLOADFORNANA, ftPp_Init_OnLoadForNana, (fp: *mut Fighter));
+    pub static mut FTPP_INIT_ONLOADFORNANA: Option<fn(*mut Fighter) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftPp_Init_OnLoadForNana(fp: *mut Fighter)  {
+                match unsafe { FTPP_INIT_ONLOADFORNANA } {
+                    Some(f) => f(fp),
+                    None => { unsafe { let _ = crate::tu::ftpopo::ftPp_Init_OnLoadForNana(fp as _); } return; },
+                }
+            }
 }
 
 #[inline(always)]

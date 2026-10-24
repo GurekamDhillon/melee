@@ -34,9 +34,30 @@ pub mod ext {
     }
     type G = *mut HSD_GObj;
     pub use crate::tu::ftkirbyspecialn::ext::{lb_8000B1CC, LB_8000B1CC};
-    hook!(IT_802AA8C0, it_802AA8C0, (g: G, pos: *const Vec3, kind: i32, dir: f32) -> *mut Item_GObj);
-    hook!(IT_802AA7E4, it_802AA7E4, (item: *mut Item_GObj) -> G);
-    hook!(IT_802AA7F0, it_802AA7F0, (item: *mut Item_GObj) -> i32);
+    pub static mut IT_802AA8C0: Option<fn(G, *const Vec3, i32, f32) -> *mut Item_GObj> = None;
+            #[allow(non_snake_case)]
+            pub fn it_802AA8C0(g: G, pos: *const Vec3, kind: i32, dir: f32) -> *mut Item_GObj {
+                match unsafe { IT_802AA8C0 } {
+                    Some(f) => f(g, pos, kind, dir),
+                    None => { return unsafe { melee_items::tu::itnesspkflash::it_802AA8C0(g as _, pos as _, kind as _, dir as _) as _ }; },
+                }
+            }
+    pub static mut IT_802AA7E4: Option<fn(*mut Item_GObj) -> G> = None;
+            #[allow(non_snake_case)]
+            pub fn it_802AA7E4(item: *mut Item_GObj) -> G {
+                match unsafe { IT_802AA7E4 } {
+                    Some(f) => f(item),
+                    None => { return unsafe { melee_items::tu::itnesspkflash::it_802AA7E4(item as _) as _ }; },
+                }
+            }
+    pub static mut IT_802AA7F0: Option<fn(*mut Item_GObj) -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn it_802AA7F0(item: *mut Item_GObj) -> i32 {
+                match unsafe { IT_802AA7F0 } {
+                    Some(f) => f(item),
+                    None => { return unsafe { melee_items::tu::itnesspkflash::it_802AA7F0(item as _) as _ }; },
+                }
+            }
     hook!(FTPARTSETROTX, ftPartSetRotX, (fp: *mut Fighter, part_idx: i32, rot: f32));
 }
 

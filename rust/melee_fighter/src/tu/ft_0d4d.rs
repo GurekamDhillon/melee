@@ -25,20 +25,20 @@ pub mod ext {
     pub static mut H_Stage_80224E38: Option<fn(&mut Vec3, i32)> = None;
     pub fn Stage_80224E38(out: &mut Vec3, i: i32) { match unsafe { H_Stage_80224E38 } { Some(f) => f(out, i), None => panic!("TODO(group2 stage) Stage_80224E38") } }
     pub static mut H_ftCamera_80076320: Option<fn(*mut HSD_GObj)> = None;
-    pub fn ftCamera_80076320(g: *mut HSD_GObj) { match unsafe { H_ftCamera_80076320 } { Some(f) => f(g), None => panic!("TODO(group3 ftcamera) ftCamera_80076320") } }
+    pub fn ftCamera_80076320(g: *mut HSD_GObj) { match unsafe { H_ftCamera_80076320 } { Some(f) => f(g), None => { unsafe { let _ = crate::tu::ftcamera::ftcamera_80076320(g as _); } return; } } }
     pub static mut H_ftCamera_80076018: Option<fn(*mut UnkFloat6_Camera, &mut UnkFloat6_Camera, f32)> = None;
     pub fn ftCamera_80076018(inp: *mut UnkFloat6_Camera, out: &mut UnkFloat6_Camera, mul: f32) { match unsafe { H_ftCamera_80076018 } { Some(f) => f(inp, out, mul), None => panic!("TODO(group3 ftcamera) ftCamera_80076018") } }
     pub static mut H_ftCo_800BFD04: Option<fn(*mut HSD_GObj)> = None;
-    pub fn ftCo_800BFD04(g: *mut HSD_GObj) { match unsafe { H_ftCo_800BFD04 } { Some(f) => f(g), None => panic!("TODO(group3 ftcolanim) ftCo_800BFD04") } }
+    pub fn ftCo_800BFD04(g: *mut HSD_GObj) { match unsafe { H_ftCo_800BFD04 } { Some(f) => f(g), None => { unsafe { let _ = crate::tu::ftcolanim::ftco_800bfd04(g as _); } return; } } }
     /// efsync.c `efSync_Spawn(kind, gobj, ...)`; the variadic tail as raw words.
     pub static mut H_efSync_Spawn: Option<fn(i32, *mut HSD_GObj, &[usize]) -> *mut c_void> = None;
     pub fn efSync_Spawn(kind: i32, g: *mut HSD_GObj, va: &[usize]) -> *mut c_void { match unsafe { H_efSync_Spawn } { Some(f) => f(kind, g, va), None => panic!("TODO(group2 efsync) efSync_Spawn") } }
     pub static mut H_Fighter_ChangeMotionState: Option<fn(*mut HSD_GObj, i32, u32, f32, f32, f32, *mut HSD_GObj)> = None;
-    pub fn Fighter_ChangeMotionState(g: *mut HSD_GObj, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, item: *mut HSD_GObj) { match unsafe { H_Fighter_ChangeMotionState } { Some(f) => f(g, msid, flags, start, speed, blend, item), None => panic!("TODO(group3 fighter) Fighter_ChangeMotionState") } }
+    pub fn Fighter_ChangeMotionState(g: *mut HSD_GObj, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, item: *mut HSD_GObj) { match unsafe { H_Fighter_ChangeMotionState } { Some(f) => f(g, msid, flags, start, speed, blend, item), None => { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, item as _); } return; } } }
     pub static mut H_ftCo_8008A7A8: Option<fn(*mut HSD_GObj, *mut c_void)> = None;
-    pub fn ftCo_8008A7A8(g: *mut HSD_GObj, p: *mut c_void) { match unsafe { H_ftCo_8008A7A8 } { Some(f) => f(g, p), None => panic!("TODO(group3 ft_08A1) ftCo_8008A7A8") } }
+    pub fn ftCo_8008A7A8(g: *mut HSD_GObj, p: *mut c_void) { match unsafe { H_ftCo_8008A7A8 } { Some(f) => f(g, p), None => { unsafe { let _ = crate::tu::ftwaitanim::ftCo_8008A7A8(g as _, p as _); } return; } } }
     pub static mut H_ft_80083DCC: Option<fn(*mut HSD_GObj)> = None;
-    pub fn ft_80083DCC(g: *mut HSD_GObj) { match unsafe { H_ft_80083DCC } { Some(f) => f(g), None => panic!("TODO(group3 ft_081B) ft_80083DCC") } }
+    pub fn ft_80083DCC(g: *mut HSD_GObj) { match unsafe { H_ft_80083DCC } { Some(f) => f(g), None => { unsafe { let _ = crate::tu::ft_081b::ft_80083dcc(g as _); } return; } } }
     pub static mut H_ft_80083844: Option<fn(*mut HSD_GObj, HSD_GObjEvent)> = None;
     pub fn ft_80083844(g: *mut HSD_GObj, cb: HSD_GObjEvent) { match unsafe { H_ft_80083844 } { Some(f) => f(g, cb), None => panic!("TODO(group3 ft_081B) ft_80083844") } }
     pub static mut H_mpColl_80043680: Option<fn(&mut CollData, &Vec3)> = None;
@@ -46,29 +46,29 @@ pub mod ext {
     pub static mut H_ftColl_8007B7A4: Option<fn(*mut HSD_GObj, i32)> = None;
     pub fn ftColl_8007B7A4(g: *mut HSD_GObj, n: i32) { match unsafe { H_ftColl_8007B7A4 } { Some(f) => f(g, n), None => panic!("TODO(group3 ftcoll) ftColl_8007B7A4") } }
     pub static mut H_ftCo_SpecialAir_CheckInput: Option<fn(*mut HSD_GObj) -> bool> = None;
-    pub fn ftCo_SpecialAir_CheckInput(g: *mut HSD_GObj) -> bool { match unsafe { H_ftCo_SpecialAir_CheckInput } { Some(f) => f(g), None => panic!("TODO(group3 ftCo_SpecialAir) ftCo_SpecialAir_CheckInput") } }
+    pub fn ftCo_SpecialAir_CheckInput(g: *mut HSD_GObj) -> bool { match unsafe { H_ftCo_SpecialAir_CheckInput } { Some(f) => f(g), None => { return unsafe { crate::tu::ftCo_SpecialAir::ftCo_SpecialAir_CheckInput(g as _) as _ }; } } }
     pub static mut H_ftCo_800D7100: Option<fn(*mut HSD_GObj) -> bool> = None;
-    pub fn ftCo_800D7100(g: *mut HSD_GObj) -> bool { match unsafe { H_ftCo_800D7100 } { Some(f) => f(g), None => panic!("TODO(group3 ftCo_AirCatch) ftCo_800D7100") } }
+    pub fn ftCo_800D7100(g: *mut HSD_GObj) -> bool { match unsafe { H_ftCo_800D7100 } { Some(f) => f(g), None => { return unsafe { crate::tu::ftCo_Attack100::ftCo_800D7100(g as _) as _ }; } } }
     pub static mut H_ftCo_800C3B10: Option<fn(*mut HSD_GObj) -> bool> = None;
-    pub fn ftCo_800C3B10(g: *mut HSD_GObj) -> bool { match unsafe { H_ftCo_800C3B10 } { Some(f) => f(g), None => panic!("TODO(group3 ftCo_Guard) ftCo_800C3B10") } }
+    pub fn ftCo_800C3B10(g: *mut HSD_GObj) -> bool { match unsafe { H_ftCo_800C3B10 } { Some(f) => f(g), None => { return unsafe { crate::tu::ftco_aircatch::ftco_800c3b10(g as _) as _ }; } } }
     pub static mut H_ftCo_80099A58: Option<fn(*mut HSD_GObj) -> bool> = None;
-    pub fn ftCo_80099A58(g: *mut HSD_GObj) -> bool { match unsafe { H_ftCo_80099A58 } { Some(f) => f(g), None => panic!("TODO(group3 ftCo_EscapeAir) ftCo_80099A58") } }
+    pub fn ftCo_80099A58(g: *mut HSD_GObj) -> bool { match unsafe { H_ftCo_80099A58 } { Some(f) => f(g), None => { return unsafe { crate::tu::ftCo_EscapeAir::ftCo_80099A58(g as _) as _ }; } } }
     pub static mut H_ftCo_AttackAir_CheckItemThrowInput: Option<fn(*mut HSD_GObj) -> bool> = None;
-    pub fn ftCo_AttackAir_CheckItemThrowInput(g: *mut HSD_GObj) -> bool { match unsafe { H_ftCo_AttackAir_CheckItemThrowInput } { Some(f) => f(g), None => panic!("TODO(group3 ftCo_AttackAir) ftCo_AttackAir_CheckItemThrowInput") } }
+    pub fn ftCo_AttackAir_CheckItemThrowInput(g: *mut HSD_GObj) -> bool { match unsafe { H_ftCo_AttackAir_CheckItemThrowInput } { Some(f) => f(g), None => { return unsafe { crate::tu::ftCo_AttackAir::ftCo_AttackAir_CheckItemThrowInput(g as _) as _ }; } } }
     pub static mut H_ftCo_800D705C: Option<fn(*mut HSD_GObj) -> bool> = None;
-    pub fn ftCo_800D705C(g: *mut HSD_GObj) -> bool { match unsafe { H_ftCo_800D705C } { Some(f) => f(g), None => panic!("TODO(group3 ftCo_AirCatch) ftCo_800D705C") } }
+    pub fn ftCo_800D705C(g: *mut HSD_GObj) -> bool { match unsafe { H_ftCo_800D705C } { Some(f) => f(g), None => { return unsafe { crate::tu::ftCo_Attack100::ftCo_800D705C(g as _) as _ }; } } }
     pub static mut H_ftCo_800CB870: Option<fn(*mut HSD_GObj) -> bool> = None;
-    pub fn ftCo_800CB870(g: *mut HSD_GObj) -> bool { match unsafe { H_ftCo_800CB870 } { Some(f) => f(g), None => panic!("TODO(group3 ftCo_JumpAerial) ftCo_800CB870") } }
+    pub fn ftCo_800CB870(g: *mut HSD_GObj) -> bool { match unsafe { H_ftCo_800CB870 } { Some(f) => f(g), None => { return unsafe { crate::tu::ftCo_JumpAerial::ftCo_800CB870(g as _) as _ }; } } }
     pub static mut H_ftCo_80091A2C: Option<fn(*mut HSD_GObj) -> bool> = None;
-    pub fn ftCo_80091A2C(g: *mut HSD_GObj) -> bool { match unsafe { H_ftCo_80091A2C } { Some(f) => f(g), None => panic!("TODO(group3 ftCo_Squat) ftCo_80091A2C") } }
+    pub fn ftCo_80091A2C(g: *mut HSD_GObj) -> bool { match unsafe { H_ftCo_80091A2C } { Some(f) => f(g), None => { return unsafe { crate::tu::ftCo_Guard::ftCo_80091A2C(g as _) as _ }; } } }
     pub static mut H_ftCo_800DE9B8: Option<fn(*mut HSD_GObj) -> bool> = None;
-    pub fn ftCo_800DE9B8(g: *mut HSD_GObj) -> bool { match unsafe { H_ftCo_800DE9B8 } { Some(f) => f(g), None => panic!("TODO(group3 ftCo_AppealS) ftCo_800DE9B8") } }
+    pub fn ftCo_800DE9B8(g: *mut HSD_GObj) -> bool { match unsafe { H_ftCo_800DE9B8 } { Some(f) => f(g), None => { return unsafe { crate::tu::ftCo_AppealS::ftCo_800DE9B8(g as _) as _ }; } } }
     pub static mut H_fn_800D5F84: Option<fn(*mut HSD_GObj) -> bool> = None;
-    pub fn fn_800D5F84(g: *mut HSD_GObj) -> bool { match unsafe { H_fn_800D5F84 } { Some(f) => f(g), None => panic!("TODO(group3 ftCo_Attack100) fn_800D5F84") } }
+    pub fn fn_800D5F84(g: *mut HSD_GObj) -> bool { match unsafe { H_fn_800D5F84 } { Some(f) => f(g), None => { return unsafe { crate::tu::ftCo_Squat::fn_800D5F84(g as _) as _ }; } } }
     pub static mut H_ftCo_800C97A8: Option<fn(*mut HSD_GObj) -> bool> = None;
-    pub fn ftCo_800C97A8(g: *mut HSD_GObj) -> bool { match unsafe { H_ftCo_800C97A8 } { Some(f) => f(g), None => panic!("TODO(group3 ftCo_Turn) ftCo_800C97A8") } }
+    pub fn ftCo_800C97A8(g: *mut HSD_GObj) -> bool { match unsafe { H_ftCo_800C97A8 } { Some(f) => f(g), None => { return unsafe { crate::tu::ftCo_Turn::ftCo_800C97A8(g as _) as _ }; } } }
     pub static mut H_ftWalkCommon_800DFC70: Option<fn(*mut HSD_GObj) -> bool> = None;
-    pub fn ftWalkCommon_800DFC70(g: *mut HSD_GObj) -> bool { match unsafe { H_ftWalkCommon_800DFC70 } { Some(f) => f(g), None => panic!("TODO(group3 ftwalkcommon) ftWalkCommon_800DFC70") } }
+    pub fn ftWalkCommon_800DFC70(g: *mut HSD_GObj) -> bool { match unsafe { H_ftWalkCommon_800DFC70 } { Some(f) => f(g), None => { return unsafe { crate::tu::ftwalkcommon::ftwalkcommon_800dfc70(g as _) as _ }; } } }
 }
 
 pub type G = *mut HSD_GObj;

@@ -28,7 +28,7 @@ pub mod ext {
         };
     }
     ext_fns! {
-        Fighter_UpdateModelScale(g: G) = |_| todo!("TODO(port) Fighter_UpdateModelScale (fighter.c)");
+        Fighter_UpdateModelScale(g: G) = |g: G| { unsafe { let _ = crate::tu::fighter::Fighter_UpdateModelScale(g as _); } };
         ftKp_SpecialS_80132DC0(g: G) -> f32 = |_| todo!("TODO(port) ftKp_SpecialS_80132DC0 (ftkoopaspecials.c)");
         ftKp_SpecialS_80132DD0(g: G) -> f32 = |_| todo!("TODO(port) ftKp_SpecialS_80132DD0 (ftkoopaspecials.c)");
         ftKp_SpecialS_80132DE0(g: G) -> f32 = |_| todo!("TODO(port) ftKp_SpecialS_80132DE0 (ftkoopaspecials.c)");
@@ -39,7 +39,7 @@ pub mod ext {
         ftCommon_GrabMash(f: &mut Fighter, v: f32) -> bool = crate::ftcommon2::grab_mash;
         ftCommon_InitGrab(f: &mut Fighter, a: i32, timer: f32) = crate::ftcommon2::init_grab;
         ftParts_GetBoneIndex(f: &Fighter, part: i32) -> i32 = crate::ftdmgfall::ftparts_get_bone_index;
-        ftAnim_SetAnimRate(g: G, rate: f32) = |_, _| todo!("TODO(port) ftAnim_SetAnimRate (ftanim.c)");
+        ftAnim_SetAnimRate(g: G, rate: f32) = |g: G, rate: f32| { unsafe { let _ = crate::tu::ftanim::ftAnim_SetAnimRate(g as _, rate as _); } };
         HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjSetMtxDirtySub (jobj.c)");
         ftCo_ReleaseItemAndVictim(g: G) = crate::tu::ftco_800c7590::ftco_release_item_and_victim;
         ftCo_800DB368(att: &mut Fighter, f: &mut Fighter) = crate::tu::ftCo_CapturePulled::ftCo_800DB368;

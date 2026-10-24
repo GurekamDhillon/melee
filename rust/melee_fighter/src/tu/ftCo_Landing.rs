@@ -28,21 +28,21 @@ pub mod ext {
     }
     ext_fns! {
         ftCommon_8007D7FC(fp: &mut Fighter) = crate::ftcommon3::ftcommon_8007d7fc;
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         // TARGET_PC `ftGetTemplateKind` / `FTKB_IS_KIRBY` (inlines.h, ft/forward.h).
         Geno_DefineTemplateSkeleton(kind: i32) -> i32 = |_| todo!("TODO(port) Geno_DefineTemplateSkeleton (pc/gameworld)");
         Geno_DefineBaseKind(kind: i32) -> i32 = |_| todo!("TODO(port) Geno_DefineBaseKind (pc/gameworld)");
         ftKb_MexKirbyLike(kind: i32) -> i32 = |_| todo!("TODO(port) ftKb_MexKirbyLike (ftkirby.c)");
         ftPe_8011D598(g: G) = |_| todo!("TODO(port) ftPe_8011D598 (ftpeachspecialhi.c)");
-        ftCo_800C5240(g: G) -> bool = |_| todo!("TODO(port) ftCo_800C5240 (ftCo_HammerWait.c)");
-        ftCo_HammerLanding_Enter(g: G) = |_| todo!("TODO(port) ftCo_HammerLanding_Enter (ftCo_HammerLanding.c)");
+        ftCo_800C5240(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_HammerWait::ftCo_800C5240(g as _) as _ } };
+        ftCo_HammerLanding_Enter(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_HammerLanding::ftCo_HammerLanding_Enter(g as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ft_8008A2BC(g: G) = crate::hooks::ft_8008a2bc;
-        ftCo_SpecialS_CheckInput(g: G) -> bool = |_| todo!("TODO(port) ftCo_SpecialS_CheckInput (ftCo_SpecialS.c)");
+        ftCo_SpecialS_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_SpecialS::ftCo_SpecialS_CheckInput(g as _) as _ } };
         ftCo_Attack100_CheckInput(g: G) -> bool = crate::tu::ftCo_Attack100::ftCo_Attack100_CheckInput;
         ftCo_800D6824(g: G) -> bool = crate::tu::ftCo_Attack100::ftCo_800D6824;
         ftCo_800D68C0(g: G) -> bool = crate::tu::ftCo_Attack100::ftCo_800D68C0;
-        ftCo_Catch_CheckInput(g: G) -> bool = |_| todo!("TODO(port) ftCo_Catch_CheckInput (ftCo_Catch.c)");
+        ftCo_Catch_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Catch::ftCo_Catch_CheckInput(g as _) as _ } };
         ftCo_AttackS4_CheckInput(g: G) -> bool = crate::tu::ftCo_AttackS4::ftCo_AttackS4_CheckInput;
         ftCo_AttackHi4_CheckInput(g: G) -> bool = crate::tu::ftCo_AttackHi4::ftCo_AttackHi4_CheckInput;
         ftCo_AttackLw4_CheckInput(g: G) -> bool = crate::tu::ftCo_AttackLw4::ftCo_AttackLw4_CheckInput;
@@ -50,13 +50,13 @@ pub mod ext {
         ftCo_AttackHi3_CheckInput(g: G) -> bool = crate::tu::ftCo_AttackHi3::ftCo_AttackHi3_CheckInput;
         ftCo_AttackLw3_CheckInput(g: G) -> bool = crate::tu::ftCo_AttackLw3::ftCo_AttackLw3_CheckInput;
         ftCo_Attack1_CheckInput(g: G) -> bool = crate::tu::ftCo_Attack1::ftCo_Attack1_CheckInput;
-        ftCo_80091A4C(g: G) -> bool = |_| todo!("TODO(port) ftCo_80091A4C (ftCo_Guard.c)");
-        ftCo_800DE9D8(g: G) -> bool = |_| todo!("TODO(port) ftCo_800DE9D8");
-        ftCo_Jump_CheckInput(g: G) -> bool = |_| todo!("TODO(port) ftCo_Jump_CheckInput (ftCo_Jump.c)");
+        ftCo_80091A4C(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Guard::ftCo_80091A4C(g as _) as _ } };
+        ftCo_800DE9D8(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_AppealS::ftCo_800DE9D8(g as _) as _ } };
+        ftCo_Jump_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Jump::ftCo_Jump_CheckInput(g as _) as _ } };
         ftCo_Dash_CheckInput(g: G) -> bool = crate::tu::ftCo_Dash::ftCo_Dash_CheckInput;
-        ftCo_SquatWait_CheckInput(g: G) -> bool = |_| todo!("TODO(port) ftCo_SquatWait_CheckInput (ftCo_SquatWait.c)");
-        ftCo_Turn_CheckInput(g: G) -> bool = |_| todo!("TODO(port) ftCo_Turn_CheckInput (ftCo_Turn.c)");
-        ftCo_Walk_CheckInput(g: G) -> bool = |_| todo!("TODO(port) ftCo_Walk_CheckInput (ftCo_Walk.c)");
+        ftCo_SquatWait_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_SquatWait::ftCo_SquatWait_CheckInput(g as _) as _ } };
+        ftCo_Turn_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Turn::ftCo_Turn_CheckInput(g as _) as _ } };
+        ftCo_Walk_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Walk::ftCo_Walk_CheckInput(g as _) as _ } };
         ft_80084F3C(g: G) = crate::ft084e::ft_80084f3c;
         ft_80084280(g: G) = crate::tu::ft_081b::ft_80084280;
     }

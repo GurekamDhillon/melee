@@ -43,9 +43,9 @@ pub mod ext {
         FTLK_INIT_BOOMERANG_EXISTS ftLk_Init_BoomerangExists(g: G) -> bool;
     }
     /// TODO(group5 itlinkhookshot.c) callbacks stored in the fighter's accessory / death slots.
-    pub unsafe extern "C" fn it_802A7AF0(_g: *mut HSD_GObj) { panic!("TODO: it_802A7AF0 not ported") }
-    pub unsafe extern "C" fn it_802A7AAC(_g: *mut HSD_GObj) { panic!("TODO: it_802A7AAC not ported") }
-    pub unsafe extern "C" fn it_802A7B34(_g: *mut HSD_GObj) { panic!("TODO: it_802A7B34 not ported") }
+    pub unsafe extern "C" fn it_802A7AF0(_g: *mut HSD_GObj) { { unsafe { let _ = melee_items::tu::itlinkhookshot::it_802A7AF0(_g as _); } return; } }
+    pub unsafe extern "C" fn it_802A7AAC(_g: *mut HSD_GObj) { { unsafe { let _ = melee_items::tu::itlinkhookshot::it_802A7AAC(_g as _); } return; } }
+    pub unsafe extern "C" fn it_802A7B34(_g: *mut HSD_GObj) { { unsafe { let _ = melee_items::tu::itlinkhookshot::it_802A7B34(_g as _); } return; } }
 }
 
 #[inline(always)]

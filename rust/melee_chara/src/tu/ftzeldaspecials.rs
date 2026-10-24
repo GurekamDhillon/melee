@@ -39,11 +39,32 @@ pub mod ext {
     // `efSync_Spawn(gfx_id, gobj, joint)` (ef/efsync.c, variadic; the port passes the one joint).
     hook!(EFSYNC_SPAWN, efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, joint: *mut c_void) -> *mut c_void);
     // `lb_8000B1CC(jobj, pos0, pos1)` (lb/lb_00B0.c).
-    hook!(LB_8000B1CC, lb_8000B1CC, (j: *mut HSD_JObj, pos0: *const Vec3, pos1: *mut Vec3));
+    pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *const Vec3, *mut Vec3) > = None;
+            #[allow(non_snake_case)]
+            pub fn lb_8000B1CC(j: *mut HSD_JObj, pos0: *const Vec3, pos1: *mut Vec3)  {
+                match unsafe { LB_8000B1CC } {
+                    Some(f) => f(j, pos0, pos1),
+                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(j as _, pos0 as _, pos1 as _); } return; },
+                }
+            }
     // `it_802C3BAC(gobj, vec, dir, x)` (it/kinds/itzeldadinfire.c): the Din's Fire item, or NULL.
-    hook!(IT_802C3BAC, it_802C3BAC, (gobj: *mut HSD_GObj, vec: *mut Vec3, dir: f32, x: f32) -> *mut HSD_GObj);
+    pub static mut IT_802C3BAC: Option<fn(*mut HSD_GObj, *mut Vec3, f32, f32) -> *mut HSD_GObj> = None;
+            #[allow(non_snake_case)]
+            pub fn it_802C3BAC(gobj: *mut HSD_GObj, vec: *mut Vec3, dir: f32, x: f32) -> *mut HSD_GObj {
+                match unsafe { IT_802C3BAC } {
+                    Some(f) => f(gobj, vec, dir, x),
+                    None => { return unsafe { melee_items::tu::itzeldadinfire::it_802C3BAC(gobj as _, vec as _, dir as _, x as _) as _ }; },
+                }
+            }
     // `itZeldaDinFire_GetOwner(item)` (it/kinds/itzeldadinfire.c).
-    hook!(ITZELDADINFIRE_GETOWNER, itZeldaDinFire_GetOwner, (item: *mut HSD_GObj) -> *mut HSD_GObj);
+    pub static mut ITZELDADINFIRE_GETOWNER: Option<fn(*mut HSD_GObj) -> *mut HSD_GObj> = None;
+            #[allow(non_snake_case)]
+            pub fn itZeldaDinFire_GetOwner(item: *mut HSD_GObj) -> *mut HSD_GObj {
+                match unsafe { ITZELDADINFIRE_GETOWNER } {
+                    Some(f) => f(item),
+                    None => { return unsafe { melee_items::tu::itzeldadinfire::itZeldaDinFire_GetOwner(item as _) as _ }; },
+                }
+            }
     // `ftPartSetRotX(fp, part_idx, rot)` (ft/ftparts.c): its port needs the unported JObj setter.
     hook!(FTPARTSETROTX, ftPartSetRotX, (fp: *mut Fighter, part_idx: i32, rot: f32));
 }
@@ -68,7 +89,7 @@ unsafe fn joint(fp: *mut Fighter, part: usize) -> *mut core::ffi::c_void {
 
 /// `ftZd_Init_801393AC` (ft/kinds/ftZelda/ftzelda.c): not ported yet (a callback address only here).
 pub unsafe extern "C" fn ftZd_Init_801393AC(_gobj: *mut HSD_GObj) {
-    panic!("TODO(group4): ftZd_Init_801393AC (src/melee/ft/kinds/ftZelda/ftzelda.c) is not ported");
+    { unsafe { let _ = crate::tu::ftzelda::ftZd_Init_801393AC(_gobj as _); } return; };
 }
 
 /// `ftZd_MF_SpecialSStart_Coll` is the coll TU's (r12); the Enter/Anim functions here use no flags.

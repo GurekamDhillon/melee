@@ -27,12 +27,12 @@ macro_rules! ext_fns {
 pub mod ext {
     use super::*;
     ext_fns! {
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
-        ftCo_800DB464(g: G) = |_| todo!("TODO(port) ftCo_800DB464 (ftCo_CatchCut.c)");
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        ftCo_800DB464(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_CapturePulled::ftCo_800DB464(g as _); } };
         ftCommon_8007E2F4(f: &mut Fighter, v: i16) = crate::ftcommon2::ftcommon_8007e2f4;
-        ftCo_800BC458(g: G) = |_| todo!("TODO(port) ftCo_800BC458 (ftCo_CaptureKoopa.c)");
-        ftCo_800BC4A8(g: G) = |_| todo!("TODO(port) ftCo_800BC4A8 (ftCo_CaptureKoopa.c)");
-        ftCo_800DA698(g: G, b: bool) = |_, _| todo!("TODO(port) ftCo_800DA698 (ftCo_CatchCut.c)");
+        ftCo_800BC458(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_CaptureKoopa::ftCo_800BC458(g as _); } };
+        ftCo_800BC4A8(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_CaptureKoopa::ftCo_800BC4A8(g as _); } };
+        ftCo_800DA698(g: G, b: bool) = |g: G, b: bool| { unsafe { let _ = crate::tu::ftCo_CatchCut::ftCo_800DA698(g as _, b as _); } };
         ftCo_CaptureCut_Enter(g: G) = crate::tu::ftCo_CaptureCut::ftCo_CaptureCut_Enter;
     }
 }

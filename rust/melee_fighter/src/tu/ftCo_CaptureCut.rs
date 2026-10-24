@@ -40,23 +40,23 @@ pub mod ext {
         };
     }
     ext_fns! {
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
-        ftCommon_8007D92C(g: G) = |_| todo!("TODO(port) ftCommon_8007D92C (ftcommon.c)");
+        ftCommon_8007D92C(g: G) = |g: G| { unsafe { let _ = crate::ftcommon3::ftcommon_8007d92c(g as _); } };
         ftCommon_CalcGroundAccel_Deaccel(f: &mut Fighter, friction: f32) = crate::ftcommon::calc_ground_accel_deaccel;
         ftCommon_SetSelfMovementFromGroundedMovement(g: G) = |g| crate::ftcommon::set_self_movement_from_grounded_movement(super::fp(g));
-        ft_80084DB0(g: G) = |_| todo!("TODO(port) ft_80084DB0 (ft_081B.c)");
+        ft_80084DB0(g: G) = |g: G| { unsafe { let _ = crate::ft084e::ft_80084db0(g as _); } };
         ft_800841B8(g: G, cb: HSD_GObjEvent) = |_, _| todo!("TODO(port) ft_800841B8 (ft_081B.c)");
         ft_80083910(g: G, cb: HSD_GObjEvent) = |_, _| todo!("TODO(port) ft_80083910 (ft_081B.c)");
         ftCommon_8007D5D4(f: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
         ftCommon_8007D7FC(f: &mut Fighter) = crate::ftcommon3::ftcommon_8007d7fc;
         ftCommon_UnlockECB(f: &mut Fighter) = crate::ftcommon2::unlock_ecb;
         Fighter_UnkSetFlag_8006CFBC(g: G) = |_| todo!("TODO(port) Fighter_UnkSetFlag_8006CFBC (fighter.c)");
-        Fighter_UpdateModelScale(g: G) = |_| todo!("TODO(port) Fighter_UpdateModelScale (fighter.c)");
+        Fighter_UpdateModelScale(g: G) = |g: G| { unsafe { let _ = crate::tu::fighter::Fighter_UpdateModelScale(g as _); } };
         ftKb_MexKirbyLike(kind: i32) -> i32 = |_| todo!("TODO(port) ftKb_MexKirbyLike (ftkirby.c)");
         ftParts_GetBoneIndex(f: &Fighter, part: i32) -> i32 = crate::ftdmgfall::ftparts_get_bone_index;
-        lb_8000B1CC(j: *mut HSD_JObj, off: *const Vec3, out: &mut Vec3) = |_, _, _| todo!("TODO(port) lb_8000B1CC (lb_00B0.c)");
-        lb_8000C390(j: *mut HSD_JObj) = |_| todo!("TODO(port) lb_8000C390 (lb_00B0.c)");
+        lb_8000B1CC(j: *mut HSD_JObj, off: *const Vec3, out: &mut Vec3) = |j: *mut HSD_JObj, off: *const Vec3, out: &mut Vec3| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(j as _, off as _, out as _); } };
+        lb_8000C390(j: *mut HSD_JObj) = |j: *mut HSD_JObj| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000C390(j as _); } };
         HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjSetMtxDirtySub (jobj.c)");
         mpLib_80054ED8(index: i32) -> i32 = |_| todo!("TODO(port) mpLib_80054ED8 (mplib.c)");
         mpLib_8005199C_Floor(pos: &mut Vec3, a: i32, b: i32) -> i32 = |_, _, _| todo!("TODO(port) mpLib_8005199C_Floor (mplib.c)");
@@ -75,9 +75,9 @@ pub mod ext {
         ScriptGame_HitRuleContact(hit: *mut HitCapsule, f: *mut Fighter, value: f32, kb: i32) -> f32 = |_, _, _, _| todo!("TODO(pc script) ScriptGame_HitRuleContact");
         ScriptGame_HitRuleReport(att: *mut Fighter, vic: *mut Fighter, hit: *mut HitCapsule, damage: f32) = |_, _, _, _| todo!("TODO(pc script) ScriptGame_HitRuleReport");
         ScriptGame_HitRulePercentQueue(hit: *mut HitCapsule, f: *mut Fighter, damage: f32) = |_, _, _| todo!("TODO(pc script) ScriptGame_HitRulePercentQueue");
-        Fighter_UnkTakeDamage_8006CC30(f: &mut Fighter, damage: f32) = |_, _| todo!("TODO(port) Fighter_UnkTakeDamage_8006CC30 (fighter.c)");
-        ftCo_Damage_CalcKnockback(f: &mut Fighter) = |_| todo!("TODO(port) ftCo_Damage_CalcKnockback (ftCo_Damage.c)");
-        ftCo_8008E908(g: G, f: f32) = |_, _| todo!("TODO(port) ftCo_8008E908 (ftCo_Damage.c)");
+        Fighter_UnkTakeDamage_8006CC30(f: &mut Fighter, damage: f32) = |f: &mut Fighter, damage: f32| { unsafe { let _ = crate::tu::fighter::Fighter_UnkTakeDamage_8006CC30(f as _, damage as _); } };
+        ftCo_Damage_CalcKnockback(f: &mut Fighter) = |f: &mut Fighter| { unsafe { let _ = crate::tu::ftCo_Damage::ftCo_Damage_CalcKnockback(f as _); } };
+        ftCo_8008E908(g: G, f: f32) = |g: G, f: f32| { unsafe { let _ = crate::tu::ftCo_Damage::ftCo_8008E908(g as _, f as _); } };
     }
 }
 

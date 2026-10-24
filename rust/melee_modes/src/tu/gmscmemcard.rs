@@ -125,22 +125,120 @@ pub mod ext {
     hook_or!(GM_801AE74C, gm_801AE74C, crate::tu::gm_1ADD::gm_801AE74C, (arg0: i32, arg1: bool));
     hook_or!(GM_801ADDD8, gm_801ADDD8, crate::tu::gm_1ADD::gm_801ADDD8, ());
     // lb/lbcardnew.c, lb/lbcardgame.c, lb/lblanguage.c
-    hook!(LBCARDNEW_PROBEEX, lbCardNew_ProbeEx, (chan: i32) -> i32);
-    hook!(LBCARDNEW_ALLOCWORKAREA, lbCardNew_AllocWorkArea, ());
-    hook!(LBCARDGAME_LOADARCHIVE, lbCardGame_LoadArchive, (a: i32));
-    hook!(LBCARDGAME_SETCARDSTATUS, lbCardGame_SetCardStatus, (status: i32));
-    hook!(LBCARDGAME_SAVECHANGES, lbCardGame_SaveChanges, ());
-    hook!(LB_8001C87C, lb_8001C87C, () -> u32);
-    hook!(LB_8001CBBC, lb_8001CBBC, () -> i32);
-    hook!(LB_8001CC4C, lb_8001CC4C, () -> i32);
-    hook!(LB_8001C8BC, lb_8001C8BC, () -> i32);
-    hook!(LB_8001B8C8, lb_8001B8C8, (chan: i32) -> bool);
-    hook!(LBLANG_ISSAVEDLANGUAGEUS, lbLang_IsSavedLanguageUS, () -> bool);
+    pub static mut LBCARDNEW_PROBEEX: Option<fn(i32) -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn lbCardNew_ProbeEx(chan: i32) -> i32 {
+                match unsafe { LBCARDNEW_PROBEEX } {
+                    Some(f) => f(chan),
+                    None => { return unsafe { melee_runtime::tu::lbcardnew::lbCardNew_ProbeEx(chan as _) as _ }; },
+                }
+            }
+    pub static mut LBCARDNEW_ALLOCWORKAREA: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn lbCardNew_AllocWorkArea()  {
+                match unsafe { LBCARDNEW_ALLOCWORKAREA } {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = melee_runtime::tu::lbcardnew::lbCardNew_AllocWorkArea(); } return; },
+                }
+            }
+    pub static mut LBCARDGAME_LOADARCHIVE: Option<fn(i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn lbCardGame_LoadArchive(a: i32)  {
+                match unsafe { LBCARDGAME_LOADARCHIVE } {
+                    Some(f) => f(a),
+                    None => { unsafe { let _ = melee_runtime::tu::lbcardgame::lbCardGame_LoadArchive(a as _); } return; },
+                }
+            }
+    pub static mut LBCARDGAME_SETCARDSTATUS: Option<fn(i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn lbCardGame_SetCardStatus(status: i32)  {
+                match unsafe { LBCARDGAME_SETCARDSTATUS } {
+                    Some(f) => f(status),
+                    None => { unsafe { let _ = melee_runtime::tu::lbcardgame::lbCardGame_SetCardStatus(status as _); } return; },
+                }
+            }
+    pub static mut LBCARDGAME_SAVECHANGES: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn lbCardGame_SaveChanges()  {
+                match unsafe { LBCARDGAME_SAVECHANGES } {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = melee_runtime::tu::lbcardgame::lbCardGame_SaveChanges(); } return; },
+                }
+            }
+    pub static mut LB_8001C87C: Option<fn() -> u32> = None;
+            #[allow(non_snake_case)]
+            pub fn lb_8001C87C() -> u32 {
+                match unsafe { LB_8001C87C } {
+                    Some(f) => f(),
+                    None => { return unsafe { melee_runtime::tu::lbcardgame::lb_8001C87C() as _ }; },
+                }
+            }
+    pub static mut LB_8001CBBC: Option<fn() -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn lb_8001CBBC() -> i32 {
+                match unsafe { LB_8001CBBC } {
+                    Some(f) => f(),
+                    None => { return unsafe { melee_runtime::tu::lbcardgame::lb_8001CBBC() as _ }; },
+                }
+            }
+    pub static mut LB_8001CC4C: Option<fn() -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn lb_8001CC4C() -> i32 {
+                match unsafe { LB_8001CC4C } {
+                    Some(f) => f(),
+                    None => { return unsafe { melee_runtime::tu::lbcardgame::lb_8001CC4C() as _ }; },
+                }
+            }
+    pub static mut LB_8001C8BC: Option<fn() -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn lb_8001C8BC() -> i32 {
+                match unsafe { LB_8001C8BC } {
+                    Some(f) => f(),
+                    None => { return unsafe { melee_runtime::tu::lbcardgame::lb_8001C8BC() as _ }; },
+                }
+            }
+    pub static mut LB_8001B8C8: Option<fn(i32) -> bool> = None;
+            #[allow(non_snake_case)]
+            pub fn lb_8001B8C8(chan: i32) -> bool {
+                match unsafe { LB_8001B8C8 } {
+                    Some(f) => f(chan),
+                    None => { return unsafe { melee_runtime::tu::lbcardnew::lb_8001B8C8(chan as _) != 0 }; },
+                }
+            }
+    pub static mut LBLANG_ISSAVEDLANGUAGEUS: Option<fn() -> bool> = None;
+            #[allow(non_snake_case)]
+            pub fn lbLang_IsSavedLanguageUS() -> bool {
+                match unsafe { LBLANG_ISSAVEDLANGUAGEUS } {
+                    Some(f) => f(),
+                    None => { return unsafe { melee_runtime::tu::lblanguage::lbLang_IsSavedLanguageUS() as _ }; },
+                }
+            }
     // gm/gmmain_lib.c, gm/gmscene.c
-    hook!(GMMAINLIB_8015FA34, gmMainLib_8015FA34, (v: i32));
-    hook!(GM_801A4B60, gm_801A4B60, ());
+    pub static mut GMMAINLIB_8015FA34: Option<fn(i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn gmMainLib_8015FA34(v: i32)  {
+                match unsafe { GMMAINLIB_8015FA34 } {
+                    Some(f) => f(v),
+                    None => { unsafe { let _ = crate::tu::gmmain_lib::gmMainLib_8015FA34(v as _); } return; },
+                }
+            }
+    pub static mut GM_801A4B60: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_801A4B60()  {
+                match unsafe { GM_801A4B60 } {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::gmscene::gm_801A4B60(); } return; },
+                }
+            }
     // lb/lbaudio_ax.c (the sfx inlines of mn/inlines.h), db/db.c, sysdolphin/baselib/controller.c
-    hook!(LBAUDIOAX_80024030, lbAudioAx_80024030, (id: i32));
+    pub static mut LBAUDIOAX_80024030: Option<fn(i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn lbAudioAx_80024030(id: i32)  {
+                match unsafe { LBAUDIOAX_80024030 } {
+                    Some(f) => f(id),
+                    None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80024030(id as _); } return; },
+                }
+            }
     hook!(DBLEVEL, DbLevel, () -> i32);
     /// `HSD_PadCopyStatus[0].button` / `.trigger`.
     hook!(HSD_PADCOPYSTATUS0_BUTTON, hsd_pad_copy_status0_button, () -> u32);

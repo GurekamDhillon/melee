@@ -36,10 +36,10 @@ pub mod ext {
         GObj_Create(class: u32, p_link: u32, prio: u32) -> G = |_, _, _| todo!("TODO(port) GObj_Create (baselib/gobj.c)");
         HSD_GObj_SetupProc(g: G, f: Option<unsafe extern "C" fn(G)>, prio: u32) = |_, _, _| todo!("TODO(port) HSD_GObj_SetupProc (baselib/gobjproc.c)");
         HSD_GObjPLinkHead(link: i32) -> G = crate::hooks::plink_head;
-        lbAudioAx_80023710(id: i32) -> i32 = |_| todo!("TODO(port) lbAudioAx_80023710 (lb/lbaudio_ax.c)");
-        lbAudioAx_800236B8(id: i32) = |_| todo!("TODO(port) lbAudioAx_800236B8 (lb/lbaudio_ax.c)");
-        lbAudioAx_800240B4(sfx: i32) -> i32 = |_| todo!("TODO(port) lbAudioAx_800240B4 (lb/lbaudio_ax.c)");
-        lbAudioAx_8002411C(sfx: i32) -> i32 = |_| todo!("TODO(port) lbAudioAx_8002411C (lb/lbaudio_ax.c)");
+        lbAudioAx_80023710(id: i32) -> i32 = |id: i32| -> i32 { unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023710(id as _) as _ } };
+        lbAudioAx_800236B8(id: i32) = |id: i32| { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_800236B8(id as _); } };
+        lbAudioAx_800240B4(sfx: i32) -> i32 = |sfx: i32| -> i32 { unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800240B4(sfx as _) as _ } };
+        lbAudioAx_8002411C(sfx: i32) -> i32 = |sfx: i32| -> i32 { unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_8002411C(sfx as _) as _ } };
         mpLib_80458868() -> *mut mpCollisionBox = || todo!("TODO(port) mpLib_80458868 (mp/mplib.c data)");
         ftLib_8008732C(g: G) -> i32 = |g| crate::ftlib::ftlib_8008732c(g) as i32;
         ftLib_8008731C(g: G) -> i32 = crate::ftlib::ftlib_8008731c;

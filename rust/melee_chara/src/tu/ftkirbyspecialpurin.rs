@@ -48,9 +48,30 @@ pub mod ext {
     type G = *mut HSD_GObj;
     pub use crate::tu::ftcaptainspecialn::ext::{efSync_Spawn, EFSYNC_SPAWN};
     pub use crate::tu::ftkirbyspecialmewtwo::ext::{ftCo_800BFFAC, ftCo_800BFFD0, ft_80088510, FTCO_800BFFAC, FTCO_800BFFD0, FT_80088510};
-    hook!(HSD_JOBJSETSCALE, HSD_JObjSetScale, (j: *mut HSD_JObj, scale: *const Vec3));
-    hook!(HSD_JOBJGETSCALE, HSD_JObjGetScale, (j: *mut HSD_JObj, scale: *mut Vec3));
-    hook!(HSD_JOBJSETROTATIONY, HSD_JObjSetRotationY, (j: *mut core::ffi::c_void, rot: f32));
+    pub static mut HSD_JOBJSETSCALE: Option<fn(*mut HSD_JObj, *const Vec3) > = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_JObjSetScale(j: *mut HSD_JObj, scale: *const Vec3)  {
+                match unsafe { HSD_JOBJSETSCALE } {
+                    Some(f) => f(j, scale),
+                    None => { unsafe { let _ = crate::tu::ftinl::HSD_JObjSetScale(j as _, scale as _); } return; },
+                }
+            }
+    pub static mut HSD_JOBJGETSCALE: Option<fn(*mut HSD_JObj, *mut Vec3) > = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_JObjGetScale(j: *mut HSD_JObj, scale: *mut Vec3)  {
+                match unsafe { HSD_JOBJGETSCALE } {
+                    Some(f) => f(j, scale),
+                    None => { unsafe { let _ = crate::tu::ftinl::HSD_JObjGetScale(j as _, scale as _); } return; },
+                }
+            }
+    pub static mut HSD_JOBJSETROTATIONY: Option<fn(*mut core::ffi::c_void, f32) > = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_JObjSetRotationY(j: *mut core::ffi::c_void, rot: f32)  {
+                match unsafe { HSD_JOBJSETROTATIONY } {
+                    Some(f) => f(j, rot),
+                    None => { unsafe { let _ = melee_fighter::tu::ftCo_Lift::HSD_JObjSetRotationY(j as _, rot as _); } return; },
+                }
+            }
     hook!(FTCOLL_8007AFF8, ftColl_8007AFF8, (g: G));
     hook!(FTCOLL_8007ABD0, ftColl_8007ABD0, (hit: *mut HitCapsule, damage: u32, g: G));
     hook!(MPLIB_800569EC, mpLib_800569EC, (flags: u32) -> f32);

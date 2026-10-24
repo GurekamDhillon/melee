@@ -18,9 +18,21 @@ pub mod ext {
     use melee_types::*;
     hook!(HSD_LOBJ_803668EC, HSD_LObj_803668EC, (lobj: *mut HSD_LObj));
     hook!(HSD_LOBJSETUPINIT, HSD_LObjSetupInit, (cobj: *mut HSD_CObj));
-    hook!(HSD_COBJGETCURRENT, HSD_CObjGetCurrent, () -> *mut HSD_CObj);
-    hook!(HSD_COBJSETCURRENT, HSD_CObjSetCurrent, (cobj: *mut HSD_CObj) -> i32);
-    hook!(HSD_COBJENDCURRENT, HSD_CObjEndCurrent, ());
+    pub static mut HSD_COBJGETCURRENT: Option<fn() -> *mut HSD_CObj> = None;
+    #[allow(non_snake_case)]
+    pub fn HSD_CObjGetCurrent() -> *mut HSD_CObj {
+        match unsafe { HSD_COBJGETCURRENT } { Some(f) => f(), None => { return unsafe { crate::tu::cobj::HSD_CObjGetCurrent() as _ }; } }
+    }
+    pub static mut HSD_COBJSETCURRENT: Option<fn(*mut HSD_CObj) -> i32> = None;
+    #[allow(non_snake_case)]
+    pub fn HSD_CObjSetCurrent(cobj: *mut HSD_CObj) -> i32 {
+        match unsafe { HSD_COBJSETCURRENT } { Some(f) => f(cobj), None => { return unsafe { crate::tu::cobj::HSD_CObjSetCurrent(cobj as _) as _ }; } }
+    }
+    pub static mut HSD_COBJENDCURRENT: Option<fn()> = None;
+    #[allow(non_snake_case)]
+    pub fn HSD_CObjEndCurrent() {
+        match unsafe { HSD_COBJENDCURRENT } { Some(f) => f(), None => { unsafe { let _ = crate::tu::cobj::HSD_CObjEndCurrent(); } return; } }
+    }
     hook!(HSD_JOBJDISPALL, HSD_JObjDispAll, (jobj: *mut HSD_JObj, vmtx: *mut [f32; 4], flags: u32, rendermode: u32));
     hook!(HSD_FOGSET, HSD_FogSet, (fog: *mut HSD_Fog));
     hook!(HSDDELETE, hsdDelete, (obj: *mut core::ffi::c_void));

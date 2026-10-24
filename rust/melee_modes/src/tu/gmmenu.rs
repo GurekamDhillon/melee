@@ -70,14 +70,77 @@ pub mod ext {
             }
         };
     }
-    hook!(GM_GETALLSTARDATA, gm_GetAllStarData, () -> *mut UnkAllstarData);
-    hook!(GM_GETADVENTUREDATA, gm_GetAdventureData, () -> *mut UnkAdventureData);
+    pub static mut GM_GETALLSTARDATA: Option<fn() -> *mut UnkAllstarData> = None;
+            #[allow(non_snake_case)]
+            pub fn gm_GetAllStarData() -> *mut UnkAllstarData {
+                match unsafe { GM_GETALLSTARDATA } {
+                    Some(f) => unsafe { f() },
+                    None => { return unsafe { crate::tu::gm_17eb::gm_GetAllStarData() as _ }; },
+                }
+            }
+    pub static mut GM_GETADVENTUREDATA: Option<fn() -> *mut UnkAdventureData> = None;
+            #[allow(non_snake_case)]
+            pub fn gm_GetAdventureData() -> *mut UnkAdventureData {
+                match unsafe { GM_GETADVENTUREDATA } {
+                    Some(f) => unsafe { f() },
+                    None => { return unsafe { crate::tu::gm_17e4::gm_GetAdventureData() as _ }; },
+                }
+            }
     hook!(GM_80473A18, gm_80473A18, () -> *mut UnkAllstarData);
-    hook!(GM_801BEFA4, gm_801BEFA4, (v: u8));
-    hook!(GM_801BEFC0, gm_801BEFC0, (v: u8));
-    hook!(GM_801BF000, gm_801BF000, (v: u8));
-    hook!(GM_801BEFE0, gm_801BEFE0, (v: u8));
-    hook!(GM_801BF020, gm_801BF020, (v: i32));
-    hook!(GM_801BF718, gm_801BF718, () -> i32);
-    hook!(GM_SETGAMEMODESTATEID, gm_SetGameModeStateId, (id: i32));
+    pub static mut GM_801BEFA4: Option<fn(u8) > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_801BEFA4(v: u8)  {
+                match unsafe { GM_801BEFA4 } {
+                    Some(f) => unsafe { f(v) },
+                    None => { unsafe { let _ = crate::tu::gmgover::gm_801BEFA4(v as _); } return; },
+                }
+            }
+    pub static mut GM_801BEFC0: Option<fn(u8) > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_801BEFC0(v: u8)  {
+                match unsafe { GM_801BEFC0 } {
+                    Some(f) => unsafe { f(v) },
+                    None => { unsafe { let _ = crate::tu::gmgover::gm_801BEFC0(v as _); } return; },
+                }
+            }
+    pub static mut GM_801BF000: Option<fn(u8) > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_801BF000(v: u8)  {
+                match unsafe { GM_801BF000 } {
+                    Some(f) => unsafe { f(v) },
+                    None => { unsafe { let _ = crate::tu::gmgover::gm_801BF000(v as _); } return; },
+                }
+            }
+    pub static mut GM_801BEFE0: Option<fn(u8) > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_801BEFE0(v: u8)  {
+                match unsafe { GM_801BEFE0 } {
+                    Some(f) => unsafe { f(v) },
+                    None => { unsafe { let _ = crate::tu::gmgover::gm_801BEFE0(v as _); } return; },
+                }
+            }
+    pub static mut GM_801BF020: Option<fn(i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_801BF020(v: i32)  {
+                match unsafe { GM_801BF020 } {
+                    Some(f) => unsafe { f(v) },
+                    None => { unsafe { let _ = crate::tu::gmgover::gm_801BF020(v as _); } return; },
+                }
+            }
+    pub static mut GM_801BF718: Option<fn() -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn gm_801BF718() -> i32 {
+                match unsafe { GM_801BF718 } {
+                    Some(f) => unsafe { f() },
+                    None => { return unsafe { crate::tu::gmopeningmode::gm_801BF718() as _ }; },
+                }
+            }
+    pub static mut GM_SETGAMEMODESTATEID: Option<fn(i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_SetGameModeStateId(id: i32)  {
+                match unsafe { GM_SETGAMEMODESTATEID } {
+                    Some(f) => unsafe { f(id) },
+                    None => { unsafe { let _ = crate::tu::gm_1A3F::gm_SetGameModeStateId(id as _); } return; },
+                }
+            }
 }

@@ -35,18 +35,18 @@ pub mod ext {
     ext_fns! {
         ftCo_GetLStickAngle(fp: &Fighter) -> f32 = crate::ftcommon3::ftco_get_lstick_angle;
         it_8026B30C(i: *mut Item_GObj) -> i32 = crate::hooks::it_8026b30c;
-        ftCo_800957F4(g: G, msid: i32) = |_, _| todo!("TODO(port) ftCo_800957F4 (ftCo_ItemThrow.c)");
-        ftCo_Attack_800CCF58(g: G, a: i32) = |_, _| todo!("TODO(port) ftCo_Attack_800CCF58 (ftswing.c)");
-        ftCo_Attack_800CDD14(g: G) = |_| todo!("TODO(port) ftCo_Attack_800CDD14 (ft_0CDD.c)");
-        ftpickupitem_80094790(g: G) -> bool = |_| todo!("TODO(port) ftpickupitem_80094790 (ftpickupitem.c)");
-        ftData_80085FD4(fp: &mut Fighter, msid: i32) -> *mut ftData_80085FD4_ret = |_, _| todo!("TODO(port) ftData_80085FD4 (ftdata.c)");
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
-        ftAnim_8006EBA4(g: G) = |_| todo!("TODO(port) ftAnim_8006EBA4 (ftanim.c)");
+        ftCo_800957F4(g: G, msid: i32) = |g: G, msid: i32| { unsafe { let _ = crate::tu::ftCo_ItemThrow::ftCo_800957F4(g as _, msid as _); } };
+        ftCo_Attack_800CCF58(g: G, a: i32) = |g: G, a: i32| { unsafe { let _ = crate::tu::ftswing::ftCo_Attack_800CCF58(g as _, a as _); } };
+        ftCo_Attack_800CDD14(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_0cdd::ftco_attack_800cdd14(g as _); } };
+        ftpickupitem_80094790(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftpickupitem::ftpickupitem_80094790(g as _) as _ } };
+        ftData_80085FD4(fp: &mut Fighter, msid: i32) -> *mut ftData_80085FD4_ret = |fp: &mut Fighter, msid: i32| -> *mut ftData_80085FD4_ret { unsafe { crate::tu::ftdata::ftData_80085FD4(fp as _, msid as _) as _ } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ft_8008A2BC(g: G) = crate::hooks::ft_8008a2bc;
-        ftCo_Wait_IASA(g: G) = |_| todo!("TODO(port) ftCo_Wait_IASA (ftCo_Wait.c)");
+        ftCo_Wait_IASA(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_Wait::ftCo_Wait_IASA(g as _); } };
         ft_80084F3C(g: G) = crate::ft084e::ft_80084f3c;
-        ft_80084104(g: G) = |_| todo!("TODO(port) ft_80084104 (ft_081B.c)");
+        ft_80084104(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_081b::ft_80084104(g as _); } };
     }
 }
 

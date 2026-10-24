@@ -40,23 +40,23 @@ macro_rules! ext_fns {
 pub mod ext {
     use super::*;
     ext_fns! {
-        it_80294430(item: *mut Item_GObj, a: f32, b: f32) = |_, _, _| todo!("TODO(port) it_80294430 (itwstar.c)");
-        it_80294364(item: *mut Item_GObj) -> *mut HSD_AnimJoint = |_| todo!("TODO(port) it_80294364 (itwstar.c)");
-        it_802944AC(item: *mut Item_GObj, ecb: *mut ftCollisionBox) = |_, _| todo!("TODO(port) it_802944AC (itwstar.c)");
-        it_802946B0(item: *mut Item_GObj) = |_| todo!("TODO(port) it_802946B0 (itwstar.c)");
-        it_802947CC(item: *mut Item_GObj, pos: *mut Vec3) = |_, _| todo!("TODO(port) it_802947CC (itwstar.c)");
-        Item_8026ABD8(item: *mut Item_GObj, pos: *mut Vec3, v: f32) = |_, _, _| todo!("TODO(port) Item_8026ABD8 (item.c)");
+        it_80294430(item: *mut Item_GObj, a: f32, b: f32) = |item: *mut Item_GObj, a: f32, b: f32| { unsafe { let _ = melee_items::tu::itwstar::it_80294430(item as _, a as _, b as _); } };
+        it_80294364(item: *mut Item_GObj) -> *mut HSD_AnimJoint = |item: *mut Item_GObj| -> *mut HSD_AnimJoint { unsafe { melee_items::tu::itwstar::it_80294364(item as _) as _ } };
+        it_802944AC(item: *mut Item_GObj, ecb: *mut ftCollisionBox) = |item: *mut Item_GObj, ecb: *mut ftCollisionBox| { unsafe { let _ = melee_items::tu::itwstar::it_802944AC(item as _, ecb as _); } };
+        it_802946B0(item: *mut Item_GObj) = |item: *mut Item_GObj| { unsafe { let _ = melee_items::tu::itwstar::it_802946B0(item as _); } };
+        it_802947CC(item: *mut Item_GObj, pos: *mut Vec3) = |item: *mut Item_GObj, pos: *mut Vec3| { unsafe { let _ = melee_items::tu::itwstar::it_802947CC(item as _, pos as _); } };
+        Item_8026ABD8(item: *mut Item_GObj, pos: *mut Vec3, v: f32) = |item: *mut Item_GObj, pos: *mut Vec3, v: f32| { unsafe { let _ = melee_items::tu::item::Item_8026ABD8(item as _, pos as _, v as _); } };
         ftCommon_8007D5D4(f: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftColl_8007B6A0(g: G) = |_| todo!("TODO(port) ftColl_8007B6A0 (ftcoll.c)");
         ftColl_8007B6EC(g: G) = |_| todo!("TODO(port) ftColl_8007B6EC (ftcoll.c)");
         ftCommon_8007E2FC(g: G) = |g| crate::ftcommon2::ftcommon_8007e2fc(super::fp(g));
         HSD_JObjAddAnim(j: *mut HSD_JObj, an: *mut HSD_AnimJoint, mat: *mut HSD_MatAnimJoint, sh: *mut HSD_ShapeAnimJoint) = |_, _, _, _| todo!("TODO(port) HSD_JObjAddAnim (jobj.c)");
-        ftAnim_80070734(j: *mut HSD_JObj, frame: f32) = |_, _| todo!("TODO(port) ftAnim_80070734 (ftanim.c)");
+        ftAnim_80070734(j: *mut HSD_JObj, frame: f32) = |j: *mut HSD_JObj, frame: f32| { unsafe { let _ = crate::tu::ftanim::ftAnim_80070734(j as _, frame as _); } };
         HSD_JObjAnim(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjAnim (jobj.c)");
         HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjSetMtxDirtySub (jobj.c)");
         Stage_GetBlastZoneTopOffset() -> f32 = || todo!("TODO(port) Stage_GetBlastZoneTopOffset (stage.c)");
-        ftCamera_800762F4(g: G) = |_| todo!("TODO(port) ftCamera_800762F4 (ftcamera.c)");
+        ftCamera_800762F4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftcamera::ftcamera_800762f4(g as _); } };
         mpColl_80043680(c: *mut CollData, pos: *mut Vec3) = |_, _| todo!("TODO(port) mpColl_80043680 (mpcoll.c)");
         ftCommon_Fall(f: &mut Fighter, a: f32, b: f32) = |_, _, _| todo!("TODO(port) ftCommon_Fall (ftcommon.c)");
         ftCommon_CalcSelfAccel_AccelToVelClampedFrom(f: &mut Fighter, vel: f32, accel: f32, target: f32, fr: f32) = crate::ftcommon::calc_self_accel_accel_to_vel_clamped_from;

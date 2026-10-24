@@ -27,17 +27,17 @@ pub mod ext {
     }
     ext_fns! {
         ft_8008A1FC(g: G) -> bool = crate::ft084e::ft_8008a1fc;
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
-        ftCo_8009C5A4(g: G, msid: i32) = |_, _| todo!("TODO(port) ftCo_8009C5A4 (ftCo_Shouldered.c)");
-        ftCo_8009C640(g: G, msid: i32) = |_, _| todo!("TODO(port) ftCo_8009C640 (ftCo_Shouldered.c)");
-        ftCo_8009BF3C(g: G) -> bool = |_| todo!("TODO(port) ftCo_8009BF3C (ftCo_CargoThrow.c)");
-        ftCo_8009BB1C(g: G) -> bool = |_| todo!("TODO(port) ftCo_8009BB1C (ftCo_CargoJump.c)");
-        ftCo_8009C4F8(g: G) -> bool = |_| todo!("TODO(port) ftCo_8009C4F8 (ftCo_09C4.c, port pending registration)");
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        ftCo_8009C5A4(g: G, msid: i32) = |g: G, msid: i32| { unsafe { let _ = crate::tu::ftCo_Shouldered::ftCo_8009C5A4(g as _, msid as _); } };
+        ftCo_8009C640(g: G, msid: i32) = |g: G, msid: i32| { unsafe { let _ = crate::tu::ftCo_Shouldered::ftCo_8009C640(g as _, msid as _); } };
+        ftCo_8009BF3C(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_CargoThrow::ftCo_8009BF3C(g as _) as _ } };
+        ftCo_8009BB1C(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_CargoJump::ftCo_8009BB1C(g as _) as _ } };
+        ftCo_8009C4F8(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftco_09c4::ftCo_8009C4F8(g as _) as _ } };
         ftCo_8009B818(g: G) -> bool = crate::tu::ftCo_CargoTurn::ftCo_8009B818;
         ftCo_8009B67C(g: G) -> bool = crate::tu::ftCo_CargoWalk::ftCo_8009B67C;
         ft_80084F3C(g: G) = crate::ft084e::ft_80084f3c;
         ft_8008403C(g: G, cb: HSD_GObjEvent) = |_, _| todo!("TODO(port) ft_8008403C (ft_081B.c)");
-        ftCo_8009BC58(g: G) = |_| todo!("TODO(port) ftCo_8009BC58 (ftCo_CargoFall.c)");
+        ftCo_8009BC58(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_CargoFall::ftCo_8009BC58(g as _); } };
     }
 }
 

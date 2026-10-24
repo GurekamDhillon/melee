@@ -57,14 +57,14 @@ pub mod ext {
     pub fn it_802EADD8(i: *mut Item_GObj) {
         match unsafe { IT_802EADD8 } {
             Some(f) => f(i),
-            None => panic!("TODO(group5 itleadead.c) it_802EADD8 is not ported"),
+            None => { unsafe { let _ = melee_items::tu::itleadead::it_802EADD8(i as _); } return; },
         }
     }
     /// TODO(group5 itleadead.c) `it_802EAF28`.
     pub fn it_802EAF28(i: *mut Item_GObj) -> i32 {
         match unsafe { IT_802EAF28 } {
             Some(f) => f(i),
-            None => panic!("TODO(group5 itleadead.c) it_802EAF28 is not ported"),
+            None => { return unsafe { melee_items::tu::itgreatfoxlaser::it_802EAF28(i as _) as _ }; },
         }
     }
 }

@@ -26,13 +26,13 @@ pub mod ext {
         };
     }
     ext_fns! {
-        ftCo_800C97A8(g: G) -> bool = |_| todo!("TODO(port) ftCo_800C97A8 (ftCo_Turn.c)");
-        ftCo_Turn_Enter(g: G, msid: i32, flags: u32, a: f32, b: f32, c: f32) = |_, _, _, _, _, _| todo!("TODO(port) ftCo_Turn_Enter (ftCo_Turn.c)");
-        ftCo_8009C5A4(g: G, msid: i32) = |_, _| todo!("TODO(port) ftCo_8009C5A4 (ftCo_Shouldered.c)");
+        ftCo_800C97A8(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Turn::ftCo_800C97A8(g as _) as _ } };
+        ftCo_Turn_Enter(g: G, msid: i32, flags: u32, a: f32, b: f32, c: f32) = |g: G, msid: i32, flags: u32, a: f32, b: f32, c: f32| { unsafe { let _ = crate::tu::ftCo_Turn::ftCo_Turn_Enter(g as _, msid as _, flags as _, a as _, b as _, c as _); } };
+        ftCo_8009C5A4(g: G, msid: i32) = |g: G, msid: i32| { unsafe { let _ = crate::tu::ftCo_Shouldered::ftCo_8009C5A4(g as _, msid as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ftCo_8009B518(g: G) = crate::tu::ftCo_CargoWait::ftCo_8009B518;
-        ftCo_8009BF3C(g: G) -> bool = |_| todo!("TODO(port) ftCo_8009BF3C (ftCo_CargoThrow.c)");
-        ftCo_8009BB1C(g: G) -> bool = |_| todo!("TODO(port) ftCo_8009BB1C (ftCo_CargoJump.c)");
+        ftCo_8009BF3C(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_CargoThrow::ftCo_8009BF3C(g as _) as _ } };
+        ftCo_8009BB1C(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_CargoJump::ftCo_8009BB1C(g as _) as _ } };
         ft_80084F3C(g: G) = crate::ft084e::ft_80084f3c;
         ftCo_CargoWait_Coll(g: G) = crate::tu::ftCo_CargoWait::ftCo_CargoWait_Coll;
     }

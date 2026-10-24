@@ -44,27 +44,111 @@ pub mod ext {
     }
     // ---- callee hooks ----
     hook!(H_ScriptGame_ArenaBound, ScriptGame_ArenaBound, (a0: i32, a1: f32) -> f32);
-    hook!(H_lbVector_ApplyEulerRotation, lbVector_ApplyEulerRotation, (a0: *mut melee_types::Vec, a1: *mut melee_types::Vec) -> *mut melee_types::Vec);
-    hook!(H_Ground_801C2D24, Ground_801C2D24, (a0: i32, a1: *mut melee_types::Vec) -> i32);
-    hook!(H___assert, __assert, (a0: *const i8, a1: u32, a2: *const i8));
-    hook!(H_mpCheckMultiple, mpCheckMultiple, (a0: f32, a1: f32, a2: f32, a3: f32, a4: *mut melee_types::Vec, a5: *mut i32, a6: *mut u32, a7: *mut melee_types::Vec, a8: u32, a9: i32, a10: i32) -> i32);
+    pub static mut H_lbVector_ApplyEulerRotation: Option<unsafe extern "C" fn(*mut melee_types::Vec, *mut melee_types::Vec) -> *mut melee_types::Vec> = None;
+            pub unsafe extern "C" fn lbVector_ApplyEulerRotation(a0: *mut melee_types::Vec, a1: *mut melee_types::Vec) -> *mut melee_types::Vec {
+                match H_lbVector_ApplyEulerRotation {
+                    Some(f) => f(a0, a1),
+                    None => { return unsafe { melee_runtime::tu::lbvector::lbVector_ApplyEulerRotation(a0 as _, a1 as _) as _ }; },
+                }
+            }
+    pub static mut H_Ground_801C2D24: Option<unsafe extern "C" fn(i32, *mut melee_types::Vec) -> i32> = None;
+            pub unsafe extern "C" fn Ground_801C2D24(a0: i32, a1: *mut melee_types::Vec) -> i32 {
+                match H_Ground_801C2D24 {
+                    Some(f) => f(a0, a1),
+                    None => { return unsafe { crate::tu::ground::Ground_801C2D24(a0 as _, a1 as _) as _ }; },
+                }
+            }
+    pub static mut H___assert: Option<unsafe extern "C" fn(*const i8, u32, *const i8) > = None;
+            pub unsafe extern "C" fn __assert(a0: *const i8, a1: u32, a2: *const i8)  {
+                match H___assert {
+                    Some(f) => f(a0, a1, a2),
+                    None => { unsafe { let _ = melee_runtime::tu::debug::__assert(a0 as _, a1 as _, a2 as _); } return; },
+                }
+            }
+    pub static mut H_mpCheckMultiple: Option<unsafe extern "C" fn(f32, f32, f32, f32, *mut melee_types::Vec, *mut i32, *mut u32, *mut melee_types::Vec, u32, i32, i32) -> i32> = None;
+            pub unsafe extern "C" fn mpCheckMultiple(a0: f32, a1: f32, a2: f32, a3: f32, a4: *mut melee_types::Vec, a5: *mut i32, a6: *mut u32, a7: *mut melee_types::Vec, a8: u32, a9: i32, a10: i32) -> i32 {
+                match H_mpCheckMultiple {
+                    Some(f) => f(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10),
+                    None => { return unsafe { crate::tu::mplib::mpCheckMultiple(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _, a6 as _, a7 as _, a8 as _, a9 as _, a10 as _) as _ }; },
+                }
+            }
     hook!(H_HSD_Randi, HSD_Randi, (a0: i32) -> i32);
     hook!(H_gm_8016B238, gm_8016B238, () -> i32);
     hook!(H_gm_8016B3A0, gm_8016B3A0, () -> i32);
-    hook!(H_Ground_801C28AC, Ground_801C28AC, (a0: u32, a1: u32, a2: *mut i32) -> i32);
-    hook!(H_lbAudioAx_80023F28, lbAudioAx_80023F28, (a0: i32) -> i32);
-    hook!(H_Ground_801C5A84, Ground_801C5A84, (a0: i32));
-    hook!(H_Ground_801C5AA4, Ground_801C5AA4, (a0: i32));
+    pub static mut H_Ground_801C28AC: Option<unsafe extern "C" fn(u32, u32, *mut i32) -> i32> = None;
+            pub unsafe extern "C" fn Ground_801C28AC(a0: u32, a1: u32, a2: *mut i32) -> i32 {
+                match H_Ground_801C28AC {
+                    Some(f) => f(a0, a1, a2),
+                    None => { return unsafe { crate::tu::ground::Ground_801C28AC(a0 as _, a1 as _, a2 as _) as _ }; },
+                }
+            }
+    pub static mut H_lbAudioAx_80023F28: Option<unsafe extern "C" fn(i32) -> i32> = None;
+            pub unsafe extern "C" fn lbAudioAx_80023F28(a0: i32) -> i32 {
+                match H_lbAudioAx_80023F28 {
+                    Some(f) => f(a0),
+                    None => { return unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023F28(a0 as _) as _ }; },
+                }
+            }
+    pub static mut H_Ground_801C5A84: Option<unsafe extern "C" fn(i32) > = None;
+            pub unsafe extern "C" fn Ground_801C5A84(a0: i32)  {
+                match H_Ground_801C5A84 {
+                    Some(f) => f(a0),
+                    None => { unsafe { let _ = crate::tu::ground::Ground_801C5A84(a0 as _); } return; },
+                }
+            }
+    pub static mut H_Ground_801C5AA4: Option<unsafe extern "C" fn(i32) > = None;
+            pub unsafe extern "C" fn Ground_801C5AA4(a0: i32)  {
+                match H_Ground_801C5AA4 {
+                    Some(f) => f(a0),
+                    None => { unsafe { let _ = crate::tu::ground::Ground_801C5AA4(a0 as _); } return; },
+                }
+            }
     hook!(H_Mex_GrExternalCount, Mex_GrExternalCount, () -> i32);
     pub static mut H_OSReport: Option<unsafe fn(*const i8, &[u64])> = None;
     pub unsafe fn OSReport(f: *const i8, a: &[u64]) { match H_OSReport { Some(h) => h(f, a), None => panic!("TODO: OSReport is not ported") } }
     hook!(H_Mex_GrKindForExt, Mex_GrKindForExt, (a0: i32) -> i32);
-    hook!(H_Ground_801C06B8, Ground_801C06B8, (a0: u32));
-    hook!(H_Ground_801C0754, Ground_801C0754, (a0: *mut melee_types::StageIdPair));
-    hook!(H_Ground_801C0800, Ground_801C0800, (a0: *mut melee_types::StageIdPair));
-    hook!(H_Ground_OnLoad, Ground_OnLoad, (a0: *mut melee_types::StageIdPair));
-    hook!(H_Ground_801C0FB8, Ground_801C0FB8, (a0: *mut melee_types::StageIdPair));
-    hook!(H_Ground_DemoInit, Ground_DemoInit, (a0: *mut melee_types::StageIdPair, a1: i32));
+    pub static mut H_Ground_801C06B8: Option<unsafe extern "C" fn(u32) > = None;
+            pub unsafe extern "C" fn Ground_801C06B8(a0: u32)  {
+                match H_Ground_801C06B8 {
+                    Some(f) => f(a0),
+                    None => { unsafe { let _ = crate::tu::ground::Ground_801C06B8(a0 as _); } return; },
+                }
+            }
+    pub static mut H_Ground_801C0754: Option<unsafe extern "C" fn(*mut melee_types::StageIdPair) > = None;
+            pub unsafe extern "C" fn Ground_801C0754(a0: *mut melee_types::StageIdPair)  {
+                match H_Ground_801C0754 {
+                    Some(f) => f(a0),
+                    None => { unsafe { let _ = crate::tu::ground::Ground_801C0754(a0 as _); } return; },
+                }
+            }
+    pub static mut H_Ground_801C0800: Option<unsafe extern "C" fn(*mut melee_types::StageIdPair) > = None;
+            pub unsafe extern "C" fn Ground_801C0800(a0: *mut melee_types::StageIdPair)  {
+                match H_Ground_801C0800 {
+                    Some(f) => f(a0),
+                    None => { unsafe { let _ = crate::tu::ground::Ground_801C0800(a0 as _); } return; },
+                }
+            }
+    pub static mut H_Ground_OnLoad: Option<unsafe extern "C" fn(*mut melee_types::StageIdPair) > = None;
+            pub unsafe extern "C" fn Ground_OnLoad(a0: *mut melee_types::StageIdPair)  {
+                match H_Ground_OnLoad {
+                    Some(f) => f(a0),
+                    None => { unsafe { let _ = crate::tu::ground::Ground_OnLoad(a0 as _); } return; },
+                }
+            }
+    pub static mut H_Ground_801C0FB8: Option<unsafe extern "C" fn(*mut melee_types::StageIdPair) > = None;
+            pub unsafe extern "C" fn Ground_801C0FB8(a0: *mut melee_types::StageIdPair)  {
+                match H_Ground_801C0FB8 {
+                    Some(f) => f(a0),
+                    None => { unsafe { let _ = crate::tu::ground::Ground_801C0FB8(a0 as _); } return; },
+                }
+            }
+    pub static mut H_Ground_DemoInit: Option<unsafe extern "C" fn(*mut melee_types::StageIdPair, i32) > = None;
+            pub unsafe extern "C" fn Ground_DemoInit(a0: *mut melee_types::StageIdPair, a1: i32)  {
+                match H_Ground_DemoInit {
+                    Some(f) => f(a0, a1),
+                    None => { unsafe { let _ = crate::tu::ground::Ground_DemoInit(a0 as _, a1 as _); } return; },
+                }
+            }
     // ---- extern globals ----
     pub static mut stage_info: melee_types::StageInfo = unsafe { core::mem::zeroed() };
 }

@@ -33,15 +33,78 @@ pub mod ext {
             }
         };
     }
-    hook!(HSD_ARCHIVEPARSE, HSD_ArchiveParse, (archive: *mut HSD_Archive, data: *mut u8, file_size: usize) -> i32);
-    hook!(HSD_ARCHIVEGETEXTERN, HSD_ArchiveGetExtern, (archive: *mut HSD_Archive, i: i32) -> *mut c_char);
-    hook!(HSD_ARCHIVELOCATEEXTERN, HSD_ArchiveLocateExtern, (archive: *mut HSD_Archive, name: *const c_char, addr: *mut c_void));
-    hook!(HSD_ARCHIVEGETPUBLICADDRESS, HSD_ArchiveGetPublicAddress, (archive: *mut HSD_Archive, name: *const c_char) -> *mut c_void);
-    hook!(LBHEAP_80015BD0, lbHeap_80015BD0, (heap_id: i32, size: usize) -> *mut c_void);
-    hook!(LBHEAP_80015CA8, lbHeap_80015CA8, (heap_id: i32, ptr: *mut c_void));
-    hook!(LBFILEGETSIZE, lbFileGetSize, (basename: *const c_char) -> usize);
-    hook!(LBFILE_8001668C, lbFile_8001668C, (basename: *const c_char, dst: *mut c_void, size: *mut usize));
-    hook!(LBDVD_8001819C, lbDvd_8001819C, (basename: *const c_char) -> *mut HSD_Archive);
+    pub static mut HSD_ARCHIVEPARSE: Option<fn(*mut HSD_Archive, *mut u8, usize) -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_ArchiveParse(archive: *mut HSD_Archive, data: *mut u8, file_size: usize) -> i32 {
+                match unsafe { HSD_ARCHIVEPARSE } {
+                    Some(f) => f(archive, data, file_size),
+                    None => { return unsafe { crate::tu::archive::HSD_ArchiveParse(archive as _, data as _, file_size as _) as _ }; },
+                }
+            }
+    pub static mut HSD_ARCHIVEGETEXTERN: Option<fn(*mut HSD_Archive, i32) -> *mut c_char> = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_ArchiveGetExtern(archive: *mut HSD_Archive, i: i32) -> *mut c_char {
+                match unsafe { HSD_ARCHIVEGETEXTERN } {
+                    Some(f) => f(archive, i),
+                    None => { return unsafe { crate::tu::archive::HSD_ArchiveGetExtern(archive as _, i as _) as _ }; },
+                }
+            }
+    pub static mut HSD_ARCHIVELOCATEEXTERN: Option<fn(*mut HSD_Archive, *const c_char, *mut c_void) > = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_ArchiveLocateExtern(archive: *mut HSD_Archive, name: *const c_char, addr: *mut c_void)  {
+                match unsafe { HSD_ARCHIVELOCATEEXTERN } {
+                    Some(f) => f(archive, name, addr),
+                    None => { unsafe { let _ = crate::tu::archive::HSD_ArchiveLocateExtern(archive as _, name as _, addr as _); } return; },
+                }
+            }
+    pub static mut HSD_ARCHIVEGETPUBLICADDRESS: Option<fn(*mut HSD_Archive, *const c_char) -> *mut c_void> = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_ArchiveGetPublicAddress(archive: *mut HSD_Archive, name: *const c_char) -> *mut c_void {
+                match unsafe { HSD_ARCHIVEGETPUBLICADDRESS } {
+                    Some(f) => f(archive, name),
+                    None => { return unsafe { crate::tu::archive::HSD_ArchiveGetPublicAddress(archive as _, name as _) as _ }; },
+                }
+            }
+    pub static mut LBHEAP_80015BD0: Option<fn(i32, usize) -> *mut c_void> = None;
+            #[allow(non_snake_case)]
+            pub fn lbHeap_80015BD0(heap_id: i32, size: usize) -> *mut c_void {
+                match unsafe { LBHEAP_80015BD0 } {
+                    Some(f) => f(heap_id, size),
+                    None => { return unsafe { crate::tu::lbheap::lbHeap_80015BD0(heap_id as _, size as _) as _ }; },
+                }
+            }
+    pub static mut LBHEAP_80015CA8: Option<fn(i32, *mut c_void) > = None;
+            #[allow(non_snake_case)]
+            pub fn lbHeap_80015CA8(heap_id: i32, ptr: *mut c_void)  {
+                match unsafe { LBHEAP_80015CA8 } {
+                    Some(f) => f(heap_id, ptr),
+                    None => { unsafe { let _ = crate::tu::lbheap::lbHeap_80015CA8(heap_id as _, ptr as _); } return; },
+                }
+            }
+    pub static mut LBFILEGETSIZE: Option<fn(*const c_char) -> usize> = None;
+            #[allow(non_snake_case)]
+            pub fn lbFileGetSize(basename: *const c_char) -> usize {
+                match unsafe { LBFILEGETSIZE } {
+                    Some(f) => f(basename),
+                    None => { return unsafe { crate::tu::lbfile::lbFileGetSize(basename as _) as _ }; },
+                }
+            }
+    pub static mut LBFILE_8001668C: Option<fn(*const c_char, *mut c_void, *mut usize) > = None;
+            #[allow(non_snake_case)]
+            pub fn lbFile_8001668C(basename: *const c_char, dst: *mut c_void, size: *mut usize)  {
+                match unsafe { LBFILE_8001668C } {
+                    Some(f) => f(basename, dst, size),
+                    None => { unsafe { let _ = crate::tu::lbfile::lbFile_8001668C(basename as _, dst as _, size as _); } return; },
+                }
+            }
+    pub static mut LBDVD_8001819C: Option<fn(*const c_char) -> *mut HSD_Archive> = None;
+            #[allow(non_snake_case)]
+            pub fn lbDvd_8001819C(basename: *const c_char) -> *mut HSD_Archive {
+                match unsafe { LBDVD_8001819C } {
+                    Some(f) => f(basename),
+                    None => { return unsafe { crate::tu::lbdvd::lbDvd_8001819C(basename as _) as _ }; },
+                }
+            }
     /// `OSReport(fmt, ...)`: the variadic arguments as one slice of register-width values.
     hook!(OSREPORT, OSReport, (fmt: *const c_char, args: &[u64]));
     pub static mut ASSERT: Option<fn(*const c_char, u32, *const c_char)> = None;

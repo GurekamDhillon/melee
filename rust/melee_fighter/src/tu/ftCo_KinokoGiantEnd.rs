@@ -27,20 +27,20 @@ pub mod ext {
         };
     }
     ext_fns! {
-        fn_800D2818(fp: &mut Fighter) -> bool = |_| todo!("TODO(port) fn_800D2818 (ft_0D27.c)");
-        fn_800D2BF8(g: G) = |_| todo!("TODO(port) fn_800D2BF8 (ft_0D27.c)");
-        ftCo_800D2770(g: G, s: f32) = |_, _| todo!("TODO(port) ftCo_800D2770 (ft_0D27.c)");
+        fn_800D2818(fp: &mut Fighter) -> bool = |fp: &mut Fighter| -> bool { unsafe { crate::tu::ft_0d27::fn_800d2818(fp as _) as _ } };
+        fn_800D2BF8(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_0d27::fn_800d2bf8(g as _); } };
+        ftCo_800D2770(g: G, s: f32) = |g: G, s: f32| { unsafe { let _ = crate::tu::ft_0d27::ftco_800d2770(g as _, s as _); } };
         ftCommon_8007E2FC(g: G) = |_| todo!("TODO(port) ftCommon_8007E2FC (ftcommon.c)");
-        ft_8008A324(g: G) = |_| todo!("TODO(port) ft_8008A324 (ft_0892.c)");
-        fn_800D2B30(g: G) = |_| todo!("TODO(port) fn_800D2B30 (ft_0D27.c)");
-        fn_800D2890(g: G, id: i32) = |_, _| todo!("TODO(port) fn_800D2890 (ft_0D27.c)");
-        fn_800D299C(g: G, a: i32, b: f32, c: f32) = |_, _, _, _| todo!("TODO(port) fn_800D299C (ft_0D27.c)");
-        fn_800D2B04(fp: &mut Fighter) = |_| todo!("TODO(port) fn_800D2B04 (ft_0D27.c)");
-        fn_800D290C(g: G) = |_| todo!("TODO(port) fn_800D290C (ft_0D27.c)");
-        fn_800D2CA0(fp: &mut Fighter) = |_| todo!("TODO(port) fn_800D2CA0 (ft_0D27.c)");
-        fn_800D2CD4(fp: &mut Fighter) = |_| todo!("TODO(port) fn_800D2CD4 (ft_0D27.c)");
-        fn_800D2A3C(g: G) -> bool = |_| todo!("TODO(port) fn_800D2A3C (ft_0D27.c)");
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
+        ft_8008A324(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_08a1::ft_8008A324(g as _); } };
+        fn_800D2B30(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_0d27::fn_800d2b30(g as _); } };
+        fn_800D2890(g: G, id: i32) = |g: G, id: i32| { unsafe { let _ = crate::tu::ft_0d27::fn_800d2890(g as _, id as _); } };
+        fn_800D299C(g: G, a: i32, b: f32, c: f32) = |g: G, a: i32, b: f32, c: f32| { unsafe { let _ = crate::tu::ft_0d27::fn_800d299c(g as _, a as _, b as _, c as _); } };
+        fn_800D2B04(fp: &mut Fighter) = |fp: &mut Fighter| { unsafe { let _ = crate::tu::ft_0d27::fn_800d2b04(fp as _); } };
+        fn_800D290C(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_0d27::fn_800d290c(g as _); } };
+        fn_800D2CA0(fp: &mut Fighter) = |fp: &mut Fighter| { unsafe { let _ = crate::tu::ft_0d27::fn_800d2ca0(fp as _); } };
+        fn_800D2CD4(fp: &mut Fighter) = |fp: &mut Fighter| { unsafe { let _ = crate::tu::ft_0d27::fn_800d2cd4(fp as _); } };
+        fn_800D2A3C(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ft_0d27::fn_800d2a3c(g as _) as _ } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ft_8008403C(g: G, cb: fn(G)) = crate::tu::ft_081b::ft_8008403c;
         ft_80082C74(g: G, cb: fn(G)) = crate::tu::ft_081b::ft_80082c74;
     }

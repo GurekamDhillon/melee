@@ -17,16 +17,36 @@ pub mod ext {
     use core::ffi::c_void;
     use melee_types::*;
     pub use crate::tu::grinl::ext::stage_info;
-    hook!(HSD_ARCHIVEGETPUBLICADDRESS, HSD_ArchiveGetPublicAddress, (a0: *mut HSD_Archive, a1: *const i8) -> *mut c_void);
+    pub static mut HSD_ARCHIVEGETPUBLICADDRESS: Option<fn(*mut HSD_Archive, *const i8) -> *mut c_void> = None;
+    #[allow(non_snake_case)]
+    pub fn HSD_ArchiveGetPublicAddress(a0: *mut HSD_Archive, a1: *const i8) -> *mut c_void {
+        match unsafe { HSD_ARCHIVEGETPUBLICADDRESS } { Some(f) => f(a0, a1), None => { return unsafe { melee_runtime::tu::archive::HSD_ArchiveGetPublicAddress(a0 as _, a1 as _) as _ }; } }
+    }
     hook!(SCRIPTGAME_STAGESLOTARCHIVE, ScriptGame_StageSlotArchive, (slot: i32) -> *mut UnkArchiveStruct);
     hook!(LBARCHIVE_80016DBC, lbArchive_80016DBC, (filename: *const i8, symbols: *mut c_void, va: &[usize]) -> *mut HSD_Archive);
     hook!(LBARCHIVE_800171CC, lbArchive_800171CC, (dst: *mut *mut HSD_Archive, filename: *const i8, symbols: *mut c_void, va: &[usize]) -> i32);
-    hook!(LBARCHIVE_INITIALIZEDAT, lbArchive_InitializeDAT, (archive: *mut HSD_Archive, data: *mut c_void, length: u32));
-    hook!(LBHEAP_80015BD0, lbHeap_80015BD0, (heap_id: i32, size: u32) -> *mut c_void);
-    hook!(MEMZERO, memzero, (mem: *mut c_void, size: ssize_t));
+    pub static mut LBARCHIVE_INITIALIZEDAT: Option<fn(*mut HSD_Archive, *mut c_void, u32)> = None;
+    #[allow(non_snake_case)]
+    pub fn lbArchive_InitializeDAT(archive: *mut HSD_Archive, data: *mut c_void, length: u32) {
+        match unsafe { LBARCHIVE_INITIALIZEDAT } { Some(f) => f(archive, data, length), None => { unsafe { let _ = melee_runtime::tu::lbarchive::lbArchive_InitializeDAT(archive as _, data as _, length as _); } return; } }
+    }
+    pub static mut LBHEAP_80015BD0: Option<fn(i32, u32) -> *mut c_void> = None;
+    #[allow(non_snake_case)]
+    pub fn lbHeap_80015BD0(heap_id: i32, size: u32) -> *mut c_void {
+        match unsafe { LBHEAP_80015BD0 } { Some(f) => f(heap_id, size), None => { return unsafe { melee_runtime::tu::lbheap::lbHeap_80015BD0(heap_id as _, size as _) as _ }; } }
+    }
+    pub static mut MEMZERO: Option<fn(*mut c_void, ssize_t)> = None;
+    #[allow(non_snake_case)]
+    pub fn memzero(mem: *mut c_void, size: ssize_t) {
+        match unsafe { MEMZERO } { Some(f) => f(mem, size), None => { unsafe { let _ = melee_runtime::tu::lb_00B0::memzero(mem as _, size as _); } return; } }
+    }
     hook!(PSINITDATABANK, psInitDataBank, (bank: i32, cmdBank: *mut c_void, texBank: *mut c_void, r#ref: *mut u32, formBank: *mut i32));
     hook!(PSINITDATABANKLOAD, psInitDataBankLoad, (bank: i32, cmdBank: *mut c_void, texBank: *mut c_void, r#ref: *mut u32, formBank: *mut i32));
-    hook!(PSINITDATABANKLOCATE, psInitDataBankLocate, (cmdBank: *mut HSD_Archive, texBank: *mut HSD_Archive, formBank: *mut i32));
+    pub static mut PSINITDATABANKLOCATE: Option<fn(*mut HSD_Archive, *mut HSD_Archive, *mut i32)> = None;
+    #[allow(non_snake_case)]
+    pub fn psInitDataBankLocate(cmdBank: *mut HSD_Archive, texBank: *mut HSD_Archive, formBank: *mut i32) {
+        match unsafe { PSINITDATABANKLOCATE } { Some(f) => f(cmdBank, texBank, formBank), None => { unsafe { let _ = melee_runtime::tu::particle::psInitDataBankLocate(cmdBank as _, texBank as _, formBank as _); } return; } }
+    }
 }
 
 #[inline(always)]

@@ -20,8 +20,16 @@ pub use crate::chars::r4::ftYoshi::ftyoshispeciallw::{ftYs_SpecialAirLw_Anim, ft
 pub mod ext {
     use crate::tu::hookmac::hook;
     use melee_types::*;
-    hook!(LB_8000B1CC, lb_8000B1CC, (jobj: *mut HSD_JObj, pos0: *mut Vec3, pos1: *mut Vec3));
-    hook!(IT_802B2FC8, it_802B2FC8, (parent: *mut HSD_GObj, pos: *mut Vec3, dir: f32) -> *mut Item_GObj);
+    pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *mut Vec3, *mut Vec3)> = None;
+    #[allow(non_snake_case)]
+    pub fn lb_8000B1CC(jobj: *mut HSD_JObj, pos0: *mut Vec3, pos1: *mut Vec3) {
+        match unsafe { LB_8000B1CC } { Some(f) => f(jobj, pos0, pos1), None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, pos0 as _, pos1 as _); } return; } }
+    }
+    pub static mut IT_802B2FC8: Option<fn(*mut HSD_GObj, *mut Vec3, f32) -> *mut Item_GObj> = None;
+    #[allow(non_snake_case)]
+    pub fn it_802B2FC8(parent: *mut HSD_GObj, pos: *mut Vec3, dir: f32) -> *mut Item_GObj {
+        match unsafe { IT_802B2FC8 } { Some(f) => f(parent, pos, dir), None => { return unsafe { melee_items::tu::ityoshistar::it_802B2FC8(parent as _, pos as _, dir as _) as _ }; } }
+    }
     pub use crate::tu::ftinl::ext::{
         ftAnim_8006EBA4, ftCliffCommon_80081298, ftCliffCommon_80081370, ftCommon_8007D5D4, ft_80085134,
         ft_CheckGroundAndLedge, Fighter_ChangeMotionState,

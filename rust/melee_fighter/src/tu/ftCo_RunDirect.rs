@@ -32,22 +32,22 @@ macro_rules! ext_fns {
 pub mod ext {
     use super::*;
     ext_fns! {
-        ftCo_Run_Anim(g: G) = |_| todo!("TODO(port) ftCo_Run_Anim (ftCo_Run.c)");
-        ftCo_Run_Phys(g: G) = |_| todo!("TODO(port) ftCo_Run_Phys (ftCo_Run.c)");
-        ftCo_Run_Coll(g: G) = |_| todo!("TODO(port) ftCo_Run_Coll (ftCo_Run.c)");
-        ftCo_SpecialS_CheckInput(g: G) -> bool = |_| todo!("TODO(port) ftCo_SpecialS_CheckInput (ftCo_SpecialS.c)");
+        ftCo_Run_Anim(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_Run::ftCo_Run_Anim(g as _); } };
+        ftCo_Run_Phys(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_Run::ftCo_Run_Phys(g as _); } };
+        ftCo_Run_Coll(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_Run::ftCo_Run_Coll(g as _); } };
+        ftCo_SpecialS_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_SpecialS::ftCo_SpecialS_CheckInput(g as _) as _ } };
         ftCo_Attack100_CheckInput(g: G) -> bool = crate::tu::ftCo_Attack100::ftCo_Attack100_CheckInput;
         ftCo_800D6824(g: G) -> bool = crate::tu::ftCo_Attack100::ftCo_800D6824;
         ftCo_800D68C0(g: G) -> bool = crate::tu::ftCo_Attack100::ftCo_800D68C0;
         ftCo_800D8A38(g: G) -> bool = crate::tu::ftCo_Catch::ftCo_800D8A38;
         ftCo_AttackDash_CheckInput(g: G) -> bool = crate::tu::ftCo_AttackDash::ftCo_AttackDash_CheckInput;
         ftCo_AttackDash_SetMv0(g: G) = crate::tu::ftCo_AttackDash::ftCo_AttackDash_SetMv0;
-        ftCo_80091A4C(g: G) -> bool = |_| todo!("TODO(port) ftCo_80091A4C (ftCo_Guard.c)");
-        ftCo_80091B90(g: G, n: i32) = |_, _| todo!("TODO(port) ftCo_80091B90 (ftCo_Guard.c)");
-        ftCo_80091B9C(g: G) = |_| todo!("TODO(port) ftCo_80091B9C (ftCo_Guard.c)");
+        ftCo_80091A4C(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Guard::ftCo_80091A4C(g as _) as _ } };
+        ftCo_80091B90(g: G, n: i32) = |g: G, n: i32| { unsafe { let _ = crate::tu::ftCo_Guard::ftCo_80091B90(g as _, n as _); } };
+        ftCo_80091B9C(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_Guard::ftCo_80091B9C(g as _); } };
         ftCo_800DE9D8(g: G) -> bool = crate::tu::ftCo_AppealS::ftCo_800DE9D8;
         fn_800CAF78(g: G) -> bool = crate::tu::ftCo_Jump::fn_800CAF78;
-        fn_800CA698(g: G) -> bool = |_| todo!("TODO(port) fn_800CA698 (ftCo_Run.c)");
+        fn_800CA698(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Run::fn_800CA698(g as _) as _ } };
         ft_8008A244(g: G) -> bool = crate::ft084e::ft_8008a244;
     }
 }

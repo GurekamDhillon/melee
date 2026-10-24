@@ -32,13 +32,47 @@ pub mod ext {
         };
     }
     // itgamewatchjudge.c
-    hook!(IT_802C7774, it_802C7774,
-        (facing: f32, owner: *mut HSD_GObj, pos: *const Vec3, part: i32, judge: i32) -> *mut HSD_GObj);
-    hook!(IT_802C7A84, it_802C7A84, (item: *mut HSD_GObj));
-    hook!(IT_802C7AD0, it_802C7AD0, (item: *mut HSD_GObj));
-    hook!(IT_802C7AF0, it_802C7AF0, (item: *mut HSD_GObj));
+    pub static mut IT_802C7774: Option<fn(f32, *mut HSD_GObj, *const Vec3, i32, i32) -> *mut HSD_GObj> = None;
+            #[allow(non_snake_case)]
+            pub fn it_802C7774(facing: f32, owner: *mut HSD_GObj, pos: *const Vec3, part: i32, judge: i32) -> *mut HSD_GObj {
+                match unsafe { IT_802C7774 } {
+                    Some(f) => f(facing, owner, pos, part, judge),
+                    None => { return unsafe { melee_items::tu::itgamewatchjudge::it_802C7774(facing as _, owner as _, pos as _, part as _, judge as _) as _ }; },
+                }
+            }
+    pub static mut IT_802C7A84: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802C7A84(item: *mut HSD_GObj)  {
+                match unsafe { IT_802C7A84 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itgamewatchjudge::it_802C7A84(item as _); } return; },
+                }
+            }
+    pub static mut IT_802C7AD0: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802C7AD0(item: *mut HSD_GObj)  {
+                match unsafe { IT_802C7AD0 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itgamewatchjudge::it_802C7AD0(item as _); } return; },
+                }
+            }
+    pub static mut IT_802C7AF0: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802C7AF0(item: *mut HSD_GObj)  {
+                match unsafe { IT_802C7AF0 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itgamewatchjudge::it_802C7AF0(item as _); } return; },
+                }
+            }
     // it/items.c
-    hook!(IT_8028FAF4, it_8028FAF4, (owner: *mut HSD_GObj, pos: *const Vec3));
+    pub static mut IT_8028FAF4: Option<fn(*mut HSD_GObj, *const Vec3) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_8028FAF4(owner: *mut HSD_GObj, pos: *const Vec3)  {
+                match unsafe { IT_8028FAF4 } {
+                    Some(f) => f(owner, pos),
+                    None => { unsafe { let _ = melee_items::tu::itfoods::it_8028FAF4(owner as _, pos as _); } return; },
+                }
+            }
 }
 
 #[inline(always)]

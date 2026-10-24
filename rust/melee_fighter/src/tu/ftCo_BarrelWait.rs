@@ -33,8 +33,8 @@ pub mod ext {
         };
     }
     ext_fns! {
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
-        ftAnim_8006EBA4(g: G) = |_| todo!("TODO(port) ftAnim_8006EBA4 (ftanim.c)");
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
         ftCo_8009EAF8_fn() -> HSD_GObjEvent = || todo!("TODO(port) &ftCo_8009EAF8 (ftdynamics.c)");
         ftCommon_8007E2FC(g: G) = |g| crate::ftcommon2::ftcommon_8007e2fc(super::fp(g));
         ftCommon_8007E2F4(fp: &mut Fighter, v: i16) = crate::ftcommon2::ftcommon_8007e2f4;
@@ -43,10 +43,10 @@ pub mod ext {
         Ground_801C4DA0(pos: *mut Vec3, out: *mut f32) -> bool = |_, _| todo!("TODO(port) Ground_801C4DA0 (ground.c)");
         mpColl_80043680(c: *mut CollData, v: *mut Vec3) = |_, _| todo!("TODO(port) mpColl_80043680 (mpcoll.c)");
         ftCamera_80076064(fp: *mut Fighter) = |_| todo!("TODO(port) ftCamera_80076064 (ftcamera.c)");
-        lbColl_80008D30(hit: *mut HitCapsule, a: *mut lbColl_80008D30_arg1) = |_, _| todo!("TODO(port) lbColl_80008D30 (lbcollision.c)");
+        lbColl_80008D30(hit: *mut HitCapsule, a: *mut lbColl_80008D30_arg1) = |hit: *mut HitCapsule, a: *mut lbColl_80008D30_arg1| { unsafe { let _ = melee_runtime::tu::lbcollision::lbColl_80008D30(hit as _, a as _); } };
         ftColl_800788D4(g: G) = |_| todo!("TODO(port) ftColl_800788D4 (ftcoll.c)");
         Fighter_UnkTakeDamage_8006CC30(fp: *mut Fighter, dmg: f32) = |_, _| todo!("TODO(port) Fighter_UnkTakeDamage_8006CC30 (fighter.c)");
-        ftCo_8008DCE0(g: G, a: i32, facing: f32) = |_, _, _| todo!("TODO(port) ftCo_8008DCE0 (ftCo_Damage.c)");
+        ftCo_8008DCE0(g: G, a: i32, facing: f32) = |g: G, a: i32, facing: f32| { unsafe { let _ = crate::tu::ftCo_Damage::ftCo_8008DCE0(g as _, a as _, facing as _); } };
     }
 }
 

@@ -27,9 +27,9 @@ pub mod ext {
         };
     }
     ext_fns! {
-        ftCo_800951D0(g: G) -> bool = |_| todo!("TODO(port) ftCo_800951D0 (ftCo_ItemThrow.c)");
-        ftCo_80095254(g: G) -> bool = |_| todo!("TODO(port) ftCo_80095254 (ftCo_ItemThrow.c)");
-        ftCo_800952DC(g: G) -> bool = |_| todo!("TODO(port) ftCo_800952DC (ftCo_ItemThrow.c)");
+        ftCo_800951D0(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_ItemThrow::ftCo_800951D0(g as _) as _ } };
+        ftCo_80095254(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_ItemThrow::ftCo_80095254(g as _) as _ } };
+        ftCo_800952DC(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_ItemThrow::ftCo_800952DC(g as _) as _ } };
         // TARGET_PC `FT_CAPS_ACTION_ALLOWED(fp, flag)` = `ScriptGame_CapsActionAllowed`.
         ScriptGame_CapsActionAllowed(fp: &Fighter, flag: i32) -> i32 = |_, _| todo!("TODO(port) ScriptGame_CapsActionAllowed (pc/gameworld/script_game.c)");
         fn_800D952C(g: G) -> bool = crate::tu::ftco_0d8e::fn_800d952c;
@@ -39,12 +39,12 @@ pub mod ext {
         fn_800D9558(g: G) -> bool = crate::tu::ftco_0d95::fn_800d9558;
         fn_800D9930(g: G) -> bool = crate::tu::ftco_0d95::fn_800d9930;
         fn_800D9C64(g: G) = crate::tu::ftco_0d95::fn_800d9c64;
-        ftpickupitem_800948A8(g: G, item: *mut Item_GObj) = |_, _| todo!("TODO(port) ftpickupitem_800948A8 (ftpickupitem.c)");
-        ftpickupitem_80094694(g: G, msid: i32, b: bool) = |_, _, _| todo!("TODO(port) ftpickupitem_80094694 (ftpickupitem.c)");
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
+        ftpickupitem_800948A8(g: G, item: *mut Item_GObj) = |g: G, item: *mut Item_GObj| { unsafe { let _ = crate::tu::ftpickupitem::ftpickupitem_800948A8(g as _, item as _); } };
+        ftpickupitem_80094694(g: G, msid: i32, b: bool) = |g: G, msid: i32, b: bool| { unsafe { let _ = crate::tu::ftpickupitem::ftpickupitem_80094694(g as _, msid as _, b as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftCommon_8007E2D0(fp: &mut Fighter, arg1: i16, grab_cb: HSD_GObjEvent, unk_cb: HSD_GObjEvent, grabbed_cb: HSD_GObjInteraction) = crate::ftcommon2::ftcommon_8007e2d0;
         fn_800D9CE8(g: G) = crate::tu::ftCo_CatchPull::fn_800D9CE8;
-        fn_800DAADC(g: G, other: G) = |_, _| todo!("TODO(port) fn_800DAADC (ftCo_Throw.c)");
+        fn_800DAADC(g: G, other: G) = |g: G, other: G| { unsafe { let _ = crate::tu::ftCo_CapturePulled::fn_800DAADC(g as _, other as _); } };
         Mex_OnCatchDispatch(kind: i32, g: G, vanilla: *mut core::ffi::c_void) = |_, _, _| todo!("TODO(pc mex) Mex_OnCatchDispatch");
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ft_8008A2BC(g: G) = crate::tu::ft_08a1::ft_8008A2BC;

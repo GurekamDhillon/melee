@@ -75,9 +75,23 @@ pub mod ext {
         (fp: &Fighter, part: i32, rot: f32));
     hook_or!(FTCOMMON_UPDATEFACING, ftCommon_UpdateFacing, crate::stubs::ftCommon_UpdateFacing,
         (fp: &mut Fighter));
-    hook!(LB_8000B1CC, lb_8000B1CC, (jobj: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3));
+    pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *const Vec3, *mut Vec3) > = None;
+            #[allow(non_snake_case)]
+            pub fn lb_8000B1CC(jobj: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3)  {
+                match unsafe { LB_8000B1CC } {
+                    Some(f) => f(jobj, off, out),
+                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, off as _, out as _); } return; },
+                }
+            }
     hook!(FTMATERIAL_800BFB4C, ftMaterial_800BFB4C, (gobj: *mut HSD_GObj, color: *const _GXColor));
-    hook!(IT_8026B3F8, it_8026B3F8, (article: *mut c_void, kind: i32));
+    pub static mut IT_8026B3F8: Option<fn(*mut c_void, i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_8026B3F8(article: *mut c_void, kind: i32)  {
+                match unsafe { IT_8026B3F8 } {
+                    Some(f) => f(article, kind),
+                    None => { unsafe { let _ = melee_items::tu::it_26B1::it_8026B3F8(article as _, kind as _); } return; },
+                }
+            }
 
     /// `Mex_CostumeVisIdx(fk, costume)` (TARGET_PC, ft/inlines.h): the raw costume id when there
     /// is no mexData (vanilla disc); the m-ex row lookup is installed here.

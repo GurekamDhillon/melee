@@ -43,8 +43,22 @@ pub mod ext {
         };
     }
     // `lb_8000B1CC(joint, offset, out)` (lb/lb_00B0.c); the C passes a NULL offset here.
-    hook!(LB_8000B1CC, lb_8000B1CC, (joint: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3));
-    hook!(IT_802C01AC, it_802C01AC, (gobj: *mut HSD_GObj, pos: *mut Vec3, kind: i32, facing: f32));
+    pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *const Vec3, *mut Vec3) > = None;
+            #[allow(non_snake_case)]
+            pub fn lb_8000B1CC(joint: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3)  {
+                match unsafe { LB_8000B1CC } {
+                    Some(f) => f(joint, off, out),
+                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(joint as _, off as _, out as _); } return; },
+                }
+            }
+    pub static mut IT_802C01AC: Option<fn(*mut HSD_GObj, *mut Vec3, i32, f32) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802C01AC(gobj: *mut HSD_GObj, pos: *mut Vec3, kind: i32, facing: f32)  {
+                match unsafe { IT_802C01AC } {
+                    Some(f) => f(gobj, pos, kind, facing),
+                    None => { unsafe { let _ = melee_items::tu::itluigifireball::it_802C01AC(gobj as _, pos as _, kind as _, facing as _); } return; },
+                }
+            }
     // `efSync_Spawn(gfx_id, gobj, ...)` (ef/efsync.c, variadic): the trailing arguments as a slice.
     hook!(EFSYNC_SPAWN, efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut c_void]) -> *mut c_void);
     hook_or!(FTCO_FALL_IASA_INNER, ftCo_Fall_IASA_Inner, ftco_fall_iasa_inner_port, (gobj: *mut HSD_GObj));

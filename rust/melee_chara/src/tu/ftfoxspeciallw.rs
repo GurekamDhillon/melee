@@ -60,8 +60,22 @@ pub mod ext {
         };
     }
     hook!(EFSYNC_SPAWN, efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut core::ffi::c_void]) -> *mut core::ffi::c_void);
-    hook!(LB_8000B1CC, lb_8000B1CC, (joint: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3));
-    hook!(LB_800119DC, lb_800119DC, (pos: *mut Vec3, a: i32, b: f32, c: f32, d: f32));
+    pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *const Vec3, *mut Vec3) > = None;
+            #[allow(non_snake_case)]
+            pub fn lb_8000B1CC(joint: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3)  {
+                match unsafe { LB_8000B1CC } {
+                    Some(f) => f(joint, off, out),
+                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(joint as _, off as _, out as _); } return; },
+                }
+            }
+    pub static mut LB_800119DC: Option<fn(*mut Vec3, i32, f32, f32, f32) > = None;
+            #[allow(non_snake_case)]
+            pub fn lb_800119DC(pos: *mut Vec3, a: i32, b: f32, c: f32, d: f32)  {
+                match unsafe { LB_800119DC } {
+                    Some(f) => f(pos, a, b, c, d),
+                    None => { unsafe { let _ = melee_runtime::tu::lb_00F9::lb_800119DC(pos as _, a as _, b as _, c as _, d as _); } return; },
+                }
+            }
     hook!(FTCOLL_CREATEREFLECTHIT, ftColl_CreateReflectHit, (gobj: *mut HSD_GObj, desc: *mut ReflectDesc, cb: HSD_GObjEvent));
     hook_or!(FIGHTER_SETEFFECTHITLAGCALLBACKS, Fighter_SetEffectHitlagCallbacks, (fp: *mut Fighter),
         |fp: *mut Fighter| unsafe { melee_fighter::tu::ftCo_AttackS4::Fighter_SetEffectHitlagCallbacks(&mut *fp) });

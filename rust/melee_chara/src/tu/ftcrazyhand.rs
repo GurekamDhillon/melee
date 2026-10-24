@@ -33,7 +33,14 @@ pub mod ext {
             }
         };
     }
-    hook!(IT_8026B3F8, it_8026B3F8, (article: *mut core::ffi::c_void, kind: i32));
+    pub static mut IT_8026B3F8: Option<fn(*mut core::ffi::c_void, i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_8026B3F8(article: *mut core::ffi::c_void, kind: i32)  {
+                match unsafe { IT_8026B3F8 } {
+                    Some(f) => f(article, kind),
+                    None => { unsafe { let _ = melee_items::tu::it_26B1::it_8026B3F8(article as _, kind as _); } return; },
+                }
+            }
     /// `ftBossLib_ReportGObjSlotType` (ftbosslib.c): the native `melee_fighter` port when unset
     /// (it needs `Player_GetPlayerSlotType`, which is still a TODO in that crate).
     pub static mut FTBOSSLIB_REPORTGOBJSLOTTYPE: Option<fn(*mut HSD_GObj)> = None;

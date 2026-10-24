@@ -159,7 +159,7 @@ pub mod ext {
         if let Some(v) = ext_call("lb_80011E24", &[arg(a0), arg(a1)], K::I(32)) {
             return <i32 as OVal>::from_bits(v);
         }
-        panic!("TODO(ext) lb_80011E24: its TU is not ported")
+        { return unsafe { melee_runtime::tu::lbspdisplay::lb_80011E24(a0 as _, a1 as _, _rest as _) as _ }; }
     }
 }
 

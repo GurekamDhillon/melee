@@ -39,61 +39,331 @@ pub mod ext {
         };
     }
     // ---- callee hooks ----
-    hook!(H_ifStatus_802F6898, ifStatus_802F6898, ());
-    hook!(H_ifTime_HideTimers, ifTime_HideTimers, ());
-    hook!(H_un_802FD450, un_802FD450, ());
-    hook!(H_ifMagnify_802FC8E8, ifMagnify_802FC8E8, ());
-    hook!(H_un_802FD668, un_802FD668, ());
-    hook!(H_un_802FD910, un_802FD910, ());
-    hook!(H_un_802FF570, un_802FF570, ());
-    hook!(H_ifStatus_802F68F0, ifStatus_802F68F0, ());
-    hook!(H_ifTime_ShowTimers, ifTime_ShowTimers, ());
-    hook!(H_un_802FD45C, un_802FD45C, ());
-    hook!(H_ifMagnify_802FC940, ifMagnify_802FC940, ());
-    hook!(H_un_802FD674, un_802FD674, ());
-    hook!(H_un_802FD91C, un_802FD91C, ());
-    hook!(H_un_802FF620, un_802FF620, ());
+    pub static mut H_ifStatus_802F6898: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn ifStatus_802F6898()  {
+                match H_ifStatus_802F6898 {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::ifstatus::ifStatus_802F6898(); } return; },
+                }
+            }
+    pub static mut H_ifTime_HideTimers: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn ifTime_HideTimers()  {
+                match H_ifTime_HideTimers {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::iftime::ifTime_HideTimers(); } return; },
+                }
+            }
+    pub static mut H_un_802FD450: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn un_802FD450()  {
+                match H_un_802FD450 {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::ifnametag::un_802FD450(); } return; },
+                }
+            }
+    pub static mut H_ifMagnify_802FC8E8: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn ifMagnify_802FC8E8()  {
+                match H_ifMagnify_802FC8E8 {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::ifmagnify::ifMagnify_802FC8E8(); } return; },
+                }
+            }
+    pub static mut H_un_802FD668: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn un_802FD668()  {
+                match H_un_802FD668 {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::ifhazard::un_802FD668(); } return; },
+                }
+            }
+    pub static mut H_un_802FD910: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn un_802FD910()  {
+                match H_un_802FD910 {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::if_2FD9::un_802FD910(); } return; },
+                }
+            }
+    pub static mut H_un_802FF570: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn un_802FF570()  {
+                match H_un_802FF570 {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::if_2FF2::un_802FF570(); } return; },
+                }
+            }
+    pub static mut H_ifStatus_802F68F0: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn ifStatus_802F68F0()  {
+                match H_ifStatus_802F68F0 {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::ifstatus::ifStatus_802F68F0(); } return; },
+                }
+            }
+    pub static mut H_ifTime_ShowTimers: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn ifTime_ShowTimers()  {
+                match H_ifTime_ShowTimers {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::iftime::ifTime_ShowTimers(); } return; },
+                }
+            }
+    pub static mut H_un_802FD45C: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn un_802FD45C()  {
+                match H_un_802FD45C {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::ifnametag::un_802FD45C(); } return; },
+                }
+            }
+    pub static mut H_ifMagnify_802FC940: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn ifMagnify_802FC940()  {
+                match H_ifMagnify_802FC940 {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::ifmagnify::ifMagnify_802FC940(); } return; },
+                }
+            }
+    pub static mut H_un_802FD674: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn un_802FD674()  {
+                match H_un_802FD674 {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::ifhazard::un_802FD674(); } return; },
+                }
+            }
+    pub static mut H_un_802FD91C: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn un_802FD91C()  {
+                match H_un_802FD91C {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::if_2FD9::un_802FD91C(); } return; },
+                }
+            }
+    pub static mut H_un_802FF620: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn un_802FF620()  {
+                match H_un_802FF620 {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::if_2FF2::un_802FF620(); } return; },
+                }
+            }
     hook!(H_lb_80011E24, lb_80011E24, (a0: *mut melee_types::HSD_JObj, a1: *mut *mut melee_types::HSD_JObj, a2: i32, a3: i32) -> i32);
-    hook!(H_lb_8000B1CC, lb_8000B1CC, (a0: *mut melee_types::HSD_JObj, a1: *mut melee_types::Vec, a2: *mut melee_types::Vec));
+    pub static mut H_lb_8000B1CC: Option<unsafe extern "C" fn(*mut melee_types::HSD_JObj, *mut melee_types::Vec, *mut melee_types::Vec) > = None;
+            pub unsafe extern "C" fn lb_8000B1CC(a0: *mut melee_types::HSD_JObj, a1: *mut melee_types::Vec, a2: *mut melee_types::Vec)  {
+                match H_lb_8000B1CC {
+                    Some(f) => f(a0, a1, a2),
+                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(a0 as _, a1 as _, a2 as _); } return; },
+                }
+            }
     hook!(H_Wb_RenderOption, Wb_RenderOption, (a0: i32, a1: i32) -> i32);
-    hook!(H_lbArchive_80016F80, lbArchive_80016F80, (a0: *mut *mut melee_types::HSD_Archive, a1: *const i8) -> i32);
+    pub static mut H_lbArchive_80016F80: Option<unsafe extern "C" fn(*mut *mut melee_types::HSD_Archive, *const i8) -> i32> = None;
+            pub unsafe extern "C" fn lbArchive_80016F80(a0: *mut *mut melee_types::HSD_Archive, a1: *const i8) -> i32 {
+                match H_lbArchive_80016F80 {
+                    Some(f) => f(a0, a1),
+                    None => { return unsafe { melee_runtime::tu::lbarchive::lbArchive_80016F80(a0 as _, a1 as _) as _ }; },
+                }
+            }
     hook!(H_lbArchive_LoadSections, lbArchive_LoadSections, (a0: *mut melee_types::HSD_Archive, a1: *mut *mut core::ffi::c_void, a2: *const i8, a3: i32));
     hook!(H_GObj_Create, GObj_Create, (a0: u16, a1: u8, a2: u8) -> *mut melee_types::HSD_GObj);
-    hook!(H_lb_80013B14, lb_80013B14, (a0: *mut melee_types::HSD_CameraDescPerspective) -> *mut melee_types::HSD_CObj);
+    pub static mut H_lb_80013B14: Option<unsafe extern "C" fn(*mut melee_types::HSD_CameraDescPerspective) -> *mut melee_types::HSD_CObj> = None;
+            pub unsafe extern "C" fn lb_80013B14(a0: *mut melee_types::HSD_CameraDescPerspective) -> *mut melee_types::HSD_CObj {
+                match H_lb_80013B14 {
+                    Some(f) => f(a0),
+                    None => { return unsafe { melee_runtime::tu::lbspdisplay::lb_80013B14(a0 as _) as _ }; },
+                }
+            }
     hook!(H_HSD_GObjObject_80390A70, HSD_GObjObject_80390A70, (a0: *mut melee_types::HSD_GObj, a1: u8, a2: *mut core::ffi::c_void));
     hook!(H_GObj_SetupGXLinkMax, GObj_SetupGXLinkMax, (a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, a2: u32));
     hook!(H_HSD_LObjLoadDesc, HSD_LObjLoadDesc, (a0: *mut melee_types::HSD_LightDesc) -> *mut melee_types::HSD_LObj);
     hook!(H_GObj_SetupGXLink, GObj_SetupGXLink, (a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, a2: u8, a3: u32));
-    hook!(H_HSD_GObj_LObjCallback, HSD_GObj_LObjCallback, (a0: *mut melee_types::HSD_GObj, a1: i32));
-    hook!(H_ifStatus_802F7134, ifStatus_802F7134, ());
-    hook!(H_ifStatus_802F66A4, ifStatus_802F66A4, ());
-    hook!(H_ifStock_802FAEC4, ifStock_802FAEC4, ());
-    hook!(H_ifTime_Reset, ifTime_Reset, ());
-    hook!(H_if_802F7E24, if_802F7E24, ());
-    hook!(H_ifMagnify_802FC870, ifMagnify_802FC870, ());
-    hook!(H_un_802FE260, un_802FE260, ());
-    hook!(H_un_802FD704, un_802FD704, ());
-    hook!(H_un_802FD4C8, un_802FD4C8, ());
-    hook!(H_un_802FF1B4, un_802FF1B4, ());
-    hook!(H_un_802FF498, un_802FF498, ());
-    hook!(H_un_802FE390, un_802FE390, ());
-    hook!(H_ifStock_802FB390, ifStock_802FB390, ());
-    hook!(H_ifStock_802FB41C, ifStock_802FB41C, ());
-    hook!(H_ifStock_802FB484, ifStock_802FB484, ());
-    hook!(H_ifMagnify_802FC750, ifMagnify_802FC750, ());
-    hook!(H_if_802F7E7C, if_802F7E7C, ());
-    hook!(H_ifTime_FreeTimers, ifTime_FreeTimers, ());
-    hook!(H_ifStatus_802F6804, ifStatus_802F6804, ());
-    hook!(H_ifStatus_802F7220, ifStatus_802F7220, ());
+    pub static mut H_HSD_GObj_LObjCallback: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32) > = None;
+            pub unsafe extern "C" fn HSD_GObj_LObjCallback(a0: *mut melee_types::HSD_GObj, a1: i32)  {
+                match H_HSD_GObj_LObjCallback {
+                    Some(f) => f(a0, a1),
+                    None => { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_LObjCallback(a0 as _, a1 as _); } return; },
+                }
+            }
+    pub static mut H_ifStatus_802F7134: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn ifStatus_802F7134()  {
+                match H_ifStatus_802F7134 {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::if_2F6E::ifStatus_802F7134(); } return; },
+                }
+            }
+    pub static mut H_ifStatus_802F66A4: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn ifStatus_802F66A4()  {
+                match H_ifStatus_802F66A4 {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::ifstatus::ifStatus_802F66A4(); } return; },
+                }
+            }
+    pub static mut H_ifStock_802FAEC4: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn ifStock_802FAEC4()  {
+                match H_ifStock_802FAEC4 {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::ifstock::ifStock_802FAEC4(); } return; },
+                }
+            }
+    pub static mut H_ifTime_Reset: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn ifTime_Reset()  {
+                match H_ifTime_Reset {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::iftime::ifTime_Reset(); } return; },
+                }
+            }
+    pub static mut H_if_802F7E24: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn if_802F7E24()  {
+                match H_if_802F7E24 {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::if_2F72::if_802F7E24(); } return; },
+                }
+            }
+    pub static mut H_ifMagnify_802FC870: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn ifMagnify_802FC870()  {
+                match H_ifMagnify_802FC870 {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::ifmagnify::ifMagnify_802FC870(); } return; },
+                }
+            }
+    pub static mut H_un_802FE260: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn un_802FE260()  {
+                match H_un_802FE260 {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::if_2FD9::un_802FE260(); } return; },
+                }
+            }
+    pub static mut H_un_802FD704: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn un_802FD704()  {
+                match H_un_802FD704 {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::ifhazard::un_802FD704(); } return; },
+                }
+            }
+    pub static mut H_un_802FD4C8: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn un_802FD4C8()  {
+                match H_un_802FD4C8 {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::ifnametag::un_802FD4C8(); } return; },
+                }
+            }
+    pub static mut H_un_802FF1B4: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn un_802FF1B4()  {
+                match H_un_802FF1B4 {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::ifcoget::un_802FF1B4(); } return; },
+                }
+            }
+    pub static mut H_un_802FF498: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn un_802FF498()  {
+                match H_un_802FF498 {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::if_2FF2::un_802FF498(); } return; },
+                }
+            }
+    pub static mut H_un_802FE390: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn un_802FE390()  {
+                match H_un_802FE390 {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::if_2FD9::un_802FE390(); } return; },
+                }
+            }
+    pub static mut H_ifStock_802FB390: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn ifStock_802FB390()  {
+                match H_ifStock_802FB390 {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::ifstock::ifStock_802FB390(); } return; },
+                }
+            }
+    pub static mut H_ifStock_802FB41C: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn ifStock_802FB41C()  {
+                match H_ifStock_802FB41C {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::ifstock::ifStock_802FB41C(); } return; },
+                }
+            }
+    pub static mut H_ifStock_802FB484: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn ifStock_802FB484()  {
+                match H_ifStock_802FB484 {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::ifstock::ifStock_802FB484(); } return; },
+                }
+            }
+    pub static mut H_ifMagnify_802FC750: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn ifMagnify_802FC750()  {
+                match H_ifMagnify_802FC750 {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::ifmagnify::ifMagnify_802FC750(); } return; },
+                }
+            }
+    pub static mut H_if_802F7E7C: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn if_802F7E7C()  {
+                match H_if_802F7E7C {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::if_2F72::if_802F7E7C(); } return; },
+                }
+            }
+    pub static mut H_ifTime_FreeTimers: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn ifTime_FreeTimers()  {
+                match H_ifTime_FreeTimers {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::iftime::ifTime_FreeTimers(); } return; },
+                }
+            }
+    pub static mut H_ifStatus_802F6804: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn ifStatus_802F6804()  {
+                match H_ifStatus_802F6804 {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::ifstatus::ifStatus_802F6804(); } return; },
+                }
+            }
+    pub static mut H_ifStatus_802F7220: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn ifStatus_802F7220()  {
+                match H_ifStatus_802F7220 {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::if_2F6E::ifStatus_802F7220(); } return; },
+                }
+            }
     hook!(H_HSD_GObjFree, HSD_GObjFree, (a0: *mut melee_types::HSD_GObj));
-    hook!(H_un_802FD468, un_802FD468, ());
-    hook!(H_un_802FD90C, un_802FD90C, ());
-    hook!(H_un_802FF190, un_802FF190, ());
-    hook!(H_un_802FF4FC, un_802FF4FC, ());
-    hook!(H_HSD_JObjLoadJoint, HSD_JObjLoadJoint, (a0: *mut melee_types::HSD_Joint) -> *mut melee_types::HSD_JObj);
-    hook!(H_HSD_CObjSetCurrent, HSD_CObjSetCurrent, (a0: *mut melee_types::HSD_CObj) -> i32);
+    pub static mut H_un_802FD468: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn un_802FD468()  {
+                match H_un_802FD468 {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::ifnametag::un_802FD468(); } return; },
+                }
+            }
+    pub static mut H_un_802FD90C: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn un_802FD90C()  {
+                match H_un_802FD90C {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::ifhazard::un_802FD90C(); } return; },
+                }
+            }
+    pub static mut H_un_802FF190: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn un_802FF190()  {
+                match H_un_802FF190 {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::ifcoget::un_802FF190(); } return; },
+                }
+            }
+    pub static mut H_un_802FF4FC: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn un_802FF4FC()  {
+                match H_un_802FF4FC {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::if_2FF2::un_802FF4FC(); } return; },
+                }
+            }
+    pub static mut H_HSD_JObjLoadJoint: Option<unsafe extern "C" fn(*mut melee_types::HSD_Joint) -> *mut melee_types::HSD_JObj> = None;
+            pub unsafe extern "C" fn HSD_JObjLoadJoint(a0: *mut melee_types::HSD_Joint) -> *mut melee_types::HSD_JObj {
+                match H_HSD_JObjLoadJoint {
+                    Some(f) => f(a0),
+                    None => { return unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(a0 as _) as _ }; },
+                }
+            }
+    pub static mut H_HSD_CObjSetCurrent: Option<unsafe extern "C" fn(*mut melee_types::HSD_CObj) -> i32> = None;
+            pub unsafe extern "C" fn HSD_CObjSetCurrent(a0: *mut melee_types::HSD_CObj) -> i32 {
+                match H_HSD_CObjSetCurrent {
+                    Some(f) => f(a0),
+                    None => { return unsafe { melee_runtime::tu::cobj::HSD_CObjSetCurrent(a0 as _) as _ }; },
+                }
+            }
     hook!(H_HSD_GObj_80390ED0, HSD_GObj_80390ED0, (a0: *mut melee_types::HSD_GObj, a1: u32));
-    hook!(H_HSD_CObjEndCurrent, HSD_CObjEndCurrent, ());
+    pub static mut H_HSD_CObjEndCurrent: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn HSD_CObjEndCurrent()  {
+                match H_HSD_CObjEndCurrent {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = melee_runtime::tu::cobj::HSD_CObjEndCurrent(); } return; },
+                }
+            }
     // ---- extern globals ----
     pub static mut HSD_GObj_CameraKind: u8 = unsafe { core::mem::zeroed() };
     pub static mut HSD_GObj_LightKind: i8 = unsafe { core::mem::zeroed() };

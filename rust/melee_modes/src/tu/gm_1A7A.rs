@@ -44,37 +44,149 @@ pub mod ext {
     hook!(HSD_GOBJ_JOBJKIND, hsd_gobj_jobj_kind, () -> u8);
     hook!(HSD_GOBJ_CAMERAKIND, hsd_gobj_camera_kind, () -> u8);
     // sysdolphin/baselib/jobj.c, cobj.c
-    hook!(HSD_JOBJLOADJOINT, HSD_JObjLoadJoint, (joint: *mut HSD_Joint) -> *mut HSD_JObj);
+    pub static mut HSD_JOBJLOADJOINT: Option<fn(*mut HSD_Joint) -> *mut HSD_JObj> = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_JObjLoadJoint(joint: *mut HSD_Joint) -> *mut HSD_JObj {
+                match unsafe { HSD_JOBJLOADJOINT } {
+                    Some(f) => f(joint),
+                    None => { return unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(joint as _) as _ }; },
+                }
+            }
     hook!(HSD_JOBJREQANIMALL, HSD_JObjReqAnimAll, (jobj: *mut HSD_JObj, frame: f32));
     hook!(HSD_JOBJANIMALL, HSD_JObjAnimAll, (jobj: *mut HSD_JObj));
     /// The out-of-line `HSD_JObjSetMtxDirty` (the `WithMtxDirty` setters call it, not the macro).
-    hook!(HSD_JOBJSETMTXDIRTY, HSD_JObjSetMtxDirty, (jobj: *mut HSD_JObj));
-    hook!(HSD_COBJADDANIM, HSD_CObjAddAnim, (cobj: *mut HSD_CObj, anim: *mut HSD_CameraAnim));
-    hook!(HSD_COBJREQANIM, HSD_CObjReqAnim, (cobj: *mut HSD_CObj, frame: f32));
-    hook!(HSD_COBJANIM, HSD_CObjAnim, (cobj: *mut HSD_CObj));
+    pub static mut HSD_JOBJSETMTXDIRTY: Option<fn(*mut HSD_JObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_JObjSetMtxDirty(jobj: *mut HSD_JObj)  {
+                match unsafe { HSD_JOBJSETMTXDIRTY } {
+                    Some(f) => f(jobj),
+                    None => { unsafe { let _ = melee_fighter::tu::ft_0c31::HSD_JObjSetMtxDirty(jobj as _); } return; },
+                }
+            }
+    pub static mut HSD_COBJADDANIM: Option<fn(*mut HSD_CObj, *mut HSD_CameraAnim) > = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_CObjAddAnim(cobj: *mut HSD_CObj, anim: *mut HSD_CameraAnim)  {
+                match unsafe { HSD_COBJADDANIM } {
+                    Some(f) => f(cobj, anim),
+                    None => { unsafe { let _ = melee_runtime::tu::cobj::HSD_CObjAddAnim(cobj as _, anim as _); } return; },
+                }
+            }
+    pub static mut HSD_COBJREQANIM: Option<fn(*mut HSD_CObj, f32) > = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_CObjReqAnim(cobj: *mut HSD_CObj, frame: f32)  {
+                match unsafe { HSD_COBJREQANIM } {
+                    Some(f) => f(cobj, frame),
+                    None => { unsafe { let _ = melee_runtime::tu::cobj::HSD_CObjReqAnim(cobj as _, frame as _); } return; },
+                }
+            }
+    pub static mut HSD_COBJANIM: Option<fn(*mut HSD_CObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_CObjAnim(cobj: *mut HSD_CObj)  {
+                match unsafe { HSD_COBJANIM } {
+                    Some(f) => f(cobj),
+                    None => { unsafe { let _ = melee_runtime::tu::cobj::HSD_CObjAnim(cobj as _); } return; },
+                }
+            }
     // lb/lbspdisplay.c, lb/lb_00B0.c, gm/gm_1601.c, gm/gmevent.c, gm/gmregtyfall.c, gm/gmscene.c, mn/mnmain.c, ty/toy.c
-    hook!(LB_80011AC4, lb_80011AC4, (lights: *mut *mut LightList) -> *mut HSD_LObj);
-    hook!(LB_80013B14, lb_80013B14, (desc: *mut HSD_CameraDescPerspective) -> *mut HSD_CObj);
-    hook!(LB_8000C1C0, lb_8000C1C0, (jobj: *mut HSD_JObj, constraint: *mut HSD_JObj));
-    hook!(LB_8000C290, lb_8000C290, (jobj: *mut HSD_JObj, constraint: *mut HSD_JObj));
-    hook!(GM_8016895C, gm_8016895C, (jobj: *mut HSD_JObj, mdl: *mut DynamicModelDesc, idx: i32));
-    hook!(GM_801BEFB0, gm_801BEFB0, () -> i32);
-    hook!(GM_801A659C, gm_801A659C, (i: i32) -> i32);
-    hook!(GM_GETCURRENTSCENEENTERDATA, gm_GetCurrentSceneEnterData, () -> *mut c_void);
-    hook!(GM_801A9630, gm_801A9630, ());
-    hook!(MN_8022F0F0, mn_8022F0F0, (v: i32));
-    hook!(TOY_803060BC, Toy_803060BC, (a: i32, b: i32) -> f32);
+    pub static mut LB_80011AC4: Option<fn(*mut *mut LightList) -> *mut HSD_LObj> = None;
+            #[allow(non_snake_case)]
+            pub fn lb_80011AC4(lights: *mut *mut LightList) -> *mut HSD_LObj {
+                match unsafe { LB_80011AC4 } {
+                    Some(f) => f(lights),
+                    None => { return unsafe { melee_runtime::tu::lbspdisplay::lb_80011AC4(lights as _) as _ }; },
+                }
+            }
+    pub static mut LB_80013B14: Option<fn(*mut HSD_CameraDescPerspective) -> *mut HSD_CObj> = None;
+            #[allow(non_snake_case)]
+            pub fn lb_80013B14(desc: *mut HSD_CameraDescPerspective) -> *mut HSD_CObj {
+                match unsafe { LB_80013B14 } {
+                    Some(f) => f(desc),
+                    None => { return unsafe { melee_runtime::tu::lbspdisplay::lb_80013B14(desc as _) as _ }; },
+                }
+            }
+    pub static mut LB_8000C1C0: Option<fn(*mut HSD_JObj, *mut HSD_JObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn lb_8000C1C0(jobj: *mut HSD_JObj, constraint: *mut HSD_JObj)  {
+                match unsafe { LB_8000C1C0 } {
+                    Some(f) => f(jobj, constraint),
+                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000C1C0(jobj as _, constraint as _); } return; },
+                }
+            }
+    pub static mut LB_8000C290: Option<fn(*mut HSD_JObj, *mut HSD_JObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn lb_8000C290(jobj: *mut HSD_JObj, constraint: *mut HSD_JObj)  {
+                match unsafe { LB_8000C290 } {
+                    Some(f) => f(jobj, constraint),
+                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000C290(jobj as _, constraint as _); } return; },
+                }
+            }
+    pub static mut GM_8016895C: Option<fn(*mut HSD_JObj, *mut DynamicModelDesc, i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_8016895C(jobj: *mut HSD_JObj, mdl: *mut DynamicModelDesc, idx: i32)  {
+                match unsafe { GM_8016895C } {
+                    Some(f) => f(jobj, mdl, idx),
+                    None => { unsafe { let _ = crate::tu::gm_1601::gm_8016895C(jobj as _, mdl as _, idx as _); } return; },
+                }
+            }
+    pub static mut GM_801BEFB0: Option<fn() -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn gm_801BEFB0() -> i32 {
+                match unsafe { GM_801BEFB0 } {
+                    Some(f) => f(),
+                    None => { return unsafe { crate::tu::gmgover::gm_801BEFB0() as _ }; },
+                }
+            }
+    pub static mut GM_801A659C: Option<fn(i32) -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn gm_801A659C(i: i32) -> i32 {
+                match unsafe { GM_801A659C } {
+                    Some(f) => f(i),
+                    None => { return unsafe { crate::tu::gmregtyfall::gm_801A659C(i as _) as _ }; },
+                }
+            }
+    pub static mut GM_GETCURRENTSCENEENTERDATA: Option<fn() -> *mut c_void> = None;
+            #[allow(non_snake_case)]
+            pub fn gm_GetCurrentSceneEnterData() -> *mut c_void {
+                match unsafe { GM_GETCURRENTSCENEENTERDATA } {
+                    Some(f) => f(),
+                    None => { return unsafe { crate::tu::gmscene::gm_GetCurrentSceneEnterData() as _ }; },
+                }
+            }
+    pub static mut GM_801A9630: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_801A9630()  {
+                match unsafe { GM_801A9630 } {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::gmregenddisp::gm_801A9630(); } return; },
+                }
+            }
+    pub static mut MN_8022F0F0: Option<fn(i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn mn_8022F0F0(v: i32)  {
+                match unsafe { MN_8022F0F0 } {
+                    Some(f) => f(v),
+                    None => { unsafe { let _ = crate::tu::mn_22EC::mn_8022F0F0(v as _); } return; },
+                }
+            }
+    pub static mut TOY_803060BC: Option<fn(i32, i32) -> f32> = None;
+            #[allow(non_snake_case)]
+            pub fn Toy_803060BC(a: i32, b: i32) -> f32 {
+                match unsafe { TOY_803060BC } {
+                    Some(f) => f(a, b),
+                    None => { return unsafe { melee_items::tu::toy::Toy_803060BC(a as _, b as _) as _ }; },
+                }
+            }
 
     /// `HSD_GObj_LObjCallback` / `HSD_GObj_803910D8` / `HSD_GObj_JObjCallback` (sysdolphin/baselib/gobj.c): the
     /// GX-link render callbacks; address only.
     pub unsafe extern "C" fn HSD_GObj_LObjCallback(_gobj: *mut HSD_GObj, _unused: i32) {
-        panic!("TODO(sysdolphin): HSD_GObj_LObjCallback is not ported");
+        { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_LObjCallback(_gobj as _, _unused as _); } return; };
     }
     pub unsafe extern "C" fn HSD_GObj_803910D8(_gobj: *mut HSD_GObj, _code: i32) {
         panic!("TODO(sysdolphin): HSD_GObj_803910D8 is not ported");
     }
     pub unsafe extern "C" fn HSD_GObj_JObjCallback(_gobj: *mut HSD_GObj, _code: i32) {
-        panic!("TODO(sysdolphin): HSD_GObj_JObjCallback is not ported");
+        { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_JObjCallback(_gobj as _, _code as _); } return; };
     }
 }
 

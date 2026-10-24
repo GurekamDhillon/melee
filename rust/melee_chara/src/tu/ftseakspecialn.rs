@@ -52,9 +52,30 @@ pub mod ext {
         |fp: *mut Fighter, sfx: i32, vol: i32, pan: i32| unsafe { melee_fighter::hooks::play_sfx(&mut *fp, sfx, vol, pan) });
     hook!(EFSYNC_SPAWN, efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut core::ffi::c_void]) -> *mut core::ffi::c_void);
     // Items (it/kinds/itseakneedlethrown.c, itseakneedleheld.c)
-    hook!(IT_802AFD8C, it_802AFD8C, (owner: *mut HSD_GObj, pos: *mut Vec3, kind: ItemKind, facing_dir: f32) -> *mut HSD_GObj);
-    hook!(IT_802AFEA8, it_802AFEA8, (item: *mut HSD_GObj, owner: *mut HSD_GObj, arg: i32));
-    hook!(IT_802B19AC, it_802B19AC, (owner: *mut HSD_GObj, pos: *mut Vec3, bone: i32, kind: ItemKind, facing_dir: f32) -> *mut HSD_GObj);
+    pub static mut IT_802AFD8C: Option<fn(*mut HSD_GObj, *mut Vec3, ItemKind, f32) -> *mut HSD_GObj> = None;
+            #[allow(non_snake_case)]
+            pub fn it_802AFD8C(owner: *mut HSD_GObj, pos: *mut Vec3, kind: ItemKind, facing_dir: f32) -> *mut HSD_GObj {
+                match unsafe { IT_802AFD8C } {
+                    Some(f) => f(owner, pos, kind, facing_dir),
+                    None => { return unsafe { melee_items::tu::itseakneedlethrown::it_802AFD8C(owner as _, pos as _, kind as _, facing_dir as _) as _ }; },
+                }
+            }
+    pub static mut IT_802AFEA8: Option<fn(*mut HSD_GObj, *mut HSD_GObj, i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802AFEA8(item: *mut HSD_GObj, owner: *mut HSD_GObj, arg: i32)  {
+                match unsafe { IT_802AFEA8 } {
+                    Some(f) => f(item, owner, arg),
+                    None => { unsafe { let _ = melee_items::tu::itseakneedlethrown::it_802AFEA8(item as _, owner as _, arg as _); } return; },
+                }
+            }
+    pub static mut IT_802B19AC: Option<fn(*mut HSD_GObj, *mut Vec3, i32, ItemKind, f32) -> *mut HSD_GObj> = None;
+            #[allow(non_snake_case)]
+            pub fn it_802B19AC(owner: *mut HSD_GObj, pos: *mut Vec3, bone: i32, kind: ItemKind, facing_dir: f32) -> *mut HSD_GObj {
+                match unsafe { IT_802B19AC } {
+                    Some(f) => f(owner, pos, bone, kind, facing_dir),
+                    None => { return unsafe { melee_items::tu::itseakneedleheld::it_802B19AC(owner as _, pos as _, bone as _, kind as _, facing_dir as _) as _ }; },
+                }
+            }
 }
 
 /// `needleYPosScale`.

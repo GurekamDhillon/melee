@@ -30,9 +30,9 @@ pub mod ext {
         };
     }
     ext_fns! {
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
-        ftCo_SpecialS_CheckInput(g: G) -> bool = |_| todo!("TODO(port) ftCo_SpecialS_CheckInput (ftCo_SpecialS.c)");
+        ftCo_SpecialS_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_SpecialS::ftCo_SpecialS_CheckInput(g as _) as _ } };
         ftCo_Attack100_CheckInput(g: G) -> bool = crate::tu::ftCo_Attack100::ftCo_Attack100_CheckInput;
         ftCo_800D6824(g: G) -> bool = crate::tu::ftCo_Attack100::ftCo_800D6824;
         ftCo_800D68C0(g: G) -> bool = crate::tu::ftCo_Attack100::ftCo_800D68C0;
@@ -44,21 +44,21 @@ pub mod ext {
         ftCo_AttackHi3_CheckInput(g: G) -> bool = crate::tu::ftCo_AttackHi3::ftCo_AttackHi3_CheckInput;
         ftCo_AttackLw3_CheckInput(g: G) -> bool = crate::tu::ftCo_AttackLw3::ftCo_AttackLw3_CheckInput;
         ftCo_Attack1_CheckInput(g: G) -> bool = crate::tu::ftCo_Attack1::ftCo_Attack1_CheckInput;
-        ftCo_80091A4C(g: G) -> bool = |_| todo!("TODO(port) ftCo_80091A4C (ftCo_Guard.c)");
+        ftCo_80091A4C(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Guard::ftCo_80091A4C(g as _) as _ } };
         ftCo_800DE9D8(g: G) -> bool = crate::tu::ftCo_AppealS::ftCo_800DE9D8;
-        ftCo_Jump_CheckInput(g: G) -> bool = |_| todo!("TODO(port) ftCo_Jump_CheckInput (ftCo_Jump.c; rewire to crate::tu::ftCo_Jump)");
+        ftCo_Jump_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Jump::ftCo_Jump_CheckInput(g as _) as _ } };
         ftCo_Dash_CheckInput(g: G) -> bool = crate::tu::ftCo_Dash::ftCo_Dash_CheckInput;
-        ftCo_800D5FB0(g: G) -> bool = |_| todo!("TODO(port) ftCo_800D5FB0 (ftCo_Squat.c)");
-        ftCo_Turn_CheckInput(g: G) -> bool = |_| todo!("TODO(port) ftCo_Turn_CheckInput (ftCo_Turn.c)");
-        ftCo_Walk_CheckInput_Ottotto(g: G) -> bool = |_| todo!("TODO(port) ftCo_Walk_CheckInput_Ottotto (ftCo_Walk.c)");
+        ftCo_800D5FB0(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Squat::ftCo_800D5FB0(g as _) as _ } };
+        ftCo_Turn_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Turn::ftCo_Turn_CheckInput(g as _) as _ } };
+        ftCo_Walk_CheckInput_Ottotto(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Walk::ftCo_Walk_CheckInput_Ottotto(g as _) as _ } };
         ft_800827A0(g: G) -> bool = crate::tu::ft_081b::ft_800827a0;
         ftCo_Fall_Enter(g: G) = crate::tu::ftCo_Fall::ftCo_Fall_Enter;
         mpFloorGetRight(line_id: i32, pos: &mut Vec3) = |_, _| todo!("TODO(port) mpFloorGetRight (mplib.c)");
         mpFloorGetLeft(line_id: i32, pos: &mut Vec3) = |_, _| todo!("TODO(port) mpFloorGetLeft (mplib.c)");
         ft_8008A2BC(g: G) = crate::hooks::ft_8008a2bc;
-        ft_80088770(fp: &mut Fighter) = |_| todo!("TODO(port) ft_80088770 (ft_0881.c)");
-        ft_800887CC(fp: &mut Fighter) = |_| todo!("TODO(port) ft_800887CC (ft_0881.c)");
-        ft_80088328(fp: &mut Fighter, sfx: i32, vol: u8, pan: u8) = |_, _, _, _| todo!("TODO(port) ft_80088328 (ft_0881.c)");
+        ft_80088770(fp: &mut Fighter) = |fp: &mut Fighter| { unsafe { let _ = crate::ft0881::ft_80088770(fp as _); } };
+        ft_800887CC(fp: &mut Fighter) = |fp: &mut Fighter| { unsafe { let _ = crate::ft0881::ft_800887cc(fp as _); } };
+        ft_80088328(fp: &mut Fighter, sfx: i32, vol: u8, pan: u8) = |fp: &mut Fighter, sfx: i32, vol: u8, pan: u8| { unsafe { let _ = crate::ft0881::ft_80088328(fp as _, sfx as _, vol as _, pan as _); } };
     }
 }
 

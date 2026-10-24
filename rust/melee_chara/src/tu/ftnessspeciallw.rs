@@ -35,7 +35,14 @@ pub mod ext {
     hook!(FTPARTSETROTY, ftPartSetRotY, (fp: *mut Fighter, part: i32, v: f32));
     hook!(FTPARTGETROTZ, ftPartGetRotZ, (fp: *mut Fighter, part: i32) -> f32);
     hook!(PLAYER_SETHPBYINDEX, Player_SetHPByIndex, (slot: i32, is_sub: i32, hp: i32));
-    hook!(PL_80040B8C, pl_80040B8C, (slot: i32, is_sub: i32, amount: i32));
+    pub static mut PL_80040B8C: Option<fn(i32, i32, i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn pl_80040B8C(slot: i32, is_sub: i32, amount: i32)  {
+                match unsafe { PL_80040B8C } {
+                    Some(f) => f(slot, is_sub, amount),
+                    None => { unsafe { let _ = melee_fighter::tu::plbonuslib::pl_80040B8C(slot as _, is_sub as _, amount as _); } return; },
+                }
+            }
 }
 
 /// `FTNESS_SPECIALLW_COLL_FLAG`.

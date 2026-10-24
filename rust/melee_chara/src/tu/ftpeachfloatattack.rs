@@ -45,11 +45,46 @@ pub mod ext {
     }
     hook_or!(FTCO_800DF478, ftCo_800DF478, ftco_800df478_port, (fp: *mut Fighter) -> bool);
     hook_or!(FTCO_ATTACKAIR_GETMSIDFROMCSTICK, ftCo_AttackAir_GetMsidFromCStick, getmsid_port, (fp: *mut Fighter) -> i32);
-    hook!(IT_8026B30C, it_8026B30C, (item: *mut Item_GObj) -> i32);
-    hook!(FTCO_800CDDA0, ftCo_800CDDA0, (gobj: *mut HSD_GObj));
-    hook!(FTCO_ATTACKAIR_ENTERFROMMSID, ftCo_AttackAir_EnterFromMsid, (gobj: *mut HSD_GObj, msid: i32));
-    hook!(FTCO_80095328, ftCo_80095328, (gobj: *mut HSD_GObj, out: *mut bool) -> bool);
-    hook!(FTCO_800CB870, ftCo_800CB870, (gobj: *mut HSD_GObj) -> bool);
+    pub static mut IT_8026B30C: Option<fn(*mut Item_GObj) -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn it_8026B30C(item: *mut Item_GObj) -> i32 {
+                match unsafe { IT_8026B30C } {
+                    Some(f) => f(item),
+                    None => { return unsafe { melee_items::tu::it_26B1::it_8026B30C(item as _) as _ }; },
+                }
+            }
+    pub static mut FTCO_800CDDA0: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftCo_800CDDA0(gobj: *mut HSD_GObj)  {
+                match unsafe { FTCO_800CDDA0 } {
+                    Some(f) => f(gobj),
+                    None => { unsafe { let _ = melee_fighter::tu::ft_0cdd::ftco_800cdda0(gobj as _); } return; },
+                }
+            }
+    pub static mut FTCO_ATTACKAIR_ENTERFROMMSID: Option<fn(*mut HSD_GObj, i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftCo_AttackAir_EnterFromMsid(gobj: *mut HSD_GObj, msid: i32)  {
+                match unsafe { FTCO_ATTACKAIR_ENTERFROMMSID } {
+                    Some(f) => f(gobj, msid),
+                    None => { unsafe { let _ = melee_fighter::tu::ftCo_AttackAir::ftCo_AttackAir_EnterFromMsid(gobj as _, msid as _); } return; },
+                }
+            }
+    pub static mut FTCO_80095328: Option<fn(*mut HSD_GObj, *mut bool) -> bool> = None;
+            #[allow(non_snake_case)]
+            pub fn ftCo_80095328(gobj: *mut HSD_GObj, out: *mut bool) -> bool {
+                match unsafe { FTCO_80095328 } {
+                    Some(f) => f(gobj, out),
+                    None => { return unsafe { melee_fighter::tu::ftCo_ItemThrow::ftCo_80095328(gobj as _, out as _) as _ }; },
+                }
+            }
+    pub static mut FTCO_800CB870: Option<fn(*mut HSD_GObj) -> bool> = None;
+            #[allow(non_snake_case)]
+            pub fn ftCo_800CB870(gobj: *mut HSD_GObj) -> bool {
+                match unsafe { FTCO_800CB870 } {
+                    Some(f) => f(gobj),
+                    None => { return unsafe { melee_fighter::tu::ftCo_JumpAerial::ftCo_800CB870(gobj as _) as _ }; },
+                }
+            }
 }
 
 #[inline(always)]

@@ -10,3 +10,4 @@ melee_core.workspace = true
 melee_types.workspace = true
 melee_fighter.workspace = true
 melee_runtime.workspace = true
+melee_items.workspace = true

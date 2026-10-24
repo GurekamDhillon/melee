@@ -28,5 +28,12 @@ pub mod ext {
             }
         };
     }
-    hook!(GM_GETGAMEMODESTATEENTERDATA, gm_GetGameModeStateEnterData, (s: *mut melee_types::GameModeState) -> *mut c_void);
+    pub static mut GM_GETGAMEMODESTATEENTERDATA: Option<fn(*mut melee_types::GameModeState) -> *mut c_void> = None;
+            #[allow(non_snake_case)]
+            pub fn gm_GetGameModeStateEnterData(s: *mut melee_types::GameModeState) -> *mut c_void {
+                match unsafe { GM_GETGAMEMODESTATEENTERDATA } {
+                    Some(f) => unsafe { f(s) },
+                    None => { return unsafe { crate::tu::gm_1A3F::gm_GetGameModeStateEnterData(s as _) as _ }; },
+                }
+            }
 }

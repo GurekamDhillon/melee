@@ -49,9 +49,21 @@ pub mod ext {
         Fighter_ChangeMotionState,
     };
     pub use crate::tu::ftinl::ext::{ft_CheckGroundAndLedge as _unused_ft_CheckGroundAndLedge, HSD_JObjSetMtxDirtySub};
-    hook!(FTANIM_SETANIMRATE, ftAnim_SetAnimRate, (gobj: *mut HSD_GObj, rate: f32));
-    hook!(FTPARTS_80074B0C, ftParts_80074B0C, (gobj: *mut HSD_GObj, model_idx: i32, val: i32));
-    hook!(FTYS_INIT_8012B918, ftYs_Init_8012B918, (gobj: *mut HSD_GObj));
+    pub static mut FTANIM_SETANIMRATE: Option<fn(*mut HSD_GObj, f32)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftAnim_SetAnimRate(gobj: *mut HSD_GObj, rate: f32) {
+        match unsafe { FTANIM_SETANIMRATE } { Some(f) => f(gobj, rate), None => { unsafe { let _ = melee_fighter::tu::ftanim::ftAnim_SetAnimRate(gobj as _, rate as _); } return; } }
+    }
+    pub static mut FTPARTS_80074B0C: Option<fn(*mut HSD_GObj, i32, i32)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftParts_80074B0C(gobj: *mut HSD_GObj, model_idx: i32, val: i32) {
+        match unsafe { FTPARTS_80074B0C } { Some(f) => f(gobj, model_idx, val), None => { unsafe { let _ = melee_fighter::tu::ftparts::ftParts_80074B0C(gobj as _, model_idx as _, val as _); } return; } }
+    }
+    pub static mut FTYS_INIT_8012B918: Option<fn(*mut HSD_GObj)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftYs_Init_8012B918(gobj: *mut HSD_GObj) {
+        match unsafe { FTYS_INIT_8012B918 } { Some(f) => f(gobj), None => { unsafe { let _ = crate::tu::ftyoshi::ftYs_Init_8012B918(gobj as _); } return; } }
+    }
     hook_or!(FTCOMMON_8007F5CC, ftCommon_8007F5CC, (gobj: *mut Item_GObj, flag: i32), melee_fighter::ftcommon3::ftcommon_8007f5cc);
     hook_or!(FTPARTSETROTY, ftPartSetRotY, (fp: *mut Fighter, part: i32, v: f32),
         |fp: *mut Fighter, part: i32, v: f32| unsafe { melee_fighter::tu::ftparts::ftPartSetRotY(&*fp, part, v) });
@@ -59,20 +71,44 @@ pub mod ext {
         |fp: *mut Fighter, part: i32, v: f32| unsafe { melee_fighter::tu::ftparts::ftPartSetRotZ(&*fp, part, v) });
     hook_or!(FTPARTSETROTX, ftPartSetRotX, (fp: *mut Fighter, part: i32, v: f32),
         |fp: *mut Fighter, part: i32, v: f32| unsafe { melee_fighter::tu::ftparts::ftPartSetRotX(&*fp, part, v) });
-    hook!(LB_8000B1CC, lb_8000B1CC, (jobj: *mut HSD_JObj, pos0: *mut Vec3, pos1: *mut Vec3));
+    pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *mut Vec3, *mut Vec3)> = None;
+    #[allow(non_snake_case)]
+    pub fn lb_8000B1CC(jobj: *mut HSD_JObj, pos0: *mut Vec3, pos1: *mut Vec3) {
+        match unsafe { LB_8000B1CC } { Some(f) => f(jobj, pos0, pos1), None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, pos0 as _, pos1 as _); } return; } }
+    }
     hook!(EFSYNC_SPAWN, efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut c_void]) -> *mut c_void);
     hook_or!(FT_PLAYSFX, ft_PlaySFX, (fp: *mut Fighter, id: i32, vol: u8, pan: u8),
         |fp: *mut Fighter, id: i32, vol: u8, pan: u8| unsafe { melee_fighter::ft0877::play_sfx(&mut *fp, id, vol, pan) });
-    hook!(FT_80089824, ft_80089824, (gobj: *mut HSD_GObj));
+    pub static mut FT_80089824: Option<fn(*mut HSD_GObj)> = None;
+    #[allow(non_snake_case)]
+    pub fn ft_80089824(gobj: *mut HSD_GObj) {
+        match unsafe { FT_80089824 } { Some(f) => f(gobj), None => { unsafe { let _ = melee_fighter::ft0892::ft_80089824(gobj as _); } return; } }
+    }
     hook!(FT_800892A0, ft_800892A0, (gobj: *mut HSD_GObj));
     hook!(FTCOLL_8007AFF8, ftColl_8007AFF8, (gobj: *mut HSD_GObj));
     hook!(FTCOLL_8007ABD0, ftColl_8007ABD0, (hit: *mut HitCapsule, damage: u32, gobj: *mut HSD_GObj));
-    hook!(FT_80082888, ft_80082888, (gobj: *mut HSD_GObj, ecb: *mut ftCollisionBox) -> bool);
-    hook!(FT_80082978, ft_80082978, (gobj: *mut HSD_GObj, ecb: *mut ftCollisionBox) -> bool);
-    hook!(FT_800824A0, ft_800824A0, (gobj: *mut HSD_GObj, ecb: *mut ftCollisionBox) -> bool);
+    pub static mut FT_80082888: Option<fn(*mut HSD_GObj, *mut ftCollisionBox) -> bool> = None;
+    #[allow(non_snake_case)]
+    pub fn ft_80082888(gobj: *mut HSD_GObj, ecb: *mut ftCollisionBox) -> bool {
+        match unsafe { FT_80082888 } { Some(f) => f(gobj, ecb), None => { return unsafe { melee_fighter::tu::ft_081b::ft_80082888(gobj as _, ecb as _) as _ }; } }
+    }
+    pub static mut FT_80082978: Option<fn(*mut HSD_GObj, *mut ftCollisionBox) -> bool> = None;
+    #[allow(non_snake_case)]
+    pub fn ft_80082978(gobj: *mut HSD_GObj, ecb: *mut ftCollisionBox) -> bool {
+        match unsafe { FT_80082978 } { Some(f) => f(gobj, ecb), None => { return unsafe { melee_fighter::tu::ft_081b::ft_80082978(gobj as _, ecb as _) as _ }; } }
+    }
+    pub static mut FT_800824A0: Option<fn(*mut HSD_GObj, *mut ftCollisionBox) -> bool> = None;
+    #[allow(non_snake_case)]
+    pub fn ft_800824A0(gobj: *mut HSD_GObj, ecb: *mut ftCollisionBox) -> bool {
+        match unsafe { FT_800824A0 } { Some(f) => f(gobj, ecb), None => { return unsafe { melee_fighter::tu::ft_081b::ft_800824a0(gobj as _, ecb as _) as _ }; } }
+    }
     hook_or!(FTCOMMON_8007EBAC, ftCommon_8007EBAC, (fp: *mut Fighter, a: u32, b: u32),
         |fp: *mut Fighter, a: u32, b: u32| unsafe { melee_fighter::ftcommon2::ftcommon_8007ebac(&mut *fp, a, b) });
-    hook!(FTCO_80096900, ftCo_80096900, (gobj: *mut HSD_GObj, a: i32, b: i32, allow_interrupt: i32, mobility: f32, landing_lag: f32));
+    pub static mut FTCO_80096900: Option<fn(*mut HSD_GObj, i32, i32, i32, f32, f32)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftCo_80096900(gobj: *mut HSD_GObj, a: i32, b: i32, allow_interrupt: i32, mobility: f32, landing_lag: f32) {
+        match unsafe { FTCO_80096900 } { Some(f) => f(gobj, a, b, allow_interrupt, mobility, landing_lag), None => { unsafe { let _ = melee_fighter::tu::ftCo_FallSpecial::ftCo_80096900(gobj as _, a as _, b as _, allow_interrupt as _, mobility as _, landing_lag as _); } return; } }
+    }
     hook!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, (kind: i32, pos: *mut Vec3));
     hook!(MPLIB_800569EC, mpLib_800569EC, (flags: u32) -> f32);
     hook_or!(ATAN2F, atan2f, (y: f32, x: f32) -> f32, melee_runtime::lbtrigf::atan2f);

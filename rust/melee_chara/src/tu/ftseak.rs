@@ -47,7 +47,14 @@ pub mod ext {
             }
         };
     }
-    hook!(IT_8026B3F8, it_8026B3F8, (article: *mut core::ffi::c_void, kind: i32));
+    pub static mut IT_8026B3F8: Option<fn(*mut core::ffi::c_void, i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_8026B3F8(article: *mut core::ffi::c_void, kind: i32)  {
+                match unsafe { IT_8026B3F8 } {
+                    Some(f) => f(article, kind),
+                    None => { unsafe { let _ = melee_items::tu::it_26B1::it_8026B3F8(article as _, kind as _); } return; },
+                }
+            }
     hook!(FTCO_800BFFD0, ftCo_800BFFD0, (fp: *mut Fighter, a: i32, b: i32));
 }
 

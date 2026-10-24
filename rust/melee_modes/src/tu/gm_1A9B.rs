@@ -44,35 +44,161 @@ pub mod ext {
     }
     // sysdolphin/baselib/gobj.c, gobjgxlink.c, gobjobject.c, sobjlib.c
     hook!(GOBJ_CREATE, GObj_Create, (classifier: u16, p_link: u8, priority: u8) -> *mut HSD_GObj);
-    hook!(HSD_SOBJLIB_803A55DC, HSD_SObjLib_803A55DC, (g: *mut HSD_GObj, w: u16, h: u16, n: i32));
+    pub static mut HSD_SOBJLIB_803A55DC: Option<fn(*mut HSD_GObj, u16, u16, i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_SObjLib_803A55DC(g: *mut HSD_GObj, w: u16, h: u16, n: i32)  {
+                match unsafe { HSD_SOBJLIB_803A55DC } {
+                    Some(f) => f(g, w, h, n),
+                    None => { unsafe { let _ = melee_runtime::tu::sobjlib::HSD_SObjLib_803A55DC(g as _, w as _, h as _, n as _); } return; },
+                }
+            }
     hook!(HSD_GOBJOBJECT_80390A70, HSD_GObjObject_80390A70, (gobj: *mut HSD_GObj, kind: u8, obj: *mut c_void));
     hook!(GOBJ_SETUPGXLINK, GObj_SetupGXLink, (gobj: *mut HSD_GObj, render: usize, gx_link: u8, priority: u32));
     /// `HSD_SObjLib_804D7960` (sysdolphin/baselib/sobjlib.c): the SObj object kind.
     hook!(HSD_SOBJLIB_804D7960, hsd_sobjlib_804d7960, () -> u8);
     // lb/lbaudio_ax.c, lb/lbbgflash.c, lb/lbmthp.c
-    hook!(LBAUDIOAX_80026F2C, lbAudioAx_80026F2C, (v: u32));
-    hook!(LBAUDIOAX_8002702C, lbAudioAx_8002702C, (flags: u32, mask: u64));
-    hook!(LBAUDIOAX_80027168, lbAudioAx_80027168, ());
-    hook!(LBAUDIOAX_80027648, lbAudioAx_80027648, ());
-    hook!(LBAUDIOAX_80023694, lbAudioAx_80023694, () -> i32);
-    hook!(LBAUDIOAX_800237A8, lbAudioAx_800237A8, (sfx_id: i32, vol: i32, pan: i32) -> i32);
-    hook!(LBAUDIOAX_80024030, lbAudioAx_80024030, (id: i32));
-    hook!(LBBGFLASH_800209F4, lbBgFlash_800209F4, ());
-    hook!(LBBGFLASH_8002063C, lbBgFlash_8002063C, (count: i32));
-    hook!(LBMTHP_8001F890, lbMthp8001F890, (g: *mut HSD_GObj) -> *mut HSD_SObj);
+    pub static mut LBAUDIOAX_80026F2C: Option<fn(u32) > = None;
+            #[allow(non_snake_case)]
+            pub fn lbAudioAx_80026F2C(v: u32)  {
+                match unsafe { LBAUDIOAX_80026F2C } {
+                    Some(f) => f(v),
+                    None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80026F2C(v as _); } return; },
+                }
+            }
+    pub static mut LBAUDIOAX_8002702C: Option<fn(u32, u64) > = None;
+            #[allow(non_snake_case)]
+            pub fn lbAudioAx_8002702C(flags: u32, mask: u64)  {
+                match unsafe { LBAUDIOAX_8002702C } {
+                    Some(f) => f(flags, mask),
+                    None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_8002702C(flags as _, mask as _); } return; },
+                }
+            }
+    pub static mut LBAUDIOAX_80027168: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn lbAudioAx_80027168()  {
+                match unsafe { LBAUDIOAX_80027168 } {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80027168(); } return; },
+                }
+            }
+    pub static mut LBAUDIOAX_80027648: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn lbAudioAx_80027648()  {
+                match unsafe { LBAUDIOAX_80027648 } {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80027648(); } return; },
+                }
+            }
+    pub static mut LBAUDIOAX_80023694: Option<fn() -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn lbAudioAx_80023694() -> i32 {
+                match unsafe { LBAUDIOAX_80023694 } {
+                    Some(f) => f(),
+                    None => { return unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023694() as _ }; },
+                }
+            }
+    pub static mut LBAUDIOAX_800237A8: Option<fn(i32, i32, i32) -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn lbAudioAx_800237A8(sfx_id: i32, vol: i32, pan: i32) -> i32 {
+                match unsafe { LBAUDIOAX_800237A8 } {
+                    Some(f) => f(sfx_id, vol, pan),
+                    None => { return unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800237A8(sfx_id as _, vol as _, pan as _) as _ }; },
+                }
+            }
+    pub static mut LBAUDIOAX_80024030: Option<fn(i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn lbAudioAx_80024030(id: i32)  {
+                match unsafe { LBAUDIOAX_80024030 } {
+                    Some(f) => f(id),
+                    None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80024030(id as _); } return; },
+                }
+            }
+    pub static mut LBBGFLASH_800209F4: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn lbBgFlash_800209F4()  {
+                match unsafe { LBBGFLASH_800209F4 } {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = melee_runtime::tu::lbbgflash::lbBgFlash_800209F4(); } return; },
+                }
+            }
+    pub static mut LBBGFLASH_8002063C: Option<fn(i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn lbBgFlash_8002063C(count: i32)  {
+                match unsafe { LBBGFLASH_8002063C } {
+                    Some(f) => f(count),
+                    None => { unsafe { let _ = melee_runtime::tu::lbbgflash::lbBgFlash_8002063C(count as _); } return; },
+                }
+            }
+    pub static mut LBMTHP_8001F890: Option<fn(*mut HSD_GObj) -> *mut HSD_SObj> = None;
+            #[allow(non_snake_case)]
+            pub fn lbMthp8001F890(g: *mut HSD_GObj) -> *mut HSD_SObj {
+                match unsafe { LBMTHP_8001F890 } {
+                    Some(f) => f(g),
+                    None => { return unsafe { crate::tu::lb_01F8::lbMthp8001F890(g as _) as _ }; },
+                }
+            }
     hook!(LBMTHP_8001FAA0, lbMthp8001FAA0, (filename: &str, w: i32, h: i32));
     // gm/gmevent.c, gm/gm_1A3F.c, gm/gmregclear.c, gm/gmregtyfall.c, gm/gm_1601.c (TARGET_PC)
-    hook!(GM_801BEFB0, gm_801BEFB0, () -> i32);
-    hook!(GM_801BF010, gm_801BF010, () -> i32);
-    hook!(GM_801BF050, gm_801BF050, () -> i32);
-    hook!(GM_GETCURRENTGAMEMODE, gm_GetCurrentGameMode, () -> u8);
-    hook!(GM_8017DFF4, gm_8017DFF4, (v: i32) -> i32);
-    hook!(GM_801A6630, gm_801A6630, (v: i32));
-    hook!(GM_MEXVANILLAKIND, gm_MexVanillaKind, (kind: i32, character_kind: i32) -> i32);
+    pub static mut GM_801BEFB0: Option<fn() -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn gm_801BEFB0() -> i32 {
+                match unsafe { GM_801BEFB0 } {
+                    Some(f) => f(),
+                    None => { return unsafe { crate::tu::gmgover::gm_801BEFB0() as _ }; },
+                }
+            }
+    pub static mut GM_801BF010: Option<fn() -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn gm_801BF010() -> i32 {
+                match unsafe { GM_801BF010 } {
+                    Some(f) => f(),
+                    None => { return unsafe { crate::tu::gmgover::gm_801BF010() as _ }; },
+                }
+            }
+    pub static mut GM_801BF050: Option<fn() -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn gm_801BF050() -> i32 {
+                match unsafe { GM_801BF050 } {
+                    Some(f) => f(),
+                    None => { return unsafe { crate::tu::gmgover::gm_801BF050() as _ }; },
+                }
+            }
+    pub static mut GM_GETCURRENTGAMEMODE: Option<fn() -> u8> = None;
+            #[allow(non_snake_case)]
+            pub fn gm_GetCurrentGameMode() -> u8 {
+                match unsafe { GM_GETCURRENTGAMEMODE } {
+                    Some(f) => f(),
+                    None => { return unsafe { crate::tu::gm_1A3F::gm_GetCurrentGameMode() as _ }; },
+                }
+            }
+    pub static mut GM_8017DFF4: Option<fn(i32) -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn gm_8017DFF4(v: i32) -> i32 {
+                match unsafe { GM_8017DFF4 } {
+                    Some(f) => f(v),
+                    None => { return unsafe { crate::tu::gm_17c0::gm_8017DFF4(v as _) as _ }; },
+                }
+            }
+    pub static mut GM_801A6630: Option<fn(i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_801A6630(v: i32)  {
+                match unsafe { GM_801A6630 } {
+                    Some(f) => f(v),
+                    None => { unsafe { let _ = crate::tu::gmregtyfall::gm_801A6630(v as _); } return; },
+                }
+            }
+    pub static mut GM_MEXVANILLAKIND: Option<fn(i32, i32) -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn gm_MexVanillaKind(kind: i32, character_kind: i32) -> i32 {
+                match unsafe { GM_MEXVANILLAKIND } {
+                    Some(f) => f(kind, character_kind),
+                    None => { return unsafe { crate::tu::gm_1601::gm_MexVanillaKind(kind as _, character_kind as _) as _ }; },
+                }
+            }
 
     /// `lbMthp8001F928` (lb/lbmthp.c): the GX-link render callback of the movie; address only.
     pub unsafe extern "C" fn lbMthp8001F928(_gobj: *mut HSD_GObj, _code: i32) {
-        panic!("TODO(lb): lbMthp8001F928 is not ported");
+        { unsafe { let _ = crate::tu::lb_01F8::lbMthp8001F928(_gobj as _, _code as _); } return; };
     }
 }
 

@@ -31,11 +31,38 @@ pub mod ext {
         };
     }
     // itgamewatchrescue.c
-    hook!(IT_802C8038, it_802C8038,
-        (owner: *mut HSD_GObj, pos: *const Vec3, part: i32, kind: i32, facing: f32, scale: f32) -> *mut HSD_GObj);
-    hook!(IT_802C8158, it_802C8158, (item: *mut HSD_GObj));
-    hook!(IT_802C81C8, it_802C81C8, (item: *mut HSD_GObj));
-    hook!(IT_802C81E8, it_802C81E8, (item: *mut HSD_GObj));
+    pub static mut IT_802C8038: Option<fn(*mut HSD_GObj, *const Vec3, i32, i32, f32, f32) -> *mut HSD_GObj> = None;
+            #[allow(non_snake_case)]
+            pub fn it_802C8038(owner: *mut HSD_GObj, pos: *const Vec3, part: i32, kind: i32, facing: f32, scale: f32) -> *mut HSD_GObj {
+                match unsafe { IT_802C8038 } {
+                    Some(f) => f(owner, pos, part, kind, facing, scale),
+                    None => { return unsafe { melee_items::tu::itgamewatchrescue::it_802C8038(owner as _, pos as _, part as _, kind as _, facing as _, scale as _) as _ }; },
+                }
+            }
+    pub static mut IT_802C8158: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802C8158(item: *mut HSD_GObj)  {
+                match unsafe { IT_802C8158 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itgamewatchrescue::it_802C8158(item as _); } return; },
+                }
+            }
+    pub static mut IT_802C81C8: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802C81C8(item: *mut HSD_GObj)  {
+                match unsafe { IT_802C81C8 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itgamewatchrescue::it_802C81C8(item as _); } return; },
+                }
+            }
+    pub static mut IT_802C81E8: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802C81E8(item: *mut HSD_GObj)  {
+                match unsafe { IT_802C81E8 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itgamewatchrescue::it_802C81E8(item as _); } return; },
+                }
+            }
 }
 
 #[inline(always)]

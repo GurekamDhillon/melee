@@ -45,12 +45,31 @@ pub mod ext {
             }
         };
     }
-    hook!(LB_8000B1CC, lb_8000B1CC, (jobj: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3));
+    pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *const Vec3, *mut Vec3) > = None;
+            #[allow(non_snake_case)]
+            pub fn lb_8000B1CC(jobj: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3)  {
+                match unsafe { LB_8000B1CC } {
+                    Some(f) => f(jobj, off, out),
+                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, off as _, out as _); } return; },
+                }
+            }
     hook!(HSD_RANDI, HSD_Randi, (max: i32) -> i32);
-    hook!(ITEM_8026AE60, Item_8026AE60, () -> u32);
-    hook!(ITKOOPAFLAME_SPAWN, itKoopaFlame_Spawn,
-        (parent: *mut HSD_GObj, pos: *mut Vec3, facing_dir: f32, unk: u32, gfx: i32, base_speed: i32, scale: i32, kind: i32)
-        -> *mut HSD_GObj);
+    pub static mut ITEM_8026AE60: Option<fn() -> u32> = None;
+            #[allow(non_snake_case)]
+            pub fn Item_8026AE60() -> u32 {
+                match unsafe { ITEM_8026AE60 } {
+                    Some(f) => f(),
+                    None => { return unsafe { melee_items::tu::item::Item_8026AE60() as _ }; },
+                }
+            }
+    pub static mut ITKOOPAFLAME_SPAWN: Option<fn(*mut HSD_GObj, *mut Vec3, f32, u32, i32, i32, i32, i32) -> *mut HSD_GObj> = None;
+            #[allow(non_snake_case)]
+            pub fn itKoopaFlame_Spawn(parent: *mut HSD_GObj, pos: *mut Vec3, facing_dir: f32, unk: u32, gfx: i32, base_speed: i32, scale: i32, kind: i32) -> *mut HSD_GObj {
+                match unsafe { ITKOOPAFLAME_SPAWN } {
+                    Some(f) => f(parent, pos, facing_dir, unk, gfx, base_speed, scale, kind),
+                    None => { return unsafe { melee_items::tu::itkoopaflame::itKoopaFlame_Spawn(parent as _, pos as _, facing_dir as _, unk as _, gfx as _, base_speed as _, scale as _, kind as _) as _ }; },
+                }
+            }
     hook!(FT_PLAYSFX, ft_PlaySFX, (fp: *mut Fighter, sfx: i32, vol: u8, pan: u8));
     hook_or!(FT_80089824, ft_80089824, melee_fighter::ft0892::ft_80089824, (gobj: *mut HSD_GObj));
     hook!(FT_800892A0, ft_800892A0, (gobj: *mut HSD_GObj));

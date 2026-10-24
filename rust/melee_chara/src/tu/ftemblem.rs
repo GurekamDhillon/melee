@@ -50,8 +50,22 @@ pub mod ext {
             }
         };
     }
-    hook!(FTMS_INIT_ONLOADFORROY, ftMs_Init_OnLoadForRoy, (fp: *mut Fighter));
-    hook!(FTMS_INIT_LOADSPECIALATTRS, ftMs_Init_LoadSpecialAttrs, (gobj: *mut HSD_GObj));
+    pub static mut FTMS_INIT_ONLOADFORROY: Option<fn(*mut Fighter) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftMs_Init_OnLoadForRoy(fp: *mut Fighter)  {
+                match unsafe { FTMS_INIT_ONLOADFORROY } {
+                    Some(f) => f(fp),
+                    None => { unsafe { let _ = crate::tu::ftmars::ftMs_Init_OnLoadForRoy(fp as _); } return; },
+                }
+            }
+    pub static mut FTMS_INIT_LOADSPECIALATTRS: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftMs_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj)  {
+                match unsafe { FTMS_INIT_LOADSPECIALATTRS } {
+                    Some(f) => f(gobj),
+                    None => { unsafe { let _ = crate::tu::ftmars::ftMs_Init_LoadSpecialAttrs(gobj as _); } return; },
+                }
+            }
 }
 
 pub fn ftFe_Init_OnItemPickup(gobj: *mut HSD_GObj, flag: i32) {

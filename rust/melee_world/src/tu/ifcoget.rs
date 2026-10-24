@@ -41,25 +41,67 @@ pub mod ext {
     // ---- callee hooks ----
     hook!(H_HSD_JObjSetFlagsAll, HSD_JObjSetFlagsAll, (a0: *mut melee_types::HSD_JObj, a1: u32));
     hook!(H_HSD_JObjClearFlagsAll, HSD_JObjClearFlagsAll, (a0: *mut melee_types::HSD_JObj, a1: u32));
-    hook!(H_lbAudioAx_800237A8, lbAudioAx_800237A8, (a0: i32, a1: i32, a2: i32) -> i32);
+    pub static mut H_lbAudioAx_800237A8: Option<unsafe extern "C" fn(i32, i32, i32) -> i32> = None;
+            pub unsafe extern "C" fn lbAudioAx_800237A8(a0: i32, a1: i32, a2: i32) -> i32 {
+                match H_lbAudioAx_800237A8 {
+                    Some(f) => f(a0, a1, a2),
+                    None => { return unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800237A8(a0 as _, a1 as _, a2 as _) as _ }; },
+                }
+            }
     hook!(H_HSD_JObjReqAnimAll, HSD_JObjReqAnimAll, (a0: *mut melee_types::HSD_JObj, a1: f32));
     hook!(H_HSD_JObjAnimAll, HSD_JObjAnimAll, (a0: *mut melee_types::HSD_JObj));
     hook!(H_GObj_Create, GObj_Create, (a0: u16, a1: u8, a2: u8) -> *mut melee_types::HSD_GObj);
     hook!(H_HSD_GObjObject_80390A70, HSD_GObjObject_80390A70, (a0: *mut melee_types::HSD_GObj, a1: u8, a2: *mut core::ffi::c_void));
-    hook!(H_HSD_CObjLoadDesc, HSD_CObjLoadDesc, (a0: *mut melee_types::HSD_CObjDesc) -> *mut melee_types::HSD_CObj);
+    pub static mut H_HSD_CObjLoadDesc: Option<unsafe extern "C" fn(*mut melee_types::HSD_CObjDesc) -> *mut melee_types::HSD_CObj> = None;
+            pub unsafe extern "C" fn HSD_CObjLoadDesc(a0: *mut melee_types::HSD_CObjDesc) -> *mut melee_types::HSD_CObj {
+                match H_HSD_CObjLoadDesc {
+                    Some(f) => f(a0),
+                    None => { return unsafe { melee_runtime::tu::cobj::HSD_CObjLoadDesc(a0 as _) as _ }; },
+                }
+            }
     hook!(H_GObj_SetupGXLinkMax, GObj_SetupGXLinkMax, (a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, a2: u32));
     hook!(H_HSD_GObj_803910D8, HSD_GObj_803910D8, (a0: *mut melee_types::HSD_GObj, a1: i32));
-    hook!(H_lb_80011AC4, lb_80011AC4, (a0: *mut *mut melee_types::LightList) -> *mut melee_types::HSD_LObj);
+    pub static mut H_lb_80011AC4: Option<unsafe extern "C" fn(*mut *mut melee_types::LightList) -> *mut melee_types::HSD_LObj> = None;
+            pub unsafe extern "C" fn lb_80011AC4(a0: *mut *mut melee_types::LightList) -> *mut melee_types::HSD_LObj {
+                match H_lb_80011AC4 {
+                    Some(f) => f(a0),
+                    None => { return unsafe { melee_runtime::tu::lbspdisplay::lb_80011AC4(a0 as _) as _ }; },
+                }
+            }
     hook!(H_GObj_SetupGXLink, GObj_SetupGXLink, (a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, a2: u8, a3: u32));
-    hook!(H_HSD_GObj_LObjCallback, HSD_GObj_LObjCallback, (a0: *mut melee_types::HSD_GObj, a1: i32));
-    hook!(H_HSD_JObjLoadJoint, HSD_JObjLoadJoint, (a0: *mut melee_types::HSD_Joint) -> *mut melee_types::HSD_JObj);
+    pub static mut H_HSD_GObj_LObjCallback: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32) > = None;
+            pub unsafe extern "C" fn HSD_GObj_LObjCallback(a0: *mut melee_types::HSD_GObj, a1: i32)  {
+                match H_HSD_GObj_LObjCallback {
+                    Some(f) => f(a0, a1),
+                    None => { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_LObjCallback(a0 as _, a1 as _); } return; },
+                }
+            }
+    pub static mut H_HSD_JObjLoadJoint: Option<unsafe extern "C" fn(*mut melee_types::HSD_Joint) -> *mut melee_types::HSD_JObj> = None;
+            pub unsafe extern "C" fn HSD_JObjLoadJoint(a0: *mut melee_types::HSD_Joint) -> *mut melee_types::HSD_JObj {
+                match H_HSD_JObjLoadJoint {
+                    Some(f) => f(a0),
+                    None => { return unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(a0 as _) as _ }; },
+                }
+            }
     hook!(H_HSD_GObj_SetupProc, HSD_GObj_SetupProc, (a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj)>, a2: u8) -> *mut melee_types::HSD_GObjProc);
     hook!(H_gm_8016895C, gm_8016895C, (a0: *mut melee_types::HSD_JObj, a1: *mut melee_types::DynamicModelDesc, a2: i32));
     hook!(H_lbArchive_80016DBC, lbArchive_80016DBC, (a0: *const i8, a1: *mut core::ffi::c_void, a2: *const i8, a3: i32) -> *mut melee_types::HSD_Archive);
-    hook!(H___assert, __assert, (a0: *const i8, a1: u32, a2: *const i8));
+    pub static mut H___assert: Option<unsafe extern "C" fn(*const i8, u32, *const i8) > = None;
+            pub unsafe extern "C" fn __assert(a0: *const i8, a1: u32, a2: *const i8)  {
+                match H___assert {
+                    Some(f) => f(a0, a1, a2),
+                    None => { unsafe { let _ = melee_runtime::tu::debug::__assert(a0 as _, a1 as _, a2 as _); } return; },
+                }
+            }
     hook!(H_HSD_JObjSetMtxDirtySub, HSD_JObjSetMtxDirtySub, (a0: *mut melee_types::HSD_JObj));
     hook!(H_Ui_RetailHidden, Ui_RetailHidden, (a0: i32) -> i32);
-    hook!(H_HSD_GObj_JObjCallback, HSD_GObj_JObjCallback, (a0: *mut melee_types::HSD_GObj, a1: i32));
+    pub static mut H_HSD_GObj_JObjCallback: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32) > = None;
+            pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut melee_types::HSD_GObj, a1: i32)  {
+                match H_HSD_GObj_JObjCallback {
+                    Some(f) => f(a0, a1),
+                    None => { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } return; },
+                }
+            }
     // ---- extern globals ----
     pub static mut HSD_GObj_CameraKind: u8 = unsafe { core::mem::zeroed() };
     pub static mut HSD_GObj_LightKind: i8 = unsafe { core::mem::zeroed() };

@@ -15,7 +15,7 @@ pub mod ext {
     pub fn lb_8000D008(y: f32, x: f32) -> f32 {
         match unsafe { LB_8000D008 } {
             Some(f) => f(y, x),
-            None => panic!("TODO: lb_8000D008 not wired"),
+            None => { return unsafe { melee_runtime::tu::lb_00CE::lb_8000D008(y as _, x as _) as _ }; },
         }
     }
 }

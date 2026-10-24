@@ -29,13 +29,13 @@ pub mod ext {
     use super::*;
     ext_fns! {
         ftCo_800DB368(victim: *mut Fighter, fp: *mut Fighter) = |_, _| todo!("TODO(port) ftCo_800DB368 (ftCo_CatchCut.c)");
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         Fighter_UpdateModelScale(g: G) = crate::hooks::fighter_update_model_scale;
-        ftCo_800DB464(g: G) = |_| todo!("TODO(port) ftCo_800DB464 (ftCo_CatchCut.c)");
+        ftCo_800DB464(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_CapturePulled::ftCo_800DB464(g as _); } };
         ftColl_8007B62C(g: G, v: i32) = |_, _| todo!("TODO(port) ftColl_8007B62C (ftcoll.c)");
         ftCommon_8007D5D4(f: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
         ftCommon_8007E2F4(f: &mut Fighter, v: i16) = crate::ftcommon2::ftcommon_8007e2f4;
-        ftAnim_8006EBA4(g: G) = |_| todo!("TODO(port) ftAnim_8006EBA4 (ftanim.c)");
+        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
         ftCommon_8007E2FC(g: G) = |g| crate::ftcommon2::ftcommon_8007e2fc(super::fp(g));
         ftKb_SpecialN_800F598C(g: G, a: i32) = |_, _| todo!("TODO(port) ftKb_SpecialN_800F598C (ftkirby)");
         ftKb_SpecialN_800F597C(g: G) -> bool = |_| todo!("TODO(port) ftKb_SpecialN_800F597C (ftkirby)");
@@ -48,7 +48,7 @@ pub mod ext {
         ftCommon_GrabMash(f: &mut Fighter, a: f32) -> bool = crate::ftcommon2::grab_mash;
         HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjSetMtxDirtySub (baselib jobj.c)");
         ftCo_CaptureCut_Enter(g: G) = crate::tu::ftCo_CaptureCut::ftCo_CaptureCut_Enter;
-        ftCo_800DA698(g: G, b: bool) = |_, _| todo!("TODO(port) ftCo_800DA698 (ftCo_CatchCut.c)");
+        ftCo_800DA698(g: G, b: bool) = |g: G, b: bool| { unsafe { let _ = crate::tu::ftCo_CatchCut::ftCo_800DA698(g as _, b as _); } };
     }
 }
 

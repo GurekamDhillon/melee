@@ -30,21 +30,126 @@ pub mod ext {
             }
         };
     }
-    hook!(LB_8000B1CC, lb_8000B1CC, (jobj: *mut HSD_JObj, pos0: *const Vec3, pos1: *mut Vec3));
-    hook!(IT_8026B300, itGetKind, (item: *mut Item_GObj) -> i32);
-    hook!(IT_8026BB44, it_8026BB44, (item: *mut Item_GObj));
-    hook!(IT_8026B724, it_8026B724, (item: *mut Item_GObj));
-    hook!(IT_8026BB20, it_8026BB20, (item: *mut Item_GObj));
-    hook!(IT_8026B73C, it_8026B73C, (item: *mut Item_GObj));
-    hook!(FTCOMMON_8007E6DC, ftCommon_8007E6DC, (gobj: *mut HSD_GObj, item: *mut HSD_GObj, flag: i32));
-    hook!(IT_802BDA64, it_802BDA64, (gobj: *mut HSD_GObj, pos: *mut Vec3, part: u32, dir: f32) -> *mut Item_GObj);
-    hook!(FTPICKUPITEM_80094818, ftpickupitem_80094818, (gobj: *mut HSD_GObj, flag: bool));
-    hook!(IT_802BDB94, it_802BDB94, (item: *mut Item_GObj));
-    hook!(IT_802BDBF8, it_802BDBF8, (item: *mut Item_GObj));
-    hook!(IT_802BDC18, it_802BDC18, (item: *mut Item_GObj));
-    hook!(IT_802BDC38, it_802BDC38, (item: *mut Item_GObj) -> bool);
-    hook!(FTCO_800CEFE0, ftCo_800CEFE0, (gobj: *mut HSD_GObj, arg1: i32));
-    hook!(FT_80083B68, ft_80083B68, (gobj: *mut HSD_GObj));
+    pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *const Vec3, *mut Vec3) > = None;
+            #[allow(non_snake_case)]
+            pub fn lb_8000B1CC(jobj: *mut HSD_JObj, pos0: *const Vec3, pos1: *mut Vec3)  {
+                match unsafe { LB_8000B1CC } {
+                    Some(f) => f(jobj, pos0, pos1),
+                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, pos0 as _, pos1 as _); } return; },
+                }
+            }
+    pub static mut IT_8026B300: Option<fn(*mut Item_GObj) -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn itGetKind(item: *mut Item_GObj) -> i32 {
+                match unsafe { IT_8026B300 } {
+                    Some(f) => f(item),
+                    None => { return unsafe { melee_items::tu::it_26B1::itGetKind(item as _) as _ }; },
+                }
+            }
+    pub static mut IT_8026BB44: Option<fn(*mut Item_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_8026BB44(item: *mut Item_GObj)  {
+                match unsafe { IT_8026BB44 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::it_26B1::it_8026BB44(item as _); } return; },
+                }
+            }
+    pub static mut IT_8026B724: Option<fn(*mut Item_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_8026B724(item: *mut Item_GObj)  {
+                match unsafe { IT_8026B724 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::it_26B1::it_8026B724(item as _); } return; },
+                }
+            }
+    pub static mut IT_8026BB20: Option<fn(*mut Item_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_8026BB20(item: *mut Item_GObj)  {
+                match unsafe { IT_8026BB20 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::it_26B1::it_8026BB20(item as _); } return; },
+                }
+            }
+    pub static mut IT_8026B73C: Option<fn(*mut Item_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_8026B73C(item: *mut Item_GObj)  {
+                match unsafe { IT_8026B73C } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::it_26B1::it_8026B73C(item as _); } return; },
+                }
+            }
+    pub static mut FTCOMMON_8007E6DC: Option<fn(*mut HSD_GObj, *mut HSD_GObj, i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftCommon_8007E6DC(gobj: *mut HSD_GObj, item: *mut HSD_GObj, flag: i32)  {
+                match unsafe { FTCOMMON_8007E6DC } {
+                    Some(f) => f(gobj, item, flag),
+                    None => { unsafe { let _ = melee_fighter::ftcommon3::ftcommon_8007e6dc(gobj as _, item as _, flag as _); } return; },
+                }
+            }
+    pub static mut IT_802BDA64: Option<fn(*mut HSD_GObj, *mut Vec3, u32, f32) -> *mut Item_GObj> = None;
+            #[allow(non_snake_case)]
+            pub fn it_802BDA64(gobj: *mut HSD_GObj, pos: *mut Vec3, part: u32, dir: f32) -> *mut Item_GObj {
+                match unsafe { IT_802BDA64 } {
+                    Some(f) => f(gobj, pos, part, dir),
+                    None => { return unsafe { melee_items::tu::itpeachparasol::it_802BDA64(gobj as _, pos as _, part as _, dir as _) as _ }; },
+                }
+            }
+    pub static mut FTPICKUPITEM_80094818: Option<fn(*mut HSD_GObj, bool) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftpickupitem_80094818(gobj: *mut HSD_GObj, flag: bool)  {
+                match unsafe { FTPICKUPITEM_80094818 } {
+                    Some(f) => f(gobj, flag),
+                    None => { unsafe { let _ = melee_fighter::tu::ftpickupitem::ftpickupitem_80094818(gobj as _, flag as _); } return; },
+                }
+            }
+    pub static mut IT_802BDB94: Option<fn(*mut Item_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802BDB94(item: *mut Item_GObj)  {
+                match unsafe { IT_802BDB94 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itpeachparasol::it_802BDB94(item as _); } return; },
+                }
+            }
+    pub static mut IT_802BDBF8: Option<fn(*mut Item_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802BDBF8(item: *mut Item_GObj)  {
+                match unsafe { IT_802BDBF8 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itpeachparasol::it_802BDBF8(item as _); } return; },
+                }
+            }
+    pub static mut IT_802BDC18: Option<fn(*mut Item_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802BDC18(item: *mut Item_GObj)  {
+                match unsafe { IT_802BDC18 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itpeachparasol::it_802BDC18(item as _); } return; },
+                }
+            }
+    pub static mut IT_802BDC38: Option<fn(*mut Item_GObj) -> bool> = None;
+            #[allow(non_snake_case)]
+            pub fn it_802BDC38(item: *mut Item_GObj) -> bool {
+                match unsafe { IT_802BDC38 } {
+                    Some(f) => f(item),
+                    None => { return unsafe { melee_items::tu::itpeachparasol::it_802BDC38(item as _) as _ }; },
+                }
+            }
+    pub static mut FTCO_800CEFE0: Option<fn(*mut HSD_GObj, i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftCo_800CEFE0(gobj: *mut HSD_GObj, arg1: i32)  {
+                match unsafe { FTCO_800CEFE0 } {
+                    Some(f) => f(gobj, arg1),
+                    None => { unsafe { let _ = melee_fighter::tu::ftCo_ItemParasolOpen::ftCo_800CEFE0(gobj as _, arg1 as _); } return; },
+                }
+            }
+    pub static mut FT_80083B68: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn ft_80083B68(gobj: *mut HSD_GObj)  {
+                match unsafe { FT_80083B68 } {
+                    Some(f) => f(gobj),
+                    None => { unsafe { let _ = melee_fighter::tu::ft_081b::ft_80083b68(gobj as _); } return; },
+                }
+            }
     pub use crate::tu::ftcaptainspecialhi::ext::{ftPartSetRotY, FTPARTSETROTY};
 }
 

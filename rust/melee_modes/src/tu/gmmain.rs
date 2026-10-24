@@ -90,7 +90,14 @@ pub mod ext {
         };
     }
     hook!(PADSETSPEC, PADSetSpec, (spec: i32));
-    hook!(HSD_PADINIT, HSD_PadInit, (n: i32, data: *mut HSD_PadData, rumble_n: i32, rumble: *mut HSD_PadRumbleListData));
+    pub static mut HSD_PADINIT: Option<fn(i32, *mut HSD_PadData, i32, *mut HSD_PadRumbleListData) > = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_PadInit(n: i32, data: *mut HSD_PadData, rumble_n: i32, rumble: *mut HSD_PadRumbleListData)  {
+                match unsafe { HSD_PADINIT } {
+                    Some(f) => unsafe { f(n, data, rumble_n, rumble) },
+                    None => { unsafe { let _ = melee_runtime::tu::controller::HSD_PadInit(n as _, data as _, rumble_n as _, rumble as _); } return; },
+                }
+            }
     hook!(HSD_PADLIBDATA, HSD_PadLibData, () -> *mut PadLibData);
     hook!(DVDCONVERTPATHTOENTRYNUM, DVDConvertPathToEntrynum, (path: &str) -> i32);
     hook!(SET_DB_804D6B20, set_db_804D6B20, (v: bool));

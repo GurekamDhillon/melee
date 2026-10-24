@@ -65,7 +65,14 @@ pub mod ext {
     }
     /// `efSync_Spawn(gfx_id, gobj, ...)` (ef/efsync.c, variadic): shared with ftCaptain's TU.
     pub use crate::tu::ftcaptainspecialn::ext::{efSync_Spawn, EFSYNC_SPAWN};
-    hook!(LB_8000B1CC, lb_8000B1CC, (joint: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3));
+    pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *const Vec3, *mut Vec3) > = None;
+            #[allow(non_snake_case)]
+            pub fn lb_8000B1CC(joint: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3)  {
+                match unsafe { LB_8000B1CC } {
+                    Some(f) => f(joint, off, out),
+                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(joint as _, off as _, out as _); } return; },
+                }
+            }
     hook!(FTCOLL_8007B62C, ftColl_8007B62C, (gobj: *mut HSD_GObj, arg: i32));
     hook!(FTCOMMON_8007DA24, ftCommon_8007DA24, (fp: *mut Fighter));
     fn ft_setfx_port(gobj: *mut HSD_GObj) {

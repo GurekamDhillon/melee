@@ -10,8 +10,8 @@ use melee_types::*;
 pub mod ext {
     use crate::tu::ext_fns_c as ext_fns;
     ext_fns! {
-        gm_SetPendingGameMode(mode: u8) = |_| todo!("TODO(port) gm_SetPendingGameMode (gm_1A3F.c)");
-        gm_SetNewGameModePending() = || todo!("TODO(port) gm_SetNewGameModePending (gm_1A3F.c)");
+        gm_SetPendingGameMode(mode: u8) = |mode: u8| { unsafe { let _ = crate::tu::gm_1A3F::gm_SetPendingGameMode(mode as _); } };
+        gm_SetNewGameModePending() = || { unsafe { let _ = crate::tu::gm_1A3F::gm_SetNewGameModePending(); } };
     }
 }
 

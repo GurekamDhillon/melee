@@ -22,7 +22,7 @@ pub mod ext {
     /// grDisplay_801C5DB0 (gr/grdisplay.c): the render callback `Ground_SetupStageCallbacks` installs.
     /// Only its address is used here.
     pub unsafe extern "C" fn grDisplay_801C5DB0(_g: *mut HSD_GObj, _pass: i32) {
-        panic!("TODO(group2: gr/grdisplay.c) grDisplay_801C5DB0")
+        { unsafe { let _ = crate::tu::grdisplay::grDisplay_801C5DB0(_g as _, _pass as _); } return; }
     }
 
     /// The callees of this TU (unported TUs). Each defaults to a TODO panic; a test or the game
@@ -42,18 +42,18 @@ pub mod ext {
         pub Ground_801C4210: unsafe fn(),
         pub Ground_801C42AC: unsafe fn(),
     }
-    unsafe fn todo_grAnime_801C8138(_g: *mut HSD_GObj, _m: i32, _b: i32) { panic!("TODO(group2: gr/granime.c) grAnime_801C8138") }
-    unsafe fn todo_Ground_InitMapColl(_j: *mut HSD_JObj, _m: i32) -> i32 { panic!("TODO(group2: gr/ground.c) Ground_InitMapColl") }
-    unsafe fn todo_Ground_UpdateMapColl(_g: *mut HSD_GObj) -> i32 { panic!("TODO(group2: gr/ground.c) Ground_UpdateMapColl") }
-    unsafe fn todo_lb_800115F4() { panic!("TODO(group1: lb/lb_00F9.c) lb_800115F4") }
+    unsafe fn todo_grAnime_801C8138(_g: *mut HSD_GObj, _m: i32, _b: i32) { { unsafe { let _ = crate::tu::granime::grAnime_801C8138(_g as _, _m as _, _b as _); } return; } }
+    unsafe fn todo_Ground_InitMapColl(_j: *mut HSD_JObj, _m: i32) -> i32 { { return unsafe { crate::tu::ground::Ground_InitMapColl(_j as _, _m as _) as _ }; } }
+    unsafe fn todo_Ground_UpdateMapColl(_g: *mut HSD_GObj) -> i32 { { return unsafe { crate::tu::ground::Ground_UpdateMapColl(_g as _) as _ }; } }
+    unsafe fn todo_lb_800115F4() { { unsafe { let _ = melee_runtime::tu::lb_00F9::lb_800115F4(); } return; } }
     unsafe fn todo_GObj_SetupGXLink(_g: *mut HSD_GObj, _cb: GObj_RenderFunc, _gx: u8, _pri: u32) { panic!("TODO(group1: baselib/gobjgxlink.c) GObj_SetupGXLink") }
     unsafe fn todo_Mex_GrBind(_f: *mut c_void) -> *mut c_void { panic!("TODO(group2: pc/mex Mex_GrBind) Mex_GrBind") }
     unsafe fn todo_HSD_GObj_SetupProc(_g: *mut HSD_GObj, _f: HSD_GObjEvent, _pri: u8) { panic!("TODO(group1: baselib/gobjproc.c) HSD_GObj_SetupProc") }
     unsafe fn todo_stage_info() -> *mut StageInfo { panic!("TODO(group2: gr/stage.c global stage_info) stage_info") }
-    unsafe fn todo_Ground_801C39C0() { panic!("TODO(group2: gr/ground.c) Ground_801C39C0") }
-    unsafe fn todo_Ground_801C3BB4() { panic!("TODO(group2: gr/ground.c) Ground_801C3BB4") }
-    unsafe fn todo_Ground_801C4210() { panic!("TODO(group2: gr/ground.c) Ground_801C4210") }
-    unsafe fn todo_Ground_801C42AC() { panic!("TODO(group2: gr/ground.c) Ground_801C42AC") }
+    unsafe fn todo_Ground_801C39C0() { { unsafe { let _ = crate::tu::ground::Ground_801C39C0(); } return; } }
+    unsafe fn todo_Ground_801C3BB4() { { unsafe { let _ = crate::tu::ground::Ground_801C3BB4(); } return; } }
+    unsafe fn todo_Ground_801C4210() { { unsafe { let _ = crate::tu::ground::Ground_801C4210(); } return; } }
+    unsafe fn todo_Ground_801C42AC() { { unsafe { let _ = crate::tu::ground::Ground_801C42AC(); } return; } }
     impl Hooks {
         pub const fn todo() -> Hooks {
             Hooks {

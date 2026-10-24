@@ -31,7 +31,14 @@ pub mod ext {
     hook!(FTCO_8008D8E8, ftCo_8008D8E8, (f: f32) -> i32);
     hook!(FTCO_SCALEBY154, ftCo_ScaleBy154, (f: f32) -> f32);
     hook!(FTCO_8008DCE0, ftCo_8008DCE0, (gobj: G, a: i32, facing: f32));
-    hook!(FTCO_8008F744, ftCo_8008F744, (gobj: G));
+    pub static mut FTCO_8008F744: Option<fn(G) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftCo_8008F744(gobj: G)  {
+                match unsafe { FTCO_8008F744 } {
+                    Some(f) => f(gobj),
+                    None => { unsafe { let _ = melee_fighter::tu::ftCo_Damage::ftCo_8008F744(gobj as _); } return; },
+                }
+            }
     hook!(FTCO_DAMAGE_PHYS, ftCo_Damage_Phys, (gobj: G));
 }
 

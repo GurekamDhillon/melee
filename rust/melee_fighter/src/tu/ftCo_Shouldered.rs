@@ -32,7 +32,7 @@ macro_rules! ext_fns {
 pub mod ext {
     use super::*;
     ext_fns! {
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftCommon_8007E2FC(g: G) = |g| crate::ftcommon2::ftcommon_8007e2fc(super::fp(g));
         ftCommon_8007E2F4(f: &mut Fighter, v: i16) = crate::ftcommon2::ftcommon_8007e2f4;
         ftCo_800DB464(g: G) = crate::tu::ftCo_CapturePulled::ftCo_800DB464;
@@ -40,7 +40,7 @@ pub mod ext {
         ftCommon_GrabMash(f: &mut Fighter, v: f32) -> bool = crate::ftcommon2::grab_mash;
         ftCo_800DC920(a: G, b: G) = crate::tu::ftCo_CaptureCut::ftCo_800DC920;
         ftParts_GetBoneIndex(f: *mut Fighter, part: i32) -> i32 = |f: *mut Fighter, p| crate::ftdmgfall::ftparts_get_bone_index(unsafe { &*f }, p);
-        lb_8000B1CC(jobj: *mut HSD_JObj, pos0: *const Vec3, out: &mut Vec3) = |_, _, _| todo!("TODO(port) lb_8000B1CC (lb_00B0.c)");
+        lb_8000B1CC(jobj: *mut HSD_JObj, pos0: *const Vec3, out: &mut Vec3) = |jobj: *mut HSD_JObj, pos0: *const Vec3, out: &mut Vec3| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, pos0 as _, out as _); } };
         ftColl_80079C70(f: *mut Fighter, victim: *mut Fighter, hit: *mut HitCapsule, count: i32) -> f32 = |_, _, _, _| todo!("TODO(port) ftColl_80079C70 (ftcoll.c)");
         ftColl_80078710(victim: G, g: G, facing: *mut f32) = |_, _, _| todo!("TODO(port) ftColl_80078710 (ftcoll.c)");
         // TARGET_PC `FT_SCRIPT_DEALT(fp, base)`.
@@ -50,8 +50,8 @@ pub mod ext {
         ScriptGame_HitRulePercentQueue(hit: *mut HitCapsule, victim: *mut Fighter, damage: f32) = |_, _, _| todo!("TODO(pc script) ScriptGame_HitRulePercentQueue");
         Fighter_UnkTakeDamage_8006CC30(f: *mut Fighter, dmg: f32) = |_, _| todo!("TODO(port) Fighter_UnkTakeDamage_8006CC30 (fighter.c)");
         ftCo_Damage_CalcKnockback(f: *mut Fighter) = |_| todo!("TODO(port) ftCo_Damage_CalcKnockback (ftCo_Damage.c)");
-        ftCo_8008E908(g: G, v: f32) = |_, _| todo!("TODO(port) ftCo_8008E908 (ftCo_Damage.c)");
-        ftAnim_SetAnimRate(g: G, rate: f32) = |_, _| todo!("TODO(port) ftAnim_SetAnimRate (ftanim.c)");
+        ftCo_8008E908(g: G, v: f32) = |g: G, v: f32| { unsafe { let _ = crate::tu::ftCo_Damage::ftCo_8008E908(g as _, v as _); } };
+        ftAnim_SetAnimRate(g: G, rate: f32) = |g: G, rate: f32| { unsafe { let _ = crate::tu::ftanim::ftAnim_SetAnimRate(g as _, rate as _); } };
     }
 }
 

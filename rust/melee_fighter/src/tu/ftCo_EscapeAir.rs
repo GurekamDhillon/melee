@@ -41,13 +41,13 @@ pub mod ext {
         ftCommon_8007D9D4(fp: &Fighter) -> f32 = crate::ftcommon3::ftcommon_8007d9d4;
         cosf(x: f32) -> f32 = melee_runtime::gekko::cosf;
         sinf(x: f32) -> f32 = melee_runtime::gekko::sinf;
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
-        ftAnim_8006EBA4(g: G) = |_| todo!("TODO(port) ftAnim_8006EBA4 (ftanim.c)");
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
         ftCommon_8007EBAC(fp: &mut Fighter, a: u32, b: u32) = crate::ftcommon2::ftcommon_8007ebac;
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ftCo_80096900(g: G, a1: i32, a2: i32, ai: i32, mobility: f32, landing_lag: f32) = crate::tu::ftCo_FallSpecial::ftCo_80096900;
-        ftCo_80095328(g: G, b: *mut bool) -> bool = |_, _| todo!("TODO(port) ftCo_80095328 (ftCo_ItemThrow.c)");
-        ftCo_800C3B10(g: G) -> bool = |_| todo!("TODO(port) ftCo_800C3B10 (ftCo_AirCatch.c)");
+        ftCo_80095328(g: G, b: *mut bool) -> bool = |g: G, b: *mut bool| -> bool { unsafe { crate::tu::ftCo_ItemThrow::ftCo_80095328(g as _, b as _) as _ } };
+        ftCo_800C3B10(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftco_aircatch::ftco_800c3b10(g as _) as _ } };
         ft_80084DB0(g: G) = crate::ft084e::ft_80084db0;
         ft_80082C74(g: G, cb: HSD_GObjEvent) = |_, _| todo!("TODO(port) ft_80082C74 (ft_081B.c)");
         ftCo_LandingFallSpecial_Enter(g: G, allow_interrupt: i32, landing_lag: f32) = |_, _, _| todo!("TODO(port) ftCo_LandingFallSpecial_Enter (ftCo_Landing.c)");

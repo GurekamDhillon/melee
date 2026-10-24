@@ -61,11 +61,25 @@ pub mod ext {
     }
     hook_or!(FT_PLAYSFX, ft_PlaySFX, (fp: *mut Fighter, sfx: i32, vol: i32, pan: i32),
         |fp: *mut Fighter, sfx: i32, vol: i32, pan: i32| unsafe { melee_fighter::hooks::play_sfx(&mut *fp, sfx, vol, pan) });
-    hook!(LB_8000B1CC, lb_8000B1CC, (joint: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3));
+    pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *const Vec3, *mut Vec3) > = None;
+            #[allow(non_snake_case)]
+            pub fn lb_8000B1CC(joint: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3)  {
+                match unsafe { LB_8000B1CC } {
+                    Some(f) => f(joint, off, out),
+                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(joint as _, off as _, out as _); } return; },
+                }
+            }
     hook_or!(FTDATA_80085E50, ftData_80085E50, (fp: *mut Fighter, msid: i32) -> *mut FigaTree,
         melee_fighter::tu::ftdata::ftData_80085E50);
     hook!(FTANIM_8006F4C8, ftAnim_8006F4C8, (fp: *mut Fighter, arg1: bool, tree: *mut FigaTree));
-    hook!(FTANIM_80070710, ftAnim_80070710, (jobj: *mut HSD_JObj, frame: f32));
+    pub static mut FTANIM_80070710: Option<fn(*mut HSD_JObj, f32) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftAnim_80070710(jobj: *mut HSD_JObj, frame: f32)  {
+                match unsafe { FTANIM_80070710 } {
+                    Some(f) => f(jobj, frame),
+                    None => { unsafe { let _ = melee_fighter::tu::ftanim::ftAnim_80070710(jobj as _, frame as _); } return; },
+                }
+            }
     hook!(FTANIM_8006FB88, ftAnim_8006FB88, (fp: *mut Fighter, part: Fighter_Part, joint: *mut HSD_Joint));
     hook!(HSD_JOBJANIMALL, HSD_JObjAnimAll, (jobj: *mut HSD_JObj));
     hook!(FTANIM_80070108, ftAnim_80070108, (fp: *mut Fighter, part: Fighter_Part, a: f32, b: f32, joint: *mut HSD_Joint));

@@ -33,167 +33,167 @@ pub fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: GObj_RenderFunc, a2: u8, a3: u32)
 pub static mut HOOK_Ground_801C0498: Option<fn() -> f32> = None;
 /// C `Ground_801C0498` (melee/gr/ground.h).
 pub fn Ground_801C0498() -> f32 {
-    match unsafe { HOOK_Ground_801C0498 } { Some(f) => f(), None => panic!("TODO: Ground_801C0498 is not ported") }
+    match unsafe { HOOK_Ground_801C0498 } { Some(f) => f(), None => { return unsafe { crate::tu::ground::Ground_801C0498() as _ }; } }
 }
 pub static mut HOOK_Ground_801C10B8: Option<fn(*mut HSD_GObj, HSD_GObjEvent)> = None;
 /// C `Ground_801C10B8` (melee/gr/ground.h).
 pub fn Ground_801C10B8(a0: *mut HSD_GObj, a1: HSD_GObjEvent) {
-    match unsafe { HOOK_Ground_801C10B8 } { Some(f) => f(a0, a1), None => panic!("TODO: Ground_801C10B8 is not ported") }
+    match unsafe { HOOK_Ground_801C10B8 } { Some(f) => f(a0, a1), None => { unsafe { let _ = crate::tu::ground::Ground_801C10B8(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_Ground_801C2CF4: Option<fn(i32) -> *mut HSD_JObj> = None;
 /// C `Ground_801C2CF4` (melee/gr/ground.h).
 pub fn Ground_801C2CF4(a0: i32) -> *mut HSD_JObj {
-    match unsafe { HOOK_Ground_801C2CF4 } { Some(f) => f(a0), None => panic!("TODO: Ground_801C2CF4 is not ported") }
+    match unsafe { HOOK_Ground_801C2CF4 } { Some(f) => f(a0), None => { return unsafe { crate::tu::ground::Ground_801C2CF4(a0 as _) as _ }; } }
 }
 pub static mut HOOK_Ground_801C2D0C: Option<fn(i32, *mut HSD_JObj)> = None;
 /// C `Ground_801C2D0C` (melee/gr/ground.h).
 pub fn Ground_801C2D0C(a0: i32, a1: *mut HSD_JObj) {
-    match unsafe { HOOK_Ground_801C2D0C } { Some(f) => f(a0, a1), None => panic!("TODO: Ground_801C2D0C is not ported") }
+    match unsafe { HOOK_Ground_801C2D0C } { Some(f) => f(a0, a1), None => { unsafe { let _ = crate::tu::ground::Ground_801C2D0C(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_Ground_801C2D24: Option<fn(i32, *mut Vec3) -> i32> = None;
 /// C `Ground_801C2D24` (melee/gr/ground.h).
 pub fn Ground_801C2D24(a0: i32, a1: *mut Vec3) -> i32 {
-    match unsafe { HOOK_Ground_801C2D24 } { Some(f) => f(a0, a1), None => panic!("TODO: Ground_801C2D24 is not ported") }
+    match unsafe { HOOK_Ground_801C2D24 } { Some(f) => f(a0, a1), None => { return unsafe { crate::tu::ground::Ground_801C2D24(a0 as _, a1 as _) as _ }; } }
 }
 pub static mut HOOK_Ground_801C32AC: Option<fn(i32)> = None;
 /// C `Ground_801C32AC` (melee/gr/ground.h).
 pub fn Ground_801C32AC(a0: i32) {
-    match unsafe { HOOK_Ground_801C32AC } { Some(f) => f(a0), None => panic!("TODO: Ground_801C32AC is not ported") }
+    match unsafe { HOOK_Ground_801C32AC } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::ground::Ground_801C32AC(a0 as _); } return; } }
 }
 pub static mut HOOK_Ground_801C32D4: Option<fn(i32, i32) -> i32> = None;
 /// C `Ground_801C32D4` (melee/gr/ground.h).
 pub fn Ground_801C32D4(a0: i32, a1: i32) -> i32 {
-    match unsafe { HOOK_Ground_801C32D4 } { Some(f) => f(a0, a1), None => panic!("TODO: Ground_801C32D4 is not ported") }
+    match unsafe { HOOK_Ground_801C32D4 } { Some(f) => f(a0, a1), None => { return unsafe { crate::tu::ground::Ground_801C32D4(a0 as _, a1 as _) as _ }; } }
 }
 pub static mut HOOK_Ground_801C3880: Option<fn(f32)> = None;
 /// C `Ground_801C3880` (melee/gr/ground.h).
 pub fn Ground_801C3880(a0: f32) {
-    match unsafe { HOOK_Ground_801C3880 } { Some(f) => f(a0), None => panic!("TODO: Ground_801C3880 is not ported") }
+    match unsafe { HOOK_Ground_801C3880 } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::ground::Ground_801C3880(a0 as _); } return; } }
 }
 pub static mut HOOK_Ground_801C3890: Option<fn(f32)> = None;
 /// C `Ground_801C3890` (melee/gr/ground.h).
 pub fn Ground_801C3890(a0: f32) {
-    match unsafe { HOOK_Ground_801C3890 } { Some(f) => f(a0), None => panic!("TODO: Ground_801C3890 is not ported") }
+    match unsafe { HOOK_Ground_801C3890 } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::ground::Ground_801C3890(a0 as _); } return; } }
 }
 pub static mut HOOK_Ground_801C38A0: Option<fn(f32)> = None;
 /// C `Ground_801C38A0` (melee/gr/ground.h).
 pub fn Ground_801C38A0(a0: f32) {
-    match unsafe { HOOK_Ground_801C38A0 } { Some(f) => f(a0), None => panic!("TODO: Ground_801C38A0 is not ported") }
+    match unsafe { HOOK_Ground_801C38A0 } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::ground::Ground_801C38A0(a0 as _); } return; } }
 }
 pub static mut HOOK_Ground_801C38AC: Option<fn(f32)> = None;
 /// C `Ground_801C38AC` (melee/gr/ground.h).
 pub fn Ground_801C38AC(a0: f32) {
-    match unsafe { HOOK_Ground_801C38AC } { Some(f) => f(a0), None => panic!("TODO: Ground_801C38AC is not ported") }
+    match unsafe { HOOK_Ground_801C38AC } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::ground::Ground_801C38AC(a0 as _); } return; } }
 }
 pub static mut HOOK_Ground_801C38BC: Option<fn(f32, f32)> = None;
 /// C `Ground_801C38BC` (melee/gr/ground.h).
 pub fn Ground_801C38BC(a0: f32, a1: f32) {
-    match unsafe { HOOK_Ground_801C38BC } { Some(f) => f(a0, a1), None => panic!("TODO: Ground_801C38BC is not ported") }
+    match unsafe { HOOK_Ground_801C38BC } { Some(f) => f(a0, a1), None => { unsafe { let _ = crate::tu::ground::Ground_801C38BC(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_Ground_801C39C0: Option<fn()> = None;
 /// C `Ground_801C39C0` (melee/gr/ground.h).
 pub fn Ground_801C39C0() {
-    match unsafe { HOOK_Ground_801C39C0 } { Some(f) => f(), None => panic!("TODO: Ground_801C39C0 is not ported") }
+    match unsafe { HOOK_Ground_801C39C0 } { Some(f) => f(), None => { unsafe { let _ = crate::tu::ground::Ground_801C39C0(); } return; } }
 }
 pub static mut HOOK_Ground_801C3BB4: Option<fn()> = None;
 /// C `Ground_801C3BB4` (melee/gr/ground.h).
 pub fn Ground_801C3BB4() {
-    match unsafe { HOOK_Ground_801C3BB4 } { Some(f) => f(), None => panic!("TODO: Ground_801C3BB4 is not ported") }
+    match unsafe { HOOK_Ground_801C3BB4 } { Some(f) => f(), None => { unsafe { let _ = crate::tu::ground::Ground_801C3BB4(); } return; } }
 }
 pub static mut HOOK_Ground_801C3D44: Option<fn(*mut core::ffi::c_void, f32, f32) -> i32> = None;
 /// C `Ground_801C3D44` (melee/gr/ground.h).
 pub fn Ground_801C3D44(a0: *mut core::ffi::c_void, a1: f32, a2: f32) -> i32 {
-    match unsafe { HOOK_Ground_801C3D44 } { Some(f) => f(a0, a1, a2), None => panic!("TODO: Ground_801C3D44 is not ported") }
+    match unsafe { HOOK_Ground_801C3D44 } { Some(f) => f(a0, a1, a2), None => { return unsafe { crate::tu::ground::Ground_801C3D44(a0 as _, a1 as _, a2 as _) as _ }; } }
 }
 pub static mut HOOK_Ground_801C3DB4: Option<fn(*mut core::ffi::c_void, f32, f32) -> i32> = None;
 /// C `Ground_801C3DB4` (melee/gr/ground.h).
 pub fn Ground_801C3DB4(a0: *mut core::ffi::c_void, a1: f32, a2: f32) -> i32 {
-    match unsafe { HOOK_Ground_801C3DB4 } { Some(f) => f(a0, a1, a2), None => panic!("TODO: Ground_801C3DB4 is not ported") }
+    match unsafe { HOOK_Ground_801C3DB4 } { Some(f) => f(a0, a1, a2), None => { return unsafe { crate::tu::ground::Ground_801C3DB4(a0 as _, a1 as _, a2 as _) as _ }; } }
 }
 pub static mut HOOK_Ground_801C3FA4: Option<fn(*mut HSD_GObj, i32) -> *mut HSD_JObj> = None;
 /// C `Ground_801C3FA4` (melee/gr/ground.h).
 pub fn Ground_801C3FA4(a0: *mut HSD_GObj, a1: i32) -> *mut HSD_JObj {
-    match unsafe { HOOK_Ground_801C3FA4 } { Some(f) => f(a0, a1), None => panic!("TODO: Ground_801C3FA4 is not ported") }
+    match unsafe { HOOK_Ground_801C3FA4 } { Some(f) => f(a0, a1), None => { return unsafe { crate::tu::ground::Ground_801C3FA4(a0 as _, a1 as _) as _ }; } }
 }
 pub static mut HOOK_Ground_801C4210: Option<fn() -> i32> = None;
 /// C `Ground_801C4210` (melee/gr/ground.h).
 pub fn Ground_801C4210() -> i32 {
-    match unsafe { HOOK_Ground_801C4210 } { Some(f) => f(), None => panic!("TODO: Ground_801C4210 is not ported") }
+    match unsafe { HOOK_Ground_801C4210 } { Some(f) => f(), None => { return unsafe { crate::tu::ground::Ground_801C4210() as _ }; } }
 }
 pub static mut HOOK_Ground_801C42AC: Option<fn()> = None;
 /// C `Ground_801C42AC` (melee/gr/ground.h).
 pub fn Ground_801C42AC() {
-    match unsafe { HOOK_Ground_801C42AC } { Some(f) => f(), None => panic!("TODO: Ground_801C42AC is not ported") }
+    match unsafe { HOOK_Ground_801C42AC } { Some(f) => f(), None => { unsafe { let _ = crate::tu::ground::Ground_801C42AC(); } return; } }
 }
 pub static mut HOOK_Ground_801C4A08: Option<fn(*mut HSD_GObj)> = None;
 /// C `Ground_801C4A08` (melee/gr/ground.h).
 pub fn Ground_801C4A08(a0: *mut HSD_GObj) {
-    match unsafe { HOOK_Ground_801C4A08 } { Some(f) => f(a0), None => panic!("TODO: Ground_801C4A08 is not ported") }
+    match unsafe { HOOK_Ground_801C4A08 } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::ground::Ground_801C4A08(a0 as _); } return; } }
 }
 pub static mut HOOK_Ground_801C5740: Option<fn(i32)> = None;
 /// C `Ground_801C5740` (melee/gr/ground.h).
 pub fn Ground_801C5740(a0: i32) {
-    match unsafe { HOOK_Ground_801C5740 } { Some(f) => f(a0), None => panic!("TODO: Ground_801C5740 is not ported") }
+    match unsafe { HOOK_Ground_801C5740 } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::ground::Ground_801C5740(a0 as _); } return; } }
 }
 pub static mut HOOK_Ground_801C5750: Option<fn()> = None;
 /// C `Ground_801C5750` (melee/gr/ground.h).
 pub fn Ground_801C5750() {
-    match unsafe { HOOK_Ground_801C5750 } { Some(f) => f(), None => panic!("TODO: Ground_801C5750 is not ported") }
+    match unsafe { HOOK_Ground_801C5750 } { Some(f) => f(), None => { unsafe { let _ = crate::tu::ground::Ground_801C5750(); } return; } }
 }
 pub static mut HOOK_Ground_801C5764: Option<fn() -> i32> = None;
 /// C `Ground_801C5764` (melee/gr/ground.h).
 pub fn Ground_801C5764() -> i32 {
-    match unsafe { HOOK_Ground_801C5764 } { Some(f) => f(), None => panic!("TODO: Ground_801C5764 is not ported") }
+    match unsafe { HOOK_Ground_801C5764 } { Some(f) => f(), None => { return unsafe { crate::tu::ground::Ground_801C5764() as _ }; } }
 }
 pub static mut HOOK_Ground_801C5840: Option<fn() -> i32> = None;
 /// C `Ground_801C5840` (melee/gr/ground.h).
 pub fn Ground_801C5840() -> i32 {
-    match unsafe { HOOK_Ground_801C5840 } { Some(f) => f(), None => panic!("TODO: Ground_801C5840 is not ported") }
+    match unsafe { HOOK_Ground_801C5840 } { Some(f) => f(), None => { return unsafe { crate::tu::ground::Ground_801C5840() as _ }; } }
 }
 pub static mut HOOK_Ground_801C5940: Option<fn() -> i32> = None;
 /// C `Ground_801C5940` (melee/gr/ground.h).
 pub fn Ground_801C5940() -> i32 {
-    match unsafe { HOOK_Ground_801C5940 } { Some(f) => f(), None => panic!("TODO: Ground_801C5940 is not ported") }
+    match unsafe { HOOK_Ground_801C5940 } { Some(f) => f(), None => { return unsafe { crate::tu::ground::Ground_801C5940() as _ }; } }
 }
 pub static mut HOOK_Ground_GetMapGObj: Option<fn(i32) -> *mut Ground_GObj> = None;
 /// C `Ground_GetMapGObj` (melee/gr/ground.h).
 pub fn Ground_GetMapGObj(a0: i32) -> *mut Ground_GObj {
-    match unsafe { HOOK_Ground_GetMapGObj } { Some(f) => f(a0), None => panic!("TODO: Ground_GetMapGObj is not ported") }
+    match unsafe { HOOK_Ground_GetMapGObj } { Some(f) => f(a0), None => { return unsafe { crate::tu::ground::Ground_GetMapGObj(a0 as _) as _ }; } }
 }
 pub static mut HOOK_Ground_GetP1Fighter: Option<fn() -> *mut Fighter_GObj> = None;
 /// C `Ground_GetP1Fighter` (melee/gr/ground.h).
 pub fn Ground_GetP1Fighter() -> *mut Fighter_GObj {
-    match unsafe { HOOK_Ground_GetP1Fighter } { Some(f) => f(), None => panic!("TODO: Ground_GetP1Fighter is not ported") }
+    match unsafe { HOOK_Ground_GetP1Fighter } { Some(f) => f(), None => { return unsafe { crate::tu::ground::Ground_GetP1Fighter() as _ }; } }
 }
 pub static mut HOOK_Ground_GetStageGObj: Option<fn(i32) -> *mut Ground_GObj> = None;
 /// C `Ground_GetStageGObj` (melee/gr/ground.h).
 pub fn Ground_GetStageGObj(a0: i32) -> *mut Ground_GObj {
-    match unsafe { HOOK_Ground_GetStageGObj } { Some(f) => f(a0), None => panic!("TODO: Ground_GetStageGObj is not ported") }
+    match unsafe { HOOK_Ground_GetStageGObj } { Some(f) => f(a0), None => { return unsafe { crate::tu::ground::Ground_GetStageGObj(a0 as _) as _ }; } }
 }
 pub static mut HOOK_Ground_GetYakumonoParam: Option<fn() -> *mut core::ffi::c_void> = None;
 /// C `Ground_GetYakumonoParam` (melee/gr/ground.h).
 pub fn Ground_GetYakumonoParam() -> *mut core::ffi::c_void {
-    match unsafe { HOOK_Ground_GetYakumonoParam } { Some(f) => f(), None => panic!("TODO: Ground_GetYakumonoParam is not ported") }
+    match unsafe { HOOK_Ground_GetYakumonoParam } { Some(f) => f(), None => { return unsafe { crate::tu::ground::Ground_GetYakumonoParam() as _ }; } }
 }
 pub static mut HOOK_Ground_InitMapColl: Option<fn(*mut HSD_JObj, i32) -> i32> = None;
 /// C `Ground_InitMapColl` (melee/gr/ground.h).
 pub fn Ground_InitMapColl(a0: *mut HSD_JObj, a1: i32) -> i32 {
-    match unsafe { HOOK_Ground_InitMapColl } { Some(f) => f(a0, a1), None => panic!("TODO: Ground_InitMapColl is not ported") }
+    match unsafe { HOOK_Ground_InitMapColl } { Some(f) => f(a0, a1), None => { return unsafe { crate::tu::ground::Ground_InitMapColl(a0 as _, a1 as _) as _ }; } }
 }
 pub static mut HOOK_Ground_UpdateMapColl: Option<fn(*mut Ground_GObj) -> i32> = None;
 /// C `Ground_UpdateMapColl` (melee/gr/ground.h).
 pub fn Ground_UpdateMapColl(a0: *mut Ground_GObj) -> i32 {
-    match unsafe { HOOK_Ground_UpdateMapColl } { Some(f) => f(a0), None => panic!("TODO: Ground_UpdateMapColl is not ported") }
+    match unsafe { HOOK_Ground_UpdateMapColl } { Some(f) => f(a0), None => { return unsafe { crate::tu::ground::Ground_UpdateMapColl(a0 as _) as _ }; } }
 }
 pub static mut HOOK_HSD_AObjSetFlags: Option<fn(*mut HSD_AObj, u32)> = None;
 /// C `HSD_AObjSetFlags` (sysdolphin/baselib/aobj.h); referenced as a function value, so it is `extern "C"`.
 pub unsafe extern "C" fn HSD_AObjSetFlags(a0: *mut HSD_AObj, a1: u32) {
-    match HOOK_HSD_AObjSetFlags { Some(f) => f(a0, a1), None => panic!("TODO: HSD_AObjSetFlags is not ported") }
+    match HOOK_HSD_AObjSetFlags { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjSetFlags(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_HSD_ArchiveGetPublicAddress: Option<fn(*mut HSD_Archive, *const core::ffi::c_char) -> *mut core::ffi::c_void> = None;
 /// C `HSD_ArchiveGetPublicAddress` (sysdolphin/baselib/archive.h).
 pub fn HSD_ArchiveGetPublicAddress(a0: *mut HSD_Archive, a1: *const core::ffi::c_char) -> *mut core::ffi::c_void {
-    match unsafe { HOOK_HSD_ArchiveGetPublicAddress } { Some(f) => f(a0, a1), None => panic!("TODO: HSD_ArchiveGetPublicAddress is not ported") }
+    match unsafe { HOOK_HSD_ArchiveGetPublicAddress } { Some(f) => f(a0, a1), None => { return unsafe { melee_runtime::tu::archive::HSD_ArchiveGetPublicAddress(a0 as _, a1 as _) as _ }; } }
 }
 pub static mut HOOK_HSD_DObjClearFlags: Option<fn(*mut HSD_DObj, u32)> = None;
 /// C `HSD_DObjClearFlags` (sysdolphin/baselib/dobj.h); referenced as a function value, so it is `extern "C"`.
@@ -298,7 +298,7 @@ pub fn HSD_LObjSetSpot(a0: *mut HSD_LObj, a1: f32, a2: i32) {
 pub static mut HOOK_HSD_MemAlloc: Option<fn(i32) -> *mut core::ffi::c_void> = None;
 /// C `HSD_MemAlloc` (sysdolphin/baselib/memory.h).
 pub fn HSD_MemAlloc(a0: i32) -> *mut core::ffi::c_void {
-    match unsafe { HOOK_HSD_MemAlloc } { Some(f) => f(a0), None => panic!("TODO: HSD_MemAlloc is not ported") }
+    match unsafe { HOOK_HSD_MemAlloc } { Some(f) => f(a0), None => { return unsafe { melee_runtime::tu::memory::HSD_MemAlloc(a0 as _) as _ }; } }
 }
 pub static mut HOOK_HSD_Randf: Option<fn() -> f32> = None;
 /// C `HSD_Randf` (sysdolphin/baselib/random.h).
@@ -346,47 +346,47 @@ pub fn Player_GetEntityAtIndex(a0: i32, a1: i32) -> *mut HSD_GObj {
 pub static mut HOOK_Stage_GetBlastZoneBottomOffset: Option<fn() -> f32> = None;
 /// C `Stage_GetBlastZoneBottomOffset` (melee/gr/stage.h).
 pub fn Stage_GetBlastZoneBottomOffset() -> f32 {
-    match unsafe { HOOK_Stage_GetBlastZoneBottomOffset } { Some(f) => f(), None => panic!("TODO: Stage_GetBlastZoneBottomOffset is not ported") }
+    match unsafe { HOOK_Stage_GetBlastZoneBottomOffset } { Some(f) => f(), None => { return unsafe { crate::tu::stage::Stage_GetBlastZoneBottomOffset() as _ }; } }
 }
 pub static mut HOOK_Stage_GetBlastZoneLeftOffset: Option<fn() -> f32> = None;
 /// C `Stage_GetBlastZoneLeftOffset` (melee/gr/stage.h).
 pub fn Stage_GetBlastZoneLeftOffset() -> f32 {
-    match unsafe { HOOK_Stage_GetBlastZoneLeftOffset } { Some(f) => f(), None => panic!("TODO: Stage_GetBlastZoneLeftOffset is not ported") }
+    match unsafe { HOOK_Stage_GetBlastZoneLeftOffset } { Some(f) => f(), None => { return unsafe { crate::tu::stage::Stage_GetBlastZoneLeftOffset() as _ }; } }
 }
 pub static mut HOOK_Stage_GetBlastZoneRightOffset: Option<fn() -> f32> = None;
 /// C `Stage_GetBlastZoneRightOffset` (melee/gr/stage.h).
 pub fn Stage_GetBlastZoneRightOffset() -> f32 {
-    match unsafe { HOOK_Stage_GetBlastZoneRightOffset } { Some(f) => f(), None => panic!("TODO: Stage_GetBlastZoneRightOffset is not ported") }
+    match unsafe { HOOK_Stage_GetBlastZoneRightOffset } { Some(f) => f(), None => { return unsafe { crate::tu::stage::Stage_GetBlastZoneRightOffset() as _ }; } }
 }
 pub static mut HOOK_Stage_GetBlastZoneTopOffset: Option<fn() -> f32> = None;
 /// C `Stage_GetBlastZoneTopOffset` (melee/gr/stage.h).
 pub fn Stage_GetBlastZoneTopOffset() -> f32 {
-    match unsafe { HOOK_Stage_GetBlastZoneTopOffset } { Some(f) => f(), None => panic!("TODO: Stage_GetBlastZoneTopOffset is not ported") }
+    match unsafe { HOOK_Stage_GetBlastZoneTopOffset } { Some(f) => f(), None => { return unsafe { crate::tu::stage::Stage_GetBlastZoneTopOffset() as _ }; } }
 }
 pub static mut HOOK_Stage_GetCamBoundsBottomOffset: Option<fn() -> f32> = None;
 /// C `Stage_GetCamBoundsBottomOffset` (melee/gr/stage.h).
 pub fn Stage_GetCamBoundsBottomOffset() -> f32 {
-    match unsafe { HOOK_Stage_GetCamBoundsBottomOffset } { Some(f) => f(), None => panic!("TODO: Stage_GetCamBoundsBottomOffset is not ported") }
+    match unsafe { HOOK_Stage_GetCamBoundsBottomOffset } { Some(f) => f(), None => { return unsafe { crate::tu::stage::Stage_GetCamBoundsBottomOffset() as _ }; } }
 }
 pub static mut HOOK_Stage_GetCamBoundsLeftOffset: Option<fn() -> f32> = None;
 /// C `Stage_GetCamBoundsLeftOffset` (melee/gr/stage.h).
 pub fn Stage_GetCamBoundsLeftOffset() -> f32 {
-    match unsafe { HOOK_Stage_GetCamBoundsLeftOffset } { Some(f) => f(), None => panic!("TODO: Stage_GetCamBoundsLeftOffset is not ported") }
+    match unsafe { HOOK_Stage_GetCamBoundsLeftOffset } { Some(f) => f(), None => { return unsafe { crate::tu::stage::Stage_GetCamBoundsLeftOffset() as _ }; } }
 }
 pub static mut HOOK_Stage_GetCamBoundsRightOffset: Option<fn() -> f32> = None;
 /// C `Stage_GetCamBoundsRightOffset` (melee/gr/stage.h).
 pub fn Stage_GetCamBoundsRightOffset() -> f32 {
-    match unsafe { HOOK_Stage_GetCamBoundsRightOffset } { Some(f) => f(), None => panic!("TODO: Stage_GetCamBoundsRightOffset is not ported") }
+    match unsafe { HOOK_Stage_GetCamBoundsRightOffset } { Some(f) => f(), None => { return unsafe { crate::tu::stage::Stage_GetCamBoundsRightOffset() as _ }; } }
 }
 pub static mut HOOK_Stage_GetCamBoundsTopOffset: Option<fn() -> f32> = None;
 /// C `Stage_GetCamBoundsTopOffset` (melee/gr/stage.h).
 pub fn Stage_GetCamBoundsTopOffset() -> f32 {
-    match unsafe { HOOK_Stage_GetCamBoundsTopOffset } { Some(f) => f(), None => panic!("TODO: Stage_GetCamBoundsTopOffset is not ported") }
+    match unsafe { HOOK_Stage_GetCamBoundsTopOffset } { Some(f) => f(), None => { return unsafe { crate::tu::stage::Stage_GetCamBoundsTopOffset() as _ }; } }
 }
 pub static mut HOOK_Stage_UnkSetVec3TCam_Offset: Option<fn(*mut Vec3)> = None;
 /// C `Stage_UnkSetVec3TCam_Offset` (melee/gr/stage.h).
 pub fn Stage_UnkSetVec3TCam_Offset(a0: *mut Vec3) {
-    match unsafe { HOOK_Stage_UnkSetVec3TCam_Offset } { Some(f) => f(a0), None => panic!("TODO: Stage_UnkSetVec3TCam_Offset is not ported") }
+    match unsafe { HOOK_Stage_UnkSetVec3TCam_Offset } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::stage::Stage_UnkSetVec3TCam_Offset(a0 as _); } return; } }
 }
 pub static mut HOOK_efSync_Spawn: Option<fn(i32, *mut HSD_GObj, *mut HSD_JObj, *mut f32) -> *mut core::ffi::c_void> = None;
 /// C `efSync_Spawn(gfx_id, gobj, ...)` (melee/ef/efsync.h) is variadic; grshrineroute.c passes the joint
@@ -453,82 +453,82 @@ pub fn grAnime_801C752C(jobj: *mut HSD_JObj, a: i32, b: i32, f: *mut core::ffi::
 pub static mut HOOK_grAnime_801C7A04: Option<fn(*mut HSD_GObj, i32, u32, f32)> = None;
 /// C `grAnime_801C7A04` (melee/gr/granime.h).
 pub fn grAnime_801C7A04(a0: *mut HSD_GObj, a1: i32, a2: u32, a3: f32) {
-    match unsafe { HOOK_grAnime_801C7A04 } { Some(f) => f(a0, a1, a2, a3), None => panic!("TODO: grAnime_801C7A04 is not ported") }
+    match unsafe { HOOK_grAnime_801C7A04 } { Some(f) => f(a0, a1, a2, a3), None => { unsafe { let _ = crate::tu::granime::grAnime_801C7A04(a0 as _, a1 as _, a2 as _, a3 as _); } return; } }
 }
 pub static mut HOOK_grAnime_801C7A94: Option<fn(*mut HSD_GObj, i32, u32, f32)> = None;
 /// C `grAnime_801C7A94` (melee/gr/granime.h).
 pub fn grAnime_801C7A94(a0: *mut HSD_GObj, a1: i32, a2: u32, a3: f32) {
-    match unsafe { HOOK_grAnime_801C7A94 } { Some(f) => f(a0, a1, a2, a3), None => panic!("TODO: grAnime_801C7A94 is not ported") }
+    match unsafe { HOOK_grAnime_801C7A94 } { Some(f) => f(a0, a1, a2, a3), None => { unsafe { let _ = crate::tu::granime::grAnime_801C7A94(a0 as _, a1 as _, a2 as _, a3 as _); } return; } }
 }
 pub static mut HOOK_grAnime_801C7BA0: Option<fn(*mut HSD_GObj, i32, u32, f32)> = None;
 /// C `grAnime_801C7BA0` (melee/gr/granime.h).
 pub fn grAnime_801C7BA0(a0: *mut HSD_GObj, a1: i32, a2: u32, a3: f32) {
-    match unsafe { HOOK_grAnime_801C7BA0 } { Some(f) => f(a0, a1, a2, a3), None => panic!("TODO: grAnime_801C7BA0 is not ported") }
+    match unsafe { HOOK_grAnime_801C7BA0 } { Some(f) => f(a0, a1, a2, a3), None => { unsafe { let _ = crate::tu::granime::grAnime_801C7BA0(a0 as _, a1 as _, a2 as _, a3 as _); } return; } }
 }
 pub static mut HOOK_grAnime_801C7FF8: Option<fn(*mut HSD_GObj, i32, i32, i32, f32, f32)> = None;
 /// C `grAnime_801C7FF8` (melee/gr/granime.h).
 pub fn grAnime_801C7FF8(a0: *mut HSD_GObj, a1: i32, a2: i32, a3: i32, a4: f32, a5: f32) {
-    match unsafe { HOOK_grAnime_801C7FF8 } { Some(f) => f(a0, a1, a2, a3, a4, a5), None => panic!("TODO: grAnime_801C7FF8 is not ported") }
+    match unsafe { HOOK_grAnime_801C7FF8 } { Some(f) => f(a0, a1, a2, a3, a4, a5), None => { unsafe { let _ = crate::tu::granime::grAnime_801C7FF8(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _); } return; } }
 }
 pub static mut HOOK_grAnime_801C8098: Option<fn(*mut HSD_GObj, i32, i32, i32, f32, f32)> = None;
 /// C `grAnime_801C8098` (melee/gr/granime.h).
 pub fn grAnime_801C8098(a0: *mut HSD_GObj, a1: i32, a2: i32, a3: i32, a4: f32, a5: f32) {
-    match unsafe { HOOK_grAnime_801C8098 } { Some(f) => f(a0, a1, a2, a3, a4, a5), None => panic!("TODO: grAnime_801C8098 is not ported") }
+    match unsafe { HOOK_grAnime_801C8098 } { Some(f) => f(a0, a1, a2, a3, a4, a5), None => { unsafe { let _ = crate::tu::granime::grAnime_801C8098(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _); } return; } }
 }
 pub static mut HOOK_grAnime_801C8138: Option<fn(*mut HSD_GObj, i32, i32)> = None;
 /// C `grAnime_801C8138` (melee/gr/granime.h).
 pub fn grAnime_801C8138(a0: *mut HSD_GObj, a1: i32, a2: i32) {
-    match unsafe { HOOK_grAnime_801C8138 } { Some(f) => f(a0, a1, a2), None => panic!("TODO: grAnime_801C8138 is not ported") }
+    match unsafe { HOOK_grAnime_801C8138 } { Some(f) => f(a0, a1, a2), None => { unsafe { let _ = crate::tu::granime::grAnime_801C8138(a0 as _, a1 as _, a2 as _); } return; } }
 }
 pub static mut HOOK_grAnime_801C83D0: Option<fn(*mut HSD_GObj, i32, i32) -> i32> = None;
 /// C `grAnime_801C83D0` (melee/gr/granime.h).
 pub fn grAnime_801C83D0(a0: *mut HSD_GObj, a1: i32, a2: i32) -> i32 {
-    match unsafe { HOOK_grAnime_801C83D0 } { Some(f) => f(a0, a1, a2), None => panic!("TODO: grAnime_801C83D0 is not ported") }
+    match unsafe { HOOK_grAnime_801C83D0 } { Some(f) => f(a0, a1, a2), None => { return unsafe { crate::tu::granime::grAnime_801C83D0(a0 as _, a1 as _, a2 as _) as _ }; } }
 }
 pub static mut HOOK_grDatFiles_GetArchive: Option<fn() -> *mut UnkArchiveStruct> = None;
 /// C `grDatFiles_GetArchive` (melee/gr/grdatfiles.h).
 pub fn grDatFiles_GetArchive() -> *mut UnkArchiveStruct {
-    match unsafe { HOOK_grDatFiles_GetArchive } { Some(f) => f(), None => panic!("TODO: grDatFiles_GetArchive is not ported") }
+    match unsafe { HOOK_grDatFiles_GetArchive } { Some(f) => f(), None => { return unsafe { crate::tu::grdatfiles::grDatFiles_GetArchive() as _ }; } }
 }
 pub static mut HOOK_grDisplay_801C5DB0: Option<fn(*mut HSD_GObj, i32)> = None;
 /// C `grDisplay_801C5DB0` (melee/gr/grdisplay.h); referenced as a function value, so it is `extern "C"`.
 pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: i32) {
-    match HOOK_grDisplay_801C5DB0 { Some(f) => f(a0, a1), None => panic!("TODO: grDisplay_801C5DB0 is not ported") }
+    match HOOK_grDisplay_801C5DB0 { Some(f) => f(a0, a1), None => { unsafe { let _ = crate::tu::grdisplay::grDisplay_801C5DB0(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_grLib_801C96E8: Option<fn(*mut HSD_GObj) -> i32> = None;
 /// C `grLib_801C96E8` (melee/gr/grlib.h).
 pub fn grLib_801C96E8(a0: *mut HSD_GObj) -> i32 {
-    match unsafe { HOOK_grLib_801C96E8 } { Some(f) => f(a0), None => panic!("TODO: grLib_801C96E8 is not ported") }
+    match unsafe { HOOK_grLib_801C96E8 } { Some(f) => f(a0), None => { return unsafe { crate::tu::grlib::grLib_801C96E8(a0 as _) as _ }; } }
 }
 pub static mut HOOK_grLib_801C97DC: Option<fn(i32, i32, *mut HSD_JObj)> = None;
 /// C `grLib_801C97DC` (melee/gr/grlib.h).
 pub fn grLib_801C97DC(a0: i32, a1: i32, a2: *mut HSD_JObj) {
-    match unsafe { HOOK_grLib_801C97DC } { Some(f) => f(a0, a1, a2), None => panic!("TODO: grLib_801C97DC is not ported") }
+    match unsafe { HOOK_grLib_801C97DC } { Some(f) => f(a0, a1, a2), None => { unsafe { let _ = crate::tu::grlib::grLib_801C97DC(a0 as _, a1 as _, a2 as _); } return; } }
 }
 pub static mut HOOK_grLib_801C9908: Option<fn(*mut HSD_JObj)> = None;
 /// C `grLib_801C9908` (melee/gr/grlib.h).
 pub fn grLib_801C9908(a0: *mut HSD_JObj) {
-    match unsafe { HOOK_grLib_801C9908 } { Some(f) => f(a0), None => panic!("TODO: grLib_801C9908 is not ported") }
+    match unsafe { HOOK_grLib_801C9908 } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::grlib::grLib_801C9908(a0 as _); } return; } }
 }
 pub static mut HOOK_grLib_801C9B20: Option<fn(*mut HSD_JObj, *mut DynamicsDesc, *mut DynamicsDesc)> = None;
 /// C `grLib_801C9B20` (melee/gr/grlib.h).
 pub fn grLib_801C9B20(a0: *mut HSD_JObj, a1: *mut DynamicsDesc, a2: *mut DynamicsDesc) {
-    match unsafe { HOOK_grLib_801C9B20 } { Some(f) => f(a0, a1, a2), None => panic!("TODO: grLib_801C9B20 is not ported") }
+    match unsafe { HOOK_grLib_801C9B20 } { Some(f) => f(a0, a1, a2), None => { unsafe { let _ = crate::tu::grlib::grLib_801C9B20(a0 as _, a1 as _, a2 as _); } return; } }
 }
 pub static mut HOOK_grLib_801C9B8C: Option<fn(*mut core::ffi::c_void)> = None;
 /// C `grLib_801C9B8C` (melee/gr/grlib.h).
 pub fn grLib_801C9B8C(a0: *mut core::ffi::c_void) {
-    match unsafe { HOOK_grLib_801C9B8C } { Some(f) => f(a0), None => panic!("TODO: grLib_801C9B8C is not ported") }
+    match unsafe { HOOK_grLib_801C9B8C } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::grlib::grLib_801C9B8C(a0 as _); } return; } }
 }
 pub static mut HOOK_grMaterial_801C8858: Option<fn(*mut HSD_JObj, u32)> = None;
 /// C `grMaterial_801C8858` (melee/gr/grmaterial.h).
 pub fn grMaterial_801C8858(a0: *mut HSD_JObj, a1: u32) {
-    match unsafe { HOOK_grMaterial_801C8858 } { Some(f) => f(a0, a1), None => panic!("TODO: grMaterial_801C8858 is not ported") }
+    match unsafe { HOOK_grMaterial_801C8858 } { Some(f) => f(a0, a1), None => { unsafe { let _ = crate::tu::grmaterial::grMaterial_801C8858(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_grMaterial_801C94D8: Option<fn(*mut core::ffi::c_void)> = None;
 /// C `grMaterial_801C94D8` (melee/gr/grmaterial.h).
 pub fn grMaterial_801C94D8(a0: *mut core::ffi::c_void) {
-    match unsafe { HOOK_grMaterial_801C94D8 } { Some(f) => f(a0), None => panic!("TODO: grMaterial_801C94D8 is not ported") }
+    match unsafe { HOOK_grMaterial_801C94D8 } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::grmaterial::grMaterial_801C94D8(a0 as _); } return; } }
 }
 pub static mut HOOK_grMaterial_801C9604: Option<fn(*mut HSD_GObj, *mut core::ffi::c_void, i32)> = None;
 /// C `grMaterial_801C9604` (melee/gr/grmaterial.h).
@@ -538,22 +538,22 @@ pub fn grMaterial_801C9604(a0: *mut HSD_GObj, a1: *mut core::ffi::c_void, a2: i3
 pub static mut HOOK_grZakoGenerator_801CAE04: Option<fn(*mut grZakoGenerator_SpawnDesc) -> *mut HSD_GObj> = None;
 /// C `grZakoGenerator_801CAE04` (melee/gr/grzakogenerator.h).
 pub fn grZakoGenerator_801CAE04(a0: *mut grZakoGenerator_SpawnDesc) -> *mut HSD_GObj {
-    match unsafe { HOOK_grZakoGenerator_801CAE04 } { Some(f) => f(a0), None => panic!("TODO: grZakoGenerator_801CAE04 is not ported") }
+    match unsafe { HOOK_grZakoGenerator_801CAE04 } { Some(f) => f(a0), None => { return unsafe { crate::tu::grzakogenerator::grZakoGenerator_801CAE04(a0 as _) as _ }; } }
 }
 pub static mut HOOK_grZakoGenerator_801CAEB0: Option<fn(i32, i32)> = None;
 /// C `grZakoGenerator_801CAEB0` (melee/gr/grzakogenerator.h).
 pub fn grZakoGenerator_801CAEB0(a0: i32, a1: i32) {
-    match unsafe { HOOK_grZakoGenerator_801CAEB0 } { Some(f) => f(a0, a1), None => panic!("TODO: grZakoGenerator_801CAEB0 is not ported") }
+    match unsafe { HOOK_grZakoGenerator_801CAEB0 } { Some(f) => f(a0, a1), None => { unsafe { let _ = crate::tu::grzakogenerator::grZakoGenerator_801CAEB0(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_grZakoGenerator_801CAEF0: Option<fn(i32)> = None;
 /// C `grZakoGenerator_801CAEF0` (melee/gr/grzakogenerator.h).
 pub fn grZakoGenerator_801CAEF0(a0: i32) {
-    match unsafe { HOOK_grZakoGenerator_801CAEF0 } { Some(f) => f(a0), None => panic!("TODO: grZakoGenerator_801CAEF0 is not ported") }
+    match unsafe { HOOK_grZakoGenerator_801CAEF0 } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::grzakogenerator::grZakoGenerator_801CAEF0(a0 as _); } return; } }
 }
 pub static mut HOOK_grZakoGenerator_801CAF08: Option<fn()> = None;
 /// C `grZakoGenerator_801CAF08` (melee/gr/grzakogenerator.h).
 pub fn grZakoGenerator_801CAF08() {
-    match unsafe { HOOK_grZakoGenerator_801CAF08 } { Some(f) => f(), None => panic!("TODO: grZakoGenerator_801CAF08 is not ported") }
+    match unsafe { HOOK_grZakoGenerator_801CAF08 } { Some(f) => f(), None => { unsafe { let _ = crate::tu::grzakogenerator::grZakoGenerator_801CAF08(); } return; } }
 }
 pub static mut HOOK_it_8026B3C0: Option<fn(i32) -> i32> = None;
 /// C `it_8026B3C0` (melee/it/it_26B1.h).
@@ -568,87 +568,87 @@ pub fn it_802D8618(a0: i32, a1: *mut Vec3, a2: i32, a3: i32) {
 pub static mut HOOK_lbVector_Add: Option<fn(*mut Vec3, *mut Vec3) -> *mut Vec3> = None;
 /// C `lbVector_Add` (melee/lb/lbvector.h).
 pub fn lbVector_Add(a0: *mut Vec3, a1: *mut Vec3) -> *mut Vec3 {
-    match unsafe { HOOK_lbVector_Add } { Some(f) => f(a0, a1), None => panic!("TODO: lbVector_Add is not ported") }
+    match unsafe { HOOK_lbVector_Add } { Some(f) => f(a0, a1), None => { return unsafe { melee_runtime::tu::lbvector::lbVector_Add(a0 as _, a1 as _) as _ }; } }
 }
 pub static mut HOOK_lbVector_Diff: Option<fn(*mut Vec3, *mut Vec3, *mut Vec3) -> *mut Vec3> = None;
 /// C `lbVector_Diff` (melee/lb/lbvector.h).
 pub fn lbVector_Diff(a0: *mut Vec3, a1: *mut Vec3, a2: *mut Vec3) -> *mut Vec3 {
-    match unsafe { HOOK_lbVector_Diff } { Some(f) => f(a0, a1, a2), None => panic!("TODO: lbVector_Diff is not ported") }
+    match unsafe { HOOK_lbVector_Diff } { Some(f) => f(a0, a1, a2), None => { return unsafe { melee_runtime::tu::lbvector::lbVector_Diff(a0 as _, a1 as _, a2 as _) as _ }; } }
 }
 pub static mut HOOK_lbVector_Normalize: Option<fn(*mut Vec3) -> f32> = None;
 /// C `lbVector_Normalize` (melee/lb/lbvector.h).
 pub fn lbVector_Normalize(a0: *mut Vec3) -> f32 {
-    match unsafe { HOOK_lbVector_Normalize } { Some(f) => f(a0), None => panic!("TODO: lbVector_Normalize is not ported") }
+    match unsafe { HOOK_lbVector_Normalize } { Some(f) => f(a0), None => { return unsafe { melee_runtime::tu::lbvector::lbVector_Normalize(a0 as _) as _ }; } }
 }
 pub static mut HOOK_lbVector_Sub: Option<fn(*mut Vec3, *mut Vec3) -> *mut Vec3> = None;
 /// C `lbVector_Sub` (melee/lb/lbvector.h).
 pub fn lbVector_Sub(a0: *mut Vec3, a1: *mut Vec3) -> *mut Vec3 {
-    match unsafe { HOOK_lbVector_Sub } { Some(f) => f(a0, a1), None => panic!("TODO: lbVector_Sub is not ported") }
+    match unsafe { HOOK_lbVector_Sub } { Some(f) => f(a0, a1), None => { return unsafe { melee_runtime::tu::lbvector::lbVector_Sub(a0 as _, a1 as _) as _ }; } }
 }
 pub static mut HOOK_lb_8000B134: Option<fn(*mut HSD_JObj) -> i32> = None;
 /// C `lb_8000B134` (melee/lb/lb_00B0.h).
 pub fn lb_8000B134(a0: *mut HSD_JObj) -> i32 {
-    match unsafe { HOOK_lb_8000B134 } { Some(f) => f(a0), None => panic!("TODO: lb_8000B134 is not ported") }
+    match unsafe { HOOK_lb_8000B134 } { Some(f) => f(a0), None => { return unsafe { melee_runtime::tu::lb_00B0::lb_8000B134(a0 as _) as _ }; } }
 }
 pub static mut HOOK_lb_8000B1CC: Option<fn(*mut HSD_JObj, *mut Vec3, *mut Vec3)> = None;
 /// C `lb_8000B1CC` (melee/lb/lb_00B0.h).
 pub fn lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec3, a2: *mut Vec3) {
-    match unsafe { HOOK_lb_8000B1CC } { Some(f) => f(a0, a1, a2), None => panic!("TODO: lb_8000B1CC is not ported") }
+    match unsafe { HOOK_lb_8000B1CC } { Some(f) => f(a0, a1, a2), None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(a0 as _, a1 as _, a2 as _); } return; } }
 }
 pub static mut HOOK_lb_800115F4: Option<fn()> = None;
 /// C `lb_800115F4` (melee/lb/lb_00F9.h).
 pub fn lb_800115F4() {
-    match unsafe { HOOK_lb_800115F4 } { Some(f) => f(), None => panic!("TODO: lb_800115F4 is not ported") }
+    match unsafe { HOOK_lb_800115F4 } { Some(f) => f(), None => { unsafe { let _ = melee_runtime::tu::lb_00F9::lb_800115F4(); } return; } }
 }
 pub static mut HOOK_lb_80011A50: Option<fn(*mut Vec3, i32, f32, f32, f32, f32, f32, f32, f32) -> *mut lb_80011A50_t> = None;
 /// C `lb_80011A50` (melee/lb/lb_00F9.h).
 pub fn lb_80011A50(a0: *mut Vec3, a1: i32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32, a7: f32, a8: f32) -> *mut lb_80011A50_t {
-    match unsafe { HOOK_lb_80011A50 } { Some(f) => f(a0, a1, a2, a3, a4, a5, a6, a7, a8), None => panic!("TODO: lb_80011A50 is not ported") }
+    match unsafe { HOOK_lb_80011A50 } { Some(f) => f(a0, a1, a2, a3, a4, a5, a6, a7, a8), None => { return unsafe { melee_runtime::tu::lb_00F9::lb_80011A50(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _, a6 as _, a7 as _, a8 as _) as _ }; } }
 }
 pub static mut HOOK_mpJointFromLine: Option<fn(i32) -> i32> = None;
 /// C `mpJointFromLine` (melee/mp/mplib.h).
 pub fn mpJointFromLine(a0: i32) -> i32 {
-    match unsafe { HOOK_mpJointFromLine } { Some(f) => f(a0), None => panic!("TODO: mpJointFromLine is not ported") }
+    match unsafe { HOOK_mpJointFromLine } { Some(f) => f(a0), None => { return unsafe { crate::tu::mplib::mpJointFromLine(a0 as _) as _ }; } }
 }
 pub static mut HOOK_mpJointListAdd: Option<fn(i32)> = None;
 /// C `mpJointListAdd` (melee/mp/mplib.h).
 pub fn mpJointListAdd(a0: i32) {
-    match unsafe { HOOK_mpJointListAdd } { Some(f) => f(a0), None => panic!("TODO: mpJointListAdd is not ported") }
+    match unsafe { HOOK_mpJointListAdd } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::mplib::mpJointListAdd(a0 as _); } return; } }
 }
 pub static mut HOOK_mpJointSetCb1: Option<fn(i32, *mut core::ffi::c_void, mpLib_JointCollisionCallback)> = None;
 /// C `mpJointSetCb1` (melee/mp/mplib.h).
 pub fn mpJointSetCb1(a0: i32, a1: *mut core::ffi::c_void, a2: mpLib_JointCollisionCallback) {
-    match unsafe { HOOK_mpJointSetCb1 } { Some(f) => f(a0, a1, a2), None => panic!("TODO: mpJointSetCb1 is not ported") }
+    match unsafe { HOOK_mpJointSetCb1 } { Some(f) => f(a0, a1, a2), None => { unsafe { let _ = crate::tu::mplib::mpJointSetCb1(a0 as _, a1 as _, a2 as _); } return; } }
 }
 pub static mut HOOK_mpLib_80055E9C: Option<fn(i32)> = None;
 /// C `mpLib_80055E9C` (melee/mp/mplib.h).
 pub fn mpLib_80055E9C(a0: i32) {
-    match unsafe { HOOK_mpLib_80055E9C } { Some(f) => f(a0), None => panic!("TODO: mpLib_80055E9C is not ported") }
+    match unsafe { HOOK_mpLib_80055E9C } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::mplib::mpLib_80055E9C(a0 as _); } return; } }
 }
 pub static mut HOOK_mpLib_80057424: Option<fn(i32)> = None;
 /// C `mpLib_80057424` (melee/mp/mplib.h).
 pub fn mpLib_80057424(a0: i32) {
-    match unsafe { HOOK_mpLib_80057424 } { Some(f) => f(a0), None => panic!("TODO: mpLib_80057424 is not ported") }
+    match unsafe { HOOK_mpLib_80057424 } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::mplib::mpLib_80057424(a0 as _); } return; } }
 }
 pub static mut HOOK_mpLib_800575B0: Option<fn(i32)> = None;
 /// C `mpLib_800575B0` (melee/mp/mplib.h).
 pub fn mpLib_800575B0(a0: i32) {
-    match unsafe { HOOK_mpLib_800575B0 } { Some(f) => f(a0), None => panic!("TODO: mpLib_800575B0 is not ported") }
+    match unsafe { HOOK_mpLib_800575B0 } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::mplib::mpLib_800575B0(a0 as _); } return; } }
 }
 pub static mut HOOK_mpLib_80057BC0: Option<fn(i32)> = None;
 /// C `mpLib_80057BC0` (melee/mp/mplib.h).
 pub fn mpLib_80057BC0(a0: i32) {
-    match unsafe { HOOK_mpLib_80057BC0 } { Some(f) => f(a0), None => panic!("TODO: mpLib_80057BC0 is not ported") }
+    match unsafe { HOOK_mpLib_80057BC0 } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::mplib::mpLib_80057BC0(a0 as _); } return; } }
 }
 pub static mut HOOK_mpLib_80058560: Option<fn()> = None;
 /// C `mpLib_80058560` (melee/mp/mplib.h).
 pub fn mpLib_80058560() {
-    match unsafe { HOOK_mpLib_80058560 } { Some(f) => f(), None => panic!("TODO: mpLib_80058560 is not ported") }
+    match unsafe { HOOK_mpLib_80058560 } { Some(f) => f(), None => { unsafe { let _ = crate::tu::mplib::mpLib_80058560(); } return; } }
 }
 pub static mut HOOK_mpLineGetKind: Option<fn(i32) -> i32> = None;
 /// C `mpLineGetKind` (melee/mp/mplib.h).
 pub fn mpLineGetKind(a0: i32) -> i32 {
-    match unsafe { HOOK_mpLineGetKind } { Some(f) => f(a0), None => panic!("TODO: mpLineGetKind is not ported") }
+    match unsafe { HOOK_mpLineGetKind } { Some(f) => f(a0), None => { return unsafe { crate::tu::mplib::mpLineGetKind(a0 as _) as _ }; } }
 }
 
 /// extern global `HSD_GObjGXLinkHead` (owner TU is elsewhere)

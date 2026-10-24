@@ -69,14 +69,38 @@ pub mod ext {
     hook!(H_HSD_JObjAnimAll, HSD_JObjAnimAll, (a0: *mut melee_types::HSD_JObj));
     hook!(H_lbArchive_80016DBC, lbArchive_80016DBC, (a0: *const i8, a1: *mut core::ffi::c_void, a2: *const i8, a3: i32) -> *mut melee_types::HSD_Archive);
     hook!(H_GObj_Create, GObj_Create, (a0: u16, a1: u8, a2: u8) -> *mut melee_types::HSD_GObj);
-    hook!(H_HSD_JObjLoadJoint, HSD_JObjLoadJoint, (a0: *mut melee_types::HSD_Joint) -> *mut melee_types::HSD_JObj);
+    pub static mut H_HSD_JObjLoadJoint: Option<unsafe extern "C" fn(*mut melee_types::HSD_Joint) -> *mut melee_types::HSD_JObj> = None;
+            pub unsafe extern "C" fn HSD_JObjLoadJoint(a0: *mut melee_types::HSD_Joint) -> *mut melee_types::HSD_JObj {
+                match H_HSD_JObjLoadJoint {
+                    Some(f) => f(a0),
+                    None => { return unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(a0 as _) as _ }; },
+                }
+            }
     hook!(H_lb_80011E24, lb_80011E24, (a0: *mut melee_types::HSD_JObj, a1: *mut *mut melee_types::HSD_JObj, a2: i32, a3: i32) -> i32);
     hook!(H_HSD_GObjObject_80390A70, HSD_GObjObject_80390A70, (a0: *mut melee_types::HSD_GObj, a1: u8, a2: *mut core::ffi::c_void));
     hook!(H_GObj_SetupGXLink, GObj_SetupGXLink, (a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, a2: u8, a3: u32));
-    hook!(H_HSD_GObj_JObjCallback, HSD_GObj_JObjCallback, (a0: *mut melee_types::HSD_GObj, a1: i32));
-    hook!(H_gm_8016895C, gm_8016895C, (a0: *mut melee_types::HSD_JObj, a1: *mut melee_types::DynamicModelDesc, a2: i32));
+    pub static mut H_HSD_GObj_JObjCallback: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32) > = None;
+            pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut melee_types::HSD_GObj, a1: i32)  {
+                match H_HSD_GObj_JObjCallback {
+                    Some(f) => f(a0, a1),
+                    None => { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } return; },
+                }
+            }
+    pub static mut H_gm_8016895C: Option<unsafe extern "C" fn(*mut melee_types::HSD_JObj, *mut melee_types::DynamicModelDesc, i32) > = None;
+            pub unsafe extern "C" fn gm_8016895C(a0: *mut melee_types::HSD_JObj, a1: *mut melee_types::DynamicModelDesc, a2: i32)  {
+                match H_gm_8016895C {
+                    Some(f) => f(a0, a1, a2),
+                    None => { unsafe { let _ = crate::tu::gm_1601::gm_8016895C(a0 as _, a1 as _, a2 as _); } return; },
+                }
+            }
     hook!(H_HSD_GObj_SetupProc, HSD_GObj_SetupProc, (a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj)>, a2: u8) -> *mut melee_types::HSD_GObjProc);
-    hook!(H___assert, __assert, (a0: *const i8, a1: u32, a2: *const i8));
+    pub static mut H___assert: Option<unsafe extern "C" fn(*const i8, u32, *const i8) > = None;
+            pub unsafe extern "C" fn __assert(a0: *const i8, a1: u32, a2: *const i8)  {
+                match H___assert {
+                    Some(f) => f(a0, a1, a2),
+                    None => { unsafe { let _ = melee_runtime::tu::debug::__assert(a0 as _, a1 as _, a2 as _); } return; },
+                }
+            }
     hook!(H_HSD_JObjSetMtxDirtySub, HSD_JObjSetMtxDirtySub, (a0: *mut melee_types::HSD_JObj));
     // ---- extern globals ----
     pub static mut HSD_PadMasterStatus: [melee_types::HSD_PadStatus; 4] = unsafe { core::mem::zeroed() };

@@ -148,7 +148,7 @@ pub unsafe extern "C" fn ftZd_SpecialN_8013ADB0_cb(gobj: *mut HSD_GObj) {
 
 /// `ftZd_Init_801393AC` (ft/kinds/ftZelda/ftzelda.c): death / take-damage callback, not ported yet.
 pub unsafe extern "C" fn ftZd_Init_801393AC(_gobj: *mut HSD_GObj) {
-    panic!("TODO(group4): ftZd_Init_801393AC (src/melee/ft/kinds/ftZelda/ftzelda.c) is not ported");
+    { unsafe { let _ = crate::tu::ftzelda::ftZd_Init_801393AC(_gobj as _); } return; };
 }
 
 /// `startActionHelper(gobj)` (static, ftzeldaspecialn.c).

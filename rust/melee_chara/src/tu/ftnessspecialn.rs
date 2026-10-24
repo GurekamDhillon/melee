@@ -37,11 +37,46 @@ pub mod ext {
             }
         };
     }
-    hook!(LB_8000B1CC, lb_8000B1CC, (jobj: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3));
-    hook!(IT_802AAA50, it_802AAA50, (item: *mut HSD_GObj));
-    hook!(IT_802AA8C0, it_802AA8C0, (owner: *mut HSD_GObj, pos: *mut Vec3, kind: i32, facing: f32) -> *mut HSD_GObj);
-    hook!(IT_802AA7E4, it_802AA7E4, (item: *mut HSD_GObj) -> *mut HSD_GObj);
-    hook!(IT_802AA7F0, it_802AA7F0, (item: *mut HSD_GObj) -> i32);
+    pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *const Vec3, *mut Vec3) > = None;
+            #[allow(non_snake_case)]
+            pub fn lb_8000B1CC(jobj: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3)  {
+                match unsafe { LB_8000B1CC } {
+                    Some(f) => f(jobj, off, out),
+                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, off as _, out as _); } return; },
+                }
+            }
+    pub static mut IT_802AAA50: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802AAA50(item: *mut HSD_GObj)  {
+                match unsafe { IT_802AAA50 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itnesspkflash::it_802AAA50(item as _); } return; },
+                }
+            }
+    pub static mut IT_802AA8C0: Option<fn(*mut HSD_GObj, *mut Vec3, i32, f32) -> *mut HSD_GObj> = None;
+            #[allow(non_snake_case)]
+            pub fn it_802AA8C0(owner: *mut HSD_GObj, pos: *mut Vec3, kind: i32, facing: f32) -> *mut HSD_GObj {
+                match unsafe { IT_802AA8C0 } {
+                    Some(f) => f(owner, pos, kind, facing),
+                    None => { return unsafe { melee_items::tu::itnesspkflash::it_802AA8C0(owner as _, pos as _, kind as _, facing as _) as _ }; },
+                }
+            }
+    pub static mut IT_802AA7E4: Option<fn(*mut HSD_GObj) -> *mut HSD_GObj> = None;
+            #[allow(non_snake_case)]
+            pub fn it_802AA7E4(item: *mut HSD_GObj) -> *mut HSD_GObj {
+                match unsafe { IT_802AA7E4 } {
+                    Some(f) => f(item),
+                    None => { return unsafe { melee_items::tu::itnesspkflash::it_802AA7E4(item as _) as _ }; },
+                }
+            }
+    pub static mut IT_802AA7F0: Option<fn(*mut HSD_GObj) -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn it_802AA7F0(item: *mut HSD_GObj) -> i32 {
+                match unsafe { IT_802AA7F0 } {
+                    Some(f) => f(item),
+                    None => { return unsafe { melee_items::tu::itnesspkflash::it_802AA7F0(item as _) as _ }; },
+                }
+            }
     hook!(FTPARTSETROTX, ftPartSetRotX, (fp: *mut Fighter, part: i32, v: f32));
 }
 

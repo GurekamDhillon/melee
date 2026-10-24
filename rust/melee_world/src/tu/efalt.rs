@@ -16,18 +16,18 @@ use super::efasync::{drain_anim_queue, facing_rot, EfHost, VaList, EF_LOADKIND_S
 
 pub mod ext {
     use super::*;
-    pub unsafe fn efLib_Create_Attach_Scale(_id: u32, _g: *mut HSD_GObj, _j: *mut HSD_JObj) -> *mut EF_Effect { panic!("TODO(group2 eflib) efLib_Create_Attach_Scale") }
-    pub unsafe fn efLib_Create_AttachChild_Scale(_id: u32, _g: *mut HSD_GObj, _j: *mut HSD_JObj) -> *mut EF_Effect { panic!("TODO(group2 eflib) efLib_Create_AttachChild_Scale") }
-    pub unsafe fn efLib_Create_Attach_Scale_FacingDir(_id: u32, _g: *mut HSD_GObj, _j: *mut HSD_JObj) -> *mut EF_Effect { panic!("TODO(group2 eflib) efLib_Create_Attach_Scale_FacingDir") }
+    pub unsafe fn efLib_Create_Attach_Scale(_id: u32, _g: *mut HSD_GObj, _j: *mut HSD_JObj) -> *mut EF_Effect { { return unsafe { crate::tu::eflib::efLib_Create_Attach_Scale(_id as _, _g as _, _j as _) as _ }; } }
+    pub unsafe fn efLib_Create_AttachChild_Scale(_id: u32, _g: *mut HSD_GObj, _j: *mut HSD_JObj) -> *mut EF_Effect { { return unsafe { crate::tu::eflib::efLib_Create_AttachChild_Scale(_id as _, _g as _, _j as _) as _ }; } }
+    pub unsafe fn efLib_Create_Attach_Scale_FacingDir(_id: u32, _g: *mut HSD_GObj, _j: *mut HSD_JObj) -> *mut EF_Effect { { return unsafe { crate::tu::eflib::efLib_Create_Attach_Scale_FacingDir(_id as _, _g as _, _j as _) as _ }; } }
     pub unsafe fn efLib_CreateGenerator_AppSRT_SetFacingDir(_id: i32, _vl: VaList<'_>) -> *mut HSD_Generator { panic!("TODO(group2 eflib) efLib_CreateGenerator_AppSRT_SetFacingDir") }
     pub unsafe fn efLib_CreateGenerator_Attach_Scale(_id: i32, _vl: VaList<'_>, _g: *mut HSD_GObj) -> *mut HSD_Generator { panic!("TODO(group2 eflib) efLib_CreateGenerator_Attach_Scale") }
-    pub unsafe extern "C" fn efLib_Cb_ftMr_SpecialLw(_e: *mut EF_Effect) { panic!("TODO(group2 eflib) efLib_Cb_ftMr_SpecialLw") }
-    pub unsafe extern "C" fn efLib_Cb_SetScaleRotY_FromFighter(_e: *mut EF_Effect) { panic!("TODO(group2 eflib) efLib_Cb_SetScaleRotY_FromFighter") }
-    pub unsafe extern "C" fn efLib_Cb_SetRotYZ_FromFighter(_e: *mut EF_Effect) { panic!("TODO(group2 eflib) efLib_Cb_SetRotYZ_FromFighter") }
-    pub unsafe extern "C" fn efLib_Cb_SetRotYZ_FromParamZ_FighterDir(_e: *mut EF_Effect) { panic!("TODO(group2 eflib) efLib_Cb_SetRotYZ_FromParamZ_FighterDir") }
-    pub unsafe extern "C" fn efLib_Cb_SetRotYAndTransition(_e: *mut EF_Effect) { panic!("TODO(group2 eflib) efLib_Cb_SetRotYAndTransition") }
-    pub unsafe extern "C" fn efLib_Cb_SetRotY_FromFighterDir(_e: *mut EF_Effect) { panic!("TODO(group2 eflib) efLib_Cb_SetRotY_FromFighterDir") }
-    pub unsafe extern "C" fn efLib_Cb_SetJObjOffsetZ(_e: *mut EF_Effect) { panic!("TODO(group2 eflib) efLib_Cb_SetJObjOffsetZ") }
+    pub unsafe extern "C" fn efLib_Cb_ftMr_SpecialLw(_e: *mut EF_Effect) { { unsafe { let _ = crate::tu::eflib::efLib_Cb_ftMr_SpecialLw(_e as _); } return; } }
+    pub unsafe extern "C" fn efLib_Cb_SetScaleRotY_FromFighter(_e: *mut EF_Effect) { { unsafe { let _ = crate::tu::eflib::efLib_Cb_SetScaleRotY_FromFighter(_e as _); } return; } }
+    pub unsafe extern "C" fn efLib_Cb_SetRotYZ_FromFighter(_e: *mut EF_Effect) { { unsafe { let _ = crate::tu::eflib::efLib_Cb_SetRotYZ_FromFighter(_e as _); } return; } }
+    pub unsafe extern "C" fn efLib_Cb_SetRotYZ_FromParamZ_FighterDir(_e: *mut EF_Effect) { { unsafe { let _ = crate::tu::eflib::efLib_Cb_SetRotYZ_FromParamZ_FighterDir(_e as _); } return; } }
+    pub unsafe extern "C" fn efLib_Cb_SetRotYAndTransition(_e: *mut EF_Effect) { { unsafe { let _ = crate::tu::eflib::efLib_Cb_SetRotYAndTransition(_e as _); } return; } }
+    pub unsafe extern "C" fn efLib_Cb_SetRotY_FromFighterDir(_e: *mut EF_Effect) { { unsafe { let _ = crate::tu::eflib::efLib_Cb_SetRotY_FromFighterDir(_e as _); } return; } }
+    pub unsafe extern "C" fn efLib_Cb_SetJObjOffsetZ(_e: *mut EF_Effect) { { unsafe { let _ = crate::tu::eflib::efLib_Cb_SetJObjOffsetZ(_e as _); } return; } }
 }
 
 /// efalt.c's callees beyond [`EfHost`].

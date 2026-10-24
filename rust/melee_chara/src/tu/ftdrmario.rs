@@ -62,9 +62,30 @@ pub mod ext {
             }
         };
     }
-    hook!(FTMR_INIT_ONLOADFORDRMARIO, ftMr_Init_OnLoadForDrMario, (fp: *mut Fighter));
-    hook!(FTMR_INIT_LOADSPECIALATTRS, ftMr_Init_LoadSpecialAttrs, (gobj: *mut HSD_GObj));
-    hook!(IT_8026B3F8, it_8026B3F8, (article: *mut core::ffi::c_void, kind: i32));
+    pub static mut FTMR_INIT_ONLOADFORDRMARIO: Option<fn(*mut Fighter) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftMr_Init_OnLoadForDrMario(fp: *mut Fighter)  {
+                match unsafe { FTMR_INIT_ONLOADFORDRMARIO } {
+                    Some(f) => f(fp),
+                    None => { unsafe { let _ = crate::tu::ftmario::ftMr_Init_OnLoadForDrMario(fp as _); } return; },
+                }
+            }
+    pub static mut FTMR_INIT_LOADSPECIALATTRS: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftMr_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj)  {
+                match unsafe { FTMR_INIT_LOADSPECIALATTRS } {
+                    Some(f) => f(gobj),
+                    None => { unsafe { let _ = crate::tu::ftmario::ftMr_Init_LoadSpecialAttrs(gobj as _); } return; },
+                }
+            }
+    pub static mut IT_8026B3F8: Option<fn(*mut core::ffi::c_void, i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_8026B3F8(article: *mut core::ffi::c_void, kind: i32)  {
+                match unsafe { IT_8026B3F8 } {
+                    Some(f) => f(article, kind),
+                    None => { unsafe { let _ = melee_items::tu::it_26B1::it_8026B3F8(article as _, kind as _); } return; },
+                }
+            }
     hook!(ITDRMARIOPILL_802C0DBC, itDrMarioPill_802C0DBC, (item: *mut Item_GObj));
     hook_or!(FTCO_800DEAE8, ftCo_800DEAE8, melee_fighter::tu::ftCo_AppealS::ftCo_800DEAE8,
              (gobj: *mut HSD_GObj, msid0: i32, msid1: i32));

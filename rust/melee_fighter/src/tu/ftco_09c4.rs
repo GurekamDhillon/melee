@@ -22,9 +22,30 @@ pub mod ext {
             }
         };
     }
-    hook!(FTCO_80099F1C, ftCo_80099F1C, (g: *mut Fighter_GObj) -> bool);
-    hook!(FTCO_8009A184, ftCo_8009A184, (g: *mut Fighter_GObj, msid: i32, flags: MotionFlags, anim_start: f32));
-    hook!(FTCO_8009C5A4, ftCo_8009C5A4, (g: *mut Fighter_GObj, msid: i32));
+    pub static mut FTCO_80099F1C: Option<fn(*mut Fighter_GObj) -> bool> = None;
+            #[allow(non_snake_case)]
+            pub fn ftCo_80099F1C(g: *mut Fighter_GObj) -> bool {
+                match unsafe { FTCO_80099F1C } {
+                    Some(f) => f(g),
+                    None => { return unsafe { crate::tu::ftCo_Pass::ftCo_80099F1C(g as _) as _ }; },
+                }
+            }
+    pub static mut FTCO_8009A184: Option<fn(*mut Fighter_GObj, i32, MotionFlags, f32) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftCo_8009A184(g: *mut Fighter_GObj, msid: i32, flags: MotionFlags, anim_start: f32)  {
+                match unsafe { FTCO_8009A184 } {
+                    Some(f) => f(g, msid, flags, anim_start),
+                    None => { unsafe { let _ = crate::tu::ftCo_Pass::ftCo_8009A184(g as _, msid as _, flags as _, anim_start as _); } return; },
+                }
+            }
+    pub static mut FTCO_8009C5A4: Option<fn(*mut Fighter_GObj, i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftCo_8009C5A4(g: *mut Fighter_GObj, msid: i32)  {
+                match unsafe { FTCO_8009C5A4 } {
+                    Some(f) => f(g, msid),
+                    None => { unsafe { let _ = crate::tu::ftCo_Shouldered::ftCo_8009C5A4(g as _, msid as _); } return; },
+                }
+            }
 }
 
 /// `ftCo_8009C4F8`.

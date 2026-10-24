@@ -40,42 +40,222 @@ pub mod ext {
         };
     }
     // ---- callee hooks ----
-    hook!(H_gm_GetGameModeStateExitData, gm_GetGameModeStateExitData, (a0: *mut melee_types::GameModeState) -> *mut core::ffi::c_void);
-    hook!(H_gm_GetChallengerData, gm_GetChallengerData, () -> *mut melee_types::ChallengerData);
-    hook!(H_gm_80162968, gm_80162968, (a0: u32) -> i32);
-    hook!(H_gm_8016247C, gm_8016247C, (a0: i32) -> i32);
-    hook!(H_gm_UnlockCKind, gm_UnlockCKind, (a0: u32));
-    hook!(H_gm_CKindToUnlockIndex, gm_CKindToUnlockIndex, (a0: u32) -> i8);
-    hook!(H_gmMainLib_8015DB2C, gmMainLib_8015DB2C, (a0: u8));
-    hook!(H_gm_80173EEC, gm_80173EEC, ());
-    hook!(H_gm_80172898, gm_80172898, (a0: u16) -> i32);
-    hook!(H_gm_801721EC, gm_801721EC, () -> i32);
-    hook!(H_gm_SetNextGameModeStateId, gm_SetNextGameModeStateId, (a0: u8));
-    hook!(H_un_802FF710, un_802FF710, ());
-    hook!(H_un_802FF6A0, un_802FF6A0, ());
-    hook!(H_un_80304168, un_80304168, (a0: *mut core::ffi::c_void, a1: i32, a2: i32, a3: i32) -> *mut melee_types::HSD_GObj);
-    hook!(H_un_80302DF8, un_80302DF8, (a0: *mut melee_types::un_80304138_objalloc_t, a1: Option<unsafe extern "C" fn(u32) -> i32>));
-    hook!(H_un_80302DF0, un_80302DF0, () -> *mut melee_types::un_80304138_objalloc_t);
+    pub static mut H_gm_GetGameModeStateExitData: Option<unsafe extern "C" fn(*mut melee_types::GameModeState) -> *mut core::ffi::c_void> = None;
+            pub unsafe extern "C" fn gm_GetGameModeStateExitData(a0: *mut melee_types::GameModeState) -> *mut core::ffi::c_void {
+                match H_gm_GetGameModeStateExitData {
+                    Some(f) => f(a0),
+                    None => { return unsafe { crate::tu::gm_1A3F::gm_GetGameModeStateExitData(a0 as _) as _ }; },
+                }
+            }
+    pub static mut H_gm_GetChallengerData: Option<unsafe extern "C" fn() -> *mut melee_types::ChallengerData> = None;
+            pub unsafe extern "C" fn gm_GetChallengerData() -> *mut melee_types::ChallengerData {
+                match H_gm_GetChallengerData {
+                    Some(f) => f(),
+                    None => { return unsafe { crate::tu::gm_1736::gm_GetChallengerData() as _ }; },
+                }
+            }
+    pub static mut H_gm_80162968: Option<unsafe extern "C" fn(u32) -> i32> = None;
+            pub unsafe extern "C" fn gm_80162968(a0: u32) -> i32 {
+                match H_gm_80162968 {
+                    Some(f) => f(a0),
+                    None => { return unsafe { crate::tu::gm_1601::gm_80162968(a0 as _) as _ }; },
+                }
+            }
+    pub static mut H_gm_8016247C: Option<unsafe extern "C" fn(i32) -> i32> = None;
+            pub unsafe extern "C" fn gm_8016247C(a0: i32) -> i32 {
+                match H_gm_8016247C {
+                    Some(f) => f(a0),
+                    None => { return unsafe { crate::tu::gm_1601::gm_8016247C(a0 as _) as _ }; },
+                }
+            }
+    pub static mut H_gm_UnlockCKind: Option<unsafe extern "C" fn(u32) > = None;
+            pub unsafe extern "C" fn gm_UnlockCKind(a0: u32)  {
+                match H_gm_UnlockCKind {
+                    Some(f) => f(a0),
+                    None => { unsafe { let _ = crate::tu::gm_1601::gm_UnlockCKind(a0 as _); } return; },
+                }
+            }
+    pub static mut H_gm_CKindToUnlockIndex: Option<unsafe extern "C" fn(u32) -> i8> = None;
+            pub unsafe extern "C" fn gm_CKindToUnlockIndex(a0: u32) -> i8 {
+                match H_gm_CKindToUnlockIndex {
+                    Some(f) => f(a0),
+                    None => { return unsafe { crate::gm::gm_CKindToUnlockIndex(a0 as _) as _ }; },
+                }
+            }
+    pub static mut H_gmMainLib_8015DB2C: Option<unsafe extern "C" fn(u8) > = None;
+            pub unsafe extern "C" fn gmMainLib_8015DB2C(a0: u8)  {
+                match H_gmMainLib_8015DB2C {
+                    Some(f) => f(a0),
+                    None => { unsafe { let _ = crate::tu::gmmain_lib::gmMainLib_8015DB2C(a0 as _); } return; },
+                }
+            }
+    pub static mut H_gm_80173EEC: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn gm_80173EEC()  {
+                match H_gm_80173EEC {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::gm_1736::gm_80173EEC(); } return; },
+                }
+            }
+    pub static mut H_gm_80172898: Option<unsafe extern "C" fn(u16) -> i32> = None;
+            pub unsafe extern "C" fn gm_80172898(a0: u16) -> i32 {
+                match H_gm_80172898 {
+                    Some(f) => f(a0),
+                    None => { return unsafe { crate::tu::gm_16f1::gm_80172898(a0 as _) as _ }; },
+                }
+            }
+    pub static mut H_gm_801721EC: Option<unsafe extern "C" fn() -> i32> = None;
+            pub unsafe extern "C" fn gm_801721EC() -> i32 {
+                match H_gm_801721EC {
+                    Some(f) => f(),
+                    None => { return unsafe { crate::tu::gm_16f1::gm_801721EC() as _ }; },
+                }
+            }
+    pub static mut H_gm_SetNextGameModeStateId: Option<unsafe extern "C" fn(u8) > = None;
+            pub unsafe extern "C" fn gm_SetNextGameModeStateId(a0: u8)  {
+                match H_gm_SetNextGameModeStateId {
+                    Some(f) => f(a0),
+                    None => { unsafe { let _ = crate::tu::gm_1A3F::gm_SetNextGameModeStateId(a0 as _); } return; },
+                }
+            }
+    pub static mut H_un_802FF710: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn un_802FF710()  {
+                match H_un_802FF710 {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = melee_world::tu::if_2FF2::un_802FF710(); } return; },
+                }
+            }
+    pub static mut H_un_802FF6A0: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn un_802FF6A0()  {
+                match H_un_802FF6A0 {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = melee_world::tu::if_2FF2::un_802FF6A0(); } return; },
+                }
+            }
+    pub static mut H_un_80304168: Option<unsafe extern "C" fn(*mut core::ffi::c_void, i32, i32, i32) -> *mut melee_types::HSD_GObj> = None;
+            pub unsafe extern "C" fn un_80304168(a0: *mut core::ffi::c_void, a1: i32, a2: i32, a3: i32) -> *mut melee_types::HSD_GObj {
+                match H_un_80304168 {
+                    Some(f) => f(a0, a1, a2, a3),
+                    None => { return unsafe { melee_world::tu::textlib_1::un_80304168(a0 as _, a1 as _, a2 as _, a3 as _) as _ }; },
+                }
+            }
+    pub static mut H_un_80302DF8: Option<unsafe extern "C" fn(*mut melee_types::un_80304138_objalloc_t, Option<unsafe extern "C" fn(u32) -> i32>) > = None;
+            pub unsafe extern "C" fn un_80302DF8(a0: *mut melee_types::un_80304138_objalloc_t, a1: Option<unsafe extern "C" fn(u32) -> i32>)  {
+                match H_un_80302DF8 {
+                    Some(f) => f(a0, a1),
+                    None => { unsafe { let _ = melee_world::tu::textlib::un_80302DF8(a0 as _, a1 as _); } return; },
+                }
+            }
+    pub static mut H_un_80302DF0: Option<unsafe extern "C" fn() -> *mut melee_types::un_80304138_objalloc_t> = None;
+            pub unsafe extern "C" fn un_80302DF0() -> *mut melee_types::un_80304138_objalloc_t {
+                match H_un_80302DF0 {
+                    Some(f) => f(),
+                    None => { return unsafe { melee_world::tu::textlib::un_80302DF0() as _ }; },
+                }
+            }
     hook!(H_GObj_Create, GObj_Create, (a0: u16, a1: u8, a2: u8) -> *mut melee_types::HSD_GObj);
     hook_or!(H_gm_801A9DD0, gm_801A9DD0, crate::tu::gmopening::gm_801A9DD0, (a0: *mut melee_types::HSD_GObj, a1: u16, a2: u16, a3: i32, a4: i32));
     hook!(H_HSD_GObjObject_80390A70, HSD_GObjObject_80390A70, (a0: *mut melee_types::HSD_GObj, a1: u8, a2: *mut core::ffi::c_void));
     hook!(H_GObj_SetupGXLink, GObj_SetupGXLink, (a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, a2: u8, a3: u32));
-    hook!(H_lbMthp_8001F67C, lbMthp_8001F67C, (a0: *mut melee_types::HSD_GObj, a1: i32));
-    hook!(H_lbMthp_8001F624, lbMthp_8001F624, (a0: *mut melee_types::HSD_GObj, a1: i32, a2: i32) -> *mut melee_types::HSD_SObj);
-    hook!(H_lbAudioAx_80023F28, lbAudioAx_80023F28, (a0: i32) -> i32);
-    hook!(H_gm_801BEFB0, gm_801BEFB0, () -> u32);
+    pub static mut H_lbMthp_8001F67C: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32) > = None;
+            pub unsafe extern "C" fn lbMthp_8001F67C(a0: *mut melee_types::HSD_GObj, a1: i32)  {
+                match H_lbMthp_8001F67C {
+                    Some(f) => f(a0, a1),
+                    None => { unsafe { let _ = melee_runtime::tu::lbmthp::lbMthp_8001F67C(a0 as _, a1 as _); } return; },
+                }
+            }
+    pub static mut H_lbMthp_8001F624: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32, i32) -> *mut melee_types::HSD_SObj> = None;
+            pub unsafe extern "C" fn lbMthp_8001F624(a0: *mut melee_types::HSD_GObj, a1: i32, a2: i32) -> *mut melee_types::HSD_SObj {
+                match H_lbMthp_8001F624 {
+                    Some(f) => f(a0, a1, a2),
+                    None => { return unsafe { melee_runtime::tu::lbmthp::lbMthp_8001F624(a0 as _, a1 as _, a2 as _) as _ }; },
+                }
+            }
+    pub static mut H_lbAudioAx_80023F28: Option<unsafe extern "C" fn(i32) -> i32> = None;
+            pub unsafe extern "C" fn lbAudioAx_80023F28(a0: i32) -> i32 {
+                match H_lbAudioAx_80023F28 {
+                    Some(f) => f(a0),
+                    None => { return unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023F28(a0 as _) as _ }; },
+                }
+            }
+    pub static mut H_gm_801BEFB0: Option<unsafe extern "C" fn() -> u32> = None;
+            pub unsafe extern "C" fn gm_801BEFB0() -> u32 {
+                match H_gm_801BEFB0 {
+                    Some(f) => f(),
+                    None => { return unsafe { crate::tu::gmgover::gm_801BEFB0() as _ }; },
+                }
+            }
     hook!(H_lbAudioAx_80024E50, lbAudioAx_80024E50, (a0: i32));
-    hook!(H_lbMthp_8001F410, lbMthp_8001F410, (a0: *const i8, a1: *mut u32, a2: *mut core::ffi::c_void, a3: u32, a4: i32));
+    pub static mut H_lbMthp_8001F410: Option<unsafe extern "C" fn(*const i8, *mut u32, *mut core::ffi::c_void, u32, i32) > = None;
+            pub unsafe extern "C" fn lbMthp_8001F410(a0: *const i8, a1: *mut u32, a2: *mut core::ffi::c_void, a3: u32, a4: i32)  {
+                match H_lbMthp_8001F410 {
+                    Some(f) => f(a0, a1, a2, a3, a4),
+                    None => { unsafe { let _ = melee_runtime::tu::lbmthp::lbMthp_8001F410(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _); } return; },
+                }
+            }
     hook_or!(H_fn_801AA0E8, fn_801AA0E8, crate::tu::gmopening::fn_801AA0E8, ());
-    hook!(H_lbMthp_8001F578, lbMthp_8001F578, ());
-    hook!(H_lbMthp_8001F5C4, lbMthp_8001F5C4, () -> i32);
-    hook!(H_lbMthp_8001F604, lbMthp_8001F604, () -> i32);
-    hook!(H_gm_GetButtonsTriggered, gm_GetButtonsTriggered, (a0: u8) -> u64);
-    hook!(H_gm_801BF010, gm_801BF010, () -> i32);
-    hook!(H_lbAudioAx_800236DC, lbAudioAx_800236DC, () -> i32);
-    hook!(H_lbAudioAx_80023694, lbAudioAx_80023694, () -> i32);
-    hook!(H_gm_801A4B74, gm_801A4B74, ());
-    hook!(H_gm_801A4B60, gm_801A4B60, ());
+    pub static mut H_lbMthp_8001F578: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn lbMthp_8001F578()  {
+                match H_lbMthp_8001F578 {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = melee_runtime::tu::lbmthp::lbMthp_8001F578(); } return; },
+                }
+            }
+    pub static mut H_lbMthp_8001F5C4: Option<unsafe extern "C" fn() -> i32> = None;
+            pub unsafe extern "C" fn lbMthp_8001F5C4() -> i32 {
+                match H_lbMthp_8001F5C4 {
+                    Some(f) => f(),
+                    None => { return unsafe { melee_runtime::tu::lbmthp::lbMthp_8001F5C4() as _ }; },
+                }
+            }
+    pub static mut H_lbMthp_8001F604: Option<unsafe extern "C" fn() -> i32> = None;
+            pub unsafe extern "C" fn lbMthp_8001F604() -> i32 {
+                match H_lbMthp_8001F604 {
+                    Some(f) => f(),
+                    None => { return unsafe { melee_runtime::tu::lbmthp::lbMthp_8001F604() as _ }; },
+                }
+            }
+    pub static mut H_gm_GetButtonsTriggered: Option<unsafe extern "C" fn(u8) -> u64> = None;
+            pub unsafe extern "C" fn gm_GetButtonsTriggered(a0: u8) -> u64 {
+                match H_gm_GetButtonsTriggered {
+                    Some(f) => f(a0),
+                    None => { return unsafe { crate::tu::gm_1A36::gm_GetButtonsTriggered(a0 as _) as _ }; },
+                }
+            }
+    pub static mut H_gm_801BF010: Option<unsafe extern "C" fn() -> i32> = None;
+            pub unsafe extern "C" fn gm_801BF010() -> i32 {
+                match H_gm_801BF010 {
+                    Some(f) => f(),
+                    None => { return unsafe { crate::tu::gmgover::gm_801BF010() as _ }; },
+                }
+            }
+    pub static mut H_lbAudioAx_800236DC: Option<unsafe extern "C" fn() -> i32> = None;
+            pub unsafe extern "C" fn lbAudioAx_800236DC() -> i32 {
+                match H_lbAudioAx_800236DC {
+                    Some(f) => f(),
+                    None => { return unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800236DC() as _ }; },
+                }
+            }
+    pub static mut H_lbAudioAx_80023694: Option<unsafe extern "C" fn() -> i32> = None;
+            pub unsafe extern "C" fn lbAudioAx_80023694() -> i32 {
+                match H_lbAudioAx_80023694 {
+                    Some(f) => f(),
+                    None => { return unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023694() as _ }; },
+                }
+            }
+    pub static mut H_gm_801A4B74: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn gm_801A4B74()  {
+                match H_gm_801A4B74 {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::gmscene::gm_801A4B74(); } return; },
+                }
+            }
+    pub static mut H_gm_801A4B60: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn gm_801A4B60()  {
+                match H_gm_801A4B60 {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::gmscene::gm_801A4B60(); } return; },
+                }
+            }
     // ---- extern globals ----
     pub static mut HSD_SObjLib_804D7960: u8 = unsafe { core::mem::zeroed() };
     pub static mut gm_804D6724: Option<unsafe extern "C" fn()> = unsafe { core::mem::zeroed() };

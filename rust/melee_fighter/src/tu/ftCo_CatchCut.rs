@@ -26,16 +26,16 @@ pub mod ext {
         };
     }
     ext_fns! {
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
-        ftCo_CaptureCut_Enter(g: G) = |_| todo!("TODO(port) ftCo_CaptureCut_Enter (ftCo_CaptureCut.c)");
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        ftCo_CaptureCut_Enter(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_CaptureCut::ftCo_CaptureCut_Enter(g as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ftCommon_8007D92C(g: G) = crate::ftcommon3::ftcommon_8007d92c;
         ftCommon_CalcGroundAccel_Deaccel(fp: &mut Fighter, friction: f32) = crate::ftcommon::calc_ground_accel_deaccel;
         ftCommon_SetSelfMovementFromGroundedMovement(g: G) = |g| crate::ftcommon::set_self_movement_from_grounded_movement(fp(g));
         ft_80084DB0(g: G) = crate::ft084e::ft_80084db0;
-        ft_80084104(g: G) = |_| todo!("TODO(port) ft_80084104 (ft_081B.c)");
+        ft_80084104(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_081b::ft_80084104(g as _); } };
         ft_8008370C(g: G, cb: HSD_GObjEvent) = |_, _| todo!("TODO(port) ft_8008370C (ft_081B.c)");
-        ft_80082B1C(g: G) = |_| todo!("TODO(port) ft_80082B1C (ft_081B.c)");
+        ft_80082B1C(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_081b::ft_80082b1c(g as _); } };
     }
 }
 

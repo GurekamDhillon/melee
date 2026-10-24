@@ -14,9 +14,9 @@ const HSD_PAD_A: u32 = 0x100;
 pub mod ext {
     use crate::types::*;
     type G = *mut HSD_GObj;
-    pub fn it_80292EAC(_i: G) { todo!("TODO(group5 itfflower) it_80292EAC") }
-    pub fn it_80292E64(_i: G) { todo!("TODO(group5 itfflower) it_80292E64") }
-    pub fn it_80292EF8(_i: G, _v: &mut Vec3) { todo!("TODO(group5 itfflower) it_80292EF8") }
+    pub fn it_80292EAC(_i: G) { { unsafe { let _ = melee_items::tu::itfflower::it_80292EAC(_i as _); } return; } }
+    pub fn it_80292E64(_i: G) { { unsafe { let _ = melee_items::tu::itfflower::it_80292E64(_i as _); } return; } }
+    pub fn it_80292EF8(_i: G, _v: &mut Vec3) { { unsafe { let _ = melee_items::tu::itfflower::it_80292EF8(_i as _, _v as _); } return; } }
     pub fn it_80292F14(_i: G, _v: &Vec3, _dir: f32) { todo!("TODO(group5 itfflower) it_80292F14") }
     /// `lb_8000B1CC(jobj, NULL, out)`.
     pub fn lb_8000B1CC(_j: *mut HSD_JObj, _out: &mut Vec3) { todo!("TODO(group1 lb) lb_8000B1CC") }

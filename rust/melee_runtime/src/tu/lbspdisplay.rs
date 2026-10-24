@@ -185,16 +185,16 @@ pub mod ext {
         match unsafe { hook::GXTexCoord2f32 } { Some(f) => f(a0, a1), None => { panic!("TODO: GXTexCoord2f32 is not ported") } }
     }
     pub fn HSD_CObjAlloc() -> *mut HSD_CObj {
-        match unsafe { hook::HSD_CObjAlloc } { Some(f) => f(), None => { panic!("TODO: HSD_CObjAlloc is not ported") } }
+        match unsafe { hook::HSD_CObjAlloc } { Some(f) => f(), None => { { return unsafe { crate::tu::cobj::HSD_CObjAlloc() as _ }; } } }
     }
     pub fn HSD_CObjGetAuthoredAspect(a0: *mut HSD_CObj) -> f32 {
         match unsafe { hook::HSD_CObjGetAuthoredAspect } { Some(f) => f(a0), None => { panic!("TODO: HSD_CObjGetAuthoredAspect is not ported") } }
     }
     pub fn HSD_CObjGetCurrent() -> *mut HSD_CObj {
-        match unsafe { hook::HSD_CObjGetCurrent } { Some(f) => f(), None => { panic!("TODO: HSD_CObjGetCurrent is not ported") } }
+        match unsafe { hook::HSD_CObjGetCurrent } { Some(f) => f(), None => { { return unsafe { crate::tu::cobj::HSD_CObjGetCurrent() as _ }; } } }
     }
     pub fn HSD_CObjGetProjectionType(a0: *mut HSD_CObj) -> i32 {
-        match unsafe { hook::HSD_CObjGetProjectionType } { Some(f) => f(a0), None => { panic!("TODO: HSD_CObjGetProjectionType is not ported") } }
+        match unsafe { hook::HSD_CObjGetProjectionType } { Some(f) => f(a0), None => { { return unsafe { crate::tu::cobj::HSD_CObjGetProjectionType(a0 as _) as _ }; } } }
     }
     pub fn HSD_CObjGetScissor(a0: *mut HSD_CObj, a1: *mut _Scissor) {
         match unsafe { hook::HSD_CObjGetScissor } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_CObjGetScissor is not ported") } }
@@ -203,28 +203,28 @@ pub mod ext {
         match unsafe { hook::HSD_CObjGetViewingMtx } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_CObjGetViewingMtx is not ported") } }
     }
     pub fn HSD_CObjLoadDesc(a0: *mut HSD_CObjDesc) -> *mut HSD_CObj {
-        match unsafe { hook::HSD_CObjLoadDesc } { Some(f) => f(a0), None => { panic!("TODO: HSD_CObjLoadDesc is not ported") } }
+        match unsafe { hook::HSD_CObjLoadDesc } { Some(f) => f(a0), None => { { return unsafe { crate::tu::cobj::HSD_CObjLoadDesc(a0 as _) as _ }; } } }
     }
     pub fn HSD_CObjSetAspect(a0: *mut HSD_CObj, a1: f32) {
         match unsafe { hook::HSD_CObjSetAspect } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_CObjSetAspect is not ported") } }
     }
     pub fn HSD_CObjSetCurrent(a0: *mut HSD_CObj) -> i32 {
-        match unsafe { hook::HSD_CObjSetCurrent } { Some(f) => f(a0), None => { panic!("TODO: HSD_CObjSetCurrent is not ported") } }
+        match unsafe { hook::HSD_CObjSetCurrent } { Some(f) => f(a0), None => { { return unsafe { crate::tu::cobj::HSD_CObjSetCurrent(a0 as _) as _ }; } } }
     }
     pub fn HSD_CObjSetEyePosition(a0: *mut HSD_CObj, a1: *mut Vec) {
         match unsafe { hook::HSD_CObjSetEyePosition } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_CObjSetEyePosition is not ported") } }
     }
     pub fn HSD_CObjSetFar(a0: *mut HSD_CObj, a1: f32) {
-        match unsafe { hook::HSD_CObjSetFar } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_CObjSetFar is not ported") } }
+        match unsafe { hook::HSD_CObjSetFar } { Some(f) => f(a0, a1), None => { { unsafe { let _ = crate::tu::cobj::HSD_CObjSetFar(a0 as _, a1 as _); } return; } } }
     }
     pub fn HSD_CObjSetInterest(a0: *mut HSD_CObj, a1: *mut Vec) {
         match unsafe { hook::HSD_CObjSetInterest } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_CObjSetInterest is not ported") } }
     }
     pub fn HSD_CObjSetNear(a0: *mut HSD_CObj, a1: f32) {
-        match unsafe { hook::HSD_CObjSetNear } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_CObjSetNear is not ported") } }
+        match unsafe { hook::HSD_CObjSetNear } { Some(f) => f(a0, a1), None => { { unsafe { let _ = crate::tu::cobj::HSD_CObjSetNear(a0 as _, a1 as _); } return; } } }
     }
     pub fn HSD_CObjSetOrtho(a0: *mut HSD_CObj, a1: f32, a2: f32, a3: f32, a4: f32) {
-        match unsafe { hook::HSD_CObjSetOrtho } { Some(f) => f(a0, a1, a2, a3, a4), None => { panic!("TODO: HSD_CObjSetOrtho is not ported") } }
+        match unsafe { hook::HSD_CObjSetOrtho } { Some(f) => f(a0, a1, a2, a3, a4), None => { { unsafe { let _ = crate::tu::cobj::HSD_CObjSetOrtho(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _); } return; } } }
     }
     pub fn HSD_CObjSetProjectionType(a0: *mut HSD_CObj, a1: u32) {
         match unsafe { hook::HSD_CObjSetProjectionType } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_CObjSetProjectionType is not ported") } }
@@ -233,19 +233,19 @@ pub mod ext {
         match unsafe { hook::HSD_CObjSetRoll } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_CObjSetRoll is not ported") } }
     }
     pub fn HSD_CObjSetScissor(a0: *mut HSD_CObj, a1: *mut _Scissor) {
-        match unsafe { hook::HSD_CObjSetScissor } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_CObjSetScissor is not ported") } }
+        match unsafe { hook::HSD_CObjSetScissor } { Some(f) => f(a0, a1), None => { { unsafe { let _ = crate::tu::cobj::HSD_CObjSetScissor(a0 as _, a1 as _); } return; } } }
     }
     pub fn HSD_CObjSetViewport(a0: *mut HSD_CObj, a1: *mut _HSD_RectS16) {
-        match unsafe { hook::HSD_CObjSetViewport } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_CObjSetViewport is not ported") } }
+        match unsafe { hook::HSD_CObjSetViewport } { Some(f) => f(a0, a1), None => { { unsafe { let _ = crate::tu::cobj::HSD_CObjSetViewport(a0 as _, a1 as _); } return; } } }
     }
     pub fn HSD_Free(a0: *mut c_void) {
-        match unsafe { hook::HSD_Free } { Some(f) => f(a0), None => { panic!("TODO: HSD_Free is not ported") } }
+        match unsafe { hook::HSD_Free } { Some(f) => f(a0), None => { { unsafe { let _ = crate::tu::memory::HSD_Free(a0 as _); } return; } } }
     }
     pub fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void) {
         match unsafe { hook::HSD_GObjObject_80390A70 } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: HSD_GObjObject_80390A70 is not ported") } }
     }
     pub fn HSD_ImageDescCopyFromEFB(a0: *mut HSD_ImageDesc, a1: u16, a2: u16, a3: u8, a4: i32) {
-        match unsafe { hook::HSD_ImageDescCopyFromEFB } { Some(f) => f(a0, a1, a2, a3, a4), None => { panic!("TODO: HSD_ImageDescCopyFromEFB is not ported") } }
+        match unsafe { hook::HSD_ImageDescCopyFromEFB } { Some(f) => f(a0, a1, a2, a3, a4), None => { { unsafe { let _ = crate::tu::tobj::HSD_ImageDescCopyFromEFB(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _); } return; } } }
     }
     pub fn HSD_LObjAddAnimAll(a0: *mut HSD_LObj, a1: *mut HSD_LightAnim) {
         match unsafe { hook::HSD_LObjAddAnimAll } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_LObjAddAnimAll is not ported") } }
@@ -254,7 +254,7 @@ pub mod ext {
         match unsafe { hook::HSD_LObjLoadDesc } { Some(f) => f(a0), None => { panic!("TODO: HSD_LObjLoadDesc is not ported") } }
     }
     pub fn HSD_MemAlloc(a0: i32) -> *mut c_void {
-        match unsafe { hook::HSD_MemAlloc } { Some(f) => f(a0), None => { panic!("TODO: HSD_MemAlloc is not ported") } }
+        match unsafe { hook::HSD_MemAlloc } { Some(f) => f(a0), None => { { return unsafe { crate::tu::memory::HSD_MemAlloc(a0 as _) as _ }; } } }
     }
     pub fn HSD_SetupChannel(a0: *mut HSD_Chan) {
         match unsafe { hook::HSD_SetupChannel } { Some(f) => f(a0), None => { panic!("TODO: HSD_SetupChannel is not ported") } }
@@ -275,7 +275,7 @@ pub mod ext {
         match unsafe { hook::__va_arg } { Some(f) => f(a0, a1), None => { panic!("TODO: __va_arg is not ported") } }
     }
     pub fn lbDvd_GetPreloadedArchive(a0: i32) -> *mut c_void {
-        match unsafe { hook::lbDvd_GetPreloadedArchive } { Some(f) => f(a0), None => { panic!("TODO: lbDvd_GetPreloadedArchive is not ported") } }
+        match unsafe { hook::lbDvd_GetPreloadedArchive } { Some(f) => f(a0), None => { { return unsafe { crate::tu::lbdvd::lbDvd_GetPreloadedArchive(a0 as _) as _ }; } } }
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

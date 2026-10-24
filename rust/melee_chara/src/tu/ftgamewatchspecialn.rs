@@ -29,8 +29,14 @@ pub mod ext {
     // baselib/random.c
     hook!(HSD_RANDI, HSD_Randi, (max: i32) -> i32);
     // itgamewatchchef.c
-    hook!(IT_802C837C, it_802C837C,
-        (owner: *mut HSD_GObj, pos: *const Vec3, kind: i32, sausage: i32, facing: f32));
+    pub static mut IT_802C837C: Option<fn(*mut HSD_GObj, *const Vec3, i32, i32, f32) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802C837C(owner: *mut HSD_GObj, pos: *const Vec3, kind: i32, sausage: i32, facing: f32)  {
+                match unsafe { IT_802C837C } {
+                    Some(f) => f(owner, pos, kind, sausage, facing),
+                    None => { unsafe { let _ = melee_items::tu::itgamewatchchef::it_802C837C(owner as _, pos as _, kind as _, sausage as _, facing as _); } return; },
+                }
+            }
 }
 
 #[inline(always)]

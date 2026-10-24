@@ -25,9 +25,30 @@ pub mod ext {
             }
         };
     }
-    hook!(FTCH_GRABUNK1_8015B850, ftCh_GrabUnk1_8015B850, (gobj: *mut HSD_GObj, msid: i32));
-    hook!(FTCH_GRABUNK1_8015BC88, ftCh_GrabUnk1_8015BC88, (gobj: *mut HSD_GObj));
-    hook!(FTCO_800DE2A8, ftCo_800DE2A8, (gobj: *mut HSD_GObj, vic: *mut HSD_GObj));
+    pub static mut FTCH_GRABUNK1_8015B850: Option<fn(*mut HSD_GObj, i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftCh_GrabUnk1_8015B850(gobj: *mut HSD_GObj, msid: i32)  {
+                match unsafe { FTCH_GRABUNK1_8015B850 } {
+                    Some(f) => f(gobj, msid),
+                    None => { unsafe { let _ = crate::tu::ftcrazyhandthrowncrazyhand::ftCh_GrabUnk1_8015B850(gobj as _, msid as _); } return; },
+                }
+            }
+    pub static mut FTCH_GRABUNK1_8015BC88: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftCh_GrabUnk1_8015BC88(gobj: *mut HSD_GObj)  {
+                match unsafe { FTCH_GRABUNK1_8015BC88 } {
+                    Some(f) => f(gobj),
+                    None => { unsafe { let _ = crate::tu::ftcrazyhandtagcancel::ftCh_GrabUnk1_8015BC88(gobj as _); } return; },
+                }
+            }
+    pub static mut FTCO_800DE2A8: Option<fn(*mut HSD_GObj, *mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftCo_800DE2A8(gobj: *mut HSD_GObj, vic: *mut HSD_GObj)  {
+                match unsafe { FTCO_800DE2A8 } {
+                    Some(f) => f(gobj, vic),
+                    None => { unsafe { let _ = melee_fighter::tu::ftCo_Throw::ftCo_800DE2A8(gobj as _, vic as _); } return; },
+                }
+            }
     /// `ftCo_800DE7C0(gobj, victim, is_upward)`: the native melee_fighter port when unset.
     pub static mut FTCO_800DE7C0: Option<fn(*mut HSD_GObj, *mut HSD_GObj, bool)> = None;
     #[allow(non_snake_case)]

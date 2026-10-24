@@ -53,13 +53,13 @@ pub mod ext {
         match unsafe { hook::gm_GetStKind } { Some(f) => f(), None => { panic!("TODO: gm_GetStKind is not ported") } }
     }
     pub fn hsd_803B51C8(a0: i32, a1: i32, a2: i32, a3: *mut i8, a4: i32) -> i32 {
-        match unsafe { hook::hsd_803B51C8 } { Some(f) => f(a0, a1, a2, a3, a4), None => { panic!("TODO: hsd_803B51C8 is not ported") } }
+        match unsafe { hook::hsd_803B51C8 } { Some(f) => f(a0, a1, a2, a3, a4), None => { { return unsafe { crate::tu::hsd_3B34::hsd_803B51C8(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _) as _ }; } } }
     }
     pub fn hsd_803B5C2C(a0: i32) {
-        match unsafe { hook::hsd_803B5C2C } { Some(f) => f(a0), None => { panic!("TODO: hsd_803B5C2C is not ported") } }
+        match unsafe { hook::hsd_803B5C2C } { Some(f) => f(a0), None => { { unsafe { let _ = crate::tu::hsd_3B34::hsd_803B5C2C(a0 as _); } return; } } }
     }
     pub fn hsd_803B6BE4(a0: *mut i8, a1: i32, a2: *mut c_void) -> i32 {
-        match unsafe { hook::hsd_803B6BE4 } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: hsd_803B6BE4 is not ported") } }
+        match unsafe { hook::hsd_803B6BE4 } { Some(f) => f(a0, a1, a2), None => { { return unsafe { crate::tu::hsd_3B5C::hsd_803B6BE4(a0 as _, a1 as _, a2 as _) as _ }; } } }
     }
     pub fn it_8026C47C(a0: *mut it_8026C47C_arg0_t) {
         match unsafe { hook::it_8026C47C } { Some(f) => f(a0), None => { panic!("TODO: it_8026C47C is not ported") } }
@@ -68,25 +68,25 @@ pub mod ext {
         match unsafe { hook::lbArchive_80016DBC } { Some(f) => f(a0, a1, a2, a3), None => { panic!("TODO: lbArchive_80016DBC is not ported") } }
     }
     pub fn lbCardNew_DeleteSnap(a0: i32, a1: *const i8, a2: *mut c_void) -> i32 {
-        match unsafe { hook::lbCardNew_DeleteSnap } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: lbCardNew_DeleteSnap is not ported") } }
+        match unsafe { hook::lbCardNew_DeleteSnap } { Some(f) => f(a0, a1, a2), None => { { return unsafe { crate::tu::lbcardnew::lbCardNew_DeleteSnap(a0 as _, a1 as _, a2 as _) as _ }; } } }
     }
     pub fn lbLang_IsSettingJP() -> i32 {
-        match unsafe { hook::lbLang_IsSettingJP } { Some(f) => f(), None => { panic!("TODO: lbLang_IsSettingJP is not ported") } }
+        match unsafe { hook::lbLang_IsSettingJP } { Some(f) => f(), None => { { return unsafe { crate::tu::lblanguage::lbLang_IsSettingJP() as _ }; } } }
     }
     pub fn lb_8001BB48(a0: i32, a1: *mut i8, a2: *mut c_void, a3: *mut c_void, a4: *mut i8, a5: *mut c_void, a6: *mut c_void, a7: *mut c_void) -> i32 {
-        match unsafe { hook::lb_8001BB48 } { Some(f) => f(a0, a1, a2, a3, a4, a5, a6, a7), None => { panic!("TODO: lb_8001BB48 is not ported") } }
+        match unsafe { hook::lb_8001BB48 } { Some(f) => f(a0, a1, a2, a3, a4, a5, a6, a7), None => { { return unsafe { crate::tu::lbcardnew::lb_8001BB48(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _, a6 as _, a7 as _) as _ }; } } }
     }
     pub fn lb_8001BF04(a0: i32, a1: *mut i8, a2: *mut c_void, a3: *mut i8, a4: *mut c_void, a5: *mut c_void, a6: *mut c_void) -> i32 {
-        match unsafe { hook::lb_8001BF04 } { Some(f) => f(a0, a1, a2, a3, a4, a5, a6), None => { panic!("TODO: lb_8001BF04 is not ported") } }
+        match unsafe { hook::lb_8001BF04 } { Some(f) => f(a0, a1, a2, a3, a4, a5, a6), None => { { return unsafe { crate::tu::lbcardnew::lb_8001BF04(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _, a6 as _) as _ }; } } }
     }
     pub fn lb_8001BFD8(a0: i32, a1: *mut lbCardNew_SnapshotEntry, a2: *mut i32, a3: *mut i32) -> i32 {
-        match unsafe { hook::lb_8001BFD8 } { Some(f) => f(a0, a1, a2, a3), None => { panic!("TODO: lb_8001BFD8 is not ported") } }
+        match unsafe { hook::lb_8001BFD8 } { Some(f) => f(a0, a1, a2, a3), None => { { return unsafe { crate::tu::lbcardnew::lb_8001BFD8(a0 as _, a1 as _, a2 as _, a3 as _) as _ }; } } }
     }
     pub fn lb_8001C0F4(a0: i32, a1: *const i8, a2: *const i8, a3: *const i8, a4: *mut c_void) -> i32 {
-        match unsafe { hook::lb_8001C0F4 } { Some(f) => f(a0, a1, a2, a3, a4), None => { panic!("TODO: lb_8001C0F4 is not ported") } }
+        match unsafe { hook::lb_8001C0F4 } { Some(f) => f(a0, a1, a2, a3, a4), None => { { return unsafe { crate::tu::lbcardnew::lb_8001C0F4(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _) as _ }; } } }
     }
     pub fn lb_8001C4A8(a0: *mut c_void, a1: *mut c_void) -> i32 {
-        match unsafe { hook::lb_8001C4A8 } { Some(f) => f(a0, a1), None => { panic!("TODO: lb_8001C4A8 is not ported") } }
+        match unsafe { hook::lb_8001C4A8 } { Some(f) => f(a0, a1), None => { { return unsafe { crate::tu::lbcardnew::lb_8001C4A8(a0 as _, a1 as _) as _ }; } } }
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

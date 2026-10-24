@@ -31,8 +31,14 @@ pub mod ext {
             }
         };
     }
-    hook!(ITPIKACHUTHUNDERJOLT_SPAWN, itPikachuThunderJolt_Spawn,
-        (gobj: *mut HSD_GObj, pos: *mut Vec3, facing_dir: f32, kind: i32));
+    pub static mut ITPIKACHUTHUNDERJOLT_SPAWN: Option<fn(*mut HSD_GObj, *mut Vec3, f32, i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn itPikachuThunderJolt_Spawn(gobj: *mut HSD_GObj, pos: *mut Vec3, facing_dir: f32, kind: i32)  {
+                match unsafe { ITPIKACHUTHUNDERJOLT_SPAWN } {
+                    Some(f) => f(gobj, pos, facing_dir, kind),
+                    None => { unsafe { let _ = melee_items::tu::itpikachutjoltground::itPikachuThunderJolt_Spawn(gobj as _, pos as _, facing_dir as _, kind as _); } return; },
+                }
+            }
     // `efSync_Spawn(gfx_id, gobj, ...)` (ef/efsync.c, variadic): the trailing pointers as a slice.
     hook!(EFSYNC_SPAWN, efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut c_void]) -> *mut c_void);
 }

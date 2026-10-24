@@ -39,7 +39,7 @@ pub mod ext {
         ft_800D2D0C(g: G) -> bool = |g| crate::tu::ftCo_JumpAerial::ext::ft_800D2D0C(g);
         ft_800D2E7C(g: G, v: &mut Vec3) = crate::tu::ftCo_ItemScrew::ft_800D2E7C;
         ftCommon_8007D5D4(fp: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
-        ftCo_800D72A0(fp: &mut Fighter) -> bool = |_| todo!("TODO(port) ftCo_800D72A0 (ftCo_0D72.c)");
+        ftCo_800D72A0(fp: &mut Fighter) -> bool = |fp: &mut Fighter| -> bool { unsafe { crate::tu::ftco_0d72::ftco_800d72a0(fp as _) as _ } };
         ftCo_800D7268(fp: &mut Fighter) -> i32 = |f| crate::tu::ftCo_Attack100::ftCo_800D7268(f);
         ftCo_800CBAC4(g: G, msid: i32, vel: &Vec3, arg3: bool) = crate::tu::ftCo_JumpAerial::ftCo_800CBAC4;
         ft_800CB6EC(fp: &mut Fighter, arg1: i32) = crate::tu::ftCo_JumpAerial::ft_800CB6EC;

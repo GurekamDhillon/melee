@@ -31,12 +31,12 @@ pub mod ext {
     }
     ext_fns! {
         ftCo_800DB368(vic: *mut Fighter, fp: *mut Fighter) = |_, _| todo!("TODO(port) ftCo_800DB368 (ftCo_Attack100.c)");
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftCo_800DB464_fn() -> HSD_GObjEvent = || todo!("TODO(port) &ftCo_800DB464 (ftCo_Attack100.c)");
         ftCommon_8007E2F4(fp: &mut Fighter, v: i16) = crate::ftcommon2::ftcommon_8007e2f4;
-        ftAnim_8006EBA4(g: G) = |_| todo!("TODO(port) ftAnim_8006EBA4 (ftanim.c)");
+        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
         ftCommon_8007E2FC(g: G) = |g| crate::ftcommon2::ftcommon_8007e2fc(super::fp(g));
-        ft_80083B68(g: G) = |_| todo!("TODO(port) ft_80083B68 (ft_081B.c)");
+        ft_80083B68(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_081b::ft_80083b68(g as _); } };
     }
 }
 

@@ -52,7 +52,7 @@ pub unsafe fn lb_80011E24(jobj: *mut HSD_JObj, out: *mut *mut HSD_JObj, path: &[
             a.extend(path.iter().map(|v| *v as i64 as u64));
             h("lb_80011E24", &a) as i32
         }
-        None => panic!("TODO ext: lb_80011E24 is in a TU that is not ported yet"),
+        None => { return unsafe { melee_runtime::tu::lbspdisplay::lb_80011E24(jobj as _, out as _, path as _) as _ }; },
     }
 }
 

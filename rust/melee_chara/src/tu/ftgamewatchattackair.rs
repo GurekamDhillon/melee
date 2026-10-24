@@ -39,23 +39,128 @@ pub mod ext {
         };
     }
     // itgamewatchparachute.c
-    hook!(IT_802C6C38, it_802C6C38, (owner: *mut HSD_GObj, pos: *const Vec3, part: i32, facing: f32) -> *mut HSD_GObj);
-    hook!(IT_802C6D6C, it_802C6D6C, (item: *mut HSD_GObj));
-    hook!(IT_802C6DB8, it_802C6DB8, (item: *mut HSD_GObj));
-    hook!(IT_802C6DD8, it_802C6DD8, (item: *mut HSD_GObj));
-    hook!(IT_802C6E50, it_802C6E50, (item: *mut HSD_GObj));
+    pub static mut IT_802C6C38: Option<fn(*mut HSD_GObj, *const Vec3, i32, f32) -> *mut HSD_GObj> = None;
+            #[allow(non_snake_case)]
+            pub fn it_802C6C38(owner: *mut HSD_GObj, pos: *const Vec3, part: i32, facing: f32) -> *mut HSD_GObj {
+                match unsafe { IT_802C6C38 } {
+                    Some(f) => f(owner, pos, part, facing),
+                    None => { return unsafe { melee_items::tu::itgamewatchparachute::it_802C6C38(owner as _, pos as _, part as _, facing as _) as _ }; },
+                }
+            }
+    pub static mut IT_802C6D6C: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802C6D6C(item: *mut HSD_GObj)  {
+                match unsafe { IT_802C6D6C } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itgamewatchparachute::it_802C6D6C(item as _); } return; },
+                }
+            }
+    pub static mut IT_802C6DB8: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802C6DB8(item: *mut HSD_GObj)  {
+                match unsafe { IT_802C6DB8 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itgamewatchparachute::it_802C6DB8(item as _); } return; },
+                }
+            }
+    pub static mut IT_802C6DD8: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802C6DD8(item: *mut HSD_GObj)  {
+                match unsafe { IT_802C6DD8 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itgamewatchparachute::it_802C6DD8(item as _); } return; },
+                }
+            }
+    pub static mut IT_802C6E50: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802C6E50(item: *mut HSD_GObj)  {
+                match unsafe { IT_802C6E50 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itgamewatchparachute::it_802C6E50(item as _); } return; },
+                }
+            }
     // itgamewatchturtle.c
-    hook!(IT_802C6F40, it_802C6F40, (owner: *mut HSD_GObj, pos: *const Vec3, part: i32, facing: f32) -> *mut HSD_GObj);
-    hook!(IT_802C7074, it_802C7074, (item: *mut HSD_GObj));
-    hook!(IT_802C70C0, it_802C70C0, (item: *mut HSD_GObj));
-    hook!(IT_802C70E0, it_802C70E0, (item: *mut HSD_GObj));
-    hook!(IT_802C7158, it_802C7158, (item: *mut HSD_GObj));
+    pub static mut IT_802C6F40: Option<fn(*mut HSD_GObj, *const Vec3, i32, f32) -> *mut HSD_GObj> = None;
+            #[allow(non_snake_case)]
+            pub fn it_802C6F40(owner: *mut HSD_GObj, pos: *const Vec3, part: i32, facing: f32) -> *mut HSD_GObj {
+                match unsafe { IT_802C6F40 } {
+                    Some(f) => f(owner, pos, part, facing),
+                    None => { return unsafe { melee_items::tu::itgamewatchturtle::it_802C6F40(owner as _, pos as _, part as _, facing as _) as _ }; },
+                }
+            }
+    pub static mut IT_802C7074: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802C7074(item: *mut HSD_GObj)  {
+                match unsafe { IT_802C7074 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itgamewatchturtle::it_802C7074(item as _); } return; },
+                }
+            }
+    pub static mut IT_802C70C0: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802C70C0(item: *mut HSD_GObj)  {
+                match unsafe { IT_802C70C0 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itgamewatchturtle::it_802C70C0(item as _); } return; },
+                }
+            }
+    pub static mut IT_802C70E0: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802C70E0(item: *mut HSD_GObj)  {
+                match unsafe { IT_802C70E0 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itgamewatchturtle::it_802C70E0(item as _); } return; },
+                }
+            }
+    pub static mut IT_802C7158: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802C7158(item: *mut HSD_GObj)  {
+                match unsafe { IT_802C7158 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itgamewatchturtle::it_802C7158(item as _); } return; },
+                }
+            }
     // itgamewatchbreath.c (sparky)
-    hook!(IT_802C720C, it_802C720C, (owner: *mut HSD_GObj, pos: *const Vec3, part: i32, facing: f32) -> *mut HSD_GObj);
-    hook!(IT_802C7340, it_802C7340, (item: *mut HSD_GObj));
-    hook!(IT_802C738C, it_802C738C, (item: *mut HSD_GObj));
-    hook!(IT_802C73AC, it_802C73AC, (item: *mut HSD_GObj));
-    hook!(IT_802C7424, it_802C7424, (item: *mut HSD_GObj));
+    pub static mut IT_802C720C: Option<fn(*mut HSD_GObj, *const Vec3, i32, f32) -> *mut HSD_GObj> = None;
+            #[allow(non_snake_case)]
+            pub fn it_802C720C(owner: *mut HSD_GObj, pos: *const Vec3, part: i32, facing: f32) -> *mut HSD_GObj {
+                match unsafe { IT_802C720C } {
+                    Some(f) => f(owner, pos, part, facing),
+                    None => { return unsafe { melee_items::tu::itgamewatchbreath::it_802C720C(owner as _, pos as _, part as _, facing as _) as _ }; },
+                }
+            }
+    pub static mut IT_802C7340: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802C7340(item: *mut HSD_GObj)  {
+                match unsafe { IT_802C7340 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itgamewatchbreath::it_802C7340(item as _); } return; },
+                }
+            }
+    pub static mut IT_802C738C: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802C738C(item: *mut HSD_GObj)  {
+                match unsafe { IT_802C738C } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itgamewatchbreath::it_802C738C(item as _); } return; },
+                }
+            }
+    pub static mut IT_802C73AC: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802C73AC(item: *mut HSD_GObj)  {
+                match unsafe { IT_802C73AC } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itgamewatchbreath::it_802C73AC(item as _); } return; },
+                }
+            }
+    pub static mut IT_802C7424: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802C7424(item: *mut HSD_GObj)  {
+                match unsafe { IT_802C7424 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itgamewatchbreath::it_802C7424(item as _); } return; },
+                }
+            }
 }
 
 #[inline(always)]

@@ -31,7 +31,7 @@ pub mod ext {
     pub fn ftDk_MS_347_800E0378(g: G) -> bool {
         match unsafe { FTDK_MS_347_800E0378 } {
             Some(f) => f(g),
-            None => panic!("TODO: ftDk_MS_347_800E0378 is not ported"),
+            None => { return unsafe { crate::tu::ftdonkeyheavyfall::ftDk_MS_347_800E0378(g as _) != 0 }; },
         }
     }
 }

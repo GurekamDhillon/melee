@@ -49,7 +49,14 @@ pub mod ext {
         };
     }
     hook!(EFSYNC_SPAWN, efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut core::ffi::c_void]) -> *mut core::ffi::c_void);
-    hook!(IT_8029CEB4, it_8029CEB4, (owner: *mut HSD_GObj, pos: *const Vec3, kind: ItemKind, facing_dir: f32) -> *mut HSD_GObj);
+    pub static mut IT_8029CEB4: Option<fn(*mut HSD_GObj, *const Vec3, ItemKind, f32) -> *mut HSD_GObj> = None;
+            #[allow(non_snake_case)]
+            pub fn it_8029CEB4(owner: *mut HSD_GObj, pos: *const Vec3, kind: ItemKind, facing_dir: f32) -> *mut HSD_GObj {
+                match unsafe { IT_8029CEB4 } {
+                    Some(f) => f(owner, pos, kind, facing_dir),
+                    None => { return unsafe { melee_items::tu::itfoxillusion::it_8029CEB4(owner as _, pos as _, kind as _, facing_dir as _) as _ }; },
+                }
+            }
     hook_or!(FIGHTER_SETEFFECTHITLAGCALLBACKS, Fighter_SetEffectHitlagCallbacks, (fp: *mut Fighter),
         |fp: *mut Fighter| unsafe { melee_fighter::tu::ftCo_AttackS4::Fighter_SetEffectHitlagCallbacks(&mut *fp) });
     hook_or!(FTPARTGETROTX, ftPartGetRotX, (fp: *mut Fighter, part: i32) -> f32,

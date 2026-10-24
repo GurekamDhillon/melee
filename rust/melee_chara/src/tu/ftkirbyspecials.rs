@@ -30,11 +30,39 @@ pub mod ext {
         };
     }
     pub use crate::tu::ftcaptainspecialn::ext::{efSync_Spawn, EFSYNC_SPAWN};
-    hook!(LB_8000B1CC, lb_8000B1CC, (joint: *mut c_void, off: *const Vec3, out: *mut Vec3));
-    hook!(IT_802ADC34, it_802ADC34, (item: *mut Item_GObj));
-    hook!(IT_802ADC54, it_802ADC54, (gobj: *mut HSD_GObj, pos: *const Vec3, part: i32, ground_or_air: i32, dir: f32) -> *mut Item_GObj);
+    pub static mut LB_8000B1CC: Option<fn(*mut c_void, *const Vec3, *mut Vec3) > = None;
+            #[allow(non_snake_case)]
+            pub fn lb_8000B1CC(joint: *mut c_void, off: *const Vec3, out: *mut Vec3)  {
+                match unsafe { LB_8000B1CC } {
+                    Some(f) => f(joint, off, out),
+                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(joint as _, off as _, out as _); } return; },
+                }
+            }
+    pub static mut IT_802ADC34: Option<fn(*mut Item_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802ADC34(item: *mut Item_GObj)  {
+                match unsafe { IT_802ADC34 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itkirbyhammer::it_802ADC34(item as _); } return; },
+                }
+            }
+    pub static mut IT_802ADC54: Option<fn(*mut HSD_GObj, *const Vec3, i32, i32, f32) -> *mut Item_GObj> = None;
+            #[allow(non_snake_case)]
+            pub fn it_802ADC54(gobj: *mut HSD_GObj, pos: *const Vec3, part: i32, ground_or_air: i32, dir: f32) -> *mut Item_GObj {
+                match unsafe { IT_802ADC54 } {
+                    Some(f) => f(gobj, pos, part, ground_or_air, dir),
+                    None => { return unsafe { melee_items::tu::itkirbyhammer::it_802ADC54(gobj as _, pos as _, part as _, ground_or_air as _, dir as _) as _ }; },
+                }
+            }
     hook!(OSREPORT, OSReport, (msg: &str));
-    hook!(ASSERT, __assert, (file: &str, line: u32, cond: &str));
+    pub static mut ASSERT: Option<fn(&str, u32, &str) > = None;
+            #[allow(non_snake_case)]
+            pub fn __assert(file: &str, line: u32, cond: &str)  {
+                match unsafe { ASSERT } {
+                    Some(f) => f(file, line, cond),
+                    None => { unsafe { let _ = melee_runtime::tu::lbext::__assert(file as _, line as _, cond as _); } return; },
+                }
+            }
 }
 
 #[inline(always)]

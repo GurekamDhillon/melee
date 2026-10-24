@@ -35,16 +35,16 @@ pub mod ext {
         ftCo_800DF2D8(fp: &Fighter) -> bool = crate::ft0df::ftco_800df2d8;
         ftCo_80094E54(fp: &Fighter) -> bool = |_| todo!("TODO(port) ftCo_80094E54 (ftCo_ItemThrow.c)");
         ftCo_800DF30C(fp: &Fighter) -> bool = crate::ft0df::ftco_800df30c;
-        ftCo_800957F4(g: G, msid: i32) = |_, _| todo!("TODO(port) ftCo_800957F4 (ftCo_ItemThrow.c)");
+        ftCo_800957F4(g: G, msid: i32) = |g: G, msid: i32| { unsafe { let _ = crate::tu::ftCo_ItemThrow::ftCo_800957F4(g as _, msid as _); } };
         ftNs_AttackHi4_Enter(g: G) = |_| todo!("TODO(port) ftNs_AttackHi4_Enter (ftnessattackhi4.c)");
         Mex_OnUSmashDispatch(kind: i32, g: G, vanilla: *mut core::ffi::c_void) = |_, _, _| todo!("TODO(pc mex) Mex_OnUSmashDispatch");
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
-        ftAnim_8006EBA4(g: G) = |_| todo!("TODO(port) ftAnim_8006EBA4 (ftanim.c)");
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ft_8008A2BC(g: G) = crate::hooks::ft_8008a2bc;
-        ftCo_Wait_IASA(g: G) = |_| todo!("TODO(port) ftCo_Wait_IASA (ftCo_Wait.c)");
+        ftCo_Wait_IASA(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_Wait::ftCo_Wait_IASA(g as _); } };
         ft_80084F3C(g: G) = crate::ft084e::ft_80084f3c;
-        ft_80084104(g: G) = |_| todo!("TODO(port) ft_80084104 (ft_081B.c)");
+        ft_80084104(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_081b::ft_80084104(g as _); } };
     }
 }
 

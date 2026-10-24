@@ -64,10 +64,31 @@ pub mod ext {
         };
     }
     hook!(LBANIM_8001E8F8, lbAnim_8001E8F8, (tree: *mut FigaTree) -> f32);
-    hook!(FTDATA_80085E50, ftData_80085E50, (fp: *mut Fighter, msid: i32) -> *mut FigaTree);
-    hook!(IT_8026B3F8, it_8026B3F8, (article: *mut c_void, kind: i32));
+    pub static mut FTDATA_80085E50: Option<fn(*mut Fighter, i32) -> *mut FigaTree> = None;
+            #[allow(non_snake_case)]
+            pub fn ftData_80085E50(fp: *mut Fighter, msid: i32) -> *mut FigaTree {
+                match unsafe { FTDATA_80085E50 } {
+                    Some(f) => f(fp, msid),
+                    None => { return unsafe { melee_fighter::tu::ftdata::ftData_80085E50(fp as _, msid as _) as _ }; },
+                }
+            }
+    pub static mut IT_8026B3F8: Option<fn(*mut c_void, i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_8026B3F8(article: *mut c_void, kind: i32)  {
+                match unsafe { IT_8026B3F8 } {
+                    Some(f) => f(article, kind),
+                    None => { unsafe { let _ = melee_items::tu::it_26B1::it_8026B3F8(article as _, kind as _); } return; },
+                }
+            }
     /// `ftPe_SpecialN_OnDeath2(gobj)` (ftpeachspecialn.c, not ported yet).
-    hook!(FTPE_SPECIALN_ONDEATH2, ftPe_SpecialN_OnDeath2, (gobj: *mut HSD_GObj));
+    pub static mut FTPE_SPECIALN_ONDEATH2: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftPe_SpecialN_OnDeath2(gobj: *mut HSD_GObj)  {
+                match unsafe { FTPE_SPECIALN_ONDEATH2 } {
+                    Some(f) => f(gobj),
+                    None => { unsafe { let _ = crate::tu::ftpeachspecialn::ftPe_SpecialN_OnDeath2(gobj as _); } return; },
+                }
+            }
     hook_or!(FTPARTS_80074A74, ftParts_80074A74, melee_fighter::ft0df::ftparts_80074a74, (gobj: *mut HSD_GObj, model_idx: i32) -> i32);
 }
 

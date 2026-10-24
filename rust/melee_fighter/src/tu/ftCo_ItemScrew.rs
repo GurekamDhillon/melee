@@ -32,7 +32,7 @@ pub mod ext {
     }
     ext_fns! {
         ftCommon_8007D5D4(fp: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftCo_800CB110(g: G, arg1: bool, jump_mul: f32) = crate::tu::ftCo_Jump::ftCo_800CB110;
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ftCo_Fall_Enter(g: G) = |g| crate::tu::ftCo_Jump::ext::ftCo_Fall_Enter(g);
@@ -42,9 +42,9 @@ pub mod ext {
         ftCo_JumpAerial_IASA(g: G) = crate::tu::ftCo_JumpAerial::ftCo_JumpAerial_IASA;
         ft_80084DB0(g: G) = crate::ft084e::ft_80084db0;
         ftCo_800CBAC4(g: G, msid: i32, vel: &Vec3, arg3: bool) = crate::tu::ftCo_JumpAerial::ftCo_800CBAC4;
-        ft_800831CC(g: G, a: fn(G, i32) -> bool, b: fn(G)) = |_, _, _| todo!("TODO(port) ft_800831CC (ft_081B.c)");
-        ftCo_80096CC8(g: G, line: i32) -> bool = |_, _| todo!("TODO(port) ftCo_80096CC8 (ftCo_FallSpecial.c)");
-        ft_80082B1C(g: G) = |_| todo!("TODO(port) ft_80082B1C (ft_081B.c)");
+        ft_800831CC(g: G, a: fn(G, i32) -> bool, b: fn(G)) = |g: G, a: fn(G, i32) -> bool, b: fn(G)| { unsafe { let _ = crate::tu::ft_081b::ft_800831cc(g as _, a as _, b as _); } };
+        ftCo_80096CC8(g: G, line: i32) -> bool = |g: G, line: i32| -> bool { unsafe { crate::tu::ftCo_FallSpecial::ftCo_80096CC8(g as _, line as _) as _ } };
+        ft_80082B1C(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_081b::ft_80082b1c(g as _); } };
     }
 }
 

@@ -29,20 +29,20 @@ pub mod ext {
     }
     ext_fns! {
         ftGetParasolStatus(g: G) -> i32 = crate::ftcommon3::ft_get_parasol_status;
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
-        ftAnim_8006EBA4(g: G) = |_| todo!("TODO(port) ftAnim_8006EBA4 (ftanim.c)");
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ftCo_800CF3C8(g: G) = crate::tu::ftCo_ItemParasolFallSpecial::ftCo_800CF3C8;
         ftCo_800CF280(g: G) = crate::tu::ftCo_ItemParasolFall::ftCo_800CF280;
-        ftCo_SpecialAir_CheckInput(g: G) -> bool = |_| todo!("TODO(port) ftCo_SpecialAir_CheckInput (ftCo_SpecialAir.c)");
-        ftCo_80095328(g: G, out: *mut bool) -> bool = |_, _| todo!("TODO(port) ftCo_80095328 (ftCo_JumpAerial.c)");
+        ftCo_SpecialAir_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_SpecialAir::ftCo_SpecialAir_CheckInput(g as _) as _ } };
+        ftCo_80095328(g: G, out: *mut bool) -> bool = |g: G, out: *mut bool| -> bool { unsafe { crate::tu::ftCo_ItemThrow::ftCo_80095328(g as _, out as _) as _ } };
         ftCo_800C3B10(g: G) -> bool = crate::tu::ftco_aircatch::ftco_800c3b10;
         ftCo_AttackAir_CheckItemThrowInput(g: G) -> bool = crate::tu::ftCo_AttackAir::ftCo_AttackAir_CheckItemThrowInput;
-        ftCo_800CB870(g: G) -> bool = |_| todo!("TODO(port) ftCo_800CB870 (ftCo_AirCatch.c)");
+        ftCo_800CB870(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_JumpAerial::ftCo_800CB870(g as _) as _ } };
         ftCommon_Fall(f: &mut Fighter, grav: f32, terminal: f32) = crate::ftcommon::fall;
         ftCommon_CalcSelfAccel_AccelToVelClamped(f: &mut Fighter, accel: f32, target: f32, friction: f32) = crate::ftcommon::calc_self_accel_accel_to_vel_clamped;
         ft_8008370C(g: G, cb: fn(G)) = crate::tu::ft_081b::ft_8008370c;
-        ftCo_Landing_Enter_Basic(g: G) = |_| todo!("TODO(port) ftCo_Landing_Enter_Basic (ftCo_Landing.c)");
+        ftCo_Landing_Enter_Basic(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_Landing::ftCo_Landing_Enter_Basic(g as _); } };
     }
 }
 

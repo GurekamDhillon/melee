@@ -23,9 +23,30 @@ pub mod ext {
             }
         };
     }
-    hook!(IT_802F046C, it_802F046C, (gobj: *mut Item_GObj));
-    hook!(LBAUDIOAX_800236B8, lbAudioAx_800236B8, (id: i32));
-    hook!(LBAUDIOAX_8002438C, lbAudioAx_8002438C, (id: i32));
+    pub static mut IT_802F046C: Option<fn(*mut Item_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802F046C(gobj: *mut Item_GObj)  {
+                match unsafe { IT_802F046C } {
+                    Some(f) => f(gobj),
+                    None => { unsafe { let _ = melee_items::tu::itmasterhandlaser::it_802F046C(gobj as _); } return; },
+                }
+            }
+    pub static mut LBAUDIOAX_800236B8: Option<fn(i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn lbAudioAx_800236B8(id: i32)  {
+                match unsafe { LBAUDIOAX_800236B8 } {
+                    Some(f) => f(id),
+                    None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_800236B8(id as _); } return; },
+                }
+            }
+    pub static mut LBAUDIOAX_8002438C: Option<fn(i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn lbAudioAx_8002438C(id: i32)  {
+                match unsafe { LBAUDIOAX_8002438C } {
+                    Some(f) => f(id),
+                    None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_8002438C(id as _); } return; },
+                }
+            }
     // ftcrazyhandcapturewaitcrazyhand.c
     hook!(FTCH_GRABUNK1_8015B800, ftCh_GrabUnk1_8015B800, (gobj: *mut HSD_GObj));
 }

@@ -24,10 +24,26 @@ pub mod ext {
     hook_or!(COSF, cosf, (x: f32) -> f32, melee_runtime::gekko::cosf);
     hook_or!(SINF, sinf, (x: f32) -> f32, melee_runtime::gekko::sinf);
     hook!(IT_802F2CE0, it_802F2CE0, (item: *mut Item_GObj, clear_destroy_type: i32));
-    hook!(LB_8000B1CC, lb_8000B1CC, (jobj: *mut HSD_JObj, pos0: *mut Vec3, pos1: *mut Vec3));
-    hook!(IT_802B2A10, it_802B2A10, (gobj: *mut HSD_GObj, pos: *mut Vec3, arg: i32, dir: f32) -> *mut Item_GObj);
-    hook!(IT_802B28C8, it_802B28C8, (item: *mut Item_GObj, pos: *mut Vec3, offset: *mut Vec3, facing_dir: f32, unused: f32));
-    hook!(IT_802B2890, it_802B2890, (item: *mut Item_GObj));
+    pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *mut Vec3, *mut Vec3)> = None;
+    #[allow(non_snake_case)]
+    pub fn lb_8000B1CC(jobj: *mut HSD_JObj, pos0: *mut Vec3, pos1: *mut Vec3) {
+        match unsafe { LB_8000B1CC } { Some(f) => f(jobj, pos0, pos1), None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, pos0 as _, pos1 as _); } return; } }
+    }
+    pub static mut IT_802B2A10: Option<fn(*mut HSD_GObj, *mut Vec3, i32, f32) -> *mut Item_GObj> = None;
+    #[allow(non_snake_case)]
+    pub fn it_802B2A10(gobj: *mut HSD_GObj, pos: *mut Vec3, arg: i32, dir: f32) -> *mut Item_GObj {
+        match unsafe { IT_802B2A10 } { Some(f) => f(gobj, pos, arg, dir), None => { return unsafe { melee_items::tu::ityoshieggthrow::it_802B2A10(gobj as _, pos as _, arg as _, dir as _) as _ }; } }
+    }
+    pub static mut IT_802B28C8: Option<fn(*mut Item_GObj, *mut Vec3, *mut Vec3, f32, f32)> = None;
+    #[allow(non_snake_case)]
+    pub fn it_802B28C8(item: *mut Item_GObj, pos: *mut Vec3, offset: *mut Vec3, facing_dir: f32, unused: f32) {
+        match unsafe { IT_802B28C8 } { Some(f) => f(item, pos, offset, facing_dir, unused), None => { unsafe { let _ = melee_items::tu::ityoshieggthrow::it_802B28C8(item as _, pos as _, offset as _, facing_dir as _, unused as _); } return; } }
+    }
+    pub static mut IT_802B2890: Option<fn(*mut Item_GObj)> = None;
+    #[allow(non_snake_case)]
+    pub fn it_802B2890(item: *mut Item_GObj) {
+        match unsafe { IT_802B2890 } { Some(f) => f(item), None => { unsafe { let _ = melee_items::tu::ityoshieggthrow::it_802B2890(item as _); } return; } }
+    }
     pub use crate::tu::ftinl::ext::{ft_80082C74, ft_80083A48, ft_8008403C};
 }
 

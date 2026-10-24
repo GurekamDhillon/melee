@@ -98,21 +98,63 @@ pub mod ext {
         };
     }
     // sysdolphin/baselib/memory.c
-    hook!(HSD_MEMALLOC, HSD_MemAlloc, (size: isize) -> *mut c_void);
-    hook!(HSD_FREE, HSD_Free, (ptr: *mut c_void));
+    pub static mut HSD_MEMALLOC: Option<fn(isize) -> *mut c_void> = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_MemAlloc(size: isize) -> *mut c_void {
+                match unsafe { HSD_MEMALLOC } {
+                    Some(f) => f(size),
+                    None => { return unsafe { melee_runtime::tu::memory::HSD_MemAlloc(size as _) as _ }; },
+                }
+            }
+    pub static mut HSD_FREE: Option<fn(*mut c_void) > = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_Free(ptr: *mut c_void)  {
+                match unsafe { HSD_FREE } {
+                    Some(f) => f(ptr),
+                    None => { unsafe { let _ = melee_runtime::tu::memory::HSD_Free(ptr as _); } return; },
+                }
+            }
     // sysdolphin/baselib/sislib.c
-    hook!(HSD_SISLIB_803A5ACC, HSD_SisLib_803A5ACC, (a: i32, b: i32, x: f32, y: f32, z: f32, w: f32, h: f32) -> *mut HSD_Text);
-    hook!(HSD_SISLIB_803A6368, HSD_SisLib_803A6368, (text: *mut HSD_Text, v: i32));
+    pub static mut HSD_SISLIB_803A5ACC: Option<fn(i32, i32, f32, f32, f32, f32, f32) -> *mut HSD_Text> = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_SisLib_803A5ACC(a: i32, b: i32, x: f32, y: f32, z: f32, w: f32, h: f32) -> *mut HSD_Text {
+                match unsafe { HSD_SISLIB_803A5ACC } {
+                    Some(f) => f(a, b, x, y, z, w, h),
+                    None => { return unsafe { melee_runtime::tu::sislib::HSD_SisLib_803A5ACC(a as _, b as _, x as _, y as _, z as _, w as _, h as _) as _ }; },
+                }
+            }
+    pub static mut HSD_SISLIB_803A6368: Option<fn(*mut HSD_Text, i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_SisLib_803A6368(text: *mut HSD_Text, v: i32)  {
+                match unsafe { HSD_SISLIB_803A6368 } {
+                    Some(f) => f(text, v),
+                    None => { unsafe { let _ = melee_runtime::tu::sislib::HSD_SisLib_803A6368(text as _, v as _); } return; },
+                }
+            }
     hook!(HSD_SISLIB_803A62A0, HSD_SisLib_803A62A0, (a: i32, file: &str, sym: &str));
     hook!(HSD_SISLIB_803A611C, HSD_SisLib_803A611C, (a: i32, g: *mut HSD_GObj, b: u16, c: u8, d: u8, e: u8, f: u8, h: u32) -> i32);
     hook!(HSD_SISLIB_803A5CC4, HSD_SisLib_803A5CC4, (text: *mut HSD_Text));
     // sysdolphin/baselib/jobj.c, cobj.c, gobj*.c
     hook!(HSD_JOBJSETMTXDIRTYSUB, HSD_JObjSetMtxDirtySub, (j: *mut HSD_JObj));
     hook!(HSD_JOBJSETFLAGSALL, HSD_JObjSetFlagsAll, (j: *mut HSD_JObj, f: u32));
-    hook!(HSD_JOBJLOADJOINT, HSD_JObjLoadJoint, (joint: *mut HSD_Joint) -> *mut HSD_JObj);
+    pub static mut HSD_JOBJLOADJOINT: Option<fn(*mut HSD_Joint) -> *mut HSD_JObj> = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_JObjLoadJoint(joint: *mut HSD_Joint) -> *mut HSD_JObj {
+                match unsafe { HSD_JOBJLOADJOINT } {
+                    Some(f) => f(joint),
+                    None => { return unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(joint as _) as _ }; },
+                }
+            }
     hook!(HSD_JOBJREQANIMALL, HSD_JObjReqAnimAll, (jobj: *mut HSD_JObj, frame: f32));
     hook!(HSD_JOBJANIMALL, HSD_JObjAnimAll, (jobj: *mut HSD_JObj));
-    hook!(HSD_COBJLOADDESC, HSD_CObjLoadDesc, (desc: *mut HSD_CObjDesc) -> *mut HSD_CObj);
+    pub static mut HSD_COBJLOADDESC: Option<fn(*mut HSD_CObjDesc) -> *mut HSD_CObj> = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_CObjLoadDesc(desc: *mut HSD_CObjDesc) -> *mut HSD_CObj {
+                match unsafe { HSD_COBJLOADDESC } {
+                    Some(f) => f(desc),
+                    None => { return unsafe { melee_runtime::tu::cobj::HSD_CObjLoadDesc(desc as _) as _ }; },
+                }
+            }
     hook!(GOBJ_CREATE, GObj_Create, (classifier: u16, p_link: u8, priority: u8) -> *mut HSD_GObj);
     hook!(HSD_GOBJOBJECT_80390A70, HSD_GObjObject_80390A70, (gobj: *mut HSD_GObj, kind: u8, obj: *mut c_void));
     hook!(GOBJ_SETUPGXLINK, GObj_SetupGXLink, (gobj: *mut HSD_GObj, render: usize, gx_link: u8, priority: u32));
@@ -124,8 +166,22 @@ pub mod ext {
     hook!(HSD_GOBJ_CAMERAKIND, hsd_gobj_camera_kind, () -> u8);
     // lb/lbarchive.c, lb/lblanguage.c, gm/gm_1601.c
     hook!(LBARCHIVE_80016DBC, lbArchive_80016DBC, (filename: &str, symbols: *mut *mut SceneDesc, sym: &str, end: i32));
-    hook!(LBLANG_ISSAVEDLANGUAGEUS, lbLang_IsSavedLanguageUS, () -> bool);
-    hook!(GM_8016895C, gm_8016895C, (jobj: *mut HSD_JObj, mdl: *mut DynamicModelDesc, idx: i32));
+    pub static mut LBLANG_ISSAVEDLANGUAGEUS: Option<fn() -> bool> = None;
+            #[allow(non_snake_case)]
+            pub fn lbLang_IsSavedLanguageUS() -> bool {
+                match unsafe { LBLANG_ISSAVEDLANGUAGEUS } {
+                    Some(f) => f(),
+                    None => { return unsafe { melee_runtime::tu::lblanguage::lbLang_IsSavedLanguageUS() as _ }; },
+                }
+            }
+    pub static mut GM_8016895C: Option<fn(*mut HSD_JObj, *mut DynamicModelDesc, i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_8016895C(jobj: *mut HSD_JObj, mdl: *mut DynamicModelDesc, idx: i32)  {
+                match unsafe { GM_8016895C } {
+                    Some(f) => f(jobj, mdl, idx),
+                    None => { unsafe { let _ = crate::tu::gm_1601::gm_8016895C(jobj as _, mdl as _, idx as _); } return; },
+                }
+            }
     /// `HSD_PadMasterStatus[idx].err` and `HSD_PadCopyStatus[idx].trigger` (sysdolphin/baselib/controller.c).
     hook!(HSD_PADMASTERSTATUS_ERR, hsd_pad_master_status_err, (idx: usize) -> i8);
     hook!(HSD_PADCOPYSTATUS_TRIGGER, hsd_pad_copy_status_trigger, (idx: usize) -> u32);
@@ -135,7 +191,7 @@ pub mod ext {
         panic!("TODO(sysdolphin): HSD_GObj_803910D8 is not ported");
     }
     pub unsafe extern "C" fn HSD_GObj_JObjCallback(_gobj: *mut HSD_GObj, _code: i32) {
-        panic!("TODO(sysdolphin): HSD_GObj_JObjCallback is not ported");
+        { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_JObjCallback(_gobj as _, _code as _); } return; };
     }
 }
 

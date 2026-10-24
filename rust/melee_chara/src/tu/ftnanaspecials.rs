@@ -83,7 +83,14 @@ pub mod ext {
         })
     }
     hook_or!(FTPP_SPECIALS_8011F964, ftPp_SpecialS_8011F964, ftpp_specials_8011f964_port, (gobj: *mut HSD_GObj) -> bool);
-    hook!(FTPP_SPECIALS_8011F6FC, ftPp_SpecialS_8011F6FC, (gobj: *mut HSD_GObj) -> bool);
+    pub static mut FTPP_SPECIALS_8011F6FC: Option<fn(*mut HSD_GObj) -> bool> = None;
+            #[allow(non_snake_case)]
+            pub fn ftPp_SpecialS_8011F6FC(gobj: *mut HSD_GObj) -> bool {
+                match unsafe { FTPP_SPECIALS_8011F6FC } {
+                    Some(f) => f(gobj),
+                    None => { return unsafe { crate::tu::ftpopospecials::ftPp_SpecialS_8011F6FC(gobj as _) != 0 }; },
+                }
+            }
     // TARGET_PC `Slippi_Version()` (pc/platform); `Slippi_Codes()` is `melee_fighter::hooks`.
     hook!(SLIPPI_VERSION, Slippi_Version, () -> i32);
 }

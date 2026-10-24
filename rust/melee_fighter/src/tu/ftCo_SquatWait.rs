@@ -32,12 +32,12 @@ pub mod ext {
         };
     }
     ext_fns! {
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftCo_8008A698(f: &Fighter) -> bool = crate::tu::ftwaitanim::ftCo_8008A698;
         // `ftData_80085FD4(fp, msid)->x8` (only that word is read here).
         ftData_80085FD4(f: &mut Fighter, msid: i32) -> usize = crate::tu::ftdata::ftData_80085FD4_x8;
         ftCo_8008A6D8(g: G, anim_id: i32) = crate::tu::ftwaitanim::ftCo_8008A6D8;
-        ftCommon_8007EFC0(f: &mut Fighter, val: u32) = |_, _| todo!("TODO(port) ftCommon_8007EFC0 (ftcommon.c)");
+        ftCommon_8007EFC0(f: &mut Fighter, val: u32) = |f: &mut Fighter, val: u32| { unsafe { let _ = crate::ftcommon2::ftcommon_8007efc0(f as _, val as _); } };
         ftLk_AttackAir_800EB3BC(g: G) = |_| todo!("TODO(port) ftLk_AttackAir_800EB3BC (ftlinkattackair.c)");
         ftCl_Init_8014919C(g: G) = |_| todo!("TODO(port) ftCl_Init_8014919C (ftclink.c)");
         ftCo_8008A7A8(g: G, w: *mut WaitStruct) = |g, w| crate::tu::ftwaitanim::ftCo_8008A7A8(g, w);
@@ -50,15 +50,15 @@ pub mod ext {
         ftCo_AttackHi3_CheckInput(g: G) -> bool = crate::tu::ftCo_AttackHi3::ftCo_AttackHi3_CheckInput;
         ftCo_AttackLw3_CheckInput(g: G) -> bool = crate::tu::ftCo_AttackLw3::ftCo_AttackLw3_CheckInput;
         ftCo_Attack1_CheckInput(g: G) -> bool = crate::tu::ftCo_Attack1::ftCo_Attack1_CheckInput;
-        ftCo_80091A4C(g: G) -> bool = |_| todo!("TODO(port) ftCo_80091A4C (ftCo_Guard.c)");
+        ftCo_80091A4C(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Guard::ftCo_80091A4C(g as _) as _ } };
         ftCo_800DE9D8(g: G) -> bool = crate::tu::ftCo_AppealS::ftCo_800DE9D8;
         ftCo_Jump_CheckInput(g: G) -> bool = crate::tu::ftCo_Jump::ftCo_Jump_CheckInput;
-        ftCo_80099F9C(g: G) -> bool = |_| todo!("TODO(port) ftCo_80099F9C (ftCo_Pass.c)");
+        ftCo_80099F9C(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Pass::ftCo_80099F9C(g as _) as _ } };
         ftCo_Dash_CheckInput(g: G) -> bool = crate::tu::ftCo_Dash::ftCo_Dash_CheckInput;
         ftCo_SquatRv_CheckInput(g: G) -> bool = crate::tu::ftCo_SquatRv::ftCo_SquatRv_CheckInput;
-        ft_80084F3C(g: G) = |_| todo!("TODO(port) ft_80084F3C (ft_084E.c)");
+        ft_80084F3C(g: G) = |g: G| { unsafe { let _ = crate::ft084e::ft_80084f3c(g as _); } };
         ftColl_8007AEE0(g: G) = crate::ft0df::ftcoll_8007aee0;
-        ft_80083F88(g: G) = |_| todo!("TODO(port) ft_80083F88 (ft_081B.c)");
+        ft_80083F88(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_081b::ft_80083f88(g as _); } };
     }
 }
 

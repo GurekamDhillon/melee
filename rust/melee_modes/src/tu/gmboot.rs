@@ -62,19 +62,61 @@ pub mod ext {
     /// `gmMainLib_8046B0F0.skip_intro` (gm/gmmain_lib.c).
     hook!(GM_MAIN_LIB_SKIP_INTRO, gm_main_lib_skip_intro, () -> bool);
     /// `gm_801BF708(s8)` (gm/gmevent.c).
-    hook!(GM_801BF708, gm_801BF708, (arg: i8));
+    pub static mut GM_801BF708: Option<fn(i8) > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_801BF708(arg: i8)  {
+                match unsafe { GM_801BF708 } {
+                    Some(f) => f(arg),
+                    None => { unsafe { let _ = crate::tu::gmopeningmode::gm_801BF708(arg as _); } return; },
+                }
+            }
     /// `Toy_803048C0(id)` (ty/toy.c; s32 in the C, bool-valued).
-    hook!(TOY_803048C0, Toy_803048C0, (id: i32) -> i32);
+    pub static mut TOY_803048C0: Option<fn(i32) -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn Toy_803048C0(id: i32) -> i32 {
+                match unsafe { TOY_803048C0 } {
+                    Some(f) => f(id),
+                    None => { return unsafe { melee_items::tu::toy::Toy_803048C0(id as _) as _ }; },
+                }
+            }
     /// `Toy_803124BC()` (ty/toy.c).
-    hook!(TOY_803124BC, Toy_803124BC, ());
+    pub static mut TOY_803124BC: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn Toy_803124BC()  {
+                match unsafe { TOY_803124BC } {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = melee_items::tu::toy::Toy_803124BC(); } return; },
+                }
+            }
     /// `Toy_SetUnlockState(id, value)` (ty/toy.c).
-    hook!(TOY_SETUNLOCKSTATE, Toy_SetUnlockState, (id: i32, value: bool));
+    pub static mut TOY_SETUNLOCKSTATE: Option<fn(i32, bool) > = None;
+            #[allow(non_snake_case)]
+            pub fn Toy_SetUnlockState(id: i32, value: bool)  {
+                match unsafe { TOY_SETUNLOCKSTATE } {
+                    Some(f) => f(id, value),
+                    None => { unsafe { let _ = melee_items::tu::toy::Toy_SetUnlockState(id as _, value as _); } return; },
+                }
+            }
     /// `lb_8001C2D8(chan, company, game_name, filename)` (lb/lbcardnew.c; 0 on success).
     hook!(LB_8001C2D8, lb_8001C2D8, (chan: i32, company: &str, game_name: &str, filename: &str) -> i32);
     /// `lbLang_GetLanguageSetting()` (lb/lblanguage.c).
-    hook!(LBLANG_GETLANGUAGESETTING, lbLang_GetLanguageSetting, () -> i32);
+    pub static mut LBLANG_GETLANGUAGESETTING: Option<fn() -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn lbLang_GetLanguageSetting() -> i32 {
+                match unsafe { LBLANG_GETLANGUAGESETTING } {
+                    Some(f) => f(),
+                    None => { return unsafe { melee_runtime::tu::lblanguage::lbLang_GetLanguageSetting() as _ }; },
+                }
+            }
     /// `gm_ChangeGameModeAfterCurrentScene(mode)` (gm/gm_1A3F.c).
-    hook!(GM_CHANGEGAMEMODEAFTERCURRENTSCENE, gm_ChangeGameModeAfterCurrentScene, (mode: i32));
+    pub static mut GM_CHANGEGAMEMODEAFTERCURRENTSCENE: Option<fn(i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_ChangeGameModeAfterCurrentScene(mode: i32)  {
+                match unsafe { GM_CHANGEGAMEMODEAFTERCURRENTSCENE } {
+                    Some(f) => f(mode),
+                    None => { unsafe { let _ = crate::tu::gm_1A3F::gm_ChangeGameModeAfterCurrentScene(mode as _); } return; },
+                }
+            }
     /// `gm_SetGameModeOverride(fn)` (gm/gm_1A3F.c).
     hook!(GM_SETGAMEMODEOVERRIDE, gm_SetGameModeOverride, (f: fn() -> u8));
     /// `gm_SetPendingGameMode(mode)` (gm/gm_1A3F.c).
@@ -90,7 +132,7 @@ pub mod ext {
 
     /// `lbCardGame_DecideGameMode` (lb/lbcardgame.c): the override's identity; not ported yet.
     pub fn lbCardGame_DecideGameMode() -> u8 {
-        panic!("TODO: lbCardGame_DecideGameMode is not ported")
+        { return unsafe { melee_runtime::tu::lbcardgame::lbCardGame_DecideGameMode() as _ }; }
     }
 }
 

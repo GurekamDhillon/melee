@@ -48,23 +48,58 @@ pub mod ext {
     /// `lbArchive_80016DBC(filename, &symbols, name, flag)`: loads the scene archive; `symbols` gets the desc.
     hook!(LBARCHIVE_80016DBC, lbArchive_80016DBC, (filename: &str, symbols: *mut *mut SceneDesc, name: &str, flag: i32) -> *mut HSD_Archive);
     /// `lbArchive_80016EFC(archive)`.
-    hook!(LBARCHIVE_80016EFC, lbArchive_80016EFC, (archive: *mut HSD_Archive));
+    pub static mut LBARCHIVE_80016EFC: Option<fn(*mut HSD_Archive) > = None;
+            #[allow(non_snake_case)]
+            pub fn lbArchive_80016EFC(archive: *mut HSD_Archive)  {
+                match unsafe { LBARCHIVE_80016EFC } {
+                    Some(f) => f(archive),
+                    None => { unsafe { let _ = melee_runtime::tu::lbarchive::lbArchive_80016EFC(archive as _); } return; },
+                }
+            }
     /// `GObj_Create(classifier, p_link, priority)`.
     hook!(GOBJ_CREATE, GObj_Create, (classifier: u16, p_link: u8, priority: u8) -> *mut HSD_GObj);
     /// `HSD_CObjLoadDesc(desc)`.
-    hook!(HSD_COBJLOADDESC, HSD_CObjLoadDesc, (desc: *mut HSD_CObjDesc) -> *mut HSD_CObj);
+    pub static mut HSD_COBJLOADDESC: Option<fn(*mut HSD_CObjDesc) -> *mut HSD_CObj> = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_CObjLoadDesc(desc: *mut HSD_CObjDesc) -> *mut HSD_CObj {
+                match unsafe { HSD_COBJLOADDESC } {
+                    Some(f) => f(desc),
+                    None => { return unsafe { melee_runtime::tu::cobj::HSD_CObjLoadDesc(desc as _) as _ }; },
+                }
+            }
     /// `HSD_GObjObject_80390A70(gobj, kind, obj)`.
     hook!(HSD_GOBJOBJECT_80390A70, HSD_GObjObject_80390A70, (gobj: *mut HSD_GObj, kind: u8, obj: *mut c_void));
     /// `GObj_SetupGXLinkMax(gobj, render, priority)` (the render callback's address).
     hook!(GOBJ_SETUPGXLINKMAX, GObj_SetupGXLinkMax, (gobj: *mut HSD_GObj, render: usize, priority: u32));
     /// `lb_80011AC4(lights)`.
-    hook!(LB_80011AC4, lb_80011AC4, (lights: *mut *mut LightList) -> *mut HSD_LObj);
+    pub static mut LB_80011AC4: Option<fn(*mut *mut LightList) -> *mut HSD_LObj> = None;
+            #[allow(non_snake_case)]
+            pub fn lb_80011AC4(lights: *mut *mut LightList) -> *mut HSD_LObj {
+                match unsafe { LB_80011AC4 } {
+                    Some(f) => f(lights),
+                    None => { return unsafe { melee_runtime::tu::lbspdisplay::lb_80011AC4(lights as _) as _ }; },
+                }
+            }
     /// `GObj_SetupGXLink(gobj, render, gx_link, priority)`.
     hook!(GOBJ_SETUPGXLINK, GObj_SetupGXLink, (gobj: *mut HSD_GObj, render: usize, gx_link: u8, priority: u32));
     /// `HSD_JObjLoadJoint(joint)`.
-    hook!(HSD_JOBJLOADJOINT, HSD_JObjLoadJoint, (joint: *mut HSD_Joint) -> *mut HSD_JObj);
+    pub static mut HSD_JOBJLOADJOINT: Option<fn(*mut HSD_Joint) -> *mut HSD_JObj> = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_JObjLoadJoint(joint: *mut HSD_Joint) -> *mut HSD_JObj {
+                match unsafe { HSD_JOBJLOADJOINT } {
+                    Some(f) => f(joint),
+                    None => { return unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(joint as _) as _ }; },
+                }
+            }
     /// `gm_8016895C(jobj, model, idx)` (gm/gm_1689.c).
-    hook!(GM_8016895C, gm_8016895C, (jobj: *mut HSD_JObj, model: *mut DynamicModelDesc, idx: i32));
+    pub static mut GM_8016895C: Option<fn(*mut HSD_JObj, *mut DynamicModelDesc, i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_8016895C(jobj: *mut HSD_JObj, model: *mut DynamicModelDesc, idx: i32)  {
+                match unsafe { GM_8016895C } {
+                    Some(f) => f(jobj, model, idx),
+                    None => { unsafe { let _ = crate::tu::gm_1601::gm_8016895C(jobj as _, model as _, idx as _); } return; },
+                }
+            }
     /// `HSD_JObjReqAnimAll(jobj, frame)`.
     hook!(HSD_JOBJREQANIMALL, HSD_JObjReqAnimAll, (jobj: *mut HSD_JObj, frame: f32));
     /// `HSD_JObjAnimAll(jobj)`.
@@ -72,14 +107,49 @@ pub mod ext {
     /// `HSD_GObj_SetupProc(gobj, proc, priority)` (the proc's address).
     hook!(HSD_GOBJ_SETUPPROC, HSD_GObj_SetupProc, (gobj: *mut HSD_GObj, proc: usize, priority: u8));
     /// `HSD_TObjReqAnimAll(tobj, start_frame)`.
-    hook!(HSD_TOBJREQANIMALL, HSD_TObjReqAnimAll, (tobj: *mut HSD_TObj, start_frame: f32));
+    pub static mut HSD_TOBJREQANIMALL: Option<fn(*mut HSD_TObj, f32) > = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_TObjReqAnimAll(tobj: *mut HSD_TObj, start_frame: f32)  {
+                match unsafe { HSD_TOBJREQANIMALL } {
+                    Some(f) => f(tobj, start_frame),
+                    None => { unsafe { let _ = melee_runtime::tu::tobj::HSD_TObjReqAnimAll(tobj as _, start_frame as _); } return; },
+                }
+            }
     /// `HSD_AObjSetRate(aobj, rate)`.
-    hook!(HSD_AOBJSETRATE, HSD_AObjSetRate, (aobj: *mut HSD_AObj, rate: f32));
+    pub static mut HSD_AOBJSETRATE: Option<fn(*mut HSD_AObj, f32) > = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_AObjSetRate(aobj: *mut HSD_AObj, rate: f32)  {
+                match unsafe { HSD_AOBJSETRATE } {
+                    Some(f) => f(aobj, rate),
+                    None => { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjSetRate(aobj as _, rate as _); } return; },
+                }
+            }
     /// `gm_801A4B60()` (gm/gmscene: the scene exit).
-    hook!(GM_801A4B60, gm_801A4B60, ());
+    pub static mut GM_801A4B60: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_801A4B60()  {
+                match unsafe { GM_801A4B60 } {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::gmscene::gm_801A4B60(); } return; },
+                }
+            }
     /// `lbAudioAx_80023F28(id)` / `lbAudioAx_800236DC()` (lb/lbaudio_ax.c).
-    hook!(LBAUDIOAX_80023F28, lbAudioAx_80023F28, (id: i32) -> i32);
-    hook!(LBAUDIOAX_800236DC, lbAudioAx_800236DC, () -> i32);
+    pub static mut LBAUDIOAX_80023F28: Option<fn(i32) -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn lbAudioAx_80023F28(id: i32) -> i32 {
+                match unsafe { LBAUDIOAX_80023F28 } {
+                    Some(f) => f(id),
+                    None => { return unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023F28(id as _) as _ }; },
+                }
+            }
+    pub static mut LBAUDIOAX_800236DC: Option<fn() -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn lbAudioAx_800236DC() -> i32 {
+                match unsafe { LBAUDIOAX_800236DC } {
+                    Some(f) => f(),
+                    None => { return unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800236DC() as _ }; },
+                }
+            }
     /// `HSD_PadCopyStatus[idx].trigger` (sysdolphin/baselib/controller.c).
     hook!(HSD_PADCOPYSTATUS_TRIGGER, hsd_pad_copy_status_trigger, (idx: usize) -> u32);
     /// `HSD_GObj_JObjKind` / `HSD_GObj_LightKind` / `HSD_GObj_CameraKind` (sysdolphin/baselib/gobj.c).
@@ -93,10 +163,10 @@ pub mod ext {
     }
     /// `HSD_GObj_LObjCallback` / `HSD_GObj_JObjCallback` (sysdolphin/baselib/gobj.c): addresses only.
     pub unsafe extern "C" fn HSD_GObj_LObjCallback(_gobj: *mut HSD_GObj, _code: i32) {
-        panic!("TODO(sysdolphin): HSD_GObj_LObjCallback is not ported");
+        { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_LObjCallback(_gobj as _, _code as _); } return; };
     }
     pub unsafe extern "C" fn HSD_GObj_JObjCallback(_gobj: *mut HSD_GObj, _code: i32) {
-        panic!("TODO(sysdolphin): HSD_GObj_JObjCallback is not ported");
+        { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_JObjCallback(_gobj as _, _code as _); } return; };
     }
 }
 

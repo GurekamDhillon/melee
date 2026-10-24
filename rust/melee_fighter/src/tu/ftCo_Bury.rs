@@ -43,31 +43,31 @@ pub mod ext {
         ftColl_800765F0(fp: *mut Fighter, victim: G, v: f32) -> f32 = |_, _, _| todo!("TODO(port) ftColl_800765F0 (ftcoll.c)");
         ftColl_80076640(fp: *mut Fighter, f: *mut f32) -> bool = |_, _| todo!("TODO(port) ftColl_80076640 (ftcoll.c)");
         ftColl_80076764(a: i32, b: i32, g: G, d: D, fp: *mut Fighter, h: FH) = |_, _, _, _, _, _| todo!("TODO(port) ftColl_80076764 (ftcoll.c)");
-        lbColl_80008D30(hit: *mut HitCapsule, a: *mut lbColl_80008D30_arg1) = |_, _| todo!("TODO(port) lbColl_80008D30 (lbcollision.c)");
+        lbColl_80008D30(hit: *mut HitCapsule, a: *mut lbColl_80008D30_arg1) = |hit: *mut HitCapsule, a: *mut lbColl_80008D30_arg1| { unsafe { let _ = melee_runtime::tu::lbcollision::lbColl_80008D30(hit as _, a as _); } };
         ftColl_80078384(fp: *mut Fighter, h: FH, hit: *mut HitCapsule) = |_, _, _| todo!("TODO(port) ftColl_80078384 (ftcoll.c)");
-        pl_8003EC30(slot: i32, sub: i32, kind: i32, f: f32) = |_, _, _, _| todo!("TODO(port) pl_8003EC30 (plbonuslib.c)");
+        pl_8003EC30(slot: i32, sub: i32, kind: i32, f: f32) = |slot: i32, sub: i32, kind: i32, f: f32| { unsafe { let _ = crate::tu::plbonuslib::pl_8003EC30(slot as _, sub as _, kind as _, f as _); } };
         stage_info_grkind() -> i32 = || todo!("TODO(port) stage_info.grkind (ground.c global)");
         Ground_801C5700(i: i32) -> D = |_| todo!("TODO(port) Ground_801C5700 (ground.c)");
-        ftCo_8008DCE0(g: G, a: i32, facing: f32) = |_, _, _| todo!("TODO(port) ftCo_8008DCE0 (ftCo_Damage.c)");
+        ftCo_8008DCE0(g: G, a: i32, facing: f32) = |g: G, a: i32, facing: f32| { unsafe { let _ = crate::tu::ftCo_Damage::ftCo_8008DCE0(g as _, a as _, facing as _); } };
         ftCommon_8007D7FC(fp: &mut Fighter) = crate::ftcommon3::ftcommon_8007d7fc;
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftCommon_8007E2FC(g: G) = |g| crate::ftcommon2::ftcommon_8007e2fc(super::fp(g));
         ftCommon_InitGrab(fp: &mut Fighter, a: i32, v: f32) = |_, _, _| todo!("TODO(port) ftCommon_InitGrab (ftcommon.c)");
-        Player_GetHandicap(slot: i32) -> i32 = |_| todo!("TODO(port) Player_GetHandicap (player.c)");
-        Player_80033BB8(slot: i32) -> i32 = |_| todo!("TODO(port) Player_80033BB8 (player.c)");
+        Player_GetHandicap(slot: i32) -> i32 = |slot: i32| -> i32 { unsafe { crate::tu::player::Player_GetHandicap(slot as _) as _ } };
+        Player_80033BB8(slot: i32) -> i32 = |slot: i32| -> i32 { unsafe { crate::tu::player::Player_80033BB8(slot as _) as _ } };
         ftCommon_8007E2F4(fp: &mut Fighter, v: i16) = crate::ftcommon2::ftcommon_8007e2f4;
         ft_80084CB0(fp: &Fighter, b: &mut ftCollisionBox) = crate::ft084e::ft_80084cb0;
-        lb_8000B1CC(j: *mut HSD_JObj, p0: *mut Vec3, p1: *mut Vec3) = |_, _, _| todo!("TODO(port) lb_8000B1CC (lb_00B0.c)");
+        lb_8000B1CC(j: *mut HSD_JObj, p0: *mut Vec3, p1: *mut Vec3) = |j: *mut HSD_JObj, p0: *mut Vec3, p1: *mut Vec3| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(j as _, p0 as _, p1 as _); } };
         ftParts_GetBoneIndex(fp: *mut Fighter, part: i32) -> i32 = |_, _| todo!("TODO(port) ftParts_GetBoneIndex (ftparts.c)");
         efSync_Spawn(id: i32, g: G, pos: *mut Vec3, s: *mut f32) = |_, _, _, _| todo!("TODO(port) efSync_Spawn (efsync.c)");
         ftCommon_GrabMash(fp: &mut Fighter, v: f32) -> bool = |_, _| todo!("TODO(port) ftCommon_GrabMash (ftcommon.c)");
         mpLib_80054ED8(line: i32) -> bool = |_| todo!("TODO(port) mpLib_80054ED8 (mplib.c)");
         mpLineGetNormal(line: i32, n: *mut Vec3) -> *mut Vec3 = |_, _| todo!("TODO(port) mpLineGetNormal (mplib.c)");
-        atan2f(y: f32, x: f32) -> f32 = |_, _| todo!("TODO(port) atan2f (MSL)");
+        atan2f(y: f32, x: f32) -> f32 = |y: f32, x: f32| -> f32 { unsafe { melee_runtime::lbtrigf::atan2f(y as _, x as _) as _ } };
         HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = t!("HSD_JObjSetMtxDirtySub (jobj.c)");
         mpGetSpeed(line: i32, pos: *mut Vec3, speed: *mut Vec3) -> bool = |_, _, _| todo!("TODO(port) mpGetSpeed (mplib.c)");
         PSVECAdd(a: *mut Vec3, b: *mut Vec3, c: *mut Vec3) = |_, _, _| todo!("TODO(port) PSVECAdd (mtx)");
-        ft_80082888(g: G, b: *mut ftCollisionBox) -> bool = |_, _| todo!("TODO(port) ft_80082888 (ft_081B.c)");
+        ft_80082888(g: G, b: *mut ftCollisionBox) -> bool = |g: G, b: *mut ftCollisionBox| -> bool { unsafe { crate::tu::ft_081b::ft_80082888(g as _, b as _) as _ } };
         ftCo_800C5240(g: G) -> bool = t!("ftCo_800C5240 (ftCo_HammerWait.c)");
         ftCo_800C5A98(g: G) = t!("ftCo_800C5A98 (ftCo_HammerJump.c)");
         ftCommon_8007D5D4(fp: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
@@ -75,7 +75,7 @@ pub mod ext {
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ftCo_Fall_Enter(g: G) = t!("ftCo_Fall_Enter (ftCo_Fall.c)");
         ftCo_SpecialAir_CheckInput(g: G) -> bool = t!("ftCo_SpecialAir_CheckInput (ftCo_SpecialAir.c)");
-        ftCo_80095328(g: G, b: *mut i32) -> bool = |_, _| todo!("TODO(port) ftCo_80095328 (ftCo_ItemThrow.c)");
+        ftCo_80095328(g: G, b: *mut i32) -> bool = |g: G, b: *mut i32| -> bool { unsafe { crate::tu::ftCo_ItemThrow::ftCo_80095328(g as _, b as _) as _ } };
         ftCo_800D7100(g: G) -> bool = t!("ftCo_800D7100 (ftCo_HammerJump.c)");
         ftCo_800C3B10(g: G) -> bool = t!("ftCo_800C3B10 (ftCo_AirCatch.c)");
         ftCo_80099A58(g: G) -> bool = t!("ftCo_80099A58 (ftCo_EscapeAir.c)");
@@ -84,7 +84,7 @@ pub mod ext {
         ftCo_800CB870(g: G) -> bool = t!("ftCo_800CB870 (ftCo_JumpAerial.c)");
         ftCommon_Fall(fp: &mut Fighter, grav: f32, term: f32) = |_, _, _| todo!("TODO(port) ftCommon_Fall (ftcommon.c)");
         ftCommon_CalcSelfAccel_Drift(fp: &mut Fighter) = |_| todo!("TODO(port) ftCommon_CalcSelfAccel_Drift (ftcommon.c)");
-        ft_80082D40(g: G, v: f32) = |_, _| todo!("TODO(port) ft_80082D40 (ft_081B.c)");
+        ft_80082D40(g: G, v: f32) = |g: G, v: f32| { unsafe { let _ = crate::tu::ft_081b::ft_80082d40(g as _, v as _); } };
         ftCo_AirCatchHit_Coll(g: G) = t!("ftCo_AirCatchHit_Coll (ft_081B.c)");
     }
 }

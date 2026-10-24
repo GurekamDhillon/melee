@@ -42,10 +42,10 @@ pub mod ext {
         match unsafe { hook::EulerToQuat } { Some(f) => f(a0, a1), None => { panic!("TODO: EulerToQuat is not ported") } }
     }
     pub fn HSD_AObjReqAnim(a0: *mut HSD_AObj, a1: f32) {
-        match unsafe { hook::HSD_AObjReqAnim } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_AObjReqAnim is not ported") } }
+        match unsafe { hook::HSD_AObjReqAnim } { Some(f) => f(a0, a1), None => { { unsafe { let _ = crate::tu::aobj::HSD_AObjReqAnim(a0 as _, a1 as _); } return; } } }
     }
     pub fn HSD_AObjSetRate(a0: *mut HSD_AObj, a1: f32) {
-        match unsafe { hook::HSD_AObjSetRate } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_AObjSetRate is not ported") } }
+        match unsafe { hook::HSD_AObjSetRate } { Some(f) => f(a0, a1), None => { { unsafe { let _ = crate::tu::aobj::HSD_AObjSetRate(a0 as _, a1 as _); } return; } } }
     }
     pub fn HSD_JObjAddAnimAll(a0: *mut HSD_JObj, a1: *mut HSD_AnimJoint, a2: *mut HSD_MatAnimJoint, a3: *mut HSD_ShapeAnimJoint) {
         match unsafe { hook::HSD_JObjAddAnimAll } { Some(f) => f(a0, a1, a2, a3), None => { panic!("TODO: HSD_JObjAddAnimAll is not ported") } }

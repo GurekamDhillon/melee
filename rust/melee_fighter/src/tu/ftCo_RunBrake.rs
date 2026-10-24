@@ -32,14 +32,14 @@ macro_rules! ext_fns {
 pub mod ext {
     use super::*;
     ext_fns! {
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |_, _, _, _| todo!("TODO(port) ft_PlaySFX (ft_0877.c)");
-        ftAnim_SetAnimRate(g: G, rate: f32) = |_, _| todo!("TODO(port) ftAnim_SetAnimRate (ftanim.c)");
+        ftAnim_SetAnimRate(g: G, rate: f32) = |g: G, rate: f32| { unsafe { let _ = crate::tu::ftanim::ftAnim_SetAnimRate(g as _, rate as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ft_8008A2BC(g: G) = crate::hooks::ft_8008a2bc;
         fn_800CAF78(g: G) -> bool = crate::tu::ftCo_Jump::fn_800CAF78;
-        fn_800C9CEC(g: G) -> bool = |_| todo!("TODO(port) fn_800C9CEC (ftCo_TurnRun.c)");
-        ftCo_800D5FB0(g: G) -> bool = |_| todo!("TODO(port) ftCo_800D5FB0 (ftCo_Squat.c)");
+        fn_800C9CEC(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_TurnRun::fn_800C9CEC(g as _) as _ } };
+        ftCo_800D5FB0(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Squat::ftCo_800D5FB0(g as _) as _ } };
         ftCommon_CalcGroundAccel_Deaccel(f: &mut Fighter, friction: f32) = crate::ftcommon::calc_ground_accel_deaccel;
         ftCommon_SetSelfMovementFromGroundedMovement(g: G) = |g| crate::ftcommon::set_self_movement_from_grounded_movement(super::fp(g));
         ft_80084280(g: G) = crate::tu::ft_081b::ft_80084280;

@@ -13,15 +13,15 @@ pub mod ext {
     use crate::types::*;
     type G = *mut HSD_GObj;
     pub fn ftCo_800D105C(_g: G) { todo!("TODO(group3 ftCo) ftCo_800D105C") }
-    pub fn ftCamera_80076064(_fp: &mut Fighter) { todo!("TODO(group3 ftcamera) ftCamera_80076064") }
-    pub fn ft_80081C88(_g: G, _s: f32) { todo!("TODO(group3 ft_081B) ft_80081C88") }
-    pub extern "C" fn ftCo_800968C8(_g: G) { todo!("TODO(group3 ftCo) ftCo_800968C8") }
-    pub extern "C" fn ftCo_FallAerial_Enter(_g: G) { todo!("TODO(group3 ftCo) ftCo_FallAerial_Enter") }
-    pub fn HSD_JObjLoadJoint(_j: *mut HSD_Joint) -> *mut HSD_JObj { todo!("TODO(group1 HSD) HSD_JObjLoadJoint") }
+    pub fn ftCamera_80076064(_fp: &mut Fighter) { { unsafe { let _ = crate::tu::ftcamera::ftcamera_80076064(_fp as _); } return; } }
+    pub fn ft_80081C88(_g: G, _s: f32) { { unsafe { let _ = crate::tu::ft_081b::ft_80081c88(_g as _, _s as _); } return; } }
+    pub extern "C" fn ftCo_800968C8(_g: G) { { unsafe { let _ = crate::tu::ftCo_FallSpecial::ftCo_800968C8(_g as _); } return; } }
+    pub extern "C" fn ftCo_FallAerial_Enter(_g: G) { { unsafe { let _ = crate::tu::ftCo_FallAerial::ftCo_FallAerial_Enter(_g as _); } return; } }
+    pub fn HSD_JObjLoadJoint(_j: *mut HSD_Joint) -> *mut HSD_JObj { { return unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(_j as _) as _ }; } }
     pub fn HSD_JObjAddAnim(_j: *mut HSD_JObj, _a: *mut HSD_AnimJoint) { todo!("TODO(group1 HSD) HSD_JObjAddAnim") }
     pub static mut HSD_JOBJ_ANIM: Option<fn(*mut HSD_JObj)> = None;
     pub fn HSD_JObjAnim(j: *mut HSD_JObj) { if let Some(h) = unsafe { HSD_JOBJ_ANIM } { return h(j) } todo!("TODO(group1 HSD) HSD_JObjAnim") }
-    pub fn it_80293660(_i: i32) -> *mut HSD_AnimJoint { todo!("TODO(group5 itkinoko) it_80293660") }
+    pub fn it_80293660(_i: i32) -> *mut HSD_AnimJoint { { return unsafe { melee_items::tu::itkinoko::it_80293660(_i as _) as _ }; } }
 }
 
 /// `lbl_803C6FF0`: the one-joint scale driver fn_800D299C loads.

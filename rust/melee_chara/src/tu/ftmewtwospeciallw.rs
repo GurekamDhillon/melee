@@ -34,10 +34,30 @@ pub mod ext {
             }
         };
     }
-    hook!(ITMEWTWODISABLE_LOGIC67_DESTROY, itMewtwoDisable_Logic67_Destroy, (item: *mut HSD_GObj));
-    hook!(ITMEWTWODISABLE_LOGIC67_SPAWNMEWTWODISABLE, itMewtwoDisable_Logic67_SpawnMewtwoDisable,
-          (owner: *mut HSD_GObj, pos: *const Vec3, facing_dir: f32) -> *mut HSD_GObj);
-    hook!(LB_8000B1CC, lb_8000B1CC, (joint: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3));
+    pub static mut ITMEWTWODISABLE_LOGIC67_DESTROY: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn itMewtwoDisable_Logic67_Destroy(item: *mut HSD_GObj)  {
+                match unsafe { ITMEWTWODISABLE_LOGIC67_DESTROY } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itmewtwodisable::itMewtwoDisable_Logic67_Destroy(item as _); } return; },
+                }
+            }
+    pub static mut ITMEWTWODISABLE_LOGIC67_SPAWNMEWTWODISABLE: Option<fn(*mut HSD_GObj, *const Vec3, f32) -> *mut HSD_GObj> = None;
+            #[allow(non_snake_case)]
+            pub fn itMewtwoDisable_Logic67_SpawnMewtwoDisable(owner: *mut HSD_GObj, pos: *const Vec3, facing_dir: f32) -> *mut HSD_GObj {
+                match unsafe { ITMEWTWODISABLE_LOGIC67_SPAWNMEWTWODISABLE } {
+                    Some(f) => f(owner, pos, facing_dir),
+                    None => { return unsafe { melee_items::tu::itmewtwodisable::itMewtwoDisable_Logic67_SpawnMewtwoDisable(owner as _, pos as _, facing_dir as _) as _ }; },
+                }
+            }
+    pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *const Vec3, *mut Vec3) > = None;
+            #[allow(non_snake_case)]
+            pub fn lb_8000B1CC(joint: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3)  {
+                match unsafe { LB_8000B1CC } {
+                    Some(f) => f(joint, off, out),
+                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(joint as _, off as _, out as _); } return; },
+                }
+            }
 }
 
 #[inline(always)]

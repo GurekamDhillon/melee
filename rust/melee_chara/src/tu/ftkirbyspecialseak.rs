@@ -43,9 +43,30 @@ pub mod ext {
     }
     // `efSync_Spawn(gfx_id, gobj, ...)` (ef/efsync.c, variadic): the trailing pointers as a slice.
     hook!(EFSYNC_SPAWN, efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut c_void]) -> *mut c_void);
-    hook!(IT_802AFD8C, it_802AFD8C, (gobj: *mut HSD_GObj, pos: *mut Vec3, kind: i32, facing_dir: f32) -> *mut Item_GObj);
-    hook!(IT_802AFEA8, it_802AFEA8, (item: *mut Item_GObj, owner: *mut HSD_GObj, flag: i32));
-    hook!(IT_802B19AC, it_802B19AC, (gobj: *mut HSD_GObj, pos: *mut Vec3, bone: i32, kind: i32, facing_dir: f32) -> *mut Item_GObj);
+    pub static mut IT_802AFD8C: Option<fn(*mut HSD_GObj, *mut Vec3, i32, f32) -> *mut Item_GObj> = None;
+            #[allow(non_snake_case)]
+            pub fn it_802AFD8C(gobj: *mut HSD_GObj, pos: *mut Vec3, kind: i32, facing_dir: f32) -> *mut Item_GObj {
+                match unsafe { IT_802AFD8C } {
+                    Some(f) => f(gobj, pos, kind, facing_dir),
+                    None => { return unsafe { melee_items::tu::itseakneedlethrown::it_802AFD8C(gobj as _, pos as _, kind as _, facing_dir as _) as _ }; },
+                }
+            }
+    pub static mut IT_802AFEA8: Option<fn(*mut Item_GObj, *mut HSD_GObj, i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802AFEA8(item: *mut Item_GObj, owner: *mut HSD_GObj, flag: i32)  {
+                match unsafe { IT_802AFEA8 } {
+                    Some(f) => f(item, owner, flag),
+                    None => { unsafe { let _ = melee_items::tu::itseakneedlethrown::it_802AFEA8(item as _, owner as _, flag as _); } return; },
+                }
+            }
+    pub static mut IT_802B19AC: Option<fn(*mut HSD_GObj, *mut Vec3, i32, i32, f32) -> *mut Item_GObj> = None;
+            #[allow(non_snake_case)]
+            pub fn it_802B19AC(gobj: *mut HSD_GObj, pos: *mut Vec3, bone: i32, kind: i32, facing_dir: f32) -> *mut Item_GObj {
+                match unsafe { IT_802B19AC } {
+                    Some(f) => f(gobj, pos, bone, kind, facing_dir),
+                    None => { return unsafe { melee_items::tu::itseakneedleheld::it_802B19AC(gobj as _, pos as _, bone as _, kind as _, facing_dir as _) as _ }; },
+                }
+            }
     /// Recording hook; unset, the native `melee_fighter::tu::ftcolanim` port runs.
     pub static mut FTCO_800BFFD0: Option<fn(*mut Fighter, i32, i32) -> bool> = None;
     #[allow(non_snake_case)]

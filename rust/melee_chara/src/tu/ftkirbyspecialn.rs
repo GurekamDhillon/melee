@@ -79,16 +79,79 @@ pub mod ext {
     // Unported TUs.
     hook!(MPUPDATEFLOORSKIP, mpUpdateFloorSkip, (coll: *mut CollData));
     hook!(HSD_RANDI, HSD_Randi, (n: i32) -> i32);
-    hook!(KB_800F19AC, ftKb_SpecialN_800F19AC, (g: G));
-    hook!(KB_800F190C, ftKb_SpecialN_800F190C, (g: G, kind: i32));
-    hook!(KB_800EEEC4, ftKb_SpecialN_800EEEC4, (g: G, kind: i32));
-    hook!(KB_800F1BAC, ftKb_SpecialN_800F1BAC, (g: G, x: i32, b: bool));
-    hook!(IT_802ADA1C, it_802ADA1C, (pos: *mut Vec3, vel: *mut Vec3, dir: f32));
-    hook!(IT_802F23AC, it_802F23AC, (item: *mut Item_GObj, pos: *const Vec3) -> f64);
-    hook!(IT_802F2810, it_802F2810, (item: *mut Item_GObj));
-    hook!(IT_802F23EC, it_802F23EC, (item: *mut Item_GObj, g: G, dir: f32));
+    pub static mut KB_800F19AC: Option<fn(G) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftKb_SpecialN_800F19AC(g: G)  {
+                match unsafe { KB_800F19AC } {
+                    Some(f) => f(g),
+                    None => { unsafe { let _ = crate::tu::ftkirby::ftKb_SpecialN_800F19AC(g as _); } return; },
+                }
+            }
+    pub static mut KB_800F190C: Option<fn(G, i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftKb_SpecialN_800F190C(g: G, kind: i32)  {
+                match unsafe { KB_800F190C } {
+                    Some(f) => f(g, kind),
+                    None => { unsafe { let _ = crate::tu::ftkirby::ftKb_SpecialN_800F190C(g as _, kind as _); } return; },
+                }
+            }
+    pub static mut KB_800EEEC4: Option<fn(G, i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftKb_SpecialN_800EEEC4(g: G, kind: i32)  {
+                match unsafe { KB_800EEEC4 } {
+                    Some(f) => f(g, kind),
+                    None => { unsafe { let _ = crate::tu::ftkirby::ftKb_SpecialN_800EEEC4(g as _, kind as _); } return; },
+                }
+            }
+    pub static mut KB_800F1BAC: Option<fn(G, i32, bool) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftKb_SpecialN_800F1BAC(g: G, x: i32, b: bool)  {
+                match unsafe { KB_800F1BAC } {
+                    Some(f) => f(g, x, b),
+                    None => { unsafe { let _ = crate::tu::ftkirby::ftKb_SpecialN_800F1BAC(g as _, x as _, b as _); } return; },
+                }
+            }
+    pub static mut IT_802ADA1C: Option<fn(*mut Vec3, *mut Vec3, f32) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802ADA1C(pos: *mut Vec3, vel: *mut Vec3, dir: f32)  {
+                match unsafe { IT_802ADA1C } {
+                    Some(f) => f(pos, vel, dir),
+                    None => { unsafe { let _ = melee_items::tu::it_2ADA::it_802ADA1C(pos as _, vel as _, dir as _); } return; },
+                }
+            }
+    pub static mut IT_802F23AC: Option<fn(*mut Item_GObj, *const Vec3) -> f64> = None;
+            #[allow(non_snake_case)]
+            pub fn it_802F23AC(item: *mut Item_GObj, pos: *const Vec3) -> f64 {
+                match unsafe { IT_802F23AC } {
+                    Some(f) => f(item, pos),
+                    None => { return unsafe { melee_items::tu::itkirby_2F23::it_802F23AC(item as _, pos as _) as _ }; },
+                }
+            }
+    pub static mut IT_802F2810: Option<fn(*mut Item_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802F2810(item: *mut Item_GObj)  {
+                match unsafe { IT_802F2810 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itkirby_2F23::it_802F2810(item as _); } return; },
+                }
+            }
+    pub static mut IT_802F23EC: Option<fn(*mut Item_GObj, G, f32) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802F23EC(item: *mut Item_GObj, g: G, dir: f32)  {
+                match unsafe { IT_802F23EC } {
+                    Some(f) => f(item, g, dir),
+                    None => { unsafe { let _ = melee_items::tu::itkirby_2F23::it_802F23EC(item as _, g as _, dir as _); } return; },
+                }
+            }
     hook!(IT_802F28C8, it_802F28C8, (item: *mut Item_GObj, flag: i32, f: f32));
-    hook!(IT_802F295C, it_802F295C, (g: G, attr: *mut itUnk2_DatAttrs) -> f32);
+    pub static mut IT_802F295C: Option<fn(G, *mut itUnk2_DatAttrs) -> f32> = None;
+            #[allow(non_snake_case)]
+            pub fn it_802F295C(g: G, attr: *mut itUnk2_DatAttrs) -> f32 {
+                match unsafe { IT_802F295C } {
+                    Some(f) => f(g, attr),
+                    None => { return unsafe { melee_items::tu::it_2F28::it_802F295C(g as _, attr as _) as _ }; },
+                }
+            }
     hook!(LBANIM_8001E8F8, lbAnim_8001E8F8, (tree: *mut FigaTree) -> f32);
     hook!(LB_8000B1CC, lb_8000B1CC, (joint: *mut c_void, off: *const Vec3, out: *mut Vec3));
     // `efAsync_Spawn(gobj, queue, kind, gfx_id, ...)` (ef/efasync.c, variadic): trailing pointers.

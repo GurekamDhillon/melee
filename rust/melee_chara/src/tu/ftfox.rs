@@ -50,8 +50,22 @@ pub mod ext {
             }
         };
     }
-    hook!(IT_8026B3F8, it_8026B3F8, (article: *mut core::ffi::c_void, kind: i32));
-    hook!(FTFX_SPECIALN_REMOVEBLASTER, ftFx_SpecialN_RemoveBlaster, (gobj: *mut HSD_GObj));
+    pub static mut IT_8026B3F8: Option<fn(*mut core::ffi::c_void, i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_8026B3F8(article: *mut core::ffi::c_void, kind: i32)  {
+                match unsafe { IT_8026B3F8 } {
+                    Some(f) => f(article, kind),
+                    None => { unsafe { let _ = melee_items::tu::it_26B1::it_8026B3F8(article as _, kind as _); } return; },
+                }
+            }
+    pub static mut FTFX_SPECIALN_REMOVEBLASTER: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftFx_SpecialN_RemoveBlaster(gobj: *mut HSD_GObj)  {
+                match unsafe { FTFX_SPECIALN_REMOVEBLASTER } {
+                    Some(f) => f(gobj),
+                    None => { unsafe { let _ = crate::tu::ftfoxspecialn::ftFx_SpecialN_RemoveBlaster(gobj as _); } return; },
+                }
+            }
 }
 
 #[inline(always)]

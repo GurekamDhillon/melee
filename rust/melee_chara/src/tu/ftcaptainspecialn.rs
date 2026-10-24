@@ -28,7 +28,14 @@ pub mod ext {
             }
         };
     }
-    hook!(LB_800119DC, lb_800119DC, (pos: *mut Vec3, a: i32, b: f32, c: f32, d: f32));
+    pub static mut LB_800119DC: Option<fn(*mut Vec3, i32, f32, f32, f32) > = None;
+            #[allow(non_snake_case)]
+            pub fn lb_800119DC(pos: *mut Vec3, a: i32, b: f32, c: f32, d: f32)  {
+                match unsafe { LB_800119DC } {
+                    Some(f) => f(pos, a, b, c, d),
+                    None => { unsafe { let _ = melee_runtime::tu::lb_00F9::lb_800119DC(pos as _, a as _, b as _, c as _, d as _); } return; },
+                }
+            }
     // `efSync_Spawn(gfx_id, gobj, ...)` (ef/efsync.c, variadic): the trailing pointers as a slice.
     hook!(EFSYNC_SPAWN, efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut c_void]) -> *mut c_void);
 }

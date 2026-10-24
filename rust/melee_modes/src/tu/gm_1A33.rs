@@ -65,17 +65,87 @@ pub mod ext {
         crate::tu::gm_1A36::gm_GetButtonsTriggered(idx)
     }
     // sysdolphin/baselib/sislib.c
-    hook!(HSD_SISLIB_803A5ACC, HSD_SisLib_803A5ACC, (a: i32, b: i32, x: f32, y: f32, z: f32, w: f32, h: f32) -> *mut HSD_Text);
-    hook!(HSD_SISLIB_803A6368, HSD_SisLib_803A6368, (text: *mut HSD_Text, v: i32));
-    hook!(HSD_SISLIB_803A6530, HSD_SisLib_803A6530, (a: i32, b: i32, c: i32) -> *mut u8);
-    hook!(HSD_SISLIB_803A660C, HSD_SisLib_803A660C, (a: i32, b: i32, c: i32));
-    hook!(HSD_SISLIB_803A5CC4, HSD_SisLib_803A5CC4, (text: *mut HSD_Text));
+    pub static mut HSD_SISLIB_803A5ACC: Option<fn(i32, i32, f32, f32, f32, f32, f32) -> *mut HSD_Text> = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_SisLib_803A5ACC(a: i32, b: i32, x: f32, y: f32, z: f32, w: f32, h: f32) -> *mut HSD_Text {
+                match unsafe { HSD_SISLIB_803A5ACC } {
+                    Some(f) => f(a, b, x, y, z, w, h),
+                    None => { return unsafe { melee_runtime::tu::sislib::HSD_SisLib_803A5ACC(a as _, b as _, x as _, y as _, z as _, w as _, h as _) as _ }; },
+                }
+            }
+    pub static mut HSD_SISLIB_803A6368: Option<fn(*mut HSD_Text, i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_SisLib_803A6368(text: *mut HSD_Text, v: i32)  {
+                match unsafe { HSD_SISLIB_803A6368 } {
+                    Some(f) => f(text, v),
+                    None => { unsafe { let _ = melee_runtime::tu::sislib::HSD_SisLib_803A6368(text as _, v as _); } return; },
+                }
+            }
+    pub static mut HSD_SISLIB_803A6530: Option<fn(i32, i32, i32) -> *mut u8> = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_SisLib_803A6530(a: i32, b: i32, c: i32) -> *mut u8 {
+                match unsafe { HSD_SISLIB_803A6530 } {
+                    Some(f) => f(a, b, c),
+                    None => { return unsafe { melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6530(a as _, b as _, c as _) as _ }; },
+                }
+            }
+    pub static mut HSD_SISLIB_803A660C: Option<fn(i32, i32, i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_SisLib_803A660C(a: i32, b: i32, c: i32)  {
+                match unsafe { HSD_SISLIB_803A660C } {
+                    Some(f) => f(a, b, c),
+                    None => { unsafe { let _ = melee_runtime::tu::hsd_3A64::HSD_SisLib_803A660C(a as _, b as _, c as _); } return; },
+                }
+            }
+    pub static mut HSD_SISLIB_803A5CC4: Option<fn(*mut HSD_Text) > = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_SisLib_803A5CC4(text: *mut HSD_Text)  {
+                match unsafe { HSD_SISLIB_803A5CC4 } {
+                    Some(f) => f(text),
+                    None => { unsafe { let _ = melee_runtime::tu::sislib::HSD_SisLib_803A5CC4(text as _); } return; },
+                }
+            }
     // lb/lbsnap.c, mn/mnmain.c, gm/gmscene.c, lb/lbaudio_ax.c (the sfx inlines of mn/inlines.h)
-    hook!(LBSNAP_8001D338, lbSnap_8001D338, (i: i32) -> i32);
-    hook!(MN_8022F218, mn_8022F218, () -> bool);
-    hook!(MN_8022F268, mn_8022F268, ());
-    hook!(GM_801A4B60, gm_801A4B60, ());
-    hook!(LBAUDIOAX_80024030, lbAudioAx_80024030, (id: i32));
+    pub static mut LBSNAP_8001D338: Option<fn(i32) -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn lbSnap_8001D338(i: i32) -> i32 {
+                match unsafe { LBSNAP_8001D338 } {
+                    Some(f) => f(i),
+                    None => { return unsafe { melee_runtime::tu::lbsnap::lbSnap_8001D338(i as _) as _ }; },
+                }
+            }
+    pub static mut MN_8022F218: Option<fn() -> bool> = None;
+            #[allow(non_snake_case)]
+            pub fn mn_8022F218() -> bool {
+                match unsafe { MN_8022F218 } {
+                    Some(f) => f(),
+                    None => { return unsafe { crate::tu::mn_22EC::mn_8022F218() as _ }; },
+                }
+            }
+    pub static mut MN_8022F268: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn mn_8022F268()  {
+                match unsafe { MN_8022F268 } {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::mn_22EC::mn_8022F268(); } return; },
+                }
+            }
+    pub static mut GM_801A4B60: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_801A4B60()  {
+                match unsafe { GM_801A4B60 } {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::gmscene::gm_801A4B60(); } return; },
+                }
+            }
+    pub static mut LBAUDIOAX_80024030: Option<fn(i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn lbAudioAx_80024030(id: i32)  {
+                match unsafe { LBAUDIOAX_80024030 } {
+                    Some(f) => f(id),
+                    None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80024030(id as _); } return; },
+                }
+            }
 }
 
 /// `sfxForward()` / `sfxBack()` (mn/inlines.h, static inline).

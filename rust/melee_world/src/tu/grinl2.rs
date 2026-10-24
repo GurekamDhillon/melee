@@ -23,14 +23,30 @@ pub mod ext {
     pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: i32) {
         match GRDISPLAY_801C5DB0 {
             Some(f) => f(a0, a1),
-            None => panic!("TODO: grDisplay_801C5DB0 is not ported"),
+            None => { unsafe { let _ = crate::tu::grdisplay::grDisplay_801C5DB0(a0 as _, a1 as _); } return; },
         }
     }
     hook!(HSD_GOBJ_SETUPPROC, HSD_GObj_SetupProc, (a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8) -> *mut HSD_GObjProc);
-    hook!(GRANIME_801C8138, grAnime_801C8138, (a0: *mut HSD_GObj, a1: enum_t, a2: i32));
-    hook!(GROUND_INITMAPCOLL, Ground_InitMapColl, (jobj: *mut HSD_JObj, map_id: s32) -> i32);
-    hook!(GROUND_UPDATEMAPCOLL, Ground_UpdateMapColl, (a0: *mut HSD_GObj) -> i32);
-    hook!(LB_800115F4, lb_800115F4, ());
+    pub static mut GRANIME_801C8138: Option<fn(*mut HSD_GObj, enum_t, i32)> = None;
+    #[allow(non_snake_case)]
+    pub fn grAnime_801C8138(a0: *mut HSD_GObj, a1: enum_t, a2: i32) {
+        match unsafe { GRANIME_801C8138 } { Some(f) => f(a0, a1, a2), None => { unsafe { let _ = crate::tu::granime::grAnime_801C8138(a0 as _, a1 as _, a2 as _); } return; } }
+    }
+    pub static mut GROUND_INITMAPCOLL: Option<fn(*mut HSD_JObj, s32) -> i32> = None;
+    #[allow(non_snake_case)]
+    pub fn Ground_InitMapColl(jobj: *mut HSD_JObj, map_id: s32) -> i32 {
+        match unsafe { GROUND_INITMAPCOLL } { Some(f) => f(jobj, map_id), None => { return unsafe { crate::tu::ground::Ground_InitMapColl(jobj as _, map_id as _) as _ }; } }
+    }
+    pub static mut GROUND_UPDATEMAPCOLL: Option<fn(*mut HSD_GObj) -> i32> = None;
+    #[allow(non_snake_case)]
+    pub fn Ground_UpdateMapColl(a0: *mut HSD_GObj) -> i32 {
+        match unsafe { GROUND_UPDATEMAPCOLL } { Some(f) => f(a0), None => { return unsafe { crate::tu::ground::Ground_UpdateMapColl(a0 as _) as _ }; } }
+    }
+    pub static mut LB_800115F4: Option<fn()> = None;
+    #[allow(non_snake_case)]
+    pub fn lb_800115F4() {
+        match unsafe { LB_800115F4 } { Some(f) => f(), None => { unsafe { let _ = melee_runtime::tu::lb_00F9::lb_800115F4(); } return; } }
+    }
     hook!(HSD_RANDI, HSD_Randi, (max_val: s32) -> s32);
 }
 

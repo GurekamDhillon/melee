@@ -37,8 +37,22 @@ pub mod ext {
             }
         };
     }
-    hook!(LB_8000B1CC, lb_8000B1CC, (jobj: *mut HSD_JObj, pos0: *mut Vec3, pos1: *mut Vec3));
-    hook!(FTMR_SPECIALN_VITAMINRANDOM, ftMr_SpecialN_VitaminRandom, (gobj: *mut HSD_GObj) -> i32);
+    pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *mut Vec3, *mut Vec3) > = None;
+            #[allow(non_snake_case)]
+            pub fn lb_8000B1CC(jobj: *mut HSD_JObj, pos0: *mut Vec3, pos1: *mut Vec3)  {
+                match unsafe { LB_8000B1CC } {
+                    Some(f) => f(jobj, pos0, pos1),
+                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, pos0 as _, pos1 as _); } return; },
+                }
+            }
+    pub static mut FTMR_SPECIALN_VITAMINRANDOM: Option<fn(*mut HSD_GObj) -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn ftMr_SpecialN_VitaminRandom(gobj: *mut HSD_GObj) -> i32 {
+                match unsafe { FTMR_SPECIALN_VITAMINRANDOM } {
+                    Some(f) => f(gobj),
+                    None => { return unsafe { crate::tu::ftmariospecialn::ftMr_SpecialN_VitaminRandom(gobj as _) as _ }; },
+                }
+            }
     hook!(ITDRMARIOPILL_APPEAL_SPAWN, itDrMarioPill_Appeal_Spawn,
           (gobj: *mut Item_GObj, pos: *mut Vec3, vitamin_idx: i32, kind: i32, facing_dir: f32) -> *mut Item_GObj);
     pub use super::super::ftdrmario::ext::{itDrMarioPill_802C0DBC, ITDRMARIOPILL_802C0DBC};

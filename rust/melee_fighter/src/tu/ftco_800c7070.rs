@@ -28,7 +28,7 @@ pub mod ext {
     pub fn Fighter_ChangeMotionState(g: *mut HSD_GObj, msid: FtMotionId, flags: MotionFlags, start: f32, speed: f32, blend: f32, o: *mut HSD_GObj) {
         match unsafe { FIGHTER_CHANGE_MOTION_STATE } {
             Some(f) => f(g, msid, flags, start, speed, blend, o),
-            None => panic!("TODO(group3 fighter.c) Fighter_ChangeMotionState is not ported"),
+            None => { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, o as _); } return; },
         }
     }
 }

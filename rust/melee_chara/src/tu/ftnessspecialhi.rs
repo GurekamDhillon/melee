@@ -41,18 +41,74 @@ pub mod ext {
             }
         };
     }
-    hook!(LB_8000B1CC, lb_8000B1CC, (jobj: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3));
+    pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *const Vec3, *mut Vec3) > = None;
+            #[allow(non_snake_case)]
+            pub fn lb_8000B1CC(jobj: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3)  {
+                match unsafe { LB_8000B1CC } {
+                    Some(f) => f(jobj, off, out),
+                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, off as _, out as _); } return; },
+                }
+            }
     hook!(FTPARTSETROTX, ftPartSetRotX, (fp: *mut Fighter, part: i32, v: f32));
     hook!(EFLIB_DESTROYALL, efLib_DestroyAll, (gobj: *mut HSD_GObj));
     // `efSync_Spawn(gfx_id, gobj, ...)` (ef/efsync.c, variadic): the trailing pointers as a slice.
     hook!(EFSYNC_SPAWN, efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut c_void]) -> *mut c_void);
-    hook!(IT_802AB3F0, it_802AB3F0, (item: *mut HSD_GObj, out: *mut Vec3, which: i32));
-    hook!(IT_802AB9C0, it_802AB9C0, (item: *mut HSD_GObj));
-    hook!(IT_802AB58C, it_802AB58C, (owner: *mut HSD_GObj, pos: *mut Vec3, facing: f32) -> *mut HSD_GObj);
-    hook!(IT_802AB568, it_802AB568, (item: *mut HSD_GObj) -> *mut HSD_GObj);
-    hook!(FTCO_80097D40, ftCo_80097D40, (gobj: *mut HSD_GObj));
-    hook!(FTCO_800969D8, ftCo_800969D8, (gobj: *mut HSD_GObj, a: i32, b: i32, allow_interrupt: i32, mobility: f32, landing_lag: f32, blend: f32));
-    hook!(FTCLIFFCOMMON_80081370, ftCliffCommon_80081370, (gobj: *mut HSD_GObj));
+    pub static mut IT_802AB3F0: Option<fn(*mut HSD_GObj, *mut Vec3, i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802AB3F0(item: *mut HSD_GObj, out: *mut Vec3, which: i32)  {
+                match unsafe { IT_802AB3F0 } {
+                    Some(f) => f(item, out, which),
+                    None => { unsafe { let _ = melee_items::tu::itnesspkthunderball::it_802AB3F0(item as _, out as _, which as _); } return; },
+                }
+            }
+    pub static mut IT_802AB9C0: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802AB9C0(item: *mut HSD_GObj)  {
+                match unsafe { IT_802AB9C0 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itnesspkthunderball::it_802AB9C0(item as _); } return; },
+                }
+            }
+    pub static mut IT_802AB58C: Option<fn(*mut HSD_GObj, *mut Vec3, f32) -> *mut HSD_GObj> = None;
+            #[allow(non_snake_case)]
+            pub fn it_802AB58C(owner: *mut HSD_GObj, pos: *mut Vec3, facing: f32) -> *mut HSD_GObj {
+                match unsafe { IT_802AB58C } {
+                    Some(f) => f(owner, pos, facing),
+                    None => { return unsafe { melee_items::tu::itnesspkthunderball::it_802AB58C(owner as _, pos as _, facing as _) as _ }; },
+                }
+            }
+    pub static mut IT_802AB568: Option<fn(*mut HSD_GObj) -> *mut HSD_GObj> = None;
+            #[allow(non_snake_case)]
+            pub fn it_802AB568(item: *mut HSD_GObj) -> *mut HSD_GObj {
+                match unsafe { IT_802AB568 } {
+                    Some(f) => f(item),
+                    None => { return unsafe { melee_items::tu::itnesspkthunderball::it_802AB568(item as _) as _ }; },
+                }
+            }
+    pub static mut FTCO_80097D40: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftCo_80097D40(gobj: *mut HSD_GObj)  {
+                match unsafe { FTCO_80097D40 } {
+                    Some(f) => f(gobj),
+                    None => { unsafe { let _ = melee_fighter::tu::ftCo_DownBound::ftCo_80097D40(gobj as _); } return; },
+                }
+            }
+    pub static mut FTCO_800969D8: Option<fn(*mut HSD_GObj, i32, i32, i32, f32, f32, f32) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftCo_800969D8(gobj: *mut HSD_GObj, a: i32, b: i32, allow_interrupt: i32, mobility: f32, landing_lag: f32, blend: f32)  {
+                match unsafe { FTCO_800969D8 } {
+                    Some(f) => f(gobj, a, b, allow_interrupt, mobility, landing_lag, blend),
+                    None => { unsafe { let _ = melee_fighter::tu::ftCo_FallSpecial::ftCo_800969D8(gobj as _, a as _, b as _, allow_interrupt as _, mobility as _, landing_lag as _, blend as _); } return; },
+                }
+            }
+    pub static mut FTCLIFFCOMMON_80081370: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftCliffCommon_80081370(gobj: *mut HSD_GObj)  {
+                match unsafe { FTCLIFFCOMMON_80081370 } {
+                    Some(f) => f(gobj),
+                    None => { unsafe { let _ = melee_fighter::tu::ftcliffcommon::ftcliffcommon_80081370(gobj as _); } return; },
+                }
+            }
 }
 
 /// `FTNESS_SPECIALHI_COLL_FLAG`.

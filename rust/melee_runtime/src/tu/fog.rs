@@ -16,10 +16,22 @@ use melee_types::*;
 pub mod ext {
     use crate::tu::hookmac::hook;
     use melee_types::*;
-    hook!(HSDNEW, hsdNew, (info: *mut HSD_ClassInfo) -> *mut HSD_Class);
-    hook!(HSDINITCLASSINFO, hsdInitClassInfo, (info: *mut HSD_ClassInfo, parent: *mut HSD_ClassInfo, lib: *const i8, name: *const i8, info_size: i32, obj_size: i32));
+    pub static mut HSDNEW: Option<fn(*mut HSD_ClassInfo) -> *mut HSD_Class> = None;
+    #[allow(non_snake_case)]
+    pub fn hsdNew(info: *mut HSD_ClassInfo) -> *mut HSD_Class {
+        match unsafe { HSDNEW } { Some(f) => f(info), None => { return unsafe { crate::tu::class::hsdNew(info as _) as _ }; } }
+    }
+    pub static mut HSDINITCLASSINFO: Option<fn(*mut HSD_ClassInfo, *mut HSD_ClassInfo, *const i8, *const i8, i32, i32)> = None;
+    #[allow(non_snake_case)]
+    pub fn hsdInitClassInfo(info: *mut HSD_ClassInfo, parent: *mut HSD_ClassInfo, lib: *const i8, name: *const i8, info_size: i32, obj_size: i32) {
+        match unsafe { HSDINITCLASSINFO } { Some(f) => f(info, parent, lib, name, info_size, obj_size), None => { unsafe { let _ = crate::tu::class::hsdInitClassInfo(info as _, parent as _, lib as _, name as _, info_size as _, obj_size as _); } return; } }
+    }
     hook!(HSDOBJ, hsdObj, () -> *mut HSD_ClassInfo);
-    hook!(HSD_AOBJREMOVE, HSD_AObjRemove, (aobj: *mut HSD_AObj));
+    pub static mut HSD_AOBJREMOVE: Option<fn(*mut HSD_AObj)> = None;
+    #[allow(non_snake_case)]
+    pub fn HSD_AObjRemove(aobj: *mut HSD_AObj) {
+        match unsafe { HSD_AOBJREMOVE } { Some(f) => f(aobj), None => { unsafe { let _ = crate::tu::aobj::HSD_AObjRemove(aobj as _); } return; } }
+    }
 }
 
 /// `hsdFog` (`{ FogInfoInit }`) and `hsdFogAdj`.

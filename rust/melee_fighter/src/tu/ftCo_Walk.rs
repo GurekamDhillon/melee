@@ -28,7 +28,7 @@ pub mod ext {
     use super::*;
     ext_fns! {
         ftCo_Catch_CheckInput(g: G) -> bool = crate::tu::ftCo_Catch::ftCo_Catch_CheckInput;
-        ftCo_SpecialS_CheckInput(g: G) -> bool = |_| todo!("TODO(port) ftCo_SpecialS_CheckInput (ftCo_SpecialS.c)");
+        ftCo_SpecialS_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_SpecialS::ftCo_SpecialS_CheckInput(g as _) as _ } };
         ftCo_Attack100_CheckInput(g: G) -> bool = crate::tu::ftCo_Attack100::ftCo_Attack100_CheckInput;
         ftCo_800D6824(g: G) -> bool = crate::tu::ftCo_Attack100::ftCo_800D6824;
         ftCo_800D68C0(g: G) -> bool = crate::tu::ftCo_Attack100::ftCo_800D68C0;
@@ -39,12 +39,12 @@ pub mod ext {
         ftCo_AttackHi3_CheckInput(g: G) -> bool = crate::tu::ftCo_AttackHi3::ftCo_AttackHi3_CheckInput;
         ftCo_AttackLw3_CheckInput(g: G) -> bool = crate::tu::ftCo_AttackLw3::ftCo_AttackLw3_CheckInput;
         ftCo_Attack1_CheckInput(g: G) -> bool = crate::tu::ftCo_Attack1::ftCo_Attack1_CheckInput;
-        ftCo_80091A4C(g: G) -> bool = |_| todo!("TODO(port) ftCo_80091A4C (ftCo_Guard.c)");
+        ftCo_80091A4C(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Guard::ftCo_80091A4C(g as _) as _ } };
         ftCo_800DE9D8(g: G) -> bool = crate::tu::ftCo_AppealS::ftCo_800DE9D8;
         ftCo_Jump_CheckInput(g: G) -> bool = crate::tu::ftCo_Jump::ftCo_Jump_CheckInput;
         ftCo_Dash_CheckInput(g: G) -> bool = crate::tu::ftCo_Dash::ftCo_Dash_CheckInput;
-        ftCo_800D5FB0(g: G) -> bool = |_| todo!("TODO(port) ftCo_800D5FB0 (ftCo_Squat.c)");
-        ft_8008A244(g: G) -> bool = |_| todo!("TODO(port) ft_8008A244 (ft_08A1.c)");
+        ftCo_800D5FB0(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Squat::ftCo_800D5FB0(g as _) as _ } };
+        ft_8008A244(g: G) -> bool = |g: G| -> bool { unsafe { crate::ft084e::ft_8008a244(g as _) as _ } };
         ftWalkCommon_800DFC70(g: G) -> bool = crate::tu::ftwalkcommon::ftwalkcommon_800dfc70;
         ftWalkCommon_800DFCA4(g: G, msid: FtMotionId, fl: MotionFlags, start: f32, a: f32, b: f32, c: f32, d: f32, e: f32, h: f32, accel: f32) = crate::tu::ftwalkcommon::ftwalkcommon_800dfca4;
         ftWalkCommon_800DFDDC(g: G) = crate::tu::ftwalkcommon::ftwalkcommon_800dfddc;

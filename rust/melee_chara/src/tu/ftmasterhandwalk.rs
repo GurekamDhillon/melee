@@ -32,8 +32,22 @@ pub mod ext {
             }
         };
     }
-    hook!(FTMH_MS_389_80151018, ftMh_MS_389_80151018, (gobj: *mut HSD_GObj));
-    hook!(FTMH_MS_349_80151CA8, ftMh_MS_349_80151CA8, (gobj: *mut HSD_GObj));
+    pub static mut FTMH_MS_389_80151018: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftMh_MS_389_80151018(gobj: *mut HSD_GObj)  {
+                match unsafe { FTMH_MS_389_80151018 } {
+                    Some(f) => f(gobj),
+                    None => { unsafe { let _ = crate::tu::ftmasterhandwait12::ftMh_MS_389_80151018(gobj as _); } return; },
+                }
+            }
+    pub static mut FTMH_MS_349_80151CA8: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftMh_MS_349_80151CA8(gobj: *mut HSD_GObj)  {
+                match unsafe { FTMH_MS_349_80151CA8 } {
+                    Some(f) => f(gobj),
+                    None => { unsafe { let _ = crate::tu::ftmasterhandslap::ftMh_MS_349_80151CA8(gobj as _); } return; },
+                }
+            }
     hook!(FTBOSSLIB_8015C244, ftBossLib_8015C244, (gobj: *mut HSD_GObj, pos: *const Vec3) -> *mut HSD_GObj);
     hook!(FTLIB_800866DC, ftLib_800866DC, (gobj: *mut HSD_GObj, out: *mut Vec3));
     hook!(MPFLOORGETLEFT, mpFloorGetLeft, (line: i32, out: *mut Vec3));

@@ -28,16 +28,56 @@ pub mod ext {
     use core::ffi::c_void;
     use melee_types::*;
     pub use crate::tu::grinl::ext::HSD_JObjSetMtxDirtySub;
-    hook!(GROUND_801C3FA4, Ground_801C3FA4, (gobj: *mut HSD_GObj, depth: i32) -> *mut HSD_JObj);
-    hook!(GROUND_801C498C, Ground_801C498C, () -> *mut HSD_GObj);
-    hook!(HSD_AOBJCLEARFLAGS, HSD_AObjClearFlags, (aobj: *mut HSD_AObj, flags: u32));
-    hook!(HSD_AOBJGETFLAGS, HSD_AObjGetFlags, (aobj: *mut HSD_AObj) -> u32);
-    hook!(HSD_AOBJLOADDESC, HSD_AObjLoadDesc, (aobjdesc: *mut HSD_AObjDesc) -> *mut HSD_AObj);
-    hook!(HSD_AOBJREMOVE, HSD_AObjRemove, (aobj: *mut HSD_AObj));
-    hook!(HSD_AOBJSETENDFRAME, HSD_AObjSetEndFrame, (aobj: *mut HSD_AObj, frame: f32));
-    hook!(HSD_AOBJSETFLAGS, HSD_AObjSetFlags, (aobj: *mut HSD_AObj, flags: u32));
-    hook!(HSD_AOBJSETRATE, HSD_AObjSetRate, (aobj: *mut HSD_AObj, rate: f32));
-    hook!(HSD_AOBJSETREWINDFRAME, HSD_AObjSetRewindFrame, (aobj: *mut HSD_AObj, frame: f32));
+    pub static mut GROUND_801C3FA4: Option<fn(*mut HSD_GObj, i32) -> *mut HSD_JObj> = None;
+    #[allow(non_snake_case)]
+    pub fn Ground_801C3FA4(gobj: *mut HSD_GObj, depth: i32) -> *mut HSD_JObj {
+        match unsafe { GROUND_801C3FA4 } { Some(f) => f(gobj, depth), None => { return unsafe { crate::tu::ground::Ground_801C3FA4(gobj as _, depth as _) as _ }; } }
+    }
+    pub static mut GROUND_801C498C: Option<fn() -> *mut HSD_GObj> = None;
+    #[allow(non_snake_case)]
+    pub fn Ground_801C498C() -> *mut HSD_GObj {
+        match unsafe { GROUND_801C498C } { Some(f) => f(), None => { return unsafe { crate::tu::ground::Ground_801C498C() as _ }; } }
+    }
+    pub static mut HSD_AOBJCLEARFLAGS: Option<fn(*mut HSD_AObj, u32)> = None;
+    #[allow(non_snake_case)]
+    pub fn HSD_AObjClearFlags(aobj: *mut HSD_AObj, flags: u32) {
+        match unsafe { HSD_AOBJCLEARFLAGS } { Some(f) => f(aobj, flags), None => { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjClearFlags(aobj as _, flags as _); } return; } }
+    }
+    pub static mut HSD_AOBJGETFLAGS: Option<fn(*mut HSD_AObj) -> u32> = None;
+    #[allow(non_snake_case)]
+    pub fn HSD_AObjGetFlags(aobj: *mut HSD_AObj) -> u32 {
+        match unsafe { HSD_AOBJGETFLAGS } { Some(f) => f(aobj), None => { return unsafe { melee_runtime::tu::aobj::HSD_AObjGetFlags(aobj as _) as _ }; } }
+    }
+    pub static mut HSD_AOBJLOADDESC: Option<fn(*mut HSD_AObjDesc) -> *mut HSD_AObj> = None;
+    #[allow(non_snake_case)]
+    pub fn HSD_AObjLoadDesc(aobjdesc: *mut HSD_AObjDesc) -> *mut HSD_AObj {
+        match unsafe { HSD_AOBJLOADDESC } { Some(f) => f(aobjdesc), None => { return unsafe { melee_runtime::tu::aobj::HSD_AObjLoadDesc(aobjdesc as _) as _ }; } }
+    }
+    pub static mut HSD_AOBJREMOVE: Option<fn(*mut HSD_AObj)> = None;
+    #[allow(non_snake_case)]
+    pub fn HSD_AObjRemove(aobj: *mut HSD_AObj) {
+        match unsafe { HSD_AOBJREMOVE } { Some(f) => f(aobj), None => { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjRemove(aobj as _); } return; } }
+    }
+    pub static mut HSD_AOBJSETENDFRAME: Option<fn(*mut HSD_AObj, f32)> = None;
+    #[allow(non_snake_case)]
+    pub fn HSD_AObjSetEndFrame(aobj: *mut HSD_AObj, frame: f32) {
+        match unsafe { HSD_AOBJSETENDFRAME } { Some(f) => f(aobj, frame), None => { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjSetEndFrame(aobj as _, frame as _); } return; } }
+    }
+    pub static mut HSD_AOBJSETFLAGS: Option<fn(*mut HSD_AObj, u32)> = None;
+    #[allow(non_snake_case)]
+    pub fn HSD_AObjSetFlags(aobj: *mut HSD_AObj, flags: u32) {
+        match unsafe { HSD_AOBJSETFLAGS } { Some(f) => f(aobj, flags), None => { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjSetFlags(aobj as _, flags as _); } return; } }
+    }
+    pub static mut HSD_AOBJSETRATE: Option<fn(*mut HSD_AObj, f32)> = None;
+    #[allow(non_snake_case)]
+    pub fn HSD_AObjSetRate(aobj: *mut HSD_AObj, rate: f32) {
+        match unsafe { HSD_AOBJSETRATE } { Some(f) => f(aobj, rate), None => { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjSetRate(aobj as _, rate as _); } return; } }
+    }
+    pub static mut HSD_AOBJSETREWINDFRAME: Option<fn(*mut HSD_AObj, f32)> = None;
+    #[allow(non_snake_case)]
+    pub fn HSD_AObjSetRewindFrame(aobj: *mut HSD_AObj, frame: f32) {
+        match unsafe { HSD_AOBJSETREWINDFRAME } { Some(f) => f(aobj, frame), None => { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjSetRewindFrame(aobj as _, frame as _); } return; } }
+    }
     /// `fn_801C82E8` may unwind out of this (the C `longjmp`s); `func` is an `extern "C-unwind" fn(*mut HSD_AObj, *mut c_void)`.
     hook!(HSD_FOREACHANIM, HSD_ForeachAnim, (obj: *mut c_void, r#type: u32, mask: u32, func: *mut c_void, arg_type: u32, va: &[usize]));
     hook!(HSD_JOBJADDANIMALL, HSD_JObjAddAnimAll, (a0: *mut HSD_JObj, a1: *mut HSD_AnimJoint, a2: *mut HSD_MatAnimJoint, a3: *mut HSD_ShapeAnimJoint));
@@ -48,13 +88,41 @@ pub mod ext {
     hook!(HSD_JOBJREQANIMBYFLAGS, HSD_JObjReqAnimByFlags, (jobj: *mut HSD_JObj, flags: u32, frame: f32));
     hook!(HSD_JOBJRESETRST, HSD_JObjResetRST, (jobj: *mut HSD_JObj, joint: *mut HSD_Joint));
     hook!(OSREPORT, OSReport, (a0: *const i8, va: &[usize]));
-    hook!(GRDATFILES_801C6330, grDatFiles_801C6330, (a0: s32) -> *mut UnkArchiveStruct);
-    hook!(GRMATERIAL_801C8B28, grMaterial_801C8B28, (a0: *mut HSD_JObj) -> *mut HSD_JObj);
-    hook!(GRMATERIAL_801C8B68, grMaterial_801C8B68, (a0: *mut HSD_JObj, a1: i32));
-    hook!(LBARCHIVE_80016EFC, lbArchive_80016EFC, (a0: *mut HSD_Archive));
-    hook!(LBHEAP_80015CA8, lbHeap_80015CA8, (a0: i32, a1: *mut c_void));
-    hook!(LB_8000B804, lb_8000B804, (a0: *mut HSD_JObj, a1: *mut HSD_Joint));
-    hook!(MEMZERO, memzero, (mem: *mut c_void, size: ssize_t));
+    pub static mut GRDATFILES_801C6330: Option<fn(s32) -> *mut UnkArchiveStruct> = None;
+    #[allow(non_snake_case)]
+    pub fn grDatFiles_801C6330(a0: s32) -> *mut UnkArchiveStruct {
+        match unsafe { GRDATFILES_801C6330 } { Some(f) => f(a0), None => { return unsafe { crate::tu::grdatfiles::grDatFiles_801C6330(a0 as _) as _ }; } }
+    }
+    pub static mut GRMATERIAL_801C8B28: Option<fn(*mut HSD_JObj) -> *mut HSD_JObj> = None;
+    #[allow(non_snake_case)]
+    pub fn grMaterial_801C8B28(a0: *mut HSD_JObj) -> *mut HSD_JObj {
+        match unsafe { GRMATERIAL_801C8B28 } { Some(f) => f(a0), None => { return unsafe { crate::tu::grmaterial::grMaterial_801C8B28(a0 as _) as _ }; } }
+    }
+    pub static mut GRMATERIAL_801C8B68: Option<fn(*mut HSD_JObj, i32)> = None;
+    #[allow(non_snake_case)]
+    pub fn grMaterial_801C8B68(a0: *mut HSD_JObj, a1: i32) {
+        match unsafe { GRMATERIAL_801C8B68 } { Some(f) => f(a0, a1), None => { unsafe { let _ = crate::tu::grmaterial::grMaterial_801C8B68(a0 as _, a1 as _); } return; } }
+    }
+    pub static mut LBARCHIVE_80016EFC: Option<fn(*mut HSD_Archive)> = None;
+    #[allow(non_snake_case)]
+    pub fn lbArchive_80016EFC(a0: *mut HSD_Archive) {
+        match unsafe { LBARCHIVE_80016EFC } { Some(f) => f(a0), None => { unsafe { let _ = melee_runtime::tu::lbarchive::lbArchive_80016EFC(a0 as _); } return; } }
+    }
+    pub static mut LBHEAP_80015CA8: Option<fn(i32, *mut c_void)> = None;
+    #[allow(non_snake_case)]
+    pub fn lbHeap_80015CA8(a0: i32, a1: *mut c_void) {
+        match unsafe { LBHEAP_80015CA8 } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_runtime::tu::lbheap::lbHeap_80015CA8(a0 as _, a1 as _); } return; } }
+    }
+    pub static mut LB_8000B804: Option<fn(*mut HSD_JObj, *mut HSD_Joint)> = None;
+    #[allow(non_snake_case)]
+    pub fn lb_8000B804(a0: *mut HSD_JObj, a1: *mut HSD_Joint) {
+        match unsafe { LB_8000B804 } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B804(a0 as _, a1 as _); } return; } }
+    }
+    pub static mut MEMZERO: Option<fn(*mut c_void, ssize_t)> = None;
+    #[allow(non_snake_case)]
+    pub fn memzero(mem: *mut c_void, size: ssize_t) {
+        match unsafe { MEMZERO } { Some(f) => f(mem, size), None => { unsafe { let _ = melee_runtime::tu::lb_00B0::memzero(mem as _, size as _); } return; } }
+    }
 
     // The engine functions the C passes as callbacks (`void* func`), in the uniform AnimCallback form.
     pub unsafe extern "C" fn HSD_AObjClearFlags_cb(aobj: *mut HSD_AObj, _obj: *mut c_void, _flags: u32, arg: u32) {

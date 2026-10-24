@@ -29,13 +29,62 @@ pub mod ext {
             }
         };
     }
-    hook!(HSD_FOBJALLOC, HSD_FObjAlloc, () -> *mut HSD_FObj);
-    hook!(HSD_AOBJALLOC, HSD_AObjAlloc, () -> *mut HSD_AObj);
-    hook!(HSD_AOBJREMOVE, HSD_AObjRemove, (aobj: *mut HSD_AObj));
-    hook!(HSD_AOBJSETFLAGS, HSD_AObjSetFlags, (aobj: *mut HSD_AObj, flags: u32));
-    hook!(HSD_AOBJSETFOBJ, HSD_AObjSetFObj, (aobj: *mut HSD_AObj, fobj: *mut HSD_FObj));
-    hook!(HSD_AOBJSETREWINDFRAME, HSD_AObjSetRewindFrame, (aobj: *mut HSD_AObj, frame: f32));
-    hook!(HSD_AOBJSETENDFRAME, HSD_AObjSetEndFrame, (aobj: *mut HSD_AObj, frame: f32));
+    pub static mut HSD_FOBJALLOC: Option<fn() -> *mut HSD_FObj> = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_FObjAlloc() -> *mut HSD_FObj {
+                match unsafe { HSD_FOBJALLOC } {
+                    Some(f) => f(),
+                    None => { return unsafe { crate::tu::fobj::HSD_FObjAlloc() as _ }; },
+                }
+            }
+    pub static mut HSD_AOBJALLOC: Option<fn() -> *mut HSD_AObj> = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_AObjAlloc() -> *mut HSD_AObj {
+                match unsafe { HSD_AOBJALLOC } {
+                    Some(f) => f(),
+                    None => { return unsafe { crate::tu::aobj::HSD_AObjAlloc() as _ }; },
+                }
+            }
+    pub static mut HSD_AOBJREMOVE: Option<fn(*mut HSD_AObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_AObjRemove(aobj: *mut HSD_AObj)  {
+                match unsafe { HSD_AOBJREMOVE } {
+                    Some(f) => f(aobj),
+                    None => { unsafe { let _ = crate::tu::aobj::HSD_AObjRemove(aobj as _); } return; },
+                }
+            }
+    pub static mut HSD_AOBJSETFLAGS: Option<fn(*mut HSD_AObj, u32) > = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_AObjSetFlags(aobj: *mut HSD_AObj, flags: u32)  {
+                match unsafe { HSD_AOBJSETFLAGS } {
+                    Some(f) => f(aobj, flags),
+                    None => { unsafe { let _ = crate::tu::aobj::HSD_AObjSetFlags(aobj as _, flags as _); } return; },
+                }
+            }
+    pub static mut HSD_AOBJSETFOBJ: Option<fn(*mut HSD_AObj, *mut HSD_FObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_AObjSetFObj(aobj: *mut HSD_AObj, fobj: *mut HSD_FObj)  {
+                match unsafe { HSD_AOBJSETFOBJ } {
+                    Some(f) => f(aobj, fobj),
+                    None => { unsafe { let _ = crate::tu::aobj::HSD_AObjSetFObj(aobj as _, fobj as _); } return; },
+                }
+            }
+    pub static mut HSD_AOBJSETREWINDFRAME: Option<fn(*mut HSD_AObj, f32) > = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_AObjSetRewindFrame(aobj: *mut HSD_AObj, frame: f32)  {
+                match unsafe { HSD_AOBJSETREWINDFRAME } {
+                    Some(f) => f(aobj, frame),
+                    None => { unsafe { let _ = crate::tu::aobj::HSD_AObjSetRewindFrame(aobj as _, frame as _); } return; },
+                }
+            }
+    pub static mut HSD_AOBJSETENDFRAME: Option<fn(*mut HSD_AObj, f32) > = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_AObjSetEndFrame(aobj: *mut HSD_AObj, frame: f32)  {
+                match unsafe { HSD_AOBJSETENDFRAME } {
+                    Some(f) => f(aobj, frame),
+                    None => { unsafe { let _ = crate::tu::aobj::HSD_AObjSetEndFrame(aobj as _, frame as _); } return; },
+                }
+            }
     hook!(HSD_JOBJSETFLAGS, HSD_JObjSetFlags, (jobj: *mut HSD_JObj, flags: u32));
     hook!(HSD_JOBJCLEARFLAGS, HSD_JObjClearFlags, (jobj: *mut HSD_JObj, flags: u32));
 }

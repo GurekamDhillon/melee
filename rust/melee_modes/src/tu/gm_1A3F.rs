@@ -90,39 +90,214 @@ pub mod ext {
     }
     pub type SceneFn = Option<unsafe extern "C" fn()>;
     // lb/lbdvd.c, lb/lbheap.c, lb/lbcardnew.c, lb/lbcardgame.c, lb/lbsnap.c, lb/lbmthp.c, lb/lbaudio_ax.c, lb/lbcardgame.c
-    hook!(LBDVD_80018CF4, lbDvd_80018CF4, (preload: i32));
-    hook!(LBDVD_GETPRELOADCACHESCENE, lbDvd_GetPreloadCacheScene, () -> *mut PreloadedGameModeState);
-    hook!(LBDVD_80018254, lbDvd_80018254, ());
-    hook!(LBDVD_80018F58, lbDvd_80018F58, (value: bool));
-    hook!(LBHEAP_80015BB8, lbHeap_80015BB8, (idx: i32) -> i32);
-    hook!(LBCARDNEW_FORGETMEMORY, lbCardNew_ForgetMemory, ());
-    hook!(LBCARDGAME_RESET, lbCardGame_Reset, ());
-    hook!(LBSNAP_8001E27C, lbSnap_8001E27C, ());
-    hook!(LB_8001CDB4, lb_8001CDB4, ());
-    hook!(LBCARDNEW_COMPLETEALLTASKS, lbCardNew_CompleteAllTasks, (result: i32) -> i32);
-    hook!(LBCARDNEW_COMPLETENEXTTASK, lbCardNew_CompleteNextTask, () -> i32);
-    hook!(LBMTHP_8001F800, lbMthp_8001F800, ());
-    hook!(LBAUDIOAX_80027DBC, lbAudioAx_80027DBC, ());
+    pub static mut LBDVD_80018CF4: Option<fn(i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn lbDvd_80018CF4(preload: i32)  {
+                match unsafe { LBDVD_80018CF4 } {
+                    Some(f) => f(preload),
+                    None => { unsafe { let _ = melee_runtime::tu::lbdvd::lbDvd_80018CF4(preload as _); } return; },
+                }
+            }
+    pub static mut LBDVD_GETPRELOADCACHESCENE: Option<fn() -> *mut PreloadedGameModeState> = None;
+            #[allow(non_snake_case)]
+            pub fn lbDvd_GetPreloadCacheScene() -> *mut PreloadedGameModeState {
+                match unsafe { LBDVD_GETPRELOADCACHESCENE } {
+                    Some(f) => f(),
+                    None => { return unsafe { melee_runtime::tu::lbdvd::lbDvd_GetPreloadCacheScene() as _ }; },
+                }
+            }
+    pub static mut LBDVD_80018254: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn lbDvd_80018254()  {
+                match unsafe { LBDVD_80018254 } {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = melee_runtime::tu::lbdvd::lbDvd_80018254(); } return; },
+                }
+            }
+    pub static mut LBDVD_80018F58: Option<fn(bool) > = None;
+            #[allow(non_snake_case)]
+            pub fn lbDvd_80018F58(value: bool)  {
+                match unsafe { LBDVD_80018F58 } {
+                    Some(f) => f(value),
+                    None => { unsafe { let _ = melee_runtime::tu::lbdvd::lbDvd_80018F58(value as _); } return; },
+                }
+            }
+    pub static mut LBHEAP_80015BB8: Option<fn(i32) -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn lbHeap_80015BB8(idx: i32) -> i32 {
+                match unsafe { LBHEAP_80015BB8 } {
+                    Some(f) => f(idx),
+                    None => { return unsafe { melee_runtime::tu::lbheap::lbHeap_80015BB8(idx as _) as _ }; },
+                }
+            }
+    pub static mut LBCARDNEW_FORGETMEMORY: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn lbCardNew_ForgetMemory()  {
+                match unsafe { LBCARDNEW_FORGETMEMORY } {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = melee_runtime::tu::lbcardnew::lbCardNew_ForgetMemory(); } return; },
+                }
+            }
+    pub static mut LBCARDGAME_RESET: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn lbCardGame_Reset()  {
+                match unsafe { LBCARDGAME_RESET } {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = melee_runtime::tu::lbcardgame::lbCardGame_Reset(); } return; },
+                }
+            }
+    pub static mut LBSNAP_8001E27C: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn lbSnap_8001E27C()  {
+                match unsafe { LBSNAP_8001E27C } {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = melee_runtime::tu::lbsnap::lbSnap_8001E27C(); } return; },
+                }
+            }
+    pub static mut LB_8001CDB4: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn lb_8001CDB4()  {
+                match unsafe { LB_8001CDB4 } {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = melee_runtime::tu::lbcardgame::lb_8001CDB4(); } return; },
+                }
+            }
+    pub static mut LBCARDNEW_COMPLETEALLTASKS: Option<fn(i32) -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn lbCardNew_CompleteAllTasks(result: i32) -> i32 {
+                match unsafe { LBCARDNEW_COMPLETEALLTASKS } {
+                    Some(f) => f(result),
+                    None => { return unsafe { melee_runtime::tu::lbcardnew::lbCardNew_CompleteAllTasks(result as _) as _ }; },
+                }
+            }
+    pub static mut LBCARDNEW_COMPLETENEXTTASK: Option<fn() -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn lbCardNew_CompleteNextTask() -> i32 {
+                match unsafe { LBCARDNEW_COMPLETENEXTTASK } {
+                    Some(f) => f(),
+                    None => { return unsafe { melee_runtime::tu::lbcardnew::lbCardNew_CompleteNextTask() as _ }; },
+                }
+            }
+    pub static mut LBMTHP_8001F800: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn lbMthp_8001F800()  {
+                match unsafe { LBMTHP_8001F800 } {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = melee_runtime::tu::lbmthp::lbMthp_8001F800(); } return; },
+                }
+            }
+    pub static mut LBAUDIOAX_80027DBC: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn lbAudioAx_80027DBC()  {
+                match unsafe { LBAUDIOAX_80027DBC } {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80027DBC(); } return; },
+                }
+            }
     // ty/toy.c, ty/tydisplay.c
-    hook!(TOY_803127D4, Toy_803127D4, ());
-    hook!(TYDISPLAY_8031C8B8, tyDisplay_8031C8B8, ());
+    pub static mut TOY_803127D4: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn Toy_803127D4()  {
+                match unsafe { TOY_803127D4 } {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = melee_items::tu::toy::Toy_803127D4(); } return; },
+                }
+            }
+    pub static mut TYDISPLAY_8031C8B8: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn tyDisplay_8031C8B8()  {
+                match unsafe { TYDISPLAY_8031C8B8 } {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = melee_items::tu::tydisplay::tyDisplay_8031C8B8(); } return; },
+                }
+            }
     // sysdolphin/baselib: sislib.c, controller.c, devcom.c, video.c
-    hook!(HSD_SISLIB_803A6048, HSD_SisLib_803A6048, (size: usize));
-    hook!(HSD_PADRESET, HSD_PadReset, ());
-    hook!(HSD_DEVCOMISBUSY, HSD_DevComIsBusy, (idx: i32) -> bool);
-    hook!(HSD_VISETBLACK, HSD_VISetBlack, (v: bool));
+    pub static mut HSD_SISLIB_803A6048: Option<fn(usize) > = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_SisLib_803A6048(size: usize)  {
+                match unsafe { HSD_SISLIB_803A6048 } {
+                    Some(f) => f(size),
+                    None => { unsafe { let _ = melee_runtime::tu::sislib::HSD_SisLib_803A6048(size as _); } return; },
+                }
+            }
+    pub static mut HSD_PADRESET: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_PadReset()  {
+                match unsafe { HSD_PADRESET } {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = melee_runtime::tu::controller::HSD_PadReset(); } return; },
+                }
+            }
+    pub static mut HSD_DEVCOMISBUSY: Option<fn(i32) -> bool> = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_DevComIsBusy(idx: i32) -> bool {
+                match unsafe { HSD_DEVCOMISBUSY } {
+                    Some(f) => f(idx),
+                    None => { return unsafe { melee_runtime::tu::devcom::HSD_DevComIsBusy(idx as _) as _ }; },
+                }
+            }
+    pub static mut HSD_VISETBLACK: Option<fn(bool) > = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_VISetBlack(v: bool)  {
+                match unsafe { HSD_VISETBLACK } {
+                    Some(f) => f(v),
+                    None => { unsafe { let _ = melee_runtime::tu::video::HSD_VISetBlack(v as _); } return; },
+                }
+            }
     // dolphin: dvd.c, os.c, vi.c
     hook!(DVDCHECKDISK, DVDCheckDisk, () -> i32);
     hook!(OSRESETSYSTEM, OSResetSystem, (a: i32, b: u32, c: i32));
     hook!(VIGETDTVSTATUS, VIGetDTVStatus, () -> u32);
     hook!(OSGETPROGRESSIVEMODE, OSGetProgressiveMode, () -> u32);
     // gm/gmscene.c, gm/gmscdata.c, gm/gmmain_lib.c
-    hook!(GM_FINDGAMESCENEHANDLER, gm_FindGameSceneHandler, (kind: u8) -> *mut GameScene);
-    hook!(GM_801A4BD4, gm_801A4BD4, ());
-    hook!(GM_801A4B88, gm_801A4B88, (info: *mut GameSceneInfo));
-    hook!(GM_801A4D34, gm_801A4D34, (on_frame: SceneFn, info: *mut GameSceneInfo));
-    hook!(GM_GETALLGAMEMODES, gm_GetAllGameModes, () -> *mut GameMode);
-    hook!(GMMAINLIB_8015FBA4, gmMainLib_8015FBA4, ());
+    pub static mut GM_FINDGAMESCENEHANDLER: Option<fn(u8) -> *mut GameScene> = None;
+            #[allow(non_snake_case)]
+            pub fn gm_FindGameSceneHandler(kind: u8) -> *mut GameScene {
+                match unsafe { GM_FINDGAMESCENEHANDLER } {
+                    Some(f) => f(kind),
+                    None => { return unsafe { crate::tu::gmscene::gm_FindGameSceneHandler(kind as _) as _ }; },
+                }
+            }
+    pub static mut GM_801A4BD4: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_801A4BD4()  {
+                match unsafe { GM_801A4BD4 } {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::gmscene::gm_801A4BD4(); } return; },
+                }
+            }
+    pub static mut GM_801A4B88: Option<fn(*mut GameSceneInfo) > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_801A4B88(info: *mut GameSceneInfo)  {
+                match unsafe { GM_801A4B88 } {
+                    Some(f) => f(info),
+                    None => { unsafe { let _ = crate::tu::gmscene::gm_801A4B88(info as _); } return; },
+                }
+            }
+    pub static mut GM_801A4D34: Option<fn(SceneFn, *mut GameSceneInfo) > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_801A4D34(on_frame: SceneFn, info: *mut GameSceneInfo)  {
+                match unsafe { GM_801A4D34 } {
+                    Some(f) => f(on_frame, info),
+                    None => { unsafe { let _ = crate::tu::gmscene::gm_801A4D34(on_frame as _, info as _); } return; },
+                }
+            }
+    pub static mut GM_GETALLGAMEMODES: Option<fn() -> *mut GameMode> = None;
+            #[allow(non_snake_case)]
+            pub fn gm_GetAllGameModes() -> *mut GameMode {
+                match unsafe { GM_GETALLGAMEMODES } {
+                    Some(f) => f(),
+                    None => { return unsafe { crate::tu::gmscdata::gm_GetAllGameModes() as _ }; },
+                }
+            }
+    pub static mut GMMAINLIB_8015FBA4: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn gmMainLib_8015FBA4()  {
+                match unsafe { GMMAINLIB_8015FBA4 } {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::gmmain_lib::gmMainLib_8015FBA4(); } return; },
+                }
+            }
     /// `gmMainLib_8046B0F0.resetting` (gm/gmmain_lib.c): read, and cleared by `gm_801A4510`.
     hook!(GMMAINLIB_8046B0F0_RESETTING, gmMainLib_8046B0F0_resetting, () -> bool);
     hook!(SET_GMMAINLIB_8046B0F0_RESETTING, set_gmMainLib_8046B0F0_resetting, (v: bool));
@@ -139,9 +314,30 @@ pub mod ext {
     hook!(UI_TOYPROBE, Ui_ToyProbe, () -> i32);
     hook!(FAD_OVERLAYWRAP, Fad_OverlayWrap, (kind: u8, inner: SceneFn) -> SceneFn);
     hook!(SCRIPT_ONEPBARRIERPENDING, Script_OnePBarrierPending, () -> i32);
-    hook!(GM_ONEPINTERSTAGE, gm_OnePInterstage, ());
-    hook!(GMFRONTEND_ROUTE, gmFrontend_Route, (from: u8, to: u8) -> u8);
-    hook!(GMFRONTEND_REPORTEDMODE, gmFrontend_ReportedMode, () -> u8);
+    pub static mut GM_ONEPINTERSTAGE: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_OnePInterstage()  {
+                match unsafe { GM_ONEPINTERSTAGE } {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::gmscene::gm_OnePInterstage(); } return; },
+                }
+            }
+    pub static mut GMFRONTEND_ROUTE: Option<fn(u8, u8) -> u8> = None;
+            #[allow(non_snake_case)]
+            pub fn gmFrontend_Route(from: u8, to: u8) -> u8 {
+                match unsafe { GMFRONTEND_ROUTE } {
+                    Some(f) => f(from, to),
+                    None => { return unsafe { crate::tu::gmfrontend::gmFrontend_Route(from as _, to as _) as _ }; },
+                }
+            }
+    pub static mut GMFRONTEND_REPORTEDMODE: Option<fn() -> u8> = None;
+            #[allow(non_snake_case)]
+            pub fn gmFrontend_ReportedMode() -> u8 {
+                match unsafe { GMFRONTEND_REPORTEDMODE } {
+                    Some(f) => f(),
+                    None => { return unsafe { crate::tu::gmfrontend::gmFrontend_ReportedMode() as _ }; },
+                }
+            }
     /// `gm_801A3EF4()` (gm/gm_1A36.c, ported).
     pub static mut GM_801A3EF4: Option<fn()> = None;
     pub fn gm_801A3EF4() {

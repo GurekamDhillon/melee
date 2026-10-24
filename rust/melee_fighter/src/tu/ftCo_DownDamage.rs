@@ -36,21 +36,21 @@ pub mod ext {
         };
     }
     ext_fns! {
-        ftCo_8008DCE0(g: G, msid: i32, facing: f32) = |_, _, _| todo!("TODO(port) ftCo_8008DCE0 (ftCo_Damage.c)");
+        ftCo_8008DCE0(g: G, msid: i32, facing: f32) = |g: G, msid: i32, facing: f32| { unsafe { let _ = crate::tu::ftCo_Damage::ftCo_8008DCE0(g as _, msid as _, facing as _); } };
         ftCommon_8007E2F4(fp: &mut Fighter, v: i16) = crate::ftcommon2::ftcommon_8007e2f4;
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
-        ftCo_80090780(g: G) = |_| todo!("TODO(port) ftCo_80090780 (ftCo_DamageFall.c)");
+        ftCo_80090780(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_DamageFall::ftCo_80090780(g as _); } };
         ftCo_Fall_Enter(g: G) = crate::tu::ftCo_Fall::ftCo_Fall_Enter;
         ftCo_80098160(g: G, msid: i32) = crate::tu::ftCo_DownStand::ftCo_80098160;
-        ftCo_80097F38(g: G) = |_| todo!("TODO(port) ftCo_80097F38 (ftCo_DownBound.c)");
-        ftCo_Damage_Phys(g: G) = |_| todo!("TODO(port) ftCo_Damage_Phys (ftCo_Damage.c)");
-        ft_80082708(g: G) -> u32 = |_| todo!("TODO(port) ft_80082708 (ft_081B.c)");
-        ftCo_8008FC94(g: G) = |_| todo!("TODO(port) ftCo_8008FC94 (ftCo_Damage.c)");
+        ftCo_80097F38(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_DownBound::ftCo_80097F38(g as _); } };
+        ftCo_Damage_Phys(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_Damage::ftCo_Damage_Phys(g as _); } };
+        ft_80082708(g: G) -> u32 = |g: G| -> u32 { unsafe { crate::tu::ft_081b::ft_80082708(g as _) as _ } };
+        ftCo_8008FC94(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_Damage::ftCo_8008FC94(g as _); } };
         ftCo_800C7CA0(g: G) -> bool = crate::tu::ftco_800c7ca0::ftco_800c7ca0;
-        ft_80081DD4(g: G) -> bool = |_| todo!("TODO(port) ft_80081DD4 (ft_081B.c)");
+        ft_80081DD4(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ft_081b::ft_80081dd4(g as _) as _ } };
         ftCommon_8007D7FC(fp: &mut Fighter) = crate::ftcommon3::ftcommon_8007d7fc;
-        ftCo_800C1D38(g: G) -> bool = |_| todo!("TODO(port) ftCo_800C1D38 (ftCo_FlyReflect.c)");
-        ftCo_800C17CC(g: G) -> bool = |_| todo!("TODO(port) ftCo_800C17CC (ftCo_PassiveWall.c)");
+        ftCo_800C1D38(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_PassiveWall::ftCo_800C1D38(g as _) as _ } };
+        ftCo_800C17CC(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_FlyReflect::ftCo_800C17CC(g as _) as _ } };
     }
 }
 

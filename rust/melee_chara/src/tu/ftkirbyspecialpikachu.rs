@@ -29,7 +29,14 @@ pub mod ext {
         };
     }
     type G = *mut HSD_GObj;
-    hook!(ITPIKACHUTHUNDERJOLT_SPAWN, itPikachuThunderJolt_Spawn, (g: G, pos: *const Vec3, dir: f32, kind: ItemKind) -> *mut Item_GObj);
+    pub static mut ITPIKACHUTHUNDERJOLT_SPAWN: Option<fn(G, *const Vec3, f32, ItemKind) -> *mut Item_GObj> = None;
+            #[allow(non_snake_case)]
+            pub fn itPikachuThunderJolt_Spawn(g: G, pos: *const Vec3, dir: f32, kind: ItemKind) -> *mut Item_GObj {
+                match unsafe { ITPIKACHUTHUNDERJOLT_SPAWN } {
+                    Some(f) => f(g, pos, dir, kind),
+                    None => { return unsafe { melee_items::tu::itpikachutjoltground::itPikachuThunderJolt_Spawn(g as _, pos as _, dir as _, kind as _) as _ }; },
+                }
+            }
 }
 
 /// `coll_mf` (static const): the Coll ground<->air change's motion flags.

@@ -30,11 +30,38 @@ pub mod ext {
         };
     }
     // itgamewatchfire.c
-    hook!(ITGAMEWATCHFIRE_SPAWN, itGamewatchFire_Spawn,
-        (owner: *mut HSD_GObj, pos: *const Vec3, part: i32, facing: f32) -> *mut HSD_GObj);
-    hook!(ITGAMEWATCHFIRE_802C6A2C, itGamewatchFire_802C6A2C, (item: *mut HSD_GObj));
-    hook!(ITGAMEWATCHFIRE_802C6A78, itGamewatchFire_802C6A78, (item: *mut HSD_GObj));
-    hook!(ITGAMEWATCHFIRE_802C6A98, itGamewatchFire_802C6A98, (item: *mut HSD_GObj));
+    pub static mut ITGAMEWATCHFIRE_SPAWN: Option<fn(*mut HSD_GObj, *const Vec3, i32, f32) -> *mut HSD_GObj> = None;
+            #[allow(non_snake_case)]
+            pub fn itGamewatchFire_Spawn(owner: *mut HSD_GObj, pos: *const Vec3, part: i32, facing: f32) -> *mut HSD_GObj {
+                match unsafe { ITGAMEWATCHFIRE_SPAWN } {
+                    Some(f) => f(owner, pos, part, facing),
+                    None => { return unsafe { melee_items::tu::itgamewatchfire::itGamewatchFire_Spawn(owner as _, pos as _, part as _, facing as _) as _ }; },
+                }
+            }
+    pub static mut ITGAMEWATCHFIRE_802C6A2C: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn itGamewatchFire_802C6A2C(item: *mut HSD_GObj)  {
+                match unsafe { ITGAMEWATCHFIRE_802C6A2C } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itgamewatchfire::itGamewatchFire_802C6A2C(item as _); } return; },
+                }
+            }
+    pub static mut ITGAMEWATCHFIRE_802C6A78: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn itGamewatchFire_802C6A78(item: *mut HSD_GObj)  {
+                match unsafe { ITGAMEWATCHFIRE_802C6A78 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itgamewatchfire::itGamewatchFire_802C6A78(item as _); } return; },
+                }
+            }
+    pub static mut ITGAMEWATCHFIRE_802C6A98: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn itGamewatchFire_802C6A98(item: *mut HSD_GObj)  {
+                match unsafe { ITGAMEWATCHFIRE_802C6A98 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itgamewatchfire::itGamewatchFire_802C6A98(item as _); } return; },
+                }
+            }
 }
 
 #[inline(always)]

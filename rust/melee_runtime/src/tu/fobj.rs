@@ -15,9 +15,21 @@ use melee_types::*;
 pub mod ext {
     use crate::tu::hookmac::hook;
     use melee_types::*;
-    hook!(HSD_OBJALLOCINIT, HSD_ObjAllocInit, (data: *mut HSD_ObjAllocData, size: u32, align: u32));
-    hook!(HSD_OBJALLOC, HSD_ObjAlloc, (data: *mut HSD_ObjAllocData) -> *mut core::ffi::c_void);
-    hook!(HSD_OBJFREE, HSD_ObjFree, (data: *mut HSD_ObjAllocData, obj: *mut core::ffi::c_void));
+    pub static mut HSD_OBJALLOCINIT: Option<fn(*mut HSD_ObjAllocData, u32, u32)> = None;
+    #[allow(non_snake_case)]
+    pub fn HSD_ObjAllocInit(data: *mut HSD_ObjAllocData, size: u32, align: u32) {
+        match unsafe { HSD_OBJALLOCINIT } { Some(f) => f(data, size, align), None => { unsafe { let _ = crate::tu::objalloc::HSD_ObjAllocInit(data as _, size as _, align as _); } return; } }
+    }
+    pub static mut HSD_OBJALLOC: Option<fn(*mut HSD_ObjAllocData) -> *mut core::ffi::c_void> = None;
+    #[allow(non_snake_case)]
+    pub fn HSD_ObjAlloc(data: *mut HSD_ObjAllocData) -> *mut core::ffi::c_void {
+        match unsafe { HSD_OBJALLOC } { Some(f) => f(data), None => { return unsafe { crate::tu::objalloc::HSD_ObjAlloc(data as _) as _ }; } }
+    }
+    pub static mut HSD_OBJFREE: Option<fn(*mut HSD_ObjAllocData, *mut core::ffi::c_void)> = None;
+    #[allow(non_snake_case)]
+    pub fn HSD_ObjFree(data: *mut HSD_ObjAllocData, obj: *mut core::ffi::c_void) {
+        match unsafe { HSD_OBJFREE } { Some(f) => f(data, obj), None => { unsafe { let _ = crate::tu::objalloc::HSD_ObjFree(data as _, obj as _); } return; } }
+    }
 }
 
 /// `fobj_alloc_data`.

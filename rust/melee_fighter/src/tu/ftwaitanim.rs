@@ -8,11 +8,11 @@ use crate::types::*;
 #[allow(non_snake_case, unused_variables)]
 pub mod ext {
     use crate::types::*;
-    pub fn ftData_80085CD8(fp: *mut Fighter, fp2: *mut Fighter, anim_id: i32) { panic!("TODO(ftdata) ftData_80085CD8") }
+    pub fn ftData_80085CD8(fp: *mut Fighter, fp2: *mut Fighter, anim_id: i32) { { unsafe { let _ = crate::tu::ftdata::ftData_80085CD8(fp as _, fp2 as _, anim_id as _); } return; } }
     pub fn ftCo_8009E7B4(fp: *mut Fighter, blend: *mut [u8; 2]) { panic!("TODO(ftCo) ftCo_8009E7B4") }
-    pub fn ftAnim_8006EBE8(gobj: *mut HSD_GObj, a: f32, b: f32, c: f32) { panic!("TODO(ftanim) ftAnim_8006EBE8") }
-    pub fn ftAnim_8006EBA4(gobj: *mut HSD_GObj) { panic!("TODO(ftanim) ftAnim_8006EBA4") }
-    pub fn ftAnim_IsFramesRemaining(gobj: *mut HSD_GObj) -> bool { panic!("TODO(ftanim) ftAnim_IsFramesRemaining") }
+    pub fn ftAnim_8006EBE8(gobj: *mut HSD_GObj, a: f32, b: f32, c: f32) { { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBE8(gobj as _, a as _, b as _, c as _); } return; } }
+    pub fn ftAnim_8006EBA4(gobj: *mut HSD_GObj) { { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(gobj as _); } return; } }
+    pub fn ftAnim_IsFramesRemaining(gobj: *mut HSD_GObj) -> bool { { return unsafe { crate::tu::ftanim::ftAnim_IsFramesRemaining(gobj as _) as _ }; } }
     pub fn HSD_Randi(max: i32) -> i32 { panic!("TODO(group1 random) HSD_Randi") }
     pub fn itGetHoldKind(item: *mut Item_GObj) -> i32 {
         unsafe { melee_items::itlib::it_get_hold_kind(&*((*item).user_data as *const Item)) }

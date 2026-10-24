@@ -8,12 +8,12 @@ use super::ft_0cd1::{self as c, ext as e, fp, G};
 pub mod ext {
     use crate::types::*;
     type I = *mut HSD_GObj;
-    pub fn it_8029282C(_i: I) { todo!("TODO(group5 itharisen) it_8029282C") }
-    pub fn it_80292A28(_i: I) { todo!("TODO(group5 itharisen) it_80292A28") }
-    pub fn it_802927E8(_i: I) { todo!("TODO(group5 itharisen) it_802927E8") }
-    pub fn it_80292998(_i: I, _f: f32) { todo!("TODO(group5 itharisen) it_80292998") }
-    pub fn it_802929C8(_i: I, _f: f32) { todo!("TODO(group5 itharisen) it_802929C8") }
-    pub fn it_802929F8(_i: I, _f: f32) { todo!("TODO(group5 itharisen) it_802929F8") }
+    pub fn it_8029282C(_i: I) { { unsafe { let _ = melee_items::tu::itharisen::it_8029282C(_i as _); } return; } }
+    pub fn it_80292A28(_i: I) { { unsafe { let _ = melee_items::tu::itharisen::it_80292A28(_i as _); } return; } }
+    pub fn it_802927E8(_i: I) { { unsafe { let _ = melee_items::tu::itharisen::it_802927E8(_i as _); } return; } }
+    pub fn it_80292998(_i: I, _f: f32) { { unsafe { let _ = melee_items::tu::itharisen::it_80292998(_i as _, _f as _); } return; } }
+    pub fn it_802929C8(_i: I, _f: f32) { { unsafe { let _ = melee_items::tu::itharisen::it_802929C8(_i as _, _f as _); } return; } }
+    pub fn it_802929F8(_i: I, _f: f32) { { unsafe { let _ = melee_items::tu::itharisen::it_802929F8(_i as _, _f as _); } return; } }
 }
 
 fn enter(g: G, arg1: i32, flags: i32, arg2: i32, arg3: f32) {

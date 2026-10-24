@@ -35,8 +35,8 @@ pub mod ext {
         pub OSReport_grtrace: unsafe fn(fmt: &CStr, args: &[usize]),
     }
     unsafe fn todo_OSReport(_fmt: &CStr, _file: &CStr, _line: i32, _id: i32) { panic!("TODO(os: OSReport (varargs: fmt, __FILE__, line, id)) OSReport") }
-    unsafe fn todo_Ground_GetStageGObj(_id: i32) -> *mut HSD_GObj { panic!("TODO(group2: gr/ground.c) Ground_GetStageGObj") }
-    unsafe fn todo_grZakoGenerator_801CAE04(_d: *mut c_void) { panic!("TODO(group2: gr/grzakogenerator.c) grZakoGenerator_801CAE04") }
+    unsafe fn todo_Ground_GetStageGObj(_id: i32) -> *mut HSD_GObj { { return unsafe { crate::tu::ground::Ground_GetStageGObj(_id as _) as _ }; } }
+    unsafe fn todo_grZakoGenerator_801CAE04(_d: *mut c_void) { { unsafe { let _ = crate::tu::grzakogenerator::grZakoGenerator_801CAE04(_d as _); } return; } }
     unsafe fn todo_Mex_GrCallbacks() -> *mut c_void { panic!("TODO(pc: m-ex (Mex_GrCallbacks, NULL for a vanilla stage)) Mex_GrCallbacks") }
     unsafe fn todo_Mex_GrTrace() -> i32 { panic!("TODO(pc: m-ex (Mex_GrTrace, the grtrace debug switch)) Mex_GrTrace") }
     unsafe fn todo_OSReport_grtrace(_fmt: &CStr, _args: &[usize]) { panic!("TODO(os: OSReport (varargs, %p arguments)) OSReport_grtrace") }

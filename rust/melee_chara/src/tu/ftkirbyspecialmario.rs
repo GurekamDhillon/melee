@@ -42,9 +42,23 @@ pub mod ext {
     }
     hook_or!(FTCO_FALL_IASA_INNER, ftCo_Fall_IASA_Inner, melee_fighter::tu::ftCo_Fall::ftCo_Fall_IASA_Inner,
         (gobj: *mut HSD_GObj) -> bool);
-    hook!(LB_8000B1CC, lb_8000B1CC, (jobj: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3));
+    pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *const Vec3, *mut Vec3) > = None;
+            #[allow(non_snake_case)]
+            pub fn lb_8000B1CC(jobj: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3)  {
+                match unsafe { LB_8000B1CC } {
+                    Some(f) => f(jobj, off, out),
+                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, off as _, out as _); } return; },
+                }
+            }
     hook!(HSD_RANDI, HSD_Randi, (max: i32) -> i32);
-    hook!(IT_8029B6F8, it_8029B6F8, (gobj: *mut HSD_GObj, pos: *mut Vec3, kind: i32, facing_dir: f32));
+    pub static mut IT_8029B6F8: Option<fn(*mut HSD_GObj, *mut Vec3, i32, f32) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_8029B6F8(gobj: *mut HSD_GObj, pos: *mut Vec3, kind: i32, facing_dir: f32)  {
+                match unsafe { IT_8029B6F8 } {
+                    Some(f) => f(gobj, pos, kind, facing_dir),
+                    None => { unsafe { let _ = melee_items::tu::itmariofireball::it_8029B6F8(gobj as _, pos as _, kind as _, facing_dir as _); } return; },
+                }
+            }
     hook!(ITDRMARIOPILL_SPAWN, itDrMarioPill_Spawn,
         (gobj: *mut HSD_GObj, pos: *mut Vec3, pick: i32, kind: i32, facing_dir: f32));
     /// `efSync_Spawn(gfx_id, gobj, ...)` (variadic in C; `va` are the extra word arguments).

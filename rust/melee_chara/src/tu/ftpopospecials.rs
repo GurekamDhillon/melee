@@ -41,12 +41,54 @@ pub mod ext {
             }
         };
     }
-    hook!(PLAYER_GETENTITYATINDEX, Player_GetEntityAtIndex, (slot: i32, index: i32) -> *mut HSD_GObj);
-    hook!(FTNN_INIT_80123954, ftNn_Init_80123954, (gobj: *mut HSD_GObj, ground_or_air: u32) -> u32);
-    hook!(FTNN_INIT_80123B10, ftNn_Init_80123B10, (gobj: *mut HSD_GObj) -> i32);
-    hook!(FT_80082888, ft_80082888, (gobj: *mut HSD_GObj, cb: *const ftCollisionBox) -> i32);
-    hook!(FT_800824A0, ft_800824A0, (gobj: *mut HSD_GObj, cb: *const ftCollisionBox) -> i32);
-    hook!(HSD_JOBJGETCHILD, HSD_JObjGetChild, (jobj: *mut HSD_JObj) -> *mut HSD_JObj);
+    pub static mut PLAYER_GETENTITYATINDEX: Option<fn(i32, i32) -> *mut HSD_GObj> = None;
+            #[allow(non_snake_case)]
+            pub fn Player_GetEntityAtIndex(slot: i32, index: i32) -> *mut HSD_GObj {
+                match unsafe { PLAYER_GETENTITYATINDEX } {
+                    Some(f) => f(slot, index),
+                    None => { return unsafe { melee_fighter::tu::player::Player_GetEntityAtIndex(slot as _, index as _) as _ }; },
+                }
+            }
+    pub static mut FTNN_INIT_80123954: Option<fn(*mut HSD_GObj, u32) -> u32> = None;
+            #[allow(non_snake_case)]
+            pub fn ftNn_Init_80123954(gobj: *mut HSD_GObj, ground_or_air: u32) -> u32 {
+                match unsafe { FTNN_INIT_80123954 } {
+                    Some(f) => f(gobj, ground_or_air),
+                    None => { return unsafe { crate::tu::ftnanaspecials::ftNn_Init_80123954(gobj as _, ground_or_air as _) as _ }; },
+                }
+            }
+    pub static mut FTNN_INIT_80123B10: Option<fn(*mut HSD_GObj) -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn ftNn_Init_80123B10(gobj: *mut HSD_GObj) -> i32 {
+                match unsafe { FTNN_INIT_80123B10 } {
+                    Some(f) => f(gobj),
+                    None => { return unsafe { crate::tu::ftnanaspecials::ftNn_Init_80123B10(gobj as _) as _ }; },
+                }
+            }
+    pub static mut FT_80082888: Option<fn(*mut HSD_GObj, *const ftCollisionBox) -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn ft_80082888(gobj: *mut HSD_GObj, cb: *const ftCollisionBox) -> i32 {
+                match unsafe { FT_80082888 } {
+                    Some(f) => f(gobj, cb),
+                    None => { return unsafe { melee_fighter::tu::ft_081b::ft_80082888(gobj as _, cb as _) as _ }; },
+                }
+            }
+    pub static mut FT_800824A0: Option<fn(*mut HSD_GObj, *const ftCollisionBox) -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn ft_800824A0(gobj: *mut HSD_GObj, cb: *const ftCollisionBox) -> i32 {
+                match unsafe { FT_800824A0 } {
+                    Some(f) => f(gobj, cb),
+                    None => { return unsafe { melee_fighter::tu::ft_081b::ft_800824a0(gobj as _, cb as _) as _ }; },
+                }
+            }
+    pub static mut HSD_JOBJGETCHILD: Option<fn(*mut HSD_JObj) -> *mut HSD_JObj> = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_JObjGetChild(jobj: *mut HSD_JObj) -> *mut HSD_JObj {
+                match unsafe { HSD_JOBJGETCHILD } {
+                    Some(f) => f(jobj),
+                    None => { return unsafe { melee_items::tu::kinds_inl::HSD_JObjGetChild(jobj as _) as _ }; },
+                }
+            }
     hook!(HSD_JOBJGETNEXT, HSD_JObjGetNext, (jobj: *mut HSD_JObj) -> *mut HSD_JObj);
     hook!(HSD_JOBJCLEARFLAGSALL, HSD_JObjClearFlagsAll, (jobj: *mut HSD_JObj, flags: u32));
     hook!(HSD_JOBJSETFLAGSALL, HSD_JObjSetFlagsAll, (jobj: *mut HSD_JObj, flags: u32));

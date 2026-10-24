@@ -39,12 +39,54 @@ pub mod ext {
             None => melee_fighter::hooks::hsd_randi(max),
         }
     }
-    hook!(IT_8026B300, itGetKind, (item: *mut Item_GObj) -> i32);
-    hook!(IT_802BD45C, it_802BD45C, (item: *mut Item_GObj));
-    hook!(IT_802BD4AC, it_802BD4AC, (gobj: *mut HSD_GObj, pos: *mut Vec3, part: u32, kind: i32, dir: f32) -> *mut Item_GObj);
-    hook!(FTPICKUPITEM_80094818, ftpickupitem_80094818, (gobj: *mut HSD_GObj, flag: bool));
-    hook!(LB_8000B1CC, lb_8000B1CC, (jobj: *mut HSD_JObj, pos0: *const Vec3, pos1: *mut Vec3));
-    hook!(FTCO_800957F4, ftCo_800957F4, (gobj: *mut HSD_GObj, msid: i32));
+    pub static mut IT_8026B300: Option<fn(*mut Item_GObj) -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn itGetKind(item: *mut Item_GObj) -> i32 {
+                match unsafe { IT_8026B300 } {
+                    Some(f) => f(item),
+                    None => { return unsafe { melee_items::tu::it_26B1::itGetKind(item as _) as _ }; },
+                }
+            }
+    pub static mut IT_802BD45C: Option<fn(*mut Item_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802BD45C(item: *mut Item_GObj)  {
+                match unsafe { IT_802BD45C } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itpeachturnip::it_802BD45C(item as _); } return; },
+                }
+            }
+    pub static mut IT_802BD4AC: Option<fn(*mut HSD_GObj, *mut Vec3, u32, i32, f32) -> *mut Item_GObj> = None;
+            #[allow(non_snake_case)]
+            pub fn it_802BD4AC(gobj: *mut HSD_GObj, pos: *mut Vec3, part: u32, kind: i32, dir: f32) -> *mut Item_GObj {
+                match unsafe { IT_802BD4AC } {
+                    Some(f) => f(gobj, pos, part, kind, dir),
+                    None => { return unsafe { melee_items::tu::itpeachturnip::it_802BD4AC(gobj as _, pos as _, part as _, kind as _, dir as _) as _ }; },
+                }
+            }
+    pub static mut FTPICKUPITEM_80094818: Option<fn(*mut HSD_GObj, bool) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftpickupitem_80094818(gobj: *mut HSD_GObj, flag: bool)  {
+                match unsafe { FTPICKUPITEM_80094818 } {
+                    Some(f) => f(gobj, flag),
+                    None => { unsafe { let _ = melee_fighter::tu::ftpickupitem::ftpickupitem_80094818(gobj as _, flag as _); } return; },
+                }
+            }
+    pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *const Vec3, *mut Vec3) > = None;
+            #[allow(non_snake_case)]
+            pub fn lb_8000B1CC(jobj: *mut HSD_JObj, pos0: *const Vec3, pos1: *mut Vec3)  {
+                match unsafe { LB_8000B1CC } {
+                    Some(f) => f(jobj, pos0, pos1),
+                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, pos0 as _, pos1 as _); } return; },
+                }
+            }
+    pub static mut FTCO_800957F4: Option<fn(*mut HSD_GObj, i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftCo_800957F4(gobj: *mut HSD_GObj, msid: i32)  {
+                match unsafe { FTCO_800957F4 } {
+                    Some(f) => f(gobj, msid),
+                    None => { unsafe { let _ = melee_fighter::tu::ftCo_ItemThrow::ftCo_800957F4(gobj as _, msid as _); } return; },
+                }
+            }
     pub use crate::tu::ftcaptainspecialn::ext::{efSync_Spawn, EFSYNC_SPAWN};
 }
 

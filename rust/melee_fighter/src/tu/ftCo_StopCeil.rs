@@ -27,15 +27,15 @@ pub mod ext {
         };
     }
     ext_fns! {
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftKb_SpecialN_800F1F1C(g: G, v: &mut Vec3) = |_, _| todo!("TODO(port) ftKb_SpecialN_800F1F1C (ftkirbyspecialn.c)");
-        ft_80082D40(g: G, y: f32) = |_, _| todo!("TODO(port) ft_80082D40 (ft_081B.c)");
+        ft_80082D40(g: G, y: f32) = |g: G, y: f32| { unsafe { let _ = crate::tu::ft_081b::ft_80082d40(g as _, y as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ftCo_Fall_Enter(g: G) = crate::tu::ftCo_Fall::ftCo_Fall_Enter;
         ft_80083464(g: G, line_cb: unsafe extern "C" fn(G, i32) -> bool, cb: unsafe extern "C" fn(G)) = |_, _, _| todo!("TODO(port) ft_80083464 (ft_081B.c)");
         // Address-taken only (passed to `ft_80083464`).
-        ftCo_80096CC8(g: G, line_id: i32) -> bool = |_, _| todo!("TODO(port) ftCo_80096CC8 (ftCo_Fall.c)");
-        ft_80082B1C(g: G) = |_| todo!("TODO(port) ft_80082B1C (ft_081B.c)");
+        ftCo_80096CC8(g: G, line_id: i32) -> bool = |g: G, line_id: i32| -> bool { unsafe { crate::tu::ftCo_FallSpecial::ftCo_80096CC8(g as _, line_id as _) as _ } };
+        ft_80082B1C(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_081b::ft_80082b1c(g as _); } };
     }
 }
 

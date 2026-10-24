@@ -13,19 +13,47 @@ pub mod ext {
     hook_or!(ITISHEAVY, itIsHeavy, (item: *mut Item_GObj) -> bool, melee_fighter::hooks::it_is_heavy);
     hook_or!(ITGETHOLDKIND, itGetHoldKind, (item: *mut Item_GObj) -> i32, melee_fighter::tu::ftwaitanim::ext::itGetHoldKind);
     hook_or!(FTANIM_80070FB4, ftAnim_80070FB4, (gobj: *mut HSD_GObj, a: i32, b: i32), melee_fighter::ftanim::ftanim_80070fb4);
-    hook!(FTANIM_80070C48, ftAnim_80070C48, (gobj: *mut HSD_GObj, flag: i32));
-    hook!(FTANIM_80070CC4, ftAnim_80070CC4, (gobj: *mut HSD_GObj, flag: i32));
-    hook!(FTANIM_800704F0, ftAnim_800704F0, (gobj: *mut HSD_GObj, tobj_idx: i32, frame: f32));
+    pub static mut FTANIM_80070C48: Option<fn(*mut HSD_GObj, i32)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftAnim_80070C48(gobj: *mut HSD_GObj, flag: i32) {
+        match unsafe { FTANIM_80070C48 } { Some(f) => f(gobj, flag), None => { unsafe { let _ = melee_fighter::tu::ftanim::ftAnim_80070C48(gobj as _, flag as _); } return; } }
+    }
+    pub static mut FTANIM_80070CC4: Option<fn(*mut HSD_GObj, i32)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftAnim_80070CC4(gobj: *mut HSD_GObj, flag: i32) {
+        match unsafe { FTANIM_80070CC4 } { Some(f) => f(gobj, flag), None => { unsafe { let _ = melee_fighter::tu::ftanim::ftAnim_80070CC4(gobj as _, flag as _); } return; } }
+    }
+    pub static mut FTANIM_800704F0: Option<fn(*mut HSD_GObj, i32, f32)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftAnim_800704F0(gobj: *mut HSD_GObj, tobj_idx: i32, frame: f32) {
+        match unsafe { FTANIM_800704F0 } { Some(f) => f(gobj, tobj_idx, frame), None => { unsafe { let _ = melee_fighter::tu::ftanim::ftAnim_800704F0(gobj as _, tobj_idx as _, frame as _); } return; } }
+    }
     hook_or!(FTCOMMON_8007D5D4, ftCommon_8007D5D4, (fp: *mut Fighter),
         |fp: *mut Fighter| unsafe { melee_fighter::ftcommon2::ftcommon_8007d5d4(&mut *fp) });
     hook_or!(FTCOMMON_8007D7FC, ftCommon_8007D7FC, (fp: *mut Fighter),
         |fp: *mut Fighter| unsafe { melee_fighter::ftcommon3::ftcommon_8007d7fc(&mut *fp) });
     hook!(HSD_JOBJSETMTXDIRTYSUB, HSD_JObjSetMtxDirtySub, (jobj: *mut HSD_JObj));
     // The ft/ callees shared by the ftYoshi / ftZelda TUs; each TU's `ext` re-exports the ones it calls.
-    hook!(FTANIM_8006EBA4, ftAnim_8006EBA4, (gobj: *mut HSD_GObj));
-    hook!(FTANIM_ISFRAMESREMAINING, ftAnim_IsFramesRemaining, (gobj: *mut HSD_GObj) -> bool);
-    hook!(FT_8008A2BC, ft_8008A2BC, (gobj: *mut HSD_GObj));
-    hook!(FTCO_FALL_ENTER, ftCo_Fall_Enter, (gobj: *mut HSD_GObj));
+    pub static mut FTANIM_8006EBA4: Option<fn(*mut HSD_GObj)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftAnim_8006EBA4(gobj: *mut HSD_GObj) {
+        match unsafe { FTANIM_8006EBA4 } { Some(f) => f(gobj), None => { unsafe { let _ = melee_fighter::tu::ftanim::ftAnim_8006EBA4(gobj as _); } return; } }
+    }
+    pub static mut FTANIM_ISFRAMESREMAINING: Option<fn(*mut HSD_GObj) -> bool> = None;
+    #[allow(non_snake_case)]
+    pub fn ftAnim_IsFramesRemaining(gobj: *mut HSD_GObj) -> bool {
+        match unsafe { FTANIM_ISFRAMESREMAINING } { Some(f) => f(gobj), None => { return unsafe { melee_fighter::tu::ftanim::ftAnim_IsFramesRemaining(gobj as _) as _ }; } }
+    }
+    pub static mut FT_8008A2BC: Option<fn(*mut HSD_GObj)> = None;
+    #[allow(non_snake_case)]
+    pub fn ft_8008A2BC(gobj: *mut HSD_GObj) {
+        match unsafe { FT_8008A2BC } { Some(f) => f(gobj), None => { unsafe { let _ = melee_fighter::tu::ft_08a1::ft_8008A2BC(gobj as _); } return; } }
+    }
+    pub static mut FTCO_FALL_ENTER: Option<fn(*mut HSD_GObj)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftCo_Fall_Enter(gobj: *mut HSD_GObj) {
+        match unsafe { FTCO_FALL_ENTER } { Some(f) => f(gobj), None => { unsafe { let _ = melee_fighter::tu::ftCo_Fall::ftCo_Fall_Enter(gobj as _); } return; } }
+    }
     hook_or!(FT_80084F3C, ft_80084F3C, (gobj: *mut HSD_GObj), melee_fighter::ft084e::ft_80084f3c);
     hook_or!(FT_80084EEC, ft_80084EEC, (gobj: *mut HSD_GObj), melee_fighter::ft084e::ft_80084eec);
     hook_or!(FT_80085134, ft_80085134, (gobj: *mut HSD_GObj), melee_fighter::ft084e::ft_80085134);
@@ -59,8 +87,11 @@ pub mod ext {
         |fp: *mut Fighter, g: f32, t: f32| unsafe { melee_fighter::ftcommon::fall(&mut *fp, g, t) });
     hook_or!(FTCOMMON_SETSELFMOVEMENTFROMGROUNDEDMOVEMENT, ftCommon_SetSelfMovementFromGroundedMovement, (gobj: *mut HSD_GObj),
         |g: *mut HSD_GObj| unsafe { melee_fighter::ftcommon::set_self_movement_from_grounded_movement(&mut *((*g).user_data as *mut Fighter)) });
-    hook!(FIGHTER_CHANGEMOTIONSTATE, Fighter_ChangeMotionState,
-        (gobj: *mut HSD_GObj, msid: i32, flags: u32, anim_start: f32, anim_speed: f32, anim_blend: f32, arg3: *mut HSD_GObj));
+    pub static mut FIGHTER_CHANGEMOTIONSTATE: Option<fn(*mut HSD_GObj, i32, u32, f32, f32, f32, *mut HSD_GObj)> = None;
+    #[allow(non_snake_case)]
+    pub fn Fighter_ChangeMotionState(gobj: *mut HSD_GObj, msid: i32, flags: u32, anim_start: f32, anim_speed: f32, anim_blend: f32, arg3: *mut HSD_GObj) {
+        match unsafe { FIGHTER_CHANGEMOTIONSTATE } { Some(f) => f(gobj, msid, flags, anim_start, anim_speed, anim_blend, arg3), None => { unsafe { let _ = melee_fighter::tu::fighter::Fighter_ChangeMotionState(gobj as _, msid as _, flags as _, anim_start as _, anim_speed as _, anim_blend as _, arg3 as _); } return; } }
+    }
 }
 
 #[inline(always)]

@@ -73,7 +73,7 @@ pub mod ext {
         match unsafe { hook::GXSetLineWidth } { Some(f) => f(a0, a1), None => { panic!("TODO: GXSetLineWidth is not ported") } }
     }
     pub fn HSD_CObjGetCurrent() -> *mut HSD_CObj {
-        match unsafe { hook::HSD_CObjGetCurrent } { Some(f) => f(), None => { panic!("TODO: HSD_CObjGetCurrent is not ported") } }
+        match unsafe { hook::HSD_CObjGetCurrent } { Some(f) => f(), None => { { return unsafe { crate::tu::cobj::HSD_CObjGetCurrent() as _ }; } } }
     }
     pub fn HSD_CObjGetViewingMtx(a0: *mut HSD_CObj, a1: *mut [f32; 4]) {
         match unsafe { hook::HSD_CObjGetViewingMtx } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_CObjGetViewingMtx is not ported") } }
@@ -91,7 +91,7 @@ pub mod ext {
         match unsafe { hook::HSD_JObjSetupMatrixSub } { Some(f) => f(a0), None => { panic!("TODO: HSD_JObjSetupMatrixSub is not ported") } }
     }
     pub fn HSD_MemAlloc(a0: i32) -> *mut c_void {
-        match unsafe { hook::HSD_MemAlloc } { Some(f) => f(a0), None => { panic!("TODO: HSD_MemAlloc is not ported") } }
+        match unsafe { hook::HSD_MemAlloc } { Some(f) => f(a0), None => { { return unsafe { crate::tu::memory::HSD_MemAlloc(a0 as _) as _ }; } } }
     }
     pub fn HSD_QuatLib_8037EB28(a0: *mut [f32; 4], a1: *mut Vec) -> i32 {
         match unsafe { hook::HSD_QuatLib_8037EB28 } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_QuatLib_8037EB28 is not ported") } }
@@ -136,37 +136,37 @@ pub mod ext {
         match unsafe { hook::__frsqrte } { Some(f) => f(a0), None => { panic!("TODO: __frsqrte is not ported") } }
     }
     pub fn atan2f(a0: f32, a1: f32) -> f32 {
-        match unsafe { hook::atan2f } { Some(f) => f(a0, a1), None => { panic!("TODO: atan2f is not ported") } }
+        match unsafe { hook::atan2f } { Some(f) => f(a0, a1), None => { { return unsafe { crate::lbtrigf::atan2f(a0 as _, a1 as _) as _ }; } } }
     }
     pub fn cosf(a0: f32) -> f32 {
-        match unsafe { hook::cosf } { Some(f) => f(a0), None => { panic!("TODO: cosf is not ported") } }
+        match unsafe { hook::cosf } { Some(f) => f(a0), None => { { return unsafe { crate::gekko::cosf(a0 as _) as _ }; } } }
     }
     pub fn lbColl_80005C44(a0: *const Vec, a1: *const Vec, a2: *const Vec, a3: *mut Vec, a4: f32, a5: f32) -> i32 {
-        match unsafe { hook::lbColl_80005C44 } { Some(f) => f(a0, a1, a2, a3, a4, a5), None => { panic!("TODO: lbColl_80005C44 is not ported") } }
+        match unsafe { hook::lbColl_80005C44 } { Some(f) => f(a0, a1, a2, a3, a4, a5), None => { { return unsafe { crate::tu::lbcollision::lbColl_80005C44(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _) as _ }; } } }
     }
     pub fn lbVector_Angle(a0: *mut Vec, a1: *mut Vec) -> f32 {
-        match unsafe { hook::lbVector_Angle } { Some(f) => f(a0, a1), None => { panic!("TODO: lbVector_Angle is not ported") } }
+        match unsafe { hook::lbVector_Angle } { Some(f) => f(a0, a1), None => { { return unsafe { crate::tu::lbvector::lbVector_Angle(a0 as _, a1 as _) as _ }; } } }
     }
     pub fn lbVector_CreateEulerMatrix(a0: *mut [f32; 4], a1: *mut Quaternion) {
-        match unsafe { hook::lbVector_CreateEulerMatrix } { Some(f) => f(a0, a1), None => { panic!("TODO: lbVector_CreateEulerMatrix is not ported") } }
+        match unsafe { hook::lbVector_CreateEulerMatrix } { Some(f) => f(a0, a1), None => { { unsafe { let _ = crate::tu::lbvector::lbVector_CreateEulerMatrix(a0 as _, a1 as _); } return; } } }
     }
     pub fn lbVector_Normalize(a0: *mut Vec) -> f32 {
-        match unsafe { hook::lbVector_Normalize } { Some(f) => f(a0), None => { panic!("TODO: lbVector_Normalize is not ported") } }
+        match unsafe { hook::lbVector_Normalize } { Some(f) => f(a0), None => { { return unsafe { crate::tu::lbvector::lbVector_Normalize(a0 as _) as _ }; } } }
     }
     pub fn lbVector_RotateAboutUnitAxis(a0: *mut Vec, a1: *mut Vec, a2: f32) {
-        match unsafe { hook::lbVector_RotateAboutUnitAxis } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: lbVector_RotateAboutUnitAxis is not ported") } }
+        match unsafe { hook::lbVector_RotateAboutUnitAxis } { Some(f) => f(a0, a1, a2), None => { { unsafe { let _ = crate::tu::lbvector::lbVector_RotateAboutUnitAxis(a0 as _, a1 as _, a2 as _); } return; } } }
     }
     pub fn lb_80011B74(a0: *mut HSD_DObj, a1: u32) {
-        match unsafe { hook::lb_80011B74 } { Some(f) => f(a0, a1), None => { panic!("TODO: lb_80011B74 is not ported") } }
+        match unsafe { hook::lb_80011B74 } { Some(f) => f(a0, a1), None => { { unsafe { let _ = crate::tu::lbspdisplay::lb_80011B74(a0 as _, a1 as _); } return; } } }
     }
     pub fn lb_80011C18(a0: *mut HSD_JObj, a1: u32) {
-        match unsafe { hook::lb_80011C18 } { Some(f) => f(a0, a1), None => { panic!("TODO: lb_80011C18 is not ported") } }
+        match unsafe { hook::lb_80011C18 } { Some(f) => f(a0, a1), None => { { unsafe { let _ = crate::tu::lbspdisplay::lb_80011C18(a0 as _, a1 as _); } return; } } }
     }
     pub fn mpCheckFloor(a0: f32, a1: f32, a2: f32, a3: f32, a4: f32, a5: *mut Vec, a6: *mut i32, a7: *mut u32, a8: *mut Vec, a9: i32, a10: i32, a11: i32, a12: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> i32>, a13: *mut HSD_GObj) -> i32 {
         match unsafe { hook::mpCheckFloor } { Some(f) => f(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13), None => { panic!("TODO: mpCheckFloor is not ported") } }
     }
     pub fn sinf(a0: f32) -> f32 {
-        match unsafe { hook::sinf } { Some(f) => f(a0), None => { panic!("TODO: sinf is not ported") } }
+        match unsafe { hook::sinf } { Some(f) => f(a0), None => { { return unsafe { crate::gekko::sinf(a0 as _) as _ }; } } }
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

@@ -35,14 +35,42 @@ pub mod ext {
         };
     }
     /// `gm_InitVsMode(vs)` (gm/gm_1601.c or gmmain_lib.c): resets a `VsModeData` to the defaults.
-    hook!(GM_INITVSMODE, gm_InitVsMode, (vs: *mut VsModeData));
+    pub static mut GM_INITVSMODE: Option<fn(*mut VsModeData) > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_InitVsMode(vs: *mut VsModeData)  {
+                match unsafe { GM_INITVSMODE } {
+                    Some(f) => f(vs),
+                    None => { unsafe { let _ = crate::tu::gm_1601::gm_InitVsMode(vs as _); } return; },
+                }
+            }
     /// `SceneLaunch_Active()` / `SceneLaunch_EnemyTeamColors()` (pc/platform/gw_runtime.c, TARGET_PC).
     hook!(SCENELAUNCH_ACTIVE, SceneLaunch_Active, () -> i32);
     hook!(SCENELAUNCH_ENEMYTEAMCOLORS, SceneLaunch_EnemyTeamColors, () -> i32);
     /// The team-colour tables of gm_1601.c.
-    hook!(GM_801692BC, gm_801692BC, (ckind: i8) -> u8);
-    hook!(GM_80169290, gm_80169290, (ckind: i8) -> u8);
-    hook!(GM_80169264, gm_80169264, (ckind: i8) -> u8);
+    pub static mut GM_801692BC: Option<fn(i8) -> u8> = None;
+            #[allow(non_snake_case)]
+            pub fn gm_801692BC(ckind: i8) -> u8 {
+                match unsafe { GM_801692BC } {
+                    Some(f) => f(ckind),
+                    None => { return unsafe { crate::tu::gm_1601::gm_801692BC(ckind as _) as _ }; },
+                }
+            }
+    pub static mut GM_80169290: Option<fn(i8) -> u8> = None;
+            #[allow(non_snake_case)]
+            pub fn gm_80169290(ckind: i8) -> u8 {
+                match unsafe { GM_80169290 } {
+                    Some(f) => f(ckind),
+                    None => { return unsafe { crate::tu::gm_1601::gm_80169290(ckind as _) as _ }; },
+                }
+            }
+    pub static mut GM_80169264: Option<fn(i8) -> u8> = None;
+            #[allow(non_snake_case)]
+            pub fn gm_80169264(ckind: i8) -> u8 {
+                match unsafe { GM_80169264 } {
+                    Some(f) => f(ckind),
+                    None => { return unsafe { crate::tu::gm_1601::gm_80169264(ckind as _) as _ }; },
+                }
+            }
 }
 
 /// gmscenelaunch.h `SceneLaunch_HudCount`: the highest occupied slot (P5/P6) selects the HUD layout.

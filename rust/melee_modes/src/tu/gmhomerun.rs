@@ -175,34 +175,230 @@ pub mod ext {
             }
         };
     }
-    hook!(GM_GETGAMEMODESTATEENTERDATA, gm_GetGameModeStateEnterData, (s: *mut GameModeState) -> *mut core::ffi::c_void);
-    hook!(GM_GETGAMEMODESTATEEXITDATA, gm_GetGameModeStateExitData, (s: *mut GameModeState) -> *mut core::ffi::c_void);
-    hook!(LBCARDNEW_ALLOCWORKAREA, lbCardNew_AllocWorkArea, ());
-    hook!(LBCARDGAME_LOADARCHIVE, lbCardGame_LoadArchive, (a: i32));
-    hook!(LBCARDGAME_SAVECHANGES, lbCardGame_SaveChanges, ());
+    pub static mut GM_GETGAMEMODESTATEENTERDATA: Option<fn(*mut GameModeState) -> *mut core::ffi::c_void> = None;
+            #[allow(non_snake_case)]
+            pub fn gm_GetGameModeStateEnterData(s: *mut GameModeState) -> *mut core::ffi::c_void {
+                match unsafe { GM_GETGAMEMODESTATEENTERDATA } {
+                    Some(f) => unsafe { f(s) },
+                    None => { return unsafe { crate::tu::gm_1A3F::gm_GetGameModeStateEnterData(s as _) as _ }; },
+                }
+            }
+    pub static mut GM_GETGAMEMODESTATEEXITDATA: Option<fn(*mut GameModeState) -> *mut core::ffi::c_void> = None;
+            #[allow(non_snake_case)]
+            pub fn gm_GetGameModeStateExitData(s: *mut GameModeState) -> *mut core::ffi::c_void {
+                match unsafe { GM_GETGAMEMODESTATEEXITDATA } {
+                    Some(f) => unsafe { f(s) },
+                    None => { return unsafe { crate::tu::gm_1A3F::gm_GetGameModeStateExitData(s as _) as _ }; },
+                }
+            }
+    pub static mut LBCARDNEW_ALLOCWORKAREA: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn lbCardNew_AllocWorkArea()  {
+                match unsafe { LBCARDNEW_ALLOCWORKAREA } {
+                    Some(f) => unsafe { f() },
+                    None => { unsafe { let _ = melee_runtime::tu::lbcardnew::lbCardNew_AllocWorkArea(); } return; },
+                }
+            }
+    pub static mut LBCARDGAME_LOADARCHIVE: Option<fn(i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn lbCardGame_LoadArchive(a: i32)  {
+                match unsafe { LBCARDGAME_LOADARCHIVE } {
+                    Some(f) => unsafe { f(a) },
+                    None => { unsafe { let _ = melee_runtime::tu::lbcardgame::lbCardGame_LoadArchive(a as _); } return; },
+                }
+            }
+    pub static mut LBCARDGAME_SAVECHANGES: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn lbCardGame_SaveChanges()  {
+                match unsafe { LBCARDGAME_SAVECHANGES } {
+                    Some(f) => unsafe { f() },
+                    None => { unsafe { let _ = melee_runtime::tu::lbcardgame::lbCardGame_SaveChanges(); } return; },
+                }
+            }
     hook!(GM_801B06B0, gm_801B06B0, (css: *mut CSSData, a: i32, b: i32, c: i32, d: i32, e: i32, f: i32, g: i32));
     hook!(LBDVD_GETPRELOADCACHESCENE, lbDvd_GetPreloadCacheScene, () -> *mut PreloadedGameModeState);
-    hook!(LBDVD_SETUPVSPRELOADCACHE, lbDvd_SetupVsPreloadCache, ());
-    hook!(LBDVD_80018254, lbDvd_80018254, ());
-    hook!(GMFRONTEND_ATLASSELECT, gmFrontend_AtlasSelect, (s: *mut GameModeState, sss: i32, name: *const i8));
-    hook!(GM_CHANGEGAMEMODEAFTERCURRENTSCENE, gm_ChangeGameModeAfterCurrentScene, (m: i32));
-    hook!(GM_SETUPALLPLAYERDEFAULTS, gm_SetupAllPlayerDefaults, (p: *mut PlayerInitData));
-    hook!(GM_SETUPRULESDEFAULTS, gm_SetupRulesDefaults, (r: *mut StartMeleeRules));
-    hook!(GM_80181998, gm_80181998, ());
-    hook!(GM_LOADRUMBLEENABLED, gm_LoadRumbleEnabled, (s: *mut StartMeleeData));
-    hook!(GM_80181A00, gm_80181A00, (ckind: i32, nametag: i32));
-    hook!(GM_80180B18, gm_80180B18, ());
-    hook!(GM_801677F0, gm_801677F0, () -> u8);
-    hook!(GM_80164504, gm_80164504, (a: u32));
-    hook!(GM_80162968, gm_80162968, (frames: u32));
-    hook!(GM_8016247C, gm_8016247C, (a: i32));
-    hook!(GM_80180BA0, gm_80180BA0, ());
-    hook!(GM_80180AE4, gm_80180AE4, () -> i32);
-    hook!(GM_801734D0, gm_801734D0, (a: u32) -> i16);
-    hook!(GM_80173B30, gm_80173B30, (a: u32));
-    hook!(GM_80173EEC, gm_80173EEC, ());
-    hook!(GM_80172898, gm_80172898, (a: i32));
-    hook!(GM_80173754, gm_80173754, (a: i32, b: i32) -> i32);
-    hook!(GM_SETNEXTGAMEMODESTATEID, gm_SetNextGameModeStateId, (id: i32));
-    hook!(GM_INITVSMODE, gm_InitVsMode, (vs: *mut VsModeData));
+    pub static mut LBDVD_SETUPVSPRELOADCACHE: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn lbDvd_SetupVsPreloadCache()  {
+                match unsafe { LBDVD_SETUPVSPRELOADCACHE } {
+                    Some(f) => unsafe { f() },
+                    None => { unsafe { let _ = melee_runtime::tu::lbdvd::lbDvd_SetupVsPreloadCache(); } return; },
+                }
+            }
+    pub static mut LBDVD_80018254: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn lbDvd_80018254()  {
+                match unsafe { LBDVD_80018254 } {
+                    Some(f) => unsafe { f() },
+                    None => { unsafe { let _ = melee_runtime::tu::lbdvd::lbDvd_80018254(); } return; },
+                }
+            }
+    pub static mut GMFRONTEND_ATLASSELECT: Option<fn(*mut GameModeState, i32, *const i8) > = None;
+            #[allow(non_snake_case)]
+            pub fn gmFrontend_AtlasSelect(s: *mut GameModeState, sss: i32, name: *const i8)  {
+                match unsafe { GMFRONTEND_ATLASSELECT } {
+                    Some(f) => unsafe { f(s, sss, name) },
+                    None => { unsafe { let _ = crate::tu::gmfrontend::gmFrontend_AtlasSelect(s as _, sss as _, name as _); } return; },
+                }
+            }
+    pub static mut GM_CHANGEGAMEMODEAFTERCURRENTSCENE: Option<fn(i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_ChangeGameModeAfterCurrentScene(m: i32)  {
+                match unsafe { GM_CHANGEGAMEMODEAFTERCURRENTSCENE } {
+                    Some(f) => unsafe { f(m) },
+                    None => { unsafe { let _ = crate::tu::gm_1A3F::gm_ChangeGameModeAfterCurrentScene(m as _); } return; },
+                }
+            }
+    pub static mut GM_SETUPALLPLAYERDEFAULTS: Option<fn(*mut PlayerInitData) > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_SetupAllPlayerDefaults(p: *mut PlayerInitData)  {
+                match unsafe { GM_SETUPALLPLAYERDEFAULTS } {
+                    Some(f) => unsafe { f(p) },
+                    None => { unsafe { let _ = crate::tu::gm_1601::gm_SetupAllPlayerDefaults(p as _); } return; },
+                }
+            }
+    pub static mut GM_SETUPRULESDEFAULTS: Option<fn(*mut StartMeleeRules) > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_SetupRulesDefaults(r: *mut StartMeleeRules)  {
+                match unsafe { GM_SETUPRULESDEFAULTS } {
+                    Some(f) => unsafe { f(r) },
+                    None => { unsafe { let _ = crate::tu::gm_1601::gm_SetupRulesDefaults(r as _); } return; },
+                }
+            }
+    pub static mut GM_80181998: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_80181998()  {
+                match unsafe { GM_80181998 } {
+                    Some(f) => unsafe { f() },
+                    None => { unsafe { let _ = crate::tu::gm_180A::gm_80181998(); } return; },
+                }
+            }
+    pub static mut GM_LOADRUMBLEENABLED: Option<fn(*mut StartMeleeData) > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_LoadRumbleEnabled(s: *mut StartMeleeData)  {
+                match unsafe { GM_LOADRUMBLEENABLED } {
+                    Some(f) => unsafe { f(s) },
+                    None => { unsafe { let _ = crate::tu::gmvs::gm_LoadRumbleEnabled(s as _); } return; },
+                }
+            }
+    pub static mut GM_80181A00: Option<fn(i32, i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_80181A00(ckind: i32, nametag: i32)  {
+                match unsafe { GM_80181A00 } {
+                    Some(f) => unsafe { f(ckind, nametag) },
+                    None => { unsafe { let _ = crate::tu::gm_180A::gm_80181A00(ckind as _, nametag as _); } return; },
+                }
+            }
+    pub static mut GM_80180B18: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_80180B18()  {
+                match unsafe { GM_80180B18 } {
+                    Some(f) => unsafe { f() },
+                    None => { unsafe { let _ = crate::tu::gm_180A::gm_80180B18(); } return; },
+                }
+            }
+    pub static mut GM_801677F0: Option<fn() -> u8> = None;
+            #[allow(non_snake_case)]
+            pub fn gm_801677F0() -> u8 {
+                match unsafe { GM_801677F0 } {
+                    Some(f) => unsafe { f() },
+                    None => { return unsafe { crate::tu::gm_1601::gm_801677F0() as _ }; },
+                }
+            }
+    pub static mut GM_80164504: Option<fn(u32) > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_80164504(a: u32)  {
+                match unsafe { GM_80164504 } {
+                    Some(f) => unsafe { f(a) },
+                    None => { unsafe { let _ = crate::tu::gm_1601::gm_80164504(a as _); } return; },
+                }
+            }
+    pub static mut GM_80162968: Option<fn(u32) > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_80162968(frames: u32)  {
+                match unsafe { GM_80162968 } {
+                    Some(f) => unsafe { f(frames) },
+                    None => { unsafe { let _ = crate::tu::gm_1601::gm_80162968(frames as _); } return; },
+                }
+            }
+    pub static mut GM_8016247C: Option<fn(i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_8016247C(a: i32)  {
+                match unsafe { GM_8016247C } {
+                    Some(f) => unsafe { f(a) },
+                    None => { unsafe { let _ = crate::tu::gm_1601::gm_8016247C(a as _); } return; },
+                }
+            }
+    pub static mut GM_80180BA0: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_80180BA0()  {
+                match unsafe { GM_80180BA0 } {
+                    Some(f) => unsafe { f() },
+                    None => { unsafe { let _ = crate::tu::gm_180A::gm_80180BA0(); } return; },
+                }
+            }
+    pub static mut GM_80180AE4: Option<fn() -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn gm_80180AE4() -> i32 {
+                match unsafe { GM_80180AE4 } {
+                    Some(f) => unsafe { f() },
+                    None => { return unsafe { crate::tu::gm_180A::gm_80180AE4() as _ }; },
+                }
+            }
+    pub static mut GM_801734D0: Option<fn(u32) -> i16> = None;
+            #[allow(non_snake_case)]
+            pub fn gm_801734D0(a: u32) -> i16 {
+                match unsafe { GM_801734D0 } {
+                    Some(f) => unsafe { f(a) },
+                    None => { return unsafe { crate::tu::gm_16f1::gm_801734D0(a as _) as _ }; },
+                }
+            }
+    pub static mut GM_80173B30: Option<fn(u32) > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_80173B30(a: u32)  {
+                match unsafe { GM_80173B30 } {
+                    Some(f) => unsafe { f(a) },
+                    None => { unsafe { let _ = crate::tu::gm_1736::gm_80173B30(a as _); } return; },
+                }
+            }
+    pub static mut GM_80173EEC: Option<fn() > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_80173EEC()  {
+                match unsafe { GM_80173EEC } {
+                    Some(f) => unsafe { f() },
+                    None => { unsafe { let _ = crate::tu::gm_1736::gm_80173EEC(); } return; },
+                }
+            }
+    pub static mut GM_80172898: Option<fn(i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_80172898(a: i32)  {
+                match unsafe { GM_80172898 } {
+                    Some(f) => unsafe { f(a) },
+                    None => { unsafe { let _ = crate::tu::gm_16f1::gm_80172898(a as _); } return; },
+                }
+            }
+    pub static mut GM_80173754: Option<fn(i32, i32) -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn gm_80173754(a: i32, b: i32) -> i32 {
+                match unsafe { GM_80173754 } {
+                    Some(f) => unsafe { f(a, b) },
+                    None => { return unsafe { crate::tu::gm_1736::gm_80173754(a as _, b as _) as _ }; },
+                }
+            }
+    pub static mut GM_SETNEXTGAMEMODESTATEID: Option<fn(i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_SetNextGameModeStateId(id: i32)  {
+                match unsafe { GM_SETNEXTGAMEMODESTATEID } {
+                    Some(f) => unsafe { f(id) },
+                    None => { unsafe { let _ = crate::tu::gm_1A3F::gm_SetNextGameModeStateId(id as _); } return; },
+                }
+            }
+    pub static mut GM_INITVSMODE: Option<fn(*mut VsModeData) > = None;
+            #[allow(non_snake_case)]
+            pub fn gm_InitVsMode(vs: *mut VsModeData)  {
+                match unsafe { GM_INITVSMODE } {
+                    Some(f) => unsafe { f(vs) },
+                    None => { unsafe { let _ = crate::tu::gm_1601::gm_InitVsMode(vs as _); } return; },
+                }
+            }
 }

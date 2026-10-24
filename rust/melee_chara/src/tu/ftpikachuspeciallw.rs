@@ -52,11 +52,38 @@ pub mod ext {
     hook!(EFSYNC_SPAWN, efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut c_void]) -> *mut c_void);
     hook!(EFASYNC_SPAWN, efAsync_Spawn,
         (gobj: *mut HSD_GObj, queue: *mut c_void, kind: u32, gfx: u32, jobj: *mut HSD_JObj));
-    hook!(IT_802B1DEC, it_802B1DEC, (thunder: *mut Item_GObj) -> i32);
-    hook!(IT_802B1DF8, it_802B1DF8,
-        (owner: *mut HSD_GObj, pos: *mut Vec3, vel: *mut Vec3, count: i32, delay: i32, kind: i32) -> *mut Item_GObj);
-    hook!(IT_802B1FC8, it_802B1FC8, (thunder: *mut Item_GObj));
-    hook!(IT_802B1FE8, it_802B1FE8, (thunder: *mut Item_GObj, out: *mut Vec3));
+    pub static mut IT_802B1DEC: Option<fn(*mut Item_GObj) -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn it_802B1DEC(thunder: *mut Item_GObj) -> i32 {
+                match unsafe { IT_802B1DEC } {
+                    Some(f) => f(thunder),
+                    None => { return unsafe { melee_items::tu::itpikachuthunder::it_802B1DEC(thunder as _) as _ }; },
+                }
+            }
+    pub static mut IT_802B1DF8: Option<fn(*mut HSD_GObj, *mut Vec3, *mut Vec3, i32, i32, i32) -> *mut Item_GObj> = None;
+            #[allow(non_snake_case)]
+            pub fn it_802B1DF8(owner: *mut HSD_GObj, pos: *mut Vec3, vel: *mut Vec3, count: i32, delay: i32, kind: i32) -> *mut Item_GObj {
+                match unsafe { IT_802B1DF8 } {
+                    Some(f) => f(owner, pos, vel, count, delay, kind),
+                    None => { return unsafe { melee_items::tu::itpikachuthunder::it_802B1DF8(owner as _, pos as _, vel as _, count as _, delay as _, kind as _) as _ }; },
+                }
+            }
+    pub static mut IT_802B1FC8: Option<fn(*mut Item_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802B1FC8(thunder: *mut Item_GObj)  {
+                match unsafe { IT_802B1FC8 } {
+                    Some(f) => f(thunder),
+                    None => { unsafe { let _ = melee_items::tu::itpikachuthunder::it_802B1FC8(thunder as _); } return; },
+                }
+            }
+    pub static mut IT_802B1FE8: Option<fn(*mut Item_GObj, *mut Vec3) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802B1FE8(thunder: *mut Item_GObj, out: *mut Vec3)  {
+                match unsafe { IT_802B1FE8 } {
+                    Some(f) => f(thunder, out),
+                    None => { unsafe { let _ = melee_items::tu::itpikachuthunder::it_802B1FE8(thunder as _, out as _); } return; },
+                }
+            }
 }
 
 type G = *mut HSD_GObj;

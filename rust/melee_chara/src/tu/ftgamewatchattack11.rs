@@ -30,15 +30,70 @@ pub mod ext {
             }
         };
     }
-    hook!(ITGAMEWATCHGREENHOUSE_SPAWN, itGamewatchGreenhouse_Spawn,
-        (owner: *mut HSD_GObj, pos: *const Vec3, part: i32, facing: f32) -> *mut HSD_GObj);
-    hook!(ITGAMEWATCHGREENHOUSE_802C6430, itGamewatchGreenhouse_802C6430, (item: *mut HSD_GObj));
-    hook!(ITGAMEWATCHGREENHOUSE_802C6458, itGamewatchGreenhouse_802C6458, (item: *mut HSD_GObj));
-    hook!(ITGAMEWATCHGREENHOUSE_802C6480, itGamewatchGreenhouse_802C6480, (item: *mut HSD_GObj));
-    hook!(ITGAMEWATCHGREENHOUSE_802C64A8, itGamewatchGreenhouse_802C64A8, (item: *mut HSD_GObj));
-    hook!(ITGAMEWATCHGREENHOUSE_802C6328, itGamewatchGreenhouse_802C6328, (item: *mut HSD_GObj));
-    hook!(ITGAMEWATCHGREENHOUSE_802C6374, itGamewatchGreenhouse_802C6374, (item: *mut HSD_GObj));
-    hook!(ITGAMEWATCHGREENHOUSE_802C6394, itGamewatchGreenhouse_802C6394, (item: *mut HSD_GObj));
+    pub static mut ITGAMEWATCHGREENHOUSE_SPAWN: Option<fn(*mut HSD_GObj, *const Vec3, i32, f32) -> *mut HSD_GObj> = None;
+            #[allow(non_snake_case)]
+            pub fn itGamewatchGreenhouse_Spawn(owner: *mut HSD_GObj, pos: *const Vec3, part: i32, facing: f32) -> *mut HSD_GObj {
+                match unsafe { ITGAMEWATCHGREENHOUSE_SPAWN } {
+                    Some(f) => f(owner, pos, part, facing),
+                    None => { return unsafe { melee_items::tu::itgamewatchgreenhouse::itGamewatchGreenhouse_Spawn(owner as _, pos as _, part as _, facing as _) as _ }; },
+                }
+            }
+    pub static mut ITGAMEWATCHGREENHOUSE_802C6430: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn itGamewatchGreenhouse_802C6430(item: *mut HSD_GObj)  {
+                match unsafe { ITGAMEWATCHGREENHOUSE_802C6430 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itgamewatchgreenhouse::itGamewatchGreenhouse_802C6430(item as _); } return; },
+                }
+            }
+    pub static mut ITGAMEWATCHGREENHOUSE_802C6458: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn itGamewatchGreenhouse_802C6458(item: *mut HSD_GObj)  {
+                match unsafe { ITGAMEWATCHGREENHOUSE_802C6458 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itgamewatchgreenhouse::itGamewatchGreenhouse_802C6458(item as _); } return; },
+                }
+            }
+    pub static mut ITGAMEWATCHGREENHOUSE_802C6480: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn itGamewatchGreenhouse_802C6480(item: *mut HSD_GObj)  {
+                match unsafe { ITGAMEWATCHGREENHOUSE_802C6480 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itgamewatchgreenhouse::itGamewatchGreenhouse_802C6480(item as _); } return; },
+                }
+            }
+    pub static mut ITGAMEWATCHGREENHOUSE_802C64A8: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn itGamewatchGreenhouse_802C64A8(item: *mut HSD_GObj)  {
+                match unsafe { ITGAMEWATCHGREENHOUSE_802C64A8 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itgamewatchgreenhouse::itGamewatchGreenhouse_802C64A8(item as _); } return; },
+                }
+            }
+    pub static mut ITGAMEWATCHGREENHOUSE_802C6328: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn itGamewatchGreenhouse_802C6328(item: *mut HSD_GObj)  {
+                match unsafe { ITGAMEWATCHGREENHOUSE_802C6328 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itgamewatchgreenhouse::itGamewatchGreenhouse_802C6328(item as _); } return; },
+                }
+            }
+    pub static mut ITGAMEWATCHGREENHOUSE_802C6374: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn itGamewatchGreenhouse_802C6374(item: *mut HSD_GObj)  {
+                match unsafe { ITGAMEWATCHGREENHOUSE_802C6374 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itgamewatchgreenhouse::itGamewatchGreenhouse_802C6374(item as _); } return; },
+                }
+            }
+    pub static mut ITGAMEWATCHGREENHOUSE_802C6394: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn itGamewatchGreenhouse_802C6394(item: *mut HSD_GObj)  {
+                match unsafe { ITGAMEWATCHGREENHOUSE_802C6394 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itgamewatchgreenhouse::itGamewatchGreenhouse_802C6394(item as _); } return; },
+                }
+            }
 }
 
 #[inline(always)]

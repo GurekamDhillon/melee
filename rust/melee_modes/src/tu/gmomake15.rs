@@ -43,23 +43,113 @@ pub mod ext {
     hook_or!(H_gm_801A9DD0, gm_801A9DD0, crate::tu::gmopening::gm_801A9DD0, (a0: *mut melee_types::HSD_GObj, a1: u16, a2: u16, a3: i32, a4: i32));
     hook!(H_HSD_GObjObject_80390A70, HSD_GObjObject_80390A70, (a0: *mut melee_types::HSD_GObj, a1: u8, a2: *mut core::ffi::c_void));
     hook!(H_GObj_SetupGXLink, GObj_SetupGXLink, (a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, a2: u8, a3: u32));
-    hook!(H_lbMthp_8001F67C, lbMthp_8001F67C, (a0: *mut melee_types::HSD_GObj, a1: i32));
-    hook!(H_lbMthp_8001F624, lbMthp_8001F624, (a0: *mut melee_types::HSD_GObj, a1: i32, a2: i32) -> *mut melee_types::HSD_SObj);
-    hook!(H_lbAudioAx_80023F28, lbAudioAx_80023F28, (a0: i32) -> i32);
+    pub static mut H_lbMthp_8001F67C: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32) > = None;
+            pub unsafe extern "C" fn lbMthp_8001F67C(a0: *mut melee_types::HSD_GObj, a1: i32)  {
+                match H_lbMthp_8001F67C {
+                    Some(f) => f(a0, a1),
+                    None => { unsafe { let _ = melee_runtime::tu::lbmthp::lbMthp_8001F67C(a0 as _, a1 as _); } return; },
+                }
+            }
+    pub static mut H_lbMthp_8001F624: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32, i32) -> *mut melee_types::HSD_SObj> = None;
+            pub unsafe extern "C" fn lbMthp_8001F624(a0: *mut melee_types::HSD_GObj, a1: i32, a2: i32) -> *mut melee_types::HSD_SObj {
+                match H_lbMthp_8001F624 {
+                    Some(f) => f(a0, a1, a2),
+                    None => { return unsafe { melee_runtime::tu::lbmthp::lbMthp_8001F624(a0 as _, a1 as _, a2 as _) as _ }; },
+                }
+            }
+    pub static mut H_lbAudioAx_80023F28: Option<unsafe extern "C" fn(i32) -> i32> = None;
+            pub unsafe extern "C" fn lbAudioAx_80023F28(a0: i32) -> i32 {
+                match H_lbAudioAx_80023F28 {
+                    Some(f) => f(a0),
+                    None => { return unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023F28(a0 as _) as _ }; },
+                }
+            }
     hook!(H_lbAudioAx_80024E50, lbAudioAx_80024E50, (a0: i32));
-    hook!(H_lbMthp_8001F410, lbMthp_8001F410, (a0: *const i8, a1: *mut u32, a2: *mut core::ffi::c_void, a3: u32, a4: i32));
+    pub static mut H_lbMthp_8001F410: Option<unsafe extern "C" fn(*const i8, *mut u32, *mut core::ffi::c_void, u32, i32) > = None;
+            pub unsafe extern "C" fn lbMthp_8001F410(a0: *const i8, a1: *mut u32, a2: *mut core::ffi::c_void, a3: u32, a4: i32)  {
+                match H_lbMthp_8001F410 {
+                    Some(f) => f(a0, a1, a2, a3, a4),
+                    None => { unsafe { let _ = melee_runtime::tu::lbmthp::lbMthp_8001F410(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _); } return; },
+                }
+            }
     hook_or!(H_fn_801AA0E8, fn_801AA0E8, crate::tu::gmopening::fn_801AA0E8, ());
-    hook!(H_lbMthp_8001F578, lbMthp_8001F578, ());
-    hook!(H_lbMthp_8001F5C4, lbMthp_8001F5C4, () -> i32);
-    hook!(H_lbMthp_8001F604, lbMthp_8001F604, () -> i32);
-    hook!(H_gm_GetButtonsTriggered, gm_GetButtonsTriggered, (a0: u8) -> u64);
-    hook!(H_lbAudioAx_800236DC, lbAudioAx_800236DC, () -> i32);
-    hook!(H_gm_801A4B74, gm_801A4B74, ());
-    hook!(H_gm_801A4B60, gm_801A4B60, ());
-    hook!(H_gmMainLib_8015DB0C, gmMainLib_8015DB0C, (a0: u8));
-    hook!(H_gm_SetPendingGameMode, gm_SetPendingGameMode, (a0: u8));
-    hook!(H_gm_SetNewGameModePending, gm_SetNewGameModePending, ());
-    hook!(H_lbAudioAx_80024030, lbAudioAx_80024030, (a0: i32));
+    pub static mut H_lbMthp_8001F578: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn lbMthp_8001F578()  {
+                match H_lbMthp_8001F578 {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = melee_runtime::tu::lbmthp::lbMthp_8001F578(); } return; },
+                }
+            }
+    pub static mut H_lbMthp_8001F5C4: Option<unsafe extern "C" fn() -> i32> = None;
+            pub unsafe extern "C" fn lbMthp_8001F5C4() -> i32 {
+                match H_lbMthp_8001F5C4 {
+                    Some(f) => f(),
+                    None => { return unsafe { melee_runtime::tu::lbmthp::lbMthp_8001F5C4() as _ }; },
+                }
+            }
+    pub static mut H_lbMthp_8001F604: Option<unsafe extern "C" fn() -> i32> = None;
+            pub unsafe extern "C" fn lbMthp_8001F604() -> i32 {
+                match H_lbMthp_8001F604 {
+                    Some(f) => f(),
+                    None => { return unsafe { melee_runtime::tu::lbmthp::lbMthp_8001F604() as _ }; },
+                }
+            }
+    pub static mut H_gm_GetButtonsTriggered: Option<unsafe extern "C" fn(u8) -> u64> = None;
+            pub unsafe extern "C" fn gm_GetButtonsTriggered(a0: u8) -> u64 {
+                match H_gm_GetButtonsTriggered {
+                    Some(f) => f(a0),
+                    None => { return unsafe { crate::tu::gm_1A36::gm_GetButtonsTriggered(a0 as _) as _ }; },
+                }
+            }
+    pub static mut H_lbAudioAx_800236DC: Option<unsafe extern "C" fn() -> i32> = None;
+            pub unsafe extern "C" fn lbAudioAx_800236DC() -> i32 {
+                match H_lbAudioAx_800236DC {
+                    Some(f) => f(),
+                    None => { return unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800236DC() as _ }; },
+                }
+            }
+    pub static mut H_gm_801A4B74: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn gm_801A4B74()  {
+                match H_gm_801A4B74 {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::gmscene::gm_801A4B74(); } return; },
+                }
+            }
+    pub static mut H_gm_801A4B60: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn gm_801A4B60()  {
+                match H_gm_801A4B60 {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::gmscene::gm_801A4B60(); } return; },
+                }
+            }
+    pub static mut H_gmMainLib_8015DB0C: Option<unsafe extern "C" fn(u8) > = None;
+            pub unsafe extern "C" fn gmMainLib_8015DB0C(a0: u8)  {
+                match H_gmMainLib_8015DB0C {
+                    Some(f) => f(a0),
+                    None => { unsafe { let _ = crate::tu::gmmain_lib::gmMainLib_8015DB0C(a0 as _); } return; },
+                }
+            }
+    pub static mut H_gm_SetPendingGameMode: Option<unsafe extern "C" fn(u8) > = None;
+            pub unsafe extern "C" fn gm_SetPendingGameMode(a0: u8)  {
+                match H_gm_SetPendingGameMode {
+                    Some(f) => f(a0),
+                    None => { unsafe { let _ = crate::tu::gm_1A3F::gm_SetPendingGameMode(a0 as _); } return; },
+                }
+            }
+    pub static mut H_gm_SetNewGameModePending: Option<unsafe extern "C" fn() > = None;
+            pub unsafe extern "C" fn gm_SetNewGameModePending()  {
+                match H_gm_SetNewGameModePending {
+                    Some(f) => f(),
+                    None => { unsafe { let _ = crate::tu::gm_1A3F::gm_SetNewGameModePending(); } return; },
+                }
+            }
+    pub static mut H_lbAudioAx_80024030: Option<unsafe extern "C" fn(i32) > = None;
+            pub unsafe extern "C" fn lbAudioAx_80024030(a0: i32)  {
+                match H_lbAudioAx_80024030 {
+                    Some(f) => f(a0),
+                    None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80024030(a0 as _); } return; },
+                }
+            }
     // ---- extern globals ----
     pub static mut HSD_SObjLib_804D7960: u8 = unsafe { core::mem::zeroed() };
     pub static mut gm_804D6724: Option<unsafe extern "C" fn()> = unsafe { core::mem::zeroed() };

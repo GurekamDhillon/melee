@@ -38,10 +38,10 @@ pub mod ext {
         pub HSD_JObjSetMtxDirtySub: unsafe fn(j: *mut HSD_JObj),
     }
     unsafe fn todo_OSReport(_fmt: &CStr, _file: &CStr, _line: i32, _id: i32) { panic!("TODO(os: OSReport (varargs: fmt, __FILE__, line, id)) OSReport") }
-    unsafe fn todo_Ground_GetStageGObj(_id: i32) -> *mut HSD_GObj { panic!("TODO(group2: gr/ground.c) Ground_GetStageGObj") }
-    unsafe fn todo_grZakoGenerator_801CAE04(_d: *mut c_void) { panic!("TODO(group2: gr/grzakogenerator.c) grZakoGenerator_801CAE04") }
+    unsafe fn todo_Ground_GetStageGObj(_id: i32) -> *mut HSD_GObj { { return unsafe { crate::tu::ground::Ground_GetStageGObj(_id as _) as _ }; } }
+    unsafe fn todo_grZakoGenerator_801CAE04(_d: *mut c_void) { { unsafe { let _ = crate::tu::grzakogenerator::grZakoGenerator_801CAE04(_d as _); } return; } }
     unsafe fn todo_HSD_PadMasterStatus() -> *mut HSD_PadStatus { panic!("TODO(group1: baselib/controller.c global HSD_PadMasterStatus[4]) HSD_PadMasterStatus") }
-    unsafe fn todo_Ground_801C3FA4(_g: *mut HSD_GObj, _depth: i32) -> *mut HSD_JObj { panic!("TODO(group2: gr/ground.c) Ground_801C3FA4") }
+    unsafe fn todo_Ground_801C3FA4(_g: *mut HSD_GObj, _depth: i32) -> *mut HSD_JObj { { return unsafe { crate::tu::ground::Ground_801C3FA4(_g as _, _depth as _) as _ }; } }
     unsafe fn todo_HSD_JObjGetFlags(_j: *mut HSD_JObj) -> u32 { panic!("TODO(group1: baselib/jobj.c) HSD_JObjGetFlags") }
     unsafe fn todo_HSD_JObjSetFlags(_j: *mut HSD_JObj, _f: u32) { panic!("TODO(group1: baselib/jobj.c) HSD_JObjSetFlags") }
     unsafe fn todo_HSD_JObjClearFlags(_j: *mut HSD_JObj, _f: u32) { panic!("TODO(group1: baselib/jobj.c) HSD_JObjClearFlags") }

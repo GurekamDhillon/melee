@@ -28,17 +28,70 @@ pub mod ext {
             }
         };
     }
-    hook!(LB_8000B1CC, lb_8000B1CC, (jobj: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3));
-    hook!(IT_802A83E0, it_802A83E0,
-        (facing_dir: f32, gobj: *mut HSD_GObj, pos: *mut Vec3, part: Fighter_Part, loader_id: i32) -> *mut HSD_GObj);
-    hook!(IT_802AF1A4, it_802AF1A4,
-        (facing_dir: f32, gobj: *mut HSD_GObj, pos: *mut Vec3, part: Fighter_Part, item_id: i32) -> *mut HSD_GObj);
-    hook!(ITLINKARROW_802A850C, itLinkArrow_802A850C,
-        (arrow: *mut HSD_GObj, pos1: *mut Vec3, pos2: *mut Vec3, angle: f32, charge: f32, max: f32) -> bool);
-    hook!(IT_802A8398, it_802A8398, (arrow: *mut HSD_GObj, b: *mut Vec3, a: *mut Vec3));
-    hook!(IT_802A8A7C, it_802A8A7C, (arrow: *mut HSD_GObj));
-    hook!(IT_802AF304, it_802AF304, (bow: *mut HSD_GObj));
-    hook!(FTPICKUPITEM_80094818, ftpickupitem_80094818, (gobj: *mut HSD_GObj, flag: bool));
+    pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *const Vec3, *mut Vec3) > = None;
+            #[allow(non_snake_case)]
+            pub fn lb_8000B1CC(jobj: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3)  {
+                match unsafe { LB_8000B1CC } {
+                    Some(f) => f(jobj, off, out),
+                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, off as _, out as _); } return; },
+                }
+            }
+    pub static mut IT_802A83E0: Option<fn(f32, *mut HSD_GObj, *mut Vec3, Fighter_Part, i32) -> *mut HSD_GObj> = None;
+            #[allow(non_snake_case)]
+            pub fn it_802A83E0(facing_dir: f32, gobj: *mut HSD_GObj, pos: *mut Vec3, part: Fighter_Part, loader_id: i32) -> *mut HSD_GObj {
+                match unsafe { IT_802A83E0 } {
+                    Some(f) => f(facing_dir, gobj, pos, part, loader_id),
+                    None => { return unsafe { melee_items::tu::itlinkarrow::it_802A83E0(facing_dir as _, gobj as _, pos as _, part as _, loader_id as _) as _ }; },
+                }
+            }
+    pub static mut IT_802AF1A4: Option<fn(f32, *mut HSD_GObj, *mut Vec3, Fighter_Part, i32) -> *mut HSD_GObj> = None;
+            #[allow(non_snake_case)]
+            pub fn it_802AF1A4(facing_dir: f32, gobj: *mut HSD_GObj, pos: *mut Vec3, part: Fighter_Part, item_id: i32) -> *mut HSD_GObj {
+                match unsafe { IT_802AF1A4 } {
+                    Some(f) => f(facing_dir, gobj, pos, part, item_id),
+                    None => { return unsafe { melee_items::tu::itlinkbow::it_802AF1A4(facing_dir as _, gobj as _, pos as _, part as _, item_id as _) as _ }; },
+                }
+            }
+    pub static mut ITLINKARROW_802A850C: Option<fn(*mut HSD_GObj, *mut Vec3, *mut Vec3, f32, f32, f32) -> bool> = None;
+            #[allow(non_snake_case)]
+            pub fn itLinkArrow_802A850C(arrow: *mut HSD_GObj, pos1: *mut Vec3, pos2: *mut Vec3, angle: f32, charge: f32, max: f32) -> bool {
+                match unsafe { ITLINKARROW_802A850C } {
+                    Some(f) => f(arrow, pos1, pos2, angle, charge, max),
+                    None => { return unsafe { melee_items::tu::itlinkarrow::itLinkArrow_802A850C(arrow as _, pos1 as _, pos2 as _, angle as _, charge as _, max as _) != 0 }; },
+                }
+            }
+    pub static mut IT_802A8398: Option<fn(*mut HSD_GObj, *mut Vec3, *mut Vec3) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802A8398(arrow: *mut HSD_GObj, b: *mut Vec3, a: *mut Vec3)  {
+                match unsafe { IT_802A8398 } {
+                    Some(f) => f(arrow, b, a),
+                    None => { unsafe { let _ = melee_items::tu::itlinkarrow::it_802A8398(arrow as _, b as _, a as _); } return; },
+                }
+            }
+    pub static mut IT_802A8A7C: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802A8A7C(arrow: *mut HSD_GObj)  {
+                match unsafe { IT_802A8A7C } {
+                    Some(f) => f(arrow),
+                    None => { unsafe { let _ = melee_items::tu::itlinkarrow::it_802A8A7C(arrow as _); } return; },
+                }
+            }
+    pub static mut IT_802AF304: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802AF304(bow: *mut HSD_GObj)  {
+                match unsafe { IT_802AF304 } {
+                    Some(f) => f(bow),
+                    None => { unsafe { let _ = melee_items::tu::itlinkbow::it_802AF304(bow as _); } return; },
+                }
+            }
+    pub static mut FTPICKUPITEM_80094818: Option<fn(*mut HSD_GObj, bool) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftpickupitem_80094818(gobj: *mut HSD_GObj, flag: bool)  {
+                match unsafe { FTPICKUPITEM_80094818 } {
+                    Some(f) => f(gobj, flag),
+                    None => { unsafe { let _ = melee_fighter::tu::ftpickupitem::ftpickupitem_80094818(gobj as _, flag as _); } return; },
+                }
+            }
     // `ftKb_Init_803B7548` (ftkirby.c data): the bow's three-point group.
     hook!(FTKB_INIT_803B7548, ftKb_Init_803B7548, () -> *const ftLk_SpecialN_Vec3Group);
 }

@@ -37,8 +37,8 @@ pub mod ext {
         ftCo_GetCStickAngle(fp: &Fighter) -> f32 = crate::ftcommon3::ftco_get_cstick_angle;
         ftCo_800DF79C(fp: &Fighter) -> bool = crate::ft0df::ftco_800df79c;
         ftCo_Fall_Enter(g: G) = crate::hooks::ftco_fall_enter;
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
-        ftAnim_8006EBA4(g: G) = |_| todo!("TODO(port) ftAnim_8006EBA4 (ftanim.c)");
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
         ftCommon_8007E2F4(fp: &mut Fighter, v: i16) = crate::ftcommon2::ftcommon_8007e2f4;
         ftCo_CliffCatch_Phys(g: G) = crate::tu::ftcliffcommon::ftco_cliff_catch_phys;
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
@@ -48,10 +48,10 @@ pub mod ext {
         mpLib_80053DA4_Floor(line: i32, v: &mut Vec3) = |_, _| todo!("TODO(port) mpLib_80053DA4_Floor (mplib.c)");
         ftCommon_8007D7FC(fp: &mut Fighter) = crate::ftcommon3::ftcommon_8007d7fc;
         ft_80084FA8(g: G) = crate::ft084e::ft_80084fa8;
-        ft_800821DC(g: G) -> bool = |_| todo!("TODO(port) ft_800821DC (ft_081B.c)");
+        ft_800821DC(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ft_081b::ft_800821dc(g as _) as _ } };
         ftCo_8009AE14(g: G) = crate::tu::ftCo_CliffAttack::ftCo_8009AE14;
-        ftCo_8009EF68(g: G) -> bool = |_| todo!("TODO(port) ftCo_8009EF68 (ftCo_Fall.c)");
-        ft_80084104(g: G) = |_| todo!("TODO(port) ft_80084104 (ft_081B.c)");
+        ftCo_8009EF68(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_StopCeil::ftCo_8009EF68(g as _) as _ } };
+        ft_80084104(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_081b::ft_80084104(g as _); } };
     }
 }
 

@@ -49,10 +49,38 @@ pub mod ext {
             }
         };
     }
-    hook!(PLAYER_GETENTITYATINDEX, Player_GetEntityAtIndex, (slot: i32, index: i32) -> *mut HSD_GObj);
-    hook!(FTNN_INIT_8012300C, ftNn_Init_8012300C, (gobj: *mut HSD_GObj) -> i32);
-    hook!(FTNN_INIT_8012309C, ftNn_Init_8012309C, (gobj: *mut HSD_GObj) -> i32);
-    hook!(LB_8000B1CC, lb_8000B1CC, (jobj: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3));
+    pub static mut PLAYER_GETENTITYATINDEX: Option<fn(i32, i32) -> *mut HSD_GObj> = None;
+            #[allow(non_snake_case)]
+            pub fn Player_GetEntityAtIndex(slot: i32, index: i32) -> *mut HSD_GObj {
+                match unsafe { PLAYER_GETENTITYATINDEX } {
+                    Some(f) => f(slot, index),
+                    None => { return unsafe { melee_fighter::tu::player::Player_GetEntityAtIndex(slot as _, index as _) as _ }; },
+                }
+            }
+    pub static mut FTNN_INIT_8012300C: Option<fn(*mut HSD_GObj) -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn ftNn_Init_8012300C(gobj: *mut HSD_GObj) -> i32 {
+                match unsafe { FTNN_INIT_8012300C } {
+                    Some(f) => f(gobj),
+                    None => { return unsafe { crate::tu::ftnana::ftNn_Init_8012300C(gobj as _) as _ }; },
+                }
+            }
+    pub static mut FTNN_INIT_8012309C: Option<fn(*mut HSD_GObj) -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn ftNn_Init_8012309C(gobj: *mut HSD_GObj) -> i32 {
+                match unsafe { FTNN_INIT_8012309C } {
+                    Some(f) => f(gobj),
+                    None => { return unsafe { crate::tu::ftnana::ftNn_Init_8012309C(gobj as _) as _ }; },
+                }
+            }
+    pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *const Vec3, *mut Vec3) > = None;
+            #[allow(non_snake_case)]
+            pub fn lb_8000B1CC(jobj: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3)  {
+                match unsafe { LB_8000B1CC } {
+                    Some(f) => f(jobj, off, out),
+                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, off as _, out as _); } return; },
+                }
+            }
     hook!(IT_802C3950, it_802C3950, (item: *mut HSD_GObj));
     hook!(IT_802C3810, it_802C3810, (item: *mut HSD_GObj));
     hook!(IT_802C3864, it_802C3864, (item: *mut HSD_GObj));

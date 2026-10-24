@@ -85,11 +85,32 @@ pub mod ext {
     hook!(HSD_ARCHIVEGETPUBLICADDRESS, HSD_ArchiveGetPublicAddress, (archive: *mut HSD_Archive, name: &str) -> *mut c_void);
     /// `&fighter_x2040_alloc_data`.
     hook!(FIGHTER_X2040_ALLOC_DATA, fighter_x2040_alloc_data, () -> *mut c_void);
-    hook!(HSD_OBJALLOC, HSD_ObjAlloc, (data: *mut c_void) -> *mut c_void);
-    hook!(HSD_OBJFREE, HSD_ObjFree, (data: *mut c_void, obj: *mut c_void));
+    pub static mut HSD_OBJALLOC: Option<fn(*mut c_void) -> *mut c_void> = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_ObjAlloc(data: *mut c_void) -> *mut c_void {
+                match unsafe { HSD_OBJALLOC } {
+                    Some(f) => f(data),
+                    None => { return unsafe { melee_runtime::tu::objalloc::HSD_ObjAlloc(data as _) as _ }; },
+                }
+            }
+    pub static mut HSD_OBJFREE: Option<fn(*mut c_void, *mut c_void) > = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_ObjFree(data: *mut c_void, obj: *mut c_void)  {
+                match unsafe { HSD_OBJFREE } {
+                    Some(f) => f(data, obj),
+                    None => { unsafe { let _ = melee_runtime::tu::objalloc::HSD_ObjFree(data as _, obj as _); } return; },
+                }
+            }
     hook!(FTPARTSPOBJSETDEFAULTCLASS, ftPartsPObjSetDefaultClass, ());
     hook!(FTPARTSPOBJCLEARDEFAULTCLASS, ftPartsPObjClearDefaultClass, ());
-    hook!(HSD_JOBJLOADJOINT, HSD_JObjLoadJoint, (joint: *mut HSD_Joint) -> *mut HSD_JObj);
+    pub static mut HSD_JOBJLOADJOINT: Option<fn(*mut HSD_Joint) -> *mut HSD_JObj> = None;
+            #[allow(non_snake_case)]
+            pub fn HSD_JObjLoadJoint(joint: *mut HSD_Joint) -> *mut HSD_JObj {
+                match unsafe { HSD_JOBJLOADJOINT } {
+                    Some(f) => f(joint),
+                    None => { return unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(joint as _) as _ }; },
+                }
+            }
     hook!(HSD_JOBJREMOVEALL, HSD_JObjRemoveAll, (jobj: *mut HSD_JObj));
     hook!(FTPARTS_80075650, ftParts_80075650, (gobj: *mut HSD_GObj, jobj: *mut HSD_JObj, list: *mut DObjList));
     hook!(FTPARTS_8007487C, ftParts_8007487C,
@@ -102,7 +123,14 @@ pub mod ext {
     hook!(HSD_JOBJSETMTXDIRTYSUB, HSD_JObjSetMtxDirtySub, (jobj: *mut HSD_JObj));
     hook!(HSD_JOBJDISPALL, HSD_JObjDispAll, (jobj: *mut HSD_JObj, vmtx: *mut [f32; 4], flags: u32, rendermode: u32));
     hook!(HSD_GOBJ_80390EB8, HSD_GObj_80390EB8, (arg: i32) -> u32);
-    hook!(ITGETHOLDKIND, itGetHoldKind, (item: *mut HSD_GObj) -> i32);
+    pub static mut ITGETHOLDKIND: Option<fn(*mut HSD_GObj) -> i32> = None;
+            #[allow(non_snake_case)]
+            pub fn itGetHoldKind(item: *mut HSD_GObj) -> i32 {
+                match unsafe { ITGETHOLDKIND } {
+                    Some(f) => f(item),
+                    None => { return unsafe { melee_items::tu::it_26B1::itGetHoldKind(item as _) as _ }; },
+                }
+            }
     hook!(FTANIM_80070FB4, ftAnim_80070FB4, (gobj: *mut HSD_GObj, a: i32, b: i32));
     /// `efSync_Spawn(gfx_id, gobj, ...)` (variadic in C; `va` are the extra word arguments).
     pub static mut EFSYNC_SPAWN: Option<fn(i32, *mut HSD_GObj, &[usize]) -> *mut c_void> = None;

@@ -28,18 +28,18 @@ pub mod ext {
         };
     }
     ext_fns! {
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
-        ftAnim_8006EBA4(g: G) = |_| todo!("TODO(port) ftAnim_8006EBA4 (ftanim.c)");
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
         ftCommon_8007E2F4(fp: &mut Fighter, v: i16) = crate::ftcommon2::ftcommon_8007e2f4;
         ftCo_CliffCatch_Phys(g: G) = crate::tu::ftcliffcommon::ftco_cliff_catch_phys;
-        ftCo_Jump_GetInput(g: G) -> i32 = |_| todo!("TODO(port) ftCo_Jump_GetInput (ftCo_Jump.c)");
+        ftCo_Jump_GetInput(g: G) -> i32 = |g: G| -> i32 { unsafe { crate::tu::ftCo_Jump::ftCo_Jump_GetInput(g as _) as _ } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ftCo_CliffClimb_Coll(g: G) = crate::tu::ftCo_CliffClimb::ftCo_CliffClimb_Coll;
         ftCo_Fall_Enter(g: G) = crate::hooks::ftco_fall_enter;
         ft_80084DB0(g: G) = crate::ft084e::ft_80084db0;
-        ft_800835B0(g: G, a: fn(G, i32) -> bool, b: fn(G)) = |_, _, _| todo!("TODO(port) ft_800835B0 (ft_081B.c)");
-        ftCo_80096CC8(g: G, line: i32) -> bool = |_, _| todo!("TODO(port) ftCo_80096CC8 (ftCo_FallSpecial.c)");
-        ft_80082B1C(g: G) = |_| todo!("TODO(port) ft_80082B1C (ft_081B.c)");
+        ft_800835B0(g: G, a: fn(G, i32) -> bool, b: fn(G)) = |g: G, a: fn(G, i32) -> bool, b: fn(G)| { unsafe { let _ = crate::tu::ft_081b::ft_800835b0(g as _, a as _, b as _); } };
+        ftCo_80096CC8(g: G, line: i32) -> bool = |g: G, line: i32| -> bool { unsafe { crate::tu::ftCo_FallSpecial::ftCo_80096CC8(g as _, line as _) as _ } };
+        ft_80082B1C(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_081b::ft_80082b1c(g as _); } };
     }
 }
 

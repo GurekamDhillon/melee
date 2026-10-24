@@ -39,9 +39,30 @@ pub mod ext {
     pub use crate::tu::ftcaptainspecialn::ext::{efSync_Spawn, EFSYNC_SPAWN};
     pub use crate::tu::ftkirbyspecialmewtwo::ext::{ftCo_800BFFD0, ftCo_8009917C, ft_80088510, FTCO_800BFFD0, FTCO_8009917C, FT_80088510};
     pub use crate::tu::ftkirbyspecialn::ext::{lb_8000B1CC, LB_8000B1CC};
-    hook!(IT_802B5974, it_802B5974, (item: *mut c_void));
-    hook!(IT_802B56E4, it_802B56E4, (item: *mut c_void, pos: *const Vec3, angle: f32, charge: f32, max: f32));
-    hook!(IT_802B55C8, it_802B55C8, (g: G, pos: *const Vec3, part: i32, kind: i32, dir: f32) -> *mut c_void);
+    pub static mut IT_802B5974: Option<fn(*mut c_void) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802B5974(item: *mut c_void)  {
+                match unsafe { IT_802B5974 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itsamuschargeshot::it_802B5974(item as _); } return; },
+                }
+            }
+    pub static mut IT_802B56E4: Option<fn(*mut c_void, *const Vec3, f32, f32, f32) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802B56E4(item: *mut c_void, pos: *const Vec3, angle: f32, charge: f32, max: f32)  {
+                match unsafe { IT_802B56E4 } {
+                    Some(f) => f(item, pos, angle, charge, max),
+                    None => { unsafe { let _ = melee_items::tu::itsamuschargeshot::it_802B56E4(item as _, pos as _, angle as _, charge as _, max as _); } return; },
+                }
+            }
+    pub static mut IT_802B55C8: Option<fn(G, *const Vec3, i32, i32, f32) -> *mut c_void> = None;
+            #[allow(non_snake_case)]
+            pub fn it_802B55C8(g: G, pos: *const Vec3, part: i32, kind: i32, dir: f32) -> *mut c_void {
+                match unsafe { IT_802B55C8 } {
+                    Some(f) => f(g, pos, part, kind, dir),
+                    None => { return unsafe { melee_items::tu::itsamuschargeshot::it_802B55C8(g as _, pos as _, part as _, kind as _, dir as _) as _ }; },
+                }
+            }
 }
 
 /// `ftKb_Init_803CB6C0`: charge-level sfx ids (the last entry is the sentinel the index never reaches

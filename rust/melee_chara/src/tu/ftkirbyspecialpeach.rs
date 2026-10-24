@@ -43,12 +43,54 @@ pub mod ext {
     }
     type G = *mut HSD_GObj;
     pub use crate::tu::ftkirbyspecialn::ext::{lb_8000B1CC, LB_8000B1CC};
-    hook!(IT_802BDE18, it_802BDE18, (g: G, pos: *const Vec3, part: i32, kind: i32, dir: f32) -> *mut Item_GObj);
-    hook!(IT_802BE214, it_802BE214, (g: G, pos: *const Vec3, kind: i32, dir: f32));
-    hook!(IT_802BDF40, it_802BDF40, (item: *mut Item_GObj));
-    hook!(IT_802BDFA0, it_802BDFA0, (item: *mut Item_GObj));
-    hook!(IT_802BDFC0, it_802BDFC0, (item: *mut Item_GObj));
-    hook!(IT_802BE100, it_802BE100, (item: *mut Item_GObj));
+    pub static mut IT_802BDE18: Option<fn(G, *const Vec3, i32, i32, f32) -> *mut Item_GObj> = None;
+            #[allow(non_snake_case)]
+            pub fn it_802BDE18(g: G, pos: *const Vec3, part: i32, kind: i32, dir: f32) -> *mut Item_GObj {
+                match unsafe { IT_802BDE18 } {
+                    Some(f) => f(g, pos, part, kind, dir),
+                    None => { return unsafe { melee_items::tu::itpeachtoad::it_802BDE18(g as _, pos as _, part as _, kind as _, dir as _) as _ }; },
+                }
+            }
+    pub static mut IT_802BE214: Option<fn(G, *const Vec3, i32, f32) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802BE214(g: G, pos: *const Vec3, kind: i32, dir: f32)  {
+                match unsafe { IT_802BE214 } {
+                    Some(f) => f(g, pos, kind, dir),
+                    None => { unsafe { let _ = melee_items::tu::itpeachtoadspore::it_802BE214(g as _, pos as _, kind as _, dir as _); } return; },
+                }
+            }
+    pub static mut IT_802BDF40: Option<fn(*mut Item_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802BDF40(item: *mut Item_GObj)  {
+                match unsafe { IT_802BDF40 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itpeachtoad::it_802BDF40(item as _); } return; },
+                }
+            }
+    pub static mut IT_802BDFA0: Option<fn(*mut Item_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802BDFA0(item: *mut Item_GObj)  {
+                match unsafe { IT_802BDFA0 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itpeachtoad::it_802BDFA0(item as _); } return; },
+                }
+            }
+    pub static mut IT_802BDFC0: Option<fn(*mut Item_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802BDFC0(item: *mut Item_GObj)  {
+                match unsafe { IT_802BDFC0 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itpeachtoad::it_802BDFC0(item as _); } return; },
+                }
+            }
+    pub static mut IT_802BE100: Option<fn(*mut Item_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802BE100(item: *mut Item_GObj)  {
+                match unsafe { IT_802BE100 } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itpeachtoad::it_802BE100(item as _); } return; },
+                }
+            }
     hook!(FTCOLL_8007B1B8, ftColl_8007B1B8, (g: G, desc: *mut ShieldDesc, cb: HSD_GObjEvent));
     hook_or!(FTCOMMON_FALLBASIC, ftCommon_FallBasic, |fp: *mut Fighter| melee_fighter::ftcommon::fall_basic(unsafe { &mut *fp }), (fp: *mut Fighter));
     hook_or!(FTCOMMON_CALCSELFACCEL_DEACCEL, ftCommon_CalcSelfAccel_Deaccel, |fp: *mut Fighter, f| melee_fighter::ftcommon::calc_self_accel_deaccel(unsafe { &mut *fp }, f), (fp: *mut Fighter, friction: f32));

@@ -35,16 +35,50 @@ pub mod ext {
             }
         };
     }
-    hook!(LB_8000B1CC, lb_8000B1CC, (jobj: *mut HSD_JObj, ofs: *const Vec3, out: *mut Vec3));
-    hook!(ITKOOPAFLAME_SPAWN, itKoopaFlame_Spawn,
-        (parent: *mut HSD_GObj, pos: *mut Vec3, facing_dir: f32, unk: u32, gfx: i32, base_speed: i32, scale: i32, kind: i32) -> *mut HSD_GObj);
-    hook!(ITEM_8026AE60, Item_8026AE60, () -> u32);
-    hook!(FT_80089824, ft_80089824, (gobj: *mut HSD_GObj));
+    pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *const Vec3, *mut Vec3) > = None;
+            #[allow(non_snake_case)]
+            pub fn lb_8000B1CC(jobj: *mut HSD_JObj, ofs: *const Vec3, out: *mut Vec3)  {
+                match unsafe { LB_8000B1CC } {
+                    Some(f) => f(jobj, ofs, out),
+                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, ofs as _, out as _); } return; },
+                }
+            }
+    pub static mut ITKOOPAFLAME_SPAWN: Option<fn(*mut HSD_GObj, *mut Vec3, f32, u32, i32, i32, i32, i32) -> *mut HSD_GObj> = None;
+            #[allow(non_snake_case)]
+            pub fn itKoopaFlame_Spawn(parent: *mut HSD_GObj, pos: *mut Vec3, facing_dir: f32, unk: u32, gfx: i32, base_speed: i32, scale: i32, kind: i32) -> *mut HSD_GObj {
+                match unsafe { ITKOOPAFLAME_SPAWN } {
+                    Some(f) => f(parent, pos, facing_dir, unk, gfx, base_speed, scale, kind),
+                    None => { return unsafe { melee_items::tu::itkoopaflame::itKoopaFlame_Spawn(parent as _, pos as _, facing_dir as _, unk as _, gfx as _, base_speed as _, scale as _, kind as _) as _ }; },
+                }
+            }
+    pub static mut ITEM_8026AE60: Option<fn() -> u32> = None;
+            #[allow(non_snake_case)]
+            pub fn Item_8026AE60() -> u32 {
+                match unsafe { ITEM_8026AE60 } {
+                    Some(f) => f(),
+                    None => { return unsafe { melee_items::tu::item::Item_8026AE60() as _ }; },
+                }
+            }
+    pub static mut FT_80089824: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn ft_80089824(gobj: *mut HSD_GObj)  {
+                match unsafe { FT_80089824 } {
+                    Some(f) => f(gobj),
+                    None => { unsafe { let _ = melee_fighter::ft0892::ft_80089824(gobj as _); } return; },
+                }
+            }
     hook!(FT_800892A0, ft_800892A0, (gobj: *mut HSD_GObj));
     hook!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, (kind: CmQuakeKind, pos: *mut Vec3));
     hook!(FTCOLL_8007B128, ftColl_8007B128, (gobj: *mut HSD_GObj, bone_id: i32, state: i32));
     hook!(FTCOLL_8007B0C0, ftColl_8007B0C0, (gobj: *mut HSD_GObj, state: i32));
-    hook!(FTCOMMON_8007F5CC, ftCommon_8007F5CC, (gobj: *mut HSD_GObj, arg: i32));
+    pub static mut FTCOMMON_8007F5CC: Option<fn(*mut HSD_GObj, i32) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftCommon_8007F5CC(gobj: *mut HSD_GObj, arg: i32)  {
+                match unsafe { FTCOMMON_8007F5CC } {
+                    Some(f) => f(gobj, arg),
+                    None => { unsafe { let _ = melee_fighter::ftcommon3::ftcommon_8007f5cc(gobj as _, arg as _); } return; },
+                }
+            }
 }
 
 #[inline(always)]

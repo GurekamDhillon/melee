@@ -30,7 +30,14 @@ pub mod ext {
         };
     }
     hook!(EFSYNC_SPAWN, efSync_Spawn, (id: i32, g: G, jobj: *mut HSD_JObj));
-    hook!(FTCLIFFCOMMON_80081370, ftCliffCommon_80081370, (g: G));
+    pub static mut FTCLIFFCOMMON_80081370: Option<fn(G) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftCliffCommon_80081370(g: G)  {
+                match unsafe { FTCLIFFCOMMON_80081370 } {
+                    Some(f) => f(g),
+                    None => { unsafe { let _ = melee_fighter::tu::ftcliffcommon::ftcliffcommon_80081370(g as _); } return; },
+                }
+            }
 }
 
 /// `coll_mf` (static const).

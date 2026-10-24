@@ -110,7 +110,14 @@ pub mod ext {
     /// `HSD_PadCopyStatus` (sysdolphin/baselib/controller.c): the 4-port copy array.
     hook!(HSD_PADCOPYSTATUS, HSD_PadCopyStatus, () -> *mut HSD_PadStatus);
     /// `gm_GetAllGameModes()` (gm/gm_unsplit.c): the mode table, terminated by `kind == GM_COUNT`.
-    hook!(GM_GETALLGAMEMODES, gm_GetAllGameModes, () -> *mut GameMode);
+    pub static mut GM_GETALLGAMEMODES: Option<fn() -> *mut GameMode> = None;
+            #[allow(non_snake_case)]
+            pub fn gm_GetAllGameModes() -> *mut GameMode {
+                match unsafe { GM_GETALLGAMEMODES } {
+                    Some(f) => f(),
+                    None => { return unsafe { crate::tu::gmscdata::gm_GetAllGameModes() as _ }; },
+                }
+            }
 }
 
 /// `gm_GetButtonsPressed(idx)`.

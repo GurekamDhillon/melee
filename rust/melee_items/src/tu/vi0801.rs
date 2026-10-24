@@ -77,7 +77,7 @@ pub mod ext {
     /// `lbArchive_LoadSymbols(filename, (void** out, const char* name)..., NULL)`: variadic in C;
     /// `args` is the argument list after `filename`, NULL-terminated.
     pub unsafe fn lbArchive_LoadSymbols(filename: *const i8, args: &[*mut c_void]) -> *mut HSD_Archive {
-        panic!("TODO: lbArchive_LoadSymbols is not ported")
+        { return unsafe { melee_runtime::tu::lbarchive::lbArchive_LoadSymbols(filename as _, args as _) as _ }; }
     }
     // Data defined in other TUs.
     pub static mut HSD_GObj_JObjKind: u8 = 0;

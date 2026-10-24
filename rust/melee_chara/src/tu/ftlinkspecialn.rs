@@ -32,8 +32,22 @@ pub mod ext {
         };
     }
     // it/kinds/itlinkarrow.c, itlinkbow.c
-    hook!(IT_802A8A7C, it_802A8A7C, (arrow: *mut Item_GObj));
-    hook!(IT_802AF304, it_802AF304, (bow: *mut Item_GObj));
+    pub static mut IT_802A8A7C: Option<fn(*mut Item_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802A8A7C(arrow: *mut Item_GObj)  {
+                match unsafe { IT_802A8A7C } {
+                    Some(f) => f(arrow),
+                    None => { unsafe { let _ = melee_items::tu::itlinkarrow::it_802A8A7C(arrow as _); } return; },
+                }
+            }
+    pub static mut IT_802AF304: Option<fn(*mut Item_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802AF304(bow: *mut Item_GObj)  {
+                match unsafe { IT_802AF304 } {
+                    Some(f) => f(bow),
+                    None => { unsafe { let _ = melee_items::tu::itlinkbow::it_802AF304(bow as _); } return; },
+                }
+            }
     hook!(IT_802AF1A4, it_802AF1A4, (facing_dir: f32, owner: *mut HSD_GObj, pos: &Vec3, part: i32, x10: i32) -> *mut Item_GObj);
     hook!(IT_802A83E0, it_802A83E0, (facing_dir: f32, owner: *mut HSD_GObj, pos: &Vec3, part: i32, xc: i32) -> *mut Item_GObj);
     hook!(IT_802A8398, it_802A8398, (arrow: *mut Item_GObj, rpos: &Vec3, lpos: &Vec3));

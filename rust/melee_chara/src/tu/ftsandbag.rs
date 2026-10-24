@@ -42,9 +42,30 @@ pub mod ext {
             }
         };
     }
-    hook!(LB_8000C1C0, lb_8000C1C0, (jobj: *mut HSD_JObj, constraint: *mut HSD_JObj));
-    hook!(LB_8000C228, lb_8000C228, (jobj: *mut HSD_JObj, constraint: *mut HSD_JObj));
-    hook!(LB_8000C420, lb_8000C420, (jobj: *mut HSD_JObj, flags: u32, limit: f32));
+    pub static mut LB_8000C1C0: Option<fn(*mut HSD_JObj, *mut HSD_JObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn lb_8000C1C0(jobj: *mut HSD_JObj, constraint: *mut HSD_JObj)  {
+                match unsafe { LB_8000C1C0 } {
+                    Some(f) => f(jobj, constraint),
+                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000C1C0(jobj as _, constraint as _); } return; },
+                }
+            }
+    pub static mut LB_8000C228: Option<fn(*mut HSD_JObj, *mut HSD_JObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn lb_8000C228(jobj: *mut HSD_JObj, constraint: *mut HSD_JObj)  {
+                match unsafe { LB_8000C228 } {
+                    Some(f) => f(jobj, constraint),
+                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000C228(jobj as _, constraint as _); } return; },
+                }
+            }
+    pub static mut LB_8000C420: Option<fn(*mut HSD_JObj, u32, f32) > = None;
+            #[allow(non_snake_case)]
+            pub fn lb_8000C420(jobj: *mut HSD_JObj, flags: u32, limit: f32)  {
+                match unsafe { LB_8000C420 } {
+                    Some(f) => f(jobj, flags, limit),
+                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000C420(jobj as _, flags as _, limit as _); } return; },
+                }
+            }
 }
 
 #[inline(always)]

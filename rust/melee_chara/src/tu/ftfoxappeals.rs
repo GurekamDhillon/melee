@@ -42,7 +42,14 @@ pub mod ext {
     fn pl_800386d8_port(stats: *mut plActionStats, attack: i32) -> u32 {
         melee_fighter::plbonus3::pl_800386d8(unsafe { &*stats }, attack)
     }
-    hook!(PLAYER_GETACTIONSTATS, Player_GetActionStats, (slot: i32) -> *mut plActionStats);
+    pub static mut PLAYER_GETACTIONSTATS: Option<fn(i32) -> *mut plActionStats> = None;
+            #[allow(non_snake_case)]
+            pub fn Player_GetActionStats(slot: i32) -> *mut plActionStats {
+                match unsafe { PLAYER_GETACTIONSTATS } {
+                    Some(f) => f(slot),
+                    None => { return unsafe { melee_fighter::tu::player::Player_GetActionStats(slot as _) as _ }; },
+                }
+            }
     hook_or!(PL_800386D8, pl_800386D8, pl_800386d8_port, (stats: *mut plActionStats, attack: i32) -> u32);
     hook_or!(PL_80040120, pl_80040120, melee_fighter::plbonus::pl_80040120, (slot: i32, sub: i32));
     hook!(GRCORNERIA_801E2AF4, grCorneria_801E2AF4, ());

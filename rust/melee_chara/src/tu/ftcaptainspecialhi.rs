@@ -30,11 +30,39 @@ pub mod ext {
             }
         };
     }
-    hook!(FTCO_8009CA0C, ftCo_8009CA0C, (gobj: *mut HSD_GObj, vic: *mut HSD_GObj));
-    hook!(FT_80083B68, ft_80083B68, (gobj: *mut HSD_GObj));
-    hook!(FTCLIFFCOMMON_80081370, ftCliffCommon_80081370, (gobj: *mut HSD_GObj));
+    pub static mut FTCO_8009CA0C: Option<fn(*mut HSD_GObj, *mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftCo_8009CA0C(gobj: *mut HSD_GObj, vic: *mut HSD_GObj)  {
+                match unsafe { FTCO_8009CA0C } {
+                    Some(f) => f(gobj, vic),
+                    None => { unsafe { let _ = melee_fighter::tu::ftCo_CaptureCaptain::ftCo_8009CA0C(gobj as _, vic as _); } return; },
+                }
+            }
+    pub static mut FT_80083B68: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn ft_80083B68(gobj: *mut HSD_GObj)  {
+                match unsafe { FT_80083B68 } {
+                    Some(f) => f(gobj),
+                    None => { unsafe { let _ = melee_fighter::tu::ft_081b::ft_80083b68(gobj as _); } return; },
+                }
+            }
+    pub static mut FTCLIFFCOMMON_80081370: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftCliffCommon_80081370(gobj: *mut HSD_GObj)  {
+                match unsafe { FTCLIFFCOMMON_80081370 } {
+                    Some(f) => f(gobj),
+                    None => { unsafe { let _ = melee_fighter::tu::ftcliffcommon::ftcliffcommon_80081370(gobj as _); } return; },
+                }
+            }
     hook!(FTCO_800DB368, ftCo_800DB368, (vic_fp: *mut Fighter, fp: *mut Fighter));
-    hook!(FTCO_800DE2A8, ftCo_800DE2A8, (gobj: *mut HSD_GObj, vic: *mut HSD_GObj));
+    pub static mut FTCO_800DE2A8: Option<fn(*mut HSD_GObj, *mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftCo_800DE2A8(gobj: *mut HSD_GObj, vic: *mut HSD_GObj)  {
+                match unsafe { FTCO_800DE2A8 } {
+                    Some(f) => f(gobj, vic),
+                    None => { unsafe { let _ = melee_fighter::tu::ftCo_Throw::ftCo_800DE2A8(gobj as _, vic as _); } return; },
+                }
+            }
     hook!(FTCO_800DE7C0, ftCo_800DE7C0, (gobj: *mut HSD_GObj, a: i32, b: i32));
     /// Recording hook; unset, the native `melee_fighter::tu::ftparts` port runs.
     pub static mut FTPARTSETROTY: Option<fn(*mut Fighter, i32, f32)> = None;

@@ -38,16 +38,16 @@ pub mod ext {
         };
     }
     ext_fns! {
-        ftCo_80090780(g: G) = |_| todo!("TODO(port) ftCo_80090780 (ftCo_DamageFall.c)");
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
+        ftCo_80090780(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_DamageFall::ftCo_80090780(g as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftCommon_8007D60C(fp: &mut Fighter) = crate::ftcommon2::ftcommon_8007d60c;
         ftCommon_UseAllJumps(fp: &mut Fighter) = crate::ftcommon2::use_all_jumps;
-        un_80322598(spawn: i32, y: f32) -> i32 = |_, _| todo!("TODO(port) un_80322598 (crowdsfx.c)");
+        un_80322598(spawn: i32, y: f32) -> i32 = |spawn: i32, y: f32| -> i32 { unsafe { crate::tu::crowdsfx::un_80322598(spawn as _, y as _) as _ } };
         ftCo_Fall_Anim_Inner(g: G, mv_x4: *mut f32, n: i32, f: i32, b: i32) = crate::tu::ftCo_Fall::ftCo_Fall_Anim_Inner;
         ftCo_800CC988(g: G, a: f32) = crate::tu::ftCo_Fall::ftCo_800CC988;
-        ftCo_800CEE70(g: G) -> bool = |_| todo!("TODO(port) ftCo_800CEE70 (ftCo_ItemParasolOpen.c)");
+        ftCo_800CEE70(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_ItemParasolOpen::ftCo_800CEE70(g as _) as _ } };
         ftCo_800D705C(g: G) -> bool = crate::tu::ftCo_Attack100::ftCo_800D705C;
-        ftCo_800CB870(g: G) -> bool = |_| todo!("TODO(port) ftCo_800CB870 (ftCo_JumpAerial.c)");
+        ftCo_800CB870(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_JumpAerial::ftCo_800CB870(g as _) as _ } };
         ftCommon_CheckFallFast(fp: &mut Fighter) -> bool = crate::ftcommon::check_fall_fast;
         ftCommon_FallFast(fp: &mut Fighter) = crate::ftcommon::fall_fast;
         ftCommon_Fall(fp: &mut Fighter, gravity: f32, terminal: f32) = crate::ftcommon::fall;

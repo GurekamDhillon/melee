@@ -45,12 +45,26 @@ pub mod ext {
     /// `efAsync_Spawn(gobj, queue_head, spawn_kind, gfx_id, jobj, ...)` (ef/efasync.c).
     hook!(EFASYNC_SPAWN, efAsync_Spawn, (gobj: *mut HSD_GObj, q: *mut core::ffi::c_void, kind: u32, gfx: u32, jobj: *mut HSD_JObj));
     /// `ftCo_SpecialAir_CheckInput(gobj)` (ftCommon/ftCo_SpecialAir.c).
-    hook!(FTCO_SPECIALAIR_CHECKINPUT, ftCo_SpecialAir_CheckInput, (gobj: *mut HSD_GObj) -> bool);
+    pub static mut FTCO_SPECIALAIR_CHECKINPUT: Option<fn(*mut HSD_GObj) -> bool> = None;
+            #[allow(non_snake_case)]
+            pub fn ftCo_SpecialAir_CheckInput(gobj: *mut HSD_GObj) -> bool {
+                match unsafe { FTCO_SPECIALAIR_CHECKINPUT } {
+                    Some(f) => f(gobj),
+                    None => { return unsafe { melee_fighter::tu::ftCo_SpecialAir::ftCo_SpecialAir_CheckInput(gobj as _) as _ }; },
+                }
+            }
     /// `ft_800831CC(gobj, line_cb, coll_cb)` (ft/ft_081B.c): air collision with a landing-line filter.
     hook!(FT_800831CC, ft_800831CC, (gobj: *mut HSD_GObj, line_cb: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> bool>, cb: HSD_GObjEvent));
     hook_or!(FTCO_80096CC8, ftCo_80096CC8, melee_fighter::tu::ftCo_FallSpecial::ftCo_80096CC8, (gobj: *mut HSD_GObj, line_id: i32) -> bool);
     /// `ft_80082B1C(gobj)` (ft/ft_081B.c), used as the landing callback.
-    hook!(FT_80082B1C, ft_80082B1C, (gobj: *mut HSD_GObj));
+    pub static mut FT_80082B1C: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn ft_80082B1C(gobj: *mut HSD_GObj)  {
+                match unsafe { FT_80082B1C } {
+                    Some(f) => f(gobj),
+                    None => { unsafe { let _ = melee_fighter::tu::ft_081b::ft_80082b1c(gobj as _); } return; },
+                }
+            }
     hook_or!(FTCO_JUMPAERIAL_PHYS_CB, ftCo_JumpAerial_Phys_Cb, melee_fighter::tu::ftCo_JumpAerial::ftCo_JumpAerial_Phys_Cb, (gobj: *mut HSD_GObj));
 }
 

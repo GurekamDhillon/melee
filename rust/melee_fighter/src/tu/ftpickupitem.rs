@@ -41,7 +41,7 @@ pub mod ext {
         it_8026B47C(i: I) -> i32 = |i| melee_items::itlib::it_8026b47c(ip(i));
         it_8026B4F0(i: I) -> bool = |i| melee_items::itlib::it_8026b4f0(ip(i));
         itIsHeavy(i: I) -> bool = |i| unsafe { melee_items::itlib::it_is_heavy(ip(i)) };
-        it_8026B344(i: I, pos: &mut Vec3) = |_, _| todo!("TODO(port) it_8026B344 (it_26B1.c; melee_items::itlib has a GcVec form)");
+        it_8026B344(i: I, pos: &mut Vec3) = |i: I, pos: &mut Vec3| { unsafe { let _ = melee_items::tu::it_26B1::it_8026B344(i as _, pos as _); } };
         itGetGrabRangeX(i: I) -> f32 = |i| melee_items::itlib::it_get_grab_range_x(ip(i));
         itGetGrabRangeY(i: I) -> f32 = |i| melee_items::itlib::it_get_grab_range_y(ip(i));
         ftCo_IsCpuControlled(f: &mut Fighter) -> bool = |_| todo!("TODO(port) ftCo_IsCpuControlled (ftCo_0A01.c)");
@@ -51,9 +51,9 @@ pub mod ext {
         it_8026B30C(i: I) -> i32 = crate::hooks::it_8026b30c;
         Geno_ItemFamilyEvent(i: I, a: i32, port: i32) = |_, _, _| todo!("TODO(pc/geno) Geno_ItemFamilyEvent");
         itGetKind(i: I) -> i32 = |i| melee_items::itlib::it_get_kind(ip(i)) as i32;
-        Fighter_8006CF5C(f: &mut Fighter, v: i32) = |_, _| todo!("TODO(port) Fighter_8006CF5C (fighter.c)");
+        Fighter_8006CF5C(f: &mut Fighter, v: i32) = |f: &mut Fighter, v: i32| { unsafe { let _ = crate::tu::fighter::Fighter_8006CF5C(f as _, v as _); } };
         Item_8026A8EC(i: I) = crate::hooks::item_8026a8ec;
-        ftCo_800C4724(g: G) = |_| todo!("TODO(port) ftCo_800C4724 (ftCo_WarpStar.c)");
+        ftCo_800C4724(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_WarpStar::ftCo_800C4724(g as _); } };
         ftCo_800C52F4(g: G) = crate::tu::ftCo_HammerWait::ftCo_800C52F4;
         ftCommon_8007FA58(g: G, i: I) = crate::ftcommon3::ftcommon_8007fa58;
         ftLib_800871A8(g: G, i: I) = crate::tu::ftlib::ftlib_800871a8;
@@ -61,14 +61,14 @@ pub mod ext {
         ftCo_CalcYScaledKnockback(a: f32, b: f32, c: f32) -> f32 = crate::tu::ftchangeparam::ftco_calc_y_scaled_knockback;
         // `Fighter_804D6524->x8` (PlCo size-scaling exponent).
         Fighter_804D6524_x8() -> f32 = || crate::tu::ftchangeparam::ext::d6524().x8;
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
-        ftAnim_8006EBA4(g: G) = |_| todo!("TODO(port) ftAnim_8006EBA4 (ftanim.c)");
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
         ftCo_800974C4(g: G) = crate::tu::ftCo_Lift::ftCo_800974C4;
-        pl_8003E17C(slot: i32, sub: i32, i: I) = |_, _, _| todo!("TODO(port) pl_8003E17C (plbonuslib.c)");
+        pl_8003E17C(slot: i32, sub: i32, i: I) = |slot: i32, sub: i32, i: I| { unsafe { let _ = crate::tu::plbonuslib::pl_8003E17C(slot as _, sub as _, i as _); } };
         // `ftData_OnItemPickupExt[kind]`.
         ftData_OnItemPickupExt(kind: i32) -> Option<fn(G, i32)> = |_| todo!("TODO(port) ftData_OnItemPickupExt (ftdata.c table)");
         Mex_OnItemPickupDispatch(kind: i32, g: *mut c_void, i: *mut c_void, vanilla: *mut c_void) = |_, _, _, _| todo!("TODO(pc mex) Mex_OnItemPickupDispatch");
-        pl_8003E854(slot: i32, sub: i32, i: I) = |_, _, _| todo!("TODO(port) pl_8003E854 (plbonuslib.c)");
+        pl_8003E854(slot: i32, sub: i32, i: I) = |slot: i32, sub: i32, i: I| { unsafe { let _ = crate::tu::plbonuslib::pl_8003E854(slot as _, sub as _, i as _); } };
         Item_8026AB54(i: I, owner: G, part: i32) = crate::hooks::item_8026ab54;
         ft_800881D8(f: &mut Fighter, id: i32, vol: u8, pan: u8) = crate::ft0881::ft_800881d8;
         Geno_ItemPressCollect(i: I, port: i32) = |_, _| todo!("TODO(pc/geno) Geno_ItemPressCollect");

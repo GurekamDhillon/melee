@@ -27,7 +27,7 @@ pub mod ext {
     pub fn ftMh_MS_388_80155A58(gobj: *mut HSD_GObj, gobj2: *mut HSD_GObj) {
         match unsafe { FTMH_MS_388_80155A58 } {
             Some(f) => f(gobj, gobj2),
-            None => panic!("TODO: ftMh_MS_388_80155A58 is not ported"),
+            None => { unsafe { let _ = crate::tu::ftmasterhandtagcancel::ftMh_MS_388_80155A58(gobj as _, gobj2 as _); } return; },
         }
     }
     /// `ftMh_MS_388_80155A58` as the `grabbed_cb` (`HSD_GObjInteraction`) value.
@@ -40,7 +40,7 @@ pub mod ext {
     pub fn ftMh_CaptureWaitMasterHand_80155D1C(gobj: *mut HSD_GObj) {
         match unsafe { FTMH_CAPTUREWAITMASTERHAND_80155D1C } {
             Some(f) => f(gobj),
-            None => panic!("TODO: ftMh_CaptureWaitMasterHand_80155D1C is not ported"),
+            None => { unsafe { let _ = crate::tu::ftmasterhandthrownmasterhand::ftMh_CaptureWaitMasterHand_80155D1C(gobj as _); } return; },
         }
     }
 }

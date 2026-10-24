@@ -13,14 +13,14 @@ pub mod ext {
     use crate::types::*;
     type G = *mut HSD_GObj;
     pub fn Fighter_ChangeMotionState(_g: G, _msid: i32, _flags: u32, _start: f32, _speed: f32, _blend: f32, _acc: G) {
-        panic!("TODO(group3 fighter.c) Fighter_ChangeMotionState")
+        { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(_g as _, _msid as _, _flags as _, _start as _, _speed as _, _blend as _, _acc as _); } return; }
     }
-    pub fn fn_800DB5D8(_g: G) { panic!("TODO(ftCo_Attack100 / CaptureDamage) fn_800DB5D8") }
-    pub fn fn_800DB8A4(_g: G) { panic!("TODO(ftCo_Attack100) fn_800DB8A4") }
-    pub fn fn_800DB790(_g: G) { panic!("TODO(ftCo_Attack100) fn_800DB790") }
-    pub fn fn_800DBAE4(_g: G) { panic!("TODO(ftCo_Attack100) fn_800DBAE4") }
-    pub fn fn_800DAD18(_g: G) -> bool { panic!("TODO(ftCo_Attack100) fn_800DAD18") }
-    pub fn fn_800DAA40(_g: G, _victim: G) { panic!("TODO(ftCo_Attack100) fn_800DAA40") }
+    pub fn fn_800DB5D8(_g: G) { { unsafe { let _ = crate::tu::ftCo_CaptureWait::fn_800DB5D8(_g as _); } return; } }
+    pub fn fn_800DB8A4(_g: G) { { unsafe { let _ = crate::tu::ftCo_CaptureWait::fn_800DB8A4(_g as _); } return; } }
+    pub fn fn_800DB790(_g: G) { { unsafe { let _ = crate::tu::ftCo_CaptureWait::fn_800DB790(_g as _); } return; } }
+    pub fn fn_800DBAE4(_g: G) { { unsafe { let _ = crate::tu::ftCo_CaptureWait::fn_800DBAE4(_g as _); } return; } }
+    pub fn fn_800DAD18(_g: G) -> bool { { return unsafe { crate::tu::ftCo_CapturePulled::fn_800DAD18(_g as _) as _ }; } }
+    pub fn fn_800DAA40(_g: G, _victim: G) { { unsafe { let _ = crate::tu::ftCo_CapturePulled::fn_800DAA40(_g as _, _victim as _); } return; } }
     pub fn ft_80083C00(_g: G, _cb: HSD_GObjEvent) { panic!("TODO(group3 ft_081B) ft_80083C00") }
     pub fn ft_8008403C(_g: G, _cb: HSD_GObjEvent) { panic!("TODO(group3 ft_081B) ft_8008403C") }
 }

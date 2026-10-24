@@ -51,7 +51,14 @@ pub mod ext {
         }
     }
     // ftkoopa.c: the thrown-victim position follow-up of the End-B animation.
-    hook!(FTKP_SPECIALS_80132E30, ftKp_SpecialS_80132E30, (gobj: *mut HSD_GObj));
+    pub static mut FTKP_SPECIALS_80132E30: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn ftKp_SpecialS_80132E30(gobj: *mut HSD_GObj)  {
+                match unsafe { FTKP_SPECIALS_80132E30 } {
+                    Some(f) => f(gobj),
+                    None => { unsafe { let _ = crate::tu::ftkoopa::ftKp_SpecialS_80132E30(gobj as _); } return; },
+                }
+            }
 }
 
 /// Ft_MF_SkipMatAnim.

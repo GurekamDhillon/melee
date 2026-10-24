@@ -39,16 +39,16 @@ pub mod ext {
         atan2f(y: f32, x: f32) -> f32 = melee_runtime::lbtrigf::atan2f;
         lbVector_Add_xy(a: &mut Vec3, b: &Vec3) = |a: &mut Vec3, b: &Vec3| { a.x += b.x; a.y += b.y; };
         lbVector_Mirror(a: &mut Vec3, n: &Vec3) = |_, _| todo!("TODO(port) lbVector_Mirror (lb/lbvector.c)");
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |_, _, _, _, _, _, _| todo!("TODO(port) Fighter_ChangeMotionState (fighter.c)");
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ft_80081F2C(g: G) -> bool = crate::tu::ft_081b::ft_80081f2c;
         ft_80082084(g: G) -> bool = crate::tu::ft_081b::ft_80082084;
         ftCommon_8007EBAC(fp: &mut Fighter, a: u32, b: u32) = crate::ftcommon2::ftcommon_8007ebac;
         ftColl_8007B760(g: G, v: i32) = |_, _| todo!("TODO(port) ftColl_8007B760 (ftcoll.c)");
         ftCo_80097630(fp: &mut Fighter, sfx_ids: &[i32; 4], threshold: f32) = crate::tu::ftCo_DownBound::ftCo_80097630;
         ft_80084DB0(g: G) = crate::ft084e::ft_80084db0;
-        ftCo_80090184(g: G) = |_| todo!("TODO(port) ftCo_80090184 (ftCo_Damage.c)");
-        ftCo_DamageFly_Anim(g: G) = |_| todo!("TODO(port) ftCo_DamageFly_Anim (ftCo_Damage.c)");
-        ftCo_DamageFly_IASA(g: G) = |_| todo!("TODO(port) ftCo_DamageFly_IASA (ftCo_Damage.c)");
+        ftCo_80090184(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_Damage::ftCo_80090184(g as _); } };
+        ftCo_DamageFly_Anim(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_Damage::ftCo_DamageFly_Anim(g as _); } };
+        ftCo_DamageFly_IASA(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_Damage::ftCo_DamageFly_IASA(g as _); } };
     }
 }
 

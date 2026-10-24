@@ -62,14 +62,46 @@ pub mod ext {
     }
     /// `efSync_Spawn(gfx_id, gobj, ...)` (ef/efsync.c, variadic): shared with ftCaptain's TU.
     pub use crate::tu::ftcaptainspecialn::ext::{efSync_Spawn, EFSYNC_SPAWN};
-    hook!(LB_8000B1CC, lb_8000B1CC, (joint: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3));
-    hook!(IT_802C573C, it_802C573C, (item: *mut HSD_GObj));
-    hook!(IT_802C5000, it_802C5000,
-          (owner: *mut HSD_GObj, pos: *const Vec3, bone: i32, kind: i32, facing_dir: f32) -> *mut HSD_GObj);
-    hook!(IT_802C53F0, it_802C53F0,
-          (item: *mut HSD_GObj, pos: *const Vec3, angle: f32, charge: f32, cycles: f32));
-    hook!(IT_802C519C, it_802C519C,
-          (owner: *mut HSD_GObj, pos: *const Vec3, kind: i32, cycles: f32, angle: f32, facing_dir: f32));
+    pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *const Vec3, *mut Vec3) > = None;
+            #[allow(non_snake_case)]
+            pub fn lb_8000B1CC(joint: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3)  {
+                match unsafe { LB_8000B1CC } {
+                    Some(f) => f(joint, off, out),
+                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(joint as _, off as _, out as _); } return; },
+                }
+            }
+    pub static mut IT_802C573C: Option<fn(*mut HSD_GObj) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802C573C(item: *mut HSD_GObj)  {
+                match unsafe { IT_802C573C } {
+                    Some(f) => f(item),
+                    None => { unsafe { let _ = melee_items::tu::itmewtwoshadowball::it_802C573C(item as _); } return; },
+                }
+            }
+    pub static mut IT_802C5000: Option<fn(*mut HSD_GObj, *const Vec3, i32, i32, f32) -> *mut HSD_GObj> = None;
+            #[allow(non_snake_case)]
+            pub fn it_802C5000(owner: *mut HSD_GObj, pos: *const Vec3, bone: i32, kind: i32, facing_dir: f32) -> *mut HSD_GObj {
+                match unsafe { IT_802C5000 } {
+                    Some(f) => f(owner, pos, bone, kind, facing_dir),
+                    None => { return unsafe { melee_items::tu::itmewtwoshadowball::it_802C5000(owner as _, pos as _, bone as _, kind as _, facing_dir as _) as _ }; },
+                }
+            }
+    pub static mut IT_802C53F0: Option<fn(*mut HSD_GObj, *const Vec3, f32, f32, f32) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802C53F0(item: *mut HSD_GObj, pos: *const Vec3, angle: f32, charge: f32, cycles: f32)  {
+                match unsafe { IT_802C53F0 } {
+                    Some(f) => f(item, pos, angle, charge, cycles),
+                    None => { unsafe { let _ = melee_items::tu::itmewtwoshadowball::it_802C53F0(item as _, pos as _, angle as _, charge as _, cycles as _); } return; },
+                }
+            }
+    pub static mut IT_802C519C: Option<fn(*mut HSD_GObj, *const Vec3, i32, f32, f32, f32) > = None;
+            #[allow(non_snake_case)]
+            pub fn it_802C519C(owner: *mut HSD_GObj, pos: *const Vec3, kind: i32, cycles: f32, angle: f32, facing_dir: f32)  {
+                match unsafe { IT_802C519C } {
+                    Some(f) => f(owner, pos, kind, cycles, angle, facing_dir),
+                    None => { unsafe { let _ = melee_items::tu::itmewtwoshadowball::it_802C519C(owner as _, pos as _, kind as _, cycles as _, angle as _, facing_dir as _); } return; },
+                }
+            }
     fn ftco_800bffd0_port(fp: *mut Fighter, a: i32, b: i32) -> bool {
         melee_fighter::tu::ftcolanim::ftco_800bffd0(unsafe { &mut *fp }, a, b)
     }

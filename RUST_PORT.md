@@ -1023,6 +1023,14 @@ rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_In
   captures the pause (10 ticks in) and a live frame (tick 420). Match/pause shots hold disc art and are not committed; play_sss.png is.
   Not tried: keyboard and gamepad input by hand (the GC adapter did open in the run, but the script drove the pads).
 
+- Round 3 (hands-off input): a scripted run (`MELEE_PAD_SCRIPT` set) never touches the user's keyboard or focus. The window is created
+  with `with_active(false)` (`WindowConfig.active`, also view-golden and gx_viewer), the GC adapter is not opened (`MELEE_PAD_IGNORE_ADAPTER=1`),
+  gamepads are a fixed empty set and port 1 gets no keyboard preset, so alt-tabbing cannot change the result. No tool in the repo sends
+  OS-level input (grep for SendKeys/SendInput/keybd_event/AppActivate/pyautogui: none). Interactive `melee play` binds port 1 to the keyboard
+  preset (WASD/IJKL/Space/Shift/Enter; `MELEE_KEYBOARD=0` off). `view` renders any stage's map groups, not just FD.
+  Re-run: full_loop.txt (1360 ticks to results), vs_to_ko.txt --golden-pads (1875 ticks, winner port 2 by falls), pause_quit_rematch.txt (two matches, 1563 ticks), all with the window in the background.
+  Still stand-ins: ui.rs menus (gmfrontend.c's .inc units and the retail mn* scenes are not driven), opening card, 7 fighters, 4 stages.
+
 ## Platform track, audio proof (plat-audio, 2026-10-24)
 - C side: `MELEE_AUDIO_TRACE=<path>` (shim_ax.c `gw_ax_trace`) logs every game-facing axdriver.c / synth.c call
   (`<sub-frame> OP args`; START with its returned handle, KO*, PAN/VOL/PITCH/MIX, MIXGRP, PAUSE/RESUME, PSTART,

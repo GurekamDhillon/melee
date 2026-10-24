@@ -1111,6 +1111,7 @@ dependencies = [
  "melee_gx",
  "melee_items",
  "melee_modes",
+ "melee_net",
  "melee_platform",
  "melee_runtime",
  "melee_types",

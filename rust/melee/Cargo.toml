@@ -19,6 +19,7 @@ melee_audio = { path = "../melee_audio", default-features = false }
 # view-golden: the HSD draw path on the GX shim, in a window.
 melee_gx = { path = "../melee_gx" }
 melee_platform = { path = "../melee_platform" }
+melee_net = { path = "../melee_net" }
 # m-ex fighters: the PPC interpreter + GC->native field rewrite for gdmod ftFunction code.
 mex_import = { path = "../../tools/mex-import" }
 winit = "0.30"

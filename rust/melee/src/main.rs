@@ -37,6 +37,7 @@ mod gx_backend;
 mod view;
 mod snap;
 mod fighter_fields;
+mod netmatch;
 
 /// What the frame driver needs from a simulation, per frame.
 pub(crate) trait Sim {
@@ -173,6 +174,7 @@ fn main() -> ExitCode {
             }
         }
         Some("golden") => golden(&args),
+        Some("synctest") => netmatch::synctest(&args),
         Some("view-golden") => view::view_golden(&args),
         Some(x) => {
             eprintln!("melee: unknown command {x:?} (selftest | hashlog | golden | view-golden)");

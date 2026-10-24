@@ -113,3 +113,7 @@ pub mod gmtoulib;
 pub mod gmtoumode;
 pub mod gmtoycollection;
 pub mod gm_1BFA;
+pub mod geno_game;
+pub mod mex_tests;
+pub mod geno_tests;
+pub mod script_game;

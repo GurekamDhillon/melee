@@ -7,8 +7,8 @@ use melee_core::fp::fmadds;
 const M_PI: f64 = 3.14159265358979323846;
 const M_PI_2: f64 = M_PI / 2.0;
 /// MSL float.c `MSL_TrigF_80400770` / `..74`: NaN 0x7FFFFFFF, +inf.
-const NAN: u32 = 0x7FFF_FFFF;
-const INF: u32 = 0x7F80_0000;
+const NAN: u32 = crate::tu::float::MSL_TrigF_80400770[0] as u32;
+const INF: u32 = crate::tu::float::MSL_TrigF_80400774[0] as u32;
 const SIGN_BIT: u32 = 1 << 31;
 const BITWISE_PI_2: u32 = 0x3FC9_0FDB;
 

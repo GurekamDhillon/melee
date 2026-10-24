@@ -45,6 +45,17 @@ COMMON = ["-std=c99", "-nostdinc", "-fno-builtin", "-DLINT", "-DTARGET_PC", "-fn
 PPC = ["--target=ppc32-none-eabi"] + COMMON
 NAT = ["--target=x86_64-pc-windows-msvc", "-D_Static_assert(a,b)=", "-Dsize_t=gc_size_t"] + COMMON
 SRC = GEN / "all_types.c"
+# Port-side records also live in source files and their .inc fragments. Parse those
+# separately (including them in all_types.c would collide on private C names), then
+# merge by source location so shared headers still have one authoritative type.
+EXTRA_SOURCES = [
+    "src/sysdolphin/baselib/card.c",
+    "libs/dolphin/src/dolphin/thp/THPDec.c",
+    "pc/tests/mex_tests.c",
+    "pc/gameworld/script_game.c",
+    "pc/geno/geno_game.c",
+    "pc/geno/geno_tests.c",
+]
 # Records whose GcDecode is hand-written in src/decode.rs (a union chosen by a flags field).
 # The generator still emits `gc_decode_fields` for them (fields at GC offsets, union = first
 # member); the hand impl calls it and then fixes the union.
@@ -109,12 +120,13 @@ def rel(f):
         return f
 
 
-def parse(args):
+def parse(args, src=SRC):
     idx = ci.Index.create()
     opts = ci.TranslationUnit.PARSE_DETAILED_PROCESSING_RECORD
     cwd = os.getcwd(); os.chdir(ROOT)
     try:
-        tu = idx.parse(str(SRC.relative_to(ROOT)), args=args, options=opts)
+        tu = idx.parse(str(Path(src).relative_to(ROOT) if Path(src).is_absolute() else src),
+                       args=args, options=opts)
     finally:
         os.chdir(cwd)
     errs = [d for d in tu.diagnostics if d.severity >= ci.Diagnostic.Error]
@@ -124,8 +136,9 @@ def parse(args):
 
 
 class Gen:
-    def __init__(self, tu, native):
+    def __init__(self, tu, native, extra_tus=()):
         self.tu = tu
+        self.extra_tus = extra_tus
         self.native_size = native          # loc -> (size, has_bitfields)
         self.rec_name = {}                 # canonical decl loc -> rust name
         self.records = OrderedDict()       # loc -> cursor (definitions)
@@ -137,18 +150,25 @@ class Gen:
 
     # ---------- naming ----------
     def collect(self):
-        def walk(c, parent_name=None):
+        def walk(c, include_locals=False):
             for ch in c.get_children():
                 if ch.kind in (K.STRUCT_DECL, K.UNION_DECL) and ch.is_definition():
                     self.records.setdefault(loc(ch), ch)
-                    walk(ch)
+                    walk(ch, include_locals)
                 elif ch.kind == K.ENUM_DECL and ch.is_definition():
                     self.enums.setdefault(loc(ch), ch)
                 elif ch.kind == K.TYPEDEF_DECL:
                     self.typedefs.setdefault(ch.spelling, ch)
                 elif ch.kind == K.FIELD_DECL:
                     pass
+                elif include_locals and ch.kind in (K.FUNCTION_DECL, K.COMPOUND_STMT,
+                                                     K.DECL_STMT, K.VAR_DECL,
+                                                     K.IF_STMT, K.FOR_STMT, K.WHILE_STMT,
+                                                     K.SWITCH_STMT, K.CASE_STMT):
+                    walk(ch, include_locals)
         walk(self.tu.cursor)
+        for tu in self.extra_tus:
+            walk(tu.cursor, True)
         # typedef names for anonymous records/enums
         anon_td = {}
         for n, td in self.typedefs.items():
@@ -690,7 +710,7 @@ class Gen:
         return False
 
 
-def native_sizes():
+def native_sizes(extra_tus=()):
     tu = parse(NAT)
     out = {}
 
@@ -698,8 +718,10 @@ def native_sizes():
         for ch in c.get_children():
             if ch.kind in (K.STRUCT_DECL, K.UNION_DECL) and ch.is_definition():
                 out[loc(ch)] = (ch.type.get_size(), ch.type.get_align())
-                walk(ch)
+            walk(ch)
     walk(tu.cursor)
+    for extra in extra_tus:
+        walk(extra.cursor)
     return out
 
 
@@ -710,6 +732,13 @@ def dump_check(records):
                         str(SRC.relative_to(ROOT))], cwd=ROOT, capture_output=True, text=True)
     (GEN / "ppc32_layouts.txt").write_text(r.stdout, newline="\n")
     sizes = re.findall(r"\| \[sizeof=(\d+), align=(\d+)", r.stdout)
+    for src in EXTRA_SOURCES:
+        extra = subprocess.run([clang, *PPC, "-fsyntax-only", "-Xclang",
+                                "-fdump-record-layouts-complete", src], cwd=ROOT,
+                               capture_output=True, text=True)
+        if extra.returncode:
+            raise SystemExit(extra.stderr)
+        sizes += re.findall(r"\| \[sizeof=(\d+), align=(\d+)", extra.stdout)
     want = sorted((c.type.get_size(), c.type.get_align()) for c in records.values())
     got = sorted((int(a), int(b)) for a, b in sizes)
     missing = [w for w in want if w not in got]
@@ -718,9 +747,9 @@ def dump_check(records):
 
 def main():
     nprobe = write_probe()
-    nat = native_sizes()
+    nat = native_sizes([parse(NAT, src) for src in EXTRA_SOURCES])
     tu = parse(PPC)
-    g = Gen(tu, nat)
+    g = Gen(tu, nat, [parse(PPC, src) for src in EXTRA_SOURCES])
     txt = g.gen()
     n_dump, miss = dump_check(g.records)
     helpers = (

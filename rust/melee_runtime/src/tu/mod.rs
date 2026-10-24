@@ -17,3 +17,8 @@ pub mod mobj;
 pub mod dobj;
 pub mod pobj;
 pub mod displayfunc;
+pub mod card;
+#[allow(non_snake_case)]
+pub mod THPDec;
+pub mod float;
+pub mod ansi_files;

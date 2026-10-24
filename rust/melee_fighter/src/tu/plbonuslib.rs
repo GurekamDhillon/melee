@@ -1348,11 +1348,8 @@ pub fn pl_800403FC(arg0: i32, arg1: i32, slot: i32, arg3: i32, arg4: i32) {
 }
 
 pub fn pl_80040460(slot: i32, arg1: i32) {
-    let temp_r3 = tbl(slot);
-    if arg1 != 0 {
-        return;
-    }
-    unsafe { (*temp_r3).x0_staleMoveTable.xCAC = 6 };
+    // one port per C function: forwards to plbonus.rs
+    crate::plbonus::pl_80040460(slot, arg1)
 }
 
 pub fn pl_8004049C(player: i32, arg1: ItemKind) {

@@ -91,24 +91,20 @@ pub fn sqrDistance(a: &Vec3, b: &Vec3) -> f32 {
 
 /// lbcollision.c `lbColl_80008428`.
 pub fn lbColl_80008428(arg0: &mut HitCapsule) {
-    arg0.state = mt::HitCapsule_Disabled;
+    // one port per C function: forwards to melee_runtime's TU port
+    unsafe { melee_runtime::tu::lbcollision::lbColl_80008428(arg0) }
 }
 
 /// lbcollision.c `lbColl_80008434`.
 pub fn lbColl_80008434(arg0: &mut HitCapsule) {
-    arg0.state = mt::HitCapsule_Enabled;
+    // one port per C function: forwards to melee_runtime's TU port
+    unsafe { melee_runtime::tu::lbcollision::lbColl_80008434(arg0) }
 }
 
 /// lbcollision.c `lbColl_80008440`: forget every victim.
 pub fn lbColl_80008440(hit: &mut HitCapsule) {
-    for v in &mut hit.victims_1 {
-        v.victim = core::ptr::null_mut();
-    }
-    hit.x44 = 0;
-    for v in &mut hit.victims_2 {
-        v.victim = core::ptr::null_mut();
-    }
-    hit.x45 = 0;
+    // one port per C function: forwards to melee_runtime's TU port
+    unsafe { melee_runtime::tu::lbcollision::lbColl_80008440(hit) }
 }
 
 /// lbcollision.c `lbColl_800089B8`: forget one victim.
@@ -192,16 +188,14 @@ pub fn lbVector_Mirror(a: &mut Vec3, unit_mirror_axis: &Vec3) {
 
 /// lb_00B0.c `lb_8000CE30`.
 pub fn lb_8000CE30(dobj: Option<&mut HSD_DObj>, next: *mut HSD_DObj) {
-    if let Some(d) = dobj {
-        d.next = next;
-    }
+    // one port per C function: forwards to melee_runtime's TU port
+    unsafe { melee_runtime::tu::lb_00B0::lb_8000CE30(dobj.map_or(core::ptr::null_mut(), |d| d as *mut HSD_DObj), next) }
 }
 
 /// lb_00B0.c `lb_8000CE40`.
 pub fn lb_8000CE40(jobj: Option<&mut HSD_JObj>, dobj: *mut HSD_DObj) {
-    if let Some(j) = jobj {
-        j.u.dobj = dobj;
-    }
+    // one port per C function: forwards to melee_runtime's TU port
+    unsafe { melee_runtime::tu::lb_00B0::lb_8000CE40(jobj.map_or(core::ptr::null_mut(), |j| j as *mut HSD_JObj), dobj) }
 }
 
 /// lb_00F9.c `lb_800103D8`: where the segment (x0,x1)-(x2,x3) crosses height `offset`

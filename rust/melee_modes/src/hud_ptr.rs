@@ -41,8 +41,9 @@ pub fn ifStock_ClearGObjSlots(slots: &mut [*mut HSD_GObj], count: i32) {
 }
 
 /// soundtest.c `un_802FF884`.
-pub fn un_802FF884(_arg0: *mut i8) -> bool {
-    false
+pub fn un_802FF884(arg0: *mut i8) -> bool {
+    // one port per C function: forwards to melee_world's TU port
+    unsafe { melee_world::tu::soundtest::un_802FF884(arg0) != 0 }
 }
 
 /// textlib.c `DevText_SetCursorXY`: clamp into the text grid.
@@ -110,7 +111,8 @@ pub fn DevText_SetBGColor(text: &mut DevText, color: _GXColor) -> _GXColor {
 
 /// textlib.c `un_80302DF8`.
 pub fn un_80302DF8(arg0: &mut mt::un_80304138_objalloc_t, arg1: mt::soundtest_callback) {
-    arg0.xC = arg1;
+    // one port per C function: forwards to melee_world's TU port
+    unsafe { melee_world::tu::textlib::un_80302DF8(arg0, arg1) }
 }
 
 /// textlib_1.c `un_80303FD4_first`: index of the first entry with x0 != 0 before the 9

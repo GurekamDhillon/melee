@@ -201,3 +201,12 @@ pub mod it_2F28;
 pub mod toy;
 pub mod tydisplay;
 pub mod tyfigupon;
+// Shard 897-904: whole-TU native ports of the vi (visual scenes) and ty/tylist TUs.
+pub mod vi;
+pub mod vi0102;
+pub mod vi0401;
+pub mod vi0402;
+pub mod vi0501;
+pub mod vi0502;
+pub mod vi0601;
+pub mod tylist;

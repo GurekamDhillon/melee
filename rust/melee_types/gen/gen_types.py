@@ -95,6 +95,7 @@ LOCAL_RECORDS = {
     "src/melee/lb/lbsnap.c": ["Unk80433380_48", "Unk80433380_0",
                               "LbMcSnapMemSnapIconData", "Unk80433380", "Unk803BACC8"],
     "src/melee/lb/lb_00F9.c": ["lb_Collider"],
+    "src/melee/vi/vi0502.c": ["Vi0502Data"],
 }
 
 

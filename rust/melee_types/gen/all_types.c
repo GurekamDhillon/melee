@@ -1065,6 +1065,13 @@ struct lb_Collider {
     /* 0x18 */ Vec3 position;
     /* 0x24 */ char pad_24[0x04];
 };
+/* Verbatim src/melee/vi/vi0502.c:36. */
+typedef struct Vi0502Data {
+    Vec3 initial_pos;
+    char vi0502_dat[12];
+    char visual0502_scene[16];
+    char irals_dat[16];
+} Vi0502Data;
 /* Extracted from src/melee/lb/lb_0192.c:13; do not edit. */
 struct strings {
     const char* x0;

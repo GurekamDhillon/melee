@@ -338,11 +338,7 @@ use crate::tobj as logic;
 use crate::mtx as math;
 use melee_core::fp::fmadds;
 
-pub use crate::tobj::{tex_map_id_to_pt_tex_mtx as HSD_TexMapID2PTTexMtx,
-    tg_tex_to_index as HSD_TGTex2Index, tex_coord_id_to_tex_gen_src as HSD_TexCoordID2TexGenSrc,
-    tex_coord_to_index as HSD_TexCoord2Index, index_to_tex_coord as HSD_Index2TexCoord,
-    tex_mtx_to_index as HSD_TexMtx2Index, index_to_tex_mtx as HSD_Index2TexMtx,
-    index_to_tex_map as HSD_Index2TexMap, tex_map_to_index as HSD_TexMap2Index};
+pub use crate::tobj::{tex_map_id_to_pt_tex_mtx as HSD_TexMapID2PTTexMtx, tg_tex_to_index as HSD_TGTex2Index, tex_coord_id_to_tex_gen_src as HSD_TexCoordID2TexGenSrc, tex_coord_to_index as HSD_TexCoord2Index, index_to_tex_coord as HSD_Index2TexCoord, tex_mtx_to_index as HSD_TexMtx2Index, index_to_tex_map as HSD_Index2TexMap, tex_map_to_index as HSD_TexMap2Index};
 
 pub static mut hsdTObj: HSD_TObjInfo = {
     let mut info: HSD_TObjInfo = unsafe { core::mem::zeroed() };
@@ -784,3 +780,16 @@ pub mod ext {
 
 }
 pub use native::*;
+
+#[allow(non_snake_case, unused_imports, clippy::missing_safety_doc)]
+pub mod cnames {
+    #[allow(unused_imports)]
+    use crate::tobj::*;
+    use super::*;
+    /// `HSD_Index2TexMtx`: the C entry point over `crate::tobj::index_to_tex_mtx` (the owned object model).
+    #[inline]
+    pub fn HSD_Index2TexMtx(index: u32) -> u32 {
+        crate::tobj::index_to_tex_mtx(index)
+    }
+}
+pub use cnames::*;

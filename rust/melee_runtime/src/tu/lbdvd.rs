@@ -532,11 +532,8 @@ pub unsafe extern "C" fn lbDvd_80017CC4() {
 
 pub unsafe extern "C" fn lbDvd_80017E64(key: i32, index: usize, value: *mut c_void, cancelflag: bool) {
     let pe = entry_at(index);
-    if cancelflag {
-        panic!("lbdvd.c:827 0");
-    } else {
-        (*pe).state = 3;
-    }
+    assert!(!cancelflag, "lbdvd.c:827 0");
+    (*pe).state = 3;
     lbDvd_80017CC4();
 }
 

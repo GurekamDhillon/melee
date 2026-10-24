@@ -3,10 +3,7 @@
 //! re-exported here. The GameCube-layout lifecycle (allocator pool, Remove / RemoveAll / Alloc /
 //! Free / LoadDesc on `melee_types::HSD_FObj`) is ported below with the allocator as a TODO stub.
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs, clippy::missing_safety_doc)]
-pub use crate::fobj::{
-    interpret_anim_all as HSD_FObjInterpretAnimAll, load_desc_list as HSD_FObjLoadDescList,
-    req_anim_all as HSD_FObjReqAnimAll, stop_anim_all as HSD_FObjStopAnimAll, HsdFObj,
-};
+pub use crate::fobj::{load_desc_list as HSD_FObjLoadDescList, HsdFObj};
 use crate::cabi::f2i16;
 use core::ptr::{null_mut, write_bytes};
 use melee_types::*;
@@ -107,3 +104,26 @@ pub unsafe fn HSD_FObjLoadDesc(desc: *mut HSD_FObjDesc) -> *mut HSD_FObj {
     (*fobj).flags = 0;
     fobj
 }
+
+#[allow(non_snake_case, unused_imports, clippy::missing_safety_doc)]
+pub mod cnames {
+    #[allow(unused_imports)]
+    use crate::fobj::*;
+    use super::*;
+    /// `HSD_FObjInterpretAnimAll`: the C entry point over `crate::fobj::interpret_anim_all` (the owned object model).
+    #[inline]
+    pub fn HSD_FObjInterpretAnimAll(list: &mut [HsdFObj], obj_update: &mut ObjUpdate<'_>, rate: f32) {
+        crate::fobj::interpret_anim_all(list, obj_update, rate)
+    }
+    /// `HSD_FObjReqAnimAll`: the C entry point over `crate::fobj::req_anim_all` (the owned object model).
+    #[inline]
+    pub fn HSD_FObjReqAnimAll(list: &mut [HsdFObj], startframe: f32) {
+        crate::fobj::req_anim_all(list, startframe)
+    }
+    /// `HSD_FObjStopAnimAll`: the C entry point over `crate::fobj::stop_anim_all` (the owned object model).
+    #[inline]
+    pub fn HSD_FObjStopAnimAll(list: &mut [HsdFObj], obj_update: &mut ObjUpdate<'_>, rate: f32) {
+        crate::fobj::stop_anim_all(list, obj_update, rate)
+    }
+}
+pub use cnames::*;

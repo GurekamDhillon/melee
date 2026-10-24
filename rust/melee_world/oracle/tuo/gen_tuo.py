@@ -200,8 +200,15 @@ class Walker:
                 e.c.append(f"if(tuo_mode==1) {cx_} = (__typeof__({cx_})) tuo_leaf_ptr({path_c}); else tuo_dump_p({path_c}, (void*) {cx_});")
                 e.r.append(f"if v.set() {{ {rx_} = unsafe {{ core::mem::transmute::<usize, _>(v.leaf_ptr({path_r})) }}; }} else {{ v.dump_p({path_r}, unsafe {{ core::mem::transmute_copy::<_, usize>(&{rx_}) }}); }}")
             else:
-                e.c.append(f"if(tuo_mode==1) {cx_} = (__typeof__({cx_})) tuo_leaf_ptr({path_c}); else tuo_dump_p({path_c}, (const void*) {cx_});")
-                e.r.append(f"if v.set() {{ {rx_} = v.leaf_ptr({path_r}) as _; }} else {{ v.dump_p({path_r}, ({rx_}) as usize); }}")
+                # PTR_MASK = {record: [field]}: the pointer's low byte is aliased by a bitfield of another union view
+                # (b0 is bit 7 in melee_types / on the GameCube, bit 0 in the native C): bits 0 and 7 are not compared
+                masked = getattr(self, "rec", "") in self.cx.spec.get("PTR_MASK", {}) and cx_.rsplit(".", 1)[-1] in self.cx.spec.get("PTR_MASK", {})[self.rec]
+                if masked:
+                    e.c.append(f"if(tuo_mode==1) {cx_} = (__typeof__({cx_})) tuo_leaf_ptr({path_c}); else tuo_dump_p({path_c}, (const void*) ((unsigned long long) {cx_} & ~0x81ull));")
+                    e.r.append(f"if v.set() {{ {rx_} = v.leaf_ptr({path_r}) as _; }} else {{ v.dump_p({path_r}, (({rx_}) as usize) & !0x81usize); }}")
+                else:
+                    e.c.append(f"if(tuo_mode==1) {cx_} = (__typeof__({cx_})) tuo_leaf_ptr({path_c}); else tuo_dump_p({path_c}, (const void*) {cx_});")
+                    e.r.append(f"if v.set() {{ {rx_} = v.leaf_ptr({path_r}) as _; }} else {{ v.dump_p({path_r}, ({rx_}) as usize); }}")
             return
         if k == T.CONSTANTARRAY:
             n = c.get_array_size()

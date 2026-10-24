@@ -3,6 +3,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import *
 TU = "src/melee/gr/grvenom.c"
 RUST_MOD = "melee_world::tu::grvenom"
+LOWMEM = True  # pointer slots overlap u32 views (Ground.u): pool objects below 4 GB, same addresses on both sides
 SIZE_OK = ["HSD_JObj"]
 SKIP_LEAF_TYPES = ["HSD_IDKey"]
 RUST_TYPES = {"grVe_Data": "melee_world::tu::grvenom::grVe_Data",
@@ -115,6 +116,10 @@ PTR_BYTES["lb_80011A50"] = {0: 12}
 # b7 of xE0_state shares its byte with `xE0_state_pad.state` (80204B88 writes it, and 8020454C calls that): native bit order
 # differs from the GameCube order there, so the bit is not compared (no function reads it as b7)
 SKIP_BITS = {"types.h:570:9": ["b7"], "types.h:565:9": ["padding", "padding2"]}  # the anonymous b0..b7 struct of grVenom_GroundVars2.xE0_state
+# `Ground_ResetStarFoxArwingState` clears `starfox.xC4.flags.b0`, which shares its byte with the low byte of the pointer views
+# venom2.xC4 and venom_platform.target_gobj: b0 is bit 7 on the GameCube (and in melee_types), bit 0 in the native C, so those two
+# pointers are compared without bits 0 and 7 of their low byte (see gen_tuo.py PTR_MASK)
+PTR_MASK = {"grVenom_GroundVars2": ["xC4"], "grVenom_Platform_GroundVars": ["target_gobj"]}
 FORCE_FILL = ["grVe_803E5348", "grVe_803E5380"]
 _V = fl("80204F20", "802052E0", "802053B0", "802056B0", "80205758", "80205AD4", "80205F30", "80206874", "80206BF0", "80206B70")
 UNION_VIEW = {

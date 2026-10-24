@@ -845,7 +845,7 @@ if v.set() { (*p).x100 = v.leaf_int(&format!("{}.x100", path), 32, 1) as _; } el
 #[allow(unused_variables, unused_mut, unused_unsafe, unused_parens, non_snake_case)]
 fn vis_struct_grVenom_GroundVars2(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut melee_types::grVenom_GroundVars2; unsafe {
 {
-if v.set() { (*p).xC4 = v.leaf_ptr(&format!("{}.xC4", path)) as _; } else { v.dump_p(&format!("{}.xC4", path), ((*p).xC4) as usize); }
+if v.set() { (*p).xC4 = v.leaf_ptr(&format!("{}.xC4", path)) as _; } else { v.dump_p(&format!("{}.xC4", path), (((*p).xC4) as usize) & !0x81usize); }
 }
 {
 if v.set() { (*p).xC8 = v.leaf_ptr(&format!("{}.xC8", path)) as _; } else { v.dump_p(&format!("{}.xC8", path), ((*p).xC8) as usize); }
@@ -885,7 +885,7 @@ if v.set() { (*p).xE0_state.xE0_state_pad.set_state(v.leaf_int(&format!("{}.stat
 #[allow(unused_variables, unused_mut, unused_unsafe, unused_parens, non_snake_case)]
 fn vis_struct_grVenom_Platform_GroundVars(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut melee_types::grVenom_Platform_GroundVars; unsafe {
 {
-if v.set() { (*p).target_gobj = v.leaf_ptr(&format!("{}.target_gobj", path)) as _; } else { v.dump_p(&format!("{}.target_gobj", path), ((*p).target_gobj) as usize); }
+if v.set() { (*p).target_gobj = v.leaf_ptr(&format!("{}.target_gobj", path)) as _; } else { v.dump_p(&format!("{}.target_gobj", path), (((*p).target_gobj) as usize) & !0x81usize); }
 }
 if v.fn_in("fn_802040B4|grVenom_802040F0|grVenom_80204284|grVenom_80206D7C") {
 {

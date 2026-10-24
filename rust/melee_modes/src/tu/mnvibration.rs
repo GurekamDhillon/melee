@@ -144,7 +144,7 @@ pub mod ext {
         fn GObj_InitUserData(gobj: *mut HSD_GObj, kind: u8, remove_func: Option<unsafe extern "C" fn(*mut c_void) -> ()>, data: *mut c_void, );
         extern "C" fn HSD_Free(ptr: *mut c_void) = crate::tu::adapt::HSD_Free__3ee311;
         fn HSD_MemAlloc(size: isize) -> *mut c_void = crate::tu::adapt::HSD_MemAlloc__849f1b;
-        fn GetNameText(slot: u8) -> *mut c_char;
+        fn GetNameText(slot: u8) -> *mut c_char = crate::tu::adapt::GetNameText__e732d9;
         fn GetNameCount() -> i32 = crate::tu::adapt::GetNameCount__b961fe;
         fn lbCardGame_SaveChanges() = crate::tu::adapt::lbCardGame_SaveChanges__0fc9e6;
     }

@@ -2,7 +2,7 @@
 //! (see docs/rust-port/missing.md). Each calls the port with `as` conversions of the stub's
 //! parameter types; the port is the single implementation of the C function.
 #![allow(non_snake_case, unused_imports, unused_unsafe, unused_variables, clippy::all)]
-use core::ffi::c_void;
+use core::ffi::{c_void, c_char, c_int, c_uint, c_uchar, c_ushort, c_short, c_schar, c_long, c_ulong, c_float, c_double};
 use melee_types::*;
 pub fn lbAudioAx_80024030__36458a(a0: i32) { unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80024030(a0) } }
 pub fn HSD_JObjSetMtxDirty__955390(a0: *mut HSD_JObj) { unsafe { melee_world::tu::grinl::HSD_JObjSetMtxDirty(a0) } }
@@ -1161,3 +1161,9 @@ pub fn ftCo_800D5FB0__315eef(a0: * mut Fighter_GObj) -> :: core :: ffi :: c_int 
 pub fn ftCo_Turn_CheckInput__96ef34(a0: * mut Fighter_GObj) -> :: core :: ffi :: c_int { unsafe { (melee_fighter::tu::ftCo_Turn::ftCo_Turn_CheckInput(a0 as _)) as _ } }
 pub fn ftCo_Walk_CheckInput__5c6c59(a0: * mut Fighter_GObj) -> :: core :: ffi :: c_int { unsafe { (melee_fighter::tu::ftCo_Walk::ftCo_Walk_CheckInput(a0 as _)) as _ } }
 pub fn ftCo_800DCE34__658ea4(a0: * mut Fighter_GObj, a1: * mut Fighter_GObj) { unsafe { melee_fighter::tu::ftCo_CaptureCut::ftCo_800DCE34(a0 as _, a1 as _) } }
+pub fn IsNameUnique__f9fddb(a0: *mut c_char) -> i32 { unsafe { crate::tu::mnname::IsNameUnique(a0) } }
+pub fn IsNameNotAllowed__c0ffe3(a0: *mut c_char) -> i32 { unsafe { crate::tu::mnname::IsNameNotAllowed(a0) } }
+pub fn mn_8022EA08__998c76(a0: *mut c_char, a1: u32) { unsafe { crate::tu::mnmain::mn_8022EA08(a0, a1) } }
+pub fn HSD_ArchiveGetPublicAddress__6d6399(a0: *mut HSD_Archive, a1: *const c_char) -> *mut c_void { unsafe { melee_runtime::tu::archive::HSD_ArchiveGetPublicAddress(a0, a1 as _) } }
+pub fn lbArchive_LoadArchive__992527(a0: *const c_char) -> *mut HSD_Archive { unsafe { melee_runtime::tu::lbarchive::lbArchive_LoadArchive(a0) } }
+pub fn GetNameText__e732d9(a0: u8) -> *mut c_char { unsafe { crate::tu::mnname::GetNameText(a0 as _) } }

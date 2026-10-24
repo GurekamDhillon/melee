@@ -184,7 +184,7 @@ pub mod ext {
         fn HSD_JObjSetFlagsAll(a0: *mut HSD_JObj, flags: u32);
         fn HSD_JObjPrependRObj(jobj: *mut HSD_JObj, robj: *mut HSD_RObj);
         fn HSD_JObjReqAnimAllByFlags(jobj: *mut HSD_JObj, flags: u32, frame: f32);
-        fn HSD_ArchiveGetPublicAddress(a0: *mut HSD_Archive, a1: *const c_char) -> *mut c_void;
+        fn HSD_ArchiveGetPublicAddress(a0: *mut HSD_Archive, a1: *const c_char) -> *mut c_void = crate::tu::adapt::HSD_ArchiveGetPublicAddress__6d6399;
         fn HSD_CObjLoadDesc(desc: *mut HSD_CObjDesc) -> *mut HSD_CObj = crate::tu::adapt::HSD_CObjLoadDesc__66a547;
         fn gm_80164330(a0: i32) -> i32 = crate::mn_inl::gm_80164330_i32;
         fn gm_80164430(a0: u16) -> i32 = crate::mn_inl::gm_80164430_i32;
@@ -195,7 +195,7 @@ pub mod ext {
         fn lb_8000C1C0(a0: *mut HSD_JObj, constraint: *mut HSD_JObj) = crate::tu::adapt::lb_8000C1C0__9b8c49;
         fn lb_8000C2F8(a0: *mut HSD_JObj, constraint: *mut HSD_JObj) = crate::tu::adapt::lb_8000C2F8__a15864;
         fn lb_800145F4() = crate::tu::adapt::lb_800145F4__895731;
-        fn lbArchive_LoadArchive(filename: *const c_char) -> *mut HSD_Archive;
+        fn lbArchive_LoadArchive(filename: *const c_char) -> *mut HSD_Archive = crate::tu::adapt::lbArchive_LoadArchive__992527;
         fn lbArchive_80016EFC(a0: *mut HSD_Archive) = crate::tu::adapt::lbArchive_80016EFC__e6851b;
         fn lbDvd_GetPreloadCacheScene() -> *mut PreloadedGameModeState = crate::tu::adapt::lbDvd_GetPreloadCacheScene__1ed990;
         fn lbDvd_80018254() = crate::tu::adapt::lbDvd_80018254__6be579;

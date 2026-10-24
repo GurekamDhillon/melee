@@ -46,8 +46,8 @@ pub mod ext {
         ftCommon_CalcGroundAccel_Deaccel(f: &mut Fighter, friction: f32) = crate::ftcommon::calc_ground_accel_deaccel;
         ftCommon_SetSelfMovementFromGroundedMovement(g: G) = |g| crate::ftcommon::set_self_movement_from_grounded_movement(super::fp(g));
         ft_80084DB0(g: G) = |g: G| { unsafe { let _ = crate::ft084e::ft_80084db0(g as _); } };
-        ft_800841B8(g: G, cb: HSD_GObjEvent) = |_, _| todo!("TODO(port) ft_800841B8 (ft_081B.c)");
-        ft_80083910(g: G, cb: HSD_GObjEvent) = |_, _| todo!("TODO(port) ft_80083910 (ft_081B.c)");
+        ft_800841B8(g: G, cb: HSD_GObjEvent) = |g: G, cb: HSD_GObjEvent| { unsafe { let _ = crate::bridge::with_ev(cb, |ev| crate::tu::ft_081b::ft_800841b8(g as _, ev)); } };
+        ft_80083910(g: G, cb: HSD_GObjEvent) = |g: G, cb: HSD_GObjEvent| { unsafe { let _ = crate::bridge::with_ev(cb, |ev| crate::tu::ft_081b::ft_80083910(g as _, ev)); } };
         ftCommon_8007D5D4(f: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
         ftCommon_8007D7FC(f: &mut Fighter) = crate::ftcommon3::ftcommon_8007d7fc;
         ftCommon_UnlockECB(f: &mut Fighter) = crate::ftcommon2::unlock_ecb;

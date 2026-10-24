@@ -49,7 +49,7 @@ pub mod ext {
         ftCo_800D705C(g: G) -> bool = crate::tu::ftCo_Attack100::ftCo_800D705C;
         ftCo_800CB870(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_JumpAerial::ftCo_800CB870(g as _) as _ } };
         ft_80084DB0(g: G) = crate::ft084e::ft_80084db0;
-        ft_80082C74(g: G, cb: HSD_GObjEvent) = |_, _| todo!("TODO(port) ft_80082C74 (ft_081B.c)");
+        ft_80082C74(g: G, cb: HSD_GObjEvent) = |g: G, cb: HSD_GObjEvent| { unsafe { let _ = crate::bridge::with_ev(cb, |ev| crate::tu::ft_081b::ft_80082c74(g as _, ev)); } };
     }
     /// `ftCo_LandingAir_EnterWithLag` (ftCo_LandingAir.c), passed as a callback: a TODO stub.
     pub unsafe extern "C" fn ftCo_LandingAir_EnterWithLag(_g: *mut HSD_GObj) {

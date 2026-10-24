@@ -39,7 +39,7 @@ pub mod ext {
         it_802BAC3C(g: G) = |g: G| { unsafe { let _ = melee_items::tu::itsamusgrapple::it_802BAC3C(g as _); } };
         ftCommon_CalcGroundAccel_Deaccel(fp: &mut Fighter, friction: f32) = crate::ftcommon::calc_ground_accel_deaccel;
         ftCommon_SetSelfMovementFromGroundedMovement(g: G) = |g| crate::ftcommon::set_self_movement_from_grounded_movement(fp(g));
-        ft_800841B8(g: G, cb: HSD_GObjEvent) = |_, _| todo!("TODO(port) ft_800841B8 (ft_081B.c)");
+        ft_800841B8(g: G, cb: HSD_GObjEvent) = |g: G, cb: HSD_GObjEvent| { unsafe { let _ = crate::bridge::with_ev(cb, |ev| crate::tu::ft_081b::ft_800841b8(g as _, ev)); } };
         ftCo_800DC920(g: G, victim: G) = |g: G, victim: G| { unsafe { let _ = crate::tu::ftCo_CaptureCut::ftCo_800DC920(g as _, victim as _); } };
         ftCo_Fall_Enter(g: G) = crate::hooks::ftco_fall_enter;
     }

@@ -51,8 +51,8 @@ pub mod ext {
         lb_8000B1CC(j: *mut HSD_JObj, off: *const Vec3, out: &mut Vec3) = |j: *mut HSD_JObj, off: *const Vec3, out: &mut Vec3| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(j as _, off as _, out as _); } };
         lb_8000C1C0(j: *mut HSD_JObj, constraint: *mut HSD_JObj) = |j: *mut HSD_JObj, constraint: *mut HSD_JObj| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000C1C0(j as _, constraint as _); } };
         ftParts_JObjSetRotation(j: *mut HSD_JObj, q: &Quaternion) = |j: *mut HSD_JObj, q: &Quaternion| { unsafe { let _ = crate::tu::ftparts::ftParts_JObjSetRotation(j as _, q as _); } };
-        ft_80083C00(g: G, cb: HSD_GObjEvent) = |_, _| todo!("TODO(port) ft_80083C00 (ft_081B.c)");
-        ft_8008403C(g: G, cb: HSD_GObjEvent) = |_, _| todo!("TODO(port) ft_8008403C (ft_081B.c)");
+        ft_80083C00(g: G, cb: HSD_GObjEvent) = |g: G, cb: HSD_GObjEvent| { unsafe { let _ = crate::bridge::with_ev(cb, |ev| crate::tu::ft_081b::ft_80083c00(g as _, ev)); } };
+        ft_8008403C(g: G, cb: HSD_GObjEvent) = |g: G, cb: HSD_GObjEvent| { unsafe { let _ = crate::bridge::with_ev(cb, |ev| crate::tu::ft_081b::ft_8008403c(g as _, ev)); } };
         ftAnim_8006F368(f: &mut Fighter, idx: i32) -> bool = |f: &mut Fighter, idx: i32| -> bool { unsafe { crate::tu::ftanim::ftAnim_8006F368(f as _, idx as _) as _ } };
         ftAnim_8006DF0C(f: &mut Fighter) = |f: &mut Fighter| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006DF0C(f as _); } };
     }

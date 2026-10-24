@@ -53,7 +53,7 @@ pub mod ext {
         ftCommon_Fall(fp: &mut Fighter, gravity: f32, terminal: f32) = crate::ftcommon::fall;
         ftCommon_CalcSelfAccel_AccelToVelClamped(fp: &mut Fighter, accel: f32, target: f32, friction: f32) = crate::ftcommon::calc_self_accel_accel_to_vel_clamped;
         Geno_FallSpecialColl(g: G) -> i32 = |_| todo!("TODO(pc) Geno_FallSpecialColl (pc geno)");
-        ft_80083090(g: G, a: unsafe extern "C" fn(G, i32) -> bool, b: HSD_GObjEvent) = |_, _, _| todo!("TODO(port) ft_80083090 (ft_081B.c)");
+        ft_80083090(g: G, a: unsafe extern "C" fn(G, i32) -> bool, b: HSD_GObjEvent) = |g: G, a: unsafe extern "C" fn(G, i32) -> bool, b: HSD_GObjEvent| { unsafe { let _ = crate::bridge::with_coll_ev(a, b, |a, b| crate::tu::ft_081b::ft_80083090(g as _, a, b)); } };
         mpLineGetFlags(line: i32) -> u32 = |_| todo!("TODO(port) mpLineGetFlags (mplib.c)");
         ftCo_800D0EC8(fp: &Fighter) -> f32 = crate::tu::ftchangeparam::ftco_800d0ec8;
         ftCo_LandingFallSpecial_Enter(g: G, allow_interrupt: i32, landing_lag: f32) = |g: G, allow_interrupt: i32, landing_lag: f32| { unsafe { let _ = crate::tu::ftCo_Landing::ftCo_LandingFallSpecial_Enter(g as _, (allow_interrupt != 0 as _), landing_lag as _); } };

@@ -66,8 +66,8 @@ pub mod ext {
     pub fn ftParts_80074A8C(_g: G) { crate::ft0df::ftparts_80074a8c(_g) }
     pub fn ftParts_80074ACC(_g: G) { crate::ft0df::ftparts_80074acc(_g) }
     pub fn ft_PlaySFX(_fp: F, _sfx: i32, _vol: i32, _pan: i32) { unsafe { let _ = crate::ft0877::play_sfx(&mut *(_fp as *mut _), _sfx as _, _vol as _, _pan as _); } }
-    pub fn ft_sfx_variant(_which: u32, _fp: F, _sfx: i32, _vol: i32, _pan: i32) { todo!("ft_80088478/800881D8/80088510/800885A8/80088640/80088328 (ft/ft_0877.c)") }
-    pub fn ft_sfx_stop(_which: u32, _fp: F) { todo!("ft_80088828/80088770/80088884/800888E0/8008893C/800887CC (ft/ft_0877.c)") }
+    pub fn ft_sfx_variant(_which: u32, _fp: F, _sfx: i32, _vol: i32, _pan: i32) { unsafe { let _ = match _which { 1 => crate::ft0881::ft_80088478(&mut *_fp, _sfx, _vol as u8, _pan as u8), 2 => crate::ft0881::ft_800881d8(&mut *_fp, _sfx, _vol as u8, _pan as u8), 3 => crate::ft0881::ft_80088510(&mut *_fp, _sfx, _vol as u8, _pan as u8), 4 => crate::ft0881::ft_800885a8(&mut *_fp, _sfx, _vol as u8, _pan as u8), 5 => crate::ft0881::ft_80088640(&mut *_fp, _sfx, _vol as u8, _pan as u8), 6 => crate::ft0881::ft_80088328(&mut *_fp, _sfx, _vol as u8, _pan as u8), _ => {} }; } }
+    pub fn ft_sfx_stop(_which: u32, _fp: F) { unsafe { let _ = match _which { 10 => crate::ft0881::ft_80088828(&mut *_fp), 11 => crate::ft0881::ft_80088770(&mut *_fp), 12 => crate::ft0881::ft_80088884(&mut *_fp), 13 => crate::ft0881::ft_800888e0(&mut *_fp), 14 => crate::ft0881::ft_8008893c(&mut *_fp), 15 => crate::ft0881::ft_800887cc(&mut *_fp), _ => {} }; } }
     pub fn ft_800889F4(_fp: F, _s: *mut FtSFXArr) { unsafe { let _ = crate::ft0881::ft_800889f4(&mut *(_fp as *mut _), _s as _); } }
     pub fn ft_80087D0C(_fp: F, _id: u32) -> i32 { unsafe { crate::ft0877::ft_80087d0c(&*(_fp as *const _), _id as _) } }
     pub fn ft_80084BFC(_g: G, _a: &mut i32, _b: &mut i32, _c: &mut i32) -> bool { unsafe { crate::tu::ft_081b::ft_80084bfc(_g as _, _a as *mut _ as *mut _, _b as *mut _ as *mut _, _c as *mut _ as *mut _) } }

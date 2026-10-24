@@ -59,9 +59,9 @@ pub mod ext {
         ftCo_ThrowLw_Anim(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_Throw::ftCo_ThrowLw_Anim(g as _); } };
         ftCo_ThrowLw_IASA(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_Throw::ftCo_ThrowLw_IASA(g as _); } };
         ftCo_ThrowLw_Phys(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_Throw::ftCo_ThrowLw_Phys(g as _); } };
-        ft_8008403C(g: G, cb: HSD_GObjEvent) = |_, _| todo!("TODO(port) ft_8008403C (ft_081B.c)");
+        ft_8008403C(g: G, cb: HSD_GObjEvent) = |g: G, cb: HSD_GObjEvent| { unsafe { let _ = crate::bridge::with_ev(cb, |ev| crate::tu::ft_081b::ft_8008403c(g as _, ev)); } };
         ft_80084DB0(g: G) = crate::ft084e::ft_80084db0;
-        ft_80082C74(g: G, cb: HSD_GObjEvent) = |_, _| todo!("TODO(port) ft_80082C74 (ft_081B.c)");
+        ft_80082C74(g: G, cb: HSD_GObjEvent) = |g: G, cb: HSD_GObjEvent| { unsafe { let _ = crate::bridge::with_ev(cb, |ev| crate::tu::ft_081b::ft_80082c74(g as _, ev)); } };
     }
 }
 

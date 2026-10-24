@@ -44,3 +44,48 @@ pub unsafe fn psvec_add(a: *const Vec3, b: *const Vec3, ab: *mut Vec3) {
     (*ab).y = ay + by;
     (*ab).z = az + bz;
 }
+
+// ---- C callbacks into Rust-ABI function pointers ---------------------------------------------------
+
+use crate::types::{HSD_GObj, HSD_GObjEvent};
+
+thread_local! {
+    static EV: core::cell::Cell<HSD_GObjEvent> = const { core::cell::Cell::new(None) };
+}
+
+fn ev_tramp(g: *mut HSD_GObj) {
+    let f = EV.with(|c| c.get()).expect("NULL HSD_GObjEvent callback called");
+    unsafe { f(g) }
+}
+
+/// Runs `f` with a Rust-ABI `fn(G)` standing for the C callback `cb`. The ported `ft_081b` functions
+/// only call their callback during the call (never store it), so a trampoline reading the callback
+/// from a scoped slot is exact; the slot is restored on exit so nested uses stay correct.
+pub fn with_ev<R>(cb: HSD_GObjEvent, f: impl FnOnce(fn(*mut HSD_GObj)) -> R) -> R {
+    let prev = EV.with(|c| c.replace(cb));
+    let r = f(ev_tramp);
+    EV.with(|c| c.set(prev));
+    r
+}
+
+thread_local! {
+    static COLL: core::cell::Cell<Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> bool>> = const { core::cell::Cell::new(None) };
+}
+
+fn coll_tramp(g: *mut HSD_GObj, i: i32) -> bool {
+    let f = COLL.with(|c| c.get()).expect("NULL collision callback called");
+    unsafe { f(g, i) }
+}
+
+/// Like [`with_ev`] for the `(collision callback, event callback)` pair the `ft_081b` landing / cliff
+/// helpers take.
+pub fn with_coll_ev<R>(
+    coll: unsafe extern "C" fn(*mut HSD_GObj, i32) -> bool,
+    cb: HSD_GObjEvent,
+    f: impl FnOnce(fn(*mut HSD_GObj, i32) -> bool, fn(*mut HSD_GObj)) -> R,
+) -> R {
+    let prev = COLL.with(|c| c.replace(Some(coll)));
+    let r = with_ev(cb, |ev| f(coll_tramp, ev));
+    COLL.with(|c| c.set(prev));
+    r
+}

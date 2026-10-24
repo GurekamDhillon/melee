@@ -62,7 +62,7 @@ pub mod ext {
         // rp3-end
         ftCommon_Fall(f: &mut Fighter, a: f32, b: f32) = |f: &mut Fighter, a: f32, b: f32| { unsafe { let _ = crate::ftcommon::fall(f, a as _, b as _); } };
         ftCommon_CalcSelfAccel_AccelToVelClampedFrom(f: &mut Fighter, vel: f32, accel: f32, target: f32, fr: f32) = crate::ftcommon::calc_self_accel_accel_to_vel_clamped_from;
-        ft_80083E64(g: G, ecb: *mut ftCollisionBox, cb: HSD_GObjEvent) = |_, _, _| todo!("TODO(port) ft_80083E64 (ft_081B.c)");
+        ft_80083E64(g: G, ecb: *mut ftCollisionBox, cb: HSD_GObjEvent) = |g: G, ecb: *mut ftCollisionBox, cb: HSD_GObjEvent| { unsafe { let _ = crate::bridge::with_ev(cb, |ev| crate::tu::ft_081b::ft_80083e64(g as _, ecb as _, ev)); } };
         atan2f(y: f32, x: f32) -> f32 = melee_runtime::lbtrigf::atan2f;
         // `efAsync_Spawn(gobj, queue, kind, gfx_id, jobj, ...)` with (pos, param) as the varargs.
         efAsync_Spawn(g: G, queue: *mut core::ffi::c_void, kind: u32, id: u32, j: *mut HSD_JObj, pos: *mut Vec3, param: *mut f32) = |_, _, _, _, _, _, _| todo!("TODO(port) efAsync_Spawn (efasync.c)");

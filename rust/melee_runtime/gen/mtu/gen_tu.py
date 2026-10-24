@@ -313,7 +313,13 @@ class Walk:
     def gen(self, name):
         decl = self.rec_of(name)
         cf, ch, rf, rh = [], [], [], []
-        self.fields(decl, "p->", "p.", 0, cf, ch, rf, rh, "p", 0)
+        if decl.kind == K.UNION_DECL and self.has_bf(decl):
+            self.bf_union(decl, "p->", "p.", cf, ch, rf, rh, 0)
+        elif decl.kind == K.UNION_DECL:
+            sz = canon(self.tu.types[name]).get_size()
+            self.raw_bytes(cf, ch, rf, rh, "(*p)", "p", 0, sz, 0)
+        else:
+            self.fields(decl, "p->", "p.", 0, cf, ch, rf, rh, "p", 0)
         cn = ("struct " + name) if name in self.tu.tagged else name
         cdef = f"static void fill_{name}({cn}* p)\n{{\n    int i0, i1, i2, j0, j1, j2, j3;\n" + "\n".join("    " + x for x in cf) + \
             f"\n}}\nstatic void hash_{name}(const {cn}* p)\n{{\n    int i0, i1, i2, j0, j1, j2, j3;\n    if (HDBG) printf(\"B {name}%c\", 10);\n" + "\n".join("    " + x for x in ch) + "\n}\n"

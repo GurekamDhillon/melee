@@ -63,7 +63,10 @@ def main():
             run([sys.executable, str(LOWER), str(ll), str(lo)], n)
             lls.append(str(lo))
         run([CLANG, "-O0", "-w", *lls, "-o", str(exe), "-Wl,/OPT:NOICF", "-fuse-ld=lld"], n)
-        r = subprocess.run([str(exe)], capture_output=True, text=True)
+        try:
+            r = subprocess.run([str(exe)], capture_output=True, text=True, timeout=int(os.environ.get('MTU_TIMEOUT', '100')))
+        except subprocess.TimeoutExpired:
+            raise SystemExit(f'mtu: {n}: C driver timed out (an infinite loop in some case: run it with MTU_PROG=1 to see which)')
         if r.returncode:
             env = dict(os.environ, MTU_PROG="1")
             r2 = subprocess.run([str(exe)], capture_output=True, text=True, env=env)

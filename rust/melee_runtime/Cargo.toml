@@ -17,3 +17,7 @@ harness = false
 [[test]]
 name = "tu_controller"
 harness = false
+
+[[test]]
+name = "tu_rumble"
+harness = false

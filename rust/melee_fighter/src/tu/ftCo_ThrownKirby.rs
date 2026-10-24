@@ -38,7 +38,7 @@ macro_rules! ext_fns {
 pub mod ext {
     use super::*;
     ext_fns! {
-        Geno_DefineKirbyCopy(kind: i32) -> i32 = |_| todo!("TODO(port) Geno_DefineKirbyCopy (pc/geno)");
+        Geno_DefineKirbyCopy(kind: i32) -> i32 = |kind: i32| -> i32 { unsafe { crate::platform::Geno_DefineKirbyCopy(kind) } };
         // `OSReport("geno: Kirby inhales define kind ...")`: log only.
         OSReport_GenoKirbyCopy(kind: i32, copy: i32) = |_, _| {};
         ftKb_MexKirbyLike(kind: i32) -> i32 = |_| todo!("TODO(port) ftKb_MexKirbyLike (ftkirby.c)");

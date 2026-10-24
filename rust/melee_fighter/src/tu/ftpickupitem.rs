@@ -66,8 +66,8 @@ pub mod ext {
         ftCo_800974C4(g: G) = crate::tu::ftCo_Lift::ftCo_800974C4;
         pl_8003E17C(slot: i32, sub: i32, i: I) = |slot: i32, sub: i32, i: I| { unsafe { let _ = crate::tu::plbonuslib::pl_8003E17C(slot as _, sub as _, i as _); } };
         // `ftData_OnItemPickupExt[kind]`.
-        ftData_OnItemPickupExt(kind: i32) -> Option<fn(G, i32)> = |_| todo!("TODO(port) ftData_OnItemPickupExt (ftdata.c table)");
-        Mex_OnItemPickupDispatch(kind: i32, g: *mut c_void, i: *mut c_void, vanilla: *mut c_void) = |_, _, _, _| todo!("TODO(pc mex) Mex_OnItemPickupDispatch");
+        ftData_OnItemPickupExt(kind: i32) -> Option<unsafe extern "C" fn(G, i32)> = |kind: i32| -> Option<unsafe extern "C" fn(G, i32)> { unsafe { crate::tu::ftdata::ftData_OnItemPickupExt[kind as usize] } };
+        Mex_OnItemPickupDispatch(kind: i32, g: *mut c_void, i: *mut c_void, vanilla: *mut c_void) = |kind: i32, g: *mut c_void, i: *mut c_void, vanilla: *mut c_void| { unsafe { let _ = crate::platform::mex_dispatch2(crate::platform::MEX_EVENT_ON_ITEM_PICKUP, kind, g as _, i, vanilla); } };
         pl_8003E854(slot: i32, sub: i32, i: I) = |slot: i32, sub: i32, i: I| { unsafe { let _ = crate::tu::plbonuslib::pl_8003E854(slot as _, sub as _, i as _); } };
         Item_8026AB54(i: I, owner: G, part: i32) = crate::hooks::item_8026ab54;
         ft_800881D8(f: &mut Fighter, id: i32, vol: u8, pan: u8) = crate::ft0881::ft_800881d8;
@@ -319,7 +319,7 @@ pub fn ftpickupitem_80094818(g: G, arg1: bool) {
         ext::pl_8003E17C(f.player_id as i32, f.is_sub_fighter() as i32, f.x1978);
     } else if !f.item_gobj.is_null() {
         if let Some(cb) = ext::ftData_OnItemPickupExt(f.kind as i32) {
-            cb(g, arg1 as i32);
+            unsafe { cb(g, arg1 as i32) };
         }
         let f = fp(g);
         ext::pl_8003E17C(f.player_id as i32, f.is_sub_fighter() as i32, f.item_gobj);

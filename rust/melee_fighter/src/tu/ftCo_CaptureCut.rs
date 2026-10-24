@@ -72,7 +72,7 @@ pub mod ext {
         // rp3 mpColl_800477E0
         mpColl_800477E0(coll: &mut CollData) -> bool = |coll: &mut CollData| -> bool { unsafe { (melee_world::tu::mpcoll::mpColl_800477E0(coll as _) != 0) } };
         // rp3-end
-        Mex_Enabled(name: &str) -> i32 = |_| todo!("TODO(pc mex) Mex_Enabled");
+        Mex_Enabled(name: &str) -> i32 = |name: &str| -> i32 { unsafe { crate::platform::Mex_Enabled(name) as i32 } };
         ftColl_8007B62C(g: G, n: i32) = |g: G, n: i32| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007b62c(g as _, n as _); } };
         ftColl_8007891C(victim: G, g: G, damage: f32) = |victim: G, g: G, damage: f32| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007891c(victim as _, g as _, damage as _); } };
         ftColl_80079C70(f: &mut Fighter, victim: &mut Fighter, hit: *mut HitCapsule, count: i32) -> f32 = |f: &mut Fighter, victim: &mut Fighter, hit: *mut HitCapsule, count: i32| -> f32 { unsafe { crate::tu::ftcoll::ftcoll_80079c70(f as *mut _ as *mut _, victim as *mut _ as *mut _, hit as _, count as _) } };

@@ -52,7 +52,7 @@ pub mod ext {
         ftSs_Init_CreateThrowGrappleBeam(g: G, msid: i32, speed: f32) = |_, _, _| todo!("TODO(port) ftSs_Init_CreateThrowGrappleBeam (ftsamus)");
         ftColl_8007B7A4(g: G, n: i32) = |g: G, n: i32| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007b7a4(g as _, n as _); } };
         Geno_DefineTemplateSkeleton(kind: i32) -> i32 = crate::hooks::geno_define_template_skeleton;
-        Geno_DefineBaseKind(kind: i32) -> i32 = |_| todo!("TODO(pc geno) Geno_DefineBaseKind");
+        Geno_DefineBaseKind(kind: i32) -> i32 = |kind: i32| -> i32 { unsafe { crate::platform::Geno_DefineBaseKind(kind) } };
         ftAnim_SetAnimRate(g: G, rate: f32) = |g: G, rate: f32| { unsafe { let _ = crate::tu::ftanim::ftAnim_SetAnimRate(g as _, rate as _); } };
         ftCo_800DE974(g: G) = crate::tu::ftCo_Thrown::ftCo_800DE974;
         ftCommon_8007D7FC(f: &mut Fighter) = crate::ftcommon3::ftcommon_8007d7fc;

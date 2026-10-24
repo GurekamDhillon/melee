@@ -84,10 +84,10 @@ pub mod ext {
         ScriptGame_CapsNoFlinch(fp: &mut Fighter) -> i32 = |_| todo!("TODO(pc gameworld) ScriptGame_CapsNoFlinch");
         ScriptGame_ShockTake(fp: &mut Fighter, base: i32) -> i32 = |_, _| todo!("TODO(pc gameworld) ScriptGame_ShockTake");
         Geno_TakeStunBonus(fp: &mut Fighter) -> i32 = |_| todo!("TODO(pc geno) Geno_TakeStunBonus");
-        diag_geno_stun(port: i32, base: i32, bonus: i32) = |_, _, _| todo!("TODO(pc geno) diag_geno_stun");
-        Replay_UcfVersion(port: i32) -> i32 = |_| todo!("TODO(pc replay) Replay_UcfVersion");
+        diag_geno_stun(port: i32, base: i32, bonus: i32) = |port: i32, base: i32, bonus: i32| { unsafe { let _ = crate::platform::diag_geno_stun(port, base, bonus); } };
+        Replay_UcfVersion(port: i32) -> i32 = |port: i32| -> i32 { unsafe { crate::platform::Replay_UcfVersion(port) } };
         ftUcf_PadRaw(port: i32, which_y: i32, back: i32) -> i32 = crate::fighter::ftucf_pad_raw;
-        Mex_Enabled(name: &str) -> i32 = |_| todo!("TODO(pc mex) Mex_Enabled");
+        Mex_Enabled(name: &str) -> i32 = |name: &str| -> i32 { unsafe { crate::platform::Mex_Enabled(name) as i32 } };
         ftColl_8007AC68(kb_angle: u32) -> bool = |kb_angle: u32| -> bool { unsafe { crate::tu::ftcoll::ftcoll_8007ac68(kb_angle as _) } };
         ftCo_CalcYScaledKnockback(a: f32, scale: f32, b: f32) -> f32 = crate::tu::ftchangeparam::ftco_calc_y_scaled_knockback;
         Fighter_804D6524_x0() -> f32 = || crate::tu::ftchangeparam::ext::d6524().x0;

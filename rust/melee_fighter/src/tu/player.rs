@@ -40,7 +40,7 @@ pub mod ext {
     ext_fns! {
     fn Fighter_Create(a0: *mut plAllocInfo) -> *mut HSD_GObj => unsafe { crate::tu::fighter::Fighter_Create(&*(a0 as *const _)) as _ };
     fn Fighter_FirstInitialize_80067A84() => unsafe { let _ = crate::tu::fighter::Fighter_FirstInitialize_80067A84(); };
-    fn GenoDefine_InitKinds();
+    fn GenoDefine_InitKinds() => unsafe { let _ = crate::platform::GenoDefine_InitKinds(); };
     fn HSD_GObjFree(a0: *mut HSD_GObj);
     fn HSD_ObjAllocInit(a0: *mut HSD_ObjAllocData, a1: usize, a2: u32) => unsafe { let _ = melee_runtime::tu::objalloc::HSD_ObjAllocInit(a0 as _, a1 as _, a2 as _); };
     fn ft_80087AC0(a0: *mut HSD_GObj, a1: i32) => unsafe { let _ = crate::ft0877::ft_80087ac0(a0 as _, a1 as _); };

@@ -19,7 +19,7 @@ pub mod ext {
     pub fn HSD_ObjAlloc_fighter_x2040_alloc_data() -> *mut *mut HSD_DObj {
         todo!("TODO(group1 HSD) HSD_ObjAlloc(&fighter_x2040_alloc_data)")
     }
-    pub fn Geno_DefineIsNone(_kind: i32) -> i32 { todo!("TODO(pc geno) Geno_DefineIsNone") }
+    pub fn Geno_DefineIsNone(_kind: i32) -> i32 { unsafe { crate::platform::Geno_DefineIsNone(_kind) } }
     pub fn ftPartsPObjSetDefaultClass() { todo!("TODO(group3 ftparts) ftPartsPObjSetDefaultClass") }
     pub fn ftPartsPObjClearDefaultClass() { todo!("TODO(group3 ftparts) ftPartsPObjClearDefaultClass") }
     pub fn ft_800C85B8(_g: *mut HSD_GObj) { { unsafe { let _ = crate::tu::ftmetal::ft_800C85B8(_g as _); } return; } }

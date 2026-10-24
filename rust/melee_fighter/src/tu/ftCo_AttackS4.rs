@@ -42,8 +42,8 @@ pub mod ext {
         ftCo_800957F4(g: G, msid: i32) = |g: G, msid: i32| { unsafe { let _ = crate::tu::ftCo_ItemThrow::ftCo_800957F4(g as _, msid as _); } };
         ftCo_Attack_800CCF58(g: G, a: i32) = |g: G, a: i32| { unsafe { let _ = crate::tu::ftswing::ftCo_Attack_800CCF58(g as _, a as _); } };
         ftCo_Attack_800CDD14(g: G) = t!("ftCo_Attack_800CDD14 (ft_0CDD.c)");
-        Mex_HasFSmashHook(kind: i32) -> bool = |_| todo!("TODO(pc mex) Mex_HasFSmashHook");
-        Mex_OnFSmashDispatch(kind: i32, g: G, vanilla: *mut core::ffi::c_void) = |_, _, _| todo!("TODO(pc mex) Mex_OnFSmashDispatch");
+        Mex_HasFSmashHook(kind: i32) -> bool = |kind: i32| -> bool { unsafe { crate::platform::Mex_HasFSmashHook(kind) } };
+        Mex_OnFSmashDispatch(kind: i32, g: G, vanilla: *mut core::ffi::c_void) = |kind: i32, g: G, vanilla: *mut core::ffi::c_void| { unsafe { let _ = crate::platform::mex_dispatch(crate::platform::MEX_EVENT_ON_FSMASH, kind, g, vanilla); } };
         ftNs_AttackS4_Enter(g: G) = t!("ftNs_AttackS4_Enter (ftnessattacks4.c)");
         ftPe_AttackS4_Enter(g: G) = t!("ftPe_AttackS4_Enter (ftpeachattacks4.c)");
         ftGw_AttackS4_Enter(g: G) = t!("ftGw_AttackS4_Enter (ftgamewatchattacks4.c)");

@@ -45,8 +45,8 @@ pub mod ext {
     pub fn it_80285300(_i: G) -> *mut itSword_UnkBytes { unsafe { melee_items::itkinds13::it_80285300(&*(_i as *const _)) as _ } }
     pub fn it_802852B8(_i: G, _a: &mut f32, _b: &mut f32) { todo!("it_802852B8 (it/kinds/itsword.c)") }
     pub fn it_80285314(_i: G) -> *mut HSD_JObj { unsafe { melee_items::itkinds14::it_80285314(_i as _) as _ } }
-    pub fn Mex_FtTrailData(_g: G) -> *mut core::ffi::c_void { todo!("Mex_FtTrailData (pc/platform m-ex)") }
-    pub fn Geno_DefineBaseKind(_k: i32) -> i32 { todo!("Geno_DefineBaseKind (pc/geno)") }
+    pub fn Mex_FtTrailData(_g: G) -> *mut core::ffi::c_void { unsafe { crate::platform::Mex_FtTrailData(_g) } }
+    pub fn Geno_DefineBaseKind(_k: i32) -> i32 { unsafe { crate::platform::Geno_DefineBaseKind(_k) } }
     pub fn lb_8000B1CC(_j: *mut HSD_JObj, _off: Option<&Vec3>, _out: &mut Vec3) { todo!("lb_8000B1CC (lb/lb_00B0.c)") }
     pub fn HSD_CObjGetCurrent() -> *mut HSD_CObj { unsafe { melee_runtime::tu::cobj::HSD_CObjGetCurrent() as _ } }
     /// `HSD_CObjGetViewingMtxPtrDirect` (cobj.h static inline): `cobj->view_mtx`.

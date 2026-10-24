@@ -33,7 +33,7 @@ pub mod ext {
     }
     ext_fns! {
         // TARGET_PC `FT_TAP_JUMP_OK(fp)` = `!FighterControls_TapJumpOff(fp->player_id)`.
-        FighterControls_TapJumpOff(port: i32) -> i32 = |_| todo!("TODO(port) FighterControls_TapJumpOff (pc/platform)");
+        FighterControls_TapJumpOff(port: i32) -> i32 = |port: i32| -> i32 { unsafe { crate::platform::FighterControls_TapJumpOff(port) } };
         // TARGET_PC `FT_SCRIPT_JUMP(fp, field, base)` = `ScriptGame_ModJump(fp->player_id, ...)`.
         ScriptGame_ModJump(slot: i32, field: i32, base: f32) -> f32 = |_, _, _| todo!("TODO(port) ScriptGame_ModJump (pc/gameworld/script_game.c)");
         ftCo_800C5240(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_HammerWait::ftCo_800C5240(g as _) as _ } };

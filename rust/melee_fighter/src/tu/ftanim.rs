@@ -45,8 +45,8 @@ pub mod ext {
     pub fn HSD_ForeachAnim_SetLoop(_j: J, _mask: u32) { todo!("HSD_ForeachAnim (baselib/object.c)") }
     /// `HSD_ForeachAnim(jobj, JOBJ_TYPE, mask, HSD_AObjSetRate, AOBJ_ARG_AF, rate)`.
     pub fn HSD_ForeachAnim_SetRate(_j: J, _mask: u32, _rate: f32) { todo!("HSD_ForeachAnim (baselib/object.c)") }
-    pub fn HSD_MtxInverse(_src: *mut Mtx, _dst: *mut Mtx) { todo!("HSD_MtxInverse (baselib/mtx.c)") }
-    pub fn PSMTXMultVec(_m: *mut Mtx, _src: *const Vec3, _dst: *mut Vec3) { todo!("PSMTXMultVec (dolphin mtx)") }
+    pub fn HSD_MtxInverse(_src: *mut Mtx, _dst: *mut Mtx) { unsafe { let _ = crate::bridge::hsd_mtx_inverse(_src, _dst); } }
+    pub fn PSMTXMultVec(_m: *mut Mtx, _src: *const Vec3, _dst: *mut Vec3) { unsafe { let _ = crate::bridge::psmtx_mult_vec(_m, _src, _dst); } }
     pub fn lb_8000B1CC(_j: J, _off: *const Vec3, _out: *mut Vec3) { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(_j as _, _off as _, _out as _); } }
     pub fn lb_8000B074(_j: J) -> bool { unsafe { melee_runtime::tu::lb_00B0::lb_8000B074(_j as _) } }
     pub fn lb_8000B4FC(_j: J, _joint: *mut HSD_Joint) { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B4FC(_j as _, _joint as _); } }
@@ -70,15 +70,15 @@ pub mod ext {
     pub fn ftData_80085E50(_fp: *mut Fighter, _id: i32) -> *mut FigaTree { unsafe { crate::tu::ftdata::ftData_80085E50(_fp as _, _id as _) as _ } }
     pub fn ftData_80085FD4(_fp: *mut Fighter, _id: i32) -> *mut ftData_80085FD4_ret { unsafe { crate::tu::ftdata::ftData_80085FD4(&mut *(_fp as *mut _), _id as _) as _ } }
     /// `ftData_UnkCallbackPairs0[kind].x0` / `.x4`.
-    pub fn ftData_UnkCallbackPairs0_x0(_kind: i32) -> Option<unsafe extern "C" fn(G)> { todo!("ftData_UnkCallbackPairs0 (ft/ftdata.c)") }
-    pub fn ftData_UnkCallbackPairs0_x4(_kind: i32) -> Option<unsafe extern "C" fn(G, i32, f32)> { todo!("ftData_UnkCallbackPairs0 (ft/ftdata.c)") }
+    pub fn ftData_UnkCallbackPairs0_x0(_kind: i32) -> Option<unsafe extern "C" fn(G)> { unsafe { crate::tu::ftdata::ftData_UnkCallbackPairs0[_kind as usize].x0 } }
+    pub fn ftData_UnkCallbackPairs0_x4(_kind: i32) -> Option<unsafe extern "C" fn(G, i32, f32)> { unsafe { crate::tu::ftdata::ftData_UnkCallbackPairs0[_kind as usize].x4 } }
     /// `CostumeListsForeachCharacter[kind].costume_list[costume].x4`.
-    pub fn costume_matanim(_kind: i32, _costume: u8) -> *mut HSD_MatAnimJoint { todo!("CostumeListsForeachCharacter (ft/ftdata.c)") }
+    pub fn costume_matanim(_kind: i32, _costume: u8) -> *mut HSD_MatAnimJoint { unsafe { (*crate::tu::ftdata::CostumeListsForeachCharacter[_kind as usize].costume_list.add(_costume as usize)).x4 } }
     /// `FT_COSTUME_VIS_IDX(fp)`.
     pub fn FT_COSTUME_VIS_IDX(_fp: *mut Fighter) -> u32 { todo!("FT_COSTUME_VIS_IDX (ft/ftparts.h)") }
     pub fn ftAction_80073240(_g: G) { unsafe { let _ = crate::tu::ftaction::ftAction_80073240(_g as _); } }
     pub fn ftCo_800DB500(_g: G) { unsafe { let _ = crate::tu::ftCo_CapturePulled::ftCo_800DB500(_g as _); } }
-    pub fn Geno_DefineIsNone(_kind: i32) -> i32 { todo!("Geno_DefineIsNone (pc/geno)") }
+    pub fn Geno_DefineIsNone(_kind: i32) -> i32 { unsafe { crate::platform::Geno_DefineIsNone(_kind) } }
     pub fn OSReport(_s: &str) {}
 }
 

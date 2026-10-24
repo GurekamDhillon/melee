@@ -37,7 +37,7 @@ pub mod ext {
         ScriptGame_ModValue(slot: i32, field: i32, base: f32) -> f32 = crate::hooks::script_mod_value;
         // TARGET_PC `FT_CAPS_MAX_JUMPS(fp)` (pc/gameworld/script_fighter_caps.h).
         ScriptGame_CapsMaxJumps(fp: &Fighter) -> i32 = |_| todo!("TODO(port) ScriptGame_CapsMaxJumps (pc/gameworld/script_game.c)");
-        Mex_OnDoubleJumpDispatch(kind: i32, g: G, vanilla: *mut core::ffi::c_void) = |_, _, _| todo!("TODO(port) Mex_OnDoubleJumpDispatch (pc/platform m-ex)");
+        Mex_OnDoubleJumpDispatch(kind: i32, g: G, vanilla: *mut core::ffi::c_void) = |kind: i32, g: G, vanilla: *mut core::ffi::c_void| { unsafe { let _ = crate::platform::mex_dispatch(crate::platform::MEX_EVENT_ON_DOUBLE_JUMP, kind, g, vanilla); } };
         HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(group1 jobj) HSD_JObjSetMtxDirtySub");
         ftCo_800C5240(g: G) -> bool = |g| crate::tu::ftCo_Jump::ext::ftCo_800C5240(g);
         ftCo_800D730C(g: G, arg1: bool) -> bool = crate::tu::ftCo_JumpAerialF1::ftCo_800D730C;

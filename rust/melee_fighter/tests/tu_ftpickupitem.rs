@@ -29,7 +29,7 @@ fn iid(g: *mut HSD_GObj) -> u32 {
 fn isf(fr: &Fighter) -> u32 { (fr as *const Fighter == f() as *const Fighter) as u32 }
 fn r10() -> f32 { rg() * 10.0 / 3.0 }
 fn q(v: &mut Quaternion) { v.x = r10(); v.y = r10(); v.z = r10(); v.w = r10(); }
-fn pickup_ext(g: *mut HSD_GObj, a: i32) { t(25); t(iid(g)); t(a as u32) }
+unsafe extern "C" fn pickup_ext(g: *mut HSD_GObj, a: i32) { t(25); t(iid(g)); t(a as u32) }
 
 #[test]
 fn ftpickupitem_matches_c() {
@@ -74,7 +74,7 @@ fn ftpickupitem_matches_c() {
         });
         hk::ftCo_800974C4 = Some(|_| t(23));
         hk::pl_8003E17C = Some(|s, sub, i| { t(24); t(s as u32); t(sub as u32); t(iid(i)) });
-        hk::ftData_OnItemPickupExt = Some(|k| if k == 0 || k == 2 { Some(pickup_ext as fn(*mut HSD_GObj, i32)) } else { None });
+        hk::ftData_OnItemPickupExt = Some(|k| if k == 0 || k == 2 { Some(pickup_ext as unsafe extern "C" fn(*mut HSD_GObj, i32)) } else { None });
         hk::Mex_OnItemPickupDispatch = Some(|k, g, i, v| { t(26); t(k as u32); t(iid(g as _)); t(iid(i as _)); t(v.is_null() as u32) });
         hk::pl_8003E854 = Some(|s, sub, i| { t(27); t(s as u32); t(sub as u32); t(iid(i)) });
         hk::Item_8026AB54 = Some(|i, o, p| { t(28); t(iid(i)); t(iid(o)); t(p as u32) });

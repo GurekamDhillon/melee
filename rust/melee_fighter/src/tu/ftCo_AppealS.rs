@@ -37,12 +37,12 @@ pub mod ext {
         ftData_80085FD4(fp: &mut Fighter, anim_id: i32) -> usize = crate::hooks::ftdata_80085fd4_x8;
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         // `DbLevel` (db.c global).
-        DbLevel() -> i32 = || todo!("TODO(port) DbLevel (db.c)");
+        DbLevel() -> i32 = || -> i32 { unsafe { crate::platform::DbLevel() } };
         ftPe_Init_8011B93C(g: G) = |_| todo!("TODO(port) ftPe_Init_8011B93C (ftpeach)");
         ftZd_Init_801395C8(g: G) = |_| todo!("TODO(port) ftZd_Init_801395C8 (ftzelda)");
         ftKb_MexKirbyLike(kind: i32) -> i32 = |_| todo!("TODO(port) ftKb_MexKirbyLike (ftkirby.c)");
         ftKb_SpecialN_800F5D04(g: G, b: bool) = |_, _| todo!("TODO(port) ftKb_SpecialN_800F5D04 (ftkirbyspecialn.c)");
-        Mex_OnTauntDispatch(kind: i32, g: G, vanilla: *mut core::ffi::c_void) = |_, _, _| todo!("TODO(pc mex) Mex_OnTauntDispatch");
+        Mex_OnTauntDispatch(kind: i32, g: G, vanilla: *mut core::ffi::c_void) = |kind: i32, g: G, vanilla: *mut core::ffi::c_void| { unsafe { let _ = crate::platform::mex_dispatch(crate::platform::MEX_EVENT_ON_TAUNT, kind, g, vanilla); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ft_8008A2BC(g: G) = crate::hooks::ft_8008a2bc;
         ftCo_SpecialS_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_SpecialS::ftCo_SpecialS_CheckInput(g as _) as _ } };

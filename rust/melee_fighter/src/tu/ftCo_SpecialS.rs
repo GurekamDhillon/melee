@@ -41,11 +41,11 @@ pub mod ext {
         // TARGET_PC `FT_CAPS_ACTION_ALLOWED(fp, flag)`.
         ScriptGame_CapsActionAllowed(fp: &Fighter, flag: i32) -> i32 = |_, _| todo!("TODO(port) ScriptGame_CapsActionAllowed (pc/gameworld/script_game.c)");
         // `ftData_SpecialS[kind]` (ftdata.c table).
-        ftData_SpecialS(kind: u32) -> HSD_GObjEvent = |_| todo!("TODO(port) ftData_SpecialS (ftdata.c)");
+        ftData_SpecialS(kind: u32) -> HSD_GObjEvent = |kind: u32| -> HSD_GObjEvent { unsafe { crate::tu::ftdata::ftData_SpecialS[kind as usize] } };
         ftCommon_UpdateFacing(fp: &mut Fighter) = |fp: &mut Fighter| { unsafe { let _ = crate::ftcommon::update_facing(fp); } };
         ft_GetGroundFrictionMultiplier(fp: &mut Fighter) -> f32 = |fp: &mut Fighter| -> f32 { unsafe { crate::tu::ft_081b::ft_get_ground_friction_multiplier(fp) } };
         Geno_SpecialEnter(g: G, which: i32) -> i32 = |_, _| todo!("TODO(pc geno) Geno_SpecialEnter");
-        Mex_SpecialSDispatch(kind: i32, g: G, vanilla: HSD_GObjEvent) = |_, _, _| todo!("TODO(pc mex) Mex_SpecialSDispatch");
+        Mex_SpecialSDispatch(kind: i32, g: G, vanilla: HSD_GObjEvent) = |kind: i32, g: G, vanilla: HSD_GObjEvent| { unsafe { let _ = crate::platform::mex_dispatch_ev(crate::platform::MEX_EVENT_SPECIAL_S, kind, g, vanilla); } };
     }
 }
 

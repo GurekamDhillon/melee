@@ -58,7 +58,7 @@ pub mod ext {
         ft_80084F3C(g: G) = crate::ft084e::ft_80084f3c;
         ft_80084104(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_081b::ft_80084104(g as _); } };
         ft_800847D0(g: G, b: *mut ftCollisionBox) = |g: G, b: *mut ftCollisionBox| { unsafe { let _ = crate::tu::ft_081b::ft_800847d0(g as _, b as _); } };
-        Replay_UcfVersion(port: i32) -> i32 = |_| todo!("TODO(pc) Replay_UcfVersion (pc replay)");
+        Replay_UcfVersion(port: i32) -> i32 = |port: i32| -> i32 { unsafe { crate::platform::Replay_UcfVersion(port) } };
     }
 }
 

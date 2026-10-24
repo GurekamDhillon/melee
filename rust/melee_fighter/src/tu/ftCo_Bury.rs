@@ -66,7 +66,7 @@ pub mod ext {
         atan2f(y: f32, x: f32) -> f32 = |y: f32, x: f32| -> f32 { unsafe { melee_runtime::lbtrigf::atan2f(y as _, x as _) as _ } };
         HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = t!("HSD_JObjSetMtxDirtySub (jobj.c)");
         mpGetSpeed(line: i32, pos: *mut Vec3, speed: *mut Vec3) -> bool = |_, _, _| todo!("TODO(port) mpGetSpeed (mplib.c)");
-        PSVECAdd(a: *mut Vec3, b: *mut Vec3, c: *mut Vec3) = |_, _, _| todo!("TODO(port) PSVECAdd (mtx)");
+        PSVECAdd(a: *mut Vec3, b: *mut Vec3, c: *mut Vec3) = |a: *mut Vec3, b: *mut Vec3, c: *mut Vec3| { unsafe { let _ = crate::bridge::psvec_add(a, b, c); } };
         ft_80082888(g: G, b: *mut ftCollisionBox) -> bool = |g: G, b: *mut ftCollisionBox| -> bool { unsafe { crate::tu::ft_081b::ft_80082888(g as _, b as _) as _ } };
         ftCo_800C5240(g: G) -> bool = t!("ftCo_800C5240 (ftCo_HammerWait.c)");
         ftCo_800C5A98(g: G) = t!("ftCo_800C5A98 (ftCo_HammerJump.c)");

@@ -55,6 +55,17 @@ use std::sync::Arc;
 
 /// `ftCo_MS_DeadDown`.
 const FTCO_MS_DEAD_DOWN: i32 = 0;
+/// `ftCo_MS_KneeBend` / `JumpF` / `JumpB` (ftmotionstates.c 24-26) and their rows (15-17).
+const FTCO_MS_KNEE_BEND: i32 = 24;
+const FTCO_MS_JUMP_F: i32 = 25;
+const FTCO_MS_JUMP_B: i32 = 26;
+const FTCO_SM_KNEE_BEND: u32 = 15;
+/// `ftCo_MS_JumpAerialF` / `B`, `FallAerial` and the rows (18, 19; 23-25).
+const FTCO_MS_JUMP_AERIAL_F: i32 = 27;
+const FTCO_MS_JUMP_AERIAL_B: i32 = 28;
+const FTCO_MS_FALL_AERIAL: i32 = 32;
+const FTCO_SM_JUMP_AERIAL_F: u32 = 18;
+const FTCO_SM_FALL_AERIAL: u32 = 23;
 /// `ftCo_MS_GuardOn` .. `GuardReflect` (ftmotionstates.c 178-182) and their rows
 /// (`ftCo_SM_GuardOn` 37, `Guard` 38, `GuardOff` 39).
 const FTCO_MS_GUARD_ON: i32 = 178;
@@ -204,6 +215,15 @@ pub struct Player {
     hud_randomize: bool,
     /// `fp->mv.co.guard` and `x221B_b0` (the shield is up).
     guard: GuardVars,
+    /// `fp->mv.co.kneebend` / `fp->mv.co.jump`.
+    jump: JumpVars,
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+pub struct JumpVars {
+    pub jump_input: i32,
+    pub is_short_hop: bool,
+    pub x4: bool,
 }
 
 /// `fp->mv.co.guard` (ft/kinds/ftCommon/types.h) plus `fp->x221B_b0`, whose ft_0877 setter
@@ -280,7 +300,9 @@ pub enum EfOp {
 const EF_SPAWN_ATTACH_PARAM: u8 = 3;
 const EF_SPAWN_POS_OFFSET_PARAM: u8 = 5;
 /// A direct `efSync_Spawn` (not queued): kind 0 here.
-const EF_SPAWN_SYNC: u8 = 0;
+const EF_SPAWN_SYNC: u8 = 99;
+/// `EF_SPAWN_ATTACH` (ef/types.h): `(jobj)`.
+const EF_SPAWN_ATTACH: u8 = 0;
 
 /// `p_ftCommonData` words the entry states read (PlCo.dat `ftLoadCommonData`, ft/types.h).
 #[derive(Clone, Copy, Debug)]
@@ -357,6 +379,9 @@ pub struct VsMatch {
     appsrt_hook_lists: Vec<CmdRef>,
     /// `Stage_GetBlastZone{Left,Right,Top,Bottom}Offset()` (the stage's dead range).
     blast: BlastZone,
+    /// Fighter parts that generators follow: (`JObjRef`, player index, part). Their matrices in
+    /// `joint_mtx` are the part's world translation (no rotation: particle positions are not hashed).
+    fighter_jobjs: Vec<(JObjRef, usize, usize)>,
 }
 
 /// `Stage_GetBlastZone*Offset()`: `stage_info.blast_zone.* + cam_info.cam_{x,y}_offset`
@@ -788,6 +813,7 @@ impl VsMatch {
                 dead_timer: 0,
                 hud_randomize: false,
                 guard: GuardVars::default(),
+                jump: JumpVars::default(),
             });
             // ... Fighter_ChangeMotionState(Entry): no animation, cur_anim_frame -1;
             // ftaction.c:1408 frame_count = cur_anim_frame + x898_unk. Then ft_80084CB0: the
@@ -831,7 +857,7 @@ impl VsMatch {
                 }
             });
         }
-        Ok(Self { players, ground, cg, pads: [input::PadStatus::default(); 4], go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists, blast })
+        Ok(Self { players, ground, cg, pads: [input::PadStatus::default(); 4], go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists, blast, fighter_jobjs: Vec::new() })
     }
 
     /// The m-ex fighters' code-run report (crate::mex), one block per such fighter.
@@ -1023,6 +1049,20 @@ impl VsMatch {
                     }
                 }
                 m if is_guard_motion(m) => guard_anim(p, &mut self.rand)?,
+                FTCO_MS_KNEE_BEND => kneebend_anim(p, &mut self.rand)?,
+                m if is_jump_motion(m) => {
+                    // ftCo_Jump_Anim.
+                    if !p.skel.frames_remaining() {
+                        fall_enter(p, &mut self.rand)?;
+                    }
+                }
+                m if is_jump_aerial_motion(m) => {
+                    // ftCo_JumpAerial_Anim.
+                    if !p.skel.frames_remaining() {
+                        fall_aerial_enter(p, &mut self.rand)?;
+                    }
+                }
+                FTCO_MS_FALL_AERIAL => fall_anim(p)?,
                 FTCO_MS_DEAD_DOWN => {
                     // ftCo_DeadDown_Anim: the countdown, then ftCo_800BFD9C (Sleep + the respawn).
                     p.dead_timer -= 1;
@@ -1088,8 +1128,8 @@ impl VsMatch {
                     e.x28 = e.x20 * t;
                     p.fp.cur_pos.y = e.x4 + e.x28;
                 }
-                FTCO_MS_FALL => {
-                    // ftCo_Fall_Phys -> ft_80084DB0: fall-fast check, fall, air drift.
+                FTCO_MS_FALL | FTCO_MS_FALL_AERIAL | FTCO_MS_JUMP_AERIAL_F | FTCO_MS_JUMP_AERIAL_B => {
+                    // ftCo_Fall_Phys / FallAerial_Phys / JumpAerial_Phys -> ft_80084DB0: fall-fast check, fall, air drift.
                     let f = &mut *p.fp;
                     fc::check_fall_fast(f);
                     if f.fall_fast() != 0 {
@@ -1186,7 +1226,8 @@ impl VsMatch {
                         ftca_800e3eac(p)?;
                     }
                 }
-                m if m == FTCO_MS_LANDING || m == FTCO_MS_TURN || m == FTCO_MS_WAIT || is_guard_motion(m) => {
+                m if is_jump_motion(m) => jump_phys(p),
+                m if m == FTCO_MS_LANDING || m == FTCO_MS_TURN || m == FTCO_MS_WAIT || is_guard_motion(m) || m == FTCO_MS_KNEE_BEND => {
                     // (Wait: then ftColl_8007AEE0, a hurtbox reset; not hashed.)
                     // ftCo_Landing_Phys / ftCo_Turn_Phys -> ft_80084F3C: ground friction, then the
                     // self velocity along the floor.
@@ -1242,7 +1283,7 @@ impl VsMatch {
                         }
                     }
                 }
-                FTCO_MS_FALL => {
+                FTCO_MS_FALL | FTCO_MS_FALL_AERIAL => {
                     // ftCo_Fall_Coll: ft_800831CC(gobj, ftCo_80096CC8, ft_80082B1C).
                     if ft_800831cc(&mut self.ground, &mut self.cg, p)? {
                         ft_80082b1c(&mut self.ground, p, c_common, &mut self.rand)?;
@@ -1319,7 +1360,16 @@ impl VsMatch {
                         return Err("Falcon Kick into a wall (SpecialHiThrow1) not ported".into());
                     }
                 }
-                m if m == FTCO_MS_TURN || is_guard_motion(m) => {
+                m if is_jump_motion(m) || is_jump_aerial_motion(m) => {
+                    // ftCo_Jump_Coll: ft_800835B0(gobj, ftCo_80096CC8, ft_80082B1C): the Fall
+                    // collision, then a ceiling hug (ftCo_8009EF68).
+                    if ft_800831cc(&mut self.ground, &mut self.cg, p)? {
+                        ft_80082b1c(&mut self.ground, p, c_common, &mut self.rand)?;
+                    } else if p.fp.coll_data.env_flags & mc::COLLIDE_CEILING_HUG != 0 {
+                        return Err("ftCo_8009EF68 (StopCeil) not ported".into());
+                    }
+                }
+                m if m == FTCO_MS_TURN || m == FTCO_MS_KNEE_BEND || is_guard_motion(m) => {
                     // ftCo_Turn_Coll -> ft_80083F88 / the guard states' ft_800845B4: ft_80082708
                     // (mpColl_8004B108); no floor -> Fall (a ledge slip -> ftCo_8009F39C).
                     let joints = {
@@ -1494,6 +1544,19 @@ impl VsMatch {
                 // angle, update = efLib_Cb_SetRotYZ_FromParamZ_FighterDir (rotation: render only).
                 self.ef_create(0xFA2, i, 1.0, None, None)
             }
+            (EF_SPAWN_ATTACH, g @ (0x402 | 0x403)) => {
+                // efAsync_Dispatch: hsd_8039EFAC(0, 0, 0x59 / 0x5E, joint): a generator following
+                // the fighter's part (its matrix is refreshed from the skeleton every frame).
+                let r: JObjRef = ((0x80 + i as u32) << 24) | q.part as u32;
+                if !self.fighter_jobjs.iter().any(|e| e.0 == r) {
+                    self.fighter_jobjs.push((r, i, q.part));
+                }
+                self.refresh_fighter_jobj(r, i, q.part);
+                let id = if g == 0x402 { 0x59 } else { 0x5E };
+                let mut host = Host { rand: &mut self.rand, joint_mtx: &self.joint_mtx, appsrt_hook_lists: &self.appsrt_hook_lists };
+                self.ps.gen_create_on_jobj(&mut host, 0, 0, id, Some(r));
+                Ok(())
+            }
             (EF_SPAWN_SYNC, 1047 | 1048) => {
                 // efSync_Spawn(0x417 / 0x418, gobj, shield joint, colour) -> efLib_Create_Attach(0xB / 0xC).
                 let id = if q.gfx == 1047 { 0xB } else { 0xC };
@@ -1612,6 +1675,18 @@ impl VsMatch {
         self.ef_create(0x19, i, cd_x4f4, Some(pos), Some(0.0))?;
         // ftCo_800D4E50: coins (not a coin match).
         Ok(())
+    }
+
+    /// Refresh the matrix of a followed fighter part.
+    fn refresh_fighter_jobj(&mut self, r: JObjRef, i: usize, part: usize) {
+        let p = &mut self.players[i];
+        let j = p.skel.part(part);
+        let w = p.skel.world_pos(j);
+        let mut m = melee_runtime::mtx::identity();
+        m[0][3] = w.x;
+        m[1][3] = w.y;
+        m[2][3] = w.z;
+        self.joint_mtx.insert(r, m);
     }
 
     /// `efLib_DestroyAll(gobj)`: every effect of player `i` freed after
@@ -1899,9 +1974,9 @@ fn any_input(fp: &Fighter) -> bool {
 fn input_cb(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     match p.fp.motion_id {
         FTCO_MS_ENTRY | FTCO_MS_ENTRY_START | FTCO_MS_ENTRY_END => Ok(()), // empty IASAs
-        FTCO_MS_FALL => fall_iasa(p),
+        FTCO_MS_FALL => fall_iasa(p, rand),
         FTCO_MS_LANDING => landing_iasa(p, rand),
-        FTCO_MS_TURN => turn_iasa(p),
+        FTCO_MS_TURN => turn_iasa(p, rand),
         FTCO_MS_WAIT => wait_iasa(p, rand),
         m if (FTCO_MS_WALK_SLOW..=FTCO_MS_WALK_FAST).contains(&m) => walk_iasa(p, rand),
         FTCA_MS_SPECIAL_LW | FTCA_MS_SPECIAL_LW_END | FTCA_MS_SPECIAL_LW_END_AIR => Ok(()), // input_cb NULL
@@ -1909,6 +1984,9 @@ fn input_cb(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         FTCO_MS_CATCH => Ok(()), // ftCo_Catch_IASA is empty
         FTCO_MS_DEAD_DOWN => Ok(()), // input_cb NULL
         m if is_guard_motion(m) => guard_iasa(p, rand),
+        FTCO_MS_KNEE_BEND => kneebend_iasa(p),
+        m if is_jump_motion(m) || is_jump_aerial_motion(m) => jump_iasa(p, rand),
+        FTCO_MS_FALL_AERIAL => fall_iasa(p, rand),
         m => Err(format!("player {}: input_cb of motion {m} not ported", p.slot + 1)),
     }
 }
@@ -1917,20 +1995,20 @@ fn input_cb(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
 /// jump needs a press (B: SpecialAir; A: AttackAir / item checks; L/R: EscapeAir; X/Y: the
 /// jump) or the C-stick (`ftCo_800DF478`); the jump also fires on a tap of the stick up
 /// (`ftCo_JumpAerial_CheckInput`). Any of those stops the run.
-fn fall_iasa(p: &mut Player) -> Result<(), String> {
-    let cd = melee_fighter::hooks::common_data();
+fn fall_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     let fp = &*p.fp;
     let i = &fp.input;
     if !fp.item_gobj.is_null() {
         return Err("ftCo_Fall_IASA with an item not ported".into());
     }
-    if i.pressed_buttons & !PAD_STICK_DIRS != 0 || i.cstick[0].x != 0.0 || i.cstick[0].y != 0.0 {
+    if fp.x686 == 0 || fp.x687 == 0 || fp.x688 == 0 || fp.x689 == 0 {
+        return Err(format!("player {}: ftCo_SpecialAir_CheckInput not ported", p.slot + 1));
+    }
+    if i.pressed_buttons & !(PAD_STICK_DIRS | input::HSD_PAD_XY) != 0 || i.cstick[0].x != 0.0 || i.cstick[0].y != 0.0 {
         return Err(format!("player {}: ftCo_Fall_IASA with a press / C-stick: not ported", p.slot + 1));
     }
-    if i.lstick[0].y >= cd.tap_jump_threshold && (fp.active_timer.lstick.y as i32) < cd.tap_jump_window as i32 {
-        return Err(format!("player {}: ftCo_JumpAerial_CheckInput (tap) not ported", p.slot + 1));
-    }
-    Ok(())
+    // ftCo_800CB870: the double jump.
+    ftco_800cb870(p, rand).map(|_| ())
 }
 
 /// `ftCo_Landing_IASA`.
@@ -1950,7 +2028,8 @@ fn landing_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     }
     // ftCo_Jump_CheckInput (tap jump).
     if jump_get_input(fp) {
-        return Err(format!("player {}: ftCo_Jump_CheckInput (KneeBend) not ported", p.slot + 1));
+        jump_check_input(p, rand)?;
+        return Ok(());
     }
     // ftCo_Dash_CheckInput.
     if fc::abs_c(i.lstick[0].x) >= cd.dash_smash_stick_threshold && (fp.active_timer.lstick.x as i32) < cd.dash_smash_window as i32 {
@@ -1985,7 +2064,8 @@ fn ground_stick_gate(p: &mut Player, rand: &mut HsdRand, what: &str) -> Result<b
         return Err(format!("player {}: {what} with a button / C-stick / trigger: not ported", p.slot + 1));
     }
     if jump_get_input(fp) {
-        return Err(format!("player {}: ftCo_Jump_CheckInput (KneeBend) not ported", p.slot + 1));
+        jump_check_input(p, rand)?;
+        return Ok(true);
     }
     if fc::abs_c(i.lstick[0].x) >= cd.dash_smash_stick_threshold && (fp.active_timer.lstick.x as i32) < cd.dash_smash_window as i32 {
         return Err(format!("player {}: ftCo_Dash_CheckInput (Dash / smash turn) not ported", p.slot + 1));
@@ -2199,6 +2279,228 @@ fn wait_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
 }
 
 
+
+// ---------------------------------------------------------------------------------------------
+// ftCo_Jump.c / ftCo_KneeBend.c: the ground jump (KneeBend -> JumpF / JumpB).
+// ---------------------------------------------------------------------------------------------
+
+/// `ftCo_JumpInput` (ftCommon/forward.h).
+const JUMP_INPUT_NONE: i32 = 0;
+const JUMP_INPUT_LSTICK: i32 = 1;
+const JUMP_INPUT_CSTICK: i32 = 2;
+const JUMP_INPUT_XY: i32 = 3;
+
+fn is_jump_motion(m: i32) -> bool {
+    m == FTCO_MS_JUMP_F || m == FTCO_MS_JUMP_B
+}
+
+fn is_jump_aerial_motion(m: i32) -> bool {
+    m == FTCO_MS_JUMP_AERIAL_F || m == FTCO_MS_JUMP_AERIAL_B
+}
+
+/// `ftCo_Jump_GetInput` (tap jump on).
+fn jump_input_kind(fp: &Fighter) -> i32 {
+    let cd = melee_fighter::hooks::common_data();
+    if fp.input.lstick[0].y >= cd.tap_jump_threshold && (fp.active_timer.lstick.y as i32) < cd.tap_jump_window as i32 {
+        return JUMP_INPUT_LSTICK;
+    }
+    if fp.input.pressed_buttons & input::HSD_PAD_XY != 0 {
+        return JUMP_INPUT_XY;
+    }
+    JUMP_INPUT_NONE
+}
+
+/// `ftCo_Jump_CheckInput` (no item): the KneeBend when a jump was asked for.
+fn jump_check_input(p: &mut Player, rand: &mut HsdRand) -> Result<bool, String> {
+    if !p.fp.item_gobj.is_null() {
+        return Err("ftCo_Jump_CheckInput with an item (ftCo_800C5240) not ported".into());
+    }
+    let k = jump_input_kind(&p.fp);
+    if k != JUMP_INPUT_NONE {
+        kneebend_enter(p, k, rand)?;
+        return Ok(true);
+    }
+    Ok(false)
+}
+
+/// `ftCo_800CB024`: `ftCo_Jump_CheckInput`, then a C-stick flick up.
+fn ftco_800cb024(p: &mut Player, rand: &mut HsdRand) -> Result<bool, String> {
+    if jump_check_input(p, rand)? {
+        return Ok(true);
+    }
+    if p.fp.input.cstick[0].y >= melee_fighter::hooks::common_data().tap_jump_threshold {
+        kneebend_enter(p, JUMP_INPUT_CSTICK, rand)?;
+        return Ok(true);
+    }
+    Ok(false)
+}
+
+/// `ftCo_KneeBend_Enter`.
+fn kneebend_enter(p: &mut Player, input_kind: i32, rand: &mut HsdRand) -> Result<(), String> {
+    p.jump.jump_input = input_kind;
+    p.jump.is_short_hop = false;
+    let row = load_row(p, FTCO_SM_KNEE_BEND)?;
+    change_motion_state(p, FTCO_MS_KNEE_BEND, row.as_ref(), rand)
+}
+
+/// `ftCo_KneeBend_Anim`.
+fn kneebend_anim(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    if p.fp.cur_anim_frame >= p.fp.co_attrs.jump_startup_time || !p.skel.frames_remaining() {
+        // ft_800D2D0C (a screw-attack item) is false: ftCo_Jump_Enter.
+        jump_enter(p, rand)?;
+    }
+    Ok(())
+}
+
+/// `ftCo_KneeBend_IASA`.
+fn kneebend_iasa(p: &mut Player) -> Result<(), String> {
+    let cd = melee_fighter::hooks::common_data();
+    let who = p.slot + 1;
+    let fp = &*p.fp;
+    let i = &fp.input;
+    if fp.x686 == 0 {
+        return Err(format!("player {who}: ftCo_Attack100_CheckInput (up-B) not ported"));
+    }
+    if i.held_buttons[0] & input::HSD_PAD_LR != 0 && i.pressed_buttons & input::HSD_PAD_A != 0 {
+        return Err(format!("player {who}: ftCo_Catch_CheckInput out of KneeBend not ported"));
+    }
+    if (i.pressed_buttons & input::HSD_PAD_A != 0 && i.lstick[0].y >= cd.xCC) || (i.cstick[1].y < cd.xCC && i.cstick[0].y >= cd.xCC) {
+        return Err(format!("player {who}: ftCo_AttackHi4 out of KneeBend not ported"));
+    }
+    // ftCo_KneeBend_Check_ShortHop.
+    let released = (i.held_buttons[0] & input::HSD_PAD_XY == 0 && p.jump.jump_input == JUMP_INPUT_XY)
+        || (i.lstick[0].y < cd.tap_jump_release_threshold && p.jump.jump_input == JUMP_INPUT_LSTICK)
+        || (i.cstick[0].y < cd.tap_jump_release_threshold && p.jump.jump_input == JUMP_INPUT_CSTICK);
+    if released {
+        p.jump.is_short_hop = true;
+    }
+    Ok(())
+}
+
+/// `ftCo_Jump_Enter` (+ `ftCo_800CB110(gobj, true, 1.0)`).
+fn jump_enter(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    let cd = melee_fighter::hooks::common_data();
+    melee_fighter::ftcommon2::ftcommon_8007d5d4(&mut p.fp);
+    let fp = &*p.fp;
+    let (msid, smid) = if fp.input.lstick[0].x * fp.facing_dir > -cd.x78 { (FTCO_MS_JUMP_F, FTCO_SM_KNEE_BEND + 1) } else { (FTCO_MS_JUMP_B, FTCO_SM_KNEE_BEND + 2) };
+    let row = load_row(p, smid)?;
+    change_motion_state(p, msid, row.as_ref(), rand)?;
+    // ftCo_800CB110(gobj, true, 1.0): jump_mul = 1.
+    p.jump.x4 = false;
+    let jump_mul = 1.0f32;
+    let hop = p.jump.is_short_hop;
+    let fp = &mut *p.fp;
+    let a = &fp.co_attrs;
+    let (hi, vi, hv, mom, hmax) = (a.jump_h_initial_velocity, a.jump_v_initial_velocity, a.hop_v_initial_velocity, a.ground_to_air_jump_momentum_multiplier, a.jump_h_max_velocity);
+    fp.self_vel.x *= mom * jump_mul;
+    fp.self_vel.y *= cd.x438;
+    fp.self_vel.z = 0.0;
+    let h_init_v = fp.input.lstick[0].x * hi;
+    let mut h_vel = jump_mul * h_init_v;
+    let v_init_v = if hop { hv * jump_mul } else { vi * jump_mul };
+    fp.self_vel.y = v_init_v;
+    h_vel = fp.self_vel.x + h_vel;
+    let h_max_vel = hmax * jump_mul;
+    if fc::abs_c(h_vel) > h_max_vel {
+        h_vel = if h_vel < 0.0 { -h_max_vel } else { h_max_vel };
+    }
+    fp.self_vel.x = h_vel;
+    fp.active_timer.lstick.y = 0xFE;
+    // (the jump SFX: ft_800881D8 / ft_PlaySFX, no draws.)
+    fp.set_x2227_b0(1);
+    Ok(())
+}
+
+/// `ftCo_Jump_IASA` / `ftCo_JumpAerial_IASA`: the air checks (specials, air dodge, air attack)
+/// are refused when an input would fire; then the double jump (`ftCo_800CB870`).
+fn jump_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    let who = p.slot + 1;
+    let fp = &*p.fp;
+    let i = &fp.input;
+    if !fp.item_gobj.is_null() {
+        return Err("ftCo_Jump_IASA with an item not ported".into());
+    }
+    if fp.x686 == 0 || fp.x687 == 0 || fp.x688 == 0 || fp.x689 == 0 {
+        return Err(format!("player {who}: ftCo_SpecialAir_CheckInput not ported"));
+    }
+    if i.pressed_buttons & !(PAD_STICK_DIRS | input::HSD_PAD_XY) != 0 || i.cstick[0].x != 0.0 || i.cstick[0].y != 0.0 || i.triggers[0] != 0.0 {
+        return Err(format!("player {who}: ftCo_Jump_IASA with a press / C-stick / trigger: not ported"));
+    }
+    ftco_800cb870(p, rand).map(|_| ())
+}
+
+/// `ftCo_800CB870` -> `ftCo_JumpAerial_CheckInput(gobj, false)`.
+fn ftco_800cb870(p: &mut Player, rand: &mut HsdRand) -> Result<bool, String> {
+    let cd = melee_fighter::hooks::common_data();
+    let fp = &*p.fp;
+    if fp.can_multijump() != 0 {
+        return Err(format!("player {}: ftCo_800D730C (multi-jump) not ported", p.slot + 1));
+    }
+    // ft_did_jump(fp, false).
+    let tap = fp.input.lstick[0].y >= cd.tap_jump_threshold && (fp.active_timer.lstick.y as i32) < cd.tap_jump_window as i32;
+    if (fp.x1968_jumpsUsed as i32) < fp.co_attrs.max_jumps as i32 && (tap || fp.input.pressed_buttons & input::HSD_PAD_XY != 0) {
+        match fp.kind {
+            melee_types::Ft_Kind_Ness | melee_types::Ft_Kind_Yoshi | melee_types::Ft_Kind_Peach | melee_types::Ft_Kind_Mewtwo => {
+                return Err(format!("player {}: character-specific double jump not ported", p.slot + 1));
+            }
+            _ => {}
+        }
+        jump_aerial_enter(p, rand)?;
+        return Ok(true);
+    }
+    Ok(false)
+}
+
+/// `ftCo_JumpAerial_Enter_Basic` + `ftCo_800CBAC4`.
+fn jump_aerial_enter(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    let cd = melee_fighter::hooks::common_data();
+    // ft_JumpAerial_MarkAir.
+    let used = p.fp.x1968_jumpsUsed;
+    melee_fighter::ftcommon2::ftcommon_8007d5d4(&mut p.fp);
+    if used > 1 {
+        p.fp.x1968_jumpsUsed = used;
+    }
+    p.fp.cmd_vars[0] = 1;
+    let fp = &*p.fp;
+    let (msid, smid) = if fp.input.lstick[0].x * fp.facing_dir > -cd.x78 { (FTCO_MS_JUMP_AERIAL_F, FTCO_SM_JUMP_AERIAL_F) } else { (FTCO_MS_JUMP_AERIAL_B, FTCO_SM_JUMP_AERIAL_F + 1) };
+    let vx = fp.input.lstick[0].x * fp.co_attrs.air_jump_h_multiplier;
+    let vy = fp.co_attrs.jump_v_initial_velocity * fp.co_attrs.air_jump_v_multiplier;
+    let row = load_row(p, smid)?;
+    change_motion_state(p, msid, row.as_ref(), rand)?;
+    let fp = &mut *p.fp;
+    fp.set_x2221_b7(1);
+    fp.self_vel = melee_types::Vec { x: vx, y: vy, z: 0.0 };
+    fp.active_timer.lstick.y = 0xFE;
+    fp.x1968_jumpsUsed += 1;
+    Ok(())
+}
+
+/// `ftCo_FallAerial_Enter`.
+fn fall_aerial_enter(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    let row = load_row(p, FTCO_SM_FALL_AERIAL)?;
+    change_motion_state(p, FTCO_MS_FALL_AERIAL, row.as_ref(), rand)?;
+    p.fall_smid = FTCO_SM_FALL_AERIAL as i32;
+    p.fall_x4 = 0.0;
+    Ok(())
+}
+
+/// `ftCo_Jump_Phys`: the first frame only arms `x4`; then `ft_80084DB0`.
+fn jump_phys(p: &mut Player) {
+    if !p.jump.x4 {
+        p.jump.x4 = true;
+        return;
+    }
+    let f = &mut *p.fp;
+    fc::check_fall_fast(f);
+    if f.fall_fast() != 0 {
+        fc::fall_fast(f);
+    } else {
+        let (g, t) = (f.co_attrs.gravity, f.co_attrs.terminal_velocity);
+        fc::fall(f, g, t);
+    }
+    fc::calc_self_accel_drift(f);
+}
+
 // ---------------------------------------------------------------------------------------------
 // ftCo_Guard.c. Not modelled (nothing in a hash reads them): the shield bubble's pose blending
 // (`ftCo_80091E78`: bone positions and the bubble's scale), the shield / reflect hit records
@@ -2382,7 +2684,7 @@ fn guard_release(p: &mut Player, rand: &mut HsdRand) -> Result<bool, String> {
 
 /// The input checks the shield IASAs end with (item throw, spot dodge, roll, `800D8B9C`, grab,
 /// jump, drop through): refused when one would fire.
-fn guard_inputs(p: &mut Player, x800d8b9c: bool) -> Result<(), String> {
+fn guard_inputs(p: &mut Player, rand: &mut HsdRand, x800d8b9c: bool) -> Result<bool, String> {
     let cd = melee_fighter::hooks::common_data();
     let who = p.slot + 1;
     let fp = &*p.fp;
@@ -2413,13 +2715,14 @@ fn guard_inputs(p: &mut Player, x800d8b9c: bool) -> Result<(), String> {
     }
     // ftCo_800CB024: jump out of the shield.
     if jump_get_input(fp) || i.cstick[0].y >= cd.tap_jump_threshold {
-        return Err(format!("player {who}: jump out of the shield (ftCo_KneeBend_Enter) not ported"));
+        ftco_800cb024(p, rand)?;
+        return Ok(true);
     }
     // ftCo_8009A080: drop through a platform (the floor here is solid).
     if i.held_buttons[0] & input::HSD_PAD_LR != 0 && i.lstick[0].y <= -cd.x464 && (fp.active_timer.lstick.y as i32) < cd.x468 as i32 {
         return Err(format!("player {who}: shield drop (ftCo_8009A228) not ported"));
     }
-    Ok(())
+    Ok(false)
 }
 
 /// GuardOn_IASA / Guard_IASA / GuardReflect_IASA / GuardOff_IASA.
@@ -2435,9 +2738,7 @@ fn guard_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         if (fp.input.lstick[0].y <= cd.x314 && (fp.active_timer.lstick.y as i32) < cd.x318) || fp.input.cstick[0].y <= cd.x314 {
             return Err(format!("player {}: spot dodge out of GuardOff not ported", p.slot + 1));
         }
-        if jump_get_input(fp) || fp.input.cstick[0].y >= cd.tap_jump_threshold {
-            return Err(format!("player {}: jump out of GuardOff not ported", p.slot + 1));
-        }
+        ftco_800cb024(p, rand)?;
         return Ok(());
     }
     if guard_release(p, rand)? {
@@ -2451,7 +2752,7 @@ fn guard_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
             return Err(format!("player {}: ftCo_80093850 (power shield from GuardOn) not ported", p.slot + 1));
         }
     }
-    guard_inputs(p, m != FTCO_MS_GUARD)
+    guard_inputs(p, rand, m != FTCO_MS_GUARD).map(|_| ())
 }
 
 /// The guard states' Anim callbacks (GuardOn / Guard / GuardOff / GuardReflect).
@@ -2786,7 +3087,7 @@ fn anim_step(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
 /// `ftCo_Turn_IASA` with no button, C-stick or trigger input (each attack / special / catch /
 /// guard check needs one): the facing flip around the checks, the tap jump, fn_800C9C2C (the
 /// smash-turn dash), the press latch.
-fn turn_iasa(p: &mut Player) -> Result<(), String> {
+fn turn_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     let cd = melee_fighter::hooks::common_data();
     if p.turn.just_turned {
         p.fp.input.pressed_buttons |= p.turn.x1c;
@@ -2802,7 +3103,8 @@ fn turn_iasa(p: &mut Player) -> Result<(), String> {
         p.fp.facing_dir = -p.fp.facing_dir;
     }
     if jump_get_input(&p.fp) {
-        return Err(format!("player {}: ftCo_Jump_CheckInput (KneeBend) not ported", p.slot + 1));
+        jump_check_input(p, rand)?;
+        return Ok(());
     }
     // fn_800C9C2C.
     let fp = &*p.fp;
@@ -3245,6 +3547,11 @@ fn ftco_8009f834(p: &mut Player, rand: &mut HsdRand, gfx_id: u32, part: usize, o
     if gfx_id < 0x250 || gfx_id / 1000 == 0x1E {
         return Err(format!("ftCo_8009F834 gfx {gfx_id:#x} (< 0x250 path) not wired"));
     }
+    if matches!(gfx_id, 0x402 | 0x403 | 0x409 | 0x412 | 0x413 | 0x414 | 0x422 | 0x487 | 0x4D1 | 0x4E5 | 0x4E6 | 0x4FE | 0x500 | 0x501 | 0x502) {
+        // efAsync_Spawn(gobj, &x60C, EF_SPAWN_ATTACH, gfx_id, joint).
+        p.ef_queue.push(QueuedEffect { kind: EF_SPAWN_ATTACH, gfx: gfx_id, part, params: Vec3 { x: 0.0, y: 0.0, z: 0.0 }, extra1: 0.0 });
+        return Ok(());
+    }
     // block_70: the jitter.
     let mut sp84 = offset;
     let r = rand.randf();
@@ -3566,10 +3873,11 @@ fn fall_anim(p: &mut Player) -> Result<(), String> {
         frac = -1.0;
     }
     let abs = fc::abs_c(frac);
+    let (neutral, fwd, back) = if fp.motion_id == FTCO_MS_FALL_AERIAL { (FTCO_SM_FALL_AERIAL as i32, 24, 25) } else { (FTCO_SM_FALL as i32, 21, 22) };
     let (smid, v) = if abs > cd.x444 {
-        (if frac * fp.facing_dir > 0.0 { 21 } else { 22 }, (abs - cd.x444) / (1.0 - cd.x444))
+        (if frac * fp.facing_dir > 0.0 { fwd } else { back }, (abs - cd.x444) / (1.0 - cd.x444))
     } else {
-        (FTCO_SM_FALL as i32, 0.0)
+        (neutral, 0.0)
     };
     p.fall_x4 += cd.x448 * (v - p.fall_x4);
     if p.fall_x4 != 0.0 && smid != p.fall_smid {
@@ -3633,6 +3941,9 @@ impl Sim for VsMatch {
         }
         for k in 0..self.effects.len() {
             self.effect_matrices(k);
+        }
+        for e in self.fighter_jobjs.clone() {
+            self.refresh_fighter_jobj(e.0, e.1, e.2);
         }
         let mut host = Host { rand: &mut self.rand, joint_mtx: &self.joint_mtx, appsrt_hook_lists: &self.appsrt_hook_lists };
         for mask in [PTCL_MASK_MAIN, PTCL_MASK_AUX] {

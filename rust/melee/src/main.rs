@@ -230,6 +230,7 @@ fn golden(args: &[String]) -> ExitCode {
         // The same pads and stage with P2 an m-ex fighter: Akaneia's Wolf from its gdmods
         // (`mex-import import`, then --mods DIR or MELEE_MODS_DIR). No C golden exists for it.
         "pad_marth_sheik_bf" => ("GrNBa.dat", &["marth", "sheik"]),
+        "cpu_fox_falco_dl" => ("GrGr.dat", &["fox/cpu9", "falco/cpu9"]),
         "pad_falcon_wolf_fd" => ("GrNLa.dat", &["falcon", "wolf"]),
         s => {
             eprintln!("melee: scenario {s:?} not wired (pad_falcon_fox_fd)");

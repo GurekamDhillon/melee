@@ -34,6 +34,7 @@
 pub mod input;
 
 mod attackair;
+mod cpu;
 mod dashrun;
 mod fox;
 mod rebirth;
@@ -53,7 +54,7 @@ use melee_runtime::particle::{CmdRef, GenId, JObjRef, PsHost, PsSystem};
 use melee_runtime::random::HsdRand;
 use melee_types::neutral_hash::nh_fighter;
 use melee_runtime::mtx::Vec3;
-use melee_types::{ftCollisionBox, Fighter, FighterKind, Ft_Kind_Captain, Ft_Kind_Fox};
+use melee_types::{Gr_Kind_Greens, Gr_Kind_Battle, Gr_Kind_Last, ftCollisionBox, Fighter, FighterKind, Ft_Kind_Captain, Ft_Kind_Fox};
 use melee_world::mp::coll::{self as mc, CollGlobals};
 use melee_world::mp::lines::GroundColl;
 use melee_world::gr::bgm::{self, BgmUnlocks, StageParam};
@@ -135,6 +136,8 @@ const EF_ENTRY_BEAM: u32 = 0x24;
 /// `Gr_Kind_Last`'s StKind in a VS match (`grGroundParam->stage_params[0].stkind`).
 pub const STKIND_FD: i32 = 0x20;
 pub const STKIND_BF: i32 = 0x1F;
+/// Dream Land (Green Greens, `GrGr.dat`, Gr_Kind_Greens).
+pub const STKIND_DL: i32 = 0x11;
 /// efLib's particle procs (eflib.c `efLib_particles_proc_main` / `_aux`, TARGET_PC masks).
 const PTCL_MASK_MAIN: u32 = 0x20000 | 0x40000;
 const PTCL_MASK_AUX: u32 = 0x10000 | 0x80000;
@@ -436,6 +439,8 @@ pub struct VsMatch {
     fighter_jobjs: Vec<(JObjRef, usize, usize)>,
     /// The live items (fox.rs).
     items: Vec<SimItem>,
+    /// `stage_info.grkind`.
+    grkind: i32,
     /// `stage_info.unk8C.b4` (grBattle_OnInit): respawn at the stage point of the player's slot.
     per_slot_spawn: bool,
     /// `Stage_80224E38(&v, n)`: the stage's respawn points (points 4..8), `scene_state->fighters[].x8`
@@ -443,6 +448,78 @@ pub struct VsMatch {
     respawn_points: Vec<Vec3>,
     respawn_busy: [i32; 6],
     start_shield: f32,
+}
+
+/// Green Greens' `grGreens_Init` (the map gobjs' OnInit in order 6, 5 for the draws that matter): the
+/// bomb-block pattern (`grGreens_80214B58`), the block timer, the wind timer, and the 18 block items
+/// (`grGreens_80214FA8` -> `grGreens_80215358`). Returns the blocks as items in creation order.
+fn greens_init(stage: &DatArchive, rand: &mut HsdRand, scale: f32) -> Result<Vec<fox::SimItem>, String> {
+    let y = crate::stage::yakumono_words(stage, 0x1E).ok_or("GrGr.dat: no yakumono_param")?;
+    let y = |i: usize| y[i] as i32;
+    let range = |rand: &mut HsdRand, min: i32, max: i32| -> i32 {
+        if min > max {
+            let d = min - max;
+            max + if d != 0 { rand.randi(d) } else { 0 }
+        } else if min < max {
+            let d = max - min;
+            min + if d != 0 { rand.randi(d) } else { 0 }
+        } else {
+            min
+        }
+    };
+    let mut table = [0u8; 30];
+    for idx in [0x12usize, 0x0C, 0x0D, 0x06, 0x07, 0x08, 0x00, 0x01, 0x02, 0x17, 0x10, 0x11, 0x09, 0x0A, 0x0B, 0x03, 0x04, 0x05] {
+        let r = if y(8) != 0 { rand.randi(y(8)) } else { 0 };
+        table[idx] = if r != 0 { 1 } else { 2 };
+    }
+    // grGreens_80214674: the block timer.
+    let _ = range(rand, y(0), y(1));
+    // grGreens_802139C4: the wind timer and its first side.
+    let _ = range(rand, y(14), y(13));
+    let _ = rand.randi(2);
+    // grGreens_8021483C: the 5x6 grid of block cells from the 30 block joints' positions.
+    let (mut lmax, mut lmin, mut ltop, mut lbot) = (-3.4028235e38f32, 3.4028235e38f32, -3.4028235e38f32, 3.4028235e38f32);
+    let (mut rmax, mut rtop, mut rmin, mut rbot) = (-3.4028235e38f32, -3.4028235e38f32, 3.4028235e38f32, 3.4028235e38f32);
+    for i in 0..30usize {
+        let (v, _) = crate::stage::map_joint_world(stage, 6, 5 + i).ok_or("GrGr.dat: block joint missing")?;
+        // The map JObj tree hangs under the root scaled by grGroundParam->y.
+        let v = [v[0] * scale, v[1] * scale, v[2] * scale];
+        if v[0] < 0.0 {
+            lmax = lmax.max(v[0]);
+            lmin = lmin.min(v[0]);
+            ltop = ltop.max(v[1]);
+            lbot = lbot.min(v[1]);
+        } else {
+            rmax = rmax.max(v[0]);
+            rmin = rmin.min(v[0]);
+            rtop = rtop.max(v[1]);
+            rbot = rbot.min(v[1]);
+        }
+    }
+    let mut grid = [[(0.0f32, 0.0f32); 6]; 5];
+    let (xs, ys) = ((lmax - lmin) / 2.0, (ltop - lbot) / 4.0);
+    for i in 0..5 {
+        for j in 0..3 {
+            grid[i][j] = (xs * j as f32 + lmin, ys * i as f32 + lbot);
+        }
+    }
+    let (xs, ys) = ((rmax - rmin) / 2.0, (rtop - rbot) / 4.0);
+    for i in 0..5 {
+        for j in 3..6 {
+            grid[i][j] = (xs * (j - 3) as f32 + rmin, ys * i as f32 + rbot);
+        }
+    }
+    let mut items = Vec::new();
+    for j in 0..5 {
+        for col in 0..6 {
+            if matches!(table[j * 6 + col], 1 | 2) {
+                let (x, yy) = grid[j][col];
+                items.push(fox::SimItem { kind: 160, msid: 0, pos: Vec3 { x, y: yy, z: 0.0 }, vel: Vec3 { x: 0.0, y: 0.0, z: 0.0 }, class: fox::ItemClass::GreensBlock });
+            }
+        }
+    }
+    if std::env::var_os("MELEE_GOLDEN_DUMP").is_some() { for it in &items { eprintln!("block {:?} {:?}", it.pos.x, it.pos.y); } }
+    Ok(items)
 }
 
 /// `Stage_GetBlastZone*Offset()`: `stage_info.blast_zone.* + cam_info.cam_{x,y}_offset`
@@ -456,6 +533,9 @@ pub struct BlastZone {
     pub bottom: f32,
     /// `Stage_GetCamBoundsTopOffset()`.
     pub cam_top: f32,
+    pub cam_left: f32,
+    pub cam_right: f32,
+    pub cam_bottom: f32,
 }
 
 impl BlastZone {
@@ -474,7 +554,13 @@ impl BlastZone {
         // Ground_801C39C0: cam_bounds.top = the larger y of points 0x95 / 0x96 minus the offset.
         let (a, b) = (a.unwrap(), b.unwrap());
         let cam_top_raw = if a[1] < b[1] { b[1] - cam_y } else { a[1] - cam_y };
-        Ok(BlastZone { left: lft + cam_x, right: rgt + cam_x, top: top + cam_y, bottom: bot + cam_y, cam_top: cam_top_raw + cam_y })
+        let (a, b2) = (a, b);
+        let _ = (a, b2);
+        // Ground_801C39C0: left/right/bottom of the camera range, the same way.
+        let (pa, pb) = (pt(0x95).unwrap(), pt(0x96).unwrap());
+        let (cl, cr) = if pa[0] < pb[0] { (pa[0] - cam_x, pb[0] - cam_x) } else { (pb[0] - cam_x, pa[0] - cam_x) };
+        let cb = if pa[1] < pb[1] { pa[1] - cam_y } else { pb[1] - cam_y };
+        Ok(BlastZone { left: lft + cam_x, right: rgt + cam_x, top: top + cam_y, bottom: bot + cam_y, cam_top: cam_top_raw + cam_y, cam_left: cl + cam_x, cam_right: cr + cam_x, cam_bottom: cb + cam_y })
     }
 }
 
@@ -536,6 +622,7 @@ fn fighter_kind(name: &str) -> Result<FighterKind, String> {
     match name {
         "falcon" => Ok(Ft_Kind_Captain),
         "fox" => Ok(Ft_Kind_Fox),
+        "falco" => Ok(melee_types::Ft_Kind_Falco),
         "marth" => Ok(melee_types::Ft_Kind_Mars),
         "sheik" => Ok(melee_types::Ft_Kind_Seak),
         "zelda" => Ok(melee_types::Ft_Kind_Zelda),
@@ -548,10 +635,15 @@ fn fighter_kind(name: &str) -> Result<FighterKind, String> {
 }
 
 impl VsMatch {
-    pub fn new(disc: &mut crate::disc::Disc, stage_file: &str, fighters: &[&str], seed: u32, stocks: i32) -> Result<Self, String> {
+    pub fn new(disc: &mut crate::disc::Disc, stage_file: &str, fighter_specs: &[&str], seed: u32, stocks: i32) -> Result<Self, String> {
+        // "fox" (human) or "fox/cpu9" (CPU, level 9).
+        let cpu_levels: Vec<Option<i32>> = fighter_specs.iter().map(|s| s.split_once("/cpu").and_then(|(_, l)| l.parse().ok())).collect();
+        let fighters: Vec<&str> = fighter_specs.iter().map(|s| s.split('/').next().unwrap()).collect();
+        let fighters = &fighters[..];
         let stkind = match stage_file {
             "GrNLa.dat" => STKIND_FD,
             "GrNBa.dat" => STKIND_BF,
+            "GrGr.dat" => STKIND_DL,
             _ => return Err(format!("{stage_file}: only Final Destination's and Battlefield's stage code is wired")),
         };
         let stage_bytes = disc.read(stage_file)?;
@@ -645,12 +737,17 @@ impl VsMatch {
             let (file, table, idx) = match *name {
                 "falcon" => ("EfCaData.dat", "effCaptainDataTable", 4),
                 "fox" => ("EfFxData.dat", "effFoxDataTable", 3),
+                // Falco has no bank of his own: he loads Fox's (once, see below).
+                "falco" => ("EfFxData.dat", "effFoxDataTable", 3),
                 "marth" => ("EfMsData.dat", "effMarsDataTable", 16),
                 "sheik" => ("EfZdData.dat", "effZeldaDataTable", 17),
                 // Wolf's own bank takes Fox's index: a match here has one Fox-kind fighter.
                 "wolf" => ("EfWfData.dat", "effWolfDataTable", 3),
                 n => return Err(format!("effect bank of {n:?} not wired")),
             };
+            if effect_banks[idx].is_some() {
+                continue;
+            }
             let b = crate::effect::EffectBank::load(&disc.read(file)?, file, table)?;
             if let Some(pb) = b.particles()? {
                 ps.load_bank(idx, Arc::new(pb), None);
@@ -684,7 +781,11 @@ impl VsMatch {
 
         // grLast_OnInit -> grLast_8021A9C4 (map gobj 3) -> grLast_8021B920(1): the level gobjs
         // 4..8 are created in order; gobj 7's on_init is grLast_8021AC30.
-        let last_bg = if stkind == STKIND_BF {
+        let mut items0: Vec<fox::SimItem> = Vec::new();
+        let last_bg = if stkind == STKIND_DL {
+            items0 = greens_init(&stage, &mut rand, f32::from_bits(u32::from_be_bytes(stage.data[crate::stage::ground_param(&stage).ok_or("no grGroundParam")? as usize..][..4].try_into().unwrap())))?;
+            None
+        } else if stkind == STKIND_BF {
             // grBattle_OnInit: grBattle_80219D84(3) -> grBattle_BG_Callback0: reset_bg_timer,
             // `HSD_Randi(1200) + 2400` (the first background change is 2400+ frames away).
             let _ = rand.randi(1200);
@@ -841,6 +942,12 @@ impl VsMatch {
             skel.set_translate(root, Vec3 { x: fp.cur_pos.x, y: fp.cur_pos.y, z: fp.cur_pos.z });
             if !follower {
                 stale::set_stocks(slot, stocks);
+                // gmvs.c: Player_SetSlottype, SetPlayerAndEntityCpuType(gmvsmode.c: cpu_kind 4) / Level.
+                if let Some(level) = cpu_levels[slot as usize] {
+                    stale::set_slot_type(slot, melee_types::Gm_PKind_Cpu);
+                    melee_fighter::player::set_player_and_entity_cpu_type(slot, 4);
+                    melee_fighter::player::set_player_and_entity_cpu_level(slot, level);
+                }
             }
             // Fighter_UnkProcessDeath_80068354 -> ftCo_800A101C(fp, Player_GetCpuType,
             // Player_GetCpuLevel, 0): two HSD_Randf. The co_attrs it reads for x558 are not loaded
@@ -1056,7 +1163,7 @@ impl VsMatch {
                 }
             });
         }
-        Ok(Self { players, ground, cg, pads: [input::PadStatus::default(); 4], go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists, blast, fighter_jobjs: Vec::new(), items: Vec::new(), respawn_points: (4..8).filter_map(|id| points.iter().find(|p| p.id == id).map(|p| Vec3 { x: p.pos[0], y: p.pos[1], z: p.pos[2] })).collect(), respawn_busy: [0; 6], start_shield, per_slot_spawn: stkind == STKIND_BF })
+        Ok(Self { players, ground, cg, pads: [input::PadStatus::default(); 4], go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists, blast, fighter_jobjs: Vec::new(), items: items0, grkind: if stkind == STKIND_DL { Gr_Kind_Greens as i32 } else if stkind == STKIND_BF { Gr_Kind_Battle as i32 } else { Gr_Kind_Last as i32 }, respawn_points: (4..8).filter_map(|id| points.iter().find(|p| p.id == id).map(|p| Vec3 { x: p.pos[0], y: p.pos[1], z: p.pos[2] })).collect(), respawn_busy: [0; 6], start_shield, per_slot_spawn: stkind == STKIND_BF })
     }
 
     /// The m-ex fighters' code-run report (crate::mex), one block per such fighter.
@@ -1070,7 +1177,14 @@ impl VsMatch {
         for p in &self.players {
             // Slot = player*2 + follower; is_cpu false (human scenario).
             let s = p.slot * 2 + p.follower as i32;
-            w.slots[s as usize] = Some(nh_fighter(&p.fp, s, stale::stocks(p.slot), false));
+            w.slots[s as usize] = Some(nh_fighter(&p.fp, s, stale::stocks(p.slot), stale::slot_type(p.slot) == melee_types::Gm_PKind_Cpu && p.fp.cpu.kind != 5));
+            if std::env::var_os("MELEE_GOLDEN_CPU").is_some() && self.frame < 3 {
+                let f = &p.fp;
+                let c = &f.cpu;
+                eprintln!("NHR s{} m{} pos {:08X} {:08X} ga {} fc {:08X} btn {:X} k{} lv{}", s, f.motion_id, f.cur_pos.x.to_bits(), f.cur_pos.y.to_bits(), f.ground_or_air, f.x3E4_fighterCmdScript.frame_count.to_bits(), c.buttons, c.kind, c.level);
+                eprintln!("NHR x14 {} x18 {} x1C {} x20 {} x24 {} x28 {} x2C {} x30 {} x34 {} x38 {:08X} x3C {:08X} x40 {:08X}", c.x14, c.x18, c.x1C, c.x20, c.x24, c.x28, c.x2C, c.x30, c.x34, c.x38.to_bits(), c.x3C.to_bits(), c.x40.to_bits());
+                eprintln!("NHR x7C {} x80 {} x84 {} xC8 {} xEC {} cd {} fl {:02X}{:02X}{:02X}{:02X}", c.x7C, c.x80, c.x84, c.xC8, c.xEC, c.command_duration, c.bf_f8[0], c.bf_f8[1], c.bf_f8[2], c.bf_f8[3]);
+            }
             if std::env::var_os("MELEE_GOLDEN_FRAMES").is_some() {
                 let f = &p.fp;
                 eprintln!("NHD f{} s{} m{} pos {:08X} {:08X} {:08X} vel {:08X} {:08X} ga {} fc {:08X} j {} 67F {} 680 {} shield {:08X}",
@@ -1336,6 +1450,19 @@ impl VsMatch {
         // s_link 2, Fighter_8006ABA0: input_cb. ftCo_Fall_IASA's checks all read pad input, and
         // the C applies none before GO (self_vel.x stays 0 in the golden with the stick held):
         // the fighters' input is all zero here. TODO(group3): the IASA checks themselves.
+        // s_link 2 (Fighter_8006ABA0): the CPU controller of every CPU fighter.
+        {
+            let grkind = self.grkind;
+            let cpu: Vec<usize> = (0..self.players.len())
+                .filter(|&i| !self.players[i].follower && stale::slot_type(self.players[i].slot) == melee_types::Gm_PKind_Cpu && self.players[i].fp.cpu.kind != 5 && self.players[i].fp.x221F_b3() == 0)
+                .collect();
+            for i in cpu {
+                let me: *mut Fighter = &mut *self.players[i].fp;
+                let fps: Vec<*mut Fighter> = self.players.iter_mut().map(|p| &mut *p.fp as *mut Fighter).collect();
+                let mut cx = cpu::Cx { fps, ground: &mut self.ground, rand: &mut self.rand, items: &self.items, blast: self.blast, grkind };
+                cpu::ftco_800b3900(&mut cx, me)?;
+            }
+        }
         // s_link 3, Fighter_Spaghetti_8006AD10: the input step, then (outside hitlag) the
         // smash-charge state, the stick-activity stats, the press counters and input_cb.
         for i in 0..self.players.len() {

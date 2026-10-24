@@ -246,3 +246,41 @@ pub fn bind_pose_matrix_rooted(d: &[u8], chain: &[u32], root_t: [f32; 3], root_s
     }
     m
 }
+
+/// The world translation (stage-local, before the `grGroundParam->y` root scale) of the `dfs`-th
+/// JObj of map gobj `gobj`'s tree (`map_head->unk8[gobj].unk0`, depth first, child before sibling:
+/// `Ground_801C3FA4(gobj, dfs)` + `lb_8000B1CC`). `None` when the tree is shorter.
+pub fn map_joint_world(a: &DatArchive, gobj: u32, dfs: usize) -> Option<([f32; 3], bool)> {
+    let d = &a.data;
+    let head = a.public_offset("map_head")?;
+    let (gobjs, n) = (be32(d, head + 8), be32(d, head + 12));
+    if gobj >= n {
+        return None;
+    }
+    let root = be32(d, gobjs + gobj * 0x34);
+    let mut stack: Vec<(u32, Vec<u32>)> = vec![(root, vec![])];
+    let mut k = 0usize;
+    while let Some((j, chain)) = stack.pop() {
+        if j == 0 {
+            continue;
+        }
+        let mut c = chain.clone();
+        c.push(j);
+        if k == dfs {
+            return Some(world_translation(d, &c));
+        }
+        k += 1;
+        let (flags, child, next) = (be32(d, j + 4), be32(d, j + 8), be32(d, j + 0xC));
+        stack.push((next, chain));
+        if flags & JOBJ_INSTANCE == 0 && a.is_reloc(j + 8) {
+            stack.push((child, c));
+        }
+    }
+    None
+}
+
+/// `yakumono_param` (a stage file's public symbol): its words, big endian.
+pub fn yakumono_words(a: &DatArchive, n: usize) -> Option<Vec<u32>> {
+    let at = a.public_offset("yakumono_param")?;
+    Some((0..n).map(|i| be32(&a.data, at + 4 * i as u32)).collect())
+}

@@ -49,6 +49,7 @@ pub fn files_for(name: &str) -> Option<(&'static str, &'static str, &'static str
     match name {
         "falcon" => Some(("PlCa.dat", "ftDataCaptain", "PlCaAJ.dat")),
         "fox" => Some(("PlFx.dat", "ftDataFox", "PlFxAJ.dat")),
+        "falco" => Some(("PlFc.dat", "ftDataFalco", "PlFcAJ.dat")),
         "marth" => Some(("PlMs.dat", "ftDataMars", "PlMsAJ.dat")),
         "sheik" => Some(("PlSk.dat", "ftDataSeak", "PlSkAJ.dat")),
         "zelda" => Some(("PlZd.dat", "ftDataZelda", "PlZdAJ.dat")),
@@ -65,6 +66,7 @@ pub fn costume_for(name: &str) -> Option<(&'static str, &'static str)> {
     match name {
         "falcon" => Some(("PlCaNr.dat", "PlyCaptain5K_Share_joint")),
         "fox" => Some(("PlFxNr.dat", "PlyFox5K_Share_joint")),
+        "falco" => Some(("PlFcNr.dat", "PlyFalco5K_Share_joint")),
         "marth" => Some(("PlMsNr.dat", "PlyMars5K_Share_joint")),
         "sheik" => Some(("PlSkNr.dat", "PlySeak5K_Share_joint")),
         "zelda" => Some(("PlZdNr.dat", "PlyZelda5K_Share_joint")),

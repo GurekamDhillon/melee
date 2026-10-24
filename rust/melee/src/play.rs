@@ -210,6 +210,7 @@ pub struct Play {
     shot_dir: Option<PathBuf>,
     shots: bool,
     shot_pending: Option<String>,
+    pause_age: u32,
     quit_at_results: bool,
     max_frames: Option<u64>,
     skip_intro: bool,
@@ -722,6 +723,16 @@ impl Game for Play {
         if self.shots && self.age == 30 && self.shot_pending.is_none() {
             self.shot_pending = Some(format!("m{}_{}", self.matches_played, self.scene.name()));
         }
+        // Match: one shot well into the fight and one 10 ticks into a pause.
+        let paused = self.scene == Scene::Match && self.m.as_ref().is_some_and(|m| m.paused.is_some());
+        self.pause_age = if paused { self.pause_age + 1 } else { 0 };
+        if self.shots && self.shot_pending.is_none() {
+            if paused && self.pause_age == 10 {
+                self.shot_pending = Some(format!("m{}_pause", self.matches_played));
+            } else if self.scene == Scene::Match && self.age == 420 {
+                self.shot_pending = Some(format!("m{}_live", self.matches_played));
+            }
+        }
     }
 
     fn present(&mut self, window: &Arc<Window>, _alpha: f64) {
@@ -805,6 +816,7 @@ pub fn play(args: &[String]) -> ExitCode {
         shots: shot_dir.is_some(),
         shot_dir,
         shot_pending: None,
+        pause_age: 0,
         quit_at_results: has("--quit-at-results"),
         max_frames: get("--max-frames").and_then(|s| s.parse().ok()),
         skip_intro: has("--skip-intro") || std::env::var("MELEE_SKIP_INTRO").is_ok_and(|v| v == "1"),

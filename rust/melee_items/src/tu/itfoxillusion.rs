@@ -46,7 +46,7 @@ pub mod ext {
     fn ftFx_SpecialS_CopyGhostPosIndexed(a0: *mut HSD_GObj, a1: i32, a2: *mut Vec);
     fn ftFx_SpecialS_GetCmdVar2(a0: *mut HSD_GObj) -> i32;
     fn ftFx_SpecialS_ReturnFloatVarIndexed(a0: *mut HSD_GObj, a1: i32) -> f32;
-    fn ftLib_800865CC(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_800865CC(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_800865CC(a0) };
     fn it_8026B3A8(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b3a8(&mut *((*a0).user_data as *mut Item)) };
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_8026b894(&mut *((*a0).user_data as *mut Item), a1) as _ };
     fn it_8026EECC(a0: *mut HSD_GObj, a1: i32) => unsafe { crate::tu::itdraw::it_8026EECC(a0, a1) };

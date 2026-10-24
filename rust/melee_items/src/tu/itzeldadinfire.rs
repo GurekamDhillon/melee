@@ -40,7 +40,7 @@ pub mod ext {
     fn db_80225DD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
     fn efLib_DestroyAll(a0: *mut HSD_GObj);
     fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: *mut HSD_JObj) -> *mut c_void;
-    fn ftLib_800865D8(a0: *mut HSD_GObj, a1: *mut f32, a2: *mut f32);
+    fn ftLib_800865D8(a0: *mut HSD_GObj, a1: *mut f32, a2: *mut f32) => unsafe { crate::tu::ftlib::ftLib_800865D8(a0, a1, a2) };
     fn ftZd_SpecialLw_8013B540(a0: *mut HSD_GObj) -> i32;
     fn ftZd_SpecialLw_8013B574(a0: *mut HSD_GObj) -> i32;
     fn ftZd_SpecialLw_8013B5C4(a0: *mut HSD_GObj);

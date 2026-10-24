@@ -45,7 +45,7 @@ pub mod ext {
     fn Stage_8022519C(a0: u32) -> u32 => unsafe { melee_world::tu::stage::Stage_8022519C(a0) };
     fn atan2f(a0: f32, a1: f32) -> f32 => unsafe { melee_runtime::lbtrigf::atan2f(a0, a1) };
     fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: *mut Vec) -> *mut c_void;
-    fn ftLib_800865C0(a0: *mut HSD_GObj) -> f32;
+    fn ftLib_800865C0(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftLib_800865C0(a0) };
     fn grCorneria_801DDCF0(a0: *mut Vec) => unsafe { melee_world::tu::grcorneria::grCorneria_801DDCF0(a0 as _) };
     fn it_8026B3A8(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b3a8(&mut *((*a0).user_data as *mut Item)) };
     fn it_8026EA20(a0: *mut HSD_GObj, a1: *mut Vec, a2: *mut Vec, a3: *mut Vec, a4: *mut i32, a5: *mut u32) -> i32 => unsafe { crate::tu::itgroundcoll::it_8026EA20(a0, a1 as _, a2 as _, a3 as _, a4, a5) };

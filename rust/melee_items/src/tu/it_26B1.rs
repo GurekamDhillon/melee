@@ -42,13 +42,13 @@ pub mod ext {
     fn ftLib_8008627C(a0: *mut Vec, a1: *mut HSD_GObj) -> *mut HSD_GObj;
     fn ftLib_80086368(a0: *mut Vec, a1: *mut HSD_GObj, a2: f32) -> *mut HSD_GObj;
     fn ftLib_800864A8(a0: *mut Vec, a1: *mut HSD_GObj) -> f32;
-    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::ftlib::ftLib_80086644(a0, a1) };
     fn ftLib_800866DC(a0: *mut HSD_GObj, a1: *mut Vec);
-    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_80086960(a0) as _ };
     fn ftLib_80086984(a0: *mut HSD_GObj) -> *mut CollData;
     fn ftLib_80086990(a0: *mut HSD_GObj, a1: *mut Vec);
     fn ftLib_80086A4C(a0: *mut HSD_GObj, a1: f32);
-    fn ftLib_80086BE0(a0: *mut HSD_GObj) -> u8;
+    fn ftLib_80086BE0(a0: *mut HSD_GObj) -> u8 => unsafe { crate::tu::ftlib::ftLib_80086BE0(a0) };
     fn gm_8016B238() -> i32;
     fn itFlipper_Spawn(a0: *mut HSD_JObj) -> *mut HSD_GObj => unsafe { crate::tu::itflipper::itFlipper_Spawn(a0) };
     fn itSword_Spawn(a0: *mut Vec) -> *mut HSD_GObj => unsafe { crate::tu::itsword::itSword_Spawn(a0 as _) as _ };

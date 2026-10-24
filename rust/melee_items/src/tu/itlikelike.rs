@@ -41,7 +41,7 @@ pub mod ext {
     fn ftCo_800C7B0C(a0: *mut HSD_GObj, a1: *mut Vec, a2: *mut Vec, a3: *mut lbColl_80008D30_arg1, a4: f32);
     fn ftCo_800C7C60(a0: *mut HSD_GObj, a1: i32);
     fn ftLib_8008627C(a0: *mut Vec, a1: *mut HSD_GObj) -> *mut HSD_GObj;
-    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::ftlib::ftLib_80086644(a0, a1) };
     fn it_2725_Logic9_Destroyed(a0: *mut HSD_GObj) => unsafe { crate::tu::itzako::it_2725_Logic9_Destroyed(a0) };
     fn it_8026B684(a0: *mut Vec) -> f32 => unsafe { crate::tu::it_26B1::it_8026B684(a0 as _) };
     fn it_8026D564(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itgroundcoll::it_8026D564(a0) };

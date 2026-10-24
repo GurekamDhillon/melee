@@ -39,7 +39,7 @@ pub mod ext {
     fn db_80225DD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
     fn ftKb_SpecialNNs_800FEC78(a0: *mut HSD_GObj) -> i32;
     fn ftKb_SpecialNNs_800FECBC(a0: *mut HSD_GObj);
-    fn ftLib_800865D8(a0: *mut HSD_GObj, a1: *mut f32, a2: *mut f32);
+    fn ftLib_800865D8(a0: *mut HSD_GObj, a1: *mut f32, a2: *mut f32) => unsafe { crate::tu::ftlib::ftLib_800865D8(a0, a1, a2) };
     fn ftNs_SpecialN_CheckSpecialNHold(a0: *mut HSD_GObj) -> i32;
     fn ftNs_SpecialN_SetNULL(a0: *mut HSD_GObj);
     fn it_8026B3A8(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b3a8(&mut *((*a0).user_data as *mut Item)) };

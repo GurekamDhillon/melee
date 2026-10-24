@@ -55,7 +55,7 @@ pub mod ext {
     fn ftDr_Init_80149844(a0: *mut HSD_GObj) -> i32;
     fn ftDr_Init_801498A0(a0: *mut HSD_GObj);
     fn ftDr_Init_801498EC(a0: *mut HSD_GObj) -> u32;
-    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::ftlib::ftLib_80086644(a0, a1) };
     fn ftLib_800869D4(a0: *mut HSD_GObj) -> f32;
     fn it_8026B3A8(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b3a8(&mut *((*a0).user_data as *mut Item)) };
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_8026b894(&mut *((*a0).user_data as *mut Item), a1) as _ };

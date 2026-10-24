@@ -30,7 +30,7 @@ pub mod ext {
     fn HSD_Randf() -> f32 => unsafe { melee_runtime::tu::random::global::HSD_Randf() };
     fn HSD_Randi(a0: i32) -> i32 => unsafe { melee_runtime::tu::random::global::HSD_Randi(a0) };
     fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj => unsafe { crate::tu::item::Item_80268B18(a0) };
-    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_80086960(a0) as _ };
     fn ftLib_800874CC(a0: *mut HSD_GObj, a1: *mut c_void, a2: i32);
     fn gm_8016B0B4() -> i32;
     fn gm_8016B238() -> i32;

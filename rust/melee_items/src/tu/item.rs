@@ -76,10 +76,10 @@ pub mod ext {
     fn efLib_DestroyAll(a0: *mut HSD_GObj);
     fn ftLib_80086724(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
     fn ftLib_80086764(a0: *mut HSD_GObj);
-    fn ftLib_800867A0(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;
-    fn ftLib_800867CC(a0: *mut HSD_GObj) -> *mut HSD_GObj;
-    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32;
-    fn ftLib_80086EB4(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_800867A0(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_800867A0(a0, a1) as _ };
+    fn ftLib_800867CC(a0: *mut HSD_GObj) -> *mut HSD_GObj => unsafe { crate::tu::ftlib::ftLib_800867CC(a0) };
+    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_80086960(a0) as _ };
+    fn ftLib_80086EB4(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_80086EB4(a0) };
     fn ftLib_8008702C(a0: i32);
     fn ftLib_80087050(a0: i32);
     fn ftLib_GetKind(a0: *mut HSD_GObj) -> u32;

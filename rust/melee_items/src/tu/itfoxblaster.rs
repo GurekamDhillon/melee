@@ -62,8 +62,8 @@ pub mod ext {
     fn ftKb_SpecialNFx_800FDD4C(a0: *mut HSD_GObj) -> u32;
     fn ftKb_SpecialNFx_800FDDF4(a0: *mut HSD_GObj) -> i32;
     fn ftKb_SpecialNFx_800FDEB4(a0: *mut HSD_GObj);
-    fn ftLib_800865C0(a0: *mut HSD_GObj) -> f32;
-    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn ftLib_800865C0(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftLib_800865C0(a0) };
+    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::ftlib::ftLib_80086644(a0, a1) };
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_8026b894(&mut *((*a0).user_data as *mut Item), a1) as _ };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.

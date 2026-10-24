@@ -43,8 +43,8 @@ pub mod ext {
     fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj => unsafe { crate::tu::item::Item_80268B18(a0) };
     fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32) => unsafe { crate::tu::item::Item_80268E5C(a0, a1, a2) };
     fn ftLib_800866DC(a0: *mut HSD_GObj, a1: *mut Vec);
-    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32;
-    fn ftLib_80086BEC(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_80086960(a0) as _ };
+    fn ftLib_80086BEC(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::ftlib::ftLib_80086BEC(a0, a1) };
     fn ftLib_80087284(a0: *mut HSD_GObj) -> i32;
     fn itColl_BounceOffShield(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::it_2725::itColl_BounceOffShield(a0) as _ };
     fn itColl_BounceOffVictim(a0: *mut HSD_GObj) => unsafe { crate::tu::it_2725::itColl_BounceOffVictim(a0) };

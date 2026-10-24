@@ -40,8 +40,8 @@ pub mod ext {
     fn ftCo_CalcYScaledKnockback(a0: f32, a1: f32, a2: f32) -> f32;
     fn ftColl_80076808(a0: *mut Fighter, a1: *mut HitCapsule, a2: i32, a3: *mut c_void, a4: i32);
     fn ftCommon_8007F804(a0: *mut Fighter) -> *mut c_void;
-    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32;
-    fn ftLib_80086EB4(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_80086960(a0) as _ };
+    fn ftLib_80086EB4(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_80086EB4(a0) };
     fn ftLib_80086FD4(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;
     fn ft_80089228(a0: *mut Fighter, a1: i32, a2: i32, a3: f32) -> f32;
     fn gm_8016B0D4() -> i32;

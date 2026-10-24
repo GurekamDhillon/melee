@@ -54,8 +54,8 @@ pub mod ext {
     fn ftCo_80094098(a0: *mut HSD_GObj, a1: *mut f32) -> f32;
     fn ftKb_SpecialNLk800FB418(a0: *mut HSD_GObj);
     fn ftKb_SpecialNLk800FB470(a0: *mut HSD_GObj) -> i32;
-    fn ftLib_800865C0(a0: *mut HSD_GObj) -> f32;
-    fn ftLib_80086630(a0: *mut HSD_GObj, a1: u32) -> *mut HSD_JObj;
+    fn ftLib_800865C0(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftLib_800865C0(a0) };
+    fn ftLib_80086630(a0: *mut HSD_GObj, a1: u32) -> *mut HSD_JObj => unsafe { crate::tu::ftlib::ftLib_80086630(a0, a1) };
     fn ftLib_800869D4(a0: *mut HSD_GObj) -> f32;
     fn ftLib_80086A18(a0: *mut HSD_GObj) -> i32;
     fn ftLk_SpecialN_IsActiveAnd2071b6(a0: *mut HSD_GObj) -> i32;

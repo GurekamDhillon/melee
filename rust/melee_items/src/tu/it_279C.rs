@@ -53,9 +53,9 @@ pub mod ext {
     fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: &[EfArg]) -> *mut c_void;
     fn ftLib_800860C4() -> i32;
     fn ftLib_8008627C(a0: *mut Vec, a1: *mut HSD_GObj) -> *mut HSD_GObj;
-    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec);
-    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32;
-    fn ftLib_80086BE0(a0: *mut HSD_GObj) -> u8;
+    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::ftlib::ftLib_80086644(a0, a1) };
+    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_80086960(a0) as _ };
+    fn ftLib_80086BE0(a0: *mut HSD_GObj) -> u8 => unsafe { crate::tu::ftlib::ftLib_80086BE0(a0) };
     fn ftLib_800874BC(a0: *mut HSD_GObj) -> i32;
     fn ft_80089768(a0: *mut Vec2);
     fn ft_80089884(a0: *mut HSD_GObj) -> *mut Struct2070;

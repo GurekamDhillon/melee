@@ -41,7 +41,7 @@ pub mod ext {
     fn Item_8026AE84(a0: *mut Item, a1: i32, a2: u8, a3: u8) => unsafe { crate::tu::item::Item_8026AE84(a0, a1, a2, a3) };
     fn ScriptGame_EnemyDefeated(a0: *mut HSD_GObj) -> i32;
     fn ScriptGame_EnemyDestroyed(a0: *mut HSD_GObj) -> i32;
-    fn ftLib_800865C0(a0: *mut HSD_GObj) -> f32;
+    fn ftLib_800865C0(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftLib_800865C0(a0) };
     fn ftLib_800870BC(a0: *mut HSD_GObj, a1: *mut i32) -> i32;
     fn ftLib_8008770C(a0: *mut HSD_GObj, a1: *mut c_void);
     fn ftLib_80087744(a0: *mut HSD_GObj, a1: *mut c_void);

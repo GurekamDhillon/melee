@@ -72,7 +72,7 @@ pub mod ext {
     fn ftColl_8007AC9C(a0: *mut HitCapsule, a1: i32, a2: *mut HSD_GObj);
     fn ftColl_8007AFF8(a0: *mut HSD_GObj);
     fn ftCommon_8007E2F4(a0: *mut Fighter, a1: i16);
-    fn ftLib_80086630(a0: *mut HSD_GObj, a1: u32) -> *mut HSD_JObj;
+    fn ftLib_80086630(a0: *mut HSD_GObj, a1: u32) -> *mut HSD_JObj => unsafe { crate::tu::ftlib::ftLib_80086630(a0, a1) };
     fn ftParts_GetBoneIndex(a0: *mut Fighter, a1: u32) -> u32;
     fn ft_80082E3C(a0: *mut HSD_GObj) -> *mut HSD_GObj;
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_8026b894(&mut *((*a0).user_data as *mut Item), a1) as _ };

@@ -96,3 +96,6 @@ pub mod granime;
 pub mod grcastle;
 pub mod grcorneria;
 pub mod grbigblue;
+pub mod mplib;
+pub mod mpisland;
+pub mod mpcoll;

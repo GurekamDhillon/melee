@@ -81,3 +81,7 @@ harness = false
 [[test]]
 name = "tu_class"
 harness = false
+
+[[test]]
+name = "tu_initialize"
+harness = false

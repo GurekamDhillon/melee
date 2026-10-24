@@ -9,32 +9,44 @@ use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
 
-use super::id::_HSD_IDForgetMemory;
-use super::id::{HSD_IDGetAllocData, HSD_IDInitAllocData, HSD_IDSetup};
-use super::list::{HSD_DListGetAllocData, HSD_ListInitAllocData, HSD_SListGetAllocData};
+use super::lbext::OsArg;
 
-static mut FrameBuffer: [*mut c_void; HSD_VI_XFB_MAX as usize] = [null_mut(); HSD_VI_XFB_MAX as usize];
-static mut memReport: HSD_MemReport = unsafe { core::mem::zeroed() };
-static mut hsd_heap_next_arena_lo: *mut c_void = null_mut();
-static mut hsd_heap_next_arena_hi: *mut c_void = null_mut();
-static mut current_render_pass: HSD_RenderPass = 0;
-static mut DefaultFifoObj: *mut GXFifoObj = null_mut();
-static mut current_pix_fmt: i32 = 0;
-static mut init_done: i32 = 0;
-static mut shown: i32 = 0;
+pub static mut FrameBuffer: [*mut c_void; HSD_VI_XFB_MAX as usize] = [null_mut(); HSD_VI_XFB_MAX as usize];
+pub static mut memReport: HSD_MemReport = unsafe { core::mem::zeroed() };
+pub static mut hsd_heap_next_arena_lo: *mut c_void = null_mut();
+pub static mut hsd_heap_next_arena_hi: *mut c_void = null_mut();
+pub static mut current_render_pass: HSD_RenderPass = 0;
+pub static mut DefaultFifoObj: *mut GXFifoObj = null_mut();
+pub static mut current_pix_fmt: i32 = 0;
+pub static mut init_done: i32 = 0;
+pub static mut shown: i32 = 0;
 
-static mut current_heap: OSHeapHandle = -1;
+pub static mut current_heap: OSHeapHandle = -1;
 /// `rmode = &GXNtsc480IntDf`; NULL stands for the default object, resolved through `ext`.
-static mut rmode: *mut GXRenderModeObj = null_mut();
-static mut current_z_fmt: i32 = GX_ZC_MID as i32;
-static mut iparam_fifo_size: u32 = HSD_DEFAULT_FIFO_SIZE as u32;
-static mut iparam_xfb_max_num: i32 = HSD_DEFAULT_XFB_MAX_NUM;
-static mut iparam_heap_max_num: i32 = 4;
-static mut iparam_audio_heap_size: u32 = HSD_DEFAULT_AUDIO_SIZE as u32;
+pub static mut rmode: *mut GXRenderModeObj = null_mut();
+pub static mut current_z_fmt: i32 = GX_ZC_MID as i32;
+pub static mut iparam_fifo_size: u32 = HSD_DEFAULT_FIFO_SIZE as u32;
+pub static mut iparam_xfb_max_num: i32 = HSD_DEFAULT_XFB_MAX_NUM;
+pub static mut iparam_heap_max_num: i32 = 4;
+pub static mut iparam_audio_heap_size: u32 = HSD_DEFAULT_AUDIO_SIZE as u32;
 static HSD_Init_804D5E1C: GXColor = GXColor { r: 0, g: 0, b: 0, a: 0 };
 
+/// Tests that own their copy of other TUs' data set this; the game uses the owning TU's statics.
+pub static mut use_ext_data: bool = false;
+/// `GXNtsc480IntDf`, the default render mode (no Rust owner yet outside the oracle).
+unsafe fn ntsc480_int_df() -> *mut GXRenderModeObj {
+    if use_ext_data { core::ptr::addr_of_mut!(ext::GXNtsc480IntDf) } else { panic!("TODO: GXNtsc480IntDf is not ported") }
+}
+/// `__OSCurrHeap`.
+unsafe fn os_curr_heap() -> OSHeapHandle {
+    if use_ext_data { ext::__OSCurrHeap } else { panic!("TODO: __OSCurrHeap is not ported") }
+}
 unsafe fn current_rmode() -> *mut GXRenderModeObj {
-    if rmode.is_null() { ext::GXNtsc480IntDf() } else { rmode }
+    if rmode.is_null() { ntsc480_int_df() } else { rmode }
+}
+/// video.h `HSD_VIGetRenderMode` (inline): `&HSD_VIData.current.vi.rmode`.
+unsafe fn vi_render_mode() -> *mut GXRenderModeObj {
+    if use_ext_data { core::ptr::addr_of_mut!(ext::HSD_VIData.current.vi.rmode) } else { core::ptr::addr_of_mut!(super::video::HSD_VIData.current.vi.rmode) }
 }
 
 #[inline]
@@ -67,7 +79,7 @@ pub unsafe fn HSD_InitComponent() {
 
     HSD_GXInit();
     HSD_DVDInit();
-    HSD_IDSetup();
+    ext::HSD_IDSetup();
     ext::VIWaitForRetrace();
     HSD_ObjInit();
     ext::HSD_LogInit();
@@ -93,7 +105,7 @@ pub unsafe fn HSD_AllocateXFB(nbuffer: i32, rm: *mut GXRenderModeObj) -> *mut *m
     memReport.xfb = fb_size.wrapping_mul(nbuffer as u32);
     if arena_lo == arena_hi {
         for i in 0..nbuffer {
-            FrameBuffer[i as usize] = ext::OSAllocFromHeap(ext::__OSCurrHeap(), fb_size);
+            FrameBuffer[i as usize] = ext::OSAllocFromHeap(os_curr_heap(), fb_size);
         }
     } else {
         for i in 0..nbuffer {
@@ -101,7 +113,7 @@ pub unsafe fn HSD_AllocateXFB(nbuffer: i32, rm: *mut GXRenderModeObj) -> *mut *m
             arena_lo = round_up_32b(arena_lo.wrapping_add(fb_size as usize));
         }
         if arena_lo > arena_hi {
-            ext::HSD_Panic("initialize.c", 265, "No memory space remains for XFB.\n");
+            super::debug::HSD_Panic(c"initialize.c".as_ptr(), 265, c"No memory space remains for XFB.\n".as_ptr());
         }
         ext::OSSetArenaLo(arena_lo as *mut c_void);
     }
@@ -116,15 +128,15 @@ pub unsafe fn HSD_AllocateFifo(size: u32) -> *mut GXFifoObj {
     let arena_hi: usize = round_down_32b(ext::OSGetArenaHi() as usize);
     let fifo: *mut GXFifoObj;
     if arena_lo0 == 0 && arena_hi == 0 {
-        fifo = ext::OSAllocFromHeap(ext::__OSCurrHeap(), size).cast();
+        fifo = ext::OSAllocFromHeap(os_curr_heap(), size).cast();
         if fifo.is_null() {
-            ext::HSD_Panic("initialize.c", 295, "cannot allocate memory for gx fifo.\n");
+            super::debug::HSD_Panic(c"initialize.c".as_ptr(), 295, c"cannot allocate memory for gx fifo.\n".as_ptr());
         }
     } else {
         fifo = arena_lo0 as *mut GXFifoObj;
         let arena_lo = arena_lo0.wrapping_add(size as usize);
         if arena_lo > ext::OSGetArenaHi() as usize {
-            ext::HSD_Panic("initialize.c", 302, "no space remains for gx fifo.\n");
+            super::debug::HSD_Panic(c"initialize.c".as_ptr(), 302, c"no space remains for gx fifo.\n".as_ptr());
         }
         ext::OSSetArenaLo(arena_lo as *mut c_void);
     }
@@ -140,7 +152,7 @@ pub unsafe fn HSD_GXInit() {
     ext::GXInitLightColor(&mut lightobj, HSD_Init_804D5E1C);
 
     for i in 0..8 {
-        ext::GXLoadLightObjImm(&mut lightobj, ext::HSD_Index2LightID(i));
+        ext::GXLoadLightObjImm(&mut lightobj, ext::HSD_Index2LightID(i) as u32);
     }
     ext::HSD_StateInvalidate(-1);
 }
@@ -163,7 +175,7 @@ pub unsafe fn HSD_OSInit() {
 
     let mut new_arena_lo = round_up_32b(old_arena_lo);
     let new_arena_hi = round_down_32b(old_arena_hi);
-    ext::set_HSD_Synth_804D6018(ext::OSCreateHeap(
+    set_synth_heap(ext::OSCreateHeap(
         new_arena_lo as *mut c_void,
         (new_arena_lo + iparam_audio_heap_size as usize) as *mut c_void,
     ));
@@ -175,6 +187,10 @@ pub unsafe fn HSD_OSInit() {
     memReport.heap = new_arena_hi.wrapping_sub(new_arena_lo) as u32;
     ext::HSD_ObjSetHeap(new_arena_hi.wrapping_sub(new_arena_lo) as u32, null_mut());
     ext::OSSetArenaLo(new_arena_hi as *mut c_void);
+}
+
+unsafe fn set_synth_heap(h: OSHeapHandle) {
+    if use_ext_data { ext::HSD_Synth_804D6018 = h } else { super::synth::HSD_Synth_804D6018 = h }
 }
 
 pub unsafe fn HSD_GetHeap() -> OSHeapHandle {
@@ -194,7 +210,7 @@ pub unsafe fn HSD_CreateMainHeap(lo: *mut c_void, hi: *mut c_void) -> OSHeapHand
     let cb_table: [unsafe fn(*mut c_void, *mut c_void); 6] = [
         ext::_HSD_AObjForgetMemory,
         ext::_HSD_DispForgetMemory,
-        _HSD_IDForgetMemory,
+        ext::_HSD_IDForgetMemory,
         ext::_HSD_ObjAllocForgetMemory,
         ext::_HSD_RandForgetMemory,
         ext::_HSD_RObjForgetMemory,
@@ -225,12 +241,12 @@ pub unsafe fn HSD_GetCurrentRenderPass() -> HSD_RenderPass {
 }
 
 pub unsafe fn HSD_StartRender(pass: HSD_RenderPass) {
-    let rm = ext::HSD_VIGetRenderMode();
+    let rm = vi_render_mode();
     current_render_pass = pass;
     if (*rm).aa != 0 {
-        ext::GXSetPixelFmt(GX_PF_RGB565_Z16 as i32, current_z_fmt);
+        ext::GXSetPixelFmt(GX_PF_RGB565_Z16 as u32, current_z_fmt as u32);
     } else {
-        ext::GXSetPixelFmt(current_pix_fmt, GX_ZC_LINEAR as i32);
+        ext::GXSetPixelFmt(current_pix_fmt as u32, GX_ZC_LINEAR as u32);
     }
     ext::GXSetFieldMode(
         (*rm).field_rendering,
@@ -242,10 +258,10 @@ pub unsafe fn HSD_StartRender(pass: HSD_RenderPass) {
 pub unsafe fn HSD_Init_803755A8() {}
 
 pub unsafe fn HSD_ObjInit() {
-    HSD_ListInitAllocData();
+    ext::HSD_ListInitAllocData();
     ext::HSD_AObjInitAllocData();
     ext::HSD_FObjInitAllocData();
-    HSD_IDInitAllocData();
+    ext::HSD_IDInitAllocData();
     ext::HSD_VecInitAllocData();
     ext::HSD_MtxInitAllocData();
     ext::HSD_RObjInitAllocData();
@@ -255,36 +271,36 @@ pub unsafe fn HSD_ObjInit() {
 }
 
 pub unsafe fn HSD_ObjDumpStat() {
-    let types: [(unsafe fn() -> *mut HSD_ObjAllocData, &str); 13] = [
-        (ext::HSD_AObjGetAllocData, "aobj"),
-        (ext::HSD_FObjGetAllocData, "fobj"),
-        (HSD_IDGetAllocData, "id"),
-        (HSD_SListGetAllocData, "slist"),
-        (HSD_DListGetAllocData, "dlist"),
-        (ext::HSD_VecGetAllocData, "vec"),
-        (ext::HSD_MtxGetAllocData, "mtx"),
-        (ext::HSD_RObjGetAllocData, "robj"),
-        (ext::HSD_RvalueObjGetAllocData, "rval"),
-        (ext::HSD_ShadowGetAllocData, "shadow"),
-        (ext::HSD_RenderGetAllocData, "render"),
-        (ext::HSD_ChanGetAllocData, "chan"),
-        (ext::HSD_TevRegGetAllocData, "tevreg"),
+    let types: [(unsafe fn() -> *mut HSD_ObjAllocData, &core::ffi::CStr); 13] = [
+        (ext::HSD_AObjGetAllocData, c"aobj"),
+        (ext::HSD_FObjGetAllocData, c"fobj"),
+        (ext::HSD_IDGetAllocData, c"id"),
+        (ext::HSD_SListGetAllocData, c"slist"),
+        (ext::HSD_DListGetAllocData, c"dlist"),
+        (ext::HSD_VecGetAllocData, c"vec"),
+        (ext::HSD_MtxGetAllocData, c"mtx"),
+        (ext::HSD_RObjGetAllocData, c"robj"),
+        (ext::HSD_RvalueObjGetAllocData, c"rval"),
+        (ext::HSD_ShadowGetAllocData, c"shadow"),
+        (ext::HSD_RenderGetAllocData, c"render"),
+        (ext::HSD_ChanGetAllocData, c"chan"),
+        (ext::HSD_TevRegGetAllocData, c"tevreg"),
     ];
     for (func, label) in types {
-        ext::OSReport(&format!(
-            "objalloc: {}\tusing {}\tfreed {}\tpeak {}\n",
-            label,
-            ext::HSD_ObjAllocGetUsing(func()),
-            ext::HSD_ObjAllocGetFreed(func()),
-            ext::HSD_ObjAllocGetPeak(func()),
-        ));
+        let using = melee_types::inline::HSD_ObjAllocGetUsing(&*(func() as *const _));
+        let freed = melee_types::inline::HSD_ObjAllocGetFreed(&*(func() as *const _));
+        let peak = melee_types::inline::HSD_ObjAllocGetPeak(&*(func() as *const _));
+        super::lbext::OSReport(
+            "objalloc: %s\tusing %d\tfreed %d\tpeak %d\n",
+            &[OsArg::S(label.as_ptr()), OsArg::I(using as i32), OsArg::I(freed as i32), OsArg::I(peak as i32)],
+        );
     }
 }
 
 unsafe fn hsd_init_parameter_allowed() -> bool {
     if init_done != 0 {
         if shown == 0 {
-            ext::OSReport("init parameter should be set before invoking HSD_Init().\n");
+            super::lbext::OSReport("init parameter should be set before invoking HSD_Init().\n", &[]);
             shown = 1;
         }
         return false;
@@ -338,70 +354,109 @@ pub unsafe fn HSD_SetInitParameterPtr(param: HSD_InitParam, value: *mut c_void) 
 }
 
 /// Callees in unported TUs; each is a TODO stub named like the C function.
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
-    macro_rules! todo_fns {
-        ($( fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)? ; )*) => {
-            $( pub unsafe fn $name($($a: $t),*) $(-> $r)? { crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?) } )*
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
+                }
+            } )*
         };
     }
-    todo_fns! {
-        fn GXNtsc480IntDf() -> *mut GXRenderModeObj;
-        fn HSD_VIInit(s: *mut HSD_VIStatus, a: *mut c_void, b: *mut c_void, c: *mut c_void) = crate::tu::video::HSD_VIInit(s, a, b, c);
-        fn VIWaitForRetrace();
-        fn HSD_LogInit() = crate::tu::debug::HSD_LogInit();
-        fn OSGetArenaLo() -> *mut c_void;
-        fn OSGetArenaHi() -> *mut c_void;
-        fn OSSetArenaLo(p: *mut c_void);
-        fn OSAllocFromHeap(h: OSHeapHandle, size: u32) -> *mut c_void;
-        fn __OSCurrHeap() -> OSHeapHandle;
-        fn HSD_Panic(file: &str, line: i32, msg: &str) = { let f = std::ffi::CString::new(file).unwrap_or_default(); let m = std::ffi::CString::new(msg).unwrap_or_default(); crate::tu::debug::HSD_Panic(f.as_ptr(), line as u32, m.as_ptr()) };
-        fn GXInitLightPos(l: *mut GXLightObj, x: f32, y: f32, z: f32);
-        fn GXInitLightDir(l: *mut GXLightObj, x: f32, y: f32, z: f32);
-        fn GXInitLightAttn(l: *mut GXLightObj, a0: f32, a1: f32, a2: f32, k0: f32, k1: f32, k2: f32);
-        fn GXInitLightColor(l: *mut GXLightObj, c: GXColor);
-        fn GXLoadLightObjImm(l: *mut GXLightObj, id: u32);
-        fn HSD_Index2LightID(i: i32) -> u32 = crate::lobj::index_to_light_id(i as u32) as u32;
-        fn HSD_StateInvalidate(mask: i32);
-        fn OSGetPhysicalMemSize() -> u32;
-        fn OSInitAlloc(lo: *mut c_void, hi: *mut c_void, max: i32) -> *mut c_void;
-        fn OSCreateHeap(lo: *mut c_void, hi: *mut c_void) -> OSHeapHandle;
-        fn OSSetCurrentHeap(h: OSHeapHandle) -> OSHeapHandle;
-        fn OSDestroyHeap(h: OSHeapHandle);
-        fn HSD_ObjSetHeap(size: u32, p: *mut c_void) = crate::tu::objalloc::HSD_ObjSetHeap(size, p);
-        fn set_HSD_Synth_804D6018(h: OSHeapHandle);
-        fn hsdForgetClassLibrary(name: *const i8) = crate::tu::class::hsdForgetClassLibrary(name as _);
-        fn _HSD_AObjForgetMemory(lo: *mut c_void, hi: *mut c_void) = crate::tu::aobj::_HSD_AObjForgetMemory(lo, hi);
-        fn _HSD_DispForgetMemory(lo: *mut c_void, hi: *mut c_void);
-        fn _HSD_ObjAllocForgetMemory(lo: *mut c_void, hi: *mut c_void) = crate::tu::objalloc::_HSD_ObjAllocForgetMemory(lo, hi);
-        fn _HSD_RandForgetMemory(lo: *mut c_void, hi: *mut c_void) = crate::tu::random::_HSD_RandForgetMemory(crate::tu::globals::rand(), lo as *const u8, hi as *const u8);
-        fn _HSD_RObjForgetMemory(lo: *mut c_void, hi: *mut c_void);
-        fn HSD_VIGetRenderMode() -> *mut GXRenderModeObj = crate::tu::video::HSD_VIGetRenderMode();
-        fn GXSetPixelFmt(pix: i32, z: i32);
-        fn GXSetFieldMode(field_rendering: u8, half_aspect: u8);
-        fn HSD_AObjInitAllocData() = crate::tu::aobj::HSD_AObjInitAllocData();
-        fn HSD_FObjInitAllocData() = crate::tu::fobj::HSD_FObjInitAllocData();
-        fn HSD_VecInitAllocData() = crate::tu::mtx::HSD_VecInitAllocData();
-        fn HSD_MtxInitAllocData() = crate::tu::mtx::HSD_MtxInitAllocData();
-        fn HSD_RObjInitAllocData();
-        fn HSD_RenderInitAllocData() = crate::tu::tev::HSD_RenderInitAllocData(crate::tu::globals::render());
-        fn HSD_ShadowInitAllocData() = crate::tu::shadow::HSD_ShadowInitAllocData();
-        fn HSD_ZListInitAllocData();
-        fn HSD_AObjGetAllocData() -> *mut HSD_ObjAllocData = crate::tu::aobj::HSD_AObjGetAllocData();
-        fn HSD_FObjGetAllocData() -> *mut HSD_ObjAllocData = crate::tu::fobj::HSD_FObjGetAllocData();
-        fn HSD_VecGetAllocData() -> *mut HSD_ObjAllocData = crate::tu::mtx::HSD_VecGetAllocData();
-        fn HSD_MtxGetAllocData() -> *mut HSD_ObjAllocData = crate::tu::mtx::HSD_MtxGetAllocData();
-        fn HSD_RObjGetAllocData() -> *mut HSD_ObjAllocData;
-        fn HSD_RvalueObjGetAllocData() -> *mut HSD_ObjAllocData;
-        fn HSD_ShadowGetAllocData() -> *mut HSD_ObjAllocData = crate::tu::shadow::HSD_ShadowGetAllocData();
-        fn HSD_RenderGetAllocData() -> *mut HSD_ObjAllocData = crate::tu::tev::HSD_RenderGetAllocData(crate::tu::globals::render());
-        fn HSD_ChanGetAllocData() -> *mut HSD_ObjAllocData = crate::tu::tev::HSD_ChanGetAllocData(crate::tu::globals::render());
-        fn HSD_TevRegGetAllocData() -> *mut HSD_ObjAllocData = crate::tu::tev::HSD_TevRegGetAllocData(crate::tu::globals::render());
-        fn HSD_ObjAllocGetUsing(d: *mut HSD_ObjAllocData) -> u32 = melee_types::inline::HSD_ObjAllocGetUsing(&*(d as *const _));
-        fn HSD_ObjAllocGetFreed(d: *mut HSD_ObjAllocData) -> u32 = melee_types::inline::HSD_ObjAllocGetFreed(&*(d as *const _));
-        fn HSD_ObjAllocGetPeak(d: *mut HSD_ObjAllocData) -> u32 = melee_types::inline::HSD_ObjAllocGetPeak(&*(d as *const _));
+    ext_fns! {
+    fn GXInitLightAttn(a0: *mut _GXLightObj, a1: f32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32);
+    fn GXInitLightColor(a0: *mut _GXLightObj, a1: _GXColor);
+    fn GXInitLightDir(a0: *mut _GXLightObj, a1: f32, a2: f32, a3: f32);
+    fn GXInitLightPos(a0: *mut _GXLightObj, a1: f32, a2: f32, a3: f32);
+    fn GXLoadLightObjImm(a0: *mut _GXLightObj, a1: u32);
+    fn GXSetFieldMode(a0: u8, a1: u8);
+    fn GXSetPixelFmt(a0: u32, a1: u32);
+    fn HSD_AObjGetAllocData() -> *mut _HSD_ObjAllocData = crate::tu::aobj::HSD_AObjGetAllocData();
+    fn HSD_AObjInitAllocData() = crate::tu::aobj::HSD_AObjInitAllocData();
+    fn HSD_ChanGetAllocData() -> *mut _HSD_ObjAllocData = crate::tu::tev::HSD_ChanGetAllocData(crate::tu::globals::render());
+    fn HSD_DListGetAllocData() -> *mut _HSD_ObjAllocData = crate::tu::list::HSD_DListGetAllocData();
+    fn HSD_FObjGetAllocData() -> *mut _HSD_ObjAllocData = crate::tu::fobj::HSD_FObjGetAllocData();
+    fn HSD_FObjInitAllocData() = crate::tu::fobj::HSD_FObjInitAllocData();
+    fn HSD_IDGetAllocData() -> *mut _HSD_ObjAllocData = crate::tu::id::HSD_IDGetAllocData();
+    fn HSD_IDInitAllocData() = crate::tu::id::HSD_IDInitAllocData();
+    fn HSD_IDSetup() = crate::tu::id::HSD_IDSetup();
+    fn HSD_Index2LightID(a0: u32) -> i32 = crate::lobj::index_to_light_id(a0) as i32;
+    fn HSD_ListInitAllocData() = crate::tu::list::HSD_ListInitAllocData();
+    fn HSD_LogInit() = crate::tu::debug::HSD_LogInit();
+    fn HSD_MtxGetAllocData() -> *mut _HSD_ObjAllocData = crate::tu::mtx::HSD_MtxGetAllocData();
+    fn HSD_MtxInitAllocData() = crate::tu::mtx::HSD_MtxInitAllocData();
+    fn HSD_ObjSetHeap(a0: u32, a1: *mut c_void) = { let (size, p) = (a0, a1); crate::tu::objalloc::HSD_ObjSetHeap(size, p) };
+    fn HSD_RObjGetAllocData() -> *mut _HSD_ObjAllocData;
+    fn HSD_RObjInitAllocData();
+    fn HSD_RenderGetAllocData() -> *mut _HSD_ObjAllocData = crate::tu::tev::HSD_RenderGetAllocData(crate::tu::globals::render());
+    fn HSD_RenderInitAllocData() = crate::tu::tev::HSD_RenderInitAllocData(crate::tu::globals::render());
+    fn HSD_RvalueObjGetAllocData() -> *mut _HSD_ObjAllocData;
+    fn HSD_SListGetAllocData() -> *mut _HSD_ObjAllocData = crate::tu::list::HSD_SListGetAllocData();
+    fn HSD_ShadowGetAllocData() -> *mut _HSD_ObjAllocData = crate::tu::shadow::HSD_ShadowGetAllocData();
+    fn HSD_ShadowInitAllocData() = crate::tu::shadow::HSD_ShadowInitAllocData();
+    fn HSD_StateInvalidate(a0: i32);
+    fn HSD_TevRegGetAllocData() -> *mut _HSD_ObjAllocData = crate::tu::tev::HSD_TevRegGetAllocData(crate::tu::globals::render());
+    fn HSD_VIInit(a0: *mut _HSD_VIStatus, a1: *mut c_void, a2: *mut c_void, a3: *mut c_void) = { let (s, a, b, c) = (a0, a1, a2, a3); crate::tu::video::HSD_VIInit(s, a, b, c) };
+    fn HSD_VecGetAllocData() -> *mut _HSD_ObjAllocData = crate::tu::mtx::HSD_VecGetAllocData();
+    fn HSD_VecInitAllocData() = crate::tu::mtx::HSD_VecInitAllocData();
+    fn HSD_ZListInitAllocData();
+    fn OSAllocFromHeap(a0: i32, a1: u32) -> *mut c_void;
+    fn OSCreateHeap(a0: *mut c_void, a1: *mut c_void) -> i32;
+    fn OSDestroyHeap(a0: i32);
+    fn OSGetArenaHi() -> *mut c_void;
+    fn OSGetArenaLo() -> *mut c_void;
+    fn OSGetPhysicalMemSize() -> u32;
+    fn OSInitAlloc(a0: *mut c_void, a1: *mut c_void, a2: i32) -> *mut c_void;
+    fn OSSetArenaLo(a0: *mut c_void);
+    fn OSSetCurrentHeap(a0: i32) -> i32;
+    fn VIWaitForRetrace();
+    fn _HSD_AObjForgetMemory(a0: *mut c_void, a1: *mut c_void) = { let (lo, hi) = (a0, a1); crate::tu::aobj::_HSD_AObjForgetMemory(lo, hi) };
+    fn _HSD_DispForgetMemory(a0: *mut c_void, a1: *mut c_void);
+    fn _HSD_IDForgetMemory(a0: *mut c_void, a1: *mut c_void) = crate::tu::id::_HSD_IDForgetMemory(a0, a1);
+    fn _HSD_ObjAllocForgetMemory(a0: *mut c_void, a1: *mut c_void) = { let (lo, hi) = (a0, a1); crate::tu::objalloc::_HSD_ObjAllocForgetMemory(lo, hi) };
+    fn _HSD_RObjForgetMemory(a0: *mut c_void, a1: *mut c_void);
+    fn _HSD_RandForgetMemory(a0: *mut c_void, a1: *mut c_void) = { let (lo, hi) = (a0, a1); crate::tu::random::_HSD_RandForgetMemory(crate::tu::globals::rand(), lo as *const u8, hi as *const u8) };
+    fn hsdForgetClassLibrary(a0: *const i8) = { let (name,) = (a0,); crate::tu::class::hsdForgetClassLibrary(name as _) };
     }
-    pub fn OSReport(_s: &str) {
-        todo!("TODO ext: OSReport (dolphin/os)")
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+        pub unsafe extern "C" fn HSD_AObjGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_AObjGetAllocData() }
+        pub unsafe extern "C" fn HSD_ChanGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_ChanGetAllocData() }
+        pub unsafe extern "C" fn HSD_DListGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_DListGetAllocData() }
+        pub unsafe extern "C" fn HSD_FObjGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_FObjGetAllocData() }
+        pub unsafe extern "C" fn HSD_IDGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_IDGetAllocData() }
+        pub unsafe extern "C" fn HSD_MtxGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_MtxGetAllocData() }
+        pub unsafe extern "C" fn HSD_RObjGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_RObjGetAllocData() }
+        pub unsafe extern "C" fn HSD_RenderGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_RenderGetAllocData() }
+        pub unsafe extern "C" fn HSD_RvalueObjGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_RvalueObjGetAllocData() }
+        pub unsafe extern "C" fn HSD_SListGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_SListGetAllocData() }
+        pub unsafe extern "C" fn HSD_ShadowGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_ShadowGetAllocData() }
+        pub unsafe extern "C" fn HSD_TevRegGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_TevRegGetAllocData() }
+        pub unsafe extern "C" fn HSD_VecGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_VecGetAllocData() }
+        pub unsafe extern "C" fn OSGetArenaHi() -> *mut c_void { super::OSGetArenaHi() }
+        pub unsafe extern "C" fn OSGetArenaLo() -> *mut c_void { super::OSGetArenaLo() }
+        pub unsafe extern "C" fn _HSD_AObjForgetMemory(a0: *mut c_void, a1: *mut c_void) { super::_HSD_AObjForgetMemory(a0, a1) }
+        pub unsafe extern "C" fn _HSD_DispForgetMemory(a0: *mut c_void, a1: *mut c_void) { super::_HSD_DispForgetMemory(a0, a1) }
+        pub unsafe extern "C" fn _HSD_IDForgetMemory(a0: *mut c_void, a1: *mut c_void) { super::_HSD_IDForgetMemory(a0, a1) }
+        pub unsafe extern "C" fn _HSD_ObjAllocForgetMemory(a0: *mut c_void, a1: *mut c_void) { super::_HSD_ObjAllocForgetMemory(a0, a1) }
+        pub unsafe extern "C" fn _HSD_RObjForgetMemory(a0: *mut c_void, a1: *mut c_void) { super::_HSD_RObjForgetMemory(a0, a1) }
+        pub unsafe extern "C" fn _HSD_RandForgetMemory(a0: *mut c_void, a1: *mut c_void) { super::_HSD_RandForgetMemory(a0, a1) }
     }
+    // Data defined in other TUs (the tests set them).
+    pub static mut GXNtsc480IntDf: GXRenderModeObj = unsafe { core::mem::zeroed() };
+    pub static mut HSD_Synth_804D6018: i32 = unsafe { core::mem::zeroed() };
+    pub static mut HSD_VIData: HSD_VIInfo = unsafe { core::mem::zeroed() };
+    pub static mut __OSCurrHeap: i32 = unsafe { core::mem::zeroed() };
 }
+// END GENERATED EXT

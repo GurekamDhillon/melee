@@ -1,3 +1,4 @@
+mod inl;
 pub mod cmsnap;
 pub mod camera;
 pub mod efdata;
@@ -96,3 +97,11 @@ pub mod granime;
 pub mod grcastle;
 pub mod grcorneria;
 pub mod grbigblue;
+pub mod ifcoget;
+pub mod grzebesroute;
+pub mod ifall;
+pub mod grzakogenerator;
+pub mod gryorster;
+pub mod stage;
+pub mod grvenom;
+pub mod grzebes;

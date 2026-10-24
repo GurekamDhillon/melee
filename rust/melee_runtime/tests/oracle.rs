@@ -1,11 +1,27 @@
 //! Bit-for-bit comparison against the C build's arithmetic. `tests/data/oracle_vectors.txt` is
 //! produced by `oracle/build.sh` from the C sources (pc/gameworld/{gekko_fp,mtx_pc}.c, mtx44.c,
 //! baselib/random.c, lb/lbtrigf.c, lb/lbvector.c, math_ppc.h), compiled with the real build's contraction + gwtool lowering.
-use melee_runtime::gekko::*;
+use melee_runtime::gekko::{sqrtf, sqrtf_accurate};
+use melee_runtime::tu::gekko_fp::{__fres as fres, __frsqrte as frsqrte, sinf, cosf, tanf};
 use melee_runtime::lbtrigf;
 use melee_runtime::lbvector;
-use melee_runtime::mtx::{self, Mtx, Quaternion, Vec3};
+use melee_runtime::mtx::{Mtx, Quaternion, Vec3};
 use melee_runtime::random::HsdRand;
+
+// Exercise the shard's re-exports using the established bitwise C corpus.
+mod mtx {
+    pub use melee_runtime::tu::mtx_pc::{
+        PSMTXConcat as concat, PSMTXTranspose as transpose, PSMTXInverse as inverse,
+        PSMTXMultVec as mult_vec, PSMTXMultVecSR as mult_vec_sr, PSVECAdd as vec_add,
+        PSVECSubtract as vec_sub, PSVECScale as vec_scale, PSVECNormalize as vec_normalize,
+        PSVECMag as vec_mag, PSVECDotProduct as vec_dot, PSVECCrossProduct as vec_cross,
+        PSMTXRotAxisRad as rot_axis_rad, MTXRotRad as rot_rad, PSMTXQuat as quat,
+        C_MTXLookAt as look_at, PSMTXTrans as trans, PSMTXScale as scale,
+        MTXLightFrustum as light_frustum, MTXLightPerspective as light_perspective,
+        MTXLightOrtho as light_ortho,
+    };
+    pub use melee_runtime::tu::mtx44::{MTXFrustum as frustum, MTXPerspective as perspective, MTXOrtho as ortho};
+}
 
 const DATA: &str = include_str!("data/oracle_vectors.txt");
 

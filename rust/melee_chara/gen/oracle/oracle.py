@@ -236,9 +236,9 @@ def ret_is_bool(t):
 
 # ------------------------------------------------------------------ Rust hook parsing
 def parse_hooks(rs_text):
-    """hook!(HOOK, name, (a: T, ...) -> R ...) / hook_or!(... , port) lines in the file's `ext` module."""
+    """hook!(HOOK, name, (a: T, ...) -> R ...) / hook_or!(... , port) / port_hook!(HOOK, name, port, (..)) lines in the file's `ext` module."""
     out = {}
-    for m in re.finditer(r"^\s*hook(?:_or)?!\(\s*(\w+)\s*,\s*(\w+)\s*,\s*\(", rs_text, re.M):
+    for m in re.finditer(r"^\s*(?:crate::)?(?:port_)?hook(?:_or)?!\(\s*(\w+)\s*,\s*(\w+)\s*,\s*(?:[\w:]+\s*,\s*)?\(", rs_text, re.M):
         hook, name = m.group(1), m.group(2)
         i = m.end()
         depth, j = 1, i
@@ -633,7 +633,7 @@ def build(stem, verbose_fn=None):
         if n == "efSync_Spawn":
             continue
         S.append(next(t for t in stubs if re.search(r"\b" + n + r"\(", t.split("\n")[0])))
-    S.append(C_WORLD)
+    S.append(C_WORLD.replace("#define NJO 48", "#define NJO %d" % spec.get("njo", 48)))
     # fn table
     fnv_names = list(spec.get("fnvals", {}).keys())
     S.append("static void world_reg_fns(void)\n{")
@@ -757,7 +757,7 @@ def build(stem, verbose_fn=None):
     R.append(spec.get("use_rs", ""))
     for k, v in D.items():
         R.append(f"static D_{k}: &[ODesc] = &[" + ", ".join(f"({o}, {s}, b'{kd}')" for o, s, kd in v) + "];")
-    R.append(RS_WORLD)
+    R.append(RS_WORLD.replace("const NJO: usize = 48;", "const NJO: usize = %d;" % spec.get("njo", 48)))
     R.append("unsafe fn world_reg_fns() {")
     for n, expr in spec.get("fnvals", {}).items():
         R.append(f"    ofn(({expr}) as usize);")

@@ -557,3 +557,20 @@ pub unsafe fn ftMaterial_800BFB4C(gobj: G, color: *const _GXColor) {
 pub unsafe fn hsdChangeClass_ftMObj(mobj: *mut HSD_MObj) {
     melee_runtime::tu::class::hsdChangeClass(mobj.cast(), melee_fighter::tu::ftmaterial::ftMObj_ptr().cast());
 }
+
+/// `it_802B62D0(gobj, pos, is_smash_missile, dir)` with the C `bool` as a Rust `bool`.
+pub unsafe fn it_802B62D0(gobj: G, pos: *mut Vec3, is_smash: bool, dir: f32) -> G {
+    melee_items::tu::itsamusmissile::it_802B62D0(gobj, pos, is_smash as i32, dir)
+}
+pub unsafe fn ftBossLib_8015C208(gobj: G, out: *mut Vec3) {
+    melee_fighter::tu::ftbosslib::ftBossLib_8015C208(gobj, &mut *out)
+}
+pub unsafe fn ftAnim_SetAnimRate(gobj: G, rate: f32) {
+    melee_fighter::tu::ftanim::ftAnim_SetAnimRate(gobj, rate)
+}
+pub unsafe fn Fighter_ChangeMotionState(gobj: G, msid: i32, flags: u32, anim_start: f32, anim_speed: f32, anim_blend: f32, arg3: G) {
+    melee_fighter::tu::fighter::Fighter_ChangeMotionState(gobj, msid as _, flags as _, anim_start, anim_speed, anim_blend, arg3)
+}
+pub unsafe fn ftAnim_8006EBA4(gobj: G) {
+    melee_fighter::tu::ftanim::ftAnim_8006EBA4(gobj)
+}

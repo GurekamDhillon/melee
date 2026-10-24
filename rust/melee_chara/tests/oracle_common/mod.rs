@@ -381,6 +381,7 @@ pub fn efsync_shape(gfx: i32) -> &'static str {
         0x4CF => "Vf",
         0x3FF => "Vff",
         1285 => "V",
+        1155 => "V",
         _ => "pppp",
     }
 }

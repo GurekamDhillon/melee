@@ -391,6 +391,7 @@ static const char* efsync_shape(int gfx)
     case 0x4CF: return "Vf";
     case 0x3FF: return "Vff";
     case 1285: return "V";
+    case 1155: return "V";
     default: return "pppp";
     }
 }

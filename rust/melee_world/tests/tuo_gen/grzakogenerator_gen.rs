@@ -133,6 +133,7 @@ fn vis_Item(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut melee_types
 v.bytes(&format!("{}.anon_daa", path), &mut (*p).anon_daa as *mut _ as *mut u8, core::mem::size_of_val(&(*p).anon_daa));
 v.bytes(&format!("{}.anon_dbc", path), &mut (*p).anon_dbc as *mut _ as *mut u8, core::mem::size_of_val(&(*p).anon_dbc));
 {
+if v.view_on("Item_ItemVars", "zako") {
 {
 {
 if v.set() { (*p).xDD4_itemVar.zako.jobj = v.leaf_ptr(&format!("{}.jobj", format!("{}.zako", format!("{}.xDD4_itemVar", path)))) as _; } else { v.dump_p(&format!("{}.jobj", format!("{}.zako", format!("{}.xDD4_itemVar", path))), ((*p).xDD4_itemVar.zako.jobj) as usize); }
@@ -209,6 +210,7 @@ if v.set() { (*p).xDD4_itemVar.zako.x58 = v.leaf_int(&format!("{}.x58", format!(
 }
 {
 if v.set() { (*p).xDD4_itemVar.zako.x5C = v.leaf_int(&format!("{}.x5C", format!("{}.zako", format!("{}.xDD4_itemVar", path))), 32, 1) as _; } else { v.dump_i(&format!("{}.x5C", format!("{}.zako", format!("{}.xDD4_itemVar", path))), (((*p).xDD4_itemVar.zako.x5C) as i32) as i64); }
+}
 }
 }
 }

@@ -3,6 +3,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import *
 TU = "src/melee/gr/grzakogenerator.c"
 RUST_MOD = "melee_world::tu::grzakogenerator"
+LOWMEM = True  # u32 views alias pointer slots (Item_ItemVars/Ground unions): pool objects below 4 GB, same addresses on both sides
 SIZE_OK = ["HSD_JObj"]
 SKIP_LEAF_TYPES = ["HSD_IDKey"]
 RUST_TYPES = {}

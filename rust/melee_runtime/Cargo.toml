@@ -29,3 +29,11 @@ harness = false
 [[test]]
 name = "tu_perf"
 harness = false
+
+[[test]]
+name = "tu_memory"
+harness = false
+
+[[test]]
+name = "tu_objalloc"
+harness = false

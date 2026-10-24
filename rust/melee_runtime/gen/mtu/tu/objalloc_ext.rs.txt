@@ -1,0 +1,40 @@
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/mtu/gen_tu.py; the callees of the C TU)
+pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    use super::*;
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn HSD_GetHeap() -> i32 = crate::tu::memory::ext::HSD_GetHeap();
+    fn HSD_MemAlloc(a0: i32) -> *mut c_void = crate::tu::memory::HSD_MemAlloc(a0 as i32);
+    fn OSCheckHeap(a0: i32) -> i32;
+    fn PcTraceHeapEnabled() -> i32 = crate::tu::memory::ext::PcTraceHeapEnabled();
+    fn Snap_InRender() -> i32;
+    fn Snap_NoteArena(a0: *mut c_void, a1: *mut c_void, a2: u32);
+    fn Snap_NoteObj(a0: *mut c_void, a1: *mut c_void, a2: i32);
+    fn Snap_NoteRenderPool(a0: *mut c_void);
+    fn Snap_RenderPoolAt(a0: i32) -> *mut c_void;
+    fn Snap_RenderPoolCount() -> i32;
+    fn Snap_Resimulating() -> i32;
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+        pub unsafe extern "C" fn Snap_NoteRenderPool(a0: *mut c_void) { super::Snap_NoteRenderPool(a0) }
+    }
+    // Data defined in other TUs (the tests set them).
+}
+// END GENERATED EXT

@@ -262,23 +262,23 @@ unsafe fn pick_p(r: &mut Rng) -> i32 {
 }
 
 unsafe fn install_hooks() {
-    memory::ext::HSD_GetHeap_hook = Some(|| 0);
-    memory::ext::OSAllocFromHeap_hook = Some(|_h, size| {
+    memory::ext::hook::HSD_GetHeap = Some(|| 0);
+    memory::ext::hook::OSAllocFromHeap = Some(|_h, size| {
         let l = std::alloc::Layout::from_size_align(size.max(8) as usize, 16).unwrap();
         std::alloc::alloc_zeroed(l).cast()
     });
-    memory::ext::OSFreeToHeap_hook = Some(|_h, _p| ());
-    memory::ext::PcTraceHeapEnabled_hook = Some(|| 0);
-    memory::ext::Snap_NoteMem_hook = Some(|_s, _p, _c, _f| ());
-    memory::ext::return_address_hook = Some(|_d| null_mut());
-    memory::ext::OSReport_hook = Some(|_f, _a| ());
-    objalloc::ext::OSCheckHeap_hook = Some(|_h| 0x7FFFFFFF);
-    objalloc::ext::Snap_InRender_hook = Some(|| 0);
-    objalloc::ext::Snap_NoteObj_hook = Some(|_d, _o, _f| ());
-    objalloc::ext::Snap_NoteArena_hook = Some(|_d, _s, _z| ());
-    objalloc::ext::Snap_RenderPoolCount_hook = Some(|| 0);
-    objalloc::ext::Snap_RenderPoolAt_hook = Some(|_i| null_mut());
-    objalloc::ext::Snap_Resimulating_hook = Some(|| 0);
+    memory::ext::hook::OSFreeToHeap = Some(|_h, _p| ());
+    memory::ext::hook::PcTraceHeapEnabled = Some(|| 0);
+    memory::ext::hook::Snap_NoteMem = Some(|_s, _p, _c, _f| ());
+    memory::return_address_hook = Some(|_d| null_mut());
+    melee_runtime::tu::lbext::H_OSReport = Some(|_f, _a| ());
+    objalloc::ext::hook::OSCheckHeap = Some(|_h| 0x7FFFFFFF);
+    objalloc::ext::hook::Snap_InRender = Some(|| 0);
+    objalloc::ext::hook::Snap_NoteObj = Some(|_d, _o, _f| ());
+    objalloc::ext::hook::Snap_NoteArena = Some(|_d, _s, _z| ());
+    objalloc::ext::hook::Snap_RenderPoolCount = Some(|| 0);
+    objalloc::ext::hook::Snap_RenderPoolAt = Some(|_i| null_mut());
+    objalloc::ext::hook::Snap_Resimulating = Some(|| 0);
 }
 
 #[test]

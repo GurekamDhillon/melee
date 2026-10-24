@@ -1,0 +1,7 @@
+DbLevel
+HSD_GObj_CameraKind
+HSD_GObj_CurrentInvokedProc
+HSD_GObj_FogKind
+HSD_GObj_JObjKind
+HSD_GObj_LightKind
+HSD_PadCopyStatus

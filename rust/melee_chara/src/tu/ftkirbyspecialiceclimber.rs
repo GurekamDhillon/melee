@@ -43,12 +43,12 @@ pub mod ext {
     crate::port_hook!(IT_802C17DC, it_802C17DC, crate::adapt::it_802C17DC, (item: *mut HSD_GObj));
     crate::port_hook!(IT_802C16F8, it_802C16F8, crate::adapt::it_802C16F8, (item: *mut HSD_GObj));
     crate::port_hook!(IT_802C1590, it_802C1590, crate::adapt::it_802C1590, (gobj: *mut HSD_GObj, pos: *mut Vec3, kind: i32, facing_dir: f32) -> *mut HSD_GObj);
-    hook!(FT_PLAYSFX, ft_PlaySFX, (fp: *mut Fighter, sfx: i32, vol: u8, pan: u8));
+    crate::port_hook!(FT_PLAYSFX, ft_PlaySFX, crate::adapt::ft_PlaySFX, (fp: *mut Fighter, sfx: i32, vol: u8, pan: u8));
     hook_or!(FT_800881D8, ft_800881D8, ft_800881d8_port, (fp: *mut Fighter, sfx: i32, vol: u8, pan: u8));
     fn ft_800881d8_port(fp: *mut Fighter, sfx: i32, vol: u8, pan: u8) {
         melee_fighter::ft0881::ft_800881d8(unsafe { &mut *fp }, sfx, vol, pan)
     }
-    hook!(FTCOMMON_SETACCESSORY, ftCommon_SetAccessory, (fp: *mut Fighter, joint: *mut HSD_Joint));
+    crate::port_hook!(FTCOMMON_SETACCESSORY, ftCommon_SetAccessory, crate::adapt::ftCommon_SetAccessory, (fp: *mut Fighter, joint: *mut HSD_Joint));
     pub static mut LB_8000C2F8: Option<fn(*mut HSD_JObj, *mut HSD_JObj) > = None;
             #[allow(non_snake_case)]
             pub fn lb_8000C2F8(jobj: *mut HSD_JObj, parent: *mut HSD_JObj)  {

@@ -68,7 +68,7 @@ pub mod ext {
         |fp: *mut Fighter| unsafe { melee_fighter::ftcommon::update_facing(&mut *fp) });
     hook_or!(FTCOMMON_8007DA24, ftCommon_8007DA24, (fp: *mut Fighter),
         |fp: *mut Fighter| unsafe { melee_fighter::ftcommon::update_facing_outside_deadzone(&mut *fp) });
-    hook!(FTCOLL_8007B62C, ftColl_8007B62C, (gobj: *mut HSD_GObj, arg: i32));
+    crate::port_hook!(FTCOLL_8007B62C, ftColl_8007B62C, crate::adapt::ftColl_8007B62C, (gobj: *mut HSD_GObj, arg: i32));
     hook_or!(SCRIPTGAME_CAPSMAXJUMPS, ScriptGame_CapsMaxJumps, (fp: *mut Fighter) -> i32,
         |fp: *mut Fighter| unsafe { crate::chars::caps_max_jumps(&*fp) });
     pub static mut FTCO_80096900: Option<fn(*mut HSD_GObj, i32, i32, i32, f32, f32)> = None;

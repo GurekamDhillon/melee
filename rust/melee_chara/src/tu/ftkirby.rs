@@ -139,7 +139,7 @@ pub mod ext {
                 }
             }
     // `fighter_x2040_alloc_data` (the fighter's DObj-list pool).
-    hook!(FIGHTER_X2040_ALLOC_DATA, fighter_x2040_alloc_data, () -> *mut c_void);
+    crate::port_hook!(FIGHTER_X2040_ALLOC_DATA, fighter_x2040_alloc_data, crate::adapt::fighter_x2040_alloc_data, () -> *mut c_void);
     pub static mut HSD_OBJALLOC: Option<fn(*mut c_void) -> *mut c_void> = None;
             #[allow(non_snake_case)]
             pub fn HSD_ObjAlloc(data: *mut c_void) -> *mut c_void {
@@ -205,8 +205,8 @@ pub mod ext {
                     None => { unsafe { let _ = melee_fighter::ftanim::ftanim_80070fb4(gobj as _, a as _, b as _); } return; },
                 }
             }
-    hook!(FTANIM_GETNEXTJOINTINTREE, ftAnim_GetNextJointInTree, (joint: *mut *mut HSD_Joint, idx: *mut i32));
-    hook!(FTANIM_GETNEXTMATANIMJOINTINTREE, ftAnim_GetNextMatAnimJointInTree, (joint: *mut *mut HSD_MatAnimJoint, idx: *mut i32));
+    crate::port_hook!(FTANIM_GETNEXTJOINTINTREE, ftAnim_GetNextJointInTree, crate::adapt::ftAnim_GetNextJointInTree, (joint: *mut *mut HSD_Joint, idx: *mut i32));
+    crate::port_hook!(FTANIM_GETNEXTMATANIMJOINTINTREE, ftAnim_GetNextMatAnimJointInTree, crate::adapt::ftAnim_GetNextMatAnimJointInTree, (joint: *mut *mut HSD_MatAnimJoint, idx: *mut i32));
     hook!(FTPARTSPOBJSETDEFAULTCLASS, ftPartsPObjSetDefaultClass, ());
     hook!(FTPARTSPOBJCLEARDEFAULTCLASS, ftPartsPObjClearDefaultClass, ());
     hook!(FTPARTS_800753D4, ftParts_800753D4, (fp: *mut Fighter, parts: *mut Fighter_804D6540_x0_t, joint: *mut HSD_Joint));

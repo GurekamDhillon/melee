@@ -40,7 +40,7 @@ pub mod ext {
                     None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, offset as _, out as _); } return; },
                 }
             }
-    hook!(FT_800892A0, ft_800892A0, (gobj: *mut HSD_GObj));
+    crate::port_hook!(FT_800892A0, ft_800892A0, crate::adapt::ft_800892A0, (gobj: *mut HSD_GObj));
     pub static mut IT_802AEAB4: Option<fn(*mut Item_GObj) > = None;
             #[allow(non_snake_case)]
             pub fn it_802AEAB4(item: *mut Item_GObj)  {

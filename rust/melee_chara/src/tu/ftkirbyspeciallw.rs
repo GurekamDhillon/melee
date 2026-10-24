@@ -58,7 +58,7 @@ pub mod ext {
             None => { unsafe { melee_world::tu::mplib::mpCheckAllRemap(pos_out as _, line_id_out as _, flags_out as _, normal_out as _, joint_id_skip as _, joint_id_only as _, x0 as _, y0 as _, x1 as _, y1 as _) != 0 } },
         }
     }
-    hook!(FT_PLAYSFX, ft_PlaySFX, (fp: *mut Fighter, sfx: i32, vol: u8, pan: u8));
+    crate::port_hook!(FT_PLAYSFX, ft_PlaySFX, crate::adapt::ft_PlaySFX, (fp: *mut Fighter, sfx: i32, vol: u8, pan: u8));
     crate::port_hook!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, crate::adapt::Camera_RequestQuake, (kind: CmQuakeKind, pos: *mut Vec3));
     pub static mut EFLIB_DESTROYALL: Option<fn(*mut HSD_GObj)> = None;
     #[allow(non_snake_case)]

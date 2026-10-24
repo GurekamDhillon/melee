@@ -51,7 +51,7 @@ pub mod ext {
         }
     }
     // `ftColl_CreateReflectHit(gobj, desc, on_reflect)` (ft/ftcoll.c).
-    hook!(FTCOLL_CREATEREFLECTHIT, ftColl_CreateReflectHit, (g: *mut HSD_GObj, desc: *mut ReflectDesc, cb: HSD_GObjEvent));
+    crate::port_hook!(FTCOLL_CREATEREFLECTHIT, ftColl_CreateReflectHit, crate::adapt::ftColl_CreateReflectHit, (g: *mut HSD_GObj, desc: *mut ReflectDesc, cb: HSD_GObjEvent));
     // Group 3 helpers the TU calls directly (ft/ftcommon.c).
     hook_or!(FTCOMMON_FALL, ftCommon_Fall, (fp: &mut Fighter, gravity: f32, terminal_vel: f32),
         super::fall_port);

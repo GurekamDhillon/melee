@@ -56,7 +56,7 @@ pub mod ext {
                     None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(joint as _, off as _, out as _); } return; },
                 }
             }
-    hook!(FT_800892A0, ft_800892A0, (gobj: *mut HSD_GObj));
+    crate::port_hook!(FT_800892A0, ft_800892A0, crate::adapt::ft_800892A0, (gobj: *mut HSD_GObj));
     hook_or!(FT_80089824, ft_80089824, (gobj: *mut HSD_GObj), melee_fighter::ft0892::ft_80089824);
     pub static mut FTFX_INIT_800E5534: Option<fn(*mut HSD_GObj) -> bool> = None;
             #[allow(non_snake_case)]

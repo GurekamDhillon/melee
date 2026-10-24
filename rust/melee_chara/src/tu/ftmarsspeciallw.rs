@@ -26,7 +26,7 @@ pub mod ext {
     pub fn ftColl_8007ABD0(hit: *mut HitCapsule, damage: u32, gobj: *mut HSD_GObj) {
         match unsafe { FTCOLL_8007ABD0 } {
             Some(f) => f(hit, damage, gobj),
-            None => panic!("TODO: ftColl_8007ABD0 is not ported"),
+            None => crate::adapt::ftColl_8007ABD0(hit, damage, gobj),
         }
     }
 }

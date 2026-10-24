@@ -41,7 +41,7 @@ pub mod ext {
         }
     }
     crate::port_hook!(EFASYNC_SPAWN, efAsync_Spawn, crate::adapt::efAsync_Spawn_plain, (g: G, q: *mut core::ffi::c_void, kind: u32, gfx: u32, jobj: *mut HSD_JObj));
-    hook!(FT_800892A0, ft_800892A0, (g: G));
+    crate::port_hook!(FT_800892A0, ft_800892A0, crate::adapt::ft_800892A0, (g: G));
     // TODO: ftdonkey.c (`ftDk_Init_8010DB3C`) is not ported.
     pub static mut FTDK_INIT_8010DB3C: Option<fn(G) > = None;
             #[allow(non_snake_case)]

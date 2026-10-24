@@ -58,12 +58,12 @@ pub mod ext {
                     None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000C2F8(jobj as _, parent as _); } return; },
                 }
             }
-    hook!(FTCOLL_8007B0C0, ftColl_8007B0C0, (gobj: *mut HSD_GObj, state: i32));
-    hook!(FTCOLL_HURTBOXINIT, ftColl_HurtboxInit, (fp: *mut Fighter, hurt_capsules: *mut FighterHurtCapsule, init: *mut ftHurtboxInit));
-    hook!(FTCOLL_8007B760, ftColl_8007B760, (gobj: *mut HSD_GObj, v: i32));
-    hook!(FTCOMMON_SETACCESSORY, ftCommon_SetAccessory, (fp: *mut Fighter, joint: *mut HSD_Joint));
-    hook!(FTCOMMON_INITGRAB, ftCommon_InitGrab, (fp: *mut Fighter, a: i32, b: f32));
-    hook!(FTCOMMON_GRABMASH, ftCommon_GrabMash, (fp: *mut Fighter, decrement: f32) -> i32);
+    crate::port_hook!(FTCOLL_8007B0C0, ftColl_8007B0C0, crate::adapt::ftColl_8007B0C0, (gobj: *mut HSD_GObj, state: i32));
+    crate::port_hook!(FTCOLL_HURTBOXINIT, ftColl_HurtboxInit, crate::adapt::ftColl_HurtboxInit, (fp: *mut Fighter, hurt_capsules: *mut FighterHurtCapsule, init: *mut ftHurtboxInit));
+    crate::port_hook!(FTCOLL_8007B760, ftColl_8007B760, crate::adapt::ftColl_8007B760, (gobj: *mut HSD_GObj, v: i32));
+    crate::port_hook!(FTCOMMON_SETACCESSORY, ftCommon_SetAccessory, crate::adapt::ftCommon_SetAccessory, (fp: *mut Fighter, joint: *mut HSD_Joint));
+    crate::port_hook!(FTCOMMON_INITGRAB, ftCommon_InitGrab, crate::adapt::ftCommon_InitGrab, (fp: *mut Fighter, a: i32, b: f32));
+    crate::port_hook!(FTCOMMON_GRABMASH, ftCommon_GrabMash, crate::adapt::ftCommon_GrabMash, (fp: *mut Fighter, decrement: f32) -> i32);
     // `efAsync_Spawn(gobj, queue, kind, gfx_id, ...)` (ef/efasync.c, variadic): trailing args as a slice.
     crate::port_hook!(EFASYNC_SPAWN, efAsync_Spawn, crate::adapt::efAsync_Spawn_slice_pp, (gobj: *mut HSD_GObj, queue: *mut *mut c_void, kind: u32, gfx_id: u32, args: &[*mut c_void]));
     /// Recording hook; unset, the native `melee_fighter::tu::fighter` port runs.

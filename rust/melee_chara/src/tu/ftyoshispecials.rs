@@ -84,9 +84,9 @@ pub mod ext {
     pub fn ft_80089824(gobj: *mut HSD_GObj) {
         match unsafe { FT_80089824 } { Some(f) => f(gobj), None => { unsafe { let _ = melee_fighter::ft0892::ft_80089824(gobj as _); } return; } }
     }
-    hook!(FT_800892A0, ft_800892A0, (gobj: *mut HSD_GObj));
-    hook!(FTCOLL_8007AFF8, ftColl_8007AFF8, (gobj: *mut HSD_GObj));
-    hook!(FTCOLL_8007ABD0, ftColl_8007ABD0, (hit: *mut HitCapsule, damage: u32, gobj: *mut HSD_GObj));
+    crate::port_hook!(FT_800892A0, ft_800892A0, crate::adapt::ft_800892A0, (gobj: *mut HSD_GObj));
+    crate::port_hook!(FTCOLL_8007AFF8, ftColl_8007AFF8, crate::adapt::ftColl_8007AFF8, (gobj: *mut HSD_GObj));
+    crate::port_hook!(FTCOLL_8007ABD0, ftColl_8007ABD0, crate::adapt::ftColl_8007ABD0, (hit: *mut HitCapsule, damage: u32, gobj: *mut HSD_GObj));
     pub static mut FT_80082888: Option<fn(*mut HSD_GObj, *mut ftCollisionBox) -> bool> = None;
     #[allow(non_snake_case)]
     pub fn ft_80082888(gobj: *mut HSD_GObj, ecb: *mut ftCollisionBox) -> bool {

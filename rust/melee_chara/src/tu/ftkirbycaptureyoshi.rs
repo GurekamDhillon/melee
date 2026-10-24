@@ -21,7 +21,7 @@ pub mod ext {
             }
         };
     }
-    hook!(FTCOLL_8007B62C, ftColl_8007B62C, (gobj: *mut HSD_GObj, v: i32));
+    crate::port_hook!(FTCOLL_8007B62C, ftColl_8007B62C, crate::adapt::ftColl_8007B62C, (gobj: *mut HSD_GObj, v: i32));
 
     /// `ftCo_ReleaseItemAndVictim(gobj)`: group 3's port when the hook is unset.
     pub static mut FTCO_RELEASEITEMANDVICTIM: Option<fn(*mut HSD_GObj)> = None;

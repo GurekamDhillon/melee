@@ -66,6 +66,7 @@ pub mod ft_07c6;
 pub mod ftCo_Barrel;
 pub mod ftcmdscript;
 pub mod ftcolanim;
+pub mod ftcoll;
 pub mod ftCo_CliffClimb;
 pub mod ftCo_CliffAttack;
 pub mod ftCo_CliffEscape;

@@ -72,8 +72,8 @@ pub mod ext {
                 }
             }
     crate::port_hook!(EFSYNC_SPAWN, efSync_Spawn, crate::adapt::efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut core::ffi::c_void]) -> *mut core::ffi::c_void);
-    hook!(FTCOMMON_8007DA24, ftCommon_8007DA24, (fp: &mut Fighter));
-    hook!(FTCOLL_8007B62C, ftColl_8007B62C, (g: *mut HSD_GObj, s: i32));
+    crate::port_hook!(FTCOMMON_8007DA24, ftCommon_8007DA24, crate::adapt::ftCommon_8007DA24, (fp: &mut Fighter));
+    crate::port_hook!(FTCOLL_8007B62C, ftColl_8007B62C, crate::adapt::ftColl_8007B62C, (g: *mut HSD_GObj, s: i32));
     crate::port_hook!(SCRIPTGAME_CAPSMAXJUMPS, ScriptGame_CapsMaxJumps, crate::adapt::ScriptGame_CapsMaxJumps, (fp: &Fighter) -> i32);
     hook_or!(FT_PLAYSFX, ft_PlaySFX, (fp: &mut Fighter, sfx: i32, vol: i32, pan: i32),
         |fp: &mut Fighter, sfx: i32, vol: i32, pan: i32| melee_fighter::hooks::play_sfx(fp, sfx, vol, pan));

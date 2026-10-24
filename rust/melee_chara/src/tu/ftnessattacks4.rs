@@ -21,7 +21,7 @@ pub mod ext {
             }
         };
     }
-    hook!(FT_PLAYSFX, ft_PlaySFX, (fp: *mut Fighter, sfx: i32, vol: u8, pan: u8));
+    crate::port_hook!(FT_PLAYSFX, ft_PlaySFX, crate::adapt::ft_PlaySFX, (fp: *mut Fighter, sfx: i32, vol: u8, pan: u8));
     pub static mut IT_802AD478: Option<fn(*mut HSD_GObj, *mut Vec3, i32, f32) -> *mut HSD_GObj> = None;
             #[allow(non_snake_case)]
             pub fn it_802AD478(gobj: *mut HSD_GObj, pos: *mut Vec3, bone: i32, facing: f32) -> *mut HSD_GObj {
@@ -38,7 +38,7 @@ pub mod ext {
                     None => { unsafe { let _ = melee_items::tu::itnessbat::it_802AD6B8(bat as _); } return; },
                 }
             }
-    hook!(FTCOLL_CREATEREFLECTHIT, ftColl_CreateReflectHit, (gobj: *mut HSD_GObj, desc: *mut ReflectDesc, cb: HSD_GObjEvent));
+    crate::port_hook!(FTCOLL_CREATEREFLECTHIT, ftColl_CreateReflectHit, crate::adapt::ftColl_CreateReflectHit, (gobj: *mut HSD_GObj, desc: *mut ReflectDesc, cb: HSD_GObjEvent));
 }
 
 #[inline(always)]

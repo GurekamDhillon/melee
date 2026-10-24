@@ -92,7 +92,7 @@ pub mod ext {
                     None => { return unsafe { melee_fighter::tu::ftCo_Guard::ftCo_80092ED8(a as _, b as _) as _ }; },
                 }
             }
-    hook!(FTCOLL_8007B1B8, ftColl_8007B1B8, (gobj: *mut HSD_GObj, shield: *mut c_void, cb: HSD_GObjEvent));
+    crate::port_hook!(FTCOLL_8007B1B8, ftColl_8007B1B8, crate::adapt::ftColl_8007B1B8, (gobj: *mut HSD_GObj, shield: *mut c_void, cb: HSD_GObjEvent));
     pub static mut FTCO_800DEAE8: Option<fn(*mut HSD_GObj, i32, i32) > = None;
             #[allow(non_snake_case)]
             pub fn ftCo_800DEAE8(gobj: *mut HSD_GObj, msid0: i32, msid1: i32)  {

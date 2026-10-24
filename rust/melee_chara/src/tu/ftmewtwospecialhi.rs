@@ -73,8 +73,8 @@ pub mod ext {
                     None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(joint as _, off as _, out as _); } return; },
                 }
             }
-    hook!(FTCOLL_8007B62C, ftColl_8007B62C, (gobj: *mut HSD_GObj, arg: i32));
-    hook!(FTCOMMON_8007DA24, ftCommon_8007DA24, (fp: *mut Fighter));
+    crate::port_hook!(FTCOLL_8007B62C, ftColl_8007B62C, crate::adapt::ftColl_8007B62C, (gobj: *mut HSD_GObj, arg: i32));
+    crate::port_hook!(FTCOMMON_8007DA24, ftCommon_8007DA24, crate::adapt::ftCommon_8007DA24, (fp: *mut Fighter));
     fn ft_setfx_port(gobj: *mut HSD_GObj) {
         melee_fighter::tu::ftCo_AttackS4::Fighter_SetEffectHitlagCallbacks(unsafe {
             &mut *((*gobj).user_data as *mut Fighter)

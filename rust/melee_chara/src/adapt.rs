@@ -405,3 +405,118 @@ pub unsafe fn ft_80459B88_hat(kind: i32) -> *mut KirbyHatStruct {
 pub unsafe fn CostumeListsForeachCharacter_costume_list(kind: i32) -> *mut UnkCostumeStruct {
     (*(&raw const melee_fighter::tu::ftdata::CostumeListsForeachCharacter))[kind as usize].costume_list
 }
+
+// ---- ft/ftcoll.c, ftcommon.c, ... (melee_fighter) ---------------------------------------------
+// The character TUs declare the same C function with several Rust spellings (`*mut c_void` for a
+// descriptor, `i32` for an enum, `&mut Fighter` for a pointer); these adapters accept them all.
+
+/// A pointer-ish argument (`*mut T`, `*const T`, `&mut T`).
+pub trait AsPtr {
+    fn p(self) -> *mut c_void;
+}
+impl<T> AsPtr for *mut T {
+    fn p(self) -> *mut c_void {
+        self as *mut c_void
+    }
+}
+impl<T> AsPtr for *const T {
+    fn p(self) -> *mut c_void {
+        self as *mut c_void
+    }
+}
+impl<T> AsPtr for &mut T {
+    fn p(self) -> *mut c_void {
+        self as *mut T as *mut c_void
+    }
+}
+/// An integer-ish argument.
+pub trait AsI {
+    fn i(self) -> i64;
+}
+macro_rules! as_i {
+    ($($t:ty),*) => {$(impl AsI for $t { fn i(self) -> i64 { self as i64 } })*};
+}
+as_i!(i32, u32, u8, i8, i16, u16, usize, isize);
+/// A game callback argument (`HSD_GObjEvent`, or the same pointer as `*mut c_void`).
+pub trait AsCb {
+    fn cb(self) -> HSD_GObjEvent;
+}
+impl AsCb for HSD_GObjEvent {
+    fn cb(self) -> HSD_GObjEvent {
+        self
+    }
+}
+impl AsCb for *mut c_void {
+    fn cb(self) -> HSD_GObjEvent {
+        unsafe { core::mem::transmute::<*mut c_void, HSD_GObjEvent>(self) }
+    }
+}
+
+#[inline]
+unsafe fn fighter_of<'a>(g: G) -> &'a mut Fighter {
+    &mut *((*g).user_data as *mut Fighter)
+}
+
+pub fn ftColl_8007ABD0<D: AsI>(hit: *mut HitCapsule, damage: D, g: G) {
+    melee_fighter::tu::ftcoll::ftColl_8007ABD0(hit, damage.i() as u32, g)
+}
+pub fn ftColl_8007AFF8(g: G) {
+    melee_fighter::tu::ftcoll::ftColl_8007AFF8(g)
+}
+pub fn ftColl_8007B064(g: G, idx: i32) {
+    melee_fighter::tu::ftcoll::ftColl_8007B064(g, idx)
+}
+pub fn ftColl_8007B0C0<S: AsI>(g: G, state: S) {
+    melee_fighter::tu::ftcoll::ftColl_8007B0C0(g, state.i() as u32)
+}
+pub fn ftColl_8007B128<S: AsI>(g: G, bone_id: i32, state: S) {
+    melee_fighter::tu::ftcoll::ftColl_8007B128(g, bone_id, state.i() as u32)
+}
+pub fn ftColl_8007B1B8<P: AsPtr, C: AsCb>(g: G, shield: P, cb: C) {
+    melee_fighter::tu::ftcoll::ftColl_8007B1B8(g, shield.p() as *const ShieldDesc, cb.cb())
+}
+pub fn ftColl_8007B62C(g: G, v: i32) {
+    melee_fighter::tu::ftcoll::ftColl_8007B62C(g, v)
+}
+pub fn ftColl_8007B760(g: G, v: i32) {
+    melee_fighter::tu::ftcoll::ftColl_8007B760(g, v)
+}
+pub fn ftColl_CreateAbsorbHit<P: AsPtr>(g: G, desc: P) {
+    melee_fighter::tu::ftcoll::ftColl_CreateAbsorbHit(g, desc.p() as *const AbsorbDesc)
+}
+pub fn ftColl_CreateReflectHit<P: AsPtr, C: AsCb>(g: G, desc: P, cb: C) {
+    melee_fighter::tu::ftcoll::ftColl_CreateReflectHit(g, desc.p() as *const ReflectDesc, cb.cb())
+}
+pub fn ftColl_HurtboxInit<P: AsPtr>(fp: *mut Fighter, hurt: *mut FighterHurtCapsule, init: P) {
+    melee_fighter::tu::ftcoll::ftColl_HurtboxInit(fp, hurt, init.p() as *const ftHurtboxInit)
+}
+pub fn ftCommon_8007DA24<P: AsPtr>(fp: P) {
+    melee_fighter::ftcommon::update_facing_outside_deadzone(unsafe { &mut *(fp.p() as *mut Fighter) })
+}
+pub fn ftCommon_GrabMash(fp: *mut Fighter, decrement: f32) -> i32 {
+    melee_fighter::ftcommon2::grab_mash(unsafe { &mut *fp }, decrement) as i32
+}
+pub fn ftCommon_InitGrab(fp: *mut Fighter, a: i32, b: f32) {
+    melee_fighter::ftcommon2::init_grab(unsafe { &mut *fp }, a, b)
+}
+pub fn ftCommon_SetAccessory(fp: *mut Fighter, joint: *mut HSD_Joint) {
+    melee_fighter::ftcommon3::set_accessory(unsafe { &mut *fp }, joint)
+}
+pub fn ft_800892A0(g: G) {
+    melee_fighter::stale::renew_attack_instance(unsafe { fighter_of(g) })
+}
+pub fn ft_PlaySFX(fp: *mut Fighter, sfx: i32, vol: u8, pan: u8) {
+    melee_fighter::ft0877::play_sfx(unsafe { &mut *fp }, sfx, vol, pan)
+}
+pub fn ftParts_GetBoneIndex(fp: *mut Fighter, part: i32) -> Fighter_Part {
+    melee_fighter::ftdmgfall::ftparts_get_bone_index(unsafe { &*fp }, part) as Fighter_Part
+}
+pub fn ftAnim_GetNextJointInTree(joint: *mut *mut HSD_Joint, idx: *mut i32) {
+    unsafe { melee_fighter::tu::ftanim::ftAnim_GetNextJointInTree(&mut *joint, &mut *idx) }
+}
+pub fn ftAnim_GetNextMatAnimJointInTree(joint: *mut *mut HSD_MatAnimJoint, idx: *mut i32) {
+    unsafe { melee_fighter::tu::ftanim::ftAnim_GetNextMatAnimJointInTree(&mut *joint, &mut *idx) }
+}
+pub fn fighter_x2040_alloc_data() -> *mut c_void {
+    (&raw mut melee_fighter::tu::fighter::fighter_x2040_alloc_data) as *mut c_void
+}

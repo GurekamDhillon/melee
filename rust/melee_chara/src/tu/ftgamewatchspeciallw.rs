@@ -69,8 +69,8 @@ pub mod ext {
                 }
             }
     // ft/ftcoll.c
-    hook!(FTCOLL_CREATEABSORBHIT, ftColl_CreateAbsorbHit, (gobj: *mut HSD_GObj, desc: *const AbsorbDesc));
-    hook!(FTCOLL_8007ABD0, ftColl_8007ABD0, (hit: *mut HitCapsule, dmg: u32, gobj: *mut HSD_GObj));
+    crate::port_hook!(FTCOLL_CREATEABSORBHIT, ftColl_CreateAbsorbHit, crate::adapt::ftColl_CreateAbsorbHit, (gobj: *mut HSD_GObj, desc: *const AbsorbDesc));
+    crate::port_hook!(FTCOLL_8007ABD0, ftColl_8007ABD0, crate::adapt::ftColl_8007ABD0, (hit: *mut HitCapsule, dmg: u32, gobj: *mut HSD_GObj));
 }
 
 #[inline(always)]

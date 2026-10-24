@@ -281,6 +281,8 @@ def write_probe():
         ("hsd_3924", "typedef struct {", "static inline s32 count_bar_units"),
         ("hsd_392A", "typedef struct {", "static PerfDispItem hsd_804CE3F8"),
         ("hsd_392C", "struct ParticleConsoleState {", "/* 4D7890 */"),
+        ("hsd_3933", "typedef struct {", "/// Host-IO USB"),
+        ("hsd_3933", "struct ParticleUsbMessages {", "ASSERT_SIZE"),
     ]
     for stem, start, end in tu_records:
         source = ROOT / f"src/sysdolphin/baselib/{stem}.c"

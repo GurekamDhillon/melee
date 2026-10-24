@@ -958,6 +958,27 @@ struct ParticleConsoleState {
     /* 20 */ UNK_T x24;
 };
 ASSERT_SIZE(struct ParticleConsoleState, 0x28);
+// From src/sysdolphin/baselib/hsd_3933.c
+typedef struct {
+    s32 x0;
+    u32 x4;
+    s32 x8;
+} ParticleLogEntry;
+// From src/sysdolphin/baselib/hsd_3933.c
+struct ParticleUsbMessages {
+    /* 0x00 */ char loading[0x20];
+    /* 0x20 */ char cannot_open[0x14];
+    /* 0x34 */ char cannot_get_files_stat[0x18];
+    /* 0x4C */ char file_too_large[0x18];
+    /* 0x64 */ char cannot_allocate[0x18];
+    /* 0x7C */ char cannot_load[0x14];
+    /* 0x90 */ char done[0x28];
+    /* 0xB8 */ char cannot_save[0x14];
+    /* 0xCC */ char searching[0x20];
+    /* 0xEC */ char cannot_get_dir_stat[0x18];
+    /* 0x104 */ char dir_too_large[0x14];
+    /* 0x118 */ char cannot_use_usb[0x18];
+};
 /* TU-local records extracted by gen/local_records.py. */
 struct MemEntry {
     struct MemEntry* x0_next;

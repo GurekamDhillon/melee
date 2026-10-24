@@ -68,3 +68,11 @@ pub mod hsd_3924;
 pub mod hsd_392A;
 #[allow(non_snake_case)]
 pub mod hsd_392C;
+pub mod crypt;
+pub mod hsd_3933;
+pub mod hsd_393C;
+pub mod hsd_397E;
+pub mod hsd_3982;
+pub mod hsd_3A64;
+pub mod hsd_3A76;
+pub mod hsd_3B33;

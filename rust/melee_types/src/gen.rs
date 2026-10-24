@@ -5296,6 +5296,56 @@ pub type LbHeapStatus = u32;
 pub const LbHeapStatus_Create: LbHeapStatus = 0;
 pub const LbHeapStatus_Destroy: LbHeapStatus = 1;
 
+/// C enum `mnCount_row` (src/melee/mn/mncount.h:28)
+pub type mnCount_row = u32;
+pub const POWER_COUNT: mnCount_row = 0;
+pub const POWER_TIME: mnCount_row = 1;
+pub const PLAY_TIME: mnCount_row = 2;
+pub const SINGLEPLAYER_TIME: mnCount_row = 3;
+pub const VS_PLAY_TIME: mnCount_row = 4;
+pub const COMBINED_VS_PLAY_TIME: mnCount_row = 5;
+pub const VS_PLAY_MATCH_TOTAL: mnCount_row = 6;
+pub const TIME_MATCH_TOTAL: mnCount_row = 7;
+pub const STOCK_MATCH_TOTAL: mnCount_row = 8;
+pub const COIN_MATCH_TOTAL: mnCount_row = 9;
+pub const BONUS_MATCH_TOTAL: mnCount_row = 10;
+pub const VS_PLAY_CONTESTANTS: mnCount_row = 11;
+pub const MATCH_RESET_COUNTER: mnCount_row = 12;
+pub const TOTAL_DAMAGE: mnCount_row = 13;
+pub const KO_TOTAL: mnCount_row = 14;
+pub const SELFDESTRUCT_TOTAL: mnCount_row = 15;
+pub const AVAILABLE_CHARACTERS: mnCount_row = 16;
+pub const AVAILABLE_MAPS: mnCount_row = 17;
+pub const TROPHY_TOTAL: mnCount_row = 18;
+pub const NAME_TOTAL: mnCount_row = 19;
+pub const LONGEST_TIME: mnCount_row = 20;
+pub const SECOND_LONGEST_TIME: mnCount_row = 21;
+pub const SHORTEST_TIME: mnCount_row = 22;
+pub const SMASH_CHAMP: mnCount_row = 23;
+pub const SMASH_SAP: mnCount_row = 24;
+pub const SLUG_MEISTER: mnCount_row = 25;
+pub const PUNCHING_BAG: mnCount_row = 26;
+pub const KO_KINGPIN: mnCount_row = 27;
+pub const NO_DEFENSE_NELLY: mnCount_row = 28;
+pub const DISASTER_MASTER: mnCount_row = 29;
+
+/// C enum `WarnCommonJoints` (src/melee/mn/mndatadel.static.h:18)
+pub type WarnCommonJoints = u32;
+pub const WARN_JOINT_ROOT: WarnCommonJoints = 0;
+pub const WARN_JOINT_BACKGROUND: WarnCommonJoints = 1;
+pub const WARN_JOINT_PANEL: WarnCommonJoints = 2;
+pub const WARN_JOINT_PANEL_TOP: WarnCommonJoints = 3;
+pub const WARN_JOINT_PANEL_TEXT_BOTTOM: WarnCommonJoints = 4;
+pub const WARN_JOINT_PANEL_BOTTOM: WarnCommonJoints = 5;
+pub const WARN_JOINT_CURSOR_YES: WarnCommonJoints = 6;
+pub const WARN_JOINT_CURSOR_NO: WarnCommonJoints = 7;
+pub const WARN_JOINT_EXCLAIM: WarnCommonJoints = 8;
+pub const WARN_JOINT_EXCLAIM_MARK: WarnCommonJoints = 9;
+pub const WARN_JOINT_EXCLAIM_ARROW: WarnCommonJoints = 10;
+pub const WARN_JOINT_PROGRESS_BAR: WarnCommonJoints = 11;
+pub const WARN_JOINT_PROGRESS_BAR_START: WarnCommonJoints = 12;
+pub const WARN_JOINT_PROGRESS_BAR_END: WarnCommonJoints = 13;
+
 // ---- #define / static const constants (group-0 headers) ----
 pub const HSD_A_S_W0: i32 = 2;  // src/sysdolphin/baselib/forward.h:120
 pub const HSD_DEFAULT_MAX_SHAPE_VERTICES: i32 = 2000;  // src/sysdolphin/baselib/forward.h:121
@@ -6092,6 +6142,10 @@ pub type THPQuantTab = [f32; 64];
 pub type THPHuffmanTab = _THPHuffmanTab;
 pub type THPComponent = _THPComponent;
 pub type THPFileInfo = _THPFileInfo;
+pub type MainMenuData = _MainMenuData;
+pub type MainMenuPanelData = _MainMenuPanelData;
+pub type MenuFlow = _MenuFlow;
+pub type MenuInputState = _MenuInputState;
 
 /// C `__file_modes` (src/MSL/stdio.h:44); GameCube size 0x4, align 4.
 #[repr(C, align(4))]
@@ -91737,7 +91791,1224 @@ impl GcLayout for THPDec_8032FD40_Data {
 }
 const _: () = assert!(core::mem::size_of::<THPDec_8032FD40_Data>() == 12);
 
-/// C `MemEntry` (rust/melee_types/gen/all_types.c:811); GameCube size 0xC, align 4.
+/// C `_MainMenuData` (src/melee/mn/mnmain.h:13); GameCube size 0xB0, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct _MainMenuData {
+    pub menu_kind: MenuKind8,
+    pub hovered_selection: MenuKind8,
+    pub state: MenuState8,
+    pub pad_3: u8,
+    pub tree: [*mut HSD_JObj; 42],
+    pub description: *mut HSD_Text,
+}
+impl _MainMenuData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for _MainMenuData {
+    const GC_BYTES: u32 = 0xB0;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.menu_kind = <MenuKind8 as GcDecode>::gc_decode(d, at + 0x0);
+        v.hovered_selection = <MenuKind8 as GcDecode>::gc_decode(d, at + 0x1);
+        v.state = <MenuState8 as GcDecode>::gc_decode(d, at + 0x2);
+        v.pad_3 = <u8 as GcDecode>::gc_decode(d, at + 0x3);
+        v.tree = <[*mut HSD_JObj; 42] as GcDecode>::gc_decode(d, at + 0x4);
+        v.description = <*mut HSD_Text as GcDecode>::gc_decode(d, at + 0xAC);
+        v
+    }
+}
+impl GcPointee for _MainMenuData { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<_MainMenuData>(t) } }
+impl GcLayout for _MainMenuData {
+    const GC_NAME: &'static str = "_MainMenuData";
+    const GC_SIZE: u32 = 0xB0;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("menu_kind", 0x0, 1, "MenuKind8"),
+        GcField::new("hovered_selection", 0x1, 1, "MenuKind8"),
+        GcField::new("state", 0x2, 1, "MenuState8"),
+        GcField::new("pad_3", 0x3, 1, "u8"),
+        GcField::new("tree", 0x4, 168, "HSD_JObj *[42]"),
+        GcField::new("description", 0xAC, 4, "HSD_Text *"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<_MainMenuData>() == 352);
+
+/// C `_MainMenuPanelData` (src/melee/mn/mnmain.h:22); GameCube size 0x4, align 1.
+#[repr(C, align(1))]
+#[derive(Clone, Copy)]
+pub struct _MainMenuPanelData {
+    pub cur_menu: MenuKind8,
+    pub prev_menu: MenuKind8,
+    pub x2: u8,
+    pub state: MenuState8,
+}
+impl _MainMenuPanelData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for _MainMenuPanelData {
+    const GC_BYTES: u32 = 0x4;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.cur_menu = <MenuKind8 as GcDecode>::gc_decode(d, at + 0x0);
+        v.prev_menu = <MenuKind8 as GcDecode>::gc_decode(d, at + 0x1);
+        v.x2 = <u8 as GcDecode>::gc_decode(d, at + 0x2);
+        v.state = <MenuState8 as GcDecode>::gc_decode(d, at + 0x3);
+        v
+    }
+}
+impl GcPointee for _MainMenuPanelData { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<_MainMenuPanelData>(t) } }
+impl GcLayout for _MainMenuPanelData {
+    const GC_NAME: &'static str = "_MainMenuPanelData";
+    const GC_SIZE: u32 = 0x4;
+    const GC_ALIGN: u32 = 1;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("cur_menu", 0x0, 1, "MenuKind8"),
+        GcField::new("prev_menu", 0x1, 1, "MenuKind8"),
+        GcField::new("x2", 0x2, 1, "u8"),
+        GcField::new("state", 0x3, 1, "MenuState8"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<_MainMenuPanelData>() == 4);
+
+/// C `_MenuFlow` (src/melee/mn/mnmain.h:29); GameCube size 0x18, align 8.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct _MenuFlow {
+    pub cur_menu: MenuKind8,
+    pub prev_menu: MenuKind8,
+    pub hovered_selection: u16,
+    pub confirmed_selection: u8,
+    pub pad_5: [u8; 3],
+    pub buttons: u64,
+    pub x10: u8,
+    pub entering_menu: u8,
+    pub light_lerp_frames: u8,
+    pub pad_13: u8,
+    pub light_color: *mut _GXColor,
+}
+impl _MenuFlow { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for _MenuFlow {
+    const GC_BYTES: u32 = 0x18;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.cur_menu = <MenuKind8 as GcDecode>::gc_decode(d, at + 0x0);
+        v.prev_menu = <MenuKind8 as GcDecode>::gc_decode(d, at + 0x1);
+        v.hovered_selection = <u16 as GcDecode>::gc_decode(d, at + 0x2);
+        v.confirmed_selection = <u8 as GcDecode>::gc_decode(d, at + 0x4);
+        v.pad_5 = <[u8; 3] as GcDecode>::gc_decode(d, at + 0x5);
+        v.buttons = <u64 as GcDecode>::gc_decode(d, at + 0x8);
+        v.x10 = <u8 as GcDecode>::gc_decode(d, at + 0x10);
+        v.entering_menu = <u8 as GcDecode>::gc_decode(d, at + 0x11);
+        v.light_lerp_frames = <u8 as GcDecode>::gc_decode(d, at + 0x12);
+        v.pad_13 = <u8 as GcDecode>::gc_decode(d, at + 0x13);
+        v.light_color = <*mut _GXColor as GcDecode>::gc_decode(d, at + 0x14);
+        v
+    }
+}
+impl GcPointee for _MenuFlow { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<_MenuFlow>(t) } }
+impl GcLayout for _MenuFlow {
+    const GC_NAME: &'static str = "_MenuFlow";
+    const GC_SIZE: u32 = 0x18;
+    const GC_ALIGN: u32 = 8;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("cur_menu", 0x0, 1, "MenuKind8"),
+        GcField::new("prev_menu", 0x1, 1, "MenuKind8"),
+        GcField::new("hovered_selection", 0x2, 2, "u16"),
+        GcField::new("confirmed_selection", 0x4, 1, "u8"),
+        GcField::new("pad_5", 0x5, 3, "u8[3]"),
+        GcField::new("buttons", 0x8, 8, "u64"),
+        GcField::new("x10", 0x10, 1, "u8"),
+        GcField::new("entering_menu", 0x11, 1, "u8"),
+        GcField::new("light_lerp_frames", 0x12, 1, "u8"),
+        GcField::new("pad_13", 0x13, 1, "u8"),
+        GcField::new("light_color", 0x14, 4, "GXColor *"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<_MenuFlow>() == 32);
+
+/// C `_MenuInputState` (src/melee/mn/mnmain.h:43); GameCube size 0x8, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct _MenuInputState {
+    pub cooldown: u16,
+    pub x2: u16,
+    pub x4: i32,
+}
+impl _MenuInputState { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for _MenuInputState {
+    const GC_BYTES: u32 = 0x8;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.cooldown = <u16 as GcDecode>::gc_decode(d, at + 0x0);
+        v.x2 = <u16 as GcDecode>::gc_decode(d, at + 0x2);
+        v.x4 = <i32 as GcDecode>::gc_decode(d, at + 0x4);
+        v
+    }
+}
+impl GcPointee for _MenuInputState { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<_MenuInputState>(t) } }
+impl GcLayout for _MenuInputState {
+    const GC_NAME: &'static str = "_MenuInputState";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("cooldown", 0x0, 2, "u16"),
+        GcField::new("x2", 0x2, 2, "u16"),
+        GcField::new("x4", 0x4, 4, "s32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<_MenuInputState>() == 8);
+
+/// C `MnCountData` (src/melee/mn/mncount.h:13); GameCube size 0x5C, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct MnCountData {
+    pub scroll_pos: u8,
+    pub expand_anim_duration: i32,
+    pub labels: [*mut HSD_Text; 10],
+    pub values: [*mut HSD_Text; 10],
+    pub title: *mut HSD_Text,
+}
+impl MnCountData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for MnCountData {
+    const GC_BYTES: u32 = 0x5C;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.scroll_pos = <u8 as GcDecode>::gc_decode(d, at + 0x0);
+        v.expand_anim_duration = <i32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.labels = <[*mut HSD_Text; 10] as GcDecode>::gc_decode(d, at + 0x8);
+        v.values = <[*mut HSD_Text; 10] as GcDecode>::gc_decode(d, at + 0x30);
+        v.title = <*mut HSD_Text as GcDecode>::gc_decode(d, at + 0x58);
+        v
+    }
+}
+impl GcPointee for MnCountData { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<MnCountData>(t) } }
+impl GcLayout for MnCountData {
+    const GC_NAME: &'static str = "MnCountData";
+    const GC_SIZE: u32 = 0x5C;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("scroll_pos", 0x0, 1, "unsigned char"),
+        GcField::new("expand_anim_duration", 0x4, 4, "int"),
+        GcField::new("labels", 0x8, 40, "HSD_Text *[10]"),
+        GcField::new("values", 0x30, 40, "HSD_Text *[10]"),
+        GcField::new("title", 0x58, 4, "HSD_Text *"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<MnCountData>() == 176);
+
+/// C `WarnCmnData` (src/melee/mn/mndatadel.static.h:12); GameCube size 0x3, align 1.
+#[repr(C, align(1))]
+#[derive(Clone, Copy)]
+pub struct WarnCmnData {
+    pub x0: u8,
+    pub visible: u8,
+    pub cursor_idx: u8,
+}
+impl WarnCmnData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for WarnCmnData {
+    const GC_BYTES: u32 = 0x3;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.x0 = <u8 as GcDecode>::gc_decode(d, at + 0x0);
+        v.visible = <u8 as GcDecode>::gc_decode(d, at + 0x1);
+        v.cursor_idx = <u8 as GcDecode>::gc_decode(d, at + 0x2);
+        v
+    }
+}
+impl GcPointee for WarnCmnData { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<WarnCmnData>(t) } }
+impl GcLayout for WarnCmnData {
+    const GC_NAME: &'static str = "WarnCmnData";
+    const GC_SIZE: u32 = 0x3;
+    const GC_ALIGN: u32 = 1;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 1, "u8"),
+        GcField::new("visible", 0x1, 1, "u8"),
+        GcField::new("cursor_idx", 0x2, 1, "u8"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<WarnCmnData>() == 3);
+
+/// C `MnDataDelData` (src/melee/mn/mndatadel.static.h:35); GameCube size 0x18, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct MnDataDelData {
+    pub x0: AnimLoopSettings,
+    pub xC: AnimLoopSettings,
+}
+impl MnDataDelData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for MnDataDelData {
+    const GC_BYTES: u32 = 0x18;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.x0 = <AnimLoopSettings as GcDecode>::gc_decode(d, at + 0x0);
+        v.xC = <AnimLoopSettings as GcDecode>::gc_decode(d, at + 0xC);
+        v
+    }
+}
+impl GcPointee for MnDataDelData { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<MnDataDelData>(t) } }
+impl GcLayout for MnDataDelData {
+    const GC_NAME: &'static str = "MnDataDelData";
+    const GC_SIZE: u32 = 0x18;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 12, "AnimLoopSettings"),
+        GcField::new("xC", 0xC, 12, "AnimLoopSettings"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<MnDataDelData>() == 24);
+
+/// C `MnDataDelGObjUserData` (src/melee/mn/mndatadel.static.h:40); GameCube size 0x30, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct MnDataDelGObjUserData {
+    pub x0: u8,
+    pub x1: u8,
+    pub x2: u8,
+    pub x3: [u8; 6],
+    pub xC: *mut HSD_Text,
+    pub x10: [*mut HSD_JObj; 8],
+}
+impl MnDataDelGObjUserData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for MnDataDelGObjUserData {
+    const GC_BYTES: u32 = 0x30;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.x0 = <u8 as GcDecode>::gc_decode(d, at + 0x0);
+        v.x1 = <u8 as GcDecode>::gc_decode(d, at + 0x1);
+        v.x2 = <u8 as GcDecode>::gc_decode(d, at + 0x2);
+        v.x3 = <[u8; 6] as GcDecode>::gc_decode(d, at + 0x3);
+        v.xC = <*mut HSD_Text as GcDecode>::gc_decode(d, at + 0xC);
+        v.x10 = <[*mut HSD_JObj; 8] as GcDecode>::gc_decode(d, at + 0x10);
+        v
+    }
+}
+impl GcPointee for MnDataDelGObjUserData { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<MnDataDelGObjUserData>(t) } }
+impl GcLayout for MnDataDelGObjUserData {
+    const GC_NAME: &'static str = "MnDataDelGObjUserData";
+    const GC_SIZE: u32 = 0x30;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 1, "u8"),
+        GcField::new("x1", 0x1, 1, "u8"),
+        GcField::new("x2", 0x2, 1, "u8"),
+        GcField::new("x3", 0x3, 6, "u8[6]"),
+        GcField::new("xC", 0xC, 4, "HSD_Text *"),
+        GcField::new("x10", 0x10, 32, "HSD_JObj *[8]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<MnDataDelGObjUserData>() == 88);
+
+/// C `mnDiagram2_SortEntry` (src/melee/mn/mndiagram2.h:8); GameCube size 0x10, align 8.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub union mnDiagram2_SortEntry {
+    /// anonymous C member
+    pub anon_0: mnDiagram2_SortEntry_anon_9,
+    /// anonymous C member
+    pub anon_0_0: mnDiagram2_SortEntry_anon_15,
+    /// anonymous C member
+    pub anon_0_0_: mnDiagram2_SortEntry_anon_19,
+}
+impl mnDiagram2_SortEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for mnDiagram2_SortEntry {
+    const GC_BYTES: u32 = 0x10;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.anon_0 = <mnDiagram2_SortEntry_anon_9 as GcDecode>::gc_decode(d, at + 0x0);
+        v
+    }
+}
+impl GcPointee for mnDiagram2_SortEntry { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<mnDiagram2_SortEntry>(t) } }
+impl GcLayout for mnDiagram2_SortEntry {
+    const GC_NAME: &'static str = "mnDiagram2_SortEntry";
+    const GC_SIZE: u32 = 0x10;
+    const GC_ALIGN: u32 = 8;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("(anon)", 0x0, 16, "mnDiagram2_SortEntry_anon_9"),
+        GcField::new("idx", 0x0, 1, "u8"),
+        GcField::new("pad1", 0x1, 7, "char[7]"),
+        GcField::new("x8", 0x8, 4, "s32"),
+        GcField::new("xC", 0xC, 4, "s32"),
+        GcField::new("(anon)", 0x0, 16, "mnDiagram2_SortEntry_anon_15"),
+        GcField::new("d0", 0x0, 8, "f64"),
+        GcField::new("d8", 0x8, 8, "f64"),
+        GcField::new("(anon)", 0x0, 16, "mnDiagram2_SortEntry_anon_19"),
+        GcField::new("pad2", 0x0, 8, "char[8]"),
+        GcField::new("value", 0x8, 8, "u64"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<mnDiagram2_SortEntry>() == 16);
+
+/// C `struct (anonymous at src/melee/mn/mndiagram2.h:9:5)` (src/melee/mn/mndiagram2.h:9); GameCube size 0x10, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct mnDiagram2_SortEntry_anon_9 {
+    pub idx: u8,
+    pub pad1: [i8; 7],
+    pub x8: i32,
+    pub xC: i32,
+}
+impl mnDiagram2_SortEntry_anon_9 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for mnDiagram2_SortEntry_anon_9 {
+    const GC_BYTES: u32 = 0x10;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.idx = <u8 as GcDecode>::gc_decode(d, at + 0x0);
+        v.pad1 = <[i8; 7] as GcDecode>::gc_decode(d, at + 0x1);
+        v.x8 = <i32 as GcDecode>::gc_decode(d, at + 0x8);
+        v.xC = <i32 as GcDecode>::gc_decode(d, at + 0xC);
+        v
+    }
+}
+impl GcPointee for mnDiagram2_SortEntry_anon_9 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<mnDiagram2_SortEntry_anon_9>(t) } }
+impl GcLayout for mnDiagram2_SortEntry_anon_9 {
+    const GC_NAME: &'static str = "struct (anonymous at src/melee/mn/mndiagram2.h:9:5)";
+    const GC_SIZE: u32 = 0x10;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("idx", 0x0, 1, "u8"),
+        GcField::new("pad1", 0x1, 7, "char[7]"),
+        GcField::new("x8", 0x8, 4, "s32"),
+        GcField::new("xC", 0xC, 4, "s32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<mnDiagram2_SortEntry_anon_9>() == 16);
+
+/// C `struct (anonymous at src/melee/mn/mndiagram2.h:15:5)` (src/melee/mn/mndiagram2.h:15); GameCube size 0x10, align 8.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct mnDiagram2_SortEntry_anon_15 {
+    pub d0: f64,
+    pub d8: f64,
+}
+impl mnDiagram2_SortEntry_anon_15 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for mnDiagram2_SortEntry_anon_15 {
+    const GC_BYTES: u32 = 0x10;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.d0 = <f64 as GcDecode>::gc_decode(d, at + 0x0);
+        v.d8 = <f64 as GcDecode>::gc_decode(d, at + 0x8);
+        v
+    }
+}
+impl GcPointee for mnDiagram2_SortEntry_anon_15 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<mnDiagram2_SortEntry_anon_15>(t) } }
+impl GcLayout for mnDiagram2_SortEntry_anon_15 {
+    const GC_NAME: &'static str = "struct (anonymous at src/melee/mn/mndiagram2.h:15:5)";
+    const GC_SIZE: u32 = 0x10;
+    const GC_ALIGN: u32 = 8;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("d0", 0x0, 8, "f64"),
+        GcField::new("d8", 0x8, 8, "f64"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<mnDiagram2_SortEntry_anon_15>() == 16);
+
+/// C `struct (anonymous at src/melee/mn/mndiagram2.h:19:5)` (src/melee/mn/mndiagram2.h:19); GameCube size 0x10, align 8.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct mnDiagram2_SortEntry_anon_19 {
+    pub pad2: [i8; 8],
+    pub value: u64,
+}
+impl mnDiagram2_SortEntry_anon_19 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for mnDiagram2_SortEntry_anon_19 {
+    const GC_BYTES: u32 = 0x10;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.pad2 = <[i8; 8] as GcDecode>::gc_decode(d, at + 0x0);
+        v.value = <u64 as GcDecode>::gc_decode(d, at + 0x8);
+        v
+    }
+}
+impl GcPointee for mnDiagram2_SortEntry_anon_19 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<mnDiagram2_SortEntry_anon_19>(t) } }
+impl GcLayout for mnDiagram2_SortEntry_anon_19 {
+    const GC_NAME: &'static str = "struct (anonymous at src/melee/mn/mndiagram2.h:19:5)";
+    const GC_SIZE: u32 = 0x10;
+    const GC_ALIGN: u32 = 8;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("pad2", 0x0, 8, "char[8]"),
+        GcField::new("value", 0x8, 8, "u64"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<mnDiagram2_SortEntry_anon_19>() == 16);
+
+/// C `mnDiagram3_PosTable` (src/melee/mn/mndiagram3.static.h:7); GameCube size 0x24, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct mnDiagram3_PosTable {
+    pub x0: Vec,
+    pub xC: Vec,
+    pub x18: Vec,
+}
+impl mnDiagram3_PosTable { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for mnDiagram3_PosTable {
+    const GC_BYTES: u32 = 0x24;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.x0 = <Vec as GcDecode>::gc_decode(d, at + 0x0);
+        v.xC = <Vec as GcDecode>::gc_decode(d, at + 0xC);
+        v.x18 = <Vec as GcDecode>::gc_decode(d, at + 0x18);
+        v
+    }
+}
+impl GcPointee for mnDiagram3_PosTable { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<mnDiagram3_PosTable>(t) } }
+impl GcLayout for mnDiagram3_PosTable {
+    const GC_NAME: &'static str = "mnDiagram3_PosTable";
+    const GC_SIZE: u32 = 0x24;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 12, "Vec3"),
+        GcField::new("xC", 0xC, 12, "Vec3"),
+        GcField::new("x18", 0x18, 12, "Vec3"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<mnDiagram3_PosTable>() == 36);
+
+/// C `mnDiagram3_StatTable` (src/melee/mn/mndiagram3.static.h:13); GameCube size 0x60, align 2.
+#[repr(C, align(2))]
+#[derive(Clone, Copy)]
+pub struct mnDiagram3_StatTable {
+    pub label_ids: [u16; 24],
+    pub unit_glyph_ids: [u16; 24],
+}
+impl mnDiagram3_StatTable { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for mnDiagram3_StatTable {
+    const GC_BYTES: u32 = 0x60;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.label_ids = <[u16; 24] as GcDecode>::gc_decode(d, at + 0x0);
+        v.unit_glyph_ids = <[u16; 24] as GcDecode>::gc_decode(d, at + 0x30);
+        v
+    }
+}
+impl GcPointee for mnDiagram3_StatTable { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<mnDiagram3_StatTable>(t) } }
+impl GcLayout for mnDiagram3_StatTable {
+    const GC_NAME: &'static str = "mnDiagram3_StatTable";
+    const GC_SIZE: u32 = 0x60;
+    const GC_ALIGN: u32 = 2;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("label_ids", 0x0, 48, "u16[24]"),
+        GcField::new("unit_glyph_ids", 0x30, 48, "u16[24]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<mnDiagram3_StatTable>() == 96);
+
+/// C `mnDiagram3_DataTable` (src/melee/mn/mndiagram3.static.h:18); GameCube size 0x9C, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct mnDiagram3_DataTable {
+    pub x0: AnimLoopSettings,
+    pub xC: AnimLoopSettings,
+    pub positions: mnDiagram3_PosTable,
+    pub stats: mnDiagram3_StatTable,
+}
+impl mnDiagram3_DataTable { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for mnDiagram3_DataTable {
+    const GC_BYTES: u32 = 0x9C;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.x0 = <AnimLoopSettings as GcDecode>::gc_decode(d, at + 0x0);
+        v.xC = <AnimLoopSettings as GcDecode>::gc_decode(d, at + 0xC);
+        v.positions = <mnDiagram3_PosTable as GcDecode>::gc_decode(d, at + 0x18);
+        v.stats = <mnDiagram3_StatTable as GcDecode>::gc_decode(d, at + 0x3C);
+        v
+    }
+}
+impl GcPointee for mnDiagram3_DataTable { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<mnDiagram3_DataTable>(t) } }
+impl GcLayout for mnDiagram3_DataTable {
+    const GC_NAME: &'static str = "mnDiagram3_DataTable";
+    const GC_SIZE: u32 = 0x9C;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 12, "AnimLoopSettings"),
+        GcField::new("xC", 0xC, 12, "AnimLoopSettings"),
+        GcField::new("positions", 0x18, 36, "mnDiagram3_PosTable"),
+        GcField::new("stats", 0x3C, 96, "mnDiagram3_StatTable"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<mnDiagram3_DataTable>() == 156);
+
+/// C `MnEventData` (src/melee/mn/mnevent.h:8); GameCube size 0x7C, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct MnEventData {
+    pub page: u8,
+    pub pad_01: [u8; 3],
+    pub first_event: i32,
+    pub gobjs: [*mut HSD_GObj; 9],
+    pub texts: [*mut HSD_Text; 9],
+    pub icons: [*mut HSD_Text; 9],
+    pub name_text: *mut HSD_Text,
+    pub desc_text: *mut HSD_Text,
+}
+impl MnEventData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for MnEventData {
+    const GC_BYTES: u32 = 0x7C;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.page = <u8 as GcDecode>::gc_decode(d, at + 0x0);
+        v.pad_01 = <[u8; 3] as GcDecode>::gc_decode(d, at + 0x1);
+        v.first_event = <i32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.gobjs = <[*mut HSD_GObj; 9] as GcDecode>::gc_decode(d, at + 0x8);
+        v.texts = <[*mut HSD_Text; 9] as GcDecode>::gc_decode(d, at + 0x2C);
+        v.icons = <[*mut HSD_Text; 9] as GcDecode>::gc_decode(d, at + 0x50);
+        v.name_text = <*mut HSD_Text as GcDecode>::gc_decode(d, at + 0x74);
+        v.desc_text = <*mut HSD_Text as GcDecode>::gc_decode(d, at + 0x78);
+        v
+    }
+}
+impl GcPointee for MnEventData { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<MnEventData>(t) } }
+impl GcLayout for MnEventData {
+    const GC_NAME: &'static str = "MnEventData";
+    const GC_SIZE: u32 = 0x7C;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("page", 0x0, 1, "u8"),
+        GcField::new("pad_01", 0x1, 3, "u8[3]"),
+        GcField::new("first_event", 0x4, 4, "s32"),
+        GcField::new("gobjs", 0x8, 36, "HSD_GObj *[9]"),
+        GcField::new("texts", 0x2C, 36, "HSD_Text *[9]"),
+        GcField::new("icons", 0x50, 36, "HSD_Text *[9]"),
+        GcField::new("name_text", 0x74, 4, "HSD_Text *"),
+        GcField::new("desc_text", 0x78, 4, "HSD_Text *"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<MnEventData>() == 240);
+
+/// C `mn_802307F8_t` (src/melee/mn/mnmainrule.h:6); GameCube size 0x134, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct mn_802307F8_t {
+    pub x0: u8,
+    pub x1: u8,
+    pub x2: u8,
+    pub x3: u8,
+    pub x4: u8,
+    pub x5: u8,
+    pub x6: u8,
+    pub x7_pad: [u8; 2],
+    pub x9: u8,
+    pub xA: u8,
+    pub xB_pad: [u8; 1],
+    /// anonymous C member
+    pub anon_c: mn_802307F8_t_anon_18,
+    pub text: *mut HSD_Text,
+}
+impl mn_802307F8_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for mn_802307F8_t {
+    const GC_BYTES: u32 = 0x134;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.x0 = <u8 as GcDecode>::gc_decode(d, at + 0x0);
+        v.x1 = <u8 as GcDecode>::gc_decode(d, at + 0x1);
+        v.x2 = <u8 as GcDecode>::gc_decode(d, at + 0x2);
+        v.x3 = <u8 as GcDecode>::gc_decode(d, at + 0x3);
+        v.x4 = <u8 as GcDecode>::gc_decode(d, at + 0x4);
+        v.x5 = <u8 as GcDecode>::gc_decode(d, at + 0x5);
+        v.x6 = <u8 as GcDecode>::gc_decode(d, at + 0x6);
+        v.x7_pad = <[u8; 2] as GcDecode>::gc_decode(d, at + 0x7);
+        v.x9 = <u8 as GcDecode>::gc_decode(d, at + 0x9);
+        v.xA = <u8 as GcDecode>::gc_decode(d, at + 0xA);
+        v.xB_pad = <[u8; 1] as GcDecode>::gc_decode(d, at + 0xB);
+        v.anon_c = <mn_802307F8_t_anon_18 as GcDecode>::gc_decode(d, at + 0xC);
+        v.text = <*mut HSD_Text as GcDecode>::gc_decode(d, at + 0x130);
+        v
+    }
+}
+impl GcPointee for mn_802307F8_t { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<mn_802307F8_t>(t) } }
+impl GcLayout for mn_802307F8_t {
+    const GC_NAME: &'static str = "mn_802307F8_t";
+    const GC_SIZE: u32 = 0x134;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 1, "u8"),
+        GcField::new("x1", 0x1, 1, "u8"),
+        GcField::new("x2", 0x2, 1, "u8"),
+        GcField::new("x3", 0x3, 1, "u8"),
+        GcField::new("x4", 0x4, 1, "u8"),
+        GcField::new("x5", 0x5, 1, "u8"),
+        GcField::new("x6", 0x6, 1, "u8"),
+        GcField::new("x7_pad", 0x7, 2, "u8[2]"),
+        GcField::new("x9", 0x9, 1, "u8"),
+        GcField::new("xA", 0xA, 1, "u8"),
+        GcField::new("xB_pad", 0xB, 1, "u8[1]"),
+        GcField::new("(anon)", 0xC, 292, "mn_802307F8_t_anon_18"),
+        GcField::new("xC", 0xC, 68, "HSD_JObj *[17]"),
+        GcField::new("xC0", 0xC, 40, "HSD_JObj *[10]"),
+        GcField::new("x34", 0x34, 252, "struct (unnamed at src/melee/mn/mnmainrule.h:22:13)[7]"),
+        GcField::new("text", 0x130, 4, "HSD_Text *"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<mn_802307F8_t>() == 608);
+
+/// C `union (anonymous at src/melee/mn/mnmainrule.h:18:5)` (src/melee/mn/mnmainrule.h:18); GameCube size 0x124, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub union mn_802307F8_t_anon_18 {
+    pub xC: [*mut HSD_JObj; 17],
+    /// anonymous C member
+    pub anon_0: mn_802307F8_t_anon_18_anon_20,
+}
+impl mn_802307F8_t_anon_18 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for mn_802307F8_t_anon_18 {
+    const GC_BYTES: u32 = 0x124;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.xC = <[*mut HSD_JObj; 17] as GcDecode>::gc_decode(d, at + 0x0);
+        v
+    }
+}
+impl GcPointee for mn_802307F8_t_anon_18 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<mn_802307F8_t_anon_18>(t) } }
+impl GcLayout for mn_802307F8_t_anon_18 {
+    const GC_NAME: &'static str = "union (anonymous at src/melee/mn/mnmainrule.h:18:5)";
+    const GC_SIZE: u32 = 0x124;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("xC", 0x0, 68, "HSD_JObj *[17]"),
+        GcField::new("(anon)", 0x0, 292, "mn_802307F8_t_anon_18_anon_20"),
+        GcField::new("xC0", 0x0, 40, "HSD_JObj *[10]"),
+        GcField::new("x34", 0x28, 252, "struct (unnamed at src/melee/mn/mnmainrule.h:22:13)[7]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<mn_802307F8_t_anon_18>() == 584);
+
+/// C `struct (anonymous at src/melee/mn/mnmainrule.h:20:9)` (src/melee/mn/mnmainrule.h:20); GameCube size 0x124, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct mn_802307F8_t_anon_18_anon_20 {
+    pub xC0: [*mut HSD_JObj; 10],
+    pub x34: [mn_802307F8_t_anon_18_anon_20_x34; 7],
+}
+impl mn_802307F8_t_anon_18_anon_20 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for mn_802307F8_t_anon_18_anon_20 {
+    const GC_BYTES: u32 = 0x124;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.xC0 = <[*mut HSD_JObj; 10] as GcDecode>::gc_decode(d, at + 0x0);
+        v.x34 = <[mn_802307F8_t_anon_18_anon_20_x34; 7] as GcDecode>::gc_decode(d, at + 0x28);
+        v
+    }
+}
+impl GcPointee for mn_802307F8_t_anon_18_anon_20 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<mn_802307F8_t_anon_18_anon_20>(t) } }
+impl GcLayout for mn_802307F8_t_anon_18_anon_20 {
+    const GC_NAME: &'static str = "struct (anonymous at src/melee/mn/mnmainrule.h:20:9)";
+    const GC_SIZE: u32 = 0x124;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("xC0", 0x0, 40, "HSD_JObj *[10]"),
+        GcField::new("x34", 0x28, 252, "struct (unnamed at src/melee/mn/mnmainrule.h:22:13)[7]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<mn_802307F8_t_anon_18_anon_20>() == 584);
+
+/// C `struct (unnamed at src/melee/mn/mnmainrule.h:22:13)` (src/melee/mn/mnmainrule.h:22); GameCube size 0x24, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct mn_802307F8_t_anon_18_anon_20_x34 {
+    pub joints: [*mut HSD_JObj; 9],
+}
+impl mn_802307F8_t_anon_18_anon_20_x34 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for mn_802307F8_t_anon_18_anon_20_x34 {
+    const GC_BYTES: u32 = 0x24;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.joints = <[*mut HSD_JObj; 9] as GcDecode>::gc_decode(d, at + 0x0);
+        v
+    }
+}
+impl GcPointee for mn_802307F8_t_anon_18_anon_20_x34 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<mn_802307F8_t_anon_18_anon_20_x34>(t) } }
+impl GcLayout for mn_802307F8_t_anon_18_anon_20_x34 {
+    const GC_NAME: &'static str = "struct (unnamed at src/melee/mn/mnmainrule.h:22:13)";
+    const GC_SIZE: u32 = 0x24;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("joints", 0x0, 36, "HSD_JObj *[9]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<mn_802307F8_t_anon_18_anon_20_x34>() == 72);
+
+/// C `mn_80231634_t` (src/melee/mn/mnmainrule.h:30); GameCube size 0x14, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct mn_80231634_t {
+    pub pad_0: [i8; 16],
+    pub x10: i32,
+}
+impl mn_80231634_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for mn_80231634_t {
+    const GC_BYTES: u32 = 0x14;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.pad_0 = <[i8; 16] as GcDecode>::gc_decode(d, at + 0x0);
+        v.x10 = <i32 as GcDecode>::gc_decode(d, at + 0x10);
+        v
+    }
+}
+impl GcPointee for mn_80231634_t { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<mn_80231634_t>(t) } }
+impl GcLayout for mn_80231634_t {
+    const GC_NAME: &'static str = "mn_80231634_t";
+    const GC_SIZE: u32 = 0x14;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("pad_0", 0x0, 16, "char[16]"),
+        GcField::new("x10", 0x10, 4, "int"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<mn_80231634_t>() == 20);
+
+/// C `mnGallery_804D6C88_userdata` (rust/melee_types/gen/all_types.c:818); GameCube size 0x24, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct mnGallery_804D6C88_userdata {
+    pub unk0: u8,
+    pub unk1: u8,
+    pub unk2: u8,
+    pub gobj4: *mut HSD_GObj,
+    pub gobj8: *mut HSD_GObj,
+    pub sobj: *mut HSD_SObj,
+    pub text: *mut HSD_Text,
+    pub state: u8,
+    pub unk15: u8,
+    pub frame: i32,
+    pub gobjs: [*mut HSD_GObj; 2],
+}
+impl mnGallery_804D6C88_userdata { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for mnGallery_804D6C88_userdata {
+    const GC_BYTES: u32 = 0x24;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.unk0 = <u8 as GcDecode>::gc_decode(d, at + 0x0);
+        v.unk1 = <u8 as GcDecode>::gc_decode(d, at + 0x1);
+        v.unk2 = <u8 as GcDecode>::gc_decode(d, at + 0x2);
+        v.gobj4 = <*mut HSD_GObj as GcDecode>::gc_decode(d, at + 0x4);
+        v.gobj8 = <*mut HSD_GObj as GcDecode>::gc_decode(d, at + 0x8);
+        v.sobj = <*mut HSD_SObj as GcDecode>::gc_decode(d, at + 0xC);
+        v.text = <*mut HSD_Text as GcDecode>::gc_decode(d, at + 0x10);
+        v.state = <u8 as GcDecode>::gc_decode(d, at + 0x14);
+        v.unk15 = <u8 as GcDecode>::gc_decode(d, at + 0x15);
+        v.frame = <i32 as GcDecode>::gc_decode(d, at + 0x18);
+        v.gobjs = <[*mut HSD_GObj; 2] as GcDecode>::gc_decode(d, at + 0x1C);
+        v
+    }
+}
+impl GcPointee for mnGallery_804D6C88_userdata { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<mnGallery_804D6C88_userdata>(t) } }
+impl GcLayout for mnGallery_804D6C88_userdata {
+    const GC_NAME: &'static str = "mnGallery_804D6C88_userdata";
+    const GC_SIZE: u32 = 0x24;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("unk0", 0x0, 1, "u8"),
+        GcField::new("unk1", 0x1, 1, "u8"),
+        GcField::new("unk2", 0x2, 1, "u8"),
+        GcField::new("gobj4", 0x4, 4, "HSD_GObj *"),
+        GcField::new("gobj8", 0x8, 4, "HSD_GObj *"),
+        GcField::new("sobj", 0xC, 4, "HSD_SObj *"),
+        GcField::new("text", 0x10, 4, "HSD_Text *"),
+        GcField::new("state", 0x14, 1, "u8"),
+        GcField::new("unk15", 0x15, 1, "u8"),
+        GcField::new("frame", 0x18, 4, "s32"),
+        GcField::new("gobjs", 0x1C, 8, "HSD_GObj *[2]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<mnGallery_804D6C88_userdata>() == 64);
+
+/// C `mnGallery_child_userdata` (rust/melee_types/gen/all_types.c:832); GameCube size 0x8, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct mnGallery_child_userdata {
+    pub parent_gobj: *mut HSD_GObj,
+    pub index: i32,
+}
+impl mnGallery_child_userdata { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for mnGallery_child_userdata {
+    const GC_BYTES: u32 = 0x8;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.parent_gobj = <*mut HSD_GObj as GcDecode>::gc_decode(d, at + 0x0);
+        v.index = <i32 as GcDecode>::gc_decode(d, at + 0x4);
+        v
+    }
+}
+impl GcPointee for mnGallery_child_userdata { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<mnGallery_child_userdata>(t) } }
+impl GcLayout for mnGallery_child_userdata {
+    const GC_NAME: &'static str = "mnGallery_child_userdata";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("parent_gobj", 0x0, 4, "HSD_GObj *"),
+        GcField::new("index", 0x4, 4, "s32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<mnGallery_child_userdata>() == 16);
+
+/// C `mnDiagram_Assets` (rust/melee_types/gen/all_types.c:837); GameCube size 0x118, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct mnDiagram_Assets {
+    pub sorted_fighters: [u8; 25],
+    pub pad_19: [u8; 3],
+    pub sorted_names: [u8; 120],
+    pub SubB1: [*mut c_void; 4],
+    pub NmB: [*mut c_void; 4],
+    pub FaceB: [*mut c_void; 4],
+    pub CursorB1: [*mut c_void; 4],
+    pub ConB1: [*mut c_void; 4],
+    pub ConB2: [*mut c_void; 4],
+    pub ConB3: [*mut c_void; 4],
+    pub CursorB3: [*mut c_void; 5],
+}
+impl mnDiagram_Assets { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for mnDiagram_Assets {
+    const GC_BYTES: u32 = 0x118;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.sorted_fighters = <[u8; 25] as GcDecode>::gc_decode(d, at + 0x0);
+        v.pad_19 = <[u8; 3] as GcDecode>::gc_decode(d, at + 0x19);
+        v.sorted_names = <[u8; 120] as GcDecode>::gc_decode(d, at + 0x1C);
+        v.SubB1 = <[*mut c_void; 4] as GcDecode>::gc_decode(d, at + 0x94);
+        v.NmB = <[*mut c_void; 4] as GcDecode>::gc_decode(d, at + 0xA4);
+        v.FaceB = <[*mut c_void; 4] as GcDecode>::gc_decode(d, at + 0xB4);
+        v.CursorB1 = <[*mut c_void; 4] as GcDecode>::gc_decode(d, at + 0xC4);
+        v.ConB1 = <[*mut c_void; 4] as GcDecode>::gc_decode(d, at + 0xD4);
+        v.ConB2 = <[*mut c_void; 4] as GcDecode>::gc_decode(d, at + 0xE4);
+        v.ConB3 = <[*mut c_void; 4] as GcDecode>::gc_decode(d, at + 0xF4);
+        v.CursorB3 = <[*mut c_void; 5] as GcDecode>::gc_decode(d, at + 0x104);
+        v
+    }
+}
+impl GcPointee for mnDiagram_Assets { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<mnDiagram_Assets>(t) } }
+impl GcLayout for mnDiagram_Assets {
+    const GC_NAME: &'static str = "mnDiagram_Assets";
+    const GC_SIZE: u32 = 0x118;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("sorted_fighters", 0x0, 25, "u8[25]"),
+        GcField::new("pad_19", 0x19, 3, "u8[3]"),
+        GcField::new("sorted_names", 0x1C, 120, "u8[120]"),
+        GcField::new("SubB1", 0x94, 16, "void *[4]"),
+        GcField::new("NmB", 0xA4, 16, "void *[4]"),
+        GcField::new("FaceB", 0xB4, 16, "void *[4]"),
+        GcField::new("CursorB1", 0xC4, 16, "void *[4]"),
+        GcField::new("ConB1", 0xD4, 16, "void *[4]"),
+        GcField::new("ConB2", 0xE4, 16, "void *[4]"),
+        GcField::new("ConB3", 0xF4, 16, "void *[4]"),
+        GcField::new("CursorB3", 0x104, 20, "void *[5]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<mnDiagram_Assets>() == 416);
+
+/// C `mnDiagram_CleanupData` (rust/melee_types/gen/all_types.c:851); GameCube size 0x50, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct mnDiagram_CleanupData {
+    pub jobjs_reserved: [i8; 56],
+    pub text: [*mut HSD_Text; 6],
+}
+impl mnDiagram_CleanupData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for mnDiagram_CleanupData {
+    const GC_BYTES: u32 = 0x50;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.jobjs_reserved = <[i8; 56] as GcDecode>::gc_decode(d, at + 0x0);
+        v.text = <[*mut HSD_Text; 6] as GcDecode>::gc_decode(d, at + 0x38);
+        v
+    }
+}
+impl GcPointee for mnDiagram_CleanupData { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<mnDiagram_CleanupData>(t) } }
+impl GcLayout for mnDiagram_CleanupData {
+    const GC_NAME: &'static str = "mnDiagram_CleanupData";
+    const GC_SIZE: u32 = 0x50;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("jobjs_reserved", 0x0, 56, "char[56]"),
+        GcField::new("text", 0x38, 24, "HSD_Text *[6]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<mnDiagram_CleanupData>() == 104);
+
+/// C `mnDiagram_AnimData` (rust/melee_types/gen/all_types.c:856); GameCube size 0x10, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct mnDiagram_AnimData {
+    pub header_reserved: [i8; 12],
+    pub jobj: *mut HSD_JObj,
+}
+impl mnDiagram_AnimData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for mnDiagram_AnimData {
+    const GC_BYTES: u32 = 0x10;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.header_reserved = <[i8; 12] as GcDecode>::gc_decode(d, at + 0x0);
+        v.jobj = <*mut HSD_JObj as GcDecode>::gc_decode(d, at + 0xC);
+        v
+    }
+}
+impl GcPointee for mnDiagram_AnimData { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<mnDiagram_AnimData>(t) } }
+impl GcLayout for mnDiagram_AnimData {
+    const GC_NAME: &'static str = "mnDiagram_AnimData";
+    const GC_SIZE: u32 = 0x10;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("header_reserved", 0x0, 12, "char[12]"),
+        GcField::new("jobj", 0xC, 4, "HSD_JObj *"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<mnDiagram_AnimData>() == 24);
+
+/// C `mnDiagram_PopupAnimTableHead` (rust/melee_types/gen/all_types.c:861); GameCube size 0x24, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct mnDiagram_PopupAnimTableHead {
+    pub points: [Vec; 3],
+}
+impl mnDiagram_PopupAnimTableHead { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for mnDiagram_PopupAnimTableHead {
+    const GC_BYTES: u32 = 0x24;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.points = <[Vec; 3] as GcDecode>::gc_decode(d, at + 0x0);
+        v
+    }
+}
+impl GcPointee for mnDiagram_PopupAnimTableHead { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<mnDiagram_PopupAnimTableHead>(t) } }
+impl GcLayout for mnDiagram_PopupAnimTableHead {
+    const GC_NAME: &'static str = "mnDiagram_PopupAnimTableHead";
+    const GC_SIZE: u32 = 0x24;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("points", 0x0, 36, "Point3d[3]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<mnDiagram_PopupAnimTableHead>() == 36);
+
+/// C `mnDiagram_AnimTable` (rust/melee_types/gen/all_types.c:865); GameCube size 0xA8, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct mnDiagram_AnimTable {
+    pub points: [Vec; 3],
+    pub default_fighter_order: [u8; 28],
+    pub intro_anim: AnimLoopSettings,
+    pub exit_anim: AnimLoopSettings,
+    pub arrow_anim: AnimLoopSettings,
+    pub cursor_anim: AnimLoopSettings,
+    pub user_data_error: [i8; 24],
+    pub file_name: [i8; 12],
+    pub user_data_name: [i8; 20],
+}
+impl mnDiagram_AnimTable { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for mnDiagram_AnimTable {
+    const GC_BYTES: u32 = 0xA8;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.points = <[Vec; 3] as GcDecode>::gc_decode(d, at + 0x0);
+        v.default_fighter_order = <[u8; 28] as GcDecode>::gc_decode(d, at + 0x24);
+        v.intro_anim = <AnimLoopSettings as GcDecode>::gc_decode(d, at + 0x40);
+        v.exit_anim = <AnimLoopSettings as GcDecode>::gc_decode(d, at + 0x4C);
+        v.arrow_anim = <AnimLoopSettings as GcDecode>::gc_decode(d, at + 0x58);
+        v.cursor_anim = <AnimLoopSettings as GcDecode>::gc_decode(d, at + 0x64);
+        v.user_data_error = <[i8; 24] as GcDecode>::gc_decode(d, at + 0x70);
+        v.file_name = <[i8; 12] as GcDecode>::gc_decode(d, at + 0x88);
+        v.user_data_name = <[i8; 20] as GcDecode>::gc_decode(d, at + 0x94);
+        v
+    }
+}
+impl GcPointee for mnDiagram_AnimTable { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<mnDiagram_AnimTable>(t) } }
+impl GcLayout for mnDiagram_AnimTable {
+    const GC_NAME: &'static str = "mnDiagram_AnimTable";
+    const GC_SIZE: u32 = 0xA8;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("points", 0x0, 36, "Point3d[3]"),
+        GcField::new("default_fighter_order", 0x24, 28, "u8[28]"),
+        GcField::new("intro_anim", 0x40, 12, "AnimLoopSettings"),
+        GcField::new("exit_anim", 0x4C, 12, "AnimLoopSettings"),
+        GcField::new("arrow_anim", 0x58, 12, "AnimLoopSettings"),
+        GcField::new("cursor_anim", 0x64, 12, "AnimLoopSettings"),
+        GcField::new("user_data_error", 0x70, 24, "char[24]"),
+        GcField::new("file_name", 0x88, 12, "char[12]"),
+        GcField::new("user_data_name", 0x94, 20, "char[20]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<mnDiagram_AnimTable>() == 168);
+
+/// C `RankEntry` (rust/melee_types/gen/all_types.c:878); GameCube size 0x8, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct RankEntry {
+    pub selkind: u8,
+    pub value: u32,
+}
+impl RankEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for RankEntry {
+    const GC_BYTES: u32 = 0x8;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.selkind = <u8 as GcDecode>::gc_decode(d, at + 0x0);
+        v.value = <u32 as GcDecode>::gc_decode(d, at + 0x4);
+        v
+    }
+}
+impl GcPointee for RankEntry { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<RankEntry>(t) } }
+impl GcLayout for RankEntry {
+    const GC_NAME: &'static str = "RankEntry";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("selkind", 0x0, 1, "u8"),
+        GcField::new("value", 0x4, 4, "u32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<RankEntry>() == 8);
+
+/// C `mnDiagram_PopupData` (rust/melee_types/gen/all_types.c:883); GameCube size 0x4C, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct mnDiagram_PopupData {
+    pub jobjs: [*mut HSD_JObj; 14],
+    pub text: [*mut HSD_Text; 5],
+}
+impl mnDiagram_PopupData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for mnDiagram_PopupData {
+    const GC_BYTES: u32 = 0x4C;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.jobjs = <[*mut HSD_JObj; 14] as GcDecode>::gc_decode(d, at + 0x0);
+        v.text = <[*mut HSD_Text; 5] as GcDecode>::gc_decode(d, at + 0x38);
+        v
+    }
+}
+impl GcPointee for mnDiagram_PopupData { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<mnDiagram_PopupData>(t) } }
+impl GcLayout for mnDiagram_PopupData {
+    const GC_NAME: &'static str = "mnDiagram_PopupData";
+    const GC_SIZE: u32 = 0x4C;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("jobjs", 0x0, 56, "HSD_JObj *[14]"),
+        GcField::new("text", 0x38, 20, "HSD_Text *[5]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<mnDiagram_PopupData>() == 152);
+
+/// C `mnDiagram_MainOverlay` (rust/melee_types/gen/all_types.c:888); GameCube size 0x50, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct mnDiagram_MainOverlay {
+    pub jobjs: [*mut HSD_JObj; 14],
+    pub text: [*mut HSD_Text; 6],
+}
+impl mnDiagram_MainOverlay { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for mnDiagram_MainOverlay {
+    const GC_BYTES: u32 = 0x50;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.jobjs = <[*mut HSD_JObj; 14] as GcDecode>::gc_decode(d, at + 0x0);
+        v.text = <[*mut HSD_Text; 6] as GcDecode>::gc_decode(d, at + 0x38);
+        v
+    }
+}
+impl GcPointee for mnDiagram_MainOverlay { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<mnDiagram_MainOverlay>(t) } }
+impl GcLayout for mnDiagram_MainOverlay {
+    const GC_NAME: &'static str = "mnDiagram_MainOverlay";
+    const GC_SIZE: u32 = 0x50;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("jobjs", 0x0, 56, "HSD_JObj *[14]"),
+        GcField::new("text", 0x38, 24, "HSD_Text *[6]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<mnDiagram_MainOverlay>() == 160);
+
+/// C `MemEntry` (rust/melee_types/gen/all_types.c:893); GameCube size 0xC, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct MemEntry {
@@ -91772,7 +93043,7 @@ impl GcLayout for MemEntry {
 }
 const _: () = assert!(core::mem::size_of::<MemEntry>() == 24);
 
-/// C `LBMgr` (rust/melee_types/gen/all_types.c:816); GameCube size 0x40, align 8.
+/// C `LBMgr` (rust/melee_types/gen/all_types.c:898); GameCube size 0x40, align 8.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct LBMgr {
@@ -91819,7 +93090,7 @@ impl GcLayout for LBMgr {
 }
 const _: () = assert!(core::mem::size_of::<LBMgr>() == 96);
 
-/// C `Allocator` (rust/melee_types/gen/all_types.c:825); GameCube size 0x6F0, align 8.
+/// C `Allocator` (rust/melee_types/gen/all_types.c:907); GameCube size 0x6F0, align 8.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct Allocator {
@@ -91886,7 +93157,7 @@ impl GcLayout for Allocator {
 }
 const _: () = assert!(core::mem::size_of::<Allocator>() == 3512);
 
-/// C `lbHeap_HeapDesc` (rust/melee_types/gen/all_types.c:841); GameCube size 0x10, align 4.
+/// C `lbHeap_HeapDesc` (rust/melee_types/gen/all_types.c:923); GameCube size 0x10, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct lbHeap_HeapDesc {
@@ -91924,7 +93195,7 @@ impl GcLayout for lbHeap_HeapDesc {
 }
 const _: () = assert!(core::mem::size_of::<lbHeap_HeapDesc>() == 16);
 
-/// C `lbHeap_HeapOffsetView` (rust/melee_types/gen/all_types.c:847); GameCube size 0x2C, align 4.
+/// C `lbHeap_HeapOffsetView` (rust/melee_types/gen/all_types.c:929); GameCube size 0x2C, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct lbHeap_HeapOffsetView {
@@ -91956,7 +93227,7 @@ impl GcLayout for lbHeap_HeapOffsetView {
 }
 const _: () = assert!(core::mem::size_of::<lbHeap_HeapOffsetView>() == 56);
 
-/// C `THPFrameBuffer` (rust/melee_types/gen/all_types.c:851); GameCube size 0x4, align 4.
+/// C `THPFrameBuffer` (rust/melee_types/gen/all_types.c:933); GameCube size 0x4, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct THPFrameBuffer {
@@ -91988,7 +93259,7 @@ impl GcLayout for THPFrameBuffer {
 }
 const _: () = assert!(core::mem::size_of::<THPFrameBuffer>() == 4);
 
-/// C `THPDecComp` (rust/melee_types/gen/all_types.c:855); GameCube size 0x238, align 8.
+/// C `THPDecComp` (rust/melee_types/gen/all_types.c:937); GameCube size 0x238, align 8.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct THPDecComp {
@@ -92197,7 +93468,7 @@ impl GcLayout for THPDecComp {
 }
 const _: () = assert!(core::mem::size_of::<THPDecComp>() == 624);
 
-/// C `lbRefract_State` (rust/melee_types/gen/all_types.c:918); GameCube size 0x40, align 4.
+/// C `lbRefract_State` (rust/melee_types/gen/all_types.c:1000); GameCube size 0x40, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct lbRefract_State {
@@ -92238,7 +93509,7 @@ impl GcLayout for lbRefract_State {
 }
 const _: () = assert!(core::mem::size_of::<lbRefract_State>() == 80);
 
-/// C `lbRefract_Data` (rust/melee_types/gen/all_types.c:925); GameCube size 0x8, align 4.
+/// C `lbRefract_Data` (rust/melee_types/gen/all_types.c:1007); GameCube size 0x8, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct lbRefract_Data {
@@ -92270,7 +93541,7 @@ impl GcLayout for lbRefract_Data {
 }
 const _: () = assert!(core::mem::size_of::<lbRefract_Data>() == 16);
 
-/// C `lbRefract_DataLayout` (rust/melee_types/gen/all_types.c:929); GameCube size 0x60, align 4.
+/// C `lbRefract_DataLayout` (rust/melee_types/gen/all_types.c:1011); GameCube size 0x60, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct lbRefract_DataLayout {
@@ -92305,7 +93576,7 @@ impl GcLayout for lbRefract_DataLayout {
 }
 const _: () = assert!(core::mem::size_of::<lbRefract_DataLayout>() == 104);
 
-/// C `Unk80433380_48` (rust/melee_types/gen/all_types.c:935); GameCube size 0x408, align 4.
+/// C `Unk80433380_48` (rust/melee_types/gen/all_types.c:1017); GameCube size 0x408, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct Unk80433380_48 {
@@ -92346,7 +93617,7 @@ impl GcLayout for Unk80433380_48 {
 }
 const _: () = assert!(core::mem::size_of::<Unk80433380_48>() == 1032);
 
-/// C `Unk80433380_0` (rust/melee_types/gen/all_types.c:943); GameCube size 0x3C, align 4.
+/// C `Unk80433380_0` (rust/melee_types/gen/all_types.c:1025); GameCube size 0x3C, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct Unk80433380_0 {
@@ -92399,7 +93670,7 @@ impl GcLayout for Unk80433380_0 {
 }
 const _: () = assert!(core::mem::size_of::<Unk80433380_0>() == 60);
 
-/// C `LbMcSnapMemSnapIconData` (rust/melee_types/gen/all_types.c:955); GameCube size 0x4, align 4.
+/// C `LbMcSnapMemSnapIconData` (rust/melee_types/gen/all_types.c:1037); GameCube size 0x4, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub union LbMcSnapMemSnapIconData {
@@ -92433,7 +93704,7 @@ impl GcLayout for LbMcSnapMemSnapIconData {
 }
 const _: () = assert!(core::mem::size_of::<LbMcSnapMemSnapIconData>() == 8);
 
-/// C `Unk80433380` (rust/melee_types/gen/all_types.c:961); GameCube size 0x60, align 4.
+/// C `Unk80433380` (rust/melee_types/gen/all_types.c:1043); GameCube size 0x60, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct Unk80433380 {
@@ -92477,7 +93748,7 @@ impl GcLayout for Unk80433380 {
 }
 const _: () = assert!(core::mem::size_of::<Unk80433380>() == 112);
 
-/// C `Unk803BACC8` (rust/melee_types/gen/all_types.c:970); GameCube size 0x2C, align 4.
+/// C `Unk803BACC8` (rust/melee_types/gen/all_types.c:1052); GameCube size 0x2C, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct Unk803BACC8 {
@@ -92509,7 +93780,7 @@ impl GcLayout for Unk803BACC8 {
 }
 const _: () = assert!(core::mem::size_of::<Unk803BACC8>() == 56);
 
-/// C `lb_Collider` (rust/melee_types/gen/all_types.c:975); GameCube size 0x28, align 4.
+/// C `lb_Collider` (rust/melee_types/gen/all_types.c:1057); GameCube size 0x28, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct lb_Collider {
@@ -94506,6 +95777,37 @@ pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[
     (<_THPComponent as GcLayout>::GC_NAME, <_THPComponent as GcLayout>::GC_SIZE, <_THPComponent as GcLayout>::GC_ALIGN, <_THPComponent as GcLayout>::GC_FIELDS),
     (<_THPFileInfo as GcLayout>::GC_NAME, <_THPFileInfo as GcLayout>::GC_SIZE, <_THPFileInfo as GcLayout>::GC_ALIGN, <_THPFileInfo as GcLayout>::GC_FIELDS),
     (<THPDec_8032FD40_Data as GcLayout>::GC_NAME, <THPDec_8032FD40_Data as GcLayout>::GC_SIZE, <THPDec_8032FD40_Data as GcLayout>::GC_ALIGN, <THPDec_8032FD40_Data as GcLayout>::GC_FIELDS),
+    (<_MainMenuData as GcLayout>::GC_NAME, <_MainMenuData as GcLayout>::GC_SIZE, <_MainMenuData as GcLayout>::GC_ALIGN, <_MainMenuData as GcLayout>::GC_FIELDS),
+    (<_MainMenuPanelData as GcLayout>::GC_NAME, <_MainMenuPanelData as GcLayout>::GC_SIZE, <_MainMenuPanelData as GcLayout>::GC_ALIGN, <_MainMenuPanelData as GcLayout>::GC_FIELDS),
+    (<_MenuFlow as GcLayout>::GC_NAME, <_MenuFlow as GcLayout>::GC_SIZE, <_MenuFlow as GcLayout>::GC_ALIGN, <_MenuFlow as GcLayout>::GC_FIELDS),
+    (<_MenuInputState as GcLayout>::GC_NAME, <_MenuInputState as GcLayout>::GC_SIZE, <_MenuInputState as GcLayout>::GC_ALIGN, <_MenuInputState as GcLayout>::GC_FIELDS),
+    (<MnCountData as GcLayout>::GC_NAME, <MnCountData as GcLayout>::GC_SIZE, <MnCountData as GcLayout>::GC_ALIGN, <MnCountData as GcLayout>::GC_FIELDS),
+    (<WarnCmnData as GcLayout>::GC_NAME, <WarnCmnData as GcLayout>::GC_SIZE, <WarnCmnData as GcLayout>::GC_ALIGN, <WarnCmnData as GcLayout>::GC_FIELDS),
+    (<MnDataDelData as GcLayout>::GC_NAME, <MnDataDelData as GcLayout>::GC_SIZE, <MnDataDelData as GcLayout>::GC_ALIGN, <MnDataDelData as GcLayout>::GC_FIELDS),
+    (<MnDataDelGObjUserData as GcLayout>::GC_NAME, <MnDataDelGObjUserData as GcLayout>::GC_SIZE, <MnDataDelGObjUserData as GcLayout>::GC_ALIGN, <MnDataDelGObjUserData as GcLayout>::GC_FIELDS),
+    (<mnDiagram2_SortEntry as GcLayout>::GC_NAME, <mnDiagram2_SortEntry as GcLayout>::GC_SIZE, <mnDiagram2_SortEntry as GcLayout>::GC_ALIGN, <mnDiagram2_SortEntry as GcLayout>::GC_FIELDS),
+    (<mnDiagram2_SortEntry_anon_9 as GcLayout>::GC_NAME, <mnDiagram2_SortEntry_anon_9 as GcLayout>::GC_SIZE, <mnDiagram2_SortEntry_anon_9 as GcLayout>::GC_ALIGN, <mnDiagram2_SortEntry_anon_9 as GcLayout>::GC_FIELDS),
+    (<mnDiagram2_SortEntry_anon_15 as GcLayout>::GC_NAME, <mnDiagram2_SortEntry_anon_15 as GcLayout>::GC_SIZE, <mnDiagram2_SortEntry_anon_15 as GcLayout>::GC_ALIGN, <mnDiagram2_SortEntry_anon_15 as GcLayout>::GC_FIELDS),
+    (<mnDiagram2_SortEntry_anon_19 as GcLayout>::GC_NAME, <mnDiagram2_SortEntry_anon_19 as GcLayout>::GC_SIZE, <mnDiagram2_SortEntry_anon_19 as GcLayout>::GC_ALIGN, <mnDiagram2_SortEntry_anon_19 as GcLayout>::GC_FIELDS),
+    (<mnDiagram3_PosTable as GcLayout>::GC_NAME, <mnDiagram3_PosTable as GcLayout>::GC_SIZE, <mnDiagram3_PosTable as GcLayout>::GC_ALIGN, <mnDiagram3_PosTable as GcLayout>::GC_FIELDS),
+    (<mnDiagram3_StatTable as GcLayout>::GC_NAME, <mnDiagram3_StatTable as GcLayout>::GC_SIZE, <mnDiagram3_StatTable as GcLayout>::GC_ALIGN, <mnDiagram3_StatTable as GcLayout>::GC_FIELDS),
+    (<mnDiagram3_DataTable as GcLayout>::GC_NAME, <mnDiagram3_DataTable as GcLayout>::GC_SIZE, <mnDiagram3_DataTable as GcLayout>::GC_ALIGN, <mnDiagram3_DataTable as GcLayout>::GC_FIELDS),
+    (<MnEventData as GcLayout>::GC_NAME, <MnEventData as GcLayout>::GC_SIZE, <MnEventData as GcLayout>::GC_ALIGN, <MnEventData as GcLayout>::GC_FIELDS),
+    (<mn_802307F8_t as GcLayout>::GC_NAME, <mn_802307F8_t as GcLayout>::GC_SIZE, <mn_802307F8_t as GcLayout>::GC_ALIGN, <mn_802307F8_t as GcLayout>::GC_FIELDS),
+    (<mn_802307F8_t_anon_18 as GcLayout>::GC_NAME, <mn_802307F8_t_anon_18 as GcLayout>::GC_SIZE, <mn_802307F8_t_anon_18 as GcLayout>::GC_ALIGN, <mn_802307F8_t_anon_18 as GcLayout>::GC_FIELDS),
+    (<mn_802307F8_t_anon_18_anon_20 as GcLayout>::GC_NAME, <mn_802307F8_t_anon_18_anon_20 as GcLayout>::GC_SIZE, <mn_802307F8_t_anon_18_anon_20 as GcLayout>::GC_ALIGN, <mn_802307F8_t_anon_18_anon_20 as GcLayout>::GC_FIELDS),
+    (<mn_802307F8_t_anon_18_anon_20_x34 as GcLayout>::GC_NAME, <mn_802307F8_t_anon_18_anon_20_x34 as GcLayout>::GC_SIZE, <mn_802307F8_t_anon_18_anon_20_x34 as GcLayout>::GC_ALIGN, <mn_802307F8_t_anon_18_anon_20_x34 as GcLayout>::GC_FIELDS),
+    (<mn_80231634_t as GcLayout>::GC_NAME, <mn_80231634_t as GcLayout>::GC_SIZE, <mn_80231634_t as GcLayout>::GC_ALIGN, <mn_80231634_t as GcLayout>::GC_FIELDS),
+    (<mnGallery_804D6C88_userdata as GcLayout>::GC_NAME, <mnGallery_804D6C88_userdata as GcLayout>::GC_SIZE, <mnGallery_804D6C88_userdata as GcLayout>::GC_ALIGN, <mnGallery_804D6C88_userdata as GcLayout>::GC_FIELDS),
+    (<mnGallery_child_userdata as GcLayout>::GC_NAME, <mnGallery_child_userdata as GcLayout>::GC_SIZE, <mnGallery_child_userdata as GcLayout>::GC_ALIGN, <mnGallery_child_userdata as GcLayout>::GC_FIELDS),
+    (<mnDiagram_Assets as GcLayout>::GC_NAME, <mnDiagram_Assets as GcLayout>::GC_SIZE, <mnDiagram_Assets as GcLayout>::GC_ALIGN, <mnDiagram_Assets as GcLayout>::GC_FIELDS),
+    (<mnDiagram_CleanupData as GcLayout>::GC_NAME, <mnDiagram_CleanupData as GcLayout>::GC_SIZE, <mnDiagram_CleanupData as GcLayout>::GC_ALIGN, <mnDiagram_CleanupData as GcLayout>::GC_FIELDS),
+    (<mnDiagram_AnimData as GcLayout>::GC_NAME, <mnDiagram_AnimData as GcLayout>::GC_SIZE, <mnDiagram_AnimData as GcLayout>::GC_ALIGN, <mnDiagram_AnimData as GcLayout>::GC_FIELDS),
+    (<mnDiagram_PopupAnimTableHead as GcLayout>::GC_NAME, <mnDiagram_PopupAnimTableHead as GcLayout>::GC_SIZE, <mnDiagram_PopupAnimTableHead as GcLayout>::GC_ALIGN, <mnDiagram_PopupAnimTableHead as GcLayout>::GC_FIELDS),
+    (<mnDiagram_AnimTable as GcLayout>::GC_NAME, <mnDiagram_AnimTable as GcLayout>::GC_SIZE, <mnDiagram_AnimTable as GcLayout>::GC_ALIGN, <mnDiagram_AnimTable as GcLayout>::GC_FIELDS),
+    (<RankEntry as GcLayout>::GC_NAME, <RankEntry as GcLayout>::GC_SIZE, <RankEntry as GcLayout>::GC_ALIGN, <RankEntry as GcLayout>::GC_FIELDS),
+    (<mnDiagram_PopupData as GcLayout>::GC_NAME, <mnDiagram_PopupData as GcLayout>::GC_SIZE, <mnDiagram_PopupData as GcLayout>::GC_ALIGN, <mnDiagram_PopupData as GcLayout>::GC_FIELDS),
+    (<mnDiagram_MainOverlay as GcLayout>::GC_NAME, <mnDiagram_MainOverlay as GcLayout>::GC_SIZE, <mnDiagram_MainOverlay as GcLayout>::GC_ALIGN, <mnDiagram_MainOverlay as GcLayout>::GC_FIELDS),
     (<MemEntry as GcLayout>::GC_NAME, <MemEntry as GcLayout>::GC_SIZE, <MemEntry as GcLayout>::GC_ALIGN, <MemEntry as GcLayout>::GC_FIELDS),
     (<LBMgr as GcLayout>::GC_NAME, <LBMgr as GcLayout>::GC_SIZE, <LBMgr as GcLayout>::GC_ALIGN, <LBMgr as GcLayout>::GC_FIELDS),
     (<Allocator as GcLayout>::GC_NAME, <Allocator as GcLayout>::GC_SIZE, <Allocator as GcLayout>::GC_ALIGN, <Allocator as GcLayout>::GC_FIELDS),

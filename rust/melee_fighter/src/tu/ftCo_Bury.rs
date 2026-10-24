@@ -62,10 +62,10 @@ pub mod ext {
         efSync_Spawn(id: i32, g: G, pos: *mut Vec3, s: *mut f32) = |_, _, _, _| todo!("TODO(port) efSync_Spawn (efsync.c)");
         ftCommon_GrabMash(fp: &mut Fighter, v: f32) -> bool = |fp: &mut Fighter, v: f32| -> bool { unsafe { crate::ftcommon2::grab_mash(fp, v as _) } };
         mpLib_80054ED8(line: i32) -> bool = |line: i32| -> bool { unsafe { (melee_world::tu::mplib::mpLib_80054ED8(line as _) != 0 as _) } };
-        mpLineGetNormal(line: i32, n: *mut Vec3) -> *mut Vec3 = |_, _| todo!("TODO(port) mpLineGetNormal (mplib.c)");
+        mpLineGetNormal(line: i32, n: *mut Vec3) -> *mut Vec3 = |line: i32, n: *mut Vec3| -> *mut Vec3 { unsafe { melee_world::tu::mplib::mpLineGetNormal(line as _, n as _) as _ } };
         atan2f(y: f32, x: f32) -> f32 = |y: f32, x: f32| -> f32 { unsafe { melee_runtime::lbtrigf::atan2f(y as _, x as _) as _ } };
         HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = t!("HSD_JObjSetMtxDirtySub (jobj.c)");
-        mpGetSpeed(line: i32, pos: *mut Vec3, speed: *mut Vec3) -> bool = |_, _, _| todo!("TODO(port) mpGetSpeed (mplib.c)");
+        mpGetSpeed(line: i32, pos: *mut Vec3, speed: *mut Vec3) -> bool = |line: i32, pos: *mut Vec3, speed: *mut Vec3| -> bool { unsafe { (melee_world::tu::mplib::mpGetSpeed(line as _, pos as _, speed as _) != 0 as _) } };
         PSVECAdd(a: *mut Vec3, b: *mut Vec3, c: *mut Vec3) = |a: *mut Vec3, b: *mut Vec3, c: *mut Vec3| { unsafe { let _ = crate::bridge::psvec_add(a, b, c); } };
         ft_80082888(g: G, b: *mut ftCollisionBox) -> bool = |g: G, b: *mut ftCollisionBox| -> bool { unsafe { crate::tu::ft_081b::ft_80082888(g as _, b as _) as _ } };
         ftCo_800C5240(g: G) -> bool = t!("ftCo_800C5240 (ftCo_HammerWait.c)");

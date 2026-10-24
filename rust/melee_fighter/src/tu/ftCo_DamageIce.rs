@@ -64,7 +64,7 @@ pub mod ext {
         ftCo_8009E140(fp: &mut Fighter, b: i32) = |fp: &mut Fighter, b: i32| { unsafe { let _ = crate::tu::ftdynamics::ftCo_8009E140(fp as _, b as _); } };
         ftCommon_8007F824(g: G) = |g: G| { unsafe { let _ = crate::ftcommon3::ftcommon_8007f824(g as _); } };
         ftCommon_8007E2F4(fp: &mut Fighter, v: i16) = crate::ftcommon2::ftcommon_8007e2f4;
-        HSD_Randf() -> f32 = || todo!("TODO(port) HSD_Randf (baselib/random.c)");
+        HSD_Randf() -> f32 = || -> f32 { unsafe { crate::rng::HSD_Randf() } };
         ftColl_8007B0C0(g: G, state: i32) = |g: G, state: i32| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007b0c0(g as _, state as _); } };
         ftColl_HurtboxInit(fp: &mut Fighter, hurt: *mut FighterHurtCapsule, init: &ftHurtboxInit) = |fp: &mut Fighter, hurt: *mut FighterHurtCapsule, init: &ftHurtboxInit| { unsafe { let _ = crate::tu::ftcoll::ftcoll_hurtbox_init(fp, hurt as _, init); } };
         ftCommon_8007EBAC(fp: &mut Fighter, a: u32, b: u32) = crate::ftcommon2::ftcommon_8007ebac;

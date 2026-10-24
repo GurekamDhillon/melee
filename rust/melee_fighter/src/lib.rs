@@ -17,6 +17,7 @@ pub mod neutral_hash;
 pub mod bridge;
 pub mod chardata;
 pub mod platform;
+pub mod rng;
 pub mod hooks;
 pub mod ftcommon;
 pub mod ftcommon2;

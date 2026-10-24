@@ -60,7 +60,7 @@ pub mod ext {
         HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjSetMtxDirtySub (jobj.c)");
         mpLib_80054ED8(index: i32) -> i32 = |index: i32| -> i32 { unsafe { melee_world::tu::mplib::mpLib_80054ED8(index as _) } };
         mpLib_8005199C_Floor(pos: &mut Vec3, a: i32, b: i32) -> i32 = |pos: &mut Vec3, a: i32, b: i32| -> i32 { unsafe { melee_world::tu::mplib::mpLib_8005199C_Floor(pos as *mut _ as *mut _, a as _, b as _) } };
-        mpLinesConnected(a: i32, b: i32) -> bool = |_, _| todo!("TODO(port) mpLinesConnected (mplib.c)");
+        mpLinesConnected(a: i32, b: i32) -> bool = |a: i32, b: i32| -> bool { unsafe { (melee_world::tu::mplib::mpLinesConnected(a as _, b as _) != 0 as _) } };
         mpLib_8004DD90_Floor(index: i32, pos: &mut Vec3, out: &mut f32, a: i32, b: *mut Vec3) -> bool = |_, _, _, _, _| todo!("TODO(port) mpLib_8004DD90_Floor (mplib.c)");
         mpColl_80043680(coll: &mut CollData, pos: &Vec3) = |coll: &mut CollData, pos: &Vec3| { unsafe { let _ = melee_world::tu::mpcoll::mpColl_80043680(coll as *mut _ as *mut _, pos as *const _ as *mut _); } };
         // rp3 mpColl_80043670

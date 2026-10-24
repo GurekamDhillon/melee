@@ -58,7 +58,7 @@ pub mod ext {
         ftCommon_8007D7FC(f: &mut Fighter) = crate::ftcommon3::ftcommon_8007d7fc;
         OSReport(msg: &str) = |_| {};
         ftCo_Fall_Enter(g: G) = crate::tu::ftCo_Fall::ftCo_Fall_Enter;
-        mpLineGetFlags(line_id: i32) -> u32 = |_| todo!("TODO(port) mpLineGetFlags (mplib.c)");
+        mpLineGetFlags(line_id: i32) -> u32 = |line_id: i32| -> u32 { unsafe { melee_world::tu::mplib::mpLineGetFlags(line_id as _) } };
         pl_80040614(slot: i32, sub: bool, timer: f32) = crate::plbonus::pl_80040614;
         ftCo_800DE7C0(g: G, victim: G, up: bool) = crate::tu::ftCo_Thrown::ftCo_800DE7C0;
         ftCo_800DE920(g: G, frame: f32) = crate::tu::ftCo_Thrown::ftCo_800DE920;

@@ -100,7 +100,7 @@ pub mod ext {
         pl_80040270(port: i32, sub: i32, kb: f32) = crate::plbonus::pl_80040270;
         pl_800401F0(port: i32, sub: i32, x: f32, y: f32) = crate::plbonus::pl_800401f0;
         ftCommon_8007D5D4(fp: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
-        HSD_Randf() -> f32 = || todo!("TODO(group1 random) HSD_Randf");
+        HSD_Randf() -> f32 = || -> f32 { unsafe { crate::rng::HSD_Randf() } };
         un_803222EC(mag: f32, angle: f32) -> f32 = |mag: f32, angle: f32| -> f32 { unsafe { crate::tu::crowdsfx::un_803222EC(mag as _, angle as _) as _ } };
         un_8032233C(a: u32, b: u32) = |a: u32, b: u32| { unsafe { let _ = crate::tu::crowdsfx::un_8032233C(a as _, b as _); } };
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };

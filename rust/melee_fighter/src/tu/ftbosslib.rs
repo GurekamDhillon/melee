@@ -25,8 +25,8 @@ pub mod ext {
     use crate::types::*;
     pub fn Player_GetPlayerSlotType(_slot: i32) -> Gm_PKind { unsafe { crate::tu::player::Player_GetPlayerSlotType(_slot as _) } }
     pub fn HSD_JObjSetRotation(_j: *mut HSD_JObj, _q: &Quaternion) { unsafe { let _ = melee_world::tu::grinl::HSD_JObjSetRotation(_j as _, _q as *const _ as *mut _); } }
-    pub fn mpFloorGetRight(_line: i32, _out: &mut Vec3) { todo!("mpFloorGetRight (mp/mplib.c)") }
-    pub fn mpFloorGetLeft(_line: i32, _out: &mut Vec3) { todo!("mpFloorGetLeft (mp/mplib.c)") }
+    pub fn mpFloorGetRight(_line: i32, _out: &mut Vec3) { unsafe { let _ = melee_world::tu::mplib::mpFloorGetRight(_line as _, _out as *mut _ as *mut _); } }
+    pub fn mpFloorGetLeft(_line: i32, _out: &mut Vec3) { unsafe { let _ = melee_world::tu::mplib::mpFloorGetLeft(_line as _, _out as *mut _ as *mut _); } }
     pub fn it_8026C3FC() { todo!("it_8026C3FC (it/it_26B1.c)") }
     pub fn it_8026C42C() { todo!("it_8026C42C (it/it_26B1.c)") }
     pub fn Camera_8002E818(_v: &Vec3) { todo!("Camera_8002E818 (cm/camera.c)") }

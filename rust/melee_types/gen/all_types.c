@@ -803,3 +803,12 @@
 #include <melee/gm/gmresultplayer.static.h>
 #include <melee/gm/gmfrontend_items.h>
 #include <melee/gm/gmtoulib.static.h>
+typedef struct {
+    Fighter* fighter;
+    int target, attack, damage, pulses;
+    float x, y, radius;
+    /* burst timing (logic frames, advanced only while the attacker is out of hitlag): the capsule is one
+     * fresh attack instance at phase 0, enabled for `active` frames, disabled for `gap` frames, then again.
+     * every_frame (or an empty cycle) is the old mode: a fresh instance on every frame. */
+    int every_frame, active, gap, phase, kb_base, kbg, angle;
+} FlyCursor;

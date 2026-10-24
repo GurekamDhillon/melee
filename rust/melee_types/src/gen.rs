@@ -91221,6 +91221,77 @@ impl GcLayout for lbl_803D9DD0_t {
 }
 const _: () = assert!(core::mem::size_of::<lbl_803D9DD0_t>() == 40);
 
+/// C `FlyCursor` (rust/melee_types/gen/all_types.c:806); GameCube size 0x3C, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct FlyCursor {
+    pub fighter: *mut Fighter,
+    pub target: i32,
+    pub attack: i32,
+    pub damage: i32,
+    pub pulses: i32,
+    pub x: f32,
+    pub y: f32,
+    pub radius: f32,
+    pub every_frame: i32,
+    pub active: i32,
+    pub gap: i32,
+    pub phase: i32,
+    pub kb_base: i32,
+    pub kbg: i32,
+    pub angle: i32,
+}
+impl FlyCursor { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for FlyCursor {
+    const GC_BYTES: u32 = 0x3C;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.fighter = <*mut Fighter as GcDecode>::gc_decode(d, at + 0x0);
+        v.target = <i32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.attack = <i32 as GcDecode>::gc_decode(d, at + 0x8);
+        v.damage = <i32 as GcDecode>::gc_decode(d, at + 0xC);
+        v.pulses = <i32 as GcDecode>::gc_decode(d, at + 0x10);
+        v.x = <f32 as GcDecode>::gc_decode(d, at + 0x14);
+        v.y = <f32 as GcDecode>::gc_decode(d, at + 0x18);
+        v.radius = <f32 as GcDecode>::gc_decode(d, at + 0x1C);
+        v.every_frame = <i32 as GcDecode>::gc_decode(d, at + 0x20);
+        v.active = <i32 as GcDecode>::gc_decode(d, at + 0x24);
+        v.gap = <i32 as GcDecode>::gc_decode(d, at + 0x28);
+        v.phase = <i32 as GcDecode>::gc_decode(d, at + 0x2C);
+        v.kb_base = <i32 as GcDecode>::gc_decode(d, at + 0x30);
+        v.kbg = <i32 as GcDecode>::gc_decode(d, at + 0x34);
+        v.angle = <i32 as GcDecode>::gc_decode(d, at + 0x38);
+        v
+    }
+}
+impl GcPointee for FlyCursor { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<FlyCursor>(t) } }
+impl GcLayout for FlyCursor {
+    const GC_NAME: &'static str = "FlyCursor";
+    const GC_SIZE: u32 = 0x3C;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("fighter", 0x0, 4, "Fighter *"),
+        GcField::new("target", 0x4, 4, "int"),
+        GcField::new("attack", 0x8, 4, "int"),
+        GcField::new("damage", 0xC, 4, "int"),
+        GcField::new("pulses", 0x10, 4, "int"),
+        GcField::new("x", 0x14, 4, "float"),
+        GcField::new("y", 0x18, 4, "float"),
+        GcField::new("radius", 0x1C, 4, "float"),
+        GcField::new("every_frame", 0x20, 4, "int"),
+        GcField::new("active", 0x24, 4, "int"),
+        GcField::new("gap", 0x28, 4, "int"),
+        GcField::new("phase", 0x2C, 4, "int"),
+        GcField::new("kb_base", 0x30, 4, "int"),
+        GcField::new("kbg", 0x34, 4, "int"),
+        GcField::new("angle", 0x38, 4, "int"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<FlyCursor>() == 64);
+
 /// Every generated GameCube record layout, for the DAT loader, serialisers and the m-ex map.
 pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[
     (<__file_modes as GcLayout>::GC_NAME, <__file_modes as GcLayout>::GC_SIZE, <__file_modes as GcLayout>::GC_ALIGN, <__file_modes as GcLayout>::GC_FIELDS),
@@ -92859,6 +92930,7 @@ pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[
     (<BracketSrcEntry as GcLayout>::GC_NAME, <BracketSrcEntry as GcLayout>::GC_SIZE, <BracketSrcEntry as GcLayout>::GC_ALIGN, <BracketSrcEntry as GcLayout>::GC_FIELDS),
     (<lbl_803D9DAC_t as GcLayout>::GC_NAME, <lbl_803D9DAC_t as GcLayout>::GC_SIZE, <lbl_803D9DAC_t as GcLayout>::GC_ALIGN, <lbl_803D9DAC_t as GcLayout>::GC_FIELDS),
     (<lbl_803D9DD0_t as GcLayout>::GC_NAME, <lbl_803D9DD0_t as GcLayout>::GC_SIZE, <lbl_803D9DD0_t as GcLayout>::GC_ALIGN, <lbl_803D9DD0_t as GcLayout>::GC_FIELDS),
+    (<FlyCursor as GcLayout>::GC_NAME, <FlyCursor as GcLayout>::GC_SIZE, <FlyCursor as GcLayout>::GC_ALIGN, <FlyCursor as GcLayout>::GC_FIELDS),
 ];
 
 /// Read `w` bits of a GameCube big-endian bitfield byte run, `shift` bits up from its LSB.

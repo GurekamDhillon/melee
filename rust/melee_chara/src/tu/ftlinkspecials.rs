@@ -46,7 +46,7 @@ pub mod ext {
                     None => { unsafe { let _ = melee_items::tu::itlinkboomerang::it_802A07B4(boomerang as _); } return; },
                 }
             }
-    hook!(IT_802A013C, it_802A013C, (facing_dir: f32, owner: *mut HSD_GObj, pos: &Vec3, part: i32, x2c: i32) -> *mut Item_GObj);
+    crate::port_hook!(IT_802A013C, it_802A013C, crate::adapt::it_802A013C, (facing_dir: f32, owner: *mut HSD_GObj, pos: &Vec3, part: i32, x2c: i32) -> *mut Item_GObj);
     pub static mut IT_8029FDBC: Option<fn(*mut Item_GObj) -> bool> = None;
             #[allow(non_snake_case)]
             pub fn it_8029FDBC(boomerang: *mut Item_GObj) -> bool {
@@ -55,7 +55,7 @@ pub mod ext {
                     None => { return unsafe { melee_items::tu::itlinkboomerang::it_8029FDBC(boomerang as _) != 0 }; },
                 }
             }
-    hook!(IT_802A0534, it_802A0534, (boomerang: *mut Item_GObj, pos: &Vec3, angle: f32));
+    crate::port_hook!(IT_802A0534, it_802A0534, crate::adapt::it_802A0534, (boomerang: *mut Item_GObj, pos: &Vec3, angle: f32));
 }
 
 #[inline(always)]

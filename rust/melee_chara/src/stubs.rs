@@ -155,12 +155,12 @@ pub fn ftCommon_AirToGroundStateChange(g: G, fp: &mut Fighter, msid: i32, flags:
 // ---- Round 5 (gen/port_r5.py): more group-3 calls the character code makes. ----
 // `HSD_GObjEvent` arguments are `Option<unsafe extern "C" fn(*mut HSD_GObj)>` (chars::cb entries).
 use melee_types::HSD_GObjEvent;
-stub!(/// TODO(group3): `ft_80082C74(gobj, cb)` (ft/ftcoll.c, ground collision with edge callback).
-    FT_80082C74, ft_80082C74, (g: G, cb: HSD_GObjEvent));
-stub!(/// TODO(group3): `ft_8008403C(gobj, cb)` (ft/ft_0877.c, air collision with landing callback).
-    FT_8008403C, ft_8008403C, (g: G, cb: HSD_GObjEvent));
-stub!(/// TODO(group3): `ft_800841B8(gobj, cb)` (ft/ft_0877.c).
-    FT_800841B8, ft_800841B8, (g: G, cb: HSD_GObjEvent));
+stub_or!(/// TODO(group3): `ft_80082C74(gobj, cb)` (ft/ftcoll.c, ground collision with edge callback).
+    FT_80082C74, ft_80082C74, crate::adapt::ft_80082C74, (g: G, cb: HSD_GObjEvent));
+stub_or!(/// TODO(group3): `ft_8008403C(gobj, cb)` (ft/ft_0877.c, air collision with landing callback).
+    FT_8008403C, ft_8008403C, crate::adapt::ft_8008403C, (g: G, cb: HSD_GObjEvent));
+stub_or!(/// TODO(group3): `ft_800841B8(gobj, cb)` (ft/ft_0877.c).
+    FT_800841B8, ft_800841B8, crate::adapt::ft_800841B8, (g: G, cb: HSD_GObjEvent));
     /// TODO(group3): `ft_80084104(gobj)` (ft/ft_0877.c).
 pub static mut FT_80084104: Option<fn(G)> = None;
         /// TODO(group3): `ft_80084104(gobj)` (ft/ft_0877.c).

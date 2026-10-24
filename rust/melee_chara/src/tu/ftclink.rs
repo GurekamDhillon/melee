@@ -50,7 +50,7 @@ pub mod ext {
             }
         };
     }
-    hook!(LBANIM_8001E8F8, lbAnim_8001E8F8, (tree: *mut FigaTree) -> f32);
+    crate::port_hook!(LBANIM_8001E8F8, lbAnim_8001E8F8, crate::adapt::lbAnim_8001E8F8, (tree: *mut FigaTree) -> f32);
     pub static mut FTDATA_80085E50: Option<fn(*mut Fighter, i32) -> *mut FigaTree> = None;
             #[allow(non_snake_case)]
             pub fn ftData_80085E50(fp: *mut Fighter, msid: i32) -> *mut FigaTree {
@@ -101,7 +101,7 @@ pub mod ext {
                     None => { unsafe { let _ = melee_fighter::tu::ftCo_AppealS::ftCo_800DEAE8(gobj as _, msid0 as _, msid1 as _); } return; },
                 }
             }
-    hook!(IT_802C8C34, it_802C8C34, (item: *mut Item_GObj));
+    crate::port_hook!(IT_802C8C34, it_802C8C34, crate::adapt::it_802C8C34, (item: *mut Item_GObj));
 }
 
 #[inline(always)]

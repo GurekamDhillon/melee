@@ -57,7 +57,7 @@ pub mod ext {
                     None => { unsafe { let _ = melee_items::tu::it_26B1::it_8026B3F8(article as _, kind as _); } return; },
                 }
             }
-    hook!(IT_802C17DC, it_802C17DC, (item: *mut Item_GObj));
+    crate::port_hook!(IT_802C17DC, it_802C17DC, crate::adapt::it_802C17DC, (item: *mut Item_GObj));
 }
 
 /// Motion flags of the Popo states (`ftPopo/forward.h`), as numeric values of the `Ft_MF_*` ors.

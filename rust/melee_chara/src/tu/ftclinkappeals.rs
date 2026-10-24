@@ -24,7 +24,7 @@ pub mod ext {
             }
         };
     }
-    hook!(IT_802C8B28, it_802C8B28, (gobj: *mut HSD_GObj, pos: *mut Vec3, bone: u32, facing: f32) -> *mut HSD_GObj);
+    crate::port_hook!(IT_802C8B28, it_802C8B28, crate::adapt::it_802C8B28, (gobj: *mut HSD_GObj, pos: *mut Vec3, bone: u32, facing: f32) -> *mut HSD_GObj);
     pub static mut FTCO_APPEALS_IASA: Option<fn(*mut HSD_GObj) > = None;
             #[allow(non_snake_case)]
             pub fn ftCo_AppealS_IASA(gobj: *mut HSD_GObj)  {

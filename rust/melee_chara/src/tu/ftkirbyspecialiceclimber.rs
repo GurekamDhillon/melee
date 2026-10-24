@@ -40,9 +40,9 @@ pub mod ext {
             }
         };
     }
-    hook!(IT_802C17DC, it_802C17DC, (item: *mut HSD_GObj));
-    hook!(IT_802C16F8, it_802C16F8, (item: *mut HSD_GObj));
-    hook!(IT_802C1590, it_802C1590, (gobj: *mut HSD_GObj, pos: *mut Vec3, kind: i32, facing_dir: f32) -> *mut HSD_GObj);
+    crate::port_hook!(IT_802C17DC, it_802C17DC, crate::adapt::it_802C17DC, (item: *mut HSD_GObj));
+    crate::port_hook!(IT_802C16F8, it_802C16F8, crate::adapt::it_802C16F8, (item: *mut HSD_GObj));
+    crate::port_hook!(IT_802C1590, it_802C1590, crate::adapt::it_802C1590, (gobj: *mut HSD_GObj, pos: *mut Vec3, kind: i32, facing_dir: f32) -> *mut HSD_GObj);
     hook!(FT_PLAYSFX, ft_PlaySFX, (fp: *mut Fighter, sfx: i32, vol: u8, pan: u8));
     hook_or!(FT_800881D8, ft_800881D8, ft_800881d8_port, (fp: *mut Fighter, sfx: i32, vol: u8, pan: u8));
     fn ft_800881d8_port(fp: *mut Fighter, sfx: i32, vol: u8, pan: u8) {

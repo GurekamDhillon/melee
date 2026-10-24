@@ -150,7 +150,7 @@ pub mod ext {
                     None => { unsafe { let _ = melee_items::tu::itkirby_2F23::it_802F23EC(item as _, g as _, dir as _); } return; },
                 }
             }
-    hook!(IT_802F28C8, it_802F28C8, (item: *mut Item_GObj, flag: i32, f: f32));
+    crate::port_hook!(IT_802F28C8, it_802F28C8, crate::adapt::it_802F28C8, (item: *mut Item_GObj, flag: i32, f: f32));
 
     pub static mut IT_802F295C: Option<fn(G, *mut itUnk2_DatAttrs) -> f32> = None;
             #[allow(non_snake_case)]
@@ -160,7 +160,7 @@ pub mod ext {
                     None => { return unsafe { melee_items::tu::it_2F28::it_802F295C(g as _, attr as _) as _ }; },
                 }
             }
-    hook!(LBANIM_8001E8F8, lbAnim_8001E8F8, (tree: *mut FigaTree) -> f32);
+    crate::port_hook!(LBANIM_8001E8F8, lbAnim_8001E8F8, crate::adapt::lbAnim_8001E8F8, (tree: *mut FigaTree) -> f32);
     pub static mut LB_8000B1CC: Option<fn(*mut c_void, *const Vec3, *mut Vec3)> = None;
     #[allow(non_snake_case)]
     pub fn lb_8000B1CC(joint: *mut c_void, off: *const Vec3, out: *mut Vec3) {

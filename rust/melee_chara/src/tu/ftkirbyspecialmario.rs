@@ -59,7 +59,7 @@ pub mod ext {
                     None => { unsafe { let _ = melee_items::tu::itmariofireball::it_8029B6F8(gobj as _, pos as _, kind as _, facing_dir as _); } return; },
                 }
             }
-    hook!(ITDRMARIOPILL_SPAWN, itDrMarioPill_Spawn,
+    crate::port_hook!(ITDRMARIOPILL_SPAWN, itDrMarioPill_Spawn, crate::adapt::itDrMarioPill_Spawn,
         (gobj: *mut HSD_GObj, pos: *mut Vec3, pick: i32, kind: i32, facing_dir: f32));
     /// `efSync_Spawn(gfx_id, gobj, ...)` (variadic in C; `va` are the extra word arguments).
     pub static mut EFSYNC_SPAWN: Option<fn(i32, *mut HSD_GObj, &[usize]) -> *mut core::ffi::c_void> = None;

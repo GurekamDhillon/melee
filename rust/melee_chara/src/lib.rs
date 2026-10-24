@@ -59,4 +59,22 @@ mod layout_tests {
         assert!(kinds > 150, "character records missing from melee_types ({kinds})");
     }
 }
+/// Typed adapters from the call shapes the character TUs declare to ports in the crates below.
+pub mod adapt;
 pub mod tu;
+
+/// A TU callee declared as a settable hook that, unset, calls `$port` (an adapter in
+/// [`adapt`] or a port in a lower crate) instead of panicking.
+#[macro_export]
+macro_rules! port_hook {
+    ($hook:ident, $name:ident, $port:path, ($($a:ident: $t:ty),*) $(-> $r:ty)?) => {
+        pub static mut $hook: Option<fn($($t),*) $(-> $r)?> = None;
+        #[allow(non_snake_case, unused_unsafe)]
+        pub fn $name($($a: $t),*) $(-> $r)? {
+            match unsafe { $hook } {
+                Some(f) => f($($a),*),
+                None => unsafe { $port($($a),*) },
+            }
+        }
+    };
+}

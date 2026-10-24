@@ -63,7 +63,7 @@ pub mod ext {
             }
         };
     }
-    hook!(LBANIM_8001E8F8, lbAnim_8001E8F8, (tree: *mut FigaTree) -> f32);
+    crate::port_hook!(LBANIM_8001E8F8, lbAnim_8001E8F8, crate::adapt::lbAnim_8001E8F8, (tree: *mut FigaTree) -> f32);
     pub static mut FTDATA_80085E50: Option<fn(*mut Fighter, i32) -> *mut FigaTree> = None;
             #[allow(non_snake_case)]
             pub fn ftData_80085E50(fp: *mut Fighter, msid: i32) -> *mut FigaTree {

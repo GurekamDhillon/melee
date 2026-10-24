@@ -82,7 +82,7 @@ pub mod ext {
     }
     /// `CostumeListsForeachCharacter[kind].costume_list`.
     hook!(COSTUMELIST, CostumeListsForeachCharacter_costume_list, (kind: i32) -> *mut UnkCostumeStruct);
-    hook!(HSD_ARCHIVEGETPUBLICADDRESS, HSD_ArchiveGetPublicAddress, (archive: *mut HSD_Archive, name: &str) -> *mut c_void);
+    crate::port_hook!(HSD_ARCHIVEGETPUBLICADDRESS, HSD_ArchiveGetPublicAddress, crate::adapt::HSD_ArchiveGetPublicAddress, (archive: *mut HSD_Archive, name: &str) -> *mut c_void);
     /// `&fighter_x2040_alloc_data`.
     hook!(FIGHTER_X2040_ALLOC_DATA, fighter_x2040_alloc_data, () -> *mut c_void);
     pub static mut HSD_OBJALLOC: Option<fn(*mut c_void) -> *mut c_void> = None;

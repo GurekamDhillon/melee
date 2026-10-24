@@ -5,12 +5,11 @@
 //! `memory_list`), which grows through `HSD_MemAlloc`.
 //!
 //! Native shape: the records are `melee_types`' native `repr(C)` structs (pointers are host
-//! pointers); `obj_size` / `info_size` are native `size_of`s (the C stores the GameCube sizeof, so
-//! `memcpy` / `memset` here use the native record sizes the callers pass). The pool's bookkeeping
-//! keeps the C's GameCube accounting (4-byte `memory_list` entries) so size classes and
-//! `nb_alloc` / `nb_free` evolve exactly as on the console, while the arrays themselves are
-//! allocated at their native size. The resize path zeroes the new native slots in full (the C
-//! zeroes `4 * n` bytes, which is the whole slot range only with 4-byte pointers).
+//! pointers); `obj_size` / `info_size` are native `size_of`s, and the pool's bookkeeping is the
+//! native C build's (`sizeof(*memory_list)` is the host pointer size), so size classes and
+//! `nb_alloc` / `nb_free` evolve exactly as in the C; the state oracle checks this. The resize
+//! path zeroes the new slots in full (the C zeroes `4 * n` bytes, which is the whole range only
+//! with 4-byte pointers; the oracle's arena is zeroed, so both agree).
 //!
 //! `hsdClass` is the root class. Callees of unported TUs (HSD_MemAlloc, HSD_HashSearch, OSReport)
 //! are the hooks in [`ext`].
@@ -24,10 +23,12 @@ use melee_types::{
 };
 
 use super::debug::__assert;
-
+use super::lbext::OsArg;
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
+    use core::ffi::c_void;
     macro_rules! ext_fns {
         ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
@@ -43,14 +44,16 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn HSD_MemAlloc(size: u32) -> *mut c_void = crate::tu::memory::HSD_MemAlloc(size as _);
-    fn HSD_HashSearch(hash: *mut HSD_Hash, key: *mut c_void, a2: u32) -> *mut c_void = crate::tu::hash::HSD_HashSearch(hash, key, a2 as _);
-    fn OSReport(s: &str);
+    fn HSD_HashSearch(a0: *mut HSD_Hash, a1: *mut c_void, a2: *mut i32) -> *mut c_void = crate::tu::hash::HSD_HashSearch(a0, a1, a2);
+    fn HSD_MemAlloc(a0: i32) -> *mut c_void = crate::tu::memory::HSD_MemAlloc(a0);
     }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+    }
+    // Data defined in other TUs (the tests set them).
 }
-
-/// The GameCube `sizeof(HSD_MemoryEntry*)` the pool's accounting uses.
-const GC_PTR: i32 = 4;
+// END GENERATED EXT
 
 macro_rules! hsd_assert {
     ($line:expr, $cond:expr, $text:literal) => {
@@ -60,9 +63,9 @@ macro_rules! hsd_assert {
     };
 }
 
-static mut memory_list: *mut *mut HSD_MemoryEntry = null_mut();
-static mut nb_memory_list: i32 = 0;
-static mut current_hash: *mut HSD_Hash = null_mut();
+pub static mut memory_list: *mut *mut HSD_MemoryEntry = null_mut();
+pub static mut nb_memory_list: i32 = 0;
+pub static mut current_hash: *mut HSD_Hash = null_mut();
 
 /// `hsdClass`: the root of the class tree (`info_init` is `_hsdClassInfoInit`).
 pub static mut hsdClass: HSD_ClassInfo = HSD_ClassInfo {
@@ -129,7 +132,7 @@ pub unsafe fn hsdInitClassInfo(
         hsd_assert!(94, (*class_info).head.obj_size >= (*parent_info).head.obj_size, "class_info->head.obj_size >= parent_info->head.obj_size");
         hsd_assert!(95, (*class_info).head.info_size >= (*parent_info).head.info_size, "class_info->head.info_size >= parent_info->head.info_size");
         let n = (*parent_info).head.info_size as usize - core::mem::size_of::<HSD_ClassInfoHead>();
-        core::ptr::copy_nonoverlapping(
+        core::ptr::copy(
             core::ptr::addr_of!((*parent_info).alloc) as *const u8,
             core::ptr::addr_of_mut!((*class_info).alloc) as *mut u8,
             n,
@@ -142,7 +145,7 @@ pub unsafe fn hsdInitClassInfo(
 /// `OSReport_PrintSpaces`.
 pub fn OSReport_PrintSpaces(count: i32) {
     for _ in 0..count.max(0) {
-        ext::OSReport(" ");
+        super::lbext::OSReport(" ", &[]);
     }
 }
 
@@ -158,7 +161,7 @@ pub unsafe fn GetMemoryEntry(idx: i32) -> *mut HSD_MemoryEntry {
             while idx >= new_nb {
                 new_nb *= 2;
             }
-            memory_list = ext::HSD_MemAlloc((new_nb as usize * slot) as u32) as *mut *mut HSD_MemoryEntry;
+            memory_list = ext::HSD_MemAlloc((new_nb as usize * slot) as i32) as *mut *mut HSD_MemoryEntry;
             if memory_list.is_null() {
                 return null_mut();
             }
@@ -170,14 +173,14 @@ pub unsafe fn GetMemoryEntry(idx: i32) -> *mut HSD_MemoryEntry {
             while idx >= new_nb {
                 new_nb *= 2;
             }
-            let new_list = ext::HSD_MemAlloc((new_nb as usize * slot) as u32) as *mut *mut HSD_MemoryEntry;
+            let new_list = ext::HSD_MemAlloc((new_nb as usize * slot) as i32) as *mut *mut HSD_MemoryEntry;
             if new_list.is_null() {
                 return null_mut();
             }
             core::ptr::copy_nonoverlapping(memory_list, new_list, nb_memory_list as usize);
             core::ptr::write_bytes(new_list.add(nb_memory_list as usize), 0, (new_nb - nb_memory_list) as usize);
             let old_list = memory_list;
-            let old_nb = round_down_32((nb_memory_list * GC_PTR) as u32) as i32;
+            let old_nb = round_down_32((nb_memory_list * slot as i32) as u32) as i32;
             memory_list = new_list;
             nb_memory_list = new_nb;
 
@@ -188,7 +191,7 @@ pub unsafe fn GetMemoryEntry(idx: i32) -> *mut HSD_MemoryEntry {
     }
 
     if (*memory_list.add(idx as usize)).is_null() {
-        let entry = ext::HSD_MemAlloc(core::mem::size_of::<HSD_MemoryEntry>() as u32) as *mut HSD_MemoryEntry;
+        let entry = ext::HSD_MemAlloc(core::mem::size_of::<HSD_MemoryEntry>() as i32) as *mut HSD_MemoryEntry;
         if entry.is_null() {
             return null_mut();
         }
@@ -266,7 +269,7 @@ pub unsafe fn hsdAllocMemPiece(size: i32) -> *mut c_void {
             return null_mut();
         }
     }
-    let temp_r3 = ext::HSD_MemAlloc((nb_memory_list * 32) as u32);
+    let temp_r3 = ext::HSD_MemAlloc(nb_memory_list * 32);
     if temp_r3.is_null() {
         return null_mut();
     }
@@ -496,7 +499,7 @@ pub unsafe fn hsdForgetClassLibrary(mut library_name: *const c_char) {
 /// `hsdSearchClassInfo`.
 pub unsafe fn hsdSearchClassInfo(class_name: *const c_char) -> *mut HSD_ClassInfo {
     if !current_hash.is_null() {
-        return ext::HSD_HashSearch(current_hash, class_name as *mut c_void, 0) as *mut HSD_ClassInfo;
+        return ext::HSD_HashSearch(current_hash, class_name as *mut c_void, null_mut()) as *mut HSD_ClassInfo;
     }
     null_mut()
 }
@@ -504,15 +507,12 @@ pub unsafe fn hsdSearchClassInfo(class_name: *const c_char) -> *mut HSD_ClassInf
 /// `DumpClassStat`.
 pub unsafe fn DumpClassStat(info: *mut HSD_ClassInfo, level: i32) {
     OSReport_PrintSpaces(level);
-    ext::OSReport(&format!("<class {}>\n", CStr::from_ptr((*info).head.class_name).to_string_lossy()));
+    super::lbext::OSReport("<class %s>\n", &[OsArg::S((*info).head.class_name)]);
     OSReport_PrintSpaces(level);
-    ext::OSReport(&format!(
-        "    info {} object {} nb_exist {} nb_peak {}\n",
-        (*info).head.info_size as i32,
-        (*info).head.obj_size as i32,
-        (*info).head.nb_exist as i32,
-        (*info).head.nb_peak as i32
-    ));
+    super::lbext::OSReport(
+        "    info %d object %d nb_exist %d nb_peak %d\n",
+        &[OsArg::I((*info).head.info_size as i32), OsArg::I((*info).head.obj_size as i32), OsArg::I((*info).head.nb_exist as i32), OsArg::I((*info).head.nb_peak as i32)],
+    );
 }
 
 /// `hsdDumpClassStat`.

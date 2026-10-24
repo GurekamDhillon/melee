@@ -417,7 +417,7 @@ impl Play {
         let Some(m) = self.m.as_mut() else { return };
         let ports = self.port;
         // gm_DefaultVSGetPauser: START on a connected pad pauses; the pauser's START resumes.
-        let pauser = ports.iter().take(2).position(|p| p.connected && p.trig & HSD_PAD_START != 0);
+        let pauser = ports.iter().take(2).position(|p| p.connected && p.trig & HSD_PAD_START != 0 && p.held & (HSD_PAD_L | HSD_PAD_R | HSD_PAD_A) != (HSD_PAD_L | HSD_PAD_R | HSD_PAD_A));
         match (m.paused, pauser) {
             (None, Some(p)) if m.end_timer.is_none() && m.sim.go_reached() => {
                 m.paused = Some(p);
@@ -454,6 +454,10 @@ impl Play {
         let mut raws = [RawPad::default(); 4];
         for i in 0..4 {
             raws[i] = if self.golden_pads { crate::vs_match::input::pad_fixed(i, m.sim.frame + 1) } else { ports[i].raw };
+        }
+        // START belongs to the pause layer (gm_DefaultVSGetPauser); no fighter check reads it.
+        for r in raws.iter_mut() {
+            r.button &= !HSD_PAD_START;
         }
         m.sim.live_pads = Some(raws);
         if !m.sim.step() {

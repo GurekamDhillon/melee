@@ -29,7 +29,7 @@ pub mod ext {
     pub fn HSD_AObjInvokeCallBacks() { todo!("HSD_AObjInvokeCallBacks (baselib/aobj.c)") }
     pub fn HSD_AObjSetRate(_a: *mut HSD_AObj, _r: f32) { todo!("HSD_AObjSetRate (baselib/aobj.c)") }
     pub fn HSD_AObjReqAnim(_a: *mut HSD_AObj, _f: f32) { todo!("HSD_AObjReqAnim (baselib/aobj.c)") }
-    pub fn HSD_TObjAnim(_t: *mut HSD_TObj) { todo!("HSD_TObjAnim (baselib/tobj.c)") }
+    pub fn HSD_TObjAnim(_t: *mut HSD_TObj) { unsafe { let _ = melee_runtime::tu::tobj::HSD_TObjAnim(_t as _); } }
     pub fn HSD_JObjAnim(_j: J) { todo!("HSD_JObjAnim (baselib/jobj.c)") }
     pub fn HSD_JObjAnimAll(_j: J) { todo!("HSD_JObjAnimAll (baselib/jobj.c)") }
     pub fn HSD_JObjSetMtxDirtySub(_j: J) { todo!("HSD_JObjSetMtxDirtySub (baselib/jobj.c)") }
@@ -60,15 +60,15 @@ pub mod ext {
     pub fn lbGetJObjFramerate(_j: J) -> f32 { todo!("lbGetJObjFramerate (lb/lb_00B0.c)") }
     pub fn lbGetJObjCurrFrame(_j: J) -> f32 { todo!("lbGetJObjCurrFrame (lb/lb_00B0.c)") }
     pub fn lbGetJObjEndFrame(_j: J) -> f32 { todo!("lbGetJObjEndFrame (lb/lb_00B0.c)") }
-    pub fn lbAnim_8001E6D8(_j: J, _t: *mut FigaTree, _tr: *mut FigaTrack, _n: i8) { todo!("lbAnim_8001E6D8 (lb/lbanim.c)") }
-    pub fn lbAnim_8001E7E8(_j: J, _t: *mut FigaTree, _tr: *mut FigaTrack, _n: i8) { todo!("lbAnim_8001E7E8 (lb/lbanim.c)") }
+    pub fn lbAnim_8001E6D8(_j: J, _t: *mut FigaTree, _tr: *mut FigaTrack, _n: i8) { unsafe { let _ = melee_runtime::tu::lbanim::lbAnim_8001E6D8(_j as _, _t as _, _tr as _, _n as _); } }
+    pub fn lbAnim_8001E7E8(_j: J, _t: *mut FigaTree, _tr: *mut FigaTrack, _n: i8) { unsafe { let _ = melee_runtime::tu::lbanim::lbAnim_8001E7E8(_j as _, _t as _, _tr as _, _n as _); } }
     pub fn ftCommon_GetModelScale(_fp: *mut Fighter) -> f32 { todo!("ftCommon_GetModelScale (ft/ftcommon.c)") }
-    pub fn ftCommon_8007F6A4(_fp: *mut Fighter, _j: J) { todo!("ftCommon_8007F6A4 (ft/ftcommon.c)") }
+    pub fn ftCommon_8007F6A4(_fp: *mut Fighter, _j: J) { unsafe { let _ = crate::ftcommon3::ftcommon_8007f6a4(&mut *(_fp as *mut _), _j as _); } }
     pub fn ftParts_8007482C(_joint: *mut HSD_Joint) -> J { todo!("ftParts_8007482C (ft/ftparts.c)") }
     pub fn ftParts_8007462C(_g: G) { todo!("ftParts_8007462C (ft/ftparts.c)") }
     pub fn ftParts_80075240(_d: *mut DObjList, _idx: u16) -> *mut HSD_TObj { todo!("ftParts_80075240 (ft/ftparts.c)") }
-    pub fn ftData_80085E50(_fp: *mut Fighter, _id: i32) -> *mut FigaTree { todo!("ftData_80085E50 (ft/ftdata.c)") }
-    pub fn ftData_80085FD4(_fp: *mut Fighter, _id: i32) -> *mut ftData_80085FD4_ret { todo!("ftData_80085FD4 (ft/ftdata.c)") }
+    pub fn ftData_80085E50(_fp: *mut Fighter, _id: i32) -> *mut FigaTree { unsafe { crate::tu::ftdata::ftData_80085E50(_fp as _, _id as _) as _ } }
+    pub fn ftData_80085FD4(_fp: *mut Fighter, _id: i32) -> *mut ftData_80085FD4_ret { unsafe { crate::tu::ftdata::ftData_80085FD4(&mut *(_fp as *mut _), _id as _) as _ } }
     /// `ftData_UnkCallbackPairs0[kind].x0` / `.x4`.
     pub fn ftData_UnkCallbackPairs0_x0(_kind: i32) -> Option<unsafe extern "C" fn(G)> { todo!("ftData_UnkCallbackPairs0 (ft/ftdata.c)") }
     pub fn ftData_UnkCallbackPairs0_x4(_kind: i32) -> Option<unsafe extern "C" fn(G, i32, f32)> { todo!("ftData_UnkCallbackPairs0 (ft/ftdata.c)") }
@@ -76,8 +76,8 @@ pub mod ext {
     pub fn costume_matanim(_kind: i32, _costume: u8) -> *mut HSD_MatAnimJoint { todo!("CostumeListsForeachCharacter (ft/ftdata.c)") }
     /// `FT_COSTUME_VIS_IDX(fp)`.
     pub fn FT_COSTUME_VIS_IDX(_fp: *mut Fighter) -> u32 { todo!("FT_COSTUME_VIS_IDX (ft/ftparts.h)") }
-    pub fn ftAction_80073240(_g: G) { todo!("ftAction_80073240 (ft/ftaction.c)") }
-    pub fn ftCo_800DB500(_g: G) { todo!("ftCo_800DB500 (ftCommon/ftCo_Attack100.c)") }
+    pub fn ftAction_80073240(_g: G) { unsafe { let _ = crate::tu::ftaction::ftAction_80073240(_g as _); } }
+    pub fn ftCo_800DB500(_g: G) { unsafe { let _ = crate::tu::ftCo_CapturePulled::ftCo_800DB500(_g as _); } }
     pub fn Geno_DefineIsNone(_kind: i32) -> i32 { todo!("Geno_DefineIsNone (pc/geno)") }
     pub fn OSReport(_s: &str) {}
 }

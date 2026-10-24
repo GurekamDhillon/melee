@@ -27,7 +27,7 @@ pub mod ext {
     pub static mut H_ftCamera_80076320: Option<fn(*mut HSD_GObj)> = None;
     pub fn ftCamera_80076320(g: *mut HSD_GObj) { match unsafe { H_ftCamera_80076320 } { Some(f) => f(g), None => { unsafe { let _ = crate::tu::ftcamera::ftcamera_80076320(g as _); } return; } } }
     pub static mut H_ftCamera_80076018: Option<fn(*mut UnkFloat6_Camera, &mut UnkFloat6_Camera, f32)> = None;
-    pub fn ftCamera_80076018(inp: *mut UnkFloat6_Camera, out: &mut UnkFloat6_Camera, mul: f32) { match unsafe { H_ftCamera_80076018 } { Some(f) => f(inp, out, mul), None => panic!("TODO(group3 ftcamera) ftCamera_80076018") } }
+    pub fn ftCamera_80076018(inp: *mut UnkFloat6_Camera, out: &mut UnkFloat6_Camera, mul: f32) { match unsafe { H_ftCamera_80076018 } { Some(f) => f(inp, out, mul), None => unsafe { crate::tu::ftcamera::ftcamera_80076018(&*(inp as *const _), out, mul as _) } } }
     pub static mut H_ftCo_800BFD04: Option<fn(*mut HSD_GObj)> = None;
     pub fn ftCo_800BFD04(g: *mut HSD_GObj) { match unsafe { H_ftCo_800BFD04 } { Some(f) => f(g), None => { unsafe { let _ = crate::tu::ftcolanim::ftco_800bfd04(g as _); } return; } } }
     /// efsync.c `efSync_Spawn(kind, gobj, ...)`; the variadic tail as raw words.
@@ -42,7 +42,7 @@ pub mod ext {
     pub static mut H_ft_80083844: Option<fn(*mut HSD_GObj, HSD_GObjEvent)> = None;
     pub fn ft_80083844(g: *mut HSD_GObj, cb: HSD_GObjEvent) { match unsafe { H_ft_80083844 } { Some(f) => f(g, cb), None => panic!("TODO(group3 ft_081B) ft_80083844") } }
     pub static mut H_mpColl_80043680: Option<fn(&mut CollData, &Vec3)> = None;
-    pub fn mpColl_80043680(c: &mut CollData, v: &Vec3) { match unsafe { H_mpColl_80043680 } { Some(f) => f(c, v), None => panic!("TODO(group2 mpcoll) mpColl_80043680") } }
+    pub fn mpColl_80043680(c: &mut CollData, v: &Vec3) { match unsafe { H_mpColl_80043680 } { Some(f) => f(c, v), None => unsafe { melee_world::tu::mpcoll::mpColl_80043680(c as *mut _ as *mut _, v as *const _ as *mut _) } } }
     pub static mut H_ftColl_8007B7A4: Option<fn(*mut HSD_GObj, i32)> = None;
     pub fn ftColl_8007B7A4(g: *mut HSD_GObj, n: i32) { match unsafe { H_ftColl_8007B7A4 } { Some(f) => f(g, n), None => panic!("TODO(group3 ftcoll) ftColl_8007B7A4") } }
     pub static mut H_ftCo_SpecialAir_CheckInput: Option<fn(*mut HSD_GObj) -> bool> = None;

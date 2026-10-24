@@ -12,7 +12,7 @@ use melee_core::fp::fmadds;
 pub mod ext {
     use crate::types::*;
     type G = *mut HSD_GObj;
-    pub fn ftCo_800D105C(_g: G) { todo!("TODO(group3 ftCo) ftCo_800D105C") }
+    pub fn ftCo_800D105C(_g: G) { unsafe { let _ = crate::tu::ftchangeparam::ftco_800d105c(_g as _); } }
     pub fn ftCamera_80076064(_fp: &mut Fighter) { { unsafe { let _ = crate::tu::ftcamera::ftcamera_80076064(_fp as _); } return; } }
     pub fn ft_80081C88(_g: G, _s: f32) { { unsafe { let _ = crate::tu::ft_081b::ft_80081c88(_g as _, _s as _); } return; } }
     pub extern "C" fn ftCo_800968C8(_g: G) { { unsafe { let _ = crate::tu::ftCo_FallSpecial::ftCo_800968C8(_g as _); } return; } }

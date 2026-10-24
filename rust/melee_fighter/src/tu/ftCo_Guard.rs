@@ -41,7 +41,7 @@ pub mod ext {
         ScriptGame_ModValue(slot: i32, field: i32, base: f32) -> f32 = |_, _, _| todo!("TODO(port) ScriptGame_ModValue (pc/gameworld/script_game.c)");
         lb_8000D008(y: f32, x: f32) -> f32 = |y: f32, x: f32| -> f32 { unsafe { melee_runtime::tu::lb_00CE::lb_8000D008(y as _, x as _) as _ } };
         HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjSetMtxDirtySub (baselib/jobj.c)");
-        efLib_SetParamAlpha(g: G, a: u8) = |_, _| todo!("TODO(port) efLib_SetParamAlpha (ef/eflib.c)");
+        efLib_SetParamAlpha(g: G, a: u8) = |g: G, a: u8| { unsafe { let _ = melee_world::tu::eflib::efLib_SetParamAlpha(g as _, a as _); } };
         GenoDefine_RestPoseTree(fp: &mut Fighter) -> *mut HSD_Joint = |_| todo!("TODO(port) GenoDefine_RestPoseTree (pc/geno)");
         Geno_MotionAnimRow(fp: &mut Fighter, motion: i32) -> i32 = |_, _| todo!("TODO(port) Geno_MotionAnimRow (pc/geno)");
         ftData_80085E50(fp: &mut Fighter, msid: i32) -> *mut FigaTree = |fp: &mut Fighter, msid: i32| -> *mut FigaTree { unsafe { crate::tu::ftdata::ftData_80085E50(fp as _, msid as _) as _ } };

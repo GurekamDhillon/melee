@@ -66,9 +66,9 @@ pub mod ext {
     type F = *mut Fighter;
     #[inline(always)]
     unsafe fn fpg<'a>(g: G) -> &'a mut Fighter { &mut *((*g).user_data as *mut Fighter) }
-    pub fn HSD_ObjAllocInit(d: *mut HSD_ObjAllocData, size: u32, align: u32) { todo!("HSD_ObjAllocInit (baselib/objalloc.c)") }
-    pub fn HSD_ObjAlloc(d: *mut HSD_ObjAllocData) -> *mut core::ffi::c_void { todo!("HSD_ObjAlloc (baselib/objalloc.c)") }
-    pub fn HSD_ObjFree(d: *mut HSD_ObjAllocData, p: *mut core::ffi::c_void) { todo!("HSD_ObjFree (baselib/objalloc.c)") }
+    pub fn HSD_ObjAllocInit(d: *mut HSD_ObjAllocData, size: u32, align: u32) { unsafe { let _ = melee_runtime::tu::objalloc::HSD_ObjAllocInit(d as _, size as _, align as _); } }
+    pub fn HSD_ObjAlloc(d: *mut HSD_ObjAllocData) -> *mut core::ffi::c_void { unsafe { melee_runtime::tu::objalloc::HSD_ObjAlloc(d as _) as _ } }
+    pub fn HSD_ObjFree(d: *mut HSD_ObjAllocData, p: *mut core::ffi::c_void) { unsafe { let _ = melee_runtime::tu::objalloc::HSD_ObjFree(d as _, p as _); } }
     pub fn ftData_MexInitKinds() { unsafe { let _ = crate::tu::ftdata::ftData_MexInitKinds(); } }
     pub fn GenoDefine_InitKinds() { todo!("GenoDefine_InitKinds (pc/geno)") }
     pub fn ft_800852B0() { unsafe { let _ = crate::tu::ftdata::ft_800852B0(); } }
@@ -141,7 +141,7 @@ pub mod ext {
     pub fn costume_count(kind: i32) -> i32 { todo!("costume_count (ft/ftdata.c CostumeListsForeachCharacter)") }
     pub fn ftPartsPObjSetDefaultClass() { todo!("ftPartsPObjSetDefaultClass (ft/ftparts.c)") }
     pub fn ftPartsPObjClearDefaultClass() { todo!("ftPartsPObjClearDefaultClass (ft/ftparts.c)") }
-    pub fn HSD_JObjLoadJoint(j: *mut HSD_Joint) -> J { todo!("HSD_JObjLoadJoint (baselib/jobj.c)") }
+    pub fn HSD_JObjLoadJoint(j: *mut HSD_Joint) -> J { unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(j as _) as _ } }
     pub fn ftParts_80073758(j: J) { todo!("ftParts_80073758 (ft/ftparts.c)") }
     pub fn Geno_ToonUnlit(kind: i32) -> i32 { todo!("Geno_ToonUnlit (pc/geno)") }
     pub fn HSD_GObjObject_80390A70(g: G, kind: u8, o: *mut core::ffi::c_void) { todo!("HSD_GObjObject_80390A70 (baselib/gobjobject.c)") }
@@ -174,7 +174,7 @@ pub mod ext {
     pub fn Mex_OnLoadDispatch(kind: i32, g: G) { todo!("Mex_OnLoadDispatch (pc/platform m-ex (ftData_OnLoad))") }
     pub fn ftColl_8007B320(g: G) { todo!("ftColl_8007B320 (ft/ftcoll.c)") }
     pub fn Camera_80029020() -> *mut core::ffi::c_void { todo!("Camera_80029020 (cm/camera.c)") }
-    pub fn lbShadow_8000ED54(s: *mut core::ffi::c_void, j: J) { todo!("lbShadow_8000ED54 (lb/lbshadow.c)") }
+    pub fn lbShadow_8000ED54(s: *mut core::ffi::c_void, j: J) { unsafe { let _ = melee_runtime::tu::lbshadow::lbShadow_8000ED54(s as _, j as _); } }
     pub fn HSD_GObj_SetupProc(g: G, f: fn(G), prio: u8) { todo!("HSD_GObj_SetupProc (baselib/gobjproc.c)") }
     pub fn ftMh_MS_341_8014FE10(g: G) { todo!("ftMh_MS_341_8014FE10 (ftMasterHand)") }
     pub fn ftCh_Init_80155FCC(g: G) { todo!("ftCh_Init_80155FCC (ftCrazyHand)") }
@@ -201,7 +201,7 @@ pub mod ext {
     pub fn ftCommon_8007E83C(g: G, a: i32, b: f32) { unsafe { let _ = crate::ftcommon3::ftcommon_8007e83c(g, a, b); } }
     pub fn ftCommon_8007ECD4(fp: F, a: i32) { unsafe { let _ = crate::ftcommon2::ftcommon_8007ecd4(&mut *fp, a); } }
     pub fn ftCommon_8007E2F4(fp: F, a: i32) { unsafe { let _ = crate::ftcommon2::ftcommon_8007e2f4(&mut *fp, a as i16); } }
-    pub fn mpClearFloorSkip(c: *mut CollData) { todo!("mpClearFloorSkip (mp/mpcoll.c)") }
+    pub fn mpClearFloorSkip(c: *mut CollData) { unsafe { let _ = melee_world::tu::mpcoll::mpClearFloorSkip(c as _); } }
     pub fn ftCommon_8007F578(g: G) { unsafe { let _ = crate::ftcommon3::ftcommon_8007f578(g); } }
     pub fn ftCo_800C0134(fp: F) { unsafe { let _ = crate::tu::ftcolanim::ftco_800c0134(&mut *fp); } }
     pub fn ftCommon_8007DB24(g: G) { unsafe { let _ = crate::ftcommon3::ftcommon_8007db24(g); } }
@@ -304,7 +304,7 @@ pub mod ext {
     pub fn Replay_RecordInput(port: i32, fol: i32, lx: f32, ly: f32, cx: f32, cy: f32, t: f32, b: u32, action: i32, x: f32, y: f32, facing: f32, pct: f32) { todo!("Replay_RecordInput (pc/platform/gw_replay.c)") }
     pub fn Replay_UcfCardinals(port: i32) -> i32 { todo!("Replay_UcfCardinals (pc/platform/gw_replay.c)") }
     pub fn Replay_RawStick(port: i32, which: i32) -> i32 { todo!("Replay_RawStick (pc/platform/gw_replay.c)") }
-    pub fn lb_8000D148(a: f32, b: f32, c: f32, d: f32, e: f32, f: f32, g: f32) -> bool { todo!("lb_8000D148 (lb/lb_00CE.c)") }
+    pub fn lb_8000D148(a: f32, b: f32, c: f32, d: f32, e: f32, f: f32, g: f32) -> bool { unsafe { (melee_runtime::tu::lb_00CE::lb_8000D148(a as _, b as _, c as _, d as _, e as _, f as _, g as _) != 0 as _) } }
     pub fn Geno_ComboInput(g: G) { todo!("Geno_ComboInput (pc/geno)") }
     pub fn Geno_ComboTick(g: G) -> i32 { todo!("Geno_ComboTick (pc/geno)") }
     pub fn ScriptGame_IntrWinTick(g: G) { todo!("ScriptGame_IntrWinTick (pc/gameworld)") }
@@ -359,7 +359,7 @@ pub mod ext {
     pub fn ftColl_80078A2C(g: G) { todo!("ftColl_80078A2C (ft/ftcoll.c)") }
     pub fn ftColl_80078754(g: G, v: G, a: i32) { todo!("ftColl_80078754 (ft/ftcoll.c)") }
     pub fn ftColl_8007BC90(g: G) { todo!("ftColl_8007BC90 (ft/ftcoll.c)") }
-    pub fn it_8027B4A4(g: G, item: G) { todo!("it_8027B4A4 (it/it_27CF.c)") }
+    pub fn it_8027B4A4(g: G, item: G) { unsafe { let _ = melee_items::tu::it_279C::it_8027B4A4(g as _, item as _); } }
     pub fn ftColl_800765E0() { unsafe { let _ = crate::ftcoll::ftcoll_800765e0(); } }
     pub fn ftColl_80078C70(g: G) { todo!("ftColl_80078C70 (ft/ftcoll.c)") }
     pub fn ft_8007C77C(g: G) { unsafe { let _ = crate::tu::ft_07c6::ft_8007c77c(g); } }
@@ -375,7 +375,7 @@ pub mod ext {
     pub fn ScriptGame_ModDamage(slot: i32, k: i32, d: f32) -> f32 { todo!("ScriptGame_ModDamage (pc/gameworld)") }
     pub fn pl_8003EC9C(slot: i32, sub: i32, pct: f32, d: f32) { unsafe { let _ = crate::plbonus2::pl_8003ec9c(slot, sub, pct, d); } }
     pub fn ftCo_800C8C84(g: G) { unsafe { let _ = crate::tu::ft_0c8c::ftco_800c8c84(g); } }
-    pub fn itIsHeavy(item: G) -> bool { todo!("itIsHeavy (it/it_26B1.c)") }
+    pub fn itIsHeavy(item: G) -> bool { unsafe { melee_items::tu::it_26B1::itIsHeavy(item as _) } }
     pub fn ftCo_8008E984(fp: F) -> bool { todo!("ftCo_8008E984 (ftCommon/ftCo_Damage.c)") }
     pub fn HSD_Randi(n: i32) -> i32 { todo!("HSD_Randi (baselib/random.c)") }
     pub fn it_8026B30C(item: G) -> i32 { unsafe { crate::hooks::it_8026b30c(item) } }
@@ -418,13 +418,13 @@ pub mod ext {
     pub fn pl_8003FAA8(slot: i32, sub: i32, a: *const Vec3, b: *const Vec3) { todo!("pl_8003FAA8 (pl/plbonuslib.c)") }
     pub fn Mex_OnDestroyDispatch(kind: i32, g: G) { todo!("Mex_OnDestroyDispatch (pc/platform m-ex (ftData_OnUserDataRemove))") }
     pub fn ftColl_8007B8E8(g: G) { todo!("ftColl_8007B8E8 (ft/ftcoll.c)") }
-    pub fn it_8026B7F8(g: G) { todo!("it_8026B7F8 (it/it_26B1.c)") }
+    pub fn it_8026B7F8(g: G) { unsafe { let _ = melee_items::tu::it_26B1::it_8026B7F8(g as _); } }
     pub fn Camera_800290D4(c: *mut core::ffi::c_void) { todo!("Camera_800290D4 (cm/camera.c)") }
     pub fn ftCo_UnloadDynamicBones(fp: F) { unsafe { let _ = crate::tu::ftdynamics::ftCo_UnloadDynamicBones(&mut *fp); } }
     pub fn ftColl_800765AC(g: G) { todo!("ftColl_800765AC (ft/ftcoll.c)") }
     pub fn ft_80088C5C(g: G) { unsafe { let _ = crate::ft0881::ft_80088c5c(g); } }
-    pub fn lbShadow_8000EE8C(s: *mut core::ffi::c_void) { todo!("lbShadow_8000EE8C (lb/lbshadow.c)") }
-    pub fn HSD_JObjUnref(j: J) { todo!("HSD_JObjUnref (baselib/jobj.c)") }
+    pub fn lbShadow_8000EE8C(s: *mut core::ffi::c_void) { unsafe { let _ = melee_runtime::tu::lbshadow::lbShadow_8000EE8C(s as _); } }
+    pub fn HSD_JObjUnref(j: J) { unsafe { let _ = melee_runtime::tu::jobj::HSD_JObjUnref(j as _); } }
     pub fn ftData_800859A8(fp: F) { unsafe { let _ = crate::tu::ftdata::ftData_800859A8(fp); } }
     pub fn HSD_LObjRemoveAll(l: *mut HSD_LObj) { todo!("HSD_LObjRemoveAll (baselib/lobj.c)") }
     pub fn Player_80031FB0(slot: i32, sub: i32) { unsafe { let _ = crate::player::player_80031fb0(slot, sub); } }

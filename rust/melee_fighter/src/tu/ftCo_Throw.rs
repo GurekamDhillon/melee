@@ -99,7 +99,7 @@ pub mod ext {
         mpColl_80043670(coll: &mut CollData) = |coll: &mut CollData| unsafe { melee_world::tu::mpcoll::mpColl_80043670(coll as _); };
         // rp3-end
         ftCommon_UnlockECB(f: &mut Fighter) = crate::ftcommon2::unlock_ecb;
-        mpColl_800471F8(coll: &mut CollData) -> bool = |_| todo!("TODO(port) mpColl_800471F8 (mpcoll.c)");
+        mpColl_800471F8(coll: &mut CollData) -> bool = |coll: &mut CollData| -> bool { unsafe { (melee_world::tu::mpcoll::mpColl_800471F8(coll as *mut _ as *mut _) != 0 as _) } };
         lbColl_80008D30(hit: &mut HitCapsule, arg: *const lbColl_80008D30_arg1) = |hit: &mut HitCapsule, arg: *const lbColl_80008D30_arg1| { unsafe { let _ = melee_runtime::tu::lbcollision::lbColl_80008D30(hit as _, arg as _); } };
         ftColl_800788D4(g: G) = |_| todo!("TODO(port) ftColl_800788D4 (ftcoll.c)");
         ScriptGame_ModValue(slot: i32, field: i32, base: f32) -> f32 = |_, _, _| todo!("TODO(pc script) ScriptGame_ModValue");

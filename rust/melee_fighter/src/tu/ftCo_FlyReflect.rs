@@ -38,7 +38,7 @@ pub mod ext {
         Camera_RequestQuake(kind: i32, pos: *mut Vec) = |_, _| todo!("TODO(port) Camera_RequestQuake (cm/camera.c)");
         atan2f(y: f32, x: f32) -> f32 = melee_runtime::lbtrigf::atan2f;
         lbVector_Add_xy(a: &mut Vec3, b: &Vec3) = |a: &mut Vec3, b: &Vec3| { a.x += b.x; a.y += b.y; };
-        lbVector_Mirror(a: &mut Vec3, n: &Vec3) = |_, _| todo!("TODO(port) lbVector_Mirror (lb/lbvector.c)");
+        lbVector_Mirror(a: &mut Vec3, n: &Vec3) = |a: &mut Vec3, n: &Vec3| { unsafe { let _ = melee_runtime::tu::lbvector::lbVector_Mirror(a as *mut _ as *mut _, n as *const _ as *mut _); } };
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ft_80081F2C(g: G) -> bool = crate::tu::ft_081b::ft_80081f2c;
         ft_80082084(g: G) -> bool = crate::tu::ft_081b::ft_80082084;

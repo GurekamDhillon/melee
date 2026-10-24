@@ -55,7 +55,7 @@ pub mod ext {
         ftAnim_80070734(j: *mut HSD_JObj, frame: f32) = |j: *mut HSD_JObj, frame: f32| { unsafe { let _ = crate::tu::ftanim::ftAnim_80070734(j as _, frame as _); } };
         HSD_JObjAnim(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjAnim (jobj.c)");
         HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjSetMtxDirtySub (jobj.c)");
-        Stage_GetBlastZoneTopOffset() -> f32 = || todo!("TODO(port) Stage_GetBlastZoneTopOffset (stage.c)");
+        Stage_GetBlastZoneTopOffset() -> f32 = || -> f32 { unsafe { melee_world::tu::stage::Stage_GetBlastZoneTopOffset() } };
         ftCamera_800762F4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftcamera::ftcamera_800762f4(g as _); } };
         // rp3 mpColl_80043680
         mpColl_80043680(c: *mut CollData, pos: *mut Vec3) = |c: *mut CollData, pos: *mut Vec3| unsafe { melee_world::tu::mpcoll::mpColl_80043680(c, pos as _); };

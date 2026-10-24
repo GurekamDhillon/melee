@@ -61,7 +61,7 @@ pub mod ext {
         ftParts_GetBoneIndex(fp: *mut Fighter, part: i32) -> i32 = |_, _| todo!("TODO(port) ftParts_GetBoneIndex (ftparts.c)");
         efSync_Spawn(id: i32, g: G, pos: *mut Vec3, s: *mut f32) = |_, _, _, _| todo!("TODO(port) efSync_Spawn (efsync.c)");
         ftCommon_GrabMash(fp: &mut Fighter, v: f32) -> bool = |_, _| todo!("TODO(port) ftCommon_GrabMash (ftcommon.c)");
-        mpLib_80054ED8(line: i32) -> bool = |_| todo!("TODO(port) mpLib_80054ED8 (mplib.c)");
+        mpLib_80054ED8(line: i32) -> bool = |line: i32| -> bool { unsafe { (melee_world::tu::mplib::mpLib_80054ED8(line as _) != 0 as _) } };
         mpLineGetNormal(line: i32, n: *mut Vec3) -> *mut Vec3 = |_, _| todo!("TODO(port) mpLineGetNormal (mplib.c)");
         atan2f(y: f32, x: f32) -> f32 = |y: f32, x: f32| -> f32 { unsafe { melee_runtime::lbtrigf::atan2f(y as _, x as _) as _ } };
         HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = t!("HSD_JObjSetMtxDirtySub (jobj.c)");

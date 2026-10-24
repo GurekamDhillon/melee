@@ -30,7 +30,7 @@ pub mod ext {
         };
     }
     ext_fns! {
-        mpColl_IsOnPlatform(coll: &mut CollData) -> bool = |_| todo!("TODO(port) mpColl_IsOnPlatform (mpcoll.c)");
+        mpColl_IsOnPlatform(coll: &mut CollData) -> bool = |coll: &mut CollData| -> bool { unsafe { (melee_world::tu::mpcoll::mpColl_IsOnPlatform(coll as *mut _ as *mut _) != 0 as _) } };
         // rp3 mpUpdateFloorSkip
         mpUpdateFloorSkip(coll: &mut CollData) = |coll: &mut CollData| unsafe { melee_world::tu::mpcoll::mpUpdateFloorSkip(coll as _); };
         // rp3-end

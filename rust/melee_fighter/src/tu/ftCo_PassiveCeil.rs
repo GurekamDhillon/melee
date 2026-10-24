@@ -30,7 +30,7 @@ pub mod ext {
     }
     ext_fns! {
         ftCo_800986B0(g: G) -> bool = crate::tu::ftCo_DownAttack::ftCo_800986B0;
-        ftCommon_8007E2FC(g: G) = |_| todo!("TODO(port) ftCommon_8007E2FC (ftcommon.c)");
+        ftCommon_8007E2FC(g: G) = |g: G| { unsafe { let _ = crate::ftcommon2::ftcommon_8007e2fc(&mut *(g as *mut _)); } };
         ftKb_SpecialN_800F1F1C(g: G, ofs: &mut Vec3) = |_, _| todo!("TODO(port) ftKb_SpecialN_800F1F1C (ftKb_SpecialN.c)");
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         efAsync_Spawn(g: G, queue: *mut core::ffi::c_void, kind: u32, gfx: u32, jobj: *mut HSD_JObj, pos: *mut Vec3) = |_, _, _, _, _, _| todo!("TODO(port) efAsync_Spawn (efasync.c)");

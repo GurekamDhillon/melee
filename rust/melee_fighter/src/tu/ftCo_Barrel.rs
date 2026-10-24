@@ -46,7 +46,7 @@ pub mod ext {
         ftCommon_8007EFC0(fp: &mut Fighter, v: u32) = crate::ftcommon2::ftcommon_8007efc0;
         ftColl_800787B4(i: I, g: G, v: i32) = |_, _, _| todo!("TODO(port) ftColl_800787B4 (ftcoll.c)");
         ftLib_80086960(g: G) -> bool = crate::ftlib::ftlib_80086960;
-        ftColl_8007B8CC(fp: *mut Fighter, owner: G) = |_, _| todo!("TODO(port) ftColl_8007B8CC (ftcoll.c)");
+        ftColl_8007B8CC(fp: *mut Fighter, owner: G) = |fp: *mut Fighter, owner: G| { unsafe { let _ = crate::ft0df::ftcoll_8007b8cc(&mut *(fp as *mut _), owner as _); } };
         ftLib_800866DC(g: G, v: &mut Vec3) = crate::ftlib::ftlib_800866dc;
         // rp3 mpColl_80043680
         mpColl_80043680(c: *mut CollData, v: *mut Vec3) = |c: *mut CollData, v: *mut Vec3| unsafe { melee_world::tu::mpcoll::mpColl_80043680(c, v as _); };

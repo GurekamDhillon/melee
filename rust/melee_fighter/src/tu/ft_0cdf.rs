@@ -17,7 +17,7 @@ pub mod ext {
     type G = *mut HSD_GObj;
     pub fn it_8028E938(_i: G) { { unsafe { let _ = melee_items::tu::itlgun::it_8028E938(_i as _); } return; } }
     pub fn it_8028E774(_i: G, _v: &mut Vec3) { { unsafe { let _ = melee_items::tu::itlgun::it_8028E774(_i as _, _v as _); } return; } }
-    pub fn it_8028E79C(_i: G, _v: &Vec3, _dir: f32) { todo!("TODO(group5 itlgun) it_8028E79C") }
+    pub fn it_8028E79C(_i: G, _v: &Vec3, _dir: f32) { unsafe { let _ = melee_items::tu::itlgun::it_8028E79C(_i as _, _v as *const _ as *mut _, _dir as _); } }
     pub fn ft_800841B8(_g: G, _cb: unsafe extern "C" fn(G)) { todo!("TODO(group3 ft_081B) ft_800841B8") }
     pub fn ft_80082C74(_g: G, _cb: unsafe extern "C" fn(G)) { todo!("TODO(group3 ft_081B) ft_80082C74") }
     /// `efSync_Spawn(id, gobj, pos)`.

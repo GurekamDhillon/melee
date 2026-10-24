@@ -24,7 +24,7 @@ pub mod ext {
     pub static mut H_Stage_GetBlastZoneLeftOffset: Option<fn() -> f32> = None;
     pub fn Stage_GetBlastZoneLeftOffset() -> f32 { match unsafe { H_Stage_GetBlastZoneLeftOffset } { Some(f) => f(), None => panic!("TODO(group2 stage) Stage_GetBlastZoneLeftOffset") } }
     pub static mut H_Stage_GetBlastZoneTopOffset: Option<fn() -> f32> = None;
-    pub fn Stage_GetBlastZoneTopOffset() -> f32 { match unsafe { H_Stage_GetBlastZoneTopOffset } { Some(f) => f(), None => panic!("TODO(group2 stage) Stage_GetBlastZoneTopOffset") } }
+    pub fn Stage_GetBlastZoneTopOffset() -> f32 { match unsafe { H_Stage_GetBlastZoneTopOffset } { Some(f) => f(), None => unsafe { melee_world::tu::stage::Stage_GetBlastZoneTopOffset() } } }
     pub static mut H_Stage_GetBlastZoneBottomOffset: Option<fn() -> f32> = None;
     pub fn Stage_GetBlastZoneBottomOffset() -> f32 { match unsafe { H_Stage_GetBlastZoneBottomOffset } { Some(f) => f(), None => panic!("TODO(group2 stage) Stage_GetBlastZoneBottomOffset") } }
     pub static mut H_Stage_GetCamBoundsTopOffset: Option<fn() -> f32> = None;

@@ -81,7 +81,7 @@ pub mod ext {
         Camera_RequestQuake(kind: i32, pos: *mut Vec) = |_, _| todo!("TODO(port) Camera_RequestQuake (cm/camera.c)");
         ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |_, _, _, _| todo!("TODO(port) ft_PlaySFX (ft_0881.c)");
         ftCo_80090780(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_DamageFall::ftCo_80090780(g as _); } };
-        lbVector_Mirror(a: &mut Vec3, n: &Vec3) = |_, _| todo!("TODO(port) lbVector_Mirror (lb/lbvector.c)");
+        lbVector_Mirror(a: &mut Vec3, n: &Vec3) = |a: &mut Vec3, n: &Vec3| { unsafe { let _ = melee_runtime::tu::lbvector::lbVector_Mirror(a as *mut _ as *mut _, n as *const _ as *mut _); } };
         ft_80081D0C(g: G) -> i32 = |g: G| -> i32 { unsafe { crate::tu::ft_081b::ft_80081d0c(g as _) as _ } };
         ftCo_800C5240(g: G) -> bool = crate::hooks::ftco_800c5240;
         ftCo_800C5A98(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_HammerJump::ftCo_800C5A98(g as _); } };

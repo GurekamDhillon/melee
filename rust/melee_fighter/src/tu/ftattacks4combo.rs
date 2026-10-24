@@ -17,7 +17,7 @@ pub mod ext {
     pub fn Fighter_ChangeMotionState(_g: G, _msid: i32, _flags: i32, _start: f32, _speed: f32, _blend: f32, _cb: *mut core::ffi::c_void) {
         todo!("Fighter_ChangeMotionState (ft/fighter.c)")
     }
-    pub fn ftAnim_8006EBA4(_g: G) { todo!("ftAnim_8006EBA4 (ft/ftanim.c)") }
+    pub fn ftAnim_8006EBA4(_g: G) { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(_g as _); } }
     pub fn ftCo_AttackS4_Anim(_g: G) { todo!("ftCo_AttackS4_Anim (ftCommon/ftCo_AttackS4.c)") }
     pub fn ftCo_AttackS4_Phys(_g: G) { todo!("ftCo_AttackS4_Phys (ftCommon/ftCo_AttackS4.c)") }
     pub fn ftCo_AttackS4_Coll(_g: G) { todo!("ftCo_AttackS4_Coll (ftCommon/ftCo_AttackS4.c)") }

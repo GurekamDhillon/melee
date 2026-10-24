@@ -55,7 +55,14 @@ pub mod ext {
                     None => { unsafe { let _ = melee_items::tu::it_26B1::it_8026B3F8(article as _, kind as _); } return; },
                 }
             }
-    hook!(FTCO_800BFFD0, ftCo_800BFFD0, (fp: *mut Fighter, a: i32, b: i32));
+    pub static mut FTCO_800BFFD0: Option<fn(*mut Fighter, i32, i32)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftCo_800BFFD0(fp: *mut Fighter, a: i32, b: i32) {
+        match unsafe { FTCO_800BFFD0 } {
+            Some(f) => f(fp, a, b),
+            None => { unsafe { let _ = melee_fighter::tu::ftcolanim::ftco_800bffd0(&mut *(fp as *mut _), a as _, b as _); } },
+        }
+    }
 }
 
 #[inline(always)]

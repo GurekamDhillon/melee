@@ -82,9 +82,30 @@ pub mod ext {
                     None => { return unsafe { crate::gm::gm_CKindToSelKind(ckind as _) as _ }; },
                 }
             }
-    hook!(GM_SETUPHUMANPLAYER, gm_SetupHumanPlayer, (p: *mut PlayerInitData, ckind: u8, color: u8, stocks: u8, slot: u8));
-    hook!(GM_SETUPCPUPLAYER, gm_SetupCpuPlayer, (p: *mut PlayerInitData, ckind: u8, color: u8, stocks: u8, slot: u8));
-    hook!(GM_DECIDECHALLENGERCPULEVEL, gm_DecideChallengerCpuLevel, (cpu_ckind: u8, human_nametag: u8) -> u8);
+    pub static mut GM_SETUPHUMANPLAYER: Option<fn(*mut PlayerInitData, u8, u8, u8, u8)> = None;
+    #[allow(non_snake_case)]
+    pub fn gm_SetupHumanPlayer(p: *mut PlayerInitData, ckind: u8, color: u8, stocks: u8, slot: u8) {
+        match unsafe { GM_SETUPHUMANPLAYER } {
+            Some(f) => f(p, ckind, color, stocks, slot),
+            None => { unsafe { let _ = crate::gm_r4::gm_SetupHumanPlayer(&mut *(p as *mut _), ckind as _, color as _, stocks as _, slot as _); } },
+        }
+    }
+    pub static mut GM_SETUPCPUPLAYER: Option<fn(*mut PlayerInitData, u8, u8, u8, u8)> = None;
+    #[allow(non_snake_case)]
+    pub fn gm_SetupCpuPlayer(p: *mut PlayerInitData, ckind: u8, color: u8, stocks: u8, slot: u8) {
+        match unsafe { GM_SETUPCPUPLAYER } {
+            Some(f) => f(p, ckind, color, stocks, slot),
+            None => { unsafe { let _ = crate::gm_r4::gm_SetupCpuPlayer(&mut *(p as *mut _), ckind as _, color as _, stocks as _, slot as _); } },
+        }
+    }
+    pub static mut GM_DECIDECHALLENGERCPULEVEL: Option<fn(u8, u8) -> u8> = None;
+    #[allow(non_snake_case)]
+    pub fn gm_DecideChallengerCpuLevel(cpu_ckind: u8, human_nametag: u8) -> u8 {
+        match unsafe { GM_DECIDECHALLENGERCPULEVEL } {
+            Some(f) => f(cpu_ckind, human_nametag),
+            None => { unsafe { crate::tu::gm_16f1::gm_DecideChallengerCpuLevel(cpu_ckind as _, human_nametag as _) as _ } },
+        }
+    }
     pub static mut GM_LOADRUMBLEENABLED: Option<fn(*mut StartMeleeData) > = None;
             #[allow(non_snake_case)]
             pub fn gm_LoadRumbleEnabled(start: *mut StartMeleeData)  {

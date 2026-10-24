@@ -122,13 +122,13 @@ pub mod ext {
     use super::*;
     pub unsafe fn efLib_Create_Attach(_gfx_id: u32, _gobj: *mut HSD_GObj, _jobj: *mut HSD_JObj) -> *mut EF_Effect { { return unsafe { crate::tu::eflib::efLib_Create_Attach(_gfx_id as _, _gobj as _, _jobj as _) as _ }; } }
     pub unsafe fn efLib_Create_AttachChild(_gfx_id: u32, _gobj: *mut HSD_GObj, _jobj: *mut HSD_JObj) -> *mut EF_Effect { { return unsafe { crate::tu::eflib::efLib_Create_AttachChild(_gfx_id as _, _gobj as _, _jobj as _) as _ }; } }
-    pub unsafe fn efLib_Create_Attach_Pos(_gfx_id: u32, _gobj: *mut HSD_GObj, _pos: *mut Vec3) -> *mut EF_Effect { panic!("TODO(group2 eflib) efLib_Create_Attach_Pos") }
-    pub unsafe fn efLib_CreateGenerator(_gfx_id: i32, _pos: *mut Vec3) -> *mut HSD_Generator { panic!("TODO(group2 eflib) efLib_CreateGenerator") }
+    pub unsafe fn efLib_Create_Attach_Pos(gfx_id: u32, gobj: *mut HSD_GObj, pos: *mut Vec3) -> *mut EF_Effect { unsafe { crate::tu::eflib::efLib_Create_Attach_Pos(gfx_id as _, gobj as _, &*(pos as *const _)) as _ } }
+    pub unsafe fn efLib_CreateGenerator(gfx_id: i32, pos: *mut Vec3) -> *mut HSD_Generator { unsafe { crate::tu::eflib::efLib_CreateGenerator(gfx_id as _, &*(pos as *const _)) as _ } }
     pub unsafe fn efLib_CreateGenerator_AddAppSRT(_gfx_id: i32) -> *mut HSD_Generator { { return unsafe { crate::tu::eflib::efLib_CreateGenerator_AddAppSRT(_gfx_id as _) as _ }; } }
-    pub unsafe fn efLib_CreateGenerator_Translate_FacingDir(_gfx_id: i32, _t: *mut Vec3, _dir: f32) -> *mut HSD_Generator { panic!("TODO(group2 eflib) efLib_CreateGenerator_Translate_FacingDir") }
+    pub unsafe fn efLib_CreateGenerator_Translate_FacingDir(gfx_id: i32, t: *mut Vec3, dir: f32) -> *mut HSD_Generator { unsafe { crate::tu::eflib::efLib_CreateGenerator_Translate_FacingDir(gfx_id as _, &*(t as *const _), dir as _) as _ } }
     pub unsafe fn efLib_CreateGenerator_AppSRT_SetScale(_gfx_id: i32, _vl: VaList<'_>) -> *mut HSD_Generator { panic!("TODO(group2 eflib) efLib_CreateGenerator_AppSRT_SetScale") }
     pub unsafe fn efLib_CreateGenerator_AppSRT_SetFacingDirScale(_gfx_id: i32, _vl: VaList<'_>) -> *mut HSD_Generator { panic!("TODO(group2 eflib) efLib_CreateGenerator_AppSRT_SetFacingDirScale") }
-    pub unsafe fn efLib_CreateGenerator_AppSRT_SetPos(_gfx_id: i32, _gobj: *mut HSD_GObj, _jobj: *mut HSD_JObj, _pos: *mut Vec3) -> *mut EF_Effect { panic!("TODO(group2 eflib) efLib_CreateGenerator_AppSRT_SetPos") }
+    pub unsafe fn efLib_CreateGenerator_AppSRT_SetPos(gfx_id: i32, gobj: *mut HSD_GObj, jobj: *mut HSD_JObj, pos: *mut Vec3) -> *mut EF_Effect { unsafe { crate::tu::eflib::efLib_CreateGenerator_AppSRT_SetPos(gfx_id as _, gobj as _, jobj as _, &*(pos as *const _)) as _ } }
     pub unsafe fn efLib_SetTevKonstColor(_jobj: *mut HSD_JObj, _count: i32, _konst: u32, _color: u32) { { unsafe { let _ = crate::tu::eflib::efLib_SetTevKonstColor(_jobj as _, _count as _, _konst as _, _color as _); } return; } }
     pub unsafe fn efLib_SetParamGfxId(_gobj: *mut HSD_GObj, _gfx_id: i32) { { unsafe { let _ = crate::tu::eflib::efLib_SetParamGfxId(_gobj as _, _gfx_id as _); } return; } }
     /// `((HSD_JObj**) efLib_AnimQueue)[i]` (eflib.c global).

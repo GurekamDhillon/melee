@@ -147,7 +147,14 @@ pub mod ext {
                     None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80027168(); } return; },
                 }
             }
-    hook!(H_gmMainLib_8015F588, gmMainLib_8015F588, (a0: i32));
+    pub static mut H_gmMainLib_8015F588: Option<fn(i32)> = None;
+    #[allow(non_snake_case)]
+    pub fn gmMainLib_8015F588(a0: i32) {
+        match unsafe { H_gmMainLib_8015F588 } {
+            Some(f) => f(a0),
+            None => { unsafe { let _ = crate::tu::gmmain_lib::gmMainLib_8015F588((a0 != 0)); } },
+        }
+    }
     pub static mut H_gmTitle_801A1A3C: Option<unsafe extern "C" fn() -> *mut melee_types::HSD_GObj> = None;
             pub unsafe extern "C" fn gmTitle_801A1A3C() -> *mut melee_types::HSD_GObj {
                 match H_gmTitle_801A1A3C {
@@ -207,8 +214,22 @@ pub mod ext {
                     None => { return unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023F28(a0 as _) as _ }; },
                 }
             }
-    hook!(H_lbAudioAx_80024E50, lbAudioAx_80024E50, (a0: i32));
-    hook!(H_lbMthp_8001F410, lbMthp_8001F410, (a0: *const i8, a1: *mut u32, a2: *mut core::ffi::c_void, a3: u32, a4: i32));
+    pub static mut H_lbAudioAx_80024E50: Option<fn(i32)> = None;
+    #[allow(non_snake_case)]
+    pub fn lbAudioAx_80024E50(a0: i32) {
+        match unsafe { H_lbAudioAx_80024E50 } {
+            Some(f) => f(a0),
+            None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80024E50((a0 != 0)); } },
+        }
+    }
+    pub static mut H_lbMthp_8001F410: Option<fn(*const i8, *mut u32, *mut core::ffi::c_void, u32, i32)> = None;
+    #[allow(non_snake_case)]
+    pub fn lbMthp_8001F410(a0: *const i8, a1: *mut u32, a2: *mut core::ffi::c_void, a3: u32, a4: i32) {
+        match unsafe { H_lbMthp_8001F410 } {
+            Some(f) => f(a0, a1, a2, a3, a4),
+            None => { unsafe { let _ = melee_runtime::tu::lbmthp::lbMthp_8001F410(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _); } },
+        }
+    }
     pub static mut H_gm_801A4B60: Option<unsafe extern "C" fn() > = None;
             pub unsafe extern "C" fn gm_801A4B60()  {
                 match H_gm_801A4B60 {

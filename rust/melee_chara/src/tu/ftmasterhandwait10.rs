@@ -32,9 +32,23 @@ pub mod ext {
         };
     }
     // `Stage_80225194()` (gr/stage.c).
-    hook!(STAGE_80225194, Stage_80225194, () -> i32);
+    pub static mut STAGE_80225194: Option<fn() -> i32> = None;
+    #[allow(non_snake_case)]
+    pub fn Stage_80225194() -> i32 {
+        match unsafe { STAGE_80225194 } {
+            Some(f) => f(),
+            None => { unsafe { melee_world::tu::stage::Stage_80225194() as _ } },
+        }
+    }
     // `mpFloorGetRight(line, out)` (mp/mplib.c).
-    hook!(MPFLOORGETRIGHT, mpFloorGetRight, (line: i32, out: *mut Vec3));
+    pub static mut MPFLOORGETRIGHT: Option<fn(i32, *mut Vec3)> = None;
+    #[allow(non_snake_case)]
+    pub fn mpFloorGetRight(line: i32, out: *mut Vec3) {
+        match unsafe { MPFLOORGETRIGHT } {
+            Some(f) => f(line, out),
+            None => { unsafe { let _ = melee_world::tu::mplib::mpFloorGetRight(line as _, out as _); } },
+        }
+    }
     // `HSD_PadMasterStatus[port].button` (baselib/controller.c).
     hook!(HSD_PADMASTERSTATUS_BUTTON, HSD_PadMasterStatus_button, (port: i32) -> u32);
     hook!(HSD_RANDI, HSD_Randi, (max: i32) -> i32);

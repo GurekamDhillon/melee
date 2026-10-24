@@ -126,7 +126,14 @@ pub mod ext {
         match unsafe { STAGE_80225194 } { Some(f) => f(), None => { return unsafe { crate::tu::stage::Stage_80225194() as _ }; } }
     }
     /// `efSync_Spawn(gfx_id, arg_gobj, ...)`: variadic; here its one trailing `Vec3*`.
-    hook!(EFSYNC_SPAWN, efSync_Spawn, (gfx_id: s32, arg_gobj: *mut HSD_GObj, pos: *mut Vec3) -> *mut c_void);
+    pub static mut EFSYNC_SPAWN: Option<fn(s32, *mut HSD_GObj, *mut Vec3) -> *mut c_void> = None;
+    #[allow(non_snake_case)]
+    pub fn efSync_Spawn(gfx_id: s32, arg_gobj: *mut HSD_GObj, pos: *mut Vec3) -> *mut c_void {
+        match unsafe { EFSYNC_SPAWN } {
+            Some(f) => f(gfx_id, arg_gobj, pos),
+            None => { unsafe { crate::tu::efsync::efSync_Spawn(gfx_id as _, arg_gobj as _, &mut *(pos as *mut _)) as _ } },
+        }
+    }
     hook!(FTCO_8009EC70, ftCo_8009EC70, (gobj: *mut HSD_GObj, pos: *mut Vec3, arg2: *mut lbColl_80008D30_arg1, kb_angle: f32));
     hook!(FTCO_800C0764, ftCo_800C0764, (a0: *mut HSD_GObj, a1: u32, a2: *mut c_void));
     hook!(FTLIB_80086644, ftLib_80086644, (a0: *mut HSD_GObj, a1: *mut Vec3));
@@ -162,8 +169,22 @@ pub mod ext {
     pub fn grMaterial_801C95C4(a0: *mut HSD_GObj) {
         match unsafe { GRMATERIAL_801C95C4 } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::grmaterial::grMaterial_801C95C4(a0 as _); } return; } }
     }
-    hook!(GRMATERIAL_801C9604, grMaterial_801C9604, (bg: *mut HSD_GObj, a1: *mut c_void, a2: i32));
-    hook!(GRZAKOGENERATOR_801CAE04, grZakoGenerator_801CAE04, (a0: *mut grZakoGenerator_SpawnDesc) -> *mut HSD_GObj);
+    pub static mut GRMATERIAL_801C9604: Option<fn(*mut HSD_GObj, *mut c_void, i32)> = None;
+    #[allow(non_snake_case)]
+    pub fn grMaterial_801C9604(bg: *mut HSD_GObj, a1: *mut c_void, a2: i32) {
+        match unsafe { GRMATERIAL_801C9604 } {
+            Some(f) => f(bg, a1, a2),
+            None => { unsafe { let _ = crate::tu::grmaterial::grMaterial_801C9604(bg as _, a1 as _, (a2 != 0)); } },
+        }
+    }
+    pub static mut GRZAKOGENERATOR_801CAE04: Option<fn(*mut grZakoGenerator_SpawnDesc) -> *mut HSD_GObj> = None;
+    #[allow(non_snake_case)]
+    pub fn grZakoGenerator_801CAE04(a0: *mut grZakoGenerator_SpawnDesc) -> *mut HSD_GObj {
+        match unsafe { GRZAKOGENERATOR_801CAE04 } {
+            Some(f) => f(a0),
+            None => { unsafe { crate::tu::grzakogenerator::grZakoGenerator_801CAE04(a0 as _) as _ } },
+        }
+    }
     hook!(ITGETKIND, itGetKind, (gobj: *mut HSD_GObj) -> ItemKind);
     hook!(IT_8026B294, it_8026B294, (gobj: *mut HSD_GObj, pos: *mut Vec3));
     hook!(IT_8026D324, it_8026D324, (a0: ItemKind) -> i32);

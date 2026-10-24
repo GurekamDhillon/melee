@@ -121,7 +121,14 @@ pub mod ext {
     pub fn grMaterial_801C8E28(gobj: *mut HSD_GObj) {
         match unsafe { GRMATERIAL_801C8E28 } { Some(f) => f(gobj), None => { unsafe { let _ = crate::tu::grmaterial::grMaterial_801C8E28(gobj as _); } return; } }
     }
-    hook!(GRMATERIAL_801C9604, grMaterial_801C9604, (bg: *mut HSD_GObj, a1: *mut c_void, a2: i32));
+    pub static mut GRMATERIAL_801C9604: Option<fn(*mut HSD_GObj, *mut c_void, i32)> = None;
+    #[allow(non_snake_case)]
+    pub fn grMaterial_801C9604(bg: *mut HSD_GObj, a1: *mut c_void, a2: i32) {
+        match unsafe { GRMATERIAL_801C9604 } {
+            Some(f) => f(bg, a1, a2),
+            None => { unsafe { let _ = crate::tu::grmaterial::grMaterial_801C9604(bg as _, a1 as _, (a2 != 0)); } },
+        }
+    }
     pub static mut GRVENOM_80206BF0: Option<fn(i32) -> i32> = None;
     #[allow(non_snake_case)]
     pub fn grVenom_80206BF0(a0: i32) -> i32 {

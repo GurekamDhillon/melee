@@ -115,14 +115,49 @@ pub mod ext {
     hook!(FTPARTS_80075650, ftParts_80075650, (gobj: *mut HSD_GObj, jobj: *mut HSD_JObj, list: *mut DObjList));
     hook!(FTPARTS_8007487C, ftParts_8007487C,
         (desc: *mut FtPartsDesc, vis: *mut FtPartsVis, costume_id: u32, a: *mut DObjList, b: *mut DObjList));
-    hook!(FTPARTS_80074CA0, ftParts_80074CA0, (vis: *mut FtPartsVis, idx: i32, list: *mut DObjList));
-    hook!(FTPARTS_80074D7C, ftParts_80074D7C, (vis: *mut FtPartsVis, idx: i32, list: *mut DObjList));
-    hook!(FTCO_8009DC54, ftCo_8009DC54, (fp: *mut Fighter));
+    pub static mut FTPARTS_80074CA0: Option<fn(*mut FtPartsVis, i32, *mut DObjList)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftParts_80074CA0(vis: *mut FtPartsVis, idx: i32, list: *mut DObjList) {
+        match unsafe { FTPARTS_80074CA0 } {
+            Some(f) => f(vis, idx, list),
+            None => { unsafe { let _ = melee_fighter::tu::ftparts::ftParts_80074CA0(&mut *(vis as *mut _), idx as _, list as _); } },
+        }
+    }
+    pub static mut FTPARTS_80074D7C: Option<fn(*mut FtPartsVis, i32, *mut DObjList)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftParts_80074D7C(vis: *mut FtPartsVis, idx: i32, list: *mut DObjList) {
+        match unsafe { FTPARTS_80074D7C } {
+            Some(f) => f(vis, idx, list),
+            None => { unsafe { let _ = melee_fighter::tu::ftparts::ftParts_80074D7C(&mut *(vis as *mut _), idx as _, list as _); } },
+        }
+    }
+    pub static mut FTCO_8009DC54: Option<fn(*mut Fighter)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftCo_8009DC54(fp: *mut Fighter) {
+        match unsafe { FTCO_8009DC54 } {
+            Some(f) => f(fp),
+            None => { unsafe { let _ = melee_fighter::tu::ftdynamics::ftCo_8009DC54(&mut *(fp as *mut _)); } },
+        }
+    }
     hook!(HSD_JOBJGETMTXPTR, HSD_JObjGetMtxPtr, (jobj: *mut HSD_JObj) -> *mut [f32; 4]);
     hook!(HSD_JOBJCOPYMTX, HSD_JObjCopyMtx, (jobj: *mut HSD_JObj, mtx: *mut [f32; 4]));
     hook!(HSD_JOBJSETMTXDIRTYSUB, HSD_JObjSetMtxDirtySub, (jobj: *mut HSD_JObj));
-    hook!(HSD_JOBJDISPALL, HSD_JObjDispAll, (jobj: *mut HSD_JObj, vmtx: *mut [f32; 4], flags: u32, rendermode: u32));
-    hook!(HSD_GOBJ_80390EB8, HSD_GObj_80390EB8, (arg: i32) -> u32);
+    pub static mut HSD_JOBJDISPALL: Option<fn(*mut HSD_JObj, *mut [f32; 4], u32, u32)> = None;
+    #[allow(non_snake_case)]
+    pub fn HSD_JObjDispAll(jobj: *mut HSD_JObj, vmtx: *mut [f32; 4], flags: u32, rendermode: u32) {
+        match unsafe { HSD_JOBJDISPALL } {
+            Some(f) => f(jobj, vmtx, flags, rendermode),
+            None => { unsafe { let _ = melee_runtime::tu::jobj::HSD_JObjDispAll(jobj as _, &*(vmtx as *const _), flags as _, rendermode as _); } },
+        }
+    }
+    pub static mut HSD_GOBJ_80390EB8: Option<fn(i32) -> u32> = None;
+    #[allow(non_snake_case)]
+    pub fn HSD_GObj_80390EB8(arg: i32) -> u32 {
+        match unsafe { HSD_GOBJ_80390EB8 } {
+            Some(f) => f(arg),
+            None => { unsafe { melee_runtime::tu::gobj::HSD_GObj_80390EB8(arg as _) as _ } },
+        }
+    }
     pub static mut ITGETHOLDKIND: Option<fn(*mut HSD_GObj) -> i32> = None;
             #[allow(non_snake_case)]
             pub fn itGetHoldKind(item: *mut HSD_GObj) -> i32 {
@@ -131,7 +166,14 @@ pub mod ext {
                     None => { return unsafe { melee_items::tu::it_26B1::itGetHoldKind(item as _) as _ }; },
                 }
             }
-    hook!(FTANIM_80070FB4, ftAnim_80070FB4, (gobj: *mut HSD_GObj, a: i32, b: i32));
+    pub static mut FTANIM_80070FB4: Option<fn(*mut HSD_GObj, i32, i32)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftAnim_80070FB4(gobj: *mut HSD_GObj, a: i32, b: i32) {
+        match unsafe { FTANIM_80070FB4 } {
+            Some(f) => f(gobj, a, b),
+            None => { unsafe { let _ = melee_fighter::ftanim::ftanim_80070fb4(gobj as _, a as _, b as _); } },
+        }
+    }
     /// `efSync_Spawn(gfx_id, gobj, ...)` (variadic in C; `va` are the extra word arguments).
     pub static mut EFSYNC_SPAWN: Option<fn(i32, *mut HSD_GObj, &[usize]) -> *mut c_void> = None;
     pub fn efSync_Spawn(id: i32, gobj: *mut HSD_GObj, va: &[usize]) -> *mut c_void {

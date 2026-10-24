@@ -42,7 +42,14 @@ pub mod ext {
         };
     }
     // `efSync_Spawn(gfx_id, gobj, joint)` (ef/efsync.c, variadic; the port passes the one joint).
-    hook!(EFSYNC_SPAWN, efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, joint: *mut c_void) -> *mut c_void);
+    pub static mut EFSYNC_SPAWN: Option<fn(i32, *mut HSD_GObj, *mut c_void) -> *mut c_void> = None;
+    #[allow(non_snake_case)]
+    pub fn efSync_Spawn(gfx_id: i32, gobj: *mut HSD_GObj, joint: *mut c_void) -> *mut c_void {
+        match unsafe { EFSYNC_SPAWN } {
+            Some(f) => f(gfx_id, gobj, joint),
+            None => { unsafe { melee_world::tu::efsync::efSync_Spawn(gfx_id as _, gobj as _, &mut *(joint as *mut _)) as _ } },
+        }
+    }
     // `ftColl_CreateReflectHit(gobj, desc, on_reflect)` (ft/ftcoll.c).
     hook!(FTCOLL_CREATEREFLECTHIT, ftColl_CreateReflectHit, (g: *mut HSD_GObj, desc: *mut ReflectDesc, cb: HSD_GObjEvent));
     // Group 3 helpers the TU calls directly (ft/ftcommon.c).

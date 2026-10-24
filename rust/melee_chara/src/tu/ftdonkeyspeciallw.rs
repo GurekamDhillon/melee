@@ -32,7 +32,14 @@ pub mod ext {
             }
         };
     }
-    hook!(EFSYNC_SPAWN, efSync_Spawn, (id: i32, g: G, jobj: *mut HSD_JObj));
+    pub static mut EFSYNC_SPAWN: Option<fn(i32, G, *mut HSD_JObj)> = None;
+    #[allow(non_snake_case)]
+    pub fn efSync_Spawn(id: i32, g: G, jobj: *mut HSD_JObj) {
+        match unsafe { EFSYNC_SPAWN } {
+            Some(f) => f(id, g, jobj),
+            None => { unsafe { let _ = melee_world::tu::efsync::efSync_Spawn(id as _, g, &mut *(jobj as *mut _)); } },
+        }
+    }
     hook!(EFASYNC_SPAWN, efAsync_Spawn, (g: G, q: *mut core::ffi::c_void, kind: u32, gfx: u32, jobj: *mut HSD_JObj));
     hook!(FT_800892A0, ft_800892A0, (g: G));
     // TODO: ftdonkey.c (`ftDk_Init_8010DB3C`) is not ported.

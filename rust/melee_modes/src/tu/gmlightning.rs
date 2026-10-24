@@ -148,7 +148,14 @@ pub mod ext {
                 }
             }
     hook!(GMVSMELEE_ENTERSUDDENDEATH, gmVsMelee_EnterSuddenDeath, (s: *mut GameModeState, vs: *mut VsModeData, pre: Option<unsafe fn(*mut StartMeleeData, *mut StartMeleeData)>, per: Option<unsafe fn(*mut PlayerInitData, *mut PlayerInitData)>));
-    hook!(GMVSMELEE_EXITSUDDENDEATH, gmVsMelee_ExitSuddenDeath, (s: *mut GameModeState));
+    pub static mut GMVSMELEE_EXITSUDDENDEATH: Option<fn(*mut GameModeState)> = None;
+    #[allow(non_snake_case)]
+    pub fn gmVsMelee_ExitSuddenDeath(s: *mut GameModeState) {
+        match unsafe { GMVSMELEE_EXITSUDDENDEATH } {
+            Some(f) => f(s),
+            None => { unsafe { let _ = crate::tu::gmvsmelee::gmVsMelee_ExitSuddenDeath(s as _); } },
+        }
+    }
     pub static mut GMVSMELEE_ENTERRESULTS: Option<unsafe fn(*mut GameModeState) > = None;
             #[allow(non_snake_case)]
             pub fn gmVsMelee_EnterResults(s: *mut GameModeState)  {

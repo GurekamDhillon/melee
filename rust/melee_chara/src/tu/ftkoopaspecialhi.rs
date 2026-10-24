@@ -27,7 +27,14 @@ pub mod ext {
     }
     // `efSync_Spawn(gfx_id, gobj, ...)` (ef/efsync.c, variadic): the trailing pointers as a slice.
     hook!(EFSYNC_SPAWN, efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut c_void]) -> *mut c_void);
-    hook!(FTPARTSETROTX, ftPartSetRotX, (fp: *mut Fighter, part: i32, v: f32));
+    pub static mut FTPARTSETROTX: Option<fn(*mut Fighter, i32, f32)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftPartSetRotX(fp: *mut Fighter, part: i32, v: f32) {
+        match unsafe { FTPARTSETROTX } {
+            Some(f) => f(fp, part, v),
+            None => { unsafe { let _ = melee_fighter::tu::ftparts::ftPartSetRotX(&*(fp as *const _), part as _, v as _); } },
+        }
+    }
     /// Recording hook; unset, the native `melee_fighter::tu::ftcliffcommon` port runs.
     pub static mut FTCLIFFCOMMON_80081370: Option<fn(*mut HSD_GObj)> = None;
     #[allow(non_snake_case)]

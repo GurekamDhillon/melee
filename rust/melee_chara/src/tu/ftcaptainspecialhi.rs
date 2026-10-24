@@ -54,7 +54,14 @@ pub mod ext {
                     None => { unsafe { let _ = melee_fighter::tu::ftcliffcommon::ftcliffcommon_80081370(gobj as _); } return; },
                 }
             }
-    hook!(FTCO_800DB368, ftCo_800DB368, (vic_fp: *mut Fighter, fp: *mut Fighter));
+    pub static mut FTCO_800DB368: Option<fn(*mut Fighter, *mut Fighter)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftCo_800DB368(vic_fp: *mut Fighter, fp: *mut Fighter) {
+        match unsafe { FTCO_800DB368 } {
+            Some(f) => f(vic_fp, fp),
+            None => { unsafe { let _ = melee_fighter::tu::ftCo_CapturePulled::ftCo_800DB368(&mut *(vic_fp as *mut _), &mut *(fp as *mut _)); } },
+        }
+    }
     pub static mut FTCO_800DE2A8: Option<fn(*mut HSD_GObj, *mut HSD_GObj) > = None;
             #[allow(non_snake_case)]
             pub fn ftCo_800DE2A8(gobj: *mut HSD_GObj, vic: *mut HSD_GObj)  {
@@ -63,7 +70,14 @@ pub mod ext {
                     None => { unsafe { let _ = melee_fighter::tu::ftCo_Throw::ftCo_800DE2A8(gobj as _, vic as _); } return; },
                 }
             }
-    hook!(FTCO_800DE7C0, ftCo_800DE7C0, (gobj: *mut HSD_GObj, a: i32, b: i32));
+    pub static mut FTCO_800DE7C0: Option<fn(*mut HSD_GObj, i32, i32)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftCo_800DE7C0(gobj: *mut HSD_GObj, a: i32, b: i32) {
+        match unsafe { FTCO_800DE7C0 } {
+            Some(f) => f(gobj, a, b),
+            None => { unsafe { let _ = melee_fighter::tu::ftCo_Thrown::ftCo_800DE7C0(gobj as _, a as _, (b != 0)); } },
+        }
+    }
     /// Recording hook; unset, the native `melee_fighter::tu::ftparts` port runs.
     pub static mut FTPARTSETROTY: Option<fn(*mut Fighter, i32, f32)> = None;
     pub fn ftPartSetRotY(fp: *mut Fighter, part: i32, v: f32) {

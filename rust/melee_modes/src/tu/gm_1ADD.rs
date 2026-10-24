@@ -133,7 +133,14 @@ pub mod ext {
             }
     hook!(HSD_SISLIB_803A62A0, HSD_SisLib_803A62A0, (a: i32, file: &str, sym: &str));
     hook!(HSD_SISLIB_803A611C, HSD_SisLib_803A611C, (a: i32, g: *mut HSD_GObj, b: u16, c: u8, d: u8, e: u8, f: u8, h: u32) -> i32);
-    hook!(HSD_SISLIB_803A5CC4, HSD_SisLib_803A5CC4, (text: *mut HSD_Text));
+    pub static mut HSD_SISLIB_803A5CC4: Option<fn(*mut HSD_Text)> = None;
+    #[allow(non_snake_case)]
+    pub fn HSD_SisLib_803A5CC4(text: *mut HSD_Text) {
+        match unsafe { HSD_SISLIB_803A5CC4 } {
+            Some(f) => f(text),
+            None => { unsafe { let _ = melee_runtime::tu::sislib::HSD_SisLib_803A5CC4(text as _); } },
+        }
+    }
     // sysdolphin/baselib/jobj.c, cobj.c, gobj*.c
     hook!(HSD_JOBJSETMTXDIRTYSUB, HSD_JObjSetMtxDirtySub, (j: *mut HSD_JObj));
     hook!(HSD_JOBJSETFLAGSALL, HSD_JObjSetFlagsAll, (j: *mut HSD_JObj, f: u32));

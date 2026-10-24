@@ -24,7 +24,14 @@ pub use crate::chars::r8::ftMasterHand::ftmasterhandfingerbeam::{ftMh_FingerBeam
 pub mod ext {
     use melee_types::*;
     pub use crate::tu::ftmasterhanddamage0::ext::{it_802F046C, lbAudioAx_800236B8, lb_8000B1CC};
-    crate::ch_hook!(IT_802F0340, it_802F0340, (gobj: *mut HSD_GObj, prev_pos: *mut Vec3, pos: *mut Vec3, part: u32, kind: ItemKind, facing_dir: f32) -> *mut Item_GObj);
+    pub static mut IT_802F0340: Option<fn(*mut HSD_GObj, *mut Vec3, *mut Vec3, u32, ItemKind, f32) -> *mut Item_GObj> = None;
+    #[allow(non_snake_case)]
+    pub fn it_802F0340(gobj: *mut HSD_GObj, prev_pos: *mut Vec3, pos: *mut Vec3, part: u32, kind: ItemKind, facing_dir: f32) -> *mut Item_GObj {
+        match unsafe { IT_802F0340 } {
+            Some(f) => f(gobj, prev_pos, pos, part, kind, facing_dir),
+            None => { unsafe { melee_items::tu::itmasterhandlaser::it_802F0340(gobj as _, prev_pos as _, pos as _, part as _, kind, facing_dir as _) as _ } },
+        }
+    }
     /// `lbAudioAx_800237A8` is the melee_fighter hook `hooks::lbaudioax_800237a8`.
     pub fn lbAudioAx_800237A8(sfx_id: i32, vol: i32, pan: i32) -> i32 {
         melee_fighter::hooks::lbaudioax_800237a8(sfx_id, vol, pan)

@@ -27,10 +27,24 @@ pub mod ext {
     }
     hook!(ITEM_8026ABD8, Item_8026ABD8, (gobj: *mut Item_GObj, pos: *mut Vec3, f: f32));
     hook!(FTCO_8008E908, ftCo_8008E908, (gobj: G, f: f32));
-    hook!(FTCO_8008E984, ftCo_8008E984, (fp: *mut Fighter) -> bool);
+    pub static mut FTCO_8008E984: Option<fn(*mut Fighter) -> bool> = None;
+    #[allow(non_snake_case)]
+    pub fn ftCo_8008E984(fp: *mut Fighter) -> bool {
+        match unsafe { FTCO_8008E984 } {
+            Some(f) => f(fp),
+            None => { unsafe { melee_fighter::tu::ftCo_Damage::ftCo_8008E984(&*(fp as *const _)) as _ } },
+        }
+    }
     hook!(FTCO_8008D8E8, ftCo_8008D8E8, (f: f32) -> i32);
     hook!(FTCO_SCALEBY154, ftCo_ScaleBy154, (f: f32) -> f32);
-    hook!(FTCO_8008DCE0, ftCo_8008DCE0, (gobj: G, a: i32, facing: f32));
+    pub static mut FTCO_8008DCE0: Option<fn(G, i32, f32)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftCo_8008DCE0(gobj: G, a: i32, facing: f32) {
+        match unsafe { FTCO_8008DCE0 } {
+            Some(f) => f(gobj, a, facing),
+            None => { unsafe { let _ = melee_fighter::tu::ftCo_Damage::ftCo_8008DCE0(gobj, a as _, facing as _); } },
+        }
+    }
     pub static mut FTCO_8008F744: Option<fn(G) > = None;
             #[allow(non_snake_case)]
             pub fn ftCo_8008F744(gobj: G)  {
@@ -39,7 +53,14 @@ pub mod ext {
                     None => { unsafe { let _ = melee_fighter::tu::ftCo_Damage::ftCo_8008F744(gobj as _); } return; },
                 }
             }
-    hook!(FTCO_DAMAGE_PHYS, ftCo_Damage_Phys, (gobj: G));
+    pub static mut FTCO_DAMAGE_PHYS: Option<fn(G)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftCo_Damage_Phys(gobj: G) {
+        match unsafe { FTCO_DAMAGE_PHYS } {
+            Some(f) => f(gobj),
+            None => { unsafe { let _ = melee_fighter::tu::ftCo_Damage::ftCo_Damage_Phys(gobj); } },
+        }
+    }
 }
 
 /// `checkSomething` (static).

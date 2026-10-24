@@ -120,7 +120,14 @@ pub mod ext {
     /// `gm_SetGameModeOverride(fn)` (gm/gm_1A3F.c).
     hook!(GM_SETGAMEMODEOVERRIDE, gm_SetGameModeOverride, (f: fn() -> u8));
     /// `gm_SetPendingGameMode(mode)` (gm/gm_1A3F.c).
-    hook!(GM_SETPENDINGGAMEMODE, gm_SetPendingGameMode, (mode: u8));
+    pub static mut GM_SETPENDINGGAMEMODE: Option<fn(u8)> = None;
+    #[allow(non_snake_case)]
+    pub fn gm_SetPendingGameMode(mode: u8) {
+        match unsafe { GM_SETPENDINGGAMEMODE } {
+            Some(f) => f(mode),
+            None => { unsafe { let _ = crate::tu::gm_1A3F::gm_SetPendingGameMode(mode as _); } },
+        }
+    }
     /// `SceneLaunch_BootGameMode()` (gm/gmscenelaunch.c, TARGET_PC): -1 when unset.
     hook!(SCENELAUNCH_BOOTGAMEMODE, SceneLaunch_BootGameMode, () -> i32);
     /// `ContentProbeName()` (pc, TARGET_PC): the probe file name, or NULL.

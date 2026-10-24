@@ -21,9 +21,9 @@ pub mod ext {
     use core::ffi::c_void;
     pub fn HSD_DObjSetFlags(dobj: *mut HSD_DObj, flags: u32) { panic!("TODO(group1 dobj) HSD_DObjSetFlags") }
     pub fn HSD_DObjClearFlags(dobj: *mut HSD_DObj, flags: u32) { panic!("TODO(group1 dobj) HSD_DObjClearFlags") }
-    pub fn HSD_JObjSetRotation(jobj: *mut HSD_JObj, q: *const Vec4) { panic!("TODO(group1 jobj) HSD_JObjSetRotation") }
+    pub fn HSD_JObjSetRotation(jobj: *mut HSD_JObj, q: *const Vec4) { unsafe { let _ = melee_world::tu::grinl::HSD_JObjSetRotation(jobj as _, q as _); } }
     pub fn HSD_JObjClearFlags(jobj: *mut HSD_JObj, flags: u32) { panic!("TODO(group1 jobj) HSD_JObjClearFlags") }
-    pub fn HSD_JObjSetRotationX(jobj: *mut HSD_JObj, v: f32) { panic!("TODO(group1 jobj) HSD_JObjSetRotationX") }
+    pub fn HSD_JObjSetRotationX(jobj: *mut HSD_JObj, v: f32) { unsafe { let _ = melee_world::tu::grinl::HSD_JObjSetRotationX(jobj as _, v as _); } }
     pub fn HSD_JObjSetRotationY(jobj: *mut HSD_JObj, v: f32) { { unsafe { let _ = crate::tu::ftCo_Lift::HSD_JObjSetRotationY(jobj as _, v as _); } return; } }
     pub fn HSD_JObjSetRotationZ(jobj: *mut HSD_JObj, v: f32) { panic!("TODO(group1 jobj) HSD_JObjSetRotationZ") }
     pub fn HSD_ObjAlloc(data: *mut c_void) -> *mut c_void { { return unsafe { melee_runtime::tu::objalloc::HSD_ObjAlloc(data as _) as _ }; } }

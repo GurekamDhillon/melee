@@ -40,8 +40,22 @@ pub mod ext {
     pub fn memzero(mem: *mut c_void, size: ssize_t) {
         match unsafe { MEMZERO } { Some(f) => f(mem, size), None => { unsafe { let _ = melee_runtime::tu::lb_00B0::memzero(mem as _, size as _); } return; } }
     }
-    hook!(PSINITDATABANK, psInitDataBank, (bank: i32, cmdBank: *mut c_void, texBank: *mut c_void, r#ref: *mut u32, formBank: *mut i32));
-    hook!(PSINITDATABANKLOAD, psInitDataBankLoad, (bank: i32, cmdBank: *mut c_void, texBank: *mut c_void, r#ref: *mut u32, formBank: *mut i32));
+    pub static mut PSINITDATABANK: Option<fn(i32, *mut c_void, *mut c_void, *mut u32, *mut i32)> = None;
+    #[allow(non_snake_case)]
+    pub fn psInitDataBank(bank: i32, cmdBank: *mut c_void, texBank: *mut c_void, r#ref: *mut u32, formBank: *mut i32) {
+        match unsafe { PSINITDATABANK } {
+            Some(f) => f(bank, cmdBank, texBank, r#ref, formBank),
+            None => { unsafe { let _ = melee_runtime::tu::particle::psInitDataBank(bank as _, cmdBank as _, texBank as _, r#ref as _, formBank as _); } },
+        }
+    }
+    pub static mut PSINITDATABANKLOAD: Option<fn(i32, *mut c_void, *mut c_void, *mut u32, *mut i32)> = None;
+    #[allow(non_snake_case)]
+    pub fn psInitDataBankLoad(bank: i32, cmdBank: *mut c_void, texBank: *mut c_void, r#ref: *mut u32, formBank: *mut i32) {
+        match unsafe { PSINITDATABANKLOAD } {
+            Some(f) => f(bank, cmdBank, texBank, r#ref, formBank),
+            None => { unsafe { let _ = melee_runtime::tu::particle::psInitDataBankLoad(bank as _, cmdBank as _, texBank as _, r#ref as _, formBank as _); } },
+        }
+    }
     pub static mut PSINITDATABANKLOCATE: Option<fn(*mut HSD_Archive, *mut HSD_Archive, *mut i32)> = None;
     #[allow(non_snake_case)]
     pub fn psInitDataBankLocate(cmdBank: *mut HSD_Archive, texBank: *mut HSD_Archive, formBank: *mut i32) {

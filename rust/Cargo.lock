@@ -1137,6 +1137,7 @@ dependencies = [
  "melee_items",
  "melee_runtime",
  "melee_types",
+ "melee_world",
 ]
 
 [[package]]
@@ -1152,6 +1153,7 @@ dependencies = [
  "melee_items",
  "melee_runtime",
  "melee_types",
+ "melee_world",
 ]
 
 [[package]]
@@ -1172,6 +1174,7 @@ dependencies = [
  "melee_core",
  "melee_runtime",
  "melee_types",
+ "melee_world",
 ]
 
 [[package]]

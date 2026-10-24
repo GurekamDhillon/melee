@@ -206,12 +206,24 @@ pub static mut FTANIM_800704F0: Option<fn(G, i32, f32)> = None;
     pub fn ftAnim_800704F0(g: G, tobj_idx: i32, frame: f32) {
         match unsafe { FTANIM_800704F0 } { Some(f) => f(g, tobj_idx, frame), None => { unsafe { let _ = melee_fighter::tu::ftanim::ftAnim_800704F0(g as _, tobj_idx as _, frame as _); } return; } }
     }
-stub!(/// TODO(group3): `ftCo_LandingFallSpecial_Enter(gobj, allow_interrupt, landing_lag)`.
-    FTCO_LANDINGFALLSPECIAL_ENTER, ftCo_LandingFallSpecial_Enter, (g: G, allow_interrupt: i32, landing_lag: f32));
+pub static mut FTCO_LANDINGFALLSPECIAL_ENTER: Option<fn(G, i32, f32)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftCo_LandingFallSpecial_Enter(g: G, allow_interrupt: i32, landing_lag: f32) {
+        match unsafe { FTCO_LANDINGFALLSPECIAL_ENTER } {
+            Some(f) => f(g, allow_interrupt, landing_lag),
+            None => { unsafe { let _ = melee_fighter::tu::ftCo_Landing::ftCo_LandingFallSpecial_Enter(g, (allow_interrupt != 0), landing_lag as _); } },
+        }
+    }
 stub_or!(/// `Fighter_UnkSetFlag_8006CFBC(gobj)` (ft/fighter.c): group 3's verified port (night 3) when the hook is unset.
     FIGHTER_UNKSETFLAG_8006CFBC, Fighter_UnkSetFlag_8006CFBC, melee_fighter::fighter::fighter_unk_set_flag_8006cfbc, (g: G));
-stub!(/// TODO(group3): `ftCo_800957F4(gobj, msid)` (ftCommon/ftCo_ItemThrow.c).
-    FTCO_800957F4, ftCo_800957F4, (g: G, msid: i32));
+pub static mut FTCO_800957F4: Option<fn(G, i32)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftCo_800957F4(g: G, msid: i32) {
+        match unsafe { FTCO_800957F4 } {
+            Some(f) => f(g, msid),
+            None => { unsafe { let _ = melee_fighter::tu::ftCo_ItemThrow::ftCo_800957F4(g, msid as _); } },
+        }
+    }
 
 /// `Fighter_OnKnockbackEnter` (ft/inlines.h, static inline).
 #[inline]
@@ -281,8 +293,14 @@ pub static mut FTANIM_80070CC4: Option<fn(G, i32)> = None;
     pub fn ftAnim_80070CC4(g: G, flag: i32) {
         match unsafe { FTANIM_80070CC4 } { Some(f) => f(g, flag), None => { unsafe { let _ = melee_fighter::tu::ftanim::ftAnim_80070CC4(g as _, flag as _); } return; } }
     }
-stub!(/// TODO(ef): `efLib_DestroyAll(gobj)` (ef/eflib.c; no group owns ef/ yet).
-    EFLIB_DESTROYALL, efLib_DestroyAll, (g: G));
+pub static mut EFLIB_DESTROYALL: Option<fn(G)> = None;
+    #[allow(non_snake_case)]
+    pub fn efLib_DestroyAll(g: G) {
+        match unsafe { EFLIB_DESTROYALL } {
+            Some(f) => f(g),
+            None => { unsafe { let _ = melee_world::tu::eflib::efLib_DestroyAll(g); } },
+        }
+    }
 /// Group 5's verified `itIsHeavy` port (melee_items::itlib::it_is_heavy, reached through group 3's
 /// `melee_fighter::hooks::it_is_heavy`, whose unset default is that port), as the C's bool (0/1).
 fn it_is_heavy_port(item: *mut melee_types::Item_GObj) -> i32 {

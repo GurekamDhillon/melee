@@ -216,7 +216,14 @@ pub mod ext {
                 }
             }
     hook!(GM_801B06B0, gm_801B06B0, (css: *mut CSSData, a: i32, b: i32, c: i32, d: i32, e: i32, f: i32, g: i32));
-    hook!(LBDVD_GETPRELOADCACHESCENE, lbDvd_GetPreloadCacheScene, () -> *mut PreloadedGameModeState);
+    pub static mut LBDVD_GETPRELOADCACHESCENE: Option<fn() -> *mut PreloadedGameModeState> = None;
+    #[allow(non_snake_case)]
+    pub fn lbDvd_GetPreloadCacheScene() -> *mut PreloadedGameModeState {
+        match unsafe { LBDVD_GETPRELOADCACHESCENE } {
+            Some(f) => f(),
+            None => { unsafe { melee_runtime::tu::lbdvd::lbDvd_GetPreloadCacheScene() as _ } },
+        }
+    }
     pub static mut LBDVD_SETUPVSPRELOADCACHE: Option<fn() > = None;
             #[allow(non_snake_case)]
             pub fn lbDvd_SetupVsPreloadCache()  {

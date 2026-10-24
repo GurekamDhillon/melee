@@ -12,7 +12,14 @@ pub use crate::chars::r8::ftMasterHand::ftmasterhandsweep::{ftMh_Damage_IASA, ft
 /// Calls into TUs that are not ported yet (settable hooks; unset they panic).
 pub mod ext {
     use melee_types::*;
-    crate::ch_hook!(MPFLOORGETLEFT, mpFloorGetLeft, (line: i32, out: *mut Vec3));
+    pub static mut MPFLOORGETLEFT: Option<fn(i32, *mut Vec3)> = None;
+    #[allow(non_snake_case)]
+    pub fn mpFloorGetLeft(line: i32, out: *mut Vec3) {
+        match unsafe { MPFLOORGETLEFT } {
+            Some(f) => f(line, out),
+            None => { unsafe { let _ = melee_world::tu::mplib::mpFloorGetLeft(line as _, out as _); } },
+        }
+    }
 }
 
 pub fn ftMh_Damage_Phys(gobj: *mut HSD_GObj) {

@@ -533,7 +533,7 @@ pub fn grMaterial_801C94D8(a0: *mut core::ffi::c_void) {
 pub static mut HOOK_grMaterial_801C9604: Option<fn(*mut HSD_GObj, *mut core::ffi::c_void, i32)> = None;
 /// C `grMaterial_801C9604` (melee/gr/grmaterial.h).
 pub fn grMaterial_801C9604(a0: *mut HSD_GObj, a1: *mut core::ffi::c_void, a2: i32) {
-    match unsafe { HOOK_grMaterial_801C9604 } { Some(f) => f(a0, a1, a2), None => panic!("TODO: grMaterial_801C9604 is not ported") }
+    match unsafe { HOOK_grMaterial_801C9604 } { Some(f) => f(a0, a1, a2), None => { unsafe { let _ = crate::tu::grmaterial::grMaterial_801C9604(a0 as _, a1 as _, (a2 != 0)); } } }
 }
 pub static mut HOOK_grZakoGenerator_801CAE04: Option<fn(*mut grZakoGenerator_SpawnDesc) -> *mut HSD_GObj> = None;
 /// C `grZakoGenerator_801CAE04` (melee/gr/grzakogenerator.h).

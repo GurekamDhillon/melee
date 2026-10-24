@@ -23,7 +23,14 @@ pub mod ext {
     use melee_types::*;
     hook_or!(COSF, cosf, (x: f32) -> f32, melee_runtime::gekko::cosf);
     hook_or!(SINF, sinf, (x: f32) -> f32, melee_runtime::gekko::sinf);
-    hook!(IT_802F2CE0, it_802F2CE0, (item: *mut Item_GObj, clear_destroy_type: i32));
+    pub static mut IT_802F2CE0: Option<fn(*mut Item_GObj, i32)> = None;
+    #[allow(non_snake_case)]
+    pub fn it_802F2CE0(item: *mut Item_GObj, clear_destroy_type: i32) {
+        match unsafe { IT_802F2CE0 } {
+            Some(f) => f(item, clear_destroy_type),
+            None => { unsafe { let _ = melee_items::tu::ityoshitongue::it_802F2CE0(item as _, (clear_destroy_type != 0)); } },
+        }
+    }
     pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *mut Vec3, *mut Vec3)> = None;
     #[allow(non_snake_case)]
     pub fn lb_8000B1CC(jobj: *mut HSD_JObj, pos0: *mut Vec3, pos1: *mut Vec3) {

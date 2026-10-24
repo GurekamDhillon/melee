@@ -5140,8 +5140,22 @@ pub mod ext {
                     None => { unsafe { let _ = crate::tu::mndiagram::mnDiagram_Init(a0 as _, a1 as _); } return; },
                 }
             }
-    hook!(H_mnEvent_8024E838, mnEvent_8024E838, (a0: ::core::ffi::c_int, a1: bool_0));
-    hook!(H_mnGallery_80259868, mnGallery_80259868, ());
+    pub static mut H_mnEvent_8024E838: Option<fn(::core::ffi::c_int, bool_0)> = None;
+    #[allow(non_snake_case)]
+    pub fn mnEvent_8024E838(a0: ::core::ffi::c_int, a1: bool_0) {
+        match unsafe { H_mnEvent_8024E838 } {
+            Some(f) => f(a0, a1),
+            None => { unsafe { let _ = crate::tu::mnevent::mnEvent_8024E838(a0 as _, (a1 != 0)); } },
+        }
+    }
+    pub static mut H_mnGallery_80259868: Option<fn()> = None;
+    #[allow(non_snake_case)]
+    pub fn mnGallery_80259868() {
+        match unsafe { H_mnGallery_80259868 } {
+            Some(f) => f(),
+            None => { unsafe { let _ = crate::tu::mngallery::mnGallery_80259868(); } },
+        }
+    }
     hook!(H_HSD_GObjObject_80390A70, HSD_GObjObject_80390A70, (a0: *mut HSD_GObj, a1: u8_0, a2: *mut ::core::ffi::c_void));
     hook!(H_HSD_GObj_SetupProc, HSD_GObj_SetupProc, (a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8_0) -> *mut HSD_GObjProc);
     hook!(H_HSD_GObjProc_RemoveProc, HSD_GObjProc_RemoveProc, (a0: *mut HSD_GObjProc));

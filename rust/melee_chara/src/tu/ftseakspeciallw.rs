@@ -32,7 +32,14 @@ pub mod ext {
             }
         };
     }
-    hook!(EFSYNC_SPAWN, efSync_Spawn, (id: i32, gobj: *mut HSD_GObj, jobj: *mut HSD_JObj));
+    pub static mut EFSYNC_SPAWN: Option<fn(i32, *mut HSD_GObj, *mut HSD_JObj)> = None;
+    #[allow(non_snake_case)]
+    pub fn efSync_Spawn(id: i32, gobj: *mut HSD_GObj, jobj: *mut HSD_JObj) {
+        match unsafe { EFSYNC_SPAWN } {
+            Some(f) => f(id, gobj, jobj),
+            None => { unsafe { let _ = melee_world::tu::efsync::efSync_Spawn(id as _, gobj as _, &mut *(jobj as *mut _)); } },
+        }
+    }
     pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *const Vec3, *mut Vec3) > = None;
             #[allow(non_snake_case)]
             pub fn lb_8000B1CC(joint: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3)  {

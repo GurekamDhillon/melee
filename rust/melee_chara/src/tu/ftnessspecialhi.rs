@@ -49,8 +49,22 @@ pub mod ext {
                     None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, off as _, out as _); } return; },
                 }
             }
-    hook!(FTPARTSETROTX, ftPartSetRotX, (fp: *mut Fighter, part: i32, v: f32));
-    hook!(EFLIB_DESTROYALL, efLib_DestroyAll, (gobj: *mut HSD_GObj));
+    pub static mut FTPARTSETROTX: Option<fn(*mut Fighter, i32, f32)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftPartSetRotX(fp: *mut Fighter, part: i32, v: f32) {
+        match unsafe { FTPARTSETROTX } {
+            Some(f) => f(fp, part, v),
+            None => { unsafe { let _ = melee_fighter::tu::ftparts::ftPartSetRotX(&*(fp as *const _), part as _, v as _); } },
+        }
+    }
+    pub static mut EFLIB_DESTROYALL: Option<fn(*mut HSD_GObj)> = None;
+    #[allow(non_snake_case)]
+    pub fn efLib_DestroyAll(gobj: *mut HSD_GObj) {
+        match unsafe { EFLIB_DESTROYALL } {
+            Some(f) => f(gobj),
+            None => { unsafe { let _ = melee_world::tu::eflib::efLib_DestroyAll(gobj as _); } },
+        }
+    }
     // `efSync_Spawn(gfx_id, gobj, ...)` (ef/efsync.c, variadic): the trailing pointers as a slice.
     hook!(EFSYNC_SPAWN, efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut c_void]) -> *mut c_void);
     pub static mut IT_802AB3F0: Option<fn(*mut HSD_GObj, *mut Vec3, i32) > = None;

@@ -15,7 +15,14 @@ pub use crate::chars::r8::ftMasterHand::ftmasterhandsqueezing::ftMh_Squeezing_IA
 /// Calls into TUs that are not ported yet (settable hooks; unset they panic).
 pub mod ext {
     use melee_types::*;
-    crate::ch_hook!(FTMH_CAPTUREWAITMASTERHAND_80155D6C, ftMh_CaptureWaitMasterHand_80155D6C, (gobj: *mut HSD_GObj, msid: i32));
+    pub static mut FTMH_CAPTUREWAITMASTERHAND_80155D6C: Option<fn(*mut HSD_GObj, i32)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftMh_CaptureWaitMasterHand_80155D6C(gobj: *mut HSD_GObj, msid: i32) {
+        match unsafe { FTMH_CAPTUREWAITMASTERHAND_80155D6C } {
+            Some(f) => f(gobj, msid),
+            None => { unsafe { let _ = crate::tu::ftmasterhandthrownmasterhand::ftMh_CaptureWaitMasterHand_80155D6C(gobj as _, msid as _); } },
+        }
+    }
 }
 /// ftCo_Throw / ftCo_Thrown calls (hooks with the native melee_fighter port as default for DE7C0).
 pub use crate::tu::ftcrazyhandbackairplane2::ext::{ftCo_800DE2A8, ftCo_800DE7C0};

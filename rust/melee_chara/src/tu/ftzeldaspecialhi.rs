@@ -76,7 +76,14 @@ pub mod ext {
     pub fn ftCo_80096900(gobj: *mut HSD_GObj, a: i32, b: i32, allow_interrupt: i32, mobility: f32, landing_lag: f32) {
         match unsafe { FTCO_80096900 } { Some(f) => f(gobj, a, b, allow_interrupt, mobility, landing_lag), None => { unsafe { let _ = melee_fighter::tu::ftCo_FallSpecial::ftCo_80096900(gobj as _, a as _, b as _, allow_interrupt as _, mobility as _, landing_lag as _); } return; } }
     }
-    hook!(FTCO_LANDINGFALLSPECIAL_ENTER, ftCo_LandingFallSpecial_Enter, (gobj: *mut HSD_GObj, allow_interrupt: i32, landing_lag: f32));
+    pub static mut FTCO_LANDINGFALLSPECIAL_ENTER: Option<fn(*mut HSD_GObj, i32, f32)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftCo_LandingFallSpecial_Enter(gobj: *mut HSD_GObj, allow_interrupt: i32, landing_lag: f32) {
+        match unsafe { FTCO_LANDINGFALLSPECIAL_ENTER } {
+            Some(f) => f(gobj, allow_interrupt, landing_lag),
+            None => { unsafe { let _ = melee_fighter::tu::ftCo_Landing::ftCo_LandingFallSpecial_Enter(gobj as _, (allow_interrupt != 0), landing_lag as _); } },
+        }
+    }
 }
 
 #[inline(always)]

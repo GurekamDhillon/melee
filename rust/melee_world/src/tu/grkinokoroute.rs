@@ -198,7 +198,14 @@ pub mod ext {
         match unsafe { STAGE_UNKSETVEC3TCAM_OFFSET } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::stage::Stage_UnkSetVec3TCam_Offset(a0 as _); } return; } }
     }
     /// `efSync_Spawn(gfx_id, arg_gobj, ...)`: variadic; here its one trailing `Vec3*`.
-    hook!(EFSYNC_SPAWN, efSync_Spawn, (gfx_id: s32, arg_gobj: *mut HSD_GObj, pos: *mut Vec3) -> *mut c_void);
+    pub static mut EFSYNC_SPAWN: Option<fn(s32, *mut HSD_GObj, *mut Vec3) -> *mut c_void> = None;
+    #[allow(non_snake_case)]
+    pub fn efSync_Spawn(gfx_id: s32, arg_gobj: *mut HSD_GObj, pos: *mut Vec3) -> *mut c_void {
+        match unsafe { EFSYNC_SPAWN } {
+            Some(f) => f(gfx_id, arg_gobj, pos),
+            None => { unsafe { crate::tu::efsync::efSync_Spawn(gfx_id as _, arg_gobj as _, &mut *(pos as *mut _)) as _ } },
+        }
+    }
     hook!(FTCO_800C07F8, ftCo_800C07F8, (a0: *mut HSD_GObj, a1: u32, a2: *mut c_void));
     hook!(FTLIB_80086644, ftLib_80086644, (a0: *mut HSD_GObj, a1: *mut Vec3));
     hook!(FTLIB_80086684, ftLib_80086684, (a0: *mut HSD_GObj, a1: *mut Vec3));

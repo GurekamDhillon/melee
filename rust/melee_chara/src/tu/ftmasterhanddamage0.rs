@@ -39,14 +39,56 @@ macro_rules! mh_hook_or {
 /// The hooks shared by the ftmasterhand* TUs of this shard are defined here once.
 pub mod ext {
     use melee_types::*;
-    crate::ch_hook!(LB_8000B1CC, lb_8000B1CC, (jobj: *mut HSD_JObj, pos0: *const Vec3, pos1: *mut Vec3));
-    crate::ch_hook!(LBAUDIOAX_800236B8, lbAudioAx_800236B8, (id: i32) -> i32);
-    crate::ch_hook!(LBAUDIOAX_8002438C, lbAudioAx_8002438C, (id: i32) -> i32);
-    crate::ch_hook!(IT_802F046C, it_802F046C, (gobj: *mut Item_GObj));
+    pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *const Vec3, *mut Vec3)> = None;
+    #[allow(non_snake_case)]
+    pub fn lb_8000B1CC(jobj: *mut HSD_JObj, pos0: *const Vec3, pos1: *mut Vec3) {
+        match unsafe { LB_8000B1CC } {
+            Some(f) => f(jobj, pos0, pos1),
+            None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, pos0 as _, pos1 as _); } },
+        }
+    }
+    pub static mut LBAUDIOAX_800236B8: Option<fn(i32) -> i32> = None;
+    #[allow(non_snake_case)]
+    pub fn lbAudioAx_800236B8(id: i32) -> i32 {
+        match unsafe { LBAUDIOAX_800236B8 } {
+            Some(f) => f(id),
+            None => { unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800236B8(id as _) as _ } },
+        }
+    }
+    pub static mut LBAUDIOAX_8002438C: Option<fn(i32) -> i32> = None;
+    #[allow(non_snake_case)]
+    pub fn lbAudioAx_8002438C(id: i32) -> i32 {
+        match unsafe { LBAUDIOAX_8002438C } {
+            Some(f) => f(id),
+            None => { unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_8002438C(id as _) as _ } },
+        }
+    }
+    pub static mut IT_802F046C: Option<fn(*mut Item_GObj)> = None;
+    #[allow(non_snake_case)]
+    pub fn it_802F046C(gobj: *mut Item_GObj) {
+        match unsafe { IT_802F046C } {
+            Some(f) => f(gobj),
+            None => { unsafe { let _ = melee_items::tu::itmasterhandlaser::it_802F046C(gobj as _); } },
+        }
+    }
     // `ftMh_MS_389_80151018` (ftmasterhandwait12.c, not ported).
-    crate::ch_hook!(FTMH_MS_389_80151018, ftMh_MS_389_80151018, (gobj: *mut HSD_GObj));
+    pub static mut FTMH_MS_389_80151018: Option<fn(*mut HSD_GObj)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftMh_MS_389_80151018(gobj: *mut HSD_GObj) {
+        match unsafe { FTMH_MS_389_80151018 } {
+            Some(f) => f(gobj),
+            None => { unsafe { let _ = crate::tu::ftmasterhandwait12::ftMh_MS_389_80151018(gobj as _); } },
+        }
+    }
     // `ftMh_CaptureWaitMasterHand_80155D1C` (ftmasterhandthrownmasterhand.c, not ported).
-    crate::ch_hook!(FTMH_CAPTUREWAITMASTERHAND_80155D1C, ftMh_CaptureWaitMasterHand_80155D1C, (gobj: *mut HSD_GObj));
+    pub static mut FTMH_CAPTUREWAITMASTERHAND_80155D1C: Option<fn(*mut HSD_GObj)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftMh_CaptureWaitMasterHand_80155D1C(gobj: *mut HSD_GObj) {
+        match unsafe { FTMH_CAPTUREWAITMASTERHAND_80155D1C } {
+            Some(f) => f(gobj),
+            None => { unsafe { let _ = crate::tu::ftmasterhandthrownmasterhand::ftMh_CaptureWaitMasterHand_80155D1C(gobj as _); } },
+        }
+    }
 
     fn ft_800881D8_port(fp: *mut Fighter, sfx_id: i32, vol: u8, pan: u8) {
         melee_fighter::ft0881::ft_800881d8(unsafe { &mut *fp }, sfx_id, vol, pan)

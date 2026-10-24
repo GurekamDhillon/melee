@@ -191,7 +191,14 @@ pub mod ext {
     pub fn grZakoGenerator_801CAEB0(a0: i32, a1: i32) {
         match unsafe { GRZAKOGENERATOR_801CAEB0 } { Some(f) => f(a0, a1), None => { unsafe { let _ = crate::tu::grzakogenerator::grZakoGenerator_801CAEB0(a0 as _, a1 as _); } return; } }
     }
-    hook!(LBSHADOW_8000E9F0, lbShadow_8000E9F0, (a0: *mut Vec, a1: *mut HSD_Spline, a2: f32));
+    pub static mut LBSHADOW_8000E9F0: Option<fn(*mut Vec, *mut HSD_Spline, f32)> = None;
+    #[allow(non_snake_case)]
+    pub fn lbShadow_8000E9F0(a0: *mut Vec, a1: *mut HSD_Spline, a2: f32) {
+        match unsafe { LBSHADOW_8000E9F0 } {
+            Some(f) => f(a0, a1, a2),
+            None => { unsafe { let _ = melee_runtime::tu::lbshadow::lbShadow_8000E9F0(&mut *(a0 as *mut _), &*(a1 as *const _), a2 as _); } },
+        }
+    }
     pub static mut LBVECTOR_ADD: Option<fn(*mut Vec, *mut Vec) -> *mut Vec> = None;
     #[allow(non_snake_case)]
     pub fn lbVector_Add(a: *mut Vec, b: *mut Vec) -> *mut Vec {

@@ -209,7 +209,14 @@ pub mod ext {
     pub fn lb_800121FC(image_desc: *mut HSD_ImageDesc, width: i32, height: i32, format: GXTexFmt, entry_num: s16) -> *mut HSD_ImageDesc {
         match unsafe { LB_800121FC } { Some(f) => f(image_desc, width, height, format, entry_num), None => { return unsafe { melee_runtime::tu::lbspdisplay::lb_800121FC(image_desc as _, width as _, height as _, format as _, entry_num as _) as _ }; } }
     }
-    hook!(LB_800122C8, lb_800122C8, (image_desc: *mut HSD_ImageDesc, origx: u16, origy: u16, clear: i32));
+    pub static mut LB_800122C8: Option<fn(*mut HSD_ImageDesc, u16, u16, i32)> = None;
+    #[allow(non_snake_case)]
+    pub fn lb_800122C8(image_desc: *mut HSD_ImageDesc, origx: u16, origy: u16, clear: i32) {
+        match unsafe { LB_800122C8 } {
+            Some(f) => f(image_desc, origx, origy, clear),
+            None => { unsafe { let _ = melee_runtime::tu::lbspdisplay::lb_800122C8(image_desc as _, origx as _, origy as _, (clear != 0)); } },
+        }
+    }
     pub static mut LB_80013B14: Option<fn(*mut HSD_CameraDescPerspective) -> *mut HSD_CObj> = None;
     #[allow(non_snake_case)]
     pub fn lb_80013B14(a0: *mut HSD_CameraDescPerspective) -> *mut HSD_CObj {

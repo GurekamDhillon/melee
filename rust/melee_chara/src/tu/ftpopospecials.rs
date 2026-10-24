@@ -89,7 +89,14 @@ pub mod ext {
                     None => { return unsafe { melee_items::tu::kinds_inl::HSD_JObjGetChild(jobj as _) as _ }; },
                 }
             }
-    hook!(HSD_JOBJGETNEXT, HSD_JObjGetNext, (jobj: *mut HSD_JObj) -> *mut HSD_JObj);
+    pub static mut HSD_JOBJGETNEXT: Option<fn(*mut HSD_JObj) -> *mut HSD_JObj> = None;
+    #[allow(non_snake_case)]
+    pub fn HSD_JObjGetNext(jobj: *mut HSD_JObj) -> *mut HSD_JObj {
+        match unsafe { HSD_JOBJGETNEXT } {
+            Some(f) => f(jobj),
+            None => { unsafe { melee_world::tu::grinl::HSD_JObjGetNext(jobj as _) as _ } },
+        }
+    }
     hook!(HSD_JOBJCLEARFLAGSALL, HSD_JObjClearFlagsAll, (jobj: *mut HSD_JObj, flags: u32));
     hook!(HSD_JOBJSETFLAGSALL, HSD_JObjSetFlagsAll, (jobj: *mut HSD_JObj, flags: u32));
     hook!(HSD_JOBJSETROTATIONZ, HSD_JObjSetRotationZ, (jobj: *mut HSD_JObj, z: f32));

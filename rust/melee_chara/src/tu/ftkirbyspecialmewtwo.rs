@@ -64,9 +64,30 @@ pub mod ext {
                     None => { return unsafe { melee_items::tu::itmewtwoshadowball::it_802C5000(g as _, pos as _, part as _, kind as _, dir as _) as _ }; },
                 }
             }
-    hook!(FTCO_800BFFAC, ftCo_800BFFAC, (fp: *mut Fighter));
-    hook!(FTCO_800BFFD0, ftCo_800BFFD0, (fp: *mut Fighter, a: i32, b: i32) -> bool);
-    hook!(FT_80088510, ft_80088510, (fp: *mut Fighter, sfx: u32, vol: i32, pan: i32));
+    pub static mut FTCO_800BFFAC: Option<fn(*mut Fighter)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftCo_800BFFAC(fp: *mut Fighter) {
+        match unsafe { FTCO_800BFFAC } {
+            Some(f) => f(fp),
+            None => { unsafe { let _ = melee_fighter::tu::ftcolanim::ftco_800bffac(&mut *(fp as *mut _)); } },
+        }
+    }
+    pub static mut FTCO_800BFFD0: Option<fn(*mut Fighter, i32, i32) -> bool> = None;
+    #[allow(non_snake_case)]
+    pub fn ftCo_800BFFD0(fp: *mut Fighter, a: i32, b: i32) -> bool {
+        match unsafe { FTCO_800BFFD0 } {
+            Some(f) => f(fp, a, b),
+            None => { unsafe { melee_fighter::tu::ftcolanim::ftco_800bffd0(&mut *(fp as *mut _), a as _, b as _) as _ } },
+        }
+    }
+    pub static mut FT_80088510: Option<fn(*mut Fighter, u32, i32, i32)> = None;
+    #[allow(non_snake_case)]
+    pub fn ft_80088510(fp: *mut Fighter, sfx: u32, vol: i32, pan: i32) {
+        match unsafe { FT_80088510 } {
+            Some(f) => f(fp, sfx, vol, pan),
+            None => { unsafe { let _ = melee_fighter::ft0881::ft_80088510(&mut *(fp as *mut _), sfx as _, vol as _, pan as _); } },
+        }
+    }
     pub static mut FTCO_8009917C: Option<fn(G) -> bool> = None;
             #[allow(non_snake_case)]
             pub fn ftCo_8009917C(g: G) -> bool {

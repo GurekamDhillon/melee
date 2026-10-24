@@ -121,9 +121,23 @@ pub mod ext {
                     None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80023F28(a as _); } return; },
                 }
             }
-    hook!(LBAUDIOAX_80024E50, lbAudioAx_80024E50, (a: i32));
+    pub static mut LBAUDIOAX_80024E50: Option<fn(i32)> = None;
+    #[allow(non_snake_case)]
+    pub fn lbAudioAx_80024E50(a: i32) {
+        match unsafe { LBAUDIOAX_80024E50 } {
+            Some(f) => f(a),
+            None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80024E50((a != 0)); } },
+        }
+    }
     hook!(LBMTHP_8001F410, lbMthp_8001F410, (path: &str, table: *mut u32, a: i32, b: i32, c: i32));
-    hook!(LBMTHP_8001F578, lbMthp_8001F578, ());
+    pub static mut LBMTHP_8001F578: Option<fn()> = None;
+    #[allow(non_snake_case)]
+    pub fn lbMthp_8001F578() {
+        match unsafe { LBMTHP_8001F578 } {
+            Some(f) => f(),
+            None => { unsafe { let _ = melee_runtime::tu::lbmthp::lbMthp_8001F578(); } },
+        }
+    }
     pub static mut LBMTHP_8001F5C4: Option<fn() > = None;
             #[allow(non_snake_case)]
             pub fn lbMthp_8001F5C4()  {

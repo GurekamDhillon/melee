@@ -52,11 +52,46 @@ pub mod ext {
             }
     hook_or!(PL_800386D8, pl_800386D8, pl_800386d8_port, (stats: *mut plActionStats, attack: i32) -> u32);
     hook_or!(PL_80040120, pl_80040120, melee_fighter::plbonus::pl_80040120, (slot: i32, sub: i32));
-    hook!(GRCORNERIA_801E2AF4, grCorneria_801E2AF4, ());
-    hook!(GRCORNERIA_801E2B80, grCorneria_801E2B80, () -> bool);
-    hook!(GRCORNERIA_801E2C34, grCorneria_801E2C34, () -> bool);
-    hook!(GRCORNERIA_801E2CE8, grCorneria_801E2CE8, () -> bool);
-    hook!(GRCORNERIA_801E2D14, grCorneria_801E2D14, () -> bool);
+    pub static mut GRCORNERIA_801E2AF4: Option<fn()> = None;
+    #[allow(non_snake_case)]
+    pub fn grCorneria_801E2AF4() {
+        match unsafe { GRCORNERIA_801E2AF4 } {
+            Some(f) => f(),
+            None => { unsafe { let _ = melee_world::tu::grcorneria::grCorneria_801E2AF4(); } },
+        }
+    }
+    pub static mut GRCORNERIA_801E2B80: Option<fn() -> bool> = None;
+    #[allow(non_snake_case)]
+    pub fn grCorneria_801E2B80() -> bool {
+        match unsafe { GRCORNERIA_801E2B80 } {
+            Some(f) => f(),
+            None => { unsafe { melee_world::tu::grcorneria::grCorneria_801E2B80() != 0 } },
+        }
+    }
+    pub static mut GRCORNERIA_801E2C34: Option<fn() -> bool> = None;
+    #[allow(non_snake_case)]
+    pub fn grCorneria_801E2C34() -> bool {
+        match unsafe { GRCORNERIA_801E2C34 } {
+            Some(f) => f(),
+            None => { unsafe { melee_world::tu::grcorneria::grCorneria_801E2C34() != 0 } },
+        }
+    }
+    pub static mut GRCORNERIA_801E2CE8: Option<fn() -> bool> = None;
+    #[allow(non_snake_case)]
+    pub fn grCorneria_801E2CE8() -> bool {
+        match unsafe { GRCORNERIA_801E2CE8 } {
+            Some(f) => f(),
+            None => { unsafe { melee_world::tu::grcorneria::grCorneria_801E2CE8() != 0 } },
+        }
+    }
+    pub static mut GRCORNERIA_801E2D14: Option<fn() -> bool> = None;
+    #[allow(non_snake_case)]
+    pub fn grCorneria_801E2D14() -> bool {
+        match unsafe { GRCORNERIA_801E2D14 } {
+            Some(f) => f(),
+            None => { unsafe { melee_world::tu::grcorneria::grCorneria_801E2D14() != 0 } },
+        }
+    }
     hook_or!(FT_8008A324, ft_8008A324, melee_fighter::tu::ft_08a1::ft_8008A324, (gobj: *mut HSD_GObj));
     hook_or!(FT_80084280, ft_80084280, melee_fighter::tu::ft_081b::ft_80084280, (gobj: *mut HSD_GObj));
 }

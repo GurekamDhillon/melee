@@ -28,8 +28,22 @@ pub mod ext {
             }
         };
     }
-    ch_hook!(LB_8000B1CC, lb_8000B1CC, (jobj: *mut HSD_JObj, pos0: *const Vec3, pos1: *mut Vec3));
-    ch_hook!(FTCH_GRABUNK1_8015BC88, ftCh_GrabUnk1_8015BC88, (gobj: *mut HSD_GObj));
+    pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *const Vec3, *mut Vec3)> = None;
+    #[allow(non_snake_case)]
+    pub fn lb_8000B1CC(jobj: *mut HSD_JObj, pos0: *const Vec3, pos1: *mut Vec3) {
+        match unsafe { LB_8000B1CC } {
+            Some(f) => f(jobj, pos0, pos1),
+            None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, pos0 as _, pos1 as _); } },
+        }
+    }
+    pub static mut FTCH_GRABUNK1_8015BC88: Option<fn(*mut HSD_GObj)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftCh_GrabUnk1_8015BC88(gobj: *mut HSD_GObj) {
+        match unsafe { FTCH_GRABUNK1_8015BC88 } {
+            Some(f) => f(gobj),
+            None => { unsafe { let _ = crate::tu::ftcrazyhandtagcancel::ftCh_GrabUnk1_8015BC88(gobj as _); } },
+        }
+    }
     ch_hook!(IT_802F0F6C, it_802F0F6C, (owner: *mut HSD_GObj, prev_pos: *mut Vec3, pos: *mut Vec3, kind: ItemKind, facing_dir: f32));
 }
 

@@ -9,7 +9,7 @@ use crate::types::*;
 pub mod ext {
     use crate::types::*;
     pub fn ftData_80085CD8(fp: *mut Fighter, fp2: *mut Fighter, anim_id: i32) { { unsafe { let _ = crate::tu::ftdata::ftData_80085CD8(fp as _, fp2 as _, anim_id as _); } return; } }
-    pub fn ftCo_8009E7B4(fp: *mut Fighter, blend: *mut [u8; 2]) { panic!("TODO(ftCo) ftCo_8009E7B4") }
+    pub fn ftCo_8009E7B4(fp: *mut Fighter, blend: *mut [u8; 2]) { unsafe { let _ = crate::tu::ftdynamics::ftCo_8009E7B4(&mut *(fp as *mut _), blend as _); } }
     pub fn ftAnim_8006EBE8(gobj: *mut HSD_GObj, a: f32, b: f32, c: f32) { { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBE8(gobj as _, a as _, b as _, c as _); } return; } }
     pub fn ftAnim_8006EBA4(gobj: *mut HSD_GObj) { { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(gobj as _); } return; } }
     pub fn ftAnim_IsFramesRemaining(gobj: *mut HSD_GObj) -> bool { { return unsafe { crate::tu::ftanim::ftAnim_IsFramesRemaining(gobj as _) as _ }; } }

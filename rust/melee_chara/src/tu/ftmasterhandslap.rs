@@ -13,7 +13,14 @@ pub use crate::chars::r8::ftMasterHand::ftmasterhandslap::ftMh_Slap_IASA;
 /// function is shared by every Master Hand TU that returns to the wait state.
 pub mod ext {
     use melee_types::*;
-    crate::ch_hook!(FTMH_MS_389_80151018, ftMh_MS_389_80151018, (gobj: *mut HSD_GObj));
+    pub static mut FTMH_MS_389_80151018: Option<fn(*mut HSD_GObj)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftMh_MS_389_80151018(gobj: *mut HSD_GObj) {
+        match unsafe { FTMH_MS_389_80151018 } {
+            Some(f) => f(gobj),
+            None => { unsafe { let _ = crate::tu::ftmasterhandwait12::ftMh_MS_389_80151018(gobj as _); } },
+        }
+    }
 }
 
 pub fn ftMh_Slap_Anim(gobj: *mut HSD_GObj) {

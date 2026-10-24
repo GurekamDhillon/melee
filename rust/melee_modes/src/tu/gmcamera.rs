@@ -150,7 +150,14 @@ pub mod ext {
             }
     hook!(HSD_SISLIB_803A62A0, HSD_SisLib_803A62A0, (a: i32, b: &str, c: &str));
     hook!(HSD_SISLIB_803A611C, HSD_SisLib_803A611C, (a: i32, g: *mut HSD_GObj, b: u16, c: u8, d: u8, e: u8, f: u8, h: u32) -> i32);
-    hook!(HSD_SISLIB_803A5CC4, HSD_SisLib_803A5CC4, (text: *mut HSD_Text));
+    pub static mut HSD_SISLIB_803A5CC4: Option<fn(*mut HSD_Text)> = None;
+    #[allow(non_snake_case)]
+    pub fn HSD_SisLib_803A5CC4(text: *mut HSD_Text) {
+        match unsafe { HSD_SISLIB_803A5CC4 } {
+            Some(f) => f(text),
+            None => { unsafe { let _ = melee_runtime::tu::sislib::HSD_SisLib_803A5CC4(text as _); } },
+        }
+    }
     // lb/lbsnap.c
     pub static mut LBSNAP_8001D40C: Option<fn(i32) -> i32> = None;
             #[allow(non_snake_case)]
@@ -326,10 +333,24 @@ pub mod ext {
     hook!(LBARCHIVE_LOADARCHIVE, lbArchive_LoadArchive, (name: &str) -> *mut HSD_Archive);
     hook!(HSD_ARCHIVEGETPUBLICADDRESS, HSD_ArchiveGetPublicAddress, (a: *mut HSD_Archive, name: &str) -> *mut c_void);
     hook!(GOBJ_CREATE, GObj_Create, (classifier: u16, p_link: u8, priority: u8) -> *mut HSD_GObj);
-    hook!(HSD_JOBJLOADJOINT, HSD_JObjLoadJoint, (joint: *mut HSD_Joint) -> *mut HSD_JObj);
+    pub static mut HSD_JOBJLOADJOINT: Option<fn(*mut HSD_Joint) -> *mut HSD_JObj> = None;
+    #[allow(non_snake_case)]
+    pub fn HSD_JObjLoadJoint(joint: *mut HSD_Joint) -> *mut HSD_JObj {
+        match unsafe { HSD_JOBJLOADJOINT } {
+            Some(f) => f(joint),
+            None => { unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(joint as _) as _ } },
+        }
+    }
     hook!(HSD_GOBJOBJECT_80390A70, HSD_GObjObject_80390A70, (gobj: *mut HSD_GObj, kind: u8, obj: *mut HSD_JObj));
     hook!(GOBJ_SETUPGXLINK, GObj_SetupGXLink, (gobj: *mut HSD_GObj, render: usize, gx_link: u8, priority: u32));
-    hook!(GM_8016895C, gm_8016895C, (jobj: *mut HSD_JObj, mdl: *mut DynamicModelDesc, idx: i32));
+    pub static mut GM_8016895C: Option<fn(*mut HSD_JObj, *mut DynamicModelDesc, i32)> = None;
+    #[allow(non_snake_case)]
+    pub fn gm_8016895C(jobj: *mut HSD_JObj, mdl: *mut DynamicModelDesc, idx: i32) {
+        match unsafe { GM_8016895C } {
+            Some(f) => f(jobj, mdl, idx),
+            None => { unsafe { let _ = crate::tu::gm_1601::gm_8016895C(jobj as _, mdl as _, idx as _); } },
+        }
+    }
     hook!(HSD_JOBJREQANIMALL, HSD_JObjReqAnimAll, (jobj: *mut HSD_JObj, frame: f32));
     hook!(HSD_JOBJANIMALL, HSD_JObjAnimAll, (jobj: *mut HSD_JObj));
     hook!(HSD_GOBJ_SETUPPROC, HSD_GObj_SetupProc, (gobj: *mut HSD_GObj, proc: usize, prio: u8));

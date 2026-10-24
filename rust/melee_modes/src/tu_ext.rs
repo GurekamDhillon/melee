@@ -623,7 +623,7 @@ pub fn Player_SetPlayerId(a0: i32, a1: i32) {
 pub static mut HOOK_Player_SetSelfDestructs: Option<fn(i32, u32)> = None;
 /// C `Player_SetSelfDestructs` (melee/pl/player.h).
 pub fn Player_SetSelfDestructs(a0: i32, a1: u32) {
-    match unsafe { HOOK_Player_SetSelfDestructs } { Some(f) => f(a0, a1), None => panic!("TODO: Player_SetSelfDestructs is not ported") }
+    match unsafe { HOOK_Player_SetSelfDestructs } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_fighter::tu::player::Player_SetSelfDestructs(a0 as _, a1 as _); } } }
 }
 pub static mut HOOK_Player_SetSlottype: Option<fn(i32, i32)> = None;
 /// C `Player_SetSlottype` (melee/pl/player.h).

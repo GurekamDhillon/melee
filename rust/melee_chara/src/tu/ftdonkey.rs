@@ -74,12 +74,24 @@ pub mod ext {
         };
     }
     // `ftCo_800BFFD0(fp, a, b)` (ft/ft_0C88.c).
-    hook!(FTCO_800BFFD0, ftCo_800BFFD0, (fp: *mut Fighter, a: u32, b: u32));
+    pub static mut FTCO_800BFFD0: Option<fn(*mut Fighter, u32, u32)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftCo_800BFFD0(fp: *mut Fighter, a: u32, b: u32) {
+        match unsafe { FTCO_800BFFD0 } {
+            Some(f) => f(fp, a, b),
+            None => { unsafe { let _ = melee_fighter::tu::ftcolanim::ftco_800bffd0(&mut *(fp as *mut _), a as _, b as _); } },
+        }
+    }
     // `mpLib_80056C54(line_id, pos, line_id_out, vec_out, flags_out, normal_out, f1, f2)`
     // (mp/mplib.c); returns the C `bool`.
-    hook!(MPLIB_80056C54, mpLib_80056C54,
-        (line_id: i32, pos: *const Vec3, line_id_out: *mut i32, vec_out: *mut Vec3,
-         flags_out: *mut u32, normal_out: *mut Vec3, f1: f32, f2: f32) -> i32);
+    pub static mut MPLIB_80056C54: Option<fn(i32, *const Vec3, *mut i32, *mut Vec3, *mut u32, *mut Vec3, f32, f32) -> i32> = None;
+    #[allow(non_snake_case)]
+    pub fn mpLib_80056C54(line_id: i32, pos: *const Vec3, line_id_out: *mut i32, vec_out: *mut Vec3, flags_out: *mut u32, normal_out: *mut Vec3, f1: f32, f2: f32) -> i32 {
+        match unsafe { MPLIB_80056C54 } {
+            Some(f) => f(line_id, pos, line_id_out, vec_out, flags_out, normal_out, f1, f2),
+            None => { unsafe { melee_world::tu::mplib::mpLib_80056C54(line_id as _, pos as _, line_id_out as _, vec_out as _, flags_out as _, normal_out as _, f1 as _, f2 as _) as _ } },
+        }
+    }
 }
 
 /// `Collide_FloorMask` (mp/forward.h): `Collide_FloorPush | Collide_FloorHug`.

@@ -48,9 +48,30 @@ pub mod ext {
                     None => { unsafe { let _ = crate::tu::ftmasterhandslap::ftMh_MS_349_80151CA8(gobj as _); } return; },
                 }
             }
-    hook!(FTBOSSLIB_8015C244, ftBossLib_8015C244, (gobj: *mut HSD_GObj, pos: *const Vec3) -> *mut HSD_GObj);
-    hook!(FTLIB_800866DC, ftLib_800866DC, (gobj: *mut HSD_GObj, out: *mut Vec3));
-    hook!(MPFLOORGETLEFT, mpFloorGetLeft, (line: i32, out: *mut Vec3));
+    pub static mut FTBOSSLIB_8015C244: Option<fn(*mut HSD_GObj, *const Vec3) -> *mut HSD_GObj> = None;
+    #[allow(non_snake_case)]
+    pub fn ftBossLib_8015C244(gobj: *mut HSD_GObj, pos: *const Vec3) -> *mut HSD_GObj {
+        match unsafe { FTBOSSLIB_8015C244 } {
+            Some(f) => f(gobj, pos),
+            None => { unsafe { melee_fighter::tu::ftbosslib::ftBossLib_8015C244(gobj as _, &*(pos as *const _)) as _ } },
+        }
+    }
+    pub static mut FTLIB_800866DC: Option<fn(*mut HSD_GObj, *mut Vec3)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftLib_800866DC(gobj: *mut HSD_GObj, out: *mut Vec3) {
+        match unsafe { FTLIB_800866DC } {
+            Some(f) => f(gobj, out),
+            None => { unsafe { let _ = melee_fighter::ftlib::ftlib_800866dc(gobj as _, &mut *(out as *mut _)); } },
+        }
+    }
+    pub static mut MPFLOORGETLEFT: Option<fn(i32, *mut Vec3)> = None;
+    #[allow(non_snake_case)]
+    pub fn mpFloorGetLeft(line: i32, out: *mut Vec3) {
+        match unsafe { MPFLOORGETLEFT } {
+            Some(f) => f(line, out),
+            None => { unsafe { let _ = melee_world::tu::mplib::mpFloorGetLeft(line as _, out as _); } },
+        }
+    }
 }
 
 pub fn ftMh_WalkShoot_Anim(gobj: *mut HSD_GObj) {

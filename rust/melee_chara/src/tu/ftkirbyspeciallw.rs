@@ -50,12 +50,24 @@ pub mod ext {
     fn ft_get_ground_friction_multiplier_port(fp: *mut Fighter) -> f32 {
         melee_fighter::tu::ft_081b::ft_get_ground_friction_multiplier(unsafe { &mut *fp })
     }
-    hook!(MPCHECKALLREMAP, mpCheckAllRemap,
-        (pos_out: *mut Vec3, line_id_out: *mut i32, flags_out: *mut u32, normal_out: *mut Vec3,
-         joint_id_skip: i32, joint_id_only: i32, x0: f32, y0: f32, x1: f32, y1: f32) -> bool);
+    pub static mut MPCHECKALLREMAP: Option<fn(*mut Vec3, *mut i32, *mut u32, *mut Vec3, i32, i32, f32, f32, f32, f32) -> bool> = None;
+    #[allow(non_snake_case)]
+    pub fn mpCheckAllRemap(pos_out: *mut Vec3, line_id_out: *mut i32, flags_out: *mut u32, normal_out: *mut Vec3, joint_id_skip: i32, joint_id_only: i32, x0: f32, y0: f32, x1: f32, y1: f32) -> bool {
+        match unsafe { MPCHECKALLREMAP } {
+            Some(f) => f(pos_out, line_id_out, flags_out, normal_out, joint_id_skip, joint_id_only, x0, y0, x1, y1),
+            None => { unsafe { melee_world::tu::mplib::mpCheckAllRemap(pos_out as _, line_id_out as _, flags_out as _, normal_out as _, joint_id_skip as _, joint_id_only as _, x0 as _, y0 as _, x1 as _, y1 as _) != 0 } },
+        }
+    }
     hook!(FT_PLAYSFX, ft_PlaySFX, (fp: *mut Fighter, sfx: i32, vol: u8, pan: u8));
     hook!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, (kind: CmQuakeKind, pos: *mut Vec3));
-    hook!(EFLIB_DESTROYALL, efLib_DestroyAll, (gobj: *mut HSD_GObj));
+    pub static mut EFLIB_DESTROYALL: Option<fn(*mut HSD_GObj)> = None;
+    #[allow(non_snake_case)]
+    pub fn efLib_DestroyAll(gobj: *mut HSD_GObj) {
+        match unsafe { EFLIB_DESTROYALL } {
+            Some(f) => f(gobj),
+            None => { unsafe { let _ = melee_world::tu::eflib::efLib_DestroyAll(gobj as _); } },
+        }
+    }
     /// `efSync_Spawn(gfx_id, gobj, ...)` (variadic in C; `va` are the extra word arguments).
     pub static mut EFSYNC_SPAWN: Option<fn(i32, *mut HSD_GObj, &[usize]) -> *mut core::ffi::c_void> = None;
     pub fn efSync_Spawn(id: i32, gobj: *mut HSD_GObj, va: &[usize]) -> *mut core::ffi::c_void {

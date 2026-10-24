@@ -13,7 +13,14 @@ use crate::chars::r9::ftCrazyHand::ftcrazyhandfingerbeam::ftCh_Init_80158F34;
 
 pub mod ext {
     use melee_types::*;
-    crate::ch_hook!(FTCH_INIT_801592D4, ftCh_Init_801592D4, (gobj: *mut HSD_GObj));
+    pub static mut FTCH_INIT_801592D4: Option<fn(*mut HSD_GObj)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftCh_Init_801592D4(gobj: *mut HSD_GObj) {
+        match unsafe { FTCH_INIT_801592D4 } {
+            Some(f) => f(gobj),
+            None => { unsafe { let _ = crate::tu::ftcrazyhandbackairplane1::ftCh_Init_801592D4(gobj as _); } },
+        }
+    }
 }
 
 /// `ftCh_UpdateBossMotion` (ftCrazyHand/inlines.h, static inline).

@@ -51,7 +51,14 @@ pub mod ext {
                 }
             }
     hook!(FTCOLL_8007ABD0, ftColl_8007ABD0, (hit: *mut HitCapsule, damage: u32, gobj: *mut HSD_GObj));
-    hook!(FTCO_800BFFD0, ftCo_800BFFD0, (fp: *mut Fighter, a: u32, b: u32));
+    pub static mut FTCO_800BFFD0: Option<fn(*mut Fighter, u32, u32)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftCo_800BFFD0(fp: *mut Fighter, a: u32, b: u32) {
+        match unsafe { FTCO_800BFFD0 } {
+            Some(f) => f(fp, a, b),
+            None => { unsafe { let _ = melee_fighter::tu::ftcolanim::ftco_800bffd0(&mut *(fp as *mut _), a as _, b as _); } },
+        }
+    }
     pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *const Vec3, *mut Vec3) > = None;
             #[allow(non_snake_case)]
             pub fn lb_8000B1CC(jobj: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3)  {
@@ -60,8 +67,22 @@ pub mod ext {
                     None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, off as _, out as _); } return; },
                 }
             }
-    hook!(MPCOLL_80041EE4, mpColl_80041EE4, (coll: *mut CollData));
-    hook!(MPCOLL_8004730C, mpColl_8004730C, (coll: *mut CollData, ecb: *mut ftCollisionBox) -> i32);
+    pub static mut MPCOLL_80041EE4: Option<fn(*mut CollData)> = None;
+    #[allow(non_snake_case)]
+    pub fn mpColl_80041EE4(coll: *mut CollData) {
+        match unsafe { MPCOLL_80041EE4 } {
+            Some(f) => f(coll),
+            None => { unsafe { let _ = melee_world::tu::mpcoll::mpColl_80041EE4(coll as _); } },
+        }
+    }
+    pub static mut MPCOLL_8004730C: Option<fn(*mut CollData, *mut ftCollisionBox) -> i32> = None;
+    #[allow(non_snake_case)]
+    pub fn mpColl_8004730C(coll: *mut CollData, ecb: *mut ftCollisionBox) -> i32 {
+        match unsafe { MPCOLL_8004730C } {
+            Some(f) => f(coll, ecb),
+            None => { unsafe { melee_world::tu::mpcoll::mpColl_8004730C(coll as _, ecb as _) as _ } },
+        }
+    }
     pub static mut IT_802BFE5C: Option<fn(*mut HSD_GObj, *mut Vec3, f32) > = None;
             #[allow(non_snake_case)]
             pub fn it_802BFE5C(gobj: *mut HSD_GObj, vel: *mut Vec3, x: f32)  {

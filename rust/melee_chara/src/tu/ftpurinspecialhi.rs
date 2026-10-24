@@ -25,7 +25,14 @@ pub mod ext {
         };
     }
     hook!(GM_8016B1D8, gm_8016B1D8, () -> i32);
-    hook!(GRSTADIUM_801D4FF8, grStadium_801D4FF8, (player_id: i32) -> i32);
+    pub static mut GRSTADIUM_801D4FF8: Option<fn(i32) -> i32> = None;
+    #[allow(non_snake_case)]
+    pub fn grStadium_801D4FF8(player_id: i32) -> i32 {
+        match unsafe { GRSTADIUM_801D4FF8 } {
+            Some(f) => f(player_id),
+            None => { unsafe { melee_world::tu::grpstadium::grStadium_801D4FF8(player_id as _) as _ } },
+        }
+    }
     hook!(SCRIPTGAME_HITRULESPECIAL, ScriptGame_HitRuleSpecial, (hit: *mut HitCapsule));
 }
 

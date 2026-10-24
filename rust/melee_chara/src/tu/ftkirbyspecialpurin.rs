@@ -74,7 +74,14 @@ pub mod ext {
             }
     hook!(FTCOLL_8007AFF8, ftColl_8007AFF8, (g: G));
     hook!(FTCOLL_8007ABD0, ftColl_8007ABD0, (hit: *mut HitCapsule, damage: u32, g: G));
-    hook!(MPLIB_800569EC, mpLib_800569EC, (flags: u32) -> f32);
+    pub static mut MPLIB_800569EC: Option<fn(u32) -> f32> = None;
+    #[allow(non_snake_case)]
+    pub fn mpLib_800569EC(flags: u32) -> f32 {
+        match unsafe { MPLIB_800569EC } {
+            Some(f) => f(flags),
+            None => { unsafe { melee_world::tu::mplib::mpLib_800569EC(flags as _) as _ } },
+        }
+    }
     hook!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, (kind: CmQuakeKind, pos: *const Vec3));
     hook!(FT_800892A0, ft_800892A0, (g: G));
     hook_or!(FTPARTSETROTX, ftPartSetRotX, |fp: *mut Fighter, i, v| melee_fighter::tu::ftparts::ftPartSetRotX(unsafe { &*fp }, i, v), (fp: *mut Fighter, part_idx: i32, rot: f32));

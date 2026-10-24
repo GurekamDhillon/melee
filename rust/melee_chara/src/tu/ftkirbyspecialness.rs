@@ -58,7 +58,14 @@ pub mod ext {
                     None => { return unsafe { melee_items::tu::itnesspkflash::it_802AA7F0(item as _) as _ }; },
                 }
             }
-    hook!(FTPARTSETROTX, ftPartSetRotX, (fp: *mut Fighter, part_idx: i32, rot: f32));
+    pub static mut FTPARTSETROTX: Option<fn(*mut Fighter, i32, f32)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftPartSetRotX(fp: *mut Fighter, part_idx: i32, rot: f32) {
+        match unsafe { FTPARTSETROTX } {
+            Some(f) => f(fp, part_idx, rot),
+            None => { unsafe { let _ = melee_fighter::tu::ftparts::ftPartSetRotX(&*(fp as *const _), part_idx as _, rot as _); } },
+        }
+    }
 }
 
 const HSD_PAD_B_U: u32 = HSD_PAD_B as u32;

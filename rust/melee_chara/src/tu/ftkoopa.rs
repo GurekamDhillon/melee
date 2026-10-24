@@ -72,7 +72,14 @@ pub mod ext {
                     None => { unsafe { let _ = melee_fighter::tu::ftCo_Throw::ftCo_800DE2A8(gobj as _, vic as _); } return; },
                 }
             }
-    hook!(FTCO_800DE7C0, ftCo_800DE7C0, (gobj: *mut HSD_GObj, a: i32, b: i32));
+    pub static mut FTCO_800DE7C0: Option<fn(*mut HSD_GObj, i32, i32)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftCo_800DE7C0(gobj: *mut HSD_GObj, a: i32, b: i32) {
+        match unsafe { FTCO_800DE7C0 } {
+            Some(f) => f(gobj, a, b),
+            None => { unsafe { let _ = melee_fighter::tu::ftCo_Thrown::ftCo_800DE7C0(gobj as _, a as _, (b != 0)); } },
+        }
+    }
 }
 
 #[inline(always)]

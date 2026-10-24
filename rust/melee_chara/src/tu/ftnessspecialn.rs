@@ -77,7 +77,14 @@ pub mod ext {
                     None => { return unsafe { melee_items::tu::itnesspkflash::it_802AA7F0(item as _) as _ }; },
                 }
             }
-    hook!(FTPARTSETROTX, ftPartSetRotX, (fp: *mut Fighter, part: i32, v: f32));
+    pub static mut FTPARTSETROTX: Option<fn(*mut Fighter, i32, f32)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftPartSetRotX(fp: *mut Fighter, part: i32, v: f32) {
+        match unsafe { FTPARTSETROTX } {
+            Some(f) => f(fp, part, v),
+            None => { unsafe { let _ = melee_fighter::tu::ftparts::ftPartSetRotX(&*(fp as *const _), part as _, v as _); } },
+        }
+    }
 }
 
 /// `FTNESS_SPECIALN_COLL_FLAG`.

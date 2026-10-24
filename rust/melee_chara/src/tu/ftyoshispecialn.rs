@@ -57,7 +57,14 @@ pub mod ext {
     pub fn it_802F2BFC(item: *mut Item_GObj, owner: *mut HSD_GObj) {
         match unsafe { IT_802F2BFC } { Some(f) => f(item, owner), None => { unsafe { let _ = melee_items::tu::ityoshitongue::it_802F2BFC(item as _, owner as _); } return; } }
     }
-    hook!(IT_802F2CE0, it_802F2CE0, (item: *mut Item_GObj, clear_destroy_type: i32));
+    pub static mut IT_802F2CE0: Option<fn(*mut Item_GObj, i32)> = None;
+    #[allow(non_snake_case)]
+    pub fn it_802F2CE0(item: *mut Item_GObj, clear_destroy_type: i32) {
+        match unsafe { IT_802F2CE0 } {
+            Some(f) => f(item, clear_destroy_type),
+            None => { unsafe { let _ = melee_items::tu::ityoshitongue::it_802F2CE0(item as _, (clear_destroy_type != 0)); } },
+        }
+    }
     pub static mut IT_802F2F34: Option<fn(*mut HSD_GObj, *mut itYoshiEggLay_DatAttrs)> = None;
     #[allow(non_snake_case)]
     pub fn it_802F2F34(gobj: *mut HSD_GObj, attrs: *mut itYoshiEggLay_DatAttrs) {

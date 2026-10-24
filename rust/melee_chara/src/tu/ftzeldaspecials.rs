@@ -37,7 +37,14 @@ pub mod ext {
         };
     }
     // `efSync_Spawn(gfx_id, gobj, joint)` (ef/efsync.c, variadic; the port passes the one joint).
-    hook!(EFSYNC_SPAWN, efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, joint: *mut c_void) -> *mut c_void);
+    pub static mut EFSYNC_SPAWN: Option<fn(i32, *mut HSD_GObj, *mut c_void) -> *mut c_void> = None;
+    #[allow(non_snake_case)]
+    pub fn efSync_Spawn(gfx_id: i32, gobj: *mut HSD_GObj, joint: *mut c_void) -> *mut c_void {
+        match unsafe { EFSYNC_SPAWN } {
+            Some(f) => f(gfx_id, gobj, joint),
+            None => { unsafe { melee_world::tu::efsync::efSync_Spawn(gfx_id as _, gobj as _, &mut *(joint as *mut _)) as _ } },
+        }
+    }
     // `lb_8000B1CC(jobj, pos0, pos1)` (lb/lb_00B0.c).
     pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *const Vec3, *mut Vec3) > = None;
             #[allow(non_snake_case)]
@@ -66,7 +73,14 @@ pub mod ext {
                 }
             }
     // `ftPartSetRotX(fp, part_idx, rot)` (ft/ftparts.c): its port needs the unported JObj setter.
-    hook!(FTPARTSETROTX, ftPartSetRotX, (fp: *mut Fighter, part_idx: i32, rot: f32));
+    pub static mut FTPARTSETROTX: Option<fn(*mut Fighter, i32, f32)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftPartSetRotX(fp: *mut Fighter, part_idx: i32, rot: f32) {
+        match unsafe { FTPARTSETROTX } {
+            Some(f) => f(fp, part_idx, rot),
+            None => { unsafe { let _ = melee_fighter::tu::ftparts::ftPartSetRotX(&*(fp as *const _), part_idx as _, rot as _); } },
+        }
+    }
 }
 
 /// `ftZelda_DatAttrs` of a fighter (`fp->dat_attrs`).

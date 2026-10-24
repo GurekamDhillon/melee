@@ -76,7 +76,14 @@ pub mod ext {
     pub fn lb_8000FD48(a0: *mut HSD_JObj, a1: *mut DynamicsDesc, a2: u32) {
         match unsafe { LB_8000FD48 } { Some(f) => f(a0, a1, a2), None => { unsafe { let _ = melee_runtime::tu::lb_00F9::lb_8000FD48(a0 as _, a1 as _, a2 as _); } return; } }
     }
-    hook!(LB_8001044C, lb_8001044C, (a0: *mut DynamicsDesc, a1: *mut c_void, a2: i32, pos_y: f32, a4: i32, part: Fighter_Part, a6: i32, a7: i32));
+    pub static mut LB_8001044C: Option<fn(*mut DynamicsDesc, *mut c_void, i32, f32, i32, Fighter_Part, i32, i32)> = None;
+    #[allow(non_snake_case)]
+    pub fn lb_8001044C(a0: *mut DynamicsDesc, a1: *mut c_void, a2: i32, pos_y: f32, a4: i32, part: Fighter_Part, a6: i32, a7: i32) {
+        match unsafe { LB_8001044C } {
+            Some(f) => f(a0, a1, a2, pos_y, a4, part, a6, a7),
+            None => { unsafe { let _ = melee_runtime::tu::lb_00F9::lb_8001044C(a0 as _, a1 as _, a2 as _, pos_y as _, (a4 != 0), part, a6 as _, (a7 != 0)); } },
+        }
+    }
     pub static mut LB_80011710: Option<fn(*mut DynamicsDesc, *mut DynamicsDesc)> = None;
     #[allow(non_snake_case)]
     pub fn lb_80011710(a0: *mut DynamicsDesc, a1: *mut DynamicsDesc) {

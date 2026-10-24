@@ -64,7 +64,14 @@ pub mod ext {
                     None => { return unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023F28(a0 as _) as _ }; },
                 }
             }
-    hook!(H_lbAudioAx_80024E50, lbAudioAx_80024E50, (a0: i32));
+    pub static mut H_lbAudioAx_80024E50: Option<fn(i32)> = None;
+    #[allow(non_snake_case)]
+    pub fn lbAudioAx_80024E50(a0: i32) {
+        match unsafe { H_lbAudioAx_80024E50 } {
+            Some(f) => f(a0),
+            None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80024E50((a0 != 0)); } },
+        }
+    }
     pub static mut H_lbMthp_8001F410: Option<unsafe extern "C" fn(*const i8, *mut u32, *mut core::ffi::c_void, u32, i32) > = None;
             pub unsafe extern "C" fn lbMthp_8001F410(a0: *const i8, a1: *mut u32, a2: *mut core::ffi::c_void, a3: u32, a4: i32)  {
                 match H_lbMthp_8001F410 {

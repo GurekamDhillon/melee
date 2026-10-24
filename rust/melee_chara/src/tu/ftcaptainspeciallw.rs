@@ -44,7 +44,14 @@ pub mod ext {
         };
     }
     hook!(EFASYNC_SPAWN, efAsync_Spawn, (gobj: *mut HSD_GObj, q: *mut core::ffi::c_void, kind: u32, gfx: u32, jobj: *mut HSD_JObj, angle: *const f32));
-    hook!(FTCOMMON_8007E5AC, ftCommon_8007E5AC, (fp: *mut Fighter));
+    pub static mut FTCOMMON_8007E5AC: Option<fn(*mut Fighter)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftCommon_8007E5AC(fp: *mut Fighter) {
+        match unsafe { FTCOMMON_8007E5AC } {
+            Some(f) => f(fp),
+            None => { unsafe { let _ = melee_fighter::tu::ftcommon::ftcommon_8007e5ac(&mut *(fp as *mut _)); } },
+        }
+    }
 
     pub static mut FTPARTSETROTZ: Option<fn(*mut Fighter, i32, f32)> = None;
     pub fn ftPartSetRotZ(fp: *mut Fighter, part: i32, v: f32) {

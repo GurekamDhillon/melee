@@ -77,7 +77,14 @@ pub mod ext {
     type G = *mut HSD_GObj;
     pub use crate::tu::ftcaptainspecialn::ext::{efSync_Spawn, EFSYNC_SPAWN};
     // Unported TUs.
-    hook!(MPUPDATEFLOORSKIP, mpUpdateFloorSkip, (coll: *mut CollData));
+    pub static mut MPUPDATEFLOORSKIP: Option<fn(*mut CollData)> = None;
+    #[allow(non_snake_case)]
+    pub fn mpUpdateFloorSkip(coll: *mut CollData) {
+        match unsafe { MPUPDATEFLOORSKIP } {
+            Some(f) => f(coll),
+            None => { unsafe { let _ = melee_world::tu::mpcoll::mpUpdateFloorSkip(coll as _); } },
+        }
+    }
     hook!(HSD_RANDI, HSD_Randi, (n: i32) -> i32);
     pub static mut KB_800F19AC: Option<fn(G) > = None;
             #[allow(non_snake_case)]
@@ -153,7 +160,14 @@ pub mod ext {
                 }
             }
     hook!(LBANIM_8001E8F8, lbAnim_8001E8F8, (tree: *mut FigaTree) -> f32);
-    hook!(LB_8000B1CC, lb_8000B1CC, (joint: *mut c_void, off: *const Vec3, out: *mut Vec3));
+    pub static mut LB_8000B1CC: Option<fn(*mut c_void, *const Vec3, *mut Vec3)> = None;
+    #[allow(non_snake_case)]
+    pub fn lb_8000B1CC(joint: *mut c_void, off: *const Vec3, out: *mut Vec3) {
+        match unsafe { LB_8000B1CC } {
+            Some(f) => f(joint, off, out),
+            None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(joint as _, off as _, out as _); } },
+        }
+    }
     // `efAsync_Spawn(gobj, queue, kind, gfx_id, ...)` (ef/efasync.c, variadic): trailing pointers.
     hook!(EFASYNC_SPAWN, efAsync_Spawn, (gobj: G, queue: *mut c_void, kind: u32, gfx_id: u32, args: &[*mut c_void]));
     // Ported TUs (default = the port).

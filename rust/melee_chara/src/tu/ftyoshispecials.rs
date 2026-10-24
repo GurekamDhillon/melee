@@ -110,7 +110,14 @@ pub mod ext {
         match unsafe { FTCO_80096900 } { Some(f) => f(gobj, a, b, allow_interrupt, mobility, landing_lag), None => { unsafe { let _ = melee_fighter::tu::ftCo_FallSpecial::ftCo_80096900(gobj as _, a as _, b as _, allow_interrupt as _, mobility as _, landing_lag as _); } return; } }
     }
     hook!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, (kind: i32, pos: *mut Vec3));
-    hook!(MPLIB_800569EC, mpLib_800569EC, (flags: u32) -> f32);
+    pub static mut MPLIB_800569EC: Option<fn(u32) -> f32> = None;
+    #[allow(non_snake_case)]
+    pub fn mpLib_800569EC(flags: u32) -> f32 {
+        match unsafe { MPLIB_800569EC } {
+            Some(f) => f(flags),
+            None => { unsafe { melee_world::tu::mplib::mpLib_800569EC(flags as _) as _ } },
+        }
+    }
     hook_or!(ATAN2F, atan2f, (y: f32, x: f32) -> f32, melee_runtime::lbtrigf::atan2f);
 }
 

@@ -186,3 +186,67 @@ pub unsafe fn HSD_ArchiveGetPublicAddress(archive: *mut HSD_Archive, name: &str)
     buf.push(0);
     melee_runtime::tu::archive::HSD_ArchiveGetPublicAddress(archive, buf.as_ptr())
 }
+
+// ---- HSD baselib on raw pointers --------------------------------------------------------------
+
+pub unsafe fn HSD_Randi(max: i32) -> i32 {
+    melee_runtime::tu::random::HSD_Randi_global(max)
+}
+pub unsafe fn HSD_Randf() -> f32 {
+    melee_runtime::tu::random::HSD_Randf_global()
+}
+pub unsafe fn HSD_JObjSetMtxDirtySub(jobj: *mut HSD_JObj) {
+    melee_runtime::tu::jobj_ptr::HSD_JObjSetMtxDirtySub(jobj)
+}
+pub unsafe fn HSD_JObjGetDObj(jobj: *mut HSD_JObj) -> *mut HSD_DObj {
+    melee_runtime::tu::jobj_ptr::HSD_JObjGetDObj(jobj)
+}
+pub unsafe fn HSD_JObjAddDObj(jobj: *mut HSD_JObj, dobj: *mut HSD_DObj) {
+    melee_runtime::tu::jobj_ptr::HSD_JObjAddDObj(jobj, dobj)
+}
+pub unsafe fn HSD_JObjSetFlagsAll(jobj: *mut HSD_JObj, flags: u32) {
+    melee_runtime::tu::jobj_ptr::HSD_JObjSetFlagsAll(jobj, flags)
+}
+pub unsafe fn HSD_JObjClearFlagsAll(jobj: *mut HSD_JObj, flags: u32) {
+    melee_runtime::tu::jobj_ptr::HSD_JObjClearFlagsAll(jobj, flags)
+}
+pub unsafe fn HSD_JObjRemoveAll(jobj: *mut HSD_JObj) {
+    melee_runtime::tu::jobj::HSD_JObjRemoveAll_ptr(jobj)
+}
+pub unsafe fn HSD_JObjAnimAll(jobj: *mut HSD_JObj) {
+    melee_runtime::tu::jobj_ptr::HSD_JObjAnimAll(jobj)
+}
+pub unsafe fn HSD_JObjReqAnimAll(jobj: *mut HSD_JObj, frame: f32) {
+    melee_runtime::tu::jobj_ptr::HSD_JObjReqAnimAll(jobj, frame)
+}
+pub unsafe fn HSD_JObjAddAnimAll(jobj: *mut HSD_JObj, anim: *mut HSD_AnimJoint, mat: *mut HSD_MatAnimJoint, shape: *mut HSD_ShapeAnimJoint) {
+    melee_runtime::tu::jobj_ptr::HSD_JObjAddAnimAll(jobj, anim, mat, shape)
+}
+/// The stub's `(jobj, mtx, rmode, flags)` names are the C's `(jobj, vmtx, flags, rendermode)` by position.
+pub unsafe fn HSD_JObjDispAll(jobj: *mut HSD_JObj, mtx: MtxPtr, flags: u32, rendermode: u32) {
+    melee_runtime::tu::jobj::HSD_JObjDispAll(jobj, &*(mtx as *const Mtx), flags, rendermode)
+}
+pub unsafe fn HSD_JObjSetTranslate(jobj: *mut HSD_JObj, v: *const Vec3) {
+    melee_runtime::tu::jobj_ptr::HSD_JObjSetTranslate(jobj, v)
+}
+pub unsafe fn HSD_JObjSetRotationZ(jobj: *mut HSD_JObj, z: f32) {
+    melee_runtime::tu::jobj_ptr::HSD_JObjSetRotationZ(jobj, z)
+}
+pub unsafe fn HSD_JObjGetMtxPtr(jobj: *mut HSD_JObj) -> MtxPtr {
+    melee_runtime::tu::jobj_ptr::HSD_JObjGetMtxPtr(jobj) as MtxPtr
+}
+pub unsafe fn HSD_JObjCopyMtx(jobj: *mut HSD_JObj, mtx: MtxPtr) {
+    melee_runtime::tu::jobj_ptr::HSD_JObjCopyMtx(jobj, mtx as *const c_void)
+}
+pub unsafe fn HSD_DObjAddAnimAll(dobj: *mut HSD_DObj, matanim: *mut c_void, aobj: *mut c_void) {
+    melee_runtime::tu::dobj::hsd::HSD_DObjAddAnimAll(dobj, matanim as *mut HSD_MatAnim, aobj as *mut HSD_ShapeAnimDObj)
+}
+pub unsafe fn HSD_DObjLoadDesc(desc: *mut HSD_DObjDesc) -> *mut HSD_DObj {
+    melee_runtime::tu::dobj::hsd::HSD_DObjLoadDesc(desc)
+}
+pub unsafe fn HSD_DObjRemoveAll(dobj: *mut HSD_DObj) {
+    melee_runtime::tu::dobj::hsd::HSD_DObjRemoveAll(dobj)
+}
+pub unsafe fn HSD_DObjResolveRefsAll(dobj: *mut HSD_DObj, desc: *mut HSD_DObjDesc) {
+    melee_runtime::tu::dobj::hsd::HSD_DObjResolveRefsAll(dobj, desc)
+}

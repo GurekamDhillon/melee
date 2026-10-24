@@ -76,6 +76,7 @@ pub mod list;
 pub mod initialize;
 pub mod leak;
 pub mod jobj;
+pub mod jobj_ptr;
 pub mod hsd_3B34;
 pub mod hsd_3B5C;
 pub mod memory;

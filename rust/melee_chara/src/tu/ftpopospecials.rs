@@ -97,9 +97,9 @@ pub mod ext {
             None => { unsafe { melee_world::tu::grinl::HSD_JObjGetNext(jobj as _) as _ } },
         }
     }
-    hook!(HSD_JOBJCLEARFLAGSALL, HSD_JObjClearFlagsAll, (jobj: *mut HSD_JObj, flags: u32));
-    hook!(HSD_JOBJSETFLAGSALL, HSD_JObjSetFlagsAll, (jobj: *mut HSD_JObj, flags: u32));
-    hook!(HSD_JOBJSETROTATIONZ, HSD_JObjSetRotationZ, (jobj: *mut HSD_JObj, z: f32));
+    crate::port_hook!(HSD_JOBJCLEARFLAGSALL, HSD_JObjClearFlagsAll, crate::adapt::HSD_JObjClearFlagsAll, (jobj: *mut HSD_JObj, flags: u32));
+    crate::port_hook!(HSD_JOBJSETFLAGSALL, HSD_JObjSetFlagsAll, crate::adapt::HSD_JObjSetFlagsAll, (jobj: *mut HSD_JObj, flags: u32));
+    crate::port_hook!(HSD_JOBJSETROTATIONZ, HSD_JObjSetRotationZ, crate::adapt::HSD_JObjSetRotationZ, (jobj: *mut HSD_JObj, z: f32));
 
     /// Recording hook; unset, the native `melee_fighter::tu::ftparts` port runs.
     pub static mut FTPARTSETROTX: Option<fn(*mut Fighter, i32, f32)> = None;

@@ -57,9 +57,9 @@ pub mod ext {
                     None => { return unsafe { crate::tu::ftkirbyspecialn::ftKb_KirbyFtData() as _ }; },
                 }
             }
-    hook!(HSD_JOBJADDANIMALL, HSD_JObjAddAnimAll, (jobj: *mut HSD_JObj, anim: *mut HSD_AnimJoint, mat: *mut HSD_MatAnimJoint, shape: *mut HSD_ShapeAnimJoint));
-    hook!(HSD_JOBJREQANIMALL, HSD_JObjReqAnimAll, (jobj: *mut HSD_JObj, frame: f32));
-    hook!(HSD_JOBJANIMALL, HSD_JObjAnimAll, (jobj: *mut HSD_JObj));
+    crate::port_hook!(HSD_JOBJADDANIMALL, HSD_JObjAddAnimAll, crate::adapt::HSD_JObjAddAnimAll, (jobj: *mut HSD_JObj, anim: *mut HSD_AnimJoint, mat: *mut HSD_MatAnimJoint, shape: *mut HSD_ShapeAnimJoint));
+    crate::port_hook!(HSD_JOBJREQANIMALL, HSD_JObjReqAnimAll, crate::adapt::HSD_JObjReqAnimAll, (jobj: *mut HSD_JObj, frame: f32));
+    crate::port_hook!(HSD_JOBJANIMALL, HSD_JObjAnimAll, crate::adapt::HSD_JObjAnimAll, (jobj: *mut HSD_JObj));
     pub static mut LB_8000BA0C: Option<fn(*mut HSD_JObj, f32) > = None;
             #[allow(non_snake_case)]
             pub fn lb_8000BA0C(jobj: *mut HSD_JObj, frame: f32)  {

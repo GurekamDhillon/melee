@@ -27,7 +27,7 @@ pub mod ext {
         };
     }
     // baselib/random.c
-    hook!(HSD_RANDI, HSD_Randi, (max: i32) -> i32);
+    crate::port_hook!(HSD_RANDI, HSD_Randi, crate::adapt::HSD_Randi, (max: i32) -> i32);
     // itgamewatchchef.c
     pub static mut IT_802C837C: Option<fn(*mut HSD_GObj, *const Vec3, i32, i32, f32) > = None;
             #[allow(non_snake_case)]

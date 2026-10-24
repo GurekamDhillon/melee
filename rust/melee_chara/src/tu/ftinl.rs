@@ -32,7 +32,7 @@ pub mod ext {
         |fp: *mut Fighter| unsafe { melee_fighter::ftcommon2::ftcommon_8007d5d4(&mut *fp) });
     hook_or!(FTCOMMON_8007D7FC, ftCommon_8007D7FC, (fp: *mut Fighter),
         |fp: *mut Fighter| unsafe { melee_fighter::ftcommon3::ftcommon_8007d7fc(&mut *fp) });
-    hook!(HSD_JOBJSETMTXDIRTYSUB, HSD_JObjSetMtxDirtySub, (jobj: *mut HSD_JObj));
+    crate::port_hook!(HSD_JOBJSETMTXDIRTYSUB, HSD_JObjSetMtxDirtySub, crate::adapt::HSD_JObjSetMtxDirtySub, (jobj: *mut HSD_JObj));
     // The ft/ callees shared by the ftYoshi / ftZelda TUs; each TU's `ext` re-exports the ones it calls.
     pub static mut FTANIM_8006EBA4: Option<fn(*mut HSD_GObj)> = None;
     #[allow(non_snake_case)]

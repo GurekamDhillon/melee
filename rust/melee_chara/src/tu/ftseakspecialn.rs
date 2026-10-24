@@ -44,7 +44,7 @@ pub mod ext {
             }
         };
     }
-    hook!(HSD_RANDI, HSD_Randi, (max: i32) -> i32);
+    crate::port_hook!(HSD_RANDI, HSD_Randi, crate::adapt::HSD_Randi, (max: i32) -> i32);
     pub static mut FTCO_800BFFD0: Option<fn(*mut Fighter, i32, i32)> = None;
     #[allow(non_snake_case)]
     pub fn ftCo_800BFFD0(fp: *mut Fighter, a: i32, b: i32) {

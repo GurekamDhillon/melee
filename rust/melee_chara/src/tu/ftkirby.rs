@@ -89,7 +89,7 @@ pub mod ext {
             }
     crate::port_hook!(PLAYER_80031DC8, Player_80031DC8, crate::adapt::Player_80031DC8, (cb: fn(i32, i32)));
     // baselib
-    hook!(HSD_RANDI, HSD_Randi, (max: i32) -> i32);
+    crate::port_hook!(HSD_RANDI, HSD_Randi, crate::adapt::HSD_Randi, (max: i32) -> i32);
     pub static mut HSD_IDINSERTTOTABLE: Option<fn(*mut c_void, *mut c_void, *mut HSD_JObj) > = None;
             #[allow(non_snake_case)]
             pub fn HSD_IDInsertToTable(table: *mut c_void, key: *mut c_void, value: *mut HSD_JObj)  {
@@ -98,15 +98,15 @@ pub mod ext {
                     None => { unsafe { let _ = melee_runtime::tu::id::HSD_IDInsertToTable(table as _, key as _, value as _); } return; },
                 }
             }
-    hook!(HSD_DOBJLOADDESC, HSD_DObjLoadDesc, (desc: *mut HSD_DObjDesc) -> *mut HSD_DObj);
+    crate::port_hook!(HSD_DOBJLOADDESC, HSD_DObjLoadDesc, crate::adapt::HSD_DObjLoadDesc, (desc: *mut HSD_DObjDesc) -> *mut HSD_DObj);
 
-    hook!(HSD_JOBJGETDOBJ, HSD_JObjGetDObj, (jobj: *mut HSD_JObj) -> *mut HSD_DObj);
-    hook!(HSD_DOBJRESOLVEREFSALL, HSD_DObjResolveRefsAll, (dobj: *mut HSD_DObj, desc: *mut HSD_DObjDesc));
+    crate::port_hook!(HSD_JOBJGETDOBJ, HSD_JObjGetDObj, crate::adapt::HSD_JObjGetDObj, (jobj: *mut HSD_JObj) -> *mut HSD_DObj);
+    crate::port_hook!(HSD_DOBJRESOLVEREFSALL, HSD_DObjResolveRefsAll, crate::adapt::HSD_DObjResolveRefsAll, (dobj: *mut HSD_DObj, desc: *mut HSD_DObjDesc));
 
-    hook!(HSD_JOBJADDDOBJ, HSD_JObjAddDObj, (jobj: *mut HSD_JObj, dobj: *mut HSD_DObj));
-    hook!(HSD_DOBJADDANIMALL, HSD_DObjAddAnimAll, (dobj: *mut HSD_DObj, matanim: *mut c_void, aobj: *mut c_void));
+    crate::port_hook!(HSD_JOBJADDDOBJ, HSD_JObjAddDObj, crate::adapt::HSD_JObjAddDObj, (jobj: *mut HSD_JObj, dobj: *mut HSD_DObj));
+    crate::port_hook!(HSD_DOBJADDANIMALL, HSD_DObjAddAnimAll, crate::adapt::HSD_DObjAddAnimAll, (dobj: *mut HSD_DObj, matanim: *mut c_void, aobj: *mut c_void));
 
-    hook!(HSD_DOBJREMOVEALL, HSD_DObjRemoveAll, (dobj: *mut HSD_DObj));
+    crate::port_hook!(HSD_DOBJREMOVEALL, HSD_DObjRemoveAll, crate::adapt::HSD_DObjRemoveAll, (dobj: *mut HSD_DObj));
 
     // `hsdChangeClass(mobj, &ftMObj)`.
     hook!(HSDCHANGECLASS_FTMOBJ, hsdChangeClass_ftMObj, (mobj: *mut HSD_MObj));
@@ -118,9 +118,9 @@ pub mod ext {
                     None => { return unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(joint as _) as _ }; },
                 }
             }
-    hook!(HSD_JOBJREMOVEALL, HSD_JObjRemoveAll, (jobj: *mut HSD_JObj));
-    hook!(HSD_JOBJGETMTXPTR, HSD_JObjGetMtxPtr, (jobj: *mut HSD_JObj) -> MtxPtr);
-    hook!(HSD_JOBJCOPYMTX, HSD_JObjCopyMtx, (jobj: *mut HSD_JObj, mtx: MtxPtr));
+    crate::port_hook!(HSD_JOBJREMOVEALL, HSD_JObjRemoveAll, crate::adapt::HSD_JObjRemoveAll, (jobj: *mut HSD_JObj));
+    crate::port_hook!(HSD_JOBJGETMTXPTR, HSD_JObjGetMtxPtr, crate::adapt::HSD_JObjGetMtxPtr, (jobj: *mut HSD_JObj) -> MtxPtr);
+    crate::port_hook!(HSD_JOBJCOPYMTX, HSD_JObjCopyMtx, crate::adapt::HSD_JObjCopyMtx, (jobj: *mut HSD_JObj, mtx: MtxPtr));
     pub static mut HSD_JOBJSETMTXDIRTY: Option<fn(*mut HSD_JObj) > = None;
             #[allow(non_snake_case)]
             pub fn HSD_JObjSetMtxDirty(jobj: *mut HSD_JObj)  {
@@ -129,7 +129,7 @@ pub mod ext {
                     None => { unsafe { let _ = crate::tu::ftinl::HSD_JObjSetMtxDirty(jobj as _); } return; },
                 }
             }
-    hook!(HSD_JOBJDISPALL, HSD_JObjDispAll, (jobj: *mut HSD_JObj, mtx: MtxPtr, rmode: u32, flags: u32));
+    crate::port_hook!(HSD_JOBJDISPALL, HSD_JObjDispAll, crate::adapt::HSD_JObjDispAll, (jobj: *mut HSD_JObj, mtx: MtxPtr, rmode: u32, flags: u32));
     pub static mut HSD_GOBJ_80390EB8: Option<fn(i32) -> u32> = None;
             #[allow(non_snake_case)]
             pub fn HSD_GObj_80390EB8(arg: i32) -> u32 {

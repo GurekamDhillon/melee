@@ -85,7 +85,7 @@ pub mod ext {
             None => { unsafe { let _ = melee_world::tu::mpcoll::mpUpdateFloorSkip(coll as _); } },
         }
     }
-    hook!(HSD_RANDI, HSD_Randi, (n: i32) -> i32);
+    crate::port_hook!(HSD_RANDI, HSD_Randi, crate::adapt::HSD_Randi, (n: i32) -> i32);
     pub static mut KB_800F19AC: Option<fn(G) > = None;
             #[allow(non_snake_case)]
             pub fn ftKb_SpecialN_800F19AC(g: G)  {

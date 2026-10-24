@@ -42,7 +42,7 @@ pub mod ext {
             }
         };
     }
-    hook!(HSD_RANDI, HSD_Randi, (max: i32) -> i32);
+    crate::port_hook!(HSD_RANDI, HSD_Randi, crate::adapt::HSD_Randi, (max: i32) -> i32);
     hook_or!(FTCOMMON_8007F5CC, ftCommon_8007F5CC, melee_fighter::ftcommon3::ftcommon_8007f5cc,
         (gobj: *mut HSD_GObj, arg1: i32));
     hook_or!(FT_GETGROUNDFRICTIONMULTIPLIER, ft_GetGroundFrictionMultiplier,

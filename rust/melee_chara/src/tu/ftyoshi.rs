@@ -62,7 +62,7 @@ pub mod ext {
     }
     // rp3-end
 
-    hook!(HSD_JOBJSETTRANSLATE, HSD_JObjSetTranslate, (jobj: *mut HSD_JObj, v: *const Vec3));
+    crate::port_hook!(HSD_JOBJSETTRANSLATE, HSD_JObjSetTranslate, crate::adapt::HSD_JObjSetTranslate, (jobj: *mut HSD_JObj, v: *const Vec3));
 
     pub static mut IT_8026B3F8: Option<fn(*mut core::ffi::c_void, i32) > = None;
             #[allow(non_snake_case)]

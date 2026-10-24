@@ -67,7 +67,7 @@ pub mod ext {
                     None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, off as _, out as _); } return; },
                 }
             }
-    hook!(HSD_RANDF, HSD_Randf, () -> f32);
+    crate::port_hook!(HSD_RANDF, HSD_Randf, crate::adapt::HSD_Randf, () -> f32);
     pub static mut HSD_JOBJSETSCALE: Option<fn(*mut HSD_JObj, *const Vec3) > = None;
             #[allow(non_snake_case)]
             pub fn HSD_JObjSetScale(jobj: *mut HSD_JObj, scale: *const Vec3)  {

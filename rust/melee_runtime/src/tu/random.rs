@@ -44,3 +44,17 @@ pub fn _HSD_RandForgetMemory(
 pub fn randi(state: &mut HsdRand, max_val: i32) -> i32 {
     state.randi_safe(max_val)
 }
+
+/// random.c's file statics (`seed`, `HSD_RandSeedPtr`, the render stream) as the one global the C
+/// has, for callers that draw through the C name (`HSD_Randi(max)` with no state argument).
+/// Single-threaded game state, like the C globals.
+pub static mut GLOBAL: HsdRand = HsdRand { seed: 1, seed_ptr: SeedSlot::Default, render_seed: 0, render_depth: 0, trace: None };
+
+/// `HSD_Randi(max)` over [`GLOBAL`].
+pub unsafe fn HSD_Randi_global(max_val: i32) -> i32 {
+    HSD_Randi(&mut *(&raw mut GLOBAL), max_val)
+}
+/// `HSD_Randf()` over [`GLOBAL`].
+pub unsafe fn HSD_Randf_global() -> f32 {
+    HSD_Randf(&mut *(&raw mut GLOBAL))
+}

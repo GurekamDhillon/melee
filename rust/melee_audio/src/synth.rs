@@ -307,6 +307,11 @@ impl Sound {
 
     /// HSD_Synth_80389334: start SSM sound `sfx_id` on one or two voices; the node handle or -1.
     #[allow(clippy::too_many_arguments)]
+    /// Whether sound `sfx_id` is in a loaded bank.
+    pub fn has_sfx(&self, sfx_id: i32) -> bool {
+        self.data_hash[(sfx_id & 0x1F) as usize].iter().any(|e| e.id == sfx_id)
+    }
+
     pub(crate) fn synth_play(
         &mut self,
         sfx_id: i32,

@@ -12,6 +12,16 @@
 #include <dolphin/os.h>
 
 #if defined(TARGET_PC)
+/* Audio call trace (pc/platform/shim_ax.c ax_trace, MELEE_AUDIO_TRACE): the game-facing calls with the
+ * 5 ms sub-frame they came at, for replaying a match into the Rust synth. Scalars/strings only. */
+extern void ax_trace(const char* op, int a, int b, int c, int d, int e);
+extern void ax_trace_str(const char* op, const char* s, int a, int b);
+#define GW_ATRACE(op, a, b, c, d, e) ax_trace((op), (int) (a), (int) (b), (int) (c), (int) (d), (int) (e))
+#else
+#define GW_ATRACE(op, a, b, c, d, e) ((void) 0)
+#endif
+
+#if defined(TARGET_PC)
 /* The Geno Lab's rewind (pc/platform/gw_script.c, LabAudio_*): what the voice pool tells the game
  * (is a sound still playing, did a key-off find its voice, ...) is not in any snapshot, so a frame
  * being replayed gets the answers the frame got when it first ran. The real functions are renamed
@@ -106,6 +116,7 @@ static bool AXDriverKeyOff(HSD_SM* v)
 
 bool HSD_AudioSFXKeyOff(int vid)
 {
+    GW_ATRACE("KO", vid, 0, 0, 0, 0);
     bool result;
     int idx;
     HSD_SM* v;
@@ -137,6 +148,7 @@ bool HSD_AudioSFXKeyOff(int vid)
 
 void HSD_AudioSFXKeyOffAll(void)
 {
+    GW_ATRACE("KOALL", 0, 0, 0, 0, 0);
     bool enabled = OSDisableInterrupts();
     HSD_SM* v = AXDriver_804D7794;
     PAD_STACK(8);
@@ -154,6 +166,7 @@ void HSD_AudioSFXKeyOffAll(void)
 
 void HSD_AudioSFXKeyOffTrack(int track)
 {
+    GW_ATRACE("KOTRK", track, 0, 0, 0, 0);
     bool enabled = OSDisableInterrupts();
     HSD_SM* v = AXDriver_804D7794;
 
@@ -688,11 +701,14 @@ int HSD_AudioSFXStartParam(int sound_id, u8 volume, u8 pan, int track,
     AXDriver_804D77D0++;
     OSRestoreInterrupts(enabled);
 
+    GW_ATRACE("START", sound_id, volume, pan, track, channel);
+    GW_ATRACE("STARTRET", v->unk, 0, 0, 0, 0);
     return v->unk;
 }
 
 bool HSD_AudioSFXSetPan(int vid, u8 pan)
 {
+    GW_ATRACE("PAN", vid, pan, 0, 0, 0);
     int idx;
     bool enabled;
     HSD_SM* v;
@@ -720,6 +736,7 @@ bool HSD_AudioSFXSetPan(int vid, u8 pan)
 
 bool HSD_AudioSFXSetVolumeEx(s32 vid, u8 volume)
 {
+    GW_ATRACE("VOL", vid, volume, 0, 0, 0);
     HSD_SM* v;
     s32 idx;
     bool enabled;
@@ -748,6 +765,7 @@ bool HSD_AudioSFXSetVolumeEx(s32 vid, u8 volume)
 
 bool HSD_AudioSFXSetPitchFid(s32 vid, s16 pitch)
 {
+    GW_ATRACE("PITCH", vid, pitch, 0, 0, 0);
     HSD_SM* v;
     s32 idx;
     bool enabled;
@@ -771,6 +789,7 @@ bool HSD_AudioSFXSetPitchFid(s32 vid, s16 pitch)
 
 bool HSD_AudioSFXSetMix(s32 vid, s32 aux_bus, u8 send_level)
 {
+    GW_ATRACE("MIX", vid, aux_bus, send_level, 0, 0);
     HSD_SM* v;
     float right_vol;
     float left_vol;
@@ -827,6 +846,7 @@ bool HSD_AudioSFXSetMix(s32 vid, s32 aux_bus, u8 send_level)
 
 bool HSD_AudioSFXSetMixGroup(s32 channel, s32 aux_bus, s8 send_level)
 {
+    GW_ATRACE("MIXGRP", channel, aux_bus, send_level, 0, 0);
     bool enabled;
     HSD_SM* v;
 
@@ -840,7 +860,11 @@ bool HSD_AudioSFXSetMixGroup(s32 channel, s32 aux_bus, s8 send_level)
     v = AXDriver_804D7794;
     while (v != NULL) {
         if ((v->flags & SMSTATE_MASK) && v->itdflag == channel) {
+#if defined(TARGET_PC)
+            { extern void ax_trace_mute(int); ax_trace_mute(1); HSD_AudioSFXSetMix(v->unk, aux_bus, (u8) send_level); ax_trace_mute(0); }
+#else
             HSD_AudioSFXSetMix(v->unk, aux_bus, (u8) send_level);
+#endif
         }
         v = v->next;
     }
@@ -1291,6 +1315,7 @@ static bool PStreamPauseCh(int vid)
 
 bool HSD_AudioPStreamPauseCh(int channel)
 {
+    GW_ATRACE("PAUSE", channel, 0, 0, 0, 0);
     bool enabled;
     HSD_SM* v;
 
@@ -1337,6 +1362,7 @@ static bool PStreamResumeCh(int vid)
 
 bool HSD_AudioPStreamResumeCh(int channel)
 {
+    GW_ATRACE("RESUME", channel, 0, 0, 0, 0);
     bool enabled;
     HSD_SM* v;
 
@@ -1358,6 +1384,9 @@ bool HSD_AudioPStreamResumeCh(int channel)
 
 bool HSD_AudioPStreamStartChParam(const char* path, u8 volume, int track)
 {
+    #if defined(TARGET_PC)
+    ax_trace_str("PSTART", path, volume, track);
+#endif
     int entrynum = DVDConvertPathToEntrynum(path);
     if (AXDriver_804D6038 != -1) {
         HSD_SynthSFXKeyOff(AXDriver_804D6038);

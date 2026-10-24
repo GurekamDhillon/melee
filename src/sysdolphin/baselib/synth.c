@@ -1164,6 +1164,9 @@ static inline void updateAllVolume(u32 mask)
 
 void HSD_SynthSFXUpdateAllVolume(int vol, u16 fade_frames, int channel)
 {
+    #if defined(TARGET_PC)
+    { extern void ax_trace(const char*, int, int, int, int, int); ax_trace("UAV", vol, fade_frames, channel, 0, 0); }
+#endif
     voicelist_1784[channel].x1788 = 1 / 255.0F * vol;
     if (voicelist_1784[channel].x1784 != voicelist_1784[channel].x1788) {
         voicelist_1784[channel].x178C = fade_frames;
@@ -1520,6 +1523,9 @@ int HSD_SynthPStreamStart(int entrynum, u8 vol, u8 vol2, int channel)
 
 void HSD_SynthStreamSetVolume(f32 volume)
 {
+    #if defined(TARGET_PC)
+    { extern void ax_trace(const char*, int, int, int, int, int); union { f32 f; int i; } gw_u; gw_u.f = volume; ax_trace("SSV", gw_u.i, 0, 0, 0, 0); }
+#endif
     HSD_Synth_804D6030 = volume;
     AISetStreamVolLeft(HSD_Synth_804D6030 * (f32) HSD_Synth_804D777C);
     AISetStreamVolRight(HSD_Synth_804D6030 * (f32) HSD_Synth_804D777C);

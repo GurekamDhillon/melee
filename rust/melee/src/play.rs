@@ -216,6 +216,7 @@ pub struct Play {
     skip_intro: bool,
     quit: bool,
     pub failed: Option<String>,
+    audio: Option<crate::audio::Audio>,
 }
 
 fn log(msg: &str) {
@@ -225,8 +226,49 @@ fn log(msg: &str) {
 impl Play {
     fn goto(&mut self, s: Scene) {
         log(&format!("tick {}: {} -> {}", self.tick_no, self.scene.name(), s.name()));
+        self.audio_enter(s);
         self.scene = s;
         self.age = 0;
+    }
+
+    /// The scene's audio start (see audio.rs), before `self.scene` changes.
+    fn audio_enter(&mut self, s: Scene) {
+        let Some(a) = self.audio.as_ref() else { return };
+        let from = self.scene;
+        a.scene_start();
+        match s {
+            Scene::Opening => a.stop_music(),
+            Scene::Title => a.title(),
+            Scene::MainMenu | Scene::VsMenu => a.menu_music(),
+            Scene::Css => {
+                if from != Scene::Sss {
+                    a.css();
+                } else {
+                    a.menu_music();
+                }
+            }
+            Scene::Sss => a.menu_music(),
+            Scene::Loading => {}
+            Scene::Match => {
+                if let (Some(su), Some(m)) = (self.setup.as_ref(), self.m.as_ref()) {
+                    let ck = [crate::audio::ckind_of(ROSTER[su.fighters[0]].0), crate::audio::ckind_of(ROSTER[su.fighters[1]].0)];
+                    let (st, gr) = match STAGES[su.stage].0 {
+                        "GrNLa.dat" => (crate::vs_match::STKIND_FD, melee_types::Gr_Kind_Last),
+                        "GrNBa.dat" => (crate::vs_match::STKIND_BF, melee_types::Gr_Kind_Battle),
+                        "GrGr.dat" => (crate::vs_match::STKIND_GREENS, melee_types::Gr_Kind_Greens),
+                        _ => (crate::vs_match::STKIND_STORY, melee_types::Gr_Kind_Story),
+                    };
+                    a.match_start(&ck, st, gr as i32, m.sim.bgm);
+                }
+            }
+            Scene::Results => {
+                if from == Scene::Match {
+                    a.match_leave();
+                }
+                let w = self.outcome.winner.map(|w| crate::audio::ckind_of(self.m.as_ref().map_or("falcon", |m| m.setup_names[w])));
+                a.results(w);
+            }
+        }
     }
 
     fn any_trig(&self) -> u32 {
@@ -242,6 +284,9 @@ impl Play {
     }
 
     fn back_to_css(&mut self) {
+        if self.scene == Scene::Match {
+            if let Some(a) = &self.audio { a.match_leave() }
+        }
         self.m = None;
         self.pick = [None, None];
         self.cursor = [0, 1];
@@ -270,14 +315,17 @@ impl Play {
                 } else if trig & HSD_PAD_START != 0 {
                     // gmTitleMode onExit: START -> GM_MENU
                     self.main_sel = 1;
+                    if let Some(a) = &self.audio { a.title_start() }
                     self.goto(Scene::MainMenu);
                 }
             }
             Scene::MainMenu => {
                 if ny != 0 {
                     self.main_sel = (self.main_sel as i32 - ny).rem_euclid(MAIN_ITEMS.len() as i32) as usize;
+                    if let Some(a) = &self.audio { a.moved() }
                 }
                 if trig & HSD_PAD_A != 0 {
+                    if let Some(a) = &self.audio { if MAIN_ITEMS[self.main_sel].1 { a.forward() } else { a.denied() } }
                     if MAIN_ITEMS[self.main_sel].1 {
                         self.vs_sel = 0;
                         self.goto(Scene::VsMenu);
@@ -285,6 +333,7 @@ impl Play {
                         self.toast = Some((format!("{} IS NOT IN THE NATIVE PORT YET", MAIN_ITEMS[self.main_sel].0), 120));
                     }
                 } else if trig & HSD_PAD_B != 0 {
+                    if let Some(a) = &self.audio { a.back() }
                     self.title_count = 0;
                     self.goto(Scene::Title);
                 }
@@ -292,8 +341,10 @@ impl Play {
             Scene::VsMenu => {
                 if ny != 0 {
                     self.vs_sel = (self.vs_sel as i32 - ny).rem_euclid(VS_ITEMS.len() as i32) as usize;
+                    if let Some(a) = &self.audio { a.moved() }
                 }
                 if trig & HSD_PAD_A != 0 {
+                    if let Some(a) = &self.audio { if VS_ITEMS[self.vs_sel].1 { a.forward() } else { a.denied() } }
                     if VS_ITEMS[self.vs_sel].1 {
                         self.cursor = [0, 1];
                         self.pick = [None, None];
@@ -302,11 +353,15 @@ impl Play {
                         self.toast = Some((format!("{} IS NOT IN THE NATIVE PORT YET", VS_ITEMS[self.vs_sel].0), 120));
                     }
                 } else if trig & HSD_PAD_B != 0 {
+                    if let Some(a) = &self.audio { a.back() }
                     self.goto(Scene::MainMenu);
                 }
             }
             Scene::Css => self.tick_css(),
             Scene::Sss => {
+                if nx != 0 || ny != 0 {
+                    if let Some(a) = &self.audio { a.moved() }
+                }
                 if nx != 0 {
                     self.sss_sel = (self.sss_sel as i32 + nx).rem_euclid(STAGES.len() as i32) as usize;
                 }
@@ -314,9 +369,11 @@ impl Play {
                     self.sss_sel = (self.sss_sel + 2) % STAGES.len();
                 }
                 if trig & (HSD_PAD_A | HSD_PAD_START) != 0 {
+                    if let Some(a) = &self.audio { a.forward() }
                     self.setup = Some(MatchSetup { fighters: [self.pick[0].unwrap_or(0), self.pick[1].unwrap_or(1)], stage: self.sss_sel });
                     self.goto(Scene::Loading);
                 } else if trig & HSD_PAD_B != 0 {
+                    if let Some(a) = &self.audio { a.back() }
                     self.pick = [None, None];
                     self.goto(Scene::Css);
                 }
@@ -331,6 +388,9 @@ impl Play {
             Scene::Results => {
                 if self.quit_at_results && self.age >= 90 {
                     self.quit = true;
+                }
+                if trig & (HSD_PAD_A | HSD_PAD_START) != 0 {
+                    if let Some(a) = &self.audio { a.forward() }
                 }
                 if trig & HSD_PAD_A != 0 {
                     self.back_to_css();
@@ -363,18 +423,25 @@ impl Play {
             let (mut cx, mut cy) = ((*c as i32) % cols, (*c as i32) / cols);
             cx = (cx + src.nav_x).rem_euclid(cols);
             cy = (cy - src.nav_y).rem_euclid(rows);
+            let old = *c;
             *c = ((cy * cols + cx) as usize).min(ROSTER.len() - 1);
+            if *c != old {
+                if let Some(a) = &self.audio { a.moved() }
+            }
             if src.trig & HSD_PAD_A != 0 {
+                if let Some(a) = &self.audio { a.css_pick(crate::audio::ckind_of(ROSTER[*c].0), *c) }
                 self.pick[slot] = Some(*c);
                 log(&format!("css: slot {} picked {}", slot + 1, ROSTER[*c].0));
                 return;
             }
         } else if src.trig & (HSD_PAD_START | HSD_PAD_A) != 0 {
+            if let Some(a) = &self.audio { a.forward() }
             self.sss_sel = 0;
             self.goto(Scene::Sss);
             return;
         }
         if src.trig & HSD_PAD_B != 0 {
+            if let Some(a) = &self.audio { a.back() }
             if self.pick[1].is_some() {
                 self.pick[1] = None;
             } else if self.pick[0].is_some() {
@@ -422,10 +489,12 @@ impl Play {
         match (m.paused, pauser) {
             (None, Some(p)) if m.end_timer.is_none() && m.sim.go_reached() => {
                 m.paused = Some(p);
+                if let Some(a) = &self.audio { a.pause(true) }
                 log(&format!("paused by port {}", p + 1));
             }
             (Some(q), Some(p)) if q == p => {
                 m.paused = None;
+                if let Some(a) = &self.audio { a.pause(false) }
                 log("resumed");
             }
             _ => {}
@@ -464,12 +533,17 @@ impl Play {
         let alive = m.sim.step();
         if alive {
             m.mr.step(&mut m.sim);
+            if let Some(a) = &self.audio {
+                a.match_frame(m.sim.frame, m.sim.go_frame_for_hud(), self.time_secs);
+            }
         }
         if !alive {
             log(&format!("simulation halted: {:?}", m.sim.stopped));
+            if let Some(a) = &self.audio { a.match_end_call(false) }
             m.end_timer = Some(0);
         } else if m.sim.frame >= self.time_secs * 60 {
             log("time up: GameSet");
+            if let Some(a) = &self.audio { a.match_end_call(true) }
             m.end_timer = Some(0);
         }
     }
@@ -716,6 +790,9 @@ impl Game for Play {
         self.tick_no += 1;
         self.age += 1;
         self.tick_scene();
+        if let Some(a) = self.audio.as_mut() {
+            a.tick();
+        }
         if self.max_frames.is_some_and(|n| self.tick_no >= n) {
             log(&format!("max frames reached in {}", self.scene.name()));
             self.quit = true;
@@ -822,7 +899,19 @@ pub fn play(args: &[String]) -> ExitCode {
         skip_intro: has("--skip-intro") || std::env::var("MELEE_SKIP_INTRO").is_ok_and(|v| v == "1"),
         quit: false,
         failed: None,
+        audio: None,
     };
+    let mut game = game;
+    if !has("--no-audio") && std::env::var("MELEE_AUDIO").map_or(true, |v| v != "0") {
+        match crate::audio::Audio::boot(&game.iso) {
+            Ok(a) => game.audio = Some(a),
+            Err(e) => log(&format!("audio off: {e}")),
+        }
+    }
+    if let Some(a) = &game.audio {
+        a.scene_start();
+        a.stop_music();
+    }
     let cfg = WindowConfig { title: "GD's Melee (native)".into(), width: 1280, height: 960 };
     match run_windowed(game, PadSystem::interactive(), cfg) {
         Ok((ticks, _)) => {

@@ -37,6 +37,7 @@ mod gx_backend;
 mod view;
 mod ui;
 mod play;
+mod audio;
 mod cm_drive;
 mod stage_anim;
 mod snap;
@@ -237,11 +238,30 @@ fn install_audio(iso: &str) -> Result<(), String> {
 
 /// The match's audio start (lbAudioAx_8002785C + the BGM): the players' and the stage's SSM
 /// banks, then the picked BGM.
-fn start_match_audio(sim: &vs_match::VsMatch, ckinds: &[i32]) {
+/// The C build's scene-load timeline before the first logic frame (the scripted VS scene,
+/// MELEE_TURBO): scene init and the bank loads at DSP sub-frame 0, the BGM at sub-frame 10 (3
+/// video frames in), the first logic frame (Ready call) at sub-frame 106 (29 frames later). The
+/// mix of those sub-frames is appended to `pre` when a capture is on.
+fn start_match_audio(sim: &vs_match::VsMatch, ckinds: &[i32], mut pre: Option<&mut Vec<i16>>) {
+    let mut frames = |n: u32, pre: &mut Option<&mut Vec<i16>>| {
+        for _ in 0..n {
+            melee_audio::sim::game_frame();
+            match pre.as_deref_mut() {
+                Some(w) => {
+                    melee_audio::sim::virtual_frame_into(w);
+                }
+                None => {
+                    melee_audio::sim::virtual_frame();
+                }
+            }
+        }
+    };
     melee_audio::sim::scene_init();
     melee_audio::sim::load_announcer();
     melee_audio::sim::load_match_banks(ckinds, vs_match::STKIND_FD, melee_types::Gr_Kind_Last as i32);
+    frames(3, &mut pre);
     let r = melee_audio::sim::play_bgm_id(sim.bgm);
+    frames(29, &mut pre);
     let loaded = melee_audio::sim::with(|s| s.lb.state.iter().enumerate().filter(|(_, &x)| x == 2).map(|(i, _)| melee_audio::lbaudio::SSM_FILES[i]).collect::<Vec<_>>());
     eprintln!("melee: match audio: banks {:?}, bgm {} ({}) {}", loaded.unwrap_or_default(), sim.bgm,
         melee_audio::lbaudio::HPS_FILES.get(sim.bgm as usize).unwrap_or(&"?"), if r == 0 { "started" } else { "not started" });
@@ -389,6 +409,7 @@ fn golden(args: &[String]) -> ExitCode {
             }
         }
     }
+    let mut pre_wav: Vec<i16> = Vec::new();
     // `--audio`: boot the ported sound stack from the same disc and route the fighter code's
     // lbAudioAx hooks to it; the DSP runs on melee_audio::sim::virtual_frame's fixed schedule.
     if args.iter().any(|a| a == "--audio") {
@@ -396,7 +417,12 @@ fn golden(args: &[String]) -> ExitCode {
             eprintln!("melee: --audio: {e}");
             return ExitCode::FAILURE;
         }
-        start_match_audio(&sim, &[melee_types::CKind_Captain as i32, melee_types::CKind_Fox as i32]);
+        if get("--audio-trace").is_some() {
+            melee_audio::sim::with(|s| s.trace = Some(Vec::new()));
+        }
+        let mut v = Vec::new();
+        start_match_audio(&sim, &[melee_types::CKind_Captain as i32, melee_types::CKind_Fox as i32], if get("--audio-wav").is_some() { Some(&mut v) } else { None });
+        pre_wav = v;
     }
     impl Sim for SeedFrom<'_> {
         fn step(&mut self) -> bool {
@@ -406,6 +432,9 @@ fn golden(args: &[String]) -> ExitCode {
                 return true;
             }
             let r = self.sim.step();
+            if r && melee_audio::sim::is_installed() {
+                audio::match_frame_calls(self.sim.frame, self.sim.go_frame_for_hud(), 180);
+            }
             melee_audio::sim::game_frame();
             match &mut self.wav {
                 Some(w) => {
@@ -431,12 +460,18 @@ fn golden(args: &[String]) -> ExitCode {
         }
     }
     let wav_path = get("--audio-wav");
+    let trace_path = get("--audio-trace");
     let injected = seed_from.is_some();
     let res = std::fs::File::create(&out).and_then(|f| {
         let mut w = std::io::BufWriter::new(f);
-        let mut sf = SeedFrom { sim: &mut sim, golden: seed_from, resumed, dump_state, wav: wav_path.as_ref().map(|_| Vec::new()) };
+        let mut sf = SeedFrom { sim: &mut sim, golden: seed_from, resumed, dump_state, wav: wav_path.as_ref().map(|_| std::mem::take(&mut pre_wav)) };
         let n = run(&mut sf, &mut w, frames)?;
         w.flush()?;
+        if let Some(p) = &trace_path {
+            let t = melee_audio::sim::with(|s| s.trace.take()).flatten().unwrap_or_default();
+            std::fs::write(p, t.join("\n") + "\n")?;
+            eprintln!("melee: {} audio calls written to {p}", t.len());
+        }
         if let (Some(p), Some(samples)) = (&wav_path, &sf.wav) {
             write_wav(p, samples)?;
             eprintln!("melee: audio mix of {} sub-frames written to {p}", samples.len() / 320);

@@ -771,6 +771,7 @@ impl Sound {
 
     /// HSD_SynthSFXUpdateAllVolume(vol, fade_frames, channel): fade a whole channel.
     pub fn sfx_update_all_volume(&mut self, vol: i32, fade_frames: u16, channel: usize) {
+        self.tr("UAV", [vol, fade_frames as i32, channel as i32, 0, 0]);
         self.chan[channel].target = 1.0f32 / 255.0 * vol as f32;
         if self.chan[channel].cur != self.chan[channel].target {
             self.chan[channel].count = fade_frames as i32;
@@ -1046,6 +1047,7 @@ impl Sound {
 
     /// HSD_SynthStreamSetVolume.
     pub fn stream_set_volume(&mut self, v: f32) {
+        self.tr("SSV", [v.to_bits() as i32, 0, 0, 0, 0]);
         self.stream_vol = v;
         self.set_ai_stream_vol();
         self.update_all_volume(0xFFFF);

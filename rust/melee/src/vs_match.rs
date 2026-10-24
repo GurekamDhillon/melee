@@ -55,6 +55,15 @@ use std::sync::Arc;
 
 /// `ftCo_MS_DeadDown`.
 const FTCO_MS_DEAD_DOWN: i32 = 0;
+/// `ftCo_MS_GuardOn` .. `GuardReflect` (ftmotionstates.c 178-182) and their rows
+/// (`ftCo_SM_GuardOn` 37, `Guard` 38, `GuardOff` 39).
+const FTCO_MS_GUARD_ON: i32 = 178;
+const FTCO_MS_GUARD: i32 = 179;
+const FTCO_MS_GUARD_OFF: i32 = 180;
+const FTCO_MS_GUARD_SET_OFF: i32 = 181;
+const FTCO_MS_GUARD_REFLECT: i32 = 182;
+const FTCO_SM_GUARD_ON: u32 = 37;
+const FTCO_SM_GUARD_OFF: u32 = 39;
 /// `ftCo_MS_Entry` / `EntryStart` / `EntryEnd` (ftmotionstates.c: 322-324).
 const FTCO_MS_ENTRY: i32 = 322;
 const FTCO_MS_ENTRY_START: i32 = 323;
@@ -193,6 +202,26 @@ pub struct Player {
     /// The player's HUD `IfDamageFlags.randomize_velocity` (set by `ifStatus_802F6C04`, a self
     /// destruct): the HUD proc's next run draws 8 `HSD_Randf`s (`ifStatus_PercentOnDeathAnimationThink`).
     hud_randomize: bool,
+    /// `fp->mv.co.guard` and `x221B_b0` (the shield is up).
+    guard: GuardVars,
+}
+
+/// `fp->mv.co.guard` (ft/kinds/ftCommon/types.h) plus `fp->x221B_b0`, whose ft_0877 setter
+/// (`ftColl_8007B1B8`) is the only writer here.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct GuardVars {
+    pub x0: f32,
+    pub x4: f32,
+    pub x8: f32,
+    pub xc: bool,
+    pub x10: f32,
+    pub x14: f32,
+    pub x18: f32,
+    pub x1c: i32,
+    pub x20: i32,
+    pub x24: i32,
+    pub x2c: f32,
+    pub shield_on: bool,
 }
 
 /// A live `HitCapsule` (`ftAction_8007121C`): its part, size and offset.
@@ -250,6 +279,8 @@ pub enum EfOp {
 /// `EF_SPAWN_ATTACH_PARAM` / `EF_SPAWN_POS_OFFSET_PARAM` (ef/types.h spawn kinds 3 and 5).
 const EF_SPAWN_ATTACH_PARAM: u8 = 3;
 const EF_SPAWN_POS_OFFSET_PARAM: u8 = 5;
+/// A direct `efSync_Spawn` (not queued): kind 0 here.
+const EF_SPAWN_SYNC: u8 = 0;
 
 /// `p_ftCommonData` words the entry states read (PlCo.dat `ftLoadCommonData`, ft/types.h).
 #[derive(Clone, Copy, Debug)]
@@ -756,6 +787,7 @@ impl VsMatch {
                 attack1_x0: false,
                 dead_timer: 0,
                 hud_randomize: false,
+                guard: GuardVars::default(),
             });
             // ... Fighter_ChangeMotionState(Entry): no animation, cur_anim_frame -1;
             // ftaction.c:1408 frame_count = cur_anim_frame + x898_unk. Then ft_80084CB0: the
@@ -765,6 +797,8 @@ impl VsMatch {
             p.fp.x2DC = p.row_walk[0].as_ref().map_or(0.0, |r| r.0.frames);
             p.fp.x2E0 = p.row_walk[1].as_ref().map_or(0.0, |r| r.0.frames);
             p.fp.x2E4 = p.row_walk[2].as_ref().map_or(0.0, |r| r.0.frames);
+            // fighter.c 1063: x2E8 = lbAnim_8001E8F8(ftData_80085E50(fp, 0x25)), the GuardOn row.
+            p.fp.x2E8 = load_row(p, FTCO_SM_GUARD_ON)?.map_or(0.0, |r| r.0.frames);
             // Fighter_Create -> ftLib_800867E8: Fighter_ResetInputData_80068854, x221D_b4 = true.
             input::reset_input(&mut p.fp);
             p.input_locked = true;
@@ -788,6 +822,15 @@ impl VsMatch {
             eprintln!("bgm {} alt {:?}; seed before frame 0 {:08X}; particle tracks {}", pick.bgm, pick.alt_flag, rand.logic_seed(), dptcl.len());
         }
 
+        if std::env::var_os("MELEE_GOLDEN_RAND").is_some() {
+            // Diagnostic: every draw as `R <golden frame> <seed after>` (compare with the C build's
+            // MELEE_RAND_TRACE, whose script frame is the golden frame + 29).
+            rand.trace = Some(|seed, stream| {
+                if stream != 2 {
+                    eprintln!("R {} {:08X}", unsafe { TRACE_FRAME }, seed);
+                }
+            });
+        }
         Ok(Self { players, ground, cg, pads: [input::PadStatus::default(); 4], go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists, blast })
     }
 
@@ -979,6 +1022,7 @@ impl VsMatch {
                         }
                     }
                 }
+                m if is_guard_motion(m) => guard_anim(p, &mut self.rand)?,
                 FTCO_MS_DEAD_DOWN => {
                     // ftCo_DeadDown_Anim: the countdown, then ftCo_800BFD9C (Sleep + the respawn).
                     p.dead_timer -= 1;
@@ -1142,7 +1186,7 @@ impl VsMatch {
                         ftca_800e3eac(p)?;
                     }
                 }
-                FTCO_MS_LANDING | FTCO_MS_TURN | FTCO_MS_WAIT => {
+                m if m == FTCO_MS_LANDING || m == FTCO_MS_TURN || m == FTCO_MS_WAIT || is_guard_motion(m) => {
                     // (Wait: then ftColl_8007AEE0, a hurtbox reset; not hashed.)
                     // ftCo_Landing_Phys / ftCo_Turn_Phys -> ft_80084F3C: ground friction, then the
                     // self velocity along the floor.
@@ -1275,8 +1319,9 @@ impl VsMatch {
                         return Err("Falcon Kick into a wall (SpecialHiThrow1) not ported".into());
                     }
                 }
-                FTCO_MS_TURN => {
-                    // ftCo_Turn_Coll -> ft_80083F88: ft_80082708 (mpColl_8004B108); no floor -> Fall.
+                m if m == FTCO_MS_TURN || is_guard_motion(m) => {
+                    // ftCo_Turn_Coll -> ft_80083F88 / the guard states' ft_800845B4: ft_80082708
+                    // (mpColl_8004B108); no floor -> Fall (a ledge slip -> ftCo_8009F39C).
                     let joints = {
                         let d = p.ecb_desc;
                         ecb_joints(&mut p.skel, &d)
@@ -1288,6 +1333,12 @@ impl VsMatch {
                         .map_err(|e| format!("{} not ported", e.0))?;
                     fp.cur_pos = fp.coll_data.cur_pos;
                     if !r {
+                        if is_guard_motion(p.fp.motion_id) {
+                            let (fd, env) = (p.fp.facing_dir, p.fp.coll_data.env_flags);
+                            if (fd < 0.0 && env & mc::COLLIDE_RIGHT_LEDGE_SLIP != 0) || (fd > 0.0 && env & mc::COLLIDE_LEFT_LEDGE_SLIP != 0) {
+                                return Err("ftCo_8009F39C (shield ledge slip) not ported".into());
+                            }
+                        }
                         fall_enter(p, &mut self.rand)?;
                     }
                 }
@@ -1333,6 +1384,31 @@ impl VsMatch {
             let q = std::mem::take(&mut self.players[i].ef_queue);
             for e in q.into_iter().rev() {
                 self.ef_dispatch(i, e)?;
+            }
+        }
+        // s_link 14, Fighter_ProcessHit_8006D1EC: the shield's regeneration / upkeep (no hit is
+        // ported: hit_guard stops the run before one lands).
+        for p in &mut self.players {
+            if p.fp.x221F_b3() != 0 {
+                continue;
+            }
+            let cd = melee_fighter::hooks::common_data();
+            let fp = &mut *p.fp;
+            let start = cd.x260_startShieldHealth;
+            if fp.x221A_b7() == 0 {
+                if fp.shield_health < start {
+                    fp.shield_health += cd.x27C;
+                    if fp.shield_health > start {
+                        fp.shield_health = start;
+                    }
+                }
+            } else {
+                let lsa = fp.lightshield_amount;
+                let scale = 1.0 - melee_core::fp::fmadds(lsa, cd.x2E0 - cd.x2DC, cd.x2DC);
+                fp.shield_health -= melee_core::fp::fmadds(cd.x284, fp.x19A0_shieldDamageTaken as f32 * scale, cd.x288);
+                if fp.shield_health < 0.0 {
+                    return Err(format!("player {}: shield break (pl_8003E058) not ported", p.slot + 1));
+                }
             }
         }
         Ok(())
@@ -1417,6 +1493,12 @@ impl VsMatch {
                 // efAlt_Spawn: efLib_Create_Attach(0xFA2, gobj, foot joint), params.z = the
                 // angle, update = efLib_Cb_SetRotYZ_FromParamZ_FighterDir (rotation: render only).
                 self.ef_create(0xFA2, i, 1.0, None, None)
+            }
+            (EF_SPAWN_SYNC, 1047 | 1048) => {
+                // efSync_Spawn(0x417 / 0x418, gobj, shield joint, colour) -> efLib_Create_Attach(0xB / 0xC).
+                let id = if q.gfx == 1047 { 0xB } else { 0xC };
+                let scale = self.players[i].model_scaling;
+                self.ef_create(id, i, scale, None, None)
             }
             (k, g) => Err(format!("efAsync_Dispatch kind {k} gfx {g:#x} is not ported")),
         }
@@ -1612,6 +1694,9 @@ impl VsMatch {
     /// the track belongs to (None for a stage track).
     fn dptcl_spawns(&mut self, spawns: Vec<(i32, i32, JObjRef)>, root: Option<EffectRoot>) -> Result<(), String> {
         for (bank, id, joint) in spawns {
+            if std::env::var_os("MELEE_GOLDEN_RAND").is_some() {
+                eprintln!("DPTCL frame {} bank {bank} id {id:#x} joint {joint:#x}", unsafe { TRACE_FRAME });
+            }
             let mut host = Host { rand: &mut self.rand, joint_mtx: &self.joint_mtx, appsrt_hook_lists: &self.appsrt_hook_lists };
             if bank == 0x1E {
                 // grLib_801C99C0(bank, id, jobj, 1) -> hsd_8039EFAC(0, bank, id, jobj).
@@ -1640,7 +1725,22 @@ impl VsMatch {
                     }
                     continue;
                 }
-                0x4A38..=0x4A3A | 0xB798..=0xB79A | 0x2D | 0x2E | 0x31 | 0x127 | 0x2 | 0x6 | 0xA3 | 0xA7 | 0xAA | 0xF2
+                0x2D | 0x2E | 0x31 => {
+                    // eflib_create_generator_add_appsrt (hsd_8039EFAC(0, id / 1000, id, jobj), an
+                    // AppSRT of status 0 with gp = the generator, type = (type & ~0x600) | 0x800),
+                    // then type |= 0x1000.
+                    if let Some(gen) = self.ps.gen_create_on_jobj(&mut host, 0, id / 1000, id, Some(joint)) {
+                        let srt = match self.ps.gen(gen).appsrt {
+                            Some(a) => a,
+                            None => self.ps.add_generator_appsrt_begin(gen, 0),
+                        };
+                        self.ps.srt_mut(srt).gp = Some(gen);
+                        let g = self.ps.gen_mut(gen);
+                        g.type_ = (g.type_ & 0xF9FF) | 0x800 | 0x1000;
+                    }
+                    continue;
+                }
+                0x4A38..=0x4A3A | 0xB798..=0xB79A | 0x127 | 0x2 | 0x6 | 0xA3 | 0xA7 | 0xAA | 0xF2
                 | 0x12A | 0x132 | 0x133 | 0x16D..=0x170 | 0x7E2 | 0xE3 => {
                     return Err(format!("efLib_SpawnParticleEffect bank {bank} id {id:#x}: special case not ported"));
                 }
@@ -1808,6 +1908,7 @@ fn input_cb(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         m if (FTCO_MS_ATTACK11..=FTCO_MS_ATTACK11 + 2).contains(&m) => attack1_iasa(p, rand),
         FTCO_MS_CATCH => Ok(()), // ftCo_Catch_IASA is empty
         FTCO_MS_DEAD_DOWN => Ok(()), // input_cb NULL
+        m if is_guard_motion(m) => guard_iasa(p, rand),
         m => Err(format!("player {}: input_cb of motion {m} not ported", p.slot + 1)),
     }
 }
@@ -1872,7 +1973,11 @@ fn landing_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
 
 /// The stick-only grounded checks every grounded IASA ends with, after the press / C-stick /
 /// trigger checks (which stop the run here): jump, dash, squat.
-fn ground_stick_gate(p: &Player, what: &str) -> Result<(), String> {
+fn ground_stick_gate(p: &mut Player, rand: &mut HsdRand, what: &str) -> Result<bool, String> {
+    // ftCo_80091A4C: the shield.
+    if guard_check(p, rand)? {
+        return Ok(true);
+    }
     let cd = melee_fighter::hooks::common_data();
     let fp = &*p.fp;
     let i = &fp.input;
@@ -1888,7 +1993,7 @@ fn ground_stick_gate(p: &Player, what: &str) -> Result<(), String> {
     if i.lstick[0].y < -cd.x90 {
         return Err(format!("player {}: ftCo_800D5FB0 (Squat) not ported", p.slot + 1));
     }
-    Ok(())
+    Ok(false)
 }
 
 /// `ftCo_Catch_CheckInput` (ftCo_800951D0 needs an item; fn_800D8E94 / fn_800D952C pass for
@@ -2053,7 +2158,9 @@ fn attack1_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         }
     }
     if allow {
-        ground_stick_gate(p, "ftCo_Attack11_IASA")?;
+        if ground_stick_gate(p, rand, "ftCo_Attack11_IASA")? {
+            return Ok(());
+        }
         let cd = melee_fighter::hooks::common_data();
         let fp = &*p.fp;
         if fp.input.lstick[0].x * fp.facing_dir <= cd.x34 {
@@ -2077,7 +2184,9 @@ fn wait_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     if attack_checks(p, rand)? {
         return Ok(());
     }
-    ground_stick_gate(p, "ftCo_Wait_IASA")?;
+    if ground_stick_gate(p, rand, "ftCo_Wait_IASA")? {
+        return Ok(());
+    }
     let cd = melee_fighter::hooks::common_data();
     let fp = &*p.fp;
     if fp.input.lstick[0].x * fp.facing_dir <= cd.x34 {
@@ -2089,6 +2198,285 @@ fn wait_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     Ok(())
 }
 
+
+// ---------------------------------------------------------------------------------------------
+// ftCo_Guard.c. Not modelled (nothing in a hash reads them): the shield bubble's pose blending
+// (`ftCo_80091E78`: bone positions and the bubble's scale), the shield / reflect hit records
+// (`ftColl_8007B1B8`, `ftColl_CreateReflectHit`: only their flags are kept), SFX and the stats.
+// ---------------------------------------------------------------------------------------------
+
+fn is_guard_motion(m: i32) -> bool {
+    (FTCO_MS_GUARD_ON..=FTCO_MS_GUARD_REFLECT).contains(&m)
+}
+
+/// `ftCo_80091A4C`: a shoulder press starts the shield (a power shield inside the input window).
+fn guard_check(p: &mut Player, rand: &mut HsdRand) -> Result<bool, String> {
+    let window = melee_fighter::hooks::common_data().powershield_input_window;
+    let fp = &*p.fp;
+    if fp.input.pressed_buttons & (input::HSD_PAD_R | input::HSD_PAD_L) != 0 && (fp.active_timer.trigger as i32) < window {
+        ftco_800939b4(p, rand)?;
+        return Ok(true);
+    }
+    if fp.input.held_buttons[0] & input::HSD_PAD_LR != 0 && fp.shield_health != 0.0 {
+        ftco_800923b4(p, rand)?;
+        return Ok(true);
+    }
+    Ok(false)
+}
+
+fn guard_kind_check(p: &Player) -> Result<(), String> {
+    match p.fp.kind {
+        melee_types::Ft_Kind_Yoshi | melee_types::Ft_Kind_Mars => Err(format!("player {}: ftCo_Guard for Yoshi / Marth not ported", p.slot + 1)),
+        _ => Ok(()),
+    }
+}
+
+/// `ftCo_80092450_inline`: `ftColl_8007B1B8` (the shield hit record).
+fn guard_shield_up(p: &mut Player) {
+    p.guard.shield_on = true;
+    p.fp.set_x221A_b7(1);
+}
+
+/// `ftCo_800939B4` -> `ftCo_80093A50`: the power shield.
+fn ftco_800939b4(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    guard_kind_check(p)?;
+    let cd = melee_fighter::hooks::common_data();
+    let row = load_row(p, FTCO_SM_GUARD_ON)?;
+    change_motion_state_ext(p, FTCO_MS_GUARD_REFLECT, row.as_ref(), 0.0, 1.0, true, rand)?;
+    anim_step(p, rand)?; // ftAnim_8006EBA4
+    let fp = &mut *p.fp;
+    fp.active_timer.trigger = 0xFE;
+    fp.set_x221C_b3(1);
+    fp.set_x221C_b1(1);
+    fp.set_x221C_b2(1);
+    p.guard.x1c = 0;
+    p.guard.x14 = cd.x2A4;
+    p.guard.x18 = cd.x2B4;
+    guard_shield_up(p);
+    // ftCo_8009370C: ftColl_CreateReflectHit.
+    p.fp.set_reflecting(1);
+    ftco_800921dc(p)
+}
+
+/// `ftCo_800923B4` -> `ftCo_800924C0`: GuardOn.
+fn ftco_800923b4(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    guard_kind_check(p)?;
+    let row = load_row(p, FTCO_SM_GUARD_ON)?;
+    change_motion_state_ext(p, FTCO_MS_GUARD_ON, row.as_ref(), 0.0, 1.0, true, rand)?;
+    anim_step(p, rand)?; // ftAnim_8006EBA4
+    let fp = &mut *p.fp;
+    fp.set_x221C_b3(0);
+    fp.set_x221C_b1(0);
+    fp.set_x221C_b2(0);
+    p.guard.x1c = 0;
+    p.guard.x14 = 0.0;
+    p.guard.x18 = 0.0;
+    guard_shield_up(p);
+    ftco_800921dc(p)
+}
+
+/// `ftCo_800921DC`: the shield's variables and bubble (effect 1047 = 0x417, `efLib_Create_Attach(0xB)`).
+fn ftco_800921dc(p: &mut Player) -> Result<(), String> {
+    let cd = melee_fighter::hooks::common_data();
+    p.ef_ops.push(EfOp::Spawn(QueuedEffect { kind: EF_SPAWN_SYNC, gfx: 1047, part: 0, params: Vec3 { x: 0.0, y: 0.0, z: 0.0 }, extra1: 0.0 }));
+    let fp = &mut *p.fp;
+    fp.set_x2219_b0(1);
+    let g = &mut p.guard;
+    g.xc = false;
+    g.x0 = 0.0;
+    g.x10 = cd.x268;
+    g.x8 = 10.0;
+    g.x4 = 0.0;
+    g.x2c = 0.0;
+    let dz = cd.analog_shoulder_deadzone;
+    let mut lsa = (fp.input.triggers[0] - dz) / (1.0 - dz);
+    if lsa < 0.0 {
+        lsa = g.x2c;
+    }
+    fp.lightshield_amount = lsa;
+    g.x20 = 0;
+    g.x24 = 0;
+    Ok(())
+}
+
+/// `ftCo_800925A4`: the shield's per-frame cost. True when it broke.
+fn ftco_800925a4(p: &mut Player) -> Result<bool, String> {
+    let cd = melee_fighter::hooks::common_data();
+    if !p.guard.shield_on {
+        return Ok(false);
+    }
+    let fp = &mut *p.fp;
+    p.guard.x2c = fp.lightshield_amount;
+    let dz = cd.analog_shoulder_deadzone;
+    let v = (fp.input.triggers[0] - dz) / (1.0 - dz);
+    fp.lightshield_amount = if v < 0.0 { p.guard.x2c } else { v };
+    // shield_health -= x278 * (lsa * (x2F0 - x2EC) + x2EC), contracted.
+    let inner = melee_core::fp::fmadds(fp.lightshield_amount, cd.x2F0 - cd.x2EC, cd.x2EC);
+    fp.shield_health = melee_core::fp::fmadds(-cd.x278, inner, fp.shield_health);
+    if fp.shield_health < 0.0 {
+        return Err(format!("player {}: shield break (ftCo_80098B20) not ported", p.slot + 1));
+    }
+    if p.guard.x10 > 0.0 {
+        p.guard.x10 -= 1.0;
+        if p.guard.x10 < 0.0 {
+            p.guard.x10 = 0.0;
+        }
+    }
+    Ok(false)
+}
+
+/// `ftCo_80093BC0`: the reflect window's timers (GuardReflect_Anim).
+fn ftco_80093bc0(p: &mut Player) {
+    if p.fp.x221C_b3() != 0 {
+        p.fp.set_x221C_b3(0);
+    }
+    if p.fp.x221C_b1() != 0 {
+        p.guard.x14 -= 1.0;
+        if p.guard.x14 < 0.0 {
+            p.fp.set_x221C_b1(0);
+            p.fp.set_reflecting(0);
+            guard_shield_up(p);
+        }
+    }
+    if p.fp.x221C_b2() != 0 {
+        p.guard.x18 -= 1.0;
+        if p.guard.x18 < 0.0 {
+            p.fp.set_x221C_b2(0);
+        }
+    }
+}
+
+/// GuardOn_Anim / the inline in GuardReflect_Anim.
+fn guard_on_anim(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    p.guard.x0 += 1.0;
+    if !ftco_800925a4(p)? && p.guard.x0 >= p.fp.x2E8 {
+        // ftCo_800928CC -> ftCo_80092908: Guard (SkipAnim), the bubble 1048.
+        guard_kind_check(p)?;
+        let row = load_row(p, FTCO_SM_GUARD_ON + 1)?;
+        change_motion_state_ext(p, FTCO_MS_GUARD, row.as_ref(), 0.0, 1.0, true, rand)?;
+        p.ef_ops.push(EfOp::Spawn(QueuedEffect { kind: EF_SPAWN_SYNC, gfx: 1048, part: 0, params: Vec3 { x: 0.0, y: 0.0, z: 0.0 }, extra1: 0.0 }));
+        p.fp.set_x2219_b0(1);
+        guard_shield_up(p);
+    }
+    Ok(())
+}
+
+/// `ftCo_80092BCC` + the exit test shared by the shield IASAs (`inlineC0`): true when the
+/// shield was let go (GuardOff entered).
+fn guard_release(p: &mut Player, rand: &mut HsdRand) -> Result<bool, String> {
+    if p.fp.input.held_buttons[0] & input::HSD_PAD_LR == 0 {
+        p.guard.xc = true;
+    }
+    if (p.guard.xc && p.guard.x10 == 0.0) || (!p.guard.shield_on && p.fp.reflecting() == 0) {
+        // ftCo_80092BE8 -> ftCo_80092C54: GuardOff.
+        guard_kind_check(p)?;
+        let row = load_row(p, FTCO_SM_GUARD_OFF)?;
+        change_motion_state(p, FTCO_MS_GUARD_OFF, row.as_ref(), rand)?;
+        return Ok(true);
+    }
+    if p.guard.x1c != 0 {
+        p.guard.x1c -= 1;
+    }
+    Ok(false)
+}
+
+/// The input checks the shield IASAs end with (item throw, spot dodge, roll, `800D8B9C`, grab,
+/// jump, drop through): refused when one would fire.
+fn guard_inputs(p: &mut Player, x800d8b9c: bool) -> Result<(), String> {
+    let cd = melee_fighter::hooks::common_data();
+    let who = p.slot + 1;
+    let fp = &*p.fp;
+    let i = &fp.input;
+    // ftCo_8009515C: no item; the throw timer.
+    if p.guard.x20 != 0 {
+        p.guard.x20 -= 1;
+    }
+    // ftCo_8009980C (spot dodge).
+    if (i.lstick[0].y <= cd.x314 && (fp.active_timer.lstick.y as i32) < cd.x318) || i.cstick[0].y <= cd.x314 {
+        return Err(format!("player {who}: shield spot dodge (ftCo_80099894) not ported"));
+    }
+    // ftCo_8009917C (roll).
+    if (fc::abs_c(i.lstick[0].x) >= cd.x31C && (fp.active_timer.lstick.x as i32) < cd.x320) || fc::abs_c(i.cstick[0].x) >= cd.x31C {
+        return Err(format!("player {who}: shield roll (ftCo_800992A8) not ported"));
+    }
+    if x800d8b9c {
+        if i.pressed_buttons & input::HSD_PAD_A != 0 && p.guard.x24 != 0 {
+            return Err(format!("player {who}: shield grab (ftCo_800D8C54) not ported"));
+        }
+        if p.guard.x24 != 0 {
+            p.guard.x24 -= 1;
+        }
+    }
+    // ftCo_Catch_CheckInput (shield + A).
+    if i.held_buttons[0] & input::HSD_PAD_LR != 0 && i.pressed_buttons & input::HSD_PAD_A != 0 {
+        return Err(format!("player {who}: shield grab (ftCo_Catch_CheckInput) not ported"));
+    }
+    // ftCo_800CB024: jump out of the shield.
+    if jump_get_input(fp) || i.cstick[0].y >= cd.tap_jump_threshold {
+        return Err(format!("player {who}: jump out of the shield (ftCo_KneeBend_Enter) not ported"));
+    }
+    // ftCo_8009A080: drop through a platform (the floor here is solid).
+    if i.held_buttons[0] & input::HSD_PAD_LR != 0 && i.lstick[0].y <= -cd.x464 && (fp.active_timer.lstick.y as i32) < cd.x468 as i32 {
+        return Err(format!("player {who}: shield drop (ftCo_8009A228) not ported"));
+    }
+    Ok(())
+}
+
+/// GuardOn_IASA / Guard_IASA / GuardReflect_IASA / GuardOff_IASA.
+fn guard_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    let m = p.fp.motion_id;
+    if m == FTCO_MS_GUARD_OFF {
+        // ftCo_GuardOff_IASA: with the reflect lag (x1C) cleared, spot dodge and jump.
+        if p.guard.x1c != 0 {
+            return Err(format!("player {}: GuardOff IASA with the reflect lag not ported", p.slot + 1));
+        }
+        let cd = melee_fighter::hooks::common_data();
+        let fp = &*p.fp;
+        if (fp.input.lstick[0].y <= cd.x314 && (fp.active_timer.lstick.y as i32) < cd.x318) || fp.input.cstick[0].y <= cd.x314 {
+            return Err(format!("player {}: spot dodge out of GuardOff not ported", p.slot + 1));
+        }
+        if jump_get_input(fp) || fp.input.cstick[0].y >= cd.tap_jump_threshold {
+            return Err(format!("player {}: jump out of GuardOff not ported", p.slot + 1));
+        }
+        return Ok(());
+    }
+    if guard_release(p, rand)? {
+        return Ok(());
+    }
+    if m == FTCO_MS_GUARD_ON {
+        // ftCo_80093694: pressing the shoulder again inside the power shield window.
+        let window = melee_fighter::hooks::common_data().powershield_input_window;
+        let fp = &*p.fp;
+        if p.guard.x0 < window as f32 && fp.input.pressed_buttons & (input::HSD_PAD_R | input::HSD_PAD_L) != 0 && (fp.active_timer.trigger as i32) < window {
+            return Err(format!("player {}: ftCo_80093850 (power shield from GuardOn) not ported", p.slot + 1));
+        }
+    }
+    guard_inputs(p, m != FTCO_MS_GUARD)
+}
+
+/// The guard states' Anim callbacks (GuardOn / Guard / GuardOff / GuardReflect).
+fn guard_anim(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    match p.fp.motion_id {
+        FTCO_MS_GUARD_ON => guard_on_anim(p, rand),
+        FTCO_MS_GUARD_REFLECT => {
+            ftco_80093bc0(p);
+            guard_on_anim(p, rand)
+        }
+        FTCO_MS_GUARD => {
+            p.guard.x0 += 1.0;
+            ftco_800925a4(p).map(|_| ())
+        }
+        FTCO_MS_GUARD_OFF => {
+            p.guard.x0 += 1.0;
+            if !p.skel.frames_remaining() {
+                ft_8008a2bc(p, rand)?;
+            }
+            Ok(())
+        }
+        m => Err(format!("player {}: guard motion {m} not ported", p.slot + 1)),
+    }
+}
+
 /// `ftCo_Walk_IASA`.
 fn walk_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     if catch_check(p)? {
@@ -2097,7 +2485,9 @@ fn walk_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     if special_checks(p, rand)? || attack_checks(p, rand)? {
         return Ok(());
     }
-    ground_stick_gate(p, "ftCo_Walk_IASA")?;
+    if ground_stick_gate(p, rand, "ftCo_Walk_IASA")? {
+        return Ok(());
+    }
     let cd = melee_fighter::hooks::common_data();
     let fp = &*p.fp;
     // ft_8008A244: stick back or under the walk threshold -> Wait.
@@ -2948,6 +3338,15 @@ fn change_motion_state_at(p: &mut Player, msid: i32, row: Option<&(AnimRow, Figa
 /// (`ftAnim_8006EBE8(start - speed)`, two `ftAnim_8006E9B4` steps, `timer = -start`,
 /// `ftAction_80073354`, the script run in its skip table).
 fn change_motion_state_full(p: &mut Player, msid: i32, row: Option<&(AnimRow, FigaTree)>, anim_start: f32, anim_speed: f32, rand: &mut HsdRand) -> Result<(), String> {
+    change_motion_state_ext(p, msid, row, anim_start, anim_speed, false, rand)
+}
+
+/// `Fighter_ChangeMotionState(gobj, msid, skip_anim ? Ft_MF_SkipAnim : 0, anim_start, anim_speed, 0.0, NULL)`.
+/// With `Ft_MF_SkipAnim` the C leaves the animation block out and ends in the `anim_id = -1` path
+/// (x594 = 0, the AObjs dropped, no script): the same as a state without a row. The guard states
+/// pose the body themselves (`ftCo_80091E78`).
+fn change_motion_state_ext(p: &mut Player, msid: i32, row: Option<&(AnimRow, FigaTree)>, anim_start: f32, anim_speed: f32, skip_anim: bool, rand: &mut HsdRand) -> Result<(), String> {
+    let row = if skip_anim { None } else { row };
     // efAsync_QueueFlush(gobj, &fp->x60C) (newest first) and, with x2219_b0 and no
     // Ft_MF_KeepGfx, ftCommon_8007DB24 (efLib_DestroyAll): replayed at s_link 9 (`ef_ops`).
     for q in std::mem::take(&mut p.ef_queue).into_iter().rev() {
@@ -2975,6 +3374,12 @@ fn change_motion_state_full(p: &mut Player, msid: i32, row: Option<&(AnimRow, Fi
     fp.set_x221E_b1(0);
     fp.set_x221E_b2(0);
     fp.set_x221F_b1(0);
+    fp.set_x221A_b7(0);
+    p.guard.shield_on = false;
+    fp.set_x221C_b3(0);
+    fp.set_reflecting(0);
+    fp.set_x221C_b4(0);
+    fp.set_x2218_b6(0);
     let root = p.skel.root;
     p.skel.set_translate(root, melee_runtime::mtx::Vec3 { x: fp.cur_pos.x, y: fp.cur_pos.y, z: fp.cur_pos.z });
     // ftAnim_80070F28 (end the hand poses), ftAnim_80070E74 (restart the slots with a default
@@ -3208,8 +3613,12 @@ fn proc_update_integrate(fp: &mut Fighter) {
     fp.cur_pos.z += fp.x98_atk_shield_kb.z;
 }
 
+/// The golden frame being simulated (`MELEE_GOLDEN_RAND` trace).
+static mut TRACE_FRAME: i32 = 0;
+
 impl Sim for VsMatch {
     fn step(&mut self) -> bool {
+        unsafe { TRACE_FRAME = self.frame + 1 };
         if self.stopped.is_some() {
             return false;
         }

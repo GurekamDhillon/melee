@@ -33,6 +33,19 @@ NAT = [a.replace("x86_64-pc-windows-msvc", "x86_64-pc-windows-gnu") for a in g.N
 GEN_RS = (ROOT / "rust/melee_types/src/gen.rs").read_text(encoding="utf-8")
 KNOWN = set(re.findall(r"^pub (?:struct|union|type) (\w+)", GEN_RS, re.M))
 
+REC_FIELDS = {}
+for _m in re.finditer(r"^pub (?:struct|union) (\w+) \{\n(.*?)^\}", GEN_RS, re.M | re.S):
+    REC_FIELDS[_m.group(1)] = dict(re.findall(r"^\s+pub ([\w#]+): ([^\n]+),$", _m.group(2), re.M))
+
+
+def strip_arr(t):
+    """element type of a Rust array type text `[T; N]` (nested arrays stripped)"""
+    t = t.strip()
+    while t.startswith("["):
+        t = t[1:t.rindex(";")].strip()
+    return t
+
+
 PRIM = g.PRIM
 INTS = {T.CHAR_S, T.SCHAR, T.CHAR_U, T.UCHAR, T.SHORT, T.USHORT, T.INT, T.UINT, T.LONG, T.ULONG,
         T.LONGLONG, T.ULONGLONG, T.BOOL}
@@ -298,10 +311,15 @@ class Walk:
 
     """Field-by-field fill/hash of one C record type (bitfields by value, pointers by id)."""
 
-    def __init__(self, tu, rules=None):
+    def __init__(self, tu, rules=None, spec=None):
         self.tu = tu
         self.rules = rules or {}
         self.cur_key = None
+        self.parent_rs = None
+        spec = spec or {}
+        self.walk2 = bool(spec.get("walk2"))
+        self.uv_only = spec.get("uv_only", {})
+        self.uv_keys = {}      # union key -> member names (declared once in gen.h / gen.rs)
 
     def rec_of(self, name):
         t = self.tu.types.get(name)
@@ -313,17 +331,33 @@ class Walk:
     def gen(self, name):
         decl = self.rec_of(name)
         cf, ch, rf, rh = [], [], [], []
-        self.fields(decl, "p->", "p.", 0, cf, ch, rf, rh, "p", 0)
+        self.fields(decl, "p->", "p.", 0, cf, ch, rf, rh, "p", 0, rs=name)
         cn = ("struct " + name) if name in self.tu.tagged else name
         cdef = f"static void fill_{name}({cn}* p)\n{{\n    int i0, i1, i2, j0, j1, j2, j3;\n" + "\n".join("    " + x for x in cf) + \
             f"\n}}\nstatic void hash_{name}(const {cn}* p)\n{{\n    int i0, i1, i2, j0, j1, j2, j3;\n    if (HDBG) printf(\"B {name}%c\", 10);\n" + "\n".join("    " + x for x in ch) + "\n}\n"
-        rdef = f"pub fn fill_{name}(p: &mut {name}) {{\n" + "\n".join("    " + x for x in rf) + \
-            f"\n}}\npub fn hash_{name}(p: &{name}) {{\n    unsafe {{ if HDBG {{ println!(\"B {name}\"); }} }}\n" + "\n".join("    " + x for x in rh) + "\n}\n"
+        rdef = f"pub fn fill_{name}(p: &mut {name}) {{ unsafe {{\n" + "\n".join("    " + x for x in rf) + \
+            f"\n}} }}\npub fn hash_{name}(p: &{name}) {{ unsafe {{\n    if HDBG {{ println!(\"B {name}\"); }}\n" + "\n".join("    " + x for x in rh) + "\n} }\n"
         return cdef, rdef
 
-    def fields(self, decl, cp, rp, base_off, cf, ch, rf, rh, rootc, depth):
+    def fields(self, decl, cp, rp, base_off, cf, ch, rf, rh, rootc, depth, rs=None):
+        anon_i = 0
         for f in decl.get_children():
             if f.kind != K.FIELD_DECL:
+                if self.walk2 and f.kind in (K.STRUCT_DECL, K.UNION_DECL) and f.is_anonymous_record_decl():
+                    # walk2: the anonymous member by value (bitfields through their accessors); an
+                    # anonymous union fills / hashes the one variant UV_<anon_NNN> names
+                    flds = REC_FIELDS.get(rs, {})
+                    anons = [x for x in flds if x.startswith("anon_")]
+                    if anon_i >= len(anons):
+                        raise SystemExit(f"walk2: no Rust anon field #{anon_i} in {rs}")
+                    rname = anons[anon_i]
+                    anon_i += 1
+                    nrs = strip_arr(flds[rname])
+                    if f.kind == K.UNION_DECL:
+                        self.union(f, f"{rs}_{rname}", cp, rp + rname + ".", cf, ch, rf, rh, depth, nrs)
+                    else:
+                        self.fields(f, cp, rp + rname + ".", 0, cf, ch, rf, rh, None, depth, rs=nrs)
+                    continue
                 if f.kind in (K.STRUCT_DECL, K.UNION_DECL) and f.is_anonymous_record_decl():
                     # C11 anonymous member: raw bytes at its offset in the parent. (A bitfield
                     # overlay in it is not compared by value: melee_types keeps bitfields in GC bit
@@ -343,11 +377,53 @@ class Walk:
             if not n:
                 raise SystemExit(f"unnamed field in {decl.spelling}")
             self.cur_key = f"{decl.spelling}.{n}"
-            self.one(f.type, f, cp + n, rp + rust_field(n), cf, ch, rf, rh, depth)
+            self.parent_rs = rs
+            self.one(f.type, f, cp + n, rp + rust_field(n), cf, ch, rf, rh, depth,
+                     rs=strip_arr(REC_FIELDS.get(rs, {}).get(rust_field(n), "")) if self.walk2 else None)
 
-    def one(self, t, f, cexpr, rexpr, cf, ch, rf, rh, depth):
+    def union(self, d, key, cprefix, rprefix, cf, ch, rf, rh, depth, rs):
+        """walk2: a union fills / hashes ONE variant by value, chosen by the global UV_<key> (the
+        member index; set per operation before the state is reset). uv_only[key] lists the members
+        generated (default: all)."""
+        members = [m for m in d.get_children() if m.kind == K.FIELD_DECL or
+                   (m.kind in (K.STRUCT_DECL, K.UNION_DECL) and m.is_anonymous_record_decl())]
+        anons = [x for x in REC_FIELDS.get(rs, {}) if x.startswith("anon_")]
+        names, rnames, ai = [], [], 0
+        for m in members:
+            if m.kind == K.FIELD_DECL:
+                names.append(m.spelling)
+                rnames.append(None)
+            else:
+                names.append(f"anon{ai}")
+                rnames.append(anons[ai])
+                ai += 1
+        self.uv_keys[key] = names
+        only = self.uv_only.get(key)
+        for idx, m in enumerate(members):
+            if only is not None and names[idx] not in only:
+                continue
+            for L in (cf, ch):
+                L.append(f"if (UV_{key} == {idx}) {{")
+            for L in (rf, rh):
+                L.append(f"if UV_{key} == {idx} {{")
+            if m.kind == K.FIELD_DECL:
+                self.cur_key = f"{d.spelling}.{m.spelling}"
+                nrs = strip_arr(REC_FIELDS.get(rs, {}).get(rust_field(m.spelling), ""))
+                self.parent_rs = rs
+                self.one(m.type, m, cprefix + m.spelling, rprefix + rust_field(m.spelling), cf, ch, rf, rh, depth + 1, rs=nrs)
+            else:
+                nrs = strip_arr(REC_FIELDS[rs][rnames[idx]])
+                if m.kind == K.UNION_DECL:
+                    self.union(m, f"{rs}_{rnames[idx]}", cprefix, rprefix + rnames[idx] + ".", cf, ch, rf, rh, depth + 1, nrs)
+                else:
+                    self.fields(m, cprefix, rprefix + rnames[idx] + ".", 0, cf, ch, rf, rh, None, depth + 1, rs=nrs)
+            for L in (cf, ch, rf, rh):
+                L.append("}")
+
+    def one(self, t, f, cexpr, rexpr, cf, ch, rf, rh, depth, rs=None):
         c = canon(t)
         k = c.kind
+        prs = self.parent_rs
         rule = self.rules.get(self.cur_key)
         if rule is not None and (k not in (T.CONSTANTARRAY,) or rule[0] == "skip"):
             kind = rule[0]
@@ -422,13 +498,17 @@ class Walk:
             ch.append(f"for ({iv} = 0; {iv} < {c.element_count}; {iv}++) {{")
             rf.append(f"for {iv} in 0..{c.element_count} {{")
             rh.append(f"for {iv} in 0..{c.element_count} {{")
-            self.one(c.element_type, None, f"{cexpr}[{iv}]", f"{rexpr}[{iv}]", cf, ch, rf, rh, depth + 1)
+            self.one(c.element_type, None, f"{cexpr}[{iv}]", f"{rexpr}[{iv}]", cf, ch, rf, rh, depth + 1, rs=rs)
             for L in (cf, ch, rf, rh):
                 L.append("}")
             return
         if k == T.RECORD:
             d = c.get_declaration()
             d = d.get_definition() or d
+            if d.kind == K.UNION_DECL and self.walk2:
+                key = f"{prs}_{f.spelling}" if f is not None else f"{prs}_{(self.cur_key or 'u').split('.')[-1]}"
+                self.union(d, key, cexpr + ".", rexpr + ".", cf, ch, rf, rh, depth, rs)
+                return
             if d.kind == K.UNION_DECL:
                 sz = c.get_size()
                 cf.append(f"for (i{depth} = 0; i{depth} < {sz}; i{depth}++) ((unsigned char*) &{cexpr})[i{depth}] = (unsigned char) rnd();")
@@ -436,7 +516,7 @@ class Walk:
                 rf.append(f"for i{depth} in 0..{sz} {{ unsafe {{ *(&mut {rexpr} as *mut _ as *mut u8).add(i{depth}) = rnd() as u8; }} }}")
                 rh.append(f"for i{depth} in 0..{sz} {{ unsafe {{ hm(*(&{rexpr} as *const _ as *const u8).add(i{depth}) as u32); }} }}")
                 return
-            self.fields(d, cexpr + ".", rexpr + ".", 0, cf, ch, rf, rh, None, depth)
+            self.fields(d, cexpr + ".", rexpr + ".", 0, cf, ch, rf, rh, None, depth, rs=rs)
             return
         if k == T.POINTER:
             if is_fnptr(t):
@@ -577,7 +657,8 @@ def build(stem, spec, want_ext):
         if addr and n not in realcb:
             ext_cb.append((n, rparams, rret, argnames))
     # fill / hash
-    walker = Walk(tu, spec.get("rules"))
+    walker = Walk(tu, spec.get("rules"), spec)
+    crate = spec.get("crate", "melee_world")
     local_types = []
     fwd = []
     all_types = list(spec.get("types", ()))
@@ -597,6 +678,10 @@ def build(stem, spec, want_ext):
         r_out.append(("@@RAW@@", rdef))
         if tu.in_main(walker.rec_of(tn)):
             local_types.append(tn)
+    for uk in walker.uv_keys:   # walk2 union selectors (declared ahead of the fill / hash code)
+        c_out.insert(1, f"static int UV_{uk};")
+        r_out.append(("@@RAW@@", f"pub static mut UV_{uk}: i32 = 0;"))
+    spec = dict(spec, _uv_keys=walker.uv_keys)
     if local_types:
         # records the .c defines shadow a same-named opaque melee_types record
         r_out.insert(5, "use super::m::{" + ", ".join(local_types) + "};")
@@ -629,7 +714,7 @@ def build(stem, spec, want_ext):
     for n in own:
         rtxt += f"    freg(m::{n} as *const () as usize);\n"
     rtxt += "}\n\n" + "\n".join(raws) + "\n" + "\n".join(pool_r) + "\n" + "\n".join(r_tail) + "\n"
-    rfile = ROOT / "rust/melee_world/tests/mtu" / f"{stem}_gen.rs"
+    rfile = ROOT / "rust" / crate / "tests/mtu" / f"{stem}_gen.rs"
     rfile.parent.mkdir(parents=True, exist_ok=True)
     rfile.write_text(rtxt, encoding="utf-8", newline="\n")
 
@@ -666,7 +751,7 @@ def build(stem, spec, want_ext):
     ext_txt = "\n".join(ext) + "\n"
     (ROOT / "rust/target").mkdir(exist_ok=True)
     (HERE / "tu" / f"{stem}_ext.rs.txt").write_text(ext_txt, encoding="utf-8", newline="\n")
-    port = ROOT / "rust/melee_world/src/tu" / f"{stem}.rs"
+    port = ROOT / "rust" / crate / "src/tu" / f"{stem}.rs"
     if port.exists():
         txt = port.read_text(encoding="utf-8")
         if "@@EXT@@" in txt:

@@ -60,3 +60,15 @@ pub mod itfreezer;
 pub mod itfushigibana;
 pub mod itgamewatchbreath;
 pub mod itgamewatchchef;
+
+// Shard 697-704.
+
+pub mod inl;
+pub mod itheart;
+pub mod itgreatfoxlaser;
+pub mod ithammerhead;
+pub mod ithammer;
+pub mod itharisen;
+pub mod itgshell;
+pub mod ithassam;
+pub mod itheiho;

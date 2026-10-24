@@ -15,6 +15,7 @@ pub mod compat;
 pub mod c2r;
 pub mod neutral_hash;
 pub mod bridge;
+pub mod chardata;
 pub mod platform;
 pub mod hooks;
 pub mod ftcommon;

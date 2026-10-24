@@ -59,10 +59,10 @@ pub mod ext {
         ftColl_8007ABD0(hit: *mut HitCapsule, dmg: u32, g: G) = |hit: *mut HitCapsule, dmg: u32, g: G| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007abd0(hit as _, dmg as _, g as _); } };
         ftColl_8007AFF8(g: G) = |g: G| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007aff8(g as _); } };
         ftKb_SpecialN_800F5820(g: G, b: *mut ftCollisionBox, s: f32) = |_, _, _| todo!("TODO(port) ftKb_SpecialN_800F5820 (ftKb_Init.c)");
-        ftKb_SpecialN_800F58AC(g: G, v: *mut Vec3, facing: f32) -> f32 = |_, _, _| todo!("TODO(port) ftKb_SpecialN_800F58AC (ftKb_Init.c)");
+        ftKb_SpecialN_800F58AC(g: G, v: *mut Vec3, facing: f32) -> f32 = |g: G, v: *mut Vec3, facing: f32| -> f32 { unsafe { crate::chardata::ftKb_SpecialN_800F58AC(&*(g as *const _), &mut *(v as *mut _), facing as _) } };
         ftKb_SpecialN_800F58D8(g: G, v: *mut Vec3, facing: f32) -> f32 = |_, _, _| todo!("TODO(port) ftKb_SpecialN_800F58D8 (ftKb_Init.c)");
-        ftKb_SpecialN_800F5A88(g: G) -> f32 = |_| todo!("TODO(port) ftKb_SpecialN_800F5A88 (ftKb_Init.c)");
-        ftKb_SpecialN_800F5AB0(g: G) -> f32 = |_| todo!("TODO(port) ftKb_SpecialN_800F5AB0 (ftKb_Init.c)");
+        ftKb_SpecialN_800F5A88(g: G) -> f32 = |g: G| -> f32 { unsafe { crate::chardata::ftKb_SpecialN_800F5A88(&*(g as *const _)) } };
+        ftKb_SpecialN_800F5AB0(g: G) -> f32 = |g: G| -> f32 { unsafe { crate::chardata::ftKb_SpecialN_800F5AB0(&*(g as *const _)) } };
         ftKb_SpecialN_800F5AC0() -> f32 = || todo!("TODO(port) ftKb_SpecialN_800F5AC0 (ftKb_Init.c)");
         ftKb_SpecialN_800F5AD8() -> f32 = || todo!("TODO(port) ftKb_SpecialN_800F5AD8 (ftKb_Init.c)");
         ftKb_SpecialN_800F5874(v: *mut Vec2) = |_| todo!("TODO(port) ftKb_SpecialN_800F5874 (ftKb_Init.c)");

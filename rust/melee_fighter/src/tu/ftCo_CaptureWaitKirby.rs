@@ -40,13 +40,13 @@ pub mod ext {
         ftAnim_8006EBA4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
         ftCommon_8007E2FC(g: G) = |g| crate::ftcommon2::ftcommon_8007e2fc(super::fp(g));
         ftKb_SpecialN_800F598C(g: G, a: i32) = |_, _| todo!("TODO(port) ftKb_SpecialN_800F598C (ftkirby)");
-        ftKb_SpecialN_800F597C(g: G) -> bool = |_| todo!("TODO(port) ftKb_SpecialN_800F597C (ftkirby)");
+        ftKb_SpecialN_800F597C(g: G) -> bool = |g: G| -> bool { unsafe { (crate::chardata::ftKb_SpecialN_800F597C(&*(g as *const _)) != 0 as _) } };
         ftKb_SpecialN_800F5954(g: G) = |_| todo!("TODO(port) ftKb_SpecialN_800F5954 (ftkirby)");
         ftKb_SpecialN_800F5A04(g: G, a: f32) = |_, _| todo!("TODO(port) ftKb_SpecialN_800F5A04 (ftkirby)");
-        ftKb_SpecialN_800F5A38(g: G, victim: *mut Fighter) -> bool = |_, _| todo!("TODO(port) ftKb_SpecialN_800F5A38 (ftkirby)");
-        ftKb_SpecialN_800F5B00(g: G) -> f32 = |_| todo!("TODO(port) ftKb_SpecialN_800F5B00 (ftkirby)");
-        ftKb_SpecialN_800F5B10(g: G) -> f32 = |_| todo!("TODO(port) ftKb_SpecialN_800F5B10 (ftkirby)");
-        ftKb_SpecialN_800F5A60(g: G) -> f32 = |_| todo!("TODO(port) ftKb_SpecialN_800F5A60 (ftkirby)");
+        ftKb_SpecialN_800F5A38(g: G, victim: *mut Fighter) -> bool = |g: G, victim: *mut Fighter| -> bool { unsafe { crate::chardata::ftKb_SpecialN_800F5A38(&*(g as *const _), &*(victim as *const _)) } };
+        ftKb_SpecialN_800F5B00(g: G) -> f32 = |g: G| -> f32 { unsafe { crate::chardata::ftKb_SpecialN_800F5B00(&*(g as *const _)) } };
+        ftKb_SpecialN_800F5B10(g: G) -> f32 = |g: G| -> f32 { unsafe { crate::chardata::ftKb_SpecialN_800F5B10(&*(g as *const _)) } };
+        ftKb_SpecialN_800F5A60(g: G) -> f32 = |g: G| -> f32 { unsafe { crate::chardata::ftKb_SpecialN_800F5A60(&*(g as *const _)) } };
         ftCommon_GrabMash(f: &mut Fighter, a: f32) -> bool = crate::ftcommon2::grab_mash;
         HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjSetMtxDirtySub (baselib jobj.c)");
         ftCo_CaptureCut_Enter(g: G) = crate::tu::ftCo_CaptureCut::ftCo_CaptureCut_Enter;

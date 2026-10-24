@@ -49,6 +49,9 @@ pub fn files_for(name: &str) -> Option<(&'static str, &'static str, &'static str
     match name {
         "falcon" => Some(("PlCa.dat", "ftDataCaptain", "PlCaAJ.dat")),
         "fox" => Some(("PlFx.dat", "ftDataFox", "PlFxAJ.dat")),
+        "marth" => Some(("PlMs.dat", "ftDataMars", "PlMsAJ.dat")),
+        "sheik" => Some(("PlSk.dat", "ftDataSeak", "PlSkAJ.dat")),
+        "zelda" => Some(("PlZd.dat", "ftDataZelda", "PlZdAJ.dat")),
         // m-ex fighters: their files come from a mounted gdmod (crate::mods); MxDt.dat's
         // fighter table names them (`mex-import tables`).
         "wolf" => Some(("PlWf.dat", "ftDataWolf", "PlWfAJ.dat")),
@@ -62,6 +65,9 @@ pub fn costume_for(name: &str) -> Option<(&'static str, &'static str)> {
     match name {
         "falcon" => Some(("PlCaNr.dat", "PlyCaptain5K_Share_joint")),
         "fox" => Some(("PlFxNr.dat", "PlyFox5K_Share_joint")),
+        "marth" => Some(("PlMsNr.dat", "PlyMars5K_Share_joint")),
+        "sheik" => Some(("PlSkNr.dat", "PlySeak5K_Share_joint")),
+        "zelda" => Some(("PlZdNr.dat", "PlyZelda5K_Share_joint")),
         "wolf" => Some(("PlWfNr.dat", "PlyWolf5K_Share_joint")),
         _ => None,
     }
@@ -169,7 +175,13 @@ impl FighterFiles {
                 return None;
             }
             let e = be32(d, tab + 4 * i as u32);
-            if e == 0 {
+            // The table holds only as many entries as the fighter has hand-pose slots; the words
+            // after it are other data, so an entry that is not a plausible pointer is absent.
+            if e == 0 || e as usize + 12 > d.len() || e % 4 != 0 {
+                return None;
+            }
+            let list_at = be32(d, e + 4) as usize;
+            if list_at == 0 || list_at >= d.len() {
                 return None;
             }
             let x0 = u16::from_be_bytes(d[e as usize..][..2].try_into().unwrap()) as usize;

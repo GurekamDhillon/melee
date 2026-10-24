@@ -124,6 +124,7 @@ fn fd_ground_friction(fp: &Fighter) -> f32 {
 const EF_ENTRY_BEAM: u32 = 0x24;
 /// `Gr_Kind_Last`'s StKind in a VS match (`grGroundParam->stage_params[0].stkind`).
 pub const STKIND_FD: i32 = 0x20;
+pub const STKIND_BF: i32 = 0x1F;
 /// efLib's particle procs (eflib.c `efLib_particles_proc_main` / `_aux`, TARGET_PC masks).
 const PTCL_MASK_MAIN: u32 = 0x20000 | 0x40000;
 const PTCL_MASK_AUX: u32 = 0x10000 | 0x80000;
@@ -154,6 +155,8 @@ impl Default for EntryVars {
 
 pub struct Player {
     pub slot: i32,
+    /// The partner fighter (`player_entity[1]`): Zelda behind Sheik, hash slot `slot * 2 + 1`.
+    pub follower: bool,
     pub fp: Box<Fighter>,
     /// An m-ex fighter's ftFunction code (crate::mex), run on `fp` at onLoad / onFrame.
     pub mex: Option<crate::mex::MexFighter>,
@@ -394,7 +397,7 @@ pub struct VsMatch {
     pub stopped: Option<String>,
     /// The match BGM `Ground_801C24F8` picked (an `hps_files` index; lbAudioAx_80023F28 plays it).
     pub bgm: i32,
-    last_bg: LastBg,
+    last_bg: Option<LastBg>,
     dptcl: Vec<DptclAnim>,
     aobj_globals: AObjGlobals,
     /// Bind-pose world matrices of the joints a generator can follow (by DAT offset; an effect
@@ -512,6 +515,9 @@ fn fighter_kind(name: &str) -> Result<FighterKind, String> {
     match name {
         "falcon" => Ok(Ft_Kind_Captain),
         "fox" => Ok(Ft_Kind_Fox),
+        "marth" => Ok(melee_types::Ft_Kind_Mars),
+        "sheik" => Ok(melee_types::Ft_Kind_Seak),
+        "zelda" => Ok(melee_types::Ft_Kind_Zelda),
         // Akaneia's Wolf: an m-ex fighter built on Fox (its ftFunction overrides some slots; the
         // rest is Fox's vanilla code, as m-ex's per-kind tables copy them). The native match runs
         // it as Fox's kind with Wolf's files: crate::fighter_data::files_for.
@@ -522,11 +528,27 @@ fn fighter_kind(name: &str) -> Result<FighterKind, String> {
 
 impl VsMatch {
     pub fn new(disc: &mut crate::disc::Disc, stage_file: &str, fighters: &[&str], seed: u32, stocks: i32) -> Result<Self, String> {
-        if stage_file != "GrNLa.dat" {
-            return Err(format!("{stage_file}: only Final Destination's stage code is wired"));
-        }
+        let stkind = match stage_file {
+            "GrNLa.dat" => STKIND_FD,
+            "GrNBa.dat" => STKIND_BF,
+            _ => return Err(format!("{stage_file}: only Final Destination's and Battlefield's stage code is wired")),
+        };
         let stage_bytes = disc.read(stage_file)?;
-        let points = crate::stage::spawn_points(&stage_bytes)?;
+        let mut points = crate::stage::spawn_points(&stage_bytes)?;
+        // Ground_801C0498 (grGroundParam->y): the stage JObj tree hangs under a root scaled by it
+        // (Ground_801C34AC / get_jobj_inline), so every stage point is scaled (Battlefield 0.8).
+        {
+            let a = DatArchive::parse(&stage_bytes).map_err(|e| format!("{stage_file}: {e}"))?;
+            let gp = crate::stage::ground_param(&a).ok_or("stage dat: no grGroundParam")?;
+            let sc = f32::from_bits(u32::from_be_bytes(a.data[gp as usize..][..4].try_into().unwrap()));
+            if sc != 1.0 && sc > 0.001 {
+                for p in &mut points {
+                    for c in &mut p.pos {
+                        *c *= sc;
+                    }
+                }
+            }
+        }
         let blast = BlastZone::from_points(&points)?;
         if std::env::var_os("MELEE_GOLDEN_DUMP").is_some() {
             for p in &points {
@@ -595,6 +617,8 @@ impl VsMatch {
             let (file, table, idx) = match *name {
                 "falcon" => ("EfCaData.dat", "effCaptainDataTable", 4),
                 "fox" => ("EfFxData.dat", "effFoxDataTable", 3),
+                "marth" => ("EfMsData.dat", "effMarsDataTable", 16),
+                "sheik" => ("EfZdData.dat", "effZeldaDataTable", 17),
                 // Wolf's own bank takes Fox's index: a match here has one Fox-kind fighter.
                 "wolf" => ("EfWfData.dat", "effWolfDataTable", 3),
                 n => return Err(format!("effect bank of {n:?} not wired")),
@@ -632,9 +656,14 @@ impl VsMatch {
 
         // grLast_OnInit -> grLast_8021A9C4 (map gobj 3) -> grLast_8021B920(1): the level gobjs
         // 4..8 are created in order; gobj 7's on_init is grLast_8021AC30.
-        let last_bg = {
+        let last_bg = if stkind == STKIND_BF {
+            // grBattle_OnInit: grBattle_80219D84(3) -> grBattle_BG_Callback0: reset_bg_timer,
+            // `HSD_Randi(1200) + 2400` (the first background change is 2400+ frames away).
+            let _ = rand.randi(1200);
+            None
+        } else {
             let r = std::cell::RefCell::new(&mut rand);
-            LastBg::init(&mut || r.borrow_mut().randf(), &mut |m| r.borrow_mut().randi(m))
+            Some(LastBg::init(&mut || r.borrow_mut().randf(), &mut |m| r.borrow_mut().randi(m)))
         };
         // grLast_8021B920(1) starts these animations (grNLa_803E8010 rows {gobj, joint, joint,
         // anim}): grAnime_801C7FF8(lv, 2, 7, anim, 0, 1) and grAnime_801C8098(lv, 1, 7, 0, 0, 1)
@@ -645,7 +674,10 @@ impl VsMatch {
         let mut dptcl = Vec::new();
         let mut joint_mtx = HashMap::new();
         let mut seen = std::collections::HashSet::new();
-        for (g, anim) in [(4, 0), (5, 4), (6, 6), (7, 8), (8, 10), (4, 0), (5, 0), (6, 0), (7, 0), (8, 0)] {
+        // FD's grLast animation table; Battlefield's grBattle_OnInit starts gobj 0 and 1's anim 0
+        // (grBattle_GObj0/1_Callback0 -> grAnime_801C8138), whose particle tracks are the 4 stage gens.
+        let dptcl_rows: &[(u32, u32)] = if stkind == STKIND_BF { &[(0, 0), (1, 0)] } else { &[(4, 0), (5, 4), (6, 6), (7, 8), (8, 10), (4, 0), (5, 0), (6, 0), (7, 0), (8, 0)] };
+        for &(g, anim) in dptcl_rows {
             if !seen.insert((g, anim)) {
                 continue;
             }
@@ -669,8 +701,48 @@ impl VsMatch {
         };
         ground.mp_lib_80058820();
         let mut players = Vec::new();
+        // Player_80031AD0: the main fighter, then (Sheik / Zelda) the partner fighter of the
+        // transformation, created hidden (`has_transformation`: ftCo_800BFD04, Sleep).
+        // fn_8016DEEC (the multi-player spawn pre-pass): each fighter faces the nearest other one
+        // (largest |dx| wins ties by order); within 5 units it faces away from the other's facing
+        // (+1 when that is unset).
+        let mut facings = vec![0.0f32; fighters.len()];
+        {
+            let xs: Vec<f32> = (0..fighters.len())
+                .map(|i| points.iter().find(|p| p.id == i as i32).map_or(0.0, |p| p.pos[0]))
+                .collect();
+            for i in 0..fighters.len() {
+                let mut best: Option<(usize, f32)> = None;
+                for j in 0..fighters.len() {
+                    if j != i && best.map_or(true, |(_, d)| d < (xs[i] - xs[j]).abs()) {
+                        best = Some((j, (xs[i] - xs[j]).abs()));
+                    }
+                }
+                facings[i] = match best {
+                    None => 1.0,
+                    Some((j, _)) => {
+                        let dx = xs[j] - xs[i];
+                        if dx < -5.0 {
+                            -1.0
+                        } else if dx > 5.0 {
+                            1.0
+                        } else if facings[j] == 1.0 {
+                            -1.0
+                        } else {
+                            1.0
+                        }
+                    }
+                };
+            }
+        }
+        let mut roster: Vec<(i32, &str, bool)> = Vec::new();
         for (i, name) in fighters.iter().enumerate() {
-            let slot = i as i32;
+            roster.push((i as i32, name, false));
+            if *name == "sheik" {
+                roster.push((i as i32, "zelda", true));
+            }
+        }
+        for &(slot, name, follower) in &roster {
             let sp = points.iter().find(|p| p.id == slot).ok_or(format!("{stage_file}: no spawn point {slot}"))?;
             if !sp.exact {
                 eprintln!("melee: spawn point {slot} is under a rotated/scaled joint: position not bit-exact (TODO group1 jobj)");
@@ -728,7 +800,7 @@ impl VsMatch {
             fp.cur_pos.x = sp.pos[0];
             fp.cur_pos.y = sp.pos[1];
             fp.cur_pos.z = sp.pos[2];
-            fp.facing_dir = direction(sp.pos[0]);
+            fp.facing_dir = facings[slot as usize];
             // Fighter_UnkInitLoad_80068914: x34_scale.x = Player_GetModelScale (1 in a VS match);
             // Fighter_UnkInitReset: y = x; Fighter_80068E64: z = 1 off Flat Zone.
             fp.x34_scale.x = 1.0;
@@ -739,7 +811,9 @@ impl VsMatch {
             // model scale comes after the spawn probe below.
             let root = skel.root;
             skel.set_translate(root, Vec3 { x: fp.cur_pos.x, y: fp.cur_pos.y, z: fp.cur_pos.z });
-            stale::set_stocks(slot, stocks);
+            if !follower {
+                stale::set_stocks(slot, stocks);
+            }
             // Fighter_UnkProcessDeath_80068354 -> ftCo_800A101C(fp, Player_GetCpuType,
             // Player_GetCpuLevel, 0): two HSD_Randf. The co_attrs it reads for x558 are not loaded
             // (x558 is not hashed).
@@ -809,6 +883,7 @@ impl VsMatch {
             }
             players.push(Player {
                 slot,
+                follower,
                 fp,
                 mex,
                 entry,
@@ -902,6 +977,18 @@ impl VsMatch {
             // Fighter_Create -> ftLib_800867E8: Fighter_ResetInputData_80068854, x221D_b4 = true.
             input::reset_input(&mut p.fp);
             p.input_locked = true;
+            if follower {
+                // ftCo_800BFD04: Sleep, hidden, inactive camera.
+                change_motion_state(p, melee_types::ftCo_MS_Sleep as i32, None, &mut rand)?;
+                p.fp.set_invisible(1);
+                p.fp.set_x221E_b1(1);
+                p.fp.set_x221E_b2(1);
+                p.fp.set_x2219_b1(1);
+                p.fp.set_x221F_b3(1);
+                p.fp.set_x221F_b1(1);
+                p.animating = false;
+                continue;
+            }
             change_motion_state(p, FTCO_MS_ENTRY, None, &mut rand)?;
             // ftCo_Entry_Enter (ft_0C31.c:42).
             p.fp.set_invisible(1);
@@ -917,7 +1004,7 @@ impl VsMatch {
         // gmvs.c -> Stage_80225074(fn_8016E5C0(...)): no alternate-music button held -> 0 -> 4.
         let param = crate::stage::ground_param(&stage).ok_or("stage dat: no grGroundParam")?;
         let rows = StageParam::parse_all(&stage.data, param);
-        let pick = bgm::ground_801c24f8(&rows, STKIND_FD, bgm::stage_80225074_flags(0), &SaveUnlocks, &mut |m| rand.randi(m));
+        let pick = bgm::ground_801c24f8(&rows, stkind, bgm::stage_80225074_flags(0), &SaveUnlocks, &mut |m| rand.randi(m));
         if std::env::var_os("MELEE_GOLDEN_DUMP").is_some() {
             eprintln!("bgm {} alt {:?}; seed before frame 0 {:08X}; particle tracks {}", pick.bgm, pick.alt_flag, rand.logic_seed(), dptcl.len());
         }
@@ -944,7 +1031,7 @@ impl VsMatch {
         let mut w = FrameWords { frame: self.frame as u32, seed: self.rand.logic_seed(), items: n_items, itemsum: item_sum, ..Default::default() };
         for p in &self.players {
             // Slot = player*2 + follower; is_cpu false (human scenario).
-            let s = p.slot * 2;
+            let s = p.slot * 2 + p.follower as i32;
             w.slots[s as usize] = Some(nh_fighter(&p.fp, s, stale::stocks(p.slot), false));
             if std::env::var_os("MELEE_GOLDEN_FRAMES").is_some() {
                 let f = &p.fp;
@@ -1003,6 +1090,9 @@ impl VsMatch {
         // ftAction_80073240's frame_count = cur_anim_frame + x898), then the state's anim_cb.
         for pi in 0..self.players.len() {
             let p = &mut self.players[pi];
+            if p.follower {
+                continue;
+            }
             if p.animating {
                 // ftAnim_8006E9B4, no blend (x8A4 == 0), x594_b0 / x594_b2 clear.
                 body_anim(p)?;
@@ -1177,6 +1267,9 @@ impl VsMatch {
         // s_link 3, Fighter_Spaghetti_8006AD10: the input step, then (outside hitlag) the
         // smash-charge state, the stick-activity stats, the press counters and input_cb.
         for i in 0..self.players.len() {
+            if self.players[i].follower {
+                continue;
+            }
             let port = self.players[i].slot as usize;
             let pad = self.pads[port];
             let p = &mut self.players[i];
@@ -1367,6 +1460,9 @@ impl VsMatch {
         }
         // The rest of Fighter_procUpdate: ftCo_800D3158, the blast zone check.
         for i in 0..self.players.len() {
+            if self.players[i].follower {
+                continue;
+            }
             self.blast_check(i)?;
         }
         // s_link 6, Fighter_procMap (x221F_b3 clear): the ECB lock countdown, the root JObj to
@@ -1374,6 +1470,9 @@ impl VsMatch {
         let c_common = self.common;
         for i in 0..self.players.len() {
             let p = &mut self.players[i];
+            if p.follower {
+                continue;
+            }
             if p.fp.ecb_lock != 0 {
                 p.fp.ecb_lock -= 1;
                 if p.fp.ecb_lock == 0 {
@@ -4258,7 +4357,9 @@ impl Sim for VsMatch {
         }
         let r = self.fighters().and_then(|_| self.hit_guard()).and_then(|_| self.stage_anim()).and_then(|_| {
             let rand = &mut self.rand;
-            self.last_bg.update(&mut || rand.randf());
+            if let Some(b) = &mut self.last_bg {
+                b.update(&mut || rand.randf());
+            }
             self.effects_update()
         });
         if let Err(e) = r {

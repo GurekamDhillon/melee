@@ -51,6 +51,8 @@ pub struct RespawnCtx<'a> {
     /// `scene_state->fighters[i].x8`: the respawn spots' countdowns (`fn_8016758C`).
     pub busy: &'a mut [i32; 6],
     pub start_shield: f32,
+    /// `stage_info.unk8C.b4`: fn_80167638 takes the stage point of the slot, no spot countdown.
+    pub per_slot_spawn: bool,
 }
 
 fn stage_point(ctx: &RespawnCtx<'_>, n: i32) -> Result<Vec3, String> {
@@ -81,11 +83,16 @@ pub fn dead_over(p: &mut Player, ctx: &mut RespawnCtx<'_>) -> Result<(), String>
 /// `fn_8016719C(slot, subchar)` (gm_1601.c) up to `Player_80032070`.
 fn fn_8016719c(p: &mut Player, ctx: &mut RespawnCtx<'_>) -> Result<(), String> {
     // fn_80167638: get_idx() = the first free respawn spot; Stage_80224E38(&pos, 0); offset.x = 16 * sp[idx].
-    let idx = ctx.busy.iter().position(|&b| b == 0).unwrap_or(0);
-    let sp: [f32; 6] = [0.0, 1.0, -1.0, 2.0, 0.0, 0.0];
-    let mut respawn = stage_point(ctx, 0)?;
-    let offset = Vec3 { x: 16.0 * sp[idx], y: 0.0, z: 0.0 };
-    ctx.busy[idx] = 0x90;
+    let (respawn, offset) = if ctx.per_slot_spawn {
+        (stage_point(ctx, p.slot)?, Vec3 { x: 0.0, y: 0.0, z: 0.0 })
+    } else {
+        let idx = ctx.busy.iter().position(|&b| b == 0).unwrap_or(0);
+        let sp: [f32; 6] = [0.0, 1.0, -1.0, 2.0, 0.0, 0.0];
+        let respawn = stage_point(ctx, 0)?;
+        ctx.busy[idx] = 0x90;
+        (respawn, Vec3 { x: 16.0 * sp[idx], y: 0.0, z: 0.0 })
+    };
+    let mut respawn = respawn;
     respawn.x += offset.x;
     // Player_SetSpawnPlatformPos; stage_info.unk8C.b5 is set on Final Destination, so
     // Player_80032FA4 / Player_SetSomePos are skipped (unk4E stays -1).

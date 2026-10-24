@@ -1190,28 +1190,80 @@ fn mp_coll_800488f4(g: &mut GroundColl, cd: &mut CollData) -> bool {
     false
 }
 
-/// `mpColl_8004A45C_Floor` (`teeter` false: walk off) / `mpColl_8004A678_Floor` (`teeter` true:
-/// stop at the edge). Only the "no edge reached" outcome is ported; reaching an edge returns
-/// NotPorted.
+/// `mpColl_8004A45C_Floor` (`teeter` false: walk off the end, stand on the end point) /
+/// `mpColl_8004A678_Floor` (`teeter` true: stop at the edge). True = the ECB was put on the end
+/// point of the floor (`on_edge`).
 fn mp_coll_floor_edge(g: &mut GroundColl, cd: &mut CollData, line_id: i32, teeter: bool) -> R<bool> {
     if !g.mp_lib_80054ed8(line_id) || g.mp_line_get_kind(line_id) != COLL_LINE_FLOOR {
         return Ok(false);
     }
-    let edge = g.mp_floor_get_left(line_id);
+    let mut on_edge = false;
+    let mut edge = g.mp_floor_get_left(line_id);
+    let mut hit = None;
     if cd.cur_pos.x <= edge.x {
         let cond = !teeter
             || (cd.env_flags & COLLIDE_LEFT_WALL_MASK == 0 && cd.facing_dir == -1 && (cd.lstick_x as f64) > -0.75);
         if cond {
-            return Err(NotPorted("mpColl_8004A45C/8004A678_Floor at a floor's left end"));
+            hit = g.mp_lib_8004dd90_floor(line_id, edge);
+            if teeter {
+                if let Some(h) = &hit {
+                    if h.line_id != -1 {
+                        edge.y += h.dist;
+                    }
+                }
+            }
+            let edge_x = edge.x + 1.0;
+            let edge_y = edge.y + 1.0;
+            let right_x = edge.x + cd.ecb.right.x - cd.ecb.bottom.x;
+            let right_y = edge.y + cd.ecb.right.y - cd.ecb.bottom.y;
+            // make sure a wall hasn't stopped us
+            if g.mp_check_left_wall(edge_x, edge_y, right_x, right_y, cd.joint_id_skip, cd.joint_id_only).is_none() {
+                on_edge = true;
+                if !teeter {
+                    cd.env_flags |= COLLIDE_RIGHT_EDGE;
+                }
+            }
         }
     } else {
-        let edge = g.mp_floor_get_right(line_id);
+        edge = g.mp_floor_get_right(line_id);
         let cond = cd.cur_pos.x >= edge.x
             && (!teeter
                 || (cd.env_flags & COLLIDE_RIGHT_WALL_MASK == 0 && cd.facing_dir == 1 && (cd.lstick_x as f64) < 0.75));
         if cond {
-            return Err(NotPorted("mpColl_8004A45C/8004A678_Floor at a floor's right end"));
+            hit = g.mp_lib_8004dd90_floor(line_id, edge);
+            if teeter {
+                if let Some(h) = &hit {
+                    if h.line_id != -1 {
+                        edge.y += h.dist;
+                    }
+                }
+            }
+            let edge_x = edge.x - 1.0;
+            let edge_y = edge.y + 1.0;
+            let left_x = edge.x + cd.ecb.left.x - cd.ecb.bottom.x;
+            let left_y = edge.y + cd.ecb.left.y - cd.ecb.bottom.y;
+            if g.mp_check_right_wall(edge_x, edge_y, left_x, left_y, cd.joint_id_skip, cd.joint_id_only).is_none() {
+                on_edge = true;
+                if !teeter {
+                    cd.env_flags |= COLLIDE_LEFT_EDGE;
+                }
+            }
         }
+    }
+    if on_edge {
+        let Some(h) = hit else {
+            return Err(NotPorted("mpColl_8004A45C/8004A678_Floor: no floor under the end point"));
+        };
+        cd.cur_pos.x = edge.x - cd.ecb.bottom.x;
+        cd.cur_pos.y = edge.y - cd.ecb.bottom.y;
+        cd.cur_pos.z = edge.z;
+        cd.floor.index = h.line_id;
+        cd.floor.flags = h.flags;
+        cd.floor.normal = tv(h.normal);
+        if teeter {
+            cd.env_flags |= COLLIDE_EDGE;
+        }
+        return Ok(true);
     }
     Ok(false)
 }
@@ -1274,19 +1326,34 @@ pub fn mp_coll_8004ace4(g: &mut GroundColl, st: &mut CollGlobals, cd: &mut CollD
         } else {
             let floor_id = cd.floor.index;
             if g.mp_lib_80054ed8(floor_id) && g.mp_line_get_kind(floor_id) == COLL_LINE_FLOOR {
-                // flags & 1 / & 2: the edge probes (each returns false here or stops the run).
+                // flags & 1: stop at the edge (mpColl_8004A678_Floor); & 2: walk off (45C).
+                let mut var_r23 = false;
                 if flags & 1 != 0 {
-                    mp_coll_floor_edge(g, cd, floor_id, true)?;
+                    if mp_coll_floor_edge(g, cd, floor_id, true)? {
+                        cd.x34_flags.set_b5(1);
+                        touching_floor = false;
+                    } else {
+                        var_r23 = true;
+                    }
                 } else if flags & 2 != 0 {
-                    mp_coll_floor_edge(g, cd, floor_id, false)?;
+                    if mp_coll_floor_edge(g, cd, floor_id, false)? {
+                        cd.x34_flags.set_b5(1);
+                        touching_floor = true;
+                    } else {
+                        var_r23 = true;
+                    }
+                } else {
+                    var_r23 = true;
                 }
-                let old_skip = cd.floor_skip;
-                cd.floor_skip = floor_id;
-                if mp_coll_80046904(g, st, cd, 0, &mut None)? {
-                    touching_floor = true;
+                if var_r23 {
+                    let old_skip = cd.floor_skip;
+                    cd.floor_skip = floor_id;
+                    if mp_coll_80046904(g, st, cd, 0, &mut None)? {
+                        touching_floor = true;
+                    }
+                    cd.floor_skip = old_skip;
+                    cd.x34_flags.set_b5(1);
                 }
-                cd.floor_skip = old_skip;
-                cd.x34_flags.set_b5(1);
             }
         }
         if prev_b6 == cd.x34_flags.b6() {

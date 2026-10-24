@@ -107,6 +107,9 @@ const FTCO_MS_TURN: i32 = 18;
 const FTCO_SM_TURN: u32 = 10;
 /// `ftCo_MS_Landing` (42) and its row `ftCo_SM_Landing` (35).
 const FTCO_MS_LANDING: i32 = 42;
+const FTCO_MS_OTTOTTO: i32 = 245;
+const FTCO_MS_OTTOTTO_WAIT: i32 = 246;
+const FTCO_SM_OTTOTTO: u32 = 210;
 const FTCO_SM_LANDING: u32 = 35;
 /// `ftCo_MS_LandingAirN..Lw` (the submotions follow at `ftCo_SM_LandingAirN` = 73).
 const FTCO_MS_LANDING_AIR_N: i32 = 70;
@@ -433,6 +436,8 @@ pub struct VsMatch {
     fighter_jobjs: Vec<(JObjRef, usize, usize)>,
     /// The live items (fox.rs).
     items: Vec<SimItem>,
+    /// `stage_info.unk8C.b4` (grBattle_OnInit): respawn at the stage point of the player's slot.
+    per_slot_spawn: bool,
     /// `Stage_80224E38(&v, n)`: the stage's respawn points (points 4..8), `scene_state->fighters[].x8`
     /// (the respawn spots' countdowns) and `PlCo`'s start shield.
     respawn_points: Vec<Vec3>,
@@ -1051,7 +1056,7 @@ impl VsMatch {
                 }
             });
         }
-        Ok(Self { players, ground, cg, pads: [input::PadStatus::default(); 4], go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists, blast, fighter_jobjs: Vec::new(), items: Vec::new(), respawn_points: (4..8).filter_map(|id| points.iter().find(|p| p.id == id).map(|p| Vec3 { x: p.pos[0], y: p.pos[1], z: p.pos[2] })).collect(), respawn_busy: [0; 6], start_shield })
+        Ok(Self { players, ground, cg, pads: [input::PadStatus::default(); 4], go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists, blast, fighter_jobjs: Vec::new(), items: Vec::new(), respawn_points: (4..8).filter_map(|id| points.iter().find(|p| p.id == id).map(|p| Vec3 { x: p.pos[0], y: p.pos[1], z: p.pos[2] })).collect(), respawn_busy: [0; 6], start_shield, per_slot_spawn: stkind == STKIND_BF })
     }
 
     /// The m-ex fighters' code-run report (crate::mex), one block per such fighter.
@@ -1269,6 +1274,14 @@ impl VsMatch {
                 }
                 m if is_guard_motion(m) => guard_anim(p, &mut self.rand)?,
                 FTCO_MS_KNEE_BEND => kneebend_anim(p, &mut self.rand)?,
+                FTCO_MS_OTTOTTO => {
+                    // ftCo_Ottotto_Anim -> ftCo_8009A6B8: OttottoWait (the sounds are not modelled).
+                    if !p.skel.frames_remaining() {
+                        let row = load_row(p, FTCO_SM_OTTOTTO + 1)?;
+                        change_motion_state(p, FTCO_MS_OTTOTTO_WAIT, row.as_ref(), &mut self.rand)?;
+                    }
+                }
+                FTCO_MS_OTTOTTO_WAIT => {} // ftCo_OttottoWait_Anim is empty
                 m if kind == Ft_Kind_Fox && fox::is_fox_special_n(m) => fox::anim(p, &mut self.rand)?,
                 m if kind == melee_types::Ft_Kind_Seak && sheik::is_sheik_special_n(m) => sheik::anim(p, &mut self.rand)?,
                 m if is_jump_motion(m) => {
@@ -1291,12 +1304,12 @@ impl VsMatch {
                     // ftCo_DeadDown_Anim: the countdown, then ftCo_800BFD9C (Sleep + the respawn).
                     p.dead_timer -= 1;
                     if p.dead_timer == 0 {
-                        let mut ctx = RespawnCtx { ground: &mut self.ground, cg: &mut self.cg, rand: &mut self.rand, respawn_points: &self.respawn_points, cam_top: self.blast.cam_top, busy: &mut self.respawn_busy, start_shield: self.start_shield };
+                        let mut ctx = RespawnCtx { ground: &mut self.ground, cg: &mut self.cg, rand: &mut self.rand, respawn_points: &self.respawn_points, cam_top: self.blast.cam_top, busy: &mut self.respawn_busy, start_shield: self.start_shield, per_slot_spawn: self.per_slot_spawn };
                         rebirth::dead_over(p, &mut ctx)?;
                     }
                 }
                 rebirth::FTCO_MS_REBIRTH | rebirth::FTCO_MS_REBIRTH_WAIT => {
-                    let mut ctx = RespawnCtx { ground: &mut self.ground, cg: &mut self.cg, rand: &mut self.rand, respawn_points: &self.respawn_points, cam_top: self.blast.cam_top, busy: &mut self.respawn_busy, start_shield: self.start_shield };
+                    let mut ctx = RespawnCtx { ground: &mut self.ground, cg: &mut self.cg, rand: &mut self.rand, respawn_points: &self.respawn_points, cam_top: self.blast.cam_top, busy: &mut self.respawn_busy, start_shield: self.start_shield, per_slot_spawn: self.per_slot_spawn };
                     rebirth::anim(p, &mut ctx)?;
                 }
                 rebirth::FTCO_MS_SLEEP => {} // ftCo_Sleep_Anim is empty
@@ -1486,7 +1499,7 @@ impl VsMatch {
                 }
                 m if is_jump_motion(m) => jump_phys(p),
                 rebirth::FTCO_MS_REBIRTH | rebirth::FTCO_MS_REBIRTH_WAIT => {
-                    let mut ctx = RespawnCtx { ground: &mut self.ground, cg: &mut self.cg, rand: &mut self.rand, respawn_points: &self.respawn_points, cam_top: self.blast.cam_top, busy: &mut self.respawn_busy, start_shield: self.start_shield };
+                    let mut ctx = RespawnCtx { ground: &mut self.ground, cg: &mut self.cg, rand: &mut self.rand, respawn_points: &self.respawn_points, cam_top: self.blast.cam_top, busy: &mut self.respawn_busy, start_shield: self.start_shield, per_slot_spawn: self.per_slot_spawn };
                     rebirth::phys(p, &mut ctx)?;
                 }
                 rebirth::FTCO_MS_SLEEP => {}
@@ -1745,14 +1758,39 @@ impl VsMatch {
                     fp.cur_pos = fp.coll_data.cur_pos;
                     if !r {
                         if fp.coll_data.env_flags & mc::COLLIDE_EDGE != 0 {
-                            return Err("ftCo_8009A3C8 -> Ottotto (teeter) not ported".into());
+                            // ftCo_8009A3C8 -> ftCo_8009A410.
+                            return ottotto_enter(p, &mut self.rand);
                         }
                         fall_enter(p, &mut self.rand)?;
                     }
                 }
+                FTCO_MS_OTTOTTO | FTCO_MS_OTTOTTO_WAIT => {
+                    // ftCo_Ottotto_Coll / ftCo_OttottoWait_Coll: ft_800827A0 (mpColl_8004B2DC, walk
+                    // off) - no floor: Fall; else Wait once the fighter is far enough from the end.
+                    let joints = {
+                        let d = p.ecb_desc;
+                        ecb_joints(&mut p.skel, &d)
+                    };
+                    let fp = &mut *p.fp;
+                    fp.coll_data.last_pos = fp.coll_data.cur_pos;
+                    fp.coll_data.cur_pos = fp.cur_pos;
+                    let r = mc::mp_coll_8004b2dc(&mut self.ground, &mut self.cg, &mut fp.coll_data, &joints)
+                        .map_err(|e| format!("{} not ported", e.0))?;
+                    fp.cur_pos = fp.coll_data.cur_pos;
+                    if !r {
+                        fall_enter(p, &mut self.rand)?;
+                    } else {
+                        let line = p.fp.coll_data.floor.index;
+                        let pos = if p.fp.facing_dir > 0.0 { self.ground.mp_floor_get_right(line) } else { self.ground.mp_floor_get_left(line) };
+                        let cd = melee_fighter::hooks::common_data();
+                        if fc::abs_c(p.fp.cur_pos.x - pos.x) > cd.x478 + cd.x47C {
+                            ft_8008a2bc(p, &mut self.rand)?;
+                        }
+                    }
+                }
                 FTCO_MS_DEAD_DOWN => {} // coll_cb NULL
                 rebirth::FTCO_MS_REBIRTH => {
-                    let mut ctx = RespawnCtx { ground: &mut self.ground, cg: &mut self.cg, rand: &mut self.rand, respawn_points: &self.respawn_points, cam_top: self.blast.cam_top, busy: &mut self.respawn_busy, start_shield: self.start_shield };
+                    let mut ctx = RespawnCtx { ground: &mut self.ground, cg: &mut self.cg, rand: &mut self.rand, respawn_points: &self.respawn_points, cam_top: self.blast.cam_top, busy: &mut self.respawn_busy, start_shield: self.start_shield, per_slot_spawn: self.per_slot_spawn };
                     rebirth::coll(p, &mut ctx)?;
                 }
                 rebirth::FTCO_MS_REBIRTH_WAIT => return Err("ftCo_RebirthWait_Coll (ft_80083844) not ported".into()),
@@ -2381,6 +2419,7 @@ fn input_cb(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         rebirth::FTCO_MS_REBIRTH_WAIT => rebirth::wait_iasa(p, rand),
         m if is_guard_motion(m) => guard_iasa(p, rand),
         FTCO_MS_KNEE_BEND => kneebend_iasa(p),
+        FTCO_MS_OTTOTTO | FTCO_MS_OTTOTTO_WAIT => ottotto_iasa(p, rand),
         m if p.fp.kind == Ft_Kind_Fox && fox::is_fox_special_n(m) => {
             fox::iasa(p);
             Ok(())
@@ -2408,7 +2447,9 @@ fn fall_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     if !fp.item_gobj.is_null() {
         return Err("ftCo_Fall_IASA with an item not ported".into());
     }
-    if i.pressed_buttons & !(PAD_STICK_DIRS | input::HSD_PAD_XY | input::HSD_PAD_A) != 0 || i.triggers[0] != 0.0 {
+    // The analog trigger alone reads nothing here (ftCo_80099A58 needs the digital R / L press);
+    // L / R held with A pressed is ftCo_800D705C's item grab / the Z-air.
+    if i.pressed_buttons & !(PAD_STICK_DIRS | input::HSD_PAD_XY | input::HSD_PAD_A) != 0 || (i.held_buttons[0] & input::HSD_PAD_LR != 0 && i.pressed_buttons & input::HSD_PAD_A != 0) {
         return Err(format!("player {}: ftCo_Fall_IASA with a press {:#x}: not ported", p.slot + 1, i.pressed_buttons));
     }
     if attackair::check_input(p, rand)? {
@@ -3308,6 +3349,44 @@ fn guard_anim(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         }
         m => Err(format!("player {}: guard motion {m} not ported", p.slot + 1)),
     }
+}
+
+/// `ftCo_8009A410`: the teeter at a floor's end.
+fn ottotto_enter(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    let row = load_row(p, FTCO_SM_OTTOTTO)?;
+    change_motion_state(p, FTCO_MS_OTTOTTO, row.as_ref(), rand)?;
+    let fp = &mut *p.fp;
+    fp.self_vel.x = 0.0;
+    fp.self_vel.y = 0.0;
+    fp.self_vel.z = 0.0;
+    fp.gr_vel = 0.0;
+    Ok(())
+}
+
+/// `ftCo_Ottotto_IASA` / `ftCo_OttottoWait_IASA`: the Wait checks, then the teeter-walk check.
+fn ottotto_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    if special_checks(p, rand)? {
+        return Ok(());
+    }
+    if catch_check(p)? {
+        return catch_enter(p, rand);
+    }
+    if attack_checks(p, rand)? {
+        return Ok(());
+    }
+    if ground_stick_gate(p, rand, "ftCo_Ottotto_IASA")? {
+        return Ok(());
+    }
+    let cd = melee_fighter::hooks::common_data();
+    let fp = &*p.fp;
+    if fp.input.lstick[0].x * fp.facing_dir <= cd.x34 {
+        return turn_enter_basic(p, rand);
+    }
+    // ftCo_Walk_CheckInput_Ottotto.
+    if fp.input.lstick[0].x * fp.facing_dir >= cd.teeter_walk_threshold && fp.input.lstick[0].x * fp.facing_dir >= cd.walk_stick_threshold {
+        return walk_enter(p, 0.0, rand);
+    }
+    Ok(())
 }
 
 /// `ftCo_Walk_IASA`.
@@ -4537,6 +4616,9 @@ fn fall_enter(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     fc::clamp_air_drift(&mut p.fp);
     p.fall_smid = FTCO_SM_FALL as i32;
     p.fall_x4 = 0.0;
+    if p.fp.ground_or_air == melee_types::GA_Ground {
+        melee_fighter::ftcommon2::ftcommon_8007d5d4(&mut p.fp);
+    }
     Ok(())
 }
 
@@ -4627,7 +4709,7 @@ impl Sim for VsMatch {
         }
         if std::env::var_os("MELEE_GOLDEN_RAND").is_some() {
             for p in &self.players {
-                eprintln!("R {} MOTION slot {} {} id {} frame {}", unsafe { TRACE_FRAME }, p.slot, p.follower, p.fp.motion_id, p.fp.cur_anim_frame);
+                eprintln!("R {} MOTION slot {} {} id {} frame {} pos {} {} vel {} {} face {}", unsafe { TRACE_FRAME }, p.slot, p.follower, p.fp.motion_id, p.fp.cur_anim_frame, p.fp.cur_pos.x, p.fp.cur_pos.y, p.fp.self_vel.x, p.fp.self_vel.y, p.fp.facing_dir);
             }
         }
         for k in 0..self.effects.len() {

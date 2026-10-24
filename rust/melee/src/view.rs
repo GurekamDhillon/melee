@@ -168,6 +168,8 @@ struct FighterModel {
 }
 
 pub struct View {
+    cm: crate::cm_drive::CmDrive,
+    pose: crate::cm_drive::CamPose,
     sim: VsMatch,
     sim_alive: bool,
     stage: Stage,
@@ -184,11 +186,10 @@ pub struct View {
     pub failed: Option<String>,
 }
 
-/// The fixed camera (see the module note): the FD match-start framing, looking down -z.
-fn camera() -> (Mtx, [[f32; 4]; 4]) {
-    let eye = Vec3 { x: 0.0, y: 25.0, z: 230.0 };
-    let at = Vec3 { x: 0.0, y: 15.0, z: 0.0 };
-    // look-at (MTXLookAt)
+/// The view matrix and projection of a CObj pose (`HSD_CObjGetViewingMtx`, MTXPerspective).
+fn camera(p: &crate::cm_drive::CamPose) -> (Mtx, [[f32; 4]; 4]) {
+    let eye = Vec3 { x: p.eye[0], y: p.eye[1], z: p.eye[2] };
+    let at = Vec3 { x: p.interest[0], y: p.interest[1], z: p.interest[2] };
     let f = mtx::vec_normalize(&mtx::vec_sub(&eye, &at));
     let up = Vec3 { x: 0.0, y: 1.0, z: 0.0 };
     let cross = |a: &Vec3, b: &Vec3| Vec3 { x: a.y * b.z - a.z * b.y, y: a.z * b.x - a.x * b.z, z: a.x * b.y - a.y * b.x };
@@ -200,12 +201,11 @@ fn camera() -> (Mtx, [[f32; 4]; 4]) {
         [u.x, u.y, u.z, -dot(&u, &eye)],
         [f.x, f.y, f.z, -dot(&f, &eye)],
     ];
-    // MTXPerspective
-    let (fovy, aspect, n, fz) = (30.0f32, EFB_WIDTH as f32 / EFB_HEIGHT as f32, 1.0f32, 50000.0f32);
-    let c = 1.0 / (fovy.to_radians() * 0.5).tan();
+    let (n, fz) = (p.near, p.far);
+    let c = 1.0 / (p.fov.to_radians() * 0.5).tan();
     let s = 1.0 / (fz - n);
     let proj = [
-        [c / aspect, 0.0, 0.0, 0.0],
+        [c / p.aspect, 0.0, 0.0, 0.0],
         [0.0, c, 0.0, 0.0],
         [0.0, 0.0, -n * s, -fz * n * s],
         [0.0, 0.0, -1.0, 0.0],
@@ -215,7 +215,7 @@ fn camera() -> (Mtx, [[f32; 4]; 4]) {
 
 impl View {
     pub fn draw_frame(&mut self) {
-        let (vmtx, proj) = camera();
+        let (vmtx, proj) = camera(&self.pose);
         let shim = &mut self.shim;
         shim.set_copy_clear(GxColor::new(0, 0, 0, 255), 0xFF_FFFF);
         shim.set_viewport(0.0, 0.0, EFB_WIDTH as f32, EFB_HEIGHT as f32, 0.0, 1.0);
@@ -266,6 +266,9 @@ impl Game for View {
         // One sim frame per presented frame (the golden's frame index = self.frame).
         if self.sim_alive {
             self.sim_alive = self.sim.step();
+            let ins: Vec<_> = self.sim.players.iter_mut().filter_map(|p| p.camera_subject_in()).collect();
+            self.cm.step(&ins);
+            self.pose = self.cm.pose();
             if !self.sim_alive {
                 eprintln!("view-golden: simulation stopped after frame {}: {:?}", self.sim.frame, self.sim.stopped);
             }
@@ -328,8 +331,26 @@ pub fn view_golden(args: &[String]) -> ExitCode {
     };
     let built = (|| -> Result<View, String> {
         let mut disc = crate::disc::Disc::open(&iso)?;
-        let sim = VsMatch::new(&mut disc, stage_file, names, 12345, 3)?;
-        let stage = load_stage(&disc.read(stage_file)?)?;
+        let mut sim = VsMatch::new(&mut disc, stage_file, names, 12345, 3)?;
+        let stage_bytes = disc.read(stage_file)?;
+        let stage = load_stage(&stage_bytes)?;
+        let cm = {
+            let a = DatArchive::parse(&stage_bytes).map_err(|e| format!("{stage_file}: {e}"))?;
+            let gp = crate::stage::ground_param(&a).ok_or("stage dat: no grGroundParam")?;
+            let mut points = crate::stage::spawn_points(&stage_bytes)?;
+            let sc = bef(&a.data, gp);
+            if sc != 1.0 && sc > 0.001 {
+                for p in &mut points {
+                    for c in &mut p.pos {
+                        *c *= sc;
+                    }
+                }
+            }
+            let (cs, fixed_zoom, smooth) = crate::cm_drive::stage_cam(&a.data, gp, &points)?;
+            let ins: Vec<_> = sim.players.iter_mut().filter_map(|p| p.camera_subject_in()).collect();
+            let d = crate::cm_drive::CmDrive::new(cs, fixed_zoom, smooth, &ins);
+            d
+        };
         let mut fighters = Vec::new();
         for n in names {
             let (nr, sym) = crate::fighter_data::costume_for(n).ok_or("no costume")?;
@@ -341,7 +362,10 @@ pub fn view_golden(args: &[String]) -> ExitCode {
         }
         let shot_dir = PathBuf::from(get("--shot-dir").unwrap_or_else(|| "target/shots".into()));
         std::fs::create_dir_all(&shot_dir).map_err(|e| format!("{}: {e}", shot_dir.display()))?;
+        let pose = cm.pose();
         Ok(View {
+            cm,
+            pose,
             sim,
             sim_alive: true,
             stage,

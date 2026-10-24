@@ -35,6 +35,7 @@ mod stage;
 mod vs_match;
 mod gx_backend;
 mod view;
+mod cm_drive;
 mod snap;
 mod fighter_fields;
 

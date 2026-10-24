@@ -551,6 +551,42 @@ fn fighter_kind(name: &str) -> Result<FighterKind, String> {
     }
 }
 
+/// What `ftCamera_UpdateCameraBox` reads of one fighter (cm_drive.rs builds the camera subject).
+#[derive(Clone, Copy, Debug)]
+pub struct CmSubjectIn {
+    pub pos: [f32; 3],
+    pub facing: f32,
+    /// `fp->x34_scale.y`.
+    pub scale_y: f32,
+    /// `*ft_data->x3C` (`UnkFloat6_Camera`: x0 vec3, xC vec3).
+    pub x3c: [f32; 6],
+    /// `ftLib_800866DC`: the camera zoom bone's world point (`lb_8000B1CC(parts[bone], x170)`).
+    pub bone: [f32; 3],
+}
+
+impl Player {
+    /// The inputs of this fighter's camera box this frame (None for a Sheik/Zelda follower).
+    pub fn camera_subject_in(&mut self) -> Option<CmSubjectIn> {
+        if self.follower {
+            return None;
+        }
+        let d = &self.files.dat.data;
+        let at = be32(d, self.files.ft_data + 0x3C);
+        let x3c = core::array::from_fn(|i| f32::from_bits(be32(d, at + 4 * i as u32)));
+        let attrs = self.files.attrs();
+        let j = self.skel.part(attrs.camera_zoom_target_bone as usize);
+        let off = Vec3 { x: attrs.x170.x, y: attrs.x170.y, z: attrs.x170.z };
+        let b = self.skel.world_point(j, off);
+        Some(CmSubjectIn {
+            pos: [self.fp.cur_pos.x, self.fp.cur_pos.y, self.fp.cur_pos.z],
+            facing: self.fp.facing_dir,
+            scale_y: self.fp.x34_scale.y,
+            x3c,
+            bone: [b.x, b.y, b.z],
+        })
+    }
+}
+
 impl VsMatch {
     pub fn new(disc: &mut crate::disc::Disc, stage_file: &str, fighters: &[&str], seed: u32, stocks: i32) -> Result<Self, String> {
         let stkind = match stage_file {

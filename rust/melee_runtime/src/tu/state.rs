@@ -14,7 +14,7 @@
 //! *LoadDesc functions); this port reads the same fields straight from their descriptors, which
 //! the loaders copy unchanged (MObjLoad adds RENDER_TOON, DObjLoad derives the trsp bits; both are
 //! applied where read). Material/texture animation is not applied (no MObj/TObj AObjs here).
-#![allow(clippy::too_many_arguments)]
+#![allow(clippy::too_many_arguments, non_snake_case, non_upper_case_globals)]
 
 use crate::mtx::Mtx;
 
@@ -140,6 +140,10 @@ pub struct LightLoad {
 
 /// The GX entry points HSD's display functions call (the `gw_GX*` shim in the C build).
 pub trait GxBackend {
+    fn set_line_width(&mut self, width: u8, offsets: i32) { ext::GXSetLineWidth(width, offsets); }
+    fn set_point_size(&mut self, size: u8, offsets: i32) { ext::GXSetPointSize(size, offsets); }
+    fn set_tev_color_s10(&mut self, reg: u32, color: [i16; 4]) { super::tev::ext::GXSetTevColorS10(reg, color); }
+    fn setup_lobj(&mut self, light: &ActiveLight, color: Rgba, shininess: f32) { ext::HSD_LObjSetup(light.id, color, shininess); }
     fn set_cull_mode(&mut self, mode: u32);
     fn set_blend_mode(&mut self, ty: u32, src: u32, dst: u32, op: u32);
     fn set_z_mode(&mut self, enable: bool, func: u32, update: bool);
@@ -221,27 +225,30 @@ impl<'a> Dat<'a> {
 }
 
 /// `HSD_Chan` (tev.h): one GXSetChanCtrl + colours.
-#[derive(Clone, Copy, Debug, Default, PartialEq)]
-pub struct HsdChan {
-    pub chan: u32,
-    pub amb_color: Rgba,
-    pub mat_color: Rgba,
-    pub enable: bool,
-    pub amb_src: u32,
-    pub mat_src: u32,
-    pub light_mask: u32,
-    pub diff_fn: u32,
-    pub attn_fn: u32,
-}
+pub use melee_types::HSD_Chan as HsdChan;
 
 /// state.c's `matstate`.
-#[derive(Clone, Copy, Debug, Default)]
-pub struct MatState {
-    pub ambient: Rgba,
-    pub diffuse: Rgba,
-    pub specular: Rgba,
-    pub alpha: u8,
-    pub shininess: f32,
+pub use melee_types::HSD_MaterialState as MatState;
+
+pub fn rgba(c: melee_types::GXColor) -> Rgba { [c.r, c.g, c.b, c.a] }
+pub fn gxcolor(c: Rgba) -> melee_types::GXColor {
+    melee_types::GXColor { r: c[0], g: c[1], b: c[2], a: c[3] }
+}
+
+/// state.c's six static channel descriptors, in source order.
+fn material_channels() -> [HsdChan; 6] {
+    let mut ch = [HsdChan::zeroed(); 6];
+    for (i, c) in ch.iter_mut().enumerate() {
+        c.chan = [1, 4, 0, 2, 2, 4][i];
+        c.flags = (i == 0) as u32;
+        c.amb_color = gxcolor(if i == 3 { [0, 0, 0, 255] } else { [0; 4] });
+        c.mat_color = gxcolor(match i { 1 => [0; 4], 3 | 4 => [0, 0, 0, 255], _ => [255; 4] });
+        c.enable = matches!(i, 0 | 2 | 3) as u8;
+        c.mat_src = (i == 1) as u32;
+        c.diff_fn = if i == 4 { 0 } else { 2 };
+        c.attn_fn = [0, 2, 1, 1, 2, 2][i];
+    }
+    ch
 }
 
 /// A light as the display path needs it (lobj.c's active list after HSD_LObjSetupInit).
@@ -255,9 +262,12 @@ pub struct ActiveLight {
 }
 
 /// The statics of state.c, tev.c, pobj.c (matrix marks) and lobj.c the display path uses.
-#[derive(Debug)]
 pub struct HsdRender {
     // state.c
+    line_width: u8,
+    line_tex_offsets: i32,
+    point_size: u8,
+    point_tex_offsets: i32,
     cull_mode: i64,
     blend: Option<(u32, u32, u32, u32)>,
     zmode: Option<(bool, u32, bool)>,
@@ -268,12 +278,19 @@ pub struct HsdRender {
     before_tex: Option<bool>,
     dither: Option<bool>,
     pub matstate: MatState,
+    pub channels: [HsdChan; 6],
     // tev.c
-    pub(crate) prev_amb: [Option<Rgba>; 2],
-    pub(crate) prev_mat: [Option<Rgba>; 2],
+    pub(crate) prev_ch: [HsdChan; 4],
+    pub(crate) prev_amb_invalid: [bool; 2],
+    pub(crate) prev_mat_invalid: [bool; 2],
     pub(crate) prev_num_chans: i32,
     pub(crate) num_tex_gens: u32,
     pub(crate) current_tev: u32,
+    pub(crate) committed_tev_stages: u32,
+    pub tev_regs: [([i16; 4], i32); 4],
+    pub render_alloc_data: melee_types::HSD_ObjAllocData,
+    pub tevreg_alloc_data: melee_types::HSD_ObjAllocData,
+    pub chan_alloc_data: melee_types::HSD_ObjAllocData,
     // lobj.c
     pub lights: Vec<ActiveLight>,
     pub lightmask_diffuse: u32,
@@ -310,22 +327,37 @@ impl Default for HsdRender {
 
 impl HsdRender {
     pub fn new() -> Self {
+        let mut s = Self::c_initial();
+        s.invalidate_all();
+        s
+    }
+
+    /// The C TU's static initializers, before its first invalidation.
+    pub fn c_initial() -> Self {
         HsdRender {
-            cull_mode: -1,
-            blend: None,
-            zmode: None,
-            alpha_cmp: None,
-            color_update: None,
-            alpha_update: None,
-            dst_alpha: None,
-            before_tex: None,
-            dither: None,
-            matstate: MatState::default(),
-            prev_amb: [None; 2],
-            prev_mat: [None; 2],
-            prev_num_chans: -1,
+            line_width: 0, line_tex_offsets: 0, point_size: 0, point_tex_offsets: 0,
+            cull_mode: 0,
+            blend: Some((0, 0, 0, 0)),
+            zmode: Some((false, 0, false)),
+            alpha_cmp: Some((0, 0, 0, 0, 0)),
+            color_update: Some(false),
+            alpha_update: Some(false),
+            dst_alpha: Some((false, 0)),
+            before_tex: Some(false),
+            dither: Some(false),
+            matstate: MatState::zeroed(),
+            channels: material_channels(),
+            prev_ch: super::tev::initial_channels(),
+            prev_amb_invalid: [false; 2],
+            prev_mat_invalid: [false; 2],
+            prev_num_chans: 0,
             num_tex_gens: 0,
             current_tev: 0,
+            committed_tev_stages: 0,
+            tev_regs: [([0; 4], 0); 4],
+            render_alloc_data: melee_types::HSD_ObjAllocData::zeroed(),
+            tevreg_alloc_data: melee_types::HSD_ObjAllocData::zeroed(),
+            chan_alloc_data: melee_types::HSD_ObjAllocData::zeroed(),
             lights: Vec::new(),
             lightmask_diffuse: 0,
             lightmask_specular: 0,
@@ -343,30 +375,79 @@ impl HsdRender {
     /// `HSD_StateInvalidate(HSD_STATE_ALL)`: the start of a frame (the GX state is unknown).
     pub fn invalidate_all(&mut self) {
         // _HSD_StateInvalidatePrimitive / RenderMode / VtxAttr / ColorChannel / TevStage / TexCoordGen.
-        self.cull_mode = -1;
-        self.blend = None;
-        self.zmode = None;
-        self.alpha_cmp = None;
-        self.color_update = None;
-        self.alpha_update = None;
-        self.dst_alpha = None;
-        self.before_tex = None;
-        self.dither = None;
-        self.prev_amb = [None; 2];
-        self.prev_mat = [None; 2];
-        self.prev_num_chans = -1;
-        self.num_tex_gens = 0;
-        self.current_tev = 0;
+        self.invalidate_primitive();
+        self.invalidate_render_mode();
+        self.invalidate_color_channel();
+        self.invalidate_tev_stage();
+        self.invalidate_tev_register();
+        self.invalidate_tex_coord_gen();
         self.prev_vtxdesc = None;
         self.prev_array = None;
         self.mtx_mark = [(None, 0); 2];
     }
 
     /// `HSD_StateSetCullMode`.
+    pub fn state_set_line_width<G: GxBackend>(&mut self, g: &mut G, width: u8, offsets: i32) {
+        if self.line_width != width || self.line_tex_offsets != offsets {
+            g.set_line_width(width, offsets);
+            self.line_width = width; self.line_tex_offsets = offsets;
+        }
+    }
+    pub fn state_set_point_size<G: GxBackend>(&mut self, g: &mut G, size: u8, offsets: i32) {
+        if self.point_size != size || self.point_tex_offsets != offsets {
+            g.set_point_size(size, offsets);
+            self.point_size = size; self.point_tex_offsets = offsets;
+        }
+    }
+    pub fn invalidate_primitive(&mut self) {
+        self.line_width = 0; self.point_size = 0; self.cull_mode = -1;
+    }
+    pub fn invalidate_render_mode(&mut self) {
+        self.blend = None; self.zmode = None; self.alpha_cmp = None;
+        self.color_update = None; self.alpha_update = None; self.dst_alpha = None;
+        self.before_tex = None; self.dither = None;
+    }
+    pub fn state_invalidate<G: GxBackend>(&mut self, g: &mut G, mask: i32) {
+        if mask & 1 != 0 { self.invalidate_primitive(); }
+        if mask & 2 != 0 { self.clear_vtx_desc(g); }
+        if mask & 4 != 0 { self.invalidate_color_channel(); }
+        if mask & 8 != 0 { self.invalidate_tev_stage(); }
+        if mask & 16 != 0 { self.invalidate_tev_register(); }
+        if mask & 32 != 0 { self.invalidate_tex_coord_gen(); }
+        if mask & 64 != 0 { self.invalidate_render_mode(); }
+    }
+
+    /// Logical C cache fields for deterministic state inspection (no padding or pointers).
+    pub fn state_words(&self) -> Vec<u32> {
+        let (bt, bs, bd, bo) = self.blend.unwrap_or((u32::MAX, u32::MAX, u32::MAX, u32::MAX));
+        let (ze, zf, zu) = self.zmode.map(|(a,b,c)| (a as u32,b,c as u32)).unwrap_or((255,u32::MAX,255));
+        let (ac, ar, ao, bc, br) = self.alpha_cmp.unwrap_or((u32::MAX,0,u32::MAX,u32::MAX,0));
+        let (de, da) = self.dst_alpha.map(|(a,b)| (a as u32,b)).unwrap_or((255,0));
+        let flag = |x: Option<bool>| x.map(|v| v as u32).unwrap_or(255);
+        let mut words = vec![self.line_width as u32,self.line_tex_offsets as u32,self.point_size as u32,
+            self.point_tex_offsets as u32,self.cull_mode as u32,bt,bs,bd,bo,ze,zf,zu,ac,ar as u32,ao,bc,
+            br as u32,flag(self.color_update),flag(self.alpha_update),de,da as u32,flag(self.before_tex),flag(self.dither)];
+        for c in [self.matstate.ambient,self.matstate.diffuse,self.matstate.specular] { words.extend(rgba(c).map(u32::from)); }
+        words.extend([self.matstate.alpha as u32,self.matstate.shininess.to_bits()]);
+        for c in self.channels.iter().chain(self.prev_ch.iter()) {
+            words.extend([c.chan,c.flags]);
+            words.extend(rgba(c.amb_color).map(u32::from)); words.extend(rgba(c.mat_color).map(u32::from));
+            words.extend([c.enable as u32,c.amb_src,c.mat_src,c.light_mask,c.diff_fn,c.attn_fn]);
+        }
+        words.extend([self.current_tev,self.num_tex_gens,self.prev_num_chans as u32,self.committed_tev_stages]);
+        words.extend(self.prev_mat_invalid.map(|x| x as u32)); words.extend(self.prev_amb_invalid.map(|x| x as u32));
+        for (c, dirty) in &self.tev_regs { words.extend(c.map(|x| x as i32 as u32)); words.push(*dirty as u32); }
+        for d in [&self.render_alloc_data,&self.tevreg_alloc_data,&self.chan_alloc_data] {
+            words.extend([d.num_limit_flag(),d.heap_limit_flag(),d.freehead.is_null() as u32,d.used,d.free,d.peak,
+                d.num_limit,d.heap_limit_size,d.heap_limit_num,d.size,d.align,d.next.is_null() as u32]);
+        }
+        words
+    }
+
     pub fn state_set_cull_mode<G: GxBackend>(&mut self, g: &mut G, mode: u32) {
-        if self.cull_mode != mode as i64 {
+        if self.cull_mode != mode as i32 as i64 {
             g.set_cull_mode(mode);
-            self.cull_mode = mode as i64;
+            self.cull_mode = mode as i32 as i64;
         }
     }
     /// `HSD_StateSetBlendMode`.
@@ -428,9 +509,9 @@ impl HsdRender {
 
     /// `HSD_SetMaterialColor`.
     pub fn set_material_color(&mut self, ambient: Rgba, diffuse: Rgba, specular: Rgba, alpha: f32) {
-        self.matstate.ambient = ambient;
-        self.matstate.diffuse = diffuse;
-        self.matstate.specular = specular;
+        self.matstate.ambient = gxcolor(ambient);
+        self.matstate.diffuse = gxcolor(diffuse);
+        self.matstate.specular = gxcolor(specular);
         // `matstate.alpha = 255.0 * alpha` (double multiply, then the u8 store's conversion).
         self.matstate.alpha = crate::cabi::f2u8(255.0f64 * alpha as f64);
     }
@@ -439,112 +520,50 @@ impl HsdRender {
         self.matstate.shininess = s;
     }
 
+    fn setup_material_channel<G: GxBackend>(&mut self, g: &mut G, index: usize) {
+        let ch = self.channels[index];
+        self.setup_channel(g, &ch);
+    }
+
     /// `HSD_SetupChannelMode`.
     pub fn setup_channel_mode<G: GxBackend>(&mut self, g: &mut G, rendermode: u32) {
         let spec = rendermode & 8 != 0;
         self.state_set_num_chans(g, if spec { 2 } else { 1 });
         if spec {
-            // HSD_State_80405A38: COLOR1A1, specular lights.
-            let ch = HsdChan {
-                chan: GX_COLOR1A1,
-                amb_color: [0; 4],
-                mat_color: [0xFF; 4],
-                enable: true,
-                amb_src: GX_SRC_REG,
-                mat_src: GX_SRC_REG,
-                light_mask: self.lightmask_specular,
-                diff_fn: GX_DF_CLAMP,
-                attn_fn: GX_AF_SPEC,
-            };
-            self.setup_channel(g, &ch);
-            // HSD_LObjSetup per active light with matstate.shininess (diffuse colour reload only).
-            let lights = self.lights.clone();
-            for l in &lights {
-                self.lobj_setup(g, l);
+            // The source descriptor is COLOR1, not COLOR1A1; alpha control stays separate.
+            self.channels[0].light_mask = self.lightmask_specular;
+            self.setup_material_channel(g, 0);
+            for l in &self.lights {
+                g.setup_lobj(l, l.color, self.matstate.shininess);
             }
         }
         match rendermode & 7 {
             2 => {
-                // HSD_State_80405A38_30: vertex colour, unlit.
-                let ch = HsdChan {
-                    chan: GX_COLOR0A0,
-                    amb_color: [0; 4],
-                    mat_color: [0; 4],
-                    enable: false,
-                    amb_src: GX_SRC_REG,
-                    mat_src: GX_SRC_VTX,
-                    light_mask: 0,
-                    diff_fn: GX_DF_CLAMP,
-                    attn_fn: GX_AF_NONE,
-                };
-                self.setup_channel(g, &ch);
+                self.setup_material_channel(g, 1);
             }
             4 => {
-                // HSD_State_80405A38_60 (COLOR0, lit) + _90 / _C0 (ALPHA0).
                 let ambient = self.lights.iter().find(|l| l.flags & 3 == 0).copied();
                 let amb_color = match ambient {
-                    Some(a) if a.flags & 4 != 0 => mul_color(self.matstate.ambient, a.color),
+                    Some(a) if a.flags & 4 != 0 => mul_color(rgba(self.matstate.ambient), a.color),
                     _ => [0, 0, 0, 0xFF],
                 };
-                let c60 = HsdChan {
-                    chan: GX_COLOR0,
-                    amb_color,
-                    mat_color: [0xFF; 4],
-                    enable: true,
-                    amb_src: GX_SRC_REG,
-                    mat_src: GX_SRC_REG,
-                    light_mask: self.lightmask_diffuse,
-                    diff_fn: GX_DF_CLAMP,
-                    attn_fn: GX_AF_SPOT,
-                };
-                self.setup_channel(g, &c60);
+                self.channels[2].amb_color = gxcolor(amb_color);
+                self.channels[2].light_mask = self.lightmask_diffuse;
+                self.setup_material_channel(g, 2);
                 let mask_a = self.lightmask_alpha;
-                let mut c90 = HsdChan {
-                    chan: GX_ALPHA0,
-                    amb_color: [0, 0, 0, 0xFF],
-                    mat_color: [0, 0, 0, 0xFF],
-                    enable: true,
-                    amb_src: GX_SRC_REG,
-                    mat_src: GX_SRC_REG,
-                    light_mask: mask_a,
-                    diff_fn: GX_DF_CLAMP,
-                    attn_fn: GX_AF_SPOT,
-                };
+                self.channels[3].light_mask = mask_a;
                 if let Some(a) = ambient.filter(|a| a.flags & 0x10 != 0) {
-                    c90.amb_color[3] = a.color[3];
-                    self.setup_channel(g, &c90);
+                    self.channels[3].amb_color.a = a.color[3];
+                    self.setup_material_channel(g, 3);
                 } else if mask_a != 0 {
-                    c90.amb_color[3] = 0;
-                    self.setup_channel(g, &c90);
+                    self.channels[3].amb_color.a = 0;
+                    self.setup_material_channel(g, 3);
                 } else {
-                    let cc0 = HsdChan {
-                        chan: GX_ALPHA0,
-                        amb_color: [0; 4],
-                        mat_color: [0, 0, 0, 0xFF],
-                        enable: false,
-                        amb_src: GX_SRC_REG,
-                        mat_src: GX_SRC_REG,
-                        light_mask: 0,
-                        diff_fn: GX_DF_NONE,
-                        attn_fn: GX_AF_NONE,
-                    };
-                    self.setup_channel(g, &cc0);
+                    self.setup_material_channel(g, 4);
                 }
             }
             _ => {
-                // HSD_State_80405A38_F0: constant colour (chan unlit, material white).
-                let ch = HsdChan {
-                    chan: GX_COLOR0A0,
-                    amb_color: [0; 4],
-                    mat_color: [0xFF; 4],
-                    enable: false,
-                    amb_src: GX_SRC_REG,
-                    mat_src: GX_SRC_REG,
-                    light_mask: 0,
-                    diff_fn: GX_DF_CLAMP,
-                    attn_fn: GX_AF_NONE,
-                };
-                self.setup_channel(g, &ch);
+                self.setup_material_channel(g, 5);
             }
         }
     }
@@ -580,7 +599,7 @@ impl HsdRender {
     }
 
     /// `setupTevMode_last` (static).
-    fn setup_tev_mode_last<G: GxBackend>(&mut self, g: &mut G) {
+    pub fn setup_tev_mode_last<G: GxBackend>(&mut self, g: &mut G) {
         if self.current_tev == 0 {
             let stage = self.state_assign_tev();
             // HSD_SetupTevStage with flags 0: TevOrder + TevOp(PASSCLR) + swap 0.
@@ -595,6 +614,7 @@ impl HsdRender {
     pub fn setup_render_mode_with_custom_pe<G: GxBackend>(&mut self, g: &mut G, rendermode: u32, pe: Option<[u8; 12]>) {
         self.setup_tev_mode_last(g);
         self.setup_pe_mode(g, rendermode, pe);
+        self.set_tev_reg_all(g);
         self.state_set_num_tev_stages(g);
         self.state_set_num_tex_gens(g);
         self.setup_channel_mode(g, rendermode);
@@ -610,4 +630,47 @@ impl HsdRender {
 pub fn mul_color(a: Rgba, b: Rgba) -> Rgba {
     let m = |x: u8, y: u8| ((x as u32 * y as u32) / 255) as u8;
     [m(a[0], b[0]), m(a[1], b[1]), m(a[2], b[2]), m(a[3], b[3])]
+}
+
+pub fn HSD_SetupChannelMode<G: GxBackend>(r: &mut HsdRender, g: &mut G, mode: u32) { r.setup_channel_mode(g, mode); }
+pub fn HSD_SetupPEMode<G: GxBackend>(r: &mut HsdRender, g: &mut G, flags: u32, pe: Option<&melee_types::HSD_PEDesc>) {
+    r.setup_pe_mode(g, flags, pe.map(pe_bytes));
+}
+fn pe_bytes(pe: &melee_types::HSD_PEDesc) -> [u8; 12] {
+    [pe.flags,pe.ref0,pe.ref1,pe.dst_alpha,pe.r#type,pe.src_factor,pe.dst_factor,pe.logic_op,pe.z_comp,pe.alpha_comp0,pe.alpha_op,pe.alpha_comp1]
+}
+pub fn setupTevMode_last<G: GxBackend>(r: &mut HsdRender, g: &mut G) { r.setup_tev_mode_last(g); }
+pub fn HSD_SetupRenderModeWithCustomPE<G: GxBackend>(r: &mut HsdRender, g: &mut G, mode: u32, pe: Option<&melee_types::HSD_PEDesc>) {
+    r.setup_render_mode_with_custom_pe(g, mode, pe.map(pe_bytes));
+}
+pub fn HSD_SetupRenderMode<G: GxBackend>(r: &mut HsdRender, g: &mut G, mode: u32) { r.setup_render_mode(g, mode); }
+pub fn HSD_SetMaterialColor(r: &mut HsdRender, a: melee_types::GXColor, d: melee_types::GXColor, s: melee_types::GXColor, alpha: f32) {
+    r.set_material_color(rgba(a),rgba(d),rgba(s),alpha);
+}
+pub fn HSD_SetMaterialShininess(r: &mut HsdRender, s: f32) { r.set_material_shininess(s); }
+pub fn HSD_StateSetLineWidth<G: GxBackend>(r: &mut HsdRender,g: &mut G,w: u8,t: i32) { r.state_set_line_width(g,w,t); }
+pub fn HSD_StateSetPointSize<G: GxBackend>(r: &mut HsdRender,g: &mut G,s: u8,t: i32) { r.state_set_point_size(g,s,t); }
+pub fn HSD_StateSetCullMode<G: GxBackend>(r: &mut HsdRender,g: &mut G,m: i32) { r.state_set_cull_mode(g,m as u32); }
+pub fn HSD_StateSetBlendMode<G: GxBackend>(r: &mut HsdRender,g: &mut G,t: i32,s: i32,d: i32,o: i32) { r.state_set_blend_mode(g,t as u32,s as u32,d as u32,o as u32); }
+pub fn HSD_StateSetZMode<G: GxBackend>(r: &mut HsdRender,g: &mut G,e: i32,f: i32,u: i32) { r.state_set_z_mode(g,e != 0,f as u32,u != 0); }
+pub fn HSD_StateSetAlphaCompare<G: GxBackend>(r: &mut HsdRender,g: &mut G,c0: i32,r0: u8,op: i32,c1: i32,r1: u8) { r.state_set_alpha_compare(g,c0 as u32,r0,op as u32,c1 as u32,r1); }
+pub fn HSD_StateSetColorUpdate<G: GxBackend>(r: &mut HsdRender,g: &mut G,x: i32) { r.state_set_color_update(g,x != 0); }
+pub fn HSD_StateSetAlphaUpdate<G: GxBackend>(r: &mut HsdRender,g: &mut G,x: i32) { r.state_set_alpha_update(g,x != 0); }
+pub fn HSD_StateSetDstAlpha<G: GxBackend>(r: &mut HsdRender,g: &mut G,x: i32,a: u8) { r.state_set_dst_alpha(g,x != 0,a); }
+pub fn HSD_StateSetZCompLoc<G: GxBackend>(r: &mut HsdRender,g: &mut G,x: i32) { r.state_set_z_comp_loc(g,x != 0); }
+pub fn HSD_StateSetDither<G: GxBackend>(r: &mut HsdRender,g: &mut G,x: i32) { r.state_set_dither(g,x != 0); }
+pub fn _HSD_StateInvalidatePrimitive(r: &mut HsdRender) { r.invalidate_primitive(); }
+pub fn _HSD_StateInvalidateVtxAttr<G: GxBackend>(r: &mut HsdRender,g: &mut G) { r.clear_vtx_desc(g); }
+pub fn _HSD_StateInvalidateRenderMode(r: &mut HsdRender) { r.invalidate_render_mode(); }
+pub fn HSD_StateInvalidate<G: GxBackend>(r: &mut HsdRender,g: &mut G,mask: i32) { r.state_invalidate(g,mask); }
+
+pub mod ext {
+    use super::Rgba;
+    pub static mut LINE_WIDTH: Option<fn(u8, i32)> = None;
+    pub static mut POINT_SIZE: Option<fn(u8, i32)> = None;
+    pub static mut LOBJ_SETUP: Option<fn(u32, Rgba, f32)> = None;
+    pub fn GXSetLineWidth(w: u8,t: i32) { unsafe { (LINE_WIDTH.expect("TODO: GXSetLineWidth"))(w,t); } }
+    pub fn GXSetPointSize(s: u8,t: i32) { unsafe { (POINT_SIZE.expect("TODO: GXSetPointSize"))(s,t); } }
+    /// The renderer supplies its native light identity; the C light port has a separate arena.
+    pub fn HSD_LObjSetup(id: u32,c: Rgba,s: f32) { unsafe { (LOBJ_SETUP.expect("TODO: HSD_LObjSetup renderer binding"))(id,c,s); } }
 }

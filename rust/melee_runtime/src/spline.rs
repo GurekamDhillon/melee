@@ -1,4 +1,4 @@
-//! HSD splines. Port of `src/sysdolphin/baselib/spline.c` (all 10 functions incl. statics).
+//! HSD splines. Port of `src/sysdolphin/baselib/spline.c` (all 11 functions incl. statics).
 //!
 //! Fused sites as in the shipping build's IR (`fma_sites.py src/sysdolphin/baselib/spline.c`).
 //! Checked bit for bit against the C by `tests/oracle_hsd.rs`.
@@ -133,7 +133,7 @@ pub fn arc_length_polynomial(c: &[f32; 5], t: f32) -> f32 {
 }
 
 /// `spl_IterateSimpsonsMiddle` (static inline).
-fn simpsons_middle(c: &[f32; 5], dx: f32, mut t: f32) -> f32 {
+pub fn simpsons_middle(c: &[f32; 5], dx: f32, mut t: f32) -> f32 {
     let mut acc = 0.0f32;
     for i in 2..=8 {
         let w = if i & 1 == 0 { 4.0 } else { 2.0 };
@@ -141,6 +141,16 @@ fn simpsons_middle(c: &[f32; 5], dx: f32, mut t: f32) -> f32 {
         t += dx;
     }
     acc
+}
+
+/// `spl_GetCoeffs` (static inline): the selected segment's coefficient array.
+pub fn get_coeffs<'a>(spl: &Spline<'a>, idx: i32) -> &'a [f32; 5] {
+    &spl.seg_poly[idx as usize]
+}
+
+/// `spl_GetArcLengthDx` (static): Simpson's eight equal subintervals.
+pub fn get_arc_length_dx(start: f32, midpoint: f32) -> f32 {
+    (midpoint - start) / 8.0
 }
 
 /// `splArcLengthGetParameter(spl, s)`: spline parameter at normalised arc length `s`.
@@ -164,7 +174,7 @@ pub fn arc_length_get_parameter(spl: &Spline, arg1: f32) -> f32 {
         0 => result = (arg1 - sl(idx)) / (sl(idx + 1) - sl(idx)),
         1..=3 => {
             let mut rem = spl.total_length * (arg1 - sl(idx));
-            let c = &spl.seg_poly[idx as usize];
+            let c = get_coeffs(spl, idx);
             loop {
                 let d = start - end;
                 let a = if d < 0.0 { -d } else { d };
@@ -172,7 +182,7 @@ pub fn arc_length_get_parameter(spl: &Spline, arg1: f32) -> f32 {
                     break;
                 }
                 result = (start + end) / 2.0;
-                let dx = (result - start) / 8.0;
+                let dx = get_arc_length_dx(start, result);
                 let middle = simpsons_middle(c, dx, start + dx);
                 let simpsons = dx
                     * (middle + arc_length_polynomial(c, start) + arc_length_polynomial(c, result))

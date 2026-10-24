@@ -642,6 +642,13 @@ pub fn mp_coll_800471f8(g: &mut GroundColl, st: &mut CollGlobals, cd: &mut CollD
     run_air(g, st, cd, 0, &mut None)
 }
 
+/// `mpColl_800478F4`: JObj ECB (flags 5), `inline0(coll, 1, true)`.
+pub fn mp_coll_800478f4(g: &mut GroundColl, st: &mut CollGlobals, cd: &mut CollData, joints: &[Vec3; 6]) -> R<bool> {
+    mp_coll_prev(cd);
+    mp_coll_load_ecb_inline(cd, 5, joints)?;
+    run_air(g, st, cd, 1, &mut None)
+}
+
 /// `mpColl_8004730C`: a fixed box, `inline0(coll, 0, true)`.
 pub fn mp_coll_8004730c(g: &mut GroundColl, st: &mut CollGlobals, cd: &mut CollData, b: &ftCollisionBox) -> R<bool> {
     mp_coll_prev(cd);

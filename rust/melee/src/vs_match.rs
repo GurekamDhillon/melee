@@ -34,7 +34,9 @@
 pub mod input;
 
 mod fox;
+mod rebirth;
 use fox::{ItemCmd, FoxVars, SimItem};
+use rebirth::{PlayerRespawn, RespawnCtx};
 
 use crate::fighter_data::skeleton::{FigaTree, Skeleton};
 use crate::fighter_data::{AnimRow, EcbDesc};
@@ -230,6 +232,12 @@ pub struct Player {
     fx_attrs: Option<melee_types::ftFox_DatAttrs>,
     /// The next `Fighter_ChangeMotionState` has `Ft_MF_KeepGfx`.
     keep_gfx: bool,
+    /// The next one has `anim_blend == -1` (no blend frames).
+    blend_zero: bool,
+    /// The player's respawn data (rebirth.rs) and `ft_data->x24`, the idle animations
+    /// (`{anim id, weight}` up to the -1 terminator).
+    rb: PlayerRespawn,
+    wait_anims: Vec<(i32, i32)>,
 }
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -397,6 +405,11 @@ pub struct VsMatch {
     fighter_jobjs: Vec<(JObjRef, usize, usize)>,
     /// The live items (fox.rs).
     items: Vec<SimItem>,
+    /// `Stage_80224E38(&v, n)`: the stage's respawn points (points 4..8), `scene_state->fighters[].x8`
+    /// (the respawn spots' countdowns) and `PlCo`'s start shield.
+    respawn_points: Vec<Vec3>,
+    respawn_busy: [i32; 6],
+    start_shield: f32,
 }
 
 /// `Stage_GetBlastZone*Offset()`: `stage_info.blast_zone.* + cam_info.cam_{x,y}_offset`
@@ -408,6 +421,8 @@ pub struct BlastZone {
     pub right: f32,
     pub top: f32,
     pub bottom: f32,
+    /// `Stage_GetCamBoundsTopOffset()`.
+    pub cam_top: f32,
 }
 
 impl BlastZone {
@@ -423,7 +438,10 @@ impl BlastZone {
         };
         let (lft, rgt) = if p1[0] < p2[0] { (p1[0] - cam_x, p2[0] - cam_x) } else { (p2[0] - cam_x, p1[0] - cam_x) };
         let (bot, top) = if p1[1] < p2[1] { (p1[1] - cam_y, p2[1] - cam_y) } else { (p2[1] - cam_y, p1[1] - cam_y) };
-        Ok(BlastZone { left: lft + cam_x, right: rgt + cam_x, top: top + cam_y, bottom: bot + cam_y })
+        // Ground_801C39C0: cam_bounds.top = the larger y of points 0x95 / 0x96 minus the offset.
+        let (a, b) = (a.unwrap(), b.unwrap());
+        let cam_top_raw = if a[1] < b[1] { b[1] - cam_y } else { a[1] - cam_y };
+        Ok(BlastZone { left: lft + cam_x, right: rgt + cam_x, top: top + cam_y, bottom: bot + cam_y, cam_top: cam_top_raw + cam_y })
     }
 }
 
@@ -824,6 +842,23 @@ impl VsMatch {
                 } else {
                     None
                 },
+                wait_anims: {
+                    let d = &files.dat.data;
+                    let at = be32(d, files.ft_data + 0x24);
+                    let mut v = Vec::new();
+                    if at != 0 {
+                        let mut q = at;
+                        loop {
+                            let id = be32(d, q) as i32;
+                            if id == -1 {
+                                break;
+                            }
+                            v.push((id, be32(d, q + 4) as i32));
+                            q += 8;
+                        }
+                    }
+                    v
+                },
                 files: Arc::new(files),
                 rows: HashMap::new(),
                 part_to_joint,
@@ -838,6 +873,8 @@ impl VsMatch {
                 fx: FoxVars::default(),
                 item_cmds: Vec::new(),
                 keep_gfx: false,
+                blend_zero: false,
+                rb: PlayerRespawn::default(),
             });
             // ... Fighter_ChangeMotionState(Entry): no animation, cur_anim_frame -1;
             // ftaction.c:1408 frame_count = cur_anim_frame + x898_unk. Then ft_80084CB0: the
@@ -881,7 +918,7 @@ impl VsMatch {
                 }
             });
         }
-        Ok(Self { players, ground, cg, pads: [input::PadStatus::default(); 4], go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists, blast, fighter_jobjs: Vec::new(), items: Vec::new() })
+        Ok(Self { players, ground, cg, pads: [input::PadStatus::default(); 4], go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists, blast, fighter_jobjs: Vec::new(), items: Vec::new(), respawn_points: (4..8).filter_map(|id| points.iter().find(|p| p.id == id).map(|p| Vec3 { x: p.pos[0], y: p.pos[1], z: p.pos[2] })).collect(), respawn_busy: [0; 6], start_shield })
     }
 
     /// The m-ex fighters' code-run report (crate::mex), one block per such fighter.
@@ -1007,9 +1044,7 @@ impl VsMatch {
                 FTCO_MS_WAIT => {
                     // ftCo_Wait_Anim -> ftCo_8008A7A8(gobj, ft_data->x24): a new random idle
                     // animation when this one ends.
-                    if !p.skel.frames_remaining() {
-                        return Err(format!("player {}: Wait over -> ftCo_8008A7A8 (random idle) not ported", p.slot + 1));
-                    }
+                    rebirth::ft_8008a7a8(p, &mut self.rand)?;
                 }
                 m if (FTCO_MS_WALK_SLOW..=FTCO_MS_WALK_FAST).contains(&m) => {
                     // ftCo_Walk_Anim -> ftWalkCommon_800DFDDC: the animation rate from the speed.
@@ -1093,9 +1128,15 @@ impl VsMatch {
                     // ftCo_DeadDown_Anim: the countdown, then ftCo_800BFD9C (Sleep + the respawn).
                     p.dead_timer -= 1;
                     if p.dead_timer == 0 {
-                        return Err(format!("player {}: ftCo_800BFD9C (Dead -> Sleep, respawn) not ported", p.slot + 1));
+                        let mut ctx = RespawnCtx { ground: &mut self.ground, cg: &mut self.cg, rand: &mut self.rand, respawn_points: &self.respawn_points, cam_top: self.blast.cam_top, busy: &mut self.respawn_busy, start_shield: self.start_shield };
+                        rebirth::dead_over(p, &mut ctx)?;
                     }
                 }
+                rebirth::FTCO_MS_REBIRTH | rebirth::FTCO_MS_REBIRTH_WAIT => {
+                    let mut ctx = RespawnCtx { ground: &mut self.ground, cg: &mut self.cg, rand: &mut self.rand, respawn_points: &self.respawn_points, cam_top: self.blast.cam_top, busy: &mut self.respawn_busy, start_shield: self.start_shield };
+                    rebirth::anim(p, &mut ctx)?;
+                }
+                rebirth::FTCO_MS_SLEEP => {} // ftCo_Sleep_Anim is empty
                 m => return Err(format!("player {}: motion {m} not ported", p.slot + 1)),
             }
             // The end of Fighter_8006A360 (fighter.c TARGET_PC): Mex_OnFrameDispatch(kind) runs an
@@ -1253,6 +1294,11 @@ impl VsMatch {
                     }
                 }
                 m if is_jump_motion(m) => jump_phys(p),
+                rebirth::FTCO_MS_REBIRTH | rebirth::FTCO_MS_REBIRTH_WAIT => {
+                    let mut ctx = RespawnCtx { ground: &mut self.ground, cg: &mut self.cg, rand: &mut self.rand, respawn_points: &self.respawn_points, cam_top: self.blast.cam_top, busy: &mut self.respawn_busy, start_shield: self.start_shield };
+                    rebirth::phys(p, &mut ctx)?;
+                }
+                rebirth::FTCO_MS_SLEEP => {}
                 FOX_AIR_N_START | FOX_AIR_N_LOOP | FOX_AIR_N_END => {
                     // ftFx_SpecialAirN*_Phys -> ft_80084DB0.
                     let f = &mut *p.fp;
@@ -1462,6 +1508,11 @@ impl VsMatch {
                     }
                 }
                 FTCO_MS_DEAD_DOWN => {} // coll_cb NULL
+                rebirth::FTCO_MS_REBIRTH => {
+                    let mut ctx = RespawnCtx { ground: &mut self.ground, cg: &mut self.cg, rand: &mut self.rand, respawn_points: &self.respawn_points, cam_top: self.blast.cam_top, busy: &mut self.respawn_busy, start_shield: self.start_shield };
+                    rebirth::coll(p, &mut ctx)?;
+                }
+                rebirth::FTCO_MS_REBIRTH_WAIT => return Err("ftCo_RebirthWait_Coll (ft_80083844) not ported".into()),
                 m => return Err(format!("player {}: coll_cb of motion {m} not ported", p.slot + 1)),
             }
             let c = p.fp.cur_pos;
@@ -2033,6 +2084,8 @@ fn input_cb(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         m if (FTCO_MS_ATTACK11..=FTCO_MS_ATTACK11 + 2).contains(&m) => attack1_iasa(p, rand),
         FTCO_MS_CATCH => Ok(()), // ftCo_Catch_IASA is empty
         FTCO_MS_DEAD_DOWN => Ok(()), // input_cb NULL
+        rebirth::FTCO_MS_SLEEP | rebirth::FTCO_MS_REBIRTH => Ok(()), // empty IASAs
+        rebirth::FTCO_MS_REBIRTH_WAIT => rebirth::wait_iasa(p, rand),
         m if is_guard_motion(m) => guard_iasa(p, rand),
         FTCO_MS_KNEE_BEND => kneebend_iasa(p),
         m if fox::is_fox_special_n(m) => {
@@ -3813,7 +3866,8 @@ fn change_motion_state_ext(p: &mut Player, msid: i32, row: Option<&(AnimRow, Fig
             // generated bitfield accessors read).
             fp.anon_594.x594_s32 = i32::from_ne_bytes(r.flags.to_be_bytes());
             // anim_blend 0.0 -> the row's default blend byte.
-            let blend = r.blend as f32;
+            let blend = if std::mem::take(&mut p.blend_zero) { 0.0 } else { r.blend as f32 };
+            p.fp.anim_id = r.id as i32;
 
             // x3E4_fighterCmdScript.u = row->xC; loop_count = 0.
             p.script = r.script;
@@ -3864,6 +3918,8 @@ fn change_motion_state_ext(p: &mut Player, msid: i32, row: Option<&(AnimRow, Fig
             }
         }
         None => {
+            fp.anim_id = -1;
+            p.blend_zero = false;
             // anim_id == -1: x594 = 0, x3E4.u = NULL, the AObjs dropped, x8A4 = x8A8 = 0.
             fp.anon_594.x594_s32 = 0;
             p.animating = false;

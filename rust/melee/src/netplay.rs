@@ -206,6 +206,9 @@ pub fn netplay(args: &[String]) -> std::process::ExitCode {
         }
     };
     game.live = true;
+    if args.iter().any(|a| a == "--live-rng") {
+        game.live_seed = Some(agreed_seed);
+    }
     let host = room.sh.borrow().s.host;
     let tag = if host { "host" } else { "guest" };
     let local_port = if host { 0 } else { 1 };

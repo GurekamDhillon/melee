@@ -16,11 +16,25 @@ pub struct NetMatch {
     /// Ports driven by pads (the scenario has two humans).
     pub humans: [bool; 4],
     pub live: bool,
+    /// Live online RNG rule (`gw_Replay_ChecksumSeed` / `ResyncSeed`): every frame starts from
+    /// `seed + ((frame + 123) << 16)`, so a draw only one peer makes cannot carry over. None = the
+    /// offline free-running seed (the golden CSVs).
+    pub live_seed: Option<u32>,
 }
 
 impl NetMatch {
     pub fn new(vs: VsMatch) -> Self {
-        NetMatch { vs, humans: [true, true, false, false], live: false }
+        NetMatch { vs, humans: [true, true, false, false], live: false, live_seed: None }
+    }
+}
+
+/// `gw_Replay_ChecksumSeed` in live mode: the seed a frame starts from.
+pub fn live_frame_seed(seed: u32, frame: i32) -> u32 {
+    let s = seed.wrapping_add((frame as u32).wrapping_sub(FIRST as u32) << 16);
+    if s != 0 {
+        s
+    } else {
+        1
     }
 }
 
@@ -60,7 +74,10 @@ impl RbGame for NetMatch {
         self.vs.rb_state_hash()
     }
     fn game_hash(&self) -> u32 {
-        self.vs.rb_game_hash()
+        match self.live_seed {
+            Some(sd) => self.vs.rb_game_hash_seeded(live_frame_seed(sd, self.vs.frame + 1 + FIRST)),
+            None => self.vs.rb_game_hash(),
+        }
     }
     fn run_frame(&mut self, inputs: &[Option<RbInput>; SLOTS], _resim: bool) {
         use crate::Sim;
@@ -69,6 +86,9 @@ impl RbGame for NetMatch {
             pads[p] = inputs[p * 2];
         }
         self.vs.set_pads(&pads);
+        if let Some(sd) = self.live_seed {
+            self.vs.rb_force_seed(live_frame_seed(sd, self.vs.frame + 1 + FIRST));
+        }
         self.vs.step();
     }
 }

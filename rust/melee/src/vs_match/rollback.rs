@@ -225,6 +225,17 @@ impl VsMatch {
         nh_game(w.seed, &w.slots, w.items, w.itemsum)
     }
 
+    /// The neutral hash with the seed word replaced (the C's online checksum seed rule).
+    pub fn rb_game_hash_seeded(&self, seed: u32) -> u32 {
+        let w = self.words();
+        nh_game(seed, &w.slots, w.items, w.itemsum)
+    }
+
+    /// Force the logic RNG (gw_Replay_ResyncSeed in live mode).
+    pub fn rb_force_seed(&mut self, seed: u32) {
+        self.rand.set_logic_seed(seed);
+    }
+
     /// Feed one frame's inputs (one per port; `None`: neutral) to the next step.
     pub fn set_pads(&mut self, inputs: &[Option<RbInput>; 4]) {
         let mut feed = [input::RawPad::default(); 4];

@@ -803,3 +803,38 @@
 #include <melee/gm/gmresultplayer.static.h>
 #include <melee/gm/gmfrontend_items.h>
 #include <melee/gm/gmtoulib.static.h>
+#include <melee/sfx/crowdsfx.h>
+#define TY_SORT_KEY_COUNT 3
+/* Extracted verbatim from src/melee/ty/toy.c. */
+typedef struct ToyUnkJObjData {
+    /* 0x00 */ u8 pad_00[0x10];
+    /* 0x10 */ HSD_JObj* jobj;
+} ToyUnkJObjData;
+/* Extracted verbatim from src/melee/ty/toy.c. */
+typedef struct TySortRow {
+    /* 0x0 */ s16 key[TY_SORT_KEY_COUNT];
+} TySortRow;
+/* Extracted verbatim from src/melee/ty/toy.c. */
+struct ModelNamesDesc {
+    char* animjoint;
+    char* matanim_joint;
+    char* shapeanim_joint;
+};
+/* Extracted verbatim from src/melee/ty/toy.c. */
+typedef union ToyPanelLabelData {
+    char bytes[1];
+    char* ptrs[1];
+} ToyPanelLabelData;
+/* Extracted verbatim from src/melee/ty/tyfigupon.c. */
+typedef union {
+    struct {
+        s32 x0, x4, x8, xC;
+    } s;
+    s32 digits[4];
+} TyFiguponDigitInit;
+/* Extracted verbatim from src/melee/ty/tydisplay.c. */
+typedef struct TySortElemInt {
+    s32 key;
+    s32 val;
+} TySortElemInt;
+#undef TY_SORT_KEY_COUNT

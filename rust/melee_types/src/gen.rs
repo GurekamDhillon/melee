@@ -67237,10 +67237,10 @@ impl GcLayout for DevText {
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct un_804D6EF4_t {
-    pub x00: u32,
+    pub x00: usize,
     pub unk4: *mut HSD_GObj,
-    pub x08: u32,
-    pub x0C: u32,
+    pub x08: usize,
+    pub x0C: usize,
     pub jobjs: [*mut HSD_JObj; 16],
     pub archive: *mut HSD_Archive,
     pub x54: i16,
@@ -67259,10 +67259,10 @@ impl GcDecode for un_804D6EF4_t {
     #[allow(unused_variables, unused_mut, unused_unsafe)]
     fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
         let mut v = Self::zeroed();
-        v.x00 = <u32 as GcDecode>::gc_decode(d, at + 0x0);
+        v.x00 = <usize as GcDecode>::gc_decode(d, at + 0x0);
         v.unk4 = <*mut HSD_GObj as GcDecode>::gc_decode(d, at + 0x4);
-        v.x08 = <u32 as GcDecode>::gc_decode(d, at + 0x8);
-        v.x0C = <u32 as GcDecode>::gc_decode(d, at + 0xC);
+        v.x08 = <usize as GcDecode>::gc_decode(d, at + 0x8);
+        v.x0C = <usize as GcDecode>::gc_decode(d, at + 0xC);
         v.jobjs = <[*mut HSD_JObj; 16] as GcDecode>::gc_decode(d, at + 0x10);
         v.archive = <*mut HSD_Archive as GcDecode>::gc_decode(d, at + 0x50);
         v.x54 = <i16 as GcDecode>::gc_decode(d, at + 0x54);
@@ -67296,7 +67296,6 @@ impl GcLayout for un_804D6EF4_t {
         GcField::new("x5E", 0x5E, 1, "s8"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<un_804D6EF4_t>() == 176);
 
 /// C `un_80301C64_t` (src/melee/if/types.h:176); GameCube size 0x8, align 4.
 #[repr(C, align(8))]
@@ -85607,10 +85606,10 @@ const _: () = assert!(core::mem::size_of::<ToyGlobalsS_>() == 400);
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct TyFiguponED4 {
-    pub x0: u32,
-    pub x4: u32,
+    pub x0: usize,
+    pub x4: usize,
     pub pad_08: [u8; 4],
-    pub xC: u32,
+    pub xC: usize,
 }
 impl TyFiguponED4 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
     #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
@@ -85620,10 +85619,10 @@ impl GcDecode for TyFiguponED4 {
     #[allow(unused_variables, unused_mut, unused_unsafe)]
     fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
         let mut v = Self::zeroed();
-        v.x0 = <u32 as GcDecode>::gc_decode(d, at + 0x0);
-        v.x4 = <u32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.x0 = <usize as GcDecode>::gc_decode(d, at + 0x0);
+        v.x4 = <usize as GcDecode>::gc_decode(d, at + 0x4);
         v.pad_08 = <[u8; 4] as GcDecode>::gc_decode(d, at + 0x8);
-        v.xC = <u32 as GcDecode>::gc_decode(d, at + 0xC);
+        v.xC = <usize as GcDecode>::gc_decode(d, at + 0xC);
         v
     }
 }
@@ -85639,7 +85638,6 @@ impl GcLayout for TyFiguponED4 {
         GcField::new("xC", 0xC, 4, "u32"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<TyFiguponED4>() == 16);
 
 /// C `ToyModelFile` (src/melee/ty/types.h:143); GameCube size 0x54, align 4.
 #[repr(C, align(4))]
@@ -91221,6 +91219,373 @@ impl GcLayout for lbl_803D9DD0_t {
 }
 const _: () = assert!(core::mem::size_of::<lbl_803D9DD0_t>() == 40);
 
+/// C `CrowdSFX_UnkStruct` (src/melee/sfx/crowdsfx.h:6); GameCube size 0x30, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct CrowdSFX_UnkStruct {
+    pub x0: i32,
+    pub x4: i32,
+    pub x8: f32,
+    pub xC: u32,
+    pub x10: i32,
+    pub x14: i32,
+    pub x18: i32,
+    pub x1C: i32,
+    pub x20: i32,
+    pub x24: i32,
+    pub x28: i32,
+    pub x2C: i32,
+}
+impl CrowdSFX_UnkStruct { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for CrowdSFX_UnkStruct {
+    const GC_BYTES: u32 = 0x30;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.x0 = <i32 as GcDecode>::gc_decode(d, at + 0x0);
+        v.x4 = <i32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.x8 = <f32 as GcDecode>::gc_decode(d, at + 0x8);
+        v.xC = <u32 as GcDecode>::gc_decode(d, at + 0xC);
+        v.x10 = <i32 as GcDecode>::gc_decode(d, at + 0x10);
+        v.x14 = <i32 as GcDecode>::gc_decode(d, at + 0x14);
+        v.x18 = <i32 as GcDecode>::gc_decode(d, at + 0x18);
+        v.x1C = <i32 as GcDecode>::gc_decode(d, at + 0x1C);
+        v.x20 = <i32 as GcDecode>::gc_decode(d, at + 0x20);
+        v.x24 = <i32 as GcDecode>::gc_decode(d, at + 0x24);
+        v.x28 = <i32 as GcDecode>::gc_decode(d, at + 0x28);
+        v.x2C = <i32 as GcDecode>::gc_decode(d, at + 0x2C);
+        v
+    }
+}
+impl GcPointee for CrowdSFX_UnkStruct { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<CrowdSFX_UnkStruct>(t) } }
+impl GcLayout for CrowdSFX_UnkStruct {
+    const GC_NAME: &'static str = "CrowdSFX_UnkStruct";
+    const GC_SIZE: u32 = 0x30;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 4, "s32"),
+        GcField::new("x4", 0x4, 4, "s32"),
+        GcField::new("x8", 0x8, 4, "f32"),
+        GcField::new("xC", 0xC, 4, "u32"),
+        GcField::new("x10", 0x10, 4, "s32"),
+        GcField::new("x14", 0x14, 4, "s32"),
+        GcField::new("x18", 0x18, 4, "s32"),
+        GcField::new("x1C", 0x1C, 4, "s32"),
+        GcField::new("x20", 0x20, 4, "s32"),
+        GcField::new("x24", 0x24, 4, "s32"),
+        GcField::new("x28", 0x28, 4, "s32"),
+        GcField::new("x2C", 0x2C, 4, "s32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<CrowdSFX_UnkStruct>() == 48);
+
+/// C `CrowdConfig` (src/melee/sfx/crowdsfx.h:28); GameCube size 0x44, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct CrowdConfig {
+    pub kb_threshold_low: f32,
+    pub kb_threshold_mid: f32,
+    pub kb_threshold_high: f32,
+    pub angle_min: f32,
+    pub angle_max: f32,
+    pub angle_mult: f32,
+    pub x18: f32,
+    pub x1C: i32,
+    pub cheer_limit: i32,
+    pub x24: i32,
+    pub max_gasp_count: i32,
+    pub horiz_margin: f32,
+    pub recovery_y_high: f32,
+    pub recovery_y_mid: f32,
+    pub recovery_y_low: f32,
+    pub fighters_near_blastzone: i32,
+    pub blastzone_y_offset: f32,
+}
+impl CrowdConfig { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for CrowdConfig {
+    const GC_BYTES: u32 = 0x44;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.kb_threshold_low = <f32 as GcDecode>::gc_decode(d, at + 0x0);
+        v.kb_threshold_mid = <f32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.kb_threshold_high = <f32 as GcDecode>::gc_decode(d, at + 0x8);
+        v.angle_min = <f32 as GcDecode>::gc_decode(d, at + 0xC);
+        v.angle_max = <f32 as GcDecode>::gc_decode(d, at + 0x10);
+        v.angle_mult = <f32 as GcDecode>::gc_decode(d, at + 0x14);
+        v.x18 = <f32 as GcDecode>::gc_decode(d, at + 0x18);
+        v.x1C = <i32 as GcDecode>::gc_decode(d, at + 0x1C);
+        v.cheer_limit = <i32 as GcDecode>::gc_decode(d, at + 0x20);
+        v.x24 = <i32 as GcDecode>::gc_decode(d, at + 0x24);
+        v.max_gasp_count = <i32 as GcDecode>::gc_decode(d, at + 0x28);
+        v.horiz_margin = <f32 as GcDecode>::gc_decode(d, at + 0x2C);
+        v.recovery_y_high = <f32 as GcDecode>::gc_decode(d, at + 0x30);
+        v.recovery_y_mid = <f32 as GcDecode>::gc_decode(d, at + 0x34);
+        v.recovery_y_low = <f32 as GcDecode>::gc_decode(d, at + 0x38);
+        v.fighters_near_blastzone = <i32 as GcDecode>::gc_decode(d, at + 0x3C);
+        v.blastzone_y_offset = <f32 as GcDecode>::gc_decode(d, at + 0x40);
+        v
+    }
+}
+impl GcPointee for CrowdConfig { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<CrowdConfig>(t) } }
+impl GcLayout for CrowdConfig {
+    const GC_NAME: &'static str = "CrowdConfig";
+    const GC_SIZE: u32 = 0x44;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("kb_threshold_low", 0x0, 4, "f32"),
+        GcField::new("kb_threshold_mid", 0x4, 4, "f32"),
+        GcField::new("kb_threshold_high", 0x8, 4, "f32"),
+        GcField::new("angle_min", 0xC, 4, "f32"),
+        GcField::new("angle_max", 0x10, 4, "f32"),
+        GcField::new("angle_mult", 0x14, 4, "f32"),
+        GcField::new("x18", 0x18, 4, "f32"),
+        GcField::new("x1C", 0x1C, 4, "s32"),
+        GcField::new("cheer_limit", 0x20, 4, "s32"),
+        GcField::new("x24", 0x24, 4, "s32"),
+        GcField::new("max_gasp_count", 0x28, 4, "s32"),
+        GcField::new("horiz_margin", 0x2C, 4, "f32"),
+        GcField::new("recovery_y_high", 0x30, 4, "f32"),
+        GcField::new("recovery_y_mid", 0x34, 4, "f32"),
+        GcField::new("recovery_y_low", 0x38, 4, "f32"),
+        GcField::new("fighters_near_blastzone", 0x3C, 4, "s32"),
+        GcField::new("blastzone_y_offset", 0x40, 4, "f32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<CrowdConfig>() == 68);
+
+/// C `ToyUnkJObjData` (rust/melee_types/gen/all_types.c:809); GameCube size 0x14, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct ToyUnkJObjData {
+    pub pad_00: [u8; 16],
+    pub jobj: *mut HSD_JObj,
+}
+impl ToyUnkJObjData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for ToyUnkJObjData {
+    const GC_BYTES: u32 = 0x14;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.pad_00 = <[u8; 16] as GcDecode>::gc_decode(d, at + 0x0);
+        v.jobj = <*mut HSD_JObj as GcDecode>::gc_decode(d, at + 0x10);
+        v
+    }
+}
+impl GcPointee for ToyUnkJObjData { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<ToyUnkJObjData>(t) } }
+impl GcLayout for ToyUnkJObjData {
+    const GC_NAME: &'static str = "ToyUnkJObjData";
+    const GC_SIZE: u32 = 0x14;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("pad_00", 0x0, 16, "u8[16]"),
+        GcField::new("jobj", 0x10, 4, "HSD_JObj *"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<ToyUnkJObjData>() == 24);
+
+/// C `TySortRow` (rust/melee_types/gen/all_types.c:814); GameCube size 0x6, align 2.
+#[repr(C, align(2))]
+#[derive(Clone, Copy)]
+pub struct TySortRow {
+    pub key: [i16; 3],
+}
+impl TySortRow { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for TySortRow {
+    const GC_BYTES: u32 = 0x6;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.key = <[i16; 3] as GcDecode>::gc_decode(d, at + 0x0);
+        v
+    }
+}
+impl GcPointee for TySortRow { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<TySortRow>(t) } }
+impl GcLayout for TySortRow {
+    const GC_NAME: &'static str = "TySortRow";
+    const GC_SIZE: u32 = 0x6;
+    const GC_ALIGN: u32 = 2;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("key", 0x0, 6, "s16[3]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<TySortRow>() == 6);
+
+/// C `ModelNamesDesc` (rust/melee_types/gen/all_types.c:818); GameCube size 0xC, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct ModelNamesDesc {
+    pub animjoint: *mut i8,
+    pub matanim_joint: *mut i8,
+    pub shapeanim_joint: *mut i8,
+}
+impl ModelNamesDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for ModelNamesDesc {
+    const GC_BYTES: u32 = 0xC;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.animjoint = <*mut i8 as GcDecode>::gc_decode(d, at + 0x0);
+        v.matanim_joint = <*mut i8 as GcDecode>::gc_decode(d, at + 0x4);
+        v.shapeanim_joint = <*mut i8 as GcDecode>::gc_decode(d, at + 0x8);
+        v
+    }
+}
+impl GcPointee for ModelNamesDesc { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<ModelNamesDesc>(t) } }
+impl GcLayout for ModelNamesDesc {
+    const GC_NAME: &'static str = "ModelNamesDesc";
+    const GC_SIZE: u32 = 0xC;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("animjoint", 0x0, 4, "char *"),
+        GcField::new("matanim_joint", 0x4, 4, "char *"),
+        GcField::new("shapeanim_joint", 0x8, 4, "char *"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<ModelNamesDesc>() == 24);
+
+/// C `ToyPanelLabelData` (rust/melee_types/gen/all_types.c:824); GameCube size 0x4, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub union ToyPanelLabelData {
+    pub bytes: [i8; 1],
+    pub ptrs: [*mut i8; 1],
+}
+impl ToyPanelLabelData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for ToyPanelLabelData {
+    const GC_BYTES: u32 = 0x4;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.bytes = <[i8; 1] as GcDecode>::gc_decode(d, at + 0x0);
+        v
+    }
+}
+impl GcPointee for ToyPanelLabelData { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<ToyPanelLabelData>(t) } }
+impl GcLayout for ToyPanelLabelData {
+    const GC_NAME: &'static str = "ToyPanelLabelData";
+    const GC_SIZE: u32 = 0x4;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("bytes", 0x0, 1, "char[1]"),
+        GcField::new("ptrs", 0x0, 4, "char *[1]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<ToyPanelLabelData>() == 8);
+
+/// C `TyFiguponDigitInit` (rust/melee_types/gen/all_types.c:829); GameCube size 0x10, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub union TyFiguponDigitInit {
+    pub s: TyFiguponDigitInit_s,
+    pub digits: [i32; 4],
+}
+impl TyFiguponDigitInit { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for TyFiguponDigitInit {
+    const GC_BYTES: u32 = 0x10;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.s = <TyFiguponDigitInit_s as GcDecode>::gc_decode(d, at + 0x0);
+        v
+    }
+}
+impl GcPointee for TyFiguponDigitInit { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<TyFiguponDigitInit>(t) } }
+impl GcLayout for TyFiguponDigitInit {
+    const GC_NAME: &'static str = "TyFiguponDigitInit";
+    const GC_SIZE: u32 = 0x10;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("s", 0x0, 16, "struct (unnamed at rust/melee_types/gen/all_types.c:830:5)"),
+        GcField::new("digits", 0x0, 16, "s32[4]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<TyFiguponDigitInit>() == 16);
+
+/// C `struct (unnamed at rust/melee_types/gen/all_types.c:830:5)` (rust/melee_types/gen/all_types.c:830); GameCube size 0x10, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct TyFiguponDigitInit_s {
+    pub x0: i32,
+    pub x4: i32,
+    pub x8: i32,
+    pub xC: i32,
+}
+impl TyFiguponDigitInit_s { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for TyFiguponDigitInit_s {
+    const GC_BYTES: u32 = 0x10;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.x0 = <i32 as GcDecode>::gc_decode(d, at + 0x0);
+        v.x4 = <i32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.x8 = <i32 as GcDecode>::gc_decode(d, at + 0x8);
+        v.xC = <i32 as GcDecode>::gc_decode(d, at + 0xC);
+        v
+    }
+}
+impl GcPointee for TyFiguponDigitInit_s { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<TyFiguponDigitInit_s>(t) } }
+impl GcLayout for TyFiguponDigitInit_s {
+    const GC_NAME: &'static str = "struct (unnamed at rust/melee_types/gen/all_types.c:830:5)";
+    const GC_SIZE: u32 = 0x10;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 4, "s32"),
+        GcField::new("x4", 0x4, 4, "s32"),
+        GcField::new("x8", 0x8, 4, "s32"),
+        GcField::new("xC", 0xC, 4, "s32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<TyFiguponDigitInit_s>() == 16);
+
+/// C `TySortElemInt` (rust/melee_types/gen/all_types.c:836); GameCube size 0x8, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct TySortElemInt {
+    pub key: i32,
+    pub val: i32,
+}
+impl TySortElemInt { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for TySortElemInt {
+    const GC_BYTES: u32 = 0x8;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.key = <i32 as GcDecode>::gc_decode(d, at + 0x0);
+        v.val = <i32 as GcDecode>::gc_decode(d, at + 0x4);
+        v
+    }
+}
+impl GcPointee for TySortElemInt { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<TySortElemInt>(t) } }
+impl GcLayout for TySortElemInt {
+    const GC_NAME: &'static str = "TySortElemInt";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("key", 0x0, 4, "s32"),
+        GcField::new("val", 0x4, 4, "s32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<TySortElemInt>() == 8);
+
 /// Every generated GameCube record layout, for the DAT loader, serialisers and the m-ex map.
 pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[
     (<__file_modes as GcLayout>::GC_NAME, <__file_modes as GcLayout>::GC_SIZE, <__file_modes as GcLayout>::GC_ALIGN, <__file_modes as GcLayout>::GC_FIELDS),
@@ -92859,6 +93224,15 @@ pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[
     (<BracketSrcEntry as GcLayout>::GC_NAME, <BracketSrcEntry as GcLayout>::GC_SIZE, <BracketSrcEntry as GcLayout>::GC_ALIGN, <BracketSrcEntry as GcLayout>::GC_FIELDS),
     (<lbl_803D9DAC_t as GcLayout>::GC_NAME, <lbl_803D9DAC_t as GcLayout>::GC_SIZE, <lbl_803D9DAC_t as GcLayout>::GC_ALIGN, <lbl_803D9DAC_t as GcLayout>::GC_FIELDS),
     (<lbl_803D9DD0_t as GcLayout>::GC_NAME, <lbl_803D9DD0_t as GcLayout>::GC_SIZE, <lbl_803D9DD0_t as GcLayout>::GC_ALIGN, <lbl_803D9DD0_t as GcLayout>::GC_FIELDS),
+    (<CrowdSFX_UnkStruct as GcLayout>::GC_NAME, <CrowdSFX_UnkStruct as GcLayout>::GC_SIZE, <CrowdSFX_UnkStruct as GcLayout>::GC_ALIGN, <CrowdSFX_UnkStruct as GcLayout>::GC_FIELDS),
+    (<CrowdConfig as GcLayout>::GC_NAME, <CrowdConfig as GcLayout>::GC_SIZE, <CrowdConfig as GcLayout>::GC_ALIGN, <CrowdConfig as GcLayout>::GC_FIELDS),
+    (<ToyUnkJObjData as GcLayout>::GC_NAME, <ToyUnkJObjData as GcLayout>::GC_SIZE, <ToyUnkJObjData as GcLayout>::GC_ALIGN, <ToyUnkJObjData as GcLayout>::GC_FIELDS),
+    (<TySortRow as GcLayout>::GC_NAME, <TySortRow as GcLayout>::GC_SIZE, <TySortRow as GcLayout>::GC_ALIGN, <TySortRow as GcLayout>::GC_FIELDS),
+    (<ModelNamesDesc as GcLayout>::GC_NAME, <ModelNamesDesc as GcLayout>::GC_SIZE, <ModelNamesDesc as GcLayout>::GC_ALIGN, <ModelNamesDesc as GcLayout>::GC_FIELDS),
+    (<ToyPanelLabelData as GcLayout>::GC_NAME, <ToyPanelLabelData as GcLayout>::GC_SIZE, <ToyPanelLabelData as GcLayout>::GC_ALIGN, <ToyPanelLabelData as GcLayout>::GC_FIELDS),
+    (<TyFiguponDigitInit as GcLayout>::GC_NAME, <TyFiguponDigitInit as GcLayout>::GC_SIZE, <TyFiguponDigitInit as GcLayout>::GC_ALIGN, <TyFiguponDigitInit as GcLayout>::GC_FIELDS),
+    (<TyFiguponDigitInit_s as GcLayout>::GC_NAME, <TyFiguponDigitInit_s as GcLayout>::GC_SIZE, <TyFiguponDigitInit_s as GcLayout>::GC_ALIGN, <TyFiguponDigitInit_s as GcLayout>::GC_FIELDS),
+    (<TySortElemInt as GcLayout>::GC_NAME, <TySortElemInt as GcLayout>::GC_SIZE, <TySortElemInt as GcLayout>::GC_ALIGN, <TySortElemInt as GcLayout>::GC_FIELDS),
 ];
 
 /// Read `w` bits of a GameCube big-endian bitfield byte run, `shift` bits up from its LSB.

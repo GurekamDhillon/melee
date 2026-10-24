@@ -283,6 +283,7 @@ def table_hashes(tu):
 def emit(stem):
     from specs import SPECS
     from specs_cfg import CFG
+    import specs_ness, specs_yoyo  # noqa: F401
     spec = SPECS[stem]
     cfg = CFG[stem]
     tu = Tu(gen_tu.patched_source(stem, spec), spec.get("args", ()), (ROOT / spec["src"]).parent)

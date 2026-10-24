@@ -58,16 +58,6 @@ const M_PI: f64 = core::f64::consts::PI;
 const M_PI_2: f64 = M_PI / 2.0;
 const M_TAU: f64 = 6.283185307179586;
 
-/// `HSD_JObjSetScaleZ` (baselib/jobj.h, static inline)
-#[inline]
-unsafe fn HSD_JObjSetScaleZ(jobj: *mut HSD_JObj, z: f32) {
-    hsd_assert(!jobj.is_null(), "(jobj)");
-    (*jobj).scale.z = z;
-    if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
-        HSD_JObjSetMtxDirty(jobj);
-    }
-}
-
 /// `ABS` (platform.h): `((x) < 0 ? -(x) : (x))`.
 #[inline(always)]
 fn abs_c(x: f32) -> f32 {

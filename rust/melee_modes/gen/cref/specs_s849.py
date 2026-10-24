@@ -22,3 +22,8 @@ SPECS["lb_013B"] = dict(
 for _s in SPECS.values():
     _s.setdefault("narrow_si", True)
     _s.setdefault("common_ret", {})
+SPECS["lb_0146"] = dict(
+    src="src/melee/lb/lb_0146.c",
+    types=["lb_80014638_arg0_t", "lb_80014638_arg1_t", "Vec3"],
+    ret={"HSD_CObjGetCurrent": ("&COB", "&raw mut super::COB")},
+)

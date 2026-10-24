@@ -1670,3 +1670,5 @@ CFG["ittarucann"] = dict(
 )
 
 from specs_cfg_801 import *  # noqa: E402,F401,F403  (shard 801-808 entries)
+
+import cfg_809  # noqa: E402,F401  (shard 809-816 entries)

@@ -808,3 +808,12 @@ pastes the generated `ext` block into a port). State oracle per file (`bash rust
   `itTarucann_UnkMotion7_Phys` returns a `float` (state-table slot is cast); `itTarucann` stubs `sinf`/`cosf` are the real gekko ports.
 - Oracle additions: `facing_dir` also drawn as an arbitrary float; a fake `ItemModelDesc`/`HSD_Joint` (`MD`, `JNT`) for the
   `x10_modelDesc->x0_joint` reads; `ftCo_800C92E4`'s `lbColl_80008D30_arg1` pointee is traced.
+## melee_items::tu: it/kinds set 2 (shard 809-816)
+`itwhitebea itwstar ityaku ityoshiegglay ityoshieggthrow ityoshistar ityoshitongue itzeldadinfire` (165 fns, all with a
+state-oracle op each) ported with the shard 657-664 generator (`gen/kinds`; descriptions in `cfg_809.py`, specs in `specs.py`).
+New in the oracle: `efAsync_Spawn` modelled as a 6-argument hook (the variadic scale is read only for spawn kind 4);
+`__frsqrte`/`sinf`/`cosf` are the real linked ports; callback fixtures (ityaku) are registered functions.
+Fused sites (IR): yoshistar `vel.x += accel*dir`, yoshiegglay timer `-= xCA0*x0`, zeldadinfire scale and steering,
+whitebea distance. The test catches the yoshistar mutation; the whitebea distance (only compared against thresholds)
+and zelda steering (rarely reached) are not discriminated by the current inputs.
+`x28_entries` (itwstar) and the yaku `while (true)` hang are handled as noted in the file headers.

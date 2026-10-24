@@ -75,7 +75,9 @@ for _n in ("itarwinglaser", "itbat", "itbombhei", "itbox", "itcapsule", "itcereb
     SPECS[_n] = dict(src=f"{K}{_n}.c", types=_T, ret=dict(COMMON_RET), effects=dict(COMMON_EFF),
                      null_ret_ok=["Item_80268B18", "Item_80268B5C", "it_8026F6BC", "HSD_Randi"])
 
-for _n in ("itthunder", "ittogepy", "ittomato", "ittosakinto", "ittools", "itunknown", "itwhispyapple", "ittincle"):
+for _n in ("itthunder", "ittogepy", "ittomato", "ittosakinto", "ittools", "itunknown", "itwhispyapple", "ittincle",
+           "itwhitebea", "itwstar", "ityaku", "ityoshiegglay", "ityoshieggthrow", "ityoshistar", "ityoshitongue",
+           "itzeldadinfire"):
     SPECS[_n] = dict(src=f"{K}{_n}.c", types=_T, ret=dict(COMMON_RET), effects=dict(COMMON_EFF),
                      null_ret_ok=["Item_80268B18", "Item_80268B5C", "it_8026F6BC", "HSD_Randi"])
 
@@ -128,6 +130,14 @@ for _n in ("itporygon2", "itrabbitc", "itraikou", "itrshell", "itsamusbomb", "it
 SPECS["itrabbitc"]["ret"]["it_80272CC0"] = ("(&JO[3 + (fv() % 3)])", "&raw mut crate::JO[3 + (fv() % 3) as usize]")
 SPECS["itraikou"]["custom_stubs"] = {"efSync_Spawn": _EFS4}
 
+# ---------------------------------------------------------------- shard 809-816
+_EFA = dict(
+    c="void efAsync_Spawn(HSD_GObj* a0, void* a1, u32 a2, u32 a3, HSD_JObj* a4, ...) { __builtin_va_list ap; float* a5 = 0; "
+      "if (a2 == 4) { __builtin_va_start(ap, a4); a5 = __builtin_va_arg(ap, float*); __builtin_va_end(ap); } "
+      "T(@ID@); T(PI(a0)); T(PI(a1)); T(a2); T(a3); T(PI(a4)); if (a2 == 4) { T(PI(a5)); T(B(*a5)); } }",
+    ext="fn efAsync_Spawn(a0: *mut HSD_GObj, a1: *mut c_void, a2: u32, a3: u32, a4: *mut HSD_JObj, a5: *mut f32);",
+    hook="|a0, a1, a2, a3, a4, a5| { t(@ID@); t(pi(a0)); t(pi(a1)); t(a2); t(a3); t(pi(a4)); "
+         "if a2 == 4 { t(pi(a5)); t((*a5).to_bits()); } }")
 _EFSJ = dict(
     c="void* efSync_Spawn(s32 a0, HSD_GObj* a1, ...) { __builtin_va_list ap; void* a2; __builtin_va_start(ap, a1); "
       "a2 = __builtin_va_arg(ap, void*); __builtin_va_end(ap); T(@ID@); T((u32) a0); T(PI(a1)); T(PI(a2)); return 0; }",
@@ -469,3 +479,35 @@ SPECS["ittincle"]["null_ret_ok"].append("it_8027B5B0")
 SPECS["ittincle"]["effects"]["it_80275D5C"] = (
     "T(B(a1->top)); T(B(a1->bottom)); T(B(a1->right)); T(B(a1->left));",
     "t((*a1).top.to_bits()); t((*a1).bottom.to_bits()); t((*a1).right.to_bits()); t((*a1).left.to_bits());")
+for _n in ("itwstar", "ityoshiegglay", "ityoshieggthrow"):
+    SPECS[_n]["custom_stubs"] = {"efAsync_Spawn": _EFA}
+SPECS["itzeldadinfire"]["custom_stubs"] = {"efSync_Spawn": _EFSJ}
+SPECS["itzeldadinfire"]["skip_stubs"] = ["sinf", "cosf"]
+SPECS["itwhitebea"]["skip_stubs"] = ["__frsqrte"]
+_VOUT = lambda a: _V(a)
+SPECS["itwhitebea"]["ret"].update({
+    "it_8026B684": ("((fv() & 1) ? 1.0f : -1.0f)", "if fv() & 1 != 0 { 1.0 } else { -1.0 }"),
+    "it_8027CBFC": ("(float) ((int) (fv() % 200) - 50)", "((fv() % 200) as i32 - 50) as f32"),
+    "mpLib_80056A1C": ("&SFXA[fv() % 4]", "&raw mut crate::SFXA[(fv() % 4) as usize]"),
+    "it_802750E8": _P, "it_8027B798": _P, "it_8027C794": _P, "it_8027C79C": _P, "it_8027C824": _P,
+})
+SPECS["itwhitebea"]["effects"].update({
+    "it_8028ECF0": _V("a1"), "it_8027B798": _V("a1"), "it_8027BA54": _V("a1"), "it_8027C8D0": _V("a0"),
+})
+SPECS["itwhitebea"]["null_ret_ok"] += ["it_8028ECF0"]
+SPECS["itwstar"]["ret"].update({
+    "HSD_Randi": ("(a0 > 0 ? (int) (rnd() % (u32) a0) : 0)", "if a0 > 0 { (rnd() % a0 as u32) as i32 } else { 0 }"),
+})
+SPECS["itwstar"]["null_ret_ok"] += ["it_80272C90", "it_80272CC0"]
+SPECS["itzeldadinfire"]["ret"].update({
+    "ftZd_SpecialLw_8013B540": _P, "ftZd_SpecialLw_8013B574": _P,
+})
+SPECS["itzeldadinfire"]["effects"].update({
+    "ftLib_800865D8": ("if (a1) { *a1 = rw(); } if (a2) { *a2 = rw(); }",
+                       "if !a1.is_null() { *a1 = rw(); } if !a2.is_null() { *a2 = rw(); }"),
+})
+SPECS["itzeldadinfire"]["null_ret_ok"] += ["it_802C4580"]
+SPECS["ityoshitongue"]["null_ret_ok"] += ["ftLib_80086630"]
+SPECS["ityoshitongue"]["ret"]["ftLib_80086630"] = ("((fv() & 1) ? &JO[3] : 0)", "if fv() & 1 != 0 { &raw mut crate::JO[3] } else { core::ptr::null_mut() }")
+for _n in ("ityoshistar", "ityoshieggthrow", "ityoshiegglay", "itwstar", "ityaku", "itzeldadinfire"):
+    SPECS[_n]["ret"]["it_80272C6C"] = _P

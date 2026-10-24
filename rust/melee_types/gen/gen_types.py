@@ -56,6 +56,15 @@ NATIVE_FIELD_TYPES = {
     ("un_804D6EF4_t", n): "usize" for n in ("x00", "x08", "x0C")
 } | {
     ("TyFiguponED4", n): "usize" for n in ("x0", "x4", "xC")
+} | {
+    ("ToyED8Data", "x54"): "usize",
+    ("TyDisplayData", "pad_144"): "[*mut HSD_Text; 4]",
+    ("Toy6E68", "pad10"): "[*mut c_void; 2]",
+}
+# Native names for slots the C code declares as padding but uses as a view's fields.
+NATIVE_FIELD_NAMES = {
+    ("TyDisplayData", "pad_144"): "texts",
+    ("Toy6E68", "pad10"): "x10",
 }
 
 TU_RECORDS = {
@@ -620,7 +629,7 @@ class Gen:
                 continue
             off = boff // 8
             ty = NATIVE_FIELD_TYPES.get((nm, f.spelling), self.rty(f.type))
-            fn_ = fname(f.spelling, off)
+            fn_ = NATIVE_FIELD_NAMES.get((nm, f.spelling)) or fname(f.spelling, off)
             rust_fields.append(f"    pub {ident(fn_)}: {ty},")
             dec.append((ident(fn_), off, ty))
             cn = f.spelling or "(anon)"

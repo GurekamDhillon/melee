@@ -85729,7 +85729,7 @@ pub struct TyDisplayData {
     pub first_entry: *mut ToyListEntry,
     pub last_entry: *mut ToyListEntry,
     pub selected_entry: *mut ToyListEntry,
-    pub pad_144: [u8; 16],
+    pub texts: [*mut HSD_Text; 4],
     pub selectedIdx: i16,
     pub pad_156: u8,
     pub visible_count: i8,
@@ -85746,7 +85746,7 @@ impl GcDecode for TyDisplayData {
         v.first_entry = <*mut ToyListEntry as GcDecode>::gc_decode(d, at + 0x138);
         v.last_entry = <*mut ToyListEntry as GcDecode>::gc_decode(d, at + 0x13C);
         v.selected_entry = <*mut ToyListEntry as GcDecode>::gc_decode(d, at + 0x140);
-        v.pad_144 = <[u8; 16] as GcDecode>::gc_decode(d, at + 0x144);
+        v.texts = <[*mut HSD_Text; 4] as GcDecode>::gc_decode(d, at + 0x144);
         v.selectedIdx = <i16 as GcDecode>::gc_decode(d, at + 0x154);
         v.pad_156 = <u8 as GcDecode>::gc_decode(d, at + 0x156);
         v.visible_count = <i8 as GcDecode>::gc_decode(d, at + 0x157);
@@ -85769,7 +85769,6 @@ impl GcLayout for TyDisplayData {
         GcField::new("visible_count", 0x157, 1, "s8"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<TyDisplayData>() == 672);
 
 /// C `Toy26B8` (src/melee/ty/types.h:170); GameCube size 0x404, align 4.
 #[repr(C, align(8))]
@@ -87186,7 +87185,7 @@ pub struct Toy6E68 {
     pub x4: *mut ToyTransitionObj,
     pub x8: *mut c_void,
     pub xC: *mut ToyTransitionObj,
-    pub pad10: [u8; 8],
+    pub x10: [*mut c_void; 2],
     pub x18: f32,
     pub x1C: f32,
     pub x20: f32,
@@ -87220,7 +87219,7 @@ impl GcDecode for Toy6E68 {
         v.x4 = <*mut ToyTransitionObj as GcDecode>::gc_decode(d, at + 0x4);
         v.x8 = <*mut c_void as GcDecode>::gc_decode(d, at + 0x8);
         v.xC = <*mut ToyTransitionObj as GcDecode>::gc_decode(d, at + 0xC);
-        v.pad10 = <[u8; 8] as GcDecode>::gc_decode(d, at + 0x10);
+        v.x10 = <[*mut c_void; 2] as GcDecode>::gc_decode(d, at + 0x10);
         v.x18 = <f32 as GcDecode>::gc_decode(d, at + 0x18);
         v.x1C = <f32 as GcDecode>::gc_decode(d, at + 0x1C);
         v.x20 = <f32 as GcDecode>::gc_decode(d, at + 0x20);
@@ -87277,7 +87276,6 @@ impl GcLayout for Toy6E68 {
         GcField::new("x61", 0x61, 1, "s8"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<Toy6E68>() == 120);
 
 /// C `Ty25Entry` (src/melee/ty/types.h:483); GameCube size 0x18, align 4.
 #[repr(C, align(8))]
@@ -87513,7 +87511,7 @@ pub struct ToyED8Data {
     pub x30: *mut HSD_JObj,
     pub pad_34: [u8; 28],
     pub archive: *mut HSD_Archive,
-    pub x54: u32,
+    pub x54: usize,
     pub x58: *mut c_void,
 }
 impl ToyED8Data { /// All-zero value (every generated record is plain data: null pointers, None fns). 
@@ -87534,7 +87532,7 @@ impl GcDecode for ToyED8Data {
         v.x30 = <*mut HSD_JObj as GcDecode>::gc_decode(d, at + 0x30);
         v.pad_34 = <[u8; 28] as GcDecode>::gc_decode(d, at + 0x34);
         v.archive = <*mut HSD_Archive as GcDecode>::gc_decode(d, at + 0x50);
-        v.x54 = <u32 as GcDecode>::gc_decode(d, at + 0x54);
+        v.x54 = <usize as GcDecode>::gc_decode(d, at + 0x54);
         v.x58 = <*mut c_void as GcDecode>::gc_decode(d, at + 0x58);
         v
     }
@@ -87559,7 +87557,6 @@ impl GcLayout for ToyED8Data {
         GcField::new("x58", 0x58, 4, "void *"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<ToyED8Data>() == 144);
 
 /// C `TyArchiveData` (src/melee/ty/types.h:555); GameCube size 0x54, align 4.
 #[repr(C, align(8))]

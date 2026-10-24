@@ -832,7 +832,7 @@ unsafe fn h_HSD_JObjSetMtxDirtySub(a: &[u64]) -> u64 {
         rt::h_p((*p).envelopemtx as *const u8);
         rt::h_p((*p).aobj as *const u8);
         rt::h_p((*p).robj as *const u8);
-        rt::h_u((*p).id as u64);
+        rt::h_u(((*p).id as u32) as u64);
         rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
     let p0 = a[0] as usize as *mut Q::HSD_JObj;
     if !p0.is_null() {
@@ -863,7 +863,7 @@ unsafe fn h_HSD_JObjSetMtxDirtySub(a: &[u64]) -> u64 {
         (*p0).envelopemtx = 0usize as _;
         (*p0).aobj = 0usize as _;
         (*p0).robj = 0usize as _;
-        (*p0).id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).id = (rt::draw_int(&mut rt::MST) as u32) as _;
     }
     0
 }
@@ -3546,7 +3546,7 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(MO_jbb0)).envelopemtx = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jbb0)).aobj = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jbb0)).robj = 0usize as _;
-    (*core::ptr::addr_of_mut!(MO_jbb0)).id = rt::draw_int(&mut rt::ST) as _;
+    (*core::ptr::addr_of_mut!(MO_jbb0)).id = (rt::draw_int(&mut rt::ST) as u32) as _;
     (*core::ptr::addr_of_mut!(MO_jbb1)).object.parent.class_info = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jbb1)).object.ref_count = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(MO_jbb1)).object.ref_count_individual = rt::draw_int(&mut rt::ST) as _;
@@ -3574,7 +3574,7 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(MO_jbb1)).envelopemtx = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jbb1)).aobj = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jbb1)).robj = 0usize as _;
-    (*core::ptr::addr_of_mut!(MO_jbb1)).id = rt::draw_int(&mut rt::ST) as _;
+    (*core::ptr::addr_of_mut!(MO_jbb1)).id = (rt::draw_int(&mut rt::ST) as u32) as _;
     (*core::ptr::addr_of_mut!(MO_jbb2)).object.parent.class_info = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jbb2)).object.ref_count = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(MO_jbb2)).object.ref_count_individual = rt::draw_int(&mut rt::ST) as _;
@@ -3602,7 +3602,7 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(MO_jbb2)).envelopemtx = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jbb2)).aobj = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jbb2)).robj = 0usize as _;
-    (*core::ptr::addr_of_mut!(MO_jbb2)).id = rt::draw_int(&mut rt::ST) as _;
+    (*core::ptr::addr_of_mut!(MO_jbb2)).id = (rt::draw_int(&mut rt::ST) as u32) as _;
     (*core::ptr::addr_of_mut!(MO_jbb3)).object.parent.class_info = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jbb3)).object.ref_count = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(MO_jbb3)).object.ref_count_individual = rt::draw_int(&mut rt::ST) as _;
@@ -3630,7 +3630,7 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(MO_jbb3)).envelopemtx = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jbb3)).aobj = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jbb3)).robj = 0usize as _;
-    (*core::ptr::addr_of_mut!(MO_jbb3)).id = rt::draw_int(&mut rt::ST) as _;
+    (*core::ptr::addr_of_mut!(MO_jbb3)).id = (rt::draw_int(&mut rt::ST) as u32) as _;
     (*core::ptr::addr_of_mut!(MO_jch0)).object.parent.class_info = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jch0)).object.ref_count = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(MO_jch0)).object.ref_count_individual = rt::draw_int(&mut rt::ST) as _;
@@ -3658,7 +3658,7 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(MO_jch0)).envelopemtx = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jch0)).aobj = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jch0)).robj = 0usize as _;
-    (*core::ptr::addr_of_mut!(MO_jch0)).id = rt::draw_int(&mut rt::ST) as _;
+    (*core::ptr::addr_of_mut!(MO_jch0)).id = (rt::draw_int(&mut rt::ST) as u32) as _;
     (*core::ptr::addr_of_mut!(MO_jch1)).object.parent.class_info = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jch1)).object.ref_count = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(MO_jch1)).object.ref_count_individual = rt::draw_int(&mut rt::ST) as _;
@@ -3686,7 +3686,7 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(MO_jch1)).envelopemtx = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jch1)).aobj = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jch1)).robj = 0usize as _;
-    (*core::ptr::addr_of_mut!(MO_jch1)).id = rt::draw_int(&mut rt::ST) as _;
+    (*core::ptr::addr_of_mut!(MO_jch1)).id = (rt::draw_int(&mut rt::ST) as u32) as _;
     (*core::ptr::addr_of_mut!(MO_jch2)).object.parent.class_info = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jch2)).object.ref_count = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(MO_jch2)).object.ref_count_individual = rt::draw_int(&mut rt::ST) as _;
@@ -3714,7 +3714,7 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(MO_jch2)).envelopemtx = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jch2)).aobj = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jch2)).robj = 0usize as _;
-    (*core::ptr::addr_of_mut!(MO_jch2)).id = rt::draw_int(&mut rt::ST) as _;
+    (*core::ptr::addr_of_mut!(MO_jch2)).id = (rt::draw_int(&mut rt::ST) as u32) as _;
     (*core::ptr::addr_of_mut!(MO_jch3)).object.parent.class_info = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jch3)).object.ref_count = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(MO_jch3)).object.ref_count_individual = rt::draw_int(&mut rt::ST) as _;
@@ -3742,7 +3742,7 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(MO_jch3)).envelopemtx = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jch3)).aobj = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jch3)).robj = 0usize as _;
-    (*core::ptr::addr_of_mut!(MO_jch3)).id = rt::draw_int(&mut rt::ST) as _;
+    (*core::ptr::addr_of_mut!(MO_jch3)).id = (rt::draw_int(&mut rt::ST) as u32) as _;
     (*core::ptr::addr_of_mut!(MO_job0)).object.parent.class_info = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_job0)).object.ref_count = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(MO_job0)).object.ref_count_individual = rt::draw_int(&mut rt::ST) as _;
@@ -3770,7 +3770,7 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(MO_job0)).envelopemtx = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_job0)).aobj = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_job0)).robj = 0usize as _;
-    (*core::ptr::addr_of_mut!(MO_job0)).id = rt::draw_int(&mut rt::ST) as _;
+    (*core::ptr::addr_of_mut!(MO_job0)).id = (rt::draw_int(&mut rt::ST) as u32) as _;
     (*core::ptr::addr_of_mut!(MO_job1)).object.parent.class_info = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_job1)).object.ref_count = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(MO_job1)).object.ref_count_individual = rt::draw_int(&mut rt::ST) as _;
@@ -3798,7 +3798,7 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(MO_job1)).envelopemtx = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_job1)).aobj = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_job1)).robj = 0usize as _;
-    (*core::ptr::addr_of_mut!(MO_job1)).id = rt::draw_int(&mut rt::ST) as _;
+    (*core::ptr::addr_of_mut!(MO_job1)).id = (rt::draw_int(&mut rt::ST) as u32) as _;
     (*core::ptr::addr_of_mut!(MO_job2)).object.parent.class_info = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_job2)).object.ref_count = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(MO_job2)).object.ref_count_individual = rt::draw_int(&mut rt::ST) as _;
@@ -3826,7 +3826,7 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(MO_job2)).envelopemtx = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_job2)).aobj = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_job2)).robj = 0usize as _;
-    (*core::ptr::addr_of_mut!(MO_job2)).id = rt::draw_int(&mut rt::ST) as _;
+    (*core::ptr::addr_of_mut!(MO_job2)).id = (rt::draw_int(&mut rt::ST) as u32) as _;
     (*core::ptr::addr_of_mut!(MO_job3)).object.parent.class_info = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_job3)).object.ref_count = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(MO_job3)).object.ref_count_individual = rt::draw_int(&mut rt::ST) as _;
@@ -3854,7 +3854,7 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(MO_job3)).envelopemtx = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_job3)).aobj = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_job3)).robj = 0usize as _;
-    (*core::ptr::addr_of_mut!(MO_job3)).id = rt::draw_int(&mut rt::ST) as _;
+    (*core::ptr::addr_of_mut!(MO_job3)).id = (rt::draw_int(&mut rt::ST) as u32) as _;
     (*core::ptr::addr_of_mut!(MO_jr0)).object.parent.class_info = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jr0)).object.ref_count = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(MO_jr0)).object.ref_count_individual = rt::draw_int(&mut rt::ST) as _;
@@ -3882,7 +3882,7 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(MO_jr0)).envelopemtx = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jr0)).aobj = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jr0)).robj = 0usize as _;
-    (*core::ptr::addr_of_mut!(MO_jr0)).id = rt::draw_int(&mut rt::ST) as _;
+    (*core::ptr::addr_of_mut!(MO_jr0)).id = (rt::draw_int(&mut rt::ST) as u32) as _;
     (*core::ptr::addr_of_mut!(MO_jr1)).object.parent.class_info = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jr1)).object.ref_count = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(MO_jr1)).object.ref_count_individual = rt::draw_int(&mut rt::ST) as _;
@@ -3910,7 +3910,7 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(MO_jr1)).envelopemtx = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jr1)).aobj = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jr1)).robj = 0usize as _;
-    (*core::ptr::addr_of_mut!(MO_jr1)).id = rt::draw_int(&mut rt::ST) as _;
+    (*core::ptr::addr_of_mut!(MO_jr1)).id = (rt::draw_int(&mut rt::ST) as u32) as _;
     (*core::ptr::addr_of_mut!(MO_jr2)).object.parent.class_info = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jr2)).object.ref_count = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(MO_jr2)).object.ref_count_individual = rt::draw_int(&mut rt::ST) as _;
@@ -3938,7 +3938,7 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(MO_jr2)).envelopemtx = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jr2)).aobj = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jr2)).robj = 0usize as _;
-    (*core::ptr::addr_of_mut!(MO_jr2)).id = rt::draw_int(&mut rt::ST) as _;
+    (*core::ptr::addr_of_mut!(MO_jr2)).id = (rt::draw_int(&mut rt::ST) as u32) as _;
     (*core::ptr::addr_of_mut!(MO_jr3)).object.parent.class_info = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jr3)).object.ref_count = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(MO_jr3)).object.ref_count_individual = rt::draw_int(&mut rt::ST) as _;
@@ -3966,7 +3966,7 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(MO_jr3)).envelopemtx = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jr3)).aobj = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jr3)).robj = 0usize as _;
-    (*core::ptr::addr_of_mut!(MO_jr3)).id = rt::draw_int(&mut rt::ST) as _;
+    (*core::ptr::addr_of_mut!(MO_jr3)).id = (rt::draw_int(&mut rt::ST) as u32) as _;
     (*core::ptr::addr_of_mut!(MO_jr4)).object.parent.class_info = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jr4)).object.ref_count = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(MO_jr4)).object.ref_count_individual = rt::draw_int(&mut rt::ST) as _;
@@ -3994,7 +3994,7 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(MO_jr4)).envelopemtx = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jr4)).aobj = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jr4)).robj = 0usize as _;
-    (*core::ptr::addr_of_mut!(MO_jr4)).id = rt::draw_int(&mut rt::ST) as _;
+    (*core::ptr::addr_of_mut!(MO_jr4)).id = (rt::draw_int(&mut rt::ST) as u32) as _;
     (*core::ptr::addr_of_mut!(MO_jrR)).object.parent.class_info = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jrR)).object.ref_count = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(MO_jrR)).object.ref_count_individual = rt::draw_int(&mut rt::ST) as _;
@@ -4022,7 +4022,7 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(MO_jrR)).envelopemtx = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jrR)).aobj = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_jrR)).robj = 0usize as _;
-    (*core::ptr::addr_of_mut!(MO_jrR)).id = rt::draw_int(&mut rt::ST) as _;
+    (*core::ptr::addr_of_mut!(MO_jrR)).id = (rt::draw_int(&mut rt::ST) as u32) as _;
     (*core::ptr::addr_of_mut!(MO_mA0)).parent.class_info = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_mA0)).rendermode = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(MO_mA0)).tobj = 0usize as _;
@@ -6801,7 +6801,7 @@ unsafe fn hash_objs() {
     rt::h_p((*core::ptr::addr_of_mut!(MO_jbb0)).envelopemtx as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(MO_jbb0)).aobj as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(MO_jbb0)).robj as *const u8);
-    rt::h_u((*core::ptr::addr_of_mut!(MO_jbb0)).id as u64);
+    rt::h_u(((*core::ptr::addr_of_mut!(MO_jbb0)).id as u32) as u64);
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     rt::h_p((*core::ptr::addr_of_mut!(MO_jbb1)).object.parent.class_info as *const u8);
@@ -6831,7 +6831,7 @@ unsafe fn hash_objs() {
     rt::h_p((*core::ptr::addr_of_mut!(MO_jbb1)).envelopemtx as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(MO_jbb1)).aobj as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(MO_jbb1)).robj as *const u8);
-    rt::h_u((*core::ptr::addr_of_mut!(MO_jbb1)).id as u64);
+    rt::h_u(((*core::ptr::addr_of_mut!(MO_jbb1)).id as u32) as u64);
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     rt::h_p((*core::ptr::addr_of_mut!(MO_jbb2)).object.parent.class_info as *const u8);
@@ -6861,7 +6861,7 @@ unsafe fn hash_objs() {
     rt::h_p((*core::ptr::addr_of_mut!(MO_jbb2)).envelopemtx as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(MO_jbb2)).aobj as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(MO_jbb2)).robj as *const u8);
-    rt::h_u((*core::ptr::addr_of_mut!(MO_jbb2)).id as u64);
+    rt::h_u(((*core::ptr::addr_of_mut!(MO_jbb2)).id as u32) as u64);
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     rt::h_p((*core::ptr::addr_of_mut!(MO_jbb3)).object.parent.class_info as *const u8);
@@ -6891,7 +6891,7 @@ unsafe fn hash_objs() {
     rt::h_p((*core::ptr::addr_of_mut!(MO_jbb3)).envelopemtx as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(MO_jbb3)).aobj as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(MO_jbb3)).robj as *const u8);
-    rt::h_u((*core::ptr::addr_of_mut!(MO_jbb3)).id as u64);
+    rt::h_u(((*core::ptr::addr_of_mut!(MO_jbb3)).id as u32) as u64);
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     rt::h_p((*core::ptr::addr_of_mut!(MO_jch0)).object.parent.class_info as *const u8);
@@ -6921,7 +6921,7 @@ unsafe fn hash_objs() {
     rt::h_p((*core::ptr::addr_of_mut!(MO_jch0)).envelopemtx as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(MO_jch0)).aobj as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(MO_jch0)).robj as *const u8);
-    rt::h_u((*core::ptr::addr_of_mut!(MO_jch0)).id as u64);
+    rt::h_u(((*core::ptr::addr_of_mut!(MO_jch0)).id as u32) as u64);
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     rt::h_p((*core::ptr::addr_of_mut!(MO_jch1)).object.parent.class_info as *const u8);
@@ -6951,7 +6951,7 @@ unsafe fn hash_objs() {
     rt::h_p((*core::ptr::addr_of_mut!(MO_jch1)).envelopemtx as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(MO_jch1)).aobj as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(MO_jch1)).robj as *const u8);
-    rt::h_u((*core::ptr::addr_of_mut!(MO_jch1)).id as u64);
+    rt::h_u(((*core::ptr::addr_of_mut!(MO_jch1)).id as u32) as u64);
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     rt::h_p((*core::ptr::addr_of_mut!(MO_jch2)).object.parent.class_info as *const u8);
@@ -6981,7 +6981,7 @@ unsafe fn hash_objs() {
     rt::h_p((*core::ptr::addr_of_mut!(MO_jch2)).envelopemtx as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(MO_jch2)).aobj as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(MO_jch2)).robj as *const u8);
-    rt::h_u((*core::ptr::addr_of_mut!(MO_jch2)).id as u64);
+    rt::h_u(((*core::ptr::addr_of_mut!(MO_jch2)).id as u32) as u64);
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     rt::h_p((*core::ptr::addr_of_mut!(MO_jch3)).object.parent.class_info as *const u8);
@@ -7011,7 +7011,7 @@ unsafe fn hash_objs() {
     rt::h_p((*core::ptr::addr_of_mut!(MO_jch3)).envelopemtx as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(MO_jch3)).aobj as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(MO_jch3)).robj as *const u8);
-    rt::h_u((*core::ptr::addr_of_mut!(MO_jch3)).id as u64);
+    rt::h_u(((*core::ptr::addr_of_mut!(MO_jch3)).id as u32) as u64);
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     rt::h_p((*core::ptr::addr_of_mut!(MO_job0)).object.parent.class_info as *const u8);
@@ -7041,7 +7041,7 @@ unsafe fn hash_objs() {
     rt::h_p((*core::ptr::addr_of_mut!(MO_job0)).envelopemtx as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(MO_job0)).aobj as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(MO_job0)).robj as *const u8);
-    rt::h_u((*core::ptr::addr_of_mut!(MO_job0)).id as u64);
+    rt::h_u(((*core::ptr::addr_of_mut!(MO_job0)).id as u32) as u64);
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     rt::h_p((*core::ptr::addr_of_mut!(MO_job1)).object.parent.class_info as *const u8);
@@ -7071,7 +7071,7 @@ unsafe fn hash_objs() {
     rt::h_p((*core::ptr::addr_of_mut!(MO_job1)).envelopemtx as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(MO_job1)).aobj as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(MO_job1)).robj as *const u8);
-    rt::h_u((*core::ptr::addr_of_mut!(MO_job1)).id as u64);
+    rt::h_u(((*core::ptr::addr_of_mut!(MO_job1)).id as u32) as u64);
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     rt::h_p((*core::ptr::addr_of_mut!(MO_job2)).object.parent.class_info as *const u8);
@@ -7101,7 +7101,7 @@ unsafe fn hash_objs() {
     rt::h_p((*core::ptr::addr_of_mut!(MO_job2)).envelopemtx as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(MO_job2)).aobj as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(MO_job2)).robj as *const u8);
-    rt::h_u((*core::ptr::addr_of_mut!(MO_job2)).id as u64);
+    rt::h_u(((*core::ptr::addr_of_mut!(MO_job2)).id as u32) as u64);
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     rt::h_p((*core::ptr::addr_of_mut!(MO_job3)).object.parent.class_info as *const u8);
@@ -7131,7 +7131,7 @@ unsafe fn hash_objs() {
     rt::h_p((*core::ptr::addr_of_mut!(MO_job3)).envelopemtx as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(MO_job3)).aobj as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(MO_job3)).robj as *const u8);
-    rt::h_u((*core::ptr::addr_of_mut!(MO_job3)).id as u64);
+    rt::h_u(((*core::ptr::addr_of_mut!(MO_job3)).id as u32) as u64);
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     rt::h_p((*core::ptr::addr_of_mut!(MO_jr0)).object.parent.class_info as *const u8);
@@ -7161,7 +7161,7 @@ unsafe fn hash_objs() {
     rt::h_p((*core::ptr::addr_of_mut!(MO_jr0)).envelopemtx as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(MO_jr0)).aobj as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(MO_jr0)).robj as *const u8);
-    rt::h_u((*core::ptr::addr_of_mut!(MO_jr0)).id as u64);
+    rt::h_u(((*core::ptr::addr_of_mut!(MO_jr0)).id as u32) as u64);
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     rt::h_p((*core::ptr::addr_of_mut!(MO_jr1)).object.parent.class_info as *const u8);
@@ -7191,7 +7191,7 @@ unsafe fn hash_objs() {
     rt::h_p((*core::ptr::addr_of_mut!(MO_jr1)).envelopemtx as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(MO_jr1)).aobj as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(MO_jr1)).robj as *const u8);
-    rt::h_u((*core::ptr::addr_of_mut!(MO_jr1)).id as u64);
+    rt::h_u(((*core::ptr::addr_of_mut!(MO_jr1)).id as u32) as u64);
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     rt::h_p((*core::ptr::addr_of_mut!(MO_jr2)).object.parent.class_info as *const u8);
@@ -7221,7 +7221,7 @@ unsafe fn hash_objs() {
     rt::h_p((*core::ptr::addr_of_mut!(MO_jr2)).envelopemtx as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(MO_jr2)).aobj as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(MO_jr2)).robj as *const u8);
-    rt::h_u((*core::ptr::addr_of_mut!(MO_jr2)).id as u64);
+    rt::h_u(((*core::ptr::addr_of_mut!(MO_jr2)).id as u32) as u64);
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     rt::h_p((*core::ptr::addr_of_mut!(MO_jr3)).object.parent.class_info as *const u8);
@@ -7251,7 +7251,7 @@ unsafe fn hash_objs() {
     rt::h_p((*core::ptr::addr_of_mut!(MO_jr3)).envelopemtx as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(MO_jr3)).aobj as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(MO_jr3)).robj as *const u8);
-    rt::h_u((*core::ptr::addr_of_mut!(MO_jr3)).id as u64);
+    rt::h_u(((*core::ptr::addr_of_mut!(MO_jr3)).id as u32) as u64);
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     rt::h_p((*core::ptr::addr_of_mut!(MO_jr4)).object.parent.class_info as *const u8);
@@ -7281,7 +7281,7 @@ unsafe fn hash_objs() {
     rt::h_p((*core::ptr::addr_of_mut!(MO_jr4)).envelopemtx as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(MO_jr4)).aobj as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(MO_jr4)).robj as *const u8);
-    rt::h_u((*core::ptr::addr_of_mut!(MO_jr4)).id as u64);
+    rt::h_u(((*core::ptr::addr_of_mut!(MO_jr4)).id as u32) as u64);
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     rt::h_p((*core::ptr::addr_of_mut!(MO_jrR)).object.parent.class_info as *const u8);
@@ -7311,7 +7311,7 @@ unsafe fn hash_objs() {
     rt::h_p((*core::ptr::addr_of_mut!(MO_jrR)).envelopemtx as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(MO_jrR)).aobj as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(MO_jrR)).robj as *const u8);
-    rt::h_u((*core::ptr::addr_of_mut!(MO_jrR)).id as u64);
+    rt::h_u(((*core::ptr::addr_of_mut!(MO_jrR)).id as u32) as u64);
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     rt::h_p((*core::ptr::addr_of_mut!(MO_mA0)).parent.class_info as *const u8);

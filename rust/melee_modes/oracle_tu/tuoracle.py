@@ -211,7 +211,7 @@ class Gen2:
         if k[0] == "int":
             if len(k) > 3:
                 return ([f"{cp} = (__typeof__({cp})) (unsigned) tuo_draw_int(&{stream});"],
-                        [f"{rp} = rt::draw_int(&mut {rstream}) as _;"])
+                        [f"{rp} = (rt::draw_int(&mut {rstream}) as u32) as _;"])  # pointer-width field: 32-bit draw on both sides
             return ([f"{cp} = (__typeof__({cp})) tuo_draw_int(&{stream});"],
                     [f"{rp} = rt::draw_int(&mut {rstream}) as _;"])
         if k[0] == "bool":
@@ -288,7 +288,7 @@ class Gen2:
         k = classify(t)
         if k[0] == "int":
             if len(k) > 3:
-                return ([f"tuo_h_u((tuo_u64)(unsigned){cp});"], [f"rt::h_u({rp} as u64);"])
+                return ([f"tuo_h_u((tuo_u64)(unsigned){cp});"], [f"rt::h_u(({rp} as u32) as u64);"])
             if k[2]:
                 return ([f"tuo_h_i((tuo_i64){cp});"], [f"rt::h_i({rp} as i64);"])
             return ([f"tuo_h_u((tuo_u64){cp});"], [f"rt::h_u({rp} as u64);"])

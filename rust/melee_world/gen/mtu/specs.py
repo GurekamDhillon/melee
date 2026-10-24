@@ -270,3 +270,34 @@ SPECS["soundtest"] = dict(
 )
 for _s in SPECS.values():
     _s["common_ret"] = COMMON_RET
+
+# --- shard 689-696: the GameWatch item TUs (src/melee/it/kinds/itgamewatch*.c) ---
+_GW_SPAWN_EFF = (
+    "{ T(PI(a0->x0_parent_gobj)); T(PI(a0->x4_parent_gobj2)); T((u32) a0->kind); T((u32) a0->hold_kind); T((u32) a0->x10); "
+    "T(B(a0->pos.x)); T(B(a0->pos.y)); T(B(a0->pos.z)); T(B(a0->prev_pos.x)); T(B(a0->prev_pos.y)); T(B(a0->prev_pos.z)); "
+    "T(B(a0->vel.x)); T(B(a0->vel.y)); T(B(a0->vel.z)); T(B(a0->facing_dir)); T((u32) a0->x3C_damage); T((u32) a0->x3E); "
+    "T((u32) a0->x40); T((u32) a0->x44_flag.b0); T(*(unsigned char*) &a0->x45_flag); T(*(unsigned char*) &a0->x46_flag); "
+    "T(*(unsigned char*) &a0->x47_flag); T((u32) a0->x48_ground_or_air); }",
+    "{ t(pi((*a0).x0_parent_gobj)); t(pi((*a0).x4_parent_gobj2)); t((*a0).kind as u32); t((*a0).hold_kind as u32); t((*a0).x10 as u32); "
+    "t((*a0).pos.x.to_bits()); t((*a0).pos.y.to_bits()); t((*a0).pos.z.to_bits()); t((*a0).prev_pos.x.to_bits()); t((*a0).prev_pos.y.to_bits()); t((*a0).prev_pos.z.to_bits()); "
+    "t((*a0).vel.x.to_bits()); t((*a0).vel.y.to_bits()); t((*a0).vel.z.to_bits()); t((*a0).facing_dir.to_bits()); t((*a0).x3C_damage as u32); t((*a0).x3E as u32); "
+    "t((*a0).x40 as u32); t((*a0).x44_flag.anon_0.b0() as u32); t(*(&raw const (*a0).x45_flag as *const u8) as u32); t(*(&raw const (*a0).x46_flag as *const u8) as u32); "
+    "t(*(&raw const (*a0).x47_flag as *const u8) as u32); t((*a0).x48_ground_or_air as u32); }")
+_GW_COMMON = dict(
+    crate="melee_items",
+    types=[],
+    skip_data=["result"],
+    ret={
+        "Item_80268B18": ("((fv() & 3) != 0 ? &NEWG : 0)", "if fv() & 3 != 0 { &raw mut super::NEWG } else { core::ptr::null_mut() }"),
+        "ftLib_800865C0": ("((fv() & 1) ? 1.0f : rg())", "if fv() & 1 != 0 { 1.0 } else { rg() }"),
+    },
+    effects={
+        "Item_80268B18": _GW_SPAWN_EFF,
+        "lb_8000B1CC": ("{ a2->x = rw(); a2->y = rw(); a2->z = rw(); }",
+                        "{ (*a2).x = rw(); (*a2).y = rw(); (*a2).z = rw(); }"),
+        "lb_800119DC": ("{ T(B(a0->x)); T(B(a0->y)); T(B(a0->z)); }",
+                        "{ t((*a0).x.to_bits()); t((*a0).y.to_bits()); t((*a0).z.to_bits()); }"),
+    },
+)
+for _s in ("fire", "greenhouse", "judge", "manhole", "panic", "parachute", "rescue", "turtle"):
+    SPECS["itgamewatch" + _s] = dict(_GW_COMMON, src=f"src/melee/it/kinds/itgamewatch{_s}.c")

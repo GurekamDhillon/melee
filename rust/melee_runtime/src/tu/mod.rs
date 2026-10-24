@@ -68,3 +68,10 @@ pub mod hsd_3924;
 pub mod hsd_392A;
 #[allow(non_snake_case)]
 pub mod hsd_392C;
+pub mod debug;
+pub mod class;
+pub mod bytecode;
+pub mod controller;
+pub mod devcom;
+pub mod cobj;
+pub mod debugconsole_main;

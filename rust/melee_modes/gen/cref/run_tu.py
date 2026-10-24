@@ -45,6 +45,8 @@ def main():
     import gen_tu
     for n in sys.argv[1:]:
         spec = SPECS[n]
+        if spec.get("narrow_si"):  # gwtool: narrow fptoui = signed i32 saturate, then truncate
+            os.environ["GW_NARROW_FPTOUI_AS_SI"] = "1"
         gen_tu.build(n, spec, False)
         drv = HERE / "tu" / f"{n}.c"
         src = gen_tu.patched_source(n, spec)
@@ -65,7 +67,7 @@ def main():
         run([CLANG, "-O0", "-w", *lls, "-o", str(exe), "-Wl,/OPT:NOICF", "-fuse-ld=lld"], n)
         out = subprocess.run([str(exe)], capture_output=True, text=True, check=True).stdout
         if dbg:
-            tr = [l for l in out.splitlines() if l.startswith(("T ", "H "))]
+            tr = [l for l in out.splitlines() if l.startswith(("T ", "H ", "D "))]
             (BUILD / f"dbg_{n}.txt").write_text(chr(10).join(tr) + chr(10), encoding="utf-8")
             print(f"mtu: {n}: {len(tr)} trace words")
             continue

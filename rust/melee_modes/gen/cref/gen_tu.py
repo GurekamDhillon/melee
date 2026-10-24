@@ -453,7 +453,7 @@ def build(stem, spec, want_ext):
         ptys = list(ft.argument_types())
         rt = ft.get_result()
         rcls = arg_class(rt)
-        va = ft.is_function_variadic()
+        va = ft.is_function_variadic() or n in spec.get("custom_stubs", {})
         if va:
             cs = spec.get("custom_stubs", {}).get(n)
             if cs:  # a variadic callee the spec models by hand (fixed-arity on the Rust side)

@@ -35,7 +35,7 @@ pub mod ext {
         };
     }
     ext_fns! {
-        ifMagnify_802FB6E8(slot: u8) -> i32 = |_| todo!("TODO(port) ifMagnify_802FB6E8 (if/ifmagnify.c)");
+        ifMagnify_802FB6E8(slot: u8) -> i32 = |slot: u8| -> i32 { unsafe { melee_world::tu::ifmagnify::ifMagnify_802FB6E8(slot as _) } };
         gm_8016B0D4() -> bool = || todo!("TODO(port) gm_8016B0D4 (gm/gm_unsplit.c)");
         gm_8016B168() -> bool = crate::hooks::gm_8016b168;
         pl_80038914() -> *const pl_804D6470_t = crate::plbonus3::pl_80038914;

@@ -38,8 +38,8 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn Stage_UnkSetVec3TCam_Offset(a0: *mut Vec3);
-    fn ft_800877F8(a0: *mut HSD_GObj, a1: i32) -> bool;
+    fn Stage_UnkSetVec3TCam_Offset(a0: *mut Vec3) => unsafe { let _ = melee_world::tu::stage::Stage_UnkSetVec3TCam_Offset(a0 as _); };
+    fn ft_800877F8(a0: *mut HSD_GObj, a1: i32) -> bool => unsafe { crate::ft0877::ft_800877f8(a0 as _, a1 as _) };
     fn ft_80087818(a0: *mut HSD_GObj, a1: i32) -> bool => unsafe { crate::ft0877::ft_80087818(a0 as _, a1 as _) };
     fn ft_80087858(a0: *mut HSD_GObj) -> bool => unsafe { crate::ft0877::ft_80087858(a0 as _) };
     fn ft_80087878(a0: *mut HSD_GObj, a1: i32) -> bool => unsafe { crate::ft0877::ft_80087878(a0 as _, a1 as _) };
@@ -52,13 +52,13 @@ pub mod ext {
     fn ft_80087AB4(a0: *mut HSD_GObj) -> u8 => unsafe { crate::ft0877::ft_80087ab4(a0 as _) };
     fn ft_80087AEC(a0: *mut HSD_GObj) -> bool => unsafe { crate::ft0877::ft_80087aec(a0 as _) };
     fn ft_80087B34(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ft0877::ft_80087b34(a0 as _) };
-    fn ft_80089884(a0: *mut HSD_GObj) -> *mut Struct2070;
+    fn ft_80089884(a0: *mut HSD_GObj) -> *mut Struct2070 => unsafe { crate::ft0892::ft_80089884(a0 as _) as _ };
     fn ft_80089890(a0: *mut HSD_GObj) -> *mut UnkPlBonusBits => unsafe { crate::ft0892::ft_80089890(a0 as _) as _ };
     fn ft_8008989C(a0: *mut HSD_GObj) -> u16 => unsafe { crate::ft0892::ft_8008989c(a0 as _) };
     fn ft_800898A8(a0: *mut HSD_GObj) -> *mut Struct2074 => unsafe { crate::ft0892::ft_800898a8(a0 as _) as _ };
     fn ft_800898B4(a0: *mut HSD_GObj) -> *mut ft_800898B4_t => unsafe { crate::ft0892::ft_800898b4(a0 as _) as _ };
     fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec3) => unsafe { let _ = crate::ftlib::ftlib_80086644(a0 as _, &mut *(a1 as *mut _)); };
-    fn ftLib_800865C0(a0: *mut HSD_GObj) -> f32;
+    fn ftLib_800865C0(a0: *mut HSD_GObj) -> f32 => unsafe { crate::ftlib::ftlib_800865c0(a0 as _) };
     fn ftLib_800865CC(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_800865cc(a0 as _) };
     fn ftLib_800867D8(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_800867d8(a0 as _) };
     fn ftLib_GetItem(a0: *mut HSD_GObj) -> *mut HSD_GObj;
@@ -84,7 +84,7 @@ pub mod ext {
     fn gm_8016B6E8(a0: i32, a1: i32);
     fn gm_8016F2F8(a0: i32, a1: u8) -> i32;
     fn gm_GetFrameCount() -> u32;
-    fn ifMagnify_802FB6E8(a0: i32) -> i32;
+    fn ifMagnify_802FB6E8(a0: i32) -> i32 => unsafe { melee_world::tu::ifmagnify::ifMagnify_802FB6E8(a0 as _) };
     fn itGetKind(a0: *mut HSD_GObj) -> i32;
     fn itGetOwner(a0: *mut HSD_GObj) -> *mut HSD_GObj => unsafe { melee_items::tu::it_26B1::itGetOwner(a0 as _) as _ };
     fn it_8026B30C(a0: *mut HSD_GObj) -> i32 => unsafe { melee_items::itlib::it_8026b30c(&*(a0 as *const _)) };

@@ -17,7 +17,7 @@ pub mod ext {
     pub fn it_80292EAC(_i: G) { { unsafe { let _ = melee_items::tu::itfflower::it_80292EAC(_i as _); } return; } }
     pub fn it_80292E64(_i: G) { { unsafe { let _ = melee_items::tu::itfflower::it_80292E64(_i as _); } return; } }
     pub fn it_80292EF8(_i: G, _v: &mut Vec3) { { unsafe { let _ = melee_items::tu::itfflower::it_80292EF8(_i as _, _v as _); } return; } }
-    pub fn it_80292F14(_i: G, _v: &Vec3, _dir: f32) { todo!("TODO(group5 itfflower) it_80292F14") }
+    pub fn it_80292F14(_i: G, _v: &Vec3, _dir: f32) { unsafe { let _ = melee_items::tu::itfflower::it_80292F14(_i as _, _v as *const _ as *mut _, _dir as _); } }
     /// `lb_8000B1CC(jobj, NULL, out)`.
     pub fn lb_8000B1CC(_j: *mut HSD_JObj, _out: &mut Vec3) { todo!("TODO(group1 lb) lb_8000B1CC") }
     pub fn ft_800892A0(_g: G) { todo!("TODO(group3 ft_0892) ft_800892A0") }

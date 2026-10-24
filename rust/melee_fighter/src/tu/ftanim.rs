@@ -25,10 +25,10 @@ pub mod ext {
     use crate::types::*;
     type G = *mut HSD_GObj;
     type J = *mut HSD_JObj;
-    pub fn HSD_AObjInitEndCallBack() { todo!("HSD_AObjInitEndCallBack (baselib/aobj.c)") }
-    pub fn HSD_AObjInvokeCallBacks() { todo!("HSD_AObjInvokeCallBacks (baselib/aobj.c)") }
-    pub fn HSD_AObjSetRate(_a: *mut HSD_AObj, _r: f32) { todo!("HSD_AObjSetRate (baselib/aobj.c)") }
-    pub fn HSD_AObjReqAnim(_a: *mut HSD_AObj, _f: f32) { todo!("HSD_AObjReqAnim (baselib/aobj.c)") }
+    pub fn HSD_AObjInitEndCallBack() { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjInitEndCallBack(); } }
+    pub fn HSD_AObjInvokeCallBacks() { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjInvokeCallBacks(); } }
+    pub fn HSD_AObjSetRate(_a: *mut HSD_AObj, _r: f32) { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjSetRate(_a as _, _r as _); } }
+    pub fn HSD_AObjReqAnim(_a: *mut HSD_AObj, _f: f32) { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjReqAnim(_a as _, _f as _); } }
     pub fn HSD_TObjAnim(_t: *mut HSD_TObj) { unsafe { let _ = melee_runtime::tu::tobj::HSD_TObjAnim(_t as _); } }
     pub fn HSD_JObjAnim(_j: J) { todo!("HSD_JObjAnim (baselib/jobj.c)") }
     pub fn HSD_JObjAnimAll(_j: J) { todo!("HSD_JObjAnimAll (baselib/jobj.c)") }
@@ -47,19 +47,19 @@ pub mod ext {
     pub fn HSD_ForeachAnim_SetRate(_j: J, _mask: u32, _rate: f32) { todo!("HSD_ForeachAnim (baselib/object.c)") }
     pub fn HSD_MtxInverse(_src: *mut Mtx, _dst: *mut Mtx) { todo!("HSD_MtxInverse (baselib/mtx.c)") }
     pub fn PSMTXMultVec(_m: *mut Mtx, _src: *const Vec3, _dst: *mut Vec3) { todo!("PSMTXMultVec (dolphin mtx)") }
-    pub fn lb_8000B1CC(_j: J, _off: *const Vec3, _out: *mut Vec3) { todo!("lb_8000B1CC (lb/lb_00B0.c)") }
-    pub fn lb_8000B074(_j: J) -> bool { todo!("lb_8000B074 (lb/lb_00B0.c)") }
-    pub fn lb_8000B4FC(_j: J, _joint: *mut HSD_Joint) { todo!("lb_8000B4FC (lb/lb_00B0.c)") }
-    pub fn lb_8000B5DC(_j: J, _joint: *mut HSD_Joint) { todo!("lb_8000B5DC (lb/lb_00B0.c)") }
-    pub fn lb_8000B6A4(_j: J, _joint: *mut HSD_Joint) { todo!("lb_8000B6A4 (lb/lb_00B0.c)") }
-    pub fn lb_8000B760(_j: J, _joint: *mut HSD_Joint) { todo!("lb_8000B760 (lb/lb_00B0.c)") }
-    pub fn lb_8000BFF0(_a: *mut HSD_AnimJoint) -> f32 { todo!("lb_8000BFF0 (lb/lb_00B0.c)") }
-    pub fn lb_8000C490(_a: J, _b: J, _c: J, _t: f32, _ti: f32) { todo!("lb_8000C490 (lb/lb_00B0.c)") }
-    pub fn lb_8000C868(_joint: *mut HSD_Joint, _b: J, _c: J, _t: f32, _ti: f32) { todo!("lb_8000C868 (lb/lb_00B0.c)") }
-    pub fn lbCopyJObjSRT(_a: J, _b: J) { todo!("lbCopyJObjSRT (lb/lb_00B0.c)") }
-    pub fn lbGetJObjFramerate(_j: J) -> f32 { todo!("lbGetJObjFramerate (lb/lb_00B0.c)") }
-    pub fn lbGetJObjCurrFrame(_j: J) -> f32 { todo!("lbGetJObjCurrFrame (lb/lb_00B0.c)") }
-    pub fn lbGetJObjEndFrame(_j: J) -> f32 { todo!("lbGetJObjEndFrame (lb/lb_00B0.c)") }
+    pub fn lb_8000B1CC(_j: J, _off: *const Vec3, _out: *mut Vec3) { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(_j as _, _off as _, _out as _); } }
+    pub fn lb_8000B074(_j: J) -> bool { unsafe { melee_runtime::tu::lb_00B0::lb_8000B074(_j as _) } }
+    pub fn lb_8000B4FC(_j: J, _joint: *mut HSD_Joint) { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B4FC(_j as _, _joint as _); } }
+    pub fn lb_8000B5DC(_j: J, _joint: *mut HSD_Joint) { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B5DC(_j as _, _joint as _); } }
+    pub fn lb_8000B6A4(_j: J, _joint: *mut HSD_Joint) { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B6A4(_j as _, _joint as _); } }
+    pub fn lb_8000B760(_j: J, _joint: *mut HSD_Joint) { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B760(_j as _, _joint as _); } }
+    pub fn lb_8000BFF0(_a: *mut HSD_AnimJoint) -> f32 { unsafe { melee_runtime::tu::lb_00B0::lb_8000BFF0(_a as _) } }
+    pub fn lb_8000C490(_a: J, _b: J, _c: J, _t: f32, _ti: f32) { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000C490(_a as _, _b as _, _c as _, _t as _, _ti as _); } }
+    pub fn lb_8000C868(_joint: *mut HSD_Joint, _b: J, _c: J, _t: f32, _ti: f32) { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000C868(_joint as _, _b as _, _c as _, _t as _, _ti as _); } }
+    pub fn lbCopyJObjSRT(_a: J, _b: J) { unsafe { let _ = melee_runtime::tu::lb_00B0::lbCopyJObjSRT(_a as _, _b as _); } }
+    pub fn lbGetJObjFramerate(_j: J) -> f32 { unsafe { melee_runtime::tu::lb_00B0::lbGetJObjFramerate(_j as _) } }
+    pub fn lbGetJObjCurrFrame(_j: J) -> f32 { unsafe { melee_runtime::tu::lb_00B0::lbGetJObjCurrFrame(_j as _) } }
+    pub fn lbGetJObjEndFrame(_j: J) -> f32 { unsafe { melee_runtime::tu::lb_00B0::lbGetJObjEndFrame(_j as _) } }
     pub fn lbAnim_8001E6D8(_j: J, _t: *mut FigaTree, _tr: *mut FigaTrack, _n: i8) { unsafe { let _ = melee_runtime::tu::lbanim::lbAnim_8001E6D8(_j as _, _t as _, _tr as _, _n as _); } }
     pub fn lbAnim_8001E7E8(_j: J, _t: *mut FigaTree, _tr: *mut FigaTrack, _n: i8) { unsafe { let _ = melee_runtime::tu::lbanim::lbAnim_8001E7E8(_j as _, _t as _, _tr as _, _n as _); } }
     pub fn ftCommon_GetModelScale(_fp: *mut Fighter) -> f32 { todo!("ftCommon_GetModelScale (ft/ftcommon.c)") }

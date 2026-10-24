@@ -146,7 +146,7 @@ pub mod ext {
     pub fn Geno_ToonUnlit(kind: i32) -> i32 { todo!("Geno_ToonUnlit (pc/geno)") }
     pub fn HSD_GObjObject_80390A70(g: G, kind: u8, o: *mut core::ffi::c_void) { todo!("HSD_GObjObject_80390A70 (baselib/gobjobject.c)") }
     pub fn HSD_GObj_JObjKind() -> u8 { todo!("HSD_GObj_JObjKind (baselib/gobj.c)") }
-    pub fn lb_8000B1CC(j: J, off: *const Vec3, out: *mut Vec3) { todo!("lb_8000B1CC (lb/lb_00B0.c)") }
+    pub fn lb_8000B1CC(j: J, off: *const Vec3, out: *mut Vec3) { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(j as _, off as _, out as _); } }
     pub fn Geno_FighterScale(fp: F) -> f32 { todo!("Geno_FighterScale (pc/geno)") }
     pub fn gFtDataList(kind: i32) -> *mut ftData { todo!("gFtDataList (ft/ftdata.c)") }
     pub fn ftCo_800D0FA0(g: G) { unsafe { let _ = crate::tu::ftchangeparam::ftco_800d0fa0(g); } }
@@ -234,12 +234,12 @@ pub mod ext {
     pub fn ft_800819A8(g: G) { unsafe { let _ = crate::tu::ft_0819::ft_800819a8(g); } }
     pub fn Slippi_Codes() -> i32 { todo!("Slippi_Codes (pc/platform slippi)") }
     pub fn Camera_ScriptState() -> i32 { todo!("Camera_ScriptState (cm/camera.c (PC))") }
-    pub fn ifMagnify_802FC998(slot: i32) -> bool { todo!("ifMagnify_802FC998 (if/ifmagnify.c)") }
+    pub fn ifMagnify_802FC998(slot: i32) -> bool { unsafe { melee_world::tu::ifmagnify::ifMagnify_802FC998(slot as _) } }
     pub fn gm_GetCurrentGameMode() -> i32 { todo!("gm_GetCurrentGameMode (gm)") }
-    pub fn Stage_GetCamBoundsLeftOffset() -> f32 { todo!("Stage_GetCamBoundsLeftOffset (gr/stage.c)") }
-    pub fn Stage_GetCamBoundsRightOffset() -> f32 { todo!("Stage_GetCamBoundsRightOffset (gr/stage.c)") }
-    pub fn Stage_GetCamBoundsTopOffset() -> f32 { todo!("Stage_GetCamBoundsTopOffset (gr/stage.c)") }
-    pub fn Stage_GetCamBoundsBottomOffset() -> f32 { todo!("Stage_GetCamBoundsBottomOffset (gr/stage.c)") }
+    pub fn Stage_GetCamBoundsLeftOffset() -> f32 { unsafe { melee_world::tu::stage::Stage_GetCamBoundsLeftOffset() } }
+    pub fn Stage_GetCamBoundsRightOffset() -> f32 { unsafe { melee_world::tu::stage::Stage_GetCamBoundsRightOffset() } }
+    pub fn Stage_GetCamBoundsTopOffset() -> f32 { unsafe { melee_world::tu::stage::Stage_GetCamBoundsTopOffset() } }
+    pub fn Stage_GetCamBoundsBottomOffset() -> f32 { unsafe { melee_world::tu::stage::Stage_GetCamBoundsBottomOffset() } }
     pub fn ftCo_800C0694(fp: F) -> i32 { unsafe { crate::ft0df::ftco_800c0694(&mut *fp) } }
     pub fn ftCo_800C0200(fp: F, a: i32) { unsafe { let _ = crate::tu::ftcolanim::ftco_800c0200(&mut *fp, a); } }
     pub fn it_8026B588() -> i32 { todo!("it_8026B588 (it/it_26B1.c)") }
@@ -249,7 +249,7 @@ pub mod ext {
     pub fn ftCommon_8007F9B4(g: G) { unsafe { let _ = crate::ftcommon3::ftcommon_8007f9b4(g); } }
     pub fn ftCo_800C8540(g: G) { unsafe { let _ = crate::tu::ftmetal::ftCo_800C8540(g); } }
     pub fn ftCo_800C9034(g: G) { unsafe { let _ = crate::tu::ft_0c8c::ftco_800c9034(g); } }
-    pub fn Item_8026ABD8(item: G, v: *const Vec3, f: f32) { todo!("Item_8026ABD8 (it/item.c)") }
+    pub fn Item_8026ABD8(item: G, v: *const Vec3, f: f32) { unsafe { let _ = melee_items::tu::item::Item_8026ABD8(item as _, v as _, f as _); } }
     pub fn ftCommon_8007FF74(g: G) { unsafe { let _ = crate::ftcommon2::ftcommon_8007ff74(fpg(g)); } }
     pub fn ftCo_800C8A64(g: G) { unsafe { let _ = crate::tu::ft_0c88::ftco_800c8a64(g); } }
     pub fn itGetKind(item: G) -> i32 { unsafe { crate::hooks::it_get_kind(item) } }
@@ -322,10 +322,10 @@ pub mod ext {
     pub fn ftColl_80076528(g: G) { todo!("ftColl_80076528 (ft/ftcoll.c)") }
     pub fn mpGetSpeed(floor: i32, pos: *const Vec3, out: *mut Vec3) -> bool { todo!("mpGetSpeed (mp/mplib.c)") }
     pub fn ftCo_800D3158(g: G) { unsafe { let _ = crate::tu::ft_0d31::ftCo_800D3158(g); } }
-    pub fn Stage_CalcUnkCamYBounds() -> f32 { todo!("Stage_CalcUnkCamYBounds (gr/stage.c)") }
-    pub fn Stage_CalcUnkCamY() -> f32 { todo!("Stage_CalcUnkCamY (gr/stage.c)") }
+    pub fn Stage_CalcUnkCamYBounds() -> f32 { unsafe { melee_world::tu::stage::Stage_CalcUnkCamYBounds() } }
+    pub fn Stage_CalcUnkCamY() -> f32 { unsafe { melee_world::tu::stage::Stage_CalcUnkCamY() } }
     pub fn ft_PlaySFX(fp: F, sfx: i32, vol: i32, pan: i32) { todo!("ft_PlaySFX (ft/ft_0877.c)") }
-    pub fn un_80322258(x: f32) -> bool { todo!("un_80322258 (un)") }
+    pub fn un_80322258(x: f32) -> bool { unsafe { crate::tu::crowdsfx::un_80322258(x as _) } }
     pub fn ftColl_8007AF28(g: G) { unsafe { let _ = crate::ft0df::ftcoll_8007af28(g); } }
     pub fn DbLevel_at_least_DebugRom() -> bool { todo!("DbLevel_at_least_DebugRom (db/db.c)") }
     pub fn HSD_JObjSetupMatrix(j: J) { todo!("HSD_JObjSetupMatrix (baselib/jobj.c)") }
@@ -352,8 +352,8 @@ pub mod ext {
     pub fn ft_8007C224(g: G) { unsafe { let _ = crate::tu::ft_07c1::ft_8007c224(g); } }
     pub fn ft_8007C6DC(g: G) { unsafe { let _ = crate::tu::ft_07c6::ft_8007c6dc(g); } }
     pub fn HSD_JObjAnimAll(j: J) { todo!("HSD_JObjAnimAll (baselib/jobj.c)") }
-    pub fn ifMagnify_802FB6E8(slot: i32) -> i32 { todo!("ifMagnify_802FB6E8 (if/ifmagnify.c)") }
-    pub fn Stage_UnkSetVec3TCam_Offset(out: *mut Vec3) { todo!("Stage_UnkSetVec3TCam_Offset (gr/stage.c)") }
+    pub fn ifMagnify_802FB6E8(slot: i32) -> i32 { unsafe { melee_world::tu::ifmagnify::ifMagnify_802FB6E8(slot as _) } }
+    pub fn Stage_UnkSetVec3TCam_Offset(out: *mut Vec3) { unsafe { let _ = melee_world::tu::stage::Stage_UnkSetVec3TCam_Offset(out as _); } }
     pub fn gm_8016B1C4() -> bool { todo!("gm_8016B1C4 (gm)") }
     pub fn ftColl_8007BA0C(g: G) { todo!("ftColl_8007BA0C (ft/ftcoll.c)") }
     pub fn ftColl_80078A2C(g: G) { todo!("ftColl_80078A2C (ft/ftcoll.c)") }
@@ -376,7 +376,7 @@ pub mod ext {
     pub fn pl_8003EC9C(slot: i32, sub: i32, pct: f32, d: f32) { unsafe { let _ = crate::plbonus2::pl_8003ec9c(slot, sub, pct, d); } }
     pub fn ftCo_800C8C84(g: G) { unsafe { let _ = crate::tu::ft_0c8c::ftco_800c8c84(g); } }
     pub fn itIsHeavy(item: G) -> bool { unsafe { melee_items::tu::it_26B1::itIsHeavy(item as _) } }
-    pub fn ftCo_8008E984(fp: F) -> bool { todo!("ftCo_8008E984 (ftCommon/ftCo_Damage.c)") }
+    pub fn ftCo_8008E984(fp: F) -> bool { unsafe { crate::tu::ftCo_Damage::ftCo_8008E984(&*(fp as *const _)) } }
     pub fn HSD_Randi(n: i32) -> i32 { todo!("HSD_Randi (baselib/random.c)") }
     pub fn it_8026B30C(item: G) -> i32 { unsafe { crate::hooks::it_8026b30c(item) } }
     pub fn it_8026B594(item: G) -> bool { unsafe { crate::tu::ft_0cdf::it_8026b594(item) } }
@@ -386,14 +386,14 @@ pub mod ext {
     pub fn Geno_HitReact(fp: F) -> i32 { todo!("Geno_HitReact (pc/geno)") }
     pub fn pl_8003E058(a: i32, b: i32, slot: i32, sub: i32) { unsafe { let _ = crate::plbonus2::pl_8003e058(a, b, slot, sub); } }
     pub fn ftColl_8007BE3C(g: G) { todo!("ftColl_8007BE3C (ft/ftcoll.c)") }
-    pub fn ftCo_Damage_CalcKnockback(fp: F) { todo!("ftCo_Damage_CalcKnockback (ftCommon/ftCo_Damage.c)") }
+    pub fn ftCo_Damage_CalcKnockback(fp: F) { unsafe { let _ = crate::tu::ftCo_Damage::ftCo_Damage_CalcKnockback(&mut *(fp as *mut _)); } }
     pub fn ftKb_SpecialN_800F5BA4(fp: F) { todo!("ftKb_SpecialN_800F5BA4 (ftKirby)") }
     pub fn ftKb_SpecialN_800F5C34(fp: F) { todo!("ftKb_SpecialN_800F5C34 (ftKirby)") }
-    pub fn ftCo_8008EC90(g: G) { todo!("ftCo_8008EC90 (ftCommon/ftCo_Damage.c)") }
+    pub fn ftCo_8008EC90(g: G) { unsafe { let _ = crate::tu::ftCo_Damage::ftCo_8008EC90(g as _); } }
     pub fn ftCommon_8007DB58(g: G) { unsafe { let _ = crate::ftcommon3::ftcommon_8007db58(g); } }
-    pub fn ftCo_8008E908(g: G, f: f32) { todo!("ftCo_8008E908 (ftCommon/ftCo_Damage.c)") }
-    pub fn ftCo_8008E9D0(g: G) { todo!("ftCo_8008E9D0 (ftCommon/ftCo_Damage.c)") }
-    pub fn ftCo_8008EB58(g: G) { todo!("ftCo_8008EB58 (ftCommon/ftCo_Damage.c)") }
+    pub fn ftCo_8008E908(g: G, f: f32) { unsafe { let _ = crate::tu::ftCo_Damage::ftCo_8008E908(g as _, f as _); } }
+    pub fn ftCo_8008E9D0(g: G) { unsafe { let _ = crate::tu::ftCo_Damage::ftCo_8008E9D0(g as _); } }
+    pub fn ftCo_8008EB58(g: G) { unsafe { let _ = crate::tu::ftCo_Damage::ftCo_8008EB58(g as _); } }
     pub fn ScriptGame_ArmorAbsorbed(fp: F) -> i32 { todo!("ScriptGame_ArmorAbsorbed (pc/gameworld)") }
     pub fn ftCo_80090594(fp: F, elem: i32, applied: i32, msid: i32, ga: i32, vib: f32) { unsafe { let _ = crate::ftdmgfall::ftco_80090594(&mut *fp, elem, applied, msid, ga, vib); } }
     pub fn ftCommon_8007ED50(fp: F, f: f32) { unsafe { let _ = crate::ftcommon2::ftcommon_8007ed50(&mut *fp, melee_runtime::cabi::f2i32(f as f64)); } }
@@ -415,7 +415,7 @@ pub mod ext {
     pub fn ftCommon_8008021C(g: G) { unsafe { let _ = crate::ftcommon2::ftcommon_8008021c(fpg(g)); } }
     pub fn Player_80032828(slot: i32, sub: i32, pos: *const Vec3) { unsafe { let _ = crate::player::player_80032828(slot, sub, &*pos); } }
     pub fn Player_SetFacingDirectionConditional(slot: i32, sub: i32, f: f32) { unsafe { let _ = crate::player::set_facing_direction_conditional(slot, sub, f); } }
-    pub fn pl_8003FAA8(slot: i32, sub: i32, a: *const Vec3, b: *const Vec3) { todo!("pl_8003FAA8 (pl/plbonuslib.c)") }
+    pub fn pl_8003FAA8(slot: i32, sub: i32, a: *const Vec3, b: *const Vec3) { unsafe { let _ = crate::tu::plbonuslib::pl_8003FAA8(slot as _, sub as _, a as _, b as _); } }
     pub fn Mex_OnDestroyDispatch(kind: i32, g: G) { todo!("Mex_OnDestroyDispatch (pc/platform m-ex (ftData_OnUserDataRemove))") }
     pub fn ftColl_8007B8E8(g: G) { todo!("ftColl_8007B8E8 (ft/ftcoll.c)") }
     pub fn it_8026B7F8(g: G) { unsafe { let _ = melee_items::tu::it_26B1::it_8026B7F8(g as _); } }

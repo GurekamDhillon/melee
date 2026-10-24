@@ -18,10 +18,10 @@ pub mod ext {
         todo!("Fighter_ChangeMotionState (ft/fighter.c)")
     }
     pub fn ftAnim_8006EBA4(_g: G) { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(_g as _); } }
-    pub fn ftCo_AttackS4_Anim(_g: G) { todo!("ftCo_AttackS4_Anim (ftCommon/ftCo_AttackS4.c)") }
-    pub fn ftCo_AttackS4_Phys(_g: G) { todo!("ftCo_AttackS4_Phys (ftCommon/ftCo_AttackS4.c)") }
-    pub fn ftCo_AttackS4_Coll(_g: G) { todo!("ftCo_AttackS4_Coll (ftCommon/ftCo_AttackS4.c)") }
-    pub fn ftCo_Wait_IASA(_g: G) { todo!("ftCo_Wait_IASA (ftCommon/ftCo_Wait.c)") }
+    pub fn ftCo_AttackS4_Anim(_g: G) { unsafe { let _ = crate::tu::ftCo_AttackS4::ftCo_AttackS4_Anim(_g as _); } }
+    pub fn ftCo_AttackS4_Phys(_g: G) { unsafe { let _ = crate::tu::ftCo_AttackS4::ftCo_AttackS4_Phys(_g as _); } }
+    pub fn ftCo_AttackS4_Coll(_g: G) { unsafe { let _ = crate::tu::ftCo_AttackS4::ftCo_AttackS4_Coll(_g as _); } }
+    pub fn ftCo_Wait_IASA(_g: G) { unsafe { let _ = crate::tu::ftCo_Wait::ftCo_Wait_IASA(_g as _); } }
 }
 
 /// `ftCo_800CECE8`: A pressed during the combo window -> second hit.

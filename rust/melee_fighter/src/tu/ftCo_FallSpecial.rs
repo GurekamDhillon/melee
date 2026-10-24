@@ -56,7 +56,7 @@ pub mod ext {
         ft_80083090(g: G, a: unsafe extern "C" fn(G, i32) -> bool, b: HSD_GObjEvent) = |_, _, _| todo!("TODO(port) ft_80083090 (ft_081B.c)");
         mpLineGetFlags(line: i32) -> u32 = |_| todo!("TODO(port) mpLineGetFlags (mplib.c)");
         ftCo_800D0EC8(fp: &Fighter) -> f32 = crate::tu::ftchangeparam::ftco_800d0ec8;
-        ftCo_LandingFallSpecial_Enter(g: G, allow_interrupt: i32, landing_lag: f32) = |_, _, _| todo!("TODO(port) ftCo_LandingFallSpecial_Enter (ftCo_Landing.c)");
+        ftCo_LandingFallSpecial_Enter(g: G, allow_interrupt: i32, landing_lag: f32) = |g: G, allow_interrupt: i32, landing_lag: f32| { unsafe { let _ = crate::tu::ftCo_Landing::ftCo_LandingFallSpecial_Enter(g as _, (allow_interrupt != 0 as _), landing_lag as _); } };
         ft_8008A2BC(g: G) = crate::tu::ft_08a1::ft_8008A2BC;
     }
 }

@@ -21,7 +21,7 @@ pub mod ext {
     /// fighter.c globals (set by Fighter_LoadCommonData).
     pub static mut Fighter_804D6534: *mut *mut c_void = core::ptr::null_mut();
     pub static mut H_Stage_GetCamBoundsBottomOffset: Option<fn() -> f32> = None;
-    pub fn Stage_GetCamBoundsBottomOffset() -> f32 { match unsafe { H_Stage_GetCamBoundsBottomOffset } { Some(f) => f(), None => panic!("TODO(group2 stage) Stage_GetCamBoundsBottomOffset") } }
+    pub fn Stage_GetCamBoundsBottomOffset() -> f32 { match unsafe { H_Stage_GetCamBoundsBottomOffset } { Some(f) => f(), None => unsafe { melee_world::tu::stage::Stage_GetCamBoundsBottomOffset() } } }
     pub static mut H_Stage_80224E38: Option<fn(&mut Vec3, i32)> = None;
     pub fn Stage_80224E38(out: &mut Vec3, i: i32) { match unsafe { H_Stage_80224E38 } { Some(f) => f(out, i), None => panic!("TODO(group2 stage) Stage_80224E38") } }
     pub static mut H_ftCamera_80076320: Option<fn(*mut HSD_GObj)> = None;

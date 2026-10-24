@@ -1103,6 +1103,7 @@ rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_In
     `tools/netplay/server/gdmelee_server.py` room codes (`--host --server S` then `--room CODE --server S`) and
     through random matchmaking (`--random --server S` on both): all golden-equal, identical CSVs, rollbacks
     included when lag/loss are on.
+- Golden comparison needs `--seed 12345` on the host (the match seed is random otherwise, so the hashes differ from the golden CSV from frame 0 while both peers still agree). Re-verified 2026-10-24 on the merged tree (no window, no OS input): synctest depth 12 0 mismatches / 1801 golden-equal; host+guest `--seed 12345 --lag-ms 70 --loss-pct 5`: 78 rollbacks, 0 desyncs, 1801/1801 golden-equal, identical CSVs.
 - `--live-rng`: the online per-frame RNG rule (`gw_Replay_ChecksumSeed`: a frame starts from
   `seed + ((frame + 123) << 16)`), needed to match a C netplay match; the checksum uses it too. Off by default
   (the golden CSVs are offline).

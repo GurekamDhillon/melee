@@ -110,6 +110,13 @@ impl FighterFiles {
         Ok(Self { dat, ft_data, aj })
     }
 
+    /// A word of `*ftData->x4C_sfx` (`FtSFX`: x10 jump, x14 aerial jump, ...).
+    pub fn sfx_field(&self, off: u32) -> i32 {
+        let d = &self.dat.data;
+        let at = be32(d, self.ft_data + 0x4C);
+        be32(d, at + off) as i32
+    }
+
     /// `ftData->x0->trophy_scale` (`ftCo_DatAttrs` +0x110; copied to `fp->co_attrs`).
     pub fn trophy_scale(&self) -> f32 {
         use melee_core::gc::GcLayout;

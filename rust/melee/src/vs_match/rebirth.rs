@@ -100,6 +100,8 @@ fn fn_8016719c(p: &mut Player, ctx: &mut RespawnCtx<'_>) -> Result<(), String> {
 /// `Fighter_UnkProcessDeath_80068354` (the parts a hash or this sim's state can see).
 fn fighter_unk_process_death(p: &mut Player, ctx: &mut RespawnCtx<'_>) -> Result<(), String> {
     let rb = p.rb;
+    // ft_80088A50: every sound channel of the fighter stopped (after ftCommon_8007E2FC in the C).
+    super::sound::stop_all_channels(p);
     {
         let fp = &mut *p.fp;
         // Fighter_UnkInitReset_80067C98.
@@ -107,6 +109,7 @@ fn fighter_unk_process_death(p: &mut Player, ctx: &mut RespawnCtx<'_>) -> Result
         let x = melee_core::fp::fmadds(fp.facing_dir, fp.x40 * fp.x34_scale.x, rb.coords.x);
         fp.cur_pos = melee_types::Vec { x, y: rb.coords.y, z: rb.coords.z };
         fp.prev_pos = fp.cur_pos;
+        fp.set_x2225_b0(0);
         fp.facing_dir1 = fp.facing_dir;
         fp.x34_scale.y = fp.x34_scale.x;
         fp.pos_delta = melee_types::Vec { x: 0.0, y: 0.0, z: 0.0 };

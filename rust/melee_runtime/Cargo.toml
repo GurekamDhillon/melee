@@ -85,3 +85,7 @@ harness = false
 [[test]]
 name = "tu_initialize"
 harness = false
+
+[[test]]
+name = "tu_video"
+harness = false

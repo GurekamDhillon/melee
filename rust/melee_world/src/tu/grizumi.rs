@@ -160,7 +160,7 @@ pub mod ext {
     hook_or!(MTXLIGHTPERSPECTIVE, MTXLightPerspective, (m: MtxPtr, fov_y: f32, aspect: f32, scale_s: f32, scale_t: f32, trans_s: f32, trans_t: f32), |m: MtxPtr, fov_y: f32, aspect: f32, scale_s: f32, scale_t: f32, trans_s: f32, trans_t: f32| { unsafe { let _ = melee_runtime::tu::mtx_pc::raw::MTXLightPerspective(m as _, fov_y as _, aspect as _, scale_s as _, scale_t as _, trans_s as _, trans_t as _); } });
     hook_or!(OSREPORT, OSReport, (a0: *mut i8), |a0: *mut i8| unsafe { melee_runtime::tu::os_error::OSReport(a0 as _, &[]) });
     hook_or!(PSMTXCONCAT, PSMTXConcat, (m_a: MtxPtr, m_b: MtxPtr, m_ab: MtxPtr), |m_a: MtxPtr, m_b: MtxPtr, m_ab: MtxPtr| { unsafe { let _ = melee_runtime::tu::mtx_pc::raw::PSMTXConcat(m_a as _, m_b as _, m_ab as _); } });
-    hook!(PSMTXCOPY, PSMTXCopy, (src: MtxPtr, dst: MtxPtr));
+    hook_or!(PSMTXCOPY, PSMTXCopy, (src: MtxPtr, dst: MtxPtr), |src: MtxPtr, dst: MtxPtr| { unsafe { let _ = melee_runtime::tu::mtx_pc::raw::PSMTXCopy(src as _, dst as _); } });
     // The stage-slot (m-ex stage mod) context: the native build has none yet, so these answer 0 / do nothing.
     hook_or!(SCRIPTGAME_STAGESLOTNATIVECONTEXT, ScriptGame_StageSlotNativeContext, () -> i32, || 0);
     hook_or!(SCRIPTGAME_STAGESLOTRETAILBUFFER, ScriptGame_StageSlotRetailBuffer, (a0: *mut c_void), |_a0: *mut c_void| ());

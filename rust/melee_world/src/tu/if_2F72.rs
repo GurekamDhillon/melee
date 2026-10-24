@@ -54,7 +54,7 @@ pub mod ext {
     fn ifAll_GetArchive() -> *mut *mut HSD_Archive = || unsafe { crate::tu::ifall::ifAll_GetArchive() as _ };
     fn ifAll_GetPlayerHUDPosition(a0: i32) -> *mut Vec = |a0: i32| unsafe { crate::tu::ifall::ifAll_GetPlayerHUDPosition(a0 as _) as _ };
     fn ifStatus_GetHUDInfo() -> *mut HudIndex = || unsafe { crate::tu::ifstatus::ifStatus_GetHUDInfo() as _ };
-    fn lbArchive_LoadSections(a0: *mut HSD_Archive, a1: *mut *mut c_void, a2: *const u8, a3: i32);
+    fn lbArchive_LoadSections(a0: *mut HSD_Archive, a1: *mut *mut c_void, a2: *const u8, a3: i32) = |a0: *mut HSD_Archive, a1: *mut *mut c_void, a2: *const u8, a3: i32| { unsafe { let v: std::vec::Vec<*mut core::ffi::c_void> = std::vec![a1 as *mut core::ffi::c_void, a2 as *mut core::ffi::c_void, core::ptr::null_mut()]; melee_runtime::tu::lbarchive::lbArchive_LoadSections(a0 as _, &v); } };
     fn lbAudioAx_800237A8(a0: i32, a1: i32, a2: i32) -> i32 = |a0: i32, a1: i32, a2: i32| unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800237A8(a0 as _, a1 as _, a2 as _) as _ };
     fn lbGetJObjCurrFrame(a0: *mut HSD_JObj) -> f32 = |a0: *mut HSD_JObj| unsafe { melee_runtime::tu::lb_00B0::lbGetJObjCurrFrame(a0 as _) as _ };
     fn lb_8000B09C(a0: *mut HSD_JObj) -> i32 = |a0: *mut HSD_JObj| unsafe { melee_runtime::tu::lb_00B0::lb_8000B09C(a0 as _) as _ };

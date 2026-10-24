@@ -153,7 +153,8 @@ pub mod ext {
                     None => { return unsafe { melee_runtime::tu::lbarchive::lbArchive_80016F80(a0 as _, a1 as _) as _ }; },
                 }
             }
-    hook!(H_lbArchive_LoadSections, lbArchive_LoadSections, (a0: *mut melee_types::HSD_Archive, a1: *mut *mut core::ffi::c_void, a2: *const i8, a3: i32));
+    pub static mut H_lbArchive_LoadSections: Option<unsafe extern "C" fn(*mut melee_types::HSD_Archive, *mut *mut core::ffi::c_void, *const i8, i32)> = None;
+    pub unsafe extern "C" fn lbArchive_LoadSections(a0: *mut melee_types::HSD_Archive, a1: *mut *mut core::ffi::c_void, a2: *const i8, a3: i32) { match H_lbArchive_LoadSections { Some(f) => f(a0, a1, a2, a3), None => unsafe { let v: std::vec::Vec<*mut core::ffi::c_void> = std::vec![a1 as *mut core::ffi::c_void, a2 as *mut core::ffi::c_void, core::ptr::null_mut()]; melee_runtime::tu::lbarchive::lbArchive_LoadSections(a0 as _, &v); } } }
     pub static mut H_GObj_Create: Option<unsafe extern "C" fn(u16, u8, u8) -> *mut melee_types::HSD_GObj> = None;
     pub unsafe extern "C" fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut melee_types::HSD_GObj { match H_GObj_Create { Some(f) => f(a0, a1, a2), None => unsafe { melee_runtime::tu::gobj_native::GObj_Create(a0 as _, a1 as _, a2 as _) as _ } } }
     pub static mut H_lb_80013B14: Option<unsafe extern "C" fn(*mut melee_types::HSD_CameraDescPerspective) -> *mut melee_types::HSD_CObj> = None;

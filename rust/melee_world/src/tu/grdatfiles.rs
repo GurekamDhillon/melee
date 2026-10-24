@@ -13,7 +13,7 @@ use melee_types::*;
 
 /// Callees in TUs that are not ported yet. An unset hook panics.
 pub mod ext {
-    use crate::tu::hookmac::hook;
+    use crate::tu::hookmac::{hook, hook_or};
     use core::ffi::c_void;
     use melee_types::*;
     pub use crate::tu::grinl::ext::stage_info;
@@ -23,8 +23,8 @@ pub mod ext {
         match unsafe { HSD_ARCHIVEGETPUBLICADDRESS } { Some(f) => f(a0, a1), None => { return unsafe { melee_runtime::tu::archive::HSD_ArchiveGetPublicAddress(a0 as _, a1 as _) as _ }; } }
     }
     hook!(SCRIPTGAME_STAGESLOTARCHIVE, ScriptGame_StageSlotArchive, (slot: i32) -> *mut UnkArchiveStruct);
-    hook!(LBARCHIVE_80016DBC, lbArchive_80016DBC, (filename: *const i8, symbols: *mut c_void, va: &[usize]) -> *mut HSD_Archive);
-    hook!(LBARCHIVE_800171CC, lbArchive_800171CC, (dst: *mut *mut HSD_Archive, filename: *const i8, symbols: *mut c_void, va: &[usize]) -> i32);
+    hook_or!(LBARCHIVE_80016DBC, lbArchive_80016DBC, (filename: *const i8, symbols: *mut c_void, va: &[usize]) -> *mut HSD_Archive, |filename: *const i8, symbols: *mut c_void, va: &[usize]| { unsafe { let mut v: std::vec::Vec<*mut core::ffi::c_void> = std::vec![symbols as *mut core::ffi::c_void]; v.extend(va.iter().map(|x| *x as *mut core::ffi::c_void)); if v.last().map_or(true, |p| !p.is_null()) { v.push(core::ptr::null_mut()); } melee_runtime::tu::lbarchive::lbArchive_80016DBC(filename as _, &v) as _ } });
+    hook_or!(LBARCHIVE_800171CC, lbArchive_800171CC, (dst: *mut *mut HSD_Archive, filename: *const i8, symbols: *mut c_void, va: &[usize]) -> i32, |dst: *mut *mut HSD_Archive, filename: *const i8, symbols: *mut c_void, va: &[usize]| { unsafe { let mut v: std::vec::Vec<*mut core::ffi::c_void> = std::vec![symbols as *mut core::ffi::c_void]; v.extend(va.iter().map(|x| *x as *mut core::ffi::c_void)); if v.last().map_or(true, |p| !p.is_null()) { v.push(core::ptr::null_mut()); } melee_runtime::tu::lbarchive::lbArchive_800171CC(dst as _, filename as _, &v) as i32 } });
     pub static mut LBARCHIVE_INITIALIZEDAT: Option<fn(*mut HSD_Archive, *mut c_void, u32)> = None;
     #[allow(non_snake_case)]
     pub fn lbArchive_InitializeDAT(archive: *mut HSD_Archive, data: *mut c_void, length: u32) {

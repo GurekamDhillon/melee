@@ -78,7 +78,7 @@ pub mod ext {
     fn gm_SetNextGameModeStateId(a0: u8);
     fn gm_SetupAllPlayerDefaults(a0: *mut PlayerInitData);
     fn gm_SetupRulesDefaults(a0: *mut StartMeleeRules);
-    fn lbArchive_LoadSymbols(a0: *const i8, a1: *mut c_void, a2: *const i8);
+    fn lbArchive_LoadSymbols(a0: *const i8, a1: *mut c_void, a2: *const i8) = |a0: *const i8, a1: *mut c_void, a2: *const i8| { unsafe { let v: std::vec::Vec<*mut core::ffi::c_void> = std::vec![a1 as *mut core::ffi::c_void, a2 as *mut core::ffi::c_void, core::ptr::null_mut()]; let _ = melee_runtime::tu::lbarchive::lbArchive_LoadSymbols(a0 as _, &v); } };
     fn lbAudioAx_80023694() -> i32 = || unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023694() as _ };
     fn lbAudioAx_800236DC() -> i32 = || unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800236DC() as _ };
     fn lbAudioAx_80023B24(a0: i32) -> i32 = |a0: i32| unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023B24(a0 as _) as _ };

@@ -54,6 +54,12 @@ pub mod raw {
         let r = mtx::vec_cross(&v3(a), &v3(b));
         put(dst, r);
     }
+    /// `PSMTXCopy(src, dst)` (`src == dst` is a no-op).
+    pub unsafe fn PSMTXCopy(src: *mut [f32; 4], dst: *mut [f32; 4]) {
+        if src != dst {
+            dst.cast::<Mtx>().write(rd(src));
+        }
+    }
     /// `PSMTXIdentity(m)`.
     pub unsafe fn PSMTXIdentity(m: *mut [f32; 4]) {
         m.cast::<Mtx>().write(mtx::identity());

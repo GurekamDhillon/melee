@@ -84,7 +84,7 @@ pub mod ext {
     fn if_802F7BB4(a0: i32) = |a0: i32| { unsafe { let _ = crate::tu::if_2F72::if_802F7BB4(a0 as _); } };
     fn if_802F7C30(a0: i32) = |a0: i32| { unsafe { let _ = crate::tu::if_2F72::if_802F7C30(a0 as _); } };
     fn if_802F7D08(a0: i32) = |a0: i32| { unsafe { let _ = crate::tu::if_2F72::if_802F7D08(a0 as _); } };
-    fn lbArchive_LoadSections(a0: *mut HSD_Archive, a1: *mut c_void, a2: *const u8, rest: &[(*mut c_void, *const u8)]);
+    fn lbArchive_LoadSections(a0: *mut HSD_Archive, a1: *mut c_void, a2: *const u8, rest: &[(*mut c_void, *const u8)]) = |a0: *mut HSD_Archive, a1: *mut c_void, a2: *const u8, rest: &[(*mut c_void, *const u8)]| { unsafe { let mut v: std::vec::Vec<*mut core::ffi::c_void> = std::vec![a1 as *mut core::ffi::c_void, a2 as *mut core::ffi::c_void]; for (s, n) in rest.iter() { v.push(*s as *mut core::ffi::c_void); v.push(*n as *mut core::ffi::c_void); } v.push(core::ptr::null_mut()); melee_runtime::tu::lbarchive::lbArchive_LoadSections(a0 as _, &v); } };
     fn lbDvd_8001819C(a0: *const i8) -> *mut HSD_Archive = |a0: *const i8| unsafe { melee_runtime::tu::lbdvd::lbDvd_8001819C(a0 as _) as _ };
     fn lb_8000B09C(a0: *mut HSD_JObj) -> i32 = |a0: *mut HSD_JObj| unsafe { melee_runtime::tu::lb_00B0::lb_8000B09C(a0 as _) as _ };
     fn lb_8000C07C(a0: *mut HSD_JObj, a1: i32, a2: *mut *mut HSD_AnimJoint, a3: *mut *mut HSD_MatAnimJoint, a4: *mut *mut HSD_ShapeAnimJoint) = |a0: *mut HSD_JObj, a1: i32, a2: *mut *mut HSD_AnimJoint, a3: *mut *mut HSD_MatAnimJoint, a4: *mut *mut HSD_ShapeAnimJoint| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000C07C(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _); } };

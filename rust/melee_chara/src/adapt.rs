@@ -381,3 +381,15 @@ pub fn ftKb_SpecialNPr_80100DE0(g: G) {
 pub fn ftKb_Init_803B7548() -> *const ftLk_SpecialN_Vec3Group {
     crate::tu::ftkirby::ftKb_Init_803B7548.as_ptr() as *const ftLk_SpecialN_Vec3Group
 }
+pub fn OSReport(msg: &str) {
+    melee_runtime::tu::os_report::OSReport(msg)
+}
+pub unsafe fn gm_8016B1D8() -> i32 {
+    melee_runtime::tu::gmvs_state::gm_8016B1D8()
+}
+pub unsafe fn ScriptGame_CapsMaxJumps(fp: &Fighter) -> i32 {
+    melee_fighter::script_caps::ScriptGame_CapsMaxJumps(fp as *const Fighter as *mut Fighter)
+}
+pub unsafe fn ScriptGame_HitRuleSpecial(hit: *mut HitCapsule) {
+    melee_runtime::tu::script_hit::ScriptGame_HitRuleSpecial(hit)
+}

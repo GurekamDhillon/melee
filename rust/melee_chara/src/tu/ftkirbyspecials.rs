@@ -54,7 +54,7 @@ pub mod ext {
                     None => { return unsafe { melee_items::tu::itkirbyhammer::it_802ADC54(gobj as _, pos as _, part as _, ground_or_air as _, dir as _) as _ }; },
                 }
             }
-    hook!(OSREPORT, OSReport, (msg: &str));
+    crate::port_hook!(OSREPORT, OSReport, crate::adapt::OSReport, (msg: &str));
     pub static mut ASSERT: Option<fn(&str, u32, &str) > = None;
             #[allow(non_snake_case)]
             pub fn __assert(file: &str, line: u32, cond: &str)  {

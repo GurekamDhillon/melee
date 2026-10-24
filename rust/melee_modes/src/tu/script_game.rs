@@ -374,6 +374,15 @@ crate::oext_fns! {fn HeapCheckFull() -> :: core :: ffi :: c_int;}
 crate::oext_fns! {fn Camera_PCMainCObj() -> * mut HSD_CObj;}
  }
 use ext::*;
+// Moved below this crate so the fighter/character code can call them (CYCLE); same items.
+pub use melee_runtime::tu::script_hit::{
+    hr_ordinary, script_hit_meta, script_hit_meta_count, script_hit_metadata, ScriptGame_HitRuleDamage,
+    ScriptGame_HitRuleForget, ScriptGame_HitRuleSpecial, HR_META_MAX,
+};
+pub use melee_fighter::script_caps::{
+    script_caps_max_jumps_value, script_caps_movement, ScriptGame_CapsEntity, ScriptGame_CapsFighter,
+    ScriptGame_CapsMaxJumps,
+};
 extern "C" { fn strcpy (dst : * mut :: core :: ffi :: c_char , src : * const :: core :: ffi :: c_char ,) -> * mut :: core :: ffi :: c_char;
 fn strcat (dest : * mut :: core :: ffi :: c_char , src : * const :: core :: ffi :: c_char ,) -> * mut :: core :: ffi :: c_char;
 fn strlen (s : * const :: core :: ffi :: c_char) -> usize;
@@ -3670,11 +3679,6 @@ pub unsafe extern "C" fn hr_percent_cap(
         x
     };
 }
-pub unsafe extern "C" fn hr_ordinary(mut e: ::core::ffi::c_int) -> ::core::ffi::c_int {
-    return (e == 0 as ::core::ffi::c_int || e == 1 as ::core::ffi::c_int
-        || e == 2 as ::core::ffi::c_int || e == 5 as ::core::ffi::c_int
-        || e == 13 as ::core::ffi::c_int) as ::core::ffi::c_int;
-}
 pub unsafe extern "C" fn hr_evaluate(
     mut rules: *const HRRule,
     mut count: ::core::ffi::c_int,
@@ -3809,17 +3813,12 @@ pub unsafe extern "C" fn hr_evaluate(
     v.launch = launch as ::core::ffi::c_float;
     return v;
 }
-pub const HR_META_MAX: ::core::ffi::c_int = 1024 as ::core::ffi::c_int;
 pub static mut script_hit_ports: [HRPort; 12] = [unsafe {
     core::mem::zeroed::<HRPort>()
 }; 12];
 pub static mut script_hit_percent_delta: [::core::ffi::c_float; 12] = [0.; 12];
-pub static mut script_hit_meta: [HRMeta; 1024] = [unsafe {
-    core::mem::zeroed::<HRMeta>()
-}; 1024];
 pub static mut script_hit_next_handle: ::core::ffi::c_int = 0;
 pub static mut script_hit_capacity_warned: ::core::ffi::c_int = 0;
-pub static mut script_hit_meta_count: ::core::ffi::c_int = 0;
 pub unsafe extern "C" fn script_hit_entity(mut f: *mut Fighter) -> ::core::ffi::c_int {
     return (*f).player_id as ::core::ffi::c_int * 2 as ::core::ffi::c_int
         + (if (*f).is_sub_fighter() as ::core::ffi::c_int != 0 {
@@ -3827,54 +3826,6 @@ pub unsafe extern "C" fn script_hit_entity(mut f: *mut Fighter) -> ::core::ffi::
         } else {
             0 as ::core::ffi::c_int
         });
-}
-pub unsafe extern "C" fn script_hit_metadata(
-    mut h: *mut HitCapsule,
-    mut create: ::core::ffi::c_int,
-) -> *mut HRMeta {
-    let mut start: ::core::ffi::c_uint = (h as ::core::ffi::c_uint
-        >> 2 as ::core::ffi::c_int)
-        .wrapping_rem(HR_META_MAX as ::core::ffi::c_uint);
-    let mut i: ::core::ffi::c_int = 0;
-    if create == 0 && script_hit_meta_count == 0 {
-        return ::core::ptr::null_mut::<HRMeta>();
-    }
-    i = 0 as ::core::ffi::c_int;
-    while i < HR_META_MAX {
-        let mut m: *mut HRMeta = (&raw mut script_hit_meta as *mut HRMeta)
-            .offset(
-                start
-                    .wrapping_add(i as ::core::ffi::c_uint)
-                    .wrapping_rem(HR_META_MAX as ::core::ffi::c_uint) as isize,
-            ) as *mut HRMeta;
-        if (*m).hit == h {
-            return m;
-        }
-        i += 1;
-    }
-    if create != 0 {
-        i = 0 as ::core::ffi::c_int;
-        while i < HR_META_MAX {
-            let mut m_0: *mut HRMeta = (&raw mut script_hit_meta as *mut HRMeta)
-                .offset(
-                    start
-                        .wrapping_add(i as ::core::ffi::c_uint)
-                        .wrapping_rem(HR_META_MAX as ::core::ffi::c_uint) as isize,
-                ) as *mut HRMeta;
-            if (*m_0).hit.is_null() {
-                memset(
-                    m_0 as *mut ::core::ffi::c_void,
-                    0 as ::core::ffi::c_int,
-                    ::core::mem::size_of::<HRMeta>() as usize,
-                );
-                (*m_0).hit = h;
-                script_hit_meta_count += 1;
-                return m_0;
-            }
-            i += 1;
-        }
-    }
-    return ::core::ptr::null_mut::<HRMeta>();
 }
 pub unsafe extern "C" fn ScriptGame_HitRulesOwner(
     mut slot: ::core::ffi::c_int,
@@ -4087,28 +4038,6 @@ pub unsafe extern "C" fn ScriptGame_HitRulesRelease(mut owner: ::core::ffi::c_in
         );
         script_hit_capacity_warned = 0 as ::core::ffi::c_int;
         script_hit_meta_count = 0 as ::core::ffi::c_int;
-    }
-}
-pub unsafe extern "C" fn ScriptGame_HitRuleForget(mut hit: *mut HitCapsule) {
-    let mut m: *mut HRMeta = script_hit_metadata(hit, 0 as ::core::ffi::c_int);
-    if !m.is_null() {
-        memset(
-            m as *mut ::core::ffi::c_void,
-            0 as ::core::ffi::c_int,
-            ::core::mem::size_of::<HRMeta>() as usize,
-        );
-        script_hit_meta_count -= 1;
-    }
-}
-pub unsafe extern "C" fn ScriptGame_HitRuleSpecial(mut hit: *mut HitCapsule) {
-    let mut m: *mut HRMeta = script_hit_metadata(hit, 0 as ::core::ffi::c_int);
-    if !m.is_null() {
-        (*hit).damage = (*m).original_damage;
-        (*hit).unk_count = (*m).original_count as ::core::ffi::c_uint;
-        (*hit).x24 = (*m).original_growth as ::core::ffi::c_uint;
-        (*hit).x2C = (*m).original_base as ::core::ffi::c_uint;
-        (*hit).x34 = (*m).original_shield;
-        ScriptGame_HitRuleForget(hit);
     }
 }
 pub unsafe extern "C" fn ScriptGame_HitRuleCreate(
@@ -4647,26 +4576,6 @@ pub unsafe extern "C" fn ScriptGame_HitRuleContext(
         );
         i += 1;
     }
-}
-pub unsafe extern "C" fn ScriptGame_HitRuleDamage(mut hit: *mut HitCapsule) {
-    let mut m: *mut HRMeta = script_hit_metadata(hit, 0 as ::core::ffi::c_int);
-    if m.is_null() {
-        return;
-    }
-    (*m).original_damage = (*hit).damage;
-    (*m).original_count = (*hit).unk_count as ::core::ffi::c_uint;
-    if hr_ordinary((*hit).element as ::core::ffi::c_int) == 0 {
-        ScriptGame_HitRuleForget(hit);
-        return;
-    }
-    if (*m).damage_scale != 1 as ::core::ffi::c_int as ::core::ffi::c_float {
-        (*hit).damage *= (*m).damage_scale;
-        if (*hit).damage > 500 as ::core::ffi::c_int as ::core::ffi::c_float {
-            (*hit).damage = 500 as ::core::ffi::c_int as ::core::ffi::c_float;
-        }
-    }
-    (*hit).unk_count = ((*hit).unk_count as ::core::ffi::c_float * (*m).damage_scale)
-        as ::core::ffi::c_uint as ::core::ffi::c_uint;
 }
 pub unsafe extern "C" fn ScriptGame_HitRuleRetire(
     mut data: *mut ::core::ffi::c_void,
@@ -11833,39 +11742,6 @@ pub unsafe extern "C" fn ScriptGame_FighterBenchTest() -> ::core::ffi::c_int {
     }
     return rc;
 }
-pub unsafe extern "C" fn ScriptGame_CapsFighter(
-    mut entity: ::core::ffi::c_int,
-) -> *mut Fighter {
-    let mut g: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
-    if entity < 1 as ::core::ffi::c_int || entity > 12 as ::core::ffi::c_int {
-        return ::core::ptr::null_mut::<Fighter>();
-    }
-    g = Player_GetEntityAtIndex(
-        (entity - 1 as ::core::ffi::c_int) % 6 as ::core::ffi::c_int,
-        (entity - 1 as ::core::ffi::c_int) / 6 as ::core::ffi::c_int,
-    );
-    return if script_gobj_live(g) != 0 && !(*g).user_data.is_null() {
-        HSD_GObjGetUserData(g) as *mut Fighter
-    } else {
-        ::core::ptr::null_mut::<Fighter>()
-    };
-}
-pub unsafe extern "C" fn ScriptGame_CapsEntity(
-    mut fp: *mut Fighter,
-) -> ::core::ffi::c_int {
-    let mut entity: ::core::ffi::c_int = 0;
-    if fp.is_null() {
-        return 0 as ::core::ffi::c_int;
-    }
-    entity = 1 as ::core::ffi::c_int;
-    while entity <= 12 as ::core::ffi::c_int {
-        if ScriptGame_CapsFighter(entity) == fp {
-            return entity;
-        }
-        entity += 1;
-    }
-    return 0 as ::core::ffi::c_int;
-}
 pub unsafe extern "C" fn script_caps_opponent(
     mut from: *mut Fighter,
     mut to: *mut Fighter,
@@ -12205,9 +12081,6 @@ pub unsafe extern "C" fn ScriptGame_CapsTargetTest() -> ::core::ffi::c_int {
     }
     return rc;
 }
-pub static mut script_caps_movement: [ScriptCapsMovement; 12] = [unsafe {
-    core::mem::zeroed::<ScriptCapsMovement>()
-}; 12];
 pub unsafe extern "C" fn ScriptGame_CapsMovement(
     mut entity: ::core::ffi::c_int,
     mut owner: ::core::ffi::c_int,
@@ -12323,27 +12196,6 @@ pub unsafe extern "C" fn ScriptGame_CapsMovementRelease(mut owner: ::core::ffi::
         i += 1;
     }
 }
-pub unsafe extern "C" fn script_caps_max_jumps_value(
-    mut fp: *mut Fighter,
-    mut entity: ::core::ffi::c_int,
-) -> ::core::ffi::c_int {
-    let mut value: *mut ScriptCapsMovement = ::core::ptr::null_mut::<
-        ScriptCapsMovement,
-    >();
-    if fp.is_null() {
-        return 0 as ::core::ffi::c_int;
-    }
-    if entity < 1 as ::core::ffi::c_int || entity > 12 as ::core::ffi::c_int {
-        return (*fp).co_attrs.max_jumps;
-    }
-    value = (&raw mut script_caps_movement as *mut ScriptCapsMovement)
-        .offset((entity - 1 as ::core::ffi::c_int) as isize) as *mut ScriptCapsMovement;
-    return if (*value).owner != 0 && (*value).jumps >= 0 as ::core::ffi::c_int {
-        (*value).jumps + 1 as ::core::ffi::c_int
-    } else {
-        (*fp).co_attrs.max_jumps
-    };
-}
 pub unsafe extern "C" fn script_caps_action_allowed_value(
     mut entity: ::core::ffi::c_int,
     mut flag: ::core::ffi::c_int,
@@ -12354,11 +12206,6 @@ pub unsafe extern "C" fn script_caps_action_allowed_value(
     return !(script_caps_movement[(entity - 1 as ::core::ffi::c_int) as usize].owner != 0
         && script_caps_movement[(entity - 1 as ::core::ffi::c_int) as usize].flags & flag
             != 0) as ::core::ffi::c_int;
-}
-pub unsafe extern "C" fn ScriptGame_CapsMaxJumps(
-    mut fp: *mut Fighter,
-) -> ::core::ffi::c_int {
-    return script_caps_max_jumps_value(fp, ScriptGame_CapsEntity(fp));
 }
 pub unsafe extern "C" fn ScriptGame_CapsActionAllowed(
     mut fp: *mut Fighter,

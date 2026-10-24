@@ -1704,7 +1704,7 @@ def main():
                 pre.append(f'melee_core::gc_layout!({c.spelling}, "{c.spelling}", size {size:#x}, align {align}, [{NL}    {body},{NL}]);{NL}')
     tr.cur = "<data>"
     for n, v in tr.main_vars.items():
-        vis = "pub " if v.storage_class != ci.StorageClass.STATIC else ""
+        vis = "pub "  # statics too: the mtu state oracles set and hash them
         iv = tr.var_init(v)
         init = tr.cexpr(iv[-1], v.type) if iv else tr.zero(v.type)
         mu = "" if v.type.is_const_qualified() else "mut "

@@ -46,10 +46,17 @@ def patched_source(stem, spec):
     """The TU source the oracle compiles: the game's file verbatim, except for the literal
     replacements the spec lists (each must match exactly once; documented in the spec)."""
     src = spec["src"]
-    if not spec.get("patch"):
+    if spec.get("srcs"):  # several game TUs compiled as one (their statics shared): the files, concatenated
+        txt = "".join((ROOT / x).read_bytes().decode("utf-8").replace(chr(13) + chr(10), chr(10)) + chr(10)
+                      for x in spec["srcs"])
+    elif not spec.get("patch") and not spec.get("patch_all"):
         return src
-    txt = (ROOT / src).read_bytes().decode("utf-8").replace(chr(13) + chr(10), chr(10))
-    for a, b in spec["patch"]:
+    else:
+        txt = (ROOT / src).read_bytes().decode("utf-8").replace(chr(13) + chr(10), chr(10))
+    for a, b in spec.get("patch_all", ()):  # every occurrence (pointer <-> 32-bit int casts the native build cannot keep)
+        assert txt.count(a) > 0, f"{stem}: patch_all text {a!r} not found"
+        txt = txt.replace(a, b)
+    for a, b in spec.get("patch", ()):
         assert txt.count(a) == 1, f"{stem}: patch text {a!r} matches {txt.count(a)} times"
         txt = txt.replace(a, b)
     out = ROOT / "rust/target/mtu" / f"{stem}_tu.c"
@@ -441,6 +448,18 @@ class Walk:
 
 # ---------------------------------------------------------------------------- output
 
+def has_ext(mod, name):
+    """True when src/tu/<mod>.rs declares `fn <name>(` in its ext_fns! block."""
+    txt = (ROOT / "rust/melee_world/src/tu" / f"{mod}.rs").read_text(encoding="utf-8")
+    a = txt.index("ext_fns! {")
+    return re.search(r"^    fn " + re.escape(name) + r"\(", txt[a:], re.M) is not None
+
+
+def has_fn(mod, name):
+    txt = (ROOT / "rust/melee_world/src/tu" / f"{mod}.rs").read_text(encoding="utf-8")
+    return re.search(r"^(?:pub )?(?:unsafe )?fn " + re.escape(name) + r"\(", txt, re.M) is not None
+
+
 def build(stem, spec, want_ext):
     tu = Tu(patched_source(stem, spec), spec.get("args", ()), (ROOT / spec["src"]).parent)
     stubs, inlines, data = tu.uses()
@@ -522,8 +541,12 @@ def build(stem, spec, want_ext):
         c_out.append(f"{ret_t} {n}({params}) {{ " + " ".join(body_c) + " }")
         argnames = ", ".join(f"a{i}" for i in range(len(ptys)))
         argl = ", ".join(f"a{i}" for i in range(len(ptys)))
-        r_out_hook = f"        m::ext::hook::{n} = Some(|{argl}| {{ " + " ".join(body_r) + " });"
-        r_out.append(("@@HOOK@@", r_out_hook))
+        for mn in (spec.get("mods") or [None]):
+            if mn and not has_ext(mn, n):
+                continue
+            pre_ = f"m::{mn}::ext::hook::" if mn else "m::ext::hook::"
+            r_out_hook = f"        {pre_}{n} = Some(|{argl}| {{ " + " ".join(body_r) + " });"
+            r_out.append(("@@HOOK@@", r_out_hook))
         ext_fns.append(f"    fn {n}({rparams}){rret};")
         if addr and n not in realcb:
             ext_cb.append((n, rparams, rret, argnames))
@@ -565,12 +588,18 @@ def build(stem, spec, want_ext):
     raws = [x[1] for x in r_out if isinstance(x, tuple) and x[0] == "@@RAW@@"]
     head = [x for x in r_out if isinstance(x, str)]
     rtxt = "\n".join(head) + "\n\n"
-    rtxt += "pub fn install() {\n    use m::ext::hook::*;\n    unsafe {\n" + "\n".join(h.replace("m::ext::hook::", "") for h in hooks) + "\n    }\n}\n\n"
+    if spec.get("mods"):
+        rtxt += "pub fn install() {\n    unsafe {\n" + "\n".join(hooks) + "\n    }\n}\n\n"
+    else:
+        rtxt += "pub fn install() {\n    use m::ext::hook::*;\n    unsafe {\n" + "\n".join(h.replace("m::ext::hook::", "") for h in hooks) + "\n    }\n}\n\n"
     rtxt += "pub fn freg_all() {\n"
-    for n in fpn:
+    for n in ([] if spec.get("mods") else fpn):
         rtxt += f"    freg({spec.get('real_cb', {}).get(n, 'm::ext::cb::' + n)} as *const () as usize);\n"
     for n in own:
-        rtxt += f"    freg(m::{n} as *const () as usize);\n"
+        if spec.get("mods"):
+            pass  # multi-module oracles register the callbacks they store by hand
+        else:
+            rtxt += f"    freg(m::{n} as *const () as usize);\n"
     rtxt += "}\n\n" + "\n".join(raws)
     crate = spec.get("crate", "melee_world")
     rfile = ROOT / "rust" / crate / "tests/mtu" / f"{stem}_gen.rs"

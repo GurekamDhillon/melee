@@ -119,3 +119,4 @@ pub mod mnruleplus;
 pub mod mnsoundtest;
 pub mod mnvibration;
 pub mod mnsnap;
+pub mod mnnamenew;

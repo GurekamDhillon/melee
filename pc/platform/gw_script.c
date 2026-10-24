@@ -10148,7 +10148,8 @@ void gw_Script_FramePost(void) {
                 fflush(nhlog);
             }
         }
-        { extern void gw_snap_xlog(int frame); gw_snap_xlog(gs.match_frame); } /* MELEE_XHASH_LOG: the cross-platform digest (gw_snap.c) */
+        { extern void gw_snap_xlog(int frame); gw_snap_xlog(gs.match_frame); }
+        { extern void gw_snap_dump_hook(int frame); gw_snap_dump_hook(gs.match_frame); } /* MELEE_SNAP_DUMP: the Rust port's state snapshot (gw_snap.c) */ /* MELEE_XHASH_LOG: the cross-platform digest (gw_snap.c) */
     }
 }
 

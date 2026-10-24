@@ -101,6 +101,9 @@ pub struct GcDecoder<'a> {
     issues: Vec<String>,
     /// Object being filled (type, offset), for issue messages.
     cur: (&'static str, u32),
+    /// Raw-pointer mode (memory images, see [`GcDecoder::new_raw`]): a pointer word is not followed
+    /// but stored as its guest address (`addr as *mut T`; never dereferenced).
+    raw: bool,
 }
 
 impl<'a> GcDecoder<'a> {
@@ -108,7 +111,17 @@ impl<'a> GcDecoder<'a> {
     /// data offset of every pointer word.
     pub fn new(data: &'a [u8], relocs: &'a HashSet<u32>) -> Self {
         Self { data, relocs, memo: HashMap::new(), queue: Vec::new(), arena: GcArena { owned: Vec::new() },
-               issues: Vec::new(), cur: ("(root)", 0) }
+               issues: Vec::new(), cur: ("(root)", 0), raw: false }
+    }
+
+    /// Decoder over a MEMORY IMAGE (a savestate's bytes, not a relocated archive): `data` holds
+    /// the object's GameCube bytes, `at` offsets index it. Pointers are never followed; each
+    /// decodes to its guest address stored in the native pointer (`addr as usize as *mut T`),
+    /// for the caller to look up in the image itself. Function pointers decode to `None`.
+    pub fn new_raw(data: &'a [u8], relocs: &'a HashSet<u32>) -> Self {
+        let mut d = Self::new(data, relocs);
+        d.raw = true;
+        d
     }
 
     /// Record something the bytes could not say.
@@ -164,6 +177,9 @@ impl<'a> GcDecoder<'a> {
 
     /// Decode the pointer word at `at` into a native pointer (null if not relocated).
     pub fn ptr<T: GcPointee>(&mut self, at: u32) -> *mut T {
+        if self.raw {
+            return self.u32_at(at) as usize as *mut T;
+        }
         match self.target(at) {
             Some(t) => T::gc_pointee(self, t),
             None => core::ptr::null_mut(),

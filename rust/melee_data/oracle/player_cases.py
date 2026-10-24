@@ -25,4 +25,8 @@ real = [l.strip() for l in open(real_list) if l.strip()]
 for j in range(2, len(real), 20):
     out.append(f"r|{real[j]}|trace,rec,parity,frames=30000")
     out.append(f"r|{real[j]}|trace,rec,resync,frames=400")
+# whole-match .gdlp recordings made by the C (live mode, no replay): stage 1 saves m.gdlp as g<k>.gdlp
+for flags in ["live,gdlp,frames=30,trace", "live,gdlp,frames=20,mods=geno-lab,skin", "live,gset,frames=25,codes=online",
+              "live,gdlp0,frames=10", "live,gdlp,rec,frames=12", "live,gdlp,frames=3"]:
+    out.append(f"G|noraw.slp|{flags}")
 print("\n".join(out))

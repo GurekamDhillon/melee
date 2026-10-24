@@ -4,6 +4,7 @@
 //! The Rust program below is the same driver; the two transcripts must be identical, including the
 //! log lines, the hashes of the state-trace files and the bytes of the recorded .slp.
 
+use melee_data::gdlp::Identity;
 use melee_data::player::{Env, Player, UNARMED};
 use melee_data::replay::{FIRST_FRAME, SLOTS};
 use std::fmt::Write as _;
@@ -33,6 +34,41 @@ fn flag_int(flags: &str, name: &str, d: i64) -> i64 {
 }
 fn fb(f: f32) -> u32 {
     f.to_bits()
+}
+
+/// (plain .slp recording, ./m.gdlp, the recordings-folder .gdlp)
+fn split_rec3(p: &Player) -> (Option<&[u8]>, Option<&[u8]>, Option<&[u8]>) {
+    let (mut rec, mut gdlp, mut gdlp2) = (None, None, None);
+    let mut put = |path: &str, b: &'static [u8]| {
+        let _ = (path, b);
+    };
+    let _ = &mut put;
+    for (path, b) in &p.rec.closed_all {
+        if path.is_empty() {
+            rec = Some(b.as_slice());
+        } else if path.ends_with("m.gdlp") {
+            gdlp = Some(b.as_slice());
+        } else {
+            gdlp2 = Some(b.as_slice());
+        }
+    }
+    if let Some(f) = p.rec.file.as_deref() {
+        if p.rec.gdlp {
+            if p.rec.gdlp_path.ends_with("m.gdlp") {
+                gdlp = Some(f);
+            } else {
+                gdlp2 = Some(f);
+            }
+        } else {
+            rec = Some(f);
+        }
+    }
+    (rec, gdlp, gdlp2)
+}
+
+fn split_rec(p: &Player) -> (Option<&[u8]>, Option<&[u8]>) {
+    let (r, g, _) = split_rec3(p);
+    (r, g)
 }
 
 fn fnv_buf(b: Option<&[u8]>) -> (i64, u64) {
@@ -72,13 +108,15 @@ impl Out {
 }
 
 fn dump_files(o: &mut Out, p: &Player) {
-    // the recording as it stands (open or closed)
-    let rec = p.rec.closed.as_deref().or(p.rec.file.as_deref());
+    // the recording as it stands (open or closed): a plain .slp or the whole-match .gdlp
+    let (rec, gdlp, gdlp2) = split_rec3(p);
     let rows = [
         ("trace", p.trace.as_deref()),
         ("vel", p.vel_trace.as_deref()),
         ("seed", p.seed_csv.as_deref()),
         ("rec", rec),
+        ("gdlp", gdlp),
+        ("gdlp2", gdlp2),
     ];
     for (tag, b) in rows {
         let (len, h) = fnv_buf(b);
@@ -100,11 +138,35 @@ pub fn run_case(slp_path: &str, data: &[u8], flags: &str) -> String {
         slippi_local_port: flag_int(flags, "local", -1) as i32,
         match_turbo_rules: 0x5FB,
         stage_skin: if has_flag(flags, "skin") { Some(("Frosty Skin".into(), 0x123456789abc)) } else { None },
+        gdlp_record: if has_flag(flags, "gdlp") {
+            Some("./m.gdlp".to_string())
+        } else if has_flag(flags, "gdlp0") {
+            Some("0".to_string())
+        } else {
+            None
+        },
+        gdlp_record_setting: has_flag(flags, "gset") as i32,
+        identity: Some(Identity {
+            id: [
+                0x1111222233334444,
+                0x5555666677778888,
+                0x99990000aaaa1111 ^ (flag_int(flags, "idx", 0) == 2) as u64,
+                0xdeadbeefcafef00d,
+            ],
+            geno_version: flag_int(flags, "geno", 9) as u32,
+        }),
+        mods_describe: flag_val(flags, "mods").map(|v| v.split(',').next().unwrap().to_string()).unwrap_or_default(),
+        time: 1700000000,
+        rec_dir: ".\\geno-lab_lab\\recordings".into(),
     };
     let mut p = Player::new(env);
     p.resimulating = has_flag(flags, "resim");
     let mut o = Out { s: String::new(), line_hash: Fnv::new(), line_count: 0, logs_done: 0 };
-    p.load_slp(slp_path, data, has_flag(flags, "trace"));
+    if has_flag(flags, "play_gdlp") {
+        p.load_gdlp(slp_path, data, has_flag(flags, "trace"));
+    } else {
+        p.load_slp(slp_path, data, has_flag(flags, "trace"));
+    }
     if has_flag(flags, "live") {
         p.arm_live(true);
     }
@@ -238,6 +300,12 @@ pub fn run_case(slp_path: &str, data: &[u8], flags: &str) -> String {
                 }
             }
         }
+        if p.is_live() {
+            for port in 0..2 {
+                p.record_input(port, false, 0.5 * port as f32, -0.25, 0.125, 1.0, 0.75, 0x100 + port as u32, 0x20 + port, f as f32, (-port) as f32, 1.0, (f & 0x3f) as f32);
+                o.flush_logs(&p);
+            }
+        }
         for port in 0..4 {
             let card = p.ucf_cardinals(port) as i32;
             let ver = p.ucf_version(port);
@@ -316,6 +384,8 @@ pub fn run_case(slp_path: &str, data: &[u8], flags: &str) -> String {
         dump_debug(&p);
         return o.s;
     }
+    p.match_record_end();
+    o.flush_logs(&p);
     for port in 0..2 {
         let fr = p.r.first + 5;
         match p.slippi_pad(port, fr) {
@@ -339,8 +409,8 @@ pub fn run_case(slp_path: &str, data: &[u8], flags: &str) -> String {
 /// PLAYER_DUMP=<dir> writes the Rust-side files of the last case for diffing against the C's.
 fn dump_debug(p: &Player) {
     if let Ok(dir) = std::env::var("PLAYER_DUMP") {
-        let rec = p.rec.closed.as_deref().or(p.rec.file.as_deref());
-        for (n, b) in [("trace.csv", p.trace.as_deref()), ("trace.csv.vel.csv", p.vel_trace.as_deref()), ("trace.csv.seed.csv", p.seed_csv.as_deref()), ("rec.slp", rec)] {
+        let (rec, gdlp) = split_rec(p);
+        for (n, b) in [("trace.csv", p.trace.as_deref()), ("trace.csv.vel.csv", p.vel_trace.as_deref()), ("trace.csv.seed.csv", p.seed_csv.as_deref()), ("rec.slp", rec), ("m.gdlp", gdlp)] {
             if let Some(b) = b {
                 std::fs::write(format!("{dir}/{n}"), b).unwrap();
             }
@@ -385,11 +455,18 @@ fn check(real: bool) {
         if (b == 'r') != real {
             continue;
         }
-        let base = if b == 'r' { unix(&realroot).trim_start_matches("//?/").to_string() } else { unix(&std::fs::canonicalize(&synth).unwrap()).trim_start_matches("//?/").to_string() };
+        let base = if b == 'g' {
+            unix(&std::fs::canonicalize(manifest.join("tests/data/gdlp")).unwrap()).trim_start_matches("//?/").to_string()
+        } else if b == 'r' { unix(&realroot).trim_start_matches("//?/").to_string() } else { unix(&std::fs::canonicalize(&synth).unwrap()).trim_start_matches("//?/").to_string() };
         let path = format!("{base}/{name}");
         let data = std::fs::read(&path).unwrap();
         let got = run_case(&path, &data, &flags).replace(&base, "<S>");
         let key = format!("{b}|{name}|{flags}");
+        if let Ok(only) = std::env::var("PLAYER_ONLY") {
+            if !key.contains(&only) {
+                continue;
+            }
+        }
         let w = want.get(key.as_str()).unwrap_or_else(|| panic!("no oracle block for {key}"));
         if *w != got {
             let wl: Vec<&str> = w.lines().collect();

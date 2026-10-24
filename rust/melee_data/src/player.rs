@@ -9,6 +9,7 @@
 //! (`rp_parity_end`: `_exit`), [`Player::exit`] is set and the caller must stop driving.
 
 use crate::cfmt;
+use crate::gdlp;
 use crate::replay::{self, Input, Replay, FIRST_FRAME, GAME_INFO, SLOTS};
 
 pub const UNARMED: i32 = -0x7FFF_FFFF;
@@ -45,6 +46,18 @@ pub struct Env {
     pub match_turbo_rules: u32,
     /// `gw_StageSkin_Last`: (name, digest) of the stage skin played, if any
     pub stage_skin: Option<(String, u64)>,
+    /// `MELEE_GDLP_RECORD` (nonempty value) for whole-match `.gdlp` recording
+    pub gdlp_record: Option<String>,
+    /// settings.cfg `gdlp_record` (used when the environment variable is empty)
+    pub gdlp_record_setting: i32,
+    /// `gs_identity` + `GENO_VERSION`: what a `.gdlp` must match to play here
+    pub identity: Option<gdlp::Identity>,
+    /// `gw_Mods_Describe()` for the `.gdlp` header
+    pub mods_describe: String,
+    /// `time(NULL)` for the header and the file name
+    pub time: i64,
+    /// the LAB recordings folder (`gr_dir`)
+    pub rec_dir: String,
 }
 
 #[derive(Default)]
@@ -57,7 +70,14 @@ pub struct Recorder {
     pub seed: u32,
     pub failed: bool,
     pub closed: Option<Vec<u8>>,
+    /// every recording closed so far (path, bytes): a `.gdlp` is one file per match
+    pub closed_all: Vec<(String, Vec<u8>)>,
     flush_next: i32,
+    /// the open file is a whole-match `.gdlp`
+    pub gdlp: bool,
+    pub gdlp_path: String,
+    gdlp_seq: u32,
+    gdlp_wanted: Option<bool>,
 }
 
 pub struct Player {
@@ -84,6 +104,8 @@ pub struct Player {
     pub log: Vec<String>,
     /// `gw_FighterControls_MatchGet`: the choices frozen by [`Player::match_begin`].
     pub match_controls: [u32; 4],
+    /// `gw_FighterControls_MatchCK`: the character kind each port's choice was frozen for.
+    pub match_cks: [i32; 4],
     /// Set when the C would have called `_exit` (parity verdict).
     pub exit: Option<i32>,
     pub resimulating: bool,
@@ -131,6 +153,7 @@ impl Player {
             noted: false,
             log: Vec::new(),
             match_controls: [0; 4],
+            match_cks: [-1; 4],
             exit: None,
             resimulating: false,
             ucf_off_mode: -1,
@@ -188,6 +211,21 @@ impl Player {
         if self.active && trace {
             self.trace = Some(format!("frame,player,follower,char,action_state,x,y,facing,percent,stocks{NL}").into_bytes());
             self.vel_trace = Some(format!("frame,player,follower,air_x,air_y,kb_x,kb_y,ground_x{NL}").into_bytes());
+        }
+    }
+
+    /// `rp_load` for `MELEE_GDLP=<file>`: a whole-match recording of this port plays as `MELEE_SLP`
+    /// does, but only on the build / disc / mods / Geno data it was made with.
+    pub fn load_gdlp(&mut self, path: &str, data: &[u8], trace: bool) {
+        let me = self.env.identity.unwrap_or(gdlp::Identity { id: [0; 4], geno_version: 0 });
+        match gdlp::check_file(data, &me) {
+            Err(why) => {
+                self.log(format!("replay: MELEE_GDLP=\"{path}\" refused: {why}"));
+            }
+            Ok(()) => {
+                self.log(format!("replay: MELEE_GDLP=\"{path}\" - identity matches (build, disc, mods, Geno data)"));
+                self.load_slp(path, data, trace);
+            }
         }
     }
 
@@ -274,6 +312,7 @@ impl Player {
     /// peer's announced choice.
     pub fn match_begin(&mut self, d: &[u8], offline_get: &dyn Fn(i32, i32) -> u32, netplay: &dyn Fn(i32) -> u32) {
         self.match_controls = [0; 4];
+        self.match_cks = [-1; 4];
         for p in 0..4usize {
             let pl = &d[0x60 + 0x24 * p..];
             let port = pl[7] as usize;
@@ -289,6 +328,7 @@ impl Player {
                 offline_get(port as i32, ck)
             };
             self.match_controls[port] = choice;
+            self.match_cks[port] = ck;
             let m = format!(
                 "fighter controls: frozen P{} controller {} ck {} choice 0x{:04x} ({})",
                 p + 1,
@@ -1008,14 +1048,58 @@ impl Player {
         self.log(format!("replay: recording to {path}"));
     }
 
-    /// `gw_Replay_Recording` after the environment was consulted.
-    pub fn recording(&self) -> bool {
-        self.rec.file.is_some()
+    fn gdlp_wanted(&mut self) -> bool {
+        if self.rec.gdlp_wanted.is_none() {
+            let v = match self.env.gdlp_record.as_deref() {
+                Some(e) if !e.is_empty() => e != "0",
+                _ => self.env.gdlp_record_setting != 0,
+            };
+            self.rec.gdlp_wanted = Some(v);
+        }
+        self.rec.gdlp_wanted.unwrap()
+    }
+
+    /// `gw_Replay_Recording` after the environment was consulted (a whole-match `.gdlp` is opened
+    /// per match, never while a replay plays back; live netplay is not a replay).
+    pub fn recording(&mut self) -> bool {
+        self.rec.file.is_some() || ((!self.active || self.live) && self.gdlp_wanted())
     }
 
     /// `gw_Replay_RecordMatch`: the match as it starts (call after [`Player::apply_match`]).
     pub fn record_match(&mut self, game_info: &[u8], seed: u32) {
         if !self.recording() {
+            return;
+        }
+        if (self.rec.file.is_none() || self.rec.gdlp) && (!self.active || self.live) && self.gdlp_wanted() {
+            if self.rec.file.is_some() {
+                self.rec_close(); // the previous match, if its scene end was missed
+            }
+            let spec = self.env.gdlp_record.clone().unwrap_or_default();
+            self.rec.gdlp_seq += 1;
+            let path = gdlp::match_path(&spec, self.rec.gdlp_seq, self.env.time, &self.env.rec_dir);
+            let (mut f, raw_len_at, raw_start) = gdlp::open(gdlp::GR_VER);
+            self.rec.raw_len_at = raw_len_at;
+            self.rec.raw_start = raw_start;
+            self.rec.gdlp = true;
+            self.rec.failed = false;
+            let head = gdlp::match_head(
+                game_info,
+                &gdlp::HeadInputs {
+                    write_ver: gdlp::GR_VER,
+                    identity: self.env.identity.map_or([0; 4], |i| i.id),
+                    geno_version: self.env.identity.map_or(0, |i| i.geno_version),
+                    mods: self.env.mods_describe.clone(),
+                    controls_ck: self.match_cks,
+                    controls: self.match_controls,
+                    time: self.env.time as u32,
+                },
+            );
+            f.extend_from_slice(&head);
+            self.rec.file = Some(f);
+            self.rec.gdlp_path = path.clone();
+            self.log(format!("replay: recording the match to {path} (.gdlp)"));
+        }
+        if self.rec.file.is_none() {
             return;
         }
         let mut ev = vec![0u8; 1 + replay::SZ_START];
@@ -1045,10 +1129,30 @@ impl Player {
         self.log(m);
     }
 
+    /// Frame Bookend (0x3C): the frame, and the latest finalized frame (the frame itself).
+    fn rec_bookend(&mut self, frame: i32) {
+        if !self.rec.gdlp || self.rec.file.is_none() || self.rec.failed || frame < FIRST_FRAME {
+            return;
+        }
+        let mut ev = [0u8; 9];
+        ev[0] = 0x3C;
+        ev[1..5].copy_from_slice(&be32(frame as u32));
+        ev[5..9].copy_from_slice(&be32(frame as u32));
+        self.rec.file.as_mut().unwrap().extend_from_slice(&ev);
+    }
+
+    /// `gw_Replay_MatchRecordEnd`: the scene ended, a whole-match `.gdlp` is complete.
+    pub fn match_record_end(&mut self) {
+        if self.rec.gdlp && self.rec.frame > FIRST_FRAME - 1 {
+            self.rec_close();
+        }
+    }
+
     fn rec_tick(&mut self, seed: u32) {
         if self.rec.file.is_none() || self.rec.frame == UNARMED {
             return;
         }
+        self.rec_bookend(self.rec.frame); // the frame that just finished (.gdlp only)
         self.rec.frame += 1;
         self.rec.seed = seed;
         if self.rec.flush_next == UNARMED {
@@ -1204,6 +1308,12 @@ impl Player {
             }
         }
         meta.extend_from_slice(b"}}");
+        if self.rec.gdlp && self.rec.frame != UNARMED {
+            let fr = self.rec.frame;
+            self.rec.file = Some(f);
+            self.rec_bookend(fr);
+            f = self.rec.file.take().unwrap();
+        }
         let mut ev = [0u8; 1 + replay::SZ_END];
         ev[0] = 0x39;
         ev[1] = 7;
@@ -1215,7 +1325,20 @@ impl Player {
         f.extend_from_slice(&meta);
         let len = (end - self.rec.raw_start) as u32;
         f[self.rec.raw_len_at..self.rec.raw_len_at + 4].copy_from_slice(&be32(len));
-        self.log(format!("replay: recording closed ({} event bytes)", end - self.rec.raw_start));
+        let suffix = if self.rec.gdlp { format!(" {}", self.rec.gdlp_path) } else { String::new() };
+        self.log(format!(
+            "replay: recording closed ({} event bytes){}{}",
+            end - self.rec.raw_start,
+            if self.rec.gdlp { " " } else { "" },
+            suffix.trim_start()
+        ));
+        let path = if self.rec.gdlp { self.rec.gdlp_path.clone() } else { String::new() };
+        self.rec.closed_all.push((path, f.clone()));
         self.rec.closed = Some(f);
+        if self.rec.gdlp {
+            self.rec.gdlp = false;
+            self.rec.frame = UNARMED;
+            self.rec.flush_next = UNARMED;
+        }
     }
 }

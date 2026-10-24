@@ -17,7 +17,10 @@
 
 /* ---- stubs for everything gw_replay.c reaches outside itself ---- */
 static unsigned fcm[4];
-static char out_trace[600], out_rec[600], out_vel[600], out_seed[600];
+static int fck[4] = { -1, -1, -1, -1 };
+static char out_trace[600], out_rec[600], out_vel[600], out_seed[600], out_gdlp[600];
+static int gdlp_setting;
+static char out_gdlp2[600];
 static int local_port = -1, resim_flag = 0, skin_flag = 0;
 
 static void gw_log(const char *fmt, ...) {
@@ -29,9 +32,10 @@ static void gw_log(const char *fmt, ...) {
     printf("LOG %s\n", b);
 }
 unsigned gw_FighterControls_Get(int port, int ck) { return (unsigned) ((port * 0x11 + ck * 3) & 0xff3d); }
-void gw_FighterControls_MatchClear(void) { memset(fcm, 0, sizeof fcm); }
+void gw_FighterControls_MatchClear(void) { int i; memset(fcm, 0, sizeof fcm); for (i = 0; i < 4; ++i) fck[i] = -1; }
+int gw_FighterControls_MatchCK(int port) { return port >= 0 && port < 4 ? fck[port] : -1; }
 unsigned gw_FighterControls_MatchGet(int port) { return port >= 0 && port < 4 ? fcm[port] : 0; }
-void gw_FighterControls_MatchSet(int port, int ck, unsigned choice) { (void) ck; if (port >= 0 && port < 4) fcm[port] = choice; }
+void gw_FighterControls_MatchSet(int port, int ck, unsigned choice) { if (port >= 0 && port < 4) { fcm[port] = choice; fck[port] = ck; } }
 unsigned gw_Netplay_FighterControls(int player) { return (unsigned) (player * 5); }
 uint32_t gw_Netplay_Handshake(uint8_t *d, int len, int keep_off, int keep_len) {
     int i;
@@ -39,15 +43,12 @@ uint32_t gw_Netplay_Handshake(uint8_t *d, int len, int keep_off, int keep_len) {
     for (i = 0; i < len; i += 17) d[i] ^= 0x5A;
     return 0xA5A5C3C3u;
 }
-int gw_Gdlp_CheckFile(const char *path, char *why, size_t cap) { (void) path; snprintf(why, cap, "oracle"); return -1; }
-FILE *gw_Gdlp_OpenMatch(const char *spec, long *a, long *b, char *path_out, size_t cap) { (void) spec; (void) a; (void) b; (void) path_out; (void) cap; return NULL; }
-size_t gw_Gdlp_MatchHead(unsigned char *buf, const unsigned char *gi) { (void) buf; (void) gi; return 0; }
 void gw_HSD_RandRenderBegin(void) {}
 void gw_HSD_RandRenderEnd(void) {}
 int gw_MatchTurboRules(void) { return 0x5FB; }
 const GwRbInput *gw_RB_InputAny(int port, int frame) { (void) port; (void) frame; return NULL; }
 const GwRbInput *gw_RB_InputFor(int port, int fol, int frame) { (void) port; (void) fol; (void) frame; return NULL; }
-int gw_Settings_Int(const char *key, int dflt) { (void) key; return dflt; }
+int gw_Settings_Int(const char *key, int dflt) { if (strcmp(key, "gdlp_record") == 0) return gdlp_setting; return dflt; }
 int gw_Snap_Resimulating(void) { return resim_flag; }
 int gw_StageSkin_Last(int *ext, char *name, int cap, uint64_t *digest) {
     if (!skin_flag) return 0;
@@ -71,11 +72,11 @@ static uint64_t fnv_file(const char *path, long *len) {
     return h;
 }
 static void dump_files(void) {
-    const char *names[4] = { out_trace, out_vel, out_seed, out_rec };
-    const char *tag[4] = { "trace", "vel", "seed", "rec" };
+    const char *names[6] = { out_trace, out_vel, out_seed, out_rec, out_gdlp, out_gdlp2 };
+    const char *tag[6] = { "trace", "vel", "seed", "rec", "gdlp", "gdlp2" };
     int i;
     fflush(NULL);
-    for (i = 0; i < 4; ++i) {
+    for (i = 0; i < 6; ++i) {
         long len;
         uint64_t h = fnv_file(names[i], &len);
         printf("FILE %s %ld %016llx\n", tag[i], len, (unsigned long long) h);
@@ -85,6 +86,24 @@ void gw_hang_final(const char *msg, unsigned rc) {
     printf("LOG hang_final: %s %u\n", msg, rc);
     dump_files();
 }
+
+static uint64_t id2 = 0x99990000aaaa1111ull;
+static const char *mods_text = "";
+/* ---- the LAB recorder container (gw_script_rec.inc up to its recording section) ---- */
+static int geno_version = 9;
+#define GENO_VERSION geno_version
+static struct { char data_dir[MAX_PATH]; int match_active; } gs;
+static int gs_players_present(int s) { (void) s; return 0; }
+static int gw_ScriptGame_FighterI(int s, int what) { (void) s; (void) what; return 0; }
+enum { SI_CHAR, SI_COSTUME, SI_SLOT_TYPE };
+static const char *gs_char_name(int c) { (void) c; return "?"; }
+static void gs_identity(uint64_t out[4]) { out[0] = 0x1111222233334444ull; out[1] = 0x5555666677778888ull; out[2] = id2; out[3] = 0xdeadbeefcafef00dull; }
+const char *gw_Mods_Describe(void) { return mods_text; }
+static int gw_ScriptGame_StageKind(void) { return 0; }
+static long long fake_time(void *p) { (void) p; return 1700000000ll; }
+#define time(x) fake_time(x)
+#include "script_rec_cut.inc"
+#undef time
 
 #include "gw_replay.c"
 
@@ -141,12 +160,20 @@ int main(int argc, char **argv) {
     snprintf(out_vel, sizeof out_vel, "%s/trace.csv.vel.csv", dir);
     snprintf(out_seed, sizeof out_seed, "%s/trace.csv.seed.csv", dir);
     snprintf(out_rec, sizeof out_rec, "%s/rec.slp", dir);
-    remove(out_trace); remove(out_vel); remove(out_seed); remove(out_rec);
+    snprintf(out_gdlp, sizeof out_gdlp, "%s/m.gdlp", dir);
+    snprintf(out_gdlp2, sizeof out_gdlp2, "%s/geno-lab_lab/recordings/match_1700000000_1.gdlp", dir);
+    remove(out_trace); remove(out_vel); remove(out_seed); remove(out_rec); remove(out_gdlp); remove(out_gdlp2);
     local_port = (int) flag_int(flags, "local", -1);
+    snprintf(gs.data_dir, sizeof gs.data_dir, ".");
     resim_flag = has_flag(flags, "resim");
     skin_flag = has_flag(flags, "skin");
-    _putenv_s("MELEE_GDLP", "");
-    _putenv_s("MELEE_SLP", slp);
+    gdlp_setting = has_flag(flags, "gset");
+    _putenv_s("MELEE_GDLP_RECORD", has_flag(flags, "gdlp") ? out_gdlp : (has_flag(flags, "gdlp0") ? "0" : ""));
+    { const char *v = flag_val(flags, "idx"); if (v) { int k = atoi(v); if (k == 2) id2 ^= 1; } }
+    { const char *v = flag_val(flags, "geno"); if (v) geno_version = atoi(v); }
+    { const char *v = flag_val(flags, "mods"); if (v) { static char mt[64]; size_t n = strcspn(v, ","); snprintf(mt, sizeof mt, "%.*s", (int) n, v); mods_text = mt; } }
+    if (has_flag(flags, "play_gdlp")) { _putenv_s("MELEE_GDLP", slp); _putenv_s("MELEE_SLP", ""); }
+    else { _putenv_s("MELEE_GDLP", ""); _putenv_s("MELEE_SLP", slp); }
     _putenv_s("MELEE_SLP_RESYNC", has_flag(flags, "resync") ? "1" : "");
     _putenv_s("MELEE_SLP_PARITY", has_flag(flags, "parity") ? "1" : "");
     _putenv_s("MELEE_SLP_NO_UCF073", has_flag(flags, "noucf073") ? "1" : "");
@@ -221,6 +248,10 @@ int main(int argc, char **argv) {
                     }
                 }
             }
+            if (rp.live) {
+                for (p = 0; p < 2; ++p)
+                    gw_Replay_RecordInput(p, 0, 0.5f * p, -0.25f, 0.125f, 1.0f, 0.75f, 0x100u + (unsigned) p, 0x20 + p, (float) f, (float) -p, 1.0f, (float) (f & 0x3f));
+            }
             for (p = 0; p < 4; ++p) {
                 char ub[512];
                 int n = snprintf(ub, sizeof ub, "U %d card=%d ver=%d raw=", p, gw_Replay_UcfCardinals(p), gw_Replay_UcfVersion(p));
@@ -260,6 +291,7 @@ int main(int argc, char **argv) {
             }
         }
     }
+    gw_Replay_MatchRecordEnd();
     for (p = 0; p < 2; ++p) {
         GwSlippiPad pad;
         int fr = rp.first + 5;

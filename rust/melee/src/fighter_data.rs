@@ -79,6 +79,18 @@ pub fn costume_for(name: &str) -> Option<(&'static str, &'static str)> {
     }
 }
 
+/// The costume a scene gives a slot that names none (`color=-1`): the C build starts costume `slot`
+/// (verified by screenshot: P1 Falcon is Nr, P2 Fox is Or). Only the alternates the golden scenarios
+/// reach are listed (ftfox.c `ftFx_Init_CostumeStrings`); anything else falls back to Nr.
+pub fn costume_for_slot(name: &str, slot: usize) -> Option<(&'static str, &'static str)> {
+    match (name, slot) {
+        ("fox", 1) => Some(("PlFxOr.dat", "PlyFox5KOr_Share_joint")),
+        ("fox", 2) => Some(("PlFxLa.dat", "PlyFox5KLa_Share_joint")),
+        ("fox", 3) => Some(("PlFxGr.dat", "PlyFox5KGr_Share_joint")),
+        _ => costume_for(name),
+    }
+}
+
 /// `ftData->x44` (`ftData_x44_t`): the six ECB part indices, `unkC` and the ledge snap box.
 #[derive(Clone, Copy, Debug)]
 pub struct EcbDesc {

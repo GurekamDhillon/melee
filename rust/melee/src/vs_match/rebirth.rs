@@ -235,6 +235,8 @@ fn fighter_unk_process_death(p: &mut Player, ctx: &mut RespawnCtx<'_>) -> Result
 /// `ftCo_800D4FF4`: Rebirth.
 fn rebirth_enter(p: &mut Player, ctx: &mut RespawnCtx<'_>) -> Result<(), String> {
     fighter_unk_process_death(p, ctx)?;
+    // ftCamera_80076064 (Fighter_UnkProcessDeath_80068354): the camera box is re-snapped to the platform.
+    p.snap_camera();
     p.fp.smash_attrs.x2135 = p.rb.unk4e as i8;
     if p.fp.smash_attrs.x2135 == -1 {
         // Player_GetSpawnPlatformPos: the target the fighter eases to (mv.co.turn.facing_after, x8).

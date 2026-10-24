@@ -133,33 +133,81 @@ impl Drawable {
     }
 }
 
+/// The FD stage (`grlast.c`): its map groups and the camera pass (`StageGObj::x11_flags.b012`) each is
+/// drawn in. 0 / 2 default 0; 1 and 3 set it to 1 in their on_init; 4-8 to 2 (`grMaterial_801C94D8` users).
+const FD_GROUPS: [(u32, u32); 9] = [(0, 0), (1, 1), (2, 0), (3, 1), (4, 2), (5, 2), (6, 2), (7, 2), (8, 2)];
+/// `grNLa_803E8010`: { map id, jobj idx for the looping anim, jobj idx of the sub-tree anim (-1 none), its set }.
+const FD_BACKDROP: [(u32, u32, i32, i32); 5] = [(4, 1, 2, 0), (5, 1, 2, 4), (6, 1, 2, 6), (7, 1, 2, 8), (8, 1, 2, 10)];
+
 struct Stage {
-    draw: Drawable,
-    tree: Tree,
+    dat: Arc<Vec<u8>>,
+    anim: crate::stage_anim::StageAnim,
     map_head: u32,
+    /// (map id, camera pass) of each drawn group.
+    groups: Vec<(u32, u32)>,
+    /// `x18` light descriptors of the light group.
+    lights: Vec<u32>,
 }
 
 fn load_stage(file: &[u8]) -> Result<Stage, String> {
     let a = DatArchive::parse(file).map_err(|e| format!("stage: {e}"))?;
     let head = a.public_offset("map_head").ok_or("no map_head")?;
-    let d = a.data;
-    let groups = be32(&d, head + 8);
-    let count = be32(&d, head + 0xC);
-    let mut tree = Tree::new();
-    let mut descs = Vec::new();
-    let mut roots = Vec::new();
-    for g in 0..count.min(64) {
-        // UnkStageDat_x8_t, 0x34 bytes: +0 HSD_Joint* root. Each group is its own GObj's tree:
-        // load the root alone (its `next` chain belongs to the same tree in the C too).
-        let root = be32(&d, groups + g * 0x34);
-        if root == 0 {
-            continue;
-        }
-        if let Some(r) = load_tree(&d, root, &mut tree, None, &mut descs, 0) {
-            roots.push(r);
+    let dat = Arc::new(a.data);
+    let d = &dat[..];
+    let table = be32(d, head + 8);
+    let want: Option<Vec<u32>> = std::env::var("MELEE_VIEW_GROUPS").ok().map(|v| v.split(',').filter_map(|x| x.trim().parse().ok()).collect());
+    let groups: Vec<(u32, u32)> = FD_GROUPS.iter().copied().filter(|(g, _)| want.as_ref().map_or(true, |w| w.contains(g))).collect();
+    let ids: Vec<u32> = groups.iter().map(|g| g.0).collect();
+    let mut anim = crate::stage_anim::StageAnim::new(dat.clone(), head, &ids);
+    // FD only: StageCallbacks.flags_b0 is the MSB of the table's flags word (PPC bitfield order).
+    let light_group = (0..10u32).find(|&i| unsafe { melee_world::tu::grlast::grLast_StageCallbacks[i as usize].anon_10.flags } & 0x8000_0000 != 0).unwrap_or(0);
+    let mut lights = Vec::new();
+    let ll = be32(d, table + light_group * 0x34 + 0x18);
+    if ll != 0 {
+        for i in 0..16 {
+            let l = be32(d, ll + 4 * i);
+            if l == 0 {
+                break;
+            }
+            if be32(d, l) != 0 {
+                lights.push(be32(d, l));
+            }
         }
     }
-    Ok(Stage { draw: Drawable { dat: Arc::new(d), roots, descs }, tree, map_head: head })
+    // grLast_OnInit: stage gobjs 0-3 on_init (grAnime_801C8138 set 0), then backdrop case 1 of grLast_8021B920.
+    for &g in &ids {
+        if g <= 3 {
+            anim.start_map_anim(g, 0);
+        }
+    }
+    for &(map, i1, i2, set) in &FD_BACKDROP {
+        if !ids.contains(&map) {
+            continue;
+        }
+        if i2 != -1 {
+            anim.grdo_anim(map, i2 as u32, 7, set, true, 0.0, 1.0);
+        }
+        anim.grdo_anim(map, i1, 7, 0, false, 0.0, 1.0);
+        anim.grdo_clear_loop(map, i1, 7);
+    }
+    if ids.contains(&4) {
+        anim.grdo_anim(4, 0x10, 7, 0, false, 0.0, 1.0);
+    }
+    if let (Ok(v), Err(_)) = (std::env::var("MELEE_VIEW_DUMP"), std::env::var("MELEE_VIEW_DUMP_FRAME")) {
+        for g in v.split(',').filter_map(|x| x.trim().parse::<u32>().ok()) {
+            anim.dump(g);
+        }
+    }
+    if let Ok(v) = std::env::var("MELEE_VIEW_HIDE") {
+        for it in v.split(',') {
+            if let Some((m, j)) = it.split_once(':') {
+                if let (Ok(m), Ok(j)) = (m.trim().parse::<u32>(), j.trim().parse::<u32>()) {
+                    anim.hide(m, j);
+                }
+            }
+        }
+    }
+    Ok(Stage { dat, anim, map_head: head, groups, lights })
 }
 
 struct FighterModel {
@@ -167,13 +215,14 @@ struct FighterModel {
     descs: Vec<u32>,
 }
 
-/// What it takes to draw a `VsMatch`: the stage and costume models plus the HSD render state.
+/// What it takes to draw a `VsMatch`: the stage and costume models, the match camera and the HSD render state.
 pub struct MatchRender {
+    cm: crate::cm_drive::CmDrive,
+    pose: crate::cm_drive::CamPose,
     stage: Stage,
     fighters: Vec<FighterModel>,
     cache: DataCache,
     render: HsdRender,
-    logged: bool,
 }
 
 pub struct View {
@@ -190,16 +239,10 @@ pub struct View {
     pub failed: Option<String>,
 }
 
-/// The fixed camera (see the module note): the FD match-start framing, looking down -z.
-fn camera() -> (Mtx, [[f32; 4]; 4]) {
-    camera_at(0.0, 15.0, 230.0)
-}
-
-/// A look-at camera on (cx, cy) from `dist` in front (an approximation of the match camera).
-pub fn camera_at(cx: f32, cy: f32, dist: f32) -> (Mtx, [[f32; 4]; 4]) {
-    let eye = Vec3 { x: cx, y: cy + 10.0, z: dist };
-    let at = Vec3 { x: cx, y: cy, z: 0.0 };
-    // look-at (MTXLookAt)
+/// The view matrix and projection of a CObj pose (`HSD_CObjGetViewingMtx`, MTXPerspective).
+fn camera(p: &crate::cm_drive::CamPose) -> (Mtx, [[f32; 4]; 4]) {
+    let eye = Vec3 { x: p.eye[0], y: p.eye[1], z: p.eye[2] };
+    let at = Vec3 { x: p.interest[0], y: p.interest[1], z: p.interest[2] };
     let f = mtx::vec_normalize(&mtx::vec_sub(&eye, &at));
     let up = Vec3 { x: 0.0, y: 1.0, z: 0.0 };
     let cross = |a: &Vec3, b: &Vec3| Vec3 { x: a.y * b.z - a.z * b.y, y: a.z * b.x - a.x * b.z, z: a.x * b.y - a.y * b.x };
@@ -211,12 +254,11 @@ pub fn camera_at(cx: f32, cy: f32, dist: f32) -> (Mtx, [[f32; 4]; 4]) {
         [u.x, u.y, u.z, -dot(&u, &eye)],
         [f.x, f.y, f.z, -dot(&f, &eye)],
     ];
-    // MTXPerspective
-    let (fovy, aspect, n, fz) = (30.0f32, EFB_WIDTH as f32 / EFB_HEIGHT as f32, 1.0f32, 50000.0f32);
-    let c = 1.0 / (fovy.to_radians() * 0.5).tan();
+    let (n, fz) = (p.near, p.far);
+    let c = 1.0 / (p.fov.to_radians() * 0.5).tan();
     let s = 1.0 / (fz - n);
     let proj = [
-        [c / aspect, 0.0, 0.0, 0.0],
+        [c / p.aspect, 0.0, 0.0, 0.0],
         [0.0, c, 0.0, 0.0],
         [0.0, 0.0, -n * s, -fz * n * s],
         [0.0, 0.0, -1.0, 0.0],
@@ -225,70 +267,135 @@ pub fn camera_at(cx: f32, cy: f32, dist: f32) -> (Mtx, [[f32; 4]; 4]) {
 }
 
 impl MatchRender {
-    pub fn new(disc: &mut crate::disc::Disc, stage_file: &str, names: &[&str]) -> Result<Self, String> {
-        let stage = load_stage(&disc.read(stage_file)?)?;
+    pub fn new(disc: &mut crate::disc::Disc, stage_file: &str, names: &[&str], sim: &mut VsMatch) -> Result<Self, String> {
+        let stage_bytes = disc.read(stage_file)?;
+        let stage = load_stage(&stage_bytes)?;
+        let cm = {
+            let a = DatArchive::parse(&stage_bytes).map_err(|e| format!("{stage_file}: {e}"))?;
+            let gp = crate::stage::ground_param(&a).ok_or("stage dat: no grGroundParam")?;
+            let mut points = crate::stage::spawn_points(&stage_bytes)?;
+            let sc = bef(&a.data, gp);
+            if sc != 1.0 && sc > 0.001 {
+                for p in &mut points {
+                    for c in &mut p.pos {
+                        *c *= sc;
+                    }
+                }
+            }
+            let (cs, fixed_zoom, smooth, tilt) = crate::cm_drive::stage_cam(&a.data, gp, &points)?;
+            let ins: Vec<_> = sim.players.iter_mut().filter_map(|p| p.camera_subject_in()).collect();
+            if std::env::var("MELEE_VIEW_CAMLOG").is_ok() {
+                eprintln!("RCAMSTAGE {:?} fixed_zoom {fixed_zoom} smooth {smooth}", cs);
+                for i in &ins {
+                    eprintln!("RCAMSUBJ {:?}", i);
+                }
+            }
+            let d = crate::cm_drive::CmDrive::new(cs, fixed_zoom, smooth, tilt, sim.blast_top(), &ins);
+            d
+        };
         let mut fighters = Vec::new();
-        for n in names {
-            let (nr, sym) = crate::fighter_data::costume_for(n).ok_or("no costume")?;
+        for (slot, n) in names.iter().enumerate() {
+            let (nr, sym) = crate::fighter_data::costume_for_slot(n, slot).ok_or("no costume")?;
             let a = DatArchive::parse(&disc.read(nr)?).map_err(|e| format!("{nr}: {e}"))?;
             let at = a.public_offset(sym).ok_or(format!("{nr}: no {sym}"))?;
             let mut descs = Vec::new();
             descs_of(&a.data, at, 0, &mut descs);
             fighters.push(FighterModel { dat: Arc::new(a.data), descs });
         }
-        Ok(Self { stage, fighters, cache: DataCache::default(), render: HsdRender::new(), logged: false })
+        let pose = cm.pose();
+        Ok(Self { cm, pose, stage, fighters, cache: DataCache::default(), render: HsdRender::new() })
     }
+}
 
+impl MatchRender {
     /// Draw the stage and fighters into the shim's EFB (no copy-out: the caller adds UI, then ends the frame).
-    /// `follow`: a camera that frames the players instead of the fixed FD framing.
-    pub fn draw(&mut self, shim: &mut GxShim, sim: &VsMatch, follow: bool) {
-        let (vmtx, proj) = if follow {
-            let ps: Vec<(f32, f32)> = sim.players.iter().filter(|p| !p.follower).map(|p| (p.fp.cur_pos.x, p.fp.cur_pos.y)).collect();
-            let n = ps.len().max(1) as f32;
-            let cx = ps.iter().map(|p| p.0).sum::<f32>() / n;
-            let cy = ps.iter().map(|p| p.1).sum::<f32>() / n;
-            let spread = ps.iter().map(|p| ((p.0 - cx).powi(2) + (p.1 - cy).powi(2)).sqrt()).fold(0.0, f32::max);
-            camera_at(cx.clamp(-120.0, 120.0), (cy + 8.0).clamp(0.0, 90.0), (spread * 1.3 + 150.0).clamp(230.0, 480.0))
-        } else {
-            camera()
-        };
+    pub fn draw(&mut self, shim: &mut GxShim, sim: &VsMatch) {
         shim.set_copy_clear(GxColor::new(0, 0, 0, 255), 0xFF_FFFF);
         shim.set_viewport(0.0, 0.0, EFB_WIDTH as f32, EFB_HEIGHT as f32, 0.0, 1.0);
         shim.set_scissor(0, 0, EFB_WIDTH, EFB_HEIGHT);
+        let sd = self.stage.dat.clone();
+        let (vmtx, proj) = camera(&self.pose);
         shim.set_projection(&proj, GX_PERSPECTIVE);
-        let r = &mut self.render;
-        r.invalidate_all();
-        let mut g = ShimBackend { shim, cache: &mut self.cache };
-        let sd = self.stage.draw.dat.clone();
-        r.lobj_setup_init(&mut g, &Dat(&sd), &stage_light_descs(&Dat(&sd), self.stage.map_head), &vmtx);
-        if !self.logged {
-            self.logged = true;
-            eprintln!("view: lights {:?} diffuse mask {:#x}", r.lights, r.lightmask_diffuse);
+        // Joint matrices and animated materials of this frame.
+        let mut stage_joints: Vec<(u32, u32, Vec<DispJoint>)> = Vec::new();
+        for (g, pass) in self.stage.groups.clone() {
+            stage_joints.push((g, pass, self.stage.anim.disp_joints(g)));
         }
-        // Models: the stage, then each fighter's costume (sim joint SRTs on a copy of the tree).
-        let mut models: Vec<(Arc<Vec<u8>>, Vec<DispJoint>)> = Vec::new();
-        let mut st = self.stage.tree.clone();
-        models.push((sd.clone(), self.stage.draw.disp_joints(&mut st)));
+        let over = self.stage.anim.overrides();
+        let mut fighter_models: Vec<(Arc<Vec<u8>>, Vec<DispJoint>)> = Vec::new();
         for (p, f) in sim.players.iter().zip(&self.fighters) {
             let mut t = p.skel.tree.clone();
             let d = Drawable { dat: f.dat.clone(), roots: vec![p.skel.root], descs: f.descs.clone() };
-            models.push((f.dat.clone(), d.disp_joints(&mut t)));
+            fighter_models.push((f.dat.clone(), d.disp_joints(&mut t)));
         }
-        let dms: Vec<DispModel> = models.iter().map(|(d, j)| DispModel::new(d, j.clone())).collect();
-        // HSD_JObjDispAll per pass: opaque and texedge, then translucent.
-        for mask in [HSD_TRSP_OPA | HSD_TRSP_TEXEDGE, HSD_TRSP_XLU] {
-            for m in &dms {
-                r.clear_vtx_desc(&mut g);
-                r.jobj_disp_all(&mut g, m, &vmtx, mask, 0);
+        let r = &mut self.render;
+        r.invalidate_all();
+        let mut g = ShimBackend { shim, cache: &mut self.cache };
+        r.lobj_setup_init(&mut g, &Dat(&sd), &self.stage.lights, &vmtx);
+        let stage_dms: Vec<(u32, DispModel)> = stage_joints.iter().map(|(gid, pass, j)| (*pass, DispModel::new(&sd, j.clone()).with_mat_anim(&over))).collect();
+        let fighter_dms: Vec<DispModel> = fighter_models.iter().map(|(d, j)| DispModel::new(d, j.clone())).collect();
+        // fn_800301D0's gx-link schedule: the codes (OPA = 0, XLU = 1, TEXEDGE = 2) run as the outer loop.
+        let mask_of = |code: u32| 1u32 << code;
+        let mut stage_pass = |r: &mut HsdRender, g: &mut ShimBackend, pass: u32, codes: &[u32]| {
+            for &c in codes {
+                for (gp, m) in &stage_dms {
+                    if *gp == pass {
+                        r.clear_vtx_desc(g);
+                        r.jobj_disp_all(g, m, &vmtx, mask_of(c), 0);
+                    }
+                }
             }
+        };
+        stage_pass(r, &mut g, 2, &[0, 1, 2]);
+        stage_pass(r, &mut g, 1, &[0, 1, 2]);
+        stage_pass(r, &mut g, 0, &[0, 1]);
+        for c in [0u32, 1] {
+            for m in &fighter_dms {
+                r.clear_vtx_desc(&mut g);
+                r.jobj_disp_all(&mut g, m, &vmtx, mask_of(c), 0);
+            }
+        }
+        stage_pass(r, &mut g, 0, &[2]);
+        for m in &fighter_dms {
+            r.clear_vtx_desc(&mut g);
+            r.jobj_disp_all(&mut g, m, &vmtx, mask_of(2), 0);
         }
     }
 }
 
 impl View {
     pub fn draw_frame(&mut self) {
-        self.mr.draw(&mut self.shim, &self.sim, false);
+        self.mr.draw(&mut self.shim, &self.sim);
         self.shim.copy_disp(true);
+    }
+}
+
+impl MatchRender {
+    /// One match frame's render-side update, after `sim.step()`: the stage animation and the match camera.
+    pub fn step(&mut self, sim: &mut VsMatch) {
+        self.stage.anim.step();
+        if std::env::var("MELEE_VIEW_HIDLOG").is_ok() && sim.frame % 20 == 0 {
+            eprintln!("HID frame {} {}", sim.frame, self.stage.anim.hidden_summary());
+        }
+        if let (Ok(v), Ok(f)) = (std::env::var("MELEE_VIEW_DUMP"), std::env::var("MELEE_VIEW_DUMP_FRAME")) {
+            if f.parse::<u64>().ok() == Some(sim.frame as u64) {
+                for g in v.split(',').filter_map(|x| x.trim().parse::<u32>().ok()) {
+                    self.stage.anim.dump(g);
+                }
+            }
+        }
+        if std::env::var("MELEE_VIEW_POSLOG").is_ok() && sim.frame % 10 == 0 {
+            let p = &sim.players;
+            eprintln!("POS frame {} p1 {:.2} {:.2} p2 {:.2} {:.2}", sim.frame, p[0].fp.cur_pos.x, p[0].fp.cur_pos.y, p[1].fp.cur_pos.x, p[1].fp.cur_pos.y);
+        }
+        let ins: Vec<_> = sim.players.iter_mut().filter_map(|p| p.camera_subject_in()).collect();
+        let snaps: Vec<_> = sim.players.iter_mut().filter(|p| !p.follower).map(|p| p.cam_snap.take()).collect();
+        self.cm.step(&ins, &snaps);
+        self.pose = self.cm.pose();
+        if std::env::var("MELEE_VIEW_CAMLOG").is_ok() {
+            let p = &self.pose;
+            eprintln!("RCAM {} {:.5} {:.5} {:.5} {:.5} {:.5} {:.5} {:.4}", sim.frame, p.eye[0], p.eye[1], p.eye[2], p.interest[0], p.interest[1], p.interest[2], p.fov);
+        }
     }
 }
 
@@ -308,6 +415,7 @@ impl Game for View {
         // One sim frame per presented frame (the golden's frame index = self.frame).
         if self.sim_alive {
             self.sim_alive = self.sim.step();
+            self.mr.step(&mut self.sim);
             if !self.sim_alive {
                 eprintln!("view-golden: simulation stopped after frame {}: {:?}", self.sim.frame, self.sim.stopped);
             }
@@ -334,7 +442,7 @@ impl Game for View {
         if self.shots.contains(&self.frame) {
             let px = p.screenshot();
             let path = self.shot_dir.join(format!("native_{:04}.png", self.frame));
-            match write_png(&path, EFB_WIDTH, EFB_HEIGHT, &px) {
+            match write_png(&path, p.renderer.width, p.renderer.height, &px) {
                 Ok(()) => eprintln!("view-golden: frame {} (sim frame {}) -> {}", self.frame, self.sim.frame, path.display()),
                 Err(e) => eprintln!("view-golden: screenshot: {e}"),
             }
@@ -370,8 +478,17 @@ pub fn view_golden(args: &[String]) -> ExitCode {
     };
     let built = (|| -> Result<View, String> {
         let mut disc = crate::disc::Disc::open(&iso)?;
-        let sim = VsMatch::new(&mut disc, stage_file, names, 12345, 3)?;
-        let mr = MatchRender::new(&mut disc, stage_file, names)?;
+        // Dev aid: MELEE_DUMP_FILES=a.dat,b.dat MELEE_DUMP_DIR=<scratch dir> writes disc files out for
+        // offline inspection (never commit them).
+        if let (Ok(names), Ok(dir)) = (std::env::var("MELEE_DUMP_FILES"), std::env::var("MELEE_DUMP_DIR")) {
+            for n in names.split(',') {
+                let b = disc.read(n.trim())?;
+                std::fs::write(std::path::Path::new(&dir).join(n.trim()), b).map_err(|e| e.to_string())?;
+            }
+            return Err("dumped".into());
+        }
+        let mut sim = VsMatch::new(&mut disc, stage_file, names, 12345, 3)?;
+        let mr = MatchRender::new(&mut disc, stage_file, names, &mut sim)?;
         let shot_dir = PathBuf::from(get("--shot-dir").unwrap_or_else(|| "target/shots".into()));
         std::fs::create_dir_all(&shot_dir).map_err(|e| format!("{}: {e}", shot_dir.display()))?;
         Ok(View {

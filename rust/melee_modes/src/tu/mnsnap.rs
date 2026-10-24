@@ -2869,9 +2869,9 @@ unsafe extern "C" fn mnSnap_CreateThumbnails(
             *sub_matanim as *mut HSD_MatAnimJoint,
             *sub_shapeanim as *mut HSD_ShapeAnimJoint,
         );
-        end_pos.x = step_x * i as f32 + start_pos.x;
-        end_pos.y = step_y * i as f32 + start_pos.y;
-        end_pos.z = step_z * i as f32 + start_pos.z;
+        end_pos.x = fmadds(step_x, i as f32, start_pos.x);
+        end_pos.y = fmadds(step_y, i as f32, start_pos.y);
+        end_pos.z = fmadds(step_z, i as f32, start_pos.z);
         HSD_JObjSetTranslate(jobj2, &raw mut end_pos);
         (*snap).option_jobjs[i as usize] = jobj2;
         HSD_JObjAddChild(*thumb_root_ptr, jobj2);

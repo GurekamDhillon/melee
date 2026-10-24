@@ -56,6 +56,19 @@ pub unsafe fn lb_80011E24(jobj: *mut HSD_JObj, out: *mut *mut HSD_JObj, path: &[
     }
 }
 
+/// `HSD_ForeachAnim(obj, type, mask, func, arg_type, ...)` (baselib/aobj.c, not ported): the
+/// variadic tail is passed as integer bits.
+pub unsafe fn HSD_ForeachAnim(obj: *mut c_void, ty: HSD_Type, mask: HSD_TypeMask, func: *mut c_void, arg_type: AObj_Arg_Type, args: &[usize]) {
+    match crate::tu::ext_hook::EXT_HOOK {
+        Some(h) => {
+            let mut a: std::vec::Vec<u64> = std::vec![obj as usize as u64, ty as u64, mask as u64, func as usize as u64, arg_type as u64];
+            a.extend(args.iter().map(|v| *v as u64));
+            h("HSD_ForeachAnim", &a);
+        }
+        None => panic!("TODO ext: HSD_ForeachAnim is in a TU that is not ported yet"),
+    }
+}
+
 /// `lbArchive_LoadSections(archive, &sym0, "name0", &sym1, "name1", ..., 0)` (lb/lbarchive.c, not
 /// ported): the (symbol slot, section name) pairs.
 pub unsafe fn lbArchive_LoadSections(archive: *mut HSD_Archive, sections: &[(*mut *mut c_void, *const c_char)]) {

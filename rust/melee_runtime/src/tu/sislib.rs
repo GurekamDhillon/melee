@@ -710,7 +710,7 @@ pub mod ext {
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -718,7 +718,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
                 }
             } )*
         };
@@ -728,17 +728,17 @@ pub mod ext {
     fn GObj_InitUserData(a0: *mut HSD_GObj, a1: u8, a2: Option<unsafe extern "C" fn(*mut c_void)>, a3: *mut c_void);
     fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32);
     fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32);
-    fn HSD_ArchiveGetPublicAddress(a0: *mut HSD_Archive, a1: *const i8) -> *mut c_void;
-    fn HSD_CObjLoadDesc(a0: *mut HSD_CObjDesc) -> *mut HSD_CObj;
-    fn HSD_CObjSetOrtho(a0: *mut HSD_CObj, a1: f32, a2: f32, a3: f32, a4: f32);
-    fn HSD_Free(a0: *mut c_void);
+    fn HSD_ArchiveGetPublicAddress(a0: *mut HSD_Archive, a1: *const i8) -> *mut c_void = crate::tu::archive::HSD_ArchiveGetPublicAddress(a0, a1);
+    fn HSD_CObjLoadDesc(a0: *mut HSD_CObjDesc) -> *mut HSD_CObj = crate::tu::cobj::HSD_CObjLoadDesc(a0);
+    fn HSD_CObjSetOrtho(a0: *mut HSD_CObj, a1: f32, a2: f32, a3: f32, a4: f32) = crate::tu::cobj::HSD_CObjSetOrtho(a0, a1, a2, a3, a4);
+    fn HSD_Free(a0: *mut c_void) = crate::tu::memory::HSD_Free(a0);
     fn HSD_GObjFree(a0: *mut HSD_GObj);
     fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void);
     fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: i32);
-    fn HSD_MemAlloc(a0: i32) -> *mut c_void;
-    fn HSD_SisLib_803A84BC(a0: *mut HSD_GObj, a1: i32);
-    fn HSD_SisLib_803A945C(a0: *mut i8) -> *mut HSD_Archive;
-    fn HSD_SisLib_803A947C(a0: *mut HSD_Archive);
+    fn HSD_MemAlloc(a0: i32) -> *mut c_void = crate::tu::memory::HSD_MemAlloc(a0);
+    fn HSD_SisLib_803A84BC(a0: *mut HSD_GObj, a1: i32) = crate::tu::hsd_3A76::HSD_SisLib_803A84BC(a0, a1);
+    fn HSD_SisLib_803A945C(a0: *mut i8) -> *mut HSD_Archive = crate::tu::hsd_3A76::HSD_SisLib_803A945C(a0);
+    fn HSD_SisLib_803A947C(a0: *mut HSD_Archive) = crate::tu::hsd_3A76::HSD_SisLib_803A947C(a0);
     fn OSReport(a0: *mut core::ffi::c_char, a1: *mut core::ffi::c_char);
     fn View_AspectBits() -> i32;
     }

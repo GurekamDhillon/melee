@@ -629,7 +629,7 @@ pub mod native {
         use super::*;
         use core::ffi::c_void;
         macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -637,16 +637,16 @@ pub mod native {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
                 }
             } )*
         };
     }
         ext_fns! {
         fn HSD_AObjInterpretAnim(a0: *mut HSD_AObj, a1: *mut c_void, a2: Option<unsafe extern "C" fn(*mut c_void, i32, *mut HSD_ObjData)>);
-        fn HSD_AObjLoadDesc(a0: *mut HSD_AObjDesc) -> *mut HSD_AObj;
-        fn HSD_AObjRemove(a0: *mut HSD_AObj);
-        fn HSD_AObjReqAnim(a0: *mut HSD_AObj, a1: f32);
+        fn HSD_AObjLoadDesc(a0: *mut HSD_AObjDesc) -> *mut HSD_AObj = crate::tu::aobj::HSD_AObjLoadDesc(a0);
+        fn HSD_AObjRemove(a0: *mut HSD_AObj) = crate::tu::aobj::HSD_AObjRemove(a0);
+        fn HSD_AObjReqAnim(a0: *mut HSD_AObj, a1: f32) = crate::tu::aobj::HSD_AObjReqAnim(a0, a1);
         fn HSD_SetMaterialColor(a0: _GXColor, a1: _GXColor, a2: _GXColor, a3: f32);
         fn HSD_SetMaterialShininess(a0: f32);
         fn HSD_SetupRenderModeWithCustomPE(a0: u32, a1: *mut HSD_PEDesc);
@@ -656,28 +656,28 @@ pub mod native {
         fn HSD_TExpCnst(a0: *mut c_void, a1: u32, a2: u32, a3: *mut *mut HSD_TExp) -> *mut HSD_TExp;
         fn HSD_TExpColorIn(a0: *mut HSD_TExp, a1: u32, a2: *mut HSD_TExp, a3: u32, a4: *mut HSD_TExp, a5: u32, a6: *mut HSD_TExp, a7: u32, a8: *mut HSD_TExp);
         fn HSD_TExpColorOp(a0: *mut HSD_TExp, a1: u32, a2: u32, a3: u32, a4: u8);
-        fn HSD_TExpCompile(a0: *mut HSD_TExp, a1: *mut *mut _HSD_TExpTevDesc, a2: *mut *mut HSD_TExp) -> i32;
+        fn HSD_TExpCompile(a0: *mut HSD_TExp, a1: *mut *mut _HSD_TExpTevDesc, a2: *mut *mut HSD_TExp) -> i32 = crate::tu::texp::HSD_TExpCompile(a0, a1 as _, a2) as _;
         fn HSD_TExpFreeList(a0: *mut HSD_TExp, a1: u32, a2: i32) -> *mut HSD_TExp;
-        fn HSD_TExpFreeTevDesc(a0: *mut _HSD_TExpTevDesc);
+        fn HSD_TExpFreeTevDesc(a0: *mut _HSD_TExpTevDesc) = crate::tu::texp::HSD_TExpFreeTevDesc(a0 as _);
         fn HSD_TExpGetType(a0: *mut HSD_TExp) -> u32;
         fn HSD_TExpOrder(a0: *mut HSD_TExp, a1: *mut HSD_TObj, a2: u32);
-        fn HSD_TExpSetupTev(a0: *mut _HSD_TExpTevDesc, a1: *mut HSD_TExp);
-        fn HSD_TExpTev(a0: *mut *mut HSD_TExp) -> *mut HSD_TExp;
-        fn HSD_TObjAddAnimAll(a0: *mut HSD_TObj, a1: *mut _HSD_TexAnim);
-        fn HSD_TObjAnimAll(a0: *mut HSD_TObj);
-        fn HSD_TObjAssignResources(a0: *mut HSD_TObj) -> i32;
-        fn HSD_TObjLoadDesc(a0: *mut _HSD_TObjDesc) -> *mut HSD_TObj;
-        fn HSD_TObjRemoveAll(a0: *mut HSD_TObj);
-        fn HSD_TObjRemoveAnimAll(a0: *mut HSD_TObj);
-        fn HSD_TObjReqAnimAllByFlags(a0: *mut HSD_TObj, a1: f32, a2: u32);
+        fn HSD_TExpSetupTev(a0: *mut _HSD_TExpTevDesc, a1: *mut HSD_TExp) = crate::tu::texp::HSD_TExpSetupTev(a0 as _, a1);
+        fn HSD_TExpTev(a0: *mut *mut HSD_TExp) -> *mut HSD_TExp = crate::tu::texp::HSD_TExpTev(a0);
+        fn HSD_TObjAddAnimAll(a0: *mut HSD_TObj, a1: *mut _HSD_TexAnim) = crate::tu::tobj::HSD_TObjAddAnimAll(a0, a1 as _);
+        fn HSD_TObjAnimAll(a0: *mut HSD_TObj) = crate::tu::tobj::HSD_TObjAnimAll(a0);
+        fn HSD_TObjAssignResources(a0: *mut HSD_TObj) -> i32 = crate::tu::tobj::HSD_TObjAssignResources(a0);
+        fn HSD_TObjLoadDesc(a0: *mut _HSD_TObjDesc) -> *mut HSD_TObj = crate::tu::tobj::HSD_TObjLoadDesc(a0 as _);
+        fn HSD_TObjRemoveAll(a0: *mut HSD_TObj) = crate::tu::tobj::HSD_TObjRemoveAll(a0);
+        fn HSD_TObjRemoveAnimAll(a0: *mut HSD_TObj) = crate::tu::tobj::HSD_TObjRemoveAnimAll(a0);
+        fn HSD_TObjReqAnimAllByFlags(a0: *mut HSD_TObj, a1: f32, a2: u32) = crate::tu::tobj::HSD_TObjReqAnimAllByFlags(a0, a1, a2);
         fn HSD_TObjSetup(a0: *mut HSD_TObj);
-        fn HSD_TObjSetupTextureCoordGen(a0: *mut HSD_TObj);
-        fn HSD_TObjSetupVolatileTev(a0: *mut HSD_TObj, a1: u32);
-        fn hsdAllocMemPiece(a0: i32) -> *mut c_void;
-        fn hsdFreeMemPiece(a0: *mut c_void, a1: i32);
-        fn hsdInitClassInfo(a0: *mut _HSD_ClassInfo, a1: *mut _HSD_ClassInfo, a2: *mut i8, a3: *mut i8, a4: i32, a5: i32);
-        fn hsdNew(a0: *mut _HSD_ClassInfo) -> *mut c_void;
-        fn hsdSearchClassInfo(a0: *const i8) -> *mut _HSD_ClassInfo;
+        fn HSD_TObjSetupTextureCoordGen(a0: *mut HSD_TObj) = crate::tu::tobj::HSD_TObjSetupTextureCoordGen(a0);
+        fn HSD_TObjSetupVolatileTev(a0: *mut HSD_TObj, a1: u32) = crate::tu::tobj::HSD_TObjSetupVolatileTev(a0, a1);
+        fn hsdAllocMemPiece(a0: i32) -> *mut c_void = crate::tu::class::hsdAllocMemPiece(a0);
+        fn hsdFreeMemPiece(a0: *mut c_void, a1: i32) = crate::tu::class::hsdFreeMemPiece(a0, a1);
+        fn hsdInitClassInfo(a0: *mut _HSD_ClassInfo, a1: *mut _HSD_ClassInfo, a2: *mut i8, a3: *mut i8, a4: i32, a5: i32) = crate::tu::class::hsdInitClassInfo(a0 as _, a1 as _, a2 as _, a3 as _, a4, a5);
+        fn hsdNew(a0: *mut _HSD_ClassInfo) -> *mut c_void = crate::tu::class::hsdNew(a0 as _);
+        fn hsdSearchClassInfo(a0: *const i8) -> *mut _HSD_ClassInfo = crate::tu::class::hsdSearchClassInfo(a0 as _) as _;
         }
         /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
         pub mod cb {

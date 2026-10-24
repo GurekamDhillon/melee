@@ -896,7 +896,7 @@ pub mod ext {
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -904,7 +904,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
                 }
             } )*
         };
@@ -948,27 +948,27 @@ pub mod ext {
     fn GXSetVtxDesc(a0: u32, a1: u32);
     fn GXSetZTexture(a0: u32, a1: u32, a2: u32);
     fn GXTexCoord2f32(a0: f32, a1: f32);
-    fn HSD_CObjAlloc() -> *mut HSD_CObj;
-    fn HSD_CObjEndCurrent();
-    fn HSD_CObjGetCurrent() -> *mut HSD_CObj;
+    fn HSD_CObjAlloc() -> *mut HSD_CObj = crate::tu::cobj::HSD_CObjAlloc();
+    fn HSD_CObjEndCurrent() = crate::tu::cobj::HSD_CObjEndCurrent();
+    fn HSD_CObjGetCurrent() -> *mut HSD_CObj = crate::tu::cobj::HSD_CObjGetCurrent();
     fn HSD_CObjGetViewingMtx(a0: *mut HSD_CObj, a1: *mut c_void);
-    fn HSD_CObjSetCurrent(a0: *mut HSD_CObj) -> i32;
+    fn HSD_CObjSetCurrent(a0: *mut HSD_CObj) -> i32 = crate::tu::cobj::HSD_CObjSetCurrent(a0) as _;
     fn HSD_CObjSetEyePosition(a0: *mut HSD_CObj, a1: *mut Vec);
-    fn HSD_CObjSetFar(a0: *mut HSD_CObj, a1: f32);
+    fn HSD_CObjSetFar(a0: *mut HSD_CObj, a1: f32) = crate::tu::cobj::HSD_CObjSetFar(a0, a1);
     fn HSD_CObjSetInterest(a0: *mut HSD_CObj, a1: *mut Vec);
-    fn HSD_CObjSetNear(a0: *mut HSD_CObj, a1: f32);
-    fn HSD_CObjSetOrtho(a0: *mut HSD_CObj, a1: f32, a2: f32, a3: f32, a4: f32);
+    fn HSD_CObjSetNear(a0: *mut HSD_CObj, a1: f32) = crate::tu::cobj::HSD_CObjSetNear(a0, a1);
+    fn HSD_CObjSetOrtho(a0: *mut HSD_CObj, a1: f32, a2: f32, a3: f32, a4: f32) = crate::tu::cobj::HSD_CObjSetOrtho(a0, a1, a2, a3, a4);
     fn HSD_CObjSetProjectionType(a0: *mut HSD_CObj, a1: u32);
     fn HSD_CObjSetRoll(a0: *mut HSD_CObj, a1: f32);
-    fn HSD_CObjSetScissor(a0: *mut HSD_CObj, a1: *mut _Scissor);
-    fn HSD_CObjSetViewport(a0: *mut HSD_CObj, a1: *mut _HSD_RectS16);
-    fn HSD_ClearVtxDesc();
+    fn HSD_CObjSetScissor(a0: *mut HSD_CObj, a1: *mut _Scissor) = crate::tu::cobj::HSD_CObjSetScissor(a0, a1 as _);
+    fn HSD_CObjSetViewport(a0: *mut HSD_CObj, a1: *mut _HSD_RectS16) = crate::tu::cobj::HSD_CObjSetViewport(a0, a1 as _);
+    fn HSD_ClearVtxDesc() = crate::tu::pobj::HSD_ClearVtxDesc();
     fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void);
     fn HSD_GObjObject_80390ADC(a0: *mut HSD_GObj) -> *mut c_void;
     fn HSD_GObj_80390ED0(a0: *mut HSD_GObj, a1: u32);
-    fn HSD_ObjAlloc(a0: *mut _HSD_ObjAllocData) -> *mut c_void;
-    fn HSD_ObjAllocInit(a0: *mut _HSD_ObjAllocData, a1: u32, a2: u32);
-    fn HSD_ObjFree(a0: *mut _HSD_ObjAllocData, a1: *mut c_void);
+    fn HSD_ObjAlloc(a0: *mut _HSD_ObjAllocData) -> *mut c_void = crate::tu::objalloc::HSD_ObjAlloc(a0 as _);
+    fn HSD_ObjAllocInit(a0: *mut _HSD_ObjAllocData, a1: u32, a2: u32) = crate::tu::objalloc::HSD_ObjAllocInit(a0 as _, a1 as _, a2);
+    fn HSD_ObjFree(a0: *mut _HSD_ObjAllocData, a1: *mut c_void) = crate::tu::objalloc::HSD_ObjFree(a0 as _, a1);
     fn HSD_SetupChannel(a0: *mut HSD_Chan);
     fn HSD_StateInitTev();
     fn HSD_StateInvalidate(a0: i32);

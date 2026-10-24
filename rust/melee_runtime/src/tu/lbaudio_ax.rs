@@ -16,7 +16,7 @@ pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -24,7 +24,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
                 }
             } )*
         };
@@ -33,51 +33,51 @@ pub mod ext {
     fn OSReport(msg: &str);
     fn lb_800195D0();
     fn lbArchive_LoadSymbols(file: *const i8, out: *mut *mut LbAudioAxHeapData, sym: *const i8, end: i32);
-    fn lbLang_IsSettingUS() -> i32;
-    fn lbLang_IsSavedLanguageUS() -> i32;
-    fn AXDriverStop();
-    fn AXDriverCheck() -> i32;
-    fn AXDriverPause();
-    fn AXDriverResume();
-    fn AXDriver_8038DCFC();
+    fn lbLang_IsSettingUS() -> i32 = crate::tu::lblanguage::lbLang_IsSettingUS() as _;
+    fn lbLang_IsSavedLanguageUS() -> i32 = crate::tu::lblanguage::lbLang_IsSavedLanguageUS() as _;
+    fn AXDriverStop() = { let _ = crate::tu::axdriver::AXDriverStop(); };
+    fn AXDriverCheck() -> i32 = crate::tu::axdriver::AXDriverCheck() as _;
+    fn AXDriverPause() = { let _ = crate::tu::axdriver::AXDriverPause(); };
+    fn AXDriverResume() = { let _ = crate::tu::axdriver::AXDriverResume(); };
+    fn AXDriver_8038DCFC() = crate::tu::axdriver::AXDriver_8038DCFC();
     fn AXDriver_8038DA70(path: *const i8, cb: Option<unsafe extern "C" fn()>);
-    fn AXDriver_8038E5D4() -> i32;
-    fn AXDriver_8038E5DC() -> i32;
+    fn AXDriver_8038E5D4() -> i32 = crate::tu::axdriver::AXDriver_8038E5D4();
+    fn AXDriver_8038E5DC() -> i32 = crate::tu::axdriver::AXDriver_8038E5DC();
     fn ARInit(stack: *mut u32, len: u32);
     fn ARQInit();
     fn AIInit(a0: *mut c_void);
-    fn HSD_AudioSFXKeyOffAll();
-    fn HSD_AudioSFXKeyOff(voice: i32);
-    fn HSD_AudioSFXKeyOffTrack(track: i32);
+    fn HSD_AudioSFXKeyOffAll() = crate::tu::axdriver::HSD_AudioSFXKeyOffAll();
+    fn HSD_AudioSFXKeyOff(voice: i32) = { let _ = crate::tu::axdriver::HSD_AudioSFXKeyOff(voice); };
+    fn HSD_AudioSFXKeyOffTrack(track: i32) = crate::tu::axdriver::HSD_AudioSFXKeyOffTrack(track);
     fn HSD_AudioSFXCheck(voice: i32) -> i32;
-    fn HSD_AudioSFXStartParam(id: i32, vol: i32, pan: i32, track: i32, channel: i32) -> i32;
+    fn HSD_AudioSFXStartParam(id: i32, vol: i32, pan: i32, track: i32, channel: i32) -> i32 = crate::tu::axdriver::HSD_AudioSFXStartParam(id, vol as _, pan as _, track, channel);
     fn HSD_AudioSFXSetPan(voice: i32, pan: i32);
     fn HSD_AudioSFXSetVolumeEx(voice: i32, vol: i32);
     fn HSD_AudioSFXSetPitchFid(voice: i32, pitch: i32) -> i32;
-    fn HSD_AudioSFXSetMixGroup(a0: i32, a1: i32, a2: u8);
+    fn HSD_AudioSFXSetMixGroup(a0: i32, a1: i32, a2: u8) = { let _ = crate::tu::axdriver::HSD_AudioSFXSetMixGroup(a0, a1, a2 as _); };
     fn HSD_AudioSFXGetDefaultAuxParam(kind: u32, out: *mut c_void);
     fn HSD_AudioGetAuxHeapSize(kind: i32, param: *mut c_void) -> u32;
-    fn HSD_AudioSFXSetupAux(slot: i32, kind: i32, param: *mut c_void, heap: *mut u8, size: u32);
-    fn HSD_AudioInitMultiPStream(voices: i32, a1: i32, a2: i32, size: i32);
-    fn HSD_AudioPStreamStartChParam(path: *const i8, vol: i32, ch: i32) -> i32;
-    fn HSD_AudioPStreamPauseCh(ch: i32);
-    fn HSD_AudioPStreamResumeCh(ch: i32);
-    fn HSD_SynthStreamSetVolume(v: f32);
-    fn HSD_SynthSFXUpdateAllVolume(vol: u8, a1: i32, a2: i32);
-    fn HSD_SynthGetSoundMode() -> u32;
-    fn HSD_SynthSetSoundMode(mode: u32);
-    fn HSD_SynthSFXUnloadBank(bank: i32);
-    fn HSD_SynthSFXLoad(path: *const i8, bank: i32, cb: Option<unsafe extern "C" fn(i32, i32)>, arg: i32) -> i32;
-    fn HSD_SynthSFXWaitForLoadCompletion(cb: Option<unsafe extern "C" fn()>);
-    fn HSD_SynthSFXGroupDataRemove(group: i32);
-    fn HSD_SynthSFXBankDeflag(bank: i32);
-    fn HSD_SynthSFXBankDeflagSync();
-    fn HSD_SynthSFXGetPendingLoadCount() -> i32;
-    fn HSD_SynthSFXCancelLoad(group: i32) -> i32;
-    fn HSD_SynthSFXAllocateBank(size: i32);
-    fn HSD_ObjAllocInit(data: *mut HSD_ObjAllocData, size: u32, align: u32);
-    fn HSD_ObjAlloc(data: *mut HSD_ObjAllocData) -> *mut c_void;
-    fn HSD_ObjFree(data: *mut HSD_ObjAllocData, obj: *mut c_void);
+    fn HSD_AudioSFXSetupAux(slot: i32, kind: i32, param: *mut c_void, heap: *mut u8, size: u32) = { let _ = crate::tu::axdriver::HSD_AudioSFXSetupAux(slot, kind, param, heap, size as _); };
+    fn HSD_AudioInitMultiPStream(voices: i32, a1: i32, a2: i32, size: i32) = crate::tu::axdriver::HSD_AudioInitMultiPStream(voices, a1, a2, size);
+    fn HSD_AudioPStreamStartChParam(path: *const i8, vol: i32, ch: i32) -> i32 = crate::tu::axdriver::HSD_AudioPStreamStartChParam(path, vol as _, ch) as _;
+    fn HSD_AudioPStreamPauseCh(ch: i32) = { let _ = crate::tu::axdriver::HSD_AudioPStreamPauseCh(ch); };
+    fn HSD_AudioPStreamResumeCh(ch: i32) = { let _ = crate::tu::axdriver::HSD_AudioPStreamResumeCh(ch); };
+    fn HSD_SynthStreamSetVolume(v: f32) = crate::tu::synth::HSD_SynthStreamSetVolume(v);
+    fn HSD_SynthSFXUpdateAllVolume(vol: u8, a1: i32, a2: i32) = crate::tu::synth::HSD_SynthSFXUpdateAllVolume(vol as _, a1 as _, a2);
+    fn HSD_SynthGetSoundMode() -> u32 = crate::tu::synth::HSD_SynthGetSoundMode();
+    fn HSD_SynthSetSoundMode(mode: u32) = crate::tu::synth::HSD_SynthSetSoundMode(mode as _);
+    fn HSD_SynthSFXUnloadBank(bank: i32) = crate::tu::synth::HSD_SynthSFXUnloadBank(bank);
+    fn HSD_SynthSFXLoad(path: *const i8, bank: i32, cb: Option<unsafe extern "C" fn(i32, i32)>, arg: i32) -> i32 = crate::tu::synth::HSD_SynthSFXLoad(path, bank, cb, arg);
+    fn HSD_SynthSFXWaitForLoadCompletion(cb: Option<unsafe extern "C" fn()>) = crate::tu::synth::HSD_SynthSFXWaitForLoadCompletion(cb);
+    fn HSD_SynthSFXGroupDataRemove(group: i32) = crate::tu::synth::HSD_SynthSFXGroupDataRemove(group);
+    fn HSD_SynthSFXBankDeflag(bank: i32) = crate::tu::synth::HSD_SynthSFXBankDeflag(bank);
+    fn HSD_SynthSFXBankDeflagSync() = crate::tu::synth::HSD_SynthSFXBankDeflagSync();
+    fn HSD_SynthSFXGetPendingLoadCount() -> i32 = crate::tu::synth::HSD_SynthSFXGetPendingLoadCount();
+    fn HSD_SynthSFXCancelLoad(group: i32) -> i32 = crate::tu::synth::HSD_SynthSFXCancelLoad(group);
+    fn HSD_SynthSFXAllocateBank(size: i32) = crate::tu::synth::HSD_SynthSFXAllocateBank(size);
+    fn HSD_ObjAllocInit(data: *mut HSD_ObjAllocData, size: u32, align: u32) = crate::tu::objalloc::HSD_ObjAllocInit(data, size as _, align);
+    fn HSD_ObjAlloc(data: *mut HSD_ObjAllocData) -> *mut c_void = crate::tu::objalloc::HSD_ObjAlloc(data);
+    fn HSD_ObjFree(data: *mut HSD_ObjAllocData, obj: *mut c_void) = crate::tu::objalloc::HSD_ObjFree(data, obj);
     fn HSD_Randi(n: i32) -> i32;
     fn HSD_GObjFree(gobj: *mut HSD_GObj);
     fn GObj_Create(class: u16, plink: u8, prio: u8) -> *mut HSD_GObj;

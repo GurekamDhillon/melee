@@ -23,13 +23,13 @@ pub mod ext {
     lb_hook!(H_HSD_CreateMainHeap, HSD_CreateMainHeap, (a: *mut c_void, b: *mut c_void) -> i32);
     lb_hook!(H_HSD_GetHeap, HSD_GetHeap, () -> i32);
     lb_hook!(H_HSD_SetHeap, HSD_SetHeap, (a: i32));
-    lb_hook!(H_HSD_MemAlloc, HSD_MemAlloc, (a: i32) -> *mut c_void);
-    lb_hook!(H_HSD_Free, HSD_Free, (a: *mut c_void));
+    lb_hook!(H_HSD_MemAlloc, HSD_MemAlloc, (a: i32) -> *mut c_void = |a| unsafe { crate::tu::memory::HSD_MemAlloc(a) });
+    lb_hook!(H_HSD_Free, HSD_Free, (a: *mut c_void) = |a| unsafe { crate::tu::memory::HSD_Free(a) });
     lb_hook!(H_OSCheckHeap, OSCheckHeap, (a: i32) -> i32);
-    lb_hook!(H_HSD_GetNextArena, HSD_GetNextArena, (a: *mut *mut c_void, b: *mut *mut c_void));
+    lb_hook!(H_HSD_GetNextArena, HSD_GetNextArena, (a: *mut *mut c_void, b: *mut *mut c_void) = |a, b| unsafe { crate::tu::initialize::HSD_GetNextArena(a, b) });
     lb_hook!(H_OSAllocFromHeap, OSAllocFromHeap, (a: i32, b: u32) -> *mut c_void);
     lb_hook!(H_OSDumpHeap, OSDumpHeap, (a: i32));
-    lb_hook!(H_HSD_ObjAllocReport, HSD_ObjAllocReport, ());
+    lb_hook!(H_HSD_ObjAllocReport, HSD_ObjAllocReport, () = || unsafe { crate::tu::objalloc::HSD_ObjAllocReport() });
     lb_hook!(H_OSAllocTrack, OSAllocTrack, (a: i32));
     lb_hook!(H_Env1, Env1, (a: *const c_char) -> i32);
     lb_hook!(H_OSDisableInterrupts, OSDisableInterrupts, () -> i32);

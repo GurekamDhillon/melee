@@ -22,9 +22,9 @@ pub mod ext {
     #![allow(non_snake_case, unused_variables, dead_code)]
     use super::*;
     macro_rules! todo_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             $( pub unsafe extern "C" fn $name($($a: $t),*) $(-> $r)? {
-                panic!(concat!("TODO: ", stringify!($name), " is not ported"))
+                crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?)
             } )*
         };
     }
@@ -53,23 +53,23 @@ pub mod ext {
         fn AXFXDelayShutdown(a0: *mut AXFX_DELAY) -> i32;
         fn AXFXDelayCallback(a0: *mut c_void, a1: *mut c_void);
         // baselib synth
-        fn HSD_AudioMalloc(a0: usize) -> *mut c_void;
-        fn HSD_AudioFree(a0: *mut c_void);
-        fn HSD_SynthInit(a0: i32, a1: i32, a2: i32, a3: i32);
-        fn HSD_SynthSFXKeyOff(a0: i32);
-        fn HSD_SynthSFXPause(a0: i32);
-        fn HSD_SynthSFXResume(a0: i32);
-        fn HSD_SynthSFXCheck(a0: i32) -> i32;
-        fn HSD_SynthSFXSetPan(a0: i32, a1: u8);
-        fn HSD_SynthSFXSetMix(a0: i32, a1: f32, a2: f32, a3: f32);
-        fn HSD_SynthSFXSetPitchRatio(a0: i32, a1: i32, a2: f32);
-        fn HSD_SynthSFXSetPriority(a0: i32, a1: i32);
-        fn HSD_SynthSFXSetVolumeFade(a0: i32, a1: u8, a2: i32);
-        fn HSD_SynthSFXSetDriverInactivatedCallback(a0: Option<unsafe extern "C" fn(i32)>);
+        fn HSD_AudioMalloc(a0: usize) -> *mut c_void = crate::tu::synth::HSD_AudioMalloc(a0);
+        fn HSD_AudioFree(a0: *mut c_void) = crate::tu::synth::HSD_AudioFree(a0);
+        fn HSD_SynthInit(a0: i32, a1: i32, a2: i32, a3: i32) = crate::tu::synth::HSD_SynthInit(a0, a1, a2, a3);
+        fn HSD_SynthSFXKeyOff(a0: i32) = crate::tu::synth::HSD_SynthSFXKeyOff(a0);
+        fn HSD_SynthSFXPause(a0: i32) = crate::tu::synth::HSD_SynthSFXPause(a0);
+        fn HSD_SynthSFXResume(a0: i32) = crate::tu::synth::HSD_SynthSFXResume(a0);
+        fn HSD_SynthSFXCheck(a0: i32) -> i32 = crate::tu::synth::HSD_SynthSFXCheck(a0);
+        fn HSD_SynthSFXSetPan(a0: i32, a1: u8) = crate::tu::synth::HSD_SynthSFXSetPan(a0, a1);
+        fn HSD_SynthSFXSetMix(a0: i32, a1: f32, a2: f32, a3: f32) = crate::tu::synth::HSD_SynthSFXSetMix(a0, a1, a2, a3);
+        fn HSD_SynthSFXSetPitchRatio(a0: i32, a1: i32, a2: f32) = crate::tu::synth::HSD_SynthSFXSetPitchRatio(a0, a1, a2);
+        fn HSD_SynthSFXSetPriority(a0: i32, a1: i32) = crate::tu::synth::HSD_SynthSFXSetPriority(a0, a1);
+        fn HSD_SynthSFXSetVolumeFade(a0: i32, a1: u8, a2: i32) = crate::tu::synth::HSD_SynthSFXSetVolumeFade(a0, a1, a2);
+        fn HSD_SynthSFXSetDriverInactivatedCallback(a0: Option<unsafe extern "C" fn(i32)>) = crate::tu::synth::HSD_SynthSFXSetDriverInactivatedCallback(a0);
         fn HSD_SynthSFXSetDriverMasterClockCallback(a0: Option<unsafe extern "C" fn()>);
-        fn HSD_SynthSFXSetDriverPauseCallback(a0: Option<unsafe extern "C" fn(i32)>);
-        fn HSD_SynthPStreamStart(a0: i32, a1: u8, a2: u8, a3: i32) -> i32;
-        fn HSD_SynthSFXPlayWithGroup(a0: i32, a1: u8, a2: u8, a3: u8, a4: i32, a5: i32, a6: i32, a7: f32, a8: f32, a9: f32, a10: f32, a11: f32) -> i32;
+        fn HSD_SynthSFXSetDriverPauseCallback(a0: Option<unsafe extern "C" fn(i32)>) = crate::tu::synth::HSD_SynthSFXSetDriverPauseCallback(a0);
+        fn HSD_SynthPStreamStart(a0: i32, a1: u8, a2: u8, a3: i32) -> i32 = crate::tu::synth::HSD_SynthPStreamStart(a0, a1, a2, a3);
+        fn HSD_SynthSFXPlayWithGroup(a0: i32, a1: u8, a2: u8, a3: u8, a4: i32, a5: i32, a6: i32, a7: f32, a8: f32, a9: f32, a10: f32, a11: f32) -> i32 = crate::tu::synth::HSD_SynthSFXPlayWithGroup(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
         // TARGET_PC Geno-Lab / rollback hooks
         fn Snap_SuppressSfx() -> i32;
         fn Snap_SfxTake(a0: i32) -> i32;

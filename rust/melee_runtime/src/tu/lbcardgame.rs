@@ -13,7 +13,7 @@ pub mod ext {
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -21,7 +21,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
                 }
             } )*
         };
@@ -31,13 +31,13 @@ pub mod ext {
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
     fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32);
     fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32);
-    fn HSD_CObjLoadDesc(a0: *mut HSD_CObjDesc) -> *mut HSD_CObj;
+    fn HSD_CObjLoadDesc(a0: *mut HSD_CObjDesc) -> *mut HSD_CObj = crate::tu::cobj::HSD_CObjLoadDesc(a0);
     fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void);
     fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: i32);
-    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32);
+    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) = crate::tu::gobj::HSD_GObj_JObjCallback(a0, a1);
     fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc;
     fn HSD_JObjAnimAll(a0: *mut HSD_JObj);
-    fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj;
+    fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj = crate::tu::jobj::HSD_JObjLoadJoint(a0);
     fn HSD_JObjReqAnimAll(a0: *mut HSD_JObj, a1: f32);
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
     fn Mex_Enabled(a0: *const i8) -> i32;
@@ -50,13 +50,13 @@ pub mod ext {
     fn gm_8016895C(a0: *mut HSD_JObj, a1: *mut DynamicModelDesc, a2: i32);
     fn gm_GetPowerTime() -> *mut i32;
     fn lbArchive_80016DBC(a0: *const i8, a1: *mut c_void, a2: *const i8, a3: i32) -> *mut c_void;
-    fn lbCardNew_CompleteNextTask() -> i32;
-    fn lbCardNew_ProbeEx(a0: i32) -> i32;
-    fn lbLang_IsSettingJP() -> i32;
-    fn lb_8001B7E0(a0: i32, a1: *mut i8, a2: *mut c_void, a3: *mut c_void, a4: *mut i32) -> u32;
-    fn lb_8001BA44(a0: i32, a1: *const i8, a2: *mut c_void) -> i32;
+    fn lbCardNew_CompleteNextTask() -> i32 = crate::tu::lbcardnew::lbCardNew_CompleteNextTask();
+    fn lbCardNew_ProbeEx(a0: i32) -> i32 = crate::tu::lbcardnew::lbCardNew_ProbeEx(a0);
+    fn lbLang_IsSettingJP() -> i32 = crate::tu::lblanguage::lbLang_IsSettingJP() as _;
+    fn lb_8001B7E0(a0: i32, a1: *mut i8, a2: *mut c_void, a3: *mut c_void, a4: *mut i32) -> u32 = crate::tu::lbcardnew::lb_8001B7E0(a0, a1, a2, a3, a4);
+    fn lb_8001BA44(a0: i32, a1: *const i8, a2: *mut c_void) -> i32 = crate::tu::lbcardnew::lb_8001BA44(a0, a1, a2);
     fn lb_8001BC18(a0: i32, a1: *mut i8, a2: *mut *mut c_void, a3: *mut c_void, a4: *mut i8, a5: *mut c_void, a6: *mut c_void, a7: *mut i32) -> i32;
-    fn lb_8001BD34(a0: i32, a1: *const i8, a2: *mut c_void, a3: *mut c_void) -> i32;
+    fn lb_8001BD34(a0: i32, a1: *const i8, a2: *mut c_void, a3: *mut c_void) -> i32 = crate::tu::lbcardnew::lb_8001BD34(a0, a1, a2, a3);
     fn lb_8001BE30(a0: i32, a1: *const i8, a2: *mut c_void, a3: *mut i8, a4: *mut c_void, a5: *mut c_void, a6: *mut c_void, a7: *mut c_void) -> i32;
     fn un_80304470() -> i32;
     fn wait_idle();

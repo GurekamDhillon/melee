@@ -25,9 +25,9 @@ pub mod ext {
     pub use crate::tu::lbmthp::ext::DCStoreRange;
     lb_hook!(H_lbArchive_LoadSymbols, lbArchive_LoadSymbols, (file: *const c_char, out: *mut c_void, sym: *const c_char));
     lb_hook!(H_GXGetTexBufferSize, GXGetTexBufferSize, (w: u16, h: u16, fmt: u32, mipmap: u8, max_lod: u8) -> u32);
-    lb_hook!(H_HSD_TObjLoadDesc, HSD_TObjLoadDesc, (d: *mut HSD_TObjDesc) -> *mut HSD_TObj);
+    lb_hook!(H_HSD_TObjLoadDesc, HSD_TObjLoadDesc, (d: *mut HSD_TObjDesc) -> *mut HSD_TObj = |d| unsafe { crate::tu::tobj::HSD_TObjLoadDesc(d) });
     lb_hook!(H_HSD_TObjSetup, HSD_TObjSetup, (t: *mut HSD_TObj));
-    lb_hook!(H_HSD_CObjGetProjectionType, HSD_CObjGetProjectionType, (c: *mut HSD_CObj) -> i32);
+    lb_hook!(H_HSD_CObjGetProjectionType, HSD_CObjGetProjectionType, (c: *mut HSD_CObj) -> i32 = |c| unsafe { crate::tu::cobj::HSD_CObjGetProjectionType(c) });
     lb_hook!(H_GXSetTexCopySrc, GXSetTexCopySrc, (a: u16, b: u16, c: u16, d: u16));
     lb_hook!(H_GXSetTexCopyDst, GXSetTexCopyDst, (a: u16, b: u16, fmt: i32, mipmap: u8));
     lb_hook!(H_GXCopyTex, GXCopyTex, (dst: *mut c_void, clear: u8));
@@ -38,7 +38,7 @@ pub mod ext {
     lb_hook!(H_HSD_StateInvalidate, HSD_StateInvalidate, (mask: i32));
     lb_hook!(H_hsdDObj_disp, hsdDObj_disp, (d: *mut HSD_DObj, v: *mut [f32; 4], p: *mut [f32; 4], rendermode: u32));
     lb_hook!(H_hsdPObj_load, hsdPObj_load, (p: *mut HSD_PObj, d: *mut HSD_PObjDesc) -> i32);
-    lb_hook!(H_hsdInitClassInfo, hsdInitClassInfo, (info: *mut _HSD_ClassInfo, parent: *mut _HSD_ClassInfo, lib: *const c_char, name: *const c_char, size_info: i32, size_obj: i32));
+    lb_hook!(H_hsdInitClassInfo, hsdInitClassInfo, (info: *mut _HSD_ClassInfo, parent: *mut _HSD_ClassInfo, lib: *const c_char, name: *const c_char, size_info: i32, size_obj: i32) = |info, parent, lib, name, size_info, size_obj| unsafe { crate::tu::class::hsdInitClassInfo(info as _, parent as _, lib as _, name as _, size_info, size_obj) });
     lb_hook!(H_DCFlushRange, DCFlushRange, (addr: *mut c_void, n: u32));
     lb_hook!(H_GXSetTexCoordGen2, GXSetTexCoordGen2, (coord: i32, ty: i32, src: i32, mtx: i32, normalize: u8, post: i32));
     lb_hook!(H_GXLoadTexMtxImm, GXLoadTexMtxImm, (m: *const [f32; 4], id: u32, ty: i32));

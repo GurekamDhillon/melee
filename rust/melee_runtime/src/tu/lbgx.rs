@@ -34,7 +34,7 @@ pub mod ext {
     lb_hook!(H_GXBegin, GXBegin, (a: i32, b: i32, c: u16));
     lb_hook!(H_GXPosition3f32, GXPosition3f32, (a: f32, b: f32, c: f32));
     lb_hook!(H_GXPosition2u8, GXPosition2u8, (a: u8, b: u8));
-    lb_hook!(H_HSD_CObjGetCurrent, HSD_CObjGetCurrent, () -> *mut HSD_CObj);
+    lb_hook!(H_HSD_CObjGetCurrent, HSD_CObjGetCurrent, () -> *mut HSD_CObj = || unsafe { crate::tu::cobj::HSD_CObjGetCurrent() });
     // END GENERATED ext
 }
 

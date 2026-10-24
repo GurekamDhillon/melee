@@ -44,7 +44,7 @@ pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -52,26 +52,26 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
                 }
             } )*
         };
     }
     ext_fns! {
     // aobj.c
-    fn HSD_AObjRemove(aobj: *mut melee_types::HSD_AObj);
-    fn HSD_AObjLoadDesc(desc: *mut HSD_AObjDesc) -> *mut melee_types::HSD_AObj;
+    fn HSD_AObjRemove(aobj: *mut melee_types::HSD_AObj) = crate::tu::aobj::HSD_AObjRemove(aobj as _);
+    fn HSD_AObjLoadDesc(desc: *mut HSD_AObjDesc) -> *mut melee_types::HSD_AObj = crate::tu::aobj::HSD_AObjLoadDesc(desc) as _;
     fn HSD_AObjInterpretAnim(aobj: *mut melee_types::HSD_AObj, obj: *mut c_void, update: unsafe extern "C" fn(*mut c_void, i32, *mut HSD_ObjData));
-    fn HSD_AObjReqAnim(aobj: *mut melee_types::HSD_AObj, startframe: f32);
+    fn HSD_AObjReqAnim(aobj: *mut melee_types::HSD_AObj, startframe: f32) = crate::tu::aobj::HSD_AObjReqAnim(aobj as _, startframe);
     // wobj.c
-    fn HSD_WObjAlloc() -> *mut HSD_WObj;
-    fn HSD_WObjUnref(wobj: *mut HSD_WObj);
-    fn HSD_WObjInit(wobj: *mut HSD_WObj, desc: *mut HSD_WObjDesc);
-    fn HSD_WObjRemoveAnim(wobj: *mut HSD_WObj);
-    fn HSD_WObjAddAnim(wobj: *mut HSD_WObj, anim: *mut melee_types::HSD_WObjAnim);
-    fn HSD_WObjInterpretAnim(wobj: *mut HSD_WObj);
-    fn HSD_WObjReqAnim(wobj: *mut HSD_WObj, startframe: f32);
-    fn HSD_WObjClearFlags(wobj: *mut HSD_WObj, flags: u32);
+    fn HSD_WObjAlloc() -> *mut HSD_WObj = crate::tu::wobj::HSD_WObjAlloc();
+    fn HSD_WObjUnref(wobj: *mut HSD_WObj) = crate::tu::wobj::HSD_WObjUnref(wobj);
+    fn HSD_WObjInit(wobj: *mut HSD_WObj, desc: *mut HSD_WObjDesc) = crate::tu::wobj::HSD_WObjInit(wobj, desc);
+    fn HSD_WObjRemoveAnim(wobj: *mut HSD_WObj) = crate::tu::wobj::HSD_WObjRemoveAnim(wobj);
+    fn HSD_WObjAddAnim(wobj: *mut HSD_WObj, anim: *mut melee_types::HSD_WObjAnim) = crate::tu::wobj::HSD_WObjAddAnim(wobj, anim as _);
+    fn HSD_WObjInterpretAnim(wobj: *mut HSD_WObj) = crate::tu::wobj::HSD_WObjInterpretAnim(wobj);
+    fn HSD_WObjReqAnim(wobj: *mut HSD_WObj, startframe: f32) = crate::tu::wobj::HSD_WObjReqAnim(wobj, startframe);
+    fn HSD_WObjClearFlags(wobj: *mut HSD_WObj, flags: u32) = crate::tu::wobj::HSD_WObjClearFlags(wobj, flags);
     // cobj.c on the native model (positions walk the WObj's JObj target)
     fn HSD_CObjGetEyePosition(cobj: *mut HSD_CObj) -> Vec3;
     fn HSD_CObjSetEyePosition(cobj: *mut HSD_CObj, v: Vec3);
@@ -87,7 +87,7 @@ pub mod ext {
     fn _HSD_ZListSort();
     fn _HSD_ZListDisp();
     // video.c / initialize.c
-    fn HSD_VIGetRenderMode() -> *mut GXRenderModeObj;
+    fn HSD_VIGetRenderMode() -> *mut GXRenderModeObj = crate::tu::video::HSD_VIGetRenderMode();
     fn HSD_GetCurrentRenderPass() -> _HSD_RenderPass;
     fn VIGetNextField() -> u32;
     // GX
@@ -96,7 +96,7 @@ pub mod ext {
     fn GXSetScissor(left: u32, top: u32, width: u32, height: u32);
     fn GXSetProjection(mtx: &Mtx44, type_: u32);
     // memory / object.c / platform
-    fn HSD_MtxFree(mtx: *mut melee_types::Mtx);
+    fn HSD_MtxFree(mtx: *mut melee_types::Mtx) = crate::tu::mtx::HSD_MtxFree(mtx as _);
     fn hsdObj() -> *mut HSD_ClassInfo;
     fn View_ProjectionScaleBits() -> i32;
     }

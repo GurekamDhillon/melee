@@ -28,7 +28,7 @@ pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -36,7 +36,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
                 }
             } )*
         };
@@ -56,8 +56,8 @@ pub mod ext {
     fn gc_write_u8(addr: u32, v: u8);
     // video / font (hsd_3915.c, hsd_393C.c)
     fn hsd_803941E8(x24: &mut i32, x2c: &mut i32) -> i32;
-    fn hsd_803921B8(glyph: u32, x: i32, y: i32, xfb: i32, w: i32, h: i32, stride: i32, color: u32);
-    fn hsd_803922FC(glyph: u32, x: i32, y: i32, interlace: i32, xfb: i32, w: i32, h: i32, stride: i32, color: u32);
+    fn hsd_803921B8(glyph: u32, x: i32, y: i32, xfb: i32, w: i32, h: i32, stride: i32, color: u32) = crate::tu::hsd_3915::hsd_803921B8(glyph as _, x, y, xfb, w, h, stride, color as _);
+    fn hsd_803922FC(glyph: u32, x: i32, y: i32, interlace: i32, xfb: i32, w: i32, h: i32, stride: i32, color: u32) = crate::tu::hsd_3915::hsd_803922FC(glyph as _, x, y, interlace, xfb, w, h, stride, color as _);
     fn hsd_80393E68(col: u32, row: u32);
     fn hsd_80394068() -> u8;
     // HSD_VIData: u16 at byte offset 4 and 8 (the xfb size), its address, and the font atlas address

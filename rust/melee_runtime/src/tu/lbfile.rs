@@ -24,7 +24,7 @@ pub mod ext {
     lb_hook!(H_OSRestoreInterrupts, OSRestoreInterrupts, (a: i32) -> i32);
     lb_hook!(H_DVDConvertPathToEntrynum, DVDConvertPathToEntrynum, (a: *const c_char) -> i32);
     lb_hook!(H_lbDvd_8001819C, lbDvd_8001819C, (a: *const c_char) -> *mut HSD_Archive);
-    lb_hook!(H_lbHeap_80015BD0, lbHeap_80015BD0, (a: i32, b: usize) -> *mut c_void);
+    lb_hook!(H_lbHeap_80015BD0, lbHeap_80015BD0, (a: i32, b: usize) -> *mut c_void = |a, b| unsafe { crate::tu::lbheap::lbHeap_80015BD0(a, b) });
     lb_hook!(H_lbLang_IsSettingUS, lbLang_IsSettingUS, () -> bool = crate::tu::lblanguage::lbLang_IsSettingUS);
     lb_hook!(H_lbLang_IsSavedLanguageUS, lbLang_IsSavedLanguageUS, () -> bool = crate::tu::lblanguage::lbLang_IsSavedLanguageUS);
     // END GENERATED ext

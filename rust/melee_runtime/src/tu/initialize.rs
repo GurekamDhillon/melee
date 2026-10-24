@@ -341,15 +341,15 @@ pub unsafe fn HSD_SetInitParameterPtr(param: HSD_InitParam, value: *mut c_void) 
 pub mod ext {
     use super::*;
     macro_rules! todo_fns {
-        ($( fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? ; )*) => {
-            $( pub unsafe fn $name($($a: $t),*) $(-> $r)? { todo!(concat!("TODO ext: ", stringify!($name))) } )*
+        ($( fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)? ; )*) => {
+            $( pub unsafe fn $name($($a: $t),*) $(-> $r)? { crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?) } )*
         };
     }
     todo_fns! {
         fn GXNtsc480IntDf() -> *mut GXRenderModeObj;
-        fn HSD_VIInit(s: *mut HSD_VIStatus, a: *mut c_void, b: *mut c_void, c: *mut c_void);
+        fn HSD_VIInit(s: *mut HSD_VIStatus, a: *mut c_void, b: *mut c_void, c: *mut c_void) = crate::tu::video::HSD_VIInit(s, a, b, c);
         fn VIWaitForRetrace();
-        fn HSD_LogInit();
+        fn HSD_LogInit() = crate::tu::debug::HSD_LogInit();
         fn OSGetArenaLo() -> *mut c_void;
         fn OSGetArenaHi() -> *mut c_void;
         fn OSSetArenaLo(p: *mut c_void);
@@ -368,38 +368,38 @@ pub mod ext {
         fn OSCreateHeap(lo: *mut c_void, hi: *mut c_void) -> OSHeapHandle;
         fn OSSetCurrentHeap(h: OSHeapHandle) -> OSHeapHandle;
         fn OSDestroyHeap(h: OSHeapHandle);
-        fn HSD_ObjSetHeap(size: u32, p: *mut c_void);
+        fn HSD_ObjSetHeap(size: u32, p: *mut c_void) = crate::tu::objalloc::HSD_ObjSetHeap(size, p);
         fn set_HSD_Synth_804D6018(h: OSHeapHandle);
-        fn hsdForgetClassLibrary(name: *const i8);
-        fn _HSD_AObjForgetMemory(lo: *mut c_void, hi: *mut c_void);
+        fn hsdForgetClassLibrary(name: *const i8) = crate::tu::class::hsdForgetClassLibrary(name as _);
+        fn _HSD_AObjForgetMemory(lo: *mut c_void, hi: *mut c_void) = crate::tu::aobj::_HSD_AObjForgetMemory(lo, hi);
         fn _HSD_DispForgetMemory(lo: *mut c_void, hi: *mut c_void);
-        fn _HSD_ObjAllocForgetMemory(lo: *mut c_void, hi: *mut c_void);
+        fn _HSD_ObjAllocForgetMemory(lo: *mut c_void, hi: *mut c_void) = crate::tu::objalloc::_HSD_ObjAllocForgetMemory(lo, hi);
         fn _HSD_RandForgetMemory(lo: *mut c_void, hi: *mut c_void);
         fn _HSD_RObjForgetMemory(lo: *mut c_void, hi: *mut c_void);
-        fn HSD_VIGetRenderMode() -> *mut GXRenderModeObj;
+        fn HSD_VIGetRenderMode() -> *mut GXRenderModeObj = crate::tu::video::HSD_VIGetRenderMode();
         fn GXSetPixelFmt(pix: i32, z: i32);
         fn GXSetFieldMode(field_rendering: u8, half_aspect: u8);
-        fn HSD_AObjInitAllocData();
-        fn HSD_FObjInitAllocData();
-        fn HSD_VecInitAllocData();
-        fn HSD_MtxInitAllocData();
+        fn HSD_AObjInitAllocData() = crate::tu::aobj::HSD_AObjInitAllocData();
+        fn HSD_FObjInitAllocData() = crate::tu::fobj::HSD_FObjInitAllocData();
+        fn HSD_VecInitAllocData() = crate::tu::mtx::HSD_VecInitAllocData();
+        fn HSD_MtxInitAllocData() = crate::tu::mtx::HSD_MtxInitAllocData();
         fn HSD_RObjInitAllocData();
         fn HSD_RenderInitAllocData();
-        fn HSD_ShadowInitAllocData();
+        fn HSD_ShadowInitAllocData() = crate::tu::shadow::HSD_ShadowInitAllocData();
         fn HSD_ZListInitAllocData();
-        fn HSD_AObjGetAllocData() -> *mut HSD_ObjAllocData;
-        fn HSD_FObjGetAllocData() -> *mut HSD_ObjAllocData;
-        fn HSD_VecGetAllocData() -> *mut HSD_ObjAllocData;
-        fn HSD_MtxGetAllocData() -> *mut HSD_ObjAllocData;
+        fn HSD_AObjGetAllocData() -> *mut HSD_ObjAllocData = crate::tu::aobj::HSD_AObjGetAllocData();
+        fn HSD_FObjGetAllocData() -> *mut HSD_ObjAllocData = crate::tu::fobj::HSD_FObjGetAllocData();
+        fn HSD_VecGetAllocData() -> *mut HSD_ObjAllocData = crate::tu::mtx::HSD_VecGetAllocData();
+        fn HSD_MtxGetAllocData() -> *mut HSD_ObjAllocData = crate::tu::mtx::HSD_MtxGetAllocData();
         fn HSD_RObjGetAllocData() -> *mut HSD_ObjAllocData;
         fn HSD_RvalueObjGetAllocData() -> *mut HSD_ObjAllocData;
-        fn HSD_ShadowGetAllocData() -> *mut HSD_ObjAllocData;
+        fn HSD_ShadowGetAllocData() -> *mut HSD_ObjAllocData = crate::tu::shadow::HSD_ShadowGetAllocData();
         fn HSD_RenderGetAllocData() -> *mut HSD_ObjAllocData;
         fn HSD_ChanGetAllocData() -> *mut HSD_ObjAllocData;
         fn HSD_TevRegGetAllocData() -> *mut HSD_ObjAllocData;
-        fn HSD_ObjAllocGetUsing(d: *mut HSD_ObjAllocData) -> u32;
-        fn HSD_ObjAllocGetFreed(d: *mut HSD_ObjAllocData) -> u32;
-        fn HSD_ObjAllocGetPeak(d: *mut HSD_ObjAllocData) -> u32;
+        fn HSD_ObjAllocGetUsing(d: *mut HSD_ObjAllocData) -> u32 = melee_types::inline::HSD_ObjAllocGetUsing(&*(d as *const _));
+        fn HSD_ObjAllocGetFreed(d: *mut HSD_ObjAllocData) -> u32 = melee_types::inline::HSD_ObjAllocGetFreed(&*(d as *const _));
+        fn HSD_ObjAllocGetPeak(d: *mut HSD_ObjAllocData) -> u32 = melee_types::inline::HSD_ObjAllocGetPeak(&*(d as *const _));
     }
     pub fn OSReport(_s: &str) {
         todo!("TODO ext: OSReport (dolphin/os)")

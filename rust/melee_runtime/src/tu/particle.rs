@@ -1667,7 +1667,7 @@ pub mod ext {
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -1675,21 +1675,21 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
                 }
             } )*
         };
     }
     ext_fns! {
-    fn HSD_JObjAlloc() -> *mut HSD_JObj;
+    fn HSD_JObjAlloc() -> *mut HSD_JObj = crate::tu::jobj::HSD_JObjAlloc();
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
     fn HSD_JObjSetupMatrixSub(a0: *mut HSD_JObj);
-    fn HSD_JObjUnref(a0: *mut HSD_JObj);
+    fn HSD_JObjUnref(a0: *mut HSD_JObj) = crate::tu::jobj::HSD_JObjUnref(a0);
     fn HSD_MtxGetScale(a0: *mut c_void, a1: *mut Vec);
     fn HSD_MtxSRT(a0: *mut c_void, a1: *mut Vec, a2: *mut Vec, a3: *mut Vec, a4: *mut Vec);
-    fn HSD_ObjAlloc(a0: *mut _HSD_ObjAllocData) -> *mut c_void;
-    fn HSD_ObjAllocInit(a0: *mut _HSD_ObjAllocData, a1: u32, a2: u32);
-    fn HSD_ObjFree(a0: *mut _HSD_ObjAllocData, a1: *mut c_void);
+    fn HSD_ObjAlloc(a0: *mut _HSD_ObjAllocData) -> *mut c_void = crate::tu::objalloc::HSD_ObjAlloc(a0 as _);
+    fn HSD_ObjAllocInit(a0: *mut _HSD_ObjAllocData, a1: u32, a2: u32) = crate::tu::objalloc::HSD_ObjAllocInit(a0 as _, a1 as _, a2);
+    fn HSD_ObjFree(a0: *mut _HSD_ObjAllocData, a1: *mut c_void) = crate::tu::objalloc::HSD_ObjFree(a0 as _, a1);
     fn HSD_Randf() -> f32;
     fn ScriptGame_StageSlotParticleBegin(a0: i32) -> i32;
     fn ScriptGame_StageSlotProcEnd();

@@ -202,7 +202,30 @@ fn install_audio(iso: &str) -> Result<(), String> {
         h::LBAUDIOAX_80024FF4 = Some(sim::lbaudioax_80024ff4);
         h::LBAUDIOAX_8002500C = Some(sim::lbaudioax_8002500c);
         h::LBAUDIOAX_80025038 = Some(sim::lbaudioax_80025038);
+        h::LBAUDIOAX_800263E8 = Some(|dir, g, beh, sfx, a, b, p0, p1, p2, s8, sc| sim::lbaudioax_800263e8(dir, g as usize, beh as i32, sfx, a, b, p0, p1, p2, s8, sc));
+        h::LBAUDIOAX_800264E4 = Some(sim::lbaudioax_800264e4);
+        h::LBAUDIOAX_80026510 = Some(|g| sim::lbaudioax_80026510(g as usize));
+        h::LBAUDIOAX_800265C4 = Some(|g, voice| sim::lbaudioax_800265c4(g as usize, voice));
     }
+    // What the positional sound objects read: the owner's class and position, the game RNG. The
+    // match camera (Camera_800307D0) is not simulated yet, so an unset camera leaves them at
+    // centre pan.
+    sim::set_env(melee_audio::posobj::PosEnv {
+        class_of: Some(|g| unsafe { (*(g as *const melee_types::HSD_GObj)).classifier as i32 }),
+        fighter_pos: Some(|g| {
+            let mut p = melee_types::Vec3 { x: 0.0, y: 0.0, z: 0.0 };
+            melee_fighter::ftlib::ftlib_80086644(g as *mut _, &mut p);
+            [p.x, p.y, p.z]
+        }),
+        item_pos: Some(|g| unsafe {
+            let ip = (*(g as *const melee_types::HSD_GObj)).user_data as *const melee_types::Item;
+            let mut p = melee_types::Vec3 { x: 0.0, y: 0.0, z: 0.0 };
+            melee_items::itlib::it_8026b294(&*ip, &mut p);
+            [p.x, p.y, p.z]
+        }),
+        camera: None,
+        randi: Some(melee_fighter::rng::HSD_Randi),
+    });
     eprintln!("melee: audio booted (smash2.sem + main.ssm), lbAudioAx hooks set");
     Ok(())
 }

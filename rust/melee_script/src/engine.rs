@@ -128,6 +128,16 @@ pub struct State {
     /// `gs.stage_zones`: LAB_STAGE_ZONES has no getter, so the last write is remembered
     pub stage_zones: bool,
     pub pads: crate::pad::ScriptPads,
+    /// `gd.set_motion` / `gd.anim_preview` requests: motion + 1 to enter at the next frame boundary, per slot
+    pub set_motion: [i32; 6],
+    pub set_rate: [f32; 6],
+    pub set_lift: [f32; 6],
+    /// `gs.lab_request`: the frontend's LAB entry or MELEE_LAB=1 asked for the Lab
+    pub lab_request: bool,
+    /// `gs.camera_owner` (script slot + 1), the task that took it, and the completion counter last seen
+    pub camera_owner: i32,
+    pub camera_task_owner: i32,
+    pub camera_completion: i32,
     /// error sentinel + wrapper factory (see Engine::native)
     pub err_sentinel: Option<Table>,
     pub wrapper: Option<Function>,
@@ -288,6 +298,58 @@ impl State {
         }
     }
 
+    /// `gs_cpu_log_slot`: "cpu: P2 idle (global)" - which CPUs could interfere is visible from the log alone.
+    pub fn cpu_log_slot(&mut self, slot: i32) {
+        if let Some((w, src)) = crate::gd::fighter::cpu_mode_words(self.game.cpu_mode_info(slot)) {
+            self.log(&format!("cpu: P{} {} ({})", slot + 1, w, src));
+        }
+    }
+
+    /// `gs_fly_set`: mode 0 off, 1 on, 2 place, -1 toggle. Returns the game's code.
+    pub fn fly_set(&mut self, slot: i32, mode: i32) -> i32 {
+        let mode = if mode < 0 { if self.game.geno_fly_get(slot) > 0 { 0 } else { 1 } } else { mode };
+        self.rw_branch();
+        let rc = self.game.geno_fly_set(slot, mode);
+        if rc >= 0 {
+            self.log(&format!(
+                "fly: P{} {}{}",
+                slot + 1,
+                match mode { 1 => "on", 2 => "off (placed)", _ => "off" },
+                if rc == 1 { " - no floor below, dropped where it was" } else { "" }
+            ));
+        }
+        rc
+    }
+
+    /// `gs_set_motion_core`: shared scheduling; callers validate the fighter and motion first.
+    pub fn set_motion_core(&mut self, slot: usize, motion: i32, frame: i32, rate: f32, lift: f32) {
+        let frame = frame.clamp(1, 600);
+        self.step = 0;
+        self.set_motion[slot] = motion + 1;
+        self.set_rate[slot] = rate;
+        self.set_lift[slot] = lift;
+        self.paused = true;
+        self.step = frame - 1;
+    }
+
+    /// `gs_apply_set_motion`: at a frame boundary the requested fighters enter their motion.
+    pub fn apply_set_motion(&mut self) {
+        let session = self.host.borrow().session();
+        let mut any = false;
+        for slot in 0..6 {
+            if self.set_motion[slot] > 0 && !session {
+                let rate = if self.set_rate[slot] > 0.0 { self.set_rate[slot] } else { 1.0 };
+                if !any {
+                    self.rw_branch(); // a write: the timeline forks here
+                    any = true;
+                }
+                let m = self.set_motion[slot] - 1;
+                self.game.lab_set_motion(slot as i32, m, rate.to_bits() as i32, self.set_lift[slot].to_bits() as i32);
+            }
+            self.set_motion[slot] = 0;
+        }
+    }
+
     /// `gs_rw_branch`: a gameplay write forks the rewind timeline (the long rewind is not ported yet, so nothing to drop).
     pub fn rw_branch(&mut self) {}
 
@@ -358,6 +420,13 @@ impl Engine {
             step: 0,
             stage_zones: false,
             pads: Default::default(),
+            set_motion: [0; 6],
+            set_rate: [0.0; 6],
+            set_lift: [0.0; 6],
+            lab_request: false,
+            camera_owner: 0,
+            camera_task_owner: 0,
+            camera_completion: 0,
             err_sentinel: None,
             wrapper: None,
             draw: [Vec::new(), Vec::new()],
@@ -394,7 +463,32 @@ impl Engine {
             );
             s.log(&msg);
         }
+        {
+            let mut s = eng.st.borrow_mut();
+            let v = s.host.borrow().getenv("MELEE_LAB");
+            if v.is_some_and(|v| !v.is_empty() && !v.starts_with('0')) {
+                s.lab_request = true;
+                s.log("script: MELEE_LAB: the Geno Lab is requested for this session");
+            }
+        }
         Ok(eng)
+    }
+
+    /// The load half of `gs_init`: scripts from the scripts folder, then from active mods, then the `MELEE_SCRIPT`
+    /// list (`;`-separated names or paths, origin "env"). `MELEE_SCRIPTS=0` skips the first two.
+    pub fn boot(&self) {
+        let getenv = |k: &str| self.st.borrow().host.borrow().getenv(k);
+        if !getenv("MELEE_SCRIPTS").is_some_and(|v| v.starts_with('0')) {
+            self.scan_scripts_dir();
+            self.scan_mods();
+        }
+        if let Some(v) = getenv("MELEE_SCRIPT").filter(|v| !v.is_empty()) {
+            for name in v.split(';').filter(|n| !n.is_empty()) {
+                if let Some(i) = self.load_named(name) {
+                    self.st.borrow_mut().scripts[i].origin = "env".into();
+                }
+            }
+        }
     }
 
     /// `lua_sethook(L, gs_count_hook, LUA_MASKCOUNT, GW_SCRIPT_HOOK_STEP)` as a raw C hook: `luaL_error` raises a plain
@@ -1061,6 +1155,39 @@ impl Engine {
         s.build = 1 - s.build;
     }
 
+    /// The camera block of `gw_Script_FramePost`: tell the owner a move or path finished, drop ownership once the
+    /// camera is attached again.
+    fn camera_tick(&self) {
+        let (completed, kind, owner, state, last) = {
+            let s = self.st.borrow();
+            (
+                s.game.camera_script_completion(),
+                s.game.camera_script_completion_kind(),
+                s.camera_owner,
+                s.game.camera_script_state(),
+                s.camera_completion,
+            )
+        };
+        if completed > last && owner > 0 {
+            let o = (owner - 1) as usize;
+            let kind_name = if kind == 2 { "path" } else { "move" };
+            let id = self.st.borrow().script_id(Some(o));
+            self.st.borrow().log(&format!("script [{id}] camera {kind_name} complete"));
+            if let Some(f) = self.get_hook(o, "on_camera_complete") {
+                let a: MultiValue = [Value::String(self.lua.create_string(kind_name).unwrap())].into_iter().collect();
+                self.pcall(o, &f, a, "on_camera_complete");
+            }
+        }
+        let mut s = self.st.borrow_mut();
+        s.camera_completion = completed; // a rewind may move the counter backward
+        if s.camera_owner != 0 && state == 0 {
+            let id = s.script_id(Some((s.camera_owner - 1) as usize));
+            s.log(&format!("script [{id}] camera restored (attach complete)"));
+            s.camera_owner = 0;
+            s.camera_task_owner = 0;
+        }
+    }
+
     /// `gw_Script_PadApply`: the script layer over the four pad samples just read; returns the driven-port mask.
     pub fn pad_apply(&self, st: &mut [crate::pad::PadSample; 4], driven: u32) -> u32 {
         let mut s = self.st.borrow_mut();
@@ -1075,6 +1202,7 @@ impl Engine {
 
     /// `gw_Script_FramePre`
     pub fn frame_pre(&self) {
+        self.st.borrow_mut().apply_set_motion();
         self.hook_all("on_frame_pre", &[]);
     }
 
@@ -1110,6 +1238,7 @@ impl Engine {
             (any, start)
         };
         let _ = any;
+        self.camera_tick();
         if start {
             self.hook_all("on_match_start", &[]);
         }
@@ -1437,7 +1566,7 @@ unsafe extern "C-unwind" fn count_hook(l: *mut mlua::ffi::lua_State, _ar: *mut m
         if s.budget < 0 || (!turbo && now > s.deadline) {
             s.budget = 0; // keep failing until control is back with the engine
             Some(format!(
-                "ran too long (limit: {} instructions or {} ms per call) ",
+                "ran too long (limit: {} instructions or {} ms per call)\0",
                 s.budget_per_call, s.ms_per_call as i64
             ))
         } else {
@@ -1445,7 +1574,7 @@ unsafe extern "C-unwind" fn count_hook(l: *mut mlua::ffi::lua_State, _ar: *mut m
         }
     };
     if let Some(m) = msg {
-        ffi::luaL_error(l, b"%s ".as_ptr() as *const std::ffi::c_char, m.as_ptr() as *const std::ffi::c_char);
+        ffi::luaL_error(l, b"%s\0".as_ptr() as *const std::ffi::c_char, m.as_ptr() as *const std::ffi::c_char);
     }
 }
 

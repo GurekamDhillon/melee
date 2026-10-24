@@ -262,6 +262,152 @@ pub trait ScriptGame {
         0
     }
     fn virtual_pad_release(&mut self, _slot: i32, _owner: i32) {}
+    // ---- the script camera (gw_Camera_Script*)
+    fn camera_script_get_bits(&self, _field: i32) -> i32 {
+        0
+    }
+    fn camera_script_set(&mut self, _field: i32, _bits: i32) {}
+    /// 0 attached, 1 detached, 2 attaching
+    fn camera_script_state(&self) -> i32 {
+        0
+    }
+    fn camera_script_mode(&self) -> i32 {
+        0
+    }
+    fn camera_script_completion(&self) -> i32 {
+        0
+    }
+    /// 1 move, 2 path
+    fn camera_script_completion_kind(&self) -> i32 {
+        0
+    }
+    fn camera_script_detach(&mut self) -> bool {
+        false
+    }
+    fn camera_script_attach(&mut self, _frames: i32) {}
+    fn camera_script_reset(&mut self) {}
+    fn camera_script_commit(&mut self) {}
+    fn camera_script_move_begin(&mut self) {}
+    fn camera_script_move(&mut self, _frames: i32, _ease: i32) {}
+    fn camera_script_path_clear(&mut self) {}
+    fn camera_script_path_key(&mut self, _frame: i32) -> bool {
+        false
+    }
+    fn camera_script_path_start(&mut self) {}
+    fn camera_script_follow(&mut self, _kind: i32, _id: i32, _point: [i32; 3], _offset: [i32; 3]) -> bool {
+        false
+    }
+    fn camera_script_shake(&mut self, _intensity_bits: i32, _frames: i32) {}
+    fn camera_script_lift_bounds(&mut self, _lift: bool) {}
+    // ---- fighter writes, CPU, debug movement
+    fn set_stocks(&mut self, _slot: i32, _n: i32) {}
+    fn impulse(&mut self, _slot: i32, _x_bits: i32, _y_bits: i32) -> bool {
+        false
+    }
+    fn hit(&mut self, _slot: i32, _from: i32, _damage: i32, _angle: i32, _kbg: i32, _bkb: i32) -> bool {
+        false
+    }
+    /// fight: 0 stand, 1 fight, 2 default
+    fn cpu_mode(&mut self, _slot: i32, _fight: i32) -> bool {
+        false
+    }
+    fn cpu_script_mode(&mut self, _slot: i32) -> bool {
+        false
+    }
+    fn cpu_mode_info(&self, _slot: i32) -> i32 {
+        0
+    }
+    fn geno_fly_get(&self, _slot: i32) -> i32 {
+        -1
+    }
+    fn geno_fly_set(&mut self, _slot: i32, _mode: i32) -> i32 {
+        -1
+    }
+    fn geno_fly_teleport(&mut self, _slot: i32, _x_bits: i32, _y_bits: i32) -> i32 {
+        -1
+    }
+    fn geno_fly_set_speed(&mut self, _bits: i32) {}
+    fn geno_fly_speed(&self) -> f32 {
+        0.0
+    }
+    fn geno_fly_set_solid(&mut self, _solid: bool) {}
+    fn geno_fly_solid(&self) -> bool {
+        false
+    }
+    fn geno_fly_hold_hitbox(&mut self, _slot: i32, _on: bool, _action: i32, _frame: i32) -> i32 {
+        -1
+    }
+    fn geno_fly_holding(&self, _slot: i32) -> bool {
+        false
+    }
+    fn geno_fly_hold_hits(&self, _slot: i32) -> i32 {
+        0
+    }
+    fn play_sound_options(&mut self, _id: i32, _volume: i32, _pitch: i32) -> i32 {
+        0
+    }
+    // ---- action states, animation rows, script words (the LAB's browsers)
+    fn lab_common_count(&self, _slot: i32) -> i32 {
+        0
+    }
+    /// the animation index of a motion state's row, -1 none, < -1 invalid
+    fn lab_motion_anim(&self, _slot: i32, _motion: i32) -> i32 {
+        -2
+    }
+    fn lab_anim_symbol_for(&self, _slot: i32, _anim: i32) -> Option<String> {
+        None
+    }
+    fn lab_row_count(&self, _slot: i32) -> i32 {
+        0
+    }
+    fn lab_set_preview_row(&mut self, _slot: i32, _row: i32, _facing: i32) {}
+    /// guest address of an animation's subaction script
+    fn lab_script(&self, _slot: i32, _anim: i32) -> Option<u32> {
+        None
+    }
+    fn lab_set_motion(&mut self, _slot: i32, _motion: i32, _rate_bits: i32, _lift_bits: i32) {}
+    fn guest_ok(&self, _addr: u32, _len: u32) -> bool {
+        false
+    }
+    fn guest_word(&self, _addr: u32) -> u32 {
+        0
+    }
+    fn geno_script_original(&self, addr: u32) -> u32 {
+        addr
+    }
+    fn mex_move_logic_entries(&self, _kind: i32) -> i32 {
+        0
+    }
+    fn geno_state_count(&self, _profile: i32) -> i32 {
+        0
+    }
+    // ---- LAB mode, constants and edits
+    fn geno_lab_mode_active(&self) -> bool {
+        false
+    }
+    /// `gw_GenoLab_Leave(where)`: 0 css, 1 sss, 2 menu, 3 restart. False when refused.
+    fn geno_lab_leave(&mut self, _where: i32) -> bool {
+        false
+    }
+    fn lab_common_f(&self, _which: i32) -> f32 {
+        0.0
+    }
+    fn lab_floor_y(&self, _x: f32, _y: f32, _depth: f32) -> f32 {
+        -1.0e9
+    }
+    fn lab_set_shield(&mut self, _slot: i32, _health: f32) {}
+    fn lab_set_scale(&mut self, _slot: i32, _scale: f32) {}
+    // ---- rollback visualiser (gw_RbViz_*)
+    fn rbviz_total(&self) -> i32 {
+        0
+    }
+    fn rbviz_get(&self, _back: i32) -> Option<crate::gd::labmisc::RbRow> {
+        None
+    }
+    fn rbviz_first_mismatch(&self) -> Option<crate::gd::labmisc::RbMismatch> {
+        None
+    }
+    fn rbviz_reset(&mut self) {}
     // ---- scene
     fn stage_kind(&self) -> i32 {
         0

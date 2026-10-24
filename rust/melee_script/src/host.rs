@@ -32,6 +32,14 @@ pub trait Host {
     fn request_quit(&mut self) {}
     /// `gw_Overlay_SetRunLabel`
     fn set_run_label(&mut self, _text: &str) {}
+    /// `getenv`
+    fn getenv(&self, key: &str) -> Option<String> {
+        std::env::var(key).ok()
+    }
+    /// `GetLocalTime`: (year, month, day, hour, minute, second)
+    fn local_time(&self) -> (u32, u32, u32, u32, u32, u32) {
+        (1970, 1, 1, 0, 0, 0)
+    }
     /// `gw_SceneReport_SceneName`
     fn scene_name(&self, kind: i32) -> String {
         format!("scene {kind}")

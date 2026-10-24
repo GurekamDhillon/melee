@@ -4,8 +4,12 @@ use crate::args::Args;
 use crate::engine::{Engine, Shared};
 use mlua::{IntoLuaMulti, Lua, Result as LuaResult, Table, Value};
 
+pub mod camera;
 pub mod core;
+pub mod fighter;
 pub mod lab;
+pub mod labmisc;
+pub mod labstate;
 pub mod mods;
 pub mod pad;
 pub mod players;
@@ -31,10 +35,14 @@ where
 
 pub fn register_all(e: &Engine, gd: &Table) -> LuaResult<()> {
     core::register(e, gd)?;
+    fighter::register(e, gd)?;
+    camera::register(e, gd)?;
     mods::register(e, gd)?;
     pad::register(e, gd)?;
     players::register(e, gd)?;
     lab::register(e, gd)?;
+    labmisc::register(e, gd)?;
+    labstate::register(e, gd)?;
     Ok(())
 }
 

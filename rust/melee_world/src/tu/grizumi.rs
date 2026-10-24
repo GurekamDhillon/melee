@@ -38,7 +38,7 @@ pub mod ext {
     pub use crate::tu::grinl2::ext::{
         grAnime_801C8138, grDisplay_801C5DB0, GObj_SetupGXLink, Ground_InitMapColl, HSD_GObj_SetupProc, lb_800115F4,
     };
-    hook!(CAMERA_8002A4AC, Camera_8002A4AC, (a0: *mut HSD_GObj));
+    hook_or!(CAMERA_8002A4AC, Camera_8002A4AC, (a0: *mut HSD_GObj), |a0: *mut HSD_GObj| { unsafe { let _ = crate::tu::cmcamera::Camera_8002A4AC(a0 as _); } });
     hook_or!(CAMERA_80030A50, Camera_80030A50, () -> *mut HSD_GObj, || unsafe { crate::cm::camera::Camera_80030A50() as _ });
     hook_or!(CAMERA_80031074, Camera_80031074, (a0: u8), |a0: u8| crate::cm::camera::world().camera_80031074(a0));
     hook_or!(CAMERA_800310A0, Camera_800310A0, (a0: u8), |a0: u8| crate::cm::camera::world().camera_800310a0(a0));

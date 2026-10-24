@@ -89,3 +89,8 @@ pub fn with_coll_ev<R>(
     COLL.with(|c| c.set(prev));
     r
 }
+
+/// `Camera_LogicToScreen(subject, point)` (cm/camera.c, `melee_world::tu::cmcamera`): the screen position of a camera subject.
+pub fn camera_logic_to_screen(s: *mut crate::types::CmSubject, out: &mut crate::types::S32Vec2) -> bool {
+    unsafe { melee_world::tu::cmcamera::Camera_LogicToScreen(s, out) != 0 }
+}

@@ -823,8 +823,23 @@ pub fn play(args: &[String]) -> ExitCode {
         quit: false,
         failed: None,
     };
-    let cfg = WindowConfig { title: "GD's Melee (native)".into(), width: 1280, height: 960 };
-    match run_windowed(game, PadSystem::interactive(), cfg) {
+    let scripted = std::env::var_os("MELEE_PAD_SCRIPT").is_some_and(|v| !v.is_empty());
+    let cfg = WindowConfig { title: "GD's Melee (native)".into(), width: 1280, height: 960, active: !scripted };
+    if scripted {
+        std::env::set_var("MELEE_PAD_IGNORE_ADAPTER", "1");
+    }
+    let mut pads = PadSystem::interactive();
+    if scripted {
+        // Deterministic and hands-off: no keyboard, adapter or gamepad can leak into a scripted run, and the window never takes focus.
+        pads.set_ignore_adapter(true);
+        pads.gamepads = melee_platform::pad_read::GamepadSource::Fixed(Default::default());
+    }
+    // Port 1 on the keyboard (WASD stick, IJKL C-stick, Space A, Shift B, F/G X/Y, Q/E L/R, Z, Enter START, arrows d-pad)
+    // unless MELEE_KEYBOARD=0; an adapter or gamepad on port 1 still wins, a pad script wins over both.
+    if !scripted && std::env::var("MELEE_KEYBOARD").map_or(true, |v| v != "0") {
+        pads.keyboard[0] = melee_platform::aurora::KeyboardBindings::preset_default();
+    }
+    match run_windowed(game, pads, cfg) {
         Ok((ticks, _)) => {
             log(&format!("closed after {ticks} ticks"));
             ExitCode::SUCCESS

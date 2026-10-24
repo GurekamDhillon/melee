@@ -268,7 +268,7 @@ fn start_match_audio(sim: &vs_match::VsMatch, ckinds: &[i32], mut pre: Option<&m
 }
 
 /// A 32 kHz s16 stereo WAV, like `shim_ax.c`'s `MELEE_AUDIO_DUMP`.
-fn write_wav(path: &str, samples: &[i16]) -> std::io::Result<()> {
+pub(crate) fn write_wav(path: &str, samples: &[i16]) -> std::io::Result<()> {
     let bytes = (samples.len() * 2) as u32;
     let mut b = Vec::with_capacity(44 + bytes as usize);
     b.extend_from_slice(b"RIFF");

@@ -252,13 +252,8 @@ impl Play {
             Scene::Match => {
                 if let (Some(su), Some(m)) = (self.setup.as_ref(), self.m.as_ref()) {
                     let ck = [crate::audio::ckind_of(ROSTER[su.fighters[0]].0), crate::audio::ckind_of(ROSTER[su.fighters[1]].0)];
-                    let (st, gr) = match STAGES[su.stage].0 {
-                        "GrNLa.dat" => (crate::vs_match::STKIND_FD, melee_types::Gr_Kind_Last),
-                        "GrNBa.dat" => (crate::vs_match::STKIND_BF, melee_types::Gr_Kind_Battle),
-                        "GrGr.dat" => (crate::vs_match::STKIND_GREENS, melee_types::Gr_Kind_Greens),
-                        _ => (crate::vs_match::STKIND_STORY, melee_types::Gr_Kind_Story),
-                    };
-                    a.match_start(&ck, st, gr as i32, m.sim.bgm);
+                    let (st, gr) = crate::audio::stage_kinds(STAGES[su.stage].0);
+                    a.match_start(&ck, st, gr, m.sim.bgm);
                 }
             }
             Scene::Results => {

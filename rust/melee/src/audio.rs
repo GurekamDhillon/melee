@@ -29,12 +29,22 @@ pub fn ckind_of(name: &str) -> i32 {
         "falcon" => melee_types::CKind_Captain,
         "fox" => melee_types::CKind_Fox,
         "falco" => melee_types::CKind_Falco,
-        "marth" => melee_types::CKind_Emblem,
+        "marth" => melee_types::CKind_Mars,
         "sheik" => melee_types::CKind_Seak,
         "peach" => melee_types::CKind_Peach,
         "samus" => melee_types::CKind_Samus,
         _ => melee_types::CKind_Captain,
     }) as i32
+}
+
+/// `(StageKind, GroundKind)` of a stage file, for the bank loads and the stage's echo.
+pub fn stage_kinds(file: &str) -> (i32, i32) {
+    match file {
+        "GrNLa.dat" => (crate::vs_match::STKIND_FD, melee_types::Gr_Kind_Last as i32),
+        "GrNBa.dat" => (crate::vs_match::STKIND_BF, melee_types::Gr_Kind_Battle as i32),
+        "GrGr.dat" => (crate::vs_match::STKIND_GREENS, melee_types::Gr_Kind_Greens as i32),
+        _ => (crate::vs_match::STKIND_STORY, melee_types::Gr_Kind_Story as i32),
+    }
 }
 
 /// `gm_80168C5C`: the announcer's call for a character name (retail table).
@@ -57,7 +67,8 @@ fn css_voice(ckind: i32) -> Option<i32> {
         20 => 0xC6, // Falco
         12 => 0xD1, // Peach
         16 => 0xD5, // Samus
-        23 => 0xDA, // Marth
+        9 => 0xCE,  // Marth
+        23 => 0xDA, // Roy
         19 => 0xD6, // Sheik (the Zelda icon)
         _ => return None,
     })
@@ -69,7 +80,7 @@ fn victory_theme(ckind: i32) -> i32 {
         2 | 20 => 0x10,
         12 => 0x16,
         16 => 0x19,
-        23 => 0xE,
+        9 | 23 => 0xE,
         19 => 0x15,
         _ => 0x11,
     }

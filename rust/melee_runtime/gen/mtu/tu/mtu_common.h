@@ -90,6 +90,17 @@ static u32 FI32(u32 v)
     for (i = 0; i < NF; i++) if ((u32) (unsigned long long) FP[i] == v) return (u32) (i + 1);
     return 0xFFFFFFFDu;
 }
+/* a data address truncated to 32 bits ((u32) ptr): named by the registered region it falls in */
+static u32 PI32(u32 v)
+{
+    int i;
+    if (v == 0) return 0;
+    for (i = 0; i < NR; i++) {
+        u32 b = (u32) (unsigned long long) RB[i];
+        if (v >= b && v - b < RZ[i]) return ((u32) (i + 1) << 16) | (v - b);
+    }
+    return 0xFFFFFFFCu;
+}
 /* a data pointer that is really a function address (UNK_T slots) gets the function's id */
 static u32 PI(const void* p)
 {

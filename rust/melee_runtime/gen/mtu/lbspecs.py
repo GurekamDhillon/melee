@@ -72,5 +72,5 @@ add("lbcardgame", "src/melee/lb/lbcardgame.c", dict(
     effects={"OSTicksToCalendarTime": (_ctime_c, _ctime_r)})
 
 
-for _m in ("lbspecs_card",):
+for _m in ("lbspecs_card", "lbspecs_cmd", "lbspecs_arq"):
     __import__(_m)

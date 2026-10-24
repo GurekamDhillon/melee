@@ -121,6 +121,21 @@ pub fn fi32(v: u32) -> u32 {
     }
     0xFFFF_FFFD
 }
+/// A data address truncated to 32 bits (`(u32) ptr`): named by the registered region it falls in.
+pub fn pi32(v: u32) -> u32 {
+    if v == 0 {
+        return 0;
+    }
+    unsafe {
+        for (i, &(b, z)) in RB.iter().enumerate() {
+            let b = b as u32;
+            if v >= b && ((v - b) as usize) < z {
+                return (((i + 1) as u32) << 16) | (v - b);
+            }
+        }
+    }
+    0xFFFF_FFFC
+}
 /// A data pointer that is really a function address (UNK_T slots) gets the function's id.
 pub fn pi<T>(p: *const T) -> u32 {
     let a = p as usize;

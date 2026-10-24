@@ -20,3 +20,5 @@ pub mod displayfunc;
 pub mod lbbgflash;
 pub mod lbcardgame;
 pub mod lbcardnew;
+pub mod lbarq;
+pub mod lbcommand;

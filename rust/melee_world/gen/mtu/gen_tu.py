@@ -494,7 +494,7 @@ def build(stem, spec, want_ext):
             c_out.append(f"{c.element_type.spelling} {n}[{c.element_count}];")
             ext_data.append(f"    pub static mut {n}: {rust_ty(t)} = unsafe {{ core::mem::zeroed() }};")
         else:
-            c_out.append(f"{t.spelling} {n};")
+            c_out.append((f"__typeof__({t.spelling}) {n};" if is_fnptr(t) else f"{t.spelling} {n};"))
             ext_data.append(f"    pub static mut {n}: {rust_ty(t)} = unsafe {{ core::mem::zeroed() }};")
 
     # stubs
@@ -513,7 +513,13 @@ def build(stem, spec, want_ext):
             if cs:  # a variadic callee the spec models by hand (fixed-arity on the Rust side)
                 c_out.append(cs["c"].replace("@ID@", str(sid[n])))
                 ext_fns.append("    " + cs["ext"])
-                r_out.append(("@@HOOK@@", f"        m::ext::hook::{n} = Some({cs['hook'].replace('@ID@', str(sid[n]))});"))
+                rn, hk = cs.get("rust_name", n), cs["hook"].replace("@ID@", str(sid[n]))
+                if spec.get("mods"):  # multi-module oracle: install into every module whose ext declares it
+                    for mn in spec["mods"]:
+                        if has_ext(mn, rn):
+                            r_out.append(("@@HOOK@@", f"        m::{mn.replace(chr(47), chr(58) * 2)}::ext::hook::{rn} = Some({hk});"))
+                else:
+                    r_out.append(("@@HOOK@@", f"        m::ext::hook::{rn} = Some({hk});"))
             continue  # other variadics (OSReport): defined in mtu_common.h
         params = ", ".join(f"__typeof__({p.spelling}) a{i}" for i, p in enumerate(ptys)) or "void"
         ret_t = "void" if rcls == "void" else f"__typeof__({rt.spelling})"
@@ -545,7 +551,7 @@ def build(stem, spec, want_ext):
         for mn in (spec.get("mods") or [None]):
             if mn and not has_ext(mn, n):
                 continue
-            pre_ = f"m::{mn}::ext::hook::" if mn else "m::ext::hook::"
+            pre_ = f"m::{mn.replace(chr(47), chr(58) * 2)}::ext::hook::" if mn else "m::ext::hook::"
             r_out_hook = f"        {pre_}{n} = Some(|{argl}| {{ " + " ".join(body_r) + " });"
             r_out.append(("@@HOOK@@", r_out_hook))
         ext_fns.append(f"    fn {n}({rparams}){rret};")
@@ -595,12 +601,18 @@ def build(stem, spec, want_ext):
         rtxt += "pub fn install() {\n    use m::ext::hook::*;\n    unsafe {\n" + "\n".join(h.replace("m::ext::hook::", "") for h in hooks) + "\n    }\n}\n\n"
     rtxt += "pub fn freg_all() {\n"
     fm = spec.get("freg_mod")  # single-module oracle: register the TU's own functions (observable as callback ids)
-    for k, n in enumerate([] if (spec.get("mods") and not fm) else fpn):
+    fpf = spec.get("freg_path")  # multi-module oracle: callable(kind, name) -> Rust path of the function the C table names
+    if fpf:
+        for n in fpn:
+            rtxt += f"    freg({fpf('cb', n)} as *const () as usize);" + chr(10)
+        for n in own:
+            rtxt += f"    freg({fpf('own', n)} as *const () as usize);" + chr(10)
+    for k, n in enumerate([] if (fpf or (spec.get("mods") and not fm)) else fpn):
         if fm:  # address-taken stubs: placeholders that keep the ids aligned with the C table
             rtxt += f"    freg({0xDEAD0000 + k});" + chr(10)
         else:
             rtxt += f"    freg({spec.get('real_cb', {}).get(n, 'm::ext::cb::' + n)} as *const () as usize);" + chr(10)
-    for n in own:
+    for n in ([] if fpf else own):
         if fm:
             rtxt += f"    freg(m::{fm}::{n} as *const () as usize);" + chr(10)
         elif spec.get("mods"):

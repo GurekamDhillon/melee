@@ -107,5 +107,7 @@ pub mod grvenom;
 pub mod grzebes;
 pub mod mplib;
 pub mod cmcamera;
+pub mod efn;
+pub mod va;
 pub mod mpisland;
 pub mod mpcoll;

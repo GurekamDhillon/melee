@@ -991,3 +991,18 @@ Stub names in `docs/rust-port/missing.md` for melee_fighter: NO_PORT 276 -> ~71,
 `melee golden --from-snapshot FILE --start N` resumes the native sim from it and compares the hash from N
 on. Dump/resume/proof commands, what is loaded from where, and the model differences found:
 `tools/rust-port/snap/README.md`. Proven on `pad_falcon_fox_fd` at frames 0 and 300.
+
+## melee_world::tu::efn: ef/eflib.c, efasync.c, efdata.c via c2rs + state oracle (pre-melee_world)
+- `bash rust/melee_world/gen/mtu/regen_ef.sh` regenerates `src/tu/efn/{eflib,efasync,efdata}.rs` (c2rs `--all-extern`: every
+  function is `extern "C"` so a test can store any of them as a callback; then `gen/rewire/rewire.py --skip=lbArchive_80017040`).
+  c2rs learned: variadic definitions (`args: &[*const c_void]`, `crate::tu::va::Va` for `va_list`; `va_arg` steps it like the
+  `__va_arg` shim), goto-into-a-later-case-label inside a switch (flag + block after the match), `&arr[i]` as a wrapping
+  pointer offset (C forms out-of-range addresses before checking them), a NULL `%s` in OSReport, pointer args of `%08X`.
+- Oracle: `python rust/melee_world/gen/mtu/mk_ef.py all` (`dbg_ef.sh <op>:<case>` bisects): the three TUs as one native C TU
+  (shipping contraction, `efSync_Spawn` call sites counted by a patch macro), 78 ops x 400 cases (every eflib/efasync function,
+  Dispatch over all 144 case ids with the argument pointers each case reads, the fused `0.04f * x + 0.3f` site of case 0x3E8
+  discriminated). Fighter is filled/hashed by the 14 fields ef reads (the full record has bitfield overlays the walker cannot map).
+  Traps: asserts inside `extern "C"` ports abort the test (no unwinding), so the fixture never reaches an assert (GObj_Create
+  never NULL, EffectCount < 64); `any` Dispatch ids avoid the case ids because their argument kinds are pointers of the wrong type.
+- Camera stubs (Camera_Init/Create/ForgetGameCamera/RefreshViewingMtx/8002A4AC/8002F3AC/PCMainCObj/SetQuakeScale/LogicToScreen) of
+  world, modes, items and fighter now default to `tu::cmcamera`.

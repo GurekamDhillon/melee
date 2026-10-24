@@ -114,7 +114,7 @@ impl GroundColl {
     }
 
     #[inline]
-    pub(crate) fn flags(&self, line_id: i32) -> u32 {
+    pub fn flags(&self, line_id: i32) -> u32 {
         self.lines[line_id as usize].flags
     }
 

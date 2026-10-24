@@ -1036,3 +1036,32 @@ Stub names in `docs/rust-port/missing.md` for melee_fighter: NO_PORT 276 -> ~71,
     a file with uncommitted work (lost and redone once), and `git checkout pc` after reverting c_trace.patch.
 - Next: the unported states past the goldens (RunBrake / smash turn, hits via `hit_guard`, item hit detection,
   Sheik's other specials), then the CPU goldens.
+
+## Golden round 4: cpu_fox_falco_dl wired, frames 0..63 match (2026-10-24)
+- pad_falcon_fox_fd (0..1800) and pad_marth_sheik_bf (0..1800) still match in full. `melee golden --scenario
+  cpu_fox_falco_dl` (Fox/Falco CPU9 on Green Greens, `GrGr.dat`, ext StKind 0x11 = "dreamland") is newly wired and
+  matches golden frames 0..63; it then diverges at frame 64 (Falco, s2) and stops at frame 91 on
+  "ftCo_800B2790: behaviour 3 not ported". cpu_peach_samus_ys_items is not wired.
+- Wired: Green Greens init (`greens_init`: 18 BOMB draws, block timer, wind timer, the 18 block items at the grid
+  positions from the 30 block joints times `grGroundParam->y` (0.75), item kind 160 msid 0), Falco (Fox's effect
+  bank, `PlFc*`), CPU slots (`fox/cpu9`: slot type Cpu, cpu kind 4, level 9, `fp.cpu` hash words), and the CPU
+  controller `vs_match/cpu.rs` (ftCo_800B3900 at s_link 2: sensing 800B33B0, 800B2AFC/24B8, 800B2790 behaviours
+  1, the island/target helpers, 800ADE48, the ftcpuattack.c attack choosers 4AB0/8A9C/9CBC/732C/77E8). The pad
+  input of a CPU is `fp.cpu` (`input::fighter_input(.., cpu)`). Every unported branch returns `Err("... not ported")`.
+- Traps found:
+  - The CPU draws RNG from the first match frame: golden frame 0 = C logic frame 36, six draws (B33B0 x3 per
+    fighter pair + 0CB0 + 4BEC); `ftCo_CpuInitNoTarget(fp, true)` in B24B8 (the `false` one is B1EF0's).
+  - `stage_info` for Green Greens: ground param y 0.75 scales the map joint positions (block items).
+  - Hurt capsule `bone_idx` indexes `fp->parts[]` (the DFS part number) directly, NOT through `part_to_joint`.
+  - `ftCo_800A0DA4` (hurtbox extents x55C..x568) runs every frame at the end of `Fighter_ProcessHit_8006D1EC`.
+- Debugging that worked: temporary `OSReport` in `nh_Fighter` (all CPU hash words per call), rebuild with
+  tools/port/build.sh, `MELEE_GOLDEN_CPU=1` / `MELEE_GOLDEN_HRT=1` in the Rust side print the same lines
+  (removed again from the C; `git checkout src` afterwards).
+- First divergence (frame 64, Falco): `cpu.x38` = `x56C + target.x564`, and `target.x564` comes from the hurt
+  capsules, of which the Fox TAIL (hurt capsule 12, part 18) is a dynamics bone: parts 18..20 differ from frame 1
+  on. `ftCo_8009DD94` -> `lb_8001044C` (lb_00F9.c cloth/tail physics, ported on raw HSD_JObj in
+  `melee_runtime::tu::lb_00F9`, not on the sim's `Skeleton` tree) must run for the sim's skeleton. Also open at
+  frame 64: `cpu.xEC` is 2 here, 1 in the C (one avoid-list push too many in B8A9C/B77E8, likely the same cause).
+- Next: dynamics bones for the sim skeleton, then behaviour 3 (800B9020), the rest of the CPU decision code
+  (A9904, A96B8, ABBA8, ...), Fox/Falco ground neutral-B and shine, hits, Green Greens' per-frame stage procs
+  (blocks, wind, apples), then cpu_peach_samus_ys_items.

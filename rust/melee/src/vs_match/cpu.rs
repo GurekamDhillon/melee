@@ -17,6 +17,7 @@ use melee_types::*;
 use melee_world::mp::check::SegHit;
 use melee_world::mp::lines::GroundColl;
 use melee_world::vec::Vec3 as WVec3;
+use melee_world::mp::types::LINE_FLAG_PLATFORM;
 
 type R<T = ()> = Result<T, String>;
 
@@ -30,6 +31,13 @@ pub(super) struct Cx<'a> {
     pub blast: BlastZone,
     /// `stage_info.grkind`.
     pub grkind: i32,
+    /// `Fighter_804D64FC->x20[kind]`: the per-character distance thresholds.
+    pub dist_thresh: &'a [f32],
+    /// `p_ftCommonData->horizontal_stick_deadzone`.
+    pub h_deadzone: f32,
+    /// PlCo.dat and the offset of `Fighter_804D64FC` (`pData[22]`).
+    pub plco: &'a [u8],
+    pub tbl: u32,
 }
 
 #[inline]
@@ -440,7 +448,17 @@ fn ftco_800b24b8(cx: &mut Cx, me: *mut Fighter) -> R {
     let target = ftco_800a5ce0(cx, me)?;
     fp.cpu.x44 = target;
     if !target.is_null() {
-        return Err("ftCo_CpuTargetAct (a valid target) not ported".into());
+        // ftCo_CpuSetTargetFlags
+        fp.cpu.set_xF8_b0(1);
+        clear_target_modes(&mut fp.cpu);
+        fp.cpu.set_xF9_b1(1);
+        // ftCo_CpuTargetAct
+        ftco_800a20a0(cx, fp);
+        if should_act(&mut fp.cpu) {
+            ftco_800a80e4(cx, fp)?;
+        }
+        ftco_800ade48(cx, me)?;
+        return Ok(());
     }
     // ftCo_CpuInitNoTarget(fp, true)
     {
@@ -506,29 +524,268 @@ fn ftco_800a648c(cx: &Cx, _fp: &Fighter) -> R<u32> {
     Ok(0)
 }
 
-/// `ftCo_800A53DC`: the fighter to attack (lowest rank, then nearest).
+/// `gm_8016C6C0` (is_big_loser) / `gm_8016C75C` (KOs made): the match standings. Nobody has lost
+/// a stock yet while the stocks are full; later states need `gm_80166378`.
+fn match_standing(cx: &Cx, fp: &Fighter) -> R<(i32, i32)> {
+    let _ = cx;
+    if melee_fighter::stale::stocks(fp.player_id as i32) != 3 {
+        return Err("gm_80166378 (match standings after a KO) not ported".into());
+    }
+    Ok((0, 0))
+}
+
+/// `ftCo_IsCpuControlled`.
+fn is_cpu(fp: &Fighter) -> bool {
+    melee_fighter::stale::slot_type(fp.player_id as i32) == Gm_PKind_Cpu && fp.cpu.kind != 5
+}
+
+/// `ftCo_800A53DC`: the fighter to attack (lowest standing, then nearest).
 fn ftco_800a53dc(cx: &Cx, me: *mut Fighter) -> R<*mut Fighter> {
     let fp = unsafe { &*me };
-    // Only a valid enemy changes the answer; with none, NULL.
-    for &cur in &cx.fps {
-        if cur == me {
-            continue;
+    let pick = |skip_cpu: bool| -> R<*mut Fighter> {
+        let mut best: *mut Fighter = core::ptr::null_mut();
+        let (mut rank, mut dist) = (0i32, 0.0f32);
+        for &cur in &cx.fps {
+            if cur == me {
+                continue;
+            }
+            let o = unsafe { &*cur };
+            if cx.out_of_bounds(&fp.cpu, o.cur_pos.x, o.cur_pos.y) || ftco_is_ally(fp, o) || ftco_800a1c44(o) || inline_d1(o)? {
+                continue;
+            }
+            if skip_cpu && is_cpu(o) {
+                continue;
+            }
+            let (r, _) = match_standing(cx, o)?;
+            let d = ftco_800a1ab4(fp, o);
+            if best.is_null() {
+                best = cur;
+                rank = r;
+                dist = d;
+            } else if rank > r {
+                dist = d;
+                rank = r;
+                best = cur;
+            } else if rank == r && dist > d {
+                dist = d;
+                best = cur;
+            }
         }
-        let o = unsafe { &*cur };
-        if cx.out_of_bounds(&fp.cpu, o.cur_pos.x, o.cur_pos.y) || ftco_is_ally(fp, o) || ftco_800a1c44(o) || inline_d1(o)? {
-            continue;
+        Ok(best)
+    };
+    if b(fp.cpu.xFA_b34()) {
+        let t = pick(true)?;
+        if !t.is_null() {
+            return Ok(t);
         }
-        return Err("ftCo_800A53DC (a valid attack target) not ported".into());
     }
-    Ok(core::ptr::null_mut())
+    pick(false)
+}
+
+/// The floor islands in list order (`mpIsland_80458E88.next` ...).
+fn islands(cx: &Cx) -> std::vec::Vec<i32> {
+    let mut v = std::vec::Vec::new();
+    let mut cur = cx.ground.islands.heads.next;
+    while cur != -1 {
+        v.push(cur);
+        cur = cx.ground.islands.segs[cur as usize].next;
+    }
+    v
+}
+
+/// `ftCo_800A2718`: the island holds something the CPU wants to avoid (a live bomb, a shell).
+fn ftco_800a2718(cx: &Cx, island: i32) -> R<bool> {
+    if island == -1 {
+        return Ok(false);
+    }
+    for it in cx.items {
+        let k = it.kind;
+        if k == It_Kind_BombHei as i32 || k == It_Kind_G_Shell as i32 || k == It_Kind_R_Shell as i32 {
+            return Err("ftCo_800A2718 (a bomb / shell item) not ported".into());
+        }
+    }
+    match cx.grkind {
+        g if g == Gr_Kind_Story as i32 || g == Gr_Kind_Zebes as i32 || g == Gr_Kind_Onett as i32 => Err(format!("ftCo_800A2718 on stage {g} not ported")),
+        _ => Ok(false),
+    }
+}
+
+/// `ftCo_800A4768`: the nearest island end to flee to on the left.
+fn ftco_800a4768(cx: &Cx, fp: &Fighter) -> (f32, f32) {
+    let mut best = -1.0f32;
+    let mut out = (0.0f32, 0.0f32);
+    for isl in islands(cx) {
+        let s = cx.ground.islands.segs[isl as usize];
+        let mut pt = s.x14;
+        if !cx.out_of_bounds(&fp.cpu, pt.x, pt.y) {
+            let dx = fp.cur_pos.x - pt.x;
+            if dx > 0.0 {
+                let dy = fp.cur_pos.y - pt.y;
+                // FMA: fma(dx, dx, dy * dy)
+                let dist = dx.mul_add(dx, dy * dy);
+                if best < 0.0 || best > dist {
+                    best = dist;
+                    out = (dsub(pt.x, 5.0), pt.y);
+                }
+            }
+        }
+        if !cx.out_of_bounds(&fp.cpu, pt.x, pt.y) {
+            pt = s.x8;
+            let dx = fp.cur_pos.x - pt.x;
+            if dx < 0.0 {
+                let dy = fp.cur_pos.y - pt.y;
+                let dist = dx.mul_add(dx, dy * dy);
+                if best < 0.0 || best > dist {
+                    best = dist;
+                    out = (dadd(5.0, pt.x), pt.y);
+                }
+            }
+        }
+    }
+    out
+}
+
+/// `ftCo_800A6700`: the farthest reachable island end from `from` (None: no candidate).
+fn ftco_800a6700(cx: &mut Cx, fp: &Fighter, from: WVec3) -> R<Option<WVec3>> {
+    let mut best = -1.0f32;
+    let mut out = WVec3 { x: 0.0, y: 0.0, z: 0.0 };
+    for isl in islands(cx) {
+        if ftco_800a2718(cx, isl)? {
+            continue;
+        }
+        let s = cx.ground.islands.segs[isl as usize];
+        let a = s.x8;
+        let px = dadd(5.0, a.x);
+        if cx.probe(px, dadd(5.0, a.y), px, dsub(a.y, 5.0), 0.0)?.is_some() && !cx.out_of_bounds(&fp.cpu, px, a.y) {
+            let ddx = px - from.x;
+            let dy = a.y - from.y;
+            // FMA: fma(ddx, ddx, dy * dy)
+            let dist = ddx.mul_add(ddx, dy * dy);
+            if dist > best {
+                best = dist;
+                out = WVec3 { x: px, y: a.y, z: a.z };
+            }
+        }
+        let bb = s.x14;
+        let px = dsub(bb.x, 5.0);
+        if cx.probe(px, dadd(5.0, bb.y), px, dsub(bb.y, 5.0), 0.0)?.is_some() && !cx.out_of_bounds(&fp.cpu, px, bb.y) {
+            let ddx = px - from.x;
+            let dy = bb.y - from.y;
+            let dist = ddx.mul_add(ddx, dy * dy);
+            if dist > best {
+                best = dist;
+                out = WVec3 { x: px, y: bb.y, z: bb.z };
+            }
+        }
+    }
+    if (best as f64) < 0.0 {
+        return Ok(None);
+    }
+    Ok(Some(out))
+}
+
+/// `ftCo_800A80E4`: a grounded CPU near its target: head for the farthest island end.
+fn ftco_800a80e4(cx: &mut Cx, fp: &mut Fighter) -> R {
+    let other = fp.cpu.x44;
+    if other.is_null() || fp.ground_or_air == GA_Air as _ {
+        return Ok(());
+    }
+    let o = unsafe { &*other };
+    let dx = fp.cur_pos.x - o.cur_pos.x;
+    let dy = fp.cur_pos.y - o.cur_pos.y;
+    // FMA: fma(dx, dx, dy * dy)
+    if !((sqrtf(dx.mul_add(dx, dy * dy)) as f64) > 50.0) {
+        let from = WVec3 { x: o.cur_pos.x, y: o.cur_pos.y, z: o.cur_pos.z };
+        if let Some(v) = ftco_800a6700(cx, fp, from)? {
+            ftco_800a1f3c(cx, fp, v.x, v.y, 5.0)?;
+        }
+    }
+    Ok(())
+}
+
+/// `ftCo_800A20A0`: a grounded target within twice the character's threshold.
+fn ftco_800a20a0(cx: &Cx, fp: &mut Fighter) {
+    let o = fp.cpu.x44;
+    if !o.is_null() && fp.ground_or_air != GA_Air as _ {
+        let t = cx.dist_thresh.get(fp.kind as usize).copied().unwrap_or(0.0);
+        let d = ftco_800a1ab4(fp, unsafe { &*o });
+        fp.cpu.set_xF8_b6((d < 2.0f32 * t) as u8);
+    } else {
+        fp.cpu.set_xF8_b6(0);
+    }
+}
+
+/// The `ftCo_800A1CC4` stage-island hook after a destination change: only Great Bay / Shrine.
+fn island_hook(cx: &Cx) -> R {
+    if cx.grkind == Gr_Kind_GreatBay as i32 || cx.grkind == Gr_Kind_Shrine as i32 {
+        return Err("ftCo_800A1CC4 (stage island list) not ported".into());
+    }
+    Ok(())
 }
 
 /// `ftCo_800A75DC(fp, target)`: head for the target (NULL: nothing).
-fn ftco_800a75dc(_cx: &Cx, _me: *mut Fighter, target: *mut Fighter) -> R {
+fn ftco_800a75dc(cx: &mut Cx, me: *mut Fighter, target: *mut Fighter) -> R {
     if target.is_null() {
         return Ok(());
     }
-    Err("ftCo_800A75DC (head for a target) not ported".into())
+    let fp = unsafe { &mut *me };
+    let t = unsafe { &*target };
+    let tol = fp.cpu.x56C + t.cpu.x564;
+    if t.ground_or_air == GA_Air as _ {
+        // The floor under the target (hazard lines dropped).
+        let hit = cx.probe(t.cur_pos.x, dadd(10.0, t.cur_pos.y), t.cur_pos.x, t.cur_pos.y - 1000.0f32, 0.0)?;
+        if let Some(h) = hit {
+            let isl = cx.ground.mp_island_8005ab54(h.line_id);
+            if !ftco_800a2718(cx, isl)? {
+                ftco_800a1f3c(cx, fp, h.pos.x, h.pos.y, tol)?;
+                if isl != -1 {
+                    let s = cx.ground.islands.segs[isl as usize];
+                    let d = (s.x14.x - fp.cpu.x54.x).abs();
+                    if (d as f64) < 5.0 {
+                        if fp.cpu.x60 == 0 {
+                            fp.cpu.x54.x = dsub(s.x14.x, 5.0);
+                            fp.cpu.x54.y = s.x14.y;
+                            fp.cpu.x38 = tol;
+                            island_hook(cx)?;
+                        }
+                    } else {
+                        let d = (s.x8.x - fp.cpu.x54.x).abs();
+                        if (d as f64) < 5.0 {
+                            ftco_800a1f3c(cx, fp, dadd(5.0, s.x8.x), s.x8.y, tol)?;
+                        }
+                    }
+                }
+            }
+        } else {
+            let (x, y) = ftco_800a4768(cx, fp);
+            ftco_800a1f3c(cx, fp, x, y, tol)?;
+        }
+    } else {
+        let isl_t = cx.ground.mp_island_8005ab54(t.coll_data.floor.index);
+        if !ftco_800a2718(cx, isl_t)? {
+            ftco_800a1f3c(cx, fp, t.cur_pos.x, t.cur_pos.y, tol)?;
+            let same = if fp.ground_or_air == GA_Air as _ || t.ground_or_air == GA_Air as _ {
+                false
+            } else {
+                let i0 = cx.ground.mp_island_8005ab54(fp.coll_data.floor.index);
+                i0 != -1 && isl_t == i0
+            };
+            if !same && isl_t != -1 && (fp.cpu.x54.y - fp.cur_pos.y) as f64 > 0.0 {
+                let s = cx.ground.islands.segs[isl_t as usize];
+                if (fp.cpu.x54.x - fp.cur_pos.x) as f64 > 0.0 {
+                    if fp.cur_pos.x < s.x8.x && fp.cpu.x60 == 0 {
+                        fp.cpu.x54.x = dadd(5.0, s.x8.x);
+                        fp.cpu.x54.y = s.x8.y;
+                        fp.cpu.x38 = tol;
+                        island_hook(cx)?;
+                    }
+                } else if fp.cur_pos.x > s.x14.x {
+                    ftco_800a1f3c(cx, fp, dsub(s.x14.x, 5.0), s.x14.y, tol)?;
+                }
+            }
+        }
+    }
+    Ok(())
 }
 
 /// `ftCo_800ADE48`: recompute the destination and switch behaviour on the fighter's state.
@@ -692,7 +949,7 @@ fn ftco_800ade48(cx: &mut Cx, me: *mut Fighter) -> R {
     if fp.cpu.x18 == 2 {
         return Ok(());
     }
-    if ftco_800b8a9c(fp)? {
+    if ftco_800b8a9c(cx, fp)? {
         cs::ftco_800b4a78(fp);
         fp.cpu.x18 = 2;
         return Ok(());
@@ -700,7 +957,7 @@ fn ftco_800ade48(cx: &mut Cx, me: *mut Fighter) -> R {
     if fp.cpu.x18 == 8 {
         return Ok(());
     }
-    let r = ftco_800b732c(fp)?;
+    let r = ftco_800b732c(cx, fp)?;
     fp.cpu.set_xF8_b34(r as u8);
     if r != 0 {
         fp.cpu.x18 = 8;
@@ -810,37 +1067,8 @@ fn ftco_800a2c80(cx: &mut Cx, fp: &Fighter) -> R<bool> {
     Ok(true)
 }
 
-/// `ftCo_800B9CBC`: decide on a ranged attack at the target.
-fn ftco_800b9cbc(_cx: &mut Cx, fp: &mut Fighter) -> R<bool> {
-    fp.cpu.xA4 = 0;
-    if fp.cpu.x44.is_null() {
-        return Ok(false);
-    }
-    Err("ftCo_800B9CBC (a target) not ported".into())
-}
 
-/// `ftCo_800B8A9C`: decide on a melee attack at the target.
-fn ftco_800b8a9c(fp: &mut Fighter) -> R<bool> {
-    if !b(fp.cpu.xF9_b2()) {
-        return Ok(false);
-    }
-    fp.cpu.xEC = 0;
-    fp.cpu.xC8 = 0;
-    // target == NULL (or Pass, an untargetable target, ...): no attack.
-    if fp.cpu.x44.is_null() || fp.motion_id == ftCo_MS_Pass as i32 || ftco_800a1ca8(fp) {
-        fp.cpu.xA4 = 0;
-        return Ok(false);
-    }
-    Err("ftCo_800B8A9C (a target) not ported".into())
-}
 
-/// `ftCo_800B732C`: grab / ledge decisions against the target.
-fn ftco_800b732c(fp: &Fighter) -> R<i32> {
-    if fp.cpu.x44.is_null() || fp.ground_or_air == GA_Air as _ {
-        return Ok(0);
-    }
-    Err("ftCo_800B732C (a target) not ported".into())
-}
 
 /// `ftCo_800A3710`: go pick up the targeted item.
 fn ftco_800a3710(fp: &mut Fighter) -> R<bool> {
@@ -888,6 +1116,726 @@ fn ftco_800a3554(cx: &mut Cx, fp: &mut Fighter, arg: f32) -> R<bool> {
     Ok(false)
 }
 
+
+// ---- ftcpuattack.c ----
+
+/// `ftCo_AttackEntry` (PlCo, 0x24 bytes; the list ends at `cmd == 0`).
+#[derive(Clone, Copy, Debug, Default)]
+pub(super) struct AttackEntry {
+    pub cmd: i32,
+    pub x04: i32,
+    pub x08: f32,
+    pub x0c: f32,
+    pub x10: f32,
+    pub x14: f32,
+    pub weight: f32,
+    pub x1c: i32,
+    pub x20: i32,
+}
+
+/// `Fighter_804D64FC` field offsets (the per-character tables of attack lists).
+pub(super) const T_CMDSCRIPTS: u32 = 0x00;
+pub(super) const T_GROUND: u32 = 0x04; // x4
+pub(super) const T_AIR: u32 = 0x08; // x8
+pub(super) const T_RANGED: u32 = 0x0C; // xC
+pub(super) const T_SMASH: u32 = 0x10; // x10
+pub(super) const T_SPECIAL: u32 = 0x14; // x14
+pub(super) const T_WEAPON: u32 = 0x18; // x18
+pub(super) const T_EDGE: u32 = 0x1C; // x1C
+
+impl Cx<'_> {
+    fn be(&self, at: u32) -> u32 {
+        u32::from_be_bytes(self.plco[at as usize..at as usize + 4].try_into().unwrap())
+    }
+
+    /// `Fighter_804D64FC-><field>[kind]`: the attack list, `None` for a NULL pointer.
+    fn attack_list(&self, field: u32, kind: FighterKind) -> Option<std::vec::Vec<AttackEntry>> {
+        let arr = self.be(self.tbl + field);
+        let p = self.be(arr + 4 * kind as u32);
+        if p == 0 {
+            return None;
+        }
+        let mut v = std::vec::Vec::new();
+        let mut at = p;
+        loop {
+            let cmd = self.be(at) as i32;
+            if cmd == 0 {
+                break;
+            }
+            let f = |o: u32| f32::from_bits(self.be(at + o));
+            v.push(AttackEntry { cmd, x04: self.be(at + 4) as i32, x08: f(8), x0c: f(0xC), x10: f(0x10), x14: f(0x14), weight: f(0x18), x1c: self.be(at + 0x1C) as i32, x20: self.be(at + 0x20) as i32 });
+            at += 0x24;
+        }
+        Some(v)
+    }
+
+    /// `ftCo_800B4880(fp, idx)`: append command script `idx`.
+    fn run_cmdscript(&self, fp: &mut Fighter, idx: i32) {
+        let arr = self.be(self.tbl + T_CMDSCRIPTS);
+        let mut at = self.be(arr + 4 * idx as u32) as usize;
+        loop {
+            let c = self.plco[at];
+            cs::ftco_800b463c(fp, c);
+            if c as u32 == CpuCmd_Done {
+                break;
+            }
+            if c as u32 > CpuCmd_OneArgEnd {
+                at += 1;
+                cs::ftco_800b463c(fp, self.plco[at]);
+            }
+            if c as u32 > CpuCmd_ZeroArgEnd {
+                // (the C re-tests the same byte; a two-arg command has a second argument)
+                at += 1;
+                cs::ftco_800b463c(fp, self.plco[at]);
+            }
+            at += 1;
+        }
+    }
+}
+
+/// Push onto the 8-entry avoid list (`xCC_array`, count `xEC`).
+fn push_avoid(c: &mut CpuFighter, v: i32) -> bool {
+    if (c.xEC as u32) < 8 {
+        c.xCC_array[c.xEC as usize] = v;
+        c.xEC += 1;
+        true
+    } else {
+        false
+    }
+}
+
+/// `ftCo_800B6208`: a weighted pick of an attack command from a ranged list.
+fn ftco_800b6208(cx: &mut Cx, arr: &[AttackEntry]) -> R<i32> {
+    let r = cx.rand.randf();
+    let mut sum = 0.0f32;
+    for e in arr {
+        sum += e.weight;
+    }
+    if arr.is_empty() {
+        return Ok(0);
+    }
+    if sum < 0.00001 && sum > -0.00001 {
+        return Ok(0);
+    }
+    let inv = (1.0f64 / sum as f64) as f32;
+    let mut acc = 0.0f32;
+    for e in arr {
+        acc += e.weight;
+        if acc * inv >= r {
+            return Ok(e.cmd);
+        }
+    }
+    Err("ftCo_800B6208: HSD_ASSERT(0x28A)".into())
+}
+
+/// `ftCo_800B630C`: the fighter is in an attacking motion.
+fn ftco_800b630c(fp: &Fighter) -> R<bool> {
+    let m = fp.motion_id;
+    if m >= ftCo_MS_Attack11 as i32 && m <= ftCo_MS_AttackAirLw as i32 {
+        return Ok(true);
+    }
+    // ftCo_800A5A90: item swings / shots.
+    if (m >= ftCo_MS_SwordSwing1 as i32 && m <= ftCo_MS_StarRodSwingDash as i32) || (m >= ftCo_MS_LGunShoot as i32 && m <= ftCo_MS_ItemScopeAirEndEmpty as i32) {
+        return Ok(true);
+    }
+    let k = fp.kind;
+    if k == Ft_Kind_Donkey || k == Ft_Kind_Kirby || k == Ft_Kind_Peach {
+        return Err("ftCo_800B630C (Donkey Kong / Kirby / Peach) not ported".into());
+    }
+    if m < ftCo_MS_Count as i32 {
+        return Ok(false);
+    }
+    Ok(true)
+}
+
+/// `ftCo_800B63D8`: wait a level-scaled random time.
+fn ftco_800b63d8(cx: &mut Cx, fp: &mut Fighter) {
+    let r = cx.rand.randf();
+    let (n, add) = match fp.cpu.level {
+        0 => (40, 5),
+        1 => (35, 5),
+        2 => (30, 5),
+        3 => (25, 5),
+        4 => (25, 0),
+        5 => (20, 0),
+        6 => (15, 0),
+        7 => (10, 0),
+        8 => (5, 0),
+        _ => return,
+    };
+    cmd1(fp, CpuCmd_WaitFor, (n as f32 * r) as i32 + add);
+}
+
+/// `ftCo_800B9F90`: tap shield (R), holding for a level-scaled time while already shielding.
+fn ftco_800b9f90(cx: &mut Cx, fp: &mut Fighter) {
+    if fp.motion_id == ftCo_MS_Guard as i32 {
+        let t = 9 - fp.cpu.level;
+        neutral_stick(fp);
+        cmd0(fp, CpuCmd_PressR);
+        if t != 0 {
+            let r = cx.rand.randf();
+            cmd1(fp, CpuCmd_WaitFor, t * ((4.0f32 * r) as i32 + 4));
+        }
+        done(fp);
+    } else {
+        neutral_stick(fp);
+        cmd0(fp, CpuCmd_PressR);
+        done(fp);
+    }
+}
+
+/// `ftCo_800BA160` / `ftCo_800BA224`: roll right / left.
+fn ftco_800ba160(fp: &mut Fighter) {
+    neutral_stick(fp);
+    cmd0(fp, CpuCmd_ReleaseR);
+    cmd1(fp, CpuCmd_WaitFor, 1);
+    cmd1(fp, CpuCmd_SetLstickX, 0x7F);
+    cmd0(fp, CpuCmd_PressR);
+    cmd1(fp, CpuCmd_WaitFor, 2);
+    cmd0(fp, CpuCmd_ReleaseR);
+    cmd1(fp, CpuCmd_WaitFor, 5);
+    cmd1(fp, CpuCmd_SetLstickX, 0);
+    done(fp);
+}
+fn ftco_800ba224(fp: &mut Fighter) {
+    neutral_stick(fp);
+    cmd0(fp, CpuCmd_ReleaseR);
+    cmd1(fp, CpuCmd_WaitFor, 1);
+    cmd1(fp, CpuCmd_SetLstickX, -0x7F);
+    cmd0(fp, CpuCmd_PressR);
+    cmd1(fp, CpuCmd_WaitFor, 2);
+    cmd0(fp, CpuCmd_ReleaseR);
+    cmd1(fp, CpuCmd_WaitFor, 5);
+    cmd1(fp, CpuCmd_SetLstickX, 0);
+    done(fp);
+}
+
+/// `ftCo_800A2A70`: distance to the island's end (left when `left`), -1 when airborne / no island.
+fn ftco_800a2a70(cx: &Cx, fp: &Fighter, left: bool) -> f32 {
+    let isl = island_of(cx, fp);
+    if isl == -1 {
+        return -1.0;
+    }
+    let s = cx.ground.islands.segs[isl as usize];
+    let e = if left { s.x8 } else { s.x14 };
+    let x = e.x - fp.cur_pos.x;
+    let y = e.y - fp.cur_pos.y;
+    // FMA: fma(x, x, y * y)
+    sqrtf(x.mul_add(x, y * y))
+}
+
+/// `ftCo_800BA2E8`: roll away from the nearer end when the island end is far.
+fn ftco_800ba2e8(cx: &Cx, fp: &mut Fighter, target: &Fighter) -> bool {
+    let t = cx.dist_thresh.get(fp.kind as usize).copied().unwrap_or(0.0);
+    if (fp.cur_pos.x - target.cur_pos.x) as f64 > 0.0 {
+        if ftco_800a2a70(cx, fp, false) > t {
+            ftco_800ba160(fp);
+            return true;
+        }
+        if ftco_800a2a70(cx, fp, true) > t {
+            ftco_800ba224(fp);
+            return true;
+        }
+        false
+    } else {
+        if ftco_800a2a70(cx, fp, true) > t {
+            ftco_800ba224(fp);
+            return true;
+        }
+        if ftco_800a2a70(cx, fp, false) > t {
+            ftco_800ba160(fp);
+            return true;
+        }
+        false
+    }
+}
+
+/// `ftCo_800A0098` (the walk-away script).
+fn ftco_800a0098(fp: &mut Fighter) {
+    cmd1(fp, 0x80, 0);
+    cmd1(fp, 0x81, 0);
+    cmd1(fp, 0x8E, 1);
+    cmd1(fp, 0x91, 0xB0);
+    cmd1(fp, 0x8E, 1);
+    cmd1(fp, 0x81, 0);
+    cmd1(fp, 0x8E, 0xA);
+    cmd1(fp, 0x80, 0);
+    cmd0(fp, 0x7F);
+}
+
+/// `ftCo_800A0C8C`: stop (command 127).
+fn ftco_800a0c8c(fp: &mut Fighter) {
+    cmd0(fp, 127);
+}
+
+/// `ftCo_800A3134`.
+fn ftco_800a3134(fp: &Fighter) -> i32 {
+    let m = fp.motion_id;
+    if m == ftCo_MS_DownBoundD as i32 || m == ftCo_MS_DownBoundU as i32 {
+        1
+    } else if m == ftCo_MS_DownWaitD as i32 || m == ftCo_MS_DownWaitU as i32 {
+        2
+    } else {
+        0
+    }
+}
+
+/// `ftCo_800A3200`: the fighter hangs on a ledge.
+fn ftco_800a3200(fp: &Fighter) -> i32 {
+    let m = fp.motion_id;
+    if m == ftCo_MS_CliffCatch as i32 {
+        1
+    } else if m == ftCo_MS_CliffWait as i32 {
+        2
+    } else {
+        0
+    }
+}
+
+/// `ftCo_800B4AB0`: the weighted attack choice from a list for the current geometry.
+/// Returns the attack's command-script index (0: none) and sets the hit-reach boxes `x6C` / `x74`.
+fn ftco_800b4ab0(cx: &mut Cx, fp: &mut Fighter, target: &Fighter, list: Option<std::vec::Vec<AttackEntry>>) -> R<i32> {
+    fp.cpu.x74.y = 0.0;
+    fp.cpu.x74.x = 0.0;
+    fp.cpu.x6C.y = 0.0;
+    fp.cpu.x6C.x = 0.0;
+    // (f32)(0.5 * x570 + 0.5): FMA f64.
+    let half_range = 0.5f64.mul_add(fp.cpu.x570 as f64, 0.5) as f32;
+    let Some(list) = list else { return Ok(0) };
+    let fp_term_neg = -fp.co_attrs.terminal_velocity;
+    let tgt_term_neg = -target.co_attrs.terminal_velocity;
+    let (fp_x, fp_y, fp_vx, fp_vy, fp_grav) = (fp.cur_pos.x, fp.cur_pos.y, fp.pos_delta.x, fp.pos_delta.y, fp.co_attrs.gravity);
+    let (tx, ty, tvx, tvy, tgrav) = (target.cur_pos.x, target.cur_pos.y, target.pos_delta.x, target.pos_delta.y, target.co_attrs.gravity);
+    let (range_f, range_b) = if target.facing_dir as f64 > 0.0 { (target.cpu.x55C, target.cpu.x560) } else { (target.cpu.x560, target.cpu.x55C) };
+    let x568 = target.cpu.x568;
+    let mut sel: std::vec::Vec<AttackEntry> = std::vec::Vec::new();
+    let near0 = |g: f32| g < 0.00001 && g > -0.00001;
+    for l in &list {
+        if l.x20 > fp.cpu.level {
+            continue;
+        }
+        if (0..fp.cpu.xEC as usize).any(|j| fp.cpu.xCC_array[j] == l.cmd) {
+            continue;
+        }
+        let t = l.x04 as f32;
+        // FMA: tvx * t + tx, fpVx * t + fpX
+        let relx = tvx.mul_add(t, tx) - fp_vx.mul_add(t, fp_x);
+        let fp_pred_y = if target.ground_or_air == GA_Air as _ {
+            let v = if near0(fp_grav) { 1000.0f32 } else { -(fp_term_neg - fp_y) / fp_grav };
+            if v <= 0.0 {
+                fp_vy.mul_add(t, fp_y)
+            } else if t < v {
+                let sq = sqrtf(t);
+                (fp_y as f64 + (-0.5f64).mul_add((fp_grav * sq) as f64, (fp_vy * t) as f64)) as f32
+            } else {
+                let sq = sqrtf(v);
+                (fp_y as f64 + (((fp_term_neg * (t - v)) as f64) + (-0.5f64).mul_add((fp_grav * sq) as f64, (fp_vy * t) as f64))) as f32
+            }
+        } else {
+            fp_vy.mul_add(t, fp_y)
+        };
+        let rel_pred_y = if target.ground_or_air == GA_Air as _ {
+            let v = if near0(tgrav) { 1000.0f32 } else { -(tgt_term_neg - tvy) / tgrav };
+            if v <= 0.0 {
+                tvy.mul_add(t, ty) - fp_pred_y
+            } else if t < v {
+                let sq = sqrtf(t);
+                ((-0.5f64).mul_add((tgrav * sq) as f64, tvy.mul_add(t, ty) as f64) - fp_pred_y as f64) as f32
+            } else {
+                let sq = sqrtf(v);
+                (((tgt_term_neg * (t - v)) as f64 + (-0.5f64).mul_add((tgrav * sq) as f64, tvy.mul_add(t, ty) as f64)) - fp_pred_y as f64) as f32
+            }
+        } else {
+            tvy.mul_add(t, ty) - fp_pred_y
+        };
+        let sc = fp.x34_scale.y;
+        let (mut dirx, mut diry) = if fp.facing_dir as f64 > 0.0 { (l.x08 * sc, l.x0c * sc) } else { (-l.x0c * sc, -l.x08 * sc) };
+        dirx *= half_range;
+        diry *= half_range;
+        let upper = (l.x14 * sc) * half_range;
+        let lower = (l.x10 * sc) * half_range;
+        if upper > rel_pred_y && lower < rel_pred_y + x568 && dirx < relx + range_f && diry > relx - range_b {
+            if fp.cpu.xC8 != 0 {
+                for j in 0..fp.cpu.xC8 as usize {
+                    if fp.cpu.xA8_array[j] == l.cmd {
+                        sel.push(*l);
+                    }
+                }
+            } else if fp.cpu.x80 % l.x1c == 0 {
+                sel.push(*l);
+            }
+        }
+    }
+    if sel.is_empty() {
+        return Ok(0);
+    }
+    let r = cx.rand.randf();
+    let mut sum = 0.0f32;
+    for e in &sel {
+        sum += e.weight;
+    }
+    if sum < 0.00001 && sum > -0.00001 {
+        return Ok(0);
+    }
+    let inv = (1.0f64 / sum as f64) as f32;
+    let mut acc = 0.0f32;
+    for e in &sel {
+        acc += e.weight;
+        if acc * inv >= r {
+            // ftCo_CpuSelectAttack
+            let sc = fp.x34_scale.y;
+            fp.cpu.x6C.x = sc * e.x08;
+            fp.cpu.x6C.y = sc * e.x10;
+            fp.cpu.x74.x = sc * e.x0c;
+            fp.cpu.x74.y = sc * e.x14;
+            return Ok(e.cmd);
+        }
+    }
+    Err("ftCo_800B4AB0: HSD_ASSERT(0xFA)".into())
+}
+
+/// `ftCo_CpuCanUseRangedAttack`: the straight line to the target is blocked, or the floor ahead
+/// is missing.
+fn can_use_ranged(cx: &mut Cx, fp: &Fighter, target: *mut Fighter, range: f32) -> R<bool> {
+    if !target.is_null() {
+        let t = unsafe { &*target };
+        if cx.ground.mp_check_all(-1, -1, fp.cur_pos.x, fp.cur_pos.y, t.cur_pos.x, t.cur_pos.y).is_some() {
+            return Ok(true);
+        }
+    }
+    let x = if fp.facing_dir as f64 > 0.0 { fp.cur_pos.x + range } else { fp.cur_pos.x - range };
+    let y = fp.cur_pos.y;
+    Ok(cx.probe(x, dadd(5.0, y), x, dsub(y, 1000.0), 0.0)?.is_none())
+}
+
+/// `ftCo_800B77E8`: fill the avoid list (`xCC`) with moves not to use right now.
+fn ftco_800b77e8(cx: &mut Cx, fp: &mut Fighter) -> R {
+    if fp.cpu.kind == 7 || ftco_800a1c44(fp) {
+        push_avoid(&mut fp.cpu, 0x34);
+    }
+    let kind = fp.kind;
+    let target = fp.cpu.x44;
+    if kind == Ft_Kind_Mario {
+        if can_use_ranged(cx, fp, target, 22.0)? {
+            push_avoid(&mut fp.cpu, 0x1F);
+        }
+    } else if kind == Ft_Kind_Fox || kind == Ft_Kind_Falco {
+        if can_use_ranged(cx, fp, target, 62.0)? {
+            push_avoid(&mut fp.cpu, 0x1B);
+        }
+    } else if kind == Ft_Kind_Captain || kind == Ft_Kind_Ganon {
+        if can_use_ranged(cx, fp, target, 102.0)? {
+            push_avoid(&mut fp.cpu, 0x26);
+        }
+        if can_use_ranged(cx, fp, target, 58.0)? {
+            let ok = push_avoid(&mut fp.cpu, 0x1B);
+            if ok {
+                push_avoid(&mut fp.cpu, 0x37);
+                push_avoid(&mut fp.cpu, 0x38);
+            }
+        }
+    } else if kind == Ft_Kind_Pikachu || kind == Ft_Kind_Pichu {
+        if can_use_ranged(cx, fp, target, 57.0)? {
+            push_avoid(&mut fp.cpu, 0x1B);
+        }
+    } else if kind == Ft_Kind_Luigi {
+        if can_use_ranged(cx, fp, target, 60.0)? {
+            push_avoid(&mut fp.cpu, 0x26);
+        }
+    } else if matches!(kind, k if k == Ft_Kind_Koopa || k == Ft_Kind_GKoops || k == Ft_Kind_Yoshi || k == Ft_Kind_Peach || k == Ft_Kind_Kirby) {
+        return Err(format!("ftCo_800B77E8 (kind {kind}) not ported"));
+    }
+    Ok(())
+}
+
+/// `ftCo_800B885C`: the level-gated 'pause' window.
+fn ftco_800b885c(fp: &Fighter) -> bool {
+    let c = &fp.cpu;
+    match c.level {
+        0 => c.x80 % 300 <= 240,
+        1 => c.x80 % 300 <= 180,
+        2 => c.x80 % 300 <= 120,
+        3 => c.x80 % 240 <= 120,
+        4 => c.x80 % 240 <= 60,
+        _ => false,
+    }
+}
+
+/// `ftCo_800B89CC`: the CPU is allowed to attack from the air.
+fn ftco_800b89cc(cx: &Cx, fp: &Fighter) -> bool {
+    let tmp = unsafe { &*fp.cpu.x44 };
+    if cx.grkind == Gr_Kind_Kongo as i32 && (fp.cur_pos.x > 25.0 || fp.cur_pos.x < -25.0) {
+        return false;
+    }
+    if ftco_800a3200(tmp) != 0 {
+        return true;
+    }
+    if !b(fp.cpu.xF9_b4()) {
+        return false;
+    }
+    if !b(fp.cpu.xFA_b5()) && fp.kind == Ft_Kind_Koopa {
+        return false;
+    }
+    fp.cpu.level >= 4
+}
+
+/// `ftCo_800B8A9C`: decide on a melee attack at the target (sets `xA4`).
+fn ftco_800b8a9c(cx: &mut Cx, fp: &mut Fighter) -> R<bool> {
+    if !b(fp.cpu.xF9_b2()) {
+        return Ok(false);
+    }
+    let target = fp.cpu.x44;
+    fp.cpu.xEC = 0;
+    fp.cpu.xC8 = 0;
+    if target.is_null() {
+        fp.cpu.xA4 = 0;
+        return Ok(false);
+    }
+    let t = unsafe { &*target };
+    if fp.motion_id == ftCo_MS_Pass as i32 || ftco_800a1c44(t) || ftco_800b885c(fp) || ftco_800a1ca8(fp) {
+        fp.cpu.xA4 = 0;
+        return Ok(false);
+    }
+    if t.motion_id >= ftCo_MS_Catch as i32 && t.motion_id <= ftCo_MS_EscapeAir as i32 {
+        push_avoid(&mut fp.cpu, 0x28);
+        push_avoid(&mut fp.cpu, 0x29);
+    } else if t.x34_scale.y > fp.x34_scale.y {
+        push_avoid(&mut fp.cpu, 0x28);
+        push_avoid(&mut fp.cpu, 0x29);
+        if fp.kind == Ft_Kind_Kirby {
+            return Err("ftCo_800B8A9C (Kirby) not ported".into());
+        }
+    }
+    ftco_800b77e8(cx, fp)?;
+    let kind = fp.kind;
+    if fp.ground_or_air == GA_Air as _ {
+        if ftco_800b89cc(cx, fp) {
+            let l = cx.attack_list(T_AIR, kind);
+            let r = ftco_800b4ab0(cx, fp, t, l)?;
+            if r != 0 {
+                fp.cpu.xA4 = r;
+                return Ok(true);
+            }
+        }
+        fp.cpu.xA4 = 0;
+        return Ok(false);
+    }
+    if ftco_800a3134(t) != 0 || ftco_800a3200(t) != 0 {
+        if fp.cpu.xC8 < 8 {
+            fp.cpu.xA8_array[fp.cpu.xC8 as usize] = 0xA;
+            fp.cpu.xC8 += 1;
+        }
+        if fp.cpu.xC8 < 8 {
+            fp.cpu.xA8_array[fp.cpu.xC8 as usize] = 0xE;
+            fp.cpu.xC8 += 1;
+        }
+        let l = cx.attack_list(T_GROUND, kind);
+        let r = ftco_800b4ab0(cx, fp, t, l)?;
+        if r != 0 {
+            fp.cpu.xA4 = r;
+            return Ok(true);
+        }
+        fp.cpu.xA4 = 0;
+        return Ok(false);
+    }
+    if !fp.item_gobj.is_null() {
+        return Err("ftCo_800B8A9C (a held weapon) not ported".into());
+    }
+    if fp.cpu.level > 5 && (fp.motion_id == ftCo_MS_GuardOn as i32 || fp.motion_id == ftCo_MS_Guard as i32) == false {
+        // ftCo_800B9F6C(target): the TARGET is shielding.
+    }
+    if fp.cpu.level > 5 && (t.motion_id == ftCo_MS_GuardOn as i32 || t.motion_id == ftCo_MS_Guard as i32) {
+        let l = cx.attack_list(T_SMASH, kind);
+        let r = ftco_800b4ab0(cx, fp, t, l)?;
+        if r != 0 {
+            fp.cpu.xA4 = r;
+            return Ok(true);
+        }
+    }
+    let var_r0 = if !fp.item_gobj.is_null() || ftco_800a3200(t) != 0 {
+        false
+    } else {
+        cx.probe(t.cur_pos.x, dadd(5.0, t.cur_pos.y), t.cur_pos.x, dsub(t.cur_pos.y, 1000.0), 0.0)?.is_none()
+    };
+    if var_r0 {
+        let l = cx.attack_list(T_EDGE, kind);
+        let r = ftco_800b4ab0(cx, fp, t, l)?;
+        if r != 0 {
+            fp.cpu.xA4 = r;
+            fp.cpu.set_xF8_b7(1);
+            return Ok(true);
+        }
+    }
+    let l = cx.attack_list(T_GROUND, kind);
+    let r = ftco_800b4ab0(cx, fp, t, l)?;
+    if r != 0 {
+        fp.cpu.xA4 = r;
+        return Ok(true);
+    }
+    if fp.cpu.x50 != 0 {
+        return Err("ftCo_800B5AB0 (a special item target) not ported".into());
+    }
+    fp.cpu.xA4 = 0;
+    Ok(false)
+}
+
+/// `ftCo_800B9704`'s caller in B9CBC: the reaction delay (the ported `ftco_800b9704`).
+fn react_delay(cx: &mut Cx, fp: &mut Fighter) {
+    let r = cx.rand.randf();
+    melee_fighter::ftcpu::ftco_800b9704(fp, r);
+}
+
+/// `ftCo_800B9CBC`: decide on a ranged attack at the target.
+fn ftco_800b9cbc(cx: &mut Cx, fp: &mut Fighter) -> R<bool> {
+    let t_ptr = fp.cpu.x44;
+    fp.cpu.xA4 = 0;
+    if t_ptr.is_null() {
+        return Ok(false);
+    }
+    if !b(fp.cpu.xF9_b5()) {
+        return Ok(false);
+    }
+    if fp.cpu.x34 > 0 {
+        fp.cpu.x34 -= 1;
+        return Ok(false);
+    }
+    react_delay(cx, fp);
+    let t = unsafe { &*t_ptr };
+    // ftCo_800A1BA8: a wall between the fighters.
+    let wall = if fp.facing_dir as f64 > 0.0 {
+        cx.ground.mp_check_right_wall(fp.cur_pos.x, fp.cur_pos.y, t.cur_pos.x, t.cur_pos.y, -1, -1).is_some()
+    } else {
+        cx.ground.mp_check_left_wall(fp.cur_pos.x, fp.cur_pos.y, t.cur_pos.x, t.cur_pos.y, -1, -1).is_some()
+    };
+    if wall {
+        return Ok(false);
+    }
+    let dist = ftco_800a1ab4(fp, t);
+    let ax = (t.cur_pos.x - fp.cur_pos.x).abs();
+    let ang = cs::ext::lb_8000D008(t.cur_pos.y - fp.cur_pos.y, ax);
+    if !fp.item_gobj.is_null() {
+        return Err("ftCo_800B9A04 (a held item) not ported".into());
+    }
+    let r = cx.rand.randf();
+    if r as f64 > 0.75 {
+        return Ok(false);
+    }
+    if (dist as f64) < 30.0 {
+        return Ok(false);
+    }
+    let k = fp.kind;
+    let var_r3 = if k == Ft_Kind_Ness || k == Ft_Kind_Yoshi {
+        return Err("ftCo_800B9790 / ftCo_800B98C8 not ported".into());
+    } else if k == Ft_Kind_Samus {
+        if fp.ground_or_air == GA_Ground as _ {
+            false
+        } else if (ang as f64) < -0.7853981573134661 {
+            fp.cpu.xA4 = 0x26;
+            true
+        } else {
+            false
+        }
+    } else {
+        false
+    };
+    if var_r3 {
+        return Ok(true);
+    }
+    if !ftco_800a2c08(fp) {
+        return Ok(false);
+    }
+    if (ang as f64) < 0.08726646192371845 && (ang as f64) > -0.08726646192371845 {
+        let l = cx.attack_list(T_RANGED, k).unwrap_or_default();
+        fp.cpu.xA4 = ftco_800b6208(cx, &l)?;
+        return Ok(fp.cpu.xA4 != 0);
+    }
+    Ok(false)
+}
+
+/// `ftCo_800B7638`: kind-0x10 CPUs approach for a grab.
+fn ftco_800b7638(cx: &mut Cx, fp: &Fighter) -> R<i32> {
+    let tp = fp.cpu.x44;
+    if tp.is_null() {
+        return Ok(0);
+    }
+    let t = unsafe { &*tp };
+    if fp.ground_or_air == GA_Air as _ {
+        if fp.co_attrs.max_jumps as i32 <= fp.x1968_jumpsUsed as i32 || fp.pos_delta.y as f64 > 0.0 {
+            return Ok(0);
+        }
+    }
+    if ((t.cur_pos.y - fp.cur_pos.y) as f64) < 0.0 {
+        return Ok(0);
+    }
+    if t.ground_or_air == GA_Air as _ {
+        if cx.ground.mp_check_ceiling(fp.cur_pos.x, fp.cur_pos.y, t.cur_pos.x, t.cur_pos.y, -1, -1).is_some() {
+            return Ok(0);
+        }
+        let _ = ftco_800a1ab4(fp, t);
+        if cs::ext::lb_8000D008(t.cur_pos.y - fp.cur_pos.y, (t.cur_pos.x - fp.cur_pos.x).abs()) as f64 > 0.7853981573134661 {
+            return Ok(1);
+        }
+    } else {
+        let dist = ftco_800a1ab4(fp, t);
+        let ang = cs::ext::lb_8000D008(t.cur_pos.y - fp.cur_pos.y, (t.cur_pos.x - fp.cur_pos.x).abs());
+        if dist as f64 > 30.0 && (dist as f64) < 40.0 && ang as f64 > -0.08726646192371845 && (ang as f64) < 0.08726646192371845 {
+            return Ok(2);
+        }
+    }
+    Ok(0)
+}
+
+/// `ftCo_800B732C`: grab / ledge decisions against the target.
+fn ftco_800b732c(cx: &mut Cx, fp: &mut Fighter) -> R<i32> {
+    let tp = fp.cpu.x44;
+    if tp.is_null() || fp.ground_or_air == GA_Air as _ {
+        return Ok(0);
+    }
+    let t = unsafe { &*tp };
+    if ftco_800a3200(t) != 0 {
+        if (t.cur_pos.y < fp.cur_pos.y) || cx.ground.mp_check_ceiling(fp.cur_pos.x, fp.cur_pos.y, t.cur_pos.x, t.cur_pos.y, -1, -1).is_some() {
+            return Ok(0);
+        }
+        let _ = ftco_800a1ab4(fp, t);
+        if cs::ext::lb_8000D008(t.cur_pos.y - fp.cur_pos.y, (t.cur_pos.x - fp.cur_pos.x).abs()) > 1.3089969f32 {
+            return Ok(1);
+        }
+        return Ok(0);
+    }
+    if !b(fp.cpu.xF9_b3()) {
+        return Ok(0);
+    }
+    if fp.cpu.kind == 0x10 {
+        return ftco_800b7638(cx, fp);
+    }
+    if !ftco_800a2bd4(fp) || fp.cpu.level < 4 || ftco_800a28d0(cx, fp, 4.0) {
+        return Ok(0);
+    }
+    if t.ground_or_air == GA_Air as _ {
+        if t.cur_pos.y < fp.cur_pos.y || cx.ground.mp_check_ceiling(fp.cur_pos.x, fp.cur_pos.y, t.cur_pos.x, t.cur_pos.y, -1, -1).is_some() {
+            return Ok(0);
+        }
+        let d = ftco_800a1ab4(fp, t);
+        if cs::ext::lb_8000D008(t.cur_pos.y - fp.cur_pos.y, (t.cur_pos.x - fp.cur_pos.x).abs()) as f64 > 0.7853981573134661 && (d as f64) < 30.0 {
+            return Ok(1);
+        }
+    } else {
+        if fp.cpu.x7C % 60 != 0 {
+            return Ok(0);
+        }
+        let r = cx.rand.randf();
+        if r as f64 > 0.1 {
+            return Ok(0);
+        }
+        let d = ftco_800a1ab4(fp, t);
+        let a = cs::ext::lb_8000D008(t.cur_pos.y - fp.cur_pos.y, (t.cur_pos.x - fp.cur_pos.x).abs());
+        if d as f64 > 30.0 && (d as f64) < 40.0 && a as f64 > -0.08726646192371845 && (a as f64) < 0.08726646192371845 {
+            return Ok(2);
+        }
+    }
+    Ok(0)
+}
+
 /// `ftCo_800B2790`: run the chosen behaviour when the script is idle.
 fn ftco_800b2790(cx: &mut Cx, me: *mut Fighter) -> R {
     let fp = unsafe { &mut *me };
@@ -930,13 +1878,15 @@ fn ftco_800aba34(cx: &mut Cx, fp: &mut Fighter) -> R {
         }
     }
     let _ = cx;
-    if fp.motion_id == ftCo_MS_RebirthWait as i32 {
-        return Err("ftCo_800A08F0 (RebirthWait) not ported".into());
+    let me: *mut Fighter = fp;
+    if ftco_800a5ce0(cx, me)?.is_null() && fp.motion_id == ftCo_MS_RebirthWait as i32 {
+        ftco_800a08f0(fp);
+        return Ok(());
     }
     if fp.ground_or_air == GA_Air as _ {
         return ftco_800a9cb4(cx, fp);
     }
-    Err("ftCo_800AB224 (grounded approach) not ported".into())
+    ftco_800ab224(cx, fp)
 }
 
 /// `ftCo_800A3234`: an airborne fighter that should use its jump / up-B to get back.
@@ -1021,11 +1971,11 @@ fn ftco_800a9cb4(cx: &mut Cx, fp: &mut Fighter) -> R {
     } else if x_time < terminal_time {
         let s = sqrtf(x_time);
         // cur_y + (vy * x_time - 0.5 * (g * s)) in double after the first product.
-        (fp.cur_pos.y as f64 + ((fp.pos_delta.y * x_time) as f64 - 0.5f64 * (gravity * s) as f64)) as f32
+        (fp.cur_pos.y as f64 + (-0.5f64).mul_add((gravity * s) as f64, (fp.pos_delta.y * x_time) as f64)) as f32
     } else {
         let s = sqrtf(terminal_time);
         let xd = x_time - terminal_time;
-        (fp.cur_pos.y as f64 + (((fp.pos_delta.y * terminal_time) as f64 - 0.5f64 * (gravity * s) as f64) - (xd * fp.co_attrs.terminal_velocity) as f64)) as f32
+        (fp.cur_pos.y as f64 + ((-0.5f64).mul_add((gravity * s) as f64, (fp.pos_delta.y * terminal_time) as f64) - (xd * fp.co_attrs.terminal_velocity) as f64)) as f32
     };
     if (x_time as f64) < 0.0 {
         cs::ftco_800b46b8(fp, CpuCmd_LstickXTowardDestination as u8, 0x7F);
@@ -1079,6 +2029,444 @@ fn ftco_800bb9b4(cx: &mut Cx, me: *mut Fighter) -> R {
         if !matches!(it.class, C::GreensBlock) {
             return Err("ftCo_800BB220 (an item with a hitbox) not ported".into());
         }
+    }
+    Ok(())
+}
+
+// ---- command-script helpers (the C's static inlines) ----
+
+fn cmd1(fp: &mut Fighter, c: u32, a: i32) {
+    cs::ftco_800b46b8(fp, c as u8, a as u8);
+}
+fn cmd0(fp: &mut Fighter, c: u32) {
+    cs::ftco_800b463c(fp, c as u8);
+}
+fn cmd2(fp: &mut Fighter, c: u32, a: i32, b2: i32) {
+    cs::ftco_800b4778(fp, c as u8, a as u8, b2 as u8);
+}
+fn done(fp: &mut Fighter) {
+    cmd0(fp, CpuCmd_Done);
+}
+
+/// `ftCo_CpuTurnAwayFromLedge`.
+fn turn_away_from_ledge(fp: &mut Fighter) {
+    cmd1(fp, CpuCmd_SetLstickY, 0);
+    cmd1(fp, CpuCmd_SetLstickX, 0);
+    cmd1(fp, CpuCmd_WaitFor, 1);
+    cmd1(fp, CpuCmd_LstickXForward, 0x7F);
+    cmd1(fp, CpuCmd_WaitFor, 1);
+    cmd1(fp, CpuCmd_SetLstickX, 0);
+    done(fp);
+}
+
+/// `ftCo_CpuTurnAround`.
+fn turn_around(fp: &mut Fighter) {
+    neutral_stick(fp);
+    cmd1(fp, CpuCmd_WaitFor, 1);
+    cmd1(fp, CpuCmd_LstickXForward, 0xB0);
+    cmd1(fp, CpuCmd_WaitFor, 1);
+    cmd1(fp, CpuCmd_SetLstickY, 0);
+    cmd1(fp, CpuCmd_WaitFor, 10);
+    cmd1(fp, CpuCmd_SetLstickX, 0);
+    done(fp);
+}
+
+fn is_in_teeter(fp: &Fighter) -> bool {
+    fp.motion_id == ftCo_MS_Ottotto as i32 || fp.motion_id == ftCo_MS_OttottoWait as i32
+}
+
+/// `ftCo_800AA320`: stick step and clamp by level.
+fn ftco_800aa320(fp: &Fighter) -> (i32, i32) {
+    if fp.kind == Ft_Kind_Nana {
+        return (0x40, 0x7F);
+    }
+    match fp.cpu.level {
+        0 => (1, 0x43),
+        1 => (2, 0x48),
+        2 => (2, 0x4D),
+        3 => (2, 0x52),
+        4 => (2, 0x57),
+        5 => (2, 0x5C),
+        6 => (4, 0x61),
+        7 => (4, 0x6B),
+        8 => (8, 0x75),
+        _ => (8, 0x7F),
+    }
+}
+
+/// `ftCo_800A0148`: jump to get back up to the destination (the generic jump).
+fn ftco_800a0148(cx: &Cx, fp: &mut Fighter) {
+    if fp.cur_pos.y + fp.cpu.x558 > cx.top() {
+        neutral_stick(fp);
+        done(fp);
+    } else if ftco_800a1ca8(fp) {
+        neutral_stick(fp);
+        double_jump_after_delay(fp);
+    } else if ((fp.cpu.x54.x - fp.cur_pos.x).abs() as f64) > 30.0 {
+        cmd0(fp, CpuCmd_ReleaseY);
+        cmd1(fp, CpuCmd_WaitFor, 1);
+        cmd1(fp, CpuCmd_LstickTowardDestination, 0x7F);
+        cmd0(fp, CpuCmd_PressY);
+        cmd1(fp, CpuCmd_WaitFor, 10);
+        cmd0(fp, CpuCmd_ReleaseY);
+        cmd1(fp, CpuCmd_WaitFor, 1);
+        done(fp);
+    } else {
+        cmd0(fp, CpuCmd_ReleaseY);
+        neutral_stick(fp);
+        cmd1(fp, CpuCmd_WaitFor, 1);
+        cmd0(fp, CpuCmd_PressY);
+        cmd1(fp, CpuCmd_WaitFor, 10);
+        cmd0(fp, CpuCmd_ReleaseY);
+        cmd1(fp, CpuCmd_WaitFor, 1);
+        done(fp);
+    }
+}
+
+/// `ftCo_CpuDoubleJumpAfterDelay`.
+fn double_jump_after_delay(fp: &mut Fighter) {
+    cmd1(fp, CpuCmd_WaitFor, 10);
+    cmd0(fp, CpuCmd_ReleaseY);
+    cmd1(fp, CpuCmd_WaitFor, 1);
+    cmd0(fp, CpuCmd_PressY);
+    cmd1(fp, CpuCmd_WaitFor, 10);
+    cmd0(fp, CpuCmd_ReleaseY);
+    cmd1(fp, CpuCmd_WaitFor, 1);
+    done(fp);
+}
+
+/// `ftCo_800A0384`: jump forward.
+fn ftco_800a0384(cx: &Cx, fp: &mut Fighter) {
+    if fp.cur_pos.y + fp.cpu.x558 > cx.top() {
+        neutral_stick(fp);
+        done(fp);
+    } else if ftco_800a1ca8(fp) {
+        neutral_stick(fp);
+        double_jump_after_delay(fp);
+    } else {
+        cmd0(fp, CpuCmd_ReleaseY);
+        cmd1(fp, CpuCmd_WaitFor, 1);
+        cmd1(fp, CpuCmd_LstickXForward, 0x7F);
+        cmd0(fp, CpuCmd_PressY);
+        cmd1(fp, CpuCmd_WaitFor, 10);
+        cmd0(fp, CpuCmd_ReleaseY);
+        cmd1(fp, CpuCmd_WaitFor, 1);
+        done(fp);
+    }
+}
+
+/// `ftCo_800A08F0`: drop through a platform / wait (level-scaled).
+fn ftco_800a08f0(fp: &mut Fighter) {
+    neutral_stick(fp);
+    let m = fp.motion_id;
+    if m == ftCo_MS_SquatRv as i32 || m == ftCo_MS_Squat as i32 || m == ftCo_MS_SquatWait as i32 {
+        cmd1(fp, CpuCmd_WaitFor, 1);
+        done(fp);
+        return;
+    }
+    if fp.kind == Ft_Kind_Nana {
+        cmd1(fp, CpuCmd_WaitFor, 1);
+        cmd1(fp, CpuCmd_SetLstickY, -0x7F);
+        cmd1(fp, CpuCmd_WaitFor, 5);
+        neutral_stick(fp);
+        cmd1(fp, CpuCmd_WaitFor, 1);
+        done(fp);
+        return;
+    }
+    let w = match fp.cpu.level {
+        0 => Some(45),
+        1 | 2 => Some(30),
+        3 | 4 => Some(15),
+        5 | 6 => Some(10),
+        7 | 8 => Some(5),
+        9 => Some(1),
+        _ => None,
+    };
+    if let Some(w) = w {
+        cmd1(fp, CpuCmd_WaitFor, w);
+    }
+    cmd1(fp, CpuCmd_SetLstickY, -0x7F);
+    cmd1(fp, CpuCmd_WaitFor, 5);
+    neutral_stick(fp);
+    cmd1(fp, CpuCmd_WaitFor, 1);
+    done(fp);
+}
+
+/// `ftCo_800A28D0(fp, arg)`: the fighter is within `5 * arg` of the island end it faces.
+fn ftco_800a28d0(cx: &Cx, fp: &Fighter, arg: f32) -> bool {
+    let isl = island_of(cx, fp);
+    if isl == -1 {
+        return false;
+    }
+    let s = cx.ground.islands.segs[isl as usize];
+    let off = if fp.facing_dir as f64 > 0.0 { (s.x14.x - fp.cur_pos.x).abs() } else { (s.x8.x - fp.cur_pos.x).abs() };
+    (off as f64) < 5.0 * arg as f64
+}
+
+/// A grounded fighter's island index (`mpIsland_8005AB54`; -1 = NULL), air = -1.
+fn island_of(cx: &Cx, fp: &Fighter) -> i32 {
+    if fp.ground_or_air == GA_Air as _ {
+        return -1;
+    }
+    cx.ground.mp_island_8005ab54(fp.coll_data.floor.index)
+}
+
+/// `ftCo_800A2BD4`: the destination is in front of the fighter.
+fn ftco_800a2bd4(fp: &Fighter) -> bool {
+    (fp.facing_dir * (fp.cpu.x54.x - fp.cur_pos.x)) as f64 >= 0.0
+}
+
+/// `ftCo_800A2C08`: the target is in front of (or on top of) the fighter.
+fn ftco_800a2c08(fp: &Fighter) -> bool {
+    let o = fp.cpu.x44;
+    if o.is_null() {
+        return true;
+    }
+    let d = unsafe { (*o).cur_pos.x } - fp.cur_pos.x;
+    if (d.abs() as f64) < 1.0 {
+        return true;
+    }
+    (d * fp.facing_dir) as f64 >= 0.0
+}
+
+/// `ftCo_800A2170`: both fighters are grounded on the same island.
+fn ftco_800a2170(cx: &Cx, a: &Fighter, c: &Fighter) -> bool {
+    if a.ground_or_air == GA_Air as _ || c.ground_or_air == GA_Air as _ {
+        return false;
+    }
+    let i = cx.ground.mp_island_8005ab54(a.coll_data.floor.index);
+    i != -1 && cx.ground.mp_island_8005ab54(c.coll_data.floor.index) == i
+}
+
+fn wall_mask(fp: &Fighter) -> bool {
+    fp.coll_data.env_flags & (Collide_LeftWallMask | Collide_RightWallMask) != 0
+}
+
+/// `ftCo_800AABC8`: walk toward the destination (turning back at a teeter).
+fn ftco_800aabc8(fp: &mut Fighter) {
+    if is_in_teeter(fp) {
+        cmd1(fp, CpuCmd_SetLstickY, 0);
+        cmd1(fp, CpuCmd_SetLstickX, 0);
+        cmd1(fp, CpuCmd_WaitFor, 1);
+        cmd1(fp, CpuCmd_LstickXForward, 0x7F);
+        cmd1(fp, CpuCmd_WaitFor, 1);
+        cmd1(fp, CpuCmd_SetLstickX, 0);
+        done(fp);
+    } else {
+        let (stick, clamp) = ftco_800aa320(fp);
+        cmd1(fp, CpuCmd_SetLstickY, 0);
+        cmd2(fp, CpuCmd_LstickForwardClamped, stick, clamp);
+        done(fp);
+    }
+}
+
+/// `ftCo_800AA844`: the destination is level or slightly below.
+fn ftco_800aa844(cx: &mut Cx, fp: &mut Fighter) -> R {
+    if is_in_teeter(fp) {
+        turn_away_from_ledge(fp);
+        return Ok(());
+    }
+    let (stick, clamp) = ftco_800aa320(fp);
+    if ftco_800a28d0(cx, fp, 1.0) {
+        let on_platform = fp.coll_data.floor.index != -1 && cx.ground.flags(fp.coll_data.floor.index) & LINE_FLAG_PLATFORM != 0;
+        if ftco_800a1ca8(fp)
+            && on_platform
+            && cx.probe(fp.cur_pos.x, fp.cur_pos.y - 10.0f32, fp.cur_pos.x, fp.cur_pos.y - 1000.0f32, 0.0)?.is_some()
+        {
+            ftco_800a08f0(fp);
+        } else if fp.cpu.x54.y > fp.cur_pos.y || (fp.cpu.x54.x - fp.cur_pos.x).abs() as f64 > 40.0 || wall_mask(fp) {
+            ftco_800a0148(cx, fp);
+        } else {
+            cmd1(fp, CpuCmd_SetLstickY, 0);
+            cmd2(fp, CpuCmd_LstickForwardClamped, stick, clamp);
+            done(fp);
+        }
+    } else if wall_mask(fp) {
+        ftco_800a0148(cx, fp);
+    } else {
+        cmd1(fp, CpuCmd_SetLstickY, 0);
+        cmd2(fp, CpuCmd_LstickForwardClamped, stick, clamp);
+        done(fp);
+    }
+    Ok(())
+}
+
+/// `ftCo_800AACD0`: the destination is far below.
+fn ftco_800aacd0(cx: &mut Cx, fp: &mut Fighter) -> R {
+    if is_in_teeter(fp) {
+        turn_away_from_ledge(fp);
+        return Ok(());
+    }
+    let (stick, clamp) = ftco_800aa320(fp);
+    if fp.coll_data.floor.index != -1 && cx.ground.flags(fp.coll_data.floor.index) & LINE_FLAG_PLATFORM != 0 {
+        ftco_800a08f0(fp);
+        return Ok(());
+    }
+    let isl = cx.ground.mp_island_8005ab54(fp.coll_data.floor.index);
+    if isl != -1 {
+        let (l, r) = cx.ground.mp_island_8005ace8(isl, true, true);
+        let (l, r) = (l.unwrap(), r.unwrap());
+        if (fp.cpu.x54.x < l.x || fp.cpu.x54.x > r.x) && !ftco_800a2bd4(fp) {
+            turn_around(fp);
+            return Ok(());
+        }
+    }
+    if cx.grkind != Gr_Kind_Icemt as i32 && wall_mask(fp) {
+        ftco_800a0148(cx, fp);
+        return Ok(());
+    }
+    cmd1(fp, CpuCmd_SetLstickY, 0);
+    cmd2(fp, CpuCmd_LstickForwardClamped, stick, clamp);
+    done(fp);
+    Ok(())
+}
+
+/// `ftCo_800AAF48`: Pokemon Stadium-era hop onto a higher island (Shrine only).
+fn ftco_800aaf48(cx: &Cx, fp: &Fighter) -> R<bool> {
+    if fp.cpu.x60 != 0 || cx.grkind != Gr_Kind_Shrine as i32 {
+        return Ok(false);
+    }
+    Err("ftCo_800AAF48 (Shrine) not ported".into())
+}
+
+/// `ftCo_800AA42C_inline0`.
+fn aa42c_inline0(cx: &Cx, clamp: f32, dist: f32, near: f32, far: f32) -> i32 {
+    if dist > far {
+        return clamp as i32;
+    }
+    if dist < near {
+        return 0;
+    }
+    let mut raw = 127.0f32 * cx.h_deadzone;
+    if raw > clamp {
+        raw = clamp;
+    }
+    if raw < 80.0 {
+        raw = 80.0;
+    }
+    let scale = (dist - near) / (far - near);
+    // FMA: raw + scale * (clamp - raw)
+    let tmp = scale.mul_add(clamp - raw, raw);
+    let mut new_clamp = tmp as i32;
+    if new_clamp as f32 > clamp {
+        new_clamp = clamp as i32;
+    }
+    new_clamp
+}
+
+/// `ftCo_800AA42C`: walk / run along the island to the destination.
+fn ftco_800aa42c(cx: &Cx, fp: &mut Fighter) {
+    let (stick, clamp) = ftco_800aa320(fp);
+    if is_in_teeter(fp) {
+        turn_away_from_ledge(fp);
+        return;
+    }
+    if !((fp.facing_dir * (fp.cpu.x54.x - fp.cur_pos.x)) as f64 >= 0.0) {
+        turn_around(fp);
+        return;
+    }
+    let dx = fp.cpu.x54.x - fp.cur_pos.x;
+    let dy = fp.cpu.x54.y - fp.cur_pos.y;
+    // FMA: fma(dx, dx, dy * dy)
+    let dist = sqrtf(dx.mul_add(dx, dy * dy));
+    let near = fp.cpu.x38;
+    if dist - near > fp.cpu.x3C {
+        cmd1(fp, CpuCmd_SetLstickY, 0);
+        if b(fp.cpu.xF8_b0()) {
+            let m = fp.motion_id;
+            let is_run = m == ftCo_MS_Dash as i32 || m == ftCo_MS_Run as i32 || m == ftCo_MS_TurnRun as i32;
+            if is_run {
+                cmd1(fp, CpuCmd_LstickXTowardDestination, 0x7F);
+            } else {
+                cmd1(fp, CpuCmd_LstickXTowardDestination, 0);
+                cmd1(fp, CpuCmd_WaitFor, 2);
+                cmd1(fp, CpuCmd_LstickXTowardDestination, 0x7F);
+            }
+        } else {
+            cmd2(fp, CpuCmd_LstickXTowardDestinationClamped, stick, clamp);
+        }
+    } else if dist > near {
+        cmd1(fp, CpuCmd_SetLstickY, 0);
+        let tmp = aa42c_inline0(cx, clamp as f32, dist, fp.cpu.x38, fp.cpu.x3C);
+        cmd2(fp, CpuCmd_LstickXTowardDestinationClamped, stick, tmp);
+    } else {
+        neutral_stick(fp);
+    }
+    done(fp);
+}
+
+/// `ftCo_800AB224`: behaviour 1 on the ground: walk, jump, or turn toward the destination.
+fn ftco_800ab224(cx: &mut Cx, fp: &mut Fighter) -> R {
+    if b(fp.cpu.xFA_b6()) {
+        return Err("ftCo_800AB224 (xFA_b6: under a ceiling) not ported".into());
+    }
+    if b(fp.cpu.xF9_b1()) {
+        let o = fp.cpu.x44;
+        if !o.is_null() {
+            let ot = unsafe { &*o };
+            if ftco_800a2c08(fp) && ftco_800a2170(cx, fp, ot) && ((ot.cur_pos.x - fp.cur_pos.x).abs() as f64) < 37.5 {
+                ftco_800a0148(cx, fp);
+                return Ok(());
+            }
+        }
+        // 'dodge toward the target' roll: Randf only when the first conditions hold.
+        if b(fp.cpu.xF8_b6()) && fp.ground_or_air == GA_Ground as _ {
+            let r = cx.rand.randf();
+            if r < 0.05f32 * fp.cpu.level as f32 {
+                fp.cpu.set_xF8_b6(0);
+                return Err("ftCo_800BA2E8 (grounded attack on the target) not ported".into());
+            }
+        }
+    }
+    // block_49
+    let isl = island_of(cx, fp);
+    let dest_on_island = if isl == -1 {
+        false
+    } else {
+        let v = WVec3 { x: fp.cpu.x54.x, y: dadd(5.0, fp.cpu.x54.y), z: 0.0 };
+        cx.ground.mp_island_8005ac14(v, -10.0) == isl
+    };
+    if dest_on_island {
+        ftco_800aa42c(cx, fp);
+        return Ok(());
+    }
+    let var_f2 = (fp.cpu.x54.x - fp.cur_pos.x).abs();
+    let temp_f1 = fp.cpu.x54.y - fp.cur_pos.y;
+    let angle = if var_f2 < 0.00001 && var_f2 > -0.00001 {
+        if temp_f1 as f64 > 0.0 { core::f64::consts::FRAC_PI_2 as f32 } else { -(core::f64::consts::FRAC_PI_2 as f32) }
+    } else {
+        cs::ext::lb_8000D008(temp_f1, var_f2)
+    };
+    if angle as f64 > 0.6108652334660292 {
+        let (cx0, cy0) = (fp.coll_data.cur_pos.x, fp.coll_data.cur_pos.y);
+        let blocked = cx.ground.mp_check_ceiling(cx0, cy0, cx0, fp.cpu.x54.y, -1, -1).is_some();
+        if blocked {
+            if ftco_800a28d0(cx, fp, 1.0) {
+                turn_around(fp);
+            } else if ftco_800aaf48(cx, fp)? {
+                ftco_800a0148(cx, fp);
+            } else {
+                ftco_800aabc8(fp);
+            }
+        } else if cx.grkind == Gr_Kind_Icemt as i32 {
+            ftco_800a0148(cx, fp);
+        } else if !ftco_800a2bd4(fp) {
+            if (angle as f64) < 1.3089969288557768 {
+                turn_around(fp);
+            } else {
+                ftco_800aabc8(fp);
+            }
+        } else {
+            ftco_800a0148(cx, fp);
+        }
+    } else if angle as f64 > -0.7853981573134661 {
+        if !ftco_800a2bd4(fp) {
+            turn_around(fp);
+        } else {
+            ftco_800aa844(cx, fp)?;
+        }
+    } else {
+        ftco_800aacd0(cx, fp)?;
     }
     Ok(())
 }

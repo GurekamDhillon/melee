@@ -331,7 +331,7 @@ fn inc254(v: &mut u8) {
 /// clear): the stick/trigger/button history, the pad read with its deadzones, the edges, the
 /// smash/hold timers and the press counters; then the input lock (`x221D_b4`) copy-and-clear.
 /// `input_locked` is `x221D_b4`; `x221d_b3` the "history primed" bit.
-pub fn fighter_input(fp: &mut Fighter, pad: &PadStatus, x221d_b3: &mut bool, input_locked: bool) {
+pub fn fighter_input(fp: &mut Fighter, pad: &PadStatus, x221d_b3: &mut bool, input_locked: bool, cpu: bool) {
     let cd = melee_fighter::hooks::common_data();
     if !*x221d_b3 {
         fp.input.lstick[1] = fp.input.lstick[2];
@@ -345,6 +345,16 @@ pub fn fighter_input(fp: &mut Fighter, pad: &PadStatus, x221d_b3: &mut bool, inp
         fp.input.triggers[1] = fp.input.triggers[0];
         fp.input.held_buttons[1] = fp.input.held_buttons[0];
     }
+    if cpu {
+        // ftCo_IsCpuControlled: the CPU's virtual pad (Fighter_Spaghetti_8006AD10).
+        use melee_fighter::tu::ftCo_0A01 as c;
+        fp.input.lstick[0].x = c::ftCo_GetCpuLStickX(fp);
+        fp.input.lstick[0].y = c::ftCo_GetCpuLStickY(fp);
+        fp.input.cstick[0].x = c::ftCo_GetCpuCStickX(fp);
+        fp.input.cstick[0].y = c::ftCo_GetCpuCStickY(fp);
+        let (l, r) = (c::ftCo_GetCpuLTrigger(fp), c::ftCo_GetCpuRTrigger(fp));
+        fp.input.triggers[0] = if l > r { l } else { r };
+    } else {
     // Human: HSD_PadGameStatus (DbLevel < DebugRom and not 1P: the C-stick is routed).
     fp.input.lstick[0].x = pad.nml_stick_x;
     fp.input.lstick[0].y = pad.nml_stick_y;
@@ -352,6 +362,7 @@ pub fn fighter_input(fp: &mut Fighter, pad: &PadStatus, x221d_b3: &mut bool, inp
     fp.input.cstick[0].y = pad.nml_sub_y;
     let (t1, t0) = (pad.nml_analog_r, pad.nml_analog_l);
     fp.input.triggers[0] = if t0 > t1 { t0 } else { t1 };
+    }
     if abs(fp.input.lstick[0].x) <= cd.horizontal_stick_deadzone {
         fp.input.lstick[0].x = 0.0;
     }
@@ -367,7 +378,7 @@ pub fn fighter_input(fp: &mut Fighter, pad: &PadStatus, x221d_b3: &mut bool, inp
     if fp.input.triggers[0] <= cd.analog_shoulder_deadzone {
         fp.input.triggers[0] = 0.0;
     }
-    fp.input.held_buttons[0] = pad.button;
+    fp.input.held_buttons[0] = if cpu { melee_fighter::tu::ftCo_0A01::ftCo_GetCpuButtons(fp) } else { pad.button };
     // gm_8016B0FC (single-button mode) is off in a plain VS match.
     if fp.input.held_buttons[0] & (HSD_PAD_L | HSD_PAD_R) != 0 {
         fp.input.held_buttons[0] |= HSD_PAD_LR;

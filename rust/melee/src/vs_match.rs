@@ -170,6 +170,8 @@ pub struct Player {
     pub slot: i32,
     /// The partner fighter (`player_entity[1]`): Zelda behind Sheik, hash slot `slot * 2 + 1`.
     pub follower: bool,
+    /// `ftData->x30`: the hurtbox capsules (part, a_offset, b_offset, scale).
+    pub hurtboxes: Vec<(u32, [f32; 3], [f32; 3], f32)>,
     pub fp: Box<Fighter>,
     /// An m-ex fighter's ftFunction code (crate::mex), run on `fp` at onLoad / onFrame.
     pub mex: Option<crate::mex::MexFighter>,
@@ -439,6 +441,10 @@ pub struct VsMatch {
     fighter_jobjs: Vec<(JObjRef, usize, usize)>,
     /// The live items (fox.rs).
     items: Vec<SimItem>,
+    /// `Fighter_804D64FC->x20`.
+    cpu_dist: Vec<f32>,
+    plco_bytes: std::sync::Arc<[u8]>,
+    cpu_tbl: u32,
     /// `stage_info.grkind`.
     grkind: i32,
     /// `stage_info.unk8C.b4` (grBattle_OnInit): respawn at the stage point of the player's slot.
@@ -829,6 +835,11 @@ impl VsMatch {
             mc::mp_lib_load(&stage.data, cd, scale)
         };
         ground.mp_lib_80058820();
+        // Fighter_804D64FC = pData[22]; ->x20: float[kind] (distance thresholds).
+        let cpu_dist: Vec<f32> = {
+            let t = be(be(common_root + 4 * 22) + 0x20);
+            (0..40).map(|k| f32::from_bits(be(t + 4 * k))).collect()
+        };
         let mut players = Vec::new();
         // Player_80031AD0: the main fighter, then (Sheik / Zelda) the partner fighter of the
         // transformation, created hidden (`has_transformation`: ftCo_800BFD04, Sleep).
@@ -1026,6 +1037,7 @@ impl VsMatch {
             players.push(Player {
                 slot,
                 follower,
+                hurtboxes: files.hurtboxes(),
                 fp,
                 mex,
                 entry,
@@ -1163,7 +1175,7 @@ impl VsMatch {
                 }
             });
         }
-        Ok(Self { players, ground, cg, pads: [input::PadStatus::default(); 4], go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists, blast, fighter_jobjs: Vec::new(), items: items0, grkind: if stkind == STKIND_DL { Gr_Kind_Greens as i32 } else if stkind == STKIND_BF { Gr_Kind_Battle as i32 } else { Gr_Kind_Last as i32 }, respawn_points: (4..8).filter_map(|id| points.iter().find(|p| p.id == id).map(|p| Vec3 { x: p.pos[0], y: p.pos[1], z: p.pos[2] })).collect(), respawn_busy: [0; 6], start_shield, per_slot_spawn: stkind == STKIND_BF })
+        Ok(Self { players, ground, cg, pads: [input::PadStatus::default(); 4], go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists, blast, fighter_jobjs: Vec::new(), items: items0, cpu_dist, plco_bytes: std::sync::Arc::from(&plco.data[..]), cpu_tbl: be(common_root + 4 * 22), grkind: if stkind == STKIND_DL { Gr_Kind_Greens as i32 } else if stkind == STKIND_BF { Gr_Kind_Battle as i32 } else { Gr_Kind_Last as i32 }, respawn_points: (4..8).filter_map(|id| points.iter().find(|p| p.id == id).map(|p| Vec3 { x: p.pos[0], y: p.pos[1], z: p.pos[2] })).collect(), respawn_busy: [0; 6], start_shield, per_slot_spawn: stkind == STKIND_BF })
     }
 
     /// The m-ex fighters' code-run report (crate::mex), one block per such fighter.
@@ -1178,12 +1190,14 @@ impl VsMatch {
             // Slot = player*2 + follower; is_cpu false (human scenario).
             let s = p.slot * 2 + p.follower as i32;
             w.slots[s as usize] = Some(nh_fighter(&p.fp, s, stale::stocks(p.slot), stale::slot_type(p.slot) == melee_types::Gm_PKind_Cpu && p.fp.cpu.kind != 5));
-            if std::env::var_os("MELEE_GOLDEN_CPU").is_some() && self.frame < 3 {
+            if std::env::var_os("MELEE_GOLDEN_CPU").is_some() && stale::slot_type(p.slot) == melee_types::Gm_PKind_Cpu {
                 let f = &p.fp;
                 let c = &f.cpu;
-                eprintln!("NHR s{} m{} pos {:08X} {:08X} ga {} fc {:08X} btn {:X} k{} lv{}", s, f.motion_id, f.cur_pos.x.to_bits(), f.cur_pos.y.to_bits(), f.ground_or_air, f.x3E4_fighterCmdScript.frame_count.to_bits(), c.buttons, c.kind, c.level);
-                eprintln!("NHR x14 {} x18 {} x1C {} x20 {} x24 {} x28 {} x2C {} x30 {} x34 {} x38 {:08X} x3C {:08X} x40 {:08X}", c.x14, c.x18, c.x1C, c.x20, c.x24, c.x28, c.x2C, c.x30, c.x34, c.x38.to_bits(), c.x3C.to_bits(), c.x40.to_bits());
-                eprintln!("NHR x7C {} x80 {} x84 {} xC8 {} xEC {} cd {} fl {:02X}{:02X}{:02X}{:02X}", c.x7C, c.x80, c.x84, c.xC8, c.xEC, c.command_duration, c.bf_f8[0], c.bf_f8[1], c.bf_f8[2], c.bf_f8[3]);
+                let off = if c.csP.is_null() { 0 } else { (c.csP as usize).wrapping_sub(c.buffer.as_ptr() as usize) };
+                let fl = u32::from_be_bytes(c.bf_f8);
+                eprintln!("NHC s{} m{} p {:08X} {:08X} v {:08X} {:08X} fc {:08X} b {:X} st {:02X}{:02X} cs {:02X}{:02X} k{} x18 {} x30 {} x34 {} x38 {:08X} x54 {:08X} {:08X} x5C {:08X} h {:08X} {:08X} {:08X} {:08X} x60 {} x7C {} x80 {} x84 {} xC8 {} xEC {} cd {} off {} fl {:08X}",
+                    s, f.motion_id, f.cur_pos.x.to_bits(), f.cur_pos.y.to_bits(), f.self_vel.x.to_bits(), f.self_vel.y.to_bits(), f.x3E4_fighterCmdScript.frame_count.to_bits(), c.buttons,
+                    c.lstick.x as u8, c.lstick.y as u8, c.cstick.x as u8, c.cstick.y as u8, c.kind, c.x18, c.x30, c.x34, c.x38.to_bits(), c.x54.x.to_bits(), c.x54.y.to_bits(), c.x5C.to_bits(), c.x55C.to_bits(), c.x560.to_bits(), c.x564.to_bits(), c.x568.to_bits(), c.x60, c.x7C, c.x80, c.x84, c.xC8, c.xEC, c.command_duration, off, fl);
             }
             if std::env::var_os("MELEE_GOLDEN_FRAMES").is_some() {
                 let f = &p.fp;
@@ -1459,7 +1473,7 @@ impl VsMatch {
             for i in cpu {
                 let me: *mut Fighter = &mut *self.players[i].fp;
                 let fps: Vec<*mut Fighter> = self.players.iter_mut().map(|p| &mut *p.fp as *mut Fighter).collect();
-                let mut cx = cpu::Cx { fps, ground: &mut self.ground, rand: &mut self.rand, items: &self.items, blast: self.blast, grkind };
+                let mut cx = cpu::Cx { fps, ground: &mut self.ground, rand: &mut self.rand, items: &self.items, blast: self.blast, grkind, dist_thresh: &self.cpu_dist, h_deadzone: melee_fighter::hooks::common_data().horizontal_stick_deadzone, plco: &self.plco_bytes, tbl: self.cpu_tbl };
                 cpu::ftco_800b3900(&mut cx, me)?;
             }
         }
@@ -1473,7 +1487,8 @@ impl VsMatch {
             let pad = self.pads[port];
             let p = &mut self.players[i];
             let locked = p.input_locked;
-            input::fighter_input(&mut p.fp, &pad, &mut p.x221d_b3, locked);
+            let is_cpu = stale::slot_type(p.slot) == melee_types::Gm_PKind_Cpu && p.fp.cpu.kind != 5;
+            input::fighter_input(&mut p.fp, &pad, &mut p.x221d_b3, locked, is_cpu);
             if p.fp.x2219_b5() == 0 {
                 if !p.fp.x1980.is_null() {
                     return Err("ftCommon_8007FFD8 (x1980 item) not ported".into());
@@ -2003,6 +2018,14 @@ impl VsMatch {
                     return Err(format!("player {}: shield break (pl_8003E058) not ported", p.slot + 1));
                 }
             }
+        }
+        // The end of Fighter_ProcessHit_8006D1EC: ftCo_800A0DA4, the hurtbox extents the CPUs read
+        // (the capsules' bone positions are lbColl_800083C4's, from the skeleton as it stands).
+        for p in &mut self.players {
+            if p.fp.x221F_b3() != 0 || p.follower {
+                continue;
+            }
+            hurt_extents(p);
         }
         // The item procs.
         self.items_update()?;
@@ -4903,4 +4926,32 @@ impl Sim for VsMatch {
     fn frame_words(&self) -> FrameWords {
         self.words()
     }
+}
+
+/// `ftColl_8007B320` + `lbColl_800083C4` for each hurt capsule, then `ftCo_800A0DA4`.
+fn hurt_extents(p: &mut Player) {
+    unsafe { melee_fighter::tu::ftCo_0A01::ext::hook::lbColl_800083C4 = Some(|_| ()) };
+    let n = p.hurtboxes.len().min(p.fp.hurt_capsules.len());
+    p.fp.hurt_capsules_len = n as _;
+    for i in 0..n {
+        let (part, a, b, scale) = p.hurtboxes[i];
+        let j = p.skel.part(part as usize);
+        let pa = p.skel.world_point(j, Vec3 { x: a[0], y: a[1], z: a[2] });
+        let pb = p.skel.world_point(j, Vec3 { x: b[0], y: b[1], z: b[2] });
+        let c = &mut p.fp.hurt_capsules[i].capsule;
+        c.a_pos = melee_types::Vec { x: pa.x, y: pa.y, z: pa.z };
+        c.b_pos = melee_types::Vec { x: pb.x, y: pb.y, z: pb.z };
+        c.scale = scale;
+        if std::env::var_os("MELEE_GOLDEN_HRT").is_some() && p.slot == 0 {
+            eprintln!("HRT t{} i{} bone {} a {:08X} {:08X} {:08X} b {:08X} {:08X} {:08X} sc {:08X}", p.fp.cpu.x7C, i, part, pa.x.to_bits(), pa.y.to_bits(), pa.z.to_bits(), pb.x.to_bits(), pb.y.to_bits(), pb.z.to_bits(), scale.to_bits());
+        }
+    }
+    if std::env::var_os("MELEE_GOLDEN_HRT").is_some() && p.slot == 0 && (1..=5).contains(&p.fp.cpu.x7C) {
+        for q in 0..70usize.min(p.skel.parts.len()) {
+            let j = p.skel.part(q);
+            let w = p.skel.world_pos(j);
+            eprintln!("PRT t{} q{} {:08X} {:08X} {:08X}", p.fp.cpu.x7C, q, w.x.to_bits(), w.y.to_bits(), w.z.to_bits());
+        }
+    }
+    unsafe { melee_fighter::tu::ftCo_0A01::ftCo_800A0DA4(&mut p.fp) };
 }

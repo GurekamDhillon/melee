@@ -94,6 +94,20 @@ impl FighterFiles {
         Ok(Self { dat, ft_data, aj })
     }
 
+    /// `ftData->x30` (`ftData_x30`): the hurtbox capsules `(part, a_offset, b_offset, scale)`.
+    pub fn hurtboxes(&self) -> Vec<(u32, [f32; 3], [f32; 3], f32)> {
+        let d = &self.dat.data;
+        let x30 = be32(d, self.ft_data + 0x30);
+        let (count, inits) = (be32(d, x30) as usize, be32(d, x30 + 4));
+        let f = |at: u32| f32::from_bits(be32(d, at));
+        (0..count as u32)
+            .map(|i| {
+                let a = inits + i * 0x28;
+                (be32(d, a), [f(a + 0xC), f(a + 0x10), f(a + 0x14)], [f(a + 0x18), f(a + 0x1C), f(a + 0x20)], f(a + 0x24))
+            })
+            .collect()
+    }
+
     /// `ftData->x0->trophy_scale` (`ftCo_DatAttrs` +0x110; copied to `fp->co_attrs`).
     pub fn trophy_scale(&self) -> f32 {
         use melee_core::gc::GcLayout;

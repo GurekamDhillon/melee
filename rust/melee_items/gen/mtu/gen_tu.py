@@ -18,7 +18,7 @@ T(id) then T() of every argument (pointer -> PI, function pointer -> FI, string 
 returns a value from the shared xorshift stream, so a divergence in call order, arguments or
 values shows in the trace hash. Computed from C source only: no disc data.
 """
-import os, re, sys
+import json, os, re, sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -40,6 +40,11 @@ _BLK = build_index(GEN_RS)
 PRIM = g.PRIM
 INTS = {T.CHAR_S, T.SCHAR, T.CHAR_U, T.UCHAR, T.SHORT, T.USHORT, T.INT, T.UINT, T.LONG, T.ULONG,
         T.LONGLONG, T.ULONGLONG, T.BOOL}
+
+
+# `fn name(..) => expr;` fallbacks used when the hook is unset (the port in a lower crate, behind an adapter):
+# fallbacks.json {stem: {name: expr}} is written from the sources after a wiring pass; regeneration keeps them.
+FALLBACKS = json.loads((HERE / "fallbacks.json").read_text(encoding="utf-8")) if (HERE / "fallbacks.json").exists() else {}
 
 
 def sh(path):
@@ -589,7 +594,7 @@ def build(stem, spec, want_ext):
         argl = ", ".join(f"a{i}" for i in range(len(ptys)))
         r_out_hook = f"        m::ext::hook::{n} = Some(|{argl}| {{ " + " ".join(body_r) + " });"
         r_out.append(("@@HOOK@@", r_out_hook))
-        ext_fns.append(f"    fn {n}({rparams}){rret};")
+        ext_fns.append(f"    fn {n}({rparams}){rret}" + (f" => {FALLBACKS[stem][n]}" if n in FALLBACKS.get(stem, {}) else "") + ";")
         if addr and n not in realcb:
             ext_cb.append((n, rparams, rret, argnames))
     # fill / hash
@@ -668,11 +673,11 @@ def build(stem, spec, want_ext):
 
     ext = ["// BEGIN GENERATED EXT (rust/melee_items/gen/mtu/gen_tu.py; the callees of the C TU)",
            "pub mod ext {",
-           "    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]",
+           "    #![allow(unreachable_code, non_upper_case_globals, non_snake_case, unused_imports, dead_code)]",
            "    use super::*;",
            "    use core::ffi::c_void;",
            "    macro_rules! ext_fns {",
-           "        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {",
+           "        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(=> $fb:expr)?;)*) => {",
            "            pub mod hook {",
            "                use super::*;",
            "                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*",
@@ -680,7 +685,7 @@ def build(stem, spec, want_ext):
            "            $( pub fn $name($($a: $t),*) $(-> $r)? {",
            "                match unsafe { hook::$name } {",
            "                    Some(f) => f($($a),*),",
-           "                    None => panic!(concat!(\"TODO: \", stringify!($name), \" is not ported\")),",
+           "                    None => { $( return $fb; )? panic!(concat!(\"TODO: \", stringify!($name), \" is not ported\")) }",
            "                }",
            "            } )*",
            "        };",

@@ -913,7 +913,7 @@ ftFx_Init_OnDeath,src/melee/ft/kinds/ftFox/ftfox.c,0,1,ported+verified,melee_cha
 ftFx_Init_OnLoad,src/melee/ft/kinds/ftFox/ftfox.c,0,1,ported+verified,melee_chara
 ftKb_Init_800EE528,src/melee/ft/kinds/ftKirby/ftkirby.c,0,1,ported+verified,melee_chara
 ftKb_SpecialN_800F1D24,src/melee/ft/kinds/ftKirby/ftkirby.c,0,2928,ported+verified,melee_chara
-ftPr_Init_8013C2F8,src/melee/ft/kinds/ftPurin/ftpurin.c,0,1,ported-unverified,melee_chara
+ftPr_Init_8013C2F8,src/melee/ft/kinds/ftPurin/ftpurin.c,0,1,ported+verified,melee_chara
 fn_80160840,src/melee/gm/gm_1601.c,0,2,ported+verified,melee_modes
 fn_8016758C,src/melee/gm/gm_1601.c,0,1614,ported+verified,melee_modes
 gm_80160854,src/melee/gm/gm_1601.c,0,20,ported+verified,melee_modes
@@ -1752,7 +1752,7 @@ lbAnim_InitFrames,src/melee/lb/lbanim.c,5,11288,ported-unverified,melee_runtime
 lbAudioAx_80024304,src/melee/lb/lbaudio_ax.c,5,2,ported-unverified,melee_runtime
 Command_00,src/melee/lb/lbcommand.c,5,126,ported+verified,melee_runtime
 Command_Execute,src/melee/lb/lbcommand.c,5,1791,ported+verified,melee_runtime
-mpColl_8004730C,src/melee/mp/mpcoll.c,5,118,ported-unverified,melee_chara
+mpColl_8004730C,src/melee/mp/mpcoll.c,5,118,ported+verified,melee_chara
 mpCheckCeilingRemap,src/melee/mp/mplib.c,5,4620,ported+verified,melee_world
 mpCheckFloorRemap,src/melee/mp/mplib.c,5,4613,ported+verified,melee_world
 mpCheckLeftWallRemap,src/melee/mp/mplib.c,5,17874,ported+verified,melee_world
@@ -2103,13 +2103,13 @@ ft_800881D8,src/melee/ft/ft_0881.c,103,22,ported+verified,melee_fighter
 ftAction_80071908,src/melee/ft/ftaction.c,103,12,ported+verified,melee_fighter
 ftAnim_8006E054,src/melee/ft/ftanim.c,103,517,ported-unverified,melee_fighter
 ftCommon_8007E5AC,src/melee/ft/ftcommon.c,103,215,ported+verified,melee_fighter
-ftCa_SpecialHi_800E3EAC,src/melee/ft/kinds/ftCaptain/ftcaptainspeciallw.c,103,234,ported-unverified,melee_chara
-ftCa_SpecialLw_Coll,src/melee/ft/kinds/ftCaptain/ftcaptainspeciallw.c,103,234,ported-unverified,melee_chara
+ftCa_SpecialHi_800E3EAC,src/melee/ft/kinds/ftCaptain/ftcaptainspeciallw.c,103,234,ported+verified,melee_chara
+ftCa_SpecialLw_Coll,src/melee/ft/kinds/ftCaptain/ftcaptainspeciallw.c,103,234,ported+verified,melee_chara
 ftCa_SpecialLw_Enter,src/melee/ft/kinds/ftCaptain/ftcaptainspeciallw.c,103,6,ported+verified,melee_chara
 ftCa_SpecialLw_Phys,src/melee/ft/kinds/ftCaptain/ftcaptainspeciallw.c,103,234,ported+verified,melee_chara
 lbAudioAx_800230C8,src/melee/lb/lbaudio_ax.c,103,34,ported+verified,melee_runtime
 lbAudioAx_80023220,src/melee/lb/lbaudio_ax.c,103,34,ported+verified,melee_runtime
-ftCa_SpecialLw_Anim,src/melee/ft/kinds/ftCaptain/ftcaptainspeciallw.c,104,234,ported-unverified,melee_chara
+ftCa_SpecialLw_Anim,src/melee/ft/kinds/ftCaptain/ftcaptainspeciallw.c,104,234,ported+verified,melee_chara
 ft_80084104,src/melee/ft/ft_081B.c,105,119,ported+verified,melee_chara
 ft_80084FA8,src/melee/ft/ft_084E.c,105,119,ported+verified,melee_fighter
 decideAttack11,src/melee/ft/kinds/ftCommon/ftCo_Attack1.c,105,7,ported+verified,melee_fighter
@@ -2192,7 +2192,7 @@ hsd_8039D688,src/sysdolphin/baselib/generator.c,135,1839,ported-unverified,melee
 HSD_JObjWalkTree,src/sysdolphin/baselib/jobj.c,135,95,ported+verified,melee_runtime
 HSD_JObjWalkTree0,src/sysdolphin/baselib/jobj.c,135,1894,ported-unverified,melee_runtime
 ftCa_SpecialLwEndAir_Coll,src/melee/ft/kinds/ftCaptain/ftcaptainspeciallw.c,142,180,ported+verified,melee_chara
-ftCa_SpecialLwEndAir_Phys,src/melee/ft/kinds/ftCaptain/ftcaptainspeciallw.c,142,180,ported-unverified,melee_chara
+ftCa_SpecialLwEndAir_Phys,src/melee/ft/kinds/ftCaptain/ftcaptainspeciallw.c,142,180,ported+verified,melee_chara
 ftCa_SpecialLwEnd_Coll,src/melee/ft/kinds/ftCaptain/ftcaptainspeciallw.c,142,180,ported+verified,melee_chara
 Command_05,src/melee/lb/lbcommand.c,142,7,ported+verified,melee_modes
 ftCa_SpecialLwEndAir_Anim,src/melee/ft/kinds/ftCaptain/ftcaptainspeciallw.c,143,180,ported+verified,melee_chara
@@ -2471,8 +2471,8 @@ lbColl_80008A5C,src/melee/lb/lbcollision.c,269,1680,ported+verified,melee_runtim
 mpColl_80043670,src/melee/mp/mpcoll.c,269,12,ported+verified,melee_world
 mpColl_SetECBSource_Fixed,src/melee/mp/mpcoll.c,269,12,ported+verified,melee_world
 ftLib_800868D4,src/melee/ft/ftlib.c,270,1080,ported+verified,melee_fighter
-ftFx_SpecialAirNStart_Anim,src/melee/ft/kinds/ftFox/ftfoxspecialn.c,270,24,ported-unverified,melee_chara
-ftFx_SpecialAirNStart_IASA,src/melee/ft/kinds/ftFox/ftfoxspecialn.c,270,18,ported-unverified,melee_chara
+ftFx_SpecialAirNStart_Anim,src/melee/ft/kinds/ftFox/ftfoxspecialn.c,270,24,ported+verified,melee_chara
+ftFx_SpecialAirNStart_IASA,src/melee/ft/kinds/ftFox/ftfoxspecialn.c,270,18,ported+verified,melee_chara
 ftFx_SpecialN_CheckBlasterAction,src/melee/ft/kinds/ftFox/ftfoxspecialn.c,270,210,ported+verified,melee_chara
 ftFx_SpecialN_CheckRemoveBlaster,src/melee/ft/kinds/ftFox/ftfoxspecialn.c,270,216,ported+verified,melee_chara
 it_802721B8,src/melee/it/itcoll.c,270,420,ported+verified,melee_items
@@ -2519,9 +2519,9 @@ ftCo_Rebirth_Anim,src/melee/ft/ft_0D4D.c,272,300,ported-unverified,melee_fighter
 ftFx_SpecialAirNLoop_Coll,src/melee/ft/kinds/ftFox/ftfoxspecialn.c,273,60,ported+verified,melee_chara
 ftFx_SpecialAirNLoop_IASA,src/melee/ft/kinds/ftFox/ftfoxspecialn.c,273,60,ported+verified,melee_chara
 ftFx_SpecialAirNLoop_Phys,src/melee/ft/kinds/ftFox/ftfoxspecialn.c,273,60,ported+verified,melee_chara
-ftFx_SpecialN_CreateBlasterShot,src/melee/ft/kinds/ftFox/ftfoxspecialn.c,273,60,ported-unverified,melee_chara
+ftFx_SpecialN_CreateBlasterShot,src/melee/ft/kinds/ftFox/ftfoxspecialn.c,273,60,ported+verified,melee_chara
 lb_800140F8,src/melee/lb/lb_013B.c,273,130,ported+verified,melee_modes
-ftFx_SpecialAirNLoop_Anim,src/melee/ft/kinds/ftFox/ftfoxspecialn.c,274,60,ported-unverified,melee_chara
+ftFx_SpecialAirNLoop_Anim,src/melee/ft/kinds/ftFox/ftfoxspecialn.c,274,60,ported+verified,melee_chara
 it_802AE538,src/melee/it/kinds/itfoxblaster.c,275,6,ported+verified,melee_items
 ScriptGame_HitRuleItemCreate,pc/gameworld/script_game.c,278,24,ported+verified,melee_modes
 HSD_JObjSetRotationY,src/melee/ef/efalt.c,278,6,ported+verified,melee_modes

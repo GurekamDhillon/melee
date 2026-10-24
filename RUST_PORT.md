@@ -991,3 +991,18 @@ Stub names in `docs/rust-port/missing.md` for melee_fighter: NO_PORT 276 -> ~71,
 `melee golden --from-snapshot FILE --start N` resumes the native sim from it and compares the hash from N
 on. Dump/resume/proof commands, what is loaded from where, and the model differences found:
 `tools/rust-port/snap/README.md`. Proven on `pad_falcon_fox_fd` at frames 0 and 300.
+
+## melee_chara trace verification (port/pre-melee_chara, 2026-10-24)
+`docs/rust-port/trace/pad_falcon_fox_fd.csv` listed no stub or missing `melee_chara` function; the 10 `ported-unverified`
+rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_Init_8013C2F8`, `mpColl_8004730C`,
+`ftCa_SpecialHi_800E3EAC`, `ftCa_SpecialLw_Coll/Anim`, `ftCa_SpecialLwEndAir_Phys`, `ftFx_SpecialAirNStart_Anim/IASA`,
+`ftFx_SpecialN_CreateBlasterShot`, `ftFx_SpecialAirNLoop_Anim`.
+- Build: `python rust/melee_chara/gen/turef/tu_pre.py [stem]` (same machinery as `tu_shard89.py`: the game `.c` is `#include`d
+  verbatim, shipping contraction, recording stubs for callees, 4000-6000 seeded cases to `tests/data/tu_<stem>.txt`);
+  tests are `tests/tu_{ftcaptainspeciallw,ftfoxspecialn,ftpurin,mpcoll}_c.rs`.
+- `tu_mpcoll_ref.c` includes `mplib.c` + `mpisland.c` + `mpcoll.c` together and loads a synthetic stage with `mpLibLoad`; it is
+  the first oracle of the generated `melee_world::tu::{mplib,mpisland,mpcoll}` (it also exercises mpCollPrev,
+  mpColl_80042C58, the whole 80043754 loop, floor / wall / ceiling passes and the joint callbacks). The image is linked
+  below 4 GB because those files route pointers through `int`. Trap: a group named `LeftWall` has normal -x (hit while
+  moving right), i.e. it is the stage's right-hand wall.
+- Write C driver edits with the Edit tool, not a Python string: `\n` inside a Python literal puts a real newline in the C.

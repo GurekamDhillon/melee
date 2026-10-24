@@ -3,6 +3,7 @@
 pub mod args;
 pub mod engine;
 pub mod game;
+pub mod geno;
 pub mod gd;
 pub mod host;
 pub mod manifest;

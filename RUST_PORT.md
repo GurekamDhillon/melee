@@ -985,3 +985,28 @@ Stub names in `docs/rust-port/missing.md` for melee_fighter: NO_PORT 276 -> ~71,
 - Next: the other three goldens are not wired (`VsMatch::new` supports `GrNLa.dat` only; `golden()` has no Marth,
   Sheik, Battlefield `grbattle.c`, or CPU input). Order of attack: Battlefield stage init and its materials ->
   Marth / Sheik file and effect-bank loaders -> the states `pad_fixed.lua` reaches first.
+
+## Golden round 2: pad_marth_sheik_bf wired, frames 0..268 match (2026-10-24)
+- `melee golden --scenario pad_marth_sheik_bf` matches the golden on every column for frames 0..268
+  (`compare_golden.py ... --allow-short` exit 0); pad_falcon_fox_fd still matches 0..1800. The sim stops on
+  "player 2: neutral B in the air (kind 7) not ported" (Sheik's Needle Storm; needs the It_Kind_Seak_Needle*
+  items). cpu_fox_falco_dl and cpu_peach_samus_ys_items are NOT wired (CPU input, Falco, Peach, Samus,
+  Dream Land, Yoshi's Story, items).
+- Wired in `vs_match.rs`: `GrNBa.dat` (StKind 0x1F), Marth (`PlMs*`, EfMsData bank 16) and Sheik (`PlSk*`,
+  EfZdData bank 17) loaders, and the Sheik/Zelda partner fighter (`Player_80031AD0` second `Fighter_Create`,
+  `ftCo_800BFD04` Sleep; hash slot `slot*2+1`; `Player::follower`, skipped by every per-frame loop and by hits).
+- Traps found (each cost a bisect; C trace = `MELEE_RAND_TRACE` + the stack hack of `c_trace.patch`):
+  - Stage points are scaled by `grGroundParam->y` (Battlefield 0.8): the spawn (0,10) became (0,8). FD is 1.0.
+  - The spawn facing is `fn_8016DEEC` (face the nearest other fighter; within 5 units, away from its facing,
+    +1 when unset), not `direction(x)`; at equal x the first player faces +1, the second -1.
+  - `grBattle_OnInit` draws one `HSD_Randi(1200)` (BG timer) after the effect banks, before the fighters.
+  - Battlefield's stage creates 4 generators at init (bank 30 ids 0x7532..0x7535, the particle tracks of map
+    gobjs 0 and 1 anim 0). They draw no RNG, but they are in the generator list: the insertion cursor
+    (`hsd_804D78F8`) puts later gens after them. Without them the first fighter effect's generators were
+    visited in a different order and its RNG draws moved (a 9 vs 17 draws row, found with the C stack trace).
+  - `ftData->x1C` (hand-pose table) has only as many entries as the fighter has slots; later words are other data.
+  - Command-script ops 0x2E (colour overlay) and 0x31 (afterimage) are render-only: skip one word.
+- Ported with it: Marth's Counter (ground), the forward/up tilts (`ftCo_AttackS3`, `AttackHi3`; `AttackLw3` and
+  the smashes stop the run), Marth's GuardOn (model part flag), efAsync 0x3FE (generator 0x107).
+- Next: Sheik's neutral B (SpecialN/SpecialAirN, needle items), then `AttackLw3`, smashes, the air Counter,
+  every hit (`hit_guard`), then the two CPU goldens.

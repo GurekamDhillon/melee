@@ -18,7 +18,7 @@ envs = ["MELEE_HEAP_TRACE", "MELEE_DVD_TRACE", "MELEE_GR_TRACE", "MELEE_MEX_TRAC
 logv = ["", "all", "verbose", "quiet", "none", "default", "-scene", "+render", "-render", "render,pad", "scene; net\tmex", "-all", "bogus,gobj", "!heap", "SCENE,Pad,-NET",
         "a" * 300 + ",dvd"]
 ISOS = ['C:\Games\Melee\melee.iso', 'D:/x/y.iso', 'secret']
-ISOS2 = ['C:\Games\Melee\melee.iso', 'c:/games/melee/melee.iso', 'zzz', 'x']
+ISOS2 = ['disc.bin', 'disc.bin', 'C:\Games\Melee\melee.iso', 'c:/games/melee/melee.iso', 'zzz', 'x']
 def line():
     s = r.choice(prefixes) + r.choice(sfx)
     return s
@@ -57,6 +57,25 @@ while len(out) < 9000:
     elif c < 0.89: out.append(f"UNENV {r.choice(envs)}")
     elif c < 0.91: out.append(f"SLOG {H(r.choice(logv))}")
     elif c < 0.94: out.append(f"ISO {H(r.choice(ISOS2))}")
-    elif c < 0.95: out.append("NOISO")
-    else: out.append("ENVQ " + r.choice(envs))
+    elif c < 0.945: out.append("NOISO")
+    elif c < 0.95: out.append("ENVQ " + r.choice(envs))
+    elif c < 0.972:
+        k = r.random()
+        if k < 0.2: out.append("SUMM " + H(r.choice(["", "name=GD delay=2", "x" * 1500, "a=1 b=2 @USER@"])))
+        elif k < 0.4: out.append("VERSION " + (H(r.choice(["1.2.3\n", "v9 @USER@\r\nsecond", "", "x" * 600 + "\n", "\n"])) if r.random() < 0.8 else "~"))
+        elif k < 0.6:
+            fn = "".join(f" 0001:{a:08x}       _fn{a:x}      {0x10000000 + a:08x} f   x.obj\n" for a in sorted(r.sample(range(0x1000, 0x90000, 0x10), r.randint(0, 40))))
+            fn += " 0002:00000010 _data 10100000 f y.obj\n garbage line\n 0001:zz\n"
+            stamp = r.choice(["@STAMP@", "@STAMP@", "00000000"])
+            hdr = f" melee-pc\n\n Timestamp is {stamp} (Mon)\n\n" if r.random() < 0.9 else " no timestamp here\n"
+            out.append("MAP " + (H(hdr + fn) if r.random() < 0.9 else "~"))
+        elif k < 0.7: out.append("DISCFILE " + (H("A" * 0x20 + "GALE01 title " * 4 + "\0" * 5 + "T" * 40) if r.random() < 0.7 else r.choice(["~", H("short")])))
+        else:
+            for _ in range(r.randint(1, 5)):
+                a = r.choice([0, 0x10001000, 0x10001234, 0x1000ffff, 0x10020000, 0x1004fff0, 0x10200000, r.randint(0x10001000, 0x10090000)])
+                out.append("LOG " + H(f"gw:     melee-pc.map rva 0x{a:08X}" + r.choice(["", " @USER@", " X"])))
+            out.append("LOG " + H(r.choice(["gw: fault at @PROFILE@/game/x.c", "gw: c:/users/testy/save/@USER@.dat", "crash for @USER@ in @PROFILE@", "gw: disc image disc.bin, disk id GALE01"])))
+    else:
+        if r.random() < 0.7: out.append("CRASH")
+        out.append("REPORT " + H(r.choice(["panic", "unhandled exception", "crash", "CRT invalid parameter"])) + " " + (H(r.choice(["why", "assert @USER@", "x" * 300, "C:/Users/Testy/a"])) if r.random() < 0.8 else "~") + f" {r.randint(2020, 2030)}/{r.randint(1, 12)}/{r.randint(1, 28)}/{r.randint(0, 23)}/{r.randint(0, 59)}/{r.randint(0, 59)}")
 print("\n".join(out))

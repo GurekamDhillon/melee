@@ -386,3 +386,6 @@ pub mod vi1101;
 pub mod vi1201v1;
 pub mod vi1201v2;
 pub mod vi1202;
+
+#[cfg(test)]
+mod jobj_inl_test;

@@ -518,11 +518,12 @@ def build(stem, spec, want_ext):
         params = ", ".join(f"__typeof__({p.spelling}) a{i}" for i, p in enumerate(ptys)) or "void"
         ret_t = "void" if rcls == "void" else f"__typeof__({rt.spelling})"
         f32a = spec.get("fn32_args", {}).get(n, [])
-        body_c = [f"T({sid[n]});"] + [(f"T(FI32((u32) a{i}));" if i in f32a else c_trace(arg_class(p), f"a{i}"))
+        ign = spec.get("ignore_args", {}).get(n, [])  # address-valued int args: not observable across the two builds
+        body_c = [f"T({sid[n]});"] + [("" if i in ign else f"T(FI32((u32) a{i}));" if i in f32a else c_trace(arg_class(p), f"a{i}"))
                                       for i, p in enumerate(ptys)]
         rparams = ", ".join(f"a{i}: {rust_ty(p)}" for i, p in enumerate(ptys))
         rret = "" if rcls == "void" else f" -> {rust_ty(rt)}"
-        body_r = [f"t({sid[n]});"] + [(f"t(fi32(a{i} as u32));" if i in f32a else r_trace(arg_class(p), f"a{i}"))
+        body_r = [f"t({sid[n]});"] + [("" if i in ign else f"t(fi32(a{i} as u32));" if i in f32a else r_trace(arg_class(p), f"a{i}"))
                                       for i, p in enumerate(ptys)]
         if n in eff:
             body_c.append(eff[n][0])
@@ -593,13 +594,19 @@ def build(stem, spec, want_ext):
     else:
         rtxt += "pub fn install() {\n    use m::ext::hook::*;\n    unsafe {\n" + "\n".join(h.replace("m::ext::hook::", "") for h in hooks) + "\n    }\n}\n\n"
     rtxt += "pub fn freg_all() {\n"
-    for n in ([] if spec.get("mods") else fpn):
-        rtxt += f"    freg({spec.get('real_cb', {}).get(n, 'm::ext::cb::' + n)} as *const () as usize);\n"
+    fm = spec.get("freg_mod")  # single-module oracle: register the TU's own functions (observable as callback ids)
+    for k, n in enumerate([] if (spec.get("mods") and not fm) else fpn):
+        if fm:  # address-taken stubs: placeholders that keep the ids aligned with the C table
+            rtxt += f"    freg({0xDEAD0000 + k});" + chr(10)
+        else:
+            rtxt += f"    freg({spec.get('real_cb', {}).get(n, 'm::ext::cb::' + n)} as *const () as usize);" + chr(10)
     for n in own:
-        if spec.get("mods"):
+        if fm:
+            rtxt += f"    freg(m::{fm}::{n} as *const () as usize);" + chr(10)
+        elif spec.get("mods"):
             pass  # multi-module oracles register the callbacks they store by hand
         else:
-            rtxt += f"    freg(m::{n} as *const () as usize);\n"
+            rtxt += f"    freg(m::{n} as *const () as usize);" + chr(10)
     rtxt += "}\n\n" + "\n".join(raws)
     crate = spec.get("crate", "melee_world")
     rfile = ROOT / "rust" / crate / "tests/mtu" / f"{stem}_gen.rs"

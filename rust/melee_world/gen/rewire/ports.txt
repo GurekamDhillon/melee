@@ -607,3 +607,9 @@ Ground_801C498C = crate::tu::ground::Ground_801C498C
 lbShadow_8000E9F0 = - | expr:unsafe { melee_runtime::tu::lbshadow::lbShadow_8000E9F0(&mut *{0}, &*{1}, {2}); }
 lbArchive_80016DBC/4 = - | expr:unsafe { let v: std::vec::Vec<*mut core::ffi::c_void> = std::vec![{1} as *mut core::ffi::c_void, {2} as *mut core::ffi::c_void, core::ptr::null_mut()]; melee_runtime::tu::lbarchive::lbArchive_80016DBC({0} as _, &v) as _ }
 HSD_SisLib_803A6B98/4 = - | expr:unsafe { let s = String::from_utf8_lossy(&melee_runtime::cformat::c_format({3} as *const i8, &[])).into_owned(); melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6B98({0}, {1}, {2}, if {3}.is_null() { None } else { Some(&s) }) }
+# --- camera.c math (checked against the C by melee_runtime's oracles)
+lbVector_Rotate = melee_runtime::tu::lbvector::lbVector_Rotate
+lbVector_RotateAboutUnitAxis = melee_runtime::tu::lbvector::lbVector_RotateAboutUnitAxis
+lbVector_8000E838 = melee_runtime::tu::lbvector::lbVector_8000E838
+atanf = melee_runtime::lbtrigf::atanf
+tanf = melee_runtime::gekko::tanf

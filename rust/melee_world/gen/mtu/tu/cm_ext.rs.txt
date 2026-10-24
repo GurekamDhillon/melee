@@ -1,0 +1,144 @@
+// BEGIN GENERATED EXT (rust/melee_world/gen/mtu/gen_tu.py; the callees of the C TU)
+pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    use super::*;
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
+    fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32);
+    fn GenoFly_Any() -> i32;
+    fn GenoFly_CameraSubject(a0: *mut c_void) -> i32;
+    fn Ground_801C4368(a0: *mut f32, a1: *mut f32);
+    fn Ground_801C4FAC(a0: *mut HSD_CObj);
+    fn Ground_GetP1Fighter() -> *mut HSD_GObj;
+    fn HSD_CObjEndCurrent();
+    fn HSD_CObjEraseScreen(a0: *mut HSD_CObj, a1: i32, a2: i32, a3: i32);
+    fn HSD_CObjGetAspect(a0: *mut HSD_CObj) -> f32;
+    fn HSD_CObjGetAuthoredAspect(a0: *mut HSD_CObj) -> f32;
+    fn HSD_CObjGetCurrent() -> *mut HSD_CObj;
+    fn HSD_CObjGetEyePosition(a0: *mut HSD_CObj, a1: *mut Vec);
+    fn HSD_CObjGetEyeVector(a0: *mut HSD_CObj, a1: *mut Vec) -> i32;
+    fn HSD_CObjGetFar(a0: *mut HSD_CObj) -> f32;
+    fn HSD_CObjGetFov(a0: *mut HSD_CObj) -> f32;
+    fn HSD_CObjGetInterest(a0: *mut HSD_CObj, a1: *mut Vec);
+    fn HSD_CObjGetScissor(a0: *mut HSD_CObj, a1: *mut _Scissor);
+    fn HSD_CObjGetUpVector(a0: *mut HSD_CObj, a1: *mut Vec) -> i32;
+    fn HSD_CObjGetViewingMtxPtr(a0: *mut HSD_CObj) -> *mut c_void;
+    fn HSD_CObjSetCurrent(a0: *mut HSD_CObj) -> i32;
+    fn HSD_CObjSetEyePosition(a0: *mut HSD_CObj, a1: *mut Vec);
+    fn HSD_CObjSetFar(a0: *mut HSD_CObj, a1: f32);
+    fn HSD_CObjSetFov(a0: *mut HSD_CObj, a1: f32);
+    fn HSD_CObjSetInterest(a0: *mut HSD_CObj, a1: *mut Vec);
+    fn HSD_CObjSetMtxDirty(a0: *mut HSD_CObj);
+    fn HSD_CObjSetNear(a0: *mut HSD_CObj, a1: f32);
+    fn HSD_CObjSetRoll(a0: *mut HSD_CObj, a1: f32);
+    fn HSD_CObjSetUpVector(a0: *mut HSD_CObj, a1: *mut Vec);
+    fn HSD_CObjSetupViewingMtx(a0: *mut HSD_CObj);
+    fn HSD_CObjUpdateView(a0: *mut HSD_CObj);
+    fn HSD_FogSet(a0: *mut HSD_Fog);
+    fn HSD_GObjFree(a0: *mut HSD_GObj);
+    fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void);
+    fn HSD_GObj_80390ED0(a0: *mut HSD_GObj, a1: u32);
+    fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc;
+    fn HSD_LObjDeleteCurrentAll(a0: *mut HSD_LObj);
+    fn HSD_MemAlloc(a0: i32) -> *mut c_void;
+    fn HSD_Randf() -> f32;
+    fn HSD_Randi(a0: i32) -> i32;
+    fn HSD_SetEraseColor(a0: u8, a1: u8, a2: u8, a3: u8);
+    fn Mex_Enabled(a0: *const i8) -> i32;
+    fn MotionWorldDraw(a0: i32);
+    fn Player_GetEntity(a0: i32) -> *mut HSD_GObj;
+    fn Player_GetPlayerCharacter(a0: i32) -> u32;
+    fn Player_GetPlayerId(a0: i32) -> i32;
+    fn ScriptGame_CameraFollowTarget(a0: i32, a1: i32, a2: *mut Vec) -> i32;
+    fn ScriptGame_CameraFov(a0: f32) -> f32;
+    fn ScriptGame_MapWide() -> i32;
+    fn ScriptGame_WbDraw();
+    fn Shader_PostDraw(a0: i32);
+    fn Stage_80224CAC(a0: *mut Vec);
+    fn Stage_GetBlastZoneBottomOffset() -> f32;
+    fn Stage_GetBlastZoneLeftOffset() -> f32;
+    fn Stage_GetBlastZoneRightOffset() -> f32;
+    fn Stage_GetBlastZoneTopOffset() -> f32;
+    fn Stage_GetCamAngleRadiansDown() -> f32;
+    fn Stage_GetCamAngleRadiansLeft() -> f32;
+    fn Stage_GetCamAngleRadiansRight() -> f32;
+    fn Stage_GetCamAngleRadiansUp() -> f32;
+    fn Stage_GetCamBoundsBottomOffset() -> f32;
+    fn Stage_GetCamBoundsLeftOffset() -> f32;
+    fn Stage_GetCamBoundsRightOffset() -> f32;
+    fn Stage_GetCamBoundsTopOffset() -> f32;
+    fn Stage_GetCamFixedFov() -> f32;
+    fn Stage_GetCamInfoX20() -> f32;
+    fn Stage_GetCamInfoX24() -> f32;
+    fn Stage_GetCamMaxDepth() -> f32;
+    fn Stage_GetCamPanAngleRadians() -> f32;
+    fn Stage_GetCamTrackRatio() -> f32;
+    fn Stage_GetCamTrackSmooth() -> f32;
+    fn Stage_GetCamZoomRate() -> f32;
+    fn Stage_GetPauseCamZPosInit() -> f32;
+    fn Stage_GetPauseCamZPosMax() -> f32;
+    fn Stage_GetPauseCamZPosMin() -> f32;
+    fn Stage_SetVecToFixedCamPos(a0: *mut Vec);
+    fn Stage_UnkSetVec3TCam_Offset(a0: *mut Vec);
+    fn Wb_RenderActive() -> i32;
+    fn Wb_RenderCameraBits(a0: i32) -> i32;
+    fn Wb_RenderDrawn();
+    fn Wb_RenderOption(a0: i32, a1: i32) -> i32;
+    fn diag_cam_translate(a0: i32, a1: i32, a2: i32, a3: i32, a4: f32, a5: f32, a6: f32, a7: f32, a8: f32, a9: f32);
+    fn diag_camera_consts(a0: f32, a1: f32, a2: f32, a3: f32);
+    fn diag_camera_desc(a0: *const f32, a1: *const f32, a2: f32, a3: f32, a4: f32, a5: f32);
+    fn diag_camera_subject(a0: f32, a1: f32, a2: f32, a3: f32, a4: f32);
+    fn diag_camera_track(a0: *const f32, a1: *const f32);
+    fn diag_game_camera(a0: *const f32, a1: *const f32, a2: *const f32);
+    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn ftLib_80086B74(a0: *mut HSD_GObj) -> *mut CmSubject;
+    fn ftLib_8008701C(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_8008732C(a0: *mut HSD_GObj) -> i32;
+    fn gm_GetButtonsPressed(a0: u8) -> u64;
+    fn gm_GetButtonsTriggered(a0: u8) -> u64;
+    fn gm_IsCurrently1PMode_inline() -> i32;
+    fn grCastle_801D0FF0() -> f32;
+    fn grCorneria_801E2FCC() -> f32;
+    fn grGarden_80203624() -> f32;
+    fn grHomeRun_8021EF10() -> f32;
+    fn grKinokoRoute_802087B0() -> f32;
+    fn grLib_801C9CEC(a0: u32) -> *mut HSD_GObj;
+    fn grZebes_801DCCC8() -> f32;
+    fn lbRefract_8002247C(a0: *mut HSD_CObj);
+    fn lbRefract_80022560();
+    fn lbShadow_8000F38C(a0: i32);
+    fn lbVector_WorldToScreen(a0: *mut HSD_CObj, a1: *const Vec, a2: *mut Vec, a3: i32) -> *mut Vec;
+    fn lb_80013B14(a0: *mut HSD_CameraDescPerspective) -> *mut HSD_CObj;
+    fn mpLib_8005A2DC();
+    fn mpLib_DrawSpecialPoints();
+    fn mpLib_DrawZones();
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+        pub unsafe extern "C" fn HSD_CObjGetFov(a0: *mut HSD_CObj) -> f32 { super::HSD_CObjGetFov(a0) }
+        pub unsafe extern "C" fn Stage_GetCamInfoX20() -> f32 { super::Stage_GetCamInfoX20() }
+        pub unsafe extern "C" fn Stage_GetCamInfoX24() -> f32 { super::Stage_GetCamInfoX24() }
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut HSD_GObj_CameraKind: u8 = unsafe { core::mem::zeroed() };
+    pub static mut HSD_PadCopyStatus: [HSD_PadStatus; 4] = unsafe { core::mem::zeroed() };
+    pub static mut gm_CStickSmashTargetTest: i32 = unsafe { core::mem::zeroed() };
+    pub static mut stage_info: StageInfo = unsafe { core::mem::zeroed() };
+}
+// END GENERATED EXT

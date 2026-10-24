@@ -141,6 +141,10 @@ def is_fnptr(t):
     return c.kind == T.POINTER and ctype(c.get_pointee()).kind in (T.FUNCTIONPROTO, T.FUNCTIONNOPROTO)
 
 
+def ident_rec_is_scalarlike(nt):
+    return False
+
+
 def rty(t):
     """Rust spelling of a declared type"""
     c = ctype(t)
@@ -152,9 +156,14 @@ def rty(t):
         return f"[{rty(c.element_type)}; {c.element_count}]"
     if c.kind == T.POINTER:
         pt = ctype(c.get_pointee())
+        if pt.kind == T.RECORD and pt.get_declaration().hash in ANON:
+            mut = "*const" if c.get_pointee().is_const_qualified() else "*mut"
+            return f"{mut} {ANON[pt.get_declaration().hash]}"
         if pt.kind == T.RECORD and pt.get_declaration().spelling in MAIN_RECS:
             mut = "*const" if c.get_pointee().is_const_qualified() else "*mut"
             return f"{mut} {pt.get_declaration().spelling}"
+    if c.kind == T.RECORD and c.get_declaration().hash in ANON:
+        return ANON[c.get_declaration().hash]
     if c.kind == T.RECORD and c.get_declaration().spelling in MAIN_RECS:
         return c.get_declaration().spelling
     return G.rust_ty(t)
@@ -204,6 +213,8 @@ class Ex:
 
 WARN = []
 MAIN_RECS = set()
+PUB_ALL = False  # --pub-all: static functions are pub too (the state oracles call them)
+ANON = {}  # decl hash -> Rust name of an anonymous struct declared by a `static struct {..} name;` variable
 NL = chr(10)
 
 
@@ -269,7 +280,7 @@ class Tr:
         self.fnaddr = set()    # functions whose address is taken (need extern "C")
         self.main_vars = {}    # name -> cursor (variables defined in this TU)
         for c in self.tu.tu.cursor.get_children():
-            if c.kind in (K.STRUCT_DECL, K.UNION_DECL) and c.is_definition() and self.tu.in_main(c) and c.spelling and c.spelling not in KNOWN:
+            if c.kind in (K.STRUCT_DECL, K.UNION_DECL) and c.is_definition() and self.tu.in_main(c) and c.spelling and c.spelling not in KNOWN and "unnamed" not in c.spelling and "anonymous" not in c.spelling:
                 MAIN_RECS.add(c.spelling)
         self.local_structs = {}
         self.static_locals = {}
@@ -281,6 +292,19 @@ class Tr:
         for c in self.tu.tu.cursor.get_children():
             if c.kind == K.VAR_DECL and self.tu.in_main(c) and c.storage_class != ci.StorageClass.EXTERN:
                 self.main_vars[c.spelling] = c
+        # `static struct { ... } name;` : an anonymous record is named after its variable
+        self.anon_var_structs = []
+        for n, v in self.main_vars.items():
+            et = ctype(v.type)
+            if et.kind == T.CONSTANTARRAY:
+                et = ctype(et.element_type)
+            if et.kind == T.RECORD:
+                d = et.get_declaration()
+                if (not d.spelling or "unnamed" in d.spelling or "anonymous" in d.spelling) and d.is_definition() and d.hash not in self.local_structs:
+                    nm = f"{n}_t"
+                    self.local_structs[d.hash] = nm
+                    ANON[d.hash] = nm
+                    self.anon_var_structs.append((nm, d))
         self.FORCE_EXT = {"HSD_StateInitTev", "HSD_StateAssignTev"}
         self.ALIAS = {
             "sqrtf": "melee_runtime::gekko::sqrtf",
@@ -350,6 +374,8 @@ class Tr:
             return Ex(f"melee_runtime::cabi::f2{'i' if s else 'u'}{w}({ex.p()} as f64)", to, True)
         if fk == T.POINTER and tk == T.POINTER:
             if is_fnptr(ex.ty) and is_fnptr(to):
+                if rty(ex.ty) != rty(to):  # incompatible function pointer types: the same address
+                    return Ex(f"core::mem::transmute::<{rty(ex.ty)}, {rty(to)}>({ex.code})", to, True)
                 return Ex(ex.code, to, ex.atom)
             if is_fnptr(ex.ty) != is_fnptr(to):
                 return Ex(f"core::mem::transmute::<{rty(ex.ty)}, {rty(to)}>({ex.code})", to, True)
@@ -533,6 +559,12 @@ class Tr:
         r = cc.referenced if cc.kind == K.DECL_REF_EXPR else None
         if r is not None and r.kind == K.FUNCTION_DECL and norm(to).kind == T.POINTER:
             self.fnaddr.add(r.spelling)
+            ft = norm(r.type)
+            src = "unsafe extern \"C\" fn(" + ", ".join(pty(x) for x in ft.argument_types()) + ")" +                 ("" if norm(ft.get_result()).kind == T.VOID else " -> " + rty(ft.get_result()))
+            dst = rty(to)
+            if dst.startswith("Option<") and dst[7:-1] != src:
+                # a function whose address is stored through an incompatible function pointer type
+                return Ex(f"Some(core::mem::transmute::<{src}, {dst[7:-1]}>({ex.code}))", to, True)
             return Ex(f"Some({ex.code})", to, True)
         return self.conv(ex, to)
 
@@ -684,6 +716,16 @@ class Tr:
                 return self.conv(inner, c.type) if norm(inner.ty).kind == T.POINTER else Ex(f"{inner.p()} as {rty(c.type)}", c.type)
             if tgt.kind == K.MEMBER_REF_EXPR and tgt.referenced is not None and tgt.referenced.is_bitfield():
                 warn(f"{self.cur}: address of bitfield")
+            if tgt.kind == K.MEMBER_REF_EXPR and tgt.referenced is not None and not tgt.referenced.is_bitfield():
+                # `&((T*) 0)->member` (offsetof): the byte offset in the native record
+                kids = expr_children(tgt)
+                bt = norm(kids[0].type) if kids else None
+                if kids and bt is not None and bt.kind == T.POINTER and getattr(self.E(kids[0]), "null", False):
+                    rt0 = bt.get_pointee()
+                    rec0 = self.rec_name(rt0)
+                    path0 = self.find_path(rec0, tgt.spelling) if rec0 else None
+                    if rec0 and path0:
+                        return Ex(f"(core::mem::offset_of!({rec0}, {'.'.join(ident(x) for x in path0)}) as {rty(c.type)})", c.type, False)
             if is_fnptr(c.type) or norm(ch[0].type).kind in (T.FUNCTIONPROTO,):
                 return e
             return Ex(f"core::ptr::addr_of_mut!({e.code}) as {rty(c.type)}", c.type, False)
@@ -1462,7 +1504,8 @@ class Tr:
         for f in d.get_children():
             if f.kind == K.FIELD_DECL:
                 flds.append(f"{ident(f.spelling)}: {rty(f.type)}")
-        return f"#[derive(Clone, Copy)] #[repr(C)] struct {nm} {{ {', '.join(flds)} }}"
+        kw = "union" if d.kind == K.UNION_DECL else "struct"  # a local union must stay a union (type punning)
+        return f"#[derive(Clone, Copy)] #[repr(C)] {kw} {nm} {{ {', '.join(flds)} }}"
 
     def zero(self, t):
         n = norm(t)
@@ -1478,36 +1521,57 @@ class Tr:
                 return f"[{self.zero(el)}; {n.element_count}]"
         return "unsafe { core::mem::zeroed() }"
 
+    def agg(self, t, ch, pos, leaf, braced):
+        """aggregate initialiser of type t from the flat/braced initialisers ch[pos:] (C brace elision);
+        -> (code, next pos). `leaf(x, ty)` converts a scalar initialiser, `braced(x, ty)` an explicit {..}."""
+        n = norm(t)
+
+        def one(x, ty, pos):
+            nt = norm(ty)
+            xs = strip(x)
+            while xs.kind == K.UNEXPOSED_EXPR and len(expr_children(xs)) == 1 and strip(expr_children(xs)[0]).kind == K.INIT_LIST_EXPR:
+                xs = strip(expr_children(xs)[0])
+            if xs.kind == K.INIT_LIST_EXPR:
+                return braced(xs, ty), pos + 1
+            if xs.kind == K.STRING_LITERAL and nt.kind == T.CONSTANTARRAY:
+                return leaf(x, ty), pos + 1
+            if nt.kind in (T.RECORD, T.CONSTANTARRAY) and not (nt.kind == T.RECORD and ident_rec_is_scalarlike(nt)):
+                # brace elision: the aggregate takes its members from the following initialisers, unless this one
+                # already is an aggregate value of the right type
+                if nt.kind == T.RECORD and norm(xs.type).kind == T.RECORD:
+                    return leaf(x, ty), pos + 1
+                return self.agg(ty, ch, pos, leaf, braced)
+            return leaf(x, ty), pos + 1
+
+        if n.kind == T.RECORD:
+            decl = n.get_declaration()
+            decl = decl.get_definition() or decl
+            flds = [f for f in decl.get_children() if f.kind == K.FIELD_DECL]
+            parts = []
+            for f in flds:
+                if pos >= len(ch):
+                    break
+                code, pos = one(ch[pos], f.type, pos)
+                parts.append(f"{ident(f.spelling)}: {code}")
+            tail = "" if len(parts) == len(flds) else ", ..unsafe { core::mem::zeroed() }"
+            return f"{rty(t)} {{ " + ", ".join(parts) + tail + " }", pos
+        el = n.element_type
+        items = []
+        while len(items) < n.element_count and pos < len(ch):
+            code, pos = one(ch[pos], el, pos)
+            items.append(code)
+        while len(items) < n.element_count:
+            items.append(self.zero(el))
+        return "[" + ", ".join(items) + "]", pos
+
     def initlist(self, ie, t):
         ch = expr_children(ie)
         n = norm(t)
         if ch and all((evaluate(x) or (None, 1))[1] == 0 and x.kind in (K.INTEGER_LITERAL, K.FLOATING_LITERAL, K.UNEXPOSED_EXPR) and
                       norm(x.type).kind != T.RECORD for x in ch):
             return self.zero(t)
-        if n.kind == T.RECORD:
-            decl = n.get_declaration()
-            decl = decl.get_definition() or decl
-            flds = [f for f in decl.get_children() if f.kind == K.FIELD_DECL]
-            parts = []
-            for f, x in zip(flds, ch):
-                if x.kind == K.INIT_LIST_EXPR:
-                    parts.append(f"{ident(f.spelling)}: {self.initlist(x, f.type)}")
-                else:
-                    parts.append(f"{ident(f.spelling)}: {self.conv(self.E(x), f.type).code}")
-            tn = rty(t)
-            tail = "" if len(parts) == len(flds) else ", ..unsafe { core::mem::zeroed() }"
-            return f"{tn} {{ " + ", ".join(parts) + tail + " }"
-        if n.kind == T.CONSTANTARRAY:
-            el = n.element_type
-            items = []
-            for x in ch:
-                if x.kind == K.INIT_LIST_EXPR:
-                    items.append(self.initlist(x, el))
-                else:
-                    items.append(self.conv(self.E(x), el).code)
-            while len(items) < n.element_count:
-                items.append(self.zero(el))
-            return "[" + ", ".join(items) + "]"
+        if n.kind in (T.RECORD, T.CONSTANTARRAY):
+            return self.agg(t, ch, 0, lambda x, ty: self.conv(self.E(x), ty).code, lambda x, ty: self.initlist(x, ty))[0]
         warn(f"{self.cur}: non-trivial init list; zeroed")
         return self.zero(t)
 
@@ -1524,18 +1588,8 @@ class Tr:
         n = norm(t)
         if c.kind == K.INIT_LIST_EXPR:
             ch = expr_children(c)
-            if n.kind == T.RECORD:
-                decl = n.get_declaration()
-                decl = decl.get_definition() or decl
-                flds = [f for f in decl.get_children() if f.kind == K.FIELD_DECL]
-                parts = [f"{ident(f.spelling)}: {self.cexpr(x, f.type)}" for f, x in zip(flds, ch)]
-                tail = "" if len(parts) == len(flds) else ", ..unsafe { core::mem::zeroed() }"
-                return f"{rty(t)} {{ " + ", ".join(parts) + tail + " }"
-            if n.kind == T.CONSTANTARRAY:
-                items = [self.cexpr(x, n.element_type) for x in ch]
-                while len(items) < n.element_count:
-                    items.append(self.zero(n.element_type))
-                return "[" + ", ".join(items) + "]"
+            if n.kind in (T.RECORD, T.CONSTANTARRAY):
+                return self.agg(t, ch, 0, lambda x, ty: self.cexpr(x, ty), lambda x, ty: self.cexpr(x, ty))[0]
             warn(f"{self.cur}: init list for {n.spelling}")
             return self.zero(t)
         if c.kind == K.STRING_LITERAL and n.kind == T.CONSTANTARRAY:
@@ -1604,7 +1658,7 @@ class Tr:
         vis = "fn" if fn.storage_class == ci.StorageClass.STATIC else "pub fn"
         ext_c = force_extern or name in self.fnaddr
         qual = f'unsafe extern "C" {vis}' if False else None
-        pubs = "pub " if fn.storage_class != ci.StorageClass.STATIC else ""
+        pubs = "pub " if (fn.storage_class != ci.StorageClass.STATIC or PUB_ALL) else ""
         exs = 'extern "C" ' if ext_c else ""
         decl = f"{pubs}unsafe {exs}fn {name}({params}){rs}"
         if self.hand and (self.hand / f"{name}.rs").exists():
@@ -1646,7 +1700,10 @@ def main():
     ap.add_argument("--head")
     ap.add_argument("--data")
     ap.add_argument("--check", action="store_true")
+    ap.add_argument("--pub-all", action="store_true")
     a = ap.parse_args()
+    global PUB_ALL
+    PUB_ALL = a.pub_all
     tr = Tr(a.src, a.hand, [x for x in a.sib.split(',') if x])
     # pass 1: find functions whose address is taken (need extern "C"), via a dry run
     names = [n for n in tr.defs]
@@ -1667,6 +1724,12 @@ def main():
             for n, d in todo:
                 done.add(n)
                 outs.append(tr.emit_fn(d))
+        # the static data initialisers take function addresses too
+        tr.cur = "<data>"
+        for n, v in tr.main_vars.items():
+            iv = tr.var_init(v)
+            if iv:
+                tr.cexpr(iv[-1], v.type)
     # ext block
     ext = ["pub mod ext {", "    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]", "    use super::*;",
            "    macro_rules! ext_fns {",
@@ -1693,7 +1756,7 @@ def main():
     ext.append("}")
     pre = list(dict.fromkeys(tr.extra_statics))
     for c in tr.tu.tu.cursor.get_children():
-        if c.kind in (K.STRUCT_DECL, K.UNION_DECL) and c.is_definition() and tr.is_main(c) and c.spelling and c.spelling not in KNOWN:
+        if c.kind in (K.STRUCT_DECL, K.UNION_DECL) and c.is_definition() and tr.is_main(c) and c.spelling and c.spelling not in KNOWN and "unnamed" not in c.spelling and "anonymous" not in c.spelling:
             fl = [f"    pub {ident(f.spelling)}: {rty(f.type)}," for f in c.get_children() if f.kind == K.FIELD_DECL]
             kw = "struct" if c.kind == K.STRUCT_DECL else "union"
             pre.append("#[repr(C)]" + NL + "#[derive(Clone, Copy)]" + NL + f"pub {kw} {c.spelling} {{" + NL + NL.join(fl) + NL + "}" + NL)
@@ -1702,13 +1765,16 @@ def main():
                 size, align, flds = lay
                 body = ", ".join(f'{fn} @ {off:#x}: {sz} "{cty}"' for fn, off, sz, cty in flds)
                 pre.append(f'melee_core::gc_layout!({c.spelling}, "{c.spelling}", size {size:#x}, align {align}, [{NL}    {body},{NL}]);{NL}')
+    for nm, d in tr.anon_var_structs:
+        fl = [f"    pub {ident(f.spelling)}: {rty(f.type)}," for f in d.get_children() if f.kind == K.FIELD_DECL]
+        pre.append("#[repr(C)]" + NL + "#[derive(Clone, Copy)]" + NL + f"pub struct {nm} {{" + NL + NL.join(fl) + NL + "}" + NL)
     tr.cur = "<data>"
     for n, v in tr.main_vars.items():
         vis = "pub "  # statics too: the mtu state oracles set and hash them
         iv = tr.var_init(v)
         init = tr.cexpr(iv[-1], v.type) if iv else tr.zero(v.type)
         mu = "" if v.type.is_const_qualified() else "mut "
-        pre.append(f"{vis}static {mu}{ident(n)}: {rty(v.type)} = {init};")
+        pre.append(f"{vis}static {mu}{ident(n)}: {tr.local_ty(v.type)} = {init};")
     head = Path(a.head).read_text(encoding="utf8") if a.head else ""
     if a.data:
         pre = [Path(a.data).read_text(encoding="utf8")]

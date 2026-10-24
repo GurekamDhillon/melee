@@ -1049,6 +1049,21 @@ typedef struct HSD_LeakChecker {
     u32 peak;     /* 0x18 */
     s32 x1C;      /* 0x1C */
 } HSD_LeakChecker;
+#line 21 "src/sysdolphin/baselib/psdisp.c"
+typedef struct {
+    HSD_Particle* head;
+    HSD_Particle* tail;
+} psdisp_ParticleSortBucket;
+#line 26 "src/sysdolphin/baselib/psdisp.c"
+typedef struct {
+    GXTlutFmt fmt;
+    u32 tlut_name;
+    u16 n_entries;
+} psdisp_Tlut;
+#line 32 "src/sysdolphin/baselib/psdisp.c"
+typedef struct {
+    Mtx mtx;
+} psdisp_Mtx;
 /* TU-local records extracted by gen/local_records.py. */
 struct MemEntry {
     struct MemEntry* x0_next;

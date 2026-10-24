@@ -309,6 +309,9 @@ def write_probe():
             "JpegWorkData", "JpegState", "JpegQuantTables", "JpegOutput",
         },
         "src/sysdolphin/baselib/leak.c": {"HSD_LeakChecker"},
+        "src/sysdolphin/baselib/psdisp.c": {
+            "psdisp_ParticleSortBucket", "psdisp_Tlut", "psdisp_Mtx",
+        },
     }
     for source, wanted in private_records.items():
         text = (ROOT / source).read_text()

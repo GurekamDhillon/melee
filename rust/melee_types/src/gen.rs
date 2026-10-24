@@ -94384,7 +94384,103 @@ impl GcLayout for HSD_LeakChecker {
 }
 const _: () = assert!(core::mem::size_of::<HSD_LeakChecker>() == 40);
 
-/// C `MemEntry` (rust/melee_types/gen/all_types.c:1053); GameCube size 0xC, align 4.
+/// C `psdisp_ParticleSortBucket` (rust/melee_types/gen/all_types.c:1053); GameCube size 0x8, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct psdisp_ParticleSortBucket {
+    pub head: *mut HSD_Particle,
+    pub tail: *mut HSD_Particle,
+}
+impl psdisp_ParticleSortBucket { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for psdisp_ParticleSortBucket {
+    const GC_BYTES: u32 = 0x8;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.head = <*mut HSD_Particle as GcDecode>::gc_decode(d, at + 0x0);
+        v.tail = <*mut HSD_Particle as GcDecode>::gc_decode(d, at + 0x4);
+        v
+    }
+}
+impl GcPointee for psdisp_ParticleSortBucket { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<psdisp_ParticleSortBucket>(t) } }
+impl GcLayout for psdisp_ParticleSortBucket {
+    const GC_NAME: &'static str = "psdisp_ParticleSortBucket";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("head", 0x0, 4, "HSD_Particle *"),
+        GcField::new("tail", 0x4, 4, "HSD_Particle *"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<psdisp_ParticleSortBucket>() == 16);
+
+/// C `psdisp_Tlut` (rust/melee_types/gen/all_types.c:1058); GameCube size 0xC, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct psdisp_Tlut {
+    pub fmt: _GXTlutFmt,
+    pub tlut_name: u32,
+    pub n_entries: u16,
+}
+impl psdisp_Tlut { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for psdisp_Tlut {
+    const GC_BYTES: u32 = 0xC;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.fmt = <_GXTlutFmt as GcDecode>::gc_decode(d, at + 0x0);
+        v.tlut_name = <u32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.n_entries = <u16 as GcDecode>::gc_decode(d, at + 0x8);
+        v
+    }
+}
+impl GcPointee for psdisp_Tlut { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<psdisp_Tlut>(t) } }
+impl GcLayout for psdisp_Tlut {
+    const GC_NAME: &'static str = "psdisp_Tlut";
+    const GC_SIZE: u32 = 0xC;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("fmt", 0x0, 4, "GXTlutFmt"),
+        GcField::new("tlut_name", 0x4, 4, "u32"),
+        GcField::new("n_entries", 0x8, 2, "u16"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<psdisp_Tlut>() == 12);
+
+/// C `psdisp_Mtx` (rust/melee_types/gen/all_types.c:1064); GameCube size 0x30, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct psdisp_Mtx {
+    pub mtx: Mtx,
+}
+impl psdisp_Mtx { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for psdisp_Mtx {
+    const GC_BYTES: u32 = 0x30;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.mtx = <Mtx as GcDecode>::gc_decode(d, at + 0x0);
+        v
+    }
+}
+impl GcPointee for psdisp_Mtx { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<psdisp_Mtx>(t) } }
+impl GcLayout for psdisp_Mtx {
+    const GC_NAME: &'static str = "psdisp_Mtx";
+    const GC_SIZE: u32 = 0x30;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("mtx", 0x0, 48, "Mtx"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<psdisp_Mtx>() == 48);
+
+/// C `MemEntry` (rust/melee_types/gen/all_types.c:1068); GameCube size 0xC, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct MemEntry {
@@ -94419,7 +94515,7 @@ impl GcLayout for MemEntry {
 }
 const _: () = assert!(core::mem::size_of::<MemEntry>() == 24);
 
-/// C `LBMgr` (rust/melee_types/gen/all_types.c:1058); GameCube size 0x40, align 8.
+/// C `LBMgr` (rust/melee_types/gen/all_types.c:1073); GameCube size 0x40, align 8.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct LBMgr {
@@ -94466,7 +94562,7 @@ impl GcLayout for LBMgr {
 }
 const _: () = assert!(core::mem::size_of::<LBMgr>() == 96);
 
-/// C `Allocator` (rust/melee_types/gen/all_types.c:1067); GameCube size 0x6F0, align 8.
+/// C `Allocator` (rust/melee_types/gen/all_types.c:1082); GameCube size 0x6F0, align 8.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct Allocator {
@@ -94533,7 +94629,7 @@ impl GcLayout for Allocator {
 }
 const _: () = assert!(core::mem::size_of::<Allocator>() == 3512);
 
-/// C `lbHeap_HeapDesc` (rust/melee_types/gen/all_types.c:1083); GameCube size 0x10, align 4.
+/// C `lbHeap_HeapDesc` (rust/melee_types/gen/all_types.c:1098); GameCube size 0x10, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct lbHeap_HeapDesc {
@@ -94571,7 +94667,7 @@ impl GcLayout for lbHeap_HeapDesc {
 }
 const _: () = assert!(core::mem::size_of::<lbHeap_HeapDesc>() == 16);
 
-/// C `lbHeap_HeapOffsetView` (rust/melee_types/gen/all_types.c:1089); GameCube size 0x2C, align 4.
+/// C `lbHeap_HeapOffsetView` (rust/melee_types/gen/all_types.c:1104); GameCube size 0x2C, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct lbHeap_HeapOffsetView {
@@ -94603,7 +94699,7 @@ impl GcLayout for lbHeap_HeapOffsetView {
 }
 const _: () = assert!(core::mem::size_of::<lbHeap_HeapOffsetView>() == 56);
 
-/// C `THPFrameBuffer` (rust/melee_types/gen/all_types.c:1093); GameCube size 0x4, align 4.
+/// C `THPFrameBuffer` (rust/melee_types/gen/all_types.c:1108); GameCube size 0x4, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct THPFrameBuffer {
@@ -94635,7 +94731,7 @@ impl GcLayout for THPFrameBuffer {
 }
 const _: () = assert!(core::mem::size_of::<THPFrameBuffer>() == 4);
 
-/// C `THPDecComp` (rust/melee_types/gen/all_types.c:1097); GameCube size 0x238, align 8.
+/// C `THPDecComp` (rust/melee_types/gen/all_types.c:1112); GameCube size 0x238, align 8.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct THPDecComp {
@@ -94844,7 +94940,7 @@ impl GcLayout for THPDecComp {
 }
 const _: () = assert!(core::mem::size_of::<THPDecComp>() == 624);
 
-/// C `lbRefract_State` (rust/melee_types/gen/all_types.c:1160); GameCube size 0x40, align 4.
+/// C `lbRefract_State` (rust/melee_types/gen/all_types.c:1175); GameCube size 0x40, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct lbRefract_State {
@@ -94885,7 +94981,7 @@ impl GcLayout for lbRefract_State {
 }
 const _: () = assert!(core::mem::size_of::<lbRefract_State>() == 80);
 
-/// C `lbRefract_Data` (rust/melee_types/gen/all_types.c:1167); GameCube size 0x8, align 4.
+/// C `lbRefract_Data` (rust/melee_types/gen/all_types.c:1182); GameCube size 0x8, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct lbRefract_Data {
@@ -94917,7 +95013,7 @@ impl GcLayout for lbRefract_Data {
 }
 const _: () = assert!(core::mem::size_of::<lbRefract_Data>() == 16);
 
-/// C `lbRefract_DataLayout` (rust/melee_types/gen/all_types.c:1171); GameCube size 0x60, align 4.
+/// C `lbRefract_DataLayout` (rust/melee_types/gen/all_types.c:1186); GameCube size 0x60, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct lbRefract_DataLayout {
@@ -94952,7 +95048,7 @@ impl GcLayout for lbRefract_DataLayout {
 }
 const _: () = assert!(core::mem::size_of::<lbRefract_DataLayout>() == 104);
 
-/// C `Unk80433380_48` (rust/melee_types/gen/all_types.c:1177); GameCube size 0x408, align 4.
+/// C `Unk80433380_48` (rust/melee_types/gen/all_types.c:1192); GameCube size 0x408, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct Unk80433380_48 {
@@ -94993,7 +95089,7 @@ impl GcLayout for Unk80433380_48 {
 }
 const _: () = assert!(core::mem::size_of::<Unk80433380_48>() == 1032);
 
-/// C `Unk80433380_0` (rust/melee_types/gen/all_types.c:1185); GameCube size 0x3C, align 4.
+/// C `Unk80433380_0` (rust/melee_types/gen/all_types.c:1200); GameCube size 0x3C, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct Unk80433380_0 {
@@ -95046,7 +95142,7 @@ impl GcLayout for Unk80433380_0 {
 }
 const _: () = assert!(core::mem::size_of::<Unk80433380_0>() == 60);
 
-/// C `LbMcSnapMemSnapIconData` (rust/melee_types/gen/all_types.c:1197); GameCube size 0x4, align 4.
+/// C `LbMcSnapMemSnapIconData` (rust/melee_types/gen/all_types.c:1212); GameCube size 0x4, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub union LbMcSnapMemSnapIconData {
@@ -95080,7 +95176,7 @@ impl GcLayout for LbMcSnapMemSnapIconData {
 }
 const _: () = assert!(core::mem::size_of::<LbMcSnapMemSnapIconData>() == 8);
 
-/// C `Unk80433380` (rust/melee_types/gen/all_types.c:1203); GameCube size 0x60, align 4.
+/// C `Unk80433380` (rust/melee_types/gen/all_types.c:1218); GameCube size 0x60, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct Unk80433380 {
@@ -95124,7 +95220,7 @@ impl GcLayout for Unk80433380 {
 }
 const _: () = assert!(core::mem::size_of::<Unk80433380>() == 112);
 
-/// C `Unk803BACC8` (rust/melee_types/gen/all_types.c:1212); GameCube size 0x2C, align 4.
+/// C `Unk803BACC8` (rust/melee_types/gen/all_types.c:1227); GameCube size 0x2C, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct Unk803BACC8 {
@@ -95156,7 +95252,7 @@ impl GcLayout for Unk803BACC8 {
 }
 const _: () = assert!(core::mem::size_of::<Unk803BACC8>() == 56);
 
-/// C `lb_Collider` (rust/melee_types/gen/all_types.c:1217); GameCube size 0x28, align 4.
+/// C `lb_Collider` (rust/melee_types/gen/all_types.c:1232); GameCube size 0x28, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct lb_Collider {
@@ -95197,7 +95293,7 @@ impl GcLayout for lb_Collider {
 }
 const _: () = assert!(core::mem::size_of::<lb_Collider>() == 40);
 
-/// C `Vi0502Data` (rust/melee_types/gen/all_types.c:1225); GameCube size 0x38, align 4.
+/// C `Vi0502Data` (rust/melee_types/gen/all_types.c:1240); GameCube size 0x38, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct Vi0502Data {
@@ -95235,7 +95331,7 @@ impl GcLayout for Vi0502Data {
 }
 const _: () = assert!(core::mem::size_of::<Vi0502Data>() == 56);
 
-/// C `strings` (rust/melee_types/gen/all_types.c:1232); GameCube size 0xC, align 4.
+/// C `strings` (rust/melee_types/gen/all_types.c:1247); GameCube size 0xC, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct strings {
@@ -95270,7 +95366,7 @@ impl GcLayout for strings {
 }
 const _: () = assert!(core::mem::size_of::<strings>() == 24);
 
-/// C `UnkArrElem` (rust/melee_types/gen/all_types.c:1239); GameCube size 0x18, align 8.
+/// C `UnkArrElem` (rust/melee_types/gen/all_types.c:1254); GameCube size 0x18, align 8.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct UnkArrElem {
@@ -95305,7 +95401,7 @@ impl GcLayout for UnkArrElem {
 }
 const _: () = assert!(core::mem::size_of::<UnkArrElem>() == 24);
 
-/// C `lb_804329F0_t` (rust/melee_types/gen/all_types.c:1246); GameCube size 0x78, align 8.
+/// C `lb_804329F0_t` (rust/melee_types/gen/all_types.c:1261); GameCube size 0x78, align 8.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct lb_804329F0_t {
@@ -95349,7 +95445,7 @@ impl GcLayout for lb_804329F0_t {
 }
 const _: () = assert!(core::mem::size_of::<lb_804329F0_t>() == 136);
 
-/// C `lbl_804335B8_t` (rust/melee_types/gen/all_types.c:1256); GameCube size 0x100, align 4.
+/// C `lbl_804335B8_t` (rust/melee_types/gen/all_types.c:1271); GameCube size 0x100, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct lbl_804335B8_t {
@@ -95416,7 +95512,7 @@ impl GcLayout for lbl_804335B8_t {
     ];
 }
 
-/// C `BgFlashUserData` (rust/melee_types/gen/all_types.c:1274); GameCube size 0x84, align 4.
+/// C `BgFlashUserData` (rust/melee_types/gen/all_types.c:1289); GameCube size 0x84, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct BgFlashUserData {
@@ -95450,7 +95546,7 @@ impl GcLayout for BgFlashUserData {
     ];
 }
 
-/// C `MnSelectChrModels` (rust/melee_types/gen/all_types.c:1281); GameCube size 0x90, align 4.
+/// C `MnSelectChrModels` (rust/melee_types/gen/all_types.c:1296); GameCube size 0x90, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct MnSelectChrModels {
@@ -95503,7 +95599,7 @@ impl GcLayout for MnSelectChrModels {
 }
 const _: () = assert!(core::mem::size_of::<MnSelectChrModels>() == 288);
 
-/// C `MnSelectChrDataTable` (rust/melee_types/gen/all_types.c:1294); GameCube size 0xA0, align 4.
+/// C `MnSelectChrDataTable` (rust/melee_types/gen/all_types.c:1309); GameCube size 0xA0, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct MnSelectChrDataTable {
@@ -95544,7 +95640,7 @@ impl GcLayout for MnSelectChrDataTable {
 }
 const _: () = assert!(core::mem::size_of::<MnSelectChrDataTable>() == 320);
 
-/// C `MexSelectChr` (rust/melee_types/gen/all_types.c:1303); GameCube size 0x14, align 4.
+/// C `MexSelectChr` (rust/melee_types/gen/all_types.c:1318); GameCube size 0x14, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct MexSelectChr {
@@ -95585,7 +95681,7 @@ impl GcLayout for MexSelectChr {
 }
 const _: () = assert!(core::mem::size_of::<MexSelectChr>() == 40);
 
-/// C `CSSCursorData` (rust/melee_types/gen/all_types.c:1312); GameCube size 0x14, align 4.
+/// C `CSSCursorData` (rust/melee_types/gen/all_types.c:1327); GameCube size 0x14, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct CSSCursorData {
@@ -95638,7 +95734,7 @@ impl GcLayout for CSSCursorData {
 }
 const _: () = assert!(core::mem::size_of::<CSSCursorData>() == 24);
 
-/// C `CSSCharModel` (rust/melee_types/gen/all_types.c:1325); GameCube size 0x18, align 4.
+/// C `CSSCharModel` (rust/melee_types/gen/all_types.c:1340); GameCube size 0x18, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct CSSCharModel {
@@ -95691,7 +95787,7 @@ impl GcLayout for CSSCharModel {
 }
 const _: () = assert!(core::mem::size_of::<CSSCharModel>() == 32);
 
-/// C `ToyUnkJObjData` (rust/melee_types/gen/all_types.c:1339); GameCube size 0x14, align 4.
+/// C `ToyUnkJObjData` (rust/melee_types/gen/all_types.c:1354); GameCube size 0x14, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct ToyUnkJObjData {
@@ -95723,7 +95819,7 @@ impl GcLayout for ToyUnkJObjData {
 }
 const _: () = assert!(core::mem::size_of::<ToyUnkJObjData>() == 24);
 
-/// C `TySortRow` (rust/melee_types/gen/all_types.c:1344); GameCube size 0x6, align 2.
+/// C `TySortRow` (rust/melee_types/gen/all_types.c:1359); GameCube size 0x6, align 2.
 #[repr(C, align(2))]
 #[derive(Clone, Copy)]
 pub struct TySortRow {
@@ -95752,7 +95848,7 @@ impl GcLayout for TySortRow {
 }
 const _: () = assert!(core::mem::size_of::<TySortRow>() == 6);
 
-/// C `ModelNamesDesc` (rust/melee_types/gen/all_types.c:1348); GameCube size 0xC, align 4.
+/// C `ModelNamesDesc` (rust/melee_types/gen/all_types.c:1363); GameCube size 0xC, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct ModelNamesDesc {
@@ -95787,7 +95883,7 @@ impl GcLayout for ModelNamesDesc {
 }
 const _: () = assert!(core::mem::size_of::<ModelNamesDesc>() == 24);
 
-/// C `ToyPanelLabelData` (rust/melee_types/gen/all_types.c:1354); GameCube size 0x4, align 4.
+/// C `ToyPanelLabelData` (rust/melee_types/gen/all_types.c:1369); GameCube size 0x4, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub union ToyPanelLabelData {
@@ -95818,7 +95914,7 @@ impl GcLayout for ToyPanelLabelData {
 }
 const _: () = assert!(core::mem::size_of::<ToyPanelLabelData>() == 8);
 
-/// C `TyFiguponDigitInit` (rust/melee_types/gen/all_types.c:1359); GameCube size 0x10, align 4.
+/// C `TyFiguponDigitInit` (rust/melee_types/gen/all_types.c:1374); GameCube size 0x10, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub union TyFiguponDigitInit {
@@ -95843,13 +95939,13 @@ impl GcLayout for TyFiguponDigitInit {
     const GC_SIZE: u32 = 0x10;
     const GC_ALIGN: u32 = 4;
     const GC_FIELDS: &'static [GcField] = &[
-        GcField::new("s", 0x0, 16, "struct (unnamed at src/sysdolphin/baselib/leak.c:325:5)"),
+        GcField::new("s", 0x0, 16, "struct (unnamed at src/sysdolphin/baselib/psdisp.c:343:5)"),
         GcField::new("digits", 0x0, 16, "s32[4]"),
     ];
 }
 const _: () = assert!(core::mem::size_of::<TyFiguponDigitInit>() == 16);
 
-/// C `struct (unnamed at src/sysdolphin/baselib/leak.c:325:5)` (rust/melee_types/gen/all_types.c:1360); GameCube size 0x10, align 4.
+/// C `struct (unnamed at src/sysdolphin/baselib/psdisp.c:343:5)` (rust/melee_types/gen/all_types.c:1375); GameCube size 0x10, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct TyFiguponDigitInit_s {
@@ -95875,7 +95971,7 @@ impl GcDecode for TyFiguponDigitInit_s {
 }
 impl GcPointee for TyFiguponDigitInit_s { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<TyFiguponDigitInit_s>(t) } }
 impl GcLayout for TyFiguponDigitInit_s {
-    const GC_NAME: &'static str = "struct (unnamed at src/sysdolphin/baselib/leak.c:325:5)";
+    const GC_NAME: &'static str = "struct (unnamed at src/sysdolphin/baselib/psdisp.c:343:5)";
     const GC_SIZE: u32 = 0x10;
     const GC_ALIGN: u32 = 4;
     const GC_FIELDS: &'static [GcField] = &[
@@ -95887,7 +95983,7 @@ impl GcLayout for TyFiguponDigitInit_s {
 }
 const _: () = assert!(core::mem::size_of::<TyFiguponDigitInit_s>() == 16);
 
-/// C `TySortElemInt` (rust/melee_types/gen/all_types.c:1366); GameCube size 0x8, align 4.
+/// C `TySortElemInt` (rust/melee_types/gen/all_types.c:1381); GameCube size 0x8, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct TySortElemInt {
@@ -97976,6 +98072,9 @@ pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[
     (<JpegQuantTables as GcLayout>::GC_NAME, <JpegQuantTables as GcLayout>::GC_SIZE, <JpegQuantTables as GcLayout>::GC_ALIGN, <JpegQuantTables as GcLayout>::GC_FIELDS),
     (<JpegOutput as GcLayout>::GC_NAME, <JpegOutput as GcLayout>::GC_SIZE, <JpegOutput as GcLayout>::GC_ALIGN, <JpegOutput as GcLayout>::GC_FIELDS),
     (<HSD_LeakChecker as GcLayout>::GC_NAME, <HSD_LeakChecker as GcLayout>::GC_SIZE, <HSD_LeakChecker as GcLayout>::GC_ALIGN, <HSD_LeakChecker as GcLayout>::GC_FIELDS),
+    (<psdisp_ParticleSortBucket as GcLayout>::GC_NAME, <psdisp_ParticleSortBucket as GcLayout>::GC_SIZE, <psdisp_ParticleSortBucket as GcLayout>::GC_ALIGN, <psdisp_ParticleSortBucket as GcLayout>::GC_FIELDS),
+    (<psdisp_Tlut as GcLayout>::GC_NAME, <psdisp_Tlut as GcLayout>::GC_SIZE, <psdisp_Tlut as GcLayout>::GC_ALIGN, <psdisp_Tlut as GcLayout>::GC_FIELDS),
+    (<psdisp_Mtx as GcLayout>::GC_NAME, <psdisp_Mtx as GcLayout>::GC_SIZE, <psdisp_Mtx as GcLayout>::GC_ALIGN, <psdisp_Mtx as GcLayout>::GC_FIELDS),
     (<MemEntry as GcLayout>::GC_NAME, <MemEntry as GcLayout>::GC_SIZE, <MemEntry as GcLayout>::GC_ALIGN, <MemEntry as GcLayout>::GC_FIELDS),
     (<LBMgr as GcLayout>::GC_NAME, <LBMgr as GcLayout>::GC_SIZE, <LBMgr as GcLayout>::GC_ALIGN, <LBMgr as GcLayout>::GC_FIELDS),
     (<Allocator as GcLayout>::GC_NAME, <Allocator as GcLayout>::GC_SIZE, <Allocator as GcLayout>::GC_ALIGN, <Allocator as GcLayout>::GC_FIELDS),

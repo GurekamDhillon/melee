@@ -74,13 +74,15 @@ int main(int argc, char** argv)
         HSD_MtxSRTQuat(c, &s, &q, &t, NULL); pm(c);
         HSD_MtxSRTQuat(c, &s, &q, &t, &ps); pm(c);
         HSD_MtxScaledAdd(a, b, c, f); pm(c);
-        MatToQuat(a, &w); pq(&w);
-        HSD_QuatLib_8037EB28(a, &v); pv(&v);
-        HSD_QuatLib_8037EC4C(&p, &q, &w); pq(&w);
+        /* Native Rust returns these out-values directly: success is implicit.
+         * Check the C status too, so the oracle covers both parts of the API. */
+        if (MatToQuat(a, &w) != 0) return 2; pq(&w);
+        if (HSD_QuatLib_8037EB28(a, &v) != 0) return 3; pv(&v);
+        if (HSD_QuatLib_8037EC4C(&p, &q, &w) != 0) return 4; pq(&w);
         w.x = w.y = w.z = w.w = 7; v = s; if (i % 11 == 0) { v.x = v.y = v.z = 0; }
         k = HSD_QuatLib_8037ECE0(&v, &w, r.x); fprintf(o, " %d", k); pq(&w);
-        EulerToQuat(&r, &w); pq(&w);
-        HSD_QuatLib_8037EF28(&p, &q, &w, f * 0.5f + 0.5f); pq(&w);
+        if (EulerToQuat(&r, &w) != 0) return 5; pq(&w);
+        if (HSD_QuatLib_8037EF28(&p, &q, &w, f * 0.5f + 0.5f) != 0) return 6; pq(&w);
         fprintf(o, "\n");
     }
     for (i = 0; i < 1500; i++) {

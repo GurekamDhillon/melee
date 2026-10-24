@@ -550,10 +550,10 @@ def build(stem, spec, want_ext):
     for n in names:
         decl, called, addr = stubs[n]
         ft = canon(decl.type)
-        ptys = list(ft.argument_types())
+        ptys = list(ft.argument_types()) if ft.kind == T.FUNCTIONPROTO else []
         rt = ft.get_result()
         rcls = arg_class(rt)
-        va = ft.is_function_variadic()
+        va = ft.is_function_variadic() if ft.kind == T.FUNCTIONPROTO else False
         realcb = spec.get("real_cb", {})  # address-taken stubs whose address the port takes from a real Rust port
         if va:
             cs = spec.get("custom_stubs", {}).get(n)

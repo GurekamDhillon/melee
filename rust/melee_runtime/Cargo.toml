@@ -13,3 +13,7 @@ melee_types.workspace = true
 [[test]]
 name = "tu_lbdvd"
 harness = false
+
+[[test]]
+name = "tu_controller"
+harness = false

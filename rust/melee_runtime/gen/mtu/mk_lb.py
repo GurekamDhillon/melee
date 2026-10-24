@@ -31,7 +31,7 @@ def world_c(tu, pools):
     c = []
     for t, a, n in pools:
         c.append(f"static {ctype(tu, t)} {a}[{n}];")
-    c += ["static Vec3 VA[4];", "static u8 U8A[16];", "static int IA[4];", "static u32 UA[4];", "static float FA[4];",
+    c += ["static " + ("Vec3" if "Vec3" in tu.types else "struct { float x, y, z; }") + " VA[4];", "static u8 U8A[16];", "static int IA[4];", "static u32 UA[4];", "static float FA[4];",
           "static unsigned char BUF[256];", "static char STRS[4][64] = { \"a.dat\", \"sym\", \"LbAd.dat\", \"x\" };", ""]
     for t, a, n in pools:
         c.append(f"static {ctype(tu, t)}* pick_{t}(void) {{ u32 r = rnd(); return &{a}[(r >> 8) % {n}]; }}")
@@ -303,6 +303,7 @@ def emit(stem):
     r = [f"//! Written by gen/mtu/mk_lb.py from the same description as gen/mtu/tu/{stem}.c.",
          f"//! src/tu/{stem}.rs vs the C (the whole TU, shipping contraction; regenerate the expected file",
          f"//! with `python rust/melee_runtime/gen/mtu/run_tu.py {stem}`).",
+         "//! C functions of the TU this test covers (the private ones through their public callers): " + ", ".join(sorted(tu.defs)) + ".",
          "#![allow(static_mut_refs, non_snake_case, non_upper_case_globals, unused_imports, unused_mut, unused_assignments, unused_variables, unused_unsafe, dead_code)]",
          *[f"const OP_{o['name']}: u32 = {i};" for i, o in enumerate(ops)], "mod mtu_harness;", "use core::ffi::c_void;", "use core::ptr::null_mut;", "use melee_types::*;", f"use melee_runtime::tu::{stem} as m;",
          "use mtu_harness::*;", f'#[path = "mtu/{stem}_gen.rs"]', "mod g;", "", cfg.get("rs_extra", ""), "",

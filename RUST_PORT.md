@@ -1010,3 +1010,29 @@ Stub names in `docs/rust-port/missing.md` for melee_fighter: NO_PORT 276 -> ~71,
   the smashes stop the run), Marth's GuardOn (model part flag), efAsync 0x3FE (generator 0x107).
 - Next: Sheik's neutral B (SpecialN/SpecialAirN, needle items), then `AttackLw3`, smashes, the air Counter,
   every hit (`hit_guard`), then the two CPU goldens.
+
+## Golden round 3: pad_marth_sheik_bf matches in full (2026-10-24)
+- `melee golden --scenario pad_marth_sheik_bf --frames 1801` is identical to the golden on all 1801 frames;
+  pad_falcon_fox_fd still matches 0..1800 (stops at 1802 on `ftCo_RunBrake_Enter`). The two CPU goldens
+  (cpu_fox_falco_dl, cpu_peach_samus_ys_items) are still not wired (CPU input, Falco, Peach, Samus, Dream Land,
+  Yoshi's Story, items). Note `golden` without `--frames` now runs on forever once nothing is unported.
+- Ported: Sheik Needle Storm (`vs_match/sheik.rs`: held bundle, thrown needle incl. ground stick / bounce, destroy
+  effect gen 0x3F with its 3 randf; article data from `ft_data->x48_items[0]`), LandingAir with the L-cancel,
+  Ottotto (teeter), floor-end probes `mpColl_8004A45C/A678_Floor`, air wall push-out `mpColl_80046224/800454A4`
+  (fma_sites.py: 5 fused sites each), RebirthWait landing, Walk enter from Wait/Landing, per-slot respawn on
+  Battlefield (`stage_info.unk8C.b4`), dust gen 0x407, shared grounded IASA chain for Landing.
+- Traps found (each cost a bisect):
+  - `mpColl_804D64AC` is bumped every frame by each map gobj's s_link-1 proc: the first substep of every
+    fighter collision call takes the `Remap` variants, which do NOT extend floor ends by 1 unit
+    (`mpLib_8004ED5C`). Without the per-frame increment a fall past a floor corner landed on the corner.
+  - Stage particle animations (grAnime_801C8138) end with `HSD_JObjAnimAll`: the track is one frame ahead
+    from frame 0, and a nonzero entry of `map_head.unk8[gobj].x28` sets AOBJ_LOOP (BF gobj 1 loops at 400:
+    the 4 stage gens respawn at golden frame 399, not 400).
+  - `Fall_Enter` from the ground must call `ftCommon_8007D5D4` (ground to air) itself.
+  - Z press in the air = A pressed + the synthetic LR bit: `checkItemThrowInput` (a new aerial) comes BEFORE
+    `ftCo_800D705C` in DO_IASA. The analog trigger alone is read by nothing in the air IASAs.
+  - Debugging: a temporary `OSReport` in a game TU did not print under the rand-trace patch; the
+    `MELEE_RAND_TRACE_STACK` caller addresses resolved with the map file were enough. Never `git checkout`
+    a file with uncommitted work (lost and redone once), and `git checkout pc` after reverting c_trace.patch.
+- Next: the unported states past the goldens (RunBrake / smash turn, hits via `hit_guard`, item hit detection,
+  Sheik's other specials), then the CPU goldens.

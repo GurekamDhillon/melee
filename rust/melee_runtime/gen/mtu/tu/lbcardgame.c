@@ -17,7 +17,7 @@ static int IA[4];
 static u32 UA[4];
 static float FA[4];
 static unsigned char BUF[256];
-static char STRS[4][24] = { "a.dat", "sym", "LbAd.dat", "x" };
+static char STRS[4][64] = { "a.dat", "sym", "LbAd.dat", "x" };
 
 static HSD_GObj* pick_HSD_GObj(void) { u32 r = rnd(); return &GO[(r >> 8) % 4]; }
 static HSD_GObj* picko_HSD_GObj(void) { u32 r = rnd(); return (r % 6) == 0 ? 0 : &GO[(r >> 8) % 4]; }
@@ -34,6 +34,8 @@ static void cbev2(HSD_GObj* g) { T(7002); T(PI(g)); }
 static int cbp1(HSD_GObj* g) { T(7003); T(PI(g)); return (int) (fv() & 1); }
 static int cbp2(HSD_GObj* g) { T(7004); T(PI(g)); return (int) (fv() & 1); }
 static void cbev3(HSD_GObj* g, HSD_GObj* h) { T(7005); T(PI(g)); T(PI(h)); }
+static void cbi1(int a) { T(7006); T((u32) a); }
+static void cbi2(int a) { T(7007); T((u32) a); }
 static void* pick_fn(int kind)
 {
     u32 r = rnd();
@@ -42,11 +44,12 @@ static void* pick_fn(int kind)
     case 1: return (r & 4) ? (void*) cbev1 : (void*) cbev2;
     case 2: return (r & 4) ? (void*) cbp1 : (void*) cbp2;
     case 3: return (void*) cbev3;
+    case 4: return (r & 4) ? (void*) cbi1 : (void*) cbi2;
     }
     return 0;
 }
-static void* pick_cb(int kind) { void* f = pick_fn(kind); return f ? f : (kind == 2 ? (void*) cbp1 : kind == 3 ? (void*) cbev3 : (void*) cbev1); }
-static void freg_world(void) { freg((const void*) cbev1); freg((const void*) cbev2); freg((const void*) cbp1); freg((const void*) cbp2); freg((const void*) cbev3); }
+static void* pick_cb(int kind) { void* f = pick_fn(kind); return f ? f : (kind == 2 ? (void*) cbp1 : kind == 3 ? (void*) cbev3 : kind == 4 ? (void*) cbi1 : (void*) cbev1); }
+static void freg_world(void) { freg((const void*) cbev1); freg((const void*) cbev2); freg((const void*) cbp1); freg((const void*) cbp2); freg((const void*) cbev3); freg((const void*) cbi1); freg((const void*) cbi2); }
 static void* ICN[4]; static DynamicModelDesc* DMP[2]; static unsigned char NTB[7 * 0x1F2C + 16];
 #include "lbcardgame_gen.h"
 
@@ -74,6 +77,7 @@ static void setup_world(void)
     for (i = 0; i < 16; i++) { U8A[i] = (u8) rnd(); }
     for (i = 0; i < 4; i++) { IA[i] = (int) fv(); UA[i] = fv(); FA[i] = rw(); VA[i].x = rw(); VA[i].y = rw(); VA[i].z = rw(); }
     for (i = 0; i < 256; i++) BUF[i] = (unsigned char) rnd();
+    BUF[255] = 0;
     for (i = 0; i < 4; i++) fill_HSD_GObj(&GO[i]);
     for (i = 0; i < 2; i++) fill_SceneDesc(&SD[i]);
     for (i = 0; i < 2; i++) fill_DynamicModelDesc(&DM[i]);

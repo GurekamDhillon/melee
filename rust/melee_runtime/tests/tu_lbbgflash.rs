@@ -2,6 +2,18 @@
 //! src/tu/lbbgflash.rs vs the C (the whole TU, shipping contraction; regenerate the expected file
 //! with `python rust/melee_runtime/gen/mtu/run_tu.py lbbgflash`).
 #![allow(static_mut_refs, non_snake_case, non_upper_case_globals, unused_imports, unused_mut, unused_assignments, unused_variables, unused_unsafe, dead_code)]
+const OP_bgflash_position: u32 = 0;
+const OP_fn_8001FC08: u32 = 1;
+const OP_fn_8001FEC4: u32 = 2;
+const OP_fn_800204C8: u32 = 3;
+const OP_lbBgFlash_800205F0: u32 = 4;
+const OP_lbBgFlash_8002063C: u32 = 5;
+const OP_lbBgFlash_80020688: u32 = 6;
+const OP_lbBgFlash_800206D4: u32 = 7;
+const OP_lbBgFlash_InitState: u32 = 8;
+const OP_fn_800208B0: u32 = 9;
+const OP_lbBgFlash_800208EC: u32 = 10;
+const OP_lbBgFlash_800209F4: u32 = 11;
 mod mtu_harness;
 use core::ffi::c_void;
 use core::ptr::null_mut;
@@ -19,7 +31,7 @@ pub static mut IA: [i32; 4] = [0; 4];
 pub static mut UA: [u32; 4] = [0; 4];
 pub static mut FA: [f32; 4] = [0.0; 4];
 pub static mut BUF: [u8; 256] = [0; 256];
-pub static mut STRS: [[u8; 24]; 4] = [*b"a.dat\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", *b"sym\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", *b"LbAd.dat\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", *b"x\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"];
+pub static mut STRS: [[u8; 64]; 4] = [[0; 64]; 4];
 pub static mut GO: [HSD_GObj; 4] = unsafe { core::mem::zeroed() };
 pub static mut COL: [GXColor; 4] = unsafe { core::mem::zeroed() };
 pub fn pick_HSD_GObj() -> *mut HSD_GObj { let r = rnd(); unsafe { &raw mut GO[((r >> 8) % 4) as usize] } }
@@ -31,6 +43,8 @@ pub unsafe extern "C" fn cbev2(g: *mut HSD_GObj) { t(7002); t(pi(g)); }
 pub unsafe extern "C" fn cbp1(g: *mut HSD_GObj) -> i32 { t(7003); t(pi(g)); (fv() & 1) as i32 }
 pub unsafe extern "C" fn cbp2(g: *mut HSD_GObj) -> i32 { t(7004); t(pi(g)); (fv() & 1) as i32 }
 pub unsafe extern "C" fn cbev3(g: *mut HSD_GObj, h: *mut HSD_GObj) { t(7005); t(pi(g)); t(pi(h)); }
+pub unsafe extern "C" fn cbi1(a: i32) { t(7006); t(a as u32); }
+pub unsafe extern "C" fn cbi2(a: i32) { t(7007); t(a as u32); }
 pub fn pick_fn(kind: i32) -> usize {
     let r = rnd();
     if r & 3 == 0 { return 0; }
@@ -38,11 +52,12 @@ pub fn pick_fn(kind: i32) -> usize {
         1 => if r & 4 != 0 { cbev1 as usize } else { cbev2 as usize },
         2 => if r & 4 != 0 { cbp1 as usize } else { cbp2 as usize },
         3 => cbev3 as usize,
+        4 => if r & 4 != 0 { cbi1 as usize } else { cbi2 as usize },
         _ => 0,
     }
 }
-pub fn pick_cb(kind: i32) -> usize { let f = pick_fn(kind); if f != 0 { f } else if kind == 2 { cbp1 as usize } else if kind == 3 { cbev3 as usize } else { cbev1 as usize } }
-pub fn freg_world() { freg(cbev1 as usize); freg(cbev2 as usize); freg(cbp1 as usize); freg(cbp2 as usize); freg(cbev3 as usize); }
+pub fn pick_cb(kind: i32) -> usize { let f = pick_fn(kind); if f != 0 { f } else if kind == 2 { cbp1 as usize } else if kind == 3 { cbev3 as usize } else if kind == 4 { cbi1 as usize } else { cbev1 as usize } }
+pub fn freg_world() { freg(cbev1 as usize); freg(cbev2 as usize); freg(cbp1 as usize); freg(cbp2 as usize); freg(cbev3 as usize); freg(cbi1 as usize); freg(cbi2 as usize); }
 pub fn preg_world() {
     unsafe {
         preg(&raw const GO, core::mem::size_of_val(&GO));
@@ -55,9 +70,11 @@ pub fn preg_world() {
 pub unsafe fn setup_world() {
     GO = core::mem::zeroed();
     COL = core::mem::zeroed();
+    for (k, st) in [&b"a.dat"[..], &b"sym"[..], &b"LbAd.dat"[..], &b"x"[..]].iter().enumerate() { STRS[k] = [0; 64]; STRS[k][..st.len()].copy_from_slice(st); }
     for i in 0..16 { U8A[i] = rnd() as u8; }
     for i in 0..4 { IA[i] = fv() as i32; UA[i] = fv(); FA[i] = rw(); VA[i].x = rw(); VA[i].y = rw(); VA[i].z = rw(); }
     for i in 0..256 { BUF[i] = rnd() as u8; }
+    BUF[255] = 0;
     for i in 0..4 { g::fill_HSD_GObj(&mut GO[i]); }
     for i in 0..4 { g::fill_GXColor(&mut COL[i]); }
     g::fillg_all();

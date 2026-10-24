@@ -88,19 +88,7 @@ pub const LbCardResult_Invalid: u32 = 13;
 const CARD_COMMENT_SIZE: usize = 64;
 const HSD_GOBJ_PLINK_MEMCARD: u8 = 63 - 2;
 
-/// `LbCardEntry` (lbcardnew.h).
-#[repr(C)]
-#[derive(Clone, Copy)]
-pub struct LbCardEntry {
-    pub file_size: i32,
-    pub file_flags: i32,
-    pub data: *mut c_void,
-}
-melee_core::gc_layout!(LbCardEntry, "LbCardEntry", size 0xC, align 4, [
-    file_size @ 0x0: 4 "int",
-    file_flags @ 0x4: 4 "int",
-    data @ 0x8: 4 "void*",
-]);
+pub use super::lbcardnew::LbCardEntry;
 
 /// The file-static state record at 433318 (`state`); field comments give the console offsets.
 #[repr(C)]

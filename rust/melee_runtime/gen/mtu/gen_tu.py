@@ -30,7 +30,7 @@ import gen_types as g  # noqa: E402
 
 ci, K, T = g.ci, g.K, g.T
 # function-pointer fields are filled from small pools of recording callbacks (world.h / world.rs: pick_fn)
-FNKINDS = {"void (struct HSD_GObj *)": 1, "int (struct HSD_GObj *)": 2, "void (struct HSD_GObj *, struct HSD_GObj *)": 3}
+FNKINDS = {"void (int)": 4, "void (struct HSD_GObj *)": 1, "int (struct HSD_GObj *)": 2, "void (struct HSD_GObj *, struct HSD_GObj *)": 3}
 NAT = [a.replace("x86_64-pc-windows-msvc", "x86_64-pc-windows-gnu") for a in g.NAT] + ["-mno-ms-bitfields"]
 GEN_RS = (ROOT / "rust/melee_types/src/gen.rs").read_text(encoding="utf-8")
 KNOWN = set(re.findall(r"^pub (?:struct|union|type) (\w+)", GEN_RS, re.M))

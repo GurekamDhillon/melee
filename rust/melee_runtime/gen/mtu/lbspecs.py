@@ -70,3 +70,7 @@ add("lbcardgame", "src/melee/lb/lbcardgame.c", dict(
          "gmMainLib_GetNameTagDataBanks": ("(struct NameTagDataBank*) NTB", "(&raw mut NTB) as *mut NameTagDataBank"),
          "gm_GetPowerTime": ("(s32*) &IA[1]", "(&raw mut IA[1])")},
     effects={"OSTicksToCalendarTime": (_ctime_c, _ctime_r)})
+
+
+for _m in ("lbspecs_card",):
+    __import__(_m)

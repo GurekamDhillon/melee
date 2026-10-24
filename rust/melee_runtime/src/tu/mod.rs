@@ -19,3 +19,4 @@ pub mod pobj;
 pub mod displayfunc;
 pub mod lbbgflash;
 pub mod lbcardgame;
+pub mod lbcardnew;

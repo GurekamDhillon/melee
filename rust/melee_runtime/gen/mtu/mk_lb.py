@@ -32,7 +32,7 @@ def world_c(tu, pools):
     for t, a, n in pools:
         c.append(f"static {ctype(tu, t)} {a}[{n}];")
     c += ["static Vec3 VA[4];", "static u8 U8A[16];", "static int IA[4];", "static u32 UA[4];", "static float FA[4];",
-          "static unsigned char BUF[256];", "static char STRS[4][24] = { \"a.dat\", \"sym\", \"LbAd.dat\", \"x\" };", ""]
+          "static unsigned char BUF[256];", "static char STRS[4][64] = { \"a.dat\", \"sym\", \"LbAd.dat\", \"x\" };", ""]
     for t, a, n in pools:
         c.append(f"static {ctype(tu, t)}* pick_{t}(void) {{ u32 r = rnd(); return &{a}[(r >> 8) % {n}]; }}")
         c.append(f"static {ctype(tu, t)}* picko_{t}(void) {{ u32 r = rnd(); return (r % 6) == 0 ? 0 : &{a}[(r >> 8) % {n}]; }}")
@@ -42,6 +42,8 @@ def world_c(tu, pools):
         "static int cbp1(HSD_GObj* g) { T(7003); T(PI(g)); return (int) (fv() & 1); }",
         "static int cbp2(HSD_GObj* g) { T(7004); T(PI(g)); return (int) (fv() & 1); }",
         "static void cbev3(HSD_GObj* g, HSD_GObj* h) { T(7005); T(PI(g)); T(PI(h)); }",
+        "static void cbi1(int a) { T(7006); T((u32) a); }",
+        "static void cbi2(int a) { T(7007); T((u32) a); }",
         "static void* pick_fn(int kind)",
         "{",
         "    u32 r = rnd();",
@@ -50,11 +52,12 @@ def world_c(tu, pools):
         "    case 1: return (r & 4) ? (void*) cbev1 : (void*) cbev2;",
         "    case 2: return (r & 4) ? (void*) cbp1 : (void*) cbp2;",
         "    case 3: return (void*) cbev3;",
+        "    case 4: return (r & 4) ? (void*) cbi1 : (void*) cbi2;",
         "    }",
         "    return 0;",
         "}",
-        "static void* pick_cb(int kind) { void* f = pick_fn(kind); return f ? f : (kind == 2 ? (void*) cbp1 : kind == 3 ? (void*) cbev3 : (void*) cbev1); }",
-        "static void freg_world(void) { freg((const void*) cbev1); freg((const void*) cbev2); freg((const void*) cbp1); freg((const void*) cbp2); freg((const void*) cbev3); }",
+        "static void* pick_cb(int kind) { void* f = pick_fn(kind); return f ? f : (kind == 2 ? (void*) cbp1 : kind == 3 ? (void*) cbev3 : kind == 4 ? (void*) cbi1 : (void*) cbev1); }",
+        "static void freg_world(void) { freg((const void*) cbev1); freg((const void*) cbev2); freg((const void*) cbp1); freg((const void*) cbp2); freg((const void*) cbev3); freg((const void*) cbi1); freg((const void*) cbi2); }",
         "@@SPLIT@@",
         "static void preg_world(void)",
         "{",
@@ -67,7 +70,7 @@ def world_c(tu, pools):
         c.append(f"    zero({a}, sizeof {a});")
     c += ["    for (i = 0; i < 16; i++) { U8A[i] = (u8) rnd(); }",
           "    for (i = 0; i < 4; i++) { IA[i] = (int) fv(); UA[i] = fv(); FA[i] = rw(); VA[i].x = rw(); VA[i].y = rw(); VA[i].z = rw(); }",
-          "    for (i = 0; i < 256; i++) BUF[i] = (unsigned char) rnd();"]
+          "    for (i = 0; i < 256; i++) BUF[i] = (unsigned char) rnd();", "    BUF[255] = 0;"]
     for t, a, n in pools:
         c.append(f"    for (i = 0; i < {n}; i++) fill_{t}(&{a}[i]);")
     c += ["    fillg_all();", "    fillo_all();", "}", ""]
@@ -86,7 +89,7 @@ def world_rs(pools):
          "pub static mut U8A: [u8; 16] = [0; 16];", "pub static mut IA: [i32; 4] = [0; 4];", "pub static mut UA: [u32; 4] = [0; 4];",
          "pub static mut FA: [f32; 4] = [0.0; 4];",
          "pub static mut BUF: [u8; 256] = [0; 256];",
-         "pub static mut STRS: [[u8; 24]; 4] = [*b\"a.dat\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\", *b\"sym\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\", *b\"LbAd.dat\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\", *b\"x\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\"];"]
+         "pub static mut STRS: [[u8; 64]; 4] = [[0; 64]; 4];"]
     for t, a, n in pools:
         r.append(f"pub static mut {a}: [{t}; {n}] = unsafe {{ core::mem::zeroed() }};")
     for t, a, n in pools:
@@ -98,6 +101,8 @@ def world_rs(pools):
         "pub unsafe extern \"C\" fn cbp1(g: *mut HSD_GObj) -> i32 { t(7003); t(pi(g)); (fv() & 1) as i32 }",
         "pub unsafe extern \"C\" fn cbp2(g: *mut HSD_GObj) -> i32 { t(7004); t(pi(g)); (fv() & 1) as i32 }",
         "pub unsafe extern \"C\" fn cbev3(g: *mut HSD_GObj, h: *mut HSD_GObj) { t(7005); t(pi(g)); t(pi(h)); }",
+        "pub unsafe extern \"C\" fn cbi1(a: i32) { t(7006); t(a as u32); }",
+        "pub unsafe extern \"C\" fn cbi2(a: i32) { t(7007); t(a as u32); }",
         "pub fn pick_fn(kind: i32) -> usize {",
         "    let r = rnd();",
         "    if r & 3 == 0 { return 0; }",
@@ -105,11 +110,12 @@ def world_rs(pools):
         "        1 => if r & 4 != 0 { cbev1 as usize } else { cbev2 as usize },",
         "        2 => if r & 4 != 0 { cbp1 as usize } else { cbp2 as usize },",
         "        3 => cbev3 as usize,",
+        "        4 => if r & 4 != 0 { cbi1 as usize } else { cbi2 as usize },",
         "        _ => 0,",
         "    }",
         "}",
-        "pub fn pick_cb(kind: i32) -> usize { let f = pick_fn(kind); if f != 0 { f } else if kind == 2 { cbp1 as usize } else if kind == 3 { cbev3 as usize } else { cbev1 as usize } }",
-        "pub fn freg_world() { freg(cbev1 as usize); freg(cbev2 as usize); freg(cbp1 as usize); freg(cbp2 as usize); freg(cbev3 as usize); }",
+        "pub fn pick_cb(kind: i32) -> usize { let f = pick_fn(kind); if f != 0 { f } else if kind == 2 { cbp1 as usize } else if kind == 3 { cbev3 as usize } else if kind == 4 { cbi1 as usize } else { cbev1 as usize } }",
+        "pub fn freg_world() { freg(cbev1 as usize); freg(cbev2 as usize); freg(cbp1 as usize); freg(cbp2 as usize); freg(cbev3 as usize); freg(cbi1 as usize); freg(cbi2 as usize); }",
         "pub fn preg_world() {",
         "    unsafe {",
     ]
@@ -120,9 +126,10 @@ def world_rs(pools):
     r += ["pub unsafe fn setup_world() {"]
     for t, a, n in pools:
         r.append(f"    {a} = core::mem::zeroed();")
-    r += ["    for i in 0..16 { U8A[i] = rnd() as u8; }",
+    r += ["    for (k, st) in [&b\"a.dat\"[..], &b\"sym\"[..], &b\"LbAd.dat\"[..], &b\"x\"[..]].iter().enumerate() { STRS[k] = [0; 64]; STRS[k][..st.len()].copy_from_slice(st); }",
+          "    for i in 0..16 { U8A[i] = rnd() as u8; }",
           "    for i in 0..4 { IA[i] = fv() as i32; UA[i] = fv(); FA[i] = rw(); VA[i].x = rw(); VA[i].y = rw(); VA[i].z = rw(); }",
-          "    for i in 0..256 { BUF[i] = rnd() as u8; }"]
+          "    for i in 0..256 { BUF[i] = rnd() as u8; }", "    BUF[255] = 0;"]
     for t, a, n in pools:
         r.append(f"    for i in 0..{n} {{ g::fill_{t}(&mut {a}[i]); }}")
     r += ["    g::fillg_all();", "    g::fillo_all();", "}", ""]
@@ -136,7 +143,7 @@ def world_rs(pools):
     return "\n".join(r)
 
 
-FNK = {"void (struct HSD_GObj *)": 1, "int (struct HSD_GObj *)": 2, "void (struct HSD_GObj *, struct HSD_GObj *)": 3}
+FNK = {"void (int)": 4, "void (struct HSD_GObj *)": 1, "int (struct HSD_GObj *)": 2, "void (struct HSD_GObj *, struct HSD_GObj *)": 3}
 
 
 def bind(ptype, pools):

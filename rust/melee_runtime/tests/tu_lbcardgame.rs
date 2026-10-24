@@ -40,7 +40,7 @@ pub static mut IA: [i32; 4] = [0; 4];
 pub static mut UA: [u32; 4] = [0; 4];
 pub static mut FA: [f32; 4] = [0.0; 4];
 pub static mut BUF: [u8; 256] = [0; 256];
-pub static mut STRS: [[u8; 24]; 4] = [*b"a.dat\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", *b"sym\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", *b"LbAd.dat\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", *b"x\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"];
+pub static mut STRS: [[u8; 64]; 4] = [[0; 64]; 4];
 pub static mut GO: [HSD_GObj; 4] = unsafe { core::mem::zeroed() };
 pub static mut SD: [SceneDesc; 2] = unsafe { core::mem::zeroed() };
 pub static mut DM: [DynamicModelDesc; 2] = unsafe { core::mem::zeroed() };
@@ -61,6 +61,8 @@ pub unsafe extern "C" fn cbev2(g: *mut HSD_GObj) { t(7002); t(pi(g)); }
 pub unsafe extern "C" fn cbp1(g: *mut HSD_GObj) -> i32 { t(7003); t(pi(g)); (fv() & 1) as i32 }
 pub unsafe extern "C" fn cbp2(g: *mut HSD_GObj) -> i32 { t(7004); t(pi(g)); (fv() & 1) as i32 }
 pub unsafe extern "C" fn cbev3(g: *mut HSD_GObj, h: *mut HSD_GObj) { t(7005); t(pi(g)); t(pi(h)); }
+pub unsafe extern "C" fn cbi1(a: i32) { t(7006); t(a as u32); }
+pub unsafe extern "C" fn cbi2(a: i32) { t(7007); t(a as u32); }
 pub fn pick_fn(kind: i32) -> usize {
     let r = rnd();
     if r & 3 == 0 { return 0; }
@@ -68,11 +70,12 @@ pub fn pick_fn(kind: i32) -> usize {
         1 => if r & 4 != 0 { cbev1 as usize } else { cbev2 as usize },
         2 => if r & 4 != 0 { cbp1 as usize } else { cbp2 as usize },
         3 => cbev3 as usize,
+        4 => if r & 4 != 0 { cbi1 as usize } else { cbi2 as usize },
         _ => 0,
     }
 }
-pub fn pick_cb(kind: i32) -> usize { let f = pick_fn(kind); if f != 0 { f } else if kind == 2 { cbp1 as usize } else if kind == 3 { cbev3 as usize } else { cbev1 as usize } }
-pub fn freg_world() { freg(cbev1 as usize); freg(cbev2 as usize); freg(cbp1 as usize); freg(cbp2 as usize); freg(cbev3 as usize); }
+pub fn pick_cb(kind: i32) -> usize { let f = pick_fn(kind); if f != 0 { f } else if kind == 2 { cbp1 as usize } else if kind == 3 { cbev3 as usize } else if kind == 4 { cbi1 as usize } else { cbev1 as usize } }
+pub fn freg_world() { freg(cbev1 as usize); freg(cbev2 as usize); freg(cbp1 as usize); freg(cbp2 as usize); freg(cbev3 as usize); freg(cbi1 as usize); freg(cbi2 as usize); }
 pub fn preg_world() {
     unsafe {
         preg(&raw const GO, core::mem::size_of_val(&GO));
@@ -91,9 +94,11 @@ pub unsafe fn setup_world() {
     DM = core::mem::zeroed();
     SC = core::mem::zeroed();
     JO = core::mem::zeroed();
+    for (k, st) in [&b"a.dat"[..], &b"sym"[..], &b"LbAd.dat"[..], &b"x"[..]].iter().enumerate() { STRS[k] = [0; 64]; STRS[k][..st.len()].copy_from_slice(st); }
     for i in 0..16 { U8A[i] = rnd() as u8; }
     for i in 0..4 { IA[i] = fv() as i32; UA[i] = fv(); FA[i] = rw(); VA[i].x = rw(); VA[i].y = rw(); VA[i].z = rw(); }
     for i in 0..256 { BUF[i] = rnd() as u8; }
+    BUF[255] = 0;
     for i in 0..4 { g::fill_HSD_GObj(&mut GO[i]); }
     for i in 0..2 { g::fill_SceneDesc(&mut SD[i]); }
     for i in 0..2 { g::fill_DynamicModelDesc(&mut DM[i]); }

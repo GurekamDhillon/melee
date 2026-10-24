@@ -66,12 +66,12 @@ pub mod ext {
     fn HSD_ArchiveGetPublicAddress(a0: *mut HSD_Archive, a1: *const i8) -> *mut c_void => unsafe { melee_runtime::tu::archive::HSD_ArchiveGetPublicAddress(a0, a1) };
     fn HSD_CObjEndCurrent() => unsafe { melee_runtime::tu::cobj::HSD_CObjEndCurrent() };
     fn HSD_CObjEraseScreen(a0: *mut HSD_CObj, a1: i32, a2: i32, a3: i32) => unsafe { melee_runtime::tu::cobj::HSD_CObjEraseScreen(a0, a1, a2, a3) };
-    fn HSD_CObjGetEyeDistance(a0: *mut HSD_CObj) -> f32;
+    fn HSD_CObjGetEyeDistance(a0: *mut HSD_CObj) -> f32 => unsafe { crate::tu::cobj::HSD_CObjGetEyeDistance(a0) };
     fn HSD_CObjGetEyeVector(a0: *mut HSD_CObj, a1: *mut Vec) -> i32;
-    fn HSD_CObjGetInterest(a0: *mut HSD_CObj, a1: *mut Vec);
+    fn HSD_CObjGetInterest(a0: *mut HSD_CObj, a1: *mut Vec) => unsafe { crate::tu::cobj::HSD_CObjGetInterest(a0, a1) };
     fn HSD_CObjInit(a0: *mut HSD_CObj, a1: *mut HSD_CObjDesc) => unsafe { melee_runtime::tu::cobj::HSD_CObjInit(a0, a1) };
     fn HSD_CObjSetCurrent(a0: *mut HSD_CObj) -> i32 => unsafe { melee_runtime::tu::cobj::HSD_CObjSetCurrent(a0) as _ };
-    fn HSD_CObjSetEyePosition(a0: *mut HSD_CObj, a1: *mut Vec);
+    fn HSD_CObjSetEyePosition(a0: *mut HSD_CObj, a1: *mut Vec) => unsafe { crate::tu::cobj::HSD_CObjSetEyePosition(a0, a1) };
     fn HSD_FogSet(a0: *mut HSD_Fog);
     fn HSD_GObjFree(a0: *mut HSD_GObj);
     fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void);

@@ -75,12 +75,12 @@ pub mod ext {
     fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32);
     fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32);
     fn HSD_ArchiveGetPublicAddress(a0: *mut HSD_Archive, a1: *const i8) -> *mut c_void => unsafe { melee_runtime::tu::archive::HSD_ArchiveGetPublicAddress(a0, a1) };
-    fn HSD_CObjGetEyePosition(a0: *mut HSD_CObj, a1: *mut Vec);
-    fn HSD_CObjGetFov(a0: *mut HSD_CObj) -> f32;
-    fn HSD_CObjGetInterest(a0: *mut HSD_CObj, a1: *mut Vec);
-    fn HSD_CObjSetEyePosition(a0: *mut HSD_CObj, a1: *mut Vec);
-    fn HSD_CObjSetFov(a0: *mut HSD_CObj, a1: f32);
-    fn HSD_CObjSetInterest(a0: *mut HSD_CObj, a1: *mut Vec);
+    fn HSD_CObjGetEyePosition(a0: *mut HSD_CObj, a1: *mut Vec) => unsafe { crate::tu::cobj::HSD_CObjGetEyePosition(a0, a1) };
+    fn HSD_CObjGetFov(a0: *mut HSD_CObj) -> f32 => unsafe { crate::tu::cobj::HSD_CObjGetFov(a0) };
+    fn HSD_CObjGetInterest(a0: *mut HSD_CObj, a1: *mut Vec) => unsafe { crate::tu::cobj::HSD_CObjGetInterest(a0, a1) };
+    fn HSD_CObjSetEyePosition(a0: *mut HSD_CObj, a1: *mut Vec) => unsafe { crate::tu::cobj::HSD_CObjSetEyePosition(a0, a1) };
+    fn HSD_CObjSetFov(a0: *mut HSD_CObj, a1: f32) => unsafe { crate::tu::cobj::HSD_CObjSetFov(a0, a1) };
+    fn HSD_CObjSetInterest(a0: *mut HSD_CObj, a1: *mut Vec) => unsafe { crate::tu::cobj::HSD_CObjSetInterest(a0, a1) };
     fn HSD_FogLoadDesc(a0: *mut HSD_FogDesc) -> *mut HSD_Fog;
     fn HSD_GObjFree(a0: *mut HSD_GObj);
     fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void);

@@ -51,8 +51,8 @@ pub mod ext {
     fn HSD_CObjEndCurrent() => unsafe { melee_runtime::tu::cobj::HSD_CObjEndCurrent() };
     fn HSD_CObjEraseScreen(a0: *mut HSD_CObj, a1: i32, a2: i32, a3: i32) => unsafe { melee_runtime::tu::cobj::HSD_CObjEraseScreen(a0, a1, a2, a3) };
     fn HSD_CObjSetCurrent(a0: *mut HSD_CObj) -> i32 => unsafe { melee_runtime::tu::cobj::HSD_CObjSetCurrent(a0) as _ };
-    fn HSD_CObjSetEyePosition(a0: *mut HSD_CObj, a1: *mut Vec);
-    fn HSD_CObjSetInterest(a0: *mut HSD_CObj, a1: *mut Vec);
+    fn HSD_CObjSetEyePosition(a0: *mut HSD_CObj, a1: *mut Vec) => unsafe { crate::tu::cobj::HSD_CObjSetEyePosition(a0, a1) };
+    fn HSD_CObjSetInterest(a0: *mut HSD_CObj, a1: *mut Vec) => unsafe { crate::tu::cobj::HSD_CObjSetInterest(a0, a1) };
     fn HSD_CObjSetScissor(a0: *mut HSD_CObj, a1: *mut _Scissor) => unsafe { melee_runtime::tu::cobj::HSD_CObjSetScissor(a0, a1 as _) };
     fn HSD_CObjSetViewport(a0: *mut HSD_CObj, a1: *mut _HSD_RectS16) => unsafe { melee_runtime::tu::cobj::HSD_CObjSetViewport(a0, a1 as _) };
     fn HSD_FogSet(a0: *mut HSD_Fog);

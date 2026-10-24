@@ -1,2 +1,0 @@
-HSD_GObj_JObjKind
-result

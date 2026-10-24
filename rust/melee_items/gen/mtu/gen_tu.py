@@ -588,7 +588,7 @@ def build(stem, spec, want_ext):
                     raise SystemExit(f"{n}: returns a struct by value; give a ret override")
             body_c.append(f"return ({ret_t}) ({rc});")
             body_r.append(rr)
-        c_out.append(f"{ret_t} ({n})({params}) {{ " + " ".join(body_c) + " }")
+        c_out.append(f"{ret_t} {n}({params}) {{ " + " ".join(body_c) + " }")
         argnames = ", ".join(f"a{i}" for i in range(len(ptys)))
         argl = ", ".join(f"a{i}" for i in range(len(ptys)))
         r_out_hook = f"        m::ext::hook::{n} = Some(|{argl}| {{ " + " ".join(body_r) + " });"

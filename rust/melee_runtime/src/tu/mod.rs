@@ -23,3 +23,5 @@ pub mod lbcardnew;
 pub mod lbarq;
 pub mod lbcommand;
 pub mod lbdvd;
+pub mod lbcollision;
+pub mod lbaudio_ax;

@@ -17,3 +17,8 @@ pub mod mobj;
 pub mod dobj;
 pub mod pobj;
 pub mod displayfunc;
+pub mod debug;
+pub mod class;
+pub mod bytecode;
+pub mod controller;
+pub mod devcom;

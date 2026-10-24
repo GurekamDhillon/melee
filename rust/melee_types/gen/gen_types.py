@@ -56,6 +56,7 @@ HAND_DECODE = {"HSD_Joint", "HSD_RObjDesc"}
 TU_RECORDS = {
     "src/melee/lb/lbdvd.c": {"lbDvd_803B72C0_t": "lbDvd_803B72C0_t"},
     "src/melee/lb/lbcollision.c": {"lbColl_803B9928": "LbCollColorPair"},
+    "src/sysdolphin/baselib/pobj.c": {"GenoPalPObj": "GenoPalPObj"},
     "src/melee/lb/lbaudio_ax.c": {
         "lbAudioAx_UserData": "lbAudioAx_UserData", "SoundParams": "SoundParams",
         "lbl_804D6454": "LbAudioAxHeapData", "lbl_803BB3C0": "LbAudioAxBankMask",
@@ -173,6 +174,8 @@ NATIVE_FIELD_TYPES = {
     ("TyDisplayData", "pad_144"): "[*mut HSD_Text; 4]",
     ("Toy6E68", "pad10"): "[*mut c_void; 2]",
     ("TyFiguponData", "x10"): "usize",
+    ("_objheap", "top"): "usize",
+    ("_objheap", "curr"): "usize",
 }
 # Native names for slots the C code declares as padding but uses as a view's fields.
 NATIVE_FIELD_NAMES = {
@@ -471,7 +474,7 @@ class Gen:
             uc = u.get_canonical()
             # C adjusts array parameters even when the brackets are hidden by
             # a typedef (notably HSD display callbacks taking Mtx).
-            if in_param and uc.kind in (T.CONSTANTARRAY, T.INCOMPLETEARRAY, T.VARIABLEARRAY):
+            if in_param and uc.kind in (T.CONSTANTARRAY, T.INCOMPLETEARRAY, T.VARIABLEARRAY, T.DEPENDENTSIZEDARRAY):
                 q = "*const" if uc.element_type.is_const_qualified() else "*mut"
                 return f"{q} {self.rty(uc.element_type)}"
             if uc.kind in (T.RECORD, T.ENUM):

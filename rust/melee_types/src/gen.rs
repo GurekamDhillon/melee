@@ -8372,8 +8372,8 @@ const _: () = assert!(core::mem::size_of::<MTXStack>() == 24);
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct _objheap {
-    pub top: u32,
-    pub curr: u32,
+    pub top: usize,
+    pub curr: usize,
     pub size: u32,
     pub remain: u32,
 }
@@ -8385,8 +8385,8 @@ impl GcDecode for _objheap {
     #[allow(unused_variables, unused_mut, unused_unsafe)]
     fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
         let mut v = Self::zeroed();
-        v.top = <u32 as GcDecode>::gc_decode(d, at + 0x0);
-        v.curr = <u32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.top = <usize as GcDecode>::gc_decode(d, at + 0x0);
+        v.curr = <usize as GcDecode>::gc_decode(d, at + 0x4);
         v.size = <u32 as GcDecode>::gc_decode(d, at + 0x8);
         v.remain = <u32 as GcDecode>::gc_decode(d, at + 0xC);
         v
@@ -8404,7 +8404,6 @@ impl GcLayout for _objheap {
         GcField::new("remain", 0xC, 4, "u32"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<_objheap>() == 16);
 
 /// C `_HSD_ObjAllocLink` (src/sysdolphin/baselib/objalloc.h:15); GameCube size 0x4, align 4.
 #[repr(C, align(8))]
@@ -95890,6 +95889,44 @@ impl GcLayout for LbCollColorPair {
 }
 const _: () = assert!(core::mem::size_of::<LbCollColorPair>() == 16);
 
+/// C `GenoPalPObj` (src/sysdolphin/baselib/pobj.c:1514); GameCube size 0x1C, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct GenoPalPObj {
+    pub base: HSD_PObj,
+    pub n: u8,
+    pub broken: u8,
+    pub pad: [u8; 2],
+}
+impl GenoPalPObj { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for GenoPalPObj {
+    const GC_BYTES: u32 = 0x1C;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.base = <HSD_PObj as GcDecode>::gc_decode(d, at + 0x0);
+        v.n = <u8 as GcDecode>::gc_decode(d, at + 0x18);
+        v.broken = <u8 as GcDecode>::gc_decode(d, at + 0x19);
+        v.pad = <[u8; 2] as GcDecode>::gc_decode(d, at + 0x1A);
+        v
+    }
+}
+impl GcPointee for GenoPalPObj { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<GenoPalPObj>(t) } }
+impl GcLayout for GenoPalPObj {
+    const GC_NAME: &'static str = "GenoPalPObj";
+    const GC_SIZE: u32 = 0x1C;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("base", 0x0, 24, "HSD_PObj"),
+        GcField::new("n", 0x18, 1, "u8"),
+        GcField::new("broken", 0x19, 1, "u8"),
+        GcField::new("pad", 0x1A, 2, "u8[2]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<GenoPalPObj>() == 56);
+
 /// C `lbAudioAx_UserData` (src/melee/lb/lbaudio_ax.static.h:12); GameCube size 0x48, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
@@ -97876,6 +97913,7 @@ pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[
     (<TySortElemInt as GcLayout>::GC_NAME, <TySortElemInt as GcLayout>::GC_SIZE, <TySortElemInt as GcLayout>::GC_ALIGN, <TySortElemInt as GcLayout>::GC_FIELDS),
     (<lbDvd_803B72C0_t as GcLayout>::GC_NAME, <lbDvd_803B72C0_t as GcLayout>::GC_SIZE, <lbDvd_803B72C0_t as GcLayout>::GC_ALIGN, <lbDvd_803B72C0_t as GcLayout>::GC_FIELDS),
     (<LbCollColorPair as GcLayout>::GC_NAME, <LbCollColorPair as GcLayout>::GC_SIZE, <LbCollColorPair as GcLayout>::GC_ALIGN, <LbCollColorPair as GcLayout>::GC_FIELDS),
+    (<GenoPalPObj as GcLayout>::GC_NAME, <GenoPalPObj as GcLayout>::GC_SIZE, <GenoPalPObj as GcLayout>::GC_ALIGN, <GenoPalPObj as GcLayout>::GC_FIELDS),
     (<lbAudioAx_UserData as GcLayout>::GC_NAME, <lbAudioAx_UserData as GcLayout>::GC_SIZE, <lbAudioAx_UserData as GcLayout>::GC_ALIGN, <lbAudioAx_UserData as GcLayout>::GC_FIELDS),
     (<SoundParams as GcLayout>::GC_NAME, <SoundParams as GcLayout>::GC_SIZE, <SoundParams as GcLayout>::GC_ALIGN, <SoundParams as GcLayout>::GC_FIELDS),
     (<LbAudioAxHeapData as GcLayout>::GC_NAME, <LbAudioAxHeapData as GcLayout>::GC_SIZE, <LbAudioAxHeapData as GcLayout>::GC_ALIGN, <LbAudioAxHeapData as GcLayout>::GC_FIELDS),

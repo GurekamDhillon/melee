@@ -5,7 +5,7 @@
 //! Checked bit for bit against the C by `tests/oracle_hsd.rs`.
 //!
 //! Not ported here: `HSD_VecAlloc`/`HSD_VecFree`/`HSD_MtxAlloc`/`HSD_MtxFree` and the
-//! `*AllocData` accessors (they are `HSD_ObjAlloc` pool wrappers; native code uses plain values).
+//! `*AllocData` accessors are provided by `tu::mtx` over the native object pools.
 
 use crate::gekko::{cosf, sinf, sqrtf};
 use crate::lbtrigf::{asinf, atan2f};
@@ -137,7 +137,7 @@ pub fn inverse_transpose(src: &Mtx) -> Mtx {
 }
 
 /// `calcVal` (static inline in mtx.c).
-fn calc_val(x: f32, y: f32) -> f32 {
+pub fn calc_val(x: f32, y: f32) -> f32 {
     if fabsf_bitwise(x) <= FLOAT_MIN {
         if y >= 0.0 {
             (M_PI / 2.0) as f32

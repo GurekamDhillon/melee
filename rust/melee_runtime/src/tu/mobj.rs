@@ -1,7 +1,8 @@
-﻿//! `src/sysdolphin/baselib/mobj.c`, the display half: `HSD_MObjSetup` / `HSD_MObjUnset`, and
-//! `MObjMakeTExp` + tobj.c's `TObjMakeTExp` / `MakeColorGenTExp` with the TEV built directly.
+//! All 28 `src/sysdolphin/baselib/mobj.c` definitions have native C-named entry points
+//! in `native` (also re-exported here), checked against the C state/call-trace oracle.
+//! The older `HsdRender` descriptor API is kept below for its existing callers.
 //!
-//! APPROXIMATION (TODO texp.c): HSD compiles the TExp graph with `HSD_TExpCompile` (texp.c, not
+//! APPROXIMATION (descriptor API only; TODO texp.c): HSD compiles the TExp graph with `HSD_TExpCompile` (texp.c, not
 //! ported), which folds constants into TEV registers and merges expressions into as few stages
 //! as possible. Here every TExp TEV node becomes one GX stage in order, writing PREV (both colour
 //! and alpha; an unset half passes PREV through), constants go to KONST colour registers, and a
@@ -12,6 +13,682 @@
 use super::state::gx::*;
 use super::state::{Dat, GxBackend, HsdRender, Rgba};
 use super::tobj::{self as tt, TObjRt};
+
+// Native C entry points below are exact ports; the descriptor-renderer API
+// remains an approximation until the TExp compiler is connected to the GX backend.
+pub use native::*;
+
+pub mod native {
+    #![allow(non_snake_case, non_upper_case_globals, static_mut_refs)]
+    use super::{
+        RENDER_DIFFUSE, RENDER_SHADOW, RENDER_SPECULAR, RENDER_TOON,
+        RENDER_VERTEX,
+    };
+    use core::{
+        ffi::c_void,
+        mem::size_of,
+        ptr::{addr_of_mut, null_mut},
+    };
+    use melee_types::*;
+
+    pub static mut default_class: *mut HSD_ClassInfo = null_mut();
+    pub static mut current_mobj: *mut HSD_MObj = null_mut();
+    pub static mut tobj_shadows: *mut HSD_TObj = null_mut();
+    pub static mut tobj_toon: *mut HSD_TObj = null_mut();
+    pub static mut hsdMObj: HSD_MObjInfo = {
+        let mut v: HSD_MObjInfo = unsafe { core::mem::zeroed() };
+        v.parent.head.info_init = Some(MObjInfoInit);
+        v
+    };
+    pub static mut tobj_toon_desc: HSD_TObjDesc = {
+        let mut v: HSD_TObjDesc = unsafe { core::mem::zeroed() };
+        v.id = GX_TEXMAP7;
+        v.src = GX_TG_COLOR0;
+        v.wrap_s = GX_CLAMP;
+        v.wrap_t = GX_CLAMP;
+        v.blend_flags = 4;
+        v.blending = 1.0;
+        v.magFilt = GX_LINEAR;
+        v
+    };
+    unsafe fn method(m: *mut HSD_MObj) -> *mut HSD_MObjInfo {
+        (*m).parent.class_info.cast()
+    }
+    pub unsafe extern "C" fn HSD_MObjSetCurrent(m: *mut HSD_MObj) {
+        current_mobj = m;
+    }
+    pub unsafe extern "C" fn HSD_MObjSetFlags(m: *mut HSD_MObj, flags: u32) {
+        if !m.is_null() {
+            (*m).rendermode |= flags;
+        }
+    }
+    pub unsafe extern "C" fn HSD_MObjClearFlags(m: *mut HSD_MObj, flags: u32) {
+        if !m.is_null() {
+            (*m).rendermode &= !flags;
+        }
+    }
+    pub unsafe extern "C" fn HSD_MObjRemoveAnimByFlags(
+        m: *mut HSD_MObj,
+        flags: u32,
+    ) {
+        if m.is_null() {
+            return;
+        }
+        if flags & 4 != 0 {
+            ext::HSD_AObjRemove((*m).aobj);
+            (*m).aobj = null_mut();
+        }
+        if flags & 16 != 0 {
+            ext::HSD_TObjRemoveAnimAll((*m).tobj);
+        }
+    }
+    pub unsafe extern "C" fn HSD_MObjAddAnim(
+        m: *mut HSD_MObj,
+        a: *mut HSD_MatAnim,
+    ) {
+        if m.is_null() || a.is_null() {
+            return;
+        }
+        if !(*m).aobj.is_null() {
+            ext::HSD_AObjRemove((*m).aobj);
+        }
+        (*m).aobj = ext::HSD_AObjLoadDesc((*a).aobjdesc);
+        ext::HSD_TObjAddAnimAll((*m).tobj, (*a).texanim);
+    }
+    pub unsafe extern "C" fn HSD_MObjReqAnimByFlags(
+        m: *mut HSD_MObj,
+        frame: f32,
+        flags: u32,
+    ) {
+        if m.is_null() {
+            return;
+        }
+        if flags & 4 != 0 {
+            ext::HSD_AObjReqAnim((*m).aobj, frame);
+        }
+        ext::HSD_TObjReqAnimAllByFlags((*m).tobj, frame, flags);
+    }
+    pub unsafe extern "C" fn HSD_MObjReqAnim(m: *mut HSD_MObj, frame: f32) {
+        HSD_MObjReqAnimByFlags(m, frame, 0x7ff);
+    }
+    pub unsafe extern "C" fn MObjUpdateFunc(
+        obj: *mut c_void,
+        ty: i32,
+        v: *mut HSD_ObjData,
+    ) {
+        let m = obj.cast::<HSD_MObj>();
+        if m.is_null() {
+            return;
+        }
+        // No fused expressions in mobj.c. The double multiply precedes unsigned saturation
+        // to 32 bits, then truncation, exactly as the existing material-logic port does.
+        match ty {
+            1..=9 => {
+                let x = ((255.0 * (*v).fv as f64) as u32) as u8;
+                let mat = (*m).mat;
+                match ty {
+                    1 => (*mat).ambient.r = x,
+                    2 => (*mat).ambient.g = x,
+                    3 => (*mat).ambient.b = x,
+                    4 => (*mat).diffuse.r = x,
+                    5 => (*mat).diffuse.g = x,
+                    6 => (*mat).diffuse.b = x,
+                    7 => (*mat).specular.r = x,
+                    8 => (*mat).specular.g = x,
+                    _ => (*mat).specular.b = x,
+                }
+            }
+            10 => (*(*m).mat).alpha = 1.0 - (*v).fv,
+            11..=13 if !(*m).pe.is_null() => {
+                let x = ((255.0 * (*v).fv as f64) as u32) as u8;
+                match ty {
+                    11 => (*(*m).pe).ref0 = x,
+                    12 => (*(*m).pe).ref1 = x,
+                    _ => (*(*m).pe).dst_alpha = x,
+                }
+            }
+            _ => {}
+        }
+    }
+    pub unsafe extern "C" fn HSD_MObjAnim(m: *mut HSD_MObj) {
+        if m.is_null() {
+            return;
+        }
+        ext::HSD_AObjInterpretAnim((*m).aobj, m.cast(), Some(MObjUpdateFunc));
+        ext::HSD_TObjAnimAll((*m).tobj);
+    }
+    pub unsafe extern "C" fn MObjLoad(
+        m: *mut HSD_MObj,
+        d: *mut HSD_MObjDesc,
+    ) -> i32 {
+        (*m).rendermode = (*d).rendermode;
+        (*m).tobj = ext::HSD_TObjLoadDesc((*d).texdesc);
+        (*m).mat = HSD_MaterialAlloc();
+        core::ptr::copy_nonoverlapping((*d).mat, (*m).mat, 1);
+        (*m).rendermode |= RENDER_TOON;
+        if !(*d).pedesc.is_null() {
+            (*m).pe =
+                ext::hsdAllocMemPiece(size_of::<HSD_PEDesc>() as i32).cast();
+            core::ptr::copy_nonoverlapping((*d).pedesc, (*m).pe, 1);
+        }
+        (*m).aobj = null_mut();
+        0
+    }
+    pub unsafe extern "C" fn HSD_MObjLoadDesc(
+        d: *mut HSD_MObjDesc,
+    ) -> *mut HSD_MObj {
+        if d.is_null() {
+            return null_mut();
+        }
+        let info = if (*d).class_name.is_null() {
+            null_mut()
+        } else {
+            ext::hsdSearchClassInfo((*d).class_name)
+        };
+        let m: *mut HSD_MObj = if info.is_null() {
+            HSD_MObjAlloc()
+        } else {
+            let p = ext::hsdNew(info).cast::<HSD_MObj>();
+            assert!(!p.is_null());
+            p
+        };
+        ((*method(m)).load.expect("MObj load"))(m, d);
+        HSD_MObjCompileTev(m);
+        m
+    }
+    pub unsafe extern "C" fn HSD_MObjCompileTev(m: *mut HSD_MObj) {
+        if m.is_null() {
+            return;
+        }
+        if !(*m).tevdesc.is_null() {
+            ext::HSD_TExpFreeTevDesc((*m).tevdesc);
+            (*m).tevdesc = null_mut();
+        }
+        if !(*m).texp.is_null() {
+            ext::HSD_TExpFreeList((*m).texp, HSD_TE_ALL, 1);
+            (*m).texp = null_mut();
+        }
+        let mut t = (*m).tobj;
+        let mut tail: *mut *mut HSD_TObj = null_mut();
+        if (*m).rendermode & RENDER_SHADOW != 0 && !tobj_shadows.is_null() {
+            tail = &mut t;
+            while !(*tail).is_null() {
+                tail = addr_of_mut!((**tail).next);
+            }
+            *tail = tobj_shadows;
+        }
+        if (*m).rendermode & RENDER_TOON != 0
+            && !tobj_toon.is_null()
+            && !(*tobj_toon).imagedesc.is_null()
+        {
+            (*tobj_toon).next = t;
+            t = tobj_toon;
+        }
+        ext::HSD_TObjAssignResources(t);
+        let exp = ((*method(m)).make_texp.expect("MObj make_texp"))(
+            m,
+            t,
+            addr_of_mut!((*m).texp),
+        );
+        ext::HSD_TExpCompile(
+            exp,
+            addr_of_mut!((*m).tevdesc),
+            addr_of_mut!((*m).texp),
+        );
+        if !tail.is_null() {
+            *tail = null_mut();
+        }
+    }
+    pub unsafe extern "C" fn MObjSetupTev(
+        m: *mut HSD_MObj,
+        t: *mut HSD_TObj,
+        arg: u32,
+    ) {
+        assert!(!(*m).tevdesc.is_null());
+        ext::HSD_TExpSetupTev((*m).tevdesc, (*m).texp);
+        ext::HSD_TObjSetupVolatileTev(t, arg);
+    }
+    pub unsafe extern "C" fn HSD_MObjSetup(
+        m: *mut HSD_MObj,
+        _rendermode: u32,
+    ) {
+        ext::HSD_StateInitTev();
+        let mode = (*m).rendermode;
+        let mat = (*m).mat;
+        ext::HSD_SetMaterialColor(
+            (*mat).ambient,
+            (*mat).diffuse,
+            (*mat).specular,
+            (*mat).alpha,
+        );
+        if mode & RENDER_SPECULAR != 0 {
+            ext::HSD_SetMaterialShininess((*mat).shininess);
+        }
+        let mut t = (*m).tobj;
+        let mut tail: *mut *mut HSD_TObj = null_mut();
+        if mode & RENDER_SHADOW != 0 && !tobj_shadows.is_null() {
+            tail = &mut t;
+            while !(*tail).is_null() {
+                tail = addr_of_mut!((**tail).next);
+            }
+            *tail = tobj_shadows;
+        }
+        if mode & RENDER_TOON != 0
+            && !tobj_toon.is_null()
+            && !(*tobj_toon).imagedesc.is_null()
+        {
+            (*tobj_toon).next = t;
+            t = tobj_toon;
+        }
+        ext::HSD_TObjSetup(t);
+        ext::HSD_TObjSetupTextureCoordGen(t);
+        ((*method(m)).setup_tev.expect("MObj setup_tev"))(m, t, mode);
+        ext::HSD_SetupRenderModeWithCustomPE(mode, (*m).pe);
+        if !tail.is_null() {
+            *tail = null_mut();
+        }
+    }
+    pub unsafe extern "C" fn HSD_MObjUnset(
+        _m: *mut HSD_MObj,
+        _rendermode: u32,
+    ) {
+        ext::HSD_TObjSetup(null_mut());
+    }
+    pub unsafe extern "C" fn HSD_MObjSetToonTextureImage(
+        image: *mut HSD_ImageDesc,
+    ) {
+        if tobj_toon.is_null() {
+            tobj_toon_desc.imagedesc = image;
+            tobj_toon = ext::HSD_TObjLoadDesc(addr_of_mut!(tobj_toon_desc));
+            assert!(!tobj_toon.is_null(), "cannot allocate tobj for toon.");
+        }
+        (*tobj_toon).imagedesc = image;
+    }
+    pub unsafe extern "C" fn HSD_MObjSetDiffuseColor(
+        m: *mut HSD_MObj,
+        r: u8,
+        g: u8,
+        b: u8,
+    ) {
+        (*(*m).mat).diffuse.r = r;
+        (*(*m).mat).diffuse.g = g;
+        (*(*m).mat).diffuse.b = b;
+    }
+    pub unsafe extern "C" fn HSD_MObjSetAlpha(m: *mut HSD_MObj, alpha: f32) {
+        (*(*m).mat).alpha = alpha;
+    }
+    pub unsafe extern "C" fn HSD_MObjGetTObj(
+        m: *mut HSD_MObj,
+    ) -> *mut HSD_TObj {
+        if m.is_null() {
+            null_mut()
+        } else {
+            (*m).tobj
+        }
+    }
+    pub unsafe extern "C" fn HSD_MObjRemove(m: *mut HSD_MObj) {
+        if !m.is_null() {
+            ((*(*m).parent.class_info).release.expect("MObj release"))(
+                m.cast(),
+            );
+            ((*(*m).parent.class_info).destroy.expect("MObj destroy"))(
+                m.cast(),
+            );
+        }
+    }
+    pub unsafe extern "C" fn HSD_MObjAlloc() -> *mut HSD_MObj {
+        let p = ext::hsdNew(if default_class.is_null() {
+            addr_of_mut!(hsdMObj.parent)
+        } else {
+            default_class
+        })
+        .cast::<HSD_MObj>();
+        assert!(!p.is_null());
+        p
+    }
+    pub unsafe extern "C" fn HSD_MaterialAlloc() -> *mut HSD_Material {
+        let p = ext::hsdAllocMemPiece(size_of::<HSD_Material>() as i32)
+            .cast::<HSD_Material>();
+        assert!(!p.is_null());
+        core::ptr::write_bytes(p, 0, 1);
+        (*p).alpha = 1.0;
+        p
+    }
+    pub unsafe extern "C" fn HSD_MObjAddShadowTexture(t: *mut HSD_TObj) {
+        assert!(!t.is_null());
+        let mut cur = tobj_shadows;
+        while !cur.is_null() {
+            if cur == t {
+                return;
+            }
+            cur = (*cur).next;
+        }
+        (*t).next = tobj_shadows;
+        tobj_shadows = t;
+    }
+    pub unsafe extern "C" fn HSD_MObjDeleteShadowTexture(t: *mut HSD_TObj) {
+        if !t.is_null() {
+            let mut cur = addr_of_mut!(tobj_shadows);
+            while !(*cur).is_null() {
+                if *cur == t {
+                    *cur = (*t).next;
+                    (*t).next = null_mut();
+                    return;
+                }
+                cur = addr_of_mut!((**cur).next);
+            }
+        } else {
+            while !tobj_shadows.is_null() {
+                let next = (*tobj_shadows).next;
+                (*tobj_shadows).next = null_mut();
+                tobj_shadows = next;
+            }
+        }
+    }
+    pub unsafe extern "C" fn MObjRelease(o: *mut HSD_Class) {
+        let m = o.cast::<HSD_MObj>();
+        ext::HSD_AObjRemove((*m).aobj);
+        ext::hsdFreeMemPiece(
+            (*m).mat.cast(),
+            size_of::<HSD_Material>() as i32,
+        );
+        ext::HSD_TObjRemoveAll((*m).tobj);
+        if !(*m).tevdesc.is_null() {
+            ext::HSD_TExpFreeTevDesc((*m).tevdesc);
+        }
+        if !(*m).texp.is_null() {
+            ext::HSD_TExpFreeList((*m).texp, HSD_TE_ALL, 1);
+        }
+        if !(*m).pe.is_null() {
+            ext::hsdFreeMemPiece(
+                (*m).pe.cast(),
+                size_of::<HSD_PEDesc>() as i32,
+            );
+        }
+        ((*hsdMObj.parent.head.parent)
+            .release
+            .expect("parent release"))(o);
+    }
+    pub unsafe extern "C" fn MObjAmnesia(info: *mut HSD_ClassInfo) {
+        if info == default_class {
+            default_class = null_mut();
+        }
+        if info == addr_of_mut!(hsdMObj.parent) {
+            tobj_toon = null_mut();
+            tobj_shadows = null_mut();
+        }
+        ((*hsdMObj.parent.head.parent)
+            .amnesia
+            .expect("parent amnesia"))(info);
+    }
+    pub unsafe extern "C" fn MObjInfoInit() {
+        ext::hsdInitClassInfo(
+            addr_of_mut!(hsdMObj.parent),
+            addr_of_mut!(ext::hsdClass),
+            c"sysdolphin_base_library".as_ptr().cast_mut(),
+            c"hsd_mobj".as_ptr().cast_mut(),
+            size_of::<HSD_MObjInfo>() as i32,
+            size_of::<HSD_MObj>() as i32,
+        );
+        hsdMObj.parent.release = Some(MObjRelease);
+        hsdMObj.parent.amnesia = Some(MObjAmnesia);
+        hsdMObj.setup = Some(HSD_MObjSetup);
+        hsdMObj.unset = Some(HSD_MObjUnset);
+        hsdMObj.load = Some(MObjLoad);
+        hsdMObj.make_texp = Some(MObjMakeTExp);
+        hsdMObj.setup_tev = Some(MObjSetupTev);
+    }
+
+    /// Original MObjMakeTExp graph construction. External TExp allocation/compilation remains
+    /// a typed integration hook; every node request and input is compared with the C oracle.
+    pub unsafe extern "C" fn MObjMakeTExp(
+        m: *mut HSD_MObj,
+        top: *mut HSD_TObj,
+        list: *mut *mut HSD_TExp,
+    ) -> *mut HSD_TExp {
+        use ext::*;
+        const ZERO: *mut HSD_TExp = core::ptr::null_mut();
+        const RAS: *mut HSD_TExp = (-2isize) as *mut HSD_TExp;
+        const TEX: *mut HSD_TExp = (-1isize) as *mut HSD_TExp;
+        assert!(!list.is_null());
+        *list = null_mut();
+        let mut toon = null_mut();
+        let mut t = top;
+        while !t.is_null() {
+            if (*t).flags & 15 == 4 {
+                toon = t;
+            }
+            t = (*t).next;
+        }
+        let mut diff;
+        let mut alpha;
+        let mut done = 0;
+        if (*m).rendermode & RENDER_VERTEX != 0 {
+            let exp = HSD_TExpTev(list);
+            HSD_TExpOrder(exp, null_mut(), GX_COLOR0A0);
+            HSD_TExpColorOp(exp, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, 1);
+            HSD_TExpColorIn(
+                exp, HSD_TE_0, ZERO, HSD_TE_0, ZERO, HSD_TE_0, ZERO,
+                HSD_TE_RGB, RAS,
+            );
+            HSD_TExpAlphaOp(exp, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, 1);
+            HSD_TExpAlphaIn(
+                exp, HSD_TE_0, ZERO, HSD_TE_0, ZERO, HSD_TE_0, ZERO, HSD_TE_A,
+                RAS,
+            );
+            diff = exp;
+            alpha = exp;
+        } else {
+            let dc = HSD_TExpCnst(
+                addr_of_mut!((*(*m).mat).diffuse).cast(),
+                HSD_TE_RGB,
+                HSD_TE_U8,
+                list,
+            );
+            let ac = HSD_TExpCnst(
+                addr_of_mut!((*(*m).mat).alpha).cast(),
+                HSD_TE_X,
+                HSD_TE_F32,
+                list,
+            );
+            let exp = HSD_TExpTev(list);
+            HSD_TExpColorOp(exp, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, 1);
+            HSD_TExpColorIn(
+                exp, HSD_TE_0, ZERO, HSD_TE_0, ZERO, HSD_TE_0, ZERO,
+                HSD_TE_RGB, dc,
+            );
+            HSD_TExpAlphaOp(exp, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, 1);
+            HSD_TExpAlphaIn(
+                exp, HSD_TE_0, ZERO, HSD_TE_0, ZERO, HSD_TE_0, ZERO, HSD_TE_X,
+                ac,
+            );
+            diff = exp;
+            alpha = exp;
+        }
+        t = top;
+        while !t.is_null() {
+            if (*t).flags & 0x50 != 0 && (*t).id != GX_TEXMAP_NULL {
+                let info =
+                    (*t).parent.parent.class_info.cast::<HSD_TObjInfo>();
+                ((*info).make_texp.expect("TObj make_texp"))(
+                    t, 0x50, done, &mut diff, &mut alpha, list,
+                );
+            }
+            t = (*t).next;
+        }
+        done |= 0x50;
+        if (*m).rendermode & RENDER_DIFFUSE != 0 {
+            let exp = HSD_TExpTev(list);
+            HSD_TExpOrder(exp, toon, GX_COLOR0A0);
+            HSD_TExpColorOp(exp, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, 1);
+            HSD_TExpColorIn(
+                exp,
+                HSD_TE_0,
+                ZERO,
+                HSD_TE_RGB,
+                diff,
+                HSD_TE_RGB,
+                if toon.is_null() { RAS } else { TEX },
+                HSD_TE_0,
+                ZERO,
+            );
+            diff = exp;
+            HSD_TExpAlphaOp(exp, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, 1);
+            HSD_TExpAlphaIn(
+                exp, HSD_TE_0, ZERO, HSD_TE_A, alpha, HSD_TE_A, RAS, HSD_TE_0,
+                ZERO,
+            );
+            alpha = exp;
+        }
+        if (*m).rendermode & RENDER_SPECULAR != 0 {
+            let cnst = HSD_TExpCnst(
+                addr_of_mut!((*(*m).mat).specular).cast(),
+                HSD_TE_RGB,
+                HSD_TE_U8,
+                list,
+            );
+            let mut exp = HSD_TExpTev(list);
+            HSD_TExpColorOp(exp, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, 1);
+            HSD_TExpColorIn(
+                exp, HSD_TE_0, ZERO, HSD_TE_0, ZERO, HSD_TE_0, ZERO,
+                HSD_TE_RGB, cnst,
+            );
+            let mut spec = exp;
+            t = top;
+            while !t.is_null() {
+                if (*t).flags & 0x20 != 0 && (*t).id != GX_TEXMAP_NULL {
+                    let info =
+                        (*t).parent.parent.class_info.cast::<HSD_TObjInfo>();
+                    ((*info).make_texp.expect("TObj make_texp"))(
+                        t, 0x20, done, &mut spec, &mut alpha, list,
+                    );
+                }
+                t = (*t).next;
+            }
+            done |= 0x20;
+            exp = HSD_TExpTev(list);
+            HSD_TExpOrder(exp, null_mut(), GX_COLOR1A1);
+            HSD_TExpColorOp(exp, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, 1);
+            HSD_TExpColorIn(
+                exp, HSD_TE_0, ZERO, HSD_TE_RGB, spec, HSD_TE_RGB, RAS,
+                HSD_TE_0, ZERO,
+            );
+            spec = exp;
+            exp = HSD_TExpTev(list);
+            HSD_TExpColorOp(exp, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, 1);
+            HSD_TExpColorIn(
+                exp, HSD_TE_RGB, spec, HSD_TE_0, ZERO, HSD_TE_0, ZERO,
+                HSD_TE_RGB, diff,
+            );
+            diff = exp;
+        }
+        let mut external = diff;
+        t = top;
+        while !t.is_null() {
+            if (*t).flags & 0x80 != 0 && (*t).id != GX_TEXMAP_NULL {
+                let info =
+                    (*t).parent.parent.class_info.cast::<HSD_TObjInfo>();
+                ((*info).make_texp.expect("TObj make_texp"))(
+                    t,
+                    0x80,
+                    done,
+                    &mut external,
+                    &mut alpha,
+                    list,
+                );
+            }
+            t = (*t).next;
+        }
+        if external != alpha
+            || HSD_TExpGetType(external) != HSD_TE_TEV
+            || HSD_TExpGetType(alpha) != HSD_TE_TEV
+        {
+            let exp = HSD_TExpTev(list);
+            HSD_TExpColorOp(exp, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, 1);
+            HSD_TExpColorIn(
+                exp, HSD_TE_0, ZERO, HSD_TE_0, ZERO, HSD_TE_0, ZERO,
+                HSD_TE_RGB, external,
+            );
+            HSD_TExpAlphaOp(exp, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, 1);
+            HSD_TExpAlphaIn(
+                exp, HSD_TE_0, ZERO, HSD_TE_0, ZERO, HSD_TE_0, ZERO, HSD_TE_A,
+                alpha,
+            );
+            return exp;
+        }
+        external
+    }
+    // BEGIN GENERATED EXT (rust/melee_world/gen/mtu/gen_tu.py; the callees of the C TU)
+    pub mod ext {
+        #![allow(
+            non_upper_case_globals,
+            non_snake_case,
+            unused_imports,
+            dead_code
+        )]
+        use super::*;
+        use core::ffi::c_void;
+        macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                }
+            } )*
+        };
+    }
+        ext_fns! {
+        fn HSD_AObjInterpretAnim(a0: *mut HSD_AObj, a1: *mut c_void, a2: Option<unsafe extern "C" fn(*mut c_void, i32, *mut HSD_ObjData)>);
+        fn HSD_AObjLoadDesc(a0: *mut HSD_AObjDesc) -> *mut HSD_AObj;
+        fn HSD_AObjRemove(a0: *mut HSD_AObj);
+        fn HSD_AObjReqAnim(a0: *mut HSD_AObj, a1: f32);
+        fn HSD_SetMaterialColor(a0: _GXColor, a1: _GXColor, a2: _GXColor, a3: f32);
+        fn HSD_SetMaterialShininess(a0: f32);
+        fn HSD_SetupRenderModeWithCustomPE(a0: u32, a1: *mut HSD_PEDesc);
+        fn HSD_StateInitTev();
+        fn HSD_TExpAlphaIn(a0: *mut HSD_TExp, a1: u32, a2: *mut HSD_TExp, a3: u32, a4: *mut HSD_TExp, a5: u32, a6: *mut HSD_TExp, a7: u32, a8: *mut HSD_TExp);
+        fn HSD_TExpAlphaOp(a0: *mut HSD_TExp, a1: u32, a2: u32, a3: u32, a4: u8);
+        fn HSD_TExpCnst(a0: *mut c_void, a1: u32, a2: u32, a3: *mut *mut HSD_TExp) -> *mut HSD_TExp;
+        fn HSD_TExpColorIn(a0: *mut HSD_TExp, a1: u32, a2: *mut HSD_TExp, a3: u32, a4: *mut HSD_TExp, a5: u32, a6: *mut HSD_TExp, a7: u32, a8: *mut HSD_TExp);
+        fn HSD_TExpColorOp(a0: *mut HSD_TExp, a1: u32, a2: u32, a3: u32, a4: u8);
+        fn HSD_TExpCompile(a0: *mut HSD_TExp, a1: *mut *mut _HSD_TExpTevDesc, a2: *mut *mut HSD_TExp) -> i32;
+        fn HSD_TExpFreeList(a0: *mut HSD_TExp, a1: u32, a2: i32) -> *mut HSD_TExp;
+        fn HSD_TExpFreeTevDesc(a0: *mut _HSD_TExpTevDesc);
+        fn HSD_TExpGetType(a0: *mut HSD_TExp) -> u32;
+        fn HSD_TExpOrder(a0: *mut HSD_TExp, a1: *mut HSD_TObj, a2: u32);
+        fn HSD_TExpSetupTev(a0: *mut _HSD_TExpTevDesc, a1: *mut HSD_TExp);
+        fn HSD_TExpTev(a0: *mut *mut HSD_TExp) -> *mut HSD_TExp;
+        fn HSD_TObjAddAnimAll(a0: *mut HSD_TObj, a1: *mut _HSD_TexAnim);
+        fn HSD_TObjAnimAll(a0: *mut HSD_TObj);
+        fn HSD_TObjAssignResources(a0: *mut HSD_TObj) -> i32;
+        fn HSD_TObjLoadDesc(a0: *mut _HSD_TObjDesc) -> *mut HSD_TObj;
+        fn HSD_TObjRemoveAll(a0: *mut HSD_TObj);
+        fn HSD_TObjRemoveAnimAll(a0: *mut HSD_TObj);
+        fn HSD_TObjReqAnimAllByFlags(a0: *mut HSD_TObj, a1: f32, a2: u32);
+        fn HSD_TObjSetup(a0: *mut HSD_TObj);
+        fn HSD_TObjSetupTextureCoordGen(a0: *mut HSD_TObj);
+        fn HSD_TObjSetupVolatileTev(a0: *mut HSD_TObj, a1: u32);
+        fn hsdAllocMemPiece(a0: i32) -> *mut c_void;
+        fn hsdFreeMemPiece(a0: *mut c_void, a1: i32);
+        fn hsdInitClassInfo(a0: *mut _HSD_ClassInfo, a1: *mut _HSD_ClassInfo, a2: *mut i8, a3: *mut i8, a4: i32, a5: i32);
+        fn hsdNew(a0: *mut _HSD_ClassInfo) -> *mut c_void;
+        fn hsdSearchClassInfo(a0: *const i8) -> *mut _HSD_ClassInfo;
+        }
+        /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+        pub mod cb {
+            use super::*;
+        }
+        // Data defined in other TUs (the tests set them).
+        pub static mut hsdClass: HSD_ClassInfo =
+            unsafe { core::mem::zeroed() };
+    }
+    // END GENERATED EXT
+}
 
 pub const RENDER_VERTEX: u32 = 1 << 1;
 pub const RENDER_DIFFUSE: u32 = 1 << 2;

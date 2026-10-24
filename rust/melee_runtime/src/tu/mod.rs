@@ -41,10 +41,8 @@ pub mod lbtime;
 pub mod lb_00CE;
 pub mod lbtrigf;
 pub mod lbvector;
-#[allow(non_snake_case)]
 pub mod lb_00B0;
 pub mod lbsnap;
-#[allow(non_snake_case)]
 pub mod lb_00F9;
 pub mod lbspdisplay;
 pub mod archive;
@@ -64,9 +62,7 @@ pub mod gobjuserdata;
 pub mod hash;
 pub mod hsd_3915;
 pub mod hsd_3924;
-#[allow(non_snake_case)]
 pub mod hsd_392A;
-#[allow(non_snake_case)]
 pub mod hsd_392C;
 pub mod debug;
 pub mod class;
@@ -80,7 +76,11 @@ pub mod list;
 pub mod initialize;
 pub mod leak;
 pub mod jobj;
-#[allow(non_snake_case)]
 pub mod hsd_3B34;
-#[allow(non_snake_case)]
 pub mod hsd_3B5C;
+pub mod memory;
+pub mod mtx;
+pub mod objalloc;
+pub mod object;
+pub mod particle;
+pub mod perf;

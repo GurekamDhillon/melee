@@ -36,7 +36,7 @@ crate::oext_fns! {fn HSD_GObj_80390EB8(a0 : s32) -> :: core :: ffi :: c_uint = c
 crate::oext_fns! {fn GObj_Create(a0 : :: core :: ffi :: c_ushort, a1 : :: core :: ffi :: c_uchar, a2 : :: core :: ffi :: c_uchar) -> * mut HSD_GObj;}
 crate::oext_fns! {fn HSD_GObj_JObjCallback(a0 : * mut HSD_GObj, a1 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::HSD_GObj_JObjCallback__392d18;}
 crate::oext_fns! {fn ftKb_MexKirbyLike(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int = crate::tu::adapt::ftKb_MexKirbyLike__c2b696;}
-crate::oext_fns! {fn efLib_DestroyAll(a0 : * mut HSD_GObj) -> ();}
+crate::oext_fns! {fn efLib_DestroyAll(a0 : * mut HSD_GObj) -> () = crate::tu::adapt::efLib_DestroyAll__17a98a;}
 crate::oext_fns! {fn GXSetCullMode(a0 : GXCullMode) -> ();}
 crate::oext_fns! {fn GXSetVtxDesc(a0 : GXAttr, a1 : GXAttrType) -> ();}
 crate::oext_fns! {fn GXClearVtxDesc() -> ();}
@@ -60,7 +60,7 @@ crate::oext_fns! {fn GXSetCurrentMtx(a0 : :: core :: ffi :: c_uint) -> ();}
 crate::oext_fns! {fn GXPosition3f32(a0 : :: core :: ffi :: c_float, a1 : :: core :: ffi :: c_float, a2 : :: core :: ffi :: c_float) -> ();}
 crate::oext_fns! {fn GXPosition1x8(a0 : :: core :: ffi :: c_uchar) -> ();}
 crate::oext_fns! {fn GXColor4u8(a0 : :: core :: ffi :: c_uchar, a1 : :: core :: ffi :: c_uchar, a2 : :: core :: ffi :: c_uchar, a3 : :: core :: ffi :: c_uchar) -> ();}
-crate::oext_fns! {fn ftAnim_8006F484(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_float;}
+crate::oext_fns! {fn ftAnim_8006F484(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_float = crate::tu::adapt::ftAnim_8006F484__1b854b;}
 crate::oext_fns! {fn it_8026B40C(a0 : * mut Article, a1 : s32) -> () = crate::tu::adapt::it_8026B40C__05955e;}
 crate::oext_fns! {fn cosf(a0 : :: core :: ffi :: c_float) -> :: core :: ffi :: c_float = crate::tu::adapt::cosf__610bf5;}
 crate::oext_fns! {fn fabsf(a0 : :: core :: ffi :: c_float) -> :: core :: ffi :: c_float;}
@@ -70,10 +70,10 @@ crate::oext_fns! {fn HSD_ArchiveGetPublicAddress(a0 : * mut HSD_Archive, a1 : * 
 crate::oext_fns! {fn HSD_ArchiveGetExtern(a0 : * mut HSD_Archive, a1 : :: core :: ffi :: c_int) -> * mut :: core :: ffi :: c_char = crate::tu::adapt::HSD_ArchiveGetExtern__36350c;}
 crate::oext_fns! {fn HSD_ArchiveLocateExtern(a0 : * mut HSD_Archive, a1 : * const :: core :: ffi :: c_char, a2 : * mut :: core :: ffi :: c_void) -> () = crate::tu::adapt::HSD_ArchiveLocateExtern__a293e4;}
 crate::oext_fns! {fn Geno_DefineBaseKind(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn Fighter_UnkProcessDeath_80068354(a0 : * mut Fighter_GObj) -> ();}
-crate::oext_fns! {fn Fighter_ResetInputData_80068854(a0 : * mut Fighter_GObj) -> ();}
-crate::oext_fns! {fn Fighter_ChangeMotionState(a0 : * mut Fighter_GObj, a1 : FtMotionId, a2 : MotionFlags, a3 : :: core :: ffi :: c_float, a4 : :: core :: ffi :: c_float, a5 : :: core :: ffi :: c_float, a6 : * mut Fighter_GObj) -> ();}
-crate::oext_fns! {fn Fighter_ProcessHit_8006D1EC(a0 : * mut Fighter_GObj) -> ();}
+crate::oext_fns! {fn Fighter_UnkProcessDeath_80068354(a0 : * mut Fighter_GObj) -> () = crate::tu::adapt::Fighter_UnkProcessDeath_80068354__0d8c62;}
+crate::oext_fns! {fn Fighter_ResetInputData_80068854(a0 : * mut Fighter_GObj) -> () = crate::tu::adapt::Fighter_ResetInputData_80068854__e11eca;}
+crate::oext_fns! {fn Fighter_ChangeMotionState(a0 : * mut Fighter_GObj, a1 : FtMotionId, a2 : MotionFlags, a3 : :: core :: ffi :: c_float, a4 : :: core :: ffi :: c_float, a5 : :: core :: ffi :: c_float, a6 : * mut Fighter_GObj) -> () = crate::tu::adapt::Fighter_ChangeMotionState__8da657;}
+crate::oext_fns! {fn Fighter_ProcessHit_8006D1EC(a0 : * mut Fighter_GObj) -> () = crate::tu::adapt::Fighter_ProcessHit_8006D1EC__4dab97;}
 crate::oext_fns! {fn ftCo_800B3E04(a0 : * mut Fighter) -> () = crate::tu::adapt::ftCo_800B3E04__214e01;}
 crate::oext_fns! {fn ftCo_800B49F4(a0 : * mut Fighter) -> () = crate::tu::adapt::ftCo_800B49F4__82f580;}
 crate::oext_fns! {fn ftCo_800B4A78(a0 : * mut Fighter) -> () = crate::tu::adapt::ftCo_800B4A78__b296ba;}
@@ -83,7 +83,7 @@ crate::oext_fns! {fn ftCommon_UnlockECB(a0 : * mut Fighter) -> ();}
 crate::oext_fns! {fn ftCommon_8007D5D4(a0 : * mut Fighter) -> () = crate::tu::adapt::ftCommon_8007D5D4__dfe1c5;}
 crate::oext_fns! {fn ftCommon_8007D6A4(a0 : * mut Fighter) -> () = crate::tu::adapt::ftCommon_8007D6A4__198fd1;}
 crate::oext_fns! {fn ftCommon_8007D7FC(a0 : * mut Fighter) -> () = crate::tu::adapt::ftCommon_8007D7FC__b6f6a2;}
-crate::oext_fns! {fn ftCommon_8007D92C(a0 : * mut Fighter_GObj) -> ();}
+crate::oext_fns! {fn ftCommon_8007D92C(a0 : * mut Fighter_GObj) -> () = crate::tu::adapt::ftCommon_8007D92C__e78cfc;}
 crate::oext_fns! {fn ftCo_GetLStickAngle(a0 : * mut Fighter) -> :: core :: ffi :: c_float;}
 crate::oext_fns! {fn ftCommon_CalcHitlag(a0 : :: core :: ffi :: c_int, a1 : FtMotionId, a2 : :: core :: ffi :: c_float) -> :: core :: ffi :: c_float;}
 crate::oext_fns! {fn ftCommon_8007E2FC(a0 : * mut Fighter_GObj) -> ();}
@@ -91,8 +91,8 @@ crate::oext_fns! {fn ftCommon_8007F804(a0 : * mut Fighter) -> MtxPtr = crate::tu
 crate::oext_fns! {fn ftCamera_80076064(a0 : * mut Fighter) -> () = crate::tu::adapt::ftCamera_80076064__ed1a88;}
 crate::oext_fns! {fn ftCo_800D105C(a0 : * mut Fighter_GObj) -> () = crate::tu::adapt::ftCo_800D105C__a3a0b4;}
 crate::oext_fns! {fn ftLib_SetScale(a0 : * mut HSD_GObj, a1 : :: core :: ffi :: c_float) -> ();}
-crate::oext_fns! {fn ftLib_80086960(a0 : * mut HSD_GObj) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn ft_80081C88(a0 : * mut Fighter_GObj, a1 : :: core :: ffi :: c_float) -> ();}
+crate::oext_fns! {fn ftLib_80086960(a0 : * mut HSD_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftLib_80086960__b56944;}
+crate::oext_fns! {fn ft_80081C88(a0 : * mut Fighter_GObj, a1 : :: core :: ffi :: c_float) -> () = crate::tu::adapt::ft_80081C88__3d5b9d;}
 crate::oext_fns! {fn HSD_SListRemove(a0 : * mut HSD_SList) -> * mut HSD_SList = crate::tu::adapt::HSD_SListRemove__e27f25;}
 crate::oext_fns! {fn HSD_JObjGetFlags(a0 : * mut HSD_JObj) -> :: core :: ffi :: c_uint;}
 crate::oext_fns! {fn HSD_JObjSetupMatrixSub(a0 : * mut HSD_JObj) -> ();}
@@ -110,7 +110,7 @@ crate::oext_fns! {fn HSD_JObjAddChild(a0 : * mut HSD_JObj, a1 : * mut HSD_JObj) 
 crate::oext_fns! {fn lbColl_80008688(a0 : * mut HitCapsule, a1 : :: core :: ffi :: c_int, a2 : * mut :: core :: ffi :: c_void) -> :: core :: ffi :: c_int = crate::tu::adapt::lbColl_80008688__ab6b4d;}
 crate::oext_fns! {fn lbColl_80009F54(a0 : * mut HitCapsule, a1 : :: core :: ffi :: c_uint, a2 : :: core :: ffi :: c_float) -> :: core :: ffi :: c_int = crate::tu::adapt::lbColl_80009F54__226aa1;}
 crate::oext_fns! {fn lbColl_8000A244(a0 : * mut HurtCapsule, a1 : :: core :: ffi :: c_uint, a2 : * mut [:: core :: ffi :: c_float ; 4], a3 : :: core :: ffi :: c_float) -> :: core :: ffi :: c_int = crate::tu::adapt::lbColl_8000A244__eb27ad;}
-crate::oext_fns! {fn lbColl_8000A584(a0 : * mut HurtCapsule, a1 : :: core :: ffi :: c_uint, a2 : :: core :: ffi :: c_uint, a3 : MtxPtr, a4 : :: core :: ffi :: c_float) -> :: core :: ffi :: c_int;}
+crate::oext_fns! {fn lbColl_8000A584(a0 : * mut HurtCapsule, a1 : :: core :: ffi :: c_uint, a2 : :: core :: ffi :: c_uint, a3 : MtxPtr, a4 : :: core :: ffi :: c_float) -> :: core :: ffi :: c_int = crate::tu::adapt::lbColl_8000A584__73c219;}
 crate::oext_fns! {fn Wb_RenderActive() -> :: core :: ffi :: c_int;}
 crate::oext_fns! {fn Wb_RenderOption(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
 crate::oext_fns! {fn ftCo_800A101C(a0 : * mut Fighter, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int, a3 : :: core :: ffi :: c_int) -> ();}
@@ -240,12 +240,12 @@ crate::oext_fns! {fn Script_OnePSpawn(a0 : :: core :: ffi :: c_int, a1 : :: core
 crate::oext_fns! {fn Script_OnePOffline() -> :: core :: ffi :: c_int;}
 crate::oext_fns! {fn Script_StageModelFor(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
 crate::oext_fns! {fn Script_StageModelDraw(a0 : :: core :: ffi :: c_int, a1 : * mut [:: core :: ffi :: c_float ; 4], a2 : :: core :: ffi :: c_float, a3 : :: core :: ffi :: c_float, a4 : :: core :: ffi :: c_float, a5 : :: core :: ffi :: c_float) -> ();}
-crate::oext_fns! {fn ft_8008A2BC(a0 : * mut Fighter_GObj) -> ();}
+crate::oext_fns! {fn ft_8008A2BC(a0 : * mut Fighter_GObj) -> () = crate::tu::adapt::ft_8008A2BC__b456f9;}
 crate::oext_fns! {fn ftColl_80076640(a0 : * mut Fighter, a1 : * mut :: core :: ffi :: c_float) -> :: core :: ffi :: c_int;}
 crate::oext_fns! {fn ftColl_80079AB0(a0 : * mut Fighter, a1 : * mut HitCapsule, a2 : :: core :: ffi :: c_uint, a3 : :: core :: ffi :: c_float, a4 : :: core :: ffi :: c_float, a5 : :: core :: ffi :: c_float, a6 : :: core :: ffi :: c_float) -> :: core :: ffi :: c_float;}
 crate::oext_fns! {fn ftColl_8007B760(a0 : * mut Fighter_GObj, a1 : :: core :: ffi :: c_int) -> ();}
 crate::oext_fns! {fn ftColl_8007B7A4(a0 : * mut Fighter_GObj, a1 : :: core :: ffi :: c_int) -> ();}
-crate::oext_fns! {fn ftCo_Fall_Enter(a0 : * mut Fighter_GObj) -> ();}
+crate::oext_fns! {fn ftCo_Fall_Enter(a0 : * mut Fighter_GObj) -> () = crate::tu::adapt::ftCo_Fall_Enter__2d1b10;}
 crate::oext_fns! {fn gm_8016B248() -> :: core :: ffi :: c_float = crate::tu::adapt::gm_8016B248__a7d73b;}
 crate::oext_fns! {fn Script_ArmorEvent(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int, a3 : :: core :: ffi :: c_int, a4 : :: core :: ffi :: c_int, a5 : :: core :: ffi :: c_int) -> ();}
 crate::oext_fns! {fn ftCo_8008D8E8(a0 : :: core :: ffi :: c_float) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_8008D8E8__f17b30;}
@@ -255,8 +255,8 @@ crate::oext_fns! {fn ftCo_800C0074(a0 : * mut Fighter) -> () = crate::tu::adapt:
 crate::oext_fns! {fn ftCo_800C0200(a0 : * mut Fighter, a1 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::ftCo_800C0200__1f3409;}
 crate::oext_fns! {fn ftCo_800C8348(a0 : * mut Fighter_GObj, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::ftCo_800C8348__936756;}
 crate::oext_fns! {fn ftCo_800C8540(a0 : * mut Fighter_GObj) -> () = crate::tu::adapt::ftCo_800C8540__114dd4;}
-crate::oext_fns! {fn ftpickupitem_80094150(a0 : * mut Fighter_GObj, a1 : * mut Item_GObj) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn ftpickupitem_800948A8(a0 : * mut Fighter_GObj, a1 : * mut Item_GObj) -> ();}
+crate::oext_fns! {fn ftpickupitem_80094150(a0 : * mut Fighter_GObj, a1 : * mut Item_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftpickupitem_80094150__ba0ae9;}
+crate::oext_fns! {fn ftpickupitem_800948A8(a0 : * mut Fighter_GObj, a1 : * mut Item_GObj) -> () = crate::tu::adapt::ftpickupitem_800948A8__668622;}
 crate::oext_fns! {fn it_8026D324(a0 : ItemKind) -> :: core :: ffi :: c_int = crate::tu::adapt::it_8026D324__94e049;}
 crate::oext_fns! {fn HSD_Randi(a0 : s32) -> s32;}
 crate::oext_fns! {fn Script_SkillEvent(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int, a3 : :: core :: ffi :: c_int, a4 : :: core :: ffi :: c_int, a5 : :: core :: ffi :: c_int, a6 : :: core :: ffi :: c_int) -> ();}
@@ -264,31 +264,31 @@ crate::oext_fns! {fn grShrineRoute_ScriptQuery(a0 : :: core :: ffi :: c_int, a1 
 crate::oext_fns! {fn Script_CritEvent(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int, a3 : :: core :: ffi :: c_int, a4 : :: core :: ffi :: c_int, a5 : :: core :: ffi :: c_int, a6 : :: core :: ffi :: c_int, a7 : :: core :: ffi :: c_int, a8 : :: core :: ffi :: c_int, a9 : :: core :: ffi :: c_int, a10 : :: core :: ffi :: c_int, a11 : :: core :: ffi :: c_int) -> ();}
 crate::oext_fns! {fn grPushOn_80219204(a0 : :: core :: ffi :: c_int, a1 : * mut :: core :: ffi :: c_int, a2 : * mut :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
 crate::oext_fns! {fn fn_80218678() -> :: core :: ffi :: c_int = crate::tu::adapt::fn_80218678__e0d59f;}
-crate::oext_fns! {fn ftCo_800C3B10(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn ftCo_Attack1_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn ftCo_800D6824(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn ftCo_800D68C0(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn ftCo_Attack100_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn ftCo_Catch_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn ftCo_AttackAir_CheckItemThrowInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int;}
+crate::oext_fns! {fn ftCo_800C3B10(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_800C3B10__3d9d5c;}
+crate::oext_fns! {fn ftCo_Attack1_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_Attack1_CheckInput__d92fe1;}
+crate::oext_fns! {fn ftCo_800D6824(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_800D6824__b21805;}
+crate::oext_fns! {fn ftCo_800D68C0(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_800D68C0__ec1729;}
+crate::oext_fns! {fn ftCo_Attack100_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_Attack100_CheckInput__61aa80;}
+crate::oext_fns! {fn ftCo_Catch_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_Catch_CheckInput__e60751;}
+crate::oext_fns! {fn ftCo_AttackAir_CheckItemThrowInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_AttackAir_CheckItemThrowInput__1e285e;}
 crate::oext_fns! {fn ftCo_AttackAir_GetMsidFromCStick(a0 : * mut Fighter) -> FtMotionId;}
-crate::oext_fns! {fn ftCo_AttackHi3_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn ftCo_AttackHi4_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn ftCo_AttackLw3_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn ftCo_AttackLw4_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn ftCo_AttackS3_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn ftCo_AttackS4_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn ftCo_Dash_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn ftCo_80099794(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn ftCo_80099A58(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn ftCo_80091A4C(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn ftCo_Jump_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn ftCo_800CB870(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn ftCo_SpecialAir_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn ftCo_SpecialS_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn ftCo_800D5FB0(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn ftCo_Turn_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn ftCo_Walk_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int;}
+crate::oext_fns! {fn ftCo_AttackHi3_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_AttackHi3_CheckInput__5d742f;}
+crate::oext_fns! {fn ftCo_AttackHi4_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_AttackHi4_CheckInput__ebfa65;}
+crate::oext_fns! {fn ftCo_AttackLw3_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_AttackLw3_CheckInput__132bbd;}
+crate::oext_fns! {fn ftCo_AttackLw4_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_AttackLw4_CheckInput__e93fbf;}
+crate::oext_fns! {fn ftCo_AttackS3_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_AttackS3_CheckInput__4f4014;}
+crate::oext_fns! {fn ftCo_AttackS4_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_AttackS4_CheckInput__48fe9d;}
+crate::oext_fns! {fn ftCo_Dash_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_Dash_CheckInput__1e8d28;}
+crate::oext_fns! {fn ftCo_80099794(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_80099794__7a44df;}
+crate::oext_fns! {fn ftCo_80099A58(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_80099A58__225834;}
+crate::oext_fns! {fn ftCo_80091A4C(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_80091A4C__5bb07f;}
+crate::oext_fns! {fn ftCo_Jump_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_Jump_CheckInput__ff2f50;}
+crate::oext_fns! {fn ftCo_800CB870(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_800CB870__e3acbf;}
+crate::oext_fns! {fn ftCo_SpecialAir_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_SpecialAir_CheckInput__a14aa2;}
+crate::oext_fns! {fn ftCo_SpecialS_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_SpecialS_CheckInput__9abbee;}
+crate::oext_fns! {fn ftCo_800D5FB0(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_800D5FB0__315eef;}
+crate::oext_fns! {fn ftCo_Turn_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_Turn_CheckInput__96ef34;}
+crate::oext_fns! {fn ftCo_Walk_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_Walk_CheckInput__5c6c59;}
 crate::oext_fns! {fn ftCo_800DF1C8(a0 : * mut Fighter) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_800DF1C8__e872a9;}
 crate::oext_fns! {fn ftCo_800DF2D8(a0 : * mut Fighter) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_800DF2D8__c6c36b;}
 crate::oext_fns! {fn ftCo_800DF3A8(a0 : * mut Fighter) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_800DF3A8__8e22fa;}
@@ -352,7 +352,7 @@ crate::oext_fns! {fn Script_TargetBroken(a0 : :: core :: ffi :: c_int, a1 : :: c
 crate::oext_fns! {fn Script_EnemyDefeated(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> ();}
 crate::oext_fns! {fn Script_EnemyRemoved(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int) -> ();}
 crate::oext_fns! {fn Script_EnemyHit(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int) -> ();}
-crate::oext_fns! {fn ftCo_800DCE34(a0 : * mut Fighter_GObj, a1 : * mut Fighter_GObj) -> ();}
+crate::oext_fns! {fn ftCo_800DCE34(a0 : * mut Fighter_GObj, a1 : * mut Fighter_GObj) -> () = crate::tu::adapt::ftCo_800DCE34__658ea4;}
 crate::oext_fns! {fn Geno_MotionRowIfAny(a0 : * mut Fighter, a1 : :: core :: ffi :: c_int) -> * mut MotionState = crate::tu::adapt::Geno_MotionRowIfAny__c473f8;}
 crate::oext_fns! {fn Geno_DefineIsNone(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
 crate::oext_fns! {fn Geno_DefinePlanInt(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}

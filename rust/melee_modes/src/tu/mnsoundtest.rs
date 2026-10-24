@@ -54,7 +54,7 @@ pub mod ext {
         fn lbAudioAx_80023F28(a0: i32) -> i32 = crate::tu::adapt::lbAudioAx_80023F28__582fc2;
         fn lbAudioAx_800245F4(a0: i32) -> i32 = crate::tu::adapt::lbAudioAx_800245F4__23a8b4;
         fn lbAudioAx_80024614(a0: i32) = crate::tu::adapt::lbAudioAx_80024614__7a0894;
-        fn mn_80229894(a0: i32, a1: u16, a2: i32);
+        fn mn_80229894(a0: i32, a1: u16, a2: i32) = crate::tu::adapt::mn_80229894__f7df64;
         fn mn_8022EA08(buf: *mut c_char, num: u32);
         fn mn_8022EC18(a0: *mut HSD_JObj, a1: *mut AnimLoopSettings, a2: HSD_TypeMask) -> f32 = crate::tu::adapt::mn_8022EC18__bee2c1;
         fn mn_8022EE84(arg0: *mut HSD_JObj, arg1: *mut AnimLoopSettings, arg2: HSD_TypeMask) -> f32 = crate::tu::adapt::mn_8022EE84__fdce2b;

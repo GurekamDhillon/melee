@@ -47,8 +47,8 @@ pub mod ext {
         fn gmMainLib_8015F4F4(arg0: u8) -> () = crate::tu::adapt::gmMainLib_8015F4F4__9eed36;
         fn gmMainLib_8015F588(a0: i32) -> () = crate::tu::adapt::gmMainLib_8015F588__d30fee;
         fn lbCardGame_SaveChanges() -> () = crate::tu::adapt::lbCardGame_SaveChanges__0fc9e6;
-        fn mn_80229624(a0: u32) -> u32;
-        fn mn_80229894(a0: i32, a1: u16, a2: i32) -> ();
+        fn mn_80229624(a0: u32) -> u32 = crate::tu::adapt::mn_80229624__84b7ce;
+        fn mn_80229894(a0: i32, a1: u16, a2: i32) -> () = crate::tu::adapt::mn_80229894__f7df64;
         fn mn_8022EC18(a0: *mut HSD_JObj, a1: *mut AnimLoopSettings, a2: HSD_TypeMask) -> f32 = crate::tu::adapt::mn_8022EC18__bee2c1;
         fn mn_8022ED6C(a0: *mut HSD_JObj, a1: *mut AnimLoopSettings) -> f32 = crate::tu::adapt::mn_8022ED6C__f73cae;
         fn mn_8022F3D8(a0: *mut HSD_JObj, a1: u8, a2: HSD_TypeMask) -> () = crate::tu::adapt::mn_8022F3D8__9f7fac;

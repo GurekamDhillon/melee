@@ -88,7 +88,7 @@ pub mod ext {
         fn HSD_JObjAnim(jobj: *mut HSD_JObj);
         fn HSD_SisLib_803A5CC4(a0: *mut HSD_Text) = crate::tu::adapt::HSD_SisLib_803A5CC4__6c7e38;
         fn mn_8023164C() = crate::tu::adapt::mn_8023164C__7a202c;
-        fn mn_80231F80(a0: u8) -> i32;
+        fn mn_80231F80(a0: u8) -> i32 = crate::tu::adapt::mn_80231F80__cd7b6f;
         fn mnStageSw_80237410() = crate::tu::mnstagesw::mnStageSw_80237410;
         fn gm_GetCurrentGameMode() -> u8 = crate::tu::adapt::gm_GetCurrentGameMode__f56b36;
         fn gmMainLib_GetGameRules() -> *mut GameRules = crate::tu::gmmain_lib::gmMainLib_GetGameRules;

@@ -113,9 +113,9 @@ pub mod ext {
         fn GetNameCount() -> i32 = crate::tu::adapt::GetNameCount__b961fe;
         fn IsNameUnique(name: *mut c_char) -> i32;
         fn CreateNameAtIndex(slot: i32) = crate::tu::adapt::CreateNameAtIndex__5eec5d;
-        fn mnName_80239EBC(jobj: *mut HSD_JObj, y: f32);
-        fn mnName_80239F5C(jobj: *mut HSD_JObj, x: f32);
-        fn mnName_8023A9B4(a0: u8);
+        fn mnName_80239EBC(jobj: *mut HSD_JObj, y: f32) = crate::tu::adapt::mnName_80239EBC__737a0b;
+        fn mnName_80239F5C(jobj: *mut HSD_JObj, x: f32) = crate::tu::adapt::mnName_80239F5C__711f9f;
+        fn mnName_8023A9B4(a0: u8) = crate::tu::adapt::mnName_8023A9B4__53fde4;
         fn IsNameNotAllowed(name_idx: *mut c_char) -> i32;
         fn gm_GetCurrentGameMode() -> u8 = crate::tu::adapt::gm_GetCurrentGameMode__f56b36;
         fn GetPersistentNameData(a0: i32) -> *mut NameTagData = crate::tu::gmmain_lib::GetPersistentNameData;

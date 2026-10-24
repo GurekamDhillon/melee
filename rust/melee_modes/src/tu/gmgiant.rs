@@ -32,8 +32,8 @@ pub mod ext {
     fn gmVsMelee_EnterCss(a0: *mut GameModeState, a1: *mut VsModeData, a2: u32);
     fn gmVsMelee_EnterResults(a0: *mut GameModeState) = crate::tu::adapt::gmVsMelee_EnterResults__e8d931;
     fn gmVsMelee_EnterSss(a0: *mut GameModeState, a1: *mut VsModeData) = crate::tu::adapt::gmVsMelee_EnterSss__1e7fb2;
-    fn gmVsMelee_EnterSuddenDeath(a0: *mut GameModeState, a1: *mut VsModeData, a2: Option<unsafe extern "C" fn(*mut StartMeleeData, *mut StartMeleeData)>, a3: Option<unsafe extern "C" fn(*mut PlayerInitData, *mut PlayerInitData)>);
-    fn gmVsMelee_EnterVs(a0: *mut GameModeState, a1: *mut VsModeData, a2: Option<unsafe extern "C" fn(*mut StartMeleeData, *mut StartMeleeData)>, a3: Option<unsafe extern "C" fn(*mut PlayerInitData, *mut PlayerInitData)>);
+    fn gmVsMelee_EnterSuddenDeath(a0: *mut GameModeState, a1: *mut VsModeData, a2: Option<unsafe extern "C" fn(*mut StartMeleeData, *mut StartMeleeData)>, a3: Option<unsafe extern "C" fn(*mut PlayerInitData, *mut PlayerInitData)>) = crate::tu::adapt::gmVsMelee_EnterSuddenDeath__883e46;
+    fn gmVsMelee_EnterVs(a0: *mut GameModeState, a1: *mut VsModeData, a2: Option<unsafe extern "C" fn(*mut StartMeleeData, *mut StartMeleeData)>, a3: Option<unsafe extern "C" fn(*mut PlayerInitData, *mut PlayerInitData)>) = crate::tu::adapt::gmVsMelee_EnterVs__41232b;
     fn gmVsMelee_ExitCss(a0: *mut GameModeState, a1: *mut VsModeData) = crate::tu::adapt::gmVsMelee_ExitCss__4d2768;
     fn gmVsMelee_ExitResults(a0: *mut GameModeState, a1: *mut VsModeData, a2: u8) = crate::tu::adapt::gmVsMelee_ExitResults__c5c250;
     fn gmVsMelee_ExitSss(a0: *mut GameModeState, a1: *mut VsModeData, a2: u8) = crate::tu::adapt::gmVsMelee_ExitSss__2855c9;

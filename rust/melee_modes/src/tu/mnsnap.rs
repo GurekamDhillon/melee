@@ -196,7 +196,7 @@ pub mod ext {
     ext_fns! {
         fn GObj_Create(classifier: u16, p_link: u8, priority: u8) -> *mut HSD_GObj;
         fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: i32) = crate::tu::adapt::HSD_GObj_JObjCallback__9cd907;
-        fn mn_80229894(a0: i32, a1: u16, a2: i32);
+        fn mn_80229894(a0: i32, a1: u16, a2: i32) = crate::tu::adapt::mn_80229894__f7df64;
         fn HSD_AObjSetFlags(aobj: *mut HSD_AObj, flags: u32) = crate::tu::adapt::HSD_AObjSetFlags__2e5e0e;
         fn HSD_JObjReqAnimAll(a0: *mut HSD_JObj, a1: f32);
         fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj = crate::tu::adapt::HSD_JObjLoadJoint__3efee1;

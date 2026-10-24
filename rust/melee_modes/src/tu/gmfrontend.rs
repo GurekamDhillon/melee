@@ -429,7 +429,7 @@ pub mod ext {
         fn lbDvd_8001823C() -> () = crate::tu::adapt::lbDvd_8001823C__d87971;
         fn lbDvd_80018254() -> () = crate::tu::adapt::lbDvd_80018254__6be579;
         fn lbDvd_80018C6C() -> () = crate::tu::adapt::lbDvd_80018C6C__4e040c;
-        fn mn_80229624(a0: u32) -> u32;
+        fn mn_80229624(a0: u32) -> u32 = crate::tu::adapt::mn_80229624__84b7ce;
     }
     crate::ext_va! {
         /// os: `(fmt, ...)`

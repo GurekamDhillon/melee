@@ -148,14 +148,14 @@ pub mod ext {
         fn ftBossLib_8015CB9C(a0: i32) = crate::tu::adapt::ftBossLib_8015CB9C__c24da3;
         fn ftBossLib_8015CC14() = crate::tu::adapt::ftBossLib_8015CC14__f4f13c;
         fn ftBossLib_IsMasterHandEntry() -> i32 = crate::tu::adapt::ftBossLib_IsMasterHandEntry__b6143e;
-        fn ftCo_800C8C84(a0: *mut HSD_GObj) -> i32;
+        fn ftCo_800C8C84(a0: *mut HSD_GObj) -> i32 = crate::tu::adapt::ftCo_800C8C84__d9cbd1;
         fn ftLib_80086824() = crate::tu::adapt::ftLib_80086824__82b58f;
         fn ftLib_800868A4() = crate::tu::adapt::ftLib_800868A4__7fb267;
         fn ftLib_80087508(a0: i8, a1: u8) = crate::tu::adapt::ftLib_80087508__b45233;
         fn ftLib_80087574(a0: i8) = crate::tu::adapt::ftLib_80087574__3ccbbb;
         fn ftLib_80087610(a0: u8) = crate::tu::adapt::ftLib_80087610__f2cb3c;
-        fn ft_80087C58(a0: *mut Fighter_GObj) -> i32;
-        fn ft_80087C64(a0: *mut Fighter_GObj, a1: i32);
+        fn ft_80087C58(a0: *mut Fighter_GObj) -> i32 = crate::tu::adapt::ft_80087C58__344dc5;
+        fn ft_80087C64(a0: *mut Fighter_GObj, a1: i32) = crate::tu::adapt::ft_80087C64__aaf698;
         fn gmMainLib_8015D134(a0: u8) = crate::tu::adapt::gmMainLib_8015D134__50170c;
         fn gmMainLib_8015D194(a0: u8) -> *mut u8 = crate::tu::adapt::gmMainLib_8015D194__9e9b6e;
         fn gmMainLib_8015D1AC(a0: u8) -> i32 = crate::tu::adapt::gmMainLib_8015D1AC__400144;

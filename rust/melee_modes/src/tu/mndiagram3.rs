@@ -11,8 +11,8 @@ fn __assert(a0: *const ::core::ffi::c_char, a1: u32, a2: *const ::core::ffi::c_c
 fn GObj_Create(classifier: u16, p_link: u8, priority: u8)  -> *mut HSD_GObj;
 fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: ::core::ffi::c_int)  -> () = crate::tu::adapt::HSD_GObj_JObjCallback__b37ff8;
 fn lbAudioAx_80024030(a0: ::core::ffi::c_int)  -> () = crate::tu::adapt::lbAudioAx_80024030__52c54d;
-fn mn_80229624(a0: u32)  -> u32;
-fn mn_80229894(a0: i32, a1: u16, a2: i32)  -> ();
+fn mn_80229624(a0: u32)  -> u32 = crate::tu::adapt::mn_80229624__84b7ce;
+fn mn_80229894(a0: i32, a1: u16, a2: i32)  -> () = crate::tu::adapt::mn_80229894__f7df64;
 fn mn_8022ED6C(a0: *mut HSD_JObj, a1: *mut AnimLoopSettings)  -> ::core::ffi::c_float = crate::tu::adapt::mn_8022ED6C__a278c3;
 fn HSD_JObjReqAnimAll(a0: *mut HSD_JObj, a1: f32)  -> ();
 fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj)  -> ();

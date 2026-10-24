@@ -41,7 +41,7 @@ pub mod ext {
     fn gm_GetButtonsTriggered(a0: u8) -> u64 = crate::tu::adapt::gm_GetButtonsTriggered__dca604;
     fn gm_GetCurrentGameMode() -> u8 = crate::tu::adapt::gm_GetCurrentGameMode__f56b36;
     fn mnCharSel_802640A0() -> i32 = crate::tu::adapt::mnCharSel_802640A0__c8d517;
-    fn mn_80229894(a0: i32, a1: u16, a2: i32);
+    fn mn_80229894(a0: i32, a1: u16, a2: i32) = crate::tu::adapt::mn_80229894__f7df64;
     fn mn_8022EBDC() = crate::tu::adapt::mn_8022EBDC__a19b61;
     }
     /// `HSD_GObjPLinkHead` (baselib/gobjplink.c data): the per-link GObj list heads.

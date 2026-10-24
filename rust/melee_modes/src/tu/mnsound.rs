@@ -17,7 +17,7 @@ pub mod ext {
         extern "C" fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: i32) = crate::tu::adapt::HSD_GObj_JObjCallback__9cd907;
         fn lbAudioAx_80024BD0() -> i32 = crate::tu::adapt::lbAudioAx_80024BD0__eb4f5a;
         fn lbAudioAx_80024C08(a0: enum_t) -> i32 = crate::tu::adapt::lbAudioAx_80024C08__87c4fa;
-        fn mn_80229894(a0: i32, a1: u16, a2: i32);
+        fn mn_80229894(a0: i32, a1: u16, a2: i32) = crate::tu::adapt::mn_80229894__f7df64;
         fn mn_8022EC18(a0: *mut HSD_JObj, a1: *mut AnimLoopSettings, a2: HSD_TypeMask) -> f32 = crate::tu::adapt::mn_8022EC18__bee2c1;
         fn mn_8022ED6C(a0: *mut HSD_JObj, a1: *mut AnimLoopSettings) -> f32 = crate::tu::adapt::mn_8022ED6C__f73cae;
         fn mn_8022F298(a0: *mut HSD_JObj) -> f32 = crate::tu::adapt::mn_8022F298__0e9b78;

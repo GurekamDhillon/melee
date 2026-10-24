@@ -62,7 +62,7 @@ pub mod ext {
     fn ftBossLib_8015C92C() -> i32;
     fn ftBossLib_8015CB9C(a0: i32) = crate::tu::adapt::ftBossLib_8015CB9C__c24da3;
     fn ftBossLib_8015CC14() = crate::tu::adapt::ftBossLib_8015CC14__f4f13c;
-    fn ftLib_8008731C(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_8008731C(a0: *mut HSD_GObj) -> i32 = crate::tu::adapt::ftLib_8008731C__becdfc;
     fn ftLib_80087508(a0: i8, a1: u8) = crate::tu::adapt::ftLib_80087508__b45233;
     fn ftLib_GetKind(a0: *mut HSD_GObj) -> u32;
     fn gmFrontend_AtlasSelect(a0: *mut GameModeState, a1: i32, a2: *const i8) = crate::tu::adapt::gmFrontend_AtlasSelect__26b7fc;

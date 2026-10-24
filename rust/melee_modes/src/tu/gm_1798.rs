@@ -261,7 +261,7 @@ pub mod ext {
         fn ftLib_800876B4(a0: *mut HSD_GObj) -> i32;
         fn gm_80160438(a0: i32) -> *mut i8 = crate::tu::adapt::gm_80160438__384bdb;
         fn gm_80160854(a0: u8, a1: u8, a2: u8, a3: u8) -> u32 = crate::tu::adapt::gm_80160854__387c80;
-        fn gm_80160968(a0: u32) -> _GXColor;
+        fn gm_80160968(a0: u32) -> _GXColor = crate::tu::adapt::gm_80160968__e03b47;
         fn gm_MexVanillaKind(a0: i32, a1: i32) -> i32 = crate::tu::adapt::gm_MexVanillaKind__b3a17c;
         fn lbArchive_LoadArchive(a0: *const i8) -> *mut HSD_Archive = crate::tu::adapt::lbArchive_LoadArchive__471a59;
         fn lbBgFlash_800206D4(a0: *mut _GXColor, a1: *mut _GXColor, a2: i32) = crate::tu::adapt::lbBgFlash_800206D4__8952dd;

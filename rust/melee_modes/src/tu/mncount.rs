@@ -81,9 +81,9 @@ pub mod ext {
         fn lbAudioAx_80024030(a0: i32) -> () = crate::tu::adapt::lbAudioAx_80024030__36458a;
         fn mnDiagram_GetFighterTotalFalls(field_index: u8) -> i32 = crate::tu::adapt::mnDiagram_GetFighterTotalFalls__925ac9;
         fn mnDiagram_GetFighterTotalKOs(field_index: u8) -> i32 = crate::tu::adapt::mnDiagram_GetFighterTotalKOs__14ab9d;
-        fn mn_80229624(a0: u32) -> u32;
-        fn mn_80229894(a0: i32, a1: u16, a2: i32) -> ();
-        fn mn_8022EA78(buf: *mut i8, buf_end: i32, num: u32) -> ();
+        fn mn_80229624(a0: u32) -> u32 = crate::tu::adapt::mn_80229624__84b7ce;
+        fn mn_80229894(a0: i32, a1: u16, a2: i32) -> () = crate::tu::adapt::mn_80229894__f7df64;
+        fn mn_8022EA78(buf: *mut i8, buf_end: i32, num: u32) -> () = crate::tu::adapt::mn_8022EA78__f27e4b;
         fn mn_8022ED6C(a0: *mut HSD_JObj, a1: *mut AnimLoopSettings) -> f32 = crate::tu::adapt::mn_8022ED6C__f73cae;
     }
     crate::ext_va! {

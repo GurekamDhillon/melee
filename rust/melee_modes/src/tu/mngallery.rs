@@ -78,8 +78,8 @@ pub mod ext {
         fn lbMthp_8001F67C(a0: *mut HSD_GObj, a1: i32) -> () = crate::tu::adapt::lbMthp_8001F67C__b1c012;
         fn lbMthp_8001F800() -> () = crate::tu::adapt::lbMthp_8001F800__fe22a6;
         fn lbAudioAx_80024030(a0: i32) -> () = crate::tu::adapt::lbAudioAx_80024030__36458a;
-        fn mn_80229624(a0: u32) -> u32;
-        fn mn_80229894(a0: i32, a1: u16, a2: i32) -> ();
+        fn mn_80229624(a0: u32) -> u32 = crate::tu::adapt::mn_80229624__84b7ce;
+        fn mn_80229894(a0: i32, a1: u16, a2: i32) -> () = crate::tu::adapt::mn_80229894__f7df64;
         fn mn_8022BD6C() -> () = crate::tu::adapt::mn_8022BD6C__fc17af;
         fn mn_8022BD8C() -> () = crate::tu::adapt::mn_8022BD8C__db9576;
     }

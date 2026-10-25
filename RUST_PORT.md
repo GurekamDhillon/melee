@@ -1096,3 +1096,38 @@ Golden frames matching (`melee golden`, `compare_golden.py --allow-short`):
 Blockers: (1) Fox tail dynamics bones (`ftCo_8009DD94` -> `lb_8001044C`) not run on the sim `Skeleton`, which breaks hurtbox extents and `cpu.x38`/`xEC`; (2) remaining stubs need a global GX/GObj/JObj host layer (SIGNATURE), SDK/hardware and platform-glue ports (NO_PORT), and moving DevText/Camera/Mushroom/ftDrawCommon down a crate (CYCLE).
 
 Next plan: regenerate `missing.md`; dynamics bones for the sim skeleton; CPU behaviour 3 (800B9020) and the rest of the CPU decision code; RunBrake / smash turn / hits (`hit_guard`) for the fd golden's tail; Green Greens stage procs; wire cpu_peach_samus_ys_items; host layer for the SIGNATURE stubs.
+
+## Golden round 5: cpu_fox_falco_dl frames 0..91 match (2026-10-25)
+- pad_falcon_fox_fd and pad_marth_sheik_bf still match in full (0..1800). `cpu_fox_falco_dl` now matches golden frames
+  0..91 (was 0..63); the sim stops at frame 92: "ftCo_800BB220 (an item with a hitbox) not ported" (Fox sees Falco's
+  laser). cpu_peach_samus_ys_items is still not wired (needs Peach, Samus, Yoshi's Story, items; fighter file names
+  for peach/samus are unverified).
+- Fixed, in order of first divergence:
+  - Frame 64 (hurtbox extents): the fighter dynamic bones (Fox tail) now run on the sim `Skeleton` (`melee/src/dynamics.rs`,
+    a transcription of `lb_8001044C` over the tree; `Fighter_8006D9AC` at s_link 0x10). The chains' `unk_2C` world
+    positions are taken in `ftCo_8009CF84` at the origin in the bind pose (Dynamics::load right after the skeleton
+    is built, before the spawn translate) -- loading them at the spawn pose was the bug. Per-frame debug:
+    `MELEE_GOLDEN_DN`, `MELEE_GOLDEN_PJ`, `MELEE_NO_DYN`.
+  - Frame 64 (CPU `xEC`): Green Greens' block map joints. `grGreens_80215358` moves joint `num` (lowest unused) to the
+    cell via `mpLib_80055E9C`; the unused 12 joints are hidden by `Ground_UpdateMapColl`. `greens_sync_joints` +
+    `MapTree` (skeleton.rs) + `GroundColl::mp_lib_80055e9c` (uniform-scale path only).
+  - Frames 84-97: the stage procs start at GO (`Ground_801C0FB8` runs the deferred `fn_80214658`): `vs_match/greens.rs`
+    ports the Whispy wind state machine (`grGreens_80213C10`: states 0 and the start of 1; 2 = apples, wind force
+    `lb_80011A50` and the fighters' wind reaction are Err) and the block gobj (`grGreens_8021479C`: timer, stitching of
+    the resting blocks with `mpLib_800581DC`; spawning/breaking blocks is Err). Map animations: `grAnime_801C8138` is
+    `greens_set_anim` (tracks of `dptcl_tracks` + the timing AObj `stage::anim_timing`); `AOBJ_REWINDED` is
+    `grAnime_801C84A4`. These run at s_link 4 ahead of the fighters (p_link 5 < 8); the timing AObj steps at s_link 1.
+  - Frame 98: `Fighter_8006A360` sets `pos_delta = cur_pos - prev_pos` (CPU attack choosers read it).
+  - CPU behaviours 2 (`ftCo_800B658C`) and 3 (`ftCo_800B9020`); `ftFx_SpecialN_Enter` on the ground
+    (`ftCommon_8007D7FC` through `Player.gc` / `common_c`, set each frame) and Falco on the ftFx code paths (`is_fx_kind`).
+- Debugging recipe that worked, WITHOUT any OS input or focus: temporary `OSReport` in the C (rebuild one TU with
+  `GW_BUILD_ROOT=_build/agents/golden2 tools/port/build.sh --tu <file>`; 20 s after the first full build, which took
+  20 min), run the C with `SDL_WINDOW_ACTIVATE_WHEN_SHOWN=0 MELEE_WINDOW_X=30000 MELEE_UNATTENDED=1 MELEE_TURBO=1
+  MELEE_PAD_SCRIPT=tools/rust-port/golden/pad_idle.lua` (see record.sh for the scene strings), `MELEE_RAND_TRACE=<file>`
+  gives every draw with the caller address (resolve against `_build/.../melee-pc.map`: the CSV is
+  `logic frame,caller,seed after,stream`). C logic frame = golden frame + 29..36 of pre-golden frames; the
+  hash column `H` of a printed per-fighter line is the key that aligns C and Rust lines.
+  The C log is rate-limited (OSReport): print rare conditions only. Revert the C afterwards (`git apply -R`).
+- Next: the laser as a threat (`ftCo_800BB220`: item hitbox state `x5D4_hitboxes`, `lbColl_8000ACFC`, `lbColl_80006094`),
+  then hits (`hit_guard`), Whispy's wind (state 1 onward, `lb_80011A50`, fighters' wind) and apples, block spawning,
+  then wire Peach / Samus / Yoshi's Story / items.

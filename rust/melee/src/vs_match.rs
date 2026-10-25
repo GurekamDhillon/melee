@@ -361,6 +361,12 @@ struct EntryCommon {
 /// One live effect from `efLib_Create` (EF_Effect + its JObj tree): only its particle tracks.
 #[derive(Clone)]
 struct Effect {
+    /// `next_effect_instance` at creation (the viewer keys its model host by it).
+    inst: u32,
+    /// `efLib_SetTevKonstColor(root->child, 0, konst, tev0)` the spawner applied (render only).
+    tev: Option<(u32, u32)>,
+    /// `gfx_id % 1000`.
+    id: u32,
     lifetime: u16,
     /// Owner fighter slot (the RObj position constraint follows its root JObj).
     owner: usize,
@@ -433,6 +439,8 @@ pub struct VsMatch {
     effect_banks: Vec<Option<crate::effect::EffectBank>>,
     effects: Vec<Effect>,
     next_effect_instance: u32,
+    /// `[Fighter_804D650C, Fighter_804D6508][player colour]` as 0xRRGGBB (the KO beam's tint).
+    ko_colors: [[u32; 4]; 2],
     /// Bank 0's command lists that `efLib_Cb_PtclAppSRTHook` acts on (0x96, 0x97, 0x98, 0x21B).
     appsrt_hook_lists: Vec<CmdRef>,
     /// `Stage_GetBlastZone{Left,Right,Top,Bottom}Offset()` (the stage's dead range).
@@ -716,6 +724,18 @@ impl VsMatch {
             x804d6524_x30: f32::from_bits(be(be(common_root + 4 * 12) + 0x30)),
             // gCrowdConfig = pData[21]; ->horiz_margin (+0x2C) for un_803224DC.
             crowd_horiz_margin: f32::from_bits(be(be(common_root + 4 * 21) + 0x2C)),
+        };
+        let ko_colors = {
+            let t = |k: u32| -> [u32; 4] {
+                let base = be(common_root + 4 * k);
+                let mut v = [0u32; 4];
+                for (c, o) in v.iter_mut().enumerate() {
+                    let at = (base + 4 * c as u32) as usize;
+                    *o = ((plco.data[at] as u32) << 16) | ((plco.data[at + 1] as u32) << 8) | plco.data[at + 2] as u32;
+                }
+                v
+            };
+            [t(18), t(19)]
         };
         // ft_GetGroundFrictionMultiplier for the ported ftcommon code: FD's material table.
         unsafe { melee_fighter::hooks::GROUND_FRICTION_MUL = Some(fd_ground_friction) };
@@ -1176,7 +1196,7 @@ impl VsMatch {
                 }
             });
         }
-        Ok(Self { players, ground, cg, pads: [input::PadStatus::default(); 4], pad_feed: None, replay_in: None, go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists, blast, fighter_jobjs: Vec::new(), items: Vec::new(), respawn_points: (4..8).filter_map(|id| points.iter().find(|p| p.id == id).map(|p| Vec3 { x: p.pos[0], y: p.pos[1], z: p.pos[2] })).collect(), respawn_busy: [0; 6], start_shield, stage_data: Arc::new(stage.data.clone()), stage_map_head: stage.public_offset("map_head").unwrap_or(0), keep_ref: Vec::new() })
+        Ok(Self { players, ground, cg, pads: [input::PadStatus::default(); 4], pad_feed: None, replay_in: None, go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, ko_colors, appsrt_hook_lists, blast, fighter_jobjs: Vec::new(), items: Vec::new(), respawn_points: (4..8).filter_map(|id| points.iter().find(|p| p.id == id).map(|p| Vec3 { x: p.pos[0], y: p.pos[1], z: p.pos[2] })).collect(), respawn_busy: [0; 6], start_shield, stage_data: Arc::new(stage.data.clone()), stage_map_head: stage.public_offset("map_head").unwrap_or(0), keep_ref: Vec::new() })
     }
 
     /// The m-ex fighters' code-run report (crate::mex), one block per such fighter.
@@ -2145,6 +2165,20 @@ impl VsMatch {
         // efSync_Spawn(0x42B or 0x42C, gobj, &pos, &rot_z, &p_ftCommonData->x4F4, color1, color2):
         // efLib_Create_Attach_Pos(0x19) (0x1A in a stamina match) at the clamped position, root
         // rot Z = 0, scale x4F4 (the tev colours are render only).
+        // ftCommon_8007DB24 (inside ftCo_800D331C) ran efLib_DestroyAll(gobj) at once in the C; here it is
+        // queued to the s_link 9 flush, which would free the KO effect spawned just below. Run the queued
+        // DestroyAll now (the queued spawns still dispatch at the flush).
+        {
+            let mut ops = std::mem::take(&mut self.players[i].ef_ops);
+            let mut keep = Vec::new();
+            for op in ops.drain(..) {
+                match op {
+                    EfOp::DestroyAll => self.ef_destroy_all(i),
+                    other => keep.push(other),
+                }
+            }
+            self.players[i].ef_ops = keep;
+        }
         let c = self.players[i].fp.cur_pos;
         let mut x = c.x;
         if x > b.right {
@@ -2155,6 +2189,11 @@ impl VsMatch {
         }
         let pos = [x, b.bottom, c.z];
         self.ef_create(0x19, i, cd_x4f4, Some(pos), Some(0.0))?;
+        // The colours efSync_Spawn(0x42B) passes: Fighter_804D650C / 804D6508 (PlCo pData[18] / [19]), 4 bytes per player colour.
+        let (c1, c2) = (self.ko_colors[0][i.min(3)], self.ko_colors[1][i.min(3)]);
+        if let Some(e) = self.effects.last_mut() {
+            e.tev = Some((c1, c2));
+        }
         // ftCo_800D4E50: coins (not a coin match).
         Ok(())
     }
@@ -2181,6 +2220,9 @@ impl VsMatch {
                 continue;
             }
             let e = self.effects.remove(k);
+            if std::env::var_os("MELEE_VIEW_FXLOG").is_some() {
+                eprintln!("EFDESTROY frame {} inst {} id {}", self.frame, e.inst, e.id);
+            }
             let mut host = Host { rand: &mut self.rand, joint_mtx: &self.joint_mtx, appsrt_hook_lists: &self.appsrt_hook_lists };
             for t in &e.tracks {
                 self.ps.gen_release_jobj(&mut host, Some(t.joint));
@@ -2216,7 +2258,10 @@ impl VsMatch {
         if lifetime != 0 {
             lifetime += 1;
         }
-        self.effects.push(Effect { lifetime, owner, scale, bank, tracks, fixed_pos, rot_y, rot_z });
+        if std::env::var_os("MELEE_VIEW_FXLOG").is_some() {
+            eprintln!("EFCREATE frame {} inst {inst} gfx {gfx_id} lifetime {lifetime} owner {owner}", self.frame);
+        }
+        self.effects.push(Effect { inst, tev: None, id: gfx_id % 1000, lifetime, owner, scale, bank, tracks, fixed_pos, rot_y, rot_z });
         self.effect_anim(self.effects.len() - 1)
     }
 
@@ -4644,6 +4689,39 @@ fn proc_update_integrate(fp: &mut Fighter) {
 
 /// The golden frame being simulated (`MELEE_GOLDEN_RAND` trace).
 static mut TRACE_FRAME: i32 = 0;
+
+/// A live effect as the viewer draws it (`efLib_Create` model + its root placement).
+pub struct EffectDraw {
+    pub inst: u32,
+    pub bank: usize,
+    pub id: u32,
+    pub pos: [f32; 3],
+    pub scale: f32,
+    pub rot_y: Option<f32>,
+    pub rot_z: Option<f32>,
+    pub lifetime: u16,
+    pub tev: Option<(u32, u32)>,
+}
+
+impl VsMatch {
+    /// The live effects (render side).
+    pub fn effect_draws(&self) -> Vec<EffectDraw> {
+        self.effects
+            .iter()
+            .map(|e| {
+                let fp = &self.players[e.owner].fp;
+                EffectDraw { inst: e.inst, bank: e.bank, id: e.id, pos: e.fixed_pos.unwrap_or([fp.cur_pos.x, fp.cur_pos.y, fp.cur_pos.z]), scale: e.scale, rot_y: e.rot_y, rot_z: e.rot_z, lifetime: e.lifetime, tev: e.tev }
+            })
+            .collect()
+    }
+
+    /// The bank's model data and the synthetic model record of effect `id` (see `EffectBank::model_dat`).
+    pub fn effect_model(&self, bank: usize, id: u32) -> Option<(Arc<Vec<u8>>, u32)> {
+        let b = self.effect_banks.get(bank)?.as_ref()?;
+        let rec = *b.model_rec.get(id as usize)?;
+        (rec != 0).then(|| (b.model_dat.clone(), rec))
+    }
+}
 
 impl Sim for VsMatch {
     fn step(&mut self) -> bool {

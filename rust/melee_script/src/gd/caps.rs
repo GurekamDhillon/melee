@@ -10,7 +10,7 @@ use mlua::{MultiValue, Table, Value};
 
 type LuaResult<T> = mlua::Result<T>;
 
-fn entity(a: &Args, i: usize) -> LuaResult<i32> {
+pub(crate) fn entity(a: &Args, i: usize) -> LuaResult<i32> {
     let n = a.check_integer(i)?;
     if !(1..=12).contains(&n) {
         return Err(lua_err("fighter entity must be 1-12 (1-6 primary, 7-12 secondary)"));
@@ -24,14 +24,14 @@ fn frames(a: &Args, i: usize) -> LuaResult<i32> {
     }
     Ok(n as i32)
 }
-fn number(a: &Args, i: usize, low: f64, high: f64) -> LuaResult<f32> {
+pub(crate) fn number(a: &Args, i: usize, low: f64, high: f64) -> LuaResult<f32> {
     let n = a.check_number(i)?;
     if !n.is_finite() || n < low || n > high {
         return Err(lua_err("fighter value must be finite and in range"));
     }
     Ok(n as f32)
 }
-fn write(s: &mut State, name: &str) -> LuaResult<()> {
+pub(crate) fn write(s: &mut State, name: &str) -> LuaResult<()> {
     s.require_offline(name)?;
     if !s.match_active {
         return Err(lua_err("fighter capability requires an active match"));
@@ -40,22 +40,22 @@ fn write(s: &mut State, name: &str) -> LuaResult<()> {
 }
 
 /// A table value checked as the C code does at stack index -1 (`luaL_checkinteger(L,-1)` and friends report "#-1").
-fn one(name: &'static str, v: &Value) -> Args {
+pub(crate) fn one(name: &'static str, v: &Value) -> Args {
     Args::new(name, MultiValue::from_iter([v.clone()]))
 }
-fn neg1<T>(r: LuaResult<T>) -> LuaResult<T> {
+pub(crate) fn neg1<T>(r: LuaResult<T>) -> LuaResult<T> {
     r.map_err(|e| match e {
         mlua::Error::RuntimeError(m) => mlua::Error::RuntimeError(m.replacen("bad argument #1", "bad argument #-1", 1)),
         e => e,
     })
 }
-fn check_boolean(name: &'static str, v: &Value) -> LuaResult<bool> {
+pub(crate) fn check_boolean(name: &'static str, v: &Value) -> LuaResult<bool> {
     match v {
         Value::Boolean(b) => Ok(*b),
         o => Err(lua_err(format!("bad argument #-1 to '{name}' (boolean expected, got {})", typename(Some(o))))),
     }
 }
-fn key_str(k: &Value) -> Option<String> {
+pub(crate) fn key_str(k: &Value) -> Option<String> {
     match k {
         Value::String(s) => Some(s.to_string_lossy().to_string()),
         _ => None,
@@ -66,7 +66,7 @@ fn option(a: &Args, i: usize, opts: &[&str]) -> LuaResult<usize> {
     let s = a.check_string(i)?;
     opts.iter().position(|o| *o == s).ok_or_else(|| a.err(i, &format!("invalid option '{s}'")))
 }
-fn pairs(t: &Table) -> LuaResult<Vec<(Value, Value)>> {
+pub(crate) fn pairs(t: &Table) -> LuaResult<Vec<(Value, Value)>> {
     t.clone().pairs::<Value, Value>().collect()
 }
 

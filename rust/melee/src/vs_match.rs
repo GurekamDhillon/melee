@@ -38,6 +38,7 @@ mod cpu;
 mod dashrun;
 mod fox;
 mod greens;
+mod hit;
 mod story;
 mod rebirth;
 mod sheik;
@@ -250,6 +251,8 @@ pub struct Player {
     /// The player's HUD `IfDamageFlags.randomize_velocity` (set by `ifStatus_802F6C04`, a self
     /// destruct): the HUD proc's next run draws 8 `HSD_Randf`s (`ifStatus_PercentOnDeathAnimationThink`).
     hud_randomize: bool,
+    /// The percent display's state (`IfDamageState`, ifstatus.c).
+    hud: hit::HudDamage,
     /// `fp->mv.co.guard` and `x221B_b0` (the shield is up).
     guard: GuardVars,
     /// `fp->mv.co.kneebend` / `fp->mv.co.jump`.
@@ -783,6 +786,13 @@ impl VsMatch {
         // Leaked: it lives as long as the process, as the C's archive does.
         let cd: melee_types::ftCommonData = *plco.load_at::<melee_types::ftCommonData>(ft_common).get();
         unsafe { melee_fighter::hooks::P_FT_COMMON_DATA = Box::leak(Box::new(cd)) };
+        // plStale_InitAttackInstance and Fighter_804D6548 (PlCo pData[3]: the nine staling decrements).
+        melee_fighter::stale::init_attack_instance();
+        {
+            let t = be(common_root + 4 * 3);
+            let v: Vec<f32> = (0..9).map(|k| f32::from_bits(be(t + 4 * k))).collect();
+            unsafe { melee_fighter::stale::STALE_DECREMENTS = Box::leak(v.into_boxed_slice()).as_ptr() };
+        }
         // ft_80087D0C's lookups (the sound bank tables; no audio here, no Kirby remap).
         unsafe {
             melee_fighter::hooks::LBAUDIOAX_800233EC = Some(|id| id);
@@ -1056,6 +1066,12 @@ impl VsMatch {
             let (n0, n1) = files.x2c4();
             fp.x2C4 = melee_types::Vec2 { x: n0, y: n1 };
             fp.player_id = slot as u8;
+            // fighter.c (Fighter_UnkInitReset): no attack yet (ft_800890BC), the damage multipliers.
+            melee_fighter::stale::clear_attack_id(&mut fp);
+            fp.dmg.x182c_behavior = 1.0;
+            fp.x1960_vibrateMult = 1.0;
+            fp.dmg.x1908 = -1;
+            fp.dmg.x18C8 = -1;
             // fighter.c Fighter_UnkInitReset/Fighter_ResetInputData_80068854 defaults that the hash reads.
             fp.shield_health = start_shield;
             fp.x680 = 255;
@@ -1241,6 +1257,7 @@ impl VsMatch {
                 attack1_x0: false,
                 dead_timer: 0,
                 hud_randomize: false,
+                hud: hit::HudDamage::default(),
                 guard: GuardVars::default(),
                 jump: JumpVars::default(),
                 dash: dashrun::DashVars::default(),
@@ -2169,8 +2186,11 @@ impl VsMatch {
             }
             self.seak_accessory(i)?;
         }
-        // s_link 14, Fighter_ProcessHit_8006D1EC: the shield's regeneration / upkeep (no hit is
-        // ported: hit_guard stops the run before one lands).
+        // s_link 13, Fighter_8006CB94: the lasers' item procs of the frame, then the items' hits on fighters.
+        self.lasers_step()?;
+        self.item_hits()?;
+        // s_link 14, Fighter_ProcessHit_8006D1EC: the shield's regeneration / upkeep, and the damage of a
+        // hit without knockback (a hit with knockback is not ported: it returns Err).
         for p in &mut self.players {
             if p.fp.x221F_b3() != 0 {
                 continue;
@@ -2194,6 +2214,14 @@ impl VsMatch {
                 }
             }
         }
+        for pi in 0..self.players.len() {
+            if self.players[pi].fp.x221F_b3() != 0 {
+                continue;
+            }
+            self.process_hit_damage(pi)?;
+        }
+        // The items' s_link 14: a shot that dealt damage is destroyed.
+        self.lasers_destroy_dealt();
         // The end of Fighter_ProcessHit_8006D1EC: ftCo_800A0DA4, the hurtbox extents the CPUs read
         // (the capsules' bone positions are lbColl_800083C4's, from the skeleton as it stands).
         for p in &mut self.players {
@@ -2627,8 +2655,23 @@ impl VsMatch {
                     }
                     continue;
                 }
-                0x4A38..=0x4A3A | 0xB798..=0xB79A | 0x127 | 0x2 | 0x6 | 0xA3 | 0xA7 | 0xAA | 0xF2
-                | 0x12A | 0x132 | 0x133 | 0x16D..=0x170 | 0x7E2 | 0xE3 => {
+                0x2 | 0x6 | 0xA3 | 0xA7 | 0xAA | 0xF2 | 0x12A | 0x132 | 0x133 => {
+                    // eflib_create_generator_add_appsrt (as 0x2D below), then the generator's
+                    // scale is the effect root's.
+                    let r = root.ok_or("efLib_SpawnParticleEffect: the root's scale is needed outside an effect")?;
+                    if let Some(gen) = self.ps.gen_create_on_jobj(&mut host, 0, id / 1000, id, Some(joint)) {
+                        let srt = match self.ps.gen(gen).appsrt {
+                            Some(a) => a,
+                            None => self.ps.add_generator_appsrt_begin(gen, 0),
+                        };
+                        self.ps.srt_mut(srt).gp = Some(gen);
+                        self.ps.srt_mut(srt).scale = Vec3 { x: r.scale, y: r.scale, z: r.scale };
+                        let g = self.ps.gen_mut(gen);
+                        g.type_ = (g.type_ & 0xF9FF) | 0x800;
+                    }
+                    continue;
+                }
+                0x4A38..=0x4A3A | 0xB798..=0xB79A | 0x127 | 0x16D..=0x170 | 0x7E2 | 0xE3 => {
                     return Err(format!("efLib_SpawnParticleEffect bank {bank} id {id:#x}: special case not ported"));
                 }
                 _ => {}
@@ -4750,6 +4793,9 @@ fn change_motion_state_ext(p: &mut Player, msid: i32, row: Option<&(AnimRow, Fig
         fp.hitlag_mul = 0.0;
     }
     fp.motion_id = msid;
+    // ft_800890D0(fp, new_motion_state->move_id): a new attack instance unless the same attack goes on. Only
+    // Fox's / Falco's neutral B (attack 18) is an attack here; every other state has move_id 1.
+    melee_fighter::stale::new_attack(fp, if fox::is_fox_special_n(msid) { 18 } else { 1 });
     // The flags Fighter_ChangeMotionState clears (fighter.c ~1381): the entry / death states set
     // them again right after the change.
     fp.set_x221F_b3(0);
@@ -5137,15 +5183,15 @@ impl Sim for VsMatch {
             self.ps.particles_update_all(&mut host, mask);
             self.ps.gen_update_all(&mut host, mask);
         }
-        // The HUD's procs (p_link 14+, after the particles): ifStatus_PercentOnDeathAnimationThink
-        // on its first run draws two HSD_Randf per damage digit (4 digits): 8 draws.
+        // The HUD's procs (p_link 14+, after the particles), per player: ifStatus_802F5B48 (the damage read and
+        // the shake flag), ifStatus_802F4EDC (the death animation's 8 draws, else the shake: ifStatus_802F4B84).
         for p in &mut self.players {
-            if p.hud_randomize {
-                for _ in 0..8 {
-                    self.rand.randf();
-                }
-                p.hud_randomize = false;
+            if p.follower {
+                continue;
             }
+            let rand = &mut self.rand;
+            p.hud.step(p.fp.dmg.x1830_percent, p.hud_randomize, &mut || rand.randf());
+            p.hud_randomize = false;
         }
         self.frame += 1;
         true

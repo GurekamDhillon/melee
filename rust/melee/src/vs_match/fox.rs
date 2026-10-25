@@ -88,6 +88,16 @@ pub struct LaserHits {
     /// False when the hit state is not modelled (the shot was made by the s_link 9 accessory, whose
     /// item procs of s_link 0..5 did not run in the creating frame).
     pub valid: bool,
+    /// `hit->victims`: the players this shot has hit (bit per player index).
+    pub victims: u8,
+    /// `hit->damage` after the owner's staling (`it_80272460` -> `ft_80089228`).
+    pub dmg: f32,
+    /// `item->xD88_attackID` / `xD8C_attack_instance`: the owner's at the shot.
+    pub atk_id: i32,
+    pub atk_inst: u16,
+    /// `item->xC34_damageDealt != 0`: the shot hit a fighter and is destroyed at s_link 14
+    /// (`OnGiveDamageThink`: `itFoxLaser_Logic94_Clanked` returns true).
+    pub dealt: bool,
 }
 
 /// `hit->scale` (`size` 300 / 256).
@@ -134,7 +144,7 @@ fn laser_facing(angle: f32) -> f32 {
 fn laser_hits_new(kind: i32, pos: Vec3, angle: f32, slink1: bool) -> LaserHits {
     let offs = laser_offsets(kind);
     let z = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
-    let mut h = LaserHits { n: offs.len(), state: [0; 4], x4c: [z; 4], x58: [z; 4], valid: slink1 };
+    let mut h = LaserHits { n: offs.len(), state: [0; 4], x4c: [z; 4], x58: [z; 4], valid: slink1, victims: 0, dmg: 3.0, atk_id: 18, atk_inst: 0, dealt: false };
     for i in 0..offs.len() {
         h.state[i] = 1;
         if kind == melee_types::It_Kind_Fox_Laser as i32 {
@@ -374,6 +384,7 @@ impl VsMatch {
     /// then run every item.
     pub(super) fn items_update(&mut self) -> Result<(), String> {
         for i in 0..self.players.len() {
+            let mut rest = Vec::new();
             for c in std::mem::take(&mut self.players[i].item_cmds) {
                 match c {
                     ItemCmd::SpawnGun { owner, kind, pos } => {
@@ -382,32 +393,11 @@ impl VsMatch {
                     ItemCmd::SeakHeld { owner, pos } => {
                         self.items.push(SimItem { kind: melee_types::It_Kind_Seak_NeedleHeld as i32, msid: 0, pos, vel: Vec3 { x: 0.0, y: 0.0, z: 0.0 }, class: ItemClass::SeakHeld { owner } });
                     }
-                    ItemCmd::Laser { owner: lo, kind, angle, speed, pos, parent, slink1 } => {
-                        // it_802AE1D0(fp->u.fx.x222C_blasterGObj): arm the gun's muzzle flash.
-                        for g in &mut self.items {
-                            if let ItemClass::FoxGun { owner, flash } = &mut g.class {
-                                if *owner == lo {
-                                    *flash = true;
-                                }
-                            }
-                        }
-                        // it_8029C504: Item_NormalizeAngle(&angle), the spawn at the muzzle.
-                        let mut a = angle;
-                        while a < 0.0 {
-                            a += core::f32::consts::TAU;
-                        }
-                        while a > core::f32::consts::TAU {
-                            a -= core::f32::consts::TAU;
-                        }
-                        // it_80276100: the item's collision step from the parent to the muzzle
-                        // (mpColl_800471F8 over more than 6 units substeps; each substep adds
-                        // vel / steps, which rounds). The item's ECB and the stage are not consulted.
-                        let pos = spawn_step(parent, pos);
-                        let hits = laser_hits_new(kind, pos, a, slink1);
-                        self.items.push(SimItem { kind, msid: 0, pos, vel: Vec3 { x: 0.0, y: 0.0, z: 0.0 }, class: ItemClass::FoxLaser { angle: a, speed, life: FOX_LASER_LIFETIME, owner: lo, ray: 0.0, hits } });
-                    }
+                    // The lasers are made by `lasers_step` (s_link 13 of the creating frame).
+                    c @ ItemCmd::Laser { .. } => rest.push(c),
                 }
             }
+            self.players[i].item_cmds = rest;
         }
         let mut flashes: Vec<([f32; 3], f32, usize)> = Vec::new();
         let mut k = 0;
@@ -446,30 +436,7 @@ impl VsMatch {
                 }
                 ItemClass::SeakHeld { .. } | ItemClass::SeakThrown { .. } => {} // sheik::item_proc, below
                 ItemClass::GreensBlock => {}
-                ItemClass::FoxLaser { angle, speed, life, ray, hits, .. } => {
-                    // itFoxlaser_UnkMotion1_Anim -> Item_UpdateRayAnimation: velocity from the angle.
-                    it.vel.x = *speed * melee_runtime::gekko::cosf(*angle);
-                    it.vel.y = *speed * melee_runtime::gekko::sinf(*angle);
-                    it.vel.z = 0.0;
-                    // The growing model scale (divisor 11.25), clamped to the attribute's maximum.
-                    *ray += speed.abs() / 11.25f32;
-                    if *ray > LASER_MAX_SCALE {
-                        *ray = LASER_MAX_SCALE;
-                    }
-                    if *ray < 1e-5 {
-                        *ray = 1e-3;
-                    }
-                    // it_80273130: the life timer; the item proc stops there when it runs out.
-                    *life -= 1.0;
-                    if *life <= 0.0 {
-                        dead = true;
-                    } else {
-                        it.pos.x += it.vel.x;
-                        it.pos.y += it.vel.y;
-                        // s_link 11, it_8027137C: the hit capsules follow the joint.
-                        laser_hits_step(hits, it.kind, it.pos, it.vel, *ray);
-                    }
-                }
+                ItemClass::FoxLaser { .. } => {} // lasers_step, ahead of the fighters' s_link 13
             }
             if let Some(d) = super::sheik::item_proc(self, &mut it)? {
                 dead = d;
@@ -483,6 +450,88 @@ impl VsMatch {
         }
         for (pos, angle, owner) in flashes {
             self.ef_create_rot(0xBBD, owner, 1.0, Some(pos), Some(core::f32::consts::FRAC_PI_2), Some(angle))?;
+        }
+        Ok(())
+    }
+
+
+    /// The lasers' item procs of a frame, run ahead of the fighters' s_link 13 (`Fighter_8006CB94`: the
+    /// hit detection reads the shots as their s_link 1 (anim), 4 (phys) and 11 (hit capsules) procs of
+    /// this frame left them): the shots a fighter made this frame (`it_8029C504`), then every shot's step.
+    pub(super) fn lasers_step(&mut self) -> Result<(), String> {
+        for i in 0..self.players.len() {
+            let mut rest = Vec::new();
+            for c in std::mem::take(&mut self.players[i].item_cmds) {
+                match c {
+                    ItemCmd::Laser { owner: lo, kind, angle, speed, pos, parent, slink1 } => {
+                        // it_802AE1D0(fp->u.fx.x222C_blasterGObj): arm the gun's muzzle flash.
+                        for g in &mut self.items {
+                            if let ItemClass::FoxGun { owner, flash } = &mut g.class {
+                                if *owner == lo {
+                                    *flash = true;
+                                }
+                            }
+                        }
+                        // it_8029C504: Item_NormalizeAngle(&angle), the spawn at the muzzle.
+                        let mut a = angle;
+                        while a < 0.0 {
+                            a += core::f32::consts::TAU;
+                        }
+                        while a > core::f32::consts::TAU {
+                            a -= core::f32::consts::TAU;
+                        }
+                        // it_80276100: the item's collision step from the parent to the muzzle
+                        // (mpColl_800471F8 over more than 6 units substeps; each substep adds
+                        // vel / steps, which rounds). The item's ECB and the stage are not consulted.
+                        let pos = spawn_step(parent, pos);
+                        let mut hits = laser_hits_new(kind, pos, a, slink1);
+                        // Item_InitSpawnCommonFields: the shot carries the owner's attack id and instance; the
+                        // article script's create_hitbox (it_80272460) stales the 3% by the owner's queue.
+                        let of = &self.players[lo].fp;
+                        hits.atk_id = of.x2068_attackID;
+                        hits.atk_inst = of.x206C_attack_instance;
+                        hits.dmg = melee_fighter::stale::apply_staling(of, of.x2068_attackID, of.x206C_attack_instance as i32, 3.0);
+                        self.items.push(SimItem { kind, msid: 0, pos, vel: Vec3 { x: 0.0, y: 0.0, z: 0.0 }, class: ItemClass::FoxLaser { angle: a, speed, life: FOX_LASER_LIFETIME, owner: lo, ray: 0.0, hits } });
+                    }
+                    c => rest.push(c),
+                }
+            }
+            self.players[i].item_cmds = rest;
+        }
+        let mut k = 0;
+        while k < self.items.len() {
+            let mut it = self.items[k];
+            let mut dead = false;
+            if let ItemClass::FoxLaser { angle, speed, life, ray, hits, .. } = &mut it.class {
+                // itFoxlaser_UnkMotion1_Anim -> Item_UpdateRayAnimation: velocity from the angle.
+                it.vel.x = *speed * melee_runtime::gekko::cosf(*angle);
+                it.vel.y = *speed * melee_runtime::gekko::sinf(*angle);
+                it.vel.z = 0.0;
+                // The growing model scale (divisor 11.25), clamped to the attribute's maximum.
+                *ray += speed.abs() / 11.25f32;
+                if *ray > LASER_MAX_SCALE {
+                    *ray = LASER_MAX_SCALE;
+                }
+                if *ray < 1e-5 {
+                    *ray = 1e-3;
+                }
+                // it_80273130: the life timer; the item proc stops there when it runs out.
+                *life -= 1.0;
+                if *life <= 0.0 {
+                    dead = true;
+                } else {
+                    it.pos.x += it.vel.x;
+                    it.pos.y += it.vel.y;
+                    // s_link 11, it_8027137C: the hit capsules follow the joint.
+                    laser_hits_step(hits, it.kind, it.pos, it.vel, *ray);
+                }
+            }
+            if dead {
+                self.items.remove(k);
+            } else {
+                self.items[k] = it;
+                k += 1;
+            }
         }
         Ok(())
     }

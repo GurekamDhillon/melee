@@ -208,6 +208,11 @@ fn load_stage(file: &[u8], is_fd: bool) -> Result<Stage, String> {
             anim.dump(g);
         }
     }
+    if let Ok(v) = std::env::var("MELEE_VIEW_UNHIDE") {
+        for g in v.split(',').filter_map(|x| x.trim().parse::<u32>().ok()) {
+            anim.set_hidden_all(g, 0, false);
+        }
+    }
     if let Ok(v) = std::env::var("MELEE_VIEW_HIDE") {
         for it in v.split(',') {
             if let Some((m, j)) = it.split_once(':') {
@@ -427,6 +432,16 @@ impl MatchRender {
                     self.stage.anim.dump(g);
                 }
             }
+        }
+        if std::env::var("MELEE_VIEW_PSLOG").is_ok() && sim.frame % 100 == 0 {
+            let mut by: std::collections::BTreeMap<(usize, u8, u8, u32), u32> = Default::default();
+            for l in 0..melee_runtime::particle::NUM_LINKS {
+                for id in sim.ps.particles(l) {
+                    let p = sim.ps.part(id);
+                    *by.entry((l, p.bank, p.tex_group, p.kind)).or_default() += 1;
+                }
+            }
+            eprintln!("PS frame {} gens {} parts {} | (link,bank,texgrp,kind)=n {:?}", sim.frame, sim.ps.num_gens, sim.ps.num_parts, by);
         }
         if std::env::var("MELEE_VIEW_POSLOG").is_ok() && sim.frame % 10 == 0 {
             let p = &sim.players;

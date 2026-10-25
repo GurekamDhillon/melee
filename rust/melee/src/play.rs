@@ -898,7 +898,7 @@ pub fn play(args: &[String]) -> ExitCode {
         pause_age: 0,
         quit_at_results: has("--quit-at-results"),
         max_frames: get("--max-frames").and_then(|s| s.parse().ok()),
-        skip_intro: has("--skip-intro") || std::env::var("MELEE_SKIP_INTRO").is_ok_and(|v| v == "1"),
+        skip_intro: has("--skip-intro") || crate::cfg::flag("skip_intro", false),
         quit: false,
         failed: None,
         audio: None,
@@ -908,7 +908,7 @@ pub fn play(args: &[String]) -> ExitCode {
     // the ports and --max-frames / --quit-at-results end the run. --audio-wav keeps the mix.
     let headless = has("--headless");
     let trace_path = get("--audio-trace");
-    if !has("--no-audio") && std::env::var("MELEE_AUDIO").map_or(true, |v| v != "0") {
+    if !has("--no-audio") && crate::cfg::flag("audio", true) {
         match crate::audio::Audio::boot(&game.iso, headless) {
             Ok(a) => game.audio = Some(a),
             Err(e) => log(&format!("audio off: {e}")),

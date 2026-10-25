@@ -4,7 +4,6 @@
 use melee_types::*;
 use melee_core::fp::fmadds;
 use crate::gekko::{sinf,cosf,tanf,sqrtf};
-use crate::lbtrigf::atan2f;
 use ext::*;
 use super::psdisptev::{psSetupTev,psSetupTevCommon,psSetupTevInvalidState};
 // BEGIN GENERATED EXT (rust/melee_runtime/gen/mtu/gen_tu.py; the callees of the C TU)
@@ -76,6 +75,7 @@ pub mod ext {
     fn PSMTXInverse(a0: *mut c_void, a1: *mut c_void) -> u32 = { let s = (a0 as *const [[f32; 4]; 3]).read(); if let Some(m) = crate::mtx::inverse(&s) { (a1 as *mut [[f32; 4]; 3]).write(m); 1 } else { 0 } };
     fn PSMTXRotAxisRad(a0: *mut c_void, a1: *mut Vec, a2: f32) = { let v = crate::mtx::Vec3 { x: (*a1).x, y: (*a1).y, z: (*a1).z }; (a0 as *mut [[f32; 4]; 3]).write(crate::mtx::rot_axis_rad(&v, a2)); };
     fn PSMTXScale(a0: *mut c_void, a1: f32, a2: f32, a3: f32) = (a0 as *mut [[f32; 4]; 3]).write(crate::mtx::scale(a1, a2, a3));
+    fn atan2f(a0: f32, a1: f32) -> f32 = crate::lbtrigf::atan2f(a0, a1);
     fn psSetupTev(a0: *mut HSD_Particle);
     fn psSetupTevCommon();
     fn psSetupTevInvalidState();
@@ -91,6 +91,7 @@ pub mod ext {
 }
 // END GENERATED EXT
 type MP = *mut [f32; 4];
+unsafe fn atan2f(y: f32, x: f32) -> f32 { ext::atan2f(y, x) }
 unsafe fn memset(dst: *mut core::ffi::c_void, value: i32, n: usize) -> *mut core::ffi::c_void {
     core::ptr::write_bytes(dst.cast::<u8>(), value as u8, n);
     dst

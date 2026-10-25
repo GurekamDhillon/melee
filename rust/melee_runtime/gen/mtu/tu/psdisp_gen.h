@@ -59,9 +59,10 @@ void PSMTXIdentity(__typeof__(float (*)[4]) a0) { T(1045); T(PI((const void*) a0
 __typeof__(unsigned int) PSMTXInverse(__typeof__(float (*)[4]) a0, __typeof__(float (*)[4]) a1) { T(1046); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(unsigned int)) (fv()); }
 void PSMTXRotAxisRad(__typeof__(float (*)[4]) a0, __typeof__(Vec *) a1, __typeof__(float) a2) { T(1047); T(PI((const void*) a0)); T(PI((const void*) a1)); T(B(a2)); }
 void PSMTXScale(__typeof__(float (*)[4]) a0, __typeof__(float) a1, __typeof__(float) a2, __typeof__(float) a3) { T(1048); T(PI((const void*) a0)); T(B(a1)); T(B(a2)); T(B(a3)); }
-void psSetupTev(__typeof__(struct HSD_Particle *) a0) { T(1049); T(PI((const void*) a0)); }
-void psSetupTevCommon(void) { T(1050); }
-void psSetupTevInvalidState(void) { T(1051); }
+__typeof__(float) atan2f(__typeof__(float) a0, __typeof__(float) a1) { T(1049); T(B(a0)); T(B(a1)); return (__typeof__(float)) (rw()); }
+void psSetupTev(__typeof__(struct HSD_Particle *) a0) { T(1050); T(PI((const void*) a0)); }
+void psSetupTevCommon(void) { T(1051); }
+void psSetupTevInvalidState(void) { T(1052); }
 static void fill_HSD_Particle(HSD_Particle* p)
 {
     int i0, i1, i2, j0, j1, j2, j3;
@@ -411,6 +412,30 @@ static void hashg_all(void)
 static void fillo_all(void)
 {
     int i0, i1, i2, j0, j1, j2, j3, j9;
+    for (i0 = 0; i0 < 3; i0++) {
+    for (i1 = 0; i1 < 4; i1++) {
+    vmtx[i0][i1] = rg();
+    }
+    }
+    for (i0 = 0; i0 < 3; i0++) {
+    for (i1 = 0; i1 < 4; i1++) {
+    rvmtx[i0][i1] = rg();
+    }
+    }
+    for (i0 = 0; i0 < 3; i0++) {
+    for (i1 = 0; i1 < 4; i1++) {
+    pvmtx[i0][i1] = rg();
+    }
+    }
+    for (i0 = 0; i0 < 7; i0++) {
+    prj[i0] = rg();
+    }
+    HSD_PSDisp_804D7914 = rg();
+    HSD_PSDisp_804D7918 = rg();
+    HSD_PSDisp_804D791C = rg();
+    HSD_PSDisp_804D7920 = rg();
+    HSD_PSDisp_804D7924 = rg();
+    HSD_PSDisp_804D7928 = rg();
     prevChanCtrl = fv();
     prevChanMat.r = fv();
     prevChanMat.g = fv();
@@ -432,6 +457,30 @@ static void fillo_all(void)
     prevColorMat.g = fv();
     prevColorMat.b = fv();
     prevColorMat.a = fv();
+    for (i0 = 0; i0 < 3; i0++) {
+    for (i1 = 0; i1 < 4; i1++) {
+    vmtx[i0][i1] = rg();
+    }
+    }
+    for (i0 = 0; i0 < 3; i0++) {
+    for (i1 = 0; i1 < 4; i1++) {
+    rvmtx[i0][i1] = rg();
+    }
+    }
+    for (i0 = 0; i0 < 3; i0++) {
+    for (i1 = 0; i1 < 4; i1++) {
+    pvmtx[i0][i1] = rg();
+    }
+    }
+    for (i0 = 0; i0 < 7; i0++) {
+    prj[i0] = rg();
+    }
+    HSD_PSDisp_804D7914 = rg();
+    HSD_PSDisp_804D7918 = rg();
+    HSD_PSDisp_804D791C = rg();
+    HSD_PSDisp_804D7920 = rg();
+    HSD_PSDisp_804D7924 = rg();
+    HSD_PSDisp_804D7928 = rg();
     prevChanCtrl = fv();
     prevChanMat.r = fv();
     prevChanMat.g = fv();
@@ -457,6 +506,30 @@ static void fillo_all(void)
 static void hasho_all(void)
 {
     int i0, i1, i2, j0, j1, j2, j3, j9;
+    for (i0 = 0; i0 < 3; i0++) {
+    for (i1 = 0; i1 < 4; i1++) {
+    HM(B(vmtx[i0][i1]));
+    }
+    }
+    for (i0 = 0; i0 < 3; i0++) {
+    for (i1 = 0; i1 < 4; i1++) {
+    HM(B(rvmtx[i0][i1]));
+    }
+    }
+    for (i0 = 0; i0 < 3; i0++) {
+    for (i1 = 0; i1 < 4; i1++) {
+    HM(B(pvmtx[i0][i1]));
+    }
+    }
+    for (i0 = 0; i0 < 7; i0++) {
+    HM(B(prj[i0]));
+    }
+    HM(B(HSD_PSDisp_804D7914));
+    HM(B(HSD_PSDisp_804D7918));
+    HM(B(HSD_PSDisp_804D791C));
+    HM(B(HSD_PSDisp_804D7920));
+    HM(B(HSD_PSDisp_804D7924));
+    HM(B(HSD_PSDisp_804D7928));
     HM((u32) prevChanCtrl);
     HM((u32) prevChanMat.r);
     HM((u32) prevChanMat.g);
@@ -478,6 +551,30 @@ static void hasho_all(void)
     HM((u32) prevColorMat.g);
     HM((u32) prevColorMat.b);
     HM((u32) prevColorMat.a);
+    for (i0 = 0; i0 < 3; i0++) {
+    for (i1 = 0; i1 < 4; i1++) {
+    HM(B(vmtx[i0][i1]));
+    }
+    }
+    for (i0 = 0; i0 < 3; i0++) {
+    for (i1 = 0; i1 < 4; i1++) {
+    HM(B(rvmtx[i0][i1]));
+    }
+    }
+    for (i0 = 0; i0 < 3; i0++) {
+    for (i1 = 0; i1 < 4; i1++) {
+    HM(B(pvmtx[i0][i1]));
+    }
+    }
+    for (i0 = 0; i0 < 7; i0++) {
+    HM(B(prj[i0]));
+    }
+    HM(B(HSD_PSDisp_804D7914));
+    HM(B(HSD_PSDisp_804D7918));
+    HM(B(HSD_PSDisp_804D791C));
+    HM(B(HSD_PSDisp_804D7920));
+    HM(B(HSD_PSDisp_804D7924));
+    HM(B(HSD_PSDisp_804D7928));
     HM((u32) prevChanCtrl);
     HM((u32) prevChanMat.r);
     HM((u32) prevChanMat.g);
@@ -514,12 +611,32 @@ static void hasho_all(void)
 }
 static void preg_own(void)
 {
+    preg(&vmtx, sizeof vmtx);
+    preg(&rvmtx, sizeof rvmtx);
+    preg(&pvmtx, sizeof pvmtx);
+    preg(&prj, sizeof prj);
+    preg(&HSD_PSDisp_804D7914, sizeof HSD_PSDisp_804D7914);
+    preg(&HSD_PSDisp_804D7918, sizeof HSD_PSDisp_804D7918);
+    preg(&HSD_PSDisp_804D791C, sizeof HSD_PSDisp_804D791C);
+    preg(&HSD_PSDisp_804D7920, sizeof HSD_PSDisp_804D7920);
+    preg(&HSD_PSDisp_804D7924, sizeof HSD_PSDisp_804D7924);
+    preg(&HSD_PSDisp_804D7928, sizeof HSD_PSDisp_804D7928);
     preg(&prevChanCtrl, sizeof prevChanCtrl);
     preg(&prevChanMat, sizeof prevChanMat);
     preg(&prevChanAmb, sizeof prevChanAmb);
     preg(&prevColorPrim, sizeof prevColorPrim);
     preg(&prevColorEnv, sizeof prevColorEnv);
     preg(&prevColorMat, sizeof prevColorMat);
+    preg(&vmtx, sizeof vmtx);
+    preg(&rvmtx, sizeof rvmtx);
+    preg(&pvmtx, sizeof pvmtx);
+    preg(&prj, sizeof prj);
+    preg(&HSD_PSDisp_804D7914, sizeof HSD_PSDisp_804D7914);
+    preg(&HSD_PSDisp_804D7918, sizeof HSD_PSDisp_804D7918);
+    preg(&HSD_PSDisp_804D791C, sizeof HSD_PSDisp_804D791C);
+    preg(&HSD_PSDisp_804D7920, sizeof HSD_PSDisp_804D7920);
+    preg(&HSD_PSDisp_804D7924, sizeof HSD_PSDisp_804D7924);
+    preg(&HSD_PSDisp_804D7928, sizeof HSD_PSDisp_804D7928);
     preg(&prevChanCtrl, sizeof prevChanCtrl);
     preg(&prevChanMat, sizeof prevChanMat);
     preg(&prevChanAmb, sizeof prevChanAmb);
@@ -538,6 +655,9 @@ static void freg_all(void)
     freg((const void*) calcTornadoLastPos);
     freg((const void*) getColorPrimEnv);
     freg((const void*) particleSort);
+    freg((const void*) psDispSub);
+    freg((const void*) psDispSubAppSRT);
+    freg((const void*) psDispSubMakePolygon);
     freg((const void*) setupChanCtrl);
     freg((const void*) setupChanReg);
     freg((const void*) setupTevReg);
@@ -591,6 +711,7 @@ static void freg_all(void)
 // stub PSMTXInverse = 1046
 // stub PSMTXRotAxisRad = 1047
 // stub PSMTXScale = 1048
-// stub psSetupTev = 1049
-// stub psSetupTevCommon = 1050
-// stub psSetupTevInvalidState = 1051
+// stub atan2f = 1049
+// stub psSetupTev = 1050
+// stub psSetupTevCommon = 1051
+// stub psSetupTevInvalidState = 1052

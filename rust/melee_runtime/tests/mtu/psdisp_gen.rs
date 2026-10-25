@@ -60,9 +60,10 @@ pub fn install() {
         PSMTXInverse = Some(|a0, a1| { t(1046); t(pi(a0)); t(pi(a1)); fv() as _ });
         PSMTXRotAxisRad = Some(|a0, a1, a2| { t(1047); t(pi(a0)); t(pi(a1)); t(a2.to_bits()); });
         PSMTXScale = Some(|a0, a1, a2, a3| { t(1048); t(pi(a0)); t(a1.to_bits()); t(a2.to_bits()); t(a3.to_bits()); });
-        psSetupTev = Some(|a0| { t(1049); t(pi(a0)); });
-        psSetupTevCommon = Some(|| { t(1050); });
-        psSetupTevInvalidState = Some(|| { t(1051); });
+        atan2f = Some(|a0, a1| { t(1049); t(a0.to_bits()); t(a1.to_bits()); rw() });
+        psSetupTev = Some(|a0| { t(1050); t(pi(a0)); });
+        psSetupTevCommon = Some(|| { t(1051); });
+        psSetupTevInvalidState = Some(|| { t(1052); });
     }
 }
 
@@ -70,6 +71,9 @@ pub fn freg_all() {
     freg(m::calcTornadoLastPos as *const () as usize);
     freg(m::getColorPrimEnv as *const () as usize);
     freg(m::particleSort as *const () as usize);
+    freg(m::psDispSub as *const () as usize);
+    freg(m::psDispSubAppSRT as *const () as usize);
+    freg(m::psDispSubMakePolygon as *const () as usize);
     freg(m::setupChanCtrl as *const () as usize);
     freg(m::setupChanReg as *const () as usize);
     freg(m::setupTevReg as *const () as usize);
@@ -408,6 +412,30 @@ pub fn hashg_all() {
 
 pub fn fillo_all() {
     unsafe {
+        for i0 in 0..3 {
+        for i1 in 0..4 {
+        m::vmtx[i0][i1] = rg();
+        }
+        }
+        for i0 in 0..3 {
+        for i1 in 0..4 {
+        m::rvmtx[i0][i1] = rg();
+        }
+        }
+        for i0 in 0..3 {
+        for i1 in 0..4 {
+        m::pvmtx[i0][i1] = rg();
+        }
+        }
+        for i0 in 0..7 {
+        m::prj[i0] = rg();
+        }
+        m::HSD_PSDisp_804D7914 = rg();
+        m::HSD_PSDisp_804D7918 = rg();
+        m::HSD_PSDisp_804D791C = rg();
+        m::HSD_PSDisp_804D7920 = rg();
+        m::HSD_PSDisp_804D7924 = rg();
+        m::HSD_PSDisp_804D7928 = rg();
         m::prevChanCtrl = fv() as _;
         m::prevChanMat.r = fv() as _;
         m::prevChanMat.g = fv() as _;
@@ -429,6 +457,30 @@ pub fn fillo_all() {
         m::prevColorMat.g = fv() as _;
         m::prevColorMat.b = fv() as _;
         m::prevColorMat.a = fv() as _;
+        for i0 in 0..3 {
+        for i1 in 0..4 {
+        m::vmtx[i0][i1] = rg();
+        }
+        }
+        for i0 in 0..3 {
+        for i1 in 0..4 {
+        m::rvmtx[i0][i1] = rg();
+        }
+        }
+        for i0 in 0..3 {
+        for i1 in 0..4 {
+        m::pvmtx[i0][i1] = rg();
+        }
+        }
+        for i0 in 0..7 {
+        m::prj[i0] = rg();
+        }
+        m::HSD_PSDisp_804D7914 = rg();
+        m::HSD_PSDisp_804D7918 = rg();
+        m::HSD_PSDisp_804D791C = rg();
+        m::HSD_PSDisp_804D7920 = rg();
+        m::HSD_PSDisp_804D7924 = rg();
+        m::HSD_PSDisp_804D7928 = rg();
         m::prevChanCtrl = fv() as _;
         m::prevChanMat.r = fv() as _;
         m::prevChanMat.g = fv() as _;
@@ -454,6 +506,30 @@ pub fn fillo_all() {
 }
 pub fn hasho_all() {
     unsafe {
+        for i0 in 0..3 {
+        for i1 in 0..4 {
+        hm(m::vmtx[i0][i1].to_bits());
+        }
+        }
+        for i0 in 0..3 {
+        for i1 in 0..4 {
+        hm(m::rvmtx[i0][i1].to_bits());
+        }
+        }
+        for i0 in 0..3 {
+        for i1 in 0..4 {
+        hm(m::pvmtx[i0][i1].to_bits());
+        }
+        }
+        for i0 in 0..7 {
+        hm(m::prj[i0].to_bits());
+        }
+        hm(m::HSD_PSDisp_804D7914.to_bits());
+        hm(m::HSD_PSDisp_804D7918.to_bits());
+        hm(m::HSD_PSDisp_804D791C.to_bits());
+        hm(m::HSD_PSDisp_804D7920.to_bits());
+        hm(m::HSD_PSDisp_804D7924.to_bits());
+        hm(m::HSD_PSDisp_804D7928.to_bits());
         hm(m::prevChanCtrl as u32);
         hm(m::prevChanMat.r as u32);
         hm(m::prevChanMat.g as u32);
@@ -475,6 +551,30 @@ pub fn hasho_all() {
         hm(m::prevColorMat.g as u32);
         hm(m::prevColorMat.b as u32);
         hm(m::prevColorMat.a as u32);
+        for i0 in 0..3 {
+        for i1 in 0..4 {
+        hm(m::vmtx[i0][i1].to_bits());
+        }
+        }
+        for i0 in 0..3 {
+        for i1 in 0..4 {
+        hm(m::rvmtx[i0][i1].to_bits());
+        }
+        }
+        for i0 in 0..3 {
+        for i1 in 0..4 {
+        hm(m::pvmtx[i0][i1].to_bits());
+        }
+        }
+        for i0 in 0..7 {
+        hm(m::prj[i0].to_bits());
+        }
+        hm(m::HSD_PSDisp_804D7914.to_bits());
+        hm(m::HSD_PSDisp_804D7918.to_bits());
+        hm(m::HSD_PSDisp_804D791C.to_bits());
+        hm(m::HSD_PSDisp_804D7920.to_bits());
+        hm(m::HSD_PSDisp_804D7924.to_bits());
+        hm(m::HSD_PSDisp_804D7928.to_bits());
         hm(m::prevChanCtrl as u32);
         hm(m::prevChanMat.r as u32);
         hm(m::prevChanMat.g as u32);
@@ -513,12 +613,32 @@ pub fn hasho_all() {
 
 pub fn preg_own() {
     unsafe {
+        preg(&raw const m::vmtx, core::mem::size_of_val(&m::vmtx));
+        preg(&raw const m::rvmtx, core::mem::size_of_val(&m::rvmtx));
+        preg(&raw const m::pvmtx, core::mem::size_of_val(&m::pvmtx));
+        preg(&raw const m::prj, core::mem::size_of_val(&m::prj));
+        preg(&raw const m::HSD_PSDisp_804D7914, core::mem::size_of_val(&m::HSD_PSDisp_804D7914));
+        preg(&raw const m::HSD_PSDisp_804D7918, core::mem::size_of_val(&m::HSD_PSDisp_804D7918));
+        preg(&raw const m::HSD_PSDisp_804D791C, core::mem::size_of_val(&m::HSD_PSDisp_804D791C));
+        preg(&raw const m::HSD_PSDisp_804D7920, core::mem::size_of_val(&m::HSD_PSDisp_804D7920));
+        preg(&raw const m::HSD_PSDisp_804D7924, core::mem::size_of_val(&m::HSD_PSDisp_804D7924));
+        preg(&raw const m::HSD_PSDisp_804D7928, core::mem::size_of_val(&m::HSD_PSDisp_804D7928));
         preg(&raw const m::prevChanCtrl, core::mem::size_of_val(&m::prevChanCtrl));
         preg(&raw const m::prevChanMat, core::mem::size_of_val(&m::prevChanMat));
         preg(&raw const m::prevChanAmb, core::mem::size_of_val(&m::prevChanAmb));
         preg(&raw const m::prevColorPrim, core::mem::size_of_val(&m::prevColorPrim));
         preg(&raw const m::prevColorEnv, core::mem::size_of_val(&m::prevColorEnv));
         preg(&raw const m::prevColorMat, core::mem::size_of_val(&m::prevColorMat));
+        preg(&raw const m::vmtx, core::mem::size_of_val(&m::vmtx));
+        preg(&raw const m::rvmtx, core::mem::size_of_val(&m::rvmtx));
+        preg(&raw const m::pvmtx, core::mem::size_of_val(&m::pvmtx));
+        preg(&raw const m::prj, core::mem::size_of_val(&m::prj));
+        preg(&raw const m::HSD_PSDisp_804D7914, core::mem::size_of_val(&m::HSD_PSDisp_804D7914));
+        preg(&raw const m::HSD_PSDisp_804D7918, core::mem::size_of_val(&m::HSD_PSDisp_804D7918));
+        preg(&raw const m::HSD_PSDisp_804D791C, core::mem::size_of_val(&m::HSD_PSDisp_804D791C));
+        preg(&raw const m::HSD_PSDisp_804D7920, core::mem::size_of_val(&m::HSD_PSDisp_804D7920));
+        preg(&raw const m::HSD_PSDisp_804D7924, core::mem::size_of_val(&m::HSD_PSDisp_804D7924));
+        preg(&raw const m::HSD_PSDisp_804D7928, core::mem::size_of_val(&m::HSD_PSDisp_804D7928));
         preg(&raw const m::prevChanCtrl, core::mem::size_of_val(&m::prevChanCtrl));
         preg(&raw const m::prevChanMat, core::mem::size_of_val(&m::prevChanMat));
         preg(&raw const m::prevChanAmb, core::mem::size_of_val(&m::prevChanAmb));

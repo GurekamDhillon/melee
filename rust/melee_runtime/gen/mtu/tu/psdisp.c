@@ -100,7 +100,7 @@ static void hash_world(void)
     hasho_all();
 }
 
-enum { OP_calcTornadoLastPos = 0, OP_getColorPrimEnv = 1, OP_setupChanCtrl = 2, OP_setupChanReg = 3, OP_setupTevReg = 4, OP_particleSort = 5 };
+enum { OP_calcTornadoLastPos = 0, OP_getColorPrimEnv = 1, OP_setupChanCtrl = 2, OP_setupChanReg = 3, OP_setupTevReg = 4, OP_particleSort = 5, OP_psDispSubMakePolygon = 6, OP_psDispSub = 7, OP_psDispSubAppSRT = 8 };
 
 int main(int argc, char** argv)
 {
@@ -111,7 +111,7 @@ int main(int argc, char** argv)
     freg_all();
     freg_world();
 
-    for (op = 0; op < 6; op++) {
+    for (op = 0; op < 9; op++) {
         int n = 0;
         if (only >= 0 && op != only) continue;
         switch (op) {
@@ -121,12 +121,15 @@ int main(int argc, char** argv)
         case 3: n = 400; break;  /* setupChanReg */
         case 4: n = 400; break;  /* setupTevReg */
         case 5: n = 400; break;  /* particleSort */
+        case 6: n = 400; break;  /* psDispSubMakePolygon */
+        case 7: n = 400; break;  /* psDispSub */
+        case 8: n = 400; break;  /* psDispSubAppSRT */
         }
         for (k = 0; k < n; k++) {
             u32 ret = 0;
             tu_case(op, k);
             setup_world();
-{ int q;  for (q = 0; q < 4; q++) { P0[q].next = (q < 3 && (fv() & 1)) ? &P0[q + 1] : 0; P0[q].gen = &GEN[fv() & 1]; P0[q].appsrt = (fv() & 1) ? &SRT[fv() & 1] : 0;    P0[q].kind = fv() ^ (fv() << 13) ^ (fv() << 26); if (fv() & 1) { P0[q].primColCount = (u16) (1 + fv() % 100); P0[q].primColRemain = (u16) (fv() % 101); } else P0[q].primColCount = 0;    if (fv() & 1) { P0[q].envColCount = (u16) (1 + fv() % 100); P0[q].envColRemain = (u16) (fv() % 101); } else P0[q].envColCount = 0;    if (fv() & 1) { P0[q].matColCount = (u16) (1 + fv() % 100); P0[q].matColRemain = (u16) (fv() % 101); } else P0[q].matColCount = 0;    if (fv() & 1) { P0[q].ambColCount = (u16) (1 + fv() % 100); P0[q].ambColRemain = (u16) (fv() % 101); } else P0[q].ambColCount = 0; }  for (q = 0; q < 16; q++) hsd_804D0908[q] = (fv() & 1) ? &P0[fv() & 3] : 0; for (q = 0; q < 17; q++) particle_list[q] = (fv() & 1) ? &P0[fv() & 3] : 0; }
+{ int q;  for (q = 0; q < 4; q++) { P0[q].next = (q < 3 && (fv() & 1)) ? &P0[q + 1] : 0; P0[q].gen = &GEN[fv() & 1]; P0[q].appsrt = &SRT[fv() & 1];    P0[q].kind = fv() ^ (fv() << 13) ^ (fv() << 26); if (fv() & 1) { P0[q].primColCount = (u16) (1 + fv() % 100); P0[q].primColRemain = (u16) (fv() % 101); } else P0[q].primColCount = 0;    if (fv() & 1) { P0[q].envColCount = (u16) (1 + fv() % 100); P0[q].envColRemain = (u16) (fv() % 101); } else P0[q].envColCount = 0;    if (fv() & 1) { P0[q].matColCount = (u16) (1 + fv() % 100); P0[q].matColRemain = (u16) (fv() % 101); } else P0[q].matColCount = 0;    if (fv() & 1) { P0[q].ambColCount = (u16) (1 + fv() % 100); P0[q].ambColRemain = (u16) (fv() % 101); } else P0[q].ambColCount = 0; }  for (q = 0; q < 16; q++) hsd_804D0908[q] = (fv() & 1) ? &P0[fv() & 3] : 0; for (q = 0; q < 17; q++) particle_list[q] = (fv() & 1) ? &P0[fv() & 3] : 0; }
             if (getenv("MTU_PROG")) { printf("P %d %d%c", op, k, 10); fflush(0); }
             ARMED = 1;
             if (MTU_SETJMP()) { ARMED = 0; printf("%d %d ABORT\n", op, k); continue; }
@@ -137,6 +140,9 @@ int main(int argc, char** argv)
             case 3: {  HSD_Particle * a0 = pick_HSD_Particle(); setupChanReg(a0);  } break;
             case 4: {  HSD_Particle * a0 = pick_HSD_Particle(); setupTevReg(a0);  } break;
             case 5: {  s32 a0 = (s32) (fv() & 15); u8 a1 = fv(); HSD_Particle ** a2 = (HSD_Particle**) &PPA[0]; HSD_Particle ** a3 = (HSD_Particle**) &PPA[1]; ret = PI(particleSort(a0, a1, a2, a3));  } break;
+            case 6: {  HSD_Particle * a0 = pick_HSD_Particle(); u8 * a1 = U8A; f32 a2 = rw(); f32 a3 = rw(); f32 a4 = rw(); f32 a5 = rw(); f32 a6 = rw(); f32 a7 = rw(); f32 a8 = rw(); f32 a9 = rw(); f32 a10 = rw(); GXColor * a11 = pick_GXColor(); f32 * a12 = &FA[rnd() % 4]; f32 * a13 = &FA[rnd() % 4]; f32 * a14 = &FA[rnd() % 4]; psDispSubMakePolygon(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14);  } break;
+            case 7: {  HSD_Particle * a0 = pick_HSD_Particle(); u8 * a1 = U8A; psDispSub(a0, a1);  } break;
+            case 8: {  HSD_Particle * a0 = pick_HSD_Particle(); u8 * a1 = U8A; psDispSubAppSRT(a0, a1);  } break;
             }
             ARMED = 0;
             hash_world();

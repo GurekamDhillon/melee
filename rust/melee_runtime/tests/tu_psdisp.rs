@@ -9,6 +9,9 @@ const OP_setupChanCtrl: u32 = 2;
 const OP_setupChanReg: u32 = 3;
 const OP_setupTevReg: u32 = 4;
 const OP_particleSort: u32 = 5;
+const OP_psDispSubMakePolygon: u32 = 6;
+const OP_psDispSub: u32 = 7;
+const OP_psDispSubAppSRT: u32 = 8;
 mod mtu_harness;
 use core::ffi::c_void;
 use core::ptr::null_mut;
@@ -118,7 +121,7 @@ melee_runtime::tu::lbext::H_OSReport = Some(|_f, _a| ());
         install_abort_hook();
         let mut c = Check::new(include_str!("data/mtu_psdisp.txt"));
         let mut total = 0u32;
-        for op in 0..6u32 {
+        for op in 0..9u32 {
             let n = match op {
                 0 => 400u32,
                 1 => 400u32,
@@ -126,12 +129,15 @@ melee_runtime::tu::lbext::H_OSReport = Some(|_f, _a| ());
                 3 => 400u32,
                 4 => 400u32,
                 5 => 400u32,
+                6 => 400u32,
+                7 => 400u32,
+                8 => 400u32,
                 _ => unreachable!(),
             };
             for k in 0..n {
                 case(op, k);
                 setup_world();
-{  for q in 0..4usize { P0[q].next = if q < 3 && fv() & 1 != 0 { &raw mut P0[q + 1] } else { null_mut() }; P0[q].r#gen = &raw mut GEN[(fv() & 1) as usize]; P0[q].appsrt = if fv() & 1 != 0 { &raw mut SRT[(fv() & 1) as usize] } else { null_mut() };    P0[q].kind = fv() ^ (fv() << 13) ^ (fv() << 26); if fv() & 1 != 0 { P0[q].primColCount = (1 + fv() % 100) as u16; P0[q].primColRemain = (fv() % 101) as u16; } else { P0[q].primColCount = 0; }    if fv() & 1 != 0 { P0[q].envColCount = (1 + fv() % 100) as u16; P0[q].envColRemain = (fv() % 101) as u16; } else { P0[q].envColCount = 0; }    if fv() & 1 != 0 { P0[q].matColCount = (1 + fv() % 100) as u16; P0[q].matColRemain = (fv() % 101) as u16; } else { P0[q].matColCount = 0; }    if fv() & 1 != 0 { P0[q].ambColCount = (1 + fv() % 100) as u16; P0[q].ambColRemain = (fv() % 101) as u16; } else { P0[q].ambColCount = 0; } }  for q in 0..16usize { m::ext::hsd_804D0908[q] = if fv() & 1 != 0 { &raw mut P0[(fv() & 3) as usize] } else { null_mut() }; } for q in 0..17usize { m::particle_list[q] = if fv() & 1 != 0 { &raw mut P0[(fv() & 3) as usize] } else { null_mut() }; } }
+{  for q in 0..4usize { P0[q].next = if q < 3 && fv() & 1 != 0 { &raw mut P0[q + 1] } else { null_mut() }; P0[q].r#gen = &raw mut GEN[(fv() & 1) as usize]; P0[q].appsrt = &raw mut SRT[(fv() & 1) as usize];    P0[q].kind = fv() ^ (fv() << 13) ^ (fv() << 26); if fv() & 1 != 0 { P0[q].primColCount = (1 + fv() % 100) as u16; P0[q].primColRemain = (fv() % 101) as u16; } else { P0[q].primColCount = 0; }    if fv() & 1 != 0 { P0[q].envColCount = (1 + fv() % 100) as u16; P0[q].envColRemain = (fv() % 101) as u16; } else { P0[q].envColCount = 0; }    if fv() & 1 != 0 { P0[q].matColCount = (1 + fv() % 100) as u16; P0[q].matColRemain = (fv() % 101) as u16; } else { P0[q].matColCount = 0; }    if fv() & 1 != 0 { P0[q].ambColCount = (1 + fv() % 100) as u16; P0[q].ambColRemain = (fv() % 101) as u16; } else { P0[q].ambColCount = 0; } }  for q in 0..16usize { m::ext::hsd_804D0908[q] = if fv() & 1 != 0 { &raw mut P0[(fv() & 3) as usize] } else { null_mut() }; } for q in 0..17usize { m::particle_list[q] = if fv() & 1 != 0 { &raw mut P0[(fv() & 3) as usize] } else { null_mut() }; } }
                 let mut ret = 0u32;
                 let aborted = run_case(|| unsafe { match op {
                     0 => { 
@@ -165,6 +171,34 @@ let a1 = fv() as _;
 let a2 = (&raw mut PPA[0]) as *mut *mut HSD_Particle;
 let a3 = (&raw mut PPA[1]) as *mut *mut HSD_Particle;
 ret = pi(m::particleSort(a0, a1, a2, a3));
+ }
+                    6 => { 
+let a0 = pick_HSD_Particle();
+let a1 = (&raw mut U8A) as *mut u8;
+let a2 = rw();
+let a3 = rw();
+let a4 = rw();
+let a5 = rw();
+let a6 = rw();
+let a7 = rw();
+let a8 = rw();
+let a9 = rw();
+let a10 = rw();
+let a11 = pick_GXColor();
+let a12 = &raw mut FA[(rnd() % 4) as usize];
+let a13 = &raw mut FA[(rnd() % 4) as usize];
+let a14 = &raw mut FA[(rnd() % 4) as usize];
+m::psDispSubMakePolygon(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14);
+ }
+                    7 => { 
+let a0 = pick_HSD_Particle();
+let a1 = (&raw mut U8A) as *mut u8;
+m::psDispSub(a0, a1);
+ }
+                    8 => { 
+let a0 = pick_HSD_Particle();
+let a1 = (&raw mut U8A) as *mut u8;
+m::psDispSubAppSRT(a0, a1);
  }
                     _ => unreachable!(),
                 } });

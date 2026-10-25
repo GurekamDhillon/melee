@@ -589,6 +589,7 @@ impl MatchRender {
         }
         let over = self.stage.anim.overrides();
         let mut fighter_models: Vec<(Arc<Vec<u8>>, Vec<DispJoint>)> = Vec::new();
+        let mut fighter_ov: Vec<melee_runtime::tu::mobj::FtOverlay> = Vec::new();
         for (p, f) in sim.players.iter().zip(&self.fighters) {
             // ftDrawCommon_80080A18: `!fighter->invisible && !fighter->x221E_b5` gates the body (Entry sets
             // `invisible`; the entry beam / trophy accessory stands in for it).
@@ -598,6 +599,7 @@ impl MatchRender {
             let mut t = p.skel.tree.clone();
             let d = Drawable { dat: f.dat.clone(), roots: vec![p.skel.root], descs: f.descs.clone() };
             fighter_models.push((f.dat.clone(), d.disp_joints(&mut t)));
+            fighter_ov.push(fighter_overlay(p));
         }
         let r = &mut self.render;
         r.invalidate_all();
@@ -626,11 +628,13 @@ impl MatchRender {
             r.lobj_setup_init_with(&mut g, &Dat(&sd), &plit_ins, &vmtx);
         }
         for c in [0u32, 1] {
-            for m in &fighter_dms {
+            for (m, o) in fighter_dms.iter().zip(&fighter_ov) {
+                r.ft_overlay = Some(*o);
                 r.clear_vtx_desc(&mut g);
                 r.jobj_disp_all(&mut g, m, &vmtx, mask_of(c), 0);
             }
         }
+        r.ft_overlay = None;
         if own_lights {
             r.lobj_setup_init_with(&mut g, &Dat(&sd), &self.stage.stage_lights.ins(), &vmtx);
         }
@@ -638,10 +642,12 @@ impl MatchRender {
         if own_lights {
             r.lobj_setup_init_with(&mut g, &Dat(&sd), &plit_ins, &vmtx);
         }
-        for m in &fighter_dms {
+        for (m, o) in fighter_dms.iter().zip(&fighter_ov) {
+            r.ft_overlay = Some(*o);
             r.clear_vtx_desc(&mut g);
             r.jobj_disp_all(&mut g, m, &vmtx, mask_of(2), 0);
         }
+        r.ft_overlay = None;
         if !self.fx.is_empty() {
             let mut fxm: Vec<(Arc<Vec<u8>>, std::collections::HashMap<u32, melee_runtime::tu::mobj::MatOverride>, Vec<DispJoint>)> = Vec::new();
             for m in self.fx.values_mut() {
@@ -718,7 +724,7 @@ impl MatchRender {
                 }
             }
         }
-        if std::env::var("MELEE_VIEW_PSLOG").is_ok() && sim.frame % 100 == 0 {
+        if std::env::var("MELEE_VIEW_PSLOG").is_ok() && (sim.frame % 100 == 0 || std::env::var("MELEE_VIEW_PSFRAME").ok().and_then(|v| v.parse::<i32>().ok()) == Some(sim.frame as i32)) {
             let mut by: std::collections::BTreeMap<(usize, u8, u8, u32), u32> = Default::default();
             for l in 0..melee_runtime::particle::NUM_LINKS {
                 for id in sim.ps.particles(l) {
@@ -727,7 +733,7 @@ impl MatchRender {
                 }
             }
             for l in 0..melee_runtime::particle::NUM_LINKS {
-                for id in sim.ps.particles(l).into_iter().take(4) {
+                for id in sim.ps.particles(l).into_iter().take(if std::env::var_os("MELEE_VIEW_PSFRAME").is_some() { 100 } else { 4 }) {
                     let p = sim.ps.part(id);
                     eprintln!("  PSP link {l} bank {} tg {} pose {} kind {:#x} size {:.3} pos {:.1} {:.1} {:.1} prim {:?} cnt {} rot {:.2} appsrt {:?} aCmp {} {} {}", p.bank, p.tex_group, p.pose_num, p.kind, p.size, p.pos.x, p.pos.y, p.pos.z, p.prim_col, p.prim_col_count, p.rotate, p.appsrt, p.a_cmp_mode, p.a_cmp_param1, p.a_cmp_param2);
                 }
@@ -980,4 +986,70 @@ pub fn view_golden(args: &[String]) -> ExitCode {
             ExitCode::FAILURE
         }
     }
+}
+
+/// `ftMaterial_800BF534` / `ftMaterial_800BF6BC`: the colour overlay, light and translucency a fighter's materials get.
+fn fighter_overlay(p: &crate::vs_match::Player) -> melee_runtime::tu::mobj::FtOverlay {
+    let fp = &p.fp;
+    let lane = p.col.active();
+    if std::env::var_os("MELEE_VIEW_COLLOG").is_some() {
+        eprintln!("COL p{} ms {} x408 id {} x488 id {} x508 id {} act color {} hex {:?} light {} {:?} x61A {}", p.slot, fp.motion_id, p.col.x408.id, p.col.x488.id, p.col.x508.id, lane.color_enable, lane.hex, lane.flag2, lane.light, fp.x61A_controller_index);
+    }
+    let mut o = melee_runtime::tu::mobj::FtOverlay { light: None, color: None, alpha: 0xFF };
+    if lane.flag2 && lane.light_enable && fp.x2223_b2() == 0 {
+        o.light = Some(lane.light);
+    }
+    if fp.x2223_b3() == 0 {
+        let cd = melee_fighter::hooks::common_data();
+        let mut var = fp.x61A_controller_index as usize;
+        if fp.x2228_b0() != 0 && fp.x2224_b0() != 0 {
+            if fp.is_metal() != 0 {
+                var = 4;
+            } else if fp.x2227_b3() != 0 {
+                var = 5;
+            }
+        }
+        let tbl = |i: usize| -> [u8; 4] {
+            if (1..=4).contains(&i) {
+                let c = cd.x6DC_colorsByPlayer[i - 1];
+                [c.r, c.g, c.b, c.a]
+            } else {
+                [0; 4]
+            }
+        };
+        let hex = lane.hex;
+        let sp: Option<[u8; 4]> = if fp.x2223_b2() != 0 {
+            let c = fp.x610_color_rgba[1];
+            Some([c.r, c.g, c.b, c.a])
+        } else if var != 0 {
+            if lane.color_enable {
+                let c = fp.x610_color_rgba[0];
+                let (fr, fg, fb, fa) = (c.r as i32, c.g as i32, c.b as i32, c.a as i32);
+                let ha = hex[3] as i32;
+                let ta = ((255 - fa) * (255 - ha)) / 255;
+                if ta == 255 {
+                    Some(hex)
+                } else {
+                    let inv = 255 - ta;
+                    let r8 = fr + (ha * (hex[0] as i32 - fr)) / 255;
+                    let r7 = r8 * 255;
+                    let r = (r7 / inv) as u8;
+                    let a = if r != 0 { (r7 / r as i32) as u8 } else { (((inv - r8) * 255) / 255) as u8 };
+                    let g = (((fg + (ha * (hex[1] as i32 - fg)) / 255) * 255) / inv) as u8;
+                    let b = (((fb + (ha * (hex[2] as i32 - fb)) / 255) * 255) / inv) as u8;
+                    Some([r, g, b, a])
+                }
+            } else {
+                Some(tbl(var))
+            }
+        } else if lane.color_enable {
+            Some(hex)
+        } else {
+            None
+        };
+        if let Some(c) = sp {
+            o.color = Some(([c[0], c[1], c[2]], c[3]));
+        }
+    }
+    o
 }

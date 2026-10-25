@@ -264,6 +264,7 @@ fn rebirth_enter(p: &mut Player, ctx: &mut RespawnCtx<'_>) -> Result<(), String>
     fp.set_x221D_b5(1);
     // ftCommon_SetAccessory (the platform) is not modelled; ftCommon_8007EFC0(fp, 1).
     melee_fighter::ftcommon2::ftcommon_8007efc0(fp, 1);
+    p.col.start(0xA, 0);
     Ok(())
 }
 
@@ -304,7 +305,8 @@ pub fn anim(p: &mut Player, ctx: &mut RespawnCtx<'_>) -> Result<(), String> {
             fp.set_x221E_b1(1);
             fp.set_x221D_b5(1);
         } else {
-            // ftColl_8007B7A4 (intangibility window, not modelled), then Fall.
+            // ftColl_8007B7A4 (the intangibility window: only its colour animation is modelled), then Fall.
+            p.col.intangible(melee_fighter::hooks::common_data().x5D8);
             fall_enter(p, ctx.rand)?;
             }
     }
@@ -341,6 +343,7 @@ pub fn wait_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         || i.lstick[0].x * fp.facing_dir >= cd.walk_stick_threshold
     {
         fall_enter(p, rand)?;
+        p.col.intangible(cd.x5D8);
         if std::env::var_os("MELEE_HACK2").is_some() {
             let f = &mut *p.fp;
             f.cur_pos.x = f32::from_bits(f.cur_pos.x.to_bits() - 1);

@@ -514,7 +514,7 @@ fn ftco_800a5f4c(cx: &Cx, _fp: &Fighter) -> R<*mut Item> {
 fn item_grabbable(it: &SimItem) -> R<bool> {
     use super::fox::ItemClass as C;
     match it.class {
-        C::GreensBlock | C::FoxLaser { .. } | C::FoxGun { .. } | C::SeakHeld { .. } | C::SeakThrown { .. } => Ok(false),
+        C::GreensBlock | C::FoxLaser { .. } | C::FoxGun { .. } | C::SeakHeld { .. } | C::SeakThrown { .. } | C::SsMissile { .. } => Ok(false),
     }
 }
 
@@ -2302,6 +2302,14 @@ fn ftco_800bb9b4(cx: &mut Cx, me: *mut Fighter) -> R {
                 }
             }
             C::SeakThrown { .. } => return Err("ftCo_800BB220 (Sheik's needle) not ported".into()),
+            C::SsMissile { .. } => {
+                let r = ftco_800bb220(cx, me, &it, &mut sp24, half)?;
+                fp.cpu.set_xF8_b12(r as _);
+                if r != 0 {
+                    fp.cpu.xF4 = item_stub(fp.player_id as usize, &it);
+                    return Ok(());
+                }
+            }
         }
     }
     Ok(())
@@ -2331,13 +2339,22 @@ fn item_stub(slot: usize, it: &super::fox::SimItem) -> *mut Item {
 fn ftco_800bb220(cx: &mut Cx, me: *mut Fighter, it: &super::fox::SimItem, arg2: &mut Vec3, arg3: f32) -> Result<i32, String> {
     use super::fox::ItemClass as C;
     let fp = unsafe { &mut *me };
-    let C::FoxLaser { owner, hits, .. } = it.class else {
-        return Err("ftCo_800BB220 (an item that is not a laser) not ported".into());
+    // The item's hit capsules: (owner, states, x4C, x58, scale, modelled).
+    let cv = |v: melee_core::vec::Vec3| Vec3 { x: v.x, y: v.y, z: v.z };
+    let (owner, hstate, hx4c, hx58, hscale, valid): (usize, [u8; 4], [Vec3; 4], [Vec3; 4], f32, bool) = match it.class {
+        C::FoxLaser { owner, hits, .. } => (owner, hits.state, hits.x4c.map(cv), hits.x58.map(cv), super::fox::LASER_HIT_SCALE, hits.valid),
+        C::SsMissile { owner, hb, x58, .. } => {
+            let z = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
+            (owner, [hb, 0, 0, 0], [cv(it.pos), z, z, z], [cv(x58), z, z, z], super::samus::MISSILE_HIT_SCALE, true)
+        }
+        _ => return Err("ftCo_800BB220 (an item that is not a laser or a missile) not ported".into()),
     };
-    if hits.state[..hits.n].iter().all(|&s| s == 0) {
+    let n_boxes = if matches!(it.class, C::SsMissile { .. }) { 1 } else { 4 };
+    let _ = n_boxes;
+    if hstate.iter().all(|&s| s == 0) {
         return Ok(0);
     }
-    if !hits.valid {
+    if !valid {
         return Err("ftCo_800BB220: hit state of a laser made by the s_link 9 accessory not modelled".into());
     }
     if cx.fps[owner] == me {
@@ -2371,12 +2388,12 @@ fn ftco_800bb220(cx: &mut Cx, me: *mut Fighter, it: &super::fox::SimItem, arg2: 
     }
     for i in 0..4 {
         // state not Disabled / Enabled, x43_b2 clear, element not Inert (the laser's is 0).
-        if hits.state[i] == 0 || hits.state[i] == 1 {
+        if hstate[i] == 0 || hstate[i] == 1 {
             continue;
         }
         // lbColl_8000ACFC: the victims list holds nobody (hits are not ported).
-        let mut x4c = Vec3 { x: hits.x4c[i].x, y: hits.x4c[i].y, z: hits.x4c[i].z };
-        let x58 = hits.x58[i];
+        let mut x4c = Vec3 { x: hx4c[i].x, y: hx4c[i].y, z: hx4c[i].z };
+        let x58 = hx58[i];
         // ftCo_CpuPredictHitboxPosition.
         let mut pred = Vec3 {
             x: melee_core::fp::fmadds(x4c.x - x58.x, c, x4c.x),
@@ -2385,7 +2402,7 @@ fn ftco_800bb220(cx: &mut Cx, me: *mut Fighter, it: &super::fox::SimItem, arg2: 
         };
         let mut a = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
         let mut b2 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
-        let hit = unsafe { melee_runtime::tu::lbcollision::lbColl_80006094(&mut x4c, &mut pred, arg2, &mut dst, &mut a, &mut b2, super::fox::LASER_HIT_SCALE, arg3) };
+        let hit = unsafe { melee_runtime::tu::lbcollision::lbColl_80006094(&mut x4c, &mut pred, arg2, &mut dst, &mut a, &mut b2, hscale, arg3) };
         if hit {
             return Ok(2);
         }

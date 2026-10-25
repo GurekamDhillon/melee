@@ -2340,7 +2340,7 @@ impl VsMatch {
             // Fighter_8006C80C: accessory4_cb (ftFx_SpecialN_CreateBlasterShot).
             if self.players[i].fp.x221F_b3() == 0 && self.players[i].fp.x2219_b5() == 0 {
                 fox::accessory4(&mut self.players[i])?;
-                samus::accessory4(&mut self.players[i])?;
+                self.samus_accessory4(i)?;
             }
             self.seak_accessory(i)?;
         }

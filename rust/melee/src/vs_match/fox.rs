@@ -59,6 +59,8 @@ pub enum ItemClass {
     SeakThrown { owner: usize, life: f32, fresh: bool, state: u8, line: i32, bx: f32, bmin: f32, bgrav: f32 },
     /// Green Greens' breakable block (`grMaterial_801C8CFC` -> `it_802E6AEC`, `It_Kind_Yaku`).
     GreensBlock,
+    /// Samus' missile (samus.rs): `fresh` = made this frame, its item procs start the next one.
+    SsMissile { owner: usize, smash: bool, life: f32, x8: f32, v0: f32, v1: f32, v3: f32, born: u32, fresh: bool, facing: f32, jref: JObjRef, a: super::samus::MissileAttrs, hb: u8, x58: Vec3 },
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -402,6 +404,14 @@ impl VsMatch {
         let mut flashes: Vec<([f32; 3], f32, usize)> = Vec::new();
         let mut k = 0;
         while k < self.items.len() {
+            if matches!(self.items[k].class, ItemClass::SsMissile { .. }) {
+                if self.missile_step(k)? {
+                    self.items.remove(k);
+                } else {
+                    k += 1;
+                }
+                continue;
+            }
             let mut it = self.items[k];
             let mut dead = false;
             match &mut it.class {
@@ -436,6 +446,7 @@ impl VsMatch {
                 }
                 ItemClass::SeakHeld { .. } | ItemClass::SeakThrown { .. } => {} // sheik::item_proc, below
                 ItemClass::GreensBlock => {}
+                ItemClass::SsMissile { .. } => {}
                 ItemClass::FoxLaser { .. } => {} // lasers_step, ahead of the fighters' s_link 13
             }
             if let Some(d) = super::sheik::item_proc(self, &mut it)? {

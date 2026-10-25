@@ -99,7 +99,7 @@ pub unsafe fn HSD_FogSet(fog: *mut HSD_Fog) {
     if !(*fog).fog_adj.is_null() {
         ext::GXGetViewportv(v.as_mut_ptr());
         let adj = (*fog).fog_adj;
-        let mut range = (v[0] + v[2] * ((*adj).center as i32 + 320) as f32 / 640.0) as i32;
+        let mut range = crate::cabi::f2i32((v[0] + v[2] * ((*adj).center as i32 + 320) as f32 / 640.0) as f64);
         if range < 0 {
             range = 0;
         }
@@ -132,7 +132,7 @@ pub unsafe fn HSD_FogSet(fog: *mut HSD_Fog) {
                 }
                 _ => {}
             }
-            ext::GXInitFogAdjTable(&mut tbl, v[2] as u16, mtx.as_mut_ptr().cast());
+            ext::GXInitFogAdjTable(&mut tbl, crate::cabi::f2u16(v[2] as f64), mtx.as_mut_ptr().cast());
         }
         ext::GXSetFogRangeAdj(1, range as u16, &mut tbl);
         return;
@@ -205,7 +205,7 @@ pub unsafe fn HSD_FogAdjInit(adj: *mut HSD_FogAdj, desc: *mut HSD_FogAdjDesc) {
         } else {
             let mut v = [0.0f32; 6];
             ext::GXGetViewportv(v.as_mut_ptr());
-            (*adj).width = v[2] as u16;
+            (*adj).width = crate::cabi::f2u16(v[2] as f64);
             (*adj).center = ((*adj).width as i32 / 2) as i16;
             ext::PSMTXIdentity((*adj).mtx.as_mut_ptr().cast());
             (*adj).mtx[3][0] = 0.0;
@@ -253,13 +253,13 @@ pub unsafe extern "C" fn FogUpdateFunc(obj: *mut c_void, ty: i32, val: *mut HSD_
         match ty {
             1 => (*fog).start = (*val).fv,
             2 => (*fog).end = (*val).fv,
-            5 => (*fog).color.r = (255.0f32 * (*val).fv) as u8,
-            6 => (*fog).color.g = (255.0f32 * (*val).fv) as u8,
-            7 => (*fog).color.b = (255.0f32 * (*val).fv) as u8,
-            8 => (*fog).color.a = (255.0f32 * (*val).fv) as u8,
+            5 => (*fog).color.r = crate::cabi::f2u8((255.0f32 * (*val).fv) as f64),
+            6 => (*fog).color.g = crate::cabi::f2u8((255.0f32 * (*val).fv) as f64),
+            7 => (*fog).color.b = crate::cabi::f2u8((255.0f32 * (*val).fv) as f64),
+            8 => (*fog).color.a = crate::cabi::f2u8((255.0f32 * (*val).fv) as f64),
             20 => {
                 if !(*fog).fog_adj.is_null() {
-                    (*(*fog).fog_adj).center = (*val).fv as i16;
+                    (*(*fog).fog_adj).center = crate::cabi::f2i16((*val).fv as f64);
                 }
             }
             _ => {}

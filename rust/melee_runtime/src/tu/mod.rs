@@ -18,6 +18,7 @@ pub mod dobj;
 pub mod pobj;
 pub mod displayfunc;
 pub mod displayfunc_native;
+pub mod state_native;
 pub mod lbanim;
 pub mod lbarchive;
 pub mod lbext;

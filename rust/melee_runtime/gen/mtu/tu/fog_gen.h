@@ -175,7 +175,7 @@ static void fill_HSD_AObjDesc(HSD_AObjDesc* p)
     int i0, i1, i2, j0, j1, j2, j3;
     p->flags = fv();
     p->end_frame = rg();
-    p->obj_id = fv();
+    p->obj_id = fv64();
 }
 static void hash_HSD_AObjDesc(const HSD_AObjDesc* p)
 {
@@ -184,7 +184,7 @@ static void hash_HSD_AObjDesc(const HSD_AObjDesc* p)
     HM((u32) p->flags);
     HM(B(p->end_frame));
     HM(PI((const void*) p->fobjdesc));
-    HM((u32) p->obj_id);
+    { u32 pk_ = PI((const void*) (unsigned long long) p->obj_id); if (pk_ != 0xFFFFFFFFu) HM(pk_); else { HM((u32) p->obj_id); HM((u32) ((unsigned long long) p->obj_id >> 32)); } }
 }
 
 static void fill_HSD_ObjData(HSD_ObjData* p)

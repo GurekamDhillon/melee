@@ -121,3 +121,7 @@ harness = false
 [[test]]
 name = "tu_debug"
 harness = false
+
+[[test]]
+name = "tu_state_native"
+harness = false

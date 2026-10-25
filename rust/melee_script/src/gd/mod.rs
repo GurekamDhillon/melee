@@ -12,6 +12,7 @@ pub mod crit;
 pub mod combo;
 pub mod core;
 pub mod fighter;
+pub mod hit_rules;
 pub mod history;
 pub mod lab;
 pub mod labmisc;
@@ -48,6 +49,7 @@ pub fn register_all(e: &Engine, gd: &Table) -> LuaResult<()> {
     camera::register(e, gd)?;
     arena::register(e, gd)?;
     caps::register(e, gd)?;
+    hit_rules::register(e, gd)?;
     bench::register(e, gd)?;
     crit::register(e, gd)?;
     mods::register(e, gd)?;

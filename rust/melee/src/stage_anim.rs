@@ -673,12 +673,16 @@ impl StageAnim {
             n.aobj = None;
         }
         {
+            // only this group's DObjs (a scene hosts several models in one `MatExt`)
+            let own: Vec<u32> = self.groups[gi].tree.nodes.iter().flat_map(|n| n.dobj.clone()).collect();
             let ext = self.rt.ext.clone();
             let mut ext = ext.borrow_mut();
-            for m in ext.mobjs.values_mut() {
-                m.aobj = None;
-                for t in &mut m.tobjs {
-                    t.aobj = None;
+            for d in own {
+                if let Some(m) = ext.mobjs.get_mut(&d) {
+                    m.aobj = None;
+                    for t in &mut m.tobjs {
+                        t.aobj = None;
+                    }
                 }
             }
         }
@@ -801,7 +805,7 @@ impl StageAnim {
                             eprintln!("    dobj {d:#x} mobj aobj f{:.1}/{:.1} fobjs {:?}", a.curr_frame, a.end_frame, a.fobj.iter().map(|f| (f.obj_type, f.p0, f.p1)).collect::<Vec<_>>());
                         }
                         for t in &m.tobjs {
-                            eprintln!("    dobj {d:#x} tobj id {} flags {:#x} blend {} image {:?} {:?} tbl {:?} aobj {}", t.id, t.obj.flags, t.obj.blending, t.obj.imagedesc, t.obj.imagedesc.map(|i| (be16(&self.dat, i + 4), be16(&self.dat, i + 6), be32(&self.dat, i + 8))), t.obj.imagetbl.as_ref().map(|v| v.iter().map(|i| i.map(|i| (i, be16(&self.dat, i + 4), be16(&self.dat, i + 6), be32(&self.dat, i + 8)))).collect::<Vec<_>>()), t.aobj.as_ref().map_or("-".into(), |a| format!("f{:.1}/{:.1} fobjs {:?}", a.curr_frame, a.end_frame, a.fobj.iter().map(|f| (f.obj_type, f.op, f.p0, f.p1, f.time, f.startframe, f.nb_pack, f.frac_value, format!("{:02x?}", &f.ad_head[..f.ad_head.len().min(f.length as usize)]))).collect::<Vec<_>>())));
+                            eprintln!("    dobj {d:#x} tobj id {} tlut_no {} aobj_f {:?} flags {:#x} blend {} image {:?} {:?} tbl {:?} aobj {}", t.id, t.obj.tlut_no, t.aobj.as_ref().map(|a| (a.curr_frame, a.flags, a.fobj.iter().map(|f| (f.obj_type, f.op_intrp)).collect::<Vec<_>>())), t.obj.flags, t.obj.blending, t.obj.imagedesc, t.obj.imagedesc.map(|i| (be16(&self.dat, i + 4), be16(&self.dat, i + 6), be32(&self.dat, i + 8))), t.obj.imagetbl.as_ref().map(|v| v.iter().map(|i| i.map(|i| (i, be16(&self.dat, i + 4), be16(&self.dat, i + 6), be32(&self.dat, i + 8)))).collect::<Vec<_>>()), t.aobj.as_ref().map_or("-".into(), |a| format!("f{:.1}/{:.1} fobjs {:?}", a.curr_frame, a.end_frame, a.fobj.iter().map(|f| (f.obj_type, f.op, f.p0, f.p1, f.time, f.startframe, f.nb_pack, f.frac_value, format!("{:02x?}", &f.ad_head[..f.ad_head.len().min(f.length as usize)]))).collect::<Vec<_>>())));
                         }
                     }
                 }
@@ -1029,5 +1033,201 @@ impl StageAnim {
             }
         }
         ext.dobj_anim_all(&[dobj]);
+    }
+}
+
+/// Retail menu scenes (mn*.c / gmtitle.c): single-JObj requests and ticks, model instances that are
+/// (re)created and attached to one another, the TObj track stop of `mn_8022F3D8`.
+impl StageAnim {
+    /// `mn_8022F298(jobj)`: the current frame of the first animation found under `idx`
+    /// (joint AObj, else the first DObj's MObj AObj, else its first TObj's), depth first; -1 if none.
+    pub fn frame_at(&self, map_id: u32, idx: u32) -> f32 {
+        let g = &self.groups[self.gi(map_id)];
+        let ext = self.rt.ext.borrow();
+        fn go(g: &GroupAnim, j: JObjId, ext: &MatExt) -> Option<f32> {
+            let n = g.tree.get(j);
+            if let Some(a) = &n.aobj {
+                return Some(a.curr_frame);
+            }
+            if let Some(&d) = n.dobj.first() {
+                if let Some(m) = ext.mobjs.get(&d) {
+                    if let Some(a) = &m.aobj {
+                        return Some(a.curr_frame);
+                    }
+                    if let Some(a) = m.tobjs.first().and_then(|t| t.aobj.as_ref()) {
+                        return Some(a.curr_frame);
+                    }
+                }
+            }
+            if n.flags & JOBJ_INSTANCE == 0 {
+                let mut c = n.child;
+                while let Some(x) = c {
+                    if let Some(f) = go(g, x, ext) {
+                        return Some(f);
+                    }
+                    c = g.tree.get(x).next;
+                }
+            }
+            None
+        }
+        go(g, JObjId(idx), &ext).unwrap_or(-1.0)
+    }
+
+    /// `frame_at` of the first group's root.
+    pub fn first_frame(&self) -> Option<f32> {
+        let f = self.frame_at(self.groups.first()?.map_id, 0);
+        (f != -1.0).then_some(f)
+    }
+
+    /// `HSD_JObjReqAnim(jobj, frame)`: this JObj only.
+    pub fn req_one(&mut self, map_id: u32, idx: u32, frame: f32) {
+        let gi = self.gi(map_id);
+        self.req(gi, JObjId(idx), 0x7FF, frame, false);
+    }
+
+    /// `HSD_JObjAnim(jobj)`: this JObj only.
+    pub fn anim_one(&mut self, map_id: u32, idx: u32) {
+        let gi = self.gi(map_id);
+        let g = &mut self.groups[gi];
+        self.rt.anim(&mut g.tree, Some(JObjId(idx)));
+    }
+
+    /// `HSD_JObjAnimAll(jobj)`: this JObj and everything below it.
+    pub fn anim_all_at(&mut self, map_id: u32, idx: u32) {
+        let gi = self.gi(map_id);
+        let g = &mut self.groups[gi];
+        self.rt.anim_all(&mut g.tree, Some(JObjId(idx)));
+    }
+
+    pub fn is_hidden(&self, map_id: u32, idx: u32) -> bool {
+        self.groups[self.gi(map_id)].tree.get(JObjId(idx)).flags & melee_runtime::jobj::JOBJ_HIDDEN != 0
+    }
+
+    pub fn scale_of(&self, map_id: u32, idx: u32) -> Vec3 {
+        self.groups[self.gi(map_id)].tree.get(JObjId(idx)).scale
+    }
+
+    pub fn has_group(&self, map_id: u32) -> bool {
+        self.groups.iter().any(|g| g.map_id == map_id)
+    }
+
+    /// `mn_8022F3D8(jobj, ty, TOBJ_MASK)`: `HSD_FObjStopAnim` (flush the track's value, stop it) on every
+    /// TObj track of type `ty` under `idx`.
+    pub fn stop_tobj_tracks(&mut self, map_id: u32, idx: u32, ty: u8) {
+        let gi = self.gi(map_id);
+        let mut order = Vec::new();
+        fn walk(g: &GroupAnim, j: JObjId, out: &mut Vec<u32>) {
+            out.push(j.0);
+            let n = g.tree.get(j);
+            if n.flags & JOBJ_INSTANCE == 0 {
+                let mut c = n.child;
+                while let Some(x) = c {
+                    walk(g, x, out);
+                    c = g.tree.get(x).next;
+                }
+            }
+        }
+        walk(&self.groups[gi], JObjId(idx), &mut order);
+        let dobjs: Vec<u32> = order.iter().flat_map(|&j| self.groups[gi].tree.get(JObjId(j)).dobj.clone()).collect();
+        let ext = self.rt.ext.clone();
+        let mut ext = ext.borrow_mut();
+        for d in dobjs {
+            let Some(m) = ext.mobjs.get_mut(&d) else { continue };
+            for t in &mut m.tobjs {
+                if let Some(a) = t.aobj.as_mut() {
+                    for f in &mut a.fobj {
+                        if f.obj_type == ty {
+                            let to = &mut t.obj;
+                            let mut u = |ty: u8, fv: f32| to.update_func(ty as u32, fv);
+                            f.stop_anim(&mut Some(&mut u), 0.0);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// A fresh instance of group `map_id`: the tree reloaded from its descriptors, its MObj/TObj state
+    /// reset (the group's DObj descriptors are its own, see `retail::clone_model`).
+    pub fn reset_group(&mut self, map_id: u32) {
+        let dat = self.dat.clone();
+        let d: &[u8] = &dat;
+        let root_desc = be32(d, self.entry(map_id));
+        let mut tree = Tree::new();
+        let mut descs = Vec::new();
+        let Some(root) = load_tree(d, root_desc, &mut tree, None, &mut descs, 0) else { return };
+        let ext = self.rt.ext.clone();
+        let mut ext = ext.borrow_mut();
+        for n in &tree.nodes {
+            for &dobj in &n.dobj {
+                let m = be32(d, dobj + 8);
+                if m != 0 {
+                    ext.mobjs.insert(dobj, MObjState::load(&Dat(d), m));
+                    ext.base_pe.entry(dobj).or_insert_with(|| melee_runtime::tu::mobj::mobj_load(&Dat(d), m).2);
+                }
+            }
+        }
+        let g = GroupAnim { map_id, tree, descs, root };
+        match self.groups.iter().position(|x| x.map_id == map_id) {
+            Some(gi) => self.groups[gi] = g,
+            None => self.groups.push(g),
+        }
+    }
+
+    /// `HSD_JObjAddChild(parent idx, child root)` with the child a whole group: its nodes move into the
+    /// parent's tree (ids shifted by the returned base), the group goes away.
+    pub fn attach_group(&mut self, parent_map: u32, parent_idx: u32, child_map: u32) -> u32 {
+        let ci = self.gi(child_map);
+        let child = self.groups.remove(ci);
+        let pi = self.gi(parent_map);
+        let g = &mut self.groups[pi];
+        let base = g.tree.nodes.len() as u32;
+        let sh = |o: Option<JObjId>| o.map(|j| JObjId(j.0 + base));
+        for mut n in child.tree.nodes {
+            n.next = sh(n.next);
+            n.parent = sh(n.parent);
+            n.child = sh(n.child);
+            g.tree.nodes.push(n);
+        }
+        g.descs.extend(child.descs);
+        let croot = JObjId(child.root.0 + base);
+        let p = JObjId(parent_idx);
+        g.tree.get_mut(croot).parent = Some(p);
+        match g.tree.get(p).child {
+            None => g.tree.get_mut(p).child = Some(croot),
+            Some(mut last) => {
+                while let Some(nx) = g.tree.get(last).next {
+                    last = nx;
+                }
+                g.tree.get_mut(last).next = Some(croot);
+            }
+        }
+        g.tree.get_mut(p).flags |= melee_runtime::jobj::JOBJ_MTX_DIRTY;
+        base
+    }
+
+    /// `jobj->child` as a node index.
+    pub fn child_of(&self, map_id: u32, idx: u32) -> Option<u32> {
+        self.groups[self.gi(map_id)].tree.get(JObjId(idx)).child.map(|j| j.0)
+    }
+
+    /// `lb_80011E24`/`lb_8001204C`'s depth-first numbering below `root`: the node of DFS index `n`
+    /// (0 = root itself), `None` past the end.
+    pub fn dfs_node(&self, map_id: u32, root: u32, n: u32) -> Option<u32> {
+        let g = &self.groups[self.gi(map_id)];
+        let mut out = Vec::new();
+        fn walk(g: &GroupAnim, j: JObjId, out: &mut Vec<u32>) {
+            out.push(j.0);
+            let nd = g.tree.get(j);
+            if nd.flags & JOBJ_INSTANCE == 0 {
+                let mut c = nd.child;
+                while let Some(x) = c {
+                    walk(g, x, out);
+                    c = g.tree.get(x).next;
+                }
+            }
+        }
+        walk(g, JObjId(root), &mut out);
+        out.get(n as usize).copied()
     }
 }

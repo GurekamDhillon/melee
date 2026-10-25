@@ -21,6 +21,21 @@ pub struct Audio {
     /// Headless: the DSP runs on the virtual 10-per-3-frames clock and the mix is kept here
     /// (s16 stereo, 160 frames per 5 ms sub-frame) for `--audio-wav`.
     pub capture: Option<Vec<i16>>,
+    /// Ticks until the controller indicator's sound after an unpause (`un_802FDA78` plays menu
+    /// sound 4 two frames after `gm_801A10FC` shows it; the C trace of a pause shows it at
+    /// RESUME + 2 frames and never at the pause).
+    resume_cd: u8,
+    /// Between `match_start` and `match_leave`: leaving twice (the clock running out, then the
+    /// results scene) must not repeat the C's one-time kill-all.
+    in_match: std::cell::Cell<bool>,
+    /// The pause duck is on (a leave from the pause screen undoes it; a normal leave does not).
+    ducked: std::cell::Cell<bool>,
+}
+
+impl Drop for Audio {
+    fn drop(&mut self) {
+        eprintln!("play: {}", self.summary());
+    }
 }
 
 /// CharacterKind of the roster's fighter files.
@@ -103,10 +118,10 @@ impl Audio {
     pub fn boot(iso: &str, headless: bool) -> Result<Audio, String> {
         crate::install_audio(iso)?;
         if headless {
-            return Ok(Audio { out: None, dev_open: false, capture: Some(Vec::new()) });
+            return Ok(Audio { out: None, dev_open: false, capture: Some(Vec::new()), resume_cd: 0, in_match: false.into(), ducked: false.into() });
         }
         let out = sim::Output::new(melee_audio::output::DriverConfig::from_env(false));
-        Ok(Audio { out: Some(out), dev_open: false, capture: None })
+        Ok(Audio { out: Some(out), dev_open: false, capture: None, resume_cd: 0, in_match: false.into(), ducked: false.into() })
     }
 
     /// Once per video frame: the game's own per-frame audio (`lbAudioAx_80027DF8`), then the 5 ms
@@ -125,6 +140,51 @@ impl Audio {
                 sim::virtual_frame();
             }
         }
+        if self.resume_cd > 0 {
+            self.resume_cd -= 1;
+            if self.resume_cd == 0 {
+                self.menu(4);
+            }
+        }
+    }
+
+    /// A handle for the headless `golden` run, which owns the DSP clock itself.
+    pub fn detached() -> Audio {
+        Audio { out: None, dev_open: false, capture: None, resume_cd: 0, in_match: true.into(), ducked: false.into() }
+    }
+    /// The pause itself: duck, the pause sound.
+    pub fn pause_start(&self) {
+        self.ducked.set(true);
+        sim::set_pause_duck(true);
+        self.menu(5);
+    }
+    pub fn pause_end(&self) {
+        self.ducked.set(false);
+        sim::set_pause_duck(false);
+    }
+    /// The controller indicator's sound, two frames after the resume.
+    pub fn pause_resume_sound(&self) {
+        self.menu(4);
+    }
+
+    /// One line for the end of a run: where the sound went and how the device coped.
+    pub fn summary(&self) -> String {
+        use std::sync::atomic::Ordering::Relaxed;
+        match (&self.out, &self.capture) {
+            (Some(o), _) => format!(
+                "audio: device {}, {} underruns, {} overruns",
+                if o.driver.device_open() { "open" } else { "not open (silent)" },
+                o.driver.ring.underruns.load(Relaxed),
+                o.driver.ring.overruns.load(Relaxed)
+            ),
+            (None, Some(c)) => format!("audio: captured {} sub-frames, no device", c.len() / 320),
+            (None, None) => "audio: virtual clock, no device".into(),
+        }
+    }
+
+    /// Device underruns so far (output frames the callback had to fill with silence).
+    pub fn underruns(&self) -> u32 {
+        self.out.as_ref().map_or(0, |o| o.driver.ring.underruns.load(std::sync::atomic::Ordering::Relaxed))
     }
 
     fn menu(&self, n: i32) {
@@ -194,6 +254,7 @@ impl Audio {
 
     /// The VS scene's audio start (`gm_LoadAnnouncer`, `lbAudioAx_8002785C`, the stage's BGM).
     pub fn match_start(&self, ckinds: &[i32], stkind: i32, grkind: i32, bgm: i32) {
+        self.in_match.set(true);
         sim::scene_init();
         sim::load_announcer();
         sim::load_match_banks(ckinds, stkind, grkind);
@@ -211,19 +272,31 @@ impl Audio {
     }
 
     /// `gmVs` pause: duck the music and sfx, the pause sound.
-    pub fn pause(&self, on: bool) {
+    pub fn pause(&mut self, on: bool) {
+        self.ducked.set(on);
         sim::set_pause_duck(on);
         if on {
             self.menu(5);
+        } else {
+            self.resume_cd = 2;
         }
     }
 
     /// Leaving the VS scene (`gmVs` end: `80023694`, `80024C84`).
     pub fn match_leave(&self) {
-        sim::set_pause_duck(false);
+        if !self.in_match.replace(false) {
+            return;
+        }
+        if self.ducked.replace(false) {
+            sim::set_pause_duck(false);
+        }
         sim::with(|s| {
+            // fn_8016C7F0: AXDriverStop (the music fades out), the key-off, the resets.
+            s.lb_audio_ax_800236dc();
             s.lb_audio_ax_80023694();
             s.lb_audio_ax_80024c84();
+            // fn_8016C7F0 then lbAudioAx_80024D50: the reset again, with the match-over flag.
+            s.lb_audio_ax_80024d50();
         });
     }
 
@@ -256,11 +329,22 @@ pub fn match_frame_calls(f: i32, go_frame: i32, secs: i32) {
     if go_frame != i32::MAX && f == go_frame + 10 {
         play(0x7C857);
     }
-    // gmVs per-frame: every 60 frames the timer ticks; under six seconds left it calls out.
-    if f > 0 && f % 60 == 0 {
-        let left = secs - (f / 60 - 1);
-        if (1..6).contains(&left) {
-            play(TIMER_TICKS[left as usize]);
-        }
+    // ifTime / gmVs: the last five seconds of the clock call out 5, 4, 3, 2, 1 (the C trace of a
+    // one-minute match: 510035, 510036, 510047, 510050, 510040, 200 sub-frames = 60 frames
+    // apart, the first 300 frames before the clock ends, TIME! after it).
+    let end = clock_end(go_frame, secs);
+    let left = end - f;
+    if left > 0 && left % 60 == 0 && left <= 300 {
+        play(TIMER_TICKS[(left / 60) as usize]);
     }
 }
+
+/// The frame the match clock reaches 0 on: it starts when the Go element has played out (the C
+/// trace of a one-minute match with Go at frame 84: the clock ends at frame 3724, the sim holds
+/// its state from frame 3723 on, and TIME! is called nine frames after the hold).
+pub fn clock_end(go_frame: i32, secs: i32) -> i32 {
+    if go_frame == i32::MAX { secs * 60 } else { go_frame + 40 + secs * 60 }
+}
+
+/// Frames from the sim's last step to the TIME! call.
+pub const TIME_CALL_DELAY: i32 = 9;

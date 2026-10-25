@@ -155,7 +155,12 @@ fn main() -> ExitCode {
                 eprintln!("usage: melee hashlog --words GOLDEN.csv --out CANDIDATE.csv [--frames N]");
                 return ExitCode::from(2);
             };
-            let frames = get("--frames").and_then(|s| s.parse().ok());
+            // `--cpu LEVEL`: both ports CPU-controlled (a human scenario's stage and fighters).
+    if let Some(l) = get("--cpu").and_then(|v| v.parse().ok()) {
+        vs_match::set_cpu_player(0, l);
+        vs_match::set_cpu_player(1, l);
+    }
+    let frames = get("--frames").and_then(|s| s.parse().ok());
             let mut sim = match WordReplay::load(&words) {
                 Ok(s) => s,
                 Err(e) => {
@@ -313,6 +318,8 @@ fn golden(args: &[String]) -> ExitCode {
         "pad_marth_sheik_bf" => ("GrNBa.dat", &["marth", "sheik"]),
         "pad_falcon_wolf_fd" => ("GrNLa.dat", &["falcon", "wolf"]),
         // CPU level 9 Fox (P1) v Falco (P2); the scene's "dreamland" is StKind 17 (GrGr.dat).
+        // The audio proof's time-limit scenario: the same CPUs on Final Destination.
+        "cpu_fox_falco_fd" => ("GrNLa.dat", &["fox", "falco"]),
         "cpu_fox_falco_dl" => ("GrGr.dat", &["fox", "falco"]),
         // CPU level 9 Peach (P1) v Samus (P2) on Yoshi's Story (StKind 8), item frequency 4.
         "cpu_peach_samus_ys_items" => ("GrSt.dat", &["peach", "samus"]),
@@ -403,8 +410,26 @@ fn golden(args: &[String]) -> ExitCode {
         dump_state: Option<(i32, String)>,
         /// `--audio-wav`: every sub-frame's s16 stereo mix.
         wav: Option<Vec<i16>>,
+        /// `--pause F:T`: START pauses after logic frame F and the pauser's START resumes T-F
+        /// frames later (the audio keeps running on the held frames, as in the C build).
+        pause: Option<(i32, i32)>,
+        /// `--time-secs`: the match clock the timer callouts count down to.
+        time_secs: i32,
+        /// Frames since the clock ran out (`--time-secs` under 180).
+        halted: Option<i32>,
     }
     impl SeedFrom<'_> {
+        fn audio_frame(&mut self) {
+            melee_audio::sim::game_frame();
+            match &mut self.wav {
+                Some(w) => {
+                    melee_audio::sim::virtual_frame_into(w);
+                }
+                None => {
+                    melee_audio::sim::virtual_frame();
+                }
+            }
+        }
         fn maybe_dump(&self) {
             if let Some((f, path)) = &self.dump_state {
                 if *f == self.sim.frame {
@@ -414,6 +439,10 @@ fn golden(args: &[String]) -> ExitCode {
                 }
             }
         }
+    }
+    // `--idle-pads`: nobody touches a pad (the golden corpus's CPU/idle pad scripts, pad_pause.lua).
+    if args.iter().any(|a| a == "--idle-pads") {
+        sim.pad_feed = Some([Default::default(); 4]);
     }
     let mut pre_wav: Vec<i16> = Vec::new();
     // `--audio`: boot the ported sound stack from the same disc and route the fighter code's
@@ -438,18 +467,40 @@ fn golden(args: &[String]) -> ExitCode {
                 self.maybe_dump();
                 return true;
             }
-            let r = self.sim.step();
-            if r && melee_audio::sim::is_installed() {
-                audio::match_frame_calls(self.sim.frame, self.sim.go_frame_for_hud(), 180);
+            if let Some(h) = self.halted {
+                // The clock ran out: the sim holds, the sound goes on (TIME!, then the scene change).
+                self.halted = Some(h + 1);
+                if h == 0 {
+                    // gmVs: the end of the clock stops every track before the call.
+                    audio::Audio::detached().match_leave();
+                }
+                if h + 1 == audio::TIME_CALL_DELAY {
+                    audio::Audio::detached().match_end_call(true);
+                }
+                self.audio_frame();
+                return h < 100;
             }
-            melee_audio::sim::game_frame();
-            match &mut self.wav {
-                Some(w) => {
-                    melee_audio::sim::virtual_frame_into(w);
+            let r = self.sim.step();
+            if r && self.time_secs < 180 && self.sim.frame == audio::clock_end(self.sim.go_frame_for_hud(), self.time_secs) - 1 {
+                self.halted = Some(0);
+            }
+            if r && melee_audio::sim::is_installed() {
+                audio::match_frame_calls(self.sim.frame, self.sim.go_frame_for_hud(), self.time_secs);
+            }
+            self.audio_frame();
+            if r && self.pause.is_some_and(|(f, _)| f == self.sim.frame) {
+                let (f, t) = self.pause.take().unwrap();
+                let a = audio::Audio::detached();
+                a.pause_start();
+                for _ in f..t {
+                    self.audio_frame();
                 }
-                None => {
-                    melee_audio::sim::virtual_frame();
+                a.pause_end();
+                // un_802FDA78 plays the controller indicator's sound two frames after the resume.
+                for _ in 0..2 {
+                    self.audio_frame();
                 }
+                a.pause_resume_sound();
             }
             if r {
                 self.maybe_dump();
@@ -471,7 +522,7 @@ fn golden(args: &[String]) -> ExitCode {
     let injected = seed_from.is_some();
     let res = std::fs::File::create(&out).and_then(|f| {
         let mut w = std::io::BufWriter::new(f);
-        let mut sf = SeedFrom { sim: &mut sim, golden: seed_from, resumed, dump_state, wav: wav_path.as_ref().map(|_| std::mem::take(&mut pre_wav)) };
+        let mut sf = SeedFrom { sim: &mut sim, golden: seed_from, resumed, dump_state, halted: None, time_secs: get("--time-secs").and_then(|v| v.parse().ok()).unwrap_or(180), pause: get("--pause").and_then(|v| v.split_once(':').and_then(|(a, b)| Some((a.parse().ok()?, b.parse().ok()?)))), wav: wav_path.as_ref().map(|_| std::mem::take(&mut pre_wav)) };
         let n = run(&mut sf, &mut w, frames)?;
         w.flush()?;
         if let Some(p) = &trace_path {

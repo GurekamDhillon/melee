@@ -168,6 +168,8 @@ struct Match {
     paused: Option<usize>,
     /// Ticks since a stock count reached 0 / the sim stopped (the GameSet beat before the results).
     end_timer: Option<u32>,
+    /// The clock ran out (the TIME! call comes with the end timer).
+    timed_out: bool,
     quit_hold: u32,
 }
 
@@ -225,7 +227,7 @@ fn log(msg: &str) {
 
 impl Play {
     fn goto(&mut self, s: Scene) {
-        log(&format!("tick {}: {} -> {}", self.tick_no, self.scene.name(), s.name()));
+        log(&format!("tick {}: {} -> {}{}", self.tick_no, self.scene.name(), s.name(), self.audio.as_ref().map_or(String::new(), |a| format!(" (audio underruns {})", a.underruns()))));
         self.audio_enter(s);
         self.scene = s;
         self.age = 0;
@@ -460,7 +462,7 @@ impl Play {
             let seed = 12345 + self.matches_played;
             let mut sim = VsMatch::new(&mut disc, stage_file, &names, seed, 3)?;
             let mr = MatchRender::new(&mut disc, stage_file, &names, &mut sim)?;
-            Ok(Match { sim, mr, setup_names: names, paused: None, end_timer: None, quit_hold: 0 })
+            Ok(Match { sim, mr, setup_names: names, paused: None, end_timer: None, timed_out: false, quit_hold: 0 })
         })();
         match built {
             Ok(m) => {
@@ -484,12 +486,12 @@ impl Play {
         match (m.paused, pauser) {
             (None, Some(p)) if m.end_timer.is_none() && m.sim.go_reached() => {
                 m.paused = Some(p);
-                if let Some(a) = &self.audio { a.pause(true) }
+                if let Some(a) = self.audio.as_mut() { a.pause(true) }
                 log(&format!("paused by port {}", p + 1));
             }
             (Some(q), Some(p)) if q == p => {
                 m.paused = None;
-                if let Some(a) = &self.audio { a.pause(false) }
+                if let Some(a) = self.audio.as_mut() { a.pause(false) }
                 log("resumed");
             }
             _ => {}
@@ -510,6 +512,9 @@ impl Play {
         if let Some(t) = &mut m.end_timer {
             // The GameSet beat (a halted sim holds its last frame).
             *t += 1;
+            if *t == crate::audio::TIME_CALL_DELAY as u32 && m.timed_out {
+                if let Some(a) = &self.audio { a.match_end_call(true) }
+            }
             if *t >= 150 {
                 self.finish_match();
             }
@@ -536,10 +541,12 @@ impl Play {
             log(&format!("simulation halted: {:?}", m.sim.stopped));
             if let Some(a) = &self.audio { a.match_end_call(false) }
             m.end_timer = Some(0);
-        } else if m.sim.frame >= self.time_secs * 60 {
+        } else if m.sim.frame >= crate::audio::clock_end(m.sim.go_frame_for_hud(), self.time_secs) - 1 {
             log("time up: GameSet");
-            if let Some(a) = &self.audio { a.match_end_call(true) }
+            m.timed_out = true;
             m.end_timer = Some(0);
+            // gmVs: the end of the clock stops every track, then the TIME! call.
+            if let Some(a) = &self.audio { a.match_leave() }
         }
     }
 
@@ -900,6 +907,7 @@ pub fn play(args: &[String]) -> ExitCode {
     // --headless: no window, no device, no gamepads; the pad script (MELEE_PAD_SCRIPT) drives
     // the ports and --max-frames / --quit-at-results end the run. --audio-wav keeps the mix.
     let headless = has("--headless");
+    let trace_path = get("--audio-trace");
     if !has("--no-audio") && std::env::var("MELEE_AUDIO").map_or(true, |v| v != "0") {
         match crate::audio::Audio::boot(&game.iso, headless) {
             Ok(a) => game.audio = Some(a),
@@ -907,6 +915,9 @@ pub fn play(args: &[String]) -> ExitCode {
         }
     }
     if let Some(a) = &game.audio {
+        if trace_path.is_some() {
+            melee_audio::sim::with(|s| s.trace = Some(Vec::new()));
+        }
         a.scene_start();
         a.stop_music();
     }
@@ -921,6 +932,15 @@ pub fn play(args: &[String]) -> ExitCode {
                 return ExitCode::FAILURE;
             }
             log(&format!("audio mix of {} sub-frames written to {path}", cap.len() / 320));
+        }
+        if let Some(p) = &trace_path {
+            let t = melee_audio::sim::with(|s| s.trace.take()).flatten().unwrap_or_default();
+            if let Err(e) = std::fs::write(p, t.join("
+") + "
+") {
+                eprintln!("play: {p}: {e}");
+            }
+            log(&format!("{} audio calls written to {p}", t.len()));
         }
         return if game.failed.is_some() { ExitCode::FAILURE } else { ExitCode::SUCCESS };
     }

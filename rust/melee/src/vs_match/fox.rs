@@ -37,6 +37,12 @@ pub struct FoxVars {
     pub gun_vis: i32,
     /// The gun item's `foxblaster.xDE0` (it_802AE538 has played the draw sound).
     pub gun_shot: bool,
+    /// Reflector (foxlw.rs): `accessory4_cb` (0 none, 1 Start / 2 Loop / 3 Reflect GFX), `mv.fx.SpecialLw`, `reflect_hit_cb` set.
+    pub lw_gfx: u8,
+    pub lw_release_lag: i32,
+    pub lw_release: bool,
+    pub lw_gravity_delay: i32,
+    pub lw_reflect: bool,
 }
 
 /// Work a fighter hands to the item procs.

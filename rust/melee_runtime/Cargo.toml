@@ -105,3 +105,7 @@ harness = false
 [[test]]
 name = "tu_displayfunc_native"
 harness = false
+
+[[test]]
+name = "tu_lbcollision"
+harness = false

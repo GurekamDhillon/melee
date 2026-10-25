@@ -268,7 +268,9 @@ impl Play {
     fn load_menu(&self, kind: u8, hovered: u16) -> Result<crate::retail::mainmenu::MainMenu, String> {
         let mut disc = crate::disc::Disc::open(&self.iso)?;
         let bytes = disc.read("MnMaAll.usd").or_else(|_| disc.read("MnMaAll.dat"))?;
-        crate::retail::mainmenu::MainMenu::new(&bytes, kind, hovered, true)
+        let sis = disc.read("SdMenu.usd").or_else(|_| disc.read("SdMenu.dat")).ok();
+        let atlas = disc.dol_bytes(crate::retail::sis::ATLAS_ADDR, crate::retail::sis::ATLAS_BYTES)?;
+        crate::retail::mainmenu::MainMenu::new(&bytes, sis.as_deref().map(|s| (s, atlas)), kind, hovered, true)
     }
 
     /// `gm_Scene_Title_OnEnter`: GmTtAll.usd (US) or .dat from the disc.

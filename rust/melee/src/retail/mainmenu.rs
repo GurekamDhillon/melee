@@ -13,6 +13,7 @@
 use super::mn_tables as T;
 use super::*;
 use crate::view::AnimLights;
+use super::sis::{GlyphCache, SisArchive, SisEnv, Text};
 
 const BACK: u32 = 0;
 const PANEL: u32 = 1;
@@ -44,23 +45,25 @@ struct KindData {
     loops: &'static [AnimLoop],
     start: f32,
     count: u8,
+    /// SIS string ids of the hover description, per selection
+    desc: &'static [u16],
 }
 fn kind_data(k: u8) -> KindData {
     let none: &'static [AnimLoop] = &[];
     match k {
-        0 => KindData { loops: &T::L_803EB3FC, start: 0.0, count: 5 },
-        1 => KindData { loops: &T::L_803EB444, start: 20.0, count: 5 },
-        2 => KindData { loops: &T::L_803EB48C, start: 40.0, count: 5 },
-        3 => KindData { loops: &T::L_803EB4C8, start: 60.0, count: 4 },
-        4 => KindData { loops: &T::L_803EB4F8, start: 80.0, count: 6 },
-        5 => KindData { loops: &T::L_803EB540, start: 100.0, count: 5 },
-        6 => KindData { loops: &T::L_803EB57C, start: 120.0, count: 3 },
-        9 => KindData { loops: &T::L_803EB5C4, start: 160.0, count: 3 },
-        12 => KindData { loops: &T::L_803EB5E8, start: 200.0, count: 10 },
-        13 => KindData { loops: none, start: 0.0, count: 7 },
-        15 => KindData { loops: none, start: 0.0, count: 6 },
-        28 => KindData { loops: &T::L_803EB5A0, start: 240.0, count: 3 },
-        _ => KindData { loops: none, start: 0.0, count: 1 },
+        0 => KindData { loops: &T::L_803EB3FC, start: 0.0, count: 5, desc: &T::D_803EB660 },
+        1 => KindData { loops: &T::L_803EB444, start: 20.0, count: 5, desc: &T::D_803EB66C },
+        2 => KindData { loops: &T::L_803EB48C, start: 40.0, count: 5, desc: &T::D_803EB678 },
+        3 => KindData { loops: &T::L_803EB4C8, start: 60.0, count: 4, desc: &T::D_804D4B38 },
+        4 => KindData { loops: &T::L_803EB4F8, start: 80.0, count: 6, desc: &T::D_803EB684 },
+        5 => KindData { loops: &T::L_803EB540, start: 100.0, count: 5, desc: &T::D_803EB690 },
+        6 => KindData { loops: &T::L_803EB57C, start: 120.0, count: 3, desc: &T::D_804D4B30 },
+        9 => KindData { loops: &T::L_803EB5C4, start: 160.0, count: 3, desc: &T::D_804D4B48 },
+        12 => KindData { loops: &T::L_803EB5E8, start: 200.0, count: 10, desc: &T::D_803EB69C },
+        13 => KindData { loops: none, start: 0.0, count: 7, desc: &[] },
+        15 => KindData { loops: none, start: 0.0, count: 6, desc: &[] },
+        28 => KindData { loops: &T::L_803EB5A0, start: 240.0, count: 3, desc: &[] },
+        _ => KindData { loops: none, start: 0.0, count: 1, desc: &[] },
     }
 }
 
@@ -109,6 +112,8 @@ struct Con {
     fresh: bool,
     /// proc is `fn_8022AF10` (exit only) rather than `fn_8022AFEC`.
     exit_only: bool,
+    /// the hover description text (`MainMenuData.description`)
+    description: Option<Text>,
 }
 
 struct Panel {
@@ -135,6 +140,8 @@ pub struct MainMenu {
     /// the first POINT light's colour, which the menu drives (`LerpLightColor`)
     pose: CamPose,
     erase: [u8; 4],
+    /// the scene fog (`ScMenMain_fog`): type, start, end
+    fog: (u32, f32, f32),
     flow: Flow,
     cooldown: i32,
     panel: Panel,
@@ -149,11 +156,14 @@ pub struct MainMenu {
     render: HsdRender,
     cache: DataCache,
     pub frame: u64,
+    sis: Option<SisArchive>,
+    atlas: Vec<u8>,
+    glyphs: GlyphCache,
 }
 
 impl MainMenu {
     /// `mnMain_Scene_OnEnter(MenuEnterData{menu_kind, hovered_selection, load_assets})`.
-    pub fn new(mnmaall: &[u8], kind: u8, hovered: u16, unlock_all: bool) -> Result<Self, String> {
+    pub fn new(mnmaall: &[u8], sis: Option<(&[u8], Vec<u8>)>, kind: u8, hovered: u16, unlock_all: bool) -> Result<Self, String> {
         let a = DatArchive::parse(mnmaall).map_err(|e| format!("MnMaAll: {e}"))?;
         let mut data = a.data.clone();
         let mut entries = Vec::new();
@@ -179,6 +189,7 @@ impl MainMenu {
         let list = be32(&dat, sym("ScMenMain_scene_lights")?);
         let _ = list;
         let lights = AnimLights::new_scene(&dat, sym("ScMenMain_scene_lights")?);
+        let dat_for_fog = dat.clone();
         let mut sa = StageAnim::new_scene(dat.clone(), entries);
         // mn_80229B2C: the background
         sa.start_anim_set(BACK, 0, false);
@@ -194,6 +205,7 @@ impl MainMenu {
             lights,
             pose,
             erase,
+            fog: (be32(&dat_for_fog, fog), bef(&dat_for_fog, fog + 8), bef(&dat_for_fog, fog + 0xC)),
             flow: Flow { cur: kind, prev: kind, hovered, entering: false, light_color: 0, light_lerp: 0 },
             cooldown: 0x14,
             panel: Panel { cur: kind, prev: kind, state: 0, n4, n41 },
@@ -208,7 +220,14 @@ impl MainMenu {
             render: HsdRender::new(),
             cache: DataCache::default(),
             frame: 0,
+            sis: None,
+            atlas: Vec::new(),
+            glyphs: GlyphCache::default(),
         };
+        if let Some((bytes, atlas)) = sis {
+            m.sis = Some(SisArchive::load(bytes, "SIS_MenuData")?);
+            m.atlas = atlas;
+        }
         m.sa.req_joint(PANEL, m.panel.n4, T::L_803EB354[0].start);
         m.sa.anim_all_at(PANEL, m.panel.n4);
         if kind == KIND_MAIN {
@@ -339,7 +358,20 @@ impl MainMenu {
         let hover_anim = self.hover_anim(kind, hovered);
         self.sa.req_joint(g, tree[14], hover_anim.start);
         self.sa.anim_all_at(g, tree[14]);
-        self.cons.push(Con { g, kind, hovered, state, tree, fresh: true, exit_only: false });
+        self.cons.push(Con { g, kind, hovered, state, tree, fresh: true, exit_only: false, description: None });
+        let last = self.cons.len() - 1;
+        self.make_description(last, kind, hovered);
+    }
+
+    /// `mn_80229A7C`: (re)create the hover description of a screen's selection.
+    fn make_description(&mut self, ci: usize, kind: u8, selection: u16) {
+        self.cons[ci].description = None;
+        let kd = kind_data(kind);
+        let (Some(sis), Some(&idx)) = (self.sis.as_ref(), kd.desc.get(selection as usize)) else { return };
+        let mut t = Text::new([-9.5, 9.1, 17.0], [364.68332, 38.38772]);
+        t.font_size = [0.0521, 0.0521];
+        t.set_string(sis, idx as u32);
+        self.cons[ci].description = Some(t);
     }
 
     /// The `tree[14]` (hover description backdrop) animation of a screen/selection.
@@ -570,6 +602,19 @@ impl MainMenu {
             self.cursor_update(ci, selection);
         }
         self.backdrop(ci, selection_changed);
+        match self.cons[ci].state {
+            S_EXIT_FROM | S_ENTER_FROM => self.cons[ci].description = None,
+            S_IDLE => {
+                if selection_changed {
+                    let k = self.cons[ci].kind;
+                    self.make_description(ci, k, selection);
+                }
+                if let Some(t) = self.cons[ci].description.as_mut() {
+                    t.hidden = false;
+                }
+            }
+            _ => {}
+        }
         if set_kind {
             self.cons[ci].kind = self.flow.cur;
         }
@@ -804,6 +849,8 @@ impl MainMenu {
         shim.set_scissor(0, 0, 640, 480);
         let (vmtx, proj) = crate::view::camera(&self.pose);
         shim.set_projection(&proj, melee_gx::consts::GX_PERSPECTIVE);
+        // HSD_FogSet (gx link 1): GXSetFog(type, start, end, cobj near, far, colour)
+        shim.set_fog(self.fog.0, self.fog.1, self.fog.2, self.pose.near, self.pose.far, GxColor::new(self.erase[0], self.erase[1], self.erase[2], self.erase[3]));
         let dat = self.dat.clone();
         let mut g = ShimBackend { shim, cache: &mut self.cache };
         self.render.invalidate_all();
@@ -818,6 +865,15 @@ impl MainMenu {
             let dm = DispModel::new(&dat, j.clone()).with_mat_anim(o);
             self.render.clear_vtx_desc(&mut g);
             self.render.jobj_disp_all(&mut g, &dm, &vmtx, 7, 0);
+        }
+        // gx link 7 (the text camera, same view): each screen's description
+        if let Some(sis) = self.sis.as_ref() {
+            let env = SisEnv { sis, atlas: &self.atlas };
+            for c in &mut self.cons {
+                if let Some(t) = c.description.as_mut() {
+                    t.draw(g.shim, &env, &vmtx, &mut self.glyphs);
+                }
+            }
         }
     }
 }

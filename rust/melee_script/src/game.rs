@@ -869,6 +869,8 @@ pub trait ScriptGame {
     fn mem1_read(&self, _addr: u32, _n: usize) -> Option<Vec<u8>> {
         None
     }
+    /// `gw_ScriptGame_LaunchScene(mode)`: start the scene for a `gd.scene_launch` game mode
+    fn launch_scene(&mut self, _mode: i32) {}
     // ---- entity identity (`gw_ScriptGame_EntityField`, `EntityEpoch`, `EntityAddressField`): pc/platform/gw_script_spine_refs.inc
     /// kind 1 fighter (id = port*2+sub), 2 item, 3 echo, 4 stage object, 5 stage actor. field 0 live, 1 epoch, 2 generation,
     /// 3 definition, 4 owner fighter id + 1, 5 role bits

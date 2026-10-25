@@ -848,6 +848,27 @@ pub trait ScriptGame {
     fn cpu_attr(&self, _slot: i32, _id: i32) -> i32 {
         0
     }
+    // ---- part overrides and measurements (`gw_ScriptGame_Parts*`, script_parts.h) and raw memory peeks
+    /// field PART_I_*: REFRESH(0) rebuilds and returns the count, COUNT(1) the cached count (<0 none)
+    fn parts_i(&self, _slot: i32, _index: i32, _field: i32) -> i32 {
+        -1
+    }
+    fn parts_f(&self, _slot: i32, _index: i32, _field: i32) -> f32 {
+        0.0
+    }
+    /// ctl PART_CTL_*; <0 refused
+    fn parts_control(&mut self, _slot: i32, _part: i32, _ctl: i32, _value: i32, _owner: i32) -> i32 {
+        -1
+    }
+    /// the address of the slot's joint JObj, for effect anchors
+    fn parts_joint(&self, _slot: i32, _joint: i32) -> i32 {
+        0
+    }
+    fn parts_reset(&mut self, _owner: i32) {}
+    /// `gd.lab_peek`: n raw bytes of MEM1 at a 0x80000000-based address, None out of range
+    fn mem1_read(&self, _addr: u32, _n: usize) -> Option<Vec<u8>> {
+        None
+    }
     // ---- entity identity (`gw_ScriptGame_EntityField`, `EntityEpoch`, `EntityAddressField`): pc/platform/gw_script_spine_refs.inc
     /// kind 1 fighter (id = port*2+sub), 2 item, 3 echo, 4 stage object, 5 stage actor. field 0 live, 1 epoch, 2 generation,
     /// 3 definition, 4 owner fighter id + 1, 5 role bits

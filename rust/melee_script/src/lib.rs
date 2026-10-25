@@ -15,4 +15,4 @@ pub mod zones_core;
 
 pub use engine::{Config, Engine};
 pub use game::{NoGame, RecRead, RecRow, RecStatus, ScriptGame};
-pub use host::{Host, MemHost};
+pub use host::{FxQuery, Host, MemHost};

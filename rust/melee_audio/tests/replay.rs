@@ -49,3 +49,47 @@ fn cpu_fox_falco_dreamland_mix_equals_c() {
 fn cpu_peach_samus_ys_items_mix_equals_c() {
     check(include_str!("data/cpu_peach_samus_ys.trace"), &[12, 16], 8, 10, 12106, 0x6300687c704396b5, 652);
 }
+
+/// A scene-spanning capture: the trace carries the audio init, every bank load / unload and the
+/// HPS start's deferred completions (BANK*, SHDR / SDATA), so it replays on a bare engine.
+fn check_bare(trace: &str, sub_frames: u32, hash: u64, starts: u32) {
+    let Ok(iso) = std::env::var("GW_ISO_VANILLA") else {
+        eprintln!("skipped: no GW_ISO_VANILLA");
+        return;
+    };
+    let mut s = melee_audio::replay::boot_bare(&iso).unwrap();
+    let (mut mix, st) = replay(&mut s, trace, sub_frames);
+    assert_eq!(st.handles_different, 0);
+    assert_eq!(st.handles_equal, starts);
+    // A capture can end before the trace does (the run was cut at its time limit): compare the
+    // part both have.
+    assert!(mix.len() >= sub_frames as usize * 320);
+    mix.truncate(sub_frames as usize * 320);
+    assert_eq!(mix_hash(&mix), hash);
+}
+
+/// Opening movie, title screen and the attract demo (pad_menu: START skips the memory card, movie
+/// and title): menu sounds, opening.hps, per-scene fighter banks, nr_vs, greatbay.hps.
+#[test]
+fn title_and_attract_demo_mix_equals_c() {
+    check_bare(include_str!("data/menu_title_attract.trace"), 16412, 0x75e116914be22045, 4);
+}
+
+/// The character select screen, cursor moved and A / B / START pressed: the menu click sounds.
+#[test]
+fn css_menu_clicks_mix_equals_c() {
+    check_bare(include_str!("data/menu_css_clicks.trace"), 5650, 0xbc03c1b9ce2de179, 13);
+}
+
+/// Falcon v Fox on FD, P1 teleported out of the stage with one stock: GAME!, the KO, the results
+/// screen with its victory theme.
+#[test]
+fn stock_out_game_and_results_mix_equals_c() {
+    check_bare(include_str!("data/vs_ko_game_results.trace"), 5780, 0x7bf74c18cb10c50f, 18);
+}
+
+/// One-minute time match to the end: callouts, TIME!, the sudden-death scene.
+#[test]
+fn time_up_and_sudden_death_mix_equals_c() {
+    check_bare(include_str!("data/vs_timeup_sudden_death.trace"), 18233, 0xbb27f2611d767fb9, 29);
+}

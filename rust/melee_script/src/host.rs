@@ -65,6 +65,19 @@ pub trait Host {
     }
     /// `gw_hang_script_state`: pending and expired script deadlines, and the last expired name
     fn hang_script_state(&mut self, _pending: i32, _expired: i32, _last: &str) {}
+    // ---- the menu kit (`gw_Kit_*`, gw_kit.c): gd.kit
+    /// `gw_Kit_Available` + `gw_Kit_Why`
+    fn kit_available(&mut self) -> (bool, String) {
+        (false, "the kit is not attached to this host".into())
+    }
+    /// the palette, sections, roles and row metrics `gs_push_kit` publishes
+    fn kit_data(&mut self) -> KitData {
+        KitData::default()
+    }
+    /// one `gd.kit.<name>` drawing or measuring call with its scalar arguments; Err is the message
+    fn kit_call(&mut self, _name: &str, _args: &[KitVal]) -> Result<Vec<KitVal>, String> {
+        Err("not implemented by this host".into())
+    }
     // ---- the effects lab (`gw_Fx_Lab*`): instances belong to the creating script (owner = script index + 1)
     #[allow(clippy::too_many_arguments)]
     fn fx_lab_play(&mut self, _package: &str, _address: i32, _owner: i32, _slot1: i32, _joint: i32, _frame: i32, _facing: i32, _offset: [f32; 3], _scale: f32, _seed: u32) -> i32 {
@@ -105,6 +118,27 @@ pub trait Host {
     fn prof_command(&mut self, _args: &str) -> (bool, String) {
         (false, "prof on|off|reset|report|perf|summary on|off|trace <frames>|hitch <ms>".into())
     }
+}
+
+/// A scalar crossing the `gd.kit` seam
+#[derive(Clone, Debug, PartialEq)]
+pub enum KitVal {
+    Nil,
+    Bool(bool),
+    Int(i64),
+    Num(f64),
+    Str(String),
+}
+/// What `gs_push_kit` publishes: `colors` (palette, sections face/bg/band/face_hi, port colours), `roles`, `row`, `shear`
+#[derive(Clone, Debug, Default)]
+pub struct KitData {
+    pub palette: Vec<(String, u32)>,
+    pub sections: Vec<(String, [u32; 4])>,
+    pub ports: Vec<(String, u32)>,
+    pub roles: Vec<String>,
+    /// h, pitch, label_x, label_base, lift
+    pub row: [f32; 5],
+    pub shear: f32,
 }
 
 /// `GwFxLabQuery`

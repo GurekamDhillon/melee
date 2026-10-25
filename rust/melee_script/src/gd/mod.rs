@@ -21,6 +21,7 @@ pub mod flycam;
 pub mod hit_rules;
 pub mod history;
 pub mod lab;
+pub mod kit;
 pub mod labmisc;
 pub mod labstate;
 pub mod mods;
@@ -86,15 +87,12 @@ pub fn register_all(e: &Engine, gd: &Table) -> LuaResult<()> {
     Ok(())
 }
 
-/// `gs_push_kit`: the kit art table. The kit (gw_kit.c) is not ported yet; scripts get the table with no entries.
-pub fn push_kit(lua: &Lua) -> LuaResult<Table> {
-    lua.create_table()
-}
-
 /// `gs_push_ui`: the Atlas UI table (gw_script_ui*.inc), not ported yet.
 pub fn push_ui(lua: &Lua) -> LuaResult<Table> {
     lua.create_table()
 }
+
+pub use kit::push_kit;
 
 // ---- table builders (gs_setnum / gs_setint / gs_setstr / gs_setbool)
 pub(crate) trait TableExt {

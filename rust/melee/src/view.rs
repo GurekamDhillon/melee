@@ -151,11 +151,14 @@ struct Stage {
     groups: Vec<(u32, u32)>,
     /// `x18` light descriptors of the light group.
     lights: Vec<u32>,
+    /// `stage_info.map_plit`'s lights (ftCo_8009F4A4: the set the fighters are lit by); empty = the stage's.
+    fighter_lights: Vec<u32>,
 }
 
 fn load_stage(file: &[u8], is_fd: bool) -> Result<Stage, String> {
     let a = DatArchive::parse(file).map_err(|e| format!("stage: {e}"))?;
     let head = a.public_offset("map_head").ok_or("no map_head")?;
+    let a_plit = a.public_offset("map_plit");
     let dat = Arc::new(a.data);
     let d = &dat[..];
     let table = be32(d, head + 8);
@@ -181,6 +184,18 @@ fn load_stage(file: &[u8], is_fd: bool) -> Result<Stage, String> {
             }
             if be32(d, l) != 0 {
                 lights.push(be32(d, l));
+            }
+        }
+    }
+    let mut fighter_lights = Vec::new();
+    if let Some(pl) = a_plit {
+        for i in 0..16 {
+            let l = be32(d, pl + 4 * i);
+            if l == 0 {
+                break;
+            }
+            if be32(d, l) != 0 {
+                fighter_lights.push(be32(d, l));
             }
         }
     }
@@ -353,7 +368,7 @@ fn load_stage(file: &[u8], is_fd: bool) -> Result<Stage, String> {
             }
         }
     }
-    Ok(Stage { dat, anim, map_head: head, groups, lights })
+    Ok(Stage { dat, anim, map_head: head, groups, lights, fighter_lights })
 }
 
 struct FighterModel {
@@ -472,6 +487,11 @@ impl MatchRender {
         let over = self.stage.anim.overrides();
         let mut fighter_models: Vec<(Arc<Vec<u8>>, Vec<DispJoint>)> = Vec::new();
         for (p, f) in sim.players.iter().zip(&self.fighters) {
+            // ftDrawCommon_80080A18: `!fighter->invisible && !fighter->x221E_b5` gates the body (Entry sets
+            // `invisible`; the entry beam / trophy accessory stands in for it).
+            if p.fp.invisible() != 0 || p.fp.x221E_b5() != 0 {
+                continue;
+            }
             let mut t = p.skel.tree.clone();
             let d = Drawable { dat: f.dat.clone(), roots: vec![p.skel.root], descs: f.descs.clone() };
             fighter_models.push((f.dat.clone(), d.disp_joints(&mut t)));
@@ -497,13 +517,23 @@ impl MatchRender {
         stage_pass(r, &mut g, 2, &[0, 1, 2]);
         stage_pass(r, &mut g, 1, &[0, 1, 2]);
         stage_pass(r, &mut g, 0, &[0, 1]);
+        let own_lights = !self.stage.fighter_lights.is_empty() && std::env::var_os("MELEE_VIEW_NOPLIT").is_none();
+        if own_lights {
+            r.lobj_setup_init(&mut g, &Dat(&sd), &self.stage.fighter_lights, &vmtx);
+        }
         for c in [0u32, 1] {
             for m in &fighter_dms {
                 r.clear_vtx_desc(&mut g);
                 r.jobj_disp_all(&mut g, m, &vmtx, mask_of(c), 0);
             }
         }
+        if own_lights {
+            r.lobj_setup_init(&mut g, &Dat(&sd), &self.stage.lights, &vmtx);
+        }
         stage_pass(r, &mut g, 0, &[2]);
+        if own_lights {
+            r.lobj_setup_init(&mut g, &Dat(&sd), &self.stage.fighter_lights, &vmtx);
+        }
         for m in &fighter_dms {
             r.clear_vtx_desc(&mut g);
             r.jobj_disp_all(&mut g, m, &vmtx, mask_of(2), 0);
@@ -573,6 +603,12 @@ impl MatchRender {
                 }
             }
             eprintln!("PS frame {} gens {} parts {} | (link,bank,texgrp,kind)=n {:?}", sim.frame, sim.ps.num_gens, sim.ps.num_parts, by);
+        }
+        if std::env::var("MELEE_VIEW_FPLOG").is_ok() && sim.frame % 5 == 0 && sim.frame < 120 {
+            for (i, p) in sim.players.iter().enumerate() {
+                let f = &p.fp;
+                eprintln!("FP frame {} p{} ms {} pos {:.1} {:.1} invisible {} x221E_b5 {} x2219_b1 {} ", sim.frame, i, f.motion_id, f.cur_pos.x, f.cur_pos.y, f.invisible(), f.x221E_b5(), f.x2219_b1());
+            }
         }
         if std::env::var("MELEE_VIEW_POSLOG").is_ok() && sim.frame % 10 == 0 {
             let p = &sim.players;

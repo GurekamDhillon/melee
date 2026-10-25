@@ -1,0 +1,15 @@
+{
+ "PSMTXIdentity": "crate::tu::mtx_pc::raw::PSMTXIdentity(a0 as _)",
+ "PSMTXCopy": "crate::tu::mtx_pc::raw::PSMTXCopy(a0 as _, a1 as _)",
+ "PSMTXConcat": "crate::tu::mtx_pc::raw::PSMTXConcat(a0 as _, a1 as _, a2 as _)",
+ "PSMTXScale": "(a0 as *mut [[f32; 4]; 3]).write(crate::mtx::scale(a1, a2, a3))",
+ "PSMTXRotAxisRad": "{ let v = crate::mtx::Vec3 { x: (*a1).x, y: (*a1).y, z: (*a1).z }; (a0 as *mut [[f32; 4]; 3]).write(crate::mtx::rot_axis_rad(&v, a2)); }",
+ "PSMTXInverse": "{ let s = (a0 as *const [[f32; 4]; 3]).read(); if let Some(m) = crate::mtx::inverse(&s) { (a1 as *mut [[f32; 4]; 3]).write(m); 1 } else { 0 } }",
+ "HSD_MtxGetScale": "{ let m = (a0 as *const [[f32; 4]; 3]).read(); let r = crate::hsd_mtx::get_scale(&m); (*a1).x = r.x; (*a1).y = r.y; (*a1).z = r.z; }",
+ "HSD_MulColor": "{ let v = |x: *mut GXColor| crate::hsd_util::GxColor { r: (*x).r, g: (*x).g, b: (*x).b, a: (*x).a }; let r = crate::hsd_util::mul_color(&v(a0), &v(a1)); *a2 = GXColor { r: r.r, g: r.g, b: r.b, a: r.a }; }",
+ "HSD_MtxSRT": "{ let v = |x: *mut Vec| crate::mtx::Vec3 { x: (*x).x, y: (*x).y, z: (*x).z }; let ps = if a4.is_null() { None } else { Some(v(a4)) }; (a0 as *mut [[f32; 4]; 3]).write(crate::hsd_mtx::srt(&v(a1), &v(a2), &v(a3), ps.as_ref())); }",
+ "atan2f": "crate::lbtrigf::atan2f(a0, a1)",
+ "psSetupTev": "crate::tu::psdisptev::psSetupTev(a0)",
+ "psSetupTevCommon": "crate::tu::psdisptev::psSetupTevCommon()",
+ "psSetupTevInvalidState": "crate::tu::psdisptev::psSetupTevInvalidState()"
+}

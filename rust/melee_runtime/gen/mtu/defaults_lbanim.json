@@ -1,0 +1,11 @@
+{
+ "HSD_FObjAlloc": "crate::tu::fobj::HSD_FObjAlloc() as _",
+ "HSD_AObjAlloc": "crate::tu::aobj::HSD_AObjAlloc() as _",
+ "HSD_AObjRemove": "crate::tu::aobj::HSD_AObjRemove(a0 as _)",
+ "HSD_AObjSetFlags": "crate::tu::aobj::HSD_AObjSetFlags(a0 as _, a1 as _)",
+ "HSD_AObjSetFObj": "crate::tu::aobj::HSD_AObjSetFObj(a0 as _, a1 as _)",
+ "HSD_AObjSetRewindFrame": "crate::tu::aobj::HSD_AObjSetRewindFrame(a0 as _, a1 as _)",
+ "HSD_AObjSetEndFrame": "crate::tu::aobj::HSD_AObjSetEndFrame(a0 as _, a1 as _)",
+ "HSD_JObjSetFlags": "crate::tu::jobj_world::HSD_JObjSetFlags(a0, a1)",
+ "HSD_JObjClearFlags": "crate::tu::jobj_world::HSD_JObjClearFlags(a0, a1)"
+}

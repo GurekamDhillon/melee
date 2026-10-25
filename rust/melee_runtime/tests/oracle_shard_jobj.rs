@@ -41,7 +41,7 @@ unsafe fn dump(seed:u32,stage:u32,out:&mut String){let mut h=2166136261;word(&mu
 }
 unsafe fn run(seed:u32,out:&mut String){
  EV=0;STATUS=0;OBJECTS.clear();IDS.clear();hsdJObj=HSD_JObjInfo::zeroed();default_class=null_mut();current_jobj=null_mut();ufc_callbacks=null_mut();
- PARENT.init=Some(parent_init);PARENT.release=Some(parent_release);PARENT.amnesia=Some(parent_amnesia);ext::hsdObj=&raw mut PARENT;JObjInfoInit();HSD_JObjSetDefaultClass((&raw mut hsdJObj).cast());
+ PARENT.init=Some(parent_init);PARENT.release=Some(parent_release);PARENT.amnesia=Some(parent_amnesia);ext::hsdObj=PARENT;JObjInfoInit();HSD_JObjSetDefaultClass((&raw mut hsdJObj).cast());
  let mut d=[HSD_Joint::zeroed();4];let mut s=[_HSD_SList::zeroed();2];let mut m=mtx::identity();let mut local=HSD_JObj::zeroed();let mut r=HSD_RObj::zeroed();
  for(i,x)in d.iter_mut().enumerate(){x.flags=(1<<18)|(1<<28);x.scale=Vec{x:1.+(seed%3) as f32,y:2.,z:3.};x.rotation=Vec{x:seed as f32*0.001,y:i as f32*0.1,z:-0.25};x.position=Vec{x:i as f32,y:seed as f32,z:-2.};}
  d[0].child=&mut d[1];d[1].next=&mut d[2];d[0].next=&mut d[3];d[3].child=&mut d[1];d[3].flags|=1<<12;d[1].class_name=if seed&1!=0{c"x".as_ptr().cast_mut()}else{c"z".as_ptr().cast_mut()};d[2].flags|=match seed%3{0=>1<<5,1=>1<<14,_=>0};
@@ -61,7 +61,11 @@ unsafe fn run(seed:u32,out:&mut String){
 }
 #[test]
 fn shard_jobj_native_state_oracle(){unsafe{
- ext::NEW=Some(new);ext::SEARCH=Some(search);ext::DESCENDANT=Some(descendant);ext::INIT_INFO=Some(init_info);ext::DELETE=Some(delete);ext::DLOAD=Some(dload);ext::RLOAD=Some(rload);ext::DRESOLVE=Some(dresolve);ext::RRESOLVE=Some(rresolve);ext::DREMOVE=Some(dremove);ext::RREMOVE=Some(rremove);ext::AREMOVE=Some(aremove);ext::IDINSERT=Some(insert);ext::IDGET=Some(get);ext::IDREMOVE=Some(remove);ext::CAMERA=Some(camera);ext::DISP=Some(display);ext::MTX_FREE=Some(|_|{});ext::VEC_FREE=Some(|_|{});
+ use ext::hook::*;use std::ffi::c_void;melee_runtime::tu::jobj::use_ext_data=true;
+ hsdNew=Some(|i|new(i).cast::<c_void>());hsdSearchClassInfo=Some(|n|search(n as *mut i8));hsdIsDescendantOf=Some(|i,p|descendant(i.cast(),p.cast()) as i32);hsdInitClassInfo=Some(|i,p,l,n,is,os|init_info(i,p,l,n as *const i8,is,os));
+ HSD_DObjLoadDesc=Some(|d|dload(d));HSD_RObjLoadDesc=Some(|d|rload(d));HSD_DObjResolveRefsAll=Some(|a,b|dresolve(a,b));HSD_RObjResolveRefsAll=Some(|a,b|rresolve(a,b));HSD_DObjRemoveAll=Some(|a|dremove(a));HSD_RObjRemoveAll=Some(|a|rremove(a));HSD_AObjRemove=Some(|a|aremove(a));
+ HSD_IDInsertToTable=Some(|t,id,j|insert(t.cast(),id as usize,j.cast()));HSD_IDGetDataFromTable=Some(|t,id,s|get(t.cast(),id as usize,s).cast::<c_void>());HSD_IDRemoveByIDFromTable=Some(|t,id|remove(t.cast(),id as usize));
+ HSD_CObjGetCurrent=Some(||camera());HSD_JObjDisp=Some(|j,m,f,r|display(j,&*(m as *const Mtx),f,r));HSD_MtxFree=Some(|_|{});HSD_VecFree=Some(|_|{});HSD_MtxAlloc=Some(||Box::into_raw(Box::new([[0f32;4];3])).cast::<c_void>());
  let mut actual=String::new();for seed in 0..128{run(seed,&mut actual)}
  let expected=include_str!("data/oracle_shard_jobj.txt");for (i,(a,e))in actual.lines().zip(expected.lines()).enumerate(){assert_eq!(a,e,"oracle row {i}");}assert_eq!(actual.lines().count(),expected.lines().count());
 }}

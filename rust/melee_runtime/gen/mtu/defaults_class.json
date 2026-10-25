@@ -1,0 +1,4 @@
+{
+ "HSD_MemAlloc": "crate::tu::memory::HSD_MemAlloc(a0)",
+ "HSD_HashSearch": "crate::tu::hash::HSD_HashSearch(a0, a1, a2)"
+}

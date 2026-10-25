@@ -1,0 +1,3 @@
+{"HSD_MemAlloc": "crate::tu::memory::HSD_MemAlloc(a0 as i32)",
+ "HSD_GetHeap": "crate::tu::memory::ext::HSD_GetHeap()",
+ "PcTraceHeapEnabled": "crate::tu::memory::ext::PcTraceHeapEnabled()"}

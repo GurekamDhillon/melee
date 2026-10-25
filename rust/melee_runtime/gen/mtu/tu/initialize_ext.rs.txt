@@ -1,0 +1,106 @@
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/mtu/gen_tu.py; the callees of the C TU)
+pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    use super::*;
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn GXInitLightAttn(a0: *mut _GXLightObj, a1: f32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32);
+    fn GXInitLightColor(a0: *mut _GXLightObj, a1: _GXColor);
+    fn GXInitLightDir(a0: *mut _GXLightObj, a1: f32, a2: f32, a3: f32);
+    fn GXInitLightPos(a0: *mut _GXLightObj, a1: f32, a2: f32, a3: f32);
+    fn GXLoadLightObjImm(a0: *mut _GXLightObj, a1: u32);
+    fn GXSetFieldMode(a0: u8, a1: u8);
+    fn GXSetPixelFmt(a0: u32, a1: u32);
+    fn HSD_AObjGetAllocData() -> *mut _HSD_ObjAllocData = crate::tu::aobj::HSD_AObjGetAllocData();
+    fn HSD_AObjInitAllocData() = crate::tu::aobj::HSD_AObjInitAllocData();
+    fn HSD_ChanGetAllocData() -> *mut _HSD_ObjAllocData = crate::tu::tev::HSD_ChanGetAllocData(crate::tu::globals::render());
+    fn HSD_DListGetAllocData() -> *mut _HSD_ObjAllocData = crate::tu::list::HSD_DListGetAllocData();
+    fn HSD_FObjGetAllocData() -> *mut _HSD_ObjAllocData = crate::tu::fobj::HSD_FObjGetAllocData();
+    fn HSD_FObjInitAllocData() = crate::tu::fobj::HSD_FObjInitAllocData();
+    fn HSD_IDGetAllocData() -> *mut _HSD_ObjAllocData = crate::tu::id::HSD_IDGetAllocData();
+    fn HSD_IDInitAllocData() = crate::tu::id::HSD_IDInitAllocData();
+    fn HSD_IDSetup() = crate::tu::id::HSD_IDSetup();
+    fn HSD_Index2LightID(a0: u32) -> i32 = crate::lobj::index_to_light_id(a0) as i32;
+    fn HSD_ListInitAllocData() = crate::tu::list::HSD_ListInitAllocData();
+    fn HSD_LogInit() = crate::tu::debug::HSD_LogInit();
+    fn HSD_MtxGetAllocData() -> *mut _HSD_ObjAllocData = crate::tu::mtx::HSD_MtxGetAllocData();
+    fn HSD_MtxInitAllocData() = crate::tu::mtx::HSD_MtxInitAllocData();
+    fn HSD_ObjSetHeap(a0: u32, a1: *mut c_void) = { let (size, p) = (a0, a1); crate::tu::objalloc::HSD_ObjSetHeap(size, p) };
+    fn HSD_RObjGetAllocData() -> *mut _HSD_ObjAllocData;
+    fn HSD_RObjInitAllocData();
+    fn HSD_RenderGetAllocData() -> *mut _HSD_ObjAllocData = crate::tu::tev::HSD_RenderGetAllocData(crate::tu::globals::render());
+    fn HSD_RenderInitAllocData() = crate::tu::tev::HSD_RenderInitAllocData(crate::tu::globals::render());
+    fn HSD_RvalueObjGetAllocData() -> *mut _HSD_ObjAllocData;
+    fn HSD_SListGetAllocData() -> *mut _HSD_ObjAllocData = crate::tu::list::HSD_SListGetAllocData();
+    fn HSD_ShadowGetAllocData() -> *mut _HSD_ObjAllocData = crate::tu::shadow::HSD_ShadowGetAllocData();
+    fn HSD_ShadowInitAllocData() = crate::tu::shadow::HSD_ShadowInitAllocData();
+    fn HSD_StateInvalidate(a0: i32);
+    fn HSD_TevRegGetAllocData() -> *mut _HSD_ObjAllocData = crate::tu::tev::HSD_TevRegGetAllocData(crate::tu::globals::render());
+    fn HSD_VIInit(a0: *mut _HSD_VIStatus, a1: *mut c_void, a2: *mut c_void, a3: *mut c_void) = { let (s, a, b, c) = (a0, a1, a2, a3); crate::tu::video::HSD_VIInit(s, a, b, c) };
+    fn HSD_VecGetAllocData() -> *mut _HSD_ObjAllocData = crate::tu::mtx::HSD_VecGetAllocData();
+    fn HSD_VecInitAllocData() = crate::tu::mtx::HSD_VecInitAllocData();
+    fn HSD_ZListInitAllocData();
+    fn OSAllocFromHeap(a0: i32, a1: u32) -> *mut c_void;
+    fn OSCreateHeap(a0: *mut c_void, a1: *mut c_void) -> i32;
+    fn OSDestroyHeap(a0: i32);
+    fn OSGetArenaHi() -> *mut c_void;
+    fn OSGetArenaLo() -> *mut c_void;
+    fn OSGetPhysicalMemSize() -> u32;
+    fn OSInitAlloc(a0: *mut c_void, a1: *mut c_void, a2: i32) -> *mut c_void;
+    fn OSSetArenaLo(a0: *mut c_void);
+    fn OSSetCurrentHeap(a0: i32) -> i32;
+    fn VIWaitForRetrace();
+    fn _HSD_AObjForgetMemory(a0: *mut c_void, a1: *mut c_void) = { let (lo, hi) = (a0, a1); crate::tu::aobj::_HSD_AObjForgetMemory(lo, hi) };
+    fn _HSD_DispForgetMemory(a0: *mut c_void, a1: *mut c_void);
+    fn _HSD_IDForgetMemory(a0: *mut c_void, a1: *mut c_void) = crate::tu::id::_HSD_IDForgetMemory(a0, a1);
+    fn _HSD_ObjAllocForgetMemory(a0: *mut c_void, a1: *mut c_void) = { let (lo, hi) = (a0, a1); crate::tu::objalloc::_HSD_ObjAllocForgetMemory(lo, hi) };
+    fn _HSD_RObjForgetMemory(a0: *mut c_void, a1: *mut c_void);
+    fn _HSD_RandForgetMemory(a0: *mut c_void, a1: *mut c_void) = { let (lo, hi) = (a0, a1); crate::tu::random::_HSD_RandForgetMemory(crate::tu::globals::rand(), lo as *const u8, hi as *const u8) };
+    fn hsdForgetClassLibrary(a0: *const i8) = { let (name,) = (a0,); crate::tu::class::hsdForgetClassLibrary(name as _) };
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+        pub unsafe extern "C" fn HSD_AObjGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_AObjGetAllocData() }
+        pub unsafe extern "C" fn HSD_ChanGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_ChanGetAllocData() }
+        pub unsafe extern "C" fn HSD_DListGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_DListGetAllocData() }
+        pub unsafe extern "C" fn HSD_FObjGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_FObjGetAllocData() }
+        pub unsafe extern "C" fn HSD_IDGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_IDGetAllocData() }
+        pub unsafe extern "C" fn HSD_MtxGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_MtxGetAllocData() }
+        pub unsafe extern "C" fn HSD_RObjGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_RObjGetAllocData() }
+        pub unsafe extern "C" fn HSD_RenderGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_RenderGetAllocData() }
+        pub unsafe extern "C" fn HSD_RvalueObjGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_RvalueObjGetAllocData() }
+        pub unsafe extern "C" fn HSD_SListGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_SListGetAllocData() }
+        pub unsafe extern "C" fn HSD_ShadowGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_ShadowGetAllocData() }
+        pub unsafe extern "C" fn HSD_TevRegGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_TevRegGetAllocData() }
+        pub unsafe extern "C" fn HSD_VecGetAllocData() -> *mut _HSD_ObjAllocData { super::HSD_VecGetAllocData() }
+        pub unsafe extern "C" fn OSGetArenaHi() -> *mut c_void { super::OSGetArenaHi() }
+        pub unsafe extern "C" fn OSGetArenaLo() -> *mut c_void { super::OSGetArenaLo() }
+        pub unsafe extern "C" fn _HSD_AObjForgetMemory(a0: *mut c_void, a1: *mut c_void) { super::_HSD_AObjForgetMemory(a0, a1) }
+        pub unsafe extern "C" fn _HSD_DispForgetMemory(a0: *mut c_void, a1: *mut c_void) { super::_HSD_DispForgetMemory(a0, a1) }
+        pub unsafe extern "C" fn _HSD_IDForgetMemory(a0: *mut c_void, a1: *mut c_void) { super::_HSD_IDForgetMemory(a0, a1) }
+        pub unsafe extern "C" fn _HSD_ObjAllocForgetMemory(a0: *mut c_void, a1: *mut c_void) { super::_HSD_ObjAllocForgetMemory(a0, a1) }
+        pub unsafe extern "C" fn _HSD_RObjForgetMemory(a0: *mut c_void, a1: *mut c_void) { super::_HSD_RObjForgetMemory(a0, a1) }
+        pub unsafe extern "C" fn _HSD_RandForgetMemory(a0: *mut c_void, a1: *mut c_void) { super::_HSD_RandForgetMemory(a0, a1) }
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut GXNtsc480IntDf: GXRenderModeObj = unsafe { core::mem::zeroed() };
+    pub static mut HSD_Synth_804D6018: i32 = unsafe { core::mem::zeroed() };
+    pub static mut HSD_VIData: HSD_VIInfo = unsafe { core::mem::zeroed() };
+    pub static mut __OSCurrHeap: i32 = unsafe { core::mem::zeroed() };
+}
+// END GENERATED EXT

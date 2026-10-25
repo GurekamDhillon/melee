@@ -1,0 +1,92 @@
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/mtu/gen_tu.py; the callees of the C TU)
+pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    use super::*;
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn GXBegin(a0: u32, a1: u32, a2: u16);
+    fn GXCopyTex(a0: *mut c_void, a1: u8);
+    fn GXGetTexBufferSize(a0: u16, a1: u16, a2: u32, a3: u8, a4: u8) -> u32;
+    fn GXInvalidateTexAll();
+    fn GXLoadPosMtxImm(a0: *mut c_void, a1: u32);
+    fn GXPixModeSync();
+    fn GXPosition2f32(a0: f32, a1: f32);
+    fn GXSetCurrentMtx(a0: u32);
+    fn GXSetScissor(a0: u32, a1: u32, a2: u32, a3: u32);
+    fn GXSetTexCopyDst(a0: u16, a1: u16, a2: u32, a3: u8);
+    fn GXSetTexCopySrc(a0: u16, a1: u16, a2: u16, a3: u16);
+    fn GXSetVtxAttrFmt(a0: u32, a1: u32, a2: u32, a3: u32, a4: u8);
+    fn GXSetVtxDesc(a0: u32, a1: u32);
+    fn HSD_CObjAlloc() -> *mut HSD_CObj;
+    fn HSD_CObjEndCurrent();
+    fn HSD_CObjGetBottom(a0: *mut HSD_CObj) -> f32;
+    fn HSD_CObjGetEyeDistance(a0: *mut HSD_CObj) -> f32;
+    fn HSD_CObjGetLeft(a0: *mut HSD_CObj) -> f32;
+    fn HSD_CObjGetNear(a0: *mut HSD_CObj) -> f32;
+    fn HSD_CObjGetProjectionType(a0: *mut HSD_CObj) -> i32;
+    fn HSD_CObjGetRight(a0: *mut HSD_CObj) -> f32;
+    fn HSD_CObjGetTop(a0: *mut HSD_CObj) -> f32;
+    fn HSD_CObjSetAspect(a0: *mut HSD_CObj, a1: f32);
+    fn HSD_CObjSetCurrent(a0: *mut HSD_CObj) -> i32;
+    fn HSD_CObjSetFov(a0: *mut HSD_CObj, a1: f32);
+    fn HSD_CObjSetFrustum(a0: *mut HSD_CObj, a1: f32, a2: f32, a3: f32, a4: f32);
+    fn HSD_CObjSetOrtho(a0: *mut HSD_CObj, a1: f32, a2: f32, a3: f32, a4: f32);
+    fn HSD_CObjSetScissorx4(a0: *mut HSD_CObj, a1: u16, a2: u16, a3: u16, a4: u16);
+    fn HSD_CObjSetViewportfx4(a0: *mut HSD_CObj, a1: f32, a2: f32, a3: f32, a4: f32);
+    fn HSD_ClearVtxDesc();
+    fn HSD_Free(a0: *mut c_void);
+    fn HSD_ImageDescAlloc() -> *mut HSD_ImageDesc;
+    fn HSD_ImageDescFree(a0: *mut HSD_ImageDesc);
+    fn HSD_JObjDispAll(a0: *mut HSD_JObj, a1: *mut c_void, a2: u32, a3: u32);
+    fn HSD_JObjUnref(a0: *mut HSD_JObj);
+    fn HSD_MObjAddShadowTexture(a0: *mut HSD_TObj);
+    fn HSD_MObjDeleteShadowTexture(a0: *mut HSD_TObj);
+    fn HSD_MemAlloc(a0: i32) -> *mut c_void;
+    fn HSD_ObjAlloc(a0: *mut _HSD_ObjAllocData) -> *mut c_void;
+    fn HSD_ObjAllocInit(a0: *mut _HSD_ObjAllocData, a1: u32, a2: u32);
+    fn HSD_ObjFree(a0: *mut _HSD_ObjAllocData, a1: *mut c_void);
+    fn HSD_SListAllocAndPrepend(a0: *mut _HSD_SList, a1: *mut c_void) -> *mut _HSD_SList;
+    fn HSD_SListRemove(a0: *mut _HSD_SList) -> *mut _HSD_SList;
+    fn HSD_SetupChannelAll(a0: *mut HSD_Chan);
+    fn HSD_SetupPEMode(a0: u32, a1: *mut HSD_PEDesc);
+    fn HSD_SetupTevStageAll(a0: *mut _HSD_TevDesc);
+    fn HSD_StateInitTev();
+    fn HSD_StateSetCullMode(a0: i32);
+    fn HSD_StateSetNumTexGens();
+    fn HSD_TObjAlloc() -> *mut HSD_TObj;
+    fn HSD_TObjFree(a0: *mut HSD_TObj);
+    fn MTXLightFrustum(a0: *mut c_void, a1: f32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32, a7: f32, a8: f32, a9: f32) = { let r = crate::mtx::light_frustum(a1, a2, a3, a4, a5, a6, a7, a8, a9); (a0 as *mut [[f32; 4]; 3]).write(r); };
+    fn MTXLightOrtho(a0: *mut c_void, a1: f32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32, a7: f32, a8: f32) = { let r = crate::mtx::light_ortho(a1, a2, a3, a4, a5, a6, a7, a8); (a0 as *mut [[f32; 4]; 3]).write(r); };
+    fn MTXLightPerspective(a0: *mut c_void, a1: f32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32) = { let r = crate::mtx::light_perspective(a1, a2, a3, a4, a5, a6); (a0 as *mut [[f32; 4]; 3]).write(r); };
+    fn PSMTXConcat(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void) = crate::tu::mtx_pc::raw::PSMTXConcat(a0 as _, a1 as _, a2 as _);
+    fn PSVECCrossProduct(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) = { let r = crate::mtx::vec_cross(&crate::mtx::Vec3 { x: (*a0).x, y: (*a0).y, z: (*a0).z }, &crate::mtx::Vec3 { x: (*a1).x, y: (*a1).y, z: (*a1).z }); *a2 = Vec { x: r.x, y: r.y, z: r.z }; };
+    fn PSVECDotProduct(a0: *mut Vec, a1: *mut Vec) -> f32 = crate::mtx::vec_dot(&crate::mtx::Vec3 { x: (*a0).x, y: (*a0).y, z: (*a0).z }, &crate::mtx::Vec3 { x: (*a1).x, y: (*a1).y, z: (*a1).z });
+    fn PSVECMag(a0: *mut Vec) -> f32 = crate::mtx::vec_mag(&crate::mtx::Vec3 { x: (*a0).x, y: (*a0).y, z: (*a0).z });
+    fn PSVECNormalize(a0: *mut Vec, a1: *mut Vec) = { let r = crate::mtx::vec_normalize(&crate::mtx::Vec3 { x: (*a0).x, y: (*a0).y, z: (*a0).z }); *a1 = Vec { x: r.x, y: r.y, z: r.z }; };
+    fn PSVECScale(a0: *mut Vec, a1: *mut Vec, a2: f32) = { let r = crate::mtx::vec_scale(&crate::mtx::Vec3 { x: (*a0).x, y: (*a0).y, z: (*a0).z }, a2); *a1 = Vec { x: r.x, y: r.y, z: r.z }; };
+    fn PSVECSubtract(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) = { let r = crate::mtx::vec_sub(&crate::mtx::Vec3 { x: (*a0).x, y: (*a0).y, z: (*a0).z }, &crate::mtx::Vec3 { x: (*a1).x, y: (*a1).y, z: (*a1).z }); *a2 = Vec { x: r.x, y: r.y, z: r.z }; };
+    fn atan2f(a0: f32, a1: f32) -> f32 = crate::lbtrigf::atan2f(a0, a1);
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut HSD_PerfCurrentStat: HSD_PerfStat = unsafe { core::mem::zeroed() };
+    pub static mut HSD_identityMtx: [[f32; 4]; 3] = unsafe { core::mem::zeroed() };
+}
+// END GENERATED EXT

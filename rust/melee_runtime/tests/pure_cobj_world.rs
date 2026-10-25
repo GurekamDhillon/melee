@@ -53,6 +53,26 @@ impl H {
         self.w(c.view_auto as u32);
         self.wobj(c.eyepos);
         self.wobj(c.interest);
+        unsafe {
+            self.f(c.u.up.x);
+            self.f(c.u.up.y);
+            self.f(c.u.up.z);
+        }
+        for i in 0..3 {
+            for j in 0..4 {
+                self.f(c.view_mtx[i][j]);
+            }
+        }
+        if c.proj_mtx.is_null() {
+            self.w(0);
+        } else {
+            self.w(1);
+            for i in 0..3 {
+                for j in 0..4 {
+                    unsafe { self.f((*c.proj_mtx)[i][j]) };
+                }
+            }
+        }
     }
 }
 
@@ -76,10 +96,11 @@ fn nz(r: &mut Rng, c: &mut HSD_CObj) -> *mut HSD_CObj {
 fn cobj_world_matches_c() {
     unsafe {
         ch::View_ProjectionScaleBits = Some(|| SCALE as i32);
+        melee_runtime::tu::cobj_world::ext::HSD_MtxAlloc = Some(|| Box::into_raw(Box::new([[0.0f32; 4]; 3])));
     }
     let mut r = Rng::new();
     let mut out = String::new();
-    for op in 0..15 {
+    for op in 0..23 {
         for k in 0..300 {
             let mut c: HSD_CObj = HSD_CObj::zeroed();
             let (mut we, mut wi) = (HSD_WObj::zeroed(), HSD_WObj::zeroed());
@@ -115,6 +136,23 @@ fn cobj_world_matches_c() {
             c.eyepos = if r.u() % 8 == 0 { core::ptr::null_mut() } else { &mut we };
             c.interest = if r.u() % 8 == 0 { core::ptr::null_mut() } else { &mut wi };
             let mut v = Vec { x: r.f(), y: r.f(), z: r.f() };
+            let mut pm: [[f32; 4]; 3] = [[0.0; 4]; 3];
+            c.u.up = Vec { x: r.f(), y: r.f(), z: r.f() };
+            for i in 0..3 {
+                for j in 0..4 {
+                    c.view_mtx[i][j] = r.f();
+                }
+            }
+            for i in 0..3 {
+                for j in 0..4 {
+                    pm[i][j] = r.f();
+                }
+            }
+            c.proj_mtx = if r.u() % 3 == 0 { core::ptr::null_mut() } else { &mut pm };
+            if op == 18 || op == 19 {
+                c.eyepos = &mut we;
+                c.interest = &mut wi;
+            }
             let (mut t, mut b) = (-7.0f32, -9.0f32);
             let mut ret = 0i32;
             let mut h = H(0xCBF29CE484222325);
@@ -206,7 +244,60 @@ fn cobj_world_matches_c() {
                         h.f(v.y);
                         h.f(v.z);
                     }
-                    _ => ret = HSD_CObjGetEyeVector(&mut c, core::ptr::null_mut()),
+                    14 => ret = HSD_CObjGetEyeVector(&mut c, core::ptr::null_mut()),
+                    15 => {
+                        let cp = nz(&mut r, &mut c);
+                        let vp: *mut Vec = if r.u() % 6 == 0 { core::ptr::null_mut() } else { &mut v };
+                        ret = HSD_CObjGetUpVector(cp, vp);
+                        h.f(v.x);
+                        h.f(v.y);
+                        h.f(v.z);
+                    }
+                    16 => {
+                        let cp = nz(&mut r, &mut c);
+                        let vp: *mut Vec = if r.u() % 6 == 0 { core::ptr::null_mut() } else { &mut v };
+                        HSD_CObjSetUpVector(cp, vp);
+                    }
+                    17 => {
+                        let cp = nz(&mut r, &mut c);
+                        let roll = r.f();
+                        HSD_CObjSetRoll(cp, roll);
+                    }
+                    18 => {
+                        let m = HSD_CObjGetViewingMtxPtr(&mut c);
+                        ret = if m as *const f32 == c.view_mtx.as_ptr() as *const f32 { 1 } else { 2 };
+                    }
+                    19 => {
+                        let m = HSD_CObjGetInvViewingMtxPtrDirect(&mut c);
+                        ret = if m as *const f32 == pm.as_ptr() as *const f32 {
+                            1
+                        } else if m == c.proj_mtx as *mut [f32; 4] {
+                            2
+                        } else {
+                            3
+                        };
+                    }
+                    20 => {
+                        let cp = nz(&mut r, &mut c);
+                        let (l, rr, tt, bb) = (r.u() as u16, r.u() as u16, r.u() as u16, r.u() as u16);
+                        HSD_CObjSetScissorx4(cp, l, rr, tt, bb);
+                    }
+                    21 => {
+                        let cp = nz(&mut r, &mut c);
+                        let (l, rr, tt, bb) = (r.f(), r.f(), r.f(), r.f());
+                        HSD_CObjSetViewportfx4(cp, l, rr, tt, bb);
+                    }
+                    _ => {
+                        let m = (r.u() % 16) as i32;
+                        let mut o = [-1.0f32, -2.0, -3.0, -4.0];
+                        let cp = nz(&mut r, &mut c);
+                        let op_ = o.as_mut_ptr();
+                        let pick = |bit: i32, i: usize| if m & bit != 0 { op_.add(i) } else { core::ptr::null_mut() };
+                        HSD_CObjGetOrtho(cp, pick(1, 0), pick(2, 1), pick(4, 2), pick(8, 3));
+                        for x in o {
+                            h.f(x);
+                        }
+                    }
                 }
             }
             h.w(ret as u32);

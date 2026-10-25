@@ -17,10 +17,11 @@ use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_core::fp::{fmadds, fmsubs, frsqrte};
 use melee_types::*;
-
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
+    use core::ffi::c_void;
     macro_rules! ext_fns {
         ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
@@ -36,45 +37,72 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn lb_8000B1CC(jobj: *mut HSD_JObj, offset: *const Vec3, out: *mut Vec3) = crate::tu::lb_00B0::lb_8000B1CC(jobj, offset as _, out as _);
-    fn HSD_JObjSetupMatrix(jobj: *mut HSD_JObj);
-    fn HSD_StateInvalidate(a0: i32);
-    fn HSD_StateInitTev() = crate::tu::tev::HSD_StateInitTev(crate::tu::globals::render());
-    fn HSD_CObjGetCurrent() -> *mut HSD_CObj = crate::tu::cobj::HSD_CObjGetCurrent();
-    fn HSD_CObjGetViewingMtx(cobj: *mut HSD_CObj, mtx: *mut Mtx);
-    fn HSD_ClearVtxDesc() = crate::tu::pobj::HSD_ClearVtxDesc();
-    fn GXSetColorUpdate(a0: u8);
-    fn GXSetAlphaUpdate(a0: u8);
-    fn GXSetFog(ty: u32, startz: f32, endz: f32, nearz: f32, farz: f32, color: GXColor);
-    fn GXSetBlendMode(ty: u32, src: u32, dst: u32, op: u32);
-    fn GXSetAlphaCompare(comp0: u32, ref0: u8, op: u32, comp1: u32, ref1: u8);
-    fn GXSetZMode(enable: u8, func: u32, update: u8);
-    fn GXSetZCompLoc(a0: u8);
-    fn GXSetNumTexGens(a0: u8);
-    fn GXSetTevClampMode(stage: u32, mode: u32);
-    fn GXSetNumTevStages(a0: u8);
-    fn GXSetTevOrder(stage: u32, coord: u32, map: u32, color: u32);
-    fn GXSetTevColor(reg: u32, color: GXColor);
-    fn GXSetTevColorIn(stage: u32, a: u32, b: u32, c: u32, d: u32);
-    fn GXSetTevAlphaIn(stage: u32, a: u32, b: u32, c: u32, d: u32);
-    fn GXSetTevColorOp(stage: u32, op: u32, bias: u32, scale: u32, clamp: u8, out_reg: u32);
-    fn GXSetTevAlphaOp(stage: u32, op: u32, bias: u32, scale: u32, clamp: u8, out_reg: u32);
-    fn GXSetNumChans(a0: u8);
-    fn GXSetChanAmbColor(chan: u32, color: GXColor);
-    fn GXSetChanMatColor(chan: u32, color: GXColor);
-    fn GXSetChanCtrl(chan: u32, enable: u8, amb_src: u32, mat_src: u32, light_mask: u32, diff_fn: u32, attn_fn: u32);
-    fn GXSetCullMode(a0: u32);
+    fn GXBegin(a0: u32, a1: u32, a2: u16);
+    fn GXCallDisplayList(a0: *mut c_void, a1: u32);
     fn GXClearVtxDesc();
-    fn GXSetArray(attr: u32, base_ptr: *const u8, stride: u8);
-    fn GXSetVtxDesc(attr: u32, ty: u32);
-    fn GXSetVtxAttrFmt(fmt: u32, attr: u32, cnt: u32, ty: u32, frac: u8);
-    fn GXLoadPosMtxImm(mtx: *const Mtx, id: u32);
-    fn GXLoadNrmMtxImm(mtx: *const Mtx, id: u32);
-    fn GXCallDisplayList(list: *const u8, nbytes: u32);
-    fn GXSetCurrentMtx(id: u32);
-    fn GXBegin(ty: u32, fmt: u32, nverts: u16);
-    fn GXPosition3f32(x: f32, y: f32, z: f32);
-    fn GXColor4u8(r: u8, g: u8, b: u8, a: u8);
+    fn GXColor4u8(a0: u8, a1: u8, a2: u8, a3: u8);
+    fn GXLoadNrmMtxImm(a0: *mut c_void, a1: u32);
+    fn GXLoadPosMtxImm(a0: *mut c_void, a1: u32);
+    fn GXPosition3f32(a0: f32, a1: f32, a2: f32);
+    fn GXSetAlphaCompare(a0: u32, a1: u8, a2: u32, a3: u32, a4: u8);
+    fn GXSetAlphaUpdate(a0: u8);
+    fn GXSetArray(a0: u32, a1: *const c_void, a2: u8);
+    fn GXSetBlendMode(a0: u32, a1: u32, a2: u32, a3: u32);
+    fn GXSetChanAmbColor(a0: u32, a1: _GXColor);
+    fn GXSetChanCtrl(a0: u32, a1: u8, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32);
+    fn GXSetChanMatColor(a0: u32, a1: _GXColor);
+    fn GXSetColorUpdate(a0: u8);
+    fn GXSetCullMode(a0: u32);
+    fn GXSetCurrentMtx(a0: u32);
+    fn GXSetFog(a0: u32, a1: f32, a2: f32, a3: f32, a4: f32, a5: _GXColor);
+    fn GXSetNumChans(a0: u8);
+    fn GXSetNumTevStages(a0: u8);
+    fn GXSetNumTexGens(a0: u8);
+    fn GXSetTevAlphaIn(a0: u32, a1: u32, a2: u32, a3: u32, a4: u32);
+    fn GXSetTevAlphaOp(a0: u32, a1: u32, a2: u32, a3: u32, a4: u8, a5: u32);
+    fn GXSetTevClampMode(a0: i32, a1: i32);
+    fn GXSetTevColor(a0: u32, a1: _GXColor);
+    fn GXSetTevColorIn(a0: u32, a1: u32, a2: u32, a3: u32, a4: u32);
+    fn GXSetTevColorOp(a0: u32, a1: u32, a2: u32, a3: u32, a4: u8, a5: u32);
+    fn GXSetTevOrder(a0: u32, a1: u32, a2: u32, a3: u32);
+    fn GXSetVtxAttrFmt(a0: u32, a1: u32, a2: u32, a3: u32, a4: u8);
+    fn GXSetVtxDesc(a0: u32, a1: u32);
+    fn GXSetZCompLoc(a0: u8);
+    fn GXSetZMode(a0: u8, a1: u32, a2: u8);
+    fn HSD_CObjGetCurrent() -> *mut HSD_CObj = crate::tu::cobj::HSD_CObjGetCurrent();
+    fn HSD_CObjGetViewingMtx(a0: *mut HSD_CObj, a1: *mut c_void);
+    fn HSD_ClearVtxDesc() = crate::tu::pobj::HSD_ClearVtxDesc();
+    fn HSD_JObjSetupMatrixSub(a0: *mut HSD_JObj);
+    fn HSD_MtxInverse(a0: *mut c_void, a1: *mut c_void) = { let r = crate::hsd_mtx::inverse(&*(a0 as *const [[f32; 4]; 3])); (a1 as *mut [[f32; 4]; 3]).write(r); };
+    fn HSD_StateInitTev() = crate::tu::tev::HSD_StateInitTev(crate::tu::globals::render());
+    fn HSD_StateInvalidate(a0: i32);
+    fn PSMTXConcat(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void) = crate::tu::mtx_pc::raw::PSMTXConcat(a0 as _, a1 as _, a2 as _);
+    fn PSMTXIdentity(a0: *mut c_void);
+    fn PSMTXMultVec(a0: *mut c_void, a1: *mut Vec, a2: *mut Vec) = { let v = crate::mtx::mult_vec(&*(a0 as *const [[f32; 4]; 3]), &crate::mtx::Vec3 { x: (*a1).x, y: (*a1).y, z: (*a1).z }); *a2 = Vec { x: v.x, y: v.y, z: v.z }; };
+    fn PSMTXScale(a0: *mut c_void, a1: f32, a2: f32, a3: f32);
+    fn PSMTXTrans(a0: *mut c_void, a1: f32, a2: f32, a3: f32);
+    fn PSMTXTranspose(a0: *mut c_void, a1: *mut c_void);
+    fn PSVECCrossProduct(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec);
+    fn PSVECNormalize(a0: *mut Vec, a1: *mut Vec);
+    fn lbAudioAx_80024184(a0: i32, a1: i32, a2: i32, a3: i32) -> i32;
+    fn lbVector_AngleXY(a0: *mut Vec, a1: *mut Vec) -> f32;
+    fn lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec) = { let (jobj, offset, out) = (a0, a1, a2); crate::tu::lb_00B0::lb_8000B1CC(jobj, offset as _, out as _) };
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+    }
+    // Data defined in other TUs (the tests set them).
+}
+// END GENERATED EXT
+/// jobj.h `HSD_JObjSetupMatrix` (inline): rebuild when dirty and not user-defined.
+unsafe fn jobj_setup_matrix(j: *mut HSD_JObj) {
+    if j.is_null() {
+        return;
+    }
+    let fl = (*j).flags;
+    if fl & (1 << 23) == 0 && fl & (1 << 6) != 0 {
+        ext::HSD_JObjSetupMatrixSub(j);
     }
 }
 
@@ -148,6 +176,7 @@ fn reject_axis(s: f32, e: f32, p: f32, q: f32, r: f32) -> bool {
 
 #[inline]
 unsafe fn jobj_mtx(j: *mut HSD_JObj) -> *const Mtx {
+    jobj_setup_matrix(j); // jobj.h HSD_JObjGetMtxPtr
     (&raw const (*j).mtx) as *const Mtx
 }
 
@@ -814,9 +843,13 @@ pub unsafe extern "C" fn lbColl_80006E58(
     }
 
     // Measure the hurt radius in the matrix's local space for scaled bones.
-    let inv_hurt_mtx = hsd_mtx::inverse(&*hurt_mtx);
-    let lhs = mtx::mult_vec(&inv_hurt_mtx, &cv(&*hit_closest));
-    let rhs = mtx::mult_vec(&inv_hurt_mtx, &cv(&*hurt_closest));
+    let mut inv_hurt_mtx: Mtx = [[0.0; 4]; 3];
+    ext::HSD_MtxInverse(hurt_mtx as *mut c_void, (&mut inv_hurt_mtx as *mut Mtx).cast());
+    // the C reuses `hit_start_copy` / `hit_delta` as the outputs (their old values survive a no-op callee)
+    let mut lhs = Vec { x: hs.x, y: hs.y, z: hs.z };
+    let mut rhs = Vec { x: hit_delta.x, y: hit_delta.y, z: hit_delta.z };
+    ext::PSMTXMultVec((&mut inv_hurt_mtx as *mut Mtx).cast(), hit_closest as *mut Vec, &mut lhs);
+    ext::PSMTXMultVec((&mut inv_hurt_mtx as *mut Mtx).cast(), hurt_closest as *mut Vec, &mut rhs);
     let lsx = lhs.x - rhs.x;
     let lsy = lhs.y - rhs.y;
     let lsz = lhs.z - rhs.z;
@@ -917,7 +950,7 @@ pub unsafe extern "C" fn lbColl_80007BCC(arg0: *mut HitCapsule, shield_hit: *mut
     let mut sp38: Mtx = [[0.0; 4]; 3];
 
     if (*shield_hit).skip_update_pos() == 0 {
-        ext::lb_8000B1CC((*shield_hit).bone, &(*shield_hit).offset, &raw mut (*shield_hit).pos);
+        ext::lb_8000B1CC((*shield_hit).bone, &raw mut (*shield_hit).offset, &raw mut (*shield_hit).pos);
         if !arg2.is_null() {
             (*shield_hit).pos.z = arg6;
         }
@@ -929,7 +962,7 @@ pub unsafe extern "C" fn lbColl_80007BCC(arg0: *mut HitCapsule, shield_hit: *mut
         return true;
     }
     if !arg2.is_null() {
-        sp38 = mtx::concat(&*arg2, &*jobj_mtx((*shield_hit).bone));
+        ext::PSMTXConcat(arg2 as *mut c_void, jobj_mtx((*shield_hit).bone) as *mut c_void, (&mut sp38 as *mut Mtx).cast());
     }
     let hurt_mtx: *const Mtx = if !arg2.is_null() { &sp38 } else { jobj_mtx((*shield_hit).bone) };
     let hit_radius = if (*arg0).x43_b1() != 0 { (*arg0).scale } else { (*arg0).scale * arg4 };
@@ -965,8 +998,8 @@ pub unsafe extern "C" fn lbColl_80007DD8(capsule: *mut HitCapsule, hit: *mut Hit
 /// Shared by the hurt-capsule tests: refresh the capsule's world endpoints.
 unsafe fn update_hurt_pos(arg1: *mut HurtCapsule, has_mtx: bool, z: f32) {
     if (*arg1).skip_update_pos() == 0 {
-        ext::lb_8000B1CC((*arg1).bone, &(*arg1).a_offset, &raw mut (*arg1).a_pos);
-        ext::lb_8000B1CC((*arg1).bone, &(*arg1).b_offset, &raw mut (*arg1).b_pos);
+        ext::lb_8000B1CC((*arg1).bone, &raw mut (*arg1).a_offset, &raw mut (*arg1).a_pos);
+        ext::lb_8000B1CC((*arg1).bone, &raw mut (*arg1).b_offset, &raw mut (*arg1).b_pos);
         if has_mtx {
             (*arg1).b_pos.z = z;
             (*arg1).a_pos.z = z;
@@ -1073,8 +1106,8 @@ pub unsafe extern "C" fn lbColl_800083C4(arg0: *mut HurtCapsule) {
     if (*arg0).skip_update_pos() != 0 {
         return;
     }
-    ext::lb_8000B1CC((*arg0).bone, &(*arg0).a_offset, &raw mut (*arg0).a_pos);
-    ext::lb_8000B1CC((*arg0).bone, &(*arg0).b_offset, &raw mut (*arg0).b_pos);
+    ext::lb_8000B1CC((*arg0).bone, &raw mut (*arg0).a_offset, &raw mut (*arg0).a_pos);
+    ext::lb_8000B1CC((*arg0).bone, &raw mut (*arg0).b_offset, &raw mut (*arg0).b_pos);
     (*arg0).set_skip_update_pos(1);
 }
 
@@ -1270,8 +1303,8 @@ pub unsafe extern "C" fn lbColl_80008DA4(arg0: *const GXColor, arg1: *const GXCo
 /// The GXSETARRAY / GXSetVtxDesc / GXSetVtxAttrFmt prologue shared by the capsule draws.
 unsafe fn setup_sphere_arrays() {
     ext::GXClearVtxDesc();
-    ext::GXSetArray(GX_VA_POS, lbColl_SpherePositions.as_ptr(), 6);
-    ext::GXSetArray(GX_VA_NRM, lbColl_SphereNormals.as_ptr(), 6);
+    ext::GXSetArray(GX_VA_POS, lbColl_SpherePositions.as_ptr().cast(), 6);
+    ext::GXSetArray(GX_VA_NRM, lbColl_SphereNormals.as_ptr().cast(), 6);
     ext::GXSetVtxDesc(GX_VA_POS, GX_INDEX8);
     ext::GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_TEX_ST, GX_RGBA4, 0xE);
     ext::GXSetVtxDesc(GX_VA_NRM, GX_INDEX8);
@@ -1280,8 +1313,8 @@ unsafe fn setup_sphere_arrays() {
 
 unsafe fn setup_cylinder_arrays() {
     ext::GXClearVtxDesc();
-    ext::GXSetArray(GX_VA_POS, lbColl_CylinderPositions.as_ptr(), 6);
-    ext::GXSetArray(GX_VA_NRM, lbColl_CylinderNormals.as_ptr(), 6);
+    ext::GXSetArray(GX_VA_POS, lbColl_CylinderPositions.as_ptr().cast(), 6);
+    ext::GXSetArray(GX_VA_NRM, lbColl_CylinderNormals.as_ptr().cast(), 6);
     ext::GXSetVtxDesc(GX_VA_POS, GX_INDEX8);
     ext::GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_TEX_ST, GX_RGBA4, 0xE);
     ext::GXSetVtxDesc(GX_VA_NRM, GX_INDEX8);
@@ -1358,11 +1391,11 @@ fn capsule_mtxs(p0: &Vec3, p1: &Vec3, r: f32) -> (Mtx, Mtx, Mtx, f32) {
 /// Load `view * m`, its inverse transpose as the normal matrix, and draw the display list.
 unsafe fn draw_list(view: &Mtx, m: &Mtx, list: &[u8]) {
     let mut c = mtx::concat(view, m);
-    ext::GXLoadPosMtxImm(&c, 0);
+    ext::GXLoadPosMtxImm((&c as *const _ as *mut Mtx).cast(), 0);
     hsd_mtx::inverse_in_place(&mut c);
     c = mtx::transpose(&c);
-    ext::GXLoadNrmMtxImm(&c, 0);
-    ext::GXCallDisplayList(list.as_ptr(), list.len() as u32);
+    ext::GXLoadNrmMtxImm((&c as *const _ as *mut Mtx).cast(), 0);
+    ext::GXCallDisplayList(list.as_ptr().cast_mut().cast(), list.len() as u32);
 }
 
 pub unsafe extern "C" fn lbColl_80008FC8(arg0: Vec3, arg1: Vec3, arg2: *const GXColor, arg3: *const GXColor, arg4: f32) {
@@ -1371,7 +1404,7 @@ pub unsafe extern "C" fn lbColl_80008FC8(arg0: Vec3, arg1: Vec3, arg2: *const GX
     ext::HSD_StateInvalidate(-1);
     ext::HSD_StateInitTev();
     lbColl_80008DA4(arg2, arg3);
-    ext::HSD_CObjGetViewingMtx(ext::HSD_CObjGetCurrent(), &mut sp104);
+    ext::HSD_CObjGetViewingMtx(ext::HSD_CObjGetCurrent(), (&mut sp104 as *mut Mtx).cast());
     let (spd4, spa4, sp74, var_f31) = capsule_mtxs(&arg0, &arg1, arg4);
     ext::GXSetCullMode(GX_CULL_BACK);
     setup_sphere_arrays();
@@ -1392,7 +1425,7 @@ pub unsafe extern "C" fn lbColl_800096B4(arg0: *const Mtx, arg1: Vec3, arg2: Vec
     ext::HSD_StateInvalidate(-1);
     ext::HSD_StateInitTev();
     lbColl_80008DA4(arg3, arg4);
-    ext::HSD_CObjGetViewingMtx(ext::HSD_CObjGetCurrent(), &mut sp108);
+    ext::HSD_CObjGetViewingMtx(ext::HSD_CObjGetCurrent(), (&mut sp108 as *mut Mtx).cast());
     let (mut spd8, mut spa8, mut sp78, var_f31) = capsule_mtxs(&arg1, &arg2, arg5);
     spd8 = mtx::concat(&*arg0, &spd8);
     spa8 = mtx::concat(&*arg0, &spa8);
@@ -1423,8 +1456,8 @@ pub unsafe extern "C" fn lbColl_80009DD4(v0: *const Vec3, v1: *const Vec3, clr: 
     ext::GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
     ext::GXSetCurrentMtx(0);
     ext::GXSetCullMode(GX_CULL_NONE);
-    ext::HSD_CObjGetViewingMtx(ext::HSD_CObjGetCurrent(), &mut view_mtx);
-    ext::GXLoadPosMtxImm(&view_mtx, 0);
+    ext::HSD_CObjGetViewingMtx(ext::HSD_CObjGetCurrent(), (&mut view_mtx as *mut Mtx).cast());
+    ext::GXLoadPosMtxImm((&view_mtx as *const Mtx as *mut Mtx).cast(), 0);
     ext::GXBegin(GX_QUADS, GX_VTXFMT0, 4);
 
     let z0 = (*v0).z;
@@ -1532,7 +1565,7 @@ pub unsafe extern "C" fn lbColl_8000A460(hurt: *mut Fighter_x1670_t, arg1: u32) 
     let r31 = &raw mut lbColl_804D36E0;
     let r30 = &raw mut lbColl_804D36E4;
     if pass_for(&*r31) == arg1 {
-        ext::HSD_JObjSetupMatrix((*hurt).jobj);
+        jobj_setup_matrix((*hurt).jobj);
         lbColl_800096B4(jobj_mtx((*hurt).jobj), (*hurt).v1, (*hurt).v1, r31, r30, (*hurt).v2);
         return true;
     }
@@ -1566,7 +1599,7 @@ unsafe fn lbColl_DrawHit(hit: *mut HitResult, arg1: u32, arg2: *const Mtx, pos_z
     let mut hit_mtx: Mtx = [[0.0; 4]; 3];
     if pass_for(&*color) == arg1 {
         if (*hit).skip_update_pos() == 0 {
-            ext::lb_8000B1CC((*hit).bone, &(*hit).offset, &raw mut (*hit).pos);
+            ext::lb_8000B1CC((*hit).bone, &raw mut (*hit).offset, &raw mut (*hit).pos);
             if !arg2.is_null() {
                 (*hit).pos.z = pos_z;
             }

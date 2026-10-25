@@ -3,7 +3,17 @@
  * same pointer / function ids. */
 extern int printf(const char*, ...);
 extern int fflush(void*);
-void __assert(const char* file, u32 line, const char* cond) { (void) file; (void) line; (void) cond; for (;;) {} }
+/* A failed HSD_ASSERT / HSD_Panic / OSPanic ends the case: the driver prints "<op> <k> ABORT" and the Rust test expects
+ * its port to panic on the same case (catch_unwind). */
+typedef struct { unsigned long long b[40]; } mtu_jb_t __attribute__((aligned(16)));
+extern int _setjmp(mtu_jb_t*, void*);
+extern void longjmp(mtu_jb_t*, int);
+static mtu_jb_t AJB;
+#define MTU_SETJMP() _setjmp(&AJB, __builtin_frame_address(0))
+static int ARMED;
+void __assert(const char* file, u32 line, const char* cond) { (void) file; (void) line; (void) cond; if (ARMED) longjmp(&AJB, 1); for (;;) {} }
+__attribute__((noreturn)) void HSD_Panic(const char* file, u32 line, const char* msg) { (void) file; (void) line; (void) msg; if (ARMED) longjmp(&AJB, 1); for (;;) {} }
+__attribute__((noreturn)) void OSPanic(const char* file, int line, const char* msg, ...) { (void) file; (void) line; (void) msg; if (ARMED) longjmp(&AJB, 1); for (;;) {} }
 void OSReport(char* f, ...) { (void) f; }
 
 typedef unsigned long long u64_t_;
@@ -13,7 +23,8 @@ static u32 TR;
 #define DBG_K -1
 #endif
 static int TRACEON;
-static void T(u32 v) { TR = TR * 31u + v; if (TRACEON) printf("T %08X%c", v, 10); }
+static int NCALLS;
+static void T(u32 v) { if (++NCALLS > 20000 && ARMED) longjmp(&AJB, 1); TR = TR * 31u + v; if (TRACEON) printf("T %08X%c", v, 10); }
 static u32 B(float f) { union { float f; u32 u; } c; c.f = f; return c.u; }
 static void T64(double d) { union { double d; u64_t_ u; } c; c.d = d; T((u32) c.u); T((u32) (c.u >> 32)); }
 static u32 H;
@@ -134,6 +145,7 @@ static void tu_case(int op, int k)
 {
     int i;
     TR = 0;
+    NCALLS = 0;
     TRACEON = (op == DBG_OP && k == DBG_K);
     HDBG = TRACEON;
     H = 0x811C9DC5u;

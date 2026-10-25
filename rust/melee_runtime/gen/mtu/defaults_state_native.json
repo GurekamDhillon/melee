@@ -1,0 +1,15 @@
+{
+ "HSD_StateSetNumChans": "crate::tu::tev_native::HSD_StateSetNumChans(a0)",
+ "HSD_SetupChannel": "crate::tu::tev_native::HSD_SetupChannel(a0)",
+ "HSD_StateGetNumTevStages": "crate::tu::tev_native::HSD_StateGetNumTevStages()",
+ "HSD_StateAssignTev": "crate::tu::tev_native::HSD_StateAssignTev()",
+ "HSD_SetupTevStage": "crate::tu::tev_native::HSD_SetupTevStage(a0)",
+ "HSD_SetTevRegAll": "crate::tu::tev_native::HSD_SetTevRegAll()",
+ "HSD_StateSetNumTevStages": "crate::tu::tev_native::HSD_StateSetNumTevStages()",
+ "HSD_StateSetNumTexGens": "crate::tu::tev_native::HSD_StateSetNumTexGens()",
+ "_HSD_StateInvalidateColorChannel": "crate::tu::tev_native::_HSD_StateInvalidateColorChannel()",
+ "_HSD_StateInvalidateTevStage": "crate::tu::tev_native::_HSD_StateInvalidateTevStage()",
+ "_HSD_StateInvalidateTevRegister": "crate::tu::tev_native::_HSD_StateInvalidateTevRegister()",
+ "_HSD_StateInvalidateTexCoordGen": "crate::tu::tev_native::_HSD_StateInvalidateTexCoordGen()",
+ "HSD_ClearVtxDesc": "crate::tu::pobj::HSD_ClearVtxDesc()"
+}

@@ -5,13 +5,15 @@
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs)]
 
 use core::ffi::{c_char, CStr};
-use melee_types::{OSContext, PanicCallback, ReportCallback, __file_handle, __idle_proc, __io_proc};
-
+use core::ptr::addr_of_mut;
+use melee_types::{_IO_FILE, OSContext, PanicCallback, ReportCallback, __file_handle, __idle_proc, __io_proc};
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
+    use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -19,21 +21,22 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
                 }
             } )*
         };
     }
     ext_fns! {
-    fn OSReport(s: &str);
-    fn OSSaveContext(a0: *mut OSContext) -> i32;
-    fn OSPanic(file: &str, line: i32, msg: &str);
-    // `stdout->write_proc` (MSL ansi_files.c `stdout` FILE, read).
-    fn stdout_write_proc() -> __io_proc;
-    // `stdout->write_proc = p; stdout->state.error = 0;`
-    fn stdout_set_write_proc_clear_error(p: __io_proc);
+    fn OSSaveContext(a0: *mut OSContext) -> u32;
     }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut __files: [_IO_FILE; 3] = unsafe { core::mem::zeroed() };
 }
+// END GENERATED EXT
 
 /// `struct DebugContext` (the saved context plus 0x10 bytes of tail).
 #[repr(C)]
@@ -45,9 +48,9 @@ pub struct DebugContext {
 /// `HSD_Debug_804C2608`.
 pub static mut HSD_Debug_804C2608: DebugContext = unsafe { core::mem::zeroed() };
 
-static mut reportCallback: ReportCallback = None;
-static mut panicCallback: PanicCallback = None;
-static mut logFunc: __io_proc = None;
+pub static mut reportCallback: ReportCallback = None;
+pub static mut panicCallback: PanicCallback = None;
+pub static mut logFunc: __io_proc = None;
 
 /// The `%s` argument as text.
 unsafe fn cstr<'a>(p: *const c_char) -> std::borrow::Cow<'a, str> {
@@ -77,11 +80,22 @@ pub unsafe extern "C" fn report_func(
 /// `HSD_LogInit`.
 pub fn HSD_LogInit() {
     unsafe {
+        let out = addr_of_mut!(ext::__files).cast::<_IO_FILE>().add(1); // stdout
         if logFunc.is_none() {
-            logFunc = ext::stdout_write_proc();
+            logFunc = (*out).write_proc;
         }
-        ext::stdout_set_write_proc_clear_error(Some(report_func));
+        (*out).write_proc = Some(report_func);
+        (*out).state.error = 0;
     }
+}
+
+/// `OSPanic(file, line, msg)` (variadic, no return): settable hook, then the process panic.
+pub static mut H_OSPanic: Option<fn(&str, i32, &str)> = None;
+fn os_panic(file: &str, line: i32, msg: &str) -> ! {
+    if let Some(f) = unsafe { H_OSPanic } {
+        f(file, line, msg);
+    }
+    panic!("OSPanic: {file}:{line}: {msg}")
 }
 
 /// `__assert`.
@@ -89,7 +103,7 @@ pub fn HSD_LogInit() {
 /// # Safety
 /// `str` and `arg2` are NUL-terminated (or NULL).
 pub unsafe fn __assert(str: *const c_char, arg1: u32, arg2: *const c_char) {
-    ext::OSReport(&format!("assertion \"{}\" failed", cstr(arg2)));
+    crate::tu::lbext::OSReport("assertion \"%s\" failed", &[crate::tu::lbext::OsArg::S(arg2)]);
     HSD_Panic(str, arg1, c"".as_ptr());
 }
 
@@ -100,10 +114,11 @@ pub unsafe fn __assert(str: *const c_char, arg1: u32, arg2: *const c_char) {
 pub unsafe fn HSD_Panic(arg0: *const c_char, line: u32, arg2: *const c_char) {
     if let Some(cb) = panicCallback {
         ext::OSSaveContext(&mut HSD_Debug_804C2608.context);
-        ext::OSReport(&format!("{} in {} on line {}.\n", cstr(arg2), cstr(arg0), line as i32));
+        crate::tu::lbext::OSReport("%s in %s on line %d.
+", &[crate::tu::lbext::OsArg::S(arg2), crate::tu::lbext::OsArg::S(arg0), crate::tu::lbext::OsArg::I(line as i32)]);
         cb(&mut HSD_Debug_804C2608.context);
     }
-    ext::OSPanic(&cstr(arg0), line as i32, &cstr(arg2));
+    os_panic(&cstr(arg0), line as i32, &cstr(arg2));
 }
 
 /// `HSD_SetReportCallback`.

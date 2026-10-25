@@ -16,41 +16,81 @@ use melee_types::*;
 
 /// Callees in TUs that are not ported (dolphin gx/os, baselib class/dobj/pobj/tobj/state/memory,
 /// lbarchive). Each is a settable hook; unset it panics "TODO: <name> is not ported".
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
-    use crate::tu::lbext::lb_hook;
-    pub use crate::tu::lbext::{OSReport, OsArg, __assert};
-    pub use crate::tu::lbgx::ext::{GXSetAlphaCompare, GXSetAlphaUpdate, GXSetBlendMode, GXSetColorUpdate, GXSetNumChans, GXSetNumTevStages, GXSetNumTexGens, GXSetTevOrder, GXSetZCompLoc, GXSetZMode};
-    pub use crate::tu::lbheap::ext::HSD_MemAlloc;
-    pub use crate::tu::lbmthp::ext::DCStoreRange;
-    lb_hook!(H_lbArchive_LoadSymbols, lbArchive_LoadSymbols, (file: *const c_char, out: *mut c_void, sym: *const c_char));
-    lb_hook!(H_GXGetTexBufferSize, GXGetTexBufferSize, (w: u16, h: u16, fmt: u32, mipmap: u8, max_lod: u8) -> u32);
-    lb_hook!(H_HSD_TObjLoadDesc, HSD_TObjLoadDesc, (d: *mut HSD_TObjDesc) -> *mut HSD_TObj = |d| unsafe { crate::tu::tobj::HSD_TObjLoadDesc(d) });
-    lb_hook!(H_HSD_TObjSetup, HSD_TObjSetup, (t: *mut HSD_TObj));
-    lb_hook!(H_HSD_CObjGetProjectionType, HSD_CObjGetProjectionType, (c: *mut HSD_CObj) -> i32 = |c| unsafe { crate::tu::cobj::HSD_CObjGetProjectionType(c) });
-    lb_hook!(H_GXSetTexCopySrc, GXSetTexCopySrc, (a: u16, b: u16, c: u16, d: u16));
-    lb_hook!(H_GXSetTexCopyDst, GXSetTexCopyDst, (a: u16, b: u16, fmt: i32, mipmap: u8));
-    lb_hook!(H_GXCopyTex, GXCopyTex, (dst: *mut c_void, clear: u8));
-    lb_hook!(H_GXPixModeSync, GXPixModeSync, ());
-    lb_hook!(H_GXInvalidateTexAll, GXInvalidateTexAll, ());
-    lb_hook!(H_GXSetTevDirect, GXSetTevDirect, (stage: i32));
-    lb_hook!(H_GXSetNumIndStages, GXSetNumIndStages, (n: u8));
-    lb_hook!(H_HSD_StateInvalidate, HSD_StateInvalidate, (mask: i32));
-    lb_hook!(H_hsdDObj_disp, hsdDObj_disp, (d: *mut HSD_DObj, v: *mut [f32; 4], p: *mut [f32; 4], rendermode: u32));
-    lb_hook!(H_hsdPObj_load, hsdPObj_load, (p: *mut HSD_PObj, d: *mut HSD_PObjDesc) -> i32);
-    lb_hook!(H_hsdInitClassInfo, hsdInitClassInfo, (info: *mut _HSD_ClassInfo, parent: *mut _HSD_ClassInfo, lib: *const c_char, name: *const c_char, size_info: i32, size_obj: i32) = |info, parent, lib, name, size_info, size_obj| unsafe { crate::tu::class::hsdInitClassInfo(info as _, parent as _, lib as _, name as _, size_info, size_obj) });
-    lb_hook!(H_DCFlushRange, DCFlushRange, (addr: *mut c_void, n: u32));
-    lb_hook!(H_GXSetTexCoordGen2, GXSetTexCoordGen2, (coord: i32, ty: i32, src: i32, mtx: i32, normalize: u8, post: i32));
-    lb_hook!(H_GXLoadTexMtxImm, GXLoadTexMtxImm, (m: *const [f32; 4], id: u32, ty: i32));
-    lb_hook!(H_GXSetTevColorIn, GXSetTevColorIn, (stage: i32, a: i32, b: i32, c: i32, d: i32));
-    lb_hook!(H_GXSetTevAlphaIn, GXSetTevAlphaIn, (stage: i32, a: i32, b: i32, c: i32, d: i32));
-    lb_hook!(H_GXSetTevColorOp, GXSetTevColorOp, (stage: i32, op: i32, bias: i32, scale: i32, clamp: u8, out: i32));
-    lb_hook!(H_GXSetTevAlphaOp, GXSetTevAlphaOp, (stage: i32, op: i32, bias: i32, scale: i32, clamp: u8, out: i32));
-    lb_hook!(H_GXSetIndTexOrder, GXSetIndTexOrder, (stage: i32, coord: i32, map: i32));
-    lb_hook!(H_GXSetIndTexCoordScale, GXSetIndTexCoordScale, (stage: i32, s: i32, t: i32));
-    lb_hook!(H_GXSetIndTexMtx, GXSetIndTexMtx, (id: i32, m: *const [f32; 3], scale_exp: i8));
-    lb_hook!(H_GXSetTevIndirect, GXSetTevIndirect, (stage: i32, ind: i32, fmt: i32, bias: i32, mtx: i32, ws: i32, wt: i32, add_prev: u8, utc_lod: u8, alpha: i32));
-    lb_hook!(H_GXSetDither, GXSetDither, (a: u8));
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn DCFlushRange(a0: *mut c_void, a1: u32);
+    fn GXCopyTex(a0: *mut c_void, a1: u8);
+    fn GXGetTexBufferSize(a0: u16, a1: u16, a2: u32, a3: u8, a4: u8) -> u32;
+    fn GXInvalidateTexAll();
+    fn GXLoadTexMtxImm(a0: *mut c_void, a1: u32, a2: u32);
+    fn GXPixModeSync();
+    fn GXSetAlphaCompare(a0: u32, a1: u8, a2: u32, a3: u32, a4: u8) = crate::tu::lbgx::ext::GXSetAlphaCompare(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _);
+    fn GXSetAlphaUpdate(a0: u8) = crate::tu::lbgx::ext::GXSetAlphaUpdate(a0 as _);
+    fn GXSetBlendMode(a0: u32, a1: u32, a2: u32, a3: u32) = crate::tu::lbgx::ext::GXSetBlendMode(a0 as _, a1 as _, a2 as _, a3 as _);
+    fn GXSetColorUpdate(a0: u8) = crate::tu::lbgx::ext::GXSetColorUpdate(a0 as _);
+    fn GXSetDither(a0: u8);
+    fn GXSetIndTexCoordScale(a0: u32, a1: u32, a2: u32);
+    fn GXSetIndTexMtx(a0: u32, a1: *mut c_void, a2: i8);
+    fn GXSetIndTexOrder(a0: u32, a1: u32, a2: u32);
+    fn GXSetNumChans(a0: u8) = crate::tu::lbgx::ext::GXSetNumChans(a0 as _);
+    fn GXSetNumIndStages(a0: u8);
+    fn GXSetNumTevStages(a0: u8) = crate::tu::lbgx::ext::GXSetNumTevStages(a0 as _);
+    fn GXSetNumTexGens(a0: u8) = crate::tu::lbgx::ext::GXSetNumTexGens(a0 as _);
+    fn GXSetTevAlphaIn(a0: u32, a1: u32, a2: u32, a3: u32, a4: u32);
+    fn GXSetTevAlphaOp(a0: u32, a1: u32, a2: u32, a3: u32, a4: u8, a5: u32);
+    fn GXSetTevColorIn(a0: u32, a1: u32, a2: u32, a3: u32, a4: u32);
+    fn GXSetTevColorOp(a0: u32, a1: u32, a2: u32, a3: u32, a4: u8, a5: u32);
+    fn GXSetTevDirect(a0: u32);
+    fn GXSetTevIndirect(a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u8, a8: u8, a9: u32);
+    fn GXSetTevOrder(a0: u32, a1: u32, a2: u32, a3: u32) = crate::tu::lbgx::ext::GXSetTevOrder(a0 as _, a1 as _, a2 as _, a3 as _);
+    fn GXSetTexCoordGen2(a0: u32, a1: u32, a2: u32, a3: u32, a4: u8, a5: u32);
+    fn GXSetTexCopyDst(a0: u16, a1: u16, a2: u32, a3: u8);
+    fn GXSetTexCopySrc(a0: u16, a1: u16, a2: u16, a3: u16);
+    fn GXSetZCompLoc(a0: u8) = crate::tu::lbgx::ext::GXSetZCompLoc(a0 as _);
+    fn GXSetZMode(a0: u8, a1: u32, a2: u8) = crate::tu::lbgx::ext::GXSetZMode(a0 as _, a1 as _, a2 as _);
+    fn HSD_CObjGetProjectionType(a0: *mut HSD_CObj) -> i32 = (|c| unsafe { crate::tu::cobj::HSD_CObjGetProjectionType(c) })(a0);
+    fn HSD_MemAlloc(a0: i32) -> *mut c_void = crate::tu::lbheap::ext::HSD_MemAlloc(a0 as _);
+    fn HSD_PObjGetFlags(a0: *mut HSD_PObj) -> u32 = crate::tu::pobj::HSD_PObjGetFlags(a0);
+    fn HSD_StateInvalidate(a0: i32);
+    fn HSD_TObjLoadDesc(a0: *mut _HSD_TObjDesc) -> *mut HSD_TObj = (|d| unsafe { crate::tu::tobj::HSD_TObjLoadDesc(d) })(a0);
+    fn HSD_TObjSetup(a0: *mut HSD_TObj);
+    fn MTXLightFrustum(a0: *mut c_void, a1: f32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32, a7: f32, a8: f32, a9: f32);
+    fn MTXLightOrtho(a0: *mut c_void, a1: f32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32, a7: f32, a8: f32);
+    fn MTXLightPerspective(a0: *mut c_void, a1: f32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32);
+    fn hsdInitClassInfo(a0: *mut _HSD_ClassInfo, a1: *mut _HSD_ClassInfo, a2: *mut i8, a3: *mut i8, a4: i32, a5: i32) = (|info, parent, lib, name, size_info, size_obj| unsafe { crate::tu::class::hsdInitClassInfo(info as _, parent as _, lib as _, name as _, size_info, size_obj) })(a0, a1, a2, a3, a4, a5);
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut hsdDObj: HSD_DObjInfo = unsafe { core::mem::zeroed() };
+    pub static mut hsdPObj: HSD_PObjInfo = unsafe { core::mem::zeroed() };
+}
+// END GENERATED EXT
+
+/// `lbArchive_LoadSymbols(file, out, sym)` (variadic in the C): settable hook, no port.
+pub static mut H_lbArchive_LoadSymbols: Option<fn(*const c_char, *mut c_void, *const c_char)> = None;
+pub fn lbArchive_LoadSymbols(file: *const c_char, out: *mut c_void, sym: *const c_char) {
+    match unsafe { H_lbArchive_LoadSymbols } { Some(f) => f(file, out, sym), None => panic!("TODO: lbArchive_LoadSymbols is not ported") }
 }
 
 const FILE: &str = "src/melee/lb/lbrefract.c";
@@ -103,7 +143,7 @@ fn my_fmodf(a: f32, b: f32) -> f32 {
 
 /// `lbRefract_80021CE8(cb, arg1)`: fills the 32x32 distortion texture `arg1` from LbRf.dat's
 /// radial parameters (modulus, scale) and flushes it.
-unsafe fn lbRefract_80021CE8(cb: *mut lbRefract_CallbackData, arg1: i32) {
+pub unsafe fn lbRefract_80021CE8(cb: *mut lbRefract_CallbackData, arg1: i32) {
     use crate::gekko::sqrtf;
     let param_idx = (arg1 * 2) as isize;
     let x_step = 2.0f32 / ((*cb).width.wrapping_sub(1) as f32);
@@ -148,7 +188,7 @@ unsafe fn tile_base(data: *const lbRefract_CallbackData, c: u32, off: u32) -> *m
 }
 
 /// `lbRefract_WriteTexCoordIA4` (an IA8 texel writer): alpha then intensity.
-unsafe extern "C" fn lbRefract_WriteTexCoordIA4(data: *mut lbRefract_CallbackData, row: i32, col: i32, _arg3: u32, _arg4: u32, intensity: u32, alpha: u32) {
+pub unsafe extern "C" fn lbRefract_WriteTexCoordIA4(data: *mut lbRefract_CallbackData, row: u32, col: u32, _arg3: u32, _arg4: u32, intensity: u32, alpha: u32) {
     let (row, col) = (row as u32, col as u32);
     let base = tile_base(data, col >> 2, (row >> 2).wrapping_mul(32));
     let i = ((row & 3) + (col & 3) * 4) as usize;
@@ -246,7 +286,7 @@ unsafe fn lbRefract_8002219C(data: *mut lbRefract_CallbackData, buffer: *mut c_v
     let rgb565 = GX_TF_RGB565 as i32;
     let rgba8 = GX_TF_RGBA8 as i32;
     if format == ia8 {
-        (*data).callback0 = lbRefract_WriteTexCoordIA4 as WriteFn as *mut c_void;
+        (*data).callback0 = lbRefract_WriteTexCoordIA4 as unsafe extern "C" fn(*mut lbRefract_CallbackData, u32, u32, u32, u32, u32, u32) as usize as *mut c_void;
         (*data).callback1 = fn_80021FF8 as ReadFn as *mut c_void;
         (*data).row_stride = width.wrapping_mul(8) & 0xFFFF_FFE0;
     } else if format == rgb565 {
@@ -300,7 +340,7 @@ pub unsafe fn lbRefract_800222A4() {
     let mut cb = lbRefract_CallbackData::zeroed();
 
     lbl_804336D0.refractionUserCount = 0;
-    ext::lbArchive_LoadSymbols(b"LbRf.dat\0".as_ptr() as *const c_char, addr_of_mut!(refract_data) as *mut c_void, b"lbRefData\0".as_ptr() as *const c_char);
+    lbArchive_LoadSymbols(b"LbRf.dat\0".as_ptr() as *const c_char, addr_of_mut!(refract_data) as *mut c_void, b"lbRefData\0".as_ptr() as *const c_char);
     {
         let buf_size = ext::GXGetTexBufferSize(IMAGE_WIDTH as u16, IMAGE_HEIGHT as u16, GX_TF_RGB565 as u32, 0, 0);
         lbl_804336D0.image_ptr = ext::HSD_MemAlloc(buf_size as i32);
@@ -373,7 +413,7 @@ pub fn lbRefract_800225D4() {
 
 /// `lbRefract_DObjDispReset`: the refract DObj's `disp`: the base display, then a TEV reset.
 unsafe extern "C" fn lbRefract_DObjDispReset(dobj: *mut HSD_DObj, vmtx: *mut [f32; 4], pmtx: *mut [f32; 4], rendermode: u32) {
-    ext::hsdDObj_disp(dobj, vmtx, pmtx, rendermode);
+    ((*dobj_info_ptr()).disp.expect("hsdDObj.disp"))(dobj, vmtx, pmtx, rendermode);
     ext::GXSetTevDirect(0);
     ext::GXSetNumIndStages(0);
     ext::HSD_StateInvalidate(HSD_STATE_ALL);
@@ -394,16 +434,22 @@ pub static mut pobj_info: HSD_PObjInfo = {
 
 /// Parent class infos for `hsdInitClassInfo` (`hsdDObj`, `hsdPObj`); set by the owner of those
 /// classes.
-pub static mut hsdDObj: *mut _HSD_ClassInfo = null_mut();
-pub static mut hsdPObj: *mut _HSD_ClassInfo = null_mut();
+/// Tests that own their copy of other TUs' data set this; the game uses the owning TU's statics.
+pub static mut use_ext_data: bool = false;
+unsafe fn dobj_info_ptr() -> *mut HSD_DObjInfo {
+    if use_ext_data { addr_of_mut!(ext::hsdDObj) } else { addr_of_mut!(crate::tu::dobj::hsd::hsdDObj) }
+}
+unsafe fn pobj_info_ptr() -> *mut HSD_PObjInfo {
+    if use_ext_data { addr_of_mut!(ext::hsdPObj) } else { addr_of_mut!(crate::tu::pobj::hsdPObj) }
+}
 
 /// `fn_80022650`: registers the refract DObj class under `hsdDObj`.
 pub unsafe extern "C" fn fn_80022650() {
     ext::hsdInitClassInfo(
         addr_of_mut!(dobj_info) as *mut _HSD_ClassInfo,
-        hsdDObj,
-        b"refract_class_library\0".as_ptr() as *const c_char,
-        b"refract_dobj\0".as_ptr() as *const c_char,
+        dobj_info_ptr().cast(),
+        b"refract_class_library\0".as_ptr() as *mut c_char,
+        b"refract_dobj\0".as_ptr() as *mut c_char,
         core::mem::size_of::<HSD_DObjInfo>() as i32,
         core::mem::size_of::<HSD_DObj>() as i32,
     );
@@ -414,11 +460,11 @@ pub unsafe extern "C" fn fn_80022650() {
 /// 0x2000 copies each vertex's PNMTXIDX byte into its last TEXnMTXIDX slot throughout the display
 /// list. Returns the base load's error code, else 0.
 pub unsafe extern "C" fn lbRefract_PObjLoad(pobj: *mut HSD_PObj, desc: *mut HSD_PObjDesc) -> i32 {
-    let ret = ext::hsdPObj_load(pobj, desc);
+    let ret = ((*pobj_info_ptr()).load.expect("hsdPObj.load"))(pobj, desc);
     if ret != 0 {
         return ret;
     }
-    if (*pobj).flags as u32 & 0x2000 == 0 {
+    if ext::HSD_PObjGetFlags(pobj) & 0x2000 == 0 {
         return 0;
     }
 
@@ -496,9 +542,9 @@ pub unsafe extern "C" fn lbRefract_PObjLoad(pobj: *mut HSD_PObj, desc: *mut HSD_
 pub unsafe extern "C" fn fn_80022940() {
     ext::hsdInitClassInfo(
         addr_of_mut!(pobj_info) as *mut _HSD_ClassInfo,
-        hsdPObj,
-        b"refract_class_library\0".as_ptr() as *const c_char,
-        b"refract_pobj\0".as_ptr() as *const c_char,
+        pobj_info_ptr().cast(),
+        b"refract_class_library\0".as_ptr() as *mut c_char,
+        b"refract_pobj\0".as_ptr() as *mut c_char,
         core::mem::size_of::<HSD_PObjInfo>() as i32,
         core::mem::size_of::<HSD_PObj>() as i32,
     );
@@ -511,26 +557,26 @@ pub unsafe fn lbRefract_80022998(_mobj: *mut HSD_MObj, rendermode: u32, arg2: i3
     ext::HSD_TObjSetup(*lbl_804336D0.tobj_list.offset(arg2 as isize));
 
     ext::GXSetNumTexGens(2);
-    ext::GXSetTexCoordGen2(GX_TEXCOORD0 as i32, GX_TG_MTX3x4 as i32, GX_TG_NRM as i32, GX_TEXMTX0 as i32, 1, GX_PTTEXMTX0 as i32);
-    ext::GXSetTexCoordGen2(GX_TEXCOORD1 as i32, GX_TG_MTX3x4 as i32, GX_TG_POS as i32, 0, 0, GX_PTTEXMTX1 as i32);
+    ext::GXSetTexCoordGen2(GX_TEXCOORD0 as _, GX_TG_MTX3x4 as _, GX_TG_NRM as _, GX_TEXMTX0 as _, 1, GX_PTTEXMTX0 as _);
+    ext::GXSetTexCoordGen2(GX_TEXCOORD1 as _, GX_TG_MTX3x4 as _, GX_TG_POS as _, 0, 0, GX_PTTEXMTX1 as _);
 
-    ext::GXLoadTexMtxImm(addr_of_mut!(texture_mtx) as *const [f32; 4], GX_PTTEXMTX0 as u32, GX_MTX3x4 as i32);
-    ext::GXLoadTexMtxImm(addr_of_mut!(lbl_804336D0.texture_mtx) as *const [f32; 4], GX_PTTEXMTX1 as u32, GX_MTX3x4 as i32);
+    ext::GXLoadTexMtxImm(addr_of_mut!(texture_mtx) as *mut c_void, GX_PTTEXMTX0 as _, GX_MTX3x4 as _);
+    ext::GXLoadTexMtxImm(addr_of_mut!(lbl_804336D0.texture_mtx) as *mut c_void, GX_PTTEXMTX1 as _, GX_MTX3x4 as _);
 
     ext::GXSetNumChans(0);
     ext::GXSetNumTevStages(1);
     let write_z0 = GX_ITF_8 as i32;
-    ext::GXSetTevOrder(GX_TEVSTAGE0 as i32, GX_TEXCOORD1 as i32, GX_TEXMAP1 as i32, GX_COLOR_NULL as i32);
-    ext::GXSetTevColorIn(GX_TEVSTAGE0 as i32, GX_CC_ZERO as i32, GX_CC_ZERO as i32, GX_CC_ZERO as i32, GX_CC_TEXC as i32);
-    ext::GXSetTevAlphaIn(GX_TEVSTAGE0 as i32, GX_CA_ZERO as i32, GX_CA_ZERO as i32, GX_CA_ZERO as i32, GX_CA_TEXA as i32);
-    ext::GXSetTevColorOp(GX_TEVSTAGE0 as i32, GX_TEV_ADD as i32, GX_TB_ZERO as i32, GX_CS_SCALE_1 as i32, 0, GX_TEVPREV as i32);
-    ext::GXSetTevAlphaOp(GX_TEVSTAGE0 as i32, GX_TEV_ADD as i32, GX_TB_ZERO as i32, GX_CS_SCALE_1 as i32, 0, GX_TEVPREV as i32);
+    ext::GXSetTevOrder(GX_TEVSTAGE0 as _, GX_TEXCOORD1 as _, GX_TEXMAP1 as _, GX_COLOR_NULL as _);
+    ext::GXSetTevColorIn(GX_TEVSTAGE0 as _, GX_CC_ZERO as _, GX_CC_ZERO as _, GX_CC_ZERO as _, GX_CC_TEXC as _);
+    ext::GXSetTevAlphaIn(GX_TEVSTAGE0 as _, GX_CA_ZERO as _, GX_CA_ZERO as _, GX_CA_ZERO as _, GX_CA_TEXA as _);
+    ext::GXSetTevColorOp(GX_TEVSTAGE0 as _, GX_TEV_ADD as _, GX_TB_ZERO as _, GX_CS_SCALE_1 as _, 0, GX_TEVPREV as _);
+    ext::GXSetTevAlphaOp(GX_TEVSTAGE0 as _, GX_TEV_ADD as _, GX_TB_ZERO as _, GX_CS_SCALE_1 as _, 0, GX_TEVPREV as _);
     ext::GXSetNumIndStages(1);
-    ext::GXSetIndTexOrder(GX_INDTEXSTAGE0 as i32, GX_TEXCOORD0 as i32, GX_TEXMAP0 as i32);
-    ext::GXSetIndTexCoordScale(GX_INDTEXSTAGE0 as i32, GX_ITS_1 as i32, GX_ITS_1 as i32);
-    ext::GXSetIndTexMtx(GX_ITM_0 as i32, addr_of_mut!(texture_offset) as *const [f32; 3], 1);
+    ext::GXSetIndTexOrder(GX_INDTEXSTAGE0 as _, GX_TEXCOORD0 as _, GX_TEXMAP0 as _);
+    ext::GXSetIndTexCoordScale(GX_INDTEXSTAGE0 as _, GX_ITS_1 as _, GX_ITS_1 as _);
+    ext::GXSetIndTexMtx(GX_ITM_0 as _, addr_of_mut!(texture_offset) as *mut c_void, 1);
 
-    ext::GXSetTevIndirect(GX_TEVSTAGE0 as i32, GX_INDTEXSTAGE0 as i32, write_z0, GX_ITB_ST as i32, GX_ITM_0 as i32, GX_ITW_OFF as i32, GX_ITW_OFF as i32, 0, 0, GX_ITBA_OFF as i32);
+    ext::GXSetTevIndirect(GX_TEVSTAGE0 as _, GX_INDTEXSTAGE0 as _, write_z0 as _, GX_ITB_ST as _, GX_ITM_0 as _, GX_ITW_OFF as _, GX_ITW_OFF as _, 0, 0, GX_ITBA_OFF as _);
 
     ext::GXSetColorUpdate(1);
     ext::GXSetAlphaUpdate(0);
@@ -538,10 +584,10 @@ pub unsafe fn lbRefract_80022998(_mobj: *mut HSD_MObj, rendermode: u32, arg2: i3
     let write_z: u8 = if rendermode & (RENDER_NO_ZUPDATE as u32) != 0 { 0 } else { 1 };
     let compare = if rendermode & (RENDER_ZMODE_ALWAYS as u32) != 0 { GX_ALWAYS } else { GX_LEQUAL };
 
-    ext::GXSetZMode(1, compare as i32, write_z);
+    ext::GXSetZMode(1, compare as _, write_z);
     ext::GXSetZCompLoc(1);
-    ext::GXSetBlendMode(GX_BM_NONE as i32, GX_BL_ONE as i32, GX_BL_ZERO as i32, GX_LO_SET as i32);
-    ext::GXSetAlphaCompare(GX_ALWAYS as i32, 0, GX_AOP_OR as i32, GX_ALWAYS as i32, 0);
+    ext::GXSetBlendMode(GX_BM_NONE as _, GX_BL_ONE as _, GX_BL_ZERO as _, GX_LO_SET as _);
+    ext::GXSetAlphaCompare(GX_ALWAYS as _, 0, GX_AOP_OR as _, GX_ALWAYS as _, 0);
     ext::GXSetDither(0);
 }
 
@@ -555,8 +601,8 @@ pub fn lbRefSetUnuse() {
     unsafe {
         lbl_804336D0.refractionUserCount -= 1;
         if lbl_804336D0.refractionUserCount < 0 {
-            ext::OSReport("lbRefSetUnuse error!\n", &[]);
-            ext::__assert(FILE, 0x31c, "0");
+            crate::tu::lbext::OSReport("lbRefSetUnuse error!\n", &[]);
+            crate::tu::lbext::__assert(FILE, 0x31c, "0");
         }
     }
 }

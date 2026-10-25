@@ -1,0 +1,9 @@
+{
+ "lb_8000B1CC": "{ let (jobj, offset, out) = (a0, a1, a2); crate::tu::lb_00B0::lb_8000B1CC(jobj, offset as _, out as _) }",
+ "HSD_StateInitTev": "crate::tu::tev::HSD_StateInitTev(crate::tu::globals::render())",
+ "HSD_CObjGetCurrent": "crate::tu::cobj::HSD_CObjGetCurrent()",
+ "HSD_ClearVtxDesc": "crate::tu::pobj::HSD_ClearVtxDesc()",
+ "HSD_MtxInverse": "{ let r = crate::hsd_mtx::inverse(&*(a0 as *const [[f32; 4]; 3])); (a1 as *mut [[f32; 4]; 3]).write(r); }",
+ "PSMTXConcat": "crate::tu::mtx_pc::raw::PSMTXConcat(a0 as _, a1 as _, a2 as _)",
+ "PSMTXMultVec": "{ let v = crate::mtx::mult_vec(&*(a0 as *const [[f32; 4]; 3]), &crate::mtx::Vec3 { x: (*a1).x, y: (*a1).y, z: (*a1).z }); *a2 = Vec { x: v.x, y: v.y, z: v.z }; }"
+}

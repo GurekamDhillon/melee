@@ -38,6 +38,7 @@ from blkindex import build_index  # noqa: E402
 _BLK = build_index(GEN_RS)
 
 PRIM = g.PRIM
+_DEFAULTS = {}
 INTS = {T.CHAR_S, T.SCHAR, T.CHAR_U, T.UCHAR, T.SHORT, T.USHORT, T.INT, T.UINT, T.LONG, T.ULONG,
         T.LONGLONG, T.ULONGLONG, T.BOOL}
 
@@ -50,12 +51,14 @@ def patched_source(stem, spec):
     """The TU source the oracle compiles: the game's file verbatim, except for the literal
     replacements the spec lists (each must match exactly once; documented in the spec)."""
     src = spec["src"]
-    if not spec.get("patch"):
+    if not spec.get("patch") and not spec.get("sub"):
         return src
     txt = (ROOT / src).read_bytes().decode("utf-8").replace(chr(13) + chr(10), chr(10))
-    for a, b in spec["patch"]:
+    for a, b in spec.get("patch", ()):
         assert txt.count(a) == 1, f"{stem}: patch text {a!r} matches {txt.count(a)} times"
         txt = txt.replace(a, b)
+    for pat, rep in spec.get("sub", ()):
+        txt = re.sub(pat, rep, txt)
     out = ROOT / "rust/target/mtu" / f"{stem}_tu.c"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_bytes(txt.encode("utf-8"))
@@ -313,7 +316,13 @@ class Walk:
     def gen(self, name):
         decl = self.rec_of(name)
         cf, ch, rf, rh = [], [], [], []
-        self.fields(decl, "p->", "p.", 0, cf, ch, rf, rh, "p", 0)
+        if decl.kind == K.UNION_DECL and self.has_bf(decl):
+            self.bf_union(decl, "p->", "p.", cf, ch, rf, rh, 0)
+        elif decl.kind == K.UNION_DECL:
+            sz = canon(self.tu.types[name]).get_size()
+            self.raw_bytes(cf, ch, rf, rh, "(*p)", "p", 0, sz, 0)
+        else:
+            self.fields(decl, "p->", "p.", 0, cf, ch, rf, rh, "p", 0)
         cn = ("struct " + name) if name in self.tu.tagged else name
         cdef = f"static void fill_{name}({cn}* p)\n{{\n    int i0, i1, i2, j0, j1, j2, j3;\n" + "\n".join("    " + x for x in cf) + \
             f"\n}}\nstatic void hash_{name}(const {cn}* p)\n{{\n    int i0, i1, i2, j0, j1, j2, j3;\n    if (HDBG) printf(\"B {name}%c\", 10);\n" + "\n".join("    " + x for x in ch) + "\n}\n"
@@ -363,10 +372,18 @@ class Walk:
     def raw_bytes(self, cf, ch, rf, rh, cpar, rpar, off, sz, depth):
         j = f"j{depth}"
         cf.append(f"for ({j} = 0; {j} < {sz}; {j}++) ((unsigned char*) &{cpar})[{off} + {j}] = (unsigned char) rnd();")
-        ch.append(f"for ({j} = 0; {j} < {sz}; {j}++) HM(((const unsigned char*) &{cpar})[{off} + {j}]);")
         barg = rpar if rpar == "p" else "&" + rpar  # `p` is already a reference to the record
+        if sz % 8 == 0 and off % 8 == 0:
+            # 8-byte slots that may hold a native pointer (a union's pointer view): a slot inside a registered region is hashed
+            # as its region id, anything else byte by byte
+            ch.append(f"for ({j} = 0; {j} < {sz}; {j} += 8) {{ unsigned long long v8 = *(const unsigned long long*) (((const unsigned char*) &{cpar}) + {off} + {j}); u32 t8 = PI((const void*) v8); "
+                      f"if (t8 != 0xFFFFFFFFu) HM(t8); else {{ int b8; for (b8 = 0; b8 < 8; b8++) HM((u32) ((v8 >> (8 * b8)) & 0xFF)); }} }}")
+            rh.append(f"for {j} in (0..{sz}).step_by(8) {{ unsafe {{ let v8 = (base({barg}).add({off} + {j}) as *const u64).read_unaligned(); let t8 = pi(v8 as usize as *const u8); "
+                      f"if t8 != 0xFFFF_FFFF {{ hm(t8); }} else {{ for b8 in 0..8 {{ hm(((v8 >> (8 * b8)) & 0xFF) as u32); }} }} }} }}")
+        else:
+            ch.append(f"for ({j} = 0; {j} < {sz}; {j}++) HM(((const unsigned char*) &{cpar})[{off} + {j}]);")
+            rh.append(f"for {j} in 0..{sz} {{ unsafe {{ hm(*base({barg}).add({off} + {j}) as u32); }} }}")
         rf.append(f"for {j} in 0..{sz} {{ unsafe {{ *(base({barg}) as *mut u8).add({off} + {j}) = rnd() as u8; }} }}")
-        rh.append(f"for {j} in 0..{sz} {{ unsafe {{ hm(*base({barg}).add({off} + {j}) as u32); }} }}")
 
     def fields(self, decl, cp, rp, base_off, cf, ch, rf, rh, rootc, depth):
         names = self.rust_names(decl)
@@ -445,9 +462,16 @@ class Walk:
             if d.kind == K.UNION_DECL:
                 sz = c.get_size()
                 cf.append(f"for (i{depth} = 0; i{depth} < {sz}; i{depth}++) ((unsigned char*) &{cexpr})[i{depth}] = (unsigned char) rnd();")
-                ch.append(f"for (i{depth} = 0; i{depth} < {sz}; i{depth}++) HM(((const unsigned char*) &{cexpr})[i{depth}]);")
                 rf.append(f"for i{depth} in 0..{sz} {{ unsafe {{ *(&mut {rexpr} as *mut _ as *mut u8).add(i{depth}) = rnd() as u8; }} }}")
-                rh.append(f"for i{depth} in 0..{sz} {{ unsafe {{ hm(*(&{rexpr} as *const _ as *const u8).add(i{depth}) as u32); }} }}")
+                if sz % 8 == 0:
+                    # 8-byte slots that may hold a native pointer (a union's pointer view): inside a registered region -> region id
+                    ch.append(f"for (i{depth} = 0; i{depth} < {sz}; i{depth} += 8) {{ unsigned long long v8 = *(const unsigned long long*) (((const unsigned char*) &{cexpr}) + i{depth}); u32 t8 = PI((const void*) v8); "
+                              f"if (t8 != 0xFFFFFFFFu) HM(t8); else {{ int b8; for (b8 = 0; b8 < 8; b8++) HM((u32) ((v8 >> (8 * b8)) & 0xFF)); }} }}")
+                    rh.append(f"for i{depth} in (0..{sz}).step_by(8) {{ unsafe {{ let v8 = ((&{rexpr} as *const _ as *const u8).add(i{depth}) as *const u64).read_unaligned(); let t8 = pi(v8 as usize as *const u8); "
+                              f"if t8 != 0xFFFF_FFFF {{ hm(t8); }} else {{ for b8 in 0..8 {{ hm(((v8 >> (8 * b8)) & 0xFF) as u32); }} }} }} }}")
+                else:
+                    ch.append(f"for (i{depth} = 0; i{depth} < {sz}; i{depth}++) HM(((const unsigned char*) &{cexpr})[i{depth}]);")
+                    rh.append(f"for i{depth} in 0..{sz} {{ unsafe {{ hm(*(&{rexpr} as *const _ as *const u8).add(i{depth}) as u32); }} }}")
                 return
             self.fields(d, cexpr + ".", rexpr + ".", 0, cf, ch, rf, rh, None, depth)
             return
@@ -484,6 +508,13 @@ class Walk:
             return
         if k == T.ENUM or k in INTS:
             sz = c.get_size()
+            if "HSD_IDKey" in t.spelling and sz == 8 or ("HSD_IDKey" in t.spelling and gc4(t)):
+                # JObj::id holds the host pointer of its joint once loaded: hash the region id, else the value
+                cf.append(f"{cexpr} = fv64();")
+                rf.append(f"{rexpr} = fv64() as _;")
+                ch.append(f"{{ u32 pk_ = PI((const void*) (unsigned long long) {cexpr}); if (pk_ != 0xFFFFFFFFu) HM(pk_); else {{ HM((u32) {cexpr}); HM((u32) ((unsigned long long) {cexpr} >> 32)); }} }}")
+                rh.append(f"{{ let pk_ = pi({rexpr} as usize as *const u8); if pk_ != 0xFFFF_FFFF {{ hm(pk_); }} else {{ hm({rexpr} as u32); hm((({rexpr} as u64) >> 32) as u32); }} }}")
+                return
             if gc4(t):  # uintptr_t & co are 4 bytes in melee_types (GC layout), 8 natively: compare 32 bits
                 sz = 4
             if k == T.BOOL:
@@ -494,8 +525,12 @@ class Walk:
             elif sz == 8:
                 cf.append(f"{cexpr} = fv64();")
                 rf.append(f"{rexpr} = fv64() as _;")
-                ch.append(f"HM((u32) {cexpr}); HM((u32) ((u64) {cexpr} >> 32));")
-                rh.append(f"hm({rexpr} as u32); hm((({rexpr} as u64) >> 32) as u32);")
+                if t.spelling == "HSD_IDKey":  # holds a host pointer once loaded (JObj id = its joint): hash the region id, else the value
+                    ch.append(f"{{ u32 pk_ = PI((const void*) (unsigned long long) {cexpr}); if (pk_ != 0xFFFFFFFFu) HM(pk_); else {{ HM((u32) {cexpr}); HM((u32) ((u64) {cexpr} >> 32)); }} }}")
+                    rh.append(f"{{ let pk_ = pi({rexpr} as usize as *const u8); if pk_ != 0xFFFF_FFFF {{ hm(pk_); }} else {{ hm({rexpr} as u32); hm((({rexpr} as u64) >> 32) as u32); }} }}")
+                else:
+                    ch.append(f"HM((u32) {cexpr}); HM((u32) ((u64) {cexpr} >> 32));")
+                    rh.append(f"hm({rexpr} as u32); hm((({rexpr} as u64) >> 32) as u32);")
             else:
                 cf.append(f"{cexpr} = fv();")
                 rf.append(f"{rexpr} = fv() as _;")
@@ -508,10 +543,18 @@ class Walk:
 # ---------------------------------------------------------------------------- output
 
 def build(stem, spec, want_ext):
+    global _DEFAULTS
+    _DEFAULTS = {}
+    dj = HERE / f"defaults_{stem}.json"
+    if dj.exists():
+        import json
+        _DEFAULTS = json.loads(dj.read_text(encoding="utf-8"))
     tu = Tu(patched_source(stem, spec), spec.get("args", ()), (ROOT / spec["src"]).parent)
     stubs, inlines, data = tu.uses()
-    for n in ("__assert", "OSReport", "printf"):
+    for n in ("__assert", "OSReport", "printf", "HSD_Panic", "OSPanic", "__va_arg"):
         stubs.pop(n, None)
+    for n in [n for n in stubs if n.startswith("__builtin")]:
+        stubs.pop(n)
     for n in spec.get("skip_stubs", ()):
         stubs.pop(n, None)
     for n in list(data):
@@ -538,7 +581,11 @@ def build(stem, spec, want_ext):
             c_out.append(f"{canon(c.element_type).spelling if False else c.element_type.spelling} {n}[{cs}];")
             ext_data.append(f"    pub static mut {n}: [{rust_ty(c.element_type)}; {cs}] = unsafe {{ core::mem::zeroed() }};")
         elif c.kind == T.CONSTANTARRAY:
-            c_out.append(f"{c.element_type.spelling} {n}[{c.element_count}];")
+            dims, et = [], c
+            while et.kind == T.CONSTANTARRAY:
+                dims.append(et.element_count)
+                et = canon(et.element_type)
+            c_out.append(f"{et.spelling} {n}" + "".join(f"[{d}]" for d in dims) + ";")
             ext_data.append(f"    pub static mut {n}: {rust_ty(t)} = unsafe {{ core::mem::zeroed() }};")
         else:
             c_out.append(f"{t.spelling} {n};")
@@ -550,10 +597,10 @@ def build(stem, spec, want_ext):
     for n in names:
         decl, called, addr = stubs[n]
         ft = canon(decl.type)
-        ptys = list(ft.argument_types())
+        ptys = list(ft.argument_types()) if ft.kind == T.FUNCTIONPROTO else []
         rt = ft.get_result()
         rcls = arg_class(rt)
-        va = ft.is_function_variadic()
+        va = ft.is_function_variadic() if ft.kind == T.FUNCTIONPROTO else False
         realcb = spec.get("real_cb", {})  # address-taken stubs whose address the port takes from a real Rust port
         if va:
             cs = spec.get("custom_stubs", {}).get(n)
@@ -567,11 +614,12 @@ def build(stem, spec, want_ext):
         f32a = spec.get("fn32_args", {}).get(n, [])
         p32a = spec.get("ptr32_args", {}).get(n, [])
         nta = spec.get("notrace_args", {}).get(n, [])
-        body_c = [f"T({sid[n]});"] + [("" if i in nta else f"T(FI32((u32) a{i}));" if i in f32a else f"T(PI32((u32) a{i}));" if i in p32a else c_trace(arg_class(p), f"a{i}"))
+        p64a = spec.get("ptr64_args", {}).get(n, [])
+        body_c = [f"T({sid[n]});"] + [("" if i in nta else f"T(FI32((u32) a{i}));" if i in f32a else f"T(PI32((u32) a{i}));" if i in p32a else f"T(PI((const void*) (unsigned long long) a{i}));" if i in p64a else c_trace(arg_class(p), f"a{i}"))
                                       for i, p in enumerate(ptys)]
         rparams = ", ".join(f"a{i}: {rust_ty(p)}" for i, p in enumerate(ptys))
         rret = "" if rcls == "void" else f" -> {rust_ty(rt)}"
-        body_r = [f"t({sid[n]});"] + [("" if i in nta else f"t(fi32(a{i} as u32));" if i in f32a else f"t(pi32(a{i} as u32));" if i in p32a else r_trace(arg_class(p), f"a{i}"))
+        body_r = [f"t({sid[n]});"] + [("" if i in nta else f"t(fi32(a{i} as u32));" if i in f32a else f"t(pi32(a{i} as u32));" if i in p32a else f"t(pi(a{i} as usize as *const u8));" if i in p64a else r_trace(arg_class(p), f"a{i}"))
                                       for i, p in enumerate(ptys)]
         if n in eff:
             body_c.append(eff[n][0])
@@ -592,7 +640,8 @@ def build(stem, spec, want_ext):
         argl = ", ".join(f"a{i}" for i in range(len(ptys)))
         r_out_hook = f"        m::ext::hook::{n} = Some(|{argl}| {{ " + " ".join(body_r) + " });"
         r_out.append(("@@HOOK@@", r_out_hook))
-        ext_fns.append(f"    fn {n}({rparams}){rret};")
+        dflt = _DEFAULTS.get(n)
+        ext_fns.append(f"    fn {n}({rparams}){rret}" + (f" = {dflt.replace('@ARGS@', argl).replace('@CAST@', ', '.join(f'a{i} as _' for i in range(len(ptys))))};" if dflt else ";"))
         if addr and n not in realcb:
             ext_cb.append((n, rparams, rret, argnames))
     # fill / hash
@@ -666,6 +715,12 @@ def build(stem, spec, want_ext):
     # the function table: stubs address-taken + the TU's own functions, sorted by name
     fpn = [n for n in names if stubs[n][2] and not stubs[n][0].type.is_function_variadic()]
     own = sorted(n for n in tu.defs if not tu.defs[n].storage_class == ci.StorageClass.NONE or True)
+    if spec.get("pub_only"):
+        # only the port's public functions can be named from the test (statics of the C file stay private)
+        pubs = set(re.findall(r"(?m)^\s*pub (?:unsafe )?(?:extern \"C\" )?fn (\w+)", (ROOT / "rust/melee_runtime/src/tu" / f"{stem}.rs").read_text(encoding="utf-8")))
+        own = [n for n in own if n in pubs]
+    if spec.get("own_only"):  # a port whose pub fns include generic adapters the driver cannot name
+        own = [n for n in own if n in spec["own_only"]]
     c_out.append("static void freg_all(void)\n{")
     for n in fpn:
         c_out.append(f"    freg((const void*) {n});")
@@ -700,7 +755,7 @@ def build(stem, spec, want_ext):
            "    use super::*;",
            "    use core::ffi::c_void;",
            "    macro_rules! ext_fns {",
-           "        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {",
+           "        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {",
            "            pub mod hook {",
            "                use super::*;",
            "                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*",
@@ -708,7 +763,7 @@ def build(stem, spec, want_ext):
            "            $( pub fn $name($($a: $t),*) $(-> $r)? {",
            "                match unsafe { hook::$name } {",
            "                    Some(f) => f($($a),*),",
-           "                    None => panic!(concat!(\"TODO: \", stringify!($name), \" is not ported\")),",
+           "                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),",
            "                }",
            "            } )*",
            "        };",

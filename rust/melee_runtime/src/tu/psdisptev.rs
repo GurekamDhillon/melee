@@ -2,27 +2,43 @@
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs)]
 use melee_types::*;
 use ext::*;
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
-    use melee_types::*;
-    pub static mut GXSetNumTexGens_HOOK: Option<unsafe extern "C" fn(u8)> = None;
-    pub unsafe fn GXSetNumTexGens(nTexGens: u8) { (GXSetNumTexGens_HOOK.expect("TODO: GXSetNumTexGens"))(nTexGens); }
-    pub static mut GXSetTevOp_HOOK: Option<unsafe extern "C" fn(GXTevStageID, GXTevMode)> = None;
-    pub unsafe fn GXSetTevOp(id: GXTevStageID, mode: GXTevMode) { (GXSetTevOp_HOOK.expect("TODO: GXSetTevOp"))(id, mode); }
-    pub static mut GXSetTevColorIn_HOOK: Option<unsafe extern "C" fn(GXTevStageID, GXTevColorArg, GXTevColorArg, GXTevColorArg, GXTevColorArg)> = None;
-    pub unsafe fn GXSetTevColorIn(stage: GXTevStageID, a: GXTevColorArg, b: GXTevColorArg, c: GXTevColorArg, d: GXTevColorArg) { (GXSetTevColorIn_HOOK.expect("TODO: GXSetTevColorIn"))(stage, a, b, c, d); }
-    pub static mut GXSetTevAlphaIn_HOOK: Option<unsafe extern "C" fn(GXTevStageID, GXTevAlphaArg, GXTevAlphaArg, GXTevAlphaArg, GXTevAlphaArg)> = None;
-    pub unsafe fn GXSetTevAlphaIn(stage: GXTevStageID, a: GXTevAlphaArg, b: GXTevAlphaArg, c: GXTevAlphaArg, d: GXTevAlphaArg) { (GXSetTevAlphaIn_HOOK.expect("TODO: GXSetTevAlphaIn"))(stage, a, b, c, d); }
-    pub static mut GXSetTevColorOp_HOOK: Option<unsafe extern "C" fn(GXTevStageID, GXTevOp, GXTevBias, GXTevScale, GXBool, GXTevRegID)> = None;
-    pub unsafe fn GXSetTevColorOp(stage: GXTevStageID, op: GXTevOp, bias: GXTevBias, scale: GXTevScale, clamp: GXBool, out_reg: GXTevRegID) { (GXSetTevColorOp_HOOK.expect("TODO: GXSetTevColorOp"))(stage, op, bias, scale, clamp, out_reg); }
-    pub static mut GXSetTevAlphaOp_HOOK: Option<unsafe extern "C" fn(GXTevStageID, GXTevOp, GXTevBias, GXTevScale, GXBool, GXTevRegID)> = None;
-    pub unsafe fn GXSetTevAlphaOp(stage: GXTevStageID, op: GXTevOp, bias: GXTevBias, scale: GXTevScale, clamp: GXBool, out_reg: GXTevRegID) { (GXSetTevAlphaOp_HOOK.expect("TODO: GXSetTevAlphaOp"))(stage, op, bias, scale, clamp, out_reg); }
-    pub static mut GXSetTevSwapMode_HOOK: Option<unsafe extern "C" fn(GXTevStageID, GXTevSwapSel, GXTevSwapSel)> = None;
-    pub unsafe fn GXSetTevSwapMode(stage: GXTevStageID, ras_sel: GXTevSwapSel, tex_sel: GXTevSwapSel) { (GXSetTevSwapMode_HOOK.expect("TODO: GXSetTevSwapMode"))(stage, ras_sel, tex_sel); }
-    pub static mut GXSetTevOrder_HOOK: Option<unsafe extern "C" fn(GXTevStageID, GXTexCoordID, GXTexMapID, GXChannelID)> = None;
-    pub unsafe fn GXSetTevOrder(stage: GXTevStageID, coord: GXTexCoordID, map: GXTexMapID, color: GXChannelID) { (GXSetTevOrder_HOOK.expect("TODO: GXSetTevOrder"))(stage, coord, map, color); }
-    pub static mut GXSetNumTevStages_HOOK: Option<unsafe extern "C" fn(u8)> = None;
-    pub unsafe fn GXSetNumTevStages(nStages: u8) { (GXSetNumTevStages_HOOK.expect("TODO: GXSetNumTevStages"))(nStages); }
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    use super::*;
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn GXSetNumTevStages(a0: u8);
+    fn GXSetNumTexGens(a0: u8);
+    fn GXSetTevAlphaIn(a0: u32, a1: u32, a2: u32, a3: u32, a4: u32);
+    fn GXSetTevAlphaOp(a0: u32, a1: u32, a2: u32, a3: u32, a4: u8, a5: u32);
+    fn GXSetTevColorIn(a0: u32, a1: u32, a2: u32, a3: u32, a4: u32);
+    fn GXSetTevColorOp(a0: u32, a1: u32, a2: u32, a3: u32, a4: u8, a5: u32);
+    fn GXSetTevOp(a0: u32, a1: u32);
+    fn GXSetTevOrder(a0: u32, a1: u32, a2: u32, a3: u32);
+    fn GXSetTevSwapMode(a0: u32, a1: u32, a2: u32);
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+    }
+    // Data defined in other TUs (the tests set them).
 }
+// END GENERATED EXT
 
 pub static mut prevTev: [u32; 2] = [0; 2];
 

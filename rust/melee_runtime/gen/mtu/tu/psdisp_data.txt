@@ -1,0 +1,3 @@
+hsd_804D0908
+psNumCmdList
+psTexGroupArray

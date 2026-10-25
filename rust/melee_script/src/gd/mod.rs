@@ -15,6 +15,7 @@ pub mod entity;
 pub mod combo;
 pub mod core;
 pub mod fighter;
+pub mod flycam;
 pub mod hit_rules;
 pub mod history;
 pub mod lab;
@@ -59,6 +60,7 @@ pub fn register_all(e: &Engine, gd: &Table) -> LuaResult<()> {
     entity::register(e, gd)?;
     zones::register(e, gd)?;
     deadline::register(e, gd)?;
+    flycam::register(e, gd)?;
     contacts::register(e, gd)?;
     shock::register(e, gd)?;
     skill::register(e, gd)?;

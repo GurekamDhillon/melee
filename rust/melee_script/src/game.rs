@@ -780,6 +780,29 @@ pub trait ScriptGame {
     fn contact_cross(&self, _slot: i32, _after: i32) -> i32 {
         -1
     }
+    // ---- fly cursor attack (`gw_GenoFly_*`) and stage camera parameters (`gw_ScriptGame_CameraParam*`)
+    fn geno_fly_target(&mut self, _slot: i32, _x_bits: i32, _y_bits: i32) -> i32 {
+        -1
+    }
+    #[allow(clippy::too_many_arguments)]
+    fn geno_fly_attack_config(&mut self, _slot: i32, _flags: i32, _damage: i32, _radius_bits: i32, _active_gap: i32, _kb_kbg: i32, _angle: i32) -> i32 {
+        -1
+    }
+    /// 0 attacking, 1 targeting, 2 damage, 3 radius (bits), 4/5 x/y (bits), 6 pulses, 7 every_frame, 8 active, 9 gap, 10 kb, 11 kbg, 12 angle, 13 phase
+    fn geno_fly_state(&self, _slot: i32, _field: i32) -> i32 {
+        0
+    }
+    fn geno_fly_clear(&mut self, _slot: i32) {}
+    fn camera_param_read(&self, _field: i32) -> i32 {
+        0
+    }
+    fn camera_param_owner(&self) -> i32 {
+        0
+    }
+    /// `bits` are the ten parameters in the order min_dist .. pitch_gain; mask says which the script set
+    fn camera_params(&mut self, _owner: i32, _mask: i32, _bits: &[i32]) -> i32 {
+        0
+    }
     // ---- entity identity (`gw_ScriptGame_EntityField`, `EntityEpoch`, `EntityAddressField`): pc/platform/gw_script_spine_refs.inc
     /// kind 1 fighter (id = port*2+sub), 2 item, 3 echo, 4 stage object, 5 stage actor. field 0 live, 1 epoch, 2 generation,
     /// 3 definition, 4 owner fighter id + 1, 5 role bits

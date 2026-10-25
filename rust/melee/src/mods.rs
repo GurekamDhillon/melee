@@ -32,12 +32,12 @@ pub struct Mods {
 }
 
 impl Mods {
-    /// `MELEE_MODS_DIR` (None when unset or `MELEE_MODS=0`).
+    /// `MELEE_MODS_DIR` or `mods_dir=` in settings.cfg (None when unset or `MELEE_MODS=0`).
     pub fn from_env() -> Result<Option<Mods>, String> {
-        if std::env::var("MELEE_MODS").is_ok_and(|v| v == "0") {
+        if !crate::cfg::flag("mods", true) {
             return Ok(None);
         }
-        match std::env::var_os("MELEE_MODS_DIR") {
+        match crate::cfg::text("mods_dir") {
             Some(d) => Mods::open(Path::new(&d), None).map(Some),
             None => Ok(None),
         }

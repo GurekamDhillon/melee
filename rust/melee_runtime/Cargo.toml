@@ -109,3 +109,7 @@ harness = false
 [[test]]
 name = "tu_lbcollision"
 harness = false
+
+[[test]]
+name = "tu_shadow"
+harness = false

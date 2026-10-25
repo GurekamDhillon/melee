@@ -1,0 +1,13 @@
+{
+ "MTXLightPerspective": "{ let r = crate::mtx::light_perspective(a1, a2, a3, a4, a5, a6); (a0 as *mut [[f32; 4]; 3]).write(r); }",
+ "MTXLightFrustum": "{ let r = crate::mtx::light_frustum(a1, a2, a3, a4, a5, a6, a7, a8, a9); (a0 as *mut [[f32; 4]; 3]).write(r); }",
+ "MTXLightOrtho": "{ let r = crate::mtx::light_ortho(a1, a2, a3, a4, a5, a6, a7, a8); (a0 as *mut [[f32; 4]; 3]).write(r); }",
+ "PSMTXConcat": "crate::tu::mtx_pc::raw::PSMTXConcat(a0 as _, a1 as _, a2 as _)",
+ "atan2f": "crate::lbtrigf::atan2f(a0, a1)",
+ "PSVECSubtract": "{ let r = crate::mtx::vec_sub(&crate::mtx::Vec3 { x: (*a0).x, y: (*a0).y, z: (*a0).z }, &crate::mtx::Vec3 { x: (*a1).x, y: (*a1).y, z: (*a1).z }); *a2 = Vec { x: r.x, y: r.y, z: r.z }; }",
+ "PSVECNormalize": "{ let r = crate::mtx::vec_normalize(&crate::mtx::Vec3 { x: (*a0).x, y: (*a0).y, z: (*a0).z }); *a1 = Vec { x: r.x, y: r.y, z: r.z }; }",
+ "PSVECCrossProduct": "{ let r = crate::mtx::vec_cross(&crate::mtx::Vec3 { x: (*a0).x, y: (*a0).y, z: (*a0).z }, &crate::mtx::Vec3 { x: (*a1).x, y: (*a1).y, z: (*a1).z }); *a2 = Vec { x: r.x, y: r.y, z: r.z }; }",
+ "PSVECMag": "crate::mtx::vec_mag(&crate::mtx::Vec3 { x: (*a0).x, y: (*a0).y, z: (*a0).z })",
+ "PSVECDotProduct": "crate::mtx::vec_dot(&crate::mtx::Vec3 { x: (*a0).x, y: (*a0).y, z: (*a0).z }, &crate::mtx::Vec3 { x: (*a1).x, y: (*a1).y, z: (*a1).z })",
+ "PSVECScale": "{ let r = crate::mtx::vec_scale(&crate::mtx::Vec3 { x: (*a0).x, y: (*a0).y, z: (*a0).z }, a2); *a1 = Vec { x: r.x, y: r.y, z: r.z }; }"
+}

@@ -98,16 +98,16 @@ melee_core::gc_layout!(mpColl_80458810_t, "mpColl_80458810_t", size 0x58, align 
     right @ 0x0: 36 "int[9]", left @ 0x24: 36 "int[9]", normal @ 0x48: 12 "Vec3", x54_pad @ 0x54: 4 "u8[4]",
 ]);
 
-static mut mpColl_80458810: mpColl_80458810_t = unsafe { core::mem::zeroed() };
-static mut mpColl_804D6488: i32 = 0;
-static mut mpColl_804D648C: i32 = 0;
-static mut mpColl_804D6490_max_x: f32 = 0.0;
-static mut mpColl_804D6494_line_id: i32 = 0;
-static mut mpColl_804D6498_flags: u32 = 0;
-static mut mpColl_IsEcbTiny: i32 = 0;
-static mut mpColl_804D64A0: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> i32> = None;
-static mut mpColl_804D64A4: *mut HSD_GObj = null_mut();
-static mut mpColl_804D64A8: Option<unsafe extern "C" fn()> = None;
+pub static mut mpColl_80458810: mpColl_80458810_t = unsafe { core::mem::zeroed() };
+pub static mut mpColl_804D6488: i32 = 0;
+pub static mut mpColl_804D648C: i32 = 0;
+pub static mut mpColl_804D6490_max_x: f32 = 0.0;
+pub static mut mpColl_804D6494_line_id: i32 = 0;
+pub static mut mpColl_804D6498_flags: u32 = 0;
+pub static mut mpColl_IsEcbTiny: i32 = 0;
+pub static mut mpColl_804D64A0: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> i32> = None;
+pub static mut mpColl_804D64A4: *mut HSD_GObj = null_mut();
+pub static mut mpColl_804D64A8: Option<unsafe extern "C" fn()> = None;
 pub static mut mpColl_804D64AC: i32 = 0;
 pub static mut mpColl_LedgeLevelOK: i32 = 0;
 

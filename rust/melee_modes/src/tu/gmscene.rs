@@ -40,8 +40,8 @@ pub mod ext {
     #[repr(C)]
     #[derive(Clone, Copy)]
     pub struct MenuFlow { pub cur_menu: u8, pub prev_menu: u8, pub hovered_selection: u16, pub confirmed_selection: u8, pub pad_5: [u8; 3], pub rest: [u8; 24] }
-    pub unsafe extern "C" fn Camera_ForgetGameCamera() { if let Some(h) = HOOK { h("Camera_ForgetGameCamera", &[]); return; } panic!("TODO(group6): Camera_ForgetGameCamera is not ported") }
-    pub unsafe extern "C" fn Camera_RefreshViewingMtx() { if let Some(h) = HOOK { h("Camera_RefreshViewingMtx", &[]); return; } panic!("TODO(group6): Camera_RefreshViewingMtx is not ported") }
+    pub unsafe extern "C" fn Camera_ForgetGameCamera() { if let Some(h) = HOOK { h("Camera_ForgetGameCamera", &[]); return; } crate::tu::adapt::Camera_ForgetGameCamera__cmc() }
+    pub unsafe extern "C" fn Camera_RefreshViewingMtx() { if let Some(h) = HOOK { h("Camera_RefreshViewingMtx", &[]); return; } crate::tu::adapt::Camera_RefreshViewingMtx__cmc() }
     pub unsafe extern "C" fn Det_Enabled() -> i32 { if let Some(h) = HOOK { let r = h("Det_Enabled", &[]); return r as i32; } panic!("TODO(group6): Det_Enabled is not ported") }
     pub unsafe extern "C" fn Det_LogicFrame(frame: i32) { if let Some(h) = HOOK { h("Det_LogicFrame", &[A::I(frame as u32 as u64)]); return; } panic!("TODO(group6): Det_LogicFrame is not ported") }
     pub unsafe extern "C" fn Det_SetInRender(on: i32) { if let Some(h) = HOOK { h("Det_SetInRender", &[A::I(on as u32 as u64)]); return; } panic!("TODO(group6): Det_SetInRender is not ported") }

@@ -992,6 +992,21 @@ Stub names in `docs/rust-port/missing.md` for melee_fighter: NO_PORT 276 -> ~71,
 on. Dump/resume/proof commands, what is loaded from where, and the model differences found:
 `tools/rust-port/snap/README.md`. Proven on `pad_falcon_fox_fd` at frames 0 and 300.
 
+## melee_world::tu::efn: ef/eflib.c, efasync.c, efdata.c via c2rs + state oracle (pre-melee_world)
+- `bash rust/melee_world/gen/mtu/regen_ef.sh` regenerates `src/tu/efn/{eflib,efasync,efdata}.rs` (c2rs `--all-extern`: every
+  function is `extern "C"` so a test can store any of them as a callback; then `gen/rewire/rewire.py --skip=lbArchive_80017040`).
+  c2rs learned: variadic definitions (`args: &[*const c_void]`, `crate::tu::va::Va` for `va_list`; `va_arg` steps it like the
+  `__va_arg` shim), goto-into-a-later-case-label inside a switch (flag + block after the match), `&arr[i]` as a wrapping
+  pointer offset (C forms out-of-range addresses before checking them), a NULL `%s` in OSReport, pointer args of `%08X`.
+- Oracle: `python rust/melee_world/gen/mtu/mk_ef.py all` (`dbg_ef.sh <op>:<case>` bisects): the three TUs as one native C TU
+  (shipping contraction, `efSync_Spawn` call sites counted by a patch macro), 78 ops x 400 cases (every eflib/efasync function,
+  Dispatch over all 144 case ids with the argument pointers each case reads, the fused `0.04f * x + 0.3f` site of case 0x3E8
+  discriminated). Fighter is filled/hashed by the 14 fields ef reads (the full record has bitfield overlays the walker cannot map).
+  Traps: asserts inside `extern "C"` ports abort the test (no unwinding), so the fixture never reaches an assert (GObj_Create
+  never NULL, EffectCount < 64); `any` Dispatch ids avoid the case ids because their argument kinds are pointers of the wrong type.
+- Camera stubs (Camera_Init/Create/ForgetGameCamera/RefreshViewingMtx/8002A4AC/8002F3AC/PCMainCObj/SetQuakeScale/LogicToScreen) of
+  world, modes, items and fighter now default to `tu::cmcamera`.
+
 ## melee_chara trace verification (port/pre-melee_chara, 2026-10-24)
 `docs/rust-port/trace/pad_falcon_fox_fd.csv` listed no stub or missing `melee_chara` function; the 10 `ported-unverified`
 rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_Init_8013C2F8`, `mpColl_8004730C`,
@@ -1006,3 +1021,11 @@ rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_In
   below 4 GB because those files route pointers through `int`. Trap: a group named `LeftWall` has normal -x (hit while
   moving right), i.e. it is the stage's right-hand wall.
 - Write C driver edits with the Edit tool, not a Python string: `\n` inside a Python literal puts a real newline in the C.
+
+## melee_world trace verification (port/pre-melee_world, 2026-10-24)
+All 93 `melee_world` rows of `docs/rust-port/trace/pad_falcon_fox_fd.csv` that were stub, missing or ported-unverified are now
+`ported+verified`: camera.c (`tu::cmcamera`, `tests/tu_cm.rs`), eflib/efasync/efdata (`tu::efn`, `tests/tu_ef.rs`) and
+mplib/mpcoll/mpisland (`tu::{mplib,mpcoll,mpisland}`, `tests/tu_mp.rs` plus melee_chara's `tu_mpcoll_c`) each have a state oracle against the
+shipping-contraction C. `Camera_SetQuakeOffset` / `Camera_SetBackgroundColor` of grlib, grlast, ground and grpura now default to
+`tu::cmcamera` (they wrote the hand-port `cm::camera::world()` state, a different `game_camera` from the one tu::cmcamera renders).
+Rows that are static helpers (`update_bounds`, `cm_script_update`, `fn_801C8EF8_inline`, ...) are verified through their callers' ops.

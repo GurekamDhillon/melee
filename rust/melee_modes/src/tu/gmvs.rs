@@ -181,7 +181,7 @@ pub mod ext {
         Player_SetMoreFlagsBit6(a0: i32, a1: u8) = |a0: i32, a1: u8| { unsafe { let _ = melee_fighter::tu::player::Player_SetMoreFlagsBit6(a0 as _, a1 as _); } };
         Player_SetFacingDirection(a0: i32, a1: f32) = |a0: i32, a1: f32| { unsafe { let _ = melee_fighter::tu::player::Player_SetFacingDirection(a0 as _, a1 as _); } };
         memzero(a0: *mut c_void, a1: isize) = |a0: *mut c_void, a1: isize| { unsafe { let _ = crate::tu::ext_hook::memzero(a0 as _, a1 as _); } };
-        Camera_SetQuakeScale(a0: f32) = |_| todo!("TODO(port) Camera_SetQuakeScale (camera.c)");
+        Camera_SetQuakeScale(a0: f32) = |a0: f32| { crate::tu::adapt::Camera_SetQuakeScale__cmc(a0) };
         Player_InitAllPlayers() = || { unsafe { let _ = melee_fighter::tu::player::Player_InitAllPlayers(); } };
         fn_8016A09C() = || { unsafe { let _ = crate::tu::gm_16A2::fn_8016A09C(); } };
         Player_GetCostumeId(a0: i32) -> u32 = |a0: i32| -> u32 { unsafe { melee_fighter::tu::player::Player_GetCostumeId(a0 as _) as _ } };
@@ -208,8 +208,8 @@ pub mod ext {
         gm_SetPreGObjProcCallback(a0: Event) = |a0: Event| { unsafe { let _ = crate::tu::gmscene::gm_SetPreGObjProcCallback(a0 as _); } };
         db_RunEveryFrame() = || todo!("TODO(port) db_RunEveryFrame (dbinit.c)");
         gm_801A4B50(a0: i32) = |a0: i32| { unsafe { let _ = crate::tu::gmscene::gm_801A4B50(a0 as _); } };
-        Camera_Init(a0: i32) = |_| todo!("TODO(port) Camera_Init (camera.c)");
-        Camera_Create() = || todo!("TODO(port) Camera_Create (camera.c)");
+        Camera_Init(a0: i32) = |a0: i32| { crate::tu::adapt::Camera_Init__cmc(a0) };
+        Camera_Create() = || { crate::tu::adapt::Camera_Create__cmc() };
         lbRefract_800222A4() = || { unsafe { let _ = melee_runtime::tu::lbrefract::lbRefract_800222A4(); } };
         lb_8000FCDC() = || { unsafe { let _ = melee_runtime::tu::lb_00F9::lb_8000FCDC(); } };
         efLib_Init() = || { unsafe { let _ = melee_world::tu::eflib::efLib_Init(); } };
@@ -227,7 +227,7 @@ pub mod ext {
         Camera_80030730(a0: f32) = |_| todo!("TODO(port) Camera_80030730 (camera.c)");
         Ground_801C20D0() -> f32 = || -> f32 { unsafe { melee_world::tu::ground::Ground_801C20D0() as _ } };
         Stage_80225298() = || { unsafe { let _ = melee_world::tu::stage::Stage_80225298(); } };
-        Camera_8002F3AC() = || todo!("TODO(port) Camera_8002F3AC (camera.c)");
+        Camera_8002F3AC() = || { crate::tu::adapt::Camera_8002F3AC__cmc() };
         fn_801A1134() = || { unsafe { let _ = crate::tu::gmpause::fn_801A1134(); } };
         sfx_setupCrowdSFX() = || { unsafe { let _ = melee_fighter::tu::sfx_unk::sfx_setupCrowdSFX(); } };
         ifAll_802F390C() = || { unsafe { let _ = melee_world::tu::ifall::ifAll_802F390C(); } };

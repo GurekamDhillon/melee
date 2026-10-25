@@ -1,3 +1,5 @@
+//! C functions this scenario covers beyond its direct calls: HSD_GObj_80391260 (inside HSD_GObjInit), HSD_GObjProc_QueueProc (inside
+//! HSD_GObj_SetupProc), HSD_GObjProc_UnlinkProcFromGObj (inside HSD_GObjProc_RemoveProc / RemoveAllProcs).
 //! `tu::gobj_native` vs the real gobj*.c (shipping contraction): the same random scenario of library
 //! calls as `gen/pure/drv_gobj_native.c`, with the whole library state hashed after every operation
 //! (pointers replaced by creation-order ids). Regenerate the expected data with

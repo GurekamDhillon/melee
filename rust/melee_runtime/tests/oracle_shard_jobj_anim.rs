@@ -1,3 +1,5 @@
+//! C functions covered (C name = Rust implementation the tu::jobj / tu::robj wrappers delegate to): JObjAnimAll = JObjRt::anim_all_sub (op 7),
+//! HSD_JObjRemoveAnimAllByFlags (op 10); the RObj legs HSD_RObjReqAnimAllByFlags / HSD_RObjRemoveAnimAllByFlags run inside those walkers.
 //! Actual jobj.c animation walkers over actual aobj.c/fobj.c; DObj calls logged by value.
 use melee_runtime::{jobj::*,jobj_rt::*,robj::RObjHost,aobj::*,fobj::*,mtx::Vec3};
 use std::fmt::Write;

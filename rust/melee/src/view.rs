@@ -194,11 +194,21 @@ fn load_stage(file: &[u8], is_fd: bool) -> Result<Stage, String> {
         if !is_fd || !ids.contains(&map) {
             continue;
         }
+        let rate = if std::env::var("MELEE_VIEW_RATE0").is_ok() { 0.0 } else { 1.0 };
         if i2 != -1 {
-            anim.grdo_anim(map, i2 as u32, 7, set, true, 0.0, 1.0);
+            anim.grdo_anim(map, i2 as u32, 7, set, true, 0.0, rate);
         }
-        anim.grdo_anim(map, i1, 7, 0, false, 0.0, 1.0);
+        if std::env::var("MELEE_VIEW_NOSET0").is_ok() && map >= 5 { continue; }
+        anim.grdo_anim(map, i1, 7, 0, false, 0.0, rate);
         anim.grdo_clear_loop(map, i1, 7);
+    }
+    if let Ok(n) = std::env::var("MELEE_VIEW_EXTRASET").map(|v| v.parse::<i32>().unwrap_or(1)) {
+        for &(map, i1, _i2, _set) in &FD_BACKDROP {
+            if is_fd && ids.contains(&map) {
+                anim.grdo_anim(map, i1, 7, n, false, 0.0, 1.0);
+                anim.grdo_clear_loop(map, i1, 7);
+            }
+        }
     }
     if is_fd && ids.contains(&4) {
         anim.grdo_anim(4, 0x10, 7, 0, false, 0.0, 1.0);
@@ -206,6 +216,86 @@ fn load_stage(file: &[u8], is_fd: bool) -> Result<Stage, String> {
     if let (Ok(v), Err(_)) = (std::env::var("MELEE_VIEW_DUMP"), std::env::var("MELEE_VIEW_DUMP_FRAME")) {
         for g in v.split(',').filter_map(|x| x.trim().parse::<u32>().ok()) {
             anim.dump(g);
+        }
+    }
+    if let Ok(v) = std::env::var("MELEE_VIEW_PODUMP") {
+        // "g:j": the pobjs of a joint: flags, vertex descriptor attributes, display list primitives.
+        if let Some((g, j)) = v.split_once(':') {
+            let (g, j): (u32, usize) = (g.parse().unwrap(), j.parse().unwrap());
+            let e = be32(d, table + g * 0x34);
+            let mut descs = Vec::new();
+            descs_of(d, e, 0, &mut descs);
+            let jd = descs[j];
+            let mut dob = be32(d, jd + 0x10);
+            while dob != 0 {
+                let mut po = be32(d, dob + 0xC);
+                while po != 0 {
+                    let (flags, nd) = (be16(d, po + 0xC), be16(d, po + 0xE));
+                    let (vd, dl) = (be32(d, po + 8), be32(d, po + 0x10));
+                    let mut attrs = String::new();
+                    let mut a = vd;
+                    while be32(d, a) != 0xFF {
+                        attrs += &format!(" [attr {} type {} cnt {} ctype {} frac {} stride {}]", be32(d, a), be32(d, a + 4), be32(d, a + 8), be32(d, a + 0xC), d[a as usize + 0x10], be16(d, a + 0x12));
+                        a += 0x18;
+                    }
+                    let mut prims = String::new();
+                    let end = dl + nd as u32 * 32;
+                    let mut p = dl;
+                    // stride of one vertex in the DL: indexed (type 2/3) = 1/2 bytes; direct is unsupported here
+                    let mut vstride = 0u32;
+                    let mut aa = vd;
+                    while be32(d, aa) != 0xFF { vstride += match be32(d, aa + 4) { 2 => 1, 3 => 2, _ => 0 }; aa += 0x18; }
+                    while p < end && d[p as usize] != 0 {
+                        let (op, cnt) = (d[p as usize], be16(d, p + 1));
+                        prims += &format!(" {:#x}x{}", op, cnt);
+                        p += 3 + cnt as u32 * vstride;
+                    }
+                    eprintln!("PODUMP g{g} j{j} dobj {dob:#x} pobj {po:#x} flags {flags:#x} ndisp {nd} vstride {vstride}:{attrs} | prims{prims}");
+                    po = be32(d, po + 4);
+                }
+                dob = be32(d, dob + 4);
+            }
+        }
+    }
+    if std::env::var("MELEE_VIEW_BRANCHSCAN").is_ok() {
+        for g in 4..9u32 {
+            let e = be32(d, table + g * 0x34);
+            let mut descs = Vec::new();
+            descs_of(d, e, 0, &mut descs);
+            let fl: Vec<String> = descs.iter().map(|&jd| format!("{:#x}", be32(d, jd + 4))).collect();
+            eprintln!("STATICFLAGS g{g}: {}", fl.join(" "));
+        }
+        for g in 4..10u32 {
+            let e = be32(d, table + g * 0x34);
+            let ajp = be32(d, table + g * 0x34 + 4);
+            let _ = e;
+            if ajp == 0 { continue; }
+            for an in 0..17u32 {
+                let set = be32(d, ajp + 4 * an);
+                if set == 0 || set as usize + 0x14 > d.len() { continue; }
+                for idx in 0..10u32 {
+                    let aj = set + idx * 0x14;
+                    if aj as usize + 0x14 > d.len() { break; }
+                    let aobj = be32(d, aj + 8);
+                    if aobj == 0 || aobj as usize + 16 > d.len() { continue; }
+                    let mut fo = be32(d, aobj + 8);
+                    let mut line = String::new();
+                    while fo != 0 && (fo as usize) + 20 <= d.len() {
+                        let (len, ty) = (be32(d, fo + 4), d[fo as usize + 12]);
+                        if ty == 12 || ty == 11 {
+                            let ad = be32(d, fo + 16) as usize;
+                            line += &format!(" ty{} fv{:02x} start{} len{} ad{:02x?}", ty, d[fo as usize + 13], bef(d, fo + 8), len, &d[ad..(ad + len as usize).min(d.len()).min(ad + 12)]);
+                        }
+                        fo = be32(d, fo);
+                    }
+                    if !line.is_empty() { eprintln!("BRANCH g{g} set{an} idx{idx} endf {}:{line}", bef(d, aobj + 4)); }
+                }
+            }
+        }
+    }
+    if let Ok(n) = std::env::var("MELEE_VIEW_PREROLL").map(|v| v.parse::<u32>().unwrap_or(0)) {
+        for _ in 0..n {
+            anim.step();
         }
     }
     if let Ok(v) = std::env::var("MELEE_VIEW_UNHIDE") {
@@ -232,6 +322,18 @@ fn load_stage(file: &[u8], is_fd: bool) -> Result<Stage, String> {
                 let mut dob = be32(d, jd + 0x10);
                 while dob != 0 {
                     let mob = be32(d, dob + 8);
+                    if std::env::var("MELEE_VIEW_TEXDUMP2").is_ok() && mob != 0 {
+                        let mut t = be32(d, mob + 8);
+                        while t != 0 {
+                            let fl = |o: u32| f32::from_bits(be32(d, t + o));
+                            eprintln!("  TOBJ {t:#x} rot {:.2} {:.2} {:.2} scale {:.3} {:.3} {:.3} trans {:.3} {:.3} {:.3} wrap {} {} rep {} {} flags {:#x} blend {:.2} filt {} tlut {:#x} lod {:#x}", fl(0x10), fl(0x14), fl(0x18), fl(0x1C), fl(0x20), fl(0x24), fl(0x28), fl(0x2C), fl(0x30), be32(d, t + 0x34), be32(d, t + 0x38), d[t as usize + 0x3C], d[t as usize + 0x3D], be32(d, t + 0x40), fl(0x44), be32(d, t + 0x48), be32(d, t + 0x50), be32(d, t + 0x54));
+                            let tv = be32(d, t + 0x58);
+                            if tv != 0 {
+                                eprintln!("    TEV desc {tv:#x}: color {:02x?} alpha {:02x?} konst {:02x?} tev0 {:02x?} tev1 {:02x?} active {:#x} ops {:02x?}", &d[tv as usize + 8..tv as usize + 12], &d[tv as usize + 12..tv as usize + 16], &d[tv as usize + 0x10..tv as usize + 0x14], &d[tv as usize + 0x14..tv as usize + 0x18], &d[tv as usize + 0x18..tv as usize + 0x1C], be32(d, tv + 0x1C), &d[tv as usize..tv as usize + 8]);
+                            }
+                            t = be32(d, t + 4);
+                        }
+                    }
                     let mut line = format!("g{g} j{ji} dobj {dob:#x} mobj {mob:#x}");
                     if mob != 0 {
                         line += &format!(" rflags {:#x}", be32(d, mob + 4));
@@ -431,6 +533,21 @@ impl MatchRender {
     /// One match frame's render-side update, after `sim.step()`: the stage animation and the match camera.
     pub fn step(&mut self, sim: &mut VsMatch) {
         self.stage.anim.step();
+        if let Ok(v) = std::env::var("MELEE_VIEW_ONLY") {
+            // "g:j,j,j": per frame, hide every joint of group g except the listed ones.
+            if let Some((g, js)) = v.split_once(':') {
+                let g: u32 = g.parse().unwrap_or(0);
+                let keep: Vec<u32> = js.split(',').filter_map(|x| x.trim().parse().ok()).collect();
+                for j in 0..self.stage.anim.jobj_count(g) as u32 {
+                    if !keep.contains(&j) { self.stage.anim.hide(g, j); }
+                }
+            }
+        }
+        if let Ok(v) = std::env::var("MELEE_VIEW_FORCEVIS") {
+            for g in v.split(',').filter_map(|x| x.trim().parse::<u32>().ok()) {
+                self.stage.anim.set_hidden_all(g, 0, false);
+            }
+        }
         if std::env::var("MELEE_VIEW_HIDLOG").is_ok() && sim.frame % 20 == 0 {
             eprintln!("HID frame {} {}", sim.frame, self.stage.anim.hidden_summary());
         }

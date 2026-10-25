@@ -270,7 +270,7 @@ pub unsafe fn HSD_SetMaterialColor(ambient: GXColor, diffuse: GXColor, specular:
     matstate.ambient = ambient;
     matstate.diffuse = diffuse;
     matstate.specular = specular;
-    matstate.alpha = crate::cabi::f2u8(255.0f64 * alpha as f64);
+    matstate.alpha = (crate::cabi::f2u32(255.0f64 * alpha as f64) as u8);
 }
 
 /// `HSD_SetMaterialShininess`.

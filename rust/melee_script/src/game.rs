@@ -595,6 +595,66 @@ pub trait ScriptGame {
     fn map_bound(&self, _which: i32, _field: i32) -> i32 {
         0
     }
+    // ---- scalar fighter capabilities (`gw_ScriptGame_Caps*`, `IntrWin*`, `Armor*`): pc/platform/gw_script_fighter_caps*.inc.
+    // Records live in the game's snapshotted state; floats cross as bit patterns.
+    fn caps_movement(&mut self, _entity: i32, _owner: i32, _jumps: i32, _flags: i32) -> i32 {
+        0
+    }
+    /// field 0 present, 1 air jumps, 2 flag bits, 3 retail jumps (negative: none)
+    fn caps_movement_read(&self, _entity: i32, field: i32) -> i32 {
+        if field == 3 { -1 } else { 0 }
+    }
+    fn caps_effect(&mut self, _entity: i32, _owner: i32, _kind: i32, _value_bits: i32, _frames: i32) -> i32 {
+        0
+    }
+    /// field 0 frames left, 1 value bits
+    fn caps_effect_read(&self, _entity: i32, _kind: i32, _field: i32) -> i32 {
+        0
+    }
+    fn caps_armour(&mut self, _entity: i32, _owner: i32, _damage_bits: i32, _kb_bits: i32) -> i32 {
+        0
+    }
+    /// field 0 present, 1 damage bits, 2 knockback bits
+    fn caps_armour_read(&self, _entity: i32, _field: i32) -> i32 {
+        0
+    }
+    /// > 0 given; otherwise the refusal reason code
+    fn caps_give_item(&mut self, _entity: i32, _owner: i32, _kind: i32) -> i32 {
+        0
+    }
+    fn caps_give_item_reason(&self, _reason: i32) -> String {
+        "no game".into()
+    }
+    /// nth = 0: the nearest; n >= 1: the nth within `radius_bits`; 0 = none
+    fn caps_opponent(&self, _entity: i32, _radius_bits: i32, _nth: i32, _exclude: i32) -> i32 {
+        0
+    }
+    fn caps_status(&mut self, _entity: i32, _channel: i32, _owner: i32, _value_bits: i32, _frames: i32) -> i32 {
+        0
+    }
+    fn caps_status_read(&self, _entity: i32, _channel: i32, _field: i32) -> i32 {
+        0
+    }
+    fn intr_win_set(&mut self, _entity: i32, _owner: i32, _frames: i32, _exits: i32, _flags: i32) -> i32 {
+        0
+    }
+    /// 0 frames, 1 owner, 2 exit mask, 3 key, 4 opened, 5 cancels
+    fn intr_win_read(&self, _entity: i32, _field: i32) -> i32 {
+        0
+    }
+    #[allow(clippy::too_many_arguments)]
+    fn armor_set(&mut self, _e: i32, _owner: i32, _ty: i32, _value_bits: i32, _frames: i32, _state: i32, _from: i32, _to: i32, _dir: i32) -> i32 {
+        0
+    }
+    /// field 0 present, 1 value, 2 remaining, 3 frames, 4 state, 5 from, 6 to, 7 direction, 8 enabled
+    fn armor_read(&self, _e: i32, _ty: i32, _field: i32) -> i32 {
+        0
+    }
+    fn armor_clear(&mut self, _e: i32, _owner: i32, _ty: i32) -> i32 {
+        0
+    }
+    /// `gs_caps_release` + `ArmorRelease`: drop everything the owner (script index + 1) set
+    fn caps_release(&mut self, _owner: i32) {}
     // ---- the recorder (`pc/platform/gw_script_rec.inc`): `.gdlp` live-playback recordings. The Lua half
     // (gating, names, argument shapes) is ported in `gd::rec`; these are the recorder's state machine and files.
     fn rec_start(&mut self, _name: &str) -> Result<String, String> {

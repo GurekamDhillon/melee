@@ -12,6 +12,7 @@ static int IA[4];
 static u32 UA[4];
 static float FA[4];
 static unsigned char BUF[256];
+static void* PPA[4];
 static char STRS[4][64] = { "a.dat", "sym", "LbAd.dat", "x" };
 
 struct HSD_GObj; typedef struct HSD_GObj HSD_GObj;
@@ -35,7 +36,7 @@ static void* pick_fn(int kind)
     return 0;
 }
 static void* pick_cb(int kind) { void* f = pick_fn(kind); return f ? f : (kind == 2 ? (void*) cbp1 : kind == 3 ? (void*) cbev3 : kind == 4 ? (void*) cbi1 : (void*) cbev1); }
-static void freg_world(void) { freg((const void*) cbev1); freg((const void*) cbev2); freg((const void*) cbp1); freg((const void*) cbp2); freg((const void*) cbev3); freg((const void*) cbi1); freg((const void*) cbi2); }
+static void freg_world(void) { freg((const void*) cbev1); freg((const void*) cbev2); freg((const void*) cbp1); freg((const void*) cbp2); freg((const void*) cbev3); freg((const void*) cbi1); freg((const void*) cbi2);  }
 u32 OS_BusClock;
 #include "perf_gen.h"
 
@@ -43,7 +44,7 @@ u32 OS_BusClock;
 
 static void preg_world(void)
 {
-    preg(VA, sizeof VA); preg(U8A, sizeof U8A); preg(IA, sizeof IA); preg(UA, sizeof UA); preg(FA, sizeof FA); preg(BUF, sizeof BUF); preg(STRS, sizeof STRS);
+    preg(VA, sizeof VA); preg(U8A, sizeof U8A); preg(IA, sizeof IA); preg(UA, sizeof UA); preg(FA, sizeof FA); preg(BUF, sizeof BUF); preg(STRS, sizeof STRS); preg(PPA, sizeof PPA);
 }
 
 static void setup_world(void)
@@ -54,6 +55,7 @@ static void setup_world(void)
     for (i = 0; i < 4; i++) { IA[i] = (int) fv(); UA[i] = fv(); FA[i] = rw(); VA[i].x = rw(); VA[i].y = rw(); VA[i].z = rw(); }
     for (i = 0; i < 256; i++) BUF[i] = (unsigned char) rnd();
     BUF[255] = 0;
+    for (i = 0; i < 4; i++) PPA[i] = 0;
     fillg_all();
     fillo_all();
 }
@@ -65,6 +67,7 @@ static void hash_world(void)
     for (i = 0; i < 4; i++) { HM(B(VA[i].x)); HM(B(VA[i].y)); HM(B(VA[i].z)); HM(B(FA[i])); HM((u32) IA[i]); HM(UA[i]); }
     for (i = 0; i < 16; i++) HM(U8A[i]);
     for (i = 0; i < 256; i++) HM(BUF[i]);
+    for (i = 0; i < 4; i++) HM(PI(PPA[i]));
     hashg_all();
     hasho_all();
 }

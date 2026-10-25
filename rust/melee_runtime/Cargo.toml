@@ -89,3 +89,7 @@ harness = false
 [[test]]
 name = "tu_video"
 harness = false
+
+[[test]]
+name = "tu_fog"
+harness = false

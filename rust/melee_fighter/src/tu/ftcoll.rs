@@ -29,12 +29,17 @@ pub mod ext {
     use crate::types::*;
     use core::ffi::c_void;
     macro_rules! ext {
-        ($($stat:ident $name:ident ($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {$(
+        ($($stat:ident $name:ident ($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $d:expr)?;)*) => {$(
             pub static mut $stat: Option<fn($($t),*) $(-> $r)?> = None;
+            #[allow(unreachable_code)]
             pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { $stat } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " not ported")),
+                    None => {
+                        // a callee with a port in this crate runs it; the rest are unset seams
+                        $( return $d; )?
+                        panic!(concat!("TODO: ", stringify!($name), " not ported"))
+                    }
                 }
             }
         )*};
@@ -70,7 +75,7 @@ pub mod ext {
         SCRIPTGAME_REPORT_HIT_CONTEXT ScriptGame_ReportHitContext(atk: F, vic: F, element: u32, kind: i32);
         SCRIPTGAME_SKILL_HIT ScriptGame_SkillHit(atk: F, vic: F, dmg: f32);
         SCRIPTGAME_HIT_RULE_CONTEXT ScriptGame_HitRuleContext(hit: HC, fp: F);
-        SCRIPTGAME_HIT_RULE_DAMAGE ScriptGame_HitRuleDamage(hit: HC);
+        SCRIPTGAME_HIT_RULE_DAMAGE ScriptGame_HitRuleDamage(hit: HC) = unsafe { melee_runtime::tu::script_hit::ScriptGame_HitRuleDamage(hit) };
         SCRIPTGAME_ITEM_MOD_DAMAGE ScriptGame_ItemModDamage(item: It, dmg: f32) -> f32;
         SCRIPT_CLANK_WANTED Script_ClankWanted() -> i32;
         SCRIPT_CLANK Script_Clank(a: i32, b: i32, c: i32, d: i32, e: i32, f: i32, g: i32, h: i32, i: i32, j: i32, k: i32, l: i32);
@@ -87,9 +92,9 @@ pub mod ext {
         LBCOLL_80008688 lbColl_80008688(hit: HC, kind: i32, victim: *mut c_void) -> bool;
         LBCOLL_80008820 lbColl_80008820(hit: HC, kind: i32, victim: *mut c_void) -> bool;
         LBCOLL_COPY_HIT_CAPSULE lbColl_CopyHitCapsule(src: HC, dst: HC);
-        LBCOLL_80008440 lbColl_80008440(hit: HC);
-        LBCOLL_80008428 lbColl_80008428(hit: HC);
-        LBCOLL_80008434 lbColl_80008434(hit: HC);
+        LBCOLL_80008440 lbColl_80008440(hit: HC) = unsafe { melee_runtime::tu::lbcollision::lbColl_80008440(hit) };
+        LBCOLL_80008428 lbColl_80008428(hit: HC) = unsafe { melee_runtime::tu::lbcollision::lbColl_80008428(hit) };
+        LBCOLL_80008434 lbColl_80008434(hit: HC) = unsafe { melee_runtime::tu::lbcollision::lbColl_80008434(hit) };
         LBCOLL_80005BB0 lbColl_80005BB0(hit: HC, i: i32) -> i32;
         LBCOLL_8000ACFC lbColl_8000ACFC(victim: *mut c_void, hit: HC) -> bool;
         LBCOLL_80007ECC lbColl_80007ECC(hit: HC, hurt: *mut HurtCapsule, mtx: MtxPtr, a: f32, b: f32, z: f32) -> bool;
@@ -115,8 +120,8 @@ pub mod ext {
         IT_8026B588 it_8026B588() -> i32;
         FT_80084CE4 ft_80084CE4(a: F, v: F) -> bool;
         FT_80088080 ft_80088080(fp: F);
-        FT_80089228 ft_80089228(fp: F, id: i32, inst: i32, dmg: f32) -> f32;
-        FTCO_800DEEB8 ftCo_800DEEB8(fp: F, dmg: f32) -> f32;
+        FT_80089228 ft_80089228(fp: F, id: i32, inst: i32, dmg: f32) -> f32 = unsafe { crate::stale::apply_staling(&*fp, id, inst, dmg) };
+        FTCO_800DEEB8 ftCo_800DEEB8(fp: F, dmg: f32) -> f32 = unsafe { crate::ft0df::ftco_800deeb8(&*fp, dmg) };
         GM_8016B0D4 gm_8016B0D4() -> bool;
         GM_8016B1C4 gm_8016B1C4() -> bool;
         GM_8016B248 gm_8016B248() -> f32;
@@ -128,12 +133,13 @@ pub mod ext {
         FTCO_800C0874 ftCo_800C0874(g: G, ground: *mut c_void, kind: u32);
         FTCO_800C08A0 ftCo_800C08A0(g: G, ground: G, desc: *mut DynamicsDesc, kind: u32);
         FTCO_800C0B20 ftCo_800C0B20(g: G);
-    }
-    /// `ftCo_800BFFD0` (ftcolanim.c): a port exists; the hook lets the oracle record the call.
-    pub static mut FTCO_800BFFD0: Option<fn(&mut Fighter, i32, i32) -> bool> = None;
-    #[allow(non_snake_case)]
-    pub fn ftCo_800BFFD0(fp: &mut Fighter, a: i32, b: i32) -> bool {
-        match unsafe { FTCO_800BFFD0 } { Some(f) => f(fp, a, b), None => crate::tu::ftcolanim::ftco_800bffd0(fp, a, b) }
+        FTLIB_80086960 ftLib_80086960(g: G) -> bool = crate::ftlib::ftlib_80086960(g);
+        FTCOMMON_8007F804 ftCommon_8007F804(fp: F) -> MtxPtr = unsafe { crate::ftcommon2::ftcommon_8007f804(&mut *fp) };
+        FTCOMMON_8007EBAC ftCommon_8007EBAC(fp: F, a: u32, b: u32) = unsafe { crate::ftcommon2::ftcommon_8007ebac(&mut *fp, a, b) };
+        FTCO_CALC_Y_SCALED_KNOCKBACK ftCo_CalcYScaledKnockback(a: f32, scale: f32, c: f32) -> f32 = crate::tu::ftchangeparam::ftco_calc_y_scaled_knockback(a, scale, c);
+        FTCO_800C0694 ftCo_800C0694(fp: F) -> i32 = unsafe { crate::tu::ftdevice::ftco_800c0694(&mut *fp) as i32 };
+        FTCO_800C0200 ftCo_800C0200(fp: F, a: i32) = unsafe { crate::tu::ftcolanim::ftco_800c0200(&mut *fp, a) };
+        FTCO_800BFFD0 ftCo_800BFFD0(fp: F, a: i32, b: i32) -> bool = unsafe { crate::tu::ftcolanim::ftco_800bffd0(&mut *fp, a, b) };
     }
     /// `it_804D6D28` (ItemCommonData; set by the item loader). TODO(group5 it) move to the item crate.
     pub static mut it_804D6D28: *const ItemCommonData = core::ptr::null();
@@ -230,7 +236,7 @@ fn dir_lt(a: f32, b: f32, t: f32, f: f32) -> f32 {
 }
 #[inline(always)]
 fn mtx(fp: F) -> MtxPtr {
-    crate::ftcommon2::ftcommon_8007f804(unsafe { &mut *fp })
+    ext::ftCommon_8007F804(fp)
 }
 
 // ---- combo counting -----------------------------------------------------------------------
@@ -271,7 +277,7 @@ pub fn ftcoll_80076444(attacker: G, victim: G) {
 pub fn ftcoll_8007646c(item: G, victim: G) {
     let owner = ext::itGetOwner(item);
     let msid = ext::itGetAttackId(item);
-    if crate::ftlib::ftlib_80086960(owner) {
+    if ext::ftLib_80086960(owner) {
         ftcoll_800763c0(owner, victim, msid);
     }
 }
@@ -884,7 +890,7 @@ pub fn ftcoll_80077688(item: It, hurt: HC, fp: F, pos: *mut Vec3, mut val: f32) 
         }
         let total = dmg.wrapping_add((*hurt).x34);
         f.x19A0_shieldDamageTaken = f.x19A0_shieldDamageTaken.wrapping_add(if total < 0 { 0 } else { total } as _);
-        if crate::ftlib::ftlib_80086960(it.owner) {
+        if ext::ftLib_80086960(it.owner) {
             let o = &*fpg(it.owner);
             f.x19BC_shieldDamageTaken3 = o.player_id as _;
             f.set_x221F_b6(o.is_sub_fighter() as _);
@@ -986,7 +992,7 @@ pub fn ftcoll_80077c60(item: It, hit: HC, fp: F, hit2: HC) -> bool {
                     it.xC34_damageDealt = 1;
                     ftcoll_8007b7fc(fp, ext::it_80272818(item) as usize as i32);
                     sfx(fp, 0xF9);
-                    crate::ftcommon2::ftcommon_8007ebac(&mut *fp, 0x11, 0);
+                    ext::ftCommon_8007EBAC(fp, 0x11, 0);
                 } else if k == It_Kind_Kinoko as i32 {
                     (*hit).state = HC_DISABLED as _;
                     f.x200C = f.x200C.wrapping_add(1);
@@ -1111,7 +1117,7 @@ pub fn ftcoll_80077c60(item: It, hit: HC, fp: F, hit2: HC) -> bool {
                 // TARGET_PC: Lua on_hit for item hitbox -> fighter.
                 {
                     let mut owner = -1;
-                    if !it.owner.is_null() && crate::ftlib::ftlib_80086960(it.owner) {
+                    if !it.owner.is_null() && ext::ftLib_80086960(it.owner) {
                         owner = (*fpg(it.owner)).player_id as i32;
                     }
                     ext::ScriptGame_HitRuleWon(hit, fp);
@@ -1288,7 +1294,7 @@ unsafe fn item_damage_record(ip: It, victim: G, arg: *mut c_void) {
     let owner = (*ip).owner;
     let p = &mut (*ip).xD94 as *mut Vec2 as *mut c_void;
     let (kind, x2070, short) = ((*ip).kind as i32, (*ip).xD90.x2070_int, (*ip).xDA8_short);
-    if crate::ftlib::ftlib_80086960(owner) {
+    if ext::ftLib_80086960(owner) {
         ftcoll_8007861c(owner, victim, 2, kind, x2070, p, short, arg, 0);
     } else if ext::pl_8003D60C(kind) {
         ftcoll_8007861c(core::ptr::null_mut(), victim, 2, kind, x2070, p, short, arg, 1);
@@ -1330,7 +1336,7 @@ pub fn ftcoll_80078998(arg0: G, arg1: G, arg2: f32) {
     ftcoll_8007646c(arg0, arg1);
     unsafe {
         let ip = &*(fpg(arg0) as It);
-        if crate::ftlib::ftlib_80086960(ip.owner) {
+        if ext::ftLib_80086960(ip.owner) {
             let (o, v) = (&*fpg(ip.owner), &*fpg(arg1));
             ext::pl_8003EB30(arg2, o.player_id as i32, o.is_sub_fighter() as i32, v.player_id as i32, v.is_sub_fighter() as i32, ip.xD90.anon_0.x2073 as i32);
         }
@@ -1946,7 +1952,7 @@ pub fn ftcoll_8007a06c(gobj: G, dmg_ptr: *mut c_void, log: *mut DmgLogEntry, idx
                 2 => {
                     let item = &*(fpg(entry.gobj) as It);
                     let owner = item.owner;
-                    let attack = if crate::ftlib::ftlib_80086960(owner) { ext::Player_GetAttackRatio((*fpg(owner)).player_id as i32) } else { 1.0 };
+                    let attack = if ext::ftLib_80086960(owner) { ext::Player_GetAttackRatio((*fpg(owner)).player_id as i32) } else { 1.0 };
                     let weight = (*fp).co_attrs.weight;
                     let defense = ext::Player_GetDefenseRatio((*fp).player_id as i32);
                     let stage = ext::gm_8016B248();
@@ -2119,7 +2125,7 @@ pub fn ftcoll_8007abd0(arg0: HC, arg1: u32, arg2: G) {
         let fp = fpg(arg2);
         let mut dmg = arg1 as f32;
         if (*fp).x34_scale.y != 1.0 {
-            dmg = super::ftchangeparam::ftco_calc_y_scaled_knockback(dmg, (*fp).x34_scale.y, super::ftchangeparam::ext::d6524().x4);
+            dmg = ext::ftCo_CalcYScaledKnockback(dmg, (*fp).x34_scale.y, super::ftchangeparam::ext::d6524().x4);
         }
         let scaled = ext::ftCo_800DEEB8(fp, dmg);
         (*arg0).unk_count = scaled as i32 as u32;
@@ -2189,9 +2195,8 @@ pub fn ftcoll_8007af60(g: G) {
         let fp = &mut *fpg(g);
         let mut i = 0usize;
         while (i as u32) < fp.x166C as u32 {
-            let e = &mut fp.x1670[i];
-            let v1 = e.v1;
-            crate::hooks::lb_8000b1cc(e.jobj, &v1, &mut e.x18);
+            let e = &mut *fp.x1670.as_mut_ptr().add(i); // the C indexes past the declared [1]
+            crate::hooks::lb_8000b1cc(e.jobj, &e.v1, &mut e.x18);
             i += 1;
         }
     }
@@ -2343,7 +2348,7 @@ pub fn ftcoll_8007b320(g: G) {
         while i < dyn_.x4 as u32 {
             let init = &*dyn_.x8.add(i as usize);
             let joint = (*fp.parts.add(init.x0 as usize)).joint;
-            let dst = &mut fp.x1670[i as usize];
+            let dst = &mut *fp.x1670.as_mut_ptr().add(i as usize); // the C indexes past the declared [1]
             dst.x24 = init.x0 as _;
             dst.jobj = joint;
             dst.v1 = init.x4;
@@ -2413,8 +2418,8 @@ pub fn ftcoll_8007b6ec(g: G) {
         fp.set_x2221_b0(0);
         if fp.x1990 == 0 {
             fp.x198C = if fp.x1994 != 0 { 1 } else { 0 };
-            if super::ftdevice::ftco_800c0694(fp) == 9 {
-                super::ftcolanim::ftco_800c0200(fp, 9);
+            if ext::ftCo_800C0694(fp) == 9 {
+                ext::ftCo_800C0200(fp, 9);
             }
         }
     }
@@ -2684,7 +2689,7 @@ pub fn ftcoll_8007be3c(g: G) {
                 ext::plStale_UpdateStaleMovesFromItem(source, victim);
                 ftcoll_8007646c(source, victim);
                 let ip = &*(fpg(source) as It);
-                if crate::ftlib::ftlib_80086960(ip.owner) {
+                if ext::ftLib_80086960(ip.owner) {
                     let (o, v) = (&*fpg(ip.owner), &*fpg(victim));
                     ext::pl_8003EB30(amount, o.player_id as i32, o.is_sub_fighter() as i32, v.player_id as i32, v.is_sub_fighter() as i32, ip.xD90.anon_0.x2073 as i32);
                 }

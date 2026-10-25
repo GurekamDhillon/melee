@@ -2,6 +2,7 @@
 #![allow(unused_variables, unused_parens, non_snake_case, unused_unsafe, static_mut_refs, clippy::all)]
 use crate::mtu_h::*;
 use super::m;
+use melee_fighter::hooks as h;
 use melee_types::*;
 
 pub fn install() {

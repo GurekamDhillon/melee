@@ -233,7 +233,10 @@ impl Hud {
         if self.go.is_none() && self.ready_frames > self.file.ready_end.unwrap_or(f32::MAX) && self.ready_frames <= self.file.ready_end.unwrap_or(0.0) + 1.5 {
             let mut g = StageAnim::new_scene(self.file.dat.clone(), vec![self.file.go_desc]);
             g.start_map_anim(0, 0);
-            self.go = Some((g, 1.0));
+            // The new gobj's anim proc runs later in the frame it was created in (the C shot shows the
+            // element one animation frame in).
+            g.step();
+            self.go = Some((g, 2.0));
         } else if let Some((g, n)) = &mut self.go {
             g.step();
             *n += 1.0;

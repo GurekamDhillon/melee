@@ -80,10 +80,12 @@ pub struct WindowConfig {
     pub title: String,
     pub width: u32,
     pub height: u32,
+    /// false: create the window without taking focus (scripted / test runs, so the user's keyboard stays where it is).
+    pub active: bool,
 }
 impl Default for WindowConfig {
     fn default() -> Self {
-        Self { title: "GD's Melee".into(), width: 1280, height: 960 }
+        Self { title: "GD's Melee".into(), width: 1280, height: 960, active: true }
     }
 }
 
@@ -133,6 +135,7 @@ impl<G: Game> ApplicationHandler for App<G> {
         }
         let mut attrs = Window::default_attributes()
             .with_title(self.cfg.title.clone())
+            .with_active(self.cfg.active)
             .with_inner_size(winit::dpi::LogicalSize::new(self.cfg.width, self.cfg.height));
         // MELEE_WINDOW_UNFOCUSED=1 (test harnesses): never take the user's keyboard focus.
         // MELEE_WINDOW_UNFOCUSED=hidden also leaves the window invisible (EFB shots still work).

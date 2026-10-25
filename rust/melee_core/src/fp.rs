@@ -15,11 +15,16 @@ pub fn fmadds(a: f32, c: f32, b: f32) -> f32 {
 }
 
 /// Gekko `fmsubs` under the same model: `(float)((double)a * (double)c - (double)b)`.
-///
-/// Written as `a*c + (-b)`, which is how the C build forms it (`a*b - c` is `fmuladd(a, b, -c)`):
-/// identical for every non-NaN input, and a NaN `b` comes out with its sign flipped, as in the C.
 #[inline(always)]
 pub fn fmsubs(a: f32, c: f32, b: f32) -> f32 {
+    (a as f64 * c as f64 - b as f64) as f32
+}
+
+/// `fmsubs` as clang's `fmuladd(a, c, -b)` forms it (`a*c - b` where the C build fuses to a negated
+/// addend): identical to [`fmsubs`] for every non-NaN input; a NaN `b` comes out with its sign flipped
+/// (ft_0c31's oracle). Other TUs' oracles (itkinds10) pin the unflipped [`fmsubs`].
+#[inline(always)]
+pub fn fmsubs_neg(a: f32, c: f32, b: f32) -> f32 {
     (a as f64 * c as f64 + (-(b as f64))) as f32
 }
 

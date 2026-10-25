@@ -361,8 +361,9 @@ CFGS["gm_17c0"] = _gm_17c0()
 
 # the trace functions of pad_falcon_fox_fd (docs/rust-port/trace) that were ported but not checked
 SCRIPT_GAME_FUNCS = ['ScriptGame_ArmorRelease', 'ScriptGame_BuildClear', 'ScriptGame_CameraParamsRelease', 'ScriptGame_CapsEffectsRelease', 'ScriptGame_CapsMovementRelease', 'ScriptGame_CapsStatusRelease', 'ScriptGame_CritRelease', 'ScriptGame_EchoClear', 'ScriptGame_EchoReset', 'ScriptGame_FighterBenchRelease', 'ScriptGame_FighterI', 'ScriptGame_FighterModsRelease', 'ScriptGame_GameMode', 'ScriptGame_IntrWinRelease', 'ScriptGame_ItemCount', 'ScriptGame_LabSetPreviewRow', 'ScriptGame_OnePTemplatesClear', 'ScriptGame_ShockRelease', 'ScriptGame_SimRelease', 'ScriptGame_StageIsolationClear', 'ScriptGame_StageIsolationWatch', 'ScriptGame_StageMusicTick', 'ScriptGame_StageSlotCanCreate', 'ScriptGame_StageSlotCreated', 'ScriptGame_StageSlotProcBegin', 'ScriptGame_ZoneEventCount', 'ScriptGame_ZonesArm', 'ScriptGame_ZonesFrame', 'ScriptGame_ZonesRelease', 'script_camera_params_release', 'ScriptGame_CameraFov', 'ScriptGame_CpuModeInfo', 'ScriptGame_CpuModeReset', 'ScriptGame_FighterBenchTick', 'ScriptGame_HitRulePercentClear', 'ScriptGame_IntrWinTick', 'ScriptGame_LabPreviewRow', 'ScriptGame_MapWide', 'ScriptGame_NoteMotion', 'ScriptGame_OnePSpawn', 'ScriptGame_StageGameplayScene', 'ScriptGame_StageJoint', 'ScriptGame_StageJointActive', 'ScriptGame_StageJointCapacity', 'ScriptGame_StageLineActive', 'ScriptGame_StageMusicReset', 'ScriptGame_StageSlotDestroyed', 'ScriptGame_StageSlotJointUpdate', 'ScriptGame_StageSlotParticleBegin', 'ScriptGame_StageSlotProcEnd', 'ScriptGame_VirtualPadApply', 'ScriptGame_VirtualPadObserve', 'ScriptMods_GameEvent', 'ScriptParts_Draw', 'ScriptParts_Tint', 'script_background_render', 'script_crit_launch_clear', 'script_mesh_order_bucket', 'script_retail_forget_devices', 'script_stage_draw_init', 'script_stage_render', 'ScriptGame_AreaDrain', 'ScriptGame_ArmorFrame', 'ScriptGame_CapsEffectsFrame', 'ScriptGame_EchoCapture', 'ScriptGame_EchoFrame', 'ScriptGame_SkillFrame', 'ScriptGame_StageFrame', 'ScriptGame_StageKind', 'ScriptGame_StageSlotsFrame', 'ScriptGame_VirtualPadConsume', 'ScriptMods_StageFrame', 'script_caps_status_frame', 'script_crit_flush', 'script_hit_family_move', 'script_shock_frame', 'script_skill_one', 'ScriptGame_EchoCapsule', 'ScriptGame_EchoCapsuleCount', 'ScriptGame_EchoPrepare', 'ScriptParts_Forget', 'ScriptGame_NoteSpecialInput', 'ScriptGame_EchoBlocked', 'ScriptGame_EchoIsCapsule', 'ScriptGame_EchoSameGroup', 'ScriptMods_Skill', 'script_skill_emit', 'ScriptGame_ItemI', 'ScriptGame_EntityField', 'ScriptGame_FighterF', 'ScriptGame_HitI', 'ScriptGame_LabAnimEnd', 'ScriptGame_LabAnimSymbol', 'ScriptGame_LabF', 'ScriptGame_LabI', 'script_lab_mission_floor_valid', 'script_lab_mission_floor_height']
+SCRIPT_GAME_T_FUNCS = "ScriptGame_StageSlotProcEnd ScriptParts_Draw ScriptParts_Tint ScriptParts_Forget ScriptGame_AreaDrain".split()  # need typed state fixups: generated as script_game_t
 CFGS["script_game"] = dict(src="pc/gameworld/script_game.c", module="script_game", cases=40, all=False,
-                          funcs={n: {} for n in SCRIPT_GAME_FUNCS},
+                          funcs={n: {} for n in SCRIPT_GAME_FUNCS if n not in SCRIPT_GAME_T_FUNCS},
                           # (functions whose C side faults on the synthetic state are dropped by tuoracle.py --build and reported)
                           noext=["memcpy", "memset", "memmove", "strcpy", "strlen", "strcmp", "strncpy", "strncmp", "strcat"],
                           # the owned-object lists hold object pointers a seeded fill leaves NULL; a random count walks past the 512 entries
@@ -374,3 +375,38 @@ CFGS["script_game"] = dict(src="pc/gameworld/script_game.c", module="script_game
                                   # size_t is 32 bits in the C compile (gc_size_t) and usize in the native port: keep the filled byte count in 32 bits
                                   ("{ int i; for (i = 0; i < SCRIPT_STAGE_ARCHIVES; i++) script_stage.archives[i].bytes = (unsigned) script_stage.archives[i].bytes; }",
                                    "for i in 0..8 { let a = &mut (*core::ptr::addr_of_mut!(m::script_stage)).archives[i]; a.bytes = (a.bytes as u32) as usize; }")])
+
+
+def _sg_clamp(cvar, rvar, n):
+    """Fixup pair that keeps an index/count state variable inside its array (a seeded fill would walk past it)."""
+    return (f"{cvar} = (int) ((unsigned) {cvar} % {n}u);",
+            f"{rvar} = (({rvar}) as u32 % {n}) as _;")
+
+
+_SG_STAGE = "(*core::ptr::addr_of_mut!(m::script_stage))"
+_SG_FX2 = [
+    _sg_clamp("script_stage.cap", f"{_SG_STAGE}.cap", 768),
+    _sg_clamp("lab_part_colors_hi", "(*core::ptr::addr_of_mut!(m::lab_part_colors_hi))", 1025),
+    _sg_clamp("lab_part_ids.count", "(*core::ptr::addr_of_mut!(m::lab_part_ids)).count", 513),
+    _sg_clamp("lab_parts_n", "(*core::ptr::addr_of_mut!(m::lab_parts_n))", 513),
+    # StageSlotProcEnd reads script_slot_native->handle: point it at a typed state object
+    ("script_slot_native = &tuo_mo_slotN;",
+     "(*core::ptr::addr_of_mut!(m::script_slot_native)) = core::ptr::addr_of_mut!(MO_slotN);"),
+]
+CFGS["script_game_t"] = dict(CFGS["script_game"], module="script_game",
+    funcs={n: {} for n in SCRIPT_GAME_T_FUNCS},
+    extra_objs={"slotN": "ScriptStageSlot"},
+    fixups=CFGS["script_game"]["fixups"] + _SG_FX2)
+
+
+GENO_GAME_FUNCS = ["Geno_ItemsSceneReset", "geno_fx_drive", "GenoGame_ClearProfileStorage", "Geno_CollBegin", "Geno_CollEnd",
+                   "Geno_ComboInput", "Geno_ComboTick", "Geno_FighterReset", "Geno_FighterScale", "Geno_GroundEdge",
+                   "Geno_HitReact", "Geno_OnFrame", "Geno_OnHit", "Geno_PreAnim", "GenoGame_ComboInfo", "Geno_FallLimit"]
+CFGS["geno_game"] = dict(src="pc/geno/geno_game.c", module="geno_game", cases=40, all=False,
+                         extsize={"ftData_MotionStateList": 400, "ftMr_Init_MotionStateTable": 400, "ftCa_Init_MotionStateTable": 400, "ftFx_Init_MotionStateTable": 400, "ftFc_Init_MotionStateTable": 400, "ftMs_Init_MotionStateTable": 400, "ftPr_Init_MotionStateTable": 400, "ftSk_Init_MotionStateTable": 400, "ftZd_Init_MotionStateTable": 400},
+                         funcs={n: {} for n in GENO_GAME_FUNCS},
+                         noext=["memcpy", "memset", "memmove", "strcpy", "strlen", "strcmp", "strncpy", "strncmp", "strcat"])
+GENO_LAB_FUNCS = ["GenoFly_Any", "GenoFly_Reset", "GenoFly_Watch", "GenoFly_Fighter"]
+CFGS["geno_lab_mode"] = dict(src="pc/geno/geno_lab_mode.c", module="geno_lab_mode", cases=40, all=False,
+                             funcs={n: {} for n in GENO_LAB_FUNCS},
+                             noext=["memcpy", "memset", "memmove", "strcpy", "strlen", "strcmp", "strncpy", "strncmp", "strcat"])

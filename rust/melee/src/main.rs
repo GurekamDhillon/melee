@@ -283,9 +283,25 @@ fn golden(args: &[String]) -> ExitCode {
         return ExitCode::from(2);
     };
     let scenario = get("--scenario").unwrap_or_else(|| "pad_falcon_fox_fd".into());
+    // `--slp FILE`: play a Slippi/GDLP replay (the C's MELEE_SLP=FILE with MELEE_SLP_RESYNC=1): the
+    // stage, fighters and seed come from the file, every frame's inputs and RNG seed from its events.
+    let slp: Option<(melee_data::player::Player, &'static str, [&'static str; 2], u32)> = match get("--slp") {
+        None => None,
+        Some(path) => match slp_open(&path) {
+            Ok(x) => Some(x),
+            Err(e) => {
+                eprintln!("melee: --slp: {e}");
+                return ExitCode::from(2);
+            }
+        },
+    };
     // record.sh's scene strings: stage, fighters (P1, P2), MELEE_TEST_SEED. Stocks: VS default 3
     // (the C dump shows stocks=3 in this time match; Player_GetStocks feeds the hash).
-    let (stage, fighters): (&str, &[&str]) = match scenario.as_str() {
+    let slp_fighters: Option<[&str; 2]> = slp.as_ref().map(|x| x.2);
+    let (stage, fighters): (&str, &[&str]) = if let Some(x) = &slp {
+        (x.1, slp_fighters.as_ref().map(|f| &f[..]).unwrap())
+    } else {
+        match scenario.as_str() {
         "pad_falcon_fox_fd" => ("GrNLa.dat", &["falcon", "fox"]),
         // The same pads and stage with P2 an m-ex fighter: Akaneia's Wolf from its gdmods
         // (`mex-import import`, then --mods DIR or MELEE_MODS_DIR). No C golden exists for it.
@@ -298,6 +314,7 @@ fn golden(args: &[String]) -> ExitCode {
         s => {
             eprintln!("melee: scenario {s:?} not wired (pad_falcon_fox_fd)");
             return ExitCode::from(2);
+        }
         }
     };
     // The scene's `p1=fox/cpu9;p2=falco/cpu9`: slot types and levels, before the match is built.
@@ -344,12 +361,13 @@ fn golden(args: &[String]) -> ExitCode {
     // run: right after the load), to diff a from-0 run against a resumed one.
     let dump_state: Option<(i32, String)> = get("--dump-state").and_then(|v| v.split_once(':').map(|(a, b)| (a.parse().unwrap_or(-2), b.to_string())));
     let resumed = snapshot.is_some();
+    let slp_seed = slp.as_ref().map_or(12345, |x| x.3);
     let mut from_mods = vec![];
     let res = disc::Disc::open(&iso).and_then(|mut d| {
         d.mods = mods;
         let r = match &snapshot {
             Some(s) => vs_match::VsMatch::from_snapshot(&mut d, s, stage, fighters, 12345, 3),
-            None => vs_match::VsMatch::new(&mut d, stage, fighters, 12345, 3),
+            None => vs_match::VsMatch::new(&mut d, stage, fighters, slp_seed, 3),
         };
         from_mods = std::mem::take(&mut d.from_mods);
         r
@@ -382,6 +400,8 @@ fn golden(args: &[String]) -> ExitCode {
         dump_state: Option<(i32, String)>,
         /// `--audio-wav`: every sub-frame's s16 stereo mix.
         wav: Option<Vec<i16>>,
+        /// `--slp`: the replay driving the match.
+        replay: Option<melee_data::player::Player>,
     }
     impl SeedFrom<'_> {
         fn maybe_dump(&self) {
@@ -409,6 +429,9 @@ fn golden(args: &[String]) -> ExitCode {
                 self.resumed = false;
                 self.maybe_dump();
                 return true;
+            }
+            if let Some(pl) = &mut self.replay {
+                slp_frame(pl, self.sim);
             }
             let r = self.sim.step();
             melee_audio::sim::game_frame();
@@ -439,7 +462,7 @@ fn golden(args: &[String]) -> ExitCode {
     let injected = seed_from.is_some();
     let res = std::fs::File::create(&out).and_then(|f| {
         let mut w = std::io::BufWriter::new(f);
-        let mut sf = SeedFrom { sim: &mut sim, golden: seed_from, resumed, dump_state, wav: wav_path.as_ref().map(|_| Vec::new()) };
+        let mut sf = SeedFrom { sim: &mut sim, golden: seed_from, resumed, dump_state, wav: wav_path.as_ref().map(|_| Vec::new()), replay: slp.map(|x| x.0) };
         let n = run(&mut sf, &mut w, frames)?;
         w.flush()?;
         if let (Some(p), Some(samples)) = (&wav_path, &sf.wav) {
@@ -463,4 +486,79 @@ fn golden(args: &[String]) -> ExitCode {
             ExitCode::FAILURE
         }
     }
+}
+
+/// Load a replay for `golden --slp`: the player, the stage file, the two fighters and the seed.
+/// Only what the native sim plays is accepted (Falcon, Fox, Marth, Sheik on FD / Battlefield).
+fn slp_open(path: &str) -> Result<(melee_data::player::Player, &'static str, [&'static str; 2], u32), String> {
+    let data = std::fs::read(path).map_err(|e| format!("{path}: {e}"))?;
+    let mut pl = melee_data::player::Player::new(melee_data::player::Env { resync: true, ..Default::default() });
+    pl.load_slp(path, &data, false);
+    for l in pl.log.drain(..) {
+        eprintln!("melee: {l}");
+    }
+    if !pl.active {
+        return Err(format!("{path}: the replay was refused"));
+    }
+    // gw_Replay_ApplyMatch arms the counter: the first Replay_Tick makes it -123.
+    pl.frame = -124;
+    // "mode=vs;at=match;stage=ext:32;p1=ck:0/c0/hu;p2=ck:2/c1/hu"
+    let scene = pl.r.scene.clone();
+    let mut stage = None;
+    let mut fighters: Vec<&'static str> = Vec::new();
+    for part in scene.split(';') {
+        if let Some(e) = part.strip_prefix("stage=ext:") {
+            stage = match e {
+                "32" => Some("GrNLa.dat"),
+                "31" => Some("GrNBa.dat"),
+                _ => return Err(format!("stage ext:{e} is not playable in the Rust sim yet")),
+            };
+        } else if part.starts_with('p') && part.contains("=ck:") {
+            let ck = part.split("ck:").nth(1).and_then(|r| r.split('/').next()).unwrap_or("");
+            if !part.ends_with("/hu") {
+                return Err(format!("{part}: CPU players are not replayed"));
+            }
+            fighters.push(match ck {
+                "0" => "falcon",
+                "2" => "fox",
+                "9" => "marth",
+                "19" => "sheik",
+                _ => return Err(format!("fighter ck:{ck} is not playable in the Rust sim yet")),
+            });
+        }
+    }
+    let Some(stage) = stage else {
+        return Err("the replay has no stage".into());
+    };
+    let [a, b]: [&'static str; 2] = fighters.try_into().map_err(|_| "the replay is not a two-player match".to_string())?;
+    let seed = pl.r.seed;
+    Ok((pl, stage, [a, b], seed))
+}
+
+/// One frame of replay playback before the sim steps (gmscene.c: `Replay_Tick`, then the forced seed;
+/// fighter.c: the recorded inputs): the frame being simulated is the replay's `pl.frame`.
+fn slp_frame(pl: &mut melee_data::player::Player, sim: &mut vs_match::VsMatch) {
+    use melee_net::pad::RbInput;
+    pl.tick();
+    let s = pl.resync_seed();
+    if s != 0 {
+        sim.rb_force_seed(s);
+    }
+    let mut ins: [Option<RbInput>; 4] = [None; 4];
+    for (port, slot) in ins.iter_mut().enumerate() {
+        *slot = pl.input(port as i32, false).map(|i| RbInput {
+            lx: i.lx,
+            ly: i.ly,
+            cx: i.cx,
+            cy: i.cy,
+            trigger: i.trigger,
+            buttons: i.buttons,
+            seed: i.seed,
+            raw: i.raw,
+            present: 1,
+            ..Default::default()
+        });
+    }
+    sim.replay_in = Some(ins);
+    sim.pad_feed = Some([vs_match::input::RawPad::default(); 4]);
 }

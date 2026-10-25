@@ -1,0 +1,12 @@
+[package]
+name = "melee_data"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Platform layer: saves, settings, mods and replays (settings.cfg, memory card GCI folder, mod loader, Slippi/GDLP replay files, crash logs)"
+
+[dependencies]
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.59", features = ["Win32_Foundation", "Win32_System_Time"] }

@@ -1141,6 +1141,7 @@ dependencies = [
  "melee_audio",
  "melee_chara",
  "melee_core",
+ "melee_data",
  "melee_fighter",
  "melee_gx",
  "melee_items",
@@ -1178,6 +1179,13 @@ dependencies = [
 [[package]]
 name = "melee_core"
 version = "0.1.0"
+
+[[package]]
+name = "melee_data"
+version = "0.1.0"
+dependencies = [
+ "windows-sys 0.59.0",
+]
 
 [[package]]
 name = "melee_fighter"

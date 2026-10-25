@@ -1222,6 +1222,16 @@ void gw_ax_trace_str(const char* op, const char* s, int a, int b) {
     fflush(gw_ax_trc);
 }
 
+static int gw_ax_dbg_on(void) { /* MELEE_AX_DBG=<lo>-<hi> */
+    static int lo = -2, hi;
+    if (lo == -2) {
+        const char *e = getenv("MELEE_AX_DBG");
+        lo = -1;
+        if (e != NULL && sscanf(e, "%d-%d", &lo, &hi) != 2) lo = -1;
+    }
+    return lo >= 0 && (int) gw_ax_trc_sub >= lo && (int) gw_ax_trc_sub <= hi;
+}
+
 static void gw_ax_run_frame(void) {
     int i;
     int active = 0;
@@ -1248,6 +1258,24 @@ static void gw_ax_run_frame(void) {
         }
     }
 
+    {   /* MELEE_AX_DBG=<lo>-<hi>: per-voice state of the sub-frames lo..hi (the Rust port's replay compares) */
+        static int dbg_lo = -2, dbg_hi;
+        if (dbg_lo == -2) {
+            const char *e = getenv("MELEE_AX_DBG");
+            dbg_lo = -1;
+            if (e != NULL && sscanf(e, "%d-%d", &dbg_lo, &dbg_hi) != 2) dbg_lo = -1;
+        }
+        if (dbg_lo >= 0 && (int) gw_ax_trc_sub >= dbg_lo && (int) gw_ax_trc_sub <= dbg_hi) {
+            for (i = 0; i < GW_AX_NUM_VOICES; i++) {
+                if (gw_ax_in_use[i] && gw_ax_state[i].configured) {
+                    const gw_ax_vstate *v = &gw_ax_state[i];
+                    fprintf(stderr, "AXDBG sf %u v%d active=%d vol=%d d=%d ratio=%u mix=[%d,%d,%d,%d,%d] addr=%u yn=%d,%d ps=%u itd=%d,%d\n",
+                            gw_ax_trc_sub, i, (int) v->active, v->volume, v->volume_delta, v->ratio, v->mix[0], v->mix[1], v->mix[2], v->mix[3], v->mix[4],
+                            v->cur_addr, v->yn1, v->yn2, v->pred_scale, v->itd_l, v->itd_r);
+                }
+            }
+        }
+    }
     /* Ramp out any voice that stopped this sub-frame. */
     for (i = 0; i < GW_AX_FRAME_SAMPLES; i++) {
         int c;
@@ -1552,6 +1580,7 @@ void gw_AXSetVoiceVe(void *voice, void *ve) {
         const uint8_t *p = (const uint8_t *) ve;
         s->volume = gw_r16(p + 0x00);
         s->volume_delta = (int16_t) gw_r16(p + 0x02);
+        if (gw_ax_dbg_on()) fprintf(stderr, "AXDBG ve sf %u v%d vol=%d d=%d\n", gw_ax_trc_sub, (int) (v - gw_ax_voices), s->volume, s->volume_delta);
     }
 }
 
@@ -1561,6 +1590,7 @@ void gw_AXSetVoiceVeDelta(void *voice, int16_t delta) {
         return;
     }
     gw_ax_state[v - gw_ax_voices].volume_delta = delta;
+    if (gw_ax_dbg_on()) fprintf(stderr, "AXDBG vedelta sf %u v%d d=%d\n", gw_ax_trc_sub, (int) (v - gw_ax_voices), (int) delta);
 }
 
 void gw_AXSetVoiceAddr(void *voice, void *addr) {

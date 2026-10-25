@@ -972,12 +972,40 @@ impl Sound {
             Some(s) => s.read(0, 0x80),
             None => vec![0; 0x80],
         };
-        self.pstream_header(&header);
+        if self.defer_stream {
+            self.stream_hdr_pending = Some(header);
+            self.stream_data_pending = false;
+        } else {
+            self.pstream_header(&header);
+        }
         self.stream_node
+    }
+
+    /// HSD_SynthPStreamHeaderCallback when the C's deferred DevCom completion runs it.
+    pub fn stream_header_done(&mut self) {
+        if let Some(h) = self.stream_hdr_pending.take() {
+            self.pstream_header_part1(&h);
+        }
+    }
+
+    /// HSD_SynthPStreamFirstHakoDataCallback (with the block header read that precedes it).
+    pub fn stream_data_done(&mut self) {
+        if self.stream_data_pending {
+            self.stream_data_pending = false;
+            self.pstream_header_part2();
+        }
     }
 
     /// HSD_SynthPStreamHeaderCallback + FirstHakoHeader + FirstHakoData.
     fn pstream_header(&mut self, entry: &[u8]) {
+        self.pstream_header_part1(entry);
+        if self.stream_data_pending {
+            self.stream_data_pending = false;
+            self.pstream_header_part2();
+        }
+    }
+
+    fn pstream_header_part1(&mut self, entry: &[u8]) {
         let Some(n) = self.get_node(self.stream_node) else {
             self.stream_busy = 0;
             return;
@@ -1004,6 +1032,10 @@ impl Sound {
         self.stream_play_slot = self.stream_pos;
         self.stream_loop_slot = self.stream_pos;
         self.stream_load_slot = self.stream_pos;
+        self.stream_data_pending = true;
+    }
+
+    fn pstream_header_part2(&mut self) {
         let s = self.stream_load_slot;
         self.stream_read_hako(0x80, s);
         let (x0, _, _) = self.hako(s);

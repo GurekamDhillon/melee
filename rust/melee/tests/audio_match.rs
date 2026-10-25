@@ -24,7 +24,7 @@ fn native_mix_with(scenario: &str, preroll: u32, frames: &str, extra: &[&str], k
     let Ok(iso) = std::env::var("GW_ISO_VANILLA") else {
         return (0, 0);
     };
-    let dir = std::env::temp_dir().join(format!("melee_audio_match_{scenario}"));
+    let dir = std::env::temp_dir().join(format!("melee_audio_match_{scenario}_{frames}_{}", extra.join("").replace('-', "").replace(':', "_")));
     std::fs::create_dir_all(&dir).unwrap();
     let (csv, wav) = (dir.join("g.csv"), dir.join("n.wav"));
     let st = std::process::Command::new(env!("CARGO_BIN_EXE_melee"))

@@ -1193,6 +1193,29 @@ rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_In
   fighter Dead* states first. Results / sudden-death scene audio and in-game menu sounds depend on the stand-in ui.rs menus.
 - Round 4 (plat-audio): merged port/platform-integ again; added `output::tests::master_volume_env_clamps_and_sets_gain` (MELEE_VOLUME parse/clamp like gw_Audio_Volume, gain = pct/100 on the device path); 15 melee_audio tests pass, headless, no OS input. Open items unchanged (GAME! needs sim death path; results/sudden-death/menu audio need the real menus).
 
+## Platform track, audio round 5 (plat-audio, 2026-10-25): menu / title / results / sudden death replayed against the C mix
+- No OS input, headless (`MELEE_TURBO=1`, virtual DSP clock, Lua / text pad scripts). The C trace (`MELEE_AUDIO_TRACE`) gained the
+  ops a scene-spanning capture needs: `BANKREQ path bank entry` / `BANKDONE entry bank` (HSD_SynthSFXLoad request and its
+  completion), `BANKUNL` / `BANKDFL` (unload, deflag), `DSTOP` / `DPAUSE` / `DRESUME` (AXDriverStop/Pause/Resume), `SHDR` / `SDATA`
+  (the HPS start's deferred DevCom completions: header, first block). `MELEE_AX_DBG=<lo>-<hi>` prints the C mixer's per-voice
+  state (and every AXSetVoiceVe / VeDelta) for those sub-frames on stderr.
+- Port side: `replay` applies them (`Sound::defer_stream` is turned on by a trace that has SHDR: PSTART then waits for the
+  recorded completions); `Sound::boot_engine` / `replay::boot_bare` = the audio engine with nothing loaded, so a trace brings
+  its own banks; `sfx_replay --bare`.
+- What it found: AXDriverPause right after a stream start (opening.hps) runs between the start and the first-block completion, so
+  the C starts the voice from volume 0 with a ramp (flags 14 at the first-data callback); the port completed the start
+  synchronously and was +-1..3 off for 8 sub-frames. With the completions replayed in place: 0 samples differ.
+- Proven sample for sample (`melee_audio/tests/replay.rs`, needs the disc): opening movie + title + attract demo (16412 sub-frames,
+  opening.hps, per-scene fighter banks, nr_vs, greatbay.hps); CSS cursor / A / B / START clicks (5650); Falcon v Fox FD stock-out
+  with GAME!, the KO and the results screen with its victory theme (5780, 18 handles equal); one-minute time match through TIME!
+  into the sudden-death scene (18233, 29 handles equal). Two C runs of the KO capture give identical trace and WAV.
+- Fixed: `melee/tests/audio_match.rs` shared one temp dir between its three falcon_fox scenarios and failed ~1 run in 3 when run in
+  parallel; each scenario has its own dir now (8 parallel runs pass).
+- Still open: the native sim cannot issue the GAME! / KO / results calls itself (no death path), so those are proven for the audio
+  engine given the C's calls, not for the sim's call timing; the Atlas main menu / SSS / trophy screens were not driven (the
+  title Start lands in the Atlas menu scene; navigating it by pad script was not worked out); volume settings are output gain
+  only (the C dump is full scale by design); nothing was listened to.
+
 ## Platform track, render proof (plat-render, rounds 1-2, 2026-10-25)
 - Method: C shots from `_build/agents/plat-render/pad_cam.lua` (`gd.screenshot` at match frames) vs `melee view-golden` shots.
   RUN THE C BUILD REALTIME, not turbo (`MELEE_UNATTENDED=1 MELEE_WINDOW_X=30000 MELEE_WINDOW_Y=30000`, no `MELEE_TURBO`, run

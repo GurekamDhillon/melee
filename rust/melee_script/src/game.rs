@@ -595,6 +595,111 @@ pub trait ScriptGame {
     fn map_bound(&self, _which: i32, _field: i32) -> i32 {
         0
     }
+    // ---- scalar fighter capabilities (`gw_ScriptGame_Caps*`, `IntrWin*`, `Armor*`): pc/platform/gw_script_fighter_caps*.inc.
+    // Records live in the game's snapshotted state; floats cross as bit patterns.
+    fn caps_movement(&mut self, _entity: i32, _owner: i32, _jumps: i32, _flags: i32) -> i32 {
+        0
+    }
+    /// field 0 present, 1 air jumps, 2 flag bits, 3 retail jumps (negative: none)
+    fn caps_movement_read(&self, _entity: i32, field: i32) -> i32 {
+        if field == 3 { -1 } else { 0 }
+    }
+    fn caps_effect(&mut self, _entity: i32, _owner: i32, _kind: i32, _value_bits: i32, _frames: i32) -> i32 {
+        0
+    }
+    /// field 0 frames left, 1 value bits
+    fn caps_effect_read(&self, _entity: i32, _kind: i32, _field: i32) -> i32 {
+        0
+    }
+    fn caps_armour(&mut self, _entity: i32, _owner: i32, _damage_bits: i32, _kb_bits: i32) -> i32 {
+        0
+    }
+    /// field 0 present, 1 damage bits, 2 knockback bits
+    fn caps_armour_read(&self, _entity: i32, _field: i32) -> i32 {
+        0
+    }
+    /// > 0 given; otherwise the refusal reason code
+    fn caps_give_item(&mut self, _entity: i32, _owner: i32, _kind: i32) -> i32 {
+        0
+    }
+    fn caps_give_item_reason(&self, _reason: i32) -> String {
+        "no game".into()
+    }
+    /// nth = 0: the nearest; n >= 1: the nth within `radius_bits`; 0 = none
+    fn caps_opponent(&self, _entity: i32, _radius_bits: i32, _nth: i32, _exclude: i32) -> i32 {
+        0
+    }
+    fn caps_status(&mut self, _entity: i32, _channel: i32, _owner: i32, _value_bits: i32, _frames: i32) -> i32 {
+        0
+    }
+    fn caps_status_read(&self, _entity: i32, _channel: i32, _field: i32) -> i32 {
+        0
+    }
+    fn intr_win_set(&mut self, _entity: i32, _owner: i32, _frames: i32, _exits: i32, _flags: i32) -> i32 {
+        0
+    }
+    /// 0 frames, 1 owner, 2 exit mask, 3 key, 4 opened, 5 cancels
+    fn intr_win_read(&self, _entity: i32, _field: i32) -> i32 {
+        0
+    }
+    #[allow(clippy::too_many_arguments)]
+    fn armor_set(&mut self, _e: i32, _owner: i32, _ty: i32, _value_bits: i32, _frames: i32, _state: i32, _from: i32, _to: i32, _dir: i32) -> i32 {
+        0
+    }
+    /// field 0 present, 1 value, 2 remaining, 3 frames, 4 state, 5 from, 6 to, 7 direction, 8 enabled
+    fn armor_read(&self, _e: i32, _ty: i32, _field: i32) -> i32 {
+        0
+    }
+    fn armor_clear(&mut self, _e: i32, _owner: i32, _ty: i32) -> i32 {
+        0
+    }
+    /// `gs_caps_release` + `ArmorRelease`: drop everything the owner (script index + 1) set
+    fn caps_release(&mut self, _owner: i32) {}
+    // ---- crits (`gw_ScriptGame_Crit*`) and CPU overlays (`CpuTechnical*`, `CpuAssist*`)
+    /// field 0 owner, 1 tag mask, 2 min percent bits, 3 force, 4 hits, 5 crits, 6 max multiplier bits, 10+4*slot..13+4*slot chance/mult/max/launch bits
+    fn crit_read(&self, _entity: i32, _field: i32) -> i32 {
+        0
+    }
+    #[allow(clippy::too_many_arguments)]
+    fn crit_set(&mut self, _e: i32, _owner: i32, _slot: i32, _chance: i32, _mult: i32, _mult_max: i32, _launch: i32, _min_pct: i32, _force: i32, _flags: i32) -> i32 {
+        0
+    }
+    fn crit_seed(&mut self, _seed: i32) {}
+    fn cpu_technical_state(&self, _slot: i32, _owner: i32, _field: i32) -> i32 {
+        0
+    }
+    fn cpu_technical(&mut self, _slot: i32, _owner: i32, _skill: i32, _seed: i32) -> i32 {
+        0
+    }
+    /// field 0 enabled, 1-5 permille probabilities, 6 tech dir, 7 seed, 8-12 opportunities, 13-17 performed
+    fn cpu_assist_state(&self, _slot: i32, _owner: i32, _field: i32) -> i32 {
+        0
+    }
+    fn cpu_assist_clear_slot(&mut self, _slot: i32, _owner: i32) -> i32 {
+        0
+    }
+    #[allow(clippy::too_many_arguments)]
+    fn cpu_assist(&mut self, _slot: i32, _owner: i32, _lc: i32, _ps: i32, _tech: i32, _tdir: i32, _wd: i32, _ff: i32, _seed: i32) -> i32 {
+        0
+    }
+    // ---- fighter reserve/bench (`gw_ScriptGame_FighterBench*`, `FighterCall`, `FighterBenched`, `FighterReserveRead`)
+    /// 0 ok; otherwise the refusal code (1-11) as gs_reserve_result's reasons; `calling` 1 for fighter_call
+    fn fighter_bench_check(&self, _slot: i32, _owner: i32, _calling: i32) -> i32 {
+        1
+    }
+    fn fighter_bench(&mut self, _slot: i32, _owner: i32) -> i32 {
+        1
+    }
+    fn fighter_call(&mut self, _slot: i32, _owner: i32, _x: i32, _y: i32, _facing: i32, _intangible: i32) -> i32 {
+        1
+    }
+    fn fighter_benched(&self, _slot: i32) -> i32 {
+        0
+    }
+    /// field 0 present, 1 kind, 2 action, 3 airborne, 4/5 x/y bits, 6 cpu kind, 7.. flags, 13 refusal code
+    fn fighter_reserve_read(&self, _slot: i32, _entity: i32, _field: i32) -> i32 {
+        0
+    }
     // ---- the recorder (`pc/platform/gw_script_rec.inc`): `.gdlp` live-playback recordings. The Lua half
     // (gating, names, argument shapes) is ported in `gd::rec`; these are the recorder's state machine and files.
     fn rec_start(&mut self, _name: &str) -> Result<String, String> {

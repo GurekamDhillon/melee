@@ -1081,8 +1081,13 @@ rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_In
   stage_restore_bounds/stage_collision_group(s), and the merged `gd.stage_bounds` = largemap set/restore + arena origin/frames + model-gaps
   main_floor/surface_top), `ScriptGame::arena_*`/`stage_bounds_i`/`map_bound(s)`, arena release on script unload. `tests/arena.rs` (4 tests,
   mock arena; headless, no input sent). ~140 of the 349 C table names still unregistered (stage_add_*, models, enemies, items, fx, cpu_*, caps...).
-- **Not ported yet** (next rounds, in order): the .gdlp recorder itself, the caps family (nearest_opponent, give_item, fighter_*),
-  hitstop, cpu_* scripts, hot_reload, kb_preview, `gd.kit` / `gd.ui` (tables are empty), entity refs (`entity_ref` is nil), items/fx/echo/
+- Round 6: `gd/caps.rs` (fighter_caps, fighter_effect, fighter_armour, fighter_armor, give_item, nearest_opponent, opponents_in_radius,
+  fighter_timed_status, fighter_interrupt), `gd/bench.rs` (fighter_bench/call/benched), `gd/crit.rs` (crit, crit_force, crit_seed,
+  cpu_technical, cpu_assist; the on_crit/armor event queues are not ported). New `ScriptGame` hooks default to "nothing there"; unload calls
+  `caps_release(owner)`. Tests `tests/caps.rs` (3), `bench.rs` (1), `crit.rs` (1) run over mocks; `cargo test -p melee_script` all green.
+  Headless only, no OS input sent. Still unregistered: cpu_ctl scripts (cpu_pad/cpu_script_done), hit_rules, zones, deadline, echo/afterimage/tracer,
+  fx_*, item_define/item_kinds, model_*, stage_add_*/stage_switch/slot, 1P (spawn_1p...), area_*, sim_*, contact_*, skill_*, warm.
+- **Not ported yet** (next rounds, in order): the .gdlp recorder itself, hitstop, cpu_* scripts, hot_reload, kb_preview, `gd.kit` / `gd.ui` (tables are empty), entity refs (`entity_ref` is nil), items/fx/echo/
   afterimage/tracer, stage_*/model_*/shader/area/warm/launch/1P/netplay/modsync/sim/hit_rules/enemy*, the Geno registry (geno_registry.c,
   geno_lua_core.h, fighter Lua), `lab.lua`'s remaining calls. `gdscript pc/geno/mods/geno-lab` lists what lab.lua still lacks at load.
 - Proof so far: `cargo test -p melee_script` (7 unit + 18 engine + 6 lab_api tests); `rust/melee_script/tools/standalone_parity.sh` runs

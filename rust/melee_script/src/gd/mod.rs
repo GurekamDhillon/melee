@@ -5,7 +5,10 @@ use crate::engine::{Engine, Shared};
 use mlua::{IntoLuaMulti, Lua, Result as LuaResult, Table, Value};
 
 pub mod arena;
+pub mod bench;
 pub mod camera;
+pub mod caps;
+pub mod crit;
 pub mod combo;
 pub mod core;
 pub mod fighter;
@@ -44,6 +47,9 @@ pub fn register_all(e: &Engine, gd: &Table) -> LuaResult<()> {
     fighter::register(e, gd)?;
     camera::register(e, gd)?;
     arena::register(e, gd)?;
+    caps::register(e, gd)?;
+    bench::register(e, gd)?;
+    crit::register(e, gd)?;
     mods::register(e, gd)?;
     pad::register(e, gd)?;
     players::register(e, gd)?;

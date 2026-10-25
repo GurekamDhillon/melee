@@ -890,6 +890,7 @@ impl Engine {
             s.rw_branch();
             s.game.arena_release(i as i32 + 1);
         }
+        s.game.caps_release(i as i32 + 1);
         let sc = &mut s.scripts[i];
         for t in sc.tasks.iter_mut() {
             *t = None;

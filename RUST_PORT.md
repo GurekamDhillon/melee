@@ -1368,3 +1368,13 @@ SetForegroundWindow/pyautogui finds nothing. C-build comparisons park the window
 - Audio by ear: nothing has been listened to; equality is against the C mix on fixed scenarios.
 - A real controller: the WinUSB adapter read in port 1 once; HID transport, gamepads and the keyboard preset (WASD/IJKL/Space/Shift/Enter) in interactive `melee play` are untried by hand.
 - Online against another person over the internet: only loopback with injected lag/loss and local server paths were run.
+
+## Platform track, audio round 7 (plat-audio, 2026-10-25): driving past the main menu (no new capture)
+- Run recipe gotchas for headless menu captures: pass `MELEE_PAD_SCRIPT` / `MELEE_AUDIO_*` as `E:/...` paths (an MSYS `/e/...`
+  path silently loads no script and the run idles to the timeout), and seed a fresh sandbox with a copy of an existing
+  `runs/<x>/card` (a sandbox without a memory card never leaves the card notices).
+- From `GS_FRONTEND` the A button goes Versus -> Melee -> the Lua-hosted character select (the kit UI, scene name stays
+  `GS_FRONTEND`). Scripted A / stick down / START presses (3 or 8 frames, up to 200 frames of waiting) did not change that screen
+  in turbo (screenshots identical), so the SSS and the match start were not reached this way. Next step if wanted: an in-engine
+  scripted-input hook for the kit UI, or `MELEE_SCENE` presets for the retail SSS. No audio fixture was added this round; the
+  six pinned captures still match the C mix sample for sample. Nothing was listened to.

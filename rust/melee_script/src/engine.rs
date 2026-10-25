@@ -127,6 +127,7 @@ pub struct State {
     pub contacts: crate::gd::contacts::Contacts,
     pub fly_cursor: crate::gd::flycam::FlyCursor,
     pub frontend: crate::gd::frontend::Frontend,
+    pub hitstop: crate::gd::fmod::Hitstop,
     pub last_action: [i32; 6],
     pub state_frame: [i32; 6],
     pub paused: bool,
@@ -431,6 +432,7 @@ impl Engine {
             contacts: Default::default(),
             fly_cursor: Default::default(),
             frontend: Default::default(),
+            hitstop: Default::default(),
             last_action: [0; 6],
             state_frame: [0; 6],
             paused: false,
@@ -912,6 +914,8 @@ impl Engine {
         }
         s.game.caps_release(i as i32 + 1);
         s.game.owner_release(i as i32 + 1);
+        let so = s.scripts[i].stage_owner;
+        s.presentation_release(so);
         for slot in 0..6 {
             // gs_fly_clear_owner
             if s.fly_cursor_owner(slot) == i as i32 + 1 {
@@ -1187,6 +1191,7 @@ impl Engine {
             }
         }
         self.launch_tick();
+        self.st.borrow_mut().presentation_tick();
         self.finish_draw();
         {
             let mut s = self.st.borrow_mut();

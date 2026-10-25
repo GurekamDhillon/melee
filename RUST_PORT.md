@@ -1237,6 +1237,16 @@ rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_In
   exact size and fade (errors 12-26 vs 2-4 in plain frames); (c) entry beam light pillars (PATH effect), C frames 1-45 light up blue panels on the
   stage underside that the viewer keeps dark; (d) floor texture aliasing (tiny amplitude). Shadows: FD draws none; fog: FD has none
   (`stage_info.unk8C.b3` unset); screen flashes: none occur in these frames.
+- Round 3 (2026-10-25): fighter colour animation + overlay and particle texture fix; per-frame mean abs (0..255) f60 4.13, f120 3.51,
+  f300 1.71, f600 2.13, f900 1.57, f1200 1.15, f1500 2.84 (avg 2.43, was 2.82); within16 88-99 %. Golden unchanged (1801 frames identical).
+  1. `colanim.rs`: `lb_013B` colour-animation interpreter over PlCo tables, the x408/x488/x508 lists; `ftMaterial_800BF534/6BC`
+     overlay (colour blend, light, alpha) as `FtOverlay` TEV stages (`HsdRender::ft_overlay`). Entry glow (0x75), Rebirth / intangible pulse (9).
+     `Fighter_ChangeMotionState` with a row and `anim_start == 0` also calls `ftCo_800C0408` (an extra colour step; fixed the 1-frame phase of the pulse).
+  2. `TexBank::image_off / pal_off` now add the texBank base (`psInitDataBankLocate` phase 3 relocates texTable by `texBank`); banks
+     whose texg is not at offset 0 (EfCoData bank 0: entry sparkles, star flares) had garbage textures.
+  3. Go! element is one anim frame in when drawn.
+- Still different: entry trophy stand / light pillars / PATH-track beam effects (f60), name tag ~3 px high, KO frames, underside texture
+  detail (blue haze in diff, tiny amplitude).
 - Dev aids: MELEE_VIEW_UNHIDE, MELEE_VIEW_PSLOG, MELEE_VIEW_READYLOG, MELEE_VIEW_NOPS (round 1); MELEE_VIEW_BRANCHSCAN / PODUMP=g:j /
   TEXDUMP2 / TOBJDUMP / TAGDUMP / ONLY=g:j,j / FORCEVIS / PREROLL=n / FPLOG / LIGHTLOG / NOPLIT / NOLIGHTANIM / PPC_RATE / NOFX / FXLOG / APPSRT / APPLOG / APPFRAMES, and
   `MELEE_GX_DRAWLOG=<copy index>` (+ `MELEE_GX_DRAWLOG_TEV=<draw>`) in melee_gx's `copy_disp`.

@@ -179,6 +179,8 @@ pub struct TexBank {
     data: Arc<[u8]>,
     /// Absolute offset of each group (`None` = NULL entry).
     groups: Vec<Option<u32>>,
+    /// `texBank`: the offset the image / palette pointers are relative to (psInitDataBankLocate phase 3).
+    base: u32,
 }
 
 impl TexBank {
@@ -207,13 +209,13 @@ impl TexBank {
     /// `texTable[n]` of group `i`: the image's offset in `data()`.
     pub fn image_off(&self, i: u32, n: u32) -> Option<u32> {
         let g = self.group(i)?;
-        Some(be32(&self.data, g + 0x18 + 4 * n)).filter(|&o| o != 0)
+        Some(be32(&self.data, g + 0x18 + 4 * n)).filter(|&o| o != 0).map(|o| o + self.base)
     }
     /// The palette table follows the image table (`(void**)&texTable[num]`): palette `k`'s offset.
     pub fn pal_off(&self, i: u32, k: u32) -> Option<u32> {
         let g = self.group(i)?;
         let num = be32(&self.data, g);
-        Some(be32(&self.data, g + 0x18 + 4 * (num + k))).filter(|&o| o != 0)
+        Some(be32(&self.data, g + 0x18 + 4 * (num + k))).filter(|&o| o != 0).map(|o| o + self.base)
     }
     /// `tg->texTable[n] != NULL` (relocation keeps NULL entries NULL).
     fn tex_present(&self, g: u32, n: u32) -> bool {
@@ -280,7 +282,7 @@ impl PsBankData {
                 (rel != 0).then_some(tex_off + rel)
             })
             .collect();
-        Ok(PsBankData { base, end: base + num, cmds, tex: TexBank { data: data.clone(), groups } })
+        Ok(PsBankData { base, end: base + num, cmds, tex: TexBank { data: data.clone(), groups, base: tex_off } })
     }
 
     /// `ptclref_804D0E5C[bank][idx]` for `idx < psCmdListArray[bank]`.

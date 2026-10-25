@@ -1581,6 +1581,18 @@ impl VsMatch {
             // Slot = player*2 + follower; is_cpu false (human scenario).
             let s = p.slot * 2 + p.follower as i32;
             w.slots[s as usize] = Some(nh_fighter(&p.fp, s, stale::stocks(p.slot), stale::slot_type(p.slot) == melee_types::Gm_PKind_Cpu && p.fp.cpu.kind != 5));
+            if std::env::var_os("MELEE_GOLDEN_FT").is_some() {
+                let f = &p.fp;
+                eprintln!("FT s{} m{} p {:08X} {:08X} {:08X} v {:08X} {:08X} pct {:08X} f {:08X} ga {} kb {:08X} {:08X} gv {:08X} hl {:08X} b5 {} sh {:08X} fc {:08X} j {} H {:08X}", s, f.motion_id as i32, f.cur_pos.x.to_bits(), f.cur_pos.y.to_bits(), f.cur_pos.z.to_bits(), f.self_vel.x.to_bits(), f.self_vel.y.to_bits(), f.dmg.x1830_percent.to_bits(), f.facing_dir.to_bits(), f.ground_or_air as i32, f.x8c_kb_vel.x.to_bits(), f.x8c_kb_vel.y.to_bits(), f.gr_vel.to_bits(), f.dmg.x195c_hitlag_frames.to_bits(), f.x2219_b5() as i32, f.shield_health.to_bits(), f.x3E4_fighterCmdScript.frame_count.to_bits(), f.x1968_jumpsUsed as i32, w.slots[s as usize].unwrap_or(0));
+            }
+            if std::env::var_os("MELEE_GOLDEN_FT").is_some() && stale::slot_type(p.slot) == melee_types::Gm_PKind_Cpu && p.fp.cpu.kind != 5 {
+                let c = &p.fp.cpu;
+                eprintln!("CPU s{} btn {:X} st {:08X} tr {:X} k {} lv {} x14 {} x18 {} x1C {} x20 {} x24 {} x28 {} x2C {} x30 {} x34 {} x38 {:08X} x3C {:08X} x40 {:08X} x7C {} x80 {} x84 {} xC8 {} xEC {} cd {} off {} fl {:08X}",
+                    s, c.buttons as u32, ((c.lstick.x as u8 as u32) << 24) | ((c.lstick.y as u8 as u32) << 16) | ((c.cstick.x as u8 as u32) << 8) | (c.cstick.y as u8 as u32), ((c.ltrigger as u32) << 8) | c.rtrigger as u32,
+                    c.kind as i32, c.level as i32, c.x14 as i32, c.x18 as i32, c.x1C as i32, c.x20 as i32, c.x24 as i32, c.x28 as i32, c.x2C as i32, c.x30 as i32, c.x34 as i32, c.x38.to_bits(), c.x3C.to_bits(), c.x40.to_bits(),
+                    c.x7C as i32, c.x80 as i32, c.x84 as i32, c.xC8 as i32, c.xEC as i32, c.command_duration as i32, melee_types::neutral_hash::cs_offset(c), melee_types::neutral_hash::nh_cpu_flags(c));
+                eprintln!("EXT s{} {:08X} {:08X} {:08X} {:08X} {:08X}", s, c.x55C.to_bits(), c.x560.to_bits(), c.x564.to_bits(), c.x568.to_bits(), c.x56C.to_bits());
+            }
             if std::env::var_os("MELEE_GOLDEN_CPU").is_some() && stale::slot_type(p.slot) == melee_types::Gm_PKind_Cpu {
                 let f = &p.fp;
                 let c = &f.cpu;
@@ -5801,6 +5813,9 @@ impl Sim for VsMatch {
                 eprintln!("R {} MOTION slot {} {} id {} frame {} pos {} {} vel {} {} face {}", unsafe { TRACE_FRAME }, p.slot, p.follower, p.fp.motion_id, p.fp.cur_anim_frame, p.fp.cur_pos.x, p.fp.cur_pos.y, p.fp.self_vel.x, p.fp.self_vel.y, p.fp.facing_dir);
             }
         }
+        for p in &mut self.players {
+            p.skel.setup_all();
+        }
         for k in 0..self.effects.len() {
             self.effect_matrices(k);
         }
@@ -5868,6 +5883,20 @@ fn hurt_extents(p: &mut Player) {
             let j = p.skel.part(q);
             let w = p.skel.world_pos(j);
             eprintln!("PRT t{} q{} {:08X} {:08X} {:08X}", p.fp.cpu.x7C, q, w.x.to_bits(), w.y.to_bits(), w.z.to_bits());
+        }
+    }
+    if std::env::var_os("MELEE_GOLDEN_FT").is_some() {
+        for q in 0..n_caps_dbg(p) {
+            let c = &p.fp.hurt_capsules[q].capsule;
+            eprintln!("HC p{} i{} a {:08X} {:08X} {:08X} b {:08X} {:08X} {:08X} sc {:08X} f {:08X}", p.slot, q, c.a_pos.x.to_bits(), c.a_pos.y.to_bits(), c.a_pos.z.to_bits(), c.b_pos.x.to_bits(), c.b_pos.y.to_bits(), c.b_pos.z.to_bits(), c.scale.to_bits(), p.fp.facing_dir.to_bits());
+            if q == 12 {
+                let mut j = p.skel.part(p.hurtboxes[q].0 as usize);
+                for lv in 0..4 {
+                    let n = p.skel.tree.get(j);
+                    eprintln!("HB p{} part {} l{} r {:08X} {:08X} {:08X} {:08X} t {:08X} {:08X} {:08X} s {:08X} {:08X} {:08X}", p.slot, p.hurtboxes[q].0, lv, n.rotate.x.to_bits(), n.rotate.y.to_bits(), n.rotate.z.to_bits(), n.rotate.w.to_bits(), n.translate.x.to_bits(), n.translate.y.to_bits(), n.translate.z.to_bits(), n.scale.x.to_bits(), n.scale.y.to_bits(), n.scale.z.to_bits());
+                    match n.parent { Some(pp) => j = pp, None => break }
+                }
+            }
         }
     }
     unsafe { melee_fighter::tu::ftCo_0A01::ftCo_800A0DA4(&mut p.fp) };

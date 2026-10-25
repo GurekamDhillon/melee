@@ -8,7 +8,7 @@ pub struct Args {
     v: Vec<Value>,
 }
 
-fn typename(v: Option<&Value>) -> &'static str {
+pub(crate) fn typename(v: Option<&Value>) -> &'static str {
     match v {
         None => "no value",
         Some(Value::Nil) => "nil",

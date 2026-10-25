@@ -885,6 +885,11 @@ impl Engine {
         }
         let mut s = self.st.borrow_mut();
         s.commands.retain(|c| c.script != i);
+        if s.match_active {
+            // arena-hooks: ownership is read from the restored game snapshot
+            s.rw_branch();
+            s.game.arena_release(i as i32 + 1);
+        }
         let sc = &mut s.scripts[i];
         for t in sc.tasks.iter_mut() {
             *t = None;

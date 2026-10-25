@@ -856,7 +856,7 @@ impl StageAnim {
         let gi = self.gi(map_id);
         let n = self.groups[gi].tree.get_mut(JObjId(idx));
         n.translate = t;
-        n.flags |= melee_runtime::jobj::JOBJ_MTX_DIRTY;
+        self.groups[gi].tree.set_mtx_dirty(Some(JObjId(idx)));
     }
 
     /// `HSD_JObjSetRotationY/Z` on the idx'th JObj (`None` keeps the current value).
@@ -869,14 +869,14 @@ impl StageAnim {
         if let Some(z) = z {
             n.rotate.z = z;
         }
-        n.flags |= melee_runtime::jobj::JOBJ_MTX_DIRTY;
+        self.groups[gi].tree.set_mtx_dirty(Some(JObjId(idx)));
     }
 
     pub fn set_scale(&mut self, map_id: u32, idx: u32, s: Vec3) {
         let gi = self.gi(map_id);
         let n = self.groups[gi].tree.get_mut(JObjId(idx));
         n.scale = s;
-        n.flags |= melee_runtime::jobj::JOBJ_MTX_DIRTY;
+        self.groups[gi].tree.set_mtx_dirty(Some(JObjId(idx)));
     }
 
     /// `efLib_SetTevKonstColor(jobj, n, konst, tev0)`: the first DObj of the idx'th JObj, its n'th TObj's tev

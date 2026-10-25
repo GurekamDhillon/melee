@@ -1193,20 +1193,36 @@ rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_In
   fighter Dead* states first. Results / sudden-death scene audio and in-game menu sounds depend on the stand-in ui.rs menus.
 - Round 4 (plat-audio): merged port/platform-integ again; added `output::tests::master_volume_env_clamps_and_sets_gain` (MELEE_VOLUME parse/clamp like gw_Audio_Volume, gain = pct/100 on the device path); 15 melee_audio tests pass, headless, no OS input. Open items unchanged (GAME! needs sim death path; results/sudden-death/menu audio need the real menus).
 
-## Platform track, render proof (plat-render, round 1, 2026-10-25)
-- Method: C shots from `_build/agents/plat-render/pad_cam.lua` (`gd.screenshot` at match frames) vs `melee view-golden` shots
-  (`tools/rust-port/shotcmp.py`, C shot box-downscaled to 640x480). Alignment: Rust tick k = C match frame k+1 (the match camera is
-  bit-identical: `RCAM k` == C `CAM k+1`, e.g. 1499/1500 eye 18.18673 29.97416 152.68147), and the C screenshot is written for the frame
-  after its request (label n shows frame n+1 at 1..600; the CAM log's "engine frame" offset is not the shot's frame). Run:
-  `MELEE_VIEW_SKIP=1 rv.sh DIR 1510 0,60,120,300,600,900,1200,1500; shotcmp.py cshots2 DIR 1=1 60=61 120=121 ...`.
-- Fixed: the Ready/GO HUD drew `ScInfCnt_scene_models[1]` ("Sudden Death"); VS uses [3] (Ready) then [4] (Go!, created when Ready ends
-  at frame 85, `fn_8016B7F8`). Mean abs error (0..255) before -> after: f60 17.2 -> 10.6, f120 32.2 -> 13.0.
-- Added `ps_view.rs`: `psDispParticles` over the sim's native `PsSystem` (sort, blend, alpha compare, TEV by kind, tex + TLUT loads,
-  camera-facing/rotated/trail quads, points). Verified drawing (stage star sprites, hit sparks). AppSRT particles, point batching,
-  fog and light-mask diffuse are not ported.
-- Current per-frame error (mean abs, within16 %): f1 14.6/79.7, f60 10.6/68.6, f120 13.0/51.6, f300 22.2/27.9, f600 19.6/31.9,
-  f900 30.0/33.0, f1200 38.3/13.4, f1500 44.3/6.7. Biggest remaining differences: (1) the FD backdrop's Milky Way dust band, shooting
-  star line and magenta haze (hundreds of small particles in C; the sim spawns one stage generator, ~15-30 particles: grAnime joint
-  selection for the bg generators, "TODO group2 granime"), (2) P1/P2 name tags and the Ready-time fighter spawn glows (ifnametag, effects),
-  (3) frames 900+ also differ in sprite timing (shot frame uncertain +-3). Not yet: shadows, fog, screen flashes.
-- Dev aids: MELEE_VIEW_UNHIDE, MELEE_VIEW_PSLOG, MELEE_VIEW_READYLOG, MELEE_VIEW_NOPS.
+## Platform track, render proof (plat-render, rounds 1-2, 2026-10-25)
+- Method: C shots from `_build/agents/plat-render/pad_cam.lua` (`gd.screenshot` at match frames) vs `melee view-golden` shots.
+  RUN THE C BUILD REALTIME, not turbo (`MELEE_UNATTENDED=1 MELEE_WINDOW_X=30000 MELEE_WINDOW_Y=30000`, no `MELEE_TURBO`, run
+  `melee-pc.exe` directly in a scratch dir with `MELEE_SCENE=mode=vs;at=match;p1=falcon/human;p2=fox/human;...;stage=fd`
+  and `MELEE_PAD_SCRIPT=pad_cam.lua`; no window focus, no OS input). With realtime the screenshot for label n is exactly the frame of
+  Rust tick n (`native_000n.png`; the camera is bit-identical). Round 1's turbo shots were captured some 13-22 frames late (and later
+  frames drifted), which made its 900+ numbers meaningless. Compare: `tools/rust-port/shotcmp3.py RUSTDIR` (C shots in
+  `cshots3/`, both box-downscaled to 640x480). Run the viewer as `MELEE_VIEW_SKIP=1 rv.sh DIR 1505 60,120,300,...`.
+- Fixed this round (mean abs error 0..255, previous -> now): f60 10.6 -> 5.2, f120 12.6 -> 3.9, f300 22.2 -> 2.0, f600 19.6 -> 2.4,
+  f900 14.3 -> 2.0, f1200 17.9 -> 1.5, f1500 19.5 -> 3.7 (average 16.7 -> 2.95; within16 %: 87.7 / 92.3 / 97.7 / 96.8 / 97.8 / 97.8 / 93.8):
+  1. `melee_runtime::tu::mobj::setup_tev`: a TEV stage selects ONE konst colour; a TObj TEV of `(tev0 - konst) * tex` needs two constants
+     in the same stage and the second silently collapsed into the first (result black). Extra distinct colour / alpha constants now go to
+     TEV registers REG1 / REG2. This is the whole FD Milky Way dust band, the big nebula layers and every `0x85 0x80` gradient-map TObj.
+  2. The FD backdrop animations (map gobjs 4-8) never move in the C build. `grAnime_801C752C(.., HSD_AObjSetRate, 1, rate)` calls the
+     setter through `Callback1 (aobj, obj, flags, float)`; on the x64 build the float is the 4th argument but `HSD_AObjSetRate(aobj, f32)`
+     reads its 2nd, so every AObj those calls touch gets framerate 0 (found by sweeping the viewer's animation phase against the C
+     shots: best phase = -t at every frame). `stage_anim::grdo_anim` now sets rate 0 (`MELEE_VIEW_PPC_RATE` restores the PPC value).
+  3. Fighters are lit by `stage_info.map_plit` (`ftCo_8009F4A4`), the stage by the light group (`Ground_801C466C`); they were one set.
+     Stage light sets are animated (`HSD_LObjAnim`: VIS / LITC_* tracks) by `view::AnimLights` (FD's lights have no animation).
+  4. Name tags (`ifnametag.c`, `ScInfPnm_scene_models[0]`): scale 10, `ReqAnimAll(5 * port)` (the frame picks label + colour), translated each
+     frame to the head (`cur_pos + name_tag_height - 2.5`) projected by the match camera, own ortho camera (640x480, eye z 300), removed when
+     the Go element is created (`un_802FD428`).
+  5. Fighter bodies obey `invisible` / `x221E_b5` (`ftDrawCommon_80080A18`).
+- Still different (largest first): (a) fighter colour overlays: the C paints the Entry glow (`ftCo_800BFFD0(0x75)` colour animation, the
+  white silhouettes of frames 25-85), the Rebirth ghost (Falcon is lavender and translucent at 300/900/1500: colour overlay + `x61D` alpha,
+  `ftMaterial_800BF2B8` adds TEV stages) and the respawn platform; none of `ftcolanim.c` / `ftmaterial.c` is ported (the sim only
+  records them); (b) entry beam light pillars / sparkles, hit-spark and dust particle brightness (`ps_view.rs`: AppSRT particles, point
+  batching, fog, light-mask diffuse); (c) C frames 1-45 light up blue panels on the stage underside that the viewer keeps dark; (d) floor
+  texture aliasing (C is 2x MSAA-free but mip-filtered differently, tiny amplitude). Shadows: FD draws none; fog: FD has none
+  (`stage_info.unk8C.b3` unset); screen flashes: none occur in these frames.
+- Dev aids: MELEE_VIEW_UNHIDE, MELEE_VIEW_PSLOG, MELEE_VIEW_READYLOG, MELEE_VIEW_NOPS (round 1); MELEE_VIEW_BRANCHSCAN / PODUMP=g:j /
+  TEXDUMP2 / TOBJDUMP / TAGDUMP / ONLY=g:j,j / FORCEVIS / PREROLL=n / FPLOG / LIGHTLOG / NOPLIT / NOLIGHTANIM / PPC_RATE, and
+  `MELEE_GX_DRAWLOG=<copy index>` (+ `MELEE_GX_DRAWLOG_TEV=<draw>`) in melee_gx's `copy_disp`.

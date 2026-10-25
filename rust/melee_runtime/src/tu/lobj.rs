@@ -5,7 +5,7 @@
 //! The pre-existing `HsdRender` DAT adapter is retained for renderer compatibility; that
 //! adapter still approximates spot lights and attenuation. Use the generated-record
 //! interface for complete TU semantics and native object ownership.
-use super::state::{gx::*, ActiveLight, Dat, GxBackend, HsdRender, LightLoad};
+use super::state::{gx::*, ActiveLight, Dat, GxBackend, HsdRender, LightLoad, Rgba};
 use crate::mtx::{self, Mtx, Vec3};
 
 pub const LOBJ_AMBIENT: u32 = 0;
@@ -29,6 +29,14 @@ fn wobj_pos(d: &Dat, w: Option<u32>, default: Vec3) -> Vec3 {
     }
 }
 
+/// One light of a set: its descriptor plus the (possibly animated) flags and colour.
+#[derive(Clone, Copy, Debug)]
+pub struct LightIn {
+    pub desc: u32,
+    pub flags: u32,
+    pub color: Rgba,
+}
+
 impl HsdRender {
     /// `HSD_LObjSetupInit` over `descs` (each an `HSD_LightDesc` offset in `d`) under the viewing
     /// matrix `vmtx`: assigns GX_LIGHT0.. in order, loads every diffuse light, rebuilds the masks.
@@ -39,15 +47,31 @@ impl HsdRender {
         descs: &[u32],
         vmtx: &Mtx,
     ) {
+        let lights: Vec<LightIn> = descs
+            .iter()
+            .map(|&desc| LightIn { desc, flags: d.u16_(desc + 8) as u32, color: d.color(desc + 0xC) })
+            .collect();
+        self.lobj_setup_init_with(g, d, &lights, vmtx)
+    }
+
+    /// [`Self::lobj_setup_init`] over lights whose flags / colour were animated (`HSD_LObjAnim`:
+    /// the `VIS` and `LITC_*` tracks).
+    pub fn lobj_setup_init_with<G: GxBackend>(
+        &mut self,
+        g: &mut G,
+        d: &Dat,
+        lights: &[LightIn],
+        vmtx: &Mtx,
+    ) {
         self.lights.clear();
         self.lightmask_diffuse = 0;
         self.lightmask_specular = 0;
         self.lightmask_alpha = 0;
         self.lightmask_attnfunc = 0;
         let mut n = 0u32;
-        for &ld in descs {
-            let flags = d.u16_(ld + 8) as u32;
-            let color = d.color(ld + 0xC);
+        for li in lights {
+            let ld = li.desc;
+            let (flags, color) = (li.flags, li.color);
             if flags & LOBJ_HIDDEN != 0 {
                 continue;
             }

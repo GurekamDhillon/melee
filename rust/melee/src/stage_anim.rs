@@ -12,6 +12,9 @@
 //! NOT ported: shape animation (FD has none), RObj animation (`robj_anim` is asserted empty),
 //! TObj TLUT tables and TEV-konst colour tracks (the renderer's TEV is built from the descriptor),
 //! `grMaterial` colour-overlay scripts.
+fn be16(d: &[u8], at: u32) -> u16 {
+    d.get(at as usize..at as usize + 2).map_or(0, |b| u16::from_be_bytes(b.try_into().unwrap()))
+}
 fn be32(d: &[u8], at: u32) -> u32 {
     d.get(at as usize..at as usize + 4).map_or(0, |b| u32::from_be_bytes(b.try_into().unwrap()))
 }
@@ -751,6 +754,18 @@ impl StageAnim {
                     })
                 })
                 .collect();
+            if std::env::var_os("MELEE_VIEW_TOBJDUMP").is_some() {
+                for d in &n.dobj {
+                    if let Some(m) = ext.mobjs.get(d) {
+                        if let Some(a) = m.aobj.as_ref() {
+                            eprintln!("    dobj {d:#x} mobj aobj f{:.1}/{:.1} fobjs {:?}", a.curr_frame, a.end_frame, a.fobj.iter().map(|f| (f.obj_type, f.p0, f.p1)).collect::<Vec<_>>());
+                        }
+                        for t in &m.tobjs {
+                            eprintln!("    dobj {d:#x} tobj id {} flags {:#x} blend {} image {:?} {:?} tbl {:?} aobj {}", t.id, t.obj.flags, t.obj.blending, t.obj.imagedesc, t.obj.imagedesc.map(|i| (be16(&self.dat, i + 4), be16(&self.dat, i + 6), be32(&self.dat, i + 8))), t.obj.imagetbl.as_ref().map(|v| v.iter().map(|i| i.map(|i| (i, be16(&self.dat, i + 4), be16(&self.dat, i + 6), be32(&self.dat, i + 8)))).collect::<Vec<_>>()), t.aobj.as_ref().map_or("-".into(), |a| format!("f{:.1}/{:.1} fobjs {:?}", a.curr_frame, a.end_frame, a.fobj.iter().map(|f| (f.obj_type, f.op, f.p0, f.p1, f.time, f.startframe, f.nb_pack, f.frac_value, format!("{:02x?}", &f.ad_head[..f.ad_head.len().min(f.length as usize)]))).collect::<Vec<_>>())));
+                        }
+                    }
+                }
+            }
             if let Some(a) = n.aobj.as_ref() {
                 for f in &a.fobj {
                     eprintln!("      fobj ty {} op {} intrp {} len {} time {:.1} p0 {:.3} p1 {:.3} d0 {:.3} d1 {:.3} start {} nb {}", f.obj_type, f.op, f.op_intrp, f.length, f.time, f.p0, f.p1, f.d0, f.d1, f.startframe, f.nb_pack);

@@ -48,6 +48,9 @@ def main():
             out.append(l)
         else:
             out.append(l)
+    if not ents:
+        print(f"hookify: {p.name}: nothing to hook")
+        return
     # place the macro + block before the first kept pub fn or at the end of the module
     idx = len(out) - 2  # before the closing "}" and trailing ""
     while out[idx].strip() == "" or out[idx] == "}":

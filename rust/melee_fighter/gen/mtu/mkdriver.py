@@ -85,6 +85,7 @@ static void* pick_fn(int kind)
 }
 static void* pick_cb(int kind) { void* f = pick_fn(kind); return f ? f : (kind == 2 ? (void*) cbp1 : kind == 3 ? (void*) cbev3 : (void*) cbev1); }
 
+@C_PRE@
 #include "@STEM@_stubs.h"
 #include "@STEM@_state.h"
 HSD_GObj** HSD_GObjPLinkHead;   /* tentative: the stub header defines it only for TUs that read it */
@@ -306,7 +307,7 @@ SH_TMPL = r'''#!/bin/bash
 set -e
 cd "$(dirname "$0")/../../../.."
 python rust/melee_fighter/gen/mtu/fill.py @STEM@ @CSRC@ HSD_GObj,HSD_JObj,Fighter,Item,HSD_DObj@POOLS@ Fighter,HSD_JObj,HSD_GObj,FighterBone@FILLT@
-python rust/melee_fighter/gen/mtu/stubs.py @STEM@ @CSRC@ rust/melee_fighter/src/tu/@RFILE@.rs @STUBS@
+python rust/melee_fighter/gen/mtu/stubs.py @STEM@ @CSRC@ rust/melee_fighter/src/tu/@RFILE@.rs --ret "ftParts_GetBoneIndex=(int) (fv() % 16)|(fv() % 16) as _" --ret "ftParts_8007506C=({ u32 q_ = fv(); (q_ % 3) == 0 ? 0u : q_ * 2u + 1u; })|{ let q = fv(); if q % 3 == 0 { 0 } else { q.wrapping_mul(2).wrapping_add(1) } }" @STUBS@
 python rust/melee_fighter/gen/cref/tu/run_tu.py @STEM@_ops
 '''
 
@@ -320,7 +321,7 @@ def main():
     rs_cases = "\n".join(f"                    {i} => {{ {r} }}" for i, (c, r) in enumerate(ops))
     sub = {
         "@CSRC@": spec["csrc"], "@RMOD@": spec["rmod"], "@STEM@": stem, "@RFILE@": spec.get("rfile", stem),
-        "@C_INCLUDES@": "\n".join(spec.get("c_includes", [])), "@C_HEAD@": spec.get("c_head", ""),
+        "@C_INCLUDES@": "\n".join(spec.get("c_includes", [])), "@C_HEAD@": spec.get("c_head", ""), "@C_PRE@": spec.get("c_pre", ""),
         "@C_WORLD@": spec.get("c_world", ""), "@C_HASH@": spec.get("c_hash", ""), "@PK_C@": pkc,
         "@NOPS@": str(len(ops)), "@CASES@": str(spec.get("cases", 500)), "@C_CASES@": c_cases, "@RS_CASES@": rs_cases,
         "@RS_HEAD@": spec.get("rs_head", ""), "@RS_HOOKS@": spec.get("rs_hooks", ""), "@RS_WORLD@": spec.get("rs_world", ""),

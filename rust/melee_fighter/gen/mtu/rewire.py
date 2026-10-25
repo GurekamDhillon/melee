@@ -94,6 +94,16 @@ def find_callee(fname):
     return None
 
 
+def ext_span(s):
+    a = s.index("pub mod ext")
+    depth, k = 0, s.index("{", a)
+    while True:
+        depth += {"{": 1, "}": -1}.get(s[k], 0)
+        k += 1
+        if depth == 0:
+            return a, k
+
+
 def main():
     stem, rsrel = sys.argv[1], sys.argv[2]
     rs_path = FD / rsrel
@@ -118,7 +128,7 @@ def main():
         cands = {}
         for fm in re.finditer(r"((?:[A-Za-z_]\w*::)*)([A-Za-z_]\w*)\(", s):
             full, f = fm.group(1) + fm.group(2), fm.group(2)
-            if fm.start() < body_start:
+            if fm.start() < body_start or ext_span(s)[0] <= fm.start() < ext_span(s)[1]:
                 continue
             if full.startswith(("ext::", "super::ext::")):
                 continue
@@ -176,7 +186,10 @@ def main():
         if outp:
             pass
         sig = ", ".join(f"{n}: {t}" for n, t in zip(names, rparams))
-        ent.append(f"        fn {name}({sig})" + (f" -> {rret}" if rret else "") + f" = {body};")
+        if "($def)(" in s:       # closure-default flavour: `Name(args) -> R = |args| -> R { body };`
+            ent.append(f"        {name}({sig})" + (f" -> {rret}" if rret else "") + f" = |{sig}|" + (f" -> {rret}" if rret else "") + f" {body};")
+        else:
+            ent.append(f"        fn {name}({sig})" + (f" -> {rret}" if rret else "") + f" = {body};")
         # rewrite the call sites
         pat = re.compile(re.escape(full) + r"\(")
         out, pos = [], 0
@@ -185,7 +198,7 @@ def main():
             if not mm:
                 out.append(s[pos:])
                 break
-            if mm.start() < body_start:
+            if mm.start() < body_start or ext_span(s)[0] <= mm.start() < ext_span(s)[1] or s[max(0, mm.start() - 3):mm.start()] == "fn ":
                 out.append(s[pos:mm.end()])
                 pos = mm.end()
                 continue
@@ -229,7 +242,7 @@ def main():
         pat = re.compile(r"(?<![\w:])((?:[A-Za-z_]\w*::)+)" + re.escape(fn) + r"\(")
 
         def sub(mm, fn=fn):
-            if mm.start() < body_start or mm.group(1) in ("h::", "crate::hooks::", "hooks::"):
+            if mm.start() < body_start or ext_span(s)[0] <= mm.start() < ext_span(s)[1] or mm.group(1) in ("h::", "crate::hooks::", "hooks::"):
                 return mm.group(0)
             hooked.append(fn)
             return "h::" + fn + "("

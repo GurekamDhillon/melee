@@ -70,10 +70,10 @@ def rust_decls(path):
     out = {}
     HOOKS.clear()
     # second seam form: `ext! { STATIC name(args) -> R; }` (the hook is the static itself)
-    b = s.find("macro_rules! ext {")
-    c = s.find(chr(10) + "    ext! {") if b >= 0 else -1
+    c = s.find("macro_rules!")
     if c >= 0:
-        for m in re.finditer(r"^\s*([A-Z0-9_]+) (\w+)\((.*?)\)(?: -> ([^=;]+?))?(?: = .*)?;$", s[c:], re.M):
+        # entries of any `ext!` / `stubs!` / `extd!` style block: `STATIC name(args) -> R [= default];`
+        for m in re.finditer(r"^\s*([A-Z][A-Z0-9_]+) (\w+)\((.*?)\)(?: -> ([^=;]+?))?(?: = .*)?;$", s[c:], re.M):
             stat, name, args, ret = m.groups()
             HOOKS[name] = "ext::" + stat
             out[name] = (split_args(args), ret.strip() if ret else None)
@@ -86,7 +86,7 @@ def rust_decls(path):
     a = s.find("ext_fns! {")
     if a < 0:
         return out
-    for m in re.finditer(r"^\s*fn (\w+)\((.*?)\)(?: -> (.+?))? = ", s[a:], re.M):
+    for m in re.finditer(r"^\s*(?:fn )?(\w+)\((.*?)\)(?: -> (.+?))? = ", s[a:], re.M):
         name, args, ret = m.groups()
         parts, depth, cur = [], 0, ""
         for ch in args:

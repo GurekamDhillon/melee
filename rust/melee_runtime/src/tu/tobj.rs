@@ -84,6 +84,7 @@ pub fn load_desc_list(d: &Dat, mut td: Option<u32>) -> Vec<TObjRt> {
             lod,
             imagetbl: None,
             has_tluttbl: false,
+            tluttbl_ptrs: Vec::new(),
             tlut_no: -1,
             mtx: crate::mtx::identity(),
             tev: None,
@@ -269,7 +270,8 @@ impl HsdRender {
             let mut tlut_sel = None;
             match format {
                 GX_TF_C4 | GX_TF_C8 | GX_TF_C14X2 => {
-                    let Some(tl) = o.tlut else { continue };
+                    let animated = (o.obj.tlut_no >= 0).then(|| o.obj.tluttbl_ptrs.get(o.obj.tlut_no as usize).copied()).flatten();
+                    let Some(tl) = animated.or(o.tlut) else { continue };
                     let n = d.u16_(tl + 0xC);
                     let name = if let Some(&(_, nm)) = tluts.iter().find(|(ne, _)| *ne == n) {
                         nm
@@ -407,7 +409,7 @@ unsafe fn logic_view(p:*mut HSD_TObj)->logic::HsdTObj<*mut HSD_ImageDesc> {
         repeat_s:x.repeat_s,repeat_t:x.repeat_t,flags:x.flags,blending:x.blending,
         imagedesc:if x.imagedesc.is_null(){None}else{Some(x.imagedesc)},
         lod:x.lod.as_ref().map(|l|logic::HsdTexLodDesc{min_filt:l.minFilt,lod_bias:l.LODBias,bias_clamp:l.bias_clamp,edge_lod_enable:l.edgeLODEnable,max_anisotropy:l.max_anisotropy}),
-        imagetbl:None,has_tluttbl:!x.tluttbl.is_null(),tlut_no:x.tlut_no,mtx:x.mtx,
+        imagetbl:None,has_tluttbl:!x.tluttbl.is_null(),tluttbl_ptrs:std::vec::Vec::new(),tlut_no:x.tlut_no,mtx:x.mtx,
         tev:x.tev.as_ref().map(|v|logic::HsdTObjTev{konst:color(v.konst),tev0:color(v.tev0),tev1:color(v.tev1)}),
     }
 }

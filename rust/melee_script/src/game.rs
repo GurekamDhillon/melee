@@ -700,6 +700,229 @@ pub trait ScriptGame {
     fn fighter_reserve_read(&self, _slot: i32, _entity: i32, _field: i32) -> i32 {
         0
     }
+    /// `gw_ScriptMods_GameEvent`: the online Envoy native triggered rules see every event, even a resimulated frame's
+    fn mods_game_event(&mut self, _what: i32, _a: i32, _b: i32, _c: i32, _d: i32) {}
+    /// `gw_ScriptGame_ActionCategory`: 1 jump .. 8 perfect shield for the motion, 0 none
+    fn action_category(&self, _motion: i32) -> i32 {
+        0
+    }
+    // ---- zones (`gw_ScriptGame_Zone*`): pc/platform/gw_script_zones.inc over `zones_core::SzState` in the game's snapshotted state
+    fn zone_field(&self, _slot: i32, _field: i32) -> i32 {
+        0
+    }
+    fn zone_text(&self, _slot: i32, _text: i32, _byte: i32) -> i32 {
+        0
+    }
+    /// field -1 clears the draft
+    fn zone_draft(&mut self, _field: i32, _value: i32) {}
+    fn zone_draft_text(&mut self, _text: i32, _byte: i32, _value: i32) {}
+    /// handle 0 adds; the new/updated handle, or <0 refused
+    fn zone_commit(&mut self, _handle: i32, _owner: i32, _serial_floor: i32) -> i32 {
+        -1
+    }
+    fn zone_remove(&mut self, _handle: i32, _owner: i32) -> i32 {
+        0
+    }
+    /// owner 0: every zone
+    fn zones_release(&mut self, _owner: i32) {}
+    /// bit k: the hook of kind k+1 (enter, exit, none, some) has a listener
+    fn zones_arm(&mut self, _mask: i32) {}
+    /// the frame step; `terminal` 1 retires every zone, 2 the owner's removed ones, 0 a normal frame
+    fn zones_frame(&mut self, _terminal: i32) {}
+    /// field 0 entity id, 1/2 x/y bits (zone ignored); 3 inside zone slot `zone`; 4 frames inside slot `zone`
+    fn zone_entity(&self, _entity: i32, _field: i32, _zone: i32) -> i32 {
+        0
+    }
+    fn zone_event(&self, _event: i32, _field: i32) -> i32 {
+        0
+    }
+    fn zone_event_text(&self, _event: i32, _text: i32, _byte: i32) -> i32 {
+        0
+    }
+    fn zone_event_count(&self) -> i32 {
+        0
+    }
+    // ---- skill ring, shock, objectives (`gw_ScriptGame_Skill*`, `Shock*`): gw_script_skill.inc, gw_script_shock.inc
+    fn skill_row_count(&self) -> i32 {
+        0
+    }
+    /// ring row idx (0 newest): field 0 frame, 1 kind, 2 entity, 3.. i1 i2 i3 f1 f2 (bits)
+    fn skill_row(&self, _idx: i32, _field: i32) -> i32 {
+        0
+    }
+    /// 0 combo_count, 1 combo_damage (bits), 2 combo_attacker, 3 air_frames, 4 frames_in_state, 5 aerial_hit
+    fn skill_state(&self, _entity: i32, _field: i32) -> i32 {
+        0
+    }
+    /// 0 wave_min_speed (bits), 1 wavedash max airborne, 2 ledge dash, 3 dash dance, 4 lcancel window, 5 powershield window
+    fn skill_const(&self, _idx: i32) -> i32 {
+        0
+    }
+    #[allow(clippy::too_many_arguments)]
+    fn shock_set(&mut self, _entity: i32, _owner: i32, _frames: i32, _charges: i32, _mult_bits: i32, _bonus: i32, _flags: i32) -> i32 {
+        0
+    }
+    /// 0 owner, 1 frames, 2 charges, 3 bonus, 4 multiplier (bits), 5 hits, 6 applied
+    fn shock_read(&self, _entity: i32, _field: i32) -> i32 {
+        0
+    }
+    // ---- contacts (`gw_ScriptGame_Contact*`): pc/platform/gw_script_contacts.inc
+    /// surface 0 floor, 1 left wall, 2 right wall, 3 ceiling, 4 ledge; field SC_LINE (-1 none), OWNER, PART, KIND, PASS,
+    /// X0, Y0, X1, Y1, X, Y, NX, NY (float bits); `line` -1 the current contact, otherwise a floor line index
+    fn contact_field(&self, _slot: i32, _surface: i32, _field: i32, _line: i32) -> i32 {
+        -1
+    }
+    /// bit 0 jump, 1 pass-through, 2 knocked, 3 dead, 4 rebirth
+    fn contact_flags(&self, _slot: i32) -> i32 {
+        0
+    }
+    /// the next floor line index the fighter crossed upward after `after`, or -1
+    fn contact_cross(&self, _slot: i32, _after: i32) -> i32 {
+        -1
+    }
+    // ---- fly cursor attack (`gw_GenoFly_*`) and stage camera parameters (`gw_ScriptGame_CameraParam*`)
+    fn geno_fly_target(&mut self, _slot: i32, _x_bits: i32, _y_bits: i32) -> i32 {
+        -1
+    }
+    #[allow(clippy::too_many_arguments)]
+    fn geno_fly_attack_config(&mut self, _slot: i32, _flags: i32, _damage: i32, _radius_bits: i32, _active_gap: i32, _kb_kbg: i32, _angle: i32) -> i32 {
+        -1
+    }
+    /// 0 attacking, 1 targeting, 2 damage, 3 radius (bits), 4/5 x/y (bits), 6 pulses, 7 every_frame, 8 active, 9 gap, 10 kb, 11 kbg, 12 angle, 13 phase
+    fn geno_fly_state(&self, _slot: i32, _field: i32) -> i32 {
+        0
+    }
+    fn geno_fly_clear(&mut self, _slot: i32) {}
+    fn camera_param_read(&self, _field: i32) -> i32 {
+        0
+    }
+    fn camera_param_owner(&self) -> i32 {
+        0
+    }
+    /// `bits` are the ten parameters in the order min_dist .. pitch_gain; mask says which the script set
+    fn camera_params(&mut self, _owner: i32, _mask: i32, _bits: &[i32]) -> i32 {
+        0
+    }
+    // ---- echoes and the fighter history (`gw_ScriptGame_Echo*`, `FighterHistory*`): pc/platform/gw_script_echo.inc
+    fn fighter_history_depth(&self) -> i32 {
+        0
+    }
+    /// hitbox -1: the fighter row (0 present, 1 generation, 2 action state, 3 move, 4 airborne, 5.. action_frame x y z facing,
+    /// 10 hitbox count, 11 attack id); hitbox 0..4: 0 present, 1 identity, 2 damage ... see gd::echo
+    fn fighter_history_read(&self, _entity: i32, _age: i32, _hitbox: i32, _field: i32) -> i32 {
+        0
+    }
+    /// `rest` are delay, move, element, airborne, damage bits, knockback bits, new element, once_per_move; handle 0 allocates
+    fn echo_add_with_handle(&mut self, _entity: i32, _owner: i32, _rest: &[i32], _handle: i32) -> i32 {
+        0
+    }
+    fn echo_remove(&mut self, _handle: i32, _owner: i32) -> i32 {
+        0
+    }
+    fn echo_read(&self, _entity: i32, _index: i32, _field: i32) -> i32 {
+        0
+    }
+    fn echo_owner(&self, _entity: i32) -> i32 {
+        0
+    }
+    fn echo_next_handle(&self) -> i32 {
+        1
+    }
+    /// replace the entity's whole rule table (count rows of 9 ints, flattened to 8 rows); nonzero when accepted
+    fn echo_replace(&mut self, _entity: i32, _owner: i32, _count: i32, _rules: &[i32]) -> i32 {
+        0
+    }
+    /// field 0 armed, 1 element, 2 flash frames
+    fn echo_state(&self, _entity: i32, _handle: i32, _field: i32) -> i32 {
+        0
+    }
+    // ---- scripted CPU controller (`gw_ScriptGame_CpuCtl`, `CpuAttr`, `CpuScriptMode`): pc/platform/gw_script_cpu_ctl.inc
+    /// setters, op GCC_* 1..23 (PAD_COMMIT, SCRIPT_BEGIN/BYTE/RUN, DEST_X/Y, TARGET, CANCEL, STAGE+k, GOTO_*); `sub` selects Nana
+    fn cpu_ctl(&mut self, _slot: i32, _sub: i32, _op: i32, _a: i32) -> i32 {
+        0
+    }
+    /// getters, op GCC_G_* 100..118; -1 (ACTIVE, GOTO_STATE) when there is no such CPU fighter
+    fn cpu_ctl_read(&self, _slot: i32, _sub: i32, _op: i32, _a: i32) -> i32 {
+        -1
+    }
+    fn cpu_attr(&self, _slot: i32, _id: i32) -> i32 {
+        0
+    }
+    // ---- part overrides and measurements (`gw_ScriptGame_Parts*`, script_parts.h) and raw memory peeks
+    /// field PART_I_*: REFRESH(0) rebuilds and returns the count, COUNT(1) the cached count (<0 none)
+    fn parts_i(&self, _slot: i32, _index: i32, _field: i32) -> i32 {
+        -1
+    }
+    fn parts_f(&self, _slot: i32, _index: i32, _field: i32) -> f32 {
+        0.0
+    }
+    /// ctl PART_CTL_*; <0 refused
+    fn parts_control(&mut self, _slot: i32, _part: i32, _ctl: i32, _value: i32, _owner: i32) -> i32 {
+        -1
+    }
+    /// the address of the slot's joint JObj, for effect anchors
+    fn parts_joint(&self, _slot: i32, _joint: i32) -> i32 {
+        0
+    }
+    fn parts_reset(&mut self, _owner: i32) {}
+    /// `gd.lab_peek`: n raw bytes of MEM1 at a 0x80000000-based address, None out of range
+    fn mem1_read(&self, _addr: u32, _n: usize) -> Option<Vec<u8>> {
+        None
+    }
+    /// `gw_ScriptGame_LaunchScene(mode)`: start the scene for a `gd.scene_launch` game mode
+    fn launch_scene(&mut self, _mode: i32) {}
+    // ---- fighter modifiers (`gw_ScriptGame_FighterMod*`): pc/platform/gw_script_fighter_mod.inc
+    fn fighter_mod_owner(&self, _slot: i32) -> i32 {
+        0
+    }
+    /// field 0..10 in the order damage_dealt .. shield_regen (float bits)
+    fn fighter_mod_read(&self, _slot: i32, _field: i32) -> i32 {
+        0
+    }
+    /// `bits` are the first eight modifiers (damage_dealt .. knockback_taken); false when another owner holds it
+    fn fighter_mod(&mut self, _slot: i32, _owner: i32, _enabled: bool, _bits: &[i32]) -> i32 {
+        0
+    }
+    fn fighter_mod_extra(&mut self, _slot: i32, _owner: i32, _fall: i32, _weight: i32, _regen: i32) -> i32 {
+        0
+    }
+    // ---- entity identity (`gw_ScriptGame_EntityField`, `EntityEpoch`, `EntityAddressField`): pc/platform/gw_script_spine_refs.inc
+    /// kind 1 fighter (id = port*2+sub), 2 item, 3 echo, 4 stage object, 5 stage actor. field 0 live, 1 epoch, 2 generation,
+    /// 3 definition, 4 owner fighter id + 1, 5 role bits
+    fn entity_field(&self, _kind: i32, _id: i32, _field: i32) -> i32 {
+        0
+    }
+    fn entity_epoch(&self) -> i32 {
+        0
+    }
+    /// field 0 live, 1 epoch, 2 generation, 3 definition, 6 id of the entity at a native address
+    fn entity_address_field(&self, _kind: i32, _address: i32, _field: i32) -> i32 {
+        0
+    }
+    /// `gw_Snap_Resimulating`: the rollback is replaying a frame (no hooks, no queued events)
+    fn resimulating(&self) -> bool {
+        false
+    }
+    // ---- hit rules / fighter status (`gw_ScriptGame_HitRules*`, `FighterStatus`, `HitRuleRead`): pc/platform/gw_script_hit_rules.inc.
+    // `entity` is port*2 (+1 for the independent partner). A rule is 16 ints (floats as bits); field 12 is the stable handle.
+    fn hit_rules_owner(&self, _entity: i32) -> i32 {
+        0
+    }
+    fn hit_rules_count(&self, _entity: i32) -> i32 {
+        0
+    }
+    fn fighter_status(&self, _entity: i32) -> i32 {
+        0
+    }
+    fn hit_rule_read(&self, _entity: i32, _index: i32, _field: i32) -> i32 {
+        0
+    }
+    /// `rules` is count rows of 16 ints, flattened (32 rows); returns nonzero when accepted
+    fn hit_rules_replace(&mut self, _entity: i32, _owner: i32, _count: i32, _status: i32, _rules: &[i32]) -> i32 {
+        0
+    }
+    /// a script unloaded (owner = script index + 1, 0 = all): drop every hit rule, echo, enemy, item ... it holds
+    fn owner_release(&mut self, _owner: i32) {}
     // ---- the recorder (`pc/platform/gw_script_rec.inc`): `.gdlp` live-playback recordings. The Lua half
     // (gating, names, argument shapes) is ported in `gd::rec`; these are the recorder's state machine and files.
     fn rec_start(&mut self, _name: &str) -> Result<String, String> {

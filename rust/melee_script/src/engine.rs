@@ -121,6 +121,13 @@ pub struct State {
     pub scene_epoch: i32,
     pub match_active: bool,
     pub match_frame: i32,
+    pub ev: crate::events::EventState,
+    pub zone: crate::gd::zones::ZoneAdapter,
+    pub deadlines: crate::gd::deadline::Deadlines,
+    pub contacts: crate::gd::contacts::Contacts,
+    pub fly_cursor: crate::gd::flycam::FlyCursor,
+    pub frontend: crate::gd::frontend::Frontend,
+    pub hitstop: crate::gd::fmod::Hitstop,
     pub last_action: [i32; 6],
     pub state_frame: [i32; 6],
     pub paused: bool,
@@ -419,6 +426,13 @@ impl Engine {
             scene_epoch: 0,
             match_active: false,
             match_frame: 0,
+            ev: Default::default(),
+            zone: Default::default(),
+            deadlines: Default::default(),
+            contacts: Default::default(),
+            fly_cursor: Default::default(),
+            frontend: Default::default(),
+            hitstop: Default::default(),
             last_action: [0; 6],
             state_frame: [0; 6],
             paused: false,
@@ -600,7 +614,7 @@ impl Engine {
             stage.set(n, b)?;
         }
         gd.set("stage_draw", stage)?;
-        gd.set("kit", crate::gd::push_kit(lua)?)?;
+        gd.set("kit", crate::gd::push_kit(self)?)?;
         gd.set("ui", crate::gd::push_ui(lua)?)?;
         // the prelude adds wait / wait_until / press / tilt; gd.comm is the comm callout window
         let co: Value = g.get("coroutine")?;
@@ -883,6 +897,14 @@ impl Engine {
         if let Some(f) = self.get_hook(i, "on_unload") {
             self.pcall(i, &f, MultiValue::new(), "on_unload");
         }
+        let stage_owner = self.st.borrow().scripts[i].stage_owner;
+        self.zones_release(stage_owner);
+        self.contact_release(i);
+        {
+            let mut s = self.st.borrow_mut();
+            let (p, e, l) = s.deadlines.release(i);
+            s.host.borrow_mut().hang_script_state(p, e, &l);
+        }
         let mut s = self.st.borrow_mut();
         s.commands.retain(|c| c.script != i);
         if s.match_active {
@@ -891,6 +913,16 @@ impl Engine {
             s.game.arena_release(i as i32 + 1);
         }
         s.game.caps_release(i as i32 + 1);
+        s.game.owner_release(i as i32 + 1);
+        let so = s.scripts[i].stage_owner;
+        s.presentation_release(so);
+        for slot in 0..6 {
+            // gs_fly_clear_owner
+            if s.fly_cursor_owner(slot) == i as i32 + 1 {
+                s.game.geno_fly_clear(slot as i32);
+                s.fly_cursor_clear(slot);
+            }
+        }
         let sc = &mut s.scripts[i];
         for t in sc.tasks.iter_mut() {
             *t = None;
@@ -1113,6 +1145,9 @@ impl Engine {
 
     /// `gw_Script_SceneBegin` (the parts that belong to the script core; the engine-owned releases are the game's).
     pub fn scene_begin(&self, scene_kind: i32) {
+        self.zones_release(0);
+        self.contacts_reset("scene changed; watcher cancelled");
+        self.st.borrow_mut().contacts.labels.clear();
         let (prev, name) = {
             let mut s = self.st.borrow_mut();
             let prev = s.scene_kind;
@@ -1155,6 +1190,8 @@ impl Engine {
                 s.key_now[vk] = focused && host.borrow().key_down(vk);
             }
         }
+        self.launch_tick();
+        self.st.borrow_mut().presentation_tick();
         self.finish_draw();
         {
             let mut s = self.st.borrow_mut();
@@ -1162,6 +1199,7 @@ impl Engine {
             s.draw[b].clear();
         }
         self.rw_tick_top();
+        self.update_want_events();
         self.hook_all("on_tick", &[]);
         // (gs_rw_tick_top comes before on_tick in the C build's loop; see below)
         // paused: no logic frame will run this tick, so there is no frame boundary for a pending savestate to wait for
@@ -1178,6 +1216,7 @@ impl Engine {
     fn finish_draw(&self) {
         // on_draw completes the list; the overlay then shows it (gs_finish_draw)
         self.hook_all("on_draw", &[]);
+        self.contact_draw();
         let mut s = self.st.borrow_mut();
         s.build = 1 - s.build;
     }
@@ -1265,6 +1304,10 @@ impl Engine {
         let (start, kind) = {
             let mut s = self.st.borrow_mut();
             let kind = s.rw.frame_kind;
+            s.ev.post_pending = true;
+            if s.match_active {
+                s.game.zones_frame(0);
+            }
             s.rw.in_frame = false;
             if s.rw.began {
                 // the frame's sounds are all in the log now
@@ -1278,6 +1321,7 @@ impl Engine {
                 s.pads.frame_consumed();
             }
             s.rw.frame_kind = 0;
+            s.ev.post_pending = false;
             s.frame += 1;
             let mut any = false;
             for slot in 0..6 {
@@ -1320,7 +1364,15 @@ impl Engine {
             (start, kind)
         };
         let _ = kind;
+        if kind != 1 {
+            self.zones_dispatch();
+        }
+        if kind != 1 {
+            self.deadline_frame();
+        }
         self.camera_tick();
+        self.contact_tick();
+        self.dispatch_events();
         if start {
             self.hook_all("on_match_start", &[]);
         }
@@ -1460,6 +1512,9 @@ impl Engine {
                 }
             }
             return rc;
+        }
+        if is("contacts") || is("trace") || is("wait") {
+            return self.contact_console(cmd, arg);
         }
         if is("frame") {
             let f = self.st.borrow().frame;

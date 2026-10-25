@@ -1087,6 +1087,25 @@ rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_In
   `caps_release(owner)`. Tests `tests/caps.rs` (3), `bench.rs` (1), `crit.rs` (1) run over mocks; `cargo test -p melee_script` all green.
   Headless only, no OS input sent. Still unregistered: cpu_ctl scripts (cpu_pad/cpu_script_done), hit_rules, zones, deadline, echo/afterimage/tracer,
   fx_*, item_define/item_kinds, model_*, stage_add_*/stage_switch/slot, 1P (spawn_1p...), area_*, sim_*, contact_*, skill_*, warm.
+- Round 7 (port/plat-script, this session; every item below has a `rust/melee_script/tests/*.rs` test over a `ScriptGame`/`Host` mock, all green):
+  `gd/hit_rules.rs` (hit_rule_add/remove, hit_rules_clear, fighter_status, hit_rules), `events.rs` (the engine event queue of gw_Script_GameEvent and
+  HitContext/HitRuleContext/EnemyGameEvent/TargetBroken/Enemy*/Skill/Crit/Armor event rows, the one epoch/frame/sequence spine clock, post-frame dispatch
+  of on_action_change/on_hit/on_hitlag/on_land/on_target_broken/.../on_action_signal/on_armor/on_skill/on_crit plus the common `on_event` envelope; hook order as
+  `gs_dispatch_events`), `gd/entity.rs` (entity_ref/resolve/valid, source_ref/resolve, entity_call), `zones_core.rs` + `gd/zones.rs` (the C zone core with its
+  pc/tests/zones_test.c fixture ported as a unit test, zone_add/set/remove, zones, point_zones, zones_at, zone_members, enter/exit/none/some dispatch),
+  `gd/deadline.rs`, `gd/skill.rs` (skill_history/state/kinds/thresholds, 25 kinds, on_<technique> hooks), `gd/shock.rs`, `gd/contacts.rs` (the contact observer,
+  contacts, contact_events, contact_trace with the JSONL rotation, contact_overlay, wait_until{...}/wait_status watchers, `contacts`/`trace`/`wait` console commands),
+  `gd/flycam.rs` (fly_target/attack/clear/state, camera_params), `gd/echo.rs` (echo_add/remove, echoes, fighter_history(_depth); the echo parse/prepare/pair/apply
+  helpers are pub for sim_commit), `gd/cpu_ctl.rs` (cpu_pad/script/dest/target/goto/cancel/commands/attrs/macro and the status readers, with the 52 retail CpuCmd
+  codes and the eleven technique macros), `gd/present.rs` (parts/parts_id/parts_clear, dobj_solid/tint, the fx_* effects lab, lab_peek), `gd/kit.rs` (gd.kit over
+  `Host::kit_*`; without a kit `available()` is false and the drawing calls raise the C build's error, so the LAB loads and runs headless: `gdscript pc/geno/mods/geno-lab`
+  prints "the kit is not available, the Lab UI is not drawn" and no error), `gd/frontend.rs` (scene_launch/clear, training_select, screenshot, hud_visible, launch_request/cancel),
+  `gd/fmod.rs` (fighter_mod, hitstop/hitstop_cancel and the presentation timers). `ScriptGame` grew the scalar hooks for all of these (every one defaults to "nothing there"),
+  `Host` the fx/kit/frontend services; a new `ScriptGame::owner_release` is called on script unload. ~50 gd.* names added: 349 in the C table, **124 still unregistered**
+  (afterimage/tracer/echo_afterimage/motion_* need the gw_motion trail service; area_*, boss_*, enemy_*, spawn_*, 1P, item_*, model_*, stage_*, shader/post_*, sim_*, warm_*,
+  netbuild/netplay/modsync/mods_install, mode_blob, menu, light_set, render_test, fighter_lua/fighter_recycle/fighter_shader, match_end_*).
+  Proof run this session: `cargo test -p melee_script` (all test binaries green, 14 lib tests incl. the zones fixture), `gdscript` over pc/geno/mods/geno-lab (clean) and
+  every pc/tests/*.lua that needs the engine loads. Still **not** proven: any of this against the real game (the Rust game half of these hooks does not exist yet).
 - **Not ported yet** (next rounds, in order): the .gdlp recorder itself, hitstop, cpu_* scripts, hot_reload, kb_preview, `gd.kit` / `gd.ui` (tables are empty), entity refs (`entity_ref` is nil), items/fx/echo/
   afterimage/tracer, stage_*/model_*/shader/area/warm/launch/1P/netplay/modsync/sim/hit_rules/enemy*, the Geno registry (geno_registry.c,
   geno_lua_core.h, fighter Lua), `lab.lua`'s remaining calls. `gdscript pc/geno/mods/geno-lab` lists what lab.lua still lacks at load.

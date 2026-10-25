@@ -398,15 +398,15 @@ fn load_stage(file: &[u8], is_fd: bool, is_bf: bool, is_gr: bool) -> Result<Stag
 
 /// A light set (`lb_80011AC4` over a `LightList*[]`) with its `HSD_LObjAnim` state: the `VIS` / `LITC_*`
 /// tracks of each light's `anims[0]` (positions stay as authored).
-struct AnimLights {
-    lights: Vec<AnimLight>,
+pub(crate) struct AnimLights {
+    pub(crate) lights: Vec<AnimLight>,
     globals: melee_runtime::aobj::AObjGlobals,
 }
 
-struct AnimLight {
-    desc: u32,
-    flags: u32,
-    color: [u8; 4],
+pub(crate) struct AnimLight {
+    pub(crate) desc: u32,
+    pub(crate) flags: u32,
+    pub(crate) color: [u8; 4],
     aobj: Option<melee_runtime::aobj::HsdAObj<()>>,
 }
 
@@ -414,8 +414,16 @@ impl AnimLights {
     /// `list` is the offset of a NULL-terminated `LightList*[]`; `shadow_tbl` the stage's `Ground_801C43C4` table
     /// (`map_head + 0x20`: { anim, flag } pairs) deciding which light animations loop.
     fn new(d: &[u8], list: u32, head: u32) -> Self {
+        Self::new_with_table(d, list, be32(d, head + 0x20), be32(d, head + 0x24))
+    }
+
+    /// A scene's light set (no stage loop table: no light animation loops).
+    pub(crate) fn new_scene(d: &[u8], list: u32) -> Self {
+        Self::new_with_table(d, list, 0, 0)
+    }
+
+    fn new_with_table(d: &[u8], list: u32, tbl: u32, tn: u32) -> Self {
         let mut lights = Vec::new();
-        let (tbl, tn) = (be32(d, head + 0x20), be32(d, head + 0x24));
         for i in 0..16 {
             let ll = if list == 0 { 0 } else { be32(d, list + 4 * i) };
             if ll == 0 {
@@ -454,7 +462,7 @@ impl AnimLights {
     }
 
     /// One `HSD_LObjAnimAll` (`LObjUpdateFunc` over the tracks).
-    fn step(&mut self) {
+    pub(crate) fn step(&mut self) {
         use melee_runtime::lobj::track;
         for l in &mut self.lights {
             if let Some(a) = l.aobj.as_mut() {
@@ -481,7 +489,7 @@ impl AnimLights {
         }
     }
 
-    fn ins(&self) -> Vec<melee_runtime::tu::lobj::LightIn> {
+    pub(crate) fn ins(&self) -> Vec<melee_runtime::tu::lobj::LightIn> {
         self.lights.iter().map(|l| melee_runtime::tu::lobj::LightIn { desc: l.desc, flags: l.flags, color: l.color }).collect()
     }
 }
@@ -527,7 +535,7 @@ pub struct View {
 }
 
 /// The view matrix and projection of a CObj pose (`HSD_CObjGetViewingMtx`, MTXPerspective).
-fn camera(p: &crate::cm_drive::CamPose) -> (Mtx, [[f32; 4]; 4]) {
+pub(crate) fn camera(p: &crate::cm_drive::CamPose) -> (Mtx, [[f32; 4]; 4]) {
     let eye = Vec3 { x: p.eye[0], y: p.eye[1], z: p.eye[2] };
     let at = Vec3 { x: p.interest[0], y: p.interest[1], z: p.interest[2] };
     let f = mtx::vec_normalize(&mtx::vec_sub(&eye, &at));

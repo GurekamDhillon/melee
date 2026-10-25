@@ -42,6 +42,7 @@ mod view;
 mod hud_view;
 mod ps_view;
 mod ui;
+mod retail;
 mod play;
 mod audio;
 mod cm_drive;
@@ -203,6 +204,7 @@ fn main() -> ExitCode {
         Some("netplay") => netplay::netplay(&args),
         Some("view-golden") => view::view_golden(&args),
         Some("play") => play::play(&args),
+        Some("dat-dump") => retail::dat_dump(&args),
         Some(x) => {
             eprintln!("melee: unknown command {x:?} (selftest | hashlog | golden | view-golden)");
             ExitCode::from(2)

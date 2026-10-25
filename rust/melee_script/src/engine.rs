@@ -610,7 +610,7 @@ impl Engine {
             stage.set(n, b)?;
         }
         gd.set("stage_draw", stage)?;
-        gd.set("kit", crate::gd::push_kit(lua)?)?;
+        gd.set("kit", crate::gd::push_kit(self)?)?;
         gd.set("ui", crate::gd::push_ui(lua)?)?;
         // the prelude adds wait / wait_until / press / tilt; gd.comm is the comm callout window
         let co: Value = g.get("coroutine")?;

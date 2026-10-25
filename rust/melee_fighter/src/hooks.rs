@@ -244,6 +244,7 @@ ported_hooks! {
     FTLIB_80086BB4 ftlib_80086bb4(g: G) -> bool = crate::ftlib::ftlib_80086bb4;
     FTLIB_80086B90 ftlib_80086b90(g: G, v: &mut Vec3) = crate::ftlib::ftlib_80086b90;
     PLAYER_GET_MORE_FLAGS_BIT4 player_get_more_flags_bit4(slot: i32) -> u8 = crate::player::get_more_flags_bit4;
+    CAMERA_LOGIC_TO_SCREEN camera_logic_to_screen(s: *mut CmSubject, out: &mut S32Vec2) -> bool = crate::bridge::camera_logic_to_screen;
 }
 
 /// TARGET_PC `Geno_DefineIsNone(kind)`. Unset (vanilla, no Geno defines): 0.
@@ -268,7 +269,6 @@ needed_hooks! {
     FIGHTER_RESET_INPUT_DATA fighter_reset_input_data(g: G) = "TODO(group3 fighter) Fighter_ResetInputData_80068854";
     FIGHTER_UNK_PROCESS_DEATH fighter_unk_process_death(g: G) = "TODO(group3 fighter) Fighter_UnkProcessDeath_80068354";
     CAMERA_80030A50 camera_80030a50() -> G = "TODO(group2 cm) Camera_80030A50";
-    CAMERA_LOGIC_TO_SCREEN camera_logic_to_screen(s: *mut CmSubject, out: &mut S32Vec2) -> bool = "TODO(group2 cm) Camera_LogicToScreen";
     CAMERA_80031154 camera_80031154(v: &mut Vec3) -> bool = "TODO(group2 cm) Camera_80031154";
     FTDATA_80085560 ftdata_80085560(a: i32, b: i32) = "TODO(group3 ftdata) ftData_80085560";
     GENO_DEFINE_BASE_KIND geno_define_base_kind(kind: i32) -> i32 = "TODO(pc geno) Geno_DefineBaseKind";

@@ -43,7 +43,7 @@ pub fn Camera_800313E0(a0: *mut HSD_GObj, a1: u64) {
 pub static mut HOOK_Camera_Init: Option<fn(i32)> = None;
 /// C `Camera_Init` (melee/cm/camera.h).
 pub fn Camera_Init(a0: i32) {
-    match unsafe { HOOK_Camera_Init } { Some(f) => f(a0), None => panic!("TODO: Camera_Init is not ported") }
+    match unsafe { HOOK_Camera_Init } { Some(f) => f(a0), None => crate::tu::adapt::Camera_Init__cmc(a0) }
 }
 pub static mut HOOK_Camera_SetModeToStandard: Option<fn()> = None;
 /// C `Camera_SetModeToStandard` (melee/cm/camera.h).

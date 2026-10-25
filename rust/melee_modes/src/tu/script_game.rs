@@ -221,8 +221,8 @@ crate::oext_fns! {fn Script_ModelDraw(a0 : :: core :: ffi :: c_int, a1 : * mut [
 crate::oext_fns! {fn Script_StageModelsReset() -> ();}
 crate::oext_fns! {fn Script_StageResourceOwner() -> :: core :: ffi :: c_int;}
 crate::oext_fns! {fn Script_StageResourceOwnerAlive(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn mpScriptStageIsolationSet(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn mpScriptStageIsolationActive() -> :: core :: ffi :: c_int;}
+crate::oext_fns! {fn mpScriptStageIsolationSet(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int = melee_world::tu::mplib::mpScriptStageIsolationSet;}
+crate::oext_fns! {fn mpScriptStageIsolationActive() -> :: core :: ffi :: c_int = melee_world::tu::mplib::mpScriptStageIsolationActive;}
 crate::oext_fns! {fn Script_StageIsolationAllowed(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
 crate::oext_fns! {fn Script_StageIsolationReleased(a0 : :: core :: ffi :: c_int) -> ();}
 crate::oext_fns! {fn Netplay_Enabled() -> :: core :: ffi :: c_int;}
@@ -371,7 +371,7 @@ crate::oext_fns! {fn Script_StageSlotVisual(a0 : :: core :: ffi :: c_int) -> :: 
 crate::oext_fns! {fn Script_StageSlotMissionInput(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
 crate::oext_fns! {fn Ground_StageSlotFDBackdrop() -> () = crate::tu::adapt::Ground_StageSlotFDBackdrop__c64489;}
 crate::oext_fns! {fn HeapCheckFull() -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn Camera_PCMainCObj() -> * mut HSD_CObj;}
+crate::oext_fns! {fn Camera_PCMainCObj() -> * mut HSD_CObj = melee_world::tu::cmcamera::Camera_PCMainCObj;}
  }
 use ext::*;
 // Moved below this crate so the fighter/character code can call them (CYCLE); same items.

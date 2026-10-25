@@ -1131,3 +1131,42 @@ Next plan: regenerate `missing.md`; dynamics bones for the sim skeleton; CPU beh
 - Next: the laser as a threat (`ftCo_800BB220`: item hitbox state `x5D4_hitboxes`, `lbColl_8000ACFC`, `lbColl_80006094`),
   then hits (`hit_guard`), Whispy's wind (state 1 onward, `lb_80011A50`, fighters' wind) and apples, block spawning,
   then wire Peach / Samus / Yoshi's Story / items.
+
+## Golden round 6: cpu_fox_falco_dl 0..117, cpu_peach_samus_ys_items wired, 0..94 (2026-10-25)
+- pad_falcon_fox_fd and pad_marth_sheik_bf still match in full (0..1800, checked at the end of the round).
+  `cpu_fox_falco_dl` matches 0..117 (was 0..91); it stops at frame 118 ("a hit with knockback ... damage states not
+  ported": Falco's laser on Fox, kb 23.6). `cpu_peach_samus_ys_items` is wired (`melee golden --scenario ...`, Peach and
+  Samus vs CPU 9 on Yoshi's Story `GrSt.dat`, items=4) and matches 0..94; it stops at frame 95 ("ftCo_SpecialS_CheckInput
+  (side-B, kind 13)": Samus' missile).
+- Done, in order of first divergence:
+  - cpu_fox_falco_dl 92: the laser as a CPU threat (`ftCo_800BB220`, `vs_match/cpu.rs`): the lasers carry their hit capsules
+    (`fox::LaserHits`, steps 1 -> 2 -> 3 as `it_8027137C`). Fox's article script steps the boxes once at creation (state 2,
+    joint at the creation position with Z scale 1); Falco's leaves them Enabled (state 1, not live) -- read off the C
+    (`RPL`/`RPE`/`RPU` prints), not parsed from PlFx/PlFc. Shots made at s_link 1 are visible to the CPUs of the same frame
+    (`fox::pending_lasers`). CPU behaviour 7 (`ftCo_800BA9A0`), `ftCo_800BB768`.
+  - cpu_fox_falco_dl 111: items hitting fighters (`vs_match/hit.rs`, s_link 13): `ftColl_8007925C` for a laser against the
+    hurt capsules (`lbColl_8000805C`, capsules refreshed from the skeleton), `ftColl_80077C60` (damage log, stale moves via
+    `melee_fighter::stale`, combo counter), `ftColl_8007A06C` (knockback by `ftcoll_80079ab0`, the hit spark: `Randi(8)`
+    picks effect 9/10, then `Randi(x3F4)`), the percent commit of `Fighter_ProcessHit` at s_link 14 for a hit without
+    knockback, the shot's destruction. The lasers' item procs now run ahead of s_link 13 (`lasers_step`). The HUD percent
+    shake (`ifStatus_802F5B48/4EDC/4B84`): 8 `HSD_Randf` per frame for 9 frames after a percent increase (`hit::HudDamage`).
+    `efLib_SpawnParticleEffect` ids 0x2/0x6/0xA3.. (generator scale = effect root scale).
+  - cpu_peach_samus_ys_items: Peach / Samus files and effect banks (PlPe/PlSs, EfPeData index 15, EfSsData index 2); Yoshi's
+    Story (`vs_match/story.rs`: Randall's puff `grStory_801E366C`, the Shy Guys' timer; the shy-guy spawn at frame 120 is an
+    Err); the random item spawner's setup draw (`it_8026D018`, `item_spawner_init`: ItCo.usd range * stage param, the
+    countdown fires at golden frame ~210: Err); dynamics bone stride is 0x18 (`BoneDynamicsDesc`), not 0x1C; the avoid list
+    for Peach/Koopa/Yoshi (`ftCo_800B77E8`), `ftCo_800A2718` on Story, soft landing to Wait, the footstep and script sound
+    commands (`ft_PlaySFX`: `HSD_Randi(200)` when `ft_80087D0C` leaves the id in 332..370).
+- Traps found: the C draws the first CPU frame's `B33B0` pair at logic frame 29 for this scenario (golden frame 0), so
+  the init draw count must be right (the item spawner's setup consumes one draw); `golden frame = C logic frame - 29` here
+  (the CPU golden of round 5 used the same offset, "36" in that note was a typo of the frame label). The Rust run must be
+  capped with `--frames` (a scenario that never stops would write forever).
+- Debugging recipe (no OS input, no focus): temporary `OSReport` prints in the C (`tools/port/build.sh --tu ...` with
+  `GW_ENV_RESOLVED=1 GW_BUILD_ROOT=_build/agents/golden2`; `.env` otherwise overrides GW_BUILD_ROOT and would relink the
+  shared `_build`), run with `SDL_WINDOW_ACTIVATE_WHEN_SHOWN=0 MELEE_WINDOW_X=30000 MELEE_UNATTENDED=1 MELEE_TURBO=1` and
+  `--max-seconds 40`; `MELEE_RAND_TRACE` for the draws (caller addresses against `melee-pc.map`; statics are missing from
+  the map, e.g. the HUD shake shows as `un_802FE6A8`). Revert the C afterwards.
+- Next: the damage states for a hit with knockback (`ftCo_8008DCE0` -> `ftCo_Damage*`, `ftCo_80090594`, hitlag:
+  `ftCommon_CalcHitlag`, `Fighter_UnkRecursiveFunc_8006D044`, SDI / `ftCo_Damage_OnEveryHitlag`), Samus' missile
+  (`ftSs_SpecialS_*`, `It_Kind_Samus_Missile`), the Shy Guys (`it_802D8618`, `itHeiho`), the random item spawn
+  (`it_8026C75C`, `Stage_80224FDC`), fighter-vs-fighter hits (`hit_guard` still stops them).

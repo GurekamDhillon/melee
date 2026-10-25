@@ -220,6 +220,8 @@ def main():
         v = data[dn]
         if v.semantic_parent.kind != K.TRANSLATION_UNIT or dn in tu.defs or dn in tu.main_vars:
             continue
+        if v.storage_class == ci.StorageClass.STATIC:  # a file static of an #included .inc: the TU defines it
+            continue
         dnames.append(dn)
         toks = [x.spelling for x in v.get_tokens()]
         if toks and toks[0] == "extern":

@@ -510,7 +510,7 @@ fn player_matches_c() {
             ));
         }
     }
-    let want = include_str!("data/player.txt");
+    let want = include_str!("data/player2.txt");
     let want: Vec<&str> = want.lines().collect();
     assert_eq!(want.len(), out.len(), "line count");
     let mut ops_seen = [0u32; NOPS as usize];

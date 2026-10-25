@@ -57,9 +57,7 @@ EXTRACTS = {
     "player": [("src/melee/pl/player.c", "typedef struct _ftMapping {", "/// Matches when everything"),
                ("src/melee/pl/player.c", "StaticPlayer* Player_GetPtrForSlot(", "void Player_80031AD0("),
                ("src/melee/pl/player.c", "void Player_80031DA8(", "void Player_InitOrResetPlayer("),
-               ("src/melee/pl/player.c", "void Player_MexSetMapping(", "#endif"),
-               ("src/melee/pl/player.c", "fn:Player_80031CB0", None),
-               ("src/melee/pl/player.c", "fn:Player_InitOrResetPlayer", None)],
+               ("src/melee/pl/player.c", "void Player_MexSetMapping(", "#endif")],
     "ftlib": [("src/melee/ft/ftcommon.c", "void ftCommon_8007ED2C(", "void ftCommon_8007ED50("),
               ("src/melee/ft/ftcommon.c", "float ftCommon_GetModelScale(", "void ftCommon_8007F6A4("),
               ("src/melee/ft/ftcommon.c", "bool ftCommon_80080144(", "void ftCommon_8008021C("),
@@ -123,7 +121,6 @@ EXTRACTS = {
                  ("scale_inline", "get_part_joint", "ftAnim_8007077C", "ftAnim_80070FB4")],
                *[("src/melee/ft/ftcoll.c", "fn:" + n, None) for n in
                  ("ftColl_800765E0", "getEnvDmg", "inlineB1", "getUnkVal")],
-               ("src/melee/mp/mpcoll.c", "fn:mpClearFloorSkip", None),
                *[("src/melee/ft/ftcommon.c", "fn:" + n, None) for n in
                  ("ftCo_GetLStickAngle", "ftCo_GetCStickAngle", "ftCommon_8007D9D4")]],
     # group 3 round 12: ft_084E.c + two ft_081B.c tail functions + ft_08A1.c stick test (src/ft084e.rs)
@@ -167,6 +164,10 @@ EXTRACTS = {
                     ("8007ABD0", "8007AFF8", "8007B064", "8007B0C0", "8007B128", "8007B1B8", "8007B62C", "8007B760",
                      "CreateAbsorbHit", "CreateReflectHit", "HurtboxInit")]],
 }
+
+# player2 = player + the three functions the whole-TU port adds (Player_80031CB0, Player_InitOrResetPlayer; tests/tu_player_vs_c.rs)
+EXTRACTS["player2"] = EXTRACTS["player"] + [("src/melee/pl/player.c", "fn:Player_80031CB0", None),
+                                            ("src/melee/pl/player.c", "fn:Player_InitOrResetPlayer", None)]
 
 
 def extract(name):

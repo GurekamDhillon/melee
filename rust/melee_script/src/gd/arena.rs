@@ -31,7 +31,7 @@ pub(crate) fn stage_num(a: &Args, i: usize) -> LuaResult<f32> {
     Ok(v as f32)
 }
 
-fn cur_owner(s: &State) -> i32 {
+pub(crate) fn cur_owner(s: &State) -> i32 {
     s.cur.map_or(0, |c| c as i32 + 1)
 }
 

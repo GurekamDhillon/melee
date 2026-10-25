@@ -32,7 +32,7 @@ pub mod ext {
     pub fn HSD_TObjAnim(_t: *mut HSD_TObj) { unsafe { let _ = melee_runtime::tu::tobj::HSD_TObjAnim(_t as _); } }
     pub fn HSD_JObjAnim(_j: J) { todo!("HSD_JObjAnim (baselib/jobj.c)") }
     pub fn HSD_JObjAnimAll(_j: J) { todo!("HSD_JObjAnimAll (baselib/jobj.c)") }
-    pub fn HSD_JObjSetMtxDirtySub(_j: J) { todo!("HSD_JObjSetMtxDirtySub (baselib/jobj.c)") }
+    pub fn HSD_JObjSetMtxDirtySub(_j: J) { unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjSetMtxDirtySub(_j as _) } }
     pub fn HSD_JObjClearFlags(_j: J, _f: u32) { todo!("HSD_JObjClearFlags (baselib/jobj.c)") }
     pub fn HSD_JObjClearFlagsAll(_j: J, _f: u32) { todo!("HSD_JObjClearFlagsAll (baselib/jobj.c)") }
     pub fn HSD_JObjAddAnim(_j: J, _a: *mut HSD_AnimJoint, _m: *mut HSD_MatAnimJoint, _s: *mut HSD_ShapeAnimJoint) { todo!("HSD_JObjAddAnim (baselib/jobj.c)") }

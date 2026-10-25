@@ -700,6 +700,26 @@ pub trait ScriptGame {
     fn fighter_reserve_read(&self, _slot: i32, _entity: i32, _field: i32) -> i32 {
         0
     }
+    // ---- hit rules / fighter status (`gw_ScriptGame_HitRules*`, `FighterStatus`, `HitRuleRead`): pc/platform/gw_script_hit_rules.inc.
+    // `entity` is port*2 (+1 for the independent partner). A rule is 16 ints (floats as bits); field 12 is the stable handle.
+    fn hit_rules_owner(&self, _entity: i32) -> i32 {
+        0
+    }
+    fn hit_rules_count(&self, _entity: i32) -> i32 {
+        0
+    }
+    fn fighter_status(&self, _entity: i32) -> i32 {
+        0
+    }
+    fn hit_rule_read(&self, _entity: i32, _index: i32, _field: i32) -> i32 {
+        0
+    }
+    /// `rules` is count rows of 16 ints, flattened (32 rows); returns nonzero when accepted
+    fn hit_rules_replace(&mut self, _entity: i32, _owner: i32, _count: i32, _status: i32, _rules: &[i32]) -> i32 {
+        0
+    }
+    /// a script unloaded (owner = script index + 1, 0 = all): drop every hit rule, echo, enemy, item ... it holds
+    fn owner_release(&mut self, _owner: i32) {}
     // ---- the recorder (`pc/platform/gw_script_rec.inc`): `.gdlp` live-playback recordings. The Lua half
     // (gating, names, argument shapes) is ported in `gd::rec`; these are the recorder's state machine and files.
     fn rec_start(&mut self, _name: &str) -> Result<String, String> {

@@ -913,15 +913,76 @@ impl Sound {
                     self.stream_load_slot = (self.stream_play_slot + 1) % 3;
                     self.stream_busy = 1;
                     let src = src as u32;
+                    if self.defer_refill {
+                        // The DevCom completions (header, then data) arrive later, replayed.
+                        self.refill_src = src;
+                        return;
+                    }
                     self.stream_read_hako(src, self.stream_load_slot);
                     // HSD_SynthPStreamHakoHeaderCallback, then HSD_SynthResetStreamCounters.
-                    let (x0, _, _) = self.hako(self.stream_load_slot);
-                    let dst = self.slot_aram(self.stream_load_slot);
-                    self.stream_read_aram(src + 0x20, dst, x0.max(0) as usize);
-                    self.stream_play_slot = self.stream_load_slot;
-                    self.stream_busy = 0;
+                    self.stream_refill_data(src);
+                    self.stream_refill_counters();
                 }
             }
+        }
+    }
+
+    /// The data half of a block refill (the DevCom read the header callback issues).
+    fn stream_refill_data(&mut self, src: u32) {
+        let (x0, _, _) = self.hako(self.stream_load_slot);
+        let dst = self.slot_aram(self.stream_load_slot);
+        self.stream_read_aram(src + 0x20, dst, x0.max(0) as usize);
+    }
+
+    /// One DEVCOM_BUF_SIZE ARQ post of the refill's data read (the C moves the block in chunks,
+    /// each landing when its DVD read completes).
+    pub fn stream_refill_chunk(&mut self, size: usize) {
+        if !self.refill_active {
+            return;
+        }
+        let (x0, _, _) = self.hako(self.stream_load_slot);
+        let total = x0.max(0) as usize;
+        let off = self.refill_off;
+        let n = size.min(total.saturating_sub(off));
+        if n == 0 {
+            return;
+        }
+        let dst = (self.slot_aram(self.stream_load_slot) as usize) + off;
+        let data = match self.stream_src.as_mut() {
+            Some(s) => s.read(self.refill_src + 0x20 + off as u32, n),
+            None => vec![0; n],
+        };
+        let m = n.min(self.aram.len().saturating_sub(dst));
+        self.aram[dst..dst + m].copy_from_slice(&data[..m]);
+        self.refill_off += n;
+    }
+
+    /// HSD_SynthResetStreamCounters.
+    fn stream_refill_counters(&mut self) {
+        self.stream_play_slot = self.stream_load_slot;
+        self.stream_busy = 0;
+    }
+
+    /// HSD_SynthPStreamHakoHeaderCallback when the C's deferred completion runs it: the header is
+    /// in, and the data read it issues writes ARAM at once (its completion comes later).
+    pub fn stream_refill_header_done(&mut self) {
+        if self.stream_busy != 0 && self.stream_load_slot != self.stream_play_slot {
+            let (src, slot) = (self.refill_src, self.stream_load_slot);
+            self.stream_read_hako(src, slot);
+            if self.refill_chunked {
+                self.refill_active = true;
+                self.refill_off = 0;
+            } else {
+                self.stream_refill_data(src);
+            }
+        }
+    }
+
+    /// HSD_SynthResetStreamCounters when the C's deferred completion runs it.
+    pub fn stream_refill_done(&mut self) {
+        if self.stream_busy != 0 && self.stream_load_slot != self.stream_play_slot {
+            self.refill_active = false;
+            self.stream_refill_counters();
         }
     }
 

@@ -5,7 +5,6 @@ use melee_types::*;
 use melee_core::fp::fmadds;
 use crate::gekko::{sinf,cosf,tanf,sqrtf};
 use ext::*;
-use super::psdisptev::{psSetupTev,psSetupTevCommon,psSetupTevInvalidState};
 // BEGIN GENERATED EXT (rust/melee_runtime/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
@@ -76,9 +75,9 @@ pub mod ext {
     fn PSMTXRotAxisRad(a0: *mut c_void, a1: *mut Vec, a2: f32) = { let v = crate::mtx::Vec3 { x: (*a1).x, y: (*a1).y, z: (*a1).z }; (a0 as *mut [[f32; 4]; 3]).write(crate::mtx::rot_axis_rad(&v, a2)); };
     fn PSMTXScale(a0: *mut c_void, a1: f32, a2: f32, a3: f32) = (a0 as *mut [[f32; 4]; 3]).write(crate::mtx::scale(a1, a2, a3));
     fn atan2f(a0: f32, a1: f32) -> f32 = crate::lbtrigf::atan2f(a0, a1);
-    fn psSetupTev(a0: *mut HSD_Particle);
-    fn psSetupTevCommon();
-    fn psSetupTevInvalidState();
+    fn psSetupTev(a0: *mut HSD_Particle) = crate::tu::psdisptev::psSetupTev(a0);
+    fn psSetupTevCommon() = crate::tu::psdisptev::psSetupTevCommon();
+    fn psSetupTevInvalidState() = crate::tu::psdisptev::psSetupTevInvalidState();
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

@@ -129,6 +129,9 @@ def index_rust(root):
 def tested_names(root):
     words = set()
     for t in (root / "rust").glob("*/tests/**/*.rs"):
+        # generated recording stubs / field fill+hash only name the callees and fields of an oracle; they verify nothing
+        if any(part.endswith(("_stubs", "_state")) for part in t.parts):
+            continue
         words.update(w.lower() for w in re.findall(r"[A-Za-z_]\w*", t.read_text(encoding="utf-8", errors="replace")))
     return words
 

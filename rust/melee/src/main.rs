@@ -32,6 +32,7 @@ mod effect;
 mod fighter_data;
 mod stage;
 mod vs_match;
+mod dynamics;
 mod gx_backend;
 mod view;
 

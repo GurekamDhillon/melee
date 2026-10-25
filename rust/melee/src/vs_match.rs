@@ -265,6 +265,8 @@ pub struct Player {
     /// (`{anim id, weight}` up to the -1 terminator).
     rb: PlayerRespawn,
     wait_anims: Vec<(i32, i32)>,
+    /// Dynamic bones (tail, hair): `Fighter_8006D9AC` at s_link 0x10.
+    dynamics: Option<crate::dynamics::Dynamics>,
 }
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -526,6 +528,35 @@ fn greens_init(stage: &DatArchive, rand: &mut HsdRand, scale: f32) -> Result<Vec
     }
     if std::env::var_os("MELEE_GOLDEN_DUMP").is_some() { for it in &items { eprintln!("block {:?} {:?}", it.pos.x, it.pos.y); } }
     Ok(items)
+}
+
+/// Green Greens' block map joints (map gobj 6, joints 0..29 <-> JObjs 5..34): each used block
+/// (`grGreens_80215358`: JObj translate = cell position / `Ground_801C0498()`, then
+/// `mpLib_80055E9C`) moves its joint to the cell; the unused ones keep the hidden JObj
+/// (`grGreens_80214FA8`) that `Ground_UpdateMapColl` turns into `mpJointHide`.
+fn greens_sync_joints(stage: &DatArchive, ground: &mut melee_world::mp::lines::GroundColl, scale: f32, blocks: &[fox::SimItem]) -> Result<(), String> {
+    let d = &stage.data;
+    let head = stage.public_offset("map_head").ok_or("GrGr.dat: no map_head")?;
+    let gobjs = u32::from_be_bytes(d[head as usize + 8..][..4].try_into().unwrap());
+    let root = u32::from_be_bytes(d[(gobjs + 6 * 0x34) as usize..][..4].try_into().unwrap());
+    let mut mt = crate::fighter_data::skeleton::MapTree::load(d, root, scale)?;
+    let f = (1.0f64 / scale as f64) as f32;
+    for num in 0..30usize {
+        let j = *mt.dfs.get(5 + num).ok_or("GrGr.dat: block JObj missing")?;
+        match blocks.get(num) {
+            Some(b) => {
+                mt.set_translate(j, Vec3 { x: b.pos.x * f, y: b.pos.y * f, z: b.pos.z * f });
+                let m = mt.mtx_of(j);
+                if !(m[0][0] == m[1][1] && m[0][0] == m[2][2]) {
+                    return Err("mpLib_80055E9C: non-uniform block matrix not ported".into());
+                }
+                ground.mp_lib_80055e9c(num as i32, Some((m[0][0], m[0][3], m[1][3])));
+                ground.mp_lib_80057424(num as i32);
+            }
+            None => ground.mp_lib_80055e9c(num as i32, None),
+        }
+    }
+    Ok(())
 }
 
 /// `Stage_GetBlastZone*Offset()`: `stage_info.blast_zone.* + cam_info.cam_{x,y}_offset`
@@ -835,6 +866,11 @@ impl VsMatch {
             mc::mp_lib_load(&stage.data, cd, scale)
         };
         ground.mp_lib_80058820();
+        if stkind == STKIND_DL {
+            let gp = crate::stage::ground_param(&stage).ok_or("stage dat: no grGroundParam")?;
+            let scale = f32::from_bits(u32::from_be_bytes(stage.data[gp as usize..][..4].try_into().unwrap()));
+            greens_sync_joints(&stage, &mut ground, scale, &items0)?;
+        }
         // Fighter_804D64FC = pData[22]; ->x20: float[kind] (distance thresholds).
         let cpu_dist: Vec<f32> = {
             let t = be(be(common_root + 4 * 22) + 0x20);
@@ -947,6 +983,9 @@ impl VsMatch {
             fp.x34_scale.y = fp.x34_scale.x;
             fp.x34_scale.z = 1.0;
             let mut skel = skel;
+            // Fighter_Create: ftCo_8009CF84 runs on the bind-pose skeleton at the origin (before the
+            // spawn translate), so the chains' world positions (unk_2C) start from that pose.
+            let dynamics = crate::dynamics::Dynamics::load(&files.dat.data, files.ft_data, &mut skel);
             // Fighter_UnkProcessDeath_80068354: HSD_JObjSetTranslate(jobj, cur_pos) first; the
             // model scale comes after the spawn probe below.
             let root = skel.root;
@@ -1035,6 +1074,7 @@ impl VsMatch {
                 None
             };
             players.push(Player {
+                dynamics,
                 slot,
                 follower,
                 hurtboxes: files.hurtboxes(),
@@ -1195,9 +1235,19 @@ impl VsMatch {
                 let c = &f.cpu;
                 let off = if c.csP.is_null() { 0 } else { (c.csP as usize).wrapping_sub(c.buffer.as_ptr() as usize) };
                 let fl = u32::from_be_bytes(c.bf_f8);
-                eprintln!("NHC s{} m{} p {:08X} {:08X} v {:08X} {:08X} fc {:08X} b {:X} st {:02X}{:02X} cs {:02X}{:02X} k{} x18 {} x30 {} x34 {} x38 {:08X} x54 {:08X} {:08X} x5C {:08X} h {:08X} {:08X} {:08X} {:08X} x60 {} x7C {} x80 {} x84 {} xC8 {} xEC {} cd {} off {} fl {:08X}",
+                eprintln!("NHC s{} m{} p {:08X} {:08X} v {:08X} {:08X} fc {:08X} b {:X} st {:02X}{:02X} cs {:02X}{:02X} k{} x18 {} x30 {} x34 {} x38 {:08X} x54 {:08X} {:08X} x5C {:08X} h {:08X} {:08X} {:08X} {:08X} x60 {} x7C {} x80 {} x84 {} xC8 {} xEC {} cd {} off {} fl {:08X} xcc {} {} {} {}",
                     s, f.motion_id, f.cur_pos.x.to_bits(), f.cur_pos.y.to_bits(), f.self_vel.x.to_bits(), f.self_vel.y.to_bits(), f.x3E4_fighterCmdScript.frame_count.to_bits(), c.buttons,
-                    c.lstick.x as u8, c.lstick.y as u8, c.cstick.x as u8, c.cstick.y as u8, c.kind, c.x18, c.x30, c.x34, c.x38.to_bits(), c.x54.x.to_bits(), c.x54.y.to_bits(), c.x5C.to_bits(), c.x55C.to_bits(), c.x560.to_bits(), c.x564.to_bits(), c.x568.to_bits(), c.x60, c.x7C, c.x80, c.x84, c.xC8, c.xEC, c.command_duration, off, fl);
+                    c.lstick.x as u8, c.lstick.y as u8, c.cstick.x as u8, c.cstick.y as u8, c.kind, c.x18, c.x30, c.x34, c.x38.to_bits(), c.x54.x.to_bits(), c.x54.y.to_bits(), c.x5C.to_bits(), c.x55C.to_bits(), c.x560.to_bits(), c.x564.to_bits(), c.x568.to_bits(), c.x60, c.x7C, c.x80, c.x84, c.xC8, c.xEC, c.command_duration, off, fl, c.xCC_array[0], c.xCC_array[1], c.xCC_array[2], c.xCC_array[3]);
+            }
+            if std::env::var_os("MELEE_GOLDEN_PJ").is_some() && p.slot == 0 {
+                static N: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+                let n = N.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1;
+                if n <= 8 {
+                    for q in 0..70usize.min(p.skel.parts.len()) {
+                        let o = p.skel.tree.get(p.skel.part(q));
+                        eprintln!("PJ n{} q{} r {:08X} {:08X} {:08X} t {:08X} {:08X} {:08X}", n, q, o.rotate.x.to_bits(), o.rotate.y.to_bits(), o.rotate.z.to_bits(), o.translate.x.to_bits(), o.translate.y.to_bits(), o.translate.z.to_bits());
+                    }
+                }
             }
             if std::env::var_os("MELEE_GOLDEN_FRAMES").is_some() {
                 let f = &p.fp;
@@ -2026,6 +2076,39 @@ impl VsMatch {
                 continue;
             }
             hurt_extents(p);
+        }
+        // s_link 0x10, Fighter_8006D9AC -> ftCo_8009E0A8: the dynamic bones.
+        for p in &mut self.players {
+            if p.fp.x221F_b3() != 0 || p.fp.x2219_b5() != 0 {
+                continue;
+            }
+            let Some(dy) = &mut p.dynamics else { continue };
+            if std::env::var_os("MELEE_NO_DYN").is_some() { continue; }
+            if self.grkind == melee_types::Gr_Kind_Flatzone as i32 {
+                return Err("ftCo_8009DD94 on Flatzone not ported".into());
+            }
+            let fi = crate::dynamics::FrameIn {
+                kind: p.fp.kind as i32,
+                motion_id: p.fp.motion_id as i32,
+                grounded: p.fp.ground_or_air as i32 == melee_types::GA_Ground as i32,
+                cur_pos_y: p.fp.cur_pos.y,
+                scale_y: p.fp.x34_scale.y,
+                x2228_b1: p.fp.x2228_b1() != 0,
+                is_peach: p.fp.kind as i32 == melee_types::Ft_Kind_Peach as i32,
+                is_mewtwo: p.fp.kind as i32 == melee_types::Ft_Kind_Mewtwo as i32,
+                is_koopa: p.fp.kind as i32 == melee_types::Ft_Kind_Koopa as i32 || p.fp.kind as i32 == melee_types::Ft_Kind_GKoops as i32,
+                mewtwo_motion_range: (0xDF..=0xE8).contains(&(p.fp.motion_id as i32)),
+            };
+            let ground = &mut self.ground;
+            dy.step(&mut p.skel, &fi, &mut |ax, ay, bx, by, off| ground.mp_check_floor(ax, ay, bx, by, off, -1, -1, -1, None).map(|h| h.pos));
+            if std::env::var_os("MELEE_GOLDEN_DYN").is_some() && p.slot == 0 {
+                static N: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+                let n = N.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1;
+                for i in 18..=20usize {
+                    let r = p.skel.tree.get(p.skel.part(i)).rotate;
+                    eprintln!("DYN n{} p{} r {:08X} {:08X} {:08X}", n, i, r.x.to_bits(), r.y.to_bits(), r.z.to_bits());
+                }
+            }
         }
         // The item procs.
         self.items_update()?;

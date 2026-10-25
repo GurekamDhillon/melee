@@ -402,7 +402,7 @@ impl Skeleton {
             let (t, j) = if to2 { (&mut self.tree2, self.parts2[i]) } else { (&mut self.tree, b.joint) };
             if i == self.x8_x10 {
                 if b.b0 {
-                    unreachable!("lb_8000B760 on a dynamics part");
+                    lb_8000b760(t, j, jd);
                 } else if !b.b5 {
                     lb_8000b5dc(t, j, jd);
                 }
@@ -414,7 +414,7 @@ impl Skeleton {
                     t.set_mtx_dirty(Some(j));
                 }
             } else if b.b0 {
-                unreachable!("lb_8000B6A4 on a dynamics part");
+                lb_8000b6a4(t, j, jd);
             } else if !b.b5 {
                 lb_8000b4fc(t, j, jd);
             }
@@ -736,6 +736,12 @@ impl Skeleton {
         melee_runtime::mtx::mult_vec(&m, &o)
     }
 
+    /// `HSD_JObjSetupMatrix(j)` and the joint's world matrix.
+    pub fn mtx_of(&mut self, j: JObjId) -> melee_runtime::mtx::Mtx {
+        self.tree.setup_matrix(&mut NoRObj, Some(j));
+        self.tree.get(j).mtx
+    }
+
     /// `lb_8000B1CC(jobj, NULL, &out)`.
     pub fn world_pos(&mut self, j: JObjId) -> Vec3 {
         if self.tree.get(j).parent.is_some() {
@@ -875,6 +881,25 @@ fn lb_8000b4fc(t: &mut Tree, j: JObjId, jd: &JointDesc) {
     }
 }
 
+/// `lb_8000B6A4`: scale and translation (a dynamics part keeps its rotation).
+fn lb_8000b6a4(t: &mut Tree, j: JObjId, jd: &JointDesc) {
+    let o = t.get_mut(j);
+    o.scale = jd.scale;
+    o.translate = jd.position;
+    if o.flags & hj::JOBJ_MTX_INDEP_SRT == 0 {
+        t.set_mtx_dirty(Some(j));
+    }
+}
+
+/// `lb_8000B760`: translation only.
+fn lb_8000b760(t: &mut Tree, j: JObjId, jd: &JointDesc) {
+    let o = t.get_mut(j);
+    o.translate = jd.position;
+    if o.flags & hj::JOBJ_MTX_INDEP_SRT == 0 {
+        t.set_mtx_dirty(Some(j));
+    }
+}
+
 /// `lb_8000B5DC`: rotation and translation only.
 fn lb_8000b5dc(t: &mut Tree, j: JObjId, jd: &JointDesc) {
     let o = t.get_mut(j);
@@ -946,4 +971,65 @@ fn jobj_anim(t: &mut Tree, j: JObjId, ag: &mut AObjGlobals) -> Result<(), String
         return Err(format!("fighter animation event {e:?}: not wired"));
     }
     Ok(())
+}
+
+/// A stage map gobj's JObj tree (`Ground_GetStageGObj`): the loaded map joints under the
+/// `get_jobj_inline(grGroundParam->y)` scale root (`HSD_JObjAddNext(map, scale_root)`).
+/// `dfs[k]` is `Ground_801C3FA4(gobj, k)`'s JObj (child before sibling, instances not entered).
+pub struct MapTree {
+    pub tree: Tree,
+    pub dfs: Vec<JObjId>,
+}
+
+impl MapTree {
+    pub fn load(d: &[u8], root_joint: u32, scale: f32) -> Result<MapTree, String> {
+        let mut tree = Tree::new();
+        let map = load_joint_sub(&mut tree, d, root_joint, None)?.ok_or("map joint is NULL")?;
+        let sroot = tree.alloc();
+        {
+            let o = tree.get_mut(sroot);
+            o.scale = Vec3 { x: scale, y: scale, z: scale };
+            o.mtx = melee_runtime::mtx::identity();
+            o.scl = None;
+        }
+        tree.add_next(Some(map), Some(sroot));
+        let mut dfs = Vec::new();
+        let mut j = Some(map);
+        while let Some(x) = j {
+            dfs.push(x);
+            let o = tree.get(x);
+            if o.flags & hj::JOBJ_INSTANCE == 0 && o.child.is_some() {
+                j = o.child;
+                continue;
+            }
+            if o.next.is_some() {
+                j = o.next;
+                continue;
+            }
+            let mut y = x;
+            j = loop {
+                let Some(p) = tree.get(y).parent else { break None };
+                if let Some(n) = tree.get(p).next {
+                    break Some(n);
+                }
+                y = p;
+            };
+        }
+        Ok(MapTree { tree, dfs })
+    }
+
+    /// `HSD_JObjSetTranslate`.
+    pub fn set_translate(&mut self, j: JObjId, t: Vec3) {
+        let o = self.tree.get_mut(j);
+        o.translate = t;
+        if o.flags & hj::JOBJ_MTX_INDEP_SRT == 0 {
+            self.tree.set_mtx_dirty(Some(j));
+        }
+    }
+
+    /// `HSD_JObjSetupMatrix` and the world matrix.
+    pub fn mtx_of(&mut self, j: JObjId) -> melee_runtime::mtx::Mtx {
+        self.tree.setup_matrix(&mut NoRObj, Some(j));
+        self.tree.get(j).mtx
+    }
 }

@@ -302,6 +302,49 @@ impl GroundColl {
         Some(FloorWalk { result, line_id, flags, normal, vec })
     }
 
+    /// `mpLib_80055E9C` for a joint whose JObj is hidden (`hidden`) or has a uniformly scaled
+    /// world matrix (`Some((m00, m03, m13))`: `mtx[0][0] == mtx[1][1] == mtx[2][2]`). The general
+    /// (non-uniform) matrix path is not ported: the caller must not use it.
+    pub fn mp_lib_80055e9c(&mut self, joint_id: i32, jobj: Option<(f32, f32, f32)>) {
+        let mj = self.inner(joint_id);
+        let start = mj.vtx_start as i32 as usize;
+        let count = mj.vtx_count as i32;
+        for i in 0..count.max(0) as usize {
+            let v = &mut self.vtx[start + i];
+            v.x10 = v.pos.x;
+            v.x14 = v.pos.y;
+        }
+        let Some((m00, m03, m13)) = jobj else {
+            // HSD_JObjGetFlags(jobj) & JOBJ_HIDDEN
+            if self.joints[joint_id as usize].flags & COLL_JOINT_HIDDEN == 0 {
+                self.mp_joint_hide(joint_id);
+                let live = self.joint_live(joint_id);
+                self.refresh(joint_id, live);
+            }
+            return;
+        };
+        self.joints[joint_id as usize].x_e = true;
+        for i in 0..count.max(0) as usize {
+            let v = &mut self.vtx[start + i];
+            v.pos.x = fmadds(v.x0, m00, m03);
+            v.pos.y = fmadds(v.x4, m00, m13);
+        }
+        {
+            let j = &mut self.joints[joint_id as usize];
+            j.bounding_min.x = fmadds(mj.left_bound, m00, m03) - 30.0;
+            j.bounding_min.y = fmadds(mj.bottom_bound, m00, m13) - 30.0;
+            j.bounding_max.x = 30.0 + fmadds(mj.right_bound, m00, m03);
+            j.bounding_max.y = 30.0 + fmadds(mj.top_bound, m00, m13);
+            j.flags |= COLL_JOINT_B8;
+        }
+        self.mp_joint_update_dynamics(joint_id);
+        if self.joints[joint_id as usize].flags & COLL_JOINT_HIDDEN != 0 {
+            self.mp_joint_unhide(joint_id);
+        }
+        let live = self.joint_live(joint_id);
+        self.refresh(joint_id, live);
+    }
+
     /// `mpLib_80057424`: snapshot every joint vertex's position into x10/x14.
     pub fn mp_lib_80057424(&mut self, joint_id: i32) {
         let mj = self.inner(joint_id);

@@ -1499,13 +1499,22 @@ fn ftco_800b4ab0(cx: &mut Cx, fp: &mut Fighter, target: &Fighter, list: Option<s
 fn can_use_ranged(cx: &mut Cx, fp: &Fighter, target: *mut Fighter, range: f32) -> R<bool> {
     if !target.is_null() {
         let t = unsafe { &*target };
-        if cx.ground.mp_check_all(-1, -1, fp.cur_pos.x, fp.cur_pos.y, t.cur_pos.x, t.cur_pos.y).is_some() {
+        let h = cx.ground.mp_check_all(-1, -1, fp.cur_pos.x, fp.cur_pos.y, t.cur_pos.x, t.cur_pos.y);
+        if std::env::var_os("MELEE_GOLDEN_RNG").is_some() {
+            if let Some(hh) = &h { let j = cx.ground.mp_joint_from_line(hh.line_id); eprintln!("RNGJ line {} joint {} jflags {:08X} lflags {:08X}", hh.line_id, j, cx.ground.joints[j as usize].flags, cx.ground.lines[hh.line_id as usize].flags); }
+            eprintln!("RNGA p{} pos {:08X} {:08X} tgt {:08X} {:08X} -> {:?}", fp.player_id, fp.cur_pos.x.to_bits(), fp.cur_pos.y.to_bits(), t.cur_pos.x.to_bits(), t.cur_pos.y.to_bits(), h.as_ref().map(|h| (h.line_id, h.pos.x.to_bits(), h.pos.y.to_bits())));
+        }
+        if h.is_some() {
             return Ok(true);
         }
     }
     let x = if fp.facing_dir as f64 > 0.0 { fp.cur_pos.x + range } else { fp.cur_pos.x - range };
     let y = fp.cur_pos.y;
-    Ok(cx.probe(x, dadd(5.0, y), x, dsub(y, 1000.0), 0.0)?.is_none())
+    let r = cx.probe(x, dadd(5.0, y), x, dsub(y, 1000.0), 0.0)?;
+    if std::env::var_os("MELEE_GOLDEN_RNG").is_some() {
+        eprintln!("RNG p{} pos {:08X} {:08X} fac {:08X} range {} -> {:?}", fp.player_id, fp.cur_pos.x.to_bits(), fp.cur_pos.y.to_bits(), fp.facing_dir.to_bits(), range, r.as_ref().map(|h| (h.line_id, h.pos.x.to_bits(), h.pos.y.to_bits())));
+    }
+    Ok(r.is_none())
 }
 
 /// `ftCo_800B77E8`: fill the avoid list (`xCC`) with moves not to use right now.

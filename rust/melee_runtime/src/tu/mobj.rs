@@ -772,9 +772,11 @@ fn kf(v: f32) -> In {
 /// Returns (colour source, alpha source) for the TObj's main stage.
 fn color_gen(d: &Dat, tev: u32, o: &TObjRt, out: &mut Tev) -> (In, In) {
     let active = d.u32_(tev + 0x1C);
-    let konst = d.color(tev + 0x10);
-    let tev0 = d.color(tev + 0x14);
-    let tev1 = d.color(tev + 0x18);
+    let (konst, tev0, tev1) = match &o.obj.tev {
+        // `efLib_SetTevKonstColor` & co. write the live TObj's tev; the descriptor's are the defaults.
+        Some(t) => ([t.konst.r, t.konst.g, t.konst.b, t.konst.a], [t.tev0.r, t.tev0.g, t.tev0.b, t.tev0.a], [t.tev1.r, t.tev1.g, t.tev1.b, t.tev1.a]),
+        None => (d.color(tev + 0x10), d.color(tev + 0x14), d.color(tev + 0x18)),
+    };
     let cin = |v: u8| -> In {
         match v as u32 {
             15 => In::Zero, // GX_CC_ZERO

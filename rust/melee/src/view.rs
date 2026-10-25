@@ -29,6 +29,7 @@ use melee_runtime::mtx::{self, Mtx, Vec3};
 use melee_runtime::tu::displayfunc::{DispJoint, DispModel, HSD_TRSP_OPA, HSD_TRSP_TEXEDGE, HSD_TRSP_XLU};
 use melee_runtime::tu::lobj::stage_light_descs;
 use melee_runtime::tu::state::{Dat, HsdRender};
+use std::collections::HashMap;
 use std::path::PathBuf;
 use std::process::ExitCode;
 use std::sync::Arc;
@@ -471,7 +472,15 @@ struct FighterModel {
 }
 
 /// What it takes to draw a `VsMatch`: the stage and costume models, the match camera and the HSD render state.
+/// One live effect's model host (`efLib_Create`: `HSD_JObjLoadJoint` + `AddAnimAll` + `ReqAnimAll(0)`).
+struct FxModel {
+    dat: Arc<Vec<u8>>,
+    anim: crate::stage_anim::StageAnim,
+    done: bool,
+}
+
 pub struct MatchRender {
+    fx: HashMap<u32, FxModel>,
     cm: crate::cm_drive::CmDrive,
     pose: crate::cm_drive::CamPose,
     stage: Stage,
@@ -560,7 +569,7 @@ impl MatchRender {
         }
         let hud = crate::hud_view::Hud::new(crate::hud_view::HudFile::load(&disc.read("IfAll.usd")?)?, names)?;
         let pose = cm.pose();
-        Ok(Self { cm, pose, stage, hud, fighters, cache: DataCache::default(), render: HsdRender::new() })
+        Ok(Self { fx: HashMap::new(), cm, pose, stage, hud, fighters, cache: DataCache::default(), render: HsdRender::new() })
     }
 }
 
@@ -632,6 +641,26 @@ impl MatchRender {
         for m in &fighter_dms {
             r.clear_vtx_desc(&mut g);
             r.jobj_disp_all(&mut g, m, &vmtx, mask_of(2), 0);
+        }
+        if !self.fx.is_empty() {
+            let mut fxm: Vec<(Arc<Vec<u8>>, std::collections::HashMap<u32, melee_runtime::tu::mobj::MatOverride>, Vec<DispJoint>)> = Vec::new();
+            for m in self.fx.values_mut() {
+                if m.done {
+                    continue;
+                }
+                let r = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| (m.anim.overrides(), m.anim.disp_joints(0))));
+                if let Ok((o, j)) = r {
+                    fxm.push((m.dat.clone(), o, j));
+                }
+            }
+            let dms: Vec<DispModel> = fxm.iter().map(|(d, o, j)| DispModel::new(&d[..], j.clone()).with_mat_anim(o)).collect();
+            for c in [0u32, 1, 2] {
+                for m in &dms {
+                    r.clear_vtx_desc(&mut g);
+                    r.jobj_disp_all(&mut g, m, &vmtx, mask_of(c), 0);
+                }
+            }
+            r.invalidate_all();
         }
         if std::env::var_os("MELEE_VIEW_NOPS").is_none() {
             // efLib_render_callback: gx link 7 draws particle links 0, 2 and the stage's (3), link 8 draws link 1.
@@ -705,10 +734,23 @@ impl MatchRender {
             }
             eprintln!("PS frame {} gens {} parts {} | (link,bank,texgrp,kind)=n {:?}", sim.frame, sim.ps.num_gens, sim.ps.num_parts, by);
         }
-        if std::env::var("MELEE_VIEW_FPLOG").is_ok() && sim.frame % 5 == 0 && sim.frame < 120 {
+        if std::env::var("MELEE_VIEW_FPLOG").is_ok() && (sim.frame % 5 == 0 && sim.frame < 120 || sim.frame % 50 == 0) {
             for (i, p) in sim.players.iter().enumerate() {
                 let f = &p.fp;
-                eprintln!("FP frame {} p{} ms {} pos {:.1} {:.1} invisible {} x221E_b5 {} x2219_b1 {} ", sim.frame, i, f.motion_id, f.cur_pos.x, f.cur_pos.y, f.invisible(), f.x221E_b5(), f.x2219_b1());
+                eprintln!("FP frame {} p{} ms {} pos {:.1} {:.1} invisible {} x221E_b5 {} x2219_b1 {} x61D {} ", sim.frame, i, f.motion_id, f.cur_pos.x, f.cur_pos.y, f.invisible(), f.x221E_b5(), f.x2219_b1(), f.x61D);
+            }
+        }
+        if std::env::var_os("MELEE_VIEW_APPFRAMES").is_some() {
+            let mut n = 0;
+            for l in 0..melee_runtime::particle::NUM_LINKS {
+                for id in sim.ps.particles(l) {
+                    if sim.ps.part(id).appsrt.is_some() {
+                        n += 1;
+                    }
+                }
+            }
+            if n > 0 {
+                eprintln!("APPF frame {} {}", sim.frame, n);
             }
         }
         if std::env::var("MELEE_VIEW_POSLOG").is_ok() && sim.frame % 10 == 0 {
@@ -721,6 +763,59 @@ impl MatchRender {
         let dmg: Vec<i32> = sim.players.iter().map(|p| p.fp.dmg.x1830_percent as i32).collect();
         self.hud.step(&dmg);
         self.pose = self.cm.pose();
+        if std::env::var_os("MELEE_VIEW_NOFX").is_none() {
+            // efLib: each live effect's model (created with AddAnimAll + ReqAnimAll(0) + one AnimAll, then
+            // `efLib_Update`'s AnimAll every frame), root placed like the spawner left it.
+            let draws = sim.effect_draws();
+            if std::env::var_os("MELEE_VIEW_FXLOG").is_some() {
+                for d in &draws {
+                    if !self.fx.contains_key(&d.inst) {
+                        eprintln!("FXNEW frame {} inst {} bank {} id {} model {}", sim.frame, d.inst, d.bank, d.id, sim.effect_model(d.bank, d.id).is_some());
+                    }
+                }
+            }
+            self.fx.retain(|k, _| draws.iter().any(|d| d.inst == *k));
+            for d in &draws {
+                if !self.fx.contains_key(&d.inst) {
+                    if let Some((dat, rec)) = sim.effect_model(d.bank, d.id) {
+                        let r = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                            let mut a = crate::stage_anim::StageAnim::new_scene(dat.clone(), vec![rec]);
+                            a.start_anim_set(0, 0, true);
+                            a
+                        }));
+                        match r {
+                            Ok(mut anim) => {
+                                if let Some((k, t)) = d.tev {
+                                    anim.set_tev_colors(0, 1, 0, k, t);
+                                }
+                                self.fx.insert(d.inst, FxModel { dat, anim, done: false });
+                            }
+                            Err(_) => {
+                                if std::env::var_os("MELEE_VIEW_FXLOG").is_some() {
+                                    eprintln!("FX bank {} id {}: model failed to load", d.bank, d.id);
+                                }
+                            }
+                        }
+                    }
+                } else if let Some(m) = self.fx.get_mut(&d.inst) {
+                    let r = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| m.anim.step()));
+                    if r.is_err() {
+                        m.done = true;
+                    }
+                }
+                if let Some(m) = self.fx.get_mut(&d.inst) {
+                    if d.lifetime == 0 && !m.anim.joint_anim_running(0) {
+                        m.done = true;
+                    }
+                    m.anim.set_translate(0, 0, Vec3 { x: d.pos[0], y: d.pos[1], z: d.pos[2] });
+                    m.anim.set_scale(0, 0, Vec3 { x: d.scale, y: d.scale, z: d.scale });
+                    m.anim.set_rotate_yz(0, 0, d.rot_y, d.rot_z);
+                    if std::env::var_os("MELEE_VIEW_FXLOG").is_some() {
+                        eprintln!("FX frame {} inst {} bank {} id {} pos {:.1} {:.1} {:.1} scale {:.2} life {} done {}", sim.frame, d.inst, d.bank, d.id, d.pos[0], d.pos[1], d.pos[2], d.scale, d.lifetime, m.done);
+                    }
+                }
+            }
+        }
         {
             // ifnametag.c fn_802FCC44: the head position (+ the fighter's name_tag_height - 2.5), projected by the match camera.
             let (vm, pj) = camera(&self.pose);

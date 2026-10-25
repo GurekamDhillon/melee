@@ -4,7 +4,10 @@
 //! Ported: `psDispParticles` (per-link sort by TexEdge/blend bucket, per-particle blend, alpha
 //! compare, TEV by kind, tex-edge z mode, TEV/channel colours, texture + TLUT loads), `psDispSub`
 //! (camera-facing quads, rotation, trail/direction quads), `psDispSubPoint` (unbatched).
-//! NOT ported: AppSRT particles (`particle.appsrt`: skipped), form-bank polygons (no form bank
+//! AppSRT particles (`psDispSubAppSRT` quads / points, view-space frame) are ported but OFF by default
+//! (`MELEE_VIEW_APPSRT=1`): the KO / blast-zone effects they draw render as oversized blocky quads next to
+//! the C build's thin beams (texture or extent still wrong), which scores worse than skipping them.
+//! NOT ported: form-bank polygons (no form bank
 //! is loaded natively), point-trail batches, fog (`DispFog` draws unfogged), light-mask diffuse
 //! (lit particles use their ambient colour only).
 use crate::gx_backend::DataCache;
@@ -197,6 +200,7 @@ struct State {
     vmtx: Mtx,
     rvmtx: Mtx,
     pvmtx: [[f32; 4]; 2],
+    prj: [f32; 7],
     persp: bool,
     axes: [f32; 6],
     prev_tev: u32,
@@ -273,10 +277,10 @@ pub fn disp_particles(shim: &mut GxShim, cache: &mut DataCache, ps: &PsSystem, l
             if p.size < 1.192_092_9e-7 {
                 continue;
             }
-            if p.appsrt.is_some() {
-                if let Some(s) = st.as_mut() {
-                    s.skipped_appsrt += 1;
-                }
+            if p.appsrt.is_some() && std::env::var_os("MELEE_VIEW_APPLOG").is_some() {
+                eprintln!("APPSRT particle link {link} sw {sw} bank {} tg {} size {} kind {:#x}", p.bank, p.tex_group, p.size, p.kind);
+            }
+            if p.appsrt.is_some() && std::env::var_os("MELEE_VIEW_APPSRT").is_none() {
                 continue;
             }
             if st.is_none() {
@@ -324,6 +328,9 @@ fn setup(g: &mut GxShim, vmtx: &Mtx) -> State {
     let axes = [rx + ux, rx - ux, ry + uy, ry - uy, rz + uz, rz - uz];
     let mut v = *vmtx;
     g.load_pos_mtx_imm(&mut v, GX_PNMTX0);
+    // HSD_PSDisp_803B9628 (the AppSRT particles' matrix: their positions are already in view space).
+    let mut ident = mtx::identity();
+    g.load_pos_mtx_imm(&mut ident, GX_PNMTX1);
     g.set_current_mtx(GX_PNMTX0);
     g.enable_tex_offsets(GX_TEXCOORD0, true, true);
     g.set_cull_mode(GX_CULL_BACK);
@@ -343,6 +350,7 @@ fn setup(g: &mut GxShim, vmtx: &Mtx) -> State {
         vmtx: *vmtx,
         rvmtx: rv,
         pvmtx: pv,
+        prj: [prj[0], prj[1], prj[2], prj[3], prj[4], prj[5], prj[6]],
         persp,
         axes,
         prev_tev: u32::MAX,
@@ -535,11 +543,214 @@ fn draw_one(g: &mut GxShim, cache: &mut DataCache, ps: &PsSystem, p: &Particle, 
         }
     }
 
-    if k & DISP_POINT != 0 {
+    if p.appsrt.is_some() && std::env::var_os("MELEE_VIEW_APPTEX").is_some() {
+        if let Some(bank) = ps.banks.get(0).and_then(|b| b.as_ref()) {
+            for t in 0..32u32 {
+                if let Some(i) = bank.data.tex.group_info(t) {
+                    eprintln!("BANK0 tg {t}: fmt {} {}x{} tlutfmt {:#x} img0 {:?}", i.fmt, i.width, i.height, i.tlutfmt, bank.data.tex.image_off(t, 0));
+                }
+            }
+        }
+        let bsel: usize = std::env::var("MELEE_VIEW_APPBANK").ok().and_then(|v| v.parse().ok()).unwrap_or(0);
+        if let Some(bank) = ps.banks.get(bsel).and_then(|b| b.as_ref()) {
+            let tex = &bank.data.tex;
+            let mut out = String::new();
+            for t in [0u32, 1, 2, 23, 24, 25, 11, 4] {
+                if let (Some(info), Some(io)) = (tex.group_info(t), tex.image_off(t, 0)) {
+                    let size = get_tex_buffer_size(info.width as u16, info.height as u16, info.fmt, false, 0).max(32) as usize;
+                    let data = tex.data();
+                    let end = (io as usize + size).min(data.len());
+                    let c = melee_gx::texture::convert_texture(info.fmt, info.width as u32, info.height as u32, 1, &data[io as usize..end]);
+                    // PPM (RGBA -> RGB over black)
+                    let mut ppm = format!("P6 {} {} 255\n", info.width, info.height).into_bytes();
+                    for px in c.data.chunks(4).take((info.width as usize) * (info.height as usize)) {
+                        let a = px.get(3).copied().unwrap_or(255) as u32;
+                        ppm.push(px[0]);
+                        ppm.push(((px[1] as u32 * 1) as u8).min(255));
+                        ppm.push(px[2]);
+                        let _ = a;
+                    }
+                    let path = format!("{}/tg{t}.ppm", std::env::var("MELEE_VIEW_APPTEX").unwrap());
+                    let _ = std::fs::write(&path, ppm);
+                    out += &format!(" {t}:{path}");
+                }
+            }
+            eprintln!("APPTEX wrote{out}");
+        }
+        std::process::exit(0);
+    }
+    if p.appsrt.is_some() && std::env::var_os("MELEE_VIEW_APPLOG").is_some() {
+        if let Some(bank) = ps.banks.get(p.bank as usize).and_then(|b| b.as_ref()) {
+            if let Some(info) = bank.data.tex.group_info(p.tex_group as u32) {
+                eprintln!("APPSRT tex tg {} fmt {} {}x{} tlutfmt {:#x} pose {} pal {} kind {:#x} a_cmp {} {} {}", p.tex_group, info.fmt, info.width, info.height, info.tlutfmt, p.pose_num, p.pal_num, k, p.a_cmp_mode, p.a_cmp_param1, p.a_cmp_param2);
+            }
+        }
+    }
+    if let Some(sid) = p.appsrt {
+        let m = appsrt_matrix(ps.srt(sid), &s.vmtx);
+        if k & DISP_POINT != 0 {
+            appsrt_point(g, p, s, &m);
+        } else {
+            appsrt_quad(g, p, s, &m, prim);
+        }
+    } else if k & DISP_POINT != 0 {
         point(g, p, s);
     } else {
         quad(g, p, s, prim);
     }
+}
+
+/// The matrix `psDispSubAppSRT` leaves in the AppSRT record (`ssx .. x98`): the view-space 3x4 and the
+/// column lengths `x94` / `x98`.
+struct AppM {
+    m: Mtx,
+    ex: f32,
+    ey: f32,
+}
+
+/// `HSD_MtxSRT(mmtx, scale, rot, translate)` (unless STILL) and `PSMTXConcat(vmtx, mmtx)`; with `xA2` the
+/// translation-only variant (`HSD_MtxGetScale` of the translated view matrix on the diagonal).
+fn appsrt_matrix(srt: &melee_runtime::particle::AppSrt, vmtx: &Mtx) -> AppM {
+    const STILL: u8 = 2;
+    let mm = if srt.status != STILL {
+        melee_runtime::hsd_mtx::srt(&srt.scale, &Vec3 { x: srt.rot.x, y: srt.rot.y, z: srt.rot.z }, &srt.translate, None)
+    } else {
+        srt.mmtx
+    };
+    let c = mtx::concat(vmtx, &mm);
+    let ex = (c[0][0] * c[0][0] + c[1][0] * c[1][0] + c[2][0] * c[2][0]).sqrt();
+    let ey = (c[0][1] * c[0][1] + c[1][1] * c[1][1] + c[2][1] * c[2][1]).sqrt();
+    let mut m = c;
+    if srt.x_a2 != 0 {
+        let mut t = mtx::identity();
+        t[0][3] = srt.translate.x;
+        t[1][3] = srt.translate.y;
+        t[2][3] = srt.translate.z;
+        let t = mtx::concat(vmtx, &t);
+        let len = |c: usize| (t[0][c] * t[0][c] + t[1][c] * t[1][c] + t[2][c] * t[2][c]).sqrt();
+        m = [[len(0), 0.0, 0.0, t[0][3]], [0.0, len(1), 0.0, t[1][3]], [0.0, 0.0, len(2), t[2][3]]];
+    }
+    AppM { m, ex, ey }
+}
+
+fn m_apply(m: &Mtx, x: f32, y: f32, z: f32) -> [f32; 3] {
+    [m[0][3] + (m[0][2] * z + (m[0][0] * x + m[0][1] * y)), m[1][3] + (m[1][2] * z + (m[1][0] * x + m[1][1] * y)), m[2][3] + (m[2][2] * z + (m[2][0] * x + m[2][1] * y))]
+}
+
+/// `psDispSubAPPSRTPoint` (points; the Trail line variant is not drawn).
+fn appsrt_point(g: &mut GxShim, p: &Particle, s: &mut State, a: &AppM) {
+    g.set_current_mtx(GX_PNMTX1);
+    let c = m_apply(&a.m, p.pos.x, p.pos.y, p.pos.z);
+    if p.kind & TRAIL != 0 {
+        return;
+    }
+    let w = if p.size > 42.5 { 255.0f32 } else { 6.0 * p.size } as u8;
+    if s.point_size != w as i32 {
+        s.point_size = w as i32;
+        g.set_point_size(w, GX_TO_ONE);
+    }
+    let tex = p.kind & DISP_TEXTURE != 0;
+    vtx_desc(g, if tex { 0 } else { 1 });
+    g.begin(GX_POINTS, if tex { 0 } else { 1 }, 1);
+    g.gx.position3f32(c[0], c[1], c[2]);
+    if tex {
+        g.gx.tex_coord1x8(1);
+    }
+    g.end();
+}
+
+/// `psDispSubAppSRT` with no form table: the camera-facing quad in the AppSRT's view-space frame.
+fn appsrt_quad(g: &mut GxShim, p: &Particle, s: &mut State, a: &AppM, prim: Rgba) {
+    let k = p.kind;
+    let m = &a.m;
+    let (x, y, z) = (p.pos.x, p.pos.y, p.pos.z);
+    let cur = m_apply(m, x, y, z);
+    let (px, py, pz) = (x - p.vel.x, y - p.vel.y, z - p.vel.z);
+    let prev = m_apply(m, px, py, pz);
+    let x_extent = a.ex * p.size;
+    let y_extent = a.ey * p.size;
+    if std::env::var_os("MELEE_VIEW_APPLOG").is_some() {
+        eprintln!("APPSRT quad bank {} tg {} pos {:.1} {:.1} {:.1} size {:.2} cur {:.1} {:.1} {:.1} ex {:.3} ey {:.3} kind {:#x}", p.bank, p.tex_group, x, y, z, p.size, cur[0], cur[1], cur[2], a.ex, a.ey, k);
+    }
+    let (mut ax, mut ay, mut bx, mut by) = (x_extent, y_extent, x_extent, -y_extent);
+    let mut angle = p.rotate;
+    if k & (TRAIL | DIR_VEC) != 0 {
+        let prj = &s.prj;
+        let (vf1, vf2);
+        if prj[0] == 0.0 {
+            let w0 = m[2][3] + (m[2][2] * z + (m[2][0] * x + m[2][1] * y));
+            let s808 = prj[1] * m[0][0] + prj[2] * m[2][0];
+            let s804 = prj[1] * m[0][1] + prj[2] * m[2][1];
+            let f16 = prj[1] * m[0][2] + prj[2] * m[2][2];
+            let f20 = prj[1] * m[0][3] + prj[2] * m[2][3];
+            let f12 = prj[3] * m[1][0] + prj[4] * m[2][0];
+            let f8 = prj[3] * m[1][1] + prj[4] * m[2][1];
+            let f11 = prj[3] * m[1][2] + prj[4] * m[2][2];
+            let f13 = prj[3] * m[1][3] + prj[4] * m[2][3];
+            if w0 == 0.0 {
+                return;
+            }
+            let w0inv = -1.0 / w0;
+            let w1 = m[2][3] + (m[2][2] * pz + (m[2][0] * px + m[2][1] * py));
+            if w1 == 0.0 {
+                return;
+            }
+            let w1inv = -1.0 / w1;
+            vf1 = w0inv * (f20 + (f16 * z + (s808 * x + s804 * y))) - w1inv * (f20 + (f16 * pz + (s808 * px + s804 * py)));
+            vf2 = w0inv * (f13 + (f11 * z + (f12 * x + f8 * y))) - w1inv * (f13 + (f11 * pz + (f12 * px + f8 * py)));
+        } else {
+            let s800 = prj[1] * m[0][0] + prj[2];
+            let s7fc = prj[1] * m[0][1] + prj[2];
+            let s7f8 = prj[1] * m[0][2] + prj[2];
+            let f17 = prj[3] * m[1][0] + prj[4];
+            let f18 = prj[3] * m[1][1] + prj[4];
+            let f20b = prj[3] * m[1][2] + prj[4];
+            vf1 = s7f8 * p.vel.z + (s800 * p.vel.x + s7fc * p.vel.y);
+            vf2 = f20b * p.vel.z + (f17 * p.vel.x + f18 * p.vel.y);
+        }
+        angle = if vf2.abs() < f32::MIN_POSITIVE { if -vf1 >= 0.0 { 1.570_796_4 } else { -1.570_796_4 } } else { (-vf1).atan2(vf2) };
+        if k & DIR_VEC != 0 {
+            angle += p.rotate;
+        }
+    }
+    if (angle.abs() as f64) > 0.01 {
+        let (sn, cs) = angle.sin_cos();
+        let o = ax;
+        ax = cs * ax - sn * ay;
+        ay = sn * o + cs * ay;
+        let o = bx;
+        bx = cs * bx - sn * by;
+        by = sn * o + cs * by;
+    }
+    g.set_current_mtx(GX_PNMTX1);
+    let tex = k & DISP_TEXTURE != 0;
+    let base = ((k >> 16) & 0xC) as u8;
+    if k & TRAIL != 0 {
+        let col = if k & (DISP_LIGHTING | PRIM_ENV) == PRIM_ENV || k & (DISP_LIGHTING | PRIM_ENV) == (DISP_LIGHTING | PRIM_ENV) { WHITE } else { prim };
+        vtx_desc(g, if tex { 2 } else { 3 });
+        g.begin(GX_QUADS, if tex { 2 } else { 3 }, 4);
+        let tail_a = (col.a as f32 * p.trail) as u8;
+        let verts = [([-ax + prev[0], -ay + prev[1], prev[2]], tail_a), ([-bx + cur[0], -by + cur[1], cur[2]], col.a), ([ax + cur[0], ay + cur[1], cur[2]], col.a), ([bx + prev[0], by + prev[1], prev[2]], tail_a)];
+        for (i, (v, al)) in verts.iter().enumerate() {
+            g.gx.position3f32(v[0], v[1], v[2]);
+            g.gx.color4u8(col.r, col.g, col.b, *al);
+            if tex {
+                g.gx.tex_coord1x8(base + i as u8);
+            }
+        }
+        g.end();
+        return;
+    }
+    vtx_desc(g, if tex { 0 } else { 1 });
+    g.begin(GX_QUADS, if tex { 0 } else { 1 }, 4);
+    let verts = [[-ax + cur[0], -ay + cur[1], cur[2]], [-bx + cur[0], -by + cur[1], cur[2]], [ax + cur[0], ay + cur[1], cur[2]], [bx + cur[0], by + cur[1], cur[2]]];
+    for (i, v) in verts.iter().enumerate() {
+        g.gx.position3f32(v[0], v[1], v[2]);
+        if tex {
+            g.gx.tex_coord1x8(base + i as u8);
+        }
+    }
+    g.end();
 }
 
 fn point(g: &mut GxShim, p: &Particle, s: &mut State) {

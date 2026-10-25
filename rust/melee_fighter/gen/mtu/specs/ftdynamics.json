@@ -1,0 +1,38 @@
+{
+  "stem": "ftdynamics",
+  "csrc": "src/melee/ft/ftdynamics.c",
+  "rmod": "melee_fighter::tu::ftdynamics",
+  "cases": 500,
+  "stubs": "--ret \"lb_80011ABC=(int) (fv() % 3) - 1|(fv() % 3) as i32 - 1\"",
+  "c_pre": "static ftDynamics DYN[NG]; static ArticleDynamicBones ADB[NG]; static struct DynamicsData DDP[NG][Ft_Dynamics_NumMax][3];\nstatic FigaTree** X10[NG][5]; static FigaTree* TREES[NG][4][Ft_Dynamics_NumMax]; static u8 X28A[NG][8][2]; static u8 ARG1[2]; static int SGK;\nstatic void HF(float f) { union { float f; u32 u; } c; c.f = f; HM(c.u); }",
+  "c_world": "    { int q_, k_, j_, a_;\n      SGK = (fv() & 1) ? Gr_Kind_Flatzone : 0; stage_info.grkind = SGK;\n      for (q_ = 0; q_ < NG; q_++) {\n        zero(&DYN[q_], sizeof DYN[q_]); zero(&ADB[q_], sizeof ADB[q_]); zero(&DDP[q_], sizeof DDP[q_]);\n        DYN[q_].dynamicsNum = (int) (fv() % 10); DYN[q_].ftDynamicBones = &ADB[q_];\n        for (k_ = 0; k_ < Ft_Dynamics_NumMax; k_++) {\n          ADB[q_].array[k_].bone_id = fv() % 60; ADB[q_].array[k_].dyn_desc.count = fv() % 5;\n          for (j_ = 0; j_ < 3; j_++) {\n            struct DynamicsData* d_ = &DDP[q_][k_][j_];\n            d_->next = (j_ < 2 && (fv() & 1)) ? &DDP[q_][k_][j_ + 1] : 0;\n            d_->desc.lb_unk0.jobj = &JO[fv() % NJ];\n            d_->desc.lb_unk0.translate.x = rg(); d_->desc.lb_unk0.translate.y = rg(); d_->desc.lb_unk0.translate.z = rg();\n            d_->desc.lb_unk0.scale.x = rg(); d_->desc.lb_unk0.scale.y = rg(); d_->desc.lb_unk0.scale.z = rg();\n          }\n          FT[q_].dynamic_bone_sets[k_].dyn_desc.data = &DDP[q_][k_][0];\n        }\n        FDATA[q_].x2C = &DYN[q_];\n        FT[q_].dynamics_num = (int) (fv() % 11);\n        for (a_ = 0; a_ < 4; a_++) {\n          for (k_ = 0; k_ < Ft_Dynamics_NumMax; k_++) TREES[q_][a_][k_] = (FigaTree*) (size_t) (fv() % 4);\n          X10[q_][a_] = (fv() % 5 == 0) ? 0 : TREES[q_][a_];\n        }\n        X10[q_][4] = 0;\n        DYN[q_].x10 = X10[q_];\n        FT[q_].x28 = &X28A[q_][1];\n        for (a_ = 0; a_ < 8; a_++) { X28A[q_][a_][0] = fv() % 256; X28A[q_][a_][1] = fv() % 5; }\n        FT[q_].anim_id = (int) (fv() % 7) - 1;\n        if (fv() & 1) FT[q_].x34_scale.y = 1.0f;\n        FT[q_].x594_b3 = fv() & 1; FT[q_].x594_b4 = fv() & 1;\n      }\n      ARG1[0] = fv() % 256; ARG1[1] = fv() % 5;\n    }",
+  "rs_head": "static mut DYN: *mut [ftDynamics; NG] = null_mut(); static mut ADB: *mut [ArticleDynamicBones; NG] = null_mut();\nstatic mut DDP: *mut [[[DynamicsData; 3]; Ft_Dynamics_NumMax as usize]; NG] = null_mut();\nstatic mut X10: [[*mut *mut FigaTree; 5]; NG] = [[null_mut(); 5]; NG];\nstatic mut TREES: [[[*mut FigaTree; Ft_Dynamics_NumMax as usize]; 4]; NG] = [[[null_mut(); Ft_Dynamics_NumMax as usize]; 4]; NG];\nstatic mut X28A: [[[u8; 2]; 8]; NG] = [[[0; 2]; 8]; NG]; static mut ARG1: [u8; 2] = [0; 2]; static mut SGK: i32 = 0;",
+  "rs_world": "    {\n      SGK = if fv() & 1 != 0 { Gr_Kind_Flatzone as i32 } else { 0 };\n      for q in 0..NG {\n        (*DYN)[q] = core::mem::zeroed(); (*ADB)[q] = core::mem::zeroed(); (*DDP)[q] = core::mem::zeroed();\n        (*DYN)[q].anon_0.dynamicsNum = (fv() % 10) as i32; (*DYN)[q].anon_0.ftDynamicBones = &raw mut (*ADB)[q];\n        for k in 0..Ft_Dynamics_NumMax as usize {\n          (*ADB)[q].array[k].bone_id = (fv() % 60) as _; (*ADB)[q].array[k].dyn_desc.count = fv() % 5;\n          for j in 0..3 {\n            let d: *mut DynamicsData = &raw mut (*DDP)[q][k][j];\n            (*d).next = if j < 2 && (fv() & 1) != 0 { &raw mut (*DDP)[q][k][j + 1] } else { null_mut() };\n            (*d).desc.lb_unk0.jobj = &raw mut (*JO)[(fv() as usize) % NJ];\n            (*d).desc.lb_unk0.translate.x = rg(); (*d).desc.lb_unk0.translate.y = rg(); (*d).desc.lb_unk0.translate.z = rg();\n            (*d).desc.lb_unk0.scale.x = rg(); (*d).desc.lb_unk0.scale.y = rg(); (*d).desc.lb_unk0.scale.z = rg();\n          }\n          (*FT)[q].dynamic_bone_sets[k].dyn_desc.data = &raw mut (*DDP)[q][k][0];\n        }\n        (*FDATA)[q].x2C = &raw mut (*DYN)[q] as *mut _;\n        (*FT)[q].dynamics_num = (fv() % 11) as i32;\n        for a in 0..4 {\n          for k in 0..Ft_Dynamics_NumMax as usize { TREES[q][a][k] = (fv() % 4) as usize as *mut FigaTree; }\n          X10[q][a] = if fv() % 5 == 0 { null_mut() } else { TREES[q][a].as_mut_ptr() };\n        }\n        X10[q][4] = null_mut();\n        (*DYN)[q].x10 = X10[q].as_mut_ptr();\n        (*FT)[q].x28 = &raw mut X28A[q][1];\n        for a in 0..8 { X28A[q][a][0] = (fv() % 256) as u8; X28A[q][a][1] = (fv() % 5) as u8; }\n        (*FT)[q].anim_id = (fv() % 7) as i32 - 1;\n        if fv() & 1 != 0 { (*FT)[q].x34_scale.y = 1.0; }\n        (*FT)[q].anon_594.anon_0.set_x594_b3((fv() & 1) as _); (*FT)[q].anon_594.anon_0.set_x594_b4((fv() & 1) as _);\n      }\n      ARG1[0] = (fv() % 256) as u8; ARG1[1] = (fv() % 5) as u8;\n    }",
+  "c_hash": "    { int q_, k_, j_; for (q_ = 0; q_ < NG; q_++) for (k_ = 0; k_ < Ft_Dynamics_NumMax; k_++) for (j_ = 0; j_ < 3; j_++) { struct DynamicsData* d_ = &DDP[q_][k_][j_];\n        HF(d_->desc.lb_unk0.unk_2C.x); HF(d_->desc.lb_unk0.unk_2C.y); HF(d_->desc.lb_unk0.unk_2C.z); HF(d_->desc.lb_unk0.unk_44); HF(d_->desc.lb_unk0.translate.x); HF(d_->desc.lb_unk0.scale.x); } }",
+  "rs_hash": "    for q in 0..NG { for k in 0..Ft_Dynamics_NumMax as usize { for j in 0..3 { let d = &(*DDP)[q][k][j];\n        hm(d.desc.lb_unk0.unk_2C.x.to_bits()); hm(d.desc.lb_unk0.unk_2C.y.to_bits()); hm(d.desc.lb_unk0.unk_2C.z.to_bits()); hm(d.desc.lb_unk0.unk_44.to_bits()); hm(d.desc.lb_unk0.translate.x.to_bits()); hm(d.desc.lb_unk0.scale.x.to_bits()); } } }",
+  "c_head": "StageInfo stage_info;",
+  "rs_hooks": "    DYN = bz(); ADB = bz(); DDP = bz();\n    m::ext::STAGE_INFO_GRKIND = Some(|| SGK);",
+  "ops": [
+    [
+      "ftCo_8009CF84(fp)",
+      "m::ftCo_8009CF84(&mut *fp)"
+    ],
+    [
+      "ftCo_8009DD94(g, (bool)(fv() & 1))",
+      "let b = fv() & 1 != 0; m::ftCo_8009DD94(g, b as i32)"
+    ],
+    [
+      "ftCo_8009E0A8(g)",
+      "m::ftCo_8009E0A8(g)"
+    ],
+    [
+      "ftCo_8009E614(fp)",
+      "m::ftCo_8009E614(&mut *fp)"
+    ],
+    [
+      "ftCo_8009E7B4(fp, (u8(*)[2]) ARG1)",
+      "m::ftCo_8009E7B4(&mut *fp, ARG1.as_ptr() as *const [u8; 2])"
+    ]
+  ],
+  "rfile": "ftdynamics"
+}

@@ -611,7 +611,9 @@ fn ftco_800a2718(cx: &Cx, island: i32) -> R<bool> {
         }
     }
     match cx.grkind {
-        g if g == Gr_Kind_Story as i32 || g == Gr_Kind_Zebes as i32 || g == Gr_Kind_Onett as i32 => Err(format!("ftCo_800A2718 on stage {g} not ported")),
+        // mpIsland_8005AC8C: the island's collision joint is flagged (Randall's moving platform).
+        g if g == Gr_Kind_Story as i32 => Ok(cx.ground.mp_island_8005ac8c(island)),
+        g if g == Gr_Kind_Zebes as i32 || g == Gr_Kind_Onett as i32 => Err(format!("ftCo_800A2718 on stage {g} not ported")),
         _ => Ok(false),
     }
 }
@@ -1560,7 +1562,22 @@ fn ftco_800b77e8(cx: &mut Cx, fp: &mut Fighter) -> R {
         if can_use_ranged(cx, fp, target, 60.0)? {
             push_avoid(&mut fp.cpu, 0x26);
         }
-    } else if matches!(kind, k if k == Ft_Kind_Koopa || k == Ft_Kind_GKoops || k == Ft_Kind_Yoshi || k == Ft_Kind_Peach || k == Ft_Kind_Kirby) {
+    } else if kind == Ft_Kind_Koopa || kind == Ft_Kind_GKoops || kind == Ft_Kind_Yoshi {
+        // Grounded: the ranged test (27 / 53 / 16); airborne and off the stage: avoid it.
+        let range = if kind == Ft_Kind_Koopa { 27.0 } else if kind == Ft_Kind_GKoops { 53.0 } else { 16.0 };
+        if fp.ground_or_air == GA_Ground {
+            if can_use_ranged(cx, fp, target, range)? {
+                push_avoid(&mut fp.cpu, 0x26);
+            }
+        } else if !b(fp.cpu.xFA_b5()) {
+            push_avoid(&mut fp.cpu, 0x26);
+        }
+    } else if kind == Ft_Kind_Peach {
+        // The same test with range 32 (the C spells it out inline).
+        if can_use_ranged(cx, fp, target, 32.0)? {
+            push_avoid(&mut fp.cpu, 0x26);
+        }
+    } else if kind == Ft_Kind_Kirby {
         return Err(format!("ftCo_800B77E8 (kind {kind}) not ported"));
     }
     Ok(())
@@ -2199,6 +2216,25 @@ fn ftco_800a9cb4(cx: &mut Cx, fp: &mut Fighter) -> R {
     Ok(())
 }
 
+/// `ftCo_800BB768`: is `o` doing a move that comes down on `fp` (Bowser / Yoshi down-B, Bowser's
+/// up smash, Samus's up-B)?
+fn ftco_800bb768(fp: &Fighter, o: &Fighter) -> R<bool> {
+    let m = o.motion_id;
+    let k = o.kind;
+    if k == Ft_Kind_GKoops || k == Ft_Kind_Koopa {
+        if m == ftKp_MS_SpecialLw as i32 || m == ftKp_MS_SpecialAirLw as i32 || m == ftCo_MS_AttackHi4 as i32 {
+            return Err("ftCo_800BB768 (Bowser's down-B / up smash) not ported".into());
+        }
+    } else if k == Ft_Kind_Yoshi {
+        if m == ftYs_MS_SpecialLw as i32 || m == ftYs_MS_SpecialAirLw as i32 {
+            return Err("ftCo_800BB768 (Yoshi's down-B) not ported".into());
+        }
+    } else if k == Ft_Kind_Samus && m == ftSs_MS_SpecialHi as i32 && o.cur_pos.y < fp.cur_pos.y && (ftco_800a1ab4(fp, o) as f64) < 30.0 {
+        return Ok(true);
+    }
+    Ok(false)
+}
+
 /// `ftCo_800BB9B4`: scan the other fighters' and the items' hitboxes for one about to hit
 /// (`xF8_b12` 1..3: what kind of threat, `xF0` / `xF4`: its source).
 fn ftco_800bb9b4(cx: &mut Cx, me: *mut Fighter) -> R {
@@ -2225,9 +2261,11 @@ fn ftco_800bb9b4(cx: &mut Cx, me: *mut Fighter) -> R {
             }
         }
         // ftCo_800BB768: special moves that threaten without a hitbox.
-        let k = o.kind;
-        if k == Ft_Kind_GKoops || k == Ft_Kind_Koopa || k == Ft_Kind_Yoshi || k == Ft_Kind_Samus {
-            return Err("ftCo_800BB768 (Bowser / Yoshi / Samus threat) not ported".into());
+        if ftco_800bb768(fp, o)? {
+            // xF8_b12 = 1, xF0 = the fighter: the reaction (behaviour 7) reads it.
+            fp.cpu.set_xF8_b12(1);
+            fp.cpu.xF0 = cur;
+            return Ok(());
         }
     }
     let half = 0.5f32 * fp.cpu.x568;

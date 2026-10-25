@@ -4927,7 +4927,12 @@ fn ft_80082b1c(g: &mut GroundColl, p: &mut Player, c: EntryCommon, rand: &mut Hs
     let cd = melee_fighter::hooks::common_data();
     let thr = -calc_y_scaled_knockback(cd.x310, p.fp.x34_scale.y, c.x804d6524_x30);
     if p.fp.self_vel.y > thr {
-        return Err(format!("player {}: soft landing -> ft_8008A2BC (Wait) not ported", p.slot + 1));
+        // ft_8008A2BC -> ft_8008A348(gobj, 0): off the air first (ftCommon_8007D7FC), then Wait. Peach's
+        // parasol (ft_8008A348's item check) cannot be held here.
+        if p.fp.ground_or_air == melee_types::GA_Air {
+            ftcommon_8007d7fc(g, p, c)?;
+        }
+        return ft_8008a2bc(p, rand);
     }
     landing_enter_basic(g, p, c, rand)
 }

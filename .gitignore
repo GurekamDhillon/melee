@@ -202,3 +202,9 @@ pc/platform/gw_build_id.h
 .native-tests/
 luac.out
 rust/rs_win/
+
+# Game screenshots are disc-derived: never commit them.
+rust/out_*/
+rust/r4*/
+rust/rs_win/
+docs/rust-port/shots/play_*.png

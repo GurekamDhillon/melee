@@ -505,7 +505,7 @@ pub struct View {
 }
 
 /// The view matrix and projection of a CObj pose (`HSD_CObjGetViewingMtx`, MTXPerspective).
-fn camera(p: &crate::cm_drive::CamPose) -> (Mtx, [[f32; 4]; 4]) {
+pub(crate) fn camera(p: &crate::cm_drive::CamPose) -> (Mtx, [[f32; 4]; 4]) {
     let eye = Vec3 { x: p.eye[0], y: p.eye[1], z: p.eye[2] };
     let at = Vec3 { x: p.interest[0], y: p.interest[1], z: p.interest[2] };
     let f = mtx::vec_normalize(&mtx::vec_sub(&eye, &at));

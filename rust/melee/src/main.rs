@@ -41,6 +41,7 @@ mod view;
 mod hud_view;
 mod ps_view;
 mod ui;
+mod retail;
 mod play;
 mod audio;
 mod cm_drive;

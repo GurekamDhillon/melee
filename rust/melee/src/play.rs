@@ -219,6 +219,11 @@ pub struct Play {
     quit: bool,
     pub failed: Option<String>,
     audio: Option<crate::audio::Audio>,
+    /// The retail title scene (retail.rs), alive while `scene == Title`.
+    title: Option<crate::retail::Title>,
+    /// `--shot-ages a,b,c`: a screenshot at those scene ages of every scene (`play_<scene>_<age>.png`).
+    shot_ages: Vec<u32>,
+    kit: Box<dyn crate::retail::MenuHook>,
 }
 
 fn log(msg: &str) {
@@ -231,6 +236,24 @@ impl Play {
         self.audio_enter(s);
         self.scene = s;
         self.age = 0;
+        self.title = None;
+        if s == Scene::Title {
+            match self.load_title() {
+                Ok(t) => self.title = Some(t),
+                Err(e) => {
+                    log(&format!("title scene: {e}"));
+                    self.failed = Some(e);
+                    self.quit = true;
+                }
+            }
+        }
+    }
+
+    /// `gm_Scene_Title_OnEnter`: GmTtAll.usd (US) or .dat from the disc.
+    fn load_title(&self) -> Result<crate::retail::Title, String> {
+        let mut disc = crate::disc::Disc::open(&self.iso)?;
+        let bytes = disc.read("GmTtAll.usd").or_else(|_| disc.read("GmTtAll.dat"))?;
+        crate::retail::Title::new(&bytes, true)
     }
 
     /// The scene's audio start (see audio.rs), before `self.scene` changes.
@@ -302,18 +325,31 @@ impl Play {
                 }
             }
             Scene::Title => {
-                // gm_Scene_Title_OnFrame: a 20-tick lockout, then START -> menu; 600 ticks -> opening.
-                if self.age < 20 {
-                    return;
-                }
-                self.title_count += 1;
-                if self.title_count > 600 {
-                    self.goto(Scene::Opening);
-                } else if trig & HSD_PAD_START != 0 {
-                    // gmTitleMode onExit: START -> GM_MENU
-                    self.main_sel = 1;
-                    if let Some(a) = &self.audio { a.title_start() }
-                    self.goto(Scene::MainMenu);
+                // gm_Scene_Title_OnFrame (retail.rs `Title`): a 20-tick lockout, then START -> menu;
+                // 600 ticks -> the opening movie; Y / B (PC build) -> the port's own menu.
+                use crate::retail::Exit;
+                let exit = match self.title.as_mut() {
+                    Some(t) => {
+                        t.tick(trig);
+                        t.exit
+                    }
+                    None => Exit::None,
+                };
+                match exit {
+                    Exit::TitleTimeout => self.goto(Scene::Opening),
+                    Exit::TitleStart(_) => {
+                        // gmTitleMode onExit: START -> GM_MENU
+                        self.main_sel = 1;
+                        if let Some(a) = &self.audio { a.title_start() }
+                        self.goto(Scene::MainMenu);
+                    }
+                    Exit::TitleKit(b) => {
+                        // The kit menus are the user's: a hook, not a port. Nothing plugged in -> stay.
+                        if !self.kit.open_kit("title", b) {
+                            if let Some(t) = self.title.as_mut() { t.exit = Exit::None }
+                        }
+                    }
+                    Exit::None => {}
                 }
             }
             Scene::MainMenu => {
@@ -766,6 +802,17 @@ impl Play {
         u.text(20.0, 452.0, 1.0, "A: CHARACTER SELECT   START: MAIN MENU", ui::GREY);
     }
 
+    /// Write the pending screenshot (the presenter's last frame), if any.
+    fn emit_shot(&mut self) {
+        let (Some(name), Some(dir), Some(p)) = (self.shot_pending.take(), self.shot_dir.as_ref(), self.presenter.as_mut()) else { return };
+        let px = p.screenshot();
+        let path = dir.join(format!("play_{name}.png"));
+        match write_png(&path, EFB_WIDTH, EFB_HEIGHT, &px) {
+            Ok(()) => log(&format!("screenshot {}", path.display())),
+            Err(e) => log(&format!("screenshot: {e}")),
+        }
+    }
+
     fn draw_frame(&mut self) {
         self.shim.set_copy_clear(GxColor::new(0, 0, 0, 255), 0xFF_FFFF);
         if self.scene == Scene::Match {
@@ -774,6 +821,8 @@ impl Play {
             }
             self.ui.clear();
             self.draw_match_hud();
+        } else if let (Scene::Title, Some(t)) = (self.scene, self.title.as_mut()) {
+            t.draw(&mut self.shim);
         } else {
             self.draw_ui();
         }
@@ -799,7 +848,17 @@ impl Game for Play {
             log(&format!("max frames reached in {}", self.scene.name()));
             self.quit = true;
         }
-        if self.shots && self.age == 30 && self.shot_pending.is_none() {
+        if self.shots && self.shot_ages.contains(&self.age) && self.presenter.is_some() {
+            // Age-exact: draw this tick's state now (the display may have skipped ticks), then write it.
+            self.shot_pending = Some(format!("{}_{:04}", self.scene.name(), self.age));
+            self.draw_frame();
+            let frame = self.shim.take_frame();
+            let p = self.presenter.as_mut().unwrap();
+            p.present(&self.shim.gx.state, frame.as_deref());
+            self.shim.log.clear();
+            self.emit_shot();
+        }
+        if self.shots && self.shot_ages.is_empty() && self.age == 30 && self.shot_pending.is_none() {
             self.shot_pending = Some(format!("m{}_{}", self.matches_played, self.scene.name()));
         }
         // Match: one shot well into the fight and one 10 ticks into a pause.
@@ -830,14 +889,7 @@ impl Game for Play {
         let p = self.presenter.as_mut().unwrap();
         p.present(&self.shim.gx.state, frame.as_deref());
         self.shim.log.clear();
-        if let (Some(name), Some(dir)) = (self.shot_pending.take(), self.shot_dir.as_ref()) {
-            let px = p.screenshot();
-            let path = dir.join(format!("play_{name}.png"));
-            match write_png(&path, EFB_WIDTH, EFB_HEIGHT, &px) {
-                Ok(()) => log(&format!("screenshot {}", path.display())),
-                Err(e) => log(&format!("screenshot: {e}")),
-            }
-        }
+        self.emit_shot();
     }
 
     fn resized(&mut self, w: u32, h: u32) {
@@ -902,6 +954,9 @@ pub fn play(args: &[String]) -> ExitCode {
         quit: false,
         failed: None,
         audio: None,
+        title: None,
+        kit: Box::new(crate::retail::NoKit),
+        shot_ages: get("--shot-ages").map(|v| v.split(',').filter_map(|x| x.trim().parse().ok()).collect()).unwrap_or_default(),
     };
     let mut game = game;
     // --headless: no window, no device, no gamepads; the pad script (MELEE_PAD_SCRIPT) drives

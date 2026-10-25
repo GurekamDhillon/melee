@@ -15,6 +15,8 @@ use melee_runtime::tu::state::{Dat, HsdRender};
 use std::sync::Arc;
 
 pub mod mn_tables;
+pub mod sis;
+mod sis_tables;
 pub mod title;
 pub mod mainmenu;
 

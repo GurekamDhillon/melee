@@ -783,6 +783,13 @@ impl VsMatch {
         // Leaked: it lives as long as the process, as the C's archive does.
         let cd: melee_types::ftCommonData = *plco.load_at::<melee_types::ftCommonData>(ft_common).get();
         unsafe { melee_fighter::hooks::P_FT_COMMON_DATA = Box::leak(Box::new(cd)) };
+        // ft_80087D0C's lookups (the sound bank tables; no audio here, no Kirby remap).
+        unsafe {
+            melee_fighter::hooks::LBAUDIOAX_800233EC = Some(|id| id);
+            melee_fighter::hooks::LBAUDIOAX_80023130 = Some(melee_audio::lbaudio::lb_80023130);
+            melee_fighter::hooks::LBAUDIOAX_800230C8 = Some(melee_audio::sim::lbaudioax_800230c8);
+            melee_fighter::hooks::LBAUDIOAX_80023220 = Some(melee_audio::lbaudio::lb_80023220);
+        }
         // ft_PlaySFX from the ported fighter code (fast fall, ...): no audio here. Only the voice
         // ids 332..=370 draw (HSD_Randi(200) pitch), which the sim does not model.
         unsafe {
@@ -3897,7 +3904,7 @@ fn ft_8008a2bc(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
 
 /// `ftAction_80072CD8`: the footstep (`ft_80084BFC`, the floor material's step sound and
 /// effect), then the script's own sound command.
-fn ftaction_80072cd8(p: &mut Player, _rand: &mut HsdRand) -> Result<(), String> {
+fn ftaction_80072cd8(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     let w0 = be32(&p.pdat, p.script);
     let mut sp60 = 1;
     let fp = &*p.fp;
@@ -3911,7 +3918,8 @@ fn ftaction_80072cd8(p: &mut Player, _rand: &mut HsdRand) -> Result<(), String> 
             sp60 = play;
         }
         if sp64 != -1 {
-            return Err(format!("footstep material sfx {sp64:#x} (ft_PlaySFX pitch draw / sound remap) not wired"));
+            // ftAction_80071B50 on a copy of the command with the material's sfx id.
+            sound_command(p, w0, sp64, rand)?;
         }
         if gfx_id != -1 {
             return Err(format!("footstep gfx {gfx_id:#x} not wired"));
@@ -3919,17 +3927,26 @@ fn ftaction_80072cd8(p: &mut Player, _rand: &mut HsdRand) -> Result<(), String> 
     }
     if sp60 != 0 {
         // ftAction_80071B50(gobj, cmd): the script's own sound command (3 words).
-        let behavior = (w0 >> 18) & 0xFF;
-        if behavior <= 6 {
-            let sfx = be32(&p.pdat, p.script + 4) as i32;
-            if (332..=370).contains(&sfx) {
-                return Err(format!("ft_PlaySFX {sfx}: the HSD_Randi(200) pitch draw needs ft_80087D0C's remap (not wired)"));
-            }
-        } else if behavior >= 10 {
-            return Err("ftAction_80071B50 stop-sound behaviours not wired".into());
-        }
+        let sfx = be32(&p.pdat, p.script + 4) as i32;
+        sound_command(p, w0, sfx, rand)?;
     }
     p.script += 12;
+    Ok(())
+}
+
+/// `ftAction_80071B50`: a sound command (`behavior` = bits 18..25 of the first word). Only `ft_PlaySFX`
+/// (behavior 0) draws RNG: `HSD_Randi(200)` for a (remapped, `ft_80087D0C`) id in 332..=370. The
+/// audio itself is not simulated.
+fn sound_command(p: &Player, w0: u32, sfx: i32, rand: &mut HsdRand) -> Result<(), String> {
+    let behavior = (w0 >> 18) & 0xFF;
+    if behavior == 0 {
+        let id = melee_fighter::ft0877::ft_80087d0c(&p.fp, sfx);
+        if (332..=370).contains(&id) {
+            let _ = rand.randi(200);
+        }
+    } else if behavior >= 10 {
+        return Err("ftAction_80071B50 stop-sound behaviours not wired".into());
+    }
     Ok(())
 }
 

@@ -278,7 +278,9 @@ impl Hud {
             models.push((self.ready.overrides(), self.ready.disp_joints(0)));
         }
         if let Some((g, n)) = &mut self.go {
-            if self.file.go_end.map_or(true, |e| *n <= e) {
+            // The C shows nothing for the element's first three frames (C shots 84-86 of the FD match; it appears
+            // fully settled on 87), so the zoom-in frames are not drawn.
+            if *n >= 5.0 && self.file.go_end.map_or(true, |e| *n <= e) {
                 models.push((g.overrides(), g.disp_joints(0)));
             }
         }

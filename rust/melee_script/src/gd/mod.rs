@@ -18,6 +18,7 @@ pub mod combo;
 pub mod core;
 pub mod fighter;
 pub mod flycam;
+pub mod fmod;
 pub mod frontend;
 pub mod hit_rules;
 pub mod history;
@@ -66,6 +67,7 @@ pub fn register_all(e: &Engine, gd: &Table) -> LuaResult<()> {
     echo::register(e, gd)?;
     zones::register(e, gd)?;
     deadline::register(e, gd)?;
+    fmod::register(e, gd)?;
     frontend::register(e, gd)?;
     present::register(e, gd)?;
     cpu_ctl::register(e, gd)?;

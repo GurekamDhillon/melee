@@ -871,6 +871,21 @@ pub trait ScriptGame {
     }
     /// `gw_ScriptGame_LaunchScene(mode)`: start the scene for a `gd.scene_launch` game mode
     fn launch_scene(&mut self, _mode: i32) {}
+    // ---- fighter modifiers (`gw_ScriptGame_FighterMod*`): pc/platform/gw_script_fighter_mod.inc
+    fn fighter_mod_owner(&self, _slot: i32) -> i32 {
+        0
+    }
+    /// field 0..10 in the order damage_dealt .. shield_regen (float bits)
+    fn fighter_mod_read(&self, _slot: i32, _field: i32) -> i32 {
+        0
+    }
+    /// `bits` are the first eight modifiers (damage_dealt .. knockback_taken); false when another owner holds it
+    fn fighter_mod(&mut self, _slot: i32, _owner: i32, _enabled: bool, _bits: &[i32]) -> i32 {
+        0
+    }
+    fn fighter_mod_extra(&mut self, _slot: i32, _owner: i32, _fall: i32, _weight: i32, _regen: i32) -> i32 {
+        0
+    }
     // ---- entity identity (`gw_ScriptGame_EntityField`, `EntityEpoch`, `EntityAddressField`): pc/platform/gw_script_spine_refs.inc
     /// kind 1 fighter (id = port*2+sub), 2 item, 3 echo, 4 stage object, 5 stage actor. field 0 live, 1 epoch, 2 generation,
     /// 3 definition, 4 owner fighter id + 1, 5 role bits

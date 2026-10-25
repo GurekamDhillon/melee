@@ -706,6 +706,42 @@ pub trait ScriptGame {
     fn action_category(&self, _motion: i32) -> i32 {
         0
     }
+    // ---- zones (`gw_ScriptGame_Zone*`): pc/platform/gw_script_zones.inc over `zones_core::SzState` in the game's snapshotted state
+    fn zone_field(&self, _slot: i32, _field: i32) -> i32 {
+        0
+    }
+    fn zone_text(&self, _slot: i32, _text: i32, _byte: i32) -> i32 {
+        0
+    }
+    /// field -1 clears the draft
+    fn zone_draft(&mut self, _field: i32, _value: i32) {}
+    fn zone_draft_text(&mut self, _text: i32, _byte: i32, _value: i32) {}
+    /// handle 0 adds; the new/updated handle, or <0 refused
+    fn zone_commit(&mut self, _handle: i32, _owner: i32, _serial_floor: i32) -> i32 {
+        -1
+    }
+    fn zone_remove(&mut self, _handle: i32, _owner: i32) -> i32 {
+        0
+    }
+    /// owner 0: every zone
+    fn zones_release(&mut self, _owner: i32) {}
+    /// bit k: the hook of kind k+1 (enter, exit, none, some) has a listener
+    fn zones_arm(&mut self, _mask: i32) {}
+    /// the frame step; `terminal` 1 retires every zone, 2 the owner's removed ones, 0 a normal frame
+    fn zones_frame(&mut self, _terminal: i32) {}
+    /// field 0 entity id, 1/2 x/y bits (zone ignored); 3 inside zone slot `zone`; 4 frames inside slot `zone`
+    fn zone_entity(&self, _entity: i32, _field: i32, _zone: i32) -> i32 {
+        0
+    }
+    fn zone_event(&self, _event: i32, _field: i32) -> i32 {
+        0
+    }
+    fn zone_event_text(&self, _event: i32, _text: i32, _byte: i32) -> i32 {
+        0
+    }
+    fn zone_event_count(&self) -> i32 {
+        0
+    }
     // ---- entity identity (`gw_ScriptGame_EntityField`, `EntityEpoch`, `EntityAddressField`): pc/platform/gw_script_spine_refs.inc
     /// kind 1 fighter (id = port*2+sub), 2 item, 3 echo, 4 stage object, 5 stage actor. field 0 live, 1 epoch, 2 generation,
     /// 3 definition, 4 owner fighter id + 1, 5 role bits

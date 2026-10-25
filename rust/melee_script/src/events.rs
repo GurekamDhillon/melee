@@ -422,6 +422,7 @@ impl Engine {
         let n = self.st.borrow().scripts.len();
         let want = (0..n).any(|i| WANT_HOOKS.iter().any(|h| self.get_hook(i, h).is_some()));
         self.st.borrow_mut().ev.want = want;
+        self.zones_arm();
     }
 
     /// The Lua arguments of one event's specific hook (the switch of `gs_dispatch_events`)

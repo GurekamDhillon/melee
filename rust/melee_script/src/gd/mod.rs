@@ -24,6 +24,7 @@ pub mod pad;
 pub mod players;
 pub mod rec;
 pub mod savestate;
+pub mod zones;
 
 /// `gs_buttons` (only these twelve appear in `gd.buttons`).
 pub const BUTTONS: &[(&str, u32)] = &[
@@ -52,6 +53,7 @@ pub fn register_all(e: &Engine, gd: &Table) -> LuaResult<()> {
     caps::register(e, gd)?;
     hit_rules::register(e, gd)?;
     entity::register(e, gd)?;
+    zones::register(e, gd)?;
     bench::register(e, gd)?;
     crit::register(e, gd)?;
     mods::register(e, gd)?;

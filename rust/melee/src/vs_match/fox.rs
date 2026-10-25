@@ -68,7 +68,7 @@ pub enum ItemClass {
     /// (its anim / phys / coll procs ran before the fighter's accessory proc made it).
     SeakThrown { owner: usize, life: f32, fresh: bool, state: u8, line: i32, bx: f32, bmin: f32, bgrav: f32 },
     /// Green Greens' breakable block (`grMaterial_801C8CFC` -> `it_802E6AEC`, `It_Kind_Yaku`).
-    GreensBlock,
+    GreensBlock { id: u32 },
     /// Samus' missile (samus.rs): `fresh` = made this frame, its item procs start the next one.
     SsMissile { owner: usize, smash: bool, life: f32, x8: f32, v0: f32, v1: f32, v3: f32, born: u32, fresh: bool, facing: f32, jref: JObjRef, a: super::samus::MissileAttrs, hb: u8, x58: Vec3 },
     /// A stage-owned item the sim does not step (snapshot loading): held unchanged, hashed.
@@ -504,7 +504,7 @@ impl VsMatch {
                 }
                 ItemClass::Static => {}
                 ItemClass::SeakHeld { .. } | ItemClass::SeakThrown { .. } => {} // sheik::item_proc, below
-                ItemClass::GreensBlock => {}
+                ItemClass::GreensBlock { .. } => {}
                 ItemClass::SsMissile { .. } => {}
                 ItemClass::FoxLaser { .. } => {} // lasers_step, ahead of the fighters' s_link 13
             }

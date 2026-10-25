@@ -23,14 +23,20 @@ pub struct InitDraws {
     pub wind_x14: i32,
     /// `grGr_8049F9E0`: block type per cell (0 none, 1 normal, 2 bomb).
     pub table: [u8; 30],
+    /// `gp->u.greens.x4`: the block cells' positions (row, column), `grGreens_8021483C`.
+    pub grid: [[(f32, f32); 6]; 5],
 }
 
 /// `struct grGreens_YakumonoParam` (words).
-struct Yak(Vec<u32>);
+pub(super) struct Yak(pub(super) Vec<u32>);
 
 impl Yak {
-    fn i(&self, off: usize) -> i32 {
+    pub(super) fn i(&self, off: usize) -> i32 {
         self.0[off / 4] as i32
+    }
+
+    pub(super) fn f(&self, off: usize) -> f32 {
+        f32::from_bits(self.0[off / 4])
     }
 }
 
@@ -48,24 +54,47 @@ struct Wind {
 }
 
 #[derive(Clone, Copy, Default)]
-struct Block {
+pub(super) struct Block {
     /// `status` (0 none, 1 falling, 2 stacked on a falling one, 3 resting).
-    status: i32,
-    /// `x18`: the map joint of the block.
-    joint: i32,
+    pub(super) status: i32,
+    /// `x18`: the map joint of the block (= `index`).
+    pub(super) joint: i32,
+    /// `x1_1`: a bomb block.
+    pub(super) bomb: bool,
+    /// `x1_2`: the bomb is exploding.
+    pub(super) x1_2: bool,
+    /// `x1_3`: to be removed.
+    pub(super) x1_3: bool,
+    /// `x1_4`: a fighter stands on it (the joint's collision callback).
+    pub(super) x1_4: bool,
     /// `x1_5`: a resting block whose neighbours' joints need stitching.
-    x1_5: bool,
+    pub(super) x1_5: bool,
+    /// `x1_6`: removed; its neighbours' diagonal stitches are redone.
+    pub(super) x1_6: bool,
+    /// `x1_7`: hit.
+    pub(super) x1_7: bool,
+    /// `x4`: the fall speed; `x8`: the height.
+    pub(super) x4: f32,
+    pub(super) x8: f32,
+    /// The block's item (`SimItem` `GreensBlock { id }`).
+    pub(super) item: u32,
 }
 
 pub struct Greens {
     stage: std::sync::Arc<DatArchive>,
-    yak: Yak,
+    pub(super) yak: Yak,
     w: Wind,
     /// The AObj `grAnime_801C8318(gobj 5)` finds: the timing of Whispy's animation.
     timing: Option<HsdAObj<()>>,
-    blocks: [[Block; 6]; 5],
+    pub(super) blocks: [[Block; 6]; 5],
+    pub(super) grid: [[(f32, f32); 6]; 5],
+    /// The map gobj 6 JObj tree (block JObjs 5..34 under the `Ground_801C0498()` scale root).
+    pub(super) tree: crate::fighter_data::skeleton::MapTree,
+    /// `Ground_801C0498()`.
+    pub(super) scale: f32,
+    pub(super) next_item: u32,
     /// `u.greens.xC`.
-    block_timer: i32,
+    pub(super) block_timer: i32,
     /// The stage procs run (`fn_80214658` ran at GO).
     started: bool,
 }
@@ -74,7 +103,7 @@ const GR_803E7734: [i32; 10] = [0, 1, 0, 1, 0, 2, 0, 1, 0, 2];
 const GR_803E775C: [i32; 8] = [0, 0, 0, 14, 0, 0, 0, 14];
 const GR_803E777C: [[i32; 2]; 7] = [[1, 8], [15, 16], [2, 9], [3, 10], [4, 11], [5, 12], [6, 13]];
 
-fn randrange(rand: &mut HsdRand, min: i32, max: i32) -> i32 {
+pub(super) fn randrange(rand: &mut HsdRand, min: i32, max: i32) -> i32 {
     if min > max {
         let d = min - max;
         max + if d != 0 { rand.randi(d) } else { 0 }
@@ -95,12 +124,34 @@ impl Greens {
         for row in 0..5 {
             for col in 0..6 {
                 if matches!(d.table[row * 6 + col], 1 | 2) {
-                    blocks[row][col] = Block { status: 3, joint: num, x1_5: true };
+                    blocks[row][col] = Block { status: 3, joint: num, x1_5: true, bomb: d.table[row * 6 + col] == 2, item: num as u32, x8: d.grid[row][col].1, ..Default::default() };
                     num += 1;
                 }
             }
         }
-        Greens { stage, yak, w: Wind { xc: d.wind_xc, x10: 1, x14: d.wind_x14, ..Default::default() }, timing: None, blocks, block_timer: d.block_timer, started: false }
+        let scale = f32::from_bits(u32::from_be_bytes(stage.data[crate::stage::ground_param(&stage).expect("grGroundParam") as usize..][..4].try_into().unwrap()));
+        let tree = {
+            let dd = &stage.data;
+            let head = stage.public_offset("map_head").expect("map_head");
+            let gobjs = u32::from_be_bytes(dd[head as usize + 8..][..4].try_into().unwrap());
+            let root = u32::from_be_bytes(dd[(gobjs + 6 * 0x34) as usize..][..4].try_into().unwrap());
+            crate::fighter_data::skeleton::MapTree::load(dd, root, scale).expect("map gobj 6")
+        };
+        let mut tree = tree;
+        {
+            // grGreens_80215358: each initial block's JObj sits at its cell (translate = cell / Ground_801C0498()).
+            let f = (1.0f64 / scale as f64) as f32;
+            for row in 0..5 {
+                for col in 0..6 {
+                    let b = blocks[row][col];
+                    if b.status != 0 {
+                        let j = tree.dfs[5 + b.joint as usize];
+                        tree.set_translate(j, Vec3 { x: d.grid[row][col].0 * f, y: d.grid[row][col].1 * f, z: 0.0 });
+                    }
+                }
+            }
+        }
+        Greens { grid: d.grid, tree, scale, next_item: 100, stage, yak, w: Wind { xc: d.wind_xc, x10: 1, x14: d.wind_x14, ..Default::default() }, timing: None, blocks, block_timer: d.block_timer, started: false }
     }
 }
 
@@ -173,47 +224,6 @@ impl VsMatch {
         }
         self.greens_blocks()?;
         self.greens_wind()
-    }
-
-    /// `grGreens_8021479C`.
-    fn greens_blocks(&mut self) -> Result<(), String> {
-        let g = self.greens.as_mut().unwrap();
-        // grGreens_802166C4: `if (gp->u.greens.xC-- < 0)`.
-        let t = g.block_timer;
-        g.block_timer -= 1;
-        if t < 0 {
-            return Err("grGreens_802166C4: spawning a block not ported".into());
-        }
-        // grGreens_80215ED8 does nothing for resting blocks.
-        for row in 0..5 {
-            for col in 0..6 {
-                if matches!(g.blocks[row][col].status, 1 | 2) {
-                    return Err("grGreens_80215ED8: falling blocks not ported".into());
-                }
-            }
-        }
-        // grGreens_80216C20: stitch the joints of newly resting blocks to the resting neighbours.
-        for i in 0..5usize {
-            for j in 0..6usize {
-                if g.blocks[i][j].x1_5 {
-                    let me = g.blocks[i][j].joint;
-                    if i > 0 && g.blocks[i - 1][j].status == 3 {
-                        self.ground.mp_lib_800581dc(me, g.blocks[i - 1][j].joint);
-                    }
-                    if j > 0 && g.blocks[i][j - 1].status == 3 {
-                        self.ground.mp_lib_800581dc(me, g.blocks[i][j - 1].joint);
-                    }
-                    if i < 4 && g.blocks[i + 1][j].status == 3 {
-                        self.ground.mp_lib_800581dc(me, g.blocks[i + 1][j].joint);
-                    }
-                    if j < 5 && g.blocks[i][j + 1].status == 3 {
-                        self.ground.mp_lib_800581dc(me, g.blocks[i][j + 1].joint);
-                    }
-                    g.blocks[i][j].x1_5 = false;
-                }
-            }
-        }
-        Ok(())
     }
 
     /// `ftLib_800864A8(&pos, NULL)`: +1 when more fighters are right of `x` than left of it,

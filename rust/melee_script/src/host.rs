@@ -65,6 +65,34 @@ pub trait Host {
     }
     /// `gw_hang_script_state`: pending and expired script deadlines, and the last expired name
     fn hang_script_state(&mut self, _pending: i32, _expired: i32, _last: &str) {}
+    // ---- the effects lab (`gw_Fx_Lab*`): instances belong to the creating script (owner = script index + 1)
+    #[allow(clippy::too_many_arguments)]
+    fn fx_lab_play(&mut self, _package: &str, _address: i32, _owner: i32, _slot1: i32, _joint: i32, _frame: i32, _facing: i32, _offset: [f32; 3], _scale: f32, _seed: u32) -> i32 {
+        0
+    }
+    #[allow(clippy::too_many_arguments)]
+    fn fx_lab_attach(&mut self, _package: &str, _address: i32, _owner: i32, _slot1: i32, _joint: i32, _frame: i32, _facing: i32, _offset: [f32; 3], _scale: f32) -> i32 {
+        0
+    }
+    fn fx_lab_world(&mut self, _package: &str, _owner: i32, _frame: i32, _pos: [f32; 3], _scale: f32, _seed: u32) -> i32 {
+        0
+    }
+    fn fx_lab_move(&mut self, _handle: i32, _owner: i32, _pos: [f32; 3]) -> i32 {
+        0
+    }
+    /// values: opacity, rate, speed, life, size, brightness, turbulence
+    fn fx_lab_control(&mut self, _handle: i32, _owner: i32, _emitter: i32, _values: [f32; 7], _frames: i32) -> i32 {
+        0
+    }
+    fn fx_lab_end(&mut self, _handle: i32, _owner: i32, _fade: i32) -> i32 {
+        0
+    }
+    fn fx_lab_query(&mut self, _handle: i32, _owner: i32) -> (bool, FxQuery) {
+        (false, FxQuery::default())
+    }
+    fn fx_lab_stop(&mut self, _owner: i32) {}
+    fn fx_shake(&mut self, _amp: f32, _frames: i32, _seed: u32) {}
+    fn fx_flash(&mut self, _r: f32, _g: f32, _b: f32, _a: f32, _frames: i32) {}
     /// `gw_perf_snapshot` + `gw_surface_stats` + `gw_Shader_Perf`: host frame diagnostics (never game state).
     fn perf_snapshot(&mut self, _want: usize) -> PerfSnapshot {
         PerfSnapshot::default()
@@ -77,6 +105,17 @@ pub trait Host {
     fn prof_command(&mut self, _args: &str) -> (bool, String) {
         (false, "prof on|off|reset|report|perf|summary on|off|trace <frames>|hitch <ms>".into())
     }
+}
+
+/// `GwFxLabQuery`
+#[derive(Clone, Copy, Debug, Default)]
+pub struct FxQuery {
+    pub age: i32,
+    pub particles: i32,
+    pub emitters: i32,
+    pub emitting: i32,
+    pub refused: i32,
+    pub refused_emitters: i32,
 }
 
 /// `GW_PERF_HISTORY`

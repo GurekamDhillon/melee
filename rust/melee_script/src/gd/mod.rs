@@ -27,6 +27,7 @@ pub mod mods;
 pub mod perf;
 pub mod pad;
 pub mod players;
+pub mod present;
 pub mod rec;
 pub mod savestate;
 pub mod shock;
@@ -63,6 +64,7 @@ pub fn register_all(e: &Engine, gd: &Table) -> LuaResult<()> {
     echo::register(e, gd)?;
     zones::register(e, gd)?;
     deadline::register(e, gd)?;
+    present::register(e, gd)?;
     cpu_ctl::register(e, gd)?;
     flycam::register(e, gd)?;
     contacts::register(e, gd)?;

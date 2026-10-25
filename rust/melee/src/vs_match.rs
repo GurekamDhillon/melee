@@ -462,6 +462,8 @@ pub struct VsMatch {
     stage_map_head: u32,
     /// Debug (snapshot loading): reference Fighter bytes per player.
     keep_ref: Vec<Vec<u8>>,
+    /// `Camera_RequestQuake(kind, pos)` calls of the frame (render only: the view's camera drains them).
+    pub quake_requests: Vec<(u32, [f32; 3])>,
 }
 
 /// `Stage_GetBlastZone*Offset()`: `stage_info.blast_zone.* + cam_info.cam_{x,y}_offset`
@@ -1200,7 +1202,7 @@ impl VsMatch {
                 }
             });
         }
-        Ok(Self { players, ground, cg, pads: [input::PadStatus::default(); 4], pad_feed: None, replay_in: None, go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, ko_colors, appsrt_hook_lists, blast, fighter_jobjs: Vec::new(), items: Vec::new(), respawn_points: (4..8).filter_map(|id| points.iter().find(|p| p.id == id).map(|p| Vec3 { x: p.pos[0], y: p.pos[1], z: p.pos[2] })).collect(), respawn_busy: [0; 6], start_shield, stage_data: Arc::new(stage.data.clone()), stage_map_head: stage.public_offset("map_head").unwrap_or(0), keep_ref: Vec::new() })
+        Ok(Self { players, ground, cg, pads: [input::PadStatus::default(); 4], pad_feed: None, replay_in: None, go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, ko_colors, appsrt_hook_lists, blast, fighter_jobjs: Vec::new(), items: Vec::new(), respawn_points: (4..8).filter_map(|id| points.iter().find(|p| p.id == id).map(|p| Vec3 { x: p.pos[0], y: p.pos[1], z: p.pos[2] })).collect(), respawn_busy: [0; 6], start_shield, stage_data: Arc::new(stage.data.clone()), stage_map_head: stage.public_offset("map_head").unwrap_or(0), keep_ref: Vec::new(), quake_requests: Vec::new() })
     }
 
     /// The m-ex fighters' code-run report (crate::mex), one block per such fighter.
@@ -2161,6 +2163,8 @@ impl VsMatch {
             // pl_8003DF44 (the stale-move table's last-KO stamp), ft_PlaySFX and the quake are not hashed.
             fp.set_invisible(1);
             fp.set_x221F_b1(1);
+            let c = fp.cur_pos;
+            self.quake_requests.push((melee_types::QuakeKind_Large, [c.x, c.y, c.z]));
         }
         self.dead_bookkeeping(i)?;
         // ft_80088C5C(gobj), the two KO voices (ft_data->x4C_sfx x4 / x8), and ft_PlaySFX(0x61)

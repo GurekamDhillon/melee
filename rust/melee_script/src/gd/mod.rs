@@ -8,20 +8,34 @@ pub mod arena;
 pub mod bench;
 pub mod camera;
 pub mod caps;
+pub mod contacts;
+pub mod cpu_ctl;
 pub mod crit;
+pub mod deadline;
+pub mod echo;
+pub mod entity;
 pub mod combo;
 pub mod core;
 pub mod fighter;
+pub mod flycam;
+pub mod fmod;
+pub mod frontend;
+pub mod hit_rules;
 pub mod history;
 pub mod lab;
+pub mod kit;
 pub mod labmisc;
 pub mod labstate;
 pub mod mods;
 pub mod perf;
 pub mod pad;
 pub mod players;
+pub mod present;
 pub mod rec;
 pub mod savestate;
+pub mod shock;
+pub mod skill;
+pub mod zones;
 
 /// `gs_buttons` (only these twelve appear in `gd.buttons`).
 pub const BUTTONS: &[(&str, u32)] = &[
@@ -48,6 +62,19 @@ pub fn register_all(e: &Engine, gd: &Table) -> LuaResult<()> {
     camera::register(e, gd)?;
     arena::register(e, gd)?;
     caps::register(e, gd)?;
+    hit_rules::register(e, gd)?;
+    entity::register(e, gd)?;
+    echo::register(e, gd)?;
+    zones::register(e, gd)?;
+    deadline::register(e, gd)?;
+    fmod::register(e, gd)?;
+    frontend::register(e, gd)?;
+    present::register(e, gd)?;
+    cpu_ctl::register(e, gd)?;
+    flycam::register(e, gd)?;
+    contacts::register(e, gd)?;
+    shock::register(e, gd)?;
+    skill::register(e, gd)?;
     bench::register(e, gd)?;
     crit::register(e, gd)?;
     mods::register(e, gd)?;
@@ -64,15 +91,12 @@ pub fn register_all(e: &Engine, gd: &Table) -> LuaResult<()> {
     Ok(())
 }
 
-/// `gs_push_kit`: the kit art table. The kit (gw_kit.c) is not ported yet; scripts get the table with no entries.
-pub fn push_kit(lua: &Lua) -> LuaResult<Table> {
-    lua.create_table()
-}
-
 /// `gs_push_ui`: the Atlas UI table (gw_script_ui*.inc), not ported yet.
 pub fn push_ui(lua: &Lua) -> LuaResult<Table> {
     lua.create_table()
 }
+
+pub use kit::push_kit;
 
 // ---- table builders (gs_setnum / gs_setint / gs_setstr / gs_setbool)
 pub(crate) trait TableExt {

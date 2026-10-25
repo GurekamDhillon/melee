@@ -32,6 +32,7 @@ impl State {
 
     /// `gs_slot_restore`
     pub fn slot_restore(&mut self, s: SaveSlot) {
+        self.contacts_reset("state loaded or rewound; watcher cancelled");
         self.match_frame = s.match_frame;
         self.last_action = s.last_action;
         self.state_frame = s.state_frame;

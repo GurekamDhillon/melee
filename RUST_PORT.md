@@ -1147,3 +1147,21 @@ rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_In
 - Round 4 (plat-play, re-verify after merging port/platform-integ): full_loop.txt (1359 ticks, to results, time-up draw) and
   pause_quit_rematch.txt (1563 ticks, two matches) re-run hands-off with MELEE_PAD_IGNORE_ADAPTER=1, unfocused window, `--shots`; all
   screens captured (build/r2, disc art, not committed). Still stand-ins: ui.rs menus, 7 fighters, 4 stages, sim halts on unported fighter states.
+
+## Platform track, render proof (plat-render, round 1, 2026-10-25)
+- Method: C shots from `_build/agents/plat-render/pad_cam.lua` (`gd.screenshot` at match frames) vs `melee view-golden` shots
+  (`tools/rust-port/shotcmp.py`, C shot box-downscaled to 640x480). Alignment: Rust tick k = C match frame k+1 (the match camera is
+  bit-identical: `RCAM k` == C `CAM k+1`, e.g. 1499/1500 eye 18.18673 29.97416 152.68147), and the C screenshot is written for the frame
+  after its request (label n shows frame n+1 at 1..600; the CAM log's "engine frame" offset is not the shot's frame). Run:
+  `MELEE_VIEW_SKIP=1 rv.sh DIR 1510 0,60,120,300,600,900,1200,1500; shotcmp.py cshots2 DIR 1=1 60=61 120=121 ...`.
+- Fixed: the Ready/GO HUD drew `ScInfCnt_scene_models[1]` ("Sudden Death"); VS uses [3] (Ready) then [4] (Go!, created when Ready ends
+  at frame 85, `fn_8016B7F8`). Mean abs error (0..255) before -> after: f60 17.2 -> 10.6, f120 32.2 -> 13.0.
+- Added `ps_view.rs`: `psDispParticles` over the sim's native `PsSystem` (sort, blend, alpha compare, TEV by kind, tex + TLUT loads,
+  camera-facing/rotated/trail quads, points). Verified drawing (stage star sprites, hit sparks). AppSRT particles, point batching,
+  fog and light-mask diffuse are not ported.
+- Current per-frame error (mean abs, within16 %): f1 14.6/79.7, f60 10.6/68.6, f120 13.0/51.6, f300 22.2/27.9, f600 19.6/31.9,
+  f900 30.0/33.0, f1200 38.3/13.4, f1500 44.3/6.7. Biggest remaining differences: (1) the FD backdrop's Milky Way dust band, shooting
+  star line and magenta haze (hundreds of small particles in C; the sim spawns one stage generator, ~15-30 particles: grAnime joint
+  selection for the bg generators, "TODO group2 granime"), (2) P1/P2 name tags and the Ready-time fighter spawn glows (ifnametag, effects),
+  (3) frames 900+ also differ in sprite timing (shot frame uncertain +-3). Not yet: shadows, fog, screen flashes.
+- Dev aids: MELEE_VIEW_UNHIDE, MELEE_VIEW_PSLOG, MELEE_VIEW_READYLOG, MELEE_VIEW_NOPS.

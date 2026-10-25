@@ -23,7 +23,7 @@ pub struct DataCache {
 }
 
 impl DataCache {
-    fn get(&mut self, s: &[u8]) -> GxData {
+    pub(crate) fn get(&mut self, s: &[u8]) -> GxData {
         self.data.entry((s.as_ptr() as usize, s.len())).or_insert_with(|| GxData::from(s)).clone()
     }
 }

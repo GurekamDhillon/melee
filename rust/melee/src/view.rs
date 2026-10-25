@@ -406,6 +406,14 @@ impl MatchRender {
             r.clear_vtx_desc(&mut g);
             r.jobj_disp_all(&mut g, m, &vmtx, mask_of(2), 0);
         }
+        if std::env::var_os("MELEE_VIEW_NOPS").is_none() {
+            // efLib_render_callback: gx link 7 draws particle links 0, 2 and the stage's (3), link 8 draws link 1.
+            let mut ep = 0u64;
+            for (links, sw) in [(0x1 | 0x4 | 0x8u32, 1u32), (0x1 | 0x4 | 0x8, 2), (0x2, 1), (0x2, 2)] {
+                crate::ps_view::disp_particles(g.shim, g.cache, &sim.ps, links, sw, &vmtx, &mut ep);
+            }
+            r.invalidate_all();
+        }
         if std::env::var_os("MELEE_VIEW_NOHUD").is_none() {
             self.hud.draw(r, &mut g, camera);
         }
@@ -439,6 +447,12 @@ impl MatchRender {
                 for id in sim.ps.particles(l) {
                     let p = sim.ps.part(id);
                     *by.entry((l, p.bank, p.tex_group, p.kind)).or_default() += 1;
+                }
+            }
+            for l in 0..melee_runtime::particle::NUM_LINKS {
+                for id in sim.ps.particles(l).into_iter().take(4) {
+                    let p = sim.ps.part(id);
+                    eprintln!("  PSP link {l} bank {} tg {} pose {} kind {:#x} size {:.3} pos {:.1} {:.1} {:.1} prim {:?} cnt {} rot {:.2} appsrt {:?} aCmp {} {} {}", p.bank, p.tex_group, p.pose_num, p.kind, p.size, p.pos.x, p.pos.y, p.pos.z, p.prim_col, p.prim_col_count, p.rotate, p.appsrt, p.a_cmp_mode, p.a_cmp_param1, p.a_cmp_param2);
                 }
             }
             eprintln!("PS frame {} gens {} parts {} | (link,bank,texgrp,kind)=n {:?}", sim.frame, sim.ps.num_gens, sim.ps.num_parts, by);

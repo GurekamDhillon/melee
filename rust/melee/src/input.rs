@@ -548,11 +548,16 @@ pub fn increment_counters(fp: &mut Fighter, can_jump_input: bool) {
 /// animations all end (`lb_8000B09C` false), which runs the end callback `fn_8016B7F8` (GO:
 /// `ftLib_800868A4` unlocks every fighter's input). None: some track loops (never ends).
 pub fn ready_hud_end_frame(ifall: &[u8]) -> Result<Option<f32>, String> {
+    ready_hud_end_frame_of(ifall, 1)
+}
+
+/// `ScInfCnt_scene_models[idx]`'s end frame (see `ready_hud_end_frame`).
+pub fn ready_hud_end_frame_of(ifall: &[u8], idx: u32) -> Result<Option<f32>, String> {
     let a = melee_runtime::dat::DatArchive::parse(ifall).map_err(|e| format!("IfAll: {e}"))?;
     let d = &a.data;
     let be32 = |at: u32| u32::from_be_bytes(d[at as usize..at as usize + 4].try_into().unwrap());
     let models = a.public_offset("ScInfCnt_scene_models").ok_or("IfAll: no ScInfCnt_scene_models")?;
-    let m1 = be32(models + 4);
+    let m1 = be32(models + 4 * idx);
     let (joint, anims) = (be32(m1), be32(m1 + 4));
     if anims == 0 {
         return Ok(Some(0.0));

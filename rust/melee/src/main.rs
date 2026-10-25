@@ -36,6 +36,7 @@ mod effect;
 mod fighter_data;
 mod stage;
 mod vs_match;
+mod movetab;
 mod dynamics;
 mod colanim;
 mod gx_backend;

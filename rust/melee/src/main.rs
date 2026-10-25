@@ -26,6 +26,7 @@ use melee_types::neutral_hash::nh_game;
 use std::io::Write;
 use std::process::ExitCode;
 
+mod crash;
 mod disc;
 mod mex;
 mod cfg;
@@ -148,6 +149,7 @@ fn selftest() {
 }
 
 fn main() -> ExitCode {
+    crash::install();
     let args: std::vec::Vec<String> = std::env::args().skip(1).collect();
     match args.first().map(String::as_str) {
         None | Some("selftest") => {
@@ -190,6 +192,12 @@ fn main() -> ExitCode {
                 }
             }
         }
+        Some("version") => {
+            let line = std::env::current_exe().ok().and_then(|e| std::fs::read_to_string(e.with_file_name("version.txt")).ok()).and_then(|t| t.lines().next().map(str::to_string));
+            println!("melee (rust) {} {}", melee_core::VERSION, line.unwrap_or_else(|| "development build".into()));
+            ExitCode::SUCCESS
+        }
+        Some("crash-test") => crash::crash_test(args.get(1).map(String::as_str).unwrap_or("panic")),
         Some("golden") => golden(&args),
         Some("synctest") => netmatch::synctest(&args),
         Some("netplay") => netplay::netplay(&args),
@@ -313,6 +321,7 @@ fn golden(args: &[String]) -> ExitCode {
         eprintln!("usage: melee golden --iso DISC.iso --out CANDIDATE.csv [--scenario pad_falcon_fox_fd|pad_falcon_wolf_fd] [--mods DIR [--enable id,id]] [--frames N] [--audio [--audio-wav OUT.wav]] [--from-snapshot FILE [--start N]] [--dump-state N:FILE]");
         return ExitCode::from(2);
     };
+    crash::note_disc(&iso);
     let scenario = get("--scenario").unwrap_or_else(|| "pad_falcon_fox_fd".into());
     // gdmods over the disc: --mods DIR [--enable id,id] (else MELEE_MODS_DIR / enabled.txt).
     let mods = match get("--mods") {

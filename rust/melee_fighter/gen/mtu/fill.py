@@ -21,8 +21,8 @@ import gen_tu as gt  # noqa: E402
 # Bitfields whose memory the C build lays out LSB-first (native clang) and the Rust types MSB-first (GC order): a value
 # written through the union's raw member (`x21FC_flag.byte = 1`, `x594_s32 = 0`) reads back differently through the
 # bit members, so those members are not part of the comparison hash (the raw members still are).
-ALIAS_C = r'p->(?:x21FC_flag\.b[0-9]|x594_b[0-9]\w*|x594_bits|x594_pad2?|x596_bits\.\w+|x597_bits)(?!\w)'
-ALIAS_R = r'p\.(?:x21FC_flag\.anon_[0-9]+\.b[0-9]|anon_594\.anon_[0-9]+\.(?:x594_b[0-9]\w*|x594_bits|x594_pad2?|x596_bits\.\w+|x597_bits))'
+ALIAS_C = r'p->(?:x21FC_flag\.b[0-9]|x594_b[0-9]\w*|x594_bits|x594_pad2?|x596_bits\.\w+|x597_bits|mv\.\w+\.\w+\.x?[0-9A-Za-z]*_b[0-9]+(?:_[0-9]+)?)(?!\w)'
+ALIAS_R = r'p\.(?:x21FC_flag\.anon_[0-9]+\.b[0-9]|anon_594\.anon_[0-9]+\.(?:x594_b[0-9]\w*|x594_bits|x594_pad2?|x596_bits\.\w+|x597_bits)|mv\.\w+\.\w+\.(?:set_)?x?[0-9A-Za-z]*_b[0-9]+(?:_[0-9]+)?\(?)'
 
 
 def skip_alias(cdef, rdef):

@@ -700,6 +700,29 @@ pub trait ScriptGame {
     fn fighter_reserve_read(&self, _slot: i32, _entity: i32, _field: i32) -> i32 {
         0
     }
+    /// `gw_ScriptMods_GameEvent`: the online Envoy native triggered rules see every event, even a resimulated frame's
+    fn mods_game_event(&mut self, _what: i32, _a: i32, _b: i32, _c: i32, _d: i32) {}
+    /// `gw_ScriptGame_ActionCategory`: 1 jump .. 8 perfect shield for the motion, 0 none
+    fn action_category(&self, _motion: i32) -> i32 {
+        0
+    }
+    // ---- entity identity (`gw_ScriptGame_EntityField`, `EntityEpoch`, `EntityAddressField`): pc/platform/gw_script_spine_refs.inc
+    /// kind 1 fighter (id = port*2+sub), 2 item, 3 echo, 4 stage object, 5 stage actor. field 0 live, 1 epoch, 2 generation,
+    /// 3 definition, 4 owner fighter id + 1, 5 role bits
+    fn entity_field(&self, _kind: i32, _id: i32, _field: i32) -> i32 {
+        0
+    }
+    fn entity_epoch(&self) -> i32 {
+        0
+    }
+    /// field 0 live, 1 epoch, 2 generation, 3 definition, 6 id of the entity at a native address
+    fn entity_address_field(&self, _kind: i32, _address: i32, _field: i32) -> i32 {
+        0
+    }
+    /// `gw_Snap_Resimulating`: the rollback is replaying a frame (no hooks, no queued events)
+    fn resimulating(&self) -> bool {
+        false
+    }
     // ---- hit rules / fighter status (`gw_ScriptGame_HitRules*`, `FighterStatus`, `HitRuleRead`): pc/platform/gw_script_hit_rules.inc.
     // `entity` is port*2 (+1 for the independent partner). A rule is 16 ints (floats as bits); field 12 is the stable handle.
     fn hit_rules_owner(&self, _entity: i32) -> i32 {

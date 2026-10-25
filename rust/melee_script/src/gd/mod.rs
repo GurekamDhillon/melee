@@ -9,6 +9,7 @@ pub mod bench;
 pub mod camera;
 pub mod caps;
 pub mod crit;
+pub mod entity;
 pub mod combo;
 pub mod core;
 pub mod fighter;
@@ -50,6 +51,7 @@ pub fn register_all(e: &Engine, gd: &Table) -> LuaResult<()> {
     arena::register(e, gd)?;
     caps::register(e, gd)?;
     hit_rules::register(e, gd)?;
+    entity::register(e, gd)?;
     bench::register(e, gd)?;
     crit::register(e, gd)?;
     mods::register(e, gd)?;

@@ -1860,9 +1860,93 @@ fn ftco_800b2790(cx: &mut Cx, me: *mut Fighter) -> R {
     ftco_800adc28(fp)?;
     match fp.cpu.x18 {
         1 => ftco_800aba34(cx, fp)?,
+        2 => ftco_800b658c(cx, fp)?,
+        3 => ftco_800b9020(cx, fp)?,
         c => return Err(format!("ftCo_800B2790: behaviour {c} not ported")),
     }
     cs::ftco_800b49f4(fp);
+    Ok(())
+}
+
+/// `ftCo_CpuClearTargetAndFinish`.
+fn clear_target_and_finish(fp: &mut Fighter) {
+    fp.cpu.x44 = std::ptr::null_mut();
+    fp.cpu.x18 = fp.cpu.x1C;
+    ftco_800a0c8c(fp);
+}
+
+/// `ftCo_800B9020`: behaviour 3, pick and run an attack against the target.
+fn ftco_800b9020(cx: &mut Cx, fp: &mut Fighter) -> R {
+    if fp.cpu.x44.is_null() {
+        clear_target_and_finish(fp);
+        return Ok(());
+    }
+    let k = fp.kind;
+    if k == Ft_Kind_Ness || k == Ft_Kind_Yoshi || k == Ft_Kind_Zelda {
+        return Err(format!("ftCo_800B9020 (kind {k}) not ported"));
+    }
+    if ftco_800b630c(fp)? {
+        neutral_stick(fp);
+        ftco_800a0c8c(fp);
+        fp.cpu.xA4 = 0;
+    } else if fp.cpu.xA4 != 0 {
+        let a4 = fp.cpu.xA4;
+        cx.run_cmdscript(fp, a4);
+        fp.cpu.xA4 = 0;
+    } else if ftco_800b9cbc(cx, fp)? {
+        if fp.cpu.xA4 != 0 {
+            let a4 = fp.cpu.xA4;
+            cx.run_cmdscript(fp, a4);
+            fp.cpu.xA4 = 0;
+            fp.cpu.x90 += 1;
+        } else {
+            clear_target_and_finish(fp);
+        }
+    } else {
+        clear_target_and_finish(fp);
+    }
+    Ok(())
+}
+
+/// `ftCo_800B658C`: behaviour 2, attack the target.
+fn ftco_800b658c(cx: &mut Cx, fp: &mut Fighter) -> R {
+    let t_ptr = fp.cpu.x44;
+    if t_ptr.is_null() {
+        clear_target_and_finish(fp);
+        return Ok(());
+    }
+    if b(fp.cpu.xF8_b6()) && fp.ground_or_air == GA_Ground as _ {
+        let r = cx.rand.randf();
+        if r < 0.05f32 * fp.cpu.level as f32 {
+            fp.cpu.set_xF8_b6(0);
+            if ftco_800ba2e8(cx, fp, unsafe { &*t_ptr }) {
+                return Ok(());
+            }
+        }
+    }
+    let k = fp.kind;
+    if k == Ft_Kind_Ness || k == Ft_Kind_Yoshi || k == Ft_Kind_Samus || k == Ft_Kind_Donkey || k == Ft_Kind_Zelda {
+        return Err(format!("ftCo_800B658C (kind {k}) not ported"));
+    }
+    if ftco_800b630c(fp)? {
+        ftco_800a0c8c(fp);
+        fp.cpu.xA4 = 0;
+        return Ok(());
+    }
+    if fp.cpu.xA4 == 0 {
+        if fp.ground_or_air == GA_Ground as _ && !ftco_800a2c08(fp) {
+            ftco_800a0098(fp);
+            return Ok(());
+        }
+        if !ftco_800b8a9c(cx, fp)? {
+            clear_target_and_finish(fp);
+            return Ok(());
+        }
+    }
+    ftco_800b63d8(cx, fp);
+    let a4 = fp.cpu.xA4;
+    cx.run_cmdscript(fp, a4);
+    fp.cpu.xA4 = 0;
     Ok(())
 }
 

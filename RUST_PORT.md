@@ -1049,7 +1049,6 @@ delegating wrappers; the per-agent notes above are the finer-grained claim.
 | melee_world | 475 | 3 | 0 | 0 | 478 |
 | **total** | **2432** | **184** | **3** | **6** | **2625** |
 
-Before: 2 missing-or-stub-free crates were world/modes/items only partly; the old totals were 1913 verified, 441 unverified,
-55 stub, 56 missing (melee_runtime 378/314/39/37, melee_fighter 444/190/16/19). The remaining 9 stub/missing rows are
-melee_fighter (8) and melee_runtime (1). Note the earlier melee_runtime report counted 41 unported audio/devcom rows; the CSV
+Before: 1989 verified, 525 unverified, 55 stub, 56 missing (melee_runtime 378/314/39/37, melee_fighter 444/190/16/19). The
+remaining 9 stub/missing rows are melee_fighter (8) and melee_runtime (1). Note the earlier melee_runtime report counted 41 unported audio/devcom rows; the CSV
 now reads them as ported-unverified because same-name Rust fns with real bodies exist (name-level, not a test claim).

@@ -986,6 +986,7 @@ impl VsMatch {
             fp.cur_pos.x = sp.pos[0];
             fp.cur_pos.y = sp.pos[1];
             fp.cur_pos.z = sp.pos[2];
+            fp.prev_pos = fp.cur_pos;
             fp.facing_dir = facings[slot as usize];
             // Fighter_UnkInitLoad_80068914: x34_scale.x = Player_GetModelScale (1 in a VS match);
             // Fighter_UnkInitReset: y = x; Fighter_80068E64: z = 1 off Flat Zone.
@@ -1245,9 +1246,9 @@ impl VsMatch {
                 let c = &f.cpu;
                 let off = if c.csP.is_null() { 0 } else { (c.csP as usize).wrapping_sub(c.buffer.as_ptr() as usize) };
                 let fl = u32::from_be_bytes(c.bf_f8);
-                eprintln!("NHC s{} m{} p {:08X} {:08X} v {:08X} {:08X} fc {:08X} b {:X} st {:02X}{:02X} cs {:02X}{:02X} k{} x18 {} x30 {} x34 {} x38 {:08X} x54 {:08X} {:08X} x5C {:08X} h {:08X} {:08X} {:08X} {:08X} x60 {} x7C {} x80 {} x84 {} xC8 {} xEC {} cd {} off {} fl {:08X} xcc {} {} {} {}",
+                eprintln!("NHC s{} m{} p {:08X} {:08X} v {:08X} {:08X} fc {:08X} b {:X} st {:02X}{:02X} cs {:02X}{:02X} k{} x18 {} x30 {} x34 {} x38 {:08X} x54 {:08X} {:08X} x5C {:08X} h {:08X} {:08X} {:08X} {:08X} x60 {} x7C {} x80 {} x84 {} xC8 {} xEC {} cd {} off {} fl {:08X} xcc {} {} {} {} H {:08X}",
                     s, f.motion_id, f.cur_pos.x.to_bits(), f.cur_pos.y.to_bits(), f.self_vel.x.to_bits(), f.self_vel.y.to_bits(), f.x3E4_fighterCmdScript.frame_count.to_bits(), c.buttons,
-                    c.lstick.x as u8, c.lstick.y as u8, c.cstick.x as u8, c.cstick.y as u8, c.kind, c.x18, c.x30, c.x34, c.x38.to_bits(), c.x54.x.to_bits(), c.x54.y.to_bits(), c.x5C.to_bits(), c.x55C.to_bits(), c.x560.to_bits(), c.x564.to_bits(), c.x568.to_bits(), c.x60, c.x7C, c.x80, c.x84, c.xC8, c.xEC, c.command_duration, off, fl, c.xCC_array[0], c.xCC_array[1], c.xCC_array[2], c.xCC_array[3]);
+                    c.lstick.x as u8, c.lstick.y as u8, c.cstick.x as u8, c.cstick.y as u8, c.kind, c.x18, c.x30, c.x34, c.x38.to_bits(), c.x54.x.to_bits(), c.x54.y.to_bits(), c.x5C.to_bits(), c.x55C.to_bits(), c.x560.to_bits(), c.x564.to_bits(), c.x568.to_bits(), c.x60, c.x7C, c.x80, c.x84, c.xC8, c.xEC, c.command_duration, off, fl, c.xCC_array[0], c.xCC_array[1], c.xCC_array[2], c.xCC_array[3], w.slots[s as usize].unwrap_or(0));
             }
             if std::env::var_os("MELEE_GOLDEN_PJ").is_some() && p.slot == 0 {
                 static N: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
@@ -1336,6 +1337,12 @@ impl VsMatch {
             let p = &mut self.players[pi];
             if p.follower {
                 continue;
+            }
+            if p.fp.x221F_b3() == 0 {
+                // Fighter_8006A360: pos_delta = cur_pos - prev_pos; prev_pos = cur_pos.
+                let (c, pv) = (p.fp.cur_pos, p.fp.prev_pos);
+                p.fp.pos_delta = melee_types::Vec { x: c.x - pv.x, y: c.y - pv.y, z: c.z - pv.z };
+                p.fp.prev_pos = c;
             }
             if p.animating {
                 // ftAnim_8006E9B4, no blend (x8A4 == 0), x594_b0 / x594_b2 clear.

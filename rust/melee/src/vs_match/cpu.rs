@@ -1401,6 +1401,9 @@ fn ftco_800b4ab0(cx: &mut Cx, fp: &mut Fighter, target: &Fighter, list: Option<s
     fp.cpu.x6C.x = 0.0;
     // (f32)(0.5 * x570 + 0.5): FMA f64.
     let half_range = 0.5f64.mul_add(fp.cpu.x570 as f64, 0.5) as f32;
+    if std::env::var_os("MELEE_GOLDEN_RNG").is_some() && fp.player_id == 1 {
+        eprintln!("A4 pd {:08X} {:08X} tpd {:08X} {:08X} lv {} xec {} x7C {} list {}", fp.pos_delta.x.to_bits(), fp.pos_delta.y.to_bits(), target.pos_delta.x.to_bits(), target.pos_delta.y.to_bits(), fp.cpu.level, fp.cpu.xEC, fp.cpu.x7C, list.is_some() as i32);
+    }
     let Some(list) = list else { return Ok(0) };
     let fp_term_neg = -fp.co_attrs.terminal_velocity;
     let tgt_term_neg = -target.co_attrs.terminal_velocity;

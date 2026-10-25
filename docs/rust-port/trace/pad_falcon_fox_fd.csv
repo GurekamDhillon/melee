@@ -1349,7 +1349,7 @@ plAttack_80037590,src/melee/pl/plattack.c,0,1,ported+verified,melee_fighter
 plAttack_8003759C,src/melee/pl/plattack.c,0,6,ported+verified,melee_fighter
 plAttack_80037B08,src/melee/pl/plattack.c,0,194,ported+verified,melee_fighter
 Player_80031AD0,src/melee/pl/player.c,0,2,ported+verified,melee_fighter
-Player_80031CB0,src/melee/pl/player.c,0,2,ported-unverified,melee_fighter
+Player_80031CB0,src/melee/pl/player.c,0,2,ported+verified,melee_fighter
 Player_8003248C,src/melee/pl/player.c,0,19375,ported+verified,melee_fighter
 Player_80032768,src/melee/pl/player.c,0,7,ported+verified,melee_fighter
 Player_80032828,src/melee/pl/player.c,0,3228,ported+verified,melee_modes
@@ -1385,14 +1385,14 @@ Player_GetPlayerId,src/melee/pl/player.c,0,24,ported+verified,melee_modes
 Player_GetPlayerSlotType,src/melee/pl/player.c,0,77630,ported+verified,melee_modes
 Player_GetPlayerState,src/melee/pl/player.c,0,3228,ported+verified,melee_world
 Player_GetSelfDestructs,src/melee/pl/player.c,0,3228,ported+verified,melee_fighter
-Player_GetStaleMoveTableIndexPtr,src/melee/pl/player.c,0,130,ported-unverified,melee_fighter
+Player_GetStaleMoveTableIndexPtr,src/melee/pl/player.c,0,130,ported+verified,melee_fighter
 Player_GetStaleMoveTableIndexPtr2,src/melee/pl/player.c,0,19570,ported+verified,melee_fighter
 Player_GetStocks,src/melee/pl/player.c,0,6483,ported+verified,melee_modes
 Player_GetTeam,src/melee/pl/player.c,0,38,ported+verified,melee_modes
 Player_GetUnk4C,src/melee/pl/player.c,0,2,ported+verified,melee_fighter
 Player_GetUnk6A8Ptr,src/melee/pl/player.c,0,7933,ported+verified,melee_fighter
 Player_InitAllPlayers,src/melee/pl/player.c,0,1,ported+verified,melee_fighter
-Player_InitOrResetPlayer,src/melee/pl/player.c,0,6,ported-unverified,melee_fighter
+Player_InitOrResetPlayer,src/melee/pl/player.c,0,6,ported+verified,melee_fighter
 Player_LoadPlayerCoords,src/melee/pl/player.c,0,2855,ported+verified,melee_world
 Player_SetAttackRatio,src/melee/pl/player.c,0,6,ported+verified,melee_fighter
 Player_SetControllerIndex,src/melee/pl/player.c,0,6,ported+verified,melee_fighter
@@ -1988,7 +1988,7 @@ mpLib_800536CC_Floor,src/melee/mp/mplib.c,78,2966,ported+verified,melee_world
 mpLib_800569EC,src/melee/mp/mplib.c,78,1813,ported+verified,melee_chara
 mpLineGetKind,src/melee/mp/mplib.c,78,1495,ported+verified,melee_world
 HSD_PadRumbleInterpret1,src/sysdolphin/baselib/rumble.c,78,597,ported-unverified,melee_runtime
-fn_8008998C,src/melee/ft/ft_0899.c,79,1012,ported-unverified,melee_fighter
+fn_8008998C,src/melee/ft/ft_0899.c,79,1012,ported+verified,melee_fighter
 ft_8008A1B8,src/melee/ft/ft_0899.c,79,82,ported+verified,melee_fighter
 ftAction_800727C8,src/melee/ft/ftaction.c,79,72,ported+verified,melee_fighter
 ftAction_80072C6C,src/melee/ft/ftaction.c,79,82,ported+verified,melee_fighter

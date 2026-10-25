@@ -30,6 +30,8 @@ static u32 E(HSD_GObj* g) { return g == NULL ? 0u : g == &ga ? 1u : g == &gb ? 2
 
 void __assert(const char* file, u32 line, const char* cond) { (void) file; (void) line; (void) cond; for (;;) {} }
 void OSReport(char* fmt, ...) { (void) fmt; }
+void GenoDefine_InitKinds(void) { T(0x240u); }
+void ftData_800855C8(FighterKind k, u8 c) { T(0x250u + (u32) k); T((u32) c); }
 float ScriptGame_ModValue(int slot, int field, float base) { T(0x220u + (u32) slot * 2u + (u32) field); T(B(base)); return base; }
 
 void ftLib_800867E8(HSD_GObj* g) { T(0x10u + E(g)); }
@@ -151,7 +153,7 @@ static void dump(int slot)
     printf(" e%x%x %d\n", E(p->player_entity[0]), E(p->player_entity[1]), p->struct_func != NULL);
 }
 
-#define NOPS 144
+#define NOPS 147
 
 int main(void)
 {
@@ -314,6 +316,9 @@ int main(void)
             case 141: { int c = (int) (rnd() % 40); Player_MexSetMapping(c, (int) (rnd() % 300)); break; }
             case 142: { int c = (int) (rnd() % 40); Player_MexSetPartner(c, (int) (rnd() % 300)); break; }
             case 143: Player_ForgetEntities(); break;
+            case 144: { CharacterKind c = (CharacterKind) (rnd() % 40); Player_80031CB0(c, (u8) rnd()); break; }
+            case 145: ret = (u32) ((char*) Player_GetStaleMoveTableIndexPtr(slot) - (char*) &player_slots[slot]); break;
+            case 146: Player_InitOrResetPlayer(slot); break;
             }
             printf("%d %d %u %d %x %x %x %x %x\n", k, step, op, slot, ret, B(v.x), B(v.y), B(v.z), g_tr);
             dump(slot);

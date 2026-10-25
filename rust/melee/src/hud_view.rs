@@ -216,10 +216,13 @@ impl Hud {
 
     /// `fn_802FCC44`: each slot's tag screen position (`lbVector_WorldToScreen` of the fighter's head, 640x480),
     /// or `None` when the tag is hidden. The tags are removed when the Go element is created (`un_802FD428`).
-    pub fn set_nametags(&mut self, pos: &[Option<(f32, f32)>]) {
+    /// `rebirth[i]` is `Player_80036058` (`ftLib_80086F4C`: the fighter is on its rebirth platform): after the
+    /// Go element the tag stays visible only then (`un_804D6D70` cleared, no custom name tag).
+    pub fn set_nametags(&mut self, pos: &[Option<(f32, f32)>], rebirth: &[bool]) {
         let live = self.go.is_none();
+        if std::env::var_os("MELEE_VIEW_TAGLOG").is_some() { eprintln!("SETTAGS live {live} pos {pos:?} rebirth {rebirth:?}"); }
         for (i, (t, p)) in self.tags.iter_mut().enumerate() {
-            *p = if live { pos.get(i).copied().flatten() } else { None };
+            *p = if live || rebirth.get(i).copied().unwrap_or(false) { pos.get(i).copied().flatten() } else { None };
             if let Some((x, y)) = *p {
                 t.set_translate(0, 0, Vec3 { x, y: -y, z: 0.0 });
             }
@@ -275,7 +278,9 @@ impl Hud {
             models.push((self.ready.overrides(), self.ready.disp_joints(0)));
         }
         if let Some((g, n)) = &mut self.go {
-            if self.file.go_end.map_or(true, |e| *n <= e) {
+            // The C shows nothing for the element's first three frames (C shots 84-86 of the FD match; it appears
+            // fully settled on 87), so the zoom-in frames are not drawn.
+            if *n >= 5.0 && self.file.go_end.map_or(true, |e| *n <= e) {
                 models.push((g.overrides(), g.disp_joints(0)));
             }
         }
@@ -290,9 +295,12 @@ impl Hud {
         let mut tag_models: Vec<(HashMap<u32, MatOverride>, Vec<DispJoint>)> = Vec::new();
         for (t, p) in &mut self.tags {
             if p.is_some() {
-                tag_models.push((t.overrides(), t.disp_joints(0)));
+                let dj = t.disp_joints(0);
+                if std::env::var_os("MELEE_VIEW_TAGLOG").is_some() { eprintln!("TAGMTX {:?}", dj.iter().map(|j| (j.mtx[0][3], j.mtx[1][3], j.mtx[0][0])).collect::<Vec<_>>()); }
+                tag_models.push((t.overrides(), dj));
             }
         }
+        if std::env::var_os("MELEE_VIEW_TAGLOG").is_some() { eprintln!("TAGDRAW {}", tag_models.len()); }
         if !tag_models.is_empty() {
             let (n, f) = (0.1f32, 32768.0f32);
             let (top, bottom, left, right) = (0.0f32, -480.0f32, 0.0f32, 640.0f32);

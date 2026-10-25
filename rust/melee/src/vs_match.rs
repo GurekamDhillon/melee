@@ -132,6 +132,8 @@ pub const STKIND_FD: i32 = 0x20;
 pub const STKIND_BF: i32 = 0x1F;
 pub const STKIND_GREENS: i32 = 0x11;
 pub const STKIND_STORY: i32 = 0x08;
+pub const STKIND_FOUNTAIN: i32 = 0x02;
+pub const STKIND_DL64: i32 = 0x1C;
 /// efLib's particle procs (eflib.c `efLib_particles_proc_main` / `_aux`, TARGET_PC masks).
 const PTCL_MASK_MAIN: u32 = 0x20000 | 0x40000;
 const PTCL_MASK_AUX: u32 = 0x10000 | 0x80000;
@@ -462,6 +464,8 @@ pub struct VsMatch {
     stage_map_head: u32,
     /// Debug (snapshot loading): reference Fighter bytes per player.
     keep_ref: Vec<Vec<u8>>,
+    /// `Camera_RequestQuake(kind, pos)` calls of the frame (render only: the view's camera drains them).
+    pub quake_requests: Vec<(u32, [f32; 3])>,
 }
 
 /// `Stage_GetBlastZone*Offset()`: `stage_info.blast_zone.* + cam_info.cam_{x,y}_offset`
@@ -681,6 +685,8 @@ impl VsMatch {
             "GrNBa.dat" => STKIND_BF,
             "GrGr.dat" => STKIND_GREENS,
             "GrSt.dat" => STKIND_STORY,
+            "GrIz.dat" => STKIND_FOUNTAIN,
+            "GrOp.dat" => STKIND_DL64,
             _ => return Err(format!("{stage_file}: only Final Destination's and Battlefield's stage code is wired")),
         };
         let stage_bytes = disc.read(stage_file)?;
@@ -828,7 +834,7 @@ impl VsMatch {
 
         // grLast_OnInit -> grLast_8021A9C4 (map gobj 3) -> grLast_8021B920(1): the level gobjs
         // 4..8 are created in order; gobj 7's on_init is grLast_8021AC30.
-        let last_bg = if stkind == STKIND_GREENS || stkind == STKIND_STORY {
+        let last_bg = if stkind == STKIND_GREENS || stkind == STKIND_STORY || stkind == STKIND_FOUNTAIN || stkind == STKIND_DL64 {
             // Green Greens: no grLast sway; its own stage logic (Whispy, blocks) is not ported.
             None
         } else if stkind == STKIND_BF {
@@ -851,7 +857,7 @@ impl VsMatch {
         let mut seen = std::collections::HashSet::new();
         // FD's grLast animation table; Battlefield's grBattle_OnInit starts gobj 0 and 1's anim 0
         // (grBattle_GObj0/1_Callback0 -> grAnime_801C8138), whose particle tracks are the 4 stage gens.
-        let dptcl_rows: &[(u32, u32)] = if stkind == STKIND_GREENS || stkind == STKIND_STORY { &[] } else if stkind == STKIND_BF { &[(0, 0), (1, 0)] } else { &[(4, 0), (5, 4), (6, 6), (7, 8), (8, 10), (4, 0), (5, 0), (6, 0), (7, 0), (8, 0)] };
+        let dptcl_rows: &[(u32, u32)] = if stkind == STKIND_GREENS || stkind == STKIND_STORY || stkind == STKIND_FOUNTAIN || stkind == STKIND_DL64 { &[] } else if stkind == STKIND_BF { &[(0, 0), (1, 0)] } else { &[(4, 0), (5, 4), (6, 6), (7, 8), (8, 10), (4, 0), (5, 0), (6, 0), (7, 0), (8, 0)] };
         if std::env::var("MELEE_VIEW_PSLOG").is_ok() {
             for g in 0..12u32 { for an in 0..14u32 { let n = std::panic::catch_unwind(|| crate::stage::dptcl_tracks(&stage, g, an).len()).unwrap_or(0); if n > 0 { eprintln!("DPTCL gobj {g} anim {an}: {n} tracks"); } } }
         }
@@ -1200,7 +1206,7 @@ impl VsMatch {
                 }
             });
         }
-        Ok(Self { players, ground, cg, pads: [input::PadStatus::default(); 4], pad_feed: None, replay_in: None, go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, ko_colors, appsrt_hook_lists, blast, fighter_jobjs: Vec::new(), items: Vec::new(), respawn_points: (4..8).filter_map(|id| points.iter().find(|p| p.id == id).map(|p| Vec3 { x: p.pos[0], y: p.pos[1], z: p.pos[2] })).collect(), respawn_busy: [0; 6], start_shield, stage_data: Arc::new(stage.data.clone()), stage_map_head: stage.public_offset("map_head").unwrap_or(0), keep_ref: Vec::new() })
+        Ok(Self { players, ground, cg, pads: [input::PadStatus::default(); 4], pad_feed: None, replay_in: None, go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, ko_colors, appsrt_hook_lists, blast, fighter_jobjs: Vec::new(), items: Vec::new(), respawn_points: (4..8).filter_map(|id| points.iter().find(|p| p.id == id).map(|p| Vec3 { x: p.pos[0], y: p.pos[1], z: p.pos[2] })).collect(), respawn_busy: [0; 6], start_shield, stage_data: Arc::new(stage.data.clone()), stage_map_head: stage.public_offset("map_head").unwrap_or(0), keep_ref: Vec::new(), quake_requests: Vec::new() })
     }
 
     /// The m-ex fighters' code-run report (crate::mex), one block per such fighter.
@@ -2161,6 +2167,8 @@ impl VsMatch {
             // pl_8003DF44 (the stale-move table's last-KO stamp), ft_PlaySFX and the quake are not hashed.
             fp.set_invisible(1);
             fp.set_x221F_b1(1);
+            let c = fp.cur_pos;
+            self.quake_requests.push((melee_types::QuakeKind_Large, [c.x, c.y, c.z]));
         }
         self.dead_bookkeeping(i)?;
         // ft_80088C5C(gobj), the two KO voices (ft_data->x4C_sfx x4 / x8), and ft_PlaySFX(0x61)

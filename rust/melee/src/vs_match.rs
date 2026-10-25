@@ -36,6 +36,7 @@ pub mod input;
 mod attackair;
 mod cpu;
 mod dashrun;
+mod damage;
 mod fox;
 mod greens;
 mod hit;
@@ -183,6 +184,8 @@ pub struct Player {
     /// `ftData->x30`: the hurtbox capsules (part, a_offset, b_offset, scale).
     pub hurtboxes: Vec<(u32, [f32; 3], [f32; 3], f32)>,
     pub fp: Box<Fighter>,
+    /// The stand-in `HSD_GObj` the ported fighter code takes (`user_data` -> `fp`).
+    pub gobj: Box<melee_types::HSD_GObj>,
     /// An m-ex fighter's ftFunction code (crate::mex), run on `fp` at onLoad / onFrame.
     pub mex: Option<crate::mex::MexFighter>,
     pub entry: EntryVars,
@@ -481,6 +484,8 @@ pub struct VsMatch {
     respawn_points: Vec<Vec3>,
     respawn_busy: [i32; 6],
     start_shield: f32,
+    /// Why a damage hook could not proceed (damage.rs).
+    dmg_err: Option<String>,
 }
 
 /// Green Greens' `grGreens_Init` (the map gobjs' OnInit in order 6, 5 for the draws that matter): the
@@ -786,6 +791,31 @@ impl VsMatch {
         // Leaked: it lives as long as the process, as the C's archive does.
         let cd: melee_types::ftCommonData = *plco.load_at::<melee_types::ftCommonData>(ft_common).get();
         unsafe { melee_fighter::hooks::P_FT_COMMON_DATA = Box::leak(Box::new(cd)) };
+        // Player_80036DD8: pl_804D6470 = *plLoadCommonData (PdPm.dat), plbonus.c's constants.
+        {
+            let pd = DatArchive::parse(&disc.read("PdPm.dat")?).map_err(|e| format!("PdPm.dat: {e}"))?;
+            let at = pd.public_offset("plLoadCommonData").ok_or("PdPm.dat: no plLoadCommonData")?;
+            let root = u32::from_be_bytes(pd.data[at as usize..][..4].try_into().unwrap());
+            let t: melee_types::pl_804D6470_t = *pd.load_at::<melee_types::pl_804D6470_t>(root).get();
+            unsafe { melee_fighter::hooks::PL_804D6470 = Box::leak(Box::new(t)) };
+        }
+        // gCrowdConfig = pData[21] (un_803222EC reads its knockback angle window).
+        {
+            let cc: melee_types::CrowdConfig = *plco.load_at::<melee_types::CrowdConfig>(be(common_root + 4 * 21)).get();
+            unsafe { melee_fighter::tu::fighter::gCrowdConfig = Box::leak(Box::new(cc)) as *mut _ as *mut core::ffi::c_void };
+        }
+        // Fighter_804D6530 = pData[9]: three {Vec2 *shifts, count} rows (the hit model shift, ftCo_80090594).
+        {
+            let t = be(common_root + 4 * 9);
+            let mut v: Vec<*mut melee_types::Vec2> = Vec::new();
+            for k in 0..3u32 {
+                let (arr, n) = (be(t + 8 * k), be(t + 8 * k + 4));
+                let shifts: Vec<melee_types::Vec2> = (0..n).map(|i| melee_types::Vec2 { x: f32::from_bits(be(arr + 8 * i)), y: f32::from_bits(be(arr + 8 * i + 4)) }).collect();
+                v.push(Box::leak(shifts.into_boxed_slice()).as_mut_ptr());
+                v.push(n as usize as *mut melee_types::Vec2);
+            }
+            unsafe { melee_fighter::hooks::FIGHTER_804D6530 = Box::leak(v.into_boxed_slice()).as_mut_ptr() };
+        }
         // plStale_InitAttackInstance and Fighter_804D6548 (PlCo pData[3]: the nine staling decrements).
         melee_fighter::stale::init_attack_instance();
         {
@@ -815,6 +845,7 @@ impl VsMatch {
             // gCrowdConfig = pData[21]; ->horiz_margin (+0x2C) for un_803224DC.
             crowd_horiz_margin: f32::from_bits(be(be(common_root + 4 * 21) + 0x2C)),
         };
+        damage::install_hooks();
         // ft_GetGroundFrictionMultiplier for the ported ftcommon code: FD's material table.
         unsafe { melee_fighter::hooks::GROUND_FRICTION_MUL = Some(fd_ground_friction) };
 
@@ -1188,6 +1219,7 @@ impl VsMatch {
                 follower,
                 hurtboxes: files.hurtboxes(),
                 fp,
+                gobj: Box::new(melee_types::HSD_GObj::zeroed()),
                 mex,
                 entry,
                 skel,
@@ -1275,6 +1307,20 @@ impl VsMatch {
             // ftaction.c:1408 frame_count = cur_anim_frame + x898_unk. Then ft_80084CB0: the
             // entry box is the ECB the probe left.
             let p = players.last_mut().unwrap();
+            p.gobj.user_data = &mut *p.fp as *mut Fighter as *mut core::ffi::c_void;
+            // ftColl_8007B320: the hurt capsules from ftData->x30.
+            for (i, (h, gr)) in p.files.hurtbox_meta().into_iter().enumerate().take(p.fp.hurt_capsules.len()) {
+                let (part, a, b, sc) = p.hurtboxes[i];
+                let c = &mut p.fp.hurt_capsules[i];
+                c.capsule.bone_idx = part as _;
+                c.height = h as _;
+                c.is_grabbable = gr as _;
+                c.capsule.state = melee_types::HurtCapsule_Enabled as _;
+                c.capsule.a_offset = melee_types::Vec { x: a[0], y: a[1], z: a[2] };
+                c.capsule.b_offset = melee_types::Vec { x: b[0], y: b[1], z: b[2] };
+                c.capsule.scale = sc;
+            }
+            p.fp.gobj = &mut *p.gobj;
             // Fighter_Create_Inline2: x2DC/x2E0/x2E4 = the Walk rows' lengths (lbAnim_8001E8F8).
             p.fp.x2DC = p.row_walk[0].as_ref().map_or(0.0, |r| r.0.frames);
             p.fp.x2E0 = p.row_walk[1].as_ref().map_or(0.0, |r| r.0.frames);
@@ -1326,7 +1372,7 @@ impl VsMatch {
             });
         }
         let story_state = if stkind == STKIND_YS { Some(story::Story::new(std::sync::Arc::new(DatArchive::parse(&stage_bytes).map_err(|e| format!("{stage_file}: {e}"))?), &mut joint_mtx)?) } else { None };
-        Ok(Self { item_timer, players, ground, cg, pads: [input::PadStatus::default(); 4], go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, story: story_state, greens: greens_draws.map(move |d| greens::Greens::new(std::sync::Arc::new(stage), d)), aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists, blast, fighter_jobjs: Vec::new(), items: items0, cpu_dist, plco_bytes: std::sync::Arc::from(&plco.data[..]), cpu_tbl: be(common_root + 4 * 22), grkind: if stkind == STKIND_DL { Gr_Kind_Greens as i32 } else if stkind == STKIND_YS { Gr_Kind_Story as i32 } else if stkind == STKIND_BF { Gr_Kind_Battle as i32 } else { Gr_Kind_Last as i32 }, respawn_points: (4..8).filter_map(|id| points.iter().find(|p| p.id == id).map(|p| Vec3 { x: p.pos[0], y: p.pos[1], z: p.pos[2] })).collect(), respawn_busy: [0; 6], start_shield, per_slot_spawn: stkind == STKIND_BF })
+        Ok(Self { item_timer, players, ground, cg, pads: [input::PadStatus::default(); 4], go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, story: story_state, greens: greens_draws.map(move |d| greens::Greens::new(std::sync::Arc::new(stage), d)), aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists, blast, fighter_jobjs: Vec::new(), items: items0, cpu_dist, plco_bytes: std::sync::Arc::from(&plco.data[..]), cpu_tbl: be(common_root + 4 * 22), grkind: if stkind == STKIND_DL { Gr_Kind_Greens as i32 } else if stkind == STKIND_YS { Gr_Kind_Story as i32 } else if stkind == STKIND_BF { Gr_Kind_Battle as i32 } else { Gr_Kind_Last as i32 }, respawn_points: (4..8).filter_map(|id| points.iter().find(|p| p.id == id).map(|p| Vec3 { x: p.pos[0], y: p.pos[1], z: p.pos[2] })).collect(), respawn_busy: [0; 6], start_shield, per_slot_spawn: stkind == STKIND_BF, dmg_err: None })
     }
 
     /// The m-ex fighters' code-run report (crate::mex), one block per such fighter.
@@ -4773,7 +4819,13 @@ fn change_motion_state_full(p: &mut Player, msid: i32, row: Option<&(AnimRow, Fi
 /// (x594 = 0, the AObjs dropped, no script): the same as a state without a row. The guard states
 /// pose the body themselves (`ftCo_80091E78`).
 fn change_motion_state_ext(p: &mut Player, msid: i32, row: Option<&(AnimRow, FigaTree)>, anim_start: f32, anim_speed: f32, skip_anim: bool, rand: &mut HsdRand) -> Result<(), String> {
-    let row = if skip_anim { None } else { row };
+    change_motion_state_flags(p, msid, row, anim_start, anim_speed, if skip_anim { melee_types::Ft_MF_SkipAnim as u32 } else { 0 }, rand)
+}
+
+/// `Fighter_ChangeMotionState(gobj, msid, flags, anim_start, anim_speed, 0.0, NULL)`: `flags` is the caller's
+/// `Ft_MF_*` OR the motion state's own `x4_flags` (the C tests both through one word).
+fn change_motion_state_flags(p: &mut Player, msid: i32, row: Option<&(AnimRow, FigaTree)>, anim_start: f32, anim_speed: f32, flags: u32, rand: &mut HsdRand) -> Result<(), String> {
+    let row = if flags & melee_types::Ft_MF_SkipAnim as u32 != 0 { None } else { row };
     // efAsync_QueueFlush(gobj, &fp->x60C) (newest first) and, with x2219_b0 and no
     // Ft_MF_KeepGfx, ftCommon_8007DB24 (efLib_DestroyAll): replayed at s_link 9 (`ef_ops`).
     for q in std::mem::take(&mut p.ef_queue).into_iter().rev() {
@@ -4816,6 +4868,53 @@ fn change_motion_state_ext(p: &mut Player, msid: i32, row: Option<&(AnimRow, Fig
     if fp.ground_or_air == melee_types::GA_Ground {
         fp.set_x2224_b1(0);
     }
+    // The rest of the clears of Fighter_ChangeMotionState (fighter.c ~1380..1500).
+    if flags & melee_types::Ft_MF_SkipThrowException as u32 == 0 {
+        unsafe { fp.x1064_thrownHitbox.anon_134.owner = std::ptr::null_mut() };
+    }
+    if flags & melee_types::Ft_MF_SkipHitStun as u32 == 0 && fp.x221C_b6() != 0 {
+        fp.set_x221C_b6(0);
+        fp.x2098 = melee_fighter::hooks::common_data().x4CC as _;
+    }
+    fp.dmg.x182c_behavior = 1.0;
+    fp.dmg.kb_applied = 0.0;
+    fp.dmg.x18A8 = 0.0;
+    fp.dmg.armor1 = 0.0;
+    fp.dmg.x18a0 = 0.0;
+    fp.anon_221b.set_x221B_b0(0);
+    fp.shield_unk0 = 0.0;
+    fp.shield_unk1 = 0.0;
+    fp.x1A6A = 0;
+    fp.set_x221D_b7(0);
+    fp.set_x221E_b5(0);
+    fp.set_x221E_b6(0);
+    fp.set_x2220_b3(0);
+    fp.set_x2220_b7(0);
+    fp.set_x2223_b0(0);
+    fp.set_x2222_b3(0);
+    fp.set_x2224_b5(0);
+    fp.set_x2225_b1(0);
+    fp.set_x2225_b4(0);
+    fp.set_x2224_b4(0);
+    fp.set_x2222_b7(0);
+    fp.smash_attrs.x2138_smashSinceHitbox = -1.0;
+    fp.x100 = if flags & melee_types::Ft_MF_UnkUpdatePhys as u32 != 0 { 0.0 } else { -1.0 };
+    if flags & melee_types::Ft_MF_KeepSwordTrail as u32 == 0 {
+        fp.x2100 = -1;
+    }
+    if flags & melee_types::Ft_MF_SkipNametagVis as u32 == 0 {
+        fp.x209A = 0;
+    }
+    fp.lstick_angle = 0.0;
+    fp.hitlag_cb = None;
+    fp.post_hitlag_cb = None;
+    fp.pre_hitlag_cb = None;
+    fp.take_dmg_cb = None;
+    fp.take_dmg_2_cb = None;
+    fp.deal_dmg_cb = None;
+    fp.shield_hit_cb = None;
+    fp.reflect_hit_cb = None;
+    fp.hurtbox_detect_cb = None;
     let root = p.skel.root;
     p.skel.set_translate(root, melee_runtime::mtx::Vec3 { x: fp.cur_pos.x, y: fp.cur_pos.y, z: fp.cur_pos.z });
     // ftAnim_80070F28 (end the hand poses), ftAnim_80070E74 (restart the slots with a default

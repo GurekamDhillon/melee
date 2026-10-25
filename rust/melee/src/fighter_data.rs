@@ -112,6 +112,14 @@ impl FighterFiles {
             .collect()
     }
 
+    /// `ftHurtboxInit.height` / `is_grabbable` of each hurtbox (the entry's +4 / +8).
+    pub fn hurtbox_meta(&self) -> Vec<(i32, u32)> {
+        let d = &self.dat.data;
+        let x30 = be32(d, self.ft_data + 0x30);
+        let (count, inits) = (be32(d, x30) as usize, be32(d, x30 + 4));
+        (0..count as u32).map(|i| (be32(d, inits + i * 0x28 + 4) as i32, be32(d, inits + i * 0x28 + 8))).collect()
+    }
+
     /// `ftData->x0->trophy_scale` (`ftCo_DatAttrs` +0x110; copied to `fp->co_attrs`).
     pub fn trophy_scale(&self) -> f32 {
         use melee_core::gc::GcLayout;

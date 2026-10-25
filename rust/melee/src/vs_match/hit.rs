@@ -32,6 +32,8 @@ struct LogEntry {
     damage: f32,
     /// `entry->size_of_xC`: the raw damage as a count (`unk_count`).
     unk_count: u32,
+    /// `entry->hurt1->height` (the hurtbox that was hit: 0 high, 1 mid, 2 low).
+    hurt_height: i32,
 }
 
 /// The laser's per-box constants, by item kind: (knockback growth, weight-dependent set knockback,
@@ -173,6 +175,7 @@ impl VsMatch {
                     pos: Vec3 { x: hit.hurt_coll_pos.x, y: hit.hurt_coll_pos.y, z: hit.hurt_coll_pos.z },
                     damage: hits.dmg,
                     unk_count: raw as u32,
+                    hurt_height: fp.hurt_capsules[n].height as i32,
                 };
                 // item->xC34_damageDealt, and it_8026FAC4: the shot has hit this fighter.
                 if let ItemClass::FoxLaser { hits: h, .. } = &mut self.items[k].class {
@@ -268,11 +271,30 @@ impl VsMatch {
             -1.0
         };
         fp.dmg.facing_dir_1 = dir;
+        fp.dmg.x1848_kb_angle = e.kb_angle;
+        fp.dmg.x184c_damaged_hurtbox = e.hurt_height;
         fp.dmg.kb_applied = best_kb;
+        fp.dmg.x1854_collpos = melee_types::Vec { x: e.pos.x, y: e.pos.y, z: e.pos.z };
         fp.dmg.x1860_element = e.element as _;
-        if best_kb > 0.0 {
-            return Err(format!("a hit with knockback ({best_kb}): the damage states (ftCo_DamageN, ftCo_80090594) are not ported"));
-        }
+        fp.dmg.x1864 = e.sfx_severity;
+        fp.dmg.x1868_source = std::ptr::null_mut();
+        fp.dmg.x186c = e.damage.to_bits() as i32;
+        // ftColl_8007861C(owner, gobj, 2, item kind, ...): the attacker's identity on the victim.
+        let (owner, ikind) = match self.items[e.item].class {
+            ItemClass::FoxLaser { owner, .. } => (owner, self.items[e.item].kind),
+            _ => unreachable!(),
+        };
+        let (spawn, ply, sub) = {
+            let o = &self.players[owner].fp;
+            (o.x8_spawnNum, o.player_id, o.is_sub_fighter())
+        };
+        let fp = &mut self.players[pi].fp;
+        fp.dmg.x18C0 = if owner == pi { 0 } else { spawn as _ };
+        fp.dmg.x18c4_source_ply = ply as _;
+        fp.dmg.x18C8 = -1;
+        fp.set_x221F_b5(sub as _);
+        fp.dmg.x18CC = 2;
+        fp.dmg.x18D0 = ikind;
         Ok(())
     }
 
@@ -311,37 +333,92 @@ impl VsMatch {
         Ok(())
     }
 
-    /// `Fighter_ProcessHit_8006D1EC` for a hit that left no knockback (`fp->dmg.kb_applied == 0`) or no hit: the
-    /// damage commit and the field resets; the shots that dealt damage are destroyed (the items' s_link 14,
-    /// `OnGiveDamageThink`).
+    /// `Fighter_ProcessHit_8006D1EC` after the shield upkeep: the damage commit, the knockback branch (the
+    /// damage states), the hitlag, and the field resets. Branches other than a laser's hit return `Err`.
     pub(super) fn process_hit_damage(&mut self, pi: usize) -> Result<(), String> {
-        let fp = &mut self.players[pi].fp;
-        if fp.dmg.kb_applied != 0.0 {
-            return Err("Fighter_ProcessHit_8006D1EC: a hit with knockback is not ported".into());
+        {
+            let fp = &self.players[pi].fp;
+            if fp.dmg.x189C_unk_num_frames > 0.0 {
+                return Err("Fighter_ProcessHit_8006D1EC: x189C (ftColl_8007BE3C) is not ported".into());
+            }
+            if fp.dmg.x18a0 != 0.0 || fp.x19A4 != 0 || fp.dmg.int_value != 0 || fp.dmg.x1914 != 0 || fp.dmg.x1924 != 0 {
+                return Err("Fighter_ProcessHit_8006D1EC: a shield / dealt-damage / reflect branch is not ported".into());
+            }
         }
-        if fp.dmg.x18a0 != 0.0 || fp.x19A4 != 0 || fp.dmg.int_value != 0 || fp.dmg.x1914 != 0 || fp.dmg.x1924 != 0 {
-            return Err("Fighter_ProcessHit_8006D1EC: a shield / dealt-damage / reflect branch is not ported".into());
-        }
-        if fp.dmg.x1838_percentTemp != 0.0 {
-            // Fighter_UnkTakeDamage_8006CC30 -> Fighter_TakeDamage_8006CC7C.
+        let msid = self.players[pi].fp.motion_id as i32;
+        let force = self.players[pi].fp.dmg.kb_applied;
+        let mut b1: i32 = 0;
+        let mut b2 = false;
+        if force != 0.0 {
+            let ga = self.players[pi].fp.ground_or_air as i32;
+            let g: *mut HSD_GObj = &mut *self.players[pi].gobj;
+            {
+                let fp = &mut self.players[pi].fp;
+                fp.dmg.x189C_unk_num_frames = 0.0;
+                let d = fp.dmg.x1838_percentTemp;
+                take_damage(fp, d)?;
+                melee_fighter::tu::ftCo_Damage::ftCo_Damage_CalcKnockback(fp);
+                if fp.kind as i32 == melee_types::Ft_Kind_Kirby as i32 {
+                    return Err("ftKb_SpecialN_800F5BA4 (Kirby) is not ported".into());
+                }
+                if fp.take_dmg_2_cb.is_some() {
+                    return Err("take_dmg_2_cb is not ported".into());
+                }
+                if fp.no_kb() != 0 {
+                    return Err("no_kb (Master / Crazy Hand) is not ported".into());
+                }
+                if fp.x1828 != 0 {
+                    return Err("x1828 != 0 (a hit while grabbed) is not ported".into());
+                }
+            }
+            self.with_sim(|_| melee_fighter::tu::ftCo_Damage::ftCo_8008EC90(g));
+            self.take_dmg_err()?;
+            let fp = &mut self.players[pi].fp;
+            let applied = fp.dmg.x183C_applied;
+            b2 = true;
+            melee_fighter::ftdmgfall::ftco_80090594(fp, fp.dmg.x1860_element as i32, applied, msid, ga, fp.x1960_vibrateMult);
             let d = fp.dmg.x1838_percentTemp;
-            if fp.x2226_b4() == 0 || fp.x2226_b3() != 0 {
-                fp.dmg.x1830_percent += d;
-                if fp.metal_timer != 0 {
-                    return Err("Fighter_TakeDamage_8006CC7C: a metal fighter is not ported".into());
-                }
-                if fp.dmg.x1830_percent > 999.0 {
-                    fp.dmg.x1830_percent = 999.0;
-                }
-            }
-            // ftCommon_800804FC: a grounded fighter forgets the last attacker.
-            if fp.ground_or_air == melee_types::GA_Ground {
-                fp.dmg.x18c4_source_ply = 6;
-                fp.dmg.x18C8 = -1;
-            }
+            melee_fighter::ftcommon2::ftcommon_8007ed50(fp, d as i32);
+            b1 = applied;
+        } else if self.players[pi].fp.dmg.x1838_percentTemp != 0.0 {
+            // (the no-knockback hit: Fighter_UnkTakeDamage_8006CC30, ftKb_SpecialN_800F5C34 (Kirby only),
+            // ftCommon_800804FC)
+            let fp = &mut self.players[pi].fp;
+            let d = fp.dmg.x1838_percentTemp;
+            take_damage(fp, d)?;
+            melee_fighter::ftcommon2::ftcommon_800804fc(fp);
         }
-        // ftCo_80090718: dmg.x1908 / x190C (the damage voice) are only set by ftCo_80090594.
-        // The resets at the end of ProcessHit.
+        let cd = melee_fighter::hooks::common_data();
+        let fp = &mut self.players[pi].fp;
+        if fp.x2224_b3() != 0 {
+            return Err("ftCo_800C8D00 (x2224_b3) is not ported".into());
+        }
+        if b1 != 0 {
+            fp.dmg.x195c_hitlag_frames = melee_fighter::ftcommon::calc_hitlag(b1, msid, fp.x1960_vibrateMult);
+            if fp.dmg.x195c_hitlag_frames < fp.x1964 {
+                fp.dmg.x195c_hitlag_frames = fp.x1964;
+            }
+            if fp.dmg.x195c_hitlag_frames > 0.0 {
+                if fp.dmg.x195c_hitlag_frames > cd.x194_unkHitLagFrames {
+                    fp.dmg.x195c_hitlag_frames = cd.x194_unkHitLagFrames;
+                }
+                fp.set_allow_sdi(1);
+                if b2 {
+                    fp.set_x221A_b3(1);
+                }
+                if fp.x2219_b5() == 0 {
+                    enter_hitlag(fp)?;
+                }
+            }
+        } else {
+            melee_fighter::ftdmgfall::ftco_80090718(fp);
+        }
+        if fp.x221A_b0() != 0 || fp.dmg.x1958 != 0.0 {
+            return Err("Fighter_ProcessHit_8006D1EC: x221A_b0 / x1958 (a delayed hitlag) is not ported".into());
+        }
+        if fp.dmg.x1928 != 0.0 {
+            return Err("Fighter_ProcessHit_8006D1EC: x1928 (an attacker shield push) is not ported".into());
+        }
         fp.dmg.x1838_percentTemp = 0.0;
         fp.dmg.x183C_applied = 0;
         fp.x1828 = 0;
@@ -350,8 +427,25 @@ impl VsMatch {
         fp.dmg.x1840 = 0;
         fp.dmg.x1914 = 0;
         fp.dmg.int_value = 0;
+        fp.dmg.x191C = 0.0;
+        fp.unk_gobj = std::ptr::null_mut();
+        fp.set_x221C_b5(0);
+        fp.dmg.x1924 = 0;
+        fp.dmg.x1928 = 0.0;
+        fp.x19A0_shieldDamageTaken = 0;
+        fp.x19A4 = 0;
+        fp.x19A8 = std::ptr::null_mut();
+        fp.ReflectAttr.x1A3C_damageOver = 0;
+        fp.ReflectAttr.x1A2C_reflectHitDirection = 0.0;
+        fp.AbsorbAttr.x1A40_absorbHitDirection = 0.0;
+        fp.AbsorbAttr.x1A44_damageTaken = 0;
+        fp.AbsorbAttr.x1A48_hitsTaken = 0;
         fp.x1960_vibrateMult = 1.0;
         fp.x1964 = 0.0;
+        fp.dmg.x1950 = 0;
+        if (fp.x2219_b6() == 0 || fp.dmg.x18F4 != 0) && fp.x2100 != -1 {
+            return Err("ftCo_800C2FD8 (a sword trail) is not ported".into());
+        }
         Ok(())
     }
 
@@ -440,4 +534,36 @@ impl HudDamage {
             self.shake -= 1;
         }
     }
+}
+
+/// `Fighter_UnkTakeDamage_8006CC30` -> `Fighter_TakeDamage_8006CC7C` (the percent; no metal / stamina).
+fn take_damage(fp: &mut Fighter, d: f32) -> Result<(), String> {
+    if fp.x2226_b4() == 0 || fp.x2226_b3() != 0 {
+        fp.dmg.x1830_percent += d;
+        if fp.metal_timer != 0 {
+            return Err("Fighter_TakeDamage_8006CC7C: a metal fighter is not ported".into());
+        }
+        if fp.x2034 != 0 {
+            return Err("Fighter_TakeDamage_8006CC7C: x2034 is not ported".into());
+        }
+        if fp.dmg.x1830_percent > 999.0 {
+            fp.dmg.x1830_percent = 999.0;
+        }
+    }
+    // ftCommon_8007EA90 (rumble) and ftCo_800C8C84.
+    // ftCommon_800804FC is the caller's for a hit without knockback.
+    Ok(())
+}
+
+/// `Fighter_UnkRecursiveFunc_8006D044` for a fighter without a partner.
+fn enter_hitlag(fp: &mut Fighter) -> Result<(), String> {
+    if let Some(cb) = fp.pre_hitlag_cb {
+        let g = fp.gobj;
+        unsafe { cb(g) };
+    }
+    fp.set_x2219_b5(1);
+    if !fp.x1A5C.is_null() {
+        return Err("Fighter_UnkRecursiveFunc_8006D044: a partner (x1A5C) is not ported".into());
+    }
+    Ok(())
 }

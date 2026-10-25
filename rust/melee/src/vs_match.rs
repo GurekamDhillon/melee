@@ -137,6 +137,11 @@ const EF_ENTRY_BEAM: u32 = 0x24;
 /// `Gr_Kind_Last`'s StKind in a VS match (`grGroundParam->stage_params[0].stkind`).
 pub const STKIND_FD: i32 = 0x20;
 pub const STKIND_BF: i32 = 0x1F;
+/// Fox and Falco share the ftFx code (and the `ftFox_DatAttrs` record).
+fn is_fx_kind(k: FighterKind) -> bool {
+    k == Ft_Kind_Fox || k == melee_types::Ft_Kind_Falco
+}
+
 /// Dream Land (Green Greens, `GrGr.dat`, Gr_Kind_Greens).
 pub const STKIND_DL: i32 = 0x11;
 /// efLib's particle procs (eflib.c `efLib_particles_proc_main` / `_aux`, TARGET_PC masks).
@@ -268,6 +273,10 @@ pub struct Player {
     wait_anims: Vec<(i32, i32)>,
     /// Dynamic bones (tail, hair): `Fighter_8006D9AC` at s_link 0x10.
     dynamics: Option<crate::dynamics::Dynamics>,
+    /// The match's map collision and common data for the state enters that cannot take them as
+    /// arguments (set at the start of every frame; `special_checks`).
+    gc: *mut GroundColl,
+    common_c: EntryCommon,
 }
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -362,7 +371,7 @@ const EF_SPAWN_SYNC: u8 = 99;
 const EF_SPAWN_ATTACH: u8 = 0;
 
 /// `p_ftCommonData` words the entry states read (PlCo.dat `ftLoadCommonData`, ft/types.h).
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Default)]
 struct EntryCommon {
     x6bc: i32,
     x6c0: i32,
@@ -1086,6 +1095,8 @@ impl VsMatch {
             };
             players.push(Player {
                 dynamics,
+                gc: std::ptr::null_mut(),
+                common_c: Default::default(),
                 slot,
                 follower,
                 hurtboxes: files.hurtboxes(),
@@ -1127,7 +1138,7 @@ impl VsMatch {
                 } else {
                     None
                 },
-                fx_attrs: if kind == Ft_Kind_Fox {
+                fx_attrs: if is_fx_kind(kind) {
                     let x4 = be32(&files.dat.data, files.ft_data + 4);
                     Some(*files.dat.load_at::<melee_types::ftFox_DatAttrs>(x4).get())
                 } else {
@@ -1305,6 +1316,10 @@ impl VsMatch {
     /// proc, then every fighter's s_link 3 proc, ...). Err: the frame needs an unported state.
     fn fighters(&mut self) -> Result<(), String> {
         let c = self.common;
+        for p in &mut self.players {
+            p.gc = &mut self.ground;
+            p.common_c = c;
+        }
         // Ground_801C1CD0 (every map gobj's s_link 1 proc): `mpColl_804D64AC += 1`, so each
         // CollData's first substep of the frame (x38 != the counter) takes the Remap variants.
         self.cg.x804d64ac = self.cg.x804d64ac.wrapping_add(1);
@@ -1495,7 +1510,7 @@ impl VsMatch {
                     }
                 }
                 FTCO_MS_OTTOTTO_WAIT => {} // ftCo_OttottoWait_Anim is empty
-                m if kind == Ft_Kind_Fox && fox::is_fox_special_n(m) => fox::anim(p, &mut self.rand)?,
+                m if is_fx_kind(kind) && fox::is_fox_special_n(m) => fox::anim(p, &mut self.rand)?,
                 m if kind == melee_types::Ft_Kind_Seak && sheik::is_sheik_special_n(m) => sheik::anim(p, &mut self.rand)?,
                 m if is_jump_motion(m) => {
                     // ftCo_Jump_Anim.
@@ -1733,7 +1748,7 @@ impl VsMatch {
                 }
                 rebirth::FTCO_MS_SLEEP => {}
                 m if p.fp.kind == melee_types::Ft_Kind_Seak && sheik::is_sheik_special_n(m) => sheik::phys(p),
-                FOX_AIR_N_START | FOX_AIR_N_LOOP | FOX_AIR_N_END if p.fp.kind == Ft_Kind_Fox => {
+                FOX_AIR_N_START | FOX_AIR_N_LOOP | FOX_AIR_N_END if is_fx_kind(p.fp.kind) => {
                     // ftFx_SpecialAirN*_Phys -> ft_80084DB0.
                     let f = &mut *p.fp;
                     fc::check_fall_fast(f);
@@ -1745,7 +1760,7 @@ impl VsMatch {
                     }
                     fc::calc_self_accel_drift(f);
                 }
-                m if m == FTCO_MS_LANDING || is_landing_air(m) || m == FTCO_MS_TURN || m == FTCO_MS_WAIT || is_guard_motion(m) || m == FTCO_MS_KNEE_BEND || (p.fp.kind == Ft_Kind_Fox && (fox::FX_MS_SPECIAL_N_START..=fox::FX_MS_SPECIAL_N_END).contains(&m)) => {
+                m if m == FTCO_MS_LANDING || is_landing_air(m) || m == FTCO_MS_TURN || m == FTCO_MS_WAIT || is_guard_motion(m) || m == FTCO_MS_KNEE_BEND || (is_fx_kind(p.fp.kind) && (fox::FX_MS_SPECIAL_N_START..=fox::FX_MS_SPECIAL_N_END).contains(&m)) => {
                     // (Wait: then ftColl_8007AEE0, a hurtbox reset; not hashed.)
                     // ftCo_Landing_Phys / ftCo_Turn_Phys -> ft_80084F3C: ground friction, then the
                     // self velocity along the floor.
@@ -1938,13 +1953,13 @@ impl VsMatch {
                         }
                     }
                 }
-                FOX_AIR_N_START | FOX_AIR_N_LOOP | FOX_AIR_N_END if p.fp.kind == Ft_Kind_Fox => {
+                FOX_AIR_N_START | FOX_AIR_N_LOOP | FOX_AIR_N_END if is_fx_kind(p.fp.kind) => {
                     // ftCo_AirCatchHit_Coll -> ft_80083090(gobj, ftCo_80096CC8, ftCo_80096D28).
                     if ft_800831cc(&mut self.ground, &mut self.cg, p)? {
                         return Err("ftCo_80096D28 (SpecialAirN landing) not ported".into());
                     }
                 }
-                m if m == FTCO_MS_TURN || m == FTCO_MS_KNEE_BEND || is_guard_motion(m) || (p.fp.kind == Ft_Kind_Fox && (fox::FX_MS_SPECIAL_N_START..=fox::FX_MS_SPECIAL_N_END).contains(&m)) => {
+                m if m == FTCO_MS_TURN || m == FTCO_MS_KNEE_BEND || is_guard_motion(m) || (is_fx_kind(p.fp.kind) && (fox::FX_MS_SPECIAL_N_START..=fox::FX_MS_SPECIAL_N_END).contains(&m)) => {
                     // ftCo_Turn_Coll -> ft_80083F88 / the guard states' ft_800845B4: ft_80082708
                     // (mpColl_8004B108); no floor -> Fall (a ledge slip -> ftCo_8009F39C).
                     let joints = {
@@ -2715,7 +2730,7 @@ fn input_cb(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         m if is_guard_motion(m) => guard_iasa(p, rand),
         FTCO_MS_KNEE_BEND => kneebend_iasa(p),
         FTCO_MS_OTTOTTO | FTCO_MS_OTTOTTO_WAIT => ottotto_iasa(p, rand),
-        m if p.fp.kind == Ft_Kind_Fox && fox::is_fox_special_n(m) => {
+        m if is_fx_kind(p.fp.kind) && fox::is_fox_special_n(m) => {
             fox::iasa(p);
             Ok(())
         }
@@ -2863,6 +2878,10 @@ fn special_checks(p: &mut Player, rand: &mut HsdRand) -> Result<bool, String> {
     if fp.x689 == 0 {
         if fp.kind == melee_types::Ft_Kind_Seak {
             sheik::special_n_enter(p, false, rand)?;
+            return Ok(true);
+        }
+        if is_fx_kind(fp.kind) {
+            fox::special_n_enter(p, false, rand)?;
             return Ok(true);
         }
         return Err(format!("player {who}: ftCo_800D6824 (neutral B, kind {}) not ported", fp.kind));
@@ -3325,7 +3344,7 @@ fn special_air_check(p: &mut Player, rand: &mut HsdRand) -> Result<bool, String>
     if fc::abs_c(fp.input.lstick[0].x) >= cd.x218 {
         return Err(format!("player {who}: side-B in the air (ftData_SpecialAirS) not ported"));
     }
-    if fp.kind != Ft_Kind_Fox && fp.kind != melee_types::Ft_Kind_Seak {
+    if !is_fx_kind(fp.kind) && fp.kind != melee_types::Ft_Kind_Seak {
         return Err(format!("player {who}: neutral B in the air (kind {}) not ported", fp.kind));
     }
     // The turnaround on a fresh stick flick.

@@ -86,13 +86,19 @@ pub fn special_n_enter(p: &mut Player, air: bool, rand: &mut HsdRand) -> Result<
     let da = p.fx_attrs.ok_or("no Fox attrs")?;
     let (msid, smid) = if air { (FX_MS_SPECIAL_AIR_N_START, FX_SM_SPECIAL_N_START + 3) } else { (FX_MS_SPECIAL_N_START, FX_SM_SPECIAL_N_START) };
     if !air {
-        return Err(format!("player {}: ftFx_SpecialN_Enter on the ground (ftCommon_8007D7FC) not wired", p.slot + 1));
+        // ftCommon_8007D7FC(fp).
+        let (g, c) = (unsafe { &mut *p.gc }, p.common_c);
+        ftcommon_8007d7fc(g, p, c)?;
     }
     let row = load_row(p, smid)?;
     change_motion_state(p, msid, row.as_ref(), rand)?;
     // ftFox_SpecialN_InitializeState: Fighter_ClearCmdVars, ftAnim_8006EBA4.
     p.fp.cmd_vars = [0; 4];
     anim_step(p, rand)?;
+    if !air {
+        p.fp.gr_vel = 0.0;
+        p.fp.self_vel = melee_types::Vec { x: 0.0, y: 0.0, z: 0.0 };
+    }
     p.fx.is_loop = false;
     // ftFox_SpecialN_SpawnBlaster: it_802AE8A8(facing_dir, gobj, &cur_pos, RThumbNb, gun kind).
     let pos = p.fp.cur_pos;

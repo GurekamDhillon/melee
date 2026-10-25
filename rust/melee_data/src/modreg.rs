@@ -513,6 +513,12 @@ impl ModSet {
 
     /// `set_load`: scan `dir`; returns the number of mods found.
     pub fn load(dir: &Path, mods_off: bool) -> ModSet {
+        Self::load_with(dir, mods_off, None)
+    }
+
+    /// `load` with the enabled set given by the caller (a `--enable id,id` option) instead of
+    /// enabled.txt: exactly the listed ids (case-insensitive) are enabled at boot.
+    pub fn load_with(dir: &Path, mods_off: bool, enabled: Option<&[String]>) -> ModSet {
         let mut s = ModSet { mods_off, ..Default::default() };
         if dir.as_os_str().is_empty() {
             return s;
@@ -549,7 +555,15 @@ impl ModSet {
             s.load_meta(&mut m, &moddir);
             s.mods.push(m);
         }
-        s.read_enabled();
+        match enabled {
+            None => s.read_enabled(),
+            Some(ids) => {
+                s.explicit_set = true;
+                for m in &mut s.mods {
+                    m.enabled_boot = ids.iter().any(|i| ieq(i.as_bytes(), &m.id));
+                }
+            }
+        }
         s.resolve();
         s
     }

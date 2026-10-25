@@ -742,6 +742,30 @@ pub trait ScriptGame {
     fn zone_event_count(&self) -> i32 {
         0
     }
+    // ---- skill ring, shock, objectives (`gw_ScriptGame_Skill*`, `Shock*`): gw_script_skill.inc, gw_script_shock.inc
+    fn skill_row_count(&self) -> i32 {
+        0
+    }
+    /// ring row idx (0 newest): field 0 frame, 1 kind, 2 entity, 3.. i1 i2 i3 f1 f2 (bits)
+    fn skill_row(&self, _idx: i32, _field: i32) -> i32 {
+        0
+    }
+    /// 0 combo_count, 1 combo_damage (bits), 2 combo_attacker, 3 air_frames, 4 frames_in_state, 5 aerial_hit
+    fn skill_state(&self, _entity: i32, _field: i32) -> i32 {
+        0
+    }
+    /// 0 wave_min_speed (bits), 1 wavedash max airborne, 2 ledge dash, 3 dash dance, 4 lcancel window, 5 powershield window
+    fn skill_const(&self, _idx: i32) -> i32 {
+        0
+    }
+    #[allow(clippy::too_many_arguments)]
+    fn shock_set(&mut self, _entity: i32, _owner: i32, _frames: i32, _charges: i32, _mult_bits: i32, _bonus: i32, _flags: i32) -> i32 {
+        0
+    }
+    /// 0 owner, 1 frames, 2 charges, 3 bonus, 4 multiplier (bits), 5 hits, 6 applied
+    fn shock_read(&self, _entity: i32, _field: i32) -> i32 {
+        0
+    }
     // ---- entity identity (`gw_ScriptGame_EntityField`, `EntityEpoch`, `EntityAddressField`): pc/platform/gw_script_spine_refs.inc
     /// kind 1 fighter (id = port*2+sub), 2 item, 3 echo, 4 stage object, 5 stage actor. field 0 live, 1 epoch, 2 generation,
     /// 3 definition, 4 owner fighter id + 1, 5 role bits

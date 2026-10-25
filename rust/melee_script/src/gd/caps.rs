@@ -76,7 +76,7 @@ const IW_EXITS: [&str; 15] = [
     "jab", "tilt", "smash", "aerial", "special", "grab", "jump", "dash", "crouch", "turn", "walk", "escape", "shield", "air_dodge",
     "air_jump",
 ];
-const ARMOR_TYPES: [&str; 6] = ["knockback", "damage_threshold", "knockback_threshold", "super", "hit_count", "damage_pool"];
+pub(crate) const ARMOR_TYPES: [&str; 6] = ["knockback", "damage_threshold", "knockback_threshold", "super", "hit_count", "damage_pool"];
 
 fn fighter_caps(lua: &mlua::Lua, st: &Shared, a: Args) -> LuaResult<MultiValue> {
     let e = entity(&a, 1)?;

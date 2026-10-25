@@ -858,6 +858,7 @@ pub fn play(args: &[String]) -> ExitCode {
         eprintln!("usage: melee play --iso DISC.iso [--time-secs N] [--shots] [--shot-dir DIR] [--quit-at-results] [--max-frames N] [--skip-intro]");
         return ExitCode::from(2);
     };
+    crate::crash::note_disc(&iso);
     if let Err(e) = crate::disc::Disc::open(&iso) {
         eprintln!("play: {e}");
         return ExitCode::FAILURE;

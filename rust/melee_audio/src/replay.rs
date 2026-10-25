@@ -30,6 +30,12 @@ pub fn mix_hash(samples: &[i16]) -> u64 {
 pub fn replay(s: &mut Sound, trace: &str, min_sub_frames: u32) -> (Vec<i16>, ReplayStats) {
     // Traces that record the HPS start's deferred completions (SHDR / SDATA) replay them in place.
     s.defer_stream = trace.lines().any(|l| l.split_whitespace().nth(1) == Some("SHDR"));
+    s.defer_refill = trace.lines().any(|l| l.split_whitespace().nth(1) == Some("HDONE"));
+    s.refill_chunked = trace.lines().any(|l| l.split_whitespace().nth(1) == Some("DCHUNK"));
+    let dbg = std::env::var("MELEE_REPLAY_DBG").ok().and_then(|v| {
+        let (a, b) = v.split_once('-')?;
+        Some((a.parse::<u32>().ok()?, b.parse::<u32>().ok()?))
+    });
     let mut mix: Vec<i16> = Vec::new();
     let mut st = ReplayStats::default();
     let mut last_handle = i32::MIN;
@@ -40,6 +46,11 @@ pub fn replay(s: &mut Sound, trace: &str, min_sub_frames: u32) -> (Vec<i16>, Rep
         let mut it = line.split_whitespace();
         let (Some(sub), Some(op)) = (it.next().and_then(|x| x.parse::<u32>().ok()), it.next()) else { continue };
         while st.sub_frames < sub {
+            if let Some((lo, hi)) = dbg {
+                if (lo..=hi).contains(&st.sub_frames) {
+                    dump_voices(s, st.sub_frames);
+                }
+            }
             mix.extend_from_slice(&s.sub_frame());
             st.sub_frames += 1;
         }
@@ -86,6 +97,9 @@ pub fn replay(s: &mut Sound, trace: &str, min_sub_frames: u32) -> (Vec<i16>, Rep
             }
             "SHDR" => s.stream_header_done(),
             "SDATA" => s.stream_data_done(),
+            "DCHUNK" => s.stream_refill_chunk(n(0).max(0) as usize),
+            "HHDR" => s.stream_refill_header_done(),
+            "HDONE" => s.stream_refill_done(),
             "DSTOP" => {
                 s.stream_stop();
             }
@@ -135,4 +149,19 @@ pub fn boot_bare(iso: &str) -> Result<Sound, String> {
     let mut s = Sound::new();
     s.boot_engine(Box::new(crate::sound::DiscFs::open(iso)?), crate::lbaudio::boot_bank_sizes())?;
     Ok(s)
+}
+
+/// Debug aid (`MELEE_REPLAY_DBG=lo-hi`): per-voice mixer state before a sub-frame, in the shape of
+/// the C shim's `MELEE_AX_DBG` lines.
+fn dump_voices(s: &Sound, sf: u32) {
+    for v in 0..64 {
+        if !s.ax.in_use(v) {
+            continue;
+        }
+        let x = s.ax.voice(v);
+        eprintln!(
+            "RPDBG sf {sf} v{v} active={} vol={} d={} ratio={} mix={:?} cur={} yn={},{} ps={}",
+            x.dec.active as u8, x.volume, x.volume_delta, x.ratio, x.mix, x.dec.cur_addr, x.dec.yn1, x.dec.yn2, x.dec.pred_scale
+        );
+    }
 }

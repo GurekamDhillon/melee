@@ -1235,6 +1235,23 @@ rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_In
   title Start lands in the Atlas menu scene; navigating it by pad script was not worked out); volume settings are output gain
   only (the C dump is full scale by design); nothing was listened to.
 
+## Platform track, audio round 6 (plat-audio, 2026-10-25): retail main menu, stream block refills chunk by chunk
+- Reached the retail main menu headless: `MELEE_ATLAS=0`, `MELEE_TURBO=1 MELEE_UNATTENDED=1`, Lua pad script: A past the memory
+  card and movie, START at the title, A through the unlock notices until `GS_FRONTEND`, stick up/down on the menu, A into `GS_MENU`
+  (1P / VS), B back. (Run `tools/port/run.sh` WITHOUT `--test` for this; `--test` runs the self-test suite instead. Export
+  `GW_MELEE=<worktree>` too or build.sh builds the shared `melee/` checkout.)
+- Mismatch found: 31 sub-frames differed (max 9267) where one HPS stream replaced another (s_info1 -> s_info2 ...). The new
+  stream's first master-clock tick refills the next block into the slot the OLD stream is still fading out of. The C moves that block
+  as DEVCOM_BUF_SIZE (16 KB) ARQ chunks, one per DVD completion, so the old voice kept its data for ~7 sub-frames; the port wrote the
+  block at once. New C trace ops: `HHDR` (HSD_SynthPStreamHakoHeaderCallback), `HDONE` (HSD_SynthResetStreamCounters), `DCHUNK n`
+  (each 0x23 DevCom chunk's ARQ post, devcom.c). The replay applies the header at HHDR, each chunk at its DCHUNK, the counters at
+  HDONE (`Sound::refill_chunked` / `defer_refill`; traces without these ops keep the synchronous refill).
+- Pinned: `melee_audio/tests/replay.rs::frontend_menu_streams_mix_equals_c` (4483 sub-frames, 17 handles, 0 samples differ, needs
+  the disc). melee_audio (15 unit, 2 oracle, 8 replay) and melee audio_match (4) pass. Two C runs gave identical WAVs.
+- Still open: the older four captures were not re-recorded with the new ops (they match with the synchronous refill); the SSS, trophy
+  and Atlas menus were not driven; nothing was listened to. Debug aid: `MELEE_REPLAY_DBG=lo-hi` prints the port's per-voice mixer
+  state like the C's `MELEE_AX_DBG`.
+
 ## Platform track, render proof (plat-render, rounds 1-2, 2026-10-25)
 - Method: C shots from `_build/agents/plat-render/pad_cam.lua` (`gd.screenshot` at match frames) vs `melee view-golden` shots.
   RUN THE C BUILD REALTIME, not turbo (`MELEE_UNATTENDED=1 MELEE_WINDOW_X=30000 MELEE_WINDOW_Y=30000`, no `MELEE_TURBO`, run

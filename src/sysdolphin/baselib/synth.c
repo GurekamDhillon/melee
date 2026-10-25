@@ -1243,6 +1243,9 @@ void HSD_SynthCallback(void)
 void HSD_SynthResetStreamCounters(int result, uintptr_t args, void* buf,
                                   bool b)
 {
+#if defined(TARGET_PC)
+    { extern void ax_trace(const char*, int, int, int, int, int); ax_trace("HDONE", 0, 0, 0, 0, 0); }
+#endif
     HSD_Synth_804D776C = HSD_Synth_804D7768;
     HSD_Synth_804D7778 = 0;
 }
@@ -1250,6 +1253,9 @@ void HSD_SynthResetStreamCounters(int result, uintptr_t args, void* buf,
 void HSD_SynthPStreamHakoHeaderCallback(int dcReq, uintptr_t src, void* buf,
                                         bool cancelflag)
 {
+#if defined(TARGET_PC)
+    { extern void ax_trace(const char*, int, int, int, int, int); ax_trace("HHDR", 0, 0, 0, 0, 0); }
+#endif
     HSD_DevComRequest(HSD_Synth_804D7764, src,
                       HSD_Synth_804D7780 + (HSD_Synth_804D7768 << 16),
                       pstHakoHeader[HSD_Synth_804D7768].x0, 0x23, 0,

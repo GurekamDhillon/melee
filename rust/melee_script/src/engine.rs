@@ -126,6 +126,7 @@ pub struct State {
     pub deadlines: crate::gd::deadline::Deadlines,
     pub contacts: crate::gd::contacts::Contacts,
     pub fly_cursor: crate::gd::flycam::FlyCursor,
+    pub frontend: crate::gd::frontend::Frontend,
     pub last_action: [i32; 6],
     pub state_frame: [i32; 6],
     pub paused: bool,
@@ -429,6 +430,7 @@ impl Engine {
             deadlines: Default::default(),
             contacts: Default::default(),
             fly_cursor: Default::default(),
+            frontend: Default::default(),
             last_action: [0; 6],
             state_frame: [0; 6],
             paused: false,
@@ -1184,6 +1186,7 @@ impl Engine {
                 s.key_now[vk] = focused && host.borrow().key_down(vk);
             }
         }
+        self.launch_tick();
         self.finish_draw();
         {
             let mut s = self.st.borrow_mut();

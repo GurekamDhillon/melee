@@ -78,6 +78,28 @@ pub trait Host {
     fn kit_call(&mut self, _name: &str, _args: &[KitVal]) -> Result<Vec<KitVal>, String> {
         Err("not implemented by this host".into())
     }
+    // ---- frontend services (`gw_SceneLaunch_*`, `gw_Frontend_*`, `gs_screenshot`, the status HUD)
+    fn scene_launch_set_text(&mut self, _text: Option<&str>) {}
+    /// the game mode the launch text names, or -1 when it was refused
+    fn scene_launch_boot_game_mode(&mut self) -> i32 {
+        -1
+    }
+    fn scene_launch_info(&self) -> SceneLaunchInfo {
+        SceneLaunchInfo::default()
+    }
+    fn training_select(&self) -> bool {
+        false
+    }
+    fn set_training_select(&mut self, _kit: bool) {}
+    fn screenshot(&mut self, _path: &std::path::Path) -> bool {
+        false
+    }
+    fn status_hud_visible(&self) -> bool {
+        true
+    }
+    fn set_status_hud_hidden(&mut self, _hidden: bool) {}
+    /// `gw_hang_transition`: a loading grace for the hang watchdog
+    fn hang_transition(&mut self, _on: bool) {}
     // ---- the effects lab (`gw_Fx_Lab*`): instances belong to the creating script (owner = script index + 1)
     #[allow(clippy::too_many_arguments)]
     fn fx_lab_play(&mut self, _package: &str, _address: i32, _owner: i32, _slot1: i32, _joint: i32, _frame: i32, _facing: i32, _offset: [f32; 3], _scale: f32, _seed: u32) -> i32 {
@@ -118,6 +140,15 @@ pub trait Host {
     fn prof_command(&mut self, _args: &str) -> (bool, String) {
         (false, "prof on|off|reset|report|perf|summary on|off|trace <frames>|hitch <ms>".into())
     }
+}
+
+/// `gw_SceneLaunch_Mission/Mod/MazeSeed/MazeSize`
+#[derive(Clone, Debug, Default)]
+pub struct SceneLaunchInfo {
+    pub mission: String,
+    pub module: String,
+    pub maze_seed: i32,
+    pub maze_size: i32,
 }
 
 /// A scalar crossing the `gd.kit` seam

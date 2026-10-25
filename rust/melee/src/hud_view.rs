@@ -34,6 +34,8 @@ pub struct HudFile {
     pub ready_end: Option<f32>,
     pub go_desc: u32,
     pub go_end: Option<f32>,
+    /// `ScInfPnm_scene_models[0]`: the player name tag / arrow (ifnametag.c).
+    pub nametag_desc: u32,
 }
 
 impl HudFile {
@@ -42,6 +44,7 @@ impl HudFile {
         let sym = |n: &str| a.public_offset(n).ok_or(format!("IfAll: no {n}"));
         let scene = sym("ScInfDmg_scene_data")?;
         let (num, mrk, stc, cnt) = (sym("DmgNum_scene_models")?, sym("DmgMrk_scene_models")?, sym("Stc_scemdls")?, sym("ScInfCnt_scene_models")?);
+        let pnm = sym("ScInfPnm_scene_models")?;
         if std::env::var_os("MELEE_VIEW_READYLOG").is_some() {
             for i in 0..8 {
                 eprintln!("ScInfCnt model {i}: end {:?}", crate::vs_match::input::ready_hud_end_frame_of(ifall, i));
@@ -57,6 +60,7 @@ impl HudFile {
             ready_desc: be32(&dat, cnt + 12),
             go_desc: be32(&dat, cnt + 16),
             go_end: crate::vs_match::input::ready_hud_end_frame_of(ifall, 4)?,
+            nametag_desc: be32(&dat, pnm),
             ready_end,
             dat,
         })
@@ -95,6 +99,8 @@ pub struct Hud {
     /// `fn_8016B7F8` -> `ifStatus_802F6EA4(4, ..)`: the "Go!" element, created when Ready ends.
     go: Option<(StageAnim, f32)>,
     rng: u32,
+    /// ifnametag.c: per slot the arrow model and its screen position (`None` = hidden).
+    tags: Vec<(StageAnim, Option<(f32, f32)>)>,
 }
 
 /// `ifAll_804A0FD8.x18[slot]` for `n` players (`ifAll_802F343C` cases 1-4; every JObj by DFS index).
@@ -185,13 +191,39 @@ impl Hud {
         // ifStatus_802F6EA4(1, ..): the Ready / GO element.
         let mut ready = StageAnim::new_scene(d.clone(), vec![file.ready_desc]);
         ready.start_map_anim(0, 0);
-        Ok(Self { file, pose, light, players, ready, ready_frames: 1.0, go: None, rng: 0x2545F491 })
+        // NameTag_Create: scale 10, the matanim/anim set attached, ReqAnimAll(frame) picking the label
+        // (`un_802FC9B4`: 5 * port for a human slot of a free-for-all; `inlineA1`'s 20.. is for custom name tags), one AnimAll.
+        let mut tags = Vec::new();
+        for slot in 0..n {
+            let mut t = StageAnim::new_scene(d.clone(), vec![file.nametag_desc]);
+            t.start_anim_set(0, 0, false);
+            t.set_scale(0, 0, Vec3 { x: 10.0, y: 10.0, z: 10.0 });
+            t.req_joint(0, 0, 5.0 * slot as f32);
+            t.step();
+            if std::env::var_os("MELEE_VIEW_TAGDUMP").is_some() && slot == 0 {
+                t.dump(0);
+            }
+            tags.push((t, None));
+        }
+        Ok(Self { file, pose, light, players, ready, ready_frames: 1.0, go: None, rng: 0x2545F491, tags })
     }
 
     fn rand(&mut self) -> f32 {
         // `offset_rand`: a render-side generator (the sim's HSD_Randf stream is not touched).
         self.rng = self.rng.wrapping_mul(1664525).wrapping_add(1013904223);
         (self.rng >> 8) as f32 / (1u32 << 24) as f32 - 0.5
+    }
+
+    /// `fn_802FCC44`: each slot's tag screen position (`lbVector_WorldToScreen` of the fighter's head, 640x480),
+    /// or `None` when the tag is hidden. The tags are removed when the Go element is created (`un_802FD428`).
+    pub fn set_nametags(&mut self, pos: &[Option<(f32, f32)>]) {
+        let live = self.go.is_none();
+        for (i, (t, p)) in self.tags.iter_mut().enumerate() {
+            *p = if live { pos.get(i).copied().flatten() } else { None };
+            if let Some((x, y)) = *p {
+                t.set_translate(0, 0, Vec3 { x, y: -y, z: 0.0 });
+            }
+        }
     }
 
     /// One logic frame of the HUD gobj procs. `damage[slot]` is the sim's `Player_GetDamage`.
@@ -249,6 +281,32 @@ impl Hud {
             for m in &dms {
                 r.clear_vtx_desc(g);
                 r.jobj_disp_all(g, m, &vmtx, 1 << code, 0);
+            }
+        }
+        // The name tags: their own orthographic camera (`nametag_CObjDesc`: 640x480, eye z 300), gx link 9.
+        let mut tag_models: Vec<(HashMap<u32, MatOverride>, Vec<DispJoint>)> = Vec::new();
+        for (t, p) in &mut self.tags {
+            if p.is_some() {
+                tag_models.push((t.overrides(), t.disp_joints(0)));
+            }
+        }
+        if !tag_models.is_empty() {
+            let (n, f) = (0.1f32, 32768.0f32);
+            let (top, bottom, left, right) = (0.0f32, -480.0f32, 0.0f32, 640.0f32);
+            let proj = [
+                [2.0 / (right - left), 0.0, 0.0, -(right + left) / (right - left)],
+                [0.0, 2.0 / (top - bottom), 0.0, -(top + bottom) / (top - bottom)],
+                [0.0, 0.0, -1.0 / (f - n), -f / (f - n)],
+                [0.0, 0.0, 0.0, 1.0],
+            ];
+            g.shim.set_projection(&proj, melee_gx::consts::GX_ORTHOGRAPHIC);
+            let tview: Mtx = [[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, -300.0]];
+            let tdms: Vec<DispModel> = tag_models.iter().map(|(o, j)| DispModel::new(&dat, j.clone()).with_mat_anim(o)).collect();
+            for code in [0u32, 1, 2] {
+                for m in &tdms {
+                    r.clear_vtx_desc(g);
+                    r.jobj_disp_all(g, m, &tview, 1 << code, 0);
+                }
             }
         }
     }

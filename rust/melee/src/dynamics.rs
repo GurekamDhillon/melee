@@ -64,7 +64,10 @@ struct Node {
 
 /// One `BoneDynamicsDesc` (`fp->dynamic_bone_sets[i]`).
 struct BoneSet {
-    /// `dynamic_bone_sets[i].bone_id` (the `part` argument of `lb_8001044C`).
+    /// `ftData->x2C->ftDynamicBones->array[i].bone_id`: the first part of the chain.
+    bone0: usize,
+    /// `dynamic_bone_sets[i].bone_id` (the `part` argument of `lb_8001044C`): 0 while the chain is
+    /// simulated, 0x100 (`ftCo_8009CB40` off) while the animation drives it.
     part: i32,
     /// `desc.pos`.
     pos: Vec3,
@@ -190,7 +193,7 @@ impl Dynamics {
                 n.v88 = bef(d, a + 0x38);
                 n.v8c = if n.len as f64 != 0.0 { pos.z / n.len } else { 0.0 };
             }
-            sets.push(BoneSet { part: 0, pos, nodes });
+            sets.push(BoneSet { bone0: bone_id, part: 0, pos, nodes });
         }
         // ftColl_8007B320's collider table.
         let ncol = be32(d, x2c + 8) as usize;
@@ -202,6 +205,47 @@ impl Dynamics {
             })
             .collect();
         Some(Dynamics { sets, colliders })
+    }
+
+    /// `ftCo_8009CB40(fp, idx, on, NULL)`: the chain `idx` is simulated (`on`) or driven by the animation.
+    pub fn cb40(&mut self, skel: &mut Skeleton, idx: usize, on: bool) {
+        let Some(set) = self.sets.get_mut(idx) else { return };
+        set.part = if on { 0 } else { 0x100 };
+        for (k, n) in set.nodes.iter_mut().enumerate() {
+            let part = set.bone0 + k;
+            if on && !skel.parts[part].b0 {
+                // ftCo_8009CB40_inline
+                let m = skel.tree.get(n.jobj).mtx;
+                n.p2c = Vec3 { x: m[0][3], y: m[1][3], z: m[2][3] };
+                n.v44 = 0.0;
+                skel.set_translate(n.jobj, n.translate);
+                skel.set_scale(n.jobj, n.scale);
+            }
+            skel.parts[part].b0 = on;
+            if on {
+                skel.tree.clear_flags(Some(n.jobj), 0x20000);
+            }
+        }
+    }
+
+    /// `ftCo_8009E7B4(fp, blend_data)` for a fighter with an animation row (`anim_id != -1`) that is neither
+    /// Kirby nor a Marth / Roy under wind effects: `b3` = `x594_b3` (the row's "no dynamics" flag), `b4` =
+    /// `x594_b4` (per-chain dynamics animations: not ported). Jigglypuff only drives chain 0.
+    pub fn e7b4(&mut self, skel: &mut Skeleton, x2227_b6: bool, b3: bool, b4: bool, purin: bool) -> Result<(), String> {
+        let n = if purin { 1.min(self.sets.len()) } else { self.sets.len() };
+        if x2227_b6 {
+            for i in 0..n {
+                self.cb40(skel, i, false);
+            }
+            return Ok(());
+        }
+        if b4 {
+            return Err("ftCo_8009E7B4: x594_b4 (dynamics animations) not ported".into());
+        }
+        for i in 0..n {
+            self.cb40(skel, i, !b3);
+        }
+        Ok(())
     }
 
     /// `ftCo_8009DD94(gobj, arg1)`. `floor(ax, ay, bx, by, y_offset)` is `mpCheckFloor(.., -1, -1,

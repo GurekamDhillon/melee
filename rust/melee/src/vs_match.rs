@@ -1664,8 +1664,8 @@ impl VsMatch {
                         ft_8008a2bc(p, &mut self.rand)?;
                     }
                 }
-                m if is_tilt_motion(m) => {
-                    // ftCo_AttackS3_Anim / ftCo_AttackHi3_Anim: ft_8008A2BC at the end.
+                m if is_tilt_motion(m) || is_s4_motion(m) => {
+                    // ftCo_AttackS3_Anim / ftCo_AttackS4_Anim / ftCo_AttackHi3_Anim: ft_8008A2BC at the end.
                     if !p.skel.frames_remaining() {
                         ft_8008a2bc(p, &mut self.rand)?;
                     }
@@ -1887,8 +1887,8 @@ impl VsMatch {
                     fc::calc_ground_accel_deaccel(f, friction);
                     fc::set_self_movement_from_grounded_movement(f);
                 }
-                m if (FTCO_MS_ATTACK11..=FTCO_MS_ATTACK11 + 2).contains(&m) => {
-                    // ftCo_Attack1x_Phys -> ft_80084FA8 -> ft_80085030(friction, facing_dir).
+                m if is_s4_motion(m) || (FTCO_MS_ATTACK11..=FTCO_MS_ATTACK11 + 2).contains(&m) => {
+                    // ftCo_Attack1x_Phys / ftCo_AttackS4_Phys -> ft_80084FA8 -> ft_80085030(friction, facing_dir).
                     let f = &mut *p.fp;
                     let mut fr = f.co_attrs.ground_friction;
                     if fc::abs_c(f.gr_vel) > f.co_attrs.walk_max_vel {
@@ -2083,7 +2083,7 @@ impl VsMatch {
                         ft_80082b1c(&mut self.ground, p, c_common, &mut self.rand)?;
                     }
                 }
-                m if m == FTCO_MS_CATCH || is_tilt_motion(m) || (FTCO_MS_ATTACK11..=FTCO_MS_ATTACK11 + 2).contains(&m) => {
+                m if m == FTCO_MS_CATCH || is_tilt_motion(m) || is_s4_motion(m) || (FTCO_MS_ATTACK11..=FTCO_MS_ATTACK11 + 2).contains(&m) => {
                     // ftCo_Attack1x_Coll -> ft_80084104: ft_800827A0 (mpColl_8004B2DC), else Fall;
                     // ftCo_Catch_Coll -> ft_800841B8(fn_800D8E30): the same, the grab cleanup first.
                     let joints = {
@@ -3006,6 +3006,7 @@ fn input_cb(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
                 Ok(())
             }
         }
+        m if is_s4_motion(m) => attack_s4_iasa(p, rand),
         m if (FTCO_MS_ATTACK11..=FTCO_MS_ATTACK11 + 2).contains(&m) => attack1_iasa(p, rand),
         FTCO_MS_CATCH => Ok(()), // ftCo_Catch_IASA is empty
         FTCO_MS_DEAD_DOWN => Ok(()), // input_cb NULL
@@ -3122,6 +3123,17 @@ fn ground_stick_gate(p: &mut Player, rand: &mut HsdRand, what: &str) -> Result<b
     Ok(false)
 }
 
+/// `ftCo_8009E7B4`: the fighter's dynamic bones follow the new animation row's flags (`x594_b3`: off).
+fn dynamics_e7b4(p: &mut Player) -> Result<(), String> {
+    let kind = p.fp.kind as i32;
+    if kind == melee_types::Ft_Kind_Kirby as i32 {
+        return Ok(());
+    }
+    let Some(dy) = &mut p.dynamics else { return Ok(()) };
+    let w = u32::from_be_bytes(unsafe { p.fp.anon_594.x594_s32 }.to_ne_bytes());
+    dy.e7b4(&mut p.skel, p.fp.x2227_b6() != 0, w & 0x1000_0000 != 0, w & 0x0800_0000 != 0, kind == melee_types::Ft_Kind_Purin as i32)
+}
+
 /// `ftCo_Catch_CheckInput` (ftCo_800951D0 needs an item; fn_800D8E94 / fn_800D952C pass for
 /// the kinds wired): L/R held and A pressed.
 fn catch_check(p: &Player) -> Result<bool, String> {
@@ -3209,7 +3221,17 @@ fn attack_checks(p: &mut Player, rand: &mut HsdRand) -> Result<bool, String> {
         let cd = melee_fighter::hooks::common_data();
         let who = p.slot + 1;
         if fc::abs_c(i.lstick[0].x) >= cd.dash_smash_stick_threshold && (fp.active_timer.lstick.x as i32) < cd.dash_smash_window as i32 {
-            return Err(format!("player {who}: ftCo_AttackS4 (forward smash) not ported"));
+            if !fp.item_gobj.is_null() {
+                return Err("ftCo_AttackS4 with an item not ported".into());
+            }
+            // ftCo_AttackS4_CheckInput -> decideFighter: facing_dir = the stick's sign.
+            fp.facing_dir = if i.lstick[0].x >= 0.0 { 1.0 } else { -1.0 };
+            let angle = melee_runtime::lbtrigf::atan2f(i.lstick[0].y, fc::abs_c(i.lstick[0].x));
+            if matches!(fp.kind, melee_types::Ft_Kind_Ness | melee_types::Ft_Kind_Peach | melee_types::Ft_Kind_GameWatch | melee_types::Ft_Kind_Pikachu | melee_types::Ft_Kind_Pichu) {
+                return Err(format!("player {who}: character forward smash (kind {}) not ported", fp.kind));
+            }
+            attack_s4_enter(p, angle, rand)?;
+            return Ok(true);
         }
         if i.lstick[0].y >= cd.xCC && (fp.active_timer.lstick.y as i32) < cd.xD0 as i32 {
             return Err(format!("player {who}: ftCo_AttackHi4 (up smash) not ported"));
@@ -3251,6 +3273,35 @@ fn attack_checks(p: &mut Player, rand: &mut HsdRand) -> Result<bool, String> {
     }
     attack11_enter(p, rand)?;
     Ok(true)
+}
+
+/// `ftCo_AttackS4.c doEnter`: the angled forward smash.
+fn attack_s4_enter(p: &mut Player, angle: f32, rand: &mut HsdRand) -> Result<(), String> {
+    use melee_types::{ftCo_MS_AttackHi4, ftCo_MS_AttackLw4, ftCo_MS_AttackS4Hi, ftCo_MS_AttackS4HiS, ftCo_MS_AttackS4Lw, ftCo_MS_AttackS4LwS, ftCo_MS_AttackS4S};
+    let cd = melee_fighter::hooks::common_data();
+    let has = |p: &Player, m: u32| -> Result<bool, String> { Ok(p.files.anim_row(m)?.is_some()) };
+    let msid = if angle > cd.xB8_radians && has(p, ftCo_MS_AttackS4S as u32)? {
+        ftCo_MS_AttackS4Hi
+    } else if angle > cd.xBC_radians && has(p, ftCo_MS_AttackS4LwS as u32)? {
+        ftCo_MS_AttackS4HiS
+    } else if angle < cd.xC4_radians && has(p, ftCo_MS_AttackLw4 as u32)? {
+        ftCo_MS_AttackS4Lw
+    } else if angle < cd.xC0_radians && has(p, ftCo_MS_AttackHi4 as u32)? {
+        ftCo_MS_AttackS4LwS
+    } else {
+        ftCo_MS_AttackS4S
+    } as i32;
+    p.fp.set_allow_interrupt(0);
+    p.fp.cmd_vars[0] = 0;
+    p.fp.anon_2210.throw_flags = 0;
+    let row = load_row(p, (msid + 2) as u32)?;
+    change_motion_state(p, msid, row.as_ref(), rand)?;
+    anim_step(p, rand)
+}
+
+/// The grounded forward smashes (`ftCo_AttackS4` x5).
+fn is_s4_motion(m: i32) -> bool {
+    (melee_types::ftCo_MS_AttackS4Hi as i32..=melee_types::ftCo_MS_AttackS4Lw as i32).contains(&m)
 }
 
 /// `ftCo_AttackS3.c decideAngle`: the angled forward tilt. `ftData_80085FD4(fp, msid)->x8` is the
@@ -3372,6 +3423,15 @@ fn attack1_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         }
     }
     Ok(())
+}
+
+/// `ftCo_AttackS4_IASA`: with `allow_interrupt`, the special / catch checks, `ftCo_800CECE8`
+/// (item pick-up), the smash and tilt checks; the jump / dash / walk checks follow.
+fn attack_s4_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    if p.fp.allow_interrupt() == 0 {
+        return Ok(());
+    }
+    wait_iasa(p, rand)
 }
 
 /// `ftCo_Wait_IASA`.
@@ -5060,6 +5120,7 @@ fn change_motion_state_flags(p: &mut Player, msid: i32, row: Option<&(AnimRow, F
             // fp->x594_s32 = row->x10_animCurrFlags (stored in GameCube byte order, which the
             // generated bitfield accessors read).
             fp.anon_594.x594_s32 = i32::from_ne_bytes(r.flags.to_be_bytes());
+            dynamics_e7b4(p)?;
             // anim_blend 0.0 -> the row's default blend byte.
             let blend = if std::mem::take(&mut p.blend_zero) { 0.0 } else { r.blend as f32 };
             p.fp.anim_id = r.id as i32;

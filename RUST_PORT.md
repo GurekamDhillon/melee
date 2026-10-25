@@ -1214,3 +1214,25 @@ Next plan: regenerate `missing.md`; dynamics bones for the sim skeleton; CPU beh
   (`hit_guard`: `ftColl_800779xx`, shields, clanks), air damage states (`ft_80084DB0/EEC`, `ft_80081DD4`, DamageFall,
   `ftCo_80090780`, camera quake), the Shy Guys (`it_802D8618`, `itheiho.c`: item-stage collision `it_8026DA70`, states
   0..4), the random item spawn (`fn_8026C88C`, golden frame ~210), the missile's own hits and its smash variant.
+
+## Status: golden frames matching per scenario, and blockers (2026-10-25, after round 7)
+- Frames matching (count from frame 0, first divergence = count):
+
+  | scenario | frames matching | first divergence / blocker |
+  |---|---|---|
+  | pad_falcon_fox_fd | 1801 of 1801 (full) | none |
+  | pad_marth_sheik_bf | 1801 of 1801 (full) | none |
+  | cpu_fox_falco_dl | 140 (0..139) | 140: Falco forward smash `ftCo_AttackS4`, then fighter-vs-fighter hits stopped by `hit_guard` |
+  | cpu_peach_samus_ys_items | 120 (0..119) | 120: Shy Guys spawn (`it_802D8618`, `It_Kind_Heiho`); later the random item spawn (~frame 210) |
+
+- History: cpu_fox_falco_dl 92, 118, 140, 142, 142, 142, 140; cpu_peach_samus_ys_items 0, 95, 120, 120, 120, 120, 120.
+  The 142 -> 140 drift in the last rounds is not explained by a known logic change; re-check next round.
+- Blockers, in order: (1) fighter-vs-fighter hit detection (`hit_guard`: `ftColl_800779xx`, shields, clanks) and smash
+  hitboxes through the script; (2) air damage states (`ft_80084DB0/EEC`, `ft_80081DD4`, DamageFall, `ftCo_80090780`, camera
+  quake); (3) Shy Guys (`itheiho.c`, item-stage collision `it_8026DA70`); (4) random item spawn (`fn_8026C88C`); (5) the
+  missile's own hits and smash variant.
+- Test-input rule (user request): no OS-level input (SendKeys, SetForegroundWindow, AppActivate, computer-use, etc.) from
+  any test or agent run; tests were stealing the user's focus. All input goes through `MELEE_PAD_SCRIPT`,
+  `MELEE_PAD_IGNORE_ADAPTER=1`, the Rust `PadSystem` script source, or in-process hooks. Runs are headless (`melee golden`)
+  or, for the C oracle, off-screen, unfocused (`SDL_WINDOW_ACTIVATE_WHEN_SHOWN=0`, `MELEE_WINDOW_X=30000`, `MELEE_TURBO`)
+  and self-terminating (frame/time caps). Features that cannot be driven this way get an in-engine scripted-input hook.

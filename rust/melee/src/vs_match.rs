@@ -119,6 +119,11 @@ const FTCO_SM_LANDING: u32 = 35;
 /// `ftCo_MS_LandingAirN..Lw` (the submotions follow at `ftCo_SM_LandingAirN` = 73).
 const FTCO_MS_LANDING_AIR_N: i32 = 70;
 const FTCO_SM_LANDING_AIR_N: u32 = 73;
+/// `ftCo_MS_DamageHi1` .. `ftCo_MS_DamageFlyRoll`.
+fn is_damage_motion(m: i32) -> bool {
+    (75..=91).contains(&m)
+}
+
 fn is_landing_air(m: i32) -> bool {
     (FTCO_MS_LANDING_AIR_N..FTCO_MS_LANDING_AIR_N + 5).contains(&m)
 }
@@ -1103,6 +1108,10 @@ impl VsMatch {
             fp.x1960_vibrateMult = 1.0;
             fp.dmg.x1908 = -1;
             fp.dmg.x18C8 = -1;
+            fp.dmg.x18ac_time_since_hit = -1;
+            fp.dmg.x18c4_source_ply = 6;
+            fp.dmg.x18D0 = -10;
+            fp.dmg.x18F8 = 1;
             // fighter.c Fighter_UnkInitReset/Fighter_ResetInputData_80068854 defaults that the hash reads.
             fp.shield_health = start_shield;
             fp.x680 = 255;
@@ -1309,6 +1318,7 @@ impl VsMatch {
             let p = players.last_mut().unwrap();
             p.gobj.user_data = &mut *p.fp as *mut Fighter as *mut core::ffi::c_void;
             // ftColl_8007B320: the hurt capsules from ftData->x30.
+            p.fp.hurt_capsules_len = p.hurtboxes.len().min(p.fp.hurt_capsules.len()) as _;
             for (i, (h, gr)) in p.files.hurtbox_meta().into_iter().enumerate().take(p.fp.hurt_capsules.len()) {
                 let (part, a, b, sc) = p.hurtboxes[i];
                 let c = &mut p.fp.hurt_capsules[i];
@@ -1489,6 +1499,9 @@ impl VsMatch {
         if g == self.go_frame {
             self.greens_start();
         }
+        let sp: *mut VsMatch = self;
+        // s_link 0, Fighter_8006A1BC: the hitlag countdown.
+        self.hitlag_countdown()?;
         // s_link 1, Fighter_8006A360: the animation step (ftAnim_8006EBA4: AObj frame, then
         // ftAction_80073240's frame_count = cur_anim_frame + x898), then the state's anim_cb.
         for pi in 0..self.players.len() {
@@ -1501,6 +1514,50 @@ impl VsMatch {
                 let (c, pv) = (p.fp.cur_pos, p.fp.prev_pos);
                 p.fp.pos_delta = melee_types::Vec { x: c.x - pv.x, y: c.y - pv.y, z: c.z - pv.z };
                 p.fp.prev_pos = c;
+            }
+            if p.fp.x221F_b3() == 0 {
+                // Fighter_8006A360's countdowns: the attacker memory, the invincibility timers.
+                let fp = &mut p.fp;
+                if fp.dmg.x18C8 != -1 && fp.dmg.x18C8 > 0 {
+                    fp.dmg.x18C8 -= 1;
+                    if fp.dmg.x18C8 == 0 {
+                        fp.dmg.x18c4_source_ply = 6;
+                        fp.dmg.x18C8 = -1;
+                        fp.dmg.x18D0 = -0xA;
+                    }
+                }
+                if fp.x1990 != 0 {
+                    fp.x1990 -= 1;
+                    if fp.x1990 == 0 && fp.x2221_b0() == 0 {
+                        fp.x198C = if fp.x1994 != 0 { 1 } else { 0 };
+                    }
+                }
+                if fp.x1994 != 0 {
+                    fp.x1994 -= 1;
+                    if fp.x1994 == 0 {
+                        fp.x198C = if fp.x2221_b0() != 0 || fp.x1990 != 0 { 2 } else { 0 };
+                    }
+                }
+                if fp.x1990 != 0 || fp.x1994 != 0 || fp.x198C != 0 {
+                    // (ftCo_800C0694 / ftCo_800C0200: the colour animation, render only.)
+                }
+                if fp.dmg.x18fa_model_shift_frames != 0 {
+                    fp.dmg.x18fa_model_shift_frames -= 1;
+                    fp.dmg.x18FC += 1;
+                    if fp.dmg.x18FC >= fp.dmg.x18FD {
+                        fp.dmg.x18FC = 0;
+                    }
+                }
+            }
+            'anim: {
+            if p.fp.x2219_b5() != 0 {
+                break 'anim;
+            }
+            if p.fp.x209A > 1 && !p.input_locked {
+                p.fp.x209A -= 1;
+            }
+            if p.fp.dmg.x18ac_time_since_hit != -1 {
+                p.fp.dmg.x18ac_time_since_hit += 1;
             }
             if p.animating {
                 // ftAnim_8006E9B4, no blend (x8A4 == 0), x594_b0 / x594_b2 clear.
@@ -1684,7 +1741,12 @@ impl VsMatch {
                     rebirth::anim(p, &mut ctx)?;
                 }
                 rebirth::FTCO_MS_SLEEP => {} // ftCo_Sleep_Anim is empty
+                m if is_damage_motion(m) => {
+                    // ftCo_Damage*_Anim (damage.rs).
+                    unsafe { (*sp).damage_proc(pi, damage::Proc::Anim)? };
+                }
                 m => return Err(format!("player {}: motion {m} not ported", p.slot + 1)),
+            }
             }
             // The end of Fighter_8006A360 (fighter.c TARGET_PC): Mex_OnFrameDispatch(kind) runs an
             // m-ex fighter's onFrame override (slot 23) through the PPC interpreter.
@@ -1735,14 +1797,29 @@ impl VsMatch {
                 ftcommon_8008031c(&mut p.fp);
                 let jump = jump_get_input(&p.fp);
                 input::increment_counters(&mut p.fp, jump);
-                input_cb(p, &mut self.rand)?;
+                if is_damage_motion(p.fp.motion_id) {
+                    self.damage_proc(i, damage::Proc::Iasa)?;
+                } else {
+                    input_cb(&mut self.players[i], &mut self.rand)?;
+                }
             }
         }
         // s_link 4, the stage gobjs' procs (p_link 5, ahead of the fighters' p_link 8).
         self.greens_procs()?;
         self.story_procs()?;
         // s_link 4, Fighter_procUpdate: phys_cb, then the integration below.
-        for p in &mut self.players {
+        for pi in 0..self.players.len() {
+            if self.players[pi].fp.x221F_b3() != 0 {
+                continue;
+            }
+            if self.players[pi].fp.x2219_b5() == 0 && is_damage_motion(self.players[pi].fp.motion_id) {
+                // ftCo_Damage*_Phys (damage.rs); the shared tail below is the same.
+                self.damage_proc(pi, damage::Proc::Phys)?;
+            }
+            let p = &mut self.players[pi];
+            if p.fp.x2219_b5() != 0 {
+                // Hitlag: no phys_cb, no integration; the tail below runs.
+            } else {
             // x2064_ledgeCooldown countdown (capture_timer is 0 here).
             if p.fp.x2064_ledgeCooldown != 0 {
                 p.fp.x2064_ledgeCooldown -= 1;
@@ -1920,7 +1997,19 @@ impl VsMatch {
                 }
                 _ => {}
             }
-            proc_update_integrate(&mut p.fp);
+            proc_update_integrate(&mut p.fp)?;
+            }
+            // ftColl_80076528: the combo-push timer.
+            if p.fp.x2092 != 0 {
+                p.fp.x2092 -= 1;
+                if p.fp.victim_gobj.is_null() && p.fp.ground_or_air == melee_types::GA_Ground {
+                    return Err("ftColl_80076528: comboCount_Push is not ported".into());
+                }
+            }
+            if let Some(cb) = p.fp.hitlag_cb {
+                let g: *mut melee_types::HSD_GObj = &mut *p.gobj;
+                unsafe { cb(g) };
+            }
             if p.fp.ground_or_air == melee_types::GA_Ground {
                 // mpGetSpeed(floor.index, &cur_pos, &d): the floor's own motion.
                 let c = p.fp.cur_pos;
@@ -1937,6 +2026,15 @@ impl VsMatch {
                 continue;
             }
             self.blast_check(i)?;
+        }
+        // The end of Fighter_procUpdate: ftColl_8007AF28 lets the next lbColl_800083C4 recompute the capsules.
+        for p in &mut self.players {
+            if p.fp.x221F_b3() != 0 {
+                continue;
+            }
+            for k in 0..p.fp.hurt_capsules_len as usize {
+                p.fp.hurt_capsules[k].capsule.set_skip_update_pos(0);
+            }
         }
         // s_link 6, Fighter_procMap (x221F_b3 clear): the ECB lock countdown, the root JObj to
         // cur_pos, the state's coll_cb, the root JObj to cur_pos again.
@@ -2208,6 +2306,9 @@ impl VsMatch {
                         }
                         ft_8008a2bc(p, &mut self.rand)?;
                     }
+                }
+                m if is_damage_motion(m) => {
+                    unsafe { (*sp).damage_proc(i, damage::Proc::Coll)? };
                 }
                 m => return Err(format!("player {}: coll_cb of motion {m} not ported", p.slot + 1)),
             }
@@ -5216,11 +5317,45 @@ fn fall_anim(p: &mut Player) -> Result<(), String> {
     Ok(())
 }
 
-/// The airborne, no-knockback part of `Fighter_procUpdate` after phys_cb: `self_vel +=
-/// self_accel`, then `cur_pos += selfVel + kb_vel + atk_shield_kb` (+ nudge, + wind: zero on FD).
-/// TODO(group3 fighter.c): the whole procUpdate (knockback decay, ground path, mpGetSpeed).
-fn proc_update_integrate(fp: &mut Fighter) {
-    debug_assert!(fp.x8c_kb_vel.x == 0.0 && fp.x8c_kb_vel.y == 0.0 && fp.dmg.x1948 == 0);
+/// `Fighter_procUpdate` after phys_cb (outside hitlag): the knockback decay, `self_vel += self_accel`, and
+/// `cur_pos += selfVel + kb_vel + atk_shield_kb` (+ nudge). Wind (`ftColl_GetWindOffsetVec`) is not modelled.
+fn proc_update_integrate(fp: &mut Fighter) -> Result<(), String> {
+    use melee_core::fp::fmadds;
+    use melee_runtime::gekko::{cosf, sinf, sqrtf};
+    use melee_runtime::lbtrigf::atan2f;
+    let c = melee_fighter::hooks::common_data();
+    let air = fp.ground_or_air == melee_types::GA_Air;
+    let kbx0 = fp.x8c_kb_vel.x;
+    if kbx0 != 0.0 || fp.x8c_kb_vel.y != 0.0 {
+        if air {
+            if fp.is_sandbag() != 0 {
+                return Err("a sandbag's knockback decay is not ported".into());
+            }
+            let (kx, ky) = (fp.x8c_kb_vel.x, fp.x8c_kb_vel.y);
+            let a = atan2f(ky, kx);
+            let d = c.x204_knockbackFrameDecay;
+            if sqrtf(fmadds(kx, kx, ky * ky)) < d {
+                fp.x8c_kb_vel.x = 0.0;
+                fp.x8c_kb_vel.y = 0.0;
+            } else {
+                fp.x8c_kb_vel.x = fmadds(-d, cosf(a), fp.x8c_kb_vel.x);
+                fp.x8c_kb_vel.y = fmadds(-d, sinf(a), fp.x8c_kb_vel.y);
+            }
+            fp.xF0_ground_kb_vel = 0.0;
+        } else {
+            if fp.xF0_ground_kb_vel == 0.0 {
+                fp.xF0_ground_kb_vel = kbx0;
+            }
+            let fr = melee_fighter::hooks::ground_friction_mul(fp) * fp.co_attrs.ground_friction * c.x200;
+            fc::apply_grounded_knockback_friction(fp, fr);
+            let n = fp.coll_data.floor.normal;
+            fp.x8c_kb_vel.x = n.y * fp.xF0_ground_kb_vel;
+            fp.x8c_kb_vel.y = -n.x * fp.xF0_ground_kb_vel;
+        }
+    }
+    if fp.x98_atk_shield_kb.x != 0.0 || fp.x98_atk_shield_kb.y != 0.0 {
+        return Err("an attacker-shield knockback (x98) is not ported".into());
+    }
     fp.gr_vel += fp.xE4_ground_accel_1 + fp.xE8_ground_accel_2;
     fp.xE4_ground_accel_1 = 0.0;
     fp.xE8_ground_accel_2 = 0.0;
@@ -5230,9 +5365,21 @@ fn proc_update_integrate(fp: &mut Fighter) {
     fp.x74_self_accel.x = 0.0;
     fp.x74_self_accel.y = 0.0;
     fp.x74_self_accel.z = 0.0;
-    let v = fp.self_vel;
+    let mut v = fp.self_vel;
+    if fp.dmg.x1948 != 0 {
+        let c2 = 1.0f32 - fp.dmg.x194C as f32 / fp.dmg.x1948 as f32;
+        v.x = fmadds(c2, fp.self_vel.x - fp.xA4_unk_vel.x, fp.xA4_unk_vel.x);
+        v.y = fmadds(c2, fp.self_vel.y - fp.xA4_unk_vel.y, fp.xA4_unk_vel.y);
+        fp.dmg.x194C -= 1;
+        if fp.dmg.x194C == 0 {
+            fp.dmg.x1948 = 0;
+        }
+    }
     fp.cur_pos.x += fp.xF8_playerNudgeVel.x;
     fp.cur_pos.z += fp.xF8_playerNudgeVel.y;
+    if fp.x2222_b6() != 0 && fp.x2222_b7() == 0 {
+        return Err("Fighter_procUpdate: x2222_b6 (the unk_vel path) is not ported".into());
+    }
     fp.cur_pos.x += v.x;
     fp.cur_pos.y += v.y;
     fp.cur_pos.z += v.z;
@@ -5241,6 +5388,7 @@ fn proc_update_integrate(fp: &mut Fighter) {
     fp.cur_pos.x += fp.x98_atk_shield_kb.x;
     fp.cur_pos.y += fp.x98_atk_shield_kb.y;
     fp.cur_pos.z += fp.x98_atk_shield_kb.z;
+    Ok(())
 }
 
 /// The golden frame being simulated (`MELEE_GOLDEN_RAND` trace).
@@ -5307,13 +5455,19 @@ fn hurt_extents(p: &mut Player) {
     p.fp.hurt_capsules_len = n as _;
     for i in 0..n {
         let (part, a, b, scale) = p.hurtboxes[i];
+        // lbColl_800083C4 only computes a capsule's positions once per frame (skip_update_pos, cleared by
+        // ftColl_8007AF28 at the end of Fighter_procUpdate): the s_link 13 hit test usually did it already.
+        p.fp.hurt_capsules[i].capsule.scale = scale;
+        if p.fp.hurt_capsules[i].capsule.skip_update_pos() != 0 {
+            continue;
+        }
         let j = p.skel.part(part as usize);
         let pa = p.skel.world_point(j, Vec3 { x: a[0], y: a[1], z: a[2] });
         let pb = p.skel.world_point(j, Vec3 { x: b[0], y: b[1], z: b[2] });
         let c = &mut p.fp.hurt_capsules[i].capsule;
         c.a_pos = melee_types::Vec { x: pa.x, y: pa.y, z: pa.z };
         c.b_pos = melee_types::Vec { x: pb.x, y: pb.y, z: pb.z };
-        c.scale = scale;
+        c.set_skip_update_pos(1);
         if std::env::var_os("MELEE_GOLDEN_HRT").is_some() && p.slot == 0 {
             eprintln!("HRT t{} i{} bone {} a {:08X} {:08X} {:08X} b {:08X} {:08X} {:08X} sc {:08X}", p.fp.cpu.x7C, i, part, pa.x.to_bits(), pa.y.to_bits(), pa.z.to_bits(), pb.x.to_bits(), pb.y.to_bits(), pb.z.to_bits(), scale.to_bits());
         }
@@ -5326,4 +5480,18 @@ fn hurt_extents(p: &mut Player) {
         }
     }
     unsafe { melee_fighter::tu::ftCo_0A01::ftCo_800A0DA4(&mut p.fp) };
+    if std::env::var_os("MELEE_GOLDEN_HC").is_some() && p.slot == 0 {
+        static N: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+        let n = N.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        if (118..=121).contains(&n) {
+            for q in 0..n_caps_dbg(p) {
+                let c = &p.fp.hurt_capsules[q].capsule;
+                eprintln!("HC g{} i{} a {:08X} {:08X} {:08X} b {:08X} {:08X} {:08X}", n, q, c.a_pos.x.to_bits(), c.a_pos.y.to_bits(), c.a_pos.z.to_bits(), c.b_pos.x.to_bits(), c.b_pos.y.to_bits(), c.b_pos.z.to_bits());
+            }
+        }
+    }
+}
+
+fn n_caps_dbg(p: &Player) -> usize {
+    p.fp.hurt_capsules_len as usize
 }

@@ -864,7 +864,17 @@ fn ftco_800ade48(cx: &mut Cx, me: *mut Fighter) -> R {
     } else if fp.cpu.kind == 0xF || fp.cpu.kind == 0 {
     } else if !b(fp.x221A_b3()) {
     } else {
-        return Err("ftCo_800ADE48: x221A_b3 (just hit) path not ported".into());
+        // Just hit: xF9_b0 off, xFA_b1 = (0.1 * level > HSD_Randf()). `switch_cmd` is not assigned on this path in
+        // the C (an uninitialised read); MELEE_CPU_SWITCH selects what the build leaves in it.
+        fp.cpu.set_xF9_b0(0);
+        let r = cx.rand.randf();
+        fp.cpu.set_xFA_b1(((0.1f32 * fp.cpu.level as f32) > r) as u8);
+        if std::env::var_os("MELEE_CPU_SWITCH").is_some() {
+            switch_cmd = 1;
+        }
+    }
+    if switch_cmd != 0 {
+        return Err("ftCo_800ADE48: the uninitialised switch_cmd path (ftCo_800B4A78) is not ported".into());
     }
     let _ = &mut switch_cmd;
     let cur_cmd = fp.cpu.x18;

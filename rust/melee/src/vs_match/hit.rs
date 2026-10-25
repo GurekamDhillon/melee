@@ -65,7 +65,6 @@ impl VsMatch {
             }
             // ftColl_800765E0: both damage logs are empty.
             let mut log: Vec<LogEntry> = Vec::new();
-            let mut refreshed = false;
             for k in 0..self.items.len() {
                 let it = self.items[k];
                 let ItemClass::FoxLaser { owner, hits, .. } = it.class else { continue };
@@ -75,11 +74,6 @@ impl VsMatch {
                 // ftLib_80086FD4(gobj, item->owner): the shots of the fighter's own player pass through.
                 if self.players[owner].fp.player_id == self.players[pi].fp.player_id {
                     continue;
-                }
-                // The victim's hurt capsules, as the skeleton stands at s_link 13 (lbColl_800083C4).
-                if !refreshed {
-                    hurt_positions(&mut self.players[pi]);
-                    refreshed = true;
                 }
                 if let Some(e) = self.laser_vs_fighter(pi, k, &it, &hits)? {
                     log.push(e);
@@ -140,6 +134,12 @@ impl VsMatch {
             let n_caps = fp.hurt_capsules_len as usize;
             for n in 0..n_caps {
                 // hurt->x42_b6 is clear: the grabbable test is skipped.
+                // lbColl_8000805C -> lbColl_800083C4: this capsule's positions, from the skeleton as it stands.
+                {
+                    let pp: *mut Player = &mut self.players[pi];
+                    unsafe { hurt_position(&mut *pp, n) };
+                }
+                let fp = &mut self.players[pi].fp;
                 let hit_now = unsafe { melee_runtime::tu::lbcollision::lbColl_8000805C(&mut hit, &mut fp.hurt_capsules[n].capsule, core::ptr::null(), 0, 1.0, scale_y, pos_z) };
                 let cap_state = fp.hurt_capsules[n].capsule.state;
                 if !hit_now {
@@ -462,28 +462,28 @@ fn item_common_x78() -> f32 {
     0.0
 }
 
-/// `lbColl_800083C4` for each of the fighter's hurt capsules, from the skeleton as it stands.
-fn hurt_positions(p: &mut Player) {
-    let n = p.hurtboxes.len().min(p.fp.hurt_capsules.len());
-    p.fp.hurt_capsules_len = n as _;
+/// `lbColl_800083C4` for one of the fighter's hurt capsules: its end positions from the skeleton as it stands, once
+/// per frame (`skip_update_pos`, cleared by `ftColl_8007AF28` at the end of `Fighter_procUpdate`).
+fn hurt_position(p: &mut Player, i: usize) {
     // The bone pointers are never followed (the capsules are marked updated); the matrix argument of the
     // collision test just needs a valid JObj.
     thread_local! {
         static DUMMY: *mut HSD_JObj = Box::leak(Box::new(HSD_JObj::zeroed()));
     }
     let dummy = DUMMY.with(|d| *d);
-    for i in 0..n {
-        let (part, a, b, scale) = p.hurtboxes[i];
-        let j = p.skel.part(part as usize);
-        let pa = p.skel.world_point(j, Vec3 { x: a[0], y: a[1], z: a[2] });
-        let pb = p.skel.world_point(j, Vec3 { x: b[0], y: b[1], z: b[2] });
-        let c = &mut p.fp.hurt_capsules[i].capsule;
-        c.a_pos = melee_types::Vec { x: pa.x, y: pa.y, z: pa.z };
-        c.b_pos = melee_types::Vec { x: pb.x, y: pb.y, z: pb.z };
-        c.scale = scale;
-        c.bone = dummy;
-        c.set_skip_update_pos(1);
+    if i >= p.hurtboxes.len() || p.fp.hurt_capsules[i].capsule.skip_update_pos() != 0 {
+        return;
     }
+    let (part, a, b, scale) = p.hurtboxes[i];
+    let j = p.skel.part(part as usize);
+    let pa = p.skel.world_point(j, Vec3 { x: a[0], y: a[1], z: a[2] });
+    let pb = p.skel.world_point(j, Vec3 { x: b[0], y: b[1], z: b[2] });
+    let c = &mut p.fp.hurt_capsules[i].capsule;
+    c.a_pos = melee_types::Vec { x: pa.x, y: pa.y, z: pa.z };
+    c.b_pos = melee_types::Vec { x: pb.x, y: pb.y, z: pb.z };
+    c.scale = scale;
+    c.bone = dummy;
+    c.set_skip_update_pos(1);
 }
 
 /// `IfDamageState`: the fields of the HUD's percent display that decide its RNG draws.

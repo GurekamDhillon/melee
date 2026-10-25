@@ -279,6 +279,36 @@ pub fn map_joint_world(a: &DatArchive, gobj: u32, dfs: usize) -> Option<([f32; 3
     None
 }
 
+/// As [`map_joint_world`], the joint's descriptor offset and its ancestor chain (root first).
+pub fn map_joint_chain(a: &DatArchive, gobj: u32, dfs: usize) -> Option<(u32, Vec<u32>)> {
+    let d = &a.data;
+    let head = a.public_offset("map_head")?;
+    let (gobjs, n) = (be32(d, head + 8), be32(d, head + 12));
+    if gobj >= n {
+        return None;
+    }
+    let root = be32(d, gobjs + gobj * 0x34);
+    let mut stack: Vec<(u32, Vec<u32>)> = vec![(root, vec![])];
+    let mut k = 0usize;
+    while let Some((j, chain)) = stack.pop() {
+        if j == 0 {
+            continue;
+        }
+        let mut c = chain.clone();
+        c.push(j);
+        if k == dfs {
+            return Some((j, c));
+        }
+        k += 1;
+        let (flags, child, next) = (be32(d, j + 4), be32(d, j + 8), be32(d, j + 0xC));
+        stack.push((next, chain));
+        if flags & JOBJ_INSTANCE == 0 && a.is_reloc(j + 8) {
+            stack.push((child, c));
+        }
+    }
+    None
+}
+
 /// `yakumono_param` (a stage file's public symbol): its words, big endian.
 pub fn yakumono_words(a: &DatArchive, n: usize) -> Option<Vec<u32>> {
     let at = a.public_offset("yakumono_param")?;

@@ -38,6 +38,7 @@ mod cpu;
 mod dashrun;
 mod fox;
 mod greens;
+mod story;
 mod rebirth;
 mod sheik;
 use fox::{ItemCmd, FoxVars, SimItem};
@@ -55,7 +56,7 @@ use melee_runtime::particle::{CmdRef, GenId, JObjRef, PsHost, PsSystem};
 use melee_runtime::random::HsdRand;
 use melee_types::neutral_hash::nh_fighter;
 use melee_runtime::mtx::Vec3;
-use melee_types::{Gr_Kind_Greens, Gr_Kind_Battle, Gr_Kind_Last, ftCollisionBox, Fighter, FighterKind, Ft_Kind_Captain, Ft_Kind_Fox};
+use melee_types::{Gr_Kind_Greens, Gr_Kind_Story, Gr_Kind_Battle, Gr_Kind_Last, ftCollisionBox, Fighter, FighterKind, Ft_Kind_Captain, Ft_Kind_Fox};
 use melee_world::mp::coll::{self as mc, CollGlobals};
 use melee_world::mp::lines::GroundColl;
 use melee_world::gr::bgm::{self, BgmUnlocks, StageParam};
@@ -144,6 +145,8 @@ fn is_fx_kind(k: FighterKind) -> bool {
 
 /// Dream Land (Green Greens, `GrGr.dat`, Gr_Kind_Greens).
 pub const STKIND_DL: i32 = 0x11;
+/// Yoshi's Story (`GrSt.dat`, Gr_Kind_Story).
+pub const STKIND_YS: i32 = 8;
 /// efLib's particle procs (eflib.c `efLib_particles_proc_main` / `_aux`, TARGET_PC masks).
 const PTCL_MASK_MAIN: u32 = 0x20000 | 0x40000;
 const PTCL_MASK_AUX: u32 = 0x10000 | 0x80000;
@@ -422,6 +425,8 @@ struct DptclAnim {
 }
 
 pub struct VsMatch {
+    /// `it_804A0E30.x0`: frames until the random item spawner (`fn_8026C88C`) next fires.
+    pub item_timer: Option<i32>,
     pub players: Vec<Player>,
     /// mplib's map collision (`groundCollLine` & co.) and mpcoll's statics.
     pub ground: GroundColl,
@@ -441,6 +446,7 @@ pub struct VsMatch {
     dptcl: Vec<DptclAnim>,
     /// Green Greens' per-frame stage procs (greens.rs).
     greens: Option<greens::Greens>,
+    story: Option<story::Story>,
     aobj_globals: AObjGlobals,
     /// Bind-pose world matrices of the joints a generator can follow (by DAT offset; an effect
     /// joint is `(instance << 24) | offset`).
@@ -477,6 +483,40 @@ pub struct VsMatch {
 /// Green Greens' `grGreens_Init` (the map gobjs' OnInit in order 6, 5 for the draws that matter): the
 /// bomb-block pattern (`grGreens_80214B58`), the block timer, the wind timer, and the 18 block items
 /// (`grGreens_80214FA8` -> `grGreens_80215358`). Returns the blocks as items in creation order.
+/// `it_8026D018`: the random item spawner's setup. The tables it builds (`it_8026CA4C`,
+/// `it_8026CB9C`, `it_8026CF04`) only matter once an item is picked; the setup's one RNG draw is the
+/// first timer: `x0 = (int)(diff * randf + range[0])`, then `x0 *= Ground_801C2AE8(stkind)`.
+fn item_spawner_init(disc: &mut crate::disc::Disc, stage: &DatArchive, stkind: i32, item_freq: i32, rand: &mut HsdRand) -> Result<i32, String> {
+    let be = |d: &[u8], at: u32| u32::from_be_bytes(d[at as usize..at as usize + 4].try_into().unwrap());
+    // ItCo.usd (the English disc's language file) else ItCo.dat: itPublicData -> x0 = ItemCommonData; xFC = s32 ranges.
+    let bytes = match disc.read("ItCo.usd") {
+        Ok(b) => b,
+        Err(_) => disc.read("ItCo.dat")?,
+    };
+    let a = DatArchive::parse(&bytes).map_err(|e| format!("ItCo: {e}"))?;
+    let public = a.public_offset("itPublicData").ok_or("ItCo: no itPublicData")?;
+    let common = be(&a.data, public);
+    let at = common + 0xFC + 8 * item_freq as u32;
+    let (r0, r1) = (be(&a.data, at) as i32, be(&a.data, at + 4) as i32);
+    let randf = rand.randf();
+    let diff = (r1 - r0) as f32;
+    let x0 = melee_core::fp::fmadds(diff, randf, r0 as f32) as i32;
+    // Ground_801C2AE8: (0.01f * param->x68) * (0.01f * row.x18).
+    let param = crate::stage::ground_param(stage).ok_or("no grGroundParam")?;
+    let (rows, n) = (be(&stage.data, param + 0xB0), be(&stage.data, param + 0xB4));
+    let s16 = |at: u32| i16::from_be_bytes(stage.data[at as usize..at as usize + 2].try_into().unwrap());
+    let mut mult = None;
+    for i in 0..n {
+        let e = rows + i * 0x64;
+        if be(&stage.data, e) as i32 == stkind {
+            mult = Some((0.01f32 * s16(param + 0x68) as f32) * (0.01f32 * s16(e + 0x18) as f32));
+            break;
+        }
+    }
+    let mult = mult.ok_or("Ground_801C2AE8: no stage param row")?;
+    Ok(((x0 as f32) * mult) as i32)
+}
+
 fn greens_init(stage: &DatArchive, rand: &mut HsdRand, scale: f32) -> Result<(Vec<fox::SimItem>, greens::InitDraws), String> {
     let y = crate::stage::yakumono_words(stage, 0x1E).ok_or("GrGr.dat: no yakumono_param")?;
     let y = |i: usize| y[i] as i32;
@@ -679,6 +719,8 @@ fn fighter_kind(name: &str) -> Result<FighterKind, String> {
         "marth" => Ok(melee_types::Ft_Kind_Mars),
         "sheik" => Ok(melee_types::Ft_Kind_Seak),
         "zelda" => Ok(melee_types::Ft_Kind_Zelda),
+        "peach" => Ok(melee_types::Ft_Kind_Peach),
+        "samus" => Ok(melee_types::Ft_Kind_Samus),
         // Akaneia's Wolf: an m-ex fighter built on Fox (its ftFunction overrides some slots; the
         // rest is Fox's vanilla code, as m-ex's per-kind tables copy them). The native match runs
         // it as Fox's kind with Wolf's files: crate::fighter_data::files_for.
@@ -689,6 +731,11 @@ fn fighter_kind(name: &str) -> Result<FighterKind, String> {
 
 impl VsMatch {
     pub fn new(disc: &mut crate::disc::Disc, stage_file: &str, fighter_specs: &[&str], seed: u32, stocks: i32) -> Result<Self, String> {
+        Self::new_ex(disc, stage_file, fighter_specs, seed, stocks, None)
+    }
+
+    /// `item_freq`: the VS rules' item frequency (`items=N`; None: items off).
+    pub fn new_ex(disc: &mut crate::disc::Disc, stage_file: &str, fighter_specs: &[&str], seed: u32, stocks: i32, item_freq: Option<i32>) -> Result<Self, String> {
         // "fox" (human) or "fox/cpu9" (CPU, level 9).
         let cpu_levels: Vec<Option<i32>> = fighter_specs.iter().map(|s| s.split_once("/cpu").and_then(|(_, l)| l.parse().ok())).collect();
         let fighters: Vec<&str> = fighter_specs.iter().map(|s| s.split('/').next().unwrap()).collect();
@@ -697,6 +744,7 @@ impl VsMatch {
             "GrNLa.dat" => STKIND_FD,
             "GrNBa.dat" => STKIND_BF,
             "GrGr.dat" => STKIND_DL,
+            "GrSt.dat" => STKIND_YS,
             _ => return Err(format!("{stage_file}: only Final Destination's and Battlefield's stage code is wired")),
         };
         let stage_bytes = disc.read(stage_file)?;
@@ -794,6 +842,8 @@ impl VsMatch {
                 "falco" => ("EfFxData.dat", "effFoxDataTable", 3),
                 "marth" => ("EfMsData.dat", "effMarsDataTable", 16),
                 "sheik" => ("EfZdData.dat", "effZeldaDataTable", 17),
+                "peach" => ("EfPeData.dat", "effPeachDataTable", 15),
+                "samus" => ("EfSsData.dat", "effSamusDataTable", 2),
                 // Wolf's own bank takes Fox's index: a match here has one Fox-kind fighter.
                 "wolf" => ("EfWfData.dat", "effWolfDataTable", 3),
                 n => return Err(format!("effect bank of {n:?} not wired")),
@@ -836,10 +886,24 @@ impl VsMatch {
         // 4..8 are created in order; gobj 7's on_init is grLast_8021AC30.
         let mut items0: Vec<fox::SimItem> = Vec::new();
         let mut greens_draws: Option<greens::InitDraws> = None;
+        // gmvs.c fn_8016D... -> it_8026D018 (before the stage's OnInit): the random item spawner's
+        // first timer.
+        let item_timer = match item_freq {
+            Some(f) => Some(item_spawner_init(disc, &stage, stkind, f, &mut rand)?),
+            None => None,
+        };
         let last_bg = if stkind == STKIND_DL {
             let (items, draws) = greens_init(&stage, &mut rand, f32::from_bits(u32::from_be_bytes(stage.data[crate::stage::ground_param(&stage).ok_or("no grGroundParam")? as usize..][..4].try_into().unwrap())))?;
             items0 = items;
             greens_draws = Some(draws);
+            None
+        } else if stkind == STKIND_YS {
+            // grStory_801E3030: the stage gobjs 1, 3, 2 are set up in that order. Only the Shy Guys'
+            // (gobj 3, grStory_801E3234) reset_shyguy_timer draws: randi(timer_min..timer_rand) before
+            // the constant 120 overwrites it.
+            let y = crate::stage::yakumono_words(&stage, 3).ok_or("GrSt.dat: no yakumono_param")?;
+            let timer_rand = f32::from_bits(y[1]) as i32;
+            let _ = rand.randi(timer_rand);
             None
         } else if stkind == STKIND_BF {
             // grBattle_OnInit: grBattle_80219D84(3) -> grBattle_BG_Callback0: reset_bg_timer,
@@ -861,7 +925,7 @@ impl VsMatch {
         let mut seen = std::collections::HashSet::new();
         // FD's grLast animation table; Battlefield's grBattle_OnInit starts gobj 0 and 1's anim 0
         // (grBattle_GObj0/1_Callback0 -> grAnime_801C8138), whose particle tracks are the 4 stage gens.
-        let dptcl_rows: &[(u32, u32)] = if stkind == STKIND_DL { &[(0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0)] } else if stkind == STKIND_BF { &[(0, 0), (1, 0)] } else { &[(4, 0), (5, 4), (6, 6), (7, 8), (8, 10), (4, 0), (5, 0), (6, 0), (7, 0), (8, 0)] };
+        let dptcl_rows: &[(u32, u32)] = if stkind == STKIND_YS { &[(1, 0), (3, 0), (3, 1), (2, 0)] } else if stkind == STKIND_DL { &[(0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0)] } else if stkind == STKIND_BF { &[(0, 0), (1, 0)] } else { &[(4, 0), (5, 4), (6, 6), (7, 8), (8, 10), (4, 0), (5, 0), (6, 0), (7, 0), (8, 0)] };
         for &(g, anim) in dptcl_rows {
             if !seen.insert((g, anim)) {
                 continue;
@@ -1237,7 +1301,8 @@ impl VsMatch {
                 }
             });
         }
-        Ok(Self { players, ground, cg, pads: [input::PadStatus::default(); 4], go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, greens: greens_draws.map(move |d| greens::Greens::new(std::sync::Arc::new(stage), d)), aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists, blast, fighter_jobjs: Vec::new(), items: items0, cpu_dist, plco_bytes: std::sync::Arc::from(&plco.data[..]), cpu_tbl: be(common_root + 4 * 22), grkind: if stkind == STKIND_DL { Gr_Kind_Greens as i32 } else if stkind == STKIND_BF { Gr_Kind_Battle as i32 } else { Gr_Kind_Last as i32 }, respawn_points: (4..8).filter_map(|id| points.iter().find(|p| p.id == id).map(|p| Vec3 { x: p.pos[0], y: p.pos[1], z: p.pos[2] })).collect(), respawn_busy: [0; 6], start_shield, per_slot_spawn: stkind == STKIND_BF })
+        let story_state = if stkind == STKIND_YS { Some(story::Story::new(std::sync::Arc::new(DatArchive::parse(&stage_bytes).map_err(|e| format!("{stage_file}: {e}"))?), &mut joint_mtx)?) } else { None };
+        Ok(Self { item_timer, players, ground, cg, pads: [input::PadStatus::default(); 4], go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, story: story_state, greens: greens_draws.map(move |d| greens::Greens::new(std::sync::Arc::new(stage), d)), aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists, blast, fighter_jobjs: Vec::new(), items: items0, cpu_dist, plco_bytes: std::sync::Arc::from(&plco.data[..]), cpu_tbl: be(common_root + 4 * 22), grkind: if stkind == STKIND_DL { Gr_Kind_Greens as i32 } else if stkind == STKIND_YS { Gr_Kind_Story as i32 } else if stkind == STKIND_BF { Gr_Kind_Battle as i32 } else { Gr_Kind_Last as i32 }, respawn_points: (4..8).filter_map(|id| points.iter().find(|p| p.id == id).map(|p| Vec3 { x: p.pos[0], y: p.pos[1], z: p.pos[2] })).collect(), respawn_busy: [0; 6], start_shield, per_slot_spawn: stkind == STKIND_BF })
     }
 
     /// The m-ex fighters' code-run report (crate::mex), one block per such fighter.
@@ -1334,6 +1399,14 @@ impl VsMatch {
         for b in &mut self.respawn_busy {
             if *b != 0 {
                 *b -= 1;
+            }
+        }
+        // fn_8026C88C (the random item spawner's proc, s_link 0): the countdown; the spawn itself
+        // (it_8026C75C & co.) is not ported.
+        if let Some(t) = &mut self.item_timer {
+            *t -= 1;
+            if *t == 0 {
+                return Err("fn_8026C88C: the random item spawn (it_8026C75C, it_8026CB3C) is not ported".into());
             }
         }
         // s_link 0, the Ready HUD's proc (p_link 14, after the fighters' s_link 0 proc
@@ -1597,6 +1670,7 @@ impl VsMatch {
         }
         // s_link 4, the stage gobjs' procs (p_link 5, ahead of the fighters' p_link 8).
         self.greens_procs()?;
+        self.story_procs()?;
         // s_link 4, Fighter_procUpdate: phys_cb, then the integration below.
         for p in &mut self.players {
             // x2064_ledgeCooldown countdown (capture_timer is 0 here).

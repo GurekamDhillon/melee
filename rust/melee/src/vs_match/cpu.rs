@@ -300,6 +300,7 @@ fn ftco_800a229c(cx: &Cx, fp: &Fighter) -> R<i32> {
 
 /// `ftCo_800B33B0`: the per-frame sensing.
 fn ftco_800b33b0(cx: &mut Cx, fp: &mut Fighter) -> R {
+    if std::env::var_os("MELEE_GOLDEN_CPUDBG").is_some() { eprintln!("B33B0 slot {} x7C {} xF9_b0 {}", fp.player_id, fp.cpu.x7C, fp.cpu.xF9_b0()); }
     if fp.cpu.x7C % 300 == 0 {
         let r = cx.rand.randf();
         // FMA: 0.04f * level + 0.3f
@@ -2055,7 +2056,18 @@ fn ftco_800adc28(fp: &Fighter) -> R {
         return Ok(());
     }
     let k = fp.kind;
-    if k == Ft_Kind_Donkey || k == Ft_Kind_Samus || k == Ft_Kind_Mewtwo || k == Ft_Kind_Kirby {
+    let m = fp.motion_id;
+    let charging = if k == Ft_Kind_Donkey {
+        m == ftDk_MS_SpecialNLoop as i32
+    } else if k == Ft_Kind_Samus {
+        m == ftSs_MS_SpecialNHold as i32
+    } else if k == Ft_Kind_Mewtwo {
+        m == ftMt_MS_SpecialNLoop as i32 || m == ftMt_MS_SpecialNLoopFull as i32
+    } else {
+        // Kirby copying one of them.
+        k == Ft_Kind_Kirby
+    };
+    if charging {
         return Err("ftCo_800ADC28 (charge special) not ported".into());
     }
     Ok(())

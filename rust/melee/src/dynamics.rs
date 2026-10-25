@@ -112,7 +112,7 @@ impl Dynamics {
         let bones = be32(d, x2c + 4);
         let mut sets = Vec::new();
         for i in 0..num as u32 {
-            let b = bones + i * 0x1C;
+            let b = bones + i * 0x18;
             let bone_id = be32(d, b) as usize;
             let data = be32(d, b + 4);
             let count = be32(d, b + 8) as usize;

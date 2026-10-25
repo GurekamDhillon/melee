@@ -232,6 +232,7 @@ fn golden(args: &[String]) -> ExitCode {
         // (`mex-import import`, then --mods DIR or MELEE_MODS_DIR). No C golden exists for it.
         "pad_marth_sheik_bf" => ("GrNBa.dat", &["marth", "sheik"]),
         "cpu_fox_falco_dl" => ("GrGr.dat", &["fox/cpu9", "falco/cpu9"]),
+        "cpu_peach_samus_ys_items" => ("GrSt.dat", &["peach/cpu9", "samus/cpu9"]),
         "pad_falcon_wolf_fd" => ("GrNLa.dat", &["falcon", "wolf"]),
         s => {
             eprintln!("melee: scenario {s:?} not wired (pad_falcon_fox_fd)");
@@ -261,7 +262,8 @@ fn golden(args: &[String]) -> ExitCode {
     let mut from_mods = vec![];
     let res = disc::Disc::open(&iso).and_then(|mut d| {
         d.mods = mods;
-        let r = vs_match::VsMatch::new(&mut d, stage, fighters, 12345, 3);
+        let item_freq = if scenario == "cpu_peach_samus_ys_items" { Some(4) } else { None };
+        let r = vs_match::VsMatch::new_ex(&mut d, stage, fighters, 12345, 3, item_freq);
         from_mods = std::mem::take(&mut d.from_mods);
         r
     });

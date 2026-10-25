@@ -141,3 +141,7 @@ harness = false
 [[test]]
 name = "tu_psdisptev"
 harness = false
+
+[[test]]
+name = "tu_particle"
+harness = false

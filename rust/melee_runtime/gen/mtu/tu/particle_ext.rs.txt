@@ -1,0 +1,47 @@
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/mtu/gen_tu.py; the callees of the C TU)
+pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    use super::*;
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn HSD_JObjAlloc() -> *mut HSD_JObj = crate::tu::jobj::HSD_JObjAlloc();
+    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
+    fn HSD_JObjSetupMatrixSub(a0: *mut HSD_JObj);
+    fn HSD_JObjUnref(a0: *mut HSD_JObj) = crate::tu::jobj::HSD_JObjUnref(a0);
+    fn HSD_MtxGetScale(a0: *mut c_void, a1: *mut Vec);
+    fn HSD_MtxSRT(a0: *mut c_void, a1: *mut Vec, a2: *mut Vec, a3: *mut Vec, a4: *mut Vec);
+    fn HSD_ObjAlloc(a0: *mut _HSD_ObjAllocData) -> *mut c_void = crate::tu::objalloc::HSD_ObjAlloc(a0 as _);
+    fn HSD_ObjAllocInit(a0: *mut _HSD_ObjAllocData, a1: u32, a2: u32) = crate::tu::objalloc::HSD_ObjAllocInit(a0 as _, a1 as _, a2);
+    fn HSD_ObjFree(a0: *mut _HSD_ObjAllocData, a1: *mut c_void) = crate::tu::objalloc::HSD_ObjFree(a0 as _, a1);
+    fn HSD_Randf() -> f32 = crate::tu::random::HSD_Randf(crate::tu::globals::rand());
+    fn ScriptGame_StageSlotParticleBegin(a0: i32) -> i32;
+    fn ScriptGame_StageSlotProcEnd();
+    fn atan2f(a0: f32, a1: f32) -> f32 = crate::lbtrigf::atan2f(a0, a1);
+    fn hsd_8039D1EC() -> u16;
+    fn hsd_8039F05C(a0: i32, a1: i32, a2: i32) -> *mut HSD_Generator;
+    fn psAttachGeneratorAppSRT(a0: *mut HSD_Generator, a1: *mut HSD_psAppSRT) -> i32;
+    fn psAttachParticleAppSRT(a0: *mut HSD_Particle, a1: *mut HSD_psAppSRT) -> i32;
+    fn psRemoveParticleAppSRT(a0: *mut HSD_Particle) -> i32;
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+    }
+    // Data defined in other TUs (the tests set them).
+}
+// END GENERATED EXT

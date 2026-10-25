@@ -5,10 +5,10 @@ use melee_types::*;
 use core::ffi::c_void;
 use melee_core::fp::fmadds;
 use crate::gekko::{sinf, cosf, tanf, sqrtf};
-use crate::lbtrigf::atan2f;
 use crate::hsd_mtx::fabsf_bitwise;
 use crate::particle::{KIND_TORNADO, KIND_TEX_EDGE, KIND_MIRROR_S, KIND_MIRROR_T, KIND_PRIM_ENV, KIND_TEX_INTERP_NEAR, KIND_DISP_TEXTURE, KIND_TEX_FLIP_S, KIND_TEX_FLIP_T, KIND_TRAIL, KIND_DIR_VEC};
 const M_PI:f64=core::f64::consts::PI;
+unsafe fn atan2f(y: f32, x: f32) -> f32 { ext::atan2f(y, x) }
 pub static mut hsd_804D78D0: u32 = 0;
 pub static mut psCallback: *mut Option<
     unsafe extern "C" fn(*mut HSD_Particle) -> ::core::ffi::c_int,
@@ -1661,7 +1661,7 @@ unsafe fn memset(p:*mut c_void,v:i32,n:u32)->*mut c_void { core::ptr::write_byte
 fn OSPanic(_file:*const i8,line:i32,_msg:*const i8)->! { panic!("particle.c OSPanic line {line}") }
 fn __assert(_file:*const i8,line:u32,_msg:*const i8)->! { panic!("particle.c assertion line {line}") }
 use ext::*;
-// BEGIN GENERATED EXT (rust/melee_world/gen/mtu/gen_tu.py; the callees of the C TU)
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
@@ -1693,6 +1693,7 @@ pub mod ext {
     fn HSD_Randf() -> f32 = crate::tu::random::HSD_Randf(crate::tu::globals::rand());
     fn ScriptGame_StageSlotParticleBegin(a0: i32) -> i32;
     fn ScriptGame_StageSlotProcEnd();
+    fn atan2f(a0: f32, a1: f32) -> f32 = crate::lbtrigf::atan2f(a0, a1);
     fn hsd_8039D1EC() -> u16;
     fn hsd_8039F05C(a0: i32, a1: i32, a2: i32) -> *mut HSD_Generator;
     fn psAttachGeneratorAppSRT(a0: *mut HSD_Generator, a1: *mut HSD_psAppSRT) -> i32;
@@ -1705,6 +1706,5 @@ pub mod ext {
         pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
-    
 }
 // END GENERATED EXT

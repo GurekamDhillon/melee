@@ -1,0 +1,9 @@
+{
+ "atan2f": "crate::lbtrigf::atan2f(a0, a1)",
+ "HSD_JObjAlloc": "crate::tu::jobj::HSD_JObjAlloc()",
+ "HSD_JObjUnref": "crate::tu::jobj::HSD_JObjUnref(a0)",
+ "HSD_ObjAlloc": "crate::tu::objalloc::HSD_ObjAlloc(a0 as _)",
+ "HSD_ObjAllocInit": "crate::tu::objalloc::HSD_ObjAllocInit(a0 as _, a1 as _, a2)",
+ "HSD_ObjFree": "crate::tu::objalloc::HSD_ObjFree(a0 as _, a1)",
+ "HSD_Randf": "crate::tu::random::HSD_Randf(crate::tu::globals::rand())"
+}

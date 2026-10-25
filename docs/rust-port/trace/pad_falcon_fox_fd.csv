@@ -1440,9 +1440,9 @@ plStale_IncrementAttackInstance,src/melee/pl/plstale.c,0,215,ported+verified,mel
 plStale_InitAttackInstance,src/melee/pl/plstale.c,0,1,ported+verified,melee_fighter
 plStale_ResetStaleMoveTableForPlayer,src/melee/pl/plstale.c,0,11,ported+verified,melee_fighter
 pl_80037C60,src/melee/pl/pltrick.c,0,233,ported+verified,melee_fighter
-fn_803219AC,src/melee/sfx/crowdsfx.c,0,1614,ported-unverified,melee_fighter
-un_80321A00,src/melee/sfx/crowdsfx.c,0,1614,ported-unverified,melee_fighter
-un_80321AF4,src/melee/sfx/crowdsfx.c,0,1614,ported-unverified,melee_fighter
+fn_803219AC,src/melee/sfx/crowdsfx.c,0,1614,ported+verified,melee_fighter
+un_80321A00,src/melee/sfx/crowdsfx.c,0,1614,ported+verified,melee_fighter
+un_80321AF4,src/melee/sfx/crowdsfx.c,0,1614,ported+verified,melee_fighter
 sfx_setupCrowdSFX,src/melee/sfx/sfx_unk.c,0,1,ported+verified,melee_fighter
 tyDisplay_8031C2CC,src/melee/ty/tydisplay.c,0,1,ported+verified,melee_items
 HSD_AObjClearFlags,src/sysdolphin/baselib/aobj.c,0,5,ported+verified,melee_world

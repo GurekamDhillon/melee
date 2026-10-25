@@ -1,0 +1,28 @@
+{
+ "stem": "crowdsfx",
+ "csrc": "src/melee/sfx/crowdsfx.c",
+ "rmod": "melee_fighter::tu::crowdsfx",
+ "cases": 1500,
+ "ops": [
+  [
+   "fn_803219AC(g)",
+   "m::fn_803219AC(g)"
+  ],
+  [
+   "un_80321A00(g)",
+   "m::un_80321A00(g)"
+  ],
+  [
+   "un_80321AF4(g)",
+   "m::un_80321AF4(g)"
+  ]
+ ],
+ "fill_types": "CrowdSFX_UnkStruct,CrowdConfig,mpCollisionBox",
+ "c_pre": "static CrowdSFX_UnkStruct CSX; static CrowdConfig CC;",
+ "c_world": "    { int q_; zero(&CSX, sizeof CSX); fill_CrowdSFX_UnkStruct(&CSX); crowdsfx_ptr = &CSX; zero(&CC, sizeof CC); fill_CrowdConfig(&CC); gCrowdConfig = &CC;\n      for (q_ = 0; q_ < 2; q_++) { zero(&mpLib_80458868[q_], sizeof mpLib_80458868[q_]); fill_mpCollisionBox(&mpLib_80458868[q_]); } }",
+ "c_hash": "    hash_CrowdSFX_UnkStruct(&CSX);",
+ "rs_head": "static mut CSX: *mut CrowdSFX_UnkStruct = null_mut(); static mut CC: *mut CrowdConfig = null_mut(); static mut MPB: *mut [mpCollisionBox; 2] = null_mut();",
+ "rs_hooks": "    CSX = bz(); CC = bz(); MPB = bz(); m::ext::hook::mpLib_80458868 = Some(|| (*MPB).as_mut_ptr());",
+ "rs_world": "    *CSX = core::mem::zeroed(); fill_CrowdSFX_UnkStruct(&mut *CSX); m::crowdsfx_ptr = CSX; *CC = core::mem::zeroed(); fill_CrowdConfig(&mut *CC); melee_fighter::tu::fighter::gCrowdConfig = CC as *mut c_void;\n    for q_ in 0..2 { (*MPB)[q_] = core::mem::zeroed(); fill_mpCollisionBox(&mut (*MPB)[q_]); }",
+ "rs_hash": "    hash_CrowdSFX_UnkStruct(&*CSX);"
+}

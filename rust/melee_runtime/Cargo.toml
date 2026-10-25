@@ -93,3 +93,7 @@ harness = false
 [[test]]
 name = "tu_fog"
 harness = false
+
+[[test]]
+name = "tu_pobj"
+harness = false

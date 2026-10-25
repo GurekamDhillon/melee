@@ -1,0 +1,103 @@
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/mtu/gen_tu.py; the callees of the C TU)
+pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    use super::*;
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn GXAuroraEndPalette();
+    fn GXAuroraLoadPalette(a0: u32, a1: u32, a2: *const f32);
+    fn GXBegin(a0: u32, a1: u32, a2: u16);
+    fn GXCallDisplayList(a0: *mut c_void, a1: u32);
+    fn GXClearVtxDesc();
+    fn GXColor1u16(a0: u16);
+    fn GXColor1x16(a0: u16);
+    fn GXColor1x8(a0: u8);
+    fn GXColor3u8(a0: u8, a1: u8, a2: u8);
+    fn GXColor4u8(a0: u8, a1: u8, a2: u8, a3: u8);
+    fn GXLoadNrmMtxImm(a0: *mut c_void, a1: u32);
+    fn GXLoadPosMtxImm(a0: *mut c_void, a1: u32);
+    fn GXLoadTexMtxImm(a0: *mut c_void, a1: u32, a2: u32);
+    fn GXNormal3f32(a0: f32, a1: f32, a2: f32);
+    fn GXPosition3f32(a0: f32, a1: f32, a2: f32);
+    fn GXSetArray(a0: u32, a1: *const c_void, a2: u8);
+    fn GXSetCurrentMtx(a0: u32);
+    fn GXSetVtxAttrFmt(a0: u32, a1: u32, a2: u32, a3: u32, a4: u8);
+    fn GXSetVtxDesc(a0: u32, a1: u32);
+    fn GXTexCoord1u8(a0: u8);
+    fn GXTexCoord1x16(a0: u16);
+    fn GXTexCoord1x8(a0: u8);
+    fn GenoPalCacheGet(a0: u32, a1: u32, a2: u32, a3: u32, a4: *mut f32) -> i32;
+    fn GenoPalCachePut(a0: u32, a1: u32, a2: u32, a3: u32, a4: *const f32);
+    fn HSD_AObjInterpretAnim(a0: *mut HSD_AObj, a1: *mut c_void, a2: Option<unsafe extern "C" fn(*mut c_void, i32, *mut HSD_ObjData)>);
+    fn HSD_AObjLoadDesc(a0: *mut HSD_AObjDesc) -> *mut HSD_AObj;
+    fn HSD_AObjRemove(a0: *mut HSD_AObj);
+    fn HSD_AObjReqAnim(a0: *mut HSD_AObj, a1: f32);
+    fn HSD_Free(a0: *mut c_void);
+    fn HSD_IDGetDataFromTable(a0: *mut _HSD_IDTable, a1: u64, a2: *mut i32) -> *mut c_void;
+    fn HSD_Index2PosNrmMtx(a0: u32) -> i32;
+    fn HSD_Index2TexMtx(a0: u32) -> u32;
+    fn HSD_JObjGetCurrent() -> *mut HSD_JObj;
+    fn HSD_JObjSetupMatrixSub(a0: *mut HSD_JObj);
+    fn HSD_JObjUnrefThis(a0: *mut HSD_JObj);
+    fn HSD_MemAlloc(a0: i32) -> *mut c_void;
+    fn HSD_MtxInverseTranspose(a0: *mut c_void, a1: *mut c_void) = { let r = crate::hsd_mtx::inverse_transpose(&*(a0 as *const [[f32; 4]; 3])); (a1 as *mut [[f32; 4]; 3]).write(r); };
+    fn HSD_MtxScaledAdd(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void, a3: f32) = { let r = crate::hsd_mtx::scaled_add(&*(a0 as *const [[f32; 4]; 3]), &*(a1 as *const [[f32; 4]; 3]), a3); (a2 as *mut [[f32; 4]; 3]).write(r); };
+    fn HSD_PerfCountEnvelopeBlending(a0: i32);
+    fn HSD_SListAlloc() -> *mut _HSD_SList;
+    fn HSD_SListRemove(a0: *mut _HSD_SList) -> *mut _HSD_SList;
+    fn HSD_StateSetCullMode(a0: i32);
+    fn PSMTXConcat(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void) = crate::tu::mtx_pc::raw::PSMTXConcat(a0 as _, a1 as _, a2 as _);
+    fn ProfActive() -> i32;
+    fn ProfBegin(a0: i32, a1: i32);
+    fn ProfCount(a0: i32);
+    fn ProfEnd();
+    fn _HSD_TObjGetCurrentByType(a0: *mut HSD_TObj, a1: u32) -> *mut HSD_TObj;
+    fn _HSD_mkEnvelopeModelNodeMtx(a0: *mut HSD_JObj, a1: *mut c_void) -> *mut c_void;
+    fn diag_env_slot(a0: u32, a1: u32, a2: i32);
+    fn diag_envelope(a0: i32, a1: f32);
+    fn diag_geno_pal(a0: i32, a1: i32, a2: i32);
+    fn diag_geno_pal_compare(a0: i32, a1: i32, a2: i32, a3: i32);
+    fn diag_geno_pal_force() -> i32;
+    fn diag_geno_pal_selftest() -> i32;
+    fn diag_pobj_draw(a0: u32, a1: i32, a2: i32, a3: u32, a4: u32, a5: u32, a6: u32);
+    fn diag_pobj_enabled() -> i32;
+    fn env_cache_compare(a0: u32, a1: u32, a2: u32, a3: u32, a4: *const c_void, a5: *const c_void, a6: i32);
+    fn env_cache_get(a0: u32, a1: u32, a2: u32, a3: u32, a4: *mut c_void, a5: *mut c_void, a6: i32) -> i32;
+    fn env_cache_mode() -> i32;
+    fn env_cache_put(a0: u32, a1: u32, a2: u32, a3: u32, a4: *const c_void, a5: *const c_void, a6: i32);
+    fn geno_stun_frame() -> i32;
+    fn hsdAllocMemPiece(a0: i32) -> *mut c_void;
+    fn hsdFreeMemPiece(a0: *mut c_void, a1: i32);
+    fn hsdInitClassInfo(a0: *mut _HSD_ClassInfo, a1: *mut _HSD_ClassInfo, a2: *mut i8, a3: *mut i8, a4: i32, a5: i32);
+    fn hsdIsDescendantOf(a0: *mut c_void, a1: *mut c_void) -> i32;
+    fn hsdNew(a0: *mut _HSD_ClassInfo) -> *mut c_void;
+    fn hsdSearchClassInfo(a0: *const i8) -> *mut _HSD_ClassInfo;
+    fn memcmp(a0: *const c_void, a1: *const c_void, a2: u32) -> i32 = { let (x, y) = (core::slice::from_raw_parts(a0 as *const u8, a2 as usize), core::slice::from_raw_parts(a1 as *const u8, a2 as usize)); match x.cmp(y) { core::cmp::Ordering::Less => -1, core::cmp::Ordering::Equal => 0, core::cmp::Ordering::Greater => 1 } };
+    fn strcmp(a0: *const i8, a1: *const i8) -> i32 = { match std::ffi::CStr::from_ptr(a0).to_bytes().cmp(std::ffi::CStr::from_ptr(a1).to_bytes()) { core::cmp::Ordering::Less => -1, core::cmp::Ordering::Equal => 0, core::cmp::Ordering::Greater => 1 } };
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+        pub unsafe extern "C" fn hsdIsDescendantOf(a0: *mut c_void, a1: *mut c_void) -> i32 { super::hsdIsDescendantOf(a0, a1) }
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut HSD_GObj_804D7814: *mut HSD_GObj = unsafe { core::mem::zeroed() };
+    pub static mut HSD_PerfCurrentStat: HSD_PerfStat = unsafe { core::mem::zeroed() };
+    pub static mut gx_suppress_draws: i32 = unsafe { core::mem::zeroed() };
+    pub static mut hsdClass: HSD_ClassInfo = unsafe { core::mem::zeroed() };
+}
+// END GENERATED EXT

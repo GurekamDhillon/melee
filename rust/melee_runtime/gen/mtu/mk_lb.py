@@ -225,6 +225,9 @@ def bind(ptype, pools):
             # a record no pool describes: scratch memory (the callee reads or writes it as plain data)
             print(f"mk_lb: note: pointer to {pt.spelling} bound to BUF")
             return (f"({ptype.spelling}) BUF", "(&raw mut BUF) as *mut _")
+        if pt.kind == T.CONSTANTARRAY:
+            # pointer to a fixed array (float (*)[3]): scratch memory, written as plain data
+            return (f"({ptype.spelling}) BUF", "(&raw mut BUF) as *mut _")
         raise SystemExit(f"no binding for pointer to {pt.spelling}")
     if k == T.BOOL:
         return "fv()", "fv() != 0"
@@ -275,7 +278,7 @@ def ops_of(tu, stem, cfg, pools):
                 ce, re_ = ov[i]
             else:
                 ce, re_ = bind(p.type, pools)
-            ct = "void*" if canon(p.type).kind == T.CONSTANTARRAY else p.type.spelling
+            ct = "void*" if (canon(p.type).kind == T.CONSTANTARRAY or '(*)' in p.type.spelling) else p.type.spelling
             pre_c.append(f"{ct} a{i} = {ce};")
             pre_r.append(f"let a{i} = {re_};")
             args.append(f"a{i}")

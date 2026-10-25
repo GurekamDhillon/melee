@@ -30,6 +30,10 @@ FLAGS = ["--target=x86_64-pc-windows-gnu", "-mno-ms-bitfields", "-std=c99", "-no
          "-isystem", "libs/dolphin/src", "-isystem", GALE, "-include", "src/MSL/math_ppc.h"]
 
 
+if os.environ.get("MTU_G"):
+    FLAGS += ["-g", "-gcodeview"]
+
+
 def run(cmd, n):
     r = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
     if r.returncode:
@@ -62,7 +66,7 @@ def main():
                  '-DTU_SRC="' + str(ROOT / src).replace("\\", "/") + '"', *dbg, str(s), "-o", str(ll)], n)
             run([sys.executable, str(LOWER), str(ll), str(lo)], n)
             lls.append(str(lo))
-        run([CLANG, "-O0", "-w", *lls, "-o", str(exe), "-Wl,/OPT:NOICF", "-fuse-ld=lld"], n)
+        run([CLANG, "-O0", "-w", *(["-g", "-Wl,/DEBUG"] if os.environ.get("MTU_G") else []), *lls, "-o", str(exe), "-Wl,/OPT:NOICF", "-fuse-ld=lld"], n)
         try:
             r = subprocess.run([str(exe)], capture_output=True, text=True, timeout=int(os.environ.get('MTU_TIMEOUT', '100')))
         except subprocess.TimeoutExpired:

@@ -599,11 +599,12 @@ def build(stem, spec, want_ext):
         f32a = spec.get("fn32_args", {}).get(n, [])
         p32a = spec.get("ptr32_args", {}).get(n, [])
         nta = spec.get("notrace_args", {}).get(n, [])
-        body_c = [f"T({sid[n]});"] + [("" if i in nta else f"T(FI32((u32) a{i}));" if i in f32a else f"T(PI32((u32) a{i}));" if i in p32a else c_trace(arg_class(p), f"a{i}"))
+        p64a = spec.get("ptr64_args", {}).get(n, [])
+        body_c = [f"T({sid[n]});"] + [("" if i in nta else f"T(FI32((u32) a{i}));" if i in f32a else f"T(PI32((u32) a{i}));" if i in p32a else f"T(PI((const void*) (unsigned long long) a{i}));" if i in p64a else c_trace(arg_class(p), f"a{i}"))
                                       for i, p in enumerate(ptys)]
         rparams = ", ".join(f"a{i}: {rust_ty(p)}" for i, p in enumerate(ptys))
         rret = "" if rcls == "void" else f" -> {rust_ty(rt)}"
-        body_r = [f"t({sid[n]});"] + [("" if i in nta else f"t(fi32(a{i} as u32));" if i in f32a else f"t(pi32(a{i} as u32));" if i in p32a else r_trace(arg_class(p), f"a{i}"))
+        body_r = [f"t({sid[n]});"] + [("" if i in nta else f"t(fi32(a{i} as u32));" if i in f32a else f"t(pi32(a{i} as u32));" if i in p32a else f"t(pi(a{i} as usize as *const u8));" if i in p64a else r_trace(arg_class(p), f"a{i}"))
                                       for i, p in enumerate(ptys)]
         if n in eff:
             body_c.append(eff[n][0])

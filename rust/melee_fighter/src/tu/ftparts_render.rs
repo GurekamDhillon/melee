@@ -12,7 +12,13 @@ use crate::types::*;
 use core::ffi::{c_char, c_void};
 use core::mem::size_of;
 use core::ptr::null_mut;
-use melee_runtime::tu::pobj::ext as gx;
+/// The pobj hooks plus the typed matrix wrappers and inlines melee_runtime now provides natively.
+mod gx {
+    pub use melee_runtime::tu::pobj::ext::*;
+    pub use melee_runtime::tu::pobj::mx::{GXLoadNrmMtxImm, GXLoadPosMtxImm, GXLoadTexMtxImm, _HSD_mkEnvelopeModelNodeMtx};
+    pub use melee_runtime::tu::pobj::HSD_PerfCountMtxLoad;
+    pub use melee_runtime::tu::pobj::jobj_setup_matrix as HSD_JObjSetupMatrix;
+}
 
 type MP = *mut [f32; 4];
 type M34 = [[f32; 4]; 3];

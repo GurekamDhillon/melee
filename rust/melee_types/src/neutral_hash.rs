@@ -37,7 +37,7 @@ pub fn nh_cpu_flags(c: &CpuFighter) -> u32 {
 }
 
 /// `csP - buffer` when csP points inside (or one past) `buffer`, else 0.
-fn cs_offset(c: &CpuFighter) -> u32 {
+pub fn cs_offset(c: &CpuFighter) -> u32 {
     let base = c.buffer.as_ptr() as usize;
     let p = c.csP as usize;
     if p >= base && p <= base + c.buffer.len() {

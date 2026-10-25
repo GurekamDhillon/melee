@@ -743,6 +743,17 @@ impl Skeleton {
         self.tree.get(j).mtx
     }
 
+    /// What the frame's render does to the fighter's tree: `HSD_JObjDisp` runs `HSD_JObjSetupMatrix` on every
+    /// joint, so every cached world matrix (`mtx`) is current at the end of the frame. The dynamic bones'
+    /// `ftCo_8009CB40_inline` reads those caches raw.
+    pub fn setup_all(&mut self) {
+        let mut order = Vec::new();
+        preorder(&self.tree, self.root, &mut order);
+        for j in order {
+            self.tree.setup_matrix(&mut NoRObj, Some(j));
+        }
+    }
+
     /// `lb_8000B1CC(jobj, NULL, &out)`.
     pub fn world_pos(&mut self, j: JObjId) -> Vec3 {
         if self.tree.get(j).parent.is_some() {

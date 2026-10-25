@@ -218,6 +218,7 @@ impl Dynamics {
                 let m = skel.tree.get(n.jobj).mtx;
                 n.p2c = Vec3 { x: m[0][3], y: m[1][3], z: m[2][3] };
                 n.v44 = 0.0;
+                if std::env::var_os("MELEE_GOLDEN_FT").is_some() { eprintln!("CB j{} part {} fl {:X} p2c {:08X} {:08X} {:08X}", k, part, skel.tree.get(n.jobj).flags, n.p2c.x.to_bits(), n.p2c.y.to_bits(), n.p2c.z.to_bits()); }
                 skel.set_translate(n.jobj, n.translate);
                 skel.set_scale(n.jobj, n.scale);
             }

@@ -41,7 +41,7 @@ pub enum ItemCmd {
     /// `it_802AE8A8`: the blaster gun, at the fighter's position.
     SpawnGun { owner: usize, kind: i32, pos: Vec3 },
     /// `it_8029C6A4(angle, vel, owner, &muzzle, kind)`: a laser shot.
-    Laser { owner: usize, kind: i32, angle: f32, speed: f32, pos: Vec3, parent: Vec3 },
+    Laser { owner: usize, kind: i32, angle: f32, speed: f32, pos: Vec3, parent: Vec3, slink1: bool },
     /// `it_802B19AC`: Sheik's held needle bundle, at the fighter's position.
     SeakHeld { owner: usize, pos: Vec3 },
 }
@@ -50,7 +50,8 @@ pub enum ItemCmd {
 pub enum ItemClass {
     /// `flash`: `it_802AE1D0` armed the muzzle-flash accessory (`item->xDD4.foxblaster.gfx_spawn_var`).
     FoxGun { owner: usize, flash: bool },
-    FoxLaser { angle: f32, speed: f32, life: f32 },
+    /// `ray`: `item->xDD4_itemVar.ray.scale` (the model's Z scale); `hits`: its hit capsules.
+    FoxLaser { angle: f32, speed: f32, life: f32, owner: usize, ray: f32, hits: LaserHits },
     /// `It_Kind_Seak_NeedleHeld`: alive while the owner's `u.sk.x4` is set.
     SeakHeld { owner: usize },
     /// `It_Kind_Seak_NeedleThrow` in its flying state (msid 0): `fresh` = created this frame
@@ -67,6 +68,139 @@ pub struct SimItem {
     pub pos: Vec3,
     pub vel: Vec3,
     pub class: ItemClass,
+}
+
+
+/// The hit capsules of a Fox / Falco laser (`item->x5D4_hitboxes[i].hit`): the fields the CPU's threat
+/// check reads (`ftCo_800BB220`): `state` (`HitCapsule_Disabled` 0 .. `Unk3` 3), the capsule's two
+/// end positions `x4C` (now) and `x58` (the previous update).
+///
+/// The hitboxes are created by the article's animation script (cmd `it_802790C0`, damage 0): the model's
+/// root joint, `size` 300/256, and `b_offset.z` per box. The constants below were read off the C build
+/// (a debug print of the item in `ftCo_800BB220`) rather than parsed from `PlFx.dat` / `PlFc.dat`:
+/// Fox's shot has three boxes, Falco's four (the fourth of Fox's stays Disabled).
+#[derive(Clone, Copy, Debug)]
+pub struct LaserHits {
+    pub n: usize,
+    pub state: [u8; 4],
+    pub x4c: [Vec3; 4],
+    pub x58: [Vec3; 4],
+    /// False when the hit state is not modelled (the shot was made by the s_link 9 accessory, whose
+    /// item procs of s_link 0..5 did not run in the creating frame).
+    pub valid: bool,
+}
+
+/// `hit->scale` (`size` 300 / 256).
+pub const LASER_HIT_SCALE: f32 = f32::from_bits(0x3F95_FD8B);
+/// The attribute table's `scale` (`FoxLaserAttr`, maximum Z scale), [3].
+const LASER_MAX_SCALE: f32 = 3.0;
+
+/// `hit->b_offset.z` of the laser's boxes.
+pub fn laser_offsets(kind: i32) -> &'static [f32] {
+    use std::sync::OnceLock;
+    static FOX: OnceLock<[f32; 3]> = OnceLock::new();
+    static FALCO: OnceLock<[f32; 4]> = OnceLock::new();
+    if kind == melee_types::It_Kind_Fox_Laser as i32 {
+        FOX.get_or_init(|| [f32::from_bits(0xBF47_FCB9), f32::from_bits(0xC069_3C2D), f32::from_bits(0xC0D0_3C96)])
+    } else {
+        FALCO.get_or_init(|| [f32::from_bits(0xBF47_FCB9), f32::from_bits(0xC069_3C2D), f32::from_bits(0xC0D0_3C96), f32::from_bits(0xC115_FD8B)])
+    }
+}
+
+/// `lb_8000B1CC(jobj, &(0, 0, off), &out)` for the laser's root joint: the translate is the item position,
+/// the rotation Rz * Ry(beta) * Rx(alpha), the Z scale `scale`.
+fn laser_joint(pos: Vec3, off: f32, scale: f32, alpha: f32, beta: f32) -> Vec3 {
+    use melee_runtime::gekko::{cosf, sinf};
+    let pz = off * scale;
+    let (sa, ca, sb, cb) = (sinf(alpha), cosf(alpha), sinf(beta), cosf(beta));
+    // Rx: (0, -sa * pz, ca * pz); then Ry: x = sb * z, z = cb * z.
+    let y1 = -sa * pz;
+    let z1 = ca * pz;
+    Vec3 { x: pos.x + sb * z1, y: pos.y + y1, z: pos.z + cb * z1 }
+}
+
+/// The laser's facing for a launch angle (`it_8029C504`: `right_facing`).
+fn laser_facing(angle: f32) -> f32 {
+    if !((angle as f64) < core::f64::consts::FRAC_PI_2) && !((angle as f64) > core::f64::consts::PI * 3.0 / 2.0) {
+        -1.0
+    } else {
+        1.0
+    }
+}
+
+/// The hit capsules of a laser made this frame by a fighter proc of s_link 1: Fox's article script
+/// also steps the boxes once (`it_80272560` -> `it_8027129C` x4: Enabled -> Unk2 with the joint at the
+/// position and Z scale 1 of the creation); Falco's leaves them Enabled.
+fn laser_hits_new(kind: i32, pos: Vec3, angle: f32, slink1: bool) -> LaserHits {
+    let offs = laser_offsets(kind);
+    let z = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
+    let mut h = LaserHits { n: offs.len(), state: [0; 4], x4c: [z; 4], x58: [z; 4], valid: slink1 };
+    for i in 0..offs.len() {
+        h.state[i] = 1;
+        if kind == melee_types::It_Kind_Fox_Laser as i32 {
+            // The joint at creation: HSD_JObjSetFacingDirItem sets Y only (alpha 0).
+            let beta = (core::f64::consts::FRAC_PI_2 * laser_facing(angle) as f64) as f32;
+            let j = laser_joint(pos, offs[i], 1.0, 0.0, beta);
+            h.x4c[i] = j;
+            h.x58[i] = j;
+            h.state[i] = 2;
+        }
+    }
+    h
+}
+
+/// `it_8027137C` (the item's s_link 11 hit update) for a laser, with the joint as the item procs left it.
+fn laser_hits_step(h: &mut LaserHits, kind: i32, pos: Vec3, vel: Vec3, scale: f32) {
+    if !h.valid {
+        return;
+    }
+    let offs = laser_offsets(kind);
+    // Item_UpdateRayAnimation's rotations.
+    let facing: f32 = if vel.x > 0.0 { 1.0 } else { -1.0 };
+    let beta = (core::f64::consts::FRAC_PI_2 * facing as f64) as f32;
+    let vx = if facing == 1.0 { -vel.x } else { vel.x };
+    let alpha = (core::f64::consts::PI + melee_runtime::lbtrigf::atan2f(vel.y, vx) as f64) as f32;
+    for i in 0..h.n {
+        let j = laser_joint(pos, offs[i], scale, alpha, beta);
+        match h.state[i] {
+            1 => {
+                h.x4c[i] = j;
+                h.x58[i] = j;
+                h.state[i] = 2;
+            }
+            2 | 3 => {
+                h.state[i] = 3;
+                h.x58[i] = h.x4c[i];
+                h.x4c[i] = j;
+            }
+            _ => {}
+        }
+    }
+}
+
+/// The lasers fighters made in this frame's s_link 1 procs (their items exist for the CPU controllers of
+/// s_link 2, whose item procs of s_link 1 have run: the pending commands are applied after the frame).
+pub(super) fn pending_lasers(players: &[Player]) -> Vec<SimItem> {
+    let mut v = Vec::new();
+    for pl in players {
+        for c in &pl.item_cmds {
+            if let ItemCmd::Laser { owner, kind, angle, speed, pos, parent, slink1 } = *c {
+                if !slink1 {
+                    continue;
+                }
+                let mut a = angle;
+                while a < 0.0 {
+                    a += core::f32::consts::TAU;
+                }
+                while a > core::f32::consts::TAU {
+                    a -= core::f32::consts::TAU;
+                }
+                let pos = spawn_step(parent, pos);
+                v.push(SimItem { kind, msid: 0, pos, vel: Vec3 { x: 0.0, y: 0.0, z: 0.0 }, class: ItemClass::FoxLaser { angle: a, speed, life: FOX_LASER_LIFETIME, owner, ray: 0.0, hits: laser_hits_new(kind, pos, a, true) } });
+            }
+        }
+    }
+    v
 }
 
 /// The laser's lifetime: `FoxLaserAttr.lifetime` (the article's special attributes).
@@ -108,7 +242,7 @@ pub fn special_n_enter(p: &mut Player, air: bool, rand: &mut HsdRand) -> Result<
 }
 
 /// The shot: `ftFox_SpecialN_PrepareBlasterShot` + `FireBlasterShot`.
-fn fire_shot(p: &mut Player) -> Result<(), String> {
+fn fire_shot(p: &mut Player, slink1: bool) -> Result<(), String> {
     let da = p.fx_attrs.ok_or("no Fox attrs")?;
     // ftFx_SpecialN_FtGetHoldJoint: lb_8000B1CC(RThumbNb part, {0, 1.2325, 4.2636}, &pos).
     let part = bone_index(p, FT_PART_RTHUMBNB);
@@ -121,7 +255,7 @@ fn fire_shot(p: &mut Player) -> Result<(), String> {
     let fp = &p.fp;
     let mid = 0.5f32 * (fp.coll_data.ecb.top.y + fp.coll_data.ecb.bottom.y);
     let parent = Vec3 { x: fp.cur_pos.x + 0.0, y: fp.cur_pos.y + mid, z: fp.cur_pos.z + 0.0 };
-    p.item_cmds.push(ItemCmd::Laser { owner: p.slot as usize, kind: da.x1C_FOX_BLASTER_SHOT_ITKIND as i32, angle: launch as f32, speed: da.x14_FOX_BLASTER_VEL, pos, parent });
+    p.item_cmds.push(ItemCmd::Laser { owner: p.slot as usize, kind: da.x1C_FOX_BLASTER_SHOT_ITKIND as i32, angle: launch as f32, speed: da.x14_FOX_BLASTER_VEL, pos, parent, slink1 });
     Ok(())
 }
 
@@ -186,7 +320,7 @@ pub fn anim(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
                 // The Loop callback also fires a shot flagged in cmd_vars[2] right here.
                 if p.fp.cmd_vars[2] != 0 {
                     p.fp.cmd_vars[2] = 0;
-                    fire_shot(p)?;
+                    fire_shot(p, true)?;
                 }
             }
             let _ = da;
@@ -230,7 +364,7 @@ pub fn iasa(p: &mut Player) {
 pub fn accessory4(p: &mut Player) -> Result<(), String> {
     if p.fx.accessory4 && p.fp.cmd_vars[2] != 0 {
         p.fp.cmd_vars[2] = 0;
-        fire_shot(p)?;
+        fire_shot(p, false)?;
     }
     Ok(())
 }
@@ -248,7 +382,7 @@ impl VsMatch {
                     ItemCmd::SeakHeld { owner, pos } => {
                         self.items.push(SimItem { kind: melee_types::It_Kind_Seak_NeedleHeld as i32, msid: 0, pos, vel: Vec3 { x: 0.0, y: 0.0, z: 0.0 }, class: ItemClass::SeakHeld { owner } });
                     }
-                    ItemCmd::Laser { owner: lo, kind, angle, speed, pos, parent } => {
+                    ItemCmd::Laser { owner: lo, kind, angle, speed, pos, parent, slink1 } => {
                         // it_802AE1D0(fp->u.fx.x222C_blasterGObj): arm the gun's muzzle flash.
                         for g in &mut self.items {
                             if let ItemClass::FoxGun { owner, flash } = &mut g.class {
@@ -269,7 +403,8 @@ impl VsMatch {
                         // (mpColl_800471F8 over more than 6 units substeps; each substep adds
                         // vel / steps, which rounds). The item's ECB and the stage are not consulted.
                         let pos = spawn_step(parent, pos);
-                        self.items.push(SimItem { kind, msid: 0, pos, vel: Vec3 { x: 0.0, y: 0.0, z: 0.0 }, class: ItemClass::FoxLaser { angle: a, speed, life: FOX_LASER_LIFETIME } });
+                        let hits = laser_hits_new(kind, pos, a, slink1);
+                        self.items.push(SimItem { kind, msid: 0, pos, vel: Vec3 { x: 0.0, y: 0.0, z: 0.0 }, class: ItemClass::FoxLaser { angle: a, speed, life: FOX_LASER_LIFETIME, owner: lo, ray: 0.0, hits } });
                     }
                 }
             }
@@ -311,11 +446,19 @@ impl VsMatch {
                 }
                 ItemClass::SeakHeld { .. } | ItemClass::SeakThrown { .. } => {} // sheik::item_proc, below
                 ItemClass::GreensBlock => {}
-                ItemClass::FoxLaser { angle, speed, life } => {
+                ItemClass::FoxLaser { angle, speed, life, ray, hits, .. } => {
                     // itFoxlaser_UnkMotion1_Anim -> Item_UpdateRayAnimation: velocity from the angle.
                     it.vel.x = *speed * melee_runtime::gekko::cosf(*angle);
                     it.vel.y = *speed * melee_runtime::gekko::sinf(*angle);
                     it.vel.z = 0.0;
+                    // The growing model scale (divisor 11.25), clamped to the attribute's maximum.
+                    *ray += speed.abs() / 11.25f32;
+                    if *ray > LASER_MAX_SCALE {
+                        *ray = LASER_MAX_SCALE;
+                    }
+                    if *ray < 1e-5 {
+                        *ray = 1e-3;
+                    }
                     // it_80273130: the life timer; the item proc stops there when it runs out.
                     *life -= 1.0;
                     if *life <= 0.0 {
@@ -323,6 +466,8 @@ impl VsMatch {
                     } else {
                         it.pos.x += it.vel.x;
                         it.pos.y += it.vel.y;
+                        // s_link 11, it_8027137C: the hit capsules follow the joint.
+                        laser_hits_step(hits, it.kind, it.pos, it.vel, *ray);
                     }
                 }
             }

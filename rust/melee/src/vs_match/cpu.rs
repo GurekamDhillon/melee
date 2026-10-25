@@ -147,7 +147,12 @@ fn ftco_is_ally(a: &Fighter, c: &Fighter) -> bool {
 
 /// `ftCo_800A5980`: the fighter is in a state where the CPU treats it as grounded-helpless.
 fn ftco_800a5980(fp: &Fighter) -> bool {
-    let m = fp.motion_id;
+    ftco_800a5980_motion(fp.motion_id)
+}
+
+/// `ftCo_800A5980` on a motion id (`ftCo_800BB220` calls it with an `Item*`: the field at +0x10 is the
+/// item's `kind`).
+fn ftco_800a5980_motion(m: i32) -> bool {
     (m >= ftCo_MS_LandingFallSpecial as i32 && m < ftCo_MS_Attack100Start as i32)
         || m == ftCo_MS_Furafura as i32
         || m == ftCo_MS_Catch as i32
@@ -2119,14 +2124,96 @@ fn ftco_800bb9b4(cx: &mut Cx, me: *mut Fighter) -> R {
             return Err("ftCo_800BB768 (Bowser / Yoshi / Samus threat) not ported".into());
         }
     }
-    for it in cx.items {
+    let half = 0.5f32 * fp.cpu.x568;
+    let mut sp24 = Vec3 { x: fp.cur_pos.x, y: fp.cur_pos.y + half, z: fp.cur_pos.z };
+    for k in 0..cx.items.len() {
+        let it = cx.items[k];
         use super::fox::ItemClass as C;
-        // it_8026C1B4: the item has an enabled hitbox.
-        if !matches!(it.class, C::GreensBlock) {
-            return Err("ftCo_800BB220 (an item with a hitbox) not ported".into());
+        match it.class {
+            // It_Kind_Yaku: no hitbox.
+            C::GreensBlock => {}
+            // The blaster gun and the held needles: Disabled hit capsules (it_8026C1B4 false).
+            C::FoxGun { .. } | C::SeakHeld { .. } => {}
+            C::FoxLaser { .. } => {
+                // it_8026C1B4: any hit capsule not Disabled.
+                let r = ftco_800bb220(cx, me, &it, &mut sp24, half)?;
+                fp.cpu.set_xF8_b12(r as _);
+                if r != 0 {
+                    // xF4 (the item) is not kept: its readers (behaviour 7) are not ported.
+                    return Ok(());
+                }
+            }
+            C::SeakThrown { .. } => return Err("ftCo_800BB220 (Sheik's needle) not ported".into()),
         }
     }
     Ok(())
+}
+
+/// `ftCo_800BB220`: will the laser `it` reach `fp` (`arg2`, radius `arg3`) in a level-scaled number of
+/// frames? 0: no, 2: yes. (The Ness reflect branches are not ported.)
+fn ftco_800bb220(cx: &mut Cx, me: *mut Fighter, it: &super::fox::SimItem, arg2: &mut Vec3, arg3: f32) -> Result<i32, String> {
+    use super::fox::ItemClass as C;
+    let fp = unsafe { &mut *me };
+    let C::FoxLaser { owner, hits, .. } = it.class else {
+        return Err("ftCo_800BB220 (an item that is not a laser) not ported".into());
+    };
+    if hits.state[..hits.n].iter().all(|&s| s == 0) {
+        return Ok(0);
+    }
+    if !hits.valid {
+        return Err("ftCo_800BB220: hit state of a laser made by the s_link 9 accessory not modelled".into());
+    }
+    if cx.fps[owner] == me {
+        return Ok(0);
+    }
+    // ftLib_80086960(ip->owner) (a fighter) && ftCo_IsAlly.
+    if ftco_is_ally(fp, unsafe { &*cx.fps[owner] }) {
+        return Ok(0);
+    }
+    if it.kind == It_Kind_Star as i32 || it.kind == It_Kind_Unk4 as i32 || ftco_800a5980_motion(it.kind) {
+        return Ok(0);
+    }
+    let level = fp.cpu.level;
+    let count: i32 = if level < 3 {
+        (20.0f32 * cx.rand.randf()) as i32 + 10
+    } else if level < 6 {
+        (10.0f32 * cx.rand.randf()) as i32 + 5
+    } else if level < 9 {
+        (5.0f32 * cx.rand.randf()) as i32 + 3
+    } else {
+        1
+    };
+    let c = count as f32;
+    let mut dst = Vec3 {
+        x: melee_core::fp::fmadds(fp.pos_delta.x, c, arg2.x),
+        y: melee_core::fp::fmadds(fp.pos_delta.y, c, arg2.y),
+        z: melee_core::fp::fmadds(fp.pos_delta.z, c, arg2.z),
+    };
+    if fp.kind == Ft_Kind_Ness && level > 3 {
+        return Err("ftCo_800BB220 (Ness reflect) not ported".into());
+    }
+    for i in 0..4 {
+        // state not Disabled / Enabled, x43_b2 clear, element not Inert (the laser's is 0).
+        if hits.state[i] == 0 || hits.state[i] == 1 {
+            continue;
+        }
+        // lbColl_8000ACFC: the victims list holds nobody (hits are not ported).
+        let mut x4c = Vec3 { x: hits.x4c[i].x, y: hits.x4c[i].y, z: hits.x4c[i].z };
+        let x58 = hits.x58[i];
+        // ftCo_CpuPredictHitboxPosition.
+        let mut pred = Vec3 {
+            x: melee_core::fp::fmadds(x4c.x - x58.x, c, x4c.x),
+            y: melee_core::fp::fmadds(x4c.y - x58.y, c, x4c.y),
+            z: melee_core::fp::fmadds(x4c.z - x58.z, c, x4c.z),
+        };
+        let mut a = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
+        let mut b2 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
+        let hit = unsafe { melee_runtime::tu::lbcollision::lbColl_80006094(&mut x4c, &mut pred, arg2, &mut dst, &mut a, &mut b2, super::fox::LASER_HIT_SCALE, arg3) };
+        if hit {
+            return Ok(2);
+        }
+    }
+    Ok(0)
 }
 
 // ---- command-script helpers (the C's static inlines) ----

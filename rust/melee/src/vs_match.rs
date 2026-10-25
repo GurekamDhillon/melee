@@ -1563,7 +1563,9 @@ impl VsMatch {
             for i in cpu {
                 let me: *mut Fighter = &mut *self.players[i].fp;
                 let fps: Vec<*mut Fighter> = self.players.iter_mut().map(|p| &mut *p.fp as *mut Fighter).collect();
-                let mut cx = cpu::Cx { fps, ground: &mut self.ground, rand: &mut self.rand, items: &self.items, blast: self.blast, grkind, dist_thresh: &self.cpu_dist, h_deadzone: melee_fighter::hooks::common_data().horizontal_stick_deadzone, plco: &self.plco_bytes, tbl: self.cpu_tbl };
+                let mut items = self.items.clone();
+                items.extend(fox::pending_lasers(&self.players));
+                let mut cx = cpu::Cx { fps, ground: &mut self.ground, rand: &mut self.rand, items: &items, blast: self.blast, grkind, dist_thresh: &self.cpu_dist, h_deadzone: melee_fighter::hooks::common_data().horizontal_stick_deadzone, plco: &self.plco_bytes, tbl: self.cpu_tbl };
                 cpu::ftco_800b3900(&mut cx, me)?;
             }
         }

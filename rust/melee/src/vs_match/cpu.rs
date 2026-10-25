@@ -1867,6 +1867,7 @@ fn ftco_800b2790(cx: &mut Cx, me: *mut Fighter) -> R {
         1 => ftco_800aba34(cx, fp)?,
         2 => ftco_800b658c(cx, fp)?,
         3 => ftco_800b9020(cx, fp)?,
+        7 => ftco_800ba9a0(cx, fp)?,
         c => return Err(format!("ftCo_800B2790: behaviour {c} not ported")),
     }
     cs::ftco_800b49f4(fp);
@@ -1909,6 +1910,99 @@ fn ftco_800b9020(cx: &mut Cx, fp: &mut Fighter) -> R {
         }
     } else {
         clear_target_and_finish(fp);
+    }
+    Ok(())
+}
+
+/// `ftCo_CpuFireBlaster` (a static inline of ftcpuattack.c): down + B, then a level-scaled wait.
+fn fire_blaster(cx: &mut Cx, fp: &mut Fighter) {
+    let delay = 9 - fp.cpu.level;
+    cmd1(fp, CpuCmd_SetLstickX, 0);
+    cmd1(fp, CpuCmd_SetLstickY, -0x50);
+    cmd0(fp, CpuCmd_PressB);
+    cmd1(fp, CpuCmd_WaitFor, 1);
+    cmd1(fp, CpuCmd_SetLstickY, 0);
+    if delay != 0 {
+        let r = cx.rand.randf();
+        cmd1(fp, CpuCmd_WaitFor, delay * ((4.0f32 * r) as i32 + 4));
+    }
+    done(fp);
+}
+
+/// `ftCo_CpuRetapR`.
+fn retap_r(fp: &mut Fighter) {
+    cmd0(fp, CpuCmd_ReleaseR);
+    cmd1(fp, CpuCmd_WaitFor, 1);
+    cmd0(fp, CpuCmd_PressR);
+    cmd1(fp, CpuCmd_WaitFor, 1);
+    cmd0(fp, CpuCmd_ReleaseR);
+    done(fp);
+}
+
+/// `ftCo_800BA9A0`: behaviour 7, answer the threat `ftCo_800BB9B4` found (`xF8_b12`).
+fn ftco_800ba9a0(cx: &mut Cx, fp: &mut Fighter) -> R {
+    let m = fp.motion_id;
+    if m == ftCo_MS_EscapeF as i32 || m == ftCo_MS_EscapeB as i32 || m == ftCo_MS_EscapeAir as i32 || m == ftCo_MS_EscapeN as i32 {
+        ftco_800a0c8c(fp);
+        return Ok(());
+    }
+    if m == 0xB2 {
+        ftco_800b9f90(cx, fp);
+        return Ok(());
+    }
+    let t = fp.cpu.xF8_b12();
+    if t == 0 {
+        fp.cpu.x18 = fp.cpu.x1C;
+        neutral_stick(fp);
+        cmd0(fp, CpuCmd_ReleaseR);
+        cmd0(fp, CpuCmd_ReleaseB);
+        ftco_800a0c8c(fp);
+        return Ok(());
+    }
+    let fox = fp.kind == Ft_Kind_Fox || fp.kind == Ft_Kind_Falco;
+    if fp.ground_or_air == GA_Air {
+        if fox {
+            if t == 2 {
+                fire_blaster(cx, fp);
+            } else {
+                retap_r(fp);
+            }
+        } else if t == 3 {
+            return Err("ftCo_800BA080 not ported".into());
+        } else {
+            retap_r(fp);
+        }
+    } else if t == 2 {
+        let ip = unsafe { &*fp.cpu.xF4 };
+        let k = ip.kind;
+        if k == It_Kind_Flipper as _ || k == It_Kind_TaruCann as _ || k == It_Kind_DKinoko as _ {
+            return Err("ftCo_800BA9A0: Flipper / barrel cannon / mushroom not ported".into());
+        }
+        if fox {
+            let r = cx.rand.randf();
+            if r as f64 > 0.5 {
+                fire_blaster(cx, fp);
+            } else {
+                ftco_800b9f90(cx, fp);
+            }
+        } else {
+            ftco_800b9f90(cx, fp);
+        }
+    } else if t == 3 {
+        return Err("ftCo_800BA080 not ported".into());
+    } else if fp.cpu.xF0.is_null() {
+        ftco_800b9f90(cx, fp);
+    } else {
+        let o = unsafe { &*fp.cpu.xF0 };
+        let d = fp.cur_pos.x - o.cur_pos.x;
+        let a = if d < 0.0 { -d } else { d };
+        if a as f64 > 30.0 {
+            if d as f64 > 0.0 { ftco_800ba160(fp) } else { ftco_800ba224(fp) }
+        } else if d as f64 > 0.0 {
+            ftco_800ba224(fp)
+        } else {
+            ftco_800ba160(fp)
+        }
     }
     Ok(())
 }
@@ -2139,7 +2233,7 @@ fn ftco_800bb9b4(cx: &mut Cx, me: *mut Fighter) -> R {
                 let r = ftco_800bb220(cx, me, &it, &mut sp24, half)?;
                 fp.cpu.set_xF8_b12(r as _);
                 if r != 0 {
-                    // xF4 (the item) is not kept: its readers (behaviour 7) are not ported.
+                    fp.cpu.xF4 = item_stub(fp.player_id as usize, &it);
                     return Ok(());
                 }
             }
@@ -2147,6 +2241,25 @@ fn ftco_800bb9b4(cx: &mut Cx, me: *mut Fighter) -> R {
         }
     }
     Ok(())
+}
+
+/// A stand-in `Item` for `fp->cpu.xF4` (the CPU reads the threatening item's `kind` and `pos`): one per
+/// player, kept alive for the run.
+fn item_stub(slot: usize, it: &super::fox::SimItem) -> *mut Item {
+    use std::cell::RefCell;
+    thread_local! {
+        static STUBS: RefCell<std::vec::Vec<Box<Item>>> = const { RefCell::new(std::vec::Vec::new()) };
+    }
+    STUBS.with(|s| {
+        let mut s = s.borrow_mut();
+        while s.len() <= slot {
+            s.push(Box::new(Item::zeroed()));
+        }
+        let ip = &mut *s[slot];
+        ip.kind = it.kind as _;
+        ip.pos = Vec3 { x: it.pos.x, y: it.pos.y, z: it.pos.z };
+        &mut *ip as *mut Item
+    })
 }
 
 /// `ftCo_800BB220`: will the laser `it` reach `fp` (`arg2`, radius `arg3`) in a level-scaled number of

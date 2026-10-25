@@ -836,6 +836,18 @@ pub trait ScriptGame {
     fn echo_state(&self, _entity: i32, _handle: i32, _field: i32) -> i32 {
         0
     }
+    // ---- scripted CPU controller (`gw_ScriptGame_CpuCtl`, `CpuAttr`, `CpuScriptMode`): pc/platform/gw_script_cpu_ctl.inc
+    /// setters, op GCC_* 1..23 (PAD_COMMIT, SCRIPT_BEGIN/BYTE/RUN, DEST_X/Y, TARGET, CANCEL, STAGE+k, GOTO_*); `sub` selects Nana
+    fn cpu_ctl(&mut self, _slot: i32, _sub: i32, _op: i32, _a: i32) -> i32 {
+        0
+    }
+    /// getters, op GCC_G_* 100..118; -1 (ACTIVE, GOTO_STATE) when there is no such CPU fighter
+    fn cpu_ctl_read(&self, _slot: i32, _sub: i32, _op: i32, _a: i32) -> i32 {
+        -1
+    }
+    fn cpu_attr(&self, _slot: i32, _id: i32) -> i32 {
+        0
+    }
     // ---- entity identity (`gw_ScriptGame_EntityField`, `EntityEpoch`, `EntityAddressField`): pc/platform/gw_script_spine_refs.inc
     /// kind 1 fighter (id = port*2+sub), 2 item, 3 echo, 4 stage object, 5 stage actor. field 0 live, 1 epoch, 2 generation,
     /// 3 definition, 4 owner fighter id + 1, 5 role bits

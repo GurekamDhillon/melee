@@ -2,6 +2,7 @@
 //! registry and the LAB mod loader. Lua is the vendored 5.4.7 of the C build (see rust/third_party/lua-src).
 pub mod args;
 pub mod engine;
+pub mod events;
 pub mod game;
 pub mod geno;
 pub mod gd;

@@ -121,6 +121,7 @@ pub struct State {
     pub scene_epoch: i32,
     pub match_active: bool,
     pub match_frame: i32,
+    pub ev: crate::events::EventState,
     pub last_action: [i32; 6],
     pub state_frame: [i32; 6],
     pub paused: bool,
@@ -419,6 +420,7 @@ impl Engine {
             scene_epoch: 0,
             match_active: false,
             match_frame: 0,
+            ev: Default::default(),
             last_action: [0; 6],
             state_frame: [0; 6],
             paused: false,
@@ -1163,6 +1165,7 @@ impl Engine {
             s.draw[b].clear();
         }
         self.rw_tick_top();
+        self.update_want_events();
         self.hook_all("on_tick", &[]);
         // (gs_rw_tick_top comes before on_tick in the C build's loop; see below)
         // paused: no logic frame will run this tick, so there is no frame boundary for a pending savestate to wait for
@@ -1266,6 +1269,7 @@ impl Engine {
         let (start, kind) = {
             let mut s = self.st.borrow_mut();
             let kind = s.rw.frame_kind;
+            s.ev.post_pending = true;
             s.rw.in_frame = false;
             if s.rw.began {
                 // the frame's sounds are all in the log now
@@ -1279,6 +1283,7 @@ impl Engine {
                 s.pads.frame_consumed();
             }
             s.rw.frame_kind = 0;
+            s.ev.post_pending = false;
             s.frame += 1;
             let mut any = false;
             for slot in 0..6 {
@@ -1322,6 +1327,7 @@ impl Engine {
         };
         let _ = kind;
         self.camera_tick();
+        self.dispatch_events();
         if start {
             self.hook_all("on_match_start", &[]);
         }

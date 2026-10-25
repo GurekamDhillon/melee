@@ -41,6 +41,7 @@ mod fox;
 mod fighthit;
 mod foxlw;
 mod greens;
+mod greens_blocks;
 mod hit;
 mod story;
 mod rebirth;
@@ -637,16 +638,18 @@ fn greens_init(stage: &DatArchive, rand: &mut HsdRand, scale: f32) -> Result<(Ve
         }
     }
     let mut items = Vec::new();
+    let mut num = 0u32;
     for j in 0..5 {
         for col in 0..6 {
             if matches!(table[j * 6 + col], 1 | 2) {
                 let (x, yy) = grid[j][col];
-                items.push(fox::SimItem { kind: 160, msid: 0, pos: Vec3 { x, y: yy, z: 0.0 }, vel: Vec3 { x: 0.0, y: 0.0, z: 0.0 }, class: fox::ItemClass::GreensBlock });
+                items.push(fox::SimItem { kind: 160, msid: 0, pos: Vec3 { x, y: yy, z: 0.0 }, vel: Vec3 { x: 0.0, y: 0.0, z: 0.0 }, class: fox::ItemClass::GreensBlock { id: num } });
+                num += 1;
             }
         }
     }
     if std::env::var_os("MELEE_GOLDEN_DUMP").is_some() { for it in &items { eprintln!("block {:?} {:?}", it.pos.x, it.pos.y); } }
-    Ok((items, greens::InitDraws { block_timer, wind_xc, wind_x14, table }))
+    Ok((items, greens::InitDraws { block_timer, wind_xc, wind_x14, table, grid }))
 }
 
 /// Green Greens' block map joints (map gobj 6, joints 0..29 <-> JObjs 5..34): each used block

@@ -187,6 +187,11 @@ pub struct Sound {
     pub(crate) stream_pos: u32,
     /// HSD_Synth_804D7778.
     pub(crate) stream_busy: u8,
+    /// The HPS start's DevCom completions (header, first block) wait for `stream_header_done` /
+    /// `stream_data_done`, as the C's deferred completions do (set by the trace replay).
+    pub defer_stream: bool,
+    pub(crate) stream_hdr_pending: Option<Vec<u8>>,
+    pub(crate) stream_data_pending: bool,
     /// HSD_Synth_804D7780: the 3 x 64 KB stream blocks in ARAM.
     pub(crate) stream_base: u32,
     /// HSD_Synth_804D7784: 0x500 bytes of silence (a nibble address).
@@ -274,6 +279,9 @@ impl Sound {
             stream_loop_slot: 0,
             stream_pos: 0,
             stream_busy: 0,
+            defer_stream: false,
+            stream_hdr_pending: None,
+            stream_data_pending: false,
             stream_base: 0,
             silence: 0,
             hako: [[0; 0x20]; 3],
@@ -341,6 +349,13 @@ impl Sound {
     /// `/audio/us/smash2.sem`, and `main.ssm` into bank 0. `bank_sizes` are the three banks'
     /// ARAM sizes (the C sums them from `offsets_arr_803BC4E4`).
     pub fn boot(&mut self, fs: Box<dyn AudioFs>, bank_sizes: [i32; 3]) -> Result<(), String> {
+        self.boot_engine(fs, bank_sizes)?;
+        self.load_ssm("/audio/us/main.ssm", 0)?;
+        Ok(())
+    }
+
+    /// `boot` without the first bank load (HSD_SynthSFXLoad of main.ssm is a game call).
+    pub fn boot_engine(&mut self, fs: Box<dyn AudioFs>, bank_sizes: [i32; 3]) -> Result<(), String> {
         self.fs = Some(fs);
         let total: i32 = bank_sizes.iter().sum();
         self.lb.bank_size = bank_sizes;
@@ -355,7 +370,6 @@ impl Sound {
         }
         // HSD_SynthInit (synth.c): sound mode = OSGetSoundMode(), which the PC shim (shim_os.c) answers 0 (mono); nothing in a match sets it.
         self.load_sem("/audio/us/smash2.sem")?;
-        self.load_ssm("/audio/us/main.ssm", 0)?;
         Ok(())
     }
 

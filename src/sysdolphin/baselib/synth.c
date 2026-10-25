@@ -144,6 +144,9 @@ static void HSD_SynthSFXSampleLoadCallback(int result, uintptr_t args,
                 (struct SfxLoadStreamNode*) ((u32*) HSD_Synth_804D7730 +
                                              ((u32) ((n << 6) + 0x10) >> 2));
         }
+#if defined(TARGET_PC)
+        { extern void ax_trace(const char*, int, int, int, int, int); ax_trace("BANKDONE", HSD_Synth_804C2A60[0].entrynum, HSD_Synth_804C2A60[0].bankID, 0, 0, 0); }
+#endif
         if (HSD_Synth_804C2A60[0].x8 != NULL) {
             HSD_Synth_804C2A60[0].x8(HSD_Synth_804C2A60[0].entrynum,
                                      HSD_Synth_804C2A60[0].xC);
@@ -232,6 +235,7 @@ int HSD_SynthSFXLoad(const char* filename, int bankID, void (*cb)(int, int),
     entrynum = DVDConvertPathToEntrynum(filename);
 #if defined(TARGET_PC)
     OSReport("synth: bank %d <- %s (entry %d)\n", bankID, filename, entrynum);
+    { extern void ax_trace_str(const char*, const char*, int, int); ax_trace_str("BANKREQ", filename, bankID, entrynum); }
 #endif
 
     while (HSD_Synth_804D772C >= 6) {
@@ -332,6 +336,9 @@ static void HSD_SynthSFXGroupDataUnlink(AXVPB* vpb)
 void HSD_SynthSFXUnloadBank(int bank_id)
 {
     AXVPB** head;
+#if defined(TARGET_PC)
+    { extern void ax_trace(const char*, int, int, int, int, int); ax_trace("BANKUNL", bank_id, 0, 0, 0, 0); }
+#endif
     HSD_SynthSFXStopRange(bank_id);
     head = &HSD_Synth_804C2AE0[bank_id];
     while (*head != NULL) {
@@ -447,6 +454,9 @@ void HSD_SynthSFXBankDeflag(int bank_id)
     AXVPB* vpb;
     intptr_t offset;
 
+#if defined(TARGET_PC)
+    { extern void ax_trace(const char*, int, int, int, int, int); ax_trace("BANKDFL", bank_id, 0, 0, 0, 0); }
+#endif
     HSD_SynthSFXStopRange(bank_id);
     vpb = HSD_Synth_804C2AE0[bank_id];
     offset = hsd_SynthSFXBankHead[bank_id];
@@ -1335,6 +1345,9 @@ void HSD_SynthPStreamMasterClockCallback(void)
 
 void HSD_SynthPStreamFirstHakoDataCallback(void)
 {
+#if defined(TARGET_PC)
+    { extern void ax_trace(const char*, int, int, int, int, int); ax_trace("SDATA", 0, 0, 0, 0, 0); }
+#endif
     AXPBVE ve;
     int i;
     bool enabled;
@@ -1408,6 +1421,9 @@ void HSD_SynthPStreamFirstHakoHeaderCallback(int dcReq, uintptr_t args,
 void HSD_SynthPStreamHeaderCallback(int arg0, uintptr_t arg1, void* arg2,
                                     bool cancelflag)
 {
+#if defined(TARGET_PC)
+    { extern void ax_trace(const char*, int, int, int, int, int); ax_trace("SHDR", 0, 0, 0, 0, 0); }
+#endif
     u32* entry = arg2;
     struct HSD_SynthSFXNode* node;
     int i;

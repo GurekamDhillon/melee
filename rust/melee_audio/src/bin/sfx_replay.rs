@@ -3,7 +3,7 @@
 //! build's own `MELEE_AUDIO_DUMP` of the same run.
 //!
 //!   sfx_replay --iso DISC.iso --trace c.trace --out replay.wav [--ckinds 0,2] [--stkind 32]
-//!       [--grkind N] [--check c.wav]
+//!       [--grkind N] [--bare] [--check c.wav]
 //!   sfx_replay --iso DISC.iso --find-fid N        (which SSM holds sound N)
 //!
 //! `--check` compares the mix with the C capture sample by sample and exits 1 on any difference.
@@ -57,7 +57,11 @@ fn main() {
     let ckinds: Vec<i32> = get("--ckinds").unwrap_or_else(|| "0,2".into()).split(',').filter_map(|x| x.parse().ok()).collect();
     let stkind: i32 = get("--stkind").and_then(|x| x.parse().ok()).unwrap_or(32);
     let grkind: i32 = get("--grkind").and_then(|x| x.parse().ok()).unwrap_or(melee_types::Gr_Kind_Last as i32);
-    let mut s = boot_vs(&iso, &ckinds, stkind, grkind).expect("boot");
+    let mut s = if args.iter().any(|a| a == "--bare") {
+        melee_audio::replay::boot_bare(&iso).expect("boot")
+    } else {
+        boot_vs(&iso, &ckinds, stkind, grkind).expect("boot")
+    };
     let check = get("--check").map(|p| (read_wav(&p), p));
     let min = check.as_ref().map(|(c, _)| (c.len() / 320) as u32).unwrap_or(0);
     let (mix, st) = replay(&mut s, &trace, min);

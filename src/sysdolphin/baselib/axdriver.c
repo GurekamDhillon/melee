@@ -1398,6 +1398,7 @@ bool HSD_AudioPStreamStartChParam(const char* path, u8 volume, int track)
 
 bool AXDriverStop(void)
 {
+    GW_ATRACE("DSTOP", 0, 0, 0, 0, 0);
     if (AXDriver_804D6038 == -1) {
         return false;
     }
@@ -1408,6 +1409,7 @@ bool AXDriverStop(void)
 
 bool AXDriverPause(void)
 {
+    GW_ATRACE("DPAUSE", 0, 0, 0, 0, 0);
     if (AXDriver_804D6038 == -1) {
         return false;
     }
@@ -1417,6 +1419,7 @@ bool AXDriverPause(void)
 
 bool AXDriverResume(void)
 {
+    GW_ATRACE("DRESUME", 0, 0, 0, 0, 0);
     if (AXDriver_804D6038 == -1) {
         return false;
     }

@@ -28,9 +28,14 @@ pub fn mix_hash(samples: &[i16]) -> u64 {
 /// Apply the trace to a booted `Sound` (scene init, announcer and match banks already loaded),
 /// returning the interleaved s16 stereo mix, at least `min_sub_frames` long.
 pub fn replay(s: &mut Sound, trace: &str, min_sub_frames: u32) -> (Vec<i16>, ReplayStats) {
+    // Traces that record the HPS start's deferred completions (SHDR / SDATA) replay them in place.
+    s.defer_stream = trace.lines().any(|l| l.split_whitespace().nth(1) == Some("SHDR"));
     let mut mix: Vec<i16> = Vec::new();
     let mut st = ReplayStats::default();
     let mut last_handle = i32::MIN;
+    // HSD_SynthSFXLoad requests (path, bank), served in order by the DVD queue; the file is
+    // in the bank when BANKDONE reports the completion.
+    let mut pending: std::collections::VecDeque<(String, usize)> = std::collections::VecDeque::new();
     for line in trace.lines() {
         let mut it = line.split_whitespace();
         let (Some(sub), Some(op)) = (it.next().and_then(|x| x.parse::<u32>().ok()), it.next()) else { continue };
@@ -79,6 +84,27 @@ pub fn replay(s: &mut Sound, trace: &str, min_sub_frames: u32) -> (Vec<i16>, Rep
             "PSTART" => {
                 s.pstream_start_ch_param(rest.first().copied().unwrap_or(""), n(1) as u8, n(2));
             }
+            "SHDR" => s.stream_header_done(),
+            "SDATA" => s.stream_data_done(),
+            "DSTOP" => {
+                s.stream_stop();
+            }
+            "DPAUSE" => {
+                s.stream_pause();
+            }
+            "DRESUME" => {
+                s.stream_resume();
+            }
+            "BANKREQ" => pending.push_back((rest.first().copied().unwrap_or("").to_string(), n(1) as usize)),
+            "BANKDONE" => match pending.pop_front() {
+                Some((path, bank)) => {
+                    assert_eq!(bank, n(1) as usize, "BANKDONE for another bank than the oldest request ({path})");
+                    s.load_ssm(&path, bank).unwrap_or_else(|e| panic!("replay: {e}"));
+                }
+                None => eprintln!("replay: BANKDONE without a request"),
+            },
+            "BANKUNL" => s.sfx_unload_bank(n(0) as usize),
+            "BANKDFL" => s.sfx_bank_deflag(n(0) as usize),
             "UAV" => s.sfx_update_all_volume(n(0), n(1) as u16, n(2) as usize),
             "SSV" => s.stream_set_volume(f32::from_bits(n(0) as u32)),
             other => eprintln!("replay: unknown op {other}"),
@@ -99,5 +125,14 @@ pub fn boot_vs(iso: &str, ckinds: &[i32], stkind: i32, grkind: i32) -> Result<So
     s.lb_audio_ax_80028690();
     s.lb_load_announcer();
     s.lb_load_match_banks(ckinds, stkind, grkind);
+    Ok(s)
+}
+
+/// The sound stack as the C build has it at the first game call of a menu-flow capture: the
+/// audio engine initialised (banks allocated, aux effects, smash2.sem) but nothing loaded; every
+/// bank load, unload, announcer and scene call comes from the trace itself.
+pub fn boot_bare(iso: &str) -> Result<Sound, String> {
+    let mut s = Sound::new();
+    s.boot_engine(Box::new(crate::sound::DiscFs::open(iso)?), crate::lbaudio::boot_bank_sizes())?;
     Ok(s)
 }

@@ -142,6 +142,10 @@ impl Drawable {
 /// drawn in. 0 / 2 default 0; 1 and 3 set it to 1 in their on_init; 4-8 to 2 (`grMaterial_801C94D8` users).
 const FD_GROUPS: [(u32, u32); 9] = [(0, 0), (1, 1), (2, 0), (3, 1), (4, 2), (5, 2), (6, 2), (7, 2), (8, 2)];
 /// `grNLa_803E8010`: { map id, jobj idx for the looping anim, jobj idx of the sub-tree anim (-1 none), its set }.
+/// grBattle_OnInit's gobjs (see `load_stage`): map id, camera pass.
+const BF_GROUPS: [(u32, u32); 3] = [(0, 0), (1, 2), (6, 0)];
+/// grGreens_Init's gobjs: map id, camera pass.
+const GR_GROUPS: [(u32, u32); 5] = [(0, 0), (2, 2), (4, 0), (5, 0), (6, 0)];
 const FD_BACKDROP: [(u32, u32, i32, i32); 5] = [(4, 1, 2, 0), (5, 1, 2, 4), (6, 1, 2, 6), (7, 1, 2, 8), (8, 1, 2, 10)];
 
 struct Stage {
@@ -156,18 +160,29 @@ struct Stage {
     fighter_lights: Vec<u32>,
     stage_lights: AnimLights,
     plit_lights: Option<AnimLights>,
+    /// `stage_info.quake_model_set` (DynamicModelDesc: joint, anims[]), the camera quake offset animations.
+    quake_set: Option<u32>,
 }
 
-fn load_stage(file: &[u8], is_fd: bool) -> Result<Stage, String> {
+fn load_stage(file: &[u8], is_fd: bool, is_bf: bool, is_gr: bool) -> Result<Stage, String> {
     let a = DatArchive::parse(file).map_err(|e| format!("stage: {e}"))?;
     let head = a.public_offset("map_head").ok_or("no map_head")?;
     let a_plit = a.public_offset("map_plit");
+    let a_gp = a.public_offset("grGroundParam");
+    let a_quake = a.public_offset("quake_model_set");
     let dat = Arc::new(a.data);
     let d = &dat[..];
     let table = be32(d, head + 8);
     let want: Option<Vec<u32>> = std::env::var("MELEE_VIEW_GROUPS").ok().map(|v| v.split(',').filter_map(|x| x.trim().parse().ok()).collect());
     let fd_groups: Vec<(u32, u32)> = if is_fd {
         FD_GROUPS.to_vec()
+    } else if is_gr {
+        // grGreens_Init: gobjs 0, 2 (camera pass 2), 6, 5, 4 (1 and 3 are never created).
+        GR_GROUPS.to_vec()
+    } else if is_bf {
+        // grBattle_OnInit: gobjs 0, 3 (the background controller, whole tree hidden: not drawn), 1 (the first
+        // background, camera pass 2 via grMaterial_801C94D8) and 6; 2 / 4 / 5 only exist after a bg change.
+        BF_GROUPS.to_vec()
     } else {
         // Any other stage: every map group with a root, all in the default camera pass (no stage-specific callbacks yet).
         (0..be32(d, head + 0xC).min(64)).filter(|g| be32(d, table + g * 0x34) != 0).map(|g| (g, 0)).collect()
@@ -175,8 +190,12 @@ fn load_stage(file: &[u8], is_fd: bool) -> Result<Stage, String> {
     let groups: Vec<(u32, u32)> = fd_groups.iter().copied().filter(|(g, _)| want.as_ref().map_or(true, |w| w.contains(g))).collect();
     let ids: Vec<u32> = groups.iter().map(|g| g.0).collect();
     let mut anim = crate::stage_anim::StageAnim::new(dat.clone(), head, &ids);
+    if let Some(gp) = a_gp {
+        let sc = bef(d, gp);
+        if sc > 0.001 { anim.world_scale = sc; }
+    }
     // FD only: StageCallbacks.flags_b0 is the MSB of the table's flags word (PPC bitfield order).
-    let light_group = (0..10u32).find(|&i| is_fd && unsafe { melee_world::tu::grlast::grLast_StageCallbacks[i as usize].anon_10.flags } & 0x8000_0000 != 0).unwrap_or(0);
+    let light_group = (0..10u32).find(|&i| (is_bf || is_gr) && i == 6 || is_fd && unsafe { melee_world::tu::grlast::grLast_StageCallbacks[i as usize].anon_10.flags } & 0x8000_0000 != 0).unwrap_or(0);
     let mut lights = Vec::new();
     let ll = be32(d, table + light_group * 0x34 + 0x18);
     if ll != 0 {
@@ -204,7 +223,8 @@ fn load_stage(file: &[u8], is_fd: bool) -> Result<Stage, String> {
     }
     // grLast_OnInit: stage gobjs 0-3 on_init (grAnime_801C8138 set 0), then backdrop case 1 of grLast_8021B920.
     for &g in &ids {
-        if is_fd && g <= 3 {
+        if is_fd && g <= 3 || is_bf || is_gr {
+            // grBattle gobj 0 / 1 / 6 callback 0: grAnime_801C8138(gobj, map_id, 0).
             anim.start_map_anim(g, 0);
         }
     }
@@ -373,7 +393,7 @@ fn load_stage(file: &[u8], is_fd: bool) -> Result<Stage, String> {
     }
     let stage_lights = AnimLights::new(d, if ll != 0 { ll } else { 0 }, head);
     let plit_lights = a_plit.map(|pl| AnimLights::new(d, pl, head));
-    Ok(Stage { dat, anim, map_head: head, groups, lights, fighter_lights, stage_lights, plit_lights })
+    Ok(Stage { dat, anim, map_head: head, groups, lights, fighter_lights, stage_lights, plit_lights, quake_set: a_quake })
 }
 
 /// A light set (`lb_80011AC4` over a `LightList*[]`) with its `HSD_LObjAnim` state: the `VIS` / `LITC_*`
@@ -482,6 +502,8 @@ struct FxModel {
 pub struct MatchRender {
     fx: HashMap<u32, FxModel>,
     cm: crate::cm_drive::CmDrive,
+    /// Live camera quake gobjs (`grLib_801C9CEC`): their offset animations.
+    quakes: Vec<crate::stage_anim::StageAnim>,
     pose: crate::cm_drive::CamPose,
     stage: Stage,
     hud: crate::hud_view::Hud,
@@ -534,7 +556,7 @@ fn camera(p: &crate::cm_drive::CamPose) -> (Mtx, [[f32; 4]; 4]) {
 impl MatchRender {
     pub fn new(disc: &mut crate::disc::Disc, stage_file: &str, names: &[&str], sim: &mut VsMatch) -> Result<Self, String> {
         let stage_bytes = disc.read(stage_file)?;
-        let stage = load_stage(&stage_bytes, stage_file.ends_with("GrNLa.dat") || stage_file.ends_with("GrNLa.usd"))?;
+        let stage = load_stage(&stage_bytes, stage_file.ends_with("GrNLa.dat") || stage_file.ends_with("GrNLa.usd"), stage_file.ends_with("GrNBa.dat"), stage_file.ends_with("GrGr.dat"))?;
         let cm = {
             let a = DatArchive::parse(&stage_bytes).map_err(|e| format!("{stage_file}: {e}"))?;
             let gp = crate::stage::ground_param(&a).ok_or("stage dat: no grGroundParam")?;
@@ -569,7 +591,7 @@ impl MatchRender {
         }
         let hud = crate::hud_view::Hud::new(crate::hud_view::HudFile::load(&disc.read("IfAll.usd")?)?, names)?;
         let pose = cm.pose();
-        Ok(Self { fx: HashMap::new(), cm, pose, stage, hud, fighters, cache: DataCache::default(), render: HsdRender::new() })
+        Ok(Self { fx: HashMap::new(), cm, quakes: Vec::new(), pose, stage, hud, fighters, cache: DataCache::default(), render: HsdRender::new() })
     }
 }
 
@@ -765,6 +787,29 @@ impl MatchRender {
         }
         let ins: Vec<_> = sim.players.iter_mut().filter_map(|p| p.camera_subject_in()).collect();
         let snaps: Vec<_> = sim.players.iter_mut().filter(|p| !p.follower).map(|p| p.cam_snap.take()).collect();
+        {
+            let mut off = None;
+            self.quakes.retain_mut(|a| {
+                a.step();
+                let t = a.translate_of(0, 0);
+                off = Some((t.x, t.y));
+                a.joint_anim_running(0)
+            });
+            if let Some((x, y)) = off {
+                self.cm.set_quake_offset(x, y);
+            }
+        }
+        // Camera_RequestQuake (grLib_801C9CEC): a quake gobj whose proc sets the camera's quake offset each frame.
+        for (kind, pos) in std::mem::take(&mut sim.quake_requests) {
+            self.cm.request_quake(kind, pos);
+            let idx = match kind { melee_types::QuakeKind_Loop => 0, melee_types::QuakeKind_Small => 1, melee_types::QuakeKind_Medium => 2, _ => 3 };
+            if let Some(q) = self.stage.quake_set {
+                let mut a = crate::stage_anim::StageAnim::new_scene(self.stage.dat.clone(), vec![q]);
+                a.start_anim_set(0, idx, false);
+                a.req_joint(0, 0, 0.0);
+                self.quakes.push(a);
+            }
+        }
         self.cm.step(&ins, &snaps);
         let dmg: Vec<i32> = sim.players.iter().map(|p| p.fp.dmg.x1830_percent as i32).collect();
         self.hud.step(&dmg);
@@ -793,6 +838,10 @@ impl MatchRender {
                             Ok(mut anim) => {
                                 if let Some((k, t)) = d.tev {
                                     anim.set_tev_colors(0, 1, 0, k, t);
+                                }
+                                if std::env::var_os("MELEE_VIEW_FXDUMP").is_some_and(|v| v.to_str().and_then(|v| v.parse::<u32>().ok()) == Some(d.id)) {
+                                    eprintln!("FXDUMP bank {} id {}", d.bank, d.id);
+                                    anim.dump(0);
                                 }
                                 self.fx.insert(d.inst, FxModel { dat, anim, done: false });
                             }
@@ -845,7 +894,13 @@ impl MatchRender {
                     Some((640.0 * (c[0] / c[3] * 0.5 + 0.5), 480.0 * (0.5 - c[1] / c[3] * 0.5)))
                 })
                 .collect();
-            self.hud.set_nametags(&tags);
+            let rebirth: Vec<bool> = sim.players.iter().filter(|p| !p.follower).map(|p| p.fp.x221F_b2() == 0 && p.fp.x221F_b1() == 0 && p.fp.x209A == 1).collect();
+            if std::env::var_os("MELEE_VIEW_TAGLOG").is_some() {
+                for p in sim.players.iter().filter(|p| !p.follower) {
+                    eprintln!("TAG frame {} x209A {} b1 {} b2 {} motion {}", sim.frame, p.fp.x209A, p.fp.x221F_b1(), p.fp.x221F_b2(), p.fp.motion_id);
+                }
+            }
+            self.hud.set_nametags(&tags, &rebirth);
         }
         if std::env::var("MELEE_VIEW_CAMLOG").is_ok() {
             let p = &self.pose;
@@ -934,6 +989,11 @@ pub fn view_golden(args: &[String]) -> ExitCode {
     let scenario = get("--scenario").unwrap_or_else(|| "pad_falcon_fox_fd".into());
     let (stage_file, names): (&str, &[&str]) = match scenario.as_str() {
         "pad_falcon_fox_fd" => ("GrNLa.dat", &["falcon", "fox"]),
+        "pad_falcon_fox_bf" => ("GrNBa.dat", &["falcon", "fox"]),
+        "pad_falcon_fox_gr" => ("GrGr.dat", &["falcon", "fox"]),
+        "pad_falcon_fox_ys" => ("GrSt.dat", &["falcon", "fox"]),
+        "pad_falcon_fox_fod" => ("GrIz.dat", &["falcon", "fox"]),
+        "pad_falcon_fox_dl64" => ("GrOp.dat", &["falcon", "fox"]),
         s => {
             eprintln!("view-golden: scenario {s:?} not wired");
             return ExitCode::from(2);

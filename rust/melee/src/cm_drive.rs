@@ -424,6 +424,16 @@ impl CmDrive {
         camera_8002a768(w, ts);
     }
 
+    /// `Camera_RequestQuake(kind, &pos)` (the quake gobj itself is the view's).
+    pub fn request_quake(&mut self, kind: u32, pos: [f32; 3]) {
+        world().camera_request_quake_with(kind, Some(TVec { x: pos[0], y: pos[1], z: pos[2] }), |_| core::ptr::null_mut());
+    }
+
+    /// `Camera_SetQuakeOffset` (the quake gobj's proc).
+    pub fn set_quake_offset(&mut self, x: f32, y: f32) {
+        world().camera_set_quake_offset(x, y);
+    }
+
     /// One frame: the fighters' camera boxes, then the camera proc.
     pub fn step(&mut self, ins: &[CmSubjectIn], snaps: &[Option<CmSubjectIn>]) {
         self.update_subjects(ins, snaps);

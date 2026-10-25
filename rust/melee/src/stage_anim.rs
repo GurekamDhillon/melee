@@ -189,6 +189,8 @@ pub struct MatExt {
     dat: Arc<Vec<u8>>,
     mobjs: HashMap<u32, MObjState>,
     base_pe: HashMap<u32, Option<[u8; 12]>>,
+    /// JObj descs of the group being animated (JObjId -> desc address), for PATH splines.
+    descs: Vec<u32>,
 }
 
 impl MatExt {
@@ -259,11 +261,27 @@ impl JObjExt for MatExt {
             }
         }
     }
-    fn spline_point(&mut self, _: JObjId, _: f32) -> Vec3 {
-        panic!("stage animation: PATH track")
+    /// `splArcLengthPoint` over the spline record of the JObj desc `jp` (a DAT offset: the AObj's
+    /// obj id is the JObj desc's own address, which is what the C's ID table is keyed by).
+    fn spline_point(&mut self, jp: JObjId, s: f32) -> Vec3 {
+        let d: &[u8] = &self.dat;
+        let jd = self.descs[jp.0 as usize];
+        let sp = be32(d, jd + 0x10);
+        let ty = d[sp as usize];
+        let n = (be16(d, sp + 2) as i16).max(1) as usize;
+        let f = |at: u32| bef(d, at);
+        let v3 = |at: u32| Vec3 { x: f(at), y: f(at + 4), z: f(at + 8) };
+        let cvp = be32(d, sp + 8);
+        let cv: Vec<Vec3> = (0..n * 3 + 4).map(|i| { let a = cvp + 12 * i as u32; if (a as usize) + 12 <= d.len() { v3(a) } else { Vec3 { x: 0.0, y: 0.0, z: 0.0 } } }).collect();
+        let slp = be32(d, sp + 0x10);
+        let spp = be32(d, sp + 0x14);
+        let seg_length: Vec<f32> = (0..n + 1).map(|i| f(slp + 4 * i as u32)).collect();
+        let seg_poly: Vec<[f32; 5]> = (0..n + 1).map(|i| { let a = spp + 20 * i as u32; [f(a), f(a + 4), f(a + 8), f(a + 12), f(a + 16)] }).collect();
+        let spl = melee_runtime::spline::Spline { ty, numcv: n as i16, tension: f(sp + 4), cv: &cv, total_length: f(sp + 0xC), seg_length: &seg_length, seg_poly: &seg_poly };
+        melee_runtime::spline::arc_length_point(&spl, s).unwrap_or(Vec3 { x: 0.0, y: 0.0, z: 0.0 })
     }
-    fn aobj_resolve_obj(&mut self, _: u32) -> Option<JObjId> {
-        None
+    fn aobj_resolve_obj(&mut self, id: u32) -> Option<JObjId> {
+        self.descs.iter().position(|&x| x == id).map(|i| JObjId(i as u32))
     }
     fn jobj_ref(&mut self, _: Option<JObjId>) {}
     fn jobj_unref(&mut self, _: Option<JObjId>) {}
@@ -321,6 +339,8 @@ pub struct StageAnim {
     /// Scene models (`{joint, anims, matanims, shapeanims}` records, e.g. IfAll's HUD): the entry of
     /// each group id, in place of the `map_head` table. Empty for a stage.
     entries: Vec<u32>,
+    /// `Ground_801C0498` (grGroundParam->y): the wrapper JObj every map gobj's model hangs under.
+    pub world_scale: f32,
 }
 
 fn load_tree(d: &[u8], at: u32, tree: &mut Tree, parent: Option<JObjId>, descs: &mut Vec<u32>, depth: u32) -> Option<JObjId> {
@@ -394,8 +414,8 @@ impl StageAnim {
             }
             groups.push(GroupAnim { map_id: g, tree, descs, root });
         }
-        let rt = JObjRt::new(MatExt { dat: dat.clone(), mobjs, base_pe });
-        StageAnim { dat, rt, groups, table, entries }
+        let rt = JObjRt::new(MatExt { dat: dat.clone(), mobjs, base_pe, descs: Vec::new() });
+        StageAnim { dat, rt, groups, table, entries, world_scale: 1.0 }
     }
 
     fn gi(&self, map_id: u32) -> usize {
@@ -456,7 +476,15 @@ impl StageAnim {
     fn add_anim_one(&mut self, gi: usize, j: JObjId, aj: Option<&HsdAnimJoint>, mj: Option<&MatJoint>, hsd: bool) {
         if let Some(a) = aj {
             if a.aobjdesc.is_some() || hsd {
-                let mut o = a.aobjdesc.as_ref().map(|x| HsdAObj::load_desc(x, |_| None));
+                if let Some(x) = a.aobjdesc.as_ref().filter(|x| x.obj_id != 0) {
+                    // HSD_AObjLoadDesc: obj_id is a JObj desc; HSD_JObjLoadJoint when it is not in the ID table yet.
+                    let g = &mut self.groups[gi];
+                    if !g.descs.contains(&x.obj_id) {
+                        load_tree(&self.dat, x.obj_id, &mut g.tree, None, &mut g.descs, 0);
+                    }
+                }
+                let descs = &self.groups[gi].descs;
+                let mut o = a.aobjdesc.as_ref().map(|x| HsdAObj::load_desc(x, |id| descs.iter().position(|&d| d == id).map(|i| JObjId(i as u32))));
                 sort_anim(o.as_mut());
                 self.groups[gi].tree.get_mut(j).aobj = o;
             }
@@ -667,6 +695,7 @@ impl StageAnim {
     }
 
     fn anim_group(&mut self, gi: usize) {
+        self.rt.ext.borrow_mut().descs = self.groups[gi].descs.clone();
         let g = &mut self.groups[gi];
         let root = g.root;
         self.rt.anim_all(&mut g.tree, Some(root));
@@ -691,6 +720,7 @@ impl StageAnim {
         let gi = self.gi(map_id);
         let mut out: Vec<DispJoint> = Vec::new();
         let mut index: HashMap<u32, usize> = HashMap::new();
+        let ws = self.world_scale;
         let g = &mut self.groups[gi];
         let mut roots = vec![g.root];
         let mut x = g.tree.get(g.root).next;
@@ -709,7 +739,15 @@ impl StageAnim {
                 let o = g.tree.get(j);
                 let parent = o.parent.and_then(|p| index.get(&p.0).copied());
                 index.insert(j.0, out.len());
-                out.push(DispJoint { desc: g.descs[j.0 as usize], flags: o.flags, mtx: o.mtx, parent });
+                let mut m = o.mtx;
+                if ws != 1.0 {
+                    for row in m.iter_mut() {
+                        for c in row.iter_mut() {
+                            *c *= ws;
+                        }
+                    }
+                }
+                out.push(DispJoint { desc: g.descs[j.0 as usize], flags: o.flags, mtx: m, parent });
             }
         }
         out
@@ -818,7 +856,7 @@ impl StageAnim {
         let gi = self.gi(map_id);
         let n = self.groups[gi].tree.get_mut(JObjId(idx));
         n.translate = t;
-        n.flags |= melee_runtime::jobj::JOBJ_MTX_DIRTY;
+        self.groups[gi].tree.set_mtx_dirty(Some(JObjId(idx)));
     }
 
     /// `HSD_JObjSetRotationY/Z` on the idx'th JObj (`None` keeps the current value).
@@ -831,14 +869,14 @@ impl StageAnim {
         if let Some(z) = z {
             n.rotate.z = z;
         }
-        n.flags |= melee_runtime::jobj::JOBJ_MTX_DIRTY;
+        self.groups[gi].tree.set_mtx_dirty(Some(JObjId(idx)));
     }
 
     pub fn set_scale(&mut self, map_id: u32, idx: u32, s: Vec3) {
         let gi = self.gi(map_id);
         let n = self.groups[gi].tree.get_mut(JObjId(idx));
         n.scale = s;
-        n.flags |= melee_runtime::jobj::JOBJ_MTX_DIRTY;
+        self.groups[gi].tree.set_mtx_dirty(Some(JObjId(idx)));
     }
 
     /// `efLib_SetTevKonstColor(jobj, n, konst, tev0)`: the first DObj of the idx'th JObj, its n'th TObj's tev

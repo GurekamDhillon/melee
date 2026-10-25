@@ -1,0 +1,8 @@
+# title -> START (age 31) -> main menu, then stick down x2 and up, A on VS Mode is next screen
+30 0000 0 0
+2 1000 0 0
+60 0000 0 0
+10 0000 0 -100
+30 0000 0 0
+10 0000 0 -100
+30 0000 0 0

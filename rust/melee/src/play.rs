@@ -221,8 +221,11 @@ pub struct Play {
     audio: Option<crate::audio::Audio>,
     /// The retail title scene (retail.rs), alive while `scene == Title`.
     title: Option<crate::retail::Title>,
+    menu: Option<crate::retail::mainmenu::MainMenu>,
     /// `--shot-ages a,b,c`: a screenshot at those scene ages of every scene (`play_<scene>_<age>.png`).
     shot_ages: Vec<u32>,
+    /// `--shot-ticks a,b`: screenshots at those timeline ticks (tick_no - 1: the title's age under --skip-intro), named `tl_<n>`.
+    shot_ticks: Vec<u64>,
     kit: Box<dyn crate::retail::MenuHook>,
 }
 
@@ -237,6 +240,18 @@ impl Play {
         self.scene = s;
         self.age = 0;
         self.title = None;
+        self.menu = None;
+        if s == Scene::MainMenu || s == Scene::VsMenu {
+            let (kind, hov) = if s == Scene::VsMenu { (crate::retail::mainmenu::KIND_VS, 0) } else { (crate::retail::mainmenu::KIND_MAIN, self.main_sel as u16) };
+            match self.load_menu(kind, hov) {
+                Ok(m) => self.menu = Some(m),
+                Err(e) => {
+                    log(&format!("main menu: {e}"));
+                    self.failed = Some(e);
+                    self.quit = true;
+                }
+            }
+        }
         if s == Scene::Title {
             match self.load_title() {
                 Ok(t) => self.title = Some(t),
@@ -247,6 +262,13 @@ impl Play {
                 }
             }
         }
+    }
+
+    /// `mnMain_Scene_OnEnter`: MnMaAll.usd (US) or .dat from the disc.
+    fn load_menu(&self, kind: u8, hovered: u16) -> Result<crate::retail::mainmenu::MainMenu, String> {
+        let mut disc = crate::disc::Disc::open(&self.iso)?;
+        let bytes = disc.read("MnMaAll.usd").or_else(|_| disc.read("MnMaAll.dat"))?;
+        crate::retail::mainmenu::MainMenu::new(&bytes, kind, hovered, true)
     }
 
     /// `gm_Scene_Title_OnEnter`: GmTtAll.usd (US) or .dat from the disc.
@@ -338,8 +360,8 @@ impl Play {
                 match exit {
                     Exit::TitleTimeout => self.goto(Scene::Opening),
                     Exit::TitleStart(_) => {
-                        // gmTitleMode onExit: START -> GM_MENU
-                        self.main_sel = 1;
+                        // gmTitleMode onExit: START -> GM_MENU (the menu opens on 1-P Mode, gmMenuMode's default)
+                        self.main_sel = 0;
                         if let Some(a) = &self.audio { a.title_start() }
                         self.goto(Scene::MainMenu);
                     }
@@ -352,42 +374,31 @@ impl Play {
                     Exit::None => {}
                 }
             }
-            Scene::MainMenu => {
-                if ny != 0 {
-                    self.main_sel = (self.main_sel as i32 - ny).rem_euclid(MAIN_ITEMS.len() as i32) as usize;
-                    if let Some(a) = &self.audio { a.moved() }
-                }
-                if trig & HSD_PAD_A != 0 {
-                    if let Some(a) = &self.audio { if MAIN_ITEMS[self.main_sel].1 { a.forward() } else { a.denied() } }
-                    if MAIN_ITEMS[self.main_sel].1 {
-                        self.vs_sel = 0;
-                        self.goto(Scene::VsMenu);
-                    } else {
-                        self.toast = Some((format!("{} IS NOT IN THE NATIVE PORT YET", MAIN_ITEMS[self.main_sel].0), 120));
+            Scene::MainMenu | Scene::VsMenu => {
+                use crate::retail::mainmenu::Exit;
+                let raws: [Option<RawPad>; 4] = std::array::from_fn(|i| self.port[i].connected.then_some(self.port[i].raw));
+                let exit = match self.menu.as_mut() {
+                    Some(m) => {
+                        m.tick(&raws);
+                        m.exit
                     }
-                } else if trig & HSD_PAD_B != 0 {
-                    if let Some(a) = &self.audio { a.back() }
-                    self.title_count = 0;
-                    self.goto(Scene::Title);
-                }
-            }
-            Scene::VsMenu => {
-                if ny != 0 {
-                    self.vs_sel = (self.vs_sel as i32 - ny).rem_euclid(VS_ITEMS.len() as i32) as usize;
-                    if let Some(a) = &self.audio { a.moved() }
-                }
-                if trig & HSD_PAD_A != 0 {
-                    if let Some(a) = &self.audio { if VS_ITEMS[self.vs_sel].1 { a.forward() } else { a.denied() } }
-                    if VS_ITEMS[self.vs_sel].1 {
+                    None => Exit::None,
+                };
+                match exit {
+                    Exit::Title => {
+                        self.title_count = 0;
+                        self.goto(Scene::Title);
+                    }
+                    Exit::Mode("Vs") => {
                         self.cursor = [0, 1];
                         self.pick = [None, None];
                         self.goto(Scene::Css);
-                    } else {
-                        self.toast = Some((format!("{} IS NOT IN THE NATIVE PORT YET", VS_ITEMS[self.vs_sel].0), 120));
                     }
-                } else if trig & HSD_PAD_B != 0 {
-                    if let Some(a) = &self.audio { a.back() }
-                    self.goto(Scene::MainMenu);
+                    Exit::None => {}
+                    other => {
+                        self.toast = Some((format!("{other:?} IS NOT IN THE NATIVE PORT YET"), 120));
+                        if let Some(m) = self.menu.as_mut() { m.exit = Exit::None }
+                    }
                 }
             }
             Scene::Css => self.tick_css(),
@@ -823,6 +834,8 @@ impl Play {
             self.draw_match_hud();
         } else if let (Scene::Title, Some(t)) = (self.scene, self.title.as_mut()) {
             t.draw(&mut self.shim);
+        } else if let (Scene::MainMenu | Scene::VsMenu, Some(m)) = (self.scene, self.menu.as_mut()) {
+            m.draw(&mut self.shim);
         } else {
             self.draw_ui();
         }
@@ -848,9 +861,9 @@ impl Game for Play {
             log(&format!("max frames reached in {}", self.scene.name()));
             self.quit = true;
         }
-        if self.shots && self.shot_ages.contains(&self.age) && self.presenter.is_some() {
+        if self.shots && (self.shot_ages.contains(&self.age) || self.shot_ticks.contains(&(self.tick_no - 1))) && self.presenter.is_some() {
             // Age-exact: draw this tick's state now (the display may have skipped ticks), then write it.
-            self.shot_pending = Some(format!("{}_{:04}", self.scene.name(), self.age));
+            self.shot_pending = Some(if self.shot_ticks.contains(&(self.tick_no - 1)) { format!("tl_{:04}", self.tick_no - 1) } else { format!("{}_{:04}", self.scene.name(), self.age) });
             self.draw_frame();
             let frame = self.shim.take_frame();
             let p = self.presenter.as_mut().unwrap();
@@ -955,7 +968,9 @@ pub fn play(args: &[String]) -> ExitCode {
         failed: None,
         audio: None,
         title: None,
+        menu: None,
         kit: Box::new(crate::retail::NoKit),
+        shot_ticks: get("--shot-ticks").map(|v| v.split(',').filter_map(|x| x.trim().parse().ok()).collect()).unwrap_or_default(),
         shot_ages: get("--shot-ages").map(|v| v.split(',').filter_map(|x| x.trim().parse().ok()).collect()).unwrap_or_default(),
     };
     let mut game = game;

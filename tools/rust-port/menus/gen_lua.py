@@ -35,21 +35,24 @@ lua += ["}", "local want = {" + ",".join(map(str, want)) + "}",
   end
   gd.log("MENUPROOF scene " .. gd.scene().name .. " at frame " .. gd.frame())
   local t0 = gd.frame()
-  local age = 0
-  local wi = 1
+  -- expand the script to one entry per tick; the C game consumes a gd.input hold two logic frames after the script sets it (measured
+  -- with a START at the title: the menu's first frame lines up with the Rust tick when the input of tick k is
+  -- set at Lua age k-2)
+  local ticks = {}
   for _, r in ipairs(rows) do
-    for k = 1, r[1] do
-      age = age + 1
-      gd.input(1, {buttons = r[2], x = r[3], y = r[4]}, 1)
-      gd.wait(1)
-      while wi <= #want and want[wi] == age + 1 do
-        gd.screenshot(string.format("c_%04d", age + 1))
-        gd.log("MENUPROOF shot " .. (age + 1) .. " scene " .. gd.scene().name)
-        wi = wi + 1
-      end
-      if wi > #want then break end
+    for k = 1, r[1] do ticks[#ticks + 1] = r end
+  end
+  local last = want[#want] + 1
+  local wi = 1
+  for age = 1, last do
+    local r = ticks[age + 2]
+    if r then gd.input(1, {buttons = r[2], x = r[3], y = r[4]}, 1) else gd.input(1, {buttons = 0, x = 0, y = 0}, 1) end
+    gd.wait(1)
+    while wi <= #want and want[wi] == age + 1 do
+      gd.screenshot(string.format("c_%04d", age + 1))
+      gd.log("MENUPROOF shot " .. (age + 1) .. " scene " .. gd.scene().name)
+      wi = wi + 1
     end
-    if wi > #want then break end
   end
   gd.wait(40)
   gd.quit()

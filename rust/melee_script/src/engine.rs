@@ -124,6 +124,7 @@ pub struct State {
     pub ev: crate::events::EventState,
     pub zone: crate::gd::zones::ZoneAdapter,
     pub deadlines: crate::gd::deadline::Deadlines,
+    pub contacts: crate::gd::contacts::Contacts,
     pub last_action: [i32; 6],
     pub state_frame: [i32; 6],
     pub paused: bool,
@@ -425,6 +426,7 @@ impl Engine {
             ev: Default::default(),
             zone: Default::default(),
             deadlines: Default::default(),
+            contacts: Default::default(),
             last_action: [0; 6],
             state_frame: [0; 6],
             paused: false,
@@ -891,6 +893,7 @@ impl Engine {
         }
         let stage_owner = self.st.borrow().scripts[i].stage_owner;
         self.zones_release(stage_owner);
+        self.contact_release(i);
         {
             let mut s = self.st.borrow_mut();
             let (p, e, l) = s.deadlines.release(i);
@@ -1127,6 +1130,9 @@ impl Engine {
 
     /// `gw_Script_SceneBegin` (the parts that belong to the script core; the engine-owned releases are the game's).
     pub fn scene_begin(&self, scene_kind: i32) {
+        self.zones_release(0);
+        self.contacts_reset("scene changed; watcher cancelled");
+        self.st.borrow_mut().contacts.labels.clear();
         let (prev, name) = {
             let mut s = self.st.borrow_mut();
             let prev = s.scene_kind;
@@ -1193,6 +1199,7 @@ impl Engine {
     fn finish_draw(&self) {
         // on_draw completes the list; the overlay then shows it (gs_finish_draw)
         self.hook_all("on_draw", &[]);
+        self.contact_draw();
         let mut s = self.st.borrow_mut();
         s.build = 1 - s.build;
     }
@@ -1347,6 +1354,7 @@ impl Engine {
             self.deadline_frame();
         }
         self.camera_tick();
+        self.contact_tick();
         self.dispatch_events();
         if start {
             self.hook_all("on_match_start", &[]);
@@ -1487,6 +1495,9 @@ impl Engine {
                 }
             }
             return rc;
+        }
+        if is("contacts") || is("trace") || is("wait") {
+            return self.contact_console(cmd, arg);
         }
         if is("frame") {
             let f = self.st.borrow().frame;

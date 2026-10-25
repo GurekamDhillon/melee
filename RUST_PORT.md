@@ -1189,3 +1189,4 @@ rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_In
   (`MELEE_VOLUME` / audio.cfg, applied as output gain only, so `MELEE_AUDIO_DUMP` stays full scale as in shim_ax.c) is ported in `output.rs`. GAME! cannot be compared yet:
   the native sim has no KO / blast-zone / death path (only the C build can `gd.teleport` a fighter out and `gd.set_stocks 1`), so a stock-out capture needs the
   fighter Dead* states first. Results / sudden-death scene audio and in-game menu sounds depend on the stand-in ui.rs menus.
+- Round 4 (plat-audio): merged port/platform-integ again; added `output::tests::master_volume_env_clamps_and_sets_gain` (MELEE_VOLUME parse/clamp like gw_Audio_Volume, gain = pct/100 on the device path); 15 melee_audio tests pass, headless, no OS input. Open items unchanged (GAME! needs sim death path; results/sudden-death/menu audio need the real menus).

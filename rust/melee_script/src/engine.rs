@@ -122,6 +122,7 @@ pub struct State {
     pub match_active: bool,
     pub match_frame: i32,
     pub ev: crate::events::EventState,
+    pub zone: crate::gd::zones::ZoneAdapter,
     pub last_action: [i32; 6],
     pub state_frame: [i32; 6],
     pub paused: bool,
@@ -421,6 +422,7 @@ impl Engine {
             match_active: false,
             match_frame: 0,
             ev: Default::default(),
+            zone: Default::default(),
             last_action: [0; 6],
             state_frame: [0; 6],
             paused: false,
@@ -885,6 +887,8 @@ impl Engine {
         if let Some(f) = self.get_hook(i, "on_unload") {
             self.pcall(i, &f, MultiValue::new(), "on_unload");
         }
+        let stage_owner = self.st.borrow().scripts[i].stage_owner;
+        self.zones_release(stage_owner);
         let mut s = self.st.borrow_mut();
         s.commands.retain(|c| c.script != i);
         if s.match_active {
@@ -1270,6 +1274,9 @@ impl Engine {
             let mut s = self.st.borrow_mut();
             let kind = s.rw.frame_kind;
             s.ev.post_pending = true;
+            if s.match_active {
+                s.game.zones_frame(0);
+            }
             s.rw.in_frame = false;
             if s.rw.began {
                 // the frame's sounds are all in the log now
@@ -1326,6 +1333,9 @@ impl Engine {
             (start, kind)
         };
         let _ = kind;
+        if kind != 1 {
+            self.zones_dispatch();
+        }
         self.camera_tick();
         self.dispatch_events();
         if start {

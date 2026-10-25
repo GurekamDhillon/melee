@@ -11,6 +11,7 @@ pub mod manifest;
 pub mod motion_names;
 pub mod pad;
 pub mod rewind;
+pub mod zones_core;
 
 pub use engine::{Config, Engine};
 pub use game::{NoGame, RecRead, RecRow, RecStatus, ScriptGame};

@@ -37,6 +37,7 @@ mod attackair;
 mod cpu;
 mod dashrun;
 mod fox;
+mod greens;
 mod rebirth;
 mod sheik;
 use fox::{ItemCmd, FoxVars, SimItem};
@@ -405,6 +406,10 @@ struct DptclAnim {
     aobj: HsdAObj<()>,
     /// The init-time first step has run.
     started: bool,
+    /// The map gobj whose animation owns the track.
+    gobj: u32,
+    /// Created mid-frame by a stage proc: its first end-of-frame step belongs to the next frame.
+    skip: bool,
 }
 
 pub struct VsMatch {
@@ -425,6 +430,8 @@ pub struct VsMatch {
     pub bgm: i32,
     last_bg: Option<LastBg>,
     dptcl: Vec<DptclAnim>,
+    /// Green Greens' per-frame stage procs (greens.rs).
+    greens: Option<greens::Greens>,
     aobj_globals: AObjGlobals,
     /// Bind-pose world matrices of the joints a generator can follow (by DAT offset; an effect
     /// joint is `(instance << 24) | offset`).
@@ -461,7 +468,7 @@ pub struct VsMatch {
 /// Green Greens' `grGreens_Init` (the map gobjs' OnInit in order 6, 5 for the draws that matter): the
 /// bomb-block pattern (`grGreens_80214B58`), the block timer, the wind timer, and the 18 block items
 /// (`grGreens_80214FA8` -> `grGreens_80215358`). Returns the blocks as items in creation order.
-fn greens_init(stage: &DatArchive, rand: &mut HsdRand, scale: f32) -> Result<Vec<fox::SimItem>, String> {
+fn greens_init(stage: &DatArchive, rand: &mut HsdRand, scale: f32) -> Result<(Vec<fox::SimItem>, greens::InitDraws), String> {
     let y = crate::stage::yakumono_words(stage, 0x1E).ok_or("GrGr.dat: no yakumono_param")?;
     let y = |i: usize| y[i] as i32;
     let range = |rand: &mut HsdRand, min: i32, max: i32| -> i32 {
@@ -481,10 +488,10 @@ fn greens_init(stage: &DatArchive, rand: &mut HsdRand, scale: f32) -> Result<Vec
         table[idx] = if r != 0 { 1 } else { 2 };
     }
     // grGreens_80214674: the block timer.
-    let _ = range(rand, y(0), y(1));
+    let block_timer = range(rand, y(0), y(1));
     // grGreens_802139C4: the wind timer and its first side.
-    let _ = range(rand, y(14), y(13));
-    let _ = rand.randi(2);
+    let wind_xc = range(rand, y(14), y(13));
+    let wind_x14 = rand.randi(2);
     // grGreens_8021483C: the 5x6 grid of block cells from the 30 block joints' positions.
     let (mut lmax, mut lmin, mut ltop, mut lbot) = (-3.4028235e38f32, 3.4028235e38f32, -3.4028235e38f32, 3.4028235e38f32);
     let (mut rmax, mut rtop, mut rmin, mut rbot) = (-3.4028235e38f32, -3.4028235e38f32, 3.4028235e38f32, 3.4028235e38f32);
@@ -527,7 +534,7 @@ fn greens_init(stage: &DatArchive, rand: &mut HsdRand, scale: f32) -> Result<Vec
         }
     }
     if std::env::var_os("MELEE_GOLDEN_DUMP").is_some() { for it in &items { eprintln!("block {:?} {:?}", it.pos.x, it.pos.y); } }
-    Ok(items)
+    Ok((items, greens::InitDraws { block_timer, wind_xc, wind_x14, table }))
 }
 
 /// Green Greens' block map joints (map gobj 6, joints 0..29 <-> JObjs 5..34): each used block
@@ -819,8 +826,11 @@ impl VsMatch {
         // grLast_OnInit -> grLast_8021A9C4 (map gobj 3) -> grLast_8021B920(1): the level gobjs
         // 4..8 are created in order; gobj 7's on_init is grLast_8021AC30.
         let mut items0: Vec<fox::SimItem> = Vec::new();
+        let mut greens_draws: Option<greens::InitDraws> = None;
         let last_bg = if stkind == STKIND_DL {
-            items0 = greens_init(&stage, &mut rand, f32::from_bits(u32::from_be_bytes(stage.data[crate::stage::ground_param(&stage).ok_or("no grGroundParam")? as usize..][..4].try_into().unwrap())))?;
+            let (items, draws) = greens_init(&stage, &mut rand, f32::from_bits(u32::from_be_bytes(stage.data[crate::stage::ground_param(&stage).ok_or("no grGroundParam")? as usize..][..4].try_into().unwrap())))?;
+            items0 = items;
+            greens_draws = Some(draws);
             None
         } else if stkind == STKIND_BF {
             // grBattle_OnInit: grBattle_80219D84(3) -> grBattle_BG_Callback0: reset_bg_timer,
@@ -842,7 +852,7 @@ impl VsMatch {
         let mut seen = std::collections::HashSet::new();
         // FD's grLast animation table; Battlefield's grBattle_OnInit starts gobj 0 and 1's anim 0
         // (grBattle_GObj0/1_Callback0 -> grAnime_801C8138), whose particle tracks are the 4 stage gens.
-        let dptcl_rows: &[(u32, u32)] = if stkind == STKIND_BF { &[(0, 0), (1, 0)] } else { &[(4, 0), (5, 4), (6, 6), (7, 8), (8, 10), (4, 0), (5, 0), (6, 0), (7, 0), (8, 0)] };
+        let dptcl_rows: &[(u32, u32)] = if stkind == STKIND_DL { &[(0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0)] } else if stkind == STKIND_BF { &[(0, 0), (1, 0)] } else { &[(4, 0), (5, 4), (6, 6), (7, 8), (8, 10), (4, 0), (5, 0), (6, 0), (7, 0), (8, 0)] };
         for &(g, anim) in dptcl_rows {
             if !seen.insert((g, anim)) {
                 continue;
@@ -852,7 +862,7 @@ impl VsMatch {
                 a.req_anim(0.0);
                 a.set_rate(1.0);
                 joint_mtx.insert(t.joint, crate::stage::bind_pose_matrix(&stage.data, &t.chain));
-                dptcl.push(DptclAnim { joint: t.joint, aobj: a, started: false });
+                dptcl.push(DptclAnim { joint: t.joint, aobj: a, started: false, gobj: g, skip: false });
             }
         }
 
@@ -1215,7 +1225,7 @@ impl VsMatch {
                 }
             });
         }
-        Ok(Self { players, ground, cg, pads: [input::PadStatus::default(); 4], go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists, blast, fighter_jobjs: Vec::new(), items: items0, cpu_dist, plco_bytes: std::sync::Arc::from(&plco.data[..]), cpu_tbl: be(common_root + 4 * 22), grkind: if stkind == STKIND_DL { Gr_Kind_Greens as i32 } else if stkind == STKIND_BF { Gr_Kind_Battle as i32 } else { Gr_Kind_Last as i32 }, respawn_points: (4..8).filter_map(|id| points.iter().find(|p| p.id == id).map(|p| Vec3 { x: p.pos[0], y: p.pos[1], z: p.pos[2] })).collect(), respawn_busy: [0; 6], start_shield, per_slot_spawn: stkind == STKIND_BF })
+        Ok(Self { players, ground, cg, pads: [input::PadStatus::default(); 4], go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, greens: greens_draws.map(move |d| greens::Greens::new(std::sync::Arc::new(stage), d)), aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists, blast, fighter_jobjs: Vec::new(), items: items0, cpu_dist, plco_bytes: std::sync::Arc::from(&plco.data[..]), cpu_tbl: be(common_root + 4 * 22), grkind: if stkind == STKIND_DL { Gr_Kind_Greens as i32 } else if stkind == STKIND_BF { Gr_Kind_Battle as i32 } else { Gr_Kind_Last as i32 }, respawn_points: (4..8).filter_map(|id| points.iter().find(|p| p.id == id).map(|p| Vec3 { x: p.pos[0], y: p.pos[1], z: p.pos[2] })).collect(), respawn_busy: [0; 6], start_shield, per_slot_spawn: stkind == STKIND_BF })
     }
 
     /// The m-ex fighters' code-run report (crate::mex), one block per such fighter.
@@ -1266,6 +1276,10 @@ impl VsMatch {
     fn stage_anim(&mut self) -> Result<(), String> {
         let mut spawns = Vec::new();
         for t in &mut self.dptcl {
+            if t.skip {
+                t.skip = false;
+                continue;
+            }
             let joint = t.joint;
             let mut cb = |ty: u8, fv: f32| {
                 if ty == 0x28 {
@@ -1293,6 +1307,7 @@ impl VsMatch {
         // Ground_801C1CD0 (every map gobj's s_link 1 proc): `mpColl_804D64AC += 1`, so each
         // CollData's first substep of the frame (x38 != the counter) takes the Remap variants.
         self.cg.x804d64ac = self.cg.x804d64ac.wrapping_add(1);
+        self.greens_step_anim();
         // The frame's HSD_PadRenewStatus (the pad script's sample for this frame).
         let g = self.frame + 1;
         for port in 0..4 {
@@ -1311,6 +1326,9 @@ impl VsMatch {
             for p in &mut self.players {
                 p.input_locked = false;
             }
+        }
+        if g == self.go_frame {
+            self.greens_start();
         }
         // s_link 1, Fighter_8006A360: the animation step (ftAnim_8006EBA4: AObj frame, then
         // ftAction_80073240's frame_count = cur_anim_frame + x898), then the state's anim_cb.
@@ -1553,6 +1571,8 @@ impl VsMatch {
                 input_cb(p, &mut self.rand)?;
             }
         }
+        // s_link 4, the stage gobjs' procs (p_link 5, ahead of the fighters' p_link 8).
+        self.greens_procs()?;
         // s_link 4, Fighter_procUpdate: phys_cb, then the integration below.
         for p in &mut self.players {
             // x2064_ledgeCooldown countdown (capture_timer is 0 here).

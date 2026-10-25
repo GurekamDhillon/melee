@@ -284,3 +284,50 @@ pub fn yakumono_words(a: &DatArchive, n: usize) -> Option<Vec<u32>> {
     let at = a.public_offset("yakumono_param")?;
     Some((0..n).map(|i| be32(&a.data, at + 4 * i as u32)).collect())
 }
+
+/// `grAnime_801C8318`'s AObj of map gobj `gobj`'s animation `anim`: the first AObj in the
+/// animjoint tree's preorder (the JObj's own AObj before its children, `JObjForeachAnim`),
+/// as `(flags, end_frame)`. Only the joint-animation AObjs are looked at (the material and shape
+/// animations of an earlier JObj would come first in the C).
+pub fn anim_timing(a: &DatArchive, gobj: u32, anim: u32) -> Option<(u32, f32)> {
+    let d = &a.data;
+    let head = a.public_offset("map_head")?;
+    let (gobjs, n) = (be32(d, head + 8), be32(d, head + 12));
+    if gobj >= n {
+        return None;
+    }
+    let e = gobjs + gobj * 0x34;
+    let (root, anims) = (be32(d, e), be32(d, e + 4));
+    if anims == 0 || !a.is_reloc(e + 4) {
+        return None;
+    }
+    let aj_root = be32(d, anims + 4 * anim);
+    let mut stack = vec![(root, aj_root)];
+    while let Some((j, aj)) = stack.pop() {
+        if j == 0 || aj == 0 {
+            continue;
+        }
+        let aobj = be32(d, aj + 8);
+        if aobj != 0 {
+            return Some((be32(d, aobj), bef(d, aobj + 4)));
+        }
+        let flags = be32(d, j + 4);
+        stack.push((be32(d, j + 0xC), be32(d, aj + 4)));
+        if flags & JOBJ_INSTANCE == 0 {
+            stack.push((be32(d, j + 8), be32(d, aj)));
+        }
+    }
+    None
+}
+
+/// `map_head->unk8[gobj].x28[anim]`: the animation loops (`grAnime_801C8138` sets AOBJ_LOOP).
+pub fn anim_loops(a: &DatArchive, gobj: u32, anim: u32) -> bool {
+    let d = &a.data;
+    let Some(head) = a.public_offset("map_head") else { return false };
+    let (gobjs, n) = (be32(d, head + 8), be32(d, head + 12));
+    if gobj >= n {
+        return false;
+    }
+    let flags = be32(d, gobjs + gobj * 0x34 + 0x28);
+    flags != 0 && d[(flags + anim) as usize] != 0
+}

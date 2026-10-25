@@ -1077,6 +1077,10 @@ rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_In
   profiler block, gd.prof; via `Host::perf_snapshot/prof_snapshot/prof_command`), `gd/rec.rs` (all gd.rec_* Lua halves: gr_gate, gr_name_ok, argument
   shapes, status/list tables; the recorder state machine and .gdlp files stay behind `ScriptGame::rec_*`, NOT ported, default impls refuse).
   `tests/combo_perf_rec.rs` (4 tests). Every `gd.*` that lab.lua calls is now registered; 279 names are in the C table, ~150 remain (see below).
+- Round 5: `gd/arena.rs` (arena-hooks: stage_set_spawn/stage_spawn/stage_set_origin/stage_set_camera_bounds/stage_set_blast_bounds/
+  stage_restore_bounds/stage_collision_group(s), and the merged `gd.stage_bounds` = largemap set/restore + arena origin/frames + model-gaps
+  main_floor/surface_top), `ScriptGame::arena_*`/`stage_bounds_i`/`map_bound(s)`, arena release on script unload. `tests/arena.rs` (4 tests,
+  mock arena; headless, no input sent). ~140 of the 349 C table names still unregistered (stage_add_*, models, enemies, items, fx, cpu_*, caps...).
 - **Not ported yet** (next rounds, in order): the .gdlp recorder itself, the caps family (nearest_opponent, give_item, fighter_*),
   hitstop, cpu_* scripts, hot_reload, kb_preview, `gd.kit` / `gd.ui` (tables are empty), entity refs (`entity_ref` is nil), items/fx/echo/
   afterimage/tracer, stage_*/model_*/shader/area/warm/launch/1P/netplay/modsync/sim/hit_rules/enemy*, the Geno registry (geno_registry.c,

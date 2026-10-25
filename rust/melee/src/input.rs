@@ -331,7 +331,7 @@ fn inc254(v: &mut u8) {
 /// clear): the stick/trigger/button history, the pad read with its deadzones, the edges, the
 /// smash/hold timers and the press counters; then the input lock (`x221D_b4`) copy-and-clear.
 /// `input_locked` is `x221D_b4`; `x221d_b3` the "history primed" bit.
-pub fn fighter_input(fp: &mut Fighter, pad: &PadStatus, x221d_b3: &mut bool, input_locked: bool) {
+pub fn fighter_input(fp: &mut Fighter, pad: &PadStatus, x221d_b3: &mut bool, input_locked: bool, replay: Option<&melee_net::pad::RbInput>) {
     let cd = melee_fighter::hooks::common_data();
     if !*x221d_b3 {
         fp.input.lstick[1] = fp.input.lstick[2];
@@ -379,6 +379,16 @@ pub fn fighter_input(fp: &mut Fighter, pad: &PadStatus, x221d_b3: &mut bool, inp
     if fp.input.held_buttons[0] & HSD_PAD_Z != 0 {
         fp.input.held_buttons[0] |= HSD_PAD_LR | HSD_PAD_A;
         fp.input.triggers[0] = cd.z_press_analog_value;
+    }
+    // MELEE_SLP playback (fighter.c, TARGET_PC): this frame's recorded inputs replace what the pad
+    // gave, at the point Slippi's RestoreGameFrame.asm writes them (fp+0x620..0x65C).
+    if let Some(r) = replay {
+        fp.input.lstick[0].x = r.lx;
+        fp.input.lstick[0].y = r.ly;
+        fp.input.cstick[0].x = r.cx;
+        fp.input.cstick[0].y = r.cy;
+        fp.input.triggers[0] = r.trigger;
+        fp.input.held_buttons[0] = r.buttons;
     }
     inner1(fp);
     // The stick smash timers (Fighter_ClampSpecificValue / Fighter_ClampThreeValues).

@@ -55,7 +55,7 @@ pub fn dash_enter(p: &mut Player, arg1: i32, rand: &mut HsdRand) -> Result<(), S
     melee_fighter::ftcommon2::ftcommon_800804a0(fp, p.dash.x0);
     p.dash.x4 = arg1;
     if !fp.x197C.is_null() {
-        return Err("ftCo_Dash_Enter: ft_PlaySFX (x197C) not ported".into());
+        super::sound::play_sfx(p, rand, 0x118, 0x7F, 0x40);
     }
     Ok(())
 }

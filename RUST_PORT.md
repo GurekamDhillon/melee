@@ -1168,3 +1168,19 @@ rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_In
 
 - Round 5 (plat-play): vs_to_ko.txt --golden-pads re-run hands-off (MELEE_PAD_IGNORE_ADAPTER=1, unfocused window, --shots): title/CSS/match/live/results
   reached, 1875 ticks, time-up on Final Destination (port 2 wins, falls 5-0 on the timer). No OS-level input was sent. Menus are still ui.rs stand-ins.
+
+## Platform track, audio round 2 (plat-audio, 2026-10-25): pause and time-up proven against the C mix
+- No OS input anywhere: every run below is `melee golden --audio --idle-pads` (headless, virtual DSP clock) against the C build
+  on `MELEE_TURBO=1` + `MELEE_AUDIO_DUMP` with Lua pad scripts. `golden` gained `--idle-pads`, `--cpu LEVEL`, `--pause F:T`
+  (START after logic frame F, resume T-F frames later, the audio running on the held frames) and `--time-secs N` (the clock).
+- Pause (pad_pause.lua, C trace `pse`): PAUSE x4 + the pause sound + duck at sub-frame 1110, RESUME at 1510, the indicator's
+  sound (menu sound 4) two frames after the resume. 2440 sub-frames, 0 samples differ (`native_pause_resume_mix_equals_c`).
+- Time-up (pad_idle_long.lua, 1 minute, Falcon v Fox FD): the clock starts when Go has played out (`go_frame + 40`), callouts
+  5..1 on the 60 frame marks before `clock_end`, the sim holds from `clock_end - 1`, then fn_8016C7F0's audio: AXDriverStop
+  (music fades), KOALL, lbAudioAx_80024C84, lbAudioAx_80024D50 (the reset twice), and TIME! nine frames after the hold. 12856
+  sub-frames identical (`native_timer_callouts_and_time_up_mix_equals_c`); the C then loads sudden death (a new scene).
+  The play loop used `frame >= secs*60` for the time-up, 124 frames early; it now uses `audio::clock_end`.
+- `Audio::match_leave` is once per match (`in_match`), and undoes the pause duck only when it is on (a normal leave emits no extra RESUME).
+- Still open: GAME! (stock-out) call timing and leave order unproven; results/sudden-death scene audio; the sound-options volume
+  settings and positional SFX through the live `melee play` loop have no C capture compared yet (positional/KO paths are in
+  `melee_audio::posobj` and covered by the trace replays only where a scenario triggers them).

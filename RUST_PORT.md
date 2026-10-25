@@ -1170,3 +1170,47 @@ Next plan: regenerate `missing.md`; dynamics bones for the sim skeleton; CPU beh
   `ftCommon_CalcHitlag`, `Fighter_UnkRecursiveFunc_8006D044`, SDI / `ftCo_Damage_OnEveryHitlag`), Samus' missile
   (`ftSs_SpecialS_*`, `It_Kind_Samus_Missile`), the Shy Guys (`it_802D8618`, `itHeiho`), the random item spawn
   (`it_8026C75C`, `Stage_80224FDC`), fighter-vs-fighter hits (`hit_guard` still stops them).
+
+## Golden round 7: cpu_fox_falco_dl 0..139, cpu_peach_samus_ys_items 0..119 (2026-10-25)
+- pad_falcon_fox_fd and pad_marth_sheik_bf still match in full (0..1800, checked at the end). `cpu_fox_falco_dl` matches
+  0..139 (stops at 140: Falco's forward smash, `ftCo_AttackS4`, then fighter-vs-fighter hits / `hit_guard`);
+  `cpu_peach_samus_ys_items` matches 0..119 (stops at 120: the Shy Guys' spawn, `it_802D8618` / `It_Kind_Heiho`).
+- No OS input anywhere: the runs are `melee golden` (headless Rust) and, for the oracle, the C exe started off-screen
+  (`SDL_WINDOW_ACTIVATE_WHEN_SHOWN=0`, `MELEE_WINDOW_X=30000`, `MELEE_TURBO`, pad script `pad_idle.lua`, 40 s cap).
+- Done, in order of first divergence:
+  - cpu_fox_falco_dl 118 (a hit with knockback): `vs_match/damage.rs`. Every `Player` owns a stand-in `HSD_GObj`
+    (`user_data` -> its `Fighter`, `fp.gobj` set); `VsMatch::with_sim` publishes the running match in a thread-local so the
+    ported `ftCo_Damage.c` (`ftCo_8008EC90` -> `ftCo_8008DCE0`, the Damage/DamageFly state callbacks) can reach the
+    sim through its `ext::hook::*` tables (`Fighter_ChangeMotionState` -> `change_motion_state_flags`, `ftAnim_8006EBA4` ->
+    `anim_step`, `ft_8008A2BC`, `ftCo_Fall_Enter`, ground coll/phys leaves ...); a hook that cannot proceed records
+    `VsMatch::dmg_err`. `process_hit_damage` (hit.rs) is now the whole of `Fighter_ProcessHit_8006D1EC`'s damage part:
+    percent commit, knockback branch, `ftCo_80090594`, hitlag (`calc_hitlag`, `allow_sdi`, `x221A_b3`, pre_hitlag_cb),
+    the field resets. Tables needed: PdPm.dat `plLoadCommonData` (`pl_804D6470`), PlCo pData[21] (`gCrowdConfig`),
+    pData[9] (`Fighter_804D6530`, the hit model shift rows). Hurt capsules now get `height`/`is_grabbable`/`bone_idx`
+    (`ftColl_8007B320`) -- the hit capsule's height picks the damage motion (High=2 -> DamageHi1).
+  - 118-119: `lbColl_800083C4` caches a hurt capsule's end positions once per frame (`skip_update_pos`, cleared by
+    `ftColl_8007AF28` at the end of `Fighter_procUpdate`), and the laser hit test computes them lazily per capsule up to
+    the first hit; `ftCo_800A0DA4` (CPU extents) therefore sees the PRE-hit pose of the capsules after the hit -- the
+    C's one-frame lag, now reproduced (`hurt_position` in hit.rs, `hurt_extents`).
+  - Hitlag in the frame loop: s_link 0 `Fighter_8006A1BC` (`hitlag_countdown`), anim/phys gated on `x2219_b5`,
+    `hitlag_cb`/`ftColl_80076528`/`mpGetSpeed` after phys, the knockback decay + `x1948` interpolation in
+    `proc_update_integrate`, the invincibility countdowns `x1990/x1994` (`ftColl_8007B7A4` is called from
+    `ftCo_Damage_OnExitHitlag`), `x18C8`, `x18ac_time_since_hit` (init -1), the model shift counters.
+    `change_motion_state_flags` now does the rest of `Fighter_ChangeMotionState`'s clears (dmg.kb_applied = 0, callbacks
+    None, x100, x2100, x209A, x221C_b6 ...). CPU `ftCo_800ADE48` just-hit path: `switch_cmd` is uninitialised in the C on
+    that path; assuming 0 matches (set `MELEE_CPU_SWITCH` to try 1).
+  - cpu_peach_samus_ys_items 95: Samus' side special (`vs_match/samus.rs`: ground states 349/350, `ftSs_SpecialS_8012A074`
+    accessory), `ftCo_800B630C` for DK/Kirby/Peach, then the missile article (`It_Kind_Samus_Missile`, 95): spawn at joint 56
+    + x34 (initial collision step `spawn_step`), smoke generator (`hsd_8039EFAC(0, 2, 0x7DE, item joint)`) and muzzle
+    generator (`efLib_CreateGenerator(0x7D7)`), flight (anim: lifetime/var0/var1; phys: homing `it_802B64FC`
+    with `lbVector_Rotate`; pos += vel), explosion (`it_802B701C`: zero velocity, life 80, generator 0x19), removal;
+    `ftCo_800BB220` takes the missile's single hit capsule (state 2 on the creation frame, then 3; scale 0x3FF9FBE7).
+- Debugging recipe: the C patch used for the field-level comparisons is a temporary `OSReport` in `nh_Fighter` / the item
+  loop of `RB_NeutralHash` (`fighter.c`), printing the hashed words, the CPU words and the item/hit-capsule fields
+  (`HB`, `ITM`, `NHC`, `HC` lines); build with `GW_ENV_RESOLVED=1 GW_BUILD_ROOT=_build/agents/golden2 tools/port/build.sh
+  --tu src/melee/ft/fighter.c`, run with `MELEE_NEUTRAL_HASHLOG=<csv>` (nh_Fighter only runs with the hash log on),
+  revert with `git checkout src/melee/ft/fighter.c`. `golden frame = C log frame - 31` for these two scenarios.
+- Next: Falco's forward smash (`ftCo_AttackS4`, hitboxes via the script) and fighter-vs-fighter hit detection
+  (`hit_guard`: `ftColl_800779xx`, shields, clanks), air damage states (`ft_80084DB0/EEC`, `ft_80081DD4`, DamageFall,
+  `ftCo_80090780`, camera quake), the Shy Guys (`it_802D8618`, `itheiho.c`: item-stage collision `it_8026DA70`, states
+  0..4), the random item spawn (`fn_8026C88C`, golden frame ~210), the missile's own hits and its smash variant.

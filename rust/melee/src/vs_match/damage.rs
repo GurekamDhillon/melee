@@ -146,7 +146,6 @@ fn knockback_face(kind: i32, g: *mut HSD_GObj, anim: i32) {
             return;
         };
         let pdat = p.pdat.clone();
-        if std::env::var_os("MELEE_NO_HANDS").is_some() { continue; }
         if let Err(e) = p.skel.apply_part_anim(&pdat, &pd, slot, anim, 0.0) {
             s.dmg_fail(e);
             return;

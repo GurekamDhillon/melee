@@ -38,7 +38,7 @@ pub mod ext {
     fn GXSetPointSize(a0: u8, a1: u32);
     fn GXSetZCompLoc(a0: u8);
     fn GXSetZMode(a0: u8, a1: u32, a2: u8);
-    fn HSD_ClearVtxDesc();
+    fn HSD_ClearVtxDesc() = crate::tu::pobj::HSD_ClearVtxDesc();
     fn HSD_LObjGetActiveByID(a0: u32) -> *mut HSD_LObj;
     fn HSD_LObjGetActiveByIndex(a0: i32) -> *mut HSD_LObj;
     fn HSD_LObjGetLightMaskAlpha() -> i32;
@@ -47,18 +47,18 @@ pub mod ext {
     fn HSD_LObjGetNbActive() -> i32;
     fn HSD_LObjSetup(a0: *mut HSD_LObj, a1: _GXColor, a2: f32);
     fn HSD_MulColor(a0: *mut _GXColor, a1: *mut _GXColor, a2: *mut _GXColor);
-    fn HSD_SetTevRegAll();
-    fn HSD_SetupChannel(a0: *mut HSD_Chan);
-    fn HSD_SetupTevStage(a0: *mut _HSD_TevDesc);
-    fn HSD_StateAssignTev() -> i32;
-    fn HSD_StateGetNumTevStages() -> i32;
-    fn HSD_StateSetNumChans(a0: i32);
-    fn HSD_StateSetNumTevStages();
-    fn HSD_StateSetNumTexGens();
-    fn _HSD_StateInvalidateColorChannel();
-    fn _HSD_StateInvalidateTevRegister();
-    fn _HSD_StateInvalidateTevStage();
-    fn _HSD_StateInvalidateTexCoordGen();
+    fn HSD_SetTevRegAll() = crate::tu::tev_native::HSD_SetTevRegAll();
+    fn HSD_SetupChannel(a0: *mut HSD_Chan) = crate::tu::tev_native::HSD_SetupChannel(a0);
+    fn HSD_SetupTevStage(a0: *mut _HSD_TevDesc) = crate::tu::tev_native::HSD_SetupTevStage(a0);
+    fn HSD_StateAssignTev() -> i32 = crate::tu::tev_native::HSD_StateAssignTev();
+    fn HSD_StateGetNumTevStages() -> i32 = crate::tu::tev_native::HSD_StateGetNumTevStages();
+    fn HSD_StateSetNumChans(a0: i32) = crate::tu::tev_native::HSD_StateSetNumChans(a0);
+    fn HSD_StateSetNumTevStages() = crate::tu::tev_native::HSD_StateSetNumTevStages();
+    fn HSD_StateSetNumTexGens() = crate::tu::tev_native::HSD_StateSetNumTexGens();
+    fn _HSD_StateInvalidateColorChannel() = crate::tu::tev_native::_HSD_StateInvalidateColorChannel();
+    fn _HSD_StateInvalidateTevRegister() = crate::tu::tev_native::_HSD_StateInvalidateTevRegister();
+    fn _HSD_StateInvalidateTevStage() = crate::tu::tev_native::_HSD_StateInvalidateTevStage();
+    fn _HSD_StateInvalidateTexCoordGen() = crate::tu::tev_native::_HSD_StateInvalidateTexCoordGen();
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

@@ -60,7 +60,8 @@ fn native_falcon_fox_fd_mix_equals_c() {
 
 #[test]
 fn native_marth_sheik_bf_mix_equals_c() {
-    let (n, h) = native_mix("pad_marth_sheik_bf", 87);
+    // The native sim now runs the whole scenario; the C capture is compared over its first 843 sub-frames.
+    let (n, h) = native_mix_with("pad_marth_sheik_bf", 87, "1800", &[], 843);
     if n == 0 {
         eprintln!("skipped: no GW_ISO_VANILLA");
         return;

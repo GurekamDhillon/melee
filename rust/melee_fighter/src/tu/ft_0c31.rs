@@ -12,7 +12,7 @@
 #![allow(non_snake_case)]
 
 use crate::types::*;
-use melee_core::fp::{fmadds, fmsubs};
+use melee_core::fp::{fmadds, fmsubs_neg as fmsubs};
 use melee_types::inline as ji;
 
 pub type G = *mut HSD_GObj;

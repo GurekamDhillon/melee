@@ -7,96 +7,116 @@ use crate::gekko::{sinf,cosf,tanf,sqrtf};
 use crate::lbtrigf::atan2f;
 use ext::*;
 use super::psdisptev::{psSetupTev,psSetupTevCommon,psSetupTevInvalidState};
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
- use melee_types::*;
-    pub static mut OSReport_HOOK: Option<unsafe extern "C" fn(*mut ::core::ffi::c_char) > = None;
-    pub unsafe fn OSReport(arg0: *mut ::core::ffi::c_char)  { (OSReport_HOOK.expect("TODO: OSReport"))(arg0) }
-    pub static mut __assert_HOOK: Option<unsafe extern "C" fn(*const ::core::ffi::c_char, u32, *const ::core::ffi::c_char) -> !> = None;
-    pub unsafe fn __assert(arg0: *const ::core::ffi::c_char, arg1: u32, arg2: *const ::core::ffi::c_char) -> ! { (__assert_HOOK.expect("TODO: __assert"))(arg0, arg1, arg2) }
-    pub static mut HSD_CObjGetViewingMtx_HOOK: Option<unsafe extern "C" fn(*mut HSD_CObj, *mut [f32; 4]) > = None;
-    pub unsafe fn HSD_CObjGetViewingMtx(cobj: *mut HSD_CObj, mtx: *mut [f32; 4])  { (HSD_CObjGetViewingMtx_HOOK.expect("TODO: HSD_CObjGetViewingMtx"))(cobj, mtx) }
-    pub static mut HSD_CObjGetCurrent_HOOK: Option<unsafe extern "C" fn() -> *mut HSD_CObj> = None;
-    pub unsafe fn HSD_CObjGetCurrent() -> *mut HSD_CObj { (HSD_CObjGetCurrent_HOOK.expect("TODO: HSD_CObjGetCurrent"))() }
-    pub static mut GXSetCullMode_HOOK: Option<unsafe extern "C" fn(GXCullMode) > = None;
-    pub unsafe fn GXSetCullMode(mode: GXCullMode)  { (GXSetCullMode_HOOK.expect("TODO: GXSetCullMode"))(mode) }
-    pub static mut GXSetVtxDesc_HOOK: Option<unsafe extern "C" fn(GXAttr, GXAttrType) > = None;
-    pub unsafe fn GXSetVtxDesc(attr: GXAttr, type_0: GXAttrType)  { (GXSetVtxDesc_HOOK.expect("TODO: GXSetVtxDesc"))(attr, type_0) }
-    pub static mut GXClearVtxDesc_HOOK: Option<unsafe extern "C" fn() > = None;
-    pub unsafe fn GXClearVtxDesc()  { (GXClearVtxDesc_HOOK.expect("TODO: GXClearVtxDesc"))() }
-    pub static mut GXSetVtxAttrFmt_HOOK: Option<unsafe extern "C" fn(GXVtxFmt, GXAttr, GXCompCnt, GXCompType, u8) > = None;
-    pub unsafe fn GXSetVtxAttrFmt(vtxfmt: GXVtxFmt, attr: GXAttr, cnt: GXCompCnt, type_0: GXCompType, frac: u8)  { (GXSetVtxAttrFmt_HOOK.expect("TODO: GXSetVtxAttrFmt"))(vtxfmt, attr, cnt, type_0, frac) }
-    pub static mut GXSetArray_HOOK: Option<unsafe extern "C" fn(GXAttr, *const ::core::ffi::c_void, u8) > = None;
-    pub unsafe fn GXSetArray(attr: GXAttr, base_ptr: *const ::core::ffi::c_void, stride: u8)  { (GXSetArray_HOOK.expect("TODO: GXSetArray"))(attr, base_ptr, stride) }
-    pub static mut GXSetTexCoordGen2_HOOK: Option<unsafe extern "C" fn(GXTexCoordID, GXTexGenType, GXTexGenSrc, u32, GXBool, u32) > = None;
-    pub unsafe fn GXSetTexCoordGen2(dst_coord: GXTexCoordID, func: GXTexGenType, src_param: GXTexGenSrc, mtx: u32, normalize: GXBool, pt_texmtx: u32)  { (GXSetTexCoordGen2_HOOK.expect("TODO: GXSetTexCoordGen2"))(dst_coord, func, src_param, mtx, normalize, pt_texmtx) }
-    pub static mut GXBegin_HOOK: Option<unsafe extern "C" fn(GXPrimitive, GXVtxFmt, u16) > = None;
-    pub unsafe fn GXBegin(type_0: GXPrimitive, vtxfmt: GXVtxFmt, nverts: u16)  { (GXBegin_HOOK.expect("TODO: GXBegin"))(type_0, vtxfmt, nverts) }
-    pub static mut GXSetLineWidth_HOOK: Option<unsafe extern "C" fn(u8, GXTexOffset) > = None;
-    pub unsafe fn GXSetLineWidth(width: u8, texOffsets: GXTexOffset)  { (GXSetLineWidth_HOOK.expect("TODO: GXSetLineWidth"))(width, texOffsets) }
-    pub static mut GXSetPointSize_HOOK: Option<unsafe extern "C" fn(u8, GXTexOffset) > = None;
-    pub unsafe fn GXSetPointSize(pointSize: u8, texOffsets: GXTexOffset)  { (GXSetPointSize_HOOK.expect("TODO: GXSetPointSize"))(pointSize, texOffsets) }
-    pub static mut GXEnableTexOffsets_HOOK: Option<unsafe extern "C" fn(GXTexCoordID, u8, u8) > = None;
-    pub unsafe fn GXEnableTexOffsets(coord: GXTexCoordID, line_enable: u8, point_enable: u8)  { (GXEnableTexOffsets_HOOK.expect("TODO: GXEnableTexOffsets"))(coord, line_enable, point_enable) }
-    pub static mut GXGetProjectionv_HOOK: Option<unsafe extern "C" fn(*mut f32) > = None;
-    pub unsafe fn GXGetProjectionv(ptr: *mut f32)  { (GXGetProjectionv_HOOK.expect("TODO: GXGetProjectionv"))(ptr) }
-    pub static mut GXSetChanAmbColor_HOOK: Option<unsafe extern "C" fn(GXChannelID, GXColor) > = None;
-    pub unsafe fn GXSetChanAmbColor(chan: GXChannelID, amb_color: GXColor)  { (GXSetChanAmbColor_HOOK.expect("TODO: GXSetChanAmbColor"))(chan, amb_color) }
-    pub static mut GXSetChanMatColor_HOOK: Option<unsafe extern "C" fn(GXChannelID, GXColor) > = None;
-    pub unsafe fn GXSetChanMatColor(chan: GXChannelID, mat_color: GXColor)  { (GXSetChanMatColor_HOOK.expect("TODO: GXSetChanMatColor"))(chan, mat_color) }
-    pub static mut GXSetNumChans_HOOK: Option<unsafe extern "C" fn(u8) > = None;
-    pub unsafe fn GXSetNumChans(nChans: u8)  { (GXSetNumChans_HOOK.expect("TODO: GXSetNumChans"))(nChans) }
-    pub static mut GXSetChanCtrl_HOOK: Option<unsafe extern "C" fn(GXChannelID, GXBool, GXColorSrc, GXColorSrc, u32, GXDiffuseFn, GXAttnFn) > = None;
-    pub unsafe fn GXSetChanCtrl(chan: GXChannelID, enable: GXBool, amb_src: GXColorSrc, mat_src: GXColorSrc, light_mask: u32, diff_fn: GXDiffuseFn, attn_fn: GXAttnFn)  { (GXSetChanCtrl_HOOK.expect("TODO: GXSetChanCtrl"))(chan, enable, amb_src, mat_src, light_mask, diff_fn, attn_fn) }
-    pub static mut GXSetBlendMode_HOOK: Option<unsafe extern "C" fn(GXBlendMode, GXBlendFactor, GXBlendFactor, GXLogicOp) > = None;
-    pub unsafe fn GXSetBlendMode(type_0: GXBlendMode, src_factor: GXBlendFactor, dst_factor: GXBlendFactor, op: GXLogicOp)  { (GXSetBlendMode_HOOK.expect("TODO: GXSetBlendMode"))(type_0, src_factor, dst_factor, op) }
-    pub static mut GXSetZMode_HOOK: Option<unsafe extern "C" fn(GXBool, GXCompare, GXBool) > = None;
-    pub unsafe fn GXSetZMode(compare_enable: GXBool, func: GXCompare, update_enable: GXBool)  { (GXSetZMode_HOOK.expect("TODO: GXSetZMode"))(compare_enable, func, update_enable) }
-    pub static mut GXSetZCompLoc_HOOK: Option<unsafe extern "C" fn(GXBool) > = None;
-    pub unsafe fn GXSetZCompLoc(before_tex: GXBool)  { (GXSetZCompLoc_HOOK.expect("TODO: GXSetZCompLoc"))(before_tex) }
-    pub static mut GXSetTevColor_HOOK: Option<unsafe extern "C" fn(GXTevRegID, GXColor) > = None;
-    pub unsafe fn GXSetTevColor(id: GXTevRegID, color: GXColor)  { (GXSetTevColor_HOOK.expect("TODO: GXSetTevColor"))(id, color) }
-    pub static mut GXSetAlphaCompare_HOOK: Option<unsafe extern "C" fn(GXCompare, u8, GXAlphaOp, GXCompare, u8) > = None;
-    pub unsafe fn GXSetAlphaCompare(comp0: GXCompare, ref0: u8, op: GXAlphaOp, comp1: GXCompare, ref1: u8)  { (GXSetAlphaCompare_HOOK.expect("TODO: GXSetAlphaCompare"))(comp0, ref0, op, comp1, ref1) }
-    pub static mut GXInitTexObj_HOOK: Option<unsafe extern "C" fn(*mut GXTexObj, *mut ::core::ffi::c_void, u16, u16, GXTexFmt, GXTexWrapMode, GXTexWrapMode, u8) > = None;
-    pub unsafe fn GXInitTexObj(obj: *mut GXTexObj, image_ptr: *mut ::core::ffi::c_void, width: u16, height: u16, format: GXTexFmt, wrap_s: GXTexWrapMode, wrap_t: GXTexWrapMode, mipmap: u8)  { (GXInitTexObj_HOOK.expect("TODO: GXInitTexObj"))(obj, image_ptr, width, height, format, wrap_s, wrap_t, mipmap) }
-    pub static mut GXInitTexObjCI_HOOK: Option<unsafe extern "C" fn(*mut GXTexObj, *mut ::core::ffi::c_void, u16, u16, GXTexFmt, GXTexWrapMode, GXTexWrapMode, u8, u32) > = None;
-    pub unsafe fn GXInitTexObjCI(obj: *mut GXTexObj, image_ptr: *mut ::core::ffi::c_void, width: u16, height: u16, format: GXTexFmt, wrap_s: GXTexWrapMode, wrap_t: GXTexWrapMode, mipmap: u8, tlut_name: u32)  { (GXInitTexObjCI_HOOK.expect("TODO: GXInitTexObjCI"))(obj, image_ptr, width, height, format, wrap_s, wrap_t, mipmap, tlut_name) }
-    pub static mut GXInitTexObjLOD_HOOK: Option<unsafe extern "C" fn(*mut GXTexObj, GXTexFilter, GXTexFilter, f32, f32, f32, GXBool, GXBool, GXAnisotropy) > = None;
-    pub unsafe fn GXInitTexObjLOD(obj: *mut GXTexObj, min_filt: GXTexFilter, mag_filt: GXTexFilter, min_lod: f32, max_lod: f32, lod_bias: f32, bias_clamp: GXBool, do_edge_lod: GXBool, max_aniso: GXAnisotropy)  { (GXInitTexObjLOD_HOOK.expect("TODO: GXInitTexObjLOD"))(obj, min_filt, mag_filt, min_lod, max_lod, lod_bias, bias_clamp, do_edge_lod, max_aniso) }
-    pub static mut GXLoadTexObj_HOOK: Option<unsafe extern "C" fn(*mut GXTexObj, GXTexMapID) > = None;
-    pub unsafe fn GXLoadTexObj(obj: *mut GXTexObj, id: GXTexMapID)  { (GXLoadTexObj_HOOK.expect("TODO: GXLoadTexObj"))(obj, id) }
-    pub static mut GXInitTlutObj_HOOK: Option<unsafe extern "C" fn(*mut GXTlutObj, *mut ::core::ffi::c_void, GXTlutFmt, u16) > = None;
-    pub unsafe fn GXInitTlutObj(tlut_obj: *mut GXTlutObj, lut: *mut ::core::ffi::c_void, fmt: GXTlutFmt, n_entries: u16)  { (GXInitTlutObj_HOOK.expect("TODO: GXInitTlutObj"))(tlut_obj, lut, fmt, n_entries) }
-    pub static mut GXLoadTlut_HOOK: Option<unsafe extern "C" fn(*mut GXTlutObj, u32) > = None;
-    pub unsafe fn GXLoadTlut(tlut_obj: *mut GXTlutObj, tlut_name: u32)  { (GXLoadTlut_HOOK.expect("TODO: GXLoadTlut"))(tlut_obj, tlut_name) }
-    pub static mut GXLoadPosMtxImm_HOOK: Option<unsafe extern "C" fn(*mut [f32; 4], u32) > = None;
-    pub unsafe fn GXLoadPosMtxImm(mtx: *mut [f32; 4], id: u32)  { (GXLoadPosMtxImm_HOOK.expect("TODO: GXLoadPosMtxImm"))(mtx, id) }
-    pub static mut GXSetCurrentMtx_HOOK: Option<unsafe extern "C" fn(u32) > = None;
-    pub unsafe fn GXSetCurrentMtx(id: u32)  { (GXSetCurrentMtx_HOOK.expect("TODO: GXSetCurrentMtx"))(id) }
-    pub static mut GXLoadTexMtxImm_HOOK: Option<unsafe extern "C" fn(*mut [f32; 4], u32, GXTexMtxType) > = None;
-    pub unsafe fn GXLoadTexMtxImm(mtx: *mut [f32; 4], id: u32, type_0: GXTexMtxType)  { (GXLoadTexMtxImm_HOOK.expect("TODO: GXLoadTexMtxImm"))(mtx, id, type_0) }
-    pub static mut GXPosition3f32_HOOK: Option<unsafe extern "C" fn(f32, f32, f32) > = None;
-    pub unsafe fn GXPosition3f32(x: f32, y: f32, z: f32)  { (GXPosition3f32_HOOK.expect("TODO: GXPosition3f32"))(x, y, z) }
-    pub static mut GXColor4u8_HOOK: Option<unsafe extern "C" fn(u8, u8, u8, u8) > = None;
-    pub unsafe fn GXColor4u8(x: u8, y: u8, z: u8, w: u8)  { (GXColor4u8_HOOK.expect("TODO: GXColor4u8"))(x, y, z, w) }
-    pub static mut GXTexCoord2f32_HOOK: Option<unsafe extern "C" fn(f32, f32) > = None;
-    pub unsafe fn GXTexCoord2f32(x: f32, y: f32)  { (GXTexCoord2f32_HOOK.expect("TODO: GXTexCoord2f32"))(x, y) }
-    pub static mut GXTexCoord1x8_HOOK: Option<unsafe extern "C" fn(u8) > = None;
-    pub unsafe fn GXTexCoord1x8(x: u8)  { (GXTexCoord1x8_HOOK.expect("TODO: GXTexCoord1x8"))(x) }
-    pub static mut HSD_FogSet_HOOK: Option<unsafe extern "C" fn(*mut HSD_Fog) > = None;
-    pub unsafe fn HSD_FogSet(arg0: *mut HSD_Fog)  { (HSD_FogSet_HOOK.expect("TODO: HSD_FogSet"))(arg0) }
-    pub static mut HSD_LObjGetLightMaskDiffuse_HOOK: Option<unsafe extern "C" fn() -> GXLightID> = None;
-    pub unsafe fn HSD_LObjGetLightMaskDiffuse() -> GXLightID { (HSD_LObjGetLightMaskDiffuse_HOOK.expect("TODO: HSD_LObjGetLightMaskDiffuse"))() }
-    pub static mut HSD_LObjGetLightMaskAttnFunc_HOOK: Option<unsafe extern "C" fn() -> s32> = None;
-    pub unsafe fn HSD_LObjGetLightMaskAttnFunc() -> s32 { (HSD_LObjGetLightMaskAttnFunc_HOOK.expect("TODO: HSD_LObjGetLightMaskAttnFunc"))() }
-    pub static mut HSD_LObjGetActiveByID_HOOK: Option<unsafe extern "C" fn(GXLightID) -> *mut HSD_LObj> = None;
-    pub unsafe fn HSD_LObjGetActiveByID(id: GXLightID) -> *mut HSD_LObj { (HSD_LObjGetActiveByID_HOOK.expect("TODO: HSD_LObjGetActiveByID"))(id) }
-    pub static mut HSD_StateInvalidate_HOOK: Option<unsafe extern "C" fn(::core::ffi::c_int) > = None;
-    pub unsafe fn HSD_StateInvalidate(mask: ::core::ffi::c_int)  { (HSD_StateInvalidate_HOOK.expect("TODO: HSD_StateInvalidate"))(mask) }
-    pub static mut psTexGroupArray: [*mut *mut HSD_PSTexGroup; 65] = [core::ptr::null_mut(); 65];
-    pub static mut psNumCmdList: [*mut *mut HSD_PSFormGroup; 65] = [core::ptr::null_mut(); 65];
-    pub static mut hsd_804D0908: [*mut HSD_Particle; 16] = [core::ptr::null_mut(); 16];
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    use super::*;
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn GXBegin(a0: u32, a1: u32, a2: u16);
+    fn GXClearVtxDesc();
+    fn GXColor4u8(a0: u8, a1: u8, a2: u8, a3: u8);
+    fn GXEnableTexOffsets(a0: u32, a1: u8, a2: u8);
+    fn GXGetProjectionv(a0: *mut f32);
+    fn GXInitTexObj(a0: *mut _GXTexObj, a1: *mut c_void, a2: u16, a3: u16, a4: u32, a5: u32, a6: u32, a7: u8);
+    fn GXInitTexObjCI(a0: *mut _GXTexObj, a1: *mut c_void, a2: u16, a3: u16, a4: u32, a5: u32, a6: u32, a7: u8, a8: u32);
+    fn GXInitTexObjLOD(a0: *mut _GXTexObj, a1: u32, a2: u32, a3: f32, a4: f32, a5: f32, a6: u8, a7: u8, a8: u32);
+    fn GXInitTlutObj(a0: *mut _GXTlutObj, a1: *mut c_void, a2: u32, a3: u16);
+    fn GXLoadPosMtxImm(a0: *mut c_void, a1: u32);
+    fn GXLoadTexMtxImm(a0: *mut c_void, a1: u32, a2: u32);
+    fn GXLoadTexObj(a0: *mut _GXTexObj, a1: u32);
+    fn GXLoadTlut(a0: *mut _GXTlutObj, a1: u32);
+    fn GXPosition3f32(a0: f32, a1: f32, a2: f32);
+    fn GXSetAlphaCompare(a0: u32, a1: u8, a2: u32, a3: u32, a4: u8);
+    fn GXSetArray(a0: u32, a1: *const c_void, a2: u8);
+    fn GXSetBlendMode(a0: u32, a1: u32, a2: u32, a3: u32);
+    fn GXSetChanAmbColor(a0: u32, a1: _GXColor);
+    fn GXSetChanCtrl(a0: u32, a1: u8, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32);
+    fn GXSetChanMatColor(a0: u32, a1: _GXColor);
+    fn GXSetCullMode(a0: u32);
+    fn GXSetCurrentMtx(a0: u32);
+    fn GXSetLineWidth(a0: u8, a1: u32);
+    fn GXSetNumChans(a0: u8);
+    fn GXSetPointSize(a0: u8, a1: u32);
+    fn GXSetTevColor(a0: u32, a1: _GXColor);
+    fn GXSetTexCoordGen2(a0: u32, a1: u32, a2: u32, a3: u32, a4: u8, a5: u32);
+    fn GXSetVtxAttrFmt(a0: u32, a1: u32, a2: u32, a3: u32, a4: u8);
+    fn GXSetVtxDesc(a0: u32, a1: u32);
+    fn GXSetZCompLoc(a0: u8);
+    fn GXSetZMode(a0: u8, a1: u32, a2: u8);
+    fn GXTexCoord1x8(a0: u8);
+    fn GXTexCoord2f32(a0: f32, a1: f32);
+    fn HSD_CObjGetCurrent() -> *mut HSD_CObj;
+    fn HSD_CObjGetViewingMtx(a0: *mut HSD_CObj, a1: *mut c_void);
+    fn HSD_FogSet(a0: *mut HSD_Fog);
+    fn HSD_LObjGetActiveByID(a0: u32) -> *mut HSD_LObj;
+    fn HSD_LObjGetLightMaskAttnFunc() -> i32;
+    fn HSD_LObjGetLightMaskDiffuse() -> u32;
+    fn HSD_MtxGetScale(a0: *mut c_void, a1: *mut Vec) = { let m = (a0 as *const [[f32; 4]; 3]).read(); let r = crate::hsd_mtx::get_scale(&m); (*a1).x = r.x; (*a1).y = r.y; (*a1).z = r.z; };
+    fn HSD_MtxSRT(a0: *mut c_void, a1: *mut Vec, a2: *mut Vec, a3: *mut Vec, a4: *mut Vec) = { let v = |x: *mut Vec| crate::mtx::Vec3 { x: (*x).x, y: (*x).y, z: (*x).z }; let ps = if a4.is_null() { None } else { Some(v(a4)) }; (a0 as *mut [[f32; 4]; 3]).write(crate::hsd_mtx::srt(&v(a1), &v(a2), &v(a3), ps.as_ref())); };
+    fn HSD_MulColor(a0: *mut _GXColor, a1: *mut _GXColor, a2: *mut _GXColor) = { let v = |x: *mut GXColor| crate::hsd_util::GxColor { r: (*x).r, g: (*x).g, b: (*x).b, a: (*x).a }; let r = crate::hsd_util::mul_color(&v(a0), &v(a1)); *a2 = GXColor { r: r.r, g: r.g, b: r.b, a: r.a }; };
+    fn HSD_StateInvalidate(a0: i32);
+    fn PSMTXConcat(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void) = crate::tu::mtx_pc::raw::PSMTXConcat(a0 as _, a1 as _, a2 as _);
+    fn PSMTXCopy(a0: *mut c_void, a1: *mut c_void) = crate::tu::mtx_pc::raw::PSMTXCopy(a0 as _, a1 as _);
+    fn PSMTXIdentity(a0: *mut c_void) = crate::tu::mtx_pc::raw::PSMTXIdentity(a0 as _);
+    fn PSMTXInverse(a0: *mut c_void, a1: *mut c_void) -> u32 = { let s = (a0 as *const [[f32; 4]; 3]).read(); if let Some(m) = crate::mtx::inverse(&s) { (a1 as *mut [[f32; 4]; 3]).write(m); 1 } else { 0 } };
+    fn PSMTXRotAxisRad(a0: *mut c_void, a1: *mut Vec, a2: f32) = { let v = crate::mtx::Vec3 { x: (*a1).x, y: (*a1).y, z: (*a1).z }; (a0 as *mut [[f32; 4]; 3]).write(crate::mtx::rot_axis_rad(&v, a2)); };
+    fn PSMTXScale(a0: *mut c_void, a1: f32, a2: f32, a3: f32) = (a0 as *mut [[f32; 4]; 3]).write(crate::mtx::scale(a1, a2, a3));
+    fn psSetupTev(a0: *mut HSD_Particle);
+    fn psSetupTevCommon();
+    fn psSetupTevInvalidState();
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut hsd_804D0908: [*mut HSD_Particle; 16] = unsafe { core::mem::zeroed() };
+    pub static mut psNumCmdList: [*mut *mut _HSD_PSFormGroup; 65] = unsafe { core::mem::zeroed() };
+    pub static mut psTexGroupArray: [*mut *mut _HSD_PSTexGroup; 65] = unsafe { core::mem::zeroed() };
 }
+// END GENERATED EXT
+type MP = *mut [f32; 4];
+unsafe fn memset(dst: *mut core::ffi::c_void, value: i32, n: usize) -> *mut core::ffi::c_void {
+    core::ptr::write_bytes(dst.cast::<u8>(), value as u8, n);
+    dst
+}
+/// `__assert` (debug.c): the C build does not return.
+unsafe fn __assert(file: *const core::ffi::c_char, line: u32, cond: *const core::ffi::c_char) -> ! {
+    let _ = (file, cond);
+    panic!("psdisp.c __assert line {line}")
+}
+/// `OSReport(fmt)` (variadic; a settable lbext hook).
+unsafe fn OSReport(fmt: *mut core::ffi::c_char) {
+    crate::tu::lbext::OSReport(&core::ffi::CStr::from_ptr(fmt).to_string_lossy(), &[]);
+}
+// The generated hooks take `Mtx` parameters as `void*`; the port keeps `MtxPtr`.
+unsafe fn PSMTXIdentity(m: MP) { ext::PSMTXIdentity(m.cast()) }
+unsafe fn PSMTXCopy(src: MP, dst: MP) { ext::PSMTXCopy(src.cast(), dst.cast()) }
+unsafe fn PSMTXConcat(a: MP, b: MP, dst: MP) { ext::PSMTXConcat(a.cast(), b.cast(), dst.cast()) }
+unsafe fn PSMTXScale(dst: MP, x: f32, y: f32, z: f32) { ext::PSMTXScale(dst.cast(), x, y, z) }
+unsafe fn PSMTXRotAxisRad(dst: MP, v: *mut Vec3, r: f32) { ext::PSMTXRotAxisRad(dst.cast(), v.cast(), r) }
+unsafe fn PSMTXInverse(src: MP, dst: MP) -> u32 { ext::PSMTXInverse(src.cast(), dst.cast()) }
+unsafe fn HSD_CObjGetViewingMtx(c: *mut HSD_CObj, m: MP) { ext::HSD_CObjGetViewingMtx(c, m.cast()) }
+unsafe fn GXLoadPosMtxImm(m: MP, id: u32) { ext::GXLoadPosMtxImm(m.cast(), id) }
+unsafe fn GXLoadTexMtxImm(m: MP, id: u32, ty: GXTexMtxType) { ext::GXLoadTexMtxImm(m.cast(), id, ty as _) }
+unsafe fn HSD_MtxGetScale(m: MP, v: *mut Vec3) { ext::HSD_MtxGetScale(m.cast(), v.cast()) }
+unsafe fn HSD_MtxSRT(m: MP, s: *mut Vec3, r: *mut Vec3, t: *mut Vec3, p: *mut Vec3) { ext::HSD_MtxSRT(m.cast(), s.cast(), r.cast(), t.cast(), p.cast()) }
+
 pub static mut HSD_PSDisp_803B9628: psdisp_Mtx = psdisp_Mtx {
     mtx: [
         [1.0f32, 0.0f32, 0.0f32, 0.0f32],
@@ -3656,15 +3676,3 @@ pub const NULL: ::core::ffi::c_long = 0 as ::core::ffi::c_long;
 
 
 
-unsafe fn memset(dst: *mut core::ffi::c_void, value: i32, n: usize) -> *mut core::ffi::c_void {
-    core::ptr::write_bytes(dst.cast::<u8>(), value as i32 as u8, n); dst
-}
-unsafe fn PSMTXIdentity(m: *mut [f32;4]) { m.cast::<[[f32;4];3]>().write(crate::mtx::identity()); }
-unsafe fn PSMTXCopy(src: *mut [f32;4], dst: *mut [f32;4]) { let m=src.cast::<[[f32;4];3]>().read();dst.cast::<[[f32;4];3]>().write(m); }
-unsafe fn PSMTXConcat(a: *mut [f32;4], b: *mut [f32;4], dst: *mut [f32;4]) { let a=a.cast::<[[f32;4];3]>().read();let b=b.cast::<[[f32;4];3]>().read();dst.cast::<[[f32;4];3]>().write(crate::mtx::concat(&a,&b)); }
-unsafe fn PSMTXScale(dst: *mut [f32;4], x:f32,y:f32,z:f32) {dst.cast::<[[f32;4];3]>().write(crate::mtx::scale(x,y,z));}
-unsafe fn PSMTXRotAxisRad(dst:*mut [f32;4],v:*mut Vec3,r:f32) {let v=crate::mtx::Vec3{x:(*v).x,y:(*v).y,z:(*v).z};dst.cast::<[[f32;4];3]>().write(crate::mtx::rot_axis_rad(&v,r));}
-unsafe fn PSMTXInverse(src:*mut [f32;4],dst:*mut [f32;4])->u32 {let s=src.cast::<[[f32;4];3]>().read();if let Some(m)=crate::mtx::inverse(&s){dst.cast::<[[f32;4];3]>().write(m);1}else{0}}
-unsafe fn HSD_MtxGetScale(m:*mut [f32;4],v:*mut Vec3){let m=m.cast::<[[f32;4];3]>().read();let r=crate::hsd_mtx::get_scale(&m);(*v).x=r.x;(*v).y=r.y;(*v).z=r.z;}
-unsafe fn HSD_MtxSRT(m:*mut [f32;4],s:*mut Vec3,r:*mut Vec3,t:*mut Vec3,p:*mut Vec3){let v=|x:*mut Vec3|crate::mtx::Vec3{x:(*x).x,y:(*x).y,z:(*x).z};let ps=if p.is_null(){None}else{Some(v(p))};m.cast::<[[f32;4];3]>().write(crate::hsd_mtx::srt(&v(s),&v(r),&v(t),ps.as_ref()));}
-unsafe fn HSD_MulColor(a:*mut GXColor,b:*mut GXColor,d:*mut GXColor){let v=|x:*mut GXColor|crate::hsd_util::GxColor{r:(*x).r,g:(*x).g,b:(*x).b,a:(*x).a};let r=crate::hsd_util::mul_color(&v(a),&v(b));*d=GXColor{r:r.r,g:r.g,b:r.b,a:r.a};}

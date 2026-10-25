@@ -133,3 +133,7 @@ harness = false
 [[test]]
 name = "tu_texpdag"
 harness = false
+
+[[test]]
+name = "tu_psdisp"
+harness = false

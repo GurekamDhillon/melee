@@ -1,0 +1,83 @@
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/mtu/gen_tu.py; the callees of the C TU)
+pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    use super::*;
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn GXBegin(a0: u32, a1: u32, a2: u16);
+    fn GXClearVtxDesc();
+    fn GXColor4u8(a0: u8, a1: u8, a2: u8, a3: u8);
+    fn GXEnableTexOffsets(a0: u32, a1: u8, a2: u8);
+    fn GXGetProjectionv(a0: *mut f32);
+    fn GXInitTexObj(a0: *mut _GXTexObj, a1: *mut c_void, a2: u16, a3: u16, a4: u32, a5: u32, a6: u32, a7: u8);
+    fn GXInitTexObjCI(a0: *mut _GXTexObj, a1: *mut c_void, a2: u16, a3: u16, a4: u32, a5: u32, a6: u32, a7: u8, a8: u32);
+    fn GXInitTexObjLOD(a0: *mut _GXTexObj, a1: u32, a2: u32, a3: f32, a4: f32, a5: f32, a6: u8, a7: u8, a8: u32);
+    fn GXInitTlutObj(a0: *mut _GXTlutObj, a1: *mut c_void, a2: u32, a3: u16);
+    fn GXLoadPosMtxImm(a0: *mut c_void, a1: u32);
+    fn GXLoadTexMtxImm(a0: *mut c_void, a1: u32, a2: u32);
+    fn GXLoadTexObj(a0: *mut _GXTexObj, a1: u32);
+    fn GXLoadTlut(a0: *mut _GXTlutObj, a1: u32);
+    fn GXPosition3f32(a0: f32, a1: f32, a2: f32);
+    fn GXSetAlphaCompare(a0: u32, a1: u8, a2: u32, a3: u32, a4: u8);
+    fn GXSetArray(a0: u32, a1: *const c_void, a2: u8);
+    fn GXSetBlendMode(a0: u32, a1: u32, a2: u32, a3: u32);
+    fn GXSetChanAmbColor(a0: u32, a1: _GXColor);
+    fn GXSetChanCtrl(a0: u32, a1: u8, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32);
+    fn GXSetChanMatColor(a0: u32, a1: _GXColor);
+    fn GXSetCullMode(a0: u32);
+    fn GXSetCurrentMtx(a0: u32);
+    fn GXSetLineWidth(a0: u8, a1: u32);
+    fn GXSetNumChans(a0: u8);
+    fn GXSetPointSize(a0: u8, a1: u32);
+    fn GXSetTevColor(a0: u32, a1: _GXColor);
+    fn GXSetTexCoordGen2(a0: u32, a1: u32, a2: u32, a3: u32, a4: u8, a5: u32);
+    fn GXSetVtxAttrFmt(a0: u32, a1: u32, a2: u32, a3: u32, a4: u8);
+    fn GXSetVtxDesc(a0: u32, a1: u32);
+    fn GXSetZCompLoc(a0: u8);
+    fn GXSetZMode(a0: u8, a1: u32, a2: u8);
+    fn GXTexCoord1x8(a0: u8);
+    fn GXTexCoord2f32(a0: f32, a1: f32);
+    fn HSD_CObjGetCurrent() -> *mut HSD_CObj;
+    fn HSD_CObjGetViewingMtx(a0: *mut HSD_CObj, a1: *mut c_void);
+    fn HSD_FogSet(a0: *mut HSD_Fog);
+    fn HSD_LObjGetActiveByID(a0: u32) -> *mut HSD_LObj;
+    fn HSD_LObjGetLightMaskAttnFunc() -> i32;
+    fn HSD_LObjGetLightMaskDiffuse() -> u32;
+    fn HSD_MtxGetScale(a0: *mut c_void, a1: *mut Vec) = { let m = (a0 as *const [[f32; 4]; 3]).read(); let r = crate::hsd_mtx::get_scale(&m); (*a1).x = r.x; (*a1).y = r.y; (*a1).z = r.z; };
+    fn HSD_MtxSRT(a0: *mut c_void, a1: *mut Vec, a2: *mut Vec, a3: *mut Vec, a4: *mut Vec) = { let v = |x: *mut Vec| crate::mtx::Vec3 { x: (*x).x, y: (*x).y, z: (*x).z }; let ps = if a4.is_null() { None } else { Some(v(a4)) }; (a0 as *mut [[f32; 4]; 3]).write(crate::hsd_mtx::srt(&v(a1), &v(a2), &v(a3), ps.as_ref())); };
+    fn HSD_MulColor(a0: *mut _GXColor, a1: *mut _GXColor, a2: *mut _GXColor) = { let v = |x: *mut GXColor| crate::hsd_util::GxColor { r: (*x).r, g: (*x).g, b: (*x).b, a: (*x).a }; let r = crate::hsd_util::mul_color(&v(a0), &v(a1)); *a2 = GXColor { r: r.r, g: r.g, b: r.b, a: r.a }; };
+    fn HSD_StateInvalidate(a0: i32);
+    fn PSMTXConcat(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void) = crate::tu::mtx_pc::raw::PSMTXConcat(a0 as _, a1 as _, a2 as _);
+    fn PSMTXCopy(a0: *mut c_void, a1: *mut c_void) = crate::tu::mtx_pc::raw::PSMTXCopy(a0 as _, a1 as _);
+    fn PSMTXIdentity(a0: *mut c_void) = crate::tu::mtx_pc::raw::PSMTXIdentity(a0 as _);
+    fn PSMTXInverse(a0: *mut c_void, a1: *mut c_void) -> u32 = { let s = (a0 as *const [[f32; 4]; 3]).read(); if let Some(m) = crate::mtx::inverse(&s) { (a1 as *mut [[f32; 4]; 3]).write(m); 1 } else { 0 } };
+    fn PSMTXRotAxisRad(a0: *mut c_void, a1: *mut Vec, a2: f32) = { let v = crate::mtx::Vec3 { x: (*a1).x, y: (*a1).y, z: (*a1).z }; (a0 as *mut [[f32; 4]; 3]).write(crate::mtx::rot_axis_rad(&v, a2)); };
+    fn PSMTXScale(a0: *mut c_void, a1: f32, a2: f32, a3: f32) = (a0 as *mut [[f32; 4]; 3]).write(crate::mtx::scale(a1, a2, a3));
+    fn psSetupTev(a0: *mut HSD_Particle);
+    fn psSetupTevCommon();
+    fn psSetupTevInvalidState();
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut hsd_804D0908: [*mut HSD_Particle; 16] = unsafe { core::mem::zeroed() };
+    pub static mut psNumCmdList: [*mut *mut _HSD_PSFormGroup; 65] = unsafe { core::mem::zeroed() };
+    pub static mut psTexGroupArray: [*mut *mut _HSD_PSTexGroup; 65] = unsafe { core::mem::zeroed() };
+}
+// END GENERATED EXT

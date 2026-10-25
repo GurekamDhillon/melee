@@ -1257,13 +1257,17 @@ fn ftco_800b630c(fp: &Fighter) -> R<bool> {
         return Ok(true);
     }
     let k = fp.kind;
-    if k == Ft_Kind_Donkey || k == Ft_Kind_Kirby || k == Ft_Kind_Peach {
-        return Err("ftCo_800B630C (Donkey Kong / Kirby / Peach) not ported".into());
-    }
-    if m < ftCo_MS_Count as i32 {
-        return Ok(false);
-    }
-    Ok(true)
+    // Any of the fighter's common moves (and a few of its own) is not an attack; everything after is.
+    let last_common = if k == Ft_Kind_Donkey {
+        melee_types::ftDk_MS_ThrowAirFLw as i32
+    } else if k == Ft_Kind_Kirby {
+        melee_types::ftKb_MS_AttackDashAir as i32
+    } else if k == Ft_Kind_Peach {
+        melee_types::ftPe_MS_FloatFallB as i32
+    } else {
+        ftCo_MS_Count as i32 - 1
+    };
+    Ok(m > last_common)
 }
 
 /// `ftCo_800B63D8`: wait a level-scaled random time.

@@ -42,6 +42,7 @@ mod greens;
 mod hit;
 mod story;
 mod rebirth;
+mod samus;
 mod sheik;
 use fox::{ItemCmd, FoxVars, SimItem};
 use rebirth::{PlayerRespawn, RespawnCtx};
@@ -267,6 +268,9 @@ pub struct Player {
     jump: JumpVars,
     dash: dashrun::DashVars,
     run: dashrun::RunVars,
+    /// Samus' side special (samus.rs).
+    ss: samus::SsVars,
+    ss_attrs: Option<samus::SsAttrs>,
     /// Fox's blaster state (fox.rs) and the item work he hands to the item procs.
     fx: FoxVars,
     item_cmds: Vec<ItemCmd>,
@@ -1214,6 +1218,7 @@ impl VsMatch {
                 m.run(crate::mex::SLOT_ON_LOAD, slot, &mut fp);
             }
             let sk_needle = if kind == melee_types::Ft_Kind_Seak { Some(sheik::NeedleAttrs::from_dat(&files.dat.data, files.ft_data)) } else { None };
+            let ss_attrs = if kind == melee_types::Ft_Kind_Samus { Some(samus::SsAttrs::from_dat(&files.dat.data, files.ft_data)) } else { None };
             let sk_attrs = if kind == melee_types::Ft_Kind_Seak {
                 let x4 = be32(&files.dat.data, files.ft_data + 4);
                 Some(*files.dat.load_at::<melee_types::ftSeakAttributes>(x4).get())
@@ -1304,6 +1309,8 @@ impl VsMatch {
                 dash: dashrun::DashVars::default(),
                 run: dashrun::RunVars::default(),
                 fx: FoxVars::default(),
+                ss: Default::default(),
+                ss_attrs,
                 sk: sheik::SeakVars::default(),
                 sk_attrs,
                 sk_needle,
@@ -1741,6 +1748,7 @@ impl VsMatch {
                     rebirth::anim(p, &mut ctx)?;
                 }
                 rebirth::FTCO_MS_SLEEP => {} // ftCo_Sleep_Anim is empty
+                m if samus::is_special_s(m) => samus::anim(p, &mut self.rand)?,
                 m if is_damage_motion(m) => {
                     // ftCo_Damage*_Anim (damage.rs).
                     unsafe { (*sp).damage_proc(pi, damage::Proc::Anim)? };
@@ -1964,6 +1972,7 @@ impl VsMatch {
                         ftca_800e3eac(p)?;
                     }
                 }
+                m if samus::is_special_s(m) => samus::phys(p)?,
                 m if is_jump_motion(m) => jump_phys(p),
                 rebirth::FTCO_MS_REBIRTH | rebirth::FTCO_MS_REBIRTH_WAIT => {
                     let mut ctx = RespawnCtx { ground: &mut self.ground, cg: &mut self.cg, rand: &mut self.rand, respawn_points: &self.respawn_points, cam_top: self.blast.cam_top, busy: &mut self.respawn_busy, start_shield: self.start_shield, per_slot_spawn: self.per_slot_spawn };
@@ -2307,6 +2316,7 @@ impl VsMatch {
                         ft_8008a2bc(p, &mut self.rand)?;
                     }
                 }
+                m if samus::is_special_s(m) => samus::coll(&mut self.ground, &mut self.cg, p, &mut self.rand)?,
                 m if is_damage_motion(m) => {
                     unsafe { (*sp).damage_proc(i, damage::Proc::Coll)? };
                 }
@@ -2330,6 +2340,7 @@ impl VsMatch {
             // Fighter_8006C80C: accessory4_cb (ftFx_SpecialN_CreateBlasterShot).
             if self.players[i].fp.x221F_b3() == 0 && self.players[i].fp.x2219_b5() == 0 {
                 fox::accessory4(&mut self.players[i])?;
+                samus::accessory4(&mut self.players[i])?;
             }
             self.seak_accessory(i)?;
         }
@@ -3010,6 +3021,7 @@ fn input_cb(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         m if p.fp.kind == melee_types::Ft_Kind_Seak && sheik::is_sheik_special_n(m) => sheik::iasa(p, rand),
         m if is_jump_motion(m) || is_jump_aerial_motion(m) => jump_iasa(p, rand),
         FTCO_MS_FALL_AERIAL => fall_iasa(p, rand),
+        m if samus::is_special_s(m) => Ok(()), // ftSs_SpecialS_IASA is empty
         m => Err(format!("player {}: input_cb of motion {m} not ported", p.slot + 1)),
     }
 }
@@ -3143,6 +3155,10 @@ fn special_checks(p: &mut Player, rand: &mut HsdRand) -> Result<bool, String> {
     let fp = &*p.fp;
     let who = p.slot + 1;
     if fp.x688 == 0 {
+        if fp.kind == melee_types::Ft_Kind_Samus {
+            samus::special_s_enter(p, rand)?;
+            return Ok(true);
+        }
         return Err(format!("player {who}: ftCo_SpecialS_CheckInput (side-B, kind {}) not ported", fp.kind));
     }
     if fp.x686 == 0 {

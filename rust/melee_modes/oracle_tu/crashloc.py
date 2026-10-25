@@ -39,8 +39,12 @@ def main():
         seen = set()
         for i in range(cases):
             seed = (int.from_bytes(n.encode()[:8].ljust(8, b"\0"), "little") * 0x9E3779B97F4A7C15 + i * 0x1234567) & ((1 << 64) - 1)
-            r = subprocess.run([LLDB, "-b", "-o", "run", "-k", "image list", "-k", "bt 6", "--", str(exe), "--dump", n, f"{seed:x}"],
-                               capture_output=True, text=True, timeout=120, cwd=ROOT)
+            try:
+                r = subprocess.run([LLDB, "-b", "-o", "run", "-k", "image list", "-k", "bt 6", "--", str(exe), "--dump", n, f"{seed:x}"],
+                                   capture_output=True, text=True, timeout=40, cwd=ROOT)
+            except subprocess.TimeoutExpired:
+                print(f"{n} case {i}: HANG")
+                continue
             out = r.stdout
             if "stop reason = Exception" not in out:
                 print(f"{n} case {i}: no fault")

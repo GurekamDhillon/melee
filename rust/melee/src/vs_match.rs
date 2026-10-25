@@ -38,6 +38,7 @@ mod cpu;
 mod dashrun;
 mod damage;
 mod fox;
+mod fighthit;
 mod foxlw;
 mod greens;
 mod hit;
@@ -436,6 +437,8 @@ struct Effect {
     /// `HSD_JObjSetRotationY/Z(root, ..)` by the spawner (None: the model's own rotation).
     rot_y: Option<f32>,
     rot_z: Option<f32>,
+    /// Made with a NULL GObj (`efSync_Spawn(id, NULL, ..)`, the hit sparks): `efLib_DestroyAll(fighter)` skips it.
+    detached: bool,
 }
 
 #[derive(Clone)]
@@ -1003,6 +1006,7 @@ impl VsMatch {
             crowd_horiz_margin: f32::from_bits(be(be(common_root + 4 * 21) + 0x2C)),
         };
         damage::install_hooks();
+        fighthit::install();
         let ko_colors = {
             let t = |k: u32| -> [u32; 4] {
                 let base = be(common_root + 4 * k);
@@ -1492,6 +1496,7 @@ impl VsMatch {
             // ... Fighter_ChangeMotionState(Entry): no animation, cur_anim_frame -1;
             // ftaction.c:1408 frame_count = cur_anim_frame + x898_unk. Then ft_80084CB0: the
             // entry box is the ECB the probe left.
+            let pi_idx = players.len() - 1;
             let p = players.last_mut().unwrap();
             p.gobj.user_data = &mut *p.fp as *mut Fighter as *mut core::ffi::c_void;
             // ftColl_8007B320: the hurt capsules from ftData->x30.
@@ -1508,6 +1513,7 @@ impl VsMatch {
                 c.capsule.scale = sc;
             }
             p.fp.gobj = &mut *p.gobj;
+            fighthit::setup_player(pi_idx, p);
             // Fighter_Create_Inline2: x2DC/x2E0/x2E4 = the Walk rows' lengths (lbAnim_8001E8F8).
             p.fp.x2DC = p.row_walk[0].as_ref().map_or(0.0, |r| r.0.frames);
             p.fp.x2E0 = p.row_walk[1].as_ref().map_or(0.0, |r| r.0.frames);
@@ -2569,6 +2575,10 @@ impl VsMatch {
                 self.samus_accessory4(i)?;
             }
             self.seak_accessory(i)?;
+            if self.players[i].fp.x221F_b3() == 0 {
+                // Fighter_8006C80C: ftColl_8007AE80 (the hitboxes' positions), ft_8007C224, ft_8007C6DC.
+                fighthit::update_hits(self, i)?;
+            }
         }
         // s_link 13, Fighter_8006CB94: the lasers' item procs of the frame, then the items' hits on fighters.
         self.lasers_step()?;
@@ -2679,7 +2689,27 @@ impl VsMatch {
         Ok(())
     }
 
-    /// efAsync_QueueProcessDeferred -> efSync_Spawn -> efAsync_Dispatch, for player `i`.
+    /// `efLib_CreateGenerator_Translate_FacingDir(id, &pos, dir)`: `hsd_8039F05C(0, 0, id)` and an AppSRT (status 1) at
+    /// `pos`, rot.y = +-pi/2 (`kind |= 0x40000` for a negative direction).
+    pub(super) fn gen_translate_facing(&mut self, gen_id: i32, pos: Vec3, dir: f32) {
+        let mut host = Host { rand: &mut self.rand, joint_mtx: &self.joint_mtx, appsrt_hook_lists: &self.appsrt_hook_lists };
+        if let Some(gen) = self.ps.gen_create(&mut host, 0, 0, gen_id) {
+            let srt = match self.ps.gen(gen).appsrt {
+                Some(a) => Some(a),
+                None => Some(self.ps.add_generator_appsrt_begin(gen, 1)),
+            };
+            let Some(srt) = srt else { return };
+            let a = self.ps.srt_mut(srt);
+            a.translate = pos;
+            let half_pi = core::f32::consts::FRAC_PI_2;
+            a.rot.y = if dir < 0.0 { -half_pi } else { half_pi };
+            if dir < 0.0 {
+                self.ps.gen_mut(gen).kind |= 0x40000;
+            }
+        }
+    }
+
+    /// `efAsync_QueueProcessDeferred -> efSync_Spawn -> efAsync_Dispatch`, for player `i`.
     fn ef_dispatch(&mut self, i: usize, q: QueuedEffect) -> Result<(), String> {
         match (q.kind, q.gfx) {
             (EF_SPAWN_POS_OFFSET_PARAM, g @ (0x3FE | 0x400 | 0x401)) => {
@@ -2693,21 +2723,7 @@ impl VsMatch {
                 // 0x3FE: the same with id 0x107 and the direction as is.
                 let dir = if g == 0x400 { -q.extra1 } else { q.extra1 };
                 let gen_id = if g == 0x3FE { 0x107 } else { 0x5A };
-                let mut host = Host { rand: &mut self.rand, joint_mtx: &self.joint_mtx, appsrt_hook_lists: &self.appsrt_hook_lists };
-                if let Some(gen) = self.ps.gen_create(&mut host, 0, 0, gen_id) {
-                    let srt = match self.ps.gen(gen).appsrt {
-                        Some(a) => Some(a),
-                        None => Some(self.ps.add_generator_appsrt_begin(gen, 1)),
-                    };
-                    let Some(srt) = srt else { return Ok(()) };
-                    let a = self.ps.srt_mut(srt);
-                    a.translate = pos;
-                    let half_pi = core::f32::consts::FRAC_PI_2;
-                    a.rot.y = if dir < 0.0 { -half_pi } else { half_pi };
-                    if dir < 0.0 {
-                        self.ps.gen_mut(gen).kind |= 0x40000;
-                    }
-                }
+                self.gen_translate_facing(gen_id, pos, dir);
                 Ok(())
             }
             (EF_SPAWN_POS_OFFSET, g @ (0x3F6 | 0x3FA | 0x3FB | 0x3FC)) => {
@@ -2965,7 +2981,7 @@ impl VsMatch {
     fn ef_destroy_all(&mut self, i: usize) {
         let mut k = 0;
         while k < self.effects.len() {
-            if self.effects[k].owner != i {
+            if self.effects[k].owner != i || self.effects[k].detached {
                 k += 1;
                 continue;
             }
@@ -3011,7 +3027,7 @@ impl VsMatch {
         if std::env::var_os("MELEE_VIEW_FXLOG").is_some() {
             eprintln!("EFCREATE frame {} inst {inst} gfx {gfx_id} lifetime {lifetime} owner {owner}", self.frame);
         }
-        self.effects.push(Effect { inst, tev: None, id: gfx_id % 1000, lifetime, owner, scale, bank, tracks, fixed_pos, rot_y, rot_z });
+        self.effects.push(Effect { inst, tev: None, id: gfx_id % 1000, lifetime, owner, scale, bank, tracks, fixed_pos, rot_y, rot_z, detached: false });
         self.effect_anim(self.effects.len() - 1)
     }
 
@@ -4777,6 +4793,9 @@ fn ftaction_run_mode(p: &mut Player, rand: &mut HsdRand, skip: bool, all: bool) 
         let w = be32(&p.pdat, p.script);
         let op = w >> 26;
         let value = w & 0x3FF_FFFF;
+        if std::env::var_os("MELEE_GOLDEN_SCRIPT").is_some() {
+            eprintln!("SCR f{} s{} m{} off {:X} op {:#x} w {:08X} timer {} fc {} skip {} all {}", unsafe { TRACE_FRAME }, p.slot, p.fp.motion_id, p.script, op, w, c.timer, c.frame_count, skip, all);
+        }
         if all && op >= 10 {
             let n = *FTACTION_STEP.get(op as usize - 10).ok_or(format!("command script opcode {op:#x} (ftAction_803C0870) out of range"))?;
             p.script += 4 * n as u32;
@@ -4892,35 +4911,21 @@ fn ftaction_run_mode(p: &mut Player, rand: &mut HsdRand, skip: bool, all: bool) 
             // ftAction_800711DC (skip table).
             0x0A if skip => p.script += 20,
             0x0A => ftaction_80071028(p, rand)?,
-            // ftAction_8007121C: create a hitbox (5 words); ftAction_800715EC (skip table).
+            // ftAction_8007121C: create a hitbox; ftAction_800715EC (skip table). The ported TU runs on the stand-in GObj.
             0x0B if skip => p.script += 20,
-            0x0B => ftaction_8007121c(p)?,
-            // ftAction_8007162C (damage) / 80071708 (flags): one word each, not modelled.
-            0x0C | 0x0E => p.script += 4,
-            // ftAction_8007169C: hitbox size.
+            0x0B => fighthit::run_cmd(p, melee_fighter::tu::ftaction::ftAction_8007121C),
+            // ftAction_8007162C (damage) / 8007169C (size) / 80071708 (flags): one word each.
+            0x0C if skip => p.script += 4,
             0x0D if skip => p.script += 4,
-            0x0D => {
-                let id = ((w >> 23) & 7) as usize;
-                if let Some(h) = p.hitboxes.get_mut(id).and_then(|h| h.as_mut()) {
-                    h.scale = 0.003906f32 * (w & 0x7F_FFFF) as f32;
-                }
-                p.script += 4;
-            }
+            0x0E if skip => p.script += 4,
+            0x0C => fighthit::run_cmd(p, melee_fighter::tu::ftaction::ftAction_8007162C),
+            0x0D => fighthit::run_cmd(p, melee_fighter::tu::ftaction::ftAction_8007169C),
+            0x0E => fighthit::run_cmd(p, melee_fighter::tu::ftaction::ftAction_80071708),
             // ftAction_80071784: ftColl_8007AFC8 (remove hitbox `id`); ftAction_800717D8:
             // ftColl_8007AFF8 (remove all). The skip table steps over them.
             0x0F | 0x10 if skip => p.script += 4,
-            0x0F => {
-                let id = (w & 0x3FF_FFFF) as usize;
-                if let Some(h) = p.hitboxes.get_mut(id) {
-                    *h = None;
-                }
-                p.script += 4;
-            }
-            0x10 => {
-                p.hitboxes = [None; 4];
-                p.fp.set_x2219_b3(0);
-                p.script += 4;
-            }
+            0x0F => fighthit::run_cmd(p, melee_fighter::tu::ftaction::ftAction_80071784),
+            0x10 => fighthit::run_cmd(p, melee_fighter::tu::ftaction::ftAction_800717D8),
             // ftAction_80071820: cmd_vars[idx] = value (both tables).
             0x13 => {
                 let idx = ((w >> 24) & 3) as usize;
@@ -4969,7 +4974,10 @@ fn ftaction_run_mode(p: &mut Player, rand: &mut HsdRand, skip: bool, all: bool) 
             }
             // ftAction_80071A14 / 80071A58 / 80071A9C: body / hurt-capsule states (the
             // hurtboxes; read only by hit detection, which is not ported). One word each.
-            0x1A | 0x1B | 0x1C => p.script += 4,
+            0x1A | 0x1B | 0x1C if skip => p.script += 4,
+            0x1A => fighthit::run_cmd(p, melee_fighter::tu::ftaction::ftAction_80071A14),
+            0x1B => fighthit::run_cmd(p, melee_fighter::tu::ftaction::ftAction_80071A58),
+            0x1C => fighthit::run_cmd(p, melee_fighter::tu::ftaction::ftAction_80071A9C),
             // ftAction_80071AE8: jab combo allowed (x2218_b1); ftAction_80071B28: x2218_b2.
             0x1D => {
                 if value == 0 || !p.fp.x197C.is_null() {
@@ -5352,7 +5360,7 @@ fn change_motion_state_flags(p: &mut Player, msid: i32, row: Option<&(AnimRow, F
     if flags & melee_types::Ft_MF_SkipHit as u32 == 0 && p.fp.x2219_b3() != 0 {
         // ftColl_8007AFF8: every hitbox off.
         p.hitboxes = [None; 4];
-        p.fp.set_x2219_b3(0);
+        melee_fighter::tu::ftcoll::ftcoll_8007aff8(&mut *p.gobj);
     }
     let fp = &mut p.fp;
     if !(14..=17).contains(&msid) {
@@ -5853,10 +5861,12 @@ impl VsMatch {
 impl Sim for VsMatch {
     fn step(&mut self) -> bool {
         unsafe { TRACE_FRAME = self.frame + 1 };
+        damage::set_sim(self as *mut VsMatch);
+        sound::bind_rand(&mut self.rand);
         if self.stopped.is_some() {
             return false;
         }
-        let r = self.fighters().and_then(|_| self.hit_guard()).and_then(|_| self.stage_anim()).and_then(|_| {
+        let r = self.fighters().and_then(|_| self.stage_anim()).and_then(|_| {
             let rand = &mut self.rand;
             if let Some(b) = &mut self.last_bg {
                 b.update(&mut || rand.randf());
@@ -5896,6 +5906,9 @@ impl Sim for VsMatch {
                 continue;
             }
             let rand = &mut self.rand;
+            if std::env::var_os("MELEE_GOLDEN_RAND").is_some() {
+                eprintln!("R {} HUD slot {} pct {} shake {} dmg {} old {} expl {}", unsafe { TRACE_FRAME }, p.slot, p.fp.dmg.x1830_percent, p.hud.shake_dbg(), p.hud.dmg_dbg(), p.hud.old_dbg(), p.hud_randomize);
+            }
             p.hud.step(p.fp.dmg.x1830_percent, p.hud_randomize, &mut || rand.randf());
             p.hud_randomize = false;
         }

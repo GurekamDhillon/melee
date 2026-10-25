@@ -25,6 +25,9 @@ pub use crate::ftaction::{
     ftaction_80073108 as ftAction_80073108, ftaction_8007320c as ftAction_8007320C,
 };
 
+/// The s_link of the proc the host is running (`HSD_GObj_CurrentInvokedProc()->s_link`); 0 = no proc.
+pub static mut CURRENT_S_LINK: u8 = 1;
+
 type G = *mut HSD_GObj;
 pub type FtCmd = fn(G, &mut CommandInfo);
 
@@ -87,10 +90,22 @@ pub mod ext {
     pub fn ftCo_8009E714(_g: G, _idx: u8, _timer: i32, _x: f32, _y: f32, _mag: f32, _decay: f32, _angle: f32) { unsafe { let _ = crate::tu::ftdynamics::ftCo_8009E714(_g as _, _idx as _, _timer as _, _x as _, _y as _, _mag as _, _decay as _, _angle as _); } }
     pub fn Command_Execute(_cmd: *mut CommandInfo, _code: u32) -> bool { unsafe { melee_runtime::tu::lbcommand::Command_Execute(_cmd as _, _code as _) } }
     pub fn Geno_FtCmd(_g: G, _cmd: *mut CommandInfo, _mode: i32) { todo!("Geno_FtCmd (pc/geno)") }
-    pub fn ScriptGame_HitRuleForget(_h: *mut HitCapsule) { todo!("ScriptGame_HitRuleForget (pc/gameworld/script_hit_rules)") }
-    pub fn ScriptGame_HitRuleCreate(_fp: F, _h: *mut HitCapsule, _k: i32) { todo!("ScriptGame_HitRuleCreate (pc/gameworld/script_hit_rules)") }
+    /// Script hit rules (TARGET_PC mods): none in a vanilla match.
+    pub fn ScriptGame_HitRuleForget(_h: *mut HitCapsule) {}
+    pub fn ScriptGame_HitRuleCreate(_fp: F, _h: *mut HitCapsule, _k: i32) {}
     /// `HSD_GObj_CurrentInvokedProc` (NULL when no proc is running).
-    pub fn HSD_GObj_CurrentInvokedProc() -> *mut HSD_GObjProc { todo!("HSD_GObj_CurrentInvokedProc (baselib/gobjproc.c)") }
+    /// The native sim has no proc list: the host sets `CURRENT_S_LINK` (0 = none) as it runs the frame's stages.
+    pub fn HSD_GObj_CurrentInvokedProc() -> *mut HSD_GObjProc {
+        unsafe {
+            if super::CURRENT_S_LINK == 0 {
+                return core::ptr::null_mut();
+            }
+            static mut PROC: core::mem::MaybeUninit<HSD_GObjProc> = core::mem::MaybeUninit::zeroed();
+            let p = PROC.as_mut_ptr();
+            (*p).s_link = super::CURRENT_S_LINK;
+            p
+        }
+    }
     pub fn OSReport(_s: &str) {}
 }
 

@@ -56,6 +56,7 @@ const SEVERITY: i32 = 1;
 impl VsMatch {
     /// The fighters' s_link 13: `ftColl_8007925C` + `ftColl_8007AB48` for each fighter.
     pub(super) fn item_hits(&mut self) -> Result<(), String> {
+        super::fighthit::link_players(self);
         for pi in 0..self.players.len() {
             {
                 let p = &self.players[pi];
@@ -63,7 +64,12 @@ impl VsMatch {
                     continue;
                 }
             }
-            // ftColl_800765E0: both damage logs are empty.
+            let g = &mut *self.players[pi].gobj as *mut HSD_GObj;
+            // Fighter_8006CB94: ftColl_800765E0 (both damage logs empty), ftColl_80078C70 (every other fighter's
+            // hitboxes against this fighter's shield and hurtboxes).
+            melee_fighter::tu::ftcoll::ftcoll_800765e0();
+            super::fighthit::guarded("ftColl_80078C70", || melee_fighter::tu::ftcoll::ftcoll_80078c70(g))?;
+            // ftColl_8007925C: the shots (only lasers exist as items here).
             let mut log: Vec<LogEntry> = Vec::new();
             for k in 0..self.items.len() {
                 let it = self.items[k];
@@ -79,8 +85,20 @@ impl VsMatch {
                     log.push(e);
                 }
             }
+            let fighter_hits = unsafe { melee_fighter::ftcoll::DMG_LOG0_IDX } > 0;
+            if !log.is_empty() && fighter_hits {
+                return Err("a laser and a fighter's hitbox hit the same fighter in one frame: the merged damage log is not ported".into());
+            }
             if !log.is_empty() {
                 self.damage_log0(pi, &log)?;
+            } else if fighter_hits {
+                // ftColl_8007AB48 / ftColl_8007AB80: the strongest entry's knockback, the hit effect, fp->dmg.
+                super::fighthit::set_hit_victim(pi);
+                super::fighthit::guarded("ftColl_8007AB48", || melee_fighter::tu::ftcoll::ftcoll_8007ab48(g))?;
+                self.take_dmg_err()?;
+            }
+            if unsafe { melee_fighter::ftcoll::DMG_LOG1_IDX } > 0 {
+                super::fighthit::guarded("ftColl_8007AB80", || melee_fighter::tu::ftcoll::ftcoll_8007ab80(g))?;
             }
         }
         Ok(())
@@ -90,13 +108,8 @@ impl VsMatch {
     fn laser_vs_fighter(&mut self, pi: usize, k: usize, it: &super::fox::SimItem, hits: &LaserHits) -> Result<Option<LogEntry>, String> {
         let kind = it.kind;
         let cd = melee_fighter::hooks::common_data();
-        // The victim's own live hitboxes would make `hit_count` nonzero: the clank test.
-        {
-            let fp = &self.players[pi].fp;
-            if fp.anon_221b.x221B_b5() == 0 && fp.x914.iter().any(|h| h.state != HitCapsule_Disabled as _) {
-                return Err("ftColl_8007925C: a shot against a fighter with live hitboxes (clank) is not ported".into());
-            }
-        }
+        // The shot's capsules have x40_b0 (clank) clear (flags 0x310FDC00 / 0x310FDD00 in the C build): the clank
+        // test against the victim's own live hitboxes skips them.
         for j in 0..hits.n {
             if hits.state[j] == 0 {
                 continue;
@@ -116,6 +129,10 @@ impl VsMatch {
             // x42_b1 (set) with the fighter shielding.
             if fp.anon_221b.x221B_b0() != 0 {
                 return Err("ftColl_8007925C: a shot against a shield is not ported".into());
+            }
+            if std::env::var_os("MELEE_GOLDEN_HIT").is_some() {
+                let st: Vec<i32> = (0..fp.hurt_capsules_len as usize).map(|i| fp.hurt_capsules[i].capsule.state as i32).collect();
+                eprintln!("LASERHIT f{} pi{} box{} x1988 {} x198C {} hurt {:?} pos {:08X} {:08X} hit {:08X} {:08X}", unsafe { super::TRACE_FRAME }, pi, j, fp.x1988, fp.x198C, st, fp.cur_pos.x.to_bits(), fp.cur_pos.y.to_bits(), hits.x4c[j].x.to_bits(), hits.x4c[j].y.to_bits());
             }
             if fp.x1988 == 2 || fp.x198C == 2 {
                 continue;
@@ -300,37 +317,13 @@ impl VsMatch {
 
     /// `ftColl_80078538` (via `hit_effect_ids[HitElement_Normal]` = `Ef_Id_Unk1000`): the hit spark.
     fn hit_effect(&mut self, pi: usize, e: &LogEntry, kb: f32) -> Result<(), String> {
-        let cd = melee_fighter::hooks::common_data();
-        if kb >= cd.x3F0 {
-            return Err("ftColl_80078538: the big hit spark (0x3F3) is not ported".into());
-        }
-        // efSync_Spawn(1000, 0, pos, &u_dmg) -> efAsync_Dispatch(0x3E8): Randi(8) picks effect 9 or 10, scaled
-        // by 0.04 * damage + 0.3 (clamped to 0.3..1.5).
-        let u_dmg = e.damage as u32 as f32;
-        let id = if self.rand.randi(8) == 0 { 9 } else { 10 };
-        let mut s = 0.04f32 * u_dmg + 0.3f32;
-        if s < 0.3 {
-            s = 0.3;
-        }
-        if s > 1.5 {
-            s = 1.5;
-        }
-        self.ef_create_rot(id, pi, s, Some([e.pos.x, e.pos.y, e.pos.z]), None, None)?;
-        // dmg (the severity) >= 1: the extra spark.
-        if e.sfx_severity >= 1 {
-            match self.players[pi].fp.co_attrs.hit_spark_variant {
-                0 => {
-                    if self.rand.randi(cd.x3F4 as i32) == 0 {
-                        return Err("ftColl_80078538: the extra hit spark (efSync_Spawn 0x3EF) is not ported".into());
-                    }
-                }
-                1 => {
-                    let _ = self.rand.randi(cd.x3F8 as i32);
-                }
-                _ => {}
-            }
-        }
-        Ok(())
+        // ftColl_8007A06C -> hit_fx(Ef_Id_Unk1000) -> ftColl_80078538(gobj, &pos, severity, (f32)(u32) damage, kb).
+        let g = &mut *self.players[pi].gobj as *mut HSD_GObj;
+        let pos = melee_types::Vec { x: e.pos.x, y: e.pos.y, z: e.pos.z };
+        super::fighthit::set_hit_victim(pi);
+        let (sev, dmg) = (e.sfx_severity as u32, e.damage as u32 as f32);
+        super::fighthit::guarded("ftColl_80078538", || melee_fighter::tu::ftcoll::ftcoll_80078538(g, &pos, sev, dmg, kb))?;
+        self.take_dmg_err()
     }
 
     /// `Fighter_ProcessHit_8006D1EC` after the shield upkeep: the damage commit, the knockback branch (the
@@ -464,7 +457,7 @@ fn item_common_x78() -> f32 {
 
 /// `lbColl_800083C4` for one of the fighter's hurt capsules: its end positions from the skeleton as it stands, once
 /// per frame (`skip_update_pos`, cleared by `ftColl_8007AF28` at the end of `Fighter_procUpdate`).
-fn hurt_position(p: &mut Player, i: usize) {
+pub(super) fn hurt_position(p: &mut Player, i: usize) {
     // The bone pointers are never followed (the capsules are marked updated); the matrix argument of the
     // collision test just needs a valid JObj.
     thread_local! {
@@ -503,6 +496,9 @@ impl Default for HudDamage {
 }
 
 impl HudDamage {
+    pub fn shake_dbg(&self) -> u8 { self.shake }
+    pub fn dmg_dbg(&self) -> i32 { self.dmg }
+    pub fn old_dbg(&self) -> i32 { self.old }
     /// One frame of `ifStatus_802F5B48` then `ifStatus_802F4EDC`. `percent` is `Player_GetDamage`;
     /// `explode` the death animation's first run (`ifStatus_PercentOnDeathAnimationThink`: two draws per
     /// digit, four digits).

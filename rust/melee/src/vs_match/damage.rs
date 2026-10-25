@@ -17,10 +17,15 @@ thread_local! {
     static SIM: Cell<*mut VsMatch> = const { Cell::new(std::ptr::null_mut()) };
 }
 
-fn sim<'a>() -> &'a mut VsMatch {
+pub(super) fn sim<'a>() -> &'a mut VsMatch {
     let p = SIM.with(|c| c.get());
     assert!(!p.is_null(), "a damage hook ran outside VsMatch::with_sim");
     unsafe { &mut *p }
+}
+
+/// Makes `s` the match the ported code's hooks reach (set at the start of every step).
+pub(super) fn set_sim(s: *mut VsMatch) {
+    SIM.with(|c| c.set(s));
 }
 
 impl VsMatch {
@@ -37,7 +42,7 @@ impl VsMatch {
         self.players.iter().position(|p| &*p.gobj as *const HSD_GObj == g as *const HSD_GObj).expect("a GObj that is not a player's")
     }
 
-    fn dmg_fail(&mut self, why: impl Into<String>) {
+    pub(super) fn dmg_fail(&mut self, why: impl Into<String>) {
         if self.dmg_err.is_none() {
             self.dmg_err = Some(why.into());
         }

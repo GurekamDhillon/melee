@@ -102,7 +102,7 @@ def main():
     s = s.replace("\r\n", "\n")
     h = (FD / f"gen/cref/tu/{stem}_stubs.h").read_text(encoding="utf-8")
     m = (FD / f"tests/{stem}_stubs/mod.rs").read_text(encoding="utf-8")
-    have = set(re.findall(r"\{ t\((\d+)\);", m))
+    have = set(re.findall(r"= Some\(\|[^|]*\| \{ t\((\d+)\);", m))
     gaps = []
     for line in h.split("\n"):
         mm = re.match(r"(.*?)\((\w+)\)\((.*?)\) \{ T\((\d+)\);", line)
@@ -112,7 +112,7 @@ def main():
             args = [re.sub(r"^__typeof__\(|\)\s*$", "", a) if a.startswith("__typeof__") else a for a in args]
             ret = re.sub(r"__typeof__\((.*)\)", r"\1", ret.strip())
             gaps.append((name, args, ret))
-    ent, done, left = [], [], []
+    ent, done, left, hooked = [], [], [], []
     body_start = s.index("pub mod ext")
     for name, cargs, cret in gaps:
         cands = {}
@@ -137,10 +137,16 @@ def main():
         rparams = [ctype_to_rust(a) or "i32" for a in cargs]
         names = [f"_a{i}" for i in range(len(cargs))]
         conv = []
+        fp_gobj = []
         for i, p in enumerate(cparams):
             pt = p.split(":", 1)[1].strip() if ":" in p else p
             a = names[i] if i < len(names) else "0"
-            if pt.startswith("&mut "):
+            gobj_fp = i < len(cargs) and "HSD_GObj" in cargs[i] and "Fighter" in pt and pt.lstrip("&mut ").strip() == "Fighter"
+            fp_gobj.append(gobj_fp)
+            if gobj_fp:
+                # the C takes the fighter's gobj where the port takes the fighter
+                conv.append(("&mut *" if pt.startswith("&mut ") else "&*") + f"((*({a} as *mut HSD_GObj)).user_data as *mut Fighter)")
+            elif pt.startswith("&mut "):
                 conv.append(f"&mut *({a} as *mut {pt[5:].strip()})")
             elif pt.startswith("&"):
                 conv.append(f"&*({a} as *const {pt[1:].strip()})")
@@ -148,13 +154,20 @@ def main():
                 conv.append(f"{a} != 0")
             else:
                 conv.append(f"{a} as _")
-        call = f"{full}({', '.join(conv)})"
+        epath = full
+        if epath.startswith("super::"):
+            epath = "super::" + epath          # the entry lives one module deeper (in ext)
+        elif epath.startswith("h::"):
+            epath = "crate::hooks::" + epath[3:]
+        elif "::" not in epath:
+            epath = "super::" + epath
+        call = f"{epath}({', '.join(conv)})"
         rret = ctype_to_rust(cret)
         outp = len(cargs) == len(cparams) + 1 and cretrs and cretrs != "bool" and rret is None
         if outp:
             # the C writes through a trailing out pointer where the port returns the value
             conv = conv[:len(cparams)]
-            call = f"{full}({', '.join(conv)})"
+            call = f"{epath}({', '.join(conv)})"
             body = f"{{ unsafe {{ *({names[-1]} as *mut {cretrs}) = {call}; }} }}"
         elif rret is None:
             body = f"{{ unsafe {{ let _ = {call}; }} }}"
@@ -185,14 +198,13 @@ def main():
             new = []
             for k, a in enumerate(args):
                 ct = cargs[k] if k < len(cargs) else "int"
-                if "*" in ct:
-                    new.append(f"crate::mtu_ptr::ptr(&({a}))")
-                elif ctype_to_rust(ct) == "f32":
-                    new.append(f"({a}) as f32")
-                elif ctype_to_rust(ct) == "u32":
-                    new.append(f"({a}) as u32")
+                if k < len(fp_gobj) and fp_gobj[k]:
+                    new.append(f"crate::mtu_ptr::ptr(&(({a}).gobj))")
+                elif "*" in ct:
+                    aa = a.replace("null_mut()", "null_mut::<u8>()").replace("null()", "null::<u8>()")
+                    new.append(f"crate::mtu_ptr::ptr(&({aa}))")
                 else:
-                    new.append(f"({a}) as i32")
+                    new.append(f"({a}) as {ctype_to_rust(ct) or 'i32'}")
             expr = f"ext::{name}({', '.join(new)})"
             if outp:
                 expr = f"unsafe {{ let mut o: {cretrs} = core::mem::zeroed(); ext::{name}({', '.join(new + ['(&mut o as *mut ' + cretrs + ') as *mut core::ffi::c_void'])}); o }}"
@@ -206,6 +218,22 @@ def main():
             pos = j
         s = "".join(out)
         done.append(name)
+    # stubs the oracle installs on a crate::hooks settable while the port calls the function directly: use the hook
+    hooks_rs = (FD / "src/hooks.rs").read_text(encoding="utf-8")
+    body_start = s.index("pub mod ext")
+    for stat in re.findall(r"\bh::([A-Z0-9_]+) = Some", m):
+        fm = re.search(r"\b" + stat + r" (\w+)\(", hooks_rs)
+        if not fm:
+            continue
+        fn = fm.group(1)
+        pat = re.compile(r"(?<![\w:])((?:[A-Za-z_]\w*::)+)" + re.escape(fn) + r"\(")
+
+        def sub(mm, fn=fn):
+            if mm.start() < body_start or mm.group(1) in ("h::", "crate::hooks::", "hooks::"):
+                return mm.group(0)
+            hooked.append(fn)
+            return "h::" + fn + "("
+        s = pat.sub(sub, s)
     if ent:
         marker = "    ext_fns! {\n"
         if marker in s:
@@ -216,7 +244,7 @@ def main():
             end = s.index("\n}\n", a)
             s = s[:end] + "\n" + MACRO + "    ext_fns! {\n" + "\n".join(ent) + "\n    }" + s[end:]
     rs_path.write_text(s.replace("\n", "\r\n") if crlf else s, encoding="utf-8", newline="")
-    print("rewired:", " ".join(done))
+    print("rewired:", " ".join(done), "| hook-routed:", " ".join(sorted(set(hooked))))
     for n, why in left:
         print("  LEFT", n, "-", why)
 

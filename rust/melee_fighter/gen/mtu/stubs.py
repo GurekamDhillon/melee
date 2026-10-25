@@ -187,6 +187,7 @@ def main():
             raise SystemExit("bad arg " + argv[i])
     load_aliases(rsrc)
     load_lib_hooks()
+    load_aliases(str(ROOT / "rust/melee_fighter/src/hooks.rs"))
     decls = rust_decls(rsrc)
     lib_used = []
     tu = gt.Tu(csrc, (), (ROOT / csrc).parent)

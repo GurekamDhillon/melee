@@ -53,4 +53,6 @@ pub mod mtu_ptr {
     impl<T: ?Sized> AsPtr for *mut T { fn ptr_ref(&self) -> *mut core::ffi::c_void { *self as *const () as *mut core::ffi::c_void } }
     impl<T: ?Sized> AsPtr for *const T { fn ptr_ref(&self) -> *mut core::ffi::c_void { *self as *const () as *mut core::ffi::c_void } }
     pub fn ptr<P: AsPtr>(p: &P) -> *mut core::ffi::c_void { p.ptr_ref() }
+    /// The address of a place (a struct field passed by pointer in the C).
+    pub fn at<T>(p: &T) -> *mut core::ffi::c_void { p as *const T as *mut core::ffi::c_void }
 }

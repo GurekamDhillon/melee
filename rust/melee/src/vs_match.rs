@@ -4475,6 +4475,7 @@ fn change_motion_state_ext(p: &mut Player, msid: i32, row: Option<&(AnimRow, Fig
                 ftaction_run(p, rand, true)?;
             } else {
                 // ftCo_800C0408 (colour-animation scripts: render only), then ftAction_80073240.
+                p.col.step();
                 ftaction_80073240(p, rand)?;
             }
         }

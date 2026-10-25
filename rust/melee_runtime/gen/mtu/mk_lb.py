@@ -265,7 +265,7 @@ def ops_of(tu, stem, cfg, pools):
     ops = []
     pub = pub_fns(stem) if cfg.get("pub_only") else None
     for name, cur in tu.defs.items():
-        if name in cfg.get("skip", ()):
+        if name in cfg.get("skip", ()) or ("only" in cfg and name not in cfg["only"]):
             continue
         if pub is not None and name not in pub:
             print(f"mk_lb: {stem}: skipping private {name}")

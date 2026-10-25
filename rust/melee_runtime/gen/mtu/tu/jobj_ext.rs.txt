@@ -1,0 +1,94 @@
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/mtu/gen_tu.py; the callees of the C TU)
+pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    use super::*;
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn HSD_AObjInitEndCallBack();
+    fn HSD_AObjInterpretAnim(a0: *mut HSD_AObj, a1: *mut c_void, a2: Option<unsafe extern "C" fn(*mut c_void, i32, *mut HSD_ObjData)>);
+    fn HSD_AObjInvokeCallBacks();
+    fn HSD_AObjLoadDesc(a0: *mut HSD_AObjDesc) -> *mut HSD_AObj;
+    fn HSD_AObjRemove(a0: *mut HSD_AObj);
+    fn HSD_AObjReqAnim(a0: *mut HSD_AObj, a1: f32);
+    fn HSD_CObjGetCurrent() -> *mut HSD_CObj;
+    fn HSD_DObjAddAnimAll(a0: *mut HSD_DObj, a1: *mut _HSD_MatAnim, a2: *mut HSD_ShapeAnimDObj);
+    fn HSD_DObjAnimAll(a0: *mut HSD_DObj);
+    fn HSD_DObjLoadDesc(a0: *mut HSD_DObjDesc) -> *mut HSD_DObj;
+    fn HSD_DObjRemoveAll(a0: *mut HSD_DObj);
+    fn HSD_DObjRemoveAnimAllByFlags(a0: *mut HSD_DObj, a1: u32);
+    fn HSD_DObjReqAnimAllByFlags(a0: *mut HSD_DObj, a1: f32, a2: u32);
+    fn HSD_DObjResolveRefsAll(a0: *mut HSD_DObj, a1: *mut HSD_DObjDesc);
+    fn HSD_IDGetDataFromTable(a0: *mut _HSD_IDTable, a1: u64, a2: *mut i32) -> *mut c_void;
+    fn HSD_IDInsertToTable(a0: *mut _HSD_IDTable, a1: u64, a2: *mut c_void);
+    fn HSD_IDRemoveByIDFromTable(a0: *mut _HSD_IDTable, a1: u64);
+    fn HSD_JObjDisp(a0: *mut HSD_JObj, a1: *mut c_void, a2: u32, a3: u32);
+    fn HSD_JObjDispSub(a0: *mut HSD_JObj, a1: *mut c_void, a2: *mut c_void, a3: u32, a4: u32);
+    fn HSD_JObjMakePositionMtx(a0: *mut HSD_JObj, a1: *mut c_void, a2: *mut c_void);
+    fn HSD_MtxAlloc() -> *mut c_void;
+    fn HSD_MtxFree(a0: *mut c_void);
+    fn HSD_MtxGetRotation(a0: *mut c_void, a1: *mut Vec);
+    fn HSD_MtxGetScale(a0: *mut c_void, a1: *mut Vec);
+    fn HSD_MtxGetTranslate(a0: *mut c_void, a1: *mut Vec);
+    fn HSD_MtxInverseConcat(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void);
+    fn HSD_MtxSRT(a0: *mut c_void, a1: *mut Vec, a2: *mut Vec, a3: *mut Vec, a4: *mut Vec);
+    fn HSD_MtxSRTQuat(a0: *mut c_void, a1: *mut Vec, a2: *mut Quaternion, a3: *mut Vec, a4: *mut Vec);
+    fn HSD_RObjAddAnimAll(a0: *mut HSD_RObj, a1: *mut HSD_RObjAnimJoint);
+    fn HSD_RObjAnimAll(a0: *mut HSD_RObj);
+    fn HSD_RObjGetByType(a0: *mut HSD_RObj, a1: u32, a2: u32) -> *mut HSD_RObj;
+    fn HSD_RObjGetGlobalPosition(a0: *mut HSD_RObj, a1: i32, a2: *mut Vec) -> i32;
+    fn HSD_RObjLoadDesc(a0: *mut HSD_RObjDesc) -> *mut HSD_RObj;
+    fn HSD_RObjRemoveAll(a0: *mut HSD_RObj);
+    fn HSD_RObjRemoveAnimAllByFlags(a0: *mut HSD_RObj, a1: u32);
+    fn HSD_RObjReqAnimAllByFlags(a0: *mut HSD_RObj, a1: f32, a2: u32);
+    fn HSD_RObjResolveRefsAll(a0: *mut HSD_RObj, a1: *mut HSD_RObjDesc);
+    fn HSD_RObjUpdateAll(a0: *mut HSD_RObj, a1: *mut c_void, a2: Option<unsafe extern "C" fn(*mut c_void, i32, *mut HSD_ObjData)>);
+    fn HSD_VecAlloc() -> *mut c_void;
+    fn HSD_VecFree(a0: *mut c_void);
+    fn PSMTXConcat(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void);
+    fn PSMTXCopy(a0: *mut c_void, a1: *mut c_void);
+    fn PSMTXIdentity(a0: *mut c_void) = crate::tu::mtx_pc::raw::PSMTXIdentity(a0 as _);
+    fn PSMTXInverse(a0: *mut c_void, a1: *mut c_void) -> u32;
+    fn PSMTXMultVec(a0: *mut c_void, a1: *mut Vec, a2: *mut Vec);
+    fn PSMTXRotAxisRad(a0: *mut c_void, a1: *mut Vec, a2: f32);
+    fn PSVECAdd(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec);
+    fn PSVECCrossProduct(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec);
+    fn PSVECDotProduct(a0: *mut Vec, a1: *mut Vec) -> f32;
+    fn PSVECNormalize(a0: *mut Vec, a1: *mut Vec);
+    fn PSVECScale(a0: *mut Vec, a1: *mut Vec, a2: f32);
+    fn PSVECSubtract(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec);
+    fn ProfActive() -> i32;
+    fn ProfBegin(a0: i32, a1: i32);
+    fn ProfEnd();
+    fn acosf(a0: f32) -> f32;
+    fn diag_jobj_mtx(a0: *const f32, a1: i32, a2: i32);
+    fn hsdInitClassInfo(a0: *mut _HSD_ClassInfo, a1: *mut _HSD_ClassInfo, a2: *mut i8, a3: *mut i8, a4: i32, a5: i32);
+    fn hsdIsDescendantOf(a0: *mut c_void, a1: *mut c_void) -> i32;
+    fn hsdNew(a0: *mut _HSD_ClassInfo) -> *mut c_void;
+    fn hsdSearchClassInfo(a0: *const i8) -> *mut _HSD_ClassInfo;
+    fn splArcLengthPoint(a0: *mut Vec, a1: *mut HSD_Spline, a2: f32);
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+        pub unsafe extern "C" fn HSD_JObjDispSub(a0: *mut HSD_JObj, a1: *mut c_void, a2: *mut c_void, a3: u32, a4: u32) { super::HSD_JObjDispSub(a0, a1, a2, a3, a4) }
+        pub unsafe extern "C" fn HSD_JObjMakePositionMtx(a0: *mut HSD_JObj, a1: *mut c_void, a2: *mut c_void) { super::HSD_JObjMakePositionMtx(a0, a1, a2) }
+        pub unsafe extern "C" fn hsdIsDescendantOf(a0: *mut c_void, a1: *mut c_void) -> i32 { super::hsdIsDescendantOf(a0, a1) }
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut hsdObj: HSD_ClassInfo = unsafe { core::mem::zeroed() };
+}
+// END GENERATED EXT

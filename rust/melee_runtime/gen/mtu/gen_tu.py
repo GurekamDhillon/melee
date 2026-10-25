@@ -508,6 +508,13 @@ class Walk:
             return
         if k == T.ENUM or k in INTS:
             sz = c.get_size()
+            if "HSD_IDKey" in t.spelling and sz == 8 or ("HSD_IDKey" in t.spelling and gc4(t)):
+                # JObj::id holds the host pointer of its joint once loaded: hash the region id, else the value
+                cf.append(f"{cexpr} = fv64();")
+                rf.append(f"{rexpr} = fv64() as _;")
+                ch.append(f"{{ u32 pk_ = PI((const void*) (unsigned long long) {cexpr}); if (pk_ != 0xFFFFFFFFu) HM(pk_); else {{ HM((u32) {cexpr}); HM((u32) ((unsigned long long) {cexpr} >> 32)); }} }}")
+                rh.append(f"{{ let pk_ = pi({rexpr} as usize as *const u8); if pk_ != 0xFFFF_FFFF {{ hm(pk_); }} else {{ hm({rexpr} as u32); hm((({rexpr} as u64) >> 32) as u32); }} }}")
+                return
             if gc4(t):  # uintptr_t & co are 4 bytes in melee_types (GC layout), 8 natively: compare 32 bits
                 sz = 4
             if k == T.BOOL:
@@ -518,8 +525,12 @@ class Walk:
             elif sz == 8:
                 cf.append(f"{cexpr} = fv64();")
                 rf.append(f"{rexpr} = fv64() as _;")
-                ch.append(f"HM((u32) {cexpr}); HM((u32) ((u64) {cexpr} >> 32));")
-                rh.append(f"hm({rexpr} as u32); hm((({rexpr} as u64) >> 32) as u32);")
+                if t.spelling == "HSD_IDKey":  # holds a host pointer once loaded (JObj id = its joint): hash the region id, else the value
+                    ch.append(f"{{ u32 pk_ = PI((const void*) (unsigned long long) {cexpr}); if (pk_ != 0xFFFFFFFFu) HM(pk_); else {{ HM((u32) {cexpr}); HM((u32) ((u64) {cexpr} >> 32)); }} }}")
+                    rh.append(f"{{ let pk_ = pi({rexpr} as usize as *const u8); if pk_ != 0xFFFF_FFFF {{ hm(pk_); }} else {{ hm({rexpr} as u32); hm((({rexpr} as u64) >> 32) as u32); }} }}")
+                else:
+                    ch.append(f"HM((u32) {cexpr}); HM((u32) ((u64) {cexpr} >> 32));")
+                    rh.append(f"hm({rexpr} as u32); hm((({rexpr} as u64) >> 32) as u32);")
             else:
                 cf.append(f"{cexpr} = fv();")
                 rf.append(f"{rexpr} = fv() as _;")
@@ -704,6 +715,8 @@ def build(stem, spec, want_ext):
         # only the port's public functions can be named from the test (statics of the C file stay private)
         pubs = set(re.findall(r"(?m)^\s*pub (?:unsafe )?(?:extern \"C\" )?fn (\w+)", (ROOT / "rust/melee_runtime/src/tu" / f"{stem}.rs").read_text(encoding="utf-8")))
         own = [n for n in own if n in pubs]
+    if spec.get("own_only"):  # a port whose pub fns include generic adapters the driver cannot name
+        own = [n for n in own if n in spec["own_only"]]
     c_out.append("static void freg_all(void)\n{")
     for n in fpn:
         c_out.append(f"    freg((const void*) {n});")

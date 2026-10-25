@@ -8,54 +8,120 @@ use crate::jobj::*;
 use melee_types::{HSD_JObj, HSD_Joint, HSD_JObjInfo, HSD_DObj, HSD_DObjDesc, HSD_RObj,
     HSD_RObjDesc, HSD_AObj, HSD_CObj, _HSD_Class, _HSD_ClassInfo, _HSD_SList, Mtx};
 use std::ptr::null_mut;
+#[allow(unused_imports)]
+use melee_types::*;
+use crate::jobj::{JOBJ_HIDDEN, JOBJ_INSTANCE, JOBJ_MTX_DIRTY, JOBJ_PTCL, JOBJ_SPLINE};
 
-pub static mut hsdJObj: HSD_JObjInfo = unsafe { core::mem::zeroed() };
+pub static mut hsdJObj: HSD_JObjInfo = { let mut i: HSD_JObjInfo = unsafe { core::mem::zeroed() }; i.parent.parent.head.info_init = Some(JObjInfoInit); i };
 pub static mut default_class: *mut _HSD_ClassInfo = null_mut();
 pub static mut current_jobj: *mut HSD_JObj = null_mut();
 pub static mut ufc_callbacks: *mut _HSD_SList = null_mut();
 
 /// Exact external C boundaries. Defaults deliberately identify unavailable cross-TU services;
 /// deterministic native hosts (including the C oracle mirror) install typed hooks.
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
-    macro_rules! hook {
-        ($name:ident, $slot:ident, ($($a:ident:$ty:ty),*) -> $ret:ty) => {
-            pub static mut $slot: Option<unsafe fn($($ty),*) -> $ret> = None;
-            pub unsafe fn $name($($a:$ty),*) -> $ret {
-                ($slot.expect(concat!("TODO cross-TU: ", stringify!($name))))($($a),*)
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
             }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
+                }
+            } )*
         };
     }
-    hook!(hsdNew, NEW, (info:*mut _HSD_ClassInfo) -> *mut HSD_JObj);
-    hook!(hsdSearchClassInfo, SEARCH, (name:*mut i8) -> *mut _HSD_ClassInfo);
-    hook!(hsdIsDescendantOf, DESCENDANT, (info:*mut _HSD_ClassInfo, parent:*mut _HSD_ClassInfo) -> bool);
-    hook!(hsdInitClassInfo, INIT_INFO, (info:*mut _HSD_ClassInfo, parent:*mut _HSD_ClassInfo, library:*const i8, name:*const i8, info_size:i32, object_size:i32) -> ());
-    hook!(hsdDelete, DELETE, (j:*mut HSD_JObj) -> ());
-    hook!(HSD_DObjLoadDesc, DLOAD, (d:*mut HSD_DObjDesc) -> *mut HSD_DObj);
-    hook!(HSD_RObjLoadDesc, RLOAD, (d:*mut HSD_RObjDesc) -> *mut HSD_RObj);
-    hook!(HSD_DObjResolveRefsAll, DRESOLVE, (o:*mut HSD_DObj,d:*mut HSD_DObjDesc) -> ());
-    hook!(HSD_RObjResolveRefsAll, RRESOLVE, (o:*mut HSD_RObj,d:*mut HSD_RObjDesc) -> ());
-    hook!(HSD_DObjRemoveAll, DREMOVE, (o:*mut HSD_DObj) -> ());
-    hook!(HSD_RObjRemoveAll, RREMOVE, (o:*mut HSD_RObj) -> ());
-    hook!(HSD_AObjRemove, AREMOVE, (o:*mut HSD_AObj) -> ());
-    hook!(HSD_IDInsertToTable, IDINSERT, (table:*mut core::ffi::c_void,id:usize,j:*mut HSD_JObj) -> ());
-    hook!(HSD_IDGetDataFromTable, IDGET, (table:*mut core::ffi::c_void,id:usize,success:*mut i32) -> *mut HSD_JObj);
-    hook!(HSD_IDRemoveByIDFromTable, IDREMOVE, (table:*mut core::ffi::c_void,id:usize) -> ());
-    hook!(HSD_CObjGetCurrent, CAMERA, () -> *mut HSD_CObj);
-    hook!(HSD_JObjDisp, DISP, (j:*mut HSD_JObj,m:&Mtx,flags:u32,mode:u32) -> ());
-    hook!(HSD_JObjMakePositionMtx, PMTX, (j:*mut HSD_JObj,v:*mut [f32;4],p:*mut [f32;4]) -> ());
-    hook!(HSD_JObjDispSub, DISP_SUB, (j:*mut HSD_JObj,v:*mut [f32;4],p:*mut [f32;4],flags:u32,mode:u32) -> ());
-    pub static mut hsdObj: *mut _HSD_ClassInfo = null_mut();
-    hook!(HSD_RObjUpdateAll, RUPDATE, (r:*mut HSD_RObj,j:*mut HSD_JObj) -> ());
-    pub static mut MTX_ALLOC: Option<unsafe fn()->melee_types::MtxPtr> = None;
-    pub static mut MTX_FREE: Option<unsafe fn(melee_types::MtxPtr)> = None;
-    pub static mut VEC_FREE: Option<unsafe fn(*mut melee_types::Vec)> = None;
-    pub unsafe fn HSD_MtxAlloc()->melee_types::MtxPtr { if let Some(f)=MTX_ALLOC{f()}else{Box::into_raw(Box::new([[0.;4];3])).cast()} }
-    pub unsafe fn HSD_MtxFree(m:melee_types::MtxPtr){if let Some(f)=MTX_FREE{f(m)}else{drop(Box::from_raw(m as *mut Mtx))}}
-    pub unsafe fn HSD_VecFree(v:*mut melee_types::Vec){if let Some(f)=VEC_FREE{f(v)}else{drop(Box::from_raw(v))}}
-
-pub mod native {
-    use super::super::*;
+    ext_fns! {
+    fn HSD_AObjInitEndCallBack();
+    fn HSD_AObjInterpretAnim(a0: *mut HSD_AObj, a1: *mut c_void, a2: Option<unsafe extern "C" fn(*mut c_void, i32, *mut HSD_ObjData)>);
+    fn HSD_AObjInvokeCallBacks();
+    fn HSD_AObjLoadDesc(a0: *mut HSD_AObjDesc) -> *mut HSD_AObj;
+    fn HSD_AObjRemove(a0: *mut HSD_AObj);
+    fn HSD_AObjReqAnim(a0: *mut HSD_AObj, a1: f32);
+    fn HSD_CObjGetCurrent() -> *mut HSD_CObj;
+    fn HSD_DObjAddAnimAll(a0: *mut HSD_DObj, a1: *mut _HSD_MatAnim, a2: *mut HSD_ShapeAnimDObj);
+    fn HSD_DObjAnimAll(a0: *mut HSD_DObj);
+    fn HSD_DObjLoadDesc(a0: *mut HSD_DObjDesc) -> *mut HSD_DObj;
+    fn HSD_DObjRemoveAll(a0: *mut HSD_DObj);
+    fn HSD_DObjRemoveAnimAllByFlags(a0: *mut HSD_DObj, a1: u32);
+    fn HSD_DObjReqAnimAllByFlags(a0: *mut HSD_DObj, a1: f32, a2: u32);
+    fn HSD_DObjResolveRefsAll(a0: *mut HSD_DObj, a1: *mut HSD_DObjDesc);
+    fn HSD_IDGetDataFromTable(a0: *mut _HSD_IDTable, a1: u64, a2: *mut i32) -> *mut c_void;
+    fn HSD_IDInsertToTable(a0: *mut _HSD_IDTable, a1: u64, a2: *mut c_void);
+    fn HSD_IDRemoveByIDFromTable(a0: *mut _HSD_IDTable, a1: u64);
+    fn HSD_JObjDisp(a0: *mut HSD_JObj, a1: *mut c_void, a2: u32, a3: u32);
+    fn HSD_JObjDispSub(a0: *mut HSD_JObj, a1: *mut c_void, a2: *mut c_void, a3: u32, a4: u32);
+    fn HSD_JObjMakePositionMtx(a0: *mut HSD_JObj, a1: *mut c_void, a2: *mut c_void);
+    fn HSD_MtxAlloc() -> *mut c_void;
+    fn HSD_MtxFree(a0: *mut c_void);
+    fn HSD_MtxGetRotation(a0: *mut c_void, a1: *mut Vec);
+    fn HSD_MtxGetScale(a0: *mut c_void, a1: *mut Vec);
+    fn HSD_MtxGetTranslate(a0: *mut c_void, a1: *mut Vec);
+    fn HSD_MtxInverseConcat(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void);
+    fn HSD_MtxSRT(a0: *mut c_void, a1: *mut Vec, a2: *mut Vec, a3: *mut Vec, a4: *mut Vec);
+    fn HSD_MtxSRTQuat(a0: *mut c_void, a1: *mut Vec, a2: *mut Quaternion, a3: *mut Vec, a4: *mut Vec);
+    fn HSD_RObjAddAnimAll(a0: *mut HSD_RObj, a1: *mut HSD_RObjAnimJoint);
+    fn HSD_RObjAnimAll(a0: *mut HSD_RObj);
+    fn HSD_RObjGetByType(a0: *mut HSD_RObj, a1: u32, a2: u32) -> *mut HSD_RObj;
+    fn HSD_RObjGetGlobalPosition(a0: *mut HSD_RObj, a1: i32, a2: *mut Vec) -> i32;
+    fn HSD_RObjLoadDesc(a0: *mut HSD_RObjDesc) -> *mut HSD_RObj;
+    fn HSD_RObjRemoveAll(a0: *mut HSD_RObj);
+    fn HSD_RObjRemoveAnimAllByFlags(a0: *mut HSD_RObj, a1: u32);
+    fn HSD_RObjReqAnimAllByFlags(a0: *mut HSD_RObj, a1: f32, a2: u32);
+    fn HSD_RObjResolveRefsAll(a0: *mut HSD_RObj, a1: *mut HSD_RObjDesc);
+    fn HSD_RObjUpdateAll(a0: *mut HSD_RObj, a1: *mut c_void, a2: Option<unsafe extern "C" fn(*mut c_void, i32, *mut HSD_ObjData)>);
+    fn HSD_VecAlloc() -> *mut c_void;
+    fn HSD_VecFree(a0: *mut c_void);
+    fn PSMTXConcat(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void);
+    fn PSMTXCopy(a0: *mut c_void, a1: *mut c_void);
+    fn PSMTXIdentity(a0: *mut c_void) = crate::tu::mtx_pc::raw::PSMTXIdentity(a0 as _);
+    fn PSMTXInverse(a0: *mut c_void, a1: *mut c_void) -> u32;
+    fn PSMTXMultVec(a0: *mut c_void, a1: *mut Vec, a2: *mut Vec);
+    fn PSMTXRotAxisRad(a0: *mut c_void, a1: *mut Vec, a2: f32);
+    fn PSVECAdd(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec);
+    fn PSVECCrossProduct(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec);
+    fn PSVECDotProduct(a0: *mut Vec, a1: *mut Vec) -> f32;
+    fn PSVECNormalize(a0: *mut Vec, a1: *mut Vec);
+    fn PSVECScale(a0: *mut Vec, a1: *mut Vec, a2: f32);
+    fn PSVECSubtract(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec);
+    fn ProfActive() -> i32;
+    fn ProfBegin(a0: i32, a1: i32);
+    fn ProfEnd();
+    fn acosf(a0: f32) -> f32;
+    fn diag_jobj_mtx(a0: *const f32, a1: i32, a2: i32);
+    fn hsdInitClassInfo(a0: *mut _HSD_ClassInfo, a1: *mut _HSD_ClassInfo, a2: *mut i8, a3: *mut i8, a4: i32, a5: i32);
+    fn hsdIsDescendantOf(a0: *mut c_void, a1: *mut c_void) -> i32;
+    fn hsdNew(a0: *mut _HSD_ClassInfo) -> *mut c_void;
+    fn hsdSearchClassInfo(a0: *const i8) -> *mut _HSD_ClassInfo;
+    fn splArcLengthPoint(a0: *mut Vec, a1: *mut HSD_Spline, a2: f32);
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+        pub unsafe extern "C" fn HSD_JObjDispSub(a0: *mut HSD_JObj, a1: *mut c_void, a2: *mut c_void, a3: u32, a4: u32) { super::HSD_JObjDispSub(a0, a1, a2, a3, a4) }
+        pub unsafe extern "C" fn HSD_JObjMakePositionMtx(a0: *mut HSD_JObj, a1: *mut c_void, a2: *mut c_void) { super::HSD_JObjMakePositionMtx(a0, a1, a2) }
+        pub unsafe extern "C" fn hsdIsDescendantOf(a0: *mut c_void, a1: *mut c_void) -> i32 { super::hsdIsDescendantOf(a0, a1) }
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut hsdObj: HSD_ClassInfo = unsafe { core::mem::zeroed() };
+}
+// END GENERATED EXT
+/// Tests that own their copy of other TUs' data set this; the game uses the owning TU's statics.
+pub static mut use_ext_data: bool = false;
+/// object.c `hsdObj`.
+unsafe fn hsd_obj_ptr() -> *mut _HSD_ClassInfo {
+    if use_ext_data { (&raw mut ext::hsdObj).cast() } else { (&raw mut crate::tu::object::hsdObj).cast() }
+}
+/// Cross-TU services of the arena adapters (not in jobj.c's own raw entry points).
+pub mod ext_native {
+    use super::*;
     pub fn HSD_ByteCodeEval(_b:Option<&[u8]>,_a:&[f32],_n:u32)->f32{todo!("cross-TU HSD_ByteCodeEval")}
     pub fn HSD_DObjRemoveAnimAllByFlags(_d:&[*mut HSD_DObj],_f:u32){todo!("cross-TU HSD_DObjRemoveAnimAllByFlags")}
     pub fn HSD_DObjReqAnimAllByFlags(_d:&[*mut HSD_DObj],_x:f32,_f:u32){todo!("cross-TU HSD_DObjReqAnimAllByFlags")}
@@ -63,6 +129,12 @@ pub mod native {
     pub fn HSD_DObjAnimAll(_d:&[*mut HSD_DObj]){todo!("cross-TU HSD_DObjAnimAll")}
     pub fn splArcLengthPoint(_j:*mut HSD_JObj,_s:f32)->crate::mtx::Vec3{todo!("cross-TU splArcLengthPoint")}
 }
+/// class.h `hsdDelete` (static inline): release then destroy through the object class.
+unsafe fn hsd_delete_ext(o:*mut HSD_JObj){
+    if o.is_null(){return}
+    let i=(*o).object.parent.class_info;
+    ((*i).release.expect("hsdDelete: release"))(o.cast());
+    ((*i).destroy.expect("hsdDelete: destroy"))(o.cast());
 }
 unsafe fn info(j:*mut HSD_JObj)->*mut HSD_JObjInfo { (*j).object.parent.class_info.cast() }
 unsafe fn ref_inc(j:*mut HSD_JObj) {
@@ -74,15 +146,15 @@ pub unsafe fn has_scl(j:*mut HSD_JObj)->bool { !j.is_null()&&!(*j).scl.is_null()
 pub unsafe fn robj_set_next(r:*mut HSD_RObj,next:*mut HSD_RObj)->*mut HSD_RObj { if !r.is_null(){(*r).next=next;r}else{next} }
 
 pub unsafe fn HSD_JObjSetDefaultClass(i:*mut _HSD_ClassInfo) {
-    if !i.is_null(){assert!(ext::hsdIsDescendantOf(i, (&raw mut hsdJObj).cast()));} default_class=i;
+    if !i.is_null(){assert!(ext::hsdIsDescendantOf(i.cast(), (&raw mut hsdJObj).cast())!=0);} default_class=i;
 }
 pub unsafe fn HSD_JObjAlloc()->*mut HSD_JObj {
-    let j=ext::hsdNew(if default_class.is_null(){(&raw mut hsdJObj).cast()}else{default_class}); assert!(!j.is_null()); j
+    let j=ext::hsdNew(if default_class.is_null(){(&raw mut hsdJObj).cast()}else{default_class}).cast::<HSD_JObj>(); assert!(!j.is_null()); j
 }
 pub unsafe fn JObjLoadJointSub(d:*mut HSD_Joint,parent:*mut HSD_JObj)->*mut HSD_JObj {
     if d.is_null(){return null_mut()}
     let i=if (*d).class_name.is_null(){null_mut()}else{ext::hsdSearchClassInfo((*d).class_name)};
-    let j=if i.is_null(){HSD_JObjAlloc()}else{ext::hsdNew(i)};
+    let j=if i.is_null(){HSD_JObjAlloc()}else{ext::hsdNew(i).cast::<HSD_JObj>()};
     assert!(!j.is_null()); ((*info(j)).load.expect("JObj load method"))(j,d,parent); j
 }
 pub unsafe extern "C" fn JObjLoad(j:*mut HSD_JObj,d:*mut HSD_Joint,parent:*mut HSD_JObj)->i32 {
@@ -98,9 +170,9 @@ pub unsafe extern "C" fn JObjLoad(j:*mut HSD_JObj,d:*mut HSD_Joint,parent:*mut H
     } else {(*j).u.dobj=ext::HSD_DObjLoadDesc((*d).u.dobjdesc);}
     (*j).robj=ext::HSD_RObjLoadDesc((*d).robjdesc);
     (*j).rotate.x=(*d).rotation.x; (*j).rotate.y=(*d).rotation.y; (*j).rotate.z=(*d).rotation.z;
-    (*j).scale=(*d).scale; (*j).translate=(*d).position; (*j).mtx=crate::mtx::identity(); (*j).scl=null_mut();
-    if !(*d).mtx.is_null(){(*j).envelopemtx=ext::HSD_MtxAlloc();*((*j).envelopemtx as *mut Mtx)=*((*d).mtx as *const Mtx);}
-    (*j).id=d as usize; ext::HSD_IDInsertToTable(null_mut(),(*j).id,j); 0
+    (*j).scale=(*d).scale; (*j).translate=(*d).position; ext::PSMTXIdentity((*j).mtx.as_mut_ptr().cast()); (*j).scl=null_mut();
+    if !(*d).mtx.is_null(){(*j).envelopemtx=ext::HSD_MtxAlloc().cast();*((*j).envelopemtx as *mut Mtx)=*((*d).mtx as *const Mtx);}
+    (*j).id=d as usize; ext::HSD_IDInsertToTable(null_mut(),(*j).id as u64,j.cast()); 0
 }
 pub unsafe fn HSD_JObjLoadJoint(d:*mut HSD_Joint)->*mut HSD_JObj {
     let j=JObjLoadJointSub(d,null_mut()); HSD_JObjResolveRefsAll(j,d); j
@@ -110,7 +182,7 @@ pub unsafe fn HSD_JObjResolveRefs(j:*mut HSD_JObj,d:*mut HSD_Joint) {
     ext::HSD_RObjResolveRefsAll((*j).robj,(*d).robjdesc);
     if (*j).flags&JOBJ_INSTANCE!=0 {
         HSD_JObjUnref((*j).child);
-        (*j).child=ext::HSD_IDGetDataFromTable(null_mut(),(*d).child as usize,null_mut());
+        (*j).child=ext::HSD_IDGetDataFromTable(null_mut(),(*d).child as usize as u64,null_mut()).cast();
         assert!(!(*j).child.is_null()); ref_inc((*j).child);
     }
     if dobj_union(j){ext::HSD_DObjResolveRefsAll((*j).u.dobj,(*d).u.dobjdesc);}
@@ -126,16 +198,16 @@ pub unsafe fn HSD_JObjUnref(j:*mut HSD_JObj) {
     let n=(*j).object.ref_count;
     if n!=65535 {(*j).object.ref_count=n.wrapping_sub(1);}
     if n==0||n==65535 {
-        if (*j).object.ref_count_individual==0 {ext::hsdDelete(j);}
+        if (*j).object.ref_count_individual==0 {hsd_delete_ext(j);}
         else {(*j).object.ref_count_individual=(*j).object.ref_count_individual.wrapping_add(1);
             assert_ne!((*j).object.ref_count_individual,0);
             ((*info(j)).release_child.expect("release_child"))(j);
-            if iref_dec(&mut (*j).object.ref_count_individual){ext::hsdDelete(j);}
+            if iref_dec(&mut (*j).object.ref_count_individual){hsd_delete_ext(j);}
         }
     }
 }
 pub unsafe fn HSD_JObjUnrefThis(j:*mut HSD_JObj) {
-    if !j.is_null()&&iref_dec(&mut (*j).object.ref_count_individual)&&(*j).object.ref_count==65535 {ext::hsdDelete(j);}
+    if !j.is_null()&&iref_dec(&mut (*j).object.ref_count_individual)&&(*j).object.ref_count==65535 {hsd_delete_ext(j);}
 }
 pub unsafe fn HSD_JObjSetCurrent(j:*mut HSD_JObj){ref_inc(j);HSD_JObjUnref(current_jobj);current_jobj=j;}
 pub unsafe fn HSD_JObjGetCurrent()->*mut HSD_JObj{current_jobj}
@@ -158,9 +230,9 @@ pub unsafe extern "C" fn JObjReleaseChild(j:*mut HSD_JObj) {
 }
 pub unsafe extern "C" fn JObjRelease(o:*mut _HSD_Class) {
     let j=o.cast::<HSD_JObj>(); ((*info(j)).release_child.expect("release_child"))(j);
-    if ext::HSD_IDGetDataFromTable(null_mut(),(*j).id,null_mut())==j {ext::HSD_IDRemoveByIDFromTable(null_mut(),(*j).id);}
-    if !(*j).scl.is_null(){ext::HSD_VecFree((*j).scl);}
-    if !(*j).envelopemtx.is_null(){ext::HSD_MtxFree((*j).envelopemtx);}
+    if ext::HSD_IDGetDataFromTable(null_mut(),(*j).id as u64,null_mut())==j.cast() {ext::HSD_IDRemoveByIDFromTable(null_mut(),(*j).id as u64);}
+    if !(*j).scl.is_null(){ext::HSD_VecFree((*j).scl.cast());}
+    if !(*j).envelopemtx.is_null(){ext::HSD_MtxFree((*j).envelopemtx.cast());}
     ((*hsdJObj.parent.parent.head.parent).release.expect("parent release"))(o);
 }
 pub unsafe extern "C" fn JObjAmnesia(i:*mut _HSD_ClassInfo) {
@@ -168,10 +240,10 @@ pub unsafe extern "C" fn JObjAmnesia(i:*mut _HSD_ClassInfo) {
     if i==(&raw mut hsdJObj).cast(){ufc_callbacks=null_mut();current_jobj=null_mut();}
     ((*hsdJObj.parent.parent.head.parent).amnesia.expect("parent amnesia"))(i);
 }
-unsafe extern "C" fn make_pmtx(j:*mut HSD_JObj,v:*mut [f32;4],p:*mut [f32;4]){ext::HSD_JObjMakePositionMtx(j,v,p)}
-unsafe extern "C" fn disp_sub(j:*mut HSD_JObj,v:*mut [f32;4],p:*mut [f32;4],f:u32,r:u32){ext::HSD_JObjDispSub(j,v,p,f,r)}
+unsafe extern "C" fn make_pmtx(j:*mut HSD_JObj,v:*mut [f32;4],p:*mut [f32;4]){ext::HSD_JObjMakePositionMtx(j,v.cast(),p.cast())}
+unsafe extern "C" fn disp_sub(j:*mut HSD_JObj,v:*mut [f32;4],p:*mut [f32;4],f:u32,r:u32){ext::HSD_JObjDispSub(j,v.cast(),p.cast(),f,r)}
 pub unsafe extern "C" fn JObjInfoInit() {
-    ext::hsdInitClassInfo((&raw mut hsdJObj).cast(),ext::hsdObj,c"sysdolphin_base_library".as_ptr(),c"hsd_jobj".as_ptr(),size_of::<HSD_JObjInfo>() as i32,size_of::<HSD_JObj>() as i32);
+    ext::hsdInitClassInfo((&raw mut hsdJObj).cast(),hsd_obj_ptr(),c"sysdolphin_base_library".as_ptr().cast_mut(),c"hsd_jobj".as_ptr().cast_mut(),size_of::<HSD_JObjInfo>() as i32,size_of::<HSD_JObj>() as i32);
     hsdJObj.parent.parent.init=Some(JObjInit);hsdJObj.parent.parent.release=Some(JObjRelease);hsdJObj.parent.parent.amnesia=Some(JObjAmnesia);
     hsdJObj.make_mtx=Some(native_make_matrix);hsdJObj.make_pmtx=Some(make_pmtx);hsdJObj.disp=Some(disp_sub);hsdJObj.load=Some(JObjLoad);hsdJObj.release_child=Some(JObjReleaseChild);
 }
@@ -212,14 +284,14 @@ unsafe fn flush(t:&NativeTree,p:&[*mut HSD_JObj]){
         (*j).parent=ptr(o.parent);(*j).child=ptr(o.child);(*j).next=ptr(o.next);(*j).flags=o.flags;
         (*j).scale=native_vec(o.scale);(*j).translate=native_vec(o.translate);
         (*j).rotate=melee_types::Quaternion{x:o.rotate.x,y:o.rotate.y,z:o.rotate.z,w:o.rotate.w};(*j).mtx=o.mtx;
-        match o.scl {Some(s)=>{if (*j).scl.is_null(){(*j).scl=Box::into_raw(Box::new(native_vec(s)));}else{*(*j).scl=native_vec(s);}},None=>{if !(*j).scl.is_null(){ext::HSD_VecFree((*j).scl);(*j).scl=null_mut();}}}
+        match o.scl {Some(s)=>{if (*j).scl.is_null(){(*j).scl=Box::into_raw(Box::new(native_vec(s)));}else{*(*j).scl=native_vec(s);}},None=>{if !(*j).scl.is_null(){ext::HSD_VecFree((*j).scl.cast());(*j).scl=null_mut();}}}
         if dobj_union(j){(*j).u.dobj=o.dobj.first().copied().unwrap_or(null_mut());for (k,&d) in o.dobj.iter().enumerate(){(*d).next=o.dobj.get(k+1).copied().unwrap_or(null_mut());}}
         (*j).robj=o.robj.first().copied().unwrap_or(null_mut());for(k,&r)in o.robj.iter().enumerate(){(*r).next=o.robj.get(k+1).copied().unwrap_or(null_mut());}
     }
 }
 impl JObjHost<*mut HSD_DObj,*mut HSD_RObj> for NativeHost {
     fn ik_hint_bone_length(&mut self,r:&[*mut HSD_RObj])->Option<f32>{unsafe{r.iter().find(|&&r|(*r).flags&0xf0000000==0xc0000000).map(|&r|(*r).u.ik_hint.bone_length)}}
-    fn robj_update_all(&mut self,t:&mut NativeTree,j:JObjId){unsafe{flush(t,&self.0);let p=self.0[j.0 as usize];ext::HSD_RObjUpdateAll((*p).robj,p);*t=snapshot(&self.0).0;}}
+    fn robj_update_all(&mut self,t:&mut NativeTree,j:JObjId){unsafe{flush(t,&self.0);let p=self.0[j.0 as usize];ext::HSD_RObjUpdateAll((*p).robj,p.cast(),Some(crate::tu::jobj_ptr::JObjUpdateFunc));*t=snapshot(&self.0).0;}}
     fn resolve_ik_joint1(&mut self,t:&mut NativeTree,j:JObjId){unsafe{native_ik(t,&self.0,j,true)}}
     fn resolve_ik_joint2(&mut self,t:&mut NativeTree,j:JObjId){unsafe{native_ik(t,&self.0,j,false)}}
     fn unref(&mut self,_:&mut NativeTree,j:JObjId){self.1.push(j);}
@@ -239,7 +311,7 @@ pub unsafe fn HSD_JObjDispAll(j:*mut HSD_JObj,v:&Mtx,flags:u32,mode:u32){
             let m=crate::mtx::concat(&(*c).view_mtx,&m);HSD_JObjDispAll((*j).child,&m,flags,mode);
         }
     }else{
-        if (*j).flags&flags.wrapping_shl(18)!=0{ext::HSD_JObjDisp(j,v,flags,mode);}
+        if (*j).flags&flags.wrapping_shl(18)!=0{ext::HSD_JObjDisp(j,(v as *const Mtx as *mut Mtx).cast(),flags,mode);}
         if (*j).flags&flags.wrapping_shl(28)!=0{let mut c=(*j).child;while !c.is_null(){HSD_JObjDispAll(c,v,flags,mode);c=(*c).next;}}
     }
 }
@@ -268,16 +340,16 @@ unsafe fn native_ik(t:&mut NativeTree,p:&[*mut HSD_JObj],j:JObjId,first:bool){
 impl crate::robj::RObjHost for std::vec::Vec<*mut HSD_JObj>{
     fn jobj_ref_this(&mut self,j:JObjId){unsafe{let o=&mut (*self[j.0 as usize]).object;o.ref_count_individual=o.ref_count_individual.wrapping_add(1);assert_ne!(o.ref_count_individual,0)}}
     fn jobj_unref_this(&mut self,j:Option<JObjId>){unsafe{HSD_JObjUnrefThis(j.map_or(null_mut(),|j|self[j.0 as usize]))}}
-    fn byte_code_eval(&mut self,b:Option<&[u8]>,a:&[f32],n:u32)->f32{ext::native::HSD_ByteCodeEval(b,a,n)}
+    fn byte_code_eval(&mut self,b:Option<&[u8]>,a:&[f32],n:u32)->f32{ext_native::HSD_ByteCodeEval(b,a,n)}
 }
 impl JObjExt for std::vec::Vec<*mut HSD_JObj>{
     type D=*mut HSD_DObj;type MatAnim=();type ShapeAnim=();
-    fn dobj_remove_anim_all_by_flags(&mut self,d:&[Self::D],f:u32){ext::native::HSD_DObjRemoveAnimAllByFlags(d,f)}
-    fn dobj_req_anim_all_by_flags(&mut self,d:&[Self::D],x:f32,f:u32){ext::native::HSD_DObjReqAnimAllByFlags(d,x,f)}
-    fn dobj_add_anim_all(&mut self,d:&[Self::D],m:Option<&()>,s:Option<&()>){ext::native::HSD_DObjAddAnimAll(d,m,s)}
-    fn dobj_anim_all(&mut self,d:&[Self::D]){ext::native::HSD_DObjAnimAll(d)}
-    fn spline_point(&mut self,j:JObjId,s:f32)->crate::mtx::Vec3{ext::native::splArcLengthPoint(self[j.0 as usize],s)}
-    fn aobj_resolve_obj(&mut self,id:u32)->Option<JObjId>{unsafe{let p=ext::HSD_IDGetDataFromTable(null_mut(),id as usize,null_mut());self.iter().position(|&j|j==p).map(|i|JObjId(i as u32))}}
+    fn dobj_remove_anim_all_by_flags(&mut self,d:&[Self::D],f:u32){ext_native::HSD_DObjRemoveAnimAllByFlags(d,f)}
+    fn dobj_req_anim_all_by_flags(&mut self,d:&[Self::D],x:f32,f:u32){ext_native::HSD_DObjReqAnimAllByFlags(d,x,f)}
+    fn dobj_add_anim_all(&mut self,d:&[Self::D],m:Option<&()>,s:Option<&()>){ext_native::HSD_DObjAddAnimAll(d,m,s)}
+    fn dobj_anim_all(&mut self,d:&[Self::D]){ext_native::HSD_DObjAnimAll(d)}
+    fn spline_point(&mut self,j:JObjId,s:f32)->crate::mtx::Vec3{ext_native::splArcLengthPoint(self[j.0 as usize],s)}
+    fn aobj_resolve_obj(&mut self,id:u32)->Option<JObjId>{unsafe{let p=ext::HSD_IDGetDataFromTable(null_mut(),id as usize as u64,null_mut()).cast::<HSD_JObj>();self.iter().position(|&j|j==p).map(|i|JObjId(i as u32))}}
     fn jobj_ref(&mut self,j:Option<JObjId>){unsafe{ref_inc(j.map_or(null_mut(),|j|self[j.0 as usize]))}}
     fn jobj_unref(&mut self,j:Option<JObjId>){unsafe{HSD_JObjUnref(j.map_or(null_mut(),|j|self[j.0 as usize]))}}
 }

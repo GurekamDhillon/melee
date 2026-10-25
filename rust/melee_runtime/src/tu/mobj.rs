@@ -696,11 +696,23 @@ pub const RENDER_SPECULAR: u32 = 1 << 3;
 pub const RENDER_TOON: u32 = 1 << 12;
 pub const RENDER_SHADOW: u32 = 1 << 26;
 pub const RENDER_XLU: u32 = 1 << 30;
+const RENDER_NO_ZUPDATE_BIT: u32 = 1 << 29;
 
 const TEX_COLORMAP_MASK: u32 = 0xF << 16;
 const TEX_ALPHAMAP_MASK: u32 = 0xF << 20;
 const TOBJ_TEVREG_ACTIVE_COLOR_TEV: u32 = 1 << 30;
 const TOBJ_TEVREG_ACTIVE_ALPHA_TEV: u32 = 1 << 31;
+
+/// `ftMaterial_800BF534` / `ftMaterial_800BF6BC`: what a fighter adds after its material's TEV.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct FtOverlay {
+    /// The colour-animation light (`x50_light_color`, used only when the render mode is opaque).
+    pub light: Option<[u8; 4]>,
+    /// The overlay colour and its blend ratio (`sp168` rgb and `sp168.a`), when one applies.
+    pub color: Option<([u8; 3], u8)>,
+    /// `fp->x61D` (0xFF: opaque).
+    pub alpha: u8,
+}
 
 /// A TEV input (`HSD_TEInput` + its expression, resolved to a GX source).
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -1080,7 +1092,24 @@ impl HsdRender {
         self.tobj_setup_texture_coord_gen(g, &tobjs);
         // setup_tev (MObjSetupTev): the compiled TEV, then HSD_TObjSetupVolatileTev (shadow /
         // bump only: not ported).
-        let tev = make_texp(d, rendermode, &mat, &tobjs);
+        let mut tev = make_texp(d, rendermode, &mat, &tobjs);
+        let mut rendermode = rendermode;
+        if let Some(o) = self.ft_overlay {
+            if o.alpha != 0xFF {
+                rendermode |= RENDER_XLU | RENDER_NO_ZUPDATE_BIT;
+            }
+            if let Some(l) = o.light {
+                if rendermode & RENDER_XLU == 0 {
+                    tev.push(None, GX_COLOR_NULL, add([In::Zero, k_of(l), In::RasA, In::PrevC]), PASS_A);
+                }
+            }
+            if let Some((c, ratio)) = o.color {
+                let a = if o.alpha != 0xFF { add([In::Zero, In::Zero, In::Zero, kx(o.alpha)]) } else { PASS_A };
+                tev.push(None, GX_COLOR_NULL, add([In::PrevC, In::K(c), kx(ratio), In::Zero]), a);
+            } else if o.alpha != 0xFF {
+                tev.push(None, GX_COLOR_NULL, PASS_C, add([In::Zero, In::Zero, In::Zero, kx(o.alpha)]));
+            }
+        }
         self.setup_tev(g, &tev);
         self.setup_render_mode_with_custom_pe(g, rendermode, pe);
     }

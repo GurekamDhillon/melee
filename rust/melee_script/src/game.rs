@@ -539,6 +539,104 @@ pub trait ScriptGame {
     fn lab_flight_f(&self, _slot: i32, _which: i32) -> f32 {
         0.0
     }
+
+    // ---- the Geno combo graph (gw_GenoGame_Combo* / gw_Geno_Combo*): `docs/geno.md` section 25
+    /// `gw_GenoGame_ComboInfo(port, what)`: what 3 = route count (negative: the fighter has no combo graph), 11 = profile,
+    /// 0 links, 1 ki, 2 last route, 4 hit, 5 blocked, 6 taken, 7 max links, 8 ki max, 9 action frame, 16+r = route state.
+    fn combo_info(&self, _slot: i32, _what: i32) -> i32 {
+        -1
+    }
+    /// `gw_GenoGame_ComboSetKi(port, hundredths)`: the new value, negative without a combo graph.
+    fn combo_set_ki(&mut self, _slot: i32, _ki: i32) -> i32 {
+        -1
+    }
+    /// `gw_Geno_ComboWord(profile, route, GENO_CR_*)`
+    fn combo_word(&self, _profile: i32, _route: i32, _word: i32) -> i32 {
+        0
+    }
+    fn combo_name(&self, _profile: i32, _route: i32) -> String {
+        String::new()
+    }
+    fn combo_state_name(&self, _profile: i32, _n: i32) -> String {
+        String::new()
+    }
+    // ---- the recorder (`pc/platform/gw_script_rec.inc`): `.gdlp` live-playback recordings. The Lua half
+    // (gating, names, argument shapes) is ported in `gd::rec`; these are the recorder's state machine and files.
+    fn rec_start(&mut self, _name: &str) -> Result<String, String> {
+        Err("recording is not available".into())
+    }
+    /// frames written
+    fn rec_stop(&mut self) -> Result<i32, String> {
+        Err("not recording".into())
+    }
+    fn rec_mark(&mut self, _label: &str) -> Result<i32, String> {
+        Err("not recording".into())
+    }
+    fn rec_play(&mut self, _name: &str, _map: &str, _looping: bool) -> Result<(), String> {
+        Err("recording is not available".into())
+    }
+    fn rec_play_stop(&mut self) -> Result<(), String> {
+        Err("not playing".into())
+    }
+    fn rec_trim(&mut self, _name: &str, _from: i32, _to: i32, _dst: &str) -> Result<String, String> {
+        Err("recording is not available".into())
+    }
+    /// `name` None: the last recording made this session. Result: the new recording's name.
+    fn rec_keep_last(&mut self, _seconds: f64, _name: Option<&str>) -> Result<String, String> {
+        Err("no recording named (and none made this session)".into())
+    }
+    fn rec_save_history(&mut self, _name: &str, _seconds: f64) -> Result<String, String> {
+        Err("recording is not available".into())
+    }
+    /// (path, frames)
+    fn rec_export_slp(&mut self, _name: &str, _out: &str) -> Result<(String, i32), String> {
+        Err("recording is not available".into())
+    }
+    fn rec_status(&self) -> RecStatus {
+        RecStatus::default()
+    }
+    fn rec_list(&self) -> Vec<RecRow> {
+        Vec::new()
+    }
+}
+
+/// `gd.rec_status()`: `mode` is "idle" / "arming" / "recording" / "loading" / "playing" / "working".
+#[derive(Clone, Debug)]
+pub struct RecStatus {
+    pub mode: &'static str,
+    pub name: String,
+    pub last: String,
+    pub frames: i32,
+    pub frame: i32,
+    pub looping: bool,
+    pub base: i32,
+}
+impl Default for RecStatus {
+    fn default() -> Self {
+        RecStatus { mode: "idle", name: String::new(), last: String::new(), frames: 0, frame: 0, looping: false, base: 0 }
+    }
+}
+
+/// One row of `gd.rec_list()`. `read` None: the file could not be read (only `name`, `bytes`, `ok = false` and `why` show).
+#[derive(Clone, Debug, Default)]
+pub struct RecRow {
+    pub name: String,
+    pub bytes: i64,
+    pub read: Option<RecRead>,
+    pub ok: bool,
+    pub why: String,
+}
+#[derive(Clone, Debug, Default)]
+pub struct RecRead {
+    pub frames: i32,
+    pub marks: i32,
+    pub complete: bool,
+    pub retail: bool,
+    pub format: i32,
+    pub whole: bool,
+    pub embedded: bool,
+    pub exportable: bool,
+    pub fighters: String,
 }
 
 /// No game: nothing is present (the C build before a scene).

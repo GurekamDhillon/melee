@@ -5,6 +5,7 @@ use crate::engine::{Engine, Shared};
 use mlua::{IntoLuaMulti, Lua, Result as LuaResult, Table, Value};
 
 pub mod camera;
+pub mod combo;
 pub mod core;
 pub mod fighter;
 pub mod history;
@@ -12,8 +13,10 @@ pub mod lab;
 pub mod labmisc;
 pub mod labstate;
 pub mod mods;
+pub mod perf;
 pub mod pad;
 pub mod players;
+pub mod rec;
 pub mod savestate;
 
 /// `gs_buttons` (only these twelve appear in `gd.buttons`).
@@ -47,6 +50,9 @@ pub fn register_all(e: &Engine, gd: &Table) -> LuaResult<()> {
     labstate::register(e, gd)?;
     savestate::register(e, gd)?;
     history::register(e, gd)?;
+    combo::register(e, gd)?;
+    perf::register(e, gd)?;
+    rec::register(e, gd)?;
     Ok(())
 }
 

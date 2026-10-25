@@ -125,6 +125,7 @@ pub struct State {
     pub zone: crate::gd::zones::ZoneAdapter,
     pub deadlines: crate::gd::deadline::Deadlines,
     pub contacts: crate::gd::contacts::Contacts,
+    pub fly_cursor: crate::gd::flycam::FlyCursor,
     pub last_action: [i32; 6],
     pub state_frame: [i32; 6],
     pub paused: bool,
@@ -427,6 +428,7 @@ impl Engine {
             zone: Default::default(),
             deadlines: Default::default(),
             contacts: Default::default(),
+            fly_cursor: Default::default(),
             last_action: [0; 6],
             state_frame: [0; 6],
             paused: false,
@@ -908,6 +910,13 @@ impl Engine {
         }
         s.game.caps_release(i as i32 + 1);
         s.game.owner_release(i as i32 + 1);
+        for slot in 0..6 {
+            // gs_fly_clear_owner
+            if s.fly_cursor_owner(slot) == i as i32 + 1 {
+                s.game.geno_fly_clear(slot as i32);
+                s.fly_cursor_clear(slot);
+            }
+        }
         let sc = &mut s.scripts[i];
         for t in sc.tasks.iter_mut() {
             *t = None;

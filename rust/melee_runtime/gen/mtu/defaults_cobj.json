@@ -37,5 +37,8 @@
  "HSD_WObjGetPosition": "crate::tu::wobj::HSD_WObjGetPosition(a0 as _, a1 as _)",
  "HSD_WObjSetPosition": "crate::tu::wobj::HSD_WObjSetPosition(a0 as _, a1 as _)",
  "HSD_MtxAlloc": "crate::tu::mtx::HSD_MtxAlloc()",
- "diag_cobj_view": "()"
+ "diag_cobj_view": "()",
+ "_HSD_ZListClear": "crate::tu::displayfunc_native::_HSD_ZListClear()",
+ "_HSD_ZListDisp": "crate::tu::displayfunc_native::_HSD_ZListDisp()",
+ "_HSD_ZListSort": "crate::tu::displayfunc_native::_HSD_ZListSort()"
 }

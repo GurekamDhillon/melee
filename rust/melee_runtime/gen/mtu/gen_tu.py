@@ -581,7 +581,11 @@ def build(stem, spec, want_ext):
             c_out.append(f"{canon(c.element_type).spelling if False else c.element_type.spelling} {n}[{cs}];")
             ext_data.append(f"    pub static mut {n}: [{rust_ty(c.element_type)}; {cs}] = unsafe {{ core::mem::zeroed() }};")
         elif c.kind == T.CONSTANTARRAY:
-            c_out.append(f"{c.element_type.spelling} {n}[{c.element_count}];")
+            dims, et = [], c
+            while et.kind == T.CONSTANTARRAY:
+                dims.append(et.element_count)
+                et = canon(et.element_type)
+            c_out.append(f"{et.spelling} {n}" + "".join(f"[{d}]" for d in dims) + ";")
             ext_data.append(f"    pub static mut {n}: {rust_ty(t)} = unsafe {{ core::mem::zeroed() }};")
         else:
             c_out.append(f"{t.spelling} {n};")

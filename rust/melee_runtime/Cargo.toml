@@ -101,3 +101,7 @@ harness = false
 [[test]]
 name = "tu_jobj"
 harness = false
+
+[[test]]
+name = "tu_displayfunc_native"
+harness = false

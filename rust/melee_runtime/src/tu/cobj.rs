@@ -95,9 +95,9 @@ pub mod ext {
     fn PSVECSubtract(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) = crate::tu::mtx_pc::raw::PSVECSubtract(a0, a1, a2);
     fn VIGetNextField() -> u32;
     fn View_ProjectionScaleBits() -> i32;
-    fn _HSD_ZListClear();
-    fn _HSD_ZListDisp();
-    fn _HSD_ZListSort();
+    fn _HSD_ZListClear() = crate::tu::displayfunc_native::_HSD_ZListClear();
+    fn _HSD_ZListDisp() = crate::tu::displayfunc_native::_HSD_ZListDisp();
+    fn _HSD_ZListSort() = crate::tu::displayfunc_native::_HSD_ZListSort();
     fn atan2f(a0: f32, a1: f32) -> f32 = crate::lbtrigf::atan2f(a0, a1);
     fn diag_cobj_view(a0: *const f32, a1: *const f32, a2: *const f32, a3: *const f32) = ();
     fn fabsf(a0: f32) -> f32 = a0.abs();

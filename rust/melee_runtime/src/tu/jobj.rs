@@ -56,9 +56,9 @@ pub mod ext {
     fn HSD_IDGetDataFromTable(a0: *mut _HSD_IDTable, a1: u64, a2: *mut i32) -> *mut c_void;
     fn HSD_IDInsertToTable(a0: *mut _HSD_IDTable, a1: u64, a2: *mut c_void);
     fn HSD_IDRemoveByIDFromTable(a0: *mut _HSD_IDTable, a1: u64);
-    fn HSD_JObjDisp(a0: *mut HSD_JObj, a1: *mut c_void, a2: u32, a3: u32);
-    fn HSD_JObjDispSub(a0: *mut HSD_JObj, a1: *mut c_void, a2: *mut c_void, a3: u32, a4: u32);
-    fn HSD_JObjMakePositionMtx(a0: *mut HSD_JObj, a1: *mut c_void, a2: *mut c_void);
+    fn HSD_JObjDisp(a0: *mut HSD_JObj, a1: *mut c_void, a2: u32, a3: u32) = crate::tu::displayfunc_native::HSD_JObjDisp(a0, a1 as _, a2, a3);
+    fn HSD_JObjDispSub(a0: *mut HSD_JObj, a1: *mut c_void, a2: *mut c_void, a3: u32, a4: u32) = crate::tu::displayfunc_native::HSD_JObjDispSub(a0, a1 as _, a2 as _, a3, a4);
+    fn HSD_JObjMakePositionMtx(a0: *mut HSD_JObj, a1: *mut c_void, a2: *mut c_void) = crate::tu::displayfunc_native::HSD_JObjMakePositionMtx(a0, a1 as _, a2 as _);
     fn HSD_MtxAlloc() -> *mut c_void;
     fn HSD_MtxFree(a0: *mut c_void);
     fn HSD_MtxGetRotation(a0: *mut c_void, a1: *mut Vec);

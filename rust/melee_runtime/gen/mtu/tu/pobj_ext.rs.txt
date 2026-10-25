@@ -66,7 +66,7 @@ pub mod ext {
     fn ProfCount(a0: i32);
     fn ProfEnd();
     fn _HSD_TObjGetCurrentByType(a0: *mut HSD_TObj, a1: u32) -> *mut HSD_TObj;
-    fn _HSD_mkEnvelopeModelNodeMtx(a0: *mut HSD_JObj, a1: *mut c_void) -> *mut c_void;
+    fn _HSD_mkEnvelopeModelNodeMtx(a0: *mut HSD_JObj, a1: *mut c_void) -> *mut c_void = crate::tu::displayfunc_native::_HSD_mkEnvelopeModelNodeMtx(a0, a1 as _) as *mut c_void;
     fn diag_env_slot(a0: u32, a1: u32, a2: i32);
     fn diag_envelope(a0: i32, a1: f32);
     fn diag_geno_pal(a0: i32, a1: i32, a2: i32);

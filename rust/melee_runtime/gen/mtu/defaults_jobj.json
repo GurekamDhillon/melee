@@ -1,3 +1,6 @@
 {
- "PSMTXIdentity": "crate::tu::mtx_pc::raw::PSMTXIdentity(a0 as _)"
+ "PSMTXIdentity": "crate::tu::mtx_pc::raw::PSMTXIdentity(a0 as _)",
+ "HSD_JObjDisp": "crate::tu::displayfunc_native::HSD_JObjDisp(a0, a1 as _, a2, a3)",
+ "HSD_JObjDispSub": "crate::tu::displayfunc_native::HSD_JObjDispSub(a0, a1 as _, a2 as _, a3, a4)",
+ "HSD_JObjMakePositionMtx": "crate::tu::displayfunc_native::HSD_JObjMakePositionMtx(a0, a1 as _, a2 as _)"
 }

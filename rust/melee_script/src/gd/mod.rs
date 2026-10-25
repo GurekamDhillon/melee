@@ -11,6 +11,7 @@ pub mod caps;
 pub mod contacts;
 pub mod crit;
 pub mod deadline;
+pub mod echo;
 pub mod entity;
 pub mod combo;
 pub mod core;
@@ -58,6 +59,7 @@ pub fn register_all(e: &Engine, gd: &Table) -> LuaResult<()> {
     caps::register(e, gd)?;
     hit_rules::register(e, gd)?;
     entity::register(e, gd)?;
+    echo::register(e, gd)?;
     zones::register(e, gd)?;
     deadline::register(e, gd)?;
     flycam::register(e, gd)?;

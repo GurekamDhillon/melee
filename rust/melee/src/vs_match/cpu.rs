@@ -514,7 +514,7 @@ fn ftco_800a5f4c(cx: &Cx, _fp: &Fighter) -> R<*mut Item> {
 fn item_grabbable(it: &SimItem) -> R<bool> {
     use super::fox::ItemClass as C;
     match it.class {
-        C::GreensBlock | C::FoxLaser { .. } | C::FoxGun { .. } | C::SeakHeld { .. } | C::SeakThrown { .. } | C::SsMissile { .. } => Ok(false),
+        C::Static | C::GreensBlock | C::FoxLaser { .. } | C::FoxGun { .. } | C::SeakHeld { .. } | C::SeakThrown { .. } | C::SsMissile { .. } => Ok(false),
     }
 }
 
@@ -2289,7 +2289,7 @@ fn ftco_800bb9b4(cx: &mut Cx, me: *mut Fighter) -> R {
         use super::fox::ItemClass as C;
         match it.class {
             // It_Kind_Yaku: no hitbox.
-            C::GreensBlock => {}
+            C::GreensBlock | C::Static => {}
             // The blaster gun and the held needles: Disabled hit capsules (it_8026C1B4 false).
             C::FoxGun { .. } | C::SeakHeld { .. } => {}
             C::FoxLaser { .. } => {

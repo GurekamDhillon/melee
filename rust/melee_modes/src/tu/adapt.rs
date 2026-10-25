@@ -1193,3 +1193,10 @@ pub fn PSVECCrossProduct__0fba16(a0: *mut Vec3, a1: *mut Vec3, a2: *mut Vec3) { 
 pub fn PSMTXConcat__6707f0(a0: * mut [:: core :: ffi :: c_float ; 4], a1: * mut [:: core :: ffi :: c_float ; 4], a2: * mut [:: core :: ffi :: c_float ; 4]) { unsafe { *(a2 as *mut melee_runtime::mtx::Mtx) = melee_runtime::mtx::concat(&*(a0 as *const melee_runtime::mtx::Mtx), &*(a1 as *const melee_runtime::mtx::Mtx)) } }
 pub fn PSMTXInverse__c61344(a0: * mut [:: core :: ffi :: c_float ; 4], a1: * mut [:: core :: ffi :: c_float ; 4]) -> :: core :: ffi :: c_uint { unsafe { match melee_runtime::mtx::inverse(&*(a0 as *const melee_runtime::mtx::Mtx)) { Some(m) => { *(a1 as *mut melee_runtime::mtx::Mtx) = m; 1 } None => 0 } } }
 pub fn PSMTXMultVec__416c01(a0: * mut [:: core :: ffi :: c_float ; 4], a1: * mut Vec, a2: * mut Vec) { unsafe { *(a2 as *mut melee_runtime::mtx::Vec3) = melee_runtime::mtx::mult_vec(core::slice::from_raw_parts(a0 as *const [f32; 4], 3), &*(a1 as *const melee_runtime::mtx::Vec3)) } }
+pub fn Camera_Init__cmc(a0: i32) { unsafe { melee_world::tu::cmcamera::Camera_Init(a0) } }
+pub fn Camera_Create__cmc() { unsafe { melee_world::tu::cmcamera::Camera_Create() } }
+pub fn Camera_ForgetGameCamera__cmc() { unsafe { melee_world::tu::cmcamera::Camera_ForgetGameCamera() } }
+pub fn Camera_RefreshViewingMtx__cmc() { unsafe { melee_world::tu::cmcamera::Camera_RefreshViewingMtx() } }
+pub fn Camera_8002F3AC__cmc() { unsafe { melee_world::tu::cmcamera::Camera_8002F3AC() } }
+pub fn Camera_SetQuakeScale__cmc(a0: f32) { unsafe { melee_world::tu::cmcamera::Camera_SetQuakeScale(a0) } }
+pub fn Camera_PCMainCObj__cmc() -> *mut HSD_CObj { unsafe { melee_world::tu::cmcamera::Camera_PCMainCObj() as _ } }

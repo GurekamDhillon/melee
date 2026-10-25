@@ -44,7 +44,15 @@ pub fn psAddParticleAppSRT_begin(
 ) -> Option<SrtId> {
     pool.add_begin(slot, status, idnum)
 }
-pub use psAddParticleAppSRT_begin as psAddGeneratorAppSRT_begin;
+/// `psAddGeneratorAppSRT_begin`: same pool operation as the particle variant (the C bodies are identical).
+pub fn psAddGeneratorAppSRT_begin(
+    pool: &mut AppSrtPool,
+    slot: &mut Option<SrtId>,
+    status: i32,
+    idnum: u16,
+) -> Option<SrtId> {
+    pool.add_begin(slot, status, idnum)
+}
 pub fn psAttachParticleAppSRT(
     pool: &mut AppSrtPool,
     slot: Option<&mut Option<SrtId>>,
@@ -52,7 +60,14 @@ pub fn psAttachParticleAppSRT(
 ) -> i32 {
     pool.attach(slot, srt)
 }
-pub use psAttachParticleAppSRT as psAttachGeneratorAppSRT;
+/// `psAttachGeneratorAppSRT`: same pool operation as the particle variant (the C bodies are identical).
+pub fn psAttachGeneratorAppSRT(
+    pool: &mut AppSrtPool,
+    slot: Option<&mut Option<SrtId>>,
+    srt: Option<SrtId>,
+) -> i32 {
+    pool.attach(slot, srt)
+}
 pub fn psRemoveParticleAppSRT<H: AppSrtHost>(
     pool: &mut AppSrtPool,
     slot: &mut Option<SrtId>,

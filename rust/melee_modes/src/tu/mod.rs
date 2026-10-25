@@ -13,6 +13,22 @@ macro_rules! ext_fns_c {
         } )*
     };
 }
+/// As `ext_fns_c!`, but a test hook ([`ext_hook::EXT_HOOK`]) sees every call first (the TU state oracles).
+macro_rules! ext_fns_h {
+    ($($name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? = $def:expr;)*) => {
+        pub mod hook {
+            #[allow(unused_imports)] use super::*;
+            $( #[allow(non_upper_case_globals)] pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+        }
+        $( #[allow(non_snake_case)] pub fn $name($($a: $t),*) $(-> $r)? {
+            if let Some(h) = unsafe { $crate::tu::ext_hook::EXT_HOOK } {
+                return <$crate::ext_rty!($($r)?) as $crate::tu::ext_hook::Val>::from_u64(
+                    unsafe { h(stringify!($name), &[$($crate::tu::ext_hook::Val::to_u64($a)),*]) });
+            }
+            match unsafe { hook::$name } { Some(f) => f($($a),*), None => { let d: fn($($t),*) $(-> $r)? = $def; d($($a),*) } }
+        } )*
+    };
+}
 // Group 6 per-TU ports (gmapproach, gmboot, gmcamera; tests/tu_<stem>.rs) plus the shard-465-472 ports below.
 pub mod gmapproach;
 pub mod gmboot;
@@ -69,6 +85,9 @@ pub mod gm_17c0;
 // Callees of unported TUs are `ext` stubs in each file; every file's functions are checked by the
 // state oracle (`crate::oracle`, `gen/tu/run.py`) against the C compiled natively.
 pub mod gmfrontend;
+pub mod gmfrontend_atlas_toy;
+pub mod gmmode_init;
+pub mod gmscenelaunch;
 pub mod gmprogressivemode;
 pub mod gmregcommon;
 pub mod gmregtyfall;
@@ -87,6 +106,7 @@ pub mod gmstamina;
 pub mod gmsupersudden;
 pub mod gmtiny;
 pub(crate) use ext_fns_c;
+pub(crate) use ext_fns_h;
 
 pub mod gmtoygallery;
 pub mod gmtoylottery;

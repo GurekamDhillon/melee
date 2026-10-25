@@ -18,33 +18,54 @@ pub static mut hsdWObj: HSD_WObjInfo = {
 pub static mut default_class: *mut HSD_ClassInfo = null_mut();
 
 /// Callees in other TUs. Unported ones panic with a TODO naming the C function.
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn HSD_AObjInterpretAnim(a0: *mut HSD_AObj, a1: *mut c_void, a2: Option<unsafe extern "C" fn(*mut c_void, i32, *mut HSD_ObjData)>);
+    fn HSD_AObjLoadDesc(a0: *mut HSD_AObjDesc) -> *mut HSD_AObj;
+    fn HSD_AObjRemove(a0: *mut HSD_AObj);
+    fn HSD_AObjReqAnim(a0: *mut HSD_AObj, a1: f32);
+    fn HSD_JObjSetupMatrixSub(a0: *mut HSD_JObj);
+    fn HSD_RObjAddAnimAll(a0: *mut HSD_RObj, a1: *mut HSD_RObjAnimJoint);
+    fn HSD_RObjAnimAll(a0: *mut HSD_RObj);
+    fn HSD_RObjLoadDesc(a0: *mut HSD_RObjDesc) -> *mut HSD_RObj;
+    fn HSD_RObjRemoveAll(a0: *mut HSD_RObj);
+    fn HSD_RObjRemoveAnimAll(a0: *mut HSD_RObj);
+    fn HSD_RObjReqAnimAll(a0: *mut HSD_RObj, a1: f32);
+    fn HSD_RObjResolveRefsAll(a0: *mut HSD_RObj, a1: *mut HSD_RObjDesc);
+    fn PSMTXMultVec(a0: *mut c_void, a1: *mut Vec, a2: *mut Vec) = super::native_mtx_mult_vec(a0 as _, a1, a2);
+    fn hsdInitClassInfo(a0: *mut _HSD_ClassInfo, a1: *mut _HSD_ClassInfo, a2: *mut i8, a3: *mut i8, a4: i32, a5: i32);
+    fn hsdIsDescendantOf(a0: *mut c_void, a1: *mut c_void) -> i32;
+    fn hsdNew(a0: *mut _HSD_ClassInfo) -> *mut c_void;
+    fn hsdSearchClassInfo(a0: *const i8) -> *mut _HSD_ClassInfo;
+    fn splArcLengthPoint(a0: *mut Vec, a1: *mut HSD_Spline, a2: f32) = super::native_spline_point(a0, a1, a2);
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+        pub unsafe extern "C" fn hsdIsDescendantOf(a0: *mut c_void, a1: *mut c_void) -> i32 { super::hsdIsDescendantOf(a0, a1) }
+    }
+    // Data defined in other TUs (the tests set them).
     pub static mut hsdObj: HSD_ClassInfo = unsafe { core::mem::zeroed() };
-    pub static mut HSD_AObjRemove: unsafe fn(*mut HSD_AObj) = |_| todo!("HSD_AObjRemove");
-    pub static mut HSD_RObjRemoveAnimAll: unsafe fn(*mut HSD_RObj) = |_| todo!("HSD_RObjRemoveAnimAll");
-    pub static mut HSD_RObjRemoveAll: unsafe fn(*mut HSD_RObj) = |_| todo!("HSD_RObjRemoveAll");
-    pub static mut HSD_RObjAnimAll: unsafe fn(*mut HSD_RObj) = |_| todo!("HSD_RObjAnimAll");
-    pub static mut HSD_AObjReqAnim: unsafe fn(*mut HSD_AObj, f32) = |_, _| todo!("HSD_AObjReqAnim");
-    pub static mut HSD_RObjReqAnimAll: unsafe fn(*mut HSD_RObj, f32) = |_, _| todo!("HSD_RObjReqAnimAll");
-    pub static mut HSD_RObjAddAnimAll: unsafe fn(*mut HSD_RObj, *mut HSD_RObjAnimJoint) =
-        |_, _| todo!("HSD_RObjAddAnimAll");
-    pub static mut HSD_RObjResolveRefsAll: unsafe fn(*mut HSD_RObj, *mut HSD_RObjDesc) =
-        |_, _| todo!("HSD_RObjResolveRefsAll");
-    pub static mut HSD_AObjLoadDesc: unsafe fn(*mut HSD_AObjDesc) -> *mut HSD_AObj = |_| todo!("HSD_AObjLoadDesc");
-    pub static mut HSD_RObjLoadDesc: unsafe fn(*mut HSD_RObjDesc) -> *mut HSD_RObj = |_| todo!("HSD_RObjLoadDesc");
-    pub static mut HSD_AObjInterpretAnim: unsafe fn(*mut HSD_AObj, *mut c_void, HSD_ObjUpdateFunc) =
-        |_, _, _| todo!("HSD_AObjInterpretAnim");
-    pub static mut HSD_JObjSetupMatrixSub: unsafe fn(*mut HSD_JObj) = |_| todo!("HSD_JObjSetupMatrixSub");
-    pub static mut PSMTXMultVec: unsafe fn(*mut [f32; 4], *mut Vec3, *mut Vec3) = super::native_mtx_mult_vec;
-    pub static mut splArcLengthPoint: unsafe fn(*mut Vec3, *mut HSD_Spline, f32) = super::native_spline_point;
-    pub static mut hsdIsDescendantOf: unsafe fn(*mut c_void, *mut c_void) -> i32 =
-        |_, _| todo!("hsdIsDescendantOf");
-    pub static mut hsdSearchClassInfo: unsafe fn(*const i8) -> *mut HSD_ClassInfo = |_| todo!("hsdSearchClassInfo");
-    pub static mut hsdNew: unsafe fn(*mut HSD_ClassInfo) -> *mut c_void = |_| todo!("hsdNew");
-    pub static mut hsdInitClassInfo: unsafe fn(*mut HSD_ClassInfo, *mut HSD_ClassInfo, *mut i8, *mut i8, i32, i32) =
-        |_, _, _, _, _, _| todo!("hsdInitClassInfo");
 }
+// END GENERATED EXT
 
 /// `MTXMultVec(m, src, dst)`; reuses the verified fused implementation.
 pub unsafe fn native_mtx_mult_vec(m: *mut [f32; 4], src: *mut Vec3, dst: *mut Vec3) {
@@ -64,7 +85,7 @@ unsafe fn jobj_setup_matrix(j: *mut HSD_JObj) {
     }
     let fl = (*j).flags;
     if fl & JOBJ_USER_DEF_MTX == 0 && fl & (JOBJ_MTX_DIRTY as u32) != 0 {
-        (ext::HSD_JObjSetupMatrixSub)(j);
+        ext::HSD_JObjSetupMatrixSub(j);
     }
 }
 
@@ -75,7 +96,7 @@ unsafe fn resolve_world_pos(w: *mut HSD_WObj) {
             let jp = (*(*w).aobj).hsd_obj as *mut HSD_JObj;
             jobj_setup_matrix(jp);
             let pos = addr_of_mut!((*w).pos);
-            (ext::PSMTXMultVec)((*jp).mtx.as_mut_ptr().cast(), pos, pos);
+            ext::PSMTXMultVec((*jp).mtx.as_mut_ptr().cast(), pos, pos);
         }
         (*w).flags &= 0xFFFF_FFFE;
     }
@@ -83,26 +104,26 @@ unsafe fn resolve_world_pos(w: *mut HSD_WObj) {
 
 pub unsafe fn HSD_WObjRemoveAnim(wobj: *mut HSD_WObj) {
     if !wobj.is_null() {
-        (ext::HSD_AObjRemove)((*wobj).aobj);
+        ext::HSD_AObjRemove((*wobj).aobj);
         (*wobj).aobj = null_mut();
-        (ext::HSD_RObjRemoveAnimAll)((*wobj).robj);
+        ext::HSD_RObjRemoveAnimAll((*wobj).robj);
     }
 }
 
 pub unsafe fn HSD_WObjReqAnim(wobj: *mut HSD_WObj, frame: f32) {
     if !wobj.is_null() {
-        (ext::HSD_AObjReqAnim)((*wobj).aobj, frame);
-        (ext::HSD_RObjReqAnimAll)((*wobj).robj, frame);
+        ext::HSD_AObjReqAnim((*wobj).aobj, frame);
+        ext::HSD_RObjReqAnimAll((*wobj).robj, frame);
     }
 }
 
 pub unsafe fn HSD_WObjAddAnim(wobj: *mut HSD_WObj, anim: *mut HSD_WObjAnim) {
     if !wobj.is_null() && !anim.is_null() {
         if !(*wobj).aobj.is_null() {
-            (ext::HSD_AObjRemove)((*wobj).aobj);
+            ext::HSD_AObjRemove((*wobj).aobj);
         }
-        (*wobj).aobj = (ext::HSD_AObjLoadDesc)((*anim).aobjdesc);
-        (ext::HSD_RObjAddAnimAll)((*wobj).robj, (*anim).robjanim);
+        (*wobj).aobj = ext::HSD_AObjLoadDesc((*anim).aobjdesc);
+        ext::HSD_RObjAddAnimAll((*wobj).robj, (*anim).robjanim);
     }
 }
 
@@ -124,7 +145,7 @@ pub unsafe extern "C" fn WObjUpdateFunc(obj: *mut c_void, ty: i32, val: *mut HSD
             assert!(!jp.is_null(), "wobj.c:150 jp");
             assert!(!(*jp).u.spline.is_null(), "wobj.c:151 jp->u.spline");
             let mut p = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
-            (ext::splArcLengthPoint)(&mut p, (*jp).u.spline, (*val).fv);
+            ext::splArcLengthPoint(&mut p, (*jp).u.spline, (*val).fv);
             HSD_WObjSetPosition(wobj, &mut p);
             (*wobj).flags |= 1;
         }
@@ -137,18 +158,18 @@ pub unsafe extern "C" fn WObjUpdateFunc(obj: *mut c_void, ty: i32, val: *mut HSD
 
 pub unsafe fn HSD_WObjInterpretAnim(wobj: *mut HSD_WObj) {
     if !wobj.is_null() {
-        (ext::HSD_AObjInterpretAnim)((*wobj).aobj, wobj.cast(), Some(WObjUpdateFunc));
-        (ext::HSD_RObjAnimAll)((*wobj).robj);
+        ext::HSD_AObjInterpretAnim((*wobj).aobj, wobj.cast(), Some(WObjUpdateFunc));
+        ext::HSD_RObjAnimAll((*wobj).robj);
     }
 }
 
 pub unsafe extern "C" fn WObjLoad(wobj: *mut HSD_WObj, desc: *mut HSD_WObjDesc) -> i32 {
     HSD_WObjSetPosition(wobj, addr_of_mut!((*desc).pos));
     if !(*wobj).robj.is_null() {
-        (ext::HSD_RObjRemoveAll)((*wobj).robj);
+        ext::HSD_RObjRemoveAll((*wobj).robj);
     }
-    (*wobj).robj = (ext::HSD_RObjLoadDesc)((*desc).robjdesc);
-    (ext::HSD_RObjResolveRefsAll)((*wobj).robj, (*desc).robjdesc);
+    (*wobj).robj = ext::HSD_RObjLoadDesc((*desc).robjdesc);
+    ext::HSD_RObjResolveRefsAll((*wobj).robj, (*desc).robjdesc);
     0
 }
 
@@ -158,16 +179,16 @@ pub unsafe fn HSD_WObjInit(wobj: *mut HSD_WObj, desc: *mut HSD_WObjDesc) {
     }
     HSD_WObjSetPosition(wobj, addr_of_mut!((*desc).pos));
     if !(*wobj).robj.is_null() {
-        (ext::HSD_RObjRemoveAll)((*wobj).robj);
+        ext::HSD_RObjRemoveAll((*wobj).robj);
     }
-    (*wobj).robj = (ext::HSD_RObjLoadDesc)((*desc).robjdesc);
-    (ext::HSD_RObjResolveRefsAll)((*wobj).robj, (*desc).robjdesc);
+    (*wobj).robj = ext::HSD_RObjLoadDesc((*desc).robjdesc);
+    ext::HSD_RObjResolveRefsAll((*wobj).robj, (*desc).robjdesc);
 }
 
 pub unsafe fn HSD_WObjSetDefaultClass(info: *mut HSD_ClassInfo) {
     if !info.is_null() {
         assert!(
-            (ext::hsdIsDescendantOf)(info.cast(), addr_of_mut!(hsdWObj).cast()) != 0,
+            ext::hsdIsDescendantOf(info.cast(), addr_of_mut!(hsdWObj).cast()) != 0,
             "wobj.c:221 hsdIsDescendantOf(info, &hsdWObj)"
         );
     }
@@ -180,13 +201,13 @@ pub unsafe fn HSD_WObjLoadDesc(desc: *mut HSD_WObjDesc) -> *mut HSD_WObj {
     }
     let mut info: *mut HSD_ClassInfo = null_mut();
     let use_alloc = (*desc).class_name.is_null() || {
-        info = (ext::hsdSearchClassInfo)((*desc).class_name);
+        info = ext::hsdSearchClassInfo((*desc).class_name);
         info.is_null()
     };
     let wobj: *mut HSD_WObj = if use_alloc {
         HSD_WObjAlloc()
     } else {
-        let w = (ext::hsdNew)(info) as *mut HSD_WObj;
+        let w = ext::hsdNew(info) as *mut HSD_WObj;
         assert!(!w.is_null(), "wobj.c:252 wobj");
         w
     };
@@ -238,15 +259,15 @@ pub unsafe fn HSD_WObjGetPosition(wobj: *mut HSD_WObj, vec: *mut Vec3) {
 
 pub unsafe fn HSD_WObjAlloc() -> *mut HSD_WObj {
     let info = if default_class.is_null() { addr_of_mut!(hsdWObj).cast::<HSD_ClassInfo>() } else { default_class };
-    let wobj = (ext::hsdNew)(info) as *mut HSD_WObj;
+    let wobj = ext::hsdNew(info) as *mut HSD_WObj;
     assert!(!wobj.is_null(), "wobj.c:591 wobj");
     wobj
 }
 
 pub unsafe extern "C" fn WObjRelease(o: *mut HSD_Class) {
     let wobj = o as *mut HSD_WObj;
-    (ext::HSD_RObjRemoveAll)((*wobj).robj);
-    (ext::HSD_AObjRemove)((*wobj).aobj);
+    ext::HSD_RObjRemoveAll((*wobj).robj);
+    ext::HSD_AObjRemove((*wobj).aobj);
     let parent = hsdWObj.parent.parent.head.parent;
     ((*parent).release.expect("parent release"))(o);
 }
@@ -260,7 +281,7 @@ pub unsafe extern "C" fn WObjAmnesia(info: *mut HSD_ClassInfo) {
 }
 
 pub unsafe extern "C" fn WObjInfoInit() {
-    (ext::hsdInitClassInfo)(
+    ext::hsdInitClassInfo(
         addr_of_mut!(hsdWObj).cast(),
         addr_of_mut!(ext::hsdObj),
         c"sysdolphin_base_library".as_ptr().cast_mut(),

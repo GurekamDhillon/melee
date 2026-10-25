@@ -4,8 +4,73 @@
 
 pub static mut TR: u32 = 0;
 pub static mut TRACEON: bool = false;
+pub static mut NCALLS: u32 = 0;
+
+// ---- cases that end in a failed assertion / panic / runaway loop ("<op> <k> ABORT" in the C output) ----
+// The ports are `extern "C"` functions, so a panic cannot unwind out of them (it would abort the process).
+// Each case therefore runs on its own thread; the panic hook (or the runaway guard in `t`) reports the case as
+// aborted and ends the thread on the spot, and the next case starts on a fresh thread with freshly drawn state.
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Mutex;
+static IN_CASE: AtomicBool = AtomicBool::new(false);
+static ABORT_TX: Mutex<Option<std::sync::mpsc::Sender<bool>>> = Mutex::new(None);
+pub fn abort_case() -> ! {
+    if let Some(tx) = ABORT_TX.lock().unwrap_or_else(|e| e.into_inner()).as_ref() {
+        let _ = tx.send(true);
+    }
+    #[cfg(windows)]
+    {
+        // End the thread without unwinding (the ports' frames cannot unwind); parked threads would keep the
+        // process from exiting.
+        extern "system" {
+            fn ExitThread(code: u32) -> !;
+        }
+        unsafe { ExitThread(0) }
+    }
+    #[cfg(not(windows))]
+    loop {
+        std::thread::park();
+    }
+}
+/// Installs the hook that turns a panic inside a case into an aborted case (other panics print as usual).
+pub fn install_abort_hook() {
+    let default = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |info| {
+        if IN_CASE.load(Ordering::SeqCst) {
+            if std::env::var_os("MTU_SHOWPANIC").is_some() {
+                eprintln!("case panic: {info}");
+            }
+            abort_case();
+        }
+        default(info)
+    }));
+}
+/// Runs one case; true when it was aborted (the C driver printed `ABORT` for the same case).
+pub fn run_case<F: FnOnce()>(f: F) -> bool {
+    let (tx, rx) = std::sync::mpsc::channel::<bool>();
+    *ABORT_TX.lock().unwrap_or_else(|e| e.into_inner()) = Some(tx.clone());
+    let f: Box<dyn FnOnce() + '_> = Box::new(f);
+    // SAFETY: the caller thread blocks on `rx` until the case finished or was aborted; an aborted case's
+    // thread is parked forever and never touches the borrowed state again.
+    let f: Box<dyn FnOnce() + Send + 'static> = unsafe { core::mem::transmute(f) };
+    IN_CASE.store(true, Ordering::SeqCst);
+    std::thread::Builder::new()
+        .stack_size(16 << 20)
+        .spawn(move || {
+            f();
+            let _ = tx.send(false);
+        })
+        .unwrap();
+    let aborted = rx.recv().unwrap();
+    IN_CASE.store(false, Ordering::SeqCst);
+    aborted
+}
 pub fn t(v: u32) {
     unsafe {
+        NCALLS += 1;
+        if NCALLS > 20000 {
+            abort_case();
+        }
         TR = TR.wrapping_mul(31).wrapping_add(v);
         if TRACEON {
             println!("T {:08X}", v);
@@ -194,6 +259,10 @@ pub fn base<T>(r: &T) -> *const u8 {
 pub fn case(op: u32, k: u32) {
     unsafe {
         TR = 0;
+        NCALLS = 0;
+        if std::env::var_os("MTU_PROG").is_some() {
+            eprintln!("P {op} {k}");
+        }
         // MTU_DBG=<op>:<case> prints every trace word of that case (compare with the C driver
         // built with -DDBG_OP=<op> -DDBG_K=<case>)
         TRACEON = std::env::var("MTU_DBG").map(|v| v == format!("{op}:{k}")).unwrap_or(false);
@@ -218,6 +287,13 @@ impl Check {
         let got = format!("{} {} {:08X} {:08X} {:08X}", op, k, ret, unsafe { H }, unsafe { TR });
         let want = self.lines.next().expect("expected file too short");
         assert_eq!(got, want, "op {op} case {k}");
+        self.n += 1;
+    }
+    /// A case the C driver ended with a failed assertion ("<op> <k> ABORT"): the port must have panicked there.
+    pub fn abort(&mut self, op: u32, k: u32) {
+        let got = format!("{} {} ABORT", op, k);
+        let want = self.lines.next().expect("expected file too short");
+        assert_eq!(got, want, "op {op} case {k}: the port panicked where the C did not (or vice versa)");
         self.n += 1;
     }
     pub fn done(mut self) -> u32 {

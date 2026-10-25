@@ -1,3 +1,4 @@
+//! C functions covered: HSD_RObjGetGlobalPosition = robj::get_global_position.
 //! Bit-for-bit check of the baselib robj.c port (LoadDesc, ResolveRefs, SetConstraintObj,
 //! GetByType, SetFlags, GetGlobalPosition and the constraint solver HSD_RObjUpdateAll with its
 //! static helpers set_dirup_matrix / resolveCnsDirUp / resolveCnsOrientation / resolveLimits /

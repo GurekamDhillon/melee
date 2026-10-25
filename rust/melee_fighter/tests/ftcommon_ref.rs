@@ -3,9 +3,9 @@
 //! `python rust/melee_fighter/gen/cref/run.py ftcommon`). Fill order must match the C.
 #![allow(static_mut_refs)]
 
-use melee_fighter::ftcommon as fc;
+use melee_fighter::ftcommon_c as fc;
 use melee_fighter::hooks;
-use melee_fighter::types::{ftCommonData, Fighter};
+use melee_fighter::types::{ftCommonData, Fighter, HSD_GObj};
 
 static mut G_FRIC: f32 = 0.0;
 static mut G_SFX: i32 = 0;
@@ -90,44 +90,46 @@ fn movement_helpers_match_c() {
                 hooks::P_FT_COMMON_DATA = &*cd;
             }
             let (a, b, c, d) = (r.rf(), r.rf(), r.rf(), r.rf());
+            let mut gobj: HSD_GObj = unsafe { core::mem::zeroed() };
+            gobj.user_data = &mut *fp as *mut Fighter as *mut core::ffi::c_void;
             let fp = &mut *fp;
             let ret: f32 = match op {
-                0 => { fc::calc_ground_accel_deaccel(fp, a); 0.0 }
-                1 => { fc::calc_ground_accel_dash_run(fp, a, b, c); 0.0 }
-                2 => { fc::calc_ground_accel_accel_to_vel(fp, a, b, c); 0.0 }
-                3 => { fc::calc_ground_accel_accel_to_lstick_x(fp, a, b, c); 0.0 }
-                4 => { fc::set_self_movement_from_grounded_movement(fp); 0.0 }
-                5 => { fc::set_self_movement_from_grounded_movement_no_friction(fp); 0.0 }
-                6 => { fc::clamp_ground_vel(fp, a); 0.0 }
-                7 => { fc::apply_grounded_knockback_friction(fp, a); 0.0 }
-                8 => { fc::set_grounded_knockback_if_landed(fp); 0.0 }
-                9 => fc::sandbag_knockback_deaccel(a, b),
-                10 => { fc::apply_shield_knockback_friction(fp, a); 0.0 }
-                11 => { fc::calc_self_accel_deaccel(fp, a); 0.0 }
-                12 => { fc::calc_self_accel_deaccel_air(fp); 0.0 }
-                13 => fc::calc_self_accel_deaccel_quick_air(fp) as i32 as f32,
-                14 => fc::calc_self_accel_deaccel_quick(fp, a) as i32 as f32,
-                15 => { fc::calc_self_accel_accel_to_vel_clamped(fp, a, b, c); 0.0 }
-                16 => { fc::calc_self_accel_accel_to_vel_clamped_from(fp, a, b, c, d); 0.0 }
-                17 => { fc::calc_self_accel_drift(fp); 0.0 }
-                18 => { fc::calc_self_accel_drift_from(fp, a); 0.0 }
-                19 => { fc::calc_self_accel_accel_to_vel(fp, a, b, c); 0.0 }
-                20 => { fc::calc_self_accel_drift_simple(fp, a, b, c); 0.0 }
-                21 => { fc::calc_self_accel_drift_simple_no_friction(fp, a, b, c); 0.0 }
-                22 => { fc::clamp_self_vel_x(fp, a); 0.0 }
-                23 => { fc::clamp_air_drift(fp); 0.0 }
-                24 => { fc::fall(fp, a, b); 0.0 }
-                25 => { fc::fall_basic(fp); 0.0 }
-                26 => { fc::fall_fast(fp); 0.0 }
-                27 => { fc::clamp_fall_speed(fp, a); 0.0 }
-                28 => { fc::ascend(fp, a, b); 0.0 }
-                29 => fc::check_fall_fast(fp) as i32 as f32,
-                30 => { fc::update_facing(fp); 0.0 }
-                31 => { fc::update_facing_outside_deadzone(fp); 0.0 }
+                0 => { fc::ftCommon_CalcGroundAccel_Deaccel(fp, a); 0.0 }
+                1 => { fc::ftCommon_CalcGroundAccel_DashRun(fp, a, b, c); 0.0 }
+                2 => { fc::ftCommon_CalcGroundAccel_AccelToVel(fp, a, b, c); 0.0 }
+                3 => { fc::ftCommon_CalcGroundAccel_AccelToLStickX(fp, a, b, c); 0.0 }
+                4 => { fc::ftCommon_SetSelfMovementFromGroundedMovement(&mut gobj); 0.0 }
+                5 => { fc::ftCommon_SetSelfMovementFromGroundedMovement_NoFriction(&mut gobj); 0.0 }
+                6 => { fc::ftCommon_ClampGroundVel(fp, a); 0.0 }
+                7 => { fc::ftCommon_ApplyGroundedKnockbackFriction(fp, a); 0.0 }
+                8 => { fc::ftCommon_SetGroundedKnockbackIfLanded(fp); 0.0 }
+                9 => fc::ftCommon_SandbagKnockbackDeaccel(a, b),
+                10 => { fc::ftCommon_ApplyShieldKnockbackFriction(fp, a); 0.0 }
+                11 => { fc::ftCommon_CalcSelfAccel_Deaccel(fp, a); 0.0 }
+                12 => { fc::ftCommon_CalcSelfAccel_DeaccelAir(fp); 0.0 }
+                13 => fc::ftCommon_CalcSelfAccel_DeaccelQuickAir(fp) as i32 as f32,
+                14 => fc::ftCommon_CalcSelfAccel_DeaccelQuick(fp, a) as i32 as f32,
+                15 => { fc::ftCommon_CalcSelfAccel_AccelToVelClamped(fp, a, b, c); 0.0 }
+                16 => { fc::ftCommon_CalcSelfAccel_AccelToVelClampedFrom(fp, a, b, c, d); 0.0 }
+                17 => { fc::ftCommon_CalcSelfAccel_Drift(fp); 0.0 }
+                18 => { fc::ftCommon_CalcSelfAccel_DriftFrom(fp, a); 0.0 }
+                19 => { fc::ftCommon_CalcSelfAccel_AccelToVel(fp, a, b, c); 0.0 }
+                20 => { fc::ftCommon_CalcSelfAccel_DriftSimple(fp, a, b, c); 0.0 }
+                21 => { fc::ftCommon_CalcSelfAccel_DriftSimple_NoFriction(fp, a, b, c); 0.0 }
+                22 => { fc::ftCommon_ClampSelfVelX(fp, a); 0.0 }
+                23 => { fc::ftCommon_ClampAirDrift(fp); 0.0 }
+                24 => { fc::ftCommon_Fall(fp, a, b); 0.0 }
+                25 => { fc::ftCommon_FallBasic(fp); 0.0 }
+                26 => { fc::ftCommon_FallFast(fp); 0.0 }
+                27 => { fc::ftCommon_ClampFallSpeed(fp, a); 0.0 }
+                28 => { fc::ftCommon_Ascend(fp, a, b); 0.0 }
+                29 => fc::ftCommon_CheckFallFast(fp) as i32 as f32,
+                30 => { fc::ftCommon_UpdateFacing(fp); 0.0 }
+                31 => { fc::ftCommon_8007DA24(fp); 0.0 }
                 32 => {
                     let dmg = (r.rnd() % 40) as i32;
                     let ms = (37 + r.rnd() % 5) as i32;
-                    fc::calc_hitlag(dmg, ms, a)
+                    fc::ftCommon_CalcHitlag(dmg, ms, a)
                 }
                 _ => unreachable!(),
             };

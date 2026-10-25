@@ -622,3 +622,13 @@ pub fn lbMthp_8001F800() {
 pub fn lbMthp_8001F87C() {
     mp().power = 0;
 }
+
+/// `MoviePlayer.power` (test access to the player state the stop calls clear).
+#[doc(hidden)]
+pub fn test_power() -> i32 {
+    mp().power as i32
+}
+#[doc(hidden)]
+pub fn test_set_power(v: i32) {
+    mp().power = v as _;
+}

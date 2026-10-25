@@ -1,0 +1,53 @@
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/mtu/gen_tu.py; the callees of the C TU)
+pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    use super::*;
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn DVDConvertPathToEntrynum(a0: *const i8) -> i32;
+    fn OSDisableInterrupts() -> i32;
+    fn OSRestoreInterrupts(a0: i32) -> i32;
+    fn Player_80031CB0(a0: u32, a1: u8);
+    fn Player_80031D2C(a0: u32, a1: u8);
+    fn Stage_802251B4(a0: u32);
+    fn efAsync_OnLoad(a0: *mut HSD_Archive, a1: *mut u8, a2: u32, a3: i32);
+    fn gm_801B23F0();
+    fn grDatFiles_801C5FC0(a0: *mut HSD_Archive, a1: *mut c_void, a2: u32);
+    fn lbArchive_InitializeDAT(a0: *mut HSD_Archive, a1: *mut c_void, a2: u32);
+    fn lbFileGetFullName(a0: *const i8) -> *mut i8;
+    fn lbFile_800161C4(a0: i32, a1: u64, a2: u64, a3: u32, a4: i32, a5: i32);
+    fn lbFile_8001634C(a0: i32) -> u32;
+    fn lbFile_800164A4(a0: i32, a1: u64, a2: *mut u32, a3: i32, a4: Option<unsafe extern "C" fn(i32, u64, *mut c_void, i32)>, a5: u64);
+    fn lbHeap_800158D0(a0: i32, a1: i32);
+    fn lbHeap_800158E8(a0: i32) -> i32;
+    fn lbHeap_80015900();
+    fn lbHeap_80015BB8(a0: i32) -> u32;
+    fn lbHeap_80015BD0(a0: i32, a1: u32) -> *mut c_void;
+    fn lbHeap_80015CA8(a0: i32, a1: *mut c_void);
+    fn lbHeap_80015D6C(a0: u32, a1: Option<unsafe extern "C" fn(u32)>, a2: u32) -> i32;
+    fn lbHeap_Capacity(a0: i32) -> u32;
+    fn lbHeap_Free(a0: i32) -> u32;
+    fn lb_800195D0();
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut DbLevel: DbLKind = unsafe { core::mem::zeroed() };
+}
+// END GENERATED EXT

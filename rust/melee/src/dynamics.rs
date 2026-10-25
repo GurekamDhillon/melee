@@ -231,7 +231,7 @@ impl Dynamics {
     /// `ftCo_8009E7B4(fp, blend_data)` for a fighter with an animation row (`anim_id != -1`) that is neither
     /// Kirby nor a Marth / Roy under wind effects: `b3` = `x594_b3` (the row's "no dynamics" flag), `b4` =
     /// `x594_b4` (per-chain dynamics animations: not ported). Jigglypuff only drives chain 0.
-    pub fn e7b4(&mut self, skel: &mut Skeleton, x2227_b6: bool, b3: bool, b4: bool, purin: bool) -> Result<(), String> {
+    pub fn e7b4(&mut self, skel: &mut Skeleton, x2227_b6: bool, b3: bool, b4: bool, trees: bool, purin: bool) -> Result<(), String> {
         let n = if purin { 1.min(self.sets.len()) } else { self.sets.len() };
         if x2227_b6 {
             for i in 0..n {
@@ -240,7 +240,14 @@ impl Dynamics {
             return Ok(());
         }
         if b4 {
-            return Err("ftCo_8009E7B4: x594_b4 (dynamics animations) not ported".into());
+            // x594_b4: every chain gets `tree[j]` as `ftCo_8009CB40`'s FigaTree (a guest address, i.e.
+            // negative as the `(s32)arg3` it is compared with, or NULL): in both cases the chain is
+            // simulated from node 0 (`part` below 0 / 0 runs the same), so `on`. Without the table or
+            // its entry for the row's slot, the chains are off.
+            for i in 0..self.sets.len() {
+                self.cb40(skel, i, trees);
+            }
+            return Ok(());
         }
         for i in 0..n {
             self.cb40(skel, i, !b3);

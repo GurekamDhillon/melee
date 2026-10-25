@@ -390,7 +390,7 @@ pub fn ft_8008a7a8(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     let (row, tree) = load_row(p, anim_id as u32)?.ok_or(format!("wait anim {anim_id} has no figatree"))?;
     p.fp.anim_id = anim_id;
     // ftCo_8009E7B4 runs before x594 takes the new row's flags.
-    super::dynamics_e7b4(p)?;
+    super::dynamics_e7b4(p, row.dyn_trees)?;
     p.script = row.script;
     p.script_sp = 0;
     p.fp.anon_594.x594_s32 = i32::from_ne_bytes(row.flags.to_be_bytes());

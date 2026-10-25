@@ -16,7 +16,7 @@ pub mod ext {
     use core::ffi::c_void;
     use melee_types::*;
     pub use crate::tu::grinl::ext::stage_info;
-    hook_or!(CAMERA_SETQUAKEOFFSET, Camera_SetQuakeOffset, (x: f32, y: f32), |x: f32, y: f32| crate::cm::camera::world().camera_set_quake_offset(x, y));
+    hook_or!(CAMERA_SETQUAKEOFFSET, Camera_SetQuakeOffset, (x: f32, y: f32), |x: f32, y: f32| unsafe { crate::tu::cmcamera::Camera_SetQuakeOffset(x, y) });
     hook_or!(GOBJ_CREATE, GObj_Create, (classifier: u16, p_link: u8, priority: u8) -> *mut HSD_GObj, |classifier: u16, p_link: u8, priority: u8| unsafe { melee_runtime::tu::gobj_native::GObj_Create(classifier as _, p_link as _, priority as _) as _ });
     pub static mut GROUND_801C0498: Option<fn() -> f32> = None;
     #[allow(non_snake_case)]

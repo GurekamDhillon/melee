@@ -96,14 +96,14 @@ const lbDvd_803BA68C: PreloadEntry = PreloadEntry {
 };
 
 /// 432078
-static mut preloadCache: PreloadCache = unsafe { core::mem::zeroed() };
+pub static mut preloadCache: PreloadCache = unsafe { core::mem::zeroed() };
 
 static lbDvd_804D37F4: [i32; 2] = [4, 5];
 
-static mut six_budget_check: i32 = 0;
-static mut six_budget_ok: i32 = 0;
-static mut six_budget_measure: i32 = 0;
-static mut six_budget_measure_cache: GameCache = unsafe { core::mem::zeroed() };
+pub static mut six_budget_check: i32 = 0;
+pub static mut six_budget_ok: i32 = 0;
+pub static mut six_budget_measure: i32 = 0;
+pub static mut six_budget_measure_cache: GameCache = unsafe { core::mem::zeroed() };
 
 fn scene_eq(a: &PreloadedGameModeState, b: &PreloadedGameModeState) -> bool {
     a.is_heap_persistent == b.is_heap_persistent && game_cache_eq(&a.game_cache, &b.game_cache) && a.mode_scene_changes == b.mode_scene_changes
@@ -180,14 +180,16 @@ unsafe fn lbDvd_SixBudget() -> i32 {
         }
     }
     for h in 3..=5usize {
+        // the C passes lbHeap_Capacity(h) twice among OSReport's arguments (evaluated left to right)
         let cap = ext::lbHeap_Capacity(h as i32);
+        let cap2 = ext::lbHeap_Capacity(h as i32);
         ext::OSReport(&format!(
             "gw: scene: six-slot planned heap {} requests={} bytes={} capacity={} headroom={} reserve={}\n",
             h,
             counts[h],
             used[h],
             cap,
-            (cap as i32).wrapping_sub(used[h] as i32),
+            (cap2 as i32).wrapping_sub(used[h] as i32),
             if h == 4 || h == 5 { 0x100000 } else { 0 }
         ));
     }
@@ -201,7 +203,7 @@ unsafe fn lbDvd_SixBudget() -> i32 {
 }
 
 pub unsafe extern "C" fn lbDvd_TrySetupSixSlotCache() -> i32 {
-    let enabled = ext::OSDisableInterrupts() != 0;
+    let enabled = ext::OSDisableInterrupts(); // C `bool` is `int` (MSL stdbool.h)
     let saved = preloadCache;
     for i in 0..ENTRIES {
         *entry_at(i) = lbDvd_803BA68C;
@@ -221,7 +223,7 @@ pub unsafe extern "C" fn lbDvd_TrySetupSixSlotCache() -> i32 {
     if ok != 0 {
         six_budget_measure_cache = saved.scene.game_cache;
     }
-    ext::OSRestoreInterrupts(enabled as i32);
+    ext::OSRestoreInterrupts(enabled);
     ok
 }
 
@@ -288,7 +290,7 @@ pub unsafe extern "C" fn lbDvd_80017598(heap: i32) -> bool {
     no_change
 }
 
-unsafe fn lbDvd_80017644(heap: i32) -> bool {
+pub unsafe fn lbDvd_80017644(heap: i32) -> bool {
     let mut no_change = false;
     let enabled = ext::OSDisableInterrupts();
     if preloadCache.persistent_heap == heap {
@@ -532,11 +534,8 @@ pub unsafe extern "C" fn lbDvd_80017CC4() {
 
 pub unsafe extern "C" fn lbDvd_80017E64(key: i32, index: usize, value: *mut c_void, cancelflag: bool) {
     let pe = entry_at(index);
-    if cancelflag {
-        panic!("lbdvd.c:827 0");
-    } else {
-        (*pe).state = 3;
-    }
+    assert!(!cancelflag, "lbdvd.c:827 0");
+    (*pe).state = 3;
     lbDvd_80017CC4();
 }
 
@@ -775,7 +774,7 @@ unsafe fn inline3(entry: *mut PreloadEntry) -> (bool, bool) {
 
 pub unsafe extern "C" fn lbDvd_800187F4(entry_num: i32) -> i32 {
     let mut result = 0;
-    let enabled = ext::OSDisableInterrupts() != 0;
+    let enabled = ext::OSDisableInterrupts(); // C `bool` is `int` (MSL stdbool.h)
     let persistent_heap = preloadCache.persistent_heap;
 
     for i in 0..ENTRIES {
@@ -817,7 +816,7 @@ pub unsafe extern "C" fn lbDvd_800187F4(entry_num: i32) -> i32 {
         }
     }
 
-    ext::OSRestoreInterrupts(enabled as i32);
+    ext::OSRestoreInterrupts(enabled);
     result
 }
 
@@ -829,7 +828,7 @@ unsafe fn lbDvd_800189EC(entry_num: i32) {
 
 pub unsafe extern "C" fn lbDvd_80018A2C(arg0: u8) -> i32 {
     let mut result = 0;
-    let enabled = ext::OSDisableInterrupts() != 0;
+    let enabled = ext::OSDisableInterrupts(); // C `bool` is `int` (MSL stdbool.h)
 
     for i in 0..0x50usize {
         let entry = entry_at(i);
@@ -880,7 +879,7 @@ pub unsafe extern "C" fn lbDvd_80018A2C(arg0: u8) -> i32 {
         }
     }
 
-    ext::OSRestoreInterrupts(enabled as i32);
+    ext::OSRestoreInterrupts(enabled);
     result
 }
 

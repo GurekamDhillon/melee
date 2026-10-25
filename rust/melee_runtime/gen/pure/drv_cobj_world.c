@@ -8,6 +8,7 @@ extern int printf(const char*, ...);
 extern void* calloc(unsigned, unsigned);
 
 void* orc_alloc(unsigned n) { return calloc(1, n); }
+static int g_allocs;
 static unsigned g_scale;
 int View_ProjectionScaleBits(void) { return (int) g_scale; }
 void diag_cobj_view(const float* m, const float* e, const float* u, const float* i) { (void) m; (void) e; (void) u; (void) i; }
@@ -24,6 +25,9 @@ static void hcobj(HSD_CObj* c)
     hf(c->projection_param.frustum.left); hf(c->projection_param.frustum.right);
     hw(c->projection_type); hf(c->view_authored_aspect); hw(c->view_auto);
     hwobj(c->eyepos); hwobj(c->interest);
+    hf(c->u.up.x); hf(c->u.up.y); hf(c->u.up.z);
+    { int i, j; for (i = 0; i < 3; i++) for (j = 0; j < 4; j++) hf(c->view_mtx[i][j]); }
+    if (c->proj_mtx) { int i, j; hw(1); for (i = 0; i < 3; i++) for (j = 0; j < 4; j++) hf((*c->proj_mtx)[i][j]); } else hw(0);
 }
 static void rwobj(HSD_WObj* w)
 {
@@ -35,9 +39,9 @@ static void rwobj(HSD_WObj* w)
 int main(void)
 {
     int k, op;
-    for (op = 0; op < 15; op++) {
+    for (op = 0; op < 23; op++) {
         for (k = 0; k < 300; k++) {
-            HSD_CObj c; HSD_WObj we, wi; Vec v; Scissor sc; HSD_RectF32 vp; float t = -7, b = -9; int ret = 0;
+            HSD_CObj c; HSD_WObj we, wi; Vec v; Mtx pm; Scissor sc; HSD_RectF32 vp; float t = -7, b = -9; int ret = 0;
             c = *(HSD_CObj*) calloc(1, sizeof c);
             c.flags = (unsigned) rnd();
             c.viewport.xmin = rndf(); c.viewport.xmax = rndf(); c.viewport.ymin = rndf(); c.viewport.ymax = rndf();
@@ -55,6 +59,14 @@ int main(void)
             c.eyepos = rnd() % 8 == 0 ? 0 : &we;
             c.interest = rnd() % 8 == 0 ? 0 : &wi;
             v.x = rndf(); v.y = rndf(); v.z = rndf();
+            {
+                int i, j;
+                c.u.up.x = rndf(); c.u.up.y = rndf(); c.u.up.z = rndf();
+                for (i = 0; i < 3; i++) for (j = 0; j < 4; j++) c.view_mtx[i][j] = rndf();
+                for (i = 0; i < 3; i++) for (j = 0; j < 4; j++) pm[i][j] = rndf();
+                c.proj_mtx = rnd() % 3 == 0 ? 0 : &pm;
+                if (op == 18 || op == 19) { c.eyepos = &we; c.interest = &wi; }
+            }
             H = FNV0;
             switch (op) {
             case 0: ret = (int) HSD_CObjGetFlags(&c); break;
@@ -81,6 +93,20 @@ int main(void)
             case 12: if (c.eyepos) HSD_CObjSetEyePosition(&c, &v); break;
             case 13: ret = HSD_CObjGetEyeVector(&c, &v); hf(v.x); hf(v.y); hf(v.z); break;
             case 14: ret = HSD_CObjGetEyeVector(&c, 0); break;
+            case 15: { HSD_CObj* cp = rnd() % 6 == 0 ? 0 : &c; Vec* vp = rnd() % 6 == 0 ? 0 : &v; ret = HSD_CObjGetUpVector(cp, vp); hf(v.x); hf(v.y); hf(v.z); break; }
+            case 16: { HSD_CObj* cp = rnd() % 6 == 0 ? 0 : &c; Vec* vp = rnd() % 6 == 0 ? 0 : &v; HSD_CObjSetUpVector(cp, vp); break; }
+            case 17: { HSD_CObj* cp = rnd() % 6 == 0 ? 0 : &c; float roll = rndf(); HSD_CObjSetRoll(cp, roll); break; }
+            case 18: { float* m = (float*) HSD_CObjGetViewingMtxPtr(&c); ret = m == &c.view_mtx[0][0] ? 1 : 2; break; }
+            case 19: { float* m = (float*) HSD_CObjGetInvViewingMtxPtrDirect(&c); ret = m == (float*) &pm ? 1 : m == (float*) c.proj_mtx ? 2 : 3; break; }
+            case 20: { HSD_CObj* cp = rnd() % 6 == 0 ? 0 : &c; unsigned short l = (unsigned short) rnd(), r_ = (unsigned short) rnd(), t_ = (unsigned short) rnd(), b_ = (unsigned short) rnd(); HSD_CObjSetScissorx4(cp, l, r_, t_, b_); break; }
+            case 21: { HSD_CObj* cp = rnd() % 6 == 0 ? 0 : &c; float l = rndf(), r_ = rndf(), t_ = rndf(), b_ = rndf(); HSD_CObjSetViewportfx4(cp, l, r_, t_, b_); break; }
+            case 22: {
+                int m = (int) (rnd() % 16); float o[4] = { -1, -2, -3, -4 };
+                HSD_CObj* cp = rnd() % 6 == 0 ? 0 : &c;
+                HSD_CObjGetOrtho(cp, m & 1 ? &o[0] : 0, m & 2 ? &o[1] : 0, m & 4 ? &o[2] : 0, m & 8 ? &o[3] : 0);
+                hf(o[0]); hf(o[1]); hf(o[2]); hf(o[3]);
+                break;
+            }
             }
             hw((unsigned) ret);
             hcobj(&c);

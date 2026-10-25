@@ -117,7 +117,7 @@ pub fn ftCo_Turn_Anim(g: G) {
 }
 
 /// TARGET_PC `ftCo_Turn_Ucf073Dashback` (UCF 0.73 dashback for MELEE_SLP playback).
-fn ucf073_dashback(f: &mut Fighter) {
+pub fn ftCo_Turn_Ucf073Dashback(f: &mut Fighter) {
     let port = f.player_id as i32;
     if ext::Replay_UcfVersion(f.x618_player_id as i32) != 73 {
         return;
@@ -141,7 +141,7 @@ fn ucf073_dashback(f: &mut Fighter) {
 }
 
 /// TARGET_PC `ftCo_Turn_Ucf084Dashback` (UCF 0.84 dashback).
-fn ucf084_dashback(f: &mut Fighter) {
+pub fn ftCo_Turn_Ucf084Dashback(f: &mut Fighter) {
     let port = f.x618_player_id as i32;
     if ext::Replay_UcfVersion(port) != 84 || f.is_sub_fighter() != 0 {
         return;
@@ -171,9 +171,9 @@ pub fn ftCo_Turn_IASA(g: G) {
             f.input.pressed_buttons |= x1c;
         }
         if has == 0 {
-            ucf073_dashback(f);
+            ftCo_Turn_Ucf073Dashback(f);
             f.facing_dir = -f.facing_dir;
-            ucf084_dashback(f);
+            ftCo_Turn_Ucf084Dashback(f);
         }
     }
     ret_if!(g; ftCo_SpecialS_CheckInput, ftCo_800D68C0, ftCo_Attack100_CheckInput, ftCo_Catch_CheckInput,

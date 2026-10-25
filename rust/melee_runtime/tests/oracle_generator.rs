@@ -1,3 +1,6 @@
+//! C functions covered (C name = Rust implementation the tu:: wrapper delegates to): hsd_8039D214 = GeneratorSystem::follow (op 21),
+//! hsd_8039D9C8 = alloc (op 10), hsd_8039DAD4 = generator::emit (op 23), hsd_8039D3AC = remove (via remove_by_jobj), psAttachParticleAppSRT and
+//! psAttachGeneratorAppSRT = AppSrtPool::attach, psRemoveGeneratorSRT = remove_generator.
 //! Bit-for-bit check of baselib generator.c + psappsrt.c against the C. Vectors:
 //! `tests/data/oracle_generator.txt`, written by `oracle/build_generator.sh` (both TUs through
 //! `helper_generator.c`, over the real list.c / random.c / mtx.c / mtx_pc.c / gekko_fp.c /

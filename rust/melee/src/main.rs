@@ -9,6 +9,7 @@
 //! melee selftest
 //! melee hashlog --words GOLDEN.csv --out CANDIDATE.csv [--frames N]
 //! melee golden --iso DISC.iso --out CANDIDATE.csv [--scenario pad_falcon_fox_fd|pad_falcon_wolf_fd] [--mods DIR [--enable id,id]] [--frames N] [--seed-from GOLDEN.csv] [--audio]
+//!              [--from-snapshot FILE.snap [--start N]] [--dump-state N:FILE]
 //! ```
 //!
 //! `hashlog --words` is a PLUMBING check, not a simulation: the per-fighter and item words
@@ -35,6 +36,8 @@ mod vs_match;
 mod dynamics;
 mod gx_backend;
 mod view;
+mod snap;
+mod fighter_fields;
 
 /// What the frame driver needs from a simulation, per frame.
 pub(crate) trait Sim {
@@ -220,7 +223,7 @@ fn golden(args: &[String]) -> ExitCode {
     let get = |k: &str| args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned();
     let iso = get("--iso").or_else(|| std::env::var("GW_ISO_VANILLA").ok());
     let (Some(iso), Some(out)) = (iso, get("--out")) else {
-        eprintln!("usage: melee golden --iso DISC.iso --out CANDIDATE.csv [--scenario pad_falcon_fox_fd|pad_falcon_wolf_fd] [--mods DIR [--enable id,id]] [--frames N] [--audio]");
+        eprintln!("usage: melee golden --iso DISC.iso --out CANDIDATE.csv [--scenario pad_falcon_fox_fd|pad_falcon_wolf_fd] [--mods DIR [--enable id,id]] [--frames N] [--audio] [--from-snapshot FILE [--start N]] [--dump-state N:FILE]");
         return ExitCode::from(2);
     };
     let scenario = get("--scenario").unwrap_or_else(|| "pad_falcon_fox_fd".into());
@@ -239,6 +242,11 @@ fn golden(args: &[String]) -> ExitCode {
             return ExitCode::from(2);
         }
     };
+    // The scene's `p1=fox/cpu9;p2=falco/cpu9`: slot types and levels, before the match is built.
+    if scenario.starts_with("cpu_") {
+        vs_match::set_cpu_player(0, 9);
+        vs_match::set_cpu_player(1, 9);
+    }
     let frames = get("--frames").and_then(|s| s.parse().ok());
     // gdmods over the disc: --mods DIR [--enable id,id] (else MELEE_MODS_DIR / enabled.txt).
     let mods = match get("--mods") {
@@ -259,11 +267,33 @@ fn golden(args: &[String]) -> ExitCode {
         let ids: Vec<&str> = m.active.iter().map(|m| m.id.as_str()).collect();
         eprintln!("melee: mods mounted: {} ({} files)", ids.join(", "), m.files());
     }
+    // `--from-snapshot FILE [--start N]`: resume from the C build's state dump (MELEE_SNAP_DUMP,
+    // tools/rust-port/snap/); the CSV then holds frame N (the loaded state's own words) and on.
+    let snapshot = match get("--from-snapshot").map(|p| snap::Snap::load(&p)).transpose() {
+        Ok(s) => s,
+        Err(e) => {
+            eprintln!("melee: {e}");
+            return ExitCode::from(2);
+        }
+    };
+    if let (Some(s), Some(n)) = (&snapshot, get("--start").and_then(|v| v.parse::<i32>().ok())) {
+        if s.frame != n {
+            eprintln!("melee: --start {n} but the snapshot is of frame {}", s.frame);
+            return ExitCode::from(2);
+        }
+    }
+    // `--dump-state FRAME:FILE`: write the sim's canonical state text after that frame (a resumed
+    // run: right after the load), to diff a from-0 run against a resumed one.
+    let dump_state: Option<(i32, String)> = get("--dump-state").and_then(|v| v.split_once(':').map(|(a, b)| (a.parse().unwrap_or(-2), b.to_string())));
+    let resumed = snapshot.is_some();
     let mut from_mods = vec![];
     let res = disc::Disc::open(&iso).and_then(|mut d| {
         d.mods = mods;
         let item_freq = if scenario == "cpu_peach_samus_ys_items" { Some(4) } else { None };
-        let r = vs_match::VsMatch::new_ex(&mut d, stage, fighters, 12345, 3, item_freq);
+        let r = match &snapshot {
+            Some(s) => vs_match::VsMatch::from_snapshot(&mut d, s, stage, fighters, 12345, 3),
+            None => vs_match::VsMatch::new_ex(&mut d, stage, fighters, 12345, 3, item_freq),
+        };
         from_mods = std::mem::take(&mut d.from_mods);
         r
     });
@@ -290,6 +320,20 @@ fn golden(args: &[String]) -> ExitCode {
     struct SeedFrom<'a> {
         sim: &'a mut vs_match::VsMatch,
         golden: Option<WordReplay>,
+        /// A resumed run: the first row is the loaded state itself, not a step.
+        resumed: bool,
+        dump_state: Option<(i32, String)>,
+    }
+    impl SeedFrom<'_> {
+        fn maybe_dump(&self) {
+            if let Some((f, path)) = &self.dump_state {
+                if *f == self.sim.frame {
+                    if let Err(e) = std::fs::write(path, self.sim.state_dump()) {
+                        eprintln!("melee: {path}: {e}");
+                    }
+                }
+            }
+        }
     }
     // `--audio`: boot the ported sound stack from the same disc and route the fighter code's
     // lbAudioAx hooks to it; the DSP runs on melee_audio::sim::virtual_frame's fixed schedule.
@@ -302,9 +346,17 @@ fn golden(args: &[String]) -> ExitCode {
     }
     impl Sim for SeedFrom<'_> {
         fn step(&mut self) -> bool {
+            if self.resumed {
+                self.resumed = false;
+                self.maybe_dump();
+                return true;
+            }
             let r = self.sim.step();
             melee_audio::sim::game_frame();
             melee_audio::sim::virtual_frame();
+            if r {
+                self.maybe_dump();
+            }
             r
         }
         fn frame_words(&self) -> FrameWords {
@@ -320,7 +372,7 @@ fn golden(args: &[String]) -> ExitCode {
     let injected = seed_from.is_some();
     let res = std::fs::File::create(&out).and_then(|f| {
         let mut w = std::io::BufWriter::new(f);
-        let n = run(&mut SeedFrom { sim: &mut sim, golden: seed_from }, &mut w, frames)?;
+        let n = run(&mut SeedFrom { sim: &mut sim, golden: seed_from, resumed, dump_state }, &mut w, frames)?;
         w.flush()?;
         Ok(n)
     });

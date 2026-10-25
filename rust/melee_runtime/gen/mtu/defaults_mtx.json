@@ -1,0 +1,3 @@
+{"HSD_ObjAlloc": "crate::tu::objalloc::HSD_ObjAlloc(a0)",
+ "HSD_ObjFree": "crate::tu::objalloc::HSD_ObjFree(a0, a1)",
+ "HSD_ObjAllocInit": "crate::tu::objalloc::HSD_ObjAllocInit(a0, a1 as _, a2)"}

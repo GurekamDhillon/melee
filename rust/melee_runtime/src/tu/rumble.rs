@@ -7,21 +7,44 @@ pub static mut HSD_Rumble_804C22E0: [HSD_RumbleData; 4] =
 pub static mut HSD_Rumble_80406DE0: HSD_RumbleData =
     unsafe { core::mem::zeroed() };
 pub mod ext {
-    use melee_types::*;
-    pub static mut HSD_PadLibData: *mut PadLibData = core::ptr::null_mut();
-    pub static mut OSDisableInterrupts: Option<unsafe fn() -> i32> = None;
-    pub static mut OSRestoreInterrupts: Option<unsafe fn(i32) -> i32> = None;
-    pub static mut PADControlMotor: Option<unsafe fn(i32, u32)> = None;
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    use super::*;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn OSDisableInterrupts() -> i32;
+    fn OSRestoreInterrupts(a0: i32) -> i32;
+    fn PADControlMotor(chan: i32, command: u32);
+    }
+    // `HSD_PadLibData` belongs to controller.c. The port reads it from there; a test that owns its own copy
+    // sets `use_own_libdata` and fills `HSD_PadLibData` here.
+    pub static mut HSD_PadLibData: PadLibData = unsafe { core::mem::zeroed() };
+    pub static mut use_own_libdata: bool = false;
 }
 unsafe fn disable() -> i32 {
-    (ext::OSDisableInterrupts.expect("TODO OSDisableInterrupts"))()
+    ext::OSDisableInterrupts()
 }
 unsafe fn restore(v: i32) {
-    (ext::OSRestoreInterrupts.expect("TODO OSRestoreInterrupts"))(v);
+    ext::OSRestoreInterrupts(v);
 }
 unsafe fn info() -> *mut RumbleInfo {
-    assert!(!ext::HSD_PadLibData.is_null(), "TODO HSD_PadLibData");
-    addr_of_mut!((*ext::HSD_PadLibData).rumble_info)
+    if ext::use_own_libdata {
+        addr_of_mut!(ext::HSD_PadLibData.rumble_info)
+    } else {
+        addr_of_mut!(crate::tu::controller::HSD_PadLibData.rumble_info)
+    }
 }
 unsafe fn channel(n: u8) -> *mut HSD_RumbleData {
     addr_of_mut!(HSD_Rumble_804C22E0)
@@ -218,9 +241,7 @@ pub unsafe fn HSD_PadRumbleInterpret() {
                 _ => None,
             };
             if let Some(cmd) = cmd {
-                (ext::PADControlMotor.expect("TODO PADControlMotor"))(
-                    n as i32, cmd,
-                );
+                ext::PADControlMotor(n as i32, cmd);
             }
             (*a).last_status = (*a).status;
         }

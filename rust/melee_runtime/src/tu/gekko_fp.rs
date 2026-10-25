@@ -5,9 +5,18 @@ pub use crate::gekko::{
     cosf, gk_fmadds, sincos_even as gk_sincos_even, sincos_odd_head as gk_sincos_odd_head,
     sincos_reduce as gk_sincos_reduce, sinf, tanf,
 };
-pub use melee_core::fp::{
-    fres as __fres, frsqrte as __frsqrte, make_quiet as gekko_make_quiet, nan as gekko_nan,
-};
+pub use melee_core::fp::{make_quiet as gekko_make_quiet, nan as gekko_nan};
+
+/// `__frsqrte`: the Gekko reciprocal-square-root estimate (checked against the C by
+/// `tests/pure_gekko_fp.rs`).
+pub fn __frsqrte(val: f64) -> f64 {
+    melee_core::fp::frsqrte(val)
+}
+
+/// `__fres`: the Gekko reciprocal estimate.
+pub fn __fres(val: f64) -> f64 {
+    melee_core::fp::fres(val)
+}
 
 /// The C union pun preserves the complete bit pattern, including signaling NaNs.
 pub fn gekko_bits_to_double(bits: u64) -> f64 {

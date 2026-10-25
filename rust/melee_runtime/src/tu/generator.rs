@@ -3,9 +3,7 @@
 //! [`GeneratorSystem`], particle.c / JObj callees go through its `GeneratorHost`. This TU
 //! exposes them under the C names.
 #![allow(non_snake_case)]
-pub use crate::generator::{
-    emit as hsd_8039DAD4, set_userfunc as hsd_8039D1E4, GenId, GeneratorHost, GeneratorSystem, HsdGenerator,
-};
+pub use crate::generator::{set_userfunc as hsd_8039D1E4, GenId, GeneratorHost, GeneratorSystem, HsdGenerator};
 use crate::generator::GeneratorHost as Host;
 
 type Sys<J> = GeneratorSystem<J>;
@@ -70,3 +68,16 @@ pub fn hsd_8039F6CC<J: Copy + PartialEq>(s: &mut Sys<J>, link: i32, bank: i32, g
 pub fn HSD_StageSlotParticlesClear<J: Copy + PartialEq>(s: &mut Sys<J>, h: &mut impl Host<J>) {
     s.stage_slot_particles_clear(h)
 }
+
+#[allow(non_snake_case, unused_imports, clippy::missing_safety_doc)]
+pub mod cnames {
+    #[allow(unused_imports)]
+    use crate::generator::*;
+    use super::*;
+    /// `hsd_8039DAD4`: the C entry point over `crate::generator::emit` (the owned object model).
+    #[inline]
+    pub fn hsd_8039DAD4<J: Copy + PartialEq, H: GeneratorHost<J>>(gen: &mut HsdGenerator<J>, id: GenId, host: &mut H) -> f32 {
+        crate::generator::emit(gen, id, host)
+    }
+}
+pub use cnames::*;

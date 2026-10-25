@@ -10148,9 +10148,16 @@ void gw_Script_FramePost(void) {
                 fflush(nhlog);
             }
         }
-        { extern void gw_snap_xlog(int frame); gw_snap_xlog(gs.match_frame); } /* MELEE_XHASH_LOG: the cross-platform digest (gw_snap.c) */
+        { extern void gw_snap_xlog(int frame); gw_snap_xlog(gs.match_frame); }
+        { extern void gw_snap_dump_hook(int frame); gw_snap_dump_hook(gs.match_frame); } /* MELEE_SNAP_DUMP: the Rust port's state snapshot (gw_snap.c) */ /* MELEE_XHASH_LOG: the cross-platform digest (gw_snap.c) */
+    }
+    { /* MELEE_CALLTRACE (tools/rust-port/trace): report the frame to the call tracer; a no-op unless gw_calltrace.c is linked */
+        extern void gw_calltrace_set_frame(int match_frame);
+        gw_calltrace_set_frame(gs.match_active ? gs.match_frame : -1);
     }
 }
+void gw_calltrace_nop(int match_frame) { (void) match_frame; }
+#pragma comment(linker, "/alternatename:_gw_calltrace_set_frame=_gw_calltrace_nop")
 
 #include "gw_script_meter.inc"
 int gw_Script_DrawCount(void) {

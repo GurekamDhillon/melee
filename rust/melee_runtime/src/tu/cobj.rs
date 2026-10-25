@@ -26,23 +26,25 @@
 
 pub use crate::cobj::*;
 
-use super::class::{hsdInitClassInfo, hsdIsDescendantOf, hsdNew, hsdSearchClassInfo};
 use super::debug::{HSD_Panic, __assert};
 use crate::cabi::f2u32;
 use crate::gekko::tanf;
 use crate::mtx::{self, Vec3};
 use core::ffi::{c_char, c_void};
 use core::ptr::{addr_of_mut, null_mut};
+#[allow(unused_imports)]
+use melee_types::*;
 use melee_core::fp::fmadds;
 use melee_types::{
     GXRenderModeObj, HSD_AObjDesc, HSD_CObj, HSD_CObjDesc, HSD_CObjInfo, HSD_CameraAnim, HSD_Class,
     HSD_ClassInfo, HSD_ObjData, HSD_WObj, HSD_WObjDesc, Mtx44, _HSD_RectF32, _HSD_RectS16, _HSD_RenderPass,
     _Scissor, _HSD_ClassInfoHead, _HSD_ObjInfo, HSD_RP_BOTTOMHALF, HSD_RP_OFFSCREEN, HSD_RP_SCREEN, HSD_RP_TOPHALF,
 };
-
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
+    use core::ffi::c_void;
     macro_rules! ext_fns {
         ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
@@ -58,49 +60,63 @@ pub mod ext {
         };
     }
     ext_fns! {
-    // aobj.c
-    fn HSD_AObjRemove(aobj: *mut melee_types::HSD_AObj) = crate::tu::aobj::HSD_AObjRemove(aobj as _);
-    fn HSD_AObjLoadDesc(desc: *mut HSD_AObjDesc) -> *mut melee_types::HSD_AObj = crate::tu::aobj::HSD_AObjLoadDesc(desc) as _;
-    fn HSD_AObjInterpretAnim(aobj: *mut melee_types::HSD_AObj, obj: *mut c_void, update: unsafe extern "C" fn(*mut c_void, i32, *mut HSD_ObjData));
-    fn HSD_AObjReqAnim(aobj: *mut melee_types::HSD_AObj, startframe: f32) = crate::tu::aobj::HSD_AObjReqAnim(aobj as _, startframe);
-    // wobj.c
+    fn C_MTXLookAt(a0: *mut c_void, a1: *mut Vec, a2: *mut Vec, a3: *mut Vec) = crate::tu::mtx_pc::raw::C_MTXLookAt(a0 as _, a1, a2, a3);
+    fn GXSetProjection(a0: *mut c_void, a1: u32);
+    fn GXSetScissor(a0: u32, a1: u32, a2: u32, a3: u32);
+    fn GXSetViewport(a0: f32, a1: f32, a2: f32, a3: f32, a4: f32, a5: f32);
+    fn GXSetViewportJitter(a0: f32, a1: f32, a2: f32, a3: f32, a4: f32, a5: f32, a6: u32);
+    fn HSD_AObjInterpretAnim(a0: *mut HSD_AObj, a1: *mut c_void, a2: Option<unsafe extern "C" fn(*mut c_void, i32, *mut HSD_ObjData)>);
+    fn HSD_AObjLoadDesc(a0: *mut HSD_AObjDesc) -> *mut HSD_AObj = { let (desc,) = (a0,); crate::tu::aobj::HSD_AObjLoadDesc(desc) as _ };
+    fn HSD_AObjRemove(a0: *mut HSD_AObj) = { let (aobj,) = (a0,); crate::tu::aobj::HSD_AObjRemove(aobj as _) };
+    fn HSD_AObjReqAnim(a0: *mut HSD_AObj, a1: f32) = { let (aobj, startframe) = (a0, a1); crate::tu::aobj::HSD_AObjReqAnim(aobj as _, startframe) };
+    fn HSD_EraseRect(a0: f32, a1: f32, a2: f32, a3: f32, a4: f32, a5: i32, a6: i32, a7: i32);
+    fn HSD_GetCurrentRenderPass() -> u32;
+    fn HSD_MtxAlloc() -> *mut c_void = crate::tu::mtx::HSD_MtxAlloc();
+    fn HSD_MtxFree(a0: *mut c_void) = { let (mtx,) = (a0,); crate::tu::mtx::HSD_MtxFree(mtx as _) };
+    fn HSD_WObjAddAnim(a0: *mut HSD_WObj, a1: *mut HSD_WObjAnim) = { let (wobj, anim) = (a0, a1); crate::tu::wobj::HSD_WObjAddAnim(wobj, anim as _) };
     fn HSD_WObjAlloc() -> *mut HSD_WObj = crate::tu::wobj::HSD_WObjAlloc();
-    fn HSD_WObjUnref(wobj: *mut HSD_WObj) = crate::tu::wobj::HSD_WObjUnref(wobj);
-    fn HSD_WObjInit(wobj: *mut HSD_WObj, desc: *mut HSD_WObjDesc) = crate::tu::wobj::HSD_WObjInit(wobj, desc);
-    fn HSD_WObjRemoveAnim(wobj: *mut HSD_WObj) = crate::tu::wobj::HSD_WObjRemoveAnim(wobj);
-    fn HSD_WObjAddAnim(wobj: *mut HSD_WObj, anim: *mut melee_types::HSD_WObjAnim) = crate::tu::wobj::HSD_WObjAddAnim(wobj, anim as _);
-    fn HSD_WObjInterpretAnim(wobj: *mut HSD_WObj) = crate::tu::wobj::HSD_WObjInterpretAnim(wobj);
-    fn HSD_WObjReqAnim(wobj: *mut HSD_WObj, startframe: f32) = crate::tu::wobj::HSD_WObjReqAnim(wobj, startframe);
-    fn HSD_WObjClearFlags(wobj: *mut HSD_WObj, flags: u32) = crate::tu::wobj::HSD_WObjClearFlags(wobj, flags);
-    // cobj.c on the native model (positions walk the WObj's JObj target)
-    fn HSD_CObjGetEyePosition(cobj: *mut HSD_CObj) -> Vec3;
-    fn HSD_CObjSetEyePosition(cobj: *mut HSD_CObj, v: Vec3);
-    fn HSD_CObjGetInterest(cobj: *mut HSD_CObj) -> Vec3;
-    fn HSD_CObjSetInterest(cobj: *mut HSD_CObj, v: Vec3);
-    fn HSD_CObjGetUpVector(cobj: *mut HSD_CObj) -> Vec3;
-    fn HSD_CObjSetUpVector(cobj: *mut HSD_CObj, v: Vec3);
-    fn HSD_CObjSetRoll(cobj: *mut HSD_CObj, roll: f32);
-    fn HSD_CObjSetFov(cobj: *mut HSD_CObj, fov: f32);
-    // displayfunc.c
-    fn HSD_EraseRect(top: f32, bottom: f32, left: f32, right: f32, z: f32, enable_color: i32, enable_alpha: i32, enable_depth: i32);
-    fn _HSD_ZListClear();
-    fn _HSD_ZListSort();
-    fn _HSD_ZListDisp();
-    // video.c / initialize.c
-    fn HSD_VIGetRenderMode() -> *mut GXRenderModeObj = crate::tu::video::HSD_VIGetRenderMode();
-    fn HSD_GetCurrentRenderPass() -> _HSD_RenderPass;
+    fn HSD_WObjGetPosition(a0: *mut HSD_WObj, a1: *mut Vec) = crate::tu::wobj::HSD_WObjGetPosition(a0 as _, a1 as _);
+    fn HSD_WObjInit(a0: *mut HSD_WObj, a1: *mut HSD_WObjDesc) = { let (wobj, desc) = (a0, a1); crate::tu::wobj::HSD_WObjInit(wobj, desc) };
+    fn HSD_WObjInterpretAnim(a0: *mut HSD_WObj) = { let (wobj,) = (a0,); crate::tu::wobj::HSD_WObjInterpretAnim(wobj) };
+    fn HSD_WObjRemoveAnim(a0: *mut HSD_WObj) = { let (wobj,) = (a0,); crate::tu::wobj::HSD_WObjRemoveAnim(wobj) };
+    fn HSD_WObjReqAnim(a0: *mut HSD_WObj, a1: f32) = { let (wobj, startframe) = (a0, a1); crate::tu::wobj::HSD_WObjReqAnim(wobj, startframe) };
+    fn HSD_WObjSetPosition(a0: *mut HSD_WObj, a1: *mut Vec) = crate::tu::wobj::HSD_WObjSetPosition(a0 as _, a1 as _);
+    fn MTXFrustum(a0: *mut c_void, a1: f32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32) = crate::tu::mtx44::raw::MTXFrustum(a0 as _, a1, a2, a3, a4, a5, a6);
+    fn MTXOrtho(a0: *mut c_void, a1: f32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32) = crate::tu::mtx44::raw::MTXOrtho(a0 as _, a1, a2, a3, a4, a5, a6);
+    fn MTXPerspective(a0: *mut c_void, a1: f32, a2: f32, a3: f32, a4: f32) = crate::tu::mtx44::raw::MTXPerspective(a0 as _, a1, a2, a3, a4);
+    fn PSMTXCopy(a0: *mut c_void, a1: *mut c_void) = crate::tu::mtx_pc::raw::PSMTXCopy(a0 as _, a1 as _);
+    fn PSMTXInverse(a0: *mut c_void, a1: *mut c_void) -> u32 = crate::tu::mtx_pc::raw::PSMTXInverse(a0 as _, a1 as _);
+    fn PSMTXMultVecSR(a0: *mut c_void, a1: *mut Vec, a2: *mut Vec) = crate::tu::mtx_pc::raw::PSMTXMultVecSR(a0 as _, a1, a2);
+    fn PSMTXRotAxisRad(a0: *mut c_void, a1: *mut Vec, a2: f32) = crate::tu::mtx_pc::raw::PSMTXRotAxisRad(a0 as _, a1, a2);
+    fn PSVECCrossProduct(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) = crate::tu::mtx_pc::raw::PSVECCrossProduct(a0, a1, a2);
+    fn PSVECDotProduct(a0: *mut Vec, a1: *mut Vec) -> f32 = crate::tu::mtx_pc::raw::PSVECDotProduct(a0, a1);
+    fn PSVECMag(a0: *mut Vec) -> f32 = crate::tu::mtx_pc::raw::PSVECMag(a0);
+    fn PSVECNormalize(a0: *mut Vec, a1: *mut Vec) = crate::tu::mtx_pc::raw::PSVECNormalize(a0, a1);
+    fn PSVECSubtract(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) = crate::tu::mtx_pc::raw::PSVECSubtract(a0, a1, a2);
     fn VIGetNextField() -> u32;
-    // GX
-    fn GXSetViewport(left: f32, top: f32, width: f32, height: f32, nearz: f32, farz: f32);
-    fn GXSetViewportJitter(left: f32, top: f32, width: f32, height: f32, nearz: f32, farz: f32, field: u32);
-    fn GXSetScissor(left: u32, top: u32, width: u32, height: u32);
-    fn GXSetProjection(mtx: &Mtx44, type_: u32);
-    // memory / object.c / platform
-    fn HSD_MtxFree(mtx: *mut melee_types::Mtx) = crate::tu::mtx::HSD_MtxFree(mtx as _);
-    fn hsdObj() -> *mut HSD_ClassInfo;
     fn View_ProjectionScaleBits() -> i32;
+    fn _HSD_ZListClear() = crate::tu::displayfunc_native::_HSD_ZListClear();
+    fn _HSD_ZListDisp() = crate::tu::displayfunc_native::_HSD_ZListDisp();
+    fn _HSD_ZListSort() = crate::tu::displayfunc_native::_HSD_ZListSort();
+    fn atan2f(a0: f32, a1: f32) -> f32 = crate::lbtrigf::atan2f(a0, a1);
+    fn diag_cobj_view(a0: *const f32, a1: *const f32, a2: *const f32, a3: *const f32) = ();
+    fn fabsf(a0: f32) -> f32 = a0.abs();
+    fn hsdInitClassInfo(a0: *mut _HSD_ClassInfo, a1: *mut _HSD_ClassInfo, a2: *mut i8, a3: *mut i8, a4: i32, a5: i32);
+    fn hsdIsDescendantOf(a0: *mut c_void, a1: *mut c_void) -> i32;
+    fn hsdNew(a0: *mut _HSD_ClassInfo) -> *mut c_void;
+    fn hsdSearchClassInfo(a0: *const i8) -> *mut _HSD_ClassInfo;
     }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+        pub unsafe extern "C" fn hsdIsDescendantOf(a0: *mut c_void, a1: *mut c_void) -> i32 { super::hsdIsDescendantOf(a0, a1) }
+        pub unsafe extern "C" fn hsdNew(a0: *mut _HSD_ClassInfo) -> *mut c_void { super::hsdNew(a0) }
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut HSD_VIData: HSD_VIInfo = unsafe { core::mem::zeroed() };
+    pub static mut hsdObj: HSD_ClassInfo = unsafe { core::mem::zeroed() };
 }
+// END GENERATED EXT
 
 macro_rules! hsd_assert {
     ($line:expr, $cond:expr, $text:literal) => {
@@ -116,8 +132,8 @@ const PROJ_ORTHO_: u8 = 3;
 const GX_PERSPECTIVE_: u32 = 0;
 const GX_ORTHOGRAPHIC_: u32 = 1;
 
-static mut default_class: *mut HSD_ClassInfo = null_mut();
-static mut current: *mut HSD_CObj = null_mut();
+pub static mut default_class: *mut HSD_ClassInfo = null_mut();
+pub static mut current: *mut HSD_CObj = null_mut();
 
 /// `hsdCObj`: the CObj class info (`info_init` is `CObjInfoInit`).
 pub static mut hsdCObj: HSD_CObjInfo = HSD_CObjInfo {
@@ -378,27 +394,27 @@ pub unsafe extern "C" fn CObjUpdateFunc(obj: *mut c_void, type_: i32, val: *mut 
     let fv = (*val).fv;
     match type_ {
         1 => {
-            let mut v = ext::HSD_CObjGetEyePosition(cobj);
+            let mut v = get_eye(cobj);
             v.x = fv;
-            ext::HSD_CObjSetEyePosition(cobj, v);
+            set_eye(cobj, v);
         }
         2 => {
-            let mut v = ext::HSD_CObjGetEyePosition(cobj);
+            let mut v = get_eye(cobj);
             v.y = fv;
-            ext::HSD_CObjSetEyePosition(cobj, v);
+            set_eye(cobj, v);
         }
         3 => {
-            let mut v = ext::HSD_CObjGetEyePosition(cobj);
+            let mut v = get_eye(cobj);
             v.z = fv;
-            ext::HSD_CObjSetEyePosition(cobj, v);
+            set_eye(cobj, v);
         }
         5 | 6 | 7 => {
-            let mut v = ext::HSD_CObjGetInterest(cobj);
+            let mut v = get_interest(cobj);
             v.x = fv;
-            ext::HSD_CObjSetInterest(cobj, v);
+            set_interest(cobj, v);
         }
-        9 => ext::HSD_CObjSetRoll(cobj, fv),
-        10 => ext::HSD_CObjSetFov(cobj, fv),
+        9 => super::cobj_world::HSD_CObjSetRoll(cobj, fv),
+        10 => HSD_CObjSetFov(cobj, fv),
         11 => HSD_CObjSetNear(cobj, fv),
         12 => HSD_CObjSetFar(cobj, fv),
         _ => {}
@@ -410,7 +426,7 @@ pub unsafe fn HSD_CObjAnim(cobj: *mut HSD_CObj) {
     if cobj.is_null() {
         return;
     }
-    ext::HSD_AObjInterpretAnim((*cobj).aobj, cobj as *mut c_void, CObjUpdateFunc);
+    ext::HSD_AObjInterpretAnim((*cobj).aobj, cobj as *mut c_void, Some(CObjUpdateFunc));
     ext::HSD_WObjInterpretAnim((*cobj).eyepos);
     ext::HSD_WObjInterpretAnim((*cobj).interest);
 }
@@ -430,19 +446,20 @@ pub unsafe fn HSD_CObjReqAnim(cobj: *mut HSD_CObj, startframe: f32) {
 pub unsafe fn makeProjectionMtx(cobj: *mut HSD_CObj, m: &mut Mtx44) -> u32 {
     HSD_CObjUpdateView(cobj);
     let c = &*cobj;
+    let mp = (m as *mut Mtx44).cast::<c_void>();
     match c.projection_type {
         PROJ_PERSPECTIVE_ => {
-            *m = mtx::perspective(c.projection_param.perspective.fov, c.projection_param.perspective.aspect, c.near, c.far);
+            ext::MTXPerspective(mp, c.projection_param.perspective.fov, c.projection_param.perspective.aspect, c.near, c.far);
             GX_PERSPECTIVE_
         }
         PROJ_FRUSTUM_ => {
             let p = &c.projection_param.frustum;
-            *m = mtx::frustum(p.top, p.bottom, p.left, p.right, c.near, c.far);
+            ext::MTXFrustum(mp, c.projection_param.perspective.fov, c.projection_param.perspective.aspect, p.left, p.right, c.near, c.far);
             GX_PERSPECTIVE_
         }
         PROJ_ORTHO_ => {
-            let p = &c.projection_param.ortho;
-            *m = mtx::ortho(p.top, p.bottom, p.left, p.right, c.near, c.far);
+            let p = &c.projection_param.frustum;
+            ext::MTXOrtho(mp, c.projection_param.perspective.fov, c.projection_param.perspective.aspect, p.left, p.right, c.near, c.far);
             GX_ORTHOGRAPHIC_
         }
         _ => 0,
@@ -468,14 +485,14 @@ unsafe fn setupOffscreenCamera(cobj: *mut HSD_CObj) -> bool {
     );
     let mut m: Mtx44 = [[0.0; 4]; 4];
     let t = makeProjectionMtx(cobj, &mut m);
-    ext::GXSetProjection(&m, t);
+    ext::GXSetProjection(core::ptr::addr_of!(m) as *mut c_void, t);
     true
 }
 
 /// `setupNormalCamera` (static).
 unsafe fn setupNormalCamera(cobj: *mut HSD_CObj) -> bool {
     let c = &*cobj;
-    let rmode = ext::HSD_VIGetRenderMode();
+    let rmode = vi_render_mode();
 
     let x_scale = (*rmode).fbWidth as f32 / (*rmode).viWidth as f32;
     let y_scale = (*rmode).efbHeight as f32 / (*rmode).viHeight as f32;
@@ -504,14 +521,14 @@ unsafe fn setupNormalCamera(cobj: *mut HSD_CObj) -> bool {
 
     let mut p: Mtx44 = [[0.0; 4]; 4];
     let projection_type = makeProjectionMtx(cobj, &mut p);
-    ext::GXSetProjection(&p, projection_type);
+    ext::GXSetProjection(core::ptr::addr_of!(p) as *mut c_void, projection_type);
     true
 }
 
 /// `setupTopHalfCamera` (static).
 unsafe fn setupTopHalfCamera(cobj: *mut HSD_CObj) -> bool {
     let c = &*cobj;
-    let rmode = ext::HSD_VIGetRenderMode();
+    let rmode = vi_render_mode();
     let efb = (*rmode).efbHeight as f32;
 
     if c.viewport.ymin >= efb {
@@ -545,29 +562,29 @@ unsafe fn setupTopHalfCamera(cobj: *mut HSD_CObj) -> bool {
             let t = c.near * tanf(deg_to_rad_d(0.5f64 * fov as f64) as f32);
             let w = t * aspect;
             let b = t * -(2.0f32 * h_scale - 1.0f32);
-            p = mtx::frustum(t, b, -w, w, c.near, c.far);
+            ext::MTXFrustum(addr_of_mut!(p).cast(), t, b, -w, w, c.near, c.far);
         }
         PROJ_FRUSTUM_ => {
             projection_type = GX_PERSPECTIVE_;
             let bot = -fmadds(h_scale, fov - aspect, -fov);
-            p = mtx::frustum(fov, bot, c.projection_param.frustum.left, c.projection_param.frustum.right, c.near, c.far);
+            ext::MTXFrustum(addr_of_mut!(p).cast(), fov, bot, c.projection_param.frustum.left, c.projection_param.frustum.right, c.near, c.far);
         }
         PROJ_ORTHO_ => {
             projection_type = GX_ORTHOGRAPHIC_;
             let bot = -fmadds(h_scale, fov - aspect, -fov);
-            p = mtx::ortho(fov, bot, c.projection_param.frustum.left, c.projection_param.frustum.right, c.near, c.far);
+            ext::MTXOrtho(addr_of_mut!(p).cast(), fov, bot, c.projection_param.frustum.left, c.projection_param.frustum.right, c.near, c.far);
         }
         _ => projection_type = 0,
     }
 
-    ext::GXSetProjection(&p, projection_type);
+    ext::GXSetProjection(core::ptr::addr_of!(p) as *mut c_void, projection_type);
     true
 }
 
 /// `setupBottomHalfCamera` (static).
 unsafe fn setupBottomHalfCamera(cobj: *mut HSD_CObj) -> bool {
     let c = &*cobj;
-    let rmode = ext::HSD_VIGetRenderMode();
+    let rmode = vi_render_mode();
 
     let screen_top: u32 = ((*rmode).efbHeight as u32).wrapping_sub(8);
     let screen_top_f = screen_top as f32;
@@ -608,34 +625,88 @@ unsafe fn setupBottomHalfCamera(cobj: *mut HSD_CObj) -> bool {
             let b = c.near * tanf(deg_to_rad_d(0.5f64 * fov as f64) as f32);
             let w = b * aspect;
             let t = b * (2.0f32 * hscale + -1.0f32);
-            p = mtx::frustum(t, -b, -w, w, c.near, c.far);
+            ext::MTXFrustum(addr_of_mut!(p).cast(), t, -b, -w, w, c.near, c.far);
         }
         PROJ_FRUSTUM_ => {
             projection_type = GX_PERSPECTIVE_;
             let h = fmadds(hscale, fov - aspect, aspect);
-            p = mtx::frustum(h, aspect, c.projection_param.frustum.left, c.projection_param.frustum.right, c.near, c.far);
+            ext::MTXFrustum(addr_of_mut!(p).cast(), h, aspect, c.projection_param.frustum.left, c.projection_param.frustum.right, c.near, c.far);
         }
         PROJ_ORTHO_ => {
             projection_type = GX_ORTHOGRAPHIC_;
             let h = fmadds(hscale, fov - aspect, aspect);
-            p = mtx::ortho(h, aspect, c.projection_param.frustum.left, c.projection_param.frustum.right, c.near, c.far);
+            ext::MTXOrtho(addr_of_mut!(p).cast(), h, aspect, c.projection_param.frustum.left, c.projection_param.frustum.right, c.near, c.far);
         }
         _ => projection_type = 0,
     }
 
-    ext::GXSetProjection(&p, projection_type);
+    ext::GXSetProjection(core::ptr::addr_of!(p) as *mut c_void, projection_type);
     true
+}
+
+/// Tests that own their copy of other TUs' data set this; the game uses the owning TU's statics.
+pub static mut use_ext_data: bool = false;
+/// video.h `HSD_VIGetRenderMode` (inline): `&HSD_VIData.current.vi.rmode`.
+unsafe fn vi_render_mode() -> *mut GXRenderModeObj {
+    if use_ext_data {
+        addr_of_mut!(ext::HSD_VIData.current.vi.rmode)
+    } else {
+        addr_of_mut!(crate::tu::video::HSD_VIData.current.vi.rmode)
+    }
+}
+/// object.c `hsdObj`.
+unsafe fn hsd_obj_ptr() -> *mut HSD_ClassInfo {
+    if use_ext_data {
+        addr_of_mut!(ext::hsdObj)
+    } else {
+        addr_of_mut!(crate::tu::object::hsdObj)
+    }
+}
+unsafe fn get_eye(c: *mut HSD_CObj) -> Vec3 {
+    let mut v = melee_types::Vec { x: 0.0, y: 0.0, z: 0.0 };
+    super::cobj_world::HSD_CObjGetEyePosition(c, &mut v);
+    Vec3 { x: v.x, y: v.y, z: v.z }
+}
+unsafe fn set_eye(c: *mut HSD_CObj, v: Vec3) {
+    super::cobj_world::HSD_CObjSetEyePosition(c, &mut melee_types::Vec { x: v.x, y: v.y, z: v.z });
+}
+unsafe fn get_interest(c: *mut HSD_CObj) -> Vec3 {
+    let mut v = melee_types::Vec { x: 0.0, y: 0.0, z: 0.0 };
+    super::cobj_world::HSD_CObjGetInterest(c, &mut v);
+    Vec3 { x: v.x, y: v.y, z: v.z }
+}
+unsafe fn set_interest(c: *mut HSD_CObj, v: Vec3) {
+    super::cobj_world::HSD_CObjSetInterest(c, &mut melee_types::Vec { x: v.x, y: v.y, z: v.z });
+}
+unsafe fn get_up(c: *mut HSD_CObj) -> Vec3 {
+    let mut v = melee_types::Vec { x: 0.0, y: 0.0, z: 0.0 };
+    super::cobj_world::HSD_CObjGetUpVector(c, &mut v);
+    Vec3 { x: v.x, y: v.y, z: v.z }
+}
+unsafe fn set_up(c: *mut HSD_CObj, v: Vec3) {
+    super::cobj_world::HSD_CObjSetUpVector(c, &mut melee_types::Vec { x: v.x, y: v.y, z: v.z });
+}
+/// `HSD_CObjSetFov`: perspective cameras only.
+pub unsafe fn HSD_CObjSetFov(cobj: *mut HSD_CObj, fov: f32) {
+    if cobj.is_null() || (*cobj).projection_type != 1 {
+        return;
+    }
+    (*cobj).projection_param.perspective.fov = fov;
 }
 
 /// `HSD_CObjSetupViewingMtx`.
 pub unsafe fn HSD_CObjSetupViewingMtx(cobj: *mut HSD_CObj) {
     if (*cobj).flags & 2 == 0 && HSD_CObjMtxIsDirty(cobj) {
-        let eyepos = ext::HSD_CObjGetEyePosition(cobj);
-        let up_vec = ext::HSD_CObjGetUpVector(cobj);
-        let interest = ext::HSD_CObjGetInterest(cobj);
-        (*cobj).view_mtx = mtx::look_at(&eyepos, &up_vec, &interest);
-        ext::HSD_WObjClearFlags((*cobj).eyepos, 2);
-        ext::HSD_WObjClearFlags((*cobj).interest, 2);
+        let mut eyepos: melee_types::Vec = core::mem::zeroed();
+        let mut up_vec: melee_types::Vec = core::mem::zeroed();
+        let mut interest: melee_types::Vec = core::mem::zeroed();
+        super::cobj_world::HSD_CObjGetEyePosition(cobj, &mut eyepos);
+        super::cobj_world::HSD_CObjGetUpVector(cobj, &mut up_vec);
+        super::cobj_world::HSD_CObjGetInterest(cobj, &mut interest);
+        ext::C_MTXLookAt(addr_of_mut!((*cobj).view_mtx).cast(), &mut eyepos, &mut up_vec, &mut interest);
+        ext::diag_cobj_view(addr_of_mut!((*cobj).view_mtx).cast(), addr_of_mut!(eyepos).cast(), addr_of_mut!(up_vec).cast(), addr_of_mut!(interest).cast());
+        crate::tu::wobj::HSD_WObjClearFlags((*cobj).eyepos, 2);
+        crate::tu::wobj::HSD_WObjClearFlags((*cobj).interest, 2);
         HSD_CObjClearFlags(cobj, 0x4000_0000);
         HSD_CObjSetFlags(cobj, 0x8000_0000);
     }
@@ -683,7 +754,7 @@ pub unsafe fn HSD_CObjGetCurrent() -> *mut HSD_CObj {
 pub unsafe fn HSD_CObjSetDefaultClass(info: *mut HSD_ClassInfo) {
     if !info.is_null() {
         // The line number is made up in the C too (the function is not in the original binary).
-        hsd_assert!(1946, hsdIsDescendantOf(info as *mut c_void, class_of(addr_of_mut!(hsdCObj)) as *mut c_void), "hsdIsDescendantOf(info, &hsdCObj)");
+        hsd_assert!(1946, ext::hsdIsDescendantOf(info as *mut c_void, class_of(addr_of_mut!(hsdCObj)) as *mut c_void) != 0, "hsdIsDescendantOf(info, &hsdCObj)");
     }
     default_class = info;
 }
@@ -691,7 +762,7 @@ pub unsafe fn HSD_CObjSetDefaultClass(info: *mut HSD_ClassInfo) {
 /// `HSD_CObjAlloc`.
 pub unsafe fn HSD_CObjAlloc() -> *mut HSD_CObj {
     let info = if !default_class.is_null() { default_class } else { class_of(addr_of_mut!(hsdCObj)) };
-    let cobj = hsdNew(info) as *mut HSD_CObj;
+    let cobj = ext::hsdNew(info) as *mut HSD_CObj;
     hsd_assert!(1954, !cobj.is_null(), "cobj");
     cobj
 }
@@ -719,12 +790,12 @@ pub unsafe extern "C" fn CObjLoad(cobj: *mut HSD_CObj, desc: *mut HSD_CObjDesc) 
     if d.flags & 1 != 0 {
         if !d.up_vector.is_null() {
             let u = &*d.up_vector;
-            ext::HSD_CObjSetUpVector(cobj, Vec3 { x: u.x, y: u.y, z: u.z });
+            set_up(cobj, Vec3 { x: u.x, y: u.y, z: u.z });
         } else {
-            ext::HSD_CObjSetUpVector(cobj, up);
+            set_up(cobj, up);
         }
     } else {
-        ext::HSD_CObjSetRoll(cobj, d.roll);
+        super::cobj_world::HSD_CObjSetRoll(cobj, d.roll);
     }
     match d.projection_type {
         1 => {
@@ -764,12 +835,12 @@ pub unsafe fn HSD_CObjLoadDesc(desc: *mut HSD_CObjDesc) -> *mut HSD_CObj {
     let cobj: *mut HSD_CObj;
     let mut info: *mut HSD_ClassInfo = null_mut();
     if (*desc).class_name.is_null() || {
-        info = hsdSearchClassInfo((*desc).class_name as *const c_char);
+        info = ext::hsdSearchClassInfo((*desc).class_name as *const c_char);
         info.is_null()
     } {
         cobj = HSD_CObjAlloc();
     } else {
-        cobj = hsdNew(info) as *mut HSD_CObj;
+        cobj = ext::hsdNew(info) as *mut HSD_CObj;
         hsd_assert!(0x7F7, !cobj.is_null(), "cobj");
     }
     let m = (*((*cobj).parent.parent.class_info as *mut HSD_CObjInfo)).load;
@@ -778,7 +849,7 @@ pub unsafe fn HSD_CObjLoadDesc(desc: *mut HSD_CObjDesc) -> *mut HSD_CObj {
 }
 
 /// `CObjInit` (static): the class's `init` method.
-unsafe extern "C" fn CObjInit(o: *mut HSD_Class) -> i32 {
+pub unsafe extern "C" fn CObjInit(o: *mut HSD_Class) -> i32 {
     let parent = hsdCObj.parent.parent.head.parent;
     let status = ((*parent).init.unwrap())(o);
     if status < 0 {
@@ -799,17 +870,17 @@ unsafe extern "C" fn CObjInit(o: *mut HSD_Class) -> i32 {
 pub unsafe extern "C" fn CObjRelease(o: *mut HSD_Class) {
     let cobj = o as *mut HSD_CObj;
     ext::HSD_AObjRemove((*cobj).aobj);
-    ext::HSD_WObjUnref(HSD_CObjGetEyePositionWObj(cobj));
-    ext::HSD_WObjUnref(HSD_CObjGetInterestWObj(cobj));
+    crate::tu::wobj::HSD_WObjUnref(HSD_CObjGetEyePositionWObj(cobj));
+    crate::tu::wobj::HSD_WObjUnref(HSD_CObjGetInterestWObj(cobj));
     if !(*cobj).proj_mtx.is_null() {
-        ext::HSD_MtxFree((*cobj).proj_mtx);
+        ext::HSD_MtxFree((*cobj).proj_mtx.cast());
     }
     let parent = hsdCObj.parent.parent.head.parent;
     ((*parent).release.unwrap())(o);
 }
 
 /// `CObjAmnesia` (static): the class's `amnesia` method.
-unsafe extern "C" fn CObjAmnesia(info: *mut HSD_ClassInfo) {
+pub unsafe extern "C" fn CObjAmnesia(info: *mut HSD_ClassInfo) {
     if info == default_class {
         default_class = null_mut();
     }
@@ -821,10 +892,10 @@ unsafe extern "C" fn CObjAmnesia(info: *mut HSD_ClassInfo) {
 }
 
 /// `CObjInfoInit` (static).
-unsafe extern "C" fn CObjInfoInit() {
-    hsdInitClassInfo(
+pub unsafe extern "C" fn CObjInfoInit() {
+    ext::hsdInitClassInfo(
         class_of(addr_of_mut!(hsdCObj)),
-        ext::hsdObj(),
+        hsd_obj_ptr(),
         c"sysdolphin_base_library".as_ptr() as *mut c_char,
         c"hsd_cobj".as_ptr() as *mut c_char,
         core::mem::size_of::<HSD_CObjInfo>() as i32,

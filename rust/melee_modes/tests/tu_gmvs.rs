@@ -4,6 +4,9 @@
 //! Every callee out of the TU is a recording stub (tests/tu_gmvs_stubs, generated); the state the TU reads (the
 //! `controller` it owns, the pads, the match results...) is synthetic and filled from the shared generator. The ops
 //! (tests/tu_gmvs_ops) are generated from the OPS block of the C driver. One line per case: op case ret state-hash trace.
+//!
+//! The static inline `fn_8016CFE0_inline` (debug-pad end check + respawn timers) has no op of its own: it runs inside the
+//! ops `fn_8016CFE0` and `gm_Scene_Training_OnFrame`, whose state hash covers `controller` and the pads.
 #![allow(static_mut_refs, non_snake_case, non_upper_case_globals, dead_code)]
 mod tu_gmvs_hs;
 mod tu_gmvs_ops;

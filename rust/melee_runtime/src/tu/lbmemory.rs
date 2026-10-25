@@ -261,20 +261,33 @@ pub fn fn_80015184_body() {
         if temp_r3_2 > 0x19000 {
             var_r30 = 0x19000;
         }
-        core::ptr::copy_nonoverlapping((*p).src.add(temp_r6 as usize), (*p).dst.add(temp_r6 as usize), var_r30 as usize);
+        core::ptr::copy((*p).src.add(temp_r6 as usize), (*p).dst.add(temp_r6 as usize), var_r30 as usize);
         (*p).offset = (*p).offset.wrapping_add(var_r30);
         if (*p).offset == (*p).size {
             (*p).size = 0;
-            ((*p).cb.unwrap())(0, (*p).cb_arg, null_mut(), 0);
+            // the callback is (or may be) one of the `C-unwind` entry points above
+            let cb: unsafe extern "C-unwind" fn(i32, usize, *mut c_void, i32) = core::mem::transmute((*p).cb.unwrap());
+            cb(0, (*p).cb_arg, null_mut(), 0);
             return;
         }
         ext::OSCreateAlarm(addr_of_mut!((*p).alarm));
-        ext::OSSetAlarm(addr_of_mut!((*p).alarm), os_milliseconds_to_ticks(3), Some(fn_80015184));
+        ext::OSSetAlarm(addr_of_mut!((*p).alarm), os_milliseconds_to_ticks(3), fn_80015184_handler());
     }
 }
 
 /// `fn_80015184`: the OSAlarm handler of the RAM copy.
-pub unsafe extern "C" fn fn_80015184(_alarm: *mut OSAlarm, _context: *mut OSContext) {
+/// `fn_80015184` as the `OSAlarmHandler` it is stored as. The entry points are `extern "C-unwind"` (same calling
+/// convention): an `__assert` inside them unwinds to the caller, the way the C driver's longjmp does.
+fn fn_80015184_handler() -> OSAlarmHandler {
+    Some(unsafe { core::mem::transmute::<unsafe extern "C-unwind" fn(*mut OSAlarm, *mut OSContext), unsafe extern "C" fn(*mut OSAlarm, *mut OSContext)>(fn_80015184) })
+}
+
+/// `lbMemory_80015320` as the DevCom callback it is stored as (see `fn_80015184_handler`).
+fn lbMemory_80015320_callback() -> HSD_DevComCallback {
+    Some(unsafe { core::mem::transmute::<unsafe extern "C-unwind" fn(i32, usize, *mut c_void, i32), unsafe extern "C" fn(i32, usize, *mut c_void, i32)>(lbMemory_80015320) })
+}
+
+pub unsafe extern "C-unwind" fn fn_80015184(_alarm: *mut OSAlarm, _context: *mut OSContext) {
     fn_80015184_body();
 }
 
@@ -315,10 +328,10 @@ unsafe fn start_ram_copy(old: u32, current: u32, size: u32, next: *mut Handle) {
     (*p).size = size;
     (*p).offset = 0;
     (*p).cb_arg = next as usize;
-    (*p).cb = Some(lbMemory_80015320);
+    (*p).cb = lbMemory_80015320_callback();
     ext::OSRestoreInterrupts(enabled);
     ext::OSCreateAlarm(addr_of_mut!((*p).alarm));
-    ext::OSSetAlarm(addr_of_mut!((*p).alarm), os_milliseconds_to_ticks(3), Some(fn_80015184));
+    ext::OSSetAlarm(addr_of_mut!((*p).alarm), os_milliseconds_to_ticks(3), fn_80015184_handler());
 }
 
 /// `lbMemory_80015320`: the compaction state machine, one block per step. `_handle` is the next block to move
@@ -351,7 +364,7 @@ pub fn lbMemory_80015320_body(_arg0: i32, _handle: usize, _arg2: *mut c_void, ca
                         round_up_32b(u32_of((*handle).x8_hi)) as usize,
                         0x1B,
                         1,
-                        Some(lbMemory_80015320),
+                        lbMemory_80015320_callback(),
                         (*handle).x0_next as usize,
                     );
                     return;
@@ -370,7 +383,7 @@ pub fn lbMemory_80015320_body(_arg0: i32, _handle: usize, _arg2: *mut c_void, ca
 }
 
 /// `lbMemory_80015320`: the DevCom completion callback of the compaction.
-pub unsafe extern "C" fn lbMemory_80015320(arg0: i32, handle: usize, arg2: *mut c_void, cancelflag: i32) {
+pub unsafe extern "C-unwind" fn lbMemory_80015320(arg0: i32, handle: usize, arg2: *mut c_void, cancelflag: i32) {
     lbMemory_80015320_body(arg0, handle, arg2, cancelflag);
 }
 

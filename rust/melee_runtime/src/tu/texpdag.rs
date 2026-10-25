@@ -14,20 +14,50 @@ pub trait TExpDagHost {
     unsafe fn HSD_TExpRef(&mut self, exp: *mut HSD_TExp, sel: u8);
     unsafe fn HSD_TExpUnref(&mut self, exp: *mut HSD_TExp, sel: u8);
 }
-
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
-    pub struct Ext;
-    impl TExpDagHost for Ext {
-        unsafe fn HSD_TExpGetType(&mut self, _: *mut HSD_TExp) -> u32 {
-            todo!("HSD_TExpGetType (texp.c)")
-        }
-        unsafe fn HSD_TExpRef(&mut self, _: *mut HSD_TExp, _: u8) {
-            todo!("HSD_TExpRef (texp.c)")
-        }
-        unsafe fn HSD_TExpUnref(&mut self, _: *mut HSD_TExp, _: u8) {
-            todo!("HSD_TExpUnref (texp.c)")
-        }
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn HSD_TExpGetType(a0: *mut HSD_TExp) -> u32;
+    fn HSD_TExpRef(a0: *mut HSD_TExp, a1: u8);
+    fn HSD_TExpUnref(a0: *mut HSD_TExp, a1: u8);
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+        pub unsafe extern "C" fn HSD_TExpGetType(a0: *mut HSD_TExp) -> u32 { super::HSD_TExpGetType(a0) }
+    }
+    // Data defined in other TUs (the tests set them).
+}
+// END GENERATED EXT
+
+/// The `texp.c` host of the game: the generated hooks (`HSD_TExpGetType` / `HSD_TExpRef` / `HSD_TExpUnref`).
+pub struct Ext;
+impl TExpDagHost for Ext {
+    unsafe fn HSD_TExpGetType(&mut self, exp: *mut HSD_TExp) -> u32 {
+        ext::HSD_TExpGetType(exp) as u32
+    }
+    unsafe fn HSD_TExpRef(&mut self, exp: *mut HSD_TExp, sel: u8) {
+        ext::HSD_TExpRef(exp, sel)
+    }
+    unsafe fn HSD_TExpUnref(&mut self, exp: *mut HSD_TExp, sel: u8) {
+        ext::HSD_TExpUnref(exp, sel)
     }
 }
 
@@ -510,6 +540,7 @@ pub unsafe fn SimplifyThis(
     exp: *mut HSD_TExp,
 ) -> i32 {
     let mut result = 0;
+    let mut passes = 0u32;
     loop {
         let mut has_tex = false;
         let mut has_ras = false;
@@ -625,6 +656,8 @@ pub unsafe fn SimplifyThis(
         if !changed {
             break;
         }
+        passes += 1;
+        assert!(passes <= 100, "texpdag.c: simplify loop does not converge");
         result = 1;
     }
     result
@@ -680,6 +713,7 @@ pub unsafe fn SimplifyByMerge(
     exp: *mut HSD_TExp,
 ) -> i32 {
     let mut result = 0;
+    let mut passes = 0u32;
     loop {
         let mut merged = false;
         if matches!((*exp).tev.a_op, 0 | 1 | 14 | 15 | 255) {
@@ -836,6 +870,8 @@ pub unsafe fn SimplifyByMerge(
         if !merged {
             break;
         }
+        passes += 1;
+        assert!(passes <= 100, "texpdag.c: simplify loop does not converge");
         result = 1;
     }
     result

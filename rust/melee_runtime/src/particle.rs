@@ -660,6 +660,19 @@ impl PsSystem {
         v
     }
 
+    /// Install the live generators, particles and AppSRTs of a state snapshot (`melee golden
+    /// --from-snapshot`): arena slot = id, `None` = a free slot. The lists (`gen_head`, `heads`,
+    /// each object's `next`) and the counters are set by the caller through the public fields.
+    pub fn restore_live(&mut self, gens: Vec<Option<Generator>>, parts: Vec<Option<Particle>>, srts: Vec<Option<AppSrt>>) {
+        let free = |v: &[Option<()>]| -> Vec<u32> { (0..v.len() as u32).rev().filter(|&i| v[i as usize].is_none()).collect() };
+        self.gen_free = free(&gens.iter().map(|g| g.as_ref().map(|_| ())).collect::<Vec<_>>());
+        self.part_free = free(&parts.iter().map(|g| g.as_ref().map(|_| ())).collect::<Vec<_>>());
+        self.srt_free = free(&srts.iter().map(|g| g.as_ref().map(|_| ())).collect::<Vec<_>>());
+        self.gens = gens;
+        self.parts = parts;
+        self.srts = srts;
+    }
+
     // ---- banks -------------------------------------------------------------------------------
 
     /// `psInitDataBankLoad(bank, cmdBank, texBank, ref, NULL)` on an already located bank.

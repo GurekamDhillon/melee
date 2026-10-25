@@ -12,14 +12,37 @@
 use core::ffi::{c_void, CStr};
 use core::ptr::null_mut;
 use melee_types::*;
-
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
-    #![allow(non_snake_case, unused_variables)]
-    /// `OSReport` (dolphin/os): the one diagnostic of this TU; not ported.
-    pub unsafe fn OSReport(msg: &str) {
-        panic!("TODO: OSReport is not ported: {msg}")
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    use super::*;
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
+                }
+            } )*
+        };
     }
+    ext_fns! {
+    fn ProfActive() -> i32 = 0;
+    fn ProfBegin(a0: i32, a1: i32) = ();
+    fn ProfEnd() = ();
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+    }
+    // Data defined in other TUs (the tests set them).
 }
+// END GENERATED EXT
 
 const HEADER_BYTES: usize = 0x20;
 
@@ -34,8 +57,18 @@ unsafe fn Locate(archive: *mut HSD_Archive) {
     }
 }
 
-/// `HSD_ArchiveParse`
+/// `HSD_ArchiveParse`: the body between the profiler's begin / end calls (`PC_PROF_BEGIN(GW_PROF_DECODE, file_size)`).
 pub unsafe extern "C" fn HSD_ArchiveParse(archive: *mut HSD_Archive, src: *mut u8, file_size: usize) -> i32 {
+    if ext::ProfActive() != 0 {
+        ext::ProfBegin(GW_PROF_DECODE as i32, file_size as i32);
+    }
+    let result = HSD_ArchiveParse_profile_body(archive, src, file_size);
+    ext::ProfEnd();
+    result
+}
+
+/// `HSD_ArchiveParse_profile_body`
+pub unsafe extern "C" fn HSD_ArchiveParse_profile_body(archive: *mut HSD_Archive, src: *mut u8, file_size: usize) -> i32 {
     if archive.is_null() {
         return -1;
     }
@@ -45,11 +78,11 @@ pub unsafe extern "C" fn HSD_ArchiveParse(archive: *mut HSD_Archive, src: *mut u
     core::ptr::copy_nonoverlapping(src, archive as *mut u8, HEADER_BYTES);
 
     if (*archive).header.file_size as usize != file_size {
-        ext::OSReport(&format!(
-            "HSD_ArchiveParse: byte-order mismatch! Please check data format {:x} {:x}\n",
-            (*archive).header.file_size,
-            file_size
-        ));
+        super::lbext::OSReport(
+            "HSD_ArchiveParse: byte-order mismatch! Please check data format %x %x
+",
+            &[super::lbext::OsArg::U((*archive).header.file_size), super::lbext::OsArg::U(file_size as u32)],
+        );
         return -1;
     }
 

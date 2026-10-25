@@ -169,7 +169,7 @@ pub mod ext {
         Ground_801C5774() -> i32 = || -> i32 { unsafe { melee_world::tu::ground::Ground_801C5774() as _ } };
         Stage_80224E38(a0: *mut Vec3, a1: i32) = |a0: *mut Vec3, a1: i32| { unsafe { let _ = melee_world::tu::stage::Stage_80224E38(a0 as _, a1 as _); } };
         Ground_801C38BC(a0: f32, a1: f32) = |a0: f32, a1: f32| { unsafe { let _ = melee_world::tu::ground::Ground_801C38BC(a0 as _, a1 as _); } };
-        Camera_8002F3AC() = || todo!("TODO(port) Camera_8002F3AC (camera.c)");
+        Camera_8002F3AC() = || { crate::tu::adapt::Camera_8002F3AC__cmc() };
         gm_IsCurrently1PMode_inline() -> bool = || -> bool { unsafe { crate::tu::gmvs::gm_IsCurrently1PMode_inline() as _ } };
         Player_SetSpawnPlatformPos(a0: i32, a1: *mut Vec3) = |a0: i32, a1: *mut Vec3| { unsafe { let _ = melee_fighter::tu::player::Player_SetSpawnPlatformPos(a0 as _, a1 as _); } };
         Player_80032FA4(a0: i32, a1: i32) = |a0: i32, a1: i32| { unsafe { let _ = melee_fighter::tu::player::Player_80032FA4(a0 as _, a1 as _); } };

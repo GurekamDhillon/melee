@@ -1,0 +1,8 @@
+{
+ "HSD_MtxInverseTranspose": "{ let r = crate::hsd_mtx::inverse_transpose(&*(a0 as *const [[f32; 4]; 3])); (a1 as *mut [[f32; 4]; 3]).write(r); }",
+ "PSMTXConcat": "crate::tu::mtx_pc::raw::PSMTXConcat(a0 as _, a1 as _, a2 as _)",
+ "HSD_MtxScaledAdd": "{ let r = crate::hsd_mtx::scaled_add(&*(a0 as *const [[f32; 4]; 3]), &*(a1 as *const [[f32; 4]; 3]), a3); (a2 as *mut [[f32; 4]; 3]).write(r); }",
+ "strcmp": "{ match std::ffi::CStr::from_ptr(a0).to_bytes().cmp(std::ffi::CStr::from_ptr(a1).to_bytes()) { core::cmp::Ordering::Less => -1, core::cmp::Ordering::Equal => 0, core::cmp::Ordering::Greater => 1 } }",
+ "memcmp": "{ let (x, y) = (core::slice::from_raw_parts(a0 as *const u8, a2 as usize), core::slice::from_raw_parts(a1 as *const u8, a2 as usize)); match x.cmp(y) { core::cmp::Ordering::Less => -1, core::cmp::Ordering::Equal => 0, core::cmp::Ordering::Greater => 1 } }",
+ "_HSD_mkEnvelopeModelNodeMtx": "crate::tu::displayfunc_native::_HSD_mkEnvelopeModelNodeMtx(a0, a1 as _) as *mut c_void"
+}

@@ -1,3 +1,4 @@
+//! C functions covered: HSD_JObjMakeMatrix = JObjTree::make_matrix (op 14).
 //! Bit-for-bit check of the baselib jobj.c port (tree, flags, dirty propagation, matrix build)
 //! against the C. Vectors: `tests/data/oracle_jobj.txt`, written by `oracle/build_jobj.sh` (jobj.c,
 //! mtx.c, mtx_pc.c compiled with the shipping build's contraction + gwtool lowering; generated

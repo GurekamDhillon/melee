@@ -1,0 +1,13 @@
+{
+ "hsdNew": "crate::tu::class::hsdNew(a0)",
+ "hsdInitClassInfo": "{ crate::tu::class::hsdInitClassInfo(a0, a1, a2, a3, a4, a5); }",
+ "HSD_AObjRemove": "crate::tu::aobj::HSD_AObjRemove(a0)",
+ "HSD_AObjLoadDesc": "crate::tu::aobj::HSD_AObjLoadDesc(a0)",
+ "HSD_AObjReqAnim": "crate::tu::aobj::HSD_AObjReqAnim(a0, a1)",
+ "HSD_AObjInterpretAnim": "crate::tu::aobj::HSD_AObjInterpretAnim(a0, a1, core::mem::transmute(a2))",
+ "HSD_CObjGetCurrent": "crate::tu::cobj::HSD_CObjGetCurrent()",
+ "HSD_CObjGetNear": "crate::tu::cobj::HSD_CObjGetNear(a0)",
+ "HSD_CObjGetFar": "crate::tu::cobj::HSD_CObjGetFar(a0)",
+ "PSMTXCopy": "crate::tu::mtx_pc::raw::PSMTXCopy(a0 as _, a1 as _)",
+ "PSMTXIdentity": "crate::tu::mtx_pc::raw::PSMTXIdentity(a0 as _)"
+}

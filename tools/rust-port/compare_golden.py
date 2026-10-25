@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Compare two neutral-hash CSVs (MELEE_NEUTRAL_HASHLOG format, docs/rust-port/neutral-hash.md).
 
-    compare_golden.py GOLDEN.csv CANDIDATE.csv [--max-report N] [--allow-short]
+    compare_golden.py GOLDEN.csv CANDIDATE.csv [--max-report N] [--allow-short] [--from N]
+
+`--from N` compares only the golden frames >= N, for a run resumed from a state snapshot at frame N
+(`melee golden --from-snapshot`, tools/rust-port/snap/); the candidate must start at exactly N.
 
 Exit 0 when every frame of GOLDEN is present in CANDIDATE with identical columns (and the frame
 sets are equal, unless --allow-short lets CANDIDATE stop early), 1 on a mismatch, 2 on bad input.
@@ -43,9 +46,16 @@ def main():
     ap.add_argument("candidate")
     ap.add_argument("--max-report", type=int, default=10)
     ap.add_argument("--allow-short", action="store_true", help="candidate may end before the golden does")
+    ap.add_argument("--from", dest="start", type=int, default=None, help="compare golden frames >= N only (resumed run)")
     a = ap.parse_args()
     gh, g, gorder = load(a.golden)
-    ch, c, _ = load(a.candidate)
+    ch, c, corder = load(a.candidate)
+    if a.start is not None:
+        gorder = [f for f in gorder if not isinstance(f, tuple) and f >= a.start]
+        g = {f: g[f] for f in gorder}
+        if not corder or corder[0] != a.start:
+            print("candidate starts at frame %s, not %d" % (corder[0] if corder else None, a.start))
+            return 1
     if gh != ch:
         print("header differs:\n  golden    %s\n  candidate %s" % (",".join(gh), ",".join(ch)))
         return 1

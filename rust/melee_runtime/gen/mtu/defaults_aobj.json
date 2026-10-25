@@ -1,0 +1,14 @@
+{
+ "HSD_ObjAllocInit": "crate::tu::objalloc::HSD_ObjAllocInit(a0, a1 as _, a2)",
+ "HSD_ObjAlloc": "{ let (a0,) = (a0,); crate::tu::objalloc::HSD_ObjAlloc(a0) }",
+ "HSD_ObjFree": "{ let (a0, a1) = (a0, a1); crate::tu::objalloc::HSD_ObjFree(a0, a1) }",
+ "HSD_FObjRemoveAll": "{ let (a0,) = (a0,); crate::tu::fobj::HSD_FObjRemoveAll(a0) }",
+ "HSD_FObjReqAnimAll": "{ let (a0, a1) = (a0, a1); crate::tu::fobj::HSD_FObjReqAnimAll(a0, a1) }",
+ "HSD_FObjStopAnimAll": "{ let (a0, a1, a2, a3) = (a0, a1, a2, a3); crate::tu::fobj::HSD_FObjStopAnimAll(a0, a1, a2, a3) }",
+ "HSD_FObjInterpretAnimAll": "{ let (a0, a1, a2, a3) = (a0, a1, a2, a3); crate::tu::fobj::HSD_FObjInterpretAnimAll(a0 as _, a1, a2, a3) }",
+ "HSD_FObjLoadDesc": "{ let (a0,) = (a0,); crate::tu::fobj::HSD_FObjLoadDesc(a0 as _) }",
+ "HSD_IDGetDataFromTable": "crate::tu::id::HSD_IDGetDataFromTable(a0 as usize as _, a1 as _, a2)",
+ "HSD_JObjLoadJoint": "{ let (a0,) = (a0,); crate::tu::jobj::HSD_JObjLoadJoint(a0) }",
+ "HSD_JObjUnref": "{ let (a0,) = (a0,); crate::tu::jobj::HSD_JObjUnref(a0) }",
+ "HSD_Panic": "{ let (a0, a1, a2) = (a0, a1, a2); crate::tu::debug::HSD_Panic(a0 as _, a1, a2 as _) }"
+}

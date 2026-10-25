@@ -98,3 +98,19 @@ pub fn ftlib_8008777c(g: G) -> f32 {
     let n = f.coll_data.floor.normal;
     melee_runtime::lbtrigf::atan2f(-n.x, n.y)
 }
+
+/// `ftLib_UpdateLogicOffCamera` (TARGET_PC, ftlib.c): the off-screen flag `ftLib_80086A8C` writes from
+/// the draw callback, computed from logic (the projection of the camera box through the game camera).
+pub fn ftLib_UpdateLogicOffCamera(gobj: G) {
+    let f = fp(gobj);
+    if f.x221F_b3() != 0 {
+        return; // ftDrawCommon_80080E18 skips the test then too
+    }
+    if f.x2229_b3() == 0 && f.x2220_b7() == 0 && !h::camera_80030a50().is_null() {
+        let cam = f.x890_cameraBox;
+        let on = h::camera_logic_to_screen(cam, &mut f.x2188);
+        f.set_x221F_b0(!on as u8);
+    } else {
+        f.set_x221F_b0(0);
+    }
+}

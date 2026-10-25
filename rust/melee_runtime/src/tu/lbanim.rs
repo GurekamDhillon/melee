@@ -15,79 +15,43 @@ use melee_types::*;
 pub use melee_types::{FigaTrack, FigaTree};
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; an unset hook panics.
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
-    macro_rules! hook {
-        ($hook:ident, $name:ident, ($($a:ident: $t:ty),*) $(-> $r:ty)?) => {
-            pub static mut $hook: Option<fn($($t),*) $(-> $r)?> = None;
-            #[allow(non_snake_case)]
-            pub fn $name($($a: $t),*) $(-> $r)? {
-                match unsafe { $hook } {
-                    Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
-                }
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
             }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
+                }
+            } )*
         };
     }
-    pub static mut HSD_FOBJALLOC: Option<fn() -> *mut HSD_FObj> = None;
-            #[allow(non_snake_case)]
-            pub fn HSD_FObjAlloc() -> *mut HSD_FObj {
-                match unsafe { HSD_FOBJALLOC } {
-                    Some(f) => f(),
-                    None => { return unsafe { crate::tu::fobj::HSD_FObjAlloc() as _ }; },
-                }
-            }
-    pub static mut HSD_AOBJALLOC: Option<fn() -> *mut HSD_AObj> = None;
-            #[allow(non_snake_case)]
-            pub fn HSD_AObjAlloc() -> *mut HSD_AObj {
-                match unsafe { HSD_AOBJALLOC } {
-                    Some(f) => f(),
-                    None => { return unsafe { crate::tu::aobj::HSD_AObjAlloc() as _ }; },
-                }
-            }
-    pub static mut HSD_AOBJREMOVE: Option<fn(*mut HSD_AObj) > = None;
-            #[allow(non_snake_case)]
-            pub fn HSD_AObjRemove(aobj: *mut HSD_AObj)  {
-                match unsafe { HSD_AOBJREMOVE } {
-                    Some(f) => f(aobj),
-                    None => { unsafe { let _ = crate::tu::aobj::HSD_AObjRemove(aobj as _); } return; },
-                }
-            }
-    pub static mut HSD_AOBJSETFLAGS: Option<fn(*mut HSD_AObj, u32) > = None;
-            #[allow(non_snake_case)]
-            pub fn HSD_AObjSetFlags(aobj: *mut HSD_AObj, flags: u32)  {
-                match unsafe { HSD_AOBJSETFLAGS } {
-                    Some(f) => f(aobj, flags),
-                    None => { unsafe { let _ = crate::tu::aobj::HSD_AObjSetFlags(aobj as _, flags as _); } return; },
-                }
-            }
-    pub static mut HSD_AOBJSETFOBJ: Option<fn(*mut HSD_AObj, *mut HSD_FObj) > = None;
-            #[allow(non_snake_case)]
-            pub fn HSD_AObjSetFObj(aobj: *mut HSD_AObj, fobj: *mut HSD_FObj)  {
-                match unsafe { HSD_AOBJSETFOBJ } {
-                    Some(f) => f(aobj, fobj),
-                    None => { unsafe { let _ = crate::tu::aobj::HSD_AObjSetFObj(aobj as _, fobj as _); } return; },
-                }
-            }
-    pub static mut HSD_AOBJSETREWINDFRAME: Option<fn(*mut HSD_AObj, f32) > = None;
-            #[allow(non_snake_case)]
-            pub fn HSD_AObjSetRewindFrame(aobj: *mut HSD_AObj, frame: f32)  {
-                match unsafe { HSD_AOBJSETREWINDFRAME } {
-                    Some(f) => f(aobj, frame),
-                    None => { unsafe { let _ = crate::tu::aobj::HSD_AObjSetRewindFrame(aobj as _, frame as _); } return; },
-                }
-            }
-    pub static mut HSD_AOBJSETENDFRAME: Option<fn(*mut HSD_AObj, f32) > = None;
-            #[allow(non_snake_case)]
-            pub fn HSD_AObjSetEndFrame(aobj: *mut HSD_AObj, frame: f32)  {
-                match unsafe { HSD_AOBJSETENDFRAME } {
-                    Some(f) => f(aobj, frame),
-                    None => { unsafe { let _ = crate::tu::aobj::HSD_AObjSetEndFrame(aobj as _, frame as _); } return; },
-                }
-            }
-    hook!(HSD_JOBJSETFLAGS, HSD_JObjSetFlags, (jobj: *mut HSD_JObj, flags: u32));
-    hook!(HSD_JOBJCLEARFLAGS, HSD_JObjClearFlags, (jobj: *mut HSD_JObj, flags: u32));
+    ext_fns! {
+    fn HSD_AObjAlloc() -> *mut HSD_AObj = crate::tu::aobj::HSD_AObjAlloc() as _;
+    fn HSD_AObjRemove(a0: *mut HSD_AObj) = crate::tu::aobj::HSD_AObjRemove(a0 as _);
+    fn HSD_AObjSetEndFrame(a0: *mut HSD_AObj, a1: f32) = crate::tu::aobj::HSD_AObjSetEndFrame(a0 as _, a1 as _);
+    fn HSD_AObjSetFObj(a0: *mut HSD_AObj, a1: *mut HSD_FObj) = crate::tu::aobj::HSD_AObjSetFObj(a0 as _, a1 as _);
+    fn HSD_AObjSetFlags(a0: *mut HSD_AObj, a1: u32) = crate::tu::aobj::HSD_AObjSetFlags(a0 as _, a1 as _);
+    fn HSD_AObjSetRewindFrame(a0: *mut HSD_AObj, a1: f32) = crate::tu::aobj::HSD_AObjSetRewindFrame(a0 as _, a1 as _);
+    fn HSD_FObjAlloc() -> *mut HSD_FObj = crate::tu::fobj::HSD_FObjAlloc() as _;
+    fn HSD_JObjClearFlags(a0: *mut HSD_JObj, a1: u32) = crate::tu::jobj_world::HSD_JObjClearFlags(a0, a1);
+    fn HSD_JObjSetFlags(a0: *mut HSD_JObj, a1: u32) = crate::tu::jobj_world::HSD_JObjSetFlags(a0, a1);
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+    }
+    // Data defined in other TUs (the tests set them).
 }
+// END GENERATED EXT
 
 /// Copies one track into a freshly allocated FObj (the body shared by both builders).
 #[inline]
@@ -103,7 +67,7 @@ unsafe fn fill_fobj(fobj: *mut HSD_FObj, track: *const FigaTrack) {
 
 /// `static lbAnim_InitFrames(track, frames)`: one FObj per track, chained in order.
 /// `frames <= 0` is undefined in the C (`fobj` is read uninitialised); callers guard `frames != 0`.
-unsafe fn lbAnim_InitFrames(mut track: *const FigaTrack, frames: i8) -> *mut HSD_FObj {
+pub unsafe fn lbAnim_InitFrames(mut track: *const FigaTrack, frames: i8) -> *mut HSD_FObj {
     let mut fobj: *mut HSD_FObj = null_mut();
     let mut next: *mut HSD_FObj = null_mut();
     let mut result: *mut HSD_FObj = null_mut();

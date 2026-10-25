@@ -259,6 +259,10 @@ def main():
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     dry = "--dry" in sys.argv
     specs = load_specs(args[0] if args else Path(__file__).with_name("ports.txt"))
+    for a in sys.argv[1:]:  # --skip=NAME,NAME: leave these callees unwired (a port whose signature a generated TU does not share)
+        if a.startswith("--skip="):
+            for n in a[7:].split(","):
+                specs.pop(n, None)
     total = {n: [0] for n in specs}
     for f in sorted(SRC.rglob("*.rs")):
         pf = f.as_posix()

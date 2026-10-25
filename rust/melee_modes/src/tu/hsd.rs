@@ -25,7 +25,7 @@ pub mod ext {
         /// debug.c
         fn __assert(file: *const i8, line: u32, msg: *const i8) -> ();
         // ---- gr/inlines.h: Ground_InitScene's callees
-        fn Camera_Init(a0: i32) -> ();
+        fn Camera_Init(a0: i32) -> () = crate::tu::adapt::Camera_Init__cmc;
         fn lb_8000FCDC() -> () = crate::tu::adapt::lb_8000FCDC__a0c24e;
         fn mpColl_80041C78() -> () = crate::tu::adapt::mpColl_80041C78__63449b;
         fn Ground_801C0378(a0: i32) -> () = crate::tu::adapt::Ground_801C0378__874334;

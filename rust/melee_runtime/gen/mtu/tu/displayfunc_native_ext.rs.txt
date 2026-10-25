@@ -1,0 +1,78 @@
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/mtu/gen_tu.py; the callees of the C TU)
+pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    use super::*;
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn GXBegin(a0: u32, a1: u32, a2: u16);
+    fn GXClearVtxDesc();
+    fn GXColor4u8(a0: u8, a1: u8, a2: u8, a3: u8);
+    fn GXInitTexObj(a0: *mut _GXTexObj, a1: *mut c_void, a2: u16, a3: u16, a4: u32, a5: u32, a6: u32, a7: u8);
+    fn GXLoadPosMtxImm(a0: *mut c_void, a1: u32);
+    fn GXLoadTexObj(a0: *mut _GXTexObj, a1: u32);
+    fn GXPosition3f32(a0: f32, a1: f32, a2: f32);
+    fn GXSetAlphaCompare(a0: u32, a1: u8, a2: u32, a3: u32, a4: u8);
+    fn GXSetAlphaUpdate(a0: u8);
+    fn GXSetBlendMode(a0: u32, a1: u32, a2: u32, a3: u32);
+    fn GXSetChanCtrl(a0: u32, a1: u8, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32);
+    fn GXSetColorUpdate(a0: u8);
+    fn GXSetCullMode(a0: u32);
+    fn GXSetCurrentMtx(a0: u32);
+    fn GXSetNumChans(a0: u8);
+    fn GXSetNumTevStages(a0: u8);
+    fn GXSetNumTexGens(a0: u8);
+    fn GXSetTevOp(a0: u32, a1: u32);
+    fn GXSetTevOrder(a0: u32, a1: u32, a2: u32, a3: u32);
+    fn GXSetTexCoordGen2(a0: u32, a1: u32, a2: u32, a3: u32, a4: u8, a5: u32);
+    fn GXSetVtxAttrFmt(a0: u32, a1: u32, a2: u32, a3: u32, a4: u8);
+    fn GXSetVtxDesc(a0: u32, a1: u32);
+    fn GXSetZCompLoc(a0: u8);
+    fn GXSetZMode(a0: u8, a1: u32, a2: u8);
+    fn GXSetZTexture(a0: u32, a1: u32, a2: u32);
+    fn GXTexCoord2u8(a0: u8, a1: u8);
+    fn HSD_CObjGetCurrent() -> *mut HSD_CObj;
+    fn HSD_ClearVtxDesc();
+    fn HSD_DObjSetCurrent(a0: *mut HSD_DObj);
+    fn HSD_JObjSetCurrent(a0: *mut HSD_JObj);
+    fn HSD_JObjSetupMatrixSub(a0: *mut HSD_JObj);
+    fn HSD_LObjSetupSpecularInit(a0: *mut c_void);
+    fn HSD_MtxAlloc() -> *mut c_void;
+    fn HSD_MtxFree(a0: *mut c_void);
+    fn HSD_MtxInverseConcat(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void);
+    fn HSD_ObjAlloc(a0: *mut _HSD_ObjAllocData) -> *mut c_void;
+    fn HSD_ObjAllocInit(a0: *mut _HSD_ObjAllocData, a1: u32, a2: u32);
+    fn HSD_ObjFree(a0: *mut _HSD_ObjAllocData, a1: *mut c_void);
+    fn HSD_PObjClearMtxMark(a0: *mut c_void, a1: u32);
+    fn HSD_SetupRenderMode(a0: u32);
+    fn HSD_StateInitTev();
+    fn HSD_StateInvalidate(a0: i32);
+    fn MTXRotRad(a0: *mut c_void, a1: i8, a2: f32);
+    fn PSMTXConcat(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void);
+    fn PSMTXCopy(a0: *mut c_void, a1: *mut c_void);
+    fn PSMTXInverse(a0: *mut c_void, a1: *mut c_void) -> u32;
+    fn PSMTXScale(a0: *mut c_void, a1: f32, a2: f32, a3: f32);
+    fn PSVECCrossProduct(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec);
+    fn PSVECMag(a0: *mut Vec) -> f32;
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut HSD_identityMtx: [[f32; 4]; 3] = unsafe { core::mem::zeroed() };
+}
+// END GENERATED EXT

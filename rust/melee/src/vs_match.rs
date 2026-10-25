@@ -44,6 +44,9 @@ mod story;
 mod rebirth;
 mod samus;
 mod sheik;
+mod snapshot;
+mod snapshot_ps;
+mod snapshot_fx;
 use fox::{ItemCmd, FoxVars, SimItem};
 use rebirth::{PlayerRespawn, RespawnCtx};
 
@@ -495,6 +498,11 @@ pub struct VsMatch {
     start_shield: f32,
     /// Why a damage hook could not proceed (damage.rs).
     dmg_err: Option<String>,
+    /// The stage file's data block (joint descriptor trees; snapshot loading walks them).
+    stage_data: Arc<Vec<u8>>,
+    stage_map_head: u32,
+    /// Debug (snapshot loading): reference Fighter bytes per player.
+    keep_ref: Vec<Vec<u8>>,
 }
 
 /// Green Greens' `grGreens_Init` (the map gobjs' OnInit in order 6, 5 for the draws that matter): the
@@ -726,6 +734,16 @@ fn direction(x: f32) -> f32 {
     } else {
         1.0
     }
+}
+
+/// `p1=fox/cpu9` of the scene string: the player table's slot type, CPU kind (4 = the retail
+/// level-select CPU) and level, set before the match is built (Player_GetCpuType / GetCpuLevel
+/// feed `ftCo_800A101C`, `ftCo_IsCpuControlled`).
+pub fn set_cpu_player(slot: i32, level: i32) {
+    stale::set_slot_type(slot, melee_types::Gm_PKind_Cpu);
+    let p = stale::player(slot);
+    p.cpu_type = 4;
+    p.cpu_level = level as u8;
 }
 
 fn fighter_kind(name: &str) -> Result<FighterKind, String> {
@@ -1388,8 +1406,10 @@ impl VsMatch {
                 }
             });
         }
+        let stage_data_arc = Arc::new(stage.data.clone());
+        let stage_map_head = stage.public_offset("map_head").unwrap_or(0);
         let story_state = if stkind == STKIND_YS { Some(story::Story::new(std::sync::Arc::new(DatArchive::parse(&stage_bytes).map_err(|e| format!("{stage_file}: {e}"))?), &mut joint_mtx)?) } else { None };
-        Ok(Self { item_timer, players, ground, cg, pads: [input::PadStatus::default(); 4], go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, story: story_state, greens: greens_draws.map(move |d| greens::Greens::new(std::sync::Arc::new(stage), d)), aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists, blast, fighter_jobjs: Vec::new(), items: items0, cpu_dist, plco_bytes: std::sync::Arc::from(&plco.data[..]), cpu_tbl: be(common_root + 4 * 22), grkind: if stkind == STKIND_DL { Gr_Kind_Greens as i32 } else if stkind == STKIND_YS { Gr_Kind_Story as i32 } else if stkind == STKIND_BF { Gr_Kind_Battle as i32 } else { Gr_Kind_Last as i32 }, respawn_points: (4..8).filter_map(|id| points.iter().find(|p| p.id == id).map(|p| Vec3 { x: p.pos[0], y: p.pos[1], z: p.pos[2] })).collect(), respawn_busy: [0; 6], start_shield, per_slot_spawn: stkind == STKIND_BF, dmg_err: None })
+        Ok(Self { item_timer, players, ground, cg, pads: [input::PadStatus::default(); 4], go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, story: story_state, greens: greens_draws.map(move |d| greens::Greens::new(std::sync::Arc::new(stage), d)), aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists, blast, fighter_jobjs: Vec::new(), items: items0, cpu_dist, plco_bytes: std::sync::Arc::from(&plco.data[..]), cpu_tbl: be(common_root + 4 * 22), grkind: if stkind == STKIND_DL { Gr_Kind_Greens as i32 } else if stkind == STKIND_YS { Gr_Kind_Story as i32 } else if stkind == STKIND_BF { Gr_Kind_Battle as i32 } else { Gr_Kind_Last as i32 }, respawn_points: (4..8).filter_map(|id| points.iter().find(|p| p.id == id).map(|p| Vec3 { x: p.pos[0], y: p.pos[1], z: p.pos[2] })).collect(), respawn_busy: [0; 6], start_shield, per_slot_spawn: stkind == STKIND_BF, dmg_err: None, stage_data: stage_data_arc, stage_map_head, keep_ref: Vec::new() })
     }
 
     /// The m-ex fighters' code-run report (crate::mex), one block per such fighter.
@@ -3124,14 +3144,14 @@ fn ground_stick_gate(p: &mut Player, rand: &mut HsdRand, what: &str) -> Result<b
 }
 
 /// `ftCo_8009E7B4`: the fighter's dynamic bones follow the new animation row's flags (`x594_b3`: off).
-fn dynamics_e7b4(p: &mut Player) -> Result<(), String> {
+fn dynamics_e7b4(p: &mut Player, trees: bool) -> Result<(), String> {
     let kind = p.fp.kind as i32;
     if kind == melee_types::Ft_Kind_Kirby as i32 {
         return Ok(());
     }
     let Some(dy) = &mut p.dynamics else { return Ok(()) };
     let w = u32::from_be_bytes(unsafe { p.fp.anon_594.x594_s32 }.to_ne_bytes());
-    dy.e7b4(&mut p.skel, p.fp.x2227_b6() != 0, w & 0x1000_0000 != 0, w & 0x0800_0000 != 0, kind == melee_types::Ft_Kind_Purin as i32)
+    dy.e7b4(&mut p.skel, p.fp.x2227_b6() != 0, w & 0x1000_0000 != 0, w & 0x0800_0000 != 0, trees, kind == melee_types::Ft_Kind_Purin as i32)
 }
 
 /// `ftCo_Catch_CheckInput` (ftCo_800951D0 needs an item; fn_800D8E94 / fn_800D952C pass for
@@ -5120,7 +5140,7 @@ fn change_motion_state_flags(p: &mut Player, msid: i32, row: Option<&(AnimRow, F
             // fp->x594_s32 = row->x10_animCurrFlags (stored in GameCube byte order, which the
             // generated bitfield accessors read).
             fp.anon_594.x594_s32 = i32::from_ne_bytes(r.flags.to_be_bytes());
-            dynamics_e7b4(p)?;
+            dynamics_e7b4(p, r.dyn_trees)?;
             // anim_blend 0.0 -> the row's default blend byte.
             let blend = if std::mem::take(&mut p.blend_zero) { 0.0 } else { r.blend as f32 };
             p.fp.anim_id = r.id as i32;
@@ -5518,6 +5538,11 @@ impl Sim for VsMatch {
             p.hud_randomize = false;
         }
         self.frame += 1;
+        if let Ok(v) = std::env::var("MELEE_GOLDEN_SUMMARY") {
+            if v.split(',').any(|x| x.trim().parse::<i32>().ok() == Some(self.frame)) {
+                eprint!("{}", self.state_summary());
+            }
+        }
         true
     }
     fn frame_words(&self) -> FrameWords {

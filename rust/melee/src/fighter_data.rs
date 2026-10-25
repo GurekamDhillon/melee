@@ -28,6 +28,9 @@ pub struct AnimRow {
     pub blend: u8,
     /// The row's id (`fp->anim_id`).
     pub id: u32,
+    /// `ftData->x2C->x10` (the per-chain dynamics animation table) exists and its entry for
+    /// `fp->x28[anim_id][1]` is non-null (what `ftCo_8009E7B4` tests when `x594_b4` is set).
+    pub dyn_trees: bool,
 }
 
 impl AnimRow {
@@ -164,7 +167,10 @@ impl FighterFiles {
         let root = a.publics.first().map(|p| p.offset).ok_or(format!("AJ row {anim_id}: no root"))?;
         let x10 = be32(d, self.ft_data + 0x10);
         let blend = if x10 != 0 { d[(x10 + 2 * anim_id) as usize] } else { 0 };
-        Ok(Some(AnimRow { frames: f32::from_bits(be32(&a.data, root + 8)), flags, script: be32(d, row + 0xC), blend, id: anim_id }))
+        let x2c = be32(d, self.ft_data + 0x2C);
+        let dyn10 = if x2c != 0 { be32(d, x2c + 0x10) } else { 0 };
+        let dyn_trees = x10 != 0 && dyn10 != 0 && be32(d, dyn10 + 4 * d[(x10 + 2 * anim_id + 1) as usize] as u32) != 0;
+        Ok(Some(AnimRow { frames: f32::from_bits(be32(&a.data, root + 8)), flags, script: be32(d, row + 0xC), blend, id: anim_id, dyn_trees }))
     }
 
     /// Animation row `anim_id`'s figatree (`ftData_80085CD8` -> `fp->x590`).

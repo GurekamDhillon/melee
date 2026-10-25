@@ -61,6 +61,8 @@ pub enum ItemClass {
     GreensBlock,
     /// Samus' missile (samus.rs): `fresh` = made this frame, its item procs start the next one.
     SsMissile { owner: usize, smash: bool, life: f32, x8: f32, v0: f32, v1: f32, v3: f32, born: u32, fresh: bool, facing: f32, jref: JObjRef, a: super::samus::MissileAttrs, hb: u8, x58: Vec3 },
+    /// A stage-owned item the sim does not step (snapshot loading): held unchanged, hashed.
+    Static,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -143,7 +145,7 @@ fn laser_facing(angle: f32) -> f32 {
 /// The hit capsules of a laser made this frame by a fighter proc of s_link 1: Fox's article script
 /// also steps the boxes once (`it_80272560` -> `it_8027129C` x4: Enabled -> Unk2 with the joint at the
 /// position and Z scale 1 of the creation); Falco's leaves them Enabled.
-fn laser_hits_new(kind: i32, pos: Vec3, angle: f32, slink1: bool) -> LaserHits {
+pub(super) fn laser_hits_new(kind: i32, pos: Vec3, angle: f32, slink1: bool) -> LaserHits {
     let offs = laser_offsets(kind);
     let z = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut h = LaserHits { n: offs.len(), state: [0; 4], x4c: [z; 4], x58: [z; 4], valid: slink1, victims: 0, dmg: 3.0, atk_id: 18, atk_inst: 0, dealt: false };
@@ -444,6 +446,7 @@ impl VsMatch {
                         flashes.push(([ft_hold.x, ft_hold.y, ft_hold.z], angle, owner));
                     }
                 }
+                ItemClass::Static => {}
                 ItemClass::SeakHeld { .. } | ItemClass::SeakThrown { .. } => {} // sheik::item_proc, below
                 ItemClass::GreensBlock => {}
                 ItemClass::SsMissile { .. } => {}

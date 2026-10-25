@@ -63,6 +63,8 @@ pub trait Host {
     fn mode_name(&self, mode: i32) -> String {
         format!("mode {mode}")
     }
+    /// `gw_hang_script_state`: pending and expired script deadlines, and the last expired name
+    fn hang_script_state(&mut self, _pending: i32, _expired: i32, _last: &str) {}
     /// `gw_perf_snapshot` + `gw_surface_stats` + `gw_Shader_Perf`: host frame diagnostics (never game state).
     fn perf_snapshot(&mut self, _want: usize) -> PerfSnapshot {
         PerfSnapshot::default()

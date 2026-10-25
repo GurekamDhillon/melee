@@ -21,7 +21,7 @@ struct Slot {
 }
 
 /// `gs_item_keys`: every key must be a string in `allowed`
-fn item_keys(t: &Table, allowed: &[&str]) -> LuaResult<()> {
+pub(crate) fn item_keys(t: &Table, allowed: &[&str]) -> LuaResult<()> {
     for (k, _) in pairs(t)? {
         match key_str(&k) {
             Some(s) if allowed.contains(&s.as_str()) => {}

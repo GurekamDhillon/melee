@@ -123,6 +123,7 @@ pub struct State {
     pub match_frame: i32,
     pub ev: crate::events::EventState,
     pub zone: crate::gd::zones::ZoneAdapter,
+    pub deadlines: crate::gd::deadline::Deadlines,
     pub last_action: [i32; 6],
     pub state_frame: [i32; 6],
     pub paused: bool,
@@ -423,6 +424,7 @@ impl Engine {
             match_frame: 0,
             ev: Default::default(),
             zone: Default::default(),
+            deadlines: Default::default(),
             last_action: [0; 6],
             state_frame: [0; 6],
             paused: false,
@@ -889,6 +891,11 @@ impl Engine {
         }
         let stage_owner = self.st.borrow().scripts[i].stage_owner;
         self.zones_release(stage_owner);
+        {
+            let mut s = self.st.borrow_mut();
+            let (p, e, l) = s.deadlines.release(i);
+            s.host.borrow_mut().hang_script_state(p, e, &l);
+        }
         let mut s = self.st.borrow_mut();
         s.commands.retain(|c| c.script != i);
         if s.match_active {
@@ -1335,6 +1342,9 @@ impl Engine {
         let _ = kind;
         if kind != 1 {
             self.zones_dispatch();
+        }
+        if kind != 1 {
+            self.deadline_frame();
         }
         self.camera_tick();
         self.dispatch_events();

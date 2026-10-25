@@ -35,6 +35,7 @@ pub const HIT_BY_ITEM: i32 = 0x400;
 
 pub const MAX_EVENTS: usize = 256;
 pub const HIT_RULE_CONTEXT_MAX: usize = 96;
+pub const SKILL_KINDS: usize = 25;
 pub const ENEMY_NAMES: [&str; 7] = ["goomba", "koopa", "redead", "like_like", "octorok", "polar_bear", "topi"];
 
 /// One field of a producer-built event payload table (clank, item, armor, skill and crit events)
@@ -80,6 +81,10 @@ pub struct GsEvent {
     pub context_victim_damage: i32,
     pub source_enemy: i32,
     pub reaction: bool,
+    pub item_y: i32,
+    pub item_colour: i32,
+    pub item_amount: i32,
+    pub item_reason: i32,
     pub payload: Option<Vec<(String, Pv)>>,
 }
 impl GsEvent {
@@ -106,6 +111,10 @@ impl GsEvent {
             context_victim_damage: 0,
             source_enemy: 0,
             reaction: false,
+            item_y: 0,
+            item_colour: 0,
+            item_amount: 0,
+            item_reason: 0,
             payload: None,
         }
     }
@@ -358,6 +367,42 @@ impl State {
             ));
         }
     }
+
+    /// `gw_Script_SkillEvent`: a row the game's skill observer appended to its ring
+    #[allow(clippy::too_many_arguments)]
+    pub fn skill_event(&mut self, kind: i32, entity: i32, i1: i32, i2: i32, i3: i32, f1: i32, f2: i32) {
+        if !self.ev.want || self.game.resimulating() || !(1..SKILL_KINDS as i32).contains(&kind) || !(1..=12).contains(&entity) {
+            return;
+        }
+        let mut e = GsEvent::new(EV_SKILL, entity, kind, i1, i2);
+        e.item_amount = i3;
+        e.item_y = f1;
+        e.item_colour = f2;
+        e.item_reason = self.game.skill_row(0, 0); // the ring row appended just before this call
+        self.push_event(e);
+    }
+    /// `gw_Script_CritEvent`
+    #[allow(clippy::too_many_arguments)]
+    pub fn crit_event(&mut self, a: i32, b: i32, c: i32, d: i32, base: i32, final_dmg: i32, strength: i32, x: i32, y: i32, z: i32, hitlag: i32, mult: i32) {
+        if !self.ev.want || self.game.resimulating() || !(1..=12).contains(&a) || !(1..=12).contains(&b) {
+            return;
+        }
+        let mut e = GsEvent::new(EV_CRIT, a, b, c, d);
+        for (k, v) in [base, final_dmg, strength, x, y, z, hitlag, mult].iter().enumerate() {
+            e.hitf[k] = f32::from_bits(*v as u32);
+        }
+        e.item_reason = self.game.skill_row(0, 0);
+        self.push_event(e);
+    }
+    /// `gw_Script_ArmorEvent`
+    pub fn armor_event(&mut self, entity: i32, ty: i32, absorbed: bool, broke: bool, damage_bits: i32, kb_bits: i32) {
+        if !self.ev.want || self.game.resimulating() || !(1..=12).contains(&entity) || !(1..=6).contains(&ty) {
+            return;
+        }
+        let mut e = GsEvent::new(EV_ARMOR, entity, ty, absorbed as i32 | (broke as i32) << 1, damage_bits);
+        e.item_y = kb_bits;
+        self.push_event(e);
+    }
     /// `gw_Script_EnemyHit`: event 10 (event 9 is on_enemy_removed)
     pub fn enemy_hit(&mut self, handle: i32, from: i32, damage: i32) {
         if !self.ev.want || self.game.resimulating() || !(0..6).contains(&from) || damage <= 0 {
@@ -412,6 +457,42 @@ pub fn spine_push(lua: &mlua::Lua, e: &GsEvent, hook: &str) -> mlua::Result<Tabl
     Ok(t)
 }
 
+const CRIT_TAGS: [&str; 10] = ["default", "jab", "dash_attack", "tilt", "smash", "aerial", "grab", "throw", "special", "projectile"];
+fn crit_push(lua: &mlua::Lua, e: &GsEvent) -> mlua::Result<Table> {
+    let tag = e.c & 0xff;
+    let t = lua.create_table()?;
+    t.int("attacker", ((e.a - 1) % 6 + 1) as i64)?;
+    t.int("attacker_entity", e.a as i64)?;
+    t.int("victim", ((e.b - 1) % 6 + 1) as i64)?;
+    t.int("victim_entity", e.b as i64)?;
+    t.string("move_tag", CRIT_TAGS[if (1..10).contains(&tag) { tag as usize } else { 0 }])?;
+    t.num("base_damage", e.hitf[0] as f64)?;
+    t.num("final_damage", e.hitf[1] as f64)?;
+    t.num("added_damage", (e.hitf[1] - e.hitf[0]) as f64)?;
+    t.num("multiplier", e.hitf[7] as f64)?;
+    t.num("strength", e.hitf[2] as f64)?;
+    t.num("x", e.hitf[3] as f64)?;
+    t.num("y", e.hitf[4] as f64)?;
+    t.num("z", e.hitf[5] as f64)?;
+    t.num("hitlag_frames", e.hitf[6] as f64)?;
+    t.num("launch", bitsf(e.d))?;
+    t.boolean("forced", e.c & 0x100 != 0)?;
+    t.boolean("projectile", e.c & 0x200 != 0)?;
+    Ok(t)
+}
+fn armor_push(lua: &mlua::Lua, e: &GsEvent) -> mlua::Result<Table> {
+    let t = lua.create_table()?;
+    t.int("port", ((e.a - 1) % 6 + 1) as i64)?;
+    t.int("entity", e.a as i64)?;
+    t.boolean("subfighter", e.a > 6)?;
+    t.string("type", if (1..=6).contains(&e.b) { crate::gd::caps::ARMOR_TYPES[e.b as usize - 1] } else { "unknown" })?;
+    t.boolean("absorbed", e.c & 1 != 0)?;
+    t.boolean("broke", e.c & 2 != 0)?;
+    t.num("damage", bitsf(e.d))?;
+    t.num("knockback", bitsf(e.item_y))?;
+    Ok(t)
+}
+
 fn bitsf(i: i32) -> f64 {
     f32::from_bits(i as u32) as f64
 }
@@ -431,7 +512,10 @@ impl Engine {
         let int = |n: i32| Value::Integer(n as i64);
         let mut v: Vec<Value> = Vec::new();
         match e.what {
-            17 | 18 | 19 | EV_CLANK | EV_ITEM_COLLECT | EV_ITEM_EXPIRE => v.push(Value::Table(payload_table(lua, &e.payload)?)),
+            EV_ARMOR => v.push(Value::Table(armor_push(lua, e)?)),
+            EV_SKILL => v.push(Value::Table(crate::gd::skill::skill_push(lua, e)?)),
+            EV_CRIT => v.push(Value::Table(crit_push(lua, e)?)),
+            EV_CLANK | EV_ITEM_COLLECT | EV_ITEM_EXPIRE => v.push(Value::Table(payload_table(lua, &e.payload)?)),
             16 => {
                 v.push(int(e.a + 1));
                 v.push(int(e.b));
@@ -586,6 +670,15 @@ impl Engine {
                 if let Some(f) = self.get_hook(i, "on_event") {
                     if let Ok(t) = spine_push(&self.lua, e, hook) {
                         self.pcall(i, &f, MultiValue::from_iter([Value::Table(t)]), "on_event");
+                    }
+                }
+                if e.what == EV_SKILL && !self.st.borrow().game.resimulating() {
+                    if let Some(h) = crate::gd::skill::SKILL_HOOKS.get(e.b as usize).filter(|_| e.b >= 1) {
+                        if let Some(f) = self.get_hook(i, h) {
+                            if let Ok(t) = crate::gd::skill::skill_push(&self.lua, e) {
+                                self.pcall(i, &f, MultiValue::from_iter([Value::Table(t)]), h);
+                            }
+                        }
                     }
                 }
                 if self.st.borrow().game.resimulating() {

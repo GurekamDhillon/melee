@@ -9,6 +9,7 @@ pub mod bench;
 pub mod camera;
 pub mod caps;
 pub mod crit;
+pub mod deadline;
 pub mod entity;
 pub mod combo;
 pub mod core;
@@ -24,6 +25,8 @@ pub mod pad;
 pub mod players;
 pub mod rec;
 pub mod savestate;
+pub mod shock;
+pub mod skill;
 pub mod zones;
 
 /// `gs_buttons` (only these twelve appear in `gd.buttons`).
@@ -54,6 +57,9 @@ pub fn register_all(e: &Engine, gd: &Table) -> LuaResult<()> {
     hit_rules::register(e, gd)?;
     entity::register(e, gd)?;
     zones::register(e, gd)?;
+    deadline::register(e, gd)?;
+    shock::register(e, gd)?;
+    skill::register(e, gd)?;
     bench::register(e, gd)?;
     crit::register(e, gd)?;
     mods::register(e, gd)?;

@@ -190,6 +190,13 @@ pub struct Sound {
     /// The HPS start's DevCom completions (header, first block) wait for `stream_header_done` /
     /// `stream_data_done`, as the C's deferred completions do (set by the trace replay).
     pub defer_stream: bool,
+    /// Block refills complete on recorded HHDR / HDONE ops (replay of a trace that has them).
+    pub defer_refill: bool,
+    pub refill_src: u32,
+    /// The refill's data read lands in ARAM chunk by chunk (DCHUNK ops).
+    pub refill_chunked: bool,
+    pub refill_active: bool,
+    pub refill_off: usize,
     pub(crate) stream_hdr_pending: Option<Vec<u8>>,
     pub(crate) stream_data_pending: bool,
     /// HSD_Synth_804D7780: the 3 x 64 KB stream blocks in ARAM.
@@ -280,6 +287,11 @@ impl Sound {
             stream_pos: 0,
             stream_busy: 0,
             defer_stream: false,
+            defer_refill: false,
+            refill_src: 0,
+            refill_chunked: false,
+            refill_active: false,
+            refill_off: 0,
             stream_hdr_pending: None,
             stream_data_pending: false,
             stream_base: 0,

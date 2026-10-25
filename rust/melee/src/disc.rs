@@ -24,6 +24,21 @@ impl Disc {
         Ok(Self { f, fst, mods: None, from_mods: vec![] })
     }
 
+    /// `len` bytes of the game's main.dol at its RAM address `addr` (DOL header at the disc's +0x420 offset;
+    /// section table as `pc/tools/extract_assets.py` reads it). Used for the SIS font atlas.
+    pub fn dol_bytes(&mut self, addr: u32, len: usize) -> Result<Vec<u8>, String> {
+        let h = read_at(&mut self.f, 0x420, 4)?;
+        let dol = be32(&h, 0) as u64;
+        let hd = read_at(&mut self.f, dol, 0x100)?;
+        for k in 0..18 {
+            let (off, a, sz) = (be32(&hd, k * 4), be32(&hd, 0x48 + k * 4), be32(&hd, 0x90 + k * 4));
+            if sz != 0 && a <= addr && addr as u64 + len as u64 <= a as u64 + sz as u64 {
+                return read_at(&mut self.f, dol + off as u64 + (addr - a) as u64, len);
+            }
+        }
+        Err(format!("DOL: {addr:#x}+{len:#x} is not in any section"))
+    }
+
     /// A root-level or nested file by bare name (case-insensitive), as `iso_file` in tests/dat.rs.
     pub fn read(&mut self, want: &str) -> Result<Vec<u8>, String> {
         if let Some(p) = self.mods.as_ref().and_then(|m| m.lookup(want)) {

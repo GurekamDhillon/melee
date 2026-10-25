@@ -193,6 +193,12 @@ pub struct LbState {
     pub cur_hps: String,
     /// ssm_stem_pos 10 ("/audio/us/") vs 7 ("/audio/").
     pub ssm_dir: &'static str,
+    /// The volume statics (lbvol.rs).
+    pub vol: crate::lbvol::Vol,
+    /// Live sound objects (posobj.rs), what they read from the game, and the handle counter.
+    pub objs: Vec<crate::posobj::SoundObj>,
+    pub env: crate::posobj::PosEnv,
+    pub obj_seq: usize,
 }
 
 impl Default for LbState {
@@ -223,6 +229,10 @@ impl Default for LbState {
             stage_echo: 1,
             cur_hps: String::new(),
             ssm_dir: "/audio/us/",
+            vol: crate::lbvol::Vol::default(),
+            objs: Vec::new(),
+            env: Default::default(),
+            obj_seq: 0,
         }
     }
 }
@@ -499,6 +509,14 @@ impl Sound {
         }
     }
 
+    /// `gm_LoadAnnouncer` (gm_1601.c): drop the scene-group requests and request nr_vs.ssm (the
+    /// announcer, countdown and VS-scene sounds). The VS scene runs it before 8002785C.
+    pub fn lb_load_announcer(&mut self) {
+        self.lb_audio_ax_80026f2c(0x12);
+        self.lb_audio_ax_8002702c(2, 0x20);
+        self.lb_audio_ax_80027168();
+    }
+
     /// lbAudioAx_8002785C's VS branch: the players' CharacterKinds, the stage's StKind and its
     /// GrKind (Stage_8022519C). Loads the banks and sets the stage echo byte.
     pub fn lb_load_match_banks(&mut self, ckinds: &[i32], stkind: i32, grkind: i32) {
@@ -643,7 +661,7 @@ impl Sound {
             self.lb.hb1_vol = if self.lb.hb1_voice == -1 { 0 } else { 0x7F };
         }
         self.lb.duck = if self.lb.hb1_voice == -1 && self.lb.hb2_voice == -1 { 1.0 } else { 0.2 };
-        // fn_80024654(0): volume ducking, not ported.
+        self.lb_fn_80024654(false);
         if self.lb.flush_deferred == 1 {
             for i in 0..0x10 {
                 if self.lb.deferred[i] != SFX_NONE {

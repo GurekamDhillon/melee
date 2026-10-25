@@ -101,6 +101,11 @@ pub fn play_bgm_id(id: i32) -> i32 {
     with(|s| s.lb_audio_ax_80023f28(id)).unwrap_or(1)
 }
 
+/// `gm_LoadAnnouncer`: nr_vs.ssm for the VS scene.
+pub fn load_announcer() {
+    with(|s| s.lb_load_announcer());
+}
+
 /// `lbAudioAx_8002785C` (VS): load the players' and the stage's SSM banks.
 pub fn load_match_banks(ckinds: &[i32], stkind: i32, grkind: i32) {
     with(|s| s.lb_load_match_banks(ckinds, stkind, grkind));
@@ -108,7 +113,10 @@ pub fn load_match_banks(ckinds: &[i32], stkind: i32, grkind: i32) {
 
 /// One game frame of audio: `lbAudioAx_80027DF8` (deferred sfx, the two loop voices).
 pub fn game_frame() {
-    with(|s| s.lb_audio_ax_80027df8());
+    with(|s| {
+        s.step_sound_objs();
+        s.lb_audio_ax_80027df8()
+    });
 }
 
 static VCLOCK: Mutex<u32> = Mutex::new(0);
@@ -125,6 +133,21 @@ pub fn virtual_frame() -> u32 {
     with(|s| {
         for _ in 0..n {
             s.sub_frame();
+        }
+    });
+    n
+}
+
+/// [`virtual_frame`] that also appends each sub-frame's 160 interleaved s16 stereo samples (the
+/// mix `shim_ax.c` clips and writes to `MELEE_AUDIO_DUMP`) to `out`.
+pub fn virtual_frame_into(out: &mut Vec<i16>) -> u32 {
+    let mut c = VCLOCK.lock().unwrap_or_else(|e| e.into_inner());
+    *c += 10;
+    let n = *c / 3;
+    *c %= 3;
+    with(|s| {
+        for _ in 0..n {
+            out.extend_from_slice(&s.sub_frame());
         }
     });
     n
@@ -159,4 +182,68 @@ impl Output {
         s.ax = ax;
         n
     }
+}
+
+/// Set what the positional sound objects read from the game (class, positions, camera, RNG).
+pub fn set_env(env: crate::posobj::PosEnv) {
+    with(|s| s.lb.env = env);
+}
+
+/// `lbAudioAx_800263E8(...)`: start a sound object owned by `owner` (a GObj pointer as an
+/// integer); the object's handle as an i32 (0 where the C returns NULL).
+#[allow(clippy::too_many_arguments)]
+pub fn lbaudioax_800263e8(
+    f1: f32, owner: usize, mode: i32, sfx: i32, start_vol: i32, end_vol: i32, pan_left: i32,
+    pan_right: i32, end_frame: i32, track: i32, voice: i32,
+) -> i32 {
+    with(|s| s.lb_audio_ax_800263e8(f1, owner, mode, sfx, start_vol, end_vol, pan_left, pan_right, end_frame, track, voice))
+        .flatten()
+        .map(|h| h as i32)
+        .unwrap_or(0)
+}
+
+/// `lbAudioAx_800264E4(obj)`: the object's voice handle (-1 for none).
+pub fn lbaudioax_800264e4(handle: i32) -> i32 {
+    with(|s| s.lb_audio_ax_800264e4((handle > 0).then_some(handle as usize))).unwrap_or(-1)
+}
+
+/// `lbAudioAx_80026510(owner)`.
+pub fn lbaudioax_80026510(owner: usize) -> bool {
+    with(|s| s.lb_audio_ax_80026510(owner)).unwrap_or(false)
+}
+
+/// `lbAudioAx_800265C4(owner, voice)`.
+pub fn lbaudioax_800265c4(owner: usize, voice: i32) -> bool {
+    with(|s| s.lb_audio_ax_800265c4(owner, voice)).unwrap_or(false)
+}
+
+/// The volume settings the menus and the pause code reach (`lbAudioAx_800245D4` music,
+/// `800245F4` sfx, `80024614` voice, `80025064` voice/sfx on-off, `80024E84` pause duck,
+/// `80024E50` BGM pause, `80024F08` / `80024F6C` full silence on/off, `80024C84` scene reset).
+pub fn set_music_volume(v: i32) {
+    with(|s| s.lb_audio_ax_800245d4(v));
+}
+pub fn set_sfx_volume(v: i32) -> i32 {
+    with(|s| s.lb_audio_ax_800245f4(v)).unwrap_or(0)
+}
+pub fn set_voice_volume(v: i32) {
+    with(|s| s.lb_audio_ax_80024614(v));
+}
+pub fn set_voice_sfx_on(a: bool, b: bool) {
+    with(|s| s.lb_audio_ax_80025064(a, b));
+}
+pub fn set_pause_duck(on: bool) {
+    with(|s| s.lb_audio_ax_80024e84(on));
+}
+pub fn pause_bgm(pause: bool) {
+    with(|s| s.lb_audio_ax_80024e50(pause));
+}
+pub fn silence(on: bool) {
+    with(|s| if on { s.lb_audio_ax_80024f08() } else { s.lb_audio_ax_80024f6c() });
+}
+pub fn scene_reset() {
+    with(|s| s.lb_audio_ax_80024c84());
+}
+pub fn scene_init() {
+    with(|s| s.lb_audio_ax_80028690());
 }

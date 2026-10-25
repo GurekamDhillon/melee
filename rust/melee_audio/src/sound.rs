@@ -187,6 +187,18 @@ pub struct Sound {
     pub(crate) stream_pos: u32,
     /// HSD_Synth_804D7778.
     pub(crate) stream_busy: u8,
+    /// The HPS start's DevCom completions (header, first block) wait for `stream_header_done` /
+    /// `stream_data_done`, as the C's deferred completions do (set by the trace replay).
+    pub defer_stream: bool,
+    /// Block refills complete on recorded HHDR / HDONE ops (replay of a trace that has them).
+    pub defer_refill: bool,
+    pub refill_src: u32,
+    /// The refill's data read lands in ARAM chunk by chunk (DCHUNK ops).
+    pub refill_chunked: bool,
+    pub refill_active: bool,
+    pub refill_off: usize,
+    pub(crate) stream_hdr_pending: Option<Vec<u8>>,
+    pub(crate) stream_data_pending: bool,
     /// HSD_Synth_804D7780: the 3 x 64 KB stream blocks in ARAM.
     pub(crate) stream_base: u32,
     /// HSD_Synth_804D7784: 0x500 bytes of silence (a nibble address).
@@ -195,6 +207,10 @@ pub struct Sound {
     pub(crate) hako: [[u8; 0x20]; 3],
     /// AXRegisterCallback(HSD_SynthCallback) has run.
     pub ax_callback_registered: bool,
+    /// Call trace in the format of the C build's `MELEE_AUDIO_TRACE` (`<sub-frame> OP args`).
+    pub trace: Option<Vec<String>>,
+    pub trace_sub: u32,
+    pub(crate) trace_in_cb: bool,
 
     // ---- axdriver.c ----
     /// AXDriver_804C45A0.
@@ -270,10 +286,21 @@ impl Sound {
             stream_loop_slot: 0,
             stream_pos: 0,
             stream_busy: 0,
+            defer_stream: false,
+            defer_refill: false,
+            refill_src: 0,
+            refill_chunked: false,
+            refill_active: false,
+            refill_off: 0,
+            stream_hdr_pending: None,
+            stream_data_pending: false,
             stream_base: 0,
             silence: 0,
             hako: [[0; 0x20]; 3],
             ax_callback_registered: false,
+            trace: None,
+            trace_sub: 0,
+            trace_in_cb: false,
             sm: [Sm::default(); SMS],
             free_head: None,
             active_head: None,
@@ -296,10 +323,24 @@ impl Sound {
     }
 
     /// One 5 ms DSP sub-frame: the game's AX callback (HSD_SynthCallback), then the mix.
+    /// Record one game-facing call (not those made inside the synth callback).
+    pub(crate) fn tr(&mut self, op: &str, a: [i32; 5]) {
+        if self.trace_in_cb {
+            return;
+        }
+        let sub = self.trace_sub;
+        if let Some(t) = self.trace.as_mut() {
+            t.push(format!("{sub} {op} {} {} {} {} {}", a[0], a[1], a[2], a[3], a[4]));
+        }
+    }
+
     pub fn sub_frame(&mut self) -> [i16; crate::FRAME_SAMPLES * 2] {
         if self.ax_callback_registered {
+            self.trace_in_cb = true;
             self.synth_callback();
+            self.trace_in_cb = false;
         }
+        self.trace_sub += 1;
         *self.ax.run_frame(&self.aram)
     }
 
@@ -320,6 +361,13 @@ impl Sound {
     /// `/audio/us/smash2.sem`, and `main.ssm` into bank 0. `bank_sizes` are the three banks'
     /// ARAM sizes (the C sums them from `offsets_arr_803BC4E4`).
     pub fn boot(&mut self, fs: Box<dyn AudioFs>, bank_sizes: [i32; 3]) -> Result<(), String> {
+        self.boot_engine(fs, bank_sizes)?;
+        self.load_ssm("/audio/us/main.ssm", 0)?;
+        Ok(())
+    }
+
+    /// `boot` without the first bank load (HSD_SynthSFXLoad of main.ssm is a game call).
+    pub fn boot_engine(&mut self, fs: Box<dyn AudioFs>, bank_sizes: [i32; 3]) -> Result<(), String> {
         self.fs = Some(fs);
         let total: i32 = bank_sizes.iter().sum();
         self.lb.bank_size = bank_sizes;
@@ -332,9 +380,8 @@ impl Sound {
         for s in bank_sizes {
             self.sfx_allocate_bank(s);
         }
-        self.set_sound_mode(1); // lbAudioAx: sound_mode = 1 (stereo) unless the save says mono
+        // HSD_SynthInit (synth.c): sound mode = OSGetSoundMode(), which the PC shim (shim_os.c) answers 0 (mono); nothing in a match sets it.
         self.load_sem("/audio/us/smash2.sem")?;
-        self.load_ssm("/audio/us/main.ssm", 0)?;
         Ok(())
     }
 
@@ -481,6 +528,7 @@ impl Sound {
 
     /// HSD_AudioSFXKeyOff.
     pub fn audio_sfx_key_off(&mut self, vid: i32) -> bool {
+        self.tr("KO", [vid, 0, 0, 0, 0]);
         match self.sm_of(vid) {
             Some(v) => self.drv_key_off(v),
             None => false,
@@ -498,6 +546,7 @@ impl Sound {
 
     /// HSD_AudioSFXKeyOffAll.
     pub fn audio_sfx_key_off_all(&mut self) {
+        self.tr("KOALL", [0; 5]);
         self.for_active(|s, i| {
             if s.sm[i].flags & SMSTATE_MASK != 0 {
                 s.drv_key_off(i);
@@ -507,6 +556,7 @@ impl Sound {
 
     /// HSD_AudioSFXKeyOffTrack.
     pub fn audio_sfx_key_off_track(&mut self, track: i32) {
+        self.tr("KOTRK", [track, 0, 0, 0, 0]);
         self.for_active(|s, i| {
             if s.sm[i].flags & SMSTATE_MASK != 0 && s.sm[i].track as i32 == track {
                 s.drv_key_off(i);
@@ -797,6 +847,13 @@ impl Sound {
     /// HSD_AudioSFXStartParam: start script `sound_id` (bank = id / 10000 of smash2.sem) on a
     /// virtual voice. The handle, or -1.
     pub fn audio_sfx_start_param(&mut self, sound_id: i32, volume: u8, pan: u8, track: i32, channel: i32) -> i32 {
+        self.tr("START", [sound_id, volume as i32, pan as i32, track, channel]);
+        let h = self.audio_sfx_start_param_impl(sound_id, volume, pan, track, channel);
+        self.tr("STARTRET", [h, 0, 0, 0, 0]);
+        h
+    }
+
+    fn audio_sfx_start_param_impl(&mut self, sound_id: i32, volume: u8, pan: u8, track: i32, channel: i32) -> i32 {
         let Some(sem) = self.sem.as_ref() else { return -1 };
         let bank = sound_id / 10000;
         let mem = sound_id % 10000;
@@ -851,6 +908,7 @@ impl Sound {
 
     /// HSD_AudioSFXSetPan.
     pub fn audio_sfx_set_pan(&mut self, vid: i32, pan: u8) -> bool {
+        self.tr("PAN", [vid, pan as i32, 0, 0, 0]);
         let Some(v) = self.sm_of(vid) else { return false };
         if self.sm[v].vid != -1 {
             let id = self.sm[v].vid;
@@ -864,6 +922,7 @@ impl Sound {
 
     /// HSD_AudioSFXSetVolumeEx.
     pub fn audio_sfx_set_volume_ex(&mut self, vid: i32, volume: u8) -> bool {
+        self.tr("VOL", [vid, volume as i32, 0, 0, 0]);
         let Some(v) = self.sm_of(vid) else { return false };
         if self.sm[v].vid != -1 {
             let id = self.sm[v].vid;
@@ -877,6 +936,7 @@ impl Sound {
 
     /// HSD_AudioSFXSetPitchFid.
     pub fn audio_sfx_set_pitch_fid(&mut self, vid: i32, pitch: i16) -> bool {
+        self.tr("PITCH", [vid, pitch as i32, 0, 0, 0]);
         let Some(v) = self.sm_of(vid) else { return false };
         self.sm[v].fadetime = (pitch as i32).clamp(-0x2A30, 0x960) as i16;
         self.sm[v].flags |= 0x40;
@@ -885,6 +945,7 @@ impl Sound {
 
     /// HSD_AudioSFXSetMix.
     pub fn audio_sfx_set_mix(&mut self, vid: i32, aux_bus: i32, send: u8) -> bool {
+        self.tr("MIX", [vid, aux_bus, send as i32, 0, 0]);
         let idx = (vid & 0x7F) as usize;
         if vid < 0 || idx >= SMS || !(0..=1).contains(&aux_bus) {
             return false;
@@ -907,6 +968,7 @@ impl Sound {
 
     /// HSD_AudioSFXSetMixGroup.
     pub fn audio_sfx_set_mix_group(&mut self, channel: i32, aux_bus: i32, send: i8) -> bool {
+        self.tr("MIXGRP", [channel, aux_bus, send as i32, 0, 0]);
         if !(0..0x10).contains(&channel) || !(0..=1).contains(&aux_bus) {
             return false;
         }
@@ -967,14 +1029,22 @@ impl Sound {
 
     /// HSD_AudioPStreamPauseCh / ResumeCh.
     pub fn pstream_pause_ch(&mut self, channel: i32) -> bool {
+        self.tr("PAUSE", [channel, 0, 0, 0, 0]);
         self.pause_ch(channel, true)
     }
     pub fn pstream_resume_ch(&mut self, channel: i32) -> bool {
+        self.tr("RESUME", [channel, 0, 0, 0, 0]);
         self.pause_ch(channel, false)
     }
 
     /// HSD_AudioPStreamStartChParam(path, volume, track): start an .hps on the disc.
     pub fn pstream_start_ch_param(&mut self, path: &str, volume: u8, track: i32) -> bool {
+        if !self.trace_in_cb {
+            let sub = self.trace_sub;
+            if let Some(t) = self.trace.as_mut() {
+                t.push(format!("{sub} PSTART {path} {} {}", volume as i32, track));
+            }
+        }
         let opened = self.fs.as_mut().and_then(|fs| fs.open_stream(path));
         if self.stream_vid != -1 {
             let id = self.stream_vid;

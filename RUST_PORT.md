@@ -1302,3 +1302,374 @@ delegating wrappers; the per-agent notes above are the finer-grained claim.
 Before: 1989 verified, 525 unverified, 55 stub, 56 missing (melee_runtime 378/314/39/37, melee_fighter 444/190/16/19). The
 remaining 9 stub/missing rows are melee_fighter (8) and melee_runtime (1). Note the earlier melee_runtime report counted 41 unported audio/devcom rows; the CSV
 now reads them as ported-unverified because same-name Rust fns with real bodies exist (name-level, not a test claim).
+## Platform track: `melee play` (2026-10-24, port/plat-play)
+- `melee play [--iso] [--time-secs N] [--shot-dir D] [--quit-at-results] [--skip-intro] [--golden-pads]` (rust/melee/src/play.rs, ui.rs):
+  winit window at 60 Hz, pads via `PadSystem::read` (keyboard, GC adapter, gamepads, `MELEE_PAD_SCRIPT`), scene flow
+  opening -> title -> main menu -> VS menu -> CSS -> SSS -> loading -> live VS match (pause by START, quit by L+R+A+START) -> results -> CSS.
+- Verified by scripted runs (tools/rust-port/play/*.txt): `vs_to_ko.txt` (with `--golden-pads --time-secs 25`) reaches a match and finishes it
+  to results; `pause_quit_rematch.txt` pauses, resumes, quits to CSS and plays a second match to results on live pads. Shots: docs/rust-port/shots/play_*.png.
+- Stand-ins, not ports: every non-match screen is drawn by ui.rs (rects + bitmap font), not the retail MnTitle/MnMain/MnCharSel scenes or the
+  gmfrontend kit; opening movie is a card; roster = 7 fighters, 4 stages; rules fixed (time match). The sim (vs_match.rs) halts with a reported
+  reason on unported fighter code (~107 sites: most button presses in IASAs, attacks, shield variants), so free live play ends early on such input.
+  START is masked from the fighters (pause layer owns it).
+
+- Round 2: `tools/rust-port/play/full_loop.txt` runs the whole loop on live pads in one go (`--skip-intro --time-secs 12 --shots --quit-at-results`):
+  title, main, VS, CSS, SSS (Battlefield picked), loading, match, pause (START), resume, clock out, results; 1359 ticks. `--shots` now also
+  captures the pause (10 ticks in) and a live frame (tick 420). Match/pause shots hold disc art and are not committed; play_sss.png is.
+  Not tried: keyboard and gamepad input by hand (the GC adapter did open in the run, but the script drove the pads).
+
+- Round 3 (hands-off input): a scripted run (`MELEE_PAD_SCRIPT` set) never touches the user's keyboard or focus. The window is created
+  with `with_active(false)` (`WindowConfig.active`, also view-golden and gx_viewer), the GC adapter is not opened (`MELEE_PAD_IGNORE_ADAPTER=1`),
+  gamepads are a fixed empty set and port 1 gets no keyboard preset, so alt-tabbing cannot change the result. No tool in the repo sends
+  OS-level input (grep for SendKeys/SendInput/keybd_event/AppActivate/pyautogui: none). Interactive `melee play` binds port 1 to the keyboard
+  preset (WASD/IJKL/Space/Shift/Enter; `MELEE_KEYBOARD=0` off). `view` renders any stage's map groups, not just FD.
+  Re-run: full_loop.txt (1360 ticks to results), vs_to_ko.txt --golden-pads (1875 ticks, winner port 2 by falls), pause_quit_rematch.txt (two matches, 1563 ticks), all with the window in the background.
+  Still stand-ins: ui.rs menus (gmfrontend.c's .inc units and the retail mn* scenes are not driven), opening card, 7 fighters, 4 stages.
+
+## Platform track, audio proof (plat-audio, 2026-10-24)
+- C side: `MELEE_AUDIO_TRACE=<path>` (shim_ax.c `gw_ax_trace`) logs every game-facing axdriver.c / synth.c call
+  (`<sub-frame> OP args`; START with its returned handle, KO*, PAN/VOL/PITCH/MIX, MIXGRP, PAUSE/RESUME, PSTART,
+  UAV, SSV); calls made inside the synth callback are not logged. With `MELEE_TURBO=1` + `MELEE_AUDIO_DUMP` the C
+  mix is on the virtual 5 ms clock and run-to-run identical (two runs: identical trace and WAV).
+- Port side: `melee_audio::replay` + `sfx_replay` bin replay a trace into the Sound (boot, `lb_audio_ax_80028690`
+  scene init, `lb_load_announcer` = gm_LoadAnnouncer / nr_vs.ssm, match banks) and `--check` against the C WAV.
+- Result (pad_fixed.lua Falcon v Fox FD, 6106 sub-frames = 30.5 s): 1953920 samples, 0 differ, 176/176 voice handles
+  equal; `melee_audio/tests/replay.rs` pins the trace + C mix fingerprint (needs the disc).
+- Fix found by it: the C runs in sound mode 0 (mono, `OSGetSoundMode` shim); the port's boot forced stereo.
+- Not yet: the native sim's own SFX calls (golden --audio) match the C bit for bit only up to the first
+  game-driven sound (sub-frame ~2003; the sim does not issue the announcer/entry sounds yet), so the end-to-end
+  native capture is not equal; positional/KO/PAN paths unused in this scenario (no trace lines).
+
+## Platform track: scripting, `melee_script` (2026-10-24, port/plat-script, round 1)
+- Crate `rust/melee_script` on mlua (lua54, vendored). **Same Lua as the C build**: `rust/third_party/lua-src` is a patched `lua-src` that
+  compiles the unmodified `pc/third_party/lua-5.4.7` sources (`[patch.crates-io]` in `rust/Cargo.toml`); stock lua-src ships 5.4.9.
+- `engine.rs` ports gw_script.c's plumbing: `gs_build_base` / `gs_new_env` (sandbox: base subset, private copies of every library table
+  and `gd`, `string.dump` removed, string metatable locked, `math.randomseed(0)`), script slots (128) with up to 16 coroutine tasks,
+  `-- @key:` headers and `mod.json` fields (`manifest.rs` keeps the `strstr`-style reader and its quirks), `gs_pcall` (per-call 2,000,000
+  instruction / 500 ms budget through a **raw** C count hook), `gs_run_tasks` (`gd.wait(n)` yields n), 20 errors switch a script off,
+  `load_named` / `scan_scripts_dir` / `scan_mods` / `boot` (`MELEE_SCRIPT`, `MELEE_SCRIPTS`), the console (`exec`: `= expr`, help, scripts,
+  load/unload/reload, script commands, Lua), FramePre/FramePost/Tick/SceneBegin hook order, camera-completion hook.
+- **mlua trap**: an error raised by a Rust callback reaches Lua's `pcall` as a userdata, and a hook error likewise; the C build raises
+  strings with the caller's position. So natives never raise: `Engine::native` returns `(sentinel, msg)` and a small Lua trampoline does
+  `error(msg, 2)`; the budget hook is a raw `lua_sethook` + `luaL_error` (threads inherit it; mlua's hook callback does not reach coroutines).
+- The game is reached through `game::ScriptGame`, the `gw_ScriptGame_*` scalar interface with the C field numbers (script_lab.h, SI_/SF_),
+  every method defaulting to "nothing there". The platform through `host::Host`. `pad::ScriptPads` is gw_script_pad.c section 3.
+- gd functions ported (~120 of 440): core (log/print, frame, time, rng, rgb, label, text/box/fill/line, key/key_pressed/mouse, command,
+  run + prelude wait/wait_until/press/tilt, gd.comm, data_read/exists/write/write_atomic, script, quit, pause/resume/step/paused,
+  safe_area), mod_read/list/stamp, input/release/pad/input_mask/input_chord/mirror_pad, scene/match/players/player/char_name,
+  hitboxes/hurtboxes/joints/dobjs/project/attrs/motion_name/debug_draw/debug_stage, camera_* (9), set_percent/set_damage/set_stocks/hit/
+  impulse/cpu_mode(s)/fly/teleport/fly_speed/fly_solid/hold_hitbox/play_sound, timeline/motion_list/set_motion/anim_rows/anim_preview,
+  lab_request/lab_mode/lab_leave/lab_now/lab_common/lab_env/floor_below/set_shield/set_scale/rollbacks(_clear).
+- Round 2: `rewind.rs` + `gd/history.rs` port the long rewind (gd.history/step_back/rewind_to/rewind_live/rewind_test(_result), input log with pad/sfx/audio replay, keyframe cadence, `iterations`, FramePre/Post kinds 0/1/2), hot_reload(_status), the `gd.state_*` library (own 384-byte header, index.txt) and gd.kb_preview. Keyframes/snapshot files are `ScriptGame::rw_*`/`snap_file_*` (the game half does not exist in Rust yet; tests/history.rs uses an in-memory mock, 9 tests). Found+fixed: gd.set_percent lacked rw_branch.
+- Geno registry (round 3, `rust/melee_script/src/geno/`): `json.rs` (the registry's JSON reader, strtod and `%.9g`), `registry.rs`
+  (geno_registry.c: attach entries with attributes/scale/toon/jumps/hooks, v1 special_attributes/on_land/motion_anims/subaction overlays,
+  v2 states/params/specials, v5 counter windows/sounds/articles, stable ids, kind table, hot-reload layout check), `consts.rs`/`tables.rs`
+  generated from pc/geno/geno.h and geno_game*.c by `tools/gen_geno_tables.py`. `tests/geno_registry.rs` ports test_geno_registry_*; the pinned
+  stable id `39ebc1bd1de2fc58` equals the C build's. Found: the C `geno_registry_v2` test asserts phys "none" < 0 but the table returns
+  GENO_CBID_NONE (4); the port follows the table. **Not ported**: native `define` entries (geno_define_*.inc; every shipped mod is one, so
+  the shipped geno.json files parse to 0 entries), fighter Lua (geno_lua_registry.inc), combo/meter, controls schema, the game half.
+- Round 4: `gd/combo.rs` (gd.combo, gd.combo_ki; reads through `ScriptGame::combo_*`), `gd/perf.rs` (gd.perf incl. shader block and
+  profiler block, gd.prof; via `Host::perf_snapshot/prof_snapshot/prof_command`), `gd/rec.rs` (all gd.rec_* Lua halves: gr_gate, gr_name_ok, argument
+  shapes, status/list tables; the recorder state machine and .gdlp files stay behind `ScriptGame::rec_*`, NOT ported, default impls refuse).
+  `tests/combo_perf_rec.rs` (4 tests). Every `gd.*` that lab.lua calls is now registered; 279 names are in the C table, ~150 remain (see below).
+- Round 5: `gd/arena.rs` (arena-hooks: stage_set_spawn/stage_spawn/stage_set_origin/stage_set_camera_bounds/stage_set_blast_bounds/
+  stage_restore_bounds/stage_collision_group(s), and the merged `gd.stage_bounds` = largemap set/restore + arena origin/frames + model-gaps
+  main_floor/surface_top), `ScriptGame::arena_*`/`stage_bounds_i`/`map_bound(s)`, arena release on script unload. `tests/arena.rs` (4 tests,
+  mock arena; headless, no input sent). ~140 of the 349 C table names still unregistered (stage_add_*, models, enemies, items, fx, cpu_*, caps...).
+- Round 6: `gd/caps.rs` (fighter_caps, fighter_effect, fighter_armour, fighter_armor, give_item, nearest_opponent, opponents_in_radius,
+  fighter_timed_status, fighter_interrupt), `gd/bench.rs` (fighter_bench/call/benched), `gd/crit.rs` (crit, crit_force, crit_seed,
+  cpu_technical, cpu_assist; the on_crit/armor event queues are not ported). New `ScriptGame` hooks default to "nothing there"; unload calls
+  `caps_release(owner)`. Tests `tests/caps.rs` (3), `bench.rs` (1), `crit.rs` (1) run over mocks; `cargo test -p melee_script` all green.
+  Headless only, no OS input sent. Still unregistered: cpu_ctl scripts (cpu_pad/cpu_script_done), hit_rules, zones, deadline, echo/afterimage/tracer,
+  fx_*, item_define/item_kinds, model_*, stage_add_*/stage_switch/slot, 1P (spawn_1p...), area_*, sim_*, contact_*, skill_*, warm.
+- Round 7 (port/plat-script, this session; every item below has a `rust/melee_script/tests/*.rs` test over a `ScriptGame`/`Host` mock, all green):
+  `gd/hit_rules.rs` (hit_rule_add/remove, hit_rules_clear, fighter_status, hit_rules), `events.rs` (the engine event queue of gw_Script_GameEvent and
+  HitContext/HitRuleContext/EnemyGameEvent/TargetBroken/Enemy*/Skill/Crit/Armor event rows, the one epoch/frame/sequence spine clock, post-frame dispatch
+  of on_action_change/on_hit/on_hitlag/on_land/on_target_broken/.../on_action_signal/on_armor/on_skill/on_crit plus the common `on_event` envelope; hook order as
+  `gs_dispatch_events`), `gd/entity.rs` (entity_ref/resolve/valid, source_ref/resolve, entity_call), `zones_core.rs` + `gd/zones.rs` (the C zone core with its
+  pc/tests/zones_test.c fixture ported as a unit test, zone_add/set/remove, zones, point_zones, zones_at, zone_members, enter/exit/none/some dispatch),
+  `gd/deadline.rs`, `gd/skill.rs` (skill_history/state/kinds/thresholds, 25 kinds, on_<technique> hooks), `gd/shock.rs`, `gd/contacts.rs` (the contact observer,
+  contacts, contact_events, contact_trace with the JSONL rotation, contact_overlay, wait_until{...}/wait_status watchers, `contacts`/`trace`/`wait` console commands),
+  `gd/flycam.rs` (fly_target/attack/clear/state, camera_params), `gd/echo.rs` (echo_add/remove, echoes, fighter_history(_depth); the echo parse/prepare/pair/apply
+  helpers are pub for sim_commit), `gd/cpu_ctl.rs` (cpu_pad/script/dest/target/goto/cancel/commands/attrs/macro and the status readers, with the 52 retail CpuCmd
+  codes and the eleven technique macros), `gd/present.rs` (parts/parts_id/parts_clear, dobj_solid/tint, the fx_* effects lab, lab_peek), `gd/kit.rs` (gd.kit over
+  `Host::kit_*`; without a kit `available()` is false and the drawing calls raise the C build's error, so the LAB loads and runs headless: `gdscript pc/geno/mods/geno-lab`
+  prints "the kit is not available, the Lab UI is not drawn" and no error), `gd/frontend.rs` (scene_launch/clear, training_select, screenshot, hud_visible, launch_request/cancel),
+  `gd/fmod.rs` (fighter_mod, hitstop/hitstop_cancel and the presentation timers). `ScriptGame` grew the scalar hooks for all of these (every one defaults to "nothing there"),
+  `Host` the fx/kit/frontend services; a new `ScriptGame::owner_release` is called on script unload. ~50 gd.* names added: 349 in the C table, **124 still unregistered**
+  (afterimage/tracer/echo_afterimage/motion_* need the gw_motion trail service; area_*, boss_*, enemy_*, spawn_*, 1P, item_*, model_*, stage_*, shader/post_*, sim_*, warm_*,
+  netbuild/netplay/modsync/mods_install, mode_blob, menu, light_set, render_test, fighter_lua/fighter_recycle/fighter_shader, match_end_*).
+  Proof run this session: `cargo test -p melee_script` (all test binaries green, 14 lib tests incl. the zones fixture), `gdscript` over pc/geno/mods/geno-lab (clean) and
+  every pc/tests/*.lua that needs the engine loads. Still **not** proven: any of this against the real game (the Rust game half of these hooks does not exist yet).
+- **Not ported yet** (next rounds, in order): the .gdlp recorder itself, hitstop, cpu_* scripts, hot_reload, kb_preview, `gd.kit` / `gd.ui` (tables are empty), entity refs (`entity_ref` is nil), items/fx/echo/
+  afterimage/tracer, stage_*/model_*/shader/area/warm/launch/1P/netplay/modsync/sim/hit_rules/enemy*, the Geno registry (geno_registry.c,
+  geno_lua_core.h, fighter Lua), `lab.lua`'s remaining calls. `gdscript pc/geno/mods/geno-lab` lists what lab.lua still lacks at load.
+- Proof so far: `cargo test -p melee_script` (7 unit + 18 engine + 6 lab_api tests); `rust/melee_script/tools/standalone_parity.sh` runs
+  every engine-less script of pc/tests, pc/geno/tools, pc/gameworld, pc/scripts under the system `lua` 5.4.7 and under `luarun`
+  (this host's interpreter): 82 identical exit status and output (incl. atlas_ui_stub_test, envoy_*, campaign-save-unit, lab_stage_d_check's
+  own 9 pre-existing data-dependent failures), 0 different, 58 need the engine (`gd` global) and are not run.
+- Traps: write files with the Write/Edit tools (a bash heredoc dropped a backslash and wrote NUL bytes); target dir is `build/cargo` at
+  the repo root, not `rust/target`.
+
+## Platform track: netplay on the real game loop (port/plat-net, 2026-10-24)
+- `melee netplay` (`rust/melee/src/netplay.rs`, `netmatch.rs`, `np_env.rs`) drives the native VS match
+  (`VsMatch`) through `melee_net::session::RbSession` over `melee_net::Net` on real UDP. `NetMatch` is the
+  `RbGame`: `save`/`load` = `VsMatch::rb_save/rb_load` (the `state_dump` component set, fighters restored in
+  place), the desync checksum = the neutral hash (`game_hash`), pads from the session replace the script
+  (`pad_feed`). `RbGame::halted` (new): a frame that died half-stepped in code that is not ported yet
+  (typically a mispredicted input) is neither snapshotted nor hashed; the next tick reloads the clean
+  snapshot of that frame (`iter_start`), so the confirmed inputs roll it back like any misprediction.
+- App layer, `melee_net::app` (gw_netplay.c, direct and server paths): `scene` (np_build_scene and its
+  parse), `lobby` (lb_apply_, S/L/A/J/N/C/G messages, strike 1-2-2, ban/pick, counterpick characters,
+  3 s countdown; 5 unit tests), `rdv` (the matchmaking client: REG/JOIN/PEER/CODE, hole punch `GDPH`,
+  relay `GDMD`, RAND/MATCH/QUEUED/TIMEOUT, STUN, LAN pick; unit test), `room` (np_start_session, np_poll,
+  guest hello, ACCEPT "J c0 c1 scene" blob, lobby enter/tick, lb_go, deferred session start for room codes
+  and random matches).
+- Proofs (all on this machine, UDP loopback, `GW_ISO_VANILLA`, pad_falcon_fox_fd, 1801 golden frames):
+  - `melee synctest --depth 12 --golden docs/rust-port/golden/pad_falcon_fox_fd.csv` (12 = the max rollback
+    depth, `maxb` clamp): 1802 frames, 21504 hash checks, 0 mismatches, 1801/1801 frames golden-equal
+    (the run stops at frame 1802: `ftCo_RunBrake_Enter` is not ported).
+  - two Rust instances, `melee netplay --host` / `--join`, 60 fps pacing: 0 rollbacks, 1801/1801 equal to the
+    golden on both, identical CSVs. With `--lag-ms 70 --loss-pct 5` (inbound, both sides): 78 rollbacks,
+    depth 6-7, 0 session or transport desyncs, still 1801/1801 golden-equal and identical CSVs
+    (`--lag-ms 90 --loss-pct 10` too).
+  - the same through the lobby (`--lobby`: blind character pick, strike, ready, countdown, `G`), through
+    `tools/netplay/server/gdmelee_server.py` room codes (`--host --server S` then `--room CODE --server S`) and
+    through random matchmaking (`--random --server S` on both): all golden-equal, identical CSVs, rollbacks
+    included when lag/loss are on.
+- Golden comparison needs `--seed 12345` on the host (the match seed is random otherwise, so the hashes differ from the golden CSV from frame 0 while both peers still agree). Re-verified 2026-10-24 on the merged tree (no window, no OS input): synctest depth 12 0 mismatches / 1801 golden-equal; host+guest `--seed 12345 --lag-ms 70 --loss-pct 5`: 78 rollbacks, 0 desyncs, 1801/1801 golden-equal, identical CSVs.
+- `--live-rng`: the online per-frame RNG rule (`gw_Replay_ChecksumSeed`: a frame starts from
+  `seed + ((frame + 123) << 16)`), needed to match a C netplay match; the checksum uses it too. Off by default
+  (the golden CSVs are offline).
+- Not ported: UPnP, Envoy/stage-run/saved-run lobby messages, mod sync and the identity exchange (tokens are
+  `ck:N` / `ext:N`; the Rust sim plays Falcon, Fox on Final Destination, Battlefield is only a lobby stage),
+  controls words other than 0, Turbo rules, rematch/rejoin after a match, CPUs/items in the scene.
+- C interop: see the section below for what was measured.
+
+### Rust vs C build over the wire (2026-10-24)
+- The wire protocol allows it. The C build (this tree, `GW_BUILD_ROOT=_build/agents/plat-net`) plays scripted
+  netplay (`MELEE_NETPLAY=host|join:`, `tools/rust-port/golden/pad_np.lua`); the Rust peer takes the C's
+  handshake words (`--exe-hash` = the C `build id`, `MELEE_NP_GLOBAL_HASH` = `mods=` of the new "handshake
+  words" log line) and the C's content identities (`MELEE_NP_IDS`, run time only). HELLO/ACCEPT, the
+  `J c0 c1 scene` blob (tokens `ck:N`/`ext:N` are accepted by the C scene parser), hold/START, inputs and
+  checksums all interoperate in both directions.
+- C change needed: the C's netplay checksum is RB_GameHash (a wider word set), not the neutral hash. With
+  `MELEE_RB_NEUTRAL_HASH=1` (gw_rollback.c + `RB_NeutralHashForFrame` in fighter.c, same online seed rule) both
+  sides compute NHV1. The Rust peer also needs `--live-rng` (the C live-mode per-frame seed rule).
+- C vs C (neutral checksum, scripted pads): 3224 frames, both neutral CSVs identical, no desync.
+- Rust guest vs C host, full match (1893 frames, 2 rollbacks C side / 1 Rust side): 0 desyncs reported by either
+  side; the Rust per-frame words (fighters, items) equal the C's MELEE_NEUTRAL_HASHLOG on all 1893 frames.
+  Only the post-frame seed column differs on 548 frames (more or fewer logic RNG draws per frame in effect /
+  particle code; the seed is re-forced every frame online, so it cannot reach the next frame's state).
+- Rust host vs C guest: identical for 205 frames, then a checksum DESYNC reported at session frame 89 (golden
+  index ~212): at index 205 the C draws 38 logic RNG values and the Rust 7 (an effect / particle spawn the
+  Rust effect code does not make on that path), and at index 211 Falcon's landing word differs (5715B485 vs
+  5615B536). This is a sim gap found by netplay (different input timing from the offline golden), not a
+  transport problem; fixing it belongs to the fighter / effect ports.
+
+## Platform track: saves, settings, mods, replays (melee_data), 2026-10-24
+- `rust/melee_data` (no game logic): memory card GCI folder + CARD API (vs aurora_card), settings.cfg (vs gw_settings.c table code), mods registry/overlay (vs gw_mods.c), `.slp` reader, replay Player/Recorder and `.gdlp` container (vs gw_replay.c / gw_script_rec.inc), and now the logger and crash report (`crashlog.rs`, vs gw_log.c). Every module has an oracle that cuts the shipping C out at build time (`oracle/*.sh`) and a Rust test over its transcript.
+- Crash log (new): `oracle/log_oracle.sh` drives gw_log.c's own `gl_*` code (sink replaced) with a 9000-operation script (categories, MELEE_LOG / settings `log=`, flood limit, repeat counting, OSReport pieces, disc/user redaction, scene/pad/watchdog/disc/mods noting, RESET = a fresh process); `tests/log_oracle.rs` matches every written line and the noted state (6940+ lines) and 56 compact crash reports (`gl_write_report`: header, fault section, map symbolization with 500+ resolved frames, rings, 64 KB cap) by length and FNV-64 (the `os:` and `build id:` lines are machine-specific and left out of the hash). Not ported: the Win32 stack scan and exception filter, which are platform plumbing.
+- Replays in the native sim: `melee golden --slp FILE` loads a `.slp` with `melee_data::player::Player` (stage, fighters, seed from the file), then per frame does what gmscene.c / fighter.c do: `Replay_Tick`, the forced seed (`MELEE_SLP_RESYNC=1` rule), and the recorded stick/trigger/button words written into the fighter at the input step (`input::fighter_input`, `VsMatch::replay_in`). Proof: the C build recorded Falcon v Fox on FD (`tools/rust-port/golden/record_slp.sh`, `MELEE_SLP_RECORD`; the recording run equals `pad_falcon_fox_fd.csv` on all 1801 frames), played the .slp back itself (`MELEE_SLP`, resync), and the Rust sim's CSV equals the C playback on every fighter/item word of 1801 frames (`check_slp.sh`; `compare_golden.py --ignore-seed`: the seed column differs where the port draws different effect RNG, and replays reseed every frame). Negative control: the same file with the buttons zeroed from frame 100 diverges at frame 242. Files: `docs/rust-port/golden/slp/`.
+- `.gdlp` (round 2): `record_gdlp.sh` made the C record Falcon v Fox on FD with `MELEE_GDLP_RECORD` (its recording run = `pad_falcon_fox_fd.csv`, 1801 frames) and play it back with `MELEE_GDLP` (identity matched; 1801 rows identical to the golden and to the `.slp` playback). `melee golden --slp x.gdlp` (a `.gdlp` is a valid `.slp` stream) equals the C's `MELEE_GDLP` playback on all 1801 frames; `check_slp.sh` runs it. Files: `slp/pad_falcon_fox_fd.gdlp`, `.gdlp.play.csv`. Not done: the Rust player does not run `gdlp::check_ident` or restore the embedded state chunk.
+- Marth v Sheik on BF: the Rust sim from the C-recorded file equals the recording on its 162 playable frames (it stops at an unported move), but the C's own playback of that file differs from its recording from frame 0 (a C-side RNG/setup effect, not investigated), so there is no C playback golden for it; the files are committed for when it is.
+- Windows used by the C runs are parked at 30000,30000 with `SDL_WINDOW_ACTIVATE_WHEN_SHOWN=0` and no OS input is sent anywhere (`MELEE_WINDOW_HIDE=1` hangs the turbo watchdog on a cold shader cache).
+- Mods in `melee` now run on `melee_data::modreg` (ModSet + Overlay, oracle-checked against gw_mods.c) instead of the earlier hand-rolled resolver (`melee/src/mods.rs` is an adapter; `ModSet::load_with` takes `--enable`). Not re-run against the Akaneia Wolf golden this session.
+- Not done: `melee` does not use melee_data for settings/card yet; UCF toggles (`Replay_UcfCardinals` and the ftUcf code) are off in the playback (the golden replay has them off); `.gdlp` identity check (build/disc/mods/Geno) in the Rust player; m-ex runtime dispatch from a replay's mods; CPU players in a replay; stages and fighters beyond FD/BF and Falcon/Fox/Marth/Sheik.
+- Round 3: `melee golden --gdlp FILE` runs the identity gate (`rust/melee/src/ident.rs` = `gs_identity` for this binary: exe hash, disc 4 MiB hash ^ size, mods describe, Geno seed) via `Player::load_gdlp`; the C-recorded golden `.gdlp` is correctly refused ("recorded by another build of the game", as the C refuses another exe's recording). `melee_data/tests/gdlp_ident.rs` proves the gate accepts a matching identity and refuses each of build / disc / mods / Geno with the C's text, and that the Player plays only on a match. `melee` now reads `skip_intro`, `audio`, `mods`, `mods_dir` through `melee_data::settings` (env `MELEE_<KEY>` > settings.cfg > default; `rust/melee/src/cfg.rs`). Still not done: embedded-state restore, a Rust-side `.gdlp` recorder in the bin, memory card use by the bin, UCF in playback, m-ex dispatch from replay mods, CPU players, Marth v Sheik C playback golden.
+
+- Round 4 (plat-play, re-verify after merging port/platform-integ): full_loop.txt (1359 ticks, to results, time-up draw) and
+  pause_quit_rematch.txt (1563 ticks, two matches) re-run hands-off with MELEE_PAD_IGNORE_ADAPTER=1, unfocused window, `--shots`; all
+  screens captured (build/r2, disc art, not committed). Still stand-ins: ui.rs menus, 7 fighters, 4 stages, sim halts on unported fighter states.
+
+- Round 5 (plat-play): vs_to_ko.txt --golden-pads re-run hands-off (MELEE_PAD_IGNORE_ADAPTER=1, unfocused window, --shots): title/CSS/match/live/results
+  reached, 1875 ticks, time-up on Final Destination (port 2 wins, falls 5-0 on the timer). No OS-level input was sent. Menus are still ui.rs stand-ins.
+
+## Platform track, audio round 2 (plat-audio, 2026-10-25): pause and time-up proven against the C mix
+- No OS input anywhere: every run below is `melee golden --audio --idle-pads` (headless, virtual DSP clock) against the C build
+  on `MELEE_TURBO=1` + `MELEE_AUDIO_DUMP` with Lua pad scripts. `golden` gained `--idle-pads`, `--cpu LEVEL`, `--pause F:T`
+  (START after logic frame F, resume T-F frames later, the audio running on the held frames) and `--time-secs N` (the clock).
+- Pause (pad_pause.lua, C trace `pse`): PAUSE x4 + the pause sound + duck at sub-frame 1110, RESUME at 1510, the indicator's
+  sound (menu sound 4) two frames after the resume. 2440 sub-frames, 0 samples differ (`native_pause_resume_mix_equals_c`).
+- Time-up (pad_idle_long.lua, 1 minute, Falcon v Fox FD): the clock starts when Go has played out (`go_frame + 40`), callouts
+  5..1 on the 60 frame marks before `clock_end`, the sim holds from `clock_end - 1`, then fn_8016C7F0's audio: AXDriverStop
+  (music fades), KOALL, lbAudioAx_80024C84, lbAudioAx_80024D50 (the reset twice), and TIME! nine frames after the hold. 12856
+  sub-frames identical (`native_timer_callouts_and_time_up_mix_equals_c`); the C then loads sudden death (a new scene).
+  The play loop used `frame >= secs*60` for the time-up, 124 frames early; it now uses `audio::clock_end`.
+- `Audio::match_leave` is once per match (`in_match`), and undoes the pause duck only when it is on (a normal leave emits no extra RESUME).
+- Still open: GAME! (stock-out) call timing and leave order unproven; results/sudden-death scene audio; the sound-options volume
+  settings and positional SFX through the live `melee play` loop have no C capture compared yet (positional/KO paths are in
+  `melee_audio::posobj` and covered by the trace replays only where a scenario triggers them).
+
+- Round 3 (plat-audio, 2026-10-25): re-verified after merging port/platform-integ: `melee_audio` (14) and the 4 `audio_match` tests pass, all headless. Master volume
+  (`MELEE_VOLUME` / audio.cfg, applied as output gain only, so `MELEE_AUDIO_DUMP` stays full scale as in shim_ax.c) is ported in `output.rs`. GAME! cannot be compared yet:
+  the native sim has no KO / blast-zone / death path (only the C build can `gd.teleport` a fighter out and `gd.set_stocks 1`), so a stock-out capture needs the
+  fighter Dead* states first. Results / sudden-death scene audio and in-game menu sounds depend on the stand-in ui.rs menus.
+- Round 4 (plat-audio): merged port/platform-integ again; added `output::tests::master_volume_env_clamps_and_sets_gain` (MELEE_VOLUME parse/clamp like gw_Audio_Volume, gain = pct/100 on the device path); 15 melee_audio tests pass, headless, no OS input. Open items unchanged (GAME! needs sim death path; results/sudden-death/menu audio need the real menus).
+
+## Platform track, audio round 5 (plat-audio, 2026-10-25): menu / title / results / sudden death replayed against the C mix
+- No OS input, headless (`MELEE_TURBO=1`, virtual DSP clock, Lua / text pad scripts). The C trace (`MELEE_AUDIO_TRACE`) gained the
+  ops a scene-spanning capture needs: `BANKREQ path bank entry` / `BANKDONE entry bank` (HSD_SynthSFXLoad request and its
+  completion), `BANKUNL` / `BANKDFL` (unload, deflag), `DSTOP` / `DPAUSE` / `DRESUME` (AXDriverStop/Pause/Resume), `SHDR` / `SDATA`
+  (the HPS start's deferred DevCom completions: header, first block). `MELEE_AX_DBG=<lo>-<hi>` prints the C mixer's per-voice
+  state (and every AXSetVoiceVe / VeDelta) for those sub-frames on stderr.
+- Port side: `replay` applies them (`Sound::defer_stream` is turned on by a trace that has SHDR: PSTART then waits for the
+  recorded completions); `Sound::boot_engine` / `replay::boot_bare` = the audio engine with nothing loaded, so a trace brings
+  its own banks; `sfx_replay --bare`.
+- What it found: AXDriverPause right after a stream start (opening.hps) runs between the start and the first-block completion, so
+  the C starts the voice from volume 0 with a ramp (flags 14 at the first-data callback); the port completed the start
+  synchronously and was +-1..3 off for 8 sub-frames. With the completions replayed in place: 0 samples differ.
+- Proven sample for sample (`melee_audio/tests/replay.rs`, needs the disc): opening movie + title + attract demo (16412 sub-frames,
+  opening.hps, per-scene fighter banks, nr_vs, greatbay.hps); CSS cursor / A / B / START clicks (5650); Falcon v Fox FD stock-out
+  with GAME!, the KO and the results screen with its victory theme (5780, 18 handles equal); one-minute time match through TIME!
+  into the sudden-death scene (18233, 29 handles equal). Two C runs of the KO capture give identical trace and WAV.
+- Fixed: `melee/tests/audio_match.rs` shared one temp dir between its three falcon_fox scenarios and failed ~1 run in 3 when run in
+  parallel; each scenario has its own dir now (8 parallel runs pass).
+- Still open: the native sim cannot issue the GAME! / KO / results calls itself (no death path), so those are proven for the audio
+  engine given the C's calls, not for the sim's call timing; the Atlas main menu / SSS / trophy screens were not driven (the
+  title Start lands in the Atlas menu scene; navigating it by pad script was not worked out); volume settings are output gain
+  only (the C dump is full scale by design); nothing was listened to.
+
+## Platform track, audio round 6 (plat-audio, 2026-10-25): retail main menu, stream block refills chunk by chunk
+- Reached the retail main menu headless: `MELEE_ATLAS=0`, `MELEE_TURBO=1 MELEE_UNATTENDED=1`, Lua pad script: A past the memory
+  card and movie, START at the title, A through the unlock notices until `GS_FRONTEND`, stick up/down on the menu, A into `GS_MENU`
+  (1P / VS), B back. (Run `tools/port/run.sh` WITHOUT `--test` for this; `--test` runs the self-test suite instead. Export
+  `GW_MELEE=<worktree>` too or build.sh builds the shared `melee/` checkout.)
+- Mismatch found: 31 sub-frames differed (max 9267) where one HPS stream replaced another (s_info1 -> s_info2 ...). The new
+  stream's first master-clock tick refills the next block into the slot the OLD stream is still fading out of. The C moves that block
+  as DEVCOM_BUF_SIZE (16 KB) ARQ chunks, one per DVD completion, so the old voice kept its data for ~7 sub-frames; the port wrote the
+  block at once. New C trace ops: `HHDR` (HSD_SynthPStreamHakoHeaderCallback), `HDONE` (HSD_SynthResetStreamCounters), `DCHUNK n`
+  (each 0x23 DevCom chunk's ARQ post, devcom.c). The replay applies the header at HHDR, each chunk at its DCHUNK, the counters at
+  HDONE (`Sound::refill_chunked` / `defer_refill`; traces without these ops keep the synchronous refill).
+- Pinned: `melee_audio/tests/replay.rs::frontend_menu_streams_mix_equals_c` (4483 sub-frames, 17 handles, 0 samples differ, needs
+  the disc). melee_audio (15 unit, 2 oracle, 8 replay) and melee audio_match (4) pass. Two C runs gave identical WAVs.
+- Still open: the older four captures were not re-recorded with the new ops (they match with the synchronous refill); the SSS, trophy
+  and Atlas menus were not driven; nothing was listened to. Debug aid: `MELEE_REPLAY_DBG=lo-hi` prints the port's per-voice mixer
+  state like the C's `MELEE_AX_DBG`.
+
+## Platform track, render proof (plat-render, rounds 1-2, 2026-10-25)
+- Method: C shots from `_build/agents/plat-render/pad_cam.lua` (`gd.screenshot` at match frames) vs `melee view-golden` shots.
+  RUN THE C BUILD REALTIME, not turbo (`MELEE_UNATTENDED=1 MELEE_WINDOW_X=30000 MELEE_WINDOW_Y=30000`, no `MELEE_TURBO`, run
+  `melee-pc.exe` directly in a scratch dir with `MELEE_SCENE=mode=vs;at=match;p1=falcon/human;p2=fox/human;...;stage=fd`
+  and `MELEE_PAD_SCRIPT=pad_cam.lua`; no window focus, no OS input). With realtime the screenshot for label n is exactly the frame of
+  Rust tick n (`native_000n.png`; the camera is bit-identical). Round 1's turbo shots were captured some 13-22 frames late (and later
+  frames drifted), which made its 900+ numbers meaningless. Compare: `tools/rust-port/shotcmp3.py RUSTDIR` (C shots in
+  `cshots3/`, both box-downscaled to 640x480). Run the viewer as `MELEE_VIEW_SKIP=1 rv.sh DIR 1505 60,120,300,...`.
+- Fixed this round (mean abs error 0..255, previous -> now): f60 10.6 -> 4.7, f120 12.6 -> 3.7, f300 22.2 -> 2.0, f600 19.6 -> 2.4,
+  f900 14.3 -> 1.95, f1200 17.9 -> 1.4, f1500 19.5 -> 3.6 (average 16.7 -> 2.82; within16 %: 88.5 / 92.1 / 97.7 / 96.8 / 97.8 / 97.8 / 93.7):
+  1. `melee_runtime::tu::mobj::setup_tev`: a TEV stage selects ONE konst colour; a TObj TEV of `(tev0 - konst) * tex` needs two constants
+     in the same stage and the second silently collapsed into the first (result black). Extra distinct colour / alpha constants now go to
+     TEV registers REG1 / REG2. This is the whole FD Milky Way dust band, the big nebula layers and every `0x85 0x80` gradient-map TObj.
+  2. The FD backdrop animations (map gobjs 4-8) never move in the C build. `grAnime_801C752C(.., HSD_AObjSetRate, 1, rate)` calls the
+     setter through `Callback1 (aobj, obj, flags, float)`; on the x64 build the float is the 4th argument but `HSD_AObjSetRate(aobj, f32)`
+     reads its 2nd, so every AObj those calls touch gets framerate 0 (found by sweeping the viewer's animation phase against the C
+     shots: best phase = -t at every frame). `stage_anim::grdo_anim` now sets rate 0 (`MELEE_VIEW_PPC_RATE` restores the PPC value).
+  3. Fighters are lit by `stage_info.map_plit` (`ftCo_8009F4A4`), the stage by the light group (`Ground_801C466C`); they were one set.
+     Stage light sets are animated (`HSD_LObjAnim`: VIS / LITC_* tracks) by `view::AnimLights` (FD's lights have no animation).
+  4. Name tags (`ifnametag.c`, `ScInfPnm_scene_models[0]`): scale 10, `ReqAnimAll(5 * port)` (the frame picks label + colour), translated each
+     frame to the head (`cur_pos + name_tag_height - 2.5`) projected by the match camera, own ortho camera (640x480, eye z 300), removed when
+     the Go element is created (`un_802FD428`).
+  5. Fighter bodies obey `invisible` / `x221E_b5` (`ftDrawCommon_80080A18`).
+  6. Effect models (`efLib_Create`): the JObj trees of the effect banks (`EfCoData` & the per-character `Ef*Data`), with their joint and
+     material animation, are drawn at the root the sim keeps (`effect_draws`: owner position or fixed spawn position, scale, Y/Z rotation
+     overrides) by `view::FxModel` (a `StageAnim` per live effect; `EffectBank::model_dat` appends one synthetic `{joint, anims[], matanims[]}`
+     record per effect id). This is the dash / skid dust rings, landing dust, the KO beam, shield and so on; `efSync_Spawn(0x42B)`'s
+     `efLib_SetTevKonstColor` tint (PlCo pData[18]/[19]) is applied, and TObj tev colours now come from the live TObj
+     (`TObjState.obj.tev`, initialised from the descriptor) so tev tracks animate too. Not drawn: effects whose animation has a PATH
+     track (effect 36, the entry beam: needs the spline JObj of the AObj's `obj_id`), effects attached to a fighter bone (they follow the
+     owner's root position only), `lb_8000C1C0` RObj constraints.
+  7. Sim ordering bug found on the way: `ftCommon_8007DB24`'s `efLib_DestroyAll` is queued (`ef_ops`) to the s_link 9 flush, which freed the
+     KO effect `dead_down` spawns right after it; `dead_down` now runs the queued DestroyAll first (the golden is still identical on
+     all 1801 frames).
+- AppSRT particles (`psDispSubAppSRT` quads and points) are ported in `ps_view.rs` but OFF by default (`MELEE_VIEW_APPSRT=1`): the KO / blast
+  zone sprites they draw come out as oversized blocky quads next to the C build's thin beams (extent or texture still wrong), which scores
+  worse than skipping them.
+- Still different (largest first): (a) fighter colour overlays: the C paints the Entry glow (`ftCo_800BFFD0(0x75)` colour animation + the
+  trophy-stand accessory, the white silhouettes of frames 25-85), the Rebirth ghost (Falcon is lavender and translucent at 300/900/1500: colour
+  overlay, `ftMaterial_800BF2B8` adds TEV stages) and the respawn platform; none of `ftcolanim.c` / `ftmaterial.c` / `lb_013B` is ported (the sim
+  only records them); (b) KO frames (215-250, 500-540, 790-830): the KO star / "SCORE -1" text / the exploding percent digits / the pillar's
+  exact size and fade (errors 12-26 vs 2-4 in plain frames); (c) entry beam light pillars (PATH effect), C frames 1-45 light up blue panels on the
+  stage underside that the viewer keeps dark; (d) floor texture aliasing (tiny amplitude). Shadows: FD draws none; fog: FD has none
+  (`stage_info.unk8C.b3` unset); screen flashes: none occur in these frames.
+- Round 3 (2026-10-25): fighter colour animation + overlay and particle texture fix; per-frame mean abs (0..255) f60 4.13, f120 3.51,
+  f300 1.71, f600 2.13, f900 1.57, f1200 1.15, f1500 2.84 (avg 2.43, was 2.82); within16 88-99 %. Golden unchanged (1801 frames identical).
+  1. `colanim.rs`: `lb_013B` colour-animation interpreter over PlCo tables, the x408/x488/x508 lists; `ftMaterial_800BF534/6BC`
+     overlay (colour blend, light, alpha) as `FtOverlay` TEV stages (`HsdRender::ft_overlay`). Entry glow (0x75), Rebirth / intangible pulse (9).
+     `Fighter_ChangeMotionState` with a row and `anim_start == 0` also calls `ftCo_800C0408` (an extra colour step; fixed the 1-frame phase of the pulse).
+  2. `TexBank::image_off / pal_off` now add the texBank base (`psInitDataBankLocate` phase 3 relocates texTable by `texBank`); banks
+     whose texg is not at offset 0 (EfCoData bank 0: entry sparkles, star flares) had garbage textures.
+  3. Go! element is one anim frame in when drawn.
+- Still different: entry trophy stand / light pillars / PATH-track beam effects (f60), name tag ~3 px high, KO frames, underside texture
+  detail (blue haze in diff, tiny amplitude).
+- Dev aids: MELEE_VIEW_UNHIDE, MELEE_VIEW_PSLOG, MELEE_VIEW_READYLOG, MELEE_VIEW_NOPS (round 1); MELEE_VIEW_BRANCHSCAN / PODUMP=g:j /
+  TEXDUMP2 / TOBJDUMP / TAGDUMP / ONLY=g:j,j / FORCEVIS / PREROLL=n / FPLOG / LIGHTLOG / NOPLIT / NOLIGHTANIM / PPC_RATE / NOFX / FXLOG / APPSRT / APPLOG / APPFRAMES, and
+  `MELEE_GX_DRAWLOG=<copy index>` (+ `MELEE_GX_DRAWLOG_TEV=<draw>`) in melee_gx's `copy_disp`.
+
+- Round 4 (plat-render, 2026-10-25): other stages + KO + HUD timing. Method unchanged (realtime C shots, `MELEE_WINDOW_UNFOCUSED=1`, no OS input), but
+  `MELEE_VIEW_SKIP=1` is NOT used for measuring any more: skipping draws hid a bug (below). Scenarios: `view-golden --scenario pad_falcon_fox_{fd,bf,ys,gr,fod,dl64}`
+  (same pad cycles; the native sim only reaches frame 338 on BF, 196 on YS, 263 on Green Greens, 83 on FoD before an unported fighter state / blast zone,
+  so only those prefixes are comparable). Compare with `tools/rust-port/shotcmp_dir.py CSHOTDIR RSDIR f1,f2,..`.
+  Mean abs error (0..255) per stage, before -> now:
+  | stage | frames | before | now |
+  |---|---|---|---|
+  | Battlefield | 60/120/300 | 26.4 | 2.65 |
+  | Yoshi's Story | 10..190 step 10 | not drawn right (one rooted group set) | 3.2 |
+  | Final Destination | 60..1500 | 2.43 | 2.33 |
+  | FD KO window | 196..288 step 4 | 6.18 | 3.41 |
+  | Green Greens | 60 | 6.8 | 5.8 (frame 120+ shows the grGreens star blocks the C animates; not ported) |
+  1. `StageAnim` PATH tracks work: the AObj obj id is the spline JObj's DESC address (the C ID table key); the spline JObj is resolved inside the group's tree
+     (or loaded next to it like `HSD_JObjLoadJoint`), `spline_point` reads the HSD_Spline from the DAT (`splArcLengthPoint`). Fixes the BF background panic.
+  2. Stage gobj sets are per stage: Battlefield = grBattle_OnInit gobjs 0, 1 (pass 2, the active background), 6 (light group), the BG controller 3 is hidden;
+     Green Greens = 0, 2 (pass 2), 6, 5, 4. Everything else the old "draw every group" path drew (the three other backgrounds at once, blocks).
+  3. `grGroundParam->y` (Battlefield 0.8, Yoshi's Story etc.) is the scale of the wrapper JObj every map gobj hangs under: `StageAnim::world_scale` scales the
+     world matrices. This was the whole BF error (stage 25% too large next to the fighters).
+  4. `StageAnim::set_translate/set_scale/set_rotate_yz` now `HSD_JObjSetMtxDirty` (children follow). Before, a moved root left its children's matrices stale
+     when a frame was drawn more than once; the name tag's arrow drifted up 8-15 px when every frame was drawn (SKIP mode drew once).
+  5. Name tags stay visible after Go while the fighter is on its rebirth platform (`Player_80036058` = `ftLib_80086F4C`).
+  6. KO camera quake (`Camera_RequestQuake(QuakeKind_Large, pos)` in `dead_down`, requests queued in `VsMatch::quake_requests`): the quake gobj
+     (`grLib_801C9CEC`: `stage_info.quake_model_set` anim set 3, its root translation = `Camera_SetQuakeOffset`) is stepped by the view one frame after the request,
+     before `CmDrive::step`. The camera now equals the C's `gd.camera_get` log exactly on every frame 205-259 (it was 2-3 units off from the first KO frame, which
+     made every KO frame score 15). Quakes from other death states are not requested yet (those states are not ported).
+  7. The Go element is not drawn for its first three frames (C 84-86 show nothing, 87 is fully settled); FD frames 84-86 went 63/40/23 -> 3.4.
+- Not matched (largest first): (a) HUD KO pieces: exploding percent digits, "SCORE -1" score model, stock-loss animation (`ScInfStc`), the magnifier bubble for an
+  off-screen fighter (`ifmagnify.c`, YS C frames 160/190); (b) FD frames 1-12: the C shows z-fight / interior geometry because the camera starts nearly edge-on to
+  the top plane (depth precision, not logic); (c) Fountain of Dreams / Dream Land 64 / Pokemon Stadium: scenarios exist for FoD and DL64 (`GrIz.dat`, `GrOp.dat`,
+  no stage logic: the platforms, the reflection camera and water are not driven; error 30 / 8 at 60), Pokemon Stadium has no scenario; (d) Randall (YS) and the
+  Shy Guys are not ported; (e) AppSRT particles still off by default; (f) the C shots are taken while the build hitches, so consecutive-frame comparisons
+  alternate between two logic frames; compare spaced frames.
+
+## Platform (summary, 2026-10-25, port/platform-integ)
+
+Rule for every run below: no OS-level input and no focus stealing. Game input only through `MELEE_PAD_SCRIPT`, `MELEE_PAD_IGNORE_ADAPTER=1`,
+the `PadSystem` script source, or in-process hooks. Scripted `melee play` / `view-golden` windows are created unfocused
+(`WindowConfig.active = false`, `MELEE_WINDOW_UNFOCUSED=1`), the GC adapter is not opened, gamepads are an empty set, and port 1 has no keyboard
+preset, so alt-tabbing or typing cannot change a result. Grep of tools/, pc/tools/, rust/ for SendKeys/SendInput/keybd_event/AppActivate/
+SetForegroundWindow/pyautogui finds nothing. C-build comparisons park the window at 30000,30000 without activation.
+
+### Status per track
+| Track | Status | Proven (how) | Remains |
+|---|---|---|---|
+| melee_platform (window, 60 Hz loop, pads, GC adapter) | working | oracle tests vs the C clamp/decode/Aurora code; fake-device pipeline tests; window example ran 240 ticks with 0 dropped | HID transport, gilrs gamepads, keyboard on hardware; Linux adapter; rumble |
+| melee_gx (GX on wgpu) | working for the FD scenario | `view-golden` vs realtime C screenshots (`tools/rust-port/shotcmp3.py`): mean abs error 2.43 of 255 averaged over frames 60-1500 (f60 4.13, f1500 2.84), 88-98% of pixels within 16 | entry sequence (trophy stand, light pillars, beam effect 36 with PATH track), KO frames (star, SCORE -1, percent digits; error 12-26 there), AppSRT particles (off by default), bone-attached effects, other stages unchecked, fog/shadows/flashes unprovable on FD |
+| melee_audio (AX/synth/cpal) | proven headless | sample-exact replay vs the C mix: 1953920 samples 0 differ (match), pause/resume 2440 sub-frames 0 differ, time-up 12856 sub-frames identical; master volume | GAME! call, results/sudden-death/menu audio, positional/KO paths in live play, native sim's own SFX only equal up to the first game-driven sound; sounds are never judged by ear |
+| melee_net (rollback, UDP) | working on loopback | synctest depth 12: 1802 frames, 0 hash mismatches, 1801/1801 golden-equal; host+guest with 70 ms lag and 5% loss: 78 rollbacks, 0 desyncs, golden-equal; lobby, room codes and random matchmaking paths too | UPnP, Envoy/mod-sync/identity messages, rematch, CPUs/items; real internet play; Rust vs C build interop only measured, see the netplay section |
+| melee_script (Lua, `gd.*`) | partial | same Lua 5.4.7 sources as C; 82 standalone scripts identical to system lua; per-module mock tests green | ~140 of 349 `gd.*` names, recorder state machine, fighter Lua, native Geno `define` entries |
+| melee_data (card, settings, mods, replays, crash log) | working | C-oracle transcripts per module; `.slp` and `.gdlp` playback in the native sim equals the C playback on 1801 frames | `melee` bin does not use the card; UCF in playback; embedded-state restore; Marth v Sheik C golden |
+| mex-import | working | output byte-identical to the Python packer on two mods | running mod PPC natively, DOL/Gecko patches |
+| `melee play` (menus, match, pause, results) | flow works, screens are stand-ins | three scripts (`tools/rust-port/play/*.txt`) run title to results hands-off: 1360, 1875 and 1563 ticks | retail mn* scenes and the gmfrontend .inc units are not ported (ui.rs rectangles + bitmap font draw every non-match screen); opening is a card; 7 fighters, 4 stages, fixed rules; sim halts on ~107 unported fighter sites, so free play can end early |
+
+### What only the user can check
+- Visuals: how it looks to a person (the numbers above are pixel error against the C build on FD only), menus, other stages and fighters.
+- Audio by ear: nothing has been listened to; equality is against the C mix on fixed scenarios.
+- A real controller: the WinUSB adapter read in port 1 once; HID transport, gamepads and the keyboard preset (WASD/IJKL/Space/Shift/Enter) in interactive `melee play` are untried by hand.
+- Online against another person over the internet: only loopback with injected lag/loss and local server paths were run.
+
+## Platform track, audio round 7 (plat-audio, 2026-10-25): driving past the main menu (no new capture)
+- Run recipe gotchas for headless menu captures: pass `MELEE_PAD_SCRIPT` / `MELEE_AUDIO_*` as `E:/...` paths (an MSYS `/e/...`
+  path silently loads no script and the run idles to the timeout), and seed a fresh sandbox with a copy of an existing
+  `runs/<x>/card` (a sandbox without a memory card never leaves the card notices).
+- From `GS_FRONTEND` the A button goes Versus -> Melee -> the Lua-hosted character select (the kit UI, scene name stays
+  `GS_FRONTEND`). Scripted A / stick down / START presses (3 or 8 frames, up to 200 frames of waiting) did not change that screen
+  in turbo (screenshots identical), so the SSS and the match start were not reached this way. Next step if wanted: an in-engine
+  scripted-input hook for the kit UI, or `MELEE_SCENE` presets for the retail SSS. No audio fixture was added this round; the
+  six pinned captures still match the C mix sample for sample. Nothing was listened to.

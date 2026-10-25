@@ -348,6 +348,8 @@ needed_hooks! {
 // ---- port round 6 (ft/ft_0881.c voice channels) ------------------------------------------
 needed_hooks! {
     LBAUDIOAX_80023870 lbaudioax_80023870(sfx: i32, vol: i32, pan: i32, chan: i32) -> i32 = "TODO(group1 lb) lbAudioAx_80023870";
+    LBAUDIOAX_800263E8 lbaudioax_800263e8(dir: f32, g: G, beh: u32, sfx: i32, a: i32, b: i32, p0: i32, p1: i32, p2: i32, s8: i32, sc: i32) -> i32 = "TODO(group1 lb) lbAudioAx_800263E8";
+    LBAUDIOAX_800264E4 lbaudioax_800264e4(obj: i32) -> i32 = "TODO(group1 lb) lbAudioAx_800264E4";
     LBAUDIOAX_80026510 lbaudioax_80026510(g: G) -> bool = "TODO(group1 lb) lbAudioAx_80026510";
     LBAUDIOAX_800265C4 lbaudioax_800265c4(g: G, sfx: i32) -> bool = "TODO(group1 lb) lbAudioAx_800265C4";
 }

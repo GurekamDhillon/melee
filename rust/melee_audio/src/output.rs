@@ -524,6 +524,21 @@ mod tests {
     }
 
     #[test]
+    fn master_volume_env_clamps_and_sets_gain() {
+        // Only test touching MELEE_VOLUME (process-global).
+        for (env, want) in [("55", 55), ("250", 100), ("-3", 0), ("abc", 0), ("0", 0)] {
+            std::env::set_var("MELEE_VOLUME", env);
+            assert_eq!(load_volume(), want, "MELEE_VOLUME={env}");
+        }
+        std::env::set_var("MELEE_VOLUME", "40");
+        let mut d = Driver::new(DriverConfig { turbo: true, target_frames: 0, nofx: false, dump: None, device: false });
+        assert_eq!(d.volume(), 40);
+        d.apply_volume();
+        assert_eq!(f32::from_bits(d.gain.load(Ordering::Relaxed)), 0.4);
+        std::env::remove_var("MELEE_VOLUME");
+    }
+
+    #[test]
     fn atoi_like_c() {
         assert_eq!(atoi("  42x"), 42);
         assert_eq!(atoi("-7"), -7);

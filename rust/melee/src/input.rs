@@ -331,7 +331,7 @@ fn inc254(v: &mut u8) {
 /// clear): the stick/trigger/button history, the pad read with its deadzones, the edges, the
 /// smash/hold timers and the press counters; then the input lock (`x221D_b4`) copy-and-clear.
 /// `input_locked` is `x221D_b4`; `x221d_b3` the "history primed" bit.
-pub fn fighter_input(fp: &mut Fighter, pad: &PadStatus, x221d_b3: &mut bool, input_locked: bool, cpu: bool) {
+pub fn fighter_input(fp: &mut Fighter, pad: &PadStatus, x221d_b3: &mut bool, input_locked: bool, cpu: bool, replay: Option<&melee_net::pad::RbInput>) {
     let cd = melee_fighter::hooks::common_data();
     if !*x221d_b3 {
         fp.input.lstick[1] = fp.input.lstick[2];
@@ -390,6 +390,16 @@ pub fn fighter_input(fp: &mut Fighter, pad: &PadStatus, x221d_b3: &mut bool, inp
     if fp.input.held_buttons[0] & HSD_PAD_Z != 0 {
         fp.input.held_buttons[0] |= HSD_PAD_LR | HSD_PAD_A;
         fp.input.triggers[0] = cd.z_press_analog_value;
+    }
+    // MELEE_SLP playback (fighter.c, TARGET_PC): this frame's recorded inputs replace what the pad
+    // gave, at the point Slippi's RestoreGameFrame.asm writes them (fp+0x620..0x65C).
+    if let Some(r) = replay {
+        fp.input.lstick[0].x = r.lx;
+        fp.input.lstick[0].y = r.ly;
+        fp.input.cstick[0].x = r.cx;
+        fp.input.cstick[0].y = r.cy;
+        fp.input.triggers[0] = r.trigger;
+        fp.input.held_buttons[0] = r.buttons;
     }
     inner1(fp);
     // The stick smash timers (Fighter_ClampSpecificValue / Fighter_ClampThreeValues).
@@ -549,11 +559,16 @@ pub fn increment_counters(fp: &mut Fighter, can_jump_input: bool) {
 /// animations all end (`lb_8000B09C` false), which runs the end callback `fn_8016B7F8` (GO:
 /// `ftLib_800868A4` unlocks every fighter's input). None: some track loops (never ends).
 pub fn ready_hud_end_frame(ifall: &[u8]) -> Result<Option<f32>, String> {
+    ready_hud_end_frame_of(ifall, 1)
+}
+
+/// `ScInfCnt_scene_models[idx]`'s end frame (see `ready_hud_end_frame`).
+pub fn ready_hud_end_frame_of(ifall: &[u8], idx: u32) -> Result<Option<f32>, String> {
     let a = melee_runtime::dat::DatArchive::parse(ifall).map_err(|e| format!("IfAll: {e}"))?;
     let d = &a.data;
     let be32 = |at: u32| u32::from_be_bytes(d[at as usize..at as usize + 4].try_into().unwrap());
     let models = a.public_offset("ScInfCnt_scene_models").ok_or("IfAll: no ScInfCnt_scene_models")?;
-    let m1 = be32(models + 4);
+    let m1 = be32(models + 4 * idx);
     let (joint, anims) = (be32(m1), be32(m1 + 4));
     if anims == 0 {
         return Ok(Some(0.0));

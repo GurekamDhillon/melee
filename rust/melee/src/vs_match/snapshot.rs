@@ -50,7 +50,7 @@ fn strip_addrs(s: &str) -> String {
     out + rest
 }
 
-fn fnv(s: &str) -> u64 {
+pub(super) fn fnv(s: &str) -> u64 {
     let mut h = 0xcbf29ce484222325u64;
     for b in s.bytes() {
         h = (h ^ b as u64).wrapping_mul(0x100000001b3);
@@ -486,6 +486,8 @@ impl VsMatch {
             let da = self.players.get(owner).and_then(|p| p.fx_attrs).ok_or(format!("snapshot: item kind {kind} belongs to a fighter without Fox attributes"))?;
             let var = it + 0xDD4;
             let class = if kind == da.x20_FOX_BLASTER_GUN_ITKIND as i32 {
+                self.players[owner].fx.gun_vis = snap.s32(var + 0x104);
+                self.players[owner].fx.gun_shot = snap.u8(var + 0xC) != 0;
                 ItemClass::FoxGun { owner, flash: snap.u32(var + 0xA0) != 0 }
             } else if kind == da.x1C_FOX_BLASTER_SHOT_ITKIND as i32 {
                 ItemClass::FoxLaser { angle: snap.f32(var + 4), speed: snap.f32(var + 8), life: snap.f32(it + 0xD44), owner, ray: snap.f32(var), hits: { let mut h = super::fox::laser_hits_new(kind, pos, snap.f32(var + 4), false); h.valid = false; h } }

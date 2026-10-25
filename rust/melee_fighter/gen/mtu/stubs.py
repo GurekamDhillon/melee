@@ -73,7 +73,7 @@ def rust_decls(path):
     c = s.find("macro_rules!")
     if c >= 0:
         # entries of any `ext!` / `stubs!` / `extd!` style block: `STATIC name(args) -> R [= default];`
-        for m in re.finditer(r"^\s*([A-Z][A-Z0-9_]+) (\w+)\((.*?)\)(?: -> ([^=;]+?))?(?: = .*)?;$", s[c:], re.M):
+        for m in re.finditer(r"^\s*([A-Z][A-Z0-9_]+) (\w+)\((.*?)\)(?: -> (.+?))?(?: = .*)?;$", s[c:], re.M):
             stat, name, args, ret = m.groups()
             HOOKS[name] = "ext::" + stat
             out[name] = (split_args(args), ret.strip() if ret else None)
@@ -343,13 +343,16 @@ def main():
                 rv = "None"
             else:
                 raise SystemExit(f"{n}: Rust returns {rr}; give --ret")
+            if n in outvec:  # the C stub fills the out vector before it evaluates the return value
+                o = f"a{outvec[n]}"
+                rb.append(f"if !{o}.is_null() {{ (*{o}).x = rg(); (*{o}).y = rg(); (*{o}).z = rg(); }}")
             rb.append(rv)
         elif rc is not None and rc != "0" and n not in rets:
             # the C stub returns a drawn value the port's declaration drops: draw it here too so the shared
             # xorshift stream stays in step
             rb.append({"fv()": "let _ = fv();", "(fv() & 1)": "let _ = fv();", "fv64()": "let _ = fv64();",
                        "rg()": "let _ = rg();", "(double) rg()": "let _ = rg();"}.get(rc, ""))
-        if n in outvec:
+        if n in outvec and rr is None:
             o = f"a{outvec[n]}"
             rb.append(f"if !{o}.is_null() {{ (*{o}).x = rg(); (*{o}).y = rg(); (*{o}).z = rg(); }}")
         args = ", ".join(f"a{i}" for i in range(len(rps)))

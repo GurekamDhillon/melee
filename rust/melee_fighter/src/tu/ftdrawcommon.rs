@@ -68,7 +68,10 @@ pub mod ext {
         // `Mex_OnModelRenderDispatch(kind, gobj, arg1, mtx, ftData_UnkMtxFunc0[kind])`.
         MEX_ON_MODEL_RENDER Mex_OnModelRenderDispatch_UnkMtxFunc0(kind: i32, g: G, arg1: i32, mtx: *mut [f32; 4]);
         HSD_JOBJ_SET_MTX_DIRTY_SUB HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj);
-        SCRIPT_MOTION_DRAW_BEGIN script_motion_draw_begin(g: G) -> i32;
+        SCRIPT_MOTION_DRAW_BEGIN script_motion_draw_begin(g: G) -> i32 = super::script_motion_draw_begin(g);
+        CAMERA_PC_MAIN_COBJ Camera_PCMainCObj() -> *mut HSD_CObj;
+        MOTION_FIGHTER_BEGIN MotionFighterBegin(slot: i32, sub: i32, gobj: i32, view: i32, pos: i32, b5: i32, has_item: i32, costume: i32, falls: i32, speed: i32) -> i32;
+        PLAYER_GET_FALLS Player_GetFalls(slot: i32) -> i32 = crate::tu::player::Player_GetFalls(slot);
         MOTION_FIGHTER_END MotionFighterEnd();
         GENO_TOON_ENSURE GenoToonEnsure(slot: i32, kind: i32);
         SURFACE_BEGIN SurfaceBegin(slot: i32);
@@ -330,6 +333,33 @@ fn surface_impl(g: G, arg1: i32) {
             _ => {}
         }
     }
+}
+
+/// `script_motion_draw_begin` (pc/gameworld/script_motion_draw.h, static inline): start capturing the fighter's pose for the
+/// motion draw when the current camera is the main one (not a reflection / refraction / diagnostic camera). The C passes the
+/// guest addresses of the gobj, the view matrix and the position as `int`.
+pub fn script_motion_draw_begin(g: G) -> i32 {
+    let f = fp(g);
+    let camera = ext::HSD_CObjGetCurrent();
+    /* Exclude reflection/refraction and fighter diagnostic cameras. */
+    if ext::Camera_80031060() != 0 || camera.is_null() || camera != ext::Camera_PCMainCObj() {
+        return 0;
+    }
+    // `speed.f = vx*vx + vy*vy`: one fused site (the left product is the fused one).
+    let speed = melee_core::fp::fmadds(f.self_vel.x, f.self_vel.x, f.self_vel.y * f.self_vel.y);
+    let falls = ext::Player_GetFalls(f.player_id as i32);
+    ext::MotionFighterBegin(
+        f.player_id as i32 + 1,
+        f.is_sub_fighter() as i32,
+        g as usize as i32,
+        unsafe { &(*camera).view_mtx } as *const _ as usize as i32,
+        &f.cur_pos as *const _ as usize as i32,
+        f.x2219_b5() as i32,
+        (!f.item_gobj.is_null()) as i32,
+        f.x619_costume_id as i32,
+        falls,
+        speed.to_bits() as i32,
+    )
 }
 
 /// `ftDrawCommon_80080E18` (TARGET_PC wrapper: motion draw, Geno toon, per-port surface).

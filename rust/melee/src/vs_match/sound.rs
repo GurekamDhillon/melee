@@ -51,10 +51,17 @@ pub fn install_hooks() {
 /// Run `f` with `HSD_Randi` drawing from `rand`.
 fn with_rand<R>(rand: &mut HsdRand, f: impl FnOnce() -> R) -> R {
     install_hooks();
+    let prev = unsafe { RAND };
     unsafe { RAND = rand as *mut HsdRand };
     let r = f();
-    unsafe { RAND = std::ptr::null_mut() };
+    unsafe { RAND = prev };
     r
+}
+
+/// Points `HSD_Randi` at the match's generator for the whole step (the hit code draws from it outside `with_rand`).
+pub fn bind_rand(rand: &mut HsdRand) {
+    install_hooks();
+    unsafe { RAND = rand as *mut HsdRand };
 }
 
 /// `ft_PlaySFX(fp, sfx, vol, pan)`.

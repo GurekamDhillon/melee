@@ -150,7 +150,7 @@ impl VsMatch {
                     refs.entry(*c).or_insert((inst << 24) | *j);
                 }
                 let _ = g;
-                return Ok(Effect { inst, tev: None, id: idx, lifetime: life, owner, scale, bank: bi, tracks: etracks, fixed_pos, rot_y, rot_z });
+                return Ok(Effect { inst, tev: None, id: idx, lifetime: life, owner, scale, bank: bi, tracks: etracks, fixed_pos, rot_y, rot_z, detached: false });
             }
         }
         Err(format!("snapshot: effect {g:#x} matches no descriptor of the loaded effect banks (lifetime {})", snap.u16(ud + 0x24)))

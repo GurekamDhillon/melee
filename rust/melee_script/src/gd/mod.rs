@@ -6,6 +6,7 @@ use mlua::{IntoLuaMulti, Lua, Result as LuaResult, Table, Value};
 
 pub mod arena;
 pub mod camera;
+pub mod caps;
 pub mod combo;
 pub mod core;
 pub mod fighter;
@@ -44,6 +45,7 @@ pub fn register_all(e: &Engine, gd: &Table) -> LuaResult<()> {
     fighter::register(e, gd)?;
     camera::register(e, gd)?;
     arena::register(e, gd)?;
+    caps::register(e, gd)?;
     mods::register(e, gd)?;
     pad::register(e, gd)?;
     players::register(e, gd)?;

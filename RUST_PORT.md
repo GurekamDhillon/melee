@@ -1147,3 +1147,6 @@ rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_In
 - Round 4 (plat-play, re-verify after merging port/platform-integ): full_loop.txt (1359 ticks, to results, time-up draw) and
   pause_quit_rematch.txt (1563 ticks, two matches) re-run hands-off with MELEE_PAD_IGNORE_ADAPTER=1, unfocused window, `--shots`; all
   screens captured (build/r2, disc art, not committed). Still stand-ins: ui.rs menus, 7 fighters, 4 stages, sim halts on unported fighter states.
+
+- Round 5 (plat-play): vs_to_ko.txt --golden-pads re-run hands-off (MELEE_PAD_IGNORE_ADAPTER=1, unfocused window, --shots): title/CSS/match/live/results
+  reached, 1875 ticks, time-up on Final Destination (port 2 wins, falls 5-0 on the timer). No OS-level input was sent. Menus are still ui.rs stand-ins.

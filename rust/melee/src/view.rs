@@ -160,6 +160,8 @@ struct Stage {
     fighter_lights: Vec<u32>,
     stage_lights: AnimLights,
     plit_lights: Option<AnimLights>,
+    /// `stage_info.quake_model_set` (DynamicModelDesc: joint, anims[]), the camera quake offset animations.
+    quake_set: Option<u32>,
 }
 
 fn load_stage(file: &[u8], is_fd: bool, is_bf: bool, is_gr: bool) -> Result<Stage, String> {
@@ -167,6 +169,7 @@ fn load_stage(file: &[u8], is_fd: bool, is_bf: bool, is_gr: bool) -> Result<Stag
     let head = a.public_offset("map_head").ok_or("no map_head")?;
     let a_plit = a.public_offset("map_plit");
     let a_gp = a.public_offset("grGroundParam");
+    let a_quake = a.public_offset("quake_model_set");
     let dat = Arc::new(a.data);
     let d = &dat[..];
     let table = be32(d, head + 8);
@@ -390,7 +393,7 @@ fn load_stage(file: &[u8], is_fd: bool, is_bf: bool, is_gr: bool) -> Result<Stag
     }
     let stage_lights = AnimLights::new(d, if ll != 0 { ll } else { 0 }, head);
     let plit_lights = a_plit.map(|pl| AnimLights::new(d, pl, head));
-    Ok(Stage { dat, anim, map_head: head, groups, lights, fighter_lights, stage_lights, plit_lights })
+    Ok(Stage { dat, anim, map_head: head, groups, lights, fighter_lights, stage_lights, plit_lights, quake_set: a_quake })
 }
 
 /// A light set (`lb_80011AC4` over a `LightList*[]`) with its `HSD_LObjAnim` state: the `VIS` / `LITC_*`
@@ -499,6 +502,8 @@ struct FxModel {
 pub struct MatchRender {
     fx: HashMap<u32, FxModel>,
     cm: crate::cm_drive::CmDrive,
+    /// Live camera quake gobjs (`grLib_801C9CEC`): their offset animations.
+    quakes: Vec<crate::stage_anim::StageAnim>,
     pose: crate::cm_drive::CamPose,
     stage: Stage,
     hud: crate::hud_view::Hud,
@@ -586,7 +591,7 @@ impl MatchRender {
         }
         let hud = crate::hud_view::Hud::new(crate::hud_view::HudFile::load(&disc.read("IfAll.usd")?)?, names)?;
         let pose = cm.pose();
-        Ok(Self { fx: HashMap::new(), cm, pose, stage, hud, fighters, cache: DataCache::default(), render: HsdRender::new() })
+        Ok(Self { fx: HashMap::new(), cm, quakes: Vec::new(), pose, stage, hud, fighters, cache: DataCache::default(), render: HsdRender::new() })
     }
 }
 
@@ -782,6 +787,29 @@ impl MatchRender {
         }
         let ins: Vec<_> = sim.players.iter_mut().filter_map(|p| p.camera_subject_in()).collect();
         let snaps: Vec<_> = sim.players.iter_mut().filter(|p| !p.follower).map(|p| p.cam_snap.take()).collect();
+        {
+            let mut off = None;
+            self.quakes.retain_mut(|a| {
+                a.step();
+                let t = a.translate_of(0, 0);
+                off = Some((t.x, t.y));
+                a.joint_anim_running(0)
+            });
+            if let Some((x, y)) = off {
+                self.cm.set_quake_offset(x, y);
+            }
+        }
+        // Camera_RequestQuake (grLib_801C9CEC): a quake gobj whose proc sets the camera's quake offset each frame.
+        for (kind, pos) in std::mem::take(&mut sim.quake_requests) {
+            self.cm.request_quake(kind, pos);
+            let idx = match kind { melee_types::QuakeKind_Loop => 0, melee_types::QuakeKind_Small => 1, melee_types::QuakeKind_Medium => 2, _ => 3 };
+            if let Some(q) = self.stage.quake_set {
+                let mut a = crate::stage_anim::StageAnim::new_scene(self.stage.dat.clone(), vec![q]);
+                a.start_anim_set(0, idx, false);
+                a.req_joint(0, 0, 0.0);
+                self.quakes.push(a);
+            }
+        }
         self.cm.step(&ins, &snaps);
         let dmg: Vec<i32> = sim.players.iter().map(|p| p.fp.dmg.x1830_percent as i32).collect();
         self.hud.step(&dmg);

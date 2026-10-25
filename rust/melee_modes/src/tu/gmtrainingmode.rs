@@ -59,7 +59,7 @@ pub mod ext {
         lbAudioAx_80024030(arg: i32) = |arg: i32| { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80024030(arg as _); } };
         gm_InitVsMode(vs: *mut VsModeData) = |vs: *mut VsModeData| { unsafe { let _ = crate::tu::gm_1601::gm_InitVsMode(vs as _); } };
         gm_801677F0() -> u8 = || -> u8 { unsafe { crate::tu::gm_1601::gm_801677F0() as _ } };
-        SceneLaunch_SeedVs(vs: *mut VsModeData, dummy_fallback: bool) -> bool = |_, _| todo!("TODO(port) SceneLaunch_SeedVs (gmscenelaunch.h, TARGET_PC)");
+        SceneLaunch_SeedVs(vs: *mut VsModeData, dummy_fallback: bool) -> bool = |vs, d| unsafe { crate::tu::gmscenelaunch::SceneLaunch_SeedVs(vs, d as i32) != 0 };
     }
 }
 

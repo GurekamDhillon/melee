@@ -23,7 +23,7 @@ pub mod ext {
         lbTime_8000AF74(a: u32, b: i32) -> u32 = crate::lb::lbTime_8000AF74;
         memzero(mem: *mut c_void, size: isize) = |m, n| unsafe { core::ptr::write_bytes(m as *mut u8, 0, n as usize) };
         Mex_Enabled(name: &str) -> i32 = |_| todo!("TODO(port) Mex_Enabled (pc/platform mex)");
-        SceneLaunch_SeedVs(vs: *mut VsModeData, dummy_fallback: bool) -> bool = |_, _| todo!("TODO(port) SceneLaunch_SeedVs (gmscenelaunch.h, TARGET_PC)");
+        SceneLaunch_SeedVs(vs: *mut VsModeData, dummy_fallback: bool) -> bool = |vs, d| unsafe { crate::tu::gmscenelaunch::SceneLaunch_SeedVs(vs, d as i32) != 0 };
         SceneLaunch_Active() -> i32 = || todo!("TODO(port) SceneLaunch_Active (pc/platform)");
         SceneLaunch_EntryStateId() -> i32 = || todo!("TODO(port) SceneLaunch_EntryStateId (pc/platform)");
         SceneLaunch_PlayerStocks(slot: i32) -> i32 = |_| todo!("TODO(port) SceneLaunch_PlayerStocks (pc/platform)");

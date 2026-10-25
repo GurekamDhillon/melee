@@ -274,7 +274,7 @@ pub mod ext {
     hook!(UI_SCENEPOLICY, Ui_ScenePolicy, (kind: i32) -> i32);
     hook!(GMFRONTEND_ATLASSTANDIN, gmFrontend_AtlasStandIn, (kind: u8) -> *mut GameScene);
     hook!(UI_SCENEPOLICYMASK, Ui_ScenePolicyMask, (scene_kind: i32, window_known: i32));
-    hook!(FAD_TOYWINDOWKNOWN, Fad_ToyWindowKnown, (kind: u8) -> i32);
+    hook!(FAD_TOYWINDOWKNOWN, Fad_ToyWindowKnown, (kind: u8) -> i32, crate::tu::gmfrontend_atlas_toy::Fad_ToyWindowKnown);
     hook!(FIGHTERCONTROLS_MATCHCLEAR, FighterControls_MatchClear, ());
     hook!(UI_TOYPROBE, Ui_ToyProbe, () -> i32);
     hook!(FAD_OVERLAYWRAP, Fad_OverlayWrap, (kind: u8, inner: SceneFn) -> SceneFn);

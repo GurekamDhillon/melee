@@ -2,376 +2,376 @@
 #![allow(non_snake_case,non_camel_case_types,non_upper_case_globals,unused_mut,unused_variables,unused_assignments,unused_unsafe,unused_parens,dead_code,static_mut_refs,clippy::all)]
 use melee_types::*;
 
-pub mod ext { use super::*; crate::oext_fns! {fn ProfBegin(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> ();}
-crate::oext_fns! {fn ProfEnd() -> ();}
-crate::oext_fns! {fn ProfActive() -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn PSMTXCopy(a0 : * mut [:: core :: ffi :: c_float ; 4], a1 : * mut [:: core :: ffi :: c_float ; 4]) -> ();}
-crate::oext_fns! {fn PSMTXConcat(a0 : * mut [:: core :: ffi :: c_float ; 4], a1 : * mut [:: core :: ffi :: c_float ; 4], a2 : * mut [:: core :: ffi :: c_float ; 4]) -> () = crate::tu::adapt::PSMTXConcat__6707f0;}
-crate::oext_fns! {fn PSMTXInverse(a0 : * mut [:: core :: ffi :: c_float ; 4], a1 : * mut [:: core :: ffi :: c_float ; 4]) -> :: core :: ffi :: c_uint = crate::tu::adapt::PSMTXInverse__c61344;}
-crate::oext_fns! {fn PSMTXMultVec(a0 : * mut [:: core :: ffi :: c_float ; 4], a1 : * mut Vec, a2 : * mut Vec) -> () = crate::tu::adapt::PSMTXMultVec__416c01;}
-crate::oext_fns! {fn OSCheckHeap(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_long;}
-crate::oext_fns! {fn DVDConvertPathToEntrynum(a0 : * const :: core :: ffi :: c_char) -> s32;}
-crate::ext_va! {fn OSReport(a0 : * mut :: core :: ffi :: c_char) va 0 -> ();}
+pub mod ext { pub use super::*; crate::ext_fns! {extern "C" fn ProfBegin(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> ();}
+crate::ext_fns! {extern "C" fn ProfEnd() -> ();}
+crate::ext_fns! {extern "C" fn ProfActive() -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn PSMTXCopy(a0 : * mut [:: core :: ffi :: c_float ; 4], a1 : * mut [:: core :: ffi :: c_float ; 4]) -> ();}
+crate::ext_fns! {extern "C" fn PSMTXConcat(a0 : * mut [:: core :: ffi :: c_float ; 4], a1 : * mut [:: core :: ffi :: c_float ; 4], a2 : * mut [:: core :: ffi :: c_float ; 4]) -> () = crate::tu::adapt::PSMTXConcat__6707f0;}
+crate::ext_fns! {extern "C" fn PSMTXInverse(a0 : * mut [:: core :: ffi :: c_float ; 4], a1 : * mut [:: core :: ffi :: c_float ; 4]) -> :: core :: ffi :: c_uint = crate::tu::adapt::PSMTXInverse__c61344;}
+crate::ext_fns! {extern "C" fn PSMTXMultVec(a0 : * mut [:: core :: ffi :: c_float ; 4], a1 : * mut Vec, a2 : * mut Vec) -> () = crate::tu::adapt::PSMTXMultVec__416c01;}
+crate::ext_fns! {extern "C" fn OSCheckHeap(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_long;}
+crate::ext_fns! {extern "C" fn DVDConvertPathToEntrynum(a0 : * const :: core :: ffi :: c_char) -> s32;}
+pub unsafe fn OSReport(a0: *mut ::core::ffi::c_char, _va: &[crate::oracle::Va]) { match crate::tu::ext_hook::EXT_HOOK { Some(h) => { h("OSReport", &[a0 as usize as u64]); } None => {} } }
 pub unsafe extern "C" fn __assert(a0 : * const :: core :: ffi :: c_char, a1 : :: core :: ffi :: c_uint, a2 : * const :: core :: ffi :: c_char) -> ! { panic!("TODO(ext) __assert") }
-crate::oext_fns! {fn HSD_CObjGetViewingMtx(a0 : * mut HSD_CObj, a1 : * mut [:: core :: ffi :: c_float ; 4]) -> ();}
-crate::oext_fns! {fn HSD_CObjGetCurrent() -> * mut HSD_CObj = crate::tu::adapt::HSD_CObjGetCurrent__ad58db;}
-crate::oext_fns! {fn Camera_80030730(a0 : :: core :: ffi :: c_float) -> ();}
-crate::oext_fns! {fn Camera_80030A50() -> * mut HSD_GObj;}
-crate::oext_fns! {fn Camera_80030A60(a0 : :: core :: ffi :: c_int) -> ();}
-crate::oext_fns! {fn Camera_80030A78() -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn Camera_80030A8C(a0 : :: core :: ffi :: c_int) -> ();}
-crate::oext_fns! {fn Camera_80030B38(a0 : :: core :: ffi :: c_int) -> ();}
-crate::oext_fns! {fn Camera_80030B50() -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn Camera_80030B64(a0 : :: core :: ffi :: c_int) -> ();}
-crate::oext_fns! {fn Camera_80030B7C() -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn Camera_80030B90(a0 : :: core :: ffi :: c_int) -> ();}
-crate::oext_fns! {fn Camera_80030BA8() -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn Camera_80031060() -> enum_t;}
-crate::oext_fns! {fn Camera_8003108C() -> enum_t;}
-crate::oext_fns! {fn Camera_800311CC(a0 : :: core :: ffi :: c_float) -> ();}
-crate::oext_fns! {fn Camera_StageSlotClipGet(a0 : * mut :: core :: ffi :: c_float, a1 : * mut :: core :: ffi :: c_float) -> ();}
-crate::oext_fns! {fn Camera_800311DC(a0 : :: core :: ffi :: c_float) -> ();}
-crate::oext_fns! {fn HSD_ObjFree(a0 : * mut HSD_ObjAllocData, a1 : * mut :: core :: ffi :: c_void) -> () = crate::tu::adapt::HSD_ObjFree__bf3ee9;}
-crate::oext_fns! {fn HSD_GObj_80390EB8(a0 : s32) -> :: core :: ffi :: c_uint = crate::tu::adapt::HSD_GObj_80390EB8__ae201c;}
-crate::oext_fns! {fn GObj_Create(a0 : :: core :: ffi :: c_ushort, a1 : :: core :: ffi :: c_uchar, a2 : :: core :: ffi :: c_uchar) -> * mut HSD_GObj;}
-crate::oext_fns! {fn HSD_GObj_JObjCallback(a0 : * mut HSD_GObj, a1 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::HSD_GObj_JObjCallback__392d18;}
-crate::oext_fns! {fn ftKb_MexKirbyLike(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int = crate::tu::adapt::ftKb_MexKirbyLike__c2b696;}
-crate::oext_fns! {fn efLib_DestroyAll(a0 : * mut HSD_GObj) -> () = crate::tu::adapt::efLib_DestroyAll__17a98a;}
-crate::oext_fns! {fn GXSetCullMode(a0 : GXCullMode) -> ();}
-crate::oext_fns! {fn GXSetVtxDesc(a0 : GXAttr, a1 : GXAttrType) -> ();}
-crate::oext_fns! {fn GXClearVtxDesc() -> ();}
-crate::oext_fns! {fn GXSetVtxAttrFmt(a0 : GXVtxFmt, a1 : GXAttr, a2 : GXCompCnt, a3 : GXCompType, a4 : :: core :: ffi :: c_uchar) -> ();}
-crate::oext_fns! {fn GXSetArray(a0 : GXAttr, a1 : * const :: core :: ffi :: c_void, a2 : :: core :: ffi :: c_uchar) -> ();}
-crate::oext_fns! {fn GXBegin(a0 : GXPrimitive, a1 : GXVtxFmt, a2 : :: core :: ffi :: c_ushort) -> ();}
-crate::oext_fns! {fn GXFlush() -> ();}
-crate::oext_fns! {fn GXSetZMode(a0 : GXBool, a1 : GXCompare, a2 : GXBool) -> ();}
-crate::oext_fns! {fn GXSetTevColorIn(a0 : GXTevStageID, a1 : GXTevColorArg, a2 : GXTevColorArg, a3 : GXTevColorArg, a4 : GXTevColorArg) -> ();}
-crate::oext_fns! {fn GXSetTevAlphaIn(a0 : GXTevStageID, a1 : GXTevAlphaArg, a2 : GXTevAlphaArg, a3 : GXTevAlphaArg, a4 : GXTevAlphaArg) -> ();}
-crate::oext_fns! {fn GXSetTevColorOp(a0 : GXTevStageID, a1 : GXTevOp, a2 : GXTevBias, a3 : GXTevScale, a4 : GXBool, a5 : GXTevRegID) -> ();}
-crate::oext_fns! {fn GXSetTevAlphaOp(a0 : GXTevStageID, a1 : GXTevOp, a2 : GXTevBias, a3 : GXTevScale, a4 : GXBool, a5 : GXTevRegID) -> ();}
-crate::oext_fns! {fn GXSetTevColor(a0 : GXTevRegID, a1 : GXColor) -> ();}
-crate::oext_fns! {fn GXSetTevKColor(a0 : GXTevKColorID, a1 : GXColor) -> ();}
-crate::oext_fns! {fn GXSetTevKColorSel(a0 : GXTevStageID, a1 : GXTevKColorSel) -> ();}
-crate::oext_fns! {fn GXSetTevSwapMode(a0 : GXTevStageID, a1 : GXTevSwapSel, a2 : GXTevSwapSel) -> ();}
-crate::oext_fns! {fn GXSetTevOrder(a0 : GXTevStageID, a1 : GXTexCoordID, a2 : GXTexMapID, a3 : GXChannelID) -> ();}
-crate::oext_fns! {fn GXSetNumTevStages(a0 : :: core :: ffi :: c_uchar) -> ();}
-crate::oext_fns! {fn GXLoadPosMtxImm(a0 : * mut [:: core :: ffi :: c_float ; 4], a1 : :: core :: ffi :: c_uint) -> ();}
-crate::oext_fns! {fn GXSetCurrentMtx(a0 : :: core :: ffi :: c_uint) -> ();}
-crate::oext_fns! {fn GXPosition3f32(a0 : :: core :: ffi :: c_float, a1 : :: core :: ffi :: c_float, a2 : :: core :: ffi :: c_float) -> ();}
-crate::oext_fns! {fn GXPosition1x8(a0 : :: core :: ffi :: c_uchar) -> ();}
-crate::oext_fns! {fn GXColor4u8(a0 : :: core :: ffi :: c_uchar, a1 : :: core :: ffi :: c_uchar, a2 : :: core :: ffi :: c_uchar, a3 : :: core :: ffi :: c_uchar) -> ();}
-crate::oext_fns! {fn ftAnim_8006F484(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_float = crate::tu::adapt::ftAnim_8006F484__1b854b;}
-crate::oext_fns! {fn it_8026B40C(a0 : * mut Article, a1 : s32) -> () = crate::tu::adapt::it_8026B40C__05955e;}
-crate::oext_fns! {fn cosf(a0 : :: core :: ffi :: c_float) -> :: core :: ffi :: c_float = crate::tu::adapt::cosf__610bf5;}
-crate::oext_fns! {fn fabsf(a0 : :: core :: ffi :: c_float) -> :: core :: ffi :: c_float;}
-crate::oext_fns! {fn sinf(a0 : :: core :: ffi :: c_float) -> :: core :: ffi :: c_float = crate::tu::adapt::sinf__6f60bc;}
-crate::oext_fns! {fn HSD_ArchiveParse(a0 : * mut HSD_Archive, a1 : * mut :: core :: ffi :: c_uchar, a2 : usize) -> s32 = crate::tu::adapt::HSD_ArchiveParse__d29071;}
-crate::oext_fns! {fn HSD_ArchiveGetPublicAddress(a0 : * mut HSD_Archive, a1 : * const :: core :: ffi :: c_char) -> * mut :: core :: ffi :: c_void = crate::tu::adapt::HSD_ArchiveGetPublicAddress__8ced5d;}
-crate::oext_fns! {fn HSD_ArchiveGetExtern(a0 : * mut HSD_Archive, a1 : :: core :: ffi :: c_int) -> * mut :: core :: ffi :: c_char = crate::tu::adapt::HSD_ArchiveGetExtern__36350c;}
-crate::oext_fns! {fn HSD_ArchiveLocateExtern(a0 : * mut HSD_Archive, a1 : * const :: core :: ffi :: c_char, a2 : * mut :: core :: ffi :: c_void) -> () = crate::tu::adapt::HSD_ArchiveLocateExtern__a293e4;}
-crate::oext_fns! {fn Geno_DefineBaseKind(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn Fighter_UnkProcessDeath_80068354(a0 : * mut Fighter_GObj) -> () = crate::tu::adapt::Fighter_UnkProcessDeath_80068354__0d8c62;}
-crate::oext_fns! {fn Fighter_ResetInputData_80068854(a0 : * mut Fighter_GObj) -> () = crate::tu::adapt::Fighter_ResetInputData_80068854__e11eca;}
-crate::oext_fns! {fn Fighter_ChangeMotionState(a0 : * mut Fighter_GObj, a1 : FtMotionId, a2 : MotionFlags, a3 : :: core :: ffi :: c_float, a4 : :: core :: ffi :: c_float, a5 : :: core :: ffi :: c_float, a6 : * mut Fighter_GObj) -> () = crate::tu::adapt::Fighter_ChangeMotionState__8da657;}
-crate::oext_fns! {fn Fighter_ProcessHit_8006D1EC(a0 : * mut Fighter_GObj) -> () = crate::tu::adapt::Fighter_ProcessHit_8006D1EC__4dab97;}
-crate::oext_fns! {fn ftCo_800B3E04(a0 : * mut Fighter) -> () = crate::tu::adapt::ftCo_800B3E04__214e01;}
-crate::oext_fns! {fn ftCo_800B49F4(a0 : * mut Fighter) -> () = crate::tu::adapt::ftCo_800B49F4__82f580;}
-crate::oext_fns! {fn ftCo_800B4A78(a0 : * mut Fighter) -> () = crate::tu::adapt::ftCo_800B4A78__b296ba;}
-crate::oext_fns! {fn ftParts_GetBoneIndex(a0 : * mut Fighter, a1 : Fighter_Part) -> Fighter_Part;}
-crate::oext_fns! {fn ftCommon_CalcSelfAccel_DeaccelQuickAir(a0 : * mut Fighter) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn ftCommon_UnlockECB(a0 : * mut Fighter) -> ();}
-crate::oext_fns! {fn ftCommon_8007D5D4(a0 : * mut Fighter) -> () = crate::tu::adapt::ftCommon_8007D5D4__dfe1c5;}
-crate::oext_fns! {fn ftCommon_8007D6A4(a0 : * mut Fighter) -> () = crate::tu::adapt::ftCommon_8007D6A4__198fd1;}
-crate::oext_fns! {fn ftCommon_8007D7FC(a0 : * mut Fighter) -> () = crate::tu::adapt::ftCommon_8007D7FC__b6f6a2;}
-crate::oext_fns! {fn ftCommon_8007D92C(a0 : * mut Fighter_GObj) -> () = crate::tu::adapt::ftCommon_8007D92C__e78cfc;}
-crate::oext_fns! {fn ftCo_GetLStickAngle(a0 : * mut Fighter) -> :: core :: ffi :: c_float;}
-crate::oext_fns! {fn ftCommon_CalcHitlag(a0 : :: core :: ffi :: c_int, a1 : FtMotionId, a2 : :: core :: ffi :: c_float) -> :: core :: ffi :: c_float;}
-crate::oext_fns! {fn ftCommon_8007E2FC(a0 : * mut Fighter_GObj) -> ();}
-crate::oext_fns! {fn ftCommon_8007F804(a0 : * mut Fighter) -> MtxPtr = crate::tu::adapt::ftCommon_8007F804__b9b049;}
-crate::oext_fns! {fn ftCamera_80076064(a0 : * mut Fighter) -> () = crate::tu::adapt::ftCamera_80076064__ed1a88;}
-crate::oext_fns! {fn ftCo_800D105C(a0 : * mut Fighter_GObj) -> () = crate::tu::adapt::ftCo_800D105C__a3a0b4;}
-crate::oext_fns! {fn ftLib_SetScale(a0 : * mut HSD_GObj, a1 : :: core :: ffi :: c_float) -> ();}
-crate::oext_fns! {fn ftLib_80086960(a0 : * mut HSD_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftLib_80086960__b56944;}
-crate::oext_fns! {fn ft_80081C88(a0 : * mut Fighter_GObj, a1 : :: core :: ffi :: c_float) -> () = crate::tu::adapt::ft_80081C88__3d5b9d;}
-crate::oext_fns! {fn HSD_SListRemove(a0 : * mut HSD_SList) -> * mut HSD_SList = crate::tu::adapt::HSD_SListRemove__e27f25;}
-crate::oext_fns! {fn HSD_JObjGetFlags(a0 : * mut HSD_JObj) -> :: core :: ffi :: c_uint;}
-crate::oext_fns! {fn HSD_JObjSetupMatrixSub(a0 : * mut HSD_JObj) -> ();}
-crate::oext_fns! {fn HSD_JObjSetMtxDirtySub(a0 : * mut HSD_JObj) -> ();}
-crate::oext_fns! {fn HSD_JObjUnref(a0 : * mut HSD_JObj) -> () = crate::tu::adapt::HSD_JObjUnref__cb2b18;}
-crate::oext_fns! {fn HSD_JObjRemoveAll(a0 : * mut HSD_JObj) -> ();}
-crate::oext_fns! {fn HSD_JObjLoadJoint(a0 : * mut HSD_Joint) -> * mut HSD_JObj = crate::tu::adapt::HSD_JObjLoadJoint__7fbd4c;}
-crate::oext_fns! {fn HSD_JObjAnimAll(a0 : * mut HSD_JObj) -> ();}
-crate::oext_fns! {fn HSD_JObjSetFlags(a0 : * mut HSD_JObj, a1 : :: core :: ffi :: c_uint) -> ();}
-crate::oext_fns! {fn HSD_JObjClearFlags(a0 : * mut HSD_JObj, a1 : :: core :: ffi :: c_uint) -> ();}
-crate::oext_fns! {fn HSD_JObjAlloc() -> * mut HSD_JObj = crate::tu::adapt::HSD_JObjAlloc__ec115b;}
-crate::oext_fns! {fn HSD_JObjDispAll(a0 : * mut HSD_JObj, a1 : * mut [:: core :: ffi :: c_float ; 4], a2 : :: core :: ffi :: c_uint, a3 : :: core :: ffi :: c_uint) -> ();}
-crate::oext_fns! {fn HSD_JObjRemoveAnimAll(a0 : * mut HSD_JObj) -> ();}
-crate::oext_fns! {fn HSD_JObjAddChild(a0 : * mut HSD_JObj, a1 : * mut HSD_JObj) -> ();}
-crate::oext_fns! {fn lbColl_80008688(a0 : * mut HitCapsule, a1 : :: core :: ffi :: c_int, a2 : * mut :: core :: ffi :: c_void) -> :: core :: ffi :: c_int = crate::tu::adapt::lbColl_80008688__ab6b4d;}
-crate::oext_fns! {fn lbColl_80009F54(a0 : * mut HitCapsule, a1 : :: core :: ffi :: c_uint, a2 : :: core :: ffi :: c_float) -> :: core :: ffi :: c_int = crate::tu::adapt::lbColl_80009F54__226aa1;}
-crate::oext_fns! {fn lbColl_8000A244(a0 : * mut HurtCapsule, a1 : :: core :: ffi :: c_uint, a2 : * mut [:: core :: ffi :: c_float ; 4], a3 : :: core :: ffi :: c_float) -> :: core :: ffi :: c_int = crate::tu::adapt::lbColl_8000A244__eb27ad;}
-crate::oext_fns! {fn lbColl_8000A584(a0 : * mut HurtCapsule, a1 : :: core :: ffi :: c_uint, a2 : :: core :: ffi :: c_uint, a3 : MtxPtr, a4 : :: core :: ffi :: c_float) -> :: core :: ffi :: c_int = crate::tu::adapt::lbColl_8000A584__73c219;}
-crate::oext_fns! {fn Wb_RenderActive() -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn Wb_RenderOption(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn ftCo_800A101C(a0 : * mut Fighter, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int, a3 : :: core :: ffi :: c_int) -> ();}
-crate::oext_fns! {fn gm_GetCurrentSceneIndex() -> :: core :: ffi :: c_uchar = crate::tu::adapt::gm_GetCurrentSceneIndex__e366e9;}
-crate::oext_fns! {fn gm_GetCurrentGameMode() -> :: core :: ffi :: c_uchar = crate::tu::adapt::gm_GetCurrentGameMode__8510a2;}
-crate::oext_fns! {fn gm_801A4B60() -> () = crate::tu::adapt::gm_801A4B60__d469d9;}
-crate::oext_fns! {fn Ground_StageSlotDataFile(a0 : :: core :: ffi :: c_int) -> * const :: core :: ffi :: c_char = crate::tu::adapt::Ground_StageSlotDataFile__219c98;}
-crate::oext_fns! {fn Ground_StageSlotProofCallbacks() -> * mut StageCallbacks = crate::tu::adapt::Ground_StageSlotProofCallbacks__175716;}
-crate::oext_fns! {fn Ground_StageSlotJoints(a0 : :: core :: ffi :: c_int, a1 : * mut :: core :: ffi :: c_uint) -> * const GrJoint = crate::tu::adapt::Ground_StageSlotJoints__e0ae37;}
-crate::oext_fns! {fn Ground_801C0498() -> :: core :: ffi :: c_float = crate::tu::adapt::Ground_801C0498__19f0de;}
-crate::oext_fns! {fn Ground_GetStageGObj(a0 : :: core :: ffi :: c_int) -> * mut Ground_GObj = crate::tu::adapt::Ground_GetStageGObj__6785f9;}
-crate::oext_fns! {fn Ground_801C1DD4() -> :: core :: ffi :: c_int = crate::tu::adapt::Ground_801C1DD4__98f81b;}
-crate::oext_fns! {fn Ground_801C20D0() -> :: core :: ffi :: c_float = crate::tu::adapt::Ground_801C20D0__6446e8;}
-crate::oext_fns! {fn Ground_801C2CF4(a0 : s32) -> * mut HSD_JObj = crate::tu::adapt::Ground_801C2CF4__d74f32;}
-crate::oext_fns! {fn Ground_801C2D24(a0 : enum_t, a1 : * mut Vec) -> :: core :: ffi :: c_int = crate::tu::adapt::Ground_801C2D24__23d771;}
-crate::oext_fns! {fn Ground_801C38BC(a0 : :: core :: ffi :: c_float, a1 : :: core :: ffi :: c_float) -> () = crate::tu::adapt::Ground_801C38BC__09c5a5;}
-crate::oext_fns! {fn Ground_801C38D0(a0 : :: core :: ffi :: c_float, a1 : :: core :: ffi :: c_float, a2 : :: core :: ffi :: c_float, a3 : :: core :: ffi :: c_float) -> () = crate::tu::adapt::Ground_801C38D0__d9290e;}
-crate::oext_fns! {fn Ground_801C38EC(a0 : :: core :: ffi :: c_float, a1 : :: core :: ffi :: c_float) -> () = crate::tu::adapt::Ground_801C38EC__15ec5f;}
-crate::oext_fns! {fn Ground_801C3900(a0 : :: core :: ffi :: c_float, a1 : :: core :: ffi :: c_float, a2 : :: core :: ffi :: c_float, a3 : :: core :: ffi :: c_float, a4 : :: core :: ffi :: c_float, a5 : :: core :: ffi :: c_float, a6 : :: core :: ffi :: c_float, a7 : :: core :: ffi :: c_float) -> () = crate::tu::adapt::Ground_801C3900__ff5c95;}
-crate::oext_fns! {fn Ground_801C392C(a0 : :: core :: ffi :: c_float, a1 : :: core :: ffi :: c_float, a2 : :: core :: ffi :: c_float, a3 : :: core :: ffi :: c_float, a4 : :: core :: ffi :: c_float, a5 : :: core :: ffi :: c_float) -> () = crate::tu::adapt::Ground_801C392C__50666c;}
-crate::oext_fns! {fn Ground_801C3950(a0 : :: core :: ffi :: c_float) -> () = crate::tu::adapt::Ground_801C3950__bf47a5;}
-crate::oext_fns! {fn Ground_801C3960(a0 : :: core :: ffi :: c_float) -> () = crate::tu::adapt::Ground_801C3960__160db6;}
-crate::oext_fns! {fn Ground_801C3970(a0 : :: core :: ffi :: c_float) -> () = crate::tu::adapt::Ground_801C3970__4bd2c4;}
-crate::oext_fns! {fn Ground_801C39C0() -> () = crate::tu::adapt::Ground_801C39C0__ef7ba7;}
-crate::oext_fns! {fn Ground_801C3BB4() -> () = crate::tu::adapt::Ground_801C3BB4__85d178;}
-crate::oext_fns! {fn Ground_801C4A08(a0 : * mut HSD_GObj) -> () = crate::tu::adapt::Ground_801C4A08__d0ca52;}
-crate::oext_fns! {fn Ground_EnableMatchCamera() -> () = crate::tu::adapt::Ground_EnableMatchCamera__8fdbd1;}
-crate::oext_fns! {fn Player_GetPlayerCharacter(a0 : :: core :: ffi :: c_int) -> CharacterKind = crate::tu::adapt::Player_GetPlayerCharacter__ec3049;}
-crate::oext_fns! {fn Player_GetPlayerSlotType(a0 : s32) -> Gm_PKind = crate::tu::adapt::Player_GetPlayerSlotType__b892ec;}
-crate::oext_fns! {fn Player_GetCostumeId(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_uint = crate::tu::adapt::Player_GetCostumeId__3389fa;}
-crate::oext_fns! {fn Player_GetTeam(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int = crate::tu::adapt::Player_GetTeam__e2f2ad;}
-crate::oext_fns! {fn Player_GetCpuType(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int = crate::tu::adapt::Player_GetCpuType__23acd7;}
-crate::oext_fns! {fn Player_SetPlayerAndEntityCpuType(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::Player_SetPlayerAndEntityCpuType__d3b2ae;}
-crate::oext_fns! {fn Player_GetAttackRatio(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_float = crate::tu::adapt::Player_GetAttackRatio__c52a29;}
-crate::oext_fns! {fn Player_GetDefenseRatio(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_float = crate::tu::adapt::Player_GetDefenseRatio__53c460;}
-crate::oext_fns! {fn Player_GetStocks(a0 : :: core :: ffi :: c_int) -> s32 = crate::tu::adapt::Player_GetStocks__0d01b6;}
-crate::oext_fns! {fn Player_SetStocks(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::Player_SetStocks__f32692;}
-crate::oext_fns! {fn Player_GetEntity(a0 : s32) -> * mut HSD_GObj = crate::tu::adapt::Player_GetEntity__4ebf09;}
-crate::oext_fns! {fn Player_GetEntityAtIndex(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> * mut HSD_GObj = crate::tu::adapt::Player_GetEntityAtIndex__54b10a;}
-crate::oext_fns! {fn Player_SetHUDDamage(a0 : s32, a1 : s32) -> () = crate::tu::adapt::Player_SetHUDDamage__5667ef;}
-crate::oext_fns! {fn Player_GetOtherStamina(a0 : s32) -> :: core :: ffi :: c_int = crate::tu::adapt::Player_GetOtherStamina__98afbb;}
-crate::oext_fns! {fn Player_GetRemainingHP(a0 : s32) -> :: core :: ffi :: c_int = crate::tu::adapt::Player_GetRemainingHP__3974b6;}
-crate::oext_fns! {fn Player_GetFalls(a0 : s32) -> s32 = crate::tu::adapt::Player_GetFalls__ac24ed;}
-crate::oext_fns! {fn Player_GetFallsByIndex(a0 : s32, a1 : s32) -> s32 = crate::tu::adapt::Player_GetFallsByIndex__1adaa0;}
-crate::oext_fns! {fn Item_80266F3C() -> :: core :: ffi :: c_int = crate::tu::adapt::Item_80266F3C__ff0e50;}
-crate::oext_fns! {fn Item_80268B18(a0 : * mut SpawnItem) -> * mut Item_GObj = crate::tu::adapt::Item_80268B18__3116a3;}
-crate::oext_fns! {fn Item_80269CA0(a0 : * mut Item, a1 : s32) -> () = crate::tu::adapt::Item_80269CA0__06ea06;}
-crate::oext_fns! {fn Item_8026A8EC(a0 : * mut Item_GObj) -> () = crate::tu::adapt::Item_8026A8EC__47012e;}
-crate::oext_fns! {fn mpLib_8004D164() -> * mut MapCollData = crate::tu::adapt::mpLib_8004D164__652d00;}
-crate::oext_fns! {fn mpScriptBatchBegin() -> () = crate::tu::adapt::mpScriptBatchBegin__6b27d1;}
-crate::oext_fns! {fn mpScriptBatchEnd() -> () = crate::tu::adapt::mpScriptBatchEnd__fff89e;}
-crate::oext_fns! {fn mpScriptInvalidateBounding() -> () = crate::tu::adapt::mpScriptInvalidateBounding__ddc52c;}
-crate::oext_fns! {fn mpGetGroundCollVtx() -> * mut CollVtx = crate::tu::adapt::mpGetGroundCollVtx__277435;}
-crate::oext_fns! {fn mpGetGroundCollLine() -> * mut CollLine = crate::tu::adapt::mpGetGroundCollLine__1cd3a6;}
-crate::oext_fns! {fn mpGetGroundCollJoint() -> * mut CollJoint = crate::tu::adapt::mpGetGroundCollJoint__54117b;}
-crate::oext_fns! {fn mpLibLoad(a0 : * mut MapCollData) -> () = crate::tu::adapt::mpLibLoad__0df8c9;}
-crate::oext_fns! {fn mpCheckFloor(a0 : :: core :: ffi :: c_float, a1 : :: core :: ffi :: c_float, a2 : :: core :: ffi :: c_float, a3 : :: core :: ffi :: c_float, a4 : :: core :: ffi :: c_float, a5 : * mut Vec, a6 : * mut :: core :: ffi :: c_int, a7 : * mut :: core :: ffi :: c_uint, a8 : * mut Vec, a9 : :: core :: ffi :: c_int, a10 : :: core :: ffi :: c_int, a11 : :: core :: ffi :: c_int, a12 : Option < unsafe extern "C" fn (* mut Fighter_GObj , :: core :: ffi :: c_int) -> :: core :: ffi :: c_int >, a13 : * mut Fighter_GObj) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn mpLineGetV1Pos(a0 : :: core :: ffi :: c_int, a1 : * mut Vec) -> () = crate::tu::adapt::mpLineGetV1Pos__3338ff;}
-crate::oext_fns! {fn mpLineGetV0Pos(a0 : :: core :: ffi :: c_int, a1 : * mut Vec) -> () = crate::tu::adapt::mpLineGetV0Pos__80a600;}
-crate::oext_fns! {fn mpLib_80055E9C(a0 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::mpLib_80055E9C__84fe6b;}
-crate::oext_fns! {fn mpLib_8005667C(a0 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::mpLib_8005667C__76196e;}
-crate::oext_fns! {fn mpLib_80057424(a0 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::mpLib_80057424__edb375;}
-crate::oext_fns! {fn mpLib_80057528(a0 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::mpLib_80057528__f6bdae;}
-crate::oext_fns! {fn mpLib_800575B0(a0 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::mpLib_800575B0__aa088d;}
-crate::oext_fns! {fn mpJointListAdd(a0 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::mpJointListAdd__ba67cb;}
-crate::oext_fns! {fn mpLib_80057BC0(a0 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::mpLib_80057BC0__25e9db;}
-crate::oext_fns! {fn mpUncheckBounding() -> () = crate::tu::adapt::mpUncheckBounding__cfacaf;}
-crate::oext_fns! {fn it_8026F9AC(a0 : s32, a1 : * mut :: core :: ffi :: c_void, a2 : * mut HitCapsule, a3 : * mut Item, a4 : * mut HurtCapsule) -> () = crate::tu::adapt::it_8026F9AC__945bc2;}
-crate::oext_fns! {fn it_80270CD8(a0 : * mut Item, a1 : * mut HitCapsule) -> :: core :: ffi :: c_float = crate::tu::adapt::it_80270CD8__2e47eb;}
-crate::oext_fns! {fn it_80270E30(a0 : * mut Item_GObj) -> () = crate::tu::adapt::it_80270E30__0506d2;}
-crate::oext_fns! {fn it_8027B5B0(a0 : ItemKind, a1 : * mut Vec, a2 : * mut HSD_JObj, a3 : * mut Vec, a4 : :: core :: ffi :: c_int) -> * mut Item_GObj = crate::tu::adapt::it_8027B5B0__2814e8;}
-crate::oext_fns! {fn it_8027C56C(a0 : * mut Item_GObj, a1 : :: core :: ffi :: c_float) -> () = crate::tu::adapt::it_8027C56C__612d2a;}
-crate::oext_fns! {fn it_802EA9FC(a0 : * mut Vec, a1 : s32) -> * mut Item_GObj = crate::tu::adapt::it_802EA9FC__e2ed70;}
-crate::oext_fns! {fn it_802DC4BC(a0 : s32, a1 : * mut Vec, a2 : s32) -> * mut Item_GObj = crate::tu::adapt::it_802DC4BC__cbef47;}
-crate::oext_fns! {fn it_802DD7F0(a0 : s32, a1 : * mut Vec, a2 : * mut Vec, a3 : s32) -> * mut Item_GObj = crate::tu::adapt::it_802DD7F0__ea09a6;}
-crate::ext_va! {fn lbArchive_800171CC(a0 : * mut * mut HSD_Archive, a1 : * const :: core :: ffi :: c_char, a2 : * mut :: core :: ffi :: c_void) va 0 -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn lbAudioAx_800237A8(a0 : enum_t, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int = crate::tu::adapt::lbAudioAx_800237A8__3c5520;}
-crate::oext_fns! {fn lbAudioAx_80023F28(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int = crate::tu::adapt::lbAudioAx_80023F28__469606;}
-crate::oext_fns! {fn lbAudioAx_80024B94(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int = crate::tu::adapt::lbAudioAx_80024B94__675169;}
-crate::oext_fns! {fn mpColl_80043680(a0 : * mut CollData, a1 : * mut Vec) -> () = crate::tu::adapt::mpColl_80043680__d5fb54;}
-crate::oext_fns! {fn mpCollSetFacingDir(a0 : * mut CollData, a1 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::mpCollSetFacingDir__1c7fdb;}
-crate::oext_fns! {fn HSD_GObjObject_80390A70(a0 : * mut HSD_GObj, a1 : :: core :: ffi :: c_uchar, a2 : * mut :: core :: ffi :: c_void) -> ();}
-crate::oext_fns! {fn HSD_Free(a0 : * mut :: core :: ffi :: c_void) -> () = crate::tu::adapt::HSD_Free__8fde16;}
-crate::oext_fns! {fn HSD_MemAlloc(a0 : ssize_t) -> * mut :: core :: ffi :: c_void = crate::tu::adapt::HSD_MemAlloc__8b8f38;}
-crate::oext_fns! {fn lbFile_8001634C(a0 : :: core :: ffi :: c_int) -> usize = crate::tu::adapt::lbFile_8001634C__c4f280;}
-crate::oext_fns! {fn lbFile_8001668C(a0 : * const :: core :: ffi :: c_char, a1 : * mut :: core :: ffi :: c_void, a2 : * mut usize) -> () = crate::tu::adapt::lbFile_8001668C__3aacaf;}
-crate::oext_fns! {fn lbHeap_80015BD0(a0 : :: core :: ffi :: c_int, a1 : usize) -> * mut :: core :: ffi :: c_void = crate::tu::adapt::lbHeap_80015BD0__b34fd8;}
-crate::oext_fns! {fn lbHeap_80015CA8(a0 : :: core :: ffi :: c_int, a1 : * mut :: core :: ffi :: c_void) -> () = crate::tu::adapt::lbHeap_80015CA8__e646d5;}
-crate::oext_fns! {fn lbHeap_Capacity(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_uint = crate::tu::adapt::lbHeap_Capacity__dc42da;}
-crate::oext_fns! {fn lbHeap_Free(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_uint = crate::tu::adapt::lbHeap_Free__516b65;}
-crate::oext_fns! {fn GObj_SetupGXLink(a0 : * mut HSD_GObj, a1 : GObj_RenderFunc, a2 : :: core :: ffi :: c_uchar, a3 : :: core :: ffi :: c_uint) -> ();}
-crate::oext_fns! {fn HSD_GObjGXLink_8039084C(a0 : * mut HSD_GObj) -> ();}
-crate::oext_fns! {fn HSD_GObjFree(a0 : * mut HSD_GObj) -> ();}
-crate::oext_fns! {fn HSD_SetupPEMode(a0 : :: core :: ffi :: c_uint, a1 : * mut HSD_PEDesc) -> ();}
-crate::oext_fns! {fn HSD_SetupRenderMode(a0 : :: core :: ffi :: c_uint) -> ();}
-crate::oext_fns! {fn HSD_StateInvalidate(a0 : :: core :: ffi :: c_int) -> ();}
-crate::oext_fns! {fn HSD_SetupChannel(a0 : * mut HSD_Chan) -> ();}
-crate::oext_fns! {fn HSD_StateSetNumChans(a0 : :: core :: ffi :: c_int) -> ();}
-crate::oext_fns! {fn HSD_StateSetNumTexGens() -> ();}
-crate::oext_fns! {fn HSD_StateInitTev() -> ();}
-crate::oext_fns! {fn HSD_StateGetCommittedTevStages() -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn HSD_StateAssignTev() -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn HSD_StateSetNumTevStages() -> ();}
-crate::oext_fns! {fn HSD_SetupTevStage(a0 : * mut HSD_TevDesc) -> ();}
-crate::oext_fns! {fn HSD_SetTevRegAll() -> ();}
-crate::oext_fns! {fn Script_ModelInput(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn Script_ModelDraw(a0 : :: core :: ffi :: c_int, a1 : * mut [:: core :: ffi :: c_float ; 4]) -> ();}
-crate::oext_fns! {fn Script_StageModelsReset() -> ();}
-crate::oext_fns! {fn Script_StageResourceOwner() -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn Script_StageResourceOwnerAlive(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn mpScriptStageIsolationSet(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int = melee_world::tu::mplib::mpScriptStageIsolationSet;}
-crate::oext_fns! {fn mpScriptStageIsolationActive() -> :: core :: ffi :: c_int = melee_world::tu::mplib::mpScriptStageIsolationActive;}
-crate::oext_fns! {fn Script_StageIsolationAllowed(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn Script_StageIsolationReleased(a0 : :: core :: ffi :: c_int) -> ();}
-crate::oext_fns! {fn Netplay_Enabled() -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn RB_Enabled() -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn Replay_Active() -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn lb_8000B1CC(a0 : * mut HSD_JObj, a1 : * mut Vec, a2 : * mut Vec) -> () = crate::tu::adapt::lb_8000B1CC__6b12cc;}
-crate::oext_fns! {fn Script_SimByte(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn Script_HitRulesInput(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn Script_EchoInput(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn Script_EchoOwnerAlive(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn plStale_IncrementAttackInstance() -> :: core :: ffi :: c_ushort;}
-crate::oext_fns! {fn gm_8016B168() -> :: core :: ffi :: c_int = crate::tu::adapt::gm_8016B168__863c3b;}
-crate::oext_fns! {fn gm_8016B0D4() -> :: core :: ffi :: c_int = crate::tu::adapt::gm_8016B0D4__af8007;}
-crate::oext_fns! {fn Script_OnePSpawn(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> ();}
-crate::oext_fns! {fn Script_OnePOffline() -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn Script_StageModelFor(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn Script_StageModelDraw(a0 : :: core :: ffi :: c_int, a1 : * mut [:: core :: ffi :: c_float ; 4], a2 : :: core :: ffi :: c_float, a3 : :: core :: ffi :: c_float, a4 : :: core :: ffi :: c_float, a5 : :: core :: ffi :: c_float) -> ();}
-crate::oext_fns! {fn ft_8008A2BC(a0 : * mut Fighter_GObj) -> () = crate::tu::adapt::ft_8008A2BC__b456f9;}
-crate::oext_fns! {fn ftColl_80076640(a0 : * mut Fighter, a1 : * mut :: core :: ffi :: c_float) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn ftColl_80079AB0(a0 : * mut Fighter, a1 : * mut HitCapsule, a2 : :: core :: ffi :: c_uint, a3 : :: core :: ffi :: c_float, a4 : :: core :: ffi :: c_float, a5 : :: core :: ffi :: c_float, a6 : :: core :: ffi :: c_float) -> :: core :: ffi :: c_float;}
-crate::oext_fns! {fn ftColl_8007B760(a0 : * mut Fighter_GObj, a1 : :: core :: ffi :: c_int) -> ();}
-crate::oext_fns! {fn ftColl_8007B7A4(a0 : * mut Fighter_GObj, a1 : :: core :: ffi :: c_int) -> ();}
-crate::oext_fns! {fn ftCo_Fall_Enter(a0 : * mut Fighter_GObj) -> () = crate::tu::adapt::ftCo_Fall_Enter__2d1b10;}
-crate::oext_fns! {fn gm_8016B248() -> :: core :: ffi :: c_float = crate::tu::adapt::gm_8016B248__a7d73b;}
-crate::oext_fns! {fn Script_ArmorEvent(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int, a3 : :: core :: ffi :: c_int, a4 : :: core :: ffi :: c_int, a5 : :: core :: ffi :: c_int) -> ();}
-crate::oext_fns! {fn ftCo_8008D8E8(a0 : :: core :: ffi :: c_float) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_8008D8E8__f17b30;}
-crate::oext_fns! {fn ftCo_Damage_CalcKnockback(a0 : * mut Fighter) -> () = crate::tu::adapt::ftCo_Damage_CalcKnockback__9478d1;}
-crate::oext_fns! {fn ftCo_800BFFD0(a0 : * mut Fighter, a1 : enum_t, a2 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_800BFFD0__7622d7;}
-crate::oext_fns! {fn ftCo_800C0074(a0 : * mut Fighter) -> () = crate::tu::adapt::ftCo_800C0074__1f5870;}
-crate::oext_fns! {fn ftCo_800C0200(a0 : * mut Fighter, a1 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::ftCo_800C0200__1f3409;}
-crate::oext_fns! {fn ftCo_800C8348(a0 : * mut Fighter_GObj, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::ftCo_800C8348__936756;}
-crate::oext_fns! {fn ftCo_800C8540(a0 : * mut Fighter_GObj) -> () = crate::tu::adapt::ftCo_800C8540__114dd4;}
-crate::oext_fns! {fn ftpickupitem_80094150(a0 : * mut Fighter_GObj, a1 : * mut Item_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftpickupitem_80094150__ba0ae9;}
-crate::oext_fns! {fn ftpickupitem_800948A8(a0 : * mut Fighter_GObj, a1 : * mut Item_GObj) -> () = crate::tu::adapt::ftpickupitem_800948A8__668622;}
-crate::oext_fns! {fn it_8026D324(a0 : ItemKind) -> :: core :: ffi :: c_int = crate::tu::adapt::it_8026D324__94e049;}
-crate::oext_fns! {fn HSD_Randi(a0 : s32) -> s32;}
-crate::oext_fns! {fn Script_SkillEvent(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int, a3 : :: core :: ffi :: c_int, a4 : :: core :: ffi :: c_int, a5 : :: core :: ffi :: c_int, a6 : :: core :: ffi :: c_int) -> ();}
-crate::oext_fns! {fn grShrineRoute_ScriptQuery(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int = crate::tu::adapt::grShrineRoute_ScriptQuery__a6b0e3;}
-crate::oext_fns! {fn Script_CritEvent(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int, a3 : :: core :: ffi :: c_int, a4 : :: core :: ffi :: c_int, a5 : :: core :: ffi :: c_int, a6 : :: core :: ffi :: c_int, a7 : :: core :: ffi :: c_int, a8 : :: core :: ffi :: c_int, a9 : :: core :: ffi :: c_int, a10 : :: core :: ffi :: c_int, a11 : :: core :: ffi :: c_int) -> ();}
-crate::oext_fns! {fn grPushOn_80219204(a0 : :: core :: ffi :: c_int, a1 : * mut :: core :: ffi :: c_int, a2 : * mut :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn fn_80218678() -> :: core :: ffi :: c_int = crate::tu::adapt::fn_80218678__e0d59f;}
-crate::oext_fns! {fn ftCo_800C3B10(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_800C3B10__3d9d5c;}
-crate::oext_fns! {fn ftCo_Attack1_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_Attack1_CheckInput__d92fe1;}
-crate::oext_fns! {fn ftCo_800D6824(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_800D6824__b21805;}
-crate::oext_fns! {fn ftCo_800D68C0(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_800D68C0__ec1729;}
-crate::oext_fns! {fn ftCo_Attack100_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_Attack100_CheckInput__61aa80;}
-crate::oext_fns! {fn ftCo_Catch_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_Catch_CheckInput__e60751;}
-crate::oext_fns! {fn ftCo_AttackAir_CheckItemThrowInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_AttackAir_CheckItemThrowInput__1e285e;}
-crate::oext_fns! {fn ftCo_AttackAir_GetMsidFromCStick(a0 : * mut Fighter) -> FtMotionId = crate::tu::adapt::ftCo_AttackAir_GetMsidFromCStick__a36195;}
-crate::oext_fns! {fn ftCo_AttackHi3_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_AttackHi3_CheckInput__5d742f;}
-crate::oext_fns! {fn ftCo_AttackHi4_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_AttackHi4_CheckInput__ebfa65;}
-crate::oext_fns! {fn ftCo_AttackLw3_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_AttackLw3_CheckInput__132bbd;}
-crate::oext_fns! {fn ftCo_AttackLw4_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_AttackLw4_CheckInput__e93fbf;}
-crate::oext_fns! {fn ftCo_AttackS3_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_AttackS3_CheckInput__4f4014;}
-crate::oext_fns! {fn ftCo_AttackS4_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_AttackS4_CheckInput__48fe9d;}
-crate::oext_fns! {fn ftCo_Dash_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_Dash_CheckInput__1e8d28;}
-crate::oext_fns! {fn ftCo_80099794(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_80099794__7a44df;}
-crate::oext_fns! {fn ftCo_80099A58(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_80099A58__225834;}
-crate::oext_fns! {fn ftCo_80091A4C(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_80091A4C__5bb07f;}
-crate::oext_fns! {fn ftCo_Jump_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_Jump_CheckInput__ff2f50;}
-crate::oext_fns! {fn ftCo_800CB870(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_800CB870__e3acbf;}
-crate::oext_fns! {fn ftCo_SpecialAir_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_SpecialAir_CheckInput__a14aa2;}
-crate::oext_fns! {fn ftCo_SpecialS_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_SpecialS_CheckInput__9abbee;}
-crate::oext_fns! {fn ftCo_800D5FB0(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_800D5FB0__315eef;}
-crate::oext_fns! {fn ftCo_Turn_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_Turn_CheckInput__96ef34;}
-crate::oext_fns! {fn ftCo_Walk_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_Walk_CheckInput__5c6c59;}
-crate::oext_fns! {fn ftCo_800DF1C8(a0 : * mut Fighter) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_800DF1C8__e872a9;}
-crate::oext_fns! {fn ftCo_800DF2D8(a0 : * mut Fighter) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_800DF2D8__c6c36b;}
-crate::oext_fns! {fn ftCo_800DF3A8(a0 : * mut Fighter) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_800DF3A8__8e22fa;}
-crate::oext_fns! {fn MatchTurboRules() -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn MatchTurboColAnim() -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn MatchTurboNote(a0 : :: core :: ffi :: c_int) -> ();}
-crate::oext_fns! {fn Script_NetModsVariant(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int, a3 : :: core :: ffi :: c_int) -> ();}
-crate::oext_fns! {fn _HSD_mkEnvelopeModelNodeMtx(a0 : * mut HSD_JObj, a1 : MtxPtr) -> MtxPtr;}
-crate::oext_fns! {fn Script_CpuIdleDefault(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn Stage_GetBlastZoneRightOffset() -> :: core :: ffi :: c_float = crate::tu::adapt::Stage_GetBlastZoneRightOffset__9f3e8b;}
-crate::oext_fns! {fn Stage_GetBlastZoneLeftOffset() -> :: core :: ffi :: c_float = crate::tu::adapt::Stage_GetBlastZoneLeftOffset__7ceb78;}
-crate::oext_fns! {fn Stage_GetBlastZoneTopOffset() -> :: core :: ffi :: c_float = crate::tu::adapt::Stage_GetBlastZoneTopOffset__04a3a9;}
-crate::oext_fns! {fn Stage_GetBlastZoneBottomOffset() -> :: core :: ffi :: c_float = crate::tu::adapt::Stage_GetBlastZoneBottomOffset__752dc9;}
-crate::oext_fns! {fn gmVs_SetEndHold(a0 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::gmVs_SetEndHold__fb59b4;}
-crate::oext_fns! {fn gmVs_GetHeldOutcome() -> :: core :: ffi :: c_int = crate::tu::adapt::gmVs_GetHeldOutcome__44145d;}
-crate::oext_fns! {fn HSD_GetHeap() -> OSHeapHandle = crate::tu::adapt::HSD_GetHeap__32acf8;}
-crate::oext_fns! {fn Script_AreaNameByte(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn lbHeap_StageSlotTryAlloc(a0 : :: core :: ffi :: c_uint) -> * mut :: core :: ffi :: c_void = crate::tu::adapt::lbHeap_StageSlotTryAlloc__9c8eee;}
-crate::oext_fns! {fn lbHeap_StageSlotDump(a0 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::lbHeap_StageSlotDump__42ec51;}
-crate::oext_fns! {fn Script_StageRawStash(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_uint, a2 : :: core :: ffi :: c_uint, a3 : :: core :: ffi :: c_uint) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn lbAudioAx_StageSlotMusic() -> :: core :: ffi :: c_int = crate::tu::adapt::lbAudioAx_StageSlotMusic__0aff91;}
-crate::oext_fns! {fn grAnime_801C7FF8(a0 : * mut HSD_GObj, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int, a3 : :: core :: ffi :: c_int, a4 : :: core :: ffi :: c_float, a5 : :: core :: ffi :: c_float) -> () = crate::tu::adapt::grAnime_801C7FF8__b10a63;}
-crate::oext_fns! {fn grAnime_801C8138(a0 : * mut HSD_GObj, a1 : enum_t, a2 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::grAnime_801C8138__a8596a;}
-crate::oext_fns! {fn GObj_InitUserData(a0 : * mut HSD_GObj, a1 : :: core :: ffi :: c_uchar, a2 : Option < unsafe extern "C" fn (* mut :: core :: ffi :: c_void) -> () >, a3 : * mut :: core :: ffi :: c_void) -> ();}
-crate::oext_fns! {fn HSD_GObjProc_RemoveAllProcs(a0 : * mut HSD_GObj) -> ();}
-crate::oext_fns! {fn grStory_801E3030() -> () = crate::tu::adapt::grStory_801E3030__27bc16;}
-crate::oext_fns! {fn grStory_801E36D8(a0 : * mut Vec, a1 : :: core :: ffi :: c_int, a2 : * mut HSD_JObj) -> :: core :: ffi :: c_int = crate::tu::adapt::grStory_801E36D8__a338e5;}
-crate::oext_fns! {fn grIzumi_801CBB88() -> () = crate::tu::adapt::grIzumi_801CBB88__3ab22a;}
-crate::oext_fns! {fn grIzumi_801CD280(a0 : * mut Vec, a1 : :: core :: ffi :: c_int, a2 : * mut HSD_JObj) -> :: core :: ffi :: c_int = crate::tu::adapt::grIzumi_801CD280__3c103b;}
-crate::oext_fns! {fn Ground_StageSlotPrepare(a0 : * mut HSD_GObj, a1 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::Ground_StageSlotPrepare__d7a90e;}
-crate::oext_fns! {fn HSD_StageSlotParticlesClear() -> ();}
-crate::oext_fns! {fn grStory_StageSlotParamSwap(a0 : * mut :: core :: ffi :: c_void) -> * mut :: core :: ffi :: c_void = crate::tu::adapt::grStory_StageSlotParamSwap__30a7ba;}
-crate::oext_fns! {fn grIzumi_StageSlotParamSwap(a0 : * mut :: core :: ffi :: c_void) -> * mut :: core :: ffi :: c_void = crate::tu::adapt::grIzumi_StageSlotParamSwap__e00bb2;}
-crate::oext_fns! {fn hsd_8039D048(a0 : * mut :: core :: ffi :: c_void) -> () = crate::tu::adapt::hsd_8039D048__57a88e;}
-crate::oext_fns! {fn hsd_8039D3AC(a0 : * mut HSD_Generator, a1 : * mut HSD_Generator) -> * mut HSD_Generator;}
-crate::oext_fns! {fn psRemoveParticleAppSRT(a0 : * mut HSD_Particle) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn Stage_StageSlotSelect(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int = crate::tu::adapt::Stage_StageSlotSelect__c64d66;}
-crate::oext_fns! {fn Ground_StageSlotRetailInstall(a0 : * mut StageIdPair, a1 : * mut HSD_Archive) -> () = crate::tu::adapt::Ground_StageSlotRetailInstall__95ae93;}
-crate::oext_fns! {fn Ground_StageSlotFighterLightingClear() -> () = crate::tu::adapt::Ground_StageSlotFighterLightingClear__7c49f4;}
-crate::oext_fns! {fn mpIsland_StageSlotFree() -> () = crate::tu::adapt::mpIsland_StageSlotFree__a9f0f5;}
-crate::oext_fns! {fn grZakoGenerator_StageSlotRelease() -> () = crate::tu::adapt::grZakoGenerator_StageSlotRelease__113f21;}
-crate::oext_fns! {fn __frsqrte(a0 : :: core :: ffi :: c_double) -> :: core :: ffi :: c_double;}
-crate::oext_fns! {fn Geno_StateMoveTag(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn Geno_OverlayMoveTag(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn Geno_OverlayCount(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn Geno_OverlayAnim(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn Geno_CommonMoveTag(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn Geno_ProfileForKind(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn Script_HitContext(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int, a3 : :: core :: ffi :: c_int, a4 : :: core :: ffi :: c_int, a5 : :: core :: ffi :: c_int, a6 : :: core :: ffi :: c_int, a7 : :: core :: ffi :: c_int, a8 : :: core :: ffi :: c_int) -> ();}
-crate::oext_fns! {fn Geno_GiveStunBonus(a0 : * mut Fighter, a1 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::Geno_GiveStunBonus__3e8019;}
-crate::oext_fns! {fn Script_HitRuleContext(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int, a3 : :: core :: ffi :: c_int, a4 : :: core :: ffi :: c_int) -> ();}
-crate::oext_fns! {fn Script_HitOriginalElement(a0 : :: core :: ffi :: c_int) -> ();}
-crate::oext_fns! {fn Script_GameEvent(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int, a3 : :: core :: ffi :: c_int, a4 : :: core :: ffi :: c_int) -> ();}
-crate::oext_fns! {fn ftColl_8007891C(a0 : * mut HSD_GObj, a1 : * mut HSD_GObj, a2 : :: core :: ffi :: c_float) -> ();}
-crate::oext_fns! {fn Script_StageSlotsEnded() -> ();}
-crate::oext_fns! {fn Camera_LargeMapRestore() -> ();}
-crate::oext_fns! {fn Script_StageArchiveInput(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn Script_StageWanted() -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn Script_StageTextByte(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn Script_TargetBroken(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> ();}
-crate::oext_fns! {fn Script_EnemyDefeated(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> ();}
-crate::oext_fns! {fn Script_EnemyRemoved(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int) -> ();}
-crate::oext_fns! {fn Script_EnemyHit(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int) -> ();}
-crate::oext_fns! {fn ftCo_800DCE34(a0 : * mut Fighter_GObj, a1 : * mut Fighter_GObj) -> () = crate::tu::adapt::ftCo_800DCE34__658ea4;}
-crate::oext_fns! {fn Geno_MotionRowIfAny(a0 : * mut Fighter, a1 : :: core :: ffi :: c_int) -> * mut MotionState = crate::tu::adapt::Geno_MotionRowIfAny__c473f8;}
-crate::oext_fns! {fn Geno_DefineIsNone(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn Geno_DefinePlanInt(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn Geno_LabEnterState(a0 : * mut Fighter, a1 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int = crate::tu::adapt::Geno_LabEnterState__96cf9a;}
-crate::oext_fns! {fn ftColl_8007A06C(a0 : * mut Fighter_GObj, a1 : * mut :: core :: ffi :: c_void, a2 : * mut :: core :: ffi :: c_void, a3 : usize, a4 : :: core :: ffi :: c_int) -> ();}
-crate::oext_fns! {fn Script_EnemyGameEvent(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int, a3 : :: core :: ffi :: c_int, a4 : :: core :: ffi :: c_int, a5 : :: core :: ffi :: c_int) -> ();}
-crate::oext_fns! {fn Item_ScriptCommitDamage(a0 : * mut Item_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::Item_ScriptCommitDamage__cf50af;}
-crate::oext_fns! {fn Geno_ItemDesc(a0 : :: core :: ffi :: c_int) -> * mut :: core :: ffi :: c_void = crate::tu::adapt::Geno_ItemDesc__a0c825;}
-crate::oext_fns! {fn Mex_ItemReady(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn Mex_ItemCustomDesc(a0 : :: core :: ffi :: c_int) -> * mut :: core :: ffi :: c_void;}
-crate::oext_fns! {fn Script_WarmSync() -> ();}
-crate::oext_fns! {fn SurfaceBegin(a0 : :: core :: ffi :: c_int) -> ();}
-crate::oext_fns! {fn SurfaceEnd() -> ();}
-crate::oext_fns! {fn Script_WarmModelDraw(a0 : :: core :: ffi :: c_int, a1 : * mut :: core :: ffi :: c_void) -> ();}
-crate::oext_fns! {fn Script_StageSlotVisual(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn Script_StageSlotMissionInput(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn Ground_StageSlotFDBackdrop() -> () = crate::tu::adapt::Ground_StageSlotFDBackdrop__c64489;}
-crate::oext_fns! {fn HeapCheckFull() -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn Camera_PCMainCObj() -> * mut HSD_CObj = melee_world::tu::cmcamera::Camera_PCMainCObj;}
+crate::ext_fns! {extern "C" fn HSD_CObjGetViewingMtx(a0 : * mut HSD_CObj, a1 : * mut [:: core :: ffi :: c_float ; 4]) -> ();}
+crate::ext_fns! {extern "C" fn HSD_CObjGetCurrent() -> * mut HSD_CObj = crate::tu::adapt::HSD_CObjGetCurrent__ad58db;}
+crate::ext_fns! {extern "C" fn Camera_80030730(a0 : :: core :: ffi :: c_float) -> ();}
+crate::ext_fns! {extern "C" fn Camera_80030A50() -> * mut HSD_GObj;}
+crate::ext_fns! {extern "C" fn Camera_80030A60(a0 : :: core :: ffi :: c_int) -> ();}
+crate::ext_fns! {extern "C" fn Camera_80030A78() -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn Camera_80030A8C(a0 : :: core :: ffi :: c_int) -> ();}
+crate::ext_fns! {extern "C" fn Camera_80030B38(a0 : :: core :: ffi :: c_int) -> ();}
+crate::ext_fns! {extern "C" fn Camera_80030B50() -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn Camera_80030B64(a0 : :: core :: ffi :: c_int) -> ();}
+crate::ext_fns! {extern "C" fn Camera_80030B7C() -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn Camera_80030B90(a0 : :: core :: ffi :: c_int) -> ();}
+crate::ext_fns! {extern "C" fn Camera_80030BA8() -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn Camera_80031060() -> enum_t;}
+crate::ext_fns! {extern "C" fn Camera_8003108C() -> enum_t;}
+crate::ext_fns! {extern "C" fn Camera_800311CC(a0 : :: core :: ffi :: c_float) -> ();}
+crate::ext_fns! {extern "C" fn Camera_StageSlotClipGet(a0 : * mut :: core :: ffi :: c_float, a1 : * mut :: core :: ffi :: c_float) -> ();}
+crate::ext_fns! {extern "C" fn Camera_800311DC(a0 : :: core :: ffi :: c_float) -> ();}
+crate::ext_fns! {extern "C" fn HSD_ObjFree(a0 : * mut HSD_ObjAllocData, a1 : * mut :: core :: ffi :: c_void) -> () = crate::tu::adapt::HSD_ObjFree__bf3ee9;}
+crate::ext_fns! {extern "C" fn HSD_GObj_80390EB8(a0 : s32) -> :: core :: ffi :: c_uint = crate::tu::adapt::HSD_GObj_80390EB8__ae201c;}
+crate::ext_fns! {extern "C" fn GObj_Create(a0 : :: core :: ffi :: c_ushort, a1 : :: core :: ffi :: c_uchar, a2 : :: core :: ffi :: c_uchar) -> * mut HSD_GObj;}
+crate::ext_fns! {extern "C" fn HSD_GObj_JObjCallback(a0 : * mut HSD_GObj, a1 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::HSD_GObj_JObjCallback__392d18;}
+crate::ext_fns! {extern "C" fn ftKb_MexKirbyLike(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int = crate::tu::adapt::ftKb_MexKirbyLike__c2b696;}
+crate::ext_fns! {extern "C" fn efLib_DestroyAll(a0 : * mut HSD_GObj) -> () = crate::tu::adapt::efLib_DestroyAll__17a98a;}
+crate::ext_fns! {extern "C" fn GXSetCullMode(a0 : GXCullMode) -> ();}
+crate::ext_fns! {extern "C" fn GXSetVtxDesc(a0 : GXAttr, a1 : GXAttrType) -> ();}
+crate::ext_fns! {extern "C" fn GXClearVtxDesc() -> ();}
+crate::ext_fns! {extern "C" fn GXSetVtxAttrFmt(a0 : GXVtxFmt, a1 : GXAttr, a2 : GXCompCnt, a3 : GXCompType, a4 : :: core :: ffi :: c_uchar) -> ();}
+crate::ext_fns! {extern "C" fn GXSetArray(a0 : GXAttr, a1 : * const :: core :: ffi :: c_void, a2 : :: core :: ffi :: c_uchar) -> ();}
+crate::ext_fns! {extern "C" fn GXBegin(a0 : GXPrimitive, a1 : GXVtxFmt, a2 : :: core :: ffi :: c_ushort) -> ();}
+crate::ext_fns! {extern "C" fn GXFlush() -> ();}
+crate::ext_fns! {extern "C" fn GXSetZMode(a0 : GXBool, a1 : GXCompare, a2 : GXBool) -> ();}
+crate::ext_fns! {extern "C" fn GXSetTevColorIn(a0 : GXTevStageID, a1 : GXTevColorArg, a2 : GXTevColorArg, a3 : GXTevColorArg, a4 : GXTevColorArg) -> ();}
+crate::ext_fns! {extern "C" fn GXSetTevAlphaIn(a0 : GXTevStageID, a1 : GXTevAlphaArg, a2 : GXTevAlphaArg, a3 : GXTevAlphaArg, a4 : GXTevAlphaArg) -> ();}
+crate::ext_fns! {extern "C" fn GXSetTevColorOp(a0 : GXTevStageID, a1 : GXTevOp, a2 : GXTevBias, a3 : GXTevScale, a4 : GXBool, a5 : GXTevRegID) -> ();}
+crate::ext_fns! {extern "C" fn GXSetTevAlphaOp(a0 : GXTevStageID, a1 : GXTevOp, a2 : GXTevBias, a3 : GXTevScale, a4 : GXBool, a5 : GXTevRegID) -> ();}
+crate::ext_fns! {extern "C" fn GXSetTevColor(a0 : GXTevRegID, a1 : GXColor) -> ();}
+crate::ext_fns! {extern "C" fn GXSetTevKColor(a0 : GXTevKColorID, a1 : GXColor) -> ();}
+crate::ext_fns! {extern "C" fn GXSetTevKColorSel(a0 : GXTevStageID, a1 : GXTevKColorSel) -> ();}
+crate::ext_fns! {extern "C" fn GXSetTevSwapMode(a0 : GXTevStageID, a1 : GXTevSwapSel, a2 : GXTevSwapSel) -> ();}
+crate::ext_fns! {extern "C" fn GXSetTevOrder(a0 : GXTevStageID, a1 : GXTexCoordID, a2 : GXTexMapID, a3 : GXChannelID) -> ();}
+crate::ext_fns! {extern "C" fn GXSetNumTevStages(a0 : :: core :: ffi :: c_uchar) -> ();}
+crate::ext_fns! {extern "C" fn GXLoadPosMtxImm(a0 : * mut [:: core :: ffi :: c_float ; 4], a1 : :: core :: ffi :: c_uint) -> ();}
+crate::ext_fns! {extern "C" fn GXSetCurrentMtx(a0 : :: core :: ffi :: c_uint) -> ();}
+crate::ext_fns! {extern "C" fn GXPosition3f32(a0 : :: core :: ffi :: c_float, a1 : :: core :: ffi :: c_float, a2 : :: core :: ffi :: c_float) -> ();}
+crate::ext_fns! {extern "C" fn GXPosition1x8(a0 : :: core :: ffi :: c_uchar) -> ();}
+crate::ext_fns! {extern "C" fn GXColor4u8(a0 : :: core :: ffi :: c_uchar, a1 : :: core :: ffi :: c_uchar, a2 : :: core :: ffi :: c_uchar, a3 : :: core :: ffi :: c_uchar) -> ();}
+crate::ext_fns! {extern "C" fn ftAnim_8006F484(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_float = crate::tu::adapt::ftAnim_8006F484__1b854b;}
+crate::ext_fns! {extern "C" fn it_8026B40C(a0 : * mut Article, a1 : s32) -> () = crate::tu::adapt::it_8026B40C__05955e;}
+crate::ext_fns! {extern "C" fn cosf(a0 : :: core :: ffi :: c_float) -> :: core :: ffi :: c_float = crate::tu::adapt::cosf__610bf5;}
+crate::ext_fns! {extern "C" fn fabsf(a0 : :: core :: ffi :: c_float) -> :: core :: ffi :: c_float;}
+crate::ext_fns! {extern "C" fn sinf(a0 : :: core :: ffi :: c_float) -> :: core :: ffi :: c_float = crate::tu::adapt::sinf__6f60bc;}
+crate::ext_fns! {extern "C" fn HSD_ArchiveParse(a0 : * mut HSD_Archive, a1 : * mut :: core :: ffi :: c_uchar, a2 : usize) -> s32 = crate::tu::adapt::HSD_ArchiveParse__d29071;}
+crate::ext_fns! {extern "C" fn HSD_ArchiveGetPublicAddress(a0 : * mut HSD_Archive, a1 : * const :: core :: ffi :: c_char) -> * mut :: core :: ffi :: c_void = crate::tu::adapt::HSD_ArchiveGetPublicAddress__8ced5d;}
+crate::ext_fns! {extern "C" fn HSD_ArchiveGetExtern(a0 : * mut HSD_Archive, a1 : :: core :: ffi :: c_int) -> * mut :: core :: ffi :: c_char = crate::tu::adapt::HSD_ArchiveGetExtern__36350c;}
+crate::ext_fns! {extern "C" fn HSD_ArchiveLocateExtern(a0 : * mut HSD_Archive, a1 : * const :: core :: ffi :: c_char, a2 : * mut :: core :: ffi :: c_void) -> () = crate::tu::adapt::HSD_ArchiveLocateExtern__a293e4;}
+crate::ext_fns! {extern "C" fn Geno_DefineBaseKind(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn Fighter_UnkProcessDeath_80068354(a0 : * mut Fighter_GObj) -> () = crate::tu::adapt::Fighter_UnkProcessDeath_80068354__0d8c62;}
+crate::ext_fns! {extern "C" fn Fighter_ResetInputData_80068854(a0 : * mut Fighter_GObj) -> () = crate::tu::adapt::Fighter_ResetInputData_80068854__e11eca;}
+crate::ext_fns! {extern "C" fn Fighter_ChangeMotionState(a0 : * mut Fighter_GObj, a1 : FtMotionId, a2 : MotionFlags, a3 : :: core :: ffi :: c_float, a4 : :: core :: ffi :: c_float, a5 : :: core :: ffi :: c_float, a6 : * mut Fighter_GObj) -> () = crate::tu::adapt::Fighter_ChangeMotionState__8da657;}
+crate::ext_fns! {extern "C" fn Fighter_ProcessHit_8006D1EC(a0 : * mut Fighter_GObj) -> () = crate::tu::adapt::Fighter_ProcessHit_8006D1EC__4dab97;}
+crate::ext_fns! {extern "C" fn ftCo_800B3E04(a0 : * mut Fighter) -> () = crate::tu::adapt::ftCo_800B3E04__214e01;}
+crate::ext_fns! {extern "C" fn ftCo_800B49F4(a0 : * mut Fighter) -> () = crate::tu::adapt::ftCo_800B49F4__82f580;}
+crate::ext_fns! {extern "C" fn ftCo_800B4A78(a0 : * mut Fighter) -> () = crate::tu::adapt::ftCo_800B4A78__b296ba;}
+crate::ext_fns! {extern "C" fn ftParts_GetBoneIndex(a0 : * mut Fighter, a1 : Fighter_Part) -> Fighter_Part;}
+crate::ext_fns! {extern "C" fn ftCommon_CalcSelfAccel_DeaccelQuickAir(a0 : * mut Fighter) -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn ftCommon_UnlockECB(a0 : * mut Fighter) -> ();}
+crate::ext_fns! {extern "C" fn ftCommon_8007D5D4(a0 : * mut Fighter) -> () = crate::tu::adapt::ftCommon_8007D5D4__dfe1c5;}
+crate::ext_fns! {extern "C" fn ftCommon_8007D6A4(a0 : * mut Fighter) -> () = crate::tu::adapt::ftCommon_8007D6A4__198fd1;}
+crate::ext_fns! {extern "C" fn ftCommon_8007D7FC(a0 : * mut Fighter) -> () = crate::tu::adapt::ftCommon_8007D7FC__b6f6a2;}
+crate::ext_fns! {extern "C" fn ftCommon_8007D92C(a0 : * mut Fighter_GObj) -> () = crate::tu::adapt::ftCommon_8007D92C__e78cfc;}
+crate::ext_fns! {extern "C" fn ftCo_GetLStickAngle(a0 : * mut Fighter) -> :: core :: ffi :: c_float;}
+crate::ext_fns! {extern "C" fn ftCommon_CalcHitlag(a0 : :: core :: ffi :: c_int, a1 : FtMotionId, a2 : :: core :: ffi :: c_float) -> :: core :: ffi :: c_float;}
+crate::ext_fns! {extern "C" fn ftCommon_8007E2FC(a0 : * mut Fighter_GObj) -> ();}
+crate::ext_fns! {extern "C" fn ftCommon_8007F804(a0 : * mut Fighter) -> MtxPtr = crate::tu::adapt::ftCommon_8007F804__b9b049;}
+crate::ext_fns! {extern "C" fn ftCamera_80076064(a0 : * mut Fighter) -> () = crate::tu::adapt::ftCamera_80076064__ed1a88;}
+crate::ext_fns! {extern "C" fn ftCo_800D105C(a0 : * mut Fighter_GObj) -> () = crate::tu::adapt::ftCo_800D105C__a3a0b4;}
+crate::ext_fns! {extern "C" fn ftLib_SetScale(a0 : * mut HSD_GObj, a1 : :: core :: ffi :: c_float) -> ();}
+crate::ext_fns! {extern "C" fn ftLib_80086960(a0 : * mut HSD_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftLib_80086960__b56944;}
+crate::ext_fns! {extern "C" fn ft_80081C88(a0 : * mut Fighter_GObj, a1 : :: core :: ffi :: c_float) -> () = crate::tu::adapt::ft_80081C88__3d5b9d;}
+crate::ext_fns! {extern "C" fn HSD_SListRemove(a0 : * mut HSD_SList) -> * mut HSD_SList = crate::tu::adapt::HSD_SListRemove__e27f25;}
+crate::ext_fns! {extern "C" fn HSD_JObjGetFlags(a0 : * mut HSD_JObj) -> :: core :: ffi :: c_uint;}
+crate::ext_fns! {extern "C" fn HSD_JObjSetupMatrixSub(a0 : * mut HSD_JObj) -> ();}
+crate::ext_fns! {extern "C" fn HSD_JObjSetMtxDirtySub(a0 : * mut HSD_JObj) -> ();}
+crate::ext_fns! {extern "C" fn HSD_JObjUnref(a0 : * mut HSD_JObj) -> () = crate::tu::adapt::HSD_JObjUnref__cb2b18;}
+crate::ext_fns! {extern "C" fn HSD_JObjRemoveAll(a0 : * mut HSD_JObj) -> ();}
+crate::ext_fns! {extern "C" fn HSD_JObjLoadJoint(a0 : * mut HSD_Joint) -> * mut HSD_JObj = crate::tu::adapt::HSD_JObjLoadJoint__7fbd4c;}
+crate::ext_fns! {extern "C" fn HSD_JObjAnimAll(a0 : * mut HSD_JObj) -> ();}
+crate::ext_fns! {extern "C" fn HSD_JObjSetFlags(a0 : * mut HSD_JObj, a1 : :: core :: ffi :: c_uint) -> ();}
+crate::ext_fns! {extern "C" fn HSD_JObjClearFlags(a0 : * mut HSD_JObj, a1 : :: core :: ffi :: c_uint) -> ();}
+crate::ext_fns! {extern "C" fn HSD_JObjAlloc() -> * mut HSD_JObj = crate::tu::adapt::HSD_JObjAlloc__ec115b;}
+crate::ext_fns! {extern "C" fn HSD_JObjDispAll(a0 : * mut HSD_JObj, a1 : * mut [:: core :: ffi :: c_float ; 4], a2 : :: core :: ffi :: c_uint, a3 : :: core :: ffi :: c_uint) -> ();}
+crate::ext_fns! {extern "C" fn HSD_JObjRemoveAnimAll(a0 : * mut HSD_JObj) -> ();}
+crate::ext_fns! {extern "C" fn HSD_JObjAddChild(a0 : * mut HSD_JObj, a1 : * mut HSD_JObj) -> ();}
+crate::ext_fns! {extern "C" fn lbColl_80008688(a0 : * mut HitCapsule, a1 : :: core :: ffi :: c_int, a2 : * mut :: core :: ffi :: c_void) -> :: core :: ffi :: c_int = crate::tu::adapt::lbColl_80008688__ab6b4d;}
+crate::ext_fns! {extern "C" fn lbColl_80009F54(a0 : * mut HitCapsule, a1 : :: core :: ffi :: c_uint, a2 : :: core :: ffi :: c_float) -> :: core :: ffi :: c_int = crate::tu::adapt::lbColl_80009F54__226aa1;}
+crate::ext_fns! {extern "C" fn lbColl_8000A244(a0 : * mut HurtCapsule, a1 : :: core :: ffi :: c_uint, a2 : * mut [:: core :: ffi :: c_float ; 4], a3 : :: core :: ffi :: c_float) -> :: core :: ffi :: c_int = crate::tu::adapt::lbColl_8000A244__eb27ad;}
+crate::ext_fns! {extern "C" fn lbColl_8000A584(a0 : * mut HurtCapsule, a1 : :: core :: ffi :: c_uint, a2 : :: core :: ffi :: c_uint, a3 : MtxPtr, a4 : :: core :: ffi :: c_float) -> :: core :: ffi :: c_int = crate::tu::adapt::lbColl_8000A584__73c219;}
+crate::ext_fns! {extern "C" fn Wb_RenderActive() -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn Wb_RenderOption(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn ftCo_800A101C(a0 : * mut Fighter, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int, a3 : :: core :: ffi :: c_int) -> ();}
+crate::ext_fns! {extern "C" fn gm_GetCurrentSceneIndex() -> :: core :: ffi :: c_uchar = crate::tu::adapt::gm_GetCurrentSceneIndex__e366e9;}
+crate::ext_fns! {extern "C" fn gm_GetCurrentGameMode() -> :: core :: ffi :: c_uchar = crate::tu::adapt::gm_GetCurrentGameMode__8510a2;}
+crate::ext_fns! {extern "C" fn gm_801A4B60() -> () = crate::tu::adapt::gm_801A4B60__d469d9;}
+crate::ext_fns! {extern "C" fn Ground_StageSlotDataFile(a0 : :: core :: ffi :: c_int) -> * const :: core :: ffi :: c_char = crate::tu::adapt::Ground_StageSlotDataFile__219c98;}
+crate::ext_fns! {extern "C" fn Ground_StageSlotProofCallbacks() -> * mut StageCallbacks = crate::tu::adapt::Ground_StageSlotProofCallbacks__175716;}
+crate::ext_fns! {extern "C" fn Ground_StageSlotJoints(a0 : :: core :: ffi :: c_int, a1 : * mut :: core :: ffi :: c_uint) -> * const GrJoint = crate::tu::adapt::Ground_StageSlotJoints__e0ae37;}
+crate::ext_fns! {extern "C" fn Ground_801C0498() -> :: core :: ffi :: c_float = crate::tu::adapt::Ground_801C0498__19f0de;}
+crate::ext_fns! {extern "C" fn Ground_GetStageGObj(a0 : :: core :: ffi :: c_int) -> * mut Ground_GObj = crate::tu::adapt::Ground_GetStageGObj__6785f9;}
+crate::ext_fns! {extern "C" fn Ground_801C1DD4() -> :: core :: ffi :: c_int = crate::tu::adapt::Ground_801C1DD4__98f81b;}
+crate::ext_fns! {extern "C" fn Ground_801C20D0() -> :: core :: ffi :: c_float = crate::tu::adapt::Ground_801C20D0__6446e8;}
+crate::ext_fns! {extern "C" fn Ground_801C2CF4(a0 : s32) -> * mut HSD_JObj = crate::tu::adapt::Ground_801C2CF4__d74f32;}
+crate::ext_fns! {extern "C" fn Ground_801C2D24(a0 : enum_t, a1 : * mut Vec) -> :: core :: ffi :: c_int = crate::tu::adapt::Ground_801C2D24__23d771;}
+crate::ext_fns! {extern "C" fn Ground_801C38BC(a0 : :: core :: ffi :: c_float, a1 : :: core :: ffi :: c_float) -> () = crate::tu::adapt::Ground_801C38BC__09c5a5;}
+crate::ext_fns! {extern "C" fn Ground_801C38D0(a0 : :: core :: ffi :: c_float, a1 : :: core :: ffi :: c_float, a2 : :: core :: ffi :: c_float, a3 : :: core :: ffi :: c_float) -> () = crate::tu::adapt::Ground_801C38D0__d9290e;}
+crate::ext_fns! {extern "C" fn Ground_801C38EC(a0 : :: core :: ffi :: c_float, a1 : :: core :: ffi :: c_float) -> () = crate::tu::adapt::Ground_801C38EC__15ec5f;}
+crate::ext_fns! {extern "C" fn Ground_801C3900(a0 : :: core :: ffi :: c_float, a1 : :: core :: ffi :: c_float, a2 : :: core :: ffi :: c_float, a3 : :: core :: ffi :: c_float, a4 : :: core :: ffi :: c_float, a5 : :: core :: ffi :: c_float, a6 : :: core :: ffi :: c_float, a7 : :: core :: ffi :: c_float) -> () = crate::tu::adapt::Ground_801C3900__ff5c95;}
+crate::ext_fns! {extern "C" fn Ground_801C392C(a0 : :: core :: ffi :: c_float, a1 : :: core :: ffi :: c_float, a2 : :: core :: ffi :: c_float, a3 : :: core :: ffi :: c_float, a4 : :: core :: ffi :: c_float, a5 : :: core :: ffi :: c_float) -> () = crate::tu::adapt::Ground_801C392C__50666c;}
+crate::ext_fns! {extern "C" fn Ground_801C3950(a0 : :: core :: ffi :: c_float) -> () = crate::tu::adapt::Ground_801C3950__bf47a5;}
+crate::ext_fns! {extern "C" fn Ground_801C3960(a0 : :: core :: ffi :: c_float) -> () = crate::tu::adapt::Ground_801C3960__160db6;}
+crate::ext_fns! {extern "C" fn Ground_801C3970(a0 : :: core :: ffi :: c_float) -> () = crate::tu::adapt::Ground_801C3970__4bd2c4;}
+crate::ext_fns! {extern "C" fn Ground_801C39C0() -> () = crate::tu::adapt::Ground_801C39C0__ef7ba7;}
+crate::ext_fns! {extern "C" fn Ground_801C3BB4() -> () = crate::tu::adapt::Ground_801C3BB4__85d178;}
+crate::ext_fns! {extern "C" fn Ground_801C4A08(a0 : * mut HSD_GObj) -> () = crate::tu::adapt::Ground_801C4A08__d0ca52;}
+crate::ext_fns! {extern "C" fn Ground_EnableMatchCamera() -> () = crate::tu::adapt::Ground_EnableMatchCamera__8fdbd1;}
+crate::ext_fns! {extern "C" fn Player_GetPlayerCharacter(a0 : :: core :: ffi :: c_int) -> CharacterKind = crate::tu::adapt::Player_GetPlayerCharacter__ec3049;}
+crate::ext_fns! {extern "C" fn Player_GetPlayerSlotType(a0 : s32) -> Gm_PKind = crate::tu::adapt::Player_GetPlayerSlotType__b892ec;}
+crate::ext_fns! {extern "C" fn Player_GetCostumeId(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_uint = crate::tu::adapt::Player_GetCostumeId__3389fa;}
+crate::ext_fns! {extern "C" fn Player_GetTeam(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int = crate::tu::adapt::Player_GetTeam__e2f2ad;}
+crate::ext_fns! {extern "C" fn Player_GetCpuType(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int = crate::tu::adapt::Player_GetCpuType__23acd7;}
+crate::ext_fns! {extern "C" fn Player_SetPlayerAndEntityCpuType(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::Player_SetPlayerAndEntityCpuType__d3b2ae;}
+crate::ext_fns! {extern "C" fn Player_GetAttackRatio(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_float = crate::tu::adapt::Player_GetAttackRatio__c52a29;}
+crate::ext_fns! {extern "C" fn Player_GetDefenseRatio(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_float = crate::tu::adapt::Player_GetDefenseRatio__53c460;}
+crate::ext_fns! {extern "C" fn Player_GetStocks(a0 : :: core :: ffi :: c_int) -> s32 = crate::tu::adapt::Player_GetStocks__0d01b6;}
+crate::ext_fns! {extern "C" fn Player_SetStocks(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::Player_SetStocks__f32692;}
+crate::ext_fns! {extern "C" fn Player_GetEntity(a0 : s32) -> * mut HSD_GObj = crate::tu::adapt::Player_GetEntity__4ebf09;}
+crate::ext_fns! {extern "C" fn Player_GetEntityAtIndex(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> * mut HSD_GObj = crate::tu::adapt::Player_GetEntityAtIndex__54b10a;}
+crate::ext_fns! {extern "C" fn Player_SetHUDDamage(a0 : s32, a1 : s32) -> () = crate::tu::adapt::Player_SetHUDDamage__5667ef;}
+crate::ext_fns! {extern "C" fn Player_GetOtherStamina(a0 : s32) -> :: core :: ffi :: c_int = crate::tu::adapt::Player_GetOtherStamina__98afbb;}
+crate::ext_fns! {extern "C" fn Player_GetRemainingHP(a0 : s32) -> :: core :: ffi :: c_int = crate::tu::adapt::Player_GetRemainingHP__3974b6;}
+crate::ext_fns! {extern "C" fn Player_GetFalls(a0 : s32) -> s32 = crate::tu::adapt::Player_GetFalls__ac24ed;}
+crate::ext_fns! {extern "C" fn Player_GetFallsByIndex(a0 : s32, a1 : s32) -> s32 = crate::tu::adapt::Player_GetFallsByIndex__1adaa0;}
+crate::ext_fns! {extern "C" fn Item_80266F3C() -> :: core :: ffi :: c_int = crate::tu::adapt::Item_80266F3C__ff0e50;}
+crate::ext_fns! {extern "C" fn Item_80268B18(a0 : * mut SpawnItem) -> * mut Item_GObj = crate::tu::adapt::Item_80268B18__3116a3;}
+crate::ext_fns! {extern "C" fn Item_80269CA0(a0 : * mut Item, a1 : s32) -> () = crate::tu::adapt::Item_80269CA0__06ea06;}
+crate::ext_fns! {extern "C" fn Item_8026A8EC(a0 : * mut Item_GObj) -> () = crate::tu::adapt::Item_8026A8EC__47012e;}
+crate::ext_fns! {extern "C" fn mpLib_8004D164() -> * mut MapCollData = crate::tu::adapt::mpLib_8004D164__652d00;}
+crate::ext_fns! {extern "C" fn mpScriptBatchBegin() -> () = crate::tu::adapt::mpScriptBatchBegin__6b27d1;}
+crate::ext_fns! {extern "C" fn mpScriptBatchEnd() -> () = crate::tu::adapt::mpScriptBatchEnd__fff89e;}
+crate::ext_fns! {extern "C" fn mpScriptInvalidateBounding() -> () = crate::tu::adapt::mpScriptInvalidateBounding__ddc52c;}
+crate::ext_fns! {extern "C" fn mpGetGroundCollVtx() -> * mut CollVtx = crate::tu::adapt::mpGetGroundCollVtx__277435;}
+crate::ext_fns! {extern "C" fn mpGetGroundCollLine() -> * mut CollLine = crate::tu::adapt::mpGetGroundCollLine__1cd3a6;}
+crate::ext_fns! {extern "C" fn mpGetGroundCollJoint() -> * mut CollJoint = crate::tu::adapt::mpGetGroundCollJoint__54117b;}
+crate::ext_fns! {extern "C" fn mpLibLoad(a0 : * mut MapCollData) -> () = crate::tu::adapt::mpLibLoad__0df8c9;}
+crate::ext_fns! {extern "C" fn mpCheckFloor(a0 : :: core :: ffi :: c_float, a1 : :: core :: ffi :: c_float, a2 : :: core :: ffi :: c_float, a3 : :: core :: ffi :: c_float, a4 : :: core :: ffi :: c_float, a5 : * mut Vec, a6 : * mut :: core :: ffi :: c_int, a7 : * mut :: core :: ffi :: c_uint, a8 : * mut Vec, a9 : :: core :: ffi :: c_int, a10 : :: core :: ffi :: c_int, a11 : :: core :: ffi :: c_int, a12 : Option < unsafe extern "C" fn (* mut Fighter_GObj , :: core :: ffi :: c_int) -> :: core :: ffi :: c_int >, a13 : * mut Fighter_GObj) -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn mpLineGetV1Pos(a0 : :: core :: ffi :: c_int, a1 : * mut Vec) -> () = crate::tu::adapt::mpLineGetV1Pos__3338ff;}
+crate::ext_fns! {extern "C" fn mpLineGetV0Pos(a0 : :: core :: ffi :: c_int, a1 : * mut Vec) -> () = crate::tu::adapt::mpLineGetV0Pos__80a600;}
+crate::ext_fns! {extern "C" fn mpLib_80055E9C(a0 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::mpLib_80055E9C__84fe6b;}
+crate::ext_fns! {extern "C" fn mpLib_8005667C(a0 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::mpLib_8005667C__76196e;}
+crate::ext_fns! {extern "C" fn mpLib_80057424(a0 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::mpLib_80057424__edb375;}
+crate::ext_fns! {extern "C" fn mpLib_80057528(a0 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::mpLib_80057528__f6bdae;}
+crate::ext_fns! {extern "C" fn mpLib_800575B0(a0 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::mpLib_800575B0__aa088d;}
+crate::ext_fns! {extern "C" fn mpJointListAdd(a0 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::mpJointListAdd__ba67cb;}
+crate::ext_fns! {extern "C" fn mpLib_80057BC0(a0 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::mpLib_80057BC0__25e9db;}
+crate::ext_fns! {extern "C" fn mpUncheckBounding() -> () = crate::tu::adapt::mpUncheckBounding__cfacaf;}
+crate::ext_fns! {extern "C" fn it_8026F9AC(a0 : s32, a1 : * mut :: core :: ffi :: c_void, a2 : * mut HitCapsule, a3 : * mut Item, a4 : * mut HurtCapsule) -> () = crate::tu::adapt::it_8026F9AC__945bc2;}
+crate::ext_fns! {extern "C" fn it_80270CD8(a0 : * mut Item, a1 : * mut HitCapsule) -> :: core :: ffi :: c_float = crate::tu::adapt::it_80270CD8__2e47eb;}
+crate::ext_fns! {extern "C" fn it_80270E30(a0 : * mut Item_GObj) -> () = crate::tu::adapt::it_80270E30__0506d2;}
+crate::ext_fns! {extern "C" fn it_8027B5B0(a0 : ItemKind, a1 : * mut Vec, a2 : * mut HSD_JObj, a3 : * mut Vec, a4 : :: core :: ffi :: c_int) -> * mut Item_GObj = crate::tu::adapt::it_8027B5B0__2814e8;}
+crate::ext_fns! {extern "C" fn it_8027C56C(a0 : * mut Item_GObj, a1 : :: core :: ffi :: c_float) -> () = crate::tu::adapt::it_8027C56C__612d2a;}
+crate::ext_fns! {extern "C" fn it_802EA9FC(a0 : * mut Vec, a1 : s32) -> * mut Item_GObj = crate::tu::adapt::it_802EA9FC__e2ed70;}
+crate::ext_fns! {extern "C" fn it_802DC4BC(a0 : s32, a1 : * mut Vec, a2 : s32) -> * mut Item_GObj = crate::tu::adapt::it_802DC4BC__cbef47;}
+crate::ext_fns! {extern "C" fn it_802DD7F0(a0 : s32, a1 : * mut Vec, a2 : * mut Vec, a3 : s32) -> * mut Item_GObj = crate::tu::adapt::it_802DD7F0__ea09a6;}
+pub unsafe fn lbArchive_800171CC(a0: *mut *mut HSD_Archive, a1: *const ::core::ffi::c_char, a2: *mut ::core::ffi::c_void, _va: &[crate::oracle::Va]) -> ::core::ffi::c_int { match crate::tu::ext_hook::EXT_HOOK { Some(h) => h("lbArchive_800171CC", &[a0 as usize as u64, a1 as usize as u64, a2 as usize as u64]) as ::core::ffi::c_int, None => panic!("TODO(ext) lbArchive_800171CC") } }
+crate::ext_fns! {extern "C" fn lbAudioAx_800237A8(a0 : enum_t, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int = crate::tu::adapt::lbAudioAx_800237A8__3c5520;}
+crate::ext_fns! {extern "C" fn lbAudioAx_80023F28(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int = crate::tu::adapt::lbAudioAx_80023F28__469606;}
+crate::ext_fns! {extern "C" fn lbAudioAx_80024B94(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int = crate::tu::adapt::lbAudioAx_80024B94__675169;}
+crate::ext_fns! {extern "C" fn mpColl_80043680(a0 : * mut CollData, a1 : * mut Vec) -> () = crate::tu::adapt::mpColl_80043680__d5fb54;}
+crate::ext_fns! {extern "C" fn mpCollSetFacingDir(a0 : * mut CollData, a1 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::mpCollSetFacingDir__1c7fdb;}
+crate::ext_fns! {extern "C" fn HSD_GObjObject_80390A70(a0 : * mut HSD_GObj, a1 : :: core :: ffi :: c_uchar, a2 : * mut :: core :: ffi :: c_void) -> ();}
+crate::ext_fns! {extern "C" fn HSD_Free(a0 : * mut :: core :: ffi :: c_void) -> () = crate::tu::adapt::HSD_Free__8fde16;}
+crate::ext_fns! {extern "C" fn HSD_MemAlloc(a0 : ssize_t) -> * mut :: core :: ffi :: c_void = crate::tu::adapt::HSD_MemAlloc__8b8f38;}
+crate::ext_fns! {extern "C" fn lbFile_8001634C(a0 : :: core :: ffi :: c_int) -> usize = crate::tu::adapt::lbFile_8001634C__c4f280;}
+crate::ext_fns! {extern "C" fn lbFile_8001668C(a0 : * const :: core :: ffi :: c_char, a1 : * mut :: core :: ffi :: c_void, a2 : * mut usize) -> () = crate::tu::adapt::lbFile_8001668C__3aacaf;}
+crate::ext_fns! {extern "C" fn lbHeap_80015BD0(a0 : :: core :: ffi :: c_int, a1 : usize) -> * mut :: core :: ffi :: c_void = crate::tu::adapt::lbHeap_80015BD0__b34fd8;}
+crate::ext_fns! {extern "C" fn lbHeap_80015CA8(a0 : :: core :: ffi :: c_int, a1 : * mut :: core :: ffi :: c_void) -> () = crate::tu::adapt::lbHeap_80015CA8__e646d5;}
+crate::ext_fns! {extern "C" fn lbHeap_Capacity(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_uint = crate::tu::adapt::lbHeap_Capacity__dc42da;}
+crate::ext_fns! {extern "C" fn lbHeap_Free(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_uint = crate::tu::adapt::lbHeap_Free__516b65;}
+crate::ext_fns! {extern "C" fn GObj_SetupGXLink(a0 : * mut HSD_GObj, a1 : GObj_RenderFunc, a2 : :: core :: ffi :: c_uchar, a3 : :: core :: ffi :: c_uint) -> ();}
+crate::ext_fns! {extern "C" fn HSD_GObjGXLink_8039084C(a0 : * mut HSD_GObj) -> ();}
+crate::ext_fns! {extern "C" fn HSD_GObjFree(a0 : * mut HSD_GObj) -> ();}
+crate::ext_fns! {extern "C" fn HSD_SetupPEMode(a0 : :: core :: ffi :: c_uint, a1 : * mut HSD_PEDesc) -> ();}
+crate::ext_fns! {extern "C" fn HSD_SetupRenderMode(a0 : :: core :: ffi :: c_uint) -> ();}
+crate::ext_fns! {extern "C" fn HSD_StateInvalidate(a0 : :: core :: ffi :: c_int) -> ();}
+crate::ext_fns! {extern "C" fn HSD_SetupChannel(a0 : * mut HSD_Chan) -> ();}
+crate::ext_fns! {extern "C" fn HSD_StateSetNumChans(a0 : :: core :: ffi :: c_int) -> ();}
+crate::ext_fns! {extern "C" fn HSD_StateSetNumTexGens() -> ();}
+crate::ext_fns! {extern "C" fn HSD_StateInitTev() -> ();}
+crate::ext_fns! {extern "C" fn HSD_StateGetCommittedTevStages() -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn HSD_StateAssignTev() -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn HSD_StateSetNumTevStages() -> ();}
+crate::ext_fns! {extern "C" fn HSD_SetupTevStage(a0 : * mut HSD_TevDesc) -> ();}
+crate::ext_fns! {extern "C" fn HSD_SetTevRegAll() -> ();}
+crate::ext_fns! {extern "C" fn Script_ModelInput(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn Script_ModelDraw(a0 : :: core :: ffi :: c_int, a1 : * mut [:: core :: ffi :: c_float ; 4]) -> ();}
+crate::ext_fns! {extern "C" fn Script_StageModelsReset() -> ();}
+crate::ext_fns! {extern "C" fn Script_StageResourceOwner() -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn Script_StageResourceOwnerAlive(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn mpScriptStageIsolationSet(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int = melee_world::tu::mplib::mpScriptStageIsolationSet;}
+crate::ext_fns! {extern "C" fn mpScriptStageIsolationActive() -> :: core :: ffi :: c_int = melee_world::tu::mplib::mpScriptStageIsolationActive;}
+crate::ext_fns! {extern "C" fn Script_StageIsolationAllowed(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn Script_StageIsolationReleased(a0 : :: core :: ffi :: c_int) -> ();}
+crate::ext_fns! {extern "C" fn Netplay_Enabled() -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn RB_Enabled() -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn Replay_Active() -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn lb_8000B1CC(a0 : * mut HSD_JObj, a1 : * mut Vec, a2 : * mut Vec) -> () = crate::tu::adapt::lb_8000B1CC__6b12cc;}
+crate::ext_fns! {extern "C" fn Script_SimByte(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn Script_HitRulesInput(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn Script_EchoInput(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn Script_EchoOwnerAlive(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn plStale_IncrementAttackInstance() -> :: core :: ffi :: c_ushort;}
+crate::ext_fns! {extern "C" fn gm_8016B168() -> :: core :: ffi :: c_int = crate::tu::adapt::gm_8016B168__863c3b;}
+crate::ext_fns! {extern "C" fn gm_8016B0D4() -> :: core :: ffi :: c_int = crate::tu::adapt::gm_8016B0D4__af8007;}
+crate::ext_fns! {extern "C" fn Script_OnePSpawn(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> ();}
+crate::ext_fns! {extern "C" fn Script_OnePOffline() -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn Script_StageModelFor(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn Script_StageModelDraw(a0 : :: core :: ffi :: c_int, a1 : * mut [:: core :: ffi :: c_float ; 4], a2 : :: core :: ffi :: c_float, a3 : :: core :: ffi :: c_float, a4 : :: core :: ffi :: c_float, a5 : :: core :: ffi :: c_float) -> ();}
+crate::ext_fns! {extern "C" fn ft_8008A2BC(a0 : * mut Fighter_GObj) -> () = crate::tu::adapt::ft_8008A2BC__b456f9;}
+crate::ext_fns! {extern "C" fn ftColl_80076640(a0 : * mut Fighter, a1 : * mut :: core :: ffi :: c_float) -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn ftColl_80079AB0(a0 : * mut Fighter, a1 : * mut HitCapsule, a2 : :: core :: ffi :: c_uint, a3 : :: core :: ffi :: c_float, a4 : :: core :: ffi :: c_float, a5 : :: core :: ffi :: c_float, a6 : :: core :: ffi :: c_float) -> :: core :: ffi :: c_float;}
+crate::ext_fns! {extern "C" fn ftColl_8007B760(a0 : * mut Fighter_GObj, a1 : :: core :: ffi :: c_int) -> ();}
+crate::ext_fns! {extern "C" fn ftColl_8007B7A4(a0 : * mut Fighter_GObj, a1 : :: core :: ffi :: c_int) -> ();}
+crate::ext_fns! {extern "C" fn ftCo_Fall_Enter(a0 : * mut Fighter_GObj) -> () = crate::tu::adapt::ftCo_Fall_Enter__2d1b10;}
+crate::ext_fns! {extern "C" fn gm_8016B248() -> :: core :: ffi :: c_float = crate::tu::adapt::gm_8016B248__a7d73b;}
+crate::ext_fns! {extern "C" fn Script_ArmorEvent(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int, a3 : :: core :: ffi :: c_int, a4 : :: core :: ffi :: c_int, a5 : :: core :: ffi :: c_int) -> ();}
+crate::ext_fns! {extern "C" fn ftCo_8008D8E8(a0 : :: core :: ffi :: c_float) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_8008D8E8__f17b30;}
+crate::ext_fns! {extern "C" fn ftCo_Damage_CalcKnockback(a0 : * mut Fighter) -> () = crate::tu::adapt::ftCo_Damage_CalcKnockback__9478d1;}
+crate::ext_fns! {extern "C" fn ftCo_800BFFD0(a0 : * mut Fighter, a1 : enum_t, a2 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_800BFFD0__7622d7;}
+crate::ext_fns! {extern "C" fn ftCo_800C0074(a0 : * mut Fighter) -> () = crate::tu::adapt::ftCo_800C0074__1f5870;}
+crate::ext_fns! {extern "C" fn ftCo_800C0200(a0 : * mut Fighter, a1 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::ftCo_800C0200__1f3409;}
+crate::ext_fns! {extern "C" fn ftCo_800C8348(a0 : * mut Fighter_GObj, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::ftCo_800C8348__936756;}
+crate::ext_fns! {extern "C" fn ftCo_800C8540(a0 : * mut Fighter_GObj) -> () = crate::tu::adapt::ftCo_800C8540__114dd4;}
+crate::ext_fns! {extern "C" fn ftpickupitem_80094150(a0 : * mut Fighter_GObj, a1 : * mut Item_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftpickupitem_80094150__ba0ae9;}
+crate::ext_fns! {extern "C" fn ftpickupitem_800948A8(a0 : * mut Fighter_GObj, a1 : * mut Item_GObj) -> () = crate::tu::adapt::ftpickupitem_800948A8__668622;}
+crate::ext_fns! {extern "C" fn it_8026D324(a0 : ItemKind) -> :: core :: ffi :: c_int = crate::tu::adapt::it_8026D324__94e049;}
+crate::ext_fns! {extern "C" fn HSD_Randi(a0 : s32) -> s32;}
+crate::ext_fns! {extern "C" fn Script_SkillEvent(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int, a3 : :: core :: ffi :: c_int, a4 : :: core :: ffi :: c_int, a5 : :: core :: ffi :: c_int, a6 : :: core :: ffi :: c_int) -> ();}
+crate::ext_fns! {extern "C" fn grShrineRoute_ScriptQuery(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int = crate::tu::adapt::grShrineRoute_ScriptQuery__a6b0e3;}
+crate::ext_fns! {extern "C" fn Script_CritEvent(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int, a3 : :: core :: ffi :: c_int, a4 : :: core :: ffi :: c_int, a5 : :: core :: ffi :: c_int, a6 : :: core :: ffi :: c_int, a7 : :: core :: ffi :: c_int, a8 : :: core :: ffi :: c_int, a9 : :: core :: ffi :: c_int, a10 : :: core :: ffi :: c_int, a11 : :: core :: ffi :: c_int) -> ();}
+crate::ext_fns! {extern "C" fn grPushOn_80219204(a0 : :: core :: ffi :: c_int, a1 : * mut :: core :: ffi :: c_int, a2 : * mut :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn fn_80218678() -> :: core :: ffi :: c_int = crate::tu::adapt::fn_80218678__e0d59f;}
+crate::ext_fns! {extern "C" fn ftCo_800C3B10(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_800C3B10__3d9d5c;}
+crate::ext_fns! {extern "C" fn ftCo_Attack1_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_Attack1_CheckInput__d92fe1;}
+crate::ext_fns! {extern "C" fn ftCo_800D6824(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_800D6824__b21805;}
+crate::ext_fns! {extern "C" fn ftCo_800D68C0(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_800D68C0__ec1729;}
+crate::ext_fns! {extern "C" fn ftCo_Attack100_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_Attack100_CheckInput__61aa80;}
+crate::ext_fns! {extern "C" fn ftCo_Catch_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_Catch_CheckInput__e60751;}
+crate::ext_fns! {extern "C" fn ftCo_AttackAir_CheckItemThrowInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_AttackAir_CheckItemThrowInput__1e285e;}
+crate::ext_fns! {extern "C" fn ftCo_AttackAir_GetMsidFromCStick(a0 : * mut Fighter) -> FtMotionId = crate::tu::adapt::ftCo_AttackAir_GetMsidFromCStick__a36195;}
+crate::ext_fns! {extern "C" fn ftCo_AttackHi3_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_AttackHi3_CheckInput__5d742f;}
+crate::ext_fns! {extern "C" fn ftCo_AttackHi4_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_AttackHi4_CheckInput__ebfa65;}
+crate::ext_fns! {extern "C" fn ftCo_AttackLw3_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_AttackLw3_CheckInput__132bbd;}
+crate::ext_fns! {extern "C" fn ftCo_AttackLw4_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_AttackLw4_CheckInput__e93fbf;}
+crate::ext_fns! {extern "C" fn ftCo_AttackS3_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_AttackS3_CheckInput__4f4014;}
+crate::ext_fns! {extern "C" fn ftCo_AttackS4_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_AttackS4_CheckInput__48fe9d;}
+crate::ext_fns! {extern "C" fn ftCo_Dash_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_Dash_CheckInput__1e8d28;}
+crate::ext_fns! {extern "C" fn ftCo_80099794(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_80099794__7a44df;}
+crate::ext_fns! {extern "C" fn ftCo_80099A58(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_80099A58__225834;}
+crate::ext_fns! {extern "C" fn ftCo_80091A4C(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_80091A4C__5bb07f;}
+crate::ext_fns! {extern "C" fn ftCo_Jump_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_Jump_CheckInput__ff2f50;}
+crate::ext_fns! {extern "C" fn ftCo_800CB870(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_800CB870__e3acbf;}
+crate::ext_fns! {extern "C" fn ftCo_SpecialAir_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_SpecialAir_CheckInput__a14aa2;}
+crate::ext_fns! {extern "C" fn ftCo_SpecialS_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_SpecialS_CheckInput__9abbee;}
+crate::ext_fns! {extern "C" fn ftCo_800D5FB0(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_800D5FB0__315eef;}
+crate::ext_fns! {extern "C" fn ftCo_Turn_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_Turn_CheckInput__96ef34;}
+crate::ext_fns! {extern "C" fn ftCo_Walk_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_Walk_CheckInput__5c6c59;}
+crate::ext_fns! {extern "C" fn ftCo_800DF1C8(a0 : * mut Fighter) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_800DF1C8__e872a9;}
+crate::ext_fns! {extern "C" fn ftCo_800DF2D8(a0 : * mut Fighter) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_800DF2D8__c6c36b;}
+crate::ext_fns! {extern "C" fn ftCo_800DF3A8(a0 : * mut Fighter) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_800DF3A8__8e22fa;}
+crate::ext_fns! {extern "C" fn MatchTurboRules() -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn MatchTurboColAnim() -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn MatchTurboNote(a0 : :: core :: ffi :: c_int) -> ();}
+crate::ext_fns! {extern "C" fn Script_NetModsVariant(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int, a3 : :: core :: ffi :: c_int) -> ();}
+crate::ext_fns! {extern "C" fn _HSD_mkEnvelopeModelNodeMtx(a0 : * mut HSD_JObj, a1 : MtxPtr) -> MtxPtr;}
+crate::ext_fns! {extern "C" fn Script_CpuIdleDefault(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn Stage_GetBlastZoneRightOffset() -> :: core :: ffi :: c_float = crate::tu::adapt::Stage_GetBlastZoneRightOffset__9f3e8b;}
+crate::ext_fns! {extern "C" fn Stage_GetBlastZoneLeftOffset() -> :: core :: ffi :: c_float = crate::tu::adapt::Stage_GetBlastZoneLeftOffset__7ceb78;}
+crate::ext_fns! {extern "C" fn Stage_GetBlastZoneTopOffset() -> :: core :: ffi :: c_float = crate::tu::adapt::Stage_GetBlastZoneTopOffset__04a3a9;}
+crate::ext_fns! {extern "C" fn Stage_GetBlastZoneBottomOffset() -> :: core :: ffi :: c_float = crate::tu::adapt::Stage_GetBlastZoneBottomOffset__752dc9;}
+crate::ext_fns! {extern "C" fn gmVs_SetEndHold(a0 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::gmVs_SetEndHold__fb59b4;}
+crate::ext_fns! {extern "C" fn gmVs_GetHeldOutcome() -> :: core :: ffi :: c_int = crate::tu::adapt::gmVs_GetHeldOutcome__44145d;}
+crate::ext_fns! {extern "C" fn HSD_GetHeap() -> OSHeapHandle = crate::tu::adapt::HSD_GetHeap__32acf8;}
+crate::ext_fns! {extern "C" fn Script_AreaNameByte(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn lbHeap_StageSlotTryAlloc(a0 : :: core :: ffi :: c_uint) -> * mut :: core :: ffi :: c_void = crate::tu::adapt::lbHeap_StageSlotTryAlloc__9c8eee;}
+crate::ext_fns! {extern "C" fn lbHeap_StageSlotDump(a0 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::lbHeap_StageSlotDump__42ec51;}
+crate::ext_fns! {extern "C" fn Script_StageRawStash(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_uint, a2 : :: core :: ffi :: c_uint, a3 : :: core :: ffi :: c_uint) -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn lbAudioAx_StageSlotMusic() -> :: core :: ffi :: c_int = crate::tu::adapt::lbAudioAx_StageSlotMusic__0aff91;}
+crate::ext_fns! {extern "C" fn grAnime_801C7FF8(a0 : * mut HSD_GObj, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int, a3 : :: core :: ffi :: c_int, a4 : :: core :: ffi :: c_float, a5 : :: core :: ffi :: c_float) -> () = crate::tu::adapt::grAnime_801C7FF8__b10a63;}
+crate::ext_fns! {extern "C" fn grAnime_801C8138(a0 : * mut HSD_GObj, a1 : enum_t, a2 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::grAnime_801C8138__a8596a;}
+crate::ext_fns! {extern "C" fn GObj_InitUserData(a0 : * mut HSD_GObj, a1 : :: core :: ffi :: c_uchar, a2 : Option < unsafe extern "C" fn (* mut :: core :: ffi :: c_void) -> () >, a3 : * mut :: core :: ffi :: c_void) -> ();}
+crate::ext_fns! {extern "C" fn HSD_GObjProc_RemoveAllProcs(a0 : * mut HSD_GObj) -> ();}
+crate::ext_fns! {extern "C" fn grStory_801E3030() -> () = crate::tu::adapt::grStory_801E3030__27bc16;}
+crate::ext_fns! {extern "C" fn grStory_801E36D8(a0 : * mut Vec, a1 : :: core :: ffi :: c_int, a2 : * mut HSD_JObj) -> :: core :: ffi :: c_int = crate::tu::adapt::grStory_801E36D8__a338e5;}
+crate::ext_fns! {extern "C" fn grIzumi_801CBB88() -> () = crate::tu::adapt::grIzumi_801CBB88__3ab22a;}
+crate::ext_fns! {extern "C" fn grIzumi_801CD280(a0 : * mut Vec, a1 : :: core :: ffi :: c_int, a2 : * mut HSD_JObj) -> :: core :: ffi :: c_int = crate::tu::adapt::grIzumi_801CD280__3c103b;}
+crate::ext_fns! {extern "C" fn Ground_StageSlotPrepare(a0 : * mut HSD_GObj, a1 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::Ground_StageSlotPrepare__d7a90e;}
+crate::ext_fns! {extern "C" fn HSD_StageSlotParticlesClear() -> ();}
+crate::ext_fns! {extern "C" fn grStory_StageSlotParamSwap(a0 : * mut :: core :: ffi :: c_void) -> * mut :: core :: ffi :: c_void = crate::tu::adapt::grStory_StageSlotParamSwap__30a7ba;}
+crate::ext_fns! {extern "C" fn grIzumi_StageSlotParamSwap(a0 : * mut :: core :: ffi :: c_void) -> * mut :: core :: ffi :: c_void = crate::tu::adapt::grIzumi_StageSlotParamSwap__e00bb2;}
+crate::ext_fns! {extern "C" fn hsd_8039D048(a0 : * mut :: core :: ffi :: c_void) -> () = crate::tu::adapt::hsd_8039D048__57a88e;}
+crate::ext_fns! {extern "C" fn hsd_8039D3AC(a0 : * mut HSD_Generator, a1 : * mut HSD_Generator) -> * mut HSD_Generator;}
+crate::ext_fns! {extern "C" fn psRemoveParticleAppSRT(a0 : * mut HSD_Particle) -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn Stage_StageSlotSelect(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int = crate::tu::adapt::Stage_StageSlotSelect__c64d66;}
+crate::ext_fns! {extern "C" fn Ground_StageSlotRetailInstall(a0 : * mut StageIdPair, a1 : * mut HSD_Archive) -> () = crate::tu::adapt::Ground_StageSlotRetailInstall__95ae93;}
+crate::ext_fns! {extern "C" fn Ground_StageSlotFighterLightingClear() -> () = crate::tu::adapt::Ground_StageSlotFighterLightingClear__7c49f4;}
+crate::ext_fns! {extern "C" fn mpIsland_StageSlotFree() -> () = crate::tu::adapt::mpIsland_StageSlotFree__a9f0f5;}
+crate::ext_fns! {extern "C" fn grZakoGenerator_StageSlotRelease() -> () = crate::tu::adapt::grZakoGenerator_StageSlotRelease__113f21;}
+crate::ext_fns! {extern "C" fn __frsqrte(a0 : :: core :: ffi :: c_double) -> :: core :: ffi :: c_double;}
+crate::ext_fns! {extern "C" fn Geno_StateMoveTag(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn Geno_OverlayMoveTag(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn Geno_OverlayCount(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn Geno_OverlayAnim(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn Geno_CommonMoveTag(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn Geno_ProfileForKind(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn Script_HitContext(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int, a3 : :: core :: ffi :: c_int, a4 : :: core :: ffi :: c_int, a5 : :: core :: ffi :: c_int, a6 : :: core :: ffi :: c_int, a7 : :: core :: ffi :: c_int, a8 : :: core :: ffi :: c_int) -> ();}
+crate::ext_fns! {extern "C" fn Geno_GiveStunBonus(a0 : * mut Fighter, a1 : :: core :: ffi :: c_int) -> () = crate::tu::adapt::Geno_GiveStunBonus__3e8019;}
+crate::ext_fns! {extern "C" fn Script_HitRuleContext(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int, a3 : :: core :: ffi :: c_int, a4 : :: core :: ffi :: c_int) -> ();}
+crate::ext_fns! {extern "C" fn Script_HitOriginalElement(a0 : :: core :: ffi :: c_int) -> ();}
+crate::ext_fns! {extern "C" fn Script_GameEvent(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int, a3 : :: core :: ffi :: c_int, a4 : :: core :: ffi :: c_int) -> ();}
+crate::ext_fns! {extern "C" fn ftColl_8007891C(a0 : * mut HSD_GObj, a1 : * mut HSD_GObj, a2 : :: core :: ffi :: c_float) -> ();}
+crate::ext_fns! {extern "C" fn Script_StageSlotsEnded() -> ();}
+crate::ext_fns! {extern "C" fn Camera_LargeMapRestore() -> ();}
+crate::ext_fns! {extern "C" fn Script_StageArchiveInput(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn Script_StageWanted() -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn Script_StageTextByte(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn Script_TargetBroken(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> ();}
+crate::ext_fns! {extern "C" fn Script_EnemyDefeated(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> ();}
+crate::ext_fns! {extern "C" fn Script_EnemyRemoved(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int) -> ();}
+crate::ext_fns! {extern "C" fn Script_EnemyHit(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int) -> ();}
+crate::ext_fns! {extern "C" fn ftCo_800DCE34(a0 : * mut Fighter_GObj, a1 : * mut Fighter_GObj) -> () = crate::tu::adapt::ftCo_800DCE34__658ea4;}
+crate::ext_fns! {extern "C" fn Geno_MotionRowIfAny(a0 : * mut Fighter, a1 : :: core :: ffi :: c_int) -> * mut MotionState = crate::tu::adapt::Geno_MotionRowIfAny__c473f8;}
+crate::ext_fns! {extern "C" fn Geno_DefineIsNone(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn Geno_DefinePlanInt(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn Geno_LabEnterState(a0 : * mut Fighter, a1 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int = crate::tu::adapt::Geno_LabEnterState__96cf9a;}
+crate::ext_fns! {extern "C" fn ftColl_8007A06C(a0 : * mut Fighter_GObj, a1 : * mut :: core :: ffi :: c_void, a2 : * mut :: core :: ffi :: c_void, a3 : usize, a4 : :: core :: ffi :: c_int) -> ();}
+crate::ext_fns! {extern "C" fn Script_EnemyGameEvent(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int, a3 : :: core :: ffi :: c_int, a4 : :: core :: ffi :: c_int, a5 : :: core :: ffi :: c_int) -> ();}
+crate::ext_fns! {extern "C" fn Item_ScriptCommitDamage(a0 : * mut Item_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::Item_ScriptCommitDamage__cf50af;}
+crate::ext_fns! {extern "C" fn Geno_ItemDesc(a0 : :: core :: ffi :: c_int) -> * mut :: core :: ffi :: c_void = crate::tu::adapt::Geno_ItemDesc__a0c825;}
+crate::ext_fns! {extern "C" fn Mex_ItemReady(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn Mex_ItemCustomDesc(a0 : :: core :: ffi :: c_int) -> * mut :: core :: ffi :: c_void;}
+crate::ext_fns! {extern "C" fn Script_WarmSync() -> ();}
+crate::ext_fns! {extern "C" fn SurfaceBegin(a0 : :: core :: ffi :: c_int) -> ();}
+crate::ext_fns! {extern "C" fn SurfaceEnd() -> ();}
+crate::ext_fns! {extern "C" fn Script_WarmModelDraw(a0 : :: core :: ffi :: c_int, a1 : * mut :: core :: ffi :: c_void) -> ();}
+crate::ext_fns! {extern "C" fn Script_StageSlotVisual(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn Script_StageSlotMissionInput(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn Ground_StageSlotFDBackdrop() -> () = crate::tu::adapt::Ground_StageSlotFDBackdrop__c64489;}
+crate::ext_fns! {extern "C" fn HeapCheckFull() -> :: core :: ffi :: c_int;}
+crate::ext_fns! {extern "C" fn Camera_PCMainCObj() -> * mut HSD_CObj = melee_world::tu::cmcamera::Camera_PCMainCObj;}
  }
 use ext::*;
 // Moved below this crate so the fighter/character code can call them (CYCLE); same items.
@@ -380,17 +380,42 @@ pub use melee_runtime::tu::script_hit::{
     ScriptGame_HitRuleForget, ScriptGame_HitRuleSpecial, HR_META_MAX,
 };
 pub use melee_fighter::script_caps::{
-    script_caps_max_jumps_value, script_caps_movement, ScriptGame_CapsEntity, ScriptGame_CapsFighter,
-    ScriptGame_CapsMaxJumps,
+    script_caps_max_jumps_value, script_caps_movement, ScriptGame_CapsMaxJumps,
 };
-extern "C" { fn strcpy (dst : * mut :: core :: ffi :: c_char , src : * const :: core :: ffi :: c_char ,) -> * mut :: core :: ffi :: c_char;
-fn strcat (dest : * mut :: core :: ffi :: c_char , src : * const :: core :: ffi :: c_char ,) -> * mut :: core :: ffi :: c_char;
-fn strlen (s : * const :: core :: ffi :: c_char) -> usize;
-fn strcmp (s1 : * const :: core :: ffi :: c_char , s2 : * const :: core :: ffi :: c_char ,) -> :: core :: ffi :: c_int;
-fn strchr (str : * const :: core :: ffi :: c_char , chr : :: core :: ffi :: c_int ,) -> * mut :: core :: ffi :: c_char;
-fn memcmp (p1 : * const :: core :: ffi :: c_void , p2 : * const :: core :: ffi :: c_void , n : usize ,) -> :: core :: ffi :: c_int;
-fn memset (dst : * mut :: core :: ffi :: c_void , val : :: core :: ffi :: c_int , n : usize ,) -> * mut :: core :: ffi :: c_void;
-fn memcpy (dst : * mut :: core :: ffi :: c_void , src : * const :: core :: ffi :: c_void , n : usize ,) -> * mut :: core :: ffi :: c_void;
+/// script_fighter_caps_target.inc, as the TU defines it: reads the live fighter through this TU's
+/// own callees (the copy in `melee_fighter::script_caps` serves the fighter code below this crate).
+pub unsafe extern "C" fn ScriptGame_CapsFighter(entity: ::core::ffi::c_int) -> *mut Fighter {
+    if entity < 1 || entity > 12 {
+        return core::ptr::null_mut();
+    }
+    let g = Player_GetEntityAtIndex((entity - 1) % 6, (entity - 1) / 6);
+    if script_gobj_live(g) != 0 && !(*g).user_data.is_null() {
+        (*g).user_data as *mut Fighter
+    } else {
+        core::ptr::null_mut()
+    }
+}
+pub unsafe extern "C" fn ScriptGame_CapsEntity(fp: *mut Fighter) -> ::core::ffi::c_int {
+    if fp.is_null() {
+        return 0;
+    }
+    let mut entity = 1;
+    while entity <= 12 {
+        if ScriptGame_CapsFighter(entity) == fp {
+            return entity;
+        }
+        entity += 1;
+    }
+    0
+}
+extern "C" { pub fn strcpy (dst : * mut :: core :: ffi :: c_char , src : * const :: core :: ffi :: c_char ,) -> * mut :: core :: ffi :: c_char;
+pub fn strcat (dest : * mut :: core :: ffi :: c_char , src : * const :: core :: ffi :: c_char ,) -> * mut :: core :: ffi :: c_char;
+pub fn strlen (s : * const :: core :: ffi :: c_char) -> usize;
+pub fn strcmp (s1 : * const :: core :: ffi :: c_char , s2 : * const :: core :: ffi :: c_char ,) -> :: core :: ffi :: c_int;
+pub fn strchr (str : * const :: core :: ffi :: c_char , chr : :: core :: ffi :: c_int ,) -> * mut :: core :: ffi :: c_char;
+pub fn memcmp (p1 : * const :: core :: ffi :: c_void , p2 : * const :: core :: ffi :: c_void , n : usize ,) -> :: core :: ffi :: c_int;
+pub fn memset (dst : * mut :: core :: ffi :: c_void , val : :: core :: ffi :: c_int , n : usize ,) -> * mut :: core :: ffi :: c_void;
+pub fn memcpy (dst : * mut :: core :: ffi :: c_void , src : * const :: core :: ffi :: c_void , n : usize ,) -> * mut :: core :: ffi :: c_void;
  }
 pub static mut HSD_GObj_804D7814: * mut HSD_GObj = unsafe { core::mem::zeroed() };
 pub static mut HSD_GObjPLinkHead: * mut * mut HSD_GObj = unsafe { core::mem::zeroed() };

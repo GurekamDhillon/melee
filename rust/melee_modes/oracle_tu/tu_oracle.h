@@ -131,7 +131,7 @@ static tuo_u64 tuo_str_limit(const void* p)
 }
 
 /* ---- function pointers ---- */
-#define TUO_MAXFN 512
+#define TUO_MAXFN 4096
 static tuo_u64 tuo_fn_addr[TUO_MAXFN];
 static int tuo_nfn;
 static void tuo_fn_add(const void* p)

@@ -300,6 +300,10 @@ class Gen2:
             return ([f"tuo_h_f64({cp});"], [f"rt::h_f64({rp});"])
         if k[0] == "ptr":
             if is_cstr_ptr(k[1]):
+                if self.cfg.get("cstr_nocls"):
+                    # a string literal may sit right after a registered table in one image and not the other: hash nullness only
+                    return ([f"tuo_h_i((tuo_i64)({cp} != 0)); tuo_h_cstr((const char*){cp});"],
+                            [f"rt::h_i((({rp} as *const u8) != core::ptr::null()) as i64); rt::h_cstr({rp} as *const u8);"])
                 return ([f"tuo_h_p({cp}); tuo_h_cstr((const char*){cp});"],
                         [f"rt::h_p({rp} as *const u8); rt::h_cstr({rp} as *const u8);"])
             return ([f"tuo_h_p({cp});"], [f"rt::h_p({rp} as *const u8);"])
@@ -394,7 +398,7 @@ class TuGen:
         if not f:
             return False
         p = Path(f.name).resolve()
-        return p == self.main or p.name.endswith(".static.h")
+        return p == self.main or p.name.endswith(".static.h") or p.suffix == ".inc"  # (.inc: text the TU includes)
 
     def scan(self):
         self.funcs = {}  # defined in main file
@@ -403,7 +407,7 @@ class TuGen:
         for c in self.tu.cursor.get_children():
             if c.kind == K.FUNCTION_DECL and c.is_definition():
                 f = c.location.file
-                if f and Path(f.name).resolve() == self.main:
+                if f and (Path(f.name).resolve() == self.main or Path(f.name).suffix == ".inc"):
                     self.funcs[c.spelling] = c
                 self.fdefs[c.spelling] = c
             elif c.kind == K.VAR_DECL and self.in_tu_data(c) and c.storage_class != ci.StorageClass.EXTERN:
@@ -448,9 +452,21 @@ class TuGen:
         self.fcfg = cfg.get("funcs", {})
         names = [n for n in self.funcs if n not in self.skip and (not self.fcfg or n in self.fcfg or cfg.get("all", True))]
         self.test_funcs = sorted(n for n in names if self.fcfg.get(n, {}).get("test", True))
-        self.objs = []  # (name, ctype_expr_t, rust_place, kind) built below
+        self.objs = []
         self.build_objects()
         self.build_ext()
+        # a function whose argument types the generator cannot draw (Mtx, ...) is reported and left out
+        ok_funcs = []
+        for n in self.test_funcs:
+            try:
+                for i, (a_, s_) in enumerate(self.arg_specs(self.funcs[n])):
+                    self.arg_decl_c(i, a_, s_)
+                self.runner_c(0, n)
+                self.runner_rust(0, n)
+                ok_funcs.append(n)
+            except ValueError as e:
+                print(f"tuoracle: skip {n}: {e}")
+        self.test_funcs = ok_funcs
         c = self.emit_c()
         r = self.emit_rust()
         return c, r
@@ -482,6 +498,11 @@ class TuGen:
                                   raw=cfg.get("raw", {}).get(n),
                                   fill=not const, own=False, ext=True, size=size, const=const))
         # 3. mock-return objects (filled in build_ext)
+
+    def snap_objs(self):
+        """Initialised TU variables (tables) the functions may write: restored to their initial bytes at the start of every case."""
+        return [o for o in self.objs if o.get("own") and not o["fill"] and not o.get("bytes") and not o.get("const")
+                and o["t"] is not None and not o["t"].is_const_qualified()]
 
     def mock_obj_for(self, fn):
         """Return-object spec for an external function returning a pointer, or None."""
@@ -557,7 +578,15 @@ class TuGen:
 
     # ---- emit C
     def cdecl_fn(self, fn, name):
-        args = [f"{a.type.spelling} a{i}" for i, a in enumerate(fn.get_arguments())]
+        def decl(t, nm):
+            sp = t.spelling
+            if "(*)" in sp:  # function pointer: the name goes inside the parentheses
+                return sp.replace("(*)", f"(*{nm})", 1)
+            m = re.match(r"^(.*?)\s*((?:\[\d*\])+)$", sp)
+            if m:  # array parameter
+                return f"{m.group(1)} {nm}{m.group(2)}"
+            return f"{sp} {nm}"
+        args = [decl(a.type, f"a{i}") for i, a in enumerate(fn.get_arguments())]
         if fn.type.is_function_variadic():
             args.append("...")
         return f"{fn.result_type.spelling} {name}({', '.join(args) if args else 'void'})"
@@ -576,6 +605,8 @@ class TuGen:
     def trace_arg(self, t, v, lang):
         k = classify(t)
         if lang == "c":
+            if t.get_canonical().kind in (T.CONSTANTARRAY, T.INCOMPLETEARRAY):  # an array parameter is a pointer (Mtx)
+                return [f"tuo_t_p({v});"]
             if k[0] in ("int", "bool"):
                 return [f"tuo_t_i((tuo_i64){v});"]
             if k[0] == "f32":
@@ -602,6 +633,8 @@ class TuGen:
                     elif pk[0] in ("int", "f32", "f64") and False:
                         pass
                 return out
+            if k[0] == "rec":  # a record by value is not part of the trace (the call itself is)
+                return []
             raise ValueError(f"mock arg {t.spelling}")
         raise ValueError(lang)
 
@@ -757,6 +790,8 @@ class TuGen:
 
     def trace_arg_rust(self, t, i):
         k = classify(t)
+        if t.get_canonical().kind in (T.CONSTANTARRAY, T.INCOMPLETEARRAY):  # an array parameter is a pointer (Mtx)
+            return [f"rt::t_p(a[{i}] as usize as *const u8);"]
         if k[0] in ("int", "bool"):
             return [f"rt::t_i(a[{i}] as i64);"]
         if k[0] == "f32":
@@ -781,6 +816,8 @@ class TuGen:
                     out += ["    " + x for x in rl]
                     out.append("    rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }")
             return out
+        if k[0] == "rec":  # a record by value is not part of the trace (the call itself is)
+            return []
         raise ValueError(t.spelling)
 
     # ---- callbacks (for fn-pointer fields)
@@ -906,7 +943,7 @@ class TuGen:
         if o.get("mock"):
             if o.get("bytes"):
                 return f"static unsigned char {o['c']}[{o['bytes']}];"
-            return f"static {self.tspell(o['t'], o['c'])};"
+            return f"static {self.tspell(o['t'], o['c']).replace('const ', '')};"  # (a mock the callee returns a const pointer to is still filled)
         return None
 
     def tspell(self, t, name):
@@ -956,7 +993,11 @@ class TuGen:
         # (callbacks are discovered while generating fills, so generate everything first)
         body = []
         # fill-all / hash-all
+        for k, o in enumerate(self.snap_objs()):
+            L.append(f"static unsigned char tuo_snap{k}[sizeof({o['c']})];")
         fa = ["static void tuo_fill_all(void) {"]
+        for k, o in enumerate(self.snap_objs()):
+            fa.append(f"    {{ unsigned char* d_ = (unsigned char*)&{o['c']}; unsigned i_; for (i_ = 0; i_ < sizeof({o['c']}); i_++) d_[i_] = tuo_snap{k}[i_]; }}")
         for o in self.objs:
             if o["fill"]:
                 fa += ["    " + x for x in self.obj_fill_c(o)]
@@ -976,6 +1017,8 @@ class TuGen:
             sz = f"sizeof({o['c']})" if not o.get("size") else f"sizeof({o['c']})"
             ini.append(f'    tuo_reg_add(&{o["c"]}, {sz}, "{o["name"]}");' if not o.get("bytes") else
                        f'    tuo_reg_add({o["c"]}, {o["bytes"]}, "{o["name"]}");')
+        for k, o in enumerate(self.snap_objs()):
+            ini.append(f"    {{ const unsigned char* s_ = (const unsigned char*)&{o['c']}; unsigned i_; for (i_ = 0; i_ < sizeof({o['c']}); i_++) tuo_snap{k}[i_] = s_[i_]; }}")
         ini.append("    tuo_nstatic = tuo_nreg;")
         for i, v in enumerate(self.consts()):
             ini.append(f"    tuo_consts[{i}] = {v}LL;")
@@ -1211,7 +1254,11 @@ class TuGen:
             cbl += self.cb_rust(i, p)
         # fill_all / hash_objs
         L.append("")
+        for k, o in enumerate(self.snap_objs()):
+            L.append(f"static mut SNAP{k}: Vec<u8> = Vec::new();")
         L.append("unsafe fn fill_all() {")
+        for k, o in enumerate(self.snap_objs()):
+            L.append(f"    core::ptr::copy_nonoverlapping(SNAP{k}.as_ptr(), {o['r_ptr']} as *mut u8, SNAP{k}.len());")
         for o in self.objs:
             if o["fill"]:
                 L += ["    " + x for x in self.obj_fill_r(o)]
@@ -1233,12 +1280,18 @@ class TuGen:
                 L.append(f'    rt::reg_add({o["r"]}.as_ptr(), {o["bytes"]}, "{o["name"]}");')
             else:
                 L.append(f'    rt::reg_add(core::ptr::addr_of!({o["r"]}), core::mem::size_of_val(&{o["r"]}), "{o["name"]}");')
+        for k, o in enumerate(self.snap_objs()):
+            L.append(f"    SNAP{k} = core::slice::from_raw_parts({o['r_ptr']} as *const u8, core::mem::size_of_val(&*{o['r_ptr']})).to_vec();")
         L.append("    rt::NSTATIC = rt::REGS.len();")
         L.append("    rt::CONSTS = vec![" + ", ".join(str(v) for v in self.consts()) + "];")
         for n in sorted(self.funcs):
             L.append(f"    rt::fn_add(m::{self.rn(n)} as usize);")
-        for s in self.ext:
-            L.append(f"    rt::fn_add(m::ext::{s['name']} as usize);")
+        for k, s in enumerate(self.ext):
+            if s["name"] in self.cfg.get("rust_missing", ()):
+                # the port has no such external (it inlines or ports the callee): keep the slot so function-pointer classes line up
+                L.append(f"    rt::fn_add(usize::MAX - {k});")
+            else:
+                L.append(f"    rt::fn_add(m::ext::{s['name']} as usize);")
         for key, (i, p) in sorted(self.g2.cbs.items(), key=lambda kv: kv[1][0]):
             L.append(f"    rt::fn_add(cb{i} as usize);")
         L.append("    EXT_HOOK = Some(hook);")
@@ -1270,6 +1323,7 @@ class TuGen:
         L.append("    for line in data.lines() {")
         L.append("        let mut it = line.split_whitespace();")
         L.append("        let name = it.next().unwrap();")
+        L.append("        if let Ok(f) = std::env::var(\"TU_FN\") { if f != name { continue; } }")
         L.append("        let seed = u64::from_str_radix(it.next().unwrap(), 16).unwrap();")
         L.append("        assert_eq!(it.next(), Some(\"=\"));")
         L.append("        let want: Vec<u64> = it.map(|x| u64::from_str_radix(x, 16).unwrap()).collect();")
@@ -1528,7 +1582,7 @@ def build_and_run(stem, tg, cdir):
     subprocess.run([sys.executable, str(ROOT / "rust/melee_runtime/oracle/lower.py"), str(ll), str(lo)], check=True)
     (cdir / "main.c").write_text(driver_main_c(stem))
     exe = cdir / "oracle.exe"
-    r = subprocess.run([CL, "-O1", "-w", str(cdir / "main.c"), str(lo), "-o", str(exe)], cwd=ROOT, capture_output=True, text=True)
+    r = subprocess.run([CL, "-O1", "-w", str(cdir / "main.c"), str(lo), "-o", str(exe), "-Wl,/STACK:268435456", "-Wl,/OPT:NOICF"], cwd=ROOT, capture_output=True, text=True)
     if r.returncode:
         print(r.stderr[:6000])
         raise SystemExit("link failed")
@@ -1545,7 +1599,7 @@ def main():
     cdir = OUT_ROOT / stem
     cdir.mkdir(parents=True, exist_ok=True)
     (cdir / "wrap.c").write_text(c, newline="\n")
-    (ROOT / f"rust/melee_modes/tests/tu_{stem}.rs").write_text(r, newline="\n")
+    (ROOT / f"rust/melee_modes/tests/tu_{stem}.rs").write_text(r.replace(".__", "._x0"), newline="\n")
     # regenerate runner Rust after callbacks known (emit_c ran first, emit_rust second: both complete)
     print(f"{stem}: {len(tg.test_funcs)} functions, {len(tg.objs)} state objects, {len(tg.ext)} external functions mocked")
     # ext signatures for the port file
@@ -1565,11 +1619,34 @@ def main():
             for i in range(cases):
                 seed = (int.from_bytes(n.encode()[:8].ljust(8, b"\0"), "little") * 0x9E3779B97F4A7C15 + i * 0x1234567) & ((1 << 64) - 1)
                 inp.append(f"{n} {seed:x}")
-        res = subprocess.run([str(exe)], input="\n".join(inp) + "\n", capture_output=True, text=True, cwd=ROOT)
-        if res.returncode:
-            print(res.stderr[:3000])
-            raise SystemExit(f"oracle.exe failed rc={res.returncode}")
-        (ROOT / f"rust/melee_modes/tests/data/tu_{stem}.txt").write_text(res.stdout, newline="\n")
+        # one process per function: a function whose C side faults on the synthetic state is reported and left out
+        # of the data (the Rust test only runs the functions that have rows)
+        out_lines = []
+        for n in tg.test_funcs:
+            fin = [x for x in inp if x.split()[0] == n]
+            try:
+                res1 = subprocess.run([str(exe)], input=chr(10).join(fin) + chr(10), capture_output=True, text=True, cwd=ROOT, timeout=300)
+            except subprocess.TimeoutExpired:
+                print(f"tuoracle: C side of {n} hangs: left out")
+                continue
+            if res1.returncode:
+                # keep the cases whose C side runs: a fault is the synthetic state breaking an invariant of one draw
+                good = []
+                for ln in fin:
+                    try:
+                        r2 = subprocess.run([str(exe)], input=ln + chr(10), capture_output=True, text=True, cwd=ROOT, timeout=60)
+                    except subprocess.TimeoutExpired:
+                        continue
+                    if r2.returncode == 0:
+                        good.append(r2.stdout)
+                if len(good) * 4 < len(fin):
+                    print(f"tuoracle: C side of {n} faults (rc={res1.returncode:#x}) in {len(fin) - len(good)} of {len(fin)} cases: left out")
+                    continue
+                print(f"tuoracle: C side of {n} faults in {len(fin) - len(good)} of {len(fin)} cases: those cases are left out")
+                out_lines.append("".join(good))
+                continue
+            out_lines.append(res1.stdout)
+        (ROOT / f"rust/melee_modes/tests/data/tu_{stem}.txt").write_text("".join(out_lines), newline=chr(10))
         print(f"{stem}: {len(inp)} C cases written")
         tr = subprocess.run([str(exe), "--tables"], capture_output=True, text=True, cwd=ROOT)
         if tr.returncode == 0 and tr.stdout.strip():

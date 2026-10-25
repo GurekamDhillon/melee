@@ -11,7 +11,7 @@ use melee_types::*;
 use tu537::Rng;
 
 const NCASES: usize = 400;
-const FUNC_NAMES: [&str; 10] = [
+const FUNC_NAMES: [&str; 12] = [
     "gm_SetupSubColors",
     "SceneLaunch_SixPresentationTest",
     "gm_SetupSuddenDeath",
@@ -22,6 +22,8 @@ const FUNC_NAMES: [&str; 10] = [
     "gm_801B0730",
     "gm_801B07B4",
     "gm_801B07E8",
+    "SceneLaunch_ApplyTeamCostumes",
+    "SceneLaunch_HudCount",
 ];
 const CK: [i8; 6] = [2, 0x12, 0x13, 5, 0, 0x12];
 
@@ -156,6 +158,8 @@ fn matches_c() {
                     if mask & 16 != 0 { Some(&mut ol) } else { None },
                 ),
                 8 => t::gm_801B07B4(&mut cssd, a as i8, b as i8, c as i8, d as u8, (a >> 8) as u8, (b >> 8) as u8),
+                10 => t::SceneLaunch_ApplyTeamCostumes(&mut st),
+                11 => t::SceneLaunch_HudCount(&mut st),
                 _ => t::gm_801B07E8(
                     &cssd,
                     if mask & 1 != 0 { Some(&mut oc) } else { None },

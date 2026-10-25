@@ -31,7 +31,7 @@ void gm_InitVsMode(VsModeData* vs)
 static const char* FUNC_NAMES[] = {"gm_SetupSubColors", "SceneLaunch_SixPresentationTest", "gm_SetupSuddenDeath",
                                    "gm_801B05F4",       "gm_SetupHumanPlayer",             "gm_SetupCpuPlayer",
                                    "gm_801B06B0",       "gm_801B0730",                     "gm_801B07B4",
-                                   "gm_801B07E8"};
+                                   "gm_801B07E8",       "SceneLaunch_ApplyTeamCostumes",   "SceneLaunch_HudCount"};
 #define NFUNCS ((int) (sizeof FUNC_NAMES / sizeof FUNC_NAMES[0]))
 #define NCASES 400
 
@@ -184,6 +184,8 @@ int main(void)
                             (mask & 8) ? &on : NULL, (mask & 16) ? &ol : NULL);
                 break;
             case 8: gm_801B07B4(&CSSD, (s8) a, (s8) b, (s8) c, (u8) d, (u8) (a >> 8), (u8) (b >> 8)); break;
+            case 10: SceneLaunch_ApplyTeamCostumes(&ST); break;
+            case 11: SceneLaunch_HudCount(&ST); break;
             default:
                 gm_801B07E8(&CSSD, (mask & 1) ? &oc : NULL, (mask & 2) ? &os8 : NULL, (mask & 4) ? &ocol8 : NULL,
                             (mask & 8) ? &on8 : NULL, (mask & 16) ? &ol : NULL);

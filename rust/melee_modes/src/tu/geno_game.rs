@@ -5,21 +5,30 @@ use melee_core::fp::fmadds;
 pub use melee_types::*;
 pub use melee_runtime::gekko::sqrtf;
 macro_rules! OSReport { ($f:expr $(,$a:expr)* $(,)?) => {{
+    if let Some(h) = unsafe { crate::tu::ext_hook::EXT_HOOK } { unsafe { h("OSReport", &[$f as usize as u64]); } } else {
     let text=unsafe { core::ffi::CStr::from_ptr($f) }.to_string_lossy();
     eprintln!("{} {:?}",text, &[$(crate::tu::ext_hook::Val::to_u64($a)),*] as &[u64]);
+    }
 }}; }
 macro_rules! HSD_ForeachAnim { ($a:expr,$b:expr,$c:expr,$d:expr,$e:expr,$f:expr $(,)?) => {
     ext::HSD_ForeachAnim($a,$b,$c,$d,$e,crate::tu::ext_hook::Val::to_u64($f))
 }; }
-unsafe fn __assert(file:*const i8,line:u32,condition:*const i8)->! {
+pub unsafe fn __assert(file:*const i8,line:u32,condition:*const i8)->! {
     panic!("{}:{}: {}",core::ffi::CStr::from_ptr(file).to_string_lossy(),line,core::ffi::CStr::from_ptr(condition).to_string_lossy())
 }
 pub mod ext {
     use super::*;
+    pub use super::__assert;
+    /// Address-only marker for the OSReport mock (the TU calls it through the `OSReport!` macro).
+    pub unsafe extern "C" fn OSReport(_a0: *const i8) {}
     macro_rules! hooks {
         ($(fn $n:ident($($a:ident:$t:ty),* $(,)?) $(->$r:ty)? $(= $def:path)?;)*) => {
             pub mod hook { use super::*; $(pub static mut $n: Option<fn($($t),*) $(->$r)?> = None;)* }
             $(pub unsafe extern "C" fn $n($($a:$t),*) $(->$r)? {
+                if let Some(h) = $crate::tu::ext_hook::EXT_HOOK {
+                    return <$crate::ext_rty!($($r)?) as $crate::tu::ext_hook::Val>::from_u64(
+                        h(stringify!($n), &[$($crate::tu::ext_hook::Val::to_u64($a)),*]));
+                }
                 match hook::$n { Some(f)=>f($($a),*), None=>{ $crate::ext_dflt!([$($def)?] ($($a),*) $n) } }
             })*
             pub mod cb { pub use super::*; }
@@ -228,15 +237,15 @@ pub static mut HSD_GObj_CurrentInvokedProc: *mut HSD_GObjProc = unsafe { core::m
 pub static mut ftPartsTable: *mut *mut FighterPartsTable = unsafe { core::mem::zeroed() };
 pub static mut p_ftCommonData: *mut ftCommonData = unsafe { core::mem::zeroed() };
 pub static mut mpColl_LedgeLevelOK: i32 = unsafe { core::mem::zeroed() };
-pub static mut ftData_MotionStateList: [MotionState; 0] = unsafe { core::mem::zeroed() };
-pub static mut ftMr_Init_MotionStateTable: [MotionState; 0] = unsafe { core::mem::zeroed() };
-pub static mut ftCa_Init_MotionStateTable: [MotionState; 0] = unsafe { core::mem::zeroed() };
-pub static mut ftFx_Init_MotionStateTable: [MotionState; 0] = unsafe { core::mem::zeroed() };
-pub static mut ftFc_Init_MotionStateTable: [MotionState; 0] = unsafe { core::mem::zeroed() };
-pub static mut ftMs_Init_MotionStateTable: [MotionState; 0] = unsafe { core::mem::zeroed() };
-pub static mut ftPr_Init_MotionStateTable: [MotionState; 0] = unsafe { core::mem::zeroed() };
-pub static mut ftSk_Init_MotionStateTable: [MotionState; 0] = unsafe { core::mem::zeroed() };
-pub static mut ftZd_Init_MotionStateTable: [MotionState; 0] = unsafe { core::mem::zeroed() };
+pub static mut ftData_MotionStateList: [MotionState; 400] = unsafe { core::mem::zeroed() };
+pub static mut ftMr_Init_MotionStateTable: [MotionState; 400] = unsafe { core::mem::zeroed() };
+pub static mut ftCa_Init_MotionStateTable: [MotionState; 400] = unsafe { core::mem::zeroed() };
+pub static mut ftFx_Init_MotionStateTable: [MotionState; 400] = unsafe { core::mem::zeroed() };
+pub static mut ftFc_Init_MotionStateTable: [MotionState; 400] = unsafe { core::mem::zeroed() };
+pub static mut ftMs_Init_MotionStateTable: [MotionState; 400] = unsafe { core::mem::zeroed() };
+pub static mut ftPr_Init_MotionStateTable: [MotionState; 400] = unsafe { core::mem::zeroed() };
+pub static mut ftSk_Init_MotionStateTable: [MotionState; 400] = unsafe { core::mem::zeroed() };
+pub static mut ftZd_Init_MotionStateTable: [MotionState; 400] = unsafe { core::mem::zeroed() };
 pub static mut hsd_804D78FC: *mut HSD_Generator = unsafe { core::mem::zeroed() };
 pub static mut hsd_804D0908: [*mut HSD_Particle; 16] = unsafe { core::mem::zeroed() };
 pub static mut it_803F14C4: [ItemLogicTable; 43] = unsafe { core::mem::zeroed() };

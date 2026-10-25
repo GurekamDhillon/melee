@@ -1023,6 +1023,14 @@ rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_In
   captures the pause (10 ticks in) and a live frame (tick 420). Match/pause shots hold disc art and are not committed; play_sss.png is.
   Not tried: keyboard and gamepad input by hand (the GC adapter did open in the run, but the script drove the pads).
 
+- Round 3 (hands-off input): a scripted run (`MELEE_PAD_SCRIPT` set) never touches the user's keyboard or focus. The window is created
+  with `with_active(false)` (`WindowConfig.active`, also view-golden and gx_viewer), the GC adapter is not opened (`MELEE_PAD_IGNORE_ADAPTER=1`),
+  gamepads are a fixed empty set and port 1 gets no keyboard preset, so alt-tabbing cannot change the result. No tool in the repo sends
+  OS-level input (grep for SendKeys/SendInput/keybd_event/AppActivate/pyautogui: none). Interactive `melee play` binds port 1 to the keyboard
+  preset (WASD/IJKL/Space/Shift/Enter; `MELEE_KEYBOARD=0` off). `view` renders any stage's map groups, not just FD.
+  Re-run: full_loop.txt (1360 ticks to results), vs_to_ko.txt --golden-pads (1875 ticks, winner port 2 by falls), pause_quit_rematch.txt (two matches, 1563 ticks), all with the window in the background.
+  Still stand-ins: ui.rs menus (gmfrontend.c's .inc units and the retail mn* scenes are not driven), opening card, 7 fighters, 4 stages.
+
 ## Platform track, audio proof (plat-audio, 2026-10-24)
 - C side: `MELEE_AUDIO_TRACE=<path>` (shim_ax.c `gw_ax_trace`) logs every game-facing axdriver.c / synth.c call
   (`<sub-frame> OP args`; START with its returned handle, KO*, PAN/VOL/PITCH/MIX, MIXGRP, PAUSE/RESUME, PSTART,
@@ -1058,8 +1066,19 @@ rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_In
   impulse/cpu_mode(s)/fly/teleport/fly_speed/fly_solid/hold_hitbox/play_sound, timeline/motion_list/set_motion/anim_rows/anim_preview,
   lab_request/lab_mode/lab_leave/lab_now/lab_common/lab_env/floor_below/set_shield/set_scale/rollbacks(_clear).
 - Round 2: `rewind.rs` + `gd/history.rs` port the long rewind (gd.history/step_back/rewind_to/rewind_live/rewind_test(_result), input log with pad/sfx/audio replay, keyframe cadence, `iterations`, FramePre/Post kinds 0/1/2), hot_reload(_status), the `gd.state_*` library (own 384-byte header, index.txt) and gd.kb_preview. Keyframes/snapshot files are `ScriptGame::rw_*`/`snap_file_*` (the game half does not exist in Rust yet; tests/history.rs uses an in-memory mock, 9 tests). Found+fixed: gd.set_percent lacked rw_branch.
-- **Not ported yet** (next rounds, in order): rec_* (gw_script_rec.inc),
-  hot_reload, kb_preview, combo, perf/prof, `gd.kit` / `gd.ui` (tables are empty), entity refs (`entity_ref` is nil), items/fx/echo/
+- Geno registry (round 3, `rust/melee_script/src/geno/`): `json.rs` (the registry's JSON reader, strtod and `%.9g`), `registry.rs`
+  (geno_registry.c: attach entries with attributes/scale/toon/jumps/hooks, v1 special_attributes/on_land/motion_anims/subaction overlays,
+  v2 states/params/specials, v5 counter windows/sounds/articles, stable ids, kind table, hot-reload layout check), `consts.rs`/`tables.rs`
+  generated from pc/geno/geno.h and geno_game*.c by `tools/gen_geno_tables.py`. `tests/geno_registry.rs` ports test_geno_registry_*; the pinned
+  stable id `39ebc1bd1de2fc58` equals the C build's. Found: the C `geno_registry_v2` test asserts phys "none" < 0 but the table returns
+  GENO_CBID_NONE (4); the port follows the table. **Not ported**: native `define` entries (geno_define_*.inc; every shipped mod is one, so
+  the shipped geno.json files parse to 0 entries), fighter Lua (geno_lua_registry.inc), combo/meter, controls schema, the game half.
+- Round 4: `gd/combo.rs` (gd.combo, gd.combo_ki; reads through `ScriptGame::combo_*`), `gd/perf.rs` (gd.perf incl. shader block and
+  profiler block, gd.prof; via `Host::perf_snapshot/prof_snapshot/prof_command`), `gd/rec.rs` (all gd.rec_* Lua halves: gr_gate, gr_name_ok, argument
+  shapes, status/list tables; the recorder state machine and .gdlp files stay behind `ScriptGame::rec_*`, NOT ported, default impls refuse).
+  `tests/combo_perf_rec.rs` (4 tests). Every `gd.*` that lab.lua calls is now registered; 279 names are in the C table, ~150 remain (see below).
+- **Not ported yet** (next rounds, in order): the .gdlp recorder itself, the caps family (nearest_opponent, give_item, fighter_*),
+  hitstop, cpu_* scripts, hot_reload, kb_preview, `gd.kit` / `gd.ui` (tables are empty), entity refs (`entity_ref` is nil), items/fx/echo/
   afterimage/tracer, stage_*/model_*/shader/area/warm/launch/1P/netplay/modsync/sim/hit_rules/enemy*, the Geno registry (geno_registry.c,
   geno_lua_core.h, fighter Lua), `lab.lua`'s remaining calls. `gdscript pc/geno/mods/geno-lab` lists what lab.lua still lacks at load.
 - Proof so far: `cargo test -p melee_script` (7 unit + 18 engine + 6 lab_api tests); `rust/melee_script/tools/standalone_parity.sh` runs
@@ -1095,6 +1114,7 @@ rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_In
     `tools/netplay/server/gdmelee_server.py` room codes (`--host --server S` then `--room CODE --server S`) and
     through random matchmaking (`--random --server S` on both): all golden-equal, identical CSVs, rollbacks
     included when lag/loss are on.
+- Golden comparison needs `--seed 12345` on the host (the match seed is random otherwise, so the hashes differ from the golden CSV from frame 0 while both peers still agree). Re-verified 2026-10-24 on the merged tree (no window, no OS input): synctest depth 12 0 mismatches / 1801 golden-equal; host+guest `--seed 12345 --lag-ms 70 --loss-pct 5`: 78 rollbacks, 0 desyncs, 1801/1801 golden-equal, identical CSVs.
 - `--live-rng`: the online per-frame RNG rule (`gw_Replay_ChecksumSeed`: a frame starts from
   `seed + ((frame + 123) << 16)`), needed to match a C netplay match; the checksum uses it too. Off by default
   (the golden CSVs are offline).
@@ -1123,3 +1143,7 @@ rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_In
   Rust effect code does not make on that path), and at index 211 Falcon's landing word differs (5715B485 vs
   5615B536). This is a sim gap found by netplay (different input timing from the offline golden), not a
   transport problem; fixing it belongs to the fighter / effect ports.
+
+- Round 4 (plat-play, re-verify after merging port/platform-integ): full_loop.txt (1359 ticks, to results, time-up draw) and
+  pause_quit_rematch.txt (1563 ticks, two matches) re-run hands-off with MELEE_PAD_IGNORE_ADAPTER=1, unfocused window, `--shots`; all
+  screens captured (build/r2, disc art, not committed). Still stand-ins: ui.rs menus, 7 fighters, 4 stages, sim halts on unported fighter states.

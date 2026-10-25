@@ -11,7 +11,7 @@ type LuaResult<T> = mlua::Result<T>;
 
 pub const GS_HR_MAX: usize = 32;
 pub const GS_HR_FIELDS: usize = 16;
-const MOVES: [&str; 10] = ["unknown", "jab", "dash_attack", "tilt", "smash", "aerial", "grab", "throw", "special", "projectile"];
+pub(crate) const MOVES: [&str; 10] = ["unknown", "jab", "dash_attack", "tilt", "smash", "aerial", "grab", "throw", "special", "projectile"];
 
 type Rule = [i32; GS_HR_FIELDS];
 
@@ -22,7 +22,7 @@ struct Rules {
     rules: Vec<Rule>,
 }
 
-fn element_name(e: i32) -> &'static str {
+pub(crate) fn element_name(e: i32) -> &'static str {
     match e {
         0 => "normal",
         1 => "fire",
@@ -32,7 +32,7 @@ fn element_name(e: i32) -> &'static str {
         _ => "any",
     }
 }
-fn element(name: &'static str, v: &Value) -> LuaResult<i32> {
+pub(crate) fn element(name: &'static str, v: &Value) -> LuaResult<i32> {
     let n = neg1(one(name, v).check_string(1))?;
     if n == "any" {
         return Ok(-1);
@@ -44,7 +44,7 @@ fn element(name: &'static str, v: &Value) -> LuaResult<i32> {
     }
     Err(lua_err("hit rules allow only normal/fire/electric/ice/darkness elements"))
 }
-fn keys(t: &Table, allowed: &[&str]) -> LuaResult<()> {
+pub(crate) fn keys(t: &Table, allowed: &[&str]) -> LuaResult<()> {
     for (k, _) in pairs(t)? {
         let ks = key_str(&k);
         if !ks.as_deref().is_some_and(|k| allowed.contains(&k)) {
@@ -56,7 +56,7 @@ fn keys(t: &Table, allowed: &[&str]) -> LuaResult<()> {
     }
     Ok(())
 }
-fn int_field(name: &'static str, t: &Table, key: &str, fallback: i64, lo: i64, hi: i64) -> LuaResult<i32> {
+pub(crate) fn int_field(name: &'static str, t: &Table, key: &str, fallback: i64, lo: i64, hi: i64) -> LuaResult<i32> {
     let v: Value = t.get(key)?;
     let n = if matches!(v, Value::Nil) { fallback } else { neg1(one(name, &v).check_integer(1))? };
     if n < lo || n > hi {

@@ -803,6 +803,39 @@ pub trait ScriptGame {
     fn camera_params(&mut self, _owner: i32, _mask: i32, _bits: &[i32]) -> i32 {
         0
     }
+    // ---- echoes and the fighter history (`gw_ScriptGame_Echo*`, `FighterHistory*`): pc/platform/gw_script_echo.inc
+    fn fighter_history_depth(&self) -> i32 {
+        0
+    }
+    /// hitbox -1: the fighter row (0 present, 1 generation, 2 action state, 3 move, 4 airborne, 5.. action_frame x y z facing,
+    /// 10 hitbox count, 11 attack id); hitbox 0..4: 0 present, 1 identity, 2 damage ... see gd::echo
+    fn fighter_history_read(&self, _entity: i32, _age: i32, _hitbox: i32, _field: i32) -> i32 {
+        0
+    }
+    /// `rest` are delay, move, element, airborne, damage bits, knockback bits, new element, once_per_move; handle 0 allocates
+    fn echo_add_with_handle(&mut self, _entity: i32, _owner: i32, _rest: &[i32], _handle: i32) -> i32 {
+        0
+    }
+    fn echo_remove(&mut self, _handle: i32, _owner: i32) -> i32 {
+        0
+    }
+    fn echo_read(&self, _entity: i32, _index: i32, _field: i32) -> i32 {
+        0
+    }
+    fn echo_owner(&self, _entity: i32) -> i32 {
+        0
+    }
+    fn echo_next_handle(&self) -> i32 {
+        1
+    }
+    /// replace the entity's whole rule table (count rows of 9 ints, flattened to 8 rows); nonzero when accepted
+    fn echo_replace(&mut self, _entity: i32, _owner: i32, _count: i32, _rules: &[i32]) -> i32 {
+        0
+    }
+    /// field 0 armed, 1 element, 2 flash frames
+    fn echo_state(&self, _entity: i32, _handle: i32, _field: i32) -> i32 {
+        0
+    }
     // ---- entity identity (`gw_ScriptGame_EntityField`, `EntityEpoch`, `EntityAddressField`): pc/platform/gw_script_spine_refs.inc
     /// kind 1 fighter (id = port*2+sub), 2 item, 3 echo, 4 stage object, 5 stage actor. field 0 live, 1 epoch, 2 generation,
     /// 3 definition, 4 owner fighter id + 1, 5 role bits

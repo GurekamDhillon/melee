@@ -791,7 +791,7 @@ ftAnim_80070E74,src/melee/ft/ftanim.c,0,233,ported+verified,melee_fighter
 ftAnim_80070F28,src/melee/ft/ftanim.c,0,233,ported+verified,melee_fighter
 ftAnim_GetNextJointInTree,src/melee/ft/ftanim.c,0,272,ported+verified,melee_chara
 ftCamera_80076064,src/melee/ft/ftcamera.c,0,7,ported+verified,melee_fighter
-ftCamera_UpdateCameraBox,src/melee/ft/ftcamera.c,0,2628,stub,melee_fighter
+ftCamera_UpdateCameraBox,src/melee/ft/ftcamera.c,0,2628,ported+verified,melee_fighter
 ftCo_800D0FA0,src/melee/ft/ftchangeparam.c,0,2,ported+verified,melee_fighter
 ftCo_800D105C,src/melee/ft/ftchangeparam.c,0,7,ported+verified,melee_fighter
 ftCo_800BFFAC,src/melee/ft/ftcolanim.c,0,7,ported+verified,melee_chara
@@ -2179,7 +2179,7 @@ ftLib_8008701C,src/melee/ft/ftlib.c,124,2685,ported+verified,melee_fighter
 ftLib_80087120,src/melee/ft/ftlib.c,124,2980,ported+verified,melee_fighter
 ftLib_8008777C,src/melee/ft/ftlib.c,124,2762,ported+verified,melee_fighter
 ftLib_800877D4,src/melee/ft/ftlib.c,124,2980,ported+verified,melee_fighter
-ftLib_GetItem,src/melee/ft/ftlib.c,124,2980,ported-unverified,melee_fighter
+ftLib_GetItem,src/melee/ft/ftlib.c,124,2980,ported+verified,melee_fighter
 gm_GetCurrentSceneIndex,src/melee/gm/gm_1A3F.c,124,1490,ported+verified,melee_modes
 gm_801A4624,src/melee/gm/gmscene.c,124,1490,ported+verified,melee_modes
 gm_DefaultVSGetPauser,src/melee/gm/gmvs.c,124,1490,ported+verified,melee_modes
@@ -2306,7 +2306,7 @@ ftCo_80091E78,src/melee/ft/kinds/ftCommon/ftCo_Guard.c,216,78,ported+verified,me
 ftCo_800921DC,src/melee/ft/kinds/ftCommon/ftCo_Guard.c,216,6,ported+verified,melee_fighter
 ftCo_800939B4,src/melee/ft/kinds/ftCommon/ftCo_Guard.c,216,6,ported+verified,melee
 ftCo_80093A50,src/melee/ft/kinds/ftCommon/ftCo_Guard.c,216,6,ported+verified,melee_fighter
-ftCo_GuardPoseTree,src/melee/ft/kinds/ftCommon/ftCo_Guard.c,216,78,ported-unverified,melee_fighter
+ftCo_GuardPoseTree,src/melee/ft/kinds/ftCommon/ftCo_Guard.c,216,78,ported+verified,melee_fighter
 ftCo_GuardReflect_Coll,src/melee/ft/kinds/ftCommon/ftCo_Guard.c,216,48,ported+verified,melee_fighter
 ftCo_GuardReflect_Phys,src/melee/ft/kinds/ftCommon/ftCo_Guard.c,216,48,ported+verified,melee_fighter
 lb_8000C868,src/melee/lb/lb_00B0.c,216,3168,ported+verified,melee_runtime
@@ -2321,7 +2321,7 @@ ftCo_800D8B9C,src/melee/ft/kinds/ftCommon/ftCo_Catch.c,217,42,ported+verified,me
 ftCo_8009917C,src/melee/ft/kinds/ftCommon/ftCo_Escape.c,217,66,ported+verified,melee_fighter
 ftCo_8009980C,src/melee/ft/kinds/ftCommon/ftCo_Escape.c,217,72,ported+verified,melee_fighter
 ftCo_800925A4,src/melee/ft/kinds/ftCommon/ftCo_Guard.c,217,72,ported+verified,melee_fighter
-ftCo_GuardOn_Anim_inline,src/melee/ft/kinds/ftCommon/ftCo_Guard.c,217,48,missing,melee_fighter
+ftCo_GuardOn_Anim_inline,src/melee/ft/kinds/ftCommon/ftCo_Guard.c,217,48,ported+verified,melee_fighter
 ftCo_GuardReflect_Anim,src/melee/ft/kinds/ftCommon/ftCo_Guard.c,217,48,ported+verified,melee_fighter
 ftCo_GuardReflect_IASA,src/melee/ft/kinds/ftCommon/ftCo_Guard.c,217,42,ported+verified,melee_fighter
 ftCo_8009515C,src/melee/ft/kinds/ftCommon/ftCo_ItemThrow.c,217,66,ported+verified,melee_fighter

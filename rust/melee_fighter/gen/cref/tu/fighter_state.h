@@ -5,6 +5,8 @@ static void fill_HSD_JObj(HSD_JObj* p);
 static void hash_HSD_JObj(const HSD_JObj* p);
 static void fill_HSD_GObj(HSD_GObj* p);
 static void hash_HSD_GObj(const HSD_GObj* p);
+static void fill_plAllocInfo(struct plAllocInfo* p);
+static void hash_plAllocInfo(const struct plAllocInfo* p);
 static void fill_Fighter(Fighter* p)
 {
     int i0, i1, i2, j0, j1, j2, j3;
@@ -1523,1574 +1525,1556 @@ static void hash_Fighter(const Fighter* p)
 {
     int i0, i1, i2, j0, j1, j2, j3;
     if (HDBG) printf("B Fighter%c", 10);
-    HM(PI((const void*) p->gobj));
-    HM((u32) p->kind);
-    HM((u32) p->x8_spawnNum);
-    HM((u32) p->player_id);
-    HM((u32) p->motion_id);
-    HM((u32) p->anim_id);
-    HM((u32) p->x18);
-    HM(PI((const void*) p->x1C_actionStateList));
-    HM(PI((const void*) p->x20_actionStateList));
-    HM(PI((const void*) p->x24));
-    HM(PI((const void*) p->x28));
-    HM(B(p->facing_dir));
-    HM(B(p->facing_dir1));
-    HM(B(p->x34_scale.x));
-    HM(B(p->x34_scale.y));
-    HM(B(p->x34_scale.z));
-    HM(B(p->x40));
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->gobj)", 10); HM(PI((const void*) p->gobj)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->kind", 10); HM((u32) p->kind); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x8_spawnNum", 10); HM((u32) p->x8_spawnNum); }
+    { if (HDBG) printf("N %s%c", "(u32) p->player_id", 10); HM((u32) p->player_id); }
+    { if (HDBG) printf("N %s%c", "(u32) p->motion_id", 10); HM((u32) p->motion_id); }
+    { if (HDBG) printf("N %s%c", "(u32) p->anim_id", 10); HM((u32) p->anim_id); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x18", 10); HM((u32) p->x18); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x1C_actionStateList)", 10); HM(PI((const void*) p->x1C_actionStateList)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x20_actionStateList)", 10); HM(PI((const void*) p->x20_actionStateList)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x24)", 10); HM(PI((const void*) p->x24)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x28)", 10); HM(PI((const void*) p->x28)); }
+    { if (HDBG) printf("N %s%c", "B(p->facing_dir)", 10); HM(B(p->facing_dir)); }
+    { if (HDBG) printf("N %s%c", "B(p->facing_dir1)", 10); HM(B(p->facing_dir1)); }
+    { if (HDBG) printf("N %s%c", "B(p->x34_scale.x)", 10); HM(B(p->x34_scale.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x34_scale.y)", 10); HM(B(p->x34_scale.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->x34_scale.z)", 10); HM(B(p->x34_scale.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->x40)", 10); HM(B(p->x40)); }
     for (i0 = 0; i0 < 3; i0++) {
     for (i1 = 0; i1 < 4; i1++) {
-    HM(B(p->x44_mtx[i0][i1]));
+    { if (HDBG) printf("N %s%c", "B(p->x44_mtx[i0][i1])", 10); HM(B(p->x44_mtx[i0][i1])); }
     }
     }
-    HM(B(p->x74_self_accel.x));
-    HM(B(p->x74_self_accel.y));
-    HM(B(p->x74_self_accel.z));
-    HM(B(p->self_vel.x));
-    HM(B(p->self_vel.y));
-    HM(B(p->self_vel.z));
-    HM(B(p->x8c_kb_vel.x));
-    HM(B(p->x8c_kb_vel.y));
-    HM(B(p->x8c_kb_vel.z));
-    HM(B(p->x98_atk_shield_kb.x));
-    HM(B(p->x98_atk_shield_kb.y));
-    HM(B(p->x98_atk_shield_kb.z));
-    HM(B(p->xA4_unk_vel.x));
-    HM(B(p->xA4_unk_vel.y));
-    HM(B(p->xA4_unk_vel.z));
-    HM(B(p->cur_pos.x));
-    HM(B(p->cur_pos.y));
-    HM(B(p->cur_pos.z));
-    HM(B(p->prev_pos.x));
-    HM(B(p->prev_pos.y));
-    HM(B(p->prev_pos.z));
-    HM(B(p->pos_delta.x));
-    HM(B(p->pos_delta.y));
-    HM(B(p->pos_delta.z));
-    HM(B(p->xD4_unk_vel.x));
-    HM(B(p->xD4_unk_vel.y));
-    HM(B(p->xD4_unk_vel.z));
-    HM((u32) p->ground_or_air);
-    HM(B(p->xE4_ground_accel_1));
-    HM(B(p->xE8_ground_accel_2));
-    HM(B(p->gr_vel));
-    HM(B(p->xF0_ground_kb_vel));
-    HM(B(p->xF4_ground_attacker_shield_kb_vel));
-    HM(B(p->xF8_playerNudgeVel.x));
-    HM(B(p->xF8_playerNudgeVel.y));
-    HM(B(p->x100));
-    HM((u32) p->x104);
-    HM((u32) p->x105);
-    HM((u32) p->x106);
-    HM((u32) p->x107);
-    HM(PI((const void*) p->x108_costume_joint));
-    HM(PI((const void*) p->ft_data));
-    HM(B(p->co_attrs.walk_accel_mul));
-    HM(B(p->co_attrs.walk_accel_base));
-    HM(B(p->co_attrs.walk_max_vel));
-    HM(B(p->co_attrs.slow_walk_max));
-    HM(B(p->co_attrs.mid_walk_point));
-    HM(B(p->co_attrs.fast_walk_min));
-    HM(B(p->co_attrs.ground_friction));
-    HM(B(p->co_attrs.dash_initial_velocity));
-    HM(B(p->co_attrs.dash_accel_mul));
-    HM(B(p->co_attrs.dash_accel_base));
-    HM(B(p->co_attrs.dash_max_velocity));
-    HM(B(p->co_attrs.run_animation_scaling));
-    HM(B(p->co_attrs.max_run_brake_frames));
-    HM(B(p->co_attrs.ground_max_horizontal_velocity));
-    HM(B(p->co_attrs.jump_startup_time));
-    HM(B(p->co_attrs.jump_h_initial_velocity));
-    HM(B(p->co_attrs.jump_v_initial_velocity));
-    HM(B(p->co_attrs.ground_to_air_jump_momentum_multiplier));
-    HM(B(p->co_attrs.jump_h_max_velocity));
-    HM(B(p->co_attrs.hop_v_initial_velocity));
-    HM(B(p->co_attrs.air_jump_v_multiplier));
-    HM(B(p->co_attrs.air_jump_h_multiplier));
-    HM((u32) p->co_attrs.max_jumps);
-    HM(B(p->co_attrs.gravity));
-    HM(B(p->co_attrs.terminal_velocity));
-    HM(B(p->co_attrs.air_drift_stick_mul));
-    HM(B(p->co_attrs.aerial_drift_base));
-    HM(B(p->co_attrs.air_drift_max));
-    HM(B(p->co_attrs.aerial_friction));
-    HM(B(p->co_attrs.fast_fall_velocity));
-    HM(B(p->co_attrs.air_max_horizontal_velocity));
-    HM(B(p->co_attrs.jab_2_input_window));
-    HM(B(p->co_attrs.jab_3_input_window));
-    HM(B(p->co_attrs.standing_turn_frames));
-    HM(B(p->co_attrs.weight));
-    HM(B(p->co_attrs.model_scaling));
-    HM(B(p->co_attrs.initial_shield_size));
-    HM(B(p->co_attrs.shield_break_initial_velocity));
-    HM((u32) p->co_attrs.rapid_jab_window);
-    HM(B(p->co_attrs.clank_animation_length));
-    HM((u32) p->co_attrs.hit_spark_variant);
-    HM((u32) p->co_attrs.unused_0);
-    HM(B(p->co_attrs.ledge_jump_horizontal_velocity));
-    HM(B(p->co_attrs.ledge_jump_vertical_velocity));
-    HM(B(p->co_attrs.item_throw_velocity_multiplier));
-    HM(B(p->co_attrs.heavy_throw_velocity_multiplier));
-    HM(B(p->co_attrs.specials_ground_speed_retention));
-    HM(B(p->co_attrs.xBC.size));
-    HM(B(p->co_attrs.xBC.x4.x));
-    HM(B(p->co_attrs.xBC.x4.y));
-    HM(B(p->co_attrs.xBC.x4.z));
-    HM(B(p->co_attrs.xBC.x10.x));
-    HM(B(p->co_attrs.xBC.x10.y));
-    HM(B(p->co_attrs.xBC.x10.z));
-    HM(B(p->co_attrs.xBC.x1C));
-    HM(B(p->co_attrs.xDC));
-    HM(B(p->co_attrs.kirby_b_star_damage));
-    HM(B(p->co_attrs.normal_landing_lag));
-    HM(B(p->co_attrs.landingairn_lag));
-    HM(B(p->co_attrs.landingairf_lag));
-    HM(B(p->co_attrs.landingairb_lag));
-    HM(B(p->co_attrs.landingairhi_lag));
-    HM(B(p->co_attrs.landingairlw_lag));
-    HM(B(p->co_attrs.name_tag_height));
-    HM(B(p->co_attrs.passivewall_vel_x));
-    HM(B(p->co_attrs.wall_jump_horizontal_velocity));
-    HM(B(p->co_attrs.wall_jump_vertical_velocity));
-    HM(B(p->co_attrs.passiveceil_vel_x));
-    HM(B(p->co_attrs.trophy_scale));
-    HM(B(p->co_attrs.x114.x));
-    HM(B(p->co_attrs.x114.y));
-    HM(B(p->co_attrs.x114.z));
-    HM(B(p->co_attrs.x120.x));
-    HM(B(p->co_attrs.x120.y));
-    HM(B(p->co_attrs.x120.z));
-    HM(B(p->co_attrs.x12C));
-    HM(B(p->co_attrs.x130.x));
-    HM(B(p->co_attrs.x130.y));
-    HM(B(p->co_attrs.x130.z));
-    HM(B(p->co_attrs.x13C));
-    HM(B(p->co_attrs.screw_attack_launch_velocity));
-    HM(B(p->co_attrs.x144));
-    HM(B(p->co_attrs.wall_jump_min_approach_speed));
-    HM(B(p->co_attrs.damageice_ice_size));
-    HM(B(p->co_attrs.x150_damageice_unk));
-    HM(B(p->co_attrs.x154_damageice_unk));
-    HM(B(p->co_attrs.damageicejump_vel_y));
-    HM(B(p->co_attrs.damageicejump_vel_x_mult));
-    HM(B(p->co_attrs.respawn_platform_scale));
-    HM(B(p->co_attrs.warp_star_hitbox_scale));
-    HM(B(p->co_attrs.x168));
-    HM((u32) p->co_attrs.camera_zoom_target_bone);
-    HM(B(p->co_attrs.x170.x));
-    HM(B(p->co_attrs.x170.y));
-    HM(B(p->co_attrs.x170.z));
-    HM(B(p->co_attrs.x17C));
-    HM((u32) p->co_attrs.weight_independent_throws_mask);
-    HM(B(p->x294_itPickup.gr_light_offset.x));
-    HM(B(p->x294_itPickup.gr_light_offset.y));
-    HM(B(p->x294_itPickup.gr_light_offset.z));
-    HM(B(p->x294_itPickup.gr_light_offset.w));
-    HM(B(p->x294_itPickup.gr_heavy_offset.x));
-    HM(B(p->x294_itPickup.gr_heavy_offset.y));
-    HM(B(p->x294_itPickup.gr_heavy_offset.z));
-    HM(B(p->x294_itPickup.gr_heavy_offset.w));
-    HM(B(p->x294_itPickup.air_light_offset.x));
-    HM(B(p->x294_itPickup.air_light_offset.y));
-    HM(B(p->x294_itPickup.air_light_offset.z));
-    HM(B(p->x294_itPickup.air_light_offset.w));
-    HM(B(p->x2C4.x));
-    HM(B(p->x2C4.y));
-    HM(PI((const void*) p->x2CC));
-    HM(PI((const void*) p->x2D0));
-    HM(PI((const void*) p->dat_attrs));
-    HM(PI((const void*) p->dat_attrs_backup));
-    HM(B(p->x2DC));
-    HM(B(p->x2E0));
-    HM(B(p->x2E4));
-    HM(B(p->x2E8));
-    HM(B(p->x2EC));
+    { if (HDBG) printf("N %s%c", "B(p->x74_self_accel.x)", 10); HM(B(p->x74_self_accel.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x74_self_accel.y)", 10); HM(B(p->x74_self_accel.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->x74_self_accel.z)", 10); HM(B(p->x74_self_accel.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->self_vel.x)", 10); HM(B(p->self_vel.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->self_vel.y)", 10); HM(B(p->self_vel.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->self_vel.z)", 10); HM(B(p->self_vel.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->x8c_kb_vel.x)", 10); HM(B(p->x8c_kb_vel.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x8c_kb_vel.y)", 10); HM(B(p->x8c_kb_vel.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->x8c_kb_vel.z)", 10); HM(B(p->x8c_kb_vel.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->x98_atk_shield_kb.x)", 10); HM(B(p->x98_atk_shield_kb.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x98_atk_shield_kb.y)", 10); HM(B(p->x98_atk_shield_kb.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->x98_atk_shield_kb.z)", 10); HM(B(p->x98_atk_shield_kb.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->xA4_unk_vel.x)", 10); HM(B(p->xA4_unk_vel.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->xA4_unk_vel.y)", 10); HM(B(p->xA4_unk_vel.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->xA4_unk_vel.z)", 10); HM(B(p->xA4_unk_vel.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->cur_pos.x)", 10); HM(B(p->cur_pos.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->cur_pos.y)", 10); HM(B(p->cur_pos.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->cur_pos.z)", 10); HM(B(p->cur_pos.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->prev_pos.x)", 10); HM(B(p->prev_pos.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->prev_pos.y)", 10); HM(B(p->prev_pos.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->prev_pos.z)", 10); HM(B(p->prev_pos.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->pos_delta.x)", 10); HM(B(p->pos_delta.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->pos_delta.y)", 10); HM(B(p->pos_delta.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->pos_delta.z)", 10); HM(B(p->pos_delta.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->xD4_unk_vel.x)", 10); HM(B(p->xD4_unk_vel.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->xD4_unk_vel.y)", 10); HM(B(p->xD4_unk_vel.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->xD4_unk_vel.z)", 10); HM(B(p->xD4_unk_vel.z)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->ground_or_air", 10); HM((u32) p->ground_or_air); }
+    { if (HDBG) printf("N %s%c", "B(p->xE4_ground_accel_1)", 10); HM(B(p->xE4_ground_accel_1)); }
+    { if (HDBG) printf("N %s%c", "B(p->xE8_ground_accel_2)", 10); HM(B(p->xE8_ground_accel_2)); }
+    { if (HDBG) printf("N %s%c", "B(p->gr_vel)", 10); HM(B(p->gr_vel)); }
+    { if (HDBG) printf("N %s%c", "B(p->xF0_ground_kb_vel)", 10); HM(B(p->xF0_ground_kb_vel)); }
+    { if (HDBG) printf("N %s%c", "B(p->xF4_ground_attacker_shield_kb_vel)", 10); HM(B(p->xF4_ground_attacker_shield_kb_vel)); }
+    { if (HDBG) printf("N %s%c", "B(p->xF8_playerNudgeVel.x)", 10); HM(B(p->xF8_playerNudgeVel.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->xF8_playerNudgeVel.y)", 10); HM(B(p->xF8_playerNudgeVel.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->x100)", 10); HM(B(p->x100)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x104", 10); HM((u32) p->x104); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x105", 10); HM((u32) p->x105); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x106", 10); HM((u32) p->x106); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x107", 10); HM((u32) p->x107); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x108_costume_joint)", 10); HM(PI((const void*) p->x108_costume_joint)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->ft_data)", 10); HM(PI((const void*) p->ft_data)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.walk_accel_mul)", 10); HM(B(p->co_attrs.walk_accel_mul)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.walk_accel_base)", 10); HM(B(p->co_attrs.walk_accel_base)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.walk_max_vel)", 10); HM(B(p->co_attrs.walk_max_vel)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.slow_walk_max)", 10); HM(B(p->co_attrs.slow_walk_max)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.mid_walk_point)", 10); HM(B(p->co_attrs.mid_walk_point)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.fast_walk_min)", 10); HM(B(p->co_attrs.fast_walk_min)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.ground_friction)", 10); HM(B(p->co_attrs.ground_friction)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.dash_initial_velocity)", 10); HM(B(p->co_attrs.dash_initial_velocity)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.dash_accel_mul)", 10); HM(B(p->co_attrs.dash_accel_mul)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.dash_accel_base)", 10); HM(B(p->co_attrs.dash_accel_base)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.dash_max_velocity)", 10); HM(B(p->co_attrs.dash_max_velocity)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.run_animation_scaling)", 10); HM(B(p->co_attrs.run_animation_scaling)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.max_run_brake_frames)", 10); HM(B(p->co_attrs.max_run_brake_frames)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.ground_max_horizontal_velocity)", 10); HM(B(p->co_attrs.ground_max_horizontal_velocity)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.jump_startup_time)", 10); HM(B(p->co_attrs.jump_startup_time)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.jump_h_initial_velocity)", 10); HM(B(p->co_attrs.jump_h_initial_velocity)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.jump_v_initial_velocity)", 10); HM(B(p->co_attrs.jump_v_initial_velocity)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.ground_to_air_jump_momentum_multiplier)", 10); HM(B(p->co_attrs.ground_to_air_jump_momentum_multiplier)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.jump_h_max_velocity)", 10); HM(B(p->co_attrs.jump_h_max_velocity)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.hop_v_initial_velocity)", 10); HM(B(p->co_attrs.hop_v_initial_velocity)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.air_jump_v_multiplier)", 10); HM(B(p->co_attrs.air_jump_v_multiplier)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.air_jump_h_multiplier)", 10); HM(B(p->co_attrs.air_jump_h_multiplier)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->co_attrs.max_jumps", 10); HM((u32) p->co_attrs.max_jumps); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.gravity)", 10); HM(B(p->co_attrs.gravity)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.terminal_velocity)", 10); HM(B(p->co_attrs.terminal_velocity)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.air_drift_stick_mul)", 10); HM(B(p->co_attrs.air_drift_stick_mul)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.aerial_drift_base)", 10); HM(B(p->co_attrs.aerial_drift_base)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.air_drift_max)", 10); HM(B(p->co_attrs.air_drift_max)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.aerial_friction)", 10); HM(B(p->co_attrs.aerial_friction)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.fast_fall_velocity)", 10); HM(B(p->co_attrs.fast_fall_velocity)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.air_max_horizontal_velocity)", 10); HM(B(p->co_attrs.air_max_horizontal_velocity)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.jab_2_input_window)", 10); HM(B(p->co_attrs.jab_2_input_window)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.jab_3_input_window)", 10); HM(B(p->co_attrs.jab_3_input_window)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.standing_turn_frames)", 10); HM(B(p->co_attrs.standing_turn_frames)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.weight)", 10); HM(B(p->co_attrs.weight)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.model_scaling)", 10); HM(B(p->co_attrs.model_scaling)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.initial_shield_size)", 10); HM(B(p->co_attrs.initial_shield_size)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.shield_break_initial_velocity)", 10); HM(B(p->co_attrs.shield_break_initial_velocity)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->co_attrs.rapid_jab_window", 10); HM((u32) p->co_attrs.rapid_jab_window); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.clank_animation_length)", 10); HM(B(p->co_attrs.clank_animation_length)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->co_attrs.hit_spark_variant", 10); HM((u32) p->co_attrs.hit_spark_variant); }
+    { if (HDBG) printf("N %s%c", "(u32) p->co_attrs.unused_0", 10); HM((u32) p->co_attrs.unused_0); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.ledge_jump_horizontal_velocity)", 10); HM(B(p->co_attrs.ledge_jump_horizontal_velocity)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.ledge_jump_vertical_velocity)", 10); HM(B(p->co_attrs.ledge_jump_vertical_velocity)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.item_throw_velocity_multiplier)", 10); HM(B(p->co_attrs.item_throw_velocity_multiplier)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.heavy_throw_velocity_multiplier)", 10); HM(B(p->co_attrs.heavy_throw_velocity_multiplier)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.specials_ground_speed_retention)", 10); HM(B(p->co_attrs.specials_ground_speed_retention)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.xBC.size)", 10); HM(B(p->co_attrs.xBC.size)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.xBC.x4.x)", 10); HM(B(p->co_attrs.xBC.x4.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.xBC.x4.y)", 10); HM(B(p->co_attrs.xBC.x4.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.xBC.x4.z)", 10); HM(B(p->co_attrs.xBC.x4.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.xBC.x10.x)", 10); HM(B(p->co_attrs.xBC.x10.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.xBC.x10.y)", 10); HM(B(p->co_attrs.xBC.x10.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.xBC.x10.z)", 10); HM(B(p->co_attrs.xBC.x10.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.xBC.x1C)", 10); HM(B(p->co_attrs.xBC.x1C)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.xDC)", 10); HM(B(p->co_attrs.xDC)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.kirby_b_star_damage)", 10); HM(B(p->co_attrs.kirby_b_star_damage)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.normal_landing_lag)", 10); HM(B(p->co_attrs.normal_landing_lag)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.landingairn_lag)", 10); HM(B(p->co_attrs.landingairn_lag)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.landingairf_lag)", 10); HM(B(p->co_attrs.landingairf_lag)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.landingairb_lag)", 10); HM(B(p->co_attrs.landingairb_lag)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.landingairhi_lag)", 10); HM(B(p->co_attrs.landingairhi_lag)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.landingairlw_lag)", 10); HM(B(p->co_attrs.landingairlw_lag)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.name_tag_height)", 10); HM(B(p->co_attrs.name_tag_height)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.passivewall_vel_x)", 10); HM(B(p->co_attrs.passivewall_vel_x)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.wall_jump_horizontal_velocity)", 10); HM(B(p->co_attrs.wall_jump_horizontal_velocity)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.wall_jump_vertical_velocity)", 10); HM(B(p->co_attrs.wall_jump_vertical_velocity)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.passiveceil_vel_x)", 10); HM(B(p->co_attrs.passiveceil_vel_x)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.trophy_scale)", 10); HM(B(p->co_attrs.trophy_scale)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.x114.x)", 10); HM(B(p->co_attrs.x114.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.x114.y)", 10); HM(B(p->co_attrs.x114.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.x114.z)", 10); HM(B(p->co_attrs.x114.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.x120.x)", 10); HM(B(p->co_attrs.x120.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.x120.y)", 10); HM(B(p->co_attrs.x120.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.x120.z)", 10); HM(B(p->co_attrs.x120.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.x12C)", 10); HM(B(p->co_attrs.x12C)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.x130.x)", 10); HM(B(p->co_attrs.x130.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.x130.y)", 10); HM(B(p->co_attrs.x130.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.x130.z)", 10); HM(B(p->co_attrs.x130.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.x13C)", 10); HM(B(p->co_attrs.x13C)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.screw_attack_launch_velocity)", 10); HM(B(p->co_attrs.screw_attack_launch_velocity)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.x144)", 10); HM(B(p->co_attrs.x144)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.wall_jump_min_approach_speed)", 10); HM(B(p->co_attrs.wall_jump_min_approach_speed)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.damageice_ice_size)", 10); HM(B(p->co_attrs.damageice_ice_size)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.x150_damageice_unk)", 10); HM(B(p->co_attrs.x150_damageice_unk)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.x154_damageice_unk)", 10); HM(B(p->co_attrs.x154_damageice_unk)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.damageicejump_vel_y)", 10); HM(B(p->co_attrs.damageicejump_vel_y)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.damageicejump_vel_x_mult)", 10); HM(B(p->co_attrs.damageicejump_vel_x_mult)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.respawn_platform_scale)", 10); HM(B(p->co_attrs.respawn_platform_scale)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.warp_star_hitbox_scale)", 10); HM(B(p->co_attrs.warp_star_hitbox_scale)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.x168)", 10); HM(B(p->co_attrs.x168)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->co_attrs.camera_zoom_target_bone", 10); HM((u32) p->co_attrs.camera_zoom_target_bone); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.x170.x)", 10); HM(B(p->co_attrs.x170.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.x170.y)", 10); HM(B(p->co_attrs.x170.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.x170.z)", 10); HM(B(p->co_attrs.x170.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->co_attrs.x17C)", 10); HM(B(p->co_attrs.x17C)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->co_attrs.weight_independent_throws_mask", 10); HM((u32) p->co_attrs.weight_independent_throws_mask); }
+    { if (HDBG) printf("N %s%c", "B(p->x294_itPickup.gr_light_offset.x)", 10); HM(B(p->x294_itPickup.gr_light_offset.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x294_itPickup.gr_light_offset.y)", 10); HM(B(p->x294_itPickup.gr_light_offset.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->x294_itPickup.gr_light_offset.z)", 10); HM(B(p->x294_itPickup.gr_light_offset.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->x294_itPickup.gr_light_offset.w)", 10); HM(B(p->x294_itPickup.gr_light_offset.w)); }
+    { if (HDBG) printf("N %s%c", "B(p->x294_itPickup.gr_heavy_offset.x)", 10); HM(B(p->x294_itPickup.gr_heavy_offset.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x294_itPickup.gr_heavy_offset.y)", 10); HM(B(p->x294_itPickup.gr_heavy_offset.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->x294_itPickup.gr_heavy_offset.z)", 10); HM(B(p->x294_itPickup.gr_heavy_offset.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->x294_itPickup.gr_heavy_offset.w)", 10); HM(B(p->x294_itPickup.gr_heavy_offset.w)); }
+    { if (HDBG) printf("N %s%c", "B(p->x294_itPickup.air_light_offset.x)", 10); HM(B(p->x294_itPickup.air_light_offset.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x294_itPickup.air_light_offset.y)", 10); HM(B(p->x294_itPickup.air_light_offset.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->x294_itPickup.air_light_offset.z)", 10); HM(B(p->x294_itPickup.air_light_offset.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->x294_itPickup.air_light_offset.w)", 10); HM(B(p->x294_itPickup.air_light_offset.w)); }
+    { if (HDBG) printf("N %s%c", "B(p->x2C4.x)", 10); HM(B(p->x2C4.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x2C4.y)", 10); HM(B(p->x2C4.y)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x2CC)", 10); HM(PI((const void*) p->x2CC)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x2D0)", 10); HM(PI((const void*) p->x2D0)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->dat_attrs)", 10); HM(PI((const void*) p->dat_attrs)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->dat_attrs_backup)", 10); HM(PI((const void*) p->dat_attrs_backup)); }
+    { if (HDBG) printf("N %s%c", "B(p->x2DC)", 10); HM(B(p->x2DC)); }
+    { if (HDBG) printf("N %s%c", "B(p->x2E0)", 10); HM(B(p->x2E0)); }
+    { if (HDBG) printf("N %s%c", "B(p->x2E4)", 10); HM(B(p->x2E4)); }
+    { if (HDBG) printf("N %s%c", "B(p->x2E8)", 10); HM(B(p->x2E8)); }
+    { if (HDBG) printf("N %s%c", "B(p->x2EC)", 10); HM(B(p->x2EC)); }
     for (i0 = 0; i0 < 10; i0++) {
-    HM((u32) p->dynamic_bone_sets[i0].bone_id);
-    HM(PI((const void*) p->dynamic_bone_sets[i0].dyn_desc.data));
-    HM((u32) p->dynamic_bone_sets[i0].dyn_desc.count);
-    HM(B(p->dynamic_bone_sets[i0].dyn_desc.pos.x));
-    HM(B(p->dynamic_bone_sets[i0].dyn_desc.pos.y));
-    HM(B(p->dynamic_bone_sets[i0].dyn_desc.pos.z));
+    { if (HDBG) printf("N %s%c", "(u32) p->dynamic_bone_sets[i0].bone_id", 10); HM((u32) p->dynamic_bone_sets[i0].bone_id); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->dynamic_bone_sets[i0].dyn_desc.data)", 10); HM(PI((const void*) p->dynamic_bone_sets[i0].dyn_desc.data)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dynamic_bone_sets[i0].dyn_desc.count", 10); HM((u32) p->dynamic_bone_sets[i0].dyn_desc.count); }
+    { if (HDBG) printf("N %s%c", "B(p->dynamic_bone_sets[i0].dyn_desc.pos.x)", 10); HM(B(p->dynamic_bone_sets[i0].dyn_desc.pos.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->dynamic_bone_sets[i0].dyn_desc.pos.y)", 10); HM(B(p->dynamic_bone_sets[i0].dyn_desc.pos.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->dynamic_bone_sets[i0].dyn_desc.pos.z)", 10); HM(B(p->dynamic_bone_sets[i0].dyn_desc.pos.z)); }
     }
-    HM((u32) p->dynamics_num);
-    HM(B(p->x3E4_fighterCmdScript.timer));
-    HM(B(p->x3E4_fighterCmdScript.frame_count));
+    { if (HDBG) printf("N %s%c", "(u32) p->dynamics_num", 10); HM((u32) p->dynamics_num); }
+    { if (HDBG) printf("N %s%c", "B(p->x3E4_fighterCmdScript.timer)", 10); HM(B(p->x3E4_fighterCmdScript.timer)); }
+    { if (HDBG) printf("N %s%c", "B(p->x3E4_fighterCmdScript.frame_count)", 10); HM(B(p->x3E4_fighterCmdScript.frame_count)); }
     for (j0 = 0; j0 < 8; j0++) HM(((const unsigned char*) &p->x3E4_fighterCmdScript)[8 + j0]);
-    HM((u32) p->x3E4_fighterCmdScript.loop_count);
+    { if (HDBG) printf("N %s%c", "(u32) p->x3E4_fighterCmdScript.loop_count", 10); HM((u32) p->x3E4_fighterCmdScript.loop_count); }
     for (i0 = 0; i0 < 3; i0++) {
-    HM(PI((const void*) p->x3E4_fighterCmdScript.event_return[i0]));
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x3E4_fighterCmdScript.event_return[i0])", 10); HM(PI((const void*) p->x3E4_fighterCmdScript.event_return[i0])); }
     }
-    HM((u32) p->x3E4_fighterCmdScript.loop_count_dup);
-    HM((u32) p->x3E4_fighterCmdScript.unk_x18);
-    HM((u32) p->x408.x0_timer);
-    HM((u32) p->x408.x4_pri);
-    HM(PI((const void*) p->x408.x8_ptr1));
-    HM((u32) p->x408.xC_loop);
-    HM(PI((const void*) p->x408.x10_ptr2));
-    HM((u32) p->x408.x14);
-    HM(PI((const void*) p->x408.x18_alloc));
-    HM((u32) p->x408.x1c);
-    HM((u32) p->x408.x20);
-    HM((u32) p->x408.x24);
+    { if (HDBG) printf("N %s%c", "(u32) p->x3E4_fighterCmdScript.loop_count_dup", 10); HM((u32) p->x3E4_fighterCmdScript.loop_count_dup); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x3E4_fighterCmdScript.unk_x18", 10); HM((u32) p->x3E4_fighterCmdScript.unk_x18); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x408.x0_timer", 10); HM((u32) p->x408.x0_timer); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x408.x4_pri", 10); HM((u32) p->x408.x4_pri); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x408.x8_ptr1)", 10); HM(PI((const void*) p->x408.x8_ptr1)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x408.xC_loop", 10); HM((u32) p->x408.xC_loop); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x408.x10_ptr2)", 10); HM(PI((const void*) p->x408.x10_ptr2)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x408.x14", 10); HM((u32) p->x408.x14); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x408.x18_alloc)", 10); HM(PI((const void*) p->x408.x18_alloc)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x408.x1c", 10); HM((u32) p->x408.x1c); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x408.x20", 10); HM((u32) p->x408.x20); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x408.x24", 10); HM((u32) p->x408.x24); }
     for (i0 = 0; i0 < 8; i0++) HM(((const unsigned char*) &p->x408.x28_colanim)[i0]);
-    HM((u32) p->x408.x2C_hex.r);
-    HM((u32) p->x408.x2C_hex.g);
-    HM((u32) p->x408.x2C_hex.b);
-    HM((u32) p->x408.x2C_hex.a);
-    HM(B(p->x408.x30_color_red));
-    HM(B(p->x408.x34_color_green));
-    HM(B(p->x408.x38_color_blue));
-    HM(B(p->x408.x3C_color_alpha));
-    HM(B(p->x408.x40_colorblend_red));
-    HM(B(p->x408.x44_colorblend_green));
-    HM(B(p->x408.x48_colorblend_blue));
-    HM(B(p->x408.x4C_colorblend_alpha));
-    HM((u32) p->x408.x50_light_color.r);
-    HM((u32) p->x408.x50_light_color.g);
-    HM((u32) p->x408.x50_light_color.b);
-    HM((u32) p->x408.x50_light_color.a);
-    HM(B(p->x408.x54_light_red));
-    HM(B(p->x408.x58_light_green));
-    HM(B(p->x408.x5C_light_blue));
-    HM(B(p->x408.x60_light_alpha));
-    HM(B(p->x408.x64_lightblend_red));
-    HM(B(p->x408.x68_lightblend_green));
-    HM(B(p->x408.x6C_lightblend_blue));
-    HM(B(p->x408.x70_lightblend_alpha));
-    HM(B(p->x408.x74_light_rot_x));
-    HM(B(p->x408.x78_light_rot_yz));
-    HM((u32) p->x408.x7C_color_enable);
-    HM((u32) p->x408.x7C_flag2);
-    HM((u32) p->x408.x7C_light_enable);
-    HM((u32) p->x408.x7C_flag4);
-    HM((u32) p->x408.x7C_flag5);
-    HM((u32) p->x408.x7C_flag6);
-    HM((u32) p->x408.x7C_flag7);
-    HM((u32) p->x408.x7C_flag8);
-    HM((u32) p->x488.x0_timer);
-    HM((u32) p->x488.x4_pri);
-    HM(PI((const void*) p->x488.x8_ptr1));
-    HM((u32) p->x488.xC_loop);
-    HM(PI((const void*) p->x488.x10_ptr2));
-    HM((u32) p->x488.x14);
-    HM(PI((const void*) p->x488.x18_alloc));
-    HM((u32) p->x488.x1c);
-    HM((u32) p->x488.x20);
-    HM((u32) p->x488.x24);
+    { if (HDBG) printf("N %s%c", "(u32) p->x408.x2C_hex.r", 10); HM((u32) p->x408.x2C_hex.r); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x408.x2C_hex.g", 10); HM((u32) p->x408.x2C_hex.g); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x408.x2C_hex.b", 10); HM((u32) p->x408.x2C_hex.b); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x408.x2C_hex.a", 10); HM((u32) p->x408.x2C_hex.a); }
+    { if (HDBG) printf("N %s%c", "B(p->x408.x30_color_red)", 10); HM(B(p->x408.x30_color_red)); }
+    { if (HDBG) printf("N %s%c", "B(p->x408.x34_color_green)", 10); HM(B(p->x408.x34_color_green)); }
+    { if (HDBG) printf("N %s%c", "B(p->x408.x38_color_blue)", 10); HM(B(p->x408.x38_color_blue)); }
+    { if (HDBG) printf("N %s%c", "B(p->x408.x3C_color_alpha)", 10); HM(B(p->x408.x3C_color_alpha)); }
+    { if (HDBG) printf("N %s%c", "B(p->x408.x40_colorblend_red)", 10); HM(B(p->x408.x40_colorblend_red)); }
+    { if (HDBG) printf("N %s%c", "B(p->x408.x44_colorblend_green)", 10); HM(B(p->x408.x44_colorblend_green)); }
+    { if (HDBG) printf("N %s%c", "B(p->x408.x48_colorblend_blue)", 10); HM(B(p->x408.x48_colorblend_blue)); }
+    { if (HDBG) printf("N %s%c", "B(p->x408.x4C_colorblend_alpha)", 10); HM(B(p->x408.x4C_colorblend_alpha)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x408.x50_light_color.r", 10); HM((u32) p->x408.x50_light_color.r); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x408.x50_light_color.g", 10); HM((u32) p->x408.x50_light_color.g); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x408.x50_light_color.b", 10); HM((u32) p->x408.x50_light_color.b); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x408.x50_light_color.a", 10); HM((u32) p->x408.x50_light_color.a); }
+    { if (HDBG) printf("N %s%c", "B(p->x408.x54_light_red)", 10); HM(B(p->x408.x54_light_red)); }
+    { if (HDBG) printf("N %s%c", "B(p->x408.x58_light_green)", 10); HM(B(p->x408.x58_light_green)); }
+    { if (HDBG) printf("N %s%c", "B(p->x408.x5C_light_blue)", 10); HM(B(p->x408.x5C_light_blue)); }
+    { if (HDBG) printf("N %s%c", "B(p->x408.x60_light_alpha)", 10); HM(B(p->x408.x60_light_alpha)); }
+    { if (HDBG) printf("N %s%c", "B(p->x408.x64_lightblend_red)", 10); HM(B(p->x408.x64_lightblend_red)); }
+    { if (HDBG) printf("N %s%c", "B(p->x408.x68_lightblend_green)", 10); HM(B(p->x408.x68_lightblend_green)); }
+    { if (HDBG) printf("N %s%c", "B(p->x408.x6C_lightblend_blue)", 10); HM(B(p->x408.x6C_lightblend_blue)); }
+    { if (HDBG) printf("N %s%c", "B(p->x408.x70_lightblend_alpha)", 10); HM(B(p->x408.x70_lightblend_alpha)); }
+    { if (HDBG) printf("N %s%c", "B(p->x408.x74_light_rot_x)", 10); HM(B(p->x408.x74_light_rot_x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x408.x78_light_rot_yz)", 10); HM(B(p->x408.x78_light_rot_yz)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x408.x7C_color_enable", 10); HM((u32) p->x408.x7C_color_enable); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x408.x7C_flag2", 10); HM((u32) p->x408.x7C_flag2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x408.x7C_light_enable", 10); HM((u32) p->x408.x7C_light_enable); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x408.x7C_flag4", 10); HM((u32) p->x408.x7C_flag4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x408.x7C_flag5", 10); HM((u32) p->x408.x7C_flag5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x408.x7C_flag6", 10); HM((u32) p->x408.x7C_flag6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x408.x7C_flag7", 10); HM((u32) p->x408.x7C_flag7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x408.x7C_flag8", 10); HM((u32) p->x408.x7C_flag8); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x488.x0_timer", 10); HM((u32) p->x488.x0_timer); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x488.x4_pri", 10); HM((u32) p->x488.x4_pri); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x488.x8_ptr1)", 10); HM(PI((const void*) p->x488.x8_ptr1)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x488.xC_loop", 10); HM((u32) p->x488.xC_loop); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x488.x10_ptr2)", 10); HM(PI((const void*) p->x488.x10_ptr2)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x488.x14", 10); HM((u32) p->x488.x14); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x488.x18_alloc)", 10); HM(PI((const void*) p->x488.x18_alloc)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x488.x1c", 10); HM((u32) p->x488.x1c); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x488.x20", 10); HM((u32) p->x488.x20); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x488.x24", 10); HM((u32) p->x488.x24); }
     for (i0 = 0; i0 < 8; i0++) HM(((const unsigned char*) &p->x488.x28_colanim)[i0]);
-    HM((u32) p->x488.x2C_hex.r);
-    HM((u32) p->x488.x2C_hex.g);
-    HM((u32) p->x488.x2C_hex.b);
-    HM((u32) p->x488.x2C_hex.a);
-    HM(B(p->x488.x30_color_red));
-    HM(B(p->x488.x34_color_green));
-    HM(B(p->x488.x38_color_blue));
-    HM(B(p->x488.x3C_color_alpha));
-    HM(B(p->x488.x40_colorblend_red));
-    HM(B(p->x488.x44_colorblend_green));
-    HM(B(p->x488.x48_colorblend_blue));
-    HM(B(p->x488.x4C_colorblend_alpha));
-    HM((u32) p->x488.x50_light_color.r);
-    HM((u32) p->x488.x50_light_color.g);
-    HM((u32) p->x488.x50_light_color.b);
-    HM((u32) p->x488.x50_light_color.a);
-    HM(B(p->x488.x54_light_red));
-    HM(B(p->x488.x58_light_green));
-    HM(B(p->x488.x5C_light_blue));
-    HM(B(p->x488.x60_light_alpha));
-    HM(B(p->x488.x64_lightblend_red));
-    HM(B(p->x488.x68_lightblend_green));
-    HM(B(p->x488.x6C_lightblend_blue));
-    HM(B(p->x488.x70_lightblend_alpha));
-    HM(B(p->x488.x74_light_rot_x));
-    HM(B(p->x488.x78_light_rot_yz));
-    HM((u32) p->x488.x7C_color_enable);
-    HM((u32) p->x488.x7C_flag2);
-    HM((u32) p->x488.x7C_light_enable);
-    HM((u32) p->x488.x7C_flag4);
-    HM((u32) p->x488.x7C_flag5);
-    HM((u32) p->x488.x7C_flag6);
-    HM((u32) p->x488.x7C_flag7);
-    HM((u32) p->x488.x7C_flag8);
-    HM((u32) p->x508.x0_timer);
-    HM((u32) p->x508.x4_pri);
-    HM(PI((const void*) p->x508.x8_ptr1));
-    HM((u32) p->x508.xC_loop);
-    HM(PI((const void*) p->x508.x10_ptr2));
-    HM((u32) p->x508.x14);
-    HM(PI((const void*) p->x508.x18_alloc));
-    HM((u32) p->x508.x1c);
-    HM((u32) p->x508.x20);
-    HM((u32) p->x508.x24);
+    { if (HDBG) printf("N %s%c", "(u32) p->x488.x2C_hex.r", 10); HM((u32) p->x488.x2C_hex.r); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x488.x2C_hex.g", 10); HM((u32) p->x488.x2C_hex.g); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x488.x2C_hex.b", 10); HM((u32) p->x488.x2C_hex.b); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x488.x2C_hex.a", 10); HM((u32) p->x488.x2C_hex.a); }
+    { if (HDBG) printf("N %s%c", "B(p->x488.x30_color_red)", 10); HM(B(p->x488.x30_color_red)); }
+    { if (HDBG) printf("N %s%c", "B(p->x488.x34_color_green)", 10); HM(B(p->x488.x34_color_green)); }
+    { if (HDBG) printf("N %s%c", "B(p->x488.x38_color_blue)", 10); HM(B(p->x488.x38_color_blue)); }
+    { if (HDBG) printf("N %s%c", "B(p->x488.x3C_color_alpha)", 10); HM(B(p->x488.x3C_color_alpha)); }
+    { if (HDBG) printf("N %s%c", "B(p->x488.x40_colorblend_red)", 10); HM(B(p->x488.x40_colorblend_red)); }
+    { if (HDBG) printf("N %s%c", "B(p->x488.x44_colorblend_green)", 10); HM(B(p->x488.x44_colorblend_green)); }
+    { if (HDBG) printf("N %s%c", "B(p->x488.x48_colorblend_blue)", 10); HM(B(p->x488.x48_colorblend_blue)); }
+    { if (HDBG) printf("N %s%c", "B(p->x488.x4C_colorblend_alpha)", 10); HM(B(p->x488.x4C_colorblend_alpha)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x488.x50_light_color.r", 10); HM((u32) p->x488.x50_light_color.r); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x488.x50_light_color.g", 10); HM((u32) p->x488.x50_light_color.g); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x488.x50_light_color.b", 10); HM((u32) p->x488.x50_light_color.b); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x488.x50_light_color.a", 10); HM((u32) p->x488.x50_light_color.a); }
+    { if (HDBG) printf("N %s%c", "B(p->x488.x54_light_red)", 10); HM(B(p->x488.x54_light_red)); }
+    { if (HDBG) printf("N %s%c", "B(p->x488.x58_light_green)", 10); HM(B(p->x488.x58_light_green)); }
+    { if (HDBG) printf("N %s%c", "B(p->x488.x5C_light_blue)", 10); HM(B(p->x488.x5C_light_blue)); }
+    { if (HDBG) printf("N %s%c", "B(p->x488.x60_light_alpha)", 10); HM(B(p->x488.x60_light_alpha)); }
+    { if (HDBG) printf("N %s%c", "B(p->x488.x64_lightblend_red)", 10); HM(B(p->x488.x64_lightblend_red)); }
+    { if (HDBG) printf("N %s%c", "B(p->x488.x68_lightblend_green)", 10); HM(B(p->x488.x68_lightblend_green)); }
+    { if (HDBG) printf("N %s%c", "B(p->x488.x6C_lightblend_blue)", 10); HM(B(p->x488.x6C_lightblend_blue)); }
+    { if (HDBG) printf("N %s%c", "B(p->x488.x70_lightblend_alpha)", 10); HM(B(p->x488.x70_lightblend_alpha)); }
+    { if (HDBG) printf("N %s%c", "B(p->x488.x74_light_rot_x)", 10); HM(B(p->x488.x74_light_rot_x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x488.x78_light_rot_yz)", 10); HM(B(p->x488.x78_light_rot_yz)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x488.x7C_color_enable", 10); HM((u32) p->x488.x7C_color_enable); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x488.x7C_flag2", 10); HM((u32) p->x488.x7C_flag2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x488.x7C_light_enable", 10); HM((u32) p->x488.x7C_light_enable); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x488.x7C_flag4", 10); HM((u32) p->x488.x7C_flag4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x488.x7C_flag5", 10); HM((u32) p->x488.x7C_flag5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x488.x7C_flag6", 10); HM((u32) p->x488.x7C_flag6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x488.x7C_flag7", 10); HM((u32) p->x488.x7C_flag7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x488.x7C_flag8", 10); HM((u32) p->x488.x7C_flag8); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x508.x0_timer", 10); HM((u32) p->x508.x0_timer); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x508.x4_pri", 10); HM((u32) p->x508.x4_pri); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x508.x8_ptr1)", 10); HM(PI((const void*) p->x508.x8_ptr1)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x508.xC_loop", 10); HM((u32) p->x508.xC_loop); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x508.x10_ptr2)", 10); HM(PI((const void*) p->x508.x10_ptr2)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x508.x14", 10); HM((u32) p->x508.x14); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x508.x18_alloc)", 10); HM(PI((const void*) p->x508.x18_alloc)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x508.x1c", 10); HM((u32) p->x508.x1c); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x508.x20", 10); HM((u32) p->x508.x20); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x508.x24", 10); HM((u32) p->x508.x24); }
     for (i0 = 0; i0 < 8; i0++) HM(((const unsigned char*) &p->x508.x28_colanim)[i0]);
-    HM((u32) p->x508.x2C_hex.r);
-    HM((u32) p->x508.x2C_hex.g);
-    HM((u32) p->x508.x2C_hex.b);
-    HM((u32) p->x508.x2C_hex.a);
-    HM(B(p->x508.x30_color_red));
-    HM(B(p->x508.x34_color_green));
-    HM(B(p->x508.x38_color_blue));
-    HM(B(p->x508.x3C_color_alpha));
-    HM(B(p->x508.x40_colorblend_red));
-    HM(B(p->x508.x44_colorblend_green));
-    HM(B(p->x508.x48_colorblend_blue));
-    HM(B(p->x508.x4C_colorblend_alpha));
-    HM((u32) p->x508.x50_light_color.r);
-    HM((u32) p->x508.x50_light_color.g);
-    HM((u32) p->x508.x50_light_color.b);
-    HM((u32) p->x508.x50_light_color.a);
-    HM(B(p->x508.x54_light_red));
-    HM(B(p->x508.x58_light_green));
-    HM(B(p->x508.x5C_light_blue));
-    HM(B(p->x508.x60_light_alpha));
-    HM(B(p->x508.x64_lightblend_red));
-    HM(B(p->x508.x68_lightblend_green));
-    HM(B(p->x508.x6C_lightblend_blue));
-    HM(B(p->x508.x70_lightblend_alpha));
-    HM(B(p->x508.x74_light_rot_x));
-    HM(B(p->x508.x78_light_rot_yz));
-    HM((u32) p->x508.x7C_color_enable);
-    HM((u32) p->x508.x7C_flag2);
-    HM((u32) p->x508.x7C_light_enable);
-    HM((u32) p->x508.x7C_flag4);
-    HM((u32) p->x508.x7C_flag5);
-    HM((u32) p->x508.x7C_flag6);
-    HM((u32) p->x508.x7C_flag7);
-    HM((u32) p->x508.x7C_flag8);
-    HM(PI((const void*) p->x588));
-    HM((u32) p->x58C);
-    HM(PI((const void*) p->x590));
-    HM((u32) p->x594_b0);
-    HM((u32) p->x594_b1_loop);
-    HM((u32) p->x594_b2);
-    HM((u32) p->x594_b3);
-    HM((u32) p->x594_b4);
-    HM((u32) p->x594_b5);
-    HM((u32) p->x594_b6);
-    HM((u32) p->x594_b7);
-    HM((u32) p->x596_bits.x0);
-    HM((u32) p->x596_bits.x7);
-    HM(PI((const void*) p->x598));
-    HM(PI((const void*) p->x59C));
-    HM(PI((const void*) p->x5A0));
-    HM(PI((const void*) p->x5A4));
-    HM(PI((const void*) p->x5A8));
-    HM((u32) p->x5AC.model_num);
+    { if (HDBG) printf("N %s%c", "(u32) p->x508.x2C_hex.r", 10); HM((u32) p->x508.x2C_hex.r); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x508.x2C_hex.g", 10); HM((u32) p->x508.x2C_hex.g); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x508.x2C_hex.b", 10); HM((u32) p->x508.x2C_hex.b); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x508.x2C_hex.a", 10); HM((u32) p->x508.x2C_hex.a); }
+    { if (HDBG) printf("N %s%c", "B(p->x508.x30_color_red)", 10); HM(B(p->x508.x30_color_red)); }
+    { if (HDBG) printf("N %s%c", "B(p->x508.x34_color_green)", 10); HM(B(p->x508.x34_color_green)); }
+    { if (HDBG) printf("N %s%c", "B(p->x508.x38_color_blue)", 10); HM(B(p->x508.x38_color_blue)); }
+    { if (HDBG) printf("N %s%c", "B(p->x508.x3C_color_alpha)", 10); HM(B(p->x508.x3C_color_alpha)); }
+    { if (HDBG) printf("N %s%c", "B(p->x508.x40_colorblend_red)", 10); HM(B(p->x508.x40_colorblend_red)); }
+    { if (HDBG) printf("N %s%c", "B(p->x508.x44_colorblend_green)", 10); HM(B(p->x508.x44_colorblend_green)); }
+    { if (HDBG) printf("N %s%c", "B(p->x508.x48_colorblend_blue)", 10); HM(B(p->x508.x48_colorblend_blue)); }
+    { if (HDBG) printf("N %s%c", "B(p->x508.x4C_colorblend_alpha)", 10); HM(B(p->x508.x4C_colorblend_alpha)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x508.x50_light_color.r", 10); HM((u32) p->x508.x50_light_color.r); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x508.x50_light_color.g", 10); HM((u32) p->x508.x50_light_color.g); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x508.x50_light_color.b", 10); HM((u32) p->x508.x50_light_color.b); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x508.x50_light_color.a", 10); HM((u32) p->x508.x50_light_color.a); }
+    { if (HDBG) printf("N %s%c", "B(p->x508.x54_light_red)", 10); HM(B(p->x508.x54_light_red)); }
+    { if (HDBG) printf("N %s%c", "B(p->x508.x58_light_green)", 10); HM(B(p->x508.x58_light_green)); }
+    { if (HDBG) printf("N %s%c", "B(p->x508.x5C_light_blue)", 10); HM(B(p->x508.x5C_light_blue)); }
+    { if (HDBG) printf("N %s%c", "B(p->x508.x60_light_alpha)", 10); HM(B(p->x508.x60_light_alpha)); }
+    { if (HDBG) printf("N %s%c", "B(p->x508.x64_lightblend_red)", 10); HM(B(p->x508.x64_lightblend_red)); }
+    { if (HDBG) printf("N %s%c", "B(p->x508.x68_lightblend_green)", 10); HM(B(p->x508.x68_lightblend_green)); }
+    { if (HDBG) printf("N %s%c", "B(p->x508.x6C_lightblend_blue)", 10); HM(B(p->x508.x6C_lightblend_blue)); }
+    { if (HDBG) printf("N %s%c", "B(p->x508.x70_lightblend_alpha)", 10); HM(B(p->x508.x70_lightblend_alpha)); }
+    { if (HDBG) printf("N %s%c", "B(p->x508.x74_light_rot_x)", 10); HM(B(p->x508.x74_light_rot_x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x508.x78_light_rot_yz)", 10); HM(B(p->x508.x78_light_rot_yz)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x508.x7C_color_enable", 10); HM((u32) p->x508.x7C_color_enable); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x508.x7C_flag2", 10); HM((u32) p->x508.x7C_flag2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x508.x7C_light_enable", 10); HM((u32) p->x508.x7C_light_enable); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x508.x7C_flag4", 10); HM((u32) p->x508.x7C_flag4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x508.x7C_flag5", 10); HM((u32) p->x508.x7C_flag5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x508.x7C_flag6", 10); HM((u32) p->x508.x7C_flag6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x508.x7C_flag7", 10); HM((u32) p->x508.x7C_flag7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x508.x7C_flag8", 10); HM((u32) p->x508.x7C_flag8); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x588)", 10); HM(PI((const void*) p->x588)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x58C", 10); HM((u32) p->x58C); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x590)", 10); HM(PI((const void*) p->x590)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x598)", 10); HM(PI((const void*) p->x598)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x59C)", 10); HM(PI((const void*) p->x59C)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x5A0)", 10); HM(PI((const void*) p->x5A0)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x5A4)", 10); HM(PI((const void*) p->x5A4)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x5A8)", 10); HM(PI((const void*) p->x5A8)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x5AC.model_num", 10); HM((u32) p->x5AC.model_num); }
     for (i0 = 0; i0 < 5; i0++) {
-    HM((u32) p->x5AC.cleared[i0]);
+    { if (HDBG) printf("N %s%c", "(u32) p->x5AC.cleared[i0]", 10); HM((u32) p->x5AC.cleared[i0]); }
     }
     for (i0 = 0; i0 < 5; i0++) {
-    HM(PI((const void*) p->x5AC.xC[i0]));
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x5AC.xC[i0])", 10); HM(PI((const void*) p->x5AC.xC[i0])); }
     }
-    HM((u32) p->tobj_list.n_costume_tobjs);
-    HM(PI((const void*) p->tobj_list.x5D0));
+    { if (HDBG) printf("N %s%c", "(u32) p->tobj_list.n_costume_tobjs", 10); HM((u32) p->tobj_list.n_costume_tobjs); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->tobj_list.x5D0)", 10); HM(PI((const void*) p->tobj_list.x5D0)); }
     for (i0 = 0; i0 < 5; i0++) {
-    HM(PI((const void*) p->tobj_list.costume_tobjs[i0]));
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->tobj_list.costume_tobjs[i0])", 10); HM(PI((const void*) p->tobj_list.costume_tobjs[i0])); }
     }
-    HM(PI((const void*) p->parts));
-    HM((u32) p->dobj_list.count);
-    HM(PI((const void*) p->dobj_list.data));
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->parts)", 10); HM(PI((const void*) p->parts)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dobj_list.count", 10); HM((u32) p->dobj_list.count); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->dobj_list.data)", 10); HM(PI((const void*) p->dobj_list.data)); }
     for (i0 = 0; i0 < 12; i0++) {
-    HM((u32) p->x5F4_arr[i0].prev);
-    HM((u32) p->x5F4_arr[i0].idx);
+    { if (HDBG) printf("N %s%c", "(u32) p->x5F4_arr[i0].prev", 10); HM((u32) p->x5F4_arr[i0].prev); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x5F4_arr[i0].idx", 10); HM((u32) p->x5F4_arr[i0].idx); }
     }
-    HM(PI((const void*) p->x60C));
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x60C)", 10); HM(PI((const void*) p->x60C)); }
     for (i0 = 0; i0 < 2; i0++) {
-    HM((u32) p->x610_color_rgba[i0].r);
-    HM((u32) p->x610_color_rgba[i0].g);
-    HM((u32) p->x610_color_rgba[i0].b);
-    HM((u32) p->x610_color_rgba[i0].a);
+    { if (HDBG) printf("N %s%c", "(u32) p->x610_color_rgba[i0].r", 10); HM((u32) p->x610_color_rgba[i0].r); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x610_color_rgba[i0].g", 10); HM((u32) p->x610_color_rgba[i0].g); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x610_color_rgba[i0].b", 10); HM((u32) p->x610_color_rgba[i0].b); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x610_color_rgba[i0].a", 10); HM((u32) p->x610_color_rgba[i0].a); }
     }
-    HM((u32) p->x618_player_id);
-    HM((u32) p->x619_costume_id);
-    HM((u32) p->x61A_controller_index);
-    HM((u32) p->team);
-    HM((u32) p->x61C);
-    HM((u32) p->x61D);
+    { if (HDBG) printf("N %s%c", "(u32) p->x618_player_id", 10); HM((u32) p->x618_player_id); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x619_costume_id", 10); HM((u32) p->x619_costume_id); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x61A_controller_index", 10); HM((u32) p->x61A_controller_index); }
+    { if (HDBG) printf("N %s%c", "(u32) p->team", 10); HM((u32) p->team); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x61C", 10); HM((u32) p->x61C); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x61D", 10); HM((u32) p->x61D); }
     for (i0 = 0; i0 < 2; i0++) {
-    HM((u32) p->filler_x61E[i0]);
+    { if (HDBG) printf("N %s%c", "(u32) p->filler_x61E[i0]", 10); HM((u32) p->filler_x61E[i0]); }
     }
     for (i0 = 0; i0 < 3; i0++) {
-    HM(B(p->input.lstick[i0].x));
-    HM(B(p->input.lstick[i0].y));
+    { if (HDBG) printf("N %s%c", "B(p->input.lstick[i0].x)", 10); HM(B(p->input.lstick[i0].x)); }
+    { if (HDBG) printf("N %s%c", "B(p->input.lstick[i0].y)", 10); HM(B(p->input.lstick[i0].y)); }
     }
     for (i0 = 0; i0 < 3; i0++) {
-    HM(B(p->input.cstick[i0].x));
-    HM(B(p->input.cstick[i0].y));
+    { if (HDBG) printf("N %s%c", "B(p->input.cstick[i0].x)", 10); HM(B(p->input.cstick[i0].x)); }
+    { if (HDBG) printf("N %s%c", "B(p->input.cstick[i0].y)", 10); HM(B(p->input.cstick[i0].y)); }
     }
     for (i0 = 0; i0 < 3; i0++) {
-    HM(B(p->input.triggers[i0]));
+    { if (HDBG) printf("N %s%c", "B(p->input.triggers[i0])", 10); HM(B(p->input.triggers[i0])); }
     }
     for (i0 = 0; i0 < 3; i0++) {
-    HM((u32) p->input.held_buttons[i0]);
+    { if (HDBG) printf("N %s%c", "(u32) p->input.held_buttons[i0]", 10); HM((u32) p->input.held_buttons[i0]); }
     }
-    HM((u32) p->input.pressed_buttons);
-    HM((u32) p->input.released_buttons);
-    HM((u32) p->active_timer.lstick.x);
-    HM((u32) p->active_timer.lstick.y);
-    HM((u32) p->active_timer.trigger);
-    HM((u32) p->active_sticky.lstick.x);
-    HM((u32) p->active_sticky.lstick.y);
-    HM((u32) p->active_sticky.trigger);
-    HM((u32) p->active_duration.lstick.x);
-    HM((u32) p->active_duration.lstick.y);
-    HM((u32) p->active_duration.trigger);
-    HM((u32) p->activity_timer.lstick.x);
-    HM((u32) p->activity_timer.lstick.y);
-    HM((u32) p->activity_timer.trigger);
-    HM((u32) p->x67C);
-    HM((u32) p->x67D);
-    HM((u32) p->x67E);
-    HM((u32) p->x67F);
-    HM((u32) p->x680);
-    HM((u32) p->x681);
-    HM((u32) p->x682);
-    HM((u32) p->x683);
-    HM((u32) p->x684);
-    HM((u32) p->x685);
-    HM((u32) p->x686);
-    HM((u32) p->x687);
-    HM((u32) p->x688);
-    HM((u32) p->x689);
-    HM((u32) p->x68A);
-    HM((u32) p->x68B);
-    HM(B(p->x68C_transNPos.x));
-    HM(B(p->x68C_transNPos.y));
-    HM(B(p->x68C_transNPos.z));
-    HM(B(p->x698.x));
-    HM(B(p->x698.y));
-    HM(B(p->x698.z));
-    HM(B(p->x6A4_transNOffset.x));
-    HM(B(p->x6A4_transNOffset.y));
-    HM(B(p->x6A4_transNOffset.z));
-    HM(B(p->x6B0.x));
-    HM(B(p->x6B0.y));
-    HM(B(p->x6B0.z));
-    HM(B(p->lstick_angle));
-    HM(B(p->x6C0.x));
-    HM(B(p->x6C0.y));
-    HM(B(p->x6C0.z));
-    HM(B(p->x6CC.x));
-    HM(B(p->x6CC.y));
-    HM(B(p->x6CC.z));
-    HM(B(p->x6D8.x));
-    HM(B(p->x6D8.y));
-    HM(B(p->x6D8.z));
-    HM(B(p->x6E4.x));
-    HM(B(p->x6E4.y));
-    HM(B(p->x6E4.z));
-    HM(PI((const void*) p->coll_data.x0_gobj));
-    HM(B(p->coll_data.cur_pos.x));
-    HM(B(p->coll_data.cur_pos.y));
-    HM(B(p->coll_data.cur_pos.z));
-    HM(B(p->coll_data.prev_pos.x));
-    HM(B(p->coll_data.prev_pos.y));
-    HM(B(p->coll_data.prev_pos.z));
-    HM(B(p->coll_data.last_pos.x));
-    HM(B(p->coll_data.last_pos.y));
-    HM(B(p->coll_data.last_pos.z));
-    HM(B(p->coll_data.x28_vec.x));
-    HM(B(p->coll_data.x28_vec.y));
-    HM(B(p->coll_data.x28_vec.z));
-    HM((u32) p->coll_data.x34_flags.b0);
-    HM((u32) p->coll_data.x34_flags.b1234);
-    HM((u32) p->coll_data.x34_flags.b5);
-    HM((u32) p->coll_data.x34_flags.b6);
-    HM((u32) p->coll_data.x34_flags.b7);
-    HM((u32) p->coll_data.x35_flags.b0);
-    HM((u32) p->coll_data.x35_flags.b1234);
-    HM((u32) p->coll_data.x35_flags.b5);
-    HM((u32) p->coll_data.x35_flags.b6);
-    HM((u32) p->coll_data.x35_flags.b7);
-    HM((u32) p->coll_data.facing_dir);
-    HM((u32) p->coll_data.x38);
-    HM((u32) p->coll_data.floor_skip);
-    HM((u32) p->coll_data.ledge_id_right);
-    HM((u32) p->coll_data.ledge_id_left);
-    HM((u32) p->coll_data.joint_id_skip);
-    HM((u32) p->coll_data.joint_id_only);
-    HM(B(p->coll_data.x50));
-    HM(B(p->coll_data.ledge_snap_x));
-    HM(B(p->coll_data.ledge_snap_y));
-    HM(B(p->coll_data.ledge_snap_height));
-    HM(B(p->coll_data.lstick_x));
-    HM(B(p->coll_data.x64_ecb.top.x));
-    HM(B(p->coll_data.x64_ecb.top.y));
-    HM(B(p->coll_data.x64_ecb.bottom.x));
-    HM(B(p->coll_data.x64_ecb.bottom.y));
-    HM(B(p->coll_data.x64_ecb.right.x));
-    HM(B(p->coll_data.x64_ecb.right.y));
-    HM(B(p->coll_data.x64_ecb.left.x));
-    HM(B(p->coll_data.x64_ecb.left.y));
-    HM(B(p->coll_data.desired_ecb.top.x));
-    HM(B(p->coll_data.desired_ecb.top.y));
-    HM(B(p->coll_data.desired_ecb.bottom.x));
-    HM(B(p->coll_data.desired_ecb.bottom.y));
-    HM(B(p->coll_data.desired_ecb.right.x));
-    HM(B(p->coll_data.desired_ecb.right.y));
-    HM(B(p->coll_data.desired_ecb.left.x));
-    HM(B(p->coll_data.desired_ecb.left.y));
-    HM(B(p->coll_data.ecb.top.x));
-    HM(B(p->coll_data.ecb.top.y));
-    HM(B(p->coll_data.ecb.bottom.x));
-    HM(B(p->coll_data.ecb.bottom.y));
-    HM(B(p->coll_data.ecb.right.x));
-    HM(B(p->coll_data.ecb.right.y));
-    HM(B(p->coll_data.ecb.left.x));
-    HM(B(p->coll_data.ecb.left.y));
-    HM(B(p->coll_data.prev_ecb.top.x));
-    HM(B(p->coll_data.prev_ecb.top.y));
-    HM(B(p->coll_data.prev_ecb.bottom.x));
-    HM(B(p->coll_data.prev_ecb.bottom.y));
-    HM(B(p->coll_data.prev_ecb.right.x));
-    HM(B(p->coll_data.prev_ecb.right.y));
-    HM(B(p->coll_data.prev_ecb.left.x));
-    HM(B(p->coll_data.prev_ecb.left.y));
-    HM(B(p->coll_data.xE4_ecb.top.x));
-    HM(B(p->coll_data.xE4_ecb.top.y));
-    HM(B(p->coll_data.xE4_ecb.bottom.x));
-    HM(B(p->coll_data.xE4_ecb.bottom.y));
-    HM(B(p->coll_data.xE4_ecb.right.x));
-    HM(B(p->coll_data.xE4_ecb.right.y));
-    HM(B(p->coll_data.xE4_ecb.left.x));
-    HM(B(p->coll_data.xE4_ecb.left.y));
-    HM((u32) p->coll_data.ecb_source.kind);
+    { if (HDBG) printf("N %s%c", "(u32) p->input.pressed_buttons", 10); HM((u32) p->input.pressed_buttons); }
+    { if (HDBG) printf("N %s%c", "(u32) p->input.released_buttons", 10); HM((u32) p->input.released_buttons); }
+    { if (HDBG) printf("N %s%c", "(u32) p->active_timer.lstick.x", 10); HM((u32) p->active_timer.lstick.x); }
+    { if (HDBG) printf("N %s%c", "(u32) p->active_timer.lstick.y", 10); HM((u32) p->active_timer.lstick.y); }
+    { if (HDBG) printf("N %s%c", "(u32) p->active_timer.trigger", 10); HM((u32) p->active_timer.trigger); }
+    { if (HDBG) printf("N %s%c", "(u32) p->active_sticky.lstick.x", 10); HM((u32) p->active_sticky.lstick.x); }
+    { if (HDBG) printf("N %s%c", "(u32) p->active_sticky.lstick.y", 10); HM((u32) p->active_sticky.lstick.y); }
+    { if (HDBG) printf("N %s%c", "(u32) p->active_sticky.trigger", 10); HM((u32) p->active_sticky.trigger); }
+    { if (HDBG) printf("N %s%c", "(u32) p->active_duration.lstick.x", 10); HM((u32) p->active_duration.lstick.x); }
+    { if (HDBG) printf("N %s%c", "(u32) p->active_duration.lstick.y", 10); HM((u32) p->active_duration.lstick.y); }
+    { if (HDBG) printf("N %s%c", "(u32) p->active_duration.trigger", 10); HM((u32) p->active_duration.trigger); }
+    { if (HDBG) printf("N %s%c", "(u32) p->activity_timer.lstick.x", 10); HM((u32) p->activity_timer.lstick.x); }
+    { if (HDBG) printf("N %s%c", "(u32) p->activity_timer.lstick.y", 10); HM((u32) p->activity_timer.lstick.y); }
+    { if (HDBG) printf("N %s%c", "(u32) p->activity_timer.trigger", 10); HM((u32) p->activity_timer.trigger); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x67C", 10); HM((u32) p->x67C); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x67D", 10); HM((u32) p->x67D); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x67E", 10); HM((u32) p->x67E); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x67F", 10); HM((u32) p->x67F); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x680", 10); HM((u32) p->x680); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x681", 10); HM((u32) p->x681); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x682", 10); HM((u32) p->x682); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x683", 10); HM((u32) p->x683); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x684", 10); HM((u32) p->x684); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x685", 10); HM((u32) p->x685); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x686", 10); HM((u32) p->x686); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x687", 10); HM((u32) p->x687); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x688", 10); HM((u32) p->x688); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x689", 10); HM((u32) p->x689); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x68A", 10); HM((u32) p->x68A); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x68B", 10); HM((u32) p->x68B); }
+    { if (HDBG) printf("N %s%c", "B(p->x68C_transNPos.x)", 10); HM(B(p->x68C_transNPos.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x68C_transNPos.y)", 10); HM(B(p->x68C_transNPos.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->x68C_transNPos.z)", 10); HM(B(p->x68C_transNPos.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->x698.x)", 10); HM(B(p->x698.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x698.y)", 10); HM(B(p->x698.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->x698.z)", 10); HM(B(p->x698.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->x6A4_transNOffset.x)", 10); HM(B(p->x6A4_transNOffset.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x6A4_transNOffset.y)", 10); HM(B(p->x6A4_transNOffset.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->x6A4_transNOffset.z)", 10); HM(B(p->x6A4_transNOffset.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->x6B0.x)", 10); HM(B(p->x6B0.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x6B0.y)", 10); HM(B(p->x6B0.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->x6B0.z)", 10); HM(B(p->x6B0.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->lstick_angle)", 10); HM(B(p->lstick_angle)); }
+    { if (HDBG) printf("N %s%c", "B(p->x6C0.x)", 10); HM(B(p->x6C0.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x6C0.y)", 10); HM(B(p->x6C0.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->x6C0.z)", 10); HM(B(p->x6C0.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->x6CC.x)", 10); HM(B(p->x6CC.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x6CC.y)", 10); HM(B(p->x6CC.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->x6CC.z)", 10); HM(B(p->x6CC.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->x6D8.x)", 10); HM(B(p->x6D8.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x6D8.y)", 10); HM(B(p->x6D8.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->x6D8.z)", 10); HM(B(p->x6D8.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->x6E4.x)", 10); HM(B(p->x6E4.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x6E4.y)", 10); HM(B(p->x6E4.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->x6E4.z)", 10); HM(B(p->x6E4.z)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->coll_data.x0_gobj)", 10); HM(PI((const void*) p->coll_data.x0_gobj)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.cur_pos.x)", 10); HM(B(p->coll_data.cur_pos.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.cur_pos.y)", 10); HM(B(p->coll_data.cur_pos.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.cur_pos.z)", 10); HM(B(p->coll_data.cur_pos.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.prev_pos.x)", 10); HM(B(p->coll_data.prev_pos.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.prev_pos.y)", 10); HM(B(p->coll_data.prev_pos.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.prev_pos.z)", 10); HM(B(p->coll_data.prev_pos.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.last_pos.x)", 10); HM(B(p->coll_data.last_pos.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.last_pos.y)", 10); HM(B(p->coll_data.last_pos.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.last_pos.z)", 10); HM(B(p->coll_data.last_pos.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.x28_vec.x)", 10); HM(B(p->coll_data.x28_vec.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.x28_vec.y)", 10); HM(B(p->coll_data.x28_vec.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.x28_vec.z)", 10); HM(B(p->coll_data.x28_vec.z)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->coll_data.x34_flags.b0", 10); HM((u32) p->coll_data.x34_flags.b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->coll_data.x34_flags.b1234", 10); HM((u32) p->coll_data.x34_flags.b1234); }
+    { if (HDBG) printf("N %s%c", "(u32) p->coll_data.x34_flags.b5", 10); HM((u32) p->coll_data.x34_flags.b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->coll_data.x34_flags.b6", 10); HM((u32) p->coll_data.x34_flags.b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->coll_data.x34_flags.b7", 10); HM((u32) p->coll_data.x34_flags.b7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->coll_data.x35_flags.b0", 10); HM((u32) p->coll_data.x35_flags.b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->coll_data.x35_flags.b1234", 10); HM((u32) p->coll_data.x35_flags.b1234); }
+    { if (HDBG) printf("N %s%c", "(u32) p->coll_data.x35_flags.b5", 10); HM((u32) p->coll_data.x35_flags.b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->coll_data.x35_flags.b6", 10); HM((u32) p->coll_data.x35_flags.b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->coll_data.x35_flags.b7", 10); HM((u32) p->coll_data.x35_flags.b7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->coll_data.facing_dir", 10); HM((u32) p->coll_data.facing_dir); }
+    { if (HDBG) printf("N %s%c", "(u32) p->coll_data.x38", 10); HM((u32) p->coll_data.x38); }
+    { if (HDBG) printf("N %s%c", "(u32) p->coll_data.floor_skip", 10); HM((u32) p->coll_data.floor_skip); }
+    { if (HDBG) printf("N %s%c", "(u32) p->coll_data.ledge_id_right", 10); HM((u32) p->coll_data.ledge_id_right); }
+    { if (HDBG) printf("N %s%c", "(u32) p->coll_data.ledge_id_left", 10); HM((u32) p->coll_data.ledge_id_left); }
+    { if (HDBG) printf("N %s%c", "(u32) p->coll_data.joint_id_skip", 10); HM((u32) p->coll_data.joint_id_skip); }
+    { if (HDBG) printf("N %s%c", "(u32) p->coll_data.joint_id_only", 10); HM((u32) p->coll_data.joint_id_only); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.x50)", 10); HM(B(p->coll_data.x50)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.ledge_snap_x)", 10); HM(B(p->coll_data.ledge_snap_x)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.ledge_snap_y)", 10); HM(B(p->coll_data.ledge_snap_y)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.ledge_snap_height)", 10); HM(B(p->coll_data.ledge_snap_height)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.lstick_x)", 10); HM(B(p->coll_data.lstick_x)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.x64_ecb.top.x)", 10); HM(B(p->coll_data.x64_ecb.top.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.x64_ecb.top.y)", 10); HM(B(p->coll_data.x64_ecb.top.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.x64_ecb.bottom.x)", 10); HM(B(p->coll_data.x64_ecb.bottom.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.x64_ecb.bottom.y)", 10); HM(B(p->coll_data.x64_ecb.bottom.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.x64_ecb.right.x)", 10); HM(B(p->coll_data.x64_ecb.right.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.x64_ecb.right.y)", 10); HM(B(p->coll_data.x64_ecb.right.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.x64_ecb.left.x)", 10); HM(B(p->coll_data.x64_ecb.left.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.x64_ecb.left.y)", 10); HM(B(p->coll_data.x64_ecb.left.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.desired_ecb.top.x)", 10); HM(B(p->coll_data.desired_ecb.top.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.desired_ecb.top.y)", 10); HM(B(p->coll_data.desired_ecb.top.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.desired_ecb.bottom.x)", 10); HM(B(p->coll_data.desired_ecb.bottom.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.desired_ecb.bottom.y)", 10); HM(B(p->coll_data.desired_ecb.bottom.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.desired_ecb.right.x)", 10); HM(B(p->coll_data.desired_ecb.right.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.desired_ecb.right.y)", 10); HM(B(p->coll_data.desired_ecb.right.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.desired_ecb.left.x)", 10); HM(B(p->coll_data.desired_ecb.left.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.desired_ecb.left.y)", 10); HM(B(p->coll_data.desired_ecb.left.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.ecb.top.x)", 10); HM(B(p->coll_data.ecb.top.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.ecb.top.y)", 10); HM(B(p->coll_data.ecb.top.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.ecb.bottom.x)", 10); HM(B(p->coll_data.ecb.bottom.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.ecb.bottom.y)", 10); HM(B(p->coll_data.ecb.bottom.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.ecb.right.x)", 10); HM(B(p->coll_data.ecb.right.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.ecb.right.y)", 10); HM(B(p->coll_data.ecb.right.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.ecb.left.x)", 10); HM(B(p->coll_data.ecb.left.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.ecb.left.y)", 10); HM(B(p->coll_data.ecb.left.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.prev_ecb.top.x)", 10); HM(B(p->coll_data.prev_ecb.top.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.prev_ecb.top.y)", 10); HM(B(p->coll_data.prev_ecb.top.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.prev_ecb.bottom.x)", 10); HM(B(p->coll_data.prev_ecb.bottom.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.prev_ecb.bottom.y)", 10); HM(B(p->coll_data.prev_ecb.bottom.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.prev_ecb.right.x)", 10); HM(B(p->coll_data.prev_ecb.right.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.prev_ecb.right.y)", 10); HM(B(p->coll_data.prev_ecb.right.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.prev_ecb.left.x)", 10); HM(B(p->coll_data.prev_ecb.left.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.prev_ecb.left.y)", 10); HM(B(p->coll_data.prev_ecb.left.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.xE4_ecb.top.x)", 10); HM(B(p->coll_data.xE4_ecb.top.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.xE4_ecb.top.y)", 10); HM(B(p->coll_data.xE4_ecb.top.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.xE4_ecb.bottom.x)", 10); HM(B(p->coll_data.xE4_ecb.bottom.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.xE4_ecb.bottom.y)", 10); HM(B(p->coll_data.xE4_ecb.bottom.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.xE4_ecb.right.x)", 10); HM(B(p->coll_data.xE4_ecb.right.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.xE4_ecb.right.y)", 10); HM(B(p->coll_data.xE4_ecb.right.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.xE4_ecb.left.x)", 10); HM(B(p->coll_data.xE4_ecb.left.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.xE4_ecb.left.y)", 10); HM(B(p->coll_data.xE4_ecb.left.y)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->coll_data.ecb_source.kind", 10); HM((u32) p->coll_data.ecb_source.kind); }
     for (j0 = 0; j0 < 56; j0++) HM(((const unsigned char*) &p->coll_data.ecb_source)[8 + j0]);
-    HM(B(p->coll_data.ecb_source.x124));
-    HM(B(p->coll_data.ecb_source.x128));
-    HM(B(p->coll_data.ecb_source.x12C));
-    HM((u32) p->coll_data.x130_flags);
-    HM((u32) p->coll_data.env_flags);
-    HM((u32) p->coll_data.prev_env_flags);
-    HM((u32) p->coll_data.x13C);
-    HM(B(p->coll_data.contact.x));
-    HM(B(p->coll_data.contact.y));
-    HM(B(p->coll_data.contact.z));
-    HM((u32) p->coll_data.floor.index);
-    HM((u32) p->coll_data.floor.flags);
-    HM(B(p->coll_data.floor.normal.x));
-    HM(B(p->coll_data.floor.normal.y));
-    HM(B(p->coll_data.floor.normal.z));
-    HM((u32) p->coll_data.left_facing_wall.index);
-    HM((u32) p->coll_data.left_facing_wall.flags);
-    HM(B(p->coll_data.left_facing_wall.normal.x));
-    HM(B(p->coll_data.left_facing_wall.normal.y));
-    HM(B(p->coll_data.left_facing_wall.normal.z));
-    HM((u32) p->coll_data.right_facing_wall.index);
-    HM((u32) p->coll_data.right_facing_wall.flags);
-    HM(B(p->coll_data.right_facing_wall.normal.x));
-    HM(B(p->coll_data.right_facing_wall.normal.y));
-    HM(B(p->coll_data.right_facing_wall.normal.z));
-    HM((u32) p->coll_data.ceiling.index);
-    HM((u32) p->coll_data.ceiling.flags);
-    HM(B(p->coll_data.ceiling.normal.x));
-    HM(B(p->coll_data.ceiling.normal.y));
-    HM(B(p->coll_data.ceiling.normal.z));
-    HM((u32) p->ecb_lock);
-    HM(PI((const void*) p->x890_cameraBox));
-    HM(B(p->cur_anim_frame));
-    HM(B(p->x898_unk));
-    HM(B(p->frame_speed_mul));
-    HM(B(p->x8A0_unk));
-    HM(B(p->x8A4_animBlendFrames));
-    HM(B(p->x8A8_anim_frame));
-    HM(PI((const void*) p->x8AC_animSkeleton));
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.ecb_source.x124)", 10); HM(B(p->coll_data.ecb_source.x124)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.ecb_source.x128)", 10); HM(B(p->coll_data.ecb_source.x128)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.ecb_source.x12C)", 10); HM(B(p->coll_data.ecb_source.x12C)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->coll_data.x130_flags", 10); HM((u32) p->coll_data.x130_flags); }
+    { if (HDBG) printf("N %s%c", "(u32) p->coll_data.env_flags", 10); HM((u32) p->coll_data.env_flags); }
+    { if (HDBG) printf("N %s%c", "(u32) p->coll_data.prev_env_flags", 10); HM((u32) p->coll_data.prev_env_flags); }
+    { if (HDBG) printf("N %s%c", "(u32) p->coll_data.x13C", 10); HM((u32) p->coll_data.x13C); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.contact.x)", 10); HM(B(p->coll_data.contact.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.contact.y)", 10); HM(B(p->coll_data.contact.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.contact.z)", 10); HM(B(p->coll_data.contact.z)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->coll_data.floor.index", 10); HM((u32) p->coll_data.floor.index); }
+    { if (HDBG) printf("N %s%c", "(u32) p->coll_data.floor.flags", 10); HM((u32) p->coll_data.floor.flags); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.floor.normal.x)", 10); HM(B(p->coll_data.floor.normal.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.floor.normal.y)", 10); HM(B(p->coll_data.floor.normal.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.floor.normal.z)", 10); HM(B(p->coll_data.floor.normal.z)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->coll_data.left_facing_wall.index", 10); HM((u32) p->coll_data.left_facing_wall.index); }
+    { if (HDBG) printf("N %s%c", "(u32) p->coll_data.left_facing_wall.flags", 10); HM((u32) p->coll_data.left_facing_wall.flags); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.left_facing_wall.normal.x)", 10); HM(B(p->coll_data.left_facing_wall.normal.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.left_facing_wall.normal.y)", 10); HM(B(p->coll_data.left_facing_wall.normal.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.left_facing_wall.normal.z)", 10); HM(B(p->coll_data.left_facing_wall.normal.z)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->coll_data.right_facing_wall.index", 10); HM((u32) p->coll_data.right_facing_wall.index); }
+    { if (HDBG) printf("N %s%c", "(u32) p->coll_data.right_facing_wall.flags", 10); HM((u32) p->coll_data.right_facing_wall.flags); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.right_facing_wall.normal.x)", 10); HM(B(p->coll_data.right_facing_wall.normal.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.right_facing_wall.normal.y)", 10); HM(B(p->coll_data.right_facing_wall.normal.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.right_facing_wall.normal.z)", 10); HM(B(p->coll_data.right_facing_wall.normal.z)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->coll_data.ceiling.index", 10); HM((u32) p->coll_data.ceiling.index); }
+    { if (HDBG) printf("N %s%c", "(u32) p->coll_data.ceiling.flags", 10); HM((u32) p->coll_data.ceiling.flags); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.ceiling.normal.x)", 10); HM(B(p->coll_data.ceiling.normal.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.ceiling.normal.y)", 10); HM(B(p->coll_data.ceiling.normal.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->coll_data.ceiling.normal.z)", 10); HM(B(p->coll_data.ceiling.normal.z)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->ecb_lock", 10); HM((u32) p->ecb_lock); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x890_cameraBox)", 10); HM(PI((const void*) p->x890_cameraBox)); }
+    { if (HDBG) printf("N %s%c", "B(p->cur_anim_frame)", 10); HM(B(p->cur_anim_frame)); }
+    { if (HDBG) printf("N %s%c", "B(p->x898_unk)", 10); HM(B(p->x898_unk)); }
+    { if (HDBG) printf("N %s%c", "B(p->frame_speed_mul)", 10); HM(B(p->frame_speed_mul)); }
+    { if (HDBG) printf("N %s%c", "B(p->x8A0_unk)", 10); HM(B(p->x8A0_unk)); }
+    { if (HDBG) printf("N %s%c", "B(p->x8A4_animBlendFrames)", 10); HM(B(p->x8A4_animBlendFrames)); }
+    { if (HDBG) printf("N %s%c", "B(p->x8A8_anim_frame)", 10); HM(B(p->x8A8_anim_frame)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x8AC_animSkeleton)", 10); HM(PI((const void*) p->x8AC_animSkeleton)); }
     for (i0 = 0; i0 < 5; i0++) {
-    HM((u32) p->x8B0[i0].x0);
-    HM(B(p->x8B0[i0].x4));
-    HM(B(p->x8B0[i0].x8));
-    HM(B(p->x8B0[i0].xC));
-    HM((u32) p->x8B0[i0].x10);
-    HM((u32) p->x8B0[i0].x11);
+    { if (HDBG) printf("N %s%c", "(u32) p->x8B0[i0].x0", 10); HM((u32) p->x8B0[i0].x0); }
+    { if (HDBG) printf("N %s%c", "B(p->x8B0[i0].x4)", 10); HM(B(p->x8B0[i0].x4)); }
+    { if (HDBG) printf("N %s%c", "B(p->x8B0[i0].x8)", 10); HM(B(p->x8B0[i0].x8)); }
+    { if (HDBG) printf("N %s%c", "B(p->x8B0[i0].xC)", 10); HM(B(p->x8B0[i0].xC)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x8B0[i0].x10", 10); HM((u32) p->x8B0[i0].x10); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x8B0[i0].x11", 10); HM((u32) p->x8B0[i0].x11); }
     }
     for (i0 = 0; i0 < 4; i0++) {
-    HM((u32) p->x914[i0].state);
-    HM((u32) p->x914[i0].x4);
-    HM((u32) p->x914[i0].unk_count);
-    HM(B(p->x914[i0].damage));
-    HM(B(p->x914[i0].b_offset.x));
-    HM(B(p->x914[i0].b_offset.y));
-    HM(B(p->x914[i0].b_offset.z));
-    HM(B(p->x914[i0].scale));
-    HM((u32) p->x914[i0].kb_angle);
-    HM((u32) p->x914[i0].x24);
-    HM((u32) p->x914[i0].x28);
-    HM((u32) p->x914[i0].x2C);
-    HM((u32) p->x914[i0].element);
-    HM((u32) p->x914[i0].x34);
-    HM((u32) p->x914[i0].sfx_severity);
-    HM((u32) p->x914[i0].sfx_kind);
-    HM((u32) p->x914[i0].x40_b0);
-    HM((u32) p->x914[i0].x40_b1);
-    HM((u32) p->x914[i0].x40_b2);
-    HM((u32) p->x914[i0].x40_b3);
-    HM((u32) p->x914[i0].x40_b4);
-    HM((u32) p->x914[i0].x41_b4);
-    HM((u32) p->x914[i0].x41_b5);
-    HM((u32) p->x914[i0].x41_b6);
-    HM((u32) p->x914[i0].x41_b7);
-    HM((u32) p->x914[i0].x42_b0);
-    HM((u32) p->x914[i0].x42_b1);
-    HM((u32) p->x914[i0].x42_b2);
-    HM((u32) p->x914[i0].x42_b3);
-    HM((u32) p->x914[i0].x42_b4);
-    HM((u32) p->x914[i0].x42_b5);
-    HM((u32) p->x914[i0].x42_b6);
-    HM((u32) p->x914[i0].x42_b7);
-    HM((u32) p->x914[i0].x43_b0);
-    HM((u32) p->x914[i0].x43_b1);
-    HM((u32) p->x914[i0].x43_b2);
-    HM((u32) p->x914[i0].x43_b3);
-    HM((u32) p->x914[i0].x43_b4);
-    HM((u32) p->x914[i0].x43_b5);
-    HM((u32) p->x914[i0].x43_b6);
-    HM((u32) p->x914[i0].x43_b7);
-    HM((u32) p->x914[i0].x44);
-    HM((u32) p->x914[i0].x45);
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].state", 10); HM((u32) p->x914[i0].state); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].x4", 10); HM((u32) p->x914[i0].x4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].unk_count", 10); HM((u32) p->x914[i0].unk_count); }
+    { if (HDBG) printf("N %s%c", "B(p->x914[i0].damage)", 10); HM(B(p->x914[i0].damage)); }
+    { if (HDBG) printf("N %s%c", "B(p->x914[i0].b_offset.x)", 10); HM(B(p->x914[i0].b_offset.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x914[i0].b_offset.y)", 10); HM(B(p->x914[i0].b_offset.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->x914[i0].b_offset.z)", 10); HM(B(p->x914[i0].b_offset.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->x914[i0].scale)", 10); HM(B(p->x914[i0].scale)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].kb_angle", 10); HM((u32) p->x914[i0].kb_angle); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].x24", 10); HM((u32) p->x914[i0].x24); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].x28", 10); HM((u32) p->x914[i0].x28); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].x2C", 10); HM((u32) p->x914[i0].x2C); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].element", 10); HM((u32) p->x914[i0].element); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].x34", 10); HM((u32) p->x914[i0].x34); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].sfx_severity", 10); HM((u32) p->x914[i0].sfx_severity); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].sfx_kind", 10); HM((u32) p->x914[i0].sfx_kind); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].x40_b0", 10); HM((u32) p->x914[i0].x40_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].x40_b1", 10); HM((u32) p->x914[i0].x40_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].x40_b2", 10); HM((u32) p->x914[i0].x40_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].x40_b3", 10); HM((u32) p->x914[i0].x40_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].x40_b4", 10); HM((u32) p->x914[i0].x40_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].x41_b4", 10); HM((u32) p->x914[i0].x41_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].x41_b5", 10); HM((u32) p->x914[i0].x41_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].x41_b6", 10); HM((u32) p->x914[i0].x41_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].x41_b7", 10); HM((u32) p->x914[i0].x41_b7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].x42_b0", 10); HM((u32) p->x914[i0].x42_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].x42_b1", 10); HM((u32) p->x914[i0].x42_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].x42_b2", 10); HM((u32) p->x914[i0].x42_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].x42_b3", 10); HM((u32) p->x914[i0].x42_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].x42_b4", 10); HM((u32) p->x914[i0].x42_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].x42_b5", 10); HM((u32) p->x914[i0].x42_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].x42_b6", 10); HM((u32) p->x914[i0].x42_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].x42_b7", 10); HM((u32) p->x914[i0].x42_b7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].x43_b0", 10); HM((u32) p->x914[i0].x43_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].x43_b1", 10); HM((u32) p->x914[i0].x43_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].x43_b2", 10); HM((u32) p->x914[i0].x43_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].x43_b3", 10); HM((u32) p->x914[i0].x43_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].x43_b4", 10); HM((u32) p->x914[i0].x43_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].x43_b5", 10); HM((u32) p->x914[i0].x43_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].x43_b6", 10); HM((u32) p->x914[i0].x43_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].x43_b7", 10); HM((u32) p->x914[i0].x43_b7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].x44", 10); HM((u32) p->x914[i0].x44); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].x45", 10); HM((u32) p->x914[i0].x45); }
     for (i1 = 0; i1 < 2; i1++) {
-    HM((u32) p->x914[i0].x46[i1]);
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].x46[i1]", 10); HM((u32) p->x914[i0].x46[i1]); }
     }
-    HM(PI((const void*) p->x914[i0].jobj));
-    HM(B(p->x914[i0].x4C.x));
-    HM(B(p->x914[i0].x4C.y));
-    HM(B(p->x914[i0].x4C.z));
-    HM(B(p->x914[i0].x58.x));
-    HM(B(p->x914[i0].x58.y));
-    HM(B(p->x914[i0].x58.z));
-    HM(B(p->x914[i0].hurt_coll_pos.x));
-    HM(B(p->x914[i0].hurt_coll_pos.y));
-    HM(B(p->x914[i0].hurt_coll_pos.z));
-    HM(B(p->x914[i0].coll_distance));
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x914[i0].jobj)", 10); HM(PI((const void*) p->x914[i0].jobj)); }
+    { if (HDBG) printf("N %s%c", "B(p->x914[i0].x4C.x)", 10); HM(B(p->x914[i0].x4C.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x914[i0].x4C.y)", 10); HM(B(p->x914[i0].x4C.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->x914[i0].x4C.z)", 10); HM(B(p->x914[i0].x4C.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->x914[i0].x58.x)", 10); HM(B(p->x914[i0].x58.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x914[i0].x58.y)", 10); HM(B(p->x914[i0].x58.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->x914[i0].x58.z)", 10); HM(B(p->x914[i0].x58.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->x914[i0].hurt_coll_pos.x)", 10); HM(B(p->x914[i0].hurt_coll_pos.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x914[i0].hurt_coll_pos.y)", 10); HM(B(p->x914[i0].hurt_coll_pos.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->x914[i0].hurt_coll_pos.z)", 10); HM(B(p->x914[i0].hurt_coll_pos.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->x914[i0].coll_distance)", 10); HM(B(p->x914[i0].coll_distance)); }
     for (i1 = 0; i1 < 12; i1++) {
-    HM(PI((const void*) p->x914[i0].victims_1[i1].victim));
-    HM((u32) p->x914[i0].victims_1[i1].x4);
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x914[i0].victims_1[i1].victim)", 10); HM(PI((const void*) p->x914[i0].victims_1[i1].victim)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].victims_1[i1].x4", 10); HM((u32) p->x914[i0].victims_1[i1].x4); }
     }
     for (i1 = 0; i1 < 12; i1++) {
-    HM(PI((const void*) p->x914[i0].victims_2[i1].victim));
-    HM((u32) p->x914[i0].victims_2[i1].x4);
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x914[i0].victims_2[i1].victim)", 10); HM(PI((const void*) p->x914[i0].victims_2[i1].victim)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].victims_2[i1].x4", 10); HM((u32) p->x914[i0].victims_2[i1].x4); }
     }
-    HM((u32) p->x914[i0].hit_grabbed_victim_only);
+    { if (HDBG) printf("N %s%c", "(u32) p->x914[i0].hit_grabbed_victim_only", 10); HM((u32) p->x914[i0].hit_grabbed_victim_only); }
     }
     for (i0 = 0; i0 < 2; i0++) {
-    HM((u32) p->xDF4[i0].state);
-    HM((u32) p->xDF4[i0].x4);
-    HM((u32) p->xDF4[i0].unk_count);
-    HM(B(p->xDF4[i0].damage));
-    HM(B(p->xDF4[i0].b_offset.x));
-    HM(B(p->xDF4[i0].b_offset.y));
-    HM(B(p->xDF4[i0].b_offset.z));
-    HM(B(p->xDF4[i0].scale));
-    HM((u32) p->xDF4[i0].kb_angle);
-    HM((u32) p->xDF4[i0].x24);
-    HM((u32) p->xDF4[i0].x28);
-    HM((u32) p->xDF4[i0].x2C);
-    HM((u32) p->xDF4[i0].element);
-    HM((u32) p->xDF4[i0].x34);
-    HM((u32) p->xDF4[i0].sfx_severity);
-    HM((u32) p->xDF4[i0].sfx_kind);
-    HM((u32) p->xDF4[i0].x40_b0);
-    HM((u32) p->xDF4[i0].x40_b1);
-    HM((u32) p->xDF4[i0].x40_b2);
-    HM((u32) p->xDF4[i0].x40_b3);
-    HM((u32) p->xDF4[i0].x40_b4);
-    HM((u32) p->xDF4[i0].x41_b4);
-    HM((u32) p->xDF4[i0].x41_b5);
-    HM((u32) p->xDF4[i0].x41_b6);
-    HM((u32) p->xDF4[i0].x41_b7);
-    HM((u32) p->xDF4[i0].x42_b0);
-    HM((u32) p->xDF4[i0].x42_b1);
-    HM((u32) p->xDF4[i0].x42_b2);
-    HM((u32) p->xDF4[i0].x42_b3);
-    HM((u32) p->xDF4[i0].x42_b4);
-    HM((u32) p->xDF4[i0].x42_b5);
-    HM((u32) p->xDF4[i0].x42_b6);
-    HM((u32) p->xDF4[i0].x42_b7);
-    HM((u32) p->xDF4[i0].x43_b0);
-    HM((u32) p->xDF4[i0].x43_b1);
-    HM((u32) p->xDF4[i0].x43_b2);
-    HM((u32) p->xDF4[i0].x43_b3);
-    HM((u32) p->xDF4[i0].x43_b4);
-    HM((u32) p->xDF4[i0].x43_b5);
-    HM((u32) p->xDF4[i0].x43_b6);
-    HM((u32) p->xDF4[i0].x43_b7);
-    HM((u32) p->xDF4[i0].x44);
-    HM((u32) p->xDF4[i0].x45);
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].state", 10); HM((u32) p->xDF4[i0].state); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].x4", 10); HM((u32) p->xDF4[i0].x4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].unk_count", 10); HM((u32) p->xDF4[i0].unk_count); }
+    { if (HDBG) printf("N %s%c", "B(p->xDF4[i0].damage)", 10); HM(B(p->xDF4[i0].damage)); }
+    { if (HDBG) printf("N %s%c", "B(p->xDF4[i0].b_offset.x)", 10); HM(B(p->xDF4[i0].b_offset.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->xDF4[i0].b_offset.y)", 10); HM(B(p->xDF4[i0].b_offset.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->xDF4[i0].b_offset.z)", 10); HM(B(p->xDF4[i0].b_offset.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->xDF4[i0].scale)", 10); HM(B(p->xDF4[i0].scale)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].kb_angle", 10); HM((u32) p->xDF4[i0].kb_angle); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].x24", 10); HM((u32) p->xDF4[i0].x24); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].x28", 10); HM((u32) p->xDF4[i0].x28); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].x2C", 10); HM((u32) p->xDF4[i0].x2C); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].element", 10); HM((u32) p->xDF4[i0].element); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].x34", 10); HM((u32) p->xDF4[i0].x34); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].sfx_severity", 10); HM((u32) p->xDF4[i0].sfx_severity); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].sfx_kind", 10); HM((u32) p->xDF4[i0].sfx_kind); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].x40_b0", 10); HM((u32) p->xDF4[i0].x40_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].x40_b1", 10); HM((u32) p->xDF4[i0].x40_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].x40_b2", 10); HM((u32) p->xDF4[i0].x40_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].x40_b3", 10); HM((u32) p->xDF4[i0].x40_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].x40_b4", 10); HM((u32) p->xDF4[i0].x40_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].x41_b4", 10); HM((u32) p->xDF4[i0].x41_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].x41_b5", 10); HM((u32) p->xDF4[i0].x41_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].x41_b6", 10); HM((u32) p->xDF4[i0].x41_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].x41_b7", 10); HM((u32) p->xDF4[i0].x41_b7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].x42_b0", 10); HM((u32) p->xDF4[i0].x42_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].x42_b1", 10); HM((u32) p->xDF4[i0].x42_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].x42_b2", 10); HM((u32) p->xDF4[i0].x42_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].x42_b3", 10); HM((u32) p->xDF4[i0].x42_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].x42_b4", 10); HM((u32) p->xDF4[i0].x42_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].x42_b5", 10); HM((u32) p->xDF4[i0].x42_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].x42_b6", 10); HM((u32) p->xDF4[i0].x42_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].x42_b7", 10); HM((u32) p->xDF4[i0].x42_b7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].x43_b0", 10); HM((u32) p->xDF4[i0].x43_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].x43_b1", 10); HM((u32) p->xDF4[i0].x43_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].x43_b2", 10); HM((u32) p->xDF4[i0].x43_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].x43_b3", 10); HM((u32) p->xDF4[i0].x43_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].x43_b4", 10); HM((u32) p->xDF4[i0].x43_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].x43_b5", 10); HM((u32) p->xDF4[i0].x43_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].x43_b6", 10); HM((u32) p->xDF4[i0].x43_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].x43_b7", 10); HM((u32) p->xDF4[i0].x43_b7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].x44", 10); HM((u32) p->xDF4[i0].x44); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].x45", 10); HM((u32) p->xDF4[i0].x45); }
     for (i1 = 0; i1 < 2; i1++) {
-    HM((u32) p->xDF4[i0].x46[i1]);
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].x46[i1]", 10); HM((u32) p->xDF4[i0].x46[i1]); }
     }
-    HM(PI((const void*) p->xDF4[i0].jobj));
-    HM(B(p->xDF4[i0].x4C.x));
-    HM(B(p->xDF4[i0].x4C.y));
-    HM(B(p->xDF4[i0].x4C.z));
-    HM(B(p->xDF4[i0].x58.x));
-    HM(B(p->xDF4[i0].x58.y));
-    HM(B(p->xDF4[i0].x58.z));
-    HM(B(p->xDF4[i0].hurt_coll_pos.x));
-    HM(B(p->xDF4[i0].hurt_coll_pos.y));
-    HM(B(p->xDF4[i0].hurt_coll_pos.z));
-    HM(B(p->xDF4[i0].coll_distance));
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->xDF4[i0].jobj)", 10); HM(PI((const void*) p->xDF4[i0].jobj)); }
+    { if (HDBG) printf("N %s%c", "B(p->xDF4[i0].x4C.x)", 10); HM(B(p->xDF4[i0].x4C.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->xDF4[i0].x4C.y)", 10); HM(B(p->xDF4[i0].x4C.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->xDF4[i0].x4C.z)", 10); HM(B(p->xDF4[i0].x4C.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->xDF4[i0].x58.x)", 10); HM(B(p->xDF4[i0].x58.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->xDF4[i0].x58.y)", 10); HM(B(p->xDF4[i0].x58.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->xDF4[i0].x58.z)", 10); HM(B(p->xDF4[i0].x58.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->xDF4[i0].hurt_coll_pos.x)", 10); HM(B(p->xDF4[i0].hurt_coll_pos.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->xDF4[i0].hurt_coll_pos.y)", 10); HM(B(p->xDF4[i0].hurt_coll_pos.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->xDF4[i0].hurt_coll_pos.z)", 10); HM(B(p->xDF4[i0].hurt_coll_pos.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->xDF4[i0].coll_distance)", 10); HM(B(p->xDF4[i0].coll_distance)); }
     for (i1 = 0; i1 < 12; i1++) {
-    HM(PI((const void*) p->xDF4[i0].victims_1[i1].victim));
-    HM((u32) p->xDF4[i0].victims_1[i1].x4);
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->xDF4[i0].victims_1[i1].victim)", 10); HM(PI((const void*) p->xDF4[i0].victims_1[i1].victim)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].victims_1[i1].x4", 10); HM((u32) p->xDF4[i0].victims_1[i1].x4); }
     }
     for (i1 = 0; i1 < 12; i1++) {
-    HM(PI((const void*) p->xDF4[i0].victims_2[i1].victim));
-    HM((u32) p->xDF4[i0].victims_2[i1].x4);
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->xDF4[i0].victims_2[i1].victim)", 10); HM(PI((const void*) p->xDF4[i0].victims_2[i1].victim)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].victims_2[i1].x4", 10); HM((u32) p->xDF4[i0].victims_2[i1].x4); }
     }
-    HM((u32) p->xDF4[i0].hit_grabbed_victim_only);
+    { if (HDBG) printf("N %s%c", "(u32) p->xDF4[i0].hit_grabbed_victim_only", 10); HM((u32) p->xDF4[i0].hit_grabbed_victim_only); }
     }
-    HM((u32) p->x1064_thrownHitbox.state);
-    HM((u32) p->x1064_thrownHitbox.x4);
-    HM((u32) p->x1064_thrownHitbox.unk_count);
-    HM(B(p->x1064_thrownHitbox.damage));
-    HM(B(p->x1064_thrownHitbox.b_offset.x));
-    HM(B(p->x1064_thrownHitbox.b_offset.y));
-    HM(B(p->x1064_thrownHitbox.b_offset.z));
-    HM(B(p->x1064_thrownHitbox.scale));
-    HM((u32) p->x1064_thrownHitbox.kb_angle);
-    HM((u32) p->x1064_thrownHitbox.x24);
-    HM((u32) p->x1064_thrownHitbox.x28);
-    HM((u32) p->x1064_thrownHitbox.x2C);
-    HM((u32) p->x1064_thrownHitbox.element);
-    HM((u32) p->x1064_thrownHitbox.x34);
-    HM((u32) p->x1064_thrownHitbox.sfx_severity);
-    HM((u32) p->x1064_thrownHitbox.sfx_kind);
-    HM((u32) p->x1064_thrownHitbox.x40_b0);
-    HM((u32) p->x1064_thrownHitbox.x40_b1);
-    HM((u32) p->x1064_thrownHitbox.x40_b2);
-    HM((u32) p->x1064_thrownHitbox.x40_b3);
-    HM((u32) p->x1064_thrownHitbox.x40_b4);
-    HM((u32) p->x1064_thrownHitbox.x41_b4);
-    HM((u32) p->x1064_thrownHitbox.x41_b5);
-    HM((u32) p->x1064_thrownHitbox.x41_b6);
-    HM((u32) p->x1064_thrownHitbox.x41_b7);
-    HM((u32) p->x1064_thrownHitbox.x42_b0);
-    HM((u32) p->x1064_thrownHitbox.x42_b1);
-    HM((u32) p->x1064_thrownHitbox.x42_b2);
-    HM((u32) p->x1064_thrownHitbox.x42_b3);
-    HM((u32) p->x1064_thrownHitbox.x42_b4);
-    HM((u32) p->x1064_thrownHitbox.x42_b5);
-    HM((u32) p->x1064_thrownHitbox.x42_b6);
-    HM((u32) p->x1064_thrownHitbox.x42_b7);
-    HM((u32) p->x1064_thrownHitbox.x43_b0);
-    HM((u32) p->x1064_thrownHitbox.x43_b1);
-    HM((u32) p->x1064_thrownHitbox.x43_b2);
-    HM((u32) p->x1064_thrownHitbox.x43_b3);
-    HM((u32) p->x1064_thrownHitbox.x43_b4);
-    HM((u32) p->x1064_thrownHitbox.x43_b5);
-    HM((u32) p->x1064_thrownHitbox.x43_b6);
-    HM((u32) p->x1064_thrownHitbox.x43_b7);
-    HM((u32) p->x1064_thrownHitbox.x44);
-    HM((u32) p->x1064_thrownHitbox.x45);
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.state", 10); HM((u32) p->x1064_thrownHitbox.state); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.x4", 10); HM((u32) p->x1064_thrownHitbox.x4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.unk_count", 10); HM((u32) p->x1064_thrownHitbox.unk_count); }
+    { if (HDBG) printf("N %s%c", "B(p->x1064_thrownHitbox.damage)", 10); HM(B(p->x1064_thrownHitbox.damage)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1064_thrownHitbox.b_offset.x)", 10); HM(B(p->x1064_thrownHitbox.b_offset.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1064_thrownHitbox.b_offset.y)", 10); HM(B(p->x1064_thrownHitbox.b_offset.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1064_thrownHitbox.b_offset.z)", 10); HM(B(p->x1064_thrownHitbox.b_offset.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1064_thrownHitbox.scale)", 10); HM(B(p->x1064_thrownHitbox.scale)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.kb_angle", 10); HM((u32) p->x1064_thrownHitbox.kb_angle); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.x24", 10); HM((u32) p->x1064_thrownHitbox.x24); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.x28", 10); HM((u32) p->x1064_thrownHitbox.x28); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.x2C", 10); HM((u32) p->x1064_thrownHitbox.x2C); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.element", 10); HM((u32) p->x1064_thrownHitbox.element); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.x34", 10); HM((u32) p->x1064_thrownHitbox.x34); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.sfx_severity", 10); HM((u32) p->x1064_thrownHitbox.sfx_severity); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.sfx_kind", 10); HM((u32) p->x1064_thrownHitbox.sfx_kind); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.x40_b0", 10); HM((u32) p->x1064_thrownHitbox.x40_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.x40_b1", 10); HM((u32) p->x1064_thrownHitbox.x40_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.x40_b2", 10); HM((u32) p->x1064_thrownHitbox.x40_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.x40_b3", 10); HM((u32) p->x1064_thrownHitbox.x40_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.x40_b4", 10); HM((u32) p->x1064_thrownHitbox.x40_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.x41_b4", 10); HM((u32) p->x1064_thrownHitbox.x41_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.x41_b5", 10); HM((u32) p->x1064_thrownHitbox.x41_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.x41_b6", 10); HM((u32) p->x1064_thrownHitbox.x41_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.x41_b7", 10); HM((u32) p->x1064_thrownHitbox.x41_b7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.x42_b0", 10); HM((u32) p->x1064_thrownHitbox.x42_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.x42_b1", 10); HM((u32) p->x1064_thrownHitbox.x42_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.x42_b2", 10); HM((u32) p->x1064_thrownHitbox.x42_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.x42_b3", 10); HM((u32) p->x1064_thrownHitbox.x42_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.x42_b4", 10); HM((u32) p->x1064_thrownHitbox.x42_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.x42_b5", 10); HM((u32) p->x1064_thrownHitbox.x42_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.x42_b6", 10); HM((u32) p->x1064_thrownHitbox.x42_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.x42_b7", 10); HM((u32) p->x1064_thrownHitbox.x42_b7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.x43_b0", 10); HM((u32) p->x1064_thrownHitbox.x43_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.x43_b1", 10); HM((u32) p->x1064_thrownHitbox.x43_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.x43_b2", 10); HM((u32) p->x1064_thrownHitbox.x43_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.x43_b3", 10); HM((u32) p->x1064_thrownHitbox.x43_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.x43_b4", 10); HM((u32) p->x1064_thrownHitbox.x43_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.x43_b5", 10); HM((u32) p->x1064_thrownHitbox.x43_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.x43_b6", 10); HM((u32) p->x1064_thrownHitbox.x43_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.x43_b7", 10); HM((u32) p->x1064_thrownHitbox.x43_b7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.x44", 10); HM((u32) p->x1064_thrownHitbox.x44); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.x45", 10); HM((u32) p->x1064_thrownHitbox.x45); }
     for (i0 = 0; i0 < 2; i0++) {
-    HM((u32) p->x1064_thrownHitbox.x46[i0]);
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.x46[i0]", 10); HM((u32) p->x1064_thrownHitbox.x46[i0]); }
     }
-    HM(PI((const void*) p->x1064_thrownHitbox.jobj));
-    HM(B(p->x1064_thrownHitbox.x4C.x));
-    HM(B(p->x1064_thrownHitbox.x4C.y));
-    HM(B(p->x1064_thrownHitbox.x4C.z));
-    HM(B(p->x1064_thrownHitbox.x58.x));
-    HM(B(p->x1064_thrownHitbox.x58.y));
-    HM(B(p->x1064_thrownHitbox.x58.z));
-    HM(B(p->x1064_thrownHitbox.hurt_coll_pos.x));
-    HM(B(p->x1064_thrownHitbox.hurt_coll_pos.y));
-    HM(B(p->x1064_thrownHitbox.hurt_coll_pos.z));
-    HM(B(p->x1064_thrownHitbox.coll_distance));
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x1064_thrownHitbox.jobj)", 10); HM(PI((const void*) p->x1064_thrownHitbox.jobj)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1064_thrownHitbox.x4C.x)", 10); HM(B(p->x1064_thrownHitbox.x4C.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1064_thrownHitbox.x4C.y)", 10); HM(B(p->x1064_thrownHitbox.x4C.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1064_thrownHitbox.x4C.z)", 10); HM(B(p->x1064_thrownHitbox.x4C.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1064_thrownHitbox.x58.x)", 10); HM(B(p->x1064_thrownHitbox.x58.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1064_thrownHitbox.x58.y)", 10); HM(B(p->x1064_thrownHitbox.x58.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1064_thrownHitbox.x58.z)", 10); HM(B(p->x1064_thrownHitbox.x58.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1064_thrownHitbox.hurt_coll_pos.x)", 10); HM(B(p->x1064_thrownHitbox.hurt_coll_pos.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1064_thrownHitbox.hurt_coll_pos.y)", 10); HM(B(p->x1064_thrownHitbox.hurt_coll_pos.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1064_thrownHitbox.hurt_coll_pos.z)", 10); HM(B(p->x1064_thrownHitbox.hurt_coll_pos.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1064_thrownHitbox.coll_distance)", 10); HM(B(p->x1064_thrownHitbox.coll_distance)); }
     for (i0 = 0; i0 < 12; i0++) {
-    HM(PI((const void*) p->x1064_thrownHitbox.victims_1[i0].victim));
-    HM((u32) p->x1064_thrownHitbox.victims_1[i0].x4);
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x1064_thrownHitbox.victims_1[i0].victim)", 10); HM(PI((const void*) p->x1064_thrownHitbox.victims_1[i0].victim)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.victims_1[i0].x4", 10); HM((u32) p->x1064_thrownHitbox.victims_1[i0].x4); }
     }
     for (i0 = 0; i0 < 12; i0++) {
-    HM(PI((const void*) p->x1064_thrownHitbox.victims_2[i0].victim));
-    HM((u32) p->x1064_thrownHitbox.victims_2[i0].x4);
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x1064_thrownHitbox.victims_2[i0].victim)", 10); HM(PI((const void*) p->x1064_thrownHitbox.victims_2[i0].victim)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.victims_2[i0].x4", 10); HM((u32) p->x1064_thrownHitbox.victims_2[i0].x4); }
     }
-    HM((u32) p->x1064_thrownHitbox.hit_grabbed_victim_only);
-    HM((u32) p->x119C_teamUnk);
-    HM((u32) p->grabber_unk1);
-    HM((u32) p->hurt_capsules_len);
-    HM((u32) p->x119F);
+    { if (HDBG) printf("N %s%c", "(u32) p->x1064_thrownHitbox.hit_grabbed_victim_only", 10); HM((u32) p->x1064_thrownHitbox.hit_grabbed_victim_only); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x119C_teamUnk", 10); HM((u32) p->x119C_teamUnk); }
+    { if (HDBG) printf("N %s%c", "(u32) p->grabber_unk1", 10); HM((u32) p->grabber_unk1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->hurt_capsules_len", 10); HM((u32) p->hurt_capsules_len); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x119F", 10); HM((u32) p->x119F); }
     for (i0 = 0; i0 < 15; i0++) {
-    HM((u32) p->hurt_capsules[i0].capsule.state);
-    HM(B(p->hurt_capsules[i0].capsule.a_offset.x));
-    HM(B(p->hurt_capsules[i0].capsule.a_offset.y));
-    HM(B(p->hurt_capsules[i0].capsule.a_offset.z));
-    HM(B(p->hurt_capsules[i0].capsule.b_offset.x));
-    HM(B(p->hurt_capsules[i0].capsule.b_offset.y));
-    HM(B(p->hurt_capsules[i0].capsule.b_offset.z));
-    HM(B(p->hurt_capsules[i0].capsule.scale));
-    HM(PI((const void*) p->hurt_capsules[i0].capsule.bone));
-    HM((u32) p->hurt_capsules[i0].capsule.skip_update_pos);
-    HM((u32) p->hurt_capsules[i0].capsule.x24_b1);
-    HM((u32) p->hurt_capsules[i0].capsule.x24_b2);
-    HM((u32) p->hurt_capsules[i0].capsule.x24_b3);
-    HM((u32) p->hurt_capsules[i0].capsule.x24_b4);
-    HM((u32) p->hurt_capsules[i0].capsule.x24_b5);
-    HM((u32) p->hurt_capsules[i0].capsule.x24_b6);
-    HM((u32) p->hurt_capsules[i0].capsule.x24_b7);
-    HM(B(p->hurt_capsules[i0].capsule.a_pos.x));
-    HM(B(p->hurt_capsules[i0].capsule.a_pos.y));
-    HM(B(p->hurt_capsules[i0].capsule.a_pos.z));
-    HM(B(p->hurt_capsules[i0].capsule.b_pos.x));
-    HM(B(p->hurt_capsules[i0].capsule.b_pos.y));
-    HM(B(p->hurt_capsules[i0].capsule.b_pos.z));
-    HM((u32) p->hurt_capsules[i0].capsule.bone_idx);
-    HM((u32) p->hurt_capsules[i0].height);
-    HM((u32) p->hurt_capsules[i0].is_grabbable);
+    { if (HDBG) printf("N %s%c", "(u32) p->hurt_capsules[i0].capsule.state", 10); HM((u32) p->hurt_capsules[i0].capsule.state); }
+    { if (HDBG) printf("N %s%c", "B(p->hurt_capsules[i0].capsule.a_offset.x)", 10); HM(B(p->hurt_capsules[i0].capsule.a_offset.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->hurt_capsules[i0].capsule.a_offset.y)", 10); HM(B(p->hurt_capsules[i0].capsule.a_offset.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->hurt_capsules[i0].capsule.a_offset.z)", 10); HM(B(p->hurt_capsules[i0].capsule.a_offset.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->hurt_capsules[i0].capsule.b_offset.x)", 10); HM(B(p->hurt_capsules[i0].capsule.b_offset.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->hurt_capsules[i0].capsule.b_offset.y)", 10); HM(B(p->hurt_capsules[i0].capsule.b_offset.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->hurt_capsules[i0].capsule.b_offset.z)", 10); HM(B(p->hurt_capsules[i0].capsule.b_offset.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->hurt_capsules[i0].capsule.scale)", 10); HM(B(p->hurt_capsules[i0].capsule.scale)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->hurt_capsules[i0].capsule.bone)", 10); HM(PI((const void*) p->hurt_capsules[i0].capsule.bone)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->hurt_capsules[i0].capsule.skip_update_pos", 10); HM((u32) p->hurt_capsules[i0].capsule.skip_update_pos); }
+    { if (HDBG) printf("N %s%c", "(u32) p->hurt_capsules[i0].capsule.x24_b1", 10); HM((u32) p->hurt_capsules[i0].capsule.x24_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->hurt_capsules[i0].capsule.x24_b2", 10); HM((u32) p->hurt_capsules[i0].capsule.x24_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->hurt_capsules[i0].capsule.x24_b3", 10); HM((u32) p->hurt_capsules[i0].capsule.x24_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->hurt_capsules[i0].capsule.x24_b4", 10); HM((u32) p->hurt_capsules[i0].capsule.x24_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->hurt_capsules[i0].capsule.x24_b5", 10); HM((u32) p->hurt_capsules[i0].capsule.x24_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->hurt_capsules[i0].capsule.x24_b6", 10); HM((u32) p->hurt_capsules[i0].capsule.x24_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->hurt_capsules[i0].capsule.x24_b7", 10); HM((u32) p->hurt_capsules[i0].capsule.x24_b7); }
+    { if (HDBG) printf("N %s%c", "B(p->hurt_capsules[i0].capsule.a_pos.x)", 10); HM(B(p->hurt_capsules[i0].capsule.a_pos.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->hurt_capsules[i0].capsule.a_pos.y)", 10); HM(B(p->hurt_capsules[i0].capsule.a_pos.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->hurt_capsules[i0].capsule.a_pos.z)", 10); HM(B(p->hurt_capsules[i0].capsule.a_pos.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->hurt_capsules[i0].capsule.b_pos.x)", 10); HM(B(p->hurt_capsules[i0].capsule.b_pos.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->hurt_capsules[i0].capsule.b_pos.y)", 10); HM(B(p->hurt_capsules[i0].capsule.b_pos.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->hurt_capsules[i0].capsule.b_pos.z)", 10); HM(B(p->hurt_capsules[i0].capsule.b_pos.z)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->hurt_capsules[i0].capsule.bone_idx", 10); HM((u32) p->hurt_capsules[i0].capsule.bone_idx); }
+    { if (HDBG) printf("N %s%c", "(u32) p->hurt_capsules[i0].height", 10); HM((u32) p->hurt_capsules[i0].height); }
+    { if (HDBG) printf("N %s%c", "(u32) p->hurt_capsules[i0].is_grabbable", 10); HM((u32) p->hurt_capsules[i0].is_grabbable); }
     }
     for (i0 = 0; i0 < 2; i0++) {
-    HM(B(p->x1614[i0].x0));
-    HM(PI((const void*) p->x1614[i0].x4));
-    HM(B(p->x1614[i0].x8.x));
-    HM(B(p->x1614[i0].x8.y));
-    HM(B(p->x1614[i0].x8.z));
-    HM(B(p->x1614[i0].x14.x));
-    HM(B(p->x1614[i0].x14.y));
-    HM(B(p->x1614[i0].x14.z));
-    HM(B(p->x1614[i0].x20.x));
-    HM(B(p->x1614[i0].x20.y));
-    HM(B(p->x1614[i0].x20.z));
+    { if (HDBG) printf("N %s%c", "B(p->x1614[i0].x0)", 10); HM(B(p->x1614[i0].x0)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x1614[i0].x4)", 10); HM(PI((const void*) p->x1614[i0].x4)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1614[i0].x8.x)", 10); HM(B(p->x1614[i0].x8.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1614[i0].x8.y)", 10); HM(B(p->x1614[i0].x8.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1614[i0].x8.z)", 10); HM(B(p->x1614[i0].x8.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1614[i0].x14.x)", 10); HM(B(p->x1614[i0].x14.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1614[i0].x14.y)", 10); HM(B(p->x1614[i0].x14.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1614[i0].x14.z)", 10); HM(B(p->x1614[i0].x14.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1614[i0].x20.x)", 10); HM(B(p->x1614[i0].x20.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1614[i0].x20.y)", 10); HM(B(p->x1614[i0].x20.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1614[i0].x20.z)", 10); HM(B(p->x1614[i0].x20.z)); }
     }
-    HM((u32) p->x166C);
+    { if (HDBG) printf("N %s%c", "(u32) p->x166C", 10); HM((u32) p->x166C); }
     for (i0 = 0; i0 < 1; i0++) {
-    HM(B(p->x1670[i0].v1.x));
-    HM(B(p->x1670[i0].v1.y));
-    HM(B(p->x1670[i0].v1.z));
-    HM(B(p->x1670[i0].v2));
-    HM(PI((const void*) p->x1670[i0].jobj));
-    HM(B(p->x1670[i0].x14));
-    HM(B(p->x1670[i0].x18.x));
-    HM(B(p->x1670[i0].x18.y));
-    HM(B(p->x1670[i0].x18.z));
-    HM((u32) p->x1670[i0].x24);
+    { if (HDBG) printf("N %s%c", "B(p->x1670[i0].v1.x)", 10); HM(B(p->x1670[i0].v1.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1670[i0].v1.y)", 10); HM(B(p->x1670[i0].v1.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1670[i0].v1.z)", 10); HM(B(p->x1670[i0].v1.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1670[i0].v2)", 10); HM(B(p->x1670[i0].v2)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x1670[i0].jobj)", 10); HM(PI((const void*) p->x1670[i0].jobj)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1670[i0].x14)", 10); HM(B(p->x1670[i0].x14)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1670[i0].x18.x)", 10); HM(B(p->x1670[i0].x18.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1670[i0].x18.y)", 10); HM(B(p->x1670[i0].x18.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1670[i0].x18.z)", 10); HM(B(p->x1670[i0].x18.z)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1670[i0].x24", 10); HM((u32) p->x1670[i0].x24); }
     }
     for (i0 = 0; i0 < 400; i0++) {
-    HM((u32) p->filler_x1674[i0]);
+    { if (HDBG) printf("N %s%c", "(u32) p->filler_x1674[i0]", 10); HM((u32) p->filler_x1674[i0]); }
     }
-    HM((u32) p->x1828);
-    HM(B(p->dmg.x182c_behavior));
-    HM(B(p->dmg.x1830_percent));
-    HM(B(p->dmg.x1834));
-    HM(B(p->dmg.x1838_percentTemp));
-    HM((u32) p->dmg.x183C_applied);
-    HM((u32) p->dmg.x1840);
-    HM(B(p->dmg.facing_dir_1));
-    HM((u32) p->dmg.x1848_kb_angle);
-    HM((u32) p->dmg.x184c_damaged_hurtbox);
-    HM(B(p->dmg.kb_applied));
-    HM(B(p->dmg.x1854_collpos.x));
-    HM(B(p->dmg.x1854_collpos.y));
-    HM(B(p->dmg.x1854_collpos.z));
-    HM((u32) p->dmg.x1860_element);
-    HM((u32) p->dmg.x1864);
-    HM(PI((const void*) p->dmg.x1868_source));
-    HM((u32) p->dmg.x186c);
-    HM(PI((const void*) p->dmg.x1870));
-    HM((u32) p->dmg.x1874);
-    HM((u32) p->dmg.x1878);
-    HM(B(p->dmg.x187c));
-    HM(B(p->dmg.x1880.x));
-    HM(B(p->dmg.x1880.y));
-    HM(B(p->dmg.x1880.z));
-    HM((u32) p->dmg.x188c);
-    HM((u32) p->dmg.x1890);
-    HM((u32) p->dmg.x1894);
-    HM(B(p->dmg.x1898));
-    HM(B(p->dmg.x189C_unk_num_frames));
-    HM(B(p->dmg.x18a0));
-    HM(B(p->dmg.x18A4_knockbackMagnitude));
-    HM(B(p->dmg.x18A8));
-    HM((u32) p->dmg.x18ac_time_since_hit);
-    HM(B(p->dmg.armor0));
-    HM(B(p->dmg.armor1));
-    HM(B(p->dmg.x18B8));
-    HM(B(p->dmg.x18BC));
-    HM((u32) p->dmg.x18C0);
-    HM((u32) p->dmg.x18c4_source_ply);
-    HM((u32) p->dmg.x18C8);
-    HM((u32) p->dmg.x18CC);
-    HM((u32) p->dmg.x18D0);
-    HM((u32) p->dmg.x18d4.x0);
-    HM((u32) p->dmg.x18d4.x1);
-    HM((u32) p->dmg.x18d4.x2_b0);
-    HM((u32) p->dmg.x18d4.x2_b1);
-    HM((u32) p->dmg.x18d4.x2_b2);
-    HM((u32) p->dmg.x18d4.x2_b3);
-    HM((u32) p->dmg.x18d4.x2_b4);
-    HM((u32) p->dmg.x18d4.x2_b5);
-    HM((u32) p->dmg.x18d4.x2_b6);
-    HM((u32) p->dmg.x18d4.x2_b7);
-    HM((u32) p->dmg.x18d4.x3);
-    HM((u32) p->dmg.x18d8.x0);
-    HM((u32) p->dmg.x18d8.x4);
-    HM(B(p->dmg.x18d8.kb_applied1));
-    HM((u32) p->dmg.x18d8.xC);
-    HM((u32) p->dmg.x18d8.x10_b0);
-    HM((u32) p->dmg.x18d8.x10_b1);
-    HM((u32) p->dmg.x18d8.x10_b2);
-    HM((u32) p->dmg.x18d8.x10_b3);
-    HM((u32) p->dmg.x18d8.x10_b4);
-    HM((u32) p->dmg.x18d8.x10_b5);
-    HM((u32) p->dmg.x18d8.x10_b6);
-    HM((u32) p->dmg.x18d8.x10_b7);
-    HM((u32) p->dmg.x18d8.x11_b0);
-    HM((u32) p->dmg.x18d8.x11_b1);
-    HM((u32) p->dmg.x18d8.x11_b2);
-    HM((u32) p->dmg.x18d8.x11_b3);
-    HM((u32) p->dmg.x18d8.x11_b4);
-    HM((u32) p->dmg.x18ec_instancehitby);
-    HM((u32) p->dmg.x18F0);
-    HM((u32) p->dmg.x18F4);
-    HM((u32) p->dmg.x18F8);
-    HM((u32) p->dmg.x18f9);
-    HM((u32) p->dmg.x18fa_model_shift_frames);
-    HM((u32) p->dmg.x18FC);
-    HM((u32) p->dmg.x18FD);
-    HM(B(p->dmg.x1900));
-    HM(B(p->dmg.x1904));
-    HM((u32) p->dmg.x1908);
-    HM(PI((const void*) p->dmg.x190C));
-    HM((u32) p->dmg.x1910);
-    HM((u32) p->dmg.x1914);
-    HM((u32) p->dmg.int_value);
-    HM(B(p->dmg.x191C));
-    HM(B(p->dmg.facing_dir));
-    HM((u32) p->dmg.x1924);
-    HM(B(p->dmg.x1928));
-    HM(B(p->dmg.x192c));
-    HM(B(p->dmg.x1930.x0.x));
-    HM(B(p->dmg.x1930.x0.y));
-    HM(B(p->dmg.x1930.x0.z));
-    HM(B(p->dmg.x1930.xC.x));
-    HM(B(p->dmg.x1930.xC.y));
-    HM(B(p->dmg.x1930.xC.z));
-    HM((u32) p->dmg.x1948);
-    HM((u32) p->dmg.x194C);
-    HM((u32) p->dmg.x1950);
-    HM(B(p->dmg.x1954));
-    HM(B(p->dmg.x1958));
-    HM(B(p->dmg.x195c_hitlag_frames));
-    HM(B(p->x1960_vibrateMult));
-    HM(B(p->x1964));
-    HM((u32) p->x1968_jumpsUsed);
-    HM((u32) p->x1969_walljumpUsed);
-    HM(B(p->hitlag_mul));
-    HM((u32) p->unk_msid);
-    HM(PI((const void*) p->item_gobj));
-    HM(PI((const void*) p->x1978));
-    HM(PI((const void*) p->x197C));
-    HM(PI((const void*) p->x1980));
-    HM(PI((const void*) p->x1984_heldItemSpec));
-    HM((u32) p->x1988);
-    HM((u32) p->x198C);
-    HM((u32) p->x1990);
-    HM((u32) p->x1994);
-    HM(B(p->shield_health));
-    HM(B(p->lightshield_amount));
-    HM((u32) p->x19A0_shieldDamageTaken);
-    HM((u32) p->x19A4);
-    HM(PI((const void*) p->x19A8));
-    HM(B(p->specialn_facing_dir));
-    HM((u32) p->x19B0);
-    HM(B(p->shield_unk0));
-    HM(B(p->shield_unk1));
-    HM((u32) p->x19BC_shieldDamageTaken3);
-    HM(PI((const void*) p->shield_hit.bone));
-    HM((u32) p->shield_hit.skip_update_pos);
-    HM(B(p->shield_hit.pos.x));
-    HM(B(p->shield_hit.pos.y));
-    HM(B(p->shield_hit.pos.z));
-    HM(B(p->shield_hit.offset.x));
-    HM(B(p->shield_hit.offset.y));
-    HM(B(p->shield_hit.offset.z));
-    HM(B(p->shield_hit.size));
-    HM(PI((const void*) p->reflect_hit.bone));
-    HM((u32) p->reflect_hit.skip_update_pos);
-    HM(B(p->reflect_hit.pos.x));
-    HM(B(p->reflect_hit.pos.y));
-    HM(B(p->reflect_hit.pos.z));
-    HM(B(p->reflect_hit.offset.x));
-    HM(B(p->reflect_hit.offset.y));
-    HM(B(p->reflect_hit.offset.z));
-    HM(B(p->reflect_hit.size));
-    HM(PI((const void*) p->absorb_hit.bone));
-    HM((u32) p->absorb_hit.skip_update_pos);
-    HM(B(p->absorb_hit.pos.x));
-    HM(B(p->absorb_hit.pos.y));
-    HM(B(p->absorb_hit.pos.z));
-    HM(B(p->absorb_hit.offset.x));
-    HM(B(p->absorb_hit.offset.y));
-    HM(B(p->absorb_hit.offset.z));
-    HM(B(p->absorb_hit.size));
-    HM(B(p->ReflectAttr.x1A2C_reflectHitDirection));
-    HM((u32) p->ReflectAttr.x1A30_maxDamage);
-    HM(B(p->ReflectAttr.x1A34_damageMul));
-    HM(B(p->ReflectAttr.x1A38_speedMul));
-    HM((u32) p->ReflectAttr.x1A3C_damageOver);
-    HM(B(p->AbsorbAttr.x1A40_absorbHitDirection));
-    HM((u32) p->AbsorbAttr.x1A44_damageTaken);
-    HM((u32) p->AbsorbAttr.x1A48_hitsTaken);
-    HM(B(p->grab_timer));
-    HM((u32) p->x1A50);
-    HM((u32) p->x1A51);
-    HM((u32) p->x1A52);
-    HM((u32) p->x1A53);
-    HM((u32) p->x1A54);
-    HM(PI((const void*) p->victim_gobj));
-    HM(PI((const void*) p->x1A5C));
-    HM(PI((const void*) p->target_item_gobj));
-    HM(PI((const void*) p->x1A64));
-    HM((u32) p->x1A68);
-    HM((u32) p->x1A6A);
-    HM(B(p->x1A6C));
-    HM(B(p->x1A70.x));
-    HM(B(p->x1A70.y));
-    HM(B(p->x1A70.z));
-    HM(B(p->x1A7C.x));
-    HM(B(p->x1A7C.y));
-    HM(B(p->x1A7C.z));
-    HM((u32) p->cpu.buttons);
-    HM((u32) p->cpu.lstick.x);
-    HM((u32) p->cpu.lstick.y);
-    HM((u32) p->cpu.cstick.x);
-    HM((u32) p->cpu.cstick.y);
-    HM((u32) p->cpu.ltrigger);
-    HM((u32) p->cpu.rtrigger);
-    HM((u32) p->cpu.kind);
-    HM((u32) p->cpu.level);
-    HM((u32) p->cpu.x14);
-    HM((u32) p->cpu.x18);
-    HM((u32) p->cpu.x1C);
-    HM((u32) p->cpu.x20);
-    HM((u32) p->cpu.x24);
-    HM((u32) p->cpu.x28);
-    HM((u32) p->cpu.x2C);
-    HM((u32) p->cpu.x30);
-    HM((u32) p->cpu.x34);
-    HM(B(p->cpu.x38));
-    HM(B(p->cpu.x3C));
-    HM(B(p->cpu.x40));
-    HM(PI((const void*) p->cpu.x44));
-    HM(PI((const void*) p->cpu.x48));
-    HM(PI((const void*) p->cpu.x4C));
-    HM((u32) p->cpu.x50);
-    HM(B(p->cpu.x54.x));
-    HM(B(p->cpu.x54.y));
-    HM(B(p->cpu.x5C));
-    HM((u32) p->cpu.x60);
-    HM(B(p->cpu.x64.x));
-    HM(B(p->cpu.x64.y));
-    HM(B(p->cpu.x6C.x));
-    HM(B(p->cpu.x6C.y));
-    HM(B(p->cpu.x74.x));
-    HM(B(p->cpu.x74.y));
-    HM((u32) p->cpu.x7C);
-    HM((u32) p->cpu.x80);
-    HM((u32) p->cpu.x84);
-    HM((u32) p->cpu.x88);
-    HM((u32) p->cpu.x8C);
-    HM((u32) p->cpu.x90);
-    HM((u32) p->cpu.x94);
-    HM(B(p->cpu.x98.x));
-    HM(B(p->cpu.x98.y));
-    HM(B(p->cpu.x98.z));
-    HM((u32) p->cpu.xA4);
+    { if (HDBG) printf("N %s%c", "(u32) p->x1828", 10); HM((u32) p->x1828); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.x182c_behavior)", 10); HM(B(p->dmg.x182c_behavior)); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.x1830_percent)", 10); HM(B(p->dmg.x1830_percent)); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.x1834)", 10); HM(B(p->dmg.x1834)); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.x1838_percentTemp)", 10); HM(B(p->dmg.x1838_percentTemp)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x183C_applied", 10); HM((u32) p->dmg.x183C_applied); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x1840", 10); HM((u32) p->dmg.x1840); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.facing_dir_1)", 10); HM(B(p->dmg.facing_dir_1)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x1848_kb_angle", 10); HM((u32) p->dmg.x1848_kb_angle); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x184c_damaged_hurtbox", 10); HM((u32) p->dmg.x184c_damaged_hurtbox); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.kb_applied)", 10); HM(B(p->dmg.kb_applied)); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.x1854_collpos.x)", 10); HM(B(p->dmg.x1854_collpos.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.x1854_collpos.y)", 10); HM(B(p->dmg.x1854_collpos.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.x1854_collpos.z)", 10); HM(B(p->dmg.x1854_collpos.z)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x1860_element", 10); HM((u32) p->dmg.x1860_element); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x1864", 10); HM((u32) p->dmg.x1864); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->dmg.x1868_source)", 10); HM(PI((const void*) p->dmg.x1868_source)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x186c", 10); HM((u32) p->dmg.x186c); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->dmg.x1870)", 10); HM(PI((const void*) p->dmg.x1870)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x1874", 10); HM((u32) p->dmg.x1874); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x1878", 10); HM((u32) p->dmg.x1878); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.x187c)", 10); HM(B(p->dmg.x187c)); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.x1880.x)", 10); HM(B(p->dmg.x1880.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.x1880.y)", 10); HM(B(p->dmg.x1880.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.x1880.z)", 10); HM(B(p->dmg.x1880.z)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x188c", 10); HM((u32) p->dmg.x188c); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x1890", 10); HM((u32) p->dmg.x1890); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x1894", 10); HM((u32) p->dmg.x1894); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.x1898)", 10); HM(B(p->dmg.x1898)); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.x189C_unk_num_frames)", 10); HM(B(p->dmg.x189C_unk_num_frames)); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.x18a0)", 10); HM(B(p->dmg.x18a0)); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.x18A4_knockbackMagnitude)", 10); HM(B(p->dmg.x18A4_knockbackMagnitude)); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.x18A8)", 10); HM(B(p->dmg.x18A8)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18ac_time_since_hit", 10); HM((u32) p->dmg.x18ac_time_since_hit); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.armor0)", 10); HM(B(p->dmg.armor0)); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.armor1)", 10); HM(B(p->dmg.armor1)); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.x18B8)", 10); HM(B(p->dmg.x18B8)); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.x18BC)", 10); HM(B(p->dmg.x18BC)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18C0", 10); HM((u32) p->dmg.x18C0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18c4_source_ply", 10); HM((u32) p->dmg.x18c4_source_ply); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18C8", 10); HM((u32) p->dmg.x18C8); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18CC", 10); HM((u32) p->dmg.x18CC); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18D0", 10); HM((u32) p->dmg.x18D0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18d4.x0", 10); HM((u32) p->dmg.x18d4.x0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18d4.x1", 10); HM((u32) p->dmg.x18d4.x1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18d4.x2_b0", 10); HM((u32) p->dmg.x18d4.x2_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18d4.x2_b1", 10); HM((u32) p->dmg.x18d4.x2_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18d4.x2_b2", 10); HM((u32) p->dmg.x18d4.x2_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18d4.x2_b3", 10); HM((u32) p->dmg.x18d4.x2_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18d4.x2_b4", 10); HM((u32) p->dmg.x18d4.x2_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18d4.x2_b5", 10); HM((u32) p->dmg.x18d4.x2_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18d4.x2_b6", 10); HM((u32) p->dmg.x18d4.x2_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18d4.x2_b7", 10); HM((u32) p->dmg.x18d4.x2_b7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18d4.x3", 10); HM((u32) p->dmg.x18d4.x3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18d8.x0", 10); HM((u32) p->dmg.x18d8.x0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18d8.x4", 10); HM((u32) p->dmg.x18d8.x4); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.x18d8.kb_applied1)", 10); HM(B(p->dmg.x18d8.kb_applied1)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18d8.xC", 10); HM((u32) p->dmg.x18d8.xC); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18d8.x10_b0", 10); HM((u32) p->dmg.x18d8.x10_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18d8.x10_b1", 10); HM((u32) p->dmg.x18d8.x10_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18d8.x10_b2", 10); HM((u32) p->dmg.x18d8.x10_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18d8.x10_b3", 10); HM((u32) p->dmg.x18d8.x10_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18d8.x10_b4", 10); HM((u32) p->dmg.x18d8.x10_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18d8.x10_b5", 10); HM((u32) p->dmg.x18d8.x10_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18d8.x10_b6", 10); HM((u32) p->dmg.x18d8.x10_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18d8.x10_b7", 10); HM((u32) p->dmg.x18d8.x10_b7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18d8.x11_b0", 10); HM((u32) p->dmg.x18d8.x11_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18d8.x11_b1", 10); HM((u32) p->dmg.x18d8.x11_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18d8.x11_b2", 10); HM((u32) p->dmg.x18d8.x11_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18d8.x11_b3", 10); HM((u32) p->dmg.x18d8.x11_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18d8.x11_b4", 10); HM((u32) p->dmg.x18d8.x11_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18ec_instancehitby", 10); HM((u32) p->dmg.x18ec_instancehitby); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18F0", 10); HM((u32) p->dmg.x18F0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18F4", 10); HM((u32) p->dmg.x18F4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18F8", 10); HM((u32) p->dmg.x18F8); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18f9", 10); HM((u32) p->dmg.x18f9); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18fa_model_shift_frames", 10); HM((u32) p->dmg.x18fa_model_shift_frames); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18FC", 10); HM((u32) p->dmg.x18FC); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x18FD", 10); HM((u32) p->dmg.x18FD); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.x1900)", 10); HM(B(p->dmg.x1900)); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.x1904)", 10); HM(B(p->dmg.x1904)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x1908", 10); HM((u32) p->dmg.x1908); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->dmg.x190C)", 10); HM(PI((const void*) p->dmg.x190C)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x1910", 10); HM((u32) p->dmg.x1910); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x1914", 10); HM((u32) p->dmg.x1914); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.int_value", 10); HM((u32) p->dmg.int_value); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.x191C)", 10); HM(B(p->dmg.x191C)); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.facing_dir)", 10); HM(B(p->dmg.facing_dir)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x1924", 10); HM((u32) p->dmg.x1924); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.x1928)", 10); HM(B(p->dmg.x1928)); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.x192c)", 10); HM(B(p->dmg.x192c)); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.x1930.x0.x)", 10); HM(B(p->dmg.x1930.x0.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.x1930.x0.y)", 10); HM(B(p->dmg.x1930.x0.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.x1930.x0.z)", 10); HM(B(p->dmg.x1930.x0.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.x1930.xC.x)", 10); HM(B(p->dmg.x1930.xC.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.x1930.xC.y)", 10); HM(B(p->dmg.x1930.xC.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.x1930.xC.z)", 10); HM(B(p->dmg.x1930.xC.z)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x1948", 10); HM((u32) p->dmg.x1948); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x194C", 10); HM((u32) p->dmg.x194C); }
+    { if (HDBG) printf("N %s%c", "(u32) p->dmg.x1950", 10); HM((u32) p->dmg.x1950); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.x1954)", 10); HM(B(p->dmg.x1954)); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.x1958)", 10); HM(B(p->dmg.x1958)); }
+    { if (HDBG) printf("N %s%c", "B(p->dmg.x195c_hitlag_frames)", 10); HM(B(p->dmg.x195c_hitlag_frames)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1960_vibrateMult)", 10); HM(B(p->x1960_vibrateMult)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1964)", 10); HM(B(p->x1964)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1968_jumpsUsed", 10); HM((u32) p->x1968_jumpsUsed); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1969_walljumpUsed", 10); HM((u32) p->x1969_walljumpUsed); }
+    { if (HDBG) printf("N %s%c", "B(p->hitlag_mul)", 10); HM(B(p->hitlag_mul)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->unk_msid", 10); HM((u32) p->unk_msid); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->item_gobj)", 10); HM(PI((const void*) p->item_gobj)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x1978)", 10); HM(PI((const void*) p->x1978)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x197C)", 10); HM(PI((const void*) p->x197C)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x1980)", 10); HM(PI((const void*) p->x1980)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x1984_heldItemSpec)", 10); HM(PI((const void*) p->x1984_heldItemSpec)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1988", 10); HM((u32) p->x1988); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x198C", 10); HM((u32) p->x198C); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1990", 10); HM((u32) p->x1990); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1994", 10); HM((u32) p->x1994); }
+    { if (HDBG) printf("N %s%c", "B(p->shield_health)", 10); HM(B(p->shield_health)); }
+    { if (HDBG) printf("N %s%c", "B(p->lightshield_amount)", 10); HM(B(p->lightshield_amount)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x19A0_shieldDamageTaken", 10); HM((u32) p->x19A0_shieldDamageTaken); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x19A4", 10); HM((u32) p->x19A4); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x19A8)", 10); HM(PI((const void*) p->x19A8)); }
+    { if (HDBG) printf("N %s%c", "B(p->specialn_facing_dir)", 10); HM(B(p->specialn_facing_dir)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x19B0", 10); HM((u32) p->x19B0); }
+    { if (HDBG) printf("N %s%c", "B(p->shield_unk0)", 10); HM(B(p->shield_unk0)); }
+    { if (HDBG) printf("N %s%c", "B(p->shield_unk1)", 10); HM(B(p->shield_unk1)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x19BC_shieldDamageTaken3", 10); HM((u32) p->x19BC_shieldDamageTaken3); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->shield_hit.bone)", 10); HM(PI((const void*) p->shield_hit.bone)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->shield_hit.skip_update_pos", 10); HM((u32) p->shield_hit.skip_update_pos); }
+    { if (HDBG) printf("N %s%c", "B(p->shield_hit.pos.x)", 10); HM(B(p->shield_hit.pos.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->shield_hit.pos.y)", 10); HM(B(p->shield_hit.pos.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->shield_hit.pos.z)", 10); HM(B(p->shield_hit.pos.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->shield_hit.offset.x)", 10); HM(B(p->shield_hit.offset.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->shield_hit.offset.y)", 10); HM(B(p->shield_hit.offset.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->shield_hit.offset.z)", 10); HM(B(p->shield_hit.offset.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->shield_hit.size)", 10); HM(B(p->shield_hit.size)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->reflect_hit.bone)", 10); HM(PI((const void*) p->reflect_hit.bone)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->reflect_hit.skip_update_pos", 10); HM((u32) p->reflect_hit.skip_update_pos); }
+    { if (HDBG) printf("N %s%c", "B(p->reflect_hit.pos.x)", 10); HM(B(p->reflect_hit.pos.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->reflect_hit.pos.y)", 10); HM(B(p->reflect_hit.pos.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->reflect_hit.pos.z)", 10); HM(B(p->reflect_hit.pos.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->reflect_hit.offset.x)", 10); HM(B(p->reflect_hit.offset.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->reflect_hit.offset.y)", 10); HM(B(p->reflect_hit.offset.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->reflect_hit.offset.z)", 10); HM(B(p->reflect_hit.offset.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->reflect_hit.size)", 10); HM(B(p->reflect_hit.size)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->absorb_hit.bone)", 10); HM(PI((const void*) p->absorb_hit.bone)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->absorb_hit.skip_update_pos", 10); HM((u32) p->absorb_hit.skip_update_pos); }
+    { if (HDBG) printf("N %s%c", "B(p->absorb_hit.pos.x)", 10); HM(B(p->absorb_hit.pos.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->absorb_hit.pos.y)", 10); HM(B(p->absorb_hit.pos.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->absorb_hit.pos.z)", 10); HM(B(p->absorb_hit.pos.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->absorb_hit.offset.x)", 10); HM(B(p->absorb_hit.offset.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->absorb_hit.offset.y)", 10); HM(B(p->absorb_hit.offset.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->absorb_hit.offset.z)", 10); HM(B(p->absorb_hit.offset.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->absorb_hit.size)", 10); HM(B(p->absorb_hit.size)); }
+    { if (HDBG) printf("N %s%c", "B(p->ReflectAttr.x1A2C_reflectHitDirection)", 10); HM(B(p->ReflectAttr.x1A2C_reflectHitDirection)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->ReflectAttr.x1A30_maxDamage", 10); HM((u32) p->ReflectAttr.x1A30_maxDamage); }
+    { if (HDBG) printf("N %s%c", "B(p->ReflectAttr.x1A34_damageMul)", 10); HM(B(p->ReflectAttr.x1A34_damageMul)); }
+    { if (HDBG) printf("N %s%c", "B(p->ReflectAttr.x1A38_speedMul)", 10); HM(B(p->ReflectAttr.x1A38_speedMul)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->ReflectAttr.x1A3C_damageOver", 10); HM((u32) p->ReflectAttr.x1A3C_damageOver); }
+    { if (HDBG) printf("N %s%c", "B(p->AbsorbAttr.x1A40_absorbHitDirection)", 10); HM(B(p->AbsorbAttr.x1A40_absorbHitDirection)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->AbsorbAttr.x1A44_damageTaken", 10); HM((u32) p->AbsorbAttr.x1A44_damageTaken); }
+    { if (HDBG) printf("N %s%c", "(u32) p->AbsorbAttr.x1A48_hitsTaken", 10); HM((u32) p->AbsorbAttr.x1A48_hitsTaken); }
+    { if (HDBG) printf("N %s%c", "B(p->grab_timer)", 10); HM(B(p->grab_timer)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1A50", 10); HM((u32) p->x1A50); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1A51", 10); HM((u32) p->x1A51); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1A52", 10); HM((u32) p->x1A52); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1A53", 10); HM((u32) p->x1A53); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1A54", 10); HM((u32) p->x1A54); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->victim_gobj)", 10); HM(PI((const void*) p->victim_gobj)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x1A5C)", 10); HM(PI((const void*) p->x1A5C)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->target_item_gobj)", 10); HM(PI((const void*) p->target_item_gobj)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x1A64)", 10); HM(PI((const void*) p->x1A64)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1A68", 10); HM((u32) p->x1A68); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x1A6A", 10); HM((u32) p->x1A6A); }
+    { if (HDBG) printf("N %s%c", "B(p->x1A6C)", 10); HM(B(p->x1A6C)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1A70.x)", 10); HM(B(p->x1A70.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1A70.y)", 10); HM(B(p->x1A70.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1A70.z)", 10); HM(B(p->x1A70.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1A7C.x)", 10); HM(B(p->x1A7C.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1A7C.y)", 10); HM(B(p->x1A7C.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->x1A7C.z)", 10); HM(B(p->x1A7C.z)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.buttons", 10); HM((u32) p->cpu.buttons); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.lstick.x", 10); HM((u32) p->cpu.lstick.x); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.lstick.y", 10); HM((u32) p->cpu.lstick.y); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.cstick.x", 10); HM((u32) p->cpu.cstick.x); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.cstick.y", 10); HM((u32) p->cpu.cstick.y); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.ltrigger", 10); HM((u32) p->cpu.ltrigger); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.rtrigger", 10); HM((u32) p->cpu.rtrigger); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.kind", 10); HM((u32) p->cpu.kind); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.level", 10); HM((u32) p->cpu.level); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.x14", 10); HM((u32) p->cpu.x14); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.x18", 10); HM((u32) p->cpu.x18); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.x1C", 10); HM((u32) p->cpu.x1C); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.x20", 10); HM((u32) p->cpu.x20); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.x24", 10); HM((u32) p->cpu.x24); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.x28", 10); HM((u32) p->cpu.x28); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.x2C", 10); HM((u32) p->cpu.x2C); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.x30", 10); HM((u32) p->cpu.x30); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.x34", 10); HM((u32) p->cpu.x34); }
+    { if (HDBG) printf("N %s%c", "B(p->cpu.x38)", 10); HM(B(p->cpu.x38)); }
+    { if (HDBG) printf("N %s%c", "B(p->cpu.x3C)", 10); HM(B(p->cpu.x3C)); }
+    { if (HDBG) printf("N %s%c", "B(p->cpu.x40)", 10); HM(B(p->cpu.x40)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->cpu.x44)", 10); HM(PI((const void*) p->cpu.x44)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->cpu.x48)", 10); HM(PI((const void*) p->cpu.x48)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->cpu.x4C)", 10); HM(PI((const void*) p->cpu.x4C)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.x50", 10); HM((u32) p->cpu.x50); }
+    { if (HDBG) printf("N %s%c", "B(p->cpu.x54.x)", 10); HM(B(p->cpu.x54.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->cpu.x54.y)", 10); HM(B(p->cpu.x54.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->cpu.x5C)", 10); HM(B(p->cpu.x5C)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.x60", 10); HM((u32) p->cpu.x60); }
+    { if (HDBG) printf("N %s%c", "B(p->cpu.x64.x)", 10); HM(B(p->cpu.x64.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->cpu.x64.y)", 10); HM(B(p->cpu.x64.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->cpu.x6C.x)", 10); HM(B(p->cpu.x6C.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->cpu.x6C.y)", 10); HM(B(p->cpu.x6C.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->cpu.x74.x)", 10); HM(B(p->cpu.x74.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->cpu.x74.y)", 10); HM(B(p->cpu.x74.y)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.x7C", 10); HM((u32) p->cpu.x7C); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.x80", 10); HM((u32) p->cpu.x80); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.x84", 10); HM((u32) p->cpu.x84); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.x88", 10); HM((u32) p->cpu.x88); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.x8C", 10); HM((u32) p->cpu.x8C); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.x90", 10); HM((u32) p->cpu.x90); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.x94", 10); HM((u32) p->cpu.x94); }
+    { if (HDBG) printf("N %s%c", "B(p->cpu.x98.x)", 10); HM(B(p->cpu.x98.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->cpu.x98.y)", 10); HM(B(p->cpu.x98.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->cpu.x98.z)", 10); HM(B(p->cpu.x98.z)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xA4", 10); HM((u32) p->cpu.xA4); }
     for (i0 = 0; i0 < 8; i0++) {
-    HM((u32) p->cpu.xA8_array[i0]);
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xA8_array[i0]", 10); HM((u32) p->cpu.xA8_array[i0]); }
     }
-    HM((u32) p->cpu.xC8);
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xC8", 10); HM((u32) p->cpu.xC8); }
     for (i0 = 0; i0 < 3; i0++) {
-    HM((u32) p->cpu.pad_xC9[i0]);
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.pad_xC9[i0]", 10); HM((u32) p->cpu.pad_xC9[i0]); }
     }
     for (i0 = 0; i0 < 8; i0++) {
-    HM((u32) p->cpu.xCC_array[i0]);
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xCC_array[i0]", 10); HM((u32) p->cpu.xCC_array[i0]); }
     }
-    HM((u32) p->cpu.xEC);
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xEC", 10); HM((u32) p->cpu.xEC); }
     for (i0 = 0; i0 < 3; i0++) {
-    HM((u32) p->cpu.pad_xED[i0]);
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.pad_xED[i0]", 10); HM((u32) p->cpu.pad_xED[i0]); }
     }
-    HM(PI((const void*) p->cpu.xF0));
-    HM(PI((const void*) p->cpu.xF4));
-    HM((u32) p->cpu.xF8_b0);
-    HM((u32) p->cpu.xF8_b12);
-    HM((u32) p->cpu.xF8_b34);
-    HM((u32) p->cpu.xF8_b5);
-    HM((u32) p->cpu.xF8_b6);
-    HM((u32) p->cpu.xF8_b7);
-    HM((u32) p->cpu.xF9_b0);
-    HM((u32) p->cpu.xF9_b1);
-    HM((u32) p->cpu.xF9_b2);
-    HM((u32) p->cpu.xF9_b3);
-    HM((u32) p->cpu.xF9_b4);
-    HM((u32) p->cpu.xF9_b5);
-    HM((u32) p->cpu.xF9_b6);
-    HM((u32) p->cpu.xF9_b7);
-    HM((u32) p->cpu.xFA_b0);
-    HM((u32) p->cpu.xFA_b1);
-    HM((u32) p->cpu.xFA_b2);
-    HM((u32) p->cpu.xFA_b34);
-    HM((u32) p->cpu.xFA_b5);
-    HM((u32) p->cpu.xFA_b6);
-    HM((u32) p->cpu.xFA_b7);
-    HM((u32) p->cpu.xFB_b0);
-    HM((u32) p->cpu.xFB_b1);
-    HM((u32) p->cpu.xFB_b2);
-    HM((u32) p->cpu.xFB_b3);
-    HM((u32) p->cpu.xFB_b4);
-    HM((u32) p->cpu.xFB_b5);
-    HM((u32) p->cpu.xFB_b6);
-    HM((u32) p->cpu.xFB_b7);
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->cpu.xF0)", 10); HM(PI((const void*) p->cpu.xF0)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->cpu.xF4)", 10); HM(PI((const void*) p->cpu.xF4)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xF8_b0", 10); HM((u32) p->cpu.xF8_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xF8_b12", 10); HM((u32) p->cpu.xF8_b12); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xF8_b34", 10); HM((u32) p->cpu.xF8_b34); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xF8_b5", 10); HM((u32) p->cpu.xF8_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xF8_b6", 10); HM((u32) p->cpu.xF8_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xF8_b7", 10); HM((u32) p->cpu.xF8_b7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xF9_b0", 10); HM((u32) p->cpu.xF9_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xF9_b1", 10); HM((u32) p->cpu.xF9_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xF9_b2", 10); HM((u32) p->cpu.xF9_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xF9_b3", 10); HM((u32) p->cpu.xF9_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xF9_b4", 10); HM((u32) p->cpu.xF9_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xF9_b5", 10); HM((u32) p->cpu.xF9_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xF9_b6", 10); HM((u32) p->cpu.xF9_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xF9_b7", 10); HM((u32) p->cpu.xF9_b7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xFA_b0", 10); HM((u32) p->cpu.xFA_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xFA_b1", 10); HM((u32) p->cpu.xFA_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xFA_b2", 10); HM((u32) p->cpu.xFA_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xFA_b34", 10); HM((u32) p->cpu.xFA_b34); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xFA_b5", 10); HM((u32) p->cpu.xFA_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xFA_b6", 10); HM((u32) p->cpu.xFA_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xFA_b7", 10); HM((u32) p->cpu.xFA_b7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xFB_b0", 10); HM((u32) p->cpu.xFB_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xFB_b1", 10); HM((u32) p->cpu.xFB_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xFB_b2", 10); HM((u32) p->cpu.xFB_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xFB_b3", 10); HM((u32) p->cpu.xFB_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xFB_b4", 10); HM((u32) p->cpu.xFB_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xFB_b5", 10); HM((u32) p->cpu.xFB_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xFB_b6", 10); HM((u32) p->cpu.xFB_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xFB_b7", 10); HM((u32) p->cpu.xFB_b7); }
     for (i0 = 0; i0 < 30; i0++) {
-    HM((u32) p->cpu.xFC[i0].x0);
-    HM((u32) p->cpu.xFC[i0].x4);
-    HM((u32) p->cpu.xFC[i0].x5);
-    HM((u32) p->cpu.xFC[i0].lstick.x);
-    HM((u32) p->cpu.xFC[i0].lstick.y);
-    HM((u32) p->cpu.xFC[i0].cstick.x);
-    HM((u32) p->cpu.xFC[i0].cstick.y);
-    HM((u32) p->cpu.xFC[i0].xA);
-    HM((u32) p->cpu.xFC[i0].xB);
-    HM(B(p->cpu.xFC[i0].cur_pos.x));
-    HM(B(p->cpu.xFC[i0].cur_pos.y));
-    HM(B(p->cpu.xFC[i0].cur_pos.z));
-    HM(B(p->cpu.xFC[i0].facing_dir));
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xFC[i0].x0", 10); HM((u32) p->cpu.xFC[i0].x0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xFC[i0].x4", 10); HM((u32) p->cpu.xFC[i0].x4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xFC[i0].x5", 10); HM((u32) p->cpu.xFC[i0].x5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xFC[i0].lstick.x", 10); HM((u32) p->cpu.xFC[i0].lstick.x); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xFC[i0].lstick.y", 10); HM((u32) p->cpu.xFC[i0].lstick.y); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xFC[i0].cstick.x", 10); HM((u32) p->cpu.xFC[i0].cstick.x); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xFC[i0].cstick.y", 10); HM((u32) p->cpu.xFC[i0].cstick.y); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xFC[i0].xA", 10); HM((u32) p->cpu.xFC[i0].xA); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.xFC[i0].xB", 10); HM((u32) p->cpu.xFC[i0].xB); }
+    { if (HDBG) printf("N %s%c", "B(p->cpu.xFC[i0].cur_pos.x)", 10); HM(B(p->cpu.xFC[i0].cur_pos.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->cpu.xFC[i0].cur_pos.y)", 10); HM(B(p->cpu.xFC[i0].cur_pos.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->cpu.xFC[i0].cur_pos.z)", 10); HM(B(p->cpu.xFC[i0].cur_pos.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->cpu.xFC[i0].facing_dir)", 10); HM(B(p->cpu.xFC[i0].facing_dir)); }
     }
-    HM(PI((const void*) p->cpu.x444));
-    HM(PI((const void*) p->cpu.x448));
-    HM((u32) p->cpu.command_duration);
-    HM(PI((const void*) p->cpu.csP));
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->cpu.x444)", 10); HM(PI((const void*) p->cpu.x444)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->cpu.x448)", 10); HM(PI((const void*) p->cpu.x448)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.command_duration", 10); HM((u32) p->cpu.command_duration); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->cpu.csP)", 10); HM(PI((const void*) p->cpu.csP)); }
     for (i0 = 0; i0 < 256; i0++) {
-    HM((u32) p->cpu.buffer[i0]);
+    { if (HDBG) printf("N %s%c", "(u32) p->cpu.buffer[i0]", 10); HM((u32) p->cpu.buffer[i0]); }
     }
-    HM(PI((const void*) p->cpu.write_pos));
-    HM(B(p->cpu.x558));
-    HM(B(p->cpu.x55C));
-    HM(B(p->cpu.x560));
-    HM(B(p->cpu.x564));
-    HM(B(p->cpu.x568));
-    HM(B(p->cpu.x56C));
-    HM(B(p->cpu.x570));
-    HM(B(p->cpu.half_width));
-    HM(B(p->cpu.half_height));
-    HM((u32) p->x2004);
-    HM((u32) p->x2008);
-    HM((u32) p->x200C);
-    HM((u32) p->x2010);
-    HM((u32) p->x2014);
-    HM((u32) p->x2018);
-    HM((u32) p->x201C);
-    HM((u32) p->x2020);
-    HM((u32) p->x2021);
-    HM((u32) p->x2022);
-    HM((u32) p->x2024);
-    HM((u32) p->metal_timer);
-    HM((u32) p->metal_health);
-    HM((u32) p->x2030);
-    HM((u32) p->x2034);
-    HM((u32) p->x2038);
-    HM((u32) p->x203C.count);
-    HM(PI((const void*) p->x203C.data));
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->cpu.write_pos)", 10); HM(PI((const void*) p->cpu.write_pos)); }
+    { if (HDBG) printf("N %s%c", "B(p->cpu.x558)", 10); HM(B(p->cpu.x558)); }
+    { if (HDBG) printf("N %s%c", "B(p->cpu.x55C)", 10); HM(B(p->cpu.x55C)); }
+    { if (HDBG) printf("N %s%c", "B(p->cpu.x560)", 10); HM(B(p->cpu.x560)); }
+    { if (HDBG) printf("N %s%c", "B(p->cpu.x564)", 10); HM(B(p->cpu.x564)); }
+    { if (HDBG) printf("N %s%c", "B(p->cpu.x568)", 10); HM(B(p->cpu.x568)); }
+    { if (HDBG) printf("N %s%c", "B(p->cpu.x56C)", 10); HM(B(p->cpu.x56C)); }
+    { if (HDBG) printf("N %s%c", "B(p->cpu.x570)", 10); HM(B(p->cpu.x570)); }
+    { if (HDBG) printf("N %s%c", "B(p->cpu.half_width)", 10); HM(B(p->cpu.half_width)); }
+    { if (HDBG) printf("N %s%c", "B(p->cpu.half_height)", 10); HM(B(p->cpu.half_height)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2004", 10); HM((u32) p->x2004); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2008", 10); HM((u32) p->x2008); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x200C", 10); HM((u32) p->x200C); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2010", 10); HM((u32) p->x2010); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2014", 10); HM((u32) p->x2014); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2018", 10); HM((u32) p->x2018); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x201C", 10); HM((u32) p->x201C); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2020", 10); HM((u32) p->x2020); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2021", 10); HM((u32) p->x2021); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2022", 10); HM((u32) p->x2022); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2024", 10); HM((u32) p->x2024); }
+    { if (HDBG) printf("N %s%c", "(u32) p->metal_timer", 10); HM((u32) p->metal_timer); }
+    { if (HDBG) printf("N %s%c", "(u32) p->metal_health", 10); HM((u32) p->metal_health); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2030", 10); HM((u32) p->x2030); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2034", 10); HM((u32) p->x2034); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2038", 10); HM((u32) p->x2038); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x203C.count", 10); HM((u32) p->x203C.count); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x203C.data)", 10); HM(PI((const void*) p->x203C.data)); }
     for (i0 = 0; i0 < 32; i0++) {
-    HM((u32) p->filler_x2044[i0]);
+    { if (HDBG) printf("N %s%c", "(u32) p->filler_x2044[i0]", 10); HM((u32) p->filler_x2044[i0]); }
     }
-    HM((u32) p->x2064_ledgeCooldown);
-    HM((u32) p->x2068_attackID);
-    HM((u32) p->x206C_attack_instance);
-    HM((u32) p->x206E);
-    HM((u32) p->x2070.x2070);
-    HM((u32) p->x2070.x2071_b0_3);
-    HM((u32) p->x2070.x2071_b4);
-    HM((u32) p->x2070.x2071_b5);
-    HM((u32) p->x2070.x2071_b6);
-    HM((u32) p->x2070.x2071_b7);
-    HM((u32) p->x2070.x2072_b0);
-    HM((u32) p->x2070.x2072_b1);
-    HM((u32) p->x2070.x2072_b2);
-    HM((u32) p->x2070.count_x1A4);
-    HM((u32) p->x2070.count_thrown_items);
-    HM((u32) p->x2070.count_aerials);
-    HM((u32) p->x2070.count_x1A0);
-    HM((u32) p->x2070.count_specials);
-    HM((u32) p->x2070.x2073);
-    HM(B(p->x2074.x2074_vec.x));
-    HM(B(p->x2074.x2074_vec.y));
-    HM((u32) p->x2074.x207C.x);
-    HM((u32) p->x2074.x207C.y);
-    HM((u32) p->x2074.x2084_b0);
-    HM((u32) p->x2074.x2084_b1);
-    HM((u32) p->x2074.x2084_b2);
-    HM((u32) p->x2074.x2084_b3);
-    HM((u32) p->x2074.x2084_b4);
-    HM((u32) p->x2074.x2084_b5);
-    HM((u32) p->x2074.x2084_b6);
-    HM((u32) p->x2074.x2084_b7);
-    HM((u32) p->x2074.x2085_b0);
-    HM((u32) p->x2074.x2085_b1);
-    HM((u32) p->x2074.x2085_b2);
-    HM((u32) p->x2074.x2085_b3);
-    HM((u32) p->x2074.x2085_b4);
-    HM((u32) p->x2074.x2085_b5);
-    HM((u32) p->x2074.x2085_b6);
-    HM((u32) p->x2074.x2085_b7);
-    HM((u32) p->x2074.x2088);
-    HM((u32) p->x208C);
-    HM((u32) p->x2090);
-    HM((u32) p->x2092);
-    HM(PI((const void*) p->x2094));
-    HM((u32) p->x2098);
-    HM((u32) p->x209A);
-    HM((u32) p->x209C);
-    HM(PI((const void*) p->x20A0_accessory));
-    HM((u32) p->x20A4.x0_b0);
-    HM((u32) p->x20A4.x0_b1);
-    HM((u32) p->x20A4.x0_b2);
-    HM((u32) p->x20A4.x0_b3);
-    HM((u32) p->x20A4.x0_b4);
-    HM((u32) p->x20A4.x0_b5);
-    HM((u32) p->x20A4.x0_b6);
-    HM((u32) p->x20A4.x0_b7);
-    HM(PI((const void*) p->x20A4.shadow));
-    HM(PI((const void*) p->unk_gobj));
+    { if (HDBG) printf("N %s%c", "(u32) p->x2064_ledgeCooldown", 10); HM((u32) p->x2064_ledgeCooldown); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2068_attackID", 10); HM((u32) p->x2068_attackID); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x206C_attack_instance", 10); HM((u32) p->x206C_attack_instance); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x206E", 10); HM((u32) p->x206E); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2070.x2070", 10); HM((u32) p->x2070.x2070); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2070.x2071_b0_3", 10); HM((u32) p->x2070.x2071_b0_3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2070.x2071_b4", 10); HM((u32) p->x2070.x2071_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2070.x2071_b5", 10); HM((u32) p->x2070.x2071_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2070.x2071_b6", 10); HM((u32) p->x2070.x2071_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2070.x2071_b7", 10); HM((u32) p->x2070.x2071_b7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2070.x2072_b0", 10); HM((u32) p->x2070.x2072_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2070.x2072_b1", 10); HM((u32) p->x2070.x2072_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2070.x2072_b2", 10); HM((u32) p->x2070.x2072_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2070.count_x1A4", 10); HM((u32) p->x2070.count_x1A4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2070.count_thrown_items", 10); HM((u32) p->x2070.count_thrown_items); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2070.count_aerials", 10); HM((u32) p->x2070.count_aerials); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2070.count_x1A0", 10); HM((u32) p->x2070.count_x1A0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2070.count_specials", 10); HM((u32) p->x2070.count_specials); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2070.x2073", 10); HM((u32) p->x2070.x2073); }
+    { if (HDBG) printf("N %s%c", "B(p->x2074.x2074_vec.x)", 10); HM(B(p->x2074.x2074_vec.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x2074.x2074_vec.y)", 10); HM(B(p->x2074.x2074_vec.y)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2074.x207C.x", 10); HM((u32) p->x2074.x207C.x); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2074.x207C.y", 10); HM((u32) p->x2074.x207C.y); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2074.x2084_b0", 10); HM((u32) p->x2074.x2084_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2074.x2084_b1", 10); HM((u32) p->x2074.x2084_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2074.x2084_b2", 10); HM((u32) p->x2074.x2084_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2074.x2084_b3", 10); HM((u32) p->x2074.x2084_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2074.x2084_b4", 10); HM((u32) p->x2074.x2084_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2074.x2084_b5", 10); HM((u32) p->x2074.x2084_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2074.x2084_b6", 10); HM((u32) p->x2074.x2084_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2074.x2084_b7", 10); HM((u32) p->x2074.x2084_b7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2074.x2085_b0", 10); HM((u32) p->x2074.x2085_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2074.x2085_b1", 10); HM((u32) p->x2074.x2085_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2074.x2085_b2", 10); HM((u32) p->x2074.x2085_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2074.x2085_b3", 10); HM((u32) p->x2074.x2085_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2074.x2085_b4", 10); HM((u32) p->x2074.x2085_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2074.x2085_b5", 10); HM((u32) p->x2074.x2085_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2074.x2085_b6", 10); HM((u32) p->x2074.x2085_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2074.x2085_b7", 10); HM((u32) p->x2074.x2085_b7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2074.x2088", 10); HM((u32) p->x2074.x2088); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x208C", 10); HM((u32) p->x208C); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2090", 10); HM((u32) p->x2090); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2092", 10); HM((u32) p->x2092); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x2094)", 10); HM(PI((const void*) p->x2094)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2098", 10); HM((u32) p->x2098); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x209A", 10); HM((u32) p->x209A); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x209C", 10); HM((u32) p->x209C); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x20A0_accessory)", 10); HM(PI((const void*) p->x20A0_accessory)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x20A4.x0_b0", 10); HM((u32) p->x20A4.x0_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x20A4.x0_b1", 10); HM((u32) p->x20A4.x0_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x20A4.x0_b2", 10); HM((u32) p->x20A4.x0_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x20A4.x0_b3", 10); HM((u32) p->x20A4.x0_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x20A4.x0_b4", 10); HM((u32) p->x20A4.x0_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x20A4.x0_b5", 10); HM((u32) p->x20A4.x0_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x20A4.x0_b6", 10); HM((u32) p->x20A4.x0_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x20A4.x0_b7", 10); HM((u32) p->x20A4.x0_b7); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x20A4.shadow)", 10); HM(PI((const void*) p->x20A4.shadow)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->unk_gobj)", 10); HM(PI((const void*) p->unk_gobj)); }
     for (i0 = 0; i0 < 3; i0++) {
-    HM(B(p->x20B0[i0].x0.x));
-    HM(B(p->x20B0[i0].x0.y));
-    HM(B(p->x20B0[i0].x0.z));
-    HM(B(p->x20B0[i0].xC.x));
-    HM(B(p->x20B0[i0].xC.y));
-    HM(B(p->x20B0[i0].xC.z));
+    { if (HDBG) printf("N %s%c", "B(p->x20B0[i0].x0.x)", 10); HM(B(p->x20B0[i0].x0.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x20B0[i0].x0.y)", 10); HM(B(p->x20B0[i0].x0.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->x20B0[i0].x0.z)", 10); HM(B(p->x20B0[i0].x0.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->x20B0[i0].xC.x)", 10); HM(B(p->x20B0[i0].xC.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x20B0[i0].xC.y)", 10); HM(B(p->x20B0[i0].xC.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->x20B0[i0].xC.z)", 10); HM(B(p->x20B0[i0].xC.z)); }
     }
-    HM(B(p->x20F8));
-    HM(B(p->x20FC));
-    HM((u32) p->x2100);
-    HM((u32) p->x2101_bits_0to6);
-    HM((u32) p->x2101_bits_8);
-    HM((u32) p->x2102);
-    HM((u32) p->x2103);
-    HM((u32) p->x2104);
-    HM((u32) p->capture_timer);
-    HM((u32) p->wall_jump_input_timer);
+    { if (HDBG) printf("N %s%c", "B(p->x20F8)", 10); HM(B(p->x20F8)); }
+    { if (HDBG) printf("N %s%c", "B(p->x20FC)", 10); HM(B(p->x20FC)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2100", 10); HM((u32) p->x2100); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2101_bits_0to6", 10); HM((u32) p->x2101_bits_0to6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2101_bits_8", 10); HM((u32) p->x2101_bits_8); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2102", 10); HM((u32) p->x2102); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2103", 10); HM((u32) p->x2103); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2104", 10); HM((u32) p->x2104); }
+    { if (HDBG) printf("N %s%c", "(u32) p->capture_timer", 10); HM((u32) p->capture_timer); }
+    { if (HDBG) printf("N %s%c", "(u32) p->wall_jump_input_timer", 10); HM((u32) p->wall_jump_input_timer); }
     for (i0 = 0; i0 < 3; i0++) {
-    HM((u32) p->filler_x210C[i0]);
+    { if (HDBG) printf("N %s%c", "(u32) p->filler_x210C[i0]", 10); HM((u32) p->filler_x210C[i0]); }
     }
-    HM(B(p->x2110_walljumpWallSide));
-    HM((u32) p->smash_attrs.state);
-    HM(B(p->smash_attrs.x2118_frames));
-    HM(B(p->smash_attrs.x211C_holdFrame));
-    HM(B(p->smash_attrs.x2120_damageMul));
-    HM(B(p->smash_attrs.x2124_frameSpeedMul));
-    HM((u32) p->smash_attrs.x2128);
-    HM((u32) p->smash_attrs.x212C);
-    HM((u32) p->smash_attrs.x212D);
-    HM((u32) p->smash_attrs.x212E);
-    HM((u32) p->smash_attrs.x212F);
-    HM((u32) p->smash_attrs.x2130_sfxBool);
-    HM((u32) p->smash_attrs.x2134_vibrateFrame);
-    HM((u32) p->smash_attrs.x2135);
-    HM((u32) p->smash_attrs.x2136);
-    HM((u32) p->smash_attrs.x2137);
-    HM(B(p->smash_attrs.x2138_smashSinceHitbox));
-    HM((u32) p->x213C);
-    HM(B(p->x2140));
-    HM((u32) p->x2144);
-    HM((u32) p->x2148);
-    HM((u32) p->x214C);
-    HM((u32) p->x2150);
-    HM((u32) p->x2154);
-    HM((u32) p->x2158);
-    HM((u32) p->x215C);
-    HM((u32) p->x2160);
-    HM((u32) p->x2164);
-    HM((u32) p->x2168);
-    HM(B(p->unk_grab_val));
-    HM(B(p->x2170));
-    HM(B(p->x2174.x));
-    HM(B(p->x2174.y));
-    HM(B(p->x2174.z));
-    HM((u32) p->x2180);
-    HM(PI((const void*) p->x2184));
-    HM((u32) p->x2188.x);
-    HM((u32) p->x2188.y);
-    HM(FI((const void*) p->grab_cb));
-    HM(FI((const void*) p->x2194));
-    HM(FI((const void*) p->grabbed_cb));
-    HM(FI((const void*) p->input_cb));
-    HM(FI((const void*) p->anim_cb));
-    HM(FI((const void*) p->phys_cb));
-    HM(FI((const void*) p->coll_cb));
-    HM(FI((const void*) p->cam_cb));
-    HM(FI((const void*) p->accessory1_cb));
-    HM(FI((const void*) p->accessory2_cb));
-    HM(FI((const void*) p->accessory3_cb));
-    HM(FI((const void*) p->accessory4_cb));
-    HM(FI((const void*) p->deal_dmg_cb));
-    HM(FI((const void*) p->shield_hit_cb));
-    HM(FI((const void*) p->reflect_hit_cb));
-    HM(FI((const void*) p->x21CC));
-    HM(FI((const void*) p->hitlag_cb));
-    HM(FI((const void*) p->pre_hitlag_cb));
-    HM(FI((const void*) p->post_hitlag_cb));
-    HM(FI((const void*) p->take_dmg_cb));
-    HM(FI((const void*) p->death1_cb));
-    HM(FI((const void*) p->death2_cb));
-    HM(FI((const void*) p->death3_cb));
-    HM(FI((const void*) p->x21EC));
-    HM(FI((const void*) p->take_dmg_2_cb));
-    HM(FI((const void*) p->hurtbox_detect_cb));
-    HM(FI((const void*) p->x21F8));
-    HM((u32) p->x21FC_flag.b0);
-    HM((u32) p->x21FC_flag.b1);
-    HM((u32) p->x21FC_flag.b2);
-    HM((u32) p->x21FC_flag.b3);
-    HM((u32) p->x21FC_flag.b4);
-    HM((u32) p->x21FC_flag.b5);
-    HM((u32) p->x21FC_flag.b6);
-    HM((u32) p->x21FC_flag.b7);
+    { if (HDBG) printf("N %s%c", "B(p->x2110_walljumpWallSide)", 10); HM(B(p->x2110_walljumpWallSide)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->smash_attrs.state", 10); HM((u32) p->smash_attrs.state); }
+    { if (HDBG) printf("N %s%c", "B(p->smash_attrs.x2118_frames)", 10); HM(B(p->smash_attrs.x2118_frames)); }
+    { if (HDBG) printf("N %s%c", "B(p->smash_attrs.x211C_holdFrame)", 10); HM(B(p->smash_attrs.x211C_holdFrame)); }
+    { if (HDBG) printf("N %s%c", "B(p->smash_attrs.x2120_damageMul)", 10); HM(B(p->smash_attrs.x2120_damageMul)); }
+    { if (HDBG) printf("N %s%c", "B(p->smash_attrs.x2124_frameSpeedMul)", 10); HM(B(p->smash_attrs.x2124_frameSpeedMul)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->smash_attrs.x2128", 10); HM((u32) p->smash_attrs.x2128); }
+    { if (HDBG) printf("N %s%c", "(u32) p->smash_attrs.x212C", 10); HM((u32) p->smash_attrs.x212C); }
+    { if (HDBG) printf("N %s%c", "(u32) p->smash_attrs.x212D", 10); HM((u32) p->smash_attrs.x212D); }
+    { if (HDBG) printf("N %s%c", "(u32) p->smash_attrs.x212E", 10); HM((u32) p->smash_attrs.x212E); }
+    { if (HDBG) printf("N %s%c", "(u32) p->smash_attrs.x212F", 10); HM((u32) p->smash_attrs.x212F); }
+    { if (HDBG) printf("N %s%c", "(u32) p->smash_attrs.x2130_sfxBool", 10); HM((u32) p->smash_attrs.x2130_sfxBool); }
+    { if (HDBG) printf("N %s%c", "(u32) p->smash_attrs.x2134_vibrateFrame", 10); HM((u32) p->smash_attrs.x2134_vibrateFrame); }
+    { if (HDBG) printf("N %s%c", "(u32) p->smash_attrs.x2135", 10); HM((u32) p->smash_attrs.x2135); }
+    { if (HDBG) printf("N %s%c", "(u32) p->smash_attrs.x2136", 10); HM((u32) p->smash_attrs.x2136); }
+    { if (HDBG) printf("N %s%c", "(u32) p->smash_attrs.x2137", 10); HM((u32) p->smash_attrs.x2137); }
+    { if (HDBG) printf("N %s%c", "B(p->smash_attrs.x2138_smashSinceHitbox)", 10); HM(B(p->smash_attrs.x2138_smashSinceHitbox)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x213C", 10); HM((u32) p->x213C); }
+    { if (HDBG) printf("N %s%c", "B(p->x2140)", 10); HM(B(p->x2140)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2144", 10); HM((u32) p->x2144); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2148", 10); HM((u32) p->x2148); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x214C", 10); HM((u32) p->x214C); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2150", 10); HM((u32) p->x2150); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2154", 10); HM((u32) p->x2154); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2158", 10); HM((u32) p->x2158); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x215C", 10); HM((u32) p->x215C); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2160", 10); HM((u32) p->x2160); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2164", 10); HM((u32) p->x2164); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2168", 10); HM((u32) p->x2168); }
+    { if (HDBG) printf("N %s%c", "B(p->unk_grab_val)", 10); HM(B(p->unk_grab_val)); }
+    { if (HDBG) printf("N %s%c", "B(p->x2170)", 10); HM(B(p->x2170)); }
+    { if (HDBG) printf("N %s%c", "B(p->x2174.x)", 10); HM(B(p->x2174.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->x2174.y)", 10); HM(B(p->x2174.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->x2174.z)", 10); HM(B(p->x2174.z)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2180", 10); HM((u32) p->x2180); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x2184)", 10); HM(PI((const void*) p->x2184)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2188.x", 10); HM((u32) p->x2188.x); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2188.y", 10); HM((u32) p->x2188.y); }
+    { if (HDBG) printf("N %s%c", "FI((const void*) p->grab_cb)", 10); HM(FI((const void*) p->grab_cb)); }
+    { if (HDBG) printf("N %s%c", "FI((const void*) p->x2194)", 10); HM(FI((const void*) p->x2194)); }
+    { if (HDBG) printf("N %s%c", "FI((const void*) p->grabbed_cb)", 10); HM(FI((const void*) p->grabbed_cb)); }
+    { if (HDBG) printf("N %s%c", "FI((const void*) p->input_cb)", 10); HM(FI((const void*) p->input_cb)); }
+    { if (HDBG) printf("N %s%c", "FI((const void*) p->anim_cb)", 10); HM(FI((const void*) p->anim_cb)); }
+    { if (HDBG) printf("N %s%c", "FI((const void*) p->phys_cb)", 10); HM(FI((const void*) p->phys_cb)); }
+    { if (HDBG) printf("N %s%c", "FI((const void*) p->coll_cb)", 10); HM(FI((const void*) p->coll_cb)); }
+    { if (HDBG) printf("N %s%c", "FI((const void*) p->cam_cb)", 10); HM(FI((const void*) p->cam_cb)); }
+    { if (HDBG) printf("N %s%c", "FI((const void*) p->accessory1_cb)", 10); HM(FI((const void*) p->accessory1_cb)); }
+    { if (HDBG) printf("N %s%c", "FI((const void*) p->accessory2_cb)", 10); HM(FI((const void*) p->accessory2_cb)); }
+    { if (HDBG) printf("N %s%c", "FI((const void*) p->accessory3_cb)", 10); HM(FI((const void*) p->accessory3_cb)); }
+    { if (HDBG) printf("N %s%c", "FI((const void*) p->accessory4_cb)", 10); HM(FI((const void*) p->accessory4_cb)); }
+    { if (HDBG) printf("N %s%c", "FI((const void*) p->deal_dmg_cb)", 10); HM(FI((const void*) p->deal_dmg_cb)); }
+    { if (HDBG) printf("N %s%c", "FI((const void*) p->shield_hit_cb)", 10); HM(FI((const void*) p->shield_hit_cb)); }
+    { if (HDBG) printf("N %s%c", "FI((const void*) p->reflect_hit_cb)", 10); HM(FI((const void*) p->reflect_hit_cb)); }
+    { if (HDBG) printf("N %s%c", "FI((const void*) p->x21CC)", 10); HM(FI((const void*) p->x21CC)); }
+    { if (HDBG) printf("N %s%c", "FI((const void*) p->hitlag_cb)", 10); HM(FI((const void*) p->hitlag_cb)); }
+    { if (HDBG) printf("N %s%c", "FI((const void*) p->pre_hitlag_cb)", 10); HM(FI((const void*) p->pre_hitlag_cb)); }
+    { if (HDBG) printf("N %s%c", "FI((const void*) p->post_hitlag_cb)", 10); HM(FI((const void*) p->post_hitlag_cb)); }
+    { if (HDBG) printf("N %s%c", "FI((const void*) p->take_dmg_cb)", 10); HM(FI((const void*) p->take_dmg_cb)); }
+    { if (HDBG) printf("N %s%c", "FI((const void*) p->death1_cb)", 10); HM(FI((const void*) p->death1_cb)); }
+    { if (HDBG) printf("N %s%c", "FI((const void*) p->death2_cb)", 10); HM(FI((const void*) p->death2_cb)); }
+    { if (HDBG) printf("N %s%c", "FI((const void*) p->death3_cb)", 10); HM(FI((const void*) p->death3_cb)); }
+    { if (HDBG) printf("N %s%c", "FI((const void*) p->x21EC)", 10); HM(FI((const void*) p->x21EC)); }
+    { if (HDBG) printf("N %s%c", "FI((const void*) p->take_dmg_2_cb)", 10); HM(FI((const void*) p->take_dmg_2_cb)); }
+    { if (HDBG) printf("N %s%c", "FI((const void*) p->hurtbox_detect_cb)", 10); HM(FI((const void*) p->hurtbox_detect_cb)); }
+    { if (HDBG) printf("N %s%c", "FI((const void*) p->x21F8)", 10); HM(FI((const void*) p->x21F8)); }
     for (i0 = 0; i0 < 3; i0++) {
-    HM((u32) p->filler_x21FC[i0]);
+    { if (HDBG) printf("N %s%c", "(u32) p->filler_x21FC[i0]", 10); HM((u32) p->filler_x21FC[i0]); }
     }
     for (i0 = 0; i0 < 4; i0++) {
-    HM((u32) p->cmd_vars[i0]);
+    { if (HDBG) printf("N %s%c", "(u32) p->cmd_vars[i0]", 10); HM((u32) p->cmd_vars[i0]); }
     }
-    HM((u32) p->throw_flags_b0);
-    HM((u32) p->throw_flags_b1);
-    HM((u32) p->throw_flags_b2);
-    HM((u32) p->throw_flags_b3);
-    HM((u32) p->throw_flags_b4);
-    HM((u32) p->throw_flags_b5);
-    HM((u32) p->throw_flags_b6);
-    HM((u32) p->throw_flags_b7);
-    HM(B(p->cmd_timer));
-    HM((u32) p->allow_interrupt);
-    HM((u32) p->x2218_b1);
-    HM((u32) p->x2218_b2);
-    HM((u32) p->reflecting);
-    HM((u32) p->x2218_b4);
-    HM((u32) p->x2218_b5);
-    HM((u32) p->x2218_b6);
-    HM((u32) p->x2218_b7);
-    HM((u32) p->x2219_b0);
-    HM((u32) p->x2219_b1);
-    HM((u32) p->x2219_b2);
-    HM((u32) p->x2219_b3);
-    HM((u32) p->x2219_b4);
-    HM((u32) p->x2219_b5);
-    HM((u32) p->x2219_b6);
-    HM((u32) p->x2219_b7);
-    HM((u32) p->x221A_b0);
-    HM((u32) p->x221A_b1);
-    HM((u32) p->allow_sdi);
-    HM((u32) p->x221A_b3);
-    HM((u32) p->fall_fast);
-    HM((u32) p->x221A_b5);
-    HM((u32) p->x221A_b6);
-    HM((u32) p->x221A_b7);
-    HM((u32) p->x221B_b0);
-    HM((u32) p->x221B_b1);
-    HM((u32) p->x221B_b2);
-    HM((u32) p->x221B_b3);
-    HM((u32) p->x221B_b4);
-    HM((u32) p->x221B_b5);
-    HM((u32) p->x221B_b6);
-    HM((u32) p->x221B_b7);
-    HM((u32) p->x221C_b0);
-    HM((u32) p->x221C_b1);
-    HM((u32) p->x221C_b2);
-    HM((u32) p->x221C_b3);
-    HM((u32) p->x221C_b4);
-    HM((u32) p->x221C_b5);
-    HM((u32) p->x221C_b6);
-    HM((u32) p->x221C_u16_y);
-    HM((u32) p->x221D_b2);
-    HM((u32) p->x221D_b3);
-    HM((u32) p->x221D_b4);
-    HM((u32) p->x221D_b5);
-    HM((u32) p->x221D_b6);
-    HM((u32) p->x221D_b7);
-    HM((u32) p->invisible);
-    HM((u32) p->x221E_b1);
-    HM((u32) p->x221E_b2);
-    HM((u32) p->x221E_b3);
-    HM((u32) p->x221E_b4);
-    HM((u32) p->x221E_b5);
-    HM((u32) p->x221E_b6);
-    HM((u32) p->x221E_b7);
-    HM((u32) p->x221F_b0);
-    HM((u32) p->x221F_b1);
-    HM((u32) p->x221F_b2);
-    HM((u32) p->x221F_b3);
-    HM((u32) p->is_sub_fighter);
-    HM((u32) p->x221F_b5);
-    HM((u32) p->x221F_b6);
-    HM((u32) p->x221F_b7);
-    HM((u32) p->x2220_b0);
-    HM((u32) p->x2220_b3);
-    HM((u32) p->x2220_b4);
-    HM((u32) p->x2220_b5);
-    HM((u32) p->x2220_b6);
-    HM((u32) p->x2220_b7);
-    HM((u32) p->x2221_b0);
-    HM((u32) p->x2221_b1);
-    HM((u32) p->x2221_b2);
-    HM((u32) p->x2221_b3);
-    HM((u32) p->x2221_b4);
-    HM((u32) p->x2221_b5);
-    HM((u32) p->x2221_b6);
-    HM((u32) p->x2221_b7);
-    HM((u32) p->x2222_b0);
-    HM((u32) p->can_multijump);
-    HM((u32) p->x2222_b2);
-    HM((u32) p->x2222_b3);
-    HM((u32) p->x2222_b4);
-    HM((u32) p->x2222_b5);
-    HM((u32) p->x2222_b6);
-    HM((u32) p->x2222_b7);
-    HM((u32) p->x2223_b0);
-    HM((u32) p->x2223_b1);
-    HM((u32) p->x2223_b2);
-    HM((u32) p->x2223_b3);
-    HM((u32) p->x2223_b4);
-    HM((u32) p->x2223_b5);
-    HM((u32) p->is_always_metal);
-    HM((u32) p->is_metal);
-    HM((u32) p->x2224_b0);
-    HM((u32) p->x2224_b1);
-    HM((u32) p->x2224_b2);
-    HM((u32) p->x2224_b3);
-    HM((u32) p->x2224_b4);
-    HM((u32) p->x2224_b5);
-    HM((u32) p->x2224_b6);
-    HM((u32) p->can_walljump);
-    HM((u32) p->x2225_b0);
-    HM((u32) p->x2225_b1);
-    HM((u32) p->x2225_b2);
-    HM((u32) p->x2225_b3);
-    HM((u32) p->x2225_b4);
-    HM((u32) p->x2225_b5);
-    HM((u32) p->x2225_b6);
-    HM((u32) p->x2225_b7);
-    HM((u32) p->x2226_b0);
-    HM((u32) p->x2226_b1);
-    HM((u32) p->x2226_b2);
-    HM((u32) p->x2226_b3);
-    HM((u32) p->x2226_b4);
-    HM((u32) p->x2226_b5);
-    HM((u32) p->x2226_b6);
-    HM((u32) p->x2226_b7);
-    HM((u32) p->x2227_b0);
-    HM((u32) p->x2227_b1);
-    HM((u32) p->x2227_b2);
-    HM((u32) p->x2227_b3);
-    HM((u32) p->x2227_b4);
-    HM((u32) p->x2227_b5);
-    HM((u32) p->x2227_b6);
-    HM((u32) p->x2227_b7);
-    HM((u32) p->x2228_b0);
-    HM((u32) p->x2228_b1);
-    HM((u32) p->is_sandbag);
-    HM((u32) p->x2228_b3);
-    HM((u32) p->x2228_b5);
-    HM((u32) p->used_tether);
-    HM((u32) p->x2228_b7);
-    HM((u32) p->x2229_b0);
-    HM((u32) p->x2229_b1);
-    HM((u32) p->x2229_b2);
-    HM((u32) p->x2229_b3);
-    HM((u32) p->x2229_b4);
-    HM((u32) p->no_normal_motion);
-    HM((u32) p->x2229_b6);
-    HM((u32) p->no_kb);
-    HM((u32) p->x222A_b0);
-    HM((u32) p->x222A_b1);
-    HM((u32) p->x222A_b2);
-    HM((u32) p->x222A_b3);
-    HM((u32) p->x222A_b5);
-    HM((u32) p->x222A_b6);
-    HM((u32) p->x222A_b7);
-    HM(PI((const void*) p->u.kb.hat.x0));
-    HM((u32) p->u.kb.hat.x4);
-    HM((u32) p->u.kb.hat.x8_b0);
+    { if (HDBG) printf("N %s%c", "(u32) p->throw_flags_b0", 10); HM((u32) p->throw_flags_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->throw_flags_b1", 10); HM((u32) p->throw_flags_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->throw_flags_b2", 10); HM((u32) p->throw_flags_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->throw_flags_b3", 10); HM((u32) p->throw_flags_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->throw_flags_b4", 10); HM((u32) p->throw_flags_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->throw_flags_b5", 10); HM((u32) p->throw_flags_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->throw_flags_b6", 10); HM((u32) p->throw_flags_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->throw_flags_b7", 10); HM((u32) p->throw_flags_b7); }
+    { if (HDBG) printf("N %s%c", "B(p->cmd_timer)", 10); HM(B(p->cmd_timer)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->allow_interrupt", 10); HM((u32) p->allow_interrupt); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2218_b1", 10); HM((u32) p->x2218_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2218_b2", 10); HM((u32) p->x2218_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->reflecting", 10); HM((u32) p->reflecting); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2218_b4", 10); HM((u32) p->x2218_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2218_b5", 10); HM((u32) p->x2218_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2218_b6", 10); HM((u32) p->x2218_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2218_b7", 10); HM((u32) p->x2218_b7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2219_b0", 10); HM((u32) p->x2219_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2219_b1", 10); HM((u32) p->x2219_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2219_b2", 10); HM((u32) p->x2219_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2219_b3", 10); HM((u32) p->x2219_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2219_b4", 10); HM((u32) p->x2219_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2219_b5", 10); HM((u32) p->x2219_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2219_b6", 10); HM((u32) p->x2219_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2219_b7", 10); HM((u32) p->x2219_b7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221A_b0", 10); HM((u32) p->x221A_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221A_b1", 10); HM((u32) p->x221A_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->allow_sdi", 10); HM((u32) p->allow_sdi); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221A_b3", 10); HM((u32) p->x221A_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->fall_fast", 10); HM((u32) p->fall_fast); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221A_b5", 10); HM((u32) p->x221A_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221A_b6", 10); HM((u32) p->x221A_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221A_b7", 10); HM((u32) p->x221A_b7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221B_b0", 10); HM((u32) p->x221B_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221B_b1", 10); HM((u32) p->x221B_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221B_b2", 10); HM((u32) p->x221B_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221B_b3", 10); HM((u32) p->x221B_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221B_b4", 10); HM((u32) p->x221B_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221B_b5", 10); HM((u32) p->x221B_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221B_b6", 10); HM((u32) p->x221B_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221B_b7", 10); HM((u32) p->x221B_b7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221C_b0", 10); HM((u32) p->x221C_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221C_b1", 10); HM((u32) p->x221C_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221C_b2", 10); HM((u32) p->x221C_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221C_b3", 10); HM((u32) p->x221C_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221C_b4", 10); HM((u32) p->x221C_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221C_b5", 10); HM((u32) p->x221C_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221C_b6", 10); HM((u32) p->x221C_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221C_u16_y", 10); HM((u32) p->x221C_u16_y); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221D_b2", 10); HM((u32) p->x221D_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221D_b3", 10); HM((u32) p->x221D_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221D_b4", 10); HM((u32) p->x221D_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221D_b5", 10); HM((u32) p->x221D_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221D_b6", 10); HM((u32) p->x221D_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221D_b7", 10); HM((u32) p->x221D_b7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->invisible", 10); HM((u32) p->invisible); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221E_b1", 10); HM((u32) p->x221E_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221E_b2", 10); HM((u32) p->x221E_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221E_b3", 10); HM((u32) p->x221E_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221E_b4", 10); HM((u32) p->x221E_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221E_b5", 10); HM((u32) p->x221E_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221E_b6", 10); HM((u32) p->x221E_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221E_b7", 10); HM((u32) p->x221E_b7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221F_b0", 10); HM((u32) p->x221F_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221F_b1", 10); HM((u32) p->x221F_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221F_b2", 10); HM((u32) p->x221F_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221F_b3", 10); HM((u32) p->x221F_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->is_sub_fighter", 10); HM((u32) p->is_sub_fighter); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221F_b5", 10); HM((u32) p->x221F_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221F_b6", 10); HM((u32) p->x221F_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x221F_b7", 10); HM((u32) p->x221F_b7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2220_b0", 10); HM((u32) p->x2220_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2220_b3", 10); HM((u32) p->x2220_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2220_b4", 10); HM((u32) p->x2220_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2220_b5", 10); HM((u32) p->x2220_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2220_b6", 10); HM((u32) p->x2220_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2220_b7", 10); HM((u32) p->x2220_b7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2221_b0", 10); HM((u32) p->x2221_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2221_b1", 10); HM((u32) p->x2221_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2221_b2", 10); HM((u32) p->x2221_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2221_b3", 10); HM((u32) p->x2221_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2221_b4", 10); HM((u32) p->x2221_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2221_b5", 10); HM((u32) p->x2221_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2221_b6", 10); HM((u32) p->x2221_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2221_b7", 10); HM((u32) p->x2221_b7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2222_b0", 10); HM((u32) p->x2222_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->can_multijump", 10); HM((u32) p->can_multijump); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2222_b2", 10); HM((u32) p->x2222_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2222_b3", 10); HM((u32) p->x2222_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2222_b4", 10); HM((u32) p->x2222_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2222_b5", 10); HM((u32) p->x2222_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2222_b6", 10); HM((u32) p->x2222_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2222_b7", 10); HM((u32) p->x2222_b7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2223_b0", 10); HM((u32) p->x2223_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2223_b1", 10); HM((u32) p->x2223_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2223_b2", 10); HM((u32) p->x2223_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2223_b3", 10); HM((u32) p->x2223_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2223_b4", 10); HM((u32) p->x2223_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2223_b5", 10); HM((u32) p->x2223_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->is_always_metal", 10); HM((u32) p->is_always_metal); }
+    { if (HDBG) printf("N %s%c", "(u32) p->is_metal", 10); HM((u32) p->is_metal); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2224_b0", 10); HM((u32) p->x2224_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2224_b1", 10); HM((u32) p->x2224_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2224_b2", 10); HM((u32) p->x2224_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2224_b3", 10); HM((u32) p->x2224_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2224_b4", 10); HM((u32) p->x2224_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2224_b5", 10); HM((u32) p->x2224_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2224_b6", 10); HM((u32) p->x2224_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->can_walljump", 10); HM((u32) p->can_walljump); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2225_b0", 10); HM((u32) p->x2225_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2225_b1", 10); HM((u32) p->x2225_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2225_b2", 10); HM((u32) p->x2225_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2225_b3", 10); HM((u32) p->x2225_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2225_b4", 10); HM((u32) p->x2225_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2225_b5", 10); HM((u32) p->x2225_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2225_b6", 10); HM((u32) p->x2225_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2225_b7", 10); HM((u32) p->x2225_b7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2226_b0", 10); HM((u32) p->x2226_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2226_b1", 10); HM((u32) p->x2226_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2226_b2", 10); HM((u32) p->x2226_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2226_b3", 10); HM((u32) p->x2226_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2226_b4", 10); HM((u32) p->x2226_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2226_b5", 10); HM((u32) p->x2226_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2226_b6", 10); HM((u32) p->x2226_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2226_b7", 10); HM((u32) p->x2226_b7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2227_b0", 10); HM((u32) p->x2227_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2227_b1", 10); HM((u32) p->x2227_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2227_b2", 10); HM((u32) p->x2227_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2227_b3", 10); HM((u32) p->x2227_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2227_b4", 10); HM((u32) p->x2227_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2227_b5", 10); HM((u32) p->x2227_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2227_b6", 10); HM((u32) p->x2227_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2227_b7", 10); HM((u32) p->x2227_b7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2228_b0", 10); HM((u32) p->x2228_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2228_b1", 10); HM((u32) p->x2228_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->is_sandbag", 10); HM((u32) p->is_sandbag); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2228_b3", 10); HM((u32) p->x2228_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2228_b5", 10); HM((u32) p->x2228_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->used_tether", 10); HM((u32) p->used_tether); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2228_b7", 10); HM((u32) p->x2228_b7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2229_b0", 10); HM((u32) p->x2229_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2229_b1", 10); HM((u32) p->x2229_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2229_b2", 10); HM((u32) p->x2229_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2229_b3", 10); HM((u32) p->x2229_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2229_b4", 10); HM((u32) p->x2229_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->no_normal_motion", 10); HM((u32) p->no_normal_motion); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2229_b6", 10); HM((u32) p->x2229_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->no_kb", 10); HM((u32) p->no_kb); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x222A_b0", 10); HM((u32) p->x222A_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x222A_b1", 10); HM((u32) p->x222A_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x222A_b2", 10); HM((u32) p->x222A_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x222A_b3", 10); HM((u32) p->x222A_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x222A_b5", 10); HM((u32) p->x222A_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x222A_b6", 10); HM((u32) p->x222A_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x222A_b7", 10); HM((u32) p->x222A_b7); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->u.kb.hat.x0)", 10); HM(PI((const void*) p->u.kb.hat.x0)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->u.kb.hat.x4", 10); HM((u32) p->u.kb.hat.x4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->u.kb.hat.x8_b0", 10); HM((u32) p->u.kb.hat.x8_b0); }
     for (i0 = 0; i0 < 3; i0++) {
-    HM((u32) p->u.kb.hat.x9[i0]);
+    { if (HDBG) printf("N %s%c", "(u32) p->u.kb.hat.x9[i0]", 10); HM((u32) p->u.kb.hat.x9[i0]); }
     }
-    HM((u32) p->u.kb.hat.kind);
-    HM(PI((const void*) p->u.kb.hat.jobj));
-    HM((u32) p->u.kb.hat.x14.count);
-    HM(PI((const void*) p->u.kb.hat.x14.data));
-    HM((u32) p->u.kb.hat.x1C.count);
-    HM(PI((const void*) p->u.kb.hat.x1C.data));
-    HM((u32) p->u.kb.hat.x24.model_num);
+    { if (HDBG) printf("N %s%c", "(u32) p->u.kb.hat.kind", 10); HM((u32) p->u.kb.hat.kind); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->u.kb.hat.jobj)", 10); HM(PI((const void*) p->u.kb.hat.jobj)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->u.kb.hat.x14.count", 10); HM((u32) p->u.kb.hat.x14.count); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->u.kb.hat.x14.data)", 10); HM(PI((const void*) p->u.kb.hat.x14.data)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->u.kb.hat.x1C.count", 10); HM((u32) p->u.kb.hat.x1C.count); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->u.kb.hat.x1C.data)", 10); HM(PI((const void*) p->u.kb.hat.x1C.data)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->u.kb.hat.x24.model_num", 10); HM((u32) p->u.kb.hat.x24.model_num); }
     for (i0 = 0; i0 < 5; i0++) {
-    HM((u32) p->u.kb.hat.x24.cleared[i0]);
+    { if (HDBG) printf("N %s%c", "(u32) p->u.kb.hat.x24.cleared[i0]", 10); HM((u32) p->u.kb.hat.x24.cleared[i0]); }
     }
     for (i0 = 0; i0 < 5; i0++) {
-    HM(PI((const void*) p->u.kb.hat.x24.xC[i0]));
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->u.kb.hat.x24.xC[i0])", 10); HM(PI((const void*) p->u.kb.hat.x24.xC[i0])); }
     }
-    HM((u32) p->u.kb.x44.n_costume_tobjs);
-    HM(PI((const void*) p->u.kb.x44.x5D0));
+    { if (HDBG) printf("N %s%c", "(u32) p->u.kb.x44.n_costume_tobjs", 10); HM((u32) p->u.kb.x44.n_costume_tobjs); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->u.kb.x44.x5D0)", 10); HM(PI((const void*) p->u.kb.x44.x5D0)); }
     for (i0 = 0; i0 < 5; i0++) {
-    HM(PI((const void*) p->u.kb.x44.costume_tobjs[i0]));
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->u.kb.x44.costume_tobjs[i0])", 10); HM(PI((const void*) p->u.kb.x44.costume_tobjs[i0])); }
     }
-    HM((u32) p->u.kb.x60);
-    HM((u32) p->u.kb.x64);
-    HM((u32) p->u.kb.x68);
-    HM((u32) p->u.kb.x6C);
+    { if (HDBG) printf("N %s%c", "(u32) p->u.kb.x60", 10); HM((u32) p->u.kb.x60); }
+    { if (HDBG) printf("N %s%c", "(u32) p->u.kb.x64", 10); HM((u32) p->u.kb.x64); }
+    { if (HDBG) printf("N %s%c", "(u32) p->u.kb.x68", 10); HM((u32) p->u.kb.x68); }
+    { if (HDBG) printf("N %s%c", "(u32) p->u.kb.x6C", 10); HM((u32) p->u.kb.x6C); }
     for (i0 = 0; i0 < 4; i0++) {
-    HM((u32) p->u.kb._70[i0]);
+    { if (HDBG) printf("N %s%c", "(u32) p->u.kb._70[i0]", 10); HM((u32) p->u.kb._70[i0]); }
     }
-    HM(PI((const void*) p->u.kb.x74));
-    HM(PI((const void*) p->u.kb.x78));
-    HM(PI((const void*) p->u.kb.ns_flash_gobj));
-    HM((u32) p->u.kb.x80);
-    HM(B(p->u.kb.x84));
-    HM(B(p->u.kb.x88));
-    HM(B(p->u.kb.x8C.x));
-    HM(B(p->u.kb.x8C.y));
-    HM(B(p->u.kb.x8C.z));
-    HM(PI((const void*) p->u.kb.x98));
-    HM((u32) p->u.kb.x9C);
-    HM(PI((const void*) p->u.kb.xA0));
-    HM(PI((const void*) p->u.kb.xA4));
-    HM((u32) p->u.kb.xA8);
-    HM(PI((const void*) p->u.kb.xAC));
-    HM(PI((const void*) p->u.kb.xB0));
-    HM((u32) p->u.kb.xB4);
-    HM(PI((const void*) p->u.kb.xB8));
-    HM((u32) p->u.kb.xBC);
-    HM(PI((const void*) p->u.kb.xC0));
-    HM((u32) p->u.kb.xC4);
-    HM(B(p->u.kb.xC8));
-    HM((u32) p->u.kb.xCC);
-    HM(PI((const void*) p->u.kb.xD0));
-    HM((u32) p->u.kb.xD4);
-    HM((u32) p->u.kb.xD8);
-    HM(PI((const void*) p->u.kb.xDC));
-    HM((u32) p->u.kb.xE0);
-    HM((u32) p->u.kb.xE4);
-    HM(B(p->u.kb.xE8));
-    HM(B(p->u.kb.xEC));
-    HM(B(p->u.kb.xF0));
-    HM((u32) p->u.kb.xF4_b0);
-    HM((u32) p->bury_grkind);
-    HM((u32) p->bury_timer_1);
-    HM((u32) p->bury_timer_2);
-    HM((u32) p->x2330.x);
-    HM((u32) p->x2330.y);
-    HM((u32) p->x2338.x);
-    HM((u32) p->x2338.y);
-    HM((u32) p->mv.ca.specialhi.x0);
-    HM((u32) p->mv.ca.specialhi.x2_b0);
-    HM((u32) p->mv.ca.specialhi.x2_b1);
-    HM((u32) p->mv.ca.specialhi.x2_b2);
-    HM((u32) p->mv.ca.specialhi.x2_b3);
-    HM((u32) p->mv.ca.specialhi.x2_b4);
-    HM((u32) p->mv.ca.specialhi.x2_b5);
-    HM((u32) p->mv.ca.specialhi.x2_b6);
-    HM((u32) p->mv.ca.specialhi.x2_b7);
-    HM((u32) p->mv.ca.specialhi.x3);
-    HM(B(p->mv.ca.specialhi.vel.x));
-    HM(B(p->mv.ca.specialhi.vel.y));
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->u.kb.x74)", 10); HM(PI((const void*) p->u.kb.x74)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->u.kb.x78)", 10); HM(PI((const void*) p->u.kb.x78)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->u.kb.ns_flash_gobj)", 10); HM(PI((const void*) p->u.kb.ns_flash_gobj)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->u.kb.x80", 10); HM((u32) p->u.kb.x80); }
+    { if (HDBG) printf("N %s%c", "B(p->u.kb.x84)", 10); HM(B(p->u.kb.x84)); }
+    { if (HDBG) printf("N %s%c", "B(p->u.kb.x88)", 10); HM(B(p->u.kb.x88)); }
+    { if (HDBG) printf("N %s%c", "B(p->u.kb.x8C.x)", 10); HM(B(p->u.kb.x8C.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->u.kb.x8C.y)", 10); HM(B(p->u.kb.x8C.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->u.kb.x8C.z)", 10); HM(B(p->u.kb.x8C.z)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->u.kb.x98)", 10); HM(PI((const void*) p->u.kb.x98)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->u.kb.x9C", 10); HM((u32) p->u.kb.x9C); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->u.kb.xA0)", 10); HM(PI((const void*) p->u.kb.xA0)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->u.kb.xA4)", 10); HM(PI((const void*) p->u.kb.xA4)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->u.kb.xA8", 10); HM((u32) p->u.kb.xA8); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->u.kb.xAC)", 10); HM(PI((const void*) p->u.kb.xAC)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->u.kb.xB0)", 10); HM(PI((const void*) p->u.kb.xB0)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->u.kb.xB4", 10); HM((u32) p->u.kb.xB4); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->u.kb.xB8)", 10); HM(PI((const void*) p->u.kb.xB8)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->u.kb.xBC", 10); HM((u32) p->u.kb.xBC); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->u.kb.xC0)", 10); HM(PI((const void*) p->u.kb.xC0)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->u.kb.xC4", 10); HM((u32) p->u.kb.xC4); }
+    { if (HDBG) printf("N %s%c", "B(p->u.kb.xC8)", 10); HM(B(p->u.kb.xC8)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->u.kb.xCC", 10); HM((u32) p->u.kb.xCC); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->u.kb.xD0)", 10); HM(PI((const void*) p->u.kb.xD0)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->u.kb.xD4", 10); HM((u32) p->u.kb.xD4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->u.kb.xD8", 10); HM((u32) p->u.kb.xD8); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->u.kb.xDC)", 10); HM(PI((const void*) p->u.kb.xDC)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->u.kb.xE0", 10); HM((u32) p->u.kb.xE0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->u.kb.xE4", 10); HM((u32) p->u.kb.xE4); }
+    { if (HDBG) printf("N %s%c", "B(p->u.kb.xE8)", 10); HM(B(p->u.kb.xE8)); }
+    { if (HDBG) printf("N %s%c", "B(p->u.kb.xEC)", 10); HM(B(p->u.kb.xEC)); }
+    { if (HDBG) printf("N %s%c", "B(p->u.kb.xF0)", 10); HM(B(p->u.kb.xF0)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->u.kb.xF4_b0", 10); HM((u32) p->u.kb.xF4_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->bury_grkind", 10); HM((u32) p->bury_grkind); }
+    { if (HDBG) printf("N %s%c", "(u32) p->bury_timer_1", 10); HM((u32) p->bury_timer_1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->bury_timer_2", 10); HM((u32) p->bury_timer_2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2330.x", 10); HM((u32) p->x2330.x); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2330.y", 10); HM((u32) p->x2330.y); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2338.x", 10); HM((u32) p->x2338.x); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x2338.y", 10); HM((u32) p->x2338.y); }
+    { if (HDBG) printf("N %s%c", "(u32) p->mv.ca.specialhi.x0", 10); HM((u32) p->mv.ca.specialhi.x0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->mv.ca.specialhi.x2_b0", 10); HM((u32) p->mv.ca.specialhi.x2_b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->mv.ca.specialhi.x2_b1", 10); HM((u32) p->mv.ca.specialhi.x2_b1); }
+    { if (HDBG) printf("N %s%c", "(u32) p->mv.ca.specialhi.x2_b2", 10); HM((u32) p->mv.ca.specialhi.x2_b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->mv.ca.specialhi.x2_b3", 10); HM((u32) p->mv.ca.specialhi.x2_b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->mv.ca.specialhi.x2_b4", 10); HM((u32) p->mv.ca.specialhi.x2_b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->mv.ca.specialhi.x2_b5", 10); HM((u32) p->mv.ca.specialhi.x2_b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->mv.ca.specialhi.x2_b6", 10); HM((u32) p->mv.ca.specialhi.x2_b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->mv.ca.specialhi.x2_b7", 10); HM((u32) p->mv.ca.specialhi.x2_b7); }
+    { if (HDBG) printf("N %s%c", "(u32) p->mv.ca.specialhi.x3", 10); HM((u32) p->mv.ca.specialhi.x3); }
+    { if (HDBG) printf("N %s%c", "B(p->mv.ca.specialhi.vel.x)", 10); HM(B(p->mv.ca.specialhi.vel.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->mv.ca.specialhi.vel.y)", 10); HM(B(p->mv.ca.specialhi.vel.y)); }
 }
 
 static void fill_HSD_JObj(HSD_JObj* p)
@@ -3124,34 +3108,34 @@ static void hash_HSD_JObj(const HSD_JObj* p)
 {
     int i0, i1, i2, j0, j1, j2, j3;
     if (HDBG) printf("B HSD_JObj%c", 10);
-    HM(PI((const void*) p->object.parent.class_info));
-    HM((u32) p->object.ref_count);
-    HM((u32) p->object.ref_count_individual);
-    HM(PI((const void*) p->next));
-    HM(PI((const void*) p->parent));
-    HM(PI((const void*) p->child));
-    HM((u32) p->flags);
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->object.parent.class_info)", 10); HM(PI((const void*) p->object.parent.class_info)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->object.ref_count", 10); HM((u32) p->object.ref_count); }
+    { if (HDBG) printf("N %s%c", "(u32) p->object.ref_count_individual", 10); HM((u32) p->object.ref_count_individual); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->next)", 10); HM(PI((const void*) p->next)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->parent)", 10); HM(PI((const void*) p->parent)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->child)", 10); HM(PI((const void*) p->child)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->flags", 10); HM((u32) p->flags); }
     for (i0 = 0; i0 < 8; i0++) HM(((const unsigned char*) &p->u)[i0]);
-    HM(B(p->rotate.x));
-    HM(B(p->rotate.y));
-    HM(B(p->rotate.z));
-    HM(B(p->rotate.w));
-    HM(B(p->scale.x));
-    HM(B(p->scale.y));
-    HM(B(p->scale.z));
-    HM(B(p->translate.x));
-    HM(B(p->translate.y));
-    HM(B(p->translate.z));
+    { if (HDBG) printf("N %s%c", "B(p->rotate.x)", 10); HM(B(p->rotate.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->rotate.y)", 10); HM(B(p->rotate.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->rotate.z)", 10); HM(B(p->rotate.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->rotate.w)", 10); HM(B(p->rotate.w)); }
+    { if (HDBG) printf("N %s%c", "B(p->scale.x)", 10); HM(B(p->scale.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->scale.y)", 10); HM(B(p->scale.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->scale.z)", 10); HM(B(p->scale.z)); }
+    { if (HDBG) printf("N %s%c", "B(p->translate.x)", 10); HM(B(p->translate.x)); }
+    { if (HDBG) printf("N %s%c", "B(p->translate.y)", 10); HM(B(p->translate.y)); }
+    { if (HDBG) printf("N %s%c", "B(p->translate.z)", 10); HM(B(p->translate.z)); }
     for (i0 = 0; i0 < 3; i0++) {
     for (i1 = 0; i1 < 4; i1++) {
-    HM(B(p->mtx[i0][i1]));
+    { if (HDBG) printf("N %s%c", "B(p->mtx[i0][i1])", 10); HM(B(p->mtx[i0][i1])); }
     }
     }
-    HM(PI((const void*) p->scl));
-    HM(PI((const void*) p->envelopemtx));
-    HM(PI((const void*) p->aobj));
-    HM(PI((const void*) p->robj));
-    HM((u32) p->id);
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->scl)", 10); HM(PI((const void*) p->scl)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->envelopemtx)", 10); HM(PI((const void*) p->envelopemtx)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->aobj)", 10); HM(PI((const void*) p->aobj)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->robj)", 10); HM(PI((const void*) p->robj)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->id", 10); HM((u32) p->id); }
 }
 
 static void fill_HSD_GObj(HSD_GObj* p)
@@ -3174,23 +3158,55 @@ static void hash_HSD_GObj(const HSD_GObj* p)
 {
     int i0, i1, i2, j0, j1, j2, j3;
     if (HDBG) printf("B HSD_GObj%c", 10);
-    HM((u32) p->classifier);
-    HM((u32) p->p_link);
-    HM((u32) p->gx_link);
-    HM((u32) p->p_priority);
-    HM((u32) p->render_priority);
-    HM((u32) p->obj_kind);
-    HM((u32) p->user_data_kind);
-    HM(PI((const void*) p->next));
-    HM(PI((const void*) p->prev));
-    HM(PI((const void*) p->next_gx));
-    HM(PI((const void*) p->prev_gx));
-    HM(PI((const void*) p->proc));
-    HM(FI((const void*) p->render_cb));
-    HM((u32) p->gxlink_prios); HM((u32) ((u64) p->gxlink_prios >> 32));
-    HM(PI((const void*) p->hsd_obj));
-    HM(PI((const void*) p->user_data));
-    HM(FI((const void*) p->user_data_remove_func));
-    HM(PI((const void*) p->x34_unk));
+    { if (HDBG) printf("N %s%c", "(u32) p->classifier", 10); HM((u32) p->classifier); }
+    { if (HDBG) printf("N %s%c", "(u32) p->p_link", 10); HM((u32) p->p_link); }
+    { if (HDBG) printf("N %s%c", "(u32) p->gx_link", 10); HM((u32) p->gx_link); }
+    { if (HDBG) printf("N %s%c", "(u32) p->p_priority", 10); HM((u32) p->p_priority); }
+    { if (HDBG) printf("N %s%c", "(u32) p->render_priority", 10); HM((u32) p->render_priority); }
+    { if (HDBG) printf("N %s%c", "(u32) p->obj_kind", 10); HM((u32) p->obj_kind); }
+    { if (HDBG) printf("N %s%c", "(u32) p->user_data_kind", 10); HM((u32) p->user_data_kind); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->next)", 10); HM(PI((const void*) p->next)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->prev)", 10); HM(PI((const void*) p->prev)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->next_gx)", 10); HM(PI((const void*) p->next_gx)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->prev_gx)", 10); HM(PI((const void*) p->prev_gx)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->proc)", 10); HM(PI((const void*) p->proc)); }
+    { if (HDBG) printf("N %s%c", "FI((const void*) p->render_cb)", 10); HM(FI((const void*) p->render_cb)); }
+    { if (HDBG) printf("N %s%c", "(u32) p->gxlink_prios); HM((u32) ((u64) p->gxlink_prios >> 32)", 10); HM((u32) p->gxlink_prios); HM((u32) ((u64) p->gxlink_prios >> 32)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->hsd_obj)", 10); HM(PI((const void*) p->hsd_obj)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->user_data)", 10); HM(PI((const void*) p->user_data)); }
+    { if (HDBG) printf("N %s%c", "FI((const void*) p->user_data_remove_func)", 10); HM(FI((const void*) p->user_data_remove_func)); }
+    { if (HDBG) printf("N %s%c", "PI((const void*) p->x34_unk)", 10); HM(PI((const void*) p->x34_unk)); }
+}
+
+static void fill_plAllocInfo(struct plAllocInfo* p)
+{
+    int i0, i1, i2, j0, j1, j2, j3;
+    p->internal_id = fv();
+    p->slot = fv();
+    p->x5 = fv();
+    p->b0 = fv();
+    p->has_transformation = fv();
+    p->b2 = fv();
+    p->b3 = fv();
+    p->b4 = fv();
+    p->b5 = fv();
+    p->b6 = fv();
+    p->b7 = fv();
+}
+static void hash_plAllocInfo(const struct plAllocInfo* p)
+{
+    int i0, i1, i2, j0, j1, j2, j3;
+    if (HDBG) printf("B plAllocInfo%c", 10);
+    { if (HDBG) printf("N %s%c", "(u32) p->internal_id", 10); HM((u32) p->internal_id); }
+    { if (HDBG) printf("N %s%c", "(u32) p->slot", 10); HM((u32) p->slot); }
+    { if (HDBG) printf("N %s%c", "(u32) p->x5", 10); HM((u32) p->x5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->b0", 10); HM((u32) p->b0); }
+    { if (HDBG) printf("N %s%c", "(u32) p->has_transformation", 10); HM((u32) p->has_transformation); }
+    { if (HDBG) printf("N %s%c", "(u32) p->b2", 10); HM((u32) p->b2); }
+    { if (HDBG) printf("N %s%c", "(u32) p->b3", 10); HM((u32) p->b3); }
+    { if (HDBG) printf("N %s%c", "(u32) p->b4", 10); HM((u32) p->b4); }
+    { if (HDBG) printf("N %s%c", "(u32) p->b5", 10); HM((u32) p->b5); }
+    { if (HDBG) printf("N %s%c", "(u32) p->b6", 10); HM((u32) p->b6); }
+    { if (HDBG) printf("N %s%c", "(u32) p->b7", 10); HM((u32) p->b7); }
 }
 

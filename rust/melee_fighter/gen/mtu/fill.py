@@ -18,6 +18,21 @@ os.chdir(ROOT)
 import gen_tu as gt  # noqa: E402
 
 
+# Bitfields whose memory the C build lays out LSB-first (native clang) and the Rust types MSB-first (GC order): a value
+# written through the union's raw member (`x21FC_flag.byte = 1`, `x594_s32 = 0`) reads back differently through the
+# bit members, so those members are not part of the comparison hash (the raw members still are).
+ALIAS_C = r'p->(?:x21FC_flag\.b[0-9]|x594_b[0-9]\w*|x594_bits|x594_pad2?|x596_bits\.\w+|x597_bits)(?!\w)'
+ALIAS_R = r'p\.(?:x21FC_flag\.anon_[0-9]+\.b[0-9]|anon_594\.anon_[0-9]+\.(?:x594_b[0-9]\w*|x594_bits|x594_pad2?|x596_bits\.\w+|x597_bits))'
+
+
+def skip_alias(cdef, rdef):
+    import re
+    nl = chr(10)
+    c = [l for l in cdef.split(nl) if not (re.match(r'^\s*HM(?:64)?\(', l) and re.search(ALIAS_C, l))]
+    r = [l for l in rdef.split(nl) if not (re.match(r'^\s*hm(?:64)?\(', l) and re.search(ALIAS_R, l))]
+    return nl.join(c), nl.join(r)
+
+
 def main():
     name, csrc, pools, types = sys.argv[1:5]
     tu = gt.Tu(csrc, (), (ROOT / csrc).parent)
@@ -32,8 +47,14 @@ def main():
         fwd.append(f"static void fill_{t}({cn}* p);")
         fwd.append(f"static void hash_{t}(const {cn}* p);")
     c_out += fwd
+    import re
     for t in types.split(","):
         cdef, rdef = w.gen(t)
+        cdef, rdef = skip_alias(cdef, rdef)
+        # debug aid: name every hashed value ("N <expr>" before its "H" line when TUDBG selects the case)
+        cdef = re.sub(r"^(\s*)(HM(?:64)?)\((.*)\);$",
+                      lambda m: m.group(1) + '{ if (HDBG) printf("N %s%c", "' + m.group(3).replace("\\", "\\\\").replace('"', '\\"') + '", 10); ' + m.group(2) + "(" + m.group(3) + "); }",
+                      cdef, flags=re.M)
         c_out.append(cdef)
         r_out.append(rdef)
     (ROOT / "rust/melee_fighter/gen/cref/tu" / f"{name}_state.h").write_text("\n".join(c_out) + "\n", encoding="utf-8", newline="\n")

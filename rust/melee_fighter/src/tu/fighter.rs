@@ -19,7 +19,7 @@ use melee_types::inline::*;
 pub use crate::fighter::{
     fighter_get_pos_x as Fighter_GetPosX, fighter_get_pos_y as Fighter_GetPosY,
     fighter_new_spawn_80068e40 as Fighter_NewSpawn_80068E40, fighter_unk_set_flag_8006cfbc as Fighter_UnkSetFlag_8006CFBC,
-    ftucf_flick_count as ftUcf_FlickCount, ftucf_flick_counter as ftUcf_FlickCounter, ftucf_pad_buffer_push as ftUcf_PadBufferPush,
+    ftucf_flick_count as ftUcf_FlickCount, ftucf_pad_buffer_push as ftUcf_PadBufferPush,
     ftucf_pad_raw as ftUcf_PadRaw, ftucf_rim_units as ftUcf_RimUnits, set_bit as setBit,
 };
 
@@ -32,6 +32,9 @@ fn van(t: &[HSD_GObjEvent], kind: i32) -> usize { match t.get(kind as usize).cop
 
 /// `FT_SCRIPT_VALUE(fp, field, base)`: `ScriptGame_ModValue((fp)->player_id, field, base)`.
 fn script_value(fp: &Fighter, field: i32, base: f32) -> f32 { ext::ScriptGame_ModValue(fp.player_id as i32, field, base) }
+
+/// `ftUcf_FlickCounter(port)`: the UCF flick counter (src/fighter.rs).
+pub fn ftUcf_FlickCounter(port: i32) -> i32 { crate::fighter::ftucf_flick_counter(port) }
 
 const M_PI_2: f64 = core::f64::consts::FRAC_PI_2;
 
@@ -89,6 +92,16 @@ pub mod ext {
         };
     }
     ext_fns! {
+        fn ftAction_8007349C(g: G) = { crate::tu::ftaction::ftAction_8007349C(g) };
+        fn ftAction_80073354(g: G) = { crate::tu::ftaction::ftAction_80073354(g) };
+        fn ftAction_80073240(g: G) = { crate::tu::ftaction::ftAction_80073240(g) };
+        fn ftParts_80074A8C(g: G) = { crate::ft0df::ftparts_80074a8c(g) };
+        fn ftPartSetRotX(fp: F, part: i32, v: f32) = { unsafe { crate::tu::ftparts::ftPartSetRotX(&*fp, part, v) } };
+        fn ftPartSetRotY(fp: F, part: i32, v: f32) = { unsafe { crate::tu::ftparts::ftPartSetRotY(&*fp, part, v) } };
+        fn ftPartSetRotZ(fp: F, part: i32, v: f32) = { unsafe { crate::tu::ftparts::ftPartSetRotZ(&*fp, part, v) } };
+        fn GObj_SetupGXLink(g: G, f: Option<fn(G, i32)>, a: u32, b: u32) = { todo!("GObj_SetupGXLink (baselib/gobjgxlink.c)") };
+        fn GObj_InitUserData(g: G, kind: u8, cb: Option<unsafe fn(*mut core::ffi::c_void)>, p: *mut core::ffi::c_void) = { todo!("GObj_InitUserData (baselib/gobjuserdata.c)") };
+        fn ftParts_GetBoneIndex(fp: F, part: i32) -> i32 = { unsafe { crate::ftdmgfall::ftparts_get_bone_index(&*fp, part) } };
         fn ScriptGame_ModValue(slot: i32, field: i32, base: f32) -> f32 = { match unsafe { crate::hooks::SCRIPT_MOD_VALUE } { Some(f) => f(slot, field, base), None => base } };
         fn PSVECAdd(a: *const Vec3, b: *const Vec3, c: *mut Vec3) = { unsafe { let (x, y, z) = ((*a).x + (*b).x, (*a).y + (*b).y, (*a).z + (*b).z); (*c).x = x; (*c).y = y; (*c).z = z; } };
         fn gm_8016B0FC() -> bool = { crate::hooks::gm_8016b0fc() };
@@ -190,16 +203,14 @@ pub mod ext {
         fn gFtDataList(kind: i32) -> *mut ftData = { unsafe { crate::tu::ftdata::gFtDataList[kind as usize] } };
         fn ftCo_800D0FA0(g: G) = { unsafe { let _ = crate::tu::ftchangeparam::ftco_800d0fa0(g); } };
         fn ftData_MotionStateList() -> *mut MotionState = { todo!("ftData_MotionStateList (ft/ftdata.c)") };
-        fn Mex_MoveLogicTable(kind: i32) -> *mut MotionState = { unsafe { crate::platform::Mex_MoveLogicTable(kind) } };
+        fn Mex_MoveLogicTable(kind: i32, vanilla: *mut MotionState) -> *mut MotionState = { unsafe { crate::platform::Mex_MoveLogicTable(kind) } };
         fn GenoDefine_BindFighter(fp: F) = { unsafe { let _ = crate::platform::GenoDefine_BindFighter(fp); } };
         fn stage_grkind() -> i32 = { todo!("stage_grkind (gr/stage.c stage_info)") };
         fn lbAnim_8001E8F8(t: *mut FigaTree) -> f32 = { todo!("lbAnim_8001E8F8 (lb/lbanim.c)") };
         fn ftData_80085E50(fp: F, id: i32) -> *mut FigaTree = { unsafe { crate::tu::ftdata::ftData_80085E50(fp, id) } };
         fn Geno_AnimBankBeforeSpawn() = { unsafe { let _ = crate::platform::Geno_AnimBankBeforeSpawn(); } };
         fn GObj_Create(class: u16, p_link: u8, prio: u8) -> G = { todo!("GObj_Create (baselib/gobj.c)") };
-        fn GObj_SetupGXLink_ftDrawCommon(g: G) = { todo!("GObj_SetupGXLink_ftDrawCommon (baselib/gobjgxlink.c + ft/ftdrawcommon.c)") };
-        fn GObj_InitUserData_Fighter(g: G, fp: F) = { todo!("GObj_InitUserData_Fighter (baselib/gobjuserdata.c)") };
-        fn ftData_8008572C(kind: i32) = { unsafe { let _ = crate::tu::ftdata::ftData_8008572C(kind); } };
+                        fn ftData_8008572C(kind: i32) = { unsafe { let _ = crate::tu::ftdata::ftData_8008572C(kind); } };
         fn efAsync_LoadSync(bank: i32) = { todo!("efAsync_LoadSync (ef/efasync.c)") };
         fn ftData_UnkBytePerCharacter(kind: i32) -> i32 = { unsafe { crate::tu::ftdata::ftData_UnkBytePerCharacter[kind as usize] as i32 } };
         fn ftData_80085820(kind: i32, costume: u8) = { unsafe { let _ = crate::tu::ftdata::ftData_80085820(kind, costume as i32); } };
@@ -902,13 +913,13 @@ pub unsafe fn Fighter_UnkUpdateCostumeJoint_800686E4(g: G) {
 
 /// `Fighter_UnkUpdateVecFromBones_8006876C`.
 pub unsafe fn Fighter_UnkUpdateVecFromBones_8006876C(fp: &mut Fighter) {
-    let j = (*fp.parts.offset(crate::ftdmgfall::ftparts_get_bone_index(fp, 2) as isize)).joint;
+    let j = (*fp.parts.offset(ext::ftParts_GetBoneIndex(fp, 2) as isize)).joint;
     let mut v = v0();
     let mut v2 = v0();
     HSD_JObjGetTranslation(&*j, &mut v);
     fp.x1A6C = v.y / 8.55f32;
     ext::lb_8000B1CC(j, core::ptr::null(), &mut v);
-    ext::lb_8000B1CC((*fp.parts.offset(crate::ftdmgfall::ftparts_get_bone_index(fp, 1) as isize)).joint, core::ptr::null(), &mut v2);
+    ext::lb_8000B1CC((*fp.parts.offset(ext::ftParts_GetBoneIndex(fp, 1) as isize)).joint, core::ptr::null(), &mut v2);
     fp.x1A70.x = v2.x - v.x;
     fp.x1A70.y = v2.y - v.y;
     fp.x1A70.z = v2.z - v.z;
@@ -1000,7 +1011,7 @@ pub unsafe fn Fighter_UnkInitLoad_80068914(g: G, arg: &plAllocInfo) {
     fp.x2D0 = core::ptr::null_mut();
     fp.x18 = 0x155;
     fp.x1C_actionStateList = ext::ftData_MotionStateList();
-    fp.x20_actionStateList = ext::Mex_MoveLogicTable(fp.kind as i32);
+    fp.x20_actionStateList = ext::Mex_MoveLogicTable(fp.kind as i32, crate::tu::ftdata::ftData_CharacterStateTables[fp.kind as usize]);
     fp.x24 = (*fp.ft_data).xC;
     ext::GenoDefine_BindFighter(fp);
     fp.x28 = (*fp.ft_data).x10;
@@ -1069,11 +1080,11 @@ fn proc_8006DA4C(g: G) { unsafe { Fighter_8006DA4C(g) } }
 pub unsafe fn Fighter_Create(input: &plAllocInfo) -> G {
     ext::Geno_AnimBankBeforeSpawn();
     let g = ext::GObj_Create(HSD_GOBJ_CLASS_FIGHTER as u16, 8, 0);
-    ext::GObj_SetupGXLink_ftDrawCommon(g);
+    ext::GObj_SetupGXLink(g, Some(crate::tu::ftdrawcommon::ftDrawCommon_80080E18), 5, 0);
     let fp = ext::HSD_ObjAlloc(&mut fighter_alloc_data) as F;
     core::ptr::write_bytes(fp, 0, 1); // TARGET_PC: Slippi's Init Player Data zeroes the block
     (*fp).dat_attrs_backup = ext::HSD_ObjAlloc(&mut fighter_dat_attrs_alloc_data) as _;
-    ext::GObj_InitUserData_Fighter(g, fp);
+    ext::GObj_InitUserData(g, 4, Some(Fighter_Unload_8006DABC), fp as *mut core::ffi::c_void);
     ext::ftData_8008572C(input.internal_id as i32);
     Fighter_UnkInitLoad_80068914(g, input);
     let fp = &mut *fp;
@@ -1202,7 +1213,7 @@ pub unsafe fn Fighter_ChangeMotionState(g: G, msid: i32, mut flags: u32, anim_st
         e::ftColl_8007B4E0(g);
     }
     if !mf(flags, Ft_MF_SkipModel) && fp.x221D_b2() != 0 {
-        crate::ft0df::ftparts_80074a8c(g);
+        ext::ftParts_80074A8C(g);
     }
     if !mf(flags, Ft_MF_SkipMatAnim) && fp.x221E_b7() != 0 {
         ext::ftAnim_80070654(g);
@@ -1329,9 +1340,9 @@ pub unsafe fn Fighter_ChangeMotionState(g: G, msid: i32, mut flags: u32, anim_st
         fp.set_x221C_u16_y(0);
     }
     fp.lstick_angle = 0.0;
-    super::ftparts::ftPartSetRotX(fp, 0, 0.0);
-    super::ftparts::ftPartSetRotY(fp, 0, (M_PI_2 * fp.facing_dir as f64) as f32);
-    super::ftparts::ftPartSetRotZ(fp, 0, 0.0);
+    ext::ftPartSetRotX(fp, 0, 0.0);
+    ext::ftPartSetRotY(fp, 0, (M_PI_2 * fp.facing_dir as f64) as f32);
+    ext::ftPartSetRotZ(fp, 0, 0.0);
     e::ScriptGame_NoteMotion(fp, msid);
     let ms: *mut MotionState = if msid >= 0x400 {
         e::Geno_MotionRow(fp, msid)
@@ -1462,12 +1473,12 @@ pub unsafe fn Fighter_ChangeMotionState(g: G, msid: i32, mut flags: u32, anim_st
                 }
             }
             if mf(flags, Ft_MF_UpdateCmd) {
-                super::ftaction::ftAction_8007349C(g);
+                ext::ftAction_8007349C(g);
             } else if anim_start != 0.0 {
-                super::ftaction::ftAction_80073354(g);
+                ext::ftAction_80073354(g);
             } else {
                 e::ftCo_800C0408(g);
-                super::ftaction::ftAction_80073240(g);
+                ext::ftAction_80073240(g);
             }
         } else {
             fp.anim_id = -1;
@@ -3160,8 +3171,9 @@ pub unsafe fn RB_NeutralHash() -> u32 {
             let fg = ext::Player_GetEntityAtIndex(i, j);
             if fg.is_null() || (*fg).user_data.is_null() { continue; }
             let fp = &mut *((*fg).user_data as F);
+            let stocks = ext::Player_GetStocks(fp.player_id as i32);
             let cpu = ext::ftCo_IsCpuControlled(fp);
-            let w = nh_fighter(fp, i * 2 + j, ext::Player_GetStocks(fp.player_id as i32), cpu);
+            let w = nh_fighter(fp, i * 2 + j, stocks, cpu);
             nh_out[(4 + i * 2 + j) as usize] = w;
             h = nh_mix(h, w);
         }

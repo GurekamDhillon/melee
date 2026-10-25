@@ -2,7 +2,7 @@
 """Recording-stub generator for the melee_fighter TU oracles.
 
   python rust/melee_fighter/gen/mtu/stubs.py <stem> <game .c> <port .rs> [--ret NAME=C|RUST ...] [--skip NAME ...]
-                                              [--only NAME ...] [--notrace NAME:ARGIDX ...]
+                                              [--only NAME ...] [--notrace NAME:ARGIDX ...] [--outvec NAME:ARGIDX ...]
 
 From libclang's view of the game TU (every function it calls but does not define) and the port's `ext_fns!`
 hook list (src/tu/<stem>.rs, after gen/mtu/hookify.py) it writes, with the same trace convention on both sides
@@ -107,7 +107,7 @@ def r_trace(cls, a):
 def main():
     argv = sys.argv[1:]
     stem, csrc, rsrc = argv[:3]
-    notrace = set()
+    notrace, outvec = set(), {}
     rets, skip, only = {}, {"memset", "memcpy", "memmove", "__frsqrte", "sinf", "cosf", "ProfActive", "ProfBegin", "ProfEnd", "ProfCount"}, set()
     i = 3
     while i < len(argv):
@@ -121,6 +121,9 @@ def main():
         elif argv[i] == "--notrace":  # NAME:ARGINDEX -- an address-valued argument (differs run to run): not traced
             n, _, a = argv[i + 1].partition(":")
             notrace.add((n, int(a))); i += 2
+        elif argv[i] == "--outvec":  # NAME:ARGIDX -- an out parameter (Vec3*): the stub fills it with three drawn floats
+            n, _, a = argv[i + 1].partition(":")
+            outvec[n] = int(a); i += 2
         elif argv[i] == "--only":
             only.add(argv[i + 1]); i += 2
         else:
@@ -189,6 +192,9 @@ def main():
             rc = "0"
         else:
             raise SystemExit(f"{n}: returns a struct by value; give --ret")
+        if n in outvec:
+            o = f"a{outvec[n]}"
+            body.append(f"if ({o}) {{ ((Vec3*) {o})->x = rg(); ((Vec3*) {o})->y = rg(); ((Vec3*) {o})->z = rg(); }}")
         if rc is not None:
             body.append(f"return ({ret_t}) ({rc});")
         c_out.append(f"{ret_t} ({n})({params}) {{ " + " ".join(body) + " }")
@@ -238,6 +244,9 @@ def main():
             # xorshift stream stays in step
             rb.append({"fv()": "let _ = fv();", "(fv() & 1)": "let _ = fv();", "fv64()": "let _ = fv64();",
                        "rg()": "let _ = rg();", "(double) rg()": "let _ = rg();"}.get(rc, ""))
+        if n in outvec:
+            o = f"a{outvec[n]}"
+            rb.append(f"if !{o}.is_null() {{ (*{o}).x = rg(); (*{o}).y = rg(); (*{o}).z = rg(); }}")
         args = ", ".join(f"a{i}" for i in range(len(rps)))
         hooks.append(f"        m::ext::hook::{n} = Some(|{args}| {{ " + " ".join(rb) + " });")
     r_out.append("pub fn install() {\n    unsafe {\n" + "\n".join(hooks) + "\n    }\n}\n")

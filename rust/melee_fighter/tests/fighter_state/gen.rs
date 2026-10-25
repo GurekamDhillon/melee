@@ -1854,16 +1854,6 @@ pub fn hash_Fighter(p: &Fighter) { unsafe {
     hm(pi(p.x588));
     hm(p.x58C as u32);
     hm(pi(p.x590));
-    hm(p.anon_594.anon_0.x594_b0() as u32);
-    hm(p.anon_594.anon_0.x594_b1_loop() as u32);
-    hm(p.anon_594.anon_0.x594_b2() as u32);
-    hm(p.anon_594.anon_0.x594_b3() as u32);
-    hm(p.anon_594.anon_0.x594_b4() as u32);
-    hm(p.anon_594.anon_0.x594_b5() as u32);
-    hm(p.anon_594.anon_0.x594_b6() as u32);
-    hm(p.anon_594.anon_0.x594_b7() as u32);
-    hm(p.anon_594.anon_0.x596_bits.x0() as u32);
-    hm(p.anon_594.anon_0.x596_bits.x7() as u32);
     hm(pi(p.x598));
     hm(pi(p.x59C));
     hm(pi(p.x5A0));
@@ -2830,14 +2820,6 @@ pub fn hash_Fighter(p: &Fighter) { unsafe {
     hm(fi(p.take_dmg_2_cb));
     hm(fi(p.hurtbox_detect_cb));
     hm(fi(p.x21F8));
-    hm(p.x21FC_flag.anon_0.b0() as u32);
-    hm(p.x21FC_flag.anon_0.b1() as u32);
-    hm(p.x21FC_flag.anon_0.b2() as u32);
-    hm(p.x21FC_flag.anon_0.b3() as u32);
-    hm(p.x21FC_flag.anon_0.b4() as u32);
-    hm(p.x21FC_flag.anon_0.b5() as u32);
-    hm(p.x21FC_flag.anon_0.b6() as u32);
-    hm(p.x21FC_flag.anon_0.b7() as u32);
     for i0 in 0..3 {
     hm(p.filler_x21FC[i0] as u32);
     }
@@ -3175,4 +3157,32 @@ pub fn hash_HSD_GObj(p: &HSD_GObj) { unsafe {
     hm(pi(p.user_data));
     hm(fi(p.user_data_remove_func));
     hm(pi(p.x34_unk));
+} }
+
+pub fn fill_plAllocInfo(p: &mut plAllocInfo) { unsafe {
+    p.internal_id = fv() as _;
+    p.slot = fv() as _;
+    p.x5 = fv() as _;
+    p.anon_6.set_b0(fv() as _);
+    p.anon_6.set_has_transformation(fv() as _);
+    p.anon_6.set_b2(fv() as _);
+    p.anon_6.set_b3(fv() as _);
+    p.anon_6.set_b4(fv() as _);
+    p.anon_6.set_b5(fv() as _);
+    p.anon_6.set_b6(fv() as _);
+    p.anon_6.set_b7(fv() as _);
+} }
+pub fn hash_plAllocInfo(p: &plAllocInfo) { unsafe {
+    if HDBG { println!("B plAllocInfo"); }
+    hm(p.internal_id as u32);
+    hm(p.slot as u32);
+    hm(p.x5 as u32);
+    hm(p.anon_6.b0() as u32);
+    hm(p.anon_6.has_transformation() as u32);
+    hm(p.anon_6.b2() as u32);
+    hm(p.anon_6.b3() as u32);
+    hm(p.anon_6.b4() as u32);
+    hm(p.anon_6.b5() as u32);
+    hm(p.anon_6.b6() as u32);
+    hm(p.anon_6.b7() as u32);
 } }

@@ -132,6 +132,8 @@ pub const STKIND_FD: i32 = 0x20;
 pub const STKIND_BF: i32 = 0x1F;
 pub const STKIND_GREENS: i32 = 0x11;
 pub const STKIND_STORY: i32 = 0x08;
+pub const STKIND_FOUNTAIN: i32 = 0x02;
+pub const STKIND_DL64: i32 = 0x1C;
 /// efLib's particle procs (eflib.c `efLib_particles_proc_main` / `_aux`, TARGET_PC masks).
 const PTCL_MASK_MAIN: u32 = 0x20000 | 0x40000;
 const PTCL_MASK_AUX: u32 = 0x10000 | 0x80000;
@@ -683,6 +685,8 @@ impl VsMatch {
             "GrNBa.dat" => STKIND_BF,
             "GrGr.dat" => STKIND_GREENS,
             "GrSt.dat" => STKIND_STORY,
+            "GrIz.dat" => STKIND_FOUNTAIN,
+            "GrOp.dat" => STKIND_DL64,
             _ => return Err(format!("{stage_file}: only Final Destination's and Battlefield's stage code is wired")),
         };
         let stage_bytes = disc.read(stage_file)?;
@@ -830,7 +834,7 @@ impl VsMatch {
 
         // grLast_OnInit -> grLast_8021A9C4 (map gobj 3) -> grLast_8021B920(1): the level gobjs
         // 4..8 are created in order; gobj 7's on_init is grLast_8021AC30.
-        let last_bg = if stkind == STKIND_GREENS || stkind == STKIND_STORY {
+        let last_bg = if stkind == STKIND_GREENS || stkind == STKIND_STORY || stkind == STKIND_FOUNTAIN || stkind == STKIND_DL64 {
             // Green Greens: no grLast sway; its own stage logic (Whispy, blocks) is not ported.
             None
         } else if stkind == STKIND_BF {
@@ -853,7 +857,7 @@ impl VsMatch {
         let mut seen = std::collections::HashSet::new();
         // FD's grLast animation table; Battlefield's grBattle_OnInit starts gobj 0 and 1's anim 0
         // (grBattle_GObj0/1_Callback0 -> grAnime_801C8138), whose particle tracks are the 4 stage gens.
-        let dptcl_rows: &[(u32, u32)] = if stkind == STKIND_GREENS || stkind == STKIND_STORY { &[] } else if stkind == STKIND_BF { &[(0, 0), (1, 0)] } else { &[(4, 0), (5, 4), (6, 6), (7, 8), (8, 10), (4, 0), (5, 0), (6, 0), (7, 0), (8, 0)] };
+        let dptcl_rows: &[(u32, u32)] = if stkind == STKIND_GREENS || stkind == STKIND_STORY || stkind == STKIND_FOUNTAIN || stkind == STKIND_DL64 { &[] } else if stkind == STKIND_BF { &[(0, 0), (1, 0)] } else { &[(4, 0), (5, 4), (6, 6), (7, 8), (8, 10), (4, 0), (5, 0), (6, 0), (7, 0), (8, 0)] };
         if std::env::var("MELEE_VIEW_PSLOG").is_ok() {
             for g in 0..12u32 { for an in 0..14u32 { let n = std::panic::catch_unwind(|| crate::stage::dptcl_tracks(&stage, g, an).len()).unwrap_or(0); if n > 0 { eprintln!("DPTCL gobj {g} anim {an}: {n} tracks"); } } }
         }

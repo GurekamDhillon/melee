@@ -123,6 +123,7 @@ EXTRACTS = {
                  ("scale_inline", "get_part_joint", "ftAnim_8007077C", "ftAnim_80070FB4")],
                *[("src/melee/ft/ftcoll.c", "fn:" + n, None) for n in
                  ("ftColl_800765E0", "getEnvDmg", "inlineB1", "getUnkVal")],
+               ("src/melee/mp/mpcoll.c", "fn:mpClearFloorSkip", None),
                *[("src/melee/ft/ftcommon.c", "fn:" + n, None) for n in
                  ("ftCo_GetLStickAngle", "ftCo_GetCStickAngle", "ftCommon_8007D9D4")]],
     # group 3 round 12: ft_084E.c + two ft_081B.c tail functions + ft_08A1.c stick test (src/ft084e.rs)

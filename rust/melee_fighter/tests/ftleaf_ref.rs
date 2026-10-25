@@ -93,7 +93,7 @@ fn ftleaf_matches_c() {
         (0..8).find(|&i| j == unsafe { jbase.add(i) }).map_or(99, |i| 1 + i as u32)
     };
     let mut n = 0;
-    for op in 0..50u32 {
+    for op in 0..51u32 {
         for k in 0..200u32 {
             let mut ret: u32 = 0;
             let mut delta: isize = 0;
@@ -222,6 +222,11 @@ fn ftleaf_matches_c() {
                     47 => ret = c3::ftco_get_lstick_angle(&f).to_bits(),
                     48 => ret = c3::ftco_get_cstick_angle(&f).to_bits(),
                     49 => ret = c3::ftcommon_8007d9d4(&f).to_bits(),
+                    50 => {
+                        f.coll_data.floor_skip = rg.rnd() as i32;
+                        unsafe { melee_world::tu::mpcoll::mpClearFloorSkip(&mut f.coll_data as *mut _ as _) };
+                        ret = f.coll_data.floor_skip as u32;
+                    }
                     _ => unreachable!(),
                 }
             }
@@ -232,5 +237,5 @@ fn ftleaf_matches_c() {
         }
     }
     assert!(lines.next().is_none());
-    assert_eq!(n, 10_000);
+    assert_eq!(n, 10_200);
 }

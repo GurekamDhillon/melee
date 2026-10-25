@@ -274,7 +274,7 @@ _Toy_80304D30,src/melee/ty/toy.c,-1,1,ported-unverified,melee_items
 un_80304470,src/melee/ty/toy.c,-1,1,ported+verified,melee_items
 tyDisplay_8031C8B8,src/melee/ty/tydisplay.c,-1,2,ported+verified,melee_modes
 HSD_AObjInitAllocData,src/sysdolphin/baselib/aobj.c,-1,3,ported-unverified,melee_runtime
-HSD_AObjInitEndCallBack,src/sysdolphin/baselib/aobj.c,-1,34389,ported-unverified,melee_fighter
+HSD_AObjInitEndCallBack,src/sysdolphin/baselib/aobj.c,-1,34389,ported+verified,melee_fighter
 HSD_AObjInterpretAnim,src/sysdolphin/baselib/aobj.c,-1,1519357,ported+verified,melee_runtime
 HSD_AObjInvokeCallBacks,src/sysdolphin/baselib/aobj.c,-1,34389,ported-unverified,melee_runtime
 HSD_AObjLoadDesc,src/sysdolphin/baselib/aobj.c,-1,10954,ported+verified,melee_runtime
@@ -680,7 +680,7 @@ Camera_Init,src/melee/cm/camera.c,0,1,ported+verified,melee_world
 Camera_LogicToScreen,src/melee/cm/camera.c,0,3228,ported+verified,melee_world
 Camera_PCMainCObj,src/melee/cm/camera.c,0,13284,ported+verified,melee_world
 Camera_ProjectToScreen,src/melee/cm/camera.c,0,6296,ported+verified,melee_world
-Camera_ScriptState,src/melee/cm/camera.c,0,3228,ported-unverified,melee_fighter
+Camera_ScriptState,src/melee/cm/camera.c,0,3228,ported+verified,melee_fighter
 Camera_SetBackgroundColor,src/melee/cm/camera.c,0,1,ported+verified,melee_world
 Camera_SetModeToStandard,src/melee/cm/camera.c,0,1,ported+verified,melee_chara
 Camera_SetQuakeScale,src/melee/cm/camera.c,0,1,ported+verified,melee_world
@@ -1290,7 +1290,7 @@ lbVector_Normalize,src/melee/lb/lbvector.c,0,61002,ported+verified,melee_runtime
 lbVector_Rotate,src/melee/lb/lbvector.c,0,51680,ported+verified,melee_runtime
 lbVector_RotateAboutUnitAxis,src/melee/lb/lbvector.c,0,18802,ported+verified,melee_runtime
 lbVector_WorldToScreen,src/melee/lb/lbvector.c,0,6764,ported+verified,melee_runtime
-mpClearFloorSkip,src/melee/mp/mpcoll.c,0,233,ported-unverified,melee_fighter
+mpClearFloorSkip,src/melee/mp/mpcoll.c,0,233,ported+verified,melee_fighter
 mpCollCheckBounding,src/melee/mp/mpcoll.c,0,2994,ported+verified,melee_world
 mpCollEnd,src/melee/mp/mpcoll.c,0,2926,ported+verified,melee_world
 mpCollInterpolateECB,src/melee/mp/mpcoll.c,0,2994,ported+verified,melee_world

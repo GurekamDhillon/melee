@@ -283,7 +283,7 @@ pub mod ext {
         fn Fighter_PoisonMushroomEnd(g: G) -> bool = { unsafe { crate::tu::ftCo_KinokoSmallEnd::Fighter_PoisonMushroomEnd(g) } };
         fn ft_800819A8(g: G) = { unsafe { let _ = crate::tu::ft_0819::ft_800819a8(g); } };
         fn Slippi_Codes() -> i32 = { unsafe { crate::platform::Slippi_Codes() } };
-        fn Camera_ScriptState() -> i32 = { unsafe { crate::platform::Camera_ScriptState() } };
+        fn Camera_ScriptState() -> i32 = { unsafe { melee_world::tu::cmcamera::Camera_ScriptState() } };
         fn ifMagnify_802FC998(slot: i32) -> bool = { unsafe { melee_world::tu::ifmagnify::ifMagnify_802FC998(slot as _) } };
         fn gm_GetCurrentGameMode() -> i32 = { todo!("gm_GetCurrentGameMode (gm)") };
         fn Stage_GetCamBoundsLeftOffset() -> f32 = { unsafe { melee_world::tu::stage::Stage_GetCamBoundsLeftOffset() } };

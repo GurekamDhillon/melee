@@ -993,3 +993,39 @@ impl StageAnim {
         ext.dobj_anim_all(&[dobj]);
     }
 }
+
+impl StageAnim {
+    /// `mn_8022F298` on the first group's root: the current frame of the first animation found
+    /// (joint AObj, else the first DObj's MObj AObj, else its first TObj's), searched depth first.
+    pub fn first_frame(&self) -> Option<f32> {
+        let g = self.groups.first()?;
+        let ext = self.rt.ext.borrow();
+        fn go(g: &GroupAnim, j: JObjId, ext: &MatExt) -> Option<f32> {
+            let n = g.tree.get(j);
+            if let Some(a) = &n.aobj {
+                return Some(a.curr_frame);
+            }
+            if let Some(&d) = n.dobj.first() {
+                if let Some(m) = ext.mobjs.get(&d) {
+                    if let Some(a) = &m.aobj {
+                        return Some(a.curr_frame);
+                    }
+                    if let Some(a) = m.tobjs.first().and_then(|t| t.aobj.as_ref()) {
+                        return Some(a.curr_frame);
+                    }
+                }
+            }
+            if n.flags & melee_runtime::jobj::JOBJ_INSTANCE == 0 {
+                let mut c = n.child;
+                while let Some(x) = c {
+                    if let Some(f) = go(g, x, ext) {
+                        return Some(f);
+                    }
+                    c = g.tree.get(x).next;
+                }
+            }
+            None
+        }
+        go(g, g.root, &ext)
+    }
+}

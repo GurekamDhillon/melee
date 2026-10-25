@@ -15,5 +15,8 @@ for n in pad_falcon_fox_fd; do
     "$exe" golden --iso "$GW_ISO_VANILLA" --slp "$root/docs/rust-port/golden/slp/$n.slp" --out "$out/$n.csv" 2>&1 | tail -2
     python "$here/../compare_golden.py" "$root/docs/rust-port/golden/slp/$n.play.csv" "$out/$n.csv" --allow-short --ignore-seed || rc=1
 done
+# a whole-match .gdlp (C: MELEE_GDLP_RECORD, played by MELEE_GDLP) is a valid .slp stream: the Rust player reads it the same way
+"$exe" golden --iso "$GW_ISO_VANILLA" --slp "$root/docs/rust-port/golden/slp/pad_falcon_fox_fd.gdlp" --out "$out/gdlp.csv" 2>&1 | tail -2
+python "$here/../compare_golden.py" "$root/docs/rust-port/golden/slp/pad_falcon_fox_fd.gdlp.play.csv" "$out/gdlp.csv" --allow-short --ignore-seed || rc=1
 rm -rf "$out"
 exit $rc

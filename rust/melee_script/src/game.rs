@@ -766,6 +766,20 @@ pub trait ScriptGame {
     fn shock_read(&self, _entity: i32, _field: i32) -> i32 {
         0
     }
+    // ---- contacts (`gw_ScriptGame_Contact*`): pc/platform/gw_script_contacts.inc
+    /// surface 0 floor, 1 left wall, 2 right wall, 3 ceiling, 4 ledge; field SC_LINE (-1 none), OWNER, PART, KIND, PASS,
+    /// X0, Y0, X1, Y1, X, Y, NX, NY (float bits); `line` -1 the current contact, otherwise a floor line index
+    fn contact_field(&self, _slot: i32, _surface: i32, _field: i32, _line: i32) -> i32 {
+        -1
+    }
+    /// bit 0 jump, 1 pass-through, 2 knocked, 3 dead, 4 rebirth
+    fn contact_flags(&self, _slot: i32) -> i32 {
+        0
+    }
+    /// the next floor line index the fighter crossed upward after `after`, or -1
+    fn contact_cross(&self, _slot: i32, _after: i32) -> i32 {
+        -1
+    }
     // ---- entity identity (`gw_ScriptGame_EntityField`, `EntityEpoch`, `EntityAddressField`): pc/platform/gw_script_spine_refs.inc
     /// kind 1 fighter (id = port*2+sub), 2 item, 3 echo, 4 stage object, 5 stage actor. field 0 live, 1 epoch, 2 generation,
     /// 3 definition, 4 owner fighter id + 1, 5 role bits

@@ -8,6 +8,7 @@ pub mod arena;
 pub mod bench;
 pub mod camera;
 pub mod caps;
+pub mod contacts;
 pub mod crit;
 pub mod deadline;
 pub mod entity;
@@ -58,6 +59,7 @@ pub fn register_all(e: &Engine, gd: &Table) -> LuaResult<()> {
     entity::register(e, gd)?;
     zones::register(e, gd)?;
     deadline::register(e, gd)?;
+    contacts::register(e, gd)?;
     shock::register(e, gd)?;
     skill::register(e, gd)?;
     bench::register(e, gd)?;

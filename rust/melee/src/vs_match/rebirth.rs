@@ -107,6 +107,8 @@ fn fn_8016719c(p: &mut Player, ctx: &mut RespawnCtx<'_>) -> Result<(), String> {
 /// `Fighter_UnkProcessDeath_80068354` (the parts a hash or this sim's state can see).
 fn fighter_unk_process_death(p: &mut Player, ctx: &mut RespawnCtx<'_>) -> Result<(), String> {
     let rb = p.rb;
+    // ft_80088A50: every sound channel of the fighter stopped (after ftCommon_8007E2FC in the C).
+    super::sound::stop_all_channels(p);
     {
         let fp = &mut *p.fp;
         // Fighter_UnkInitReset_80067C98.
@@ -114,6 +116,7 @@ fn fighter_unk_process_death(p: &mut Player, ctx: &mut RespawnCtx<'_>) -> Result
         let x = melee_core::fp::fmadds(fp.facing_dir, fp.x40 * fp.x34_scale.x, rb.coords.x);
         fp.cur_pos = melee_types::Vec { x, y: rb.coords.y, z: rb.coords.z };
         fp.prev_pos = fp.cur_pos;
+        fp.set_x2225_b0(0);
         fp.facing_dir1 = fp.facing_dir;
         fp.x34_scale.y = fp.x34_scale.x;
         fp.pos_delta = melee_types::Vec { x: 0.0, y: 0.0, z: 0.0 };
@@ -242,6 +245,8 @@ fn fighter_unk_process_death(p: &mut Player, ctx: &mut RespawnCtx<'_>) -> Result
 /// `ftCo_800D4FF4`: Rebirth.
 fn rebirth_enter(p: &mut Player, ctx: &mut RespawnCtx<'_>) -> Result<(), String> {
     fighter_unk_process_death(p, ctx)?;
+    // ftCamera_80076064 (Fighter_UnkProcessDeath_80068354): the camera box is re-snapped to the platform.
+    p.snap_camera();
     p.fp.smash_attrs.x2135 = p.rb.unk4e as i8;
     if p.fp.smash_attrs.x2135 == -1 {
         // Player_GetSpawnPlatformPos: the target the fighter eases to (mv.co.turn.facing_after, x8).
@@ -266,6 +271,7 @@ fn rebirth_enter(p: &mut Player, ctx: &mut RespawnCtx<'_>) -> Result<(), String>
     fp.set_x221D_b5(1);
     // ftCommon_SetAccessory (the platform) is not modelled; ftCommon_8007EFC0(fp, 1).
     melee_fighter::ftcommon2::ftcommon_8007efc0(fp, 1);
+    p.col.start(0xA, 0);
     Ok(())
 }
 
@@ -306,7 +312,8 @@ pub fn anim(p: &mut Player, ctx: &mut RespawnCtx<'_>) -> Result<(), String> {
             fp.set_x221E_b1(1);
             fp.set_x221D_b5(1);
         } else {
-            // ftColl_8007B7A4 (intangibility window, not modelled), then Fall.
+            // ftColl_8007B7A4 (the intangibility window: only its colour animation is modelled), then Fall.
+            p.col.intangible(melee_fighter::hooks::common_data().x5D8);
             fall_enter(p, ctx.rand)?;
             }
     }
@@ -343,6 +350,7 @@ pub fn wait_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         || i.lstick[0].x * fp.facing_dir >= cd.walk_stick_threshold
     {
         fall_enter(p, rand)?;
+        p.col.intangible(cd.x5D8);
         if std::env::var_os("MELEE_HACK2").is_some() {
             let f = &mut *p.fp;
             f.cur_pos.x = f32::from_bits(f.cur_pos.x.to_bits() - 1);

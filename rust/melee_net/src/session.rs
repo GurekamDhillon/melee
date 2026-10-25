@@ -66,6 +66,13 @@ pub trait RbGame {
     /// One logic frame: simulates `frame() + 1` with the session's inputs. `resim` is
     /// `gw_Snap_SessionResim` (side effects such as sound must be gated while it is set).
     fn run_frame(&mut self, inputs: &[Option<RbInput>; SLOTS], resim: bool);
+    /// The game could not complete its last frame (native port only: a code path that is not ported
+    /// yet was reached, typically on a mispredicted input). The frame counter did not move and the
+    /// state is half-stepped, so the session must not snapshot or hash it; it waits for the
+    /// confirmed inputs and rolls back.
+    fn halted(&self) -> bool {
+        false
+    }
 }
 
 /// `MELEE_RB_INPUT`.
@@ -472,6 +479,12 @@ impl<G: RbGame> RbSession<G> {
         }
     }
 
+    /// The local port is known only once the room's roles are (a random match decides them late).
+    pub fn set_local_port(&mut self, port: usize) {
+        self.cfg.local_port = port;
+        self.cfg.remote_mask = 1 << (1 - port.min(1)) as u32;
+    }
+
     /// gw_RB_SetDelay (netplay: the guest adopts the host's delay before frame -123).
     pub fn set_delay(&mut self, d: i32) {
         self.cfg.delay = d.clamp(0, 8);
@@ -509,6 +522,11 @@ impl<G: RbGame> RbSession<G> {
     }
 
     /// gw_rb_active.
+    /// Debug line: planner state.
+    pub fn dbg_line(&self) -> String {
+        format!("first_wrong {} newest {} frame {} conf {} wait {} plan(rb {} first {} k {} new {})", self.first_wrong, self.newest, self.frame, self.conf(), self.wait_ticks, self.plan.rollback, self.plan.first, self.plan.k, self.plan.new_frame)
+    }
+
     pub fn active(&self) -> bool {
         self.on && self.in_match && self.frame >= FIRST - 1
     }
@@ -1028,6 +1046,13 @@ impl<G: RbGame> RbSession<G> {
         if first_of_rollback {
             let snap = self.snaps.get(self.plan.first).and_then(|e| e.1.clone()).expect("snapshot checked at planning");
             g.load(&snap);
+        } else if self.plan.i == 0 && g.halted() {
+            // The previous tick's attempt at the next frame died half-stepped (native port only):
+            // restart it from the clean state saved before that attempt.
+            let nxt = g.frame() + 1;
+            if let Some(snap) = self.snaps.get(nxt).and_then(|e| e.1.clone()) {
+                g.load(&snap);
+            }
         }
         self.frame = g.frame();
         let next = self.frame + 1;
@@ -1036,8 +1061,11 @@ impl<G: RbGame> RbSession<G> {
             self.live_sample(next);
         }
         self.prepare(g, next);
-        self.hring[rix(next)] = (next, g.game_hash() | 1);
-        if !first_of_rollback {
+        let halted = g.halted();
+        if !halted {
+            self.hring[rix(next)] = (next, g.game_hash() | 1);
+        }
+        if !first_of_rollback && !halted {
             let h = g.state_hash();
             self.snaps.save(next, g.save(), h);
             if !resim {

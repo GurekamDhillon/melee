@@ -48,12 +48,20 @@ pub struct DispModel<'a> {
     pub dat: Dat<'a>,
     pub joints: Vec<DispJoint>,
     by_desc: HashMap<u32, usize>,
+    /// Animated materials (`HSD_MObjAnim` / `HSD_TObjAnim` results) by DObj descriptor offset: the
+    /// descriptor's material, PE and TObjs are replaced by these when the DObj is drawn.
+    pub mat_anim: Option<&'a HashMap<u32, super::mobj::MatOverride>>,
 }
 
 impl<'a> DispModel<'a> {
     pub fn new(dat: &'a [u8], joints: Vec<DispJoint>) -> Self {
         let by_desc = joints.iter().enumerate().map(|(i, j)| (j.desc, i)).collect();
-        DispModel { dat: Dat(dat), joints, by_desc }
+        DispModel { dat: Dat(dat), joints, by_desc, mat_anim: None }
+    }
+    /// This model drawn with the animated materials `a`.
+    pub fn with_mat_anim(mut self, a: &'a HashMap<u32, super::mobj::MatOverride>) -> Self {
+        self.mat_anim = Some(a);
+        self
     }
     /// The JObj loaded from joint descriptor `desc` (`HSD_IDGetDataFromTable`).
     pub fn by_desc(&self, desc: u32) -> Option<usize> {

@@ -770,6 +770,16 @@ static void gw_ax_open_device(void) {
         /* Keep the 5 ms synth/DSP callbacks and voice progression, but never open an output
          * device: its ring occupancy is paced by real time and would stall accelerated frames. */
         gw_log("gw: AX: turbo mute (virtual 5 ms DSP clock, no output device)");
+        /* A scripted capture (tools/rust-port audio proof): the mix is deterministic on the
+         * virtual clock, so MELEE_AUDIO_DUMP still records it; no device is opened. */
+        env = getenv("MELEE_AUDIO_DUMP");
+        if (env != NULL && *env != ' ') {
+            gw_ax_wav = fopen(env, "wb");
+            if (gw_ax_wav != NULL) {
+                gw_ax_wav_header(gw_ax_wav, 0);
+                gw_log("gw: AX: turbo capture of the mix to %s", env);
+            }
+        }
         return;
     }
 
@@ -1178,6 +1188,50 @@ static void gw_ax_mix_clips(void) {
     }
 }
 
+/* ---- call trace (MELEE_AUDIO_TRACE=<path>) ----------------------------------------------
+ * One text line per game-facing audio call (axdriver.c / synth.c, TARGET_PC): "<sub-frame> OP args".
+ * <sub-frame> counts the 5 ms DSP callbacks run so far, so a replay (rust: melee_audio sfx_replay)
+ * can run the same number of sub-frames before applying the call. Calls made from inside the
+ * synth callback (the script interpreter) are the engine's own and are not recorded. */
+static FILE* gw_ax_trc;
+static bool gw_ax_trc_tried;
+static uint32_t gw_ax_trc_sub;
+static int gw_ax_trc_in_cb;
+static int gw_ax_trc_muted;
+
+static bool gw_ax_trace_on(void) {
+    if (!gw_ax_trc_tried) {
+        const char* env = getenv("MELEE_AUDIO_TRACE");
+        gw_ax_trc_tried = true;
+        if (env != NULL && *env != 0) gw_ax_trc = fopen(env, "wb");
+    }
+    return gw_ax_trc != NULL && !gw_ax_trc_in_cb && !gw_ax_trc_muted;
+}
+
+void gw_ax_trace_mute(int on) { gw_ax_trc_muted = on; }
+
+void gw_ax_trace(const char* op, int a, int b, int c, int d, int e) {
+    if (!gw_ax_trace_on()) return;
+    fprintf(gw_ax_trc, "%u %s %d %d %d %d %d\n", gw_ax_trc_sub, op, a, b, c, d, e);
+    fflush(gw_ax_trc);
+}
+
+void gw_ax_trace_str(const char* op, const char* s, int a, int b) {
+    if (!gw_ax_trace_on()) return;
+    fprintf(gw_ax_trc, "%u %s %s %d %d\n", gw_ax_trc_sub, op, s != NULL ? s : "-", a, b);
+    fflush(gw_ax_trc);
+}
+
+static int gw_ax_dbg_on(void) { /* MELEE_AX_DBG=<lo>-<hi> */
+    static int lo = -2, hi;
+    if (lo == -2) {
+        const char *e = getenv("MELEE_AX_DBG");
+        lo = -1;
+        if (e != NULL && sscanf(e, "%d-%d", &lo, &hi) != 2) lo = -1;
+    }
+    return lo >= 0 && (int) gw_ax_trc_sub >= lo && (int) gw_ax_trc_sub <= hi;
+}
+
 static void gw_ax_run_frame(void) {
     int i;
     int active = 0;
@@ -1185,8 +1239,11 @@ static void gw_ax_run_frame(void) {
     static bool reported_first;
 
     if (gw_ax_cb != NULL) {
+        gw_ax_trc_in_cb = 1;
         gw_ax_cb();
+        gw_ax_trc_in_cb = 0;
     }
+    ++gw_ax_trc_sub;
 
     memset(gw_ax_acc, 0, sizeof gw_ax_acc);
     memset(gw_ax_aux_a.bus, 0, sizeof gw_ax_aux_a.bus);
@@ -1201,6 +1258,24 @@ static void gw_ax_run_frame(void) {
         }
     }
 
+    {   /* MELEE_AX_DBG=<lo>-<hi>: per-voice state of the sub-frames lo..hi (the Rust port's replay compares) */
+        static int dbg_lo = -2, dbg_hi;
+        if (dbg_lo == -2) {
+            const char *e = getenv("MELEE_AX_DBG");
+            dbg_lo = -1;
+            if (e != NULL && sscanf(e, "%d-%d", &dbg_lo, &dbg_hi) != 2) dbg_lo = -1;
+        }
+        if (dbg_lo >= 0 && (int) gw_ax_trc_sub >= dbg_lo && (int) gw_ax_trc_sub <= dbg_hi) {
+            for (i = 0; i < GW_AX_NUM_VOICES; i++) {
+                if (gw_ax_in_use[i] && gw_ax_state[i].configured) {
+                    const gw_ax_vstate *v = &gw_ax_state[i];
+                    fprintf(stderr, "AXDBG sf %u v%d active=%d vol=%d d=%d ratio=%u mix=[%d,%d,%d,%d,%d] addr=%u yn=%d,%d ps=%u itd=%d,%d\n",
+                            gw_ax_trc_sub, i, (int) v->active, v->volume, v->volume_delta, v->ratio, v->mix[0], v->mix[1], v->mix[2], v->mix[3], v->mix[4],
+                            v->cur_addr, v->yn1, v->yn2, v->pred_scale, v->itd_l, v->itd_r);
+                }
+            }
+        }
+    }
     /* Ramp out any voice that stopped this sub-frame. */
     for (i = 0; i < GW_AX_FRAME_SAMPLES; i++) {
         int c;
@@ -1268,7 +1343,7 @@ static void gw_ax_run_frame(void) {
         gw_ax_peak = 0;
     }
 
-    if (gw_turbo_enabled()) return; /* the voice writeback above is game-visible */
+    if (gw_turbo_enabled() && gw_ax_wav == NULL) return; /* the voice writeback above is game-visible */
 
     /* Clip to s16 and hand the sub-frame to the output ring. */
     for (i = 0; i < GW_AX_FRAME_SAMPLES; i++) {
@@ -1505,6 +1580,7 @@ void gw_AXSetVoiceVe(void *voice, void *ve) {
         const uint8_t *p = (const uint8_t *) ve;
         s->volume = gw_r16(p + 0x00);
         s->volume_delta = (int16_t) gw_r16(p + 0x02);
+        if (gw_ax_dbg_on()) fprintf(stderr, "AXDBG ve sf %u v%d vol=%d d=%d\n", gw_ax_trc_sub, (int) (v - gw_ax_voices), s->volume, s->volume_delta);
     }
 }
 
@@ -1514,6 +1590,7 @@ void gw_AXSetVoiceVeDelta(void *voice, int16_t delta) {
         return;
     }
     gw_ax_state[v - gw_ax_voices].volume_delta = delta;
+    if (gw_ax_dbg_on()) fprintf(stderr, "AXDBG vedelta sf %u v%d d=%d\n", gw_ax_trc_sub, (int) (v - gw_ax_voices), (int) delta);
 }
 
 void gw_AXSetVoiceAddr(void *voice, void *addr) {

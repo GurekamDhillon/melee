@@ -307,6 +307,11 @@ impl Sound {
 
     /// HSD_Synth_80389334: start SSM sound `sfx_id` on one or two voices; the node handle or -1.
     #[allow(clippy::too_many_arguments)]
+    /// Whether sound `sfx_id` is in a loaded bank.
+    pub fn has_sfx(&self, sfx_id: i32) -> bool {
+        self.data_hash[(sfx_id & 0x1F) as usize].iter().any(|e| e.id == sfx_id)
+    }
+
     pub(crate) fn synth_play(
         &mut self,
         sfx_id: i32,
@@ -766,6 +771,7 @@ impl Sound {
 
     /// HSD_SynthSFXUpdateAllVolume(vol, fade_frames, channel): fade a whole channel.
     pub fn sfx_update_all_volume(&mut self, vol: i32, fade_frames: u16, channel: usize) {
+        self.tr("UAV", [vol, fade_frames as i32, channel as i32, 0, 0]);
         self.chan[channel].target = 1.0f32 / 255.0 * vol as f32;
         if self.chan[channel].cur != self.chan[channel].target {
             self.chan[channel].count = fade_frames as i32;
@@ -907,15 +913,76 @@ impl Sound {
                     self.stream_load_slot = (self.stream_play_slot + 1) % 3;
                     self.stream_busy = 1;
                     let src = src as u32;
+                    if self.defer_refill {
+                        // The DevCom completions (header, then data) arrive later, replayed.
+                        self.refill_src = src;
+                        return;
+                    }
                     self.stream_read_hako(src, self.stream_load_slot);
                     // HSD_SynthPStreamHakoHeaderCallback, then HSD_SynthResetStreamCounters.
-                    let (x0, _, _) = self.hako(self.stream_load_slot);
-                    let dst = self.slot_aram(self.stream_load_slot);
-                    self.stream_read_aram(src + 0x20, dst, x0.max(0) as usize);
-                    self.stream_play_slot = self.stream_load_slot;
-                    self.stream_busy = 0;
+                    self.stream_refill_data(src);
+                    self.stream_refill_counters();
                 }
             }
+        }
+    }
+
+    /// The data half of a block refill (the DevCom read the header callback issues).
+    fn stream_refill_data(&mut self, src: u32) {
+        let (x0, _, _) = self.hako(self.stream_load_slot);
+        let dst = self.slot_aram(self.stream_load_slot);
+        self.stream_read_aram(src + 0x20, dst, x0.max(0) as usize);
+    }
+
+    /// One DEVCOM_BUF_SIZE ARQ post of the refill's data read (the C moves the block in chunks,
+    /// each landing when its DVD read completes).
+    pub fn stream_refill_chunk(&mut self, size: usize) {
+        if !self.refill_active {
+            return;
+        }
+        let (x0, _, _) = self.hako(self.stream_load_slot);
+        let total = x0.max(0) as usize;
+        let off = self.refill_off;
+        let n = size.min(total.saturating_sub(off));
+        if n == 0 {
+            return;
+        }
+        let dst = (self.slot_aram(self.stream_load_slot) as usize) + off;
+        let data = match self.stream_src.as_mut() {
+            Some(s) => s.read(self.refill_src + 0x20 + off as u32, n),
+            None => vec![0; n],
+        };
+        let m = n.min(self.aram.len().saturating_sub(dst));
+        self.aram[dst..dst + m].copy_from_slice(&data[..m]);
+        self.refill_off += n;
+    }
+
+    /// HSD_SynthResetStreamCounters.
+    fn stream_refill_counters(&mut self) {
+        self.stream_play_slot = self.stream_load_slot;
+        self.stream_busy = 0;
+    }
+
+    /// HSD_SynthPStreamHakoHeaderCallback when the C's deferred completion runs it: the header is
+    /// in, and the data read it issues writes ARAM at once (its completion comes later).
+    pub fn stream_refill_header_done(&mut self) {
+        if self.stream_busy != 0 && self.stream_load_slot != self.stream_play_slot {
+            let (src, slot) = (self.refill_src, self.stream_load_slot);
+            self.stream_read_hako(src, slot);
+            if self.refill_chunked {
+                self.refill_active = true;
+                self.refill_off = 0;
+            } else {
+                self.stream_refill_data(src);
+            }
+        }
+    }
+
+    /// HSD_SynthResetStreamCounters when the C's deferred completion runs it.
+    pub fn stream_refill_done(&mut self) {
+        if self.stream_busy != 0 && self.stream_load_slot != self.stream_play_slot {
+            self.refill_active = false;
+            self.stream_refill_counters();
         }
     }
 
@@ -966,12 +1033,40 @@ impl Sound {
             Some(s) => s.read(0, 0x80),
             None => vec![0; 0x80],
         };
-        self.pstream_header(&header);
+        if self.defer_stream {
+            self.stream_hdr_pending = Some(header);
+            self.stream_data_pending = false;
+        } else {
+            self.pstream_header(&header);
+        }
         self.stream_node
+    }
+
+    /// HSD_SynthPStreamHeaderCallback when the C's deferred DevCom completion runs it.
+    pub fn stream_header_done(&mut self) {
+        if let Some(h) = self.stream_hdr_pending.take() {
+            self.pstream_header_part1(&h);
+        }
+    }
+
+    /// HSD_SynthPStreamFirstHakoDataCallback (with the block header read that precedes it).
+    pub fn stream_data_done(&mut self) {
+        if self.stream_data_pending {
+            self.stream_data_pending = false;
+            self.pstream_header_part2();
+        }
     }
 
     /// HSD_SynthPStreamHeaderCallback + FirstHakoHeader + FirstHakoData.
     fn pstream_header(&mut self, entry: &[u8]) {
+        self.pstream_header_part1(entry);
+        if self.stream_data_pending {
+            self.stream_data_pending = false;
+            self.pstream_header_part2();
+        }
+    }
+
+    fn pstream_header_part1(&mut self, entry: &[u8]) {
         let Some(n) = self.get_node(self.stream_node) else {
             self.stream_busy = 0;
             return;
@@ -998,6 +1093,10 @@ impl Sound {
         self.stream_play_slot = self.stream_pos;
         self.stream_loop_slot = self.stream_pos;
         self.stream_load_slot = self.stream_pos;
+        self.stream_data_pending = true;
+    }
+
+    fn pstream_header_part2(&mut self) {
         let s = self.stream_load_slot;
         self.stream_read_hako(0x80, s);
         let (x0, _, _) = self.hako(s);
@@ -1041,6 +1140,7 @@ impl Sound {
 
     /// HSD_SynthStreamSetVolume.
     pub fn stream_set_volume(&mut self, v: f32) {
+        self.tr("SSV", [v.to_bits() as i32, 0, 0, 0, 0]);
         self.stream_vol = v;
         self.set_ai_stream_vol();
         self.update_all_volume(0xFFFF);

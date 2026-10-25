@@ -690,11 +690,23 @@ pub const RENDER_SPECULAR: u32 = 1 << 3;
 pub const RENDER_TOON: u32 = 1 << 12;
 pub const RENDER_SHADOW: u32 = 1 << 26;
 pub const RENDER_XLU: u32 = 1 << 30;
+const RENDER_NO_ZUPDATE_BIT: u32 = 1 << 29;
 
 const TEX_COLORMAP_MASK: u32 = 0xF << 16;
 const TEX_ALPHAMAP_MASK: u32 = 0xF << 20;
 const TOBJ_TEVREG_ACTIVE_COLOR_TEV: u32 = 1 << 30;
 const TOBJ_TEVREG_ACTIVE_ALPHA_TEV: u32 = 1 << 31;
+
+/// `ftMaterial_800BF534` / `ftMaterial_800BF6BC`: what a fighter adds after its material's TEV.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct FtOverlay {
+    /// The colour-animation light (`x50_light_color`, used only when the render mode is opaque).
+    pub light: Option<[u8; 4]>,
+    /// The overlay colour and its blend ratio (`sp168` rgb and `sp168.a`), when one applies.
+    pub color: Option<([u8; 3], u8)>,
+    /// `fp->x61D` (0xFF: opaque).
+    pub alpha: u8,
+}
 
 /// A TEV input (`HSD_TEInput` + its expression, resolved to a GX source).
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -766,9 +778,11 @@ fn kf(v: f32) -> In {
 /// Returns (colour source, alpha source) for the TObj's main stage.
 fn color_gen(d: &Dat, tev: u32, o: &TObjRt, out: &mut Tev) -> (In, In) {
     let active = d.u32_(tev + 0x1C);
-    let konst = d.color(tev + 0x10);
-    let tev0 = d.color(tev + 0x14);
-    let tev1 = d.color(tev + 0x18);
+    let (konst, tev0, tev1) = match &o.obj.tev {
+        // `efLib_SetTevKonstColor` & co. write the live TObj's tev; the descriptor's are the defaults.
+        Some(t) => ([t.konst.r, t.konst.g, t.konst.b, t.konst.a], [t.tev0.r, t.tev0.g, t.tev0.b, t.tev0.a], [t.tev1.r, t.tev1.g, t.tev1.b, t.tev1.a]),
+        None => (d.color(tev + 0x10), d.color(tev + 0x14), d.color(tev + 0x18)),
+    };
     let cin = |v: u8| -> In {
         match v as u32 {
             15 => In::Zero, // GX_CC_ZERO
@@ -894,6 +908,15 @@ fn make_texp(d: &Dat, rendermode: u32, mat: &MatDesc, tobjs: &[TObjRt]) -> Tev {
     t
 }
 
+/// An animated MObj (`mobj->mat`, `mobj->pe`, its TObjs' animated fields), as the animation system
+/// leaves it; the TObj entries are keyed by the TObj descriptor offset.
+#[derive(Clone, Debug)]
+pub struct MatOverride {
+    pub mat: MatDesc,
+    pub pe: Option<[u8; 12]>,
+    pub tobjs: Vec<(u32, crate::tobj::HsdTObj<u32>)>,
+}
+
 /// The `HSD_Material` + render mode + PE of an `HSD_MObjDesc`.
 #[derive(Clone, Copy, Debug)]
 pub struct MatDesc {
@@ -955,6 +978,8 @@ impl HsdRender {
     /// Emit the stage list: TevOrder / ColorIn / AlphaIn / ops, KONST registers per stage.
     fn setup_tev<G: GxBackend>(&mut self, g: &mut G, t: &Tev) {
         let mut kregs: Vec<Rgba> = Vec::new();
+        // TEV registers REG1 / REG2: (rgb, alpha) constants a stage needed beyond its one konst.
+        let mut xregs: [(Option<[u8; 3]>, Option<u8>); 2] = [(None, None); 2];
         for st in &t.stages {
             if self.current_tev >= 16 {
                 break;
@@ -962,10 +987,40 @@ impl HsdRender {
             let stage = self.state_assign_tev();
             let (coord, map) = st.tex.unwrap_or((GX_TEXCOORD_NULL, GX_TEXMAP_NULL));
             g.set_tev_order(stage, coord, map, st.chan);
-            let c: Vec<(u32, Option<[u8; 3]>)> = st.c.ins.iter().map(|&i| cin(i)).collect();
-            let a: Vec<(u32, Option<u8>)> = st.a.ins.iter().map(|&i| ain(i)).collect();
+            let mut c: Vec<(u32, Option<[u8; 3]>)> = st.c.ins.iter().map(|&i| cin(i)).collect();
+            let mut a: Vec<(u32, Option<u8>)> = st.a.ins.iter().map(|&i| ain(i)).collect();
             let kc = c.iter().find_map(|x| x.1);
             let ka = a.iter().find_map(|x| x.1);
+            // A stage selects ONE konst colour and ONE konst alpha. A second distinct constant in
+            // the same stage (a TObj TEV of (tev0 - konst) * tex) lives in a TEV register instead
+            // (REG1 / REG2, which the stage lists never write): GXSetTevColor, 4u32/C2, 2u32/A2.
+            for x in c.iter_mut() {
+                if let Some(k) = x.1 {
+                    if Some(k) != kc {
+                        let r = match xregs.iter().position(|r| r.0 == Some(k)).or_else(|| xregs.iter().position(|r| r.0.is_none())) {
+                            Some(r) => r,
+                            None => 1,
+                        };
+                        xregs[r].0 = Some(k);
+                        g.set_tev_color_s10(2 + r as u32, [k[0] as i16, k[1] as i16, k[2] as i16, xregs[r].1.unwrap_or(0) as i16]);
+                        *x = (if r == 0 { 4u32 } else { 6u32 }, None);
+                    }
+                }
+            }
+            for x in a.iter_mut() {
+                if let Some(v) = x.1 {
+                    if Some(v) != ka {
+                        let r = match xregs.iter().position(|r| r.1 == Some(v)).or_else(|| xregs.iter().position(|r| r.1.is_none())) {
+                            Some(r) => r,
+                            None => 1,
+                        };
+                        xregs[r].1 = Some(v);
+                        let k = xregs[r].0.unwrap_or([0; 3]);
+                        g.set_tev_color_s10(2 + r as u32, [k[0] as i16, k[1] as i16, k[2] as i16, v as i16]);
+                        *x = (if r == 0 { 2u32 } else { 3u32 }, None);
+                    }
+                }
+            }
             if kc.is_some() || ka.is_some() {
                 let want: Rgba = {
                     let k = kc.unwrap_or([0; 3]);
@@ -999,21 +1054,56 @@ impl HsdRender {
         }
     }
 
-    /// `HSD_MObjSetup` for the MObj descriptor `mobj`. Returns the TObjs (for `HSD_MObjUnset`).
+    /// `HSD_MObjSetup` for the MObj descriptor `mobj`.
     pub fn mobj_setup<G: GxBackend>(&mut self, g: &mut G, d: &Dat, mobj: u32) {
+        self.mobj_setup_with(g, d, mobj, None)
+    }
+
+    /// `HSD_MObjSetup` for a MObj whose material / TObjs were animated (`ov`).
+    pub fn mobj_setup_with<G: GxBackend>(&mut self, g: &mut G, d: &Dat, mobj: u32, ov: Option<&MatOverride>) {
         self.state_init_tev();
-        let (rendermode, mat, pe) = mobj_load(d, mobj);
+        let (rendermode, mut mat, mut pe) = mobj_load(d, mobj);
+        if let Some(o) = ov {
+            mat = o.mat;
+            pe = o.pe;
+        }
         self.set_material_color(mat.ambient, mat.diffuse, mat.specular, mat.alpha);
         if rendermode & RENDER_SPECULAR != 0 {
             self.set_material_shininess(mat.shininess);
         }
         let mut tobjs = tt::load_desc_list(d, d.ptr(mobj + 8));
+        if let Some(o) = ov {
+            for t in tobjs.iter_mut() {
+                if let Some((_, a)) = o.tobjs.iter().find(|(desc, _)| *desc == t.desc) {
+                    t.obj = a.clone();
+                    t.obj.flags |= crate::tobj::TEX_MTX_DIRTY;
+                    t.image = a.imagedesc;
+                }
+            }
+        }
         self.tobj_kinds = tobjs.iter().fold(0, |k, o| k | 1 << o.coord_kind());
         self.tobj_setup(g, d, &mut tobjs);
         self.tobj_setup_texture_coord_gen(g, &tobjs);
         // setup_tev (MObjSetupTev): the compiled TEV, then HSD_TObjSetupVolatileTev (shadow /
         // bump only: not ported).
-        let tev = make_texp(d, rendermode, &mat, &tobjs);
+        let mut tev = make_texp(d, rendermode, &mat, &tobjs);
+        let mut rendermode = rendermode;
+        if let Some(o) = self.ft_overlay {
+            if o.alpha != 0xFF {
+                rendermode |= RENDER_XLU | RENDER_NO_ZUPDATE_BIT;
+            }
+            if let Some(l) = o.light {
+                if rendermode & RENDER_XLU == 0 {
+                    tev.push(None, GX_COLOR_NULL, add([In::Zero, k_of(l), In::RasA, In::PrevC]), PASS_A);
+                }
+            }
+            if let Some((c, ratio)) = o.color {
+                let a = if o.alpha != 0xFF { add([In::Zero, In::Zero, In::Zero, kx(o.alpha)]) } else { PASS_A };
+                tev.push(None, GX_COLOR_NULL, add([In::PrevC, In::K(c), kx(ratio), In::Zero]), a);
+            } else if o.alpha != 0xFF {
+                tev.push(None, GX_COLOR_NULL, PASS_C, add([In::Zero, In::Zero, In::Zero, kx(o.alpha)]));
+            }
+        }
         self.setup_tev(g, &tev);
         self.setup_render_mode_with_custom_pe(g, rendermode, pe);
     }

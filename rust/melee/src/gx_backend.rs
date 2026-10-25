@@ -23,7 +23,7 @@ pub struct DataCache {
 }
 
 impl DataCache {
-    fn get(&mut self, s: &[u8]) -> GxData {
+    pub(crate) fn get(&mut self, s: &[u8]) -> GxData {
         self.data.entry((s.as_ptr() as usize, s.len())).or_insert_with(|| GxData::from(s)).clone()
     }
 }
@@ -33,6 +33,20 @@ fn col(c: Rgba) -> GxColor {
 }
 
 impl GxBackend for ShimBackend<'_> {
+    fn set_line_width(&mut self, width: u8, offsets: i32) {
+        self.shim.set_line_width(width, offsets as u32)
+    }
+    fn set_point_size(&mut self, size: u8, offsets: i32) {
+        self.shim.set_point_size(size, offsets as u32)
+    }
+    fn set_tev_color_s10(&mut self, reg: u32, c: [i16; 4]) {
+        self.shim.set_tev_color_s10(reg, melee_gx::api::GxColorS10 { r: c[0], g: c[1], b: c[2], a: c[3] })
+    }
+    // HSD_LObjSetup (lobj.c) loads each light's colour and its specular light object. The ported
+    // lobj.c keeps its own light arena, which this backend does not share, and the view's light
+    // list (`ActiveLight`) carries no direction: so specular highlights are not drawn here.
+    /// The diffuse light is loaded once by `lobj_setup_init` (no colour change, no specular).
+    fn setup_lobj(&mut self, _light: &melee_runtime::tu::state::ActiveLight, _color: Rgba, _shininess: f32) {}
     fn set_cull_mode(&mut self, mode: u32) {
         self.shim.set_cull_mode(mode)
     }

@@ -10,9 +10,51 @@ import json
 from pathlib import Path
 import time
 
-from PIL import ImageGrab
+from PIL import Image
 from tools.port import runs
 from tools.skins.skin_shot import Console
+
+
+def _print_window(user, hwnd, width, height):
+    """Client-area capture through PrintWindow; no focus change, no screen grab."""
+    gdi = C.WinDLL("gdi32", use_last_error=True)
+    user.GetDC.argtypes = [W.HWND]
+    user.GetDC.restype = W.HDC
+    user.ReleaseDC.argtypes = [W.HWND, W.HDC]
+    user.PrintWindow.argtypes = [W.HWND, W.HDC, W.UINT]
+    gdi.CreateCompatibleDC.argtypes = [W.HDC]
+    gdi.CreateCompatibleDC.restype = W.HDC
+    gdi.CreateCompatibleBitmap.argtypes = [W.HDC, C.c_int, C.c_int]
+    gdi.CreateCompatibleBitmap.restype = W.HBITMAP
+    gdi.SelectObject.argtypes = [W.HDC, W.HGDIOBJ]
+    gdi.SelectObject.restype = W.HGDIOBJ
+    gdi.DeleteObject.argtypes = [W.HGDIOBJ]
+    gdi.DeleteDC.argtypes = [W.HDC]
+
+    class BMI(C.Structure):
+        _fields_ = [("size", W.DWORD), ("w", W.LONG), ("h", W.LONG), ("planes", W.WORD),
+                    ("bpp", W.WORD), ("comp", W.DWORD), ("img", W.DWORD), ("xp", W.LONG),
+                    ("yp", W.LONG), ("used", W.DWORD), ("imp", W.DWORD)]
+
+    gdi.GetDIBits.argtypes = [W.HDC, W.HBITMAP, W.UINT, W.UINT, C.c_void_p, C.c_void_p, W.UINT]
+    screen = user.GetDC(None)
+    mem = gdi.CreateCompatibleDC(screen)
+    bmp = gdi.CreateCompatibleBitmap(screen, width, height)
+    old = gdi.SelectObject(mem, bmp)
+    try:
+        # PW_CLIENTONLY | PW_RENDERFULLCONTENT
+        if not user.PrintWindow(hwnd, mem, 1 | 2):
+            raise RuntimeError("PrintWindow failed")
+        info = BMI(C.sizeof(BMI), width, -height, 1, 32, 0, 0, 0, 0, 0, 0)
+        buf = C.create_string_buffer(width * height * 4)
+        if not gdi.GetDIBits(mem, bmp, 0, height, buf, C.byref(info), 0):
+            raise RuntimeError("GetDIBits failed")
+        return Image.frombuffer("RGBA", (width, height), buf.raw, "raw", "BGRA", 0, 1).convert("RGB")
+    finally:
+        gdi.SelectObject(mem, old)
+        gdi.DeleteObject(bmp)
+        gdi.DeleteDC(mem)
+        user.ReleaseDC(None, screen)
 
 
 def window_capture(record, sandbox, name):
@@ -33,9 +75,6 @@ def window_capture(record, sandbox, name):
         user.IsWindowVisible.argtypes = [W.HWND]
         user.GetClientRect.argtypes = [W.HWND, C.POINTER(W.RECT)]
         user.ClientToScreen.argtypes = [W.HWND, C.POINTER(W.POINT)]
-        user.ShowWindow.argtypes = [W.HWND, C.c_int]
-        user.SetForegroundWindow.argtypes = [W.HWND]
-        user.GetForegroundWindow.restype = W.HWND
         windows = []
 
         @callback_type
@@ -52,16 +91,13 @@ def window_capture(record, sandbox, name):
         if len(windows) != 1:
             raise RuntimeError("expected one visible game window for owned PID")
         hwnd = windows[0]
-        user.ShowWindow(hwnd, 9)  # SW_RESTORE
-        user.SetForegroundWindow(hwnd)
-        time.sleep(0.5)
-        if user.GetForegroundWindow() != hwnd:
-            raise RuntimeError("game did not become foreground; capture refused")
-        rect, origin = W.RECT(), W.POINT()
-        if not user.GetClientRect(hwnd, C.byref(rect)) or not user.ClientToScreen(hwnd, C.byref(origin)):
+        # Hands-off: never restore, activate or focus the window, and never grab the
+        # screen (the user is at the keyboard). PrintWindow asks the window to paint
+        # itself into an off-screen bitmap, so alt-tabbing cannot change the result.
+        rect = W.RECT()
+        if not user.GetClientRect(hwnd, C.byref(rect)):
             raise RuntimeError("cannot locate the owned client window")
-        image = ImageGrab.grab(bbox=(origin.x, origin.y, origin.x + rect.right,
-                                    origin.y + rect.bottom), all_screens=True)
+        image = _print_window(user, hwnd, rect.right, rect.bottom)
         target = sandbox / (name + ".png")
         image.save(target)
         print(f"pid={record['pid']} window={int(hwnd)} {target}")

@@ -46,6 +46,9 @@ def main():
     ap.add_argument("candidate")
     ap.add_argument("--max-report", type=int, default=10)
     ap.add_argument("--allow-short", action="store_true", help="candidate may end before the golden does")
+    ap.add_argument("--ignore-seed", action="store_true",
+                    help="skip the `hash` and `seed` columns (the post-frame RNG seed differs where the port draws a different "
+                         "number of logic RNG values; replays force the seed every frame, so it cannot reach the next frame)")
     ap.add_argument("--from", dest="start", type=int, default=None, help="compare golden frames >= N only (resumed run)")
     a = ap.parse_args()
     gh, g, gorder = load(a.golden)
@@ -60,20 +63,21 @@ def main():
         print("header differs:\n  golden    %s\n  candidate %s" % (",".join(gh), ",".join(ch)))
         return 1
     bad = 0
+    skip = {i for i, h in enumerate(gh) if a.ignore_seed and h in ("hash", "seed")}
     missing = [f for f in gorder if f not in c]
     extra = [f for f in c if f not in g]
     first = None
     for f in gorder:
         if f not in c:
             continue
-        if g[f] != c[f]:
+        if any(g[f][i] != c[f][i] for i in range(1, len(gh)) if i not in skip):
             if first is None:
                 first = f
             if bad < a.max_report:
-                cols = [gh[i] for i in range(1, len(gh)) if g[f][i] != c[f][i]]
+                cols = [gh[i] for i in range(1, len(gh)) if i not in skip and g[f][i] != c[f][i]]
                 print("frame %s: differs in %s" % (f, ", ".join(cols)))
                 for i in range(1, len(gh)):
-                    if g[f][i] != c[f][i]:
+                    if i not in skip and g[f][i] != c[f][i]:
                         print("    %-8s golden %s  candidate %s" % (gh[i], g[f][i], c[f][i]))
             bad += 1
     ok = bad == 0

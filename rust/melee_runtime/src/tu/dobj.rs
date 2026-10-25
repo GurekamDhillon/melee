@@ -29,7 +29,8 @@ impl HsdRender {
         let mobj = m.dat.ptr(dobj + 8);
         if rendermode & 0x400_0000 == 0 {
             if let Some(mo) = mobj {
-                self.mobj_setup(g, &m.dat, mo);
+                let ov = m.mat_anim.and_then(|a| a.get(&dobj));
+                self.mobj_setup_with(g, &m.dat, mo, ov);
             }
         }
         let mut p = m.dat.ptr(dobj + 0xC);

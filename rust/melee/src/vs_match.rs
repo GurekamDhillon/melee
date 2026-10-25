@@ -44,9 +44,11 @@ mod story;
 mod rebirth;
 mod samus;
 mod sheik;
+pub mod rollback;
 mod snapshot;
 mod snapshot_ps;
 mod snapshot_fx;
+pub mod sound;
 use fox::{ItemCmd, FoxVars, SimItem};
 use rebirth::{PlayerRespawn, RespawnCtx};
 
@@ -158,6 +160,8 @@ fn is_fx_kind(k: FighterKind) -> bool {
 pub const STKIND_DL: i32 = 0x11;
 /// Yoshi's Story (`GrSt.dat`, Gr_Kind_Story).
 pub const STKIND_YS: i32 = 8;
+pub const STKIND_FOUNTAIN: i32 = 0x02;
+pub const STKIND_DL64: i32 = 0x1C;
 /// efLib's particle procs (eflib.c `efLib_particles_proc_main` / `_aux`, TARGET_PC masks).
 const PTCL_MASK_MAIN: u32 = 0x20000 | 0x40000;
 const PTCL_MASK_AUX: u32 = 0x10000 | 0x80000;
@@ -195,6 +199,8 @@ pub struct Player {
     pub fp: Box<Fighter>,
     /// The stand-in `HSD_GObj` the ported fighter code takes (`user_data` -> `fp`).
     pub gobj: Box<melee_types::HSD_GObj>,
+    /// The stand-in `Fighter_GObj` the sound code (owner identity, `user_data`) is handed.
+    pub snd_gobj: usize,
     /// An m-ex fighter's ftFunction code (crate::mex), run on `fp` at onLoad / onFrame.
     pub mex: Option<crate::mex::MexFighter>,
     pub entry: EntryVars,
@@ -265,6 +271,8 @@ pub struct Player {
     hud_randomize: bool,
     /// The percent display's state (`IfDamageState`, ifstatus.c).
     hud: hit::HudDamage,
+    /// Self-destructs / falls so far (time-match score: each is -1).
+    pub falls: u32,
     /// `fp->mv.co.guard` and `x221B_b0` (the shield is up).
     guard: GuardVars,
     /// `fp->mv.co.kneebend` / `fp->mv.co.jump`.
@@ -291,6 +299,10 @@ pub struct Player {
     /// The player's respawn data (rebirth.rs) and `ft_data->x24`, the idle animations
     /// (`{anim id, weight}` up to the -1 terminator).
     rb: PlayerRespawn,
+    /// The fighter's colour-animation lists (render only).
+    pub col: crate::colanim::ColAnim,
+    /// The camera box snap `ftCamera_80076064` made this frame (Rebirth entry), taken before the fighter moved on.
+    pub cam_snap: Option<CmSubjectIn>,
     wait_anims: Vec<(i32, i32)>,
     /// Dynamic bones (tail, hair): `Fighter_8006D9AC` at s_link 0x10.
     dynamics: Option<crate::dynamics::Dynamics>,
@@ -401,7 +413,14 @@ struct EntryCommon {
 }
 
 /// One live effect from `efLib_Create` (EF_Effect + its JObj tree): only its particle tracks.
+#[derive(Clone)]
 struct Effect {
+    /// `next_effect_instance` at creation (the viewer keys its model host by it).
+    inst: u32,
+    /// `efLib_SetTevKonstColor(root->child, 0, konst, tev0)` the spawner applied (render only).
+    tev: Option<(u32, u32)>,
+    /// `gfx_id % 1000`.
+    id: u32,
     lifetime: u16,
     /// Owner fighter slot (the RObj position constraint follows its root JObj).
     owner: usize,
@@ -416,6 +435,7 @@ struct Effect {
     rot_z: Option<f32>,
 }
 
+#[derive(Clone)]
 struct EffectTrack {
     joint: JObjRef,
     chain: Vec<u32>,
@@ -431,6 +451,7 @@ struct EffectRoot {
 }
 
 /// A stage particle track and its AObj (see `stage::dptcl_tracks`).
+#[derive(Clone)]
 struct DptclAnim {
     joint: JObjRef,
     aobj: HsdAObj<()>,
@@ -451,6 +472,13 @@ pub struct VsMatch {
     pub cg: CollGlobals,
     /// `HSD_PadGameStatus[4]`.
     pub pads: [input::PadStatus; 4],
+    /// Platform input (netplay / rollback): the raw samples the next frame's `HSD_PadRenewStatus`
+    /// reads instead of the scenario's pad script. `None`: the script (`input::pad_fixed`).
+    pub pad_feed: Option<[input::RawPad; 4]>,
+    /// MELEE_SLP playback (`golden --slp`): the replay's processed inputs for the frame about to
+    /// run, written into each human fighter where `Fighter_Spaghetti_8006AD10` reads the pad
+    /// (`Replay_StickX` & co. in fighter.c). `None`: the pad path.
+    pub replay_in: Option<[Option<melee_net::pad::RbInput>; 4]>,
     /// The golden frame whose s_link 0 runs the GO callback (input unlock).
     go_frame: i32,
     pub rand: HsdRand,
@@ -474,6 +502,8 @@ pub struct VsMatch {
     effect_banks: Vec<Option<crate::effect::EffectBank>>,
     effects: Vec<Effect>,
     next_effect_instance: u32,
+    /// `[Fighter_804D650C, Fighter_804D6508][player colour]` as 0xRRGGBB (the KO beam's tint).
+    ko_colors: [[u32; 4]; 2],
     /// Bank 0's command lists that `efLib_Cb_PtclAppSRTHook` acts on (0x96, 0x97, 0x98, 0x21B).
     appsrt_hook_lists: Vec<CmdRef>,
     /// `Stage_GetBlastZone{Left,Right,Top,Bottom}Offset()` (the stage's dead range).
@@ -503,6 +533,8 @@ pub struct VsMatch {
     stage_map_head: u32,
     /// Debug (snapshot loading): reference Fighter bytes per player.
     keep_ref: Vec<Vec<u8>>,
+    /// `Camera_RequestQuake(kind, pos)` calls of the frame (render only: the view's camera drains them).
+    pub quake_requests: Vec<(u32, [f32; 3])>,
 }
 
 /// Green Greens' `grGreens_Init` (the map gobjs' OnInit in order 6, 5 for the draws that matter): the
@@ -764,7 +796,99 @@ fn fighter_kind(name: &str) -> Result<FighterKind, String> {
     }
 }
 
+/// How the fighter's motion state's camera callback (`ftmotionstates.c`, the `Cam` column) treats its camera box.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum CamKind {
+    /// `ftCamera_UpdateCameraBox` (nearly every state).
+    Update,
+    /// An empty callback (`ftCo_Dead{Down,Left,Right,Up}_Cam`): the box keeps its last values.
+    Hold,
+    /// `ftCamera_80076320` (`ftCo_DeadUpStar_Cam`, `ftCo_DeadUpFall_Cam`).
+    DeadUp,
+    /// `ftCo_Rebirth_Cam`: the box follows `mv.co.common.x4` (xy) at z = 0.
+    Rebirth,
+    /// `ftCamera_800762F4` (`ftCo_WarpStar*_Cam`, Kirby's ThrowHi): only the bone point.
+    BoneOnly,
+    /// `ftCo_Cliff_Cam`: Update, then `on_ledge` while airborne.
+    Cliff,
+}
+
+/// What `ftCamera_UpdateCameraBox` reads of one fighter (cm_drive.rs builds the camera subject).
+#[derive(Clone, Copy, Debug)]
+pub struct CmSubjectIn {
+    pub pos: [f32; 3],
+    pub facing: f32,
+    /// `fp->x34_scale.y`.
+    pub scale_y: f32,
+    /// `*ft_data->x3C` (`UnkFloat6_Camera`: x0 vec3, xC vec3).
+    pub x3c: [f32; 6],
+    /// `ftLib_800866DC`: the camera zoom bone's world point (`lb_8000B1CC(parts[bone], x170)`).
+    pub bone: [f32; 3],
+    pub kind: CamKind,
+    /// `fp->mv.co.common.x4` (Rebirth).
+    pub rebirth_target: [f32; 2],
+    /// `fp->ground_or_air == GA_Air`.
+    pub in_air: bool,
+    /// The box is `CmSubjectState_Inactive` (`ftCo_800BFD04`, Sleep).
+    pub inactive: bool,
+}
+
+impl Player {
+    fn cam_base(&self) -> CmSubjectIn {
+        let d = &self.files.dat.data;
+        let at = be32(d, self.files.ft_data + 0x3C);
+        let x3c = core::array::from_fn(|i| f32::from_bits(be32(d, at + 4 * i as u32)));
+        let pos = [self.fp.cur_pos.x, self.fp.cur_pos.y, self.fp.cur_pos.z];
+        CmSubjectIn {
+            pos,
+            facing: self.fp.facing_dir,
+            scale_y: self.fp.x34_scale.y,
+            x3c,
+            bone: pos,
+            kind: CamKind::Update,
+            rebirth_target: [self.rb.target.x, self.rb.target.y],
+            in_air: self.fp.ground_or_air != 0,
+            inactive: self.fp.motion_id == rebirth::FTCO_MS_SLEEP,
+        }
+    }
+
+    /// The camera box inputs of this fighter this frame (None for a Sheik/Zelda follower).
+    pub fn camera_subject_in(&mut self) -> Option<CmSubjectIn> {
+        if self.follower {
+            return None;
+        }
+        let mut c = self.cam_base();
+        let attrs = self.files.attrs();
+        let j = self.skel.part(attrs.camera_zoom_target_bone as usize);
+        let off = Vec3 { x: attrs.x170.x, y: attrs.x170.y, z: attrs.x170.z };
+        let b = self.skel.world_point(j, off);
+        c.bone = [b.x, b.y, b.z];
+        c.kind = match self.fp.motion_id {
+            0..=3 => CamKind::Hold,
+            4..=10 => CamKind::DeadUp,
+            12 => CamKind::Rebirth,
+            252..=259 => CamKind::Cliff,
+            // ftCo_WarpStar{Jump,Fall}: 
+            305 | 306 => CamKind::BoneOnly,
+            _ => CamKind::Update,
+        };
+        Some(c)
+    }
+
+    /// `ftCamera_80076064` made at this instant (called from the respawn code).
+    pub(crate) fn snap_camera(&mut self) {
+        if !self.follower {
+            self.cam_snap = Some(self.cam_base());
+        }
+    }
+}
+
 impl VsMatch {
+    /// `Stage_GetBlastZoneTopOffset()`.
+    pub fn blast_top(&self) -> f32 {
+        self.blast.top
+    }
+
     pub fn new(disc: &mut crate::disc::Disc, stage_file: &str, fighter_specs: &[&str], seed: u32, stocks: i32) -> Result<Self, String> {
         Self::new_ex(disc, stage_file, fighter_specs, seed, stocks, None)
     }
@@ -780,6 +904,8 @@ impl VsMatch {
             "GrNBa.dat" => STKIND_BF,
             "GrGr.dat" => STKIND_DL,
             "GrSt.dat" => STKIND_YS,
+            "GrIz.dat" => STKIND_FOUNTAIN,
+            "GrOp.dat" => STKIND_DL64,
             _ => return Err(format!("{stage_file}: only Final Destination's and Battlefield's stage code is wired")),
         };
         let stage_bytes = disc.read(stage_file)?;
@@ -808,6 +934,7 @@ impl VsMatch {
         let plco = DatArchive::parse(&disc.read("PlCo.dat")?).map_err(|e| format!("PlCo.dat: {e}"))?;
         let common = plco.public_offset("ftLoadCommonData").ok_or("PlCo.dat: no ftLoadCommonData")?;
         let common_root = common;
+        let col_tables = Arc::new(crate::colanim::ColTables::new(&plco.data, common_root));
         // Fighter_LoadCommonData: the root is a pointer table, `p_ftCommonData = pData[0]`.
         // `p_ftCommonData->x260_startShieldHealth`; FT_SCRIPT_VALUE is the identity in vanilla.
         let be = |at: u32| u32::from_be_bytes(plco.data[at as usize..][..4].try_into().unwrap());
@@ -873,6 +1000,18 @@ impl VsMatch {
             crowd_horiz_margin: f32::from_bits(be(be(common_root + 4 * 21) + 0x2C)),
         };
         damage::install_hooks();
+        let ko_colors = {
+            let t = |k: u32| -> [u32; 4] {
+                let base = be(common_root + 4 * k);
+                let mut v = [0u32; 4];
+                for (c, o) in v.iter_mut().enumerate() {
+                    let at = (base + 4 * c as u32) as usize;
+                    *o = ((plco.data[at] as u32) << 16) | ((plco.data[at + 1] as u32) << 8) | plco.data[at + 2] as u32;
+                }
+                v
+            };
+            [t(18), t(19)]
+        };
         // ft_GetGroundFrictionMultiplier for the ported ftcommon code: FD's material table.
         unsafe { melee_fighter::hooks::GROUND_FRICTION_MUL = Some(fd_ground_friction) };
 
@@ -967,7 +1106,9 @@ impl VsMatch {
             Some(f) => Some(item_spawner_init(disc, &stage, stkind, f, &mut rand)?),
             None => None,
         };
-        let last_bg = if stkind == STKIND_DL {
+        let last_bg = if stkind == STKIND_FOUNTAIN || stkind == STKIND_DL64 {
+            None
+        } else if stkind == STKIND_DL {
             let (items, draws) = greens_init(&stage, &mut rand, f32::from_bits(u32::from_be_bytes(stage.data[crate::stage::ground_param(&stage).ok_or("no grGroundParam")? as usize..][..4].try_into().unwrap())))?;
             items0 = items;
             greens_draws = Some(draws);
@@ -1000,7 +1141,10 @@ impl VsMatch {
         let mut seen = std::collections::HashSet::new();
         // FD's grLast animation table; Battlefield's grBattle_OnInit starts gobj 0 and 1's anim 0
         // (grBattle_GObj0/1_Callback0 -> grAnime_801C8138), whose particle tracks are the 4 stage gens.
-        let dptcl_rows: &[(u32, u32)] = if stkind == STKIND_YS { &[(1, 0), (3, 0), (3, 1), (2, 0)] } else if stkind == STKIND_DL { &[(0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0)] } else if stkind == STKIND_BF { &[(0, 0), (1, 0)] } else { &[(4, 0), (5, 4), (6, 6), (7, 8), (8, 10), (4, 0), (5, 0), (6, 0), (7, 0), (8, 0)] };
+        let dptcl_rows: &[(u32, u32)] = if stkind == STKIND_FOUNTAIN || stkind == STKIND_DL64 { &[] } else if stkind == STKIND_YS { &[(1, 0), (3, 0), (3, 1), (2, 0)] } else if stkind == STKIND_DL { &[(0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0)] } else if stkind == STKIND_BF { &[(0, 0), (1, 0)] } else { &[(4, 0), (5, 4), (6, 6), (7, 8), (8, 10), (4, 0), (5, 0), (6, 0), (7, 0), (8, 0)] };
+        if std::env::var("MELEE_VIEW_PSLOG").is_ok() {
+            for g in 0..12u32 { for an in 0..14u32 { let n = std::panic::catch_unwind(|| crate::stage::dptcl_tracks(&stage, g, an).len()).unwrap_or(0); if n > 0 { eprintln!("DPTCL gobj {g} anim {an}: {n} tracks"); } } }
+        }
         for &(g, anim) in dptcl_rows {
             if !seen.insert((g, anim)) {
                 continue;
@@ -1252,6 +1396,7 @@ impl VsMatch {
                 hurtboxes: files.hurtboxes(),
                 fp,
                 gobj: Box::new(melee_types::HSD_GObj::zeroed()),
+                snd_gobj: 0,
                 mex,
                 entry,
                 skel,
@@ -1322,6 +1467,7 @@ impl VsMatch {
                 dead_timer: 0,
                 hud_randomize: false,
                 hud: hit::HudDamage::default(),
+                falls: 0,
                 guard: GuardVars::default(),
                 jump: JumpVars::default(),
                 dash: dashrun::DashVars::default(),
@@ -1336,6 +1482,8 @@ impl VsMatch {
                 keep_gfx: false,
                 blend_zero: false,
                 rb: PlayerRespawn::default(),
+                col: crate::colanim::ColAnim::new(col_tables.clone()),
+                cam_snap: None,
             });
             // ... Fighter_ChangeMotionState(Entry): no animation, cur_anim_frame -1;
             // ftaction.c:1408 frame_count = cur_anim_frame + x898_unk. Then ft_80084CB0: the
@@ -1409,10 +1557,19 @@ impl VsMatch {
         let stage_data_arc = Arc::new(stage.data.clone());
         let stage_map_head = stage.public_offset("map_head").unwrap_or(0);
         let story_state = if stkind == STKIND_YS { Some(story::Story::new(std::sync::Arc::new(DatArchive::parse(&stage_bytes).map_err(|e| format!("{stage_file}: {e}"))?), &mut joint_mtx)?) } else { None };
-        Ok(Self { item_timer, players, ground, cg, pads: [input::PadStatus::default(); 4], go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, story: story_state, greens: greens_draws.map(move |d| greens::Greens::new(std::sync::Arc::new(stage), d)), aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists, blast, fighter_jobjs: Vec::new(), items: items0, cpu_dist, plco_bytes: std::sync::Arc::from(&plco.data[..]), cpu_tbl: be(common_root + 4 * 22), grkind: if stkind == STKIND_DL { Gr_Kind_Greens as i32 } else if stkind == STKIND_YS { Gr_Kind_Story as i32 } else if stkind == STKIND_BF { Gr_Kind_Battle as i32 } else { Gr_Kind_Last as i32 }, respawn_points: (4..8).filter_map(|id| points.iter().find(|p| p.id == id).map(|p| Vec3 { x: p.pos[0], y: p.pos[1], z: p.pos[2] })).collect(), respawn_busy: [0; 6], start_shield, per_slot_spawn: stkind == STKIND_BF, dmg_err: None, stage_data: stage_data_arc, stage_map_head, keep_ref: Vec::new() })
+        Ok(Self { item_timer, players, ground, cg, pads: [input::PadStatus::default(); 4], pad_feed: None, replay_in: None, ko_colors, quake_requests: Vec::new(), go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, story: story_state, greens: greens_draws.map(move |d| greens::Greens::new(std::sync::Arc::new(stage), d)), aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists, blast, fighter_jobjs: Vec::new(), items: items0, cpu_dist, plco_bytes: std::sync::Arc::from(&plco.data[..]), cpu_tbl: be(common_root + 4 * 22), grkind: if stkind == STKIND_DL { Gr_Kind_Greens as i32 } else if stkind == STKIND_YS { Gr_Kind_Story as i32 } else if stkind == STKIND_BF { Gr_Kind_Battle as i32 } else { Gr_Kind_Last as i32 }, respawn_points: (4..8).filter_map(|id| points.iter().find(|p| p.id == id).map(|p| Vec3 { x: p.pos[0], y: p.pos[1], z: p.pos[2] })).collect(), respawn_busy: [0; 6], start_shield, per_slot_spawn: stkind == STKIND_BF, dmg_err: None, stage_data: stage_data_arc, stage_map_head, keep_ref: Vec::new() })
     }
 
     /// The m-ex fighters' code-run report (crate::mex), one block per such fighter.
+    /// True once the Ready HUD has ended and the fighters' input is unlocked (`go_frame`).
+    pub fn go_reached(&self) -> bool {
+        self.frame + 1 >= self.go_frame
+    }
+
+    pub fn go_frame_for_hud(&self) -> i32 {
+        self.go_frame
+    }
+
     pub fn mex_report(&self) -> String {
         self.players.iter().filter_map(|p| p.mex.as_ref().map(|m| format!("p{}: {}", p.slot + 1, m.report()))).collect()
     }
@@ -1499,7 +1656,10 @@ impl VsMatch {
         // The frame's HSD_PadRenewStatus (the pad script's sample for this frame).
         let g = self.frame + 1;
         for port in 0..4 {
-            let raw = input::pad_fixed(port, g);
+            let raw = match &self.pad_feed {
+                Some(f) => f[port],
+                None => input::pad_fixed(port, g),
+            };
             self.pads[port].renew(&raw);
         }
         // fn_8016758C (the VS scene's per-frame proc): the respawn spots' countdowns.
@@ -1783,6 +1943,14 @@ impl VsMatch {
             }
             // ftCommon_8007E0E4 (the end of Fighter_8006A360, outside hitlag): the player nudge.
             player_nudge(&mut self.players, pi, &self.ground);
+            // ftCo_800C0408: the colour-animation lists (render only).
+            {
+                let p = &mut self.players[pi];
+                let f = &p.fp;
+                let st = [f.x2224_b2() != 0, f.dmg.x18F0 != 0, f.x221D_b6() != 0, f.x1994 != 0 || f.x1990 != 0 || f.x2221_b0() != 0];
+                p.col.set_standing(st);
+                p.col.step();
+            }
         }
         // s_link 2, Fighter_8006ABA0: input_cb. ftCo_Fall_IASA's checks all read pad input, and
         // the C applies none before GO (self_vel.x stays 0 in the golden with the stick held):
@@ -1813,7 +1981,8 @@ impl VsMatch {
             let p = &mut self.players[i];
             let locked = p.input_locked;
             let is_cpu = stale::slot_type(p.slot) == melee_types::Gm_PKind_Cpu && p.fp.cpu.kind != 5;
-            input::fighter_input(&mut p.fp, &pad, &mut p.x221d_b3, locked, is_cpu);
+            let rin = self.replay_in.as_ref().and_then(|r| r[port].as_ref());
+            input::fighter_input(&mut p.fp, &pad, &mut p.x221d_b3, locked, is_cpu, rin);
             if p.fp.x2219_b5() == 0 {
                 if !p.fp.x1980.is_null() {
                     return Err("ftCommon_8007FFD8 (x1980 item) not ported".into());
@@ -2055,6 +2224,19 @@ impl VsMatch {
                 continue;
             }
             self.blast_check(i)?;
+            // Fighter_procUpdate: the sound heard near the bottom blast zone (once per descent).
+            let b = self.blast;
+            let p = &mut self.players[i];
+            let cam_y = 0.5 * (b.cam_bottom + b.bottom);
+            if p.fp.x2225_b0() != 0 {
+                let bounds = 0.5 * (b.cam_bottom + cam_y);
+                if p.fp.prev_pos.y <= bounds && p.fp.cur_pos.y > bounds {
+                    p.fp.set_x2225_b0(0);
+                }
+            } else if p.fp.x222A_b1() == 0 && p.fp.x2228_b5() == 0 && p.fp.prev_pos.y >= cam_y && p.fp.cur_pos.y < cam_y {
+                sound::play_sfx(p, &mut self.rand, 96, 127, 64);
+                p.fp.set_x2225_b0(1);
+            }
         }
         // The end of Fighter_procUpdate: ftColl_8007AF28 lets the next lbColl_800083C4 recompute the capsules.
         for p in &mut self.players {
@@ -2359,7 +2541,7 @@ impl VsMatch {
             }
             // Fighter_8006C80C: accessory4_cb (ftFx_SpecialN_CreateBlasterShot).
             if self.players[i].fp.x221F_b3() == 0 && self.players[i].fp.x2219_b5() == 0 {
-                fox::accessory4(&mut self.players[i])?;
+                fox::accessory4(&mut self.players[i], &mut self.rand)?;
                 self.samus_accessory4(i)?;
             }
             self.seak_accessory(i)?;
@@ -2646,6 +2828,7 @@ impl VsMatch {
             return Err("ftCo_800D34E0: a KO credited to another player (Player_UpdateKOsBySlot) not ported".into());
         }
         p.hud_randomize = true;
+        p.falls += 1;
         Ok(())
     }
 
@@ -2663,7 +2846,8 @@ impl VsMatch {
         {
             let fp = &mut *p.fp;
             if fp.x221D_b6() != 0 {
-                return Err("ftCo_800D3BC8: ft_800880D8 (looping sfx) not ported".into());
+                melee_fighter::ft0877::ft_800880d8(fp);
+                fp.x2004 = 0;
             }
             fp.set_x2219_b1(1);
             fp.set_x221E_b1(1);
@@ -2671,11 +2855,38 @@ impl VsMatch {
             // pl_8003DF44 (the stale-move table's last-KO stamp), ft_PlaySFX and the quake are not hashed.
             fp.set_invisible(1);
             fp.set_x221F_b1(1);
+            let c = fp.cur_pos;
+            self.quake_requests.push((melee_types::QuakeKind_Large, [c.x, c.y, c.z]));
         }
         self.dead_bookkeeping(i)?;
+        // ft_80088C5C(gobj), the two KO voices (ft_data->x4C_sfx x4 / x8), and ft_PlaySFX(0x61)
+        // with its deferred repeat.
+        {
+            let p = &mut self.players[i];
+            sound::ft_80088c5c(p);
+            let (v4, v8) = (p.files.sfx_field(4), p.files.sfx_field(8));
+            sound::ko_voice(p, v4);
+            sound::ko_voice(p, v8);
+            sound::play_sfx(p, &mut self.rand, 0x61, 0x7F, 0x40);
+            melee_fighter::ft0877::ft_8008805c(&p.fp, 0x61);
+        }
         // efSync_Spawn(0x42B or 0x42C, gobj, &pos, &rot_z, &p_ftCommonData->x4F4, color1, color2):
         // efLib_Create_Attach_Pos(0x19) (0x1A in a stamina match) at the clamped position, root
         // rot Z = 0, scale x4F4 (the tev colours are render only).
+        // ftCommon_8007DB24 (inside ftCo_800D331C) ran efLib_DestroyAll(gobj) at once in the C; here it is
+        // queued to the s_link 9 flush, which would free the KO effect spawned just below. Run the queued
+        // DestroyAll now (the queued spawns still dispatch at the flush).
+        {
+            let mut ops = std::mem::take(&mut self.players[i].ef_ops);
+            let mut keep = Vec::new();
+            for op in ops.drain(..) {
+                match op {
+                    EfOp::DestroyAll => self.ef_destroy_all(i),
+                    other => keep.push(other),
+                }
+            }
+            self.players[i].ef_ops = keep;
+        }
         let c = self.players[i].fp.cur_pos;
         let mut x = c.x;
         if x > b.right {
@@ -2686,6 +2897,11 @@ impl VsMatch {
         }
         let pos = [x, b.bottom, c.z];
         self.ef_create(0x19, i, cd_x4f4, Some(pos), Some(0.0))?;
+        // The colours efSync_Spawn(0x42B) passes: Fighter_804D650C / 804D6508 (PlCo pData[18] / [19]), 4 bytes per player colour.
+        let (c1, c2) = (self.ko_colors[0][i.min(3)], self.ko_colors[1][i.min(3)]);
+        if let Some(e) = self.effects.last_mut() {
+            e.tev = Some((c1, c2));
+        }
         // ftCo_800D4E50: coins (not a coin match).
         Ok(())
     }
@@ -2712,6 +2928,9 @@ impl VsMatch {
                 continue;
             }
             let e = self.effects.remove(k);
+            if std::env::var_os("MELEE_VIEW_FXLOG").is_some() {
+                eprintln!("EFDESTROY frame {} inst {} id {}", self.frame, e.inst, e.id);
+            }
             let mut host = Host { rand: &mut self.rand, joint_mtx: &self.joint_mtx, appsrt_hook_lists: &self.appsrt_hook_lists };
             for t in &e.tracks {
                 self.ps.gen_release_jobj(&mut host, Some(t.joint));
@@ -2747,7 +2966,10 @@ impl VsMatch {
         if lifetime != 0 {
             lifetime += 1;
         }
-        self.effects.push(Effect { lifetime, owner, scale, bank, tracks, fixed_pos, rot_y, rot_z });
+        if std::env::var_os("MELEE_VIEW_FXLOG").is_some() {
+            eprintln!("EFCREATE frame {} inst {inst} gfx {gfx_id} lifetime {lifetime} owner {owner}", self.frame);
+        }
+        self.effects.push(Effect { inst, tev: None, id: gfx_id % 1000, lifetime, owner, scale, bank, tracks, fixed_pos, rot_y, rot_z });
         self.effect_anim(self.effects.len() - 1)
     }
 
@@ -3607,8 +3829,14 @@ fn jump_enter(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     }
     fp.self_vel.x = h_vel;
     fp.active_timer.lstick.y = 0xFE;
-    // (the jump SFX: ft_800881D8 / ft_PlaySFX, no draws.)
-    fp.set_x2227_b0(1);
+    let x197c = !fp.x197C.is_null();
+    // ftCo_800CB110's arg1: the jump voice (ft_data->x4C_sfx->x10), and 0x11A when x197C is set.
+    let voice = p.files.sfx_field(0x10);
+    melee_fighter::ft0881::ft_800881d8(&mut p.fp, voice, 0x7F, 0x40);
+    if x197c {
+        sound::play_sfx(p, rand, 0x11A, 0x7F, 0x40);
+    }
+    p.fp.set_x2227_b0(1);
     Ok(())
 }
 
@@ -3684,6 +3912,15 @@ fn jump_aerial_enter(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     fp.self_vel = melee_types::Vec { x: vx, y: vy, z: 0.0 };
     fp.active_timer.lstick.y = 0xFE;
     fp.x1968_jumpsUsed += 1;
+    // ft_80088770 (stop channel 0), the air-jump voice (ft_data->x4C_sfx->x14) on channel 6, and
+    // ft_JumpAerial_Sound.
+    melee_fighter::ft0881::ft_80088770(fp);
+    let voice = p.files.sfx_field(0x14);
+    melee_fighter::ft0881::ft_80088328(&mut p.fp, voice, 0x7F, 0x40);
+    let (kind, x197c) = (p.fp.kind, !p.fp.x197C.is_null());
+    if kind != melee_types::Ft_Kind_Mewtwo && (kind >= 0x10 || kind != melee_types::Ft_Kind_Ness) && x197c {
+        sound::play_sfx(p, rand, 0x11B, 0x7F, 0x40);
+    }
     Ok(())
 }
 
@@ -3803,7 +4040,7 @@ fn ftco_800939b4(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     guard_shield_up(p);
     // ftCo_8009370C: ftColl_CreateReflectHit.
     p.fp.set_reflecting(1);
-    ftco_800921dc(p)
+    ftco_800921dc(p, rand)
 }
 
 /// `ftCo_800923B4` -> `ftCo_800924C0`: GuardOn.
@@ -3825,11 +4062,11 @@ fn ftco_800923b4(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         // x221D_b2) and the shield sound (ft_PlaySFX 190115): render and audio only.
         p.fp.set_x221D_b2(1);
     }
-    ftco_800921dc(p)
+    ftco_800921dc(p, rand)
 }
 
 /// `ftCo_800921DC`: the shield's variables and bubble (effect 1047 = 0x417, `efLib_Create_Attach(0xB)`).
-fn ftco_800921dc(p: &mut Player) -> Result<(), String> {
+fn ftco_800921dc(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     let cd = melee_fighter::hooks::common_data();
     p.ef_ops.push(EfOp::Spawn(QueuedEffect { kind: EF_SPAWN_SYNC, gfx: 1047, part: 0, params: Vec3 { x: 0.0, y: 0.0, z: 0.0 }, extra1: 0.0, extra2: 0.0 }));
     let fp = &mut *p.fp;
@@ -3849,6 +4086,8 @@ fn ftco_800921dc(p: &mut Player) -> Result<(), String> {
     fp.lightshield_amount = lsa;
     g.x20 = 0;
     g.x24 = 0;
+    // (ftCo_80091E78: the bubble pose, render only.) The shield-up sound.
+    sound::play_sfx(p, rand, 110, 127, 64);
     Ok(())
 }
 
@@ -3925,6 +4164,7 @@ fn guard_release(p: &mut Player, rand: &mut HsdRand) -> Result<bool, String> {
         guard_kind_check(p)?;
         let row = load_row(p, FTCO_SM_GUARD_OFF)?;
         change_motion_state(p, FTCO_MS_GUARD_OFF, row.as_ref(), rand)?;
+        sound::play_sfx(p, rand, 127, 127, 64);
         return Ok(true);
     }
     if p.guard.x1c != 0 {
@@ -4203,9 +4443,10 @@ fn ftaction_80072cd8(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         } else {
             sp60 = play;
         }
+        // ftAction_80072CD8: the material's step sound goes through a copy of the command with
+        // word 1 replaced; the gfx is spawned after it.
         if sp64 != -1 {
-            // ftAction_80071B50 on a copy of the command with the material's sfx id.
-            sound_command(p, w0, sp64, rand)?;
+            sound_cmd_with(p, rand, sp64);
         }
         if gfx_id != -1 {
             return Err(format!("footstep gfx {gfx_id:#x} not wired"));
@@ -4213,25 +4454,9 @@ fn ftaction_80072cd8(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     }
     if sp60 != 0 {
         // ftAction_80071B50(gobj, cmd): the script's own sound command (3 words).
-        let sfx = be32(&p.pdat, p.script + 4) as i32;
-        sound_command(p, w0, sfx, rand)?;
-    }
-    p.script += 12;
-    Ok(())
-}
-
-/// `ftAction_80071B50`: a sound command (`behavior` = bits 18..25 of the first word). Only `ft_PlaySFX`
-/// (behavior 0) draws RNG: `HSD_Randi(200)` for a (remapped, `ft_80087D0C`) id in 332..=370. The
-/// audio itself is not simulated.
-fn sound_command(p: &Player, w0: u32, sfx: i32, rand: &mut HsdRand) -> Result<(), String> {
-    let behavior = (w0 >> 18) & 0xFF;
-    if behavior == 0 {
-        let id = melee_fighter::ft0877::ft_80087d0c(&p.fp, sfx);
-        if (332..=370).contains(&id) {
-            let _ = rand.randi(200);
-        }
-    } else if behavior >= 10 {
-        return Err("ftAction_80071B50 stop-sound behaviours not wired".into());
+        ftaction_80071b50(p, rand)?;
+    } else {
+        p.script += 12;
     }
     Ok(())
 }
@@ -4559,7 +4784,19 @@ fn ftaction_run(p: &mut Player, rand: &mut HsdRand, skip: bool) -> Result<(), St
             }
             // ftAction_80072A5C: ftCo_800BFFD0 (start a colour-overlay animation, fp->x408 / x488 /
             // x508: render only); ftAction_80072AAC (skip table) just steps. One word.
-            0x2E => p.script += 4,
+            0x2E => {
+                if !skip {
+                    p.col.start(((w >> 18) & 0xFF) as i32, (w & 0x3FFFF) as i32);
+                }
+                p.script += 4;
+            }
+            // ftAction_80072ABC: ftCo_800C0200 (reset a colour animation's list); skip table: a step.
+            0x2F => {
+                if !skip {
+                    p.col.reset_id(((w >> 18) & 0xFF) as i32);
+                }
+                p.script += 4;
+            }
             // ftAction_80072B3C: the afterimage (sword trail) setup, x2100 / x2101 (ftafterimage.c:
             // render only); ftAction_80072B84 (skip table) just steps. One word.
             0x31 => p.script += 4,
@@ -4703,16 +4940,15 @@ fn ftaction_run(p: &mut Player, rand: &mut HsdRand, skip: bool) -> Result<(), St
             0x26 => {
                 let range = (w & 0x3F) as i32;
                 let behavior = (w >> 6) & 0xF;
+                let (vol, pan) = (((w >> 18) & 0xFF) as u8, ((w >> 10) & 0xFF) as u8);
                 let pick = rand.randi(range);
                 let sfx = be32(&p.pdat, p.script + 4 + 4 * pick as u32) as i32;
-                if behavior == 0 && (332..=515).contains(&sfx) {
-                    return Err(format!("ft_PlaySFX {sfx}: ft_80087D0C's remap and the pitch draw not wired"));
-                }
+                sound::sound_command(p, rand, behavior, sfx, vol, pan);
                 p.script += 28;
             }
             // ftAction_80071B50: a sound command; ftAction_80071CA4 (skip table): three words.
             0x11 if skip => p.script += 12,
-            0x11 => ftaction_80071b50(p)?,
+            0x11 => ftaction_80071b50(p, rand)?,
             op => return Err(format!("command script opcode {op:#x} (ftAction_803C06E8[{}]) not ported", op as i32 - 10)),
         }
         if p.fp.x3E4_fighterCmdScript.timer == F32_MAX {
@@ -4799,21 +5035,36 @@ fn ftaction_8007121c(p: &mut Player) -> Result<(), String> {
 /// `ftAction_80071B50`: behaviours 0-6 play `sfx` (word 2) on a channel, 10-15 stop one; no
 /// audio here. Only `ft_PlaySFX` (behaviour 0) draws from the RNG, `HSD_Randi(200)` for a
 /// remapped id in 332..370 (`ft_80087D0C`, not ported: such ids stop the run).
-fn ftaction_80071b50(p: &mut Player) -> Result<(), String> {
+fn ftaction_80071b50(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     let w0 = be32(&p.pdat, p.script);
     let behavior = (w0 >> 18) & 0xFF;
     match behavior {
         0..=6 => {
             let sfx = be32(&p.pdat, p.script + 4) as i32;
-            if behavior == 0 && (332..=515).contains(&sfx) {
-                return Err(format!("ft_PlaySFX {sfx}: ft_80087D0C's remap and the HSD_Randi(200) pitch draw not wired"));
-            }
+            let w2 = be32(&p.pdat, p.script + 8);
+            sound::sound_command(p, rand, behavior, sfx, ((w2 >> 8) & 0xFF) as u8, (w2 & 0xFF) as u8);
             p.script += 12;
         }
-        10..=15 => p.script += 12,
+        10..=15 => {
+            sound::sound_command(p, rand, behavior, 0, 0, 0);
+            p.script += 12;
+        }
         _ => p.script += 8,
     }
     Ok(())
+}
+
+/// `ftAction_80071B50` on a copy of the current command whose word 1 (the sound id) is `sfx`
+/// (the material sounds of `ftAction_80072CD8` / `80072E4C`); the script does not advance.
+fn sound_cmd_with(p: &mut Player, rand: &mut HsdRand, sfx: i32) {
+    let w0 = be32(&p.pdat, p.script);
+    let behavior = (w0 >> 18) & 0xFF;
+    let w2 = be32(&p.pdat, p.script + 8);
+    match behavior {
+        0..=6 => sound::sound_command(p, rand, behavior, sfx, ((w2 >> 8) & 0xFF) as u8, (w2 & 0xFF) as u8),
+        10..=15 => sound::sound_command(p, rand, behavior, 0, 0, 0),
+        _ => {}
+    }
 }
 
 /// Final Destination's floor-material step rows (mplib.c `mpLib_803BE7A8`: x4[0] (step sfx),
@@ -4855,26 +5106,17 @@ fn ftaction_80072e4c(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         false
     };
     if found && cmd_flag == 0 && sp64 != -1 {
-        return Err(format!("landing material sfx {sp64:#x} (ftAction_80071B50) not wired"));
+        sound_cmd_with(p, rand, sp64);
     }
     if gfx_id == -1 {
         gfx_id = (w0 & 0xFFFF) as i32;
     }
     ftco_8009f834(p, rand, gfx_id as u32, 0, Vec3 { x: 0.0, y: 0.0, z: 0.0 }, Vec3 { x: 0.0, y: 0.0, z: 0.0 })?;
     if sp60 != 0 {
-        // ft_PlaySFX(fp, 0x46, 0x7F, 0x40): no audio here; 0x46 draws no pitch randomness.
+        sound::play_sfx(p, rand, 0x46, 0x7F, 0x40);
         if cmd_flag == 0 {
             // ftAction_80071B50(gobj, cmd): the script's own sound command (3 words).
-            let behavior = (w0 >> 18) & 0xFF;
-            if behavior <= 6 {
-                let sfx = be32(&p.pdat, p.script + 4) as i32;
-                if (332..=370).contains(&sfx) {
-                    return Err(format!("ft_PlaySFX {sfx}: the HSD_Randi(200) pitch draw needs ft_80087D0C's remap (not wired)"));
-                }
-            } else if behavior >= 10 {
-                return Err("ftAction_80071B50 stop-sound behaviours not wired".into());
-            }
-            p.script += 12;
+            ftaction_80071b50(p, rand)?;
         }
     }
     if sp60 == 0 || cmd_flag != 0 {
@@ -4970,6 +5212,13 @@ fn entry_start(p: &mut Player, c: EntryCommon, rand: &mut HsdRand) -> Result<(),
     // queued (the current proc's s_link is below 9).
     let x8 = p.entry.x8;
     p.ef_queue.push(QueuedEffect { kind: EF_SPAWN_ATTACH_PARAM, gfx: 0x43E, part: 0, params: Vec3 { x: x8.x, y: 0.0, z: 0.0 }, extra1: 0.0, extra2: 0.0 });
+    // lbAudioAx_80024304(0x8B): the entry sound, on track 0x16.
+    melee_audio::sim::with(|s| s.lb_audio_ax_80024304(0x8B));
+    // ftCo_800BFFD0(fp, 0x75, 0): the entry glow.
+    p.col.start(0x75, 0);
+    if std::env::var_os("MELEE_VIEW_COLLOG").is_some() {
+        eprintln!("COLDUMP 0x75 {:08x?} 9 {:08x?} 0xa {:08x?}", p.col.dump(0x75), p.col.dump(9), p.col.dump(0xA));
+    }
     Ok(())
 }
 
@@ -4980,7 +5229,8 @@ fn entry_end(p: &mut Player, c: EntryCommon, rand: &mut HsdRand) -> Result<(), S
     let root = p.skel.root;
     p.skel.set_scale(root, p.entry.x8);
     p.fp.cur_pos.y = p.entry.x4 + p.entry.x20;
-    // Fighter_ChangeMotionState(EntryEnd, 0x3000, 0, 1, 0): no animation row.
+    // Fighter_ChangeMotionState(EntryEnd, 0x3000, 0, 1, 0): no animation row; 0x3000 has Ft_MF_SkipColAnim.
+    p.col.skip_next = true;
     change_motion_state(p, FTCO_MS_ENTRY_END, None, rand)?;
     p.fp.set_x2219_b1(1);
     Ok(())
@@ -5042,8 +5292,9 @@ fn change_motion_state_flags(p: &mut Player, msid: i32, row: Option<&(AnimRow, F
         fp.hitlag_mul = 0.0;
     }
     fp.motion_id = msid;
-    // ft_800890D0(fp, new_motion_state->move_id): a new attack instance unless the same attack goes on. Only
-    // Fox's / Falco's neutral B (attack 18) is an attack here; every other state has move_id 1.
+    // ftCo_800C0134 (no Ft_MF_SkipColAnim): the x488 list restarts.
+    p.col.motion_change();
+    let fp = &mut p.fp;
     melee_fighter::stale::new_attack(fp, if fox::is_fox_special_n(msid) { 18 } else { 1 });
     // The flags Fighter_ChangeMotionState clears (fighter.c ~1381): the entry / death states set
     // them again right after the change.
@@ -5123,6 +5374,9 @@ fn change_motion_state_flags(p: &mut Player, msid: i32, row: Option<&(AnimRow, F
     p.skel.set_part_rot(0, 0, 0.0);
     p.skel.set_part_rot(0, 1, (core::f64::consts::FRAC_PI_2 * fp.facing_dir as f64) as f32);
     p.skel.set_part_rot(0, 2, 0.0);
+    // (no state the native port runs passes Ft_MF_KeepSfx.)
+    sound::change_state_stops(p);
+    let fp = &mut p.fp;
     fp.frame_speed_mul = anim_speed;
     fp.x8A0_unk = anim_speed;
     fp.cur_anim_frame = anim_start - fp.frame_speed_mul;
@@ -5190,6 +5444,7 @@ fn change_motion_state_flags(p: &mut Player, msid: i32, row: Option<&(AnimRow, F
                 ftaction_run(p, rand, true)?;
             } else {
                 // ftCo_800C0408 (colour-animation scripts: render only), then ftAction_80073240.
+                p.col.step();
                 ftaction_80073240(p, rand)?;
             }
         }
@@ -5491,6 +5746,39 @@ fn proc_update_integrate(fp: &mut Fighter) -> Result<(), String> {
 /// The golden frame being simulated (`MELEE_GOLDEN_RAND` trace).
 static mut TRACE_FRAME: i32 = 0;
 
+/// A live effect as the viewer draws it (`efLib_Create` model + its root placement).
+pub struct EffectDraw {
+    pub inst: u32,
+    pub bank: usize,
+    pub id: u32,
+    pub pos: [f32; 3],
+    pub scale: f32,
+    pub rot_y: Option<f32>,
+    pub rot_z: Option<f32>,
+    pub lifetime: u16,
+    pub tev: Option<(u32, u32)>,
+}
+
+impl VsMatch {
+    /// The live effects (render side).
+    pub fn effect_draws(&self) -> Vec<EffectDraw> {
+        self.effects
+            .iter()
+            .map(|e| {
+                let fp = &self.players[e.owner].fp;
+                EffectDraw { inst: e.inst, bank: e.bank, id: e.id, pos: e.fixed_pos.unwrap_or([fp.cur_pos.x, fp.cur_pos.y, fp.cur_pos.z]), scale: e.scale, rot_y: e.rot_y, rot_z: e.rot_z, lifetime: e.lifetime, tev: e.tev }
+            })
+            .collect()
+    }
+
+    /// The bank's model data and the synthetic model record of effect `id` (see `EffectBank::model_dat`).
+    pub fn effect_model(&self, bank: usize, id: u32) -> Option<(Arc<Vec<u8>>, u32)> {
+        let b = self.effect_banks.get(bank)?.as_ref()?;
+        let rec = *b.model_rec.get(id as usize)?;
+        (rec != 0).then(|| (b.model_dat.clone(), rec))
+    }
+}
+
 impl Sim for VsMatch {
     fn step(&mut self) -> bool {
         unsafe { TRACE_FRAME = self.frame + 1 };
@@ -5538,6 +5826,7 @@ impl Sim for VsMatch {
             p.hud_randomize = false;
         }
         self.frame += 1;
+        if std::env::var_os("MELEE_DBG_MS").is_some() { for p in &self.players { eprintln!("ms {} {} {}", self.frame, p.slot, p.fp.motion_id); } }
         if let Ok(v) = std::env::var("MELEE_GOLDEN_SUMMARY") {
             if v.split(',').any(|x| x.trim().parse::<i32>().ok() == Some(self.frame)) {
                 eprint!("{}", self.state_summary());

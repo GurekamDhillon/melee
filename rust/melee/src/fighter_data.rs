@@ -82,6 +82,18 @@ pub fn costume_for(name: &str) -> Option<(&'static str, &'static str)> {
     }
 }
 
+/// The costume a scene gives a slot that names none (`color=-1`): the C build starts costume `slot`
+/// (verified by screenshot: P1 Falcon is Nr, P2 Fox is Or). Only the alternates the golden scenarios
+/// reach are listed (ftfox.c `ftFx_Init_CostumeStrings`); anything else falls back to Nr.
+pub fn costume_for_slot(name: &str, slot: usize) -> Option<(&'static str, &'static str)> {
+    match (name, slot) {
+        ("fox", 1) => Some(("PlFxOr.dat", "PlyFox5KOr_Share_joint")),
+        ("fox", 2) => Some(("PlFxLa.dat", "PlyFox5KLa_Share_joint")),
+        ("fox", 3) => Some(("PlFxGr.dat", "PlyFox5KGr_Share_joint")),
+        _ => costume_for(name),
+    }
+}
+
 /// `ftData->x44` (`ftData_x44_t`): the six ECB part indices, `unkC` and the ledge snap box.
 #[derive(Clone, Copy, Debug)]
 pub struct EcbDesc {
@@ -121,6 +133,13 @@ impl FighterFiles {
         let x30 = be32(d, self.ft_data + 0x30);
         let (count, inits) = (be32(d, x30) as usize, be32(d, x30 + 4));
         (0..count as u32).map(|i| (be32(d, inits + i * 0x28 + 4) as i32, be32(d, inits + i * 0x28 + 8))).collect()
+    }
+
+    /// A word of `*ftData->x4C_sfx` (`FtSFX`: x10 jump, x14 aerial jump, ...).
+    pub fn sfx_field(&self, off: u32) -> i32 {
+        let d = &self.dat.data;
+        let at = be32(d, self.ft_data + 0x4C);
+        be32(d, at + off) as i32
     }
 
     /// `ftData->x0->trophy_scale` (`ftCo_DatAttrs` +0x110; copied to `fp->co_attrs`).

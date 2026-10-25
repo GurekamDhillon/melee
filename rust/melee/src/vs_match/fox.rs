@@ -33,6 +33,10 @@ pub struct FoxVars {
     pub blaster: bool,
     pub is_loop: bool,
     pub accessory4: bool,
+    /// The gun item's `foxblaster.set_sfx_var2` (it_802ADDD0's last visibility; 1 at spawn).
+    pub gun_vis: i32,
+    /// The gun item's `foxblaster.xDE0` (it_802AE538 has played the draw sound).
+    pub gun_shot: bool,
 }
 
 /// Work a fighter hands to the item procs.
@@ -252,11 +256,14 @@ pub fn special_n_enter(p: &mut Player, air: bool, rand: &mut HsdRand) -> Result<
     let pos = p.fp.cur_pos;
     p.item_cmds.push(ItemCmd::SpawnGun { owner: p.slot as usize, kind: da.x20_FOX_BLASTER_GUN_ITKIND as i32, pos: Vec3 { x: pos.x, y: pos.y, z: 0.0 } });
     p.fx.blaster = true;
+    // it_802AE7B8: set_sfx_var2 = 1, xDE0 = false.
+    p.fx.gun_vis = 1;
+    p.fx.gun_shot = false;
     Ok(())
 }
 
 /// The shot: `ftFox_SpecialN_PrepareBlasterShot` + `FireBlasterShot`.
-fn fire_shot(p: &mut Player, slink1: bool) -> Result<(), String> {
+fn fire_shot(p: &mut Player, rand: &mut HsdRand, slink1: bool) -> Result<(), String> {
     let da = p.fx_attrs.ok_or("no Fox attrs")?;
     // ftFx_SpecialN_FtGetHoldJoint: lb_8000B1CC(RThumbNb part, {0, 1.2325, 4.2636}, &pos).
     let part = bone_index(p, FT_PART_RTHUMBNB);
@@ -270,6 +277,13 @@ fn fire_shot(p: &mut Player, slink1: bool) -> Result<(), String> {
     let mid = 0.5f32 * (fp.coll_data.ecb.top.y + fp.coll_data.ecb.bottom.y);
     let parent = Vec3 { x: fp.cur_pos.x + 0.0, y: fp.cur_pos.y + mid, z: fp.cur_pos.z + 0.0 };
     p.item_cmds.push(ItemCmd::Laser { owner: p.slot as usize, kind: da.x1C_FOX_BLASTER_SHOT_ITKIND as i32, angle: launch as f32, speed: da.x14_FOX_BLASTER_VEL, pos, parent, slink1 });
+    // ftFox_SpecialN_FireBlasterShot: the shot's sound (foxSFX / falcoSFX by facing).
+    let left = (p.fp.facing_dir == -1.0) as usize;
+    match p.fp.kind {
+        melee_types::Ft_Kind_Fox => super::sound::play_sfx(p, rand, [110103, 110106][left], 0x7F, 0x40),
+        melee_types::Ft_Kind_Falco => super::sound::play_sfx(p, rand, [100099, 100102][left], 0x7F, 0x40),
+        _ => {}
+    }
     Ok(())
 }
 
@@ -298,6 +312,37 @@ pub(super) fn spawn_step(last: Vec3, cur: Vec3) -> Vec3 {
 /// `FtPart_RThumbNb`.
 const FT_PART_RTHUMBNB: u32 = 49;
 
+/// `it_802ADDD0(gun, visibility)`'s sound: the put-away sound when the visibility becomes 2.
+fn gun_visibility(p: &mut Player, vis: i32) {
+    if !p.fx.blaster || p.fx.gun_vis == vis {
+        return;
+    }
+    p.fx.gun_vis = vis;
+    if vis == 2 {
+        gun_sfx(p, 0x1AE14, 0x18700);
+    }
+}
+
+/// `itFoxBlaster_PlaySFX` -> `Item_8026AE84(item, sfx, 0x7F, 0x40)`: the gun item's own sound
+/// (fox or falco id by the item kind; the item has no positional sound object).
+fn gun_sfx(p: &Player, fox: i32, falco: i32) {
+    let id = if p.fp.kind == melee_types::Ft_Kind_Falco { falco } else { fox };
+    melee_audio::sim::lbaudioax_800237a8(melee_audio::sim::lbaudioax_800233ec(id), 0x7F, 0x40);
+}
+
+/// `ftFox_SpecialN_UpdateBlaster`: it_802ADDD0(gun, 1), then cmd_vars[3] == 1 -> it_802AE538
+/// (the first time only: xDE0).
+fn update_blaster(p: &mut Player) {
+    gun_visibility(p, 1);
+    if p.fp.cmd_vars[3] == 1 && p.fx.blaster {
+        p.fp.cmd_vars[3] = 0;
+        if !p.fx.gun_shot {
+            gun_sfx(p, 0x1AE05, 0x186F1);
+            p.fx.gun_shot = true;
+        }
+    }
+}
+
 /// The Anim callbacks of the six states.
 pub fn anim(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     let m = p.fp.motion_id;
@@ -306,7 +351,8 @@ pub fn anim(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     let da = p.fx_attrs.ok_or("no Fox attrs")?;
     match state {
         0 | 1 => {
-            // Start (0) / Loop (1): UpdateBlaster (visual gun vars only), then the transitions.
+            // Start (0) / Loop (1): UpdateBlaster, then the transitions.
+            update_blaster(p);
             if !p.skel.frames_remaining() {
                 let base = if air { FX_MS_SPECIAL_AIR_N_START } else { FX_MS_SPECIAL_N_START };
                 if state == 0 {
@@ -315,6 +361,7 @@ pub fn anim(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
                     p.keep_gfx = true;
                     change_motion_state(p, base + 1, row.as_ref(), rand)?;
                     p.fx.accessory4 = true;
+                    gun_visibility(p, 1);
                 } else if p.fx.is_loop {
                     // BeginLoopTransition (SkipAttackCount | SkipModel | KeepGfx) + FinishLoopTransition.
                     let row = load_row(p, FX_SM_SPECIAL_N_START + (base - FX_MS_SPECIAL_N_START + 1) as u32)?;
@@ -322,19 +369,21 @@ pub fn anim(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
                     change_motion_state(p, base + 1, row.as_ref(), rand)?;
                     p.fx.accessory4 = true;
                     p.fx.is_loop = false;
+                    gun_visibility(p, 1);
                 } else {
                     // End: SkipModel | KeepGfx, then cmd_vars[1] = 1.
                     let row = load_row(p, FX_SM_SPECIAL_N_START + (base - FX_MS_SPECIAL_N_START + 2) as u32)?;
                     p.keep_gfx = true;
                     change_motion_state(p, base + 2, row.as_ref(), rand)?;
                     p.fp.cmd_vars[1] = 1;
+                    gun_visibility(p, 1);
                 }
             }
             if state == 1 {
                 // The Loop callback also fires a shot flagged in cmd_vars[2] right here.
                 if p.fp.cmd_vars[2] != 0 {
                     p.fp.cmd_vars[2] = 0;
-                    fire_shot(p, true)?;
+                    fire_shot(p, rand, true)?;
                 }
             }
             let _ = da;
@@ -345,6 +394,7 @@ pub fn anim(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
             // cmd_vars[1] == 2: ftpickupitem_80094818(gobj, 0), a no-op without a held item
             // (fp->item_gobj and x1978 are NULL: the gun is not a held item of the fighter).
 
+            gun_visibility(p, p.fp.cmd_vars[1] as i32);
             if p.fp.cmd_vars[3] == 2 && p.fx.blaster {
                 p.fp.cmd_vars[3] = 0;
             }
@@ -375,10 +425,10 @@ pub fn iasa(p: &mut Player) {
 }
 
 /// `ftFx_SpecialN_CreateBlasterShot` (accessory4_cb, s_link 9).
-pub fn accessory4(p: &mut Player) -> Result<(), String> {
+pub fn accessory4(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     if p.fx.accessory4 && p.fp.cmd_vars[2] != 0 {
         p.fp.cmd_vars[2] = 0;
-        fire_shot(p, false)?;
+        fire_shot(p, rand, false)?;
     }
     Ok(())
 }

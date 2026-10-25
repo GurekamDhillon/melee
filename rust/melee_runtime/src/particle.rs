@@ -179,6 +179,8 @@ pub struct TexBank {
     data: Arc<[u8]>,
     /// Absolute offset of each group (`None` = NULL entry).
     groups: Vec<Option<u32>>,
+    /// `texBank`: the offset the image / palette pointers are relative to (psInitDataBankLocate phase 3).
+    base: u32,
 }
 
 impl TexBank {
@@ -194,10 +196,42 @@ impl TexBank {
     pub fn palflag(&self, i: u32) -> Option<u16> {
         self.group(i).map(|g| be16(&self.data, g + 0x16))
     }
+    /// The DAT's bytes (image and palette offsets index these).
+    pub fn data(&self) -> &Arc<[u8]> {
+        &self.data
+    }
+    /// `HSD_PSTexGroup` header of group `i` (GC 0x0 num, 0x4 fmt, 0x8 tlutfmt, 0xC width, 0x10 height).
+    pub fn group_info(&self, i: u32) -> Option<TexGroupInfo> {
+        let g = self.group(i)?;
+        let d = &self.data;
+        Some(TexGroupInfo { num: be32(d, g), fmt: be32(d, g + 4), tlutfmt: be32(d, g + 8), width: be32(d, g + 0xC), height: be32(d, g + 0x10), palflag: be16(d, g + 0x16) })
+    }
+    /// `texTable[n]` of group `i`: the image's offset in `data()`.
+    pub fn image_off(&self, i: u32, n: u32) -> Option<u32> {
+        let g = self.group(i)?;
+        Some(be32(&self.data, g + 0x18 + 4 * n)).filter(|&o| o != 0).map(|o| o + self.base)
+    }
+    /// The palette table follows the image table (`(void**)&texTable[num]`): palette `k`'s offset.
+    pub fn pal_off(&self, i: u32, k: u32) -> Option<u32> {
+        let g = self.group(i)?;
+        let num = be32(&self.data, g);
+        Some(be32(&self.data, g + 0x18 + 4 * (num + k))).filter(|&o| o != 0).map(|o| o + self.base)
+    }
     /// `tg->texTable[n] != NULL` (relocation keeps NULL entries NULL).
     fn tex_present(&self, g: u32, n: u32) -> bool {
         be32(&self.data, g + 0x18 + 4 * n) != 0
     }
+}
+
+/// `HSD_PSTexGroup`'s header fields.
+#[derive(Clone, Copy, Debug)]
+pub struct TexGroupInfo {
+    pub num: u32,
+    pub fmt: u32,
+    pub tlutfmt: u32,
+    pub width: u32,
+    pub height: u32,
+    pub palflag: u16,
 }
 
 /// One located bank: `psInitDataBankLocate` applied to a `cmdBank` / `texBank` pair.
@@ -248,7 +282,7 @@ impl PsBankData {
                 (rel != 0).then_some(tex_off + rel)
             })
             .collect();
-        Ok(PsBankData { base, end: base + num, cmds, tex: TexBank { data: data.clone(), groups } })
+        Ok(PsBankData { base, end: base + num, cmds, tex: TexBank { data: data.clone(), groups, base: tex_off } })
     }
 
     /// `ptclref_804D0E5C[bank][idx]` for `idx < psCmdListArray[bank]`.

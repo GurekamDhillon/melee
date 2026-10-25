@@ -465,6 +465,19 @@ impl GxShim {
     pub fn copy_disp(&mut self, _clear: bool) {
         self.gx.draw_done();
         let draws = self.gx.state.take_draws();
+        if let Ok(v) = std::env::var("MELEE_GX_DRAWLOG") {
+            if v.parse::<u32>().ok() == Some(self.stats.copies) {
+                for (i, d) in draws.iter().enumerate() {
+                    let c = &d.config;
+                    eprintln!("DRAW {i} prim {:#x} verts {} blend {} {} {} op {} depth fn {} cmp {} upd {} alpha_upd {} color_upd {} cull {} tex {:#x} stages {}", d.prim, d.vtx_count, c.blend_mode, c.blend_fac_src, c.blend_fac_dst, c.blend_op, c.depth_func, c.depth_compare, c.depth_update, c.alpha_update, c.color_update, c.cull_mode, d.info.sampled_textures, c.shader.tev_stage_count);
+                    if std::env::var("MELEE_GX_DRAWLOG_TEV").ok().and_then(|x| x.parse::<usize>().ok()) == Some(i) {
+                        for k in 0..c.shader.tev_stage_count as usize { eprintln!("   TEV {k}: {:?}", c.shader.tev_stages[k]); }
+                        eprintln!("   ALPHACMP {:?}", c.shader.alpha_compare);
+                        eprintln!("   CHAN {:?}", &c.shader.color_channels[..2]);
+                    }
+                }
+            }
+        }
         self.frame = Some(draws);
         self.stats.copies = self.stats.copies.wrapping_add(1);
     }

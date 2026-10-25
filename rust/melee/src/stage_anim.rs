@@ -577,7 +577,13 @@ impl StageAnim {
             self.add_anim_one(gi, j, aj.as_deref(), mj.as_deref(), false);
         }
         self.req(gi, j, req_flags, frame, all);
-        self.for_aobjs(gi, j, af, all, AOp::SetRate(rate));
+        // grAnime_801C752C(.., HSD_AObjSetRate, 1, rate) calls the setter through `Callback1`
+        // (aobj, obj, flags, float): on the native x64 build the float travels in the 4th argument
+        // slot but HSD_AObjSetRate(aobj, f32) reads its 2nd, so the AObj's framerate becomes 0 (the
+        // PPC build had f1 for both). Measured against the C build's screenshots: the FD backdrop
+        // (gobjs 4-8) never moves. `rate` is kept for callers that want the PPC behaviour.
+        let _ppc_rate = rate;
+        self.for_aobjs(gi, j, af, all, AOp::SetRate(if std::env::var_os("MELEE_VIEW_PPC_RATE").is_some() { rate } else { 0.0 }));
         // eflags: the per-set "loop" byte (`x28`).
         let ef = if self.entries.is_empty() { be32(d, e + 0x28) } else { 0 };
         if ef != 0 && d[ef as usize + set as usize] != 0 {

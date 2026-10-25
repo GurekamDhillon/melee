@@ -829,6 +829,9 @@ impl VsMatch {
         // FD's grLast animation table; Battlefield's grBattle_OnInit starts gobj 0 and 1's anim 0
         // (grBattle_GObj0/1_Callback0 -> grAnime_801C8138), whose particle tracks are the 4 stage gens.
         let dptcl_rows: &[(u32, u32)] = if stkind == STKIND_GREENS || stkind == STKIND_STORY { &[] } else if stkind == STKIND_BF { &[(0, 0), (1, 0)] } else { &[(4, 0), (5, 4), (6, 6), (7, 8), (8, 10), (4, 0), (5, 0), (6, 0), (7, 0), (8, 0)] };
+        if std::env::var("MELEE_VIEW_PSLOG").is_ok() {
+            for g in 0..12u32 { for an in 0..14u32 { let n = std::panic::catch_unwind(|| crate::stage::dptcl_tracks(&stage, g, an).len()).unwrap_or(0); if n > 0 { eprintln!("DPTCL gobj {g} anim {an}: {n} tracks"); } } }
+        }
         for &(g, anim) in dptcl_rows {
             if !seen.insert((g, anim)) {
                 continue;

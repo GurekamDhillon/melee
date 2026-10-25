@@ -1184,3 +1184,8 @@ rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_In
 - Still open: GAME! (stock-out) call timing and leave order unproven; results/sudden-death scene audio; the sound-options volume
   settings and positional SFX through the live `melee play` loop have no C capture compared yet (positional/KO paths are in
   `melee_audio::posobj` and covered by the trace replays only where a scenario triggers them).
+
+- Round 3 (plat-audio, 2026-10-25): re-verified after merging port/platform-integ: `melee_audio` (14) and the 4 `audio_match` tests pass, all headless. Master volume
+  (`MELEE_VOLUME` / audio.cfg, applied as output gain only, so `MELEE_AUDIO_DUMP` stays full scale as in shim_ax.c) is ported in `output.rs`. GAME! cannot be compared yet:
+  the native sim has no KO / blast-zone / death path (only the C build can `gd.teleport` a fighter out and `gd.set_stocks 1`), so a stock-out capture needs the
+  fighter Dead* states first. Results / sudden-death scene audio and in-game menu sounds depend on the stand-in ui.rs menus.

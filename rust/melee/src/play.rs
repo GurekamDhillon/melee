@@ -29,7 +29,7 @@ use melee_gx::api::GxColor;
 use melee_gx::shim::GxShim;
 use melee_platform::gfx::{write_png, Presenter, EFB_HEIGHT, EFB_WIDTH};
 use melee_platform::pad::*;
-use melee_platform::{run_windowed, Game, PadSystem, WindowConfig};
+use melee_platform::{run_headless, run_windowed, Game, PadSystem, WindowConfig};
 use std::path::PathBuf;
 use std::process::ExitCode;
 use std::sync::Arc;
@@ -168,6 +168,8 @@ struct Match {
     paused: Option<usize>,
     /// Ticks since a stock count reached 0 / the sim stopped (the GameSet beat before the results).
     end_timer: Option<u32>,
+    /// The clock ran out (the TIME! call comes with the end timer).
+    timed_out: bool,
     quit_hold: u32,
 }
 
@@ -216,6 +218,7 @@ pub struct Play {
     skip_intro: bool,
     quit: bool,
     pub failed: Option<String>,
+    audio: Option<crate::audio::Audio>,
 }
 
 fn log(msg: &str) {
@@ -224,9 +227,45 @@ fn log(msg: &str) {
 
 impl Play {
     fn goto(&mut self, s: Scene) {
-        log(&format!("tick {}: {} -> {}", self.tick_no, self.scene.name(), s.name()));
+        log(&format!("tick {}: {} -> {}{}", self.tick_no, self.scene.name(), s.name(), self.audio.as_ref().map_or(String::new(), |a| format!(" (audio underruns {})", a.underruns()))));
+        self.audio_enter(s);
         self.scene = s;
         self.age = 0;
+    }
+
+    /// The scene's audio start (see audio.rs), before `self.scene` changes.
+    fn audio_enter(&mut self, s: Scene) {
+        let Some(a) = self.audio.as_ref() else { return };
+        let from = self.scene;
+        a.scene_start();
+        match s {
+            Scene::Opening => a.stop_music(),
+            Scene::Title => a.title(),
+            Scene::MainMenu | Scene::VsMenu => a.menu_music(),
+            Scene::Css => {
+                if from != Scene::Sss {
+                    a.css();
+                } else {
+                    a.menu_music();
+                }
+            }
+            Scene::Sss => a.menu_music(),
+            Scene::Loading => {}
+            Scene::Match => {
+                if let (Some(su), Some(m)) = (self.setup.as_ref(), self.m.as_ref()) {
+                    let ck = [crate::audio::ckind_of(ROSTER[su.fighters[0]].0), crate::audio::ckind_of(ROSTER[su.fighters[1]].0)];
+                    let (st, gr) = crate::audio::stage_kinds(STAGES[su.stage].0);
+                    a.match_start(&ck, st, gr, m.sim.bgm);
+                }
+            }
+            Scene::Results => {
+                if from == Scene::Match {
+                    a.match_leave();
+                }
+                let w = self.outcome.winner.map(|w| crate::audio::ckind_of(self.m.as_ref().map_or("falcon", |m| m.setup_names[w])));
+                a.results(w);
+            }
+        }
     }
 
     fn any_trig(&self) -> u32 {
@@ -242,6 +281,9 @@ impl Play {
     }
 
     fn back_to_css(&mut self) {
+        if self.scene == Scene::Match {
+            if let Some(a) = &self.audio { a.match_leave() }
+        }
         self.m = None;
         self.pick = [None, None];
         self.cursor = [0, 1];
@@ -270,14 +312,17 @@ impl Play {
                 } else if trig & HSD_PAD_START != 0 {
                     // gmTitleMode onExit: START -> GM_MENU
                     self.main_sel = 1;
+                    if let Some(a) = &self.audio { a.title_start() }
                     self.goto(Scene::MainMenu);
                 }
             }
             Scene::MainMenu => {
                 if ny != 0 {
                     self.main_sel = (self.main_sel as i32 - ny).rem_euclid(MAIN_ITEMS.len() as i32) as usize;
+                    if let Some(a) = &self.audio { a.moved() }
                 }
                 if trig & HSD_PAD_A != 0 {
+                    if let Some(a) = &self.audio { if MAIN_ITEMS[self.main_sel].1 { a.forward() } else { a.denied() } }
                     if MAIN_ITEMS[self.main_sel].1 {
                         self.vs_sel = 0;
                         self.goto(Scene::VsMenu);
@@ -285,6 +330,7 @@ impl Play {
                         self.toast = Some((format!("{} IS NOT IN THE NATIVE PORT YET", MAIN_ITEMS[self.main_sel].0), 120));
                     }
                 } else if trig & HSD_PAD_B != 0 {
+                    if let Some(a) = &self.audio { a.back() }
                     self.title_count = 0;
                     self.goto(Scene::Title);
                 }
@@ -292,8 +338,10 @@ impl Play {
             Scene::VsMenu => {
                 if ny != 0 {
                     self.vs_sel = (self.vs_sel as i32 - ny).rem_euclid(VS_ITEMS.len() as i32) as usize;
+                    if let Some(a) = &self.audio { a.moved() }
                 }
                 if trig & HSD_PAD_A != 0 {
+                    if let Some(a) = &self.audio { if VS_ITEMS[self.vs_sel].1 { a.forward() } else { a.denied() } }
                     if VS_ITEMS[self.vs_sel].1 {
                         self.cursor = [0, 1];
                         self.pick = [None, None];
@@ -302,11 +350,15 @@ impl Play {
                         self.toast = Some((format!("{} IS NOT IN THE NATIVE PORT YET", VS_ITEMS[self.vs_sel].0), 120));
                     }
                 } else if trig & HSD_PAD_B != 0 {
+                    if let Some(a) = &self.audio { a.back() }
                     self.goto(Scene::MainMenu);
                 }
             }
             Scene::Css => self.tick_css(),
             Scene::Sss => {
+                if nx != 0 || ny != 0 {
+                    if let Some(a) = &self.audio { a.moved() }
+                }
                 if nx != 0 {
                     self.sss_sel = (self.sss_sel as i32 + nx).rem_euclid(STAGES.len() as i32) as usize;
                 }
@@ -314,9 +366,11 @@ impl Play {
                     self.sss_sel = (self.sss_sel + 2) % STAGES.len();
                 }
                 if trig & (HSD_PAD_A | HSD_PAD_START) != 0 {
+                    if let Some(a) = &self.audio { a.forward() }
                     self.setup = Some(MatchSetup { fighters: [self.pick[0].unwrap_or(0), self.pick[1].unwrap_or(1)], stage: self.sss_sel });
                     self.goto(Scene::Loading);
                 } else if trig & HSD_PAD_B != 0 {
+                    if let Some(a) = &self.audio { a.back() }
                     self.pick = [None, None];
                     self.goto(Scene::Css);
                 }
@@ -331,6 +385,9 @@ impl Play {
             Scene::Results => {
                 if self.quit_at_results && self.age >= 90 {
                     self.quit = true;
+                }
+                if trig & (HSD_PAD_A | HSD_PAD_START) != 0 {
+                    if let Some(a) = &self.audio { a.forward() }
                 }
                 if trig & HSD_PAD_A != 0 {
                     self.back_to_css();
@@ -363,18 +420,25 @@ impl Play {
             let (mut cx, mut cy) = ((*c as i32) % cols, (*c as i32) / cols);
             cx = (cx + src.nav_x).rem_euclid(cols);
             cy = (cy - src.nav_y).rem_euclid(rows);
+            let old = *c;
             *c = ((cy * cols + cx) as usize).min(ROSTER.len() - 1);
+            if *c != old {
+                if let Some(a) = &self.audio { a.moved() }
+            }
             if src.trig & HSD_PAD_A != 0 {
+                if let Some(a) = &self.audio { a.css_pick(crate::audio::ckind_of(ROSTER[*c].0), *c) }
                 self.pick[slot] = Some(*c);
                 log(&format!("css: slot {} picked {}", slot + 1, ROSTER[*c].0));
                 return;
             }
         } else if src.trig & (HSD_PAD_START | HSD_PAD_A) != 0 {
+            if let Some(a) = &self.audio { a.forward() }
             self.sss_sel = 0;
             self.goto(Scene::Sss);
             return;
         }
         if src.trig & HSD_PAD_B != 0 {
+            if let Some(a) = &self.audio { a.back() }
             if self.pick[1].is_some() {
                 self.pick[1] = None;
             } else if self.pick[0].is_some() {
@@ -398,7 +462,7 @@ impl Play {
             let seed = 12345 + self.matches_played;
             let mut sim = VsMatch::new(&mut disc, stage_file, &names, seed, 3)?;
             let mr = MatchRender::new(&mut disc, stage_file, &names, &mut sim)?;
-            Ok(Match { sim, mr, setup_names: names, paused: None, end_timer: None, quit_hold: 0 })
+            Ok(Match { sim, mr, setup_names: names, paused: None, end_timer: None, timed_out: false, quit_hold: 0 })
         })();
         match built {
             Ok(m) => {
@@ -422,10 +486,12 @@ impl Play {
         match (m.paused, pauser) {
             (None, Some(p)) if m.end_timer.is_none() && m.sim.go_reached() => {
                 m.paused = Some(p);
+                if let Some(a) = self.audio.as_mut() { a.pause(true) }
                 log(&format!("paused by port {}", p + 1));
             }
             (Some(q), Some(p)) if q == p => {
                 m.paused = None;
+                if let Some(a) = self.audio.as_mut() { a.pause(false) }
                 log("resumed");
             }
             _ => {}
@@ -446,6 +512,9 @@ impl Play {
         if let Some(t) = &mut m.end_timer {
             // The GameSet beat (a halted sim holds its last frame).
             *t += 1;
+            if *t == crate::audio::TIME_CALL_DELAY as u32 && m.timed_out {
+                if let Some(a) = &self.audio { a.match_end_call(true) }
+            }
             if *t >= 150 {
                 self.finish_match();
             }
@@ -464,13 +533,20 @@ impl Play {
         let alive = m.sim.step();
         if alive {
             m.mr.step(&mut m.sim);
+            if let Some(a) = &self.audio {
+                a.match_frame(m.sim.frame, m.sim.go_frame_for_hud(), self.time_secs);
+            }
         }
         if !alive {
             log(&format!("simulation halted: {:?}", m.sim.stopped));
+            if let Some(a) = &self.audio { a.match_end_call(false) }
             m.end_timer = Some(0);
-        } else if m.sim.frame >= self.time_secs * 60 {
+        } else if m.sim.frame >= crate::audio::clock_end(m.sim.go_frame_for_hud(), self.time_secs) - 1 {
             log("time up: GameSet");
+            m.timed_out = true;
             m.end_timer = Some(0);
+            // gmVs: the end of the clock stops every track, then the TIME! call.
+            if let Some(a) = &self.audio { a.match_leave() }
         }
     }
 
@@ -716,6 +792,9 @@ impl Game for Play {
         self.tick_no += 1;
         self.age += 1;
         self.tick_scene();
+        if let Some(a) = self.audio.as_mut() {
+            a.tick();
+        }
         if self.max_frames.is_some_and(|n| self.tick_no >= n) {
             log(&format!("max frames reached in {}", self.scene.name()));
             self.quit = true;
@@ -822,7 +901,49 @@ pub fn play(args: &[String]) -> ExitCode {
         skip_intro: has("--skip-intro") || std::env::var("MELEE_SKIP_INTRO").is_ok_and(|v| v == "1"),
         quit: false,
         failed: None,
+        audio: None,
     };
+    let mut game = game;
+    // --headless: no window, no device, no gamepads; the pad script (MELEE_PAD_SCRIPT) drives
+    // the ports and --max-frames / --quit-at-results end the run. --audio-wav keeps the mix.
+    let headless = has("--headless");
+    let trace_path = get("--audio-trace");
+    if !has("--no-audio") && std::env::var("MELEE_AUDIO").map_or(true, |v| v != "0") {
+        match crate::audio::Audio::boot(&game.iso, headless) {
+            Ok(a) => game.audio = Some(a),
+            Err(e) => log(&format!("audio off: {e}")),
+        }
+    }
+    if let Some(a) = &game.audio {
+        if trace_path.is_some() {
+            melee_audio::sim::with(|s| s.trace = Some(Vec::new()));
+        }
+        a.scene_start();
+        a.stop_music();
+    }
+    if headless {
+        let mut pads = PadSystem::headless();
+        let limit = game.max_frames.unwrap_or(60 * 600);
+        let ticks = run_headless(&mut game, &mut pads, limit);
+        log(&format!("headless: {ticks} ticks, {}", game.scene.name()));
+        if let (Some(path), Some(cap)) = (get("--audio-wav"), game.audio.as_ref().and_then(|a| a.capture.as_ref())) {
+            if let Err(e) = crate::write_wav(&path, cap) {
+                eprintln!("play: {path}: {e}");
+                return ExitCode::FAILURE;
+            }
+            log(&format!("audio mix of {} sub-frames written to {path}", cap.len() / 320));
+        }
+        if let Some(p) = &trace_path {
+            let t = melee_audio::sim::with(|s| s.trace.take()).flatten().unwrap_or_default();
+            if let Err(e) = std::fs::write(p, t.join("
+") + "
+") {
+                eprintln!("play: {p}: {e}");
+            }
+            log(&format!("{} audio calls written to {p}", t.len()));
+        }
+        return if game.failed.is_some() { ExitCode::FAILURE } else { ExitCode::SUCCESS };
+    }
     let scripted = std::env::var_os("MELEE_PAD_SCRIPT").is_some_and(|v| !v.is_empty());
     let cfg = WindowConfig { title: "GD's Melee (native)".into(), width: 1280, height: 960, active: !scripted };
     if scripted {

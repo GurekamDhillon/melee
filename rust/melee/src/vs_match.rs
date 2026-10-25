@@ -41,6 +41,7 @@ pub mod rollback;
 mod snapshot;
 mod snapshot_ps;
 mod snapshot_fx;
+pub mod sound;
 use fox::{ItemCmd, FoxVars, SimItem};
 use rebirth::{PlayerRespawn, RespawnCtx};
 
@@ -164,6 +165,8 @@ pub struct Player {
     /// The partner fighter (`player_entity[1]`): Zelda behind Sheik, hash slot `slot * 2 + 1`.
     pub follower: bool,
     pub fp: Box<Fighter>,
+    /// The stand-in `Fighter_GObj` the sound code (owner identity, `user_data`) is handed.
+    pub snd_gobj: usize,
     /// An m-ex fighter's ftFunction code (crate::mex), run on `fp` at onLoad / onFrame.
     pub mex: Option<crate::mex::MexFighter>,
     pub entry: EntryVars,
@@ -462,6 +465,8 @@ pub struct BlastZone {
     pub bottom: f32,
     /// `Stage_GetCamBoundsTopOffset()`.
     pub cam_top: f32,
+    /// `Stage_GetCamBoundsBottomOffset()`.
+    pub cam_bottom: f32,
 }
 
 impl BlastZone {
@@ -480,7 +485,8 @@ impl BlastZone {
         // Ground_801C39C0: cam_bounds.top = the larger y of points 0x95 / 0x96 minus the offset.
         let (a, b) = (a.unwrap(), b.unwrap());
         let cam_top_raw = if a[1] < b[1] { b[1] - cam_y } else { a[1] - cam_y };
-        Ok(BlastZone { left: lft + cam_x, right: rgt + cam_x, top: top + cam_y, bottom: bot + cam_y, cam_top: cam_top_raw + cam_y })
+        let cam_bottom_raw = if a[1] < b[1] { a[1] - cam_y } else { b[1] - cam_y };
+        Ok(BlastZone { left: lft + cam_x, right: rgt + cam_x, top: top + cam_y, bottom: bot + cam_y, cam_top: cam_top_raw + cam_y, cam_bottom: cam_bottom_raw + cam_y })
     }
 }
 
@@ -1031,6 +1037,7 @@ impl VsMatch {
                 slot,
                 follower,
                 fp,
+                snd_gobj: 0,
                 mex,
                 entry,
                 skel,
@@ -1253,6 +1260,12 @@ impl VsMatch {
             let p = &mut self.players[pi];
             if p.follower {
                 continue;
+            }
+            if p.fp.x221F_b3() == 0 {
+                // Fighter_8006A360's head: pos_delta = cur_pos - prev_pos, then prev_pos = cur_pos.
+                let (c, q) = (p.fp.cur_pos, p.fp.prev_pos);
+                p.fp.pos_delta = melee_types::Vec { x: c.x - q.x, y: c.y - q.y, z: c.z - q.z };
+                p.fp.prev_pos = c;
             }
             if p.animating {
                 // ftAnim_8006E9B4, no blend (x8A4 == 0), x594_b0 / x594_b2 clear.
@@ -1637,6 +1650,19 @@ impl VsMatch {
                 continue;
             }
             self.blast_check(i)?;
+            // Fighter_procUpdate: the sound heard near the bottom blast zone (once per descent).
+            let b = self.blast;
+            let p = &mut self.players[i];
+            let cam_y = 0.5 * (b.cam_bottom + b.bottom);
+            if p.fp.x2225_b0() != 0 {
+                let bounds = 0.5 * (b.cam_bottom + cam_y);
+                if p.fp.prev_pos.y <= bounds && p.fp.cur_pos.y > bounds {
+                    p.fp.set_x2225_b0(0);
+                }
+            } else if p.fp.x222A_b1() == 0 && p.fp.x2228_b5() == 0 && p.fp.prev_pos.y >= cam_y && p.fp.cur_pos.y < cam_y {
+                sound::play_sfx(p, &mut self.rand, 96, 127, 64);
+                p.fp.set_x2225_b0(1);
+            }
         }
         // s_link 6, Fighter_procMap (x221F_b3 clear): the ECB lock countdown, the root JObj to
         // cur_pos, the state's coll_cb, the root JObj to cur_pos again.
@@ -1852,7 +1878,7 @@ impl VsMatch {
             }
             // Fighter_8006C80C: accessory4_cb (ftFx_SpecialN_CreateBlasterShot).
             if self.players[i].fp.x221F_b3() == 0 && self.players[i].fp.x2219_b5() == 0 {
-                fox::accessory4(&mut self.players[i])?;
+                fox::accessory4(&mut self.players[i], &mut self.rand)?;
             }
         }
         // s_link 14, Fighter_ProcessHit_8006D1EC: the shield's regeneration / upkeep (no hit is
@@ -2091,7 +2117,8 @@ impl VsMatch {
         {
             let fp = &mut *p.fp;
             if fp.x221D_b6() != 0 {
-                return Err("ftCo_800D3BC8: ft_800880D8 (looping sfx) not ported".into());
+                melee_fighter::ft0877::ft_800880d8(fp);
+                fp.x2004 = 0;
             }
             fp.set_x2219_b1(1);
             fp.set_x221E_b1(1);
@@ -2101,6 +2128,17 @@ impl VsMatch {
             fp.set_x221F_b1(1);
         }
         self.dead_bookkeeping(i)?;
+        // ft_80088C5C(gobj), the two KO voices (ft_data->x4C_sfx x4 / x8), and ft_PlaySFX(0x61)
+        // with its deferred repeat.
+        {
+            let p = &mut self.players[i];
+            sound::ft_80088c5c(p);
+            let (v4, v8) = (p.files.sfx_field(4), p.files.sfx_field(8));
+            sound::ko_voice(p, v4);
+            sound::ko_voice(p, v8);
+            sound::play_sfx(p, &mut self.rand, 0x61, 0x7F, 0x40);
+            melee_fighter::ft0877::ft_8008805c(&p.fp, 0x61);
+        }
         // efSync_Spawn(0x42B or 0x42C, gobj, &pos, &rot_z, &p_ftCommonData->x4F4, color1, color2):
         // efLib_Create_Attach_Pos(0x19) (0x1A in a stamina match) at the clamped position, root
         // rot Z = 0, scale x4F4 (the tev colours are render only).
@@ -2876,8 +2914,14 @@ fn jump_enter(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     }
     fp.self_vel.x = h_vel;
     fp.active_timer.lstick.y = 0xFE;
-    // (the jump SFX: ft_800881D8 / ft_PlaySFX, no draws.)
-    fp.set_x2227_b0(1);
+    let x197c = !fp.x197C.is_null();
+    // ftCo_800CB110's arg1: the jump voice (ft_data->x4C_sfx->x10), and 0x11A when x197C is set.
+    let voice = p.files.sfx_field(0x10);
+    melee_fighter::ft0881::ft_800881d8(&mut p.fp, voice, 0x7F, 0x40);
+    if x197c {
+        sound::play_sfx(p, rand, 0x11A, 0x7F, 0x40);
+    }
+    p.fp.set_x2227_b0(1);
     Ok(())
 }
 
@@ -2953,6 +2997,15 @@ fn jump_aerial_enter(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     fp.self_vel = melee_types::Vec { x: vx, y: vy, z: 0.0 };
     fp.active_timer.lstick.y = 0xFE;
     fp.x1968_jumpsUsed += 1;
+    // ft_80088770 (stop channel 0), the air-jump voice (ft_data->x4C_sfx->x14) on channel 6, and
+    // ft_JumpAerial_Sound.
+    melee_fighter::ft0881::ft_80088770(fp);
+    let voice = p.files.sfx_field(0x14);
+    melee_fighter::ft0881::ft_80088328(&mut p.fp, voice, 0x7F, 0x40);
+    let (kind, x197c) = (p.fp.kind, !p.fp.x197C.is_null());
+    if kind != melee_types::Ft_Kind_Mewtwo && (kind >= 0x10 || kind != melee_types::Ft_Kind_Ness) && x197c {
+        sound::play_sfx(p, rand, 0x11B, 0x7F, 0x40);
+    }
     Ok(())
 }
 
@@ -3068,7 +3121,7 @@ fn ftco_800939b4(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     guard_shield_up(p);
     // ftCo_8009370C: ftColl_CreateReflectHit.
     p.fp.set_reflecting(1);
-    ftco_800921dc(p)
+    ftco_800921dc(p, rand)
 }
 
 /// `ftCo_800923B4` -> `ftCo_800924C0`: GuardOn.
@@ -3085,11 +3138,11 @@ fn ftco_800923b4(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     p.guard.x14 = 0.0;
     p.guard.x18 = 0.0;
     guard_shield_up(p);
-    ftco_800921dc(p)
+    ftco_800921dc(p, rand)
 }
 
 /// `ftCo_800921DC`: the shield's variables and bubble (effect 1047 = 0x417, `efLib_Create_Attach(0xB)`).
-fn ftco_800921dc(p: &mut Player) -> Result<(), String> {
+fn ftco_800921dc(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     let cd = melee_fighter::hooks::common_data();
     p.ef_ops.push(EfOp::Spawn(QueuedEffect { kind: EF_SPAWN_SYNC, gfx: 1047, part: 0, params: Vec3 { x: 0.0, y: 0.0, z: 0.0 }, extra1: 0.0, extra2: 0.0 }));
     let fp = &mut *p.fp;
@@ -3109,6 +3162,8 @@ fn ftco_800921dc(p: &mut Player) -> Result<(), String> {
     fp.lightshield_amount = lsa;
     g.x20 = 0;
     g.x24 = 0;
+    // (ftCo_80091E78: the bubble pose, render only.) The shield-up sound.
+    sound::play_sfx(p, rand, 110, 127, 64);
     Ok(())
 }
 
@@ -3185,6 +3240,7 @@ fn guard_release(p: &mut Player, rand: &mut HsdRand) -> Result<bool, String> {
         guard_kind_check(p)?;
         let row = load_row(p, FTCO_SM_GUARD_OFF)?;
         change_motion_state(p, FTCO_MS_GUARD_OFF, row.as_ref(), rand)?;
+        sound::play_sfx(p, rand, 127, 127, 64);
         return Ok(true);
     }
     if p.guard.x1c != 0 {
@@ -3412,7 +3468,7 @@ fn ft_8008a2bc(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
 
 /// `ftAction_80072CD8`: the footstep (`ft_80084BFC`, the floor material's step sound and
 /// effect), then the script's own sound command.
-fn ftaction_80072cd8(p: &mut Player, _rand: &mut HsdRand) -> Result<(), String> {
+fn ftaction_80072cd8(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     let w0 = be32(&p.pdat, p.script);
     let mut sp60 = 1;
     let fp = &*p.fp;
@@ -3425,8 +3481,10 @@ fn ftaction_80072cd8(p: &mut Player, _rand: &mut HsdRand) -> Result<(), String> 
         } else {
             sp60 = play;
         }
+        // ftAction_80072CD8: the material's step sound goes through a copy of the command with
+        // word 1 replaced; the gfx is spawned after it.
         if sp64 != -1 {
-            return Err(format!("footstep material sfx {sp64:#x} (ft_PlaySFX pitch draw / sound remap) not wired"));
+            sound_cmd_with(p, rand, sp64);
         }
         if gfx_id != -1 {
             return Err(format!("footstep gfx {gfx_id:#x} not wired"));
@@ -3434,17 +3492,10 @@ fn ftaction_80072cd8(p: &mut Player, _rand: &mut HsdRand) -> Result<(), String> 
     }
     if sp60 != 0 {
         // ftAction_80071B50(gobj, cmd): the script's own sound command (3 words).
-        let behavior = (w0 >> 18) & 0xFF;
-        if behavior <= 6 {
-            let sfx = be32(&p.pdat, p.script + 4) as i32;
-            if (332..=370).contains(&sfx) {
-                return Err(format!("ft_PlaySFX {sfx}: the HSD_Randi(200) pitch draw needs ft_80087D0C's remap (not wired)"));
-            }
-        } else if behavior >= 10 {
-            return Err("ftAction_80071B50 stop-sound behaviours not wired".into());
-        }
+        ftaction_80071b50(p, rand)?;
+    } else {
+        p.script += 12;
     }
-    p.script += 12;
     Ok(())
 }
 
@@ -3912,16 +3963,15 @@ fn ftaction_run(p: &mut Player, rand: &mut HsdRand, skip: bool) -> Result<(), St
             0x26 => {
                 let range = (w & 0x3F) as i32;
                 let behavior = (w >> 6) & 0xF;
+                let (vol, pan) = (((w >> 18) & 0xFF) as u8, ((w >> 10) & 0xFF) as u8);
                 let pick = rand.randi(range);
                 let sfx = be32(&p.pdat, p.script + 4 + 4 * pick as u32) as i32;
-                if behavior == 0 && (332..=515).contains(&sfx) {
-                    return Err(format!("ft_PlaySFX {sfx}: ft_80087D0C's remap and the pitch draw not wired"));
-                }
+                sound::sound_command(p, rand, behavior, sfx, vol, pan);
                 p.script += 28;
             }
             // ftAction_80071B50: a sound command; ftAction_80071CA4 (skip table): three words.
             0x11 if skip => p.script += 12,
-            0x11 => ftaction_80071b50(p)?,
+            0x11 => ftaction_80071b50(p, rand)?,
             op => return Err(format!("command script opcode {op:#x} (ftAction_803C06E8[{}]) not ported", op as i32 - 10)),
         }
         if p.fp.x3E4_fighterCmdScript.timer == F32_MAX {
@@ -4008,21 +4058,36 @@ fn ftaction_8007121c(p: &mut Player) -> Result<(), String> {
 /// `ftAction_80071B50`: behaviours 0-6 play `sfx` (word 2) on a channel, 10-15 stop one; no
 /// audio here. Only `ft_PlaySFX` (behaviour 0) draws from the RNG, `HSD_Randi(200)` for a
 /// remapped id in 332..370 (`ft_80087D0C`, not ported: such ids stop the run).
-fn ftaction_80071b50(p: &mut Player) -> Result<(), String> {
+fn ftaction_80071b50(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     let w0 = be32(&p.pdat, p.script);
     let behavior = (w0 >> 18) & 0xFF;
     match behavior {
         0..=6 => {
             let sfx = be32(&p.pdat, p.script + 4) as i32;
-            if behavior == 0 && (332..=515).contains(&sfx) {
-                return Err(format!("ft_PlaySFX {sfx}: ft_80087D0C's remap and the HSD_Randi(200) pitch draw not wired"));
-            }
+            let w2 = be32(&p.pdat, p.script + 8);
+            sound::sound_command(p, rand, behavior, sfx, ((w2 >> 8) & 0xFF) as u8, (w2 & 0xFF) as u8);
             p.script += 12;
         }
-        10..=15 => p.script += 12,
+        10..=15 => {
+            sound::sound_command(p, rand, behavior, 0, 0, 0);
+            p.script += 12;
+        }
         _ => p.script += 8,
     }
     Ok(())
+}
+
+/// `ftAction_80071B50` on a copy of the current command whose word 1 (the sound id) is `sfx`
+/// (the material sounds of `ftAction_80072CD8` / `80072E4C`); the script does not advance.
+fn sound_cmd_with(p: &mut Player, rand: &mut HsdRand, sfx: i32) {
+    let w0 = be32(&p.pdat, p.script);
+    let behavior = (w0 >> 18) & 0xFF;
+    let w2 = be32(&p.pdat, p.script + 8);
+    match behavior {
+        0..=6 => sound::sound_command(p, rand, behavior, sfx, ((w2 >> 8) & 0xFF) as u8, (w2 & 0xFF) as u8),
+        10..=15 => sound::sound_command(p, rand, behavior, 0, 0, 0),
+        _ => {}
+    }
 }
 
 /// Final Destination's floor-material step rows (mplib.c `mpLib_803BE7A8`: x4[0] (step sfx),
@@ -4064,26 +4129,17 @@ fn ftaction_80072e4c(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         false
     };
     if found && cmd_flag == 0 && sp64 != -1 {
-        return Err(format!("landing material sfx {sp64:#x} (ftAction_80071B50) not wired"));
+        sound_cmd_with(p, rand, sp64);
     }
     if gfx_id == -1 {
         gfx_id = (w0 & 0xFFFF) as i32;
     }
     ftco_8009f834(p, rand, gfx_id as u32, 0, Vec3 { x: 0.0, y: 0.0, z: 0.0 }, Vec3 { x: 0.0, y: 0.0, z: 0.0 })?;
     if sp60 != 0 {
-        // ft_PlaySFX(fp, 0x46, 0x7F, 0x40): no audio here; 0x46 draws no pitch randomness.
+        sound::play_sfx(p, rand, 0x46, 0x7F, 0x40);
         if cmd_flag == 0 {
             // ftAction_80071B50(gobj, cmd): the script's own sound command (3 words).
-            let behavior = (w0 >> 18) & 0xFF;
-            if behavior <= 6 {
-                let sfx = be32(&p.pdat, p.script + 4) as i32;
-                if (332..=370).contains(&sfx) {
-                    return Err(format!("ft_PlaySFX {sfx}: the HSD_Randi(200) pitch draw needs ft_80087D0C's remap (not wired)"));
-                }
-            } else if behavior >= 10 {
-                return Err("ftAction_80071B50 stop-sound behaviours not wired".into());
-            }
-            p.script += 12;
+            ftaction_80071b50(p, rand)?;
         }
     }
     if sp60 == 0 || cmd_flag != 0 {
@@ -4174,6 +4230,8 @@ fn entry_start(p: &mut Player, c: EntryCommon, rand: &mut HsdRand) -> Result<(),
     // queued (the current proc's s_link is below 9).
     let x8 = p.entry.x8;
     p.ef_queue.push(QueuedEffect { kind: EF_SPAWN_ATTACH_PARAM, gfx: 0x43E, part: 0, params: Vec3 { x: x8.x, y: 0.0, z: 0.0 }, extra1: 0.0, extra2: 0.0 });
+    // lbAudioAx_80024304(0x8B): the entry sound, on track 0x16.
+    melee_audio::sim::with(|s| s.lb_audio_ax_80024304(0x8B));
     Ok(())
 }
 
@@ -4267,6 +4325,9 @@ fn change_motion_state_ext(p: &mut Player, msid: i32, row: Option<&(AnimRow, Fig
     p.skel.set_part_rot(0, 0, 0.0);
     p.skel.set_part_rot(0, 1, (core::f64::consts::FRAC_PI_2 * fp.facing_dir as f64) as f32);
     p.skel.set_part_rot(0, 2, 0.0);
+    // (no state the native port runs passes Ft_MF_KeepSfx.)
+    sound::change_state_stops(p);
+    let fp = &mut p.fp;
     fp.frame_speed_mul = anim_speed;
     fp.x8A0_unk = anim_speed;
     fp.cur_anim_frame = anim_start - fp.frame_speed_mul;
@@ -4623,6 +4684,7 @@ impl Sim for VsMatch {
             }
         }
         self.frame += 1;
+        if std::env::var_os("MELEE_DBG_MS").is_some() { for p in &self.players { eprintln!("ms {} {} {}", self.frame, p.slot, p.fp.motion_id); } }
         if let Ok(v) = std::env::var("MELEE_GOLDEN_SUMMARY") {
             if v.split(',').any(|x| x.trim().parse::<i32>().ok() == Some(self.frame)) {
                 eprint!("{}", self.state_summary());

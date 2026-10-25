@@ -293,6 +293,10 @@ static void HSD_DevComDVDCallback(s32 result, DVDFileInfo* unused)
         HSD_DevComARAMWakeUp();
     } else if (type == 0x23) {
         HSD_DevCom_804D77F7 = HSD_DevCom_804D77F6;
+#if defined(TARGET_PC)
+        { extern void ax_trace(const char*, int, int, int, int, int);
+          ax_trace("DCHUNK", dvdDC->size > DEVCOM_BUF_SIZE ? DEVCOM_BUF_SIZE : (int) dvdDC->size, 0, 0, 0, 0); }
+#endif
         if (dvdDC->size > DEVCOM_BUF_SIZE) {
             ARQPostRequest(
                 devComARQR[HSD_DevCom_804D77F7], 0, 0, 1,

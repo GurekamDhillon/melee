@@ -93,3 +93,11 @@ fn stock_out_game_and_results_mix_equals_c() {
 fn time_up_and_sudden_death_mix_equals_c() {
     check_bare(include_str!("data/vs_timeup_sudden_death.trace"), 18233, 0xbb27f2611d767fb9, 29);
 }
+
+/// Title, the memory-card / unlock notices, the retail main menu (cursor up and down, 1P / VS
+/// and back): the s_info and menu01 streams, block refills landing chunk by chunk (DCHUNK) while
+/// the previous stream fades out.
+#[test]
+fn frontend_menu_streams_mix_equals_c() {
+    check_bare(include_str!("data/menu_frontend.trace"), 4483, 0x7db0156cba82a71d, 17);
+}

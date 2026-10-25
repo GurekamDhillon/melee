@@ -772,9 +772,11 @@ fn kf(v: f32) -> In {
 /// Returns (colour source, alpha source) for the TObj's main stage.
 fn color_gen(d: &Dat, tev: u32, o: &TObjRt, out: &mut Tev) -> (In, In) {
     let active = d.u32_(tev + 0x1C);
-    let konst = d.color(tev + 0x10);
-    let tev0 = d.color(tev + 0x14);
-    let tev1 = d.color(tev + 0x18);
+    let (konst, tev0, tev1) = match &o.obj.tev {
+        // `efLib_SetTevKonstColor` & co. write the live TObj's tev; the descriptor's are the defaults.
+        Some(t) => ([t.konst.r, t.konst.g, t.konst.b, t.konst.a], [t.tev0.r, t.tev0.g, t.tev0.b, t.tev0.a], [t.tev1.r, t.tev1.g, t.tev1.b, t.tev1.a]),
+        None => (d.color(tev + 0x10), d.color(tev + 0x14), d.color(tev + 0x18)),
+    };
     let cin = |v: u8| -> In {
         match v as u32 {
             15 => In::Zero, // GX_CC_ZERO
@@ -970,6 +972,8 @@ impl HsdRender {
     /// Emit the stage list: TevOrder / ColorIn / AlphaIn / ops, KONST registers per stage.
     fn setup_tev<G: GxBackend>(&mut self, g: &mut G, t: &Tev) {
         let mut kregs: Vec<Rgba> = Vec::new();
+        // TEV registers REG1 / REG2: (rgb, alpha) constants a stage needed beyond its one konst.
+        let mut xregs: [(Option<[u8; 3]>, Option<u8>); 2] = [(None, None); 2];
         for st in &t.stages {
             if self.current_tev >= 16 {
                 break;
@@ -977,10 +981,40 @@ impl HsdRender {
             let stage = self.state_assign_tev();
             let (coord, map) = st.tex.unwrap_or((GX_TEXCOORD_NULL, GX_TEXMAP_NULL));
             g.set_tev_order(stage, coord, map, st.chan);
-            let c: Vec<(u32, Option<[u8; 3]>)> = st.c.ins.iter().map(|&i| cin(i)).collect();
-            let a: Vec<(u32, Option<u8>)> = st.a.ins.iter().map(|&i| ain(i)).collect();
+            let mut c: Vec<(u32, Option<[u8; 3]>)> = st.c.ins.iter().map(|&i| cin(i)).collect();
+            let mut a: Vec<(u32, Option<u8>)> = st.a.ins.iter().map(|&i| ain(i)).collect();
             let kc = c.iter().find_map(|x| x.1);
             let ka = a.iter().find_map(|x| x.1);
+            // A stage selects ONE konst colour and ONE konst alpha. A second distinct constant in
+            // the same stage (a TObj TEV of (tev0 - konst) * tex) lives in a TEV register instead
+            // (REG1 / REG2, which the stage lists never write): GXSetTevColor, 4u32/C2, 2u32/A2.
+            for x in c.iter_mut() {
+                if let Some(k) = x.1 {
+                    if Some(k) != kc {
+                        let r = match xregs.iter().position(|r| r.0 == Some(k)).or_else(|| xregs.iter().position(|r| r.0.is_none())) {
+                            Some(r) => r,
+                            None => 1,
+                        };
+                        xregs[r].0 = Some(k);
+                        g.set_tev_color_s10(2 + r as u32, [k[0] as i16, k[1] as i16, k[2] as i16, xregs[r].1.unwrap_or(0) as i16]);
+                        *x = (if r == 0 { 4u32 } else { 6u32 }, None);
+                    }
+                }
+            }
+            for x in a.iter_mut() {
+                if let Some(v) = x.1 {
+                    if Some(v) != ka {
+                        let r = match xregs.iter().position(|r| r.1 == Some(v)).or_else(|| xregs.iter().position(|r| r.1.is_none())) {
+                            Some(r) => r,
+                            None => 1,
+                        };
+                        xregs[r].1 = Some(v);
+                        let k = xregs[r].0.unwrap_or([0; 3]);
+                        g.set_tev_color_s10(2 + r as u32, [k[0] as i16, k[1] as i16, k[2] as i16, v as i16]);
+                        *x = (if r == 0 { 2u32 } else { 3u32 }, None);
+                    }
+                }
+            }
             if kc.is_some() || ka.is_some() {
                 let want: Rgba = {
                     let k = kc.unwrap_or([0; 3]);

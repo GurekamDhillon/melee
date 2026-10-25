@@ -12,6 +12,9 @@
 //! NOT ported: shape animation (FD has none), RObj animation (`robj_anim` is asserted empty),
 //! TObj TLUT tables and TEV-konst colour tracks (the renderer's TEV is built from the descriptor),
 //! `grMaterial` colour-overlay scripts.
+fn be16(d: &[u8], at: u32) -> u16 {
+    d.get(at as usize..at as usize + 2).map_or(0, |b| u16::from_be_bytes(b.try_into().unwrap()))
+}
 fn be32(d: &[u8], at: u32) -> u32 {
     d.get(at as usize..at as usize + 4).map_or(0, |b| u32::from_be_bytes(b.try_into().unwrap()))
 }
@@ -142,8 +145,10 @@ impl MObjState {
             .into_iter()
             .map(|t| {
                 let mut obj = t.obj;
-                if t.tev.is_some() {
-                    obj.tev = Some(HsdTObjTev::default());
+                if let Some(tv) = t.tev {
+                    // The descriptor's colours (`HSD_TObjTev` konst +0x10, tev0 +0x14, tev1 +0x18): the tracks and the
+                    // effect spawners (`efLib_SetTevKonstColor`) change them, the TEV generator reads them.
+                    obj.tev = Some(HsdTObjTev { konst: gxc(d.color(tv + 0x10)), tev0: gxc(d.color(tv + 0x14)), tev1: gxc(d.color(tv + 0x18)) });
                 }
                 TObjState { desc: t.desc, id: t.id, obj, aobj: None }
             })
@@ -577,7 +582,13 @@ impl StageAnim {
             self.add_anim_one(gi, j, aj.as_deref(), mj.as_deref(), false);
         }
         self.req(gi, j, req_flags, frame, all);
-        self.for_aobjs(gi, j, af, all, AOp::SetRate(rate));
+        // grAnime_801C752C(.., HSD_AObjSetRate, 1, rate) calls the setter through `Callback1`
+        // (aobj, obj, flags, float): on the native x64 build the float travels in the 4th argument
+        // slot but HSD_AObjSetRate(aobj, f32) reads its 2nd, so the AObj's framerate becomes 0 (the
+        // PPC build had f1 for both). Measured against the C build's screenshots: the FD backdrop
+        // (gobjs 4-8) never moves. `rate` is kept for callers that want the PPC behaviour.
+        let _ppc_rate = rate;
+        self.for_aobjs(gi, j, af, all, AOp::SetRate(if std::env::var_os("MELEE_VIEW_PPC_RATE").is_some() { rate } else { 0.0 }));
         // eflags: the per-set "loop" byte (`x28`).
         let ef = if self.entries.is_empty() { be32(d, e + 0x28) } else { 0 };
         if ef != 0 && d[ef as usize + set as usize] != 0 {
@@ -745,6 +756,18 @@ impl StageAnim {
                     })
                 })
                 .collect();
+            if std::env::var_os("MELEE_VIEW_TOBJDUMP").is_some() {
+                for d in &n.dobj {
+                    if let Some(m) = ext.mobjs.get(d) {
+                        if let Some(a) = m.aobj.as_ref() {
+                            eprintln!("    dobj {d:#x} mobj aobj f{:.1}/{:.1} fobjs {:?}", a.curr_frame, a.end_frame, a.fobj.iter().map(|f| (f.obj_type, f.p0, f.p1)).collect::<Vec<_>>());
+                        }
+                        for t in &m.tobjs {
+                            eprintln!("    dobj {d:#x} tobj id {} flags {:#x} blend {} image {:?} {:?} tbl {:?} aobj {}", t.id, t.obj.flags, t.obj.blending, t.obj.imagedesc, t.obj.imagedesc.map(|i| (be16(&self.dat, i + 4), be16(&self.dat, i + 6), be32(&self.dat, i + 8))), t.obj.imagetbl.as_ref().map(|v| v.iter().map(|i| i.map(|i| (i, be16(&self.dat, i + 4), be16(&self.dat, i + 6), be32(&self.dat, i + 8)))).collect::<Vec<_>>()), t.aobj.as_ref().map_or("-".into(), |a| format!("f{:.1}/{:.1} fobjs {:?}", a.curr_frame, a.end_frame, a.fobj.iter().map(|f| (f.obj_type, f.op, f.p0, f.p1, f.time, f.startframe, f.nb_pack, f.frac_value, format!("{:02x?}", &f.ad_head[..f.ad_head.len().min(f.length as usize)]))).collect::<Vec<_>>())));
+                        }
+                    }
+                }
+            }
             if let Some(a) = n.aobj.as_ref() {
                 for f in &a.fobj {
                     eprintln!("      fobj ty {} op {} intrp {} len {} time {:.1} p0 {:.3} p1 {:.3} d0 {:.3} d1 {:.3} start {} nb {}", f.obj_type, f.op, f.op_intrp, f.length, f.time, f.p0, f.p1, f.d0, f.d1, f.startframe, f.nb_pack);
@@ -798,11 +821,49 @@ impl StageAnim {
         n.flags |= melee_runtime::jobj::JOBJ_MTX_DIRTY;
     }
 
+    /// `HSD_JObjSetRotationY/Z` on the idx'th JObj (`None` keeps the current value).
+    pub fn set_rotate_yz(&mut self, map_id: u32, idx: u32, y: Option<f32>, z: Option<f32>) {
+        let gi = self.gi(map_id);
+        let n = self.groups[gi].tree.get_mut(JObjId(idx));
+        if let Some(y) = y {
+            n.rotate.y = y;
+        }
+        if let Some(z) = z {
+            n.rotate.z = z;
+        }
+        n.flags |= melee_runtime::jobj::JOBJ_MTX_DIRTY;
+    }
+
     pub fn set_scale(&mut self, map_id: u32, idx: u32, s: Vec3) {
         let gi = self.gi(map_id);
         let n = self.groups[gi].tree.get_mut(JObjId(idx));
         n.scale = s;
         n.flags |= melee_runtime::jobj::JOBJ_MTX_DIRTY;
+    }
+
+    /// `efLib_SetTevKonstColor(jobj, n, konst, tev0)`: the first DObj of the idx'th JObj, its n'th TObj's tev
+    /// konst / tev0 RGB (0xRRGGBB); alpha and tev1 stay the descriptor's.
+    pub fn set_tev_colors(&mut self, map_id: u32, idx: u32, n: usize, konst: u32, tev0: u32) {
+        let Some(dobj) = self.dobj_of(map_id, idx) else { return };
+        let dat = self.dat.clone();
+        let d: &[u8] = &dat;
+        let ext = self.rt.ext.clone();
+        let mut ext = ext.borrow_mut();
+        let Some(m) = ext.mobjs.get_mut(&dobj) else { return };
+        let Some(t) = m.tobjs.get_mut(n) else { return };
+        let tv = be32(d, t.desc + 0x58);
+        if tv == 0 {
+            return;
+        }
+        let c = |at: u32| melee_runtime::hsd_util::GxColor { r: d[at as usize], g: d[at as usize + 1], b: d[at as usize + 2], a: d[at as usize + 3] };
+        let (mut k, mut t0, t1) = (c(tv + 0x10), c(tv + 0x14), c(tv + 0x18));
+        k.r = (konst >> 16) as u8;
+        k.g = (konst >> 8) as u8;
+        k.b = konst as u8;
+        t0.r = (tev0 >> 16) as u8;
+        t0.g = (tev0 >> 8) as u8;
+        t0.b = tev0 as u8;
+        t.obj.tev = Some(melee_runtime::tobj::HsdTObjTev { konst: k, tev0: t0, tev1: t1 });
     }
 
     /// `HSD_JObjSetFlagsAll` / `ClearFlagsAll` of JOBJ_HIDDEN on the idx'th JObj and its subtree.

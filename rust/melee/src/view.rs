@@ -29,6 +29,7 @@ use melee_runtime::mtx::{self, Mtx, Vec3};
 use melee_runtime::tu::displayfunc::{DispJoint, DispModel, HSD_TRSP_OPA, HSD_TRSP_TEXEDGE, HSD_TRSP_XLU};
 use melee_runtime::tu::lobj::stage_light_descs;
 use melee_runtime::tu::state::{Dat, HsdRender};
+use std::collections::HashMap;
 use std::path::PathBuf;
 use std::process::ExitCode;
 use std::sync::Arc;
@@ -151,11 +152,16 @@ struct Stage {
     groups: Vec<(u32, u32)>,
     /// `x18` light descriptors of the light group.
     lights: Vec<u32>,
+    /// `stage_info.map_plit`'s lights (ftCo_8009F4A4: the set the fighters are lit by); empty = the stage's.
+    fighter_lights: Vec<u32>,
+    stage_lights: AnimLights,
+    plit_lights: Option<AnimLights>,
 }
 
 fn load_stage(file: &[u8], is_fd: bool) -> Result<Stage, String> {
     let a = DatArchive::parse(file).map_err(|e| format!("stage: {e}"))?;
     let head = a.public_offset("map_head").ok_or("no map_head")?;
+    let a_plit = a.public_offset("map_plit");
     let dat = Arc::new(a.data);
     let d = &dat[..];
     let table = be32(d, head + 8);
@@ -184,6 +190,18 @@ fn load_stage(file: &[u8], is_fd: bool) -> Result<Stage, String> {
             }
         }
     }
+    let mut fighter_lights = Vec::new();
+    if let Some(pl) = a_plit {
+        for i in 0..16 {
+            let l = be32(d, pl + 4 * i);
+            if l == 0 {
+                break;
+            }
+            if be32(d, l) != 0 {
+                fighter_lights.push(be32(d, l));
+            }
+        }
+    }
     // grLast_OnInit: stage gobjs 0-3 on_init (grAnime_801C8138 set 0), then backdrop case 1 of grLast_8021B920.
     for &g in &ids {
         if is_fd && g <= 3 {
@@ -194,11 +212,21 @@ fn load_stage(file: &[u8], is_fd: bool) -> Result<Stage, String> {
         if !is_fd || !ids.contains(&map) {
             continue;
         }
+        let rate = if std::env::var("MELEE_VIEW_RATE0").is_ok() { 0.0 } else { 1.0 };
         if i2 != -1 {
-            anim.grdo_anim(map, i2 as u32, 7, set, true, 0.0, 1.0);
+            anim.grdo_anim(map, i2 as u32, 7, set, true, 0.0, rate);
         }
-        anim.grdo_anim(map, i1, 7, 0, false, 0.0, 1.0);
+        if std::env::var("MELEE_VIEW_NOSET0").is_ok() && map >= 5 { continue; }
+        anim.grdo_anim(map, i1, 7, 0, false, 0.0, rate);
         anim.grdo_clear_loop(map, i1, 7);
+    }
+    if let Ok(n) = std::env::var("MELEE_VIEW_EXTRASET").map(|v| v.parse::<i32>().unwrap_or(1)) {
+        for &(map, i1, _i2, _set) in &FD_BACKDROP {
+            if is_fd && ids.contains(&map) {
+                anim.grdo_anim(map, i1, 7, n, false, 0.0, 1.0);
+                anim.grdo_clear_loop(map, i1, 7);
+            }
+        }
     }
     if is_fd && ids.contains(&4) {
         anim.grdo_anim(4, 0x10, 7, 0, false, 0.0, 1.0);
@@ -206,6 +234,86 @@ fn load_stage(file: &[u8], is_fd: bool) -> Result<Stage, String> {
     if let (Ok(v), Err(_)) = (std::env::var("MELEE_VIEW_DUMP"), std::env::var("MELEE_VIEW_DUMP_FRAME")) {
         for g in v.split(',').filter_map(|x| x.trim().parse::<u32>().ok()) {
             anim.dump(g);
+        }
+    }
+    if let Ok(v) = std::env::var("MELEE_VIEW_PODUMP") {
+        // "g:j": the pobjs of a joint: flags, vertex descriptor attributes, display list primitives.
+        if let Some((g, j)) = v.split_once(':') {
+            let (g, j): (u32, usize) = (g.parse().unwrap(), j.parse().unwrap());
+            let e = be32(d, table + g * 0x34);
+            let mut descs = Vec::new();
+            descs_of(d, e, 0, &mut descs);
+            let jd = descs[j];
+            let mut dob = be32(d, jd + 0x10);
+            while dob != 0 {
+                let mut po = be32(d, dob + 0xC);
+                while po != 0 {
+                    let (flags, nd) = (be16(d, po + 0xC), be16(d, po + 0xE));
+                    let (vd, dl) = (be32(d, po + 8), be32(d, po + 0x10));
+                    let mut attrs = String::new();
+                    let mut a = vd;
+                    while be32(d, a) != 0xFF {
+                        attrs += &format!(" [attr {} type {} cnt {} ctype {} frac {} stride {}]", be32(d, a), be32(d, a + 4), be32(d, a + 8), be32(d, a + 0xC), d[a as usize + 0x10], be16(d, a + 0x12));
+                        a += 0x18;
+                    }
+                    let mut prims = String::new();
+                    let end = dl + nd as u32 * 32;
+                    let mut p = dl;
+                    // stride of one vertex in the DL: indexed (type 2/3) = 1/2 bytes; direct is unsupported here
+                    let mut vstride = 0u32;
+                    let mut aa = vd;
+                    while be32(d, aa) != 0xFF { vstride += match be32(d, aa + 4) { 2 => 1, 3 => 2, _ => 0 }; aa += 0x18; }
+                    while p < end && d[p as usize] != 0 {
+                        let (op, cnt) = (d[p as usize], be16(d, p + 1));
+                        prims += &format!(" {:#x}x{}", op, cnt);
+                        p += 3 + cnt as u32 * vstride;
+                    }
+                    eprintln!("PODUMP g{g} j{j} dobj {dob:#x} pobj {po:#x} flags {flags:#x} ndisp {nd} vstride {vstride}:{attrs} | prims{prims}");
+                    po = be32(d, po + 4);
+                }
+                dob = be32(d, dob + 4);
+            }
+        }
+    }
+    if std::env::var("MELEE_VIEW_BRANCHSCAN").is_ok() {
+        for g in 4..9u32 {
+            let e = be32(d, table + g * 0x34);
+            let mut descs = Vec::new();
+            descs_of(d, e, 0, &mut descs);
+            let fl: Vec<String> = descs.iter().map(|&jd| format!("{:#x}", be32(d, jd + 4))).collect();
+            eprintln!("STATICFLAGS g{g}: {}", fl.join(" "));
+        }
+        for g in 4..10u32 {
+            let e = be32(d, table + g * 0x34);
+            let ajp = be32(d, table + g * 0x34 + 4);
+            let _ = e;
+            if ajp == 0 { continue; }
+            for an in 0..17u32 {
+                let set = be32(d, ajp + 4 * an);
+                if set == 0 || set as usize + 0x14 > d.len() { continue; }
+                for idx in 0..10u32 {
+                    let aj = set + idx * 0x14;
+                    if aj as usize + 0x14 > d.len() { break; }
+                    let aobj = be32(d, aj + 8);
+                    if aobj == 0 || aobj as usize + 16 > d.len() { continue; }
+                    let mut fo = be32(d, aobj + 8);
+                    let mut line = String::new();
+                    while fo != 0 && (fo as usize) + 20 <= d.len() {
+                        let (len, ty) = (be32(d, fo + 4), d[fo as usize + 12]);
+                        if ty == 12 || ty == 11 {
+                            let ad = be32(d, fo + 16) as usize;
+                            line += &format!(" ty{} fv{:02x} start{} len{} ad{:02x?}", ty, d[fo as usize + 13], bef(d, fo + 8), len, &d[ad..(ad + len as usize).min(d.len()).min(ad + 12)]);
+                        }
+                        fo = be32(d, fo);
+                    }
+                    if !line.is_empty() { eprintln!("BRANCH g{g} set{an} idx{idx} endf {}:{line}", bef(d, aobj + 4)); }
+                }
+            }
+        }
+    }
+    if let Ok(n) = std::env::var("MELEE_VIEW_PREROLL").map(|v| v.parse::<u32>().unwrap_or(0)) {
+        for _ in 0..n {
+            anim.step();
         }
     }
     if let Ok(v) = std::env::var("MELEE_VIEW_UNHIDE") {
@@ -232,6 +340,18 @@ fn load_stage(file: &[u8], is_fd: bool) -> Result<Stage, String> {
                 let mut dob = be32(d, jd + 0x10);
                 while dob != 0 {
                     let mob = be32(d, dob + 8);
+                    if std::env::var("MELEE_VIEW_TEXDUMP2").is_ok() && mob != 0 {
+                        let mut t = be32(d, mob + 8);
+                        while t != 0 {
+                            let fl = |o: u32| f32::from_bits(be32(d, t + o));
+                            eprintln!("  TOBJ {t:#x} rot {:.2} {:.2} {:.2} scale {:.3} {:.3} {:.3} trans {:.3} {:.3} {:.3} wrap {} {} rep {} {} flags {:#x} blend {:.2} filt {} tlut {:#x} lod {:#x}", fl(0x10), fl(0x14), fl(0x18), fl(0x1C), fl(0x20), fl(0x24), fl(0x28), fl(0x2C), fl(0x30), be32(d, t + 0x34), be32(d, t + 0x38), d[t as usize + 0x3C], d[t as usize + 0x3D], be32(d, t + 0x40), fl(0x44), be32(d, t + 0x48), be32(d, t + 0x50), be32(d, t + 0x54));
+                            let tv = be32(d, t + 0x58);
+                            if tv != 0 {
+                                eprintln!("    TEV desc {tv:#x}: color {:02x?} alpha {:02x?} konst {:02x?} tev0 {:02x?} tev1 {:02x?} active {:#x} ops {:02x?}", &d[tv as usize + 8..tv as usize + 12], &d[tv as usize + 12..tv as usize + 16], &d[tv as usize + 0x10..tv as usize + 0x14], &d[tv as usize + 0x14..tv as usize + 0x18], &d[tv as usize + 0x18..tv as usize + 0x1C], be32(d, tv + 0x1C), &d[tv as usize..tv as usize + 8]);
+                            }
+                            t = be32(d, t + 4);
+                        }
+                    }
                     let mut line = format!("g{g} j{ji} dobj {dob:#x} mobj {mob:#x}");
                     if mob != 0 {
                         line += &format!(" rflags {:#x}", be32(d, mob + 4));
@@ -251,7 +371,99 @@ fn load_stage(file: &[u8], is_fd: bool) -> Result<Stage, String> {
             }
         }
     }
-    Ok(Stage { dat, anim, map_head: head, groups, lights })
+    let stage_lights = AnimLights::new(d, if ll != 0 { ll } else { 0 }, head);
+    let plit_lights = a_plit.map(|pl| AnimLights::new(d, pl, head));
+    Ok(Stage { dat, anim, map_head: head, groups, lights, fighter_lights, stage_lights, plit_lights })
+}
+
+/// A light set (`lb_80011AC4` over a `LightList*[]`) with its `HSD_LObjAnim` state: the `VIS` / `LITC_*`
+/// tracks of each light's `anims[0]` (positions stay as authored).
+struct AnimLights {
+    lights: Vec<AnimLight>,
+    globals: melee_runtime::aobj::AObjGlobals,
+}
+
+struct AnimLight {
+    desc: u32,
+    flags: u32,
+    color: [u8; 4],
+    aobj: Option<melee_runtime::aobj::HsdAObj<()>>,
+}
+
+impl AnimLights {
+    /// `list` is the offset of a NULL-terminated `LightList*[]`; `shadow_tbl` the stage's `Ground_801C43C4` table
+    /// (`map_head + 0x20`: { anim, flag } pairs) deciding which light animations loop.
+    fn new(d: &[u8], list: u32, head: u32) -> Self {
+        let mut lights = Vec::new();
+        let (tbl, tn) = (be32(d, head + 0x20), be32(d, head + 0x24));
+        for i in 0..16 {
+            let ll = if list == 0 { 0 } else { be32(d, list + 4 * i) };
+            if ll == 0 {
+                break;
+            }
+            let desc = be32(d, ll);
+            if desc == 0 {
+                continue;
+            }
+            let anims = be32(d, ll + 4);
+            let anim0 = if anims != 0 { be32(d, anims) } else { 0 };
+            let mut aobj = None;
+            if anim0 != 0 {
+                if let Some(ad) = crate::stage_anim::load_aobj_desc(d, be32(d, anim0 + 4)) {
+                    let mut a = melee_runtime::aobj::HsdAObj::<()>::load_desc(&ad, |_| None);
+                    // HSD_LObjReqAnimAll(.., 0) + HSD_AObjSetRate(1.0) (HSD_ForeachAnim passes the AObj and the float).
+                    a.req_anim(0.0);
+                    a.set_rate(1.0);
+                    let looped = (0..tn).any(|k| be32(d, tbl + 8 * k) == anim0 && d[(tbl + 8 * k + 4) as usize] & 0x80 != 0);
+                    if looped {
+                        a.set_flags(melee_runtime::aobj::AOBJ_LOOP);
+                    }
+                    aobj = Some(a);
+                }
+            }
+            lights.push(AnimLight { desc, flags: be16(d, desc + 8) as u32, color: [d[desc as usize + 0xC], d[desc as usize + 0xD], d[desc as usize + 0xE], d[desc as usize + 0xF]], aobj });
+        }
+        if std::env::var_os("MELEE_VIEW_LIGHTLOG").is_some() {
+            for l in &lights {
+                eprintln!("LIGHT desc {:#x} flags {:#x} color {:02x?} aobj {:?}", l.desc, l.flags, l.color, l.aobj.as_ref().map(|a| (a.end_frame, a.fobj.iter().map(|f| f.obj_type).collect::<Vec<_>>())));
+            }
+        }
+        let mut s = Self { lights, globals: Default::default() };
+        s.step(); // HSD_LObjAnimAll at creation
+        s
+    }
+
+    /// One `HSD_LObjAnimAll` (`LObjUpdateFunc` over the tracks).
+    fn step(&mut self) {
+        use melee_runtime::lobj::track;
+        for l in &mut self.lights {
+            if let Some(a) = l.aobj.as_mut() {
+                let (flags, color) = (&mut l.flags, &mut l.color);
+                let mut f = |ty: u8, fv: f32| {
+                    let u8_of = |v: f32| ((255.0 * v as f64) as u32) as u8;
+                    match ty as u32 {
+                        track::VIS => {
+                            if (fv as f64) < 0.5 {
+                                *flags &= !(melee_runtime::tu::lobj::LOBJ_HIDDEN);
+                            } else {
+                                *flags |= melee_runtime::tu::lobj::LOBJ_HIDDEN;
+                            }
+                        }
+                        track::LITC_R => color[0] = u8_of(fv),
+                        track::LITC_G => color[1] = u8_of(fv),
+                        track::LITC_B => color[2] = u8_of(fv),
+                        track::LITC_A => color[3] = u8_of(fv),
+                        _ => {}
+                    }
+                };
+                a.interpret_anim(&mut self.globals, &mut Some(&mut f));
+            }
+        }
+    }
+
+    fn ins(&self) -> Vec<melee_runtime::tu::lobj::LightIn> {
+        self.lights.iter().map(|l| melee_runtime::tu::lobj::LightIn { desc: l.desc, flags: l.flags, color: l.color }).collect()
+    }
 }
 
 struct FighterModel {
@@ -260,7 +472,15 @@ struct FighterModel {
 }
 
 /// What it takes to draw a `VsMatch`: the stage and costume models, the match camera and the HSD render state.
+/// One live effect's model host (`efLib_Create`: `HSD_JObjLoadJoint` + `AddAnimAll` + `ReqAnimAll(0)`).
+struct FxModel {
+    dat: Arc<Vec<u8>>,
+    anim: crate::stage_anim::StageAnim,
+    done: bool,
+}
+
 pub struct MatchRender {
+    fx: HashMap<u32, FxModel>,
     cm: crate::cm_drive::CmDrive,
     pose: crate::cm_drive::CamPose,
     stage: Stage,
@@ -349,7 +569,7 @@ impl MatchRender {
         }
         let hud = crate::hud_view::Hud::new(crate::hud_view::HudFile::load(&disc.read("IfAll.usd")?)?, names)?;
         let pose = cm.pose();
-        Ok(Self { cm, pose, stage, hud, fighters, cache: DataCache::default(), render: HsdRender::new() })
+        Ok(Self { fx: HashMap::new(), cm, pose, stage, hud, fighters, cache: DataCache::default(), render: HsdRender::new() })
     }
 }
 
@@ -370,6 +590,11 @@ impl MatchRender {
         let over = self.stage.anim.overrides();
         let mut fighter_models: Vec<(Arc<Vec<u8>>, Vec<DispJoint>)> = Vec::new();
         for (p, f) in sim.players.iter().zip(&self.fighters) {
+            // ftDrawCommon_80080A18: `!fighter->invisible && !fighter->x221E_b5` gates the body (Entry sets
+            // `invisible`; the entry beam / trophy accessory stands in for it).
+            if p.fp.invisible() != 0 || p.fp.x221E_b5() != 0 {
+                continue;
+            }
             let mut t = p.skel.tree.clone();
             let d = Drawable { dat: f.dat.clone(), roots: vec![p.skel.root], descs: f.descs.clone() };
             fighter_models.push((f.dat.clone(), d.disp_joints(&mut t)));
@@ -377,7 +602,7 @@ impl MatchRender {
         let r = &mut self.render;
         r.invalidate_all();
         let mut g = ShimBackend { shim, cache: &mut self.cache };
-        r.lobj_setup_init(&mut g, &Dat(&sd), &self.stage.lights, &vmtx);
+        r.lobj_setup_init_with(&mut g, &Dat(&sd), &self.stage.stage_lights.ins(), &vmtx);
         let stage_dms: Vec<(u32, DispModel)> = stage_joints.iter().map(|(gid, pass, j)| (*pass, DispModel::new(&sd, j.clone()).with_mat_anim(&over))).collect();
         let fighter_dms: Vec<DispModel> = fighter_models.iter().map(|(d, j)| DispModel::new(d, j.clone())).collect();
         // fn_800301D0's gx-link schedule: the codes (OPA = 0, XLU = 1, TEXEDGE = 2) run as the outer loop.
@@ -395,16 +620,47 @@ impl MatchRender {
         stage_pass(r, &mut g, 2, &[0, 1, 2]);
         stage_pass(r, &mut g, 1, &[0, 1, 2]);
         stage_pass(r, &mut g, 0, &[0, 1]);
+        let own_lights = !self.stage.fighter_lights.is_empty() && std::env::var_os("MELEE_VIEW_NOPLIT").is_none();
+        let plit_ins = self.stage.plit_lights.as_ref().map(|p| p.ins()).unwrap_or_default();
+        if own_lights {
+            r.lobj_setup_init_with(&mut g, &Dat(&sd), &plit_ins, &vmtx);
+        }
         for c in [0u32, 1] {
             for m in &fighter_dms {
                 r.clear_vtx_desc(&mut g);
                 r.jobj_disp_all(&mut g, m, &vmtx, mask_of(c), 0);
             }
         }
+        if own_lights {
+            r.lobj_setup_init_with(&mut g, &Dat(&sd), &self.stage.stage_lights.ins(), &vmtx);
+        }
         stage_pass(r, &mut g, 0, &[2]);
+        if own_lights {
+            r.lobj_setup_init_with(&mut g, &Dat(&sd), &plit_ins, &vmtx);
+        }
         for m in &fighter_dms {
             r.clear_vtx_desc(&mut g);
             r.jobj_disp_all(&mut g, m, &vmtx, mask_of(2), 0);
+        }
+        if !self.fx.is_empty() {
+            let mut fxm: Vec<(Arc<Vec<u8>>, std::collections::HashMap<u32, melee_runtime::tu::mobj::MatOverride>, Vec<DispJoint>)> = Vec::new();
+            for m in self.fx.values_mut() {
+                if m.done {
+                    continue;
+                }
+                let r = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| (m.anim.overrides(), m.anim.disp_joints(0))));
+                if let Ok((o, j)) = r {
+                    fxm.push((m.dat.clone(), o, j));
+                }
+            }
+            let dms: Vec<DispModel> = fxm.iter().map(|(d, o, j)| DispModel::new(&d[..], j.clone()).with_mat_anim(o)).collect();
+            for c in [0u32, 1, 2] {
+                for m in &dms {
+                    r.clear_vtx_desc(&mut g);
+                    r.jobj_disp_all(&mut g, m, &vmtx, mask_of(c), 0);
+                }
+            }
+            r.invalidate_all();
         }
         if std::env::var_os("MELEE_VIEW_NOPS").is_none() {
             // efLib_render_callback: gx link 7 draws particle links 0, 2 and the stage's (3), link 8 draws link 1.
@@ -431,6 +687,27 @@ impl MatchRender {
     /// One match frame's render-side update, after `sim.step()`: the stage animation and the match camera.
     pub fn step(&mut self, sim: &mut VsMatch) {
         self.stage.anim.step();
+        if std::env::var_os("MELEE_VIEW_NOLIGHTANIM").is_none() {
+            self.stage.stage_lights.step();
+            if let Some(p) = self.stage.plit_lights.as_mut() {
+                p.step();
+            }
+        }
+        if let Ok(v) = std::env::var("MELEE_VIEW_ONLY") {
+            // "g:j,j,j": per frame, hide every joint of group g except the listed ones.
+            if let Some((g, js)) = v.split_once(':') {
+                let g: u32 = g.parse().unwrap_or(0);
+                let keep: Vec<u32> = js.split(',').filter_map(|x| x.trim().parse().ok()).collect();
+                for j in 0..self.stage.anim.jobj_count(g) as u32 {
+                    if !keep.contains(&j) { self.stage.anim.hide(g, j); }
+                }
+            }
+        }
+        if let Ok(v) = std::env::var("MELEE_VIEW_FORCEVIS") {
+            for g in v.split(',').filter_map(|x| x.trim().parse::<u32>().ok()) {
+                self.stage.anim.set_hidden_all(g, 0, false);
+            }
+        }
         if std::env::var("MELEE_VIEW_HIDLOG").is_ok() && sim.frame % 20 == 0 {
             eprintln!("HID frame {} {}", sim.frame, self.stage.anim.hidden_summary());
         }
@@ -457,6 +734,25 @@ impl MatchRender {
             }
             eprintln!("PS frame {} gens {} parts {} | (link,bank,texgrp,kind)=n {:?}", sim.frame, sim.ps.num_gens, sim.ps.num_parts, by);
         }
+        if std::env::var("MELEE_VIEW_FPLOG").is_ok() && (sim.frame % 5 == 0 && sim.frame < 120 || sim.frame % 50 == 0) {
+            for (i, p) in sim.players.iter().enumerate() {
+                let f = &p.fp;
+                eprintln!("FP frame {} p{} ms {} pos {:.1} {:.1} invisible {} x221E_b5 {} x2219_b1 {} x61D {} ", sim.frame, i, f.motion_id, f.cur_pos.x, f.cur_pos.y, f.invisible(), f.x221E_b5(), f.x2219_b1(), f.x61D);
+            }
+        }
+        if std::env::var_os("MELEE_VIEW_APPFRAMES").is_some() {
+            let mut n = 0;
+            for l in 0..melee_runtime::particle::NUM_LINKS {
+                for id in sim.ps.particles(l) {
+                    if sim.ps.part(id).appsrt.is_some() {
+                        n += 1;
+                    }
+                }
+            }
+            if n > 0 {
+                eprintln!("APPF frame {} {}", sim.frame, n);
+            }
+        }
         if std::env::var("MELEE_VIEW_POSLOG").is_ok() && sim.frame % 10 == 0 {
             let p = &sim.players;
             eprintln!("POS frame {} p1 {:.2} {:.2} p2 {:.2} {:.2}", sim.frame, p[0].fp.cur_pos.x, p[0].fp.cur_pos.y, p[1].fp.cur_pos.x, p[1].fp.cur_pos.y);
@@ -467,6 +763,84 @@ impl MatchRender {
         let dmg: Vec<i32> = sim.players.iter().map(|p| p.fp.dmg.x1830_percent as i32).collect();
         self.hud.step(&dmg);
         self.pose = self.cm.pose();
+        if std::env::var_os("MELEE_VIEW_NOFX").is_none() {
+            // efLib: each live effect's model (created with AddAnimAll + ReqAnimAll(0) + one AnimAll, then
+            // `efLib_Update`'s AnimAll every frame), root placed like the spawner left it.
+            let draws = sim.effect_draws();
+            if std::env::var_os("MELEE_VIEW_FXLOG").is_some() {
+                for d in &draws {
+                    if !self.fx.contains_key(&d.inst) {
+                        eprintln!("FXNEW frame {} inst {} bank {} id {} model {}", sim.frame, d.inst, d.bank, d.id, sim.effect_model(d.bank, d.id).is_some());
+                    }
+                }
+            }
+            self.fx.retain(|k, _| draws.iter().any(|d| d.inst == *k));
+            for d in &draws {
+                if !self.fx.contains_key(&d.inst) {
+                    if let Some((dat, rec)) = sim.effect_model(d.bank, d.id) {
+                        let r = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                            let mut a = crate::stage_anim::StageAnim::new_scene(dat.clone(), vec![rec]);
+                            a.start_anim_set(0, 0, true);
+                            a
+                        }));
+                        match r {
+                            Ok(mut anim) => {
+                                if let Some((k, t)) = d.tev {
+                                    anim.set_tev_colors(0, 1, 0, k, t);
+                                }
+                                self.fx.insert(d.inst, FxModel { dat, anim, done: false });
+                            }
+                            Err(_) => {
+                                if std::env::var_os("MELEE_VIEW_FXLOG").is_some() {
+                                    eprintln!("FX bank {} id {}: model failed to load", d.bank, d.id);
+                                }
+                            }
+                        }
+                    }
+                } else if let Some(m) = self.fx.get_mut(&d.inst) {
+                    let r = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| m.anim.step()));
+                    if r.is_err() {
+                        m.done = true;
+                    }
+                }
+                if let Some(m) = self.fx.get_mut(&d.inst) {
+                    if d.lifetime == 0 && !m.anim.joint_anim_running(0) {
+                        m.done = true;
+                    }
+                    m.anim.set_translate(0, 0, Vec3 { x: d.pos[0], y: d.pos[1], z: d.pos[2] });
+                    m.anim.set_scale(0, 0, Vec3 { x: d.scale, y: d.scale, z: d.scale });
+                    m.anim.set_rotate_yz(0, 0, d.rot_y, d.rot_z);
+                    if std::env::var_os("MELEE_VIEW_FXLOG").is_some() {
+                        eprintln!("FX frame {} inst {} bank {} id {} pos {:.1} {:.1} {:.1} scale {:.2} life {} done {}", sim.frame, d.inst, d.bank, d.id, d.pos[0], d.pos[1], d.pos[2], d.scale, d.lifetime, m.done);
+                    }
+                }
+            }
+        }
+        {
+            // ifnametag.c fn_802FCC44: the head position (+ the fighter's name_tag_height - 2.5), projected by the match camera.
+            let (vm, pj) = camera(&self.pose);
+            let tags: Vec<Option<(f32, f32)>> = sim
+                .players
+                .iter()
+                .filter(|p| !p.follower)
+                .map(|p| {
+                    let f = &p.fp;
+                    let w = [f.cur_pos.x, f.cur_pos.y + f.co_attrs.name_tag_height - 2.5, f.cur_pos.z, 1.0];
+                    let v = [
+                        vm[0][0] * w[0] + vm[0][1] * w[1] + vm[0][2] * w[2] + vm[0][3],
+                        vm[1][0] * w[0] + vm[1][1] * w[1] + vm[1][2] * w[2] + vm[1][3],
+                        vm[2][0] * w[0] + vm[2][1] * w[1] + vm[2][2] * w[2] + vm[2][3],
+                        1.0,
+                    ];
+                    let c: Vec<f32> = (0..4).map(|i| pj[i][0] * v[0] + pj[i][1] * v[1] + pj[i][2] * v[2] + pj[i][3] * v[3]).collect();
+                    if c[3] <= 0.0 {
+                        return None;
+                    }
+                    Some((640.0 * (c[0] / c[3] * 0.5 + 0.5), 480.0 * (0.5 - c[1] / c[3] * 0.5)))
+                })
+                .collect();
+            self.hud.set_nametags(&tags);
+        }
         if std::env::var("MELEE_VIEW_CAMLOG").is_ok() {
             let p = &self.pose;
             eprintln!("RCAM {} {:.5} {:.5} {:.5} {:.5} {:.5} {:.5} {:.4}", sim.frame, p.eye[0], p.eye[1], p.eye[2], p.interest[0], p.interest[1], p.interest[2], p.fov);

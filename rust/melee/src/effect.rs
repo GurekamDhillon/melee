@@ -32,6 +32,11 @@ pub struct EffectDesc {
 pub struct EffectBank {
     pub archive: DatArchive,
     pub table: u32,
+    /// The bank's data with a synthetic `DynamicModelDesc` record per effect id appended (`StageAnim::new_scene`
+    /// wants `{ joint, anims[], matanims[] }`; an `EF_EffectDesc` holds the three directly). Render only.
+    pub model_dat: Arc<Vec<u8>>,
+    /// Offset in `model_dat` of effect id `i`'s record (0 = no model).
+    pub model_rec: Vec<u32>,
 }
 
 impl EffectBank {
@@ -39,7 +44,35 @@ impl EffectBank {
     pub fn load(bytes: &[u8], file: &str, name: &str) -> Result<Self, String> {
         let archive = DatArchive::parse(bytes).map_err(|e| format!("{file}: {e}"))?;
         let table = archive.public_offset(name).ok_or(format!("{file}: no {name}"))?;
-        Ok(Self { archive, table })
+        let mut dat = archive.data.clone();
+        let len = dat.len() as u32;
+        let mut model_rec = Vec::new();
+        for i in 0..1000u32 {
+            let at = table + 8 + i * 0x14;
+            if at + 0x14 > len {
+                break;
+            }
+            let (joint, anim, mat) = (be32(&dat, at + 4), be32(&dat, at + 8), be32(&dat, at + 0xC));
+            let ok = |p: u32| p == 0 || (p < len && p % 4 == 0);
+            if !ok(joint) || !ok(anim) || !ok(mat) {
+                break;
+            }
+            if joint == 0 {
+                model_rec.push(0);
+                continue;
+            }
+            // [joint][ptr to {anim}][ptr to {mat}] + the two one-word tables.
+            let rec = dat.len() as u32;
+            let (ta, tm) = (rec + 12, rec + 16);
+            for w in [joint, ta, tm, anim, mat] {
+                dat.extend_from_slice(&w.to_be_bytes());
+            }
+            model_rec.push(rec);
+        }
+        if std::env::var_os("MELEE_VIEW_FXLOG").is_some() {
+            eprintln!("FXBANK {file}: {} model records, ids with models {:?}", model_rec.len(), model_rec.iter().enumerate().filter(|(_, &r)| r != 0).map(|(i, _)| i).collect::<Vec<_>>());
+        }
+        Ok(Self { archive, table, model_dat: Arc::new(dat), model_rec })
     }
 
     /// The bank's particle data (`psInitDataBankLoad(idx, table[0], table[1])`), when it has one.

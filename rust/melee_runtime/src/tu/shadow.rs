@@ -5,45 +5,155 @@ use core::{
     ptr::{addr_of_mut, null_mut},
 };
 use melee_types::*;
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/mtu/gen_tu.py; the callees of the C TU)
+pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    use super::*;
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn GXBegin(a0: u32, a1: u32, a2: u16);
+    fn GXCopyTex(a0: *mut c_void, a1: u8);
+    fn GXGetTexBufferSize(a0: u16, a1: u16, a2: u32, a3: u8, a4: u8) -> u32;
+    fn GXInvalidateTexAll();
+    fn GXLoadPosMtxImm(a0: *mut c_void, a1: u32);
+    fn GXPixModeSync();
+    fn GXPosition2f32(a0: f32, a1: f32);
+    fn GXSetCurrentMtx(a0: u32);
+    fn GXSetScissor(a0: u32, a1: u32, a2: u32, a3: u32);
+    fn GXSetTexCopyDst(a0: u16, a1: u16, a2: u32, a3: u8);
+    fn GXSetTexCopySrc(a0: u16, a1: u16, a2: u16, a3: u16);
+    fn GXSetVtxAttrFmt(a0: u32, a1: u32, a2: u32, a3: u32, a4: u8);
+    fn GXSetVtxDesc(a0: u32, a1: u32);
+    fn HSD_CObjAlloc() -> *mut HSD_CObj;
+    fn HSD_CObjEndCurrent();
+    fn HSD_CObjGetBottom(a0: *mut HSD_CObj) -> f32;
+    fn HSD_CObjGetEyeDistance(a0: *mut HSD_CObj) -> f32;
+    fn HSD_CObjGetLeft(a0: *mut HSD_CObj) -> f32;
+    fn HSD_CObjGetNear(a0: *mut HSD_CObj) -> f32;
+    fn HSD_CObjGetProjectionType(a0: *mut HSD_CObj) -> i32;
+    fn HSD_CObjGetRight(a0: *mut HSD_CObj) -> f32;
+    fn HSD_CObjGetTop(a0: *mut HSD_CObj) -> f32;
+    fn HSD_CObjSetAspect(a0: *mut HSD_CObj, a1: f32);
+    fn HSD_CObjSetCurrent(a0: *mut HSD_CObj) -> i32;
+    fn HSD_CObjSetFov(a0: *mut HSD_CObj, a1: f32);
+    fn HSD_CObjSetFrustum(a0: *mut HSD_CObj, a1: f32, a2: f32, a3: f32, a4: f32);
+    fn HSD_CObjSetOrtho(a0: *mut HSD_CObj, a1: f32, a2: f32, a3: f32, a4: f32);
+    fn HSD_CObjSetScissorx4(a0: *mut HSD_CObj, a1: u16, a2: u16, a3: u16, a4: u16);
+    fn HSD_CObjSetViewportfx4(a0: *mut HSD_CObj, a1: f32, a2: f32, a3: f32, a4: f32);
+    fn HSD_ClearVtxDesc();
+    fn HSD_Free(a0: *mut c_void);
+    fn HSD_ImageDescAlloc() -> *mut HSD_ImageDesc;
+    fn HSD_ImageDescFree(a0: *mut HSD_ImageDesc);
+    fn HSD_JObjDispAll(a0: *mut HSD_JObj, a1: *mut c_void, a2: u32, a3: u32);
+    fn HSD_JObjUnref(a0: *mut HSD_JObj);
+    fn HSD_MObjAddShadowTexture(a0: *mut HSD_TObj);
+    fn HSD_MObjDeleteShadowTexture(a0: *mut HSD_TObj);
+    fn HSD_MemAlloc(a0: i32) -> *mut c_void;
+    fn HSD_ObjAlloc(a0: *mut _HSD_ObjAllocData) -> *mut c_void;
+    fn HSD_ObjAllocInit(a0: *mut _HSD_ObjAllocData, a1: u32, a2: u32);
+    fn HSD_ObjFree(a0: *mut _HSD_ObjAllocData, a1: *mut c_void);
+    fn HSD_SListAllocAndPrepend(a0: *mut _HSD_SList, a1: *mut c_void) -> *mut _HSD_SList;
+    fn HSD_SListRemove(a0: *mut _HSD_SList) -> *mut _HSD_SList;
+    fn HSD_SetupChannelAll(a0: *mut HSD_Chan);
+    fn HSD_SetupPEMode(a0: u32, a1: *mut HSD_PEDesc);
+    fn HSD_SetupTevStageAll(a0: *mut _HSD_TevDesc);
+    fn HSD_StateInitTev();
+    fn HSD_StateSetCullMode(a0: i32);
+    fn HSD_StateSetNumTexGens();
+    fn HSD_TObjAlloc() -> *mut HSD_TObj;
+    fn HSD_TObjFree(a0: *mut HSD_TObj);
+    fn MTXLightFrustum(a0: *mut c_void, a1: f32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32, a7: f32, a8: f32, a9: f32) = { let r = crate::mtx::light_frustum(a1, a2, a3, a4, a5, a6, a7, a8, a9); (a0 as *mut [[f32; 4]; 3]).write(r); };
+    fn MTXLightOrtho(a0: *mut c_void, a1: f32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32, a7: f32, a8: f32) = { let r = crate::mtx::light_ortho(a1, a2, a3, a4, a5, a6, a7, a8); (a0 as *mut [[f32; 4]; 3]).write(r); };
+    fn MTXLightPerspective(a0: *mut c_void, a1: f32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32) = { let r = crate::mtx::light_perspective(a1, a2, a3, a4, a5, a6); (a0 as *mut [[f32; 4]; 3]).write(r); };
+    fn PSMTXConcat(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void) = crate::tu::mtx_pc::raw::PSMTXConcat(a0 as _, a1 as _, a2 as _);
+    fn PSVECCrossProduct(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) = { let r = crate::mtx::vec_cross(&crate::mtx::Vec3 { x: (*a0).x, y: (*a0).y, z: (*a0).z }, &crate::mtx::Vec3 { x: (*a1).x, y: (*a1).y, z: (*a1).z }); *a2 = Vec { x: r.x, y: r.y, z: r.z }; };
+    fn PSVECDotProduct(a0: *mut Vec, a1: *mut Vec) -> f32 = crate::mtx::vec_dot(&crate::mtx::Vec3 { x: (*a0).x, y: (*a0).y, z: (*a0).z }, &crate::mtx::Vec3 { x: (*a1).x, y: (*a1).y, z: (*a1).z });
+    fn PSVECMag(a0: *mut Vec) -> f32 = crate::mtx::vec_mag(&crate::mtx::Vec3 { x: (*a0).x, y: (*a0).y, z: (*a0).z });
+    fn PSVECNormalize(a0: *mut Vec, a1: *mut Vec) = { let r = crate::mtx::vec_normalize(&crate::mtx::Vec3 { x: (*a0).x, y: (*a0).y, z: (*a0).z }); *a1 = Vec { x: r.x, y: r.y, z: r.z }; };
+    fn PSVECScale(a0: *mut Vec, a1: *mut Vec, a2: f32) = { let r = crate::mtx::vec_scale(&crate::mtx::Vec3 { x: (*a0).x, y: (*a0).y, z: (*a0).z }, a2); *a1 = Vec { x: r.x, y: r.y, z: r.z }; };
+    fn PSVECSubtract(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) = { let r = crate::mtx::vec_sub(&crate::mtx::Vec3 { x: (*a0).x, y: (*a0).y, z: (*a0).z }, &crate::mtx::Vec3 { x: (*a1).x, y: (*a1).y, z: (*a1).z }); *a2 = Vec { x: r.x, y: r.y, z: r.z }; };
+    fn atan2f(a0: f32, a1: f32) -> f32 = crate::lbtrigf::atan2f(a0, a1);
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut HSD_PerfCurrentStat: HSD_PerfStat = unsafe { core::mem::zeroed() };
+    pub static mut HSD_identityMtx: [[f32; 4]; 3] = unsafe { core::mem::zeroed() };
+}
+// END GENERATED EXT
+/// Tests that own their copy of other TUs' data set this; the game uses the owning TU's statics.
+pub static mut use_ext_data: bool = false;
+/// util.c `HSD_identityMtx` (read-only here).
+pub static mut HSD_identityMtx_local: [[f32; 4]; 3] = [[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0]];
+unsafe fn identity_mtx() -> *mut c_void {
+    if use_ext_data { addr_of_mut!(ext::HSD_identityMtx).cast() } else { addr_of_mut!(HSD_identityMtx_local).cast() }
+}
+/// perf.h `HSD_PerfCountMtxLoad` (static inline).
+unsafe fn perf_count_mtx_load() {
+    let st = if use_ext_data { addr_of_mut!(ext::HSD_PerfCurrentStat) } else { addr_of_mut!(crate::tu::perf::HSD_PerfCurrentStat) };
+    (*st).nb_mtx_load = (*st).nb_mtx_load.wrapping_add(1);
+}
+/// class.h `hsdDelete` (static inline).
+unsafe fn hsd_delete(o: *mut c_void) {
+    if o.is_null() {
+        return;
+    }
+    let i = (*o.cast::<HSD_Class>()).class_info;
+    ((*i).release.expect("hsdDelete: release"))(o.cast());
+    ((*i).destroy.expect("hsdDelete: destroy"))(o.cast());
+}
+/// jobj.h `HSD_JObjRef` (inline `ref_INC`).
+unsafe fn jobj_ref(j: *mut HSD_JObj) {
+    if !j.is_null() {
+        (*j).object.ref_count = (*j).object.ref_count.wrapping_add(1);
+        assert_ne!((*j).object.ref_count, 65535);
+    }
+}
+/// cobj.h `HSD_CObjGetViewingMtxPtrDirect` (inline).
+unsafe fn cobj_view_mtx(c: *mut HSD_CObj) -> *mut Mtx {
+    (*c).view_mtx.as_mut_ptr().cast()
+}
 pub static mut shadow_alloc_data: HSD_ObjAllocData =
     unsafe { core::mem::zeroed() };
-macro_rules! hooks { ($($n:ident($($a:ident:$t:ty),*) $(->$r:ty)?;)* )=>{pub mod ext {use super::*;$(pub static mut $n:Option<unsafe fn($($t),*) $(->$r)?>=None;)*} $(unsafe fn $n($($a:$t),*) $(->$r)? {(ext::$n.expect(concat!("TODO ",stringify!($n))))($($a),*)})*};}
-hooks! {
-HSD_ObjAllocInit(a:*mut HSD_ObjAllocData,b:u32,c:u32); HSD_ObjAlloc(a:*mut HSD_ObjAllocData)->*mut c_void; HSD_ObjFree(a:*mut HSD_ObjAllocData,b:*mut c_void);
-HSD_TObjAlloc()->*mut HSD_TObj; HSD_ImageDescAlloc()->*mut HSD_ImageDesc; HSD_CObjAlloc()->*mut HSD_CObj;
-HSD_CObjSetViewportfx4(a:*mut HSD_CObj,b:f32,c:f32,d:f32,e:f32); HSD_CObjSetScissorx4(a:*mut HSD_CObj,b:u16,c:u16,d:u16,e:u16);
-hsdDelete(a:*mut c_void); HSD_MObjDeleteShadowTexture(a:*mut HSD_TObj);HSD_Free(a:*mut c_void);HSD_ImageDescFree(a:*mut HSD_ImageDesc);HSD_TObjFree(a:*mut HSD_TObj);
-GXSetTexCopySrc(a:u16,b:u16,c:u16,d:u16);GXSetTexCopyDst(a:u16,b:u16,c:u32,d:u8);GXGetTexBufferSize(a:u16,b:u16,c:u32,d:u8,e:u8)->u32;HSD_MemAlloc(a:u32)->*mut c_void;
-GXLoadPosMtxImm(a:*const Mtx,b:u32);HSD_PerfCountMtxLoad();GXSetCurrentMtx(a:u32);HSD_ClearVtxDesc();GXSetVtxDesc(a:u32,b:u32);GXSetVtxAttrFmt(a:u32,b:u32,c:u32,d:u32,e:u8);HSD_StateSetCullMode(a:u32);
-HSD_CObjGetTop(a:*mut HSD_CObj)->f32;HSD_CObjGetBottom(a:*mut HSD_CObj)->f32;HSD_CObjGetLeft(a:*mut HSD_CObj)->f32;HSD_CObjGetRight(a:*mut HSD_CObj)->f32;HSD_CObjGetNear(a:*mut HSD_CObj)->f32;
-GXBegin(a:u32,b:u32,c:u16);GXPosition2f32(a:f32,b:f32);GXEnd();HSD_CObjSetCurrent(a:*mut HSD_CObj)->i32;HSD_StateInitTev();HSD_SetupTevStageAll(a:*mut _HSD_TevDesc);HSD_StateSetNumTexGens();HSD_SetupPEMode(a:u32,b:*mut HSD_PEDesc);HSD_SetupChannelAll(a:*mut HSD_Chan);GXSetScissor(a:u32,b:u32,c:u32,d:u32);HSD_JObjDispAll(a:*mut HSD_JObj,b:*mut Mtx,c:u32,d:u32);HSD_CObjEndCurrent();
-GXCopyTex(a:*mut c_void,b:u8);GXPixModeSync();GXInvalidateTexAll();HSD_MObjAddShadowTexture(a:*mut HSD_TObj);
-HSD_SListAllocAndPrepend(a:*mut _HSD_SList,b:*mut c_void)->*mut _HSD_SList;HSD_JObjRef(a:*mut HSD_JObj);HSD_JObjUnref(a:*mut HSD_JObj);HSD_SListRemove(a:*mut _HSD_SList)->*mut _HSD_SList;
-HSD_CObjGetProjectionType(a:*mut HSD_CObj)->u32;HSD_CObjGetViewingMtxPtrDirect(a:*mut HSD_CObj)->*mut Mtx;HSD_CObjGetEyeDistance(a:*mut HSD_CObj)->f32;HSD_CObjSetAspect(a:*mut HSD_CObj,b:f32);HSD_CObjSetFov(a:*mut HSD_CObj,b:f32);HSD_CObjSetOrtho(a:*mut HSD_CObj,b:f32,c:f32,d:f32,e:f32);HSD_CObjSetFrustum(a:*mut HSD_CObj,b:f32,c:f32,d:f32,e:f32);
-}
 pub unsafe fn HSD_ShadowGetAllocData() -> *mut HSD_ObjAllocData {
     addr_of_mut!(shadow_alloc_data)
 }
 pub unsafe fn HSD_ShadowInitAllocData() {
-    HSD_ObjAllocInit(
+    ext::HSD_ObjAllocInit(
         HSD_ShadowGetAllocData(),
         core::mem::size_of::<HSD_Shadow>() as u32,
         4,
     );
 }
 pub unsafe fn makeShadowTObj() -> *mut HSD_TObj {
-    let t = HSD_TObjAlloc();
+    let t = ext::HSD_TObjAlloc();
     (*t).src = 0;
     (*t).wrap_s = 0;
     (*t).wrap_t = 0;
     (*t).flags = 0x540103;
-    (*t).imagedesc = HSD_ImageDescAlloc();
+    (*t).imagedesc = ext::HSD_ImageDescAlloc();
     t
 }
 pub unsafe fn HSD_ShadowAlloc() -> *mut HSD_Shadow {
-    let s = HSD_ObjAlloc(HSD_ShadowGetAllocData()).cast::<HSD_Shadow>();
+    let s = ext::HSD_ObjAlloc(HSD_ShadowGetAllocData()).cast::<HSD_Shadow>();
     s.write(HSD_Shadow::zeroed());
-    (*s).camera = HSD_CObjAlloc();
+    (*s).camera = ext::HSD_CObjAlloc();
     (*s).texture = makeShadowTObj();
     (*s).scaleS = 0.5;
     (*s).scaleT = -0.5;
@@ -53,8 +163,8 @@ pub unsafe fn HSD_ShadowAlloc() -> *mut HSD_Shadow {
     (*d).format = 0;
     (*d).width = 256;
     (*d).height = 256;
-    HSD_CObjSetViewportfx4((*s).camera, 0.0, 256.0, 0.0, 256.0);
-    HSD_CObjSetScissorx4((*s).camera, 0, 256, 0, 256);
+    ext::HSD_CObjSetViewportfx4((*s).camera, 0.0, 256.0, 0.0, 256.0);
+    ext::HSD_CObjSetScissorx4((*s).camera, 0, 256, 0, 256);
     s
 }
 pub unsafe fn HSD_ShadowRemove(s: *mut HSD_Shadow) {
@@ -69,68 +179,63 @@ pub unsafe fn HSD_ShadowRemove(s: *mut HSD_Shadow) {
             (*c).parent.ref_count = r.wrapping_sub(1);
         }
         if dec {
-            hsdDelete(c.cast());
+            hsd_delete(c.cast());
         }
     }
     HSD_ShadowDeleteObject(s, null_mut());
     let t = (*s).texture;
     if (*s).active != 0 {
-        HSD_MObjDeleteShadowTexture(t);
+        ext::HSD_MObjDeleteShadowTexture(t);
     }
     let d = (*t).imagedesc;
     if !(*d).image_ptr.is_null() {
-        HSD_Free((*d).image_ptr);
+        ext::HSD_Free((*d).image_ptr);
     }
-    HSD_ImageDescFree(d);
-    HSD_TObjFree(t);
-    HSD_ObjFree(HSD_ShadowGetAllocData(), s.cast());
+    ext::HSD_ImageDescFree(d);
+    ext::HSD_TObjFree(t);
+    ext::HSD_ObjFree(HSD_ShadowGetAllocData(), s.cast());
 }
 pub unsafe fn HSD_ShadowInit(s: *mut HSD_Shadow) {
     assert!(!s.is_null());
     let d = &*(*(*s).texture).imagedesc;
-    GXSetTexCopySrc(0, 0, d.width, d.height);
-    GXSetTexCopyDst(d.width, d.height, 0x20, 0);
+    ext::GXSetTexCopySrc(0, 0, d.width, d.height);
+    ext::GXSetTexCopyDst(d.width, d.height, 0x20, 0);
 }
 pub unsafe fn HSD_ShadowSetSize(s: *mut HSD_Shadow, w: u16, h: u16) {
     assert!(!s.is_null() && w > 0 && h > 0);
     let d = (*(*s).texture).imagedesc;
     if (*d).image_ptr.is_null() || (*d).width != w || (*d).height != h {
         if !(*d).image_ptr.is_null() {
-            HSD_Free((*d).image_ptr);
+            ext::HSD_Free((*d).image_ptr);
         }
-        let size = GXGetTexBufferSize(w, h, 0, 0, 0);
+        let size = ext::GXGetTexBufferSize(w, h, 0, 0, 0);
         assert!(size > 0);
-        (*d).image_ptr = HSD_MemAlloc(size);
+        (*d).image_ptr = ext::HSD_MemAlloc(size as i32);
         (*d).width = w;
         (*d).height = h;
-        HSD_CObjSetViewportfx4((*s).camera, 0.0, w as f32, 0.0, h as f32);
-        HSD_CObjSetScissorx4((*s).camera, 0, w, 0, h);
+        ext::HSD_CObjSetViewportfx4((*s).camera, 0.0, w as f32, 0.0, h as f32);
+        ext::HSD_CObjSetScissorx4((*s).camera, 0, w, 0, h);
     }
 }
 pub unsafe fn drawBackgroundRect(s: *mut HSD_Shadow) {
     let c = (*s).camera;
-    let identity = [
-        [1.0, 0.0, 0.0, 0.0],
-        [0.0, 1.0, 0.0, 0.0],
-        [0.0, 0.0, 1.0, 0.0],
-    ];
-    GXLoadPosMtxImm(&identity, 0);
-    HSD_PerfCountMtxLoad();
-    GXSetCurrentMtx(0);
-    HSD_ClearVtxDesc();
-    GXSetVtxDesc(9, 1);
-    GXSetVtxAttrFmt(0, 9, 1, 4, 0);
-    HSD_StateSetCullMode(2);
-    let t = HSD_CObjGetTop(c) * 1.2;
-    let b = HSD_CObjGetBottom(c) * 1.2;
-    let l = HSD_CObjGetLeft(c) * 1.2;
-    let r = HSD_CObjGetRight(c) * 1.2;
-    let n = HSD_CObjGetNear(c) * -1.1;
-    GXBegin(0x80, 0, 4);
+    ext::GXLoadPosMtxImm(identity_mtx(), 0);
+    perf_count_mtx_load();
+    ext::GXSetCurrentMtx(0);
+    ext::HSD_ClearVtxDesc();
+    ext::GXSetVtxDesc(9, 1);
+    ext::GXSetVtxAttrFmt(0, 9, 1, 4, 0);
+    ext::HSD_StateSetCullMode(2);
+    let t = ext::HSD_CObjGetTop(c) * 1.2;
+    let b = ext::HSD_CObjGetBottom(c) * 1.2;
+    let l = ext::HSD_CObjGetLeft(c) * 1.2;
+    let r = ext::HSD_CObjGetRight(c) * 1.2;
+    let n = ext::HSD_CObjGetNear(c) * -1.1;
+    ext::GXBegin(0x80, 0, 4);
     for (a, b) in [(l, t), (n, r), (t, n), (r, b), (n, l), (b, n)] {
-        GXPosition2f32(a, b);
+        ext::GXPosition2f32(a, b);
     }
-    GXEnd();
+    
 }
 pub unsafe fn HSD_ShadowStartRender(s: *mut HSD_Shadow) {
     assert!(!s.is_null());
@@ -140,7 +245,7 @@ pub unsafe fn HSD_ShadowStartRender(s: *mut HSD_Shadow) {
     if (*s).objects.is_null() {
         return;
     }
-    HSD_CObjSetCurrent((*s).camera);
+    ext::HSD_CObjSetCurrent((*s).camera);
     let mut chan = HSD_Chan::zeroed();
     chan.chan = 4;
     chan.mat_color.a = 255;
@@ -170,21 +275,21 @@ pub unsafe fn HSD_ShadowStartRender(s: *mut HSD_Shadow) {
     pe.z_comp = 7;
     pe.alpha_comp0 = 7;
     pe.alpha_comp1 = 7;
-    HSD_StateInitTev();
-    HSD_SetupTevStageAll(&mut tev);
-    HSD_StateSetNumTexGens();
-    HSD_SetupPEMode(0, &mut pe);
+    ext::HSD_StateInitTev();
+    ext::HSD_SetupTevStageAll(&mut tev);
+    ext::HSD_StateSetNumTexGens();
+    ext::HSD_SetupPEMode(0, &mut pe);
     chan.mat_color.r = 255;
     chan.mat_color.g = 255;
     chan.mat_color.b = 255;
-    HSD_SetupChannelAll(&mut chan);
-    GXSetScissor(0, 0, (*d).width as u32, (*d).height as u32);
+    ext::HSD_SetupChannelAll(&mut chan);
+    ext::GXSetScissor(0, 0, (*d).width as u32, (*d).height as u32);
     drawBackgroundRect(s);
     chan.mat_color.r = (*s).intensity;
     chan.mat_color.g = (*s).intensity;
     chan.mat_color.b = (*s).intensity;
-    HSD_SetupChannelAll(&mut chan);
-    GXSetScissor(
+    ext::HSD_SetupChannelAll(&mut chan);
+    ext::GXSetScissor(
         2,
         2,
         ((*d).width as u32).wrapping_sub(4),
@@ -192,10 +297,10 @@ pub unsafe fn HSD_ShadowStartRender(s: *mut HSD_Shadow) {
     );
     let mut list = (*s).objects;
     while !list.is_null() {
-        HSD_JObjDispAll((*list).data.cast(), null_mut(), 5, 1 << 26);
+        ext::HSD_JObjDispAll((*list).data.cast(), null_mut(), 5, 1 << 26);
         list = (*list).next;
     }
-    HSD_CObjEndCurrent();
+    ext::HSD_CObjEndCurrent();
 }
 pub unsafe fn HSD_ShadowEndRender(s: *mut HSD_Shadow) {
     assert!(!s.is_null());
@@ -203,9 +308,9 @@ pub unsafe fn HSD_ShadowEndRender(s: *mut HSD_Shadow) {
     if (*d).image_ptr.is_null() {
         HSD_ShadowSetSize(s, (*d).width, (*d).height);
     }
-    GXCopyTex((*d).image_ptr, 1);
-    GXPixModeSync();
-    GXInvalidateTexAll();
+    ext::GXCopyTex((*d).image_ptr, 1);
+    ext::GXPixModeSync();
+    ext::GXInvalidateTexAll();
     makeMatrix(s);
 }
 pub unsafe fn HSD_ShadowSetActive(s: *mut HSD_Shadow, active: i32) {
@@ -219,9 +324,9 @@ pub unsafe fn HSD_ShadowSetActive(s: *mut HSD_Shadow, active: i32) {
         if (*d).image_ptr.is_null() {
             HSD_ShadowSetSize(s, (*d).width, (*d).height);
         }
-        HSD_MObjAddShadowTexture((*s).texture);
+        ext::HSD_MObjAddShadowTexture((*s).texture);
     } else {
-        HSD_MObjDeleteShadowTexture((*s).texture);
+        ext::HSD_MObjDeleteShadowTexture((*s).texture);
     }
 }
 pub unsafe fn HSD_ShadowAddObject(s: *mut HSD_Shadow, j: *mut HSD_JObj) {
@@ -235,8 +340,8 @@ pub unsafe fn HSD_ShadowAddObject(s: *mut HSD_Shadow, j: *mut HSD_JObj) {
         }
         l = (*l).next;
     }
-    (*s).objects = HSD_SListAllocAndPrepend((*s).objects, j.cast());
-    HSD_JObjRef(j);
+    (*s).objects = ext::HSD_SListAllocAndPrepend((*s).objects, j.cast());
+    jobj_ref(j);
 }
 pub unsafe fn HSD_ShadowDeleteObject(s: *mut HSD_Shadow, j: *mut HSD_JObj) {
     if s.is_null() {
@@ -246,56 +351,31 @@ pub unsafe fn HSD_ShadowDeleteObject(s: *mut HSD_Shadow, j: *mut HSD_JObj) {
         let mut l = addr_of_mut!((*s).objects);
         while !(*l).is_null() {
             if (**l).data == j.cast() {
-                HSD_JObjUnref(j);
-                *l = HSD_SListRemove(*l);
+                ext::HSD_JObjUnref(j);
+                *l = ext::HSD_SListRemove(*l);
                 return;
             }
             l = addr_of_mut!((**l).next);
         }
     } else {
         while !(*s).objects.is_null() {
-            HSD_JObjUnref((*(*s).objects).data.cast());
-            (*s).objects = HSD_SListRemove((*s).objects);
+            ext::HSD_JObjUnref((*(*s).objects).data.cast());
+            (*s).objects = ext::HSD_SListRemove((*s).objects);
         }
     }
 }
 pub unsafe fn makeMatrix(s: *mut HSD_Shadow) {
     let c = (*s).camera;
     let p = &(*c).projection_param;
-    let m = match HSD_CObjGetProjectionType(c) {
-        1 => crate::mtx::light_perspective(
-            p.perspective.fov,
-            p.perspective.aspect,
-            (*s).scaleS,
-            (*s).scaleT,
-            (*s).transS,
-            (*s).transT,
-        ),
-        2 => crate::mtx::light_frustum(
-            p.frustum.top,
-            p.frustum.bottom,
-            p.frustum.left,
-            p.frustum.right,
-            (*c).near,
-            (*s).scaleS,
-            (*s).scaleT,
-            (*s).transS,
-            (*s).transT,
-        ),
-        3 => crate::mtx::light_ortho(
-            p.ortho.top,
-            p.ortho.bottom,
-            p.ortho.left,
-            p.ortho.right,
-            (*s).scaleS,
-            (*s).scaleT,
-            (*s).transS,
-            (*s).transT,
-        ),
+    let mut mprj: Mtx = [[0.0; 4]; 3];
+    let mp: *mut c_void = (&mut mprj as *mut Mtx).cast();
+    match ext::HSD_CObjGetProjectionType(c) {
+        1 => ext::MTXLightPerspective(mp, p.perspective.fov, p.perspective.aspect, (*s).scaleS, (*s).scaleT, (*s).transS, (*s).transT),
+        2 => ext::MTXLightFrustum(mp, p.frustum.top, p.frustum.bottom, p.frustum.left, p.frustum.right, (*c).near, (*s).scaleS, (*s).scaleT, (*s).transS, (*s).transT),
+        3 => ext::MTXLightOrtho(mp, p.ortho.top, p.ortho.bottom, p.ortho.left, p.ortho.right, (*s).scaleS, (*s).scaleT, (*s).transS, (*s).transT),
         _ => panic!("shadow.c:698"),
     };
-    (*(*s).texture).mtx =
-        crate::mtx::concat(&m, &*HSD_CObjGetViewingMtxPtrDirect(c));
+    ext::PSMTXConcat(mp, cobj_view_mtx(c).cast(), (&raw mut (*(*s).texture).mtx).cast());
 }
 pub unsafe fn HSD_ShadowSetViewingRect(
     s: *mut HSD_Shadow,
@@ -306,20 +386,20 @@ pub unsafe fn HSD_ShadowSetViewingRect(
 ) {
     assert!(!s.is_null());
     let c = (*s).camera;
-    let distance = HSD_CObjGetEyeDistance(c);
+    let distance = ext::HSD_CObjGetEyeDistance(c);
     assert!(distance > 0.0);
-    match HSD_CObjGetProjectionType(c) {
+    match ext::HSD_CObjGetProjectionType(c) {
         1 => {
             let width = if t.abs() > b.abs() { t.abs() } else { b.abs() };
             let height = if l.abs() > r.abs() { l.abs() } else { r.abs() };
-            HSD_CObjSetAspect(c, height / width);
-            HSD_CObjSetFov(c, crate::lbtrigf::atan2f(height, distance));
+            ext::HSD_CObjSetAspect(c, height / width);
+            ext::HSD_CObjSetFov(c, ext::atan2f(height, distance));
         }
-        3 => HSD_CObjSetOrtho(c, t, b, l, r),
+        3 => ext::HSD_CObjSetOrtho(c, t, b, l, r),
         2 => {
-            let scale = HSD_CObjGetNear(c) / distance;
+            let scale = ext::HSD_CObjGetNear(c) / distance;
             assert!(scale > 0.0);
-            HSD_CObjSetFrustum(c, scale * t, scale * b, scale * l, scale * r);
+            ext::HSD_CObjSetFrustum(c, scale * t, scale * b, scale * l, scale * r);
         }
         _ => panic!("shadow.c:762"),
     }
@@ -332,13 +412,14 @@ pub unsafe fn HSD_ViewingRectInit(
     perspective: i32,
 ) {
     assert!(!r.is_null());
+    let mut v = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     (*r).origin = *p;
-    (*r).eye_v = vec_sub(&*i, &*p);
-    (*r).eye_vn = vec_normalize(&(*r).eye_v);
-    let v = vec_normalize(&*u);
-    (*r).right_v = vec_cross(&(*r).eye_vn, &v);
-    (*r).up_v = vec_cross(&(*r).right_v, &(*r).eye_vn);
-    (*r).distance = vec_mag(&(*r).eye_v);
+    ext::PSVECSubtract(i, p, &mut (*r).eye_v);
+    ext::PSVECNormalize(&mut (*r).eye_v, &mut (*r).eye_vn);
+    ext::PSVECNormalize(u, &mut v);
+    ext::PSVECCrossProduct(&mut (*r).eye_vn, &mut v, &mut (*r).right_v);
+    ext::PSVECCrossProduct(&mut (*r).right_v, &mut (*r).eye_vn, &mut (*r).up_v);
+    (*r).distance = ext::PSVECMag(&mut (*r).eye_v);
     (*r).top = -f32::MAX;
     (*r).right = -f32::MAX;
     (*r).bottom = f32::MAX;
@@ -358,26 +439,32 @@ pub unsafe fn HSD_ViewingRectAddRect(
     mut right: f32,
 ) {
     assert!(!r.is_null() && !p.is_null());
-    let mut o = vec_sub(&*p, &(*r).origin);
-    let dot = vec_dot(&o, &(*r).eye_vn);
-    let e;
+    let mut o2p = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
+    let mut e2p = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
+    let x;
+    let y;
+    ext::PSVECSubtract(p, &mut (*r).origin, &mut o2p);
+    let dot = ext::PSVECDotProduct(&mut o2p, &mut (*r).eye_vn);
     if (*r).perspective != 0 {
         if dot <= 0.0 {
             return;
         }
         let scale = (*r).distance / dot;
-        o = vec_scale(&o, scale);
-        e = vec_sub(&o, &(*r).eye_v);
+        ext::PSVECScale(&mut o2p, &mut o2p, scale);
+        ext::PSVECSubtract(&mut o2p, &mut (*r).eye_v, &mut e2p);
+        x = ext::PSVECDotProduct(&mut (*r).right_v, &mut e2p);
+        y = ext::PSVECDotProduct(&mut (*r).up_v, &mut e2p);
         t *= scale;
         b *= scale;
         l *= scale;
         right *= scale;
     } else {
-        let tmp = vec_scale(&(*r).eye_vn, dot);
-        e = vec_sub(&o, &tmp);
+        let mut tmp = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
+        ext::PSVECScale(&mut (*r).eye_vn, &mut tmp, dot);
+        ext::PSVECSubtract(&mut o2p, &mut tmp, &mut e2p);
+        x = ext::PSVECDotProduct(&mut (*r).right_v, &mut e2p);
+        y = ext::PSVECDotProduct(&mut (*r).up_v, &mut e2p);
     }
-    let x = vec_dot(&(*r).right_v, &e);
-    let y = vec_dot(&(*r).up_v, &e);
     if x + right > (*r).right {
         (*r).right = x + right;
     }

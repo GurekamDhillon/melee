@@ -1,0 +1,4 @@
+{
+ "PSMTXMultVec": "super::native_mtx_mult_vec(a0 as _, a1, a2)",
+ "splArcLengthPoint": "super::native_spline_point(@ARGS@)"
+}

@@ -1,7 +1,7 @@
 //! Bit-for-bit check of baselib mtx.c / quatlib.c / spline.c against the C. Vectors:
 //! `tests/data/oracle_hsd.txt`, written by `oracle/build_hsd.sh` (the C TUs compiled with the
 //! shipping build's contraction + gwtool lowering; generated inputs, no disc data).
-use melee_runtime::hsd_mtx as hm;
+use melee_runtime::tu::{mtx as hm, spline as tspl};
 use melee_runtime::mtx::{Mtx, Quaternion, Vec3};
 use melee_runtime::{tu::quatlib, spline};
 
@@ -84,24 +84,24 @@ fn hsd_math_matches_c_build() {
                 let (s, rot, t, ps) = (r.v(), r.v(), r.v(), r.v());
                 let (q, p) = (r.q(), r.q());
                 let f = r.f();
-                fl.m("MtxInverse", ln, &hm::inverse(&a), &mut r);
+                fl.m("MtxInverse", ln, &hm::HSD_MtxInverse(&a), &mut r);
                 let mut c = a;
-                hm::inverse_in_place(&mut c);
+                hm::HSD_MtxInverseInPlace(&mut c);
                 fl.m("MtxInverse aliased", ln, &c, &mut r);
-                let ic = hm::inverse_concat(&a, &b);
+                let ic = hm::HSD_MtxInverseConcat(&a, &b);
                 fl.m("MtxInverseConcat", ln, &ic, &mut r);
                 fl.m("MtxInverseConcat aliased", ln, &ic, &mut r);
-                fl.m("MtxInverseTranspose", ln, &hm::inverse_transpose(&a), &mut r);
-                fl.v("MtxGetRotation", ln, hm::get_rotation(&a), &mut r);
-                fl.v("MtxGetTranslate", ln, hm::get_translate(&a), &mut r);
-                fl.v("MtxGetScale", ln, hm::get_scale(&a), &mut r);
-                fl.m("MkRotationMtx", ln, &hm::mk_rotation_mtx(&rot), &mut r);
-                fl.m("MtxQuat", ln, &hm::mtx_quat(&q), &mut r);
-                fl.m("MtxSRT", ln, &hm::srt(&s, &rot, &t, None), &mut r);
-                fl.m("MtxSRT ps", ln, &hm::srt(&s, &rot, &t, Some(&ps)), &mut r);
-                fl.m("MtxSRTQuat", ln, &hm::srt_quat(&s, &q, &t, None), &mut r);
-                fl.m("MtxSRTQuat ps", ln, &hm::srt_quat(&s, &q, &t, Some(&ps)), &mut r);
-                fl.m("MtxScaledAdd", ln, &hm::scaled_add(&a, &b, f), &mut r);
+                fl.m("MtxInverseTranspose", ln, &hm::HSD_MtxInverseTranspose(&a), &mut r);
+                fl.v("MtxGetRotation", ln, hm::HSD_MtxGetRotation(&a), &mut r);
+                fl.v("MtxGetTranslate", ln, hm::HSD_MtxGetTranslate(&a), &mut r);
+                fl.v("MtxGetScale", ln, hm::HSD_MtxGetScale(&a), &mut r);
+                fl.m("MkRotationMtx", ln, &hm::HSD_MkRotationMtx(&rot), &mut r);
+                fl.m("MtxQuat", ln, &hm::HSD_MtxQuat(&q), &mut r);
+                fl.m("MtxSRT", ln, &hm::HSD_MtxSRT(&s, &rot, &t, None), &mut r);
+                fl.m("MtxSRT ps", ln, &hm::HSD_MtxSRT(&s, &rot, &t, Some(&ps)), &mut r);
+                fl.m("MtxSRTQuat", ln, &hm::HSD_MtxSRTQuat(&s, &q, &t, None), &mut r);
+                fl.m("MtxSRTQuat ps", ln, &hm::HSD_MtxSRTQuat(&s, &q, &t, Some(&ps)), &mut r);
+                fl.m("MtxScaledAdd", ln, &hm::HSD_MtxScaledAdd(&a, &b, f), &mut r);
                 fl.q("MatToQuat", ln, quatlib::MatToQuat(&a), &mut r);
                 fl.v("QuatLib_8037EB28", ln, quatlib::HSD_QuatLib_8037EB28(&a), &mut r);
                 fl.q("QuatLib_8037EC4C", ln, quatlib::HSD_QuatLib_8037EC4C(&p, &q), &mut r);
@@ -137,11 +137,11 @@ fn hsd_math_matches_c_build() {
                     seg_poly: &poly,
                 };
                 let (u, ft, tm, p0, p1, d0, d1) = (r.f(), r.f(), r.f(), r.f(), r.f(), r.f(), r.f());
-                fl.f("splGetHelmite", ln, spline::get_helmite(ft, tm, p0, p1, d0, d1), &mut r);
+                fl.f("splGetHelmite", ln, tspl::splGetHelmite(ft, tm, p0, p1, d0, d1), &mut r);
                 let ninety9 = Vec3 { x: 99.0, y: 99.0, z: 99.0 };
-                fl.v("splGetSplinePoint", ln, spline::get_spline_point(&sp, u).unwrap_or(ninety9), &mut r);
-                fl.f("splArcLengthGetParameter", ln, spline::arc_length_get_parameter(&sp, u), &mut r);
-                fl.v("splArcLengthPoint", ln, spline::arc_length_point(&sp, u).unwrap_or(ninety9), &mut r);
+                fl.v("splGetSplinePoint", ln, tspl::splGetSplinePoint(&sp, u).unwrap_or(ninety9), &mut r);
+                fl.f("splArcLengthGetParameter", ln, tspl::splArcLengthGetParameter(&sp, u), &mut r);
+                fl.v("splArcLengthPoint", ln, tspl::splArcLengthPoint(&sp, u).unwrap_or(ninety9), &mut r);
             }
             "arc" => {
                 n_arc += 1;
@@ -158,7 +158,7 @@ fn hsd_math_matches_c_build() {
                     seg_length: &[0.0, 1.0],
                     seg_poly: &poly,
                 };
-                fl.f("splArcLengthGetParameter (1 seg)", ln, spline::arc_length_get_parameter(&sp, u), &mut r);
+                fl.f("splArcLengthGetParameter (1 seg)", ln, tspl::splArcLengthGetParameter(&sp, u), &mut r);
             }
             t => panic!("unknown tag {t}"),
         }

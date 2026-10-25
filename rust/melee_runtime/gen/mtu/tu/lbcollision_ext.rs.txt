@@ -1,0 +1,78 @@
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/mtu/gen_tu.py; the callees of the C TU)
+pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    use super::*;
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn GXBegin(a0: u32, a1: u32, a2: u16);
+    fn GXCallDisplayList(a0: *mut c_void, a1: u32);
+    fn GXClearVtxDesc();
+    fn GXColor4u8(a0: u8, a1: u8, a2: u8, a3: u8);
+    fn GXLoadNrmMtxImm(a0: *mut c_void, a1: u32);
+    fn GXLoadPosMtxImm(a0: *mut c_void, a1: u32);
+    fn GXPosition3f32(a0: f32, a1: f32, a2: f32);
+    fn GXSetAlphaCompare(a0: u32, a1: u8, a2: u32, a3: u32, a4: u8);
+    fn GXSetAlphaUpdate(a0: u8);
+    fn GXSetArray(a0: u32, a1: *const c_void, a2: u8);
+    fn GXSetBlendMode(a0: u32, a1: u32, a2: u32, a3: u32);
+    fn GXSetChanAmbColor(a0: u32, a1: _GXColor);
+    fn GXSetChanCtrl(a0: u32, a1: u8, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32);
+    fn GXSetChanMatColor(a0: u32, a1: _GXColor);
+    fn GXSetColorUpdate(a0: u8);
+    fn GXSetCullMode(a0: u32);
+    fn GXSetCurrentMtx(a0: u32);
+    fn GXSetFog(a0: u32, a1: f32, a2: f32, a3: f32, a4: f32, a5: _GXColor);
+    fn GXSetNumChans(a0: u8);
+    fn GXSetNumTevStages(a0: u8);
+    fn GXSetNumTexGens(a0: u8);
+    fn GXSetTevAlphaIn(a0: u32, a1: u32, a2: u32, a3: u32, a4: u32);
+    fn GXSetTevAlphaOp(a0: u32, a1: u32, a2: u32, a3: u32, a4: u8, a5: u32);
+    fn GXSetTevClampMode(a0: i32, a1: i32);
+    fn GXSetTevColor(a0: u32, a1: _GXColor);
+    fn GXSetTevColorIn(a0: u32, a1: u32, a2: u32, a3: u32, a4: u32);
+    fn GXSetTevColorOp(a0: u32, a1: u32, a2: u32, a3: u32, a4: u8, a5: u32);
+    fn GXSetTevOrder(a0: u32, a1: u32, a2: u32, a3: u32);
+    fn GXSetVtxAttrFmt(a0: u32, a1: u32, a2: u32, a3: u32, a4: u8);
+    fn GXSetVtxDesc(a0: u32, a1: u32);
+    fn GXSetZCompLoc(a0: u8);
+    fn GXSetZMode(a0: u8, a1: u32, a2: u8);
+    fn HSD_CObjGetCurrent() -> *mut HSD_CObj = crate::tu::cobj::HSD_CObjGetCurrent();
+    fn HSD_CObjGetViewingMtx(a0: *mut HSD_CObj, a1: *mut c_void);
+    fn HSD_ClearVtxDesc() = crate::tu::pobj::HSD_ClearVtxDesc();
+    fn HSD_JObjSetupMatrixSub(a0: *mut HSD_JObj);
+    fn HSD_MtxInverse(a0: *mut c_void, a1: *mut c_void) = { let r = crate::hsd_mtx::inverse(&*(a0 as *const [[f32; 4]; 3])); (a1 as *mut [[f32; 4]; 3]).write(r); };
+    fn HSD_StateInitTev() = crate::tu::tev::HSD_StateInitTev(crate::tu::globals::render());
+    fn HSD_StateInvalidate(a0: i32);
+    fn PSMTXConcat(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void) = crate::tu::mtx_pc::raw::PSMTXConcat(a0 as _, a1 as _, a2 as _);
+    fn PSMTXIdentity(a0: *mut c_void);
+    fn PSMTXMultVec(a0: *mut c_void, a1: *mut Vec, a2: *mut Vec) = { let v = crate::mtx::mult_vec(&*(a0 as *const [[f32; 4]; 3]), &crate::mtx::Vec3 { x: (*a1).x, y: (*a1).y, z: (*a1).z }); *a2 = Vec { x: v.x, y: v.y, z: v.z }; };
+    fn PSMTXScale(a0: *mut c_void, a1: f32, a2: f32, a3: f32);
+    fn PSMTXTrans(a0: *mut c_void, a1: f32, a2: f32, a3: f32);
+    fn PSMTXTranspose(a0: *mut c_void, a1: *mut c_void);
+    fn PSVECCrossProduct(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec);
+    fn PSVECNormalize(a0: *mut Vec, a1: *mut Vec);
+    fn lbAudioAx_80024184(a0: i32, a1: i32, a2: i32, a3: i32) -> i32;
+    fn lbVector_AngleXY(a0: *mut Vec, a1: *mut Vec) -> f32;
+    fn lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec) = { let (jobj, offset, out) = (a0, a1, a2); crate::tu::lb_00B0::lb_8000B1CC(jobj, offset as _, out as _) };
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+    }
+    // Data defined in other TUs (the tests set them).
+}
+// END GENERATED EXT

@@ -117,3 +117,17 @@ fn menu_cursor_wraps_through_the_ranges_and_spawns() {
     s.fn_80225A54(&mut h, 0);
     assert_eq!((h.alloc.x4, h.alloc.x64), (10, 9));
 }
+
+/// `db_EnableItemSpawns` / `db_DisableItemSpawns` / `db_AreItemSpawnsEnabled` (dbitem.c: the three accessors of
+/// `db_ItemAndPokemonMenu.ItemSpawnsEnabled`; checked against the C source, no oracle build of the TU).
+#[test]
+fn item_spawn_flag_accessors() {
+    let mut s = Box::new(DbItem::default());
+    s.menu.item_spawns_enabled = 7;
+    s.db_EnableItemSpawns();
+    assert_eq!(s.db_AreItemSpawnsEnabled(), 1);
+    s.db_DisableItemSpawns();
+    assert_eq!(s.db_AreItemSpawnsEnabled(), 0);
+    s.db_EnableItemSpawns();
+    assert_eq!(s.menu.item_spawns_enabled, 1);
+}

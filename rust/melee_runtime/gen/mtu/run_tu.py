@@ -30,6 +30,10 @@ FLAGS = ["--target=x86_64-pc-windows-gnu", "-mno-ms-bitfields", "-std=c99", "-no
          "-isystem", "libs/dolphin/src", "-isystem", GALE, "-include", "src/MSL/math_ppc.h"]
 
 
+if os.environ.get("MTU_G"):
+    FLAGS += ["-g", "-gcodeview"]
+
+
 def run(cmd, n):
     r = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
     if r.returncode:
@@ -62,8 +66,11 @@ def main():
                  '-DTU_SRC="' + str(ROOT / src).replace("\\", "/") + '"', *dbg, str(s), "-o", str(ll)], n)
             run([sys.executable, str(LOWER), str(ll), str(lo)], n)
             lls.append(str(lo))
-        run([CLANG, "-O0", "-w", *lls, "-o", str(exe), "-Wl,/OPT:NOICF", "-fuse-ld=lld"], n)
-        r = subprocess.run([str(exe)], capture_output=True, text=True)
+        run([CLANG, "-O0", "-w", *(["-g", "-Wl,/DEBUG"] if os.environ.get("MTU_G") else []), *lls, "-o", str(exe), "-Wl,/OPT:NOICF", "-fuse-ld=lld"], n)
+        try:
+            r = subprocess.run([str(exe)], capture_output=True, text=True, timeout=int(os.environ.get('MTU_TIMEOUT', '100')))
+        except subprocess.TimeoutExpired:
+            raise SystemExit(f'mtu: {n}: C driver timed out (an infinite loop in some case: run it with MTU_PROG=1 to see which)')
         if r.returncode:
             env = dict(os.environ, MTU_PROG="1")
             r2 = subprocess.run([str(exe)], capture_output=True, text=True, env=env)

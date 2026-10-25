@@ -8,3 +8,140 @@ publish.workspace = true
 [dependencies]
 melee_core.workspace = true
 melee_types.workspace = true
+
+# Per-TU state oracles whose cases may end in a failed assertion: run without libtest (tests/mtu_harness).
+[[test]]
+name = "tu_lbdvd"
+harness = false
+
+[[test]]
+name = "tu_controller"
+harness = false
+
+[[test]]
+name = "tu_rumble"
+harness = false
+
+[[test]]
+name = "tu_lbshadow"
+harness = false
+
+[[test]]
+name = "tu_perf"
+harness = false
+
+[[test]]
+name = "tu_memory"
+harness = false
+
+[[test]]
+name = "tu_objalloc"
+harness = false
+
+[[test]]
+name = "tu_mtx"
+harness = false
+
+[[test]]
+name = "tu_object"
+harness = false
+
+[[test]]
+name = "tu_archive"
+harness = false
+
+[[test]]
+name = "tu_wobj"
+harness = false
+
+[[test]]
+name = "tu_lbanim"
+harness = false
+
+[[test]]
+name = "tu_aobj"
+harness = false
+
+[[test]]
+name = "tu_dobj"
+harness = false
+
+[[test]]
+name = "tu_mobj"
+harness = false
+
+[[test]]
+name = "tu_tobj"
+harness = false
+
+[[test]]
+name = "tu_cobj"
+harness = false
+
+[[test]]
+name = "tu_class"
+harness = false
+
+[[test]]
+name = "tu_initialize"
+harness = false
+
+[[test]]
+name = "tu_video"
+harness = false
+
+[[test]]
+name = "tu_fog"
+harness = false
+
+[[test]]
+name = "tu_pobj"
+harness = false
+
+[[test]]
+name = "tu_jobj"
+harness = false
+
+[[test]]
+name = "tu_displayfunc_native"
+harness = false
+
+[[test]]
+name = "tu_lbcollision"
+harness = false
+
+[[test]]
+name = "tu_shadow"
+harness = false
+
+[[test]]
+name = "tu_lbrefract"
+harness = false
+
+[[test]]
+name = "tu_debug"
+harness = false
+
+[[test]]
+name = "tu_state_native"
+harness = false
+
+[[test]]
+name = "tu_tev_native"
+harness = false
+
+[[test]]
+name = "tu_texpdag"
+harness = false
+
+[[test]]
+name = "tu_psdisp"
+harness = false
+
+[[test]]
+name = "tu_psdisptev"
+harness = false
+
+[[test]]
+name = "tu_particle"
+harness = false

@@ -338,11 +338,7 @@ use crate::tobj as logic;
 use crate::mtx as math;
 use melee_core::fp::fmadds;
 
-pub use crate::tobj::{tex_map_id_to_pt_tex_mtx as HSD_TexMapID2PTTexMtx,
-    tg_tex_to_index as HSD_TGTex2Index, tex_coord_id_to_tex_gen_src as HSD_TexCoordID2TexGenSrc,
-    tex_coord_to_index as HSD_TexCoord2Index, index_to_tex_coord as HSD_Index2TexCoord,
-    tex_mtx_to_index as HSD_TexMtx2Index, index_to_tex_mtx as HSD_Index2TexMtx,
-    index_to_tex_map as HSD_Index2TexMap, tex_map_to_index as HSD_TexMap2Index};
+pub use crate::tobj::{tex_map_id_to_pt_tex_mtx as HSD_TexMapID2PTTexMtx, tg_tex_to_index as HSD_TGTex2Index, tex_coord_id_to_tex_gen_src as HSD_TexCoordID2TexGenSrc, tex_coord_to_index as HSD_TexCoord2Index, index_to_tex_coord as HSD_Index2TexCoord, tex_mtx_to_index as HSD_TexMtx2Index, index_to_tex_map as HSD_Index2TexMap, tex_map_to_index as HSD_TexMap2Index};
 
 pub static mut hsdTObj: HSD_TObjInfo = {
     let mut info: HSD_TObjInfo = unsafe { core::mem::zeroed() };
@@ -463,38 +459,91 @@ pub unsafe extern "C" fn _HSD_TObjGetCurrentByType(from:*mut HSD_TObj,mapping:u3
     let mut p=if from.is_null(){tobj_head}else{(*from).next};
     while !p.is_null(){if (*p).flags&15==mapping{return p;}p=(*p).next;}null_mut()
 }
-pub unsafe extern "C" fn MakeTextureMtx(p:*mut HSD_TObj){let mut v=logic_view(p);v.make_texture_mtx();(*p).mtx=v.mtx;}
-pub unsafe extern "C" fn TObjSetupMtx(p:*mut HSD_TObj){
-    let kind=(*p).flags&15;if kind==super::TEX_COORD_TOON{return;}
-    if (*p).flags&logic::TEX_MTX_DIRTY!=0{
-        let ci=(*p).parent.parent.class_info.cast::<HSD_TObjInfo>();((*ci).make_mtx.expect("TObj make_mtx method"))(p);
-        (*p).flags&=!logic::TEX_MTX_DIRTY;
+/// tobj.c `MakeTextureMtx`: translate, rotate and scale matrices concatenated onto `tobj->mtx` through the
+/// matrix library (callees are hooks, like the C).
+pub unsafe extern "C" fn MakeTextureMtx(tobj: *mut HSD_TObj) {
+    let t = &mut *tobj;
+    assert!(t.repeat_s != 0 && t.repeat_t != 0, "tobj.c:589 tobj->repeat_s && tobj->repeat_t");
+    let sx = if t.scale.x.abs() < f32::EPSILON { 0.0 } else { t.repeat_s as f32 / t.scale.x };
+    let sy = if t.scale.y.abs() < f32::EPSILON { 0.0 } else { t.repeat_t as f32 / t.scale.y };
+    let sz = t.scale.z;
+    let mut rot = Quaternion { x: t.rotate.x, y: t.rotate.y, z: -t.rotate.z, w: 0.0 };
+    let tx = -t.translate.x;
+    let ty = -(t.translate.y + (if t.wrap_t == GX_MIRROR { 1.0 / (t.repeat_t as f32 / t.scale.y) } else { 0.0 }));
+    let tz = t.translate.z;
+    let mut m = [[0.0f32; 4]; 3];
+    let mp = m.as_mut_ptr().cast::<c_void>();
+    let mtxp = addr_of_mut!(t.mtx).cast::<c_void>();
+    ext::PSMTXTrans(mtxp, tx, ty, tz);
+    ext::HSD_MkRotationMtx(mp, addr_of_mut!(rot).cast());
+    ext::PSMTXConcat(mp, mtxp, mtxp);
+    ext::PSMTXScale(mp, sx, sy, sz);
+    ext::PSMTXConcat(mp, mtxp, mtxp);
+}
+pub unsafe extern "C" fn TObjSetupMtx(p: *mut HSD_TObj) {
+    let kind = (*p).flags & 15;
+    if kind == super::TEX_COORD_TOON {
+        return;
     }
-    let m=(*p).mtx;
-    match kind{
-        super::TEX_COORD_REFLECTION=>{
-            let mut r=[[0.0;4];3];
-            for i in 0..3{r[i][0]=0.5*m[i][0];r[i][1]=-0.5*m[i][1];r[i][3]=fmadds(0.5,m[i][0],0.5*m[i][1])+m[i][2]+m[i][3];}
-            ext::GXLoadTexMtxImm(r.as_mut_ptr().cast(),(*p).mtxid,GX_MTX3x4);
+    if (*p).flags & logic::TEX_MTX_DIRTY != 0 {
+        let ci = (*p).parent.parent.class_info.cast::<HSD_TObjInfo>();
+        ((*ci).make_mtx.expect("TObj make_mtx method"))(p);
+        (*p).flags &= !logic::TEX_MTX_DIRTY;
+    }
+    let m = (*p).mtx;
+    match kind {
+        super::TEX_COORD_REFLECTION => {
+            let mut r = [[0.0f32; 4]; 3];
+            for i in 0..3 {
+                r[i][0] = 0.5 * m[i][0];
+                r[i][1] = -0.5 * m[i][1];
+                r[i][2] = 0.0;
+                r[i][3] = fmadds(0.5, m[i][0], 0.5 * m[i][1]) + m[i][2] + m[i][3];
+            }
+            ext::GXLoadTexMtxImm(r.as_mut_ptr().cast(), (*p).mtxid, GX_MTX3x4);
         }
-        super::TEX_COORD_HILIGHT=>{
-            let light=ext::HSD_LObjGetCurrentByType(1);
-            let mut r=[[0.0;4];3];
-            if !light.is_null(){
-                let camera=ext::HSD_CObjGetCurrent();assert!(!camera.is_null(),"tobj.c:680 cobj");
-                let mut d=Vec3::zeroed();ext::HSD_LObjGetLightVector(light,&mut d);
-                let mut d=math::mult_vec_sr(&(*camera).view_mtx,&vec(d));d.z+=-1.0;
-                let half=math::vec_normalize(&d);
-                let half=[(half.x as f64*-0.5) as f32,(half.y as f64*-0.5) as f32,(half.z as f64*-0.5) as f32];
-                for i in 0..2{for j in 0..3{r[i][j]=m[i][0]*half[j];}r[i][3]=fmadds(m[i][0],0.5,m[i][3]);}r[2][3]=1.0;
-            }else{r[0][3]=1.0;r[1][3]=1.0;}
-            ext::GXLoadTexMtxImm(r.as_mut_ptr().cast(),(*p).mtxid,GX_MTX3x4);
+        super::TEX_COORD_HILIGHT => {
+            let light = ext::HSD_LObjGetCurrentByType(1);
+            let mut r = [[0.0f32; 4]; 3];
+            if !light.is_null() {
+                let camera = ext::HSD_CObjGetCurrent();
+                assert!(!camera.is_null(), "tobj.c:680 cobj");
+                let vmtx = addr_of_mut!((*camera).view_mtx).cast::<c_void>();
+                let mut ldir = Vec3::zeroed();
+                let mut half = Vec3::zeroed();
+                ext::HSD_LObjGetLightVector(light, &mut ldir);
+                ext::PSMTXMultVecSR(vmtx, &mut ldir, &mut ldir);
+                ldir.z += -1.0;
+                ext::PSVECNormalize(&mut ldir, &mut half);
+                half.x = (half.x as f64 * -0.5) as f32;
+                half.y = (half.y as f64 * -0.5) as f32;
+                half.z = (half.z as f64 * -0.5) as f32;
+                r[0][0] = m[0][0] * half.x;
+                r[0][1] = m[0][0] * half.y;
+                r[0][2] = m[0][0] * half.z;
+                r[0][3] = fmadds(m[0][0], 0.5, m[0][3]);
+                r[1][0] = m[1][0] * half.x;
+                r[1][1] = m[1][0] * half.y;
+                r[1][2] = m[1][0] * half.z;
+                r[1][3] = fmadds(m[1][0], 0.5, m[1][3]);
+                r[2][0] = 0.0;
+                r[2][1] = 0.0;
+                r[2][2] = 0.0;
+                r[2][3] = 1.0;
+            } else {
+                r[0][3] = 1.0;
+                r[1][3] = 1.0;
+            }
+            ext::GXLoadTexMtxImm(r.as_mut_ptr().cast(), (*p).mtxid, GX_MTX3x4);
         }
-        super::TEX_COORD_SHADOW=>{
-            let c=ext::HSD_CObjGetCurrent();let v=ext::HSD_CObjGetInvViewingMtxPtrDirect(c).cast::<math::Mtx>();
-            let mut r=math::concat(&m,&*v);ext::GXLoadTexMtxImm(r.as_mut_ptr().cast(),(*p).mtxid,GX_MTX3x4);
+        super::TEX_COORD_SHADOW => {
+            let c = ext::HSD_CObjGetCurrent();
+            let inv = ext::HSD_CObjGetInvViewingMtxPtrDirect(c);
+            let mut r = [[0.0f32; 4]; 3];
+            ext::PSMTXConcat(addr_of_mut!((*p).mtx).cast(), inv, r.as_mut_ptr().cast());
+            ext::GXLoadTexMtxImm(r.as_mut_ptr().cast(), (*p).mtxid, GX_MTX3x4);
         }
-        _=>ext::GXLoadTexMtxImm(addr_of_mut!((*p).mtx).cast(),(*p).mtxid,if (*p).flags&super::TEX_BUMP!=0{GX_MTX2x4}else{GX_MTX3x4}),
+        _ => ext::GXLoadTexMtxImm(addr_of_mut!((*p).mtx).cast(), (*p).mtxid, if (*p).flags & super::TEX_BUMP != 0 { GX_MTX2x4 } else { GX_MTX3x4 }),
     }
 }
 pub unsafe extern "C" fn setupTextureCoordGen(p:*mut HSD_TObj){
@@ -709,7 +758,7 @@ pub unsafe extern "C" fn TObjInfoInit(){
     hsdTObj.parent.release=Some(TObjRelease);hsdTObj.parent.amnesia=Some(TObjAmnesia);hsdTObj.load=Some(TObjLoad);hsdTObj.make_texp=Some(TObjMakeTExp);hsdTObj.make_mtx=Some(MakeTextureMtx);
 }
 
-// BEGIN GENERATED EXT (rust/melee_world/gen/mtu/gen_tu.py; the callees of the C TU)
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
@@ -743,17 +792,17 @@ pub mod ext {
     fn GXSetTexCopyDst(a0: u16, a1: u16, a2: u32, a3: u8);
     fn GXSetTexCopySrc(a0: u16, a1: u16, a2: u16, a3: u16);
     fn HSD_AObjInterpretAnim(a0: *mut HSD_AObj, a1: *mut c_void, a2: Option<unsafe extern "C" fn(*mut c_void, i32, *mut HSD_ObjData)>);
-    fn HSD_AObjLoadDesc(a0: *mut HSD_AObjDesc) -> *mut HSD_AObj = crate::tu::aobj::HSD_AObjLoadDesc(a0);
-    fn HSD_AObjRemove(a0: *mut HSD_AObj) = crate::tu::aobj::HSD_AObjRemove(a0);
-    fn HSD_AObjReqAnim(a0: *mut HSD_AObj, a1: f32) = crate::tu::aobj::HSD_AObjReqAnim(a0, a1);
+    fn HSD_AObjLoadDesc(a0: *mut HSD_AObjDesc) -> *mut HSD_AObj = { let (a0,) = (a0,); crate::tu::aobj::HSD_AObjLoadDesc(a0) };
+    fn HSD_AObjRemove(a0: *mut HSD_AObj) = { let (a0,) = (a0,); crate::tu::aobj::HSD_AObjRemove(a0) };
+    fn HSD_AObjReqAnim(a0: *mut HSD_AObj, a1: f32) = { let (a0, a1) = (a0, a1); crate::tu::aobj::HSD_AObjReqAnim(a0, a1) };
     fn HSD_CObjGetCurrent() -> *mut HSD_CObj = crate::tu::cobj::HSD_CObjGetCurrent();
     fn HSD_CObjGetInvViewingMtxPtrDirect(a0: *mut HSD_CObj) -> *mut c_void;
-    fn HSD_Free(a0: *mut c_void) = crate::tu::memory::HSD_Free(a0);
+    fn HSD_Free(a0: *mut c_void) = { let (a0,) = (a0,); crate::tu::memory::HSD_Free(a0) };
     fn HSD_LObjGetCurrentByType(a0: u16) -> *mut HSD_LObj;
     fn HSD_LObjGetLightMaskDiffuse() -> u32;
     fn HSD_LObjGetLightVector(a0: *mut HSD_LObj, a1: *mut Vec);
-    fn HSD_MemAlloc(a0: i32) -> *mut c_void = crate::tu::memory::HSD_MemAlloc(a0);
-    fn HSD_Panic(a0: *const i8, a1: u32, a2: *const i8) = crate::tu::debug::HSD_Panic(a0 as _, a1, a2 as _);
+    fn HSD_MemAlloc(a0: i32) -> *mut c_void = { let (a0,) = (a0,); crate::tu::memory::HSD_MemAlloc(a0) };
+    fn HSD_MkRotationMtx(a0: *mut c_void, a1: *mut Vec);
     fn HSD_SetupTevStage(a0: *mut _HSD_TevDesc);
     fn HSD_StateAssignTev() -> i32;
     fn HSD_StateRegisterTexGen(a0: i32);
@@ -764,13 +813,18 @@ pub mod ext {
     fn HSD_TExpColorIn(a0: *mut HSD_TExp, a1: u32, a2: *mut HSD_TExp, a3: u32, a4: *mut HSD_TExp, a5: u32, a6: *mut HSD_TExp, a7: u32, a8: *mut HSD_TExp);
     fn HSD_TExpColorOp(a0: *mut HSD_TExp, a1: u32, a2: u32, a3: u32, a4: u8);
     fn HSD_TExpOrder(a0: *mut HSD_TExp, a1: *mut HSD_TObj, a2: u32);
-    fn HSD_TExpTev(a0: *mut *mut HSD_TExp) -> *mut HSD_TExp = crate::tu::texp::HSD_TExpTev(a0);
-    fn hsdAllocMemPiece(a0: i32) -> *mut c_void = crate::tu::class::hsdAllocMemPiece(a0);
-    fn hsdFreeMemPiece(a0: *mut c_void, a1: i32) = crate::tu::class::hsdFreeMemPiece(a0, a1);
-    fn hsdInitClassInfo(a0: *mut _HSD_ClassInfo, a1: *mut _HSD_ClassInfo, a2: *mut i8, a3: *mut i8, a4: i32, a5: i32) = crate::tu::class::hsdInitClassInfo(a0 as _, a1 as _, a2 as _, a3 as _, a4, a5);
-    fn hsdIsDescendantOf(a0: *mut c_void, a1: *mut c_void) -> i32 = crate::tu::class::hsdIsDescendantOf(a0, a1) as _;
-    fn hsdNew(a0: *mut _HSD_ClassInfo) -> *mut c_void = crate::tu::class::hsdNew(a0 as _);
-    fn hsdSearchClassInfo(a0: *const i8) -> *mut _HSD_ClassInfo = crate::tu::class::hsdSearchClassInfo(a0 as _) as _;
+    fn HSD_TExpTev(a0: *mut *mut HSD_TExp) -> *mut HSD_TExp = { let (a0,) = (a0,); crate::tu::texp::HSD_TExpTev(a0) };
+    fn PSMTXConcat(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void) = crate::tu::mtx_pc::raw::PSMTXConcat(a0 as _, a1 as _, a2 as _);
+    fn PSMTXMultVecSR(a0: *mut c_void, a1: *mut Vec, a2: *mut Vec) = crate::tu::mtx_pc::raw::PSMTXMultVecSR(a0 as _, a1, a2);
+    fn PSMTXScale(a0: *mut c_void, a1: f32, a2: f32, a3: f32) = crate::tu::mtx_pc::raw::PSMTXScale(a0 as _, a1, a2, a3);
+    fn PSMTXTrans(a0: *mut c_void, a1: f32, a2: f32, a3: f32) = crate::tu::mtx_pc::raw::PSMTXTrans(a0 as _, a1, a2, a3);
+    fn PSVECNormalize(a0: *mut Vec, a1: *mut Vec) = crate::tu::mtx_pc::raw::PSVECNormalize(a0, a1);
+    fn hsdAllocMemPiece(a0: i32) -> *mut c_void = { let (a0,) = (a0,); crate::tu::class::hsdAllocMemPiece(a0) };
+    fn hsdFreeMemPiece(a0: *mut c_void, a1: i32) = { let (a0, a1) = (a0, a1); crate::tu::class::hsdFreeMemPiece(a0, a1) };
+    fn hsdInitClassInfo(a0: *mut _HSD_ClassInfo, a1: *mut _HSD_ClassInfo, a2: *mut i8, a3: *mut i8, a4: i32, a5: i32) = { let (a0, a1, a2, a3, a4, a5) = (a0, a1, a2, a3, a4, a5); crate::tu::class::hsdInitClassInfo(a0 as _, a1 as _, a2 as _, a3 as _, a4, a5) };
+    fn hsdIsDescendantOf(a0: *mut c_void, a1: *mut c_void) -> i32 = { let (a0, a1) = (a0, a1); crate::tu::class::hsdIsDescendantOf(a0, a1) as _ };
+    fn hsdNew(a0: *mut _HSD_ClassInfo) -> *mut c_void = { let (a0,) = (a0,); crate::tu::class::hsdNew(a0 as _) };
+    fn hsdSearchClassInfo(a0: *const i8) -> *mut _HSD_ClassInfo = { let (a0,) = (a0,); crate::tu::class::hsdSearchClassInfo(a0 as _) as _ };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
@@ -784,3 +838,16 @@ pub mod ext {
 
 }
 pub use native::*;
+
+#[allow(non_snake_case, unused_imports, clippy::missing_safety_doc)]
+pub mod cnames {
+    #[allow(unused_imports)]
+    use crate::tobj::*;
+    use super::*;
+    /// `HSD_Index2TexMtx`: the C entry point over `crate::tobj::index_to_tex_mtx` (the owned object model).
+    #[inline]
+    pub fn HSD_Index2TexMtx(index: u32) -> u32 {
+        crate::tobj::index_to_tex_mtx(index)
+    }
+}
+pub use cnames::*;

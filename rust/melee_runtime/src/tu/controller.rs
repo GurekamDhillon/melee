@@ -13,7 +13,6 @@
 
 use crate::cabi::f2i8;
 use crate::gekko::sqrtf;
-use crate::lbtrigf::atan2f;
 use core::ffi::c_void;
 use melee_core::fp::fmadds;
 use melee_types::{
@@ -39,8 +38,8 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn OSDisableInterrupts() -> u32;
-    fn OSRestoreInterrupts(level: u32);
+    fn OSDisableInterrupts() -> i32;
+    fn OSRestoreInterrupts(level: i32) -> i32;
     fn OSGetResetSwitchState() -> i32;
     fn PADRead(status: *mut PADStatus) -> u32;
     fn PADReset(mask: u32) -> i32;
@@ -48,7 +47,7 @@ pub mod ext {
     fn PADInit() -> i32;
     fn HSD_PadRumbleInterpret() = crate::tu::rumble::HSD_PadRumbleInterpret();
     fn HSD_PadRumbleRemoveAll() = crate::tu::rumble::HSD_PadRumbleRemoveAll();
-    fn HSD_PadRumbleOffN(chan: i32) = crate::tu::rumble::HSD_PadRumbleOffN(chan as _);
+    fn HSD_PadRumbleOffN(chan: u8) = crate::tu::rumble::HSD_PadRumbleOffN(chan as _);
     fn HSD_PadRumbleInit(nb_list: u16, listdatap: *mut HSD_PadRumbleListData) = crate::tu::rumble::HSD_PadRumbleInit(nb_list, listdatap as _);
     fn RB_PadLatch(port: i32, button: i32, sx: i32, sy: i32, cx: i32, cy: i32, l: i32, r: i32, a: i32, b: i32, err: i32);
     fn Ucf_PadLatch(port: i32, sx: i32, sy: i32, cx: i32, cy: i32);
@@ -56,9 +55,10 @@ pub mod ext {
     fn RB_PadField(port: i32, which: i32) -> i32;
     fn LabPad_Replay(out: *mut c_void, size: i32) -> i32;
     fn LabPad_Record(st: *const c_void, size: i32);
-    fn Mex_Enabled(name: &str) -> i32;
+    fn Mex_Enabled(name: *const i8) -> i32;
     fn FighterControls_Apply(port: i32, buttons: i32) -> i32;
     fn Replay_ControlsRaw() -> i32;
+    fn atan2f(y: f32, x: f32) -> f32 = crate::lbtrigf::atan2f(y, x);
     }
 }
 
@@ -214,7 +214,7 @@ pub unsafe fn HSD_PadRenewRawStatus(err_check: bool) {
 /// `HSD_PadFlushQueue`.
 pub unsafe fn HSD_PadFlushQueue(ftype: HSD_FlushType) {
     let p: *mut PadLibData = &mut HSD_PadLibData;
-    let intr = (ext::OSDisableInterrupts() != 0) as u32;
+    let intr = ext::OSDisableInterrupts();
     match ftype {
         HSD_PAD_FLUSH_QUEUE_MERGE => {
             while (*p).qcount > 1 {
@@ -318,7 +318,7 @@ unsafe fn HSD_PadADConvertCheck1(mp: &mut HSD_PadStatus, x: i8, y: i8, up: u32, 
     let a: f32 = if (x as f32).abs() == 0.0 {
         (if y >= 0 { 1.5707963267948966f64 } else { -1.5707963267948966f64 }) as f32
     } else {
-        atan2f(y as f32, x as f32)
+        ext::atan2f(y as f32, x as f32)
     };
 
     let ha = 0.5f32 * p.adc_angle;
@@ -434,7 +434,7 @@ pub unsafe fn HSD_PadRenewMasterStatus() {
     }
 
     let mut mp: *mut HSD_PadStatus = HSD_PadMasterStatus.as_mut_ptr();
-    let intr = (ext::OSDisableInterrupts() != 0) as u32;
+    let intr = ext::OSDisableInterrupts();
     let mut qread: *mut PADStatus = core::ptr::null_mut();
     if (*p).qcount != 0 {
         qread = queue_stat(p, (*p).qread);
@@ -465,7 +465,7 @@ pub unsafe fn HSD_PadRenewMasterStatus() {
             if m.err == 0 {
                 // m-ex xy_disables_start: X+Y+Start clears the Start bit before it is latched.
                 let b = q.button as u32;
-                if ext::Mex_Enabled("xy_disables_start") != 0
+                if ext::Mex_Enabled(c"xy_disables_start".as_ptr()) != 0
                     && (b & (PAD_BUTTON_START | PAD_BUTTON_X | PAD_BUTTON_Y)) == (PAD_BUTTON_START | PAD_BUTTON_X | PAD_BUTTON_Y)
                 {
                     m.button = b & !PAD_BUTTON_START;
@@ -618,7 +618,7 @@ pub unsafe fn HSD_PadRenewStatus() {
 /// `HSD_PadReset`.
 pub unsafe fn HSD_PadReset() {
     let p: *mut PadLibData = &mut HSD_PadLibData;
-    let intr = (ext::OSDisableInterrupts() != 0) as u32;
+    let intr = ext::OSDisableInterrupts();
 
     ext::HSD_PadRumbleRemoveAll();
     for i in 0..4 {

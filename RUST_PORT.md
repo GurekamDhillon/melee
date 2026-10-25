@@ -1201,8 +1201,8 @@ rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_In
   Rust tick n (`native_000n.png`; the camera is bit-identical). Round 1's turbo shots were captured some 13-22 frames late (and later
   frames drifted), which made its 900+ numbers meaningless. Compare: `tools/rust-port/shotcmp3.py RUSTDIR` (C shots in
   `cshots3/`, both box-downscaled to 640x480). Run the viewer as `MELEE_VIEW_SKIP=1 rv.sh DIR 1505 60,120,300,...`.
-- Fixed this round (mean abs error 0..255, previous -> now): f60 10.6 -> 5.2, f120 12.6 -> 3.9, f300 22.2 -> 2.0, f600 19.6 -> 2.4,
-  f900 14.3 -> 2.0, f1200 17.9 -> 1.5, f1500 19.5 -> 3.7 (average 16.7 -> 2.95; within16 %: 87.7 / 92.3 / 97.7 / 96.8 / 97.8 / 97.8 / 93.8):
+- Fixed this round (mean abs error 0..255, previous -> now): f60 10.6 -> 4.7, f120 12.6 -> 3.7, f300 22.2 -> 2.0, f600 19.6 -> 2.4,
+  f900 14.3 -> 1.95, f1200 17.9 -> 1.4, f1500 19.5 -> 3.6 (average 16.7 -> 2.82; within16 %: 88.5 / 92.1 / 97.7 / 96.8 / 97.8 / 97.8 / 93.7):
   1. `melee_runtime::tu::mobj::setup_tev`: a TEV stage selects ONE konst colour; a TObj TEV of `(tev0 - konst) * tex` needs two constants
      in the same stage and the second silently collapsed into the first (result black). Extra distinct colour / alpha constants now go to
      TEV registers REG1 / REG2. This is the whole FD Milky Way dust band, the big nebula layers and every `0x85 0x80` gradient-map TObj.
@@ -1216,13 +1216,27 @@ rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_In
      frame to the head (`cur_pos + name_tag_height - 2.5`) projected by the match camera, own ortho camera (640x480, eye z 300), removed when
      the Go element is created (`un_802FD428`).
   5. Fighter bodies obey `invisible` / `x221E_b5` (`ftDrawCommon_80080A18`).
-- Still different (largest first): (a) fighter colour overlays: the C paints the Entry glow (`ftCo_800BFFD0(0x75)` colour animation, the
-  white silhouettes of frames 25-85), the Rebirth ghost (Falcon is lavender and translucent at 300/900/1500: colour overlay + `x61D` alpha,
-  `ftMaterial_800BF2B8` adds TEV stages) and the respawn platform; none of `ftcolanim.c` / `ftmaterial.c` is ported (the sim only
-  records them); (b) entry beam light pillars / sparkles, hit-spark and dust particle brightness (`ps_view.rs`: AppSRT particles, point
-  batching, fog, light-mask diffuse); (c) C frames 1-45 light up blue panels on the stage underside that the viewer keeps dark; (d) floor
-  texture aliasing (C is 2x MSAA-free but mip-filtered differently, tiny amplitude). Shadows: FD draws none; fog: FD has none
+  6. Effect models (`efLib_Create`): the JObj trees of the effect banks (`EfCoData` & the per-character `Ef*Data`), with their joint and
+     material animation, are drawn at the root the sim keeps (`effect_draws`: owner position or fixed spawn position, scale, Y/Z rotation
+     overrides) by `view::FxModel` (a `StageAnim` per live effect; `EffectBank::model_dat` appends one synthetic `{joint, anims[], matanims[]}`
+     record per effect id). This is the dash / skid dust rings, landing dust, the KO beam, shield and so on; `efSync_Spawn(0x42B)`'s
+     `efLib_SetTevKonstColor` tint (PlCo pData[18]/[19]) is applied, and TObj tev colours now come from the live TObj
+     (`TObjState.obj.tev`, initialised from the descriptor) so tev tracks animate too. Not drawn: effects whose animation has a PATH
+     track (effect 36, the entry beam: needs the spline JObj of the AObj's `obj_id`), effects attached to a fighter bone (they follow the
+     owner's root position only), `lb_8000C1C0` RObj constraints.
+  7. Sim ordering bug found on the way: `ftCommon_8007DB24`'s `efLib_DestroyAll` is queued (`ef_ops`) to the s_link 9 flush, which freed the
+     KO effect `dead_down` spawns right after it; `dead_down` now runs the queued DestroyAll first (the golden is still identical on
+     all 1801 frames).
+- AppSRT particles (`psDispSubAppSRT` quads and points) are ported in `ps_view.rs` but OFF by default (`MELEE_VIEW_APPSRT=1`): the KO / blast
+  zone sprites they draw come out as oversized blocky quads next to the C build's thin beams (extent or texture still wrong), which scores
+  worse than skipping them.
+- Still different (largest first): (a) fighter colour overlays: the C paints the Entry glow (`ftCo_800BFFD0(0x75)` colour animation + the
+  trophy-stand accessory, the white silhouettes of frames 25-85), the Rebirth ghost (Falcon is lavender and translucent at 300/900/1500: colour
+  overlay, `ftMaterial_800BF2B8` adds TEV stages) and the respawn platform; none of `ftcolanim.c` / `ftmaterial.c` / `lb_013B` is ported (the sim
+  only records them); (b) KO frames (215-250, 500-540, 790-830): the KO star / "SCORE -1" text / the exploding percent digits / the pillar's
+  exact size and fade (errors 12-26 vs 2-4 in plain frames); (c) entry beam light pillars (PATH effect), C frames 1-45 light up blue panels on the
+  stage underside that the viewer keeps dark; (d) floor texture aliasing (tiny amplitude). Shadows: FD draws none; fog: FD has none
   (`stage_info.unk8C.b3` unset); screen flashes: none occur in these frames.
 - Dev aids: MELEE_VIEW_UNHIDE, MELEE_VIEW_PSLOG, MELEE_VIEW_READYLOG, MELEE_VIEW_NOPS (round 1); MELEE_VIEW_BRANCHSCAN / PODUMP=g:j /
-  TEXDUMP2 / TOBJDUMP / TAGDUMP / ONLY=g:j,j / FORCEVIS / PREROLL=n / FPLOG / LIGHTLOG / NOPLIT / NOLIGHTANIM / PPC_RATE, and
+  TEXDUMP2 / TOBJDUMP / TAGDUMP / ONLY=g:j,j / FORCEVIS / PREROLL=n / FPLOG / LIGHTLOG / NOPLIT / NOLIGHTANIM / PPC_RATE / NOFX / FXLOG / APPSRT / APPLOG / APPFRAMES, and
   `MELEE_GX_DRAWLOG=<copy index>` (+ `MELEE_GX_DRAWLOG_TEV=<draw>`) in melee_gx's `copy_disp`.

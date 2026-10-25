@@ -117,3 +117,7 @@ harness = false
 [[test]]
 name = "tu_lbrefract"
 harness = false
+
+[[test]]
+name = "tu_debug"
+harness = false

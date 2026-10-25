@@ -300,6 +300,10 @@ class Gen2:
             return ([f"tuo_h_f64({cp});"], [f"rt::h_f64({rp});"])
         if k[0] == "ptr":
             if is_cstr_ptr(k[1]):
+                if self.cfg.get("cstr_nocls"):
+                    # a string literal may sit right after a registered table in one image and not the other: hash nullness only
+                    return ([f"tuo_h_i((tuo_i64)({cp} != 0)); tuo_h_cstr((const char*){cp});"],
+                            [f"rt::h_i((({rp} as *const u8) != core::ptr::null()) as i64); rt::h_cstr({rp} as *const u8);"])
                 return ([f"tuo_h_p({cp}); tuo_h_cstr((const char*){cp});"],
                         [f"rt::h_p({rp} as *const u8); rt::h_cstr({rp} as *const u8);"])
             return ([f"tuo_h_p({cp});"], [f"rt::h_p({rp} as *const u8);"])
@@ -448,6 +452,9 @@ class TuGen:
         self.fcfg = cfg.get("funcs", {})
         names = [n for n in self.funcs if n not in self.skip and (not self.fcfg or n in self.fcfg or cfg.get("all", True))]
         self.test_funcs = sorted(n for n in names if self.fcfg.get(n, {}).get("test", True))
+        self.objs = []
+        self.build_objects()
+        self.build_ext()
         # a function whose argument types the generator cannot draw (Mtx, ...) is reported and left out
         ok_funcs = []
         for n in self.test_funcs:
@@ -460,9 +467,6 @@ class TuGen:
             except ValueError as e:
                 print(f"tuoracle: skip {n}: {e}")
         self.test_funcs = ok_funcs
-        self.objs = []  # (name, ctype_expr_t, rust_place, kind) built below
-        self.build_objects()
-        self.build_ext()
         c = self.emit_c()
         r = self.emit_rust()
         return c, r
@@ -1282,8 +1286,12 @@ class TuGen:
         L.append("    rt::CONSTS = vec![" + ", ".join(str(v) for v in self.consts()) + "];")
         for n in sorted(self.funcs):
             L.append(f"    rt::fn_add(m::{self.rn(n)} as usize);")
-        for s in self.ext:
-            L.append(f"    rt::fn_add(m::ext::{s['name']} as usize);")
+        for k, s in enumerate(self.ext):
+            if s["name"] in self.cfg.get("rust_missing", ()):
+                # the port has no such external (it inlines or ports the callee): keep the slot so function-pointer classes line up
+                L.append(f"    rt::fn_add(usize::MAX - {k});")
+            else:
+                L.append(f"    rt::fn_add(m::ext::{s['name']} as usize);")
         for key, (i, p) in sorted(self.g2.cbs.items(), key=lambda kv: kv[1][0]):
             L.append(f"    rt::fn_add(cb{i} as usize);")
         L.append("    EXT_HOOK = Some(hook);")
@@ -1622,7 +1630,20 @@ def main():
                 print(f"tuoracle: C side of {n} hangs: left out")
                 continue
             if res1.returncode:
-                print(f"tuoracle: C side of {n} faults (rc={res1.returncode:#x}): left out")
+                # keep the cases whose C side runs: a fault is the synthetic state breaking an invariant of one draw
+                good = []
+                for ln in fin:
+                    try:
+                        r2 = subprocess.run([str(exe)], input=ln + chr(10), capture_output=True, text=True, cwd=ROOT, timeout=60)
+                    except subprocess.TimeoutExpired:
+                        continue
+                    if r2.returncode == 0:
+                        good.append(r2.stdout)
+                if len(good) * 4 < len(fin):
+                    print(f"tuoracle: C side of {n} faults (rc={res1.returncode:#x}) in {len(fin) - len(good)} of {len(fin)} cases: left out")
+                    continue
+                print(f"tuoracle: C side of {n} faults in {len(fin) - len(good)} of {len(fin)} cases: those cases are left out")
+                out_lines.append("".join(good))
                 continue
             out_lines.append(res1.stdout)
         (ROOT / f"rust/melee_modes/tests/data/tu_{stem}.txt").write_text("".join(out_lines), newline=chr(10))

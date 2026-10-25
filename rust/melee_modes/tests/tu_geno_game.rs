@@ -19,18 +19,10 @@ static mut MO_HSD_JObjGetDObj: Q::HSD_DObj = unsafe { core::mem::zeroed() };
 static mut MO_Item_80268B18: Q::HSD_GObj = unsafe { core::mem::zeroed() };
 static mut MO_Player_GetEntity: Q::HSD_GObj = unsafe { core::mem::zeroed() };
 
-static mut AB_Geno_CollBegin_0: [Q::HSD_GObj; 1] = unsafe { core::mem::zeroed() };
-static mut AB_Geno_CollEnd_0: [Q::HSD_GObj; 1] = unsafe { core::mem::zeroed() };
-static mut AB_Geno_ComboInput_0: [Q::HSD_GObj; 1] = unsafe { core::mem::zeroed() };
-static mut AB_Geno_ComboTick_0: [Q::HSD_GObj; 1] = unsafe { core::mem::zeroed() };
 static mut AB_Geno_FallLimit_0: [Q::Fighter; 1] = unsafe { core::mem::zeroed() };
-static mut AB_Geno_FighterReset_0: [Q::Fighter; 1] = unsafe { core::mem::zeroed() };
 static mut AB_Geno_FighterScale_0: [Q::Fighter; 1] = unsafe { core::mem::zeroed() };
 static mut AB_Geno_GroundEdge_0: [Q::Fighter; 1] = unsafe { core::mem::zeroed() };
 static mut AB_Geno_HitReact_0: [Q::Fighter; 1] = unsafe { core::mem::zeroed() };
-static mut AB_Geno_OnFrame_0: [Q::HSD_GObj; 1] = unsafe { core::mem::zeroed() };
-static mut AB_Geno_OnHit_0: [Q::HSD_GObj; 1] = unsafe { core::mem::zeroed() };
-static mut AB_Geno_PreAnim_0: [Q::HSD_GObj; 1] = unsafe { core::mem::zeroed() };
 
 unsafe fn h_Camera_800310B8(a: &[u64]) -> u64 {
     rt::t_begin(0);
@@ -99,11 +91,11 @@ unsafe fn h_Fighter_ChangeMotionState(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     let p6 = a[6] as usize as *mut Q::HSD_GObj;
@@ -120,11 +112,11 @@ unsafe fn h_Fighter_ChangeMotionState(a: &[u64]) -> u64 {
         (*p6).next_gx = 0usize as _;
         (*p6).prev_gx = 0usize as _;
         (*p6).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p6).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p6).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p6).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p6).hsd_obj = 0usize as _;
         (*p6).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p6).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p6).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p6).x34_unk = 0usize as _;
     }
     0
@@ -242,11 +234,11 @@ unsafe fn h_GObj_SetupGXLink(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     0
@@ -1193,11 +1185,11 @@ unsafe fn h_Item_80267978(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     0
@@ -1353,11 +1345,11 @@ unsafe fn h_Item_80268E5C(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     0
@@ -1399,11 +1391,11 @@ unsafe fn h_Item_8026A8EC(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     0
@@ -3008,16 +3000,16 @@ unsafe fn h_ScriptGame_HitRuleItemCreate(a: &[u64]) -> u64 {
         (*p0).xD0B = rt::draw_int(&mut rt::MST) as _;
         (*p0).xD0C = rt::draw_int(&mut rt::MST) as _;
         (*p0).xD10 = rt::draw_f32(&mut rt::MST);
-        { let d = rt::next(&mut rt::MST); (*p0).animated = if d & 1 != 0 { Some(cb4) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).physics_updated = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).collided = if d & 1 != 0 { Some(cb4) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).on_accessory = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).touched = if d & 1 != 0 { Some(cb4) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).entered_hitlag = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).exited_hitlag = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).jumped_on = if d & 1 != 0 { Some(cb4) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).grab_dealt = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).grabbed_for_victim = if d & 1 != 0 { Some(cb3) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).animated = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).physics_updated = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).collided = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).on_accessory = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).touched = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).entered_hitlag = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).exited_hitlag = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).jumped_on = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).grab_dealt = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).grabbed_for_victim = if d & 1 != 0 { Some(cb1) } else { None }; }
         (*p0).xD3C_spinSpeed = rt::draw_f32(&mut rt::MST);
         (*p0).xD40 = rt::draw_f32(&mut rt::MST);
         (*p0).xD44_lifeTimer = rt::draw_f32(&mut rt::MST);
@@ -5986,33 +5978,33 @@ unsafe fn h_ScriptGame_NoteSpecialInput(a: &[u64]) -> u64 {
         (*p0).x2184 = 0usize as _;
         (*p0).x2188.x = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2188.y = rt::draw_int(&mut rt::MST) as _;
-        { let d = rt::next(&mut rt::MST); (*p0).grab_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x2194 = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).grabbed_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).input_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).anim_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).phys_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).coll_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).cam_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory1_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory3_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory4_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).deal_dmg_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).shield_hit_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).reflect_hit_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21CC = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).pre_hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).post_hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death1_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death3_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21EC = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).grab_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x2194 = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).grabbed_cb = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory4_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).deal_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).shield_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).reflect_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x21CC = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).pre_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).post_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).death1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).death2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).death3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x21EC = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb0) } else { None }; }
         (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -6189,10 +6181,10 @@ unsafe fn h_ScriptGame_NoteSpecialInput(a: &[u64]) -> u64 {
 }
 unsafe fn h___assert(a: &[u64]) -> u64 {
     rt::t_begin(117);
-    rt::t_p(a[0] as usize as *const u8);
+    rt::t_i((a[0] != 0) as i64);
     rt::t_s(a[0] as usize as *const u8);
     rt::t_i(a[1] as i64);
-    rt::t_p(a[2] as usize as *const u8);
+    rt::t_i((a[2] != 0) as i64);
     rt::t_s(a[2] as usize as *const u8);
     0
 }
@@ -6270,11 +6262,11 @@ unsafe fn h_db_80225DD8(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     let p1 = a[1] as usize as *mut Q::HSD_GObj;
@@ -6291,11 +6283,11 @@ unsafe fn h_db_80225DD8(a: &[u64]) -> u64 {
         (*p1).next_gx = 0usize as _;
         (*p1).prev_gx = 0usize as _;
         (*p1).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p1).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p1).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p1).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p1).hsd_obj = 0usize as _;
         (*p1).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p1).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p1).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p1).x34_unk = 0usize as _;
     }
     0
@@ -6398,11 +6390,11 @@ unsafe fn h_efAsync_MexSpawn(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     let p3 = a[3] as usize as *mut Q::HSD_JObj;
@@ -6482,11 +6474,11 @@ unsafe fn h_efAsync_QueueFlush(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     0
@@ -6562,11 +6554,11 @@ unsafe fn h_efAsync_Spawn(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     let p4 = a[4] as usize as *mut Q::HSD_JObj;
@@ -6640,11 +6632,11 @@ unsafe fn h_ftAnim_8006F0FC(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     0
@@ -6686,11 +6678,11 @@ unsafe fn h_ftAnim_IsFramesRemaining(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     rt::draw_int(&mut rt::MST) as u64
@@ -6733,11 +6725,11 @@ unsafe fn h_ftAnim_SetAnimRate(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     0
@@ -6779,11 +6771,11 @@ unsafe fn h_ftCliffCommon_80081298(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     rt::draw_int(&mut rt::MST) as u64
@@ -6825,11 +6817,11 @@ unsafe fn h_ftCo_800968C8(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     0
@@ -6872,11 +6864,11 @@ unsafe fn h_ftCo_80096CC8(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     rt::draw_int(&mut rt::MST) as u64
@@ -6918,11 +6910,11 @@ unsafe fn h_ftCo_80096D28(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     0
@@ -6964,11 +6956,11 @@ unsafe fn h_ftCo_8009917C(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     rt::draw_int(&mut rt::MST) as u64
@@ -7010,11 +7002,11 @@ unsafe fn h_ftCo_800D105C(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     0
@@ -9754,33 +9746,33 @@ unsafe fn h_ftCo_800D72A0(a: &[u64]) -> u64 {
         (*p0).x2184 = 0usize as _;
         (*p0).x2188.x = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2188.y = rt::draw_int(&mut rt::MST) as _;
-        { let d = rt::next(&mut rt::MST); (*p0).grab_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x2194 = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).grabbed_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).input_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).anim_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).phys_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).coll_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).cam_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory1_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory3_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory4_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).deal_dmg_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).shield_hit_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).reflect_hit_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21CC = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).pre_hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).post_hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death1_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death3_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21EC = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).grab_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x2194 = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).grabbed_cb = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory4_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).deal_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).shield_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).reflect_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x21CC = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).pre_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).post_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).death1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).death2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).death3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x21EC = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb0) } else { None }; }
         (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -9993,11 +9985,11 @@ unsafe fn h_ftCo_AttackAir_EnterFromMsid(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     0
@@ -10039,11 +10031,11 @@ unsafe fn h_ftCo_Fall_Enter(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     0
@@ -10085,11 +10077,11 @@ unsafe fn h_ftCo_Fall_IASA(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     0
@@ -12829,33 +12821,33 @@ unsafe fn h_ftCo_IsCpuControlled(a: &[u64]) -> u64 {
         (*p0).x2184 = 0usize as _;
         (*p0).x2188.x = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2188.y = rt::draw_int(&mut rt::MST) as _;
-        { let d = rt::next(&mut rt::MST); (*p0).grab_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x2194 = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).grabbed_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).input_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).anim_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).phys_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).coll_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).cam_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory1_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory3_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory4_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).deal_dmg_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).shield_hit_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).reflect_hit_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21CC = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).pre_hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).post_hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death1_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death3_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21EC = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).grab_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x2194 = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).grabbed_cb = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory4_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).deal_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).shield_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).reflect_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x21CC = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).pre_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).post_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).death1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).death2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).death3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x21EC = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb0) } else { None }; }
         (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -13067,11 +13059,11 @@ unsafe fn h_ftCo_JumpAerial_Enter_Basic(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     0
@@ -13113,11 +13105,11 @@ unsafe fn h_ftCo_Jump_Enter(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     0
@@ -13161,11 +13153,11 @@ unsafe fn h_ftCo_LandingFallSpecial_Enter(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     0
@@ -13207,11 +13199,11 @@ unsafe fn h_ftCo_LandingFallSpecial_Enter_Basic(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     0
@@ -13253,11 +13245,11 @@ unsafe fn h_ftCo_Landing_Enter_Basic(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     0
@@ -13299,11 +13291,11 @@ unsafe fn h_ftCo_Wait_IASA(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     0
@@ -16043,33 +16035,33 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
         (*p0).x2184 = 0usize as _;
         (*p0).x2188.x = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2188.y = rt::draw_int(&mut rt::MST) as _;
-        { let d = rt::next(&mut rt::MST); (*p0).grab_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x2194 = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).grabbed_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).input_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).anim_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).phys_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).coll_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).cam_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory1_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory3_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory4_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).deal_dmg_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).shield_hit_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).reflect_hit_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21CC = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).pre_hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).post_hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death1_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death3_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21EC = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).grab_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x2194 = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).grabbed_cb = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory4_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).deal_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).shield_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).reflect_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x21CC = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).pre_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).post_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).death1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).death2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).death3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x21EC = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb0) } else { None }; }
         (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -18979,33 +18971,33 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
         (*p0).x2184 = 0usize as _;
         (*p0).x2188.x = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2188.y = rt::draw_int(&mut rt::MST) as _;
-        { let d = rt::next(&mut rt::MST); (*p0).grab_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x2194 = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).grabbed_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).input_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).anim_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).phys_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).coll_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).cam_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory1_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory3_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory4_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).deal_dmg_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).shield_hit_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).reflect_hit_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21CC = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).pre_hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).post_hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death1_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death3_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21EC = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).grab_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x2194 = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).grabbed_cb = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory4_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).deal_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).shield_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).reflect_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x21CC = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).pre_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).post_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).death1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).death2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).death3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x21EC = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb0) } else { None }; }
         (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -21915,33 +21907,33 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelAir(a: &[u64]) -> u64 {
         (*p0).x2184 = 0usize as _;
         (*p0).x2188.x = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2188.y = rt::draw_int(&mut rt::MST) as _;
-        { let d = rt::next(&mut rt::MST); (*p0).grab_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x2194 = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).grabbed_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).input_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).anim_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).phys_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).coll_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).cam_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory1_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory3_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory4_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).deal_dmg_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).shield_hit_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).reflect_hit_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21CC = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).pre_hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).post_hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death1_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death3_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21EC = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).grab_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x2194 = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).grabbed_cb = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory4_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).deal_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).shield_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).reflect_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x21CC = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).pre_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).post_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).death1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).death2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).death3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x21EC = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb0) } else { None }; }
         (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -24851,33 +24843,33 @@ unsafe fn h_ftCommon_CalcSelfAccel_Drift(a: &[u64]) -> u64 {
         (*p0).x2184 = 0usize as _;
         (*p0).x2188.x = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2188.y = rt::draw_int(&mut rt::MST) as _;
-        { let d = rt::next(&mut rt::MST); (*p0).grab_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x2194 = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).grabbed_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).input_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).anim_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).phys_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).coll_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).cam_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory1_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory3_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory4_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).deal_dmg_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).shield_hit_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).reflect_hit_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21CC = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).pre_hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).post_hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death1_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death3_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21EC = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).grab_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x2194 = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).grabbed_cb = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory4_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).deal_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).shield_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).reflect_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x21CC = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).pre_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).post_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).death1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).death2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).death3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x21EC = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb0) } else { None }; }
         (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -27789,33 +27781,33 @@ unsafe fn h_ftCommon_Fall(a: &[u64]) -> u64 {
         (*p0).x2184 = 0usize as _;
         (*p0).x2188.x = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2188.y = rt::draw_int(&mut rt::MST) as _;
-        { let d = rt::next(&mut rt::MST); (*p0).grab_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x2194 = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).grabbed_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).input_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).anim_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).phys_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).coll_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).cam_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory1_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory3_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory4_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).deal_dmg_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).shield_hit_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).reflect_hit_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21CC = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).pre_hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).post_hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death1_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death3_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21EC = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).grab_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x2194 = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).grabbed_cb = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory4_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).deal_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).shield_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).reflect_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x21CC = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).pre_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).post_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).death1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).death2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).death3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x21EC = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb0) } else { None }; }
         (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -28027,11 +28019,11 @@ unsafe fn h_ftCommon_SetSelfMovementFromGroundedMovement(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     0
@@ -30771,33 +30763,33 @@ unsafe fn h_ftCommon_UseAllJumps(a: &[u64]) -> u64 {
         (*p0).x2184 = 0usize as _;
         (*p0).x2188.x = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2188.y = rt::draw_int(&mut rt::MST) as _;
-        { let d = rt::next(&mut rt::MST); (*p0).grab_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x2194 = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).grabbed_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).input_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).anim_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).phys_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).coll_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).cam_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory1_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory3_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory4_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).deal_dmg_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).shield_hit_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).reflect_hit_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21CC = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).pre_hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).post_hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death1_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death3_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21EC = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).grab_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x2194 = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).grabbed_cb = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory4_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).deal_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).shield_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).reflect_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x21CC = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).pre_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).post_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).death1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).death2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).death3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x21EC = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb0) } else { None }; }
         (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -33709,33 +33701,33 @@ unsafe fn h_ftPartSetRotX(a: &[u64]) -> u64 {
         (*p0).x2184 = 0usize as _;
         (*p0).x2188.x = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2188.y = rt::draw_int(&mut rt::MST) as _;
-        { let d = rt::next(&mut rt::MST); (*p0).grab_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x2194 = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).grabbed_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).input_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).anim_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).phys_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).coll_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).cam_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory1_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory3_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory4_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).deal_dmg_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).shield_hit_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).reflect_hit_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21CC = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).pre_hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).post_hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death1_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death3_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21EC = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).grab_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x2194 = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).grabbed_cb = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory4_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).deal_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).shield_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).reflect_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x21CC = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).pre_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).post_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).death1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).death2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).death3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x21EC = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb0) } else { None }; }
         (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -36647,33 +36639,33 @@ unsafe fn h_ftPartSetRotY(a: &[u64]) -> u64 {
         (*p0).x2184 = 0usize as _;
         (*p0).x2188.x = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2188.y = rt::draw_int(&mut rt::MST) as _;
-        { let d = rt::next(&mut rt::MST); (*p0).grab_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x2194 = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).grabbed_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).input_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).anim_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).phys_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).coll_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).cam_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory1_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory3_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory4_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).deal_dmg_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).shield_hit_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).reflect_hit_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21CC = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).pre_hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).post_hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death1_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death3_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21EC = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).grab_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x2194 = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).grabbed_cb = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory4_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).deal_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).shield_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).reflect_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x21CC = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).pre_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).post_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).death1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).death2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).death3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x21EC = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb0) } else { None }; }
         (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -36885,11 +36877,11 @@ unsafe fn h_ft_80081A00(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     rt::draw_int(&mut rt::MST) as u64
@@ -36932,11 +36924,11 @@ unsafe fn h_ft_80082C74(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     0
@@ -36980,11 +36972,11 @@ unsafe fn h_ft_80083090(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     0
@@ -37027,11 +37019,11 @@ unsafe fn h_ft_8008403C(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     0
@@ -37073,11 +37065,11 @@ unsafe fn h_ft_80084104(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     0
@@ -37119,11 +37111,11 @@ unsafe fn h_ft_80084280(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     0
@@ -37165,11 +37157,11 @@ unsafe fn h_ft_80084DB0(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     0
@@ -37211,11 +37203,11 @@ unsafe fn h_ft_80084F3C(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     0
@@ -37257,11 +37249,11 @@ unsafe fn h_ft_8008A2BC(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     0
@@ -40004,33 +39996,33 @@ unsafe fn h_ft_PlaySFX(a: &[u64]) -> u64 {
         (*p0).x2184 = 0usize as _;
         (*p0).x2188.x = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2188.y = rt::draw_int(&mut rt::MST) as _;
-        { let d = rt::next(&mut rt::MST); (*p0).grab_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x2194 = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).grabbed_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).input_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).anim_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).phys_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).coll_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).cam_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory1_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory3_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory4_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).deal_dmg_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).shield_hit_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).reflect_hit_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21CC = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).pre_hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).post_hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death1_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death3_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21EC = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).grab_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x2194 = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).grabbed_cb = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).accessory4_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).deal_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).shield_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).reflect_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x21CC = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).pre_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).post_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).death1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).death2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).death3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x21EC = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb0) } else { None }; }
         (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -40352,11 +40344,11 @@ unsafe fn h_it_8026B894(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     let p1 = a[1] as usize as *mut Q::HSD_GObj;
@@ -40373,11 +40365,11 @@ unsafe fn h_it_8026B894(a: &[u64]) -> u64 {
         (*p1).next_gx = 0usize as _;
         (*p1).prev_gx = 0usize as _;
         (*p1).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p1).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p1).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p1).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p1).hsd_obj = 0usize as _;
         (*p1).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p1).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p1).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p1).x34_unk = 0usize as _;
     }
     rt::draw_int(&mut rt::MST) as u64
@@ -40425,11 +40417,11 @@ unsafe fn h_it_8026BB68(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     let p1 = a[1] as usize as *mut Q::Vec;
@@ -40495,11 +40487,11 @@ unsafe fn h_it_8026E9A4(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     let p1 = a[1] as usize as *mut Q::Vec;
@@ -41687,16 +41679,16 @@ unsafe fn h_it_8026FCF8(a: &[u64]) -> u64 {
         (*p0).xD0B = rt::draw_int(&mut rt::MST) as _;
         (*p0).xD0C = rt::draw_int(&mut rt::MST) as _;
         (*p0).xD10 = rt::draw_f32(&mut rt::MST);
-        { let d = rt::next(&mut rt::MST); (*p0).animated = if d & 1 != 0 { Some(cb4) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).physics_updated = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).collided = if d & 1 != 0 { Some(cb4) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).on_accessory = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).touched = if d & 1 != 0 { Some(cb4) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).entered_hitlag = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).exited_hitlag = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).jumped_on = if d & 1 != 0 { Some(cb4) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).grab_dealt = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).grabbed_for_victim = if d & 1 != 0 { Some(cb3) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).animated = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).physics_updated = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).collided = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).on_accessory = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).touched = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).entered_hitlag = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).exited_hitlag = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).jumped_on = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).grab_dealt = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).grabbed_for_victim = if d & 1 != 0 { Some(cb1) } else { None }; }
         (*p0).xD3C_spinSpeed = rt::draw_f32(&mut rt::MST);
         (*p0).xD40 = rt::draw_f32(&mut rt::MST);
         (*p0).xD44_lifeTimer = rt::draw_f32(&mut rt::MST);
@@ -41968,11 +41960,11 @@ unsafe fn h_it_8027129C(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     0
@@ -42153,11 +42145,11 @@ unsafe fn h_it_80272460(a: &[u64]) -> u64 {
         (*p2).next_gx = 0usize as _;
         (*p2).prev_gx = 0usize as _;
         (*p2).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p2).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p2).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p2).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p2).hsd_obj = 0usize as _;
         (*p2).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p2).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p2).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p2).x34_unk = 0usize as _;
     }
     0
@@ -42201,11 +42193,11 @@ unsafe fn h_it_80275594(a: &[u64]) -> u64 {
         (*p0).next_gx = 0usize as _;
         (*p0).prev_gx = 0usize as _;
         (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p0).hsd_obj = 0usize as _;
         (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
     0
@@ -42554,11 +42546,11 @@ unsafe fn h_mpCheckFloor(a: &[u64]) -> u64 {
         (*p13).next_gx = 0usize as _;
         (*p13).prev_gx = 0usize as _;
         (*p13).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p13).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p13).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p13).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p13).hsd_obj = 0usize as _;
         (*p13).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p13).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p13).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p13).x34_unk = 0usize as _;
     }
     rt::draw_int(&mut rt::MST) as u64
@@ -43130,11 +43122,11 @@ unsafe fn h_mpColl_80047AC8(a: &[u64]) -> u64 {
         (*p2).next_gx = 0usize as _;
         (*p2).prev_gx = 0usize as _;
         (*p2).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p2).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p2).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p2).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p2).hsd_obj = 0usize as _;
         (*p2).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p2).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p2).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p2).x34_unk = 0usize as _;
     }
     rt::draw_int(&mut rt::MST) as u64
@@ -43403,11 +43395,11 @@ unsafe fn h_mpColl_80047E14(a: &[u64]) -> u64 {
         (*p2).next_gx = 0usize as _;
         (*p2).prev_gx = 0usize as _;
         (*p2).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p2).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p2).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
         (*p2).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
         (*p2).hsd_obj = 0usize as _;
         (*p2).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p2).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::MST); (*p2).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p2).x34_unk = 0usize as _;
     }
     rt::draw_int(&mut rt::MST) as u64
@@ -44373,16 +44365,16 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).xD0B = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).xD0C = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).xD10 = rt::draw_f32(&mut rt::ST);
-    { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).animated = if d & 1 != 0 { Some(cb4) } else { None }; }
-    { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).physics_updated = if d & 1 != 0 { Some(cb2) } else { None }; }
-    { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).collided = if d & 1 != 0 { Some(cb4) } else { None }; }
-    { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).on_accessory = if d & 1 != 0 { Some(cb2) } else { None }; }
-    { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).touched = if d & 1 != 0 { Some(cb4) } else { None }; }
-    { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).entered_hitlag = if d & 1 != 0 { Some(cb2) } else { None }; }
-    { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).exited_hitlag = if d & 1 != 0 { Some(cb2) } else { None }; }
-    { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).jumped_on = if d & 1 != 0 { Some(cb4) } else { None }; }
-    { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).grab_dealt = if d & 1 != 0 { Some(cb2) } else { None }; }
-    { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).grabbed_for_victim = if d & 1 != 0 { Some(cb3) } else { None }; }
+    { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).animated = if d & 1 != 0 { Some(cb2) } else { None }; }
+    { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).physics_updated = if d & 1 != 0 { Some(cb0) } else { None }; }
+    { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).collided = if d & 1 != 0 { Some(cb2) } else { None }; }
+    { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).on_accessory = if d & 1 != 0 { Some(cb0) } else { None }; }
+    { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).touched = if d & 1 != 0 { Some(cb2) } else { None }; }
+    { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).entered_hitlag = if d & 1 != 0 { Some(cb0) } else { None }; }
+    { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).exited_hitlag = if d & 1 != 0 { Some(cb0) } else { None }; }
+    { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).jumped_on = if d & 1 != 0 { Some(cb2) } else { None }; }
+    { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).grab_dealt = if d & 1 != 0 { Some(cb0) } else { None }; }
+    { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).grabbed_for_victim = if d & 1 != 0 { Some(cb1) } else { None }; }
     (*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).xD3C_spinSpeed = rt::draw_f32(&mut rt::ST);
     (*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).xD40 = rt::draw_f32(&mut rt::ST);
     (*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).xD44_lifeTimer = rt::draw_f32(&mut rt::ST);
@@ -44556,11 +44548,11 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(m::geno_item_snap_gobj)).next_gx = 0usize as _;
     (*core::ptr::addr_of_mut!(m::geno_item_snap_gobj)).prev_gx = 0usize as _;
     (*core::ptr::addr_of_mut!(m::geno_item_snap_gobj)).proc = 0usize as _;
-    { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::geno_item_snap_gobj)).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+    { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::geno_item_snap_gobj)).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
     (*core::ptr::addr_of_mut!(m::geno_item_snap_gobj)).gxlink_prios = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(m::geno_item_snap_gobj)).hsd_obj = 0usize as _;
     (*core::ptr::addr_of_mut!(m::geno_item_snap_gobj)).user_data = 0usize as _;
-    { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::geno_item_snap_gobj)).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+    { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::geno_item_snap_gobj)).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
     (*core::ptr::addr_of_mut!(m::geno_item_snap_gobj)).x34_unk = 0usize as _;
     for i0 in 0..32 {
         (*core::ptr::addr_of_mut!(m::geno_item_snap_heads))[i0] = 0usize as _;
@@ -44581,92 +44573,92 @@ unsafe fn fill_all() {
         (*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable))[i0].anim_id = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable))[i0].x4_flags = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable))[i0].anon_8._x0 = rt::draw_int(&mut rt::ST) as _;
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable))[i0].anim_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable))[i0].input_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable))[i0].phys_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable))[i0].coll_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable))[i0].cam_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable))[i0].anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable))[i0].input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable))[i0].phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable))[i0].coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable))[i0].cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
     }
     for i0 in 0..400 {
         (*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList))[i0].anim_id = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList))[i0].x4_flags = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList))[i0].anon_8._x0 = rt::draw_int(&mut rt::ST) as _;
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList))[i0].anim_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList))[i0].input_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList))[i0].phys_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList))[i0].coll_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList))[i0].cam_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList))[i0].anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList))[i0].input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList))[i0].phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList))[i0].coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList))[i0].cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
     }
     for i0 in 0..400 {
         (*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable))[i0].anim_id = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable))[i0].x4_flags = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable))[i0].anon_8._x0 = rt::draw_int(&mut rt::ST) as _;
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable))[i0].anim_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable))[i0].input_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable))[i0].phys_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable))[i0].coll_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable))[i0].cam_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable))[i0].anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable))[i0].input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable))[i0].phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable))[i0].coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable))[i0].cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
     }
     for i0 in 0..400 {
         (*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable))[i0].anim_id = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable))[i0].x4_flags = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable))[i0].anon_8._x0 = rt::draw_int(&mut rt::ST) as _;
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable))[i0].anim_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable))[i0].input_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable))[i0].phys_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable))[i0].coll_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable))[i0].cam_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable))[i0].anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable))[i0].input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable))[i0].phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable))[i0].coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable))[i0].cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
     }
     for i0 in 0..400 {
         (*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable))[i0].anim_id = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable))[i0].x4_flags = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable))[i0].anon_8._x0 = rt::draw_int(&mut rt::ST) as _;
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable))[i0].anim_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable))[i0].input_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable))[i0].phys_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable))[i0].coll_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable))[i0].cam_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable))[i0].anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable))[i0].input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable))[i0].phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable))[i0].coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable))[i0].cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
     }
     for i0 in 0..400 {
         (*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable))[i0].anim_id = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable))[i0].x4_flags = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable))[i0].anon_8._x0 = rt::draw_int(&mut rt::ST) as _;
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable))[i0].anim_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable))[i0].input_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable))[i0].phys_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable))[i0].coll_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable))[i0].cam_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable))[i0].anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable))[i0].input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable))[i0].phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable))[i0].coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable))[i0].cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
     }
     (*core::ptr::addr_of_mut!(m::ext::ftPartsTable)) = 0usize as _;
     for i0 in 0..400 {
         (*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable))[i0].anim_id = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable))[i0].x4_flags = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable))[i0].anon_8._x0 = rt::draw_int(&mut rt::ST) as _;
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable))[i0].anim_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable))[i0].input_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable))[i0].phys_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable))[i0].coll_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable))[i0].cam_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable))[i0].anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable))[i0].input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable))[i0].phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable))[i0].coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable))[i0].cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
     }
     for i0 in 0..400 {
         (*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable))[i0].anim_id = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable))[i0].x4_flags = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable))[i0].anon_8._x0 = rt::draw_int(&mut rt::ST) as _;
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable))[i0].anim_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable))[i0].input_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable))[i0].phys_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable))[i0].coll_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable))[i0].cam_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable))[i0].anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable))[i0].input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable))[i0].phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable))[i0].coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable))[i0].cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
     }
     for i0 in 0..400 {
         (*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable))[i0].anim_id = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable))[i0].x4_flags = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable))[i0].anon_8._x0 = rt::draw_int(&mut rt::ST) as _;
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable))[i0].anim_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable))[i0].input_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable))[i0].phys_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable))[i0].coll_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable))[i0].cam_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable))[i0].anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable))[i0].input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable))[i0].phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable))[i0].coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable))[i0].cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
     }
     for i0 in 0..16 {
         (*core::ptr::addr_of_mut!(m::ext::hsd_804D0908))[i0] = 0usize as _;
@@ -44674,20 +44666,20 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(m::ext::hsd_804D78FC)) = 0usize as _;
     for i0 in 0..43 {
         (*core::ptr::addr_of_mut!(m::ext::it_803F14C4))[i0].states = 0usize as _;
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::it_803F14C4))[i0].spawned = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::it_803F14C4))[i0].destroyed = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::it_803F14C4))[i0].picked_up = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::it_803F14C4))[i0].dropped = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::it_803F14C4))[i0].thrown = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::it_803F14C4))[i0].dmg_dealt = if d & 1 != 0 { Some(cb4) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::it_803F14C4))[i0].dmg_received = if d & 1 != 0 { Some(cb4) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::it_803F14C4))[i0].entered_air = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::it_803F14C4))[i0].reflected = if d & 1 != 0 { Some(cb4) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::it_803F14C4))[i0].clanked = if d & 1 != 0 { Some(cb4) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::it_803F14C4))[i0].absorbed = if d & 1 != 0 { Some(cb4) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::it_803F14C4))[i0].shield_bounced = if d & 1 != 0 { Some(cb4) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::it_803F14C4))[i0].hit_shield = if d & 1 != 0 { Some(cb4) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::it_803F14C4))[i0].evt_unk = if d & 1 != 0 { Some(cb3) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::it_803F14C4))[i0].spawned = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::it_803F14C4))[i0].destroyed = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::it_803F14C4))[i0].picked_up = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::it_803F14C4))[i0].dropped = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::it_803F14C4))[i0].thrown = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::it_803F14C4))[i0].dmg_dealt = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::it_803F14C4))[i0].dmg_received = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::it_803F14C4))[i0].entered_air = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::it_803F14C4))[i0].reflected = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::it_803F14C4))[i0].clanked = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::it_803F14C4))[i0].absorbed = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::it_803F14C4))[i0].shield_bounced = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::it_803F14C4))[i0].hit_shield = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::it_803F14C4))[i0].evt_unk = if d & 1 != 0 { Some(cb1) } else { None }; }
     }
     for i0 in 0..30 {
         (*core::ptr::addr_of_mut!(m::ext::it_804A0F60))[i0] = 0usize as _;
@@ -44736,11 +44728,11 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(MO_GObj_Create)).next_gx = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_GObj_Create)).prev_gx = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_GObj_Create)).proc = 0usize as _;
-    { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(MO_GObj_Create)).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+    { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(MO_GObj_Create)).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
     (*core::ptr::addr_of_mut!(MO_GObj_Create)).gxlink_prios = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(MO_GObj_Create)).hsd_obj = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_GObj_Create)).user_data = 0usize as _;
-    { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(MO_GObj_Create)).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+    { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(MO_GObj_Create)).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
     (*core::ptr::addr_of_mut!(MO_GObj_Create)).x34_unk = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_HSD_CObjGetCurrent)).parent.parent.class_info = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_HSD_CObjGetCurrent)).parent.ref_count = rt::draw_int(&mut rt::ST) as _;
@@ -44791,11 +44783,11 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(MO_Item_80268B18)).next_gx = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_Item_80268B18)).prev_gx = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_Item_80268B18)).proc = 0usize as _;
-    { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(MO_Item_80268B18)).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+    { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(MO_Item_80268B18)).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
     (*core::ptr::addr_of_mut!(MO_Item_80268B18)).gxlink_prios = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(MO_Item_80268B18)).hsd_obj = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_Item_80268B18)).user_data = 0usize as _;
-    { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(MO_Item_80268B18)).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+    { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(MO_Item_80268B18)).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
     (*core::ptr::addr_of_mut!(MO_Item_80268B18)).x34_unk = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_Player_GetEntity)).classifier = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(MO_Player_GetEntity)).p_link = rt::draw_int(&mut rt::ST) as _;
@@ -44809,11 +44801,11 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(MO_Player_GetEntity)).next_gx = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_Player_GetEntity)).prev_gx = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_Player_GetEntity)).proc = 0usize as _;
-    { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(MO_Player_GetEntity)).render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+    { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(MO_Player_GetEntity)).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
     (*core::ptr::addr_of_mut!(MO_Player_GetEntity)).gxlink_prios = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(MO_Player_GetEntity)).hsd_obj = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_Player_GetEntity)).user_data = 0usize as _;
-    { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(MO_Player_GetEntity)).user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
+    { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(MO_Player_GetEntity)).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
     (*core::ptr::addr_of_mut!(MO_Player_GetEntity)).x34_unk = 0usize as _;
 }
 unsafe fn hash_objs() {
@@ -45022,7 +45014,7 @@ unsafe fn hash_objs() {
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     for i0 in 0..76 {
-        rt::h_p((*core::ptr::addr_of_mut!(m::geno_attrs))[i0].name as *const u8); rt::h_cstr((*core::ptr::addr_of_mut!(m::geno_attrs))[i0].name as *const u8);
+        rt::h_i((((*core::ptr::addr_of_mut!(m::geno_attrs))[i0].name as *const u8) != core::ptr::null()) as i64); rt::h_cstr((*core::ptr::addr_of_mut!(m::geno_attrs))[i0].name as *const u8);
         rt::h_i((*core::ptr::addr_of_mut!(m::geno_attrs))[i0].offset as i64);
         rt::h_i((*core::ptr::addr_of_mut!(m::geno_attrs))[i0].is_int as i64);
     }
@@ -45030,7 +45022,7 @@ unsafe fn hash_objs() {
     rt::H = rt::FNV0;
     for i0 in 0..16 {
         rt::h_i((*core::ptr::addr_of_mut!(m::geno_bhvs))[i0].id as i64);
-        rt::h_p((*core::ptr::addr_of_mut!(m::geno_bhvs))[i0].name as *const u8); rt::h_cstr((*core::ptr::addr_of_mut!(m::geno_bhvs))[i0].name as *const u8);
+        rt::h_i((((*core::ptr::addr_of_mut!(m::geno_bhvs))[i0].name as *const u8) != core::ptr::null()) as i64); rt::h_cstr((*core::ptr::addr_of_mut!(m::geno_bhvs))[i0].name as *const u8);
         for i1 in 0..4 {
             rt::h_u((*core::ptr::addr_of_mut!(m::geno_bhvs))[i0].cb[i1] as u64);
         }
@@ -45044,7 +45036,7 @@ unsafe fn hash_objs() {
     for i0 in 0..43 {
         rt::h_i((*core::ptr::addr_of_mut!(m::geno_cbs))[i0].id as i64);
         rt::h_i((*core::ptr::addr_of_mut!(m::geno_cbs))[i0].slot as i64);
-        rt::h_p((*core::ptr::addr_of_mut!(m::geno_cbs))[i0].name as *const u8); rt::h_cstr((*core::ptr::addr_of_mut!(m::geno_cbs))[i0].name as *const u8);
+        rt::h_i((((*core::ptr::addr_of_mut!(m::geno_cbs))[i0].name as *const u8) != core::ptr::null()) as i64); rt::h_cstr((*core::ptr::addr_of_mut!(m::geno_cbs))[i0].name as *const u8);
         rt::h_fn((*core::ptr::addr_of_mut!(m::geno_cbs))[i0].r#fn.map_or(0usize, |f| f as usize));
     }
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
@@ -45072,7 +45064,7 @@ unsafe fn hash_objs() {
     rt::H = rt::FNV0;
     for i0 in 0..10 {
         rt::h_i((*core::ptr::addr_of_mut!(m::geno_hooks))[i0].id as i64);
-        rt::h_p((*core::ptr::addr_of_mut!(m::geno_hooks))[i0].name as *const u8); rt::h_cstr((*core::ptr::addr_of_mut!(m::geno_hooks))[i0].name as *const u8);
+        rt::h_i((((*core::ptr::addr_of_mut!(m::geno_hooks))[i0].name as *const u8) != core::ptr::null()) as i64); rt::h_cstr((*core::ptr::addr_of_mut!(m::geno_hooks))[i0].name as *const u8);
         rt::h_fn((*core::ptr::addr_of_mut!(m::geno_hooks))[i0].r#fn.map_or(0usize, |f| f as usize));
     }
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
@@ -45858,15 +45850,15 @@ unsafe fn hash_objs() {
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     for i0 in 0..78 {
-        rt::h_p((*core::ptr::addr_of_mut!(m::geno_params))[i0].family as *const u8); rt::h_cstr((*core::ptr::addr_of_mut!(m::geno_params))[i0].family as *const u8);
-        rt::h_p((*core::ptr::addr_of_mut!(m::geno_params))[i0].name as *const u8); rt::h_cstr((*core::ptr::addr_of_mut!(m::geno_params))[i0].name as *const u8);
+        rt::h_i((((*core::ptr::addr_of_mut!(m::geno_params))[i0].family as *const u8) != core::ptr::null()) as i64); rt::h_cstr((*core::ptr::addr_of_mut!(m::geno_params))[i0].family as *const u8);
+        rt::h_i((((*core::ptr::addr_of_mut!(m::geno_params))[i0].name as *const u8) != core::ptr::null()) as i64); rt::h_cstr((*core::ptr::addr_of_mut!(m::geno_params))[i0].name as *const u8);
         rt::h_i((*core::ptr::addr_of_mut!(m::geno_params))[i0].id as i64);
         rt::h_f32((*core::ptr::addr_of_mut!(m::geno_params))[i0].def);
     }
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     for i0 in 0..42 {
-        rt::h_p((*core::ptr::addr_of_mut!(m::geno_sfields))[i0].name as *const u8); rt::h_cstr((*core::ptr::addr_of_mut!(m::geno_sfields))[i0].name as *const u8);
+        rt::h_i((((*core::ptr::addr_of_mut!(m::geno_sfields))[i0].name as *const u8) != core::ptr::null()) as i64); rt::h_cstr((*core::ptr::addr_of_mut!(m::geno_sfields))[i0].name as *const u8);
         rt::h_i((*core::ptr::addr_of_mut!(m::geno_sfields))[i0].off as i64);
         rt::h_i((*core::ptr::addr_of_mut!(m::geno_sfields))[i0].size as i64);
     }
@@ -46792,17 +46784,6 @@ unsafe fn init() {
     rt::fn_add(cb4 as usize);
     EXT_HOOK = Some(hook);
 }
-unsafe fn run_GenoGame_ClearProfileStorage(seed: u64) -> [u64; 3] {
-    rt::ST = seed; rt::MST = seed ^ 0x5DEECE66D; rt::TRACE = rt::FNV0; rt::REGS.truncate(rt::NSTATIC); rt::DYN.clear();
-    fill_all();
-    m::GenoGame_ClearProfileStorage();
-    let ret = 0u64;
-    let trace = rt::TRACE;
-    hash_objs();
-    let mut tot = rt::H;
-    for h in rt::DYN.iter() { tot = rt::mix(tot, *h); }
-    [ret, trace, tot]
-}
 unsafe fn run_GenoGame_ComboInfo(seed: u64) -> [u64; 3] {
     rt::ST = seed; rt::MST = seed ^ 0x5DEECE66D; rt::TRACE = rt::FNV0; rt::REGS.truncate(rt::NSTATIC); rt::DYN.clear();
     fill_all();
@@ -46813,226 +46794,6 @@ unsafe fn run_GenoGame_ComboInfo(seed: u64) -> [u64; 3] {
     let trace = rt::TRACE;
     hash_objs();
     let mut tot = rt::H;
-    for h in rt::DYN.iter() { tot = rt::mix(tot, *h); }
-    [ret, trace, tot]
-}
-unsafe fn run_Geno_CollBegin(seed: u64) -> [u64; 3] {
-    rt::ST = seed; rt::MST = seed ^ 0x5DEECE66D; rt::TRACE = rt::FNV0; rt::REGS.truncate(rt::NSTATIC); rt::DYN.clear();
-    fill_all();
-    for e in 0..1 {
-        AB_Geno_CollBegin_0[e].classifier = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_CollBegin_0[e].p_link = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_CollBegin_0[e].gx_link = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_CollBegin_0[e].p_priority = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_CollBegin_0[e].render_priority = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_CollBegin_0[e].obj_kind = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_CollBegin_0[e].user_data_kind = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_CollBegin_0[e].next = 0usize as _;
-        AB_Geno_CollBegin_0[e].prev = 0usize as _;
-        AB_Geno_CollBegin_0[e].next_gx = 0usize as _;
-        AB_Geno_CollBegin_0[e].prev_gx = 0usize as _;
-        AB_Geno_CollBegin_0[e].proc = 0usize as _;
-        { let d = rt::next(&mut rt::ST); AB_Geno_CollBegin_0[e].render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        AB_Geno_CollBegin_0[e].gxlink_prios = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_CollBegin_0[e].hsd_obj = 0usize as _;
-        AB_Geno_CollBegin_0[e].user_data = 0usize as _;
-        { let d = rt::next(&mut rt::ST); AB_Geno_CollBegin_0[e].user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
-        AB_Geno_CollBegin_0[e].x34_unk = 0usize as _;
-    }
-    rt::reg_add(core::ptr::addr_of!(AB_Geno_CollBegin_0), core::mem::size_of_val(&AB_Geno_CollBegin_0), "arg0");
-    let a0 = AB_Geno_CollBegin_0.as_mut_ptr();
-    m::Geno_CollBegin(a0 as _);
-    let ret = 0u64;
-    let trace = rt::TRACE;
-    hash_objs();
-    let mut tot = rt::H;
-    rt::H = rt::FNV0;
-    for e in 0..1 {
-        rt::h_u(AB_Geno_CollBegin_0[e].classifier as u64);
-        rt::h_u(AB_Geno_CollBegin_0[e].p_link as u64);
-        rt::h_u(AB_Geno_CollBegin_0[e].gx_link as u64);
-        rt::h_u(AB_Geno_CollBegin_0[e].p_priority as u64);
-        rt::h_u(AB_Geno_CollBegin_0[e].render_priority as u64);
-        rt::h_u(AB_Geno_CollBegin_0[e].obj_kind as u64);
-        rt::h_u(AB_Geno_CollBegin_0[e].user_data_kind as u64);
-        rt::h_p(AB_Geno_CollBegin_0[e].next as *const u8);
-        rt::h_p(AB_Geno_CollBegin_0[e].prev as *const u8);
-        rt::h_p(AB_Geno_CollBegin_0[e].next_gx as *const u8);
-        rt::h_p(AB_Geno_CollBegin_0[e].prev_gx as *const u8);
-        rt::h_p(AB_Geno_CollBegin_0[e].proc as *const u8);
-        rt::h_fn(AB_Geno_CollBegin_0[e].render_cb.map_or(0usize, |f| f as usize));
-        rt::h_u(AB_Geno_CollBegin_0[e].gxlink_prios as u64);
-        rt::h_p(AB_Geno_CollBegin_0[e].hsd_obj as *const u8);
-        rt::h_p(AB_Geno_CollBegin_0[e].user_data as *const u8);
-        rt::h_fn(AB_Geno_CollBegin_0[e].user_data_remove_func.map_or(0usize, |f| f as usize));
-        rt::h_p(AB_Geno_CollBegin_0[e].x34_unk as *const u8);
-    }
-    rt::DYN.push(rt::H);
-    for h in rt::DYN.iter() { tot = rt::mix(tot, *h); }
-    [ret, trace, tot]
-}
-unsafe fn run_Geno_CollEnd(seed: u64) -> [u64; 3] {
-    rt::ST = seed; rt::MST = seed ^ 0x5DEECE66D; rt::TRACE = rt::FNV0; rt::REGS.truncate(rt::NSTATIC); rt::DYN.clear();
-    fill_all();
-    for e in 0..1 {
-        AB_Geno_CollEnd_0[e].classifier = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_CollEnd_0[e].p_link = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_CollEnd_0[e].gx_link = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_CollEnd_0[e].p_priority = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_CollEnd_0[e].render_priority = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_CollEnd_0[e].obj_kind = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_CollEnd_0[e].user_data_kind = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_CollEnd_0[e].next = 0usize as _;
-        AB_Geno_CollEnd_0[e].prev = 0usize as _;
-        AB_Geno_CollEnd_0[e].next_gx = 0usize as _;
-        AB_Geno_CollEnd_0[e].prev_gx = 0usize as _;
-        AB_Geno_CollEnd_0[e].proc = 0usize as _;
-        { let d = rt::next(&mut rt::ST); AB_Geno_CollEnd_0[e].render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        AB_Geno_CollEnd_0[e].gxlink_prios = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_CollEnd_0[e].hsd_obj = 0usize as _;
-        AB_Geno_CollEnd_0[e].user_data = 0usize as _;
-        { let d = rt::next(&mut rt::ST); AB_Geno_CollEnd_0[e].user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
-        AB_Geno_CollEnd_0[e].x34_unk = 0usize as _;
-    }
-    rt::reg_add(core::ptr::addr_of!(AB_Geno_CollEnd_0), core::mem::size_of_val(&AB_Geno_CollEnd_0), "arg0");
-    let a0 = AB_Geno_CollEnd_0.as_mut_ptr();
-    m::Geno_CollEnd(a0 as _);
-    let ret = 0u64;
-    let trace = rt::TRACE;
-    hash_objs();
-    let mut tot = rt::H;
-    rt::H = rt::FNV0;
-    for e in 0..1 {
-        rt::h_u(AB_Geno_CollEnd_0[e].classifier as u64);
-        rt::h_u(AB_Geno_CollEnd_0[e].p_link as u64);
-        rt::h_u(AB_Geno_CollEnd_0[e].gx_link as u64);
-        rt::h_u(AB_Geno_CollEnd_0[e].p_priority as u64);
-        rt::h_u(AB_Geno_CollEnd_0[e].render_priority as u64);
-        rt::h_u(AB_Geno_CollEnd_0[e].obj_kind as u64);
-        rt::h_u(AB_Geno_CollEnd_0[e].user_data_kind as u64);
-        rt::h_p(AB_Geno_CollEnd_0[e].next as *const u8);
-        rt::h_p(AB_Geno_CollEnd_0[e].prev as *const u8);
-        rt::h_p(AB_Geno_CollEnd_0[e].next_gx as *const u8);
-        rt::h_p(AB_Geno_CollEnd_0[e].prev_gx as *const u8);
-        rt::h_p(AB_Geno_CollEnd_0[e].proc as *const u8);
-        rt::h_fn(AB_Geno_CollEnd_0[e].render_cb.map_or(0usize, |f| f as usize));
-        rt::h_u(AB_Geno_CollEnd_0[e].gxlink_prios as u64);
-        rt::h_p(AB_Geno_CollEnd_0[e].hsd_obj as *const u8);
-        rt::h_p(AB_Geno_CollEnd_0[e].user_data as *const u8);
-        rt::h_fn(AB_Geno_CollEnd_0[e].user_data_remove_func.map_or(0usize, |f| f as usize));
-        rt::h_p(AB_Geno_CollEnd_0[e].x34_unk as *const u8);
-    }
-    rt::DYN.push(rt::H);
-    for h in rt::DYN.iter() { tot = rt::mix(tot, *h); }
-    [ret, trace, tot]
-}
-unsafe fn run_Geno_ComboInput(seed: u64) -> [u64; 3] {
-    rt::ST = seed; rt::MST = seed ^ 0x5DEECE66D; rt::TRACE = rt::FNV0; rt::REGS.truncate(rt::NSTATIC); rt::DYN.clear();
-    fill_all();
-    for e in 0..1 {
-        AB_Geno_ComboInput_0[e].classifier = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_ComboInput_0[e].p_link = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_ComboInput_0[e].gx_link = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_ComboInput_0[e].p_priority = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_ComboInput_0[e].render_priority = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_ComboInput_0[e].obj_kind = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_ComboInput_0[e].user_data_kind = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_ComboInput_0[e].next = 0usize as _;
-        AB_Geno_ComboInput_0[e].prev = 0usize as _;
-        AB_Geno_ComboInput_0[e].next_gx = 0usize as _;
-        AB_Geno_ComboInput_0[e].prev_gx = 0usize as _;
-        AB_Geno_ComboInput_0[e].proc = 0usize as _;
-        { let d = rt::next(&mut rt::ST); AB_Geno_ComboInput_0[e].render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        AB_Geno_ComboInput_0[e].gxlink_prios = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_ComboInput_0[e].hsd_obj = 0usize as _;
-        AB_Geno_ComboInput_0[e].user_data = 0usize as _;
-        { let d = rt::next(&mut rt::ST); AB_Geno_ComboInput_0[e].user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
-        AB_Geno_ComboInput_0[e].x34_unk = 0usize as _;
-    }
-    rt::reg_add(core::ptr::addr_of!(AB_Geno_ComboInput_0), core::mem::size_of_val(&AB_Geno_ComboInput_0), "arg0");
-    let a0 = AB_Geno_ComboInput_0.as_mut_ptr();
-    m::Geno_ComboInput(a0 as _);
-    let ret = 0u64;
-    let trace = rt::TRACE;
-    hash_objs();
-    let mut tot = rt::H;
-    rt::H = rt::FNV0;
-    for e in 0..1 {
-        rt::h_u(AB_Geno_ComboInput_0[e].classifier as u64);
-        rt::h_u(AB_Geno_ComboInput_0[e].p_link as u64);
-        rt::h_u(AB_Geno_ComboInput_0[e].gx_link as u64);
-        rt::h_u(AB_Geno_ComboInput_0[e].p_priority as u64);
-        rt::h_u(AB_Geno_ComboInput_0[e].render_priority as u64);
-        rt::h_u(AB_Geno_ComboInput_0[e].obj_kind as u64);
-        rt::h_u(AB_Geno_ComboInput_0[e].user_data_kind as u64);
-        rt::h_p(AB_Geno_ComboInput_0[e].next as *const u8);
-        rt::h_p(AB_Geno_ComboInput_0[e].prev as *const u8);
-        rt::h_p(AB_Geno_ComboInput_0[e].next_gx as *const u8);
-        rt::h_p(AB_Geno_ComboInput_0[e].prev_gx as *const u8);
-        rt::h_p(AB_Geno_ComboInput_0[e].proc as *const u8);
-        rt::h_fn(AB_Geno_ComboInput_0[e].render_cb.map_or(0usize, |f| f as usize));
-        rt::h_u(AB_Geno_ComboInput_0[e].gxlink_prios as u64);
-        rt::h_p(AB_Geno_ComboInput_0[e].hsd_obj as *const u8);
-        rt::h_p(AB_Geno_ComboInput_0[e].user_data as *const u8);
-        rt::h_fn(AB_Geno_ComboInput_0[e].user_data_remove_func.map_or(0usize, |f| f as usize));
-        rt::h_p(AB_Geno_ComboInput_0[e].x34_unk as *const u8);
-    }
-    rt::DYN.push(rt::H);
-    for h in rt::DYN.iter() { tot = rt::mix(tot, *h); }
-    [ret, trace, tot]
-}
-unsafe fn run_Geno_ComboTick(seed: u64) -> [u64; 3] {
-    rt::ST = seed; rt::MST = seed ^ 0x5DEECE66D; rt::TRACE = rt::FNV0; rt::REGS.truncate(rt::NSTATIC); rt::DYN.clear();
-    fill_all();
-    for e in 0..1 {
-        AB_Geno_ComboTick_0[e].classifier = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_ComboTick_0[e].p_link = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_ComboTick_0[e].gx_link = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_ComboTick_0[e].p_priority = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_ComboTick_0[e].render_priority = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_ComboTick_0[e].obj_kind = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_ComboTick_0[e].user_data_kind = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_ComboTick_0[e].next = 0usize as _;
-        AB_Geno_ComboTick_0[e].prev = 0usize as _;
-        AB_Geno_ComboTick_0[e].next_gx = 0usize as _;
-        AB_Geno_ComboTick_0[e].prev_gx = 0usize as _;
-        AB_Geno_ComboTick_0[e].proc = 0usize as _;
-        { let d = rt::next(&mut rt::ST); AB_Geno_ComboTick_0[e].render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        AB_Geno_ComboTick_0[e].gxlink_prios = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_ComboTick_0[e].hsd_obj = 0usize as _;
-        AB_Geno_ComboTick_0[e].user_data = 0usize as _;
-        { let d = rt::next(&mut rt::ST); AB_Geno_ComboTick_0[e].user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
-        AB_Geno_ComboTick_0[e].x34_unk = 0usize as _;
-    }
-    rt::reg_add(core::ptr::addr_of!(AB_Geno_ComboTick_0), core::mem::size_of_val(&AB_Geno_ComboTick_0), "arg0");
-    let a0 = AB_Geno_ComboTick_0.as_mut_ptr();
-    let r = m::Geno_ComboTick(a0 as _);
-    let ret = r as i64 as u64;
-    let trace = rt::TRACE;
-    hash_objs();
-    let mut tot = rt::H;
-    rt::H = rt::FNV0;
-    for e in 0..1 {
-        rt::h_u(AB_Geno_ComboTick_0[e].classifier as u64);
-        rt::h_u(AB_Geno_ComboTick_0[e].p_link as u64);
-        rt::h_u(AB_Geno_ComboTick_0[e].gx_link as u64);
-        rt::h_u(AB_Geno_ComboTick_0[e].p_priority as u64);
-        rt::h_u(AB_Geno_ComboTick_0[e].render_priority as u64);
-        rt::h_u(AB_Geno_ComboTick_0[e].obj_kind as u64);
-        rt::h_u(AB_Geno_ComboTick_0[e].user_data_kind as u64);
-        rt::h_p(AB_Geno_ComboTick_0[e].next as *const u8);
-        rt::h_p(AB_Geno_ComboTick_0[e].prev as *const u8);
-        rt::h_p(AB_Geno_ComboTick_0[e].next_gx as *const u8);
-        rt::h_p(AB_Geno_ComboTick_0[e].prev_gx as *const u8);
-        rt::h_p(AB_Geno_ComboTick_0[e].proc as *const u8);
-        rt::h_fn(AB_Geno_ComboTick_0[e].render_cb.map_or(0usize, |f| f as usize));
-        rt::h_u(AB_Geno_ComboTick_0[e].gxlink_prios as u64);
-        rt::h_p(AB_Geno_ComboTick_0[e].hsd_obj as *const u8);
-        rt::h_p(AB_Geno_ComboTick_0[e].user_data as *const u8);
-        rt::h_fn(AB_Geno_ComboTick_0[e].user_data_remove_func.map_or(0usize, |f| f as usize));
-        rt::h_p(AB_Geno_ComboTick_0[e].x34_unk as *const u8);
-    }
-    rt::DYN.push(rt::H);
     for h in rt::DYN.iter() { tot = rt::mix(tot, *h); }
     [ret, trace, tot]
 }
@@ -48305,33 +48066,33 @@ unsafe fn run_Geno_FallLimit(seed: u64) -> [u64; 3] {
         AB_Geno_FallLimit_0[e].x2184 = 0usize as _;
         AB_Geno_FallLimit_0[e].x2188.x = rt::draw_int(&mut rt::ST) as _;
         AB_Geno_FallLimit_0[e].x2188.y = rt::draw_int(&mut rt::ST) as _;
-        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].grab_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].x2194 = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].grabbed_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].input_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].anim_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].phys_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].coll_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].cam_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].accessory1_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].accessory2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].accessory3_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].accessory4_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].deal_dmg_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].shield_hit_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].reflect_hit_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].x21CC = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].pre_hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].post_hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].take_dmg_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].death1_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].death2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].death3_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].x21EC = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].take_dmg_2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].hurtbox_detect_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].x21F8 = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].grab_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].x2194 = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].grabbed_cb = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].accessory1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].accessory2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].accessory3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].accessory4_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].deal_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].shield_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].reflect_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].x21CC = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].pre_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].post_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].take_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].death1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].death2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].death3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].x21EC = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].take_dmg_2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].hurtbox_detect_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FallLimit_0[e].x21F8 = if d & 1 != 0 { Some(cb0) } else { None }; }
         AB_Geno_FallLimit_0[e].x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
         AB_Geno_FallLimit_0[e].x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
         AB_Geno_FallLimit_0[e].x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
@@ -49981,2951 +49742,6 @@ unsafe fn run_Geno_FallLimit(seed: u64) -> [u64; 3] {
     for h in rt::DYN.iter() { tot = rt::mix(tot, *h); }
     [ret, trace, tot]
 }
-unsafe fn run_Geno_FighterReset(seed: u64) -> [u64; 3] {
-    rt::ST = seed; rt::MST = seed ^ 0x5DEECE66D; rt::TRACE = rt::FNV0; rt::REGS.truncate(rt::NSTATIC); rt::DYN.clear();
-    fill_all();
-    for e in 0..1 {
-        AB_Geno_FighterReset_0[e].gobj = 0usize as _;
-        AB_Geno_FighterReset_0[e].kind = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x8_spawnNum = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].player_id = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].motion_id = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].anim_id = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x18 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x1C_actionStateList = 0usize as _;
-        AB_Geno_FighterReset_0[e].x20_actionStateList = 0usize as _;
-        AB_Geno_FighterReset_0[e].x24 = 0usize as _;
-        AB_Geno_FighterReset_0[e].x28 = 0usize as _;
-        AB_Geno_FighterReset_0[e].facing_dir = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].facing_dir1 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x34_scale.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x34_scale.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x34_scale.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x40 = rt::draw_f32(&mut rt::ST);
-        for i2 in 0..3 {
-            for i3 in 0..4 {
-                AB_Geno_FighterReset_0[e].x44_mtx[i2][i3] = rt::draw_f32(&mut rt::ST);
-            }
-        }
-        AB_Geno_FighterReset_0[e].x74_self_accel.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x74_self_accel.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x74_self_accel.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].self_vel.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].self_vel.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].self_vel.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x8c_kb_vel.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x8c_kb_vel.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x8c_kb_vel.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x98_atk_shield_kb.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x98_atk_shield_kb.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x98_atk_shield_kb.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].xA4_unk_vel.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].xA4_unk_vel.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].xA4_unk_vel.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].cur_pos.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].cur_pos.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].cur_pos.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].prev_pos.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].prev_pos.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].prev_pos.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].pos_delta.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].pos_delta.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].pos_delta.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].xD4_unk_vel.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].xD4_unk_vel.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].xD4_unk_vel.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].ground_or_air = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].xE4_ground_accel_1 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].xE8_ground_accel_2 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].gr_vel = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].xF0_ground_kb_vel = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].xF4_ground_attacker_shield_kb_vel = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].xF8_playerNudgeVel.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].xF8_playerNudgeVel.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x100 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x104 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x105 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x106 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x107 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x108_costume_joint = 0usize as _;
-        AB_Geno_FighterReset_0[e].ft_data = 0usize as _;
-        AB_Geno_FighterReset_0[e].co_attrs.walk_accel_mul = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.walk_accel_base = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.walk_max_vel = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.slow_walk_max = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.mid_walk_point = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.fast_walk_min = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.ground_friction = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.dash_initial_velocity = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.dash_accel_mul = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.dash_accel_base = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.dash_max_velocity = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.run_animation_scaling = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.max_run_brake_frames = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.ground_max_horizontal_velocity = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.jump_startup_time = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.jump_h_initial_velocity = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.jump_v_initial_velocity = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.ground_to_air_jump_momentum_multiplier = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.jump_h_max_velocity = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.hop_v_initial_velocity = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.air_jump_v_multiplier = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.air_jump_h_multiplier = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.max_jumps = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].co_attrs.gravity = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.terminal_velocity = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.air_drift_stick_mul = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.aerial_drift_base = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.air_drift_max = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.aerial_friction = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.fast_fall_velocity = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.air_max_horizontal_velocity = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.jab_2_input_window = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.jab_3_input_window = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.standing_turn_frames = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.weight = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.model_scaling = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.initial_shield_size = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.shield_break_initial_velocity = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.rapid_jab_window = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].co_attrs.clank_animation_length = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.hit_spark_variant = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].co_attrs.unused_0 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].co_attrs.ledge_jump_horizontal_velocity = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.ledge_jump_vertical_velocity = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.item_throw_velocity_multiplier = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.heavy_throw_velocity_multiplier = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.specials_ground_speed_retention = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.xBC.size = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.xBC.x4.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.xBC.x4.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.xBC.x4.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.xBC.x10.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.xBC.x10.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.xBC.x10.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.xBC.x1C = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.xDC = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.kirby_b_star_damage = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.normal_landing_lag = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.landingairn_lag = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.landingairf_lag = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.landingairb_lag = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.landingairhi_lag = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.landingairlw_lag = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.name_tag_height = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.passivewall_vel_x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.wall_jump_horizontal_velocity = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.wall_jump_vertical_velocity = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.passiveceil_vel_x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.trophy_scale = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.x114.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.x114.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.x114.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.x120.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.x120.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.x120.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.x12C = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.x130.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.x130.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.x130.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.x13C = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.screw_attack_launch_velocity = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.x144 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.wall_jump_min_approach_speed = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.damageice_ice_size = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.x150_damageice_unk = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.x154_damageice_unk = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.damageicejump_vel_y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.damageicejump_vel_x_mult = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.respawn_platform_scale = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.warp_star_hitbox_scale = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.x168 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.camera_zoom_target_bone = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].co_attrs.x170.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.x170.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.x170.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.x17C = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].co_attrs.weight_independent_throws_mask = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x294_itPickup.gr_light_offset.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x294_itPickup.gr_light_offset.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x294_itPickup.gr_light_offset.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x294_itPickup.gr_light_offset.w = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x294_itPickup.gr_heavy_offset.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x294_itPickup.gr_heavy_offset.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x294_itPickup.gr_heavy_offset.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x294_itPickup.gr_heavy_offset.w = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x294_itPickup.air_light_offset.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x294_itPickup.air_light_offset.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x294_itPickup.air_light_offset.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x294_itPickup.air_light_offset.w = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x2C4.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x2C4.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x2CC = 0usize as _;
-        AB_Geno_FighterReset_0[e].x2D0 = 0usize as _;
-        AB_Geno_FighterReset_0[e].dat_attrs = 0usize as _;
-        AB_Geno_FighterReset_0[e].dat_attrs_backup = 0usize as _;
-        AB_Geno_FighterReset_0[e].x2DC = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x2E0 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x2E4 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x2E8 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x2EC = rt::draw_f32(&mut rt::ST);
-        for i2 in 0..10 {
-            AB_Geno_FighterReset_0[e].dynamic_bone_sets[i2].bone_id = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].dynamic_bone_sets[i2].dyn_desc.data = 0usize as _;
-            AB_Geno_FighterReset_0[e].dynamic_bone_sets[i2].dyn_desc.count = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].dynamic_bone_sets[i2].dyn_desc.pos.x = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].dynamic_bone_sets[i2].dyn_desc.pos.y = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].dynamic_bone_sets[i2].dyn_desc.pos.z = rt::draw_f32(&mut rt::ST);
-        }
-        AB_Geno_FighterReset_0[e].dynamics_num = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::ST);
-        for i2 in 0..1 {
-            AB_Geno_FighterReset_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] = 0usize as _;
-        }
-        AB_Geno_FighterReset_0[e].x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::ST) as _;
-        for i2 in 0..3 {
-            AB_Geno_FighterReset_0[e].x3E4_fighterCmdScript.event_return[i2] = 0usize as _;
-        }
-        AB_Geno_FighterReset_0[e].x3E4_fighterCmdScript.loop_count_dup = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x3E4_fighterCmdScript.unk_x18 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x408.x0_timer = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x408.x4_pri = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x408.x8_ptr1 = 0usize as _;
-        AB_Geno_FighterReset_0[e].x408.xC_loop = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x408.x10_ptr2 = 0usize as _;
-        AB_Geno_FighterReset_0[e].x408.x14 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x408.x18_alloc = 0usize as _;
-        AB_Geno_FighterReset_0[e].x408.x1c = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x408.x20 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x408.x24 = rt::draw_int(&mut rt::ST) as _;
-        { assert_eq!(core::mem::size_of_val(&AB_Geno_FighterReset_0[e].x408.x28_colanim), 8); for i2 in 0..8 { *(&mut AB_Geno_FighterReset_0[e].x408.x28_colanim as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::ST) as u8; } }
-        AB_Geno_FighterReset_0[e].x408.x2C_hex.r = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x408.x2C_hex.g = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x408.x2C_hex.b = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x408.x2C_hex.a = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x408.x30_color_red = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x408.x34_color_green = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x408.x38_color_blue = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x408.x3C_color_alpha = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x408.x40_colorblend_red = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x408.x44_colorblend_green = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x408.x48_colorblend_blue = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x408.x4C_colorblend_alpha = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x408.x50_light_color.r = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x408.x50_light_color.g = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x408.x50_light_color.b = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x408.x50_light_color.a = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x408.x54_light_red = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x408.x58_light_green = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x408.x5C_light_blue = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x408.x60_light_alpha = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x408.x64_lightblend_red = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x408.x68_lightblend_green = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x408.x6C_lightblend_blue = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x408.x70_lightblend_alpha = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x408.x74_light_rot_x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x408.x78_light_rot_yz = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x408.set_x7C_color_enable((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x408.set_x7C_flag2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x408.set_x7C_light_enable((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x408.set_x7C_flag4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x408.set_x7C_flag5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x408.set_x7C_flag6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x408.set_x7C_flag7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x408.set_x7C_flag8((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x488.x0_timer = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x488.x4_pri = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x488.x8_ptr1 = 0usize as _;
-        AB_Geno_FighterReset_0[e].x488.xC_loop = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x488.x10_ptr2 = 0usize as _;
-        AB_Geno_FighterReset_0[e].x488.x14 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x488.x18_alloc = 0usize as _;
-        AB_Geno_FighterReset_0[e].x488.x1c = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x488.x20 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x488.x24 = rt::draw_int(&mut rt::ST) as _;
-        { assert_eq!(core::mem::size_of_val(&AB_Geno_FighterReset_0[e].x488.x28_colanim), 8); for i2 in 0..8 { *(&mut AB_Geno_FighterReset_0[e].x488.x28_colanim as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::ST) as u8; } }
-        AB_Geno_FighterReset_0[e].x488.x2C_hex.r = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x488.x2C_hex.g = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x488.x2C_hex.b = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x488.x2C_hex.a = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x488.x30_color_red = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x488.x34_color_green = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x488.x38_color_blue = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x488.x3C_color_alpha = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x488.x40_colorblend_red = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x488.x44_colorblend_green = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x488.x48_colorblend_blue = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x488.x4C_colorblend_alpha = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x488.x50_light_color.r = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x488.x50_light_color.g = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x488.x50_light_color.b = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x488.x50_light_color.a = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x488.x54_light_red = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x488.x58_light_green = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x488.x5C_light_blue = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x488.x60_light_alpha = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x488.x64_lightblend_red = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x488.x68_lightblend_green = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x488.x6C_lightblend_blue = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x488.x70_lightblend_alpha = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x488.x74_light_rot_x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x488.x78_light_rot_yz = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x488.set_x7C_color_enable((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x488.set_x7C_flag2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x488.set_x7C_light_enable((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x488.set_x7C_flag4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x488.set_x7C_flag5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x488.set_x7C_flag6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x488.set_x7C_flag7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x488.set_x7C_flag8((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x508.x0_timer = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x508.x4_pri = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x508.x8_ptr1 = 0usize as _;
-        AB_Geno_FighterReset_0[e].x508.xC_loop = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x508.x10_ptr2 = 0usize as _;
-        AB_Geno_FighterReset_0[e].x508.x14 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x508.x18_alloc = 0usize as _;
-        AB_Geno_FighterReset_0[e].x508.x1c = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x508.x20 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x508.x24 = rt::draw_int(&mut rt::ST) as _;
-        { assert_eq!(core::mem::size_of_val(&AB_Geno_FighterReset_0[e].x508.x28_colanim), 8); for i2 in 0..8 { *(&mut AB_Geno_FighterReset_0[e].x508.x28_colanim as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::ST) as u8; } }
-        AB_Geno_FighterReset_0[e].x508.x2C_hex.r = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x508.x2C_hex.g = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x508.x2C_hex.b = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x508.x2C_hex.a = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x508.x30_color_red = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x508.x34_color_green = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x508.x38_color_blue = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x508.x3C_color_alpha = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x508.x40_colorblend_red = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x508.x44_colorblend_green = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x508.x48_colorblend_blue = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x508.x4C_colorblend_alpha = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x508.x50_light_color.r = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x508.x50_light_color.g = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x508.x50_light_color.b = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x508.x50_light_color.a = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x508.x54_light_red = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x508.x58_light_green = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x508.x5C_light_blue = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x508.x60_light_alpha = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x508.x64_lightblend_red = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x508.x68_lightblend_green = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x508.x6C_lightblend_blue = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x508.x70_lightblend_alpha = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x508.x74_light_rot_x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x508.x78_light_rot_yz = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x508.set_x7C_color_enable((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x508.set_x7C_flag2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x508.set_x7C_light_enable((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x508.set_x7C_flag4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x508.set_x7C_flag5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x508.set_x7C_flag6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x508.set_x7C_flag7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x508.set_x7C_flag8((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x588 = 0usize as _;
-        AB_Geno_FighterReset_0[e].x58C = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x590 = 0usize as _;
-        AB_Geno_FighterReset_0[e].anon_594.anon_0.set_x594_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].anon_594.anon_0.set_x594_b1_loop((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].anon_594.anon_0.set_x594_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].anon_594.anon_0.set_x594_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].anon_594.anon_0.set_x594_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].anon_594.anon_0.set_x594_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].anon_594.anon_0.set_x594_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].anon_594.anon_0.set_x594_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].anon_594.anon_0.x596_bits.set_x0((rt::draw_int(&mut rt::ST) & 0x7F) as _);
-        AB_Geno_FighterReset_0[e].anon_594.anon_0.x596_bits.set_x7((rt::draw_int(&mut rt::ST) & 0x7) as _);
-        AB_Geno_FighterReset_0[e].x598 = 0usize as _;
-        AB_Geno_FighterReset_0[e].x59C = 0usize as _;
-        AB_Geno_FighterReset_0[e].x5A0 = 0usize as _;
-        AB_Geno_FighterReset_0[e].x5A4 = 0usize as _;
-        AB_Geno_FighterReset_0[e].x5A8 = 0usize as _;
-        AB_Geno_FighterReset_0[e].x5AC.model_num = rt::draw_int(&mut rt::ST) as _;
-        for i2 in 0..5 {
-            AB_Geno_FighterReset_0[e].x5AC.cleared[i2] = rt::draw_int(&mut rt::ST) as _;
-        }
-        for i2 in 0..5 {
-            AB_Geno_FighterReset_0[e].x5AC.xC[i2] = 0usize as _;
-        }
-        AB_Geno_FighterReset_0[e].tobj_list.n_costume_tobjs = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].tobj_list.x5D0 = 0usize as _;
-        for i2 in 0..5 {
-            AB_Geno_FighterReset_0[e].tobj_list.costume_tobjs[i2] = 0usize as _;
-        }
-        AB_Geno_FighterReset_0[e].parts = 0usize as _;
-        AB_Geno_FighterReset_0[e].dobj_list.count = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dobj_list.data = 0usize as _;
-        for i2 in 0..12 {
-            AB_Geno_FighterReset_0[e].x5F4_arr[i2].prev = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].x5F4_arr[i2].idx = rt::draw_int(&mut rt::ST) as _;
-        }
-        AB_Geno_FighterReset_0[e].x60C = 0usize as _;
-        for i2 in 0..2 {
-            AB_Geno_FighterReset_0[e].x610_color_rgba[i2].r = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].x610_color_rgba[i2].g = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].x610_color_rgba[i2].b = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].x610_color_rgba[i2].a = rt::draw_int(&mut rt::ST) as _;
-        }
-        AB_Geno_FighterReset_0[e].x618_player_id = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x619_costume_id = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x61A_controller_index = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].team = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x61C = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x61D = rt::draw_int(&mut rt::ST) as _;
-        for i2 in 0..2 {
-            AB_Geno_FighterReset_0[e].filler_x61E[i2] = rt::draw_int(&mut rt::ST) as _;
-        }
-        for i2 in 0..3 {
-            AB_Geno_FighterReset_0[e].input.lstick[i2].x = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].input.lstick[i2].y = rt::draw_f32(&mut rt::ST);
-        }
-        for i2 in 0..3 {
-            AB_Geno_FighterReset_0[e].input.cstick[i2].x = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].input.cstick[i2].y = rt::draw_f32(&mut rt::ST);
-        }
-        for i2 in 0..3 {
-            AB_Geno_FighterReset_0[e].input.triggers[i2] = rt::draw_f32(&mut rt::ST);
-        }
-        for i2 in 0..3 {
-            AB_Geno_FighterReset_0[e].input.held_buttons[i2] = rt::draw_int(&mut rt::ST) as _;
-        }
-        AB_Geno_FighterReset_0[e].input.pressed_buttons = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].input.released_buttons = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].active_timer.lstick.x = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].active_timer.lstick.y = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].active_timer.trigger = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].active_sticky.lstick.x = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].active_sticky.lstick.y = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].active_sticky.trigger = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].active_duration.lstick.x = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].active_duration.lstick.y = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].active_duration.trigger = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].activity_timer.lstick.x = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].activity_timer.lstick.y = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].activity_timer.trigger = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x67C = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x67D = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x67E = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x67F = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x680 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x681 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x682 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x683 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x684 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x685 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x686 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x687 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x688 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x689 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x68A = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x68B = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x68C_transNPos.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x68C_transNPos.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x68C_transNPos.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x698.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x698.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x698.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x6A4_transNOffset.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x6A4_transNOffset.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x6A4_transNOffset.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x6B0.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x6B0.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x6B0.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].lstick_angle = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x6C0.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x6C0.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x6C0.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x6CC.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x6CC.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x6CC.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x6D8.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x6D8.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x6D8.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x6E4.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x6E4.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x6E4.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.x0_gobj = 0usize as _;
-        AB_Geno_FighterReset_0[e].coll_data.cur_pos.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.cur_pos.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.cur_pos.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.prev_pos.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.prev_pos.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.prev_pos.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.last_pos.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.last_pos.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.last_pos.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.x28_vec.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.x28_vec.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.x28_vec.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.x34_flags.set_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].coll_data.x34_flags.set_b1234((rt::draw_int(&mut rt::ST) & 0xF) as _);
-        AB_Geno_FighterReset_0[e].coll_data.x34_flags.set_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].coll_data.x34_flags.set_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].coll_data.x34_flags.set_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].coll_data.x35_flags.set_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].coll_data.x35_flags.set_b1234((rt::draw_int(&mut rt::ST) & 0xF) as _);
-        AB_Geno_FighterReset_0[e].coll_data.x35_flags.set_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].coll_data.x35_flags.set_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].coll_data.x35_flags.set_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].coll_data.facing_dir = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].coll_data.x38 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].coll_data.floor_skip = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].coll_data.ledge_id_right = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].coll_data.ledge_id_left = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].coll_data.joint_id_skip = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].coll_data.joint_id_only = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].coll_data.x50 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.ledge_snap_x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.ledge_snap_y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.ledge_snap_height = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.lstick_x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.x64_ecb.top.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.x64_ecb.top.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.x64_ecb.bottom.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.x64_ecb.bottom.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.x64_ecb.right.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.x64_ecb.right.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.x64_ecb.left.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.x64_ecb.left.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.desired_ecb.top.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.desired_ecb.top.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.desired_ecb.bottom.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.desired_ecb.bottom.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.desired_ecb.right.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.desired_ecb.right.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.desired_ecb.left.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.desired_ecb.left.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.ecb.top.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.ecb.top.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.ecb.bottom.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.ecb.bottom.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.ecb.right.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.ecb.right.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.ecb.left.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.ecb.left.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.prev_ecb.top.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.prev_ecb.top.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.prev_ecb.bottom.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.prev_ecb.bottom.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.prev_ecb.right.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.prev_ecb.right.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.prev_ecb.left.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.prev_ecb.left.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.xE4_ecb.top.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.xE4_ecb.top.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.xE4_ecb.bottom.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.xE4_ecb.bottom.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.xE4_ecb.right.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.xE4_ecb.right.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.xE4_ecb.left.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.xE4_ecb.left.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.ecb_source.kind = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].coll_data.ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i2 in 0..6 {
-            AB_Geno_FighterReset_0[e].coll_data.ecb_source.anon_4.anon_0.x10C_joint[i2] = 0usize as _;
-        }
-        AB_Geno_FighterReset_0[e].coll_data.ecb_source.x124 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.ecb_source.x128 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.ecb_source.x12C = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.x130_flags = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].coll_data.env_flags = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].coll_data.prev_env_flags = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].coll_data.x13C = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].coll_data.contact.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.contact.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.contact.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.floor.index = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].coll_data.floor.flags = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].coll_data.floor.normal.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.floor.normal.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.floor.normal.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.left_facing_wall.index = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].coll_data.left_facing_wall.flags = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].coll_data.left_facing_wall.normal.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.left_facing_wall.normal.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.left_facing_wall.normal.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.right_facing_wall.index = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].coll_data.right_facing_wall.flags = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].coll_data.right_facing_wall.normal.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.right_facing_wall.normal.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.right_facing_wall.normal.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.ceiling.index = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].coll_data.ceiling.flags = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].coll_data.ceiling.normal.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.ceiling.normal.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].coll_data.ceiling.normal.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].ecb_lock = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x890_cameraBox = 0usize as _;
-        AB_Geno_FighterReset_0[e].cur_anim_frame = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x898_unk = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].frame_speed_mul = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x8A0_unk = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x8A4_animBlendFrames = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x8A8_anim_frame = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x8AC_animSkeleton = 0usize as _;
-        for i2 in 0..5 {
-            AB_Geno_FighterReset_0[e].x8B0[i2].x0 = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].x8B0[i2].x4 = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x8B0[i2].x8 = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x8B0[i2].xC = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x8B0[i2].x10 = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].x8B0[i2].x11 = rt::draw_int(&mut rt::ST) as _;
-        }
-        for i2 in 0..4 {
-            AB_Geno_FighterReset_0[e].x914[i2].state = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].x914[i2].x4 = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].x914[i2].unk_count = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].x914[i2].damage = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x914[i2].b_offset.x = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x914[i2].b_offset.y = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x914[i2].b_offset.z = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x914[i2].scale = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x914[i2].kb_angle = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].x914[i2].x24 = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].x914[i2].x28 = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].x914[i2].x2C = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].x914[i2].element = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].x914[i2].x34 = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].x914[i2].sfx_severity = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].x914[i2].sfx_kind = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].x914[i2].set_x40_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].x914[i2].set_x40_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].x914[i2].set_x40_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].x914[i2].set_x40_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].x914[i2].set_x40_b4((rt::draw_int(&mut rt::ST) & 0xFF) as _);
-            AB_Geno_FighterReset_0[e].x914[i2].set_x41_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].x914[i2].set_x41_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].x914[i2].set_x41_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].x914[i2].set_x41_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].x914[i2].set_x42_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].x914[i2].set_x42_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].x914[i2].set_x42_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].x914[i2].set_x42_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].x914[i2].set_x42_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].x914[i2].set_x42_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].x914[i2].set_x42_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].x914[i2].set_x42_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].x914[i2].set_x43_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].x914[i2].set_x43_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].x914[i2].set_x43_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].x914[i2].set_x43_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].x914[i2].set_x43_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].x914[i2].set_x43_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].x914[i2].set_x43_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].x914[i2].set_x43_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].x914[i2].x44 = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].x914[i2].x45 = rt::draw_int(&mut rt::ST) as _;
-            for i3 in 0..2 {
-                AB_Geno_FighterReset_0[e].x914[i2].x46[i3] = rt::draw_int(&mut rt::ST) as _;
-            }
-            AB_Geno_FighterReset_0[e].x914[i2].jobj = 0usize as _;
-            AB_Geno_FighterReset_0[e].x914[i2].x4C.x = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x914[i2].x4C.y = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x914[i2].x4C.z = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x914[i2].x58.x = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x914[i2].x58.y = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x914[i2].x58.z = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x914[i2].hurt_coll_pos.x = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x914[i2].hurt_coll_pos.y = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x914[i2].hurt_coll_pos.z = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x914[i2].coll_distance = rt::draw_f32(&mut rt::ST);
-            for i3 in 0..12 {
-                AB_Geno_FighterReset_0[e].x914[i2].victims_1[i3].victim = 0usize as _;
-                AB_Geno_FighterReset_0[e].x914[i2].victims_1[i3].x4 = rt::draw_int(&mut rt::ST) as _;
-            }
-            for i3 in 0..12 {
-                AB_Geno_FighterReset_0[e].x914[i2].victims_2[i3].victim = 0usize as _;
-                AB_Geno_FighterReset_0[e].x914[i2].victims_2[i3].x4 = rt::draw_int(&mut rt::ST) as _;
-            }
-            AB_Geno_FighterReset_0[e].x914[i2].anon_134.owner = 0usize as _;
-        }
-        for i2 in 0..2 {
-            AB_Geno_FighterReset_0[e].xDF4[i2].state = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].xDF4[i2].x4 = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].xDF4[i2].unk_count = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].xDF4[i2].damage = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].xDF4[i2].b_offset.x = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].xDF4[i2].b_offset.y = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].xDF4[i2].b_offset.z = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].xDF4[i2].scale = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].xDF4[i2].kb_angle = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].xDF4[i2].x24 = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].xDF4[i2].x28 = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].xDF4[i2].x2C = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].xDF4[i2].element = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].xDF4[i2].x34 = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].xDF4[i2].sfx_severity = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].xDF4[i2].sfx_kind = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].xDF4[i2].set_x40_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].xDF4[i2].set_x40_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].xDF4[i2].set_x40_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].xDF4[i2].set_x40_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].xDF4[i2].set_x40_b4((rt::draw_int(&mut rt::ST) & 0xFF) as _);
-            AB_Geno_FighterReset_0[e].xDF4[i2].set_x41_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].xDF4[i2].set_x41_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].xDF4[i2].set_x41_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].xDF4[i2].set_x41_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].xDF4[i2].set_x42_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].xDF4[i2].set_x42_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].xDF4[i2].set_x42_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].xDF4[i2].set_x42_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].xDF4[i2].set_x42_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].xDF4[i2].set_x42_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].xDF4[i2].set_x42_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].xDF4[i2].set_x42_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].xDF4[i2].set_x43_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].xDF4[i2].set_x43_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].xDF4[i2].set_x43_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].xDF4[i2].set_x43_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].xDF4[i2].set_x43_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].xDF4[i2].set_x43_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].xDF4[i2].set_x43_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].xDF4[i2].set_x43_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].xDF4[i2].x44 = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].xDF4[i2].x45 = rt::draw_int(&mut rt::ST) as _;
-            for i3 in 0..2 {
-                AB_Geno_FighterReset_0[e].xDF4[i2].x46[i3] = rt::draw_int(&mut rt::ST) as _;
-            }
-            AB_Geno_FighterReset_0[e].xDF4[i2].jobj = 0usize as _;
-            AB_Geno_FighterReset_0[e].xDF4[i2].x4C.x = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].xDF4[i2].x4C.y = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].xDF4[i2].x4C.z = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].xDF4[i2].x58.x = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].xDF4[i2].x58.y = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].xDF4[i2].x58.z = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].xDF4[i2].hurt_coll_pos.x = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].xDF4[i2].hurt_coll_pos.y = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].xDF4[i2].hurt_coll_pos.z = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].xDF4[i2].coll_distance = rt::draw_f32(&mut rt::ST);
-            for i3 in 0..12 {
-                AB_Geno_FighterReset_0[e].xDF4[i2].victims_1[i3].victim = 0usize as _;
-                AB_Geno_FighterReset_0[e].xDF4[i2].victims_1[i3].x4 = rt::draw_int(&mut rt::ST) as _;
-            }
-            for i3 in 0..12 {
-                AB_Geno_FighterReset_0[e].xDF4[i2].victims_2[i3].victim = 0usize as _;
-                AB_Geno_FighterReset_0[e].xDF4[i2].victims_2[i3].x4 = rt::draw_int(&mut rt::ST) as _;
-            }
-            AB_Geno_FighterReset_0[e].xDF4[i2].anon_134.owner = 0usize as _;
-        }
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.state = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x4 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.unk_count = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.damage = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.b_offset.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.b_offset.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.b_offset.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.scale = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.kb_angle = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x24 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x28 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x2C = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.element = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x34 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.sfx_severity = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.sfx_kind = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.set_x40_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.set_x40_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.set_x40_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.set_x40_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.set_x40_b4((rt::draw_int(&mut rt::ST) & 0xFF) as _);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.set_x41_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.set_x41_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.set_x41_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.set_x41_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.set_x42_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.set_x42_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.set_x42_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.set_x42_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.set_x42_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.set_x42_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.set_x42_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.set_x42_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.set_x43_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.set_x43_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.set_x43_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.set_x43_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.set_x43_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.set_x43_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.set_x43_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.set_x43_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x44 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x45 = rt::draw_int(&mut rt::ST) as _;
-        for i2 in 0..2 {
-            AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x46[i2] = rt::draw_int(&mut rt::ST) as _;
-        }
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.jobj = 0usize as _;
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x4C.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x4C.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x4C.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x58.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x58.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x58.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.hurt_coll_pos.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.hurt_coll_pos.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.hurt_coll_pos.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.coll_distance = rt::draw_f32(&mut rt::ST);
-        for i2 in 0..12 {
-            AB_Geno_FighterReset_0[e].x1064_thrownHitbox.victims_1[i2].victim = 0usize as _;
-            AB_Geno_FighterReset_0[e].x1064_thrownHitbox.victims_1[i2].x4 = rt::draw_int(&mut rt::ST) as _;
-        }
-        for i2 in 0..12 {
-            AB_Geno_FighterReset_0[e].x1064_thrownHitbox.victims_2[i2].victim = 0usize as _;
-            AB_Geno_FighterReset_0[e].x1064_thrownHitbox.victims_2[i2].x4 = rt::draw_int(&mut rt::ST) as _;
-        }
-        AB_Geno_FighterReset_0[e].x1064_thrownHitbox.anon_134.owner = 0usize as _;
-        AB_Geno_FighterReset_0[e].x119C_teamUnk = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].grabber_unk1 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].hurt_capsules_len = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x119F = rt::draw_int(&mut rt::ST) as _;
-        for i2 in 0..15 {
-            AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.state = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.a_offset.x = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.a_offset.y = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.a_offset.z = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.b_offset.x = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.b_offset.y = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.b_offset.z = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.scale = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.bone = 0usize as _;
-            AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.set_skip_update_pos((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.set_x24_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.set_x24_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.set_x24_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.set_x24_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.set_x24_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.set_x24_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.set_x24_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.a_pos.x = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.a_pos.y = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.a_pos.z = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.b_pos.x = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.b_pos.y = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.b_pos.z = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.bone_idx = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].hurt_capsules[i2].height = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].hurt_capsules[i2].is_grabbable = rt::draw_int(&mut rt::ST) as _;
-        }
-        for i2 in 0..2 {
-            AB_Geno_FighterReset_0[e].x1614[i2].x0 = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x1614[i2].x4 = 0usize as _;
-            AB_Geno_FighterReset_0[e].x1614[i2].x8.x = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x1614[i2].x8.y = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x1614[i2].x8.z = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x1614[i2].x14.x = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x1614[i2].x14.y = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x1614[i2].x14.z = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x1614[i2].x20.x = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x1614[i2].x20.y = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x1614[i2].x20.z = rt::draw_f32(&mut rt::ST);
-        }
-        AB_Geno_FighterReset_0[e].x166C = rt::draw_int(&mut rt::ST) as _;
-        for i2 in 0..1 {
-            AB_Geno_FighterReset_0[e].x1670[i2].v1.x = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x1670[i2].v1.y = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x1670[i2].v1.z = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x1670[i2].v2 = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x1670[i2].jobj = 0usize as _;
-            AB_Geno_FighterReset_0[e].x1670[i2].x14 = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x1670[i2].x18.x = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x1670[i2].x18.y = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x1670[i2].x18.z = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x1670[i2].x24 = rt::draw_int(&mut rt::ST) as _;
-        }
-        for i2 in 0..400 {
-            AB_Geno_FighterReset_0[e].filler_x1674[i2] = rt::draw_int(&mut rt::ST) as _;
-        }
-        AB_Geno_FighterReset_0[e].x1828 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x182c_behavior = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.x1830_percent = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.x1834 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.x1838_percentTemp = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.x183C_applied = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x1840 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.facing_dir_1 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.x1848_kb_angle = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x184c_damaged_hurtbox = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.kb_applied = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.x1854_collpos.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.x1854_collpos.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.x1854_collpos.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.x1860_element = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x1864 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x1868_source = 0usize as _;
-        AB_Geno_FighterReset_0[e].dmg.x186c = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x1870 = 0usize as _;
-        AB_Geno_FighterReset_0[e].dmg.x1874 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x1878 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x187c = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.x1880.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.x1880.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.x1880.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.x188c = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x1890 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x1894 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x1898 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.x189C_unk_num_frames = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.x18a0 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.x18A4_knockbackMagnitude = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.x18A8 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.x18ac_time_since_hit = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.armor0 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.armor1 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.x18B8 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.x18BC = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.x18C0 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x18c4_source_ply = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x18C8 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x18CC = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x18D0 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x18d4.x0 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x18d4.x1 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x18d4.set_x2_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].dmg.x18d4.set_x2_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].dmg.x18d4.set_x2_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].dmg.x18d4.set_x2_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].dmg.x18d4.set_x2_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].dmg.x18d4.set_x2_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].dmg.x18d4.set_x2_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].dmg.x18d4.set_x2_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].dmg.x18d4.x3 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x18d8.x0 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x18d8.x4 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x18d8.kb_applied1 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.x18d8.xC = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x18d8.set_x10_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].dmg.x18d8.set_x10_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].dmg.x18d8.set_x10_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].dmg.x18d8.set_x10_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].dmg.x18d8.set_x10_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].dmg.x18d8.set_x10_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].dmg.x18d8.set_x10_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].dmg.x18d8.set_x10_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].dmg.x18d8.set_x11_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].dmg.x18d8.set_x11_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].dmg.x18d8.set_x11_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].dmg.x18d8.set_x11_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].dmg.x18d8.set_x11_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].dmg.x18ec_instancehitby = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x18F0 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x18F4 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x18F8 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x18f9 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x18fa_model_shift_frames = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x18FC = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x18FD = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x1900 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.x1904 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.x1908 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x190C = 0usize as _;
-        AB_Geno_FighterReset_0[e].dmg.x1910 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x1914 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.int_value = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x191C = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.facing_dir = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.x1924 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x1928 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.x192c = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.x1930.x0.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.x1930.x0.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.x1930.x0.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.x1930.xC.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.x1930.xC.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.x1930.xC.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.x1948 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x194C = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x1950 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].dmg.x1954 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.x1958 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].dmg.x195c_hitlag_frames = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x1960_vibrateMult = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x1964 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x1968_jumpsUsed = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x1969_walljumpUsed = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].hitlag_mul = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].unk_msid = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].item_gobj = 0usize as _;
-        AB_Geno_FighterReset_0[e].x1978 = 0usize as _;
-        AB_Geno_FighterReset_0[e].x197C = 0usize as _;
-        AB_Geno_FighterReset_0[e].x1980 = 0usize as _;
-        AB_Geno_FighterReset_0[e].x1984_heldItemSpec = 0usize as _;
-        AB_Geno_FighterReset_0[e].x1988 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x198C = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x1990 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x1994 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].shield_health = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].lightshield_amount = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x19A0_shieldDamageTaken = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x19A4 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x19A8 = 0usize as _;
-        AB_Geno_FighterReset_0[e].specialn_facing_dir = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x19B0 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].shield_unk0 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].shield_unk1 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x19BC_shieldDamageTaken3 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].shield_hit.bone = 0usize as _;
-        AB_Geno_FighterReset_0[e].shield_hit.set_skip_update_pos((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].shield_hit.pos.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].shield_hit.pos.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].shield_hit.pos.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].shield_hit.offset.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].shield_hit.offset.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].shield_hit.offset.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].shield_hit.size = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].reflect_hit.bone = 0usize as _;
-        AB_Geno_FighterReset_0[e].reflect_hit.set_skip_update_pos((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].reflect_hit.pos.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].reflect_hit.pos.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].reflect_hit.pos.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].reflect_hit.offset.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].reflect_hit.offset.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].reflect_hit.offset.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].reflect_hit.size = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].absorb_hit.bone = 0usize as _;
-        AB_Geno_FighterReset_0[e].absorb_hit.set_skip_update_pos((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].absorb_hit.pos.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].absorb_hit.pos.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].absorb_hit.pos.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].absorb_hit.offset.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].absorb_hit.offset.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].absorb_hit.offset.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].absorb_hit.size = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].ReflectAttr.x1A2C_reflectHitDirection = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].ReflectAttr.x1A30_maxDamage = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].ReflectAttr.x1A34_damageMul = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].ReflectAttr.x1A38_speedMul = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].ReflectAttr.x1A3C_damageOver = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].AbsorbAttr.x1A40_absorbHitDirection = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].AbsorbAttr.x1A44_damageTaken = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].AbsorbAttr.x1A48_hitsTaken = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].grab_timer = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x1A50 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x1A51 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x1A52 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x1A53 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x1A54 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].victim_gobj = 0usize as _;
-        AB_Geno_FighterReset_0[e].x1A5C = 0usize as _;
-        AB_Geno_FighterReset_0[e].target_item_gobj = 0usize as _;
-        AB_Geno_FighterReset_0[e].x1A64 = 0usize as _;
-        AB_Geno_FighterReset_0[e].x1A68 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x1A6A = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x1A6C = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x1A70.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x1A70.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x1A70.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x1A7C.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x1A7C.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x1A7C.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].cpu.buttons = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].cpu.lstick.x = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].cpu.lstick.y = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].cpu.cstick.x = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].cpu.cstick.y = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].cpu.ltrigger = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].cpu.rtrigger = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].cpu.kind = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].cpu.level = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].cpu.x14 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].cpu.x18 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].cpu.x1C = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].cpu.x20 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].cpu.x24 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].cpu.x28 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].cpu.x2C = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].cpu.x30 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].cpu.x34 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].cpu.x38 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].cpu.x3C = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].cpu.x40 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].cpu.x44 = 0usize as _;
-        AB_Geno_FighterReset_0[e].cpu.x48 = 0usize as _;
-        AB_Geno_FighterReset_0[e].cpu.x4C = 0usize as _;
-        AB_Geno_FighterReset_0[e].cpu.x50 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].cpu.x54.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].cpu.x54.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].cpu.x5C = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].cpu.x60 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].cpu.x64.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].cpu.x64.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].cpu.x6C.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].cpu.x6C.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].cpu.x74.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].cpu.x74.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].cpu.x7C = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].cpu.x80 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].cpu.x84 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].cpu.x88 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].cpu.x8C = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].cpu.x90 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].cpu.x94 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].cpu.x98.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].cpu.x98.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].cpu.x98.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].cpu.xA4 = rt::draw_int(&mut rt::ST) as _;
-        for i2 in 0..8 {
-            AB_Geno_FighterReset_0[e].cpu.xA8_array[i2] = rt::draw_int(&mut rt::ST) as _;
-        }
-        AB_Geno_FighterReset_0[e].cpu.xC8 = rt::draw_int(&mut rt::ST) as _;
-        for i2 in 0..3 {
-            AB_Geno_FighterReset_0[e].cpu.pad_xC9[i2] = rt::draw_int(&mut rt::ST) as _;
-        }
-        for i2 in 0..8 {
-            AB_Geno_FighterReset_0[e].cpu.xCC_array[i2] = rt::draw_int(&mut rt::ST) as _;
-        }
-        AB_Geno_FighterReset_0[e].cpu.xEC = rt::draw_int(&mut rt::ST) as _;
-        for i2 in 0..3 {
-            AB_Geno_FighterReset_0[e].cpu.pad_xED[i2] = rt::draw_int(&mut rt::ST) as _;
-        }
-        AB_Geno_FighterReset_0[e].cpu.xF0 = 0usize as _;
-        AB_Geno_FighterReset_0[e].cpu.xF4 = 0usize as _;
-        AB_Geno_FighterReset_0[e].cpu.set_xF8_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].cpu.set_xF8_b12((rt::draw_int(&mut rt::ST) & 0x3) as _);
-        AB_Geno_FighterReset_0[e].cpu.set_xF8_b34((rt::draw_int(&mut rt::ST) & 0x3) as _);
-        AB_Geno_FighterReset_0[e].cpu.set_xF8_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].cpu.set_xF8_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].cpu.set_xF8_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].cpu.set_xF9_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].cpu.set_xF9_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].cpu.set_xF9_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].cpu.set_xF9_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].cpu.set_xF9_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].cpu.set_xF9_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].cpu.set_xF9_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].cpu.set_xF9_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].cpu.set_xFA_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].cpu.set_xFA_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].cpu.set_xFA_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].cpu.set_xFA_b34((rt::draw_int(&mut rt::ST) & 0x3) as _);
-        AB_Geno_FighterReset_0[e].cpu.set_xFA_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].cpu.set_xFA_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].cpu.set_xFA_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].cpu.set_xFB_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].cpu.set_xFB_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].cpu.set_xFB_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].cpu.set_xFB_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].cpu.set_xFB_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].cpu.set_xFB_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].cpu.set_xFB_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].cpu.set_xFB_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        for i2 in 0..30 {
-            AB_Geno_FighterReset_0[e].cpu.xFC[i2].x0 = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].cpu.xFC[i2].x4 = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].cpu.xFC[i2].x5 = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].cpu.xFC[i2].lstick.x = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].cpu.xFC[i2].lstick.y = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].cpu.xFC[i2].cstick.x = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].cpu.xFC[i2].cstick.y = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].cpu.xFC[i2].xA = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].cpu.xFC[i2].xB = rt::draw_int(&mut rt::ST) as _;
-            AB_Geno_FighterReset_0[e].cpu.xFC[i2].cur_pos.x = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].cpu.xFC[i2].cur_pos.y = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].cpu.xFC[i2].cur_pos.z = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].cpu.xFC[i2].facing_dir = rt::draw_f32(&mut rt::ST);
-        }
-        AB_Geno_FighterReset_0[e].cpu.x444 = 0usize as _;
-        AB_Geno_FighterReset_0[e].cpu.x448 = 0usize as _;
-        AB_Geno_FighterReset_0[e].cpu.command_duration = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].cpu.csP = 0usize as _;
-        for i2 in 0..256 {
-            AB_Geno_FighterReset_0[e].cpu.buffer[i2] = rt::draw_int(&mut rt::ST) as _;
-        }
-        AB_Geno_FighterReset_0[e].cpu.write_pos = 0usize as _;
-        AB_Geno_FighterReset_0[e].cpu.x558 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].cpu.x55C = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].cpu.x560 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].cpu.x564 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].cpu.x568 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].cpu.x56C = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].cpu.x570 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].cpu.half_width = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].cpu.half_height = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x2004 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x2008 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x200C = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x2010 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x2014 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x2018 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x201C = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x2020 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x2021 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x2022 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x2024 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].metal_timer = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].metal_health = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x2030 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x2034 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x2038 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x203C.count = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x203C.data = 0usize as _;
-        for i2 in 0..32 {
-            AB_Geno_FighterReset_0[e].filler_x2044[i2] = rt::draw_int(&mut rt::ST) as _;
-        }
-        AB_Geno_FighterReset_0[e].x2064_ledgeCooldown = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x2068_attackID = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x206C_attack_instance = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x206E = rt::draw_int(&mut rt::ST) as _;
-        { assert_eq!(core::mem::size_of_val(&AB_Geno_FighterReset_0[e].x2070), 4); for i2 in 0..4 { *(&mut AB_Geno_FighterReset_0[e].x2070 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::ST) as u8; } }
-        AB_Geno_FighterReset_0[e].x2074.x2074_vec.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x2074.x2074_vec.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x2074.x207C.x = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x2074.x207C.y = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x2074.anon_10.x2084 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x2074.x2088 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x208C = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x2090 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x2092 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x2094 = 0usize as _;
-        AB_Geno_FighterReset_0[e].x2098 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x209A = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x209C = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x20A0_accessory = 0usize as _;
-        AB_Geno_FighterReset_0[e].x20A4.set_x0_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x20A4.set_x0_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x20A4.set_x0_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x20A4.set_x0_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x20A4.set_x0_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x20A4.set_x0_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x20A4.set_x0_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x20A4.set_x0_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x20A4.shadow = 0usize as _;
-        AB_Geno_FighterReset_0[e].unk_gobj = 0usize as _;
-        for i2 in 0..3 {
-            AB_Geno_FighterReset_0[e].x20B0[i2].x0.x = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x20B0[i2].x0.y = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x20B0[i2].x0.z = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x20B0[i2].xC.x = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x20B0[i2].xC.y = rt::draw_f32(&mut rt::ST);
-            AB_Geno_FighterReset_0[e].x20B0[i2].xC.z = rt::draw_f32(&mut rt::ST);
-        }
-        AB_Geno_FighterReset_0[e].x20F8 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x20FC = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x2100 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].set_x2101_bits_0to6((rt::draw_int(&mut rt::ST) & 0x7F) as _);
-        AB_Geno_FighterReset_0[e].set_x2101_bits_8((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x2102 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x2103 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x2104 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].capture_timer = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].wall_jump_input_timer = rt::draw_int(&mut rt::ST) as _;
-        for i2 in 0..3 {
-            AB_Geno_FighterReset_0[e].filler_x210C[i2] = rt::draw_int(&mut rt::ST) as _;
-        }
-        AB_Geno_FighterReset_0[e].x2110_walljumpWallSide = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].smash_attrs.state = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].smash_attrs.x2118_frames = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].smash_attrs.x211C_holdFrame = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].smash_attrs.x2120_damageMul = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].smash_attrs.x2124_frameSpeedMul = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].smash_attrs.x2128 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].smash_attrs.x212C = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].smash_attrs.x212D = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].smash_attrs.x212E = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].smash_attrs.x212F = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].smash_attrs.x2130_sfxBool = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].smash_attrs.x2134_vibrateFrame = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].smash_attrs.x2135 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].smash_attrs.x2136 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].smash_attrs.x2137 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].smash_attrs.x2138_smashSinceHitbox = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x213C = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x2140 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x2144 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x2148 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x214C = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x2150 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x2154 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x2158 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x215C = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x2160 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x2164 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x2168 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].unk_grab_val = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x2170 = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x2174.x = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x2174.y = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x2174.z = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].x2180 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x2184 = 0usize as _;
-        AB_Geno_FighterReset_0[e].x2188.x = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x2188.y = rt::draw_int(&mut rt::ST) as _;
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterReset_0[e].grab_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterReset_0[e].x2194 = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterReset_0[e].grabbed_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterReset_0[e].input_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterReset_0[e].anim_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterReset_0[e].phys_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterReset_0[e].coll_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterReset_0[e].cam_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterReset_0[e].accessory1_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterReset_0[e].accessory2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterReset_0[e].accessory3_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterReset_0[e].accessory4_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterReset_0[e].deal_dmg_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterReset_0[e].shield_hit_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterReset_0[e].reflect_hit_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterReset_0[e].x21CC = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterReset_0[e].hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterReset_0[e].pre_hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterReset_0[e].post_hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterReset_0[e].take_dmg_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterReset_0[e].death1_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterReset_0[e].death2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterReset_0[e].death3_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterReset_0[e].x21EC = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterReset_0[e].take_dmg_2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterReset_0[e].hurtbox_detect_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterReset_0[e].x21F8 = if d & 1 != 0 { Some(cb2) } else { None }; }
-        AB_Geno_FighterReset_0[e].x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x21FC_flag.anon_0.set_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x21FC_flag.anon_0.set_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x21FC_flag.anon_0.set_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x21FC_flag.anon_0.set_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].x21FC_flag.anon_0.set_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        for i2 in 0..3 {
-            AB_Geno_FighterReset_0[e].filler_x21FC[i2] = rt::draw_int(&mut rt::ST) as _;
-        }
-        for i2 in 0..4 {
-            AB_Geno_FighterReset_0[e].cmd_vars[i2] = rt::draw_int(&mut rt::ST) as _;
-        }
-        AB_Geno_FighterReset_0[e].anon_2210.throw_flags = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].cmd_timer = rt::draw_f32(&mut rt::ST);
-        AB_Geno_FighterReset_0[e].set_allow_interrupt((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2218_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2218_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_reflecting((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2218_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2218_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2218_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2218_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2219_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2219_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2219_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2219_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2219_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2219_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2219_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2219_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x221A_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x221A_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_allow_sdi((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x221A_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_fall_fast((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x221A_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x221A_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x221A_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].anon_221b.set_x221B_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].anon_221b.set_x221B_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].anon_221b.set_x221B_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].anon_221b.set_x221B_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].anon_221b.set_x221B_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].anon_221b.set_x221B_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].anon_221b.set_x221B_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].anon_221b.set_x221B_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x221C_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x221C_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x221C_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x221C_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x221C_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x221C_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x221C_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x221C_u16_y((rt::draw_int(&mut rt::ST) & 0x7) as _);
-        AB_Geno_FighterReset_0[e].set_x221D_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x221D_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x221D_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x221D_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x221D_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x221D_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_invisible((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x221E_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x221E_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x221E_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x221E_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x221E_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x221E_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x221E_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x221F_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x221F_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x221F_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x221F_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_is_sub_fighter((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x221F_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x221F_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x221F_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2220_b0((rt::draw_int(&mut rt::ST) & 0x7) as _);
-        AB_Geno_FighterReset_0[e].set_x2220_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2220_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2220_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2220_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2220_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2221_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2221_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2221_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2221_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2221_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2221_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2221_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2221_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2222_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_can_multijump((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2222_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2222_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2222_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2222_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2222_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2222_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2223_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2223_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2223_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2223_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2223_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2223_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_is_always_metal((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_is_metal((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2224_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2224_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2224_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2224_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2224_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2224_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2224_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_can_walljump((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2225_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2225_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2225_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2225_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2225_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2225_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2225_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2225_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2226_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2226_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2226_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2226_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2226_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2226_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2226_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2226_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2227_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2227_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2227_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2227_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2227_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2227_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2227_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2227_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2228_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2228_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_is_sandbag((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2228_b3((rt::draw_int(&mut rt::ST) & 0x3) as _);
-        AB_Geno_FighterReset_0[e].set_x2228_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_used_tether((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2228_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2229_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2229_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2229_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2229_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2229_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_no_normal_motion((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x2229_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_no_kb((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x222A_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x222A_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x222A_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x222A_b3((rt::draw_int(&mut rt::ST) & 0x3) as _);
-        AB_Geno_FighterReset_0[e].set_x222A_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x222A_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_Geno_FighterReset_0[e].set_x222A_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        { assert_eq!(core::mem::size_of_val(&AB_Geno_FighterReset_0[e].u), 400); for i2 in 0..400 { *(&mut AB_Geno_FighterReset_0[e].u as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::ST) as u8; } }
-        AB_Geno_FighterReset_0[e].bury_grkind = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].bury_timer_1 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].bury_timer_2 = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x2330.x = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x2330.y = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x2338.x = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_FighterReset_0[e].x2338.y = rt::draw_int(&mut rt::ST) as _;
-        { assert_eq!(core::mem::size_of_val(&AB_Geno_FighterReset_0[e].mv), 176); for i2 in 0..176 { *(&mut AB_Geno_FighterReset_0[e].mv as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::ST) as u8; } }
-    }
-    rt::reg_add(core::ptr::addr_of!(AB_Geno_FighterReset_0), core::mem::size_of_val(&AB_Geno_FighterReset_0), "arg0");
-    let a0 = AB_Geno_FighterReset_0.as_mut_ptr();
-    m::Geno_FighterReset(a0 as _);
-    let ret = 0u64;
-    let trace = rt::TRACE;
-    hash_objs();
-    let mut tot = rt::H;
-    rt::H = rt::FNV0;
-    for e in 0..1 {
-        rt::h_p(AB_Geno_FighterReset_0[e].gobj as *const u8);
-        rt::h_u(AB_Geno_FighterReset_0[e].kind as u64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x8_spawnNum as i64);
-        rt::h_u(AB_Geno_FighterReset_0[e].player_id as u64);
-        rt::h_i(AB_Geno_FighterReset_0[e].motion_id as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].anim_id as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x18 as i64);
-        rt::h_p(AB_Geno_FighterReset_0[e].x1C_actionStateList as *const u8);
-        rt::h_p(AB_Geno_FighterReset_0[e].x20_actionStateList as *const u8);
-        rt::h_p(AB_Geno_FighterReset_0[e].x24 as *const u8);
-        rt::h_p(AB_Geno_FighterReset_0[e].x28 as *const u8);
-        rt::h_f32(AB_Geno_FighterReset_0[e].facing_dir);
-        rt::h_f32(AB_Geno_FighterReset_0[e].facing_dir1);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x34_scale.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x34_scale.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x34_scale.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x40);
-        for i2 in 0..3 {
-            for i3 in 0..4 {
-                rt::h_f32(AB_Geno_FighterReset_0[e].x44_mtx[i2][i3]);
-            }
-        }
-        rt::h_f32(AB_Geno_FighterReset_0[e].x74_self_accel.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x74_self_accel.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x74_self_accel.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].self_vel.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].self_vel.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].self_vel.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x8c_kb_vel.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x8c_kb_vel.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x8c_kb_vel.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x98_atk_shield_kb.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x98_atk_shield_kb.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x98_atk_shield_kb.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].xA4_unk_vel.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].xA4_unk_vel.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].xA4_unk_vel.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].cur_pos.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].cur_pos.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].cur_pos.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].prev_pos.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].prev_pos.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].prev_pos.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].pos_delta.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].pos_delta.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].pos_delta.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].xD4_unk_vel.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].xD4_unk_vel.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].xD4_unk_vel.z);
-        rt::h_u(AB_Geno_FighterReset_0[e].ground_or_air as u64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].xE4_ground_accel_1);
-        rt::h_f32(AB_Geno_FighterReset_0[e].xE8_ground_accel_2);
-        rt::h_f32(AB_Geno_FighterReset_0[e].gr_vel);
-        rt::h_f32(AB_Geno_FighterReset_0[e].xF0_ground_kb_vel);
-        rt::h_f32(AB_Geno_FighterReset_0[e].xF4_ground_attacker_shield_kb_vel);
-        rt::h_f32(AB_Geno_FighterReset_0[e].xF8_playerNudgeVel.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].xF8_playerNudgeVel.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x100);
-        rt::h_u(AB_Geno_FighterReset_0[e].x104 as u64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x105 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x106 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x107 as i64);
-        rt::h_p(AB_Geno_FighterReset_0[e].x108_costume_joint as *const u8);
-        rt::h_p(AB_Geno_FighterReset_0[e].ft_data as *const u8);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.walk_accel_mul);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.walk_accel_base);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.walk_max_vel);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.slow_walk_max);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.mid_walk_point);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.fast_walk_min);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.ground_friction);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.dash_initial_velocity);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.dash_accel_mul);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.dash_accel_base);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.dash_max_velocity);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.run_animation_scaling);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.max_run_brake_frames);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.ground_max_horizontal_velocity);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.jump_startup_time);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.jump_h_initial_velocity);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.jump_v_initial_velocity);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.ground_to_air_jump_momentum_multiplier);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.jump_h_max_velocity);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.hop_v_initial_velocity);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.air_jump_v_multiplier);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.air_jump_h_multiplier);
-        rt::h_i(AB_Geno_FighterReset_0[e].co_attrs.max_jumps as i64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.gravity);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.terminal_velocity);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.air_drift_stick_mul);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.aerial_drift_base);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.air_drift_max);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.aerial_friction);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.fast_fall_velocity);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.air_max_horizontal_velocity);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.jab_2_input_window);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.jab_3_input_window);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.standing_turn_frames);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.weight);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.model_scaling);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.initial_shield_size);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.shield_break_initial_velocity);
-        rt::h_i(AB_Geno_FighterReset_0[e].co_attrs.rapid_jab_window as i64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.clank_animation_length);
-        rt::h_i(AB_Geno_FighterReset_0[e].co_attrs.hit_spark_variant as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].co_attrs.unused_0 as i64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.ledge_jump_horizontal_velocity);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.ledge_jump_vertical_velocity);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.item_throw_velocity_multiplier);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.heavy_throw_velocity_multiplier);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.specials_ground_speed_retention);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.xBC.size);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.xBC.x4.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.xBC.x4.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.xBC.x4.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.xBC.x10.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.xBC.x10.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.xBC.x10.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.xBC.x1C);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.xDC);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.kirby_b_star_damage);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.normal_landing_lag);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.landingairn_lag);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.landingairf_lag);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.landingairb_lag);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.landingairhi_lag);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.landingairlw_lag);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.name_tag_height);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.passivewall_vel_x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.wall_jump_horizontal_velocity);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.wall_jump_vertical_velocity);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.passiveceil_vel_x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.trophy_scale);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.x114.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.x114.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.x114.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.x120.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.x120.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.x120.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.x12C);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.x130.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.x130.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.x130.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.x13C);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.screw_attack_launch_velocity);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.x144);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.wall_jump_min_approach_speed);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.damageice_ice_size);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.x150_damageice_unk);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.x154_damageice_unk);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.damageicejump_vel_y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.damageicejump_vel_x_mult);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.respawn_platform_scale);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.warp_star_hitbox_scale);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.x168);
-        rt::h_i(AB_Geno_FighterReset_0[e].co_attrs.camera_zoom_target_bone as i64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.x170.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.x170.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.x170.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].co_attrs.x17C);
-        rt::h_u(AB_Geno_FighterReset_0[e].co_attrs.weight_independent_throws_mask as u64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x294_itPickup.gr_light_offset.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x294_itPickup.gr_light_offset.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x294_itPickup.gr_light_offset.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x294_itPickup.gr_light_offset.w);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x294_itPickup.gr_heavy_offset.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x294_itPickup.gr_heavy_offset.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x294_itPickup.gr_heavy_offset.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x294_itPickup.gr_heavy_offset.w);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x294_itPickup.air_light_offset.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x294_itPickup.air_light_offset.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x294_itPickup.air_light_offset.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x294_itPickup.air_light_offset.w);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x2C4.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x2C4.y);
-        rt::h_p(AB_Geno_FighterReset_0[e].x2CC as *const u8);
-        rt::h_p(AB_Geno_FighterReset_0[e].x2D0 as *const u8);
-        rt::h_p(AB_Geno_FighterReset_0[e].dat_attrs as *const u8);
-        rt::h_p(AB_Geno_FighterReset_0[e].dat_attrs_backup as *const u8);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x2DC);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x2E0);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x2E4);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x2E8);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x2EC);
-        for i2 in 0..10 {
-            rt::h_i(AB_Geno_FighterReset_0[e].dynamic_bone_sets[i2].bone_id as i64);
-            rt::h_p(AB_Geno_FighterReset_0[e].dynamic_bone_sets[i2].dyn_desc.data as *const u8);
-            rt::h_u(AB_Geno_FighterReset_0[e].dynamic_bone_sets[i2].dyn_desc.count as u64);
-            rt::h_f32(AB_Geno_FighterReset_0[e].dynamic_bone_sets[i2].dyn_desc.pos.x);
-            rt::h_f32(AB_Geno_FighterReset_0[e].dynamic_bone_sets[i2].dyn_desc.pos.y);
-            rt::h_f32(AB_Geno_FighterReset_0[e].dynamic_bone_sets[i2].dyn_desc.pos.z);
-        }
-        rt::h_i(AB_Geno_FighterReset_0[e].dynamics_num as i64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x3E4_fighterCmdScript.timer);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x3E4_fighterCmdScript.frame_count);
-        for i2 in 0..1 {
-            rt::h_p(AB_Geno_FighterReset_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] as *const u8);
-        }
-        rt::h_u(AB_Geno_FighterReset_0[e].x3E4_fighterCmdScript.loop_count as u64);
-        for i2 in 0..3 {
-            rt::h_p(AB_Geno_FighterReset_0[e].x3E4_fighterCmdScript.event_return[i2] as *const u8);
-        }
-        rt::h_u(AB_Geno_FighterReset_0[e].x3E4_fighterCmdScript.loop_count_dup as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x3E4_fighterCmdScript.unk_x18 as u64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x408.x0_timer as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x408.x4_pri as i64);
-        rt::h_p(AB_Geno_FighterReset_0[e].x408.x8_ptr1 as *const u8);
-        rt::h_i(AB_Geno_FighterReset_0[e].x408.xC_loop as i64);
-        rt::h_p(AB_Geno_FighterReset_0[e].x408.x10_ptr2 as *const u8);
-        rt::h_i(AB_Geno_FighterReset_0[e].x408.x14 as i64);
-        rt::h_p(AB_Geno_FighterReset_0[e].x408.x18_alloc as *const u8);
-        rt::h_i(AB_Geno_FighterReset_0[e].x408.x1c as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x408.x20 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x408.x24 as i64);
-        rt::h_bytes(&AB_Geno_FighterReset_0[e].x408.x28_colanim as *const _ as *const u8, 8);
-        rt::h_u(AB_Geno_FighterReset_0[e].x408.x2C_hex.r as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x408.x2C_hex.g as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x408.x2C_hex.b as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x408.x2C_hex.a as u64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x408.x30_color_red);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x408.x34_color_green);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x408.x38_color_blue);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x408.x3C_color_alpha);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x408.x40_colorblend_red);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x408.x44_colorblend_green);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x408.x48_colorblend_blue);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x408.x4C_colorblend_alpha);
-        rt::h_u(AB_Geno_FighterReset_0[e].x408.x50_light_color.r as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x408.x50_light_color.g as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x408.x50_light_color.b as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x408.x50_light_color.a as u64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x408.x54_light_red);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x408.x58_light_green);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x408.x5C_light_blue);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x408.x60_light_alpha);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x408.x64_lightblend_red);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x408.x68_lightblend_green);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x408.x6C_lightblend_blue);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x408.x70_lightblend_alpha);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x408.x74_light_rot_x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x408.x78_light_rot_yz);
-        rt::h_u(AB_Geno_FighterReset_0[e].x408.x7C_color_enable() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x408.x7C_flag2() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x408.x7C_light_enable() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x408.x7C_flag4() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x408.x7C_flag5() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x408.x7C_flag6() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x408.x7C_flag7() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x408.x7C_flag8() as u64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x488.x0_timer as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x488.x4_pri as i64);
-        rt::h_p(AB_Geno_FighterReset_0[e].x488.x8_ptr1 as *const u8);
-        rt::h_i(AB_Geno_FighterReset_0[e].x488.xC_loop as i64);
-        rt::h_p(AB_Geno_FighterReset_0[e].x488.x10_ptr2 as *const u8);
-        rt::h_i(AB_Geno_FighterReset_0[e].x488.x14 as i64);
-        rt::h_p(AB_Geno_FighterReset_0[e].x488.x18_alloc as *const u8);
-        rt::h_i(AB_Geno_FighterReset_0[e].x488.x1c as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x488.x20 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x488.x24 as i64);
-        rt::h_bytes(&AB_Geno_FighterReset_0[e].x488.x28_colanim as *const _ as *const u8, 8);
-        rt::h_u(AB_Geno_FighterReset_0[e].x488.x2C_hex.r as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x488.x2C_hex.g as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x488.x2C_hex.b as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x488.x2C_hex.a as u64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x488.x30_color_red);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x488.x34_color_green);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x488.x38_color_blue);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x488.x3C_color_alpha);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x488.x40_colorblend_red);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x488.x44_colorblend_green);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x488.x48_colorblend_blue);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x488.x4C_colorblend_alpha);
-        rt::h_u(AB_Geno_FighterReset_0[e].x488.x50_light_color.r as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x488.x50_light_color.g as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x488.x50_light_color.b as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x488.x50_light_color.a as u64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x488.x54_light_red);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x488.x58_light_green);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x488.x5C_light_blue);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x488.x60_light_alpha);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x488.x64_lightblend_red);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x488.x68_lightblend_green);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x488.x6C_lightblend_blue);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x488.x70_lightblend_alpha);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x488.x74_light_rot_x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x488.x78_light_rot_yz);
-        rt::h_u(AB_Geno_FighterReset_0[e].x488.x7C_color_enable() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x488.x7C_flag2() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x488.x7C_light_enable() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x488.x7C_flag4() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x488.x7C_flag5() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x488.x7C_flag6() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x488.x7C_flag7() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x488.x7C_flag8() as u64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x508.x0_timer as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x508.x4_pri as i64);
-        rt::h_p(AB_Geno_FighterReset_0[e].x508.x8_ptr1 as *const u8);
-        rt::h_i(AB_Geno_FighterReset_0[e].x508.xC_loop as i64);
-        rt::h_p(AB_Geno_FighterReset_0[e].x508.x10_ptr2 as *const u8);
-        rt::h_i(AB_Geno_FighterReset_0[e].x508.x14 as i64);
-        rt::h_p(AB_Geno_FighterReset_0[e].x508.x18_alloc as *const u8);
-        rt::h_i(AB_Geno_FighterReset_0[e].x508.x1c as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x508.x20 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x508.x24 as i64);
-        rt::h_bytes(&AB_Geno_FighterReset_0[e].x508.x28_colanim as *const _ as *const u8, 8);
-        rt::h_u(AB_Geno_FighterReset_0[e].x508.x2C_hex.r as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x508.x2C_hex.g as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x508.x2C_hex.b as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x508.x2C_hex.a as u64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x508.x30_color_red);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x508.x34_color_green);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x508.x38_color_blue);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x508.x3C_color_alpha);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x508.x40_colorblend_red);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x508.x44_colorblend_green);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x508.x48_colorblend_blue);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x508.x4C_colorblend_alpha);
-        rt::h_u(AB_Geno_FighterReset_0[e].x508.x50_light_color.r as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x508.x50_light_color.g as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x508.x50_light_color.b as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x508.x50_light_color.a as u64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x508.x54_light_red);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x508.x58_light_green);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x508.x5C_light_blue);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x508.x60_light_alpha);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x508.x64_lightblend_red);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x508.x68_lightblend_green);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x508.x6C_lightblend_blue);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x508.x70_lightblend_alpha);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x508.x74_light_rot_x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x508.x78_light_rot_yz);
-        rt::h_u(AB_Geno_FighterReset_0[e].x508.x7C_color_enable() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x508.x7C_flag2() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x508.x7C_light_enable() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x508.x7C_flag4() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x508.x7C_flag5() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x508.x7C_flag6() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x508.x7C_flag7() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x508.x7C_flag8() as u64);
-        rt::h_p(AB_Geno_FighterReset_0[e].x588 as *const u8);
-        rt::h_u(AB_Geno_FighterReset_0[e].x58C as u64);
-        rt::h_p(AB_Geno_FighterReset_0[e].x590 as *const u8);
-        rt::h_u(AB_Geno_FighterReset_0[e].anon_594.anon_0.x594_b0() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].anon_594.anon_0.x594_b1_loop() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].anon_594.anon_0.x594_b2() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].anon_594.anon_0.x594_b3() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].anon_594.anon_0.x594_b4() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].anon_594.anon_0.x594_b5() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].anon_594.anon_0.x594_b6() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].anon_594.anon_0.x594_b7() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].anon_594.anon_0.x596_bits.x0() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].anon_594.anon_0.x596_bits.x7() as u64);
-        rt::h_p(AB_Geno_FighterReset_0[e].x598 as *const u8);
-        rt::h_p(AB_Geno_FighterReset_0[e].x59C as *const u8);
-        rt::h_p(AB_Geno_FighterReset_0[e].x5A0 as *const u8);
-        rt::h_p(AB_Geno_FighterReset_0[e].x5A4 as *const u8);
-        rt::h_p(AB_Geno_FighterReset_0[e].x5A8 as *const u8);
-        rt::h_u(AB_Geno_FighterReset_0[e].x5AC.model_num as u64);
-        for i2 in 0..5 {
-            rt::h_u(AB_Geno_FighterReset_0[e].x5AC.cleared[i2] as u64);
-        }
-        for i2 in 0..5 {
-            rt::h_p(AB_Geno_FighterReset_0[e].x5AC.xC[i2] as *const u8);
-        }
-        rt::h_u(AB_Geno_FighterReset_0[e].tobj_list.n_costume_tobjs as u64);
-        rt::h_p(AB_Geno_FighterReset_0[e].tobj_list.x5D0 as *const u8);
-        for i2 in 0..5 {
-            rt::h_p(AB_Geno_FighterReset_0[e].tobj_list.costume_tobjs[i2] as *const u8);
-        }
-        rt::h_p(AB_Geno_FighterReset_0[e].parts as *const u8);
-        rt::h_u(AB_Geno_FighterReset_0[e].dobj_list.count as u64);
-        rt::h_p(AB_Geno_FighterReset_0[e].dobj_list.data as *const u8);
-        for i2 in 0..12 {
-            rt::h_i(AB_Geno_FighterReset_0[e].x5F4_arr[i2].prev as i64);
-            rt::h_i(AB_Geno_FighterReset_0[e].x5F4_arr[i2].idx as i64);
-        }
-        rt::h_p(AB_Geno_FighterReset_0[e].x60C as *const u8);
-        for i2 in 0..2 {
-            rt::h_u(AB_Geno_FighterReset_0[e].x610_color_rgba[i2].r as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].x610_color_rgba[i2].g as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].x610_color_rgba[i2].b as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].x610_color_rgba[i2].a as u64);
-        }
-        rt::h_u(AB_Geno_FighterReset_0[e].x618_player_id as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x619_costume_id as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x61A_controller_index as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].team as u64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x61C as i64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x61D as u64);
-        for i2 in 0..2 {
-            rt::h_u(AB_Geno_FighterReset_0[e].filler_x61E[i2] as u64);
-        }
-        for i2 in 0..3 {
-            rt::h_f32(AB_Geno_FighterReset_0[e].input.lstick[i2].x);
-            rt::h_f32(AB_Geno_FighterReset_0[e].input.lstick[i2].y);
-        }
-        for i2 in 0..3 {
-            rt::h_f32(AB_Geno_FighterReset_0[e].input.cstick[i2].x);
-            rt::h_f32(AB_Geno_FighterReset_0[e].input.cstick[i2].y);
-        }
-        for i2 in 0..3 {
-            rt::h_f32(AB_Geno_FighterReset_0[e].input.triggers[i2]);
-        }
-        for i2 in 0..3 {
-            rt::h_u(AB_Geno_FighterReset_0[e].input.held_buttons[i2] as u64);
-        }
-        rt::h_u(AB_Geno_FighterReset_0[e].input.pressed_buttons as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].input.released_buttons as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].active_timer.lstick.x as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].active_timer.lstick.y as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].active_timer.trigger as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].active_sticky.lstick.x as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].active_sticky.lstick.y as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].active_sticky.trigger as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].active_duration.lstick.x as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].active_duration.lstick.y as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].active_duration.trigger as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].activity_timer.lstick.x as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].activity_timer.lstick.y as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].activity_timer.trigger as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x67C as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x67D as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x67E as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x67F as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x680 as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x681 as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x682 as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x683 as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x684 as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x685 as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x686 as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x687 as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x688 as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x689 as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x68A as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x68B as u64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x68C_transNPos.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x68C_transNPos.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x68C_transNPos.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x698.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x698.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x698.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x6A4_transNOffset.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x6A4_transNOffset.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x6A4_transNOffset.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x6B0.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x6B0.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x6B0.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].lstick_angle);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x6C0.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x6C0.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x6C0.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x6CC.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x6CC.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x6CC.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x6D8.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x6D8.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x6D8.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x6E4.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x6E4.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x6E4.z);
-        rt::h_p(AB_Geno_FighterReset_0[e].coll_data.x0_gobj as *const u8);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.cur_pos.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.cur_pos.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.cur_pos.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.prev_pos.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.prev_pos.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.prev_pos.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.last_pos.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.last_pos.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.last_pos.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.x28_vec.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.x28_vec.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.x28_vec.z);
-        rt::h_u(AB_Geno_FighterReset_0[e].coll_data.x34_flags.b0() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].coll_data.x34_flags.b1234() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].coll_data.x34_flags.b5() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].coll_data.x34_flags.b6() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].coll_data.x34_flags.b7() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].coll_data.x35_flags.b0() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].coll_data.x35_flags.b1234() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].coll_data.x35_flags.b5() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].coll_data.x35_flags.b6() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].coll_data.x35_flags.b7() as u64);
-        rt::h_i(AB_Geno_FighterReset_0[e].coll_data.facing_dir as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].coll_data.x38 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].coll_data.floor_skip as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].coll_data.ledge_id_right as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].coll_data.ledge_id_left as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].coll_data.joint_id_skip as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].coll_data.joint_id_only as i64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.x50);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.ledge_snap_x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.ledge_snap_y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.ledge_snap_height);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.lstick_x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.x64_ecb.top.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.x64_ecb.top.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.x64_ecb.bottom.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.x64_ecb.bottom.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.x64_ecb.right.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.x64_ecb.right.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.x64_ecb.left.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.x64_ecb.left.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.desired_ecb.top.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.desired_ecb.top.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.desired_ecb.bottom.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.desired_ecb.bottom.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.desired_ecb.right.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.desired_ecb.right.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.desired_ecb.left.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.desired_ecb.left.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.ecb.top.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.ecb.top.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.ecb.bottom.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.ecb.bottom.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.ecb.right.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.ecb.right.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.ecb.left.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.ecb.left.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.prev_ecb.top.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.prev_ecb.top.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.prev_ecb.bottom.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.prev_ecb.bottom.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.prev_ecb.right.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.prev_ecb.right.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.prev_ecb.left.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.prev_ecb.left.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.xE4_ecb.top.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.xE4_ecb.top.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.xE4_ecb.bottom.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.xE4_ecb.bottom.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.xE4_ecb.right.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.xE4_ecb.right.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.xE4_ecb.left.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.xE4_ecb.left.y);
-        rt::h_u(AB_Geno_FighterReset_0[e].coll_data.ecb_source.kind as u64);
-        rt::h_p(AB_Geno_FighterReset_0[e].coll_data.ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i2 in 0..6 {
-            rt::h_p(AB_Geno_FighterReset_0[e].coll_data.ecb_source.anon_4.anon_0.x10C_joint[i2] as *const u8);
-        }
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.ecb_source.x124);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.ecb_source.x128);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.ecb_source.x12C);
-        rt::h_u(AB_Geno_FighterReset_0[e].coll_data.x130_flags as u64);
-        rt::h_i(AB_Geno_FighterReset_0[e].coll_data.env_flags as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].coll_data.prev_env_flags as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].coll_data.x13C as i64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.contact.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.contact.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.contact.z);
-        rt::h_i(AB_Geno_FighterReset_0[e].coll_data.floor.index as i64);
-        rt::h_u(AB_Geno_FighterReset_0[e].coll_data.floor.flags as u64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.floor.normal.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.floor.normal.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.floor.normal.z);
-        rt::h_i(AB_Geno_FighterReset_0[e].coll_data.left_facing_wall.index as i64);
-        rt::h_u(AB_Geno_FighterReset_0[e].coll_data.left_facing_wall.flags as u64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.left_facing_wall.normal.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.left_facing_wall.normal.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.left_facing_wall.normal.z);
-        rt::h_i(AB_Geno_FighterReset_0[e].coll_data.right_facing_wall.index as i64);
-        rt::h_u(AB_Geno_FighterReset_0[e].coll_data.right_facing_wall.flags as u64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.right_facing_wall.normal.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.right_facing_wall.normal.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.right_facing_wall.normal.z);
-        rt::h_i(AB_Geno_FighterReset_0[e].coll_data.ceiling.index as i64);
-        rt::h_u(AB_Geno_FighterReset_0[e].coll_data.ceiling.flags as u64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.ceiling.normal.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.ceiling.normal.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].coll_data.ceiling.normal.z);
-        rt::h_i(AB_Geno_FighterReset_0[e].ecb_lock as i64);
-        rt::h_p(AB_Geno_FighterReset_0[e].x890_cameraBox as *const u8);
-        rt::h_f32(AB_Geno_FighterReset_0[e].cur_anim_frame);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x898_unk);
-        rt::h_f32(AB_Geno_FighterReset_0[e].frame_speed_mul);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x8A0_unk);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x8A4_animBlendFrames);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x8A8_anim_frame);
-        rt::h_p(AB_Geno_FighterReset_0[e].x8AC_animSkeleton as *const u8);
-        for i2 in 0..5 {
-            rt::h_i(AB_Geno_FighterReset_0[e].x8B0[i2].x0 as i64);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x8B0[i2].x4);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x8B0[i2].x8);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x8B0[i2].xC);
-            rt::h_i(AB_Geno_FighterReset_0[e].x8B0[i2].x10 as i64);
-            rt::h_i(AB_Geno_FighterReset_0[e].x8B0[i2].x11 as i64);
-        }
-        for i2 in 0..4 {
-            rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].state as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].x4 as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].unk_count as u64);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x914[i2].damage);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x914[i2].b_offset.x);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x914[i2].b_offset.y);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x914[i2].b_offset.z);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x914[i2].scale);
-            rt::h_i(AB_Geno_FighterReset_0[e].x914[i2].kb_angle as i64);
-            rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].x24 as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].x28 as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].x2C as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].element as u64);
-            rt::h_i(AB_Geno_FighterReset_0[e].x914[i2].x34 as i64);
-            rt::h_i(AB_Geno_FighterReset_0[e].x914[i2].sfx_severity as i64);
-            rt::h_i(AB_Geno_FighterReset_0[e].x914[i2].sfx_kind as i64);
-            rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].x40_b0() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].x40_b1() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].x40_b2() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].x40_b3() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].x40_b4() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].x41_b4() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].x41_b5() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].x41_b6() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].x41_b7() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].x42_b0() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].x42_b1() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].x42_b2() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].x42_b3() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].x42_b4() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].x42_b5() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].x42_b6() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].x42_b7() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].x43_b0() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].x43_b1() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].x43_b2() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].x43_b3() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].x43_b4() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].x43_b5() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].x43_b6() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].x43_b7() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].x44 as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].x45 as u64);
-            for i3 in 0..2 {
-                rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].x46[i3] as u64);
-            }
-            rt::h_p(AB_Geno_FighterReset_0[e].x914[i2].jobj as *const u8);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x914[i2].x4C.x);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x914[i2].x4C.y);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x914[i2].x4C.z);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x914[i2].x58.x);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x914[i2].x58.y);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x914[i2].x58.z);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x914[i2].hurt_coll_pos.x);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x914[i2].hurt_coll_pos.y);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x914[i2].hurt_coll_pos.z);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x914[i2].coll_distance);
-            for i3 in 0..12 {
-                rt::h_p(AB_Geno_FighterReset_0[e].x914[i2].victims_1[i3].victim as *const u8);
-                rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].victims_1[i3].x4 as u64);
-            }
-            for i3 in 0..12 {
-                rt::h_p(AB_Geno_FighterReset_0[e].x914[i2].victims_2[i3].victim as *const u8);
-                rt::h_u(AB_Geno_FighterReset_0[e].x914[i2].victims_2[i3].x4 as u64);
-            }
-            rt::h_p(AB_Geno_FighterReset_0[e].x914[i2].anon_134.owner as *const u8);
-        }
-        for i2 in 0..2 {
-            rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].state as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].x4 as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].unk_count as u64);
-            rt::h_f32(AB_Geno_FighterReset_0[e].xDF4[i2].damage);
-            rt::h_f32(AB_Geno_FighterReset_0[e].xDF4[i2].b_offset.x);
-            rt::h_f32(AB_Geno_FighterReset_0[e].xDF4[i2].b_offset.y);
-            rt::h_f32(AB_Geno_FighterReset_0[e].xDF4[i2].b_offset.z);
-            rt::h_f32(AB_Geno_FighterReset_0[e].xDF4[i2].scale);
-            rt::h_i(AB_Geno_FighterReset_0[e].xDF4[i2].kb_angle as i64);
-            rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].x24 as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].x28 as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].x2C as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].element as u64);
-            rt::h_i(AB_Geno_FighterReset_0[e].xDF4[i2].x34 as i64);
-            rt::h_i(AB_Geno_FighterReset_0[e].xDF4[i2].sfx_severity as i64);
-            rt::h_i(AB_Geno_FighterReset_0[e].xDF4[i2].sfx_kind as i64);
-            rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].x40_b0() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].x40_b1() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].x40_b2() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].x40_b3() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].x40_b4() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].x41_b4() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].x41_b5() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].x41_b6() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].x41_b7() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].x42_b0() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].x42_b1() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].x42_b2() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].x42_b3() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].x42_b4() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].x42_b5() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].x42_b6() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].x42_b7() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].x43_b0() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].x43_b1() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].x43_b2() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].x43_b3() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].x43_b4() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].x43_b5() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].x43_b6() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].x43_b7() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].x44 as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].x45 as u64);
-            for i3 in 0..2 {
-                rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].x46[i3] as u64);
-            }
-            rt::h_p(AB_Geno_FighterReset_0[e].xDF4[i2].jobj as *const u8);
-            rt::h_f32(AB_Geno_FighterReset_0[e].xDF4[i2].x4C.x);
-            rt::h_f32(AB_Geno_FighterReset_0[e].xDF4[i2].x4C.y);
-            rt::h_f32(AB_Geno_FighterReset_0[e].xDF4[i2].x4C.z);
-            rt::h_f32(AB_Geno_FighterReset_0[e].xDF4[i2].x58.x);
-            rt::h_f32(AB_Geno_FighterReset_0[e].xDF4[i2].x58.y);
-            rt::h_f32(AB_Geno_FighterReset_0[e].xDF4[i2].x58.z);
-            rt::h_f32(AB_Geno_FighterReset_0[e].xDF4[i2].hurt_coll_pos.x);
-            rt::h_f32(AB_Geno_FighterReset_0[e].xDF4[i2].hurt_coll_pos.y);
-            rt::h_f32(AB_Geno_FighterReset_0[e].xDF4[i2].hurt_coll_pos.z);
-            rt::h_f32(AB_Geno_FighterReset_0[e].xDF4[i2].coll_distance);
-            for i3 in 0..12 {
-                rt::h_p(AB_Geno_FighterReset_0[e].xDF4[i2].victims_1[i3].victim as *const u8);
-                rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].victims_1[i3].x4 as u64);
-            }
-            for i3 in 0..12 {
-                rt::h_p(AB_Geno_FighterReset_0[e].xDF4[i2].victims_2[i3].victim as *const u8);
-                rt::h_u(AB_Geno_FighterReset_0[e].xDF4[i2].victims_2[i3].x4 as u64);
-            }
-            rt::h_p(AB_Geno_FighterReset_0[e].xDF4[i2].anon_134.owner as *const u8);
-        }
-        rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.state as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x4 as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.unk_count as u64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.damage);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.b_offset.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.b_offset.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.b_offset.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.scale);
-        rt::h_i(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.kb_angle as i64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x24 as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x28 as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x2C as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.element as u64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x34 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.sfx_severity as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.sfx_kind as i64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x40_b0() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x40_b1() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x40_b2() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x40_b3() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x40_b4() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x41_b4() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x41_b5() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x41_b6() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x41_b7() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x42_b0() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x42_b1() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x42_b2() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x42_b3() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x42_b4() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x42_b5() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x42_b6() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x42_b7() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x43_b0() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x43_b1() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x43_b2() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x43_b3() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x43_b4() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x43_b5() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x43_b6() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x43_b7() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x44 as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x45 as u64);
-        for i2 in 0..2 {
-            rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x46[i2] as u64);
-        }
-        rt::h_p(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.jobj as *const u8);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x4C.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x4C.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x4C.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x58.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x58.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.x58.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.hurt_coll_pos.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.hurt_coll_pos.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.hurt_coll_pos.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.coll_distance);
-        for i2 in 0..12 {
-            rt::h_p(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.victims_1[i2].victim as *const u8);
-            rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.victims_1[i2].x4 as u64);
-        }
-        for i2 in 0..12 {
-            rt::h_p(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.victims_2[i2].victim as *const u8);
-            rt::h_u(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.victims_2[i2].x4 as u64);
-        }
-        rt::h_p(AB_Geno_FighterReset_0[e].x1064_thrownHitbox.anon_134.owner as *const u8);
-        rt::h_u(AB_Geno_FighterReset_0[e].x119C_teamUnk as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].grabber_unk1 as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].hurt_capsules_len as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x119F as u64);
-        for i2 in 0..15 {
-            rt::h_u(AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.state as u64);
-            rt::h_f32(AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.a_offset.x);
-            rt::h_f32(AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.a_offset.y);
-            rt::h_f32(AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.a_offset.z);
-            rt::h_f32(AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.b_offset.x);
-            rt::h_f32(AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.b_offset.y);
-            rt::h_f32(AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.b_offset.z);
-            rt::h_f32(AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.scale);
-            rt::h_p(AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.bone as *const u8);
-            rt::h_u(AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.skip_update_pos() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.x24_b1() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.x24_b2() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.x24_b3() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.x24_b4() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.x24_b5() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.x24_b6() as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.x24_b7() as u64);
-            rt::h_f32(AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.a_pos.x);
-            rt::h_f32(AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.a_pos.y);
-            rt::h_f32(AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.a_pos.z);
-            rt::h_f32(AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.b_pos.x);
-            rt::h_f32(AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.b_pos.y);
-            rt::h_f32(AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.b_pos.z);
-            rt::h_i(AB_Geno_FighterReset_0[e].hurt_capsules[i2].capsule.bone_idx as i64);
-            rt::h_u(AB_Geno_FighterReset_0[e].hurt_capsules[i2].height as u64);
-            rt::h_i(AB_Geno_FighterReset_0[e].hurt_capsules[i2].is_grabbable as i64);
-        }
-        for i2 in 0..2 {
-            rt::h_f32(AB_Geno_FighterReset_0[e].x1614[i2].x0);
-            rt::h_p(AB_Geno_FighterReset_0[e].x1614[i2].x4 as *const u8);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x1614[i2].x8.x);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x1614[i2].x8.y);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x1614[i2].x8.z);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x1614[i2].x14.x);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x1614[i2].x14.y);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x1614[i2].x14.z);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x1614[i2].x20.x);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x1614[i2].x20.y);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x1614[i2].x20.z);
-        }
-        rt::h_u(AB_Geno_FighterReset_0[e].x166C as u64);
-        for i2 in 0..1 {
-            rt::h_f32(AB_Geno_FighterReset_0[e].x1670[i2].v1.x);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x1670[i2].v1.y);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x1670[i2].v1.z);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x1670[i2].v2);
-            rt::h_p(AB_Geno_FighterReset_0[e].x1670[i2].jobj as *const u8);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x1670[i2].x14);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x1670[i2].x18.x);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x1670[i2].x18.y);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x1670[i2].x18.z);
-            rt::h_i(AB_Geno_FighterReset_0[e].x1670[i2].x24 as i64);
-        }
-        for i2 in 0..400 {
-            rt::h_u(AB_Geno_FighterReset_0[e].filler_x1674[i2] as u64);
-        }
-        rt::h_i(AB_Geno_FighterReset_0[e].x1828 as i64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.x182c_behavior);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.x1830_percent);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.x1834);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.x1838_percentTemp);
-        rt::h_i(AB_Geno_FighterReset_0[e].dmg.x183C_applied as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].dmg.x1840 as i64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.facing_dir_1);
-        rt::h_i(AB_Geno_FighterReset_0[e].dmg.x1848_kb_angle as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].dmg.x184c_damaged_hurtbox as i64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.kb_applied);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.x1854_collpos.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.x1854_collpos.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.x1854_collpos.z);
-        rt::h_u(AB_Geno_FighterReset_0[e].dmg.x1860_element as u64);
-        rt::h_i(AB_Geno_FighterReset_0[e].dmg.x1864 as i64);
-        rt::h_p(AB_Geno_FighterReset_0[e].dmg.x1868_source as *const u8);
-        rt::h_i(AB_Geno_FighterReset_0[e].dmg.x186c as i64);
-        rt::h_p(AB_Geno_FighterReset_0[e].dmg.x1870 as *const u8);
-        rt::h_i(AB_Geno_FighterReset_0[e].dmg.x1874 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].dmg.x1878 as i64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.x187c);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.x1880.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.x1880.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.x1880.z);
-        rt::h_i(AB_Geno_FighterReset_0[e].dmg.x188c as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].dmg.x1890 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].dmg.x1894 as i64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.x1898);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.x189C_unk_num_frames);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.x18a0);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.x18A4_knockbackMagnitude);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.x18A8);
-        rt::h_i(AB_Geno_FighterReset_0[e].dmg.x18ac_time_since_hit as i64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.armor0);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.armor1);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.x18B8);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.x18BC);
-        rt::h_i(AB_Geno_FighterReset_0[e].dmg.x18C0 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].dmg.x18c4_source_ply as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].dmg.x18C8 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].dmg.x18CC as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].dmg.x18D0 as i64);
-        rt::h_u(AB_Geno_FighterReset_0[e].dmg.x18d4.x0 as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].dmg.x18d4.x1 as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].dmg.x18d4.x2_b0() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].dmg.x18d4.x2_b1() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].dmg.x18d4.x2_b2() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].dmg.x18d4.x2_b3() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].dmg.x18d4.x2_b4() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].dmg.x18d4.x2_b5() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].dmg.x18d4.x2_b6() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].dmg.x18d4.x2_b7() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].dmg.x18d4.x3 as u64);
-        rt::h_i(AB_Geno_FighterReset_0[e].dmg.x18d8.x0 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].dmg.x18d8.x4 as i64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.x18d8.kb_applied1);
-        rt::h_i(AB_Geno_FighterReset_0[e].dmg.x18d8.xC as i64);
-        rt::h_u(AB_Geno_FighterReset_0[e].dmg.x18d8.x10_b0() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].dmg.x18d8.x10_b1() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].dmg.x18d8.x10_b2() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].dmg.x18d8.x10_b3() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].dmg.x18d8.x10_b4() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].dmg.x18d8.x10_b5() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].dmg.x18d8.x10_b6() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].dmg.x18d8.x10_b7() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].dmg.x18d8.x11_b0() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].dmg.x18d8.x11_b1() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].dmg.x18d8.x11_b2() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].dmg.x18d8.x11_b3() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].dmg.x18d8.x11_b4() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].dmg.x18ec_instancehitby as u64);
-        rt::h_i(AB_Geno_FighterReset_0[e].dmg.x18F0 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].dmg.x18F4 as i64);
-        rt::h_u(AB_Geno_FighterReset_0[e].dmg.x18F8 as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].dmg.x18f9 as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].dmg.x18fa_model_shift_frames as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].dmg.x18FC as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].dmg.x18FD as u64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.x1900);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.x1904);
-        rt::h_i(AB_Geno_FighterReset_0[e].dmg.x1908 as i64);
-        rt::h_p(AB_Geno_FighterReset_0[e].dmg.x190C as *const u8);
-        rt::h_i(AB_Geno_FighterReset_0[e].dmg.x1910 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].dmg.x1914 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].dmg.int_value as i64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.x191C);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.facing_dir);
-        rt::h_i(AB_Geno_FighterReset_0[e].dmg.x1924 as i64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.x1928);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.x192c);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.x1930.x0.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.x1930.x0.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.x1930.x0.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.x1930.xC.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.x1930.xC.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.x1930.xC.z);
-        rt::h_i(AB_Geno_FighterReset_0[e].dmg.x1948 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].dmg.x194C as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].dmg.x1950 as i64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.x1954);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.x1958);
-        rt::h_f32(AB_Geno_FighterReset_0[e].dmg.x195c_hitlag_frames);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x1960_vibrateMult);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x1964);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1968_jumpsUsed as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1969_walljumpUsed as u64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].hitlag_mul);
-        rt::h_i(AB_Geno_FighterReset_0[e].unk_msid as i64);
-        rt::h_p(AB_Geno_FighterReset_0[e].item_gobj as *const u8);
-        rt::h_p(AB_Geno_FighterReset_0[e].x1978 as *const u8);
-        rt::h_p(AB_Geno_FighterReset_0[e].x197C as *const u8);
-        rt::h_p(AB_Geno_FighterReset_0[e].x1980 as *const u8);
-        rt::h_p(AB_Geno_FighterReset_0[e].x1984_heldItemSpec as *const u8);
-        rt::h_i(AB_Geno_FighterReset_0[e].x1988 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x198C as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x1990 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x1994 as i64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].shield_health);
-        rt::h_f32(AB_Geno_FighterReset_0[e].lightshield_amount);
-        rt::h_i(AB_Geno_FighterReset_0[e].x19A0_shieldDamageTaken as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x19A4 as i64);
-        rt::h_p(AB_Geno_FighterReset_0[e].x19A8 as *const u8);
-        rt::h_f32(AB_Geno_FighterReset_0[e].specialn_facing_dir);
-        rt::h_i(AB_Geno_FighterReset_0[e].x19B0 as i64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].shield_unk0);
-        rt::h_f32(AB_Geno_FighterReset_0[e].shield_unk1);
-        rt::h_i(AB_Geno_FighterReset_0[e].x19BC_shieldDamageTaken3 as i64);
-        rt::h_p(AB_Geno_FighterReset_0[e].shield_hit.bone as *const u8);
-        rt::h_u(AB_Geno_FighterReset_0[e].shield_hit.skip_update_pos() as u64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].shield_hit.pos.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].shield_hit.pos.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].shield_hit.pos.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].shield_hit.offset.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].shield_hit.offset.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].shield_hit.offset.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].shield_hit.size);
-        rt::h_p(AB_Geno_FighterReset_0[e].reflect_hit.bone as *const u8);
-        rt::h_u(AB_Geno_FighterReset_0[e].reflect_hit.skip_update_pos() as u64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].reflect_hit.pos.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].reflect_hit.pos.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].reflect_hit.pos.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].reflect_hit.offset.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].reflect_hit.offset.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].reflect_hit.offset.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].reflect_hit.size);
-        rt::h_p(AB_Geno_FighterReset_0[e].absorb_hit.bone as *const u8);
-        rt::h_u(AB_Geno_FighterReset_0[e].absorb_hit.skip_update_pos() as u64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].absorb_hit.pos.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].absorb_hit.pos.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].absorb_hit.pos.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].absorb_hit.offset.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].absorb_hit.offset.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].absorb_hit.offset.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].absorb_hit.size);
-        rt::h_f32(AB_Geno_FighterReset_0[e].ReflectAttr.x1A2C_reflectHitDirection);
-        rt::h_i(AB_Geno_FighterReset_0[e].ReflectAttr.x1A30_maxDamage as i64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].ReflectAttr.x1A34_damageMul);
-        rt::h_f32(AB_Geno_FighterReset_0[e].ReflectAttr.x1A38_speedMul);
-        rt::h_i(AB_Geno_FighterReset_0[e].ReflectAttr.x1A3C_damageOver as i64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].AbsorbAttr.x1A40_absorbHitDirection);
-        rt::h_i(AB_Geno_FighterReset_0[e].AbsorbAttr.x1A44_damageTaken as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].AbsorbAttr.x1A48_hitsTaken as i64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].grab_timer);
-        rt::h_i(AB_Geno_FighterReset_0[e].x1A50 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x1A51 as i64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1A52 as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1A53 as u64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x1A54 as i64);
-        rt::h_p(AB_Geno_FighterReset_0[e].victim_gobj as *const u8);
-        rt::h_p(AB_Geno_FighterReset_0[e].x1A5C as *const u8);
-        rt::h_p(AB_Geno_FighterReset_0[e].target_item_gobj as *const u8);
-        rt::h_p(AB_Geno_FighterReset_0[e].x1A64 as *const u8);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1A68 as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x1A6A as u64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x1A6C);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x1A70.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x1A70.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x1A70.z);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x1A7C.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x1A7C.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x1A7C.z);
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.buttons as u64);
-        rt::h_i(AB_Geno_FighterReset_0[e].cpu.lstick.x as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].cpu.lstick.y as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].cpu.cstick.x as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].cpu.cstick.y as i64);
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.ltrigger as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.rtrigger as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.kind as u64);
-        rt::h_i(AB_Geno_FighterReset_0[e].cpu.level as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].cpu.x14 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].cpu.x18 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].cpu.x1C as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].cpu.x20 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].cpu.x24 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].cpu.x28 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].cpu.x2C as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].cpu.x30 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].cpu.x34 as i64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].cpu.x38);
-        rt::h_f32(AB_Geno_FighterReset_0[e].cpu.x3C);
-        rt::h_f32(AB_Geno_FighterReset_0[e].cpu.x40);
-        rt::h_p(AB_Geno_FighterReset_0[e].cpu.x44 as *const u8);
-        rt::h_p(AB_Geno_FighterReset_0[e].cpu.x48 as *const u8);
-        rt::h_p(AB_Geno_FighterReset_0[e].cpu.x4C as *const u8);
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.x50 as u64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].cpu.x54.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].cpu.x54.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].cpu.x5C);
-        rt::h_i(AB_Geno_FighterReset_0[e].cpu.x60 as i64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].cpu.x64.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].cpu.x64.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].cpu.x6C.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].cpu.x6C.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].cpu.x74.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].cpu.x74.y);
-        rt::h_i(AB_Geno_FighterReset_0[e].cpu.x7C as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].cpu.x80 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].cpu.x84 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].cpu.x88 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].cpu.x8C as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].cpu.x90 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].cpu.x94 as i64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].cpu.x98.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].cpu.x98.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].cpu.x98.z);
-        rt::h_i(AB_Geno_FighterReset_0[e].cpu.xA4 as i64);
-        for i2 in 0..8 {
-            rt::h_i(AB_Geno_FighterReset_0[e].cpu.xA8_array[i2] as i64);
-        }
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.xC8 as u64);
-        for i2 in 0..3 {
-            rt::h_u(AB_Geno_FighterReset_0[e].cpu.pad_xC9[i2] as u64);
-        }
-        for i2 in 0..8 {
-            rt::h_i(AB_Geno_FighterReset_0[e].cpu.xCC_array[i2] as i64);
-        }
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.xEC as u64);
-        for i2 in 0..3 {
-            rt::h_u(AB_Geno_FighterReset_0[e].cpu.pad_xED[i2] as u64);
-        }
-        rt::h_p(AB_Geno_FighterReset_0[e].cpu.xF0 as *const u8);
-        rt::h_p(AB_Geno_FighterReset_0[e].cpu.xF4 as *const u8);
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.xF8_b0() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.xF8_b12() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.xF8_b34() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.xF8_b5() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.xF8_b6() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.xF8_b7() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.xF9_b0() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.xF9_b1() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.xF9_b2() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.xF9_b3() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.xF9_b4() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.xF9_b5() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.xF9_b6() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.xF9_b7() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.xFA_b0() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.xFA_b1() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.xFA_b2() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.xFA_b34() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.xFA_b5() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.xFA_b6() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.xFA_b7() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.xFB_b0() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.xFB_b1() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.xFB_b2() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.xFB_b3() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.xFB_b4() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.xFB_b5() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.xFB_b6() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.xFB_b7() as u64);
-        for i2 in 0..30 {
-            rt::h_u(AB_Geno_FighterReset_0[e].cpu.xFC[i2].x0 as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].cpu.xFC[i2].x4 as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].cpu.xFC[i2].x5 as u64);
-            rt::h_i(AB_Geno_FighterReset_0[e].cpu.xFC[i2].lstick.x as i64);
-            rt::h_i(AB_Geno_FighterReset_0[e].cpu.xFC[i2].lstick.y as i64);
-            rt::h_i(AB_Geno_FighterReset_0[e].cpu.xFC[i2].cstick.x as i64);
-            rt::h_i(AB_Geno_FighterReset_0[e].cpu.xFC[i2].cstick.y as i64);
-            rt::h_u(AB_Geno_FighterReset_0[e].cpu.xFC[i2].xA as u64);
-            rt::h_u(AB_Geno_FighterReset_0[e].cpu.xFC[i2].xB as u64);
-            rt::h_f32(AB_Geno_FighterReset_0[e].cpu.xFC[i2].cur_pos.x);
-            rt::h_f32(AB_Geno_FighterReset_0[e].cpu.xFC[i2].cur_pos.y);
-            rt::h_f32(AB_Geno_FighterReset_0[e].cpu.xFC[i2].cur_pos.z);
-            rt::h_f32(AB_Geno_FighterReset_0[e].cpu.xFC[i2].facing_dir);
-        }
-        rt::h_p(AB_Geno_FighterReset_0[e].cpu.x444 as *const u8);
-        rt::h_p(AB_Geno_FighterReset_0[e].cpu.x448 as *const u8);
-        rt::h_u(AB_Geno_FighterReset_0[e].cpu.command_duration as u64);
-        rt::h_p(AB_Geno_FighterReset_0[e].cpu.csP as *const u8);
-        for i2 in 0..256 {
-            rt::h_i(AB_Geno_FighterReset_0[e].cpu.buffer[i2] as i64);
-        }
-        rt::h_p(AB_Geno_FighterReset_0[e].cpu.write_pos as *const u8);
-        rt::h_f32(AB_Geno_FighterReset_0[e].cpu.x558);
-        rt::h_f32(AB_Geno_FighterReset_0[e].cpu.x55C);
-        rt::h_f32(AB_Geno_FighterReset_0[e].cpu.x560);
-        rt::h_f32(AB_Geno_FighterReset_0[e].cpu.x564);
-        rt::h_f32(AB_Geno_FighterReset_0[e].cpu.x568);
-        rt::h_f32(AB_Geno_FighterReset_0[e].cpu.x56C);
-        rt::h_f32(AB_Geno_FighterReset_0[e].cpu.x570);
-        rt::h_f32(AB_Geno_FighterReset_0[e].cpu.half_width);
-        rt::h_f32(AB_Geno_FighterReset_0[e].cpu.half_height);
-        rt::h_i(AB_Geno_FighterReset_0[e].x2004 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x2008 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x200C as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x2010 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x2014 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x2018 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x201C as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x2020 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x2021 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x2022 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x2024 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].metal_timer as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].metal_health as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x2030 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x2034 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x2038 as i64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x203C.count as u64);
-        rt::h_p(AB_Geno_FighterReset_0[e].x203C.data as *const u8);
-        for i2 in 0..32 {
-            rt::h_u(AB_Geno_FighterReset_0[e].filler_x2044[i2] as u64);
-        }
-        rt::h_i(AB_Geno_FighterReset_0[e].x2064_ledgeCooldown as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x2068_attackID as i64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x206C_attack_instance as u64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x206E as i64);
-        rt::h_bytes(&AB_Geno_FighterReset_0[e].x2070 as *const _ as *const u8, 4);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x2074.x2074_vec.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x2074.x2074_vec.y);
-        rt::h_i(AB_Geno_FighterReset_0[e].x2074.x207C.x as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x2074.x207C.y as i64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2074.anon_10.x2084 as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2074.x2088 as u64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x208C as i64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2090 as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2092 as u64);
-        rt::h_p(AB_Geno_FighterReset_0[e].x2094 as *const u8);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2098 as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x209A as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x209C as u64);
-        rt::h_p(AB_Geno_FighterReset_0[e].x20A0_accessory as *const u8);
-        rt::h_u(AB_Geno_FighterReset_0[e].x20A4.x0_b0() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x20A4.x0_b1() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x20A4.x0_b2() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x20A4.x0_b3() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x20A4.x0_b4() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x20A4.x0_b5() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x20A4.x0_b6() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x20A4.x0_b7() as u64);
-        rt::h_p(AB_Geno_FighterReset_0[e].x20A4.shadow as *const u8);
-        rt::h_p(AB_Geno_FighterReset_0[e].unk_gobj as *const u8);
-        for i2 in 0..3 {
-            rt::h_f32(AB_Geno_FighterReset_0[e].x20B0[i2].x0.x);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x20B0[i2].x0.y);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x20B0[i2].x0.z);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x20B0[i2].xC.x);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x20B0[i2].xC.y);
-            rt::h_f32(AB_Geno_FighterReset_0[e].x20B0[i2].xC.z);
-        }
-        rt::h_f32(AB_Geno_FighterReset_0[e].x20F8);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x20FC);
-        rt::h_i(AB_Geno_FighterReset_0[e].x2100 as i64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2101_bits_0to6() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2101_bits_8() as u64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x2102 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x2103 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x2104 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].capture_timer as i64);
-        rt::h_u(AB_Geno_FighterReset_0[e].wall_jump_input_timer as u64);
-        for i2 in 0..3 {
-            rt::h_u(AB_Geno_FighterReset_0[e].filler_x210C[i2] as u64);
-        }
-        rt::h_f32(AB_Geno_FighterReset_0[e].x2110_walljumpWallSide);
-        rt::h_u(AB_Geno_FighterReset_0[e].smash_attrs.state as u64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].smash_attrs.x2118_frames);
-        rt::h_f32(AB_Geno_FighterReset_0[e].smash_attrs.x211C_holdFrame);
-        rt::h_f32(AB_Geno_FighterReset_0[e].smash_attrs.x2120_damageMul);
-        rt::h_f32(AB_Geno_FighterReset_0[e].smash_attrs.x2124_frameSpeedMul);
-        rt::h_i(AB_Geno_FighterReset_0[e].smash_attrs.x2128 as i64);
-        rt::h_u(AB_Geno_FighterReset_0[e].smash_attrs.x212C as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].smash_attrs.x212D as u64);
-        rt::h_i(AB_Geno_FighterReset_0[e].smash_attrs.x212E as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].smash_attrs.x212F as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].smash_attrs.x2130_sfxBool as i64);
-        rt::h_u(AB_Geno_FighterReset_0[e].smash_attrs.x2134_vibrateFrame as u64);
-        rt::h_i(AB_Geno_FighterReset_0[e].smash_attrs.x2135 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].smash_attrs.x2136 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].smash_attrs.x2137 as i64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].smash_attrs.x2138_smashSinceHitbox);
-        rt::h_i(AB_Geno_FighterReset_0[e].x213C as i64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x2140);
-        rt::h_i(AB_Geno_FighterReset_0[e].x2144 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x2148 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x214C as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x2150 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x2154 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x2158 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x215C as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x2160 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x2164 as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x2168 as i64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].unk_grab_val);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x2170);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x2174.x);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x2174.y);
-        rt::h_f32(AB_Geno_FighterReset_0[e].x2174.z);
-        rt::h_i(AB_Geno_FighterReset_0[e].x2180 as i64);
-        rt::h_p(AB_Geno_FighterReset_0[e].x2184 as *const u8);
-        rt::h_i(AB_Geno_FighterReset_0[e].x2188.x as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x2188.y as i64);
-        rt::h_fn(AB_Geno_FighterReset_0[e].grab_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn(AB_Geno_FighterReset_0[e].x2194.map_or(0usize, |f| f as usize));
-        rt::h_fn(AB_Geno_FighterReset_0[e].grabbed_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn(AB_Geno_FighterReset_0[e].input_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn(AB_Geno_FighterReset_0[e].anim_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn(AB_Geno_FighterReset_0[e].phys_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn(AB_Geno_FighterReset_0[e].coll_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn(AB_Geno_FighterReset_0[e].cam_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn(AB_Geno_FighterReset_0[e].accessory1_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn(AB_Geno_FighterReset_0[e].accessory2_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn(AB_Geno_FighterReset_0[e].accessory3_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn(AB_Geno_FighterReset_0[e].accessory4_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn(AB_Geno_FighterReset_0[e].deal_dmg_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn(AB_Geno_FighterReset_0[e].shield_hit_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn(AB_Geno_FighterReset_0[e].reflect_hit_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn(AB_Geno_FighterReset_0[e].x21CC.map_or(0usize, |f| f as usize));
-        rt::h_fn(AB_Geno_FighterReset_0[e].hitlag_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn(AB_Geno_FighterReset_0[e].pre_hitlag_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn(AB_Geno_FighterReset_0[e].post_hitlag_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn(AB_Geno_FighterReset_0[e].take_dmg_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn(AB_Geno_FighterReset_0[e].death1_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn(AB_Geno_FighterReset_0[e].death2_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn(AB_Geno_FighterReset_0[e].death3_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn(AB_Geno_FighterReset_0[e].x21EC.map_or(0usize, |f| f as usize));
-        rt::h_fn(AB_Geno_FighterReset_0[e].take_dmg_2_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn(AB_Geno_FighterReset_0[e].hurtbox_detect_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn(AB_Geno_FighterReset_0[e].x21F8.map_or(0usize, |f| f as usize));
-        rt::h_u(AB_Geno_FighterReset_0[e].x21FC_flag.anon_0.b0() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x21FC_flag.anon_0.b1() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x21FC_flag.anon_0.b2() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x21FC_flag.anon_0.b3() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x21FC_flag.anon_0.b4() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x21FC_flag.anon_0.b5() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x21FC_flag.anon_0.b6() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x21FC_flag.anon_0.b7() as u64);
-        for i2 in 0..3 {
-            rt::h_u(AB_Geno_FighterReset_0[e].filler_x21FC[i2] as u64);
-        }
-        for i2 in 0..4 {
-            rt::h_u(AB_Geno_FighterReset_0[e].cmd_vars[i2] as u64);
-        }
-        rt::h_u(AB_Geno_FighterReset_0[e].anon_2210.throw_flags as u64);
-        rt::h_f32(AB_Geno_FighterReset_0[e].cmd_timer);
-        rt::h_u(AB_Geno_FighterReset_0[e].allow_interrupt() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2218_b1() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2218_b2() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].reflecting() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2218_b4() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2218_b5() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2218_b6() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2218_b7() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2219_b0() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2219_b1() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2219_b2() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2219_b3() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2219_b4() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2219_b5() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2219_b6() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2219_b7() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x221A_b0() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x221A_b1() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].allow_sdi() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x221A_b3() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].fall_fast() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x221A_b5() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x221A_b6() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x221A_b7() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].anon_221b.x221B_b0() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].anon_221b.x221B_b1() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].anon_221b.x221B_b2() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].anon_221b.x221B_b3() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].anon_221b.x221B_b4() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].anon_221b.x221B_b5() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].anon_221b.x221B_b6() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].anon_221b.x221B_b7() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x221C_b0() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x221C_b1() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x221C_b2() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x221C_b3() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x221C_b4() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x221C_b5() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x221C_b6() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x221C_u16_y() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x221D_b2() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x221D_b3() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x221D_b4() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x221D_b5() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x221D_b6() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x221D_b7() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].invisible() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x221E_b1() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x221E_b2() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x221E_b3() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x221E_b4() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x221E_b5() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x221E_b6() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x221E_b7() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x221F_b0() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x221F_b1() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x221F_b2() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x221F_b3() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].is_sub_fighter() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x221F_b5() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x221F_b6() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x221F_b7() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2220_b0() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2220_b3() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2220_b4() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2220_b5() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2220_b6() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2220_b7() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2221_b0() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2221_b1() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2221_b2() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2221_b3() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2221_b4() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2221_b5() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2221_b6() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2221_b7() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2222_b0() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].can_multijump() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2222_b2() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2222_b3() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2222_b4() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2222_b5() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2222_b6() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2222_b7() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2223_b0() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2223_b1() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2223_b2() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2223_b3() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2223_b4() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2223_b5() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].is_always_metal() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].is_metal() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2224_b0() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2224_b1() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2224_b2() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2224_b3() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2224_b4() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2224_b5() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2224_b6() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].can_walljump() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2225_b0() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2225_b1() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2225_b2() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2225_b3() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2225_b4() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2225_b5() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2225_b6() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2225_b7() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2226_b0() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2226_b1() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2226_b2() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2226_b3() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2226_b4() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2226_b5() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2226_b6() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2226_b7() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2227_b0() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2227_b1() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2227_b2() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2227_b3() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2227_b4() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2227_b5() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2227_b6() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2227_b7() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2228_b0() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2228_b1() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].is_sandbag() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2228_b3() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2228_b5() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].used_tether() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2228_b7() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2229_b0() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2229_b1() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2229_b2() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2229_b3() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2229_b4() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].no_normal_motion() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x2229_b6() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].no_kb() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x222A_b0() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x222A_b1() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x222A_b2() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x222A_b3() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x222A_b5() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x222A_b6() as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].x222A_b7() as u64);
-        rt::h_bytes(&AB_Geno_FighterReset_0[e].u as *const _ as *const u8, 400);
-        rt::h_u(AB_Geno_FighterReset_0[e].bury_grkind as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].bury_timer_1 as u64);
-        rt::h_u(AB_Geno_FighterReset_0[e].bury_timer_2 as u64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x2330.x as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x2330.y as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x2338.x as i64);
-        rt::h_i(AB_Geno_FighterReset_0[e].x2338.y as i64);
-        rt::h_bytes(&AB_Geno_FighterReset_0[e].mv as *const _ as *const u8, 176);
-    }
-    rt::DYN.push(rt::H);
-    for h in rt::DYN.iter() { tot = rt::mix(tot, *h); }
-    [ret, trace, tot]
-}
 unsafe fn run_Geno_FighterScale(seed: u64) -> [u64; 3] {
     rt::ST = seed; rt::MST = seed ^ 0x5DEECE66D; rt::TRACE = rt::FNV0; rt::REGS.truncate(rt::NSTATIC); rt::DYN.clear();
     fill_all();
@@ -54195,33 +51011,33 @@ unsafe fn run_Geno_FighterScale(seed: u64) -> [u64; 3] {
         AB_Geno_FighterScale_0[e].x2184 = 0usize as _;
         AB_Geno_FighterScale_0[e].x2188.x = rt::draw_int(&mut rt::ST) as _;
         AB_Geno_FighterScale_0[e].x2188.y = rt::draw_int(&mut rt::ST) as _;
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].grab_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].x2194 = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].grabbed_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].input_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].anim_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].phys_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].coll_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].cam_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].accessory1_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].accessory2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].accessory3_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].accessory4_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].deal_dmg_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].shield_hit_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].reflect_hit_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].x21CC = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].pre_hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].post_hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].take_dmg_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].death1_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].death2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].death3_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].x21EC = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].take_dmg_2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].hurtbox_detect_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].x21F8 = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].grab_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].x2194 = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].grabbed_cb = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].accessory1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].accessory2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].accessory3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].accessory4_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].deal_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].shield_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].reflect_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].x21CC = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].pre_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].post_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].take_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].death1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].death2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].death3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].x21EC = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].take_dmg_2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].hurtbox_detect_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_FighterScale_0[e].x21F8 = if d & 1 != 0 { Some(cb0) } else { None }; }
         AB_Geno_FighterScale_0[e].x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
         AB_Geno_FighterScale_0[e].x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
         AB_Geno_FighterScale_0[e].x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
@@ -57139,33 +53955,33 @@ unsafe fn run_Geno_GroundEdge(seed: u64) -> [u64; 3] {
         AB_Geno_GroundEdge_0[e].x2184 = 0usize as _;
         AB_Geno_GroundEdge_0[e].x2188.x = rt::draw_int(&mut rt::ST) as _;
         AB_Geno_GroundEdge_0[e].x2188.y = rt::draw_int(&mut rt::ST) as _;
-        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].grab_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].x2194 = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].grabbed_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].input_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].anim_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].phys_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].coll_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].cam_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].accessory1_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].accessory2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].accessory3_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].accessory4_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].deal_dmg_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].shield_hit_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].reflect_hit_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].x21CC = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].pre_hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].post_hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].take_dmg_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].death1_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].death2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].death3_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].x21EC = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].take_dmg_2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].hurtbox_detect_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].x21F8 = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].grab_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].x2194 = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].grabbed_cb = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].accessory1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].accessory2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].accessory3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].accessory4_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].deal_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].shield_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].reflect_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].x21CC = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].pre_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].post_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].take_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].death1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].death2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].death3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].x21EC = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].take_dmg_2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].hurtbox_detect_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_GroundEdge_0[e].x21F8 = if d & 1 != 0 { Some(cb0) } else { None }; }
         AB_Geno_GroundEdge_0[e].x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
         AB_Geno_GroundEdge_0[e].x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
         AB_Geno_GroundEdge_0[e].x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
@@ -60085,33 +56901,33 @@ unsafe fn run_Geno_HitReact(seed: u64) -> [u64; 3] {
         AB_Geno_HitReact_0[e].x2184 = 0usize as _;
         AB_Geno_HitReact_0[e].x2188.x = rt::draw_int(&mut rt::ST) as _;
         AB_Geno_HitReact_0[e].x2188.y = rt::draw_int(&mut rt::ST) as _;
-        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].grab_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].x2194 = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].grabbed_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].input_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].anim_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].phys_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].coll_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].cam_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].accessory1_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].accessory2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].accessory3_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].accessory4_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].deal_dmg_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].shield_hit_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].reflect_hit_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].x21CC = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].pre_hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].post_hitlag_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].take_dmg_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].death1_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].death2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].death3_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].x21EC = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].take_dmg_2_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].hurtbox_detect_cb = if d & 1 != 0 { Some(cb2) } else { None }; }
-        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].x21F8 = if d & 1 != 0 { Some(cb2) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].grab_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].x2194 = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].grabbed_cb = if d & 1 != 0 { Some(cb1) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].accessory1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].accessory2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].accessory3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].accessory4_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].deal_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].shield_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].reflect_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].x21CC = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].pre_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].post_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].take_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].death1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].death2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].death3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].x21EC = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].take_dmg_2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].hurtbox_detect_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); AB_Geno_HitReact_0[e].x21F8 = if d & 1 != 0 { Some(cb0) } else { None }; }
         AB_Geno_HitReact_0[e].x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
         AB_Geno_HitReact_0[e].x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
         AB_Geno_HitReact_0[e].x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
@@ -61772,226 +58588,39 @@ unsafe fn run_Geno_ItemsSceneReset(seed: u64) -> [u64; 3] {
     for h in rt::DYN.iter() { tot = rt::mix(tot, *h); }
     [ret, trace, tot]
 }
-unsafe fn run_Geno_OnFrame(seed: u64) -> [u64; 3] {
-    rt::ST = seed; rt::MST = seed ^ 0x5DEECE66D; rt::TRACE = rt::FNV0; rt::REGS.truncate(rt::NSTATIC); rt::DYN.clear();
-    fill_all();
-    for e in 0..1 {
-        AB_Geno_OnFrame_0[e].classifier = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_OnFrame_0[e].p_link = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_OnFrame_0[e].gx_link = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_OnFrame_0[e].p_priority = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_OnFrame_0[e].render_priority = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_OnFrame_0[e].obj_kind = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_OnFrame_0[e].user_data_kind = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_OnFrame_0[e].next = 0usize as _;
-        AB_Geno_OnFrame_0[e].prev = 0usize as _;
-        AB_Geno_OnFrame_0[e].next_gx = 0usize as _;
-        AB_Geno_OnFrame_0[e].prev_gx = 0usize as _;
-        AB_Geno_OnFrame_0[e].proc = 0usize as _;
-        { let d = rt::next(&mut rt::ST); AB_Geno_OnFrame_0[e].render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        AB_Geno_OnFrame_0[e].gxlink_prios = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_OnFrame_0[e].hsd_obj = 0usize as _;
-        AB_Geno_OnFrame_0[e].user_data = 0usize as _;
-        { let d = rt::next(&mut rt::ST); AB_Geno_OnFrame_0[e].user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
-        AB_Geno_OnFrame_0[e].x34_unk = 0usize as _;
-    }
-    rt::reg_add(core::ptr::addr_of!(AB_Geno_OnFrame_0), core::mem::size_of_val(&AB_Geno_OnFrame_0), "arg0");
-    let a0 = AB_Geno_OnFrame_0.as_mut_ptr();
-    m::Geno_OnFrame(a0 as _);
-    let ret = 0u64;
-    let trace = rt::TRACE;
-    hash_objs();
-    let mut tot = rt::H;
-    rt::H = rt::FNV0;
-    for e in 0..1 {
-        rt::h_u(AB_Geno_OnFrame_0[e].classifier as u64);
-        rt::h_u(AB_Geno_OnFrame_0[e].p_link as u64);
-        rt::h_u(AB_Geno_OnFrame_0[e].gx_link as u64);
-        rt::h_u(AB_Geno_OnFrame_0[e].p_priority as u64);
-        rt::h_u(AB_Geno_OnFrame_0[e].render_priority as u64);
-        rt::h_u(AB_Geno_OnFrame_0[e].obj_kind as u64);
-        rt::h_u(AB_Geno_OnFrame_0[e].user_data_kind as u64);
-        rt::h_p(AB_Geno_OnFrame_0[e].next as *const u8);
-        rt::h_p(AB_Geno_OnFrame_0[e].prev as *const u8);
-        rt::h_p(AB_Geno_OnFrame_0[e].next_gx as *const u8);
-        rt::h_p(AB_Geno_OnFrame_0[e].prev_gx as *const u8);
-        rt::h_p(AB_Geno_OnFrame_0[e].proc as *const u8);
-        rt::h_fn(AB_Geno_OnFrame_0[e].render_cb.map_or(0usize, |f| f as usize));
-        rt::h_u(AB_Geno_OnFrame_0[e].gxlink_prios as u64);
-        rt::h_p(AB_Geno_OnFrame_0[e].hsd_obj as *const u8);
-        rt::h_p(AB_Geno_OnFrame_0[e].user_data as *const u8);
-        rt::h_fn(AB_Geno_OnFrame_0[e].user_data_remove_func.map_or(0usize, |f| f as usize));
-        rt::h_p(AB_Geno_OnFrame_0[e].x34_unk as *const u8);
-    }
-    rt::DYN.push(rt::H);
-    for h in rt::DYN.iter() { tot = rt::mix(tot, *h); }
-    [ret, trace, tot]
-}
-unsafe fn run_Geno_OnHit(seed: u64) -> [u64; 3] {
-    rt::ST = seed; rt::MST = seed ^ 0x5DEECE66D; rt::TRACE = rt::FNV0; rt::REGS.truncate(rt::NSTATIC); rt::DYN.clear();
-    fill_all();
-    for e in 0..1 {
-        AB_Geno_OnHit_0[e].classifier = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_OnHit_0[e].p_link = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_OnHit_0[e].gx_link = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_OnHit_0[e].p_priority = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_OnHit_0[e].render_priority = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_OnHit_0[e].obj_kind = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_OnHit_0[e].user_data_kind = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_OnHit_0[e].next = 0usize as _;
-        AB_Geno_OnHit_0[e].prev = 0usize as _;
-        AB_Geno_OnHit_0[e].next_gx = 0usize as _;
-        AB_Geno_OnHit_0[e].prev_gx = 0usize as _;
-        AB_Geno_OnHit_0[e].proc = 0usize as _;
-        { let d = rt::next(&mut rt::ST); AB_Geno_OnHit_0[e].render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        AB_Geno_OnHit_0[e].gxlink_prios = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_OnHit_0[e].hsd_obj = 0usize as _;
-        AB_Geno_OnHit_0[e].user_data = 0usize as _;
-        { let d = rt::next(&mut rt::ST); AB_Geno_OnHit_0[e].user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
-        AB_Geno_OnHit_0[e].x34_unk = 0usize as _;
-    }
-    rt::reg_add(core::ptr::addr_of!(AB_Geno_OnHit_0), core::mem::size_of_val(&AB_Geno_OnHit_0), "arg0");
-    let a0 = AB_Geno_OnHit_0.as_mut_ptr();
-    let r = m::Geno_OnHit(a0 as _);
-    let ret = r as i64 as u64;
-    let trace = rt::TRACE;
-    hash_objs();
-    let mut tot = rt::H;
-    rt::H = rt::FNV0;
-    for e in 0..1 {
-        rt::h_u(AB_Geno_OnHit_0[e].classifier as u64);
-        rt::h_u(AB_Geno_OnHit_0[e].p_link as u64);
-        rt::h_u(AB_Geno_OnHit_0[e].gx_link as u64);
-        rt::h_u(AB_Geno_OnHit_0[e].p_priority as u64);
-        rt::h_u(AB_Geno_OnHit_0[e].render_priority as u64);
-        rt::h_u(AB_Geno_OnHit_0[e].obj_kind as u64);
-        rt::h_u(AB_Geno_OnHit_0[e].user_data_kind as u64);
-        rt::h_p(AB_Geno_OnHit_0[e].next as *const u8);
-        rt::h_p(AB_Geno_OnHit_0[e].prev as *const u8);
-        rt::h_p(AB_Geno_OnHit_0[e].next_gx as *const u8);
-        rt::h_p(AB_Geno_OnHit_0[e].prev_gx as *const u8);
-        rt::h_p(AB_Geno_OnHit_0[e].proc as *const u8);
-        rt::h_fn(AB_Geno_OnHit_0[e].render_cb.map_or(0usize, |f| f as usize));
-        rt::h_u(AB_Geno_OnHit_0[e].gxlink_prios as u64);
-        rt::h_p(AB_Geno_OnHit_0[e].hsd_obj as *const u8);
-        rt::h_p(AB_Geno_OnHit_0[e].user_data as *const u8);
-        rt::h_fn(AB_Geno_OnHit_0[e].user_data_remove_func.map_or(0usize, |f| f as usize));
-        rt::h_p(AB_Geno_OnHit_0[e].x34_unk as *const u8);
-    }
-    rt::DYN.push(rt::H);
-    for h in rt::DYN.iter() { tot = rt::mix(tot, *h); }
-    [ret, trace, tot]
-}
-unsafe fn run_Geno_PreAnim(seed: u64) -> [u64; 3] {
-    rt::ST = seed; rt::MST = seed ^ 0x5DEECE66D; rt::TRACE = rt::FNV0; rt::REGS.truncate(rt::NSTATIC); rt::DYN.clear();
-    fill_all();
-    for e in 0..1 {
-        AB_Geno_PreAnim_0[e].classifier = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_PreAnim_0[e].p_link = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_PreAnim_0[e].gx_link = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_PreAnim_0[e].p_priority = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_PreAnim_0[e].render_priority = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_PreAnim_0[e].obj_kind = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_PreAnim_0[e].user_data_kind = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_PreAnim_0[e].next = 0usize as _;
-        AB_Geno_PreAnim_0[e].prev = 0usize as _;
-        AB_Geno_PreAnim_0[e].next_gx = 0usize as _;
-        AB_Geno_PreAnim_0[e].prev_gx = 0usize as _;
-        AB_Geno_PreAnim_0[e].proc = 0usize as _;
-        { let d = rt::next(&mut rt::ST); AB_Geno_PreAnim_0[e].render_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        AB_Geno_PreAnim_0[e].gxlink_prios = rt::draw_int(&mut rt::ST) as _;
-        AB_Geno_PreAnim_0[e].hsd_obj = 0usize as _;
-        AB_Geno_PreAnim_0[e].user_data = 0usize as _;
-        { let d = rt::next(&mut rt::ST); AB_Geno_PreAnim_0[e].user_data_remove_func = if d & 1 != 0 { Some(cb1) } else { None }; }
-        AB_Geno_PreAnim_0[e].x34_unk = 0usize as _;
-    }
-    rt::reg_add(core::ptr::addr_of!(AB_Geno_PreAnim_0), core::mem::size_of_val(&AB_Geno_PreAnim_0), "arg0");
-    let a0 = AB_Geno_PreAnim_0.as_mut_ptr();
-    let r = m::Geno_PreAnim(a0 as _);
-    let ret = r as i64 as u64;
-    let trace = rt::TRACE;
-    hash_objs();
-    let mut tot = rt::H;
-    rt::H = rt::FNV0;
-    for e in 0..1 {
-        rt::h_u(AB_Geno_PreAnim_0[e].classifier as u64);
-        rt::h_u(AB_Geno_PreAnim_0[e].p_link as u64);
-        rt::h_u(AB_Geno_PreAnim_0[e].gx_link as u64);
-        rt::h_u(AB_Geno_PreAnim_0[e].p_priority as u64);
-        rt::h_u(AB_Geno_PreAnim_0[e].render_priority as u64);
-        rt::h_u(AB_Geno_PreAnim_0[e].obj_kind as u64);
-        rt::h_u(AB_Geno_PreAnim_0[e].user_data_kind as u64);
-        rt::h_p(AB_Geno_PreAnim_0[e].next as *const u8);
-        rt::h_p(AB_Geno_PreAnim_0[e].prev as *const u8);
-        rt::h_p(AB_Geno_PreAnim_0[e].next_gx as *const u8);
-        rt::h_p(AB_Geno_PreAnim_0[e].prev_gx as *const u8);
-        rt::h_p(AB_Geno_PreAnim_0[e].proc as *const u8);
-        rt::h_fn(AB_Geno_PreAnim_0[e].render_cb.map_or(0usize, |f| f as usize));
-        rt::h_u(AB_Geno_PreAnim_0[e].gxlink_prios as u64);
-        rt::h_p(AB_Geno_PreAnim_0[e].hsd_obj as *const u8);
-        rt::h_p(AB_Geno_PreAnim_0[e].user_data as *const u8);
-        rt::h_fn(AB_Geno_PreAnim_0[e].user_data_remove_func.map_or(0usize, |f| f as usize));
-        rt::h_p(AB_Geno_PreAnim_0[e].x34_unk as *const u8);
-    }
-    rt::DYN.push(rt::H);
-    for h in rt::DYN.iter() { tot = rt::mix(tot, *h); }
-    [ret, trace, tot]
-}
-unsafe fn run_geno_fx_drive(seed: u64) -> [u64; 3] {
-    rt::ST = seed; rt::MST = seed ^ 0x5DEECE66D; rt::TRACE = rt::FNV0; rt::REGS.truncate(rt::NSTATIC); rt::DYN.clear();
-    fill_all();
-    let a0 = rt::draw_int(&mut rt::ST);
-    m::geno_fx_drive(a0 as _);
-    let ret = 0u64;
-    let trace = rt::TRACE;
-    hash_objs();
-    let mut tot = rt::H;
-    for h in rt::DYN.iter() { tot = rt::mix(tot, *h); }
-    [ret, trace, tot]
-}
-unsafe extern "C" fn cb0(a0: *mut Q::HSD_GObj, a1: i32) {
+unsafe extern "C" fn cb0(a0: *mut Q::HSD_GObj) {
     rt::t_begin(1000);
     rt::t_p(a0 as *const u8);
-    rt::t_i(a1 as i64);
 }
-unsafe extern "C" fn cb1(a0: *mut c_void) {
+unsafe extern "C" fn cb1(a0: *mut Q::HSD_GObj, a1: *mut Q::HSD_GObj) {
     rt::t_begin(1001);
-    rt::t_p(a0 as *const u8);
-}
-unsafe extern "C" fn cb2(a0: *mut Q::HSD_GObj) {
-    rt::t_begin(1002);
-    rt::t_p(a0 as *const u8);
-}
-unsafe extern "C" fn cb3(a0: *mut Q::HSD_GObj, a1: *mut Q::HSD_GObj) {
-    rt::t_begin(1003);
     rt::t_p(a0 as *const u8);
     rt::t_p(a1 as *const u8);
 }
-unsafe extern "C" fn cb4(a0: *mut Q::HSD_GObj) -> i32 {
-    rt::t_begin(1004);
+unsafe extern "C" fn cb2(a0: *mut Q::HSD_GObj) -> i32 {
+    rt::t_begin(1002);
     rt::t_p(a0 as *const u8);
     rt::draw_int(&mut rt::MST) as _
+}
+unsafe extern "C" fn cb3(a0: *mut Q::HSD_GObj, a1: i32) {
+    rt::t_begin(1003);
+    rt::t_p(a0 as *const u8);
+    rt::t_i(a1 as i64);
+}
+unsafe extern "C" fn cb4(a0: *mut c_void) {
+    rt::t_begin(1004);
+    rt::t_p(a0 as *const u8);
 }
 
 type Runner = unsafe fn(u64) -> [u64; 3];
 fn runner(name: &str) -> Runner {
     match name {
-        "GenoGame_ClearProfileStorage" => run_GenoGame_ClearProfileStorage,
         "GenoGame_ComboInfo" => run_GenoGame_ComboInfo,
-        "Geno_CollBegin" => run_Geno_CollBegin,
-        "Geno_CollEnd" => run_Geno_CollEnd,
-        "Geno_ComboInput" => run_Geno_ComboInput,
-        "Geno_ComboTick" => run_Geno_ComboTick,
         "Geno_FallLimit" => run_Geno_FallLimit,
-        "Geno_FighterReset" => run_Geno_FighterReset,
         "Geno_FighterScale" => run_Geno_FighterScale,
         "Geno_GroundEdge" => run_Geno_GroundEdge,
         "Geno_HitReact" => run_Geno_HitReact,
         "Geno_ItemsSceneReset" => run_Geno_ItemsSceneReset,
-        "Geno_OnFrame" => run_Geno_OnFrame,
-        "Geno_OnHit" => run_Geno_OnHit,
-        "Geno_PreAnim" => run_Geno_PreAnim,
-        "geno_fx_drive" => run_geno_fx_drive,
         _ => panic!("no runner for {name}"),
     }
 }

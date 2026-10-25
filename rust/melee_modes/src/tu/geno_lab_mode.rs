@@ -60,6 +60,7 @@ pub mod ext {
         plStale_IncrementAttackInstance() -> u16 = || melee_fighter::stale::increment_attack_instance();
     }
     pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = null_mut();
+    pub use crate::tu::globals::gm_80473814;
     pub use crate::tu::gmvsmelee::{gmVsMelee_CssData, gmVsMelee_SssData, gmVsMelee_StartData, gmVsMelee_VsExitInfo};
     pub fn OSReport(message: &str) { eprint!("{message}"); }
 }

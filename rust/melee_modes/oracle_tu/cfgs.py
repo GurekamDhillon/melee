@@ -402,11 +402,33 @@ CFGS["script_game_t"] = dict(CFGS["script_game"], module="script_game",
 GENO_GAME_FUNCS = ["Geno_ItemsSceneReset", "geno_fx_drive", "GenoGame_ClearProfileStorage", "Geno_CollBegin", "Geno_CollEnd",
                    "Geno_ComboInput", "Geno_ComboTick", "Geno_FighterReset", "Geno_FighterScale", "Geno_GroundEdge",
                    "Geno_HitReact", "Geno_OnFrame", "Geno_OnHit", "Geno_PreAnim", "GenoGame_ComboInfo", "Geno_FallLimit"]
-CFGS["geno_game"] = dict(src="pc/geno/geno_game.c", module="geno_game", cases=40, all=False,
+CFGS["geno_game"] = dict(src="pc/geno/geno_game.c", module="geno_game", cases=40, all=False, cstr_nocls=True,
                          extsize={"ftData_MotionStateList": 400, "ftMr_Init_MotionStateTable": 400, "ftCa_Init_MotionStateTable": 400, "ftFx_Init_MotionStateTable": 400, "ftFc_Init_MotionStateTable": 400, "ftMs_Init_MotionStateTable": 400, "ftPr_Init_MotionStateTable": 400, "ftSk_Init_MotionStateTable": 400, "ftZd_Init_MotionStateTable": 400},
-                         funcs={n: {} for n in GENO_GAME_FUNCS},
+                         funcs={n: {} for n in GENO_GAME_FUNCS if n not in ("GenoGame_ClearProfileStorage", "Geno_CollBegin", "Geno_CollEnd", "Geno_ComboInput", "Geno_ComboTick", "Geno_FighterReset", "Geno_OnFrame", "Geno_OnHit", "Geno_PreAnim", "geno_fx_drive")},
                          noext=["memcpy", "memset", "memmove", "strcpy", "strlen", "strcmp", "strncpy", "strncmp", "strcat"])
 GENO_LAB_FUNCS = ["GenoFly_Any", "GenoFly_Reset", "GenoFly_Watch", "GenoFly_Fighter"]
-CFGS["geno_lab_mode"] = dict(src="pc/geno/geno_lab_mode.c", module="geno_lab_mode", cases=40, all=False,
+CFGS["geno_lab_mode"] = dict(src="pc/geno/geno_lab_mode.c", module="geno_lab_mode", cases=40, all=False, cstr_nocls=True,
+                             rust_missing='SceneLaunch_Active SceneLaunch_EnemyTeamColors SceneLaunch_EntryStateId SceneLaunch_PlayerCKind SceneLaunch_PlayerColor SceneLaunch_PlayerCpuKind SceneLaunch_PlayerCpuLevel SceneLaunch_PlayerHandicap SceneLaunch_PlayerNametag SceneLaunch_PlayerSlotType SceneLaunch_PlayerStocks SceneLaunch_PlayerTeam SceneLaunch_PreloadCKind SceneLaunch_RuleMatch SceneLaunch_RuleMinutes SceneLaunch_RulePause SceneLaunch_RuleStocks SceneLaunch_StageExternal SceneLaunch_Teams SceneLaunch_TimeLimit SceneLaunch_VsModeIndex __frsqrte gmMainLib_GetGamePrefs gmMainLib_GetGameRules gm_80169264 gm_80169290 gm_801692BC gm_SetGameModeStateId gm_SetupPlayerDefaults lbDvd_GetPreloadCacheScene lbDvd_SetupVsPreloadCache lbDvd_TrySetupSixSlotCache'.split(),
                              funcs={n: {} for n in GENO_LAB_FUNCS},
                              noext=["memcpy", "memset", "memmove", "strcpy", "strlen", "strcmp", "strncpy", "strncmp", "strcat"])
+
+
+# geno_game functions that take a gobj/fighter: a gobj whose user_data is a Fighter (state oracle objects gobA / fgA)
+GENO_GAME_G_FUNCS = ["GenoGame_ClearProfileStorage", "Geno_CollBegin", "Geno_CollEnd", "Geno_ComboInput", "Geno_ComboTick",
+                     "Geno_FighterReset", "Geno_OnFrame", "Geno_OnHit", "Geno_PreAnim", "geno_fx_drive"]
+_GG_G = ["obj:gobA"]
+CFGS["geno_game_g"] = dict(CFGS["geno_game"], module="geno_game",
+    funcs={n: ({"args": _GG_G} if n in ("Geno_CollBegin", "Geno_CollEnd", "Geno_ComboInput", "Geno_ComboTick", "Geno_OnFrame",
+                                        "Geno_OnHit", "Geno_PreAnim") else
+               {"args": ["obj:fgA"]} if n == "Geno_FighterReset" else {}) for n in GENO_GAME_G_FUNCS},
+    extra_objs={"gobA": "HSD_GObj", "fgA": "Fighter"},
+    # kinds below Ft_Kind_Mex0: above it FighterReset passes (u32) fp to a mock, whose value is an address
+    fieldrange={"Fighter.kind": "0..32"},
+    # the arena holds the pointer tables the reset builds (addresses differ between the C image and the port): its cursor and the table pointers are still hashed
+    ignore_vars=["Geno_ProfileStorage", "Geno_Rows", "Geno_Params", "Geno_RowCount"],
+    mock={"Geno_ComboParam": "0..127", "Geno_ComboWord": "0..5", "Geno_ProfileCount": "4..16", "Geno_ParamCount": "0..8", "Geno_ParamId": "-1..120", "Geno_StateCount": "0..8", "Geno_ProfileForKind": "-1|0|1|2|3"},
+    fixups=[("Geno_ProfileCapacity = 0; Geno_ArtProfileCapacity = 0;", "(*core::ptr::addr_of_mut!(m::Geno_ProfileCapacity)) = 0; (*core::ptr::addr_of_mut!(m::Geno_ArtProfileCapacity)) = 0;"),
+            ("tuo_mo_Player_GetEntity.user_data = &tuo_mo_fgA;", "MO_Player_GetEntity.user_data = core::ptr::addr_of_mut!(MO_fgA) as *mut core::ffi::c_void;"),
+            ("tuo_mo_gobA.user_data = &tuo_mo_fgA;", "MO_gobA.user_data = core::ptr::addr_of_mut!(MO_fgA) as *mut core::ffi::c_void;"),
+            ("Geno_ProfileStorageUsed = (int) (((unsigned) Geno_ProfileStorageUsed % 4096u) & ~15u);",
+             "(*core::ptr::addr_of_mut!(m::Geno_ProfileStorageUsed)) = ((((*core::ptr::addr_of_mut!(m::Geno_ProfileStorageUsed)) as u32) % 4096) & !15u32) as _;")])

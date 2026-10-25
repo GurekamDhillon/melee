@@ -142,6 +142,8 @@ impl Drawable {
 /// drawn in. 0 / 2 default 0; 1 and 3 set it to 1 in their on_init; 4-8 to 2 (`grMaterial_801C94D8` users).
 const FD_GROUPS: [(u32, u32); 9] = [(0, 0), (1, 1), (2, 0), (3, 1), (4, 2), (5, 2), (6, 2), (7, 2), (8, 2)];
 /// `grNLa_803E8010`: { map id, jobj idx for the looping anim, jobj idx of the sub-tree anim (-1 none), its set }.
+/// grBattle_OnInit's gobjs (see `load_stage`): map id, camera pass.
+const BF_GROUPS: [(u32, u32); 3] = [(0, 0), (1, 2), (6, 0)];
 const FD_BACKDROP: [(u32, u32, i32, i32); 5] = [(4, 1, 2, 0), (5, 1, 2, 4), (6, 1, 2, 6), (7, 1, 2, 8), (8, 1, 2, 10)];
 
 struct Stage {
@@ -158,16 +160,21 @@ struct Stage {
     plit_lights: Option<AnimLights>,
 }
 
-fn load_stage(file: &[u8], is_fd: bool) -> Result<Stage, String> {
+fn load_stage(file: &[u8], is_fd: bool, is_bf: bool) -> Result<Stage, String> {
     let a = DatArchive::parse(file).map_err(|e| format!("stage: {e}"))?;
     let head = a.public_offset("map_head").ok_or("no map_head")?;
     let a_plit = a.public_offset("map_plit");
+    let a_gp = a.public_offset("grGroundParam");
     let dat = Arc::new(a.data);
     let d = &dat[..];
     let table = be32(d, head + 8);
     let want: Option<Vec<u32>> = std::env::var("MELEE_VIEW_GROUPS").ok().map(|v| v.split(',').filter_map(|x| x.trim().parse().ok()).collect());
     let fd_groups: Vec<(u32, u32)> = if is_fd {
         FD_GROUPS.to_vec()
+    } else if is_bf {
+        // grBattle_OnInit: gobjs 0, 3 (the background controller, whole tree hidden: not drawn), 1 (the first
+        // background, camera pass 2 via grMaterial_801C94D8) and 6; 2 / 4 / 5 only exist after a bg change.
+        BF_GROUPS.to_vec()
     } else {
         // Any other stage: every map group with a root, all in the default camera pass (no stage-specific callbacks yet).
         (0..be32(d, head + 0xC).min(64)).filter(|g| be32(d, table + g * 0x34) != 0).map(|g| (g, 0)).collect()
@@ -175,8 +182,12 @@ fn load_stage(file: &[u8], is_fd: bool) -> Result<Stage, String> {
     let groups: Vec<(u32, u32)> = fd_groups.iter().copied().filter(|(g, _)| want.as_ref().map_or(true, |w| w.contains(g))).collect();
     let ids: Vec<u32> = groups.iter().map(|g| g.0).collect();
     let mut anim = crate::stage_anim::StageAnim::new(dat.clone(), head, &ids);
+    if let Some(gp) = a_gp {
+        let sc = bef(d, gp);
+        if sc > 0.001 { anim.world_scale = sc; }
+    }
     // FD only: StageCallbacks.flags_b0 is the MSB of the table's flags word (PPC bitfield order).
-    let light_group = (0..10u32).find(|&i| is_fd && unsafe { melee_world::tu::grlast::grLast_StageCallbacks[i as usize].anon_10.flags } & 0x8000_0000 != 0).unwrap_or(0);
+    let light_group = (0..10u32).find(|&i| is_bf && i == 6 || is_fd && unsafe { melee_world::tu::grlast::grLast_StageCallbacks[i as usize].anon_10.flags } & 0x8000_0000 != 0).unwrap_or(0);
     let mut lights = Vec::new();
     let ll = be32(d, table + light_group * 0x34 + 0x18);
     if ll != 0 {
@@ -204,7 +215,8 @@ fn load_stage(file: &[u8], is_fd: bool) -> Result<Stage, String> {
     }
     // grLast_OnInit: stage gobjs 0-3 on_init (grAnime_801C8138 set 0), then backdrop case 1 of grLast_8021B920.
     for &g in &ids {
-        if is_fd && g <= 3 {
+        if is_fd && g <= 3 || is_bf {
+            // grBattle gobj 0 / 1 / 6 callback 0: grAnime_801C8138(gobj, map_id, 0).
             anim.start_map_anim(g, 0);
         }
     }
@@ -534,7 +546,7 @@ fn camera(p: &crate::cm_drive::CamPose) -> (Mtx, [[f32; 4]; 4]) {
 impl MatchRender {
     pub fn new(disc: &mut crate::disc::Disc, stage_file: &str, names: &[&str], sim: &mut VsMatch) -> Result<Self, String> {
         let stage_bytes = disc.read(stage_file)?;
-        let stage = load_stage(&stage_bytes, stage_file.ends_with("GrNLa.dat") || stage_file.ends_with("GrNLa.usd"))?;
+        let stage = load_stage(&stage_bytes, stage_file.ends_with("GrNLa.dat") || stage_file.ends_with("GrNLa.usd"), stage_file.ends_with("GrNBa.dat"))?;
         let cm = {
             let a = DatArchive::parse(&stage_bytes).map_err(|e| format!("{stage_file}: {e}"))?;
             let gp = crate::stage::ground_param(&a).ok_or("stage dat: no grGroundParam")?;
@@ -934,6 +946,9 @@ pub fn view_golden(args: &[String]) -> ExitCode {
     let scenario = get("--scenario").unwrap_or_else(|| "pad_falcon_fox_fd".into());
     let (stage_file, names): (&str, &[&str]) = match scenario.as_str() {
         "pad_falcon_fox_fd" => ("GrNLa.dat", &["falcon", "fox"]),
+        "pad_falcon_fox_bf" => ("GrNBa.dat", &["falcon", "fox"]),
+        "pad_falcon_fox_gr" => ("GrGr.dat", &["falcon", "fox"]),
+        "pad_falcon_fox_ys" => ("GrSt.dat", &["falcon", "fox"]),
         s => {
             eprintln!("view-golden: scenario {s:?} not wired");
             return ExitCode::from(2);

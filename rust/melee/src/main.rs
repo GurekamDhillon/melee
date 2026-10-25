@@ -28,6 +28,8 @@ use std::process::ExitCode;
 
 mod disc;
 mod mex;
+mod cfg;
+mod ident;
 mod mods;
 mod effect;
 mod fighter_data;
@@ -309,17 +311,52 @@ fn golden(args: &[String]) -> ExitCode {
         return ExitCode::from(2);
     };
     let scenario = get("--scenario").unwrap_or_else(|| "pad_falcon_fox_fd".into());
+    // gdmods over the disc: --mods DIR [--enable id,id] (else MELEE_MODS_DIR / enabled.txt).
+    let mods = match get("--mods") {
+        Some(dir) => {
+            let en: Option<Vec<String>> = get("--enable").map(|s| s.split(',').map(str::to_string).collect());
+            mods::Mods::open(std::path::Path::new(&dir), en.as_deref()).map(Some)
+        }
+        None => mods::Mods::from_env(),
+    };
+    let mut mods = match mods {
+        Ok(m) => m,
+        Err(e) => {
+            eprintln!("melee: mods: {e}");
+            return ExitCode::FAILURE;
+        }
+    };
+    if let Some(m) = &mods {
+        let ids: Vec<&str> = m.active.iter().map(|m| m.id.as_str()).collect();
+        eprintln!("melee: mods mounted: {} ({} files)", ids.join(", "), m.files());
+    }
     // `--slp FILE`: play a Slippi/GDLP replay (the C's MELEE_SLP=FILE with MELEE_SLP_RESYNC=1): the
     // stage, fighters and seed come from the file, every frame's inputs and RNG seed from its events.
-    let slp: Option<(melee_data::player::Player, &'static str, [&'static str; 2], u32)> = match get("--slp") {
-        None => None,
-        Some(path) => match slp_open(&path) {
-            Ok(x) => Some(x),
-            Err(e) => {
-                eprintln!("melee: --slp: {e}");
-                return ExitCode::from(2);
+    let slp_path = get("--slp");
+    let gdlp_path = get("--gdlp");
+    // `--gdlp FILE`: a whole-match recording plays only on the build / disc / mods / Geno data it was
+    // made with (MELEE_GDLP, gw_Replay_LoadGdlp): the identity of THIS binary is checked first.
+    let ident = gdlp_path.as_ref().map(|_| {
+        let exe = std::env::current_exe().unwrap_or_default();
+        let d = mods.as_mut().map(|m| m.set.describe()).unwrap_or_default();
+        ident::identity(&exe, std::path::Path::new(&iso), &d)
+    });
+    let slp: Option<(melee_data::player::Player, &'static str, [&'static str; 2], u32)> = match (slp_path, gdlp_path) {
+        (None, None) => None,
+        (p, g) => {
+            let r = match (&g, &p) {
+                (Some(g), _) => slp_open(g, ident),
+                (None, Some(p)) => slp_open(p, None),
+                _ => unreachable!(),
+            };
+            match r {
+                Ok(x) => Some(x),
+                Err(e) => {
+                    eprintln!("melee: --slp/--gdlp: {e}");
+                    return ExitCode::from(2);
+                }
             }
-        },
+        }
     };
     // record.sh's scene strings: stage, fighters (P1, P2), MELEE_TEST_SEED. Stocks: VS default 3
     // (the C dump shows stocks=3 in this time match; Player_GetStocks feeds the hash).
@@ -351,25 +388,6 @@ fn golden(args: &[String]) -> ExitCode {
         vs_match::set_cpu_player(1, 9);
     }
     let frames = get("--frames").and_then(|s| s.parse().ok());
-    // gdmods over the disc: --mods DIR [--enable id,id] (else MELEE_MODS_DIR / enabled.txt).
-    let mods = match get("--mods") {
-        Some(dir) => {
-            let en: Option<Vec<String>> = get("--enable").map(|s| s.split(',').map(str::to_string).collect());
-            mods::Mods::open(std::path::Path::new(&dir), en.as_deref()).map(Some)
-        }
-        None => mods::Mods::from_env(),
-    };
-    let mods = match mods {
-        Ok(m) => m,
-        Err(e) => {
-            eprintln!("melee: mods: {e}");
-            return ExitCode::FAILURE;
-        }
-    };
-    if let Some(m) = &mods {
-        let ids: Vec<&str> = m.active.iter().map(|m| m.id.as_str()).collect();
-        eprintln!("melee: mods mounted: {} ({} files)", ids.join(", "), m.files());
-    }
     // `--from-snapshot FILE [--start N]`: resume from the C build's state dump (MELEE_SNAP_DUMP,
     // tools/rust-port/snap/); the CSV then holds frame N (the loaded state's own words) and on.
     let snapshot = match get("--from-snapshot").map(|p| snap::Snap::load(&p)).transpose() {
@@ -578,10 +596,14 @@ fn golden(args: &[String]) -> ExitCode {
 
 /// Load a replay for `golden --slp`: the player, the stage file, the two fighters and the seed.
 /// Only what the native sim plays is accepted (Falcon, Fox, Marth, Sheik on FD / Battlefield).
-fn slp_open(path: &str) -> Result<(melee_data::player::Player, &'static str, [&'static str; 2], u32), String> {
+fn slp_open(path: &str, gdlp: Option<melee_data::gdlp::Identity>) -> Result<(melee_data::player::Player, &'static str, [&'static str; 2], u32), String> {
     let data = std::fs::read(path).map_err(|e| format!("{path}: {e}"))?;
-    let mut pl = melee_data::player::Player::new(melee_data::player::Env { resync: true, ..Default::default() });
-    pl.load_slp(path, &data, false);
+    let mut pl = melee_data::player::Player::new(melee_data::player::Env { resync: true, identity: gdlp, ..Default::default() });
+    if gdlp.is_some() {
+        pl.load_gdlp(path, &data, false);
+    } else {
+        pl.load_slp(path, &data, false);
+    }
     for l in pl.log.drain(..) {
         eprintln!("melee: {l}");
     }

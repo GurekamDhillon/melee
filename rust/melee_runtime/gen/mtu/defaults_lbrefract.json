@@ -1,0 +1,18 @@
+{
+ "HSD_TObjLoadDesc": "(|d| unsafe { crate::tu::tobj::HSD_TObjLoadDesc(d) })(@ARGS@)",
+ "HSD_CObjGetProjectionType": "(|c| unsafe { crate::tu::cobj::HSD_CObjGetProjectionType(c) })(@ARGS@)",
+ "hsdInitClassInfo": "(|info, parent, lib, name, size_info, size_obj| unsafe { crate::tu::class::hsdInitClassInfo(info as _, parent as _, lib as _, name as _, size_info, size_obj) })(@ARGS@)",
+ "GXSetAlphaCompare": "crate::tu::lbgx::ext::GXSetAlphaCompare(@CAST@)",
+ "GXSetAlphaUpdate": "crate::tu::lbgx::ext::GXSetAlphaUpdate(@CAST@)",
+ "GXSetBlendMode": "crate::tu::lbgx::ext::GXSetBlendMode(@CAST@)",
+ "GXSetColorUpdate": "crate::tu::lbgx::ext::GXSetColorUpdate(@CAST@)",
+ "GXSetNumChans": "crate::tu::lbgx::ext::GXSetNumChans(@CAST@)",
+ "GXSetNumTevStages": "crate::tu::lbgx::ext::GXSetNumTevStages(@CAST@)",
+ "GXSetNumTexGens": "crate::tu::lbgx::ext::GXSetNumTexGens(@CAST@)",
+ "GXSetTevOrder": "crate::tu::lbgx::ext::GXSetTevOrder(@CAST@)",
+ "GXSetZCompLoc": "crate::tu::lbgx::ext::GXSetZCompLoc(@CAST@)",
+ "GXSetZMode": "crate::tu::lbgx::ext::GXSetZMode(@CAST@)",
+ "HSD_MemAlloc": "crate::tu::lbheap::ext::HSD_MemAlloc(@CAST@)",
+ "DCStoreRange": "crate::tu::lbmthp::ext::DCStoreRange(@CAST@)",
+ "HSD_PObjGetFlags": "crate::tu::pobj::HSD_PObjGetFlags(a0)"
+}

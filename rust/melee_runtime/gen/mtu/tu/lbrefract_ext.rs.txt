@@ -1,0 +1,70 @@
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/mtu/gen_tu.py; the callees of the C TU)
+pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    use super::*;
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn DCFlushRange(a0: *mut c_void, a1: u32);
+    fn GXCopyTex(a0: *mut c_void, a1: u8);
+    fn GXGetTexBufferSize(a0: u16, a1: u16, a2: u32, a3: u8, a4: u8) -> u32;
+    fn GXInvalidateTexAll();
+    fn GXLoadTexMtxImm(a0: *mut c_void, a1: u32, a2: u32);
+    fn GXPixModeSync();
+    fn GXSetAlphaCompare(a0: u32, a1: u8, a2: u32, a3: u32, a4: u8) = crate::tu::lbgx::ext::GXSetAlphaCompare(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _);
+    fn GXSetAlphaUpdate(a0: u8) = crate::tu::lbgx::ext::GXSetAlphaUpdate(a0 as _);
+    fn GXSetBlendMode(a0: u32, a1: u32, a2: u32, a3: u32) = crate::tu::lbgx::ext::GXSetBlendMode(a0 as _, a1 as _, a2 as _, a3 as _);
+    fn GXSetColorUpdate(a0: u8) = crate::tu::lbgx::ext::GXSetColorUpdate(a0 as _);
+    fn GXSetDither(a0: u8);
+    fn GXSetIndTexCoordScale(a0: u32, a1: u32, a2: u32);
+    fn GXSetIndTexMtx(a0: u32, a1: *mut c_void, a2: i8);
+    fn GXSetIndTexOrder(a0: u32, a1: u32, a2: u32);
+    fn GXSetNumChans(a0: u8) = crate::tu::lbgx::ext::GXSetNumChans(a0 as _);
+    fn GXSetNumIndStages(a0: u8);
+    fn GXSetNumTevStages(a0: u8) = crate::tu::lbgx::ext::GXSetNumTevStages(a0 as _);
+    fn GXSetNumTexGens(a0: u8) = crate::tu::lbgx::ext::GXSetNumTexGens(a0 as _);
+    fn GXSetTevAlphaIn(a0: u32, a1: u32, a2: u32, a3: u32, a4: u32);
+    fn GXSetTevAlphaOp(a0: u32, a1: u32, a2: u32, a3: u32, a4: u8, a5: u32);
+    fn GXSetTevColorIn(a0: u32, a1: u32, a2: u32, a3: u32, a4: u32);
+    fn GXSetTevColorOp(a0: u32, a1: u32, a2: u32, a3: u32, a4: u8, a5: u32);
+    fn GXSetTevDirect(a0: u32);
+    fn GXSetTevIndirect(a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u8, a8: u8, a9: u32);
+    fn GXSetTevOrder(a0: u32, a1: u32, a2: u32, a3: u32) = crate::tu::lbgx::ext::GXSetTevOrder(a0 as _, a1 as _, a2 as _, a3 as _);
+    fn GXSetTexCoordGen2(a0: u32, a1: u32, a2: u32, a3: u32, a4: u8, a5: u32);
+    fn GXSetTexCopyDst(a0: u16, a1: u16, a2: u32, a3: u8);
+    fn GXSetTexCopySrc(a0: u16, a1: u16, a2: u16, a3: u16);
+    fn GXSetZCompLoc(a0: u8) = crate::tu::lbgx::ext::GXSetZCompLoc(a0 as _);
+    fn GXSetZMode(a0: u8, a1: u32, a2: u8) = crate::tu::lbgx::ext::GXSetZMode(a0 as _, a1 as _, a2 as _);
+    fn HSD_CObjGetProjectionType(a0: *mut HSD_CObj) -> i32 = (|c| unsafe { crate::tu::cobj::HSD_CObjGetProjectionType(c) })(a0);
+    fn HSD_MemAlloc(a0: i32) -> *mut c_void = crate::tu::lbheap::ext::HSD_MemAlloc(a0 as _);
+    fn HSD_PObjGetFlags(a0: *mut HSD_PObj) -> u32 = crate::tu::pobj::HSD_PObjGetFlags(a0);
+    fn HSD_StateInvalidate(a0: i32);
+    fn HSD_TObjLoadDesc(a0: *mut _HSD_TObjDesc) -> *mut HSD_TObj = (|d| unsafe { crate::tu::tobj::HSD_TObjLoadDesc(d) })(a0);
+    fn HSD_TObjSetup(a0: *mut HSD_TObj);
+    fn MTXLightFrustum(a0: *mut c_void, a1: f32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32, a7: f32, a8: f32, a9: f32);
+    fn MTXLightOrtho(a0: *mut c_void, a1: f32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32, a7: f32, a8: f32);
+    fn MTXLightPerspective(a0: *mut c_void, a1: f32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32);
+    fn hsdInitClassInfo(a0: *mut _HSD_ClassInfo, a1: *mut _HSD_ClassInfo, a2: *mut i8, a3: *mut i8, a4: i32, a5: i32) = (|info, parent, lib, name, size_info, size_obj| unsafe { crate::tu::class::hsdInitClassInfo(info as _, parent as _, lib as _, name as _, size_info, size_obj) })(a0, a1, a2, a3, a4, a5);
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut hsdDObj: HSD_DObjInfo = unsafe { core::mem::zeroed() };
+    pub static mut hsdPObj: HSD_PObjInfo = unsafe { core::mem::zeroed() };
+}
+// END GENERATED EXT

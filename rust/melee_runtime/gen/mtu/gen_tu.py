@@ -641,7 +641,7 @@ def build(stem, spec, want_ext):
         r_out_hook = f"        m::ext::hook::{n} = Some(|{argl}| {{ " + " ".join(body_r) + " });"
         r_out.append(("@@HOOK@@", r_out_hook))
         dflt = _DEFAULTS.get(n)
-        ext_fns.append(f"    fn {n}({rparams}){rret}" + (f" = {dflt.replace('@ARGS@', argl)};" if dflt else ";"))
+        ext_fns.append(f"    fn {n}({rparams}){rret}" + (f" = {dflt.replace('@ARGS@', argl).replace('@CAST@', ', '.join(f'a{i} as _' for i in range(len(ptys))))};" if dflt else ";"))
         if addr and n not in realcb:
             ext_cb.append((n, rparams, rret, argnames))
     # fill / hash

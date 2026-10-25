@@ -74,6 +74,21 @@ for m in re.finditer(r"hook_or!\(\s*\w+\s*,\s*(\w+)\s*,\s*\(([^)]*)\)[^,]*,\s*([
     defaults[name] = f"{port}({', '.join(f'a{i}' for i in range(len(names)))})"
 for m in re.finditer(r"pub static mut (\w+)\s*:\s*(?:unsafe\s+)?fn\s*\([^=]*?=\s*([A-Za-z_][\w:]*)\s*;", old):
     defaults.setdefault(m.group(1), m.group(2) + "(@ARGS@)")
+# lb_hook!(H_X, X, (a: T, ..) [-> R] [= default]);  and  pub use path::{A, B};  /  pub use path::A;  inside the old ext
+def _split_args(s):
+    return split_params(s)
+for m in re.finditer(r"lb_hook!\(\s*\w+\s*,\s*(\w+)\s*,\s*\(([^)]*)\)[^=;]*?(?:=\s*([^;]+?))?\)\s*;", old):
+    name, ps, dflt = m.group(1), m.group(2), m.group(3)
+    if dflt and name not in ("OSReport",):
+        defaults[name] = "(" + dflt.strip() + ")(@ARGS@)"
+for m in re.finditer(r"pub use ([\w:]+)::\{([^}]*)\}\s*;", old):
+    for nm in [x.strip() for x in m.group(2).split(",") if x.strip()]:
+        if nm not in ("OSReport", "OsArg", "__assert"):
+            defaults.setdefault(nm, m.group(1) + "::" + nm + "(@ARGS@)")
+for m in re.finditer(r"pub use ([\w:]+)::(\w+)\s*;", old):
+    if m.group(2) not in ("OSReport", "OsArg", "__assert"):
+        defaults.setdefault(m.group(2), m.group(1) + "::" + m.group(2) + "(@ARGS@)")
+txt = txt.replace("ext::OSReport(", "crate::tu::lbext::OSReport(").replace("ext::OsArg", "crate::tu::lbext::OsArg").replace("ext::__assert(", "crate::tu::lbext::__assert(")
 if defaults:
     (HERE / f"defaults_{stem}.json").write_text(json.dumps(defaults, indent=1), encoding="utf-8")
 new = "// BEGIN GENERATED EXT\n// END GENERATED EXT"

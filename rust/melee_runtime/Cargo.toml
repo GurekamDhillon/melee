@@ -113,3 +113,7 @@ harness = false
 [[test]]
 name = "tu_shadow"
 harness = false
+
+[[test]]
+name = "tu_lbrefract"
+harness = false

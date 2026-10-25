@@ -839,6 +839,10 @@ impl MatchRender {
                                 if let Some((k, t)) = d.tev {
                                     anim.set_tev_colors(0, 1, 0, k, t);
                                 }
+                                if std::env::var_os("MELEE_VIEW_FXDUMP").is_some_and(|v| v.to_str().and_then(|v| v.parse::<u32>().ok()) == Some(d.id)) {
+                                    eprintln!("FXDUMP bank {} id {}", d.bank, d.id);
+                                    anim.dump(0);
+                                }
                                 self.fx.insert(d.inst, FxModel { dat, anim, done: false });
                             }
                             Err(_) => {
@@ -988,6 +992,8 @@ pub fn view_golden(args: &[String]) -> ExitCode {
         "pad_falcon_fox_bf" => ("GrNBa.dat", &["falcon", "fox"]),
         "pad_falcon_fox_gr" => ("GrGr.dat", &["falcon", "fox"]),
         "pad_falcon_fox_ys" => ("GrSt.dat", &["falcon", "fox"]),
+        "pad_falcon_fox_fod" => ("GrIz.dat", &["falcon", "fox"]),
+        "pad_falcon_fox_dl64" => ("GrOp.dat", &["falcon", "fox"]),
         s => {
             eprintln!("view-golden: scenario {s:?} not wired");
             return ExitCode::from(2);

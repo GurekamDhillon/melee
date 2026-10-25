@@ -1251,6 +1251,39 @@ rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_In
   TEXDUMP2 / TOBJDUMP / TAGDUMP / ONLY=g:j,j / FORCEVIS / PREROLL=n / FPLOG / LIGHTLOG / NOPLIT / NOLIGHTANIM / PPC_RATE / NOFX / FXLOG / APPSRT / APPLOG / APPFRAMES, and
   `MELEE_GX_DRAWLOG=<copy index>` (+ `MELEE_GX_DRAWLOG_TEV=<draw>`) in melee_gx's `copy_disp`.
 
+- Round 4 (plat-render, 2026-10-25): other stages + KO + HUD timing. Method unchanged (realtime C shots, `MELEE_WINDOW_UNFOCUSED=1`, no OS input), but
+  `MELEE_VIEW_SKIP=1` is NOT used for measuring any more: skipping draws hid a bug (below). Scenarios: `view-golden --scenario pad_falcon_fox_{fd,bf,ys,gr,fod,dl64}`
+  (same pad cycles; the native sim only reaches frame 338 on BF, 196 on YS, 263 on Green Greens, 83 on FoD before an unported fighter state / blast zone,
+  so only those prefixes are comparable). Compare with `tools/rust-port/shotcmp_dir.py CSHOTDIR RSDIR f1,f2,..`.
+  Mean abs error (0..255) per stage, before -> now:
+  | stage | frames | before | now |
+  |---|---|---|---|
+  | Battlefield | 60/120/300 | 26.4 | 2.65 |
+  | Yoshi's Story | 10..190 step 10 | not drawn right (one rooted group set) | 3.2 |
+  | Final Destination | 60..1500 | 2.43 | 2.33 |
+  | FD KO window | 196..288 step 4 | 6.18 | 3.41 |
+  | Green Greens | 60 | 6.8 | 5.8 (frame 120+ shows the grGreens star blocks the C animates; not ported) |
+  1. `StageAnim` PATH tracks work: the AObj obj id is the spline JObj's DESC address (the C ID table key); the spline JObj is resolved inside the group's tree
+     (or loaded next to it like `HSD_JObjLoadJoint`), `spline_point` reads the HSD_Spline from the DAT (`splArcLengthPoint`). Fixes the BF background panic.
+  2. Stage gobj sets are per stage: Battlefield = grBattle_OnInit gobjs 0, 1 (pass 2, the active background), 6 (light group), the BG controller 3 is hidden;
+     Green Greens = 0, 2 (pass 2), 6, 5, 4. Everything else the old "draw every group" path drew (the three other backgrounds at once, blocks).
+  3. `grGroundParam->y` (Battlefield 0.8, Yoshi's Story etc.) is the scale of the wrapper JObj every map gobj hangs under: `StageAnim::world_scale` scales the
+     world matrices. This was the whole BF error (stage 25% too large next to the fighters).
+  4. `StageAnim::set_translate/set_scale/set_rotate_yz` now `HSD_JObjSetMtxDirty` (children follow). Before, a moved root left its children's matrices stale
+     when a frame was drawn more than once; the name tag's arrow drifted up 8-15 px when every frame was drawn (SKIP mode drew once).
+  5. Name tags stay visible after Go while the fighter is on its rebirth platform (`Player_80036058` = `ftLib_80086F4C`).
+  6. KO camera quake (`Camera_RequestQuake(QuakeKind_Large, pos)` in `dead_down`, requests queued in `VsMatch::quake_requests`): the quake gobj
+     (`grLib_801C9CEC`: `stage_info.quake_model_set` anim set 3, its root translation = `Camera_SetQuakeOffset`) is stepped by the view one frame after the request,
+     before `CmDrive::step`. The camera now equals the C's `gd.camera_get` log exactly on every frame 205-259 (it was 2-3 units off from the first KO frame, which
+     made every KO frame score 15). Quakes from other death states are not requested yet (those states are not ported).
+  7. The Go element is not drawn for its first three frames (C 84-86 show nothing, 87 is fully settled); FD frames 84-86 went 63/40/23 -> 3.4.
+- Not matched (largest first): (a) HUD KO pieces: exploding percent digits, "SCORE -1" score model, stock-loss animation (`ScInfStc`), the magnifier bubble for an
+  off-screen fighter (`ifmagnify.c`, YS C frames 160/190); (b) FD frames 1-12: the C shows z-fight / interior geometry because the camera starts nearly edge-on to
+  the top plane (depth precision, not logic); (c) Fountain of Dreams / Dream Land 64 / Pokemon Stadium: scenarios exist for FoD and DL64 (`GrIz.dat`, `GrOp.dat`,
+  no stage logic: the platforms, the reflection camera and water are not driven; error 30 / 8 at 60), Pokemon Stadium has no scenario; (d) Randall (YS) and the
+  Shy Guys are not ported; (e) AppSRT particles still off by default; (f) the C shots are taken while the build hitches, so consecutive-frame comparisons
+  alternate between two logic frames; compare spaced frames.
+
 ## Platform (summary, 2026-10-25, port/platform-integ)
 
 Rule for every run below: no OS-level input and no focus stealing. Game input only through `MELEE_PAD_SCRIPT`, `MELEE_PAD_IGNORE_ADAPTER=1`,

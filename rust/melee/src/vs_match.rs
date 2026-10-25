@@ -255,6 +255,8 @@ pub struct Player {
     /// The player's respawn data (rebirth.rs) and `ft_data->x24`, the idle animations
     /// (`{anim id, weight}` up to the -1 terminator).
     rb: PlayerRespawn,
+    /// The fighter's colour-animation lists (render only).
+    pub col: crate::colanim::ColAnim,
     /// The camera box snap `ftCamera_80076064` made this frame (Rebirth entry), taken before the fighter moved on.
     pub cam_snap: Option<CmSubjectIn>,
     wait_anims: Vec<(i32, i32)>,
@@ -707,6 +709,7 @@ impl VsMatch {
         let plco = DatArchive::parse(&disc.read("PlCo.dat")?).map_err(|e| format!("PlCo.dat: {e}"))?;
         let common = plco.public_offset("ftLoadCommonData").ok_or("PlCo.dat: no ftLoadCommonData")?;
         let common_root = common;
+        let col_tables = Arc::new(crate::colanim::ColTables::new(&plco.data, common_root));
         // Fighter_LoadCommonData: the root is a pointer table, `p_ftCommonData = pData[0]`.
         // `p_ftCommonData->x260_startShieldHealth`; FT_SCRIPT_VALUE is the identity in vanilla.
         let be = |at: u32| u32::from_be_bytes(plco.data[at as usize..][..4].try_into().unwrap());
@@ -1140,6 +1143,7 @@ impl VsMatch {
                 keep_gfx: false,
                 blend_zero: false,
                 rb: PlayerRespawn::default(),
+                col: crate::colanim::ColAnim::new(col_tables.clone()),
                 cam_snap: None,
             });
             // ... Fighter_ChangeMotionState(Entry): no animation, cur_anim_frame -1;
@@ -1458,6 +1462,14 @@ impl VsMatch {
             }
             // ftCommon_8007E0E4 (the end of Fighter_8006A360, outside hitlag): the player nudge.
             player_nudge(&mut self.players, pi, &self.ground);
+            // ftCo_800C0408: the colour-animation lists (render only).
+            {
+                let p = &mut self.players[pi];
+                let f = &p.fp;
+                let st = [f.x2224_b2() != 0, f.dmg.x18F0 != 0, f.x221D_b6() != 0, f.x1994 != 0 || f.x1990 != 0 || f.x2221_b0() != 0];
+                p.col.set_standing(st);
+                p.col.step();
+            }
         }
         // s_link 2, Fighter_8006ABA0: input_cb. ftCo_Fall_IASA's checks all read pad input, and
         // the C applies none before GO (self_vel.x stays 0 in the golden with the stick held):
@@ -3870,7 +3882,19 @@ fn ftaction_run(p: &mut Player, rand: &mut HsdRand, skip: bool) -> Result<(), St
             }
             // ftAction_80072A5C: ftCo_800BFFD0 (start a colour-overlay animation, fp->x408 / x488 /
             // x508: render only); ftAction_80072AAC (skip table) just steps. One word.
-            0x2E => p.script += 4,
+            0x2E => {
+                if !skip {
+                    p.col.start(((w >> 18) & 0xFF) as i32, (w & 0x3FFFF) as i32);
+                }
+                p.script += 4;
+            }
+            // ftAction_80072ABC: ftCo_800C0200 (reset a colour animation's list); skip table: a step.
+            0x2F => {
+                if !skip {
+                    p.col.reset_id(((w >> 18) & 0xFF) as i32);
+                }
+                p.script += 4;
+            }
             // ftAction_800726F4: TObj (eye texture) animation. Render only.
             0x28 => p.script += 4,
             // ftAction_800728F8: rumble (ftCommon_8007EC30 / 8007EBAC). No sim effect.
@@ -4280,6 +4304,11 @@ fn entry_start(p: &mut Player, c: EntryCommon, rand: &mut HsdRand) -> Result<(),
     p.ef_queue.push(QueuedEffect { kind: EF_SPAWN_ATTACH_PARAM, gfx: 0x43E, part: 0, params: Vec3 { x: x8.x, y: 0.0, z: 0.0 }, extra1: 0.0, extra2: 0.0 });
     // lbAudioAx_80024304(0x8B): the entry sound, on track 0x16.
     melee_audio::sim::with(|s| s.lb_audio_ax_80024304(0x8B));
+    // ftCo_800BFFD0(fp, 0x75, 0): the entry glow.
+    p.col.start(0x75, 0);
+    if std::env::var_os("MELEE_VIEW_COLLOG").is_some() {
+        eprintln!("COLDUMP 0x75 {:08x?} 9 {:08x?} 0xa {:08x?}", p.col.dump(0x75), p.col.dump(9), p.col.dump(0xA));
+    }
     Ok(())
 }
 
@@ -4290,7 +4319,8 @@ fn entry_end(p: &mut Player, c: EntryCommon, rand: &mut HsdRand) -> Result<(), S
     let root = p.skel.root;
     p.skel.set_scale(root, p.entry.x8);
     p.fp.cur_pos.y = p.entry.x4 + p.entry.x20;
-    // Fighter_ChangeMotionState(EntryEnd, 0x3000, 0, 1, 0): no animation row.
+    // Fighter_ChangeMotionState(EntryEnd, 0x3000, 0, 1, 0): no animation row; 0x3000 has Ft_MF_SkipColAnim.
+    p.col.skip_next = true;
     change_motion_state(p, FTCO_MS_ENTRY_END, None, rand)?;
     p.fp.set_x2219_b1(1);
     Ok(())
@@ -4346,6 +4376,9 @@ fn change_motion_state_ext(p: &mut Player, msid: i32, row: Option<&(AnimRow, Fig
         fp.hitlag_mul = 0.0;
     }
     fp.motion_id = msid;
+    // ftCo_800C0134 (no Ft_MF_SkipColAnim): the x488 list restarts.
+    p.col.motion_change();
+    let fp = &mut p.fp;
     // The flags Fighter_ChangeMotionState clears (fighter.c ~1381): the entry / death states set
     // them again right after the change.
     fp.set_x221F_b3(0);
@@ -4442,6 +4475,7 @@ fn change_motion_state_ext(p: &mut Player, msid: i32, row: Option<&(AnimRow, Fig
                 ftaction_run(p, rand, true)?;
             } else {
                 // ftCo_800C0408 (colour-animation scripts: render only), then ftAction_80073240.
+                p.col.step();
                 ftaction_80073240(p, rand)?;
             }
         }

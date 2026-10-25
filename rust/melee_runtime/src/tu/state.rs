@@ -288,6 +288,8 @@ pub struct HsdRender {
     pub(crate) current_tev: u32,
     pub(crate) committed_tev_stages: u32,
     pub tev_regs: [([i16; 4], i32); 4],
+    /// `ftMaterial_800BF2B8`'s additions to the next fighter materials (colour overlay, light, translucency).
+    pub ft_overlay: Option<super::mobj::FtOverlay>,
     pub render_alloc_data: melee_types::HSD_ObjAllocData,
     pub tevreg_alloc_data: melee_types::HSD_ObjAllocData,
     pub chan_alloc_data: melee_types::HSD_ObjAllocData,
@@ -355,6 +357,7 @@ impl HsdRender {
             current_tev: 0,
             committed_tev_stages: 0,
             tev_regs: [([0; 4], 0); 4],
+            ft_overlay: None,
             render_alloc_data: melee_types::HSD_ObjAllocData::zeroed(),
             tevreg_alloc_data: melee_types::HSD_ObjAllocData::zeroed(),
             chan_alloc_data: melee_types::HSD_ObjAllocData::zeroed(),

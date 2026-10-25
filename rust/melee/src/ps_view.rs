@@ -283,6 +283,11 @@ pub fn disp_particles(shim: &mut GxShim, cache: &mut DataCache, ps: &PsSystem, l
             if p.appsrt.is_some() && std::env::var_os("MELEE_VIEW_APPSRT").is_none() {
                 continue;
             }
+            if let Ok(v) = std::env::var("MELEE_VIEW_PSONLY") {
+                if v.parse::<u8>().ok() != Some(p.tex_group) {
+                    continue;
+                }
+            }
             if st.is_none() {
                 st = Some(setup(shim, vmtx));
             }
@@ -543,7 +548,7 @@ fn draw_one(g: &mut GxShim, cache: &mut DataCache, ps: &PsSystem, p: &Particle, 
         }
     }
 
-    if p.appsrt.is_some() && std::env::var_os("MELEE_VIEW_APPTEX").is_some() {
+    if std::env::var_os("MELEE_VIEW_APPTEX").is_some() {
         if let Some(bank) = ps.banks.get(0).and_then(|b| b.as_ref()) {
             for t in 0..32u32 {
                 if let Some(i) = bank.data.tex.group_info(t) {
@@ -555,7 +560,7 @@ fn draw_one(g: &mut GxShim, cache: &mut DataCache, ps: &PsSystem, p: &Particle, 
         if let Some(bank) = ps.banks.get(bsel).and_then(|b| b.as_ref()) {
             let tex = &bank.data.tex;
             let mut out = String::new();
-            for t in [0u32, 1, 2, 23, 24, 25, 11, 4] {
+            for t in 0..32u32 {
                 if let (Some(info), Some(io)) = (tex.group_info(t), tex.image_off(t, 0)) {
                     let size = get_tex_buffer_size(info.width as u16, info.height as u16, info.fmt, false, 0).max(32) as usize;
                     let data = tex.data();

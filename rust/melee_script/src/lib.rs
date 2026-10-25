@@ -3,6 +3,7 @@
 pub mod args;
 pub mod engine;
 pub mod game;
+pub mod geno;
 pub mod gd;
 pub mod host;
 pub mod manifest;
@@ -11,5 +12,5 @@ pub mod pad;
 pub mod rewind;
 
 pub use engine::{Config, Engine};
-pub use game::{NoGame, ScriptGame};
+pub use game::{NoGame, RecRead, RecRow, RecStatus, ScriptGame};
 pub use host::{Host, MemHost};

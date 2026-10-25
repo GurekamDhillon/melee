@@ -9,6 +9,7 @@ pub mod bench;
 pub mod camera;
 pub mod caps;
 pub mod contacts;
+pub mod cpu_ctl;
 pub mod crit;
 pub mod deadline;
 pub mod echo;
@@ -62,6 +63,7 @@ pub fn register_all(e: &Engine, gd: &Table) -> LuaResult<()> {
     echo::register(e, gd)?;
     zones::register(e, gd)?;
     deadline::register(e, gd)?;
+    cpu_ctl::register(e, gd)?;
     flycam::register(e, gd)?;
     contacts::register(e, gd)?;
     shock::register(e, gd)?;

@@ -129,3 +129,7 @@ harness = false
 [[test]]
 name = "tu_tev_native"
 harness = false
+
+[[test]]
+name = "tu_texpdag"
+harness = false

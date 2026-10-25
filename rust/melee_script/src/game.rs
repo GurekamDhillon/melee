@@ -560,6 +560,41 @@ pub trait ScriptGame {
     fn combo_state_name(&self, _profile: i32, _n: i32) -> String {
         String::new()
     }
+    // ---- arena-hooks / largemap bounds (`gw_ScriptGame_Arena*`, `MapBound(s)`, `StageBounds`): pc/platform/gw_script_arena.inc.
+    // All mutable arena state (including ownership) lives in the game's snapshotted state; floats cross as bit patterns.
+    fn arena_owner(&self) -> i32 {
+        0
+    }
+    fn arena_origin(&mut self, _owner: i32, _x_bits: i32, _y_bits: i32, _frames: i32) {}
+    fn arena_spawn(&mut self, _owner: i32, _slot: i32, _x_bits: i32, _y_bits: i32) -> i32 {
+        0
+    }
+    /// axis 0 x, 1 y, 2 z; `fallback` is returned when the slot has no position
+    fn arena_spawn_pos(&self, _slot: i32, _axis: i32, fallback: f32) -> f32 {
+        fallback
+    }
+    fn arena_bounds(&mut self, _owner: i32, _blast: bool, _l: i32, _r: i32, _t: i32, _b: i32) {}
+    fn arena_restore(&mut self) {}
+    /// 0-3 camera l/r/t/b, 4-7 blast l/r/t/b (float bits), 8/9 origin x/y (bits), 10 transition frames left
+    fn arena_read(&self, _field: i32) -> i32 {
+        0
+    }
+    /// id -1 field 0: group count; field 0: enabled; field 1: owner
+    fn arena_group(&self, _id: i32, _field: i32) -> i32 {
+        0
+    }
+    fn arena_group_set(&mut self, _owner: i32, _id: i32, _enabled: bool) {}
+    fn arena_release(&mut self, _owner: i32) {}
+    /// `gw_ScriptGame_StageBounds`: blast(0-3), camera(4-7), main_floor(8-11) as float bits; 12 has main floor; 13 surface_top
+    fn stage_bounds_i(&self, _field: i32) -> i32 {
+        0
+    }
+    /// `gw_ScriptGame_MapBounds(which, l, r, b, t)`; which -1 restores the retail bounds
+    fn map_bounds(&mut self, _which: i32, _l: i32, _r: i32, _b: i32, _t: i32) {}
+    /// which 0 camera, 1 blast; field 0 left, 1 right, 2 bottom, 3 top (bits)
+    fn map_bound(&self, _which: i32, _field: i32) -> i32 {
+        0
+    }
     // ---- the recorder (`pc/platform/gw_script_rec.inc`): `.gdlp` live-playback recordings. The Lua half
     // (gating, names, argument shapes) is ported in `gd::rec`; these are the recorder's state machine and files.
     fn rec_start(&mut self, _name: &str) -> Result<String, String> {

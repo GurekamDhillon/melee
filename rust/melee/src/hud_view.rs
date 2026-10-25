@@ -32,6 +32,8 @@ pub struct HudFile {
     pub stock_desc: u32,
     pub ready_desc: u32,
     pub ready_end: Option<f32>,
+    pub go_desc: u32,
+    pub go_end: Option<f32>,
 }
 
 impl HudFile {
@@ -40,14 +42,21 @@ impl HudFile {
         let sym = |n: &str| a.public_offset(n).ok_or(format!("IfAll: no {n}"));
         let scene = sym("ScInfDmg_scene_data")?;
         let (num, mrk, stc, cnt) = (sym("DmgNum_scene_models")?, sym("DmgMrk_scene_models")?, sym("Stc_scemdls")?, sym("ScInfCnt_scene_models")?);
-        let ready_end = crate::vs_match::input::ready_hud_end_frame(ifall)?;
+        if std::env::var_os("MELEE_VIEW_READYLOG").is_some() {
+            for i in 0..8 {
+                eprintln!("ScInfCnt model {i}: end {:?}", crate::vs_match::input::ready_hud_end_frame_of(ifall, i));
+            }
+        }
+        let ready_end = crate::vs_match::input::ready_hud_end_frame_of(ifall, 3)?;
         let dat = Arc::new(a.data);
         Ok(Self {
             scene,
             num_desc: be32(&dat, num),
             mark_desc: be32(&dat, mrk),
             stock_desc: be32(&dat, stc),
-            ready_desc: be32(&dat, cnt + 4),
+            ready_desc: be32(&dat, cnt + 12),
+            go_desc: be32(&dat, cnt + 16),
+            go_end: crate::vs_match::input::ready_hud_end_frame_of(ifall, 4)?,
             ready_end,
             dat,
         })
@@ -83,6 +92,8 @@ pub struct Hud {
     players: Vec<PlayerHud>,
     ready: StageAnim,
     ready_frames: f32,
+    /// `fn_8016B7F8` -> `ifStatus_802F6EA4(4, ..)`: the "Go!" element, created when Ready ends.
+    go: Option<(StageAnim, f32)>,
     rng: u32,
 }
 
@@ -174,7 +185,7 @@ impl Hud {
         // ifStatus_802F6EA4(1, ..): the Ready / GO element.
         let mut ready = StageAnim::new_scene(d.clone(), vec![file.ready_desc]);
         ready.start_map_anim(0, 0);
-        Ok(Self { file, pose, light, players, ready, ready_frames: 1.0, rng: 0x2545F491 })
+        Ok(Self { file, pose, light, players, ready, ready_frames: 1.0, go: None, rng: 0x2545F491 })
     }
 
     fn rand(&mut self) -> f32 {
@@ -187,6 +198,14 @@ impl Hud {
     pub fn step(&mut self, damage: &[i32]) {
         self.ready.step();
         self.ready_frames += 1.0;
+        if self.go.is_none() && self.ready_frames > self.file.ready_end.unwrap_or(f32::MAX) && self.ready_frames <= self.file.ready_end.unwrap_or(0.0) + 1.5 {
+            let mut g = StageAnim::new_scene(self.file.dat.clone(), vec![self.file.go_desc]);
+            g.start_map_anim(0, 0);
+            self.go = Some((g, 1.0));
+        } else if let Some((g, n)) = &mut self.go {
+            g.step();
+            *n += 1.0;
+        }
         for i in 0..self.players.len() {
             let r: Vec<f32> = (0..8).map(|_| self.rand()).collect();
             let p = &mut self.players[i];
@@ -219,6 +238,11 @@ impl Hud {
         }
         if self.file.ready_end.map_or(true, |e| self.ready_frames <= e) {
             models.push((self.ready.overrides(), self.ready.disp_joints(0)));
+        }
+        if let Some((g, n)) = &mut self.go {
+            if self.file.go_end.map_or(true, |e| *n <= e) {
+                models.push((g.overrides(), g.disp_joints(0)));
+            }
         }
         let dms: Vec<DispModel> = models.iter().map(|(o, j)| DispModel::new(&dat, j.clone()).with_mat_anim(o)).collect();
         for code in [0u32, 1, 2] {

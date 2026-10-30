@@ -11,7 +11,7 @@ native offset/size from rustc `offset_of!`, bitfield names from `GcField::bitfie
 set -a; . "<workspace>/.env"; set +a            # GW_ISO_VANILLA
 melee diff --scenario NAME --frame N [--snap FILE] [--max 40] [--all] [--unions]
 melee diff --scenario NAME --first   [--golden CSV]     # run from the repo root (default docs/rust-port/golden/NAME.csv)
-melee diff ... --baseline-out tools/rust-port/diff/baseline.txt   # merge this frame's non-hashed diffs into the baseline
+melee diff ... --baseline-out tools/rust-port/diff/baseline/<subsystem>.txt   # merge this frame's non-hashed diffs into the baseline
 ```
 
 Scenarios: pad_falcon_fox_fd, pad_marth_sheik_bf, cpu_fox_falco_dl, cpu_fox_falco_fd, cpu_peach_samus_ys_items.
@@ -38,7 +38,7 @@ Scenarios: pad_falcon_fox_fd, pad_marth_sheik_bf, cpu_fox_falco_dl, cpu_fox_falc
 
 The native sim does not maintain every `Fighter` byte (colour overlays, pickup offsets, costume counts, hit
 bookkeeping it never reads). Those differ from the C build at frames where the hash matches, so
-`tools/rust-port/diff/baseline.txt` lists them (normalised paths) and they are hidden unless `--all`. A hashed field
+`tools/rust-port/diff/baseline/<subsystem>.txt` lists them (normalised paths) and they are hidden unless `--all`. A hashed field
 is never hidden. The baseline was built with `--baseline-out` from frames that were not used for the proofs
 (pad_falcon_fox_fd f0; cpu_fox_falco_dl f0, f100, f200). A genuinely new difference in a listed field is
 hidden too: use `--all` when a hashed column diverges and the shown list is empty. Extend it from matching
@@ -54,3 +54,10 @@ frames only.
 - `melee diff --scenario cpu_fox_falco_dl --first`: the golden has no divergence; the sim stops at 323 (shield
   roll, `ftCo_800992A8`), so frame 322 is diffed: 78 non-hashed fields (hurt-collision positions
   `x914[i].hurt_coll_pos` / `coll_distance` for both fighters, 1-ulp ECB and hurt-capsule positions on P2, P1 `x208C`).
+
+## 2026-10-30 consolidation step 2: subsystems, `--frames`, gate
+
+- The baseline is split per subsystem: `tools/rust-port/diff/baseline/{gobj,fighter,item,stage,mp,camera,effect,particle,hud,rng,globals}.txt` (144 lines in total: fighter 132, effect 5, gobj 3, particle 2, stage 1, globals 1; `baseline_max.tsv` records the caps, which only go down). Model-state keys are filed by the model part they cover (`subsystem_of_key` in diff.rs). `--baseline-out DIR/` writes one file per subsystem.
+- `melee diff --scenario S --frames 0,60,300 [--subsystems fighter,item] [--baseline-check DIR] [--max 0] [--print-hits] [--stale] [--engine legacy]`: one child per frame (each re-simulates from 0); exit 1 if a field outside the baseline differs (hashed fields never baselined); frames beyond the sim's last frame are skipped (child exit 3). `--print-hits` emits `HIT key` for baseline lines hit (gate.sh unions them over scenarios to find STALE lines); `--stale` does the same check for a single scenario.
+- `tools/rust-port/gate.sh`: build, four goldens against `engine_progress.tsv` (`compare_golden.py --print-count`), baseline caps, migrated-subsystem diffs at `diff/frames.tsv` (`docs/rust-port/migrated.txt`, empty until step 7), lint. Everything passes on `legacy`.
+- Note: at pad_falcon_fox_fd f300 the fighter subsystem still has 24 fields outside the baseline (colourblend x488, xDF4 hit records, ...). The legacy model is not migrated, so the gate does not require zero there.

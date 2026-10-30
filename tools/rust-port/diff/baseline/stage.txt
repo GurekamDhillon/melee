@@ -1,0 +1,3 @@
+# Known-unmodelled baseline for `melee diff` subsystem "stage" (docs/rust-port/notes/diff.md, consolidation.md 4.1).
+# Lines may only be removed. A hashed field is never listed. Format: the normalised key `melee diff` prints.
+model ground fnv

@@ -1,5 +1,5 @@
-# Known-unmodelled baseline for `melee diff` (docs/rust-port/notes/diff.md): fields/lines the native sim does not keep
-# like the C build at golden-matching frames. Built with --baseline-out; a hashed field is never listed.
+# Known-unmodelled baseline for `melee diff` subsystem "fighter" (docs/rust-port/notes/diff.md, consolidation.md 4.1).
+# Lines may only be removed. A hashed field is never listed. Format: the normalised key `melee diff` prints.
 Fighter bf_221c
 Fighter bury_grkind
 Fighter coll_data.x38
@@ -125,22 +125,10 @@ Fighter x8A8_anim_frame
 Fighter x8B0[].x10
 Fighter x8B0[].x11
 Fighter x8_spawnNum
-model aobj_globals 0
-model aobj_globals 12
-model aobj_globals 6
-model dptcl* joint
-model effect* life
-model effect* track
-model ground fnv
 model joint_mtx 0x*
-model next_effect_instance 1
-model next_effect_instance 20
-model next_effect_instance 5
 model p* dash
 model p* entry
 model p* fall
 model p* tree
 model p* tree*
 model p* walk
-model ps link*
-model stale counters

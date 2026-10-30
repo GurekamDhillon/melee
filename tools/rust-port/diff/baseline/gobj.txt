@@ -1,0 +1,5 @@
+# Known-unmodelled baseline for `melee diff` subsystem "gobj" (docs/rust-port/notes/diff.md, consolidation.md 4.1).
+# Lines may only be removed. A hashed field is never listed. Format: the normalised key `melee diff` prints.
+model aobj_globals 0
+model aobj_globals 12
+model aobj_globals 6

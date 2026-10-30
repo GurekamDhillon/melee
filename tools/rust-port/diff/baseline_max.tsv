@@ -1,0 +1,12 @@
+subsystem	max_lines
+camera	0
+effect	5
+fighter	132
+globals	1
+gobj	3
+hud	0
+item	0
+mp	0
+particle	2
+rng	0
+stage	1

@@ -1,0 +1,3 @@
+# Diff subsystems (consolidation.md 4.1) whose state comes from the real tu/ code path and so must show zero differing
+# fields outside tools/rust-port/diff/baseline/<subsystem>.txt. One name per line, comma-free. Empty until step 7:
+# the legacy vs_match model still keeps hashed fields only (its baseline files are "known-unmodelled", not "migrated").

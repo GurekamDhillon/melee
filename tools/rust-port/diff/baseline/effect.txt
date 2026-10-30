@@ -1,0 +1,7 @@
+# Known-unmodelled baseline for `melee diff` subsystem "effect" (docs/rust-port/notes/diff.md, consolidation.md 4.1).
+# Lines may only be removed. A hashed field is never listed. Format: the normalised key `melee diff` prints.
+model effect* life
+model effect* track
+model next_effect_instance 1
+model next_effect_instance 20
+model next_effect_instance 5

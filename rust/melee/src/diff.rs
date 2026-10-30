@@ -256,10 +256,19 @@ pub fn diff(args: &[String]) -> ExitCode {
     let get = |k: &str| args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned();
     let has = |k: &str| args.iter().any(|a| a == k);
     let (Some(scn), Some(iso)) = (get("--scenario"), get("--iso").or_else(|| std::env::var("GW_ISO_VANILLA").ok())) else {
-        eprintln!("usage: melee diff --scenario NAME (--frame N | --first) [--iso DISC] [--snap FILE] [--golden CSV] [--max N] [--unions]\n  scenarios: pad_falcon_fox_fd pad_marth_sheik_bf cpu_fox_falco_dl cpu_fox_falco_fd cpu_peach_samus_ys_items");
+        eprintln!("usage: melee diff --scenario NAME (--frame N | --frames A,B,C | --first) [--subsystems fighter,item,..] [--baseline-check DIR] [--engine legacy] [--iso DISC] [--snap FILE] [--golden CSV] [--max N] [--unions]\n  scenarios: pad_falcon_fox_fd pad_marth_sheik_bf cpu_fox_falco_dl cpu_fox_falco_fd cpu_peach_samus_ys_items");
         return ExitCode::from(2);
     };
     crate::crash::note_disc(&iso);
+    if let Some(e) = get("--engine") {
+        if e != "legacy" {
+            eprintln!("melee diff: --engine {e}: only `legacy` exists until consolidation step 7");
+            return ExitCode::from(2);
+        }
+    }
+    if let Some(list) = get("--frames") {
+        return diff_frames(args, &scn, &list);
+    }
     let max: usize = get("--max").and_then(|v| v.parse().ok()).unwrap_or(40);
     let target: Option<i32> = get("--frame").and_then(|v| v.parse().ok());
     let first = has("--first");
@@ -348,7 +357,7 @@ pub fn diff(args: &[String]) -> ExitCode {
             return ExitCode::SUCCESS;
         }
         eprintln!("melee diff: the sim stopped before frame {}: {why}", target.unwrap());
-        return ExitCode::FAILURE;
+        return ExitCode::from(3); // the --frames wrapper skips frames beyond the engine's count
     };
     drop(sim);
     let frame = st.frame;
@@ -356,7 +365,7 @@ pub fn diff(args: &[String]) -> ExitCode {
         Ok(p) => p,
         Err(e) => {
             eprintln!("melee diff: {e}");
-            return ExitCode::FAILURE;
+            return ExitCode::from(4);
         }
     };
     let snap = match Snap::load(&snap_path) {
@@ -392,24 +401,52 @@ pub fn diff(args: &[String]) -> ExitCode {
             _ => false,
         };
     }
-    let total_all = out.len();
-    let baseline: std::collections::BTreeSet<String> = BASELINE.lines().map(str::trim).filter(|l| !l.is_empty() && !l.starts_with('#')).map(str::to_string).collect();
+    let check_dir = get("--baseline-check");
+    let subs: Option<Vec<String>> = get("--subsystems").map(|v| v.split(',').map(|x| x.trim().to_string()).filter(|x| !x.is_empty()).collect());
+    let by_sub = load_baselines(check_dir.as_deref());
+    let baseline: std::collections::BTreeSet<String> = by_sub.values().flatten().cloned().collect();
     if let Some(path) = get("--baseline-out") {
+        // A directory (or a path ending in / ) gets one file per subsystem; a file gets the union (the old layout).
         let mut set = baseline.clone();
         if let Ok(old) = std::fs::read_to_string(&path) {
-            set.extend(old.lines().map(str::trim).filter(|l| !l.is_empty() && !l.starts_with('#')).map(str::to_string));
+            set.extend(baseline_lines(&old));
         }
         set.extend(out.iter().filter(|d| !d.hashed).map(norm));
         let head = "# Known-unmodelled baseline for `melee diff` (docs/rust-port/notes/diff.md): fields/lines the native sim does not keep
 # like the C build at golden-matching frames. Built with --baseline-out; a hashed field is never listed.
 ";
-        if let Err(e) = std::fs::write(&path, head.to_string() + &set.into_iter().collect::<Vec<_>>().join("
+        let res = if std::path::Path::new(&path).is_dir() || path.ends_with('/') {
+            std::fs::create_dir_all(&path).and_then(|_| {
+                for (name, _) in SUBSYSTEMS {
+                    let body: Vec<&String> = set.iter().filter(|k| subsystem_of_key(k) == *name).collect();
+                    std::fs::write(std::path::Path::new(&path).join(format!("{name}.txt")), head.to_string() + &body.iter().map(|k| k.as_str()).collect::<Vec<_>>().join("
+") + if body.is_empty() { "" } else { "
+" })?;
+                }
+                Ok(())
+            })
+        } else {
+            std::fs::write(&path, head.to_string() + &set.into_iter().collect::<Vec<_>>().join("
 ") + "
-") {
+")
+        };
+        if let Err(e) = res {
             eprintln!("melee diff: {path}: {e}");
         }
     }
-    if !has("--all") {
+    // `--subsystems a,b`: only those parts of the state.
+    if let Some(list) = &subs {
+        out.retain(|d| list.iter().any(|s| s == subsystem_of_key(&norm(d))));
+    }
+    let total_all = out.len();
+    if has("--print-hits") {
+        // The baseline lines this frame hit (the `--frames` wrapper and gate.sh decide which lines are STALE).
+        let hit: std::collections::BTreeSet<String> = out.iter().filter(|d| !d.hashed).map(norm).filter(|k| baseline.contains(k)).collect();
+        for k in hit {
+            println!("HIT {k}");
+        }
+    }
+    if !has("--all") || check_dir.is_some() {
         out.retain(|d| d.hashed || !baseline.contains(&norm(d)));
     }
     let hidden = total_all - out.len();
@@ -419,13 +456,92 @@ pub fn diff(args: &[String]) -> ExitCode {
         let gc = d.gc.map_or("-".to_string(), |g| format!("{g:#x}"));
         println!("  {:<14} {:<16} {}{:<34} gc {:<7} C {}  |  Rust {}", d.strukt, d.instance, if d.hashed { "*" } else { " " }, d.field, gc, d.c, d.rust);
     }
-    if out.len() > max {
+    if out.len() > max && max > 0 {
         println!("  ... {} more (raise --max)", out.len() - max);
     }
     if !model_note.is_empty() {
         println!("  note: {model_note}");
     }
     if out.is_empty() { ExitCode::SUCCESS } else { ExitCode::from(1) }
+}
+
+/// `--frames A,B,C`: one `diff --frame N` child per frame (each re-simulates from 0), with the baseline check on.
+/// Frames beyond what the sim reaches are skipped. The run fails if any frame has a difference outside the baseline,
+/// and, with `--baseline-check`, if a baseline line of the checked subsystems is hit by none of the frames (STALE:
+/// remove it; baselines only shrink).
+fn diff_frames(args: &[String], scn: &str, list: &str) -> ExitCode {
+    let get = |k: &str| args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned();
+    let exe = match std::env::current_exe() {
+        Ok(e) => e,
+        Err(e) => {
+            eprintln!("melee diff: {e}");
+            return ExitCode::FAILURE;
+        }
+    };
+    let mut base: Vec<String> = vec!["diff".into()];
+    let mut it = args.iter().skip(1);
+    while let Some(x) = it.next() {
+        if x == "--frames" {
+            it.next();
+        } else {
+            base.push(x.clone());
+        }
+    }
+    let check = get("--baseline-check");
+    let mut hits = std::collections::BTreeSet::new();
+    let (mut bad, mut ran) = (0, 0);
+    for f in list.split(',').filter_map(|v| v.trim().parse::<i32>().ok()) {
+        let mut a = base.clone();
+        a.extend(["--frame".into(), f.to_string(), "--print-hits".into()]);
+        match std::process::Command::new(&exe).args(&a).output() {
+            Ok(o) => {
+                let text = String::from_utf8_lossy(&o.stdout);
+                for l in text.lines() {
+                    if let Some(k) = l.strip_prefix("HIT ") {
+                        hits.insert(k.to_string());
+                        if args.iter().any(|a| a == "--print-hits") {
+                            println!("{l}"); // gate.sh unions these over all scenarios
+                        }
+                    } else {
+                        println!("{l}");
+                    }
+                }
+                match o.status.code() {
+                    Some(0) => ran += 1,
+                    Some(1) => {
+                        ran += 1;
+                        bad += 1;
+                    }
+                    Some(3) => println!("{scn} frame {f}: beyond the sim's last frame, skipped"),
+                    _ => {
+                        eprint!("{}", String::from_utf8_lossy(&o.stderr));
+                        bad += 1;
+                    }
+                }
+            }
+            Err(e) => {
+                eprintln!("melee diff: {e}");
+                bad += 1;
+            }
+        }
+    }
+    let mut stale = 0;
+    // STALE is only meaningful over the whole frame set of every scenario; `--stale` is for a single-scenario check
+    // (gate.sh unions the HIT lines instead).
+    if check.is_some() && ran > 0 && args.iter().any(|a| a == "--stale") {
+        let subs: Option<Vec<String>> = get("--subsystems").map(|v| v.split(',').map(str::to_string).collect());
+        for (name, keys) in load_baselines(check.as_deref()) {
+            if subs.as_ref().is_some_and(|s| !s.iter().any(|x| x == name)) {
+                continue;
+            }
+            for k in keys.iter().filter(|k| !hits.contains(*k)) {
+                println!("STALE {name}: {k}");
+                stale += 1;
+            }
+        }
+    }
+    println!("melee diff {scn}: {ran} frames compared, {bad} with differences outside the baseline, {stale} stale baseline lines");
+    if bad == 0 && stale == 0 { ExitCode::SUCCESS } else { ExitCode::from(1) }
 }
 
 fn compare(snap: &Snap, st: &State, o: &Opts, out: &mut Vec<Diff>) -> Result<(), String> {
@@ -563,7 +679,56 @@ const HASHED: &[&str] = &["motion_id", "cur_pos", "self_vel.x", "self_vel.y", "d
 /// `nh_cpu`'s inputs (read only for a CPU-controlled fighter).
 const HASHED_CPU: &[&str] = &["cpu.buttons", "cpu.lstick", "cpu.cstick", "cpu.ltrigger", "cpu.rtrigger", "cpu.kind", "cpu.level", "cpu.x14", "cpu.x18", "cpu.x1C", "cpu.x20", "cpu.x24", "cpu.x28", "cpu.x2C", "cpu.x30", "cpu.x34", "cpu.x38", "cpu.x3C", "cpu.x40", "cpu.x7C", "cpu.x80", "cpu.x84", "cpu.xC8", "cpu.xEC", "cpu.command_duration", "cpu.csP"];
 
-const BASELINE: &str = include_str!("../../../tools/rust-port/diff/baseline.txt");
+/// The diff subsystems (consolidation.md 4.1) and their baselines, `tools/rust-port/diff/baseline/<name>.txt`.
+const SUBSYSTEMS: &[(&str, &str)] = &[
+    ("gobj", include_str!("../../../tools/rust-port/diff/baseline/gobj.txt")),
+    ("fighter", include_str!("../../../tools/rust-port/diff/baseline/fighter.txt")),
+    ("item", include_str!("../../../tools/rust-port/diff/baseline/item.txt")),
+    ("stage", include_str!("../../../tools/rust-port/diff/baseline/stage.txt")),
+    ("mp", include_str!("../../../tools/rust-port/diff/baseline/mp.txt")),
+    ("camera", include_str!("../../../tools/rust-port/diff/baseline/camera.txt")),
+    ("effect", include_str!("../../../tools/rust-port/diff/baseline/effect.txt")),
+    ("particle", include_str!("../../../tools/rust-port/diff/baseline/particle.txt")),
+    ("hud", include_str!("../../../tools/rust-port/diff/baseline/hud.txt")),
+    ("rng", include_str!("../../../tools/rust-port/diff/baseline/rng.txt")),
+    ("globals", include_str!("../../../tools/rust-port/diff/baseline/globals.txt")),
+];
+
+fn baseline_lines(text: &str) -> impl Iterator<Item = String> + '_ {
+    text.lines().map(str::trim).filter(|l| !l.is_empty() && !l.starts_with('#')).map(str::to_string)
+}
+
+/// Which subsystem a normalised key (`norm`) belongs to. `model state` rows are filed by the model part they cover.
+fn subsystem_of_key(key: &str) -> &'static str {
+    let mut w = key.split(' ');
+    match (w.next().unwrap_or(""), w.next().unwrap_or("")) {
+        ("Fighter", _) => "fighter",
+        ("Item" | "Item list", _) => "item",
+        ("HSD_Rand", _) => "rng",
+        ("StaticPlayer" | "SceneState", _) => "globals",
+        ("model", i) if i.starts_with("p*") || i == "joint_mtx" => "fighter",
+        ("model", i) if i.starts_with("effect") || i == "next_effect_instance" => "effect",
+        ("model", i) if i.starts_with("dptcl") || i == "ps" => "particle",
+        ("model", "ground") => "stage",
+        ("model", "aobj_globals") => "gobj",
+        ("model", _) => "globals",
+        _ => "globals",
+    }
+}
+
+/// Baseline keys per subsystem: the embedded files, or `--baseline-check DIR`'s on disk.
+fn load_baselines(dir: Option<&str>) -> std::collections::BTreeMap<&'static str, std::collections::BTreeSet<String>> {
+    SUBSYSTEMS
+        .iter()
+        .map(|(name, text)| {
+            let t = match dir {
+                Some(d) => std::fs::read_to_string(std::path::Path::new(d).join(format!("{name}.txt"))).unwrap_or_default(),
+                None => text.to_string(),
+            };
+            (*name, baseline_lines(&t).collect())
+        })
+        .collect()
+}
 
 /// A difference with indices and addresses removed: the key the baseline lists.
 fn norm(d: &Diff) -> String {

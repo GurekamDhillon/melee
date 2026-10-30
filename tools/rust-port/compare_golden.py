@@ -50,6 +50,9 @@ def main():
                     help="skip the `hash` and `seed` columns (the post-frame RNG seed differs where the port draws a different "
                          "number of logic RNG values; replays force the seed every frame, so it cannot reach the next frame)")
     ap.add_argument("--from", dest="start", type=int, default=None, help="compare golden frames >= N only (resumed run)")
+    ap.add_argument("--print-count", action="store_true",
+                    help="print `COUNT n` (golden frames matching consecutively from the first row) as the last line; exit 0 "
+                         "even on a mismatch, so gate.sh can compare n with docs/rust-port/engine_progress.tsv")
     a = ap.parse_args()
     gh, g, gorder = load(a.golden)
     ch, c, corder = load(a.candidate)
@@ -80,6 +83,15 @@ def main():
                     if i not in skip and g[f][i] != c[f][i]:
                         print("    %-8s golden %s  candidate %s" % (gh[i], g[f][i], c[f][i]))
             bad += 1
+    if a.print_count:
+        n = 0
+        for f in gorder:
+            if f in c and not any(g[f][i] != c[f][i] for i in range(1, len(gh)) if i not in skip):
+                n += 1
+            else:
+                break
+        print("COUNT %d" % n)
+        return 0
     ok = bad == 0
     if missing and not a.allow_short:
         print("%d golden frame(s) missing from candidate (first %s, last %s)" % (len(missing), missing[0], missing[-1]))

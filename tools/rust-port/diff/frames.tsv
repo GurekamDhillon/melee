@@ -1,0 +1,6 @@
+# scenario<TAB>sampled frames (consolidation.md 4.2). Each is capped at the engine's current count for that scenario.
+# cpu_fox_falco_dl also gets "the last engine frame" (gate.sh appends count-1 itself).
+pad_falcon_fox_fd	0,1,60,121,300,600,1200,1800
+pad_marth_sheik_bf	0,121,450,900,1800
+cpu_fox_falco_dl	0,100,200,322
+cpu_peach_samus_ys_items	0,60,119

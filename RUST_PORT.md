@@ -88,3 +88,4 @@ The long history and topic detail that used to live here is in `docs/rust-port/n
 - 2026-10-30 rust-port: consolidation step 0 done (green tests, golden caps, baseline counts in engine_progress.tsv) -> notes/consolidation.md
 - 2026-10-30 rust-port: consolidation steps 1-3 (call trace markers + seqdiff, diff --frames/per-subsystem baselines/gate.sh, lint_logic.py report), see notes/consolidation.md and notes/diff.md
 - 2026-10-30 consolidation step 4: melee_link + gen_link.py (install() links 4395 of 12980 ext hooks; 617 trace-reached todo hooks remain)
+- 2026-10-30 consolidation step 5: melee_engine host (OS heaps, DVD seam, raw+native archive images, generated dat_types), see notes/consolidation.md

@@ -46,6 +46,13 @@ pub mod ext {
 
 const HEADER_BYTES: usize = 0x20;
 
+/// Host seams of the archive host (`melee_engine::archive`, plan 1.4): when set, the engine owns the raw and native
+/// images of an archive. `parse` returns `Some(result)` when it handled the call; `public` returns the native root
+/// (`None`: the archive is not the host's); `locate_extern` returns true when it patched the raw image.
+pub static mut host_parse: Option<unsafe fn(*mut HSD_Archive, *mut u8, usize) -> i32> = None;
+pub static mut host_public: Option<unsafe fn(*mut HSD_Archive, *const i8) -> Option<*mut c_void>> = None;
+pub static mut host_locate_extern: Option<unsafe fn(*mut HSD_Archive, *const i8, *mut c_void) -> bool> = None;
+
 /// `static inline void Locate(HSD_Archive*)`.
 unsafe fn Locate(archive: *mut HSD_Archive) {
     let mut i: u32 = 0;
@@ -60,6 +67,9 @@ unsafe fn Locate(archive: *mut HSD_Archive) {
 /// `HSD_ArchiveParse`: the body between the profiler's begin / end calls (`PC_PROF_BEGIN(GW_PROF_DECODE, file_size)`).
 pub unsafe extern "C" fn HSD_ArchiveParse(archive: *mut HSD_Archive, src: *mut u8, file_size: usize) -> i32 {
     melee_core::ct!("HSD_ArchiveParse");
+    if let Some(f) = host_parse {
+        return f(archive, src, file_size);
+    }
     if ext::ProfActive() != 0 {
         ext::ProfBegin(GW_PROF_DECODE as i32, file_size as i32);
     }
@@ -118,6 +128,11 @@ pub unsafe extern "C" fn HSD_ArchiveParse_profile_body(archive: *mut HSD_Archive
 /// `HSD_ArchiveGetPublicAddress`
 pub unsafe extern "C" fn HSD_ArchiveGetPublicAddress(archive: *mut HSD_Archive, symbols: *const i8) -> *mut c_void {
     melee_core::ct!("HSD_ArchiveGetPublicAddress");
+    if let Some(f) = host_public {
+        if let Some(p) = f(archive, symbols) {
+            return p;
+        }
+    }
     let want = CStr::from_ptr(symbols);
     let mut i: u32 = 0;
     while i < (*archive).header.nb_public {
@@ -143,6 +158,11 @@ pub unsafe extern "C" fn HSD_ArchiveGetExtern(archive: *mut HSD_Archive, offset:
 /// `HSD_ArchiveLocateExtern`: patches every slot of the extern's chain with `addr` (low 32 bits).
 pub unsafe extern "C" fn HSD_ArchiveLocateExtern(archive: *mut HSD_Archive, symbols: *const i8, addr: *mut c_void) {
     melee_core::ct!("HSD_ArchiveLocateExtern");
+    if let Some(f) = host_locate_extern {
+        if f(archive, symbols, addr) {
+            return;
+        }
+    }
     let want = CStr::from_ptr(symbols);
     let mut offset: u32 = u32::MAX;
     let mut i: u32 = 0;

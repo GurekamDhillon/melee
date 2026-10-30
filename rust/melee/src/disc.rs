@@ -1,42 +1,22 @@
-//! Read one file from the user's GameCube disc image (GCM/ISO): the FST at header +0x424.
-//! Local only: nothing read here is written anywhere or committed.
-
-use std::io::{Read, Seek, SeekFrom};
+//! Read one file from the user's GameCube disc image (GCM/ISO). The FST reader is `melee_engine::gcm`; this wraps it
+//! with the gdmods mounted over the disc. Local only: nothing read here is written anywhere or committed.
 
 pub struct Disc {
-    f: std::fs::File,
-    fst: Vec<u8>,
+    gcm: melee_engine::gcm::Gcm,
     /// gdmods mounted over the disc (`crate::mods`): a mounted file answers before the disc.
     pub mods: Option<crate::mods::Mods>,
     /// Files answered by a mod, in read order (for the run log).
     pub from_mods: Vec<String>,
 }
 
-fn be32(b: &[u8], at: usize) -> u32 {
-    u32::from_be_bytes(b[at..at + 4].try_into().unwrap())
-}
-
 impl Disc {
     pub fn open(path: &str) -> Result<Self, String> {
-        let mut f = std::fs::File::open(path).map_err(|e| format!("{path}: {e}"))?;
-        let h = read_at(&mut f, 0x424, 8)?;
-        let fst = read_at(&mut f, be32(&h, 0) as u64, be32(&h, 4) as usize)?;
-        Ok(Self { f, fst, mods: None, from_mods: vec![] })
+        Ok(Self { gcm: melee_engine::gcm::Gcm::open(path)?, mods: None, from_mods: vec![] })
     }
 
-    /// `len` bytes of the game's main.dol at its RAM address `addr` (DOL header at the disc's +0x420 offset;
-    /// section table as `pc/tools/extract_assets.py` reads it). Used for the SIS font atlas.
+    /// `len` bytes of the game's main.dol at its RAM address `addr`. Used for the SIS font atlas.
     pub fn dol_bytes(&mut self, addr: u32, len: usize) -> Result<Vec<u8>, String> {
-        let h = read_at(&mut self.f, 0x420, 4)?;
-        let dol = be32(&h, 0) as u64;
-        let hd = read_at(&mut self.f, dol, 0x100)?;
-        for k in 0..18 {
-            let (off, a, sz) = (be32(&hd, k * 4), be32(&hd, 0x48 + k * 4), be32(&hd, 0x90 + k * 4));
-            if sz != 0 && a <= addr && addr as u64 + len as u64 <= a as u64 + sz as u64 {
-                return read_at(&mut self.f, dol + off as u64 + (addr - a) as u64, len);
-            }
-        }
-        Err(format!("DOL: {addr:#x}+{len:#x} is not in any section"))
+        self.gcm.dol_bytes(addr, len)
     }
 
     /// A root-level or nested file by bare name (case-insensitive), as `iso_file` in tests/dat.rs.
@@ -51,27 +31,6 @@ impl Disc {
 
     /// The vanilla disc's own copy, ignoring mounted mods.
     pub fn read_vanilla(&mut self, want: &str) -> Result<Vec<u8>, String> {
-        let fst = &self.fst;
-        let n = be32(fst, 8) as usize;
-        let names = &fst[n * 12..];
-        for i in 1..n {
-            let e = &fst[i * 12..i * 12 + 12];
-            if e[0] != 0 {
-                continue; // directory
-            }
-            let no = (be32(e, 0) & 0xFF_FFFF) as usize;
-            let end = names[no..].iter().position(|&c| c == 0).unwrap_or(0);
-            if names[no..no + end].eq_ignore_ascii_case(want.as_bytes()) {
-                let (o, l) = (be32(e, 4), be32(e, 8));
-                return read_at(&mut self.f, o as u64, l as usize);
-            }
-        }
-        Err(format!("{want}: not on the disc"))
+        self.gcm.read(want)
     }
-}
-
-fn read_at(f: &mut std::fs::File, off: u64, n: usize) -> Result<Vec<u8>, String> {
-    let mut v = vec![0; n];
-    f.seek(SeekFrom::Start(off)).and_then(|_| f.read_exact(&mut v)).map_err(|e| format!("disc read @{off:#x}: {e}"))?;
-    Ok(v)
 }

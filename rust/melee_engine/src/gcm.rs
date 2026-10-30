@@ -1,0 +1,119 @@
+//! A GameCube disc image (GCM/ISO): the FST at header +0x424, files by entry number (the FST index, which is
+//! what `DVDConvertPathToEntrynum` returns). Local only: nothing read here is written anywhere or committed.
+
+use std::io::{Read, Seek, SeekFrom};
+
+pub struct Gcm {
+    f: std::fs::File,
+    fst: Vec<u8>,
+}
+
+fn be32(b: &[u8], at: usize) -> u32 {
+    u32::from_be_bytes(b[at..at + 4].try_into().unwrap())
+}
+
+impl Gcm {
+    pub fn open(path: &str) -> Result<Self, String> {
+        let mut f = std::fs::File::open(path).map_err(|e| format!("{path}: {e}"))?;
+        let h = read_at(&mut f, 0x424, 8)?;
+        let fst = read_at(&mut f, be32(&h, 0) as u64, be32(&h, 4) as usize)?;
+        Ok(Self { f, fst })
+    }
+
+    /// `len` bytes of the game's main.dol at its RAM address `addr` (DOL header at the disc's +0x420 offset).
+    pub fn dol_bytes(&mut self, addr: u32, len: usize) -> Result<Vec<u8>, String> {
+        let h = read_at(&mut self.f, 0x420, 4)?;
+        let dol = be32(&h, 0) as u64;
+        let hd = read_at(&mut self.f, dol, 0x100)?;
+        for k in 0..18 {
+            let (off, a, sz) = (be32(&hd, k * 4), be32(&hd, 0x48 + k * 4), be32(&hd, 0x90 + k * 4));
+            if sz != 0 && a <= addr && addr as u64 + len as u64 <= a as u64 + sz as u64 {
+                return read_at(&mut self.f, dol + off as u64 + (addr - a) as u64, len);
+            }
+        }
+        Err(format!("DOL: {addr:#x}+{len:#x} is not in any section"))
+    }
+
+    fn count(&self) -> usize {
+        be32(&self.fst, 8) as usize
+    }
+
+    fn name(&self, i: usize) -> &[u8] {
+        let names = &self.fst[self.count() * 12..];
+        let no = (be32(&self.fst, i * 12) & 0xFF_FFFF) as usize;
+        let end = names[no..].iter().position(|&c| c == 0).unwrap_or(0);
+        &names[no..no + end]
+    }
+
+    fn is_dir(&self, i: usize) -> bool {
+        self.fst[i * 12] != 0
+    }
+
+    /// `DVDConvertPathToEntrynum`: an absolute or root-relative path walks the directory tree
+    /// (case-insensitive); a bare name that is not at the root falls back to the first file of that name
+    /// anywhere (how the port's `Disc::read` has always matched). -1 when there is none.
+    pub fn entry_for_path(&self, path: &str) -> i32 {
+        let n = self.count();
+        let parts: Vec<&str> = path.split('/').filter(|p| !p.is_empty()).collect();
+        let mut dir = 0usize;
+        'walk: for (k, part) in parts.iter().enumerate() {
+            let end = be32(&self.fst, dir * 12 + 8) as usize;
+            let mut i = dir + 1;
+            while i < end.min(n) {
+                if self.name(i).eq_ignore_ascii_case(part.as_bytes()) {
+                    if k + 1 == parts.len() {
+                        return i as i32;
+                    }
+                    if self.is_dir(i) {
+                        dir = i;
+                        continue 'walk;
+                    }
+                    return -1;
+                }
+                i = if self.is_dir(i) { be32(&self.fst, i * 12 + 8) as usize } else { i + 1 };
+            }
+            break;
+        }
+        if parts.len() == 1 {
+            for i in 1..n {
+                if !self.is_dir(i) && self.name(i).eq_ignore_ascii_case(parts[0].as_bytes()) {
+                    return i as i32;
+                }
+            }
+        }
+        -1
+    }
+
+    /// Length in bytes of file entry `entry` (None for a directory or an out-of-range entry).
+    pub fn entry_len(&self, entry: i32) -> Option<u32> {
+        let i = usize::try_from(entry).ok().filter(|&i| i >= 1 && i < self.count() && !self.is_dir(i))?;
+        Some(be32(&self.fst, i * 12 + 8))
+    }
+
+    /// `len` bytes at `offset` inside file entry `entry`.
+    pub fn read_entry(&mut self, entry: i32, offset: u32, len: usize) -> Result<Vec<u8>, String> {
+        let flen = self.entry_len(entry).ok_or(format!("DVD entry {entry}: not a file"))?;
+        if offset as u64 + len as u64 > flen as u64 {
+            return Err(format!("DVD entry {entry}: read {offset:#x}+{len:#x} past the end ({flen:#x})"));
+        }
+        let i = entry as usize;
+        let start = be32(&self.fst, i * 12 + 4) as u64;
+        read_at(&mut self.f, start + offset as u64, len)
+    }
+
+    /// The whole file `want` (a path, or a bare name anywhere on the disc).
+    pub fn read(&mut self, want: &str) -> Result<Vec<u8>, String> {
+        let e = self.entry_for_path(want);
+        if e < 0 {
+            return Err(format!("{want}: not on the disc"));
+        }
+        let n = self.entry_len(e).unwrap() as usize;
+        self.read_entry(e, 0, n)
+    }
+}
+
+fn read_at(f: &mut std::fs::File, off: u64, n: usize) -> Result<Vec<u8>, String> {
+    let mut v = vec![0; n];
+    f.seek(SeekFrom::Start(off)).and_then(|_| f.read_exact(&mut v)).map_err(|e| format!("disc read @{off:#x}: {e}"))?;
+    Ok(v)
+}

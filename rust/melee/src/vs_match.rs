@@ -1859,6 +1859,15 @@ impl VsMatch {
                     };
                     set_anim_rate(p, rate);
                 }
+                FTCO_MS_CATCH_DASH => {
+                    // ftCo_CatchDash_Anim: fn_800D9228 / fn_800D9930 are Link's and Samus' (tether grabs); Wait at the end.
+                    if matches!(p.fp.kind, melee_types::Ft_Kind_Link | melee_types::Ft_Kind_CLink | melee_types::Ft_Kind_Samus) {
+                        return Err("tether dash grab (fn_800D9228 / fn_800D9930) not ported".into());
+                    }
+                    if !p.skel.frames_remaining() {
+                        ft_8008a2bc(p, &mut self.rand)?;
+                    }
+                }
                 FTCO_MS_CATCH => {
                     // ftCo_Catch_Anim: fn_800D8EC8 (Link) / fn_800D9558 (Samus) do nothing for
                     // the kinds wired; Wait when the animation ends.
@@ -2089,6 +2098,17 @@ impl VsMatch {
                     // ftCo_Walk_Phys -> ftWalkCommon_800E0060.
                     walk_phys(p);
                 }
+                FTCO_MS_CATCH_DASH => {
+                    // ftCo_CatchDash_Phys -> ft_80085030(x64 * ground_friction, facing_dir).
+                    let f = &mut *p.fp;
+                    let fr = melee_fighter::hooks::common_data().x64 * f.co_attrs.ground_friction;
+                    if x594_b0(f) {
+                        f.xE4_ground_accel_1 = melee_core::fp::fmadds(f.x6A4_transNOffset.z, f.facing_dir, -f.gr_vel);
+                    } else {
+                        fc::calc_ground_accel_deaccel(f, fr);
+                    }
+                    fc::set_self_movement_from_grounded_movement(f);
+                }
                 FTCO_MS_CATCH => {
                     // ftCo_Catch_Phys.
                     let f = &mut *p.fp;
@@ -2316,7 +2336,7 @@ impl VsMatch {
                         ft_80082b1c(&mut self.ground, p, c_common, &mut self.rand)?;
                     }
                 }
-                m if m == FTCO_MS_CATCH || is_tilt_motion(m) || is_s4_motion(m) || (FTCO_MS_ATTACK11..=FTCO_MS_ATTACK11 + 2).contains(&m) => {
+                m if m == FTCO_MS_CATCH || m == FTCO_MS_CATCH_DASH || is_tilt_motion(m) || is_s4_motion(m) || (FTCO_MS_ATTACK11..=FTCO_MS_ATTACK11 + 2).contains(&m) => {
                     // ftCo_Attack1x_Coll -> ft_80084104: ft_800827A0 (mpColl_8004B2DC), else Fall;
                     // ftCo_Catch_Coll -> ft_800841B8(fn_800D8E30): the same, the grab cleanup first.
                     let joints = {
@@ -2330,7 +2350,7 @@ impl VsMatch {
                         .map_err(|e| format!("{} not ported", e.0))?;
                     fp.cur_pos = fp.coll_data.cur_pos;
                     if !r {
-                        if p.fp.motion_id == FTCO_MS_CATCH {
+                        if p.fp.motion_id == FTCO_MS_CATCH || p.fp.motion_id == FTCO_MS_CATCH_DASH {
                             return Err("Catch off the floor: fn_800D949C / fn_800D9C64 not ported".into());
                         }
                         fall_enter(p, &mut self.rand)?;
@@ -2584,6 +2604,9 @@ impl VsMatch {
             }
         }
         // s_link 13, Fighter_8006CB94: the lasers' item procs of the frame, then the items' hits on fighters.
+        for i in 0..self.players.len() {
+            fighthit::grab_proc(self, i)?;
+        }
         self.lasers_step()?;
         self.item_hits()?;
         // s_link 14, Fighter_ProcessHit_8006D1EC: the shield's regeneration / upkeep, and the damage of a
@@ -3311,7 +3334,7 @@ fn input_cb(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         }
         m if is_s4_motion(m) => attack_s4_iasa(p, rand),
         m if (FTCO_MS_ATTACK11..=FTCO_MS_ATTACK11 + 2).contains(&m) => attack1_iasa(p, rand),
-        FTCO_MS_CATCH => Ok(()), // ftCo_Catch_IASA is empty
+        FTCO_MS_CATCH | FTCO_MS_CATCH_DASH => Ok(()), // ftCo_Catch_IASA / ftCo_CatchDash_IASA are empty
         FTCO_MS_DEAD_DOWN => Ok(()), // input_cb NULL
         rebirth::FTCO_MS_SLEEP | rebirth::FTCO_MS_REBIRTH => Ok(()), // empty IASAs
         rebirth::FTCO_MS_REBIRTH_WAIT => rebirth::wait_iasa(p, rand),
@@ -3455,12 +3478,37 @@ fn catch_check(p: &Player) -> Result<bool, String> {
 /// `ftCommon_8007E2D0`'s grab callbacks are not modelled (a grab needs hit detection, which
 /// [`VsMatch::hit_guard`] stops before).
 fn catch_enter(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    catch_enter_state(p, FTCO_MS_CATCH, melee_types::ftCo_SM_Catch as u32, rand)
+}
+
+/// `ftCo_800D8C54(gobj, msid)`: self accel cleared, `mv.co.catch_.x0 = 0`, the state, then `ftCommon_8007E2D0(fp, 1, ..)`
+/// (the grab flag `x221E_b6`, `x1A68 = 1`; the grab callbacks are only called on a successful grab, which is refused).
+fn catch_enter_state(p: &mut Player, msid: i32, smid: u32, rand: &mut HsdRand) -> Result<(), String> {
     let fp = &mut *p.fp;
     fp.x74_self_accel.z = 0.0;
     fp.x74_self_accel.y = 0.0;
     fp.x74_self_accel.x = 0.0;
-    let row = load_row(p, melee_types::ftCo_SM_Catch as u32)?;
-    change_motion_state(p, FTCO_MS_CATCH, row.as_ref(), rand)
+    let row = load_row(p, smid)?;
+    change_motion_state(p, msid, row.as_ref(), rand)?;
+    p.fp.set_x221E_b6(1);
+    p.fp.x1A68 = 1;
+    Ok(())
+}
+
+/// `ftCo_800D8A38`: the dash grab (L/R held, A pressed). The item and tether kinds are refused.
+pub(super) fn dash_catch_check(p: &mut Player, rand: &mut HsdRand) -> Result<bool, String> {
+    let fp = &*p.fp;
+    if !fp.item_gobj.is_null() {
+        return Err("ftCo_80095254 / ftCo_800952DC (a held item) not ported".into());
+    }
+    if matches!(fp.kind, melee_types::Ft_Kind_Link | melee_types::Ft_Kind_CLink | melee_types::Ft_Kind_Samus) {
+        return Err("ftCo_800D8A38 for a tether kind not ported".into());
+    }
+    if fp.input.held_buttons[0] & input::HSD_PAD_LR != 0 && fp.input.pressed_buttons & input::HSD_PAD_A != 0 {
+        catch_enter_state(p, FTCO_MS_CATCH_DASH, melee_types::ftCo_SM_CatchDash as u32, rand)?;
+        return Ok(true);
+    }
+    Ok(false)
 }
 
 /// The grounded special checks, in the IASAs' order: `ftCo_SpecialS_CheckInput`,
@@ -4549,6 +4597,9 @@ const HIT_GUARD_MARGIN: f32 = 30.0;
 
 /// `ftCo_MS_Catch` (212).
 const FTCO_MS_CATCH: i32 = 212;
+
+/// `ftCo_MS_CatchDash` (214).
+const FTCO_MS_CATCH_DASH: i32 = 214;
 
 /// `ftCo_MS_Attack11` (44); Attack12 / Attack13 follow.
 const FTCO_MS_ATTACK11: i32 = 44;

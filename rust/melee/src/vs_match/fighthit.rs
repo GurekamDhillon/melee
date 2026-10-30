@@ -159,13 +159,15 @@ pub(super) fn install() {
         e::MEX_ENABLED = Some(|_| 0);
         // lbcollision.c.
         use melee_runtime::tu::lbcollision as lb;
+        // lbColl_80005BB0's hit sound (lbAudioAx_80024184): audio only.
+        lb::ext::hook::lbAudioAx_80024184 = Some(|_, _, _, _| 0);
         e::LBCOLL_80008688 = Some(|hit, k, v| lb::lbColl_80008688(hit, k, v));
         e::LBCOLL_80008820 = Some(|hit, k, v| lb::lbColl_80008820(hit, k, v));
         e::LBCOLL_COPY_HIT_CAPSULE = Some(|s, d| lb::lbColl_CopyHitCapsule(s, d));
         e::LBCOLL_80008440 = Some(|hit| lb::lbColl_80008440(hit));
         e::LBCOLL_80008428 = Some(|hit| lb::lbColl_80008428(hit));
         e::LBCOLL_80008434 = Some(|hit| lb::lbColl_80008434(hit));
-        e::LBCOLL_80005BB0 = Some(|hit, i| lb::lbColl_80005BB0(hit, i));
+        e::LBCOLL_80005BB0 = Some(|_, _| -1); // the hit sound: audio only
         e::LBCOLL_8000ACFC = Some(|v, hit| lb::lbColl_8000ACFC(v, hit));
         e::LBCOLL_80007ECC = Some(|hit, hurt, m, a, b, z| {
             refresh_hurt(hurt);
@@ -217,6 +219,8 @@ pub(super) fn install() {
                 s.dmg_fail(m);
             }
         });
+        e::PLSTALE_UPDATE_STALE_MOVES_FROM_FIGHTER = Some(|a, b| unsafe { melee_fighter::tu::plstale::plStale_UpdateStaleMovesFromFighter(a, b) });
+        e::PLSTALE_UPDATE_STALE_MOVES_FROM_ITEM = Some(|a, b| unsafe { melee_fighter::tu::plstale::plStale_UpdateStaleMovesFromItem(a, b) });
         e::FT_80088080 = Some(|fp| melee_fighter::ft0877::ft_80088080(&mut *fp));
     }
 }
@@ -318,4 +322,27 @@ fn ef_sync_spawn(s: &mut VsMatch, id: i32, pos: melee_types::Vec, arg: *const f3
         }
         _ => Err(format!("efSync_Spawn({id:#x}) from the hit code is not ported")),
     }
+}
+
+/// `Fighter_UnkProcessGrab_8006CA5C` (s_link 12) for a fighter in a grab state (`x221E_b6`): `ftColl_80078A2C` looks
+/// for a victim of the Catch hitbox, `ftColl_8007BC90` for a grabbable item. A successful grab is not ported.
+/// (`ftColl_8007BA0C`, the stage's bury devices, has none here.)
+pub(super) fn grab_proc(s: &mut VsMatch, i: usize) -> Result<(), String> {
+    {
+        let fp = &s.players[i].fp;
+        if fp.x221F_b3() != 0 || fp.x221E_b6() == 0 {
+            return Ok(());
+        }
+    }
+    link_players(s);
+    let g = &mut *s.players[i].gobj as *mut HSD_GObj;
+    guarded("ftColl_80078A2C", || fcl::ftcoll_80078a2c(g))?;
+    if !s.players[i].fp.victim_gobj.is_null() {
+        return Err(format!("player {}: a successful grab (ftCo_Catch -> CatchPull / CapturePulled) is not ported", s.players[i].slot + 1));
+    }
+    guarded("ftColl_8007BC90", || fcl::ftcoll_8007bc90(g))?;
+    if !s.players[i].fp.target_item_gobj.is_null() {
+        return Err("a grabbable item (it_8027B4A4) is not ported".into());
+    }
+    s.take_dmg_err()
 }

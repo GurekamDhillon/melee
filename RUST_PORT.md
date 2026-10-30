@@ -1091,3 +1091,15 @@ C reads `p_ftCommonData->x6D8[idx]` unchecked). Not covered: the lbRefract / LOb
 Open: melee_runtime 41 ported-unverified (axdriver, lbaudio_ax, devcom, lobj, hsd_3933, hsd_3A76, particle `ref_INC`), melee_world 3,
 melee 2, melee_items 1; stub 1 (`HSD_AudioSFXSetPitchFid`, macro-defined body, actually ported); missing 0.
 
+| crate | ported+verified | ported-unverified | stub | missing | total |
+|---|---:|---:|---:|---:|---:|
+| melee | 12 | 2 | 0 | 0 | 14 |
+| melee_audio | 1 | 0 | 0 | 0 | 1 |
+| melee_chara | 86 | 0 | 0 | 0 | 86 |
+| melee_fighter | 677 | 0 | 0 | 0 | 677 |
+| melee_items | 159 | 1 | 0 | 0 | 160 |
+| melee_modes | 447 | 0 | 0 | 0 | 447 |
+| melee_runtime | 720 | 41 | 1 | 0 | 762 |
+| melee_types | 1 | 0 | 0 | 0 | 1 |
+| melee_world | 474 | 3 | 0 | 0 | 477 |
+| **total** | **2577** | **47** | **1** | **0** | **2625** |

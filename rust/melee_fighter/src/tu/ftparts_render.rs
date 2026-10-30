@@ -318,11 +318,30 @@ pub unsafe fn ftPartsPObjClearDefaultClass() {
     melee_runtime::tu::pobj::HSD_PObjSetDefaultClass(null_mut());
 }
 
+/// Calls out of `ftParts_8007482C`: settable hooks (the class oracle's recording stand-ins); unset they run the ported callees.
+pub mod ext {
+    use super::*;
+    pub static mut HOOK_SET_DEFAULT_CLASS: Option<unsafe fn(*mut c_void)> = None;
+    pub static mut HOOK_LOAD_JOINT: Option<unsafe fn(*mut HSD_Joint) -> *mut HSD_JObj> = None;
+    pub unsafe fn HSD_JObjSetDefaultClass(info: *mut c_void) {
+        match HOOK_SET_DEFAULT_CLASS {
+            Some(f) => f(info),
+            None => melee_runtime::tu::jobj::HSD_JObjSetDefaultClass(info.cast()),
+        }
+    }
+    pub unsafe fn HSD_JObjLoadJoint(joint: *mut HSD_Joint) -> *mut HSD_JObj {
+        match HOOK_LOAD_JOINT {
+            Some(f) => f(joint),
+            None => melee_runtime::tu::jobj::HSD_JObjLoadJoint(joint),
+        }
+    }
+}
+
 /// `ftParts_8007482C(joint)`: load a joint with the interpolation JObj class as the default.
 pub unsafe fn ftParts_8007482C(joint: *mut HSD_Joint) -> *mut HSD_JObj {
-    melee_runtime::tu::jobj::HSD_JObjSetDefaultClass((&raw mut ftIntpJObj).cast());
-    let jobj = melee_runtime::tu::jobj::HSD_JObjLoadJoint(joint);
-    melee_runtime::tu::jobj::HSD_JObjSetDefaultClass(null_mut());
+    ext::HSD_JObjSetDefaultClass((&raw mut ftIntpJObj).cast());
+    let jobj = ext::HSD_JObjLoadJoint(joint);
+    ext::HSD_JObjSetDefaultClass(null_mut());
     jobj
 }
 

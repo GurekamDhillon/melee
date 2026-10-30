@@ -857,7 +857,7 @@ ftLib_8008732C,src/melee/ft/ftlib.c,0,8893,ported+verified,melee_world
 ftLib_80087460,src/melee/ft/ftlib.c,0,2717,ported+verified,melee_fighter
 ftLib_GetKind,src/melee/ft/ftlib.c,0,6720,ported+verified,melee_fighter
 ftLib_UpdateLogicOffCamera,src/melee/ft/ftlib.c,0,3228,ported+verified,melee_fighter
-ftMaterial_800BF260,src/melee/ft/ftmaterial.c,0,1,ported-unverified,melee_fighter
+ftMaterial_800BF260,src/melee/ft/ftmaterial.c,0,1,ported+verified,melee_fighter
 ftCo_800C8438,src/melee/ft/ftmetal.c,0,7,ported+verified,melee_fighter
 ft_800C85B8,src/melee/ft/ftmetal.c,0,2,ported+verified,melee_fighter
 ftPartSetRotX,src/melee/ft/ftparts.c,0,315,ported+verified,melee_chara
@@ -868,7 +868,7 @@ ftPartsPObjSetDefaultClass,src/melee/ft/ftparts.c,0,4,ported+verified,melee_figh
 ftParts_80073758,src/melee/ft/ftparts.c,0,2,ported+verified,melee_fighter
 ftParts_80074194,src/melee/ft/ftparts.c,0,136,ported+verified,melee_fighter
 ftParts_8007462C,src/melee/ft/ftparts.c,0,2,ported+verified,melee_fighter
-ftParts_8007482C,src/melee/ft/ftparts.c,0,2,ported-unverified,melee_fighter
+ftParts_8007482C,src/melee/ft/ftparts.c,0,2,ported+verified,melee_fighter
 ftParts_8007487C,src/melee/ft/ftparts.c,0,2,ported+verified,melee_fighter
 ftParts_800749CC,src/melee/ft/ftparts.c,0,2,ported+verified,melee_fighter
 ftParts_80074A4C,src/melee/ft/ftparts.c,0,7,ported+verified,melee_fighter
@@ -1788,11 +1788,11 @@ ftCo_800C8AF0,src/melee/ft/ft_0C88.c,6,8997,ported+verified,melee_fighter
 ftCo_800C0658,src/melee/ft/ftdevice.c,6,416295,ported+verified,melee_fighter
 ftLib_80087074,src/melee/ft/ftlib.c,6,10077,ported+verified,melee_fighter
 ftLib_800872BC,src/melee/ft/ftlib.c,6,81508,ported+verified,melee_fighter
-ftMaterial_800BF2B8,src/melee/ft/ftmaterial.c,6,132767,ported-unverified,melee_fighter
-ftMaterial_800BF534,src/melee/ft/ftmaterial.c,6,132767,ported-unverified,melee_fighter
-ftMaterial_800BF6BC,src/melee/ft/ftmaterial.c,6,132767,ported-unverified,melee_fighter
+ftMaterial_800BF2B8,src/melee/ft/ftmaterial.c,6,132767,ported+verified,melee_fighter
+ftMaterial_800BF534,src/melee/ft/ftmaterial.c,6,132767,ported+verified,melee_fighter
+ftMaterial_800BF6BC,src/melee/ft/ftmaterial.c,6,132767,ported+verified,melee_fighter
 ftParts_JObjMakePositionMtx,src/melee/ft/ftparts.c,6,7306,ported+verified,melee_fighter
-ftParts_PObjSetupMtx,src/melee/ft/ftparts.c,6,277137,ported-unverified,melee_fighter
+ftParts_PObjSetupMtx,src/melee/ft/ftparts.c,6,277137,ported+verified,melee_fighter
 ftCo_8009F5AC,src/melee/ft/kinds/ftCommon/ftCo_09F4.c,6,8997,ported+verified,melee_fighter
 ftCo_8009F75C,src/melee/ft/kinds/ftCommon/ftCo_09F4.c,6,132767,ported+verified,melee_fighter
 ftCo_8009F7F8,src/melee/ft/kinds/ftCommon/ftCo_09F4.c,6,8997,ported+verified,melee_fighter

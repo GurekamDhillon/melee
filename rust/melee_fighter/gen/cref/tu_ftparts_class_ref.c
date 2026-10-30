@@ -73,6 +73,8 @@ static void cbpd(HSD_PObj* p, Mtx v, Mtx m, u32 r) { T(9011); (void) p; (void) v
 static void cbps(HSD_PObj* p, Mtx v, Mtx m, u32 r) { T(9012); (void) p; (void) v; (void) m; (void) r; }
 static s32 cbpl(HSD_PObj* p, HSD_PObjDesc* d) { T(9013); (void) p; (void) d; return 0; }
 s32 lbRefract_PObjLoad(HSD_PObj* pobj, HSD_PObjDesc* desc) { T(9014); (void) pobj; (void) desc; return 0; }
+void HSD_JObjSetDefaultClass(HSD_ClassInfo* i);
+HSD_JObj* HSD_JObjLoadJoint(HSD_Joint* j);
 static const void* FN[40];
 static int NFN;
 static void freg(const void* f) { FN[NFN++] = f; }
@@ -89,6 +91,14 @@ static u32 CI(const void* c)
     if (c == 0) return 0;
     for (i = 0; i < 5; i++) if ((const void*) CLS[i] == c) return (u32) (i + 1);
     return 0xFFFFFFFEu;
+}
+void HSD_JObjSetDefaultClass(HSD_ClassInfo* i) { T(9020); T(CI(i)); }
+HSD_JObj* HSD_JObjLoadJoint(HSD_Joint* jt)
+{
+    int a = -1, i;
+    for (i = 0; i < 4; i++) if (jt == &JT[i]) a = i;
+    T(9021); T((u32) a);
+    return (rnd() & 1) ? &JO[rnd() % 4] : 0;
 }
 static u32 SH(const char* s)
 {
@@ -137,7 +147,7 @@ int main(void)
     freg(ftParts_JObjInfoInit); freg(ftParts_IntpJObjInfoInit); freg(ftParts_PObjInfoInit);
     freg(ftParts_JObjMakePositionMtx); freg(ftParts_IntpJObjLoad); freg(ftParts_PObjSetupMtx); freg(lbRefract_PObjLoad);
     poolA[0] = 0; poolA[1] = cba; poolA[2] = cbi; poolA[3] = cbr; poolA[4] = cbm; poolA[5] = cb0; poolA[6] = cb1; poolA[7] = cbmk;
-    for (op = 0; op < 6; op++) {
+    for (op = 0; op < 7; op++) {
         for (k = 0; k < 600; k++) {
             u32 ret = 0;
             rs = 0x2468Au + (u32) op * 7919u + (u32) k * 104729u;
@@ -178,7 +188,7 @@ int main(void)
                 JT[j].flags = rnd();
                 ret = (u32) ftParts_IntpJObjLoad(&JO[i], &JT[j], (rnd() & 1) ? &JO[(i + 1) % 4] : 0);
                 HM(JT[j].u.dobjdesc != 0); HM(JT[j].flags);
-            } else {
+            } else if (op == 5) {
                 Mtx m, r;
                 int a, b;
                 zero(&FT, sizeof FT); zero(&GO, sizeof GO);
@@ -193,6 +203,15 @@ int main(void)
                 ftParts_JObjMakePositionMtx(&JO[0], m, r);
                 for (a = 0; a < 3; a++) for (b = 0; b < 4; b++) { HM(B(m[a][b])); HM(B(r[a][b])); HM(B(ft_jobj_scale.mtx[a][b])); }
                 HM(ft_jobj_scale.has_z_scale);
+            } else {
+                /* ftParts_8007482C: the default-class bracket around HSD_JObjLoadJoint (stand-ins record the calls) */
+                zero(JO, sizeof JO); zero(JT, sizeof JT);
+                i = (int) (rnd() % 4);
+                {
+                    HSD_JObj* rj = ftParts_8007482C((rnd() % 5) ? &JT[i] : 0);
+                    ret = 0xFF;
+                    for (j = 0; j < 4; j++) if (rj == &JO[j]) ret = (u32) j;
+                }
             }
             hall();
             printf("%d %d %08X %08X %08X\n", op, k, ret, H, TR);

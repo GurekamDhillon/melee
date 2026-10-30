@@ -184,7 +184,19 @@ fn ftparts_class_matches_c() {
         let mut objs: Box<[HSD_Class; 4]> = Box::new(core::mem::zeroed());
         let mut ft: Box<Fighter> = Box::new(Fighter::zeroed());
         let mut go: Box<HSD_GObj> = Box::new(HSD_GObj::zeroed());
-        for op in 0..6u32 {
+        fr::ext::HOOK_SET_DEFAULT_CLASS = Some(|i| unsafe { t(9020); t(ci(i as *const u8)) });
+        fr::ext::HOOK_LOAD_JOINT = Some(|jt| unsafe {
+            let mut a = -1i32;
+            for i in 0..4 {
+                if jt == &raw mut JT[i] {
+                    a = i as i32;
+                }
+            }
+            t(9021);
+            t(a as u32);
+            if rnd() & 1 != 0 { &raw mut JO[(rnd() % 4) as usize] } else { null_mut() }
+        });
+        for op in 0..7u32 {
             for k in 0..600u32 {
                 let mut ret: u32 = 0;
                 RS = 0x2468Au32.wrapping_add(op.wrapping_mul(7919)).wrapping_add(k.wrapping_mul(104729));
@@ -251,7 +263,7 @@ fn ftparts_class_matches_c() {
                         hm((!JT[j].u.dobjdesc.is_null()) as u32);
                         hm(JT[j].flags);
                     }
-                    _ => {
+                    5 => {
                         *ft = Fighter::zeroed();
                         *go = HSD_GObj::zeroed();
                         go.user_data = (&raw mut *ft).cast::<c_void>();
@@ -281,6 +293,19 @@ fn ftparts_class_matches_c() {
                             }
                         }
                         hm(fr::ft_jobj_scale.has_z_scale as u32);
+                    }
+                    _ => {
+                        JO = core::mem::zeroed();
+                        JT = core::mem::zeroed();
+                        let i = (rnd() % 4) as usize;
+                        let jt = if rnd() % 5 != 0 { &raw mut JT[i] } else { null_mut() };
+                        let rj = fr::ftParts_8007482C(jt);
+                        ret = 0xFF;
+                        for j in 0..4 {
+                            if rj == &raw mut JO[j] {
+                                ret = j as u32;
+                            }
+                        }
                     }
                 }
                 hall();

@@ -1074,3 +1074,12 @@ delegating wrappers; the per-agent notes above are the finer-grained claim.
 Before: 1989 verified, 525 unverified, 55 stub, 56 missing (melee_runtime 378/314/39/37, melee_fighter 444/190/16/19). The
 remaining 9 stub/missing rows are melee_fighter (8) and melee_runtime (1). Note the earlier melee_runtime report counted 41 unported audio/devcom rows; the CSV
 now reads them as ported-unverified because same-name Rust fns with real bodies exist (name-level, not a test claim).
+
+### melee_fighter trace rows, last six (port/pre-melee_fighter)
+`ftParts_PObjSetupMtx` (`tests/tu_ftparts_pobj.rs`, 4000 cases; the C reference evaluates the mark arguments in a fixed order: the
+MS-ABI argument order is unspecified, so a call with two `rnd()` arguments diverged), `ftParts_8007482C` (op 6 of `tu_ftparts_class`;
+`src/tu/ftparts_render.rs` `ext` hooks for HSD_JObjSetDefaultClass / HSD_JObjLoadJoint, stand-ins record the default-class bracket) and
+`ftMaterial_800BF260 / 2B8 / 534 / 6BC` (mtu state oracle `tests/tu_ftmaterial_vs_c.rs`, spec `gen/mtu/specs/ftmaterial.json`, 4 ops x 600
+cases over the real ftmaterial.c; the TU's callees are recording stubs and `src/tu/ftmaterial.rs` gained an `ext` seam; `ftMaterial_800BF2B8`
+is `extern "C-unwind"` so the C `__assert` longjmp has a Rust panic counterpart; `x61A_controller_index` is held to 0..6 because the
+C reads `p_ftCommonData->x6D8[idx]` unchecked). Not covered: the lbRefract / LObj / TExp / GX callees themselves (verified in their own TUs).

@@ -8,7 +8,7 @@ put on the include path), defines recording stubs for every callee out of the TU
 one line per case. Built exactly like gen/cref/run.py (shipping contraction, gwtool lowering).
 Output: rust/melee_fighter/tests/data/tu_<stem>.txt. Computed from C source only: no disc data.
 """
-import subprocess, sys
+import os, subprocess, sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -31,11 +31,12 @@ def main():
         for s in (drv, R.ROOT / "pc/gameworld/gekko_fp.c"):
             ll = R.BUILD / f"tu_{n}__{s.stem}.ll"
             lo = R.BUILD / f"tu_{n}__{s.stem}.lo.ll"
-            R.run([R.CLANG, *R.FLAGS, "-I", str((R.ROOT / src).parent), "-DTU_SRC=\"" + str(R.ROOT / src).replace("\\", "/") + "\"",
+            dbgf = ["-g", "-gcodeview"] if os.environ.get("TU_DEBUG") else []
+            R.run([R.CLANG, *R.FLAGS, *dbgf, "-I", str((R.ROOT / src).parent), "-DTU_SRC=\"" + str(R.ROOT / src).replace("\\", "/") + "\"",
                    str(s), "-o", str(ll)], n)
             R.run([sys.executable, str(R.LOWER), str(ll), str(lo)], n)
             lls.append(str(lo))
-        R.run([R.CLANG, "-O0", "-w", *lls, "-o", str(exe), "-Wl,/force:unresolved"], n)
+        R.run([R.CLANG, "-O0", "-w", *lls, "-o", str(exe), "-Wl,/force:unresolved", *(["-Wl,/DEBUG"] if os.environ.get("TU_DEBUG") else [])], n)
         out = subprocess.run([str(exe)], capture_output=True, text=True, check=True).stdout
         (R.DATA / f"tu_{n}.txt").write_text(out, encoding="utf-8", newline="\n")
         print(f"cref tu: {n}: {len(out.splitlines())} lines")

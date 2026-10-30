@@ -16,6 +16,49 @@ use core::ptr::null_mut;
 use melee_runtime::tu::mobj::native::ext as mx;
 use melee_runtime::tu::texp::ext as tx;
 
+/// Calls out of this TU: settable hooks (the oracle's recording stubs install into `ext::hook`); unset they run the
+/// ported callee.
+#[allow(non_snake_case, unused_variables)]
+pub mod ext {
+    use crate::types::*;
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? = $d:expr;)*) => {
+            pub mod hook {
+                use super::*;
+                $( #[allow(non_upper_case_globals)] pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( #[allow(unreachable_code, unused_variables)] pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => $d,
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+        fn HSD_JObjGetDObj(_a0: *mut core::ffi::c_void) -> *mut core::ffi::c_void = { unsafe { (melee_runtime::tu::jobj_ptr::HSD_JObjGetDObj(_a0 as _)) as _ } };
+        fn HSD_SetMaterialColor(_a0: GXColor, _a1: GXColor, _a2: GXColor, _a3: f32) = { super::mx::HSD_SetMaterialColor(_a0, _a1, _a2, _a3) };
+        fn HSD_SetMaterialShininess(_a0: f32) = { super::mx::HSD_SetMaterialShininess(_a0) };
+        fn HSD_StateAssignTev() -> i32 = { unsafe { super::tx::HSD_StateAssignTev() } };
+        fn HSD_StateInitTev() = { super::mx::HSD_StateInitTev() };
+        fn HSD_TObjSetup(_a0: *mut core::ffi::c_void) = { unsafe { let _ = super::mx::HSD_TObjSetup(_a0 as _); } };
+        fn HSD_TObjSetupTextureCoordGen(_a0: *mut core::ffi::c_void) = { unsafe { let _ = super::mx::HSD_TObjSetupTextureCoordGen(_a0 as _); } };
+        fn ftCo_8009F75C(_a0: *mut core::ffi::c_void, _a1: i32) = { unsafe { let _ = crate::tu::ftCo_09f4::ftCo_8009F75C(_a0 as _, _a1 != 0); } };
+        fn ftCo_800C0658(_a0: *mut core::ffi::c_void) -> *mut core::ffi::c_void = { unsafe { (crate::ft0df::ftco_800c0658(&mut *(_a0 as *mut Fighter))) as _ } };
+        fn hsdInitClassInfo(_a0: *mut core::ffi::c_void, _a1: *mut core::ffi::c_void, _a2: *mut core::ffi::c_void, _a3: *mut core::ffi::c_void, _a4: i32, _a5: i32) = { unsafe { let _ = melee_runtime::tu::class::hsdInitClassInfo(_a0 as _, _a1 as _, _a2 as _, _a3 as _, _a4 as _, _a5 as _); } };
+        fn lbGetFreeColorRegister(_a0: i32, _a1: *mut core::ffi::c_void, _a2: *mut core::ffi::c_void) -> i32 = { unsafe { (melee_runtime::tu::lb_00B0::lbGetFreeColorRegister(_a0 as _, _a1 as _, _a2 as _)) as _ } };
+        fn lbRefract_80022998(_a0: *mut core::ffi::c_void, _a1: u32, _a2: i32) = { unsafe { let _ = melee_runtime::tu::lbrefract::lbRefract_80022998(_a0 as _, _a1 as _, _a2 as _); } };
+        fn lb_8000CC8C(_a0: i32) -> i32 = { unsafe { (melee_runtime::tu::lb_00B0::lb_8000CC8C(_a0 as _)) as _ } };
+        fn lb_8000CCA4(_a0: i32) -> i32 = { unsafe { (melee_runtime::tu::lb_00B0::lb_8000CCA4(_a0 as _)) as _ } };
+        fn lb_8000CD90(_a0: i32) -> i32 = { unsafe { (melee_runtime::tu::lb_00B0::lb_8000CD90(_a0 as _)) as _ } };
+        fn lb_8000CDA8(_a0: i32) -> i32 = { unsafe { (melee_runtime::tu::lb_00B0::lb_8000CDA8(_a0 as _)) as _ } };
+        fn HSD_TExpSetReg(_a0: *mut c_void) = { unsafe { melee_runtime::tu::texp::HSD_TExpSetReg(_a0 as _) } };
+        fn HSD_SetupTevStage(_a0: *mut c_void) = { unsafe { super::tx::HSD_SetupTevStage(&mut *(_a0 as *mut HSD_TevDesc)) } };
+        fn HSD_SetupRenderModeWithCustomPE(_a0: u32, _a1: *mut c_void) = { super::mx::HSD_SetupRenderModeWithCustomPE(_a0, _a1 as _) };
+    }
+}
+
 pub static mut ftMObj: HSD_MObjInfo = {
     let mut v: HSD_MObjInfo = unsafe { core::mem::zeroed() };
     v.parent.head.info_init = Some(ftMaterial_800BF260);
@@ -79,27 +122,20 @@ fn cnst_template() -> HSD_TECnst {
 }
 
 pub unsafe extern "C" fn ftMaterial_800BF260() {
-    melee_runtime::tu::class::hsdInitClassInfo(
-        (&raw mut ftMObj).cast(),
-        (&raw mut melee_runtime::tu::mobj::native::hsdMObj).cast(),
-        c"sysdolphin_base_library".as_ptr() as *mut c_char,
-        c"ft_mobj".as_ptr() as *mut c_char,
-        size_of::<HSD_MObjInfo>() as i32,
-        size_of::<HSD_MObj>() as i32,
-    );
+    ext::hsdInitClassInfo(crate::mtu_ptr::ptr(&((&raw mut ftMObj).cast::<c_void>())), crate::mtu_ptr::ptr(&((&raw mut melee_runtime::tu::mobj::native::hsdMObj).cast::<c_void>())), crate::mtu_ptr::ptr(&(c"sysdolphin_base_library".as_ptr() as *mut c_char)), crate::mtu_ptr::ptr(&(c"ft_mobj".as_ptr() as *mut c_char)), (size_of::<HSD_MObjInfo>() as i32) as i32, (size_of::<HSD_MObj>() as i32) as i32);
     // The C stores a three-argument function in the two-argument setup slot.
     ftMObj.setup = Some(core::mem::transmute::<
-        unsafe extern "C" fn(*mut HSD_MObj, u32, u32),
+        unsafe extern "C-unwind" fn(*mut HSD_MObj, u32, u32),
         unsafe extern "C" fn(*mut HSD_MObj, u32),
     >(ftMaterial_800BF2B8));
 }
 
 /// `ftMaterial_800BF2B8(mobj, rendermode, unused)`: the fighter MObj's TEV setup.
-pub unsafe extern "C" fn ftMaterial_800BF2B8(mut mobj: *mut HSD_MObj, mut rendermode: u32, _unused: u32) {
+pub unsafe extern "C-unwind" fn ftMaterial_800BF2B8(mut mobj: *mut HSD_MObj, mut rendermode: u32, _unused: u32) {
     let fp = (*melee_runtime::tu::pobj::ext::HSD_GObj_804D7814).user_data as *mut Fighter;
 
     if (*fp).x2226_b5() != 0 {
-        melee_runtime::tu::lbrefract::lbRefract_80022998(mobj, rendermode, (*fp).smash_attrs.x2134_vibrateFrame as i32);
+        ext::lbRefract_80022998(crate::mtu_ptr::ptr(&(mobj)), (rendermode) as u32, ((*fp).smash_attrs.x2134_vibrateFrame as i32) as i32);
         return;
     }
 
@@ -111,13 +147,13 @@ pub unsafe extern "C" fn ftMaterial_800BF2B8(mut mobj: *mut HSD_MObj, mut render
         }
     }
 
-    mx::HSD_StateInitTev();
+    ext::HSD_StateInitTev();
 
     rendermode = (*mobj).rendermode;
     let mat = (*mobj).mat;
-    mx::HSD_SetMaterialColor((*mat).ambient, (*mat).diffuse, (*mat).specular, (*mat).alpha);
+    ext::HSD_SetMaterialColor((*mat).ambient, (*mat).diffuse, (*mat).specular, (*mat).alpha);
     if rendermode & RENDER_SPECULAR as u32 != 0 {
-        mx::HSD_SetMaterialShininess((*mat).shininess);
+        ext::HSD_SetMaterialShininess(((*mat).shininess) as f32);
     }
     let mut cur_tobj: *mut *mut HSD_TObj = null_mut();
     let mut tobj = (*mobj).tobj;
@@ -133,8 +169,8 @@ pub unsafe extern "C" fn ftMaterial_800BF2B8(mut mobj: *mut HSD_MObj, mut render
         (*toon).next = tobj;
         tobj = toon;
     }
-    mx::HSD_TObjSetup(tobj);
-    mx::HSD_TObjSetupTextureCoordGen(tobj);
+    ext::HSD_TObjSetup(crate::mtu_ptr::ptr(&(tobj)));
+    ext::HSD_TObjSetupTextureCoordGen(crate::mtu_ptr::ptr(&(tobj)));
     // HSD_MOBJ_METHOD(mobj)->setup_tev(mobj, tobj, rendermode)
     let info = (*mobj).parent.class_info as *mut HSD_MObjInfo;
     ((*info).setup_tev.unwrap())(mobj, tobj, rendermode);
@@ -167,9 +203,9 @@ pub unsafe extern "C" fn ftMaterial_800BF2B8(mut mobj: *mut HSD_MObj, mut render
     } else {
         pe_p = (*mobj).pe;
     }
-    mx::HSD_SetupRenderModeWithCustomPE(rendermode, pe_p);
+    ext::HSD_SetupRenderModeWithCustomPE(rendermode, pe_p.cast());
     if texp1.is_null() {
-        crate::tu::ftCo_09f4::ftCo_8009F75C(fp, true);
+        ext::ftCo_8009F75C(crate::mtu_ptr::ptr(&(fp)), (true) as i32);
     }
     if !cur_tobj.is_null() {
         *cur_tobj = null_mut();
@@ -178,32 +214,32 @@ pub unsafe extern "C" fn ftMaterial_800BF2B8(mut mobj: *mut HSD_MObj, mut render
 
 /// `ftMaterial_800BF534(fp, mobj, texp, rendermode)`: the light-overlay constant and TEV stage.
 pub unsafe fn ftMaterial_800BF534(fp: *mut Fighter, mobj: *mut HSD_MObj, texp: *mut HSD_TExp, rendermode: u32) -> *mut HSD_TExp {
-    let overlay = crate::ft0df::ftco_800c0658(&mut *fp);
+    let overlay = (ext::ftCo_800C0658(crate::mtu_ptr::ptr(&(&mut *fp))) as *mut ColorOverlay);
     if (*overlay).x7C_flag2() != 0 && (*overlay).x7C_light_enable() != 0 {
         if rendermode & RENDER_XLU as u32 == 0 && (*fp).x2223_b2() == 0 {
             (*texp).cnst = cnst_template();
-            let reg = melee_runtime::tu::lb_00B0::lbGetFreeColorRegister(0, mobj, null_mut());
+            let reg = ext::lbGetFreeColorRegister((0) as i32, crate::mtu_ptr::ptr(&(mobj)), crate::mtu_ptr::ptr(&(null_mut::<u8>())));
             if reg == -1 {
                 panic!("ftmaterial.c:240 can't find free color register!");
             }
             (*texp).cnst.reg = reg as u8;
             (*texp).cnst.val = (&raw mut (*overlay).x50_light_color).cast();
-            melee_runtime::tu::texp::HSD_TExpSetReg(texp);
+            ext::HSD_TExpSetReg(texp.cast());
 
             let mut sp_tevdesc = tevdesc_template();
-            sp_tevdesc.stage = tx::HSD_StateAssignTev() as u32;
+            sp_tevdesc.stage = ext::HSD_StateAssignTev() as u32;
             sp_tevdesc.color = 2;
             sp_tevdesc.u.tevconf.clr_a = GX_CC_ZERO;
-            sp_tevdesc.u.tevconf.clr_b = melee_runtime::tu::lb_00B0::lb_8000CC8C(reg) as _;
+            sp_tevdesc.u.tevconf.clr_b = ext::lb_8000CC8C((reg) as i32) as _;
             sp_tevdesc.u.tevconf.clr_c = GX_CC_RASA;
             sp_tevdesc.u.tevconf.clr_d = GX_CC_CPREV;
             if reg < 4 {
-                sp_tevdesc.u.tevconf.kcsel = melee_runtime::tu::lb_00B0::lb_8000CCA4(reg) as _;
+                sp_tevdesc.u.tevconf.kcsel = ext::lb_8000CCA4((reg) as i32) as _;
             }
-            tx::HSD_SetupTevStage(&mut sp_tevdesc);
+            ext::HSD_SetupTevStage((&raw mut sp_tevdesc).cast());
             return texp;
         }
-        crate::tu::ftCo_09f4::ftCo_8009F75C(fp, false);
+        ext::ftCo_8009F75C(crate::mtu_ptr::ptr(&(fp)), (false) as i32);
     }
     null_mut()
 }
@@ -213,7 +249,7 @@ pub unsafe fn ftMaterial_800BF6BC(fp: *mut Fighter, mobj: *mut HSD_MObj, texp: *
     if (*fp).x2223_b3() != 0 {
         return;
     }
-    let overlay = crate::ft0df::ftco_800c0658(&mut *fp);
+    let overlay = (ext::ftCo_800C0658(crate::mtu_ptr::ptr(&(&mut *fp))) as *mut ColorOverlay);
     let mut chk1 = false;
     let mut sp168: GXColor = core::mem::zeroed();
     let mut var_r5 = (*fp).x61A_controller_index as usize;
@@ -265,17 +301,17 @@ pub unsafe fn ftMaterial_800BF6BC(fp: *mut Fighter, mobj: *mut HSD_MObj, texp: *
         return;
     }
     let mut sp_cnst1 = cnst_template();
-    let reg1 = melee_runtime::tu::lb_00B0::lbGetFreeColorRegister(0, mobj, texp);
+    let reg1 = ext::lbGetFreeColorRegister((0) as i32, crate::mtu_ptr::ptr(&(mobj)), crate::mtu_ptr::ptr(&(texp)));
     if reg1 == -1 {
         panic!("ftmaterial.c:352 can't find free color register!");
     }
     sp_cnst1.reg = reg1 as u8;
     sp_cnst1.val = (&raw mut sp168).cast();
     let p1 = (&raw mut sp_cnst1) as *mut HSD_TExp;
-    melee_runtime::tu::texp::HSD_TExpSetReg(p1);
+    ext::HSD_TExpSetReg(p1.cast());
     sp_cnst1.next = texp;
     let var_r3 = if reg1 < 4 { 4 } else { 0 };
-    let reg2 = melee_runtime::tu::lb_00B0::lbGetFreeColorRegister(var_r3, mobj, p1);
+    let reg2 = ext::lbGetFreeColorRegister((var_r3) as i32, crate::mtu_ptr::ptr(&(mobj)), crate::mtu_ptr::ptr(&(p1)));
     if reg2 == -1 {
         panic!("ftmaterial.c:366 can't find free color ratio register!");
     }
@@ -292,31 +328,31 @@ pub unsafe fn ftMaterial_800BF6BC(fp: *mut Fighter, mobj: *mut HSD_MObj, texp: *
     sp_cnst1.reg = reg2 as u8;
     let mut color = GXColor { r: sp168.a, g: sp168.a, b: sp168.a, a: 0 };
     sp_cnst1.val = (&raw mut color).cast();
-    melee_runtime::tu::texp::HSD_TExpSetReg(p1);
+    ext::HSD_TExpSetReg(p1.cast());
 
     let mut sp_tevdesc = tevdesc_template();
-    sp_tevdesc.stage = tx::HSD_StateAssignTev() as u32;
-    sp_tevdesc.u.tevconf.clr_b = melee_runtime::tu::lb_00B0::lb_8000CC8C(reg1) as _;
-    sp_tevdesc.u.tevconf.clr_c = melee_runtime::tu::lb_00B0::lb_8000CC8C(reg2) as _;
+    sp_tevdesc.stage = ext::HSD_StateAssignTev() as u32;
+    sp_tevdesc.u.tevconf.clr_b = ext::lb_8000CC8C((reg1) as i32) as _;
+    sp_tevdesc.u.tevconf.clr_c = ext::lb_8000CC8C((reg2) as i32) as _;
     if reg1 < 4 {
-        sp_tevdesc.u.tevconf.kcsel = melee_runtime::tu::lb_00B0::lb_8000CCA4(reg1) as _;
+        sp_tevdesc.u.tevconf.kcsel = ext::lb_8000CCA4((reg1) as i32) as _;
     } else if reg2 < 4 {
-        sp_tevdesc.u.tevconf.kcsel = melee_runtime::tu::lb_00B0::lb_8000CCA4(reg2) as _;
+        sp_tevdesc.u.tevconf.kcsel = ext::lb_8000CCA4((reg2) as i32) as _;
     }
     if (*fp).x61D != 0xFF {
-        sp_tevdesc.u.tevconf.alpha_d = melee_runtime::tu::lb_00B0::lb_8000CD90(reg2) as _;
+        sp_tevdesc.u.tevconf.alpha_d = ext::lb_8000CD90((reg2) as i32) as _;
         if reg2 < 4 {
-            sp_tevdesc.u.tevconf.kasel = melee_runtime::tu::lb_00B0::lb_8000CDA8(reg2) as _;
+            sp_tevdesc.u.tevconf.kasel = ext::lb_8000CDA8((reg2) as i32) as _;
         }
     }
-    tx::HSD_SetupTevStage(&mut sp_tevdesc);
+    ext::HSD_SetupTevStage((&raw mut sp_tevdesc).cast());
 }
 
 /// `ftMaterial_800BFB4C(gobj, diffuse)`: set the diffuse colour of every material of the fighter's model.
 pub unsafe fn ftMaterial_800BFB4C(gobj: *mut HSD_GObj, diffuse: *const GXColor) {
     let mut cur = (*gobj).hsd_obj as *mut HSD_JObj;
     while !cur.is_null() {
-        let mut dobj = melee_runtime::tu::jobj_ptr::HSD_JObjGetDObj(cur);
+        let mut dobj = (ext::HSD_JObjGetDObj(crate::mtu_ptr::ptr(&(cur))) as *mut HSD_DObj);
         while !dobj.is_null() {
             let mobj = (*dobj).mobj;
             if !mobj.is_null() && !(*mobj).mat.is_null() {

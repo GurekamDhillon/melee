@@ -1,0 +1,45 @@
+{
+ "stem": "plbonus",
+ "csrc": "rust/melee_fighter/gen/cref/tu/plbonus_unity.c",
+ "rmod": "melee_fighter::tu::plbonuslib",
+ "rfile": "plbonuslib.rs,rust/melee_fighter/src/tu/plbonus.rs,rust/melee_fighter/src/tu/player",
+ "cases": 1000,
+ "ops": [
+  [
+   "{ int s_ = (int) (rnd() % 6), i_ = (int) (rnd() % 2); fn_8003EE2C(s_, i_); }",
+   "{ let s_ = (rnd() % 6) as i32; let i_ = (rnd() % 2) as i32; m::fn_8003EE2C(s_, i_); }"
+  ],
+  [
+   "{ int s_ = (int) (rnd() % 6), i_ = (int) (rnd() % 2); fn_8003F294(s_, i_); }",
+   "{ let s_ = (rnd() % 6) as i32; let i_ = (rnd() % 2) as i32; m::fn_8003F294(s_, i_); }"
+  ],
+  [
+   "{ int s_ = (int) (rnd() % 6), i_ = (int) (rnd() % 2); fn_8003F53C(s_, i_); }",
+   "{ let s_ = (rnd() % 6) as i32; let i_ = (rnd() % 2) as i32; m::fn_8003F53C(s_, i_); }"
+  ],
+  [
+   "{ int s_ = (int) (rnd() % 6), i_ = (int) (rnd() % 2); Vec3 a_, b_; a_.x = rw(); a_.y = rw(); a_.z = rw(); b_.x = rw(); b_.y = rw(); b_.z = rw(); fn_8003F654(s_, i_, &a_, &b_); }",
+   "{ let s_ = (rnd() % 6) as i32; let i_ = (rnd() % 2) as i32; let mut a_ = Vec3 { x: 0.0, y: 0.0, z: 0.0 }; let mut b_ = a_; a_.x = rw(); a_.y = rw(); a_.z = rw(); b_.x = rw(); b_.y = rw(); b_.z = rw(); m::fn_8003F654(s_, i_, &mut a_, &mut b_); }"
+  ],
+  [
+   "{ int s_ = (int) (rnd() % 6), i_ = (int) (rnd() % 2); Vec3 a_, b_; a_.x = rw(); a_.y = rw(); a_.z = rw(); b_.x = rw(); b_.y = rw(); b_.z = rw(); pl_8003FAA8(s_, i_, &a_, &b_); }",
+   "{ let s_ = (rnd() % 6) as i32; let i_ = (rnd() % 2) as i32; let mut a_ = Vec3 { x: 0.0, y: 0.0, z: 0.0 }; let mut b_ = a_; a_.x = rw(); a_.y = rw(); a_.z = rw(); b_.x = rw(); b_.y = rw(); b_.z = rw(); m::pl_8003FAA8(s_, i_, &mut a_, &mut b_); }"
+  ],
+  [
+   "{ int s_ = (int) (rnd() % 6), i_ = (int) (rnd() % 2); int m_ = (int) fv(), x_ = (int) fv(); pl_8003D644(s_, i_, m_, x_); }",
+   "{ let s_ = (rnd() % 6) as i32; let i_ = (rnd() % 2) as i32; let m_ = fv() as i32; let x_ = fv() as i32; m::pl_8003D644(s_, i_, m_, x_); }"
+  ],
+  [
+   "{ int s_ = (int) (rnd() % 6); pl_8003891C(s_); }",
+   "{ let s_ = (rnd() % 6) as i32; melee_fighter::tu::plbonus::pl_8003891C(s_); }"
+  ]
+ ],
+ "fill_types": "StaticPlayer,pl_StaleMoveTableExt_t,pl_804D6470_t",
+ "c_pre": "static pl_804D6470_t PL64;",
+ "c_world": "    { int q_; for (q_ = 0; q_ < 6; q_++) { zero(&player_slots[q_], sizeof player_slots[q_]); fill_StaticPlayer(&player_slots[q_]); player_slots[q_].transformed[0] &= 1; player_slots[q_].transformed[1] &= 1; player_slots[q_].player_entity[0] = &GO[q_ % NG]; player_slots[q_].player_entity[1] = &GO[(q_ + 1) % NG]; fill_pl_StaleMoveTableExt_t((pl_StaleMoveTableExt_t*) &player_slots[q_].stale_moves); }\n      zero(&PL64, sizeof PL64); fill_pl_804D6470_t(&PL64); { u32* w_ = (u32*) &PL64; unsigned n_; for (n_ = 0; n_ < sizeof PL64 / 4; n_++) if (!w_[n_]) w_[n_] = 1; } pl_804D6470 = &PL64; }",
+ "c_hash": "    { int q_; for (q_ = 0; q_ < 6; q_++) hash_pl_StaleMoveTableExt_t((pl_StaleMoveTableExt_t*) &player_slots[q_].stale_moves); }",
+ "rs_head": "use melee_fighter::tu::plbonus as m2;\nuse melee_fighter::tu::player as m3;\nstatic mut PL64: *mut pl_804D6470_t = null_mut();\nuse melee_fighter::stale::PLAYER_SLOTS;",
+ "rs_hooks": "    PL64 = bz();",
+ "rs_world": "    for q_ in 0..6 { PLAYER_SLOTS[q_] = core::mem::zeroed(); fill_StaticPlayer(&mut PLAYER_SLOTS[q_]); PLAYER_SLOTS[q_].transformed[0] &= 1; PLAYER_SLOTS[q_].transformed[1] &= 1; PLAYER_SLOTS[q_].player_entity[0] = &raw mut (*GO)[q_ % NG]; PLAYER_SLOTS[q_].player_entity[1] = &raw mut (*GO)[(q_ + 1) % NG]; fill_pl_StaleMoveTableExt_t(&mut *(&raw mut PLAYER_SLOTS[q_].stale_moves as *mut pl_StaleMoveTableExt_t)); }\n    *PL64 = core::mem::zeroed(); fill_pl_804D6470_t(&mut *PL64); { let w_ = PL64 as *mut u32; for n_ in 0..core::mem::size_of::<pl_804D6470_t>() / 4 { if *w_.add(n_) == 0 { *w_.add(n_) = 1; } } } melee_fighter::tu::player::pl_804D6470 = PL64;",
+ "rs_hash": "    for q_ in 0..6 { hash_pl_StaleMoveTableExt_t(&*(&raw const PLAYER_SLOTS[q_].stale_moves as *const pl_StaleMoveTableExt_t)); }"
+}

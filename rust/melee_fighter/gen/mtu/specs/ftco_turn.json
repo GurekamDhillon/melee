@@ -1,0 +1,18 @@
+{
+  "stem": "ftco_turn",
+  "csrc": "src/melee/ft/kinds/ftCommon/ftCo_Turn.c",
+  "rmod": "melee_fighter::tu::ftCo_Turn",
+  "cases": 500,
+  "stubs": "",
+  "ops": [
+    [
+      "ftCo_Turn_Ucf073Dashback(fp)",
+      "m::ftCo_Turn_Ucf073Dashback(&mut *fp)"
+    ],
+    [
+      "ftCo_Turn_Ucf084Dashback(fp)",
+      "m::ftCo_Turn_Ucf084Dashback(&mut *fp)"
+    ]
+  ],
+  "rfile": "ftCo_Turn"
+}

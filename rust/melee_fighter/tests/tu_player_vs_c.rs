@@ -77,6 +77,11 @@ fn install() {
         });
         m::ext::hook::HSD_GObjFree = Some(|g| t(0x60 + e(g)));
         m::ext::hook::ftCo_800D4FF4 = Some(|g| t(0x70 + e(g)));
+        m::ext::hook::GenoDefine_InitKinds = Some(|| t(0x240));
+        m::ext::hook::ftData_800855C8 = Some(|k, c| {
+            t(0x250 + k as u32);
+            t(c as u32)
+        });
         m::ext::hook::ifStatus_802F6E1C = Some(|s| t(0x80 + s as u32));
         m::ext::hook::ftLib_800873CC = Some(|g| {
             t(0x90 + e(g));
@@ -280,7 +285,7 @@ fn dump(out: &mut Vec<String>, slot: usize) {
     out.push(s);
 }
 
-const NOPS: u32 = 144;
+const NOPS: u32 = 147;
 
 #[test]
 fn player_matches_c() {
@@ -483,6 +488,12 @@ fn player_matches_c() {
                     m::Player_MexSetPartner(c, (rnd() % 300) as i32)
                 }
                 143 => m::Player_ForgetEntities(),
+                144 => {
+                    let c = rnd() % 40;
+                    m::Player_80031CB0(c, rnd() as u8)
+                }
+                145 => ret = (m::Player_GetStaleMoveTableIndexPtr(slot) as usize - base) as u32,
+                146 => m::Player_InitOrResetPlayer(slot),
                 _ => unreachable!(),
             }
             out.push(format!("{} {} {} {} {:x} {:x} {:x} {:x} {:x}", k, step, op, slot, ret, b(v.x), b(v.y), b(v.z), tr()));
@@ -499,7 +510,7 @@ fn player_matches_c() {
             ));
         }
     }
-    let want = include_str!("data/player.txt");
+    let want = include_str!("data/player2.txt");
     let want: Vec<&str> = want.lines().collect();
     assert_eq!(want.len(), out.len(), "line count");
     let mut ops_seen = [0u32; NOPS as usize];

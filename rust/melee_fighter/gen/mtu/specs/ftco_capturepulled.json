@@ -1,0 +1,14 @@
+{
+  "stem": "ftco_capturepulled",
+  "csrc": "src/melee/ft/kinds/ftCommon/ftCo_CapturePulled.c",
+  "rmod": "melee_fighter::tu::ftCo_CapturePulled",
+  "cases": 500,
+  "stubs": "",
+  "ops": [
+    [
+      "ftCo_800DB500(g)",
+      "m::ftCo_800DB500(g)"
+    ]
+  ],
+  "rfile": "ftCo_CapturePulled"
+}

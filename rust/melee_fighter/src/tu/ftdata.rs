@@ -36,12 +36,13 @@ pub mod ext {
     use crate::types::*;
     use core::ffi::{c_char, c_void};
     macro_rules! stubs {
-        ($($stat:ident $name:ident ($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {$(
+        ($($stat:ident $name:ident ($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $d:expr)?;)*) => {$(
             pub static mut $stat: Option<fn($($t),*) $(-> $r)?> = None;
+            #[allow(unreachable_code)]
             pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { $stat } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO stub: ", stringify!($name))),
+                    None => { $( return $d; )? panic!(concat!("TODO stub: ", stringify!($name))) }
                 }
             }
         )*};
@@ -53,13 +54,22 @@ pub mod ext {
         OS_REPORT OSReport(msg: &str);
         // pc/geno (group 6)
         GENO_GAME_CLEAR_PROFILE_STORAGE GenoGame_ClearProfileStorage();
-        GENO_DEFINE_RESET_DESCRIPTORS GenoDefine_ResetDescriptors();
-        GENO_DEFINE_INIT_KINDS GenoDefine_InitKinds();
+        GENO_DEFINE_RESET_DESCRIPTORS GenoDefine_ResetDescriptors() = super::GenoDefine_ResetDescriptors();
+        GENO_DEFINE_INIT_KINDS GenoDefine_InitKinds() = super::GenoDefine_InitKinds();
         GENO_DEFINE_LOAD GenoDefine_Load(kind: i32, base: i32);
-        GENO_DEFINE_CAPTURE_BASE GenoDefine_CaptureBase(kind: i32);
-        GENO_DEFINE_BASE_KIND Geno_DefineBaseKind(kind: i32) -> i32;
-        GENO_DEFINE_IS_NONE Geno_DefineIsNone(kind: i32) -> i32;
-        GENO_DEFINE_TEMPLATE_SKELETON Geno_DefineTemplateSkeleton(kind: i32) -> i32;
+        GENO_DEFINE_CAPTURE_BASE GenoDefine_CaptureBase(kind: i32) = super::GenoDefine_CaptureBase(kind);
+        // The Geno registry queries (pc/geno): unset = the default configuration, no Geno define registered.
+        GENO_DEFINE_BASE_KIND Geno_DefineBaseKind(kind: i32) -> i32 = crate::platform::Geno_DefineBaseKind(kind);
+        GENO_DEFINE_IS_NONE Geno_DefineIsNone(kind: i32) -> i32 = crate::platform::Geno_DefineIsNone(kind);
+        GENO_DEFINE_TEMPLATE_SKELETON Geno_DefineTemplateSkeleton(kind: i32) -> i32 = crate::hooks::geno_define_template_skeleton(kind);
+        GENO_DEFINE_COUNT Geno_DefineCount() -> i32 = 0;
+        GENO_DEFINE_CK_AT Geno_DefineCKAt(i: i32) -> i32 = 0;
+        GENO_DEFINE_COSTUME_COUNT Geno_DefineCostumeCount(kind: i32) -> i32 = 0;
+        GENO_DEFINE_STRING Geno_DefineString(kind: i32, which: i32, costume: i32) -> *const c_char = core::ptr::null();
+        GENO_DEFINE_PARTNER_KIND Geno_DefinePartnerKind(kind: i32) -> i32 = -1;
+        GENO_DEFINE_IDENTITY_WORD Geno_DefineIdentityWord(kind: i32, word: i32) -> u32 = 0;
+        PLAYER_MEX_SET_PARTNER Player_MexSetPartner(ckind: i32, partner_fk: i32) = crate::tu::player::Player_MexSetPartner(ckind, partner_fk);
+        HSD_MEM_ALLOC HSD_MemAlloc(bytes: usize) -> *mut c_void = Box::leak(vec![0u8; bytes].into_boxed_slice()).as_mut_ptr() as *mut c_void;
         GENO_DEFINE_THROWN_AS Geno_DefineThrownAs(kind: i32) -> i32;
         GENO_DEFINE_THROWN_AS_ROW Geno_DefineThrownAsRow(kind: i32, row: i32) -> i32;
         GENO_THROW_REGION Geno_ThrowRegion(size: &mut u32) -> *mut u8;
@@ -148,7 +158,7 @@ pub struct CallbackPair {
 pub static mut gFtDataList: [*mut ftData; KMAX] = [core::ptr::null_mut(); KMAX];
 pub static mut ft_8045993C: [ft_8045993C_t; 6] = [ft_8045993C_t { pad_x0: 0, pad_x4: [0; 2], bf_6: [0; 2] }; 6];
 pub static mut ft_8045996C: [i32; KMAX] = [0; KMAX];
-static mut ftData_ThrownRows: [*mut Fighter_WaitAnimData; KMAX] = [core::ptr::null_mut(); KMAX];
+pub static mut ftData_ThrownRows: [*mut Fighter_WaitAnimData; KMAX] = [core::ptr::null_mut(); KMAX];
 pub static mut ftData_AnimReloadData: [*mut c_void; KMAX] = [core::ptr::null_mut(); KMAX];
 pub static mut ftData_AnimBankBytes: [usize; KMAX] = [0; KMAX];
 
@@ -347,6 +357,170 @@ fn reset_8045993c(i: usize) {
         ft_8045993C[i].pad_x0 = 0;
         ft_8045993C[i].set_x6_b0(0);
         ft_8045993C[i].set_x6_b1_b2(0);
+    }
+}
+
+// ---- pc/geno/geno_define_data.inc (included by ftdata.c): the Geno define tables the fighter engine reaches --------------
+
+/// `GenoDefine_CommonRows` / `GenoDefine_SpecificRows`: a define's own motion-state rows, per kind.
+pub static mut GenoDefine_CommonRows: [*mut MotionState; KMAX] = [core::ptr::null_mut(); KMAX];
+pub static mut GenoDefine_SpecificRows: [*mut MotionState; KMAX] = [core::ptr::null_mut(); KMAX];
+pub static mut GenoDefine_ContentIdentity: [[u32; 2]; KMAX] = [[0; 2]; KMAX];
+pub static mut GenoDefine_InterpreterAttempts: [u32; KMAX] = [0; KMAX];
+pub static mut GenoDefine_Costumes: [*mut UnkCostumeStruct; KMAX - MEX0 as usize] = [core::ptr::null_mut(); KMAX - MEX0 as usize];
+pub static mut GenoDefine_CostumeStrings: [*mut Fighter_CostumeStrings; KMAX - MEX0 as usize] =
+    [core::ptr::null_mut(); KMAX - MEX0 as usize];
+/// `GENO_TMPL_COUNT`.
+const GENO_TMPL_COUNT: usize = 8;
+/// The pristine animation-row table of each template fighter, captured before an attach can touch it.
+pub static mut GenoDefine_RowBaseline: [*mut Fighter_WaitAnimData; GENO_TMPL_COUNT] = [core::ptr::null_mut(); GENO_TMPL_COUNT];
+
+/// `GenoDefine_TmplIndex`.
+fn GenoDefine_TmplIndex(base: i32) -> usize {
+    if base == Ft_Kind_Captain as i32 { 1 }
+    else if base == Ft_Kind_Fox as i32 { 2 }
+    else if base == Ft_Kind_Falco as i32 { 3 }
+    else if base == Ft_Kind_Mars as i32 { 4 }
+    else if base == Ft_Kind_Purin as i32 { 5 }
+    else if base == Ft_Kind_Seak as i32 { 6 }
+    else if base == Ft_Kind_Zelda as i32 { 7 }
+    else { 0 }
+}
+
+/// `gd_data_copy`: a heap copy of a descriptor block (`HSD_MemAlloc` + `memcpy`).
+unsafe fn gd_data_copy(source: *const c_void, bytes: usize) -> *mut c_void {
+    let out = ext::HSD_MemAlloc(bytes);
+    assert!(!out.is_null(), "Geno definition descriptor allocation exhausted");
+    core::ptr::copy_nonoverlapping(source as *const u8, out as *mut u8, bytes);
+    out
+}
+
+/// `GenoDefine_ResetDescriptors`.
+pub fn GenoDefine_ResetDescriptors() {
+    unsafe {
+        for t in 0..GENO_TMPL_COUNT {
+            GenoDefine_RowBaseline[t] = core::ptr::null_mut();
+        }
+        GenoDefine_CommonRows = [core::ptr::null_mut(); KMAX];
+        GenoDefine_SpecificRows = [core::ptr::null_mut(); KMAX];
+    }
+}
+
+/// `GenoDefine_CaptureBase`: capture a template fighter's row table before the first attachment can change script pointers.
+pub fn GenoDefine_CaptureBase(kind: i32) {
+    let t = GenoDefine_TmplIndex(kind);
+    unsafe {
+        if ext::Geno_DefineCount() != 0 && GenoDefine_RowBaseline[t].is_null() && !gFtDataList[kind as usize].is_null() {
+            GenoDefine_RowBaseline[t] = gd_data_copy(
+                (*gFtDataList[kind as usize]).xC as *const c_void,
+                ftData_Table_Unk0[kind as usize].count as usize * core::mem::size_of::<Fighter_WaitAnimData>(),
+            ) as *mut Fighter_WaitAnimData;
+        }
+    }
+}
+
+/// `GenoDefine_InitKinds`: give every registered define its kind's tables (inherited from its base kind).
+pub fn GenoDefine_InitKinds() {
+    let n = ext::Geno_DefineCount();
+    for i in 0..n {
+        let ck = ext::Geno_DefineCKAt(i);
+        let fk = ck - 1;
+        let base = ext::Geno_DefineBaseKind(fk);
+        if base < 0 || fk < MEX0 || fk >= Ft_Kind_Max as i32 {
+            continue;
+        }
+        let (f, b) = (fk as usize, base as usize);
+        unsafe {
+            macro_rules! inherit { ($($t:ident),*) => { $( $t[f] = $t[b]; )* } }
+            inherit!(ftData_OnLoad, ftData_OnDeath, ftData_OnUserDataRemove, ftData_CharacterStateTables);
+            if !GenoDefine_SpecificRows[f].is_null() {
+                ftData_CharacterStateTables[f] = GenoDefine_SpecificRows[f];
+            }
+            inherit!(
+                ftData_SpecialN, ftData_SpecialAirN, ftData_SpecialS, ftData_SpecialAirS, ftData_SpecialHi,
+                ftData_SpecialAirHi, ftData_SpecialLw, ftData_SpecialAirLw, ftData_OnAbsorb, ftData_OnItemPickupExt,
+                ftData_OnItemInvisible, ftData_OnItemVisible, ftData_OnItemDropExt, ftData_OnItemPickup,
+                ftData_OnItemDrop, ftData_UnkMotionStates1, ftData_UnkMotionStates2, ftData_OnKnockbackEnter,
+                ftData_OnKnockbackExit, ftData_UnkMotionStates3, ftData_UnkMotionStates4, ftKindCalcIndiviParamTable,
+                ftData_UnkMtxFunc0, ftData_803C24EC, ftData_UnkDemoCallbacks0, ftData_UnkMotionStates0,
+                ftData_803C1F40, ftData_803C23E4, ftData_803C2468, ftData_803C2360, ftData_UnkMotionStates5,
+                ftData_UnkBytePerCharacter, ftData_UnkCallbackPairs0
+            );
+            let slot = (fk - MEX0) as usize;
+            if ext::Geno_DefineIsNone(fk) != 0 {
+                // Own files by name: no Pl*.dat file, the fighter's ftData is built natively in GenoDefine_Load.
+                let nc = ext::Geno_DefineCostumeCount(fk);
+                ftData_803C1F40[f].a = core::ptr::null_mut();
+                ftData_803C1F40[f].b = core::ptr::null_mut();
+                ftData_803C23E4[f] = ext::Geno_DefineString(fk, 0, 0) as *mut c_char;
+                if GenoDefine_CostumeStrings[slot].is_null() {
+                    GenoDefine_CostumeStrings[slot] =
+                        ext::PcCostumeAlloc(nc as usize * core::mem::size_of::<Fighter_CostumeStrings>()) as *mut Fighter_CostumeStrings;
+                }
+                assert!(!GenoDefine_CostumeStrings[slot].is_null(), "costume strings exhausted");
+                for c in 0..nc {
+                    let cs = &mut *GenoDefine_CostumeStrings[slot].add(c as usize);
+                    cs.dat_filename = ext::Geno_DefineString(fk, 2, c) as *mut c_char;
+                    cs.joint_name = ext::Geno_DefineString(fk, 3, c) as *mut c_char;
+                    cs.matanim_joint_name = ext::Geno_DefineString(fk, 4, c) as *mut c_char;
+                }
+                ftData_803C2360[f] = GenoDefine_CostumeStrings[slot];
+                // `static int said; if (!said++) OSReport("geno: base none kind ...")`: one log line, no state.
+            }
+            // Do not invoke Mario's global init twice under a new id.
+            ftData_Table_Unk1[f] = None;
+            ftData_Table_Unk0[f].count = ftData_Table_Unk0[b].count;
+            ftData_UnkIntPairs[f].count = ftData_UnkIntPairs[b].count;
+            {
+                let nc = if ext::Geno_DefineIsNone(fk) != 0 {
+                    ext::Geno_DefineCostumeCount(fk)
+                } else {
+                    CostumeListsForeachCharacter[b].numCostumes as i32
+                };
+                if GenoDefine_Costumes[slot].is_null() {
+                    GenoDefine_Costumes[slot] =
+                        ext::PcCostumeAlloc(nc as usize * core::mem::size_of::<UnkCostumeStruct>()) as *mut UnkCostumeStruct;
+                    assert!(!GenoDefine_Costumes[slot].is_null(), "costume runtime exhausted");
+                }
+                CostumeListsForeachCharacter[f].costume_list = GenoDefine_Costumes[slot];
+            }
+            CostumeListsForeachCharacter[f].numCostumes = if ext::Geno_DefineIsNone(fk) != 0 {
+                ext::Geno_DefineCostumeCount(fk) as u8
+            } else {
+                CostumeListsForeachCharacter[b].numCostumes
+            };
+            ext::Player_MexSetMapping(ck, fk);
+            // a Zelda or Sheik template define: the sub-fighter is its transform partner define, never retail Sheik / Zelda
+            let pk = ext::Geno_DefinePartnerKind(fk);
+            if pk >= 0 {
+                ext::Player_MexSetPartner(ck, pk);
+            }
+            GenoDefine_ContentIdentity[f][0] = ext::Geno_DefineIdentityWord(fk, 0);
+            GenoDefine_ContentIdentity[f][1] = ext::Geno_DefineIdentityWord(fk, 1);
+        }
+    }
+}
+
+/// `GenoDefine_RestPoseTree`: a base "none" define's rest-pose joint tree (the guard's pose blend), NULL for any other fighter.
+pub fn GenoDefine_RestPoseTree(fp: &mut Fighter) -> *mut HSD_Joint {
+    if ext::Geno_DefineIsNone(fp.kind as i32) == 0 || ext::Geno_DefineTemplateSkeleton(fp.kind as i32) != 0 {
+        return core::ptr::null_mut();
+    }
+    // the guard walks it from FtPart_TransN, so it is the tree below the root joint
+    unsafe {
+        (*(*CostumeListsForeachCharacter[fp.kind as usize].costume_list.add(fp.x619_costume_id as usize)).joint).child
+    }
+}
+
+/// `GenoDefine_BindFighter`: a define's fighter takes the define's own motion-state rows.
+pub fn GenoDefine_BindFighter(fp: &mut Fighter) {
+    if ext::Geno_DefineBaseKind(fp.kind as i32) < 0 {
+        return;
+    }
+    unsafe {
+        fp.x1C_actionStateList = GenoDefine_CommonRows[fp.kind as usize];
+        fp.x20_actionStateList = GenoDefine_SpecificRows[fp.kind as usize];
+        report(format!("geno: native define kind {} spawn: interpreter attempts {}\n", fp.kind, GenoDefine_InterpreterAttempts[fp.kind as usize]));
     }
 }
 
@@ -914,6 +1088,11 @@ pub struct ThrowState {
 }
 
 static mut THROW: Option<Box<ThrowState>> = None;
+
+/// The Geno thrown stand-in bank state (`ftData_ThrowBanks`, `ftData_ThrowBankLoads`, ...).
+pub fn throw_state() -> &'static mut ThrowState {
+    throw()
+}
 
 fn throw() -> &'static mut ThrowState {
     unsafe {

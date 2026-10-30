@@ -1,0 +1,82 @@
+{
+  "stem": "ft_0d4d",
+  "csrc": "src/melee/ft/ft_0D4D.c",
+  "rmod": "melee_fighter::tu::ft_0d4d",
+  "cases": 500,
+  "stubs": "--skip efSync_Spawn --ret \"Player_GetEntityAtIndex=&GO[fv() % NG]|&raw mut (*crate::GO)[(fv() as usize) % crate::NG] as *mut core::ffi::c_void\" --libhook Fighter_UnkProcessDeath_80068354=FIGHTER_UNK_PROCESS_DEATH",
+  "c_head": "void* efSync_Spawn(s32 id, HSD_GObj* g, ...) { (void) g; T(2050); T((u32) id); return 0; }\nstatic void* D6534[4];\nstatic CmSubject CAMB[NG];",
+  "ops": [
+    [
+      "fn_800D4DD4(g)",
+      "m::fn_800D4DD4(g)"
+    ],
+    [
+      "ftCo_DeadUpFall_Cam(g)",
+      "m::ftCo_DeadUpFall_Cam(g)"
+    ],
+    [
+      "ftCo_800D4F24(g, (int) (rnd() % 4))",
+      "let ix = (rnd() % 4) as i32; m::ftCo_800D4F24(g, ix)"
+    ],
+    [
+      "ftCo_800D4FF4(g)",
+      "m::ftCo_800D4FF4(g)"
+    ],
+    [
+      "ftCo_Rebirth_Anim(g)",
+      "m::ftCo_Rebirth_Anim(g)"
+    ],
+    [
+      "ftCo_Rebirth_IASA(g)",
+      "m::ftCo_Rebirth_IASA(g)"
+    ],
+    [
+      "ftCo_Rebirth_Phys(g)",
+      "m::ftCo_Rebirth_Phys(g)"
+    ],
+    [
+      "ftCo_Rebirth_Coll(g)",
+      "m::ftCo_Rebirth_Coll(g)"
+    ],
+    [
+      "fn_800D54A4(g)",
+      "m::fn_800D54A4(g)"
+    ],
+    [
+      "fn_800D55B4(g)",
+      "m::fn_800D55B4(g)"
+    ],
+    [
+      "ftCo_800D5600(g)",
+      "m::ftCo_800D5600(g)"
+    ],
+    [
+      "ftCo_RebirthWait_Anim(g)",
+      "m::ftCo_RebirthWait_Anim(g)"
+    ],
+    [
+      "ftCo_RebirthWait_IASA(g)",
+      "m::ftCo_RebirthWait_IASA(g)"
+    ],
+    [
+      "ftCo_RebirthWait_Phys(g)",
+      "m::ftCo_RebirthWait_Phys(g)"
+    ],
+    [
+      "ftCo_RebirthWait_Coll(g)",
+      "m::ftCo_RebirthWait_Coll(g)"
+    ],
+    [
+      "fn_800D5A30(g)",
+      "m::fn_800D5A30(g)"
+    ],
+    [
+      "ftCo_Rebirth_Cam(g)",
+      "m::ftCo_Rebirth_Cam(g)"
+    ]
+  ],
+  "rs_hooks": "    m::ext::H_efSync_Spawn = Some(|id, _g, _va| { t(2050); t(id as u32); null_mut() });\n    CAMB = bz();\n    h::HSD_JOBJ_SET_SCALE = Some(|j, v| melee_types::inline::HSD_JObjSetScale(&mut *j, v, &mut Dirty));\n    h::HSD_JOBJ_SET_TRANSLATE = Some(|j, v| melee_types::inline::HSD_JObjSetTranslate(&mut *j, v, &mut Dirty));",
+  "c_world": "    { int q_; for (q_ = 0; q_ < 4; q_++) D6534[q_] = PADB[80 + q_]; Fighter_804D6534 = D6534; for (q_ = 0; q_ < NG; q_++) FT[q_].x20A0_accessory = &JO[q_]; }\n    { int q_; for (q_ = 0; q_ < NG; q_++) { zero(&CAMB[q_], sizeof CAMB[q_]); FT[q_].x890_cameraBox = &CAMB[q_]; } }\n    /* the mv union views this TU reads: set after the fill (whose bitfield view is laid out differently in the two builds) */\n    { int q_; for (q_ = 0; q_ < NG; q_++) { FT[q_].mv.co.common.x0 = (int) (fv() % 100); FT[q_].mv.co.common.x4.x = rg(); FT[q_].mv.co.common.x4.y = rg(); FT[q_].mv.co.common.x4.z = rg(); FT[q_].mv.co.unk_deadup.x40 = (int) (fv() % 100); FT[q_].mv.co.unk_deadup.x44 = (int) (fv() % 100); } }",
+  "rs_head": "static mut D6534: [*mut c_void; 4] = [null_mut(); 4];\nstatic mut CAMB: *mut [CmSubject; NG] = null_mut();\n/// the jobj.h inlines' dirty marks, as the C build compiles them: the flag, then the out-of-line HSD_JObjSetMtxDirtySub\nstruct Dirty;\nimpl melee_types::inline::JObjDirty for Dirty {\n    fn set_mtx_dirty(&mut self, j: &mut HSD_JObj) { melee_types::inline::HSD_JObjSetMtxDirtyInline(j, self) }\n    fn set_mtx_dirty_sub(&mut self, j: &mut HSD_JObj) { ft_0d4d_stubs::call_HSD_JObjSetMtxDirtySub(j as *mut HSD_JObj as *const c_void); }\n}",
+  "rs_world": "    for q in 0..4 { D6534[q] = (*PADB)[80 + q].as_mut_ptr() as *mut c_void; }\n    m::ext::Fighter_804D6534 = D6534.as_mut_ptr();\n    for q in 0..NG { (*FT)[q].x20A0_accessory = &raw mut (*JO)[q]; }\n    for q in 0..NG { (*CAMB)[q] = core::mem::zeroed(); (*FT)[q].x890_cameraBox = &raw mut (*CAMB)[q]; }\n    for q in 0..NG { let f = &mut (*FT)[q]; f.mv.co.common.x0 = (fv() % 100) as _; f.mv.co.common.x4.x = rg(); f.mv.co.common.x4.y = rg(); f.mv.co.common.x4.z = rg(); f.mv.co.unk_deadup.x40 = (fv() % 100) as _; f.mv.co.unk_deadup.x44 = (fv() % 100) as _; }"
+}

@@ -1,5 +1,3 @@
-# Rust port (branch `rust-port`)
-
 Goal: the whole codebase (decomp C, the 10 PowerPC `.s` files, `pc/` platform layer) in Rust, with game logic
 bit-identical to the C build so rollback netplay and Slippi replays still agree.
 
@@ -84,3 +82,5 @@ The long history and topic detail that used to live here is in `docs/rust-port/n
 - 2026-10-25 Platform -> notes/platform.md
 - 2026-10-25 Platform track, audio round 7: driving past the main menu (no new capture) -> notes/audio.md
 - 2026-10-30 port/tooling: `melee diff` field-level C-vs-Rust diff; RUST_PORT.md split into STATUS.md + notes/ -> notes/diff.md
+- 2026-10-25 melee_fighter trace verification (port/pre-melee_fighter) -> notes/traces.md
+- 2026-10-30 Trace status after all six pre-melee_* merges -> notes/traces.md

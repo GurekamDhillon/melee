@@ -1,0 +1,33 @@
+{
+  "stem": "ft_081b",
+  "csrc": "src/melee/ft/ft_081B.c",
+  "rmod": "melee_fighter::tu::ft_081b",
+  "rfile": "ft_081b",
+  "cases": 500,
+  "stubs": "--ret \"mpLib_80056A1C=RA|(&raw mut crate::RA) as *mut i32\" --ret \"mpLib_80056A8C=RA|(&raw mut crate::RA) as *mut i32\" --ret \"mpLib_80056AFC=RA|(&raw mut crate::RA) as *mut i32\"",
+  "c_head": "static int I3[3];",
+  "c_hash": "    HM((u32) I3[0]); HM((u32) I3[1]); HM((u32) I3[2]);",
+  "c_world": "    I3[0] = (int) (fv() % 5) - 1; I3[1] = (int) (fv() % 5) - 1; I3[2] = (int) (fv() % 5) - 1;\n    { int q_; for (q_ = 0; q_ < 4; q_++) RA[q_] = (int) (fv() % 4) - 1; }",
+  "rs_head": "static mut I3: [i32; 3] = [0; 3];\nstatic mut RA: [i32; 4] = [0; 4];",
+  "rs_hash": "    hm(I3[0] as u32); hm(I3[1] as u32); hm(I3[2] as u32);",
+  "rs_world": "    I3[0] = (fv() % 5) as i32 - 1; I3[1] = (fv() % 5) as i32 - 1; I3[2] = (fv() % 5) as i32 - 1;\n    for q in 0..4 { RA[q] = (fv() % 4) as i32 - 1; }",
+  "ops": [
+    [
+      "ret = ft_80082A68(g) != 0",
+      "ret = m::ft_80082a68(g) as u32"
+    ],
+    [
+      "ft_80083DCC(g)",
+      "m::ft_80083dcc(g)"
+    ],
+    [
+      "ret = ft_80084BFC(g, &I3[0], &I3[1], &I3[2]) != 0",
+      "ret = m::ft_80084bfc(g, &raw mut I3[0], &raw mut I3[1], &raw mut I3[2]) as u32"
+    ],
+    [
+      "ret = ft_80084C38(g, &I3[0], &I3[1], &I3[2]) != 0",
+      "ret = m::ft_80084c38(g, &raw mut I3[0], &raw mut I3[1], &raw mut I3[2]) as u32"
+    ]
+  ],
+  "c_pre": "static int RA[4];"
+}

@@ -9,19 +9,38 @@ use crate::types::*;
 pub mod ext {
     use crate::types::*;
     use core::ffi::c_void;
-    pub fn HSD_JObjGetDObj(jobj: *mut HSD_JObj) -> *mut HSD_DObj { panic!("TODO(group1 jobj) HSD_JObjGetDObj") }
-    pub fn HSD_JObjSetFlags(jobj: *mut HSD_JObj, flags: u32) { panic!("TODO(group1 jobj) HSD_JObjSetFlags") }
-    pub fn HSD_JObjClearFlags(jobj: *mut HSD_JObj, flags: u32) { panic!("TODO(group1 jobj) HSD_JObjClearFlags") }
-    pub fn HSD_JObjAddDObj(jobj: *mut HSD_JObj, dobj: *mut HSD_DObj) { panic!("TODO(group1 jobj) HSD_JObjAddDObj") }
-    pub fn HSD_DObjModifyFlags(dobj: *mut HSD_DObj, a: u32, b: u32) { panic!("TODO(group1 dobj) HSD_DObjModifyFlags") }
-    pub fn HSD_DObjLoadDesc(desc: *mut HSD_DObjDesc) -> *mut HSD_DObj { panic!("TODO(group1 dobj) HSD_DObjLoadDesc") }
-    pub fn HSD_DObjResolveRefsAll(dobj: *mut HSD_DObj, desc: *mut HSD_DObjDesc) { panic!("TODO(group1 dobj) HSD_DObjResolveRefsAll") }
-    pub fn HSD_IDInsertToTable(table: *mut c_void, key: usize, data: *mut c_void) { { unsafe { let _ = melee_runtime::tu::id::HSD_IDInsertToTable(table as _, key as _, data as _); } return; } }
-    pub fn ftAnim_GetNextJointInTree(joint: &mut *mut HSD_Joint, depth: &mut i32) { unsafe { let _ = crate::tu::ftanim::ftAnim_GetNextJointInTree(joint, depth); } }
-    pub fn lb_8000CE30(a: *mut HSD_DObj, b: *mut HSD_DObj) { { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000CE30(a as _, b as _); } return; } }
-    pub fn hsdChangeClass(obj: *mut c_void, info: *mut c_void) { { unsafe { let _ = melee_runtime::tu::class::hsdChangeClass(obj as _, info as _); } return; } }
     /// `&ftMObj` (ftmaterial.c class info).
-    pub fn ftMObj() -> *mut c_void { panic!("TODO(ftmaterial) ftMObj class info") }
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? = $d:expr;)*) => {
+            pub mod hook {
+                use super::*;
+                $( #[allow(non_upper_case_globals)] pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( #[allow(unreachable_code, unused_variables)] pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => $d,
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+        fn ftCommon_80080460(_a0: *mut core::ffi::c_void) = { unsafe { let _ = crate::ftcommon2::ftcommon_80080460(&mut *(_a0 as *mut Fighter)); } };
+        fn ftCommon_80080474(_a0: *mut core::ffi::c_void) = { unsafe { let _ = crate::ftcommon2::ftcommon_80080474(&mut *(_a0 as *mut Fighter)); } };
+        fn ftParts_8007506C(_a0: i32, _a1: i32) -> u32 = { unsafe { (crate::ftdmgfall::ftparts_8007506c(_a0 as _, _a1 as _)) as _ } };
+        fn HSD_JObjGetDObj(jobj: *mut HSD_JObj) -> *mut HSD_DObj = { panic!("TODO(group1 jobj) HSD_JObjGetDObj") };
+        fn HSD_JObjSetFlags(jobj: *mut HSD_JObj, flags: u32) = { panic!("TODO(group1 jobj) HSD_JObjSetFlags") };
+        fn HSD_JObjClearFlags(jobj: *mut HSD_JObj, flags: u32) = { panic!("TODO(group1 jobj) HSD_JObjClearFlags") };
+        fn HSD_JObjAddDObj(jobj: *mut HSD_JObj, dobj: *mut HSD_DObj) = { panic!("TODO(group1 jobj) HSD_JObjAddDObj") };
+        fn HSD_DObjModifyFlags(dobj: *mut HSD_DObj, a: u32, b: u32) = { panic!("TODO(group1 dobj) HSD_DObjModifyFlags") };
+        fn HSD_DObjLoadDesc(desc: *mut HSD_DObjDesc) -> *mut HSD_DObj = { panic!("TODO(group1 dobj) HSD_DObjLoadDesc") };
+        fn HSD_DObjResolveRefsAll(dobj: *mut HSD_DObj, desc: *mut HSD_DObjDesc) = { panic!("TODO(group1 dobj) HSD_DObjResolveRefsAll") };
+        fn HSD_IDInsertToTable(table: *mut c_void, key: usize, data: *mut c_void) = { { unsafe { let _ = melee_runtime::tu::id::HSD_IDInsertToTable(table as _, key as _, data as _); } return; } };
+        fn ftAnim_GetNextJointInTree(joint: &mut *mut HSD_Joint, depth: &mut i32) = { unsafe { let _ = crate::tu::ftanim::ftAnim_GetNextJointInTree(joint, depth); } };
+        fn lb_8000CE30(a: *mut HSD_DObj, b: *mut HSD_DObj) = { { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000CE30(a as _, b as _); } return; } };
+        fn hsdChangeClass(obj: *mut c_void, info: *mut c_void) = { { unsafe { let _ = melee_runtime::tu::class::hsdChangeClass(obj as _, info as _); } return; } };
+        fn ftMObj() -> *mut c_void = { panic!("TODO(ftmaterial) ftMObj class info") };
+    }
 }
 
 use super::ftlipstickswing::fp;
@@ -86,7 +105,7 @@ fn enable_metal(f: &mut Fighter) {
             dobj = unsafe { (*dobj).next };
         }
     }
-    crate::ftcommon2::ftcommon_80080460(f);
+    ext::ftCommon_80080460(crate::mtu_ptr::ptr(&(f)));
 }
 
 /// `ftCo_800C8348(gobj, timer, health)`: start (or refresh) metal.
@@ -126,7 +145,7 @@ pub fn ftCo_800C8540(gobj: *mut HSD_GObj) {
         crate::hooks::ftco_800d105c(gobj);
         crate::hooks::ft_80081c88(gobj, f.x34_scale.y);
         ft_800C8170(f);
-        crate::ftcommon2::ftcommon_80080474(f);
+        ext::ftCommon_80080474(crate::mtu_ptr::ptr(&(f)));
     }
 }
 
@@ -140,7 +159,7 @@ pub fn ft_800C85B8(gobj: *mut HSD_GObj) {
     let mut joint_idx: i32 = 0;
     let mut dobj_count: i32 = 0;
     while !sp20.is_null() {
-        if crate::ftdmgfall::ftparts_8007506c(f.kind as i32, joint_idx) != 0 {
+        if (ext::ftParts_8007506C((f.kind as i32) as i32, (joint_idx) as i32) as u32) != 0 {
             joint_idx += 1;
         } else {
             ext::HSD_IDInsertToTable(core::ptr::null_mut(), sp20 as usize, bone(f, joint_idx).joint as *mut _);
@@ -152,7 +171,7 @@ pub fn ft_800C85B8(gobj: *mut HSD_GObj) {
     sp1c = 0;
     let mut part_idx: i32 = 0;
     while !sp20.is_null() {
-        if crate::ftdmgfall::ftparts_8007506c(f.kind as i32, part_idx) != 0 {
+        if (ext::ftParts_8007506C((f.kind as i32) as i32, (part_idx) as i32) as u32) != 0 {
             part_idx += 1;
             continue;
         }

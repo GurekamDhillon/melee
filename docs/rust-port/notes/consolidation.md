@@ -119,7 +119,7 @@ From step 7 the engine path is the one being moved forward.
 
 | # | title | scope |
 |---|---|---|
-| 0 | Green tests | Fix `tu_ft_0d4d_vs_c` (case 42 top-bit hash, from port/integ `ftaction.rs`). Make `pad_marth_sheik_bf` stop at its CSV end rather than running to the timeout. Record the baseline frame counts. |
+| 0 (DONE 2026-10-30) | Green tests | Fix `tu_ft_0d4d_vs_c` (case 42 top-bit hash, from port/integ `ftaction.rs`). Make `pad_marth_sheik_bf` stop at its CSV end rather than running to the timeout. Record the baseline frame counts. |
 | 1 | Rust call trace | Feature `calltrace` in `melee_core`: a `ct!()` entry counter inserted by `tools/rust-port/trace/insert_ct.py` into every `#[no_mangle]`/pub TU fn. `melee golden --calltrace OUT` writes `frame,fn,seq`. Extend `pc/platform/gw_calltrace.c` to log the same per frame. Add `tools/rust-port/trace/seqdiff.py` to report the first divergent call per frame. |
 | 2 | Diff gate and split baseline | `melee diff --all --frames LIST --subsystem S --baseline-check FILE`. Split `tools/rust-port/diff/baseline.txt` into `baseline/<subsystem>.txt` (fighter, item, stage, camera, effect, particle, hud, rng, gobj) and add `tools/rust-port/gate.sh` (section 3). |
 | 3 | Logic lint, report mode | Add `tools/rust-port/lint_logic.py` and `lint_allow.txt` (section 4). Run in CI with `--report`, so it lists violations without failing. Generate `lint_baseline.txt` (current violations), so that from now on only new violations fail. |
@@ -148,6 +148,12 @@ From step 7 the engine path is the one being moved forward.
 Steps 20 to 23 do not depend on 7 to 19 and can run in parallel with them, on separate worktrees, one crate per agent.
 Merges into the same TU file are serialized. One exception: a function that a later engine step will exercise moves
 first and is verified by its C oracle.
+
+Step 0 result: `tu_ft_0d4d_vs_c` case 42 was a NaN sign: `-(a*c - b)` at `ftCo_800D4FF4` / the second site in `ft_0d4d.rs` needs
+`fmsubs_neg` (clang forms fmuladd(a,c,-b)); fixed. `melee golden` caps `pad_falcon_fox_fd` / `pad_marth_sheik_bf` at 1802 frames
+(marth_sheik used to run to the caller's timeout). Legacy counts recorded in `docs/rust-port/engine_progress.tsv`:
+cpu_fox_falco_dl matches 0..369 (hash divergence from 370, stop at 414 `ftCo_AttackLw3`; STATUS.md's 323 is stale and the
+divergence at 370 predates step 0), cpu_peach 120. Diff baseline unchanged (144 entries).
 
 ## 3. Inventories
 

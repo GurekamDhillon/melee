@@ -1,0 +1,5 @@
+step	scenario	engine	frames_matching
+0	pad_falcon_fox_fd	legacy	1801
+0	pad_marth_sheik_bf	legacy	1801
+0	cpu_fox_falco_dl	legacy	370
+0	cpu_peach_samus_ys_items	legacy	120

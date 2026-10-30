@@ -407,7 +407,12 @@ fn golden(args: &[String]) -> ExitCode {
         vs_match::set_cpu_player(0, 9);
         vs_match::set_cpu_player(1, 9);
     }
-    let frames = get("--frames").and_then(|s| s.parse().ok());
+    // The pad goldens are 1801 frames long (the scripts end there); without a cap pad_marth_sheik_bf
+    // keeps simulating until the caller's timeout.
+    let frames = get("--frames").and_then(|s| s.parse().ok()).or(match scenario.as_str() {
+        "pad_falcon_fox_fd" | "pad_marth_sheik_bf" if slp.is_none() => Some(1802),
+        _ => None,
+    });
     // `--from-snapshot FILE [--start N]`: resume from the C build's state dump (MELEE_SNAP_DUMP,
     // tools/rust-port/snap/); the CSV then holds frame N (the loaded state's own words) and on.
     let snapshot = match get("--from-snapshot").map(|p| snap::Snap::load(&p)).transpose() {

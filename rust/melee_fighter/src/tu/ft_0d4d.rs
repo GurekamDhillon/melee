@@ -9,7 +9,7 @@
 use crate::hooks as h;
 use crate::types::*;
 use core::ffi::c_void;
-use melee_core::fp::{fmadds, fmsubs};
+use melee_core::fp::{fmadds, fmsubs_neg as fmsubs};
 
 use super::ft_0d31::ftCo_800D331C;
 

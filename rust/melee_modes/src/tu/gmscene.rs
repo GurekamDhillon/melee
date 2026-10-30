@@ -42,9 +42,9 @@ pub mod ext {
     pub struct MenuFlow { pub cur_menu: u8, pub prev_menu: u8, pub hovered_selection: u16, pub confirmed_selection: u8, pub pad_5: [u8; 3], pub rest: [u8; 24] }
     pub unsafe extern "C" fn Camera_ForgetGameCamera() { if let Some(h) = HOOK { h("Camera_ForgetGameCamera", &[]); return; } crate::tu::adapt::Camera_ForgetGameCamera__cmc() }
     pub unsafe extern "C" fn Camera_RefreshViewingMtx() { if let Some(h) = HOOK { h("Camera_RefreshViewingMtx", &[]); return; } crate::tu::adapt::Camera_RefreshViewingMtx__cmc() }
-    pub unsafe extern "C" fn Det_Enabled() -> i32 { if let Some(h) = HOOK { let r = h("Det_Enabled", &[]); return r as i32; } panic!("TODO(group6): Det_Enabled is not ported") }
-    pub unsafe extern "C" fn Det_LogicFrame(frame: i32) { if let Some(h) = HOOK { h("Det_LogicFrame", &[A::I(frame as u32 as u64)]); return; } panic!("TODO(group6): Det_LogicFrame is not ported") }
-    pub unsafe extern "C" fn Det_SetInRender(on: i32) { if let Some(h) = HOOK { h("Det_SetInRender", &[A::I(on as u32 as u64)]); return; } panic!("TODO(group6): Det_SetInRender is not ported") }
+    pub unsafe extern "C" fn Det_Enabled() -> i32 { if let Some(h) = HOOK { let r = h("Det_Enabled", &[]); return r as i32; } 0 }
+    pub unsafe extern "C" fn Det_LogicFrame(frame: i32) { if let Some(h) = HOOK { h("Det_LogicFrame", &[A::I(frame as u32 as u64)]); return; } () }
+    pub unsafe extern "C" fn Det_SetInRender(on: i32) { if let Some(h) = HOOK { h("Det_SetInRender", &[A::I(on as u32 as u64)]); return; } () }
     pub unsafe extern "C" fn DevText_Create(p0: i8, p1: i32, p2: i32, p3: i32, p4: i32, p5: *mut i8) -> *mut DevText { if let Some(h) = HOOK { let r = h("DevText_Create", &[A::I(p0 as u8 as u64), A::I(p1 as u32 as u64), A::I(p2 as u32 as u64), A::I(p3 as u32 as u64), A::I(p4 as u32 as u64), A::S(p5 as *const c_char)]); return r as usize as *mut DevText; } { return unsafe { melee_world::tu::textlib::DevText_Create(p0 as _, p1 as _, p2 as _, p3 as _, p4 as _, p5 as _) as _ }; } }
     pub unsafe extern "C" fn DevText_Erase(text: *mut DevText) { if let Some(h) = HOOK { h("DevText_Erase", &[A::P(text as usize)]); return; } { unsafe { let _ = melee_world::tu::textlib::DevText_Erase(text as _); } return; } }
     pub unsafe extern "C" fn DevText_GetGObj() -> *mut HSD_GObj { if let Some(h) = HOOK { let r = h("DevText_GetGObj", &[]); return r as usize as *mut HSD_GObj; } { return unsafe { melee_world::tu::textdraw::DevText_GetGObj() as _ }; } }
@@ -63,24 +63,24 @@ pub mod ext {
     pub unsafe extern "C" fn DevText_StoreColorIndex(text: *mut DevText, index: u8) -> u8 { if let Some(h) = HOOK { let r = h("DevText_StoreColorIndex", &[A::P(text as usize), A::I(index as u8 as u64)]); return r as u8; } { return unsafe { melee_world::tu::textlib::DevText_StoreColorIndex(text as _, index as _) as _ }; } }
     pub unsafe extern "C" fn DevText_Unlink(text: *mut DevText) { if let Some(h) = HOOK { h("DevText_Unlink", &[A::P(text as usize)]); return; } { unsafe { let _ = melee_world::tu::textdraw::DevText_Unlink(text as _); } return; } }
     pub unsafe extern "C" fn Frontend_BackToOnline() { if let Some(h) = HOOK { h("Frontend_BackToOnline", &[]); return; } { unsafe { let _ = crate::tu::gmfrontend::Frontend_BackToOnline(); } return; } }
-    pub unsafe extern "C" fn GObj_Create(classifier: u16, p_link: u8, priority: u8) -> *mut HSD_GObj { if let Some(h) = HOOK { let r = h("GObj_Create", &[A::I(classifier as u16 as u64), A::I(p_link as u8 as u64), A::I(priority as u8 as u64)]); return r as usize as *mut HSD_GObj; } panic!("TODO(group6): GObj_Create is not ported") }
-    pub unsafe extern "C" fn GXInvalidateTexAll() { if let Some(h) = HOOK { h("GXInvalidateTexAll", &[]); return; } panic!("TODO(group6): GXInvalidateTexAll is not ported") }
-    pub unsafe extern "C" fn GXInvalidateVtxCache() { if let Some(h) = HOOK { h("GXInvalidateVtxCache", &[]); return; } panic!("TODO(group6): GXInvalidateVtxCache is not ported") }
-    pub unsafe extern "C" fn Geno_FxFramePost(frame: i32) { if let Some(h) = HOOK { h("Geno_FxFramePost", &[A::I(frame as u32 as u64)]); return; } { unsafe { let _ = crate::tu::geno_game::Geno_FxFramePost(frame as _); } return; } }
-    pub unsafe extern "C" fn Gfx_HostLoading(on: i32, warm: i32) { if let Some(h) = HOOK { h("Gfx_HostLoading", &[A::I(on as u32 as u64), A::I(warm as u32 as u64)]); return; } panic!("TODO(group6): Gfx_HostLoading is not ported") }
-    pub unsafe extern "C" fn Gfx_LoadScreenEnabled() -> i32 { if let Some(h) = HOOK { let r = h("Gfx_LoadScreenEnabled", &[]); return r as i32; } panic!("TODO(group6): Gfx_LoadScreenEnabled is not ported") }
-    pub unsafe extern "C" fn Gfx_PipelinesCreated() -> i32 { if let Some(h) = HOOK { let r = h("Gfx_PipelinesCreated", &[]); return r as i32; } panic!("TODO(group6): Gfx_PipelinesCreated is not ported") }
-    pub unsafe extern "C" fn Gfx_PipelinesUrgent() -> i32 { if let Some(h) = HOOK { let r = h("Gfx_PipelinesUrgent", &[]); return r as i32; } panic!("TODO(group6): Gfx_PipelinesUrgent is not ported") }
-    pub unsafe extern "C" fn Gfx_PrewarmMustDraw() -> i32 { if let Some(h) = HOOK { let r = h("Gfx_PrewarmMustDraw", &[]); return r as i32; } panic!("TODO(group6): Gfx_PrewarmMustDraw is not ported") }
-    pub unsafe extern "C" fn Gfx_SeedCoreCount() -> i32 { if let Some(h) = HOOK { let r = h("Gfx_SeedCoreCount", &[]); return r as i32; } panic!("TODO(group6): Gfx_SeedCoreCount is not ported") }
-    pub unsafe extern "C" fn Gfx_SeedCorePending() -> i32 { if let Some(h) = HOOK { let r = h("Gfx_SeedCorePending", &[]); return r as i32; } panic!("TODO(group6): Gfx_SeedCorePending is not ported") }
-    pub unsafe extern "C" fn Gx_SuppressDraws(on: i32) { if let Some(h) = HOOK { h("Gx_SuppressDraws", &[A::I(on as u32 as u64)]); return; } panic!("TODO(group6): Gx_SuppressDraws is not ported") }
-    pub unsafe extern "C" fn HSD_GObjInit(p0: *mut _HSD_GObjLibInitDataType) { if let Some(h) = HOOK { h("HSD_GObjInit", &[A::P(p0 as usize)]); return; } panic!("TODO(group6): HSD_GObjInit is not ported") }
-    pub unsafe extern "C" fn HSD_GObjSetInitDefaults(arg0: *mut _HSD_GObjLibInitDataType) { if let Some(h) = HOOK { h("HSD_GObjSetInitDefaults", &[A::P(arg0 as usize)]); return; } panic!("TODO(group6): HSD_GObjSetInitDefaults is not ported") }
-    pub unsafe extern "C" fn HSD_GObj_80390FC0() { if let Some(h) = HOOK { h("HSD_GObj_80390FC0", &[]); return; } panic!("TODO(group6): HSD_GObj_80390FC0 is not ported") }
-    pub unsafe extern "C" fn HSD_GObj_803912A8(p0: *mut _HSD_GObjLibInitDataType, p1: *mut GObjFuncs) -> u8 { if let Some(h) = HOOK { let r = h("HSD_GObj_803912A8", &[A::P(p0 as usize), A::P(p1 as usize)]); return r as u8; } panic!("TODO(group6): HSD_GObj_803912A8 is not ported") }
-    pub unsafe extern "C" fn HSD_GObj_RunProcs() { if let Some(h) = HOOK { h("HSD_GObj_RunProcs", &[]); return; } panic!("TODO(group6): HSD_GObj_RunProcs is not ported") }
-    pub unsafe extern "C" fn HSD_GObj_SetupProc(p0: *mut HSD_GObj, p1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, p2: u8) -> *mut HSD_GObjProc { if let Some(h) = HOOK { let r = h("HSD_GObj_SetupProc", &[A::P(p0 as usize), A::P(p1.map_or(0, |f| f as usize)), A::I(p2 as u8 as u64)]); return r as usize as *mut HSD_GObjProc; } panic!("TODO(group6): HSD_GObj_SetupProc is not ported") }
+    pub unsafe extern "C" fn GObj_Create(classifier: u16, p_link: u8, priority: u8) -> *mut HSD_GObj { if let Some(h) = HOOK { let r = h("GObj_Create", &[A::I(classifier as u16 as u64), A::I(p_link as u8 as u64), A::I(priority as u8 as u64)]); return r as usize as *mut HSD_GObj; } return unsafe { melee_runtime::tu::gobj_native::GObj_Create(classifier, p_link, priority) }; }
+    pub unsafe extern "C" fn GXInvalidateTexAll() { if let Some(h) = HOOK { h("GXInvalidateTexAll", &[]); return; } () }
+    pub unsafe extern "C" fn GXInvalidateVtxCache() { if let Some(h) = HOOK { h("GXInvalidateVtxCache", &[]); return; } () }
+    pub unsafe extern "C" fn Geno_FxFramePost(frame: i32) { if let Some(h) = HOOK { h("Geno_FxFramePost", &[A::I(frame as u32 as u64)]); return; } { /* Geno extension: no fighter extensions in the engine host */ return; } }
+    pub unsafe extern "C" fn Gfx_HostLoading(on: i32, warm: i32) { if let Some(h) = HOOK { h("Gfx_HostLoading", &[A::I(on as u32 as u64), A::I(warm as u32 as u64)]); return; } () }
+    pub unsafe extern "C" fn Gfx_LoadScreenEnabled() -> i32 { if let Some(h) = HOOK { let r = h("Gfx_LoadScreenEnabled", &[]); return r as i32; } 0 }
+    pub unsafe extern "C" fn Gfx_PipelinesCreated() -> i32 { if let Some(h) = HOOK { let r = h("Gfx_PipelinesCreated", &[]); return r as i32; } 0 }
+    pub unsafe extern "C" fn Gfx_PipelinesUrgent() -> i32 { if let Some(h) = HOOK { let r = h("Gfx_PipelinesUrgent", &[]); return r as i32; } 0 }
+    pub unsafe extern "C" fn Gfx_PrewarmMustDraw() -> i32 { if let Some(h) = HOOK { let r = h("Gfx_PrewarmMustDraw", &[]); return r as i32; } 0 }
+    pub unsafe extern "C" fn Gfx_SeedCoreCount() -> i32 { if let Some(h) = HOOK { let r = h("Gfx_SeedCoreCount", &[]); return r as i32; } 0 }
+    pub unsafe extern "C" fn Gfx_SeedCorePending() -> i32 { if let Some(h) = HOOK { let r = h("Gfx_SeedCorePending", &[]); return r as i32; } 0 }
+    pub unsafe extern "C" fn Gx_SuppressDraws(on: i32) { if let Some(h) = HOOK { h("Gx_SuppressDraws", &[A::I(on as u32 as u64)]); return; } () }
+    pub unsafe extern "C" fn HSD_GObjInit(p0: *mut _HSD_GObjLibInitDataType) { if let Some(h) = HOOK { h("HSD_GObjInit", &[A::P(p0 as usize)]); return; } unsafe { melee_runtime::tu::gobj_native::HSD_GObjInit(p0) }; }
+    pub unsafe extern "C" fn HSD_GObjSetInitDefaults(arg0: *mut _HSD_GObjLibInitDataType) { if let Some(h) = HOOK { h("HSD_GObjSetInitDefaults", &[A::P(arg0 as usize)]); return; } unsafe { melee_runtime::tu::gobj_native::HSD_GObjSetInitDefaults(arg0) }; }
+    pub unsafe extern "C" fn HSD_GObj_80390FC0() { if let Some(h) = HOOK { h("HSD_GObj_80390FC0", &[]); return; } unsafe { melee_runtime::tu::gobj_native::HSD_GObj_80390FC0() }; }
+    pub unsafe extern "C" fn HSD_GObj_803912A8(p0: *mut _HSD_GObjLibInitDataType, p1: *mut GObjFuncs) -> u8 { if let Some(h) = HOOK { let r = h("HSD_GObj_803912A8", &[A::P(p0 as usize), A::P(p1 as usize)]); return r as u8; } return unsafe { melee_runtime::tu::gobj_native::HSD_GObj_803912A8(p0, p1) }; }
+    pub unsafe extern "C" fn HSD_GObj_RunProcs() { if let Some(h) = HOOK { h("HSD_GObj_RunProcs", &[]); return; } unsafe { melee_runtime::tu::gobj_native::HSD_GObj_RunProcs() }; }
+    pub unsafe extern "C" fn HSD_GObj_SetupProc(p0: *mut HSD_GObj, p1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, p2: u8) -> *mut HSD_GObjProc { if let Some(h) = HOOK { let r = h("HSD_GObj_SetupProc", &[A::P(p0 as usize), A::P(p1.map_or(0, |f| f as usize)), A::I(p2 as u8 as u64)]); return r as usize as *mut HSD_GObjProc; } return unsafe { melee_runtime::tu::gobj_native::HSD_GObj_SetupProc(p0, p1, p2) }; }
     pub unsafe extern "C" fn HSD_Init_803755A8() { if let Some(h) = HOOK { h("HSD_Init_803755A8", &[]); return; } { unsafe { let _ = melee_runtime::tu::initialize::HSD_Init_803755A8(); } return; } }
     pub unsafe extern "C" fn HSD_Leak_80387DF8(p0: i32) -> i32 { if let Some(h) = HOOK { let r = h("HSD_Leak_80387DF8", &[A::I(p0 as u32 as u64)]); return r as i32; } { return unsafe { melee_runtime::tu::leak::HSD_Leak_80387DF8(p0 as _) as _ }; } }
     pub unsafe extern "C" fn HSD_ObjAllocTopUp() { if let Some(h) = HOOK { h("HSD_ObjAllocTopUp", &[]); return; } { unsafe { let _ = melee_runtime::tu::objalloc::HSD_ObjAllocTopUp(); } return; } }
@@ -96,56 +96,56 @@ pub mod ext {
     pub unsafe extern "C" fn HSD_StartRender(pass: u32) { if let Some(h) = HOOK { h("HSD_StartRender", &[A::I(pass as u32 as u64)]); return; } { unsafe { let _ = melee_runtime::tu::initialize::HSD_StartRender(pass as _); } return; } }
     pub unsafe extern "C" fn HSD_VICopyXFBAsync(rpass: u32) { if let Some(h) = HOOK { h("HSD_VICopyXFBAsync", &[A::I(rpass as u32 as u64)]); return; } { unsafe { let _ = melee_runtime::tu::video::HSD_VICopyXFBAsync(rpass as _); } return; } }
     pub unsafe extern "C" fn HSD_VIWaitXFBFlush() { if let Some(h) = HOOK { h("HSD_VIWaitXFBFlush", &[]); return; } { unsafe { let _ = melee_runtime::tu::video::HSD_VIWaitXFBFlush(); } return; } }
-    pub unsafe extern "C" fn Netplay_Background() { if let Some(h) = HOOK { h("Netplay_Background", &[]); return; } panic!("TODO(group6): Netplay_Background is not ported") }
-    pub unsafe extern "C" fn Netplay_Enabled() -> i32 { if let Some(h) = HOOK { let r = h("Netplay_Enabled", &[]); return r as i32; } panic!("TODO(group6): Netplay_Enabled is not ported") }
-    pub unsafe extern "C" fn Netplay_PeerLeft() -> i32 { if let Some(h) = HOOK { let r = h("Netplay_PeerLeft", &[]); return r as i32; } panic!("TODO(group6): Netplay_PeerLeft is not ported") }
-    pub unsafe extern "C" fn OSCheckActiveThreads() -> i32 { if let Some(h) = HOOK { let r = h("OSCheckActiveThreads", &[]); return r as i32; } panic!("TODO(group6): OSCheckActiveThreads is not ported") }
-    pub unsafe extern "C" fn OSGetTime() -> i64 { if let Some(h) = HOOK { let r = h("OSGetTime", &[]); return r as i64; } panic!("TODO(group6): OSGetTime is not ported") }
-    pub unsafe extern "C" fn Overlay_GetPanelLine(i: i32) -> *mut i8 { if let Some(h) = HOOK { let r = h("Overlay_GetPanelLine", &[A::I(i as u32 as u64)]); return r as usize as *mut i8; } panic!("TODO(group6): Overlay_GetPanelLine is not ported") }
-    pub unsafe extern "C" fn Overlay_GetPanelLineCount() -> i32 { if let Some(h) = HOOK { let r = h("Overlay_GetPanelLineCount", &[]); return r as i32; } panic!("TODO(group6): Overlay_GetPanelLineCount is not ported") }
-    pub unsafe extern "C" fn Overlay_GetPanelLineDim(i: i32) -> i32 { if let Some(h) = HOOK { let r = h("Overlay_GetPanelLineDim", &[A::I(i as u32 as u64)]); return r as i32; } panic!("TODO(group6): Overlay_GetPanelLineDim is not ported") }
-    pub unsafe extern "C" fn Overlay_GetPanelOpen() -> i32 { if let Some(h) = HOOK { let r = h("Overlay_GetPanelOpen", &[]); return r as i32; } panic!("TODO(group6): Overlay_GetPanelOpen is not ported") }
-    pub unsafe extern "C" fn Overlay_GetReshowCount() -> i32 { if let Some(h) = HOOK { let r = h("Overlay_GetReshowCount", &[]); return r as i32; } panic!("TODO(group6): Overlay_GetReshowCount is not ported") }
-    pub unsafe extern "C" fn Overlay_GetRunLabel() -> *mut i8 { if let Some(h) = HOOK { let r = h("Overlay_GetRunLabel", &[]); return r as usize as *mut i8; } panic!("TODO(group6): Overlay_GetRunLabel is not ported") }
-    pub unsafe extern "C" fn Overlay_GetToast() -> *mut i8 { if let Some(h) = HOOK { let r = h("Overlay_GetToast", &[]); return r as usize as *mut i8; } panic!("TODO(group6): Overlay_GetToast is not ported") }
+    pub unsafe extern "C" fn Netplay_Background() { if let Some(h) = HOOK { h("Netplay_Background", &[]); return; } () }
+    pub unsafe extern "C" fn Netplay_Enabled() -> i32 { if let Some(h) = HOOK { let r = h("Netplay_Enabled", &[]); return r as i32; } 0 }
+    pub unsafe extern "C" fn Netplay_PeerLeft() -> i32 { if let Some(h) = HOOK { let r = h("Netplay_PeerLeft", &[]); return r as i32; } 0 }
+    pub unsafe extern "C" fn OSCheckActiveThreads() -> i32 { if let Some(h) = HOOK { let r = h("OSCheckActiveThreads", &[]); return r as i32; } 0 }
+    pub unsafe extern "C" fn OSGetTime() -> i64 { if let Some(h) = HOOK { let r = h("OSGetTime", &[]); return r as i64; } { use std::sync::OnceLock; static T0: OnceLock<std::time::Instant> = OnceLock::new(); (T0.get_or_init(std::time::Instant::now).elapsed().as_nanos() as i64) * 81 / 2000 } }
+    pub unsafe extern "C" fn Overlay_GetPanelLine(i: i32) -> *mut i8 { if let Some(h) = HOOK { let r = h("Overlay_GetPanelLine", &[A::I(i as u32 as u64)]); return r as usize as *mut i8; } core::ptr::null_mut() }
+    pub unsafe extern "C" fn Overlay_GetPanelLineCount() -> i32 { if let Some(h) = HOOK { let r = h("Overlay_GetPanelLineCount", &[]); return r as i32; } 0 }
+    pub unsafe extern "C" fn Overlay_GetPanelLineDim(i: i32) -> i32 { if let Some(h) = HOOK { let r = h("Overlay_GetPanelLineDim", &[A::I(i as u32 as u64)]); return r as i32; } 0 }
+    pub unsafe extern "C" fn Overlay_GetPanelOpen() -> i32 { if let Some(h) = HOOK { let r = h("Overlay_GetPanelOpen", &[]); return r as i32; } 0 }
+    pub unsafe extern "C" fn Overlay_GetReshowCount() -> i32 { if let Some(h) = HOOK { let r = h("Overlay_GetReshowCount", &[]); return r as i32; } 0 }
+    pub unsafe extern "C" fn Overlay_GetRunLabel() -> *mut i8 { if let Some(h) = HOOK { let r = h("Overlay_GetRunLabel", &[]); return r as usize as *mut i8; } core::ptr::null_mut() }
+    pub unsafe extern "C" fn Overlay_GetToast() -> *mut i8 { if let Some(h) = HOOK { let r = h("Overlay_GetToast", &[]); return r as usize as *mut i8; } core::ptr::null_mut() }
     pub unsafe extern "C" fn Player_ForgetEntities() { if let Some(h) = HOOK { h("Player_ForgetEntities", &[]); return; } { unsafe { let _ = melee_fighter::tu::player::Player_ForgetEntities(); } return; } }
-    pub unsafe extern "C" fn RB_Enabled() -> i32 { if let Some(h) = HOOK { let r = h("RB_Enabled", &[]); return r as i32; } panic!("TODO(group6): RB_Enabled is not ported") }
-    pub unsafe extern "C" fn RB_IterStart() { if let Some(h) = HOOK { h("RB_IterStart", &[]); return; } panic!("TODO(group6): RB_IterStart is not ported") }
-    pub unsafe extern "C" fn RB_Iterations(count: i32) -> i32 { if let Some(h) = HOOK { let r = h("RB_Iterations", &[A::I(count as u32 as u64)]); return r as i32; } panic!("TODO(group6): RB_Iterations is not ported") }
-    pub unsafe extern "C" fn RB_SceneBegin(scene_kind: i32) { if let Some(h) = HOOK { h("RB_SceneBegin", &[A::I(scene_kind as u32 as u64)]); return; } panic!("TODO(group6): RB_SceneBegin is not ported") }
-    pub unsafe extern "C" fn RB_TickEnd() { if let Some(h) = HOOK { h("RB_TickEnd", &[]); return; } panic!("TODO(group6): RB_TickEnd is not ported") }
-    pub unsafe extern "C" fn RenderTest_Iterations(count: i32) -> i32 { if let Some(h) = HOOK { let r = h("RenderTest_Iterations", &[A::I(count as u32 as u64)]); return r as i32; } panic!("TODO(group6): RenderTest_Iterations is not ported") }
-    pub unsafe extern "C" fn Replay_CheckSeed(port_seed: u32) { if let Some(h) = HOOK { h("Replay_CheckSeed", &[A::I(port_seed as u32 as u64)]); return; } panic!("TODO(group6): Replay_CheckSeed is not ported") }
-    pub unsafe extern "C" fn Replay_Enabled() -> i32 { if let Some(h) = HOOK { let r = h("Replay_Enabled", &[]); return r as i32; } panic!("TODO(group6): Replay_Enabled is not ported") }
-    pub unsafe extern "C" fn Replay_NoteSeed(arrived_seed: u32) { if let Some(h) = HOOK { h("Replay_NoteSeed", &[A::I(arrived_seed as u32 as u64)]); return; } panic!("TODO(group6): Replay_NoteSeed is not ported") }
-    pub unsafe extern "C" fn Replay_ResyncSeed() -> u32 { if let Some(h) = HOOK { let r = h("Replay_ResyncSeed", &[]); return r as u32; } panic!("TODO(group6): Replay_ResyncSeed is not ported") }
-    pub unsafe extern "C" fn Replay_Tick() -> i32 { if let Some(h) = HOOK { let r = h("Replay_Tick", &[]); return r as i32; } panic!("TODO(group6): Replay_Tick is not ported") }
-    pub unsafe extern "C" fn SceneReport_Menu(kind: i32, hovered: i32, confirmed: i32) { if let Some(h) = HOOK { h("SceneReport_Menu", &[A::I(kind as u32 as u64), A::I(hovered as u32 as u64), A::I(confirmed as u32 as u64)]); return; } panic!("TODO(group6): SceneReport_Menu is not ported") }
+    pub unsafe extern "C" fn RB_Enabled() -> i32 { if let Some(h) = HOOK { let r = h("RB_Enabled", &[]); return r as i32; } 0 }
+    pub unsafe extern "C" fn RB_IterStart() { if let Some(h) = HOOK { h("RB_IterStart", &[]); return; } () }
+    pub unsafe extern "C" fn RB_Iterations(count: i32) -> i32 { if let Some(h) = HOOK { let r = h("RB_Iterations", &[A::I(count as u32 as u64)]); return r as i32; } count }
+    pub unsafe extern "C" fn RB_SceneBegin(scene_kind: i32) { if let Some(h) = HOOK { h("RB_SceneBegin", &[A::I(scene_kind as u32 as u64)]); return; } () }
+    pub unsafe extern "C" fn RB_TickEnd() { if let Some(h) = HOOK { h("RB_TickEnd", &[]); return; } () }
+    pub unsafe extern "C" fn RenderTest_Iterations(count: i32) -> i32 { if let Some(h) = HOOK { let r = h("RenderTest_Iterations", &[A::I(count as u32 as u64)]); return r as i32; } count }
+    pub unsafe extern "C" fn Replay_CheckSeed(port_seed: u32) { if let Some(h) = HOOK { h("Replay_CheckSeed", &[A::I(port_seed as u32 as u64)]); return; } () }
+    pub unsafe extern "C" fn Replay_Enabled() -> i32 { if let Some(h) = HOOK { let r = h("Replay_Enabled", &[]); return r as i32; } 0 }
+    pub unsafe extern "C" fn Replay_NoteSeed(arrived_seed: u32) { if let Some(h) = HOOK { h("Replay_NoteSeed", &[A::I(arrived_seed as u32 as u64)]); return; } () }
+    pub unsafe extern "C" fn Replay_ResyncSeed() -> u32 { if let Some(h) = HOOK { let r = h("Replay_ResyncSeed", &[]); return r as u32; } 0 }
+    pub unsafe extern "C" fn Replay_Tick() -> i32 { if let Some(h) = HOOK { let r = h("Replay_Tick", &[]); return r as i32; } 0 }
+    pub unsafe extern "C" fn SceneReport_Menu(kind: i32, hovered: i32, confirmed: i32) { if let Some(h) = HOOK { h("SceneReport_Menu", &[A::I(kind as u32 as u64), A::I(hovered as u32 as u64), A::I(confirmed as u32 as u64)]); return; } () }
     pub unsafe extern "C" fn ScriptGame_StageEnd() { if let Some(h) = HOOK { h("ScriptGame_StageEnd", &[]); return; } { unsafe { let _ = crate::tu::script_game::ScriptGame_StageEnd(); } return; } }
-    pub unsafe extern "C" fn Script_FramePost() { if let Some(h) = HOOK { h("Script_FramePost", &[]); return; } panic!("TODO(group6): Script_FramePost is not ported") }
-    pub unsafe extern "C" fn Script_FramePre() { if let Some(h) = HOOK { h("Script_FramePre", &[]); return; } panic!("TODO(group6): Script_FramePre is not ported") }
-    pub unsafe extern "C" fn Script_Iterations(count: i32) -> i32 { if let Some(h) = HOOK { let r = h("Script_Iterations", &[A::I(count as u32 as u64)]); return r as i32; } panic!("TODO(group6): Script_Iterations is not ported") }
-    pub unsafe extern "C" fn Script_LaunchPending() -> i32 { if let Some(h) = HOOK { let r = h("Script_LaunchPending", &[]); return r as i32; } panic!("TODO(group6): Script_LaunchPending is not ported") }
-    pub unsafe extern "C" fn Script_PostRender() { if let Some(h) = HOOK { h("Script_PostRender", &[]); return; } panic!("TODO(group6): Script_PostRender is not ported") }
-    pub unsafe extern "C" fn Script_SceneBegin(scene_kind: i32) { if let Some(h) = HOOK { h("Script_SceneBegin", &[A::I(scene_kind as u32 as u64)]); return; } panic!("TODO(group6): Script_SceneBegin is not ported") }
-    pub unsafe extern "C" fn Script_Tick() { if let Some(h) = HOOK { h("Script_Tick", &[]); return; } panic!("TODO(group6): Script_Tick is not ported") }
-    pub unsafe extern "C" fn Snap_Curated() -> i32 { if let Some(h) = HOOK { let r = h("Snap_Curated", &[]); return r as i32; } panic!("TODO(group6): Snap_Curated is not ported") }
+    pub unsafe extern "C" fn Script_FramePost() { if let Some(h) = HOOK { h("Script_FramePost", &[]); return; } () }
+    pub unsafe extern "C" fn Script_FramePre() { if let Some(h) = HOOK { h("Script_FramePre", &[]); return; } () }
+    pub unsafe extern "C" fn Script_Iterations(count: i32) -> i32 { if let Some(h) = HOOK { let r = h("Script_Iterations", &[A::I(count as u32 as u64)]); return r as i32; } count }
+    pub unsafe extern "C" fn Script_LaunchPending() -> i32 { if let Some(h) = HOOK { let r = h("Script_LaunchPending", &[]); return r as i32; } 0 }
+    pub unsafe extern "C" fn Script_PostRender() { if let Some(h) = HOOK { h("Script_PostRender", &[]); return; } () }
+    pub unsafe extern "C" fn Script_SceneBegin(scene_kind: i32) { if let Some(h) = HOOK { h("Script_SceneBegin", &[A::I(scene_kind as u32 as u64)]); return; } () }
+    pub unsafe extern "C" fn Script_Tick() { if let Some(h) = HOOK { h("Script_Tick", &[]); return; } () }
+    pub unsafe extern "C" fn Snap_Curated() -> i32 { if let Some(h) = HOOK { let r = h("Snap_Curated", &[]); return r as i32; } 0 }
     pub unsafe extern "C" fn Snap_CuratedItems() { if let Some(h) = HOOK { h("Snap_CuratedItems", &[]); return; } { unsafe { let _ = melee_fighter::tu::fighter::Snap_CuratedItems(); } return; } }
-    pub unsafe extern "C" fn Snap_CuratedMix(w: *const u32, n: i32) { if let Some(h) = HOOK { h("Snap_CuratedMix", &[A::M(w as usize, 4), A::I(n as u32 as u64)]); return; } panic!("TODO(group6): Snap_CuratedMix is not ported") }
-    pub unsafe extern "C" fn Snap_CuratedNoRender() -> i32 { if let Some(h) = HOOK { let r = h("Snap_CuratedNoRender", &[]); return r as i32; } panic!("TODO(group6): Snap_CuratedNoRender is not ported") }
-    pub unsafe extern "C" fn Snap_Resimulating() -> i32 { if let Some(h) = HOOK { let r = h("Snap_Resimulating", &[]); return r as i32; } panic!("TODO(group6): Snap_Resimulating is not ported") }
-    pub unsafe extern "C" fn Snap_SuppressDraws() -> i32 { if let Some(h) = HOOK { let r = h("Snap_SuppressDraws", &[]); return r as i32; } panic!("TODO(group6): Snap_SuppressDraws is not ported") }
-    pub unsafe extern "C" fn Snap_Time(what: i32, begin: i32) { if let Some(h) = HOOK { h("Snap_Time", &[A::I(what as u32 as u64), A::I(begin as u32 as u64)]); return; } panic!("TODO(group6): Snap_Time is not ported") }
-    pub unsafe extern "C" fn SyncTest_IterStart() { if let Some(h) = HOOK { h("SyncTest_IterStart", &[]); return; } panic!("TODO(group6): SyncTest_IterStart is not ported") }
-    pub unsafe extern "C" fn SyncTest_Iterations(count: i32) -> i32 { if let Some(h) = HOOK { let r = h("SyncTest_Iterations", &[A::I(count as u32 as u64)]); return r as i32; } panic!("TODO(group6): SyncTest_Iterations is not ported") }
-    pub unsafe extern "C" fn SyncTest_PostRender() { if let Some(h) = HOOK { h("SyncTest_PostRender", &[]); return; } panic!("TODO(group6): SyncTest_PostRender is not ported") }
-    pub unsafe extern "C" fn SyncTest_PreRender() { if let Some(h) = HOOK { h("SyncTest_PreRender", &[]); return; } panic!("TODO(group6): SyncTest_PreRender is not ported") }
-    pub unsafe extern "C" fn Turbo_FrameHidden() -> i32 { if let Some(h) = HOOK { let r = h("Turbo_FrameHidden", &[]); return r as i32; } panic!("TODO(group6): Turbo_FrameHidden is not ported") }
-    pub unsafe extern "C" fn View_SceneBegin(scene: i32) { if let Some(h) = HOOK { h("View_SceneBegin", &[A::I(scene as u32 as u64)]); return; } panic!("TODO(group6): View_SceneBegin is not ported") }
-    pub unsafe extern "C" fn db_CheckScreenshot() { if let Some(h) = HOOK { h("db_CheckScreenshot", &[]); return; } panic!("TODO(group6): db_CheckScreenshot is not ported") }
-    pub unsafe extern "C" fn db_PrintEntityCounts() { if let Some(h) = HOOK { h("db_PrintEntityCounts", &[]); return; } panic!("TODO(group6): db_PrintEntityCounts is not ported") }
-    pub unsafe extern "C" fn db_PrintThreadInfo() { if let Some(h) = HOOK { h("db_PrintThreadInfo", &[]); return; } panic!("TODO(group6): db_PrintThreadInfo is not ported") }
-    pub unsafe extern "C" fn db_TakeScreenshotIfPending() { if let Some(h) = HOOK { h("db_TakeScreenshotIfPending", &[]); return; } panic!("TODO(group6): db_TakeScreenshotIfPending is not ported") }
+    pub unsafe extern "C" fn Snap_CuratedMix(w: *const u32, n: i32) { if let Some(h) = HOOK { h("Snap_CuratedMix", &[A::M(w as usize, 4), A::I(n as u32 as u64)]); return; } () }
+    pub unsafe extern "C" fn Snap_CuratedNoRender() -> i32 { if let Some(h) = HOOK { let r = h("Snap_CuratedNoRender", &[]); return r as i32; } 0 }
+    pub unsafe extern "C" fn Snap_Resimulating() -> i32 { if let Some(h) = HOOK { let r = h("Snap_Resimulating", &[]); return r as i32; } 0 }
+    pub unsafe extern "C" fn Snap_SuppressDraws() -> i32 { if let Some(h) = HOOK { let r = h("Snap_SuppressDraws", &[]); return r as i32; } 0 }
+    pub unsafe extern "C" fn Snap_Time(what: i32, begin: i32) { if let Some(h) = HOOK { h("Snap_Time", &[A::I(what as u32 as u64), A::I(begin as u32 as u64)]); return; } () }
+    pub unsafe extern "C" fn SyncTest_IterStart() { if let Some(h) = HOOK { h("SyncTest_IterStart", &[]); return; } () }
+    pub unsafe extern "C" fn SyncTest_Iterations(count: i32) -> i32 { if let Some(h) = HOOK { let r = h("SyncTest_Iterations", &[A::I(count as u32 as u64)]); return r as i32; } count }
+    pub unsafe extern "C" fn SyncTest_PostRender() { if let Some(h) = HOOK { h("SyncTest_PostRender", &[]); return; } () }
+    pub unsafe extern "C" fn SyncTest_PreRender() { if let Some(h) = HOOK { h("SyncTest_PreRender", &[]); return; } () }
+    pub unsafe extern "C" fn Turbo_FrameHidden() -> i32 { if let Some(h) = HOOK { let r = h("Turbo_FrameHidden", &[]); return r as i32; } 0 }
+    pub unsafe extern "C" fn View_SceneBegin(scene: i32) { if let Some(h) = HOOK { h("View_SceneBegin", &[A::I(scene as u32 as u64)]); return; } () }
+    pub unsafe extern "C" fn db_CheckScreenshot() { if let Some(h) = HOOK { h("db_CheckScreenshot", &[]); return; } () }
+    pub unsafe extern "C" fn db_PrintEntityCounts() { if let Some(h) = HOOK { h("db_PrintEntityCounts", &[]); return; } () }
+    pub unsafe extern "C" fn db_PrintThreadInfo() { if let Some(h) = HOOK { h("db_PrintThreadInfo", &[]); return; } () }
+    pub unsafe extern "C" fn db_TakeScreenshotIfPending() { if let Some(h) = HOOK { h("db_TakeScreenshotIfPending", &[]); return; } () }
     pub unsafe extern "C" fn gmFrontend_TakeWarmed() -> i32 { if let Some(h) = HOOK { let r = h("gmFrontend_TakeWarmed", &[]); return r as i32; } { return unsafe { crate::tu::gmfrontend::gmFrontend_TakeWarmed() as _ }; } }
     pub unsafe extern "C" fn gm_80165388(p0: u16, p1: u8, p2: u8, p3: i32) -> *mut HSD_GObj { if let Some(h) = HOOK { let r = h("gm_80165388", &[A::I(p0 as u16 as u64), A::I(p1 as u8 as u64), A::I(p2 as u8 as u64), A::I(p3 as u32 as u64)]); return r as usize as *mut HSD_GObj; } { return unsafe { crate::tu::gm_1601::gm_80165388(p0 as _, p1 as _, p2 as _, p3 as _) as _ }; } }
     pub unsafe extern "C" fn gm_801653C8(p0: *mut HSD_GObj) { if let Some(h) = HOOK { h("gm_801653C8", &[A::P(p0 as usize)]); return; } { unsafe { let _ = crate::tu::gm_1601::gm_801653C8(p0 as _); } return; } }
@@ -156,13 +156,13 @@ pub mod ext {
     pub unsafe extern "C" fn gm_ChangeGameModeAfterCurrentScene(pending_mode: i32) { if let Some(h) = HOOK { h("gm_ChangeGameModeAfterCurrentScene", &[A::I(pending_mode as u32 as u64)]); return; } { unsafe { let _ = crate::tu::gm_1A3F::gm_ChangeGameModeAfterCurrentScene(pending_mode as _); } return; } }
     pub unsafe extern "C" fn gm_EvaluateAllControllerInputs() { if let Some(h) = HOOK { h("gm_EvaluateAllControllerInputs", &[]); return; } { unsafe { let _ = crate::tu::gm_1A36::gm_EvaluateAllControllerInputs(); } return; } }
     pub unsafe extern "C" fn gm_GetAllGameScenes() -> *mut GameScene { if let Some(h) = HOOK { let r = h("gm_GetAllGameScenes", &[]); return r as usize as *mut GameScene; } super::super::gmscdata::gm_GetAllGameScenes() }
-    pub unsafe extern "C" fn hsdDumpClassStat(info: *mut _HSD_ClassInfo, recursive: i32, level: i32) { if let Some(h) = HOOK { h("hsdDumpClassStat", &[A::P(info as usize), A::I(recursive as u32 as u64), A::I(level as u32 as u64)]); return; } panic!("TODO(group6): hsdDumpClassStat is not ported") }
-    pub unsafe extern "C" fn hsd_80392474() { if let Some(h) = HOOK { h("hsd_80392474", &[]); return; } panic!("TODO(group6): hsd_80392474 is not ported") }
-    pub unsafe extern "C" fn hsd_80392E80() -> i32 { if let Some(h) = HOOK { let r = h("hsd_80392E80", &[]); return r as i32; } panic!("TODO(group6): hsd_80392E80 is not ported") }
+    pub unsafe extern "C" fn hsdDumpClassStat(info: *mut _HSD_ClassInfo, recursive: i32, level: i32) { if let Some(h) = HOOK { h("hsdDumpClassStat", &[A::P(info as usize), A::I(recursive as u32 as u64), A::I(level as u32 as u64)]); return; } () }
+    pub unsafe extern "C" fn hsd_80392474() { if let Some(h) = HOOK { h("hsd_80392474", &[]); return; } () }
+    pub unsafe extern "C" fn hsd_80392E80() -> i32 { if let Some(h) = HOOK { let r = h("hsd_80392E80", &[]); return r as i32; } 0 }
     pub unsafe extern "C" fn ifMagnify_LogicDisarm() { if let Some(h) = HOOK { h("ifMagnify_LogicDisarm", &[]); return; } { unsafe { let _ = melee_world::tu::ifmagnify::ifMagnify_LogicDisarm(); } return; } }
     pub unsafe extern "C" fn ifMagnify_UpdateLogicOffscreen() { if let Some(h) = HOOK { h("ifMagnify_UpdateLogicOffscreen", &[]); return; } { unsafe { let _ = melee_world::tu::ifmagnify::ifMagnify_UpdateLogicOffscreen(); } return; } }
-    pub unsafe extern "C" fn lbAudioAx_80027DF8() { if let Some(h) = HOOK { h("lbAudioAx_80027DF8", &[]); return; } { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80027DF8(); } return; } }
-    pub unsafe extern "C" fn lbAudioAx_8002835C() { if let Some(h) = HOOK { h("lbAudioAx_8002835C", &[]); return; } { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_8002835C(); } return; } }
+    pub unsafe extern "C" fn lbAudioAx_80027DF8() { if let Some(h) = HOOK { h("lbAudioAx_80027DF8", &[]); return; } { /* audio sink: wired in consolidation step 11 (lbAudioAx through the audio seam) */ return; } }
+    pub unsafe extern "C" fn lbAudioAx_8002835C() { if let Some(h) = HOOK { h("lbAudioAx_8002835C", &[]); return; } { /* audio sink: wired in consolidation step 11 */ return; } }
     pub unsafe extern "C" fn lbCardGame_InitScene() { if let Some(h) = HOOK { h("lbCardGame_InitScene", &[]); return; } { unsafe { let _ = melee_runtime::tu::lbcardgame::lbCardGame_InitScene(); } return; } }
     pub unsafe extern "C" fn lbHeap_80015DF8() { if let Some(h) = HOOK { h("lbHeap_80015DF8", &[]); return; } { unsafe { let _ = melee_runtime::tu::lbheap::lbHeap_80015DF8(); } return; } }
     pub unsafe extern "C" fn lb_80014534() { if let Some(h) = HOOK { h("lb_80014534", &[]); return; } { unsafe { let _ = crate::tu::lb_013B::lb_80014534(); } return; } }
@@ -810,12 +810,9 @@ unsafe fn maybe_gm_801A48A4(i: u8) -> u64 {
 /// `gm_onep_interstage` (TARGET_PC): set while `gm_OnePInterstage` pumps the loop.
 pub static mut gm_onep_interstage: i32 = 0;
 
-/// The scene loop: run `on_frame` once per logic frame, step the GObj procs, render, until the
-/// scene sets `unk_C`.
-pub unsafe extern "C" fn gm_801A4D34(on_frame: Option<unsafe extern "C" fn()>, info: *mut GameSceneInfo) {
-    melee_core::ct!("gm_801A4D34");
-    let mut pad_queue_count: i32;
-    let mut i: i32;
+/// TARGET_PC split of the scene loop (consolidation step 6), so the engine can run exactly one iteration:
+/// the C's pre-loop setup (`gm_801677C0` through `Script_SceneBegin`).
+pub unsafe fn gm_801A4D34_begin(info: *mut GameSceneInfo) {
     let temp_r25: *mut gm_80479D58_t = &raw mut gm_80479D58;
 
     ext::gm_801677C0(&raw mut (*temp_r25).unk_10);
@@ -835,241 +832,264 @@ pub unsafe extern "C" fn gm_801A4D34(on_frame: Option<unsafe extern "C" fn()>, i
     if gm_onep_interstage == 0 {
         ext::Script_SceneBegin(if !info.is_null() { (*info).scene_kind as i32 } else { -1 });
     }
+}
 
-    'scene: while (*temp_r25).unk_C == 0 {
-        // Which menu, and what is hovered on it.
-        ext::SceneReport_Menu(
-            ext::mn_804A04F0.cur_menu as i32,
-            ext::mn_804A04F0.hovered_selection as i32,
-            ext::mn_804A04F0.confirmed_selection as i32,
-        );
-        mnOverlay_Frame();
-        ext::Script_Tick();
-        ext::hsd_80392E80();
-        ext::gmMainLib_8046B0F0.xC = 0;
+/// One iteration of the C's `while (gm_80479D58.unk_C == 0)` body. Returns false when the loop is left (the
+/// condition was already false, or the body hit one of its `break`s), true when another iteration may run.
+pub unsafe fn gm_801A4D34_tick(on_frame: Option<unsafe extern "C" fn()>, info: *mut GameSceneInfo) -> bool {
+    let mut pad_queue_count: i32;
+    let mut i: i32;
+    let temp_r25: *mut gm_80479D58_t = &raw mut gm_80479D58;
+    if (*temp_r25).unk_C != 0 {
+        return false;
+    }
+    // Which menu, and what is hovered on it.
+    ext::SceneReport_Menu(
+        ext::mn_804A04F0.cur_menu as i32,
+        ext::mn_804A04F0.hovered_selection as i32,
+        ext::mn_804A04F0.confirmed_selection as i32,
+    );
+    mnOverlay_Frame();
+    ext::Script_Tick();
+    ext::hsd_80392E80();
+    ext::gmMainLib_8046B0F0.xC = 0;
 
-        loop {
-            pad_queue_count = ext::lb_80019894() as i32;
-            if pad_queue_count != 0 {
-                break;
+    loop {
+        pad_queue_count = ext::lb_80019894() as i32;
+        if pad_queue_count != 0 {
+            break;
+        }
+        ext::lb_800195D0();
+    }
+    ext::lb_800195D0();
+    if pad_queue_count > 1 && ext::Det_Enabled() != 0 {
+        pad_queue_count = 1;
+    }
+    if ext::RB_Enabled() != 0 {
+        pad_queue_count = ext::RB_Iterations(pad_queue_count);
+    } else {
+        pad_queue_count = ext::SyncTest_Iterations(pad_queue_count);
+    }
+    if !info.is_null() && (*info).scene_kind == 2 {
+        // A dead peer cannot confirm another rollback frame: leave from the render tick.
+        if ext::Netplay_Enabled() != 0 && ext::Netplay_PeerLeft() != 0 {
+            ext::Frontend_BackToOnline();
+            ext::gm_ChangeGameModeAfterCurrentScene(super::gmscdata::GM_FRONTEND as i32);
+            gm_801A4B60();
+            return false;
+        }
+    }
+    pad_queue_count = if gm_onep_interstage != 0 { 0 } else { ext::Script_Iterations(pad_queue_count) };
+    pad_queue_count = ext::RenderTest_Iterations(pad_queue_count);
+
+    if ext::HSD_PadGetResetSwitch() != 0 {
+        ext::gmMainLib_8046B0F0.resetting = 1;
+        return false;
+    }
+
+    i = 0;
+    while i < pad_queue_count {
+        let mut held: i32 = 0; // the loading screen is holding this frame
+        if ext::RB_Enabled() != 0 {
+            ext::RB_IterStart();
+        } else {
+            ext::SyncTest_IterStart();
+        }
+        ext::Script_FramePre();
+        ext::Det_LogicFrame((*temp_r25).unk_0 as i32);
+        ext::HSD_PerfSetStartTime();
+        ext::lb_800198E0();
+        if ext::DbLevel >= DbLKind_DebugRom {
+            gm_801A4970(&raw mut (*temp_r25).unk_10.db_input);
+        }
+        if gm_801A46B8(0) != 0 || gm_GetDbPauseFlag(0) == 0 {
+            (*temp_r25).unk_10.set_unk_38_0(1);
+        } else {
+            (*temp_r25).unk_10.set_unk_38_0(0);
+        }
+        if gm_80479D58.unk_10.unk_38_0() != 0 {
+            ext::lb_80019900();
+            if ext::lb_80019A30(0) != 0 {
+                ext::gm_EvaluateAllControllerInputs();
+            }
+            if ext::lb_80019A30(0) != 0 && on_frame.is_some() {
+                // While the loading screen holds, the scene renders but does not advance.
+                held = mnLoadScreen_Frame() as i32;
+                if held == 0 {
+                    (on_frame.unwrap())();
+                }
+            }
+        }
+        if gm_80479D58.unk_10.x0 != gm_80479D58.unk_10.x1 || (*temp_r25).unk_10.x2 != (*temp_r25).unk_10.x3 {
+            (*temp_r25).unk_10.unk_20 = maybe_gm_801A48A4((*temp_r25).unk_10.x0);
+            (*temp_r25).unk_10.x1 = (*temp_r25).unk_10.x0;
+            (*temp_r25).unk_10.x3 = (*temp_r25).unk_10.x2;
+            (*temp_r25).unk_10.x2 = 0;
+        }
+        (*temp_r25).unk_10.unk_28 = (*temp_r25).unk_10.unk_20;
+        if ext::lb_80019A30(0) == 0 {
+            (*temp_r25).unk_10.unk_28 |= gm_803DA8C8[(*temp_r25).unk_10.unk_34 as usize];
+        }
+        if ext::lb_80019A30(1) == 0 {
+            (*temp_r25).unk_10.unk_28 |= !gm_803DA8C8[(*temp_r25).unk_10.unk_34 as usize];
+        }
+        if ext::DbLevel >= DbLKind_DebugRom {
+            ext::db_CheckScreenshot();
+        }
+        ext::lbAudioAx_80027DF8();
+        if held == 0 {
+            // MELEE_SLP playback: count the frame, force the console's seed under RESYNC.
+            if ext::Replay_Enabled() != 0 {
+                ext::Replay_Tick();
+                ext::Replay_NoteSeed(*ext::HSD_RandSeedPtr); // the seed the port ARRIVED with
+                let s = ext::Replay_ResyncSeed();
+                if s != 0 {
+                    *ext::HSD_RandSeedPtr = s;
+                }
+                ext::Replay_CheckSeed(*ext::HSD_RandSeedPtr);
+                if ext::Snap_Curated() != 0 {
+                    let sw: u32 = *ext::HSD_RandSeedPtr;
+                    ext::Snap_CuratedMix(&sw, 1);
+                }
+            }
+            if ext::Snap_Curated() != 0 {
+                ext::Snap_CuratedItems();
+            }
+            if let Some(pre) = (*temp_r25).unk_10.pre_gobj_proc {
+                pre();
+            }
+            ext::HSD_GObj_RunProcs();
+            ext::Netplay_Background(); // an online lobby stays connected on the CSS too
+            ext::Camera_RefreshViewingMtx();
+            ext::ifMagnify_UpdateLogicOffscreen();
+            ext::HSD_ObjAllocTopUp();
+            ext::Script_FramePost();
+            ext::Geno_FxFramePost((*temp_r25).unk_0 as i32);
+        }
+        if (*temp_r25).unk_0 != 0xFFFF_FFFE {
+            (*temp_r25).unk_0 = (*temp_r25).unk_0.wrapping_add(1);
+        }
+        if held == 0 && gm_80479D58.unk_10.unk_38_0() != 0 && ext::lb_80019A30(0) != 0 {
+            if (*temp_r25).unk_8 != 0xFFFF_FFFE {
+                (*temp_r25).unk_8 = (*temp_r25).unk_8.wrapping_add(1);
+            }
+        }
+        // Finish EVERY intermediate logic frame with the retail callback walk.
+        let resim = ext::Snap_Resimulating();
+        if (resim != 0 && ext::Snap_CuratedNoRender() == 0)
+            || (resim == 0 && i + 1 < pad_queue_count && (*temp_r25).unk_C == 0)
+        {
+            if resim != 0 {
+                ext::Snap_Time(2, 0);
+            }
+            ext::SyncTest_PreRender();
+            if resim != 0 {
+                ext::Snap_Time(0, 1);
+            }
+            if resim != 0 {
+                ext::Snap_Time(3, 1);
             }
             ext::lb_800195D0();
-        }
-        ext::lb_800195D0();
-        if pad_queue_count > 1 && ext::Det_Enabled() != 0 {
-            pad_queue_count = 1;
-        }
-        if ext::RB_Enabled() != 0 {
-            pad_queue_count = ext::RB_Iterations(pad_queue_count);
-        } else {
-            pad_queue_count = ext::SyncTest_Iterations(pad_queue_count);
-        }
-        if !info.is_null() && (*info).scene_kind == 2 {
-            // A dead peer cannot confirm another rollback frame: leave from the render tick.
-            if ext::Netplay_Enabled() != 0 && ext::Netplay_PeerLeft() != 0 {
-                ext::Frontend_BackToOnline();
-                ext::gm_ChangeGameModeAfterCurrentScene(super::gmscdata::GM_FRONTEND as i32);
-                gm_801A4B60();
-                break 'scene;
+            ext::GXInvalidateVtxCache();
+            ext::GXInvalidateTexAll();
+            if resim != 0 {
+                ext::Snap_Time(3, 0);
             }
-        }
-        pad_queue_count = if gm_onep_interstage != 0 { 0 } else { ext::Script_Iterations(pad_queue_count) };
-        pad_queue_count = ext::RenderTest_Iterations(pad_queue_count);
-
-        if ext::HSD_PadGetResetSwitch() != 0 {
-            ext::gmMainLib_8046B0F0.resetting = 1;
-            break 'scene;
-        }
-
-        i = 0;
-        while i < pad_queue_count {
-            let mut held: i32 = 0; // the loading screen is holding this frame
-            if ext::RB_Enabled() != 0 {
-                ext::RB_IterStart();
-            } else {
-                ext::SyncTest_IterStart();
+            if resim != 0 {
+                ext::Snap_Time(4, 1);
             }
-            ext::Script_FramePre();
-            ext::Det_LogicFrame((*temp_r25).unk_0 as i32);
-            ext::HSD_PerfSetStartTime();
-            ext::lb_800198E0();
-            if ext::DbLevel >= DbLKind_DebugRom {
-                gm_801A4970(&raw mut (*temp_r25).unk_10.db_input);
+            ext::Det_SetInRender(1);
+            ext::HSD_StartRender(HSD_RP_SCREEN);
+            if resim != 0 {
+                ext::Snap_Time(4, 0);
             }
-            if gm_801A46B8(0) != 0 || gm_GetDbPauseFlag(0) == 0 {
-                (*temp_r25).unk_10.set_unk_38_0(1);
-            } else {
-                (*temp_r25).unk_10.set_unk_38_0(0);
+            if resim != 0 {
+                ext::Snap_Time(5, 1);
             }
-            if gm_80479D58.unk_10.unk_38_0() != 0 {
-                ext::lb_80019900();
-                if ext::lb_80019A30(0) != 0 {
-                    ext::gm_EvaluateAllControllerInputs();
-                }
-                if ext::lb_80019A30(0) != 0 && on_frame.is_some() {
-                    // While the loading screen holds, the scene renders but does not advance.
-                    held = mnLoadScreen_Frame() as i32;
-                    if held == 0 {
-                        (on_frame.unwrap())();
-                    }
-                }
-            }
-            if gm_80479D58.unk_10.x0 != gm_80479D58.unk_10.x1 || (*temp_r25).unk_10.x2 != (*temp_r25).unk_10.x3 {
-                (*temp_r25).unk_10.unk_20 = maybe_gm_801A48A4((*temp_r25).unk_10.x0);
-                (*temp_r25).unk_10.x1 = (*temp_r25).unk_10.x0;
-                (*temp_r25).unk_10.x3 = (*temp_r25).unk_10.x2;
-                (*temp_r25).unk_10.x2 = 0;
-            }
-            (*temp_r25).unk_10.unk_28 = (*temp_r25).unk_10.unk_20;
-            if ext::lb_80019A30(0) == 0 {
-                (*temp_r25).unk_10.unk_28 |= gm_803DA8C8[(*temp_r25).unk_10.unk_34 as usize];
-            }
-            if ext::lb_80019A30(1) == 0 {
-                (*temp_r25).unk_10.unk_28 |= !gm_803DA8C8[(*temp_r25).unk_10.unk_34 as usize];
-            }
-            if ext::DbLevel >= DbLKind_DebugRom {
-                ext::db_CheckScreenshot();
-            }
-            ext::lbAudioAx_80027DF8();
-            if held == 0 {
-                // MELEE_SLP playback: count the frame, force the console's seed under RESYNC.
-                if ext::Replay_Enabled() != 0 {
-                    ext::Replay_Tick();
-                    ext::Replay_NoteSeed(*ext::HSD_RandSeedPtr); // the seed the port ARRIVED with
-                    let s = ext::Replay_ResyncSeed();
-                    if s != 0 {
-                        *ext::HSD_RandSeedPtr = s;
-                    }
-                    ext::Replay_CheckSeed(*ext::HSD_RandSeedPtr);
-                    if ext::Snap_Curated() != 0 {
-                        let sw: u32 = *ext::HSD_RandSeedPtr;
-                        ext::Snap_CuratedMix(&sw, 1);
-                    }
-                }
-                if ext::Snap_Curated() != 0 {
-                    ext::Snap_CuratedItems();
-                }
-                if let Some(pre) = (*temp_r25).unk_10.pre_gobj_proc {
-                    pre();
-                }
-                ext::HSD_GObj_RunProcs();
-                ext::Netplay_Background(); // an online lobby stays connected on the CSS too
-                ext::Camera_RefreshViewingMtx();
-                ext::ifMagnify_UpdateLogicOffscreen();
-                ext::HSD_ObjAllocTopUp();
-                ext::Script_FramePost();
-                ext::Geno_FxFramePost((*temp_r25).unk_0 as i32);
-            }
-            if (*temp_r25).unk_0 != 0xFFFF_FFFE {
-                (*temp_r25).unk_0 = (*temp_r25).unk_0.wrapping_add(1);
-            }
-            if held == 0 && gm_80479D58.unk_10.unk_38_0() != 0 && ext::lb_80019A30(0) != 0 {
-                if (*temp_r25).unk_8 != 0xFFFF_FFFE {
-                    (*temp_r25).unk_8 = (*temp_r25).unk_8.wrapping_add(1);
-                }
-            }
-            // Finish EVERY intermediate logic frame with the retail callback walk.
-            let resim = ext::Snap_Resimulating();
-            if (resim != 0 && ext::Snap_CuratedNoRender() == 0)
-                || (resim == 0 && i + 1 < pad_queue_count && (*temp_r25).unk_C == 0)
-            {
-                if resim != 0 {
-                    ext::Snap_Time(2, 0);
-                }
-                ext::SyncTest_PreRender();
-                if resim != 0 {
-                    ext::Snap_Time(0, 1);
-                }
-                if resim != 0 {
-                    ext::Snap_Time(3, 1);
-                }
-                ext::lb_800195D0();
-                ext::GXInvalidateVtxCache();
-                ext::GXInvalidateTexAll();
-                if resim != 0 {
-                    ext::Snap_Time(3, 0);
-                }
-                if resim != 0 {
-                    ext::Snap_Time(4, 1);
-                }
-                ext::Det_SetInRender(1);
-                ext::HSD_StartRender(HSD_RP_SCREEN);
-                if resim != 0 {
-                    ext::Snap_Time(4, 0);
-                }
-                if resim != 0 {
-                    ext::Snap_Time(5, 1);
-                }
-                ext::Gx_SuppressDraws(if resim != 0 { ext::Snap_SuppressDraws() } else { 1 });
-                ext::HSD_GObj_80390FC0();
-                ext::Gx_SuppressDraws(0);
-                if resim != 0 {
-                    ext::Snap_Time(5, 0);
-                }
-                if resim != 0 {
-                    ext::Snap_Time(6, 1);
-                }
-                ext::HSD_Init_803755A8();
-                ext::Det_SetInRender(0);
-                if resim != 0 {
-                    ext::Snap_Time(6, 0);
-                }
-                if resim != 0 {
-                    ext::Snap_Time(0, 0);
-                }
-            }
-            ext::HSD_PerfSetCPUTime();
-            if ext::DbLevel >= DbLKind_DebugRom {
-                ext::OSCheckActiveThreads();
-            }
-            ext::gmMainLib_8046B0F0.xC = 0;
-            if (*temp_r25).unk_C != 0 {
-                break;
-            }
-            i += 1;
-        }
-        if (*temp_r25).unk_C == 2 {
-            break 'scene;
-        }
-
-        ext::SyncTest_PreRender();
-        ext::Snap_Time(1, 1);
-        ext::lb_800195D0();
-        ext::GXInvalidateVtxCache();
-        ext::GXInvalidateTexAll();
-        // Canonical draw callbacks use their private RNG stream.
-        ext::Det_SetInRender(1);
-        ext::HSD_StartRender(HSD_RP_SCREEN);
-        // turbo: a frame that will not be presented renders without its display lists
-        let hidden = ext::Turbo_FrameHidden();
-        if hidden != 0 {
-            ext::Gx_SuppressDraws(1);
-        }
-        ext::HSD_GObj_80390FC0();
-        if hidden != 0 {
+            ext::Gx_SuppressDraws(if resim != 0 { ext::Snap_SuppressDraws() } else { 1 });
+            ext::HSD_GObj_80390FC0();
             ext::Gx_SuppressDraws(0);
+            if resim != 0 {
+                ext::Snap_Time(5, 0);
+            }
+            if resim != 0 {
+                ext::Snap_Time(6, 1);
+            }
+            ext::HSD_Init_803755A8();
+            ext::Det_SetInRender(0);
+            if resim != 0 {
+                ext::Snap_Time(6, 0);
+            }
+            if resim != 0 {
+                ext::Snap_Time(0, 0);
+            }
         }
-        ext::HSD_Init_803755A8();
-        ext::Script_PostRender();
-        ext::Det_SetInRender(0);
-        ext::HSD_PerfSetDrawTime();
-        ext::HSD_VICopyXFBAsync(HSD_RP_SCREEN);
-        if (*temp_r25).unk_4 != 0xFFFF_FFFE {
-            (*temp_r25).unk_4 = (*temp_r25).unk_4.wrapping_add(1);
+        ext::HSD_PerfSetCPUTime();
+        if ext::DbLevel >= DbLKind_DebugRom {
+            ext::OSCheckActiveThreads();
         }
-        ext::Snap_Time(1, 0);
-        ext::SyncTest_PostRender();
-        ext::RB_TickEnd();
-        ext::db_TakeScreenshotIfPending();
-        ext::HSD_PerfSetTotalTime();
-        ext::HSD_PerfInitStat();
+        ext::gmMainLib_8046B0F0.xC = 0;
+        if (*temp_r25).unk_C != 0 {
+            break;
+        }
+        i += 1;
     }
+    if (*temp_r25).unk_C == 2 {
+        return false;
+    }
+
+    ext::SyncTest_PreRender();
+    ext::Snap_Time(1, 1);
+    ext::lb_800195D0();
+    ext::GXInvalidateVtxCache();
+    ext::GXInvalidateTexAll();
+    // Canonical draw callbacks use their private RNG stream.
+    ext::Det_SetInRender(1);
+    ext::HSD_StartRender(HSD_RP_SCREEN);
+    // turbo: a frame that will not be presented renders without its display lists
+    let hidden = ext::Turbo_FrameHidden();
+    if hidden != 0 {
+        ext::Gx_SuppressDraws(1);
+    }
+    ext::HSD_GObj_80390FC0();
+    if hidden != 0 {
+        ext::Gx_SuppressDraws(0);
+    }
+    ext::HSD_Init_803755A8();
+    ext::Script_PostRender();
+    ext::Det_SetInRender(0);
+    ext::HSD_PerfSetDrawTime();
+    ext::HSD_VICopyXFBAsync(HSD_RP_SCREEN);
+    if (*temp_r25).unk_4 != 0xFFFF_FFFE {
+        (*temp_r25).unk_4 = (*temp_r25).unk_4.wrapping_add(1);
+    }
+    ext::Snap_Time(1, 0);
+    ext::SyncTest_PostRender();
+    ext::RB_TickEnd();
+    ext::db_TakeScreenshotIfPending();
+    ext::HSD_PerfSetTotalTime();
+    ext::HSD_PerfInitStat();
+
+    true
+}
+
+/// The C's post-loop teardown.
+pub unsafe fn gm_801A4D34_end() {
     // Scripted model descriptors and Mato article point into heap-0 archive buffers.
     if gm_onep_interstage == 0 {
         ext::ScriptGame_StageEnd();
     }
     mnLoadScreen_Release(c"scene ended".as_ptr());
     ext::HSD_VIWaitXFBFlush();
+}
+
+/// The scene loop: run `on_frame` once per logic frame, step the GObj procs, render, until the
+/// scene sets `unk_C`. `begin`, `tick` until false, `end`.
+pub unsafe extern "C" fn gm_801A4D34(on_frame: Option<unsafe extern "C" fn()>, info: *mut GameSceneInfo) {
+    melee_core::ct!("gm_801A4D34");
+    gm_801A4D34_begin(info);
+    while gm_801A4D34_tick(on_frame, info) {}
+    gm_801A4D34_end();
 }
 
 /// The retail state has handled its exit; no next scene is loaded yet. Pump input/scripts and

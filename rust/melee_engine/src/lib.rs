@@ -4,11 +4,15 @@
 pub mod archive;
 pub mod dat_types;
 pub mod dvd;
+pub mod engine;
 pub mod gcm;
 pub mod host;
 pub mod install;
 pub mod lowmem;
 pub mod os;
+pub mod seams;
+pub mod seams_gen;
 
+pub use engine::Engine;
 pub use host::Host;
 pub use install::install;

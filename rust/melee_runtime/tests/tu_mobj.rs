@@ -136,6 +136,7 @@ pub fn preg_world() {
 }
 
 pub unsafe fn setup_world() {
+    melee_runtime::tu::mobj::native::ext::use_ext_data = true;
     MOB = core::mem::zeroed();
     TOB = core::mem::zeroed();
     MAT = core::mem::zeroed();

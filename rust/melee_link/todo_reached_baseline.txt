@@ -102,6 +102,8 @@ HSD_DObjResolveRefsAll melee_runtime::tu::jobj::ext::hook::HSD_DObjResolveRefsAl
 HSD_DObjSetCurrent melee_runtime::tu::displayfunc_native::ext::hook::HSD_DObjSetCurrent
 HSD_DObjSetFlags melee_modes::tu/mnsnap.rs
 HSD_DObjSetFlags melee_world::tu::grinishie1::ext::hook::HSD_DObjSetFlags
+HSD_DevComRequest melee_runtime::tu::lbfile::ext::H_HSD_DevComRequest
+HSD_DevComRequest melee_runtime::tu::lbmemory::ext::H_HSD_DevComRequest
 HSD_FogLoadDesc melee_modes::tu/mnstagesel.rs
 HSD_FogSet melee_modes::tu/mnstagesel.rs
 HSD_ForeachAnim melee_modes::tu::mn_22EC::ext::hook::HSD_ForeachAnim
@@ -599,6 +601,7 @@ lbArchive_LoadSymbols melee_modes::tu::lb_0219::ext::hook::lbArchive_LoadSymbols
 lbArchive_LoadSymbols melee_runtime::tu::lbaudio_ax::ext::hook::lbArchive_LoadSymbols
 lbAudioAx_80024304 melee_fighter::tu::ft_0c31::ext::LBAUDIOAX_80024304
 lbColl_800083C4 melee_fighter::tu::ftCo_0A01_ai::ext::hook::lbColl_800083C4
+lbDvd_8001819C melee_runtime::tu::lbfile::ext::H_lbDvd_8001819C
 lb_80011E24 melee_items::tu::vi0401::ext::hook::lb_80011E24
 lb_80014258 melee_items::tu::itanimlist::ext::hook::lb_80014258
 lb_80014258 melee_modes::tu::lb_0219::ext::hook::lb_80014258

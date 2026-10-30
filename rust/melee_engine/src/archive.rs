@@ -151,7 +151,10 @@ pub unsafe fn host_parse(archive: *mut HSD_Archive, src: *mut u8, file_size: usi
                     roots.insert(p.name.clone(), Root::Raw(p.offset));
                 }
                 Some(ty) => {
-                    let r = dat_types::decode_root(&mut d, ty, p.offset);
+                    // an array root runs to the next public, or the end of the data section
+                    let next = image.dat.publics.iter().map(|q| q.offset).filter(|&o| o > p.offset).min();
+                    let extent = next.unwrap_or(image.dat.data.len() as u32) - p.offset;
+                    let r = dat_types::decode_root(&mut d, ty, p.offset, extent);
                     roots.insert(p.name.clone(), Root::Native(r));
                 }
                 None => {}

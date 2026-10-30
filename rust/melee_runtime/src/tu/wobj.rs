@@ -64,6 +64,9 @@ pub mod ext {
     }
     // Data defined in other TUs (the tests set them).
     pub static mut hsdObj: HSD_ClassInfo = unsafe { core::mem::zeroed() };
+    /// Tests (C oracle) run on the `hsdObj` copy above; the engine uses the one `object::hsdObj`.
+    pub static mut use_ext_data: bool = false;
+    pub unsafe fn obj_ptr() -> *mut HSD_ClassInfo { if use_ext_data { core::ptr::addr_of_mut!(hsdObj) } else { core::ptr::addr_of_mut!(crate::tu::object::hsdObj) } }
 }
 // END GENERATED EXT
 
@@ -303,7 +306,7 @@ pub unsafe extern "C" fn WObjInfoInit() {
     melee_core::ct!("WObjInfoInit");
     ext::hsdInitClassInfo(
         addr_of_mut!(hsdWObj).cast(),
-        addr_of_mut!(ext::hsdObj),
+        ext::obj_ptr(),
         c"sysdolphin_base_library".as_ptr().cast_mut(),
         c"had_wobj".as_ptr().cast_mut(),
         core::mem::size_of::<HSD_WObjInfo>() as i32,

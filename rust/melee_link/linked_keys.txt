@@ -4393,3 +4393,17 @@ tu::mn_22EC::ext::hook::HSD_JObjReqAnimAll
 tu::mn_22EC::ext::hook::gmMainLib_GetGameRules
 tu::mn_22EC::ext::hook::gm_GetButtonsTriggered
 tu::mn_22EC::ext::hook::mnCharSel_802640A0
+tu::lbfile::ext::H_lb_800195D0
+tu::lbfile::ext::H_lbHeap_80015BD0
+tu::lbfile::ext::H_lbLang_IsSettingUS
+tu::lbfile::ext::H_lbLang_IsSavedLanguageUS
+tu::lbgx::ext::H_HSD_CObjGetCurrent
+tu::lbheap::ext::H_HSD_CreateMainHeap
+tu::lbheap::ext::H_HSD_GetHeap
+tu::lbheap::ext::H_HSD_SetHeap
+tu::lbheap::ext::H_HSD_MemAlloc
+tu::lbheap::ext::H_HSD_Free
+tu::lbheap::ext::H_HSD_GetNextArena
+tu::lbheap::ext::H_HSD_ObjAllocReport
+tu::lblanguage::ext::H_gmMainLib_GetGamePrefs
+tu::lbmthp::ext::H_HSD_VIWaitXFBFlush

@@ -4,7 +4,7 @@
 use std::io::{Read, Seek, SeekFrom};
 
 pub struct Gcm {
-    f: std::fs::File,
+    f: Option<std::fs::File>,
     fst: Vec<u8>,
 }
 
@@ -15,20 +15,28 @@ fn be32(b: &[u8], at: usize) -> u32 {
 impl Gcm {
     pub fn open(path: &str) -> Result<Self, String> {
         let mut f = std::fs::File::open(path).map_err(|e| format!("{path}: {e}"))?;
-        let h = read_at(&mut f, 0x424, 8)?;
-        let fst = read_at(&mut f, be32(&h, 0) as u64, be32(&h, 4) as usize)?;
-        Ok(Self { f, fst })
+        let h = read_at(Some(&mut f), 0x424, 8)?;
+        let fst = read_at(Some(&mut f), be32(&h, 0) as u64, be32(&h, 4) as usize)?;
+        Ok(Self { f: Some(f), fst })
+    }
+
+    /// A disc with only the root directory: for headless runs that load no files.
+    pub fn empty() -> Self {
+        let mut fst = vec![0u8; 12];
+        fst[0] = 1;
+        fst[11] = 1;
+        Self { f: None, fst }
     }
 
     /// `len` bytes of the game's main.dol at its RAM address `addr` (DOL header at the disc's +0x420 offset).
     pub fn dol_bytes(&mut self, addr: u32, len: usize) -> Result<Vec<u8>, String> {
-        let h = read_at(&mut self.f, 0x420, 4)?;
+        let h = read_at(self.f.as_mut(), 0x420, 4)?;
         let dol = be32(&h, 0) as u64;
-        let hd = read_at(&mut self.f, dol, 0x100)?;
+        let hd = read_at(self.f.as_mut(), dol, 0x100)?;
         for k in 0..18 {
             let (off, a, sz) = (be32(&hd, k * 4), be32(&hd, 0x48 + k * 4), be32(&hd, 0x90 + k * 4));
             if sz != 0 && a <= addr && addr as u64 + len as u64 <= a as u64 + sz as u64 {
-                return read_at(&mut self.f, dol + off as u64 + (addr - a) as u64, len);
+                return read_at(self.f.as_mut(), dol + off as u64 + (addr - a) as u64, len);
             }
         }
         Err(format!("DOL: {addr:#x}+{len:#x} is not in any section"))
@@ -98,7 +106,7 @@ impl Gcm {
         }
         let i = entry as usize;
         let start = be32(&self.fst, i * 12 + 4) as u64;
-        read_at(&mut self.f, start + offset as u64, len)
+        read_at(self.f.as_mut(), start + offset as u64, len)
     }
 
     /// The whole file `want` (a path, or a bare name anywhere on the disc).
@@ -112,7 +120,8 @@ impl Gcm {
     }
 }
 
-fn read_at(f: &mut std::fs::File, off: u64, n: usize) -> Result<Vec<u8>, String> {
+fn read_at(f: Option<&mut std::fs::File>, off: u64, n: usize) -> Result<Vec<u8>, String> {
+    let f = f.ok_or_else(|| "no disc".to_string())?;
     let mut v = vec![0; n];
     f.seek(SeekFrom::Start(off)).and_then(|_| f.read_exact(&mut v)).map_err(|e| format!("disc read @{off:#x}: {e}"))?;
     Ok(v)

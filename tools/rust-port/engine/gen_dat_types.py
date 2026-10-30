@@ -39,7 +39,7 @@ def decodable_types():
 
 def render(rows):
     ok = decodable_types()
-    types = sorted({r[2].lstrip("*") for r in rows if r[2] != "raw"})
+    types = sorted({r[2].lstrip("*").removesuffix("[]") for r in rows if r[2] != "raw"})
     for t in types:
         if t not in ok:
             sys.exit(f"dat_symbols.tsv: type {t} has no GcDecode impl in melee_types")
@@ -47,7 +47,7 @@ def render(rows):
          "//! Archive public symbol -> the melee_types record the C casts it to (see the .tsv for the call-site evidence).",
          "#![allow(clippy::all)]",
          "use core::ffi::c_void;",
-         "use melee_core::gcdecode::GcDecoder;",
+         "use melee_core::gcdecode::{GcDecode, GcDecoder};",
          "use melee_types::*;",
          "",
          "/// How a symbol's root is read.",
@@ -57,11 +57,14 @@ def render(rows):
          "    Record(&'static str),",
          "    /// The symbol is a pointer to a record (C `T**`).",
          "    PtrTo(&'static str),",
+         "    /// The symbol is an array of records running to the next public (or the end of the data section).",
+         "    Array(&'static str),",
          "    /// Bytes read straight from the raw image (C `void*`).",
          "    Raw,",
          "}",
          "",
          "fn rt(t: &'static str) -> RootType {",
+         "    if let Some(a) = t.strip_suffix(\"[]\") { return RootType::Array(a); }",
          "    match t.strip_prefix('*') { Some(r) => RootType::PtrTo(r), None => RootType::Record(t) }",
          "}",
          "",
@@ -81,15 +84,19 @@ def render(rows):
     o += ["    None", "}", "",
           "/// Decode the record or pointer root at data offset `off` into the decoder's shared graph; the result is",
           "/// the native address of the root (a record pointer, or a pointer to the decoded pointer cell).",
-          "pub fn decode_root(d: &mut GcDecoder<'_>, ty: RootType, off: u32) -> *mut c_void {",
+          "pub fn decode_root(d: &mut GcDecoder<'_>, ty: RootType, off: u32, extent: u32) -> *mut c_void {",
           "    match ty {",
           "        RootType::Raw => core::ptr::null_mut(),",
           "        RootType::Record(n) => match n {"]
     for t in types:
-        if not any(r[2] == t for r in rows):
+        if not any(r[2] == t or r[2] == t + "[]" for r in rows):
             continue
         o.append(f'            "{t}" => d.object::<{t}>(off) as *mut c_void,')
     o += ['            _ => panic!("dat_types: no decoder for record {n}"),', "        },",
+          "        RootType::Array(n) => match n {"]
+    for t in sorted({r[2][:-2] for r in rows if r[2].endswith("[]")}):
+        o.append(f'            "{t}" => d.array::<{t}>(off, (extent / <{t} as GcDecode>::GC_BYTES) as usize) as *mut c_void,')
+    o += ['            _ => panic!("dat_types: no decoder for array of {n}"),', "        },",
           "        RootType::PtrTo(n) => match n {"]
     for t in sorted({r[2][1:] for r in rows if r[2].startswith("*")}):
         o.append(f'            "{t}" => d.object::<*mut {t}>(off) as *mut c_void,')

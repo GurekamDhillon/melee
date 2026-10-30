@@ -20,3 +20,4 @@ suffix	_matanim_joint	HSD_MatAnimJoint	model files, e.g. gmresultplayer.c:583 Eb
 suffix	_shapeanim_joint	HSD_ShapeAnimJoint	tyfigupon.c:164 shapeanim_str
 suffix	_animjoint	HSD_AnimJoint	toy.c:1995 anim
 suffix	_joint	HSD_Joint	fighter.c / toy.c:2432 joint (HSD_JObjLoadJoint)
+sym	lbRumbleData	Fighter_804D653C_t[]	src/melee/lb/lb_013B.c:241 Fighter_804D653C_t* lb_804D63C0 (indexed by rumble id; the array runs to the end of the data section)

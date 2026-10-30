@@ -2,7 +2,7 @@
 //! Archive public symbol -> the melee_types record the C casts it to (see the .tsv for the call-site evidence).
 #![allow(clippy::all)]
 use core::ffi::c_void;
-use melee_core::gcdecode::GcDecoder;
+use melee_core::gcdecode::{GcDecode, GcDecoder};
 use melee_types::*;
 
 /// How a symbol's root is read.
@@ -12,11 +12,14 @@ pub enum RootType {
     Record(&'static str),
     /// The symbol is a pointer to a record (C `T**`).
     PtrTo(&'static str),
+    /// The symbol is an array of records running to the next public (or the end of the data section).
+    Array(&'static str),
     /// Bytes read straight from the raw image (C `void*`).
     Raw,
 }
 
 fn rt(t: &'static str) -> RootType {
+    if let Some(a) = t.strip_suffix("[]") { return RootType::Array(a); }
     match t.strip_prefix('*') { Some(r) => RootType::PtrTo(r), None => RootType::Record(t) }
 }
 
@@ -33,6 +36,7 @@ pub fn type_of(name: &str) -> Option<RootType> {
     if name == "yakumono_param" { return Some(RootType::Raw); }
     if name == "itPublicData" { return Some(rt("it_804D6D20_t")); }
     if name == "effCommonDataTable" { return Some(rt("EF_DAT_Entry")); }
+    if name == "lbRumbleData" { return Some(rt("Fighter_804D653C_t[]")); }
     if name.starts_with("ftData") { return Some(rt("ftData")); }
     if name.ends_with("_shapeanim_joint") { return Some(rt("HSD_ShapeAnimJoint")); }
     if name.ends_with("_matanim_joint") { return Some(rt("HSD_MatAnimJoint")); }
@@ -43,12 +47,13 @@ pub fn type_of(name: &str) -> Option<RootType> {
 
 /// Decode the record or pointer root at data offset `off` into the decoder's shared graph; the result is
 /// the native address of the root (a record pointer, or a pointer to the decoded pointer cell).
-pub fn decode_root(d: &mut GcDecoder<'_>, ty: RootType, off: u32) -> *mut c_void {
+pub fn decode_root(d: &mut GcDecoder<'_>, ty: RootType, off: u32, extent: u32) -> *mut c_void {
     match ty {
         RootType::Raw => core::ptr::null_mut(),
         RootType::Record(n) => match n {
             "DynamicModelDesc" => d.object::<DynamicModelDesc>(off) as *mut c_void,
             "EF_DAT_Entry" => d.object::<EF_DAT_Entry>(off) as *mut c_void,
+            "Fighter_804D653C_t" => d.object::<Fighter_804D653C_t>(off) as *mut c_void,
             "GroundParam" => d.object::<GroundParam>(off) as *mut c_void,
             "HSD_AnimJoint" => d.object::<HSD_AnimJoint>(off) as *mut c_void,
             "HSD_Joint" => d.object::<HSD_Joint>(off) as *mut c_void,
@@ -59,6 +64,10 @@ pub fn decode_root(d: &mut GcDecoder<'_>, ty: RootType, off: u32) -> *mut c_void
             "ftData" => d.object::<ftData>(off) as *mut c_void,
             "it_804D6D20_t" => d.object::<it_804D6D20_t>(off) as *mut c_void,
             _ => panic!("dat_types: no decoder for record {n}"),
+        },
+        RootType::Array(n) => match n {
+            "Fighter_804D653C_t" => d.array::<Fighter_804D653C_t>(off, (extent / <Fighter_804D653C_t as GcDecode>::GC_BYTES) as usize) as *mut c_void,
+            _ => panic!("dat_types: no decoder for array of {n}"),
         },
         RootType::PtrTo(n) => match n {
             "GroundItemData" => d.object::<*mut GroundItemData>(off) as *mut c_void,

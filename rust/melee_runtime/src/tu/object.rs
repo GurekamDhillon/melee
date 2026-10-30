@@ -2,6 +2,9 @@
 #![allow(non_snake_case, non_upper_case_globals)]
 #[allow(unused_imports)]
 use melee_types::*;
+/// Tests (C oracle) run on the `ext::hsdClass` copy; the engine uses the one `class::hsdClass`.
+pub static mut use_ext_data: bool = false;
+unsafe fn hsd_class_ptr() -> *mut HSD_ClassInfo { if use_ext_data { core::ptr::addr_of_mut!(ext::hsdClass) } else { core::ptr::addr_of_mut!(crate::tu::class::hsdClass) } }
 pub static mut hsdObj: HSD_ClassInfo = unsafe {
     let mut info: HSD_ClassInfo = core::mem::zeroed();
     info.head.info_init = Some(ObjInfoInit);
@@ -39,7 +42,7 @@ pub mod ext {
 // END GENERATED EXT
 pub unsafe extern "C" fn ObjInfoInit() {
     melee_core::ct!("ObjInfoInit");
-    ext::hsdInitClassInfo(core::ptr::addr_of_mut!(hsdObj), core::ptr::addr_of_mut!(ext::hsdClass),
+    ext::hsdInitClassInfo(core::ptr::addr_of_mut!(hsdObj), hsd_class_ptr(),
         b"sysdolphin_base_library\0".as_ptr().cast_mut().cast(), b"hsd_obj\0".as_ptr().cast_mut().cast(),
         core::mem::size_of::<HSD_ObjInfo>() as i32, core::mem::size_of::<HSD_Obj>() as i32);
 }

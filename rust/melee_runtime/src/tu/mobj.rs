@@ -424,7 +424,7 @@ pub mod native {
     pub unsafe extern "C" fn MObjInfoInit() {
         ext::hsdInitClassInfo(
             addr_of_mut!(hsdMObj.parent),
-            addr_of_mut!(ext::hsdClass),
+            ext::hsd_class_ptr(),
             c"sysdolphin_base_library".as_ptr().cast_mut(),
             c"hsd_mobj".as_ptr().cast_mut(),
             size_of::<HSD_MObjInfo>() as i32,
@@ -680,6 +680,9 @@ pub mod ext {
     }
     // Data defined in other TUs (the tests set them).
     pub static mut hsdClass: HSD_ClassInfo = unsafe { core::mem::zeroed() };
+    /// Tests (C oracle) run on the `hsdClass` copy above; the engine uses the one `class::hsdClass`.
+    pub static mut use_ext_data: bool = false;
+    pub unsafe fn hsd_class_ptr() -> *mut HSD_ClassInfo { if use_ext_data { core::ptr::addr_of_mut!(hsdClass) } else { core::ptr::addr_of_mut!(crate::tu::class::hsdClass) } }
 }
 // END GENERATED EXT
 }

@@ -791,7 +791,7 @@ pub unsafe extern "C" fn TObjAmnesia(info:*mut HSD_ClassInfo){
 }
 pub unsafe extern "C" fn TObjInfoInit(){
     melee_core::ct!("TObjInfoInit");
-    ext::hsdInitClassInfo(addr_of_mut!(hsdTObj.parent),addr_of_mut!(ext::hsdObj),c"sysdolphin_base_library".as_ptr().cast_mut(),c"hsd_tobj".as_ptr().cast_mut(),size_of::<HSD_TObjInfo>() as i32,size_of::<HSD_TObj>() as i32);
+    ext::hsdInitClassInfo(addr_of_mut!(hsdTObj.parent),ext::obj_ptr(),c"sysdolphin_base_library".as_ptr().cast_mut(),c"hsd_tobj".as_ptr().cast_mut(),size_of::<HSD_TObjInfo>() as i32,size_of::<HSD_TObj>() as i32);
     hsdTObj.parent.release=Some(TObjRelease);hsdTObj.parent.amnesia=Some(TObjAmnesia);hsdTObj.load=Some(TObjLoad);hsdTObj.make_texp=Some(TObjMakeTExp);hsdTObj.make_mtx=Some(MakeTextureMtx);
 }
 
@@ -870,6 +870,9 @@ pub mod ext {
     }
     // Data defined in other TUs (the tests set them).
     pub static mut hsdObj: HSD_ClassInfo = unsafe { core::mem::zeroed() };
+    /// Tests (C oracle) run on the `hsdObj` copy above; the engine uses the one `object::hsdObj`.
+    pub static mut use_ext_data: bool = false;
+    pub unsafe fn obj_ptr() -> *mut HSD_ClassInfo { if use_ext_data { core::ptr::addr_of_mut!(hsdObj) } else { core::ptr::addr_of_mut!(crate::tu::object::hsdObj) } }
 }
 // END GENERATED EXT
 

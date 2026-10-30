@@ -1,0 +1,45 @@
+# Host seams for the headless engine (consolidation step 6). One regex per line, matched against the whole hook name.
+# An optional second column (tab separated) replaces the "off" return value with a Rust expression.
+# Every unlinked `ext_fns!` hook whose name matches gets the "feature off" body: 0 / null / false / None / no-op,
+# or (for `*_Iterations`) its first argument. Nothing here may carry game logic: port extensions (rollback, scripts,
+# replay, determinism, overlay), render/GX host calls and debug helpers only.
+Snap_\w+
+PcTrace\w*
+Det_\w+
+RB_\w+
+Script_\w+
+ScriptGame_\w+
+Replay_\w+
+Gfx_\w+
+Gx_\w+
+Netplay_\w+
+Overlay_\w+
+Turbo_\w+
+SyncTest_\w+
+View_\w+
+SceneReport_\w+
+RenderTest_\w+
+LabPad_\w+
+Ucf_PadLatch
+FighterControls_Apply
+Mex_Enabled
+GXInvalidate\w+
+db_CheckScreenshot
+db_TakeScreenshotIfPending
+db_PrintEntityCounts
+db_PrintThreadInfo
+OSCheckActiveThreads
+hsd_80392474
+hsd_80392E80
+CARD\w+	-3
+OSGetTime	crate::seams::os_get_time()
+OSTicksToCalendarTime
+DVDGetDriveStatus
+GX\w+
+Wb_\w+
+Fx_\w+
+Prof\w+
+diag_\w+
+Geno_\w+
+ScriptParts_\w+
+hsd_80391A04

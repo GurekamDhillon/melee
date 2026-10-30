@@ -219,3 +219,6 @@ tu::lb_0192::ext::hook::lbLang_IsSavedLanguageJP
 tu::lb_0195::ext::hook::HSD_PadRenewRawStatus
 tu::lb_0219::ext::hook::lb_80014258
 tu::lb_0219::ext::hook::lb_800144C8
+tu::lbext::H_OSReport
+tu::lbfile::ext::H_HSD_DevComRequest
+tu::lbmemory::ext::H_HSD_DevComRequest

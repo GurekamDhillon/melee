@@ -50,6 +50,7 @@ pub fn preg_world() {
 }
 
 pub unsafe fn setup_world() {
+    m::use_ext_data = true;
     for (k, st) in [&b"a.dat"[..], &b"sym"[..], &b"LbAd.dat"[..], &b"x"[..]].iter().enumerate() { STRS[k] = [0; 64]; STRS[k][..st.len()].copy_from_slice(st); }
     for i in 0..16 { U8A[i] = rnd() as u8; }
     for i in 0..4 { IA[i] = fv() as i32; UA[i] = fv(); FA[i] = rw(); VA[i].x = rw(); VA[i].y = rw(); VA[i].z = rw(); }

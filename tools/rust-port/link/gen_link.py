@@ -207,6 +207,33 @@ def parse_hooks():
                     path = None
                 hooks.append(dict(crate=c, file=rel, name=name, npar=npar, hasret=hasret, todo=todo,
                                   kind=kind, path=path, mod=mod_chain))
+    # `lb_hook!(H_NAME, NAME, (a: T, ..) -> R [= default]);` (melee_runtime lb* TUs): the static is `<mods>::H_NAME`
+    for crate, f, rel in tu_files():
+        raw = open(f, encoding='utf8', errors='replace').read()
+        if 'lb_hook!(' not in raw: continue
+        t = blank(raw)
+        c, mp = modpath_of(f)
+        for im in re.finditer(r'(?<![\w!])lb_hook!\s*\(', t):
+            if re.match(r'\s*\$h', t[im.end():im.end() + 8]): continue
+            cl = match_close(t, im.end() - 1, '(', ')')
+            body = t[im.end():cl]
+            m = re.match(r'\s*(\w+)\s*,\s*(\w+)\s*,\s*\(', body)
+            if not m: continue
+            p1 = match_close(body, m.end() - 1, '(', ')')
+            npar = count_params(body[m.end():p1])
+            rest = body[p1 + 1:]
+            hasret = bool(re.match(r'\s*->', rest))
+            dm2 = re.search(r'(?<![=!<>])=(?![=>])', rest)
+            dflt = rest[dm2.end():] if dm2 else ''
+            chain = []
+            for mm in re.finditer(r'\bmod\s+(\w+)\s*\{', t[:im.start()]):
+                o = mm.end() - 1
+                e = match_close(t, o)
+                if e < 0 or e > im.start(): chain.append(mm.group(1))
+            mod_chain = '::'.join([mp] + chain)
+            todo = ('todo!' in dflt or 'panic!' in dflt or 'unimplemented!' in dflt) or not dflt.strip()
+            hooks.append(dict(crate=c, file=rel, name=m.group(2), npar=npar, hasret=hasret, todo=todo,
+                              kind='lb_hook', path=f'{mod_chain}::{m.group(1)}', mod=mod_chain))
     return hooks
 
 

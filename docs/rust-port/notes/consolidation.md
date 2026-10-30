@@ -28,7 +28,7 @@ with data instantiated from the disc by the real loaders. Every byte of every mi
 |---|---|---|
 | leaves | `melee_runtime`, `melee_world`, `melee_fighter`, `melee_chara`, `melee_items`, `melee_modes` | Game logic, only in `src/tu/<cfile>.rs`: one Rust module per C TU, with the C's globals as the module's statics (as `tu/gobj_native.rs` does now). No crate calls another crate's logic except through the link layer (1.2). |
 | link | **new `melee_link`** (depends on every leaf crate) | `install()`: sets every `ext_fns!` hook and every `HOOK` static to the canonical TU function, from a **generated** table (`melee_link/src/gen_table.rs`, made by `tools/rust-port/link/gen_link.py` from the canonical-home table in section 3). The crate contains no hand-written logic. |
-| engine | **new `melee_engine`** (depends on `melee_link`) | The host side the C gets from the OS and dolphin SDK: the heap (`HSD_MemAlloc` / `OSAlloc` arenas), the DVD/archive host (1.4), pad feed into `HSD_PadRenewStatus`, `OSGetTick`, the audio sink (`melee_audio::sim`), the render sink (no-op or `melee_gx`). Plus `Engine::boot(scenario)` / `Engine::frame()` / `Engine::state()`. |
+| engine | **new `melee_engine`** (depends on `melee_link`) | The host side the C gets from the OS and dolphin SDK: the heap (`HSD_MemAlloc` / `OSAlloc` arenas), the DVD/archive host (1.4), pad feed into `HSD_PadRenewStatus`, `OSGetTick`, the audio sink (`melee_audio::sim`), the render sink (no-op or `melee_gx`). Plus `Engine::boot(scenario)` / `Engine::tick()` / `Engine::state()`. |
 | bin | `melee` | CLI, disc, golden CSV writer, `diff`, snapshots, viewers, netplay. No game logic (lint, section 4). |
 
 `vs_match` becomes a second, legacy `Sim` behind `--engine legacy` until the cutover step, and is then deleted.
@@ -66,7 +66,7 @@ the same either way.
   p_link and priority order, with the delayed-remove and delayed-reprioritize rules (`DelayedProcInfo`).
 - **The frame** is `melee_modes::tu::gmscene::gm_801A4D34(on_frame, info)`, the C scene loop. It calls the scene's
   `on_frame`, then `HSD_GObj_RunProcs`, then the camera refresh, then render (`HSD_GObj_80390FC0` with the render sink).
-  `Engine::frame()` runs exactly one iteration. To do that, the loop body is factored into `gm_801A4D34_tick()` in the
+  `Engine::tick()` runs exactly one iteration. To do that, the loop body is factored into `gm_801A4D34_tick()` in the
   same TU (a TARGET_PC split like `gw_*`, with a comment naming the C lines). `gm_801A4D34` itself becomes
   `loop { tick }`.
 - **The scene** is the real VS boot: the `gmvsmelee` / `gm_16f1` minor scene `OnLoad` (`StartMelee` path), then
@@ -125,7 +125,7 @@ From step 7 the engine path is the one being moved forward.
 | 3 (DONE 2026-10-30) | Logic lint, report mode | Add `tools/rust-port/lint_logic.py` and `lint_allow.txt` (section 4). Run in CI with `--report`, so it lists violations without failing. Generate `lint_baseline.txt` (current violations), so that from now on only new violations fail. |
 | 4 (DONE 2026-10-30, partial: 617 trace-reached todo hooks left) | Link generator | Add `tools/rust-port/link/gen_link.py` and the `melee_link` crate. Its `install()` sets every hook to the canonical TU function, using the section-3 table. Its test lists the hooks still left at `todo!()` among trace-reached functions; the goal is 0. Nothing in the goldens changes. |
 | 5 (DONE 2026-10-30, host only: no heap census/ARAM beyond copies, synth heap hook not wired) | Engine host and DVD/archive | Add the `melee_engine` crate: heap arenas, the DVD seam on `melee::disc`, raw and native archive images, and `dat_types.rs`. The test loads `PlCa.dat`, `PlFx.dat`, `GrNFd.dat`, `ItCo.dat` and `EfCoData.dat`, and checks that the native decode equals `fighter_data`/`stage`'s decode (no disc data is committed). |
-| 6 | Scene loop tick | Split `gm_801A4D34` into a tick, then add `Engine::frame()`. Boot the real `HSD_GObjInit` / `gmMainLib` and the pad feed (`MELEE_PAD_SCRIPT` into `HSD_PadRenewStatus`). Smoke-test 60 frames of an empty scene with no panic. |
+| 6 (DONE 2026-10-30, empty scene only) | Scene loop tick | Split `gm_801A4D34` into a tick, then add `Engine::tick()`. Boot the real `HSD_GObjInit` / `gmMainLib` and the pad feed (`MELEE_PAD_SCRIPT` into `HSD_PadRenewStatus`). Smoke-test 60 frames of an empty scene with no panic. |
 | 7 | VS boot to frame 0 | Real `StartMelee`: Stage FD and BF, `Player_InitAllPlayers`, `Fighter_Create` for Falcon, Fox, Marth and Sheik. `melee golden --engine tu` frame 0 matches for both pad scenarios. `melee diff --engine tu --frame 0`: fighter and gobj subsystems at 0 non-baseline diffs. |
 | 8 | Fighter phase procs | The `Fighter_8006A1BC` / `8006A360` / `8006ABA0` / `8006AD10` / `8006C5F4` / `8006C80C` / `8006CB94` / `8006D1EC` s_links, `ftAnim`, `ftParts`, `ftCommon` and the ground states. Target: pad_falcon_fox_fd to GO (first input frames) and calltrace seqdiff clean to that frame. |
 | 9 | Stage and collision procs | `Ground_*`, `grFinalDestination` / `grBattle` procs, `mpLib` / `mpColl` through the real ground gobjs. Retire `stage_anim()` / `stage.rs` from the engine path. Target: pad_falcon_fox_fd to 600 or more. |
@@ -854,3 +854,16 @@ initialize/memory/lbheap/lbfile/lbdvd and three new seams in `tu/archive.rs`: `h
 Test `melee_engine/tests/archive_host.rs` (needs GW_ISO_VANILLA, else vacuous) loads PlCa, PlFx, GrNLa (the task's "GrNFd" is `GrNLa.dat`), ItCo, EfCoData through the real
 `lbFile_LoadInto` + `lbArchive_InitializeDAT`, checks raw image = file + Locate (+ externs located to NULL), ftData->x0 and map_head against the `melee_runtime::dat` decode.
 Not done: engine-side mods overlay for the DVD seam, ARAM beyond plain copies, wiring `Engine::boot` (step 6). The legacy goldens are unchanged (gate OK).
+
+Step 6 result: `gm_801A4D34` is now `gm_801A4D34_begin` + `while gm_801A4D34_tick {}` + `gm_801A4D34_end` (s497 oracle still passes). `melee_engine::Engine`
+(`engine.rs`): `boot(disc, mem, PadSystem)` = Host + `melee_link::install` + host install + `seams_gen::install_gen` + `gmMainLib_init_statics`, `HSD_OSInit`,
+`lb_80019AAC(gmMain_8015FD24)` (pad library, PADRead hook = `PadSystem::read`, so `MELEE_PAD_SCRIPT` feeds `HSD_PadRenewStatus`), `gm_801A4BD4` (real
+`HSD_GObjInit`, loads `LbRb.dat` from the disc), `gm_801A4D34_begin`; `tick()` fires the periodic pad alarm once and runs one tick (`Engine::frame` was renamed
+`tick`: lint R2 flags C names). Test `melee_engine/tests/scene_loop.rs` (needs the disc, vacuous without) runs 60 frames of an empty scene, no panic.
+Seams: `tools/rust-port/engine/gen_seams.py` + `seams.txt` generate `seams_gen.rs` (638 unlinked port-extension / SDK hooks get their "feature off" body, only if
+nobody set them); hand-written ones in `seams.rs` (pad alarm, CARD = no card, lbsnap/synth/robj NULL guards). Not done / traps: the gmscene `ext` defaults for
+`lbAudioAx_*` and `Geno_FxFramePost` are now no-ops (audio is step 11); `HSD_RObj*` has no native port (only NULL descriptors are answered, step 7 needs robj.c);
+`gen_link.py` now also parses `lb_hook!` (3 more trace-reached todo hooks appear in the baseline, all engine seams); object/dobj/mobj/wobj/tobj got a
+`use_ext_data`-style flag so the engine uses the canonical `hsdClass`/`hsdObj` instead of their zeroed ext copies (the C-oracle tests set it); `dat_symbols.tsv`
+gained array roots (`T[]`) for `lbRumbleData`. Other hook forms (`hook!`, `hooks!`, `todo_fns!` in axdriver) are still outside the generators. gmscene.rs's
+generated `ext` block was edited by hand (gen.py would overwrite it).

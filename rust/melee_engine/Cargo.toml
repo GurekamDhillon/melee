@@ -12,3 +12,9 @@ melee_core.workspace = true
 melee_types.workspace = true
 melee_runtime.workspace = true
 melee_link.workspace = true
+melee_modes.workspace = true
+melee_platform = { path = "../melee_platform" }
+melee_world.workspace = true
+melee_fighter.workspace = true
+melee_chara.workspace = true
+melee_items.workspace = true

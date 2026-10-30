@@ -139,6 +139,7 @@ pub fn preg_world() {
 }
 
 pub unsafe fn setup_world() {
+    melee_runtime::tu::dobj::hsd::ext::use_ext_data = true;
     DOB = core::mem::zeroed();
     MOB = core::mem::zeroed();
     POB = core::mem::zeroed();

@@ -178,6 +178,7 @@ pub fn preg_world() {
 }
 
 pub unsafe fn setup_world() {
+    melee_runtime::tu::tobj::ext::use_ext_data = true;
     TOB = core::mem::zeroed();
     TA = core::mem::zeroed();
     AOB = core::mem::zeroed();

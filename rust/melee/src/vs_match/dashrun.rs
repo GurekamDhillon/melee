@@ -138,11 +138,17 @@ pub fn dash_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         if p.fp.x688 == 0 {
             return Err(format!("player {}: ftCo_SpecialS_CheckInput (Dash) not ported", p.slot + 1));
         }
+        if dash_catch_check(p, rand)? {
+            return Ok(());
+        }
         press_gate(p, "ftCo_Dash_IASA (dash window)")?;
         return dash_block_42(p, rand);
     } else if frame <= cd.x4C {
         if p.fp.x688 == 0 {
             return Err(format!("player {}: ftCo_SpecialS_CheckInput (Dash) not ported", p.slot + 1));
+        }
+        if dash_catch_check(p, rand)? {
+            return Ok(());
         }
         press_gate(p, "ftCo_Dash_IASA (turn window)")?;
         // ftCo_Dash_CheckInput on a backwards tap, else ftCo_80091AD8 (the shield) -> block_42.
@@ -153,6 +159,9 @@ pub fn dash_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         return dash_block_42(p, rand);
     }
     // After the window: ftCo_800D8A38, ftCo_Dash_CheckInput, the shield, then block_42.
+    if dash_catch_check(p, rand)? {
+        return Ok(());
+    }
     press_gate(p, "ftCo_Dash_IASA")?;
     if dash_check_input(p, rand)? {
         return dash_friction(p);

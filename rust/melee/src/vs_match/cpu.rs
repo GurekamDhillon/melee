@@ -2230,6 +2230,26 @@ fn ftco_800a9cb4(cx: &mut Cx, fp: &mut Fighter) -> R {
     Ok(())
 }
 
+/// `ftCo_800BB104(fp, o, &pos, size)`: does a live hitbox of `o` (past its first frame, not a grab) sweep through
+/// the capsule at `pos` over the next three frames?
+fn ftco_800bb104(fp: &mut Fighter, o: &Fighter, pos: &Vec3, size: f32) -> bool {
+    use melee_core::fp::fmadds;
+    for i in 0..4usize {
+        let h = &o.x914[i];
+        let st = h.state as u32;
+        if st != HitCapsule_Disabled as u32 && st != HitCapsule_Enabled as u32 && h.x43_b2() == 0 && h.element != HitElement_Catch as u32 && unsafe { !melee_runtime::tu::lbcollision::lbColl_8000ACFC(fp as *mut Fighter as *mut core::ffi::c_void, h) } {
+            let (dx, dy, dz) = (h.x4C.x - h.x58.x, h.x4C.y - h.x58.y, h.x4C.z - h.x58.z);
+            let sp28 = Vec { x: fmadds(3.0, dx, h.x4C.x), y: fmadds(3.0, dy, h.x4C.y), z: fmadds(3.0, dz, h.x4C.z) };
+            let p = Vec { x: pos.x, y: pos.y, z: pos.z };
+            let (mut o1, mut o2) = (Vec { x: 0.0, y: 0.0, z: 0.0 }, Vec { x: 0.0, y: 0.0, z: 0.0 });
+            if unsafe { melee_runtime::tu::lbcollision::lbColl_80006094(&h.x4C, &sp28, &p, &p, &mut o1, &mut o2, h.scale, size) } {
+                return true;
+            }
+        }
+    }
+    false
+}
+
 /// `ftCo_800BB768`: is `o` doing a move that comes down on `fp` (Bowser / Yoshi down-B, Bowser's
 /// up smash, Samus's up-B)?
 fn ftco_800bb768(fp: &Fighter, o: &Fighter) -> R<bool> {
@@ -2269,10 +2289,10 @@ fn ftco_800bb9b4(cx: &mut Cx, me: *mut Fighter) -> R {
             continue;
         }
         // ftCo_800BB104: any enabled hitbox of the other fighter.
-        for h in o.x914.iter() {
-            if h.state != HitCapsule_Disabled as _ {
-                return Err("ftCo_800BB104 (an active fighter hitbox) not ported".into());
-            }
+        if ftco_800bb104(fp, o, &Vec3 { x: fp.cur_pos.x, y: fp.cur_pos.y + 0.5f32 * fp.cpu.x568, z: fp.cur_pos.z }, 0.5f32 * fp.cpu.x568) {
+            fp.cpu.set_xF8_b12(1);
+            fp.cpu.xF0 = cur;
+            return Ok(());
         }
         // ftCo_800BB768: special moves that threaten without a hitbox.
         if ftco_800bb768(fp, o)? {

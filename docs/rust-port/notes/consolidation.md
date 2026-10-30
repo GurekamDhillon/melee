@@ -122,7 +122,7 @@ From step 7 the engine path is the one being moved forward.
 | 0 (DONE 2026-10-30) | Green tests | Fix `tu_ft_0d4d_vs_c` (case 42 top-bit hash, from port/integ `ftaction.rs`). Make `pad_marth_sheik_bf` stop at its CSV end rather than running to the timeout. Record the baseline frame counts. |
 | 1 | Rust call trace | Feature `calltrace` in `melee_core`: a `ct!()` entry counter inserted by `tools/rust-port/trace/insert_ct.py` into every `#[no_mangle]`/pub TU fn. `melee golden --calltrace OUT` writes `frame,fn,seq`. Extend `pc/platform/gw_calltrace.c` to log the same per frame. Add `tools/rust-port/trace/seqdiff.py` to report the first divergent call per frame. |
 | 2 (DONE 2026-10-30) | Diff gate and split baseline | `melee diff --all --frames LIST --subsystem S --baseline-check FILE`. Split `tools/rust-port/diff/baseline.txt` into `baseline/<subsystem>.txt` (fighter, item, stage, camera, effect, particle, hud, rng, gobj) and add `tools/rust-port/gate.sh` (section 3). |
-| 3 | Logic lint, report mode | Add `tools/rust-port/lint_logic.py` and `lint_allow.txt` (section 4). Run in CI with `--report`, so it lists violations without failing. Generate `lint_baseline.txt` (current violations), so that from now on only new violations fail. |
+| 3 (DONE 2026-10-30) | Logic lint, report mode | Add `tools/rust-port/lint_logic.py` and `lint_allow.txt` (section 4). Run in CI with `--report`, so it lists violations without failing. Generate `lint_baseline.txt` (current violations), so that from now on only new violations fail. |
 | 4 | Link generator | Add `tools/rust-port/link/gen_link.py` and the `melee_link` crate. Its `install()` sets every hook to the canonical TU function, using the section-3 table. Its test lists the hooks still left at `todo!()` among trace-reached functions; the goal is 0. Nothing in the goldens changes. |
 | 5 | Engine host and DVD/archive | Add the `melee_engine` crate: heap arenas, the DVD seam on `melee::disc`, raw and native archive images, and `dat_types.rs`. The test loads `PlCa.dat`, `PlFx.dat`, `GrNFd.dat`, `ItCo.dat` and `EfCoData.dat`, and checks that the native decode equals `fighter_data`/`stage`'s decode (no disc data is committed). |
 | 6 | Scene loop tick | Split `gm_801A4D34` into a tick, then add `Engine::frame()`. Boot the real `HSD_GObjInit` / `gmMainLib` and the pad feed (`MELEE_PAD_SCRIPT` into `HSD_PadRenewStatus`). Smoke-test 60 frames of an empty scene with no panic. |
@@ -154,6 +154,11 @@ Step 0 result: `tu_ft_0d4d_vs_c` case 42 was a NaN sign: `-(a*c - b)` at `ftCo_8
 (marth_sheik used to run to the caller's timeout). Legacy counts recorded in `docs/rust-port/engine_progress.tsv`:
 cpu_fox_falco_dl matches 0..369 (hash divergence from 370, stop at 414 `ftCo_AttackLw3`; STATUS.md's 323 is stale and the
 divergence at 370 predates step 0), cpu_peach 120. Diff baseline unchanged (144 entries).
+
+Step 2 result: see notes/diff.md (2026-10-30). Step 3 result: `tools/rust-port/lint_logic.py` measured R1=4009, R2=5824 bodies (2953 C names
+with bodies in more than one file; the plan's 2353/3404 came from a stricter C index and counted only crates the plan lists, mine also
+flags melee_audio/platform/gx/script/data name clashes), R3=372, R4=278, R5=0; `lint_baseline.txt` holds all 10483, `lint_allow.txt` the glue
+globs. No Rust CI job exists in `.github/workflows` yet; `gate.sh` runs the lint. `--dedupe-table` regenerates Appendix A (different counts).
 
 ## 3. Inventories
 

@@ -69,6 +69,40 @@ pub mod ext {
     pub fn ftCo_800C97A8(g: *mut HSD_GObj) -> bool { match unsafe { H_ftCo_800C97A8 } { Some(f) => f(g), None => { return unsafe { crate::tu::ftCo_Turn::ftCo_800C97A8(g as _) as _ }; } } }
     pub static mut H_ftWalkCommon_800DFC70: Option<fn(*mut HSD_GObj) -> bool> = None;
     pub fn ftWalkCommon_800DFC70(g: *mut HSD_GObj) -> bool { match unsafe { H_ftWalkCommon_800DFC70 } { Some(f) => f(g), None => { return unsafe { crate::tu::ftwalkcommon::ftwalkcommon_800dfc70(g as _) as _ }; } } }
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? = $d:expr;)*) => {
+            pub mod hook {
+                use super::*;
+                $( #[allow(non_upper_case_globals)] pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( #[allow(unreachable_code, unused_variables)] pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => $d,
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+        fn Player_80032F30(_a0: i32) -> i32 = { unsafe { (crate::player::player_80032f30(_a0 as _)) as _ } };
+        fn Player_GetCoins(_a0: i32) -> i32 = { unsafe { (crate::player::get_coins(_a0 as _)) as _ } };
+        fn Player_GetEntityAtIndex(_a0: i32, _a1: i32) -> *mut core::ffi::c_void = { unsafe { (crate::player::get_entity_at_index(_a0 as _, _a1 as _)) as _ } };
+        fn Player_GetSomePos(_a0: i32, _a1: *mut core::ffi::c_void) = { unsafe { *(_a1 as *mut Vec3) = crate::player::get_some_pos(_a0 as _); } };
+        fn Player_GetSpawnPlatformPos(_a0: i32, _a1: *mut core::ffi::c_void) = { unsafe { *(_a1 as *mut Vec3) = crate::player::get_spawn_platform_pos(_a0 as _); } };
+        fn Player_GetUnk9C(_a0: i32) -> i32 = { unsafe { (crate::player::get_unk9c(_a0 as _)) as _ } };
+        fn Player_SetCoins(_a0: i32, _a1: i32) = { unsafe { let _ = crate::player::set_coins(_a0 as _, _a1 as _); } };
+        fn Player_SetUnk9C(_a0: i32, _a1: i32) = { unsafe { let _ = crate::player::set_unk9c(_a0 as _, _a1 as _); } };
+        fn ftCo_800D331C(_a0: *mut core::ffi::c_void) = { unsafe { let _ = ftCo_800D331C(_a0 as _); } };
+        fn ftCommon_8007D5D4(_a0: *mut core::ffi::c_void) = { unsafe { let _ = crate::ftcommon2::ftcommon_8007d5d4(&mut *(_a0 as *mut Fighter)); } };
+        fn ftCommon_8007E2FC(_a0: *mut core::ffi::c_void) = { unsafe { let _ = crate::ftcommon2::ftcommon_8007e2fc(&mut *((*(_a0 as *mut HSD_GObj)).user_data as *mut Fighter)); } };
+        fn ftCommon_8007E690(_a0: *mut core::ffi::c_void, _a1: *mut core::ffi::c_void) = { unsafe { let _ = crate::ftcommon3::ftcommon_8007e690(&mut *(_a0 as *mut Fighter), _a1 as _); } };
+        fn ftCommon_8007EFC0(_a0: *mut core::ffi::c_void, _a1: u32) = { unsafe { let _ = crate::ftcommon2::ftcommon_8007efc0(&mut *(_a0 as *mut Fighter), _a1 as _); } };
+        fn ftCommon_8007F8B4(_a0: *mut core::ffi::c_void, _a1: *mut core::ffi::c_void) = { unsafe { *(_a1 as *mut Vec3) = crate::ftcommon2::ftcommon_8007f8b4(&*(_a0 as *const Fighter)); } };
+        fn ftCommon_800804EC(_a0: *mut core::ffi::c_void) -> f32 = { unsafe { (crate::ftcommon2::ftcommon_800804ec(&*(_a0 as *const Fighter))) as _ } };
+        fn ftCommon_SetAccessory(_a0: *mut core::ffi::c_void, _a1: *mut core::ffi::c_void) = { unsafe { let _ = crate::ftcommon3::set_accessory(&mut *(_a0 as *mut Fighter), _a1 as _); } };
+        fn ft_800880D8(_a0: *mut core::ffi::c_void) = { unsafe { let _ = crate::ft0877::ft_800880d8(&mut *(_a0 as *mut Fighter)); } };
+        fn pl_80040374(_a0: i32, _a1: i32) = { unsafe { let _ = crate::plbonus::pl_80040374(_a0 as _, _a1 as _); } };
+    }
 }
 
 pub type G = *mut HSD_GObj;
@@ -93,7 +127,7 @@ pub fn fn_800D4DD4(g: G) {
     if unsafe { f.mv.co.unk_deadup.x44 } == 3 {
         let bottom = ext::Stage_GetCamBoundsBottomOffset();
         if f.cur_pos.y < bottom {
-            crate::ftcommon2::ftcommon_8007e2fc(f);
+            ext::ftCommon_8007E2FC(crate::mtu_ptr::ptr(&(g)));
         }
     }
 }
@@ -104,10 +138,10 @@ pub fn ftCo_DeadUpFall_Cam(g: G) { ext::ftCamera_80076320(g) }
 pub fn ftCo_800D4E50(f: &mut Fighter, arg1: &Vec3, arg2: i32, arg8: f32) {
     if h::gm_8016b0b4() && f.is_sub_fighter() == 0 {
         let slot = f.player_id as i32;
-        let coins = crate::player::get_coins(slot);
+        let coins = ext::Player_GetCoins((slot) as i32);
         let mut n = coins / 2;
-        crate::player::set_coins(slot, coins - n);
-        crate::player::set_unk9c(slot, n + crate::player::get_unk9c(slot));
+        ext::Player_SetCoins((slot) as i32, (coins - n) as i32);
+        ext::Player_SetUnk9C((slot) as i32, (n + ext::Player_GetUnk9C((slot) as i32)) as i32);
         if n > cd().x5C8 {
             n = cd().x5C8;
         }
@@ -125,10 +159,10 @@ pub fn ftCo_800D4F24(g: G, index: i32) {
         let sp1c: f32 = unsafe { (*(*f.ft_data).x0).x168 } * f.x34_scale.y;
         ext::efSync_Spawn(0x43F, core::ptr::null_mut(), &[&f.cur_pos as *const Vec3 as usize, &sp1c as *const f32 as usize]);
     }
-    ftCo_800D331C(g);
+    ext::ftCo_800D331C(crate::mtu_ptr::ptr(&(g)));
     let f = fp(g);
     if f.x221D_b6() != 0 {
-        crate::ft0877::ft_800880d8(f);
+        ext::ft_800880D8(crate::mtu_ptr::ptr(&(f)));
         f.x2004 = 0;
     }
     f.set_x2219_b1(1);
@@ -141,24 +175,24 @@ pub fn ftCo_800D4F24(g: G, index: i32) {
 pub fn ftCo_800D4FF4(g: G) {
     h::fighter_unk_process_death(g);
     let f = fp(g);
-    f.smash_attrs.x2135 = crate::player::player_80032f30(f.player_id as i32) as i8;
+    f.smash_attrs.x2135 = ext::Player_80032F30((f.player_id as i32) as i32) as i8;
     unsafe {
         if f.smash_attrs.x2135 == -1 {
-            let sp44 = crate::player::get_spawn_platform_pos(f.player_id as i32);
-            f.mv.co.turn.facing_after = fmadds(f.facing_dir, crate::ftcommon2::ftcommon_800804ec(f), sp44.x);
+            let sp44 = unsafe { let mut o: Vec3 = core::mem::zeroed(); ext::Player_GetSpawnPlatformPos((f.player_id as i32) as i32, (&mut o as *mut Vec3) as *mut core::ffi::c_void); o };
+            f.mv.co.turn.facing_after = fmadds(f.facing_dir, (ext::ftCommon_800804EC(crate::mtu_ptr::ptr(&(f))) as f32), sp44.x);
             f.mv.co.turn.x8 = sp44.y;
             f.mv.co.walk.middle_anim_frame = 0.0;
         } else {
             let mut sp14 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
             ext::Stage_80224E38(&mut sp14, f.smash_attrs.x2135 as i32);
-            let sp20 = crate::player::get_some_pos(f.player_id as i32);
+            let sp20 = unsafe { let mut o: Vec3 = core::mem::zeroed(); ext::Player_GetSomePos((f.player_id as i32) as i32, (&mut o as *mut Vec3) as *mut core::ffi::c_void); o };
             f.mv.co.turn.facing_after =
-                fmadds(f.facing_dir, crate::ftcommon2::ftcommon_800804ec(f), sp14.x + sp20.x);
+                fmadds(f.facing_dir, (ext::ftCommon_800804EC(crate::mtu_ptr::ptr(&(f))) as f32), sp14.x + sp20.x);
             f.mv.co.turn.x8 = sp14.y + sp20.y;
             f.mv.co.walk.middle_anim_frame = 0.0;
         }
     }
-    crate::ftcommon2::ftcommon_8007d5d4(f);
+    ext::ftCommon_8007D5D4(crate::mtu_ptr::ptr(&(f)));
     unsafe { f.mv.co.unk_deadup.x40 = cd().rebirth_countdown };
     ext::Fighter_ChangeMotionState(g, 0xC, 0x1002, 0.0, 1.0, -1.0, core::ptr::null_mut());
     let f = fp(g);
@@ -170,13 +204,13 @@ pub fn ftCo_800D4FF4(g: G) {
     h::ftco_800bffd0(f, 0xA, 0);
     if f.is_sub_fighter() == 0 {
         let tbl = unsafe { ext::Fighter_804D6534 };
-        crate::ftcommon3::set_accessory(f, unsafe { *tbl } as *mut HSD_Joint);
+        ext::ftCommon_SetAccessory(crate::mtu_ptr::ptr(&(f)), crate::mtu_ptr::ptr(&(unsafe { *tbl } as *mut HSD_Joint)));
         let s = f.x34_scale.y * f.co_attrs.respawn_platform_scale;
         let scale = Vec3 { x: s, y: s, z: s };
         h::hsd_jobj_set_scale(f.x20A0_accessory, &scale);
-        crate::ftcommon3::ftcommon_8007e690(f, unsafe { *tbl.add(1) } as *mut HSD_AnimJoint);
+        ext::ftCommon_8007E690(crate::mtu_ptr::ptr(&(f)), crate::mtu_ptr::ptr(&(unsafe { *tbl.add(1) } as *mut HSD_AnimJoint)));
         let pos = Vec3 {
-            x: -fmsubs(f.facing_dir, crate::ftcommon2::ftcommon_800804ec(f), f.cur_pos.x),
+            x: -fmsubs(f.facing_dir, (ext::ftCommon_800804EC(crate::mtu_ptr::ptr(&(f))) as f32), f.cur_pos.x),
             y: f.cur_pos.y,
             z: f.cur_pos.z,
         };
@@ -185,7 +219,7 @@ pub fn ftCo_800D4FF4(g: G) {
     } else {
         f.accessory1_cb = Some(fn_800D55B4_cb);
     }
-    crate::ftcommon2::ftcommon_8007efc0(f, 1);
+    ext::ftCommon_8007EFC0(crate::mtu_ptr::ptr(&(f)), (1) as u32);
 }
 
 pub fn ftCo_Rebirth_Anim(g: G) {
@@ -211,18 +245,18 @@ fn rebirth_phys(g: G) {
             if f.smash_attrs.x2135 != -1 {
                 let mut st = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
                 ext::Stage_80224E38(&mut st, f.smash_attrs.x2135 as i32);
-                let pl = crate::player::get_some_pos(f.player_id as i32);
-                f.mv.co.common.x4.x = fmadds(f.facing_dir, crate::ftcommon2::ftcommon_800804ec(f), st.x + pl.x);
+                let pl = unsafe { let mut o: Vec3 = core::mem::zeroed(); ext::Player_GetSomePos((f.player_id as i32) as i32, (&mut o as *mut Vec3) as *mut core::ffi::c_void); o };
+                f.mv.co.common.x4.x = fmadds(f.facing_dir, (ext::ftCommon_800804EC(crate::mtu_ptr::ptr(&(f))) as f32), st.x + pl.x);
                 f.mv.co.common.x4.y = st.y + pl.y;
                 f.mv.co.common.x4.z = 0.0;
             }
-            let cur = crate::ftcommon2::ftcommon_8007f8b4(f);
+            let cur = unsafe { let mut o: Vec3 = core::mem::zeroed(); ext::ftCommon_8007F8B4(crate::mtu_ptr::ptr(&(f)), (&mut o as *mut Vec3) as *mut core::ffi::c_void); o };
             let inv = 1.0f32 / f.mv.co.common.x0 as f32;
             f.self_vel.x = (f.mv.co.common.x4.x - cur.x) * inv;
             f.self_vel.y = (f.mv.co.common.x4.y - cur.y) * inv;
         }
     } else {
-        let o = fp(crate::player::get_entity_at_index(f.player_id as i32, 0));
+        let o = fp((ext::Player_GetEntityAtIndex((f.player_id as i32) as i32, (0) as i32) as *mut HSD_GObj));
         let (x, y) = (o.self_vel.x, o.self_vel.y);
         let f = fp(g);
         f.self_vel.x = x;
@@ -241,7 +275,7 @@ pub fn ftCo_Rebirth_Coll(g: G) {
 /// `fn_800D54A4`: main entity's accessory1 callback: keep the platform under the fighter.
 pub fn fn_800D54A4(g: G) {
     let f = fp(g);
-    let other = crate::player::get_entity_at_index(f.player_id as i32, 1);
+    let other = (ext::Player_GetEntityAtIndex((f.player_id as i32) as i32, (1) as i32) as *mut HSD_GObj);
     if !other.is_null() {
         let o = fp(other);
         if o.x221F_b3() == 0 {
@@ -254,7 +288,7 @@ pub fn fn_800D54A4(g: G) {
     }
     let f = fp(g);
     let sp = Vec3 {
-        x: -fmsubs(f.facing_dir, crate::ftcommon2::ftcommon_800804ec(f), f.cur_pos.x),
+        x: -fmsubs(f.facing_dir, (ext::ftCommon_800804EC(crate::mtu_ptr::ptr(&(f))) as f32), f.cur_pos.x),
         y: f.cur_pos.y,
         z: f.cur_pos.z,
     };
@@ -264,7 +298,7 @@ pub fn fn_800D54A4(g: G) {
 /// `fn_800D55B4`: sub entity's accessory1 callback: never below the main entity.
 pub fn fn_800D55B4(g: G) {
     let f = fp(g);
-    let o = fp(crate::player::get_entity_at_index(f.player_id as i32, 0));
+    let o = fp((ext::Player_GetEntityAtIndex((f.player_id as i32) as i32, (0) as i32) as *mut HSD_GObj));
     let oy = o.cur_pos.y;
     let f = fp(g);
     if oy > f.cur_pos.y {
@@ -275,8 +309,7 @@ pub fn fn_800D55B4(g: G) {
 /// `ftCo_800D5600`: Rebirth -> RebirthWait.
 pub fn ftCo_800D5600(g: G) {
     let f = fp(g);
-    let pos = f.cur_pos;
-    ext::mpColl_80043680(&mut f.coll_data, &pos);
+    ext::mpColl_80043680(&mut f.coll_data, &f.cur_pos);
     f.self_vel.y = 0.0;
     unsafe { f.mv.co.common.x0 = cd().rebirth_wait };
     ext::Fighter_ChangeMotionState(
@@ -299,8 +332,7 @@ pub fn ftCo_800D5600(g: G) {
         f.accessory1_cb = Some(fn_800D55B4_cb);
     }
     if f.smash_attrs.x2135 != -1 {
-        let pos = f.cur_pos;
-        ext::mpColl_80043680(&mut f.coll_data, &pos);
+        ext::mpColl_80043680(&mut f.coll_data, &f.cur_pos);
     }
 }
 
@@ -322,12 +354,12 @@ pub fn ftCo_RebirthWait_IASA(g: G) {
     let f = fp(g);
     let (slot, sub) = (f.player_id as i32, f.is_sub_fighter() as i32);
     if sub == 0 {
-        let c = crate::player::get_entity_at_index(slot, 1);
+        let c = (ext::Player_GetEntityAtIndex((slot) as i32, (1) as i32) as *mut HSD_GObj);
         if !c.is_null() && fp(c).x221F_b3() == 0 && !h::ftlib_800873cc(c) {
             var_r30 = true;
         }
     } else {
-        if h::ftlib_800873cc(crate::player::get_entity_at_index(slot, 0)) {
+        if h::ftlib_800873cc((ext::Player_GetEntityAtIndex((slot) as i32, (0) as i32) as *mut HSD_GObj)) {
             return;
         }
         var_r30 = true;
@@ -353,7 +385,7 @@ pub fn ftCo_RebirthWait_IASA(g: G) {
         return;
     }
     ext::ftColl_8007B7A4(g, cd().x5D8);
-    crate::plbonus::pl_80040374(slot, sub);
+    ext::pl_80040374((slot) as i32, (sub) as i32);
 }
 
 pub fn ftCo_RebirthWait_Phys(g: G) { rebirth_phys(g) }
@@ -376,7 +408,7 @@ pub fn ftCo_Rebirth_Cam(g: G) {
         b.pos.y = f.mv.co.common.x4.y + spc.x0.x;
     }
     b.pos.z = 0.0;
-    crate::ftlib::ftlib_800866dc(g, &mut b.bone_pos);
+    h::ftlib_800866dc(g, &mut b.bone_pos);
 }
 
 #[allow(dead_code)]

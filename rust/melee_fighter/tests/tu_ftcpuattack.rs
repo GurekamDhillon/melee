@@ -193,4 +193,22 @@ fn matches_c() {
         n += 1;
     }
     assert_eq!(n, 20000);
+    // ftCo_800B9704: reaction delay (one HSD_Randf draw, two fused sites)
+    for k in 0..4000u32 {
+        let mut f: Box<Fighter> = Box::new(Fighter::zeroed());
+        unsafe {
+            RS = 0x7654321u32.wrapping_add(k.wrapping_mul(2654435761));
+            if RS == 0 {
+                RS = 1;
+            }
+            RR = k.wrapping_mul(104729).wrapping_add(3);
+        }
+        f.cpu.level = (rnd() % 12) as i32 - 1;
+        f.cpu.kind = if rnd() % 3 == 0 { 7 } else { rnd() % 12 };
+        f.cpu.x34 = rnd() as i32;
+        m::ftCo_800B9704(&mut *f);
+        let got = format!("R {} {} {}", f.cpu.level, f.cpu.kind, f.cpu.x34);
+        assert_eq!(got, lines.next().unwrap(), "800B9704 case {k}");
+    }
+    assert!(lines.next().is_none());
 }

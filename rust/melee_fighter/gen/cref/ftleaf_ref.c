@@ -57,7 +57,7 @@ static HSD_JObj JO[8];
 static CmdUnion CMDS[16];
 static HitCapsule HB;
 
-#define NOPS 50
+#define NOPS 51
 typedef void (*Cmd)(Fighter_GObj*, CommandInfo*);
 static Cmd CMDF[29] = {
     ftAction_800711DC, ftAction_800715EC, ftAction_8007168C, ftAction_800716F8, ftAction_80071774,
@@ -159,6 +159,7 @@ int main(void)
             case 47: ret = B(ftCo_GetLStickAngle(&F)); break;
             case 48: ret = B(ftCo_GetCStickAngle(&F)); break;
             case 49: ret = B(ftCommon_8007D9D4(&F)); break;
+            case 50: F.coll_data.floor_skip = (s32) rnd(); mpClearFloorSkip(&F.coll_data); ret = (u32) F.coll_data.floor_skip; break;
             }
             printf("%d %d %08X %08X %d\n", op, k, ret, state(), delta);
         }

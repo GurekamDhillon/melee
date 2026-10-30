@@ -1,0 +1,24 @@
+{
+  "stem": "ft_0c8c",
+  "csrc": "src/melee/ft/ft_0C8C.c",
+  "rmod": "melee_fighter::tu::ft_0c8c",
+  "cases": 500,
+  "stubs": "--ret \"HSD_JObjLoadJoint=&JO[0]|(&raw mut (*crate::JO)[0]) as *mut core::ffi::c_void\" --ret \"HSD_JObjGetDObj=&DOB|crate::DOB as *mut core::ffi::c_void\"",
+  "ops": [
+    [
+      "ftCo_800C8F6C()",
+      "m::ftco_800c8f6c()"
+    ],
+    [
+      "ftCo_800C8FC4(g)",
+      "m::ftco_800c8fc4(g)"
+    ]
+  ],
+  "c_pre": "static HSD_DObj DOB; static HSD_MObj MOB; static HSD_Material MAT;",
+  "c_world": "    zero(&DOB, sizeof DOB); zero(&MOB, sizeof MOB); zero(&MAT, sizeof MAT); DOB.mobj = &MOB; MOB.mat = &MAT; Fighter_804D6504 = 0;",
+  "rs_head": "static mut DOB: *mut HSD_DObj = null_mut(); static mut MOB: *mut HSD_MObj = null_mut(); static mut MAT: *mut HSD_Material = null_mut();",
+  "rs_world": "    *DOB = core::mem::zeroed(); *MOB = core::mem::zeroed(); *MAT = core::mem::zeroed(); (*DOB).mobj = MOB; (*MOB).mat = MAT; melee_fighter::tu::fighter::Fighter_804D6504 = null_mut();",
+  "rs_hooks": "    DOB = bz(); MOB = bz(); MAT = bz();",
+  "c_hash": "    HM(PI(ft_804D6588)); HM((u32) MAT.diffuse.r | ((u32) MAT.diffuse.g << 8) | ((u32) MAT.diffuse.b << 16) | ((u32) MAT.diffuse.a << 24)); ft_804D6588 = 0;",
+  "rs_hash": "    hm(pi(m::ft_804D6588)); hm((*MAT).diffuse.r as u32 | (((*MAT).diffuse.g as u32) << 8) | (((*MAT).diffuse.b as u32) << 16) | (((*MAT).diffuse.a as u32) << 24)); m::ft_804D6588 = null_mut();"
+}

@@ -1,0 +1,30 @@
+{
+ "stem": "ftdrawcommon",
+ "csrc": "rust/melee_fighter/gen/cref/tu/ftdraw_unity.c",
+ "rmod": "melee_fighter::tu::ftdrawcommon",
+ "cases": 600,
+ "stubs": "--ret \"HSD_CObjGetCurrent=&COB[0]|&raw mut (*crate::COB)[0]\" --ret \"Camera_800310B8=&COB[1]|&raw mut (*crate::COB)[1]\" --ret \"Camera_PCMainCObj=((fv() & 1) ? &COB[0] : &COB[1])|if fv() & 1 != 0 { &raw mut (*crate::COB)[0] } else { &raw mut (*crate::COB)[1] }\" --ret \"HSD_CObjGetInvViewingMtxPtr=(float (*)[4]) FT[0].x44_mtx|(*crate::FT)[0].x44_mtx.as_mut_ptr()\" --ret \"ftCommon_8007F804=(float (*)[4]) FT[1].x44_mtx|(*crate::FT)[1].x44_mtx.as_mut_ptr()\" --outvec ftLib_80087074:1 --skip tanf --notrace Mex_OnModelRenderDispatch:2 --notrace Mex_OnModelRenderDispatch:3 --notrace Mex_OnModelRenderDispatch:4 --notrace MotionFighterBegin:2 --notrace MotionFighterBegin:3 --notrace MotionFighterBegin:4",
+ "ops": [
+  [
+   "{ int a_ = (int) fv(); int b_ = (int) (fv() & 1); ftDrawCommon_800805C8(g, a_, b_); }",
+   "{ let a_ = fv() as i32; let b_ = (fv() & 1) as i32; m::ftDrawCommon_800805C8(g, a_, b_ != 0); }"
+  ],
+  [
+   "{ int a_ = (int) fv(); ftDrawCommon_80080E18(g, a_); }",
+   "{ let a_ = fv() as i32; m::ftDrawCommon_80080E18(g, a_); }"
+  ],
+  [
+   "ftDrawCommon_80081168()",
+   "m::ftDrawCommon_80081168()"
+  ],
+  [
+   "ftDrawCommon_80081200()",
+   "m::ftDrawCommon_80081200()"
+  ]
+ ],
+ "c_pre": "static HSD_CObj COB[2];",
+ "c_world": "    for (i = 0; i < NG; i++) { FT[i].dynamics_num = (int) ((u32) FT[i].dynamics_num % 11u); FT[i].hurt_capsules_len %= 16; FT[i].x166C %= 2; FT[i].x21FC_flag.byte = (u8) fv(); FT[i].x5AC.xC[1] = (fv() & 1) ? (__typeof__(FT[i].x5AC.xC[1])) PADB[90 + i] : 0; FT[i].x5AC.xC[4] = (fv() & 1) ? (__typeof__(FT[i].x5AC.xC[4])) PADB[93 + i] : 0; }\n    { int q_, i_, j_; for (q_ = 0; q_ < 2; q_++) { zero(&COB[q_], sizeof COB[q_]); for (i_ = 0; i_ < 3; i_++) for (j_ = 0; j_ < 4; j_++) COB[q_].view_mtx[i_][j_] = rw(); } }",
+ "rs_head": "static mut COB: *mut [HSD_CObj; 2] = null_mut();",
+ "rs_hooks": "    COB = bz();\n    m::ext::MEX_ON_MODEL_RENDER = Some(|kind, g, a1, mtx| { t(1011); t(kind as u32); t(pi(g)); });\n    m::ext::PLINK_FIGHTER_HEAD = Some(|| PLINKV[HSD_GOBJ_PLINK_FIGHTER as usize]);",
+ "rs_world": "    for i in 0..NG { (*FT)[i].dynamics_num = ((*FT)[i].dynamics_num as u32 % 11) as i32; (*FT)[i].hurt_capsules_len %= 16; (*FT)[i].x166C %= 2; (*FT)[i].x21FC_flag.byte = fv() as u8; (*FT)[i].x5AC.xC[1] = if fv() & 1 != 0 { (*PADB)[90 + i].as_mut_ptr() as *mut _ } else { null_mut() }; (*FT)[i].x5AC.xC[4] = if fv() & 1 != 0 { (*PADB)[93 + i].as_mut_ptr() as *mut _ } else { null_mut() }; }\n    for q_ in 0..2 { (*COB)[q_] = core::mem::zeroed(); for i_ in 0..3 { for j_ in 0..4 { (*COB)[q_].view_mtx[i_][j_] = rw(); } } }"
+}

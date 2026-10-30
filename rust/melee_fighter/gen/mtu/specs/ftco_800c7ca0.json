@@ -1,0 +1,21 @@
+{
+  "stem": "ftco_800c7ca0",
+  "csrc": "src/melee/ft/ftCo_800C7CA0.c",
+  "rmod": "melee_fighter::tu::ftco_800c7ca0",
+  "cases": 500,
+  "stubs": "--skip HSD_JObjLoadJoint --skip HSD_JObjGetDObj",
+  "ops": [
+    [
+      "ftCo_800C8064()",
+      "m::ftco_800c8064()"
+    ]
+  ],
+  "c_pre": "static HSD_DObj DOB; static HSD_MObj MOB;",
+  "c_world": "    zero(&DOB, sizeof DOB); zero(&MOB, sizeof MOB); DOB.mobj = (fv() & 1) ? &MOB : 0; Fighter_804D6504 = 0;",
+  "rs_head": "static mut DOB: *mut HSD_DObj = null_mut(); static mut MOB: *mut HSD_MObj = null_mut();",
+  "rs_world": "    *DOB = core::mem::zeroed(); *MOB = core::mem::zeroed(); (*DOB).mobj = if fv() & 1 != 0 { MOB } else { null_mut() }; melee_fighter::tu::fighter::Fighter_804D6504 = null_mut();",
+  "rs_hooks": "    DOB = bz(); MOB = bz();\n    m::ext::FT_HSD_JOBJ_LOAD_JOINT = Some(|_| { t(2000); &raw mut (*JO)[0] as *mut c_void });\n    m::ext::FT_HSD_JOBJ_GET_DOBJ = Some(|_| { t(2001); DOB as *mut c_void });",
+  "c_head": "HSD_JObj* HSD_JObjLoadJoint(HSD_Joint* j) { (void) j; T(2000); return &JO[0]; }\nHSD_DObj* HSD_JObjGetDObj(HSD_JObj* j) { (void) j; T(2001); return &DOB; }",
+  "c_hash": "    HM(PI(ft_804D6580)); ft_804D6580 = 0;",
+  "rs_hash": "    hm(pi(m::ft_804D6580)); m::ft_804D6580 = null_mut();"
+}

@@ -165,6 +165,14 @@ EXTRACTS = {
                      "CreateAbsorbHit", "CreateReflectHit", "HurtboxInit")]],
 }
 
+# player2 = player + the three functions the whole-TU port adds (Player_80031CB0, Player_InitOrResetPlayer; tests/tu_player_vs_c.rs)
+EXTRACTS["player2"] = EXTRACTS["player"] + [("src/melee/pl/player.c", "fn:Player_80031CB0", None),
+                                            ("src/melee/pl/player.c", "fn:Player_InitOrResetPlayer", None)]
+
+# tu_ftparts_pobj (tu_run.py): the two index tables the Rust ftParts_PObjSetupMtx inlines (util.c / tobj.c)
+EXTRACTS["tu_ftparts_pobj"] = [("src/sysdolphin/baselib/util.c", "fn:HSD_Index2PosNrmMtx", None),
+                               ("src/sysdolphin/baselib/tobj.c", "fn:HSD_Index2TexMtx", None)]
+
 
 def extract(name):
     parts = []

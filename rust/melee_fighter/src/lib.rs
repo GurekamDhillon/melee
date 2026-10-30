@@ -43,3 +43,16 @@ pub mod ft0df;
 pub mod ftdmgfall;
 pub mod ftcpu;
 pub mod tu;
+
+/// Pointer-valued arguments of the oracle seams (gen/mtu/rewire.py): references and raw pointers as `*mut c_void`
+/// (taken by reference, so a `&mut` argument is reborrowed, not moved).
+pub mod mtu_ptr {
+    pub trait AsPtr { fn ptr_ref(&self) -> *mut core::ffi::c_void; }
+    impl<T: ?Sized> AsPtr for &mut T { fn ptr_ref(&self) -> *mut core::ffi::c_void { &**self as *const T as *const () as *mut core::ffi::c_void } }
+    impl<T: ?Sized> AsPtr for &T { fn ptr_ref(&self) -> *mut core::ffi::c_void { &**self as *const T as *const () as *mut core::ffi::c_void } }
+    impl<T: ?Sized> AsPtr for *mut T { fn ptr_ref(&self) -> *mut core::ffi::c_void { *self as *const () as *mut core::ffi::c_void } }
+    impl<T: ?Sized> AsPtr for *const T { fn ptr_ref(&self) -> *mut core::ffi::c_void { *self as *const () as *mut core::ffi::c_void } }
+    pub fn ptr<P: AsPtr>(p: &P) -> *mut core::ffi::c_void { p.ptr_ref() }
+    /// The address of a place (a struct field passed by pointer in the C).
+    pub fn at<T>(p: &T) -> *mut core::ffi::c_void { p as *const T as *mut core::ffi::c_void }
+}

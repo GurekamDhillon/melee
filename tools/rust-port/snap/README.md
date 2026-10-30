@@ -75,3 +75,5 @@ for reasons unrelated to loading: the second KO / respawn is not ported yet.)
   of map gobj 4's joint), so the track never advances; the sim models rate 1.0. Harmless before frame ~1000,
   and the loader copies the C bits.
 - `respawn_busy` is never counted down in the sim (`fn_8016758C` not ported); the loader takes the C value.
+
+To see WHICH fields differ from the C state at a frame, use `melee diff` (docs/rust-port/notes/diff.md); it reads these same dumps.

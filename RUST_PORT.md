@@ -1083,3 +1083,11 @@ MS-ABI argument order is unspecified, so a call with two `rnd()` arguments diver
 cases over the real ftmaterial.c; the TU's callees are recording stubs and `src/tu/ftmaterial.rs` gained an `ext` seam; `ftMaterial_800BF2B8`
 is `extern "C-unwind"` so the C `__assert` longjmp has a Rust panic counterpart; `x61A_controller_index` is held to 0..6 because the
 C reads `p_ftCommonData->x6D8[idx]` unchecked). Not covered: the lbRefract / LObj / TExp / GX callees themselves (verified in their own TUs).
+
+## Trace status after all six pre-melee_* merges (2026-10-30)
+`rust_status`/`rust_crate` of `docs/rust-port/trace/pad_falcon_fox_fd.csv` re-derived with the `calltrace.py` rules (2625 rows). Rows already
+`ported+verified` are never downgraded: the name-level rules would drop 12 rows that agents verified with C oracles (static inlines such as
+`ftCo_GuardOn_Anim_inline`, `ftDrawCommon_80080E18_surface_impl`, and wrappers without a test naming them). Only the crate of 9 rows changed.
+Open: melee_runtime 41 ported-unverified (axdriver, lbaudio_ax, devcom, lobj, hsd_3933, hsd_3A76, particle `ref_INC`), melee_world 3,
+melee 2, melee_items 1; stub 1 (`HSD_AudioSFXSetPitchFid`, macro-defined body, actually ported); missing 0.
+

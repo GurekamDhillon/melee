@@ -585,7 +585,7 @@ PSMTXQuat,pc/gameworld/mtx_pc.c,0,32363,ported+verified,melee_runtime
 PSMTXScale,pc/gameworld/mtx_pc.c,0,43454,ported+verified,melee_runtime
 PSMTXTrans,pc/gameworld/mtx_pc.c,0,38093,ported+verified,melee_runtime
 PSMTXTranspose,pc/gameworld/mtx_pc.c,0,4226,ported+verified,melee_runtime
-PSVECAdd,pc/gameworld/mtx_pc.c,0,48740,ported+verified,melee_items
+PSVECAdd,pc/gameworld/mtx_pc.c,0,48740,ported+verified,melee_fighter
 PSVECCrossProduct,pc/gameworld/mtx_pc.c,0,33355,ported+verified,melee_runtime
 PSVECMag,pc/gameworld/mtx_pc.c,0,23592,ported+verified,melee_runtime
 ScriptGame_ArenaBound,pc/gameworld/script_game.c,0,274030,ported+verified,melee_modes
@@ -879,7 +879,7 @@ ftParts_80074E58,src/melee/ft/ftparts.c,0,2,ported+verified,melee_fighter
 ftParts_8007506C,src/melee/ft/ftparts.c,0,22480,ported+verified,melee_fighter
 ftParts_800750C8,src/melee/ft/ftparts.c,0,71412,ported+verified,melee_fighter
 ftParts_80075240,src/melee/ft/ftparts.c,0,2,ported+verified,melee_fighter
-ftParts_GetBoneIndex,src/melee/ft/ftparts.c,0,1068,ported+verified,melee_chara
+ftParts_GetBoneIndex,src/melee/ft/ftparts.c,0,1068,ported+verified,melee_fighter
 ftParts_IntpJObjInfoInit,src/melee/ft/ftparts.c,0,1,ported+verified,melee_fighter
 ftParts_IntpJObjLoad,src/melee/ft/ftparts.c,0,136,ported+verified,melee_fighter
 ftParts_JObjInfoInit,src/melee/ft/ftparts.c,0,1,ported+verified,melee_fighter
@@ -1359,7 +1359,7 @@ Player_80036394,src/melee/pl/player.c,0,6600,ported+verified,melee_fighter
 Player_80036DA4,src/melee/pl/player.c,0,1,ported+verified,melee_fighter
 Player_80036DD8,src/melee/pl/player.c,0,1,ported+verified,melee_fighter
 Player_GetActionStats,src/melee/pl/player.c,0,3467,ported+verified,melee_chara
-Player_GetCoins,src/melee/pl/player.c,0,12,ported+verified,melee_world
+Player_GetCoins,src/melee/pl/player.c,0,12,ported+verified,melee_fighter
 Player_GetControllerIndex,src/melee/pl/player.c,0,2,ported+verified,melee_fighter
 Player_GetCostumeId,src/melee/pl/player.c,0,3312,ported+verified,melee_fighter
 Player_GetCpuLevel,src/melee/pl/player.c,0,7,ported+verified,melee_fighter
@@ -1532,7 +1532,7 @@ HSD_JObjReparent,src/sysdolphin/baselib/jobj.c,0,9,ported+verified,melee_runtime
 HSD_JObjReqAnimByFlags,src/sysdolphin/baselib/jobj.c,0,294,ported+verified,melee_runtime
 HSD_JObjSetCurrent,src/sysdolphin/baselib/jobj.c,0,195606,ported+verified,melee_runtime
 HSD_JObjSetDPtclCallback,src/sysdolphin/baselib/jobj.c,0,1,ported+verified,melee_runtime
-HSD_JObjSetDefaultClass,src/sysdolphin/baselib/jobj.c,0,4,ported+verified,melee_runtime
+HSD_JObjSetDefaultClass,src/sysdolphin/baselib/jobj.c,0,4,ported+verified,melee_fighter
 HSD_JObjSetFlags,src/sysdolphin/baselib/jobj.c,0,110671,ported+verified,melee_items
 HSD_JObjSetFlagsAll,src/sysdolphin/baselib/jobj.c,0,45476,ported+verified,melee_items
 HSD_JObjSetMtxDirtySub,src/sysdolphin/baselib/jobj.c,0,329622,ported+verified,melee_items
@@ -1545,7 +1545,7 @@ HSD_JObjSetScaleZ,src/sysdolphin/baselib/jobj.c,0,5649,ported-unverified,melee_w
 HSD_JObjSetTranslateX,src/sysdolphin/baselib/jobj.c,0,31658,ported+verified,melee_modes
 HSD_JObjSetTranslateY,src/sysdolphin/baselib/jobj.c,0,32126,ported+verified,melee_modes
 HSD_JObjSetTranslateZ,src/sysdolphin/baselib/jobj.c,0,20641,ported+verified,melee_world
-HSD_JObjSetupMatrixSub,src/sysdolphin/baselib/jobj.c,0,332367,ported+verified,melee_runtime
+HSD_JObjSetupMatrixSub,src/sysdolphin/baselib/jobj.c,0,332367,ported+verified,melee_fighter
 HSD_JObjUnref,src/sysdolphin/baselib/jobj.c,0,200900,ported+verified,melee_runtime
 JObjAmnesia,src/sysdolphin/baselib/jobj.c,0,1,ported+verified,melee_runtime
 JObjUpdateFunc,src/sysdolphin/baselib/jobj.c,0,503905,ported+verified,melee_runtime
@@ -1651,7 +1651,7 @@ HSD_SynthSFXGetPendingLoadCount,src/sysdolphin/baselib/synth.c,0,2,ported+verifi
 HSD_SynthSFXUpdateMix,src/sysdolphin/baselib/synth.c,0,426,ported+verified,melee_runtime
 HSD_SynthSFXVolumeEnvelope,src/sysdolphin/baselib/synth.c,0,7390,ported+verified,melee_runtime
 HSD_StateGetCommittedTevStages,src/sysdolphin/baselib/tev.c,0,305768,ported+verified,melee_runtime
-HSD_StateInitTev,src/sysdolphin/baselib/tev.c,0,308956,ported+verified,melee_runtime
+HSD_StateInitTev,src/sysdolphin/baselib/tev.c,0,308956,ported+verified,melee_fighter
 HSD_StateRegisterTexGen,src/sysdolphin/baselib/tev.c,0,222151,ported+verified,melee_runtime
 HSD_TExpSetReg,src/sysdolphin/baselib/texp.c,0,376110,ported+verified,melee_runtime
 HSD_TExpSetupTev,src/sysdolphin/baselib/texp.c,0,305768,ported+verified,melee_runtime
@@ -1737,7 +1737,7 @@ ftAnim_8006F4C8,src/melee/ft/ftanim.c,5,212,ported+verified,melee_fighter
 ftAnim_8006FA58,src/melee/ft/ftanim.c,5,162,ported+verified,melee_chara
 ftCo_800BFFD0,src/melee/ft/ftcolanim.c,5,12,ported+verified,melee_fighter
 ftCommon_8007F6A4,src/melee/ft/ftcommon.c,5,259,ported+verified,melee_fighter
-ftCommon_SetAccessory,src/melee/ft/ftcommon.c,5,7,ported+verified,melee_chara
+ftCommon_SetAccessory,src/melee/ft/ftcommon.c,5,7,ported+verified,melee_fighter
 ftData_80085CD8,src/melee/ft/ftdata.c,5,212,ported+verified,melee_fighter
 ftCo_8009E7B4,src/melee/ft/ftdynamics.c,5,224,ported+verified,melee_fighter
 ftGetTemplateKind,src/melee/ft/ftdynamics.c,5,224,ported+verified,melee_chara
@@ -1782,7 +1782,7 @@ splArcLengthPolynomial,src/sysdolphin/baselib/spline.c,5,11934,ported+verified,m
 splGetBSplinePoint,src/sysdolphin/baselib/spline.c,5,122,ported+verified,melee_runtime
 MTXLightOrtho,pc/gameworld/mtx_pc.c,6,2911,ported+verified,melee_runtime
 PSVECDotProduct,pc/gameworld/mtx_pc.c,6,9405,ported+verified,melee_runtime
-PSVECScale,pc/gameworld/mtx_pc.c,6,3415,ported+verified,melee_items
+PSVECScale,pc/gameworld/mtx_pc.c,6,3415,ported+verified,melee_runtime
 ftCo_EntryStart_Anim,src/melee/ft/ft_0C31.c,6,58,ported+verified,melee_fighter
 ftCo_800C8AF0,src/melee/ft/ft_0C88.c,6,8997,ported+verified,melee_fighter
 ftCo_800C0658,src/melee/ft/ftdevice.c,6,416295,ported+verified,melee_fighter
@@ -2187,7 +2187,7 @@ ifMagnify_802FB6E8,src/melee/if/ifmagnify.c,124,3389,ported+verified,melee_world
 Player_8003221C,src/melee/pl/player.c,124,13425,ported+verified,melee_fighter
 HSD_CObjGetOrtho,src/sysdolphin/baselib/cobj.c,124,1490,ported+verified,melee_runtime
 efLib_DestroyAll,src/melee/ef/eflib.c,135,47,ported+verified,melee_world
-ftCommon_8007DB24,src/melee/ft/ftcommon.c,135,23,ported+verified,melee
+ftCommon_8007DB24,src/melee/ft/ftcommon.c,135,23,ported+verified,melee_fighter
 hsd_8039D688,src/sysdolphin/baselib/generator.c,135,1839,ported+verified,melee_world
 HSD_JObjWalkTree,src/sysdolphin/baselib/jobj.c,135,95,ported+verified,melee_runtime
 HSD_JObjWalkTree0,src/sysdolphin/baselib/jobj.c,135,1894,ported+verified,melee_runtime

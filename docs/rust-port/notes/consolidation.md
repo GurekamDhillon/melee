@@ -815,3 +815,48 @@ Categories: T other tu file, N non-tu module, V vs_match, C chars/, R chars/rN.
 - `melee_world/src/tu/textdraw.rs` (7): DevText_AddToList [N:modes/hud_r5.rs]; DevText_GetGObj [T:modes/gmscene.rs]; DevText_IsListed [T:modes/gmscene.rs]; DevText_NumToStr [N:modes/hud_r5.rs]; DevText_Show [T:modes/gmscene.rs]; DevText_StrLen [N:modes/hud_r5.rs, N:world/hud/leaves.rs]; DevText_Unlink [T:modes/gmscene.rs]
 - `melee_world/src/tu/textlib.rs` (18): DevText_80302AC0 [N:modes/hud_ptr.rs, N:world/hud/textlib.rs]; DevText_Clamp [N:modes/hud.rs, N:world/hud/leaves.rs]; DevText_Create [T:modes/gmscene.rs]; DevText_Erase [N:modes/hud_r7.rs, T:modes/gmscene.rs, N:world/hud/textlib.rs]; DevText_HideBackground [N:modes/hud_ptr.rs, T:modes/gmscene.rs]; DevText_HideCursor [N:modes/hud_ptr.rs, T:modes/gmscene.rs]; DevText_HideText [N:modes/hud_ptr.rs, T:modes/gmscene.rs]; DevText_Print [T:modes/gmscene.rs, N:world/hud/textlib.rs]; DevText_SetBGColor [N:modes/hud_ptr.rs, T:modes/gmscene.rs]; DevText_SetCursorX [N:modes/gm_r4.rs]; DevText_SetCursorXY [N:modes/hud_ptr.rs, T:modes/gmscene.rs]; DevText_SetScale [N:modes/hud_ptr.rs, T:modes/gmscene.rs]; DevText_SetTextColor [T:modes/gmscene.rs]; DevText_SetXY [N:modes/hud_ptr.rs]; DevText_ShowBackground [N:modes/hud_ptr.rs, T:modes/gmscene.rs]; DevText_ShowText [N:modes/hud_ptr.rs, T:modes/gmscene.rs]; DevText_StoreColorIndex [T:modes/gmscene.rs]; un_80302DF8 [N:modes/hud_ptr.rs]
 - `melee_world/src/tu/textlib_1.rs` (6): adjust [N:modes/hud.rs]; un_80302EA4 [N:modes/hud_r6.rs]; un_80302FFC_maxlen [N:modes/hud_r6.rs]; un_80303FD4_count [N:modes/hud_ptr.rs]; un_80303FD4_first [N:modes/hud_ptr.rs]; un_80304334 [N:modes/hud_ptr.rs]
+
+---
+
+## Dedupe pass and lint (port/dedupe, 2026-10-30)
+
+Tools (all in `tools/rust-port/`):
+- `lint_logic_location.py`: the section 5 lint. `--report` (counts per rule and crate), default (fails on violations not in
+  `lint_logic_baseline.txt`), `--write-baseline [--allow-growth]`, `--dedupe-table` (Appendix A regenerated from the tree),
+  `--json OUT`. Allowlist: `lint_logic_allow.txt`. Names differ from the plan text (`lint_logic_*`, not `lint_*`).
+  Not wired into CI: `.github/workflows` has no cargo job yet.
+  Differences from the plan's detector: `ext_fns!` entries (`fn f(..) => body;`, `= |..|`) are hook defaults, not bodies
+  (rule R4 reports the ones that are not forwarders); forwarders (`tu::..(a as _)`, `HOOKS.read()`, `match unsafe { HOOK }`,
+  `ext_call`) count as trivial; `pc/gameworld/*_tests.c` names are not game functions; the `tu/` home is found
+  case-insensitively and, when the named file has no body, the one `tu/` body in the owning crate is taken as the home.
+- `dedupe_apply.py`: compile-driven dedupe. For each C function with more than one Rust body and a canonical `tu/` body, a
+  depth-0 extra body in a crate that can reach the canonical crate becomes `pub use <canonical> [as alias];` (mode `use`)
+  or, when only the pointer/int/float types differ, a one-expression forwarder with `as _` casts (mode `fwd`). It applies all
+  candidates, runs `cargo check --workspace --tests --keep-going`, maps each error back to a candidate, drops it, and repeats until
+  the check is clean; nothing is written unless the final check is clean. Mode `move` (move a non-tu body into the home file)
+  exists but yielded 0 of 41. Guards: hook-dispatching bodies (`*_HOOK`, `need(`, `HOOKS`, `ext_call`), bodies whose canonical
+  body calls the same name (would recurse), and `BANNED` modules that tests call as reference models.
+
+Findings (lint counts before -> after, same lint on both trees): functions with more than one body 921 -> 826 names, extra
+bodies 1057 -> 932; R1 (logic outside `tu/`) 3302 -> 3208. 125 extra bodies removed by the lint delta (the loop placed 107 re-exports and 20 forwarders; the reverted gobj.rs held a few). The lint
+baseline holds the rest (13649 lines, mostly R4 hook defaults that call non-tu code and R3 wrong-home single bodies).
+The plan's 2353 / 3404 figures count `ext_fns!` hook entries and `mod ext` wrappers as bodies; those are hook plumbing, not
+duplicate logic, and go away with the link generator (step 4).
+
+Why the rest stays (all measured, none guessed):
+- About 270 candidates failed to compile as re-exports: the extra is a different architecture, not a copy (`&mut Fighter` /
+  `&mut Cx` model vs `*mut HSD_GObj`, `JObjTree` generic model vs raw pointers, `&[u8]` vs `*mut u8`). Deleting those means
+  rewriting their callers (the old `chars/` trees, `vs_match*`, the `*_ref` oracle models); that is migration step 19, not a dedupe.
+- 260 extras are nested (`impl` methods, `mod ext`, per-character `pub mod`): the `melee_chara/src/chars/` trees.
+- 375 bodies have no `tu/` home body at all (the real port lives in a non-tu module or only in `vs_match`); moving them
+  needs per-function import and helper surgery (`move` mode could place 0 of 41 unattended).
+- 27 are upward (the canonical `tu/` crate is above the crate holding the copy, e.g. `melee_world/efasync.rs` vs `melee_chara`).
+- Replacing these broke tests, so they are left: `melee_fighter/src/{player,plbonus,plbonus2,plbonus3}.rs` (player_ref,
+  plbonus_ref, plbonusc_ref call the model bodies) and `melee_runtime/src/gobj.rs` (oracle_gobj: stack overflow, the tu body
+  delegates back to the model). A hook-dispatching `un_803224dc` was also restored after `tu_ftdonkeyspecials` bypassed its mock.
+
+Verification (release exe, frames matching from 0, identical before and after): pad_falcon_fox_fd 1801, pad_marth_sheik_bf 1801,
+cpu_fox_falco_dl first hash divergence at frame 370 (414 frames compared; STATUS.md says it stops at 323, the baseline run
+here ran on to 414), cpu_peach_samus_ys_items 120. Tests: `cargo test --workspace --no-fail-fast` before: 3 failures
+(melee_chara `tu_ftkirby`, melee_fighter `tu_ft_0d4d_vs_c`, melee_runtime `tu_jobj`); after: `tu_ft_0d4d_vs_c` always, `tu_jobj` in the full run but not in the final melee_runtime rerun (intermittent),
+so `tu_ftkirby` now passes (its table was one of the duplicated bodies).

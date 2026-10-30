@@ -157,9 +157,7 @@ pub fn lb_rumble_stop(port: u8) {
         f(port)
     }
 }
-pub fn un_803224dc(spawn: i32, x: f32, kb: f32) -> bool {
-    unsafe { crate::tu::crowdsfx::un_803224DC(spawn, x, kb) }
-}
+pub fn un_803224dc(spawn: i32, x: f32, kb: f32) -> bool { need(unsafe { UN_803224DC }, "TODO(group6 un) un_803224DC")(spawn, x, kb) }
 pub fn it_80294e78(item: *mut Item_GObj, f: f32) { need(unsafe { IT_80294E78 }, "TODO(group5 it) it_80294E78")(item, f) }
 pub fn it_8029a89c(item: *mut Item_GObj, f: f32) { need(unsafe { IT_8029A89C }, "TODO(group5 it) it_8029A89C")(item, f) }
 pub fn it_8029a8f4(item: *mut Item_GObj, v: &Vec3) { need(unsafe { IT_8029A8F4 }, "TODO(group5 it) it_8029A8F4")(item, v) }

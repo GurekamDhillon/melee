@@ -20,6 +20,10 @@ DEPS = {
     'melee_modes': ['melee_core', 'melee_types', 'melee_runtime', 'melee_world', 'melee_fighter', 'melee_chara', 'melee_items'],
     'melee_audio': ['melee_types', 'melee_runtime'], 'melee_net': ['melee_types', 'melee_fighter', 'melee_runtime'],
 }
+HOOKISH = re.compile(r'EXT_HOOK|_HOOK|need[(]|HOOKS|ext_call|oracle|hook[(]|call[(]"')
+GUARD_TESTS = False
+# bodies that tests/oracles call directly as reference models (replacing them broke player_ref, plbonus*_ref, oracle_gobj)
+BANNED = ['melee_fighter/src/player.rs', 'melee_fighter/src/plbonus.rs', 'melee_fighter/src/plbonus2.rs', 'melee_fighter/src/plbonus3.rs', 'melee_runtime/src/gobj.rs']
 ALLOWED_ATTRS = re.compile(r'^\s*(///|//!|#\[(inline|allow|must_use|doc|track_caller|deprecated)\b)')
 
 
@@ -88,9 +92,145 @@ def fwd_text(c, es, hs):
     return '%sfn %s(%s)%s {\n    unsafe { %s(%s)%s }\n}' % (kw, e['name'], e['ptext'], (' -> ' + e['ret']) if e['ret'] else '', path, ', '.join(args), cast)
 
 
+def expand_use(tree, prefix=''):
+    """Expand a use tree into [(visible, full_path, is_glob)]."""
+    tree = tree.strip()
+    out = []
+    if '{' in tree:
+        i = tree.index('{')
+        pre = tree[:i].strip()
+        inner = tree[i + 1:tree.rindex('}')]
+        for part in split_top(inner):
+            if part.strip() == 'self': out.append((pre.rstrip(':').split('::')[-1], (prefix + pre).rstrip(':'), False))
+            else: out += expand_use(part, prefix + pre)
+        return out
+    if tree.endswith('*'): return [('*', prefix + tree, True)]
+    if ' as ' in tree:
+        a, b = [x.strip() for x in tree.split(' as ')]
+        return [(b, prefix + a, False)]
+    return [(tree.split('::')[-1], prefix + tree, False)]
+
+
+def module_path(rel):
+    m = re.match(r'rust/([^/]+)/src/(.*)\.rs$', rel)
+    parts = m.group(2).split('/')
+    if parts[-1] in ('mod', 'lib'): parts = parts[:-1]
+    return parts
+
+
+def abs_use(path, rel):
+    mp = module_path(rel)
+    if path.startswith('self::'): return 'crate::' + '::'.join(mp + [path[6:]]) if mp else 'crate::' + path[6:]
+    if path.startswith('super::'):
+        p = path; base = mp[:]
+        while p.startswith('super::'): p = p[7:]; base = base[:-1]
+        return 'crate::' + '::'.join(base + [p]) if base else 'crate::' + p
+    return path
+
+
+def top_uses(text, rel):
+    blank = L.blank_code(text)
+    res = []
+    for m in re.finditer(r'(?m)^(?:pub(?:\([^)]*\))?[ \t]+)?use[ \t]+([^;]+);', blank):
+        for vis, path, glob in expand_use(re.sub(r'\s+', ' ', m.group(1))):
+            res.append((vis, abs_use(path, rel), glob))
+    return res
+
+
+def defined_names(text):
+    blank = L.blank_code(text)
+    return set(re.findall(r'(?m)^(?:pub(?:\([^)]*\))?[ \t]+)?(?:unsafe[ \t]+)?(?:extern[ \t]+"C"[ \t]+)?(?:const[ \t]+|static[ \t]+(?:mut[ \t]+)?|fn[ \t]+|struct[ \t]+|enum[ \t]+|type[ \t]+|union[ \t]+|mod[ \t]+|trait[ \t]+)(\w+)', blank))
+
+
+def plan_move(srcs):
+    defs, canon, bodies, r5 = L.analyze()
+    def text(rel):
+        if rel not in srcs: srcs[rel] = open(os.path.join(ROOT, rel), encoding='utf-8', newline='').read()
+        return srcs[rel]
+    cands, skipped = [], collections.Counter()
+    for name, lst in bodies.items():
+        if len(lst) < 2: continue
+        cc = canon[name][0]
+        if cc is None: continue
+        home = L.tu_file(canon[name])
+        if any(b['rel'] == home and b['depth'] == 0 for b in lst): continue
+        if len([b for b in lst if b['istu'] and b['depth'] == 0 and b['crate'] == cc]) >= 1: continue
+        if not os.path.exists(os.path.join(ROOT, home)): skipped['nohome'] += 1; continue
+        srcb = [b for b in lst if b['depth'] == 0 and not b['istu'] and not b['allowed'] and b['crate'] == cc]
+        if not srcb: skipped['nosrc'] += 1; continue
+        b = max(srcb, key=lambda x: x['nlines'])
+        if len([x for x in lst if x['rel'] == b['rel']]) > 1: skipped['multi_in_file'] += 1; continue
+        s = text(b['rel'])
+        st = s.rfind('\n', 0, b['start']) + 1
+        ok = True
+        while st > 0:
+            pe = st - 1; ps = s.rfind('\n', 0, pe) + 1
+            line = s[ps:pe].rstrip('\r')
+            if line.strip() == '': break
+            if ALLOWED_ATTRS.match(line) or line.strip().startswith('//'): st = ps; continue
+            if line.strip().startswith('#['): ok = False
+            break
+        if not ok: skipped['attr'] += 1; continue
+        end = b['bend'] + 1
+        body = s[st:end]
+        bl = L.blank_code(body)
+        words = set(re.findall(r'[A-Za-z_]\w*', bl))
+        srcdef = defined_names(s)
+        # private helpers defined in source and used by the body (other than the fn itself) -> unsupported
+        priv = [w for w in words if w in srcdef and w != b['name']]
+        if priv: skipped['helpers'] += 1; continue
+        hs = text(home)
+        hdef = defined_names(hs)
+        hvis = {v for v, _, g in top_uses(hs, home) if not g}
+        uses = []
+        for vis, path, glob in top_uses(s, b['rel']):
+            if glob:
+                uses.append('use %s;' % path)
+            elif vis in words and vis not in hvis and vis not in hdef:
+                uses.append('use %s%s;' % (path, '' if path.split('::')[-1] == vis else ' as ' + vis))
+        hmod = os.path.splitext(os.path.basename(home))[0]
+        path = ('crate::tu::%s::%s' % (hmod, name)) if cc == b['crate'] else '%s::tu::%s::%s' % (cc, hmod, name)
+        vis = re.match(r'\s*(pub(?:\([a-z: ]+\))?\s+)?', s[b['start']:]).group(1) or ''
+        vis = vis.strip()
+        if not vis.startswith('pub'): body2 = re.sub(r'^(\s*)', r'\1pub ', body[b['start'] - st:], count=1); body = body[:b['start'] - st] + body2
+        alias = '' if b['name'] == name else ' as ' + b['name']
+        use = '%s%suse %s%s;' % (vis, ' ' if vis else '', path, alias)
+        hglobs = {p for v, p, g in top_uses(hs, home) if g}
+        uses = [u for u in dict.fromkeys(uses) if not (u.startswith('use ') and u[4:-1] in hglobs)]
+        cands.append(dict(kind='move', name=name, ename=b['name'], rel=b['rel'], crate=b['crate'], start=st, end=end, use=use,
+                          home=home, hstart=0, hsig='pub fn', moved='\n' + '\n'.join(uses) + '\n' + body.rstrip() + '\n',
+                          idents=sorted(words), key='%s|%s' % (b['rel'], b['name'])))
+    return cands, skipped
+
+
+def test_referenced_modules():
+    """Modules (crate, path) named by integration tests: they test those bodies directly, so leave them."""
+    refs = set()
+    for crate in os.listdir(os.path.join(ROOT, 'rust')):
+        td = os.path.join(ROOT, 'rust', crate, 'tests')
+        if not os.path.isdir(td): continue
+        for dp, _, fs in os.walk(td):
+            for f in fs:
+                if not f.endswith('.rs'): continue
+                t = open(os.path.join(dp, f), encoding='utf-8', errors='replace').read()
+                for m in re.finditer(r'(melee_\w+)::((?:\w+::)*\w+)', t):
+                    refs.add((m.group(1), tuple(m.group(2).split('::'))))
+    return refs
+
+
+def referenced(rel, refs):
+    m = re.match(r'rust/([^/]+)/src/', rel)
+    mp = tuple(module_path(rel))
+    for crate, path in refs:
+        if crate == m.group(1) and (path[:len(mp)] == mp):
+            return True
+    return False
+
+
 def plan(mode='use'):
     defs, canon, bodies, r5 = L.analyze()
     cands = []  # dicts
+    trefs = test_referenced_modules()
     skipped = collections.Counter()
     srcs = {}
     def text(rel):
@@ -113,6 +253,11 @@ def plan(mode='use'):
             if b['depth'] != 0: skipped['nested'] += 1; continue
             if not reach(b['crate'], hcrate): skipped['upward'] += 1; continue
             if b['rel'].endswith('/mod.rs') and False: continue
+            if HOOKISH.search(L.blank_code(text(b['rel'])[b['bstart']:b['bend']])): skipped['hook_dispatch'] += 1; continue
+            if referenced(b['rel'], trefs) and GUARD_TESTS: skipped['test_referenced'] += 1; continue
+            if any(b['rel'].endswith(x) for x in BANNED): skipped['banned'] += 1; continue
+            hbody = L.blank_code(text(h['rel'])[h['bstart']:h['bend']])
+            if re.search(r'(?<![A-Za-z0-9_])(%s|%s)(?![A-Za-z0-9_])' % (re.escape(b['name']), re.escape(name)), hbody): skipped['home_delegates'] += 1; continue
             same = [x for x in lst if x['rel'] == b['rel']]
             if len(same) > 1: skipped['multi_in_file'] += 1; continue
             s = text(b['rel'])
@@ -153,6 +298,8 @@ def apply(cands, active, srcs):
     for c in cands:
         if c['key'] not in active: continue
         byfile[c['rel']].append((c['start'], c['end'], c['use']))
+        if c.get('kind') == 'move':
+            hs0 = srcs[c['home']]; byfile[c['home']].append((len(hs0), len(hs0), c['moved'])); continue
         if not re.match(r'\s*pub\b', c['hsig']):
             homepub[(c['home'], c['hstart'])] = 1
     for (home, hs) in homepub:
@@ -225,6 +372,9 @@ def culprits(errs, cands, active, edited_text):
             for w in lw:
                 for c in bykey_name.get(w, []):
                     found.add(c['key'])
+            for c in cands:
+                if c['key'] in active and c.get('kind') == 'move' and c['home'] == key and (lw & set(c['idents'])):
+                    found.add(c['key'])
             # edits in the same file whose use line is the span line
             for c in cands:
                 if c['key'] in active and ('rust/' + f).replace('rust/rust/', 'rust/') == c['rel'] and c['use'].split(' as ')[0].split('::')[-1].rstrip(';') in line:
@@ -253,8 +403,15 @@ def main():
     ap.add_argument('--mode', default='use')
     ap.add_argument('--limit', type=int, default=0)
     ap.add_argument('--crates')
+    ap.add_argument('--ban-file')
+    ap.add_argument('--guard-tests', action='store_true')
     a = ap.parse_args()
-    cands, skipped, srcs = plan(a.mode)
+    global GUARD_TESTS, BANNED
+    GUARD_TESTS = a.guard_tests
+    if a.ban_file and os.path.exists(a.ban_file): BANNED += [l.strip() for l in open(a.ban_file) if l.strip()]
+    if a.mode == 'move':
+        srcs = {}; cands, skipped = plan_move(srcs)
+    else: cands, skipped, srcs = plan(a.mode)
     if a.crates: cands = [c for c in cands if c['crate'] in a.crates.split(',')]
     if a.limit: cands = cands[:a.limit]
     print('candidates', len(cands), 'skipped', dict(skipped), flush=True)

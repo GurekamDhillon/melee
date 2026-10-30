@@ -125,7 +125,7 @@ def c_index():
     for r in roots:
         for dp, _, fs in os.walk(r):
             for f in fs:
-                if not f.endswith('.c'): continue
+                if not f.endswith('.c') or f.endswith('_tests.c'): continue  # LAB test harness TUs, not game logic
                 p = os.path.join(dp, f)
                 rel = os.path.relpath(p, ROOT).replace('\\', '/')
                 try: txt = open(p, encoding='utf-8', errors='replace').read()
@@ -203,11 +203,12 @@ def is_trivial(body):
     b = body.strip()
     if not b: return True
     if 'todo!(' in '\n'.join(b.split('\n')[:5]) or 'unimplemented!(' in '\n'.join(b.split('\n')[:5]): return True
-    if re.search(r'match\s+unsafe\s*\{\s*HOOK', b) or 'Some(f) => f(' in b: return True
+    if re.search(r'match\s+unsafe\s*\{\s*[A-Z][A-Z0-9_]+\s*\}', b) or 'Some(f) => f(' in b: return True
+    if 'ext_call(' in b and b.count(chr(10)) < 15: return True
     if 'HOOKS.read()' in b and b.count(';') <= 3 and 'if ' not in b: return True
     if re.fullmatch(r'\s*call\("\w+", &\[.*\]\);?\s*', b, re.S): return True
     flat = re.sub(r'\s+', ' ', b)
-    flat = re.sub(r'(unsafe|return|let _ =)|as _|[{};]', ' ', flat)
+    flat = re.sub(r'\b(?:unsafe|return)\b|let _ =|\bas _(?![\w])|[{};]', ' ', flat)
     flat = re.sub(r'\s+', ' ', flat).strip()
     if re.fullmatch(r'(?:[\w]+::)*(?:tu|ftlib|lbtrigf|lbdvd)::[\w:]+\([^()]*(?:\([^()]*\)[^()]*)*\)', flat) and flat.count('(') <= 12: return True
     one = re.sub(r'\s+', ' ', b)
@@ -217,6 +218,29 @@ def is_trivial(body):
     return False
 
 
+HOOK_RE = re.compile(r'^[ 	]*(?:pub[ 	]+)?(?:unsafe[ 	]+)?fn[ 	]+(\w+)[ 	]*\(', re.M)
+
+
+def hook_defaults(src, blank):
+    """ext_fns! entries `fn name(args) -> R => body;` (and `= |..| body`): yield (name, line, body)."""
+    for m in HOOK_RE.finditer(blank):
+        i, d, n = m.end(), 1, len(blank)
+        while i < n and d:
+            d += (blank[i] == '(') - (blank[i] == ')'); i += 1
+        j = i
+        while j < n and blank[j] not in '{;=': j += 1
+        if j >= n or blank[j] != '=': continue
+        k, d = j, 0
+        while k < n:
+            ch = blank[k]
+            if ch in '{(': d += 1
+            elif ch in '})': d -= 1
+            elif ch == ';' and d <= 0: break
+            if d < 0: break
+            k += 1
+        yield m.group(1), src.count(chr(10), 0, m.start(1)) + 1, src[j + 1:k]
+
+
 def analyze():
     defs = c_index()
     canon = canonical_index(defs)
@@ -224,6 +248,7 @@ def analyze():
     pats = load_allow()
     bodies = collections.defaultdict(list)  # cname -> [(crate, rel, line, kind, trivial, istu, start, end)]
     r5 = []
+    r4 = []
     glue_cache = []
     for crate, path, rel in rust_files():
         src = open(path, encoding='utf-8', errors='replace', newline='').read()
@@ -237,10 +262,15 @@ def analyze():
             if triv: continue
             bodies[key].append(dict(crate=crate, rel=rel, line=line, istu=istu, allowed=allowed(rel, pats),
                                     depth=dep, start=s, bstart=bs, bend=be, name=name, sig=re.sub(r'\s+', ' ', blank[s:p]).strip(), nlines=src.count('\n', bs, be)))
+        if not allowed(rel, pats):
+            for name, line, body in hook_defaults(src, blank):
+                key = cname.get(name.lower())
+                if key is not None and not is_trivial(body) and key not in SEAMS:
+                    r4.append((rel, line, key))
         if allowed(rel, pats) and not istu:
             for m in re.finditer(r'\b(?:fp|ip|gp)\.[a-z_0-9]+\s*=[^=]|\brand\.', blank):
                 r5.append((rel, src.count('\n', 0, m.start()) + 1, 'glue_write'))
-    return defs, canon, bodies, r5
+    return defs, canon, bodies, r5 + [(a, b, 'hook:' + c) for a, b, c in r4]
 
 
 _TU = {}
@@ -254,6 +284,9 @@ def tu_file(canon_entry):
         _TU[crate] = {f[:-3].lower(): f for f in os.listdir(d) if f.endswith('.rs')} if os.path.isdir(d) else {}
     f = _TU[crate].get(stem, stem + '.rs')
     return 'rust/%s/src/tu/%s' % (crate, f)
+
+
+SEAMS = set()
 
 
 def violations(canon, bodies, r5):
@@ -276,8 +309,9 @@ def violations(canon, bodies, r5):
         if not at_home and tu_bodies and len(lst) == len(tu_bodies):
             for b in tu_bodies:
                 v.append(('R3', b['rel'], name))
-    for rel, line, _ in r5:
-        v.append(('R5', rel, 'line%d' % line))
+    for rel, line, tag in r5:
+        if tag.startswith('hook:'): v.append(('R4', rel, tag[5:]))
+        else: v.append(('R5', rel, 'line%d' % line))
     return sorted(set(v))
 
 

@@ -85,3 +85,4 @@ The long history and topic detail that used to live here is in `docs/rust-port/n
 - 2026-10-25 melee_fighter trace verification (port/pre-melee_fighter) -> notes/traces.md
 - 2026-10-30 Trace status after all six pre-melee_* merges -> notes/traces.md
 - 2026-10-30 rust-port: consolidation plan (real GObj loop on tu/ ports, vs_match stand-in inventory, dedupe list, diff gate, logic lint) -> notes/consolidation.md
+- 2026-10-30 port/dedupe: logic-location lint (tools/rust-port/lint_logic_location.py) + compile-driven dedupe; about 125 extra fn bodies became re-exports/forwarders, goldens unchanged -> notes/consolidation.md

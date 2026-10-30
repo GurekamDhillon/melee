@@ -123,6 +123,7 @@ unsafe fn sqrtf_accurate_store(x: f32, y: *mut f32) -> f32 {
 /// 2E5AC4: collision for the coin; bounces (or comes to rest) on the floor. Returns whether it landed
 /// (`false` again after a bounce).
 pub unsafe extern "C" fn it_802E5AC4(item_gobj: *mut Item_GObj, arg_check: bool) -> bool {
+    melee_core::ct!("it_802E5AC4");
     let mut sp40: Vec3 = core::mem::zeroed();
     let mut sp34: Vec3 = core::mem::zeroed();
     let mut sp28: Vec3 = core::mem::zeroed();
@@ -206,11 +207,13 @@ pub unsafe extern "C" fn it_802E5AC4(item_gobj: *mut Item_GObj, arg_check: bool)
 
 /// 2E5EF4
 pub unsafe extern "C" fn it_802E5EF4(item_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802E5EF4");
     (*GET_ITEM(item_gobj)).xDD4_itemVar.it_2E5A.x0
 }
 
 /// 2E5F00: spawns coins worth `arg3` at `pos` with velocity `vel`.
 pub unsafe extern "C" fn it_802E5F00(item_gobj: *mut Item_GObj, pos: *mut Vec3, vel: *mut Vec3, arg3: i32) {
+    melee_core::ct!("it_802E5F00");
     let mut vars: it_802E5FXX_struct = core::mem::zeroed();
     let mut sp1C: SpawnItem = core::mem::zeroed();
 
@@ -228,6 +231,7 @@ pub unsafe extern "C" fn it_802E5F00(item_gobj: *mut Item_GObj, pos: *mut Vec3, 
 
 /// 2E5F8C: spawns coins worth `arg2`, flung at angle `arg4` with speed `arg5`; returns the remaining value.
 pub unsafe extern "C" fn it_802E5F8C(item_gobj: *mut Item_GObj, pos: *mut Vec3, arg2: i32, arg3: i32, arg4: f32, arg5: f32) -> i32 {
+    melee_core::ct!("it_802E5F8C");
     let mut vars: it_802E5FXX_struct = core::mem::zeroed();
     let mut sp2C: SpawnItem = core::mem::zeroed();
     let mut vel: Vec3 = core::mem::zeroed();
@@ -257,6 +261,7 @@ pub unsafe extern "C" fn it_802E5F8C(item_gobj: *mut Item_GObj, pos: *mut Vec3, 
 
 /// 2E609C: spawns coins until `vars.xC` (the value left) is used up; returns the first coin's re-rolled total.
 pub unsafe extern "C" fn it_802E609C(vars: *mut it_802E5FXX_struct, spawn: *mut SpawnItem) -> i32 {
+    melee_core::ct!("it_802E609C");
     // `var_r30` is uninitialised in the C when no coin is rolled (the C build zero-initialises locals)
     let mut var_r30: i32 = 0;
     let mut var_r29: i32 = 0;
@@ -283,6 +288,7 @@ pub unsafe extern "C" fn it_802E609C(vars: *mut it_802E5FXX_struct, spawn: *mut 
 /// `static inline it_802E614C`: the coin's `SpawnItem` setup.
 #[inline]
 pub unsafe extern "C" fn it_802E614C(parent_gobj1: *mut Item_GObj, parent_gobj2: *mut Item_GObj, spawn: *mut SpawnItem, pos: *mut Vec3, vel: *mut Vec3) {
+    melee_core::ct!("it_802E614C");
     (*spawn).kind = It_Kind_Unk4;
     (*spawn).prev_pos = *pos;
     (*spawn).pos = (*spawn).prev_pos;
@@ -296,6 +302,7 @@ pub unsafe extern "C" fn it_802E614C(parent_gobj1: *mut Item_GObj, parent_gobj2:
 
 /// 2E61C4: re-rolls the total value `arg1` (per-player multiplier `x2C[arg2]`, random +-`x24` percent).
 pub unsafe extern "C" fn it_802E61C4(item_gobj: *mut Item_GObj, arg1: i32, arg2: i32) -> i32 {
+    melee_core::ct!("it_802E61C4");
     let item = GET_ITEM(item_gobj);
     let attr = (*(*item).xC4_article_data).x4_specialAttributes as *mut it_2E5A_Attrs;
     let mut var_r29: i32 = f2i32((arg1 as f32 * *(*attr).x2C.as_ptr().offset(arg2 as isize)) as f64);
@@ -310,6 +317,7 @@ pub unsafe extern "C" fn it_802E61C4(item_gobj: *mut Item_GObj, arg1: i32, arg2:
 
 /// 2E628C: random launch velocity.
 pub unsafe extern "C" fn it_802E628C(item_gobj: *mut Item_GObj, arg8: f32, arg9: f32) {
+    melee_core::ct!("it_802E628C");
     let item = GET_ITEM(item_gobj);
     let attr = (*(*item).xC4_article_data).x4_specialAttributes as *mut it_2E5A_Attrs;
 
@@ -368,6 +376,7 @@ unsafe fn it_802E6380_tier(item_gobj: *mut Item_GObj, attr: *mut it_2E5A_Attrs, 
 
 /// 2E6380: initialises one coin of the batch (tier, value, velocity, state); returns the value left.
 pub unsafe extern "C" fn it_802E6380(item_gobj: *mut Item_GObj, arg1: *mut it_802E5FXX_struct) -> i32 {
+    melee_core::ct!("it_802E6380");
     let item = GET_ITEM(item_gobj);
     let attr = (*(*item).xC4_article_data).x4_specialAttributes as *mut it_2E5A_Attrs;
     let off = it_802E6380_tier(item_gobj, attr, arg1);
@@ -406,6 +415,7 @@ pub unsafe extern "C" fn it_802E6380(item_gobj: *mut Item_GObj, arg1: *mut it_80
 
 /// 2E657C: lifetime / pickup-delay timers; true once the coin is gone.
 pub unsafe extern "C" fn it_802E657C(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_802E657C");
     let item = GET_ITEM(item_gobj);
     let timer = (*item).xD44_lifeTimer;
     if timer <= 0.0 {
@@ -437,6 +447,7 @@ pub unsafe extern "C" fn it_802E657C(item_gobj: *mut Item_GObj) -> bool {
 
 /// 2E6658: when the coin pool is nearly full, recycles the oldest coin.
 pub unsafe extern "C" fn it_802E6658() {
+    melee_core::ct!("it_802E6658");
     if (ext::Item_804A0C64.x50 as u32) >= (*ext::it_804D6D28).x20.wrapping_sub(2) {
         ext::Item_8026A8EC(ext::it_80272828(It_Kind_Unk4));
     }
@@ -455,6 +466,7 @@ unsafe fn it_2E5A_ApplyStateDesc(item_gobj: *mut HSD_GObj, idx: i32) {
 
 /// 2E66A0: enters the coin's idle (collectible) or falling state.
 pub unsafe extern "C" fn it_802E66A0(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802E66A0");
     let item = (*item_gobj).user_data as *mut Item;
     if (*item).xDD4_itemVar.it_2E5A.x8 == 1 {
         if (*item).xDD4_itemVar.it_2E5A.xC != 0 {
@@ -472,6 +484,7 @@ pub unsafe extern "C" fn it_802E66A0(item_gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_2E5A_UnkMotion1_Anim(item_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("it_2E5A_UnkMotion1_Anim");
     let item = GET_ITEM(item_gobj);
     // `(0.1 * ABS(vy)) + 1.0` in double: one fused multiply-add
     (*item).x5D0_animFrameSpeed = (0.1f64).mul_add(ABS((*item).x40_vel.y) as f64, 1.0) as f32;
@@ -479,11 +492,13 @@ pub unsafe extern "C" fn it_2E5A_UnkMotion1_Anim(item_gobj: *mut HSD_GObj) -> bo
 }
 
 pub unsafe extern "C" fn it_2E5A_UnkMotion1_Phys(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_2E5A_UnkMotion1_Phys");
     let comm_attr = (*GET_ITEM(item_gobj)).xCC_item_attr;
     ext::it_80272860(item_gobj, (*comm_attr).x10_fall_speed, (*comm_attr).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn it_2E5A_UnkMotion0_Coll(item_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("it_2E5A_UnkMotion0_Coll");
     let item = GET_ITEM(item_gobj);
     if it_802E5AC4(item_gobj, true) {
         it_802E6888(item_gobj);
@@ -495,6 +510,7 @@ pub unsafe extern "C" fn it_2E5A_UnkMotion0_Coll(item_gobj: *mut HSD_GObj) -> bo
 
 /// 2E6888: lands (rest state).
 pub unsafe extern "C" fn it_802E6888(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802E6888");
     let item = (*item_gobj).user_data as *mut Item;
     itResetVelocity(item);
     (*item).x5D0_animFrameSpeed = 1.0;
@@ -505,12 +521,14 @@ pub unsafe extern "C" fn it_802E6888(item_gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_2E5A_UnkMotion2_Anim(item_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("it_2E5A_UnkMotion2_Anim");
     it_802E657C(item_gobj)
 }
 
-pub unsafe extern "C" fn it_2E5A_UnkMotion2_Phys(item_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn it_2E5A_UnkMotion2_Phys(item_gobj: *mut HSD_GObj) { melee_core::ct!("it_2E5A_UnkMotion2_Phys");}
 
 pub unsafe extern "C" fn it_2E5A_UnkMotion2_Coll(item_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("it_2E5A_UnkMotion2_Coll");
     let mut item = (*item_gobj).user_data as *mut Item;
     if ((*item).xDD4_itemVar.it_2E5A.x8 == 1) && !it_802E5AC4(item_gobj, false) {
         item = (*item_gobj).user_data as *mut Item;
@@ -532,12 +550,14 @@ pub unsafe extern "C" fn it_2E5A_UnkMotion2_Coll(item_gobj: *mut HSD_GObj) -> bo
 }
 
 pub unsafe extern "C" fn it_2E5A_Logic115_DmgDealt(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_2E5A_Logic115_DmgDealt");
     ext::lbAudioAx_80023870(0x93, 0x7F, 0x40, 0x1A);
     true
 }
 
 /// 2E6A74: remembers the bone position of the previous frame and reads the new one.
 pub unsafe extern "C" fn it_802E6A74(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802E6A74");
     let item = (*gobj).user_data as *mut Item;
     if (*item).xDD4_itemVar.it_2E5A.x8 != 0 {
         let sub = &raw mut (*item).xDD4_itemVar.it_2E5A.sub;
@@ -547,5 +567,6 @@ pub unsafe extern "C" fn it_802E6A74(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_2E5A_Logic115_EvtUnk(item_gobj: *mut Item_GObj, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_2E5A_Logic115_EvtUnk");
     ext::it_8026B894(item_gobj, ref_gobj);
 }

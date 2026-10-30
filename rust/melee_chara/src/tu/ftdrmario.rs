@@ -98,10 +98,12 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 
 /// `ftDr_Init_80149540` as a Fighter callback entry (`take_dmg_cb` / `death2_cb`).
 pub unsafe extern "C" fn cb_ftDr_Init_80149540(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftDr_Init_80149540");
     ftDr_Init_80149540(g);
 }
 
 pub fn ftDr_Init_OnLoad(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDr_Init_OnLoad");
     unsafe {
         let fp = fpp(gobj);
         let items = (*(*fp).ft_data).x48_items;
@@ -113,23 +115,28 @@ pub fn ftDr_Init_OnLoad(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftDr_Init_80149540(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDr_Init_80149540");
     ftDr_Init_801497CC(gobj);
 }
 
 pub fn ftDr_Init_OnItemPickup(gobj: *mut HSD_GObj, flag: i32) {
+    melee_core::ct!("ftDr_Init_OnItemPickup");
     crate::tu::ftclink::Fighter_OnItemPickup(gobj, flag, 1, 1);
 }
 
 pub fn ftDr_Init_OnItemDrop(gobj: *mut HSD_GObj, bool1: i32) {
+    melee_core::ct!("ftDr_Init_OnItemDrop");
     crate::tu::ftclink::Fighter_OnItemDrop(gobj, bool1, 1, 1);
 }
 
 pub fn ftDr_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDr_Init_LoadSpecialAttrs");
     ext::ftMr_Init_LoadSpecialAttrs(gobj);
 }
 
 /// Drop the pill pointer (destroying the pill item) and clear the damage / death callbacks.
 pub fn ftDr_Init_801497CC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDr_Init_801497CC");
     unsafe {
         if !gobj.is_null() {
             let fp = fpp(gobj);
@@ -150,6 +157,7 @@ pub fn ftDr_Init_801497CC(gobj: *mut HSD_GObj) {
 
 /// C `bool`: true unless an Appeal (341 / 342) still holds its pill.
 pub fn ftDr_Init_80149844(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftDr_Init_80149844");
     if gobj.is_null() {
         return true;
     }
@@ -171,6 +179,7 @@ pub fn ftDr_Init_80149844(gobj: *mut HSD_GObj) -> bool {
 
 /// Forget the pill (it was handed on) and clear the damage / death callbacks.
 pub fn ftDr_Init_801498A0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDr_Init_801498A0");
     unsafe {
         if !gobj.is_null() {
             let fp = fpp(gobj);
@@ -190,6 +199,7 @@ pub fn ftDr_Init_801498A0(gobj: *mut HSD_GObj) {
 
 /// C `u32`: `cmd_vars[1]`, or 0 without a fighter.
 pub fn ftDr_Init_801498EC(gobj: *mut HSD_GObj) -> u32 {
+    melee_core::ct!("ftDr_Init_801498EC");
     if !gobj.is_null() {
         unsafe {
             let fp = fpp(gobj);
@@ -202,6 +212,7 @@ pub fn ftDr_Init_801498EC(gobj: *mut HSD_GObj) -> u32 {
 }
 
 pub fn ftDr_Init_80149910(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDr_Init_80149910");
     unsafe {
         let fp = fpp(gobj);
         ext::ftCo_800DEAE8(gobj, ftMr_MS_AppealSR as i32, ftMr_MS_AppealSL as i32);

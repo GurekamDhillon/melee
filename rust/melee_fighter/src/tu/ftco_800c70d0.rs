@@ -6,6 +6,7 @@ use crate::types::*;
 
 /// `ftCo_800C70D0(gobj)`.
 pub fn ftco_800c70d0(g: G) {
+    melee_core::ct!("ftco_800c70d0");
     let k = fp(g).kind;
     let ms = if k == Ft_Kind_Mario || k == Ft_Kind_Luigi {
         ftCo_MS_Wait
@@ -21,6 +22,7 @@ pub fn ftco_800c70d0(g: G) {
 
 /// `ftCo_800C7158(gobj)`: `ft_8008521C(gobj)`.
 pub fn ftco_800c7158(g: G) {
+    melee_core::ct!("ftco_800c7158");
     ext::ft_8008521C(g)
 }
 

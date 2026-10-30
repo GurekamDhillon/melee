@@ -56,6 +56,7 @@ fn cb_80082B1C(g: G) {
 }
 
 pub fn ftCo_800C23A0(g: G) -> bool {
+    melee_core::ct!("ftCo_800C23A0");
     if fp(g).coll_data.env_flags & Collide_CeilingHug != 0 && ext::ftCo_800986B0(g) {
         ftCo_800C23FC(g);
         return true;
@@ -64,6 +65,7 @@ pub fn ftCo_800C23A0(g: G) -> bool {
 }
 
 pub fn ftCo_800C23FC(g: G) {
+    melee_core::ct!("ftCo_800C23FC");
     ext::ftCommon_8007E2FC(g);
     let f = fp(g);
     f.anon_2210.throw_flags = 0;
@@ -86,6 +88,7 @@ pub fn ftCo_800C23FC(g: G) {
 }
 
 pub fn ftCo_PassiveCeil_Anim(g: G) {
+    melee_core::ct!("ftCo_PassiveCeil_Anim");
     let f = fp(g);
     // ftCheckThrowB3 (ft/inlines.h)
     let b3 = unsafe {
@@ -104,12 +107,14 @@ pub fn ftCo_PassiveCeil_Anim(g: G) {
     }
 }
 
-pub fn ftCo_PassiveCeil_IASA(_g: G) {}
+pub fn ftCo_PassiveCeil_IASA(_g: G) { melee_core::ct!("ftCo_PassiveCeil_IASA");}
 
 pub fn ftCo_PassiveCeil_Phys(g: G) {
+    melee_core::ct!("ftCo_PassiveCeil_Phys");
     ext::ft_80084DB0(g);
 }
 
 pub fn ftCo_PassiveCeil_Coll(g: G) {
+    melee_core::ct!("ftCo_PassiveCeil_Coll");
     ext::ft_800831CC(g, cb_80096CC8, cb_80082B1C);
 }

@@ -59,6 +59,7 @@ fn fpg<'a>(g: G) -> &'a mut Fighter {
 
 /// `ftCommon_8007E5AC`: tilt part 0 to the floor's slope.
 pub fn ftcommon_8007e5ac(fp: &mut Fighter) {
+    melee_core::ct!("ftcommon_8007e5ac");
     let n = fp.coll_data.floor.normal;
     let tmp = -melee_runtime::lbtrigf::atan2f(n.x, n.y);
     assert!(fp.ground_or_air as i32 == GA_Ground as i32, "fp->ground_or_air == GA_Ground");
@@ -68,6 +69,7 @@ pub fn ftcommon_8007e5ac(fp: &mut Fighter) {
 /// `ftCommon_8007EFC8`: hand the match over to the transform partner (Zelda <-> Sheik), then
 /// put this fighter to sleep and run `arg1` on the partner.
 pub fn ftcommon_8007efc8(gobj: G, arg1: fn(G)) {
+    melee_core::ct!("ftcommon_8007efc8");
     let src = fpg(gobj);
     let dst_gobj = ext::Player_GetEntityAtIndex(src.player_id as i32, 1);
     let dst = fpg(dst_gobj);

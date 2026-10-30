@@ -69,12 +69,14 @@ pub mod ext {
 
 /// `MTXMultVec(m, src, dst)`; reuses the verified fused implementation.
 pub unsafe fn native_mtx_mult_vec(m: *mut [f32; 4], src: *mut Vec3, dst: *mut Vec3) {
+    melee_core::ct!("native_mtx_mult_vec");
     let m = core::slice::from_raw_parts(m, 3);
     let v = crate::mtx::mult_vec(m, &melee_core::vec::Vec3 { x: (*src).x, y: (*src).y, z: (*src).z });
     *dst = Vec3 { x: v.x, y: v.y, z: v.z };
 }
 /// TODO: `splArcLengthPoint` (spline.c) has no native-pointer port yet.
 pub unsafe fn native_spline_point(_: *mut Vec3, _: *mut HSD_Spline, _: f32) {
+    melee_core::ct!("native_spline_point");
     todo!("splArcLengthPoint (spline.c)")
 }
 
@@ -103,6 +105,7 @@ unsafe fn resolve_world_pos(w: *mut HSD_WObj) {
 }
 
 pub unsafe fn HSD_WObjRemoveAnim(wobj: *mut HSD_WObj) {
+    melee_core::ct!("HSD_WObjRemoveAnim");
     if !wobj.is_null() {
         ext::HSD_AObjRemove((*wobj).aobj);
         (*wobj).aobj = null_mut();
@@ -111,6 +114,7 @@ pub unsafe fn HSD_WObjRemoveAnim(wobj: *mut HSD_WObj) {
 }
 
 pub unsafe fn HSD_WObjReqAnim(wobj: *mut HSD_WObj, frame: f32) {
+    melee_core::ct!("HSD_WObjReqAnim");
     if !wobj.is_null() {
         ext::HSD_AObjReqAnim((*wobj).aobj, frame);
         ext::HSD_RObjReqAnimAll((*wobj).robj, frame);
@@ -118,6 +122,7 @@ pub unsafe fn HSD_WObjReqAnim(wobj: *mut HSD_WObj, frame: f32) {
 }
 
 pub unsafe fn HSD_WObjAddAnim(wobj: *mut HSD_WObj, anim: *mut HSD_WObjAnim) {
+    melee_core::ct!("HSD_WObjAddAnim");
     if !wobj.is_null() && !anim.is_null() {
         if !(*wobj).aobj.is_null() {
             ext::HSD_AObjRemove((*wobj).aobj);
@@ -128,6 +133,7 @@ pub unsafe fn HSD_WObjAddAnim(wobj: *mut HSD_WObj, anim: *mut HSD_WObjAnim) {
 }
 
 pub unsafe extern "C" fn WObjUpdateFunc(obj: *mut c_void, ty: i32, val: *mut HSD_ObjData) {
+    melee_core::ct!("WObjUpdateFunc");
     let wobj = obj as *mut HSD_WObj;
     if wobj.is_null() {
         return;
@@ -157,6 +163,7 @@ pub unsafe extern "C" fn WObjUpdateFunc(obj: *mut c_void, ty: i32, val: *mut HSD
 }
 
 pub unsafe fn HSD_WObjInterpretAnim(wobj: *mut HSD_WObj) {
+    melee_core::ct!("HSD_WObjInterpretAnim");
     if !wobj.is_null() {
         ext::HSD_AObjInterpretAnim((*wobj).aobj, wobj.cast(), Some(WObjUpdateFunc));
         ext::HSD_RObjAnimAll((*wobj).robj);
@@ -164,6 +171,7 @@ pub unsafe fn HSD_WObjInterpretAnim(wobj: *mut HSD_WObj) {
 }
 
 pub unsafe extern "C" fn WObjLoad(wobj: *mut HSD_WObj, desc: *mut HSD_WObjDesc) -> i32 {
+    melee_core::ct!("WObjLoad");
     HSD_WObjSetPosition(wobj, addr_of_mut!((*desc).pos));
     if !(*wobj).robj.is_null() {
         ext::HSD_RObjRemoveAll((*wobj).robj);
@@ -174,6 +182,7 @@ pub unsafe extern "C" fn WObjLoad(wobj: *mut HSD_WObj, desc: *mut HSD_WObjDesc) 
 }
 
 pub unsafe fn HSD_WObjInit(wobj: *mut HSD_WObj, desc: *mut HSD_WObjDesc) {
+    melee_core::ct!("HSD_WObjInit");
     if wobj.is_null() || desc.is_null() {
         return;
     }
@@ -186,6 +195,7 @@ pub unsafe fn HSD_WObjInit(wobj: *mut HSD_WObj, desc: *mut HSD_WObjDesc) {
 }
 
 pub unsafe fn HSD_WObjSetDefaultClass(info: *mut HSD_ClassInfo) {
+    melee_core::ct!("HSD_WObjSetDefaultClass");
     if !info.is_null() {
         assert!(
             ext::hsdIsDescendantOf(info.cast(), addr_of_mut!(hsdWObj).cast()) != 0,
@@ -196,6 +206,7 @@ pub unsafe fn HSD_WObjSetDefaultClass(info: *mut HSD_ClassInfo) {
 }
 
 pub unsafe fn HSD_WObjLoadDesc(desc: *mut HSD_WObjDesc) -> *mut HSD_WObj {
+    melee_core::ct!("HSD_WObjLoadDesc");
     if desc.is_null() {
         return null_mut();
     }
@@ -217,6 +228,7 @@ pub unsafe fn HSD_WObjLoadDesc(desc: *mut HSD_WObjDesc) -> *mut HSD_WObj {
 }
 
 pub unsafe fn HSD_WObjSetPosition(wobj: *mut HSD_WObj, pos: *mut Vec3) {
+    melee_core::ct!("HSD_WObjSetPosition");
     if wobj.is_null() || pos.is_null() {
         return;
     }
@@ -226,6 +238,7 @@ pub unsafe fn HSD_WObjSetPosition(wobj: *mut HSD_WObj, pos: *mut Vec3) {
 }
 
 pub unsafe fn HSD_WObjSetPositionX(wobj: *mut HSD_WObj, val: f32) {
+    melee_core::ct!("HSD_WObjSetPositionX");
     if !wobj.is_null() {
         resolve_world_pos(wobj);
         (*wobj).pos.x = val;
@@ -234,6 +247,7 @@ pub unsafe fn HSD_WObjSetPositionX(wobj: *mut HSD_WObj, val: f32) {
 }
 
 pub unsafe fn HSD_WObjSetPositionY(wobj: *mut HSD_WObj, val: f32) {
+    melee_core::ct!("HSD_WObjSetPositionY");
     if !wobj.is_null() {
         resolve_world_pos(wobj);
         (*wobj).pos.y = val;
@@ -242,6 +256,7 @@ pub unsafe fn HSD_WObjSetPositionY(wobj: *mut HSD_WObj, val: f32) {
 }
 
 pub unsafe fn HSD_WObjSetPositionZ(wobj: *mut HSD_WObj, val: f32) {
+    melee_core::ct!("HSD_WObjSetPositionZ");
     if !wobj.is_null() {
         resolve_world_pos(wobj);
         (*wobj).pos.z = val;
@@ -250,6 +265,7 @@ pub unsafe fn HSD_WObjSetPositionZ(wobj: *mut HSD_WObj, val: f32) {
 }
 
 pub unsafe fn HSD_WObjGetPosition(wobj: *mut HSD_WObj, vec: *mut Vec3) {
+    melee_core::ct!("HSD_WObjGetPosition");
     if wobj.is_null() || vec.is_null() {
         return;
     }
@@ -258,6 +274,7 @@ pub unsafe fn HSD_WObjGetPosition(wobj: *mut HSD_WObj, vec: *mut Vec3) {
 }
 
 pub unsafe fn HSD_WObjAlloc() -> *mut HSD_WObj {
+    melee_core::ct!("HSD_WObjAlloc");
     let info = if default_class.is_null() { addr_of_mut!(hsdWObj).cast::<HSD_ClassInfo>() } else { default_class };
     let wobj = ext::hsdNew(info) as *mut HSD_WObj;
     assert!(!wobj.is_null(), "wobj.c:591 wobj");
@@ -265,6 +282,7 @@ pub unsafe fn HSD_WObjAlloc() -> *mut HSD_WObj {
 }
 
 pub unsafe extern "C" fn WObjRelease(o: *mut HSD_Class) {
+    melee_core::ct!("WObjRelease");
     let wobj = o as *mut HSD_WObj;
     ext::HSD_RObjRemoveAll((*wobj).robj);
     ext::HSD_AObjRemove((*wobj).aobj);
@@ -273,6 +291,7 @@ pub unsafe extern "C" fn WObjRelease(o: *mut HSD_Class) {
 }
 
 pub unsafe extern "C" fn WObjAmnesia(info: *mut HSD_ClassInfo) {
+    melee_core::ct!("WObjAmnesia");
     if info == default_class {
         default_class = null_mut();
     }
@@ -281,6 +300,7 @@ pub unsafe extern "C" fn WObjAmnesia(info: *mut HSD_ClassInfo) {
 }
 
 pub unsafe extern "C" fn WObjInfoInit() {
+    melee_core::ct!("WObjInfoInit");
     ext::hsdInitClassInfo(
         addr_of_mut!(hsdWObj).cast(),
         addr_of_mut!(ext::hsdObj),
@@ -296,6 +316,7 @@ pub unsafe extern "C" fn WObjInfoInit() {
 
 /// wobj.h `HSD_WObjUnref` (inline).
 pub unsafe fn HSD_WObjUnref(wobj: *mut HSD_WObj) {
+    melee_core::ct!("HSD_WObjUnref");
     if wobj.is_null() {
         return;
     }
@@ -315,5 +336,6 @@ pub unsafe fn HSD_WObjUnref(wobj: *mut HSD_WObj) {
 
 /// wobj.h `HSD_WObjClearFlags` (inline).
 pub unsafe fn HSD_WObjClearFlags(wobj: *mut HSD_WObj, flags: u32) {
+    melee_core::ct!("HSD_WObjClearFlags");
     (*wobj).flags &= !flags;
 }

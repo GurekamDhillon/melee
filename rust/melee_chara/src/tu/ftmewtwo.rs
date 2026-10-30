@@ -84,6 +84,7 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 pub use crate::tu::ftfox::{copy_attrs, push_attrs};
 
 pub fn ftMt_Init_OnLoad(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_Init_OnLoad");
     unsafe {
         let fp = fpp(gobj);
         let item_list = (*(*fp).ft_data).x48_items;
@@ -97,23 +98,26 @@ pub fn ftMt_Init_OnLoad(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftMt_Init_OnItemPickup(_gobj: *mut HSD_GObj, _flag: i32) {}
+pub fn ftMt_Init_OnItemPickup(_gobj: *mut HSD_GObj, _flag: i32) { melee_core::ct!("ftMt_Init_OnItemPickup");}
 
 /// Callback target of `death2_cb` / `death3_cb`.
 pub fn ftMt_Init_OnDeath2(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_Init_OnDeath2");
     crate::tu::ftmewtwospeciallw::ftMt_SpecialLw_RemoveDisable(gobj);
     crate::tu::ftmewtwospecialn::ftMt_SpecialN_OnTakeDamage(gobj);
 }
 
 /// Callback target of `take_dmg_cb`.
 pub fn ftMt_Init_OnTakeDamage(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_Init_OnTakeDamage");
     crate::tu::ftmewtwospeciallw::ftMt_SpecialLw_RemoveDisable(gobj);
     crate::tu::ftmewtwospecialn::ftMt_SpecialN_OnDeath(gobj);
 }
 
-pub fn ftMt_Init_OnItemDrop(_gobj: *mut HSD_GObj, _flag: i32) {}
+pub fn ftMt_Init_OnItemDrop(_gobj: *mut HSD_GObj, _flag: i32) { melee_core::ct!("ftMt_Init_OnItemDrop");}
 
 pub fn ftMt_Init_UnkMotionStates4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_Init_UnkMotionStates4");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftMewtwoAttributes;
@@ -125,6 +129,7 @@ pub fn ftMt_Init_UnkMotionStates4(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMt_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_Init_LoadSpecialAttrs");
     unsafe {
         let fp = fpp(gobj);
         copy_attrs::<ftMewtwoAttributes>(gobj);

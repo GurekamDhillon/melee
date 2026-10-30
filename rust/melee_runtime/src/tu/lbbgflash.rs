@@ -148,6 +148,7 @@ pub static mut lbl_803BB028: HSD_CameraDescPerspective = HSD_CameraDescPerspecti
 
 /// Maps authored 640-wide wipe progress across the current camera plane, then emits the vertex.
 pub fn bgflash_position(mut x: f32, y: f32) {
+    melee_core::ct!("bgflash_position");
     let camera = ext::HSD_CObjGetCurrent();
     if !camera.is_null() {
         let width: f32 = 480.0 * ext::HSD_CObjGetAspect(camera);
@@ -166,6 +167,7 @@ fn quad(x0: f32, y0: f32, x1: f32, y1: f32, c: [u8; 4]) {
 
 /// 01FC08
 pub unsafe extern "C" fn fn_8001FC08() {
+    melee_core::ct!("fn_8001FC08");
     let data = &mut *(&raw mut lbl_80433658);
     let targets = [data.x8.r, data.x8.g, data.x8.b, data.x8.a];
     for i in 0..4 {
@@ -179,6 +181,7 @@ pub unsafe extern "C" fn fn_8001FC08() {
 
 /// 01FEC4
 pub unsafe extern "C" fn fn_8001FEC4(_gobj: *mut HSD_GObj, _code: i32) {
+    melee_core::ct!("fn_8001FEC4");
     let data = &mut *(&raw mut lbl_80433658);
     if data.state.active() != 0 {
         return;
@@ -235,6 +238,7 @@ pub unsafe extern "C" fn fn_8001FEC4(_gobj: *mut HSD_GObj, _code: i32) {
 
 /// 0204C8
 pub unsafe extern "C" fn fn_800204C8() {
+    melee_core::ct!("fn_800204C8");
     let data = &mut *(&raw mut lbl_80433658);
     let mode = data.state.mode() as i32;
     match mode {
@@ -268,6 +272,7 @@ pub unsafe extern "C" fn fn_800204C8() {
 
 /// 0205F0
 pub unsafe extern "C" fn lbBgFlash_800205F0(mut duration: i32) {
+    melee_core::ct!("lbBgFlash_800205F0");
     if duration < 1 {
         duration = 1;
     }
@@ -277,6 +282,7 @@ pub unsafe extern "C" fn lbBgFlash_800205F0(mut duration: i32) {
 
 /// 02063C
 pub unsafe extern "C" fn lbBgFlash_8002063C(mut count: i32) {
+    melee_core::ct!("lbBgFlash_8002063C");
     if count < 1 {
         count = 1;
     }
@@ -286,6 +292,7 @@ pub unsafe extern "C" fn lbBgFlash_8002063C(mut count: i32) {
 
 /// 020688
 pub unsafe extern "C" fn lbBgFlash_80020688(mut count: i32) {
+    melee_core::ct!("lbBgFlash_80020688");
     if count < 1 {
         count = 1;
     }
@@ -295,6 +302,7 @@ pub unsafe extern "C" fn lbBgFlash_80020688(mut count: i32) {
 
 /// 0206D4
 pub unsafe extern "C" fn lbBgFlash_800206D4(col1: *mut GXColor, col2: *mut GXColor, arg2: i32) {
+    melee_core::ct!("lbBgFlash_800206D4");
     let data = &mut *(&raw mut lbl_80433658);
     let mut count = arg2;
     if count < 1 {
@@ -319,6 +327,7 @@ pub unsafe extern "C" fn lbBgFlash_800206D4(col1: *mut GXColor, col2: *mut GXCol
 
 /// `lbBgFlash_InitState`
 pub unsafe extern "C" fn lbBgFlash_InitState(color: *mut GXColor) {
+    melee_core::ct!("lbBgFlash_InitState");
     lbl_80433658.state.set_active(0);
     lbl_80433658.state.set_mode(5);
     lbl_80433658.xC = *color;
@@ -326,6 +335,7 @@ pub unsafe extern "C" fn lbBgFlash_InitState(color: *mut GXColor) {
 
 /// 0208B0
 pub unsafe extern "C" fn fn_800208B0(arg0: u8) {
+    melee_core::ct!("fn_800208B0");
     let data = &mut *(&raw mut lbl_80433658);
     data.state.set_active(0);
     data.state.set_mode(5);
@@ -337,6 +347,7 @@ pub unsafe extern "C" fn fn_800208B0(arg0: u8) {
 
 /// 0208EC
 pub unsafe extern "C" fn lbBgFlash_800208EC(arg0: i32) {
+    melee_core::ct!("lbBgFlash_800208EC");
     let flash = &mut *(&raw mut lbl_80433658);
     flash.x44 = ext::GObj_Create(0x14, 0x16, 0);
     let temp2 = ext::HSD_CObjLoadDesc((&raw mut lbl_803BB028) as *mut HSD_CObjDesc);
@@ -353,6 +364,7 @@ pub unsafe extern "C" fn lbBgFlash_800208EC(arg0: i32) {
 
 /// 0209F4
 pub unsafe extern "C" fn lbBgFlash_800209F4() {
+    melee_core::ct!("lbBgFlash_800209F4");
     let flash = &mut *(&raw mut lbl_80433658);
     flash.x44 = ext::GObj_Create(0x14, 0x16, 0);
     let desc = ext::HSD_CObjLoadDesc((&raw mut lbl_803BB028) as *mut HSD_CObjDesc);

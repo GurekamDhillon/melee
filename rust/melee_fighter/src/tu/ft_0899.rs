@@ -65,6 +65,7 @@ fn abs_c(v: f32) -> f32 {
 /// `fn_8008998C` (static): drop the IK target `ik.pos4` onto the floor under it, the step
 /// clamped to slope 0.45. Returns whether it moved.
 pub fn fn_8008998C(f: &mut Fighter, ik: &mut IKState, normal: &mut Vec3) -> bool {
+    melee_core::ct!("fn_8008998C");
     let jobj_pos = unsafe { (*((*f.gobj).hsd_obj as *mut HSD_JObj)).translate };
     *normal = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let line = f.coll_data.floor.index;
@@ -138,6 +139,7 @@ fn leg(f: &mut Fighter, ik: &mut IKState, j: [u8; 3], dir: f32) {
 ///
 /// C quirk kept: the C passes `NULL` as lb_8000B1CC's offset; the hook takes a zero offset.
 pub fn ft_80089B08(g: G) {
+    melee_core::ct!("ft_80089B08");
     let f = fp(g);
     if f.x2219_b5() != 0 || f.ground_or_air != GA_Ground {
         return;
@@ -196,6 +198,7 @@ pub fn ft_80089B08(g: G) {
 
 /// `ft_8008A1B8`: set the IK/tilt flags; without the tilt bit the root's X rotation is reset.
 pub fn ft_8008A1B8(g: G, flags: u32) {
+    melee_core::ct!("ft_8008A1B8");
     let f = fp(g);
     f.set_x221C_u16_y(flags as u16);
     if flags & (1 << 2) == 0 {

@@ -541,6 +541,7 @@ pub static mut grCn_StageData: StageData = StageData {
 
 /// `grCorneria_801DCCFC`: reset the arwing slots and roll the first spawn timer.
 pub unsafe extern "C" fn grCorneria_801DCCFC() {
+    melee_core::ct!("grCorneria_801DCCFC");
     arwing_gobjs[0] = null_mut();
     arwing_types[0] = 0;
     arwing_groups[0] = 0;
@@ -601,6 +602,7 @@ unsafe fn grCn_CheckFar(pos: *mut Vec3) -> i32 {
 
 /// `grCorneria_801DCE1C`: arwing spawn scheduler.
 pub unsafe extern "C" fn grCorneria_801DCE1C() {
+    melee_core::ct!("grCorneria_801DCE1C");
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut pos2 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
@@ -697,6 +699,7 @@ pub unsafe extern "C" fn grCorneria_801DCE1C() {
 
 /// `grCorneria_801DD2C0` (on_demo_init).
 pub unsafe extern "C" fn grCorneria_801DD2C0(_unused: i32) {
+    melee_core::ct!("grCorneria_801DD2C0");
     let mut obj = ext::Ground_GetMapGObj(3);
     if !obj.is_null() {
         let jobj = GET_JOBJ(obj);
@@ -713,6 +716,7 @@ pub unsafe extern "C" fn grCorneria_801DD2C0(_unused: i32) {
 
 /// `grCorneria_801DD350` (on_init).
 pub unsafe extern "C" fn grCorneria_801DD350() {
+    melee_core::ct!("grCorneria_801DD350");
     let light_pos_init = Vec3 { x: 1.0, y: 0.0, z: 0.0 };
     yakumono_param = ext::Ground_GetYakumonoParam() as *mut grCorneria_YakumonoParam;
     let si = ext::stage_info();
@@ -740,6 +744,7 @@ pub unsafe extern "C" fn grCorneria_801DD350() {
 
 /// `grCorneria_801DD478` (on_load).
 pub unsafe extern "C" fn grCorneria_801DD478() {
+    melee_core::ct!("grCorneria_801DD478");
     let mut gobj = ext::Ground_GetMapGObj(11);
     if !gobj.is_null() {
         ext::Ground_801C4A08(gobj);
@@ -765,16 +770,19 @@ pub unsafe extern "C" fn grCorneria_801DD478() {
 
 /// `grCorneria_801DD508` (on_start).
 pub unsafe extern "C" fn grCorneria_801DD508() {
+    melee_core::ct!("grCorneria_801DD508");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
 
 /// `grCorneria_801DD52C` (callback4).
 pub unsafe extern "C" fn grCorneria_801DD52C() -> i32 {
+    melee_core::ct!("grCorneria_801DD52C");
     0
 }
 
 /// `grCorneria_801DD534`: create stage gobj `arg0` and wire its callbacks.
 pub unsafe fn grCorneria_801DD534(arg0: i32) -> *mut HSD_GObj {
+    melee_core::ct!("grCorneria_801DD534");
     let callbacks: *mut StageCallbacks = &mut grCn_StageCallbacks[arg0 as usize];
     let gobj = ext::Ground_GetStageGObj(arg0);
 
@@ -802,18 +810,21 @@ pub unsafe fn grCorneria_801DD534(arg0: i32) -> *mut HSD_GObj {
 }
 
 pub unsafe extern "C" fn grCorneria_801DD620(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grCorneria_801DD620");
     ext::grAnime_801C8138(gobj, (*GET_GROUND(gobj)).map_id as enum_t, 0);
 }
 
 pub unsafe extern "C" fn grCorneria_801DD64C(_arg: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("grCorneria_801DD64C");
     0
 }
 
-pub unsafe extern "C" fn grCorneria_801DD654(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grCorneria_801DD654(_arg: *mut Ground_GObj) { melee_core::ct!("grCorneria_801DD654");}
 
-pub unsafe extern "C" fn grCorneria_801DD658(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grCorneria_801DD658(_arg: *mut Ground_GObj) { melee_core::ct!("grCorneria_801DD658");}
 
 pub unsafe extern "C" fn grCorneria_801DD65C(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grCorneria_801DD65C");
     (*GET_GROUND(gobj)).u.corneria.xC4.flags.set_b0(0);
 }
 
@@ -860,6 +871,7 @@ pub static grCn_803E2110: [i32; 5] = [2, 2, 2, 2, 10];
 
 /// `grCorneria_801DD674`: the Great Fox (ship) init.
 pub unsafe extern "C" fn grCorneria_801DD674(ground_gobj: *mut Ground_GObj) {
+    melee_core::ct!("grCorneria_801DD674");
     let gr = GET_GROUND(ground_gobj);
     ext::Ground_InitMapColl((*ground_gobj).hsd_obj as *mut HSD_JObj, (*gr).map_id as s32);
     (*gr).u.corneria.xC4.flags.set_b0(1);
@@ -914,11 +926,13 @@ pub unsafe extern "C" fn grCorneria_801DD674(ground_gobj: *mut Ground_GObj) {
 }
 
 pub unsafe extern "C" fn grCorneria_801DD9A0(_arg: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("grCorneria_801DD9A0");
     0
 }
 
 /// `grCorneria_801DD9A8`: Great Fox per-frame update.
 pub unsafe extern "C" fn grCorneria_801DD9A8(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grCorneria_801DD9A8");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = GET_JOBJ(gobj);
 
@@ -947,10 +961,11 @@ pub unsafe extern "C" fn grCorneria_801DD9A8(gobj: *mut Ground_GObj) {
     ext::lb_800115F4();
 }
 
-pub unsafe extern "C" fn grCorneria_801DDAC0(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grCorneria_801DDAC0(_arg: *mut Ground_GObj) { melee_core::ct!("grCorneria_801DDAC0");}
 
 /// `grCorneria_801DDAC4`: an arwing joins the fight.
 pub unsafe extern "C" fn grCorneria_801DDAC4(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grCorneria_801DDAC4");
     let gp = GET_GROUND(gobj);
     let jobj = GET_JOBJ(gobj);
 
@@ -978,10 +993,12 @@ pub unsafe extern "C" fn grCorneria_801DDAC4(gobj: *mut Ground_GObj) {
 }
 
 pub unsafe extern "C" fn grCorneria_801DDCE8(_arg: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("grCorneria_801DDCE8");
     0
 }
 
 pub unsafe extern "C" fn grCorneria_801DDCF0(vec: *mut Vec3) {
+    melee_core::ct!("grCorneria_801DDCF0");
     let gobj = ext::Ground_GetMapGObj(3);
     let gp = GET_GROUND(gobj);
     (*vec).x = (*gp).u.corneria.offset_x - (*gp).u.corneria.xE4.x;
@@ -990,6 +1007,7 @@ pub unsafe extern "C" fn grCorneria_801DDCF0(vec: *mut Vec3) {
 }
 
 pub unsafe extern "C" fn grCorneria_801DDD4C(vec: *mut Vec3) {
+    melee_core::ct!("grCorneria_801DDD4C");
     let gobj = ext::Ground_GetMapGObj(3);
     let gp = GET_GROUND(gobj);
     (*vec).x = (*gp).u.corneria.base_x + (*gp).u.corneria.offset_x;
@@ -998,6 +1016,7 @@ pub unsafe extern "C" fn grCorneria_801DDD4C(vec: *mut Vec3) {
 }
 
 pub unsafe extern "C" fn grCorneria_801DDDA8(gobj: *mut HSD_GObj, vec: *mut Vec3) {
+    melee_core::ct!("grCorneria_801DDDA8");
     if !gobj.is_null() {
         let gp = (*gobj).user_data as *mut Ground;
         let gp2 = (*ext::Ground_GetMapGObj(3)).user_data as *mut Ground;
@@ -1021,6 +1040,7 @@ pub unsafe extern "C" fn grCorneria_801DDDA8(gobj: *mut HSD_GObj, vec: *mut Vec3
 }
 
 pub unsafe extern "C" fn grCorneria_801DDE88(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grCorneria_801DDE88");
     let gp = GET_GROUND(gobj);
 
     let mut sp2C = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -1092,6 +1112,7 @@ unsafe fn grCorneria_801DE024_inline(gobj: *mut Ground_GObj) {
 
 /// `grCorneria_801DE024`: arwing per-frame update.
 pub unsafe extern "C" fn grCorneria_801DE024(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grCorneria_801DE024");
     let gp = GET_GROUND(gobj);
     let jobj = GET_JOBJ(gobj);
     let mut translate = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -1149,7 +1170,7 @@ pub unsafe extern "C" fn grCorneria_801DE024(gobj: *mut Ground_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grCorneria_801DE4BC(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grCorneria_801DE4BC(_arg: *mut Ground_GObj) { melee_core::ct!("grCorneria_801DE4BC");}
 
 /// `static int grCn_803E214C[6][2]`, flat (row `k`, column `c` is `k * 2 + c`).
 pub static grCn_803E214C: [i32; 12] = [-1, -1, 1, 0, 2, 2, 4, 4, 5, 5, -1, -1];
@@ -1158,6 +1179,7 @@ pub static grCn_803E2190: [i32; 5] = [0, 0, 1, 2, 5];
 
 /// `grCorneria_Arwing_801DE4C0`: arwing article init.
 pub unsafe extern "C" fn grCorneria_Arwing_801DE4C0(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grCorneria_Arwing_801DE4C0");
     let gp = GET_GROUND(gobj);
     let jobj = GET_JOBJ(gobj);
 
@@ -1176,6 +1198,7 @@ pub unsafe extern "C" fn grCorneria_Arwing_801DE4C0(gobj: *mut Ground_GObj) {
 }
 
 pub unsafe extern "C" fn grCorneria_801DE560(_arg: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("grCorneria_801DE560");
     0
 }
 
@@ -1203,6 +1226,7 @@ unsafe fn Ground_UpdateStarFoxArwingVisibility(gp: *mut Ground, jobj: *mut HSD_J
 
 /// `grCorneria_801DE568`: arwing article per-frame update.
 pub unsafe extern "C" fn grCorneria_801DE568(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grCorneria_801DE568");
     let gp = GET_GROUND(gobj);
     let jobj = GET_JOBJ(gobj);
 
@@ -1230,7 +1254,7 @@ pub unsafe extern "C" fn grCorneria_801DE568(gobj: *mut Ground_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grCorneria_801DE8E0(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grCorneria_801DE8E0(_arg: *mut Ground_GObj) { melee_core::ct!("grCorneria_801DE8E0");}
 
 // ---- gr/inlines.h (star fox arwing helpers)
 unsafe fn Ground_ClearStarFoxArwingGObjs(gp: *mut Ground) {
@@ -1282,6 +1306,7 @@ unsafe fn Ground_AttachStarFoxArwingModel(gobj: *mut Ground_GObj, gp: *mut Groun
 
 /// `grCorneria_801DE8E4`: Star Fox article (with the background) init.
 pub unsafe extern "C" fn grCorneria_801DE8E4(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grCorneria_801DE8E4");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = GET_JOBJ(gobj);
 
@@ -1312,10 +1337,12 @@ pub unsafe extern "C" fn grCorneria_801DE8E4(gobj: *mut Ground_GObj) {
 }
 
 pub unsafe extern "C" fn grCorneria_801DEC00(_arg: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("grCorneria_801DEC00");
     0
 }
 
 pub unsafe extern "C" fn grCorneria_801DEC08(pos: *mut Vec3) -> i32 {
+    melee_core::ct!("grCorneria_801DEC08");
     if (*pos).x > ext::Stage_GetBlastZoneRightOffset() {
         return 1;
     }
@@ -1332,6 +1359,7 @@ pub unsafe extern "C" fn grCorneria_801DEC08(pos: *mut Vec3) -> i32 {
 }
 
 pub unsafe extern "C" fn grCorneria_801DEC94(pos: *mut Vec3) -> s32 {
+    melee_core::ct!("grCorneria_801DEC94");
     if (*pos).z > -30.0 {
         if (*pos).x > ext::Stage_GetBlastZoneRightOffset() - 30.0 {
             return 1;
@@ -1368,6 +1396,7 @@ unsafe fn get_grp_off(gobj: *mut Ground_GObj) -> s32 {
 
 /// `grCorneria_801DED50`: Star Fox article per-frame update (the Arwing's shots and rolls).
 pub unsafe extern "C" fn grCorneria_801DED50(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grCorneria_801DED50");
     let gp = GET_GROUND(gobj);
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -1606,10 +1635,11 @@ unsafe fn randi(max_val: s32) -> s32 {
     0
 }
 
-pub unsafe extern "C" fn grCorneria_801DF8CC(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grCorneria_801DF8CC(_arg: *mut Ground_GObj) { melee_core::ct!("grCorneria_801DF8CC");}
 
 /// `grCorneria_801DF8D0`: Star Fox article init (no background).
 pub unsafe extern "C" fn grCorneria_801DF8D0(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grCorneria_801DF8D0");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = GET_JOBJ(gobj);
 
@@ -1639,31 +1669,36 @@ pub unsafe extern "C" fn grCorneria_801DF8D0(gobj: *mut Ground_GObj) {
 }
 
 pub unsafe extern "C" fn grCorneria_801DFBC4(_arg: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("grCorneria_801DFBC4");
     0
 }
 
 pub unsafe extern "C" fn grCorneria_801DFBCC(arg: *mut Ground_GObj) {
+    melee_core::ct!("grCorneria_801DFBCC");
     grCorneria_801DED50(arg);
 }
 
-pub unsafe extern "C" fn grCorneria_801DFBEC(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grCorneria_801DFBEC(_arg: *mut Ground_GObj) { melee_core::ct!("grCorneria_801DFBEC");}
 
 /// `static stageGObj6_OnInit`.
 pub unsafe extern "C" fn stageGObj6_OnInit(gobj: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj6_OnInit");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as enum_t, 0);
 }
 
 pub unsafe extern "C" fn grCorneria_801DFC1C(_arg: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("grCorneria_801DFC1C");
     0
 }
 
-pub unsafe extern "C" fn grCorneria_801DFC24(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grCorneria_801DFC24(_arg: *mut Ground_GObj) { melee_core::ct!("grCorneria_801DFC24");}
 
-pub unsafe extern "C" fn grCorneria_801DFC28(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grCorneria_801DFC28(_arg: *mut Ground_GObj) { melee_core::ct!("grCorneria_801DFC28");}
 
 /// `grCorneria_801DFC2C`: background 8 init.
 pub unsafe extern "C" fn grCorneria_801DFC2C(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grCorneria_801DFC2C");
     let gp = GET_GROUND(gobj);
 
     (*gp).u.corneria.xC6.value = 0;
@@ -1674,11 +1709,13 @@ pub unsafe extern "C" fn grCorneria_801DFC2C(gobj: *mut Ground_GObj) {
 }
 
 pub unsafe extern "C" fn grCorneria_801DFC90(_arg: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("grCorneria_801DFC90");
     0
 }
 
 /// `grCorneria_801DFC98`: background 8 scroll.
 pub unsafe extern "C" fn grCorneria_801DFC98(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grCorneria_801DFC98");
     let gp = GET_GROUND(gobj);
     let jobj = GET_JOBJ(gobj);
 
@@ -1704,10 +1741,11 @@ pub unsafe extern "C" fn grCorneria_801DFC98(gobj: *mut Ground_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grCorneria_801DFEB4(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grCorneria_801DFEB4(_arg: *mut Ground_GObj) { melee_core::ct!("grCorneria_801DFEB4");}
 
 /// `grCorneria_801DFEB8`: background 9 init.
 pub unsafe extern "C" fn grCorneria_801DFEB8(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grCorneria_801DFEB8");
     let gp = (*gobj).user_data as *mut Ground;
 
     (*gp).u.corneria.xC6.flags.set_b0(0);
@@ -1717,11 +1755,13 @@ pub unsafe extern "C" fn grCorneria_801DFEB8(gobj: *mut Ground_GObj) {
 }
 
 pub unsafe extern "C" fn grCorneria_801DFF18(_arg: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("grCorneria_801DFF18");
     0
 }
 
 /// `grCorneria_801DFF20`: background 9 scroll.
 pub unsafe extern "C" fn grCorneria_801DFF20(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grCorneria_801DFF20");
     let gp = GET_GROUND(gobj);
     let jobj = GET_JOBJ(gobj);
 
@@ -1747,10 +1787,11 @@ pub unsafe extern "C" fn grCorneria_801DFF20(gobj: *mut Ground_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grCorneria_801E013C(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grCorneria_801E013C(_arg: *mut Ground_GObj) { melee_core::ct!("grCorneria_801E013C");}
 
 /// `grCorneria_801E0140`: background 4 init.
 pub unsafe extern "C" fn grCorneria_801E0140(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grCorneria_801E0140");
     let gp = (*gobj).user_data as *mut Ground;
 
     (*gp).u.corneria.xC6.flags.set_b0(0);
@@ -1760,11 +1801,13 @@ pub unsafe extern "C" fn grCorneria_801E0140(gobj: *mut Ground_GObj) {
 }
 
 pub unsafe extern "C" fn grCorneria_801E01A0(_arg: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("grCorneria_801E01A0");
     0
 }
 
 /// `grCorneria_801E01A8`: background 4 scroll.
 pub unsafe extern "C" fn grCorneria_801E01A8(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grCorneria_801E01A8");
     let gp = GET_GROUND(gobj);
     let jobj = GET_JOBJ(gobj);
 
@@ -1790,10 +1833,11 @@ pub unsafe extern "C" fn grCorneria_801E01A8(gobj: *mut Ground_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grCorneria_801E03C4(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grCorneria_801E03C4(_arg: *mut Ground_GObj) { melee_core::ct!("grCorneria_801E03C4");}
 
 /// `grCorneria_801E03C8` (the C declares a fake `UNK_T` return and returns nothing): spawn the next background.
 pub unsafe extern "C" fn grCorneria_801E03C8(gobj: *mut Ground_GObj, id: i32) {
+    melee_core::ct!("grCorneria_801E03C8");
     let jobj = GET_JOBJ(gobj);
     let x = HSD_JObjGetTranslationX(jobj);
     let new_gobj = grCorneria_801DD534(id);
@@ -1819,6 +1863,7 @@ pub unsafe extern "C" fn grCorneria_801E03C8(gobj: *mut Ground_GObj, id: i32) {
 
 /// `grCorneria_801E0678`: park the three backgrounds for the demo.
 pub unsafe extern "C" fn grCorneria_801E0678() {
+    melee_core::ct!("grCorneria_801E0678");
     let mut gobj = ext::Ground_GetMapGObj(0xB);
     if !gobj.is_null() {
         ext::Ground_801C4A08(gobj);
@@ -1847,6 +1892,7 @@ pub unsafe extern "C" fn grCorneria_801E0678() {
 
 /// `grCorneria_801E08CC`: which background the camera is over (asserts when none).
 pub unsafe extern "C" fn grCorneria_801E08CC() -> i32 {
+    melee_core::ct!("grCorneria_801E08CC");
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ext::Camera_GetTransformInterest(&mut pos);
     let cam_x = pos.x;
@@ -1877,6 +1923,7 @@ pub unsafe extern "C" fn grCorneria_801E08CC() -> i32 {
 
 /// `grCorneria_801E0A74`: the same lookup for an x coordinate.
 pub unsafe extern "C" fn grCorneria_801E0A74(arg0: *const f32) -> i32 {
+    melee_core::ct!("grCorneria_801E0A74");
     let mut gobj = ext::Ground_GetMapGObj(8);
     if !gobj.is_null() {
         let x = HSD_JObjGetTranslationX((*gobj).hsd_obj as *mut HSD_JObj);
@@ -1905,6 +1952,7 @@ pub unsafe extern "C" fn grCorneria_801E0A74(arg0: *const f32) -> i32 {
 
 /// `grCorneria_801E0C3C`: Venom / Corneria backdrop (id 7) init.
 pub unsafe extern "C" fn grCorneria_801E0C3C(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grCorneria_801E0C3C");
     let gp = GET_GROUND(gobj);
     let jobj = GET_JOBJ(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as enum_t, 0);
@@ -1922,33 +1970,38 @@ pub unsafe extern "C" fn grCorneria_801E0C3C(gobj: *mut Ground_GObj) {
 }
 
 pub unsafe extern "C" fn grCorneria_801E0D28(_arg: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("grCorneria_801E0D28");
     0
 }
 
 pub unsafe extern "C" fn grCorneria_801E0D30(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grCorneria_801E0D30");
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     if !jobj.is_null() {
         HSD_JObjSetTranslateY(jobj, -grCorneria_801E2EA0());
     }
 }
 
-pub unsafe extern "C" fn grCorneria_801E0DE0(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grCorneria_801E0DE0(_arg: *mut Ground_GObj) { melee_core::ct!("grCorneria_801E0DE0");}
 
 pub unsafe extern "C" fn grCorneria_801E0DE4(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grCorneria_801E0DE4");
     let gr = GET_GROUND(gobj);
     smashTaunt_801E2550(gobj, addr_of_mut!((*gr).u.smashtaunt));
 }
 
 pub unsafe extern "C" fn grCorneria_801E0E0C(_arg: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("grCorneria_801E0E0C");
     0
 }
 
 pub unsafe extern "C" fn grCorneria_801E0E14(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grCorneria_801E0E14");
     let gr = GET_GROUND(gobj);
     grCorneria_801E277C(gobj, addr_of_mut!((*gr).u.smashtaunt));
 }
 
-pub unsafe extern "C" fn grCorneria_801E0E3C(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grCorneria_801E0E3C(_arg: *mut Ground_GObj) { melee_core::ct!("grCorneria_801E0E3C");}
 
 pub static grCn_803E21F0: [[i16; 2]; 5] = [[0, 0], [1, 6], [2, 7], [3, 8], [4, 9]];
 
@@ -1978,6 +2031,7 @@ pub static grCn_803E2204: [[[i32; 3]; 5]; 20] = [
 
 /// `grCorneria_801E0E40`: debug talk-number selection with L/R.
 pub unsafe extern "C" fn grCorneria_801E0E40() {
+    melee_core::ct!("grCorneria_801E0E40");
     if ext::Camera_80030178() == 0 && ext::Camera_80030154() == 0 {
         return;
     }
@@ -2011,10 +2065,11 @@ pub unsafe extern "C" fn grCorneria_801E0E40() {
     grCorneria_801E0F34(wgobj, grCn_804D466C);
 }
 
-pub unsafe extern "C" fn grCorneria_801E0F30(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grCorneria_801E0F30(_arg: *mut Ground_GObj) { melee_core::ct!("grCorneria_801E0F30");}
 
 /// `grCorneria_801E0F34`: select the talk sequence `val`.
 pub unsafe extern "C" fn grCorneria_801E0F34(gobj: *mut Ground_GObj, mut val: i32) {
+    melee_core::ct!("grCorneria_801E0F34");
     let gp = GET_GROUND(gobj);
     (*gp).u.arwing.xCC = 0;
     (*gp).u.arwing.xC8 = 0;
@@ -2028,11 +2083,13 @@ pub unsafe extern "C" fn grCorneria_801E0F34(gobj: *mut Ground_GObj, mut val: i3
 }
 
 pub unsafe extern "C" fn grCorneria_801E0F64(_arg: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("grCorneria_801E0F64");
     0
 }
 
 /// `static inline Ground_UpdateStarFoxSequence` called with `(gobj, gp, 5, grCorneria_801DD534)`.
 pub unsafe extern "C" fn grCorneria_801E0F6C(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grCorneria_801E0F6C");
     let gp = GET_GROUND(gobj);
     ext::ifStatus_802F6898();
     ext::un_802FF570();
@@ -2063,13 +2120,15 @@ pub unsafe extern "C" fn grCorneria_801E0F6C(gobj: *mut Ground_GObj) {
 }
 
 pub unsafe extern "C" fn grCorneria_801E1030(_gobj: *mut Ground_GObj) {
+    melee_core::ct!("grCorneria_801E1030");
     ext::ifStatus_802F68F0();
     ext::un_802FF620();
 }
 
-pub unsafe extern "C" fn grCorneria_801E1054(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grCorneria_801E1054(_arg: *mut Ground_GObj) { melee_core::ct!("grCorneria_801E1054");}
 
 pub unsafe extern "C" fn grCorneria_801E1058(_arg: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("grCorneria_801E1058");
     0
 }
 
@@ -2086,6 +2145,7 @@ unsafe fn Fake_HSD_JObjSetTranslateX(jobj: *mut HSD_JObj, x: f32) {
 
 /// `grCorneria_801E1060`: background scroll from the camera.
 pub unsafe extern "C" fn grCorneria_801E1060(_gobj: *mut Ground_GObj) {
+    melee_core::ct!("grCorneria_801E1060");
     let mut pos = ext::gm_801883C0();
     let total = 3200.0f32 * ext::Ground_801C0498();
     let a = 4800.0f32 * ext::Ground_801C0498() / 2.0;
@@ -2114,12 +2174,13 @@ pub unsafe extern "C" fn grCorneria_801E1060(_gobj: *mut Ground_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grCorneria_801E12CC(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grCorneria_801E12CC(_arg: *mut Ground_GObj) { melee_core::ct!("grCorneria_801E12CC");}
 
-pub unsafe extern "C" fn fn_801E12D0(_gobj: *mut Item_GObj, _gr: *mut Ground) {}
+pub unsafe extern "C" fn fn_801E12D0(_gobj: *mut Item_GObj, _gr: *mut Ground) { melee_core::ct!("fn_801E12D0");}
 
 /// `fn_801E12D4`: the Great Fox cannon takes a beam hit.
 pub unsafe extern "C" fn fn_801E12D4(_gobj: *mut Item_GObj, gr: *mut Ground, _pos: *mut Vec3, _arg3: *mut HSD_GObj, damage: f32) {
+    melee_core::ct!("fn_801E12D4");
     (*gr).u.corneria.x114 += damage;
     ext::OSReport(b"*** Beam Damage! %f\n\0".as_ptr() as *const i8, &[(damage as f64).to_bits() as usize]);
     if (*gr).u.corneria.x114 >= yp().x38 {
@@ -2131,6 +2192,7 @@ pub unsafe extern "C" fn fn_801E12D4(_gobj: *mut Item_GObj, gr: *mut Ground, _po
 
 /// `grCorneria_801E1348`: Great Fox cannon state machine.
 pub unsafe extern "C" fn grCorneria_801E1348(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grCorneria_801E1348");
     let mut sp40 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut cannon_pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut fighter_pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -2262,6 +2324,7 @@ pub unsafe extern "C" fn grCorneria_801E1348(gobj: *mut Ground_GObj) {
 
 /// `grCorneria_801E1878`: copy the ship's translation onto the cannon target.
 pub unsafe extern "C" fn grCorneria_801E1878(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grCorneria_801E1878");
     let gr = GET_GROUND(gobj);
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let target_jobj = (*(*gr).u.corneria.x128).hsd_obj as *mut HSD_JObj;
@@ -2277,6 +2340,7 @@ pub unsafe extern "C" fn grCorneria_801E1878(gobj: *mut Ground_GObj) {
 
 /// `grCorneria_801E1970`: Great Fox wobble.
 pub unsafe extern "C" fn grCorneria_801E1970(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grCorneria_801E1970");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
 
@@ -2342,6 +2406,7 @@ pub unsafe extern "C" fn grCorneria_801E1970(gobj: *mut Ground_GObj) {
 
 /// `grCorneria_801E1BF0`: reset and return the Great Fox gobj (id 2).
 pub unsafe extern "C" fn grCorneria_801E1BF0() -> *mut HSD_GObj {
+    melee_core::ct!("grCorneria_801E1BF0");
     let gobj = grCorneria_801DD534(2);
     assert_(!gobj.is_null(), 0xC70, "gobj");
     let gp = GET_GROUND(gobj);
@@ -2374,6 +2439,7 @@ pub static grCn_804DB238: GXColor = GXColor { r: 0x00, g: 0x50, b: 0x91, a: 0xFF
 
 /// `grCorneria_801E2110`: sky / light colours of the current background.
 pub unsafe extern "C" fn grCorneria_801E2110() {
+    melee_core::ct!("grCorneria_801E2110");
     let id = grCorneria_801E08CC();
 
     if id == 8 {
@@ -2411,6 +2477,7 @@ pub unsafe extern "C" fn grCorneria_801E2110() {
 
 /// `grCorneria_801E2228`: Great Fox rise / fall.
 pub unsafe extern "C" fn grCorneria_801E2228(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grCorneria_801E2228");
     let gp = GET_GROUND(gobj);
 
     if (*gp).u.corneria.xC4.flags.b1() == 0 {
@@ -2472,15 +2539,18 @@ pub unsafe extern "C" fn grCorneria_801E2228(gobj: *mut Ground_GObj) {
 }
 
 pub unsafe extern "C" fn grCorneria_801E2454(vec: *mut Vec3, _arg1: s32) -> *mut HSD_Generator {
+    melee_core::ct!("grCorneria_801E2454");
     ext::grLib_801C96F8(0x7534, 0x1E, vec)
 }
 
 pub unsafe extern "C" fn grCorneria_801E2480(vec: *mut Vec3, _arg1: s32) -> *mut HSD_Generator {
+    melee_core::ct!("grCorneria_801E2480");
     ext::grLib_801C96F8(0x7530, 0x1E, vec)
 }
 
 /// `smashTaunt_801E24AC`: the smash-taunt text hides while paused.
 pub unsafe extern "C" fn smashTaunt_801E24AC(gobj: *mut Ground_GObj, renderpass: i32) {
+    melee_core::ct!("smashTaunt_801E24AC");
     let gp = GET_GROUND(gobj);
 
     if ext::gm_GetDbPauseFlag(1) != 0 || ext::gm_GetDbPauseFlag(2) != 0 || ext::Camera_8003010C() != 0 {
@@ -2497,6 +2567,7 @@ pub unsafe extern "C" fn smashTaunt_801E24AC(gobj: *mut Ground_GObj, renderpass:
 }
 
 pub unsafe extern "C" fn smashTaunt_801E2550(gobj: *mut Ground_GObj, gv: *mut grSmashTaunt_GroundVars) {
+    melee_core::ct!("smashTaunt_801E2550");
     (*gv).text = null_mut();
     ext::Ground_801C11AC(gobj);
     ext::ifStatus_802F6898();
@@ -2506,6 +2577,7 @@ pub unsafe extern "C" fn smashTaunt_801E2550(gobj: *mut Ground_GObj, gv: *mut gr
 
 /// `grCorneria_801E2598`: does talk line `arg1` of sequence `arg0` exist.
 pub unsafe extern "C" fn grCorneria_801E2598(arg0: u32, arg1: u32) -> s32 {
+    melee_core::ct!("grCorneria_801E2598");
     let val = grCn_803E2204[arg0 as usize][arg1 as usize][0];
     (val != 0) as s32
 }
@@ -2558,10 +2630,12 @@ unsafe fn grCn_SetupSmashTaunt(gv: *mut grSmashTaunt_GroundVars, line: i32, arg3
 }
 
 pub unsafe extern "C" fn grCorneria_801E25C4(gobj: *mut HSD_GObj, gv: *mut grSmashTaunt_GroundVars, line: i32, arg3: i32, arg4: i32) {
+    melee_core::ct!("grCorneria_801E25C4");
     grCn_SetupSmashTaunt(gv, line, arg3, arg4, gobj);
 }
 
 pub unsafe extern "C" fn grCorneria_801E2738(gobj: *mut HSD_GObj, ptr: *mut c_void, idx1: u32, idx2: u32) {
+    melee_core::ct!("grCorneria_801E2738");
     let e = &grCn_803E2204[idx1 as usize][idx2 as usize];
     grCorneria_801E25C4(gobj, ptr as *mut grSmashTaunt_GroundVars, e[0], e[1], e[2]);
 }
@@ -2570,6 +2644,7 @@ pub static grCn_804DB24C: GXColor = GXColor { r: 0xFF, g: 0xFF, b: 0xFF, a: 0xFF
 
 /// `grCorneria_801E277C`: smash-taunt text sequence.
 pub unsafe extern "C" fn grCorneria_801E277C(gobj: *mut Ground_GObj, gv: *mut grSmashTaunt_GroundVars) {
+    melee_core::ct!("grCorneria_801E277C");
     let gp = GET_GROUND(gobj);
 
     if !(*gv).jobj0.is_null() {
@@ -2635,6 +2710,7 @@ pub unsafe extern "C" fn grCorneria_801E277C(gobj: *mut Ground_GObj, gv: *mut gr
 
 /// `grCorneria_801E2A6C`.
 pub unsafe extern "C" fn grCorneria_801E2A6C() {
+    melee_core::ct!("grCorneria_801E2A6C");
     let si = ext::stage_info();
     if (*si).grkind == Gr_Kind_Corneria {
         let gobj = ext::Ground_GetMapGObj(12);
@@ -2654,6 +2730,7 @@ pub unsafe extern "C" fn grCorneria_801E2A6C() {
 
 /// `grCorneria_801E2AF4`.
 pub unsafe extern "C" fn grCorneria_801E2AF4() {
+    melee_core::ct!("grCorneria_801E2AF4");
     let si = ext::stage_info();
     if (*si).grkind == Gr_Kind_Corneria {
         let gobj = ext::Ground_GetMapGObj(12);
@@ -2674,6 +2751,7 @@ pub unsafe extern "C" fn grCorneria_801E2AF4() {
 
 /// `grCorneria_801E2B80`.
 pub unsafe extern "C" fn grCorneria_801E2B80() -> i32 {
+    melee_core::ct!("grCorneria_801E2B80");
     let si = ext::stage_info();
     if (*si).grkind == Gr_Kind_Corneria {
         if !ext::Ground_GetMapGObj(12).is_null() {
@@ -2692,6 +2770,7 @@ pub unsafe extern "C" fn grCorneria_801E2B80() -> i32 {
 
 /// `grCorneria_801E2C34`.
 pub unsafe extern "C" fn grCorneria_801E2C34() -> i32 {
+    melee_core::ct!("grCorneria_801E2C34");
     let si = ext::stage_info();
     if (*si).grkind == Gr_Kind_Corneria {
         if !ext::Ground_GetMapGObj(12).is_null() {
@@ -2710,12 +2789,14 @@ pub unsafe extern "C" fn grCorneria_801E2C34() -> i32 {
 
 /// `grCorneria_801E2CE8`.
 pub unsafe extern "C" fn grCorneria_801E2CE8() -> i32 {
+    melee_core::ct!("grCorneria_801E2CE8");
     let si = ext::stage_info();
     ((*si).grkind == Gr_Kind_Corneria || (*si).grkind == Gr_Kind_Venom) as i32
 }
 
 /// `grCorneria_801E2D14`.
 pub unsafe extern "C" fn grCorneria_801E2D14() -> i32 {
+    melee_core::ct!("grCorneria_801E2D14");
     let si = ext::stage_info();
     if (*si).grkind == Gr_Kind_Corneria {
         let gobj = ext::Ground_GetMapGObj(12);
@@ -2729,6 +2810,7 @@ pub unsafe extern "C" fn grCorneria_801E2D14() -> i32 {
 
 /// `grCorneria_801E2D90`.
 pub unsafe extern "C" fn grCorneria_801E2D90(line_id: enum_t) -> i32 {
+    melee_core::ct!("grCorneria_801E2D90");
     let si = ext::stage_info();
     if (*si).grkind == Gr_Kind_Corneria && line_id != -1 {
         let joint = ext::mpJointFromLine(line_id);
@@ -2742,6 +2824,7 @@ pub unsafe extern "C" fn grCorneria_801E2D90(line_id: enum_t) -> i32 {
 
 /// `grCorneria_801E2E50`.
 pub unsafe extern "C" fn grCorneria_801E2E50(line_id: i32) -> i32 {
+    melee_core::ct!("grCorneria_801E2E50");
     let si = ext::stage_info();
     if (*si).grkind == Gr_Kind_Corneria && line_id != -1 {
         if ext::mpJointFromLine(line_id) == 4 {
@@ -2753,6 +2836,7 @@ pub unsafe extern "C" fn grCorneria_801E2E50(line_id: i32) -> i32 {
 
 /// `grCorneria_801E2EA0`: the ship's vertical drift.
 pub unsafe extern "C" fn grCorneria_801E2EA0() -> f32 {
+    melee_core::ct!("grCorneria_801E2EA0");
     let gobj = ext::Ground_GetMapGObj(3);
     if !gobj.is_null() {
         let gp = GET_GROUND(gobj);
@@ -2765,11 +2849,13 @@ pub unsafe extern "C" fn grCorneria_801E2EA0() -> f32 {
 
 /// `grCorneria_801E2EE4` (on_touch_line).
 pub unsafe extern "C" fn grCorneria_801E2EE4(_arg: enum_t) -> *mut DynamicsDesc {
+    melee_core::ct!("grCorneria_801E2EE4");
     null_mut()
 }
 
 /// `grCorneria_801E2EEC` (on_check_shadow_render).
 pub unsafe extern "C" fn grCorneria_801E2EEC(v: *mut Vec3, _arg1: i32, jobj: *mut HSD_JObj) -> i32 {
+    melee_core::ct!("grCorneria_801E2EEC");
     let mut sp14 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ext::lb_8000B1CC(jobj, null_mut(), &mut sp14);
     let temp_r3 = ext::Ground_GetMapGObj(3);
@@ -2791,6 +2877,7 @@ pub unsafe extern "C" fn grCorneria_801E2EEC(v: *mut Vec3, _arg1: i32, jobj: *mu
 
 /// `grCorneria_801E2FCC`.
 pub unsafe extern "C" fn grCorneria_801E2FCC() -> f32 {
+    melee_core::ct!("grCorneria_801E2FCC");
     let gobj = ext::Ground_GetMapGObj(3);
     if !gobj.is_null() {
         let gp = (*gobj).user_data as *mut Ground;

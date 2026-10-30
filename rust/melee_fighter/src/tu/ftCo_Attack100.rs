@@ -88,6 +88,7 @@ fn is_kirby(kind: FighterKind) -> bool {
 
 /// `ftCo_800D6824`: neutral special (Geno override, else the m-ex dispatcher).
 pub fn ftCo_800D6824(g: G) -> bool {
+    melee_core::ct!("ftCo_800D6824");
     let f = fp(g);
     if !caps(f) {
         return false;
@@ -107,6 +108,7 @@ pub fn ftCo_800D6824(g: G) -> bool {
 
 /// `ftCo_800D688C`: B with the stick down.
 pub fn ftCo_800D688C(f: &Fighter) -> bool {
+    melee_core::ct!("ftCo_800D688C");
     if !caps(f) {
         return false;
     }
@@ -115,6 +117,7 @@ pub fn ftCo_800D688C(f: &Fighter) -> bool {
 
 /// `ftCo_800D68C0`: down special.
 pub fn ftCo_800D68C0(g: G) -> bool {
+    melee_core::ct!("ftCo_800D68C0");
     let f = fp(g);
     if !caps(f) {
         return false;
@@ -134,6 +137,7 @@ pub fn ftCo_800D68C0(g: G) -> bool {
 
 /// `ftCo_800D6928`: B (0x200) with the stick up.
 pub fn ftCo_800D6928(f: &Fighter) -> bool {
+    melee_core::ct!("ftCo_800D6928");
     if !caps(f) {
         return false;
     }
@@ -142,6 +146,7 @@ pub fn ftCo_800D6928(f: &Fighter) -> bool {
 
 /// `ftCo_Attack100_CheckInput`: up special (the name is the decomp's).
 pub fn ftCo_Attack100_CheckInput(g: G) -> bool {
+    melee_core::ct!("ftCo_Attack100_CheckInput");
     let f = fp(g);
     if !caps(f) {
         return false;
@@ -162,6 +167,7 @@ pub fn ftCo_Attack100_CheckInput(g: G) -> bool {
 /// `ftCo_800D69C4`: aerial up special. The NULL test reads ftData_SpecialHi, the dispatch
 /// passes ftData_SpecialAirHi, as in the C.
 pub fn ftCo_800D69C4(g: G) -> bool {
+    melee_core::ct!("ftCo_800D69C4");
     let f = fp(g);
     if !caps(f) {
         return false;
@@ -182,6 +188,7 @@ pub fn ftCo_800D69C4(g: G) -> bool {
 /// `ftCo_Attack_800D6A50`: count A presses/releases; enough of them (and the window open)
 /// starts the rapid jab.
 pub fn ftCo_Attack_800D6A50(g: G) -> bool {
+    melee_core::ct!("ftCo_Attack_800D6A50");
     let f = fp(g);
     if f.input.pressed_buttons & HSD_PAD_A as u32 != 0 || f.input.released_buttons & HSD_PAD_A as u32 != 0 {
         f.x1A54 = f.x1A54.wrapping_add(1);
@@ -194,6 +201,7 @@ pub fn ftCo_Attack_800D6A50(g: G) -> bool {
 }
 
 pub fn fn_800D6AC4(g: G) {
+    melee_core::ct!("fn_800D6AC4");
     if fp(g).kind == Ft_Kind_GameWatch {
         ext::ftGw_Attack100Start_Enter(g);
     } else {
@@ -203,6 +211,7 @@ pub fn fn_800D6AC4(g: G) {
 
 /// `ftCo_800D6B00(gobj, msid)`.
 pub fn ftCo_800D6B00(g: G, msid: i32) {
+    melee_core::ct!("ftCo_800D6B00");
     let f = fp(g);
     if !ext::ftpickupitem_80094790(g) {
         f.anon_2210.throw_flags = 0;
@@ -215,10 +224,12 @@ pub fn ftCo_800D6B00(g: G, msid: i32) {
 }
 
 pub fn fn_800D6B8C(g: G) {
+    melee_core::ct!("fn_800D6B8C");
     ftCo_800D6B00(g, ftCo_MS_Attack100Start as i32);
 }
 
 pub fn ftCo_Attack100Start_Anim(g: G) {
+    melee_core::ct!("ftCo_Attack100Start_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::Fighter_ChangeMotionState(g, ftCo_MS_Attack100Loop as i32, Ft_MF_SkipAttackCount as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     }
@@ -253,22 +264,26 @@ fn loop_anim(g: G, end: &dyn Fn(G)) {
 
 /// `ftCo_800D6C60(gobj, callback)`.
 pub fn ftCo_800D6C60(g: G, callback: fn(G)) {
+    melee_core::ct!("ftCo_800D6C60");
     loop_anim(g, &|g| callback(g));
 }
 
 pub fn ftCo_Attack100Loop_Anim(g: G) {
+    melee_core::ct!("ftCo_Attack100Loop_Anim");
     loop_anim(g, &|g| {
         ext::Fighter_ChangeMotionState(g, ftCo_MS_Attack100End as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut())
     });
 }
 
 pub fn ftCo_Attack100End_Anim(g: G) {
+    melee_core::ct!("ftCo_Attack100End_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ft_8008A2BC(g);
     }
 }
 
 pub fn ftCo_Attack100Loop_IASA(g: G) {
+    melee_core::ct!("ftCo_Attack100Loop_IASA");
     let f = fp(g);
     if f.input.pressed_buttons & HSD_PAD_A as u32 != 0 || f.input.released_buttons & HSD_PAD_A as u32 != 0 {
         f.mv.co.attack100.x4 = 1;
@@ -276,26 +291,33 @@ pub fn ftCo_Attack100Loop_IASA(g: G) {
 }
 
 pub fn ftCo_Attack100Start_Phys(g: G) {
+    melee_core::ct!("ftCo_Attack100Start_Phys");
     ext::ft_80084FA8(g);
 }
 pub fn ftCo_Attack100Loop_Phys(g: G) {
+    melee_core::ct!("ftCo_Attack100Loop_Phys");
     ext::ft_80084FA8(g);
 }
 pub fn ftCo_Attack100End_Phys(g: G) {
+    melee_core::ct!("ftCo_Attack100End_Phys");
     ext::ft_80084FA8(g);
 }
 pub fn ftCo_Attack100Start_Coll(g: G) {
+    melee_core::ct!("ftCo_Attack100Start_Coll");
     ext::ft_80084104(g);
 }
 pub fn ftCo_Attack100Loop_Coll(g: G) {
+    melee_core::ct!("ftCo_Attack100Loop_Coll");
     ext::ft_80084104(g);
 }
 pub fn ftCo_Attack100End_Coll(g: G) {
+    melee_core::ct!("ftCo_Attack100End_Coll");
     ext::ft_80084104(g);
 }
 
 /// `fn_800D6F58(gobj, item_gobj)`: catch an item (TARGET_PC: a Geno "press" item is collected).
 pub fn fn_800D6F58(g: G, item: *mut Item_GObj) {
+    melee_core::ct!("fn_800D6F58");
     let f = fp(g);
     if ext::Geno_ItemPressDist(item, f) >= 0.0 {
         ext::Geno_ItemPressCollect(item, f.player_id as i32);
@@ -333,6 +355,7 @@ fn catch_ready(f: &Fighter) -> bool {
 
 /// `ftCo_800D705C`: arm the L/R+A catch window.
 pub fn ftCo_800D705C(g: G) -> bool {
+    melee_core::ct!("ftCo_800D705C");
     let f = fp(g);
     if catch_ready(f) {
         f.x209C = cd().x414 as u16;
@@ -343,6 +366,7 @@ pub fn ftCo_800D705C(g: G) -> bool {
 
 /// `ftCo_800D7100`: L/R+A catch now.
 pub fn ftCo_800D7100(g: G) -> bool {
+    melee_core::ct!("ftCo_800D7100");
     if catch_ready(fp(g)) {
         let item = ext::ftpickupitem_800942A0(g, 1);
         if !item.is_null() {
@@ -355,6 +379,7 @@ pub fn ftCo_800D7100(g: G) -> bool {
 
 /// `ftCo_800D71D8`: run the armed catch window.
 pub fn ftCo_800D71D8(g: G) {
+    melee_core::ct!("ftCo_800D71D8");
     let f = fp(g);
     if f.x209C != 0 {
         let item = ext::ftpickupitem_800942A0(g, 1);
@@ -372,6 +397,7 @@ pub fn ftCo_800D71D8(g: G) {
 
 /// `ftCo_800D7268(fp)`.
 pub fn ftCo_800D7268(f: &Fighter) -> i32 {
+    melee_core::ct!("ftCo_800D7268");
     if is_kirby(f.kind) {
         return ext::ftKb_SpecialN_800F1CD8(f.gobj);
     }

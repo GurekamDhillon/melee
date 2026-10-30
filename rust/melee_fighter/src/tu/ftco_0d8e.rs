@@ -55,6 +55,7 @@ fn fp<'a>(g: G) -> &'a mut Fighter {
 
 /// `HSD_JObjSetupMatrix` (jobj.h inline).
 pub fn hsd_jobj_setup_matrix(j: *mut HSD_JObj) {
+    melee_core::ct!("hsd_jobj_setup_matrix");
     if j.is_null() || !super::ftco_0c35::hsd_jobj_mtx_is_dirty(j) {
         return;
     }
@@ -105,6 +106,7 @@ fn sfx_pull(f: &mut Fighter) {
 
 /// `fn_800D8EC8`: the tether frame logic of one grab state (frame counter in mv.ca.specials.grav).
 pub fn fn_800d8ec8(g: G) -> bool {
+    melee_core::ct!("fn_800d8ec8");
     let f = fp(g);
     if !is_link(f) {
         return false;
@@ -145,6 +147,7 @@ pub fn fn_800d8ec8(g: G) -> bool {
 
 /// `fn_800D9228`: the same for the other grab state (counter in mv.co.catch_.x0, frames x94..xA0).
 pub fn fn_800d9228(g: G) -> bool {
+    melee_core::ct!("fn_800d9228");
     let f = fp(g);
     if !is_link(f) {
         return false;
@@ -174,6 +177,7 @@ pub fn fn_800d9228(g: G) -> bool {
 
 /// `fn_800D949C`.
 pub fn fn_800d949c(g: G) {
+    melee_core::ct!("fn_800d949c");
     let f = fp(g);
     if is_link(f) {
         ext::it_802A2B10(unsafe { f.u.lk.xC });
@@ -182,6 +186,7 @@ pub fn fn_800d949c(g: G) {
 
 /// `ftCo_800D94D8`.
 pub fn ftco_800d94d8(g: G) {
+    melee_core::ct!("ftco_800d94d8");
     let f = fp(g);
     unsafe {
         if !f.u.lk.xC.is_null() {
@@ -194,6 +199,7 @@ pub fn ftco_800d94d8(g: G) {
 
 /// `fn_800D952C`: false only for a Samus with a grapple out.
 pub fn fn_800d952c(g: G) -> bool {
+    melee_core::ct!("fn_800d952c");
     let f = fp(g);
     !(f.kind == Ft_Kind_Samus && unsafe { !f.u.ss.x223C.is_null() })
 }

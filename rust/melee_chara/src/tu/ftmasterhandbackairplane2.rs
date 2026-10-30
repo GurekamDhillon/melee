@@ -9,6 +9,7 @@ pub use crate::chars::r10::ftMasterHand::ftmasterhandbackairplane2::ftMh_MS_368_
 pub use crate::chars::r8::ftMasterHand::ftmasterhandbackairplane2::ftMh_BackAirplane2_IASA;
 
 pub fn ftMh_BackAirplane2_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_BackAirplane2_Phys");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*(*fp).ft_data).ext_attr as *const ftMasterHand_SpecialAttrs;
@@ -16,4 +17,4 @@ pub fn ftMh_BackAirplane2_Phys(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftMh_BackAirplane2_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_BackAirplane2_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_BackAirplane2_Coll");}

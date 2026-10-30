@@ -63,6 +63,7 @@ fn ucf_axis(v: f32) -> i32 {
 }
 
 pub fn ftCo_SquatRv_CheckInput(g: G) -> bool {
+    melee_core::ct!("ftCo_SquatRv_CheckInput");
     // TARGET_PC: m-ex UCF 0.84 DBOOC SquatRv fix (opt-in).
     if ext::Mex_Enabled("ucf_dbooc_squatrv_fix") != 0 {
         let f = fp(g);
@@ -89,16 +90,19 @@ pub fn ftCo_SquatRv_CheckInput(g: G) -> bool {
 
 /// static `ftCo_SquatRv_Enter`.
 pub fn ftCo_SquatRv_Enter(g: G) {
+    melee_core::ct!("ftCo_SquatRv_Enter");
     ext::Fighter_ChangeMotionState(g, ftCo_MS_SquatRv as i32, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
 }
 
 pub fn ftCo_SquatRv_Anim(g: G) {
+    melee_core::ct!("ftCo_SquatRv_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ft_8008A2BC(g);
     }
 }
 
 pub fn ftCo_SquatRv_IASA(g: G) {
+    melee_core::ct!("ftCo_SquatRv_IASA");
     let _ = ext::ftCo_800D68C0(g)
         || ext::ftCo_Attack100_CheckInput(g)
         || ext::ftCo_AttackS4_CheckInput(g)
@@ -115,9 +119,11 @@ pub fn ftCo_SquatRv_IASA(g: G) {
 }
 
 pub fn ftCo_SquatRv_Phys(g: G) {
+    melee_core::ct!("ftCo_SquatRv_Phys");
     ext::ft_80084F3C(g);
 }
 
 pub fn ftCo_SquatRv_Coll(g: G) {
+    melee_core::ct!("ftCo_SquatRv_Coll");
     ext::ft_80083F88(g);
 }

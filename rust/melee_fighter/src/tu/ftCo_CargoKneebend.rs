@@ -44,6 +44,7 @@ pub mod ext {
 }
 
 pub fn ftCo_8009B9C8(g: G, arg1: i32) {
+    melee_core::ct!("ftCo_8009B9C8");
     let f = fp(g);
     let lag = x2cc(f).cargo_hold.x24_JUMP_STARTUP_LAG;
     f.mv.co.cargokneebend.x4 = arg1;
@@ -56,6 +57,7 @@ pub fn ftCo_8009B9C8(g: G, arg1: i32) {
 }
 
 pub fn ftCo_CargoKneebend_Anim(g: G) {
+    melee_core::ct!("ftCo_CargoKneebend_Anim");
     if unsafe { fp(g).mv.ca.specialhi.vel.y } <= 0.0 {
         ext::ftCo_8009BB64(g);
     }
@@ -63,6 +65,7 @@ pub fn ftCo_CargoKneebend_Anim(g: G) {
 }
 
 pub fn ftCo_CargoKneebend_IASA(g: G) {
+    melee_core::ct!("ftCo_CargoKneebend_IASA");
     if ext::ftCo_8009BF3C(g) {
         return;
     }
@@ -70,9 +73,11 @@ pub fn ftCo_CargoKneebend_IASA(g: G) {
 }
 
 pub fn ftCo_CargoKneebend_Phys(g: G) {
+    melee_core::ct!("ftCo_CargoKneebend_Phys");
     ext::ft_80084F3C(g);
 }
 
 pub fn ftCo_CargoKneebend_Coll(g: G) {
+    melee_core::ct!("ftCo_CargoKneebend_Coll");
     ext::ftCo_CargoWait_Coll(g);
 }

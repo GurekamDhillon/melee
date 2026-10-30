@@ -65,6 +65,7 @@ unsafe fn Item_InitSpawnPositionFromParent(spawn: *mut SpawnItem, parent: *mut H
 
 /// 2AA054: spawns a PK Fire shot.
 pub unsafe extern "C" fn it_802AA054(gobj: *mut Item_GObj, pos: *mut Vec3, vel: *mut Vec3, facing_dir: f32, angle: f32) {
+    melee_core::ct!("it_802AA054");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
     spawn.kind = It_Kind_Ness_PKFire;
@@ -89,6 +90,7 @@ pub unsafe extern "C" fn it_802AA054(gobj: *mut Item_GObj, pos: *mut Vec3, vel: 
 }
 
 pub unsafe extern "C" fn it_802AA1D8(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802AA1D8");
     let item = GET_ITEM(item_gobj);
     let attrs = (*(*item).xC4_article_data).x4_specialAttributes as *mut itNessPKFirepillarAttributes;
     ext::Item_80268E5C(item_gobj, 0, ITEM_ANIM_UPDATE as u32);
@@ -96,6 +98,7 @@ pub unsafe extern "C" fn it_802AA1D8(item_gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itNesspkfire_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itNesspkfire_UnkMotion0_Anim");
     let ip = (*gobj).user_data as *mut Item;
     (*ip).xD44_lifeTimer -= 1.0;
     if (*ip).xD44_lifeTimer <= 0.0 {
@@ -105,10 +108,12 @@ pub unsafe extern "C" fn itNesspkfire_UnkMotion0_Anim(gobj: *mut Item_GObj) -> b
 }
 
 pub unsafe extern "C" fn itNesspkfire_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itNesspkfire_UnkMotion0_Coll");
     ext::it_8026E058(gobj) != 0
 }
 
 pub unsafe extern "C" fn it_2725_Logic23_DmgDealt(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_2725_Logic23_DmgDealt");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itNessPKFirepillarAttributes;
     let mut pos: Vec3 = (*ip).pos;
@@ -118,6 +123,7 @@ pub unsafe extern "C" fn it_2725_Logic23_DmgDealt(gobj: *mut Item_GObj) -> bool 
 }
 
 pub unsafe extern "C" fn it_2725_Logic23_Clanked(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_2725_Logic23_Clanked");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itNessPKFirepillarAttributes;
     let mut pos: Vec3 = (*ip).pos;
@@ -127,18 +133,22 @@ pub unsafe extern "C" fn it_2725_Logic23_Clanked(gobj: *mut Item_GObj) -> bool {
 }
 
 pub unsafe extern "C" fn itNessPKFire_Logic23_Absorbed(_arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itNessPKFire_Logic23_Absorbed");
     true
 }
 
 pub unsafe extern "C" fn itNessPKFire_Logic23_HitShield(_arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itNessPKFire_Logic23_HitShield");
     true
 }
 
 pub unsafe extern "C" fn itNessPKFire_Logic23_Reflected(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itNessPKFire_Logic23_Reflected");
     ext::it_80273030(gobj) != 0
 }
 
 pub unsafe extern "C" fn it_2725_Logic23_ShieldBounced(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_2725_Logic23_ShieldBounced");
     let jobj = GET_JOBJ(gobj);
     let rot_z = HSD_JObjGetRotationZ(jobj);
     HSD_JObjSetRotationZ(jobj, -rot_z);
@@ -146,5 +156,6 @@ pub unsafe extern "C" fn it_2725_Logic23_ShieldBounced(gobj: *mut Item_GObj) -> 
 }
 
 pub unsafe extern "C" fn it_802AA474(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802AA474");
     ext::it_8026B894(gobj, ref_gobj);
 }

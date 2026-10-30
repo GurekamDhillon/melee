@@ -40,9 +40,10 @@ pub mod ext {
 }
 
 /// `ft_80082B1C` (ft_081B.c) as the C `HSD_GObjEvent` handed to `ft_8008370C`.
-pub unsafe extern "C" fn ft_80082B1C_cb(g: *mut HSD_GObj) { ext::ft_80082B1C(g) }
+pub unsafe extern "C" fn ft_80082B1C_cb(g: *mut HSD_GObj) { melee_core::ct!("ft_80082B1C_cb"); ext::ft_80082B1C(g) }
 
 pub fn ftCo_800DA698(g: G, arg1: bool) {
+    melee_core::ct!("ftCo_800DA698");
     let f = fp(g);
     let cd = crate::hooks::common_data();
     if f.ground_or_air == GA_Air {
@@ -58,14 +59,16 @@ pub fn ftCo_800DA698(g: G, arg1: bool) {
 }
 
 pub fn ftCo_CatchCut_Anim(g: G) {
+    melee_core::ct!("ftCo_CatchCut_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ftCommon_8007D92C(g);
     }
 }
 
-pub fn ftCo_CatchCut_IASA(_g: G) {}
+pub fn ftCo_CatchCut_IASA(_g: G) { melee_core::ct!("ftCo_CatchCut_IASA");}
 
 pub fn ftCo_CatchCut_Phys(g: G) {
+    melee_core::ct!("ftCo_CatchCut_Phys");
     let f = fp(g);
     if f.ground_or_air == GA_Ground {
         let fr = crate::hooks::common_data().x64 * f.co_attrs.ground_friction;
@@ -77,6 +80,7 @@ pub fn ftCo_CatchCut_Phys(g: G) {
 }
 
 pub fn ftCo_CatchCut_Coll(g: G) {
+    melee_core::ct!("ftCo_CatchCut_Coll");
     if fp(g).ground_or_air == GA_Ground {
         ext::ft_80084104(g);
         return;

@@ -68,6 +68,7 @@ pub mod ext {
 }
 
 pub fn ftZd_Init_OnLoad(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_Init_OnLoad");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let item_list = (*(*fp).ft_data).x48_items;
@@ -78,23 +79,28 @@ pub fn ftZd_Init_OnLoad(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftZd_Init_801393AC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_Init_801393AC");
     ext::ftZd_SpecialLw_8013B5EC(gobj);
 }
 
 pub fn ftZd_Init_OnItemPickup(gobj: *mut HSD_GObj, flag: i32) {
+    melee_core::ct!("ftZd_Init_OnItemPickup");
     ftinl::Fighter_OnItemPickup(gobj, flag, 1, 1);
 }
 
 pub fn ftZd_Init_OnItemDrop(gobj: *mut HSD_GObj, flag: i32) {
+    melee_core::ct!("ftZd_Init_OnItemDrop");
     ftinl::Fighter_OnItemDrop(gobj, flag, 1, 1);
 }
 
 pub fn ftZd_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_Init_LoadSpecialAttrs");
     unsafe { ftinl::copy_attrs::<ftZelda_DatAttrs>(gobj) }
 }
 
 /// `Zelda_RemoveDress`.
 pub fn ftZd_Init_801395C8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_Init_801395C8");
     let result = ext::ftParts_80074A74(gobj, 1);
     if result == -1 {
         ext::ftParts_80074A4C(gobj, 1, 0);

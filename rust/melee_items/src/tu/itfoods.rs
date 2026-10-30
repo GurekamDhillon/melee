@@ -117,6 +117,7 @@ pub static mut it_803F5DB0: [ItemStateTable; 4] = [
 ];
 
 pub unsafe extern "C" fn it_8028F9D8(arg0: *mut Item_GObj, arg1: *mut Vec, arg8: f32) {
+    melee_core::ct!("it_8028F9D8");
     let temp_r30 = get_item(arg0);
     let temp_r6 = (*(*temp_r30).xC4_article_data).x4_specialAttributes as *mut Vec4;
     let x0 = (*temp_r30).xDD4_itemVar.foods.x0 as usize;
@@ -128,6 +129,7 @@ pub unsafe extern "C" fn it_8028F9D8(arg0: *mut Item_GObj, arg1: *mut Vec, arg8:
 }
 
 pub unsafe extern "C" fn it_8028FAF4(arg0: *mut Item_GObj, arg1: *mut Vec) -> *mut HSD_GObj {
+    melee_core::ct!("it_8028FAF4");
     let mut spawn: SpawnItem = core::mem::zeroed();
     if ext::it_8026D324(It_Kind_Foods as _) == 0 {
         return null_mut();
@@ -156,11 +158,13 @@ pub unsafe extern "C" fn it_8028FAF4(arg0: *mut Item_GObj, arg1: *mut Vec) -> *m
 }
 
 pub unsafe extern "C" fn getRandMax(article: *mut Article) -> u32 {
+    melee_core::ct!("getRandMax");
     let attr = (*article).x4_specialAttributes as *mut itFoodsAttributes;
     (*attr).x0 as u32
 }
 
 pub unsafe extern "C" fn itFoods_Logic18_Spawned(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itFoods_Logic18_Spawned");
     let ip = get_item(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itFoodsAttributes;
     let rand = ext::HSD_Randi(getRandMax((*ip).xC4_article_data) as i32);
@@ -172,25 +176,30 @@ pub unsafe extern "C" fn itFoods_Logic18_Spawned(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_8028FC5C(arg0: *mut HSD_GObj) {
+    melee_core::ct!("it_8028FC5C");
     ext::Item_80268E5C(arg0, 0, ITEM_ANIM_UPDATE as _);
 }
 
 pub unsafe extern "C" fn itFoods_UnkMotion0_Anim(_arg0: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFoods_UnkMotion0_Anim");
     0
 }
 
 pub unsafe extern "C" fn itFoods_UnkMotion0_Phys(arg0: *mut Item_GObj) {
+    melee_core::ct!("itFoods_UnkMotion0_Phys");
     let item = get_item(arg0);
     let temp_r4 = (*item).xCC_item_attr;
     ext::it_80272860(arg0, (*temp_r4).x10_fall_speed, (*temp_r4).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itFoods_UnkMotion0_Coll(arg0: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFoods_UnkMotion0_Coll");
     ext::it_8026E414(arg0, Some(it_8028FCE8));
     0
 }
 
 pub unsafe extern "C" fn it_8028FCE8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_8028FCE8");
     let item = get_item(gobj);
     itResetVelocity(item);
     ext::Item_8026AE84(item, 0x107, 0x7F, 0x40);
@@ -198,17 +207,20 @@ pub unsafe extern "C" fn it_8028FCE8(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itFoods_UnkMotion1_Anim(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFoods_UnkMotion1_Anim");
     0
 }
 
-pub unsafe extern "C" fn itFoods_UnkMotion1_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itFoods_UnkMotion1_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itFoods_UnkMotion1_Phys");}
 
 pub unsafe extern "C" fn itFoods_UnkMotion1_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFoods_UnkMotion1_Coll");
     ext::it_8026D62C(gobj, Some(it_8028FC5C));
     0
 }
 
 pub unsafe extern "C" fn itFoods_Logic18_PickedUp(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFoods_Logic18_PickedUp");
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let child = HSD_JObjGetChild(jobj);
     ext::HSD_JObjClearFlagsAll(child, JOBJ_HIDDEN as _);
@@ -216,30 +228,36 @@ pub unsafe extern "C" fn itFoods_Logic18_PickedUp(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itFoods_UnkMotion2_Anim(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFoods_UnkMotion2_Anim");
     0
 }
 
-pub unsafe extern "C" fn itFoods_UnkMotion2_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itFoods_UnkMotion2_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itFoods_UnkMotion2_Phys");}
 
 pub unsafe extern "C" fn itFoods_Logic18_Dropped(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFoods_Logic18_Dropped");
     ext::Item_80268E5C(gobj, 3, 6);
 }
 
 pub unsafe extern "C" fn itFoods_UnkMotion3_Anim(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFoods_UnkMotion3_Anim");
     0
 }
 
 pub unsafe extern "C" fn itFoods_UnkMotion3_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFoods_UnkMotion3_Phys");
     let item = get_item(gobj);
     let temp_r4 = (*item).xCC_item_attr;
     ext::it_80272860(gobj, (*temp_r4).x10_fall_speed, (*temp_r4).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itFoods_UnkMotion3_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFoods_UnkMotion3_Coll");
     ext::it_8026E414(gobj, Some(it_8028FCE8));
     0
 }
 
 pub unsafe extern "C" fn itFoods_Logic18_EvtUnk(gobj: *mut Item_GObj, arg1: *mut Item_GObj) {
+    melee_core::ct!("itFoods_Logic18_EvtUnk");
     ext::it_8026B894(gobj, arg1);
 }

@@ -140,6 +140,7 @@ fn fpm<'a>(p: *mut Fighter) -> &'a mut Fighter {
 
 /// `FTAI_KIND(fp)` (ftaikind.h, TARGET_PC).
 pub fn ftai_kind(fp: &Fighter) -> i32 {
+    melee_core::ct!("ftai_kind");
     let kind = fp.kind as i32;
     if kind < Ft_Kind_Mex0 as i32 {
         return kind;
@@ -213,6 +214,7 @@ pub struct Mover {
 
 /// The attacker's predicted y after `t` frames (`air` is the TARGET's ground_or_air, as in C).
 pub fn pred_self_y(m: &Mover, t: f32, air: bool) -> f32 {
+    melee_core::ct!("pred_self_y");
     if !air {
         return fmadds(m.vy, t, m.y);
     }
@@ -231,6 +233,7 @@ pub fn pred_self_y(m: &Mover, t: f32, air: bool) -> f32 {
 
 /// The target's predicted y after `t` frames, relative to `self_y`.
 pub fn pred_rel_y(m: &Mover, t: f32, air: bool, self_y: f32) -> f32 {
+    melee_core::ct!("pred_rel_y");
     if !air {
         return fmadds(m.vy, t, m.y) - self_y;
     }
@@ -379,16 +382,19 @@ fn select_vs_fighter(fp: &mut Fighter, target: &Fighter, list: *const ftCo_Attac
 
 /// `ftCo_800B4AB0`: pick an attack that reaches `target` (predicted `x04` frames ahead).
 pub fn ftCo_800B4AB0(fp: *mut Fighter, target: *mut Fighter, arg2: *const ftCo_AttackEntry) -> i32 {
+    melee_core::ct!("ftCo_800B4AB0");
     select_vs_fighter(fpm(fp), unsafe { &*target }, arg2, None, 0xFA)
 }
 
 /// `ftCo_800B52AC`: as ftCo_800B4AB0 with a held weapon's extra `reach`.
 pub fn ftCo_800B52AC(fp: *mut Fighter, target: *mut Fighter, arg2: *const ftCo_AttackEntry, reach: f32) -> i32 {
+    melee_core::ct!("ftCo_800B52AC");
     select_vs_fighter(fpm(fp), unsafe { &*target }, arg2, Some(reach), 0x1C5)
 }
 
 /// `ftCo_800B5AB0`: pick an attack that reaches item `arg1`.
 pub fn ftCo_800B5AB0(fp: *mut Fighter, arg1: *mut Item, arg2: *const ftCo_AttackEntry) -> i32 {
+    melee_core::ct!("ftCo_800B5AB0");
     let fp = fpm(fp);
     let x50 = unsafe { &*arg1 };
     let list = arg2;
@@ -441,6 +447,7 @@ pub fn ftCo_800B5AB0(fp: *mut Fighter, arg1: *mut Item, arg2: *const ftCo_Attack
 
 /// `ftCo_800B6208`: weighted pick over a 0-terminated list.
 pub fn ftCo_800B6208(arr: *const ftCo_AttackEntry) -> i32 {
+    melee_core::ct!("ftCo_800B6208");
     let r = ext::HSD_Randf();
     let mut sum = 0.0f32;
     let mut n = 0usize;
@@ -466,6 +473,7 @@ pub fn ftCo_800B6208(arr: *const ftCo_AttackEntry) -> i32 {
 
 /// `ftCo_800B630C`: is the fighter in any attacking motion?
 pub fn ftCo_800B630C(fp: *mut Fighter) -> bool {
+    melee_core::ct!("ftCo_800B630C");
     let f = fpm(fp);
     let m = f.motion_id as i32;
     if m >= ftCo_MS_Attack11 as i32 && m <= ftCo_MS_AttackAirLw as i32 {
@@ -495,6 +503,7 @@ pub fn ftCo_800B630C(fp: *mut Fighter) -> bool {
 
 /// `ftCo_800B63D8`: wait a random, level-scaled number of frames.
 pub fn ftCo_800B63D8(fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800B63D8");
     let f = fpm(fp);
     let r = ext::HSD_Randf();
     let (mul, add) = match f.cpu.level {
@@ -522,6 +531,7 @@ fn tap_r_wait5(f: &mut Fighter) {
 
 /// `ftCo_800B658C`: attack state step.
 pub fn ftCo_800B658C(fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800B658C");
     let f = fpm(fp);
     let target = f.cpu.x44;
     if target.is_null() {
@@ -627,6 +637,7 @@ fn level_roll(f: &Fighter) -> bool {
 
 /// `ftCo_800B683C`: grab follow-up (pummel / throw choice).
 pub fn ftCo_800B683C(fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800B683C");
     let f = fpm(fp);
     if f.victim_gobj.is_null() {
         clear_target_and_finish(f);
@@ -746,6 +757,7 @@ fn reset_b34(f: &mut Fighter) {
 
 /// `ftCo_800B7180`: jump-toward-target sequencing.
 pub fn ftCo_800B7180(fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800B7180");
     let f = fpm(fp);
     let t = f.cpu.x44;
     if t.is_null() {
@@ -792,6 +804,7 @@ fn angle_to(f: &Fighter, t: &Fighter) -> f32 {
 
 /// `ftCo_800B732C`: should the CPU jump/up-attack toward its target? (0 no, 1 up, 2 level).
 pub fn ftCo_800B732C(fp: *mut Fighter) -> i32 {
+    melee_core::ct!("ftCo_800B732C");
     let f = fpm(fp);
     let t0 = f.cpu.x44;
     if t0.is_null() || f.ground_or_air == GA_Air {
@@ -840,6 +853,7 @@ pub fn ftCo_800B732C(fp: *mut Fighter) -> i32 {
 
 /// `ftCo_800B7638`.
 pub fn ftCo_800B7638(fp: *mut Fighter) -> i32 {
+    melee_core::ct!("ftCo_800B7638");
     let f = fpm(fp);
     let t0 = f.cpu.x44;
     if t0.is_null() {
@@ -896,6 +910,7 @@ fn can_use_ranged(f: &Fighter, target: *mut Fighter, c: &mut ftCo_CollData, rang
 
 /// `ftCo_800B77E8`: exclude ranged/unsafe attacks for this kind (fills xCC).
 pub fn ftCo_800B77E8(fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800B77E8");
     let f = fpm(fp);
     let cpu_target = f.cpu.x44;
     if f.cpu.kind == 7 || ext::ftCo_800A1C44(fp) != 0 {
@@ -977,6 +992,7 @@ pub fn ftCo_800B77E8(fp: *mut Fighter) {
 
 /// `ftCo_800B885C`: level-based attack cooldown window (true = hold off).
 pub fn ftCo_800B885C(fp: *mut Fighter) -> bool {
+    melee_core::ct!("ftCo_800B885C");
     let c = &fpm(fp).cpu;
     let (m, lim) = match c.level {
         0 => (300, 240),
@@ -991,6 +1007,7 @@ pub fn ftCo_800B885C(fp: *mut Fighter) -> bool {
 
 /// `ftCo_800B89CC`: may the CPU attack in the air?
 pub fn ftCo_800B89CC(fp: *mut Fighter) -> bool {
+    melee_core::ct!("ftCo_800B89CC");
     let f = fpm(fp);
     let tmp = f.cpu.x44;
     if ext::stage_info_grkind() == Gr_Kind_Kongo as i32 && (f.cur_pos.x > 25.0 || f.cur_pos.x < -25.0) {
@@ -1027,6 +1044,7 @@ fn weapon_reach(item: *mut Item) -> f32 {
 
 /// `ftCo_800B8A9C`: choose the CPU's next attack (into cpu.xA4); true when one was chosen.
 pub fn ftCo_800B8A9C(fp: *mut Fighter) -> bool {
+    melee_core::ct!("ftCo_800B8A9C");
     let f = fpm(fp);
     if f.cpu.xF9_b2() == 0 {
         return false;
@@ -1132,6 +1150,7 @@ pub fn ftCo_800B8A9C(fp: *mut Fighter) -> bool {
 
 /// `ftCo_800B9020`: special-move state step.
 pub fn ftCo_800B9020(fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800B9020");
     let f = fpm(fp);
     if f.cpu.x44.is_null() {
         clear_target_and_finish(f);
@@ -1184,6 +1203,7 @@ pub fn ftCo_800B9020(fp: *mut Fighter) {
 
 /// `ftCo_800B920C`: Ness PK Flash release when level with the target.
 pub fn ftCo_800B920C(fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800B920C");
     let f = fpm(fp);
     let t = f.cpu.x44;
     if t.is_null() {
@@ -1200,6 +1220,7 @@ pub fn ftCo_800B920C(fp: *mut Fighter) {
 
 /// `ftCo_800B92D4`: PK Thunder steering.
 pub fn ftCo_800B92D4(fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800B92D4");
     let f = fpm(fp);
     if f.cpu.x44.is_null() {
         clear_target_and_finish(f);
@@ -1211,6 +1232,7 @@ pub fn ftCo_800B92D4(fp: *mut Fighter) {
 
 /// `ftCo_800B9340`: Yoshi egg roll steering.
 pub fn ftCo_800B9340(fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800B9340");
     let f = fpm(fp);
     let t = f.cpu.x44;
     let isl = ext::mpIsland_8005AC14(&mut f.cur_pos, -100.0);
@@ -1241,6 +1263,7 @@ pub fn ftCo_800B9340(fp: *mut Fighter) {
 
 /// `ftCo_800B9504`: Zelda Din's Fire steering.
 pub fn ftCo_800B9504(fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800B9504");
     let f = fpm(fp);
     let g = unsafe { f.u.zd.x222C };
     if g.is_null() {
@@ -1276,12 +1299,14 @@ pub fn ftCo_800B9504(fp: *mut Fighter) {
 
 /// `ftCo_800B9704`: reaction delay (one HSD_Randf draw; body in `crate::ftcpu`).
 pub fn ftCo_800B9704(fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800B9704");
     let r = ext::HSD_Randf();
     crate::ftcpu::ftco_800b9704(fpm(fp), r);
 }
 
 /// `ftCo_800B9790`: Ness special choice by angle/distance.
 pub fn ftCo_800B9790(fp: *mut Fighter, arg1: f32, arg2: f32) -> bool {
+    melee_core::ct!("ftCo_800B9790");
     let f = fpm(fp);
     let t = f.cpu.x44;
     let (a, d) = (arg1 as f64, arg2 as f64);
@@ -1309,6 +1334,7 @@ pub fn ftCo_800B9790(fp: *mut Fighter, arg1: f32, arg2: f32) -> bool {
 
 /// `ftCo_800B98C8`: Yoshi special choice.
 pub fn ftCo_800B98C8(fp: *mut Fighter, arg1: f32, arg2: f32) -> bool {
+    melee_core::ct!("ftCo_800B98C8");
     let f = fpm(fp);
     let t = f.cpu.x44;
     let (a, d) = (arg1 as f64, arg2 as f64);
@@ -1331,6 +1357,7 @@ pub fn ftCo_800B98C8(fp: *mut Fighter, arg1: f32, arg2: f32) -> bool {
 
 /// `ftCo_800B9A04`: held-item attack choice.
 pub fn ftCo_800B9A04(fp: *mut Fighter, arg1: *mut Item, arg2: f32, arg3: f32) -> bool {
+    melee_core::ct!("ftCo_800B9A04");
     let f = fpm(fp);
     let (a, d) = (arg2 as f64, arg3 as f64);
     if ext::ftCo_800A5908(arg1) != 0 || ext::ftCo_800A5A90(fp) != 0 {
@@ -1395,6 +1422,7 @@ pub fn ftCo_800B9A04(fp: *mut Fighter, arg1: *mut Item, arg2: f32, arg3: f32) ->
 
 /// `ftCo_800B9CBC`: special/item attack choice (after the reaction delay).
 pub fn ftCo_800B9CBC(fp: *mut Fighter) -> bool {
+    melee_core::ct!("ftCo_800B9CBC");
     let f = fpm(fp);
     let t = f.cpu.x44;
     f.cpu.xA4 = 0;
@@ -1449,12 +1477,14 @@ pub fn ftCo_800B9CBC(fp: *mut Fighter) -> bool {
 
 /// `ftCo_800B9F6C`: shielding?
 pub fn ftCo_800B9F6C(fp: *mut Fighter) -> bool {
+    melee_core::ct!("ftCo_800B9F6C");
     let m = fpm(fp).motion_id as i32;
     m == ftCo_MS_GuardOn as i32 || m == ftCo_MS_Guard as i32
 }
 
 /// `ftCo_800B9F90`: hold shield for a level-scaled time.
 pub fn ftCo_800B9F90(fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800B9F90");
     let f = fpm(fp);
     if f.motion_id as i32 == ftCo_MS_Guard as i32 {
         let n = 9 - f.cpu.level;
@@ -1474,6 +1504,7 @@ pub fn ftCo_800B9F90(fp: *mut Fighter) {
 
 /// `ftCo_800BA080`: down-B escape (Kirby stone etc.).
 pub fn ftCo_800BA080(fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800BA080");
     let f = fpm(fp);
     let m = f.motion_id as i32;
     neutral(f);
@@ -1504,10 +1535,12 @@ fn roll(f: &mut Fighter, x: i8) {
 
 /// `ftCo_800BA160`: roll right.
 pub fn ftCo_800BA160(fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800BA160");
     roll(fpm(fp), 0x7F);
 }
 /// `ftCo_800BA224`: roll left.
 pub fn ftCo_800BA224(fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800BA224");
     roll(fpm(fp), -0x7F);
 }
 
@@ -1520,6 +1553,7 @@ fn x20(fp: *mut Fighter) -> f32 {
 
 /// `ftCo_800BA2E8`: roll away if there is room.
 pub fn ftCo_800BA2E8(fp: *mut Fighter, arg1: *mut Fighter) -> bool {
+    melee_core::ct!("ftCo_800BA2E8");
     let away_right = ((fpm(fp).cur_pos.x - unsafe { (*arg1).cur_pos.x }) as f64) > 0.0;
     let order: [bool; 2] = if away_right { [false, true] } else { [true, false] };
     for right in order {
@@ -1533,6 +1567,7 @@ pub fn ftCo_800BA2E8(fp: *mut Fighter, arg1: *mut Fighter) -> bool {
 
 /// `ftCo_800BA674`: roll (preferring away when there is twice the room).
 pub fn ftCo_800BA674(fp: *mut Fighter, arg1: *mut Fighter) {
+    melee_core::ct!("ftCo_800BA674");
     let away_right = ((fpm(fp).cur_pos.x - unsafe { (*arg1).cur_pos.x }) as f64) > 0.0;
     if away_right {
         if roll_room(fp, false) as f64 > 2.0 * x20(fp) as f64 {
@@ -1573,6 +1608,7 @@ fn retap_r(f: &mut Fighter) {
 /// `ftCo_800BA9A0`: defend against the threat ftCo_800BB9B4 found (xF8_b12: 1 fighter, 2 item
 /// or blaster, 3 down-B).
 pub fn ftCo_800BA9A0(fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800BA9A0");
     let f = fpm(fp);
     let m = f.motion_id as i32;
     if m == ftCo_MS_EscapeF as i32 || m == ftCo_MS_EscapeB as i32 || m == ftCo_MS_EscapeAir as i32 || m == ftCo_MS_EscapeN as i32 {
@@ -1645,6 +1681,7 @@ fn hit_live(fp: *mut Fighter, h: &mut HitCapsule, skip_element: u32) -> bool {
 
 /// `ftCo_800BB104`: will one of `arg1`'s hitboxes (extrapolated 3 frames) reach `arg2`?
 pub fn ftCo_800BB104(fp: *mut Fighter, arg1: *mut Fighter, arg2: *mut Vec3, arg3: f32) -> bool {
+    melee_core::ct!("ftCo_800BB104");
     for i in 0..4 {
         let h = unsafe { &mut (*arg1).x914[i] };
         if hit_live(fp, h, HitElement_Catch as u32) {
@@ -1665,6 +1702,7 @@ pub fn ftCo_800BB104(fp: *mut Fighter, arg1: *mut Fighter, arg2: *mut Vec3, arg3
 
 /// `ftCo_CpuPredictHitboxPosition`.
 pub fn predict_hitbox(h: &HitCapsule, frames: i32) -> Vec3 {
+    melee_core::ct!("predict_hitbox");
     let fr = frames as f32;
     Vec3 {
         x: fmadds(h.x4C.x - h.x58.x, fr, h.x4C.x),
@@ -1675,6 +1713,7 @@ pub fn predict_hitbox(h: &HitCapsule, frames: i32) -> Vec3 {
 
 /// `ftCo_800BB220`: will item `ip` hit us within a level-scaled lookahead? (0, 2, 3 reflect).
 pub fn ftCo_800BB220(fp: *mut Fighter, ip: *mut Item, arg2: *mut Vec3, arg3: f32) -> i32 {
+    melee_core::ct!("ftCo_800BB220");
     let f = fpm(fp);
     let it = unsafe { &mut *ip };
     if it.owner == f.gobj {
@@ -1731,6 +1770,7 @@ pub fn ftCo_800BB220(fp: *mut Fighter, ip: *mut Item, arg2: *mut Vec3, arg3: f32
 /// `ftCo_800BB768`: is `arg1` doing a move that comes down on us (Bowser/Yoshi down-B,
 /// Bowser up-smash, Samus up-B)?
 pub fn ftCo_800BB768(fp: *mut Fighter, arg1: *mut Fighter) -> bool {
+    melee_core::ct!("ftCo_800BB768");
     let f = fpm(fp);
     let a = unsafe { &mut *arg1 };
     let m = a.motion_id as i32;
@@ -1782,6 +1822,7 @@ pub fn ftCo_800BB768(fp: *mut Fighter, arg1: *mut Fighter) -> bool {
 
 /// `ftCo_800BB9B4`: scan fighters then items for an incoming threat; sets xF8_b12/xF0/xF4.
 pub fn ftCo_800BB9B4(fp: *mut Fighter) -> i32 {
+    melee_core::ct!("ftCo_800BB9B4");
     let f = fpm(fp);
     f.cpu.set_xF8_b12(0);
     f.cpu.xF0 = core::ptr::null_mut();

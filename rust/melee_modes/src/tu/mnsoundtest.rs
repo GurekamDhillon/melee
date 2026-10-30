@@ -685,6 +685,7 @@ static mut mnSoundTest_803EF57C: [c_char; 33] = unsafe {
     >(*b"MenMainConTs_Top_shapeanim_joint\0")
 };
 pub unsafe extern "C" fn mnSoundTest_8024A790(mut arg0: *mut mnSoundTest_GObj) {
+    melee_core::ct!("mnSoundTest_8024A790");
     let mut temp_f31: f32 = 0.;
     let mut temp_f30: f32 = 0.;
     let mut temp_r31: *mut soundtest_user_data = core::ptr::null_mut::<
@@ -745,6 +746,7 @@ pub unsafe extern "C" fn mnSoundTest_8024A790(mut arg0: *mut mnSoundTest_GObj) {
     }
 }
 pub unsafe extern "C" fn mnSoundTest_8024A958(mut arg0: *mut mnSoundTest_GObj) {
+    melee_core::ct!("mnSoundTest_8024A958");
     let mut unused1: f32 = 0.;
     let mut unused2: f32 = 0.;
     let mut new_var: *mut soundtest_user_data = core::ptr::null_mut::<
@@ -809,6 +811,7 @@ pub unsafe extern "C" fn mnSoundTest_8024AA70(
     mut arg0: *mut mnSoundTest_GObj,
     mut arg1: u8,
 ) {
+    melee_core::ct!("mnSoundTest_8024AA70");
     let mut sp38: *mut HSD_JObj = null_mut();
     let mut sp34: *mut HSD_JObj = null_mut();
     let mut pad1: u32 = 0;
@@ -888,6 +891,7 @@ pub unsafe extern "C" fn mnSoundTest_8024ABF8(
     mut arg0: *mut mnSoundTest_GObj,
     mut arg1: u8,
 ) {
+    melee_core::ct!("mnSoundTest_8024ABF8");
     let mut sp1C: *mut HSD_JObj = null_mut();
     let mut sp18: *mut HSD_JObj = null_mut();
     let mut sp14: *mut HSD_JObj = null_mut();
@@ -920,6 +924,7 @@ pub unsafe extern "C" fn mnSoundTest_8024AD58(
     mut arg0: *mut mnSoundTest_GObj,
     mut arg1: u8,
 ) {
+    melee_core::ct!("mnSoundTest_8024AD58");
     let mut sp1C: *mut HSD_JObj = null_mut();
     let mut sp18: *mut HSD_JObj = null_mut();
     let mut sp14: *mut HSD_JObj = null_mut();
@@ -977,6 +982,7 @@ unsafe extern "C" fn fn_8024AED0_GetUserData() -> *mut soundtest_user_data {
     return (*mnSoundTest_804D6C40).user_data as *mut soundtest_user_data;
 }
 pub unsafe extern "C" fn fn_8024AED0(mut arg0: *mut mnSoundTest_GObj) {
+    melee_core::ct!("fn_8024AED0");
     let mut operand_pad: [u8; 24] = [0; 24];
     let mut sp7C: *mut HSD_JObj = null_mut();
     let mut array_pad: [u8; 4] = [0; 4];
@@ -1151,6 +1157,7 @@ unsafe extern "C" fn mnSoundTest_UpdateCategoryAnim(
     HSD_JObjAnimAll(*pj);
 }
 pub unsafe extern "C" fn fn_8024B2B0(mut arg0: *mut mnSoundTest_GObj) {
+    melee_core::ct!("fn_8024B2B0");
     let mut high_pad: [u8; 40] = [0; 40];
     let mut sp54: *mut HSD_JObj = null_mut();
     let mut stack_pad1: [u8; 8] = [0; 8];
@@ -1296,6 +1303,7 @@ pub unsafe extern "C" fn fn_8024B2B0(mut arg0: *mut mnSoundTest_GObj) {
     mnSoundTest_8024A790(mnSoundTest_804D6C40);
 }
 pub unsafe extern "C" fn fn_8024B7E4(mut arg0: *mut mnSoundTest_GObj) {
+    melee_core::ct!("fn_8024B7E4");
     let mut pad2: u32 = 0;
     let mut sp20: *mut HSD_JObj = null_mut();
     let mut sp1C: *mut HSD_JObj = null_mut();
@@ -1318,6 +1326,7 @@ pub unsafe extern "C" fn fn_8024B7E4(mut arg0: *mut mnSoundTest_GObj) {
     }
 }
 pub unsafe extern "C" fn fn_8024B8B4(mut arg0: *mut mnSoundTest_GObj, mut farg0: f32) {
+    melee_core::ct!("fn_8024B8B4");
     let mut var_f1: f32 = 0.;
     let mut sp20: *mut HSD_JObj = null_mut();
     let mut sp1C: *mut HSD_JObj = null_mut();
@@ -1393,6 +1402,7 @@ pub unsafe extern "C" fn fn_8024B8B4(mut arg0: *mut mnSoundTest_GObj, mut farg0:
     mn_8022EC18(sp10 as *mut HSD_JObj, &raw mut vec_5, MOBJ_MASK);
 }
 pub unsafe extern "C" fn fn_8024BAF0(mut arg0: *mut mnSoundTest_GObj) {
+    melee_core::ct!("fn_8024BAF0");
     let mut pad2: u32 = 0;
     let mut sp1C: *mut HSD_JObj = null_mut();
     let mut sp18: *mut HSD_JObj = null_mut();
@@ -1466,6 +1476,7 @@ pub unsafe extern "C" fn fn_8024BAF0(mut arg0: *mut mnSoundTest_GObj) {
     };
 }
 pub unsafe extern "C" fn mnSoundTest_8024BCA0(mut arg0: i32) {
+    melee_core::ct!("mnSoundTest_8024BCA0");
     let mut jobj: *mut HSD_JObj = null_mut();
     let mut gobj: *mut mnSoundTest_GObj = null_mut();
     let mut proc_0: *mut HSD_GObjProc = null_mut();
@@ -1571,6 +1582,7 @@ pub unsafe extern "C" fn mnSoundTest_8024BCA0(mut arg0: i32) {
     HSD_JObjAnimAll(category_jobj);
 }
 pub unsafe extern "C" fn mnSoundTest_8024BEE0(mut arg0: i32) -> *mut HSD_GObjProc {
+    melee_core::ct!("mnSoundTest_8024BEE0");
     let mut proc_0: *mut HSD_GObjProc = null_mut();
     let mut archive: *mut HSD_Archive = null_mut();
     let mut temp_ret: i32 = 0;

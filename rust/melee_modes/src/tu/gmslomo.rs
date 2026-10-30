@@ -81,59 +81,72 @@ pub static mut gm_Mode_SlowMo_States: [GameModeState; 9] = unsafe {
 
 /// CSS enter: the Atlas select runs after the retail setup (TARGET_PC).
 pub unsafe extern "C" fn gm_801BA50C(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801BA50C");
     ext::gmVsMelee_EnterCss(scene, vs_mode(), 10);
     ext::gmFrontend_AtlasSelect(scene, 0, null());
 }
 
 pub unsafe extern "C" fn gm_801BA538(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801BA538");
     ext::gmVsMelee_ExitCss(scene, vs_mode());
 }
 
 pub unsafe extern "C" fn gm_801BA560(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801BA560");
     ext::gmVsMelee_EnterSss(scene, vs_mode());
     ext::gmFrontend_AtlasSelect(scene, 1, null());
 }
 
 pub unsafe extern "C" fn gm_801BA588(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801BA588");
     ext::gmVsMelee_ExitSss(scene, vs_mode(), 0);
 }
 
 /// Slo-Mo rule: game speed 0.5 (`gm_ptr::fn_801BA5B4`, round 3), in the `extern "C"` form
 /// `gmVsMelee_EnterVs` takes.
 pub unsafe extern "C" fn fn_801BA5B4(data: *mut StartMeleeData, unused: *mut StartMeleeData) {
+    melee_core::ct!("fn_801BA5B4");
     crate::gm_ptr::fn_801BA5B4(&mut *data, unused);
 }
 
 pub unsafe extern "C" fn gm_801BA5C0(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801BA5C0");
     let data = vs_mode();
     ext::gmVsMelee_EnterVs(scene, data, Some(fn_801BA5B4), None);
 }
 
 pub unsafe extern "C" fn gm_801BA5F4(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801BA5F4");
     ext::gmVsMelee_ExitVs(scene, 4, 3);
 }
 
 pub unsafe extern "C" fn gm_801BA61C(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801BA61C");
     let data = vs_mode();
     ext::gmVsMelee_EnterSuddenDeath(scene, data, Some(fn_801BA5B4), None);
 }
 
 pub unsafe extern "C" fn gm_801BA650(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801BA650");
     ext::gmVsMelee_ExitSuddenDeath(scene);
 }
 
 pub unsafe extern "C" fn gm_801BA670(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801BA670");
     ext::gmVsMelee_EnterResults(scene);
 }
 
 pub unsafe extern "C" fn gm_801BA690(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801BA690");
     ext::gmVsMelee_ExitResults(scene, vs_mode(), 0);
 }
 
 pub unsafe extern "C" fn gm_Mode_SlowMo_OnInit() {
+    melee_core::ct!("gm_Mode_SlowMo_OnInit");
     ext::gm_InitVsMode(vs_mode());
 }
 
 pub unsafe extern "C" fn gm_Mode_SlowMo_OnLoad() {
+    melee_core::ct!("gm_Mode_SlowMo_OnLoad");
     ext::gmVsMelee_ResetKOCounts();
 }

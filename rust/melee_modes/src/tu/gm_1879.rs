@@ -100,6 +100,7 @@ unsafe fn fn_80187AB4_LoadAnim(jobj: *mut HSD_JObj, data: &mut gm_1832_804736C0_
 }
 
 pub unsafe extern "C" fn fn_80187910(arg0: *mut HSD_GObj) {
+    melee_core::ct!("fn_80187910");
     let mut sp10 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let data = &mut lbl_804736C0;
     let cobj = (*arg0).hsd_obj as *mut HSD_CObj;
@@ -133,6 +134,7 @@ pub unsafe extern "C" fn fn_80187910(arg0: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_80187AB4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80187AB4");
     let data = &mut lbl_804736C0;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let state = data.anim_state() as i32;
@@ -170,6 +172,7 @@ pub unsafe extern "C" fn fn_80187AB4(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_80187C9C(gobj: *mut HSD_GObj, arg1: i32) {
+    melee_core::ct!("fn_80187C9C");
     ext::GXSetZMode(0, GX_NEVER as i32, 0);
     ext::HSD_GObj_JObjCallback(gobj, arg1);
     ext::HSD_StateInvalidate(0x40);
@@ -186,6 +189,7 @@ unsafe fn prompt_anim(data: &gm_1832_804736C0_t, jobj: *mut HSD_JObj, anim_state
 }
 
 pub unsafe extern "C" fn fn_80187CF4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80187CF4");
     let data = &mut lbl_804736C0;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let state = data.state2() as i32;
@@ -259,6 +263,7 @@ unsafe fn gm_80187F48_GetAudioConfig(stage_index: u8) -> u64 {
 
 /// `gm_Scene_IntroNormal_OnEnter` (the C inlines `gm_80187F48_OnEnter_inline` into it).
 pub unsafe fn gm_Scene_IntroNormal_OnEnter(arg0: *mut c_void) {
+    melee_core::ct!("gm_Scene_IntroNormal_OnEnter");
     let arg0 = &*(arg0 as *const gm_80187F48_EnterData);
     let data = &mut lbl_804736C0;
     data.x38 = arg0.x0;
@@ -373,10 +378,12 @@ pub unsafe fn gm_Scene_IntroNormal_OnEnter(arg0: *mut c_void) {
 }
 
 pub unsafe fn gm_Scene_IntroNormal_OnLeave(_arg0: *mut c_void) {
+    melee_core::ct!("gm_Scene_IntroNormal_OnLeave");
     ext::lbArchive_80016EFC(lbl_804D6620);
 }
 
 pub fn gm_Scene_IntroNormal_OnFrame() {
+    melee_core::ct!("gm_Scene_IntroNormal_OnFrame");
     unsafe {
         if lbl_804736C0.done() != 0 {
             ext::gm_801A4B60();
@@ -385,6 +392,7 @@ pub fn gm_Scene_IntroNormal_OnFrame() {
 }
 
 pub unsafe fn gm_801883C0() -> f32 {
+    melee_core::ct!("gm_801883C0");
     let gobj = lbl_804736C0.x8;
     let cobj: *mut HSD_CObj;
     if !gobj.is_null() {
@@ -407,5 +415,6 @@ pub unsafe fn gm_801883C0() -> f32 {
 }
 
 pub fn gm_8018841C() -> bool {
+    melee_core::ct!("gm_8018841C");
     ext::gm_GetCurrentGameMode() as i32 == GM_TRAINING as i32
 }

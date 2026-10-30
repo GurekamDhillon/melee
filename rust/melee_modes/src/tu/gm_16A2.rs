@@ -102,20 +102,24 @@ unsafe fn gp() -> &'static mut lbl_8046B488_t {
 /// `((s8*) gm_1601_GetUnkData())[arg0]`: the record read as bytes (offsets below +0x1B8 only; the
 /// GameCube's pointer is 4 bytes, ours 8).
 pub unsafe fn gm_80169370(arg0: i32) -> i8 {
+    melee_core::ct!("gm_80169370");
     *(gm_1601_GetUnkData() as *const i8).offset(arg0 as isize)
 }
 
 pub unsafe fn gm_80169384() -> i32 {
+    melee_core::ct!("gm_80169384");
     (*gm_1601_GetUnkData()).x7 as i32
 }
 
 
 pub unsafe fn fn_801693A8() -> i32 {
+    melee_core::ct!("fn_801693A8");
     (*gm_1601_GetUnkData()).unk_10_b2() as i32
 }
 
 /// Player is Fighting Wireframe
 pub unsafe fn gm_801693BC(arg0: i32) -> bool {
+    melee_core::ct!("gm_801693BC");
     if ext::Player_GetFlagsBit1(arg0) != 0 && (*gm_1601_GetUnkData()).x8 as i32 > 1 {
         return true;
     }
@@ -125,10 +129,12 @@ pub unsafe fn gm_801693BC(arg0: i32) -> bool {
 }
 
 pub unsafe fn fn_80169434(f: GmRouteCallback) {
+    melee_core::ct!("fn_80169434");
     (*gm_1601_GetUnkData()).x1B8 = f;
 }
 
 pub unsafe fn fn_80169444(arg0: bool) -> bool {
+    melee_core::ct!("fn_80169444");
     let gp = gm_1601_GetUnkData();
     if let Some(f) = (*gp).x1B8 {
         if f(arg0 as i32) == 1 {
@@ -140,6 +146,7 @@ pub unsafe fn fn_80169444(arg0: bool) -> bool {
 }
 
 pub unsafe fn gm_801694A0(_arg0: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("gm_801694A0");
     let mut count = (*gm_1601_GetUnkData()).x7 as i32;
     for i in 0..6 {
         if ext::Player_GetPlayerSlotType(i) as i32 != Gm_PKind_NA as i32 && ext::Player_GetFlagsBit1(i) != 0 && ext::Player_GetPlayerState(i) == 2 {
@@ -152,22 +159,26 @@ pub unsafe fn gm_801694A0(_arg0: *mut HSD_GObj) -> i32 {
 
 
 pub unsafe fn gm_80169540() -> *mut c_void {
+    melee_core::ct!("gm_80169540");
     (*gm_1601_GetUnkData()).x124.as_mut_ptr() as *mut c_void
 }
 
 pub unsafe fn fn_80169550(slot: i32) {
+    melee_core::ct!("fn_80169550");
     let gp = gm_1601_GetUnkData();
     let idx = (*gp).x1A6[slot as usize];
     *(*gp).x20.as_mut_ptr().offset(idx as isize) = -1;
 }
 
 pub unsafe fn fn_80169574(size: isize, buf: *mut i8) {
+    melee_core::ct!("fn_80169574");
     ext::memzero(buf as *mut c_void, size);
     *buf.offset(size) = -2;
 }
 
 /// `fn_801695BC` (TARGET_PC): shuffle a character's costumes over the queue entries holding it.
 pub unsafe fn fn_801695BC(arg0: u8, arg1: u8, arg2: u8, arg3: *const u8, arg4: *mut i8) {
+    melee_core::ct!("fn_801695BC");
     let mut colors = [0i8; 254];
     let mut ncolors = ext::gm_GetNumCostumesForCKind(arg0);
     // Legacy Classic queues use signed bytes with -1/-2 sentinels: exclude id 254 (= the -2 terminator).
@@ -216,6 +227,7 @@ pub unsafe fn fn_801695BC(arg0: u8, arg1: u8, arg2: u8, arg3: *const u8, arg4: *
 
 /// `fn_801697FC` (TARGET_PC): give every queue entry one costume.
 pub unsafe fn fn_801697FC(character: i8, mut costume: i8, new_character: i8, new_costume: i8, buf: *mut i8) {
+    melee_core::ct!("fn_801697FC");
     let mut ncolors = ext::gm_GetNumCostumesForCKind(character as u8);
     if character as i32 == ChKind_None as i32 {
         return;
@@ -237,6 +249,7 @@ pub unsafe fn fn_801697FC(character: i8, mut costume: i8, new_character: i8, new
 }
 
 pub unsafe fn fn_8016989C(arg0: *mut u8, arg1: u8, arg2: u8, arg3: *mut u8, arg4: *mut i8) {
+    melee_core::ct!("fn_8016989C");
     for i in 0..3 {
         fn_801695BC(*arg0.add(i), arg1, arg2, arg3, arg4);
     }
@@ -244,6 +257,7 @@ pub unsafe fn fn_8016989C(arg0: *mut u8, arg1: u8, arg2: u8, arg3: *mut u8, arg4
 
 /// `fn_80169900`: pick the fighter for each queue entry by the queue kind `arg0`.
 pub unsafe fn fn_80169900(arg0: u8, arg1: *mut lbl_8046B488_t, arg2: *mut i8, arg3: *mut i8) {
+    melee_core::ct!("fn_80169900");
     match arg0 {
         0 => {
             let mut src = arg3;
@@ -298,6 +312,7 @@ pub unsafe fn fn_80169900(arg0: u8, arg1: *mut lbl_8046B488_t, arg2: *mut i8, ar
 /// `fn_80169A84`: arg0 == 1 deals the unlocked fighters (the record's `x1C0` deck, shuffled and cut
 /// to 16) to the queue; arg0 == 0 marks every entry -1.
 pub unsafe fn fn_80169A84(arg0: u8, arg1: *mut i8, arg2: *mut i8) {
+    melee_core::ct!("fn_80169A84");
     match arg0 {
         1 => {
             let g = gp();
@@ -352,6 +367,7 @@ pub unsafe fn fn_80169A84(arg0: u8, arg1: *mut i8, arg2: *mut i8) {
 
 /// `fn_80169C54`: preload the costumes of the queue's fighters (and Kirby's hats) in the player table.
 pub unsafe fn fn_80169C54(arg0: i8, arg1: i8) {
+    melee_core::ct!("fn_80169C54");
     let mut ncostumes: i32 = 0;
     let st = ext::fn_8016AE60();
     let mut costumes = [-1i32; 7];
@@ -437,6 +453,7 @@ unsafe fn fn_80169F50_inline(costume: i8, gp: *mut lbl_8046B488_t, character: i3
 
 /// `fn_80169F50`: preload Kirby's hat costumes for the queue entries.
 pub unsafe fn fn_80169F50(arg0: i8, arg1: i8) {
+    melee_core::ct!("fn_80169F50");
     let g = gm_1601_GetUnkData();
     let temp_arg0 = arg0;
     let mut flag = 0;
@@ -472,6 +489,7 @@ pub unsafe fn fn_80169F50(arg0: i8, arg1: i8) {
 }
 
 pub unsafe fn fn_8016A09C() {
+    melee_core::ct!("fn_8016A09C");
     let mut var_r29 = 0;
     ext::gmVs_GetSceneState();
     gp().set_unk_10_b1(1);
@@ -496,6 +514,7 @@ pub unsafe fn fn_8016A09C() {
 }
 
 pub unsafe fn gm_8016A164() {
+    melee_core::ct!("gm_8016A164");
     let g = gm_1601_GetUnkData();
     let scene_state = ext::gmVs_GetSceneState();
     (*scene_state).is_singleplayer = 0;
@@ -512,11 +531,13 @@ pub unsafe fn gm_8016A164() {
 }
 
 pub unsafe fn fn_8016A1E4() -> i32 {
+    melee_core::ct!("fn_8016A1E4");
     (*gm_1601_GetUnkData()).unk_10_b0() as i32
 }
 
 
 pub unsafe fn gm_8016A21C(arg0: *mut StartMeleeRules) {
+    melee_core::ct!("gm_8016A21C");
     (*arg0).x54 = gm_1601_GetUnkData() as *mut _;
 }
 
@@ -542,6 +563,7 @@ pub unsafe fn gm_8016A22C(
     f1: f32,
     f2: f32,
 ) {
+    melee_core::ct!("gm_8016A22C");
     let g = addr_of_mut!(lbl_8046B488);
     ext::memzero(g as *mut c_void, 0x1C0);
     EVENT_PLAYER_INIT_CB = None; // the C's callback slot is inside the 0x1C0 bytes cleared above
@@ -613,30 +635,37 @@ pub unsafe fn gm_8016A22C(
 
 /// `gm_8016A404`: the C stores the (32-bit) code address in the record's `pad_1BC`; here the callback itself.
 pub unsafe fn gm_8016A404(arg0: GmEventPlayerInitCallback) {
+    melee_core::ct!("gm_8016A404");
     EVENT_PLAYER_INIT_CB = arg0;
 }
 
 pub unsafe fn gm_8016A414(arg8: f32) {
+    melee_core::ct!("gm_8016A414");
     lbl_8046B488.x1C = arg8;
 }
 
 pub unsafe fn gm_8016A424(arg0: i8) {
+    melee_core::ct!("gm_8016A424");
     lbl_8046B488.xF = arg0 as u8;
 }
 
 pub unsafe fn gm_8016A434() {
+    melee_core::ct!("gm_8016A434");
     lbl_8046B488.set_unk_10_b3(1);
 }
 
 pub unsafe fn fn_8016A450() {
+    melee_core::ct!("fn_8016A450");
     lbl_8046B488.set_unk_10_b4(1);
 }
 
 pub unsafe fn fn_8016A46C() {
+    melee_core::ct!("fn_8016A46C");
     lbl_8046B488.set_unk_10_b6(1);
 }
 
 pub unsafe extern "C" fn fn_8016A488(arg0: i32) {
+    melee_core::ct!("fn_8016A488");
     if (*ext::gmVs_GetSceneState()).hud_enabled == 1 {
         ext::Player_80031848(arg0);
     }
@@ -682,6 +711,7 @@ unsafe fn findMatchingController(spawn_slot: i32, costume_id: i32) -> i8 {
 
 /// `fn_8016A4C8`: per frame, spawn the next queued enemy into every free player slot; end the event when none is left.
 pub unsafe fn fn_8016A4C8() {
+    melee_core::ct!("fn_8016A4C8");
     let g = addr_of_mut!(lbl_8046B488);
     let mut has_active_spawn = 0;
     let spawn_enabled = if lbl_8046B488.unk_10_b1() != 0 { 1 } else { 0 };
@@ -796,17 +826,20 @@ pub unsafe fn fn_8016A4C8() {
 }
 
 pub unsafe fn gm_8016A92C(arg0: *mut StartMeleeRules) {
+    melee_core::ct!("gm_8016A92C");
     lbl_8046B668.arr2[0] = -2;
     (*arg0).x58 = addr_of_mut!(lbl_8046B668);
 }
 
 pub unsafe fn gm_8016A944() -> bool {
+    melee_core::ct!("gm_8016A944");
     (*ext::gm_GetStartMeleeRules()).x58.is_null() == false
 }
 
 
 
 pub unsafe fn gm_8016A998(arg0: i8, mut arg1: i8) -> i32 {
+    melee_core::ct!("gm_8016A998");
     // This legacy Event queue uses -2 as terminator, not costume 254.
     if arg1 as u8 == 254 {
         arg1 = 0;
@@ -824,6 +857,7 @@ pub unsafe fn gm_8016A998(arg0: i8, mut arg1: i8) -> i32 {
 }
 
 pub unsafe fn gm_8016A9E8(arg0: u8, mut arg1: i8) -> i32 {
+    melee_core::ct!("gm_8016A9E8");
     if arg1 as u8 == 254 {
         arg1 = 0;
     }
@@ -850,6 +884,7 @@ pub unsafe fn gm_8016A9E8(arg0: u8, mut arg1: i8) -> i32 {
 }
 
 pub unsafe fn gm_8016AC44(ckind: i8, mut costume_id: i8) -> bool {
+    melee_core::ct!("gm_8016AC44");
     if costume_id as u8 == 254 {
         costume_id = 0;
     }
@@ -878,6 +913,7 @@ pub unsafe fn gm_8016AC44(ckind: i8, mut costume_id: i8) -> bool {
 
 /// `gm_PcTestLegacyCostumes` (TARGET_PC): the port's self-test of the legacy costume queue (0 = pass).
 pub unsafe fn gm_PcTestLegacyCostumes() -> i32 {
+    melee_core::ct!("gm_PcTestLegacyCostumes");
     let saved = lbl_8046B668;
     ext::memzero(addr_of_mut!(lbl_8046B668) as *mut c_void, core::mem::size_of::<lbl_8046B668_t>() as isize);
     lbl_8046B668.arr2[0] = -2;

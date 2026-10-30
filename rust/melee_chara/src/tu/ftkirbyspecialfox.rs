@@ -157,16 +157,19 @@ unsafe fn set_cbs(gobj: *mut HSD_GObj) {
 
 /// `ftKb_SpecialNFx_OnChangeAction` as the `HSD_GObjEvent` stored in `x21EC`.
 pub unsafe extern "C" fn cb_ftKb_SpecialNFx_OnChangeAction(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftKb_SpecialNFx_OnChangeAction");
     ftKb_SpecialNFx_OnChangeAction(g);
 }
 
 /// `ftKb_SpecialNFx_CreateBlasterShot` as the `HSD_GObjEvent` stored in `accessory4_cb`.
 pub unsafe extern "C" fn cb_ftKb_SpecialNFx_CreateBlasterShot(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftKb_SpecialNFx_CreateBlasterShot");
     ftKb_SpecialNFx_CreateBlasterShot(g);
 }
 
 /// `ftKb_SpecialNFx_800FDC00`: world position of the blaster muzzle (part 44, offset (0, 1.45, 5.016)).
 pub fn ftKb_SpecialNFx_800FDC00(gobj: *mut HSD_GObj, vec: *mut Vec3) {
+    melee_core::ct!("ftKb_SpecialNFx_800FDC00");
     unsafe {
         if !gobj.is_null() {
             let fp = fpp(gobj);
@@ -184,6 +187,7 @@ pub fn ftKb_SpecialNFx_800FDC00(gobj: *mut HSD_GObj, vec: *mut Vec3) {
 
 /// `ftKb_SpecialNFx_800FDC70`: the same for the hand (FtPart_R3rdNa), offset (0, 1.45, 0.016).
 pub fn ftKb_SpecialNFx_800FDC70(gobj: *mut HSD_GObj, vec: *mut Vec3) {
+    melee_core::ct!("ftKb_SpecialNFx_800FDC70");
     unsafe {
         if !gobj.is_null() {
             let fp = fpp(gobj);
@@ -200,12 +204,14 @@ pub fn ftKb_SpecialNFx_800FDC70(gobj: *mut HSD_GObj, vec: *mut Vec3) {
 }
 
 pub fn ftKb_SpecialNFx_OnChangeAction(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialNFx_OnChangeAction");
     ext::ft_800892A0(gobj);
     melee_fighter::ft0892::ft_80089824(gobj);
 }
 
 /// `ftKb_SpecialNFx_800FDD14`: true when no blaster item is attached (or no fighter).
 pub fn ftKb_SpecialNFx_800FDD14(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftKb_SpecialNFx_800FDD14");
     unsafe {
         if !gobj.is_null() {
             let ft = fpp(gobj);
@@ -222,6 +228,7 @@ pub fn ftKb_SpecialNFx_800FDD14(gobj: *mut HSD_GObj) -> bool {
 
 /// `ftKb_SpecialNFx_800FDD4C`: the ftFox SpecialN index (0..) matching Kirby's current motion, 9 if none.
 pub fn ftKb_SpecialNFx_800FDD4C(gobj: *mut HSD_GObj) -> ftFx_SpecialNIndex {
+    melee_core::ct!("ftKb_SpecialNFx_800FDD4C");
     unsafe {
         let mut msid: u32 = 9;
         if !gobj.is_null() {
@@ -264,6 +271,7 @@ pub fn ftKb_SpecialNFx_800FDD4C(gobj: *mut HSD_GObj) -> ftFx_SpecialNIndex {
 
 /// `ftKb_SpecialNFx_800FDDF4`: x2071_b6 while in a blaster/throw motion, else true.
 pub fn ftKb_SpecialNFx_800FDDF4(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftKb_SpecialNFx_800FDDF4");
     unsafe {
         if !gobj.is_null() {
             let fp = fpp(gobj);
@@ -319,6 +327,7 @@ pub fn ftKb_SpecialNFx_800FDDF4(gobj: *mut HSD_GObj) -> bool {
 
 /// `ftKb_SpecialNFx_800FDEB4`: forget the blaster item (without destroying it).
 pub fn ftKb_SpecialNFx_800FDEB4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialNFx_800FDEB4");
     unsafe {
         if !gobj.is_null() {
             let ft = fpp(gobj);
@@ -331,6 +340,7 @@ pub fn ftKb_SpecialNFx_800FDEB4(gobj: *mut HSD_GObj) {
 
 /// `ftKb_SpecialNFx_800FDEE0`: destroy the blaster item.
 pub fn ftKb_SpecialNFx_800FDEE0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialNFx_800FDEE0");
     unsafe {
         if !gobj.is_null() {
             let fp = fpp(gobj);
@@ -344,6 +354,7 @@ pub fn ftKb_SpecialNFx_800FDEE0(gobj: *mut HSD_GObj) {
 
 /// `ftKb_SpecialNFx_800FDF30`: on the script's cmd_vars[2] pulse, fire the blaster shot.
 pub fn ftKb_SpecialNFx_800FDF30(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialNFx_800FDF30");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftKb_DatAttrs;
@@ -392,11 +403,13 @@ pub fn ftKb_SpecialNFx_800FDF30(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_SpecialNFx_CreateBlasterShot(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialNFx_CreateBlasterShot");
     ftKb_SpecialNFx_800FDF30(gobj);
 }
 
 /// `ftKbGetStartMotionId` (static inline).
 pub fn ftKbGetStartMotionId(gobj: *mut HSD_GObj) -> u32 {
+    melee_core::ct!("ftKbGetStartMotionId");
     unsafe {
         let fp = fpp(gobj);
         let mut msid = ftKb_MS_FxSpecialNStart;
@@ -425,6 +438,7 @@ fn blaster_assert(line: u32) -> ! {
 
 /// `ftKb_SpecialNFx_800FE100`: ground entry; spawns the blaster item.
 pub fn ftKb_SpecialNFx_800FE100(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialNFx_800FE100");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftKb_DatAttrs;
@@ -450,6 +464,7 @@ pub fn ftKb_SpecialNFx_800FE100(gobj: *mut HSD_GObj) {
 
 /// `ftKbGetAirStartMotionId` (static inline).
 pub fn ftKbGetAirStartMotionId(gobj: *mut HSD_GObj) -> u32 {
+    melee_core::ct!("ftKbGetAirStartMotionId");
     unsafe {
         let fp = fpp(gobj);
         let mut msid = ftKb_MS_FxSpecialAirNStart;
@@ -464,6 +479,7 @@ pub fn ftKbGetAirStartMotionId(gobj: *mut HSD_GObj) -> u32 {
 
 /// `ftKb_SpecialNFx_800FE240`: aerial entry.
 pub fn ftKb_SpecialNFx_800FE240(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialNFx_800FE240");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftKb_DatAttrs;
@@ -484,6 +500,7 @@ pub fn ftKb_SpecialNFx_800FE240(gobj: *mut HSD_GObj) {
 
 /// `ftKbGetLoopMotionId` (static inline).
 pub fn ftKbGetLoopMotionId(gobj: *mut HSD_GObj) -> u32 {
+    melee_core::ct!("ftKbGetLoopMotionId");
     unsafe {
         let fp = fpp(gobj);
         let mut msid = ftKb_MS_FxSpecialNLoop;
@@ -506,6 +523,7 @@ unsafe fn blaster_pose(fp: *mut Fighter) {
 }
 
 pub fn ftKb_FxSpecialNStart_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_FxSpecialNStart_Anim");
     unsafe {
         let fp = fpp(gobj);
         blaster_pose(fp);
@@ -520,6 +538,7 @@ pub fn ftKb_FxSpecialNStart_Anim(gobj: *mut HSD_GObj) {
 
 /// `ftKbGetEndMotionId` (static inline).
 pub fn ftKbGetEndMotionId(gobj: *mut HSD_GObj) -> u32 {
+    melee_core::ct!("ftKbGetEndMotionId");
     unsafe {
         let fp = fpp(gobj);
         let mut msid = ftKb_MS_FxSpecialNEnd;
@@ -533,6 +552,7 @@ pub fn ftKbGetEndMotionId(gobj: *mut HSD_GObj) -> u32 {
 }
 
 pub fn ftKb_FxSpecialNLoop_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_FxSpecialNLoop_Anim");
     unsafe {
         let fp = fpp(gobj);
         blaster_pose(fp);
@@ -576,6 +596,7 @@ unsafe fn blaster_end_pose(gobj: *mut HSD_GObj, fp: *mut Fighter) {
 }
 
 pub fn ftKb_FxSpecialNEnd_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_FxSpecialNEnd_Anim");
     unsafe {
         let fp = fpp(gobj);
         blaster_end_pose(gobj, fp);
@@ -588,6 +609,7 @@ pub fn ftKb_FxSpecialNEnd_Anim(gobj: *mut HSD_GObj) {
 
 /// `ftKbGetAirLoopMotionId` (static inline).
 pub fn ftKbGetAirLoopMotionId(gobj: *mut HSD_GObj) -> u32 {
+    melee_core::ct!("ftKbGetAirLoopMotionId");
     unsafe {
         let fp = fpp(gobj);
         let mut msid = ftKb_MS_FxSpecialAirNLoop;
@@ -601,6 +623,7 @@ pub fn ftKbGetAirLoopMotionId(gobj: *mut HSD_GObj) -> u32 {
 }
 
 pub fn ftKb_FxSpecialAirNStart_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_FxSpecialAirNStart_Anim");
     unsafe {
         let fp = fpp(gobj);
         blaster_pose(fp);
@@ -615,6 +638,7 @@ pub fn ftKb_FxSpecialAirNStart_Anim(gobj: *mut HSD_GObj) {
 
 /// `ftKbGetAirEndMotionId` (static inline).
 pub fn ftKbGetAirEndMotionId(gobj: *mut HSD_GObj) -> u32 {
+    melee_core::ct!("ftKbGetAirEndMotionId");
     unsafe {
         let fp = fpp(gobj);
         let mut msid = ftKb_MS_FxSpecialAirNEnd;
@@ -628,6 +652,7 @@ pub fn ftKbGetAirEndMotionId(gobj: *mut HSD_GObj) -> u32 {
 }
 
 pub fn ftKb_FxSpecialAirNLoop_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_FxSpecialAirNLoop_Anim");
     unsafe {
         let fp = fpp(gobj);
         blaster_pose(fp);
@@ -661,6 +686,7 @@ pub fn ftKb_FxSpecialAirNLoop_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_FxSpecialAirNEnd_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_FxSpecialAirNEnd_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftKb_DatAttrs;
@@ -683,22 +709,27 @@ pub fn ftKb_FxSpecialAirNEnd_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_FxSpecialNStart_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_FxSpecialNStart_IASA");
     ext::ftFox_SpecialN_CheckLoopInput(gobj);
 }
 pub fn ftKb_FxSpecialNLoop_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_FxSpecialNLoop_IASA");
     ext::ftFox_SpecialN_CheckLoopInput(gobj);
 }
-pub fn ftKb_FxSpecialNEnd_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftKb_FxSpecialNEnd_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftKb_FxSpecialNEnd_IASA");}
 pub fn ftKb_FxSpecialAirNStart_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_FxSpecialAirNStart_IASA");
     ext::ftFox_SpecialN_CheckLoopInput(gobj);
 }
 pub fn ftKb_FxSpecialAirNLoop_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_FxSpecialAirNLoop_IASA");
     ext::ftFox_SpecialN_CheckLoopInput(gobj);
 }
-pub fn ftKb_FxSpecialAirNEnd_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftKb_FxSpecialAirNEnd_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftKb_FxSpecialAirNEnd_IASA");}
 
 /// `ftKb_SpecialNNs_800FEC78`: true while Kirby (Ness hat) holds PK Flash charge.
 pub fn ftKb_SpecialNNs_800FEC78(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftKb_SpecialNNs_800FEC78");
     unsafe {
         if !gobj.is_null() {
             let fp = fpp(gobj);
@@ -715,6 +746,7 @@ pub fn ftKb_SpecialNNs_800FEC78(gobj: *mut HSD_GObj) -> bool {
 
 /// `ftKb_SpecialNNs_800FECBC`: forget the PK Flash item.
 pub fn ftKb_SpecialNNs_800FECBC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialNNs_800FECBC");
     unsafe {
         if !gobj.is_null() {
             let fp = fpp(gobj);
@@ -727,6 +759,7 @@ pub fn ftKb_SpecialNNs_800FECBC(gobj: *mut HSD_GObj) {
 
 /// `ftKb_SpecialNNs_800FECE8`: destroy the PK Flash item.
 pub fn ftKb_SpecialNNs_800FECE8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialNNs_800FECE8");
     unsafe {
         if !gobj.is_null() {
             let fp = fpp(gobj);

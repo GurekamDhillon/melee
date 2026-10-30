@@ -85,6 +85,7 @@ pub mod ext {
 
 /// gmscenelaunch.h `SceneLaunch_HudCount`: the highest occupied slot (P5/P6) selects the HUD layout.
 pub fn SceneLaunch_HudCount(start: &mut StartMeleeData) {
+    melee_core::ct!("SceneLaunch_HudCount");
     for i in 4..GM_MAX {
         if start.players[i].slot_type != PKIND_NA {
             start.rules.set_x0_3((i + 1) as u32);
@@ -94,6 +95,7 @@ pub fn SceneLaunch_HudCount(start: &mut StartMeleeData) {
 
 /// gmscenelaunch.h `SceneLaunch_UntintedEnemy`: an opposing-team slot that keeps its base costume.
 pub fn SceneLaunch_UntintedEnemy(start: &StartMeleeData, i: usize) -> bool {
+    melee_core::ct!("SceneLaunch_UntintedEnemy");
     ext::SceneLaunch_Active() != 0
         && ext::SceneLaunch_EnemyTeamColors() != 0
         && start.rules.is_teams != 0
@@ -103,6 +105,7 @@ pub fn SceneLaunch_UntintedEnemy(start: &StartMeleeData, i: usize) -> bool {
 
 /// gmscenelaunch.h `SceneLaunch_ApplyTeamCostumes`: share costumes without duplicate tinting on the opposing team.
 pub fn SceneLaunch_ApplyTeamCostumes(start: &mut StartMeleeData) {
+    melee_core::ct!("SceneLaunch_ApplyTeamCostumes");
     for i in 0..GM_MAX {
         if SceneLaunch_UntintedEnemy(start, i) {
             let p = &mut start.players[i];
@@ -120,6 +123,7 @@ pub fn SceneLaunch_ApplyTeamCostumes(start: &mut StartMeleeData) {
 
 /// `gm_SetupSubColors(start)`: in team play, bump the tint of a player who shares character, team and tint with another.
 pub fn gm_SetupSubColors(start: &mut StartMeleeData) {
+    melee_core::ct!("gm_SetupSubColors");
     if start.rules.is_teams != 1 {
         return;
     }
@@ -149,6 +153,7 @@ pub fn gm_SetupSubColors(start: &mut StartMeleeData) {
 
 /// `SceneLaunch_SixPresentationTest(force)` (TARGET_PC): the six-player HUD/tint self test; 0 on success, 1 on failure.
 pub fn SceneLaunch_SixPresentationTest(force: i32) -> i32 {
+    melee_core::ct!("SceneLaunch_SixPresentationTest");
     let mut start = StartMeleeData::zeroed();
     start.rules.set_x0_3(4);
     start.rules.is_teams = 1;
@@ -193,6 +198,7 @@ pub fn SceneLaunch_SixPresentationTest(force: i32) -> i32 {
 
 /// `gm_SetupSuddenDeath(start, end)`: restart the match as one-stock sudden death between the players who did not lose.
 pub fn gm_SetupSuddenDeath(start: &mut StartMeleeData, end: &MatchEnd) {
+    melee_core::ct!("gm_SetupSuddenDeath");
     start.rules.set_match_kind(MatchKind_Stock as u32);
     start.rules.set_timer_enabled(0);
     start.rules.set_x2_5(0);
@@ -212,6 +218,7 @@ pub fn gm_SetupSuddenDeath(start: &mut StartMeleeData, end: &MatchEnd) {
 
 /// `gm_801B06B0(css_data, type, c_kind, stocks, color, arg5, level, slot)`: reset the VS data and seed the CSS player's slot.
 pub fn gm_801B06B0(css_data: &mut CSSData, ty: u8, c_kind: i8, stocks: i8, color: i8, arg5: u8, level: u8, slot: u8) {
+    melee_core::ct!("gm_801B06B0");
     ext::gm_InitVsMode(&mut css_data.vs);
     css_data.match_type = ty;
     css_data.unk_0x0 = (slot as u16).wrapping_add(1);

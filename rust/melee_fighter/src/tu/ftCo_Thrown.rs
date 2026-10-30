@@ -78,14 +78,17 @@ fn part_joint(f: &Fighter, part: Fighter_Part) -> *mut HSD_JObj {
 
 /// `ftCo_800DE508` as the `accessory1_cb` value.
 pub unsafe extern "C" fn ftCo_800DE508_cb(g: G) {
+    melee_core::ct!("ftCo_800DE508_cb");
     ftCo_800DE508(g)
 }
 /// `fn_800DE798` as the `x21EC` value.
 pub unsafe extern "C" fn fn_800DE798_cb(g: G) {
+    melee_core::ct!("fn_800DE798_cb");
     fn_800DE798(g)
 }
 
 pub fn ftCo_800DE3FC(g: G, msid: i32, anim_speed: f32) {
+    melee_core::ct!("ftCo_800DE3FC");
     unsafe {
         let f = fp(g);
         let thrower = fp(f.victim_gobj);
@@ -111,6 +114,7 @@ pub fn ftCo_800DE3FC(g: G, msid: i32, anim_speed: f32) {
 
 /// Assigned to `Fighter::accessory1_cb`.
 pub fn ftCo_800DE508(g: G) {
+    melee_core::ct!("ftCo_800DE508");
     let f = fp(g);
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ext::lb_8000B1CC(part_joint(f, FtPart_XRotN), core::ptr::null(), &mut pos);
@@ -123,6 +127,7 @@ pub fn ftCo_800DE508(g: G) {
 
 /// static `ftCo_800DE5A4`.
 pub fn ftCo_800DE5A4(g: G) {
+    melee_core::ct!("ftCo_800DE5A4");
     unsafe {
         let f = fp(g);
         unsafe {
@@ -156,27 +161,31 @@ pub fn ftCo_800DE5A4(g: G) {
 }
 
 pub fn ftCo_ThrownF_Anim(g: G) {
+    melee_core::ct!("ftCo_ThrownF_Anim");
     ftCo_800DE5A4(g);
 }
-pub fn ftCo_ThrownF_IASA(_g: G) {}
-pub fn ftCo_ThrownF_Phys(_g: G) {}
-pub fn ftCo_ThrownF_Coll(_g: G) {}
+pub fn ftCo_ThrownF_IASA(_g: G) { melee_core::ct!("ftCo_ThrownF_IASA");}
+pub fn ftCo_ThrownF_Phys(_g: G) { melee_core::ct!("ftCo_ThrownF_Phys");}
+pub fn ftCo_ThrownF_Coll(_g: G) { melee_core::ct!("ftCo_ThrownF_Coll");}
 
 pub fn ftCo_ThrownB_Anim(g: G) {
+    melee_core::ct!("ftCo_ThrownB_Anim");
     ftCo_800DE5A4(g);
 }
-pub fn ftCo_ThrownB_IASA(_g: G) {}
-pub fn ftCo_ThrownB_Phys(_g: G) {}
-pub fn ftCo_ThrownB_Coll(_g: G) {}
+pub fn ftCo_ThrownB_IASA(_g: G) { melee_core::ct!("ftCo_ThrownB_IASA");}
+pub fn ftCo_ThrownB_Phys(_g: G) { melee_core::ct!("ftCo_ThrownB_Phys");}
+pub fn ftCo_ThrownB_Coll(_g: G) { melee_core::ct!("ftCo_ThrownB_Coll");}
 
 pub fn ftCo_ThrownHi_Anim(g: G) {
+    melee_core::ct!("ftCo_ThrownHi_Anim");
     ftCo_800DE5A4(g);
 }
-pub fn ftCo_ThrownHi_IASA(_g: G) {}
-pub fn ftCo_ThrownHi_Phys(_g: G) {}
-pub fn ftCo_ThrownHi_Coll(_g: G) {}
+pub fn ftCo_ThrownHi_IASA(_g: G) { melee_core::ct!("ftCo_ThrownHi_IASA");}
+pub fn ftCo_ThrownHi_Phys(_g: G) { melee_core::ct!("ftCo_ThrownHi_Phys");}
+pub fn ftCo_ThrownHi_Coll(_g: G) { melee_core::ct!("ftCo_ThrownHi_Coll");}
 
 pub fn ftCo_ThrownHi_Cam(g: G) {
+    melee_core::ct!("ftCo_ThrownHi_Cam");
     let victim = fp(fp(g).victim_gobj);
     if is_kirby(victim.kind) && victim.motion_id == ftCo_MS_ThrowHi as i32 {
         ext::ftCamera_800762F4(g);
@@ -186,13 +195,15 @@ pub fn ftCo_ThrownHi_Cam(g: G) {
 }
 
 pub fn ftCo_ThrownLw_Anim(g: G) {
+    melee_core::ct!("ftCo_ThrownLw_Anim");
     ftCo_800DE5A4(g);
 }
-pub fn ftCo_ThrownLw_IASA(_g: G) {}
-pub fn ftCo_ThrownLw_Phys(_g: G) {}
-pub fn ftCo_ThrownLw_Coll(_g: G) {}
+pub fn ftCo_ThrownLw_IASA(_g: G) { melee_core::ct!("ftCo_ThrownLw_IASA");}
+pub fn ftCo_ThrownLw_Phys(_g: G) { melee_core::ct!("ftCo_ThrownLw_Phys");}
+pub fn ftCo_ThrownLw_Coll(_g: G) { melee_core::ct!("ftCo_ThrownLw_Coll");}
 
 pub fn fn_800DE798(g: G) {
+    melee_core::ct!("fn_800DE798");
     unsafe {
         let f = fp(g);
         let v = unsafe { f.mv.co.fighterthrow.victim };
@@ -201,6 +212,7 @@ pub fn fn_800DE798(g: G) {
 }
 
 pub fn ftCo_800DE7C0(g: G, victim: G, is_upward: bool) {
+    melee_core::ct!("ftCo_800DE7C0");
     unsafe {
         let f = fp(g);
         if !victim.is_null() {
@@ -217,6 +229,7 @@ pub fn ftCo_800DE7C0(g: G, victim: G, is_upward: bool) {
 }
 
 pub fn ftCo_800DE854(g: G) {
+    melee_core::ct!("ftCo_800DE854");
     let f = fp(g);
     let thrower_gobj = f.victim_gobj;
     let thrower: *mut Fighter = fp(thrower_gobj);
@@ -247,6 +260,7 @@ pub fn ftCo_800DE854(g: G) {
 }
 
 pub fn ftCo_800DE920(g: G, anim_timer: f32) {
+    melee_core::ct!("ftCo_800DE920");
     unsafe {
         let f = fp(g);
         f.mv.co.thrown.unk_bool = 1;
@@ -261,6 +275,7 @@ pub fn ftCo_800DE920(g: G, anim_timer: f32) {
 }
 
 pub fn ftCo_800DE974(g: G) {
+    melee_core::ct!("ftCo_800DE974");
     unsafe {
         fp(g).mv.co.thrown.unk_bool = 0;
         ext::ftAnim_SetAnimRate(g, 1.0);

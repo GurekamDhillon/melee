@@ -280,6 +280,7 @@ pub struct RetailRow {
 
 /// Install one retail kind's row (the C's static initialisers; TODO: called by melee_chara).
 pub fn install_retail_row(kind: usize, r: &RetailRow) {
+    melee_core::ct!("install_retail_row");
     unsafe {
         CostumeListsForeachCharacter[kind].costume_list = r.costume_list;
         CostumeListsForeachCharacter[kind].numCostumes = r.num_costumes;
@@ -339,10 +340,11 @@ fn cstr(p: *const c_char) -> String {
 // ---- functions --------------------------------------------------------------------------------
 
 /// `order_bss` (MUST_MATCH only: references the bss tables in order; no effect).
-pub fn order_bss() {}
+pub fn order_bss() { melee_core::ct!("order_bss");}
 
 /// `ft_8008521C`: self_vel = joint translation - cur_pos.
 pub fn ft_8008521C(g: G) {
+    melee_core::ct!("ft_8008521C");
     let f = fp(g);
     let j = unsafe { (*g).hsd_obj } as *mut HSD_JObj;
     assert!(!j.is_null(), "jobj.h: jobj");
@@ -397,6 +399,7 @@ unsafe fn gd_data_copy(source: *const c_void, bytes: usize) -> *mut c_void {
 
 /// `GenoDefine_ResetDescriptors`.
 pub fn GenoDefine_ResetDescriptors() {
+    melee_core::ct!("GenoDefine_ResetDescriptors");
     unsafe {
         for t in 0..GENO_TMPL_COUNT {
             GenoDefine_RowBaseline[t] = core::ptr::null_mut();
@@ -408,6 +411,7 @@ pub fn GenoDefine_ResetDescriptors() {
 
 /// `GenoDefine_CaptureBase`: capture a template fighter's row table before the first attachment can change script pointers.
 pub fn GenoDefine_CaptureBase(kind: i32) {
+    melee_core::ct!("GenoDefine_CaptureBase");
     let t = GenoDefine_TmplIndex(kind);
     unsafe {
         if ext::Geno_DefineCount() != 0 && GenoDefine_RowBaseline[t].is_null() && !gFtDataList[kind as usize].is_null() {
@@ -421,6 +425,7 @@ pub fn GenoDefine_CaptureBase(kind: i32) {
 
 /// `GenoDefine_InitKinds`: give every registered define its kind's tables (inherited from its base kind).
 pub fn GenoDefine_InitKinds() {
+    melee_core::ct!("GenoDefine_InitKinds");
     let n = ext::Geno_DefineCount();
     for i in 0..n {
         let ck = ext::Geno_DefineCKAt(i);
@@ -503,6 +508,7 @@ pub fn GenoDefine_InitKinds() {
 
 /// `GenoDefine_RestPoseTree`: a base "none" define's rest-pose joint tree (the guard's pose blend), NULL for any other fighter.
 pub fn GenoDefine_RestPoseTree(fp: &mut Fighter) -> *mut HSD_Joint {
+    melee_core::ct!("GenoDefine_RestPoseTree");
     if ext::Geno_DefineIsNone(fp.kind as i32) == 0 || ext::Geno_DefineTemplateSkeleton(fp.kind as i32) != 0 {
         return core::ptr::null_mut();
     }
@@ -514,6 +520,7 @@ pub fn GenoDefine_RestPoseTree(fp: &mut Fighter) -> *mut HSD_Joint {
 
 /// `GenoDefine_BindFighter`: a define's fighter takes the define's own motion-state rows.
 pub fn GenoDefine_BindFighter(fp: &mut Fighter) {
+    melee_core::ct!("GenoDefine_BindFighter");
     if ext::Geno_DefineBaseKind(fp.kind as i32) < 0 {
         return;
     }
@@ -526,6 +533,7 @@ pub fn GenoDefine_BindFighter(fp: &mut Fighter) {
 
 /// `ft_800852B0`: scene reset of every loaded-file pointer.
 pub fn ft_800852B0() {
+    melee_core::ct!("ft_800852B0");
     ext::GenoGame_ClearProfileStorage();
     ext::GenoDefine_ResetDescriptors();
     unsafe {
@@ -551,12 +559,14 @@ pub fn ft_800852B0() {
 
 /// `ft_8008549C`: clear the per-kind reference counters.
 pub fn ft_8008549C() {
+    melee_core::ct!("ft_8008549C");
     unsafe { ft_8045996C = [0; KMAX] };
 }
 
 /// `ftData_MexMotionRowOk`: a real motion row of an m-ex file (name NULL or in the archive,
 /// script in the archive).
 pub fn ftData_MexMotionRowOk(row: &Fighter_WaitAnimData, lo: *const u8, hi: *const u8) -> bool {
+    melee_core::ct!("ftData_MexMotionRowOk");
     let name = row.x0 as *const u8;
     let cmd = row.xC as *const u8;
     (name.is_null() || (name >= lo && name < hi)) && !cmd.is_null() && cmd >= lo && cmd < hi
@@ -564,6 +574,7 @@ pub fn ftData_MexMotionRowOk(row: &Fighter_WaitAnimData, lo: *const u8, hi: *con
 
 /// `ftData_MexAnimFlags`: the authoring-kind bits an m-ex motion gets.
 pub fn ftData_MexAnimFlags(flags: u32, kind: i32) -> u32 {
+    melee_core::ct!("ftData_MexAnimFlags");
     if flags & 0x3F == 0x21 {
         return flags;
     }
@@ -581,6 +592,7 @@ static mut ftData_PcFixtureString: Fighter_CostumeStrings = Fighter_CostumeStrin
 
 /// `ftData_PcFixtureAt`.
 pub fn ftData_PcFixtureAt(_internal: i32, _c: i32, which: i32) -> *const c_char {
+    melee_core::ct!("ftData_PcFixtureAt");
     unsafe {
         match which {
             0 => ftData_PcFixtureString.dat_filename,
@@ -601,6 +613,7 @@ static mut ftData_PcRows: PcRows = PcRows { fk: 0, native: 0, native_at: None };
 
 /// `ftData_PcRowString`: own rows first, then the skins registry's.
 pub fn ftData_PcRowString(internal: i32, c: i32, which: i32) -> *const c_char {
+    melee_core::ct!("ftData_PcRowString");
     unsafe {
         if c < ftData_PcRows.native {
             return (ftData_PcRows.native_at.expect("native_at"))(internal, c, which);
@@ -613,6 +626,7 @@ pub fn ftData_PcRowString(internal: i32, c: i32, which: i32) -> *const c_char {
 /// first `have` kept from the current lists.
 pub fn ftData_PcInstallCostumes(kind: i32, count: i32, have: i32, string_at: StringAt, internal: i32,
                                 allocate: fn(usize) -> *mut c_void) {
+    melee_core::ct!("ftData_PcInstallCostumes");
     assert!(count > 0 && count <= 255 && have <= count, "invalid costume descriptor count");
     let k = kind as usize;
     let n = count as usize;
@@ -643,6 +657,7 @@ fn pc_costume_alloc(n: usize) -> *mut c_void {
 
 /// `ftData_PcInstallRows`.
 pub fn ftData_PcInstallRows(fk: i32, native: i32, have: i32, native_at: StringAt, internal: i32) {
+    melee_core::ct!("ftData_PcInstallRows");
     let added = ext::Skins_Added(fk);
     unsafe {
         ftData_PcRows = PcRows { fk, native, native_at: Some(native_at) };
@@ -681,6 +696,7 @@ fn nullp<T>(v: &*mut T) -> bool { v.is_null() }
 
 /// `ftData_MexInitKinds`: fill the m-ex kind slots from MxDt.dat, once.
 pub fn ftData_MexInitKinds() {
+    melee_core::ct!("ftData_MexInitKinds");
     unsafe {
         if MEX_INIT_DONE {
             return;
@@ -788,6 +804,7 @@ pub fn ftData_MexInitKinds() {
 
 /// `ftData_PcRetailKindOfOnLoad`: the retail kind (0..26) whose onLoad is `native`, or -1.
 pub fn ftData_PcRetailKindOfOnLoad(native: u32) -> i32 {
+    melee_core::ct!("ftData_PcRetailKindOfOnLoad");
     for r in 0..=26 {
         let p = unsafe { ftData_OnLoad[r] }.map_or(0usize, |f| f as usize);
         if p as u32 == native {
@@ -799,12 +816,14 @@ pub fn ftData_PcRetailKindOfOnLoad(native: u32) -> i32 {
 
 /// `ftData_IsMexKind`.
 pub fn ftData_IsMexKind(kind: i32) -> bool {
+    melee_core::ct!("ftData_IsMexKind");
     ext::Geno_DefineBaseKind(kind) < 0 && kind >= MEX0 && kind < Ft_Kind_Max as i32
         && unsafe { !ftData_803C1F40[kind as usize].a.is_null() }
 }
 
 /// `ftData_80085560`: adjust a kind's reference count; negative is fatal.
 pub fn ftData_80085560(idx: i32, increment: i32) {
+    melee_core::ct!("ftData_80085560");
     unsafe {
         ft_8045996C[idx as usize] = ft_8045996C[idx as usize].wrapping_add(increment);
         if ft_8045996C[idx as usize] < 0 {
@@ -816,6 +835,7 @@ pub fn ftData_80085560(idx: i32, increment: i32) {
 
 /// `ftData_800855C8`: queue a kind's files (costume `color`, 0xFF = all) for async load.
 pub fn ftData_800855C8(kind: i32, mut color: u8) {
+    melee_core::ct!("ftData_800855C8");
     ftData_MexInitKinds();
     ext::GenoDefine_InitKinds();
     let k = kind as usize;
@@ -862,6 +882,7 @@ unsafe fn table_bound(fd: *mut ftData, lo: *mut u8, arch_lo: *mut u8, arch_hi: *
 
 /// `ftData_8008572C`: load a kind's Pl file (m-ex: rewrite its motions' authoring kind).
 pub fn ftData_8008572C(kind: i32) {
+    melee_core::ct!("ftData_8008572C");
     ftData_MexInitKinds();
     ext::GenoDefine_InitKinds();
     let base = ext::Geno_DefineBaseKind(kind);
@@ -946,6 +967,7 @@ pub fn ftData_8008572C(kind: i32) {
 
 /// `ftData_8008578C`: Kirby's copy-hat costume load.
 pub fn ftData_8008578C(arg0: i32, mut color: u8) {
+    melee_core::ct!("ftData_8008578C");
     let n = unsafe { CostumeListsForeachCharacter[Ft_Kind_Kirby as usize].numCostumes };
     if color != 0xFF && color >= n {
         color = 0;
@@ -955,6 +977,7 @@ pub fn ftData_8008578C(arg0: i32, mut color: u8) {
 
 /// `ftData_800857E0`.
 pub fn ftData_800857E0(kind: i32) {
+    melee_core::ct!("ftData_800857E0");
     if let Some(f) = unsafe { ftData_UnkMotionStates5[kind as usize] } {
         unsafe { f() };
     }
@@ -974,6 +997,7 @@ unsafe fn load_costume(k: usize, costume_id: usize, t: *mut UnkCostumeStruct) {
 
 /// `ftData_80085820`: load one costume (TARGET_PC: an id past the count falls back to 0).
 pub fn ftData_80085820(kind: i32, mut costume_id: i32) {
+    melee_core::ct!("ftData_80085820");
     let k = kind as usize;
     unsafe {
         let n = CostumeListsForeachCharacter[k].numCostumes as i32;
@@ -997,6 +1021,7 @@ pub fn ftData_80085820(kind: i32, mut costume_id: i32) {
 
 /// `ftData_800858E4`: load one costume (no range check).
 pub fn ftData_800858E4(kind: i32, costume_id: i32) {
+    melee_core::ct!("ftData_800858E4");
     let k = kind as usize;
     unsafe {
         let t = CostumeListsForeachCharacter[k].costume_list.add(costume_id as usize);
@@ -1006,6 +1031,7 @@ pub fn ftData_800858E4(kind: i32, costume_id: i32) {
 
 /// `ftData_800859A8`: release `fp`'s x61C slot unless another fighter shares it.
 pub fn ftData_800859A8(f: *mut Fighter) {
+    melee_core::ct!("ftData_800859A8");
     let r6 = unsafe { (*f).x61C };
     if r6 == -1 {
         return;
@@ -1023,6 +1049,7 @@ pub fn ftData_800859A8(f: *mut Fighter) {
 
 /// `ftData_80085A14`: load a kind's animation bank and bind its motion rows.
 pub fn ftData_80085A14(kind: i32) {
+    melee_core::ct!("ftData_80085A14");
     let k = kind as usize;
     unsafe {
         let fd = gFtDataList[k];
@@ -1091,6 +1118,7 @@ static mut THROW: Option<Box<ThrowState>> = None;
 
 /// The Geno thrown stand-in bank state (`ftData_ThrowBanks`, `ftData_ThrowBankLoads`, ...).
 pub fn throw_state() -> &'static mut ThrowState {
+    melee_core::ct!("throw_state");
     throw()
 }
 
@@ -1110,6 +1138,7 @@ fn throw() -> &'static mut ThrowState {
 
 /// `ftData_ThrowArenaAlloc`: bump from the persist region, else heap 0.
 pub fn ftData_ThrowArenaAlloc(mut need: usize) -> *mut u8 {
+    melee_core::ct!("ftData_ThrowArenaAlloc");
     let t = throw();
     if t.region_cur.is_null() {
         let mut size = 0u32;
@@ -1130,6 +1159,7 @@ pub fn ftData_ThrowArenaAlloc(mut need: usize) -> *mut u8 {
 
 /// `ftData_ThrowBankLimit` (clamped 1..GENO_THROW_BANKS_MAX, read once).
 pub fn ftData_ThrowBankLimit() -> i32 {
+    melee_core::ct!("ftData_ThrowBankLimit");
     let t = throw();
     if t.limit == 0 {
         let mut l = ext::Geno_ThrowBankLimit(GENO_THROW_BANKS);
@@ -1146,6 +1176,7 @@ pub fn ftData_ThrowBankLimit() -> i32 {
 
 /// `ftData_ThrowBankReset`.
 pub fn ftData_ThrowBankReset() {
+    melee_core::ct!("ftData_ThrowBankReset");
     let t = throw();
     for b in t.banks.iter_mut() {
         b.kind = -1;
@@ -1161,6 +1192,7 @@ pub fn ftData_ThrowBankReset() {
 
 /// `ftData_ThrowBankReport`.
 pub fn ftData_ThrowBankReport(what: &str, kind: i32) {
+    melee_core::ct!("ftData_ThrowBankReport");
     let lim = ftData_ThrowBankLimit();
     let t = throw();
     let (mut n, mut arenas, mut bytes) = (0, 0, 0u32);
@@ -1177,6 +1209,7 @@ pub fn ftData_ThrowBankReport(what: &str, kind: i32) {
 
 /// `ftData_ThrowBankDrop`: forget a bank; no fighter may keep an animation key into it.
 pub fn ftData_ThrowBankDrop(b: &mut ThrowBank) {
+    melee_core::ct!("ftData_ThrowBankDrop");
     let mut g = ext::plink_fighter_head();
     let lo = b.buf as usize;
     let hi = lo + b.cap;
@@ -1207,6 +1240,7 @@ pub fn ftData_ThrowBankDrop(b: &mut ThrowBank) {
 
 /// `ftData_ThrownStandInPrepare`: at define load, the stand-in's Pl file and the arenas.
 pub fn ftData_ThrownStandInPrepare(kind: i32) {
+    melee_core::ct!("ftData_ThrownStandInPrepare");
     let lim = ftData_ThrowBankLimit();
     if kind < 0 || kind >= Ft_Kind_Max as i32 || kind == Ft_Kind_Nana as i32 {
         return;
@@ -1247,6 +1281,7 @@ pub fn ftData_ThrownStandInPrepare(kind: i32) {
 
 /// `ftData_ThrownStandInLoad`: read the stand-in's bank into an arena on first use (LRU).
 pub fn ftData_ThrownStandInLoad(kind: i32) {
+    melee_core::ct!("ftData_ThrownStandInLoad");
     let lim = ftData_ThrowBankLimit() as usize;
     if kind < 0 || kind >= Ft_Kind_Max as i32 || kind == Ft_Kind_Nana as i32 || throw().prepared[kind as usize] == 0 {
         return;
@@ -1326,6 +1361,7 @@ static mut STANDIN: Option<Box<Fighter>> = None;
 
 /// `ftData_ThrownStandIn`: the stand-in Fighter a thrown victim reads its rows from, or NULL.
 pub fn ftData_ThrownStandIn(kind: i32) -> *mut Fighter {
+    melee_core::ct!("ftData_ThrownStandIn");
     if kind < 0 || kind >= Ft_Kind_Max as i32 || kind == Ft_Kind_Nana as i32 {
         return core::ptr::null_mut();
     }
@@ -1350,6 +1386,7 @@ pub fn ftData_ThrownStandIn(kind: i32) -> *mut Fighter {
 
 /// `ftData_80085B10`: per-fighter anim buffers + bank (+ a Geno define's thrown stand-ins).
 pub fn ftData_80085B10(f: &mut Fighter) {
+    melee_core::ct!("ftData_80085B10");
     let kind = f.kind as i32;
     f.x59C = ext::HSD_ObjAlloc_fighter_x59C();
     f.x5A0 = ext::HSD_ObjAlloc_fighter_x59C();
@@ -1371,6 +1408,7 @@ pub fn ftData_80085B10(f: &mut Fighter) {
 
 /// `ftData_80085B98`: bind demo rows `arg1..=arg2` to the demo archive.
 pub fn ftData_80085B98(f: &mut Fighter, arg1: i32, arg2: i32) {
+    melee_core::ct!("ftData_80085B98");
     let k = f.kind as usize;
     let mut r30: u32 = unsafe { ext::gc_addr32(ftData_UnkIntPairs[k].data) };
     if ext::Geno_DefineIsNone(f.kind as i32) != 0 && ext::Geno_DefineTemplateSkeleton(f.kind as i32) == 0 {
@@ -1447,6 +1485,7 @@ fn load_figatree(f: *mut Fighter, src: *mut Fighter, msid: i32, key: *mut c_void
 
 /// `ftData_80085CD8`: load motion `msid` (read from `arg1`'s table) as `fp`'s main figatree.
 pub fn ftData_80085CD8(f: *mut Fighter, arg1: *mut Fighter, msid: i32) {
+    melee_core::ct!("ftData_80085CD8");
     unsafe {
         // C: `int < u32` compares as unsigned.
         if !((msid as u32) < (*arg1).x58C) {
@@ -1461,6 +1500,7 @@ pub fn ftData_80085CD8(f: *mut Fighter, arg1: *mut Fighter, msid: i32) {
 
 /// `ftData_80085E50`: load motion `msid` as `arg0`'s secondary figatree; returns it.
 pub fn ftData_80085E50(f: *mut Fighter, msid: i32) -> *mut FigaTree {
+    melee_core::ct!("ftData_80085E50");
     unsafe {
         if !((msid as u32) < (*f).x58C) {
             return core::ptr::null_mut();
@@ -1477,6 +1517,7 @@ pub fn ftData_80085E50(f: *mut Fighter, msid: i32) -> *mut FigaTree {
 /// Returns the row itself: the C's `ftData_80085FD4_ret*` is a cast of it (same GC layout; the
 /// native `ftData_80085FD4_ret` does not share the row's layout, so callers read the row).
 pub fn ftData_80085FD4(f: &mut Fighter, msid: i32) -> *mut Fighter_WaitAnimData {
+    melee_core::ct!("ftData_80085FD4");
     unsafe {
         if f.kind == Ft_Kind_Nana
             && ext::Player_GetPlayerSlotType(f.player_id as i32) != Gm_PKind_Demo as i32
@@ -1490,11 +1531,13 @@ pub fn ftData_80085FD4(f: &mut Fighter, msid: i32) -> *mut Fighter_WaitAnimData 
 
 /// `ftData_80085FD4(...)->x8` for the hooks that read only the size word.
 pub fn ftData_80085FD4_x8(f: &mut Fighter, msid: i32) -> usize {
+    melee_core::ct!("ftData_80085FD4_x8");
     unsafe { (*ftData_80085FD4(f, msid)).x8 as u32 as usize }
 }
 
 /// `ftData_80086060`: Nana's Popo (outside demos), else NULL.
 pub fn ftData_80086060(f: &mut Fighter) -> *mut Fighter {
+    melee_core::ct!("ftData_80086060");
     if f.kind == Ft_Kind_Nana && ext::Player_GetPlayerSlotType(f.player_id as i32) != Gm_PKind_Demo as i32 {
         let g = ext::Player_GetEntityAtIndex(f.player_id as i32, 0);
         if !g.is_null() {

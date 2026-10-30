@@ -36,20 +36,24 @@ pub const ftGn_Init_CostumeStrings: [[&str; 2]; 5] = [
 ];
 
 pub fn ftGn_Init_OnItemPickup(gobj: *mut HSD_GObj, flag: i32) {
+    melee_core::ct!("ftGn_Init_OnItemPickup");
     Fighter_OnItemPickup(gobj, flag, 1, 1);
 }
 
 pub fn ftGn_Init_OnItemDrop(gobj: *mut HSD_GObj, bool1: i32) {
+    melee_core::ct!("ftGn_Init_OnItemDrop");
     Fighter_OnItemDrop(gobj, bool1, 1, 1);
 }
 
 /// Ganondorf shares Captain Falcon's attribute block layout.
 pub fn ftGn_Init_OnLoad(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGn_Init_OnLoad");
     unsafe {
         crate::tu::ftcaptain::ftCa_Init_OnLoadForGanon((*gobj).user_data as *mut Fighter);
     }
 }
 
 pub fn ftGn_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGn_Init_LoadSpecialAttrs");
     crate::tu::ftcaptain::ftCa_Init_LoadSpecialAttrs(gobj);
 }

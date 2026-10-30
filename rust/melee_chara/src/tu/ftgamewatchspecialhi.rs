@@ -82,25 +82,30 @@ fn stick_get_dir(x1: f32, x2: f32) -> f32 {
 
 /// `ftGw_SpecialHi_ItemRescueSetup` as a Fighter callback entry (accessory4_cb).
 pub unsafe extern "C" fn cb_ftGw_SpecialHi_ItemRescueSetup(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftGw_SpecialHi_ItemRescueSetup");
     ftGw_SpecialHi_ItemRescueSetup(g);
 }
 /// `ftGw_SpecialHi_ItemRescueEnterHitlag` as a Fighter callback entry (pre_hitlag_cb).
 pub unsafe extern "C" fn cb_ftGw_SpecialHi_ItemRescueEnterHitlag(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftGw_SpecialHi_ItemRescueEnterHitlag");
     ftGw_SpecialHi_ItemRescueEnterHitlag(g);
 }
 /// `ftGw_SpecialHi_ItemRescueExitHitlag` as a Fighter callback entry (post_hitlag_cb).
 pub unsafe extern "C" fn cb_ftGw_SpecialHi_ItemRescueExitHitlag(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftGw_SpecialHi_ItemRescueExitHitlag");
     ftGw_SpecialHi_ItemRescueExitHitlag(g);
 }
 
 /// Spawn height of the Fire Rescue item: `-((2.5f * scale) - y)`, fused by clang as one fmadds.
 #[inline(always)]
 pub fn rescue_spawn_y(scale: f32, y: f32) -> f32 {
+    melee_core::ct!("rescue_spawn_y");
     -fmadds(2.5, scale, -y)
 }
 
 /// Create the Fire Rescue item.
 pub fn ftGw_SpecialHi_ItemRescueSetup(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialHi_ItemRescueSetup");
     unsafe {
         let mut sp10 = Vec { x: 0.0, y: 0.0, z: 0.0 };
         let fp = fpp(gobj);
@@ -129,6 +134,7 @@ pub fn ftGw_SpecialHi_ItemRescueSetup(gobj: *mut HSD_GObj) {
 
 /// Check whether G&W has left Fire Rescue (true = remove the item).
 pub fn ftGw_SpecialHi_ItemCheckRescueRemove(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftGw_SpecialHi_ItemCheckRescueRemove");
     unsafe {
         let msid = (*fpp(gobj)).motion_id;
         !(msid == ftGw_MS_SpecialHi as FtMotionId || msid == ftGw_MS_SpecialAirHi as FtMotionId)
@@ -137,6 +143,7 @@ pub fn ftGw_SpecialHi_ItemCheckRescueRemove(gobj: *mut HSD_GObj) -> bool {
 
 /// Remove the Fire Rescue item.
 pub fn ftGw_SpecialHi_ItemRescueRemove(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialHi_ItemRescueRemove");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.gw.x226C_rescueGObj.is_null() {
@@ -148,6 +155,7 @@ pub fn ftGw_SpecialHi_ItemRescueRemove(gobj: *mut HSD_GObj) {
 
 /// Apply hitlag to the Fire Rescue item.
 pub fn ftGw_SpecialHi_ItemRescueEnterHitlag(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialHi_ItemRescueEnterHitlag");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.gw.x226C_rescueGObj.is_null() {
@@ -158,6 +166,7 @@ pub fn ftGw_SpecialHi_ItemRescueEnterHitlag(gobj: *mut HSD_GObj) {
 
 /// Remove hitlag for the Fire Rescue item.
 pub fn ftGw_SpecialHi_ItemRescueExitHitlag(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialHi_ItemRescueExitHitlag");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.gw.x226C_rescueGObj.is_null() {
@@ -168,6 +177,7 @@ pub fn ftGw_SpecialHi_ItemRescueExitHitlag(gobj: *mut HSD_GObj) {
 
 /// Grounded Fire Rescue Motion State handler.
 pub fn ftGw_SpecialHi_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialHi_Enter");
     unsafe {
         let fp = fpp(gobj);
         (*fp).x74_self_accel.y = 0.0;
@@ -182,6 +192,7 @@ pub fn ftGw_SpecialHi_Enter(gobj: *mut HSD_GObj) {
 
 /// Aerial Fire Rescue Motion State handler.
 pub fn ftGw_SpecialAirHi_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialAirHi_Enter");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_8007D60C(&mut *fp);
@@ -194,11 +205,13 @@ pub fn ftGw_SpecialAirHi_Enter(gobj: *mut HSD_GObj) {
 
 /// Grounded Fire Rescue Animation callback.
 pub fn ftGw_SpecialHi_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialHi_Anim");
     ftGw_SpecialAirHi_Anim(gobj);
 }
 
 /// Aerial Fire Rescue Animation callback.
 pub fn ftGw_SpecialAirHi_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialAirHi_Anim");
     unsafe {
         let gaw_attrs = (*fpp(gobj)).dat_attrs as *const ftGameWatchAttributes;
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -213,11 +226,13 @@ pub fn ftGw_SpecialAirHi_Anim(gobj: *mut HSD_GObj) {
 
 /// Grounded Fire Rescue IASA callback.
 pub fn ftGw_SpecialHi_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialHi_IASA");
     ftGw_SpecialAirHi_IASA(gobj);
 }
 
 /// Aerial Fire Rescue IASA callback: aim the rescue once the stick passes the threshold.
 pub fn ftGw_SpecialAirHi_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialAirHi_IASA");
     unsafe {
         let fp = fpp(gobj);
         let gaw_attrs = (*fp).dat_attrs as *const ftGameWatchAttributes;
@@ -244,11 +259,13 @@ pub fn ftGw_SpecialAirHi_IASA(gobj: *mut HSD_GObj) {
 
 /// Grounded Fire Rescue Collision callback.
 pub fn ftGw_SpecialHi_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialHi_Coll");
     ftGw_SpecialAirHi_Coll(gobj);
 }
 
 /// Aerial Fire Rescue Collision callback.
 pub fn ftGw_SpecialAirHi_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialAirHi_Coll");
     unsafe {
         let fp = fpp(gobj);
         let gaw_attrs = (*fp).dat_attrs as *const ftGameWatchAttributes;

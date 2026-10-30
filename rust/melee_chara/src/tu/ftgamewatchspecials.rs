@@ -96,19 +96,23 @@ const transition_flags: u32 = (Ft_MF_KeepColAnimHitStatus
 
 /// `ftGw_SpecialS_ItemJudgementSetup` as a Fighter callback entry (accessory4_cb).
 pub unsafe extern "C" fn cb_ftGw_SpecialS_ItemJudgementSetup(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftGw_SpecialS_ItemJudgementSetup");
     ftGw_SpecialS_ItemJudgementSetup(g);
 }
 /// `ftGw_SpecialS_ItemJudgementEnterHitlag` as a Fighter callback entry (pre_hitlag_cb).
 pub unsafe extern "C" fn cb_ftGw_SpecialS_ItemJudgementEnterHitlag(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftGw_SpecialS_ItemJudgementEnterHitlag");
     ftGw_SpecialS_ItemJudgementEnterHitlag(g);
 }
 /// `ftGw_SpecialS_ItemJudgementExitHitlag` as a Fighter callback entry (post_hitlag_cb).
 pub unsafe extern "C" fn cb_ftGw_SpecialS_ItemJudgementExitHitlag(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftGw_SpecialS_ItemJudgementExitHitlag");
     ftGw_SpecialS_ItemJudgementExitHitlag(g);
 }
 
 /// Create the Judgement item (and the number-9 effect item).
 pub fn ftGw_SpecialS_ItemJudgementSetup(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialS_ItemJudgementSetup");
     unsafe {
         let mut sp20 = Vec { x: 0.0, y: 0.0, z: 0.0 };
         let fp = fpp(gobj);
@@ -142,6 +146,7 @@ pub fn ftGw_SpecialS_ItemJudgementSetup(gobj: *mut HSD_GObj) {
 
 /// Set Judgement flags + clear pointers.
 pub fn ftGw_SpecialS_ItemJudgementSetFlag(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialS_ItemJudgementSetFlag");
     unsafe {
         let fp = fpp(gobj);
         ftGw_SpecialS_ItemJudgementExitHitlag(gobj);
@@ -153,6 +158,7 @@ pub fn ftGw_SpecialS_ItemJudgementSetFlag(gobj: *mut HSD_GObj) {
 
 /// Remove the Judgement item.
 pub fn ftGw_SpecialS_ItemJudgementRemove(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialS_ItemJudgementRemove");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.gw.x2264_judgementGObj.is_null() {
@@ -164,6 +170,7 @@ pub fn ftGw_SpecialS_ItemJudgementRemove(gobj: *mut HSD_GObj) {
 
 /// Apply hitlag to the Judgement item (static in the C).
 pub fn ftGw_SpecialS_ItemJudgementEnterHitlag(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialS_ItemJudgementEnterHitlag");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.gw.x2264_judgementGObj.is_null() {
@@ -174,6 +181,7 @@ pub fn ftGw_SpecialS_ItemJudgementEnterHitlag(gobj: *mut HSD_GObj) {
 
 /// Remove hitlag for the Judgement item (static in the C).
 pub fn ftGw_SpecialS_ItemJudgementExitHitlag(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialS_ItemJudgementExitHitlag");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.gw.x2264_judgementGObj.is_null() {
@@ -187,6 +195,7 @@ pub fn ftGw_SpecialS_ItemJudgementExitHitlag(gobj: *mut HSD_GObj) {
 /// The C leaves the unused tail of both 9-entry arrays and `result` uninitialised; the shipping
 /// build compiles with `-ftrivial-auto-var-init=zero`, so they are zero here.
 pub fn ftGw_SpecialS_GetRandomInt(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("ftGw_SpecialS_GetRandomInt");
     unsafe {
         let fp = fpp(gobj);
         let sa = (*fp).dat_attrs as *const ftGameWatchAttributes;
@@ -223,6 +232,7 @@ pub fn ftGw_SpecialS_GetRandomInt(gobj: *mut HSD_GObj) -> i32 {
 
 /// Grounded Judgement Motion State handler.
 pub fn ftGw_SpecialS_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialS_Enter");
     unsafe {
         let fp = fpp(gobj);
         (*fpp(gobj)).self_vel.y = 0.0;
@@ -243,6 +253,7 @@ pub fn ftGw_SpecialS_Enter(gobj: *mut HSD_GObj) {
 
 /// Aerial Judgement Motion State handler.
 pub fn ftGw_SpecialAirS_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialAirS_Enter");
     unsafe {
         let fp = fpp(gobj);
         let gaw_attrs = (*fp).dat_attrs as *const ftGameWatchAttributes;
@@ -264,6 +275,7 @@ pub fn ftGw_SpecialAirS_Enter(gobj: *mut HSD_GObj) {
 
 /// Aerial Judgement Physics callback.
 pub fn ftGw_SpecialAirS_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialAirS_Phys");
     unsafe {
         let fp = fpp(gobj);
         let ftcmd_var = (*fp).cmd_vars[0];
@@ -292,6 +304,7 @@ pub fn ftGw_SpecialAirS_Phys(gobj: *mut HSD_GObj) {
 
 /// Grounded Judgement Collision callback.
 pub fn ftGw_SpecialS_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialS_Coll");
     if st::ft_800827A0(gobj) == 0 {
         ftGw_SpecialS_GroundToAir(gobj);
     }
@@ -299,6 +312,7 @@ pub fn ftGw_SpecialS_Coll(gobj: *mut HSD_GObj) {
 
 /// Aerial Judgement Collision callback.
 pub fn ftGw_SpecialAirS_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialAirS_Coll");
     if st::ft_80081D0C(gobj) != 0 {
         ftGw_SpecialAirS_AirToGround(gobj);
     }
@@ -306,6 +320,7 @@ pub fn ftGw_SpecialAirS_Coll(gobj: *mut HSD_GObj) {
 
 /// Ground -> air Judgement Motion State handler (static in the C).
 pub fn ftGw_SpecialS_GroundToAir(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialS_GroundToAir");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_8007D5D4(&mut *fp);
@@ -327,6 +342,7 @@ pub fn ftGw_SpecialS_GroundToAir(gobj: *mut HSD_GObj) {
 
 /// Air -> ground Judgement Motion State handler (static in the C).
 pub fn ftGw_SpecialAirS_AirToGround(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialAirS_AirToGround");
     unsafe {
         let fp = fpp(gobj);
         (*fp).u.gw.x2234 = 0;

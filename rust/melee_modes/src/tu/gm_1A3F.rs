@@ -316,6 +316,7 @@ pub mod ext {
 /// `preloadState(state)`: preload the state's files, reserve the SIS buffer for its scene kind, mark the
 /// persistent heaps and reset the card/snap/toy/trophy-display state.
 pub unsafe fn preloadState(state: *mut GameModeState) {
+    melee_core::ct!("preloadState");
     ext::lbDvd_80018CF4((*state).preload as i32);
     let k = (*state).info.scene_kind as i32;
     if k == GS_STAFFROLL as i32 || k == GS_RESULTS as i32 {
@@ -342,11 +343,13 @@ pub unsafe fn preloadState(state: *mut GameModeState) {
 
 /// `firstState(state, next_id)`: the C's loop returns on its first pass (see `gm_ptr::firstState`).
 pub unsafe fn firstState(state: *mut GameModeState, next_id: u8) -> u8 {
+    melee_core::ct!("firstState");
     crate::gm_ptr::firstState(core::slice::from_raw_parts(state, 1), next_id)
 }
 
 /// `nextState(states)`: the id of the first state whose id is above the current one, else the first state's.
 pub unsafe fn nextState(states: *mut GameModeState) -> u8 {
+    melee_core::ct!("nextState");
     let mut next = states;
     let curr_id = state_machine.routing.curr_state_id;
     let mut cur = states;
@@ -371,6 +374,7 @@ pub unsafe fn nextState(states: *mut GameModeState) -> u8 {
 
 /// `findState(state)`: the first state (scanning ids from the current one up) with a matching id, or NULL.
 pub unsafe fn findState(state: *mut GameModeState) -> *mut GameModeState {
+    melee_core::ct!("findState");
     let mut i = state_machine.routing.curr_state_id as i32;
     while i < U8_MAX {
         let mut j = 0usize;
@@ -387,6 +391,7 @@ pub unsafe fn findState(state: *mut GameModeState) -> *mut GameModeState {
 
 /// `findMode(kind)`: the mode table entry of that kind, or NULL.
 pub unsafe fn findMode(kind: u8) -> *mut GameMode {
+    melee_core::ct!("findMode");
     let mut cur = ext::gm_GetAllGameModes();
     while (*cur).kind != GM_COUNT_U8 {
         if (*cur).kind == kind {
@@ -399,6 +404,7 @@ pub unsafe fn findMode(kind: u8) -> *mut GameMode {
 
 /// `gm_801A4014(mode)`: run one scene of the current state of `mode` and advance the state.
 pub unsafe fn gm_801A4014(mode: *mut GameMode) {
+    melee_core::ct!("gm_801A4014");
     let state = findState((*mode).states);
     state_machine.routing.curr_state_id = (*state).id;
 
@@ -480,16 +486,19 @@ pub unsafe fn gm_801A4014(mode: *mut GameMode) {
 
 /// `gm_GetGameModeStateEnterData(scene)`: the scene's enter data.
 pub unsafe fn gm_GetGameModeStateEnterData(scene: *mut GameModeState) -> *mut c_void {
+    melee_core::ct!("gm_GetGameModeStateEnterData");
     (*scene).info.enter_data
 }
 
 /// `gm_GetGameModeStateExitData(state)`: the scene's exit data.
 pub unsafe fn gm_GetGameModeStateExitData(state: *mut GameModeState) -> *mut c_void {
+    melee_core::ct!("gm_GetGameModeStateExitData");
     (*state).info.exit_data
 }
 
 /// `gm_SetGameModeStateId(id)`: jump to a state (current and previous).
 pub fn gm_SetGameModeStateId(id: u8) {
+    melee_core::ct!("gm_SetGameModeStateId");
     unsafe {
         state_machine.routing.curr_state_id = id;
         state_machine.routing.prev_state_id = id;
@@ -498,6 +507,7 @@ pub fn gm_SetGameModeStateId(id: u8) {
 
 /// `gm_SetNextGameModeStateId(curr_id)`: actually sets the next scene to the scene following the input.
 pub fn gm_SetNextGameModeStateId(curr_id: u8) {
+    melee_core::ct!("gm_SetNextGameModeStateId");
     unsafe {
         state_machine.routing.next_state_id = curr_id.wrapping_add(1);
     }
@@ -505,16 +515,19 @@ pub fn gm_SetNextGameModeStateId(curr_id: u8) {
 
 /// `gm_GetPreviousSceneIndex()`.
 pub fn gm_GetPreviousSceneIndex() -> u8 {
+    melee_core::ct!("gm_GetPreviousSceneIndex");
     unsafe { state_machine.routing.prev_state_id }
 }
 
 /// `gm_GetCurrentSceneIndex()`.
 pub fn gm_GetCurrentSceneIndex() -> u8 {
+    melee_core::ct!("gm_GetCurrentSceneIndex");
     unsafe { state_machine.routing.curr_state_id }
 }
 
 /// `gm_SetNewGameModePending()`.
 pub fn gm_SetNewGameModePending() {
+    melee_core::ct!("gm_SetNewGameModePending");
     unsafe {
         state_machine.pending_mode_change = 1;
     }
@@ -522,6 +535,7 @@ pub fn gm_SetNewGameModePending() {
 
 /// `gm_SetPendingGameMode(pending_mode)`.
 pub fn gm_SetPendingGameMode(pending_mode: u8) {
+    melee_core::ct!("gm_SetPendingGameMode");
     unsafe {
         state_machine.routing.pending_mode = pending_mode;
     }
@@ -529,6 +543,7 @@ pub fn gm_SetPendingGameMode(pending_mode: u8) {
 
 /// `gm_ChangeGameModeAfterCurrentScene(pending_mode)`.
 pub fn gm_ChangeGameModeAfterCurrentScene(pending_mode: i32) {
+    melee_core::ct!("gm_ChangeGameModeAfterCurrentScene");
     unsafe {
         state_machine.routing.pending_mode = pending_mode as u8;
         state_machine.pending_mode_change = 1;
@@ -541,6 +556,7 @@ pub fn gm_ChangeGameModeAfterCurrentScene(pending_mode: i32) {
 
 /// `gm_SetGameModeOverride(mode)`: the callback that may name a mode to run a single scene of.
 pub fn gm_SetGameModeOverride(mode: Option<unsafe extern "C" fn() -> u8>) {
+    melee_core::ct!("gm_SetGameModeOverride");
     unsafe {
         state_machine.get_override = mode;
     }
@@ -549,6 +565,7 @@ pub fn gm_SetGameModeOverride(mode: Option<unsafe extern "C" fn() -> u8>) {
 /// `runGameMode(mode_kind)`: load the mode, run its scenes until a mode change is pending, unload it, and
 /// return the pending mode.
 pub unsafe fn runGameMode(mode_kind: u8) -> u8 {
+    melee_core::ct!("runGameMode");
     let mode = findMode(mode_kind);
 
     state_machine.pending_mode_change = 0;
@@ -593,6 +610,7 @@ pub unsafe fn runGameMode(mode_kind: u8) -> u8 {
 
 /// `gm_801A4510()` (UnclePunch: `Scene_Main`): initialise the modes and run them forever (it never returns).
 pub unsafe fn gm_801A4510() {
+    melee_core::ct!("gm_801A4510");
     ext::gm_GetAllGameModes();
     state_machine = core::mem::zeroed();
     let modes = ext::gm_GetAllGameModes();

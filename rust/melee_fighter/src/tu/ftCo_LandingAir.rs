@@ -41,6 +41,7 @@ pub mod ext {
 }
 
 pub fn ftCo_LandingAir_EnterWithLag(g: G) {
+    melee_core::ct!("ftCo_LandingAir_EnterWithLag");
     // `lag` is uninitialised in the C when the motion matches no case (then msid stays None and
     // the value only reaches the telemetry call); 0 here.
     let mut lag: f32 = 0.0;
@@ -81,6 +82,7 @@ pub fn ftCo_LandingAir_EnterWithLag(g: G) {
 }
 
 pub fn ftCo_LandingAir_EnterWithMsidLag(g: G, msid: i32, lag: f32) {
+    melee_core::ct!("ftCo_LandingAir_EnterWithMsidLag");
     ext::ftCommon_8007D7FC(fp(g));
     ext::Fighter_ChangeMotionState(g, msid, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     let r = (ext::ftAnim_8006F484(g) + 0.1f32) / lag;
@@ -88,15 +90,18 @@ pub fn ftCo_LandingAir_EnterWithMsidLag(g: G, msid: i32, lag: f32) {
 }
 
 pub fn ftCo_LandingAir_Anim(g: G) {
+    melee_core::ct!("ftCo_LandingAir_Anim");
     ext::ftCo_Landing_Anim(g);
 }
 
-pub fn ftCo_LandingAir_IASA(_g: G) {}
+pub fn ftCo_LandingAir_IASA(_g: G) { melee_core::ct!("ftCo_LandingAir_IASA");}
 
 pub fn ftCo_LandingAir_Phys(g: G) {
+    melee_core::ct!("ftCo_LandingAir_Phys");
     ext::ftCo_Landing_Phys(g);
 }
 
 pub fn ftCo_LandingAir_Coll(g: G) {
+    melee_core::ct!("ftCo_LandingAir_Coll");
     ext::ftCo_Landing_Coll(g);
 }

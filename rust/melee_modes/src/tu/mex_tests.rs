@@ -69,6 +69,7 @@ macro_rules! cstr {
 }
 
 pub unsafe extern "C" fn test_external_special_range() -> i32 {
+    melee_core::ct!("test_external_special_range");
     if ChKind_Max as i32 != 0x21
         || ChKind_Mex0 as i32 != 0x22
         || Ft_Kind_Mex0 as i32 != 0x21
@@ -85,6 +86,7 @@ pub unsafe extern "C" fn test_external_special_range() -> i32 {
 }
 
 pub unsafe extern "C" fn test_special_id_remap_is_identity() -> i32 {
+    melee_core::ct!("test_special_id_remap_is_identity");
     let start = ChKind_Max as i32 - MEX_SPECIAL_COUNT;
     let mut e = CKind_Playable_Count as i32;
     while e < ChKind_Max as i32 {
@@ -98,6 +100,7 @@ pub unsafe extern "C" fn test_special_id_remap_is_identity() -> i32 {
 }
 
 pub unsafe extern "C" fn test_heap_table_shape() -> i32 {
+    melee_core::ct!("test_heap_table_shape");
     let t = ext::lbHeap_803BA380_ptr();
     if (*t.add(4)).idx != 6 {
         return fail(cstr!("heap table slot 4 should be the added heap id 6"));
@@ -112,6 +115,7 @@ pub unsafe extern "C" fn test_heap_table_shape() -> i32 {
 }
 
 pub unsafe extern "C" fn test_1p_mode_classification() -> i32 {
+    melee_core::ct!("test_1p_mode_classification");
     use crate::gm::gm_Is1PMode;
     if !gm_Is1PMode(GM_CLASSIC as u8) {
         return fail(cstr!("gm_Is1PMode(CLASSIC) should be true"));
@@ -129,6 +133,7 @@ pub unsafe extern "C" fn test_1p_mode_classification() -> i32 {
 }
 
 pub unsafe extern "C" fn test_vs_mode_is_not_1p() -> i32 {
+    melee_core::ct!("test_vs_mode_is_not_1p");
     use crate::gm::gm_Is1PMode;
     if gm_Is1PMode(GM_VS as u8) {
         return fail(cstr!("gm_Is1PMode(VS) should be false"));
@@ -150,6 +155,7 @@ unsafe extern "C" fn mex_onframe_vanilla(_gobj: *mut c_void) {
 }
 
 pub unsafe extern "C" fn test_mex_onframe_hook_register_and_clear() -> i32 {
+    melee_core::ct!("test_mex_onframe_hook_register_and_clear");
     let van = mex_onframe_vanilla as unsafe extern "C" fn(*mut c_void) as *mut c_void;
     let fox = Ft_Kind_Fox as i32;
     if ext::Mex_HookRegister(999, 0, Some(mex_onframe_hook)) != 0 {
@@ -190,6 +196,7 @@ unsafe extern "C" fn mex_pred_vanilla(_gobj: *mut c_void) -> i32 {
 }
 
 pub unsafe extern "C" fn test_mex_predicate_register_and_clear() -> i32 {
+    melee_core::ct!("test_mex_predicate_register_and_clear");
     let van = mex_pred_vanilla as unsafe extern "C" fn(*mut c_void) -> i32 as *mut c_void;
     let nul = core::ptr::null_mut::<c_void>();
     let fox = Ft_Kind_Fox as i32;
@@ -223,6 +230,7 @@ static mut t_plinks: [*mut HSD_GObj; HSD_GOBJ_PLINK_MAX as usize + 1] =
     [core::ptr::null_mut(); HSD_GOBJ_PLINK_MAX as usize + 1];
 
 pub unsafe extern "C" fn test_script_stale_fighter_reads_absent() -> i32 {
+    melee_core::ct!("test_script_stale_fighter_reads_absent");
     let s5 = ext::player_slots_ptr().add(5);
     let saved = *s5;
     let mut rc = 0;
@@ -242,6 +250,7 @@ pub unsafe extern "C" fn test_script_stale_fighter_reads_absent() -> i32 {
 }
 
 pub unsafe extern "C" fn test_script_live_fighter_reads() -> i32 {
+    melee_core::ct!("test_script_live_fighter_reads");
     let s5 = ext::player_slots_ptr().add(5);
     let saved = *s5;
     let saved_heads = ext::HSD_GObjPLinkHead_get();
@@ -272,6 +281,7 @@ pub unsafe extern "C" fn test_script_live_fighter_reads() -> i32 {
 }
 
 pub unsafe extern "C" fn test_scene_start_forgets_player_entities() -> i32 {
+    melee_core::ct!("test_scene_start_forgets_player_entities");
     let slots = ext::player_slots_ptr();
     let mut saved: [StaticPlayer; 6] = core::mem::zeroed();
     let mut rc = 0;
@@ -327,6 +337,7 @@ fn fma_split_madd(a: f32, c: f32, b: f32) -> f32 {
 }
 
 pub unsafe extern "C" fn test_mtx_madd_matches_fma() -> i32 {
+    melee_core::ct!("test_mtx_madd_matches_fma");
     for _ in 0..200000 {
         let a = fma_rand_float();
         let c = fma_rand_float();
@@ -378,6 +389,7 @@ unsafe extern "C" fn mex_float_predicate(gobj: *mut c_void) -> i32 {
 }
 
 pub unsafe extern "C" fn test_mex_onfloat_inputs() -> i32 {
+    melee_core::ct!("test_mex_onfloat_inputs");
     static mut fp: Fighter = unsafe { core::mem::zeroed() };
     static mut gobj: HSD_GObj = unsafe { core::mem::zeroed() };
     static mut common: ftCommonData = unsafe { core::mem::zeroed() };
@@ -473,6 +485,7 @@ pub unsafe extern "C" fn test_mex_onfloat_inputs() -> i32 {
 
 /// `MexTestRegisterAll`.
 pub unsafe extern "C" fn MexTestRegisterAll() {
+    melee_core::ct!("MexTestRegisterAll");
     macro_rules! reg {
         ($n:literal, $f:ident) => {
             ext::TestRegister(cstr!($n).as_ptr() as *const c_char, Some($f));

@@ -86,6 +86,7 @@ const M_TAU: f64 = 6.283185307179586;
 
 /// `PSVECCrossProduct` (the dolphin SDK function), as the default of the ext hook.
 pub unsafe fn psvec_cross_default(a: *const Vec, b: *const Vec, r: *mut Vec) {
+    melee_core::ct!("psvec_cross_default");
     let (a, b) = (&*a, &*b);
     let ax = crate::mtx::Vec3 { x: a.x, y: a.y, z: a.z };
     let bx = crate::mtx::Vec3 { x: b.x, y: b.y, z: b.z };
@@ -110,20 +111,24 @@ fn dot2(a: &Vec, b: &Vec) -> f32 {
 
 /// `lbVector_Len` (lbvector.h inline).
 pub unsafe fn lbVector_Len(v: *const Vec) -> f32 {
+    melee_core::ct!("lbVector_Len");
     sqrtf(sq3((*v).x, (*v).y, (*v).z))
 }
 
 /// `lbVector_Len_xy` (lbvector.h inline).
 pub unsafe fn lbVector_Len_xy(v: *const Vec) -> f32 {
+    melee_core::ct!("lbVector_Len_xy");
     sqrtf(dot2(&*v, &*v))
 }
 
 /// `lbVector_Len_xy_accurate` (static inline).
 pub unsafe fn lbVector_Len_xy_accurate(v: *const Vec) -> f32 {
+    melee_core::ct!("lbVector_Len_xy_accurate");
     sqrtf_accurate(dot2(&*v, &*v))
 }
 
 pub unsafe fn lbVector_Normalize(vec: *mut Vec) -> f32 {
+    melee_core::ct!("lbVector_Normalize");
     let len = lbVector_Len(vec);
     if len == 0.0 {
         return 0.0;
@@ -136,6 +141,7 @@ pub unsafe fn lbVector_Normalize(vec: *mut Vec) -> f32 {
 }
 
 pub unsafe fn lbVector_NormalizeXY(a: *mut Vec) -> f32 {
+    melee_core::ct!("lbVector_NormalizeXY");
     let len = sqrtf_accurate(dot2(&*a, &*a));
     if len == 0.0 {
         return 0.0;
@@ -147,6 +153,7 @@ pub unsafe fn lbVector_NormalizeXY(a: *mut Vec) -> f32 {
 }
 
 pub unsafe fn lbVector_Add(a: *mut Vec, b: *mut Vec) -> *mut Vec {
+    melee_core::ct!("lbVector_Add");
     (*a).x += (*b).x;
     (*a).y += (*b).y;
     (*a).z += (*b).z;
@@ -154,12 +161,14 @@ pub unsafe fn lbVector_Add(a: *mut Vec, b: *mut Vec) -> *mut Vec {
 }
 
 pub unsafe fn lbVector_Add_xy(a: *mut Vec, b: *mut Vec) -> *mut Vec {
+    melee_core::ct!("lbVector_Add_xy");
     (*a).x += (*b).x;
     (*a).y += (*b).y;
     a
 }
 
 pub unsafe fn lbVector_Sub(a: *mut Vec, b: *mut Vec) -> *mut Vec {
+    melee_core::ct!("lbVector_Sub");
     (*a).x -= (*b).x;
     (*a).y -= (*b).y;
     (*a).z -= (*b).z;
@@ -167,6 +176,7 @@ pub unsafe fn lbVector_Sub(a: *mut Vec, b: *mut Vec) -> *mut Vec {
 }
 
 pub unsafe fn lbVector_Diff(a: *mut Vec, b: *mut Vec, result: *mut Vec) -> *mut Vec {
+    melee_core::ct!("lbVector_Diff");
     (*result).x = (*a).x - (*b).x;
     (*result).y = (*a).y - (*b).y;
     (*result).z = (*a).z - (*b).z;
@@ -174,6 +184,7 @@ pub unsafe fn lbVector_Diff(a: *mut Vec, b: *mut Vec, result: *mut Vec) -> *mut 
 }
 
 pub unsafe fn lbVector_CrossprodNormalized(a: *mut Vec, b: *mut Vec, result: *mut Vec) -> *mut Vec {
+    melee_core::ct!("lbVector_CrossprodNormalized");
     ext::PSVECCrossProduct(a, b, result);
     lbVector_Normalize(result);
     result
@@ -192,6 +203,7 @@ fn clamp_cos(c: f32) -> f32 {
 
 /// 8000D620: the angle between a and b.
 pub unsafe fn lbVector_Angle(a: *mut Vec, b: *mut Vec) -> f32 {
+    melee_core::ct!("lbVector_Angle");
     let lena_lenb = lbVector_Len(a) * lbVector_Len(b);
     if lena_lenb > 0.0000000001f32 {
         let cosine = dot3(&*a, &*b) / lena_lenb;
@@ -202,6 +214,7 @@ pub unsafe fn lbVector_Angle(a: *mut Vec, b: *mut Vec) -> f32 {
 
 /// 8000D790: the angle between a and b in the xy plane.
 pub unsafe fn lbVector_AngleXY(a: *mut Vec, b: *mut Vec) -> f32 {
+    melee_core::ct!("lbVector_AngleXY");
     let lena_lenb = lbVector_Len_xy_accurate(a) * lbVector_Len_xy_accurate(b);
     if lena_lenb != 0.0 {
         let cosine = dot2(&*a, &*b) / lena_lenb;
@@ -229,17 +242,20 @@ fn wrap(a: f32) -> f32 {
 
 /// `lbvector_sin` (static).
 pub fn lbvector_sin(angle: f32) -> f32 {
+    melee_core::ct!("lbvector_sin");
     quintic(wrap(angle))
 }
 
 /// `lbvector_cos` (static).
 pub fn lbvector_cos(angle: f32) -> f32 {
+    melee_core::ct!("lbvector_cos");
     let a = (angle as f64 + M_PI / 2.0) as f32;
     quintic(wrap(a))
 }
 
 /// 8000D8F4: rotates v by angle about the unit axis.
 pub unsafe fn lbVector_RotateAboutUnitAxis(v: *mut Vec, axis: *mut Vec, angle: f32) {
+    melee_core::ct!("lbVector_RotateAboutUnitAxis");
     let (v, axis) = (&mut *v, &*axis);
     let len_yz = sqrtf(fmadds(axis.y, axis.y, axis.z * axis.z));
     let s = lbvector_sin(angle);
@@ -278,6 +294,7 @@ pub unsafe fn lbVector_RotateAboutUnitAxis(v: *mut Vec, axis: *mut Vec, angle: f
 /// axis 1 = x, 2 = y, 4 = z; any other axis zeroes `v` (the C reads uninitialised locals, which the
 /// build's `-ftrivial-auto-var-init=zero` makes 0).
 pub unsafe fn lbVector_Rotate(v: *mut Vec, axis: i32, angle: f32) {
+    melee_core::ct!("lbVector_Rotate");
     let s = lbvector_sin(angle);
     let c = lbvector_cos(angle);
     let vv = &mut *v;
@@ -294,6 +311,7 @@ pub unsafe fn lbVector_Rotate(v: *mut Vec, axis: i32, angle: f32) {
 
 /// 8000DC6C: a -= 2<a,b>b in xy.
 pub unsafe fn lbVector_Mirror(a: *mut Vec, unit_mirror_axis: *mut Vec) {
+    melee_core::ct!("lbVector_Mirror");
     let (a, m) = (&mut *a, &*unit_mirror_axis);
     let f = fmadds(m.x, a.x, m.y * a.y) * -2.0f32;
     a.x = fmadds(m.x, f, a.x);
@@ -302,11 +320,13 @@ pub unsafe fn lbVector_Mirror(a: *mut Vec, unit_mirror_axis: *mut Vec) {
 
 /// 8000DCA8
 pub unsafe fn lbVector_CosAngle(a: *mut Vec, b: *mut Vec) -> f32 {
+    melee_core::ct!("lbVector_CosAngle");
     dot2(&*a, &*b) / (sqrtf(dot2(&*a, &*a)) * sqrtf(dot2(&*b, &*b)))
 }
 
 /// 8000DDAC: a + f*(b-a).
 pub unsafe fn lbVector_Lerp(a: *mut Vec, b: *mut Vec, result: *mut Vec, f: f32) -> *mut Vec {
+    melee_core::ct!("lbVector_Lerp");
     lbVector_Diff(b, a, result);
     (*result).x *= f;
     (*result).y *= f;
@@ -317,6 +337,7 @@ pub unsafe fn lbVector_Lerp(a: *mut Vec, b: *mut Vec, result: *mut Vec, f: f32) 
 
 /// `Mtx m` is a `float[3][4]`.
 pub unsafe fn lbVector_8000DE38(m: *mut [f32; 4], v: *mut Vec, c: f32) -> *mut Vec {
+    melee_core::ct!("lbVector_8000DE38");
     let mut c = c;
     if c > 1.0 {
         c = 1.0;
@@ -337,6 +358,7 @@ pub unsafe fn lbVector_8000DE38(m: *mut [f32; 4], v: *mut Vec, c: f32) -> *mut V
 
 /// 8000DF0C
 pub unsafe fn lbVector_EulerAnglesFromONB(result_angles: *mut Vec, a: *mut Vec, b: *mut Vec, c: *mut Vec) -> *mut Vec {
+    melee_core::ct!("lbVector_EulerAnglesFromONB");
     let (a, b, c) = (&*a, &*b, &*c);
     let r = &mut *result_angles;
     if b.z == -1.0 || b.z == 1.0 {
@@ -358,6 +380,7 @@ pub unsafe fn lbVector_EulerAnglesFromONB(result_angles: *mut Vec, a: *mut Vec, 
 
 /// 8000DFF4
 pub unsafe fn lbVector_EulerAnglesFromPartialONB(result_angles: *mut Vec, a: *mut Vec, c: *mut Vec) -> *mut Vec {
+    melee_core::ct!("lbVector_EulerAnglesFromPartialONB");
     let mut b = Vec { x: 0.0, y: 0.0, z: 0.0 };
     ext::PSVECCrossProduct(c, a, &mut b);
     lbVector_Normalize(&mut b);
@@ -367,6 +390,7 @@ pub unsafe fn lbVector_EulerAnglesFromPartialONB(result_angles: *mut Vec, a: *mu
 
 /// 8000E138
 pub unsafe fn lbVector_ApplyEulerRotation(v: *mut Vec, angles: *mut Vec) -> *mut Vec {
+    melee_core::ct!("lbVector_ApplyEulerRotation");
     lbVector_Rotate(v, 1, (*angles).x);
     lbVector_Rotate(v, 2, (*angles).y);
     lbVector_Rotate(v, 4, (*angles).z);
@@ -375,12 +399,14 @@ pub unsafe fn lbVector_ApplyEulerRotation(v: *mut Vec, angles: *mut Vec) -> *mut
 
 /// 8000E19C
 pub fn lbVector_sqrtf_accurate(x: f32) -> f32 {
+    melee_core::ct!("lbVector_sqrtf_accurate");
     sqrtf_accurate(x)
 }
 
 /// 8000E210: projects a world position to screen coordinates (`d != 0` rebuilds the view matrix with
 /// `C_MTXLookAt` instead of using the camera's).
 pub unsafe fn lbVector_WorldToScreen(cobj: *mut HSD_CObj, pos3d: *const Vec, screen_coords: *mut Vec, d: i32) -> *mut Vec {
+    melee_core::ct!("lbVector_WorldToScreen");
     assert!(!pos3d.is_null(), "HSD_ASSERT 676 pos3d");
     assert!((*pos3d).x > -50000.0 && (*pos3d).x < 50000.0, "HSD_ASSERT 677");
     assert!((*pos3d).y > -50000.0 && (*pos3d).y < 50000.0, "HSD_ASSERT 678");
@@ -451,6 +477,7 @@ pub unsafe fn lbVector_WorldToScreen(cobj: *mut HSD_CObj, pos3d: *const Vec, scr
 
 /// 8000E530: the 3x3 euler matrix from angles.x/y/z (column 4 zero).
 pub unsafe fn lbVector_CreateEulerMatrix(m: *mut [f32; 4], angles: *mut Quaternion) {
+    melee_core::ct!("lbVector_CreateEulerMatrix");
     let m = core::slice::from_raw_parts_mut(m, 3);
     let a = &*angles;
     let sx = lbvector_sin(a.x);
@@ -477,6 +504,7 @@ pub unsafe fn lbVector_CreateEulerMatrix(m: *mut [f32; 4], angles: *mut Quaterni
 
 /// 8000E838: project c onto the line a->b into d; returns |c - d|.
 pub unsafe fn lbVector_8000E838(a: *mut Vec, b: *mut Vec, c: *mut Vec, d: *mut Vec) -> f32 {
+    melee_core::ct!("lbVector_8000E838");
     let mut b_a = Vec { x: 0.0, y: 0.0, z: 0.0 };
     let mut c_a = Vec { x: 0.0, y: 0.0, z: 0.0 };
     lbVector_Diff(b, a, &mut b_a);

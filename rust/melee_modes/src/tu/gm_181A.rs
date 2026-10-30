@@ -145,14 +145,17 @@ fn sfx_forward() {
 }
 
 pub unsafe fn gm_80181A14() -> i32 {
+    melee_core::ct!("gm_80181A14");
     lbl_80473594.x0 as i32
 }
 
 pub unsafe fn gm_80181A24() -> u32 {
+    melee_core::ct!("gm_80181A24");
     lbl_80473594.x2 as u32
 }
 
 pub unsafe fn gm_80181A34() -> i32 {
+    melee_core::ct!("gm_80181A34");
     lbl_80473594.x4
 }
 
@@ -167,6 +170,7 @@ fn block_of(mode: i32) -> Option<usize> {
 }
 
 pub unsafe fn gm_80181A44(c_kind: i32, arg1: i32, arg2: bool) {
+    melee_core::ct!("gm_80181A44");
     let c_kind = ext::gm_MexVanillaKind(c_kind, 1);
     if let Some(b) = block_of(arg1) {
         *lbl_803D8D08[b].icons.as_mut_ptr().offset(c_kind as isize) = arg2 as u8;
@@ -174,6 +178,7 @@ pub unsafe fn gm_80181A44(c_kind: i32, arg1: i32, arg2: bool) {
 }
 
 pub unsafe fn gm_80181AC8(c_kind: i32, arg1: i32, arg2: u16) {
+    melee_core::ct!("gm_80181AC8");
     let c_kind = ext::gm_MexVanillaKind(c_kind, 1);
     if let Some(b) = block_of(arg1) {
         *lbl_803D8D08[b].times.as_mut_ptr().offset(c_kind as isize) = arg2;
@@ -181,6 +186,7 @@ pub unsafe fn gm_80181AC8(c_kind: i32, arg1: i32, arg2: u16) {
 }
 
 pub unsafe fn gm_80181B64(c_kind: i32, arg1: i32, arg2: i32) {
+    melee_core::ct!("gm_80181B64");
     let c_kind = ext::gm_MexVanillaKind(c_kind, 1);
     if let Some(b) = block_of(arg1) {
         *lbl_803D8D08[b].scores.as_mut_ptr().offset(c_kind as isize) = arg2 as u32;
@@ -188,6 +194,7 @@ pub unsafe fn gm_80181B64(c_kind: i32, arg1: i32, arg2: i32) {
 }
 
 pub unsafe fn fn_80181BFC(arg0: *mut i32) -> i32 {
+    melee_core::ct!("fn_80181BFC");
     let mut count = 0;
     for i in 1..6i32 {
         if ext::Player_GetFalls(i) == 0 && ext::Player_GetPlayerSlotType(i) != Gm_PKind_NA as i32 {
@@ -213,6 +220,7 @@ unsafe fn count_players(out: &mut i32) -> i32 {
 }
 
 pub unsafe fn fn_80181C80(arg0: i32) {
+    melee_core::ct!("fn_80181C80");
     let data = &mut lbl_80472ED8;
     let mut sp38: i32 = 0;
 
@@ -248,10 +256,12 @@ unsafe fn live_offset(entry_idx: i32) -> i32 {
 }
 
 pub unsafe extern "C" fn fn_80181E18(_gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80181E18");
     fn_80181E18_body()
 }
 
 pub unsafe fn fn_80181E18_body() {
+    melee_core::ct!("fn_80181E18_body");
     let data = &mut lbl_80472ED8;
     let mode = ext::gm_GetCurrentGameMode() as i32;
 
@@ -364,6 +374,7 @@ unsafe fn copy_spawn_table(mut src: *const RegClearSpawnEntry) {
 }
 
 pub unsafe fn gm_80182174() {
+    melee_core::ct!("gm_80182174");
     let mode = ext::gm_GetCurrentGameMode() as i32;
 
     ext::lbArchive_80016DBC(
@@ -412,6 +423,7 @@ pub unsafe fn gm_80182174() {
 }
 
 pub fn gm_IsMultimanSmashMode() -> bool {
+    melee_core::ct!("gm_IsMultimanSmashMode");
     match ext::gm_GetCurrentGameMode() as i32 {
         x if x == GM_10MAN_VS as i32
             || x == GM_100MAN_VS as i32
@@ -429,6 +441,7 @@ pub fn gm_IsMultimanSmashMode() -> bool {
 /// The C writes these through `(regclear_record_state*) &lbl_80472ED8` (offsets 0x6BC..0x6C8);
 /// on the console that is the storage of `lbl_80473594`.
 pub unsafe fn gm_80182554(arg0: i32, arg1: i32) {
+    melee_core::ct!("gm_80182554");
     let s = &mut lbl_80473594;
     s.xC = arg0;
     s.x8 = arg1;
@@ -464,6 +477,7 @@ unsafe fn set_record_time(idx: i32, mode: i32, value: u16) {
 }
 
 pub unsafe fn gm_80182578() {
+    melee_core::ct!("gm_80182578");
     let rec = &mut lbl_80473594;
     let mut mode = rec.x8;
     let mut idx = rec.xC;
@@ -524,6 +538,7 @@ pub unsafe fn gm_80182578() {
 }
 
 pub unsafe fn fn_80182B5C() {
+    melee_core::ct!("fn_80182B5C");
     let rec = &lbl_80473594;
     let mut idx = rec.xC;
     let mode = rec.x8;
@@ -583,6 +598,7 @@ pub unsafe fn fn_80182B5C() {
 }
 
 pub unsafe fn gm_80182DF0(c_kind: i32, arg1: i32) -> *mut UnkMultimanData {
+    melee_core::ct!("gm_80182DF0");
     let result = &raw mut lbl_804D65E0;
     let c_kind = ext::gm_MexVanillaKind(c_kind, 1);
     let ck = c_kind as isize;
@@ -599,6 +615,7 @@ pub unsafe fn gm_80182DF0(c_kind: i32, arg1: i32) -> *mut UnkMultimanData {
 }
 
 pub unsafe extern "C" fn fn_80182F40(_unused: *mut HSD_GObj) {
+    melee_core::ct!("fn_80182F40");
     if ext::gm_GetButtonsTriggered(PAD_MAX_CONTROLLERS as u8) & (HSD_PAD_START as u64 | HSD_PAD_A as u64) != 0 {
         ext::lbAudioAx_80024C84();
         ext::lbAudioAx_80023694();
@@ -672,6 +689,7 @@ pub unsafe extern "C" fn fn_80182F40(_unused: *mut HSD_GObj) {
 }
 
 pub unsafe fn gm_80183218() {
+    melee_core::ct!("gm_80183218");
     lbl_804D65E8 = 0;
     ext::HSD_GObj_SetupProc(ext::GObj_Create(0xF, 0x11, 0), Some(fn_80182F40), 0x15);
 }

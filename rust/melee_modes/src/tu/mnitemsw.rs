@@ -58,6 +58,7 @@ melee_core::gc_layout!(MnItemSwTable, "MnItemSwTable", size 0x118, align 4, [
 
 #[inline]
 pub unsafe extern "C" fn HSD_JObjGetChild(mut jobj: *mut HSD_JObj) -> *mut HSD_JObj {
+    melee_core::ct!("HSD_JObjGetChild");
     if jobj.is_null() {
         return ::core::ptr::null_mut::<HSD_JObj>()
     } else {
@@ -66,6 +67,7 @@ pub unsafe extern "C" fn HSD_JObjGetChild(mut jobj: *mut HSD_JObj) -> *mut HSD_J
 }
 #[inline]
 pub unsafe extern "C" fn HSD_JObjGetNext(mut jobj: *mut HSD_JObj) -> *mut HSD_JObj {
+    melee_core::ct!("HSD_JObjGetNext");
     if jobj.is_null() {
         return ::core::ptr::null_mut::<HSD_JObj>()
     } else {
@@ -74,6 +76,7 @@ pub unsafe extern "C" fn HSD_JObjGetNext(mut jobj: *mut HSD_JObj) -> *mut HSD_JO
 }
 #[inline]
 pub unsafe extern "C" fn HSD_JObjMtxIsDirty(mut jobj: *mut HSD_JObj) -> bool_0 {
+    melee_core::ct!("HSD_JObjMtxIsDirty");
     let mut result: bool_0 = 0;
     if !jobj.is_null() {} else {
         __assert(
@@ -93,6 +96,7 @@ pub unsafe extern "C" fn HSD_JObjMtxIsDirty(mut jobj: *mut HSD_JObj) -> bool_0 {
 }
 #[inline]
 pub unsafe extern "C" fn HSD_JObjSetTranslateX(mut jobj: *mut HSD_JObj, mut x: f32_0) {
+    melee_core::ct!("HSD_JObjSetTranslateX");
     if !jobj.is_null() {} else {
         __assert(
             b"src/sysdolphin/baselib/jobj.h\0" as *const u8
@@ -110,6 +114,7 @@ pub unsafe extern "C" fn HSD_JObjSetTranslateX(mut jobj: *mut HSD_JObj, mut x: f
 }
 #[inline]
 pub unsafe extern "C" fn HSD_JObjSetTranslateY(mut jobj: *mut HSD_JObj, mut y: f32_0) {
+    melee_core::ct!("HSD_JObjSetTranslateY");
     if !jobj.is_null() {} else {
         __assert(
             b"src/sysdolphin/baselib/jobj.h\0" as *const u8
@@ -127,6 +132,7 @@ pub unsafe extern "C" fn HSD_JObjSetTranslateY(mut jobj: *mut HSD_JObj, mut y: f
 }
 #[inline]
 pub unsafe extern "C" fn HSD_JObjGetTranslationX(mut jobj: *mut HSD_JObj) -> f32_0 {
+    melee_core::ct!("HSD_JObjGetTranslationX");
     if !jobj.is_null() {} else {
         __assert(
             b"src/sysdolphin/baselib/jobj.h\0" as *const u8
@@ -139,6 +145,7 @@ pub unsafe extern "C" fn HSD_JObjGetTranslationX(mut jobj: *mut HSD_JObj) -> f32
 }
 #[inline]
 pub unsafe extern "C" fn HSD_JObjGetTranslationY(mut jobj: *mut HSD_JObj) -> f32_0 {
+    melee_core::ct!("HSD_JObjGetTranslationY");
     if !jobj.is_null() {} else {
         __assert(
             b"src/sysdolphin/baselib/jobj.h\0" as *const u8
@@ -154,6 +161,7 @@ pub unsafe extern "C" fn HSD_JObjAddTranslationY(
     mut jobj: *mut HSD_JObj,
     mut y: ::core::ffi::c_float,
 ) {
+    melee_core::ct!("HSD_JObjAddTranslationY");
     if !jobj.is_null() {} else {
         __assert(
             b"src/sysdolphin/baselib/jobj.h\0" as *const u8
@@ -172,14 +180,17 @@ pub unsafe extern "C" fn HSD_JObjAddTranslationY(
 pub const U32_TO_F32: ::core::ffi::c_double = 4503599627370496.0f64;
 #[inline]
 pub unsafe extern "C" fn sfxBack() {
+    melee_core::ct!("sfxBack");
     lbAudioAx_80024030(0 as ::core::ffi::c_int);
 }
 #[inline]
 pub unsafe extern "C" fn sfxForward() {
+    melee_core::ct!("sfxForward");
     lbAudioAx_80024030(1 as ::core::ffi::c_int);
 }
 #[inline]
 pub unsafe extern "C" fn sfxMove() {
+    melee_core::ct!("sfxMove");
     lbAudioAx_80024030(2 as ::core::ffi::c_int);
 }
 pub static mut mnItemSw_804D6BEC: u8_0 = 0;
@@ -284,9 +295,11 @@ pub static mut mnItemSw_Table: MnItemSwTable = MnItemSwTable {
 pub static mut mnItemSw_804D4BA0: [f32_0; 2] = [0.0f32, 1.0f32];
 #[inline]
 pub unsafe extern "C" fn mnItemSw_GetTable() -> *mut MnItemSwTable {
+    melee_core::ct!("mnItemSw_GetTable");
     return &raw mut mnItemSw_Table;
 }
 pub unsafe extern "C" fn mnItemSw_80233A98(mut arg0: s32) -> s32 {
+    melee_core::ct!("mnItemSw_80233A98");
     match arg0 {
         19 => {
             if lbLang_IsSettingJP() != 0 {
@@ -307,6 +320,7 @@ pub unsafe extern "C" fn mnItemSw_80233B68(
     mut arg0: *mut MnItemSwData,
     mut arg1: u32_0,
 ) {
+    melee_core::ct!("mnItemSw_80233B68");
     let mut temp_r0: s32 = 0;
     let mut var_r0: u8_0 = 0;
     let mut var_r0_2: u8_0 = 0;
@@ -433,6 +447,7 @@ pub unsafe extern "C" fn mnItemSw_CommitItems(
     mut i: s32,
     mut order: *mut u8_0,
 ) {
+    melee_core::ct!("mnItemSw_CommitItems");
     while i < 0x1f as ::core::ffi::c_int {
         mn_8022E978(*order, (*data).items[i as usize]);
         i += 1;
@@ -442,6 +457,7 @@ pub unsafe extern "C" fn mnItemSw_CommitItems(
         - 1 as ::core::ffi::c_int) as u8_0;
 }
 pub unsafe extern "C" fn fn_80233E10(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80233E10");
     let mut data: *mut MnItemSwData = ::core::ptr::null_mut::<MnItemSwData>();
     let mut order: *mut u8_0 = ::core::ptr::null_mut::<u8_0>();
     let mut buttons: u32_0 = 0;
@@ -546,6 +562,7 @@ pub unsafe extern "C" fn mnItemSw_8023405C(
     mut data: *mut MnItemSwData,
     mut idx: u8_0,
 ) -> *mut HSD_JObj {
+    melee_core::ct!("mnItemSw_8023405C");
     let mut cur: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut i: u8_0 = 0;
     if idx as ::core::ffi::c_int >= 16 as ::core::ffi::c_int {
@@ -572,10 +589,12 @@ pub unsafe extern "C" fn mnItemSw_8023405C(
 }
 #[inline]
 pub unsafe extern "C" fn mnItemSw_GetItemAnim(mut i: s32) -> s32 {
+    melee_core::ct!("mnItemSw_GetItemAnim");
     return mnItemSw_80233A98(mnItemSw_Table.item_order[i as usize] as s32);
 }
 #[inline]
 pub unsafe extern "C" fn mnItemSw_SetCursorPosition(mut data: *mut MnItemSwData) {
+    melee_core::ct!("mnItemSw_SetCursorPosition");
     let mut cursor: u8_0 = 0;
     let mut cjobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut y_spacing: f32_0 = 0.;
@@ -620,6 +639,7 @@ pub unsafe extern "C" fn mnItemSw_SetCursorPosition(mut data: *mut MnItemSwData)
     );
 }
 pub unsafe extern "C" fn mnItemSw_80234104(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnItemSw_80234104");
     let mut i: s32 = 0;
     let mut item_anim: s32 = 0;
     let mut item_jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
@@ -664,6 +684,7 @@ pub unsafe extern "C" fn mnItemSw_ReqFreqAnim(
     mut freq: u8_0,
     mut changed: u8_0,
 ) -> u8_0 {
+    melee_core::ct!("mnItemSw_ReqFreqAnim");
     if mn_804A04F0.hovered_selection as u8_0 as ::core::ffi::c_int
         == 0x1f as ::core::ffi::c_int
         || mn_804A04F0.hovered_selection as u8_0 as ::core::ffi::c_int
@@ -692,6 +713,7 @@ pub unsafe extern "C" fn mnItemSw_UpdateConfirmed(
     mut tbl: *mut MnItemSwTable,
     mut changed: u8_0,
 ) -> u8_0 {
+    melee_core::ct!("mnItemSw_UpdateConfirmed");
     let mut item_jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut animated_jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     if mn_804A04F0.hovered_selection as ::core::ffi::c_int == 0x1f as ::core::ffi::c_int
@@ -724,6 +746,7 @@ pub unsafe extern "C" fn mnItemSw_8023453C(
     mut arg1: u8_0,
     mut arg2: u8_0,
 ) {
+    melee_core::ct!("mnItemSw_8023453C");
     let mut hidden_jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut frame_jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut item_jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
@@ -865,6 +888,7 @@ pub unsafe extern "C" fn mnItemSw_8023453C(
 }
 #[inline]
 pub unsafe extern "C" fn mnItemSw_SaveSettings(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnItemSw_SaveSettings");
     let mut order: *mut u8_0 = &raw mut (*(mnItemSw_GetTable
         as unsafe extern "C" fn() -> *mut MnItemSwTable)())
         .item_order as *mut u8_0;
@@ -879,6 +903,7 @@ pub unsafe extern "C" fn mnItemSw_SaveSettings(mut gobj: *mut HSD_GObj) {
         - 1 as ::core::ffi::c_int) as u8_0;
 }
 pub unsafe extern "C" fn fn_80234C24(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80234C24");
     let mut data: *mut MnItemSwData = ::core::ptr::null_mut::<MnItemSwData>();
     let mut anims: *mut f32_0 = ::core::ptr::null_mut::<f32_0>();
     let mut jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
@@ -1065,6 +1090,7 @@ pub unsafe extern "C" fn mnItemSw_80235020(
     mut arg0: u8_0,
     mut arg1: *mut MnItemSwData,
 ) -> *mut HSD_JObj {
+    melee_core::ct!("mnItemSw_80235020");
     let mut sp14: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut sp10: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut item_val: u8_0 = 0;
@@ -1111,6 +1137,7 @@ pub unsafe extern "C" fn setInitialCursorPosition(
     mut user_data: *mut MnItemSwData,
     mut item_jobj: *mut HSD_JObj,
 ) {
+    melee_core::ct!("setInitialCursorPosition");
     let mut cursor: u8_0 = 0;
     let mut y_spacing: f32_0 = 0.;
     let mut cjobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
@@ -1175,6 +1202,7 @@ pub unsafe extern "C" fn initUserData(
     mut arg0: s32,
     mut tbl: *mut MnItemSwTable,
 ) {
+    melee_core::ct!("initUserData");
     let mut order: *mut u8_0 = ::core::ptr::null_mut::<u8_0>();
     let mut i: s32 = 0;
     (*user_data).menu_kind = mn_804A04F0.cur_menu as u8_0;
@@ -1191,6 +1219,7 @@ pub unsafe extern "C" fn initUserData(
     (*user_data).x23 = arg0 as u8_0;
 }
 pub unsafe extern "C" fn mnItemSw_802351A0(mut arg0: s32) -> *mut HSD_GObj {
+    melee_core::ct!("mnItemSw_802351A0");
     let mut jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut item_jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut user_data: *mut MnItemSwData = ::core::ptr::null_mut::<MnItemSwData>();
@@ -1315,6 +1344,7 @@ pub unsafe extern "C" fn mnItemSw_802351A0(mut arg0: s32) -> *mut HSD_GObj {
     return gobj;
 }
 pub unsafe extern "C" fn mnItemSw_802358C0() {
+    melee_core::ct!("mnItemSw_802358C0");
     let mut proc_0: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     mn_804A04F0.prev_menu = mn_804A04F0.cur_menu;
     mn_804A04F0.cur_menu = 0x10 as MenuKind8;

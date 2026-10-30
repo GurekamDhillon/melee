@@ -28,9 +28,10 @@ fn doAnim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMh_BackAirplane1_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_BackAirplane1_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         doAnim(gobj);
     }
 }
 
-pub fn ftMh_BackAirplane1_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_BackAirplane1_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_BackAirplane1_Coll");}

@@ -23,6 +23,7 @@ pub mod ext {
 }
 
 pub fn ftMh_Damage_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Damage_Phys");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*(*fp).ft_data).ext_attr as *const ftMasterHand_SpecialAttrs;
@@ -31,17 +32,19 @@ pub fn ftMh_Damage_Phys(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftMh_Damage_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_Damage_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_Damage_Coll");}
 
 pub fn ftMh_WaitSweep_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_WaitSweep_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         ftMh_MS_346_80151918(gobj);
     }
 }
 
-pub fn ftMh_WaitSweep_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_WaitSweep_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_WaitSweep_Coll");}
 
 pub fn ftMh_MS_346_80151918(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_346_80151918");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*(*fp).ft_data).ext_attr as *const ftMasterHand_SpecialAttrs;
@@ -54,6 +57,7 @@ pub fn ftMh_MS_346_80151918(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMh_SweepLoop_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_SweepLoop_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         unsafe {
             let fp = (*gobj).user_data as *mut Fighter;
@@ -69,6 +73,7 @@ pub fn ftMh_SweepLoop_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMh_SweepLoop_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_SweepLoop_Phys");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*(*fp).ft_data).ext_attr as *const ftMasterHand_SpecialAttrs;
@@ -77,4 +82,4 @@ pub fn ftMh_SweepLoop_Phys(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftMh_SweepLoop_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_SweepLoop_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_SweepLoop_Coll");}

@@ -71,14 +71,17 @@ pub static mut flash_scale: f32 = 0.0;
 
 /// `lbBgFlash_Free`: the user-data destructor.
 pub unsafe extern "C" fn lbBgFlash_Free(arg0: *mut c_void) {
+    melee_core::ct!("lbBgFlash_Free");
     ext::HSD_ObjFree(&raw mut bgflash_alloc_data, arg0);
 }
 
 pub unsafe fn lbBgFlash_SetFlashScale(arg8: f32) {
+    melee_core::ct!("lbBgFlash_SetFlashScale");
     flash_scale = arg8;
 }
 
 pub unsafe fn lbBgFlash_Init(arg0: i32) {
+    melee_core::ct!("lbBgFlash_Init");
     ext::HSD_ObjAllocInit(&raw mut bgflash_alloc_data, core::mem::size_of::<BgFlashUserData>() as u32, 4);
     let gobj = ext::GObj_Create(0xE, 0xE, 0);
     if !gobj.is_null() {
@@ -104,6 +107,7 @@ pub unsafe fn lbBgFlash_Init(arg0: i32) {
 }
 
 pub unsafe extern "C" fn lbBgFlash_Proc(gobj: *mut HSD_GObj) {
+    melee_core::ct!("lbBgFlash_Proc");
     let data = (*gobj).user_data as *mut BgFlashUserData;
     let was_active = (*data).x4.x7C_color_enable() as i32;
     let mut color: GXColor = core::mem::zeroed();
@@ -123,20 +127,23 @@ pub unsafe extern "C" fn lbBgFlash_Proc(gobj: *mut HSD_GObj) {
     }
 }
 
-pub unsafe extern "C" fn fn_80021C18(_gobj: *mut HSD_GObj, _cmd: *mut CommandInfo, _arg2: i32) {}
+pub unsafe extern "C" fn fn_80021C18(_gobj: *mut HSD_GObj, _cmd: *mut CommandInfo, _arg2: i32) { melee_core::ct!("fn_80021C18");}
 
 pub unsafe fn fn_80021C1C() {
+    melee_core::ct!("fn_80021C1C");
     let gobj = flash_gobj;
     let user_data = (*gobj).user_data as *mut BgFlashUserData;
     ext::lb_80014498(&raw mut (*user_data).x4);
 }
 
 pub unsafe fn lbBgFlash_80021C48(arg0: u32, arg1: u32) {
+    melee_core::ct!("lbBgFlash_80021C48");
     let data = (*flash_gobj).user_data as *mut BgFlashUserData;
     ext::lb_800144C8(&raw mut (*data).x4, lbl_804D63DC, arg0 as i32, arg1 as i32);
 }
 
 pub unsafe fn fn_80021C80(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80021C80");
     let user_data = (*gobj).user_data as *mut BgFlashUserData;
     while ext::lb_80014258(gobj, &raw mut (*user_data).x4 as *mut c_void, Some(fn_80021C18)) != 0 {
         ext::lb_80014498(&raw mut (*user_data).x4);

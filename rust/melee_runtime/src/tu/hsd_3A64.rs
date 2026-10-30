@@ -37,6 +37,7 @@ unsafe fn rd(p: *const u8) -> u8 {
 /// `HSD_SisLib_803A6478` (0x803A6478): copy one SIS stream (up to, not including, the NUL).
 /// Returns the pointer to the terminating NUL written to `dst`.
 pub unsafe fn HSD_SisLib_803A6478(mut dst: *mut u8, mut src: *const u8) -> *mut u8 {
+    melee_core::ct!("HSD_SisLib_803A6478");
     while rd(src) != 0 {
         if rd(src) >= 0x20 {
             *dst = rd(src);
@@ -70,12 +71,14 @@ pub unsafe fn HSD_SisLib_803A6478(mut dst: *mut u8, mut src: *const u8) -> *mut 
 
 /// `HSD_SisLib_803A6530` (0x803A6530): copy entry `src_idx` of font `font_idx`'s table into `dst_idx`.
 pub unsafe fn HSD_SisLib_803A6530(font_idx: i32, dst_idx: i32, src_idx: i32) -> *mut u8 {
+    melee_core::ct!("HSD_SisLib_803A6530");
     let sis_table = ext::HSD_SisLib_804D1124[font_idx as usize] as *mut *mut u8;
     HSD_SisLib_803A6478(*sis_table.offset(dst_idx as isize), *sis_table.offset(src_idx as isize))
 }
 
 /// `HSD_SisLib_803A660C` (0x803A660C): append entry `src_idx` to the end of entry `dst_idx`.
 pub unsafe fn HSD_SisLib_803A660C(font_idx: i32, dst_idx: i32, src_idx: i32) {
+    melee_core::ct!("HSD_SisLib_803A660C");
     let sis_table = ext::HSD_SisLib_804D1124[font_idx as usize] as *mut *mut u8;
     let mut dst = *sis_table.offset(dst_idx as isize);
     let src = *sis_table.offset(src_idx as isize);
@@ -100,6 +103,7 @@ pub unsafe fn HSD_SisLib_803A660C(font_idx: i32, dst_idx: i32, src_idx: i32) {
 /// Divergence: the C allocates 0x10 bytes for the `SisBlock` (GC `sizeof` 0xC plus the counter
 /// word); the native `SisBlock` is 24 bytes, so that is what is requested.
 pub unsafe fn HSD_SisLib_803A6754(font_idx: i32, context_id: i32) -> *mut HSD_Text {
+    melee_core::ct!("HSD_SisLib_803A6754");
     let text = ext::HSD_SisLib_803A5ACC(font_idx, context_id, 0.0, 0.0, 0.0, 640.0, 480.0);
     let alloc = ext::HSD_SisLib_Alloc(core::mem::size_of::<SisBlock>() as i32) as *mut SisBlock;
     (*text).alloc_data = alloc;
@@ -147,6 +151,7 @@ unsafe fn sisEndKerning(data: *mut u8, out_idx: &mut i32, has_kerning: &mut i32)
 /// `HSD_SisLib_803A67EC` (0x803A67EC): ASCII / Shift-JIS to SIS glyph codes. Returns the encoded
 /// length. `string` must be NUL-terminated or at least 0x80 bytes (the C reads up to 0x80).
 pub unsafe fn HSD_SisLib_803A67EC(data: *mut u8, string: *const u8) -> i32 {
+    melee_core::ct!("HSD_SisLib_803A67EC");
     let mut has_kerning: i32 = 0;
     let mut out_idx: i32 = 0;
     let mut in_idx: i32 = 0;
@@ -258,6 +263,7 @@ unsafe fn sis_grow(text: *mut HSD_Text, alloc: *mut SisBlock, old_buf: *mut u8) 
 /// `HSD_SisLib_803A6B98` (0x803A6B98): append a positioned, coloured, scaled string entry.
 /// `fmt` is the formatted text (`None` for the C's NULL format). Returns the new entry index.
 pub unsafe fn HSD_SisLib_803A6B98(text: *mut HSD_Text, x: f32, y: f32, fmt: Option<&str>) -> i32 {
+    melee_core::ct!("HSD_SisLib_803A6B98");
     let mut encoded = [0u8; 128];
     let mut encoded_len: i32 = 0;
     let alloc = (*text).alloc_data;
@@ -315,6 +321,7 @@ pub unsafe fn HSD_SisLib_803A6B98(text: *mut HSD_Text, x: f32, y: f32, fmt: Opti
 /// `fn_803A6FEC` (0x803A6FEC): find entry `entry_idx` (the Nth opcode-7 record) in a SIS stream.
 /// Returns NULL at the end of the stream; `out_size` receives the length of the entry's text.
 pub unsafe fn fn_803A6FEC(mut sis_data: *mut u8, mut entry_idx: i32, out_size: Option<&mut i32>) -> *mut u8 {
+    melee_core::ct!("fn_803A6FEC");
     loop {
         match *sis_data {
             0 => return core::ptr::null_mut(),
@@ -357,6 +364,7 @@ pub unsafe fn fn_803A6FEC(mut sis_data: *mut u8, mut entry_idx: i32, out_size: O
 /// `HSD_SisLib_803A70A0` (0x803A70A0): replace the text of entry `entry_idx` (`fmt` already
 /// formatted; `None` clears it). Returns 1 if the entry exists, else 0.
 pub unsafe fn HSD_SisLib_803A70A0(text: *mut HSD_Text, entry_idx: i32, fmt: Option<&str>) -> i32 {
+    melee_core::ct!("HSD_SisLib_803A70A0");
     let mut encoded = [0u8; 128];
     let mut old_size: i32 = 0;
     let mut result: i32 = 0;
@@ -411,6 +419,7 @@ pub unsafe fn HSD_SisLib_803A70A0(text: *mut HSD_Text, entry_idx: i32, fmt: Opti
 
 /// `HSD_SisLib_803A746C` (0x803A746C): set the position of entry `entry_idx`.
 pub unsafe fn HSD_SisLib_803A746C(text: *mut HSD_Text, entry_idx: i32, new_x: f32, new_y: f32) {
+    melee_core::ct!("HSD_SisLib_803A746C");
     let entry = fn_803A6FEC((*text).sis_buffer as *mut u8, entry_idx, None);
     if !entry.is_null() {
         let p = entry.add(1);
@@ -425,6 +434,7 @@ pub unsafe fn HSD_SisLib_803A746C(text: *mut HSD_Text, entry_idx: i32, new_x: f3
 
 /// `HSD_SisLib_803A74F0` (0x803A74F0): set the colour of entry `entry_idx`.
 pub unsafe fn HSD_SisLib_803A74F0(text: *mut HSD_Text, entry_idx: i32, color_rgb: *const GXColor) {
+    melee_core::ct!("HSD_SisLib_803A74F0");
     let entry = fn_803A6FEC((*text).sis_buffer as *mut u8, entry_idx, None);
     if !entry.is_null() {
         let color_ptr = entry.add(5);
@@ -436,6 +446,7 @@ pub unsafe fn HSD_SisLib_803A74F0(text: *mut HSD_Text, entry_idx: i32, color_rgb
 
 /// `HSD_SisLib_803A7548` (0x803A7548): set the scale of entry `entry_idx`.
 pub unsafe fn HSD_SisLib_803A7548(text: *mut HSD_Text, entry_idx: i32, scale_x: f32, scale_y: f32) {
+    melee_core::ct!("HSD_SisLib_803A7548");
     let entry = fn_803A6FEC((*text).sis_buffer as *mut u8, entry_idx, None);
     if !entry.is_null() {
         // `*++scale_ptr = ...` starts from entry + 9.
@@ -449,6 +460,7 @@ pub unsafe fn HSD_SisLib_803A7548(text: *mut HSD_Text, entry_idx: i32, scale_x: 
 
 /// `HSD_SisLib_803A75E0` (0x803A75E0): clear entry `entry_idx` and reset its colour to the text's.
 pub unsafe fn HSD_SisLib_803A75E0(text: *mut HSD_Text, entry_idx: i32) {
+    melee_core::ct!("HSD_SisLib_803A75E0");
     if HSD_SisLib_803A70A0(text, entry_idx, None) != 0 {
         let color = (*text).text_color;
         let entry = fn_803A6FEC((*text).sis_buffer as *mut u8, entry_idx, None);
@@ -463,6 +475,7 @@ pub unsafe fn HSD_SisLib_803A75E0(text: *mut HSD_Text, entry_idx: i32) {
 
 /// `HSD_SisLib_803A7664` (0x803A7664): empty a text's entry buffer.
 pub unsafe fn HSD_SisLib_803A7664(text: *mut HSD_Text) {
+    melee_core::ct!("HSD_SisLib_803A7664");
     let data = (*text).alloc_data as *mut sisLib_803A7664_t;
     (*data).x0 = (*data).x4;
     *((*data).x0 as *mut u8) = 0;

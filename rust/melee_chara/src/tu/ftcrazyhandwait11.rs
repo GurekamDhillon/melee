@@ -56,6 +56,7 @@ unsafe fn get_jobj(gobj: *mut HSD_GObj) -> *mut HSD_JObj {
 }
 
 pub fn fn_80159AA4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80159AA4");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let jobj = get_jobj(gobj);
@@ -100,10 +101,12 @@ pub fn fn_80159AA4(gobj: *mut HSD_GObj) {
 
 /// `fn_80159AA4` as a Fighter callback entry (`ftCh_Init_801597F0(gobj, fn_80159AA4)`).
 pub unsafe extern "C" fn cb_fn_80159AA4(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_80159AA4");
     fn_80159AA4(g);
 }
 
 pub fn ftCh_Wait1_1_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Wait1_1_Anim");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
 
@@ -133,6 +136,7 @@ pub fn ftCh_Wait1_1_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCh_Wait1_1_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Wait1_1_Phys");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         (*fp).mv.ch.unk0.x0 -= 1.0;
@@ -146,4 +150,4 @@ pub fn ftCh_Wait1_1_Phys(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftCh_Wait1_1_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftCh_Wait1_1_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_Wait1_1_Coll");}

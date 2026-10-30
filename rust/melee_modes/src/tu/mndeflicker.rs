@@ -113,6 +113,7 @@ unsafe fn get_menu(g: *mut HSD_GObj) -> *mut Menu {
 
 /// 24A168: the input proc of the screen.
 pub unsafe extern "C" fn mnDeflicker_8024A168(_gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnDeflicker_8024A168");
     let mut asd: [*mut HSD_JObj; 2] = [null_mut(); 2];
     let menu = get_menu(mnDeflicker_804D6C38);
     if mn_804D6BC8.cooldown != 0 {
@@ -146,6 +147,7 @@ pub unsafe extern "C" fn mnDeflicker_8024A168(_gobj: *mut HSD_GObj) {
 
 /// 24A2E8: exit animation; frees the gobj when it has run out.
 pub unsafe extern "C" fn mnDeflicker_8024A2E8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnDeflicker_8024A2E8");
     let f = ext::mn_8022EC18(get_jobj(gobj), (addr_of!(mnDeflicker_803EEFE4) as *mut AnimLoopSettings), 0x400);
     if f == mnDeflicker_803EEFE4.end_frame {
         ext::HSD_GObjFree(gobj);
@@ -154,6 +156,7 @@ pub unsafe extern "C" fn mnDeflicker_8024A2E8(gobj: *mut HSD_GObj) {
 
 /// 24A344: idle proc (loops the switch animation).
 pub unsafe extern "C" fn mnDeflicker_8024A344(gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnDeflicker_8024A344");
     let menu = get_menu(gobj);
     let jobj = get_jobj(gobj);
     if mn_804A04F0.cur_menu != 0x15 {
@@ -170,6 +173,7 @@ pub unsafe extern "C" fn mnDeflicker_8024A344(gobj: *mut HSD_GObj) {
 
 /// 24A3E8: intro animation proc.
 pub unsafe extern "C" fn mnDeflicker_8024A3E8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnDeflicker_8024A3E8");
     let menu = get_menu(gobj);
     let jobj = get_jobj(gobj);
     if mn_804A04F0.cur_menu != 0x15 {
@@ -199,6 +203,7 @@ unsafe fn mnDeflicker_8024A4BC_inline() {
 
 /// 24A4BC: build the screen's gobj (model, animation, user data, intro proc).
 pub unsafe extern "C" fn mnDeflicker_8024A4BC(_arg0: *mut HSD_GObj) {
+    melee_core::ct!("mnDeflicker_8024A4BC");
     let mut sp1c: *mut HSD_JObj = null_mut();
     let gobj = ext::GObj_Create(HSD_GOBJ_CLASS_ITEM as u16, 7, 0x80);
     mnDeflicker_804D6C38 = gobj;
@@ -233,6 +238,7 @@ pub unsafe extern "C" fn mnDeflicker_8024A4BC(_arg0: *mut HSD_GObj) {
 
 /// 24A6C4: enter the screen.
 pub unsafe extern "C" fn mnDeflicker_8024A6C4(arg0: *mut HSD_GObj) {
+    melee_core::ct!("mnDeflicker_8024A6C4");
     mn_804D6BC8.cooldown = 5;
     mn_804A04F0.prev_menu = mn_804A04F0.cur_menu;
     mn_804A04F0.cur_menu = 0x15;

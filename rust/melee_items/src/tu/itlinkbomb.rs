@@ -137,6 +137,7 @@ pub static mut it_803F6888: [ItemStateTable; 7] = [
 
 /// 29D968
 pub unsafe extern "C" fn it_8029D968(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_8029D968");
     let item = GET_ITEM(gobj);
     if (*item).xDC8_word.flags.x13() == 0 && (*item).msid != 5 {
         it_8029F69C(gobj);
@@ -145,6 +146,7 @@ pub unsafe extern "C" fn it_8029D968(gobj: *mut Item_GObj) {
 
 /// 29D9A4: enters state `msid`, keeping the bomb bone's Y translation and X rotation.
 pub unsafe extern "C" fn it_8029D9A4(gobj: *mut HSD_GObj, msid: i32, arg2: u32) {
+    melee_core::ct!("it_8029D9A4");
     let item = HSD_GObjGetUserData(gobj) as *mut Item;
     let jobj = (*(*item).xBBC_dynamicBoneTable).bones[3];
     let y = HSD_JObjGetTranslationY(jobj);
@@ -219,6 +221,7 @@ unsafe fn it_8029DB5C_Inline_TimerCheck_Part(gobj: *mut HSD_GObj, item: *mut Ite
 
 /// 29DB5C
 pub unsafe extern "C" fn it_8029DB5C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_8029DB5C");
     let item = GET_ITEM(gobj);
     let article = (*item).xC4_article_data;
     let sa = (*article).x4_specialAttributes as *mut itLinkBombAttributes;
@@ -246,6 +249,7 @@ unsafe fn it_8029DD58_inline(item: *mut Item, attr: *mut itLinkBombAttributes, f
 
 /// 29DD58: spawns a bomb from `fighter_gobj`.
 pub unsafe extern "C" fn it_8029DD58(fighter_gobj: *mut Item_GObj, arg1: *mut Vec3, arg2: u32, arg3: i32, arg4: f32) -> *mut HSD_GObj {
+    melee_core::ct!("it_8029DD58");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
     spawn.kind = arg3 as _;
@@ -271,11 +275,13 @@ pub unsafe extern "C" fn it_8029DD58(fighter_gobj: *mut Item_GObj, arg1: *mut Ve
 
 /// 29DEB0
 pub unsafe extern "C" fn it_8029DEB0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_8029DEB0");
     it_8029D9A4(gobj, 0, 0);
     ext::it_8026BCF4(gobj);
 }
 
 pub unsafe extern "C" fn itLinkbomb_UnkMotion0_Anim(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itLinkbomb_UnkMotion0_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         it_8029DEB0(gobj);
     }
@@ -290,14 +296,16 @@ pub unsafe extern "C" fn itLinkbomb_UnkMotion0_Anim(gobj: *mut HSD_GObj) -> bool
     false
 }
 
-pub unsafe extern "C" fn itLinkbomb_UnkMotion0_Phys(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itLinkbomb_UnkMotion0_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itLinkbomb_UnkMotion0_Phys");}
 
 /// 29E21C
 pub unsafe extern "C" fn fn_8029E21C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8029E21C");
     it_8029D9A4(gobj, 1, 0);
 }
 
 pub unsafe extern "C" fn itLinkbomb_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itLinkbomb_UnkMotion1_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         fn_8029E21C(gobj);
     }
@@ -315,17 +323,20 @@ pub unsafe extern "C" fn itLinkbomb_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> bool
 }
 
 pub unsafe extern "C" fn itLinkbomb_UnkMotion1_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itLinkbomb_UnkMotion1_Phys");
     let temp_r4 = (*GET_ITEM(gobj)).xCC_item_attr;
     ext::it_80272860(gobj, (*temp_r4).x10_fall_speed, (*temp_r4).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itLinkbomb_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLinkbomb_UnkMotion1_Coll");
     ext::it_8026E15C(gobj, Some(it_8029F18C));
     false
 }
 
 /// 29E5D0
 pub unsafe extern "C" fn it_8029E5D0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_8029E5D0");
     let item = GET_ITEM(gobj);
     ext::it_80275414(gobj);
     ext::it_802754A4(gobj);
@@ -337,6 +348,7 @@ pub unsafe extern "C" fn it_8029E5D0(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itLinkbomb_UnkMotion2_Anim(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itLinkbomb_UnkMotion2_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         let item = GET_ITEM(gobj);
         it_8029E5D0(gobj);
@@ -355,6 +367,7 @@ pub unsafe extern "C" fn itLinkbomb_UnkMotion2_Anim(gobj: *mut HSD_GObj) -> bool
 }
 
 pub unsafe extern "C" fn itLinkbomb_UnkMotion2_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLinkbomb_UnkMotion2_Phys");
     Item_ApplyFallingPhysics(gobj);
 }
 
@@ -372,6 +385,7 @@ unsafe fn it_LinkBomb_Inline_VelocityCompare(gobj: *mut HSD_GObj, vel: *mut Vec3
 }
 
 pub unsafe extern "C" fn itLinkbomb_UnkMotion2_Coll(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itLinkbomb_UnkMotion2_Coll");
     let item = GET_ITEM(gobj);
     let mut vel: Vec3 = (*item).x40_vel;
     let temp_r3 = ext::it_8026DAA8(gobj);
@@ -387,6 +401,7 @@ pub unsafe extern "C" fn itLinkbomb_UnkMotion2_Coll(gobj: *mut HSD_GObj) -> bool
 
 /// 29EC34
 pub unsafe extern "C" fn it_8029EC34(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_8029EC34");
     let item = GET_ITEM(gobj);
     ext::it_80275414(gobj);
     ext::it_802754A4(gobj);
@@ -420,6 +435,7 @@ unsafe fn itLinkbomb_UnkMotion3_Anim_inline2(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itLinkbomb_UnkMotion3_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLinkbomb_UnkMotion3_Anim");
     let attrs = (*(*GET_ITEM(gobj)).xC4_article_data).x4_specialAttributes as *mut itLinkBombAttributes;
     if ext::it_80272C6C(gobj) == 0 {
         itLinkbomb_UnkMotion3_Anim_inline1(gobj);
@@ -429,10 +445,12 @@ pub unsafe extern "C" fn itLinkbomb_UnkMotion3_Anim(gobj: *mut Item_GObj) -> boo
 }
 
 pub unsafe extern "C" fn itLinkbomb_UnkMotion3_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLinkbomb_UnkMotion3_Phys");
     Item_ApplyFallingPhysics(gobj);
 }
 
 pub unsafe extern "C" fn itLinkbomb_UnkMotion3_Coll(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itLinkbomb_UnkMotion3_Coll");
     GET_ITEM(gobj);
     itLinkbomb_UnkMotion2_Coll(gobj);
     false
@@ -452,6 +470,7 @@ fn float_sign_int_inline(x: f32) -> i32 {
 
 /// 29F18C: starts rolling (state 4).
 pub unsafe extern "C" fn it_8029F18C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_8029F18C");
     let item = (*gobj).user_data as *mut Item;
 
     let temp_r0 = (*item).msid;
@@ -462,6 +481,7 @@ pub unsafe extern "C" fn it_8029F18C(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itLinkbomb_UnkMotion4_Anim(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itLinkbomb_UnkMotion4_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         it_8029F18C(gobj);
     }
@@ -479,6 +499,7 @@ pub unsafe extern "C" fn itLinkbomb_UnkMotion4_Anim(gobj: *mut HSD_GObj) -> bool
 }
 
 pub unsafe extern "C" fn itLinkbomb_UnkMotion4_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itLinkbomb_UnkMotion4_Phys");
     let zero: f32 = 0.0;
 
     let item = GET_ITEM(gobj);
@@ -496,12 +517,14 @@ pub unsafe extern "C" fn itLinkbomb_UnkMotion4_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itLinkbomb_UnkMotion4_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLinkbomb_UnkMotion4_Coll");
     ext::it_8026D62C(gobj, Some(fn_8029E21C));
     false
 }
 
 /// 29F69C: explodes.
 pub unsafe extern "C" fn it_8029F69C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_8029F69C");
     let item = GET_ITEM(gobj);
     let jobj = HSD_GObjGetHSDObj(gobj) as *mut HSD_JObj;
     ext::it_80275444(gobj);
@@ -531,17 +554,20 @@ pub unsafe extern "C" fn it_8029F69C(gobj: *mut HSD_GObj) {
 
 /// Returns the raw `int` of `it_802751D8` (`bool` is the MSL `int`).
 pub unsafe extern "C" fn itLinkbomb_UnkMotion5_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLinkbomb_UnkMotion5_Anim");
     ext::it_802751D8(gobj)
 }
 
-pub unsafe extern "C" fn itLinkbomb_UnkMotion5_Phys(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itLinkbomb_UnkMotion5_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itLinkbomb_UnkMotion5_Phys");}
 
 pub unsafe extern "C" fn itLinkbomb_UnkMotion5_Coll(_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itLinkbomb_UnkMotion5_Coll");
     false
 }
 
 /// 29F960
 pub unsafe extern "C" fn it_8029F960(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_8029F960");
     let item = GET_ITEM(gobj);
     if (*item).msid != 5 {
         if it_LinkBomb_Inline_VelocityCompare(gobj, &mut (*item).x40_vel) == 0 {
@@ -556,6 +582,7 @@ pub unsafe extern "C" fn it_8029F960(gobj: *mut Item_GObj) -> bool {
 }
 
 pub unsafe extern "C" fn itLinkBomb_Logic16_DmgReceived(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLinkBomb_Logic16_DmgReceived");
     let item = GET_ITEM(gobj);
     let sa = (*(*item).xC4_article_data).x4_specialAttributes as *mut itLinkBombAttributes;
     if (*item).msid != 5 {
@@ -578,10 +605,12 @@ pub unsafe extern "C" fn itLinkBomb_Logic16_DmgReceived(gobj: *mut Item_GObj) ->
 }
 
 pub unsafe extern "C" fn itLinkBomb_Logic16_EnteredAir(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLinkBomb_Logic16_EnteredAir");
     ext::Item_80268E5C(gobj, 6, 2);
 }
 
 pub unsafe extern "C" fn itLinkbomb_UnkMotion6_Anim(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itLinkbomb_UnkMotion6_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         ext::Item_80268E5C(gobj, 6, 2);
     }
@@ -598,30 +627,35 @@ pub unsafe extern "C" fn itLinkbomb_UnkMotion6_Anim(gobj: *mut HSD_GObj) -> bool
     false
 }
 
-pub unsafe extern "C" fn itLinkbomb_UnkMotion6_Phys(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itLinkbomb_UnkMotion6_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itLinkbomb_UnkMotion6_Phys");}
 
 pub unsafe extern "C" fn itLinkbomb_UnkMotion6_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLinkbomb_UnkMotion6_Coll");
     ext::it_8026E8C4(gobj, Some(it_8029F18C), Some(fn_8029E21C));
     false
 }
 
 /// Returns the raw `int` of `it_80273030`.
 pub unsafe extern "C" fn itLinkBomb_Logic16_Reflected(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLinkBomb_Logic16_Reflected");
     ext::it_80273030(gobj)
 }
 
 pub unsafe extern "C" fn itLinkBomb_Logic16_HitShield(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLinkBomb_Logic16_HitShield");
     ext::itColl_BounceOffVictim(gobj);
     false
 }
 
 /// Returns the raw `int` of `itColl_BounceOffShield`.
 pub unsafe extern "C" fn itLinkBomb_Logic16_ShieldBounced(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLinkBomb_Logic16_ShieldBounced");
     ext::itColl_BounceOffShield(gobj)
 }
 
 /// 29FD84
 pub unsafe extern "C" fn it_8029FD84(gobj: *mut Item_GObj, arg1: *mut Item_GObj) {
+    melee_core::ct!("it_8029FD84");
     let item = GET_ITEM(gobj);
     if (*item).xDD4_itemVar.linkbomb.x10 == arg1 {
         (*item).xDD4_itemVar.linkbomb.x10 = null_mut();

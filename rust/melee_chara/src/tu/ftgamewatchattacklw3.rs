@@ -106,19 +106,23 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 
 /// `ftGw_AttackLw3_ItemManholeSetup` as a Fighter callback entry (accessory4_cb).
 pub unsafe extern "C" fn cb_ftGw_AttackLw3_ItemManholeSetup(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftGw_AttackLw3_ItemManholeSetup");
     ftGw_AttackLw3_ItemManholeSetup(g);
 }
 /// `ftGw_AttackLw3_ItemManholeEnterHitlag` as a Fighter callback entry (pre_hitlag_cb).
 pub unsafe extern "C" fn cb_ftGw_AttackLw3_ItemManholeEnterHitlag(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftGw_AttackLw3_ItemManholeEnterHitlag");
     ftGw_AttackLw3_ItemManholeEnterHitlag(g);
 }
 /// `ftGw_AttackLw3_ItemManholeExitHitlag` as a Fighter callback entry (post_hitlag_cb).
 pub unsafe extern "C" fn cb_ftGw_AttackLw3_ItemManholeExitHitlag(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftGw_AttackLw3_ItemManholeExitHitlag");
     ftGw_AttackLw3_ItemManholeExitHitlag(g);
 }
 
 /// Create the Manhole item (swapping out a held item first).
 pub fn ftGw_AttackLw3_ItemManholeSetup(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackLw3_ItemManholeSetup");
     unsafe {
         let mut sp10 = Vec { x: 0.0, y: 0.0, z: 0.0 };
         let fp = fpp(gobj);
@@ -150,6 +154,7 @@ pub fn ftGw_AttackLw3_ItemManholeSetup(gobj: *mut HSD_GObj) {
 
 /// Swap the held item's GObj pointer back.
 pub fn ftGw_AttackLw3_ItemManholeRemove(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackLw3_ItemManholeRemove");
     unsafe {
         let fp = fpp(gobj);
         ftGw_AttackLw3_ItemManholeExitHitlag(gobj);
@@ -167,6 +172,7 @@ pub fn ftGw_AttackLw3_ItemManholeRemove(gobj: *mut HSD_GObj) {
 
 /// Remove the Manhole on damage.
 pub fn ftGw_AttackLw3_ItemManholeOnDamage(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackLw3_ItemManholeOnDamage");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.gw.x2250_manholeGObj2.is_null() {
@@ -178,6 +184,7 @@ pub fn ftGw_AttackLw3_ItemManholeOnDamage(gobj: *mut HSD_GObj) {
 
 /// Apply hitlag to the Manhole item (static in the C).
 pub fn ftGw_AttackLw3_ItemManholeEnterHitlag(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackLw3_ItemManholeEnterHitlag");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.gw.x2250_manholeGObj2.is_null() {
@@ -188,6 +195,7 @@ pub fn ftGw_AttackLw3_ItemManholeEnterHitlag(gobj: *mut HSD_GObj) {
 
 /// Remove hitlag from the Manhole item (static in the C).
 pub fn ftGw_AttackLw3_ItemManholeExitHitlag(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackLw3_ItemManholeExitHitlag");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.gw.x2250_manholeGObj2.is_null() {
@@ -198,6 +206,7 @@ pub fn ftGw_AttackLw3_ItemManholeExitHitlag(gobj: *mut HSD_GObj) {
 
 /// Mr. Game & Watch's Down Tilt Motion State handler.
 pub fn ftGw_AttackLw3_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackLw3_Enter");
     unsafe {
         let fp = fpp(gobj);
         if !melee_fighter::tu::ftpickupitem::ftpickupitem_80094790(gobj) {
@@ -211,6 +220,7 @@ pub fn ftGw_AttackLw3_Enter(gobj: *mut HSD_GObj) {
 
 /// Down Tilt Animation callback.
 pub fn ftGw_AttackLw3_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackLw3_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         ftCo_SquatWait::ftCo_800D638C(gobj);
     }
@@ -218,6 +228,7 @@ pub fn ftGw_AttackLw3_Anim(gobj: *mut HSD_GObj) {
 
 /// Down Tilt IASA callback: the first input check that fires wins (`RETURN_IF`).
 pub fn ftGw_AttackLw3_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackLw3_IASA");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).allow_interrupt() != 0 {
@@ -263,6 +274,7 @@ pub fn ftGw_AttackLw3_IASA(gobj: *mut HSD_GObj) {
 
 /// Down Tilt Collision callback.
 pub fn ftGw_AttackLw3_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackLw3_Coll");
     st::ft_80084104(gobj);
     ftGw_Init_8014A538(gobj);
 }

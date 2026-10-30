@@ -44,6 +44,7 @@ pub mod ext {
 }
 
 pub fn ftCl_AppealS_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCl_AppealS_Anim");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         if (*fp).cmd_vars[1] == 1 && (*fp).u.lk.x18.is_null() {
@@ -65,9 +66,11 @@ pub fn ftCl_AppealS_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCl_AppealS_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCl_AppealS_IASA");
     ext::ftCo_AppealS_IASA(gobj);
 }
 
 pub fn ftCl_AppealS_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCl_AppealS_Coll");
     ext::ft_80084280(gobj);
 }

@@ -95,6 +95,7 @@ unsafe fn Item_ClearFlagsAndEnterState(gobj: *mut Item_GObj, ip: *mut Item, msid
 
 /// 2C4580: spawns the explosion at `pos` (z forced to 0).
 pub unsafe extern "C" fn it_802C4580(parent_gobj: *mut Item_GObj, arg1: *mut HSD_GObj, pos: *mut Vec3, facing_dir: f32, scale: f32) -> *mut Item_GObj {
+    melee_core::ct!("it_802C4580");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = It_Kind_Zelda_DinFire_Explode;
     Item_InitSpawnPosition(&mut spawn, pos, true);
@@ -119,6 +120,7 @@ pub unsafe extern "C" fn it_802C4580(parent_gobj: *mut Item_GObj, arg1: *mut HSD
 }
 
 pub unsafe extern "C" fn itZeldaDinFireExplode_Logic66_Destroyed(gobj: *mut Item_GObj) {
+    melee_core::ct!("itZeldaDinFireExplode_Logic66_Destroyed");
     let ip = GET_ITEM(gobj);
     ext::it_802725D4(gobj);
     (*ip).owner = null_mut();
@@ -128,6 +130,7 @@ pub unsafe extern "C" fn itZeldaDinFireExplode_Logic66_Destroyed(gobj: *mut Item
 
 /// 2C46C4: starts the explosion; the camera quake depends on how charged it is.
 pub unsafe extern "C" fn it_802C46C4(gobj: *mut Item_GObj, arg1: *mut Item) {
+    melee_core::ct!("it_802C46C4");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itZeldaDinFireExplodeAttributes;
@@ -155,6 +158,7 @@ pub unsafe extern "C" fn it_802C46C4(gobj: *mut Item_GObj, arg1: *mut Item) {
 
 /// Scales the joint and the first hitbox with the charge.
 pub unsafe extern "C" fn itZeldadinfireexplode_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itZeldadinfireexplode_UnkMotion0_Anim");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
     let mut scale: Vec3 = core::mem::zeroed();
@@ -185,31 +189,38 @@ pub unsafe extern "C" fn itZeldadinfireexplode_UnkMotion0_Anim(gobj: *mut Item_G
 /// @note Faithful to retail: only y and z are cleared (the doubled z is the original's typo); x velocity is
 /// deliberately left untouched.
 pub unsafe extern "C" fn itZeldadinfireexplode_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itZeldadinfireexplode_UnkMotion0_Phys");
     let ip = GET_ITEM(gobj);
     (*ip).x40_vel.z = 0.0;
     (*ip).x40_vel.y = 0.0;
 }
 
 pub unsafe extern "C" fn itZeldadinfireexplode_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itZeldadinfireexplode_UnkMotion0_Coll");
     false
 }
 
 pub unsafe extern "C" fn itZeldaDinFireExplode_Logic66_Clanked(arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itZeldaDinFireExplode_Logic66_Clanked");
     true
 }
 
 pub unsafe extern "C" fn itZeldaDinFireExplode_Logic66_Absorbed(arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itZeldaDinFireExplode_Logic66_Absorbed");
     true
 }
 
 pub unsafe extern "C" fn itZeldaDinFireExplode_Logic66_ShieldBounced(arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itZeldaDinFireExplode_Logic66_ShieldBounced");
     true
 }
 
 pub unsafe extern "C" fn itZeldaDinFireExplode_Logic66_HitShield(arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itZeldaDinFireExplode_Logic66_HitShield");
     true
 }
 
 pub unsafe extern "C" fn itZeldaDinFireExplode_Logic66_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("itZeldaDinFireExplode_Logic66_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

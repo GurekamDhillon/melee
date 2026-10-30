@@ -106,6 +106,7 @@ pub static mut it_803F79A0: [ItemStateTable; 2] = [
 
 /// `HSD_GObj* it_802C7D60(Item_GObj* parent, Vec3* pos, Fighter_Part arg2, f32 dir)`
 pub unsafe extern "C" fn it_802C7D60(parent: *mut HSD_GObj, pos: *mut Vec, arg2: Fighter_Part, dir: f32) -> *mut HSD_GObj {
+    melee_core::ct!("it_802C7D60");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = It_Kind_GameWatch_Panic;
     Item_InitSpawnPosition(&mut spawn, pos, false);
@@ -121,6 +122,7 @@ pub unsafe extern "C" fn it_802C7D60(parent: *mut HSD_GObj, pos: *mut Vec, arg2:
 }
 
 pub unsafe extern "C" fn itGameWatchPanic_Logic78_Destroyed(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGameWatchPanic_Logic78_Destroyed");
     let ip = GET_ITEM(gobj);
     if !(*ip).owner.is_null() {
         ext::ftGw_SpecialLw_ItemPanicSetFlag((*ip).owner);
@@ -128,6 +130,7 @@ pub unsafe extern "C" fn itGameWatchPanic_Logic78_Destroyed(gobj: *mut HSD_GObj)
 }
 
 pub unsafe extern "C" fn it_802C7E94(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802C7E94");
     let ip = GET_ITEM(gobj);
     if !ip.is_null() {
         itGameWatchPanic_Logic78_Destroyed(gobj);
@@ -136,14 +139,17 @@ pub unsafe extern "C" fn it_802C7E94(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_802C7EE0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802C7EE0");
     ext::it_8026B724(gobj);
 }
 
 pub unsafe extern "C" fn it_802C7F00(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802C7F00");
     ext::it_8026B73C(gobj);
 }
 
 pub unsafe extern "C" fn itGameWatchPanic_Logic78_PickedUp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGameWatchPanic_Logic78_PickedUp");
     let ip = GET_ITEM(gobj);
     (*ip).xDB0_itcmd_var1 = 0;
     (*ip).xDAC_itcmd_var0 = 0;
@@ -159,6 +165,7 @@ pub unsafe extern "C" fn itGameWatchPanic_Logic78_PickedUp(gobj: *mut HSD_GObj) 
 }
 
 pub unsafe extern "C" fn itGamewatchpanic_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itGamewatchpanic_UnkMotion1_Anim");
     let ip = GET_ITEM(gobj);
     let cond = if !(*ip).owner.is_null() { ext::ftGw_SpecialLw_ItemCheckPanicRemove((*ip).owner) } else { 1 };
     if cond != 0 {
@@ -172,5 +179,6 @@ pub unsafe extern "C" fn itGamewatchpanic_UnkMotion1_Anim(gobj: *mut HSD_GObj) -
 }
 
 pub unsafe extern "C" fn itGameWatchPanic_Logic78_EvtUnk(arg0: *mut HSD_GObj, arg1: *mut HSD_GObj) {
+    melee_core::ct!("itGameWatchPanic_Logic78_EvtUnk");
     ext::it_8026B894(arg0, arg1);
 }

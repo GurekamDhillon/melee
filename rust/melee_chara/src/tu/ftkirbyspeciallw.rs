@@ -135,6 +135,7 @@ unsafe fn set_cbs2(fp: *mut Fighter) {
 /// Plain-float callbacks used as Fighter fields elsewhere (hit callbacks etc.) are not in this TU.
 /// `ftKb_SpecialHi_800F331C`: step the stone fade-in / fade-out counter and set part visibility.
 pub fn ftKb_SpecialHi_800F331C(gobj: G) {
+    melee_core::ct!("ftKb_SpecialHi_800F331C");
     unsafe {
         let fp = fpp(gobj);
         match (*fp).mv.kb.specialhi.x8.i {
@@ -163,6 +164,7 @@ pub fn ftKb_SpecialHi_800F331C(gobj: G) {
 }
 
 pub fn ftKb_SpecialHi_800F346C(gobj: G) {
+    melee_core::ct!("ftKb_SpecialHi_800F346C");
     unsafe {
         let fp = fpp(gobj);
         let dat_attr = da(fp);
@@ -192,6 +194,7 @@ pub fn ftKb_SpecialHi_800F346C(gobj: G) {
 }
 
 pub fn ftKb_SpecialHi_800F3570(gobj: G) {
+    melee_core::ct!("ftKb_SpecialHi_800F3570");
     unsafe {
         let fp = fpp(gobj);
         let p = &ftKb_Init_803CB4EC;
@@ -243,6 +246,7 @@ pub fn ftKb_SpecialHi_800F3570(gobj: G) {
 }
 
 pub fn ftKb_SpecialHi_800F36DC(gobj: G) {
+    melee_core::ct!("ftKb_SpecialHi_800F36DC");
     unsafe {
         let fp = fpp(gobj);
         let p = &ftKb_Init_803CB4EC;
@@ -259,6 +263,7 @@ pub fn ftKb_SpecialHi_800F36DC(gobj: G) {
 }
 
 pub fn ftKb_SpecialHi_800F37EC(gobj: G) {
+    melee_core::ct!("ftKb_SpecialHi_800F37EC");
     unsafe {
         let fp = fpp(gobj);
         let dat_attr = da(fp);
@@ -324,6 +329,7 @@ pub fn ftKb_SpecialHi_800F37EC(gobj: G) {
 }
 
 pub fn ftKb_SpecialHi_800F3B28(gobj: G) {
+    melee_core::ct!("ftKb_SpecialHi_800F3B28");
     unsafe {
         let fp = fpp(gobj);
         let dat_attr = da(fp);
@@ -404,10 +410,12 @@ unsafe fn enter(gobj: G, msid: u32) {
 }
 
 pub fn ftKb_SpecialLw_Enter(gobj: G) {
+    melee_core::ct!("ftKb_SpecialLw_Enter");
     unsafe { enter(gobj, ftKb_MS_SpecialLw1 as u32) }
 }
 
 pub fn ftKb_SpecialAirLw_Enter(gobj: G) {
+    melee_core::ct!("ftKb_SpecialAirLw_Enter");
     unsafe { enter(gobj, ftKb_MS_SpecialAirLwStart as u32) }
 }
 
@@ -426,6 +434,7 @@ unsafe fn start_anim(gobj: G, next_msid: u32) {
 }
 
 pub fn ftKb_SpecialLw1_Anim(gobj: G) {
+    melee_core::ct!("ftKb_SpecialLw1_Anim");
     unsafe { start_anim(gobj, ftKb_MS_SpecialLw as u32) }
 }
 
@@ -438,6 +447,7 @@ unsafe fn unk_inline(gobj: G, val: u16) {
 }
 
 pub fn ftKb_SpecialLw_Anim(gobj: G) {
+    melee_core::ct!("ftKb_SpecialLw_Anim");
     unsafe { unk_inline(gobj, 1) }
 }
 
@@ -457,22 +467,26 @@ unsafe fn end_anim(gobj: G) {
 }
 
 pub fn ftKb_SpecialLwEnd_Anim(gobj: G) {
+    melee_core::ct!("ftKb_SpecialLwEnd_Anim");
     unsafe { end_anim(gobj) }
 }
 
 pub fn ftKb_SpecialAirLwStart_Anim(gobj: G) {
+    melee_core::ct!("ftKb_SpecialAirLwStart_Anim");
     unsafe { start_anim(gobj, ftKb_MS_SpecialAirLw as u32) }
 }
 
 pub fn ftKb_SpecialAirLw_Anim(gobj: G) {
+    melee_core::ct!("ftKb_SpecialAirLw_Anim");
     unsafe { unk_inline(gobj, 1) }
 }
 
 pub fn ftKb_SpecialAirLwEnd_Anim(gobj: G) {
+    melee_core::ct!("ftKb_SpecialAirLwEnd_Anim");
     unsafe { end_anim(gobj) }
 }
 
-pub fn ftKb_SpecialLw1_IASA(_gobj: G) {}
+pub fn ftKb_SpecialLw1_IASA(_gobj: G) { melee_core::ct!("ftKb_SpecialLw1_IASA");}
 
 /// `fbKb_SpecialLw_IASA_Inline`.
 unsafe fn iasa_inline(gobj: G) -> bool {
@@ -494,6 +508,7 @@ unsafe fn iasa_inline(gobj: G) -> bool {
 }
 
 pub fn ftKb_SpecialLw_IASA(gobj: G) {
+    melee_core::ct!("ftKb_SpecialLw_IASA");
     unsafe {
         let fp = fpp(gobj);
         let temp_r30 = (*(*fp).parts.add(FtPart_YRotN as usize)).joint;
@@ -508,10 +523,11 @@ pub fn ftKb_SpecialLw_IASA(gobj: G) {
     }
 }
 
-pub fn ftKb_SpecialLwEnd_IASA(_gobj: G) {}
-pub fn ftKb_SpecialAirLwStart_IASA(_gobj: G) {}
+pub fn ftKb_SpecialLwEnd_IASA(_gobj: G) { melee_core::ct!("ftKb_SpecialLwEnd_IASA");}
+pub fn ftKb_SpecialAirLwStart_IASA(_gobj: G) { melee_core::ct!("ftKb_SpecialAirLwStart_IASA");}
 
 pub fn ftKb_SpecialAirLw_IASA(gobj: G) {
+    melee_core::ct!("ftKb_SpecialAirLw_IASA");
     unsafe {
         let fp = fpp(gobj);
         let temp_r31 = (*(*fp).parts.add(FtPart_YRotN as usize)).joint;
@@ -525,9 +541,10 @@ pub fn ftKb_SpecialAirLw_IASA(gobj: G) {
     }
 }
 
-pub fn ftKb_SpecialAirLwEnd_IASA(_gobj: G) {}
+pub fn ftKb_SpecialAirLwEnd_IASA(_gobj: G) { melee_core::ct!("ftKb_SpecialAirLwEnd_IASA");}
 
 pub fn ftKb_SpecialLw_Phys(gobj: G) {
+    melee_core::ct!("ftKb_SpecialLw_Phys");
     unsafe {
         let fp = fpp(gobj);
         st::ft_80084FA8(gobj);
@@ -537,6 +554,7 @@ pub fn ftKb_SpecialLw_Phys(gobj: G) {
 }
 
 pub fn ftKb_SpecialAirLw_Phys(gobj: G) {
+    melee_core::ct!("ftKb_SpecialAirLw_Phys");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -546,6 +564,7 @@ pub fn ftKb_SpecialAirLw_Phys(gobj: G) {
 }
 
 pub fn ftKb_SpecialLw1_Coll(gobj: G) {
+    melee_core::ct!("ftKb_SpecialLw1_Coll");
     unsafe {
         let fp = fpp(gobj);
         if st::ft_80082708(gobj) == GA_Ground as i32 {
@@ -566,6 +585,7 @@ pub fn ftKb_SpecialLw1_Coll(gobj: G) {
 }
 
 pub fn ftKb_SpecialLw_Coll(gobj: G) {
+    melee_core::ct!("ftKb_SpecialLw_Coll");
     unsafe {
         let fp = fpp(gobj);
         if st::ft_80082708(gobj) == GA_Ground as i32 {
@@ -586,6 +606,7 @@ pub fn ftKb_SpecialLw_Coll(gobj: G) {
 }
 
 pub fn ftKb_SpecialLwEnd_Coll(gobj: G) {
+    melee_core::ct!("ftKb_SpecialLwEnd_Coll");
     unsafe {
         let fp = fpp(gobj);
         st::ft_80081D0C(gobj);
@@ -634,6 +655,7 @@ unsafe fn set_stone_vecs(gobj: G, fp: *mut Fighter, da: *const ftKb_DatAttrs) {
 }
 
 pub fn ftKb_SpecialAirLwStart_Coll(gobj: G) {
+    melee_core::ct!("ftKb_SpecialAirLwStart_Coll");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -659,6 +681,7 @@ pub fn ftKb_SpecialAirLwStart_Coll(gobj: G) {
 }
 
 pub fn ftKb_SpecialAirLw_Coll(gobj: G) {
+    melee_core::ct!("ftKb_SpecialAirLw_Coll");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -684,6 +707,7 @@ pub fn ftKb_SpecialAirLw_Coll(gobj: G) {
 }
 
 pub fn ftKb_SpecialAirLwEnd_Coll(gobj: G) {
+    melee_core::ct!("ftKb_SpecialAirLwEnd_Coll");
     unsafe {
         let fp = fpp(gobj);
         st::ft_80081D0C(gobj);
@@ -693,6 +717,7 @@ pub fn ftKb_SpecialAirLwEnd_Coll(gobj: G) {
 }
 
 pub fn ftKb_SpecialAirLw_800F5318(gobj: G) {
+    melee_core::ct!("ftKb_SpecialAirLw_800F5318");
     unsafe {
         let fp = fpp(gobj);
         ext::ftCommon_8007F5CC(gobj, 1);

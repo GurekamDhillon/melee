@@ -146,6 +146,7 @@ pub static mut it_803F64F8: [ItemStateTable; 1] = [
 
 /// 298168: fires a ray from `owner_gobj`.
 pub unsafe extern "C" fn it_80298168(owner_gobj: *mut HSD_GObj, pos: *mut Vec3, facing_dir: f32) {
+    melee_core::ct!("it_80298168");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = It_Kind_L_Gun_Ray;
     Item_InitSpawnPositionFromParent(&mut spawn, owner_gobj, pos);
@@ -167,6 +168,7 @@ pub unsafe extern "C" fn it_80298168(owner_gobj: *mut HSD_GObj, pos: *mut Vec3, 
 
 /// 2982AC
 pub unsafe extern "C" fn it_802982AC(gobj: *mut Item_GObj, owner_gobj: *mut Item_GObj, article: *mut Article) {
+    melee_core::ct!("it_802982AC");
     let da = (*(*GET_ITEM(gobj)).xC4_article_data).x4_specialAttributes as *mut ItLGunRayAttr;
     ext::it_80275158(gobj, (*da).lifetime);
     ext::it_8026B3A8(gobj);
@@ -175,6 +177,7 @@ pub unsafe extern "C" fn it_802982AC(gobj: *mut Item_GObj, owner_gobj: *mut Item
 
 /// Returns the raw `int` of `it_80273130` (`bool` is the MSL `int`).
 pub unsafe extern "C" fn itLgunray_UnkMotion0_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLgunray_UnkMotion0_Anim");
     let ip = GET_ITEM(gobj);
     let item_spec_attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut ItLGunRayAttr;
     let jobj = GET_JOBJ(gobj);
@@ -182,11 +185,13 @@ pub unsafe extern "C" fn itLgunray_UnkMotion0_Anim(gobj: *mut Item_GObj) -> i32 
 }
 
 pub unsafe extern "C" fn itLgunray_UnkMotion0_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itLgunray_UnkMotion0_Phys");
     let ip = GET_ITEM(gobj);
     (*ip).xDD4_itemVar.lgunray.pos = (*ip).pos;
 }
 
 pub unsafe extern "C" fn itLgunray_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLgunray_UnkMotion0_Coll");
     let ip = GET_ITEM(gobj);
     if ext::it_8029C4D4(gobj, &mut (*ip).x378_itemColl) != 0 {
         return true;
@@ -195,22 +200,27 @@ pub unsafe extern "C" fn itLgunray_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool
 }
 
 pub unsafe extern "C" fn itLGunRay_Logic35_DmgDealt(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLGunRay_Logic35_DmgDealt");
     true
 }
 
 pub unsafe extern "C" fn itLGunRay_Logic35_Clanked(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLGunRay_Logic35_Clanked");
     true
 }
 
 pub unsafe extern "C" fn itLGunRay_Logic35_HitShield(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLGunRay_Logic35_HitShield");
     true
 }
 
 pub unsafe extern "C" fn itLGunRay_Logic35_Absorbed(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLGunRay_Logic35_Absorbed");
     true
 }
 
 pub unsafe extern "C" fn itLGunRay_Logic35_Reflected(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLGunRay_Logic35_Reflected");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
     (*ip).facing_dir = -(*ip).facing_dir;
@@ -221,9 +231,11 @@ pub unsafe extern "C" fn itLGunRay_Logic35_Reflected(gobj: *mut Item_GObj) -> bo
 }
 
 pub unsafe extern "C" fn itLGunRay_Logic35_ShieldBounced(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLGunRay_Logic35_ShieldBounced");
     Item_BounceRayOffShield(gobj)
 }
 
 pub unsafe extern "C" fn itLGunRay_Logic35_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itLGunRay_Logic35_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

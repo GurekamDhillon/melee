@@ -103,18 +103,21 @@ macro_rules! pred_i32 {
 
 #[inline]
 pub unsafe extern "C" fn item_of(g: *mut HSD_GObj) -> *mut Item {
+    melee_core::ct!("item_of");
     (*g).user_data as *mut Item
 }
 
 /// `GET_ATTRS(ip)`: `ip->xC4_article_data->x4_specialAttributes` as `itDrMarioPillAttributes`.
 #[inline]
 pub unsafe extern "C" fn attrs_of<'a>(ip: *mut Item) -> &'a itDrMarioPillAttributes {
+    melee_core::ct!("attrs_of");
     &*((*(*ip).xC4_article_data).x4_specialAttributes as *const itDrMarioPillAttributes)
 }
 
 /// `Item_ClearCmdVars` (src/melee/it/inlines.h, static inline).
 #[inline]
 pub unsafe extern "C" fn Item_ClearCmdVars(ip: *mut Item) {
+    melee_core::ct!("Item_ClearCmdVars");
     (*ip).xDB8_itcmd_var3 = 0;
     (*ip).xDB4_itcmd_var2 = 0;
     (*ip).xDB0_itcmd_var1 = 0;
@@ -126,6 +129,7 @@ pub unsafe extern "C" fn Item_ClearCmdVars(ip: *mut Item) {
 /// `x * guess` rounded to f32. Returns `x` for `x <= 0`.
 #[inline(always)]
 pub fn my_sqrtf(x: f32) -> f32 {
+    melee_core::ct!("my_sqrtf");
     if x > 0.0 {
         let xd = x as f64;
         let mut guess = frsqrte(xd);
@@ -142,6 +146,7 @@ pub fn my_sqrtf(x: f32) -> f32 {
 /// `itDrMarioPill_Spawn` (itdrmariopill.c): spawn a pill from `parent_gobj`, flown with
 /// `attrs->x0` / `x4` (via `itDrMarioPill_802C0B5C`).
 pub unsafe extern "C" fn itDrMarioPill_Spawn(parent_gobj: *mut HSD_GObj, pos: *mut Vec3, arg2: i32, kind: ItemKind, facing_dir: f32) {
+    melee_core::ct!("itDrMarioPill_Spawn");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = kind;
     Item_InitSpawnPositionFromParent(&mut spawn, parent_gobj, pos);
@@ -158,6 +163,7 @@ pub unsafe extern "C" fn itDrMarioPill_Spawn(parent_gobj: *mut HSD_GObj, pos: *m
 
 /// `itDrMarioPill_802C061C` (static): follow the held Dr. Mario's position while attached.
 pub unsafe extern "C" fn itDrMarioPill_802C061C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itDrMarioPill_802C061C");
     let ip = item_of(gobj);
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     if !(*ip).xDD4_itemVar.drmariopill.x4.is_null() {
@@ -173,6 +179,7 @@ pub unsafe extern "C" fn itDrMarioPill_802C061C(gobj: *mut HSD_GObj) {
 
 /// `itDrMarioPill_Appeal_Spawn`: the Dr. Mario appeal pill, attached to its owner.
 pub unsafe extern "C" fn itDrMarioPill_Appeal_Spawn(parent_gobj: *mut HSD_GObj, pos: *mut Vec3, arg2: i32, kind: ItemKind, facing_dir: f32) -> *mut HSD_GObj {
+    melee_core::ct!("itDrMarioPill_Appeal_Spawn");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = kind;
     Item_InitSpawnPositionFromParent(&mut spawn, parent_gobj, pos);
@@ -204,6 +211,7 @@ pub unsafe extern "C" fn itDrMarioPill_Appeal_Spawn(parent_gobj: *mut HSD_GObj, 
 /// `itDrMarioPill_802C09C4`: the Dr. Mario pill spawned for a fighter part `part` (`msid` picks
 /// the motion; msid 2 attaches it to `part`).
 pub unsafe extern "C" fn itDrMarioPill_802C09C4(parent_gobj: *mut HSD_GObj, pos: *mut Vec3, arg2: i32, kind: ItemKind, msid: i32, part: Fighter_Part, facing_dir: f32) -> *mut HSD_GObj {
+    melee_core::ct!("itDrMarioPill_802C09C4");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = kind;
     Item_InitSpawnPositionFromParent(&mut spawn, parent_gobj, pos);
@@ -237,6 +245,7 @@ pub unsafe extern "C" fn itDrMarioPill_802C09C4(parent_gobj: *mut HSD_GObj, pos:
 
 /// `itDrMarioPill_802C0B5C`: launch the pill along the attribute angle (`x0` speed, `x4` angle).
 pub unsafe extern "C" fn itDrMarioPill_802C0B5C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itDrMarioPill_802C0B5C");
     let ip = item_of(gobj);
     let attrs = attrs_of(ip);
     let temp_f31 = attrs.x0;
@@ -251,6 +260,7 @@ pub unsafe extern "C" fn itDrMarioPill_802C0B5C(gobj: *mut HSD_GObj) {
 
 /// `itDrMarioPill_UnkMotion0_Anim` (static): tick the lifetime.
 pub unsafe extern "C" fn itDrMarioPill_UnkMotion0_Anim(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDrMarioPill_UnkMotion0_Anim");
     let ip = item_of(gobj);
     ext::it_8026B3A8(gobj);
     (*ip).xD44_lifeTimer -= 1.0;
@@ -259,6 +269,7 @@ pub unsafe extern "C" fn itDrMarioPill_UnkMotion0_Anim(gobj: *mut HSD_GObj) -> b
 
 /// `itDrMarioPill_UnkMotion0_Phys` (static): fall, then the common physics.
 pub unsafe extern "C" fn itDrMarioPill_UnkMotion0_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itDrMarioPill_UnkMotion0_Phys");
     let ip = item_of(gobj);
     ext::it_8026B3A8(gobj);
     let it_attr = &*(*ip).xCC_item_attr;
@@ -268,6 +279,7 @@ pub unsafe extern "C" fn itDrMarioPill_UnkMotion0_Phys(gobj: *mut HSD_GObj) {
 
 /// `itDrmariopill_UnkMotion0_Coll` (static): settle once slow enough, else play the bounce sound.
 pub unsafe extern "C" fn itDrmariopill_UnkMotion0_Coll(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDrmariopill_UnkMotion0_Coll");
     ext::it_8026D9A0(gobj);
     ext::it_8026B3A8(gobj);
     if ext::it_8027781C(gobj) != 0 {
@@ -285,6 +297,7 @@ pub unsafe extern "C" fn itDrmariopill_UnkMotion0_Coll(gobj: *mut HSD_GObj) -> b
 
 /// `itDrMarioPill_802C0DBC`: drop the held reference and free the item.
 pub unsafe extern "C" fn itDrMarioPill_802C0DBC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itDrMarioPill_802C0DBC");
     if !gobj.is_null() {
         let ip = item_of(gobj);
         if !ip.is_null() {
@@ -296,6 +309,7 @@ pub unsafe extern "C" fn itDrMarioPill_802C0DBC(gobj: *mut HSD_GObj) {
 
 /// `itDrMarioPill_802C0DF8`: the appeal pill's flight (motion 1, 1200 units of lifetime).
 pub unsafe extern "C" fn itDrMarioPill_802C0DF8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itDrMarioPill_802C0DF8");
     let ip = item_of(gobj);
     ext::it_80275158(gobj, 1200.0);
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);
@@ -306,6 +320,7 @@ pub unsafe extern "C" fn itDrMarioPill_802C0DF8(gobj: *mut HSD_GObj) {
 /// `itDrMarioPill_Motion2_Anim_sub` (static inline): forget the held reference and clear the
 /// on-accessory; true.
 pub unsafe extern "C" fn itDrMarioPill_Motion2_Anim_sub(arg_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDrMarioPill_Motion2_Anim_sub");
     if !arg_gobj.is_null() {
         let ip = item_of(arg_gobj);
         if !ip.is_null() {
@@ -329,6 +344,7 @@ pub unsafe extern "C" fn itDrMarioPill_Motion2_Anim_sub(arg_gobj: *mut HSD_GObj)
 
 /// `itDrMarioPill_Motion2_Anim_flags` (static inline): show the child joint while the flag is set.
 pub unsafe extern "C" fn itDrMarioPill_Motion2_Anim_flags(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itDrMarioPill_Motion2_Anim_flags");
     let ip = item_of(gobj);
     let jobj = HSD_JObjGetChild((*gobj).hsd_obj as *mut HSD_JObj);
     ext::it_8026B3A8(gobj);
@@ -341,6 +357,7 @@ pub unsafe extern "C" fn itDrMarioPill_Motion2_Anim_flags(gobj: *mut HSD_GObj) {
 
 /// `itDrMarioPill_Motion2_Anim` (static): stick to Dr. Mario; release when he lets go.
 pub unsafe extern "C" fn itDrMarioPill_Motion2_Anim(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDrMarioPill_Motion2_Anim");
     let hobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let ip = item_of(gobj);
     ext::it_802756D0(gobj);
@@ -370,12 +387,14 @@ pub unsafe extern "C" fn itDrMarioPill_Motion2_Anim(gobj: *mut HSD_GObj) -> bool
 
 /// `itDrMarioPill_Motion2_Phys` (static): the common physics.
 pub unsafe extern "C" fn itDrMarioPill_Motion2_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itDrMarioPill_Motion2_Phys");
     ext::it_802756D0(gobj);
     ext::it_8026B3A8(gobj);
 }
 
 /// `itDrMariopill_Motion2_Coll` (static): nothing to collide with (false).
 pub unsafe extern "C" fn itDrMariopill_Motion2_Coll(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDrMariopill_Motion2_Coll");
     ext::it_802756D0(gobj);
     ext::it_8026B3A8(gobj);
     false
@@ -383,6 +402,7 @@ pub unsafe extern "C" fn itDrMariopill_Motion2_Coll(gobj: *mut HSD_GObj) -> bool
 
 /// `itDrMarioPill_802C1180`: set the motion for `msid` and its speed attribute `x8`.
 pub unsafe extern "C" fn itDrMarioPill_802C1180(gobj: *mut HSD_GObj, msid: enum_t) {
+    melee_core::ct!("itDrMarioPill_802C1180");
     let ip = item_of(gobj);
     ext::it_80275158(gobj, attrs_of(ip).x8);
     ext::Item_80268E5C(gobj, msid + 4, ITEM_ANIM_UPDATE);
@@ -391,6 +411,7 @@ pub unsafe extern "C" fn itDrMarioPill_802C1180(gobj: *mut HSD_GObj, msid: enum_
 
 /// `itDrMarioPill_PickedUp`: motion 6 with the attribute lifetime.
 pub unsafe extern "C" fn itDrMarioPill_PickedUp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itDrMarioPill_PickedUp");
     let ip = item_of(gobj);
     let attrs = attrs_of(ip);
     ext::it_80275158(gobj, attrs.x8);
@@ -400,6 +421,7 @@ pub unsafe extern "C" fn itDrMarioPill_PickedUp(gobj: *mut HSD_GObj) {
 
 /// `itDrMarioPill_Motion6_Anim` (static): copy the held Dr. Mario's scale onto the pill's joint.
 pub unsafe extern "C" fn itDrMarioPill_Motion6_Anim(orig: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDrMarioPill_Motion6_Anim");
     let ip = item_of(orig);
     ext::it_8026B3A8(orig);
     let gobj = (*ip).xDD4_itemVar.drmariopill.x4 as *mut HSD_GObj;
@@ -416,17 +438,20 @@ pub unsafe extern "C" fn itDrMarioPill_Motion6_Anim(orig: *mut HSD_GObj) -> bool
 
 /// `itDrMarioPill_Motion6_Phys` (static): the common physics.
 pub unsafe extern "C" fn itDrMarioPill_Motion6_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itDrMarioPill_Motion6_Phys");
     ext::it_8026B3A8(gobj);
 }
 
 /// `itDrMarioPill_Motion6_Coll` (static): false.
 pub unsafe extern "C" fn itDrMarioPill_Motion6_Coll(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDrMarioPill_Motion6_Coll");
     ext::it_8026B3A8(gobj);
     false
 }
 
 /// `itDrMarioPill_DmgDealt`: the hit sound; true.
 pub unsafe extern "C" fn itDrMarioPill_DmgDealt(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDrMarioPill_DmgDealt");
     let ip = item_of(gobj);
     ext::it_8026B3A8(gobj);
     ext::Item_8026AE84(ip, 0x15FAE, 0x7F, 0x40);
@@ -435,12 +460,14 @@ pub unsafe extern "C" fn itDrMarioPill_DmgDealt(gobj: *mut HSD_GObj) -> bool {
 
 /// `itDrMarioPill_Reflected`: `it_80273030`.
 pub unsafe extern "C" fn itDrMarioPill_Reflected(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itDrMarioPill_Reflected");
     ext::it_8026B3A8(gobj);
     ext::it_80273030(gobj)
 }
 
 /// `itDrMarioPill_Clanked` (identical to `itDrMarioPill_DmgDealt`).
 pub unsafe extern "C" fn itDrMarioPill_Clanked(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDrMarioPill_Clanked");
     ext::it_8026B3A8(gobj);
     let ip = item_of(gobj);
     ext::it_8026B3A8(gobj);
@@ -450,6 +477,7 @@ pub unsafe extern "C" fn itDrMarioPill_Clanked(gobj: *mut HSD_GObj) -> bool {
 
 /// `itDrMarioPill_HitShield` (identical to `itDrMarioPill_DmgDealt`).
 pub unsafe extern "C" fn itDrMarioPill_HitShield(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDrMarioPill_HitShield");
     ext::it_8026B3A8(gobj);
     let ip = item_of(gobj);
     ext::it_8026B3A8(gobj);
@@ -459,6 +487,7 @@ pub unsafe extern "C" fn itDrMarioPill_HitShield(gobj: *mut HSD_GObj) -> bool {
 
 /// `itDrMarioPill_Absorbed` (identical to `itDrMarioPill_DmgDealt`).
 pub unsafe extern "C" fn itDrMarioPill_Absorbed(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDrMarioPill_Absorbed");
     ext::it_8026B3A8(gobj);
     let ip = item_of(gobj);
     ext::it_8026B3A8(gobj);
@@ -468,6 +497,7 @@ pub unsafe extern "C" fn itDrMarioPill_Absorbed(gobj: *mut HSD_GObj) -> bool {
 
 /// `itDrMarioPill_ShieldBounced` (identical to `itDrMarioPill_DmgDealt`).
 pub unsafe extern "C" fn itDrMarioPill_ShieldBounced(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDrMarioPill_ShieldBounced");
     ext::it_8026B3A8(gobj);
     let ip = item_of(gobj);
     ext::it_8026B3A8(gobj);
@@ -477,6 +507,7 @@ pub unsafe extern "C" fn itDrMarioPill_ShieldBounced(gobj: *mut HSD_GObj) -> boo
 
 /// `itDrMarioPill_EvtUnk`: `it_8026B894`.
 pub unsafe extern "C" fn itDrMarioPill_EvtUnk(gobj: *mut HSD_GObj, hobj: *mut HSD_GObj) {
+    melee_core::ct!("itDrMarioPill_EvtUnk");
     ext::it_8026B894(gobj, hobj);
 }
 

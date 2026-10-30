@@ -166,12 +166,14 @@ fn init_tables() {
 
 /// The TU's `StageCallbacks grTMr_StageCallbacks[4]` (built on first use; stable address).
 pub fn stage_callbacks() -> *mut StageCallbacks {
+    melee_core::ct!("stage_callbacks");
     init_tables();
     unsafe { CALLBACKS.as_mut_ptr().cast() }
 }
 
 /// The TU's `StageData grTMr_StageData`.
 pub fn stage_data() -> *mut StageData {
+    melee_core::ct!("stage_data");
     init_tables();
     unsafe { STAGE_DATA.as_mut_ptr() }
 }
@@ -179,22 +181,27 @@ pub fn stage_data() -> *mut StageData {
 pub const STAGE_CALLBACKS_LEN: usize = 4;
 
 pub unsafe extern "C" fn grTMario_8021F840(unk: i32) {
+    melee_core::ct!("grTMario_8021F840");
     
 }
 
 pub unsafe extern "C" fn grTMario_OnInit() {
+    melee_core::ct!("grTMario_OnInit");
     inlines::Ground_InitTargetStage(grTMario_8021F8E4);
 }
 
 pub unsafe extern "C" fn grTmario_UnkStage0_OnLoad() {
+    melee_core::ct!("grTmario_UnkStage0_OnLoad");
     
 }
 
 pub unsafe extern "C" fn grTmario_UnkStage0_OnStart() {
+    melee_core::ct!("grTmario_UnkStage0_OnStart");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
 
 pub unsafe extern "C" fn grTMario_8021F8E4(arg0: i32) -> *mut HSD_GObj {
+    melee_core::ct!("grTMario_8021F8E4");
     let callbacks = stage_callbacks().add(arg0 as usize);
     let gobj = ext::Ground_GetStageGObj(arg0);
     if !gobj.is_null() {
@@ -206,47 +213,58 @@ pub unsafe extern "C" fn grTMario_8021F8E4(arg0: i32) -> *mut HSD_GObj {
 }
 
 pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj0_OnInit");
     inlines::Ground_StartMapAnim(gobj);
 }
 
 pub unsafe extern "C" fn grTMario_8021FA00(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grTMario_8021FA00");
     
 }
 
 pub unsafe extern "C" fn grTMario_8021FA04(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grTMario_8021FA04");
     
 }
 
 pub unsafe extern "C" fn lbl_8021FA08(gobj: *mut HSD_GObj) {
+        melee_core::ct!("lbl_8021FA08");
         ext::ftCo_800C07F8(gobj, 6, lbl_8021FB50 as *const c_void);
 }
 
 pub unsafe extern "C" fn grTMario_8021FA34(gobj: *mut HSD_GObj) {
+        melee_core::ct!("grTMario_8021FA34");
         inlines::Ground_InitMapCollAndAnim(gobj);
     ext::Ground_801C10B8(gobj, Some(lbl_8021FA08));
 }
 
 pub unsafe extern "C" fn stageGObj2_GObjProc(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj2_GObjProc");
     inlines::Ground_UpdateWindAndMapColl(gobj);
 }
 
 pub unsafe extern "C" fn grTMario_8021FAD0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grTMario_8021FAD0");
     
 }
 
 pub unsafe extern "C" fn stageGObj1_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj1_OnInit");
     inlines::Ground_InitMapCollAndAnim(gobj);
 }
 
 pub unsafe extern "C" fn stageGObj1_GObjProc(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj1_GObjProc");
     ext::Ground_UpdateMapColl(gobj);
 }
 
 pub unsafe extern "C" fn grTMario_8021FB4C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grTMario_8021FB4C");
     
 }
 
 pub unsafe extern "C" fn lbl_8021FB50(unk: i32, gobj: *mut HSD_GObj) -> i32 {
+        melee_core::ct!("lbl_8021FB50");
         let mut current: Vec3 = core::mem::zeroed();
     let mut previous: Vec3 = core::mem::zeroed();
     let unused: f32 = -120.0f32;
@@ -263,6 +281,7 @@ pub unsafe extern "C" fn lbl_8021FB50(unk: i32, gobj: *mut HSD_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn grTMario_8021FBE8(vec: *mut Vec3, arg8: f32) {
+        melee_core::ct!("grTMario_8021FBE8");
         let temp_r3 = ext::grLib_801C96F8(0x7530, 0x1E, vec);
     if !temp_r3.is_null() {
         let temp_r3_2 = (*temp_r3).appsrt;

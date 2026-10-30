@@ -23,6 +23,7 @@ unsafe extern "C" fn gm_80181998_c() {
 
 /// C `gm_801B98E8` (CSS enter).
 pub unsafe fn gm_801B98E8(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B98E8");
     let vs = addr_of_mut!(gmHomeRun_VsModeData);
     let css = ext::gm_GetGameModeStateEnterData(scene) as *mut CSSData;
     if gm_804D68F9 != 0 {
@@ -45,6 +46,7 @@ pub unsafe fn gm_801B98E8(scene: *mut GameModeState) {
 
 /// C `gm_801B999C` (CSS exit).
 pub unsafe fn gm_801B999C(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B999C");
     let vs = addr_of_mut!(gmHomeRun_VsModeData);
     let temp = ext::gm_GetGameModeStateExitData(scene) as *mut CSSData;
     if (*temp).pending_scene_change == 2 {
@@ -77,6 +79,7 @@ unsafe fn gm_801B0730_call(temp: *mut CSSData, vs: *mut VsModeData) {
 
 /// C `gm_801B9A3C` (VS enter: builds the start data for the Home Run match).
 pub unsafe fn gm_801B9A3C(arg0: *mut GameModeState) {
+    melee_core::ct!("gm_801B9A3C");
     let vs = addr_of_mut!(gmHomeRun_VsModeData);
     let start = ext::gm_GetGameModeStateEnterData(arg0) as *mut StartMeleeData;
     ext::gm_SetupRulesDefaults(addr_of_mut!((*start).rules) as *mut StartMeleeRules);
@@ -123,6 +126,7 @@ pub unsafe fn gm_801B9A3C(arg0: *mut GameModeState) {
 
 /// C `gm_801B9DD8` (VS exit: records the Home Run result and offers a retry or the menu).
 pub unsafe fn gm_801B9DD8(arg0: *mut GameModeState) {
+    melee_core::ct!("gm_801B9DD8");
     let temp = ext::gm_GetGameModeStateExitData(arg0) as *mut MatchExitInfo;
     ext::gm_80162968(((*temp).match_end.frame_count / 60) as u32);
     ext::gm_8016247C((*temp).match_end.player_standings[0].xE as i32);
@@ -151,11 +155,13 @@ pub unsafe fn gm_801B9DD8(arg0: *mut GameModeState) {
 
 /// C `gm_Mode_Homerun_OnInit`.
 pub unsafe fn gm_Mode_Homerun_OnInit() {
+    melee_core::ct!("gm_Mode_Homerun_OnInit");
     ext::gm_InitVsMode(addr_of_mut!(gmHomeRun_VsModeData));
 }
 
 /// C `gm_Mode_Homerun_OnLoad`.
 pub unsafe fn gm_Mode_Homerun_OnLoad() {
+    melee_core::ct!("gm_Mode_Homerun_OnLoad");
     gm_804D68F8 = ext::gm_801677F0();
     gm_804D68F9 = 0;
 }

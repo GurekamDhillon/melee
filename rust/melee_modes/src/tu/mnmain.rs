@@ -128,12 +128,14 @@ melee_core::gc_layout!(C2RustUnnamed_12, "C2RustUnnamed_12", size 0x4, align 4, 
 pub unsafe extern "C" fn HSD_GObjGetUserData(
     mut gobj: *mut HSD_GObj,
 ) -> *mut ::core::ffi::c_void {
+    melee_core::ct!("HSD_GObjGetUserData");
     return (*gobj).user_data;
 }
 #[inline]
 pub unsafe extern "C" fn HSD_GObjGetHSDObj(
     mut gobj: *mut HSD_GObj,
 ) -> *mut ::core::ffi::c_void {
+    melee_core::ct!("HSD_GObjGetHSDObj");
     return (*gobj).hsd_obj;
 }
 pub const JOBJ_HIDDEN: ::core::ffi::c_int = (1 as ::core::ffi::c_int)
@@ -146,6 +148,7 @@ pub const JOBJ_MTX_INDEP_SRT: ::core::ffi::c_int = (1 as ::core::ffi::c_int)
     << 25 as ::core::ffi::c_int;
 #[inline]
 pub unsafe extern "C" fn HSD_JObjMtxIsDirty(mut jobj: *mut HSD_JObj) -> bool_0 {
+    melee_core::ct!("HSD_JObjMtxIsDirty");
     let mut result: bool_0 = 0;
     if !jobj.is_null() {} else {
         __assert(
@@ -165,6 +168,7 @@ pub unsafe extern "C" fn HSD_JObjMtxIsDirty(mut jobj: *mut HSD_JObj) -> bool_0 {
 }
 #[inline]
 pub unsafe extern "C" fn HSD_JObjSetRotationZ(mut jobj: *mut HSD_JObj, mut z: f32_0) {
+    melee_core::ct!("HSD_JObjSetRotationZ");
     if !jobj.is_null() {} else {
         __assert(
             b"src/sysdolphin/baselib/jobj.h\0" as *const u8
@@ -193,6 +197,7 @@ pub unsafe extern "C" fn HSD_JObjSetRotationZ(mut jobj: *mut HSD_JObj, mut z: f3
 }
 #[inline]
 pub unsafe extern "C" fn HSD_JObjSetScaleY(mut jobj: *mut HSD_JObj, mut y: f32_0) {
+    melee_core::ct!("HSD_JObjSetScaleY");
     if !jobj.is_null() {} else {
         __assert(
             b"src/sysdolphin/baselib/jobj.h\0" as *const u8
@@ -210,6 +215,7 @@ pub unsafe extern "C" fn HSD_JObjSetScaleY(mut jobj: *mut HSD_JObj, mut y: f32_0
 }
 #[inline]
 pub unsafe extern "C" fn HSD_JObjGetScaleY(mut jobj: *mut HSD_JObj) -> f32_0 {
+    melee_core::ct!("HSD_JObjGetScaleY");
     if !jobj.is_null() {} else {
         __assert(
             b"src/sysdolphin/baselib/jobj.h\0" as *const u8
@@ -225,6 +231,7 @@ pub unsafe extern "C" fn HSD_JObjSetTranslate(
     mut jobj: *mut HSD_JObj,
     mut translate: *mut Vec3,
 ) {
+    melee_core::ct!("HSD_JObjSetTranslate");
     if !jobj.is_null() {} else {
         __assert(
             b"src/sysdolphin/baselib/jobj.h\0" as *const u8
@@ -253,6 +260,7 @@ pub unsafe extern "C" fn HSD_JObjGetTranslation(
     mut jobj: *mut HSD_JObj,
     mut translate: *mut Vec3,
 ) {
+    melee_core::ct!("HSD_JObjGetTranslation");
     if !jobj.is_null() {} else {
         __assert(
             b"src/sysdolphin/baselib/jobj.h\0" as *const u8
@@ -273,6 +281,7 @@ pub unsafe extern "C" fn HSD_JObjGetTranslation(
 }
 #[inline]
 pub unsafe extern "C" fn HSD_JObjGetTranslationX(mut jobj: *mut HSD_JObj) -> f32_0 {
+    melee_core::ct!("HSD_JObjGetTranslationX");
     if !jobj.is_null() {} else {
         __assert(
             b"src/sysdolphin/baselib/jobj.h\0" as *const u8
@@ -288,6 +297,7 @@ pub unsafe extern "C" fn HSD_JObjAddScaleY(
     mut jobj: *mut HSD_JObj,
     mut y: ::core::ffi::c_float,
 ) {
+    melee_core::ct!("HSD_JObjAddScaleY");
     if !jobj.is_null() {} else {
         __assert(
             b"src/sysdolphin/baselib/jobj.h\0" as *const u8
@@ -308,6 +318,7 @@ pub unsafe extern "C" fn HSD_JObjAddTranslationX(
     mut jobj: *mut HSD_JObj,
     mut x: ::core::ffi::c_float,
 ) {
+    melee_core::ct!("HSD_JObjAddTranslationX");
     if !jobj.is_null() {} else {
         __assert(
             b"src/sysdolphin/baselib/jobj.h\0" as *const u8
@@ -328,6 +339,7 @@ pub unsafe extern "C" fn HSD_JObjAddTranslationY(
     mut jobj: *mut HSD_JObj,
     mut y: ::core::ffi::c_float,
 ) {
+    melee_core::ct!("HSD_JObjAddTranslationY");
     if !jobj.is_null() {} else {
         __assert(
             b"src/sysdolphin/baselib/jobj.h\0" as *const u8
@@ -348,6 +360,7 @@ pub unsafe extern "C" fn HSD_JObjAddTranslationZ(
     mut jobj: *mut HSD_JObj,
     mut z: ::core::ffi::c_float,
 ) {
+    melee_core::ct!("HSD_JObjAddTranslationZ");
     if !jobj.is_null() {} else {
         __assert(
             b"src/sysdolphin/baselib/jobj.h\0" as *const u8
@@ -365,20 +378,24 @@ pub unsafe extern "C" fn HSD_JObjAddTranslationZ(
 }
 #[inline]
 pub unsafe extern "C" fn Menu_DecrementAnimTimer() {
+    melee_core::ct!("Menu_DecrementAnimTimer");
     mn_804D6BC8.cooldown = mn_804D6BC8.cooldown.wrapping_sub(1);
     mn_804D6BC8.x2 = 0 as u16_0;
     mn_804D6BC8.x4 = 0 as ::core::ffi::c_int as s32;
 }
 #[inline]
 pub unsafe extern "C" fn sfxBack() {
+    melee_core::ct!("sfxBack");
     lbAudioAx_80024030(0 as ::core::ffi::c_int);
 }
 #[inline]
 pub unsafe extern "C" fn sfxForward() {
+    melee_core::ct!("sfxForward");
     lbAudioAx_80024030(1 as ::core::ffi::c_int);
 }
 #[inline]
 pub unsafe extern "C" fn sfxMove() {
+    melee_core::ct!("sfxMove");
     lbAudioAx_80024030(2 as ::core::ffi::c_int);
 }
 pub const PAD_TRIGGER_R: ::core::ffi::c_int = (1 as ::core::ffi::c_int)
@@ -1723,6 +1740,7 @@ pub static mut mn_803EB6B0: [MenuKindData; 34] = unsafe {
     ]
 };
 pub unsafe extern "C" fn mn_802295AC() -> u8_0 {
+    melee_core::ct!("mn_802295AC");
     let mut port_idx: s32 = 0 as s32;
     while port_idx < 4 as ::core::ffi::c_int {
         let mut res: u64_0 = gm_GetButtonsTriggered(port_idx as u8_0);
@@ -1734,6 +1752,7 @@ pub unsafe extern "C" fn mn_802295AC() -> u8_0 {
     return 0 as u8_0;
 }
 pub unsafe extern "C" fn mn_80229624(mut slot: u32_0) -> u32_0 {
+    melee_core::ct!("mn_80229624");
     let mut ret: u32_0 = 0 as u32_0;
     let mut inputs_repeated: u64_0 = 0;
     let mut inputs_trigger: u64_0 = 0;
@@ -1782,11 +1801,13 @@ pub unsafe extern "C" fn mn_80229624(mut slot: u32_0) -> u32_0 {
     return ret;
 }
 pub unsafe extern "C" fn mn_80229860(mut pending_mode: s8) {
+    melee_core::ct!("mn_80229860");
     let mut data: *mut MenuExitData = gm_GetCurrentSceneExitData() as *mut MenuExitData;
     (*data).pending_mode = pending_mode;
     gm_801A4B60();
 }
 pub unsafe extern "C" fn mn_80229894(mut arg0: s32, mut arg1: u16_0, mut arg2: s32) {
+    melee_core::ct!("mn_80229894");
     let mut temp_r3: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     let mut temp_r0: Option<unsafe extern "C" fn(*mut HSD_GObj) -> ()> = None;
     if gmFrontend_NativeReturn(arg0 as ::core::ffi::c_int, arg1 as ::core::ffi::c_int)
@@ -1824,6 +1845,7 @@ pub unsafe extern "C" fn mn_80229938(
     mut menu_kind: MenuKind,
     mut selection: s32,
 ) -> bool_0 {
+    melee_core::ct!("mn_80229938");
     if menu_kind as ::core::ffi::c_int == MENU_KIND_REG as ::core::ffi::c_int
         && selection == SEL_REG_ALLSTAR as ::core::ffi::c_int
     {
@@ -1862,6 +1884,7 @@ pub unsafe extern "C" fn mn_80229A04(
     mut kind: MenuKind,
     mut selection: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("mn_80229A04");
     let mut i: ::core::ffi::c_int = 0;
     let mut count: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     i = 0 as ::core::ffi::c_int;
@@ -1878,6 +1901,7 @@ pub unsafe extern "C" fn mn_80229A04_dontinline(
     mut kind: MenuKind,
     mut selection: ::core::ffi::c_int,
 ) -> u8_0 {
+    melee_core::ct!("mn_80229A04_dontinline");
     return mn_80229A04(kind, selection) as u8_0;
 }
 pub unsafe extern "C" fn mn_80229A7C(
@@ -1885,6 +1909,7 @@ pub unsafe extern "C" fn mn_80229A7C(
     mut menu_kind: MenuKind,
     mut selection: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("mn_80229A7C");
     let mut temp_r3: *mut HSD_Text = ::core::ptr::null_mut::<HSD_Text>();
     let mut text: *mut HSD_Text = ::core::ptr::null_mut::<HSD_Text>();
     let mut sis_idx: *mut u16_0 = ::core::ptr::null_mut::<u16_0>();
@@ -1915,6 +1940,7 @@ pub unsafe extern "C" fn mn_80229A7C_dontinline(
     mut arg1: ::core::ffi::c_int,
     mut arg2: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("mn_80229A7C_dontinline");
     mn_80229A7C(arg0 as *mut MainMenuData, arg1 as MenuKind, arg2);
 }
 pub static mut MenMainBack_Top: StaticModelDesc = StaticModelDesc {
@@ -1924,6 +1950,7 @@ pub static mut MenMainBack_Top: StaticModelDesc = StaticModelDesc {
     shapeanim_joint: ::core::ptr::null::<HSD_ShapeAnimJoint>() as *mut HSD_ShapeAnimJoint,
 };
 pub unsafe extern "C" fn mn_80229B2C() -> *mut HSD_GObj {
+    melee_core::ct!("mn_80229B2C");
     let mut temp_r30: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     let mut temp_r3: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     temp_r30 = GObj_Create(4 as u16_0, 5 as u8_0, 0x80 as u8_0);
@@ -2072,6 +2099,7 @@ pub static mut MenMainCursorSs_Top: StaticModelDesc = StaticModelDesc {
     shapeanim_joint: ::core::ptr::null::<HSD_ShapeAnimJoint>() as *mut HSD_ShapeAnimJoint,
 };
 pub unsafe extern "C" fn fn_80229BF4(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80229BF4");
     let mut temp_f1: f32_0 = 0.;
     let mut temp_r28: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut sp20: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
@@ -2141,6 +2169,7 @@ pub unsafe extern "C" fn fn_80229BF4(mut gobj: *mut HSD_GObj) {
     mn_8022ED6C(sp20 as *mut HSD_JObj, &raw mut mn_803EB354);
 }
 pub unsafe extern "C" fn mn_80229DC0() -> *mut HSD_GObj {
+    melee_core::ct!("mn_80229DC0");
     let mut spC: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut sp8: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut temp_r31: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
@@ -2232,6 +2261,7 @@ pub unsafe extern "C" fn mn_80229F60(
     mut root: *mut HSD_JObj,
     mut selection: MainMenuSelection,
 ) {
+    melee_core::ct!("mn_80229F60");
     let mut temp_f31: ::core::ffi::c_float = 0.;
     let mut data: *mut MainMenuData = ::core::ptr::null_mut::<MainMenuData>();
     let mut flow: *mut MenuFlow = ::core::ptr::null_mut::<MenuFlow>();
@@ -2319,6 +2349,7 @@ pub unsafe extern "C" fn mn_8022A440(
     mut root: *mut HSD_JObj,
     mut selection: MainMenuSelection,
 ) {
+    melee_core::ct!("mn_8022A440");
     let mut sp24: [*mut HSD_JObj; 7] = [::core::ptr::null_mut::<HSD_JObj>(); 7];
     let mut r29: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut flow: *mut MenuFlow = ::core::ptr::null_mut::<MenuFlow>();
@@ -2368,6 +2399,7 @@ pub unsafe extern "C" fn mn_8022A5D0(
     mut gp: *mut HSD_GObj,
     mut selection: MainMenuSelection,
 ) {
+    melee_core::ct!("mn_8022A5D0");
     let mut _pad: [u8_0; 8] = [0; 8];
     let mut spA0: [*mut HSD_JObj; 7] = [::core::ptr::null_mut::<HSD_JObj>(); 7];
     let mut sp84: [*mut HSD_JObj; 7] = [::core::ptr::null_mut::<HSD_JObj>(); 7];
@@ -2520,16 +2552,19 @@ pub unsafe extern "C" fn mn_8022A5D0(
 }
 #[inline]
 pub unsafe extern "C" fn GetAnimStartFrame(mut anim_loop: *mut AnimLoopSettings) -> f32_0 {
+    melee_core::ct!("GetAnimStartFrame");
     return (*anim_loop).start_frame;
 }
 #[inline]
 pub unsafe extern "C" fn GetAnimEndFrame(mut anim_loop: *mut AnimLoopSettings) -> f32_0 {
+    melee_core::ct!("GetAnimEndFrame");
     return (*anim_loop).end_frame;
 }
 pub unsafe extern "C" fn mn_8022ADD8(
     mut gp: *mut HSD_GObj,
     mut selection_changed: bool_0,
 ) {
+    melee_core::ct!("mn_8022ADD8");
     let mut data: *mut MainMenuData = ::core::ptr::null_mut::<MainMenuData>();
     let mut jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut cur_frame: f32_0 = 0.;
@@ -2581,6 +2616,7 @@ pub unsafe extern "C" fn mn_8022ADD8(
     };
 }
 pub unsafe extern "C" fn fn_8022AF10(mut gp: *mut HSD_GObj) {
+    melee_core::ct!("fn_8022AF10");
     let mut data: *mut MainMenuData = ::core::ptr::null_mut::<MainMenuData>();
     let mut jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut anim_loop: *mut AnimLoopSettings = ::core::ptr::null_mut::<
@@ -2609,6 +2645,7 @@ pub unsafe extern "C" fn fn_8022AF10(mut gp: *mut HSD_GObj) {
     HSD_JObjAnim(jobj);
 }
 pub unsafe extern "C" fn fn_8022AFEC(mut gp: *mut HSD_GObj) {
+    melee_core::ct!("fn_8022AFEC");
     let mut think: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     let mut jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut data2: *mut MainMenuData = ::core::ptr::null_mut::<MainMenuData>();
@@ -2803,10 +2840,12 @@ pub unsafe extern "C" fn fn_8022AFEC(mut gp: *mut HSD_GObj) {
 pub unsafe extern "C" fn GetSelectionFrameOffset(
     mut selection: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("GetSelectionFrameOffset");
     return 2 as ::core::ffi::c_int * selection;
 }
 #[inline]
 pub unsafe extern "C" fn CountUnlockedSelections(mut kind: MenuKind) -> u8_0 {
+    melee_core::ct!("CountUnlockedSelections");
     let mut i: ::core::ffi::c_int = 0;
     let mut count: u8_0 = 0 as u8_0;
     i = 0 as ::core::ffi::c_int;
@@ -2819,6 +2858,7 @@ pub unsafe extern "C" fn CountUnlockedSelections(mut kind: MenuKind) -> u8_0 {
     return count;
 }
 pub unsafe extern "C" fn mn_8022B3A0(mut state: u8_0) -> *mut HSD_GObj {
+    melee_core::ct!("mn_8022B3A0");
     let mut option_jobjs: [*mut HSD_JObj; 12] = [::core::ptr::null_mut::<
         HSD_JObj,
     >(); 12];
@@ -3068,6 +3108,7 @@ pub static mut mn_803B8500: Vec3 = Vec3 {
     z: 0 as ::core::ffi::c_int as f32_0,
 };
 pub unsafe extern "C" fn mn_8022BA1C(mut gp: *mut HSD_GObj) {
+    melee_core::ct!("mn_8022BA1C");
     let mut _pad: [u8_0; 16] = [0; 16];
     let mut sp54: Mtx = [[0.; 4]; 3];
     let mut sp48: Vec3 = Vec3 { x: 0., y: 0., z: 0. };
@@ -3145,9 +3186,11 @@ pub unsafe extern "C" fn fn_8022BCD4(
     mut gobj: *mut HSD_GObj,
     mut unused: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("fn_8022BCD4");
     HSD_FogSet((*gobj).hsd_obj as *mut HSD_Fog);
 }
 pub unsafe extern "C" fn mn_8022BCF8() -> *mut HSD_GObj {
+    melee_core::ct!("mn_8022BCF8");
     let mut gobj: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     let mut fog: *mut HSD_Fog = ::core::ptr::null_mut::<HSD_Fog>();
     gobj = GObj_Create(1 as u16_0, 2 as u8_0, 0x80 as u8_0);
@@ -3169,10 +3212,12 @@ pub unsafe extern "C" fn mn_8022BCF8() -> *mut HSD_GObj {
     return gobj as *mut HSD_GObj;
 }
 pub unsafe extern "C" fn mn_8022BD6C() {
+    melee_core::ct!("mn_8022BD6C");
     (*mn_804D6BAC).gxlink_prios = 0 as u64_0;
     (*mn_804D6BB0).gxlink_prios = 0 as u64_0;
 }
 pub unsafe extern "C" fn mn_8022BD8C() {
+    melee_core::ct!("mn_8022BD8C");
     (*mn_804D6BAC).gxlink_prios = 0x7f as u64_0;
     (*mn_804D6BB0).gxlink_prios = 0x80 as u64_0;
 }
@@ -3180,6 +3225,7 @@ pub unsafe extern "C" fn fn_8022BDB4(
     mut gobj: *mut HSD_GObj,
     mut unused: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("fn_8022BDB4");
     let mut fog: *mut HSD_Fog = HSD_GObjGetHSDObj(mn_804D6BA8) as *mut HSD_Fog;
     if HSD_CObjSetCurrent(HSD_GObjGetHSDObj(gobj) as *mut HSD_CObj)
         != 0 as ::core::ffi::c_int
@@ -3201,6 +3247,7 @@ pub unsafe extern "C" fn fn_8022BDB4(
     }
 }
 pub unsafe extern "C" fn mn_8022BE34() -> *mut HSD_GObj {
+    melee_core::ct!("mn_8022BE34");
     let mut gobj: *mut HSD_GObj = GObj_Create(2 as u16_0, 3 as u8_0, 0x80 as u8_0);
     let mut cobj: *mut HSD_CObj = ::core::ptr::null_mut::<HSD_CObj>();
     let mut pos: Vec3 = Vec3 { x: 0., y: 0., z: 0. };
@@ -3225,6 +3272,7 @@ pub unsafe extern "C" fn mn_8022BE34() -> *mut HSD_GObj {
 }
 #[inline]
 pub unsafe extern "C" fn mn_8022BE34_OnEnter(mut pos: *mut Vec3) -> *mut HSD_GObj {
+    melee_core::ct!("mn_8022BE34_OnEnter");
     let mut gobj: *mut HSD_GObj = GObj_Create(2 as u16_0, 3 as u8_0, 0x80 as u8_0);
     let mut cobj: *mut HSD_CObj = ::core::ptr::null_mut::<HSD_CObj>();
     mn_804D6BAC = gobj;
@@ -3247,6 +3295,7 @@ pub unsafe extern "C" fn mn_8022BE34_OnEnter(mut pos: *mut Vec3) -> *mut HSD_GOb
     return gobj;
 }
 pub unsafe extern "C" fn mn_8022BEDC(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mn_8022BEDC");
     let mut temp_r3: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     let mut cobj: *mut HSD_CObj = ::core::ptr::null_mut::<HSD_CObj>();
     mn_804D6BB5 = HSD_SisLib_803A611C(
@@ -3293,6 +3342,7 @@ pub unsafe extern "C" fn mn_8022BEDC(mut gobj: *mut HSD_GObj) {
     ) as u8_0;
 }
 pub unsafe extern "C" fn mn_8022BFBC(mut arg0: ::core::ffi::c_int) -> *mut GXColor {
+    melee_core::ct!("mn_8022BFBC");
     match arg0 {
         0 => return &raw mut mn_804D4B50,
         1 => return &raw mut mn_804D4B54,
@@ -3307,6 +3357,7 @@ pub unsafe extern "C" fn mn_8022C010(
     mut menu_kind: ::core::ffi::c_int,
     mut selection: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("mn_8022C010");
     if menu_kind == MENU_KIND_MAIN as ::core::ffi::c_int {
         return selection;
     }
@@ -3325,6 +3376,7 @@ pub unsafe extern "C" fn LerpLightColor(
     mut lobj: *mut HSD_LObj,
     mut div: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("LerpLightColor");
     let mut diff: ::core::ffi::c_int = 0;
     while (*lobj).flags as ::core::ffi::c_int & LOBJ_POINT == 0 {
         lobj = (*lobj).next;
@@ -3359,6 +3411,7 @@ pub unsafe extern "C" fn mn_8022C068(
     mut unused: ::core::ffi::c_int,
     mut div: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("mn_8022C068");
     let mut diff: ::core::ffi::c_int = 0;
     while (*lobj).flags as ::core::ffi::c_int & LOBJ_POINT == 0 {
         lobj = (*lobj).next;
@@ -3389,6 +3442,7 @@ pub unsafe extern "C" fn mn_8022C068(
     };
 }
 pub unsafe extern "C" fn fn_8022C128(mut arg0: *mut HSD_GObj) {
+    melee_core::ct!("fn_8022C128");
     let mut color: *mut GXColor = ::core::ptr::null_mut::<GXColor>();
     let mut lobj: *mut HSD_LObj = HSD_GObjGetHSDObj(arg0) as *mut HSD_LObj;
     HSD_LObjAnimAll(lobj);
@@ -3408,6 +3462,7 @@ pub unsafe extern "C" fn fn_8022C128(mut arg0: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn mn_8022C304() {
+    melee_core::ct!("mn_8022C304");
     let mut gobj: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     let mut lobj: *mut HSD_LObj = ::core::ptr::null_mut::<HSD_LObj>();
     let mut _pad: [::core::ffi::c_uchar; 8] = [0; 8];
@@ -3443,6 +3498,7 @@ pub unsafe extern "C" fn mn_8022C304() {
 }
 #[inline]
 pub unsafe extern "C" fn x2_dec(mut temp_r29: u8_0) {
+    melee_core::ct!("x2_dec");
     loop {
         if mn_804A04F0.hovered_selection as ::core::ffi::c_int != 0 as ::core::ffi::c_int
         {
@@ -3464,6 +3520,7 @@ pub unsafe extern "C" fn x2_dec(mut temp_r29: u8_0) {
 }
 #[inline]
 pub unsafe extern "C" fn x2_inc(mut temp_r29: u8_0) {
+    melee_core::ct!("x2_inc");
     loop {
         if mn_804A04F0.hovered_selection as ::core::ffi::c_int
             == temp_r29 as ::core::ffi::c_int - 1 as ::core::ffi::c_int
@@ -3485,6 +3542,7 @@ pub unsafe extern "C" fn x2_inc(mut temp_r29: u8_0) {
 }
 #[inline]
 pub unsafe extern "C" fn decrement_selection(mut selection_count: u8_0, mut menu_kind: s32) {
+    melee_core::ct!("decrement_selection");
     loop {
         if mn_804A04F0.hovered_selection as ::core::ffi::c_int != 0 as ::core::ffi::c_int
         {
@@ -3507,6 +3565,7 @@ pub unsafe extern "C" fn increment_selection(
     mut selection_count: u8_0,
     mut menu_kind: MenuKind,
 ) {
+    melee_core::ct!("increment_selection");
     loop {
         if mn_804A04F0.hovered_selection as ::core::ffi::c_int
             == selection_count as ::core::ffi::c_int - 1 as ::core::ffi::c_int
@@ -3525,6 +3584,7 @@ pub unsafe extern "C" fn increment_selection(
     };
 }
 pub unsafe extern "C" fn mn_8022C4F4(mut gp: *mut HSD_GObj) {
+    melee_core::ct!("mn_8022C4F4");
     let mut gobj: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     let mut temp_r3_2: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     let mut selection_count: ::core::ffi::c_int = mn_803EB6B0[MENU_KIND_SPECIAL
@@ -3628,6 +3688,7 @@ pub unsafe extern "C" fn mn_8022C4F4(mut gp: *mut HSD_GObj) {
 }
 #[inline]
 pub unsafe extern "C" fn mn_8022C7CC_inline() -> u8_0 {
+    melee_core::ct!("mn_8022C7CC_inline");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < 4 as ::core::ffi::c_int {
@@ -3641,6 +3702,7 @@ pub unsafe extern "C" fn mn_8022C7CC_inline() -> u8_0 {
     return 0 as u8_0;
 }
 pub unsafe extern "C" fn mn_8022C7CC(mut gp: *mut HSD_GObj) {
+    melee_core::ct!("mn_8022C7CC");
     let mut think: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     let mut data: *mut MenuExitData = ::core::ptr::null_mut::<MenuExitData>();
     let mut selection_count: ::core::ffi::c_int = mn_803EB6B0[MENU_KIND_STADIUM
@@ -3707,6 +3769,7 @@ pub unsafe extern "C" fn mn_8022C7CC(mut gp: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn mn_8022CA54(mut gp: *mut HSD_GObj) {
+    melee_core::ct!("mn_8022CA54");
     let mut think: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     let mut buttons: u32_0 = 0;
     let mut temp_r30: Option<unsafe extern "C" fn(*mut HSD_GObj) -> ()> = None;
@@ -3782,6 +3845,7 @@ pub unsafe extern "C" fn mn_8022CA54(mut gp: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn mn_8022CC28(mut gp: *mut HSD_GObj) {
+    melee_core::ct!("mn_8022CC28");
     let mut think: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     let mut buttons: u32_0 = 0;
     let mut data: *mut MenuExitData = ::core::ptr::null_mut::<MenuExitData>();
@@ -3877,6 +3941,7 @@ pub unsafe extern "C" fn mn_8022CC28(mut gp: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn mn_8022CE6C(mut gp: *mut HSD_GObj) {
+    melee_core::ct!("mn_8022CE6C");
     let mut think: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     let mut think2: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     let mut buttons: u32_0 = 0;
@@ -3989,6 +4054,7 @@ pub unsafe extern "C" fn mn_8022CE6C(mut gp: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn mn_8022D104(mut gp: *mut HSD_GObj) {
+    melee_core::ct!("mn_8022D104");
     let mut selection_count: ::core::ffi::c_int = 0;
     let mut buttons: u32_0 = 0;
     let mut temp_r3_2: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
@@ -4090,6 +4156,7 @@ pub unsafe extern "C" fn mn_8022D104(mut gp: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn mn_8022D34C(mut gp: *mut HSD_GObj) {
+    melee_core::ct!("mn_8022D34C");
     let mut think: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     let mut buttons: u32_0 = 0;
     let mut var_r3: u8_0 = 0;
@@ -4185,6 +4252,7 @@ pub unsafe extern "C" fn mn_8022D34C(mut gp: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn mn_8022D594(mut gp: *mut HSD_GObj) {
+    melee_core::ct!("mn_8022D594");
     let mut think: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     let mut think2: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     let mut buttons: u32_0 = 0;
@@ -4286,6 +4354,7 @@ pub unsafe extern "C" fn mn_8022D594(mut gp: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn mn_8022D7F4(mut gp: *mut HSD_GObj) {
+    melee_core::ct!("mn_8022D7F4");
     let mut selection_count: ::core::ffi::c_int = 0;
     let mut temp_r3_2: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     let mut temp_r3_3: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
@@ -4414,6 +4483,7 @@ pub unsafe extern "C" fn mn_8022D7F4(mut gp: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn mn_8022DB10(mut gp: *mut HSD_GObj) {
+    melee_core::ct!("mn_8022DB10");
     let mut data: *mut MenuExitData = ::core::ptr::null_mut::<MenuExitData>();
     let mut menu_kind: MenuKind = MENU_KIND_MAIN;
     let mut temp_r28: Option<unsafe extern "C" fn(*mut HSD_GObj) -> ()> = None;
@@ -4494,6 +4564,7 @@ pub unsafe extern "C" fn mn_8022DB10(mut gp: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn mnMain_Scene_OnFrame() {
+    melee_core::ct!("mnMain_Scene_OnFrame");
     let mut data: *mut MenuExitData = ::core::ptr::null_mut::<MenuExitData>();
     if mn_8022F218() != 0
         && mn_804A04F0.cur_menu as ::core::ffi::c_int
@@ -4513,6 +4584,7 @@ pub unsafe extern "C" fn mnMain_Scene_OnFrame() {
     }
 }
 pub unsafe extern "C" fn mn_PcOpenNative(mut kind: u8_0, mut sel: u8_0) {
+    melee_core::ct!("mn_PcOpenNative");
     mn_804D6BC8.cooldown = 5 as u16_0;
     mn_804A04F0.entering_menu = 1 as u8_0;
     mn_804A04F0.cur_menu = kind as MenuKind8;
@@ -4618,6 +4690,7 @@ pub unsafe extern "C" fn mn_PcOpenNative(mut kind: u8_0, mut sel: u8_0) {
 }
 #[inline]
 pub unsafe extern "C" fn mn_8022DDA8_inline(mut sp2B4: *const u16_0) {
+    melee_core::ct!("mn_8022DDA8_inline");
     let mut temp_r29: ::core::ffi::c_int = 0;
     let mut gobj: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     let mut lobj: *mut HSD_LObj = ::core::ptr::null_mut::<HSD_LObj>();
@@ -4651,6 +4724,7 @@ pub unsafe extern "C" fn mn_8022DDA8_inline(mut sp2B4: *const u16_0) {
     mn_8022C068(lobj, temp_r29, mn_804A04F0.light_lerp_frames as ::core::ffi::c_int);
 }
 pub unsafe extern "C" fn mnMain_Scene_OnEnter(mut user_data: *mut ::core::ffi::c_void) {
+    melee_core::ct!("mnMain_Scene_OnEnter");
     let mut pos: Vec3 = Vec3 { x: 0., y: 0., z: 0. };
     let mut hovered_selection: *mut u16_0 = ::core::ptr::null_mut::<u16_0>();
     let mut temp_r3_8: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
@@ -4799,9 +4873,11 @@ pub static mut null_terminator: [::core::ffi::c_char; 1] = unsafe {
 pub unsafe extern "C" fn mn_IsFighterUnlocked(
     mut selkind: SelectableCharacterKind,
 ) -> bool_0 {
+    melee_core::ct!("mn_IsFighterUnlocked");
     return gm_IsCKindUnlocked(gm_SelKindToCKind(selkind as u8_0));
 }
 pub unsafe extern "C" fn mn_8022E978(mut item_idx: u8_0, mut enable: u8_0) {
+    melee_core::ct!("mn_8022E978");
     if enable != 0 {
         (*gmMainLib_GetGamePrefs()).item_mask
             |= ((1 as ::core::ffi::c_int) << item_idx as ::core::ffi::c_int) as u64_0;
@@ -4811,6 +4887,7 @@ pub unsafe extern "C" fn mn_8022E978(mut item_idx: u8_0, mut enable: u8_0) {
     };
 }
 pub unsafe extern "C" fn mn_8022EA08(mut buf: *mut ::core::ffi::c_char, mut num: u32_0) {
+    melee_core::ct!("mn_8022EA08");
     let mut buf_end: ::core::ffi::c_int = mn_GetDigitCount(num as s32)
         as ::core::ffi::c_int;
     let mut i: ::core::ffi::c_int = 0;
@@ -4829,6 +4906,7 @@ pub unsafe extern "C" fn mn_8022EA78(
     mut buf_end: ::core::ffi::c_int,
     mut num: u32_0,
 ) {
+    melee_core::ct!("mn_8022EA78");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < buf_end {
@@ -4841,15 +4919,19 @@ pub unsafe extern "C" fn mn_8022EA78(
     *buf.offset(buf_end as isize) = null_terminator[0 as ::core::ffi::c_int as usize];
 }
 pub unsafe extern "C" fn mn_8022EAE0(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mn_8022EAE0");
     HSD_JObjAnimAll((*gobj).hsd_obj as *mut HSD_JObj);
 }
 pub unsafe extern "C" fn mn_8022EB04(mut user_data: *mut ::core::ffi::c_void) {
+    melee_core::ct!("mn_8022EB04");
     HSD_Free(user_data);
 }
 pub unsafe extern "C" fn mn_GetDigitAt(mut arg0: s32, mut arg1: s32) -> s32 {
+    melee_core::ct!("mn_GetDigitAt");
     return arg0 / powi(10 as s32, arg1) % 10 as s32;
 }
 pub unsafe extern "C" fn mn_GetDigitCount(mut num: s32) -> s32 {
+    melee_core::ct!("mn_GetDigitCount");
     let mut count: s32 = 0;
     if num == 0 as ::core::ffi::c_int {
         return 1 as s32;
@@ -4864,6 +4946,7 @@ pub unsafe extern "C" fn mn_GetDigitCount(mut num: s32) -> s32 {
     return count;
 }
 pub unsafe extern "C" fn mn_8022EBDC() {
+    melee_core::ct!("mn_8022EBDC");
     let mut i: ::core::ffi::c_int = 0;
     i = 1 as ::core::ffi::c_int;
     while i < 9 as ::core::ffi::c_int {

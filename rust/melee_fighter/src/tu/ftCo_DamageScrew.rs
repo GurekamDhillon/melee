@@ -41,6 +41,7 @@ pub mod ext {
 
 /// `ftCo_800D2FA4`: start the Screw Attack tumble if hit by a Screw Attack ball.
 pub fn ftCo_800D2FA4(g: G) -> bool {
+    melee_core::ct!("ftCo_800D2FA4");
     let f = fp(g);
     if f.dmg.x1860_element == HitElement_Scball as u32 {
         let x = unsafe { f.x2070.anon_0.x2071_b0_3() } as i32;
@@ -56,6 +57,7 @@ pub fn ftCo_800D2FA4(g: G) -> bool {
 
 /// static inline `ftCo_ReleaseItemAndVictim` (ftCommon/inlines.h).
 pub fn ftCo_ReleaseItemAndVictim(g: G) {
+    melee_core::ct!("ftCo_ReleaseItemAndVictim");
     ext::ftCommon_8007DB58(g);
     ext::ftCo_8009750C(g);
     ext::ftCo_800DD168(g);
@@ -63,6 +65,7 @@ pub fn ftCo_ReleaseItemAndVictim(g: G) {
 
 /// `ftCo_800D3004`.
 pub fn ftCo_800D3004(g: G) {
+    melee_core::ct!("ftCo_800D3004");
     ftCo_ReleaseItemAndVictim(g);
     fp(g).cmd_vars[0] = 0;
     if fp(g).ground_or_air == GA_Ground {
@@ -78,18 +81,21 @@ pub fn ftCo_800D3004(g: G) {
 }
 
 pub fn ftCo_DamageScrew_Anim(g: G) {
+    melee_core::ct!("ftCo_DamageScrew_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ftCo_800968C8(g);
     }
 }
 
-pub fn ftCo_DamageScrew_IASA(_g: G) {}
+pub fn ftCo_DamageScrew_IASA(_g: G) { melee_core::ct!("ftCo_DamageScrew_IASA");}
 
 pub fn ftCo_DamageScrew_Phys(g: G) {
+    melee_core::ct!("ftCo_DamageScrew_Phys");
     ext::ft_80084DB0(g);
 }
 
 pub fn ftCo_DamageScrew_Coll(g: G) {
+    melee_core::ct!("ftCo_DamageScrew_Coll");
     if fp(g).cmd_vars[0] != 0 {
         ext::ftCo_AirCatchHit_Coll(g);
         return;

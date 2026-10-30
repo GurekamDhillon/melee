@@ -244,6 +244,7 @@ pub static mut mnSnap_804A0B90: [*mut mnSnap_804A0B90_t; 4] = [core::ptr::null::
     mnSnap_804A0B90_t,
 >() as *mut mnSnap_804A0B90_t; 4];
 pub unsafe extern "C" fn mnSnap_80253184() {
+    melee_core::ct!("mnSnap_80253184");
     let mut snap: *mut mnSnap_State = &raw mut mnSnap_804A0A10;
     let mut p57: *mut i32 = null_mut();
     let mut p52: *mut i32 = null_mut();
@@ -434,6 +435,7 @@ unsafe extern "C" fn mnSnap_GetBlankImg(
     return (*snap).blank_img;
 }
 pub unsafe extern "C" fn mnSnap_80253640(mut page: i32) {
+    melee_core::ct!("mnSnap_80253640");
     let mut count: i32 = 0;
     let mut jobj: *mut HSD_JObj = null_mut();
     let mut img: *mut c_void = core::ptr::null_mut::<
@@ -543,6 +545,7 @@ pub unsafe extern "C" fn mnSnap_80253640(mut page: i32) {
     };
 }
 pub unsafe extern "C" fn mnSnap_80253964() {
+    melee_core::ct!("mnSnap_80253964");
     let mut i: i32 = 0;
     let mut j: i32 = 0;
     let mut page: i32 = mnSnap_804A0A10.cur_page;
@@ -582,6 +585,7 @@ pub unsafe extern "C" fn mnSnap_80253964() {
     }
 }
 pub unsafe extern "C" fn mnSnap_80253AE4(mut mode: i32) {
+    melee_core::ct!("mnSnap_80253AE4");
     let mut snap: *mut mnSnap_State = &raw mut mnSnap_804A0A10;
     let mut i: i32 = 0;
     i = 0 as i32;
@@ -614,6 +618,7 @@ pub unsafe extern "C" fn mnSnap_80253BE0(
     mut cursor: *mut i32,
     mut count: i32,
 ) -> i32 {
+    melee_core::ct!("mnSnap_80253BE0");
     let mut next: i32 = *cursor;
     let mut cur: i32 = next;
     if buttons & 1 as u64 != 0 {
@@ -677,16 +682,19 @@ pub unsafe extern "C" fn mnSnap_80253BE0(
     return 2 as i32;
 }
 pub unsafe extern "C" fn fn_80253DB4(mut gobj: *mut HSD_GObj, mut rendermode: i32) {
+    melee_core::ct!("fn_80253DB4");
     if mnSnap_804A0A10.state >= 4 {
         HSD_GObj_JObjCallback(gobj, rendermode as i32);
     }
 }
 pub unsafe extern "C" fn fn_80253DE8(mut gobj: *mut HSD_GObj, mut rendermode: i32) {
+    melee_core::ct!("fn_80253DE8");
     if mnSnap_804A0A10.state == 2 {
         HSD_GObj_JObjCallback(gobj, rendermode as i32);
     }
 }
 pub unsafe extern "C" fn fn_80253E1C(mut gobj: *mut HSD_GObj, mut rendermode: i32) {
+    melee_core::ct!("fn_80253E1C");
     let mut state: i32 = mnSnap_804A0A10.state;
     if state == 6
         || (state as i32 - 10 as i32) as u32
@@ -696,11 +704,13 @@ pub unsafe extern "C" fn fn_80253E1C(mut gobj: *mut HSD_GObj, mut rendermode: i3
     }
 }
 pub unsafe extern "C" fn fn_80253E5C(mut gobj: *mut HSD_GObj, mut rendermode: i32) {
+    melee_core::ct!("fn_80253E5C");
     if mnSnap_804A0A10.dlg_active == 1 {
         HSD_GObj_JObjCallback(gobj, rendermode as i32);
     }
 }
 pub unsafe extern "C" fn mnSnap_80253E90(mut idx: i32) {
+    melee_core::ct!("mnSnap_80253E90");
     let mut snap: *mut mnSnap_State = &raw mut mnSnap_804A0A10;
     let mut result: i32 = lbSnap_8001D40C(idx as i32) as i32;
     if result == 0 {
@@ -718,6 +728,7 @@ pub unsafe extern "C" fn mnSnap_80253E90(mut idx: i32) {
     };
 }
 pub unsafe extern "C" fn mnSnap_80253F60() {
+    melee_core::ct!("mnSnap_80253F60");
     let mut slot_index: i32 = 0;
     let mut i: i32 = 0;
     let mut status_idx: i32 = 0;
@@ -744,6 +755,7 @@ pub unsafe extern "C" fn mnSnap_80253F60() {
     }
 }
 pub unsafe extern "C" fn mnSnap_80254014() {
+    melee_core::ct!("mnSnap_80254014");
     let mut snap: *mut mnSnap_State = &raw mut mnSnap_804A0A10;
     let mut ptr: *mut *mut HSD_JObj = core::ptr::null_mut::<*mut HSD_JObj>();
     let mut i: i32 = 0;
@@ -758,6 +770,7 @@ pub unsafe extern "C" fn mnSnap_80254014() {
     HSD_JObjSetFlagsAll((*snap).move_jobj, JOBJ_HIDDEN as u32);
 }
 pub unsafe extern "C" fn mnSnap_8025409C(mut dlg_type: i32) {
+    melee_core::ct!("mnSnap_8025409C");
     let mut left: *mut HSD_JObj = null_mut();
     let mut right: *mut HSD_JObj = null_mut();
     let mut p5E: *mut i32 = null_mut();
@@ -861,6 +874,7 @@ unsafe extern "C" fn mnSnap_HideSubmenu(mut snap: *mut mnSnap_State) {
     HSD_JObjClearFlagsAll((*snap).move_jobj, JOBJ_HIDDEN as u32);
 }
 pub unsafe extern "C" fn mnSnap_80254298() {
+    melee_core::ct!("mnSnap_80254298");
     let mut jobj_slot: *mut *mut HSD_JObj = core::ptr::null_mut::<*mut HSD_JObj>();
     let mut text_slot: *mut *mut HSD_Text = core::ptr::null_mut::<*mut HSD_Text>();
     let mut p50: *mut i32 = &raw mut mnSnap_804A0A10.active_slot;
@@ -1051,6 +1065,7 @@ unsafe extern "C" fn mnSnap_ReadCardStatus(mut slot: i32) -> i32 {
     return mnSnap_804A0A10.card_status[slot as usize] as i32;
 }
 pub unsafe extern "C" fn fn_802545C4() {
+    melee_core::ct!("fn_802545C4");
     let mut cursor: fn_802545C4_cursor = fn_802545C4_cursor { index: 0 };
     let mut buttons: u64 = 0;
     let mut state: i32 = 0;
@@ -2737,6 +2752,7 @@ pub unsafe extern "C" fn fn_802545C4() {
     }
 }
 pub unsafe extern "C" fn fn_80257D7C() {
+    melee_core::ct!("fn_80257D7C");
     let mut snap: *mut mnSnap_State = &raw mut mnSnap_804A0A10;
     let mut i: i32 = 0;
     let mut buttons: u64 = 0;
@@ -2879,6 +2895,7 @@ unsafe extern "C" fn mnSnap_CreateThumbnails(
     }
 }
 pub unsafe extern "C" fn mnSnap_80257F24() {
+    melee_core::ct!("mnSnap_80257F24");
     let mut page_name: *const c_char = core::ptr::null::<
         c_char,
     >();

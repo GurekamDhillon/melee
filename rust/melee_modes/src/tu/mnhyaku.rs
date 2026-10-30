@@ -22,40 +22,48 @@ pub type _MenuInput = ::core::ffi::c_int;
 pub unsafe extern "C" fn HSD_GObjGetUserData(
     mut gobj: *mut HSD_GObj,
 ) -> *mut ::core::ffi::c_void {
+    melee_core::ct!("HSD_GObjGetUserData");
     return (*gobj).user_data;
 }
 #[inline]
 pub unsafe extern "C" fn HSD_GObjGetHSDObj(
     mut gobj: *mut HSD_GObj,
 ) -> *mut ::core::ffi::c_void {
+    melee_core::ct!("HSD_GObjGetHSDObj");
     return (*gobj).hsd_obj;
 }
 pub const HSD_GOBJ_CLASS_ITEM: ::core::ffi::c_int = 6 as ::core::ffi::c_int;
 #[inline]
 pub unsafe extern "C" fn Menu_DecrementAnimTimer() {
+    melee_core::ct!("Menu_DecrementAnimTimer");
     mn_804D6BC8.cooldown = mn_804D6BC8.cooldown.wrapping_sub(1);
     mn_804D6BC8.x2 = 0 as u16_0;
     mn_804D6BC8.x4 = 0 as ::core::ffi::c_int as s32;
 }
 #[inline]
 pub unsafe extern "C" fn Menu_GetAllInputs() -> u64_0 {
+    melee_core::ct!("Menu_GetAllInputs");
     mn_804A04F0.buttons = mn_80229624(4 as u32_0) as u64_0;
     return mn_804A04F0.buttons;
 }
 #[inline]
 pub unsafe extern "C" fn sfxBack() {
+    melee_core::ct!("sfxBack");
     lbAudioAx_80024030(0 as ::core::ffi::c_int);
 }
 #[inline]
 pub unsafe extern "C" fn sfxForward() {
+    melee_core::ct!("sfxForward");
     lbAudioAx_80024030(1 as ::core::ffi::c_int);
 }
 #[inline]
 pub unsafe extern "C" fn sfxMove() {
+    melee_core::ct!("sfxMove");
     lbAudioAx_80024030(2 as ::core::ffi::c_int);
 }
 #[inline]
 pub unsafe extern "C" fn Menu_InitCenterText(mut menu: *mut Menu, mut val: s32) {
+    melee_core::ct!("Menu_InitCenterText");
     let mut text: *mut HSD_Text = HSD_SisLib_803A5ACC(
         0 as ::core::ffi::c_int,
         1 as s32,
@@ -98,6 +106,7 @@ pub static mut mnHyaku_804A08E8: StaticModelDesc = StaticModelDesc {
 };
 #[inline]
 pub unsafe extern "C" fn mnHyaku_8024C68C_inline(mut jobj: *mut HSD_JObj, mut val: s32) {
+    melee_core::ct!("mnHyaku_8024C68C_inline");
     let mut temp_f31: f32_0 = mn_8022F298(jobj as *mut HSD_JObj);
     HSD_JObjReqAnimAll(jobj, mnHyaku_803EF680[val as usize]);
     HSD_JObjAnimAll(jobj);
@@ -117,6 +126,7 @@ pub static mut vals: [u8_0; 8] = [
 ];
 #[inline]
 pub unsafe extern "C" fn mnHyaku_8024C68C_inline_2(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnHyaku_8024C68C_inline_2");
     let mut menu: *mut Menu = HSD_GObjGetUserData(gobj) as *mut Menu;
     if !(*menu).text.is_null() {
         HSD_SisLib_803A5CC4((*menu).text);
@@ -124,6 +134,7 @@ pub unsafe extern "C" fn mnHyaku_8024C68C_inline_2(mut gobj: *mut HSD_GObj) {
     Menu_InitCenterText(menu, vals[(*menu).cursor as usize] as s32);
 }
 pub unsafe extern "C" fn mnHyaku_8024C68C(mut arg0: *mut HSD_GObj) {
+    melee_core::ct!("mnHyaku_8024C68C");
     let mut events: u64_0 = 0;
     let mut menu: *mut Menu = HSD_GObjGetUserData(mnHyaku_804D6C58) as *mut Menu;
     let mut _pad: [::core::ffi::c_uchar; 8] = [0; 8];
@@ -200,6 +211,7 @@ pub unsafe extern "C" fn mnHyaku_8024C68C(mut arg0: *mut HSD_GObj) {
     };
 }
 pub unsafe extern "C" fn mnHyaku_8024C9F0(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnHyaku_8024C9F0");
     let mut jobj: *mut HSD_JObj = HSD_GObjGetHSDObj(gobj) as *mut HSD_JObj;
     let mut ret: f32_0 = mn_8022EC18(
         jobj as *mut HSD_JObj,
@@ -211,6 +223,7 @@ pub unsafe extern "C" fn mnHyaku_8024C9F0(mut gobj: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn mnHyaku_8024CA50(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnHyaku_8024CA50");
     let mut gobj_proc: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     let mut menu: *mut Menu = HSD_GObjGetUserData(gobj) as *mut Menu;
     if mn_804A04F0.cur_menu as ::core::ffi::c_int != 0x21 as ::core::ffi::c_int {
@@ -225,6 +238,7 @@ pub unsafe extern "C" fn mnHyaku_8024CA50(mut gobj: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn mnHyaku_8024CAC8(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnHyaku_8024CAC8");
     let mut jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut gobj_proc: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     let mut menu: *mut Menu = ::core::ptr::null_mut::<Menu>();
@@ -256,6 +270,7 @@ pub unsafe extern "C" fn mnHyaku_8024CAC8(mut gobj: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn mnHyaku_8024CB94(mut arg0: u8_0) {
+    melee_core::ct!("mnHyaku_8024CB94");
     let mut user_data: *mut Menu = ::core::ptr::null_mut::<Menu>();
     let mut gobj: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     let mut proc_0: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
@@ -314,6 +329,7 @@ pub unsafe extern "C" fn mnHyaku_8024CB94(mut arg0: u8_0) {
     Menu_InitCenterText(menu, vals[(*menu).cursor as usize] as s32);
 }
 pub unsafe extern "C" fn mnHyaku_8024CD64(mut arg0: u8_0) {
+    melee_core::ct!("mnHyaku_8024CD64");
     let mut proc_0: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     let mut archive: *mut HSD_Archive = ::core::ptr::null_mut::<HSD_Archive>();
     mn_804D6BC8.cooldown = 5 as u16_0;

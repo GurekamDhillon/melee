@@ -35,6 +35,7 @@ pub mod ext {
 }
 
 pub fn ftCh_Init_8015A560(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Init_8015A560");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         (*fp).cmd_vars[1] = 0;
@@ -45,6 +46,7 @@ pub fn ftCh_Init_8015A560(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCh_Throw_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Throw_Anim");
     use melee_fighter::tu::ftbosslib as bl;
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
@@ -61,4 +63,4 @@ pub fn ftCh_Throw_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftCh_Throw_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftCh_Throw_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_Throw_Coll");}

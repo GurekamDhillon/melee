@@ -130,6 +130,7 @@ pub static mut it_803F9450: [ItemStateTable; 2] = [
 ];
 
 pub unsafe extern "C" fn it_802F23AC(gobj: *mut Item_GObj, pos: *mut Vec) -> f64 {
+    melee_core::ct!("it_802F23AC");
     let ip = get_item(gobj);
     let dx = (*ip).pos.x - (*pos).x;
     let dy = (*ip).pos.y - (*pos).y;
@@ -139,6 +140,7 @@ pub unsafe extern "C" fn it_802F23AC(gobj: *mut Item_GObj, pos: *mut Vec) -> f64
 }
 
 pub unsafe fn it_802F23EC_inline(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802F23EC_inline");
     let ip = get_item(gobj);
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let mut pos: Vec = core::mem::zeroed();
@@ -157,6 +159,7 @@ pub unsafe fn it_802F23EC_inline(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802F23EC(gobj: *mut Item_GObj, owner_gobj: *mut Fighter_GObj, facing_dir: f32) {
+    melee_core::ct!("it_802F23EC");
     let ip = get_item(gobj);
     (*ip).atk_victim = owner_gobj;
     (*ip).grab_victim = owner_gobj;
@@ -176,16 +179,19 @@ pub unsafe extern "C" fn it_802F23EC(gobj: *mut Item_GObj, owner_gobj: *mut Figh
 }
 
 pub unsafe extern "C" fn itKirby_2F23_UnkMotion0_Anim(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKirby_2F23_UnkMotion0_Anim");
     0
 }
 
-pub unsafe extern "C" fn itKirby_2F23_UnkMotion0_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itKirby_2F23_UnkMotion0_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itKirby_2F23_UnkMotion0_Phys");}
 
 pub unsafe extern "C" fn itKirby_2F23_UnkMotion0_Coll(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKirby_2F23_UnkMotion0_Coll");
     0
 }
 
 pub unsafe fn it_802F258C_scale(gobj: *mut Item_GObj, offset: *mut Vec) {
+    melee_core::ct!("it_802F258C_scale");
     let ip = get_item(gobj);
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let mut dist = lbVector_Len(offset);
@@ -214,6 +220,7 @@ fn abs_c(x: f32) -> f32 {
 }
 
 pub unsafe fn it_802F258C_update(gobj: *mut Item_GObj, offset: *mut Vec) {
+    melee_core::ct!("it_802F258C_update");
     let ip = get_item(gobj);
 
     if abs_c((*offset).x) > (*ip).xDD4_itemVar.kirby2f23.x1D8 {
@@ -234,6 +241,7 @@ pub unsafe fn it_802F258C_update(gobj: *mut Item_GObj, offset: *mut Vec) {
 }
 
 pub unsafe extern "C" fn it_802F258C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802F258C");
     let ip = get_item(gobj);
     let mut offset: Vec = core::mem::zeroed();
 
@@ -246,6 +254,7 @@ pub unsafe extern "C" fn it_802F258C(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802F2810(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802F2810");
     let ip = (*gobj).user_data as *mut Item;
     ext::Item_80268E5C(gobj, 1, 0);
     (*ip).on_accessory = Some(it_802F289C);
@@ -257,16 +266,19 @@ pub unsafe extern "C" fn it_802F2810(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itKirby_2F23_UnkMotion1_Anim(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKirby_2F23_UnkMotion1_Anim");
     0
 }
 
-pub unsafe extern "C" fn itKirby_2F23_UnkMotion1_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itKirby_2F23_UnkMotion1_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itKirby_2F23_UnkMotion1_Phys");}
 
 pub unsafe extern "C" fn itKirby_2F23_UnkMotion1_Coll(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKirby_2F23_UnkMotion1_Coll");
     0
 }
 
 pub unsafe extern "C" fn it_802F289C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802F289C");
     let ip = get_item(gobj);
     ext::ftKb_SpecialN_800F5800((*ip).grab_victim, &mut (*ip).pos);
 }

@@ -298,15 +298,18 @@ rw pub mn_804D6BB8: *mut HSD_Archive = core::ptr::null_mut();
 pub unsafe extern "C" fn mnDiagram_GetFighterByIndex(
     mut idx: i32,
 ) -> u8 {
+    melee_core::ct!("mnDiagram_GetFighterByIndex");
     return (*(&raw mut mnDiagram_PcBlock.sorted_fighters as *mut u8
         as *mut [u8; 28]))[idx as usize];
 }
 
 pub unsafe extern "C" fn mnDiagram_GetNameByIndex(mut idx: i32) -> u8 {
+    melee_core::ct!("mnDiagram_GetNameByIndex");
     return mnDiagram_PcBlock.sorted_names[idx as usize];
 }
 
 pub unsafe extern "C" fn mnDiagram_IsDistanceOverflow(mut distance: u32) -> i32 {
+    melee_core::ct!("mnDiagram_IsDistanceOverflow");
     if lbLang_IsSavedLanguageUS() != 0 as i32 {
         if distance >= 0x274a6 as i32 as u32 {
             return 1;
@@ -323,6 +326,7 @@ pub unsafe extern "C" fn mnDiagram_IsDistanceOverflow(mut distance: u32) -> i32 
 pub unsafe extern "C" fn mnDiagram_ConvertDistanceForDisplay(
     mut distance: u32,
 ) -> u32 {
+    melee_core::ct!("mnDiagram_ConvertDistanceForDisplay");
     if lbLang_IsSavedLanguageUS() != 0 as i32 {
         if distance >= 0x274a6 as i32 as u32 {
             return distance.wrapping_div(160934 as i32 as u32);
@@ -339,6 +343,7 @@ pub unsafe extern "C" fn mnDiagram_GetHitPercentage(
     mut is_name_mode: u8,
     mut player_index: u8,
 ) -> i32 {
+    melee_core::ct!("mnDiagram_GetHitPercentage");
     let mut player_attacks: f32 = 0.;
     let mut tag_player_attacks: f32 = 0.;
     if is_name_mode as i32 != 0 as i32 {
@@ -377,6 +382,7 @@ pub unsafe extern "C" fn mnDiagram_GetPlayPercentage(
     mut is_name_mode: u8,
     mut player_index: u8,
 ) -> i32 {
+    melee_core::ct!("mnDiagram_GetPlayPercentage");
     let mut total_play_time: f32 = 0.;
     let mut i: i32 = 0;
     let mut zero: f32 = 0.0f32;
@@ -417,6 +423,7 @@ pub unsafe extern "C" fn mnDiagram_GetAveragePlayerCount(
     mut is_name_mode: u8,
     mut player_index: u8,
 ) -> i32 {
+    melee_core::ct!("mnDiagram_GetAveragePlayerCount");
     let mut temp_f31: f32 = 0.;
     let mut temp_f31_2: f32 = 0.;
     if is_name_mode as i32 != 0 as i32 {
@@ -453,6 +460,7 @@ pub unsafe extern "C" fn mnDiagram_GetAveragePlayerCount(
 pub unsafe extern "C" fn mnDiagram_GetNameTotalKOs(
     mut field_index: u8,
 ) -> i32 {
+    melee_core::ct!("mnDiagram_GetNameTotalKOs");
     let mut total: i32 = 0 as i32;
     let mut i: i32 = 0;
     i = 0 as i32 as i32;
@@ -470,6 +478,7 @@ pub unsafe extern "C" fn mnDiagram_GetNameTotalKOs(
 pub unsafe extern "C" fn mnDiagram_SumNameFalls(
     mut field_index: u8,
 ) -> i32 {
+    melee_core::ct!("mnDiagram_SumNameFalls");
     let mut total: i32 = 0 as i32;
     let mut i: i32 = 0;
     i = 0 as i32;
@@ -490,6 +499,7 @@ pub unsafe extern "C" fn mnDiagram_SumNameFalls(
 pub unsafe extern "C" fn mnDiagram_GetNameTotalFalls(
     mut field_index: u8,
 ) -> i32 {
+    melee_core::ct!("mnDiagram_GetNameTotalFalls");
     let mut _pad: [u8; 16] = [0; 16];
     return mnDiagram_SumNameFalls(field_index);
 }
@@ -497,6 +507,7 @@ pub unsafe extern "C" fn mnDiagram_GetNameTotalFalls(
 pub unsafe extern "C" fn mnDiagram_GetFighterTotalKOs(
     mut field_index: u8,
 ) -> i32 {
+    melee_core::ct!("mnDiagram_GetFighterTotalKOs");
     let mut total: i32 = 0 as i32;
     let mut selkind: i32 = 0;
     selkind = 0 as i32;
@@ -516,6 +527,7 @@ pub unsafe extern "C" fn mnDiagram_GetFighterTotalKOs(
 pub unsafe extern "C" fn mnDiagram_SumFighterKOs(
     mut field_index: u8,
 ) -> i32 {
+    melee_core::ct!("mnDiagram_SumFighterKOs");
     let mut total: i32 = 0 as i32;
     let mut i: i32 = 0;
     i = 0 as i32;
@@ -534,6 +546,7 @@ pub unsafe extern "C" fn mnDiagram_SumFighterKOs(
 pub unsafe extern "C" fn mnDiagram_SumFighterFalls(
     mut field_index: u8,
 ) -> i32 {
+    melee_core::ct!("mnDiagram_SumFighterFalls");
     let mut total: i32 = 0 as i32;
     let mut i: i32 = 0;
     i = 0 as i32;
@@ -553,11 +566,13 @@ pub unsafe extern "C" fn mnDiagram_SumFighterFalls(
 pub unsafe extern "C" fn mnDiagram_GetFighterTotalFalls(
     mut field_index: u8,
 ) -> i32 {
+    melee_core::ct!("mnDiagram_GetFighterTotalFalls");
     let mut _pad: [u8; 16] = [0; 16];
     return mnDiagram_SumFighterFalls(field_index);
 }
 #[inline]
 pub unsafe extern "C" fn mnDiagram_CountUnlockedFightersForHeaders() -> i32 {
+    melee_core::ct!("mnDiagram_CountUnlockedFightersForHeaders");
     let mut i: i32 = 0;
     let mut count: i32 = 0 as i32;
     i = 0 as i32;
@@ -575,6 +590,7 @@ pub unsafe extern "C" fn mnDiagram_FormatDecimalNumber(
     mut val: u32,
     mut decimal_places: i32,
 ) {
+    melee_core::ct!("mnDiagram_FormatDecimalNumber");
     let mut i: i32 = 0;
     let mut digit_count: i32 = 0;
     let mut integer_part: u32 = 0;
@@ -614,6 +630,7 @@ pub unsafe extern "C" fn mnDiagram_FormatTime(
     mut buf: *mut i8,
     mut seconds: i32,
 ) {
+    melee_core::ct!("mnDiagram_FormatTime");
     let mut i: i32 = 0;
     let mut digit_count: i32 = 0;
     let mut minutes: i32 = 0;
@@ -648,6 +665,7 @@ pub unsafe extern "C" fn mnDiagram_IntToStr(
     mut buf: *mut i8,
     mut val: u32,
 ) {
+    melee_core::ct!("mnDiagram_IntToStr");
     let mut i: i32 = 0;
     let mut digit_count: i32 = 0;
     digit_count = mn_GetDigitCount(val as i32) as i32;
@@ -664,6 +682,7 @@ pub unsafe extern "C" fn mnDiagram_IntToStr(
 }
 
 pub unsafe extern "C" fn mnDiagram_GetPrevNameIndex(mut idx: i32) -> u8 {
+    melee_core::ct!("mnDiagram_GetPrevNameIndex");
     let mut original: i32 = 0;
     let mut i: i32 = 0;
     i = idx;
@@ -681,6 +700,7 @@ pub unsafe extern "C" fn mnDiagram_GetPrevNameIndex(mut idx: i32) -> u8 {
 }
 
 pub unsafe extern "C" fn mnDiagram_GetNextNameIndex(mut idx: i32) -> u8 {
+    melee_core::ct!("mnDiagram_GetNextNameIndex");
     let mut original: i32 = 0;
     let mut i: i32 = 0;
     i = idx;
@@ -698,6 +718,7 @@ pub unsafe extern "C" fn mnDiagram_GetNextNameIndex(mut idx: i32) -> u8 {
 }
 
 pub unsafe extern "C" fn mnDiagram_GetPrevFighterIndex(mut idx: i32) -> u8 {
+    melee_core::ct!("mnDiagram_GetPrevFighterIndex");
     let mut ptr: *mut u8 = ::core::ptr::null_mut::<u8>();
     let mut original: i32 = 0;
     ptr = (&raw mut *(&raw mut mnDiagram_PcBlock.sorted_fighters as *mut u8
@@ -720,6 +741,7 @@ pub unsafe extern "C" fn mnDiagram_GetPrevFighterIndex(mut idx: i32) -> u8 {
 }
 
 pub unsafe extern "C" fn mnDiagram_GetNextFighterIndex(mut idx: i32) -> u8 {
+    melee_core::ct!("mnDiagram_GetNextFighterIndex");
     let mut ptr: *mut u8 = ::core::ptr::null_mut::<u8>();
     let mut original: i32 = 0;
     ptr = (&raw mut *(&raw mut mnDiagram_PcBlock.sorted_fighters as *mut u8
@@ -745,6 +767,7 @@ pub unsafe extern "C" fn mnDiagram_GetNamePlayTimeByFighter(
     mut name_idx: i32,
     mut selkind: SelectableCharacterKind,
 ) -> u32 {
+    melee_core::ct!("mnDiagram_GetNamePlayTimeByFighter");
     return (*GetPersistentNameData(name_idx as i32))
         .play_time_by_fighter[selkind as usize];
 }
@@ -752,6 +775,7 @@ pub unsafe extern "C" fn mnDiagram_GetNamePlayTimeByFighter(
 pub unsafe extern "C" fn CheckAllZeroPlayTime(
     mut name_idx: i32,
 ) -> i32 {
+    melee_core::ct!("CheckAllZeroPlayTime");
     let mut i: i32 = 0 as i32;
     let mut offset: i32 = i;
     loop {
@@ -775,6 +799,7 @@ pub unsafe extern "C" fn mnDiagram_GetRankedFighterForName(
         unsafe extern "C" fn(i32, i32) -> u32,
     >,
 ) -> i32 {
+    melee_core::ct!("mnDiagram_GetRankedFighterForName");
     let mut _pad: [i32; 2] = [0; 2];
     let mut entries: [RankEntry; 25] = [RankEntry { selkind: 0, value: 0 }; 25];
     let mut i: i32 = 0;
@@ -880,6 +905,7 @@ pub unsafe extern "C" fn mnDiagram_GetRankedFighterForName(
 }
 #[inline]
 pub unsafe extern "C" fn mnDiagram_AllPlayTimesZero(mut name: u8) -> i32 {
+    melee_core::ct!("mnDiagram_AllPlayTimesZero");
     let mut i: i32 = 0;
     let mut offset: i32 = 0;
     i = 0 as i32;
@@ -899,6 +925,7 @@ pub unsafe extern "C" fn mnDiagram_AllPlayTimesZero(mut name: u8) -> i32 {
 }
 
 pub unsafe extern "C" fn mnDiagram_GetLeastPlayedFighter(mut name_idx: u8) -> u8 {
+    melee_core::ct!("mnDiagram_GetLeastPlayedFighter");
     let mut i: i32 = 0;
     let mut min_fighter: i32 = 0;
     let mut count: i32 = 0;
@@ -956,6 +983,7 @@ pub unsafe extern "C" fn mnDiagram_GetLeastPlayedFighter(mut name_idx: u8) -> u8
 }
 
 pub unsafe extern "C" fn mnDiagram_SortFightersByKOs() {
+    melee_core::ct!("mnDiagram_SortFightersByKOs");
     let mut totals: [u32; 25] = [0; 25];
     let mut dst: *mut u8 = &raw mut *(&raw mut mnDiagram_PcBlock.sorted_fighters
         as *mut u8 as *mut [u8; 28]) as *mut u8;
@@ -1022,6 +1050,7 @@ pub unsafe extern "C" fn mnDiagram_SortFightersByKOs() {
 }
 #[inline]
 pub unsafe extern "C" fn mnDiagram_SumNameKOs(mut field_index: u8) -> i32 {
+    melee_core::ct!("mnDiagram_SumNameKOs");
     let mut total: i32 = 0;
     let mut j: i32 = 0;
     total = 0 as i32;
@@ -1038,6 +1067,7 @@ pub unsafe extern "C" fn mnDiagram_SumNameKOs(mut field_index: u8) -> i32 {
 }
 
 pub unsafe extern "C" fn mnDiagram_SortNamesByKOs() {
+    melee_core::ct!("mnDiagram_SortNamesByKOs");
     let mut j: i32 = 0;
     let mut max_idx: i32 = 0;
     let mut dst_iter: *mut u8 = ::core::ptr::null_mut::<u8>();
@@ -1100,6 +1130,7 @@ pub unsafe extern "C" fn mnDiagram_SortNamesByKOs() {
 }
 
 pub unsafe extern "C" fn mnDiagram_CountUnlockedFighters() -> i32 {
+    melee_core::ct!("mnDiagram_CountUnlockedFighters");
     let mut i: i32 = 0;
     let mut count: i32 = 0;
     i = 0 as i32;
@@ -1115,6 +1146,7 @@ pub unsafe extern "C" fn mnDiagram_CountUnlockedFighters() -> i32 {
 }
 
 pub unsafe extern "C" fn mnDiagram_PopupInputProc(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnDiagram_PopupInputProc");
     let mut proc_0: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     let mut data: *mut Diagram = (*mnDiagram_ScreenGObj).user_data as *mut Diagram;
     let mut input: u64 = Menu_GetAllInputs();
@@ -1137,6 +1169,7 @@ pub unsafe extern "C" fn mnDiagram_GetVisibleNameFrom(
     mut start: i32,
     mut rank: i32,
 ) -> u8 {
+    melee_core::ct!("mnDiagram_GetVisibleNameFrom");
     let mut p: *mut u8 = ::core::ptr::null_mut::<u8>();
     let mut p2: *mut u8 = ::core::ptr::null_mut::<u8>();
     let mut remaining: i32 = 0;
@@ -1171,6 +1204,7 @@ pub unsafe extern "C" fn mnDiagram_GetVisibleNameRowForInput(
     mut start: i32,
     mut rank: i32,
 ) -> u8 {
+    melee_core::ct!("mnDiagram_GetVisibleNameRowForInput");
     let mut p: *mut u8 = ::core::ptr::null_mut::<u8>();
     let mut p2: *mut u8 = ::core::ptr::null_mut::<u8>();
     let mut remaining: i32 = 0;
@@ -1205,6 +1239,7 @@ pub unsafe extern "C" fn mnDiagram_GetVisibleNameFrom2(
     mut start: i32,
     mut rank: i32,
 ) -> u8 {
+    melee_core::ct!("mnDiagram_GetVisibleNameFrom2");
     let mut remaining: i32 = 0;
     let mut idx: i32 = 0;
     let mut p: *mut u8 = ::core::ptr::null_mut::<u8>();
@@ -1238,6 +1273,7 @@ pub unsafe extern "C" fn mnDiagram_FindPrevFighter(
     mut sorted: *mut u8,
     mut cur: SelectableCharacterKind,
 ) -> i32 {
+    melee_core::ct!("mnDiagram_FindPrevFighter");
     let mut p: *mut u8 = sorted.offset(cur as i32 as isize);
     let mut found: SelectableCharacterKind = cur;
     loop {
@@ -1259,6 +1295,7 @@ pub unsafe extern "C" fn mnDiagram_FindNextFighter(
     mut sorted: *mut u8,
     mut cur: SelectableCharacterKind,
 ) -> u8 {
+    melee_core::ct!("mnDiagram_FindNextFighter");
     let mut p: *mut u8 = ::core::ptr::null_mut::<u8>();
     let mut found: SelectableCharacterKind = SELKIND_CAPTAIN;
     found = cur;
@@ -1279,6 +1316,7 @@ pub unsafe extern "C" fn mnDiagram_FindNextFighter(
 }
 #[inline]
 pub unsafe extern "C" fn mnDiagram_FindPrevName(mut cur: i32) -> i32 {
+    melee_core::ct!("mnDiagram_FindPrevName");
     let mut found: i32 = cur;
     loop {
         found -= 1;
@@ -1295,6 +1333,7 @@ pub unsafe extern "C" fn mnDiagram_FindPrevName(mut cur: i32) -> i32 {
 }
 #[inline]
 pub unsafe extern "C" fn mnDiagram_FindPrevNameWrap(mut cur: i32) -> i32 {
+    melee_core::ct!("mnDiagram_FindPrevNameWrap");
     let mut found: i32 = cur;
     loop {
         found -= 1;
@@ -1314,6 +1353,7 @@ pub unsafe extern "C" fn mnDiagram_FindPrevFighterWrap(
     mut sorted: *mut u8,
     mut cur: i32,
 ) -> i32 {
+    melee_core::ct!("mnDiagram_FindPrevFighterWrap");
     let mut p: *mut u8 = sorted.offset(cur as isize);
     let mut found: i32 = cur;
     loop {
@@ -1332,6 +1372,7 @@ pub unsafe extern "C" fn mnDiagram_FindPrevFighterWrap(
 }
 #[inline]
 pub unsafe extern "C" fn mnDiagram_FindNextName(mut cur: i32) -> i32 {
+    melee_core::ct!("mnDiagram_FindNextName");
     let mut found: i32 = cur;
     loop {
         found += 1;
@@ -1351,6 +1392,7 @@ pub unsafe extern "C" fn mnDiagram_GetVisibleNameCursorFrom(
     mut start: i32,
     mut rank: i32,
 ) -> u8 {
+    melee_core::ct!("mnDiagram_GetVisibleNameCursorFrom");
     while rank > 0 as i32 {
         loop {
             start += 1;
@@ -1373,6 +1415,7 @@ pub unsafe extern "C" fn mnDiagram_GetVisibleFighterCursorFrom(
     mut start: i32,
     mut rank: i32,
 ) -> u8 {
+    melee_core::ct!("mnDiagram_GetVisibleFighterCursorFrom");
     let mut result: u8 = 0;
     let mut remaining: i32 = 0;
     let mut p2: *mut u8 = ::core::ptr::null_mut::<u8>();
@@ -1415,6 +1458,7 @@ pub unsafe extern "C" fn mnDiagram_GetVisibleFighterColumnForInput(
     mut rank: i32,
     mut index: *mut i32,
 ) -> u8 {
+    melee_core::ct!("mnDiagram_GetVisibleFighterColumnForInput");
     let mut result: u8 = 0;
     let mut p: *mut u8 = ::core::ptr::null_mut::<u8>();
     let mut p2: *mut u8 = ::core::ptr::null_mut::<u8>();
@@ -1456,6 +1500,7 @@ pub unsafe extern "C" fn mnDiagram_GetVisibleFighterRowForInput(
     mut selection: *const u16,
     mut index: *mut i32,
 ) -> u8 {
+    melee_core::ct!("mnDiagram_GetVisibleFighterRowForInput");
     let mut selected_word: u16 = 0;
     let mut cursor_word: u16 = 0;
     let mut result: u8 = 0;
@@ -1501,6 +1546,7 @@ pub unsafe extern "C" fn mnDiagram_GetVisibleFighterFromPointer(
     mut start: i32,
     mut rank: i32,
 ) -> u8 {
+    melee_core::ct!("mnDiagram_GetVisibleFighterFromPointer");
     let mut result: u8 = 0;
     let mut p2: *mut u8 = ::core::ptr::null_mut::<u8>();
     let mut remaining: i32 = 0;
@@ -1539,6 +1585,7 @@ pub unsafe extern "C" fn mnDiagram_GetVisibleFighterCursorFrom2(
     mut start: i32,
     mut rank: i32,
 ) -> u8 {
+    melee_core::ct!("mnDiagram_GetVisibleFighterCursorFrom2");
     while rank >= 0 as i32 {
         if rank == 0 as i32 {
             return mnDiagram_GetFighterByIndex(start);
@@ -1561,6 +1608,7 @@ pub unsafe extern "C" fn mnDiagram_GetVisibleFighterCursorFrom2(
 }
 #[inline]
 pub unsafe extern "C" fn mnDiagram_GetCurrentDiagramData() -> *mut Diagram {
+    melee_core::ct!("mnDiagram_GetCurrentDiagramData");
     return (*mnDiagram_ScreenGObj).user_data as *mut Diagram;
 }
 #[inline]
@@ -1568,6 +1616,7 @@ pub unsafe extern "C" fn mnDiagram_GetVisibleNameColumnForInput(
     mut start: i32,
     mut rank: i32,
 ) -> u8 {
+    melee_core::ct!("mnDiagram_GetVisibleNameColumnForInput");
     while rank > 0 as i32 {
         loop {
             start += 1;
@@ -1586,6 +1635,7 @@ pub unsafe extern "C" fn mnDiagram_GetVisibleNameColumnForInput(
 }
 #[inline]
 pub unsafe extern "C" fn mnDiagram_CountUnlockedFightersForInput() -> i32 {
+    melee_core::ct!("mnDiagram_CountUnlockedFightersForInput");
     let mut i: i32 = 0;
     let mut count: i32 = 0 as i32;
     i = 0 as i32;
@@ -1600,6 +1650,7 @@ pub unsafe extern "C" fn mnDiagram_CountUnlockedFightersForInput() -> i32 {
 }
 
 pub unsafe extern "C" fn mnDiagram_InputProc(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnDiagram_InputProc");
     let mut proc_0: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     let mut row_result: u8 = 0;
     let mut i: i32 = 0;
@@ -2055,6 +2106,7 @@ pub unsafe extern "C" fn mnDiagram_InputProc(mut gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn mnDiagram_PopupCleanup(mut arg0: *mut ::core::ffi::c_void) {
+    melee_core::ct!("mnDiagram_PopupCleanup");
     let mut data: *mut mnDiagram_PopupData = arg0 as *mut mnDiagram_PopupData;
     if !(*data).text[0 as i32 as usize].is_null() {
         HSD_SisLib_803A5CC4((*data).text[0 as i32 as usize]);
@@ -2078,10 +2130,12 @@ pub unsafe extern "C" fn mnDiagram_PopupAnimProc_Inline(
     mut arg0: *mut mnDiagram_AnimTable,
     mut arg1: i32,
 ) -> *mut Vec3 {
+    melee_core::ct!("mnDiagram_PopupAnimProc_Inline");
     return (&raw mut (*arg0).points as *mut Point3d).offset(arg1 as isize) as *mut Vec3;
 }
 
 pub unsafe extern "C" fn mnDiagram_PopupAnimProc(mut arg0: *mut HSD_GObj) {
+    melee_core::ct!("mnDiagram_PopupAnimProc");
     let mut data: *mut mnDiagram_PopupData = (*arg0).user_data
         as *mut mnDiagram_PopupData;
     let mut text: *mut HSD_Text = ::core::ptr::null_mut::<HSD_Text>();
@@ -2205,6 +2259,7 @@ pub unsafe extern "C" fn mnDiagram_FormatPopupNumber(
     mut buf: *mut i8,
     mut val: u32,
 ) {
+    melee_core::ct!("mnDiagram_FormatPopupNumber");
     let mut digit_count: i32 = mn_GetDigitCount(val as i32)
         as i32;
     let mut i: i32 = 0;
@@ -2226,6 +2281,7 @@ pub unsafe extern "C" fn mnDiagram_CreatePopupTexts(
     mut arg2: i32,
     mut use_nametag: i32,
 ) {
+    melee_core::ct!("mnDiagram_CreatePopupTexts");
     let mut data: *mut mnDiagram_PopupData = (*arg0).user_data
         as *mut mnDiagram_PopupData;
     let mut new_var: f32 = 0.;
@@ -2422,6 +2478,7 @@ pub unsafe extern "C" fn mnDiagram_CreatePopup(
     mut arg1: i32,
     mut use_nametag: i32,
 ) {
+    melee_core::ct!("mnDiagram_CreatePopup");
     let mut i: i32 = 0;
     let mut tbl: *mut mnDiagram_AnimTable = ::core::ptr::null_mut::<
         mnDiagram_AnimTable,
@@ -2563,10 +2620,12 @@ pub unsafe extern "C" fn mnDiagram_CreatePopup(
 pub unsafe extern "C" fn mnDiagram_GetUserData(
     mut gobj: *mut HSD_GObj,
 ) -> *mut ::core::ffi::c_void {
+    melee_core::ct!("mnDiagram_GetUserData");
     return (*gobj).user_data;
 }
 
 pub unsafe extern "C" fn mnDiagram_ClearGrid(mut arg0: *mut HSD_GObj) {
+    melee_core::ct!("mnDiagram_ClearGrid");
     let mut data: *mut Diagram = mnDiagram_GetUserData(arg0)
         as *mut Diagram;
     let mut child: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
@@ -2601,6 +2660,7 @@ pub unsafe extern "C" fn mnDiagram_RefreshGrid(
     mut arg1: i32,
     mut arg2: i32,
 ) {
+    melee_core::ct!("mnDiagram_RefreshGrid");
     let mut data: *mut Diagram = HSD_GObjGetUserData(arg0) as *mut Diagram;
     mnDiagram_ClearGrid(arg0);
     mnDiagram_DrawGridValues(
@@ -2618,6 +2678,7 @@ pub unsafe extern "C" fn mnDiagram_RefreshGrid(
 }
 
 pub unsafe extern "C" fn mnDiagram_UpdateScrollArrows(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnDiagram_UpdateScrollArrows");
     let mut result2: u8 = 0;
     let mut data: *mut Diagram = (*gobj).user_data as *mut Diagram;
     let mut jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
@@ -2764,6 +2825,7 @@ pub unsafe extern "C" fn mnDiagram_UpdateScrollArrows(mut gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn mnDiagram_ExitAnimProc(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnDiagram_ExitAnimProc");
     let mut data: *mut Diagram = ::core::ptr::null_mut::<
         Diagram,
     >();
@@ -2782,6 +2844,7 @@ pub unsafe extern "C" fn mnDiagram_UpdateScrollArrowVisibility(
     mut gobj: *mut HSD_GObj,
     mut count: i32,
 ) {
+    melee_core::ct!("mnDiagram_UpdateScrollArrowVisibility");
     let mut data: *mut Diagram = (*gobj).user_data as *mut Diagram;
     let mut _pad: [u8; 8] = [0; 8];
     if count <= 7 as i32 {
@@ -2825,6 +2888,7 @@ pub unsafe extern "C" fn mnDiagram_UpdateScrollArrowVisibility(
 }
 
 pub unsafe extern "C" fn mnDiagram_OnFrame(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnDiagram_OnFrame");
     let mut data: *mut Diagram = HSD_GObjGetUserData(gobj) as *mut Diagram;
     let mut proc_0: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     let mut data2: *mut Diagram = ::core::ptr::null_mut::<Diagram>();
@@ -2975,6 +3039,7 @@ pub unsafe extern "C" fn mnDiagram_DrawCellValue(
     mut arg2: u8,
     mut arg3: i32,
 ) {
+    melee_core::ct!("mnDiagram_DrawCellValue");
     let mut data_alias: *mut Diagram = ::core::ptr::null_mut::<Diagram>();
     let mut row_offset_adj: f32 = 0.;
     let mut jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
@@ -3045,6 +3110,7 @@ pub unsafe extern "C" fn mnDiagram_GetFighterPairKOs(
     mut fighter: u8,
     mut opponent: u8,
 ) -> i32 {
+    melee_core::ct!("mnDiagram_GetFighterPairKOs");
     let mut kind: SelectableCharacterKind = fighter as SelectableCharacterKind;
     return (*GetPersistentFighterData(kind)).fighter_kos[opponent as usize]
         as i32;
@@ -3056,6 +3122,7 @@ pub unsafe extern "C" fn mnDiagram_DrawGridValues(
     mut col_start: i32,
     mut arg3: u8,
 ) {
+    melee_core::ct!("mnDiagram_DrawGridValues");
     let mut name_col: i32 = 0;
     let mut is_name_mode: u8 = arg3;
     let mut unlocked_count: i32 = 0;
@@ -3212,6 +3279,7 @@ pub unsafe extern "C" fn mnDiagram_DrawNameHeaders(
     mut arg1: i32,
     mut arg2: i32,
 ) {
+    melee_core::ct!("mnDiagram_DrawNameHeaders");
     let mut data: *mut Diagram = (*arg0).user_data as *mut Diagram;
     let mut sorted: *mut u8 = &raw mut *(&raw mut mnDiagram_PcBlock.sorted_fighters
         as *mut u8 as *mut [u8; 28]) as *mut u8;
@@ -3284,6 +3352,7 @@ pub unsafe extern "C" fn mnDiagram_CreateFighterIcon(
     mut idx: i32,
     mut arg1: i32,
 ) -> *mut HSD_JObj {
+    melee_core::ct!("mnDiagram_CreateFighterIcon");
     let mut sp10: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut model: *mut StaticModelDesc = &raw mut MenMainFaceB_Top;
     let mut temp_r3: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
@@ -3313,6 +3382,7 @@ pub unsafe extern "C" fn mnDiagram_LoadHeaderIcon(
     mut fighter_id: i32,
     mut child: *mut *mut HSD_JObj,
 ) -> *mut HSD_JObj {
+    melee_core::ct!("mnDiagram_LoadHeaderIcon");
     let mut jobj: *mut HSD_JObj = HSD_JObjLoadJoint(
         *joint_data.offset(0 as i32 as isize) as *mut HSD_Joint,
     );
@@ -3335,6 +3405,7 @@ pub unsafe extern "C" fn mnDiagram_DrawFighterHeaders(
     mut arg1: i32,
     mut arg2: i32,
 ) {
+    melee_core::ct!("mnDiagram_DrawFighterHeaders");
     let mut col_ref: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut row_ref: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut col_cursor: *mut u8 = ::core::ptr::null_mut::<u8>();
@@ -3471,6 +3542,7 @@ pub unsafe extern "C" fn mnDiagram_DrawFighterHeaders(
 }
 
 pub unsafe extern "C" fn mnDiagram_CursorProc(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnDiagram_CursorProc");
     let mut sp_jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut selection: *mut u16 = ::core::ptr::null_mut::<u16>();
     let mut col: i32 = 0;
@@ -3512,6 +3584,7 @@ pub unsafe extern "C" fn mnDiagram_CursorProc(mut gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn mnDiagram_CreateCursor() {
+    melee_core::ct!("mnDiagram_CreateCursor");
     let mut model: *mut StaticModelDesc = ::core::ptr::null_mut::<StaticModelDesc>();
     let mut gobj: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     let mut jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
@@ -3537,6 +3610,7 @@ pub unsafe extern "C" fn mnDiagram_CreateCursor() {
 }
 
 pub unsafe extern "C" fn mnDiagram_CreateScreen(mut arg0: u8) {
+    melee_core::ct!("mnDiagram_CreateScreen");
     let mut col_idx: i32 = 0;
     let mut row_idx: i32 = 0;
     let mut d: *mut Diagram = ::core::ptr::null_mut::<Diagram>();
@@ -3720,6 +3794,7 @@ pub unsafe extern "C" fn mnDiagram_CreateScreen(mut arg0: u8) {
 }
 
 pub unsafe extern "C" fn mnDiagram_Init(mut arg0: u8, mut arg1: u8) {
+    melee_core::ct!("mnDiagram_Init");
     let mut assets: *mut mnDiagram_Assets = &raw mut mnDiagram_PcBlock.sorted_fighters
         as *mut u8 as *mut [u8; 28] as *mut mnDiagram_Assets;
     let mut gobj: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();

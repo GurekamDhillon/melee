@@ -79,6 +79,7 @@ fn enter(g: G, msid: ftCommon_MotionState) {
 
 /// `ftCo_800BECB0`: DeadDown (Fox holds his blaster).
 pub fn ftCo_800BECB0(g: G) {
+    melee_core::ct!("ftCo_800BECB0");
     enter(g, ftCo_MS_DeadDown);
     if crate::ft0892::template_kind(fp(g)) == Ft_Kind_Fox as i32 {
         fox_helper(g);
@@ -86,10 +87,11 @@ pub fn ftCo_800BECB0(g: G) {
 }
 
 /// `ftCo_800BED84`: empty.
-pub fn ftCo_800BED84(_g: G) {}
+pub fn ftCo_800BED84(_g: G) { melee_core::ct!("ftCo_800BED84");}
 
 /// `ftCo_800BED88`: DeadRight (Fox: blaster; Doc: pills).
 pub fn ftCo_800BED88(g: G) {
+    melee_core::ct!("ftCo_800BED88");
     enter(g, ftCo_MS_DeadRight);
     let k = crate::ft0892::template_kind(fp(g));
     if k == Ft_Kind_Fox as i32 {
@@ -100,10 +102,11 @@ pub fn ftCo_800BED88(g: G) {
 }
 
 /// `ftCo_800BEF00`: empty.
-pub fn ftCo_800BEF00(_g: G) {}
+pub fn ftCo_800BEF00(_g: G) { melee_core::ct!("ftCo_800BEF00");}
 
 /// `ftCo_800BEF04`: DeadUpStarIce (Ness holds his bat at 0.8 scale).
 pub fn ftCo_800BEF04(g: G) {
+    melee_core::ct!("ftCo_800BEF04");
     enter(g, ftCo_MS_DeadUpStarIce);
     if crate::ft0892::template_kind(fp(g)) == Ft_Kind_Ness as i32 {
         let bone = crate::hooks::ftparts_get_bone_index(fp(g), FtPart_RThumbNb as i32);
@@ -115,4 +118,4 @@ pub fn ftCo_800BEF04(g: G) {
 }
 
 /// `ftCo_800BEFD0`: empty.
-pub fn ftCo_800BEFD0(_g: G) {}
+pub fn ftCo_800BEFD0(_g: G) { melee_core::ct!("ftCo_800BEFD0");}

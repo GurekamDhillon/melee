@@ -66,6 +66,7 @@ pub static mut it_803F7FC8: [ItemStateTable; 3] = [
 ];
 
 pub unsafe extern "C" fn it_802D3008(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D3008");
     let it = GET_ITEM(item_gobj);
     let vars = (*(*it).xC4_article_data).x4_specialAttributes as *mut ItMetamonVars;
     ext::it_80279CDC(item_gobj, (*vars).x0);
@@ -74,22 +75,26 @@ pub unsafe extern "C" fn it_802D3008(item_gobj: *mut Item_GObj) {
     it_804D6D50 = item_gobj;
 }
 
-pub unsafe extern "C" fn it_802D306C(_item_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn it_802D306C(_item_gobj: *mut Item_GObj) { melee_core::ct!("it_802D306C");}
 
 pub unsafe extern "C" fn itMetamon_Logic19_EvtUnk(item_gobj: *mut Item_GObj, gobj: *mut Item_GObj) {
+    melee_core::ct!("itMetamon_Logic19_EvtUnk");
     ext::it_8026B894(item_gobj, gobj);
 }
 
 pub unsafe extern "C" fn it_802D3090(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D3090");
     ext::it_80273454(item_gobj);
     it_802D30C4(item_gobj);
 }
 
 pub unsafe extern "C" fn it_802D30C4(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D30C4");
     ext::Item_80268E5C(item_gobj, 0, ITEM_ANIM_UPDATE);
 }
 
 pub unsafe extern "C" fn itMetamon_UnkMotion0_Anim(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMetamon_UnkMotion0_Anim");
     GET_ITEM(item_gobj);
     if ext::it_80272C6C(item_gobj) == 0 {
         return true;
@@ -97,41 +102,48 @@ pub unsafe extern "C" fn itMetamon_UnkMotion0_Anim(item_gobj: *mut Item_GObj) ->
     false
 }
 
-pub unsafe extern "C" fn itMetamon_UnkMotion0_Phys(_item_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itMetamon_UnkMotion0_Phys(_item_gobj: *mut Item_GObj) { melee_core::ct!("itMetamon_UnkMotion0_Phys");}
 
 pub unsafe extern "C" fn itMetamon_UnkMotion0_Coll(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMetamon_UnkMotion0_Coll");
     ext::it_8026E15C(item_gobj, Some(it_802D306C));
     false
 }
 
 pub unsafe extern "C" fn itMetamon_UnkMotion1_Anim(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMetamon_UnkMotion1_Anim");
     if ext::it_80272C6C(item_gobj) == 0 {
         return true;
     }
     false
 }
 
-pub unsafe extern "C" fn itMetamon_UnkMotion1_Phys(_item_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itMetamon_UnkMotion1_Phys(_item_gobj: *mut Item_GObj) { melee_core::ct!("itMetamon_UnkMotion1_Phys");}
 
 pub unsafe extern "C" fn itMetamon_UnkMotion1_Coll(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMetamon_UnkMotion1_Coll");
     ext::it_8026E15C(item_gobj, Some(it_802D306C));
     false
 }
 
 pub unsafe extern "C" fn it_802D31B4(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D31B4");
     ext::it_802762BC(GET_ITEM(item_gobj));
     ext::Item_80268E5C(item_gobj, 2, ITEM_ANIM_UPDATE);
 }
 
 pub unsafe extern "C" fn itMetamon_UnkMotion2_Anim(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMetamon_UnkMotion2_Anim");
     ext::it_80279FF8(item_gobj);
     false
 }
 
 pub unsafe extern "C" fn itMetamon_UnkMotion2_Phys(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itMetamon_UnkMotion2_Phys");
     ext::it_8027A09C(item_gobj);
 }
 
 pub unsafe extern "C" fn itMetamon_UnkMotion2_Coll(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMetamon_UnkMotion2_Coll");
     ext::it_8027A118(item_gobj, Some(it_802D3090)) != 0
 }

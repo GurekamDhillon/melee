@@ -60,6 +60,7 @@ pub mod ext {
 }
 
 pub fn ftCo_800C4E4C(g: G) -> bool {
+    melee_core::ct!("ftCo_800C4E4C");
     if ext::ft_8008A1FC(g) {
         ftCo_800C4ED8(g);
         return true;
@@ -68,6 +69,7 @@ pub fn ftCo_800C4E4C(g: G) -> bool {
 }
 
 pub fn ftCo_800C4E94(f: &mut Fighter) {
+    melee_core::ct!("ftCo_800C4E94");
     ftCo_800C5408(f);
     ftCo_800C5588(f);
     ext::ftCommon_8007EBAC(f, 1, 0);
@@ -83,6 +85,7 @@ fn inline_a0(g: G) {
 }
 
 pub fn ftCo_800C4ED8(g: G) {
+    melee_core::ct!("ftCo_800C4ED8");
     inline_a0(g);
 }
 
@@ -99,14 +102,17 @@ fn inline_b0(g: G) {
 }
 
 pub fn ftCo_800C4F64(g: G) {
+    melee_core::ct!("ftCo_800C4F64");
     inline_b0(g);
 }
 
 pub fn ftCo_HammerWait_Anim(g: G) {
+    melee_core::ct!("ftCo_HammerWait_Anim");
     inline_b0(g);
 }
 
 pub fn ftCo_HammerWait_IASA(g: G) {
+    melee_core::ct!("ftCo_HammerWait_IASA");
     if ext::ftCo_800C5A50(g) { return; }
     if ext::ftCo_800C60C8(g) { return; }
     if ext::ftCo_800C576C(g) { return; }
@@ -114,14 +120,17 @@ pub fn ftCo_HammerWait_IASA(g: G) {
 }
 
 pub fn ftCo_HammerWait_Phys(g: G) {
+    melee_core::ct!("ftCo_HammerWait_Phys");
     ext::ft_80084F3C(g);
 }
 
 pub fn ftCo_HammerWait_Coll(g: G) {
+    melee_core::ct!("ftCo_HammerWait_Coll");
     ext::ft_8008403C(g, ext::ftCo_800C5D34);
 }
 
 pub fn ftCo_800C511C(g: G) {
+    melee_core::ct!("ftCo_800C511C");
     let f = fp(g);
     if f.motion_id != ftCo_MS_LightGet as i32 {
         if f.x2330.x != 0 {
@@ -158,11 +167,13 @@ pub fn ftCo_800C511C(g: G) {
 }
 
 pub fn ftCo_800C5240(g: G) -> bool {
+    melee_core::ct!("ftCo_800C5240");
     let f = fp(g);
     !f.item_gobj.is_null() && ext::itGetKind(f.item_gobj) == It_Kind_Hammer as i32
 }
 
 pub fn ftCo_800C5284(g: G) {
+    melee_core::ct!("ftCo_800C5284");
     let f = fp(g);
     f.x2330.x = crate::hooks::common_data().x6AC;
     f.x2330.y = ext::it_80293DCC(f.item_gobj);
@@ -176,6 +187,7 @@ pub fn ftCo_800C5284(g: G) {
 }
 
 pub fn ftCo_800C52F4(g: G) {
+    melee_core::ct!("ftCo_800C52F4");
     ftCo_800C5284(g);
     if fp(g).ground_or_air == GA_Ground {
         inline_a0(g);
@@ -185,26 +197,31 @@ pub fn ftCo_800C52F4(g: G) {
 }
 
 pub fn ftCo_800C53E4(f: &Fighter) -> bool {
+    melee_core::ct!("ftCo_800C53E4");
     f.motion_id >= ftCo_MS_HammerWait as i32 && f.motion_id <= ftCo_MS_HammerLanding as i32
 }
 
 pub fn ftCo_800C5408(f: &mut Fighter) {
+    melee_core::ct!("ftCo_800C5408");
     if ext::ftCo_800C0694(f) != 106 {
         ext::ftCo_800BFFD0(f, 106, false);
     }
 }
 
 pub fn ftCo_800C544C(f: &mut Fighter) {
+    melee_core::ct!("ftCo_800C544C");
     if ext::ftCo_800C0694(f) == 106 {
         ext::ftCo_800C0200(f, 106);
     }
 }
 
 pub fn ftCo_800C548C(f: &Fighter) -> f32 {
+    melee_core::ct!("ftCo_800C548C");
     if ftCo_800C53E4(f) { f.cur_anim_frame } else { 0.0 }
 }
 
 pub fn ftCo_800C54C4(f: &Fighter) -> u32 {
+    melee_core::ct!("ftCo_800C54C4");
     if ftCo_800C53E4(f) {
         Ft_MF_SkipHit | Ft_MF_SkipModel | Ft_MF_SkipMatAnim | Ft_MF_SkipRumble | Ft_MF_SkipColAnim
             | Ft_MF_UpdateCmd | Ft_MF_Unk19
@@ -214,19 +231,23 @@ pub fn ftCo_800C54C4(f: &Fighter) -> u32 {
 }
 
 pub fn ftCo_800C5500(g: G) {
+    melee_core::ct!("ftCo_800C5500");
     ftCo_800C544C(fp(g));
     ext::ft_80088110(fp(g));
 }
 
 pub fn ftCo_800C554C(f: &mut Fighter) {
+    melee_core::ct!("ftCo_800C554C");
     f.x2338.y = crate::hooks::common_data().x6B8;
 }
 
 pub fn ftCo_800C555C(g: G) {
+    melee_core::ct!("ftCo_800C555C");
     ext::it_8026C16C(fp(g).item_gobj, false);
 }
 
 pub fn ftCo_800C5588(f: &mut Fighter) {
+    melee_core::ct!("ftCo_800C5588");
     ext::it_8026C16C(f.item_gobj, true);
     f.set_x2219_b4(1);
 }

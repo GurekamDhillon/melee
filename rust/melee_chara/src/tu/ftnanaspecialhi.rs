@@ -38,6 +38,7 @@ const COLLIDE_CEILING_MASK: i32 = Collide_CeilingPush | Collide_CeilingHug;
 
 /// `ftNn_Init_801230D0` (static): glue Nana to Popo's hand while he throws her.
 pub fn ftNn_Init_801230D0(nana_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftNn_Init_801230D0");
     unsafe {
         let nana_fp = fpp(nana_gobj);
         let popo_gobj = ext::Player_GetEntityAtIndex((*nana_fp).player_id as i32, 0);
@@ -80,6 +81,7 @@ pub fn ftNn_Init_801230D0(nana_gobj: *mut HSD_GObj) -> bool {
 
 /// `fn_80123218` (static): the accessory4 callback; publishes Nana's hand position to Popo.
 pub fn fn_80123218(nana_gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80123218");
     unsafe {
         let nana_fp = fpp(nana_gobj);
         let popo_gobj = ext::Player_GetEntityAtIndex((*nana_fp).player_id as i32, 0);
@@ -106,6 +108,7 @@ fn ftNn_Init_801232A4_inline(nana_gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNn_Init_801232A4(nana_gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNn_Init_801232A4");
     unsafe {
         let nana_fp = fpp(nana_gobj);
         let popo_gobj = ext::Player_GetEntityAtIndex((*nana_fp).player_id as i32, 0);
@@ -124,6 +127,7 @@ pub fn ftNn_Init_801232A4(nana_gobj: *mut HSD_GObj) {
 }
 
 pub fn ftPp_SpecialHi_0_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialHi_0_Anim");
     unsafe {
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
             ftNn_Init_801237F8(gobj);
@@ -131,11 +135,12 @@ pub fn ftPp_SpecialHi_0_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftPp_SpecialHi_3_Anim(_gobj: *mut HSD_GObj) {}
-pub fn ftPp_SpecialHi_0_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftPp_SpecialHi_3_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftPp_SpecialHi_3_Anim(_gobj: *mut HSD_GObj) { melee_core::ct!("ftPp_SpecialHi_3_Anim");}
+pub fn ftPp_SpecialHi_0_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftPp_SpecialHi_0_IASA");}
+pub fn ftPp_SpecialHi_3_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftPp_SpecialHi_3_IASA");}
 
 pub fn ftPp_SpecialHi_0_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialHi_0_Phys");
     unsafe {
         let fp = fpp(gobj);
         if !ftNn_Init_801230D0(gobj) {
@@ -146,11 +151,12 @@ pub fn ftPp_SpecialHi_0_Phys(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftPp_SpecialHi_3_Phys(_gobj: *mut HSD_GObj) {}
-pub fn ftPp_SpecialHi_0_Coll(_gobj: *mut HSD_GObj) {}
-pub fn ftPp_SpecialHi_3_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftPp_SpecialHi_3_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("ftPp_SpecialHi_3_Phys");}
+pub fn ftPp_SpecialHi_0_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftPp_SpecialHi_0_Coll");}
+pub fn ftPp_SpecialHi_3_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftPp_SpecialHi_3_Coll");}
 
 pub fn ftPp_SpecialHi_1_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialHi_1_Anim");
     unsafe {
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
             st::ft_8008A2BC(gobj);
@@ -159,6 +165,7 @@ pub fn ftPp_SpecialHi_1_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftPp_SpecialHi_4_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialHi_4_Anim");
     unsafe {
         let fp = fpp(gobj);
         let attrs = (*fp).dat_attrs as *const ftIceClimberAttributes;
@@ -168,14 +175,16 @@ pub fn ftPp_SpecialHi_4_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftPp_SpecialHi_1_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftPp_SpecialHi_4_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftPp_SpecialHi_1_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftPp_SpecialHi_1_IASA");}
+pub fn ftPp_SpecialHi_4_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftPp_SpecialHi_4_IASA");}
 
 pub fn ftPp_SpecialHi_1_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialHi_1_Phys");
     st::ft_80084F3C(gobj);
 }
 
 pub fn ftPp_SpecialHi_4_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialHi_4_Phys");
     unsafe {
         let fp = fpp(gobj);
         let attrs = (*fp).dat_attrs as *const ftIceClimberAttributes;
@@ -195,6 +204,7 @@ pub fn ftPp_SpecialHi_4_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftPp_SpecialHi_4_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialHi_4_Coll");
     unsafe {
         let fp = fpp(gobj);
         let attrs = (*fp).dat_attrs as *const ftIceClimberAttributes;
@@ -222,6 +232,7 @@ pub fn ftPp_SpecialHi_4_Coll(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNn_Init_801237F8(nana_gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNn_Init_801237F8");
     unsafe {
         let nana_fp = fpp(nana_gobj);
         let attrs = (*nana_fp).dat_attrs as *const ftIceClimberAttributes;

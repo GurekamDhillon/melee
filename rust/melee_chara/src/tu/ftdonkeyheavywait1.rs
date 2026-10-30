@@ -29,6 +29,7 @@ pub mod ext {
 }
 
 pub fn ftDk_HeavyWait1_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_HeavyWait1_IASA");
     if !turn_ext::ftCo_80094EA4(gobj) {
         ext::ftCo_KneeBend_Check_ShortHop(gobj);
     }
@@ -36,6 +37,7 @@ pub fn ftDk_HeavyWait1_IASA(gobj: *mut HSD_GObj) {
 
 /// Start the kneebend landing (also the ground-collision callback of the heavy fall states).
 pub fn ftDk_MS_346_800E05E4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_MS_346_800E05E4");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let a = (*fp).x2CC;
@@ -48,10 +50,12 @@ pub fn ftDk_MS_346_800E05E4(gobj: *mut HSD_GObj) {
 
 /// `ftDk_MS_346_800E05E4` as a Fighter callback entry (what `chars::cb` points at).
 pub unsafe extern "C" fn cb_ftDk_MS_346_800E05E4(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftDk_MS_346_800E05E4");
     ftDk_MS_346_800E05E4(g);
 }
 
 pub fn ftDk_HeavyLanding_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_HeavyLanding_Anim");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         if (*fp).mv.dk.unk8.x4 <= 0.0 {

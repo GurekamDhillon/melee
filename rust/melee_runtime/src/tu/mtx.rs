@@ -52,19 +52,21 @@ pub mod ext {
 pub static mut HSD_Mtx_804C2310: HSD_ObjAllocData = unsafe { core::mem::zeroed() };
 pub static mut HSD_Mtx_804C233C: HSD_ObjAllocData = unsafe { core::mem::zeroed() };
 pub unsafe fn HSD_VecAlloc() -> *mut c_void {
+    melee_core::ct!("HSD_VecAlloc");
     let v = ext::HSD_ObjAlloc(addr_of_mut!(HSD_Mtx_804C2310));
     assert!(!v.is_null(), "HSD_VecAlloc: vec"); v
 }
-pub unsafe fn HSD_VecFree(v: *mut c_void) { if !v.is_null() { ext::HSD_ObjFree(addr_of_mut!(HSD_Mtx_804C2310), v); } }
+pub unsafe fn HSD_VecFree(v: *mut c_void) { melee_core::ct!("HSD_VecFree"); if !v.is_null() { ext::HSD_ObjFree(addr_of_mut!(HSD_Mtx_804C2310), v); } }
 pub unsafe fn HSD_MtxAlloc() -> *mut c_void {
+    melee_core::ct!("HSD_MtxAlloc");
     let v = ext::HSD_ObjAlloc(addr_of_mut!(HSD_Mtx_804C233C));
     assert!(!v.is_null(), "HSD_MtxAlloc: mtx"); v
 }
-pub unsafe fn HSD_MtxFree(v: *mut c_void) { if !v.is_null() { ext::HSD_ObjFree(addr_of_mut!(HSD_Mtx_804C233C), v); } }
-pub unsafe fn HSD_VecGetAllocData() -> *mut HSD_ObjAllocData { addr_of_mut!(HSD_Mtx_804C2310) }
-pub unsafe fn HSD_MtxGetAllocData() -> *mut HSD_ObjAllocData { addr_of_mut!(HSD_Mtx_804C233C) }
-pub unsafe fn HSD_VecInitAllocData() { ext::HSD_ObjAllocInit(HSD_VecGetAllocData(), core::mem::size_of::<Vec3>() as u32, 4); }
-pub unsafe fn HSD_MtxInitAllocData() { ext::HSD_ObjAllocInit(HSD_MtxGetAllocData(), core::mem::size_of::<Mtx>() as u32, 4); }
+pub unsafe fn HSD_MtxFree(v: *mut c_void) { melee_core::ct!("HSD_MtxFree"); if !v.is_null() { ext::HSD_ObjFree(addr_of_mut!(HSD_Mtx_804C233C), v); } }
+pub unsafe fn HSD_VecGetAllocData() -> *mut HSD_ObjAllocData { melee_core::ct!("HSD_VecGetAllocData"); addr_of_mut!(HSD_Mtx_804C2310) }
+pub unsafe fn HSD_MtxGetAllocData() -> *mut HSD_ObjAllocData { melee_core::ct!("HSD_MtxGetAllocData"); addr_of_mut!(HSD_Mtx_804C233C) }
+pub unsafe fn HSD_VecInitAllocData() { melee_core::ct!("HSD_VecInitAllocData"); ext::HSD_ObjAllocInit(HSD_VecGetAllocData(), core::mem::size_of::<Vec3>() as u32, 4); }
+pub unsafe fn HSD_MtxInitAllocData() { melee_core::ct!("HSD_MtxInitAllocData"); ext::HSD_ObjAllocInit(HSD_MtxGetAllocData(), core::mem::size_of::<Mtx>() as u32, 4); }
 
 #[allow(non_snake_case, unused_imports, clippy::missing_safety_doc)]
 pub mod cnames {

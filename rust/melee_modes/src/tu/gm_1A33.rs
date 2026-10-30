@@ -170,6 +170,7 @@ fn sfxBack() {
 
 /// `gmCamera_801A33BC()`: rebuild the two side labels and the header text with its message.
 pub fn gmCamera_801A33BC() {
+    melee_core::ct!("gmCamera_801A33BC");
     unsafe {
         let mut sp10: i32 = 0;
         let mut spC: i32 = 0;
@@ -221,6 +222,7 @@ pub fn gmCamera_801A33BC() {
 /// `gm_Scene_CameraVs_OnFrame()`: rebuild the text after a snapshot; otherwise A/Start confirm (`*x0 = 0`),
 /// B cancels (`*x0 = 1`) and the menu back-out sets `*x0 = 2`; each ends the scene.
 pub fn gm_Scene_CameraVs_OnFrame() {
+    melee_core::ct!("gm_Scene_CameraVs_OnFrame");
     unsafe {
         let data = &raw mut gmCamera_VsCameraTextLayout;
         if ext::lbSnap_8001D338(0) != 0 || ext::lbSnap_8001D338(1) != 0 {
@@ -250,6 +252,7 @@ pub fn gm_Scene_CameraVs_OnFrame() {
 
 /// `gm_Scene_CameraVs_OnEnter(arg0)`: remember the result word, reset the camera UI and build the texts.
 pub fn gm_Scene_CameraVs_OnEnter(arg0: *mut c_void) {
+    melee_core::ct!("gm_Scene_CameraVs_OnEnter");
     unsafe {
         let layout = &raw mut gmCamera_VsCameraTextLayout;
         (*layout).x0 = arg0 as *mut u32;
@@ -262,4 +265,4 @@ pub fn gm_Scene_CameraVs_OnEnter(arg0: *mut c_void) {
 }
 
 /// `gm_Scene_CameraVs_OnExit(unused)`: nothing.
-pub fn gm_Scene_CameraVs_OnExit(_unused: *mut c_void) {}
+pub fn gm_Scene_CameraVs_OnExit(_unused: *mut c_void) { melee_core::ct!("gm_Scene_CameraVs_OnExit");}

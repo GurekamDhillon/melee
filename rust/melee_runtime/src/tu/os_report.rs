@@ -7,6 +7,7 @@ pub static mut SINK: Option<fn(&str)> = None;
 
 /// `OSReport(msg)` for an already-formatted message.
 pub fn OSReport(msg: &str) {
+    melee_core::ct!("OSReport");
     match unsafe { SINK } {
         Some(f) => f(msg),
         None => eprint!("{msg}"),

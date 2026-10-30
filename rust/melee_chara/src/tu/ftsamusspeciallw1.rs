@@ -20,6 +20,7 @@ unsafe fn fpg(g: G) -> *mut Fighter {
 
 /// `ftSs_SpecialLw_8012ADF0` (ftsamusspeciallw1.c): spawn the bomb at the throw frame.
 pub fn ftSs_SpecialLw_8012ADF0(gobj: G) {
+    melee_core::ct!("ftSs_SpecialLw_8012ADF0");
     unsafe {
         let fp = fpg(gobj);
         let attr = (*fp).dat_attrs as *const ftSs_DatAttrs;

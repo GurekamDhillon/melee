@@ -23,6 +23,7 @@ pub unsafe fn psInitAppSRT(
     num: i32,
     size: i32,
 ) -> i32 {
+    melee_core::ct!("psInitAppSRT");
     let result = pool.init(num, size);
     unsafe {
         (ext::HSD_ObjAllocInit)(data, size as u32, 4);
@@ -34,6 +35,7 @@ pub fn psAddGeneratorAppSRT(
     status: i32,
     idnum: u16,
 ) -> Option<SrtId> {
+    melee_core::ct!("psAddGeneratorAppSRT");
     pool.add(status, idnum)
 }
 pub fn psAddParticleAppSRT_begin(
@@ -42,6 +44,7 @@ pub fn psAddParticleAppSRT_begin(
     status: i32,
     idnum: u16,
 ) -> Option<SrtId> {
+    melee_core::ct!("psAddParticleAppSRT_begin");
     pool.add_begin(slot, status, idnum)
 }
 /// `psAddGeneratorAppSRT_begin`: same pool operation as the particle variant (the C bodies are identical).
@@ -51,6 +54,7 @@ pub fn psAddGeneratorAppSRT_begin(
     status: i32,
     idnum: u16,
 ) -> Option<SrtId> {
+    melee_core::ct!("psAddGeneratorAppSRT_begin");
     pool.add_begin(slot, status, idnum)
 }
 pub fn psAttachParticleAppSRT(
@@ -58,6 +62,7 @@ pub fn psAttachParticleAppSRT(
     slot: Option<&mut Option<SrtId>>,
     srt: Option<SrtId>,
 ) -> i32 {
+    melee_core::ct!("psAttachParticleAppSRT");
     pool.attach(slot, srt)
 }
 /// `psAttachGeneratorAppSRT`: same pool operation as the particle variant (the C bodies are identical).
@@ -66,6 +71,7 @@ pub fn psAttachGeneratorAppSRT(
     slot: Option<&mut Option<SrtId>>,
     srt: Option<SrtId>,
 ) -> i32 {
+    melee_core::ct!("psAttachGeneratorAppSRT");
     pool.attach(slot, srt)
 }
 pub fn psRemoveParticleAppSRT<H: AppSrtHost>(
@@ -73,6 +79,7 @@ pub fn psRemoveParticleAppSRT<H: AppSrtHost>(
     slot: &mut Option<SrtId>,
     host: &mut H,
 ) -> i32 {
+    melee_core::ct!("psRemoveParticleAppSRT");
     pool.remove_particle(slot, host)
 }
 pub fn psRemoveGeneratorSRT<H: AppSrtHost>(
@@ -81,5 +88,6 @@ pub fn psRemoveGeneratorSRT<H: AppSrtHost>(
     slot: &mut Option<SrtId>,
     host: &mut H,
 ) -> i32 {
+    melee_core::ct!("psRemoveGeneratorSRT");
     pool.remove_generator(gen, slot, host)
 }

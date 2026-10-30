@@ -39,29 +39,32 @@ fn convert_stick_axis(val: i8) -> f32 {
 }
 
 /// `ftCo_GetCpuLStickX`.
-pub fn ftCo_GetCpuLStickX(fp: &Fighter) -> f32 { convert_stick_axis(fp.cpu.lstick.x) }
+pub fn ftCo_GetCpuLStickX(fp: &Fighter) -> f32 { melee_core::ct!("ftCo_GetCpuLStickX"); convert_stick_axis(fp.cpu.lstick.x) }
 /// `ftCo_GetCpuLStickY`.
-pub fn ftCo_GetCpuLStickY(fp: &Fighter) -> f32 { convert_stick_axis(fp.cpu.lstick.y) }
+pub fn ftCo_GetCpuLStickY(fp: &Fighter) -> f32 { melee_core::ct!("ftCo_GetCpuLStickY"); convert_stick_axis(fp.cpu.lstick.y) }
 /// `ftCo_GetCpuCStickX`.
-pub fn ftCo_GetCpuCStickX(fp: &Fighter) -> f32 { convert_stick_axis(fp.cpu.cstick.x) }
+pub fn ftCo_GetCpuCStickX(fp: &Fighter) -> f32 { melee_core::ct!("ftCo_GetCpuCStickX"); convert_stick_axis(fp.cpu.cstick.x) }
 /// `ftCo_GetCpuCStickY`.
-pub fn ftCo_GetCpuCStickY(fp: &Fighter) -> f32 { convert_stick_axis(fp.cpu.cstick.y) }
+pub fn ftCo_GetCpuCStickY(fp: &Fighter) -> f32 { melee_core::ct!("ftCo_GetCpuCStickY"); convert_stick_axis(fp.cpu.cstick.y) }
 
 /// `ftCo_GetCpuLTrigger`: `fp->cpu.ltrigger / 255.0` is a double division, narrowed once.
 pub fn ftCo_GetCpuLTrigger(fp: &Fighter) -> f32 {
+    melee_core::ct!("ftCo_GetCpuLTrigger");
     let ret = (fp.cpu.ltrigger as f64 / 255.0) as f32;
     if ret as f64 > 1.0 { 1.0 } else { ret }
 }
 /// `ftCo_GetCpuRTrigger`.
 pub fn ftCo_GetCpuRTrigger(fp: &Fighter) -> f32 {
+    melee_core::ct!("ftCo_GetCpuRTrigger");
     let ret = (fp.cpu.rtrigger as f64 / 255.0) as f32;
     if ret as f64 > 1.0 { 1.0 } else { ret }
 }
 /// `ftCo_GetCpuButtons`.
-pub fn ftCo_GetCpuButtons(fp: &Fighter) -> u32 { fp.cpu.buttons as u32 }
+pub fn ftCo_GetCpuButtons(fp: &Fighter) -> u32 { melee_core::ct!("ftCo_GetCpuButtons"); fp.cpu.buttons as u32 }
 
 /// `ftCo_IsCpuControlled`: a CPU slot whose CPU kind is not 5.
 pub fn ftCo_IsCpuControlled(fp: &Fighter) -> bool {
+    melee_core::ct!("ftCo_IsCpuControlled");
     if ext::Player_8003248C(fp.player_id as i32, fp.is_sub_fighter() as i32) != Gm_PKind_Cpu as _ {
         return false;
     }
@@ -74,6 +77,7 @@ pub fn ftCo_IsCpuControlled(fp: &Fighter) -> bool {
 /// `ftCo_800A0DA4`: the extent of the fighter's hurtboxes relative to its position, stored in the CPU
 /// block (x55C/x560 front/back by facing, x564 their midpoint, x568 height).
 pub unsafe fn ftCo_800A0DA4(fp: &mut Fighter) {
+    melee_core::ct!("ftCo_800A0DA4");
     let mut var_f31: f32 = 0.0;
     let mut var_f30: f32 = 0.0;
     let mut var_f29: f32 = 0.0;

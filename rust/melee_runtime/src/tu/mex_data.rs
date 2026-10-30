@@ -80,6 +80,7 @@ fn mex() -> Option<&'static MexData> {
 
 /// `gw_Mex_InternalCount()`.
 pub fn Mex_InternalCount() -> i32 {
+    melee_core::ct!("Mex_InternalCount");
     mex().map_or(0, |m| m.internal_count)
 }
 
@@ -99,6 +100,7 @@ fn slot_of_port(fk: i32) -> i32 {
 
 /// `Mex_InternalForPortKind(fk)`.
 pub fn Mex_InternalForPortKind(fk: i32) -> i32 {
+    melee_core::ct!("Mex_InternalForPortKind");
     let n = Mex_InternalCount();
     let s = slot_of_port(fk);
     if (0..=26).contains(&fk) {
@@ -117,6 +119,7 @@ pub fn Mex_InternalForPortKind(fk: i32) -> i32 {
 
 /// `Mex_FtBaseKind(k)`: 0 (Mario) without mexData.
 pub fn Mex_FtBaseKind(k: i32) -> i32 {
+    melee_core::ct!("Mex_FtBaseKind");
     match mex() {
         None => 0,
         Some(m) => usize::try_from(k).ok().and_then(|k| m.base_kind.get(k)).copied().unwrap_or(0),
@@ -134,6 +137,7 @@ fn skin_row(fk: i32, idx: i32) -> Option<SkinRow> {
 
 /// `Skins_Like(fk, idx)`: the original costume a skin's part visibility copies, or -1.
 pub fn Skins_Like(fk: i32, idx: i32) -> i32 {
+    melee_core::ct!("Skins_Like");
     let Some(r) = skin_row(fk, idx) else { return -1 };
     let base = unsafe { (*(&raw const SKINS)).as_ref().map_or(0, |s| s.base[fk as usize]) };
     if r.like >= 0 && r.like < base {
@@ -145,6 +149,7 @@ pub fn Skins_Like(fk: i32, idx: i32) -> i32 {
 
 /// `Skins_KirbyRow(fk, idx)`: the Kirby copy-hat row (0..5) of a Kirby skin costume, or -1.
 pub fn Skins_KirbyRow(fk: i32, idx: i32) -> i32 {
+    melee_core::ct!("Skins_KirbyRow");
     let Some(r) = skin_row(fk, idx) else { return -1 };
     if (0..=5).contains(&r.kirby_hat) {
         return r.kirby_hat;
@@ -155,6 +160,7 @@ pub fn Skins_KirbyRow(fk: i32, idx: i32) -> i32 {
 /// `Mex_CostumeVisIdx(fk, costume)`: the part-visibility table a costume uses; the costume id
 /// itself when there is no mexData or no row.
 pub fn Mex_CostumeVisIdx(fk: i32, costume: i32) -> i32 {
+    melee_core::ct!("Mex_CostumeVisIdx");
     let mut costume = costume;
     let like = Skins_Like(fk, costume); // a skin costume copies an original costume's part visibility
     if like >= 0 {
@@ -180,6 +186,7 @@ pub fn Mex_CostumeVisIdx(fk: i32, costume: i32) -> i32 {
 /// `Mex_KirbyCapFile(k)`: the hat's archive name, NULL when there is no row or the file is not on
 /// the disc (or in a mod).
 pub fn Mex_KirbyCapFile(k: i32) -> *mut i8 {
+    melee_core::ct!("Mex_KirbyCapFile");
     let Some(m) = mex() else { return core::ptr::null_mut() };
     let Some(Some(name)) = usize::try_from(k).ok().and_then(|k| m.kirby_cap_file.get(k)) else {
         return core::ptr::null_mut();
@@ -197,6 +204,7 @@ pub fn Mex_KirbyCapFile(k: i32) -> *mut i8 {
 
 /// `Mex_KirbyCapSymbol(k)`.
 pub fn Mex_KirbyCapSymbol(k: i32) -> *mut i8 {
+    melee_core::ct!("Mex_KirbyCapSymbol");
     mex()
         .and_then(|m| usize::try_from(k).ok().and_then(|k| m.kirby_cap_symbol.get(k)))
         .and_then(|s| s.as_ref())
@@ -205,6 +213,7 @@ pub fn Mex_KirbyCapSymbol(k: i32) -> *mut i8 {
 
 /// `Mex_KirbyCostumes(k)`.
 pub fn Mex_KirbyCostumes(k: i32) -> *mut c_void {
+    melee_core::ct!("Mex_KirbyCostumes");
     mex()
         .and_then(|m| usize::try_from(k).ok().and_then(|k| m.kirby_costumes.get(k)))
         .copied()
@@ -213,6 +222,7 @@ pub fn Mex_KirbyCostumes(k: i32) -> *mut c_void {
 
 /// `Mex_KirbyEffectId(k)`: the effect bank, -1 when the hat loads none (255 is m-ex's "none").
 pub fn Mex_KirbyEffectId(k: i32) -> i32 {
+    melee_core::ct!("Mex_KirbyEffectId");
     let Some(m) = mex() else { return -1 };
     let Some(&v) = usize::try_from(k).ok().and_then(|k| m.kirby_effect_id.get(k)) else { return -1 };
     if v == 0xFF {
@@ -226,6 +236,7 @@ pub fn Mex_KirbyEffectId(k: i32) -> i32 {
 
 /// `Mex_KirbyFunc(slot, k)`: the hat callback row, NULL when empty.
 pub fn Mex_KirbyFunc(slot: i32, k: i32) -> *mut c_void {
+    melee_core::ct!("Mex_KirbyFunc");
     if k < 0 || slot < 0 {
         return core::ptr::null_mut();
     }
@@ -239,11 +250,13 @@ pub fn Mex_KirbyFunc(slot: i32, k: i32) -> *mut c_void {
 /// `Slippi_Version()`: the replay's version while one plays, else a large number (live play gets
 /// the current codes).
 pub fn Slippi_Version() -> i32 {
+    melee_core::ct!("Slippi_Version");
     unsafe { SLIPPI_REPLAY_VERSION }.unwrap_or(999_999)
 }
 
 /// `Mex_OnFloatDispatch(kind, gobj)`.
 pub fn Mex_OnFloatDispatch(kind: i32, gobj: *mut c_void) -> i32 {
+    melee_core::ct!("Mex_OnFloatDispatch");
     match unsafe { ON_FLOAT_HOOK } {
         Some(f) => f(kind, gobj),
         None => 0,

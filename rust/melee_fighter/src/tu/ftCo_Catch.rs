@@ -57,13 +57,13 @@ pub mod ext {
 }
 
 /// `fn_800D9CE8` (ftCo_CatchPull.c) as the C `HSD_GObjEvent` stored in `grab_cb`.
-pub unsafe extern "C" fn fn_800D9CE8_cb(g: *mut HSD_GObj) { ext::fn_800D9CE8(g) }
+pub unsafe extern "C" fn fn_800D9CE8_cb(g: *mut HSD_GObj) { melee_core::ct!("fn_800D9CE8_cb"); ext::fn_800D9CE8(g) }
 /// `fn_800D8BFC` as the C `HSD_GObjEvent`.
-pub unsafe extern "C" fn fn_800D8BFC_cb(g: *mut HSD_GObj) { fn_800D8BFC(g) }
+pub unsafe extern "C" fn fn_800D8BFC_cb(g: *mut HSD_GObj) { melee_core::ct!("fn_800D8BFC_cb"); fn_800D8BFC(g) }
 /// `fn_800DAADC` (ftCo_Throw.c) as the C `HSD_GObjInteraction` stored in `grabbed_cb`.
-pub unsafe extern "C" fn fn_800DAADC_cb(g: *mut HSD_GObj, o: *mut HSD_GObj) { ext::fn_800DAADC(g, o) }
+pub unsafe extern "C" fn fn_800DAADC_cb(g: *mut HSD_GObj, o: *mut HSD_GObj) { melee_core::ct!("fn_800DAADC_cb"); ext::fn_800DAADC(g, o) }
 /// `fn_800D8E30` as the C `HSD_GObjEvent` handed to `ft_800841B8`.
-pub unsafe extern "C" fn fn_800D8E30_cb(g: *mut HSD_GObj) { fn_800D8E30(g) }
+pub unsafe extern "C" fn fn_800D8E30_cb(g: *mut HSD_GObj) { melee_core::ct!("fn_800D8E30_cb"); fn_800D8E30(g) }
 
 /// TARGET_PC `FT_CAPS_ACTION_ALLOWED(fp, 8)` (ScriptCaps_NoGrab).
 fn caps_grab_allowed(g: G) -> bool {
@@ -79,6 +79,7 @@ fn a_pressed(f: &Fighter) -> bool {
 }
 
 pub fn ftCo_Catch_CheckInput(g: G) -> bool {
+    melee_core::ct!("ftCo_Catch_CheckInput");
     if ext::ftCo_800951D0(g) {
         return true;
     }
@@ -94,6 +95,7 @@ pub fn ftCo_Catch_CheckInput(g: G) -> bool {
 }
 
 pub fn ftCo_800D8A38(g: G) -> bool {
+    melee_core::ct!("ftCo_800D8A38");
     if ext::ftCo_80095254(g) {
         return true;
     }
@@ -109,6 +111,7 @@ pub fn ftCo_800D8A38(g: G) -> bool {
 }
 
 pub fn ftCo_800D8AE0(g: G) -> bool {
+    melee_core::ct!("ftCo_800D8AE0");
     if ext::ftCo_800952DC(g) {
         return true;
     }
@@ -129,6 +132,7 @@ pub fn ftCo_800D8AE0(g: G) -> bool {
 }
 
 pub fn ftCo_800D8B9C(g: G) -> bool {
+    melee_core::ct!("ftCo_800D8B9C");
     if !caps_grab_allowed(g) {
         return false;
     }
@@ -147,6 +151,7 @@ pub fn ftCo_800D8B9C(g: G) -> bool {
 
 /// `fn_800D8BFC` (static in the C): the grab callback that picks up the targeted item.
 pub fn fn_800D8BFC(g: G) {
+    melee_core::ct!("fn_800D8BFC");
     let item = fp(g).target_item_gobj;
     ext::ftpickupitem_800948A8(g, item);
     let f = fp(g);
@@ -156,6 +161,7 @@ pub fn fn_800D8BFC(g: G) {
 }
 
 pub fn ftCo_800D8C54(g: G, msid: i32) {
+    melee_core::ct!("ftCo_800D8C54");
     let f = fp(g);
     f.x74_self_accel.z = 0.0;
     f.x74_self_accel.y = 0.0;
@@ -168,6 +174,7 @@ pub fn ftCo_800D8C54(g: G, msid: i32) {
 }
 
 pub fn ftCo_Catch_Anim(g: G) {
+    melee_core::ct!("ftCo_Catch_Anim");
     if ext::fn_800D8EC8(g) {
         return;
     }
@@ -180,16 +187,18 @@ pub fn ftCo_Catch_Anim(g: G) {
 }
 
 pub fn ftCo_CatchDash_Anim(g: G) {
+    melee_core::ct!("ftCo_CatchDash_Anim");
     if !ext::fn_800D9228(g) && !ext::fn_800D9930(g) && !ext::ftAnim_IsFramesRemaining(g) {
         ext::ft_8008A2BC(g);
     }
 }
 
-pub fn ftCo_Catch_IASA(_g: G) {}
+pub fn ftCo_Catch_IASA(_g: G) { melee_core::ct!("ftCo_Catch_IASA");}
 
-pub fn ftCo_CatchDash_IASA(_g: G) {}
+pub fn ftCo_CatchDash_IASA(_g: G) { melee_core::ct!("ftCo_CatchDash_IASA");}
 
 pub fn ftCo_Catch_Phys(g: G) {
+    melee_core::ct!("ftCo_Catch_Phys");
     let f = fp(g);
     let fr = crate::hooks::common_data().x64 * f.co_attrs.ground_friction;
     ext::ftCommon_CalcGroundAccel_Deaccel(f, fr);
@@ -197,26 +206,31 @@ pub fn ftCo_Catch_Phys(g: G) {
 }
 
 pub fn ftCo_CatchDash_Phys(g: G) {
+    melee_core::ct!("ftCo_CatchDash_Phys");
     let f = fp(g);
     let fr = crate::hooks::common_data().x64 * f.co_attrs.ground_friction;
     ext::ft_80085030(g, fr, f.facing_dir);
 }
 
 pub fn ftCo_Catch_Coll(g: G) {
+    melee_core::ct!("ftCo_Catch_Coll");
     ext::ft_800841B8(g, Some(fn_800D8E30_cb));
 }
 
 pub fn fn_800D8E30(g: G) {
+    melee_core::ct!("fn_800D8E30");
     ext::fn_800D949C(g);
     ext::fn_800D9C64(g);
     ext::ftCo_Fall_Enter(g);
 }
 
 pub fn ftCo_CatchDash_Coll(g: G) {
+    melee_core::ct!("ftCo_CatchDash_Coll");
     ext::ft_800841B8(g, Some(fn_800D8E30_cb));
 }
 
 pub fn fn_800D8E94(g: G) -> bool {
+    melee_core::ct!("fn_800D8E94");
     let f = fp(g);
     let kind = f.kind;
     if (kind == Ft_Kind_Link || kind == Ft_Kind_CLink) && unsafe { !f.u.lk.xC.is_null() } {

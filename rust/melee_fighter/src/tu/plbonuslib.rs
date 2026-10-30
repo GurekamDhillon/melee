@@ -198,10 +198,12 @@ fn plBonusLib_8003D514(arg0: i32) {
 }
 
 pub fn pl_8003D60C(arg0: i32) -> bool {
+    melee_core::ct!("pl_8003D60C");
     ((arg0 >= 0xA0) && (arg0 < 0xA1)) || ((arg0 >= 0xEA) && (arg0 < 0xEE)) || (arg0 == 0xE1)
 }
 
 pub fn pl_8003D644(arg0: i32, arg1: i32, arg2: i32, arg3: i32) {
+    melee_core::ct!("pl_8003D644");
     unsafe {
         let temp_r26 = tbl(arg0);
         let temp_r3 = Player_GetEntityAtIndex(arg0, arg1);
@@ -416,6 +418,7 @@ pub fn pl_8003D644(arg0: i32, arg1: i32, arg2: i32, arg3: i32) {
 }
 
 pub fn pl_8003DF44(arg0: i32, arg1: i32) {
+    melee_core::ct!("pl_8003DF44");
     let temp_r3: i32 = ext::ftLib_80087300(Player_GetEntityAtIndex(arg0, arg1));
 
     let var_r0_2 = temp_r3 == 6 || temp_r3 == arg0 || pl_CheckIfSameTeam(arg0, temp_r3);
@@ -428,12 +431,14 @@ pub fn pl_8003DF44(arg0: i32, arg1: i32) {
 }
 
 pub fn pl_8003DFF4(arg0: i32, arg1: i32, arg2: i32) {
+    melee_core::ct!("pl_8003DFF4");
     pl_8003FC88(arg0, arg1, arg2);
     pl_8003FF44(arg0, arg1, arg2);
     pl_8003EAAC(arg0, arg1, arg2);
 }
 
 pub fn pl_8003E058(arg0: i32, arg1: i32, arg2: i32, arg3: i32) {
+    melee_core::ct!("pl_8003E058");
     pl_80038824(arg2, 0x3F);
 
     if arg0 == 6 {
@@ -447,6 +452,7 @@ pub fn pl_8003E058(arg0: i32, arg1: i32, arg2: i32, arg3: i32) {
 }
 
 pub fn pl_8003E0E8(arg0: i32, arg1: i32) {
+    melee_core::ct!("pl_8003E0E8");
     if arg1 != 0 {
         return;
     }
@@ -454,12 +460,14 @@ pub fn pl_8003E0E8(arg0: i32, arg1: i32) {
 }
 
 pub fn pl_8003E114(arg0: i32, arg1: i32, arg2: f32) {
+    melee_core::ct!("pl_8003E114");
     if arg2 <= c().x84 {
         pl_80038788(arg0, 0x41, 1);
     }
 }
 
 pub fn pl_8003E150(slot: i32, arg1: i32) {
+    melee_core::ct!("pl_8003E150");
     let stale_moves = tbl(slot);
     unsafe {
         (*stale_moves).x0_staleMoveTable.xCD8 = (*stale_moves).x0_staleMoveTable.xCD8.wrapping_add(1);
@@ -467,6 +475,7 @@ pub fn pl_8003E150(slot: i32, arg1: i32) {
 }
 
 pub fn pl_8003E17C(player_id: i32, arg1: i32, item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("pl_8003E17C");
     let temp_r31 = tbl(player_id);
     let kind: ItemKind = ext::itGetKind(item_gobj);
     let kind2: ItemKind;
@@ -509,16 +518,19 @@ pub fn pl_8003E17C(player_id: i32, arg1: i32, item_gobj: *mut HSD_GObj) {
 }
 
 pub fn pl_8003E2CC(arg0: i32, pl_itemlog_kind: Pl_ItemLog) -> u32 {
+    melee_core::ct!("pl_8003E2CC");
     hsd_assert(pl_itemlog_kind < Pl_ItemLog_Terminate, 555, "pl_itemlog_kind < Pl_ItemLog_Terminate");
     unsafe { (*tbl(arg0)).x0_staleMoveTable.x674[pl_itemlog_kind as usize] }
 }
 
 pub fn pl_8003E334(arg0: i32, pl_itemlog_kind: Pl_ItemLog) -> u32 {
+    melee_core::ct!("pl_8003E334");
     hsd_assert(pl_itemlog_kind < Pl_ItemLog_Terminate, 564, "pl_itemlog_kind < Pl_ItemLog_Terminate");
     unsafe { (*tbl(arg0)).x0_staleMoveTable.x710[pl_itemlog_kind as usize] as u32 }
 }
 
 pub fn pl_8003E39C(arg0: i32) -> i32 {
+    melee_core::ct!("pl_8003E39C");
     let mut sum: i32 = 0;
     let mut k: i32 = 0;
     while k < Pl_ItemLog_Terminate as i32 {
@@ -530,6 +542,7 @@ pub fn pl_8003E39C(arg0: i32) -> i32 {
 }
 
 pub fn pl_8003E420(arg0: i32) -> u32 {
+    melee_core::ct!("pl_8003E420");
     let mut sum: i32 = 0;
     let mut k: i32 = 0;
     while k < Pl_ItemLog_Terminate as i32 {
@@ -542,6 +555,7 @@ pub fn pl_8003E420(arg0: i32) -> u32 {
 
 /// `match_item_kind` (static inline)
 pub fn match_item_kind(kind: i32) -> i32 {
+    melee_core::ct!("match_item_kind");
     if kind >= It_Kind_Capsule && kind < It_Kind_L_Gun_Ray {
         kind
     } else {
@@ -556,6 +570,7 @@ pub fn match_item_kind(kind: i32) -> i32 {
 }
 
 pub fn pl_8003E4A4(slot: i32, arg1: bool, arg2: *mut c_void, count: i32) {
+    melee_core::ct!("pl_8003E4A4");
     let table = tbl(slot);
     let moves = arg2 as *const i32;
     let mut seen = [0u32; Pl_ItemLog_Terminate as usize];
@@ -590,6 +605,7 @@ unsafe fn x598_ptr(slot: i32, kind: i32) -> *mut u32 {
 }
 
 pub fn pl_8003E70C(igobj: *mut HSD_GObj) {
+    melee_core::ct!("pl_8003E70C");
     let temp_r30 = ext::itGetOwner(igobj);
 
     hsd_assert(
@@ -610,11 +626,13 @@ pub fn pl_8003E70C(igobj: *mut HSD_GObj) {
 }
 
 pub fn pl_8003E7D4(arg0: i32, kind: i32) -> u32 {
+    melee_core::ct!("pl_8003E7D4");
     hsd_assert(It_PKind_Start <= kind && kind < It_PKind_Terminate, 649, "It_PKind_Start <= kind && kind < It_PKind_Terminate");
     unsafe { *x598_ptr(arg0, kind) }
 }
 
 pub fn pl_8003E854(arg0: i32, arg1: i32, arg2: *mut HSD_GObj) {
+    melee_core::ct!("pl_8003E854");
     let temp_r31 = Player_GetEntityAtIndex(arg0, arg1);
     let temp_r3 = ext::itGetOwner(arg2);
 
@@ -644,10 +662,12 @@ pub fn pl_8003E854(arg0: i32, arg1: i32, arg2: *mut HSD_GObj) {
 }
 
 pub fn pl_8003E978(slot: i32, fp_x221F_b4: bool, item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("pl_8003E978");
     fn_8003E998(slot, fp_x221F_b4 as i32);
 }
 
 pub fn fn_8003E998(arg0: i32, index: i32) {
+    melee_core::ct!("fn_8003E998");
     let temp_r31 = tbl(arg0);
     unsafe {
         if index == 0 && (*temp_r31).xD6C != 6 {
@@ -658,6 +678,7 @@ pub fn fn_8003E998(arg0: i32, index: i32) {
 }
 
 pub fn pl_8003EA08(slot: i32, arg1: i32) {
+    melee_core::ct!("pl_8003EA08");
     if arg1 != 0 {
         return;
     }
@@ -665,6 +686,7 @@ pub fn pl_8003EA08(slot: i32, arg1: i32) {
 }
 
 pub fn pl_8003EA40(arg0: i32, arg1: i32, arg2: i32, arg3: i32, arg4: i32) {
+    melee_core::ct!("pl_8003EA40");
     if arg3 != 0 {
         return;
     }
@@ -675,6 +697,7 @@ pub fn pl_8003EA40(arg0: i32, arg1: i32, arg2: i32, arg3: i32, arg4: i32) {
 }
 
 pub fn pl_8003EA74(arg0: i32, arg1: i32) {
+    melee_core::ct!("pl_8003EA74");
     if arg1 != 0 {
         return;
     }
@@ -682,6 +705,7 @@ pub fn pl_8003EA74(arg0: i32, arg1: i32) {
 }
 
 pub fn pl_8003EAAC(arg0: i32, arg1: i32, arg2: i32) {
+    melee_core::ct!("pl_8003EAAC");
     let temp_r31 = tbl(arg0);
 
     if arg1 == 0 && arg2 == 0x59 {
@@ -696,6 +720,7 @@ pub fn pl_8003EAAC(arg0: i32, arg1: i32, arg2: i32) {
 }
 
 pub fn pl_8003EB30(arg0: f32, arg1: i32, arg2: i32, arg3: i32, arg4: i32, arg5: i32) {
+    melee_core::ct!("pl_8003EB30");
     if arg1 != 6 && arg1 != arg3 {
         unsafe {
             let temp_r31 = tbl(arg1);
@@ -720,6 +745,7 @@ pub fn pl_8003EB30(arg0: f32, arg1: i32, arg2: i32, arg3: i32, arg4: i32, arg5: 
 }
 
 pub fn pl_8003EC30(slot: i32, arg1: i32, arg2: i32, arg3: f32) {
+    melee_core::ct!("pl_8003EC30");
     if arg1 != 0 {
         return;
     }
@@ -732,6 +758,7 @@ pub fn pl_8003EC30(slot: i32, arg1: i32, arg2: i32, arg3: f32) {
 }
 
 pub fn pl_8003EC9C(arg0: i32, arg1: i32, arg2: f32, arg3: f32) {
+    melee_core::ct!("pl_8003EC9C");
     let temp_r3 = tbl(arg0);
     if arg1 != 0 {
         return;
@@ -747,6 +774,7 @@ pub fn pl_8003EC9C(arg0: i32, arg1: i32, arg2: f32, arg3: f32) {
 }
 
 pub fn pl_8003ED0C(arg0: i32, arg1: i32, r5: i32, arg3: i32, arg2: f32) {
+    melee_core::ct!("pl_8003ED0C");
     if arg0 == r5 {
         return;
     }
@@ -766,6 +794,7 @@ pub fn pl_8003ED0C(arg0: i32, arg1: i32, r5: i32, arg3: i32, arg2: f32) {
 }
 
 pub fn fn_8003EE2C(arg0: i32, arg1: i32) {
+    melee_core::ct!("fn_8003EE2C");
     unsafe {
         let temp_r31 = tbl(arg0);
         let temp_r30 = Player_GetEntityAtIndex(arg0, arg1);
@@ -884,6 +913,7 @@ fn plBonusLib_8003F294_inline(stats: *mut plActionStats, attack: i32) -> u32 {
 }
 
 pub fn fn_8003F294(slot: i32, index: i32) {
+    melee_core::ct!("fn_8003F294");
     unsafe {
         let table = tbl(slot);
         let pl = c();
@@ -960,6 +990,7 @@ pub fn fn_8003F294(slot: i32, index: i32) {
 }
 
 pub fn fn_8003F53C(arg0: i32, arg1: i32) {
+    melee_core::ct!("fn_8003F53C");
     unsafe {
         let temp_r31 = tbl(arg0);
         let temp_r30 = Player_GetEntityAtIndex(arg0, arg1);
@@ -984,6 +1015,7 @@ pub fn fn_8003F53C(arg0: i32, arg1: i32) {
 }
 
 pub fn fn_8003F654(slot: i32, index: i32, pos: *mut Vec3, prev_pos: *mut Vec3) {
+    melee_core::ct!("fn_8003F654");
     unsafe {
         let table = tbl(slot);
         let entity = Player_GetEntityAtIndex(slot, index);
@@ -1078,6 +1110,7 @@ pub fn fn_8003F654(slot: i32, index: i32, pos: *mut Vec3, prev_pos: *mut Vec3) {
 }
 
 pub fn pl_8003FAA8(slot: i32, index: i32, pos: *mut Vec3, prev_pos: *mut Vec3) {
+    melee_core::ct!("pl_8003FAA8");
     unsafe {
         let temp_r30 = tbl(slot);
         fn_8003EE2C(slot, index);
@@ -1099,14 +1132,17 @@ pub fn pl_8003FAA8(slot: i32, index: i32, pos: *mut Vec3, prev_pos: *mut Vec3) {
 }
 
 pub fn pl_8003FBFC(arg0: i32) -> i32 {
+    melee_core::ct!("pl_8003FBFC");
     unsafe { (*tbl(arg0)).xCFC }
 }
 
 pub fn pl_8003FC20(arg0: i32) -> i32 {
+    melee_core::ct!("pl_8003FC20");
     unsafe { (*tbl(arg0)).xD00 }
 }
 
 pub fn pl_8003FC44(slot: i32, arg1: i32) {
+    melee_core::ct!("pl_8003FC44");
     let temp_r3 = tbl(slot);
     if arg1 != 0 {
         return;
@@ -1115,6 +1151,7 @@ pub fn pl_8003FC44(slot: i32, arg1: i32) {
 }
 
 pub fn pl_8003FC88(arg0: i32, arg1: i32, arg2: i32) {
+    melee_core::ct!("pl_8003FC88");
     unsafe {
         let stale_moves = tbl(arg0);
         let mut var_r4 = false;
@@ -1161,27 +1198,33 @@ pub fn pl_8003FC88(arg0: i32, arg1: i32, arg2: i32) {
 }
 
 pub fn pl_8003FDA0(arg0: i32, arg1: i32) {
+    melee_core::ct!("pl_8003FDA0");
     pl_80038788(arg0, 0x5B, 1);
 }
 
 pub fn pl_8003FDC8(arg0: i32, arg1: i32) {
+    melee_core::ct!("pl_8003FDC8");
     let temp_r3 = tbl(arg0);
     unsafe { (*temp_r3).xD70 = (*temp_r3).xD70.wrapping_add(1) };
 }
 
 pub fn pl_8003FDF4(arg0: i32, arg1: i32) {
+    melee_core::ct!("pl_8003FDF4");
     pl_80038788(arg0, 0xC4, 1);
 }
 
 pub fn pl_8003FE1C(slot: i32, arg1: i32) {
+    melee_core::ct!("pl_8003FE1C");
     pl_80038824(slot, 0xA);
 }
 
 pub fn pl_8003FE40(arg0: i32, arg1: i32) {
+    melee_core::ct!("pl_8003FE40");
     pl_80038824(arg0, 0x4B);
 }
 
 pub fn pl_8003FE64(arg0: i32, arg1: i32) {
+    melee_core::ct!("pl_8003FE64");
     let mut var_r31 = 0;
     while var_r31 < 6 {
         if pl_80039418(var_r31, 0x1A) != 0 {
@@ -1196,6 +1239,7 @@ pub fn pl_8003FE64(arg0: i32, arg1: i32) {
 }
 
 pub fn pl_8003FED0(arg0: i32, arg1: i32) {
+    melee_core::ct!("pl_8003FED0");
     if arg1 != 0 {
         return;
     }
@@ -1214,6 +1258,7 @@ pub fn pl_8003FED0(arg0: i32, arg1: i32) {
 }
 
 pub fn pl_8003FF44(arg0: i32, arg1: i32, arg2: i32) {
+    melee_core::ct!("pl_8003FF44");
     let temp_r31 = tbl(arg0);
     let temp_r3 = Player_GetEntityAtIndex(arg0, arg1);
     if arg1 == 0 && arg2 >= 1 && arg2 <= 0x10 && ext::ft_80087A8C(temp_r3) > c().x38 {
@@ -1222,6 +1267,7 @@ pub fn pl_8003FF44(arg0: i32, arg1: i32, arg2: i32) {
 }
 
 pub fn pl_8003FFDC(arg0: i32, arg1: i32, arg2: i32, arg3: i32, arg4: i32) {
+    melee_core::ct!("pl_8003FFDC");
     let temp_r3 = Player_GetEntityAtIndex(arg2, arg3);
     if arg0 != arg2 && arg4 != ext::ft_80087A98(temp_r3) {
         pl_80038824(arg0, 0x46);
@@ -1229,6 +1275,7 @@ pub fn pl_8003FFDC(arg0: i32, arg1: i32, arg2: i32, arg3: i32, arg4: i32) {
 }
 
 pub fn pl_80040048(arg0: i32, arg1: i32) {
+    melee_core::ct!("pl_80040048");
     unsafe {
         let temp_r3 = Player_GetEntityAtIndex(arg0, arg1);
         let temp_r3_2: i32 = ext::ftLib_80087300(temp_r3);
@@ -1251,6 +1298,7 @@ pub fn pl_80040048(arg0: i32, arg1: i32) {
 }
 
 pub fn pl_80040120(arg0: i32, arg1: i32) {
+    melee_core::ct!("pl_80040120");
     unsafe {
         let temp_r30 = tbl(arg0);
         let pl = c();
@@ -1281,6 +1329,7 @@ pub fn pl_80040120(arg0: i32, arg1: i32) {
 }
 
 pub fn pl_800401F0(arg0: i32, arg1: i32, arg2: f32, arg3: f32) {
+    melee_core::ct!("pl_800401F0");
     let temp_r3 = tbl(arg0);
     unsafe {
         (*temp_r3).x0_staleMoveTable.xCDC += abs_c(arg2);
@@ -1289,6 +1338,7 @@ pub fn pl_800401F0(arg0: i32, arg1: i32, arg2: f32, arg3: f32) {
 }
 
 pub fn pl_80040270(arg0: i32, arg1: i32, arg2: f32) {
+    melee_core::ct!("pl_80040270");
     let temp_r3 = tbl(arg0);
     if arg1 != 0 {
         return;
@@ -1300,6 +1350,7 @@ pub fn pl_80040270(arg0: i32, arg1: i32, arg2: f32) {
 }
 
 pub fn pl_800402D0(slot: i32, arg1: i32, arg2: i32) {
+    melee_core::ct!("pl_800402D0");
     let stale_moves = tbl(slot);
     if arg1 != 0 {
         return;
@@ -1314,6 +1365,7 @@ pub fn pl_800402D0(slot: i32, arg1: i32, arg2: i32) {
 }
 
 pub fn pl_80040330(slot: i32, arg1: i32, arg2: f32) {
+    melee_core::ct!("pl_80040330");
     if arg1 != 0 {
         return;
     }
@@ -1327,6 +1379,7 @@ pub fn pl_80040330(slot: i32, arg1: i32, arg2: f32) {
 }
 
 pub fn pl_80040374(arg0: i32, arg1: i32) {
+    melee_core::ct!("pl_80040374");
     let temp_r3 = tbl(arg0);
     unsafe {
         if arg1 == 0 && (*temp_r3).xD64 != 6 {
@@ -1336,11 +1389,13 @@ pub fn pl_80040374(arg0: i32, arg1: i32) {
 }
 
 pub fn pl_800403C0(arg0: i32, arg1: i32) {
+    melee_core::ct!("pl_800403C0");
     tbl(arg0);
     pl_80038788(arg0, 0xC5, 1);
 }
 
 pub fn pl_800403FC(arg0: i32, arg1: i32, slot: i32, arg3: i32, arg4: i32) {
+    melee_core::ct!("pl_800403FC");
     let temp_r3 = tbl(slot);
     if arg3 == 0 && arg4 >= 0x54 && arg4 <= 0x57 {
         unsafe { (*temp_r3).x0_staleMoveTable.xCAC = arg0 as u32 };
@@ -1348,11 +1403,13 @@ pub fn pl_800403FC(arg0: i32, arg1: i32, slot: i32, arg3: i32, arg4: i32) {
 }
 
 pub fn pl_80040460(slot: i32, arg1: i32) {
+    melee_core::ct!("pl_80040460");
     // one port per C function: forwards to plbonus.rs
     crate::plbonus::pl_80040460(slot, arg1)
 }
 
 pub fn pl_8004049C(player: i32, arg1: ItemKind) {
+    melee_core::ct!("pl_8004049C");
     let mut var_r30: i32 = -1;
 
     if player == Gm_Player_NumMax as i32 {
@@ -1384,6 +1441,7 @@ pub fn pl_8004049C(player: i32, arg1: ItemKind) {
 }
 
 pub fn pl_80040614(arg0: i32, arg1: bool, arg8: f32) {
+    melee_core::ct!("pl_80040614");
     if arg8 == 0.0 {
         return;
     }
@@ -1394,6 +1452,7 @@ pub fn pl_80040614(arg0: i32, arg1: bool, arg8: f32) {
 }
 
 pub fn pl_8004065C(arg0: i32, arg1: i32) {
+    melee_core::ct!("pl_8004065C");
     if arg1 != 0 {
         return;
     }
@@ -1401,6 +1460,7 @@ pub fn pl_8004065C(arg0: i32, arg1: i32) {
 }
 
 pub fn pl_80040688(arg0: i32, arg1: i32, arg2: i32) {
+    melee_core::ct!("pl_80040688");
     unsafe {
         if ext::gm_GetFrameCount() <= c().xEC as u32 {
             pl_80038788(arg0, 0x5F, 1);
@@ -1428,6 +1488,7 @@ pub fn pl_80040688(arg0: i32, arg1: i32, arg2: i32) {
 }
 
 pub fn pl_800407C8(arg0: i32) -> f32 {
+    melee_core::ct!("pl_800407C8");
     unsafe {
         let temp_r3 = tbl(arg0);
         let temp_r5: u32 = (*temp_r3).x0_staleMoveTable.xCEC as u32;
@@ -1441,30 +1502,37 @@ pub fn pl_800407C8(arg0: i32) -> f32 {
 }
 
 pub fn pl_80040870(arg0: i32) -> f32 {
+    melee_core::ct!("pl_80040870");
     unsafe { (*tbl(arg0)).xCF8 }
 }
 
 pub fn pl_80040894(arg0: i32) -> u32 {
+    melee_core::ct!("pl_80040894");
     unsafe { (*tbl(arg0)).xD40 }
 }
 
 pub fn pl_800408B8(arg0: i32) -> u32 {
+    melee_core::ct!("pl_800408B8");
     unsafe { (*tbl(arg0)).xD48 }
 }
 
 pub fn pl_800408DC(arg0: i32) -> i32 {
+    melee_core::ct!("pl_800408DC");
     unsafe { (*tbl(arg0)).x0_staleMoveTable.xCB4 }
 }
 
 pub fn pl_80040900(arg0: i32) -> i32 {
+    melee_core::ct!("pl_80040900");
     unsafe { (*Player_GetActionStats(arg0)).anon_358.x358_hits.total as i32 }
 }
 
 pub fn pl_80040924(arg0: i32) -> i32 {
+    melee_core::ct!("pl_80040924");
     unsafe { (*Player_GetActionStats(arg0)).attacks.total as i32 }
 }
 
 pub fn pl_80040948(arg0: i32) -> f32 {
+    melee_core::ct!("pl_80040948");
     unsafe {
         let total: u32 = (*Player_GetActionStats(arg0)).attacks.total;
         let temp_r30: u32 = (*Player_GetActionStats(arg0)).anon_358.x358_hits.total;
@@ -1476,6 +1544,7 @@ pub fn pl_80040948(arg0: i32) -> f32 {
 }
 
 pub fn pl_80040A04(arg0: i32) -> i32 {
+    melee_core::ct!("pl_80040A04");
     unsafe {
         let temp_r3 = Player_GetActionStats(arg0);
         (*temp_r3).attacks.total.wrapping_sub((*temp_r3).attacks.aerials_count) as i32
@@ -1483,18 +1552,22 @@ pub fn pl_80040A04(arg0: i32) -> i32 {
 }
 
 pub fn pl_80040A30(arg0: i32) -> i32 {
+    melee_core::ct!("pl_80040A30");
     unsafe { (*Player_GetActionStats(arg0)).attacks.aerials_count as i32 }
 }
 
 pub fn pl_80040A54(arg0: i32) -> i32 {
+    melee_core::ct!("pl_80040A54");
     unsafe { (*Player_GetActionStats(arg0)).attacks.thrown_item_count as i32 }
 }
 
 pub fn pl_80040A78(arg0: i32) -> i32 {
+    melee_core::ct!("pl_80040A78");
     unsafe { (*Player_GetActionStats(arg0)).attacks.by_attack_counts[StatsAttack_Catch as usize] as i32 }
 }
 
 pub fn pl_80040A9C(arg0: i32) -> i32 {
+    melee_core::ct!("pl_80040A9C");
     unsafe {
         let val = &(*Player_GetActionStats(arg0)).attacks.by_attack_counts;
         let mut idx = StatsAttack_DownAttackD as usize;
@@ -1514,22 +1587,27 @@ pub fn pl_80040A9C(arg0: i32) -> i32 {
 }
 
 pub fn pl_80040AF0(arg0: i32) -> u32 {
+    melee_core::ct!("pl_80040AF0");
     pl_800386D8(Player_GetActionStats(arg0), 0x70)
 }
 
 pub fn pl_80040B18(arg0: i32) -> i32 {
+    melee_core::ct!("pl_80040B18");
     unsafe { (*Player_GetActionStats(arg0)).attacks.specials_count as i32 }
 }
 
 pub fn pl_80040B3C(arg0: i32) -> u32 {
+    melee_core::ct!("pl_80040B3C");
     unsafe { melee_runtime::cabi::f2u32((*tbl(arg0)).x0_staleMoveTable.xC6C as f64) }
 }
 
 pub fn pl_80040B64(arg0: i32) -> u32 {
+    melee_core::ct!("pl_80040B64");
     unsafe { melee_runtime::cabi::f2u32((*tbl(arg0)).x0_staleMoveTable.xC60 as f64) }
 }
 
 pub fn pl_80040B8C(slot: i32, arg1: i32, arg2: i32) {
+    melee_core::ct!("pl_80040B8C");
     let temp_r3 = tbl(slot);
     if arg1 != 0 {
         return;
@@ -1538,54 +1616,67 @@ pub fn pl_80040B8C(slot: i32, arg1: i32, arg2: i32) {
 }
 
 pub fn pl_80040BD8(arg0: i32) -> i32 {
+    melee_core::ct!("pl_80040BD8");
     unsafe { (*tbl(arg0)).x0_staleMoveTable.xC68 }
 }
 
 pub fn pl_80040BFC(arg0: i32) -> u32 {
+    melee_core::ct!("pl_80040BFC");
     unsafe { melee_runtime::cabi::f2u32((*tbl(arg0)).x0_staleMoveTable.xC64 as f64) }
 }
 
 pub fn pl_80040C24(arg0: i32) -> f32 {
+    melee_core::ct!("pl_80040C24");
     unsafe { (*tbl(arg0)).xD74 }
 }
 
 pub fn pl_80040C48(arg0: i32) -> f32 {
+    melee_core::ct!("pl_80040C48");
     unsafe { (*tbl(arg0)).xD78 }
 }
 
 pub fn pl_80040C6C(arg0: i32) -> f32 {
+    melee_core::ct!("pl_80040C6C");
     unsafe { (*tbl(arg0)).xD7C }
 }
 
 pub fn pl_80040C90(arg0: i32) -> f32 {
+    melee_core::ct!("pl_80040C90");
     unsafe { (*tbl(arg0)).xD80 }
 }
 
 pub fn pl_80040CB4(arg0: i32) -> i32 {
+    melee_core::ct!("pl_80040CB4");
     unsafe { (*tbl(arg0)).xD24 as i32 }
 }
 
 pub fn pl_80040CD8(arg0: i32) -> i32 {
+    melee_core::ct!("pl_80040CD8");
     unsafe { (*tbl(arg0)).xD20 as i32 }
 }
 
 pub fn pl_80040CFC(arg0: i32) -> u32 {
+    melee_core::ct!("pl_80040CFC");
     unsafe { (*tbl(arg0)).xD04 }
 }
 
 pub fn pl_80040D20(arg0: i32) -> i32 {
+    melee_core::ct!("pl_80040D20");
     unsafe { (*tbl(arg0)).xD68 }
 }
 
 pub fn pl_80040D44(arg0: i32) -> f32 {
+    melee_core::ct!("pl_80040D44");
     unsafe { (*tbl(arg0)).xD84 }
 }
 
 pub fn pl_80040D68(arg0: i32) -> f32 {
+    melee_core::ct!("pl_80040D68");
     unsafe { (*tbl(arg0)).xD88 }
 }
 
 pub fn pl_80040D8C(slot: i32, arg1: i32) {
+    melee_core::ct!("pl_80040D8C");
     let stale_moves = tbl(slot);
     unsafe {
         (*stale_moves).x0_staleMoveTable.xCB0 = (*stale_moves).x0_staleMoveTable.xCB0.wrapping_add(1);
@@ -1593,5 +1684,6 @@ pub fn pl_80040D8C(slot: i32, arg1: i32) {
 }
 
 pub fn pl_80040DB8(slot: i32) -> i32 {
+    melee_core::ct!("pl_80040DB8");
     unsafe { (*tbl(slot)).x0_staleMoveTable.xCB0 }
 }

@@ -145,6 +145,7 @@ unsafe fn set_translate(j: J, v: &Vec3) {
 
 /// `ftAnim_AuthorKind` (static inline, TARGET_PC).
 pub unsafe fn ftAnim_AuthorKind(fp: &Fighter) -> i32 {
+    melee_core::ct!("ftAnim_AuthorKind");
     let k = fp.anon_594.anon_0_0.x597_bits() as i32;
     if k == FT_ANIM_KIND_SELF && fp.kind as i32 >= 64 {
         return fp.kind as i32;
@@ -197,6 +198,7 @@ next_in_tree!(ftAnim_GetNextJointInTree, HSD_Joint, ftAnim_804590D8_F0, "128");
 
 /// `ftAnim_8006DF0C`.
 pub unsafe fn ftAnim_8006DF0C(fp: &mut Fighter) {
+    melee_core::ct!("ftAnim_8006DF0C");
     if fp.x2221_b2() != 0 {
         let root = bone(fp, 0).joint;
         let t = bone(fp, x8_x10(fp)).joint;
@@ -248,6 +250,7 @@ unsafe fn next_jobj(jobj: J, stop: J) -> J {
 /// `ftAnim_8006E054`: animate the tree, pulling TransN's (and x594_b5's 2nd joint's) motion
 /// out into `x68C_transNPos` / `x6C0`.
 pub unsafe fn ftAnim_8006E054(fp: &mut Fighter, mut jobj: J, arg2: J, arg3: J) {
+    melee_core::ct!("ftAnim_8006E054");
     ext::HSD_AObjInitEndCallBack();
     while !jobj.is_null() {
         if jobj == arg2 {
@@ -303,6 +306,7 @@ pub unsafe fn ftAnim_8006E054(fp: &mut Fighter, mut jobj: J, arg2: J, arg3: J) {
 
 /// `ftAnim_8006E7B8` (TARGET_PC: the part walk is bounded by `parts_num`).
 pub unsafe fn ftAnim_8006E7B8(fp: &mut Fighter, part: i32) {
+    melee_core::ct!("ftAnim_8006E7B8");
     ext::HSD_AObjInitEndCallBack();
     let mut i = part;
     let top = bone(fp, part).joint;
@@ -331,6 +335,7 @@ pub unsafe fn ftAnim_8006E7B8(fp: &mut Fighter, part: i32) {
 
 /// `ftAnim_8006E9B4`: per-frame skeleton animation with blend.
 pub unsafe fn ftAnim_8006E9B4(gobj: G) {
+    melee_core::ct!("ftAnim_8006E9B4");
     let fp = fpm(gobj);
     if fp.anim_id == -1 {
         return;
@@ -381,6 +386,7 @@ pub unsafe fn ftAnim_8006E9B4(gobj: G) {
 
 /// `ftAnim_8006EBA4`.
 pub unsafe fn ftAnim_8006EBA4(gobj: G) {
+    melee_core::ct!("ftAnim_8006EBA4");
     ftAnim_8006E9B4(gobj);
     ext::ftAction_80073240(gobj);
     ftAnim_800707B0(gobj);
@@ -389,6 +395,7 @@ pub unsafe fn ftAnim_8006EBA4(gobj: G) {
 
 /// `ftAnim_8006EBE8`.
 pub unsafe fn ftAnim_8006EBE8(gobj: G, anim_start: f32, anim_rate: f32, anim_blend_frames: f32) {
+    melee_core::ct!("ftAnim_8006EBE8");
     let root = (*gobj).hsd_obj as J;
     let fp = fpm(gobj);
     let anim = fp.x8AC_animSkeleton;
@@ -420,6 +427,7 @@ pub unsafe fn ftAnim_8006EBE8(gobj: G, anim_start: f32, anim_rate: f32, anim_ble
 
 /// `ftAnim_8006EDD0`.
 pub unsafe fn ftAnim_8006EDD0(fp: &mut Fighter, arg1: i32, frame: f32, rate: f32) {
+    melee_core::ct!("ftAnim_8006EDD0");
     let jobj = fp.x8AC_animSkeleton;
     ftAnim_80070758(jobj);
     ftAnim_8006FB88(fp, FtPart_TransN as i32, (*fp.x108_costume_joint).child);
@@ -435,6 +443,7 @@ pub unsafe fn ftAnim_8006EDD0(fp: &mut Fighter, arg1: i32, frame: f32, rate: f32
 
 /// `ftAnim_8006EED4`.
 pub unsafe fn ftAnim_8006EED4(fp: &mut Fighter, part: i32, tree: *mut FigaTree, frame: f32, speed: f32) {
+    melee_core::ct!("ftAnim_8006EED4");
     let j = bone(fp, part).joint;
     if fp.x8A4_animBlendFrames == 0.0 {
         let joint = ftAnim_8006F994(fp, j, fp.x108_costume_joint);
@@ -467,6 +476,7 @@ pub unsafe fn ftAnim_8006EED4(fp: &mut Fighter, part: i32, tree: *mut FigaTree, 
 
 /// `ftAnim_8006F0FC`.
 pub unsafe fn ftAnim_8006F0FC(gobj: G, anim_rate: f32) {
+    melee_core::ct!("ftAnim_8006F0FC");
     let fp = fpm(gobj);
     ext::HSD_ForeachAnim_SetRate((*gobj).hsd_obj as J, ANIM_MASK, anim_rate);
     ext::HSD_ForeachAnim_SetRate(fp.x8AC_animSkeleton, ANIM_MASK, anim_rate);
@@ -475,6 +485,7 @@ pub unsafe fn ftAnim_8006F0FC(gobj: G, anim_rate: f32) {
 
 /// `ftAnim_SetAnimRate`.
 pub unsafe fn ftAnim_SetAnimRate(gobj: G, anim_rate: f32) {
+    melee_core::ct!("ftAnim_SetAnimRate");
     let fp = fpm(gobj);
     if fp.x2223_b0() != 0 {
         fp.x8A0_unk = anim_rate;
@@ -485,6 +496,7 @@ pub unsafe fn ftAnim_SetAnimRate(gobj: G, anim_rate: f32) {
 
 /// `ftAnim_IsFramesRemaining`.
 pub unsafe fn ftAnim_IsFramesRemaining(gobj: G) -> bool {
+    melee_core::ct!("ftAnim_IsFramesRemaining");
     let fp = fpm(gobj);
     let blend = fp.x8A4_animBlendFrames != 0.0;
     for i in 0..parts_num(fp) {
@@ -498,6 +510,7 @@ pub unsafe fn ftAnim_IsFramesRemaining(gobj: G) -> bool {
 
 /// `ftAnim_8006F368`.
 pub unsafe fn ftAnim_8006F368(fp: &Fighter, part: i32) -> bool {
+    melee_core::ct!("ftAnim_8006F368");
     let b = bone(fp, part);
     ext::lb_8000B074(if fp.x8A4_animBlendFrames == 0.0 { b.joint } else { b.x4_jobj2 })
 }
@@ -505,6 +518,7 @@ pub unsafe fn ftAnim_8006F368(fp: &Fighter, part: i32) -> bool {
 /// `ftAnim_8006F3DC`: the current frame of the first animated part. The C falls off the end
 /// (no return) when no part has an AObj; this returns 0.0 there.
 pub unsafe fn ftAnim_8006F3DC(gobj: G) -> f32 {
+    melee_core::ct!("ftAnim_8006F3DC");
     let fp = fpm(gobj);
     if fp.x8A4_animBlendFrames == 0.0 {
         for i in 0..parts_num(fp) {
@@ -524,6 +538,7 @@ pub unsafe fn ftAnim_8006F3DC(gobj: G) -> f32 {
 
 /// `ftAnim_8006F484`.
 pub unsafe fn ftAnim_8006F484(gobj: G) -> f32 {
+    melee_core::ct!("ftAnim_8006F484");
     let fp = fpm(gobj);
     if fp.x8A4_animBlendFrames == 0.0 {
         return ext::lbGetJObjEndFrame((*gobj).hsd_obj as J);
@@ -535,6 +550,7 @@ unsafe fn pj(fp: &Fighter, part: i32, blend: bool) -> J { get_part_joint(fp, par
 
 /// `ftAnim_8006F4C8`.
 pub unsafe fn ftAnim_8006F4C8(fp: &mut Fighter, do_blending: bool, tree: *mut FigaTree) {
+    melee_core::ct!("ftAnim_8006F4C8");
     let mut node = (*tree).nodes;
     let mut track = (*tree).tracks;
     let flags = x594_bits(fp);
@@ -565,6 +581,7 @@ pub unsafe fn ftAnim_8006F4C8(fp: &mut Fighter, do_blending: bool, tree: *mut Fi
 
 /// `ftAnim_8006F628`: bind a figatree authored for another kind, remapping parts.
 pub unsafe fn ftAnim_8006F628(fp: &mut Fighter, part: i32, do_blending: bool) {
+    melee_core::ct!("ftAnim_8006F628");
     let tree = fp.x590;
     let mut node = (*tree).nodes;
     let bits = x594_bits(fp);
@@ -662,10 +679,11 @@ unsafe fn bind_own_tree(ft: &mut Fighter, part: i32, use_jobj2: bool, tree: *mut
 }
 
 /// `ftAnim_8006F7C8`.
-pub unsafe fn ftAnim_8006F7C8(ft: &mut Fighter, part: i32, arg2: i32, tree: *mut FigaTree) { bind_own_tree(ft, part, arg2 != 0, tree) }
+pub unsafe fn ftAnim_8006F7C8(ft: &mut Fighter, part: i32, arg2: i32, tree: *mut FigaTree) { melee_core::ct!("ftAnim_8006F7C8"); bind_own_tree(ft, part, arg2 != 0, tree) }
 
 /// `ftAnim_8006F954`.
 pub unsafe fn ftAnim_8006F954(fp: &mut Fighter, part: i32, do_blending: bool, _unused: *mut FigaTree) {
+    melee_core::ct!("ftAnim_8006F954");
     if fp.kind as i32 != ftAnim_AuthorKind(fp) {
         ftAnim_8006F628(fp, part, do_blending);
     } else {
@@ -677,6 +695,7 @@ pub unsafe fn ftAnim_8006F954(fp: &mut Fighter, part: i32, do_blending: bool, _u
 /// `ftAnim_8006F994`: the HSD_Joint matching `jobj` (the C falls off the end with no return
 /// when none does; this returns NULL there).
 pub unsafe fn ftAnim_8006F994(fp: &Fighter, jobj: J, mut joint: *mut HSD_Joint) -> *mut HSD_Joint {
+    melee_core::ct!("ftAnim_8006F994");
     let mut depth = 0;
     let mut i = 0;
     while !joint.is_null() {
@@ -726,12 +745,13 @@ unsafe fn copy_joint_tree(fp: &mut Fighter, part: i32, mut joint: *mut HSD_Joint
 }
 
 /// `ftAnim_8006FA58`: reset the model joints to the joint descs.
-pub unsafe fn ftAnim_8006FA58(fp: &mut Fighter, part: i32, joint: *mut HSD_Joint) { copy_joint_tree(fp, part, joint, false) }
+pub unsafe fn ftAnim_8006FA58(fp: &mut Fighter, part: i32, joint: *mut HSD_Joint) { melee_core::ct!("ftAnim_8006FA58"); copy_joint_tree(fp, part, joint, false) }
 /// `ftAnim_8006FB88`: same for the anim skeleton (x4_jobj2).
-pub unsafe fn ftAnim_8006FB88(fp: &mut Fighter, part: i32, joint: *mut HSD_Joint) { copy_joint_tree(fp, part, joint, true) }
+pub unsafe fn ftAnim_8006FB88(fp: &mut Fighter, part: i32, joint: *mut HSD_Joint) { melee_core::ct!("ftAnim_8006FB88"); copy_joint_tree(fp, part, joint, true) }
 
 /// `ftAnim_8006FCE4`.
 pub unsafe fn ftAnim_8006FCE4(fp: &mut Fighter, do_blending: bool) {
+    melee_core::ct!("ftAnim_8006FCE4");
     let tree = fp.x590;
     let mut node = (*tree).nodes;
     let bits = x594_bits(fp);
@@ -766,6 +786,7 @@ pub unsafe fn ftAnim_8006FCE4(fp: &mut Fighter, do_blending: bool) {
 
 /// `ftAnim_8006FE08`.
 pub unsafe fn ftAnim_8006FE08(fp: &mut Fighter, do_blending: bool) {
+    melee_core::ct!("ftAnim_8006FE08");
     if fp.kind as i32 != ftAnim_AuthorKind(fp) {
         ftAnim_8006FCE4(fp, do_blending);
     } else {
@@ -776,6 +797,7 @@ pub unsafe fn ftAnim_8006FE08(fp: &mut Fighter, do_blending: bool) {
 
 /// `ftAnim_8006FE48`.
 pub unsafe fn ftAnim_8006FE48(gobj: G) {
+    melee_core::ct!("ftAnim_8006FE48");
     let fp = fpm(gobj);
     fp.x8AC_animSkeleton = ext::ftParts_8007482C(fp.x108_costume_joint);
     fp.x8A4_animBlendFrames = 0.0;
@@ -785,6 +807,7 @@ pub unsafe fn ftAnim_8006FE48(gobj: G) {
 
 /// `ftAnim_8006FE9C`.
 pub unsafe fn ftAnim_8006FE9C(fp: &mut Fighter, start: i32, t: f32, t_inv: f32) {
+    melee_core::ct!("ftAnim_8006FE9C");
     for i in start..parts_num(fp) {
         let b = bone(fp, i);
         if b1(b) && !b0(b) && !b5(b) {
@@ -799,6 +822,7 @@ pub unsafe fn ftAnim_8006FE9C(fp: &mut Fighter, start: i32, t: f32, t_inv: f32) 
 
 /// `ftAnim_8006FF74`.
 pub unsafe fn ftAnim_8006FF74(fp: &mut Fighter, start: i32) {
+    melee_core::ct!("ftAnim_8006FF74");
     for i in start..parts_num(fp) {
         let b = bone(fp, i);
         if b1(b) && !b0(b) && !b5(b) {
@@ -829,12 +853,13 @@ unsafe fn blend_joint_tree(fp: &mut Fighter, start: i32, t: f32, ti: f32, mut jo
 }
 
 /// `ftAnim_80070010`.
-pub unsafe fn ftAnim_80070010(fp: &mut Fighter, start: i32, t: f32, ti: f32, joint: *mut HSD_Joint) { blend_joint_tree(fp, start, t, ti, joint, false) }
+pub unsafe fn ftAnim_80070010(fp: &mut Fighter, start: i32, t: f32, ti: f32, joint: *mut HSD_Joint) { melee_core::ct!("ftAnim_80070010"); blend_joint_tree(fp, start, t, ti, joint, false) }
 /// `ftAnim_80070108`.
-pub unsafe fn ftAnim_80070108(fp: &mut Fighter, start: i32, t: f32, ti: f32, joint: *mut HSD_Joint) { blend_joint_tree(fp, start, t, ti, joint, true) }
+pub unsafe fn ftAnim_80070108(fp: &mut Fighter, start: i32, t: f32, ti: f32, joint: *mut HSD_Joint) { melee_core::ct!("ftAnim_80070108"); blend_joint_tree(fp, start, t, ti, joint, true) }
 
 /// `ftAnim_80070200`: bind the costume texture animations.
 pub unsafe fn ftAnim_80070200(fp: &mut Fighter, r4: *mut ftData_x8_x8, r5: *mut CostumeTObjList, r6: *mut DObjList) {
+    melee_core::ct!("ftAnim_80070200");
     (*r5).n_costume_tobjs = (*r4).x8 as u32;
     if (*r5).n_costume_tobjs as usize > (*r5).costume_tobjs.len() {
         panic!("ftanim.c:1228: fighter tobj num over!");
@@ -853,6 +878,7 @@ pub unsafe fn ftAnim_80070200(fp: &mut Fighter, r4: *mut ftData_x8_x8, r5: *mut 
 
 /// `ftAnim_80070308`.
 pub unsafe fn ftAnim_80070308(gobj: G) {
+    melee_core::ct!("ftAnim_80070308");
     let fp = fpm(gobj);
     let jobj = (*gobj).hsd_obj as J;
     ext::HSD_JObjAddAnimAll(jobj, core::ptr::null_mut(), ext::costume_matanim(fp.kind as i32, fp.x619_costume_id), core::ptr::null_mut());
@@ -865,6 +891,7 @@ pub unsafe fn ftAnim_80070308(gobj: G) {
 
 /// `ftAnim_80070458` (TARGET_PC: an index past the list is skipped, not asserted).
 pub unsafe fn ftAnim_80070458(_fp: &Fighter, tobj_list: &mut CostumeTObjList, tobj_idx: u32, frame: f32) {
+    melee_core::ct!("ftAnim_80070458");
     if tobj_idx >= tobj_list.n_costume_tobjs {
         ext::OSReport("gw: costume texture anim request skipped\n");
         return;
@@ -876,6 +903,7 @@ pub unsafe fn ftAnim_80070458(_fp: &Fighter, tobj_list: &mut CostumeTObjList, to
 
 /// `ftAnim_800704F0`.
 pub unsafe fn ftAnim_800704F0(gobj: G, tobj_idx: i32, frame: f32) {
+    melee_core::ct!("ftAnim_800704F0");
     let fp = fpm(gobj);
     let tl = &mut *(&mut fp.tobj_list as *mut CostumeTObjList);
     ftAnim_80070458(fp, tl, tobj_idx as u32, frame);
@@ -887,6 +915,7 @@ pub unsafe fn ftAnim_800704F0(gobj: G, tobj_idx: i32, frame: f32) {
 
 /// `ftAnim_800705E0`.
 pub unsafe fn ftAnim_800705E0(tobj_list: &mut CostumeTObjList) {
+    melee_core::ct!("ftAnim_800705E0");
     for i in 0..tobj_list.n_costume_tobjs as usize {
         ext::HSD_AObjReqAnim((*tobj_list.costume_tobjs[i]).aobj, 0.0);
         ext::HSD_TObjAnim(tobj_list.costume_tobjs[i]);
@@ -895,6 +924,7 @@ pub unsafe fn ftAnim_800705E0(tobj_list: &mut CostumeTObjList) {
 
 /// `ftAnim_80070654`.
 pub unsafe fn ftAnim_80070654(gobj: G) {
+    melee_core::ct!("ftAnim_80070654");
     let fp = fpm(gobj);
     ftAnim_800705E0(&mut fp.tobj_list);
     if let Some(cb) = ext::ftData_UnkCallbackPairs0_x0(fp.kind as i32) {
@@ -904,14 +934,15 @@ pub unsafe fn ftAnim_80070654(gobj: G) {
 }
 
 /// `ftAnim_80070710`.
-pub fn ftAnim_80070710(jobj: J, frame: f32) { ext::HSD_JObjReqAnimAllByFlags(jobj, 1, frame) }
+pub fn ftAnim_80070710(jobj: J, frame: f32) { melee_core::ct!("ftAnim_80070710"); ext::HSD_JObjReqAnimAllByFlags(jobj, 1, frame) }
 /// `ftAnim_80070734`.
-pub fn ftAnim_80070734(jobj: J, frame: f32) { ext::HSD_JObjReqAnimByFlags(jobj, 1, frame) }
+pub fn ftAnim_80070734(jobj: J, frame: f32) { melee_core::ct!("ftAnim_80070734"); ext::HSD_JObjReqAnimByFlags(jobj, 1, frame) }
 /// `ftAnim_80070758`.
-pub fn ftAnim_80070758(jobj: J) { ext::HSD_JObjRemoveAnimAllByFlags(jobj, 1) }
+pub fn ftAnim_80070758(jobj: J) { melee_core::ct!("ftAnim_80070758"); ext::HSD_JObjRemoveAnimAllByFlags(jobj, 1) }
 
 /// The blend weights of a part-anim slot after advancing it one frame (`ftAnim_800707B0`).
 pub fn part_anim_step(s: &mut Fighter_x8B0_t) -> (f32, f32) {
+    melee_core::ct!("part_anim_step");
     s.x8 += s.xC;
     if s.x4 <= s.x8 {
         s.x8 = s.x4;
@@ -924,6 +955,7 @@ pub fn part_anim_step(s: &mut Fighter_x8B0_t) -> (f32, f32) {
 
 /// `ftAnim_800707B0`: blend the active part (hand) animations.
 pub unsafe fn ftAnim_800707B0(gobj: G) {
+    melee_core::ct!("ftAnim_800707B0");
     let fp = fpm(gobj);
     for i in 0..fp.x8B0.len() {
         if fp.x8B0[i].x11 != -1 {
@@ -946,6 +978,7 @@ pub unsafe fn ftAnim_800707B0(gobj: G) {
 
 /// `ftAnim_80070904` (TARGET_PC: stops at the end of the fighter's parts).
 pub unsafe fn ftAnim_80070904(fp: &mut Fighter, start: i32, mut animjoint: *mut HSD_AnimJoint) {
+    melee_core::ct!("ftAnim_80070904");
     let mut i = start;
     let mut depth = 0;
     while !animjoint.is_null() {
@@ -970,10 +1003,11 @@ pub unsafe fn ftAnim_80070904(fp: &mut Fighter, start: i32, mut animjoint: *mut 
 }
 
 /// `ftAnim_80070A10`.
-pub unsafe fn ftAnim_80070A10(ft: &mut Fighter, part: i32, tree: *mut FigaTree) { bind_own_tree(ft, part, true, tree) }
+pub unsafe fn ftAnim_80070A10(ft: &mut Fighter, part: i32, tree: *mut FigaTree) { melee_core::ct!("ftAnim_80070A10"); bind_own_tree(ft, part, true, tree) }
 
 /// `ftAnim_ApplyPartAnim` (TARGET_PC: ignored on a Geno "none" define without a template skeleton).
 pub unsafe fn ftAnim_ApplyPartAnim(gobj: G, arg1: i32, arg2: i32, arg3: f32) {
+    melee_core::ct!("ftAnim_ApplyPartAnim");
     let fp = fpm(gobj);
     if ext::Geno_DefineIsNone(fp.kind as i32) != 0 && ext::Geno_DefineTemplateSkeleton(fp.kind as i32) == 0 {
         ext::OSReport("geno: part animation ignored on a none define\n");
@@ -990,6 +1024,7 @@ pub unsafe fn ftAnim_ApplyPartAnim(gobj: G, arg1: i32, arg2: i32, arg3: f32) {
 
 /// `ftAnim_80070C48`.
 pub unsafe fn ftAnim_80070C48(gobj: G, arg1: i32) {
+    melee_core::ct!("ftAnim_80070C48");
     let x10 = fpm(gobj).x8B0[arg1 as usize].x10;
     if x10 != -1 {
         ftAnim_ApplyPartAnim(gobj, arg1, x10 as i32, 0.0);
@@ -998,6 +1033,7 @@ pub unsafe fn ftAnim_80070C48(gobj: G, arg1: i32) {
 
 /// `ftAnim_80070CC4`: end a part animation and rebind the motion on those parts.
 pub unsafe fn ftAnim_80070CC4(gobj: G, arg1: i32) {
+    melee_core::ct!("ftAnim_80070CC4");
     let fp = fpm(gobj);
     let x11 = fp.x8B0[arg1 as usize].x11;
     if x11 == -1 {
@@ -1035,6 +1071,7 @@ pub unsafe fn ftAnim_80070CC4(gobj: G, arg1: i32) {
 
 /// `ftAnim_80070E74`.
 pub unsafe fn ftAnim_80070E74(gobj: G) {
+    melee_core::ct!("ftAnim_80070E74");
     for i in 0..5 {
         let x10 = fpm(gobj).x8B0[i].x10;
         if x10 != -1 {
@@ -1045,6 +1082,7 @@ pub unsafe fn ftAnim_80070E74(gobj: G) {
 
 /// `ftAnim_80070F28`.
 pub unsafe fn ftAnim_80070F28(gobj: G) {
+    melee_core::ct!("ftAnim_80070F28");
     let fp = fpm(gobj);
     for i in 0..fp.x8B0.len() {
         if fp.x8B0[i].x11 != -1 {
@@ -1059,6 +1097,7 @@ pub unsafe fn ftAnim_80070F28(gobj: G) {
 
 /// `ftAnim_80070FD0`.
 pub unsafe fn ftAnim_80070FD0(fp: &mut Fighter) -> bool {
+    melee_core::ct!("ftAnim_80070FD0");
     let r = ext::ftPartGetRotX(fp, bone_index(fp, 0x35));
     if fp.x100 != r {
         fp.x100 = r;

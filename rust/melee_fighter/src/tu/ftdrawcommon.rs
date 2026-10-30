@@ -89,6 +89,7 @@ const WB_RENDER_MODEL: i32 = 0;
 /// `FT_DRAW_FLAG(fp, bit)` on TARGET_PC (`ftDrawCommon_RenderFlag`): MSB-first bit of x21FC_flag,
 /// unless Workbench is drawing, where only the model (bit 7) is drawn, on its option.
 pub fn draw_flag(f: &Fighter, bit: i32) -> bool {
+    melee_core::ct!("draw_flag");
     let fallback = (unsafe { f.x21FC_flag.byte } as i32 & (1 << (7 - bit))) != 0;
     if ext::Wb_RenderActive() == 0 {
         return fallback;
@@ -122,6 +123,7 @@ fn opt(p: Option<*mut [f32; 4]>) -> *mut [f32; 4] {
 
 /// `ftDrawCommon_800805C8`: debug overlays, then (bit 7) the model itself.
 pub fn ftDrawCommon_800805C8(g: G, arg1: i32, arg2: bool) {
+    melee_core::ct!("ftDrawCommon_800805C8");
     let f = fp(g);
     let fpp: *mut Fighter = f;
     let mut inv = false;
@@ -244,6 +246,7 @@ pub fn ftDrawCommon_800805C8(g: G, arg1: i32, arg2: bool) {
 
 /// `ftDrawCommon_80080C28`: the FoD floor-reflection render callback.
 pub fn ftDrawCommon_80080C28(g: G, flag_index: i32) {
+    melee_core::ct!("ftDrawCommon_80080C28");
     let f = fp(g);
     let fpp: *mut Fighter = f;
     if !draw_flag(f, 7) {
@@ -339,6 +342,7 @@ fn surface_impl(g: G, arg1: i32) {
 /// motion draw when the current camera is the main one (not a reflection / refraction / diagnostic camera). The C passes the
 /// guest addresses of the gobj, the view matrix and the position as `int`.
 pub fn script_motion_draw_begin(g: G) -> i32 {
+    melee_core::ct!("script_motion_draw_begin");
     let f = fp(g);
     let camera = ext::HSD_CObjGetCurrent();
     /* Exclude reflection/refraction and fighter diagnostic cameras. */
@@ -364,6 +368,7 @@ pub fn script_motion_draw_begin(g: G) -> i32 {
 
 /// `ftDrawCommon_80080E18` (TARGET_PC wrapper: motion draw, Geno toon, per-port surface).
 pub fn ftDrawCommon_80080E18(g: G, arg1: i32) {
+    melee_core::ct!("ftDrawCommon_80080E18");
     let motion = ext::script_motion_draw_begin(g);
     let (pid, kind) = (fp(g).player_id as i32, fp(g).kind as i32);
     ext::GenoToonEnsure(pid + 1, kind);
@@ -388,11 +393,13 @@ fn for_each_fighter(mut f: impl FnMut(G)) {
 
 /// `ftDrawCommon_80081118`: normal render callback on every fighter.
 pub fn ftDrawCommon_80081118() {
+    melee_core::ct!("ftDrawCommon_80081118");
     for_each_fighter(|g| unsafe { (*g).render_cb = Some(cb_80080E18) });
 }
 
 /// `ftDrawCommon_80081140`: FoD reflection callback (m-ex opt-in: none with 4+ players).
 pub fn ftDrawCommon_80081140() {
+    melee_core::ct!("ftDrawCommon_80081140");
     if ext::Mex_Enabled_disable_fod_reflection() != 0 && ext::ftLib_800860C4() >= 4 {
         for_each_fighter(|g| unsafe { (*g).render_cb = None });
         return;
@@ -413,6 +420,6 @@ fn parts4(order: [i32; 4]) {
 }
 
 /// `ftDrawCommon_80081168`.
-pub fn ftDrawCommon_80081168() { parts4([1, 2, 4, 0]) }
+pub fn ftDrawCommon_80081168() { melee_core::ct!("ftDrawCommon_80081168"); parts4([1, 2, 4, 0]) }
 /// `ftDrawCommon_80081200`.
-pub fn ftDrawCommon_80081200() { parts4([0, 2, 4, 1]) }
+pub fn ftDrawCommon_80081200() { melee_core::ct!("ftDrawCommon_80081200"); parts4([0, 2, 4, 1]) }

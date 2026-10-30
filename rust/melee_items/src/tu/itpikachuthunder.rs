@@ -68,11 +68,13 @@ pub static mut it_803F70C8: [ItemStateTable; 3] = [
 
 /// 2B1DEC
 pub unsafe extern "C" fn it_802B1DEC(arg0: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802B1DEC");
     (*GET_ITEM(arg0)).xDD4_itemVar.pikachuthunder.x4
 }
 
 /// 2B1DF8
 pub unsafe extern "C" fn it_802B1DF8(owner: *mut Item_GObj, pos: *mut Vec3, vel: *mut Vec3, count: i32, delay: i32, kind: i32) -> *mut Item_GObj {
+    melee_core::ct!("it_802B1DF8");
     let mut spawn: SpawnItem = core::mem::zeroed();
     let x40: u32 = ext::Item_8026AE60();
     let mut cur_delay: i32;
@@ -135,11 +137,13 @@ pub unsafe extern "C" fn it_802B1DF8(owner: *mut Item_GObj, pos: *mut Vec3, vel:
 
 /// 2B1FC8
 pub unsafe extern "C" fn it_802B1FC8(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802B1FC8");
     it_802B22B8(gobj);
 }
 
 /// 2B1FE8
 pub unsafe extern "C" fn it_802B1FE8(gobj: *mut Item_GObj, pos: *mut Vec3) {
+    melee_core::ct!("it_802B1FE8");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itPikachuthunderAttributes;
     let scale = (*ip).xDD4_itemVar.pikachuthunder.x18;
@@ -151,6 +155,7 @@ pub unsafe extern "C" fn it_802B1FE8(gobj: *mut Item_GObj, pos: *mut Vec3) {
 }
 
 pub unsafe extern "C" fn it_2725_Logic39_Destroyed(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_2725_Logic39_Destroyed");
     let ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.pikachuthunder.x0 == 0
         && !(*ip).xDD4_itemVar.pikachuthunder.x38.is_null()
@@ -162,6 +167,7 @@ pub unsafe extern "C" fn it_2725_Logic39_Destroyed(gobj: *mut Item_GObj) {
 
 /// 2B2080
 pub unsafe extern "C" fn it_802B2080(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802B2080");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itPikachuthunderAttributes;
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE);
@@ -170,6 +176,7 @@ pub unsafe extern "C" fn it_802B2080(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itPikachuthunder_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPikachuthunder_UnkMotion0_Anim");
     let ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.pikachuthunder.x8 <= 0 {
         it_802B211C(gobj);
@@ -181,6 +188,7 @@ pub unsafe extern "C" fn itPikachuthunder_UnkMotion0_Anim(gobj: *mut Item_GObj) 
 
 /// 2B211C
 pub unsafe extern "C" fn it_802B211C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802B211C");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itPikachuthunderAttributes;
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);
@@ -191,6 +199,7 @@ pub unsafe extern "C" fn it_802B211C(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itPikachuthunder_UnkMotion1_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPikachuthunder_UnkMotion1_Anim");
     let ip = (*gobj).user_data as *mut Item;
     (*ip).xD44_lifeTimer -= 1.0;
     if (*ip).xD44_lifeTimer <= 0.0 {
@@ -200,6 +209,7 @@ pub unsafe extern "C" fn itPikachuthunder_UnkMotion1_Anim(gobj: *mut Item_GObj) 
 }
 
 pub unsafe extern "C" fn itPikachuthunder_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPikachuthunder_UnkMotion1_Coll");
     let ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.pikachuthunder.x0 == 0 {
         if ext::it_8026DA70(gobj) != 0 {
@@ -243,6 +253,7 @@ unsafe fn it_802B22B8_inline(gobj: *mut Item_GObj) {
 
 /// 2B22B8
 pub unsafe extern "C" fn it_802B22B8(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802B22B8");
     let ip = GET_ITEM(gobj);
     ext::Item_80268E5C(gobj, 2, ITEM_UNK_0x1 | ITEM_HIT_PRESERVE);
     (*ip).xD44_lifeTimer = (*ip).xDD4_itemVar.pikachuthunder.x14;
@@ -251,6 +262,7 @@ pub unsafe extern "C" fn it_802B22B8(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn pika_scale(a: f32, b: f32) -> f32 {
+    melee_core::ct!("pika_scale");
     let mut f: f32 = 10000.0 * a / b;
     f = (f2i32((f + 1.0) as f64) as f32) / 10000.0;
     f
@@ -282,6 +294,7 @@ unsafe fn itPikachuthunder_UnkMotion2_UpdateScale(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itPikachuthunder_UnkMotion2_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPikachuthunder_UnkMotion2_Anim");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
 
@@ -295,22 +308,27 @@ pub unsafe extern "C" fn itPikachuthunder_UnkMotion2_Anim(gobj: *mut Item_GObj) 
 }
 
 pub unsafe extern "C" fn itPikachuThunder_Logic39_DmgDealt(_arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPikachuThunder_Logic39_DmgDealt");
     false
 }
 
 pub unsafe extern "C" fn itPikachuThunder_Logic39_HitShield(_arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPikachuThunder_Logic39_HitShield");
     false
 }
 
 pub unsafe extern "C" fn itPikachuThunder_Logic39_Clanked(_arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPikachuThunder_Logic39_Clanked");
     false
 }
 
 pub unsafe extern "C" fn itPikachuThunder_Logic39_Absorbed(_arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPikachuThunder_Logic39_Absorbed");
     false
 }
 
 pub unsafe extern "C" fn itPikachuThunder_Logic39_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("itPikachuThunder_Logic39_EvtUnk");
     let ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.pikachuthunder.x38 == ref_gobj {
         (*ip).xDD4_itemVar.pikachuthunder.x38 = null_mut();

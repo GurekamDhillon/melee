@@ -69,6 +69,7 @@ pub static mut ft_804D6580: *mut HSD_MObj = core::ptr::null_mut();
 
 /// `ftCo_800C7CA0`: enter DownReflect when knocked into a wall fast enough.
 pub fn ftco_800c7ca0(g: G) -> bool {
+    melee_core::ct!("ftco_800c7ca0");
     let f = fp(g);
     let threshold = h::common_data().x1B0;
     let vel_x = f.x8c_kb_vel.x;
@@ -97,6 +98,7 @@ pub fn ftco_800c7ca0(g: G) -> bool {
 /// `normal` is passed by value-copy (C passes `&coll->..._wall.normal`; no callee before the
 /// read writes it).
 pub fn fn_800c7dc4(g: G, motion_state: i32, normal: &Vec3, offset: &Vec3) {
+    melee_core::ct!("fn_800c7dc4");
     let f = fp(g);
     ext::ftCommon_8007D5D4(crate::mtu_ptr::ptr(&(f)));
     let spawn = Vec3 {
@@ -136,22 +138,25 @@ pub fn fn_800c7dc4(g: G, motion_state: i32, normal: &Vec3, offset: &Vec3) {
 
 /// `ftCo_DownReflect_Anim`.
 pub fn ftco_downreflect_anim(g: G) {
+    melee_core::ct!("ftco_downreflect_anim");
     if !h::ftanim_is_frames_remaining(g) {
         ext::ftCo_80090780(g);
     }
 }
 
 /// `ftCo_DownReflect_IASA`: empty.
-pub fn ftco_downreflect_iasa(_g: G) {}
+pub fn ftco_downreflect_iasa(_g: G) { melee_core::ct!("ftco_downreflect_iasa");}
 
 /// `ftCo_DownReflect_Phys`.
 pub fn ftco_downreflect_phys(g: G) {
+    melee_core::ct!("ftco_downreflect_phys");
     h::ft_80084db0(g);
 }
 
 /// `ftCo_DownReflect_Coll`. C: `if (ft_80081DD4(gobj))`; the hook returns unit, so the
 /// branch result comes from the stubbed predicate.
 pub fn ftco_downreflect_coll(g: G) {
+    melee_core::ct!("ftco_downreflect_coll");
     if ext_ft_80081dd4(g) {
         ext::ftCo_80097D88(g);
     }
@@ -168,6 +173,7 @@ fn ext_ft_80081dd4(g: G) -> bool {
 /// `ftCo_800C8064`: `ft_804D6580 = first DObj's mobj of HSD_JObjLoadJoint(Fighter_804D6504)`
 /// (HSD calls behind one stub).
 pub fn ftco_800c8064() {
+    melee_core::ct!("ftco_800c8064");
     unsafe {
         let dobj = ext::HSD_JObjGetDObj(ext::HSD_JObjLoadJoint(crate::tu::fighter::Fighter_804D6504 as *mut core::ffi::c_void)) as *mut HSD_DObj;
         ft_804D6580 = if !dobj.is_null() { (*dobj).mobj } else { core::ptr::null_mut() };
@@ -177,6 +183,7 @@ pub fn ftco_800c8064() {
 /// `ft_800C80A4`: for each visible part bone, set lighting/texgen flags and clear the DObjs'
 /// flag bits (HSD JObj/DObj edits behind one per-bone stub).
 pub fn ft_800c80a4(f: &mut Fighter) {
+    melee_core::ct!("ft_800c80a4");
     let tbl = unsafe { *h::ft_parts_table().add(f.kind as usize) };
     let n = unsafe { (*tbl).parts_num } as usize;
     for i in 0..n {

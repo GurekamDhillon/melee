@@ -3598,6 +3598,7 @@ unsafe extern "C" fn mnStageSel_MexChangePage() -> i32 {
     return 1;
 }
 pub unsafe extern "C" fn mnStageSel_802599EC() -> i32 {
+    melee_core::ct!("mnStageSel_802599EC");
     let mut var_r0: i32 = 0;
     let mut iter: i32 = 0;
     let mut var_r29: i32 = 1;
@@ -3667,6 +3668,7 @@ pub unsafe extern "C" fn mnStageSel_802599EC() -> i32 {
     return i;
 }
 pub unsafe extern "C" fn mnStageSel_80259C28() {
+    melee_core::ct!("mnStageSel_80259C28");
     let mut jobj: *mut HSD_JObj = null_mut();
     let mut gobj: *mut HSD_GObj = null_mut();
     if mnStageSel_804D6CA4 != 0 {
@@ -3727,6 +3729,7 @@ pub unsafe extern "C" fn mnStageSel_80259C28() {
     sfxForward();
 }
 pub unsafe extern "C" fn fn_80259D84(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80259D84");
     let mut temp_r31: *mut StageSelUserData = HSD_GObjGetUserData(gobj)
         as *mut StageSelUserData;
     let mut jobj: *mut HSD_JObj = HSD_GObjGetHSDObj(gobj) as *mut HSD_JObj;
@@ -3775,6 +3778,7 @@ unsafe extern "C" fn do_anim(mut jobj: *mut HSD_JObj, mut frame: i32) {
     HSD_ForeachAnim(jobj as *mut c_void, JOBJ_TYPE, TOBJ_MASK, HSD_AObjStopAnim as usize as *mut c_void, AOBJ_ARG_AOV, &[(0) as usize, (0) as usize]);
 }
 pub unsafe extern "C" fn mnStageSel_80259ED8(mut id: i32) {
+    melee_core::ct!("mnStageSel_80259ED8");
     let mut gobj: *mut HSD_GObj = null_mut();
     let mut jobj: *mut HSD_JObj = null_mut();
     let mut temp_r3_2: *mut StageSelUserData = core::ptr::null_mut::<
@@ -3841,6 +3845,7 @@ pub unsafe extern "C" fn mnStageSel_80259ED8(mut id: i32) {
     }
 }
 pub unsafe extern "C" fn fn_8025A090(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8025A090");
     let mut var_r3: u32 = 0;
     let mut temp_r30: *mut C2RustUnnamed_15 = core::ptr::null_mut::<
         C2RustUnnamed_15,
@@ -3889,6 +3894,7 @@ pub unsafe extern "C" fn fn_8025A090(mut gobj: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn fn_8025A310(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8025A310");
     let mut sp1C: Vec3 = Vec3 { x: 0., y: 0., z: 0. };
     let mut sp10: Vec3 = Vec3 { x: 0., y: 0., z: 0. };
     let mut temp_f1: f32 = 0.;
@@ -3943,6 +3949,7 @@ pub unsafe extern "C" fn fn_8025A310(mut gobj: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn fn_8025A560(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8025A560");
     let mut temp_r30: *mut StageSelUserData_0 = core::ptr::null_mut::<
         StageSelUserData_0,
     >();
@@ -3981,6 +3988,7 @@ pub unsafe extern "C" fn fn_8025A560(mut gobj: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn fn_8025A91C(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8025A91C");
     let mut jobj: *mut HSD_JObj = HSD_GObjGetHSDObj(gobj) as *mut HSD_JObj;
     mnStageSel_804D6CA8 += 1;
     if mnStageSel_804D6CA8 >= 0xfa {
@@ -3993,6 +4001,7 @@ pub unsafe extern "C" fn fn_8025A974(
     mut gobj: *mut HSD_GObj,
     mut unused: i32,
 ) {
+    melee_core::ct!("fn_8025A974");
     HSD_FogSet((*gobj).hsd_obj as *mut HSD_Fog);
 }
 static mut mnStageSel_803B8550: Vec3 = Vec3 {
@@ -4117,6 +4126,7 @@ unsafe extern "C" fn get_jobj(mut gobj: *mut HSD_GObj) -> *mut HSD_JObj {
     return jobj;
 }
 pub unsafe extern "C" fn mnStageSel_Scene_OnEnter(mut arg0: *mut c_void) {
+    melee_core::ct!("mnStageSel_Scene_OnEnter");
     let mut spDC: [*mut HSD_JObj; 19] = [null_mut(); 19];
     let mut spCC: Vec3 = Vec3 { x: 0., y: 0., z: 0. };
     let mut i: i32 = 0;
@@ -4714,6 +4724,7 @@ unsafe extern "C" fn get_pad(mut i: u8) -> *mut HSD_PadStatus {
         as *mut HSD_PadStatus;
 }
 pub unsafe extern "C" fn mnStageSel_Scene_OnFrame() {
+    melee_core::ct!("mnStageSel_Scene_OnFrame");
     if (*sss_data).force_stage_id as i32 >= 0 {
         mnStageSel_804D6CAF = 2;
         (*sss_data).vs.start.rules.stkind = (*sss_data).force_stage_id as u16;
@@ -4813,6 +4824,7 @@ pub unsafe extern "C" fn mnStageSel_Scene_OnFrame() {
 pub unsafe extern "C" fn mnStageSel_Scene_OnExit(
     mut exit_data: *mut c_void,
 ) {
+    melee_core::ct!("mnStageSel_Scene_OnExit");
     if !mnStageSel_804D6C94.is_null() {
         lbArchive_80016EFC(mnStageSel_804D6C94);
         mnStageSel_804D6C94 = null_mut();
@@ -4836,12 +4848,14 @@ pub unsafe extern "C" fn mnStageSel_Scene_OnExit(
     }
 }
 pub unsafe extern "C" fn mnSelStageRandom() -> i32 {
+    melee_core::ct!("mnSelStageRandom");
     return mnStageSel_803F06D0[mnStageSel_802599EC() as usize].stkind
         as i32;
 }
 pub unsafe extern "C" fn mnStageSel_8025BC08(
     mut idx: i32,
 ) -> i32 {
+    melee_core::ct!("mnStageSel_8025BC08");
     return mnStageSel_803F06D0[idx as usize].stkind as i32;
 }
 static mut mnStageSel_PcMexIcon: *mut HSD_JObj = null_mut();
@@ -4922,6 +4936,7 @@ static mut mnStageSel_PcName: *mut HSD_JObj = null_mut();
 pub unsafe extern "C" fn mnStageSel_PcArtOpen(
     mut archive: *mut HSD_Archive,
 ) -> i32 {
+    melee_core::ct!("mnStageSel_PcArtOpen");
     let mut data: *mut C2RustUnnamed_18 = null_mut();
     let mut n: i32 = 0;
     mnStageSel_PcMexIcon = null_mut();
@@ -5000,6 +5015,7 @@ pub unsafe extern "C" fn mnStageSel_PcArtName(
     mut img: *mut *mut HSD_ImageDesc,
     mut tlut: *mut *mut HSD_Tlut,
 ) -> i32 {
+    melee_core::ct!("mnStageSel_PcArtName");
     let mut name: *mut HSD_JObj = null_mut();
     let mut best: *mut HSD_TObj = null_mut();
     let mut bw: i32 = 0;
@@ -5045,6 +5061,7 @@ pub unsafe extern "C" fn mnStageSel_PcArtIcon(
     mut img: *mut *mut HSD_ImageDesc,
     mut tlut: *mut *mut HSD_Tlut,
 ) -> i32 {
+    melee_core::ct!("mnStageSel_PcArtIcon");
     let mut j: *mut HSD_JObj = null_mut();
     let mut at: *mut HSD_JObj = null_mut();
     let mut t: *mut HSD_TObj = null_mut();

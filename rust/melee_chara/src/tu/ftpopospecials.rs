@@ -15,14 +15,17 @@ use crate::chars::ftPopo::ftpopospecials as hand;
 
 /// Gobj-signature wrappers over the hand ports in `chars::ftPopo` (those take the fighter).
 pub fn ftPp_SpecialS1_IASA(gobj: G) {
+    melee_core::ct!("ftPp_SpecialS1_IASA");
     unsafe { hand::ftPp_SpecialS1_IASA(&mut *fpp(gobj)) }
 }
 
 pub fn ftPp_SpecialAirS1_IASA(gobj: G) {
+    melee_core::ct!("ftPp_SpecialAirS1_IASA");
     unsafe { hand::ftPp_SpecialAirS1_IASA(&mut *fpp(gobj)) }
 }
 
 pub fn ftPp_SpecialS_8011F964(gobj: G) -> i32 {
+    melee_core::ct!("ftPp_SpecialS_8011F964");
     unsafe { hand::ftPp_SpecialS_8011F964(&*fpp(gobj)) as i32 }
 }
 
@@ -158,6 +161,7 @@ unsafe fn setRefGObjFlagAndClear(fp: *mut Fighter) {
 }
 
 pub fn ftPp_SpecialS_8011F68C(gobj: G) {
+    melee_core::ct!("ftPp_SpecialS_8011F68C");
     unsafe {
         let fp = fpp(gobj);
         ext::ftPartSetRotX(fp, 0, 0.0);
@@ -167,6 +171,7 @@ pub fn ftPp_SpecialS_8011F68C(gobj: G) {
 }
 
 pub fn ftPp_SpecialS_8011F6FC(gobj: G) -> i32 {
+    melee_core::ct!("ftPp_SpecialS_8011F6FC");
     unsafe {
         if !gobj.is_null() {
             let fp = fpp(gobj);
@@ -179,6 +184,7 @@ pub fn ftPp_SpecialS_8011F6FC(gobj: G) -> i32 {
 }
 
 pub fn ftPp_SpecialS_8011F720(gobj: G) {
+    melee_core::ct!("ftPp_SpecialS_8011F720");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).mv.pp.specials.x8.is_null() {
@@ -260,6 +266,7 @@ unsafe fn inlineA2(gobj: G) {
 }
 
 pub fn ftPp_SpecialS_Enter(gobj: G) {
+    melee_core::ct!("ftPp_SpecialS_Enter");
     unsafe {
         inlineA2(gobj);
         inlineA0(gobj);
@@ -297,6 +304,7 @@ unsafe fn inlineB0(gobj: G) {
 }
 
 pub fn ftPp_SpecialAirS_Enter(gobj: G) {
+    melee_core::ct!("ftPp_SpecialAirS_Enter");
     unsafe {
         inlineB0(gobj);
         inlineA0(gobj);
@@ -318,6 +326,7 @@ unsafe fn resetAnim(gobj: G) {
 }
 
 pub fn ftPp_SpecialS1_Anim(gobj: G) {
+    melee_core::ct!("ftPp_SpecialS1_Anim");
     unsafe {
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
             resetAnim(gobj);
@@ -346,6 +355,7 @@ unsafe fn inlineC1(gobj: G) {
 }
 
 pub fn ftPp_SpecialS2_Anim(gobj: G) {
+    melee_core::ct!("ftPp_SpecialS2_Anim");
     unsafe {
         let fp = fpp(gobj);
         let nn_gobj = ext::Player_GetEntityAtIndex((*fp).player_id as i32, 1);
@@ -366,6 +376,7 @@ unsafe fn inline0(gobj: G) {
 }
 
 pub fn ftPp_SpecialAirS1_Anim(gobj: G) {
+    melee_core::ct!("ftPp_SpecialAirS1_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -390,6 +401,7 @@ unsafe fn inline1(gobj: G) {
 }
 
 pub fn ftPp_SpecialAirS2_Anim(gobj: G) {
+    melee_core::ct!("ftPp_SpecialAirS2_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -408,10 +420,12 @@ pub fn ftPp_SpecialAirS2_Anim(gobj: G) {
 }
 
 pub fn ftPp_SpecialS2_IASA(gobj: G) {
+    melee_core::ct!("ftPp_SpecialS2_IASA");
     ftPp_SpecialS1_IASA(gobj);
 }
 
 pub fn ftPp_SpecialAirS2_IASA(gobj: G) {
+    melee_core::ct!("ftPp_SpecialAirS2_IASA");
     ftPp_SpecialAirS1_IASA(gobj);
 }
 
@@ -468,10 +482,12 @@ unsafe fn ground_phys(gobj: G, air_msid: u32, vy_of: fn(*const ftIceClimberAttri
 }
 
 pub fn ftPp_SpecialS1_Phys(gobj: G) {
+    melee_core::ct!("ftPp_SpecialS1_Phys");
     unsafe { ground_phys(gobj, ftPp_MS_SpecialAirS1 as u32, |d| (*d).x60) }
 }
 
 pub fn ftPp_SpecialS2_Phys(gobj: G) {
+    melee_core::ct!("ftPp_SpecialS2_Phys");
     unsafe { ground_phys(gobj, ftPp_MS_SpecialAirS2 as u32, |d| (*d).x64) }
 }
 
@@ -504,6 +520,7 @@ unsafe fn air_phys(gobj: G, jump_vy: f32, gravity: f32, terminal_vel: f32) {
 }
 
 pub fn ftPp_SpecialAirS1_Phys(gobj: G) {
+    melee_core::ct!("ftPp_SpecialAirS1_Phys");
     unsafe {
         let da = da(fpp(gobj));
         air_phys(gobj, (*da).x60, (*da).x4C_gravity, (*da).x54_terminal_vel)
@@ -511,6 +528,7 @@ pub fn ftPp_SpecialAirS1_Phys(gobj: G) {
 }
 
 pub fn ftPp_SpecialAirS2_Phys(gobj: G) {
+    melee_core::ct!("ftPp_SpecialAirS2_Phys");
     unsafe {
         let da = da(fpp(gobj));
         air_phys(gobj, (*da).x64, (*da).x50_gravity, (*da).x58_terminal_vel)
@@ -574,10 +592,12 @@ unsafe fn ground_coll(gobj: G, air_msid: u32) {
 }
 
 pub fn ftPp_SpecialS1_Coll(gobj: G) {
+    melee_core::ct!("ftPp_SpecialS1_Coll");
     unsafe { ground_coll(gobj, ftPp_MS_SpecialAirS1 as u32) }
 }
 
 pub fn ftPp_SpecialS2_Coll(gobj: G) {
+    melee_core::ct!("ftPp_SpecialS2_Coll");
     unsafe { ground_coll(gobj, ftPp_MS_SpecialAirS2 as u32) }
 }
 
@@ -628,9 +648,11 @@ unsafe fn air_coll(gobj: G, ground_msid: u32) {
 }
 
 pub fn ftPp_SpecialAirS1_Coll(gobj: G) {
+    melee_core::ct!("ftPp_SpecialAirS1_Coll");
     unsafe { air_coll(gobj, ftPp_MS_SpecialS1 as u32) }
 }
 
 pub fn ftPp_SpecialAirS2_Coll(gobj: G) {
+    melee_core::ct!("ftPp_SpecialAirS2_Coll");
     unsafe { air_coll(gobj, ftPp_MS_SpecialS2 as u32) }
 }

@@ -23,6 +23,7 @@ pub mod ext {
 
 /// `ftCa_SpecialS_OnDetect` as a Fighter callback entry (`hurtbox_detect_cb`).
 pub unsafe extern "C" fn cb_ftCa_SpecialS_OnDetect(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftCa_SpecialS_OnDetect");
     ftCa_SpecialS_OnDetect(g);
 }
 
@@ -56,6 +57,7 @@ unsafe fn set_effect_hitlag_callbacks(fp: *mut Fighter) {
 
 /// `resetCmdVarsGround` (static).
 pub fn resetCmdVarsGround(gobj: *mut HSD_GObj) {
+    melee_core::ct!("resetCmdVarsGround");
     unsafe {
         let fp = fpp(gobj);
         (*fp).cmd_vars = [0; 4];
@@ -65,6 +67,7 @@ pub fn resetCmdVarsGround(gobj: *mut HSD_GObj) {
 
 /// `resetVel` (static inline).
 pub fn resetVel(fp: &mut Fighter) {
+    melee_core::ct!("resetVel");
     fp.self_vel.z = 0.0;
     fp.self_vel.y = 0.0;
     fp.self_vel.x = 0.0;
@@ -86,6 +89,7 @@ unsafe fn spawn_start_effect(gobj: *mut HSD_GObj, fp: *mut Fighter) {
 }
 
 pub fn ftCa_SpecialS_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialS_Enter");
     unsafe {
         let fp = fpp(gobj);
         resetCmdVarsGround(gobj);
@@ -103,6 +107,7 @@ pub fn ftCa_SpecialS_Enter(gobj: *mut HSD_GObj) {
 
 /// `setupAirStart` (static inline).
 pub fn setupAirStart(gobj: *mut HSD_GObj) {
+    melee_core::ct!("setupAirStart");
     unsafe {
         let fp = fpp(gobj);
         (*fp).cmd_vars = [0; 4];
@@ -118,6 +123,7 @@ pub fn setupAirStart(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCa_SpecialAirS_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialAirS_Enter");
     unsafe {
         let fp = fpp(gobj);
         setupAirStart(gobj);
@@ -128,6 +134,7 @@ pub fn ftCa_SpecialAirS_Enter(gobj: *mut HSD_GObj) {
 
 /// `onDetectGround` (static).
 pub fn onDetectGround(gobj: *mut HSD_GObj) {
+    melee_core::ct!("onDetectGround");
     unsafe {
         let fp = fpp(gobj);
         let sa = (*fp).dat_attrs as *const ftCaptain_DatAttrs;
@@ -150,6 +157,7 @@ unsafe fn on_detect_by_motion(gobj: *mut HSD_GObj, fp: *mut Fighter) {
 }
 
 pub fn ftCa_SpecialS_OnDetect(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialS_OnDetect");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).cmd_vars[0] != 0 {
@@ -191,6 +199,7 @@ unsafe fn dash_effect(gobj: *mut HSD_GObj, fp: *mut Fighter, captain: i32, ganon
 }
 
 pub fn ftCa_SpecialS_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialS_Anim");
     unsafe {
         let fp = fpp(gobj);
         dash_effect(gobj, fp, 1170, 1294);
@@ -211,6 +220,7 @@ unsafe fn fall_or_special(gobj: *mut HSD_GObj, fp: *mut Fighter, lag: f32) {
 }
 
 pub fn ftCa_SpecialAirSStart_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialAirSStart_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftCaptain_DatAttrs;
@@ -221,6 +231,7 @@ pub fn ftCa_SpecialAirSStart_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCa_SpecialAirS_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialAirS_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftCaptain_DatAttrs;
@@ -231,13 +242,14 @@ pub fn ftCa_SpecialAirS_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftCa_SpecialSStart_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftCa_SpecialS_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftCa_SpecialAirSStart_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftCa_SpecialAirS_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftCa_SpecialSStart_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCa_SpecialSStart_IASA");}
+pub fn ftCa_SpecialS_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCa_SpecialS_IASA");}
+pub fn ftCa_SpecialAirSStart_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCa_SpecialAirSStart_IASA");}
+pub fn ftCa_SpecialAirS_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCa_SpecialAirS_IASA");}
 
 /// Gravity step of the aerial states (the fighter-only half of the Phys callbacks).
 pub fn specials_gravity(fp: &mut Fighter) {
+    melee_core::ct!("specials_gravity");
     let da: &ftCaptain_DatAttrs = unsafe { &*(fp.dat_attrs as *const ftCaptain_DatAttrs) };
     unsafe {
         fp.mv.ca.specials.grav -= da.specials_grav;
@@ -249,6 +261,7 @@ pub fn specials_gravity(fp: &mut Fighter) {
 }
 
 pub fn ftCa_SpecialAirSStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialAirSStart_Phys");
     unsafe {
         let fp = fpp(gobj);
         st::ft_80085134(gobj);
@@ -259,6 +272,7 @@ pub fn ftCa_SpecialAirSStart_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCa_SpecialAirS_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialAirS_Phys");
     unsafe {
         let fp = fpp(gobj);
         st::ft_80085134(gobj);
@@ -268,6 +282,7 @@ pub fn ftCa_SpecialAirS_Phys(gobj: *mut HSD_GObj) {
 
 /// Captain Falcon & Ganondorf's grounded Raptor Boost / Gerudo Dragon start collision.
 pub fn ftCa_SpecialSStart_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialSStart_Coll");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftCaptain_DatAttrs;
@@ -299,6 +314,7 @@ pub fn ftCa_SpecialSStart_Coll(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCa_SpecialS_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialS_Coll");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftCaptain_DatAttrs;

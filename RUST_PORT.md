@@ -86,3 +86,4 @@ The long history and topic detail that used to live here is in `docs/rust-port/n
 - 2026-10-30 Trace status after all six pre-melee_* merges -> notes/traces.md
 - 2026-10-30 rust-port: consolidation plan (real GObj loop on tu/ ports, vs_match stand-in inventory, dedupe list, diff gate, logic lint) -> notes/consolidation.md
 - 2026-10-30 rust-port: consolidation step 0 done (green tests, golden caps, baseline counts in engine_progress.tsv) -> notes/consolidation.md
+- 2026-10-30 rust-port: consolidation steps 1-3 (call trace markers + seqdiff, diff --frames/per-subsystem baselines/gate.sh, lint_logic.py report), see notes/consolidation.md and notes/diff.md

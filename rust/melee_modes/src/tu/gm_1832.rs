@@ -329,6 +329,7 @@ unsafe fn mirror_to_entity2(arg0: *mut HSD_GObj, jobj: *mut HSD_JObj, pos: &mut 
 }
 
 pub unsafe fn fn_8018325C(arg0: *mut HSD_GObj, arg1: i32) {
+    melee_core::ct!("fn_8018325C");
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let jobj = (*arg0).hsd_obj as *mut HSD_JObj;
     let st = &mut lbl_804735A8;
@@ -435,6 +436,7 @@ pub unsafe fn fn_8018325C(arg0: *mut HSD_GObj, arg1: i32) {
 }
 
 pub unsafe fn fn_80184138(arg0: *mut HSD_GObj, arg1: i32) {
+    melee_core::ct!("fn_80184138");
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let jobj = (*arg0).hsd_obj as *mut HSD_JObj;
     let st = &lbl_804735A8;
@@ -512,21 +514,27 @@ pub unsafe fn fn_80184138(arg0: *mut HSD_GObj, arg1: i32) {
 }
 
 pub unsafe extern "C" fn fn_801849E0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801849E0");
     fn_8018325C(gobj, 0);
 }
 pub unsafe extern "C" fn fn_80184A04(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80184A04");
     fn_8018325C(gobj, 1);
 }
 pub unsafe extern "C" fn fn_80184A28(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80184A28");
     fn_8018325C(gobj, 2);
 }
 pub unsafe extern "C" fn fn_80184A4C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80184A4C");
     fn_80184138(gobj, 0);
 }
 pub unsafe extern "C" fn fn_80184A70(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80184A70");
     fn_80184138(gobj, 1);
 }
 pub unsafe extern "C" fn fn_80184A94(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80184A94");
     fn_80184138(gobj, 2);
 }
 
@@ -538,6 +546,7 @@ unsafe fn tobj_aobj_rate0(jobj: *mut HSD_JObj, frame: f32) {
 }
 
 pub unsafe extern "C" fn fn_80184AB8(arg0: *mut HSD_GObj) {
+    melee_core::ct!("fn_80184AB8");
     let mut sp110: *mut HSD_JObj = null_mut();
     let mut sp10 = [0u8; 0x100];
     let jobj = (*arg0).hsd_obj as *mut HSD_JObj;
@@ -681,10 +690,12 @@ pub unsafe extern "C" fn fn_80184AB8(arg0: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_8018504C_cb(_gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8018504C_cb");
     fn_8018504C()
 }
 
 pub unsafe fn fn_8018504C() {
+    melee_core::ct!("fn_8018504C");
     let st = &mut lbl_804735A8;
     let k = &lbl_8047368C;
     let new_var: i32 = 0x32;
@@ -717,6 +728,7 @@ pub unsafe fn fn_8018504C() {
 }
 
 pub unsafe fn fn_801851C0() -> i32 {
+    melee_core::ct!("fn_801851C0");
     let mut pos: Vec3;
     let mut result: i32 = 0;
     let mut i = 0i32;
@@ -746,6 +758,7 @@ pub unsafe fn fn_801851C0() -> i32 {
 }
 
 pub unsafe extern "C" fn fn_801852FC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801852FC");
     let st = &mut lbl_804735E8;
     if ext::HSD_CObjSetCurrent((*gobj).hsd_obj as *mut HSD_CObj) != 0 {
         let mut i = 0i32;
@@ -771,6 +784,7 @@ pub unsafe extern "C" fn fn_801852FC(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe fn fn_80185408(_x: i32, arg8: f32, arg9: f32, arg_a: f32, arg_b: f32) {
+    melee_core::ct!("fn_80185408");
     // retail used a 3x4 Mtx the Mtx44 write overran; the PC build uses a 4x4
     let mut sp1c = [[0.0f32; 4]; 4];
     ext::GXSetNumChans(1);
@@ -803,6 +817,7 @@ pub unsafe fn fn_80185408(_x: i32, arg8: f32, arg9: f32, arg_a: f32, arg_b: f32)
 /// Square root through the Gekko `frsqrte` estimate and three Newton steps (the shipping build
 /// contracts each `x * (t * t) - 3.0` into an `fma`).
 pub unsafe fn fn_801855BC(arg8: f64) -> f64 {
+    melee_core::ct!("fn_801855BC");
     if arg8 > 0.0 {
         let step = |t: f64| 0.5 * t * -(arg8.mul_add(t * t, -3.0));
         let temp_f2_2 = melee_core::fp::frsqrte(arg8);
@@ -821,11 +836,13 @@ pub unsafe fn fn_801855BC(arg8: f64) -> f64 {
 }
 
 pub unsafe extern "C" fn fn_8018564C(gobj: *mut HSD_GObj, _arg1: i32) {
+    melee_core::ct!("fn_8018564C");
     fn_80185408(0xFC8000, 0.0, 480.0, 200.0, 640.0);
     ext::HSD_SObjLib_803A54EC(gobj, 7);
 }
 
 pub unsafe extern "C" fn fn_8018569C(gobj: *mut HSD_GObj, _arg1: i32) {
+    melee_core::ct!("fn_8018569C");
     if ext::HSD_CObjSetCurrent((*gobj).hsd_obj as *mut HSD_CObj) != 0 {
         let mut i = 0i32;
         while i < lbl_804735E8.xE0 as i32 + 1 {
@@ -844,6 +861,7 @@ pub unsafe extern "C" fn fn_8018569C(gobj: *mut HSD_GObj, _arg1: i32) {
 }
 
 pub unsafe extern "C" fn fn_8018575C(gobj: *mut HSD_GObj, _arg1: i32) {
+    melee_core::ct!("fn_8018575C");
     if ext::HSD_CObjSetCurrent((*gobj).hsd_obj as *mut HSD_CObj) != 0 {
         ext::Camera_800313E0(gobj, 1);
         (*gobj).gxlink_prios = 0x1001;
@@ -855,6 +873,7 @@ pub unsafe extern "C" fn fn_8018575C(gobj: *mut HSD_GObj, _arg1: i32) {
 /// Creates splash screen sprite objects from pre-rendered character images. Distributes 10
 /// image tiles across a grid with random offsets.
 pub unsafe extern "C" fn fn_801857C4(arg0: *mut HSD_GObj) {
+    melee_core::ct!("fn_801857C4");
     let st = &mut lbl_804735E8;
     if st.xE1 != 0 {
         ext::HSD_GObjFree(lbl_804D65F0);
@@ -890,6 +909,7 @@ pub unsafe extern "C" fn fn_801857C4(arg0: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_801859C8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801859C8");
     let mut sobj = (*gobj).hsd_obj as *mut HSD_SObj;
 
     while !sobj.is_null() {
@@ -904,6 +924,7 @@ pub unsafe extern "C" fn fn_801859C8(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe fn fn_80185A0C() -> i32 {
+    melee_core::ct!("fn_80185A0C");
     let gobj = ext::GObj_Create(0x13, 0x14, 0);
     ext::HSD_SObjLib_803A55DC(gobj, 0x280, 0x1E0, 0xB);
     (*gobj).gxlink_prios = 0x20000;
@@ -956,6 +977,7 @@ pub unsafe fn fn_80185A0C() -> i32 {
 }
 
 pub unsafe fn fn_80185D64() {
+    melee_core::ct!("fn_80185D64");
     ext::ftDemo_ObjAllocInit();
     ext::Player_InitAllPlayers();
 
@@ -983,6 +1005,7 @@ pub unsafe fn fn_80185D64() {
 }
 
 pub unsafe fn fn_80185E34() -> i32 {
+    melee_core::ct!("fn_80185E34");
     let local = lbl_803B7C28;
     let k = &lbl_8047368C;
     let mut player_slot = 0i32;
@@ -1009,6 +1032,7 @@ pub unsafe fn fn_80185E34() -> i32 {
 }
 
 pub unsafe fn fn_80185F5C(mut arg0: i32) {
+    melee_core::ct!("fn_80185F5C");
     let local = lbl_803B7C40;
     let k = &lbl_8047368C;
     let mut i = 0usize;
@@ -1033,6 +1057,7 @@ pub unsafe fn fn_80185F5C(mut arg0: i32) {
 }
 
 pub unsafe fn fn_80186080() {
+    melee_core::ct!("fn_80186080");
     let st = &mut lbl_804735A8;
     let k = &lbl_8047368C;
     let temp_r31 = ext::HSD_SisLib_803A611C(0, null_mut(), 9, 0x14, 0, 0xE, 0, 0x12);
@@ -1061,6 +1086,7 @@ pub unsafe fn fn_80186080() {
 }
 
 pub unsafe fn fn_801861B8() {
+    melee_core::ct!("fn_801861B8");
     let st = &mut lbl_804735A8;
     let k = &lbl_8047368C;
 
@@ -1110,6 +1136,7 @@ pub unsafe fn fn_801861B8() {
 }
 
 pub unsafe fn fn_80186400() {
+    melee_core::ct!("fn_80186400");
     let gobj = ext::GObj_Create(0xE, 0xF, 0);
     let models0 = *(*lbl_804D65FC).models;
     let jobj = ext::HSD_JObjLoadJoint((*models0).joint);
@@ -1180,6 +1207,7 @@ unsafe fn setup_fog() {
 }
 
 pub unsafe fn fn_80186634(_arg0: *mut c_void) {
+    melee_core::ct!("fn_80186634");
     ext::lbArchive_80016DBC(
         c"GmIntEz.dat".as_ptr(),
         &[
@@ -1253,6 +1281,7 @@ pub unsafe fn fn_80186634(_arg0: *mut c_void) {
 }
 
 pub unsafe fn gm_Scene_IntroEasy_OnFrame() {
+    melee_core::ct!("gm_Scene_IntroEasy_OnFrame");
     if lbl_804735A8.x0 != 0 {
         ext::lbAudioAx_800236DC();
         ext::gm_801A4B60();
@@ -1285,6 +1314,7 @@ melee_core::gc_layout!(ClassicModeEnterData, "ClassicModeEnterData", size 0x20, 
 ]);
 
 pub unsafe fn gm_Scene_IntroEasy_OnEnter(arg0_: *mut c_void) {
+    melee_core::ct!("gm_Scene_IntroEasy_OnEnter");
     let arg0 = arg0_ as *const ClassicModeEnterData;
 
     if (*arg0).x10_bytes[0] == 0x1A || (*arg0).x10_bytes[1] == 0x1A {

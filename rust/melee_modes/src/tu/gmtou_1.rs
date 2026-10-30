@@ -135,6 +135,7 @@ unsafe fn pad_err(i: i32) -> i8 {
 /// `6.5+(13*(2*p)-19.5)` (else); the inner `a*b+c` pairs are fused.
 #[inline]
 pub fn gmTournament_GetPlayerX(player_count: u8, player: i32) -> f32 {
+    melee_core::ct!("gmTournament_GetPlayerX");
     if player_count as i32 == 4 {
         return fmadds(13.0, player as f32, -19.5);
     }
@@ -145,12 +146,14 @@ pub fn gmTournament_GetPlayerX(player_count: u8, player: i32) -> f32 {
 }
 #[inline]
 pub fn gmTournament_SetPlayerX(x: &mut f32, player_count: u8, player: i32) {
+    melee_core::ct!("gmTournament_SetPlayerX");
     *x = gmTournament_GetPlayerX(player_count, player);
 }
 
 /// `gmTournament_IsPlayerSetupOption`: `0x1B <= cur_option <= 0x1E`.
 #[inline]
 pub unsafe fn gmTournament_IsPlayerSetupOption() -> i32 {
+    melee_core::ct!("gmTournament_IsPlayerSetupOption");
     let o = (*gm_GetTournamentData()).cur_option;
     if o >= 0x1B && (*gm_GetTournamentData()).cur_option <= 0x1E { 1 } else { 0 }
 }
@@ -165,6 +168,7 @@ unsafe fn in_range_13_1a() -> bool {
 // ---------------------------------------------------------------------------------------------
 
 pub unsafe extern "C" fn fn_80196510() {
+    melee_core::ct!("fn_80196510");
     gm_GetTournamentData();
 
     loop {
@@ -182,18 +186,22 @@ pub unsafe extern "C" fn fn_80196510() {
 }
 
 pub unsafe extern "C" fn fn_8019655C() -> i32 {
+    melee_core::ct!("fn_8019655C");
     lbl_804D4190
 }
 
 pub unsafe extern "C" fn fn_80196564(arg0: *mut TmData) -> i32 {
+    melee_core::ct!("fn_80196564");
     ((((*arg0).stage_selection_type == 0 && (*arg0).x32 == 0) || (*arg0).stage_selection_type == 1) as i32)
 }
 
 pub unsafe extern "C" fn fn_80196594(arg0: *mut TmData) -> i32 {
+    melee_core::ct!("fn_80196594");
     ((((*arg0).stage_selection_type == 2 && (*arg0).x32 == 0) || (*arg0).stage_selection_type == 3) as i32)
 }
 
 pub unsafe extern "C" fn fn_801965C4() {
+    melee_core::ct!("fn_801965C4");
     let temp_r3 = gm_GetTournamentData();
     (*temp_r3).x2D = 1;
 
@@ -222,6 +230,7 @@ unsafe fn set4c(b: i32, s: usize, v: u8) {
 
 /// Randomly assigns bracket positions for tournament seeding (three entrants).
 pub unsafe extern "C" fn fn_80196684(bracket_idx: i32) {
+    melee_core::ct!("fn_80196684");
     let b = bracket_idx;
     let rand_val = ext::HSD_Randi(x51(b, 0) + x51(b, 1) + x51(b, 2));
 
@@ -259,6 +268,7 @@ pub unsafe extern "C" fn fn_80196684(bracket_idx: i32) {
 
 /// Four-entrant seeding: pick the winner by weight, then the rest recursively.
 pub unsafe extern "C" fn fn_801967E0(arg0: i32) {
+    melee_core::ct!("fn_801967E0");
     let a = arg0;
     let mut rand = ext::HSD_Randi(x51(a, 0) + x51(a, 1) + x51(a, 2) + x51(a, 3));
 
@@ -417,6 +427,7 @@ pub unsafe extern "C" fn fn_801967E0(arg0: i32) {
 }
 
 pub unsafe extern "C" fn fn_80196CF8() -> i32 {
+    melee_core::ct!("fn_80196CF8");
     let tmdata = gm_GetTournamentData();
     let entrants = (*tmdata).entrants;
     let x24 = (*tmdata).x24;
@@ -440,6 +451,7 @@ pub unsafe extern "C" fn fn_80196CF8() -> i32 {
 
 /// Cycles animation frame counter and updates JObj animation.
 pub unsafe extern "C" fn fn_80196DBC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80196DBC");
     let counter = addr_of_mut!(lbl_804799D8.x10);
     let jobj = gobj_jobj(gobj);
     if *counter as u32 > 0x320 {
@@ -451,6 +463,7 @@ pub unsafe extern "C" fn fn_80196DBC(gobj: *mut HSD_GObj) {
 
 /// Updates the tournament UI animation frame counter.
 pub unsafe extern "C" fn fn_80196E30(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80196E30");
     let state = d8();
     let cur_option = (*gm_GetTournamentData()).cur_option;
     let jobj = gobj_jobj(gobj);
@@ -472,6 +485,7 @@ pub unsafe extern "C" fn fn_80196E30(gobj: *mut HSD_GObj) {
 
 /// Tournament mode JObj visibility/animation callback.
 pub unsafe extern "C" fn fn_80196EEC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80196EEC");
     let tmdata = gm_GetTournamentData();
     let jobj = gobj_jobj(gobj);
 
@@ -503,6 +517,7 @@ pub unsafe extern "C" fn fn_80196EEC(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_80196FFC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80196FFC");
     let tm = gm_GetTournamentData();
     let pnum = fn_8018F62C(&*gobj) as i32;
     let jobj = gobj_jobj(gobj);
@@ -579,6 +594,7 @@ pub unsafe extern "C" fn fn_80196FFC(gobj: *mut HSD_GObj) {
 
 /// Updates visibility and position of a tournament menu JObj.
 pub unsafe extern "C" fn fn_801973F8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801973F8");
     let tm = gm_GetTournamentData();
     let pnum = fn_8018F62C(&*gobj) as i32;
     let jobj = gobj_jobj(gobj);
@@ -609,6 +625,7 @@ pub unsafe extern "C" fn fn_801973F8(gobj: *mut HSD_GObj) {
 
 /// Updates visibility of a tournament menu JObj based on current menu state.
 pub unsafe extern "C" fn fn_801975C8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801975C8");
     let tmdata = gm_GetTournamentData();
     let idx = fn_8018F62C(&*gobj);
     let jobj = gobj_jobj(gobj);
@@ -634,6 +651,7 @@ pub unsafe extern "C" fn fn_801975C8(gobj: *mut HSD_GObj) {
 
 /// Updates visibility and animation of tournament menu JObj.
 pub unsafe extern "C" fn fn_801976D4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801976D4");
     gm_GetTournamentData();
     let jobj = gobj_jobj(gobj);
     let is_in_range = gmTournament_IsPlayerSetupOption();
@@ -651,6 +669,7 @@ pub unsafe extern "C" fn fn_801976D4(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_801977AC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801977AC");
     let tm = gm_GetTournamentData();
     let pnum = fn_8018F62C(&*gobj) as i32;
     let jobj = gobj_jobj(gobj);
@@ -689,6 +708,7 @@ pub unsafe extern "C" fn fn_801977AC(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_80197AF0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80197AF0");
     let tm = gm_GetTournamentData();
     let pnum = fn_8018F62C(&*gobj) as i32;
     let jobj = gobj_jobj(gobj);
@@ -735,6 +755,7 @@ pub unsafe extern "C" fn fn_80197AF0(gobj: *mut HSD_GObj) {
 
 /// Updates visibility of a menu JObj based on current menu option.
 pub unsafe extern "C" fn fn_80197D4C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80197D4C");
     gm_GetTournamentData();
     let jobj = gobj_jobj(gobj);
     let cond = gmTournament_IsPlayerSetupOption();
@@ -752,6 +773,7 @@ pub unsafe extern "C" fn fn_80197D4C(gobj: *mut HSD_GObj) {
 
 /// Updates player HUD element visibility and position.
 pub unsafe extern "C" fn fn_80197E18(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80197E18");
     let data = gm_GetTournamentData();
     let pnum = fn_8018F62C(&*gobj) as i32;
     let jobj = gobj_jobj(gobj);
@@ -781,6 +803,7 @@ pub unsafe extern "C" fn fn_80197E18(gobj: *mut HSD_GObj) {
 
 /// Updates JObj visibility based on menu option and player state.
 pub unsafe extern "C" fn fn_80197FD8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80197FD8");
     let tm_data = gm_GetTournamentData();
     let port = fn_8018F62C(&*gobj) as i32;
     let jobj = gobj_jobj(gobj);
@@ -813,6 +836,7 @@ pub unsafe extern "C" fn fn_80197FD8(gobj: *mut HSD_GObj) {
 
 /// Updates player cursor animation and position.
 pub unsafe extern "C" fn fn_801981A0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801981A0");
     let state = d8();
     let data = gm_GetTournamentData();
     let pnum = fn_8018F62C(&*gobj) as i32;
@@ -855,6 +879,7 @@ pub unsafe extern "C" fn fn_801981A0(gobj: *mut HSD_GObj) {
 
 /// Updates the visibility and position of a player's controller indicator.
 pub unsafe extern "C" fn fn_801983E4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801983E4");
     let tm = gm_GetTournamentData();
     let pnum = fn_8018F62C(&*gobj) as i32;
     let jobj = gobj_jobj(gobj);
@@ -881,6 +906,7 @@ pub unsafe extern "C" fn fn_801983E4(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_80198584(results: *mut ResultsData) {
+    melee_core::ct!("fn_80198584");
     let cur_option = (*gm_GetTournamentData()).cur_option;
     let jobj = (*results).x28;
     if cur_option == 0x1D {
@@ -891,6 +917,7 @@ pub unsafe extern "C" fn fn_80198584(results: *mut ResultsData) {
 }
 
 pub unsafe extern "C" fn fn_801985D4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801985D4");
     let d = d8();
     let jobj = gobj_jobj(gobj);
 
@@ -923,6 +950,7 @@ pub unsafe extern "C" fn fn_801985D4(gobj: *mut HSD_GObj) {
 
 /// Animates and positions the tournament bracket results overlay JObj.
 pub unsafe extern "C" fn fn_80198824(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80198824");
     let d = d8();
     let jobj = gobj_jobj(gobj);
 
@@ -969,6 +997,7 @@ pub unsafe extern "C" fn fn_80198824(gobj: *mut HSD_GObj) {
 
 /// Initializes tournament mode match data (per-player counters and anim records).
 pub unsafe extern "C" fn fn_80198BA0() {
+    melee_core::ct!("fn_80198BA0");
     let d = d8();
     let td = gm_GetTournamentData();
 
@@ -1002,6 +1031,7 @@ pub unsafe extern "C" fn fn_80198BA0() {
 
 /// Initializes tournament mode text displays.
 pub unsafe extern "C" fn fn_80198C60() {
+    melee_core::ct!("fn_80198C60");
     let td = gm_GetTournamentData();
     (*td).x524[2] = ext::HSD_SisLib_803A6754(0, lbl_804D663C);
     let text = (*td).x524[2];
@@ -1019,6 +1049,7 @@ pub unsafe extern "C" fn fn_80198C60() {
 
 /// Initializes the scene rendering components for the gm_18A5 game mode.
 pub unsafe extern "C" fn fn_80198D18() {
+    melee_core::ct!("fn_80198D18");
     gm_GetTournamentData();
     let gobj = fn_80190174((*(*lbl_804D666C).cameras).desc);
     fn_801901F8((*(*lbl_804D666C).cameras).desc);
@@ -1084,6 +1115,7 @@ unsafe fn select_icon_child(jobj2: &mut *mut HSD_JObj, map: i32) {
 }
 
 pub unsafe extern "C" fn fn_80198EBC() {
+    melee_core::ct!("fn_80198EBC");
     let td = gm_GetTournamentData();
     gm_GetTournamentData();
 
@@ -1243,6 +1275,7 @@ pub unsafe extern "C" fn fn_80198EBC() {
 }
 
 pub unsafe extern "C" fn fn_80199AF0() {
+    melee_core::ct!("fn_80199AF0");
     let td1 = gm_GetTournamentData();
     let td2 = gm_GetTournamentData();
     let mut local1: i32 = 0;
@@ -1317,6 +1350,7 @@ pub unsafe extern "C" fn fn_80199AF0() {
 }
 
 pub unsafe extern "C" fn fn_8019A158() {
+    melee_core::ct!("fn_8019A158");
     let mut local1: i32 = 0;
     let mut local2: i32 = 0;
     let td1 = gm_GetTournamentData();
@@ -1454,6 +1488,7 @@ pub unsafe extern "C" fn fn_8019A158() {
 }
 
 pub unsafe extern "C" fn fn_8019A71C(state: *mut i32, _unused1: u32, _unused2: u32) {
+    melee_core::ct!("fn_8019A71C");
     let counter = addr_of_mut!(lbl_804799D8.x0);
 
     match *state {
@@ -1497,6 +1532,7 @@ pub unsafe extern "C" fn fn_8019A71C(state: *mut i32, _unused1: u32, _unused2: u
 }
 
 pub unsafe extern "C" fn gm_8019A828() {
+    melee_core::ct!("gm_8019A828");
     (*gm_GetTournamentData()).x32 = 0;
     lbl_804D6678 = 1;
     (*gm_GetTournamentData()).cur_option = 0x1B;
@@ -1529,6 +1565,7 @@ unsafe fn start_stage_sequence(t: *mut TmData) -> bool {
 }
 
 pub unsafe extern "C" fn fn_8019A86C(tm: *mut TmData, _arg1: u32, arg2: u32) {
+    melee_core::ct!("fn_8019A86C");
     let mut ready_count: i32 = 0;
     let mut pad_err_flag: i32 = 0;
 
@@ -1716,6 +1753,7 @@ pub unsafe extern "C" fn fn_8019A86C(tm: *mut TmData, _arg1: u32, arg2: u32) {
 
 /// Tournament match timer display/audio state machine.
 pub unsafe extern "C" fn fn_8019AF50(arg0: *mut i32, _arg1: u32, _arg2: u32) {
+    melee_core::ct!("fn_8019AF50");
     let tm = arg0 as *mut TmData;
     let mut sp_buf: [u8; 20] = lbl_803B7D04;
     let bracket_idx = fn_8018F74C();
@@ -1804,6 +1842,7 @@ pub unsafe extern "C" fn fn_8019AF50(arg0: *mut i32, _arg1: u32, _arg2: u32) {
 
 /// Per-frame update for tournament mode menu.
 pub unsafe extern "C" fn gm_Scene_TouBracket_OnFrame() {
+    melee_core::ct!("gm_Scene_TouBracket_OnFrame");
     let mut sp: [i32; 13] = [0; 13];
 
     let data = gm_GetTournamentData();
@@ -1866,6 +1905,7 @@ unsafe fn fn_8019B458_UpdateRank(tm: *mut TmData, d: *mut Lbl804799D8_t) {
 /// Transitions to results screen after a tournament match: ranks players, preloads stage and
 /// character data, and starts audio.
 pub unsafe extern "C" fn fn_8019B458(arg0: *mut i32) {
+    melee_core::ct!("fn_8019B458");
     // struct Preload { s32 stage; s32 char_ids[4]; s32 costumes[4]; } (zero-initialised)
     let mut req_stage: i32 = 0;
     let mut req_char_ids: [i32; 4] = [0; 4];
@@ -1971,6 +2011,7 @@ pub unsafe extern "C" fn fn_8019B458(arg0: *mut i32) {
 
 /// Initializes match data and transitions to next state.
 pub unsafe extern "C" fn fn_8019B81C(state: *mut i32) {
+    melee_core::ct!("fn_8019B81C");
     fn_80198BA0();
     fn_80198EBC();
     *state = 0x1C;
@@ -1978,6 +2019,7 @@ pub unsafe extern "C" fn fn_8019B81C(state: *mut i32) {
 }
 
 pub unsafe extern "C" fn fn_8019B860(tm: *mut TmData) {
+    melee_core::ct!("fn_8019B860");
     fn_8019A158();
     fn_80199AF0();
     fn_80198BA0();
@@ -1988,6 +2030,7 @@ pub unsafe extern "C" fn fn_8019B860(tm: *mut TmData) {
 }
 
 pub unsafe extern "C" fn gm_Scene_TouBracket_OnEnter(_arg0: *mut c_void) {
+    melee_core::ct!("gm_Scene_TouBracket_OnEnter");
     lbl_804D6668 = null_mut();
     lbl_804D6664 = null_mut();
     lbl_804D6680[0] = 0;
@@ -2029,10 +2072,11 @@ pub unsafe extern "C" fn gm_Scene_TouBracket_OnEnter(_arg0: *mut c_void) {
 }
 
 pub unsafe extern "C" fn gm_Scene_TouBracket_OnExit(_arg0: *mut c_void) {
+    melee_core::ct!("gm_Scene_TouBracket_OnExit");
     ext::lbArchive_80016EFC(lbl_804D6660);
     ext::lbArchive_80016EFC(lbl_804D6638);
     ext::lbArchive_80016EFC(lbl_804D6664);
     ext::lbArchive_80016EFC(lbl_804D6668);
 }
 
-pub unsafe extern "C" fn fn_8019BA04(_state: *mut i32) {}
+pub unsafe extern "C" fn fn_8019BA04(_state: *mut i32) { melee_core::ct!("fn_8019BA04");}

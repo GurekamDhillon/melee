@@ -90,6 +90,7 @@ pub mod ext {
 /// `lbArchive_LoadSymbols(file, out, sym)` (variadic in the C): settable hook, no port.
 pub static mut H_lbArchive_LoadSymbols: Option<fn(*const c_char, *mut c_void, *const c_char)> = None;
 pub fn lbArchive_LoadSymbols(file: *const c_char, out: *mut c_void, sym: *const c_char) {
+    melee_core::ct!("lbArchive_LoadSymbols");
     match unsafe { H_lbArchive_LoadSymbols } { Some(f) => f(file, out, sym), None => panic!("TODO: lbArchive_LoadSymbols is not ported") }
 }
 
@@ -144,6 +145,7 @@ fn my_fmodf(a: f32, b: f32) -> f32 {
 /// `lbRefract_80021CE8(cb, arg1)`: fills the 32x32 distortion texture `arg1` from LbRf.dat's
 /// radial parameters (modulus, scale) and flushes it.
 pub unsafe fn lbRefract_80021CE8(cb: *mut lbRefract_CallbackData, arg1: i32) {
+    melee_core::ct!("lbRefract_80021CE8");
     use crate::gekko::sqrtf;
     let param_idx = (arg1 * 2) as isize;
     let x_step = 2.0f32 / ((*cb).width.wrapping_sub(1) as f32);
@@ -189,6 +191,7 @@ unsafe fn tile_base(data: *const lbRefract_CallbackData, c: u32, off: u32) -> *m
 
 /// `lbRefract_WriteTexCoordIA4` (an IA8 texel writer): alpha then intensity.
 pub unsafe extern "C" fn lbRefract_WriteTexCoordIA4(data: *mut lbRefract_CallbackData, row: u32, col: u32, _arg3: u32, _arg4: u32, intensity: u32, alpha: u32) {
+    melee_core::ct!("lbRefract_WriteTexCoordIA4");
     let (row, col) = (row as u32, col as u32);
     let base = tile_base(data, col >> 2, (row >> 2).wrapping_mul(32));
     let i = ((row & 3) + (col & 3) * 4) as usize;
@@ -335,6 +338,7 @@ pub static mut tobjdesc1: HSD_TObjDesc = tobj_desc(unsafe { addr_of_mut!(tobjdes
 /// `lbRefract_800222A4`: loads LbRf.dat, allocates the 320x240 RGB565 source texture and, per
 /// refraction table entry, a 32x32 IA8 distortion texture with its TObj.
 pub unsafe fn lbRefract_800222A4() {
+    melee_core::ct!("lbRefract_800222A4");
     const IMAGE_WIDTH: i32 = 320;
     const IMAGE_HEIGHT: i32 = 240;
     let mut cb = lbRefract_CallbackData::zeroed();
@@ -377,6 +381,7 @@ pub unsafe fn lbRefract_800222A4() {
 /// `lbRefract_8002247C(cobj)`: derives the light-projection texture matrix from the camera's
 /// projection (perspective / frustum / ortho) while refraction has users.
 pub unsafe fn lbRefract_8002247C(cobj: *mut HSD_CObj) {
+    melee_core::ct!("lbRefract_8002247C");
     use crate::mtx::{light_frustum, light_ortho, light_perspective};
     if lbl_804336D0.refractionUserCount == 0 {
         return;
@@ -395,6 +400,7 @@ pub unsafe fn lbRefract_8002247C(cobj: *mut HSD_CObj) {
 /// `lbRefract_80022560`: copies the 640x480 framebuffer (downscaled to 320x240 RGB565) into the
 /// refraction source texture while refraction has users.
 pub unsafe fn lbRefract_80022560() {
+    melee_core::ct!("lbRefract_80022560");
     if lbl_804336D0.refractionUserCount != 0 {
         ext::GXSetTexCopySrc(0, 0, 0x280, 0x1E0);
         ext::GXSetTexCopyDst(0x140, 0xF0, 4, 1);
@@ -406,6 +412,7 @@ pub unsafe fn lbRefract_80022560() {
 
 /// `lbRefract_800225D4`: resets the TEV and indirect texture stages.
 pub fn lbRefract_800225D4() {
+    melee_core::ct!("lbRefract_800225D4");
     ext::GXSetTevDirect(0);
     ext::GXSetNumIndStages(0);
     ext::HSD_StateInvalidate(-1);
@@ -445,6 +452,7 @@ unsafe fn pobj_info_ptr() -> *mut HSD_PObjInfo {
 
 /// `fn_80022650`: registers the refract DObj class under `hsdDObj`.
 pub unsafe extern "C" fn fn_80022650() {
+    melee_core::ct!("fn_80022650");
     ext::hsdInitClassInfo(
         addr_of_mut!(dobj_info) as *mut _HSD_ClassInfo,
         dobj_info_ptr().cast(),
@@ -460,6 +468,7 @@ pub unsafe extern "C" fn fn_80022650() {
 /// 0x2000 copies each vertex's PNMTXIDX byte into its last TEXnMTXIDX slot throughout the display
 /// list. Returns the base load's error code, else 0.
 pub unsafe extern "C" fn lbRefract_PObjLoad(pobj: *mut HSD_PObj, desc: *mut HSD_PObjDesc) -> i32 {
+    melee_core::ct!("lbRefract_PObjLoad");
     let ret = ((*pobj_info_ptr()).load.expect("hsdPObj.load"))(pobj, desc);
     if ret != 0 {
         return ret;
@@ -540,6 +549,7 @@ pub unsafe extern "C" fn lbRefract_PObjLoad(pobj: *mut HSD_PObj, desc: *mut HSD_
 
 /// `fn_80022940`: registers the refract PObj class under `hsdPObj`.
 pub unsafe extern "C" fn fn_80022940() {
+    melee_core::ct!("fn_80022940");
     ext::hsdInitClassInfo(
         addr_of_mut!(pobj_info) as *mut _HSD_ClassInfo,
         pobj_info_ptr().cast(),
@@ -554,6 +564,7 @@ pub unsafe extern "C" fn fn_80022940() {
 /// `lbRefract_80022998(mobj, rendermode, arg2)`: sets up TObj `arg2` and the GX state that
 /// samples the refraction source through the distortion texture (indirect TEV stage).
 pub unsafe fn lbRefract_80022998(_mobj: *mut HSD_MObj, rendermode: u32, arg2: i32) {
+    melee_core::ct!("lbRefract_80022998");
     ext::HSD_TObjSetup(*lbl_804336D0.tobj_list.offset(arg2 as isize));
 
     ext::GXSetNumTexGens(2);
@@ -593,11 +604,13 @@ pub unsafe fn lbRefract_80022998(_mobj: *mut HSD_MObj, rendermode: u32, arg2: i3
 
 /// `lbRefract_80022BB8`: one more refraction user.
 pub fn lbRefract_80022BB8() {
+    melee_core::ct!("lbRefract_80022BB8");
     unsafe { lbl_804336D0.refractionUserCount += 1 };
 }
 
 /// `lbRefSetUnuse`: one refraction user less; asserts when the count goes negative.
 pub fn lbRefSetUnuse() {
+    melee_core::ct!("lbRefSetUnuse");
     unsafe {
         lbl_804336D0.refractionUserCount -= 1;
         if lbl_804336D0.refractionUserCount < 0 {

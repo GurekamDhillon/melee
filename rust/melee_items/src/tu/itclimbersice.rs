@@ -153,6 +153,7 @@ fn c_abs(x: f32) -> f32 {
 
 /// `itClimbersIce_sub_x4` (static inline): `lifeTimer -= attr->x4`.
 pub unsafe fn itClimbersIce_sub_x4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itClimbersIce_sub_x4");
     let ip = item_of(gobj);
     let attr = sa::<itClimbersIceAttributes>(ip);
     (*ip).xD44_lifeTimer -= attr.x4;
@@ -160,6 +161,7 @@ pub unsafe fn itClimbersIce_sub_x4(gobj: *mut HSD_GObj) {
 
 /// `itClimbersice_Spawn` (static inline): the ice's effect, picked by kind.
 pub unsafe fn itClimbersice_Spawn(gobj: *mut HSD_GObj, spawn1: u32, spawn2: u32) {
+    melee_core::ct!("itClimbersice_Spawn");
     let child = HSD_JObjGetChild((*gobj).hsd_obj as *mut HSD_JObj);
     let ip = item_of(gobj);
     if (*ip).kind == It_Kind_IceClimber_Ice {
@@ -171,6 +173,7 @@ pub unsafe fn itClimbersice_Spawn(gobj: *mut HSD_GObj, spawn1: u32, spawn2: u32)
 
 /// `itClimbersice_Spawn2` (static inline): the ice's child effect (no facing argument).
 pub unsafe fn itClimbersice_Spawn2(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itClimbersice_Spawn2");
     let child = HSD_JObjGetChild((*gobj).hsd_obj as *mut HSD_JObj);
     let ip = item_of(gobj);
     if (*ip).kind == It_Kind_IceClimber_Ice {
@@ -184,6 +187,7 @@ pub unsafe fn itClimbersice_Spawn2(gobj: *mut HSD_GObj) {
 
 /// `it_802C1590` (itclimbersice.c): spawn an ice block for `parent_gobj`.
 pub unsafe extern "C" fn it_802C1590(parent_gobj: *mut HSD_GObj, pos: *mut Vec3, kind: enum_t, facing_dir: f32) -> *mut HSD_GObj {
+    melee_core::ct!("it_802C1590");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = kind;
     Item_InitSpawnPositionFromParent(&mut spawn, parent_gobj, pos);
@@ -205,6 +209,7 @@ pub unsafe extern "C" fn it_802C1590(parent_gobj: *mut HSD_GObj, pos: *mut Vec3,
 
 /// `it_802C16F8` (itclimbersice.c): launch the ice along its facing direction.
 pub unsafe extern "C" fn it_802C16F8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802C16F8");
     let ip = item_of(gobj);
     let sa = sa::<itClimbersIceAttributes>(ip);
     (*ip).x40_vel.x = sa.x10 * (*ip).facing_dir;
@@ -219,11 +224,13 @@ pub unsafe extern "C" fn it_802C16F8(gobj: *mut HSD_GObj) {
 
 /// `it_802C17DC` (itclimbersice.c): `Item_8026A8EC`.
 pub unsafe extern "C" fn it_802C17DC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802C17DC");
     ext::Item_8026A8EC(gobj);
 }
 
 /// `it_2725_Logic90_Destroyed` (itclimbersice.c): release the owning climber's ice reference.
 pub unsafe extern "C" fn it_2725_Logic90_Destroyed(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_2725_Logic90_Destroyed");
     let ip = item_of(gobj);
     if !(*ip).xDD4_itemVar.climbersice.x0.is_null() {
         if (*ip).kind == It_Kind_IceClimber_Ice {
@@ -237,6 +244,7 @@ pub unsafe extern "C" fn it_2725_Logic90_Destroyed(gobj: *mut HSD_GObj) {
 
 /// `it_802C1854` (itclimbersice.c): bounce off a slope while sliding; true once it stops.
 pub unsafe extern "C" fn it_802C1854(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("it_802C1854");
     let ip = item_of(gobj);
     let coll: *mut CollData = &mut (*ip).x378_itemColl;
     let sa = sa::<itClimbersIceAttributes>(ip);
@@ -268,6 +276,7 @@ pub unsafe extern "C" fn it_802C1854(gobj: *mut HSD_GObj) -> bool {
 
 /// `it_802C1950` (itclimbersice.c): zero the velocity and enter motion 0.
 pub unsafe extern "C" fn it_802C1950(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802C1950");
     let ip = item_of(gobj);
     itResetVelocity(ip);
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE);
@@ -277,6 +286,7 @@ pub unsafe extern "C" fn it_802C1950(gobj: *mut HSD_GObj) {
 
 /// `itClimbersice_UnkMotion0_Anim`: shrink the ice's scale while it is armed.
 pub unsafe extern "C" fn itClimbersice_UnkMotion0_Anim(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itClimbersice_UnkMotion0_Anim");
     let ip = item_of(gobj);
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let sa = sa::<itClimbersIceAttributes>(ip);
@@ -293,10 +303,11 @@ pub unsafe extern "C" fn itClimbersice_UnkMotion0_Anim(gobj: *mut HSD_GObj) -> b
 }
 
 /// `itClimbersice_UnkMotion0_Phys` (empty).
-pub unsafe extern "C" fn itClimbersice_UnkMotion0_Phys(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itClimbersice_UnkMotion0_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itClimbersice_UnkMotion0_Phys");}
 
 /// `itClimbersice_UnkMotion0_Coll`.
 pub unsafe extern "C" fn itClimbersice_UnkMotion0_Coll(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itClimbersice_UnkMotion0_Coll");
     ext::it_8026D62C(gobj, Some(it_802C1A58));
     ext::it_80276CB8(gobj);
     false
@@ -304,6 +315,7 @@ pub unsafe extern "C" fn itClimbersice_UnkMotion0_Coll(gobj: *mut HSD_GObj) -> b
 
 /// `it_802C1A58`: enter motion 1.
 pub unsafe extern "C" fn it_802C1A58(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802C1A58");
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);
 }
 
@@ -311,11 +323,13 @@ pub unsafe extern "C" fn it_802C1A58(gobj: *mut HSD_GObj) {
 
 /// `itClimbersice_UnkMotion1_Anim` (returns false).
 pub unsafe extern "C" fn itClimbersice_UnkMotion1_Anim(_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itClimbersice_UnkMotion1_Anim");
     false
 }
 
 /// `itClimbersice_UnkMotion1_Phys`: fall.
 pub unsafe extern "C" fn itClimbersice_UnkMotion1_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itClimbersice_UnkMotion1_Phys");
     let ip = item_of(gobj);
     let attrs = &*(*ip).xCC_item_attr;
     ext::it_80272860(gobj, attrs.x10_fall_speed, attrs.x14_fall_speed_max);
@@ -323,12 +337,14 @@ pub unsafe extern "C" fn itClimbersice_UnkMotion1_Phys(gobj: *mut HSD_GObj) {
 
 /// `itClimbersice_UnkMotion1_Coll`.
 pub unsafe extern "C" fn itClimbersice_UnkMotion1_Coll(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itClimbersice_UnkMotion1_Coll");
     ext::it_8026E15C(gobj, Some(it_802C1950));
     false
 }
 
 /// `it_802C1AE4`: spawn the shatter effects and enter motion 2.
 pub unsafe extern "C" fn it_802C1AE4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802C1AE4");
     itClimbersice_Spawn(gobj, 0x4eb, 0x4b0);
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE);
 }
@@ -337,11 +353,13 @@ pub unsafe extern "C" fn it_802C1AE4(gobj: *mut HSD_GObj) {
 
 /// `itClimbersice_UnkMotion2_Anim`: tick the lifetime.
 pub unsafe extern "C" fn itClimbersice_UnkMotion2_Anim(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itClimbersice_UnkMotion2_Anim");
     Item_TickLifetime(item_of(gobj))
 }
 
 /// `itClimbersice_Phys_inline` (static inline): the sliding hitbox, `dmg = |vx * x30| + x2C`.
 pub unsafe fn itClimbersice_Phys_inline(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itClimbersice_Phys_inline");
     let ip = item_of(gobj);
     let sa = sa::<itClimbersIceAttributes>(ip);
     let dmg = (c_abs((*ip).x40_vel.x * (sa.x30 as f32)) as u32).wrapping_add(sa.x2C as u32);
@@ -350,6 +368,7 @@ pub unsafe fn itClimbersice_Phys_inline(gobj: *mut HSD_GObj) {
 
 /// `itClimbersice_UnkMotion2_Phys`: slide while `it_802C1854` is still false.
 pub unsafe extern "C" fn itClimbersice_UnkMotion2_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itClimbersice_UnkMotion2_Phys");
     if it_802C1854(gobj) {
         itClimbersice_Phys_inline(gobj);
     }
@@ -357,6 +376,7 @@ pub unsafe extern "C" fn itClimbersice_UnkMotion2_Phys(gobj: *mut HSD_GObj) {
 
 /// `itClimbersice_Coll` (static inline): true when the ice should be destroyed.
 pub unsafe fn itClimbersice_Coll(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itClimbersice_Coll");
     let ip = item_of(gobj);
     let sa = sa::<itClimbersIceAttributes>(ip);
     if ext::it_80276308(gobj) != 0 {
@@ -373,6 +393,7 @@ pub unsafe fn itClimbersice_Coll(gobj: *mut HSD_GObj) -> bool {
 
 /// `itClimbersice_UnkMotion2_Coll`.
 pub unsafe extern "C" fn itClimbersice_UnkMotion2_Coll(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itClimbersice_UnkMotion2_Coll");
     ext::it_8026D62C(gobj, Some(fn_802C1D44));
     ext::it_80276CB8(gobj);
     itClimbersice_Coll(gobj)
@@ -380,6 +401,7 @@ pub unsafe extern "C" fn itClimbersice_UnkMotion2_Coll(gobj: *mut HSD_GObj) -> b
 
 /// `fn_802C1D44`: enter motion 3 and clear the effects.
 pub unsafe extern "C" fn fn_802C1D44(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_802C1D44");
     ext::Item_80268E5C(gobj, 3, ITEM_ANIM_UPDATE);
     ext::efLib_DestroyAll(gobj);
 }
@@ -388,17 +410,20 @@ pub unsafe extern "C" fn fn_802C1D44(gobj: *mut HSD_GObj) {
 
 /// `itClimbersice_UnkMotion3_Anim`: tick the lifetime.
 pub unsafe extern "C" fn itClimbersice_UnkMotion3_Anim(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itClimbersice_UnkMotion3_Anim");
     Item_TickLifetime(item_of(gobj))
 }
 
 /// `itClimbersice_UnkMotion3_Phys`: fall, then the hitbox.
 pub unsafe extern "C" fn itClimbersice_UnkMotion3_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itClimbersice_UnkMotion3_Phys");
     Item_ApplyFallingPhysics(gobj);
     itClimbersice_Phys_inline(gobj);
 }
 
 /// `itClimbersice_UnkMotion3_Coll`.
 pub unsafe extern "C" fn itClimbersice_UnkMotion3_Coll(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itClimbersice_UnkMotion3_Coll");
     if ext::it_8026DAA8(gobj) & 1 != 0 {
         itClimbersice_Spawn(gobj, 0x4eb, 0x4b0);
         ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE);
@@ -410,21 +435,25 @@ pub unsafe extern "C" fn itClimbersice_UnkMotion3_Coll(gobj: *mut HSD_GObj) -> b
 
 /// `itClimbersIce_Logic90_DmgDealt`: always true.
 pub unsafe extern "C" fn itClimbersIce_Logic90_DmgDealt(_arg0: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itClimbersIce_Logic90_DmgDealt");
     true
 }
 
 /// `itClimbersIce_Logic90_Reflected`: `it_80273030`.
 pub unsafe extern "C" fn itClimbersIce_Logic90_Reflected(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itClimbersIce_Logic90_Reflected");
     ext::it_80273030(gobj)
 }
 
 /// `itClimbersIce_Logic90_Clanked`: always true.
 pub unsafe extern "C" fn itClimbersIce_Logic90_Clanked(_arg0: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itClimbersIce_Logic90_Clanked");
     true
 }
 
 /// `it_2725_Logic90_HitShield`: bounce off the victim while slow enough, else break.
 pub unsafe extern "C" fn it_2725_Logic90_HitShield(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("it_2725_Logic90_HitShield");
     let ip = item_of(gobj);
     let attr = &*(*ip).xCC_item_attr;
     let sa = sa::<itClimbersIceAttributes>(ip);
@@ -448,16 +477,19 @@ pub unsafe extern "C" fn it_2725_Logic90_HitShield(gobj: *mut HSD_GObj) -> bool 
 
 /// `itClimbersIce_Logic90_Absorbed`: always true.
 pub unsafe extern "C" fn itClimbersIce_Logic90_Absorbed(_arg0: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itClimbersIce_Logic90_Absorbed");
     true
 }
 
 /// `itClimbersIce_Logic90_ShieldBounced`: `itColl_BounceOffShield`.
 pub unsafe extern "C" fn itClimbersIce_Logic90_ShieldBounced(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itClimbersIce_Logic90_ShieldBounced");
     ext::itColl_BounceOffShield(gobj)
 }
 
 /// `itClimbersIce_Logic90_EvtUnk`: forget the climber reference, then `it_8026B894`.
 pub unsafe extern "C" fn itClimbersIce_Logic90_EvtUnk(gobj: *mut HSD_GObj, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itClimbersIce_Logic90_EvtUnk");
     let ip = item_of(gobj);
     if (*ip).xDD4_itemVar.climbersice.x0 as *mut HSD_GObj == ref_gobj {
         (*ip).xDD4_itemVar.climbersice.x0 = null_mut();

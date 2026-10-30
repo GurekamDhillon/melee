@@ -64,22 +64,27 @@ static mut vr_count: i32 = 0;
 static mut renew_count: i32 = 0;
 
 pub unsafe fn HSD_VISearchXFBByStatus(status: HSD_VIXFBDrawDispStatus) -> i32 {
+    melee_core::ct!("HSD_VISearchXFBByStatus");
     for i in 0..3 { if HSD_VIData.xfb[i].status == status { return i as i32; } }
     -1
 }
 pub unsafe fn HSD_VISetUserPreRetraceCallback(cb:HSD_VIRetraceCallback)->HSD_VIRetraceCallback {
+    melee_core::ct!("HSD_VISetUserPreRetraceCallback");
     let old=HSD_VIData.pre_cb; let intr=ext::OSDisableInterrupts();
     HSD_VIData.pre_cb=cb; ext::OSRestoreInterrupts(intr); old
 }
 pub unsafe fn HSD_VISetUserPostRetraceCallback(cb:HSD_VIRetraceCallback)->HSD_VIRetraceCallback {
+    melee_core::ct!("HSD_VISetUserPostRetraceCallback");
     let old=HSD_VIData.post_cb; let intr=ext::OSDisableInterrupts();
     HSD_VIData.post_cb=cb; ext::OSRestoreInterrupts(intr); old
 }
 pub unsafe fn HSD_VISetUserGXDrawDoneCallback(cb:HSD_VIGXDrawDoneCallback)->HSD_VIGXDrawDoneCallback {
+    melee_core::ct!("HSD_VISetUserGXDrawDoneCallback");
     let old=HSD_VIData.drawdone.cb; let intr=ext::OSDisableInterrupts();
     HSD_VIData.drawdone.cb=cb; ext::OSRestoreInterrupts(intr); old
 }
 pub unsafe extern "C" fn HSD_VIPreRetraceCB(retraceCount:u32) {
+    melee_core::ct!("HSD_VIPreRetraceCB");
     let mut flush=false; let mut renew=false;
     let mut idx=HSD_VISearchXFBByStatus(HSD_VI_XFB_NEXT);
     if idx != -1 {
@@ -112,6 +117,7 @@ pub unsafe extern "C" fn HSD_VIPreRetraceCB(retraceCount:u32) {
     if let Some(cb)=HSD_VIData.pre_cb {cb(retraceCount);}
 }
 pub unsafe extern "C" fn HSD_VIPostRetraceCB(retraceCount:u32) {
+    melee_core::ct!("HSD_VIPostRetraceCB");
     let next=HSD_VISearchXFBByStatus(HSD_VI_XFB_NEXT);
     if next != -1 {
         let idx=HSD_VISearchXFBByStatus(HSD_VI_XFB_DISPLAY);
@@ -129,11 +135,13 @@ pub unsafe extern "C" fn HSD_VIPostRetraceCB(retraceCount:u32) {
     if let Some(cb)=HSD_VIData.post_cb {cb(retraceCount);}
 }
 pub unsafe extern "C" fn HSD_VIGXDrawDoneCB() {
+    melee_core::ct!("HSD_VIGXDrawDoneCB");
     HSD_VIData.drawdone.waiting=0;
     if let Some(cb)=HSD_VIData.drawdone.cb {cb(HSD_VIData.drawdone.arg);}
 }
-pub unsafe fn HSD_VIGetDrawDoneWaitingFlag()->i32 {HSD_VIData.drawdone.waiting}
+pub unsafe fn HSD_VIGetDrawDoneWaitingFlag()->i32 { melee_core::ct!("HSD_VIGetDrawDoneWaitingFlag");HSD_VIData.drawdone.waiting}
 pub unsafe fn HSD_VIGetXFBDrawEnable()->i32 {
+    melee_core::ct!("HSD_VIGetXFBDrawEnable");
     if HSD_VIGetNbXFB()<2 {return -1;}
     let intr=ext::OSDisableInterrupts();
     let mut idx=HSD_VISearchXFBByStatus(HSD_VI_XFB_DRAWING);
@@ -141,14 +149,17 @@ pub unsafe fn HSD_VIGetXFBDrawEnable()->i32 {
     ext::OSRestoreInterrupts(intr);idx
 }
 pub unsafe fn HSD_VIWaitXFBDrawEnable()->i32 {
+    melee_core::ct!("HSD_VIWaitXFBDrawEnable");
     if HSD_VIGetNbXFB()<2 {return -1;}
     loop {let idx=HSD_VIGetXFBDrawEnable();if idx != -1 {return idx;}ext::VIWaitForRetrace();}
 }
 pub unsafe fn HSD_VICopyEFB2XFBHiResoAA(rmode:*mut GXRenderModeObj) {
+    melee_core::ct!("HSD_VICopyEFB2XFBHiResoAA");
     ext::GXSetDispCopySrc(0,0,(*rmode).fbWidth,(*rmode).efbHeight.wrapping_sub(4));
     let lines=ext::GXSetDispCopyYScale(1.0);ext::GXSetDispCopyDst((*rmode).fbWidth,lines as u16);
 }
 pub unsafe fn HSD_VICopyEFB2XFBPtr(vi:*mut HSD_VIStatus,buffer:*mut c_void,rpass:HSD_RenderPass) {
+    melee_core::ct!("HSD_VICopyEFB2XFBPtr");
     let rmode=&raw mut (*vi).rmode;
     ext::GXSetCopyFilter((*rmode).aa,(*rmode).sample_pattern.as_ptr() as *const c_void,(*vi).vf,(*rmode).vfilter.as_ptr() as *const u8);
     ext::GXSetDispCopyGamma((*vi).gamma);
@@ -186,10 +197,12 @@ pub unsafe fn HSD_VICopyEFB2XFBPtr(vi:*mut HSD_VIStatus,buffer:*mut c_void,rpass
     ext::GXPixModeSync();
 }
 pub unsafe fn HSD_VIGXSetDrawDone(arg:i32) {
+    melee_core::ct!("HSD_VIGXSetDrawDone");
     while HSD_VIGetDrawDoneWaitingFlag()!=0 {ext::GXWaitDrawDone();}
     HSD_VIData.drawdone.waiting=1;HSD_VIData.drawdone.arg=arg;ext::GXSetDrawDone();
 }
 pub unsafe fn HSD_VISetXFBWaitDone(idx:i32) {
+    melee_core::ct!("HSD_VISetXFBWaitDone");
     let intr=ext::OSDisableInterrupts();
     assert_eq!(HSD_VIData.xfb[idx as usize].status,HSD_VI_XFB_DRAWING,"HSD_ASSERT(590)");
     HSD_VIData.xfb[idx as usize].status=HSD_VI_XFB_WAITDONE;
@@ -197,37 +210,44 @@ pub unsafe fn HSD_VISetXFBWaitDone(idx:i32) {
     ext::OSRestoreInterrupts(intr);
 }
 pub unsafe fn HSD_VICopyXFBAsync(rpass:HSD_RenderPass) {
+    melee_core::ct!("HSD_VICopyXFBAsync");
     if HSD_VIGetNbXFB()<2 {return;}
     let idx=HSD_VIWaitXFBDrawEnable();HSD_VICopyEFB2XFBPtr(HSD_VIGetVIStatus(),HSD_VIGetXFBPtr(idx),rpass);
     HSD_VISetXFBWaitDone(idx);HSD_VIGXSetDrawDone(idx);
 }
 pub unsafe fn HSD_VIDrawDoneXFB(idx:i32) {
+    melee_core::ct!("HSD_VIDrawDoneXFB");
     let intr=ext::OSDisableInterrupts();
     assert_eq!(HSD_VIData.xfb[idx as usize].status,HSD_VI_XFB_WAITDONE,"HSD_ASSERT(722)");
     HSD_VIData.xfb[idx as usize].status=if HSD_VISearchXFBByStatus(HSD_VI_XFB_NEXT)!=-1 {HSD_VI_XFB_DRAWDONE}else{HSD_VI_XFB_NEXT};
     ext::OSRestoreInterrupts(intr);
 }
 pub unsafe fn HSD_VIWaitXFBFlush_sub()->i32 {
+    melee_core::ct!("HSD_VIWaitXFBFlush_sub");
     let intr=ext::OSDisableInterrupts();
     let val=(HSD_VISearchXFBByStatus(HSD_VI_XFB_WAITDONE)!=-1||HSD_VISearchXFBByStatus(HSD_VI_XFB_DRAWDONE)!=-1||HSD_VISearchXFBByStatus(HSD_VI_XFB_NEXT)!=-1)as i32;
     ext::OSRestoreInterrupts(intr);val
 }
 pub unsafe fn HSD_VIWaitXFBFlush() {
+    melee_core::ct!("HSD_VIWaitXFBFlush");
     if HSD_VIGetNbXFB()<2 {return;}while HSD_VIWaitXFBFlush_sub()!=0 {ext::VIWaitForRetrace();}
 }
 pub unsafe fn HSD_VIWaitXFBFlushNoYield() {
+    melee_core::ct!("HSD_VIWaitXFBFlushNoYield");
     if HSD_VIGetNbXFB()<2 {return;}while HSD_VIWaitXFBFlush_sub()!=0 {}
 }
 pub unsafe fn HSD_VIGetXFBLastDrawDone()->i32 {
+    melee_core::ct!("HSD_VIGetXFBLastDrawDone");
     let intr=ext::OSDisableInterrupts();let mut idx=-1;
     for status in [HSD_VI_XFB_WAITDONE,HSD_VI_XFB_DRAWDONE,HSD_VI_XFB_NEXT,HSD_VI_XFB_DISPLAY] {
         idx=HSD_VISearchXFBByStatus(status);if idx != -1 {break;}
     }
     ext::OSRestoreInterrupts(intr);idx
 }
-pub unsafe fn HSD_VISetConfigure(rmode:*mut GXRenderModeObj) {HSD_VIData.current.vi.rmode=*rmode;HSD_VIData.current.chg_flag=1;}
-pub unsafe fn HSD_VISetBlack(black:i32) {HSD_VIData.current.vi.black=black;HSD_VIData.current.chg_flag=1;}
+pub unsafe fn HSD_VISetConfigure(rmode:*mut GXRenderModeObj) { melee_core::ct!("HSD_VISetConfigure");HSD_VIData.current.vi.rmode=*rmode;HSD_VIData.current.chg_flag=1;}
+pub unsafe fn HSD_VISetBlack(black:i32) { melee_core::ct!("HSD_VISetBlack");HSD_VIData.current.vi.black=black;HSD_VIData.current.chg_flag=1;}
 pub unsafe fn HSD_VIInit(vi:*mut HSD_VIStatus,xfb0:*mut c_void,xfb1:*mut c_void,xfb2:*mut c_void) {
+    melee_core::ct!("HSD_VIInit");
     ext::VIInit();HSD_VIData.current.vi=*vi;HSD_VIData.current.chg_flag=0;
     HSD_VIData.xfb[0].buffer=xfb0;HSD_VIData.xfb[1].buffer=xfb1;HSD_VIData.xfb[2].buffer=xfb2;
     let mut fbnum=0;
@@ -243,7 +263,7 @@ pub unsafe fn HSD_VIInit(vi:*mut HSD_VIStatus,xfb0:*mut c_void,xfb1:*mut c_void,
     ext::VIConfigure(&raw mut HSD_VIData.current.vi.rmode);ext::VISetBlack(HSD_VIData.current.vi.black);ext::VIFlush();
     let idx=HSD_VISearchXFBByStatus(HSD_VI_XFB_FREE);HSD_VICopyEFB2XFBPtr(HSD_VIGetVIStatus(),HSD_VIGetXFBPtr(idx),HSD_RP_SCREEN);
 }
-pub unsafe fn HSD_VIGetNbXFB()->i32 {HSD_VIData.nb_xfb}
-pub unsafe fn HSD_VIGetXFBPtr(idx:i32)->*mut c_void {HSD_VIData.xfb[idx as usize].buffer}
-pub unsafe fn HSD_VIGetVIStatus()->*mut HSD_VIStatus {&raw mut HSD_VIData.current.vi}
-pub unsafe fn HSD_VIGetRenderMode()->*mut GXRenderModeObj {&raw mut HSD_VIData.current.vi.rmode}
+pub unsafe fn HSD_VIGetNbXFB()->i32 { melee_core::ct!("HSD_VIGetNbXFB");HSD_VIData.nb_xfb}
+pub unsafe fn HSD_VIGetXFBPtr(idx:i32)->*mut c_void { melee_core::ct!("HSD_VIGetXFBPtr");HSD_VIData.xfb[idx as usize].buffer}
+pub unsafe fn HSD_VIGetVIStatus()->*mut HSD_VIStatus { melee_core::ct!("HSD_VIGetVIStatus");&raw mut HSD_VIData.current.vi}
+pub unsafe fn HSD_VIGetRenderMode()->*mut GXRenderModeObj { melee_core::ct!("HSD_VIGetRenderMode");&raw mut HSD_VIData.current.vi.rmode}

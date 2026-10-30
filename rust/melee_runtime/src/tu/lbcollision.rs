@@ -348,6 +348,7 @@ pub static mut lbColl_803B9928: [LbCollColorPair; 6] = unsafe {
 // ---- .text ----------------------------------------------------------------------------------
 
 pub unsafe extern "C" fn lbColl_80005BB0(arg0: *mut HitCapsule, arg1: i32) -> i32 {
+    melee_core::ct!("lbColl_80005BB0");
     let kind = (*arg0).sfx_kind as u32;
     if kind == 0xD {
         let sev = (*arg0).sfx_severity as u32;
@@ -359,6 +360,7 @@ pub unsafe extern "C" fn lbColl_80005BB0(arg0: *mut HitCapsule, arg1: i32) -> i3
 }
 
 pub unsafe extern "C" fn lbColl_80005C44(arg0: *const Vec3, arg1: *const Vec3, arg2: *const Vec3, arg3: *mut Vec3, arg8: f32, arg9: f32) -> bool {
+    melee_core::ct!("lbColl_80005C44");
     let temp_f2 = arg8 + arg9;
     let sp38 = *arg0;
     let sp2c = *arg2;
@@ -429,6 +431,7 @@ pub unsafe extern "C" fn lbColl_80005C44(arg0: *const Vec3, arg1: *const Vec3, a
 }
 
 pub unsafe extern "C" fn lbColl_80005EBC(arg0: *const Vec3, arg1: *const Vec3, arg2: *const Vec3, arg3: *mut f32) -> f32 {
+    melee_core::ct!("lbColl_80005EBC");
     let sp50 = *arg0;
     let d1 = Vec3 { x: (*arg1).x - (*arg0).x, y: (*arg1).y - (*arg0).y, z: (*arg1).z - (*arg0).z };
     let sp38 = *arg2;
@@ -444,6 +447,7 @@ pub unsafe extern "C" fn lbColl_80005EBC(arg0: *const Vec3, arg1: *const Vec3, a
 }
 
 pub unsafe extern "C" fn lbColl_80005FC0(arg0: *const Vec3, arg1: *const Vec3, arg2: *const Vec3, arg3: *mut f32) -> f32 {
+    melee_core::ct!("lbColl_80005FC0");
     let sp50 = *arg0;
     let d1x = (*arg1).x - (*arg0).x;
     let d1y = (*arg1).y - (*arg0).y;
@@ -468,6 +472,7 @@ unsafe fn end(a: *const Vec3, b: *const Vec3, unk_sum: f32) -> bool {
 }
 
 pub unsafe extern "C" fn lbColl_80006094(arg0: *const Vec3, arg1: *const Vec3, arg2: *const Vec3, arg3: *const Vec3, arg4: *mut Vec3, arg5: *mut Vec3, arg6: f32, arg7: f32) -> bool {
+    melee_core::ct!("lbColl_80006094");
     let unk_sum = arg6 + arg7;
     let vec4 = *arg0;
     let arg4_offset = vec4;
@@ -579,6 +584,7 @@ pub unsafe extern "C" fn lbColl_80006094(arg0: *const Vec3, arg1: *const Vec3, a
 }
 
 pub unsafe extern "C" fn lbColl_800067F8(a: *const Vec3, b: *const Vec3, c: *const Vec3, d: *const Vec3, e: *mut Vec3, f: *mut Vec3, p: f32, q: f32) -> bool {
+    melee_core::ct!("lbColl_800067F8");
     let sum_pq = p + q;
     let a0 = *a;
     let a1 = a0;
@@ -705,6 +711,7 @@ pub unsafe extern "C" fn lbColl_80006E58(
     hurt_radius: f32,
     broadphase_scale: f32,
 ) -> bool {
+    melee_core::ct!("lbColl_80006E58");
     let broadphase_radius = fmadds(hurt_radius, broadphase_scale, hit_radius);
     let hs = *hit_start;
     let us = *hurt_start;
@@ -883,6 +890,7 @@ fn sqrtf_store(x: f32) -> f32 {
 }
 
 pub unsafe extern "C" fn lbColl_800077A0(a: *const Vec3, arg1: *const Mtx, b: *const Vec3, c: *const Vec3, d: *mut Vec3, e: *mut Vec3, angle: *mut f32, x: f32, dist_offset: f32) {
+    melee_core::ct!("lbColl_800077A0");
     let diff_cb = Vec3 { x: (*c).x - (*b).x, y: (*c).y - (*b).y, z: (*c).z - (*b).z };
 
     if diff_cb.x != 0.0 || diff_cb.y != 0.0 || diff_cb.z != 0.0 {
@@ -935,16 +943,19 @@ pub unsafe extern "C" fn lbColl_800077A0(a: *const Vec3, arg1: *const Mtx, b: *c
 }
 
 pub unsafe extern "C" fn lbColl_80007AFC(a: *mut HitCapsule, b: *mut HitCapsule, x: f32, y: f32) -> bool {
+    melee_core::ct!("lbColl_80007AFC");
     let a_val = if (*a).x43_b1() != 0 { (*a).scale } else { (*a).scale * x };
     let b_val = if (*b).x43_b1() != 0 { (*b).scale } else { (*b).scale * y };
     lbColl_80006094(&(*b).x58, &(*b).x4C, &(*a).x58, &(*a).x4C, &raw mut (*b).hurt_coll_pos, &raw mut (*a).hurt_coll_pos, b_val, a_val)
 }
 
 pub unsafe extern "C" fn lbColl_80007B78(a: *mut Fighter_x1614_t, b: *mut Fighter_x1614_t, x: f32, y: f32) -> bool {
+    melee_core::ct!("lbColl_80007B78");
     lbColl_800067F8(&(*b).x14, &(*b).x8, &(*a).x14, &(*a).x8, &raw mut (*b).x20, &raw mut (*a).x20, (*b).x0 * y, (*a).x0 * x)
 }
 
 pub unsafe extern "C" fn lbColl_80007BCC(arg0: *mut HitCapsule, shield_hit: *mut HitResult, arg2: *const Mtx, arg3: i32, arg4: f32, arg5: f32, arg6: f32) -> bool {
+    melee_core::ct!("lbColl_80007BCC");
     let mut sp74 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp68 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp38: Mtx = [[0.0; 4]; 3];
@@ -984,6 +995,7 @@ pub unsafe extern "C" fn lbColl_80007BCC(arg0: *mut HitCapsule, shield_hit: *mut
 }
 
 pub unsafe extern "C" fn lbColl_80007DD8(capsule: *mut HitCapsule, hit: *mut HitResult, hit_transform: *const Mtx, arg3: *mut Vec3, angle: *mut f32, scale: f32) {
+    melee_core::ct!("lbColl_80007DD8");
     let mut unused_result = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut transformed_hit: Mtx = [[0.0; 4]; 3];
 
@@ -1009,6 +1021,7 @@ unsafe fn update_hurt_pos(arg1: *mut HurtCapsule, has_mtx: bool, z: f32) {
 }
 
 pub unsafe extern "C" fn lbColl_80007ECC(arg0: *mut HitCapsule, arg1: *mut HurtCapsule, arg2: *const Mtx, hit_scl_y: f32, hurt_scl_y: f32, hurt_pos_z: f32) -> bool {
+    melee_core::ct!("lbColl_80007ECC");
     let mut sp70 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp64 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp34: Mtx = [[0.0; 4]; 3];
@@ -1039,6 +1052,7 @@ pub unsafe extern "C" fn lbColl_80007ECC(arg0: *mut HitCapsule, arg1: *mut HurtC
 }
 
 pub unsafe extern "C" fn lbColl_8000805C(arg0: *mut HitCapsule, arg1: *mut HurtCapsule, arg2: *const Mtx, arg3: i32, arg4: f32, arg5: f32, arg6: f32) -> bool {
+    melee_core::ct!("lbColl_8000805C");
     let mut sp74 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp68 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp38: Mtx = [[0.0; 4]; 3];
@@ -1076,6 +1090,7 @@ pub unsafe extern "C" fn lbColl_8000805C(arg0: *mut HitCapsule, arg1: *mut HurtC
 }
 
 pub unsafe extern "C" fn lbColl_80008248(arg0: *mut HitCapsule, arg1: *mut HurtCapsule, arg2: *const Mtx, arg3: f32, arg4: f32, arg5: f32) -> bool {
+    melee_core::ct!("lbColl_80008248");
     let mut sp70 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp64 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp34: Mtx = [[0.0; 4]; 3];
@@ -1103,6 +1118,7 @@ pub unsafe extern "C" fn lbColl_80008248(arg0: *mut HitCapsule, arg1: *mut HurtC
 }
 
 pub unsafe extern "C" fn lbColl_800083C4(arg0: *mut HurtCapsule) {
+    melee_core::ct!("lbColl_800083C4");
     if (*arg0).skip_update_pos() != 0 {
         return;
     }
@@ -1112,14 +1128,17 @@ pub unsafe extern "C" fn lbColl_800083C4(arg0: *mut HurtCapsule) {
 }
 
 pub unsafe extern "C" fn lbColl_80008428(arg0: *mut HitCapsule) {
+    melee_core::ct!("lbColl_80008428");
     (*arg0).state = HitCapsule_Disabled;
 }
 
 pub unsafe extern "C" fn lbColl_80008434(arg0: *mut HitCapsule) {
+    melee_core::ct!("lbColl_80008434");
     (*arg0).state = HitCapsule_Enabled;
 }
 
 pub unsafe extern "C" fn lbColl_80008440(hit: *mut HitCapsule) {
+    melee_core::ct!("lbColl_80008440");
     for i in 0..12 {
         (*hit).victims_1[i].victim = null_mut();
     }
@@ -1131,6 +1150,7 @@ pub unsafe extern "C" fn lbColl_80008440(hit: *mut HitCapsule) {
 }
 
 pub unsafe extern "C" fn lbColl_CopyHitCapsule(src: *const HitCapsule, dst: *mut HitCapsule) {
+    melee_core::ct!("lbColl_CopyHitCapsule");
     for i in 0..12 {
         (*dst).victims_1[i] = (*src).victims_1[i];
         (*dst).victims_2[i] = (*src).victims_2[i];
@@ -1140,6 +1160,7 @@ pub unsafe extern "C" fn lbColl_CopyHitCapsule(src: *const HitCapsule, dst: *mut
 }
 
 pub unsafe extern "C" fn lbColl_80008688(capsule: *mut HitCapsule, ty: i32, victim: *mut c_void) -> bool {
+    melee_core::ct!("lbColl_80008688");
     let mut i = 0usize;
     while i < 12 {
         if (*capsule).victims_1[i].victim == victim {
@@ -1178,6 +1199,7 @@ pub unsafe extern "C" fn lbColl_80008688(capsule: *mut HitCapsule, ty: i32, vict
 }
 
 pub unsafe extern "C" fn lbColl_80008820(capsule: *mut HitCapsule, ty: i32, victim: *mut c_void) -> bool {
+    melee_core::ct!("lbColl_80008820");
     let mut i = 0usize;
     while i < 12 {
         if (*capsule).victims_2[i].victim == victim {
@@ -1216,6 +1238,7 @@ pub unsafe extern "C" fn lbColl_80008820(capsule: *mut HitCapsule, ty: i32, vict
 }
 
 pub unsafe extern "C" fn lbColl_800089B8(hit: *mut HitCapsule, arg1: *mut c_void) {
+    melee_core::ct!("lbColl_800089B8");
     for i in 0..12 {
         if (*hit).victims_1[i].victim == arg1 {
             (*hit).victims_1[i].victim = null_mut();
@@ -1224,6 +1247,7 @@ pub unsafe extern "C" fn lbColl_800089B8(hit: *mut HitCapsule, arg1: *mut c_void
 }
 
 pub unsafe extern "C" fn lbColl_80008A5C(hit: *mut HitCapsule) {
+    melee_core::ct!("lbColl_80008A5C");
     if (*hit).state != HitCapsule_Disabled {
         for i in 0..12 {
             if !(*hit).victims_1[i].victim.is_null() {
@@ -1251,6 +1275,7 @@ pub unsafe extern "C" fn lbColl_80008A5C(hit: *mut HitCapsule) {
 }
 
 pub unsafe extern "C" fn lbColl_80008D30(arg0: *mut HitCapsule, arg1: *const lbColl_80008D30_arg1) {
+    melee_core::ct!("lbColl_80008D30");
     (*arg0).state = (*arg1).state;
     (*arg0).damage = (*arg1).damage as f32;
     (*arg0).kb_angle = (*arg1).kb_angle;
@@ -1266,6 +1291,7 @@ pub unsafe extern "C" fn lbColl_80008D30(arg0: *mut HitCapsule, arg1: *const lbC
 pub static lbColl_804D7A50: GXColor = GXColor { r: 0, g: 0, b: 0, a: 0 };
 
 pub unsafe extern "C" fn lbColl_80008DA4(arg0: *const GXColor, arg1: *const GXColor) {
+    melee_core::ct!("lbColl_80008DA4");
     let mut sp10 = lbColl_804D7A50;
     ext::GXSetColorUpdate(1);
     ext::GXSetAlphaUpdate(0);
@@ -1399,6 +1425,7 @@ unsafe fn draw_list(view: &Mtx, m: &Mtx, list: &[u8]) {
 }
 
 pub unsafe extern "C" fn lbColl_80008FC8(arg0: Vec3, arg1: Vec3, arg2: *const GXColor, arg3: *const GXColor, arg4: f32) {
+    melee_core::ct!("lbColl_80008FC8");
     let mut sp104: Mtx = [[0.0; 4]; 3];
 
     ext::HSD_StateInvalidate(-1);
@@ -1420,6 +1447,7 @@ pub unsafe extern "C" fn lbColl_80008FC8(arg0: Vec3, arg1: Vec3, arg2: *const GX
 }
 
 pub unsafe extern "C" fn lbColl_800096B4(arg0: *const Mtx, arg1: Vec3, arg2: Vec3, arg3: *const GXColor, arg4: *const GXColor, arg5: f32) {
+    melee_core::ct!("lbColl_800096B4");
     let mut sp108: Mtx = [[0.0; 4]; 3];
 
     ext::HSD_StateInvalidate(-1);
@@ -1444,6 +1472,7 @@ pub unsafe extern "C" fn lbColl_800096B4(arg0: *const Mtx, arg1: Vec3, arg2: Vec
 }
 
 pub unsafe extern "C" fn lbColl_80009DD4(v0: *const Vec3, v1: *const Vec3, clr: *const GXColor) {
+    melee_core::ct!("lbColl_80009DD4");
     let mut view_mtx: Mtx = [[0.0; 4]; 3];
 
     ext::HSD_StateInvalidate(-1);
@@ -1491,6 +1520,7 @@ fn pass_for(c: &GXColor) -> u32 {
 }
 
 pub unsafe extern "C" fn lbColl_80009F54(hit: *mut HitCapsule, arg1: u32, arg8: f32) -> bool {
+    melee_core::ct!("lbColl_80009F54");
     if (*hit).state != HitCapsule_Disabled && (*hit).x43_b2() == 0 {
         let var_r5: *mut GXColor = match (*hit).element {
             HitElement_Catch => &raw mut lbColl_804D36A4,
@@ -1515,6 +1545,7 @@ unsafe fn lbColl_DrawHitResult(m: *const Mtx, a: &Vec3, b: &Vec3, c0: *const GXC
 }
 
 pub unsafe extern "C" fn lbColl_8000A044(hit: *mut HitCapsule, arg1: u32, arg8: f32) -> bool {
+    melee_core::ct!("lbColl_8000A044");
     if (*hit).state != HitCapsule_Disabled && (*hit).x43_b2() == 0 {
         if pass_for(&lbColl_804D36E8) == arg1 {
             let var_f1 = if (*hit).x43_b1() != 0 { (*hit).scale } else { (*hit).scale * arg8 };
@@ -1526,6 +1557,7 @@ pub unsafe extern "C" fn lbColl_8000A044(hit: *mut HitCapsule, arg1: u32, arg8: 
 }
 
 pub unsafe extern "C" fn lbColl_8000A10C(arg0: *mut lbColl_8000A10C_arg0_t, arg1: u32, arg2: f32) -> bool {
+    melee_core::ct!("lbColl_8000A10C");
     let c = &raw mut lbColl_804D36F8;
     if pass_for(&*c) == arg1 {
         lbColl_80008FC8((*arg0).x14, (*arg0).x8, c, &raw const lbColl_804D36FC, (*arg0).x0 * arg2);
@@ -1535,6 +1567,7 @@ pub unsafe extern "C" fn lbColl_8000A10C(arg0: *mut lbColl_8000A10C_arg0_t, arg1
 }
 
 pub unsafe extern "C" fn lbColl_8000A1A8(arg0: *mut Fighter_x1614_t, arg1: i32, scale_y: f32) -> bool {
+    melee_core::ct!("lbColl_8000A1A8");
     if pass_for(&lbColl_804D36F0) == arg1 as u32 {
         lbColl_80008FC8((*arg0).x14, (*arg0).x8, &raw const lbColl_804D36F0, &raw const lbColl_804D36F4, (*arg0).x0 * scale_y);
         return true;
@@ -1543,6 +1576,7 @@ pub unsafe extern "C" fn lbColl_8000A1A8(arg0: *mut Fighter_x1614_t, arg1: i32, 
 }
 
 pub unsafe extern "C" fn lbColl_8000A244(hurt: *mut HurtCapsule, arg1: u32, arg2: *const Mtx, arg3: f32) -> bool {
+    melee_core::ct!("lbColl_8000A244");
     let mut sp9c: Mtx = [[0.0; 4]; 3];
     let temp_r3 = lbColl_803B9928[(*hurt).state as usize].pad;
     if pass_for(&*temp_r3) == arg1 {
@@ -1562,6 +1596,7 @@ pub unsafe extern "C" fn lbColl_8000A244(hurt: *mut HurtCapsule, arg1: u32, arg2
 }
 
 pub unsafe extern "C" fn lbColl_8000A460(hurt: *mut Fighter_x1670_t, arg1: u32) -> bool {
+    melee_core::ct!("lbColl_8000A460");
     let r31 = &raw mut lbColl_804D36E0;
     let r30 = &raw mut lbColl_804D36E4;
     if pass_for(&*r31) == arg1 {
@@ -1573,6 +1608,7 @@ pub unsafe extern "C" fn lbColl_8000A460(hurt: *mut Fighter_x1670_t, arg1: u32) 
 }
 
 pub unsafe extern "C" fn lbColl_8000A584(hurt: *mut HurtCapsule, arg1: u32, arg2: u32, arg3: *const Mtx, arg8: f32) -> bool {
+    melee_core::ct!("lbColl_8000A584");
     let mut spa0: Mtx = [[0.0; 4]; 3];
     let mut var_r4 = arg1;
     if (*hurt).state == HurtCapsule_Intangible {
@@ -1619,18 +1655,22 @@ unsafe fn lbColl_DrawHit(hit: *mut HitResult, arg1: u32, arg2: *const Mtx, pos_z
 }
 
 pub unsafe extern "C" fn lbColl_8000A78C(hit: *mut HitResult, arg1: u32, arg2: *const Mtx, pos_z: f32) -> bool {
+    melee_core::ct!("lbColl_8000A78C");
     lbColl_DrawHit(hit, arg1, arg2, pos_z, &raw const lbColl_804D36C4, &raw const lbColl_804D36C8)
 }
 
 pub unsafe extern "C" fn lbColl_8000A95C(hit: *mut HitResult, arg1: u32, arg2: *const Mtx, pos_z: f32) -> bool {
+    melee_core::ct!("lbColl_8000A95C");
     lbColl_DrawHit(hit, arg1, arg2, pos_z, &raw const lbColl_804D36CC, &raw const lbColl_804D36D0)
 }
 
 pub unsafe extern "C" fn lbColl_8000AB2C(hit: *mut HitResult, arg1: u32, arg2: *const Mtx, pos_z: f32) -> bool {
+    melee_core::ct!("lbColl_8000AB2C");
     lbColl_DrawHit(hit, arg1, arg2, pos_z, &raw const lbColl_804D36D4, &raw const lbColl_804D36D8)
 }
 
 pub unsafe extern "C" fn lbColl_8000ACFC(victim: *mut c_void, hitbox: *const HitCapsule) -> bool {
+    melee_core::ct!("lbColl_8000ACFC");
     let mut i = 0usize;
     while i < 12 {
         if (*hitbox).victims_1[i].victim == victim {

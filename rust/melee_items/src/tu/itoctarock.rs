@@ -152,6 +152,7 @@ unsafe fn itUpdateVelocityFromBone(jobj: *mut HSD_JObj, ip: *mut Item, previous_
 }
 
 pub unsafe extern "C" fn it_802E4A44(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802E4A44");
     let ip = GET_ITEM(gobj);
     ext::it_8027B730(gobj);
     (*ip).facing_dir = ext::it_8026B684(&mut (*ip).pos);
@@ -163,6 +164,7 @@ pub unsafe extern "C" fn it_802E4A44(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802E4B00(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_802E4B00");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itOctarockAttributes;
     (*ip).init_facing_dir = (*ip).facing_dir;
@@ -181,6 +183,7 @@ pub unsafe extern "C" fn it_802E4B00(gobj: *mut Item_GObj) -> bool {
 }
 
 pub unsafe extern "C" fn it_802E4C08(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802E4C08");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itOctarockAttributes;
     ext::it_8027CAD8(gobj);
@@ -189,6 +192,7 @@ pub unsafe extern "C" fn it_802E4C08(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itOctarock_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOctarock_UnkMotion0_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE);
     }
@@ -196,6 +200,7 @@ pub unsafe extern "C" fn itOctarock_UnkMotion0_Anim(gobj: *mut Item_GObj) -> boo
 }
 
 pub unsafe extern "C" fn itOctarock_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itOctarock_UnkMotion0_Phys");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itOctarockAttributes;
     if (*ip).xDD4_itemVar.octarock.x32 == 0 {
@@ -213,11 +218,13 @@ pub unsafe extern "C" fn itOctarock_UnkMotion0_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itOctarock_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOctarock_UnkMotion0_Coll");
     ext::it_8026D62C(gobj, Some(it_802E4DB4));
     ext::it_8027C794(gobj) != 0
 }
 
 pub unsafe extern "C" fn it_802E4DB4(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802E4DB4");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itOctarockAttributes;
     (*ip).x40_vel.x *= (*attr).x4;
@@ -225,21 +232,25 @@ pub unsafe extern "C" fn it_802E4DB4(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itOctarock_UnkMotion2_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOctarock_UnkMotion2_Anim");
     false
 }
 
 pub unsafe extern "C" fn itOctarock_UnkMotion2_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itOctarock_UnkMotion2_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = (*ip).xCC_item_attr;
     ext::it_80272860(gobj, (*attrs).x10_fall_speed, (*attrs).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itOctarock_UnkMotion2_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOctarock_UnkMotion2_Coll");
     ext::it_8026E414(gobj, Some(it_802E4C08));
     ext::it_8027C794(gobj) != 0
 }
 
 pub unsafe extern "C" fn it_802E4E6C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802E4E6C");
     let ip = GET_ITEM(gobj);
     if ext::it_8027B798(gobj, &mut (*ip).x40_vel) != 0 {
         if (*ip).x40_vel.y <= 0.2 {
@@ -255,6 +266,7 @@ pub unsafe extern "C" fn it_802E4E6C(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itOctarock_UnkMotion3_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOctarock_UnkMotion3_Anim");
     let ip = GET_ITEM(gobj);
     if ext::it_80272C6C(gobj) == 0 {
         if (*ip).ground_or_air == GA_Air {
@@ -267,6 +279,7 @@ pub unsafe extern "C" fn itOctarock_UnkMotion3_Anim(gobj: *mut Item_GObj) -> boo
 }
 
 pub unsafe extern "C" fn itOctarock_UnkMotion3_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itOctarock_UnkMotion3_Phys");
     let ip = GET_ITEM(gobj);
     if (*ip).ground_or_air == GA_Air {
         (*ip).x40_vel.y -= (*(*ip).xCC_item_attr).x10_fall_speed;
@@ -274,6 +287,7 @@ pub unsafe extern "C" fn itOctarock_UnkMotion3_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itOctarock_UnkMotion3_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOctarock_UnkMotion3_Coll");
     let ip = GET_ITEM(gobj);
     if (*ip).ground_or_air == GA_Air {
         ext::it_8026E414(gobj, Some(it_802E4C08));
@@ -284,6 +298,7 @@ pub unsafe extern "C" fn itOctarock_UnkMotion3_Coll(gobj: *mut Item_GObj) -> boo
 }
 
 pub unsafe extern "C" fn it_802E503C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802E503C");
     let ip = GET_ITEM(gobj);
     (*ip).xDD4_itemVar.octarock.x32 = 0x15;
     itResetVelocity(ip);
@@ -294,6 +309,7 @@ pub unsafe extern "C" fn it_802E503C(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itOctarock_UnkMotion4_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOctarock_UnkMotion4_Anim");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itOctarockAttributes;
     it_802E595C((*(*ip).xBBC_dynamicBoneTable).bones[1], ip);
@@ -313,6 +329,7 @@ pub unsafe extern "C" fn itOctarock_UnkMotion4_Anim(gobj: *mut Item_GObj) -> boo
 }
 
 pub unsafe extern "C" fn itOctarock_UnkMotion4_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itOctarock_UnkMotion4_Phys");
     let ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.octarock.x2C == 0 && (*ip).x40_vel.y > 0.0 {
         ext::it_802762BC(ip);
@@ -321,6 +338,7 @@ pub unsafe extern "C" fn itOctarock_UnkMotion4_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itOctarock_UnkMotion4_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOctarock_UnkMotion4_Coll");
     let ip = GET_ITEM(gobj);
     if (*ip).ground_or_air == GA_Ground {
         if ext::it_8026D5CC(gobj) == 0 {
@@ -336,6 +354,7 @@ pub unsafe extern "C" fn itOctarock_UnkMotion4_Coll(gobj: *mut Item_GObj) -> boo
 }
 
 pub unsafe extern "C" fn it_802E52E0(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802E52E0");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itOctarockAttributes;
     let mut result = 0;
@@ -361,6 +380,7 @@ pub unsafe extern "C" fn it_802E52E0(gobj: *mut Item_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn it_802E53C8(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802E53C8");
     let ip = GET_ITEM(gobj);
     itResetVelocity(ip);
     (*ip).xDD4_itemVar.octarock.x32 = 0x16;
@@ -370,6 +390,7 @@ pub unsafe extern "C" fn it_802E53C8(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itOctarock_UnkMotion1_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOctarock_UnkMotion1_Anim");
     let ip = GET_ITEM(gobj);
     it_802E595C((*(*ip).xBBC_dynamicBoneTable).bones[1], ip);
     if (*ip).xDD4_itemVar.octarock.x32 == 0 {
@@ -387,6 +408,7 @@ pub unsafe extern "C" fn itOctarock_UnkMotion1_Anim(gobj: *mut Item_GObj) -> boo
 }
 
 pub unsafe extern "C" fn itOctarock_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itOctarock_UnkMotion1_Phys");
     let ip = GET_ITEM(gobj);
     if (*ip).ground_or_air == GA_Ground && (*ip).x40_vel.y > 0.0 {
         ext::it_802762BC(ip);
@@ -394,6 +416,7 @@ pub unsafe extern "C" fn itOctarock_UnkMotion1_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itOctarock_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOctarock_UnkMotion1_Coll");
     let ip = GET_ITEM(gobj);
     if (*ip).ground_or_air == GA_Ground {
         if ext::it_8026D5CC(gobj) == 0 {
@@ -409,10 +432,12 @@ pub unsafe extern "C" fn itOctarock_UnkMotion1_Coll(gobj: *mut Item_GObj) -> boo
 }
 
 pub unsafe extern "C" fn itOctarock_Logic2_PickedUp(gobj: *mut Item_GObj) {
+    melee_core::ct!("itOctarock_Logic2_PickedUp");
     ext::Item_80268E5C(gobj, 5, ITEM_ANIM_UPDATE);
 }
 
 pub unsafe extern "C" fn itOctarock_UnkMotion5_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOctarock_UnkMotion5_Anim");
     let _ip = GET_ITEM(gobj); // NOTE: unused
     if ext::it_80272C6C(gobj) == 0 {
         ext::Item_80268E5C(gobj, 5, ITEM_ANIM_UPDATE);
@@ -420,14 +445,16 @@ pub unsafe extern "C" fn itOctarock_UnkMotion5_Anim(gobj: *mut Item_GObj) -> boo
     false
 }
 
-pub unsafe extern "C" fn itOctarock_UnkMotion5_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itOctarock_UnkMotion5_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itOctarock_UnkMotion5_Phys");}
 
 pub unsafe extern "C" fn itOctarock_Logic2_Dropped(gobj: *mut Item_GObj) {
+    melee_core::ct!("itOctarock_Logic2_Dropped");
     ext::it_8027CBA4(gobj);
     it_802E4DB4(gobj);
 }
 
 pub unsafe extern "C" fn itOctarock_Logic2_Thrown(gobj: *mut Item_GObj) {
+    melee_core::ct!("itOctarock_Logic2_Thrown");
     let ip = GET_ITEM(gobj);
     ext::it_8027CB3C(gobj);
     (*ip).xDD4_itemVar.octarock.x32 = 0;
@@ -435,6 +462,7 @@ pub unsafe extern "C" fn itOctarock_Logic2_Thrown(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itOctarock_UnkMotion6_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOctarock_UnkMotion6_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         ext::Item_80268E5C(gobj, 6, ITEM_ANIM_UPDATE);
     }
@@ -442,16 +470,19 @@ pub unsafe extern "C" fn itOctarock_UnkMotion6_Anim(gobj: *mut Item_GObj) -> boo
 }
 
 pub unsafe extern "C" fn itOctarock_UnkMotion6_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itOctarock_UnkMotion6_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = (*ip).xCC_item_attr;
     ext::it_80272860(gobj, (*attrs).x10_fall_speed, (*attrs).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itOctarock_UnkMotion6_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOctarock_UnkMotion6_Coll");
     ext::it_8027C824(gobj, None) != 0
 }
 
 pub unsafe extern "C" fn it_802E57D4(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802E57D4");
     let ip = GET_ITEM(gobj);
     ext::it_802762BC(ip);
     ext::it_8027B964(gobj, 0);
@@ -460,38 +491,45 @@ pub unsafe extern "C" fn it_802E57D4(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itOctarock_UnkMotion7_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOctarock_UnkMotion7_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         ext::Item_80268E5C(gobj, 7, ITEM_ANIM_UPDATE);
     }
     false
 }
 
-pub unsafe extern "C" fn itOctarock_UnkMotion7_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itOctarock_UnkMotion7_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itOctarock_UnkMotion7_Phys");}
 
 pub unsafe extern "C" fn itOctarock_UnkMotion7_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOctarock_UnkMotion7_Coll");
     ext::it_8027C79C(gobj) != 0
 }
 
 pub unsafe extern "C" fn it_802E58A0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802E58A0");
     let ip = GET_ITEM(gobj);
     Item_UpdateZakoVelocity(gobj, ip);
     ext::Item_80268E5C(gobj, 8, 3);
 }
 
 pub unsafe extern "C" fn itOctarock_UnkMotion8_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOctarock_UnkMotion8_Anim");
     false
 }
 
 pub unsafe extern "C" fn itOctarock_UnkMotion8_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itOctarock_UnkMotion8_Phys");
     let ip = GET_ITEM(gobj);
     (*ip).x40_vel.y -= (*(*ip).xCC_item_attr).x10_fall_speed;
 }
 
 pub unsafe extern "C" fn itOctarock_UnkMotion8_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOctarock_UnkMotion8_Coll");
     ext::it_8027C794(gobj) != 0
 }
 
 pub unsafe extern "C" fn it_802E5944(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802E5944");
     let ip = GET_ITEM(gobj);
     (*ip).xDD4_itemVar.octarock.x20.x = 0.0;
     (*ip).xDD4_itemVar.octarock.x20.y = 0.0;
@@ -499,9 +537,11 @@ pub unsafe extern "C" fn it_802E5944(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802E595C(jobj: *mut HSD_JObj, ip: *mut Item) {
+    melee_core::ct!("it_802E595C");
     itUpdateVelocityFromBone(jobj, ip, &mut (*ip).xDD4_itemVar.octarock.x20);
 }
 
 pub unsafe extern "C" fn it_802E5AA4(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802E5AA4");
     ext::it_8026B894(gobj, ref_gobj);
 }

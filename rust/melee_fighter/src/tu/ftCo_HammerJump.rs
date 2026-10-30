@@ -46,6 +46,7 @@ pub mod ext {
 }
 
 pub fn ftCo_800C5A50(g: G) -> bool {
+    melee_core::ct!("ftCo_800C5A50");
     let e = ext::ftCo_Jump_GetInput(g);
     if e != 0 {
         ext::ftCo_800C5B88(g, e as i32);
@@ -55,6 +56,7 @@ pub fn ftCo_800C5A50(g: G) -> bool {
 }
 
 pub fn ftCo_800C5A98(g: G) {
+    melee_core::ct!("ftCo_800C5A98");
     ext::ftCommon_8007D5D4(fp(g));
     let flags = ext::ftCo_800C54C4(fp(g));
     let start = ext::ftCo_800C548C(fp(g));
@@ -64,15 +66,18 @@ pub fn ftCo_800C5A98(g: G) {
 }
 
 pub fn ftCo_HammerJump_Anim(g: G) {
+    melee_core::ct!("ftCo_HammerJump_Anim");
     ext::ftCo_800C4F64(g);
 }
 
-pub fn ftCo_HammerJump_IASA(_g: G) {}
+pub fn ftCo_HammerJump_IASA(_g: G) { melee_core::ct!("ftCo_HammerJump_IASA");}
 
 pub fn ftCo_HammerJump_Phys(g: G) {
+    melee_core::ct!("ftCo_HammerJump_Phys");
     ext::ftCo_Jump_Phys_Inner(g);
 }
 
 pub fn ftCo_HammerJump_Coll(g: G) {
+    melee_core::ct!("ftCo_HammerJump_Coll");
     ext::ftCo_HammerFall_Coll(g);
 }

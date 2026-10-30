@@ -155,21 +155,25 @@ pub static mut efAsync_MexReady: i32 = 0;
 
 /// `efAsync_GetEffectJObj`
 pub unsafe extern "C" fn efAsync_GetEffectJObj(mut effect: *mut EF_Effect) -> *mut HSD_JObj {
+    melee_core::ct!("efAsync_GetEffectJObj");
     return HSD_GObjGetHSDObj((*effect).gobj) as *mut HSD_JObj;
 }
 
 /// `efAsync_SetEffectRotationZFromPtr`
 pub unsafe extern "C" fn efAsync_SetEffectRotationZFromPtr(mut effect: *mut EF_Effect, mut rotation: *const f32) {
+    melee_core::ct!("efAsync_SetEffectRotationZFromPtr");
     HSD_JObjSetRotationZ(HSD_GObjGetHSDObj((*effect).gobj) as *mut HSD_JObj, *rotation);
 }
 
 /// `efAsync_SetEffectRandomRotationZ`
 pub unsafe extern "C" fn efAsync_SetEffectRandomRotationZ(mut effect: *mut EF_Effect) {
+    melee_core::ct!("efAsync_SetEffectRandomRotationZ");
     HSD_JObjSetRotationZ(HSD_GObjGetHSDObj((*effect).gobj) as *mut HSD_JObj, (6.283185307179586f64 * (ext::HSD_Randf() as f64)) as f32);
 }
 
 /// `efAsync_SetEffectScaleXYZ`
 pub unsafe extern "C" fn efAsync_SetEffectScaleXYZ(mut effect: *mut EF_Effect, mut scale: f32) {
+    melee_core::ct!("efAsync_SetEffectScaleXYZ");
     let mut jobj: *mut HSD_JObj = null_mut();
     jobj = (*(*effect).gobj).hsd_obj as *mut HSD_JObj;
     ();
@@ -183,11 +187,13 @@ pub unsafe extern "C" fn efAsync_SetEffectScaleXYZ(mut effect: *mut EF_Effect, m
 
 /// `efAsync_SetEffectScale`
 pub unsafe extern "C" fn efAsync_SetEffectScale(mut effect: *mut EF_Effect, mut scale: *mut Vec) {
+    melee_core::ct!("efAsync_SetEffectScale");
     HSD_JObjSetScale(HSD_GObjGetHSDObj((*effect).gobj) as *mut HSD_JObj, scale);
 }
 
 /// `efAsync_SetEffectFacingDir`
 pub unsafe extern "C" fn efAsync_SetEffectFacingDir(mut effect: *mut EF_Effect, mut facing_dir: f32) {
+    melee_core::ct!("efAsync_SetEffectFacingDir");
     let mut rotation: f64 = 0.0;
     if facing_dir < 0.0f32 {
         rotation = -(3.141592653589793f64 / (2 as f64));
@@ -199,6 +205,7 @@ pub unsafe extern "C" fn efAsync_SetEffectFacingDir(mut effect: *mut EF_Effect, 
 
 /// `efAsync_Dispatch`
 pub unsafe extern "C" fn efAsync_Dispatch(mut gfx_id: i32, mut gobj: *mut HSD_GObj, mut vlist: *mut crate::tu::va::Va) -> *mut c_void {
+    melee_core::ct!("efAsync_Dispatch");
     let mut translate: Vec3 = unsafe { core::mem::zeroed() };
     let mut scale: Vec3 = unsafe { core::mem::zeroed() };
     let mut generator: *mut HSD_Generator = null_mut();
@@ -1251,6 +1258,7 @@ pub unsafe extern "C" fn efAsync_Dispatch(mut gfx_id: i32, mut gobj: *mut HSD_GO
 
 /// `efAsync_LoadAsync`
 pub unsafe extern "C" fn efAsync_LoadAsync(mut index: i32) {
+    melee_core::ct!("efAsync_LoadAsync");
     let mut entry: *mut EF_DAT_Entry = core::ptr::addr_of_mut!(efAsync_DatEntries).cast::<EF_DAT_Entry>().wrapping_offset(index as isize) as *mut EF_DAT_Entry;
     efAsync_MexInit();
     if (index >= 65) || (index < 0) {
@@ -1264,6 +1272,7 @@ pub unsafe extern "C" fn efAsync_LoadAsync(mut index: i32) {
 
 /// `efAsync_OnLoad`
 pub unsafe extern "C" fn efAsync_OnLoad(mut archive: *mut HSD_Archive, mut data: *mut u8, mut length: u32, mut index: i32) {
+    melee_core::ct!("efAsync_OnLoad");
     let mut result: *mut EF_DAT_Entry = null_mut();
     ext::lbArchive_InitializeDAT(archive, data as *mut c_void, length);
     result = ext::HSD_ArchiveGetPublicAddress(archive, efAsync_DatEntries[index as usize].effDataTable_name as *const i8) as *mut EF_DAT_Entry;
@@ -1275,6 +1284,7 @@ pub unsafe extern "C" fn efAsync_OnLoad(mut archive: *mut HSD_Archive, mut data:
 
 /// `efAsync_LoadSync`
 pub unsafe extern "C" fn efAsync_LoadSync(mut idx: i32) {
+    melee_core::ct!("efAsync_LoadSync");
     let mut spC: *mut EF_DAT_Entry = null_mut();
     let mut lookup: *mut EF_DAT_Entry = null_mut();
     lookup = core::ptr::addr_of_mut!(efAsync_DatEntries).cast::<EF_DAT_Entry>().wrapping_offset(idx as isize) as *mut EF_DAT_Entry;
@@ -1305,6 +1315,7 @@ pub unsafe extern "C" fn efAsync_LoadSync(mut idx: i32) {
 
 /// `efAsync_QueueProcessDeferred`
 pub unsafe extern "C" fn efAsync_QueueProcessDeferred(mut gobj: *mut HSD_GObj, mut queued_effect: *mut EF_QueuedEffect) {
+    melee_core::ct!("efAsync_QueueProcessDeferred");
     let mut sp4C: Vec3 = unsafe { core::mem::zeroed() };
     let mut sp40: Vec3 = unsafe { core::mem::zeroed() };
     let mut sp34: Vec3 = unsafe { core::mem::zeroed() };
@@ -1365,6 +1376,7 @@ pub unsafe extern "C" fn efAsync_QueueProcessDeferred(mut gobj: *mut HSD_GObj, m
 
 /// `efAsync_QueueFlush`
 pub unsafe extern "C" fn efAsync_QueueFlush(mut gobj: *mut HSD_GObj, mut arg_struct: *mut c_void) {
+    melee_core::ct!("efAsync_QueueFlush");
     let mut temp_r31: *mut EF_QueuedEffect = null_mut();
     let mut var_r4: *mut EF_QueuedEffect = null_mut();
     var_r4 = (*(arg_struct as *mut EF_QueuedEffect)).next;
@@ -1378,6 +1390,7 @@ pub unsafe extern "C" fn efAsync_QueueFlush(mut gobj: *mut HSD_GObj, mut arg_str
 
 /// `efAsync_QueueClear`
 pub unsafe extern "C" fn efAsync_QueueClear(mut arg_struct: *mut c_void) {
+    melee_core::ct!("efAsync_QueueClear");
     let mut temp_r30: *mut EF_QueuedEffect = null_mut();
     let mut var_r4: *mut EF_QueuedEffect = null_mut();
     var_r4 = (*(arg_struct as *mut EF_QueuedEffect)).next;
@@ -1391,6 +1404,7 @@ pub unsafe extern "C" fn efAsync_QueueClear(mut arg_struct: *mut c_void) {
 
 /// `efAsync_Spawn`
 pub unsafe fn efAsync_Spawn(mut gobj: *mut HSD_GObj, mut queue_head: *mut c_void, mut spawn_kind: u32, mut gfx_id: u32, mut jobj: *mut HSD_JObj, args: &[*const c_void]) {
+    melee_core::ct!("efAsync_Spawn");
     let mut va_store = crate::tu::va::Va::new(args);
     let mut vlist: *mut crate::tu::va::Va = null_mut();
     let mut va_vec3: *mut Vec = null_mut();
@@ -1451,11 +1465,13 @@ pub unsafe fn efAsync_Spawn(mut gobj: *mut HSD_GObj, mut queue_head: *mut c_void
 
 /// `efAsync_QueueInit`
 pub unsafe extern "C" fn efAsync_QueueInit() {
+    melee_core::ct!("efAsync_QueueInit");
     ext::HSD_ObjAllocInit(core::ptr::addr_of_mut!(efAsync_AllocData) as *mut _HSD_ObjAllocData, 48_u64 as u32, 8_u64 as u32);
 }
 
 /// `efAsync_MexInit`
 pub unsafe extern "C" fn efAsync_MexInit() {
+    melee_core::ct!("efAsync_MexInit");
     let mut n: i32 = 0;
     let mut i: i32 = 0;
     if efAsync_MexReady != 0 {
@@ -1489,6 +1505,7 @@ pub unsafe extern "C" fn efAsync_MexInit() {
 
 /// `efAsync_MexNoteArchive`
 pub unsafe extern "C" fn efAsync_MexNoteArchive(mut bank: i32, mut archive: *mut HSD_Archive) {
+    melee_core::ct!("efAsync_MexNoteArchive");
     let mut bhv: *mut EfMexBehavior = null_mut();
     if ((bank < 0) || (bank >= 65)) || (archive.is_null()) {
         return;
@@ -1502,6 +1519,7 @@ pub unsafe extern "C" fn efAsync_MexNoteArchive(mut bank: i32, mut archive: *mut
 
 /// `efAsync_MexMiss`
 pub unsafe extern "C" fn efAsync_MexMiss(mut kind: i32, mut gfx_id: i32, mut why: *const i8) {
+    melee_core::ct!("efAsync_MexMiss");
     let mut key: i32 = (((kind * 10000) + (gfx_id % 100000)) * 2) + ((gfx_id >= 100000) as i32);
     let mut i: i32 = 0;
     {
@@ -1525,6 +1543,7 @@ pub unsafe extern "C" fn efAsync_MexMiss(mut kind: i32, mut gfx_id: i32, mut why
 
 /// `efAsync_MexResolve`
 pub unsafe extern "C" fn efAsync_MexResolve(mut gobj: *mut HSD_GObj, mut gfx_id: i32, mut final_id: *mut i32, mut is_ptcl: *mut i32, mut owner: *mut *mut HSD_GObj) -> i32 {
+    melee_core::ct!("efAsync_MexResolve");
     let mut fp: *mut Fighter = null_mut();
     let mut kind: i32 = 0;
     let mut src_kind: i32 = 0;
@@ -1591,6 +1610,7 @@ pub unsafe extern "C" fn efAsync_MexResolve(mut gobj: *mut HSD_GObj, mut gfx_id:
 
 /// `efAsync_MexSpawn`
 pub unsafe extern "C" fn efAsync_MexSpawn(mut gobj: *mut HSD_GObj, mut queue_head: *mut c_void, mut gfx_id: i32, mut jobj: *mut HSD_JObj, mut offset: *mut Vec, mut facing: f32, mut orientation: f32) {
+    melee_core::ct!("efAsync_MexSpawn");
     let mut q: *mut EF_QueuedEffect = null_mut();
     let mut final_id: i32 = 0;
     let mut is_ptcl: i32 = 0;
@@ -1618,6 +1638,7 @@ pub unsafe extern "C" fn efAsync_MexSpawn(mut gobj: *mut HSD_GObj, mut queue_hea
 
 /// `efAsync_MexProcessDeferred`
 pub unsafe extern "C" fn efAsync_MexProcessDeferred(mut gobj: *mut HSD_GObj, mut q: *mut EF_QueuedEffect) {
+    melee_core::ct!("efAsync_MexProcessDeferred");
     let mut pos: Vec3 = unsafe { core::mem::zeroed() };
     let mut final_id: i32 = 0;
     let mut is_ptcl: i32 = 0;
@@ -1668,11 +1689,13 @@ pub unsafe extern "C" fn efAsync_MexProcessDeferred(mut gobj: *mut HSD_GObj, mut
 
 /// `HSD_GObjGetHSDObj`
 pub unsafe extern "C" fn HSD_GObjGetHSDObj(mut gobj: *mut HSD_GObj) -> *mut c_void {
+    melee_core::ct!("HSD_GObjGetHSDObj");
     return (*gobj).hsd_obj;
 }
 
 /// `HSD_JObjSetRotationZ`
 pub unsafe extern "C" fn HSD_JObjSetRotationZ(mut jobj: *mut HSD_JObj, mut z: f32) {
+    melee_core::ct!("HSD_JObjSetRotationZ");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjSetRotationZ: assertion failed"); }
     if !(((*jobj).flags & ((1 << 17) as u32)) != 0) { (); } else { panic!("HSD_JObjSetRotationZ: assertion failed"); }
     (*jobj).rotate.z = z;
@@ -1687,6 +1710,7 @@ pub unsafe extern "C" fn HSD_JObjSetRotationZ(mut jobj: *mut HSD_JObj, mut z: f3
 
 /// `HSD_JObjSetScaleX`
 pub unsafe extern "C" fn HSD_JObjSetScaleX(mut jobj: *mut HSD_JObj, mut x: f32) {
+    melee_core::ct!("HSD_JObjSetScaleX");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjSetScaleX: assertion failed"); }
     (*jobj).scale.x = x;
     if !(((*jobj).flags & ((1 << 25) as u32)) != 0) {
@@ -1700,6 +1724,7 @@ pub unsafe extern "C" fn HSD_JObjSetScaleX(mut jobj: *mut HSD_JObj, mut x: f32) 
 
 /// `HSD_JObjSetScaleY`
 pub unsafe extern "C" fn HSD_JObjSetScaleY(mut jobj: *mut HSD_JObj, mut y: f32) {
+    melee_core::ct!("HSD_JObjSetScaleY");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjSetScaleY: assertion failed"); }
     (*jobj).scale.y = y;
     if !(((*jobj).flags & ((1 << 25) as u32)) != 0) {
@@ -1713,6 +1738,7 @@ pub unsafe extern "C" fn HSD_JObjSetScaleY(mut jobj: *mut HSD_JObj, mut y: f32) 
 
 /// `HSD_JObjSetScaleZ`
 pub unsafe extern "C" fn HSD_JObjSetScaleZ(mut jobj: *mut HSD_JObj, mut z: f32) {
+    melee_core::ct!("HSD_JObjSetScaleZ");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjSetScaleZ: assertion failed"); }
     (*jobj).scale.z = z;
     if !(((*jobj).flags & ((1 << 25) as u32)) != 0) {
@@ -1726,6 +1752,7 @@ pub unsafe extern "C" fn HSD_JObjSetScaleZ(mut jobj: *mut HSD_JObj, mut z: f32) 
 
 /// `HSD_JObjSetScale`
 pub unsafe extern "C" fn HSD_JObjSetScale(mut jobj: *mut HSD_JObj, mut scale: *mut Vec) {
+    melee_core::ct!("HSD_JObjSetScale");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjSetScale: assertion failed"); }
     if !scale.is_null() { (); } else { panic!("HSD_JObjSetScale: assertion failed"); }
     (*jobj).scale = *scale;
@@ -1740,6 +1767,7 @@ pub unsafe extern "C" fn HSD_JObjSetScale(mut jobj: *mut HSD_JObj, mut scale: *m
 
 /// `HSD_JObjSetRotationY`
 pub unsafe extern "C" fn HSD_JObjSetRotationY(mut jobj: *mut HSD_JObj, mut y: f32) {
+    melee_core::ct!("HSD_JObjSetRotationY");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjSetRotationY: assertion failed"); }
     if !(((*jobj).flags & ((1 << 17) as u32)) != 0) { (); } else { panic!("HSD_JObjSetRotationY: assertion failed"); }
     (*jobj).rotate.y = y;
@@ -1754,6 +1782,7 @@ pub unsafe extern "C" fn HSD_JObjSetRotationY(mut jobj: *mut HSD_JObj, mut y: f3
 
 /// `HSD_JObjGetScale`
 pub unsafe extern "C" fn HSD_JObjGetScale(mut jobj: *mut HSD_JObj, mut scale: *mut Vec) {
+    melee_core::ct!("HSD_JObjGetScale");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjGetScale: assertion failed"); }
     if !scale.is_null() { (); } else { panic!("HSD_JObjGetScale: assertion failed"); }
     *scale = (*jobj).scale;
@@ -1761,6 +1790,7 @@ pub unsafe extern "C" fn HSD_JObjGetScale(mut jobj: *mut HSD_JObj, mut scale: *m
 
 /// `HSD_JObjGetChild`
 pub unsafe extern "C" fn HSD_JObjGetChild(mut jobj: *mut HSD_JObj) -> *mut HSD_JObj {
+    melee_core::ct!("HSD_JObjGetChild");
     if jobj.is_null() {
         return null_mut();
     } else {
@@ -1770,6 +1800,7 @@ pub unsafe extern "C" fn HSD_JObjGetChild(mut jobj: *mut HSD_JObj) -> *mut HSD_J
 
 /// `HSD_JObjGetNext`
 pub unsafe extern "C" fn HSD_JObjGetNext(mut jobj: *mut HSD_JObj) -> *mut HSD_JObj {
+    melee_core::ct!("HSD_JObjGetNext");
     if jobj.is_null() {
         return null_mut();
     } else {
@@ -1779,17 +1810,20 @@ pub unsafe extern "C" fn HSD_JObjGetNext(mut jobj: *mut HSD_JObj) -> *mut HSD_JO
 
 /// `HSD_JObjGetRotationY`
 pub unsafe extern "C" fn HSD_JObjGetRotationY(mut jobj: *mut HSD_JObj) -> f32 {
+    melee_core::ct!("HSD_JObjGetRotationY");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjGetRotationY: assertion failed"); }
     return (*jobj).rotate.y;
 }
 
 /// `HSD_GObjGetUserData`
 pub unsafe extern "C" fn HSD_GObjGetUserData(mut gobj: *mut HSD_GObj) -> *mut c_void {
+    melee_core::ct!("HSD_GObjGetUserData");
     return (*gobj).user_data;
 }
 
 /// `HSD_JObjMtxIsDirty`
 pub unsafe extern "C" fn HSD_JObjMtxIsDirty(mut jobj: *mut HSD_JObj) -> i32 {
+    melee_core::ct!("HSD_JObjMtxIsDirty");
     let mut result: i32 = 0;
     if !jobj.is_null() { (); } else { panic!("HSD_JObjMtxIsDirty: assertion failed"); }
     result = 0;

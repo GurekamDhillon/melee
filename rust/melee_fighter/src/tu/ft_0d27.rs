@@ -40,6 +40,7 @@ pub static mut lbl_803C6FF0: HSD_Joint = HSD_Joint {
 
 /// `ftCo_800D2770(gobj, scale)`.
 pub fn ftco_800d2770(g: G, arg8: f32) {
+    melee_core::ct!("ftco_800d2770");
     h::ftlib_set_scale(g, arg8);
     ext::ftCo_800D105C(g);
     ext::ftCamera_80076064(fp(g));
@@ -49,6 +50,7 @@ pub fn ftco_800d2770(g: G, arg8: f32) {
 
 /// `ftCo_800D27C4`.
 pub fn ftco_800d27c4(f: &Fighter) -> bool {
+    melee_core::ct!("ftco_800d27c4");
     if f.motion_id as i32 == ftCo_MS_DamageIce as i32 {
         return false;
     }
@@ -57,6 +59,7 @@ pub fn ftco_800d27c4(f: &Fighter) -> bool {
 
 /// `fn_800D2818`.
 pub fn fn_800d2818(f: &Fighter) -> bool {
+    melee_core::ct!("fn_800d2818");
     let m = f.motion_id as i32;
     if m == ftCo_MS_DamageIce as i32 {
         return false;
@@ -70,6 +73,7 @@ pub fn fn_800d2818(f: &Fighter) -> bool {
 
 /// `fn_800D2890(gobj, msid)`: pick the fall state to return to.
 pub fn fn_800d2890(g: G, ms_id: i32) {
+    melee_core::ct!("fn_800d2890");
     let f = fp(g);
     let cb: unsafe extern "C" fn(G) = if f.kind == Ft_Kind_Peach && ms_id == 0x172 {
         ext::ftCo_800968C8
@@ -85,6 +89,7 @@ pub fn fn_800d2890(g: G, ms_id: i32) {
 
 /// `fn_800D290C`: release a grab both ways.
 pub fn fn_800d290c(g: G) {
+    melee_core::ct!("fn_800d290c");
     use super::ft_0c8c::ext as k;
     crate::ftcommon3::ftcommon_8007db58(g);
     k::ftCo_8009750C(g);
@@ -102,6 +107,7 @@ pub fn fn_800d290c(g: G) {
 
 /// `fn_800D299C(gobj, idx, from, to)`.
 pub fn fn_800d299c(g: G, idx: i32, arg8: f32, arg9: f32) {
+    melee_core::ct!("fn_800d299c");
     let f = fp(g);
     if f.x2184.is_null() {
         f.x2184 = ext::HSD_JObjLoadJoint(unsafe { &mut lbl_803C6FF0 });
@@ -118,11 +124,13 @@ pub fn fn_800d299c(g: G, idx: i32, arg8: f32, arg9: f32) {
 
 /// The scale fn_800D2A3C sets: `(fast - mid) * scale + mid`, fused as in the shipping build.
 pub fn lerp_scale(mid: f32, fast: f32, scale: f32) -> f32 {
+    melee_core::ct!("lerp_scale");
     fmadds(fast - mid, scale, mid)
 }
 
 /// `fn_800D2A3C`: step the scale animation; false when it ended.
 pub fn fn_800d2a3c(g: G) -> bool {
+    melee_core::ct!("fn_800d2a3c");
     ext::HSD_JObjAnim(fp(g).x2184);
     let f = fp(g);
     let scale = unsafe { (*f.x2184).scale.x };
@@ -133,16 +141,17 @@ pub fn fn_800d2a3c(g: G) -> bool {
 }
 
 /// `fn_800D2AD8`: sfx id 284 (the C passes the motion-state constant).
-pub fn fn_800d2ad8(f: &mut Fighter) { h::play_sfx(f, ftCo_MS_CaptureDamageKoopaAir as i32, 0x7F, 0x40) }
+pub fn fn_800d2ad8(f: &mut Fighter) { melee_core::ct!("fn_800d2ad8"); h::play_sfx(f, ftCo_MS_CaptureDamageKoopaAir as i32, 0x7F, 0x40) }
 
 /// `fn_800D2B04`: sfx id 285.
-pub fn fn_800d2b04(f: &mut Fighter) { h::play_sfx(f, ftCo_MS_CaptureWaitKoopaAir as i32, 0x7F, 0x40) }
+pub fn fn_800d2b04(f: &mut Fighter) { melee_core::ct!("fn_800d2b04"); h::play_sfx(f, ftCo_MS_CaptureWaitKoopaAir as i32, 0x7F, 0x40) }
 
 /// Test/rewire override for fn_800D2B30's `ftCommon_8007E2FC(fp->gobj)` (unset = the port).
 pub static mut FTCOMMON_8007E2FC: Option<fn(G)> = None;
 
 /// `fn_800D2B30`: save every velocity into `mv.co.common`, then zero them.
 pub fn fn_800d2b30(g: G) {
+    melee_core::ct!("fn_800d2b30");
     let f = fp(g);
     unsafe {
         let c = &mut f.mv.co.common;
@@ -163,6 +172,7 @@ pub fn fn_800d2b30(g: G) {
 
 /// `fn_800D2BF8`: restore the saved velocities.
 pub fn fn_800d2bf8(g: G) {
+    melee_core::ct!("fn_800d2bf8");
     let f = fp(g);
     unsafe {
         let c = f.mv.co.common;
@@ -181,12 +191,14 @@ pub fn fn_800d2bf8(g: G) {
 
 /// `fn_800D2CA0`: landed; ground velocity from the saved self velocity.
 pub fn fn_800d2ca0(f: &mut Fighter) {
+    melee_core::ct!("fn_800d2ca0");
     crate::ftcommon3::ftcommon_8007d7fc(f);
     unsafe { f.mv.co.common.x1C = f.mv.co.common.x34.x };
 }
 
 /// `fn_800D2CD4`: went airborne.
 pub fn fn_800d2cd4(f: &mut Fighter) {
+    melee_core::ct!("fn_800d2cd4");
     crate::ftcommon2::ftcommon_8007d5d4(f);
     unsafe {
         f.mv.co.common.x1C = 0.0;
@@ -196,6 +208,7 @@ pub fn fn_800d2cd4(f: &mut Fighter) {
 
 /// `ft_800D2D0C`: the held item is `It_Kind_ScBall`.
 pub fn ft_800d2d0c(g: G) -> bool {
+    melee_core::ct!("ft_800d2d0c");
     let it = fp(g).item_gobj;
     !it.is_null() && h::it_get_kind(it) as ItemKind == It_Kind_ScBall
 }

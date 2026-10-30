@@ -95,6 +95,7 @@ unsafe fn buf_ptr(i: usize) -> *mut c_void {
 
 /// `HSD_DevComIsBusy`.
 pub unsafe fn HSD_DevComIsBusy(idx: i32) -> bool {
+    melee_core::ct!("HSD_DevComIsBusy");
     !devComStatus[idx as usize].is_null()
 }
 
@@ -189,6 +190,7 @@ unsafe fn getRelayBufIdx() -> i32 {
 
 /// `HSD_DevComARAMWakeUp`.
 pub unsafe fn HSD_DevComARAMWakeUp() {
+    melee_core::ct!("HSD_DevComARAMWakeUp");
     let enabled = ext::OSDisableInterrupts();
     if aramstate != 0 {
         ext::OSRestoreInterrupts(enabled);
@@ -384,6 +386,7 @@ unsafe extern "C" fn HSD_DevComDVDCallback(result: i32, _unused: *mut DVDFileInf
 
 /// `HSD_DevComDVDWakeUp`.
 pub unsafe fn HSD_DevComDVDWakeUp() {
+    melee_core::ct!("HSD_DevComDVDWakeUp");
     let enabled = ext::OSDisableInterrupts();
 
     if HSD_DevCom_804D77F5 != 0 {
@@ -463,6 +466,7 @@ pub unsafe fn HSD_DevComRequest(
     cb: HSD_DevComCallback,
     args: u32,
 ) -> i32 {
+    melee_core::ct!("HSD_DevComRequest");
     let enabled = ext::OSDisableInterrupts();
 
     let mut dc = HSD_DevCom_804D77F0;
@@ -551,6 +555,7 @@ unsafe fn HSD_DevComCancelEx_inline(dc_req: i32) -> *mut HSD_DevCom {
 
 /// `HSD_DevComCancelEx`.
 pub unsafe fn HSD_DevComCancelEx(dc_req: i32, flags: u32, cb: HSD_DevComCallback, args: u32) -> i32 {
+    melee_core::ct!("HSD_DevComCancelEx");
     let enabled = ext::OSDisableInterrupts();
 
     let dc = HSD_DevComCancelEx_inline(dc_req);

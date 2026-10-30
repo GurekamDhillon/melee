@@ -205,9 +205,10 @@ pub static mut grOy_StageData: StageData = StageData {
     joint_count: 0,
 };
 
-pub unsafe extern "C" fn grOldYoshi_8020E798(_arg: i32) {}
+pub unsafe extern "C" fn grOldYoshi_8020E798(_arg: i32) { melee_core::ct!("grOldYoshi_8020E798");}
 
 pub unsafe extern "C" fn grOldYoshi_8020E79C() {
+    melee_core::ct!("grOldYoshi_8020E79C");
     yakumono_param = ext::Ground_GetYakumonoParam() as *mut OyYakumonoParam;
     ext::stage_info.unk8C.set_b4(0);
     ext::stage_info.unk8C.set_b5(1);
@@ -221,17 +222,20 @@ pub unsafe extern "C" fn grOldYoshi_8020E79C() {
     ext::Ground_801C3BB4();
 }
 
-pub unsafe extern "C" fn grOldYoshi_8020E824() {}
+pub unsafe extern "C" fn grOldYoshi_8020E824() { melee_core::ct!("grOldYoshi_8020E824");}
 
 pub unsafe extern "C" fn grOldYoshi_8020E828() {
+    melee_core::ct!("grOldYoshi_8020E828");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
 
 pub unsafe extern "C" fn grOldYoshi_8020E84C() -> i32 {
+    melee_core::ct!("grOldYoshi_8020E84C");
     0
 }
 
 pub unsafe extern "C" fn grOldYoshi_8020E854(gobj_id: i32) -> *mut HSD_GObj {
+    melee_core::ct!("grOldYoshi_8020E854");
     let callbacks = (&raw mut grOy_StageCallbacks as *mut StageCallbacks).add(gobj_id as usize);
     let gobj = ext::Ground_GetStageGObj(gobj_id);
     if !gobj.is_null() {
@@ -241,16 +245,19 @@ pub unsafe extern "C" fn grOldYoshi_8020E854(gobj_id: i32) -> *mut HSD_GObj {
 }
 
 pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj0_OnInit");
     Ground_StartMapAnim(gobj);
 }
 
 pub unsafe extern "C" fn grOldYoshi_8020E968(_arg: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grOldYoshi_8020E968");
     0
 }
-pub unsafe extern "C" fn grOldYoshi_8020E970(_arg: *mut HSD_GObj) {}
-pub unsafe extern "C" fn grOldYoshi_8020E974(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grOldYoshi_8020E970(_arg: *mut HSD_GObj) { melee_core::ct!("grOldYoshi_8020E970");}
+pub unsafe extern "C" fn grOldYoshi_8020E974(_arg: *mut HSD_GObj) { melee_core::ct!("grOldYoshi_8020E974");}
 
 pub unsafe extern "C" fn grOldYoshi_8020E978(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grOldYoshi_8020E978");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
@@ -260,12 +267,14 @@ pub unsafe extern "C" fn grOldYoshi_8020E978(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grOldYoshi_8020E9E0(_arg: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grOldYoshi_8020E9E0");
     0
 }
-pub unsafe extern "C" fn grOldYoshi_8020E9E8(_arg: *mut HSD_GObj) {}
-pub unsafe extern "C" fn grOldYoshi_8020E9EC(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grOldYoshi_8020E9E8(_arg: *mut HSD_GObj) { melee_core::ct!("grOldYoshi_8020E9E8");}
+pub unsafe extern "C" fn grOldYoshi_8020E9EC(_arg: *mut HSD_GObj) { melee_core::ct!("grOldYoshi_8020E9EC");}
 
 pub unsafe extern "C" fn grOldYoshi_8020E9F0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grOldYoshi_8020E9F0");
     let gp = (*gobj).user_data as *mut Ground;
     Ground_InitMapCollAndAnim(gobj);
     (*gp).x11_flags.set_b012(1);
@@ -273,29 +282,34 @@ pub unsafe extern "C" fn grOldYoshi_8020E9F0(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grOldYoshi_8020EA5C(_arg: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grOldYoshi_8020EA5C");
     0
 }
 
 pub unsafe extern "C" fn grOldYoshi_8020EA64(arg0: *mut HSD_GObj) {
+    melee_core::ct!("grOldYoshi_8020EA64");
     ext::Ground_UpdateMapColl(arg0);
     ext::lb_800115F4();
 }
 
-pub unsafe extern "C" fn grOldYoshi_8020EA88(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grOldYoshi_8020EA88(_arg: *mut HSD_GObj) { melee_core::ct!("grOldYoshi_8020EA88");}
 
 pub unsafe extern "C" fn grOldYoshi_8020EA8C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grOldYoshi_8020EA8C");
     let gp = (*gobj).user_data as *mut Ground;
     Ground_InitMapCollAndAnim(gobj);
     (*gp).x11_flags.set_b012(1);
 }
 
 pub unsafe extern "C" fn grOldYoshi_8020EAEC(_arg: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grOldYoshi_8020EAEC");
     0
 }
-pub unsafe extern "C" fn grOldYoshi_8020EAF4(_arg: *mut HSD_GObj) {}
-pub unsafe extern "C" fn grOldYoshi_8020EAF8(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grOldYoshi_8020EAF4(_arg: *mut HSD_GObj) { melee_core::ct!("grOldYoshi_8020EAF4");}
+pub unsafe extern "C" fn grOldYoshi_8020EAF8(_arg: *mut HSD_GObj) { melee_core::ct!("grOldYoshi_8020EAF8");}
 
 pub unsafe extern "C" fn grOldYoshi_8020EAFC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grOldYoshi_8020EAFC");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     ext::Ground_InitMapColl(jobj, (*gp).map_id as i32);
@@ -315,10 +329,12 @@ pub unsafe extern "C" fn grOldYoshi_8020EAFC(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grOldYoshi_8020EC08(_arg: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grOldYoshi_8020EC08");
     0
 }
 
 pub unsafe extern "C" fn grOldYoshi_8020EC10(arg: *mut HSD_GObj) {
+    melee_core::ct!("grOldYoshi_8020EC10");
     let gp = (*arg).user_data as *mut Ground;
     let yp = yakumono_param;
     for i in 0..3usize {
@@ -390,14 +406,16 @@ pub unsafe extern "C" fn grOldYoshi_8020EC10(arg: *mut HSD_GObj) {
     ext::Ground_UpdateMapColl(arg);
 }
 
-pub unsafe extern "C" fn grOldYoshi_8020EFC8(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grOldYoshi_8020EFC8(_arg: *mut HSD_GObj) { melee_core::ct!("grOldYoshi_8020EFC8");}
 
 /// `grOldYoshi_8020EFCC_inline`: the user_data read the C kept out of GET_GROUND
 pub unsafe fn grOldYoshi_8020EFCC_inline(arg0: *mut HSD_GObj) -> *mut Ground {
+    melee_core::ct!("grOldYoshi_8020EFCC_inline");
     (*arg0).user_data as *mut Ground
 }
 
 pub unsafe extern "C" fn grOldYoshi_8020EFCC(arg: *mut HSD_GObj) {
+    melee_core::ct!("grOldYoshi_8020EFCC");
     let jobj = (*arg).hsd_obj as *mut HSD_JObj;
     let gp = grOldYoshi_8020EFCC_inline(arg);
     ext::HSD_JObjSetFlagsAll(jobj, JOBJ_HIDDEN as u32);
@@ -407,10 +425,12 @@ pub unsafe extern "C" fn grOldYoshi_8020EFCC(arg: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grOldYoshi_8020F080(_arg: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grOldYoshi_8020F080");
     0
 }
 
 pub unsafe extern "C" fn grOldYoshi_8020F088(arg: *mut HSD_GObj) {
+    melee_core::ct!("grOldYoshi_8020F088");
     let gp = (*arg).user_data as *mut Ground;
     if (*gp).u.oldyoshiguest.xC6 == -1 {
         let s_var5 = (*gp).u.oldyoshiguest.xC4;
@@ -439,10 +459,11 @@ pub unsafe extern "C" fn grOldYoshi_8020F088(arg: *mut HSD_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grOldYoshi_8020F2A4(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grOldYoshi_8020F2A4(_arg: *mut HSD_GObj) { melee_core::ct!("grOldYoshi_8020F2A4");}
 
 /// 20F2A8 `mpLib_JointCollisionCallback`
 pub unsafe extern "C" fn fn_8020F2A8(user_data: *mut c_void, joint_id: i32, coll: *mut CollData, _coll_x50: i32, _ground_kind: u32, _delta_y: f32) {
+    melee_core::ct!("fn_8020F2A8");
     let gp = user_data as *mut Ground;
     if (*coll).x34_flags.b1234() as i32 != 1 {
         return;
@@ -461,6 +482,7 @@ pub unsafe extern "C" fn fn_8020F2A8(user_data: *mut c_void, joint_id: i32, coll
 }
 
 pub unsafe fn grOldYoshi_8020F31C_inline(mut param1: f32, param2: f32, param3: f32, param4: f32, distance: f32) -> f32 {
+    melee_core::ct!("grOldYoshi_8020F31C_inline");
     let mut f_var1 = param4 - param3;
     if f_var1 < 0.0 {
         f_var1 = -f_var1;
@@ -480,6 +502,7 @@ pub unsafe fn grOldYoshi_8020F31C_inline(mut param1: f32, param2: f32, param3: f
 }
 
 pub unsafe extern "C" fn grOldYoshi_8020F31C(param1: f32, param2: f32, param3: f32, param4: f32, param5: f32, param6: f32) -> f32 {
+    melee_core::ct!("grOldYoshi_8020F31C");
     let f_var2 = if param1 < 0.0 { -param1 } else { param1 };
     let f_var3 = f_var2 / param2;
     let f_var2 = if param1 < 0.0 { -param1 } else { param1 };
@@ -496,10 +519,12 @@ pub unsafe extern "C" fn grOldYoshi_8020F31C(param1: f32, param2: f32, param3: f
 }
 
 pub unsafe extern "C" fn grOldYoshi_8020F404(_arg: i32) -> *mut DynamicsDesc {
+    melee_core::ct!("grOldYoshi_8020F404");
     null_mut()
 }
 
 pub unsafe extern "C" fn grOldYoshi_8020F40C(a: *mut Vec3, _arg: i32, joint: *mut HSD_JObj) -> i32 {
+    melee_core::ct!("grOldYoshi_8020F40C");
     let mut b = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ext::lb_8000B1CC(joint, null_mut(), &mut b);
     if (*a).y > b.y + -5.0 {

@@ -78,10 +78,12 @@ unsafe fn fpp(gobj: G) -> *mut Fighter {
 
 /// Accessory callback entry for `fn_800F98F4`.
 pub unsafe extern "C" fn cb_fn_800F98F4(g: G) {
+    melee_core::ct!("cb_fn_800F98F4");
     fn_800F98F4(g);
 }
 
 pub fn ftKb_LgSpecialAirN_IASA(gobj: G) {
+    melee_core::ct!("ftKb_LgSpecialAirN_IASA");
     unsafe {
         let ft = fpp(gobj);
         if (*ft).cmd_vars[0] != 0 {
@@ -91,6 +93,7 @@ pub fn ftKb_LgSpecialAirN_IASA(gobj: G) {
 }
 
 pub fn fn_800F98F4(gobj: G) {
+    melee_core::ct!("fn_800F98F4");
     unsafe {
         let fp = fpp(gobj);
         // `ftCheckThrowB0`: test and clear.

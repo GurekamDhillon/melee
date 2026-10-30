@@ -466,6 +466,7 @@ fn is_mex_ck(ck: u32) -> bool {
 /// `gm_MexVanillaKind` (TARGET_PC): the retail table kind an m-ex / define kind reads (`character_kind` != 0: a
 /// CharacterKind, else a FighterKind).
 pub unsafe fn gm_MexVanillaKind(kind: i32, character_kind: i32) -> i32 {
+    melee_core::ct!("gm_MexVanillaKind");
     let native_base = if character_kind != 0 { ext::Geno_DefineBaseCK(kind) } else { ext::Geno_DefineBaseKind(kind) };
     if native_base >= 0 {
         return native_base;
@@ -541,6 +542,7 @@ unsafe fn gm_MexName(ckind: u8) -> *const c_char {
 }
 
 pub unsafe fn gm_801602C0(arg0: i8) {
+    melee_core::ct!("gm_801602C0");
     let a = gm_80160244(arg0);
     let b = gm_801601C4(arg0);
     ext::lbAudioAx_80024614(b);
@@ -548,6 +550,7 @@ pub unsafe fn gm_801602C0(arg0: i8) {
 }
 
 pub unsafe fn gm_801603B0() {
+    melee_core::ct!("gm_801603B0");
     let temp_r3 = ext::gmMainLib_8015ED74() as i8;
     let temp_r31 = gm_80160244_noinline(temp_r3);
     ext::lbAudioAx_80024614(gm_801601C4_noinline(temp_r3));
@@ -555,6 +558,7 @@ pub unsafe fn gm_801603B0() {
 }
 
 pub unsafe fn fn_80160400(ckind: CharacterKind) -> u32 {
+    melee_core::ct!("fn_80160400");
     let mex = ext::Mex_VictoryThemeForPortCKind(ckind as i32);
     if mex >= 0 {
         return mex as u32;
@@ -570,6 +574,7 @@ pub unsafe fn fn_80160400(ckind: CharacterKind) -> u32 {
 }
 
 pub unsafe fn gm_80160438(ckind: i32) -> *mut c_char {
+    melee_core::ct!("gm_80160438");
     let mex = ext::Mex_ResultFileForPortCKind(ckind);
     if !mex.is_null() {
         return mex as *mut c_char;
@@ -595,17 +600,20 @@ fn lbl_by_mode(mode: GameModeKind, ckind: usize) -> i32 {
 }
 
 pub unsafe fn gm_80160474(ckind: CharacterKind, mode: GameModeKind) -> bool {
+    melee_core::ct!("gm_80160474");
     let ckind = gm_MexVanillaKind(ckind as i32, 1) as usize;
     lbl_by_mode(mode, ckind) != 0
 }
 
 pub unsafe fn gm_801604DC(ckind: CharacterKind, mode: GameModeKind) -> *mut c_char {
+    melee_core::ct!("gm_801604DC");
     let ckind = gm_MexVanillaKind(ckind as i32, 1) as usize;
     let var_r3 = lbl_by_mode(mode, ckind);
     (*ext::Toy_8030813C(var_r3)).archive_name.as_mut_ptr()
 }
 
 pub unsafe fn gm_80160564(ckind: CharacterKind, mode: GameModeKind) -> *mut c_char {
+    melee_core::ct!("gm_80160564");
     let ckind = gm_MexVanillaKind(ckind as i32, 1) as usize;
     let var_r3 = lbl_by_mode(mode, ckind);
     (*ext::Toy_8030813C(var_r3)).symbol_name.as_mut_ptr()
@@ -613,6 +621,7 @@ pub unsafe fn gm_80160564(ckind: CharacterKind, mode: GameModeKind) -> *mut c_ch
 
 /// Get SJIS character name for a given CharacterKind.
 pub unsafe fn gm_80160980(ckind: u8) -> *const c_char {
+    melee_core::ct!("gm_80160980");
     if is_mex_ck(ckind as u32) {
         return gm_MexName(ckind);
     }
@@ -624,6 +633,7 @@ pub unsafe fn gm_80160980(ckind: u8) -> *const c_char {
 }
 
 pub unsafe fn fn_801609E0(ckind: u8) -> *const c_char {
+    melee_core::ct!("fn_801609E0");
     if is_mex_ck(ckind as u32) {
         return gm_MexName(ckind);
     }
@@ -641,6 +651,7 @@ pub unsafe fn fn_801609E0(ckind: u8) -> *const c_char {
 }
 
 pub unsafe fn gm_80160A60(arg0: i32) -> *const c_char {
+    melee_core::ct!("gm_80160A60");
     if ext::Player_GetPlayerSlotType(arg0) != Gm_PKind_NA {
         let ckind = ext::Player_GetPlayerCharacter(arg0) as u8;
         if ckind as u32 == CKind_Zelda || ckind as u32 == CKind_Seak {
@@ -671,6 +682,7 @@ pub unsafe fn gm_80160A60(arg0: i32) -> *const c_char {
 }
 
 pub unsafe fn gm_80160B40(text: *mut HSD_Text, ckind: u8, arg2: u8) {
+    melee_core::ct!("gm_80160B40");
     let tmp_ckind = ckind;
     // gm_80160B40_init_text
     if ext::lbLang_IsSavedLanguageUS() {
@@ -718,6 +730,7 @@ unsafe fn name_size(ckind: u8, arg2: u8) -> (f32, bool) {
 }
 
 pub unsafe fn gm_80160C90(text: *mut HSD_Text, fighter_id: u8, arg2: u8) {
+    melee_core::ct!("gm_80160C90");
     let tmp_text = text;
     let tmp_ckind = fighter_id;
     if ext::lbLang_IsSavedLanguageUS() {
@@ -730,6 +743,7 @@ pub unsafe fn gm_80160C90(text: *mut HSD_Text, fighter_id: u8, arg2: u8) {
 }
 
 pub unsafe fn fn_80160DE8(arg0: *mut HSD_JObj, arg1: u8, arg2: i32, arg3: u8, farg0: f32, farg1: f32) {
+    melee_core::ct!("fn_80160DE8");
     let tmp_text = arg0 as *mut HSD_Text;
     let tmp_ckind = arg1;
     if ext::lbLang_IsSavedLanguageUS() {
@@ -742,6 +756,7 @@ pub unsafe fn fn_80160DE8(arg0: *mut HSD_JObj, arg1: u8, arg2: i32, arg3: u8, fa
 }
 
 pub unsafe fn fn_80160F58(ckind: u8) -> f32 {
+    melee_core::ct!("fn_80160F58");
     if ext::lbLang_IsSavedLanguageUS() {
         if !LBL_803D50E4.0[name_table_ck(ckind)].is_null() {
             LBL_803B7784[name_table_ck(ckind)]
@@ -758,6 +773,7 @@ pub unsafe fn fn_80160F58(ckind: u8) -> f32 {
 // ---- match results: standings, tiebreaks, per-player statistics (fn_80161154 .. gm_801623A4)
 
 pub unsafe fn fn_80161154(arg0: *mut MatchEnd) -> i32 {
+    melee_core::ct!("fn_80161154");
     let me = &*arg0;
     let mut spc = [0u8; 12];
     let result = fn_80161004(me);
@@ -902,6 +918,7 @@ pub unsafe fn fn_80161154(arg0: *mut MatchEnd) -> i32 {
 }
 
 pub unsafe fn fn_80161C90(arg0: *mut MatchEnd, arg1: i32, s: *mut GmStats) {
+    melee_core::ct!("fn_80161C90");
     let p = &(*arg0).player_standings[arg1 as usize];
     let s = &mut *s;
     // SAT_ADD on u16 operands saturates (int arithmetic); on u32 operands `> 0xFFFFFFFF` never holds, so those wrap.
@@ -993,6 +1010,7 @@ unsafe fn gm_GenoRecordMatch(match_end: *mut MatchEnd, i: i32) {
 }
 
 pub unsafe fn fn_80162068(match_end: *mut MatchEnd) {
+    melee_core::ct!("fn_80162068");
     for i in 0..4usize {
         let pdata_i = &(*match_end).player_standings[i];
         if pdata_i.pkind == 3 {
@@ -1021,6 +1039,7 @@ pub unsafe fn fn_80162068(match_end: *mut MatchEnd) {
 }
 
 pub unsafe fn fn_80162170(arg0: *mut MatchEnd) {
+    melee_core::ct!("fn_80162170");
     for i in 0..4usize {
         let p = &(*arg0).player_standings[i];
         if p.pkind == 3 {
@@ -1067,6 +1086,7 @@ unsafe fn gm_GenoSaveRowsDigest() -> u32 {
 }
 
 pub unsafe fn gm_801623A4(arg0: *mut MatchEnd) -> i32 {
+    melee_core::ct!("gm_801623A4");
     let _before = gm_GenoSaveRowsDigest();
     let mut _defines = 0;
     for i in 0..4usize {
@@ -1081,10 +1101,12 @@ pub unsafe fn gm_801623A4(arg0: *mut MatchEnd) -> i32 {
 }
 
 pub unsafe fn gm_801623D8() -> i32 {
+    melee_core::ct!("gm_801623D8");
     *(ext::gmMainLib_8015CCF0() as *mut i32)
 }
 
 pub unsafe fn gm_801623FC(arg0: i32) {
+    melee_core::ct!("gm_801623FC");
     let mut var_r29 = arg0 as u32;
     let temp_r30 = ext::gmMainLib_8015CCF0();
     let temp_r31 = ext::gmMainLib_8015CCFC() as *mut u32;
@@ -1102,6 +1124,7 @@ pub unsafe fn gm_801623FC(arg0: i32) {
 }
 
 pub unsafe fn gm_8016247C(arg0: i32) -> i32 {
+    melee_core::ct!("gm_8016247C");
     let current_score = *ext::gmMainLib_8015CCF0() as i32;
     let high_score_ptr2 = ext::gmMainLib_8015CCFC() as *mut u32;
     let session_high_score_ptr = addr_of_mut!((*ext::gmMainLib_8015EDBC()).x14);
@@ -1136,6 +1159,7 @@ pub unsafe fn gm_8016247C(arg0: i32) -> i32 {
 }
 
 pub unsafe fn gm_80162574(arg0: u8, arg1: u8) {
+    melee_core::ct!("gm_80162574");
     if arg1 == 7 {
         return;
     }
@@ -1160,6 +1184,7 @@ pub unsafe fn gm_80162574(arg0: u8, arg1: u8) {
 }
 
 pub unsafe fn gm_SetupHumanResultsScreen(arg0: u8, arg1: u8) {
+    melee_core::ct!("gm_SetupHumanResultsScreen");
     let mut counter: *mut u32 = null_mut();
     if arg1.wrapping_sub(7) <= 1 {
         let p = ext::gmMainLib_GetMatchResetCounter();
@@ -1197,6 +1222,7 @@ pub unsafe fn gm_SetupHumanResultsScreen(arg0: u8, arg1: u8) {
 }
 
 pub unsafe fn gm_GetVsPlayMatchTotal() -> u32 {
+    melee_core::ct!("gm_GetVsPlayMatchTotal");
     *ext::gmMainLib_GetTimeMatchTotal()
         + *ext::gmMainLib_GetStockMatchTotal()
         + *ext::gmMainLib_GetCoinMatchTotal()
@@ -1205,6 +1231,7 @@ pub unsafe fn gm_GetVsPlayMatchTotal() -> u32 {
 }
 
 pub unsafe fn gm_80162800(end: *mut MatchEnd) -> u32 {
+    melee_core::ct!("gm_80162800");
     let temp_r3 = ext::gmMainLib_GetVsPlayContestants() as *mut u32;
     let mut count: u32 = 0;
     for i in 0..GM_MAX_PLAYERS as usize {
@@ -1218,6 +1245,7 @@ pub unsafe fn gm_80162800(end: *mut MatchEnd) -> u32 {
 }
 
 pub unsafe fn gm_SetupResultsScreenPlayTime(arg0: u32, arg1: u32) {
+    melee_core::ct!("gm_SetupResultsScreenPlayTime");
     let mut temp_r3 = ext::gmMainLib_GetVsPlayTime() as *mut u32;
     *temp_r3 = (*temp_r3).wrapping_add(arg0);
 
@@ -1229,30 +1257,35 @@ pub unsafe fn gm_SetupResultsScreenPlayTime(arg0: u32, arg1: u32) {
 }
 
 pub unsafe fn gm_80162968(seconds: u32) -> i32 {
+    melee_core::ct!("gm_80162968");
     let ptr = ext::gmMainLib_GetSingleplayerTime() as *mut u32;
     *ptr = (*ptr).wrapping_add(seconds);
     0 // the C falls off the end
 }
 
 pub unsafe fn gm_801629B4(amount: i32) -> i32 {
+    melee_core::ct!("gm_801629B4");
     let ptr = ext::gmMainLib_8015CD80() as *mut u32;
     *ptr = (*ptr).wrapping_add(amount as u32);
     0 // the C falls off the end
 }
 
 pub unsafe fn gm_GetPlayTime() -> i32 {
+    melee_core::ct!("gm_GetPlayTime");
     let a = *(ext::gmMainLib_GetVsPlayTime() as *mut u32);
     let b = *(ext::gmMainLib_GetSingleplayerTime() as *mut u32);
     a.wrapping_add(b) as i32
 }
 
 pub unsafe fn gm_80162A4C(amount: i32) -> i32 {
+    melee_core::ct!("gm_80162A4C");
     let ptr = ext::gmMainLib_GetTotalDamage() as *mut u32;
     *ptr = (*ptr).wrapping_add(amount as u32);
     0 // the C falls off the end
 }
 
 pub unsafe fn gm_80162A98(arg0: i32) -> *mut gmm_x1868_1A8_t {
+    melee_core::ct!("gm_80162A98");
     let ko_total = ext::gmMainLib_GetKOTotal();
     *ko_total = (*ko_total).wrapping_add(arg0);
 
@@ -1270,21 +1303,25 @@ pub unsafe fn gm_80162A98(arg0: i32) -> *mut gmm_x1868_1A8_t {
 }
 
 pub unsafe fn gm_RecordSelfDestructs(amount: i32) {
+    melee_core::ct!("gm_RecordSelfDestructs");
     let ptr = ext::gmMainLib_GetSelfDestructTotal() as *mut u32;
     *ptr = (*ptr).wrapping_add(amount as u32);
 }
 
 pub unsafe fn gm_IncrementPowerCount() {
+    melee_core::ct!("gm_IncrementPowerCount");
     let ptr = ext::gmMainLib_GetPowerCount() as *mut u32;
     let val = *ptr as i32;
     *ptr = val.wrapping_add(1) as u32;
 }
 
 pub unsafe fn gm_80162BD8(arg0: u8) -> i32 {
+    melee_core::ct!("gm_80162BD8");
     *ext::gmMainLib_8015D0C0(arg0)
 }
 
 pub unsafe fn fn_80162BFC(ckind: i8, arg1: i32) -> bool {
+    melee_core::ct!("fn_80162BFC");
     let temp_r3 = ext::gmMainLib_8015D0C0(gm_CKindToSelKind(ckind as u8));
     if (*temp_r3 as u32) < arg1 as u32 {
         *temp_r3 = arg1;
@@ -1294,6 +1331,7 @@ pub unsafe fn fn_80162BFC(ckind: i8, arg1: i32) -> bool {
 }
 
 pub unsafe fn gm_80162C48() -> i32 {
+    melee_core::ct!("gm_80162C48");
     let mut var_r29: i32 = 0;
     for i in 0..0x19i32 {
         // `(u32)(sum) > -1U` never holds; the C reads the getter in the condition and again in the else arm
@@ -1305,6 +1343,7 @@ pub unsafe fn gm_80162C48() -> i32 {
 }
 
 pub unsafe fn fn_80162CCC() -> bool {
+    melee_core::ct!("fn_80162CCC");
     for i in 0..0x19i32 {
         if ext::gmMainLib_8015D0D8(i as u8) {
             return true;
@@ -1314,6 +1353,7 @@ pub unsafe fn fn_80162CCC() -> bool {
 }
 
 pub unsafe fn gm_80162D1C() -> bool {
+    melee_core::ct!("gm_80162D1C");
     for i in 0..0x19i32 {
         if !ext::gmMainLib_8015D0D8(i as u8) {
             return false;
@@ -1323,6 +1363,7 @@ pub unsafe fn gm_80162D1C() -> bool {
 }
 
 pub unsafe fn gm_80162D6C() -> u8 {
+    melee_core::ct!("gm_80162D6C");
     let mut min: u8 = 4;
     for i in 0..0x19i32 {
         if min > *ext::gmMainLib_8015D194(i as u8) {
@@ -1333,10 +1374,12 @@ pub unsafe fn gm_80162D6C() -> u8 {
 }
 
 pub unsafe fn gm_80162DD4(i: u8) -> i32 {
+    melee_core::ct!("gm_80162DD4");
     *ext::gmMainLib_8015D1E8(i)
 }
 
 pub unsafe fn fn_80162DF8(ckind: u8, arg1: u32) -> i32 {
+    melee_core::ct!("fn_80162DF8");
     let temp_r3 = ext::gmMainLib_8015D1E8(gm_CKindToSelKind(ckind));
     if (*temp_r3 as u32) < arg1 {
         *temp_r3 = arg1 as i32;
@@ -1346,6 +1389,7 @@ pub unsafe fn fn_80162DF8(ckind: u8, arg1: u32) -> i32 {
 }
 
 pub unsafe fn gm_80162E44() -> i32 {
+    melee_core::ct!("gm_80162E44");
     let mut var_r29: i32 = 0;
     for i in 0..0x19i32 {
         let _ = *ext::gmMainLib_8015D1E8(i as u8);
@@ -1356,6 +1400,7 @@ pub unsafe fn gm_80162E44() -> i32 {
 }
 
 pub unsafe fn gm_80162EC8() -> bool {
+    melee_core::ct!("gm_80162EC8");
     for i in 0..0x19i32 {
         if ext::gmMainLib_8015D200(i as u8) {
             return true;
@@ -1365,6 +1410,7 @@ pub unsafe fn gm_80162EC8() -> bool {
 }
 
 pub unsafe fn gm_80162F18() -> bool {
+    melee_core::ct!("gm_80162F18");
     for i in 0..0x19i32 {
         if !ext::gmMainLib_8015D200(i as u8) {
             return false;
@@ -1374,6 +1420,7 @@ pub unsafe fn gm_80162F18() -> bool {
 }
 
 pub unsafe fn gm_80162F68() -> u8 {
+    melee_core::ct!("gm_80162F68");
     let mut min: u8 = 4;
     for i in 0..0x19i32 {
         if min > *ext::gmMainLib_8015D2BC(i as u8) {
@@ -1384,10 +1431,12 @@ pub unsafe fn gm_80162F68() -> u8 {
 }
 
 pub unsafe fn gm_80162FD0(i: u8) -> i32 {
+    melee_core::ct!("gm_80162FD0");
     *ext::gmMainLib_8015D310(i)
 }
 
 pub unsafe fn fn_80162FF4(ckind: u8, arg1: u32) -> bool {
+    melee_core::ct!("fn_80162FF4");
     let temp_r3 = ext::gmMainLib_8015D310(gm_CKindToSelKind(ckind));
     if (*temp_r3 as u32) < arg1 {
         *temp_r3 = arg1 as i32;
@@ -1397,6 +1446,7 @@ pub unsafe fn fn_80162FF4(ckind: u8, arg1: u32) -> bool {
 }
 
 pub unsafe fn gm_80163040() -> i32 {
+    melee_core::ct!("gm_80163040");
     let mut var_r29: i32 = 0;
     for i in 0..0x19i32 {
         let _ = *ext::gmMainLib_8015D310(i as u8);
@@ -1407,6 +1457,7 @@ pub unsafe fn gm_80163040() -> i32 {
 }
 
 pub unsafe fn fn_801630C4() -> bool {
+    melee_core::ct!("fn_801630C4");
     for i in 0..0x19i32 {
         if ext::gmMainLib_8015D328(i as u8) {
             return true;
@@ -1416,6 +1467,7 @@ pub unsafe fn fn_801630C4() -> bool {
 }
 
 pub unsafe fn gm_80163114() -> bool {
+    melee_core::ct!("gm_80163114");
     for i in 0..0x19i32 {
         if !ext::gmMainLib_8015D328(i as u8) {
             return false;
@@ -1425,6 +1477,7 @@ pub unsafe fn gm_80163114() -> bool {
 }
 
 pub unsafe fn gm_80163164() -> u8 {
+    melee_core::ct!("gm_80163164");
     let mut min: u8 = 4;
     for i in 0..0x19i32 {
         if min > *ext::gmMainLib_8015D3E4(i as u8) {
@@ -1435,10 +1488,12 @@ pub unsafe fn gm_80163164() -> u8 {
 }
 
 pub unsafe fn gm_801631CC(i: u8) -> u32 {
+    melee_core::ct!("gm_801631CC");
     *ext::gmMainLib_8015D06C(i) as u32
 }
 
 pub unsafe fn gm_801631F0() -> u32 {
+    melee_core::ct!("gm_801631F0");
     let mut sum: u32 = 0;
     for i in 0..0x19i32 {
         // `tmp > (u32) -1` never holds: reads the getter in the condition and in the else arm
@@ -1450,10 +1505,12 @@ pub unsafe fn gm_801631F0() -> u32 {
 }
 
 pub unsafe fn gm_80163274(i: u8) -> u16 {
+    melee_core::ct!("gm_80163274");
     *ext::gmMainLib_8015D7EC(i)
 }
 
 pub unsafe fn gm_80163298(c_kind: i8, arg1: u16) -> bool {
+    melee_core::ct!("gm_80163298");
     let index = gm_CKindToSelKind(c_kind as u8);
     let record = ext::gmMainLib_8015D7EC(index);
     let score = arg1;
@@ -1468,6 +1525,7 @@ pub unsafe fn gm_80163298(c_kind: i8, arg1: u16) -> bool {
 }
 
 pub unsafe fn gm_8016332C(arg0: u8) -> i32 {
+    melee_core::ct!("gm_8016332C");
     if !ext::gmMainLib_8015D48C(arg0) {
         return *ext::gmMainLib_8015D438(arg0) as i32;
     }
@@ -1492,6 +1550,7 @@ unsafe fn split_clock(val: u32, arg1: *mut u8, arg2: *mut u8, arg3: *mut u8, arg
 }
 
 pub unsafe fn gm_80163374(arg0: u8, arg1: *mut u8, arg2: *mut u8, arg3: *mut u8, arg4: *mut u8) {
+    melee_core::ct!("gm_80163374");
     if ext::gmMainLib_8015D48C(arg0) {
         let val = *ext::gmMainLib_8015D438(arg0);
         split_clock(val, arg1, arg2, arg3, arg4);
@@ -1544,10 +1603,12 @@ unsafe fn v_6f8(i: u8) -> u32 {
 }
 
 pub unsafe fn gm_801634D4(arg0: *mut u8, arg1: *mut u8, arg2: *mut u8, arg3: *mut u8) -> bool {
+    melee_core::ct!("gm_801634D4");
     total_clock(p_48c, v_438, arg0, arg1, arg2, arg3)
 }
 
 pub unsafe fn gm_8016365C(arg0: u8) -> bool {
+    melee_core::ct!("gm_8016365C");
     if !ext::gmMainLib_8015D6BC(arg0) {
         return true;
     }
@@ -1555,6 +1616,7 @@ pub unsafe fn gm_8016365C(arg0: u8) -> bool {
 }
 
 pub unsafe fn gm_80163690(arg0: u8) -> i32 {
+    melee_core::ct!("gm_80163690");
     if !ext::gmMainLib_8015D6BC(arg0) {
         return *ext::gmMainLib_8015D6A4(arg0);
     }
@@ -1562,6 +1624,7 @@ pub unsafe fn gm_80163690(arg0: u8) -> i32 {
 }
 
 pub unsafe fn gm_801636D8(arg0: u8, arg1: *mut u8, arg2: *mut u8, arg3: *mut u8, arg4: *mut u8) {
+    melee_core::ct!("gm_801636D8");
     if ext::gmMainLib_8015D6BC(arg0) {
         let val = *ext::gmMainLib_8015D6A4(arg0) as u32;
         split_clock(val, arg1, arg2, arg3, arg4);
@@ -1569,10 +1632,12 @@ pub unsafe fn gm_801636D8(arg0: u8, arg1: *mut u8, arg2: *mut u8, arg3: *mut u8,
 }
 
 pub unsafe fn gm_80163838(arg0: *mut u8, arg1: *mut u8, arg2: *mut u8, arg3: *mut u8) -> bool {
+    melee_core::ct!("gm_80163838");
     total_clock(p_6bc, v_6a4, arg0, arg1, arg2, arg3)
 }
 
 pub unsafe fn gm_801639C0(arg0: u8) -> bool {
+    melee_core::ct!("gm_801639C0");
     if !ext::gmMainLib_8015D710(arg0) {
         return true;
     }
@@ -1580,6 +1645,7 @@ pub unsafe fn gm_801639C0(arg0: u8) -> bool {
 }
 
 pub unsafe fn gm_801639F4(arg0: u8) -> i32 {
+    melee_core::ct!("gm_801639F4");
     if !ext::gmMainLib_8015D710(arg0) {
         return *ext::gmMainLib_8015D6F8(arg0);
     }
@@ -1587,6 +1653,7 @@ pub unsafe fn gm_801639F4(arg0: u8) -> i32 {
 }
 
 pub unsafe fn gm_80163A3C(arg0: u8, arg1: *mut u8, arg2: *mut u8, arg3: *mut u8, arg4: *mut u8) {
+    melee_core::ct!("gm_80163A3C");
     if ext::gmMainLib_8015D710(arg0) {
         let val = *ext::gmMainLib_8015D6F8(arg0) as u32;
         split_clock(val, arg1, arg2, arg3, arg4);
@@ -1594,10 +1661,12 @@ pub unsafe fn gm_80163A3C(arg0: u8, arg1: *mut u8, arg2: *mut u8, arg3: *mut u8,
 }
 
 pub unsafe fn gm_80163B9C(arg0: *mut u8, arg1: *mut u8, arg2: *mut u8, arg3: *mut u8) -> bool {
+    melee_core::ct!("gm_80163B9C");
     total_clock(p_710, v_6f8, arg0, arg1, arg2, arg3)
 }
 
 pub unsafe fn fn_80163D24() -> bool {
+    melee_core::ct!("fn_80163D24");
     for i in 0..0x19i32 {
         if ext::gmMainLib_8015D710(i as u8) {
             return true;
@@ -1607,6 +1676,7 @@ pub unsafe fn fn_80163D24() -> bool {
 }
 
 pub unsafe fn fn_80163D74() -> bool {
+    melee_core::ct!("fn_80163D74");
     for i in 0..0x19i32 {
         if ext::gmMainLib_8015D764(i as u8) {
             return true;
@@ -1616,11 +1686,13 @@ pub unsafe fn fn_80163D74() -> bool {
 }
 
 pub unsafe fn gm_Get3MinMultimanHighscore(i: u8) -> u16 {
+    melee_core::ct!("gm_Get3MinMultimanHighscore");
     *ext::gmMainLib_8015D74C(i)
 }
 
 /// Get total number of KOs
 pub unsafe fn gm_Get3MinMultimanTotalHighscore() -> i32 {
+    melee_core::ct!("gm_Get3MinMultimanTotalHighscore");
     let mut total: i32 = 0;
     for i in 0..0x19i32 {
         total += *ext::gmMainLib_8015D74C(i as u8) as i32;
@@ -1629,10 +1701,12 @@ pub unsafe fn gm_Get3MinMultimanTotalHighscore() -> i32 {
 }
 
 pub unsafe fn gm_Get15MinMultimanHighscore(i: u8) -> u16 {
+    melee_core::ct!("gm_Get15MinMultimanHighscore");
     *ext::gmMainLib_8015D7A4(i)
 }
 
 pub unsafe fn gm_Get15MinMultimanTotalHighscore() -> i32 {
+    melee_core::ct!("gm_Get15MinMultimanTotalHighscore");
     let mut total: i32 = 0;
     for i in 0..0x19i32 {
         total += *ext::gmMainLib_8015D7A4(i as u8) as i32;
@@ -1641,10 +1715,12 @@ pub unsafe fn gm_Get15MinMultimanTotalHighscore() -> i32 {
 }
 
 pub unsafe fn gm_GetEndlessHighscore(i: u8) -> i32 {
+    melee_core::ct!("gm_GetEndlessHighscore");
     *ext::gmMainLib_8015D7BC(i)
 }
 
 pub unsafe fn gm_GetEndlessTotalHighscore() -> i32 {
+    melee_core::ct!("gm_GetEndlessTotalHighscore");
     let mut total: i32 = 0;
     for i in 0..0x19i32 {
         total = total.wrapping_add(*ext::gmMainLib_8015D7BC(i as u8));
@@ -1653,10 +1729,12 @@ pub unsafe fn gm_GetEndlessTotalHighscore() -> i32 {
 }
 
 pub unsafe fn gm_GetCruelHighscore(i: u8) -> i32 {
+    melee_core::ct!("gm_GetCruelHighscore");
     *ext::gmMainLib_8015D7D4(i)
 }
 
 pub unsafe fn gm_GetCruelTotalHighscore() -> i32 {
+    melee_core::ct!("gm_GetCruelTotalHighscore");
     let mut total: i32 = 0;
     for i in 0..0x19i32 {
         total = total.wrapping_add(*ext::gmMainLib_8015D7D4(i as u8));
@@ -1665,6 +1743,7 @@ pub unsafe fn gm_GetCruelTotalHighscore() -> i32 {
 }
 
 pub unsafe fn fn_80163FA4(arg0: u8) -> i32 {
+    melee_core::ct!("fn_80163FA4");
     let mut count = 0;
     for i in 0..arg0 as i32 {
         if ext::gmMainLib_8015CEFC(i) {
@@ -1677,6 +1756,7 @@ pub unsafe fn fn_80163FA4(arg0: u8) -> i32 {
 // ---- item/stage switches, unlocks, pause cameras, the stress-test label
 
 pub unsafe fn gm_8016403C(item: u8) -> bool {
+    melee_core::ct!("gm_8016403C");
     let item_mask = (*ext::gmMainLib_GetGamePrefs()).item_mask;
     if (1i64 << item) as u64 & item_mask != 0 {
         return true;
@@ -1685,6 +1765,7 @@ pub unsafe fn gm_8016403C(item: u8) -> bool {
 }
 
 pub unsafe fn fn_801640B0(item_mask: *mut u64) {
+    melee_core::ct!("fn_801640B0");
     let temp_r30 = ext::gmMainLib_GetGamePrefs();
     for i in 0..0x20i32 {
         let shift = LBL_803B7844[(i as u8) as usize] as i32;
@@ -1699,6 +1780,7 @@ pub unsafe fn fn_801640B0(item_mask: *mut u64) {
 }
 
 pub unsafe fn gm_801641E4(stage: u8, enable: u8) {
+    melee_core::ct!("gm_801641E4");
     if enable != 0 {
         (*ext::gmMainLib_GetGamePrefs()).stage_mask |= 1i32.wrapping_shl(stage as u32) as u32;
     } else {
@@ -1707,6 +1789,7 @@ pub unsafe fn gm_801641E4(stage: u8, enable: u8) {
 }
 
 pub unsafe fn gm_IsStageUnlocked(stkind: u16) -> bool {
+    melee_core::ct!("gm_IsStageUnlocked");
     if (1i32.wrapping_shl(stkind as u32)) as u32 & (*ext::gmMainLib_GetGamePrefs()).stage_mask != 0 {
         return true;
     }
@@ -1714,6 +1797,7 @@ pub unsafe fn gm_IsStageUnlocked(stkind: u16) -> bool {
 }
 
 pub unsafe fn fn_801642A0() -> bool {
+    melee_core::ct!("fn_801642A0");
     let mut enabled_count: i32 = 0;
     for i in 0..0x1Di32 {
         let enabled = (1i32.wrapping_shl(i as u16 as u32)) as u32 & (*ext::gmMainLib_GetGamePrefs()).stage_mask != 0;
@@ -1729,6 +1813,7 @@ pub unsafe fn fn_801642A0() -> bool {
 
 // RandomStageSwitch
 pub unsafe fn gm_80164330(arg0: i32) -> bool {
+    melee_core::ct!("gm_80164330");
     if !gm_80164430(crate::gm::LBL_803B7808[(arg0 as u8) as usize] as u16) {
         return false;
     }
@@ -1747,6 +1832,7 @@ pub unsafe fn gm_80164330(arg0: i32) -> bool {
 }
 
 pub unsafe fn gm_80164430(arg0: u16) -> bool {
+    melee_core::ct!("gm_80164430");
     let stage_unlock_mask = ext::gmMainLib_8015EDA4();
     let stage_idx = ext::Stage_8022519C(arg0 as StKind) as u8;
     let unlock_bit = getStageUnlockIndex(stage_idx);
@@ -1761,6 +1847,7 @@ pub unsafe fn gm_80164430(arg0: u16) -> bool {
 }
 
 pub unsafe fn gm_80164504(stkind: u16) {
+    melee_core::ct!("gm_80164504");
     let stage_unlock_mask = ext::gmMainLib_8015EDA4();
     let grkind = ext::Stage_8022519C(stkind as StKind) as u8;
     let unlock_idx = getStageUnlockIndex(grkind);
@@ -1773,6 +1860,7 @@ pub unsafe fn gm_80164504(stkind: u16) {
 
 /// Are all stages unlocked?
 pub unsafe fn gm_80164600() -> bool {
+    melee_core::ct!("gm_80164600");
     let stage_unlock_mask = ext::gmMainLib_8015EDA4();
     for i in 0..NUM_UNLOCKABLE_STAGES {
         if (*stage_unlock_mask as i64 & (1i64 << i)) == 0 {
@@ -1787,6 +1875,7 @@ pub unsafe fn gm_80164600() -> bool {
 }
 
 pub unsafe fn gm_8016468C() {
+    melee_core::ct!("gm_8016468C");
     let ptr = ext::gmMainLib_8015EDA4();
     for i in 0..11i32 {
         *ptr |= (1i64 << i) as u16;
@@ -1794,6 +1883,7 @@ pub unsafe fn gm_8016468C() {
 }
 
 pub unsafe fn gm_801647D0() {
+    melee_core::ct!("gm_801647D0");
     let stage_unlock_mask = ext::gmMainLib_8015EDA4();
     *stage_unlock_mask = 0;
 }
@@ -1801,6 +1891,7 @@ pub unsafe fn gm_801647D0() {
 /// `gm_801647F8`: the C walks `lbl_803D5168` for the terminator x0 == 0x148, which the table does not hold (its
 /// last rows are {0x48, 0} and {0, 0}); a selkind it does not list runs off the table. That is returned as 0x148.
 pub unsafe fn gm_801647F8(arg0: u8) -> i32 {
+    melee_core::ct!("gm_801647F8");
     let mut arg0 = arg0;
     if arg0 == 0x20 {
         arg0 = 0xE;
@@ -1818,6 +1909,7 @@ pub unsafe fn gm_801647F8(arg0: u8) -> i32 {
 
 /// Is a specific character unlocked?
 pub unsafe fn gm_IsCKindUnlocked(ckind: u8) -> bool {
+    melee_core::ct!("gm_IsCKindUnlocked");
     let unlocked_chars_bitmask = ext::gmMainLib_GetUnlockedCharactersBitmaskPtr();
     let selkind = gm_CKindToSelKind(ckind);
     let unlock_bit = gm_SelKindToUnlockIndex(selkind as i32);
@@ -1832,6 +1924,7 @@ pub unsafe fn gm_IsCKindUnlocked(ckind: u8) -> bool {
 }
 
 pub unsafe fn gm_UnlockCKind(ckind: CharacterKind) {
+    melee_core::ct!("gm_UnlockCKind");
     let char_unlock_mask = ext::gmMainLib_GetUnlockedCharactersBitmaskPtr();
     let selkind = gm_CKindToSelKind(ckind as u8);
     let unlock_idx = gm_SelKindToUnlockIndex(selkind as i32);
@@ -1850,6 +1943,7 @@ pub unsafe fn gm_UnlockCKind(ckind: CharacterKind) {
 
 /// Lock character?
 pub unsafe fn gm_80164A0C(ckind: u8) {
+    melee_core::ct!("gm_80164A0C");
     let unlockable_character_bitfield = ext::gmMainLib_GetUnlockedCharactersBitmaskPtr();
     let selkind = gm_CKindToSelKind(ckind) as i32;
     let idx = gm_SelKindToUnlockIndex(selkind);
@@ -1860,6 +1954,7 @@ pub unsafe fn gm_80164A0C(ckind: u8) {
 
 /// Are all unlockable characters unlocked?
 pub unsafe fn gm_80164ABC() -> bool {
+    melee_core::ct!("gm_80164ABC");
     let unlockable_character_bitfield = ext::gmMainLib_GetUnlockedCharactersBitmaskPtr();
     for i in 0..NUM_UNLOCKABLE_CHARACTERS {
         if (*unlockable_character_bitfield as i64 & (1i64 << i)) == 0 {
@@ -1874,6 +1969,7 @@ pub unsafe fn gm_80164ABC() -> bool {
 }
 
 pub unsafe fn fn_80164B48() -> bool {
+    melee_core::ct!("fn_80164B48");
     for ck in [CKind_DrMario, CKind_Ganon, CKind_CLink, CKind_Falco, CKind_Pichu, CKind_Emblem] {
         let ptr = ext::gmMainLib_GetUnlockedCharactersBitmaskPtr();
         if !is_character_unlocked(gm_SelKindToUnlockIndex(crate::gm::CKIND_TO_SELKIND_MAP[ck as usize] as i32), &*ptr) {
@@ -1884,6 +1980,7 @@ pub unsafe fn fn_80164B48() -> bool {
 }
 
 pub unsafe fn gm_80164F18() {
+    melee_core::ct!("gm_80164F18");
     let ptr = ext::gmMainLib_GetUnlockedCharactersBitmaskPtr();
     for i in 0..NUM_UNLOCKABLE_CHARACTERS {
         *ptr |= (1i64 << i) as u16;
@@ -1891,11 +1988,13 @@ pub unsafe fn gm_80164F18() {
 }
 
 pub unsafe fn gm_8016505C() {
+    melee_core::ct!("gm_8016505C");
     let temp_r3 = ext::gmMainLib_GetUnlockedCharactersBitmaskPtr();
     *temp_r3 = 0;
 }
 
 pub unsafe fn gm_80165084() -> bool {
+    melee_core::ct!("gm_80165084");
     let mut result = true;
     for i in 0..=0x1Bi32 {
         if i != 0x1A && ext::gmMainLib_8015D94C(i as u32) == 0 {
@@ -1907,10 +2006,12 @@ pub unsafe fn gm_80165084() -> bool {
 }
 
 pub unsafe fn fn_801650E8() {
+    melee_core::ct!("fn_801650E8");
     ext::Ground_EnableMatchCamera();
 }
 
 pub unsafe fn gm_EnablePlayerPauseCamera(player_slot: i32, player_id: i32) {
+    melee_core::ct!("gm_EnablePlayerPauseCamera");
     if player_slot == -1 {
         ext::Camera_SetUpPauseCameraWithDefaultZoom(NUM_UNLOCKABLE_CHARACTERS as i8, 5);
         return;
@@ -1923,6 +2024,7 @@ pub unsafe fn gm_EnablePlayerPauseCamera(player_slot: i32, player_id: i32) {
 }
 
 pub unsafe fn fn_80165190(slot: i32, arg1: i32) {
+    melee_core::ct!("fn_80165190");
     if (ext::Player_GetPlayerSlotType(slot) == Gm_PKind_Human || ext::Player_GetPlayerSlotType(slot) == Gm_PKind_Cpu)
         && !ext::Player_GetEntity(slot).is_null()
     {
@@ -1931,6 +2033,7 @@ pub unsafe fn fn_80165190(slot: i32, arg1: i32) {
 }
 
 pub unsafe fn fn_801651FC(slot: i32, arg1: i32) {
+    melee_core::ct!("fn_801651FC");
     if (ext::Player_GetPlayerSlotType(slot) == Gm_PKind_Human || ext::Player_GetPlayerSlotType(slot) == Gm_PKind_Cpu)
         && !ext::Player_GetEntity(slot).is_null()
     {
@@ -1939,14 +2042,17 @@ pub unsafe fn fn_801651FC(slot: i32, arg1: i32) {
 }
 
 pub unsafe fn gm_80165268(_unused: i32) {
+    melee_core::ct!("gm_80165268");
     ext::Camera_8002FC7C(4, 3);
 }
 
 pub unsafe fn gm_80165290(_x: i32) {
+    melee_core::ct!("gm_80165290");
     ext::Camera_SetModeToFixed();
 }
 
 pub unsafe fn fn_801652B0(arg0: i32, arg1: i32) {
+    melee_core::ct!("fn_801652B0");
     ext::Camera_8002F9E4(arg0 as i8, arg1 as i8);
 }
 
@@ -1966,6 +2072,7 @@ pub static mut lbl_804D6598: i8 = 0;
 pub static mut lbl_804D659A: u16 = 0;
 
 pub unsafe extern "C" fn fn_801652D8() -> *mut c_void {
+    melee_core::ct!("fn_801652D8");
     let vi = addr_of_mut!(HSD_VIData);
     let lines = addr_of_mut!(lbl_8046B378.line0);
 
@@ -1986,6 +2093,7 @@ pub unsafe extern "C" fn fn_801652D8() -> *mut c_void {
 
 /// creates the develop mode stress test
 pub unsafe fn gm_80165388(arg0: u16, arg1: u8, arg2: u8, arg3: i32) -> *mut HSD_GObj {
+    melee_core::ct!("gm_80165388");
     let temp_r3 = ext::hsd_80398310(arg0, arg1, arg2, arg3 as u32);
     if !temp_r3.is_null() {
         ext::hsd_80392528(Some(core::mem::transmute::<unsafe extern "C" fn() -> *mut c_void, unsafe extern "C" fn()>(fn_801652D8)));
@@ -1995,12 +2103,14 @@ pub unsafe fn gm_80165388(arg0: u16, arg1: u8, arg2: u8, arg3: i32) -> *mut HSD_
 
 /// frees the develop mode stress test
 pub unsafe fn gm_801653C8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("gm_801653C8");
     ext::HSD_GObjFree(gobj);
 }
 
 // ---- ranking a finished match (fn_8016588C .. gm_80166A98)
 
 pub unsafe fn fn_8016588C(match_end: *mut MatchEnd, player_slot: i32) -> i32 {
+    melee_core::ct!("fn_8016588C");
     let me = &mut *match_end;
     let ps = player_slot as usize;
     let v: i32;
@@ -2034,6 +2144,7 @@ pub unsafe fn fn_8016588C(match_end: *mut MatchEnd, player_slot: i32) -> i32 {
 
 /// `fn_80165AC0_loser_bits` / the `MatchEnd.loser` byte: `hi` is the high nibble, `lo` the low one (PowerPC bit order).
 pub unsafe fn fn_80165AC0(arg0: *mut MatchEnd) -> i32 {
+    melee_core::ct!("fn_80165AC0");
     let me = &mut *arg0;
     let mut max_loser: i32 = 0;
     for i in 0..6usize {
@@ -2061,6 +2172,7 @@ pub unsafe fn fn_80165AC0(arg0: *mut MatchEnd) -> i32 {
 }
 
 pub unsafe fn fn_80165D60(arg0: *mut MatchEnd) -> *mut MatchEnd {
+    melee_core::ct!("fn_80165D60");
     let me = &mut *arg0;
     for i in 0..6usize {
         if me.player_standings[i].pkind != 3 {
@@ -2080,6 +2192,7 @@ pub unsafe fn fn_80165D60(arg0: *mut MatchEnd) -> *mut MatchEnd {
 }
 
 pub unsafe fn fn_80165E7C(arg0: *mut MatchEnd) {
+    melee_core::ct!("fn_80165E7C");
     let me = &mut *arg0;
     for i in 0..6usize {
         if me.player_standings[i].pkind != 3 {
@@ -2111,6 +2224,7 @@ pub unsafe fn fn_80165E7C(arg0: *mut MatchEnd) {
 }
 
 pub unsafe fn fn_80165FA4(arg0: *mut MatchEnd) -> i32 {
+    melee_core::ct!("fn_80165FA4");
     let me = &mut *arg0;
     let mut max_loser: i32 = 0;
     for i in 0..5usize {
@@ -2138,6 +2252,7 @@ pub unsafe fn fn_80165FA4(arg0: *mut MatchEnd) -> i32 {
 }
 
 pub unsafe fn fn_801661E0(arg0: *mut MatchEnd) -> i32 {
+    melee_core::ct!("fn_801661E0");
     let me = &mut *arg0;
     for i in 0..5usize {
         if me.team_standings[i].active != 0 {
@@ -2158,10 +2273,12 @@ pub unsafe fn fn_801661E0(arg0: *mut MatchEnd) -> i32 {
 
 /// `fn_80166A8C` is only compiled under MWERKS_GEKKO (`psq_st`); the PC build's version falls off the end.
 pub unsafe fn fn_80166A8C(_src: *mut Vec3, _dst: *mut Vec3) -> f32 {
+    melee_core::ct!("fn_80166A8C");
     0.0
 }
 
 pub unsafe fn gm_80166378(arg0_raw: *mut MatchEnd) {
+    melee_core::ct!("gm_80166378");
     let arg0 = arg0_raw;
     let mut sp48_y: f32;
     let mut sp48_x: f32 = 0.0;
@@ -2300,6 +2417,7 @@ pub unsafe fn gm_80166A98(
     arg_sp8: u8,
     arg_sp_c: u8,
 ) -> i32 {
+    melee_core::ct!("gm_80166A98");
     ext::memzero(arg0 as *mut c_void, core::mem::size_of::<MatchEnd>() as isize);
     let me = &mut *arg0;
 
@@ -2359,6 +2477,7 @@ pub unsafe fn gm_80166A98(
 // ---- respawn, rumble, VS defaults, stage select, stock icons, announcer, costume counts
 
 pub unsafe fn fn_8016719C(slot: i32, subchar: i32) {
+    melee_core::ct!("fn_8016719C");
     let mut respawn_pos: Vec3 = core::mem::zeroed();
     let mut offset: Vec3 = core::mem::zeroed();
     let var_r30: i32;
@@ -2444,6 +2563,7 @@ pub unsafe fn fn_8016719C(slot: i32, subchar: i32) {
 }
 
 pub unsafe fn gm_80167320(slot: i32, arg1: bool) {
+    melee_core::ct!("gm_80167320");
     if ext::Player_GetFlagsBit1(slot) == 0 {
         if ext::gm_8016A1F8() && slot == 0 && ext::fn_80169444(2) {
             for i in 1..6i32 {
@@ -2472,12 +2592,14 @@ pub unsafe fn gm_80167320(slot: i32, arg1: bool) {
 }
 
 pub unsafe fn gm_80167470(arg0: i32, arg1: i32) {
+    melee_core::ct!("gm_80167470");
     if ext::gm_GetCurrentGameMode() as i32 == GM_STAMINA_VS as i32 {
         ext::gm_801B97C4(arg0, arg1);
     }
 }
 
 pub unsafe fn gm_801674C4(arg0: i8, arg1: u8, arg2: i8, arg3: i8, arg4: GmRouteCallback) {
+    melee_core::ct!("gm_801674C4");
     let temp_ptr = ext::gm_1601_GetUnkData();
     (*temp_ptr).x0 = arg0;
     (*temp_ptr).x1 = 0x21;
@@ -2498,6 +2620,7 @@ pub unsafe fn gm_801674C4(arg0: i8, arg1: u8, arg2: i8, arg3: i8, arg4: GmRouteC
 }
 
 pub unsafe fn fn_8016758C() {
+    melee_core::ct!("fn_8016758C");
     let scene_state = ext::gmVs_GetSceneState();
     for i in 0..6usize {
         if (*scene_state).fighters[i].x8 != 0 {
@@ -2517,6 +2640,7 @@ unsafe fn get_idx() -> usize {
 }
 
 pub unsafe fn fn_80167638(arg0: i32, arg1: *mut Vec3, arg2: *mut Vec3) -> i32 {
+    melee_core::ct!("fn_80167638");
     let idx = get_idx();
     let chr = ext::Player_GetPlayerCharacter(arg0) as i8;
     let tmp: i32;
@@ -2546,14 +2670,17 @@ pub unsafe fn fn_80167638(arg0: i32, arg1: *mut Vec3, arg2: *mut Vec3) -> i32 {
 }
 
 pub unsafe fn gm_801677E8(arg0: i8) {
+    melee_core::ct!("gm_801677E8");
     lbl_804D6598 = arg0;
 }
 
 pub unsafe fn gm_801677F0() -> u8 {
+    melee_core::ct!("gm_801677F0");
     lbl_804D6598 as u8
 }
 
 pub unsafe fn gm_RumbleEnabledForPlayer(port: i32, nametag: i32) -> bool {
+    melee_core::ct!("gm_RumbleEnabledForPlayer");
     let mut result = false;
     if nametag == GM_NAMETAG_COUNT {
         if ext::GetRumbleSettingOfPort(port as isize) != 0 {
@@ -2566,16 +2693,19 @@ pub unsafe fn gm_RumbleEnabledForPlayer(port: i32, nametag: i32) -> bool {
 }
 
 pub unsafe fn gm_80167858(port: i32, nametag: i32, arg2: i32, arg3: i32) {
+    melee_core::ct!("gm_80167858");
     if gm_RumbleEnabledForPlayer(port, nametag) {
         ext::lb_80014574(port as u8, 3, arg2, arg3);
     }
 }
 
 pub unsafe fn gm_801678F8(port: i32, arg1: i32, arg2: i32) {
+    melee_core::ct!("gm_801678F8");
     gm_80167858(port, 120, arg1, arg2);
 }
 
 pub unsafe fn gm_SetupPlayerDefaults(player: *mut PlayerInitData) {
+    melee_core::ct!("gm_SetupPlayerDefaults");
     ext::memzero(player as *mut c_void, core::mem::size_of::<PlayerInitData>() as isize);
     let p = &mut *player;
     p.ckind = ChKind_None as i8;
@@ -2602,12 +2732,14 @@ pub unsafe fn gm_SetupPlayerDefaults(player: *mut PlayerInitData) {
 }
 
 pub unsafe fn gm_SetupAllPlayerDefaults(player: *mut PlayerInitData) {
+    melee_core::ct!("gm_SetupAllPlayerDefaults");
     for i in 0..Gm_Player_NumMax as usize {
         gm_SetupPlayerDefaults(player.add(i));
     }
 }
 
 pub unsafe fn gm_SetupRulesDefaults(rules: *mut StartMeleeRules) {
+    melee_core::ct!("gm_SetupRulesDefaults");
     // sizeof(*rules) is the GameCube's 0x60 (the callback pointers are 4 bytes there); the native record is cleared whole
     ext::memzero(rules as *mut c_void, <StartMeleeRules as melee_core::gc::GcLayout>::GC_SIZE as isize);
     core::ptr::write_bytes(rules as *mut u8, 0, core::mem::size_of::<StartMeleeRules>());
@@ -2641,6 +2773,7 @@ pub unsafe fn gm_SetupRulesDefaults(rules: *mut StartMeleeRules) {
 }
 
 pub unsafe fn gm_InitVsMode(vs: *mut VsModeData) {
+    melee_core::ct!("gm_InitVsMode");
     gm_SetupRulesDefaults(addr_of_mut!((*vs).start.rules));
     gm_SetupAllPlayerDefaults((*vs).start.players.as_mut_ptr());
     (*vs).loser = -1;
@@ -2649,6 +2782,7 @@ pub unsafe fn gm_InitVsMode(vs: *mut VsModeData) {
 }
 
 pub unsafe fn gm_80167BC8(vs_data: *mut VsModeData) {
+    melee_core::ct!("gm_80167BC8");
     let rules = ext::gmMainLib_GetGameRules();
     let mut prefs = ext::gmMainLib_GetGamePrefs();
     let v = &mut *vs_data;
@@ -2768,6 +2902,7 @@ unsafe fn get_flag_unk(temp_r30: u16) -> i32 {
 }
 
 pub unsafe fn gm_80167FC4(arg0: *mut SSSData) {
+    melee_core::ct!("gm_80167FC4");
     let temp_r3 = ext::gmMainLib_GetGameRules();
     if (*temp_r3).stage_sel == 1 {
         (*arg0).force_stage_id = ext::mnSelStageRandom() as i8;
@@ -2814,6 +2949,7 @@ pub unsafe fn gm_80167FC4(arg0: *mut SSSData) {
 }
 
 pub unsafe fn gm_801685D4(arg0: u8, arg1: u8) -> i8 {
+    melee_core::ct!("gm_801685D4");
     if (*ext::gmMainLib_GetGameRules()).handicap == 1 {
         let temp_r3 = ext::gmMainLib_8015CE44(arg0 as i32, arg1 as i32);
         if !temp_r3.is_null() {
@@ -2824,6 +2960,7 @@ pub unsafe fn gm_801685D4(arg0: u8, arg1: u8) -> i8 {
 }
 
 pub unsafe fn gm_80168638(arg0: *mut MatchEnd) {
+    melee_core::ct!("gm_80168638");
     let mut sp_c = [0u8; 4];
     if (*ext::gmMainLib_GetGameRules()).handicap == 1 {
         for i in 0..4usize {
@@ -2847,6 +2984,7 @@ pub unsafe fn gm_80168638(arg0: *mut MatchEnd) {
 }
 
 pub unsafe fn gm_80168710(arg0: *mut MatchEnd, arg1: *mut VsModeData) {
+    melee_core::ct!("gm_80168710");
     let mut buf = [0u8; 4];
     let mut best: i32 = -1;
     ext::memzero(buf.as_mut_ptr() as *mut c_void, 4);
@@ -2878,10 +3016,12 @@ unsafe fn add_anim_all(arg0: *mut HSD_JObj, arg1: *mut DynamicModelDesc, idx: i3
 }
 
 pub unsafe fn gm_8016895C(arg0: *mut HSD_JObj, arg1: *mut DynamicModelDesc, idx: i32) {
+    melee_core::ct!("gm_8016895C");
     add_anim_all(arg0, arg1, idx);
 }
 
 pub unsafe fn fn_801689E4(arg0: *mut HSD_JObj, arg1: *mut DynamicModelDesc, idx: i32) {
+    melee_core::ct!("fn_801689E4");
     add_anim_all(arg0, arg1, idx);
 }
 
@@ -2908,6 +3048,7 @@ unsafe fn gm_MexStcIcns() -> *mut MexStcIcns {
 }
 
 pub unsafe fn gm_MexStockMatAnim() -> *mut HSD_MatAnimJoint {
+    melee_core::ct!("gm_MexStockMatAnim");
     let stc = gm_MexStcIcns();
     if !stc.is_null() {
         (*stc).matanim
@@ -2918,6 +3059,7 @@ pub unsafe fn gm_MexStockMatAnim() -> *mut HSD_MatAnimJoint {
 
 /// The m-ex stock frame for port FighterKind `fk`, or -1 when not m-ex / unknown fighter.
 pub unsafe fn gm_MexStockFrame(fk: i32, costume: i32) -> f32 {
+    melee_core::ct!("gm_MexStockFrame");
     let specials: [u8; 6] = [3, 2, 1, 1, 5, 6];
     let stc = gm_MexStcIcns();
     if stc.is_null() {
@@ -2940,6 +3082,7 @@ pub unsafe fn gm_MexStockFrame(fk: i32, costume: i32) -> f32 {
 }
 
 pub unsafe fn gm_80168B34(ckind: CharacterKind, arg1: i32, arg2: i32) -> f32 {
+    melee_core::ct!("gm_80168B34");
     // The decomp leaves `base` uninitialised; the PC build starts from the vanilla kind
     let mut base = gm_MexVanillaKind(ckind as i32, 1);
     let ckind = base as CharacterKind;
@@ -2979,6 +3122,7 @@ pub unsafe fn gm_80168B34(ckind: CharacterKind, arg1: i32, arg2: i32) -> f32 {
 
 /// The stock-icon frame a define whose package declares a stock icon asks for: 1000000 + ck * 256 + costume, or -1.
 pub unsafe fn gm_GenoStockFrame(ck: i32, costume: i32) -> f32 {
+    melee_core::ct!("gm_GenoStockFrame");
     if ck < 0
         || ck > 127
         || costume < 0
@@ -2991,6 +3135,7 @@ pub unsafe fn gm_GenoStockFrame(ck: i32, costume: i32) -> f32 {
 }
 
 pub unsafe fn gm_80168BF8(arg0: i32) -> f32 {
+    melee_core::ct!("gm_80168BF8");
     let ckind = ext::Player_GetPlayerCharacter(arg0);
     let costume = ext::Player_GetCostumeId(arg0);
     {
@@ -3007,6 +3152,7 @@ pub unsafe fn gm_80168BF8(arg0: i32) -> f32 {
 }
 
 pub unsafe fn gm_80168C5C(arg0: u32) {
+    melee_core::ct!("gm_80168C5C");
     let mex = ext::Mex_AnnouncerForPortCKind(arg0 as i32);
     if mex >= 0 {
         ext::lbAudioAx_800243F4(mex);
@@ -3052,6 +3198,7 @@ pub unsafe fn gm_80168C5C(arg0: u32) {
 }
 
 pub unsafe fn fn_80168E54(arg0: i8, arg1: i8, arg2: u8, arg3: u8) {
+    melee_core::ct!("fn_80168E54");
     let mut arg0 = arg0;
     if arg3 != 0 {
         match arg2 {
@@ -3077,6 +3224,7 @@ pub unsafe fn fn_80168E54(arg0: i8, arg1: i8, arg2: u8, arg3: u8) {
 }
 
 pub unsafe fn fn_80168F2C(_ignored: i8) {
+    melee_core::ct!("fn_80168F2C");
     if lbl_804D659A == 0 {
         lbl_804D659A = 3;
         ext::lbAudioAx_80023870(0x7E, 0x7F, 0x40, 1);
@@ -3086,10 +3234,12 @@ pub unsafe fn fn_80168F2C(_ignored: i8) {
 }
 
 pub unsafe fn fn_80168F7C() {
+    melee_core::ct!("fn_80168F7C");
     lbl_804D659A = 0;
 }
 
 pub unsafe fn gm_80168F88() {
+    melee_core::ct!("gm_80168F88");
     ext::lbAudioAx_80026F2C(0x12);
     ext::lbAudioAx_8002702C(2, 0x10);
     ext::lbAudioAx_80027168();
@@ -3098,6 +3248,7 @@ pub unsafe fn gm_80168F88() {
 
 /// UnclePunch: Audio_LoadAnnouncer
 pub unsafe fn gm_LoadAnnouncer() {
+    melee_core::ct!("gm_LoadAnnouncer");
     ext::lbAudioAx_80026F2C(0x12);
     ext::lbAudioAx_8002702C(2, 0x20);
     ext::lbAudioAx_80027168();
@@ -3105,6 +3256,7 @@ pub unsafe fn gm_LoadAnnouncer() {
 }
 
 pub unsafe fn fn_80169000(arg0: *mut MatchEnd, arg1: *mut u8) {
+    melee_core::ct!("fn_80169000");
     let mut handicaps = [0u8; 4];
     let mut positions = [0u8; 4];
     let p = arg0;
@@ -3149,6 +3301,7 @@ pub unsafe fn fn_80169000(arg0: *mut MatchEnd, arg1: *mut u8) {
 
 /// `@param ckind ::CharacterKind`
 pub unsafe fn gm_GetNumCostumesForCKind(ckind: u8) -> u8 {
+    melee_core::ct!("gm_GetNumCostumesForCKind");
     let mut ckind = ckind;
     // skins: the fighter's own costumes plus the skin mods'
     let sk = ext::Skins_CostumeCountCK(ckind as i32);
@@ -3203,18 +3356,22 @@ unsafe fn team_costume(ckind: u8, team: i32, mex_field: i32, col: usize) -> u8 {
 }
 
 pub unsafe fn gm_80169264(ckind: u8) -> u8 {
+    melee_core::ct!("gm_80169264");
     team_costume(ckind, 0, 1, 1)
 }
 
 pub unsafe fn gm_80169290(ckind: u8) -> u8 {
+    melee_core::ct!("gm_80169290");
     team_costume(ckind, 2, 3, 3)
 }
 
 pub unsafe fn gm_801692BC(ckind: u8) -> u8 {
+    melee_core::ct!("gm_801692BC");
     team_costume(ckind, 1, 2, 2)
 }
 
 pub unsafe fn gm_801692E8(secs: u32, datetime: *mut datetime) {
+    melee_core::ct!("gm_801692E8");
     let mut tm: OSCalendarTime = core::mem::zeroed();
     ext::lbTime_8000B028(&mut tm, secs);
     (*datetime).year = tm.year as u16;

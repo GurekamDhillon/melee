@@ -10,6 +10,7 @@ use melee_types::*;
 pub use crate::chars::r2::ftMasterHand::ftmasterhandtagcrush::ftMh_TagCrush_Phys;
 
 pub fn ftMh_TagCrush_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_TagCrush_Anim");
     unsafe {
         if bl::ftBossLib_8015C31C() || bl::ftBossLib_8015C3A0() || st::ftAnim_IsFramesRemaining(gobj) == 0 {
             let fp = (*gobj).user_data as *mut Fighter;
@@ -21,6 +22,7 @@ pub fn ftMh_TagCrush_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMh_TagCrush_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_TagCrush_IASA");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         if st::Player_GetPlayerSlotType((*fp).player_id as i32) == 0 {
@@ -29,9 +31,10 @@ pub fn ftMh_TagCrush_IASA(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftMh_TagCrush_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_TagCrush_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_TagCrush_Coll");}
 
 pub fn ftMh_MS_382_801552F8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_382_801552F8");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         (*fp).cmd_vars[1] = 0;

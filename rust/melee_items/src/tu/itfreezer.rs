@@ -65,6 +65,7 @@ unsafe fn item_of(g: *mut HSD_GObj) -> *mut Item {
 /// `Item_SetEffectHitlagCallbacks` (it/inlines.h): pause / resume the effects around hitlag.
 #[inline]
 pub unsafe fn Item_SetEffectHitlagCallbacks(ip: *mut Item) {
+    melee_core::ct!("Item_SetEffectHitlagCallbacks");
     (*ip).entered_hitlag = Some(ext::cb::efLib_PauseAll);
     (*ip).exited_hitlag = Some(ext::cb::efLib_ResumeAll);
 }
@@ -72,6 +73,7 @@ pub unsafe fn Item_SetEffectHitlagCallbacks(ip: *mut Item) {
 /// `Item_EnterAirStateWithHitlagAndStateDesc` (itkinds inlines.h).
 #[inline]
 pub unsafe fn Item_EnterAirStateWithHitlagAndStateDesc(gobj: *mut Item_GObj) {
+    melee_core::ct!("Item_EnterAirStateWithHitlagAndStateDesc");
     let item = item_of(gobj);
     ext::it_802762BC(item);
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE);
@@ -89,6 +91,7 @@ pub static it_803F7C70: [ItemStateTable; 3] = [
 
 /// `void itFreezer_802CCF9C(Item_GObj*)`: item init.
 pub unsafe extern "C" fn itFreezer_802CCF9C(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFreezer_802CCF9C");
     let item = item_of(gobj);
     let attrs = (*(*item).xC4_article_data).x4_specialAttributes as *mut itFreezerAttributes;
     (*item).facing_dir = 0.0;
@@ -99,15 +102,17 @@ pub unsafe extern "C" fn itFreezer_802CCF9C(gobj: *mut Item_GObj) {
 }
 
 /// `void itFreezer_802CCFFC(Item_GObj*)`: an empty callback.
-pub unsafe extern "C" fn itFreezer_802CCFFC(gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itFreezer_802CCFFC(gobj: *mut Item_GObj) { melee_core::ct!("itFreezer_802CCFFC");}
 
 /// `void itFreezer_802CD000(Item_GObj*, Item_GObj*)`: removes the gobj interaction references.
 pub unsafe extern "C" fn itFreezer_802CD000(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("itFreezer_802CD000");
     ext::it_8026B894(gobj, ref_gobj);
 }
 
 /// `bool itFreezer_UnkMotion1_Anim(Item_GObj*)`.
 pub unsafe extern "C" fn itFreezer_UnkMotion1_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFreezer_UnkMotion1_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         itFreezer_802CD12C(gobj);
     }
@@ -115,10 +120,11 @@ pub unsafe extern "C" fn itFreezer_UnkMotion1_Anim(gobj: *mut Item_GObj) -> i32 
 }
 
 /// `void itFreezer_UnkMotion1_Phys(Item_GObj*)`.
-pub unsafe extern "C" fn itFreezer_UnkMotion1_Phys(gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itFreezer_UnkMotion1_Phys(gobj: *mut Item_GObj) { melee_core::ct!("itFreezer_UnkMotion1_Phys");}
 
 /// `bool itFreezer_UnkMotion1_Coll(Item_GObj*)`.
 pub unsafe extern "C" fn itFreezer_UnkMotion1_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFreezer_UnkMotion1_Coll");
     ext::it_8026E15C(gobj, Some(itFreezer_802CCFFC));
     0
 }
@@ -126,6 +132,7 @@ pub unsafe extern "C" fn itFreezer_UnkMotion1_Coll(gobj: *mut Item_GObj) -> i32 
 /// `void itFreezer_802CD090(Item_GObj*)`: accessory callback of state 1: the effect on bone 5 on request, and
 /// the periodic effect on the item.
 pub unsafe extern "C" fn itFreezer_802CD090(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFreezer_802CD090");
     let item = item_of(gobj);
     if (*item).xDB0_itcmd_var1 != 0 {
         ext::it_8027ADEC(0x462, gobj, (*(*item).xBBC_dynamicBoneTable).bones[5], 1.4);
@@ -143,6 +150,7 @@ pub unsafe extern "C" fn itFreezer_802CD090(gobj: *mut Item_GObj) {
 
 /// `void itFreezer_802CD12C(HSD_GObj*)`: enters state 2.
 pub unsafe extern "C" fn itFreezer_802CD12C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itFreezer_802CD12C");
     let item = item_of(gobj);
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE);
     Item_SetEffectHitlagCallbacks(item);
@@ -152,6 +160,7 @@ pub unsafe extern "C" fn itFreezer_802CD12C(gobj: *mut HSD_GObj) {
 
 /// `itFreezer_UnkMotion2_Anim_Inline` (static): same as `itFreezer_802CD12C`.
 pub unsafe fn itFreezer_UnkMotion2_Anim_Inline(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFreezer_UnkMotion2_Anim_Inline");
     let item = item_of(gobj);
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE);
     Item_SetEffectHitlagCallbacks(item);
@@ -161,6 +170,7 @@ pub unsafe fn itFreezer_UnkMotion2_Anim_Inline(gobj: *mut Item_GObj) {
 
 /// `bool itFreezer_UnkMotion2_Anim(Item_GObj*)`: removed once above the top blast zone.
 pub unsafe extern "C" fn itFreezer_UnkMotion2_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFreezer_UnkMotion2_Anim");
     let item_temp = item_of(gobj);
     if ext::it_80272C6C(gobj) == 0 {
         itFreezer_UnkMotion2_Anim_Inline(gobj);
@@ -173,6 +183,7 @@ pub unsafe extern "C" fn itFreezer_UnkMotion2_Anim(gobj: *mut Item_GObj) -> i32 
 
 /// `void itFreezer_UnkMotion2_Phys(Item_GObj*)`: the launch impulse and the upward acceleration.
 pub unsafe extern "C" fn itFreezer_UnkMotion2_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFreezer_UnkMotion2_Phys");
     let item = item_of(gobj);
     if (*item).xDAC_itcmd_var0 != 0 {
         let attrs = (*(*item).xC4_article_data).x4_specialAttributes as *mut itFreezerAttributes;
@@ -188,11 +199,13 @@ pub unsafe extern "C" fn itFreezer_UnkMotion2_Phys(gobj: *mut Item_GObj) {
 
 /// `bool itFreezer_UnkMotion2_Coll(Item_GObj*)`.
 pub unsafe extern "C" fn itFreezer_UnkMotion2_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFreezer_UnkMotion2_Coll");
     0
 }
 
 /// `void itFreezer_802CD290(Item_GObj*)`: accessory callback of state 2: the periodic effect.
 pub unsafe extern "C" fn itFreezer_802CD290(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFreezer_802CD290");
     let item = item_of(gobj);
     if (*item).xDD4_itemVar.freezer.x60 <= 0 {
         let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -206,17 +219,20 @@ pub unsafe extern "C" fn itFreezer_802CD290(gobj: *mut Item_GObj) {
 
 /// `void itFreezer_802CD2EC(Item_GObj*)`: enters the air state with hitlag callbacks.
 pub unsafe extern "C" fn itFreezer_802CD2EC(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFreezer_802CD2EC");
     Item_EnterAirStateWithHitlagAndStateDesc(gobj);
 }
 
 /// `bool itFreezer_UnkMotion0_Anim(Item_GObj*)`.
 pub unsafe extern "C" fn itFreezer_UnkMotion0_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFreezer_UnkMotion0_Anim");
     ext::it_80279FF8(gobj);
     0
 }
 
 /// `itFreezer_UnkMotion0_Phys_inline2` (static): enters state 1.
 pub unsafe fn itFreezer_UnkMotion0_Phys_inline2(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFreezer_UnkMotion0_Phys_inline2");
     let item = item_of(gobj);
     (*item).xDD4_itemVar.freezer.x60 = -1;
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);
@@ -226,6 +242,7 @@ pub unsafe fn itFreezer_UnkMotion0_Phys_inline2(gobj: *mut Item_GObj) {
 
 /// `itFreezer_UnkMotion0_Phys_inline1` (static).
 pub unsafe fn itFreezer_UnkMotion0_Phys_inline1(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFreezer_UnkMotion0_Phys_inline1");
     let item = item_of(gobj);
     ext::it_80273454(gobj);
     itFreezer_UnkMotion0_Phys_inline2(gobj);
@@ -234,6 +251,7 @@ pub unsafe fn itFreezer_UnkMotion0_Phys_inline1(gobj: *mut Item_GObj) {
 
 /// `void itFreezer_UnkMotion0_Phys(Item_GObj*)`.
 pub unsafe extern "C" fn itFreezer_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFreezer_UnkMotion0_Phys");
     if ext::it_8027A09C(gobj) != 0 {
         itFreezer_UnkMotion0_Phys_inline1(gobj);
     }
@@ -241,5 +259,6 @@ pub unsafe extern "C" fn itFreezer_UnkMotion0_Phys(gobj: *mut Item_GObj) {
 
 /// `bool itFreezer_UnkMotion0_Coll(Item_GObj*)`.
 pub unsafe extern "C" fn itFreezer_UnkMotion0_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFreezer_UnkMotion0_Coll");
     ext::it_8027A118(gobj, Some(itFreezer_802CCFFC))
 }

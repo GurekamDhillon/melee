@@ -195,6 +195,7 @@ pub static mut ItemStateTable_Flipper: [ItemStateTable; 7] = [
 ];
 
 pub unsafe extern "C" fn itFlipper_Spawn(jobj: *mut HSD_JObj) -> *mut HSD_GObj {
+    melee_core::ct!("itFlipper_Spawn");
     let mut spawn: SpawnItem = core::mem::zeroed();
     let mut pos: Vec = core::mem::zeroed();
     let mut gobj: *mut Item_GObj = null_mut();
@@ -215,6 +216,7 @@ pub unsafe extern "C" fn itFlipper_Spawn(jobj: *mut HSD_JObj) -> *mut HSD_GObj {
 }
 
 pub unsafe extern "C" fn itFlipper_Spawned(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFlipper_Spawned");
     let ip = get_item(gobj);
     (*ip).xDD4_itemVar.flipper.xDD4_flightTimer = 0;
     (*ip).xDD4_itemVar.flipper.xDD8_isSettled = 0;
@@ -228,6 +230,7 @@ pub unsafe extern "C" fn itFlipper_Spawned(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itFlipper_UpdateSpin(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFlipper_UpdateSpin");
     let ip = (*gobj).user_data as *mut Item;
     let attrs = attrs_of(ip);
     let jobj = itGetJObjGrandchild(gobj);
@@ -257,6 +260,7 @@ pub unsafe extern "C" fn itFlipper_UpdateSpin(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itFlipper_AddSpinImpulse(gobj: *mut Item_GObj, pos: *mut Vec, vel: f32) {
+    melee_core::ct!("itFlipper_AddSpinImpulse");
     let ip = get_item(gobj);
     let attrs = attrs_of(ip);
     let speed = vel + (*attrs).x1C_baseSpinOnHit;
@@ -282,6 +286,7 @@ pub unsafe extern "C" fn itFlipper_AddSpinImpulse(gobj: *mut Item_GObj, pos: *mu
 }
 
 pub unsafe extern "C" fn itFlipper_SpinSpeedFromFighter(gobj: *mut Item_GObj, fighter: *mut HSD_GObj, pos: *mut Vec, vel: *mut Vec) -> f32 {
+    melee_core::ct!("itFlipper_SpinSpeedFromFighter");
     let ip = get_item(gobj);
     let attrs = attrs_of(ip);
     ext::ftLib_800866DC(fighter, pos);
@@ -290,6 +295,7 @@ pub unsafe extern "C" fn itFlipper_SpinSpeedFromFighter(gobj: *mut Item_GObj, fi
 }
 
 pub unsafe extern "C" fn itFlipper_SpinFromFighter_inline(gobj: *mut Item_GObj, vel: *mut Vec, pos: *mut Vec, mut speed: f32) {
+    melee_core::ct!("itFlipper_SpinFromFighter_inline");
     let ip = get_item(gobj);
     *pos = (*ip).pos;
 
@@ -304,6 +310,7 @@ pub unsafe extern "C" fn itFlipper_SpinFromFighter_inline(gobj: *mut Item_GObj, 
 }
 
 pub unsafe extern "C" fn itFlipper_SpinFromFighter(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFlipper_SpinFromFighter");
     let ip = get_item(gobj);
     let mut speed: f32 = 10.0;
     let mut pos: Vec = core::mem::zeroed();
@@ -321,6 +328,7 @@ pub unsafe extern "C" fn itFlipper_SpinFromFighter(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itFlipper_Repel_inline(gobj: *mut Item_GObj, kind: i32, pos: *mut Vec, vec: *mut Vec) {
+    melee_core::ct!("itFlipper_Repel_inline");
     let ip = get_item(gobj);
     (*vec).z = 0.0;
     (*vec).y = 0.0;
@@ -338,60 +346,72 @@ pub unsafe extern "C" fn itFlipper_Repel_inline(gobj: *mut Item_GObj, kind: i32,
 }
 
 pub unsafe extern "C" fn itFlipper_Repel(gobj: *mut Item_GObj, kind: i32, pos: *mut Vec) {
+    melee_core::ct!("itFlipper_Repel");
     let mut vec: Vec = core::mem::zeroed();
     itFlipper_Repel_inline(gobj, kind, pos, &mut vec);
 }
 
 pub unsafe extern "C" fn itFlipper_EnterResting(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFlipper_EnterResting");
     let ip = get_item(gobj);
     Item_StopAndEnterState(gobj, ip, FLIPPER_MS_RESTING as _);
 }
 
 pub unsafe extern "C" fn itFlipper_Resting_Anim(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFlipper_Resting_Anim");
     0
 }
 
-pub unsafe extern "C" fn itFlipper_Resting_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itFlipper_Resting_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itFlipper_Resting_Phys");}
 
 pub unsafe extern "C" fn itFlipper_Resting_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFlipper_Resting_Coll");
     ext::it_8026D62C(gobj, Some(itFlipper_EnterFalling));
     0
 }
 
 pub unsafe extern "C" fn itFlipper_EnterFalling(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFlipper_EnterFalling");
     ext::Item_80268E5C(gobj, FLIPPER_MS_FALLING as _, ITEM_ANIM_UPDATE as _);
 }
 
 pub unsafe extern "C" fn itFlipper_Falling_Anim(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFlipper_Falling_Anim");
     0
 }
 
 pub unsafe extern "C" fn itFlipper_Falling_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFlipper_Falling_Phys");
     let ip = get_item(gobj);
     let attrs = (*ip).xCC_item_attr;
     ext::it_80272860(gobj, (*attrs).x10_fall_speed, (*attrs).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itFlipper_Falling_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFlipper_Falling_Coll");
     ext::it_8026E15C(gobj, Some(itFlipper_EnterResting));
     0
 }
 
 pub unsafe extern "C" fn itFlipper_PickedUp(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFlipper_PickedUp");
     ext::Item_80268E5C(gobj, FLIPPER_MS_HELD as _, ITEM_ANIM_UPDATE as _);
 }
 
 pub unsafe extern "C" fn itFlipper_Held_Anim(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFlipper_Held_Anim");
     0
 }
 
-pub unsafe extern "C" fn itFlipper_Held_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itFlipper_Held_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itFlipper_Held_Phys");}
 
 pub unsafe extern "C" fn itFlipper_Dropped(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFlipper_Dropped");
     itFlipper_Thrown(gobj);
 }
 
 pub unsafe extern "C" fn itFlipper_Thrown(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFlipper_Thrown");
     let ip = get_item(gobj);
     let attrs = attrs_of(ip);
     if !(*ip).owner.is_null() {
@@ -406,6 +426,7 @@ pub unsafe extern "C" fn itFlipper_Thrown(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itFlipper_Inflight_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFlipper_Inflight_Anim");
     let ip = get_item(gobj);
     (*ip).xDD4_itemVar.flipper.xDD4_flightTimer -= 1;
     if (*ip).xDD4_itemVar.flipper.xDD4_flightTimer <= 0 {
@@ -415,6 +436,7 @@ pub unsafe extern "C" fn itFlipper_Inflight_Anim(gobj: *mut Item_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn itFlipper_Inflight_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFlipper_Inflight_Phys");
     let ip = get_item(gobj);
     let item_attr = (*ip).xCC_item_attr;
     ext::it_80272860(gobj, (*item_attr).x10_fall_speed, (*item_attr).x14_fall_speed_max);
@@ -428,6 +450,7 @@ pub unsafe extern "C" fn itFlipper_Inflight_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itFlipper_Inflight_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFlipper_Inflight_Coll");
     let ip = get_item(gobj);
     let attrs = attrs_of(ip);
     let coll = ext::it_8026DAA8(gobj);
@@ -449,6 +472,7 @@ pub unsafe extern "C" fn itFlipper_Inflight_Coll(gobj: *mut Item_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn itFlipper_Settle(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFlipper_Settle");
     let ip = get_item(gobj);
     let attrs = attrs_of(ip);
     (*ip).xD5C = 0;
@@ -468,10 +492,12 @@ pub unsafe extern "C" fn itFlipper_Settle(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itFlipper_EnterActive(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFlipper_EnterActive");
     ext::Item_80268E5C(gobj, FLIPPER_MS_ACTIVE as _, 0x12);
 }
 
 pub unsafe extern "C" fn itFlipper_RefreshHitboxes(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFlipper_RefreshHitboxes");
     let ip = get_item(gobj);
     ext::it_80272674(gobj, 0);
     ext::it_80272674(gobj, 1);
@@ -481,6 +507,7 @@ pub unsafe extern "C" fn itFlipper_RefreshHitboxes(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itFlipper_UpdateActive(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFlipper_UpdateActive");
     let ip = get_item(gobj);
 
     itFlipper_UpdateSpin(gobj);
@@ -520,6 +547,7 @@ pub unsafe extern "C" fn itFlipper_UpdateActive(gobj: *mut Item_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn itFlipper_Active_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFlipper_Active_Anim");
     let ip = get_item(gobj);
     if (*ip).xDD4_itemVar.flipper.xDE4_spinVel != 0.0 {
         ext::Item_80268E5C(gobj, FLIPPER_MS_SPINNING as _, 0x12);
@@ -528,6 +556,7 @@ pub unsafe extern "C" fn itFlipper_Active_Anim(gobj: *mut Item_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn itFlipper_Spinning_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFlipper_Spinning_Anim");
     let ip = get_item(gobj);
     if (*ip).xDD4_itemVar.flipper.xDE4_spinVel == 0.0 {
         ext::Item_80268E5C(gobj, FLIPPER_MS_ACTIVE as _, 0x12);
@@ -536,6 +565,7 @@ pub unsafe extern "C" fn itFlipper_Spinning_Anim(gobj: *mut Item_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn itFlipper_Spinning_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFlipper_Spinning_Phys");
     let ip = get_item(gobj);
     if (*ip).xDD4_itemVar.flipper.xDE8_isStageFixed != 0 && !(*ip).xDD4_itemVar.flipper.xDEC_stageAnchor.is_null() {
         ext::lb_8000B1CC((*ip).xDD4_itemVar.flipper.xDEC_stageAnchor, null_mut(), &mut (*ip).pos);
@@ -543,6 +573,7 @@ pub unsafe extern "C" fn itFlipper_Spinning_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itFlipper_Spinning_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFlipper_Spinning_Coll");
     let ip = get_item(gobj);
     if (*ip).xDD4_itemVar.flipper.xDE8_isStageFixed == 0 {
         ext::it_8026E0F4(gobj);
@@ -551,6 +582,7 @@ pub unsafe extern "C" fn itFlipper_Spinning_Coll(gobj: *mut Item_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn itFlipper_DmgDealt(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFlipper_DmgDealt");
     let ip = get_item(gobj);
     let attrs = attrs_of(ip);
     let mut pos: Vec = core::mem::zeroed();
@@ -577,6 +609,7 @@ pub unsafe extern "C" fn itFlipper_DmgDealt(gobj: *mut Item_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn itFlipper_Clanked(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFlipper_Clanked");
     let ip = (*gobj).user_data as *mut Item;
     let attrs = attrs_of(ip);
     if (*ip).xDD4_itemVar.flipper.xDD8_isSettled == 0 {
@@ -600,6 +633,7 @@ pub unsafe extern "C" fn itFlipper_Clanked(gobj: *mut Item_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn itFlipper_HitShield(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFlipper_HitShield");
     let ip = (*gobj).user_data as *mut Item;
     let attrs = attrs_of(ip);
     if (*ip).xDD4_itemVar.flipper.xDD8_isSettled == 0 {
@@ -623,14 +657,17 @@ pub unsafe extern "C" fn itFlipper_HitShield(gobj: *mut Item_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn itFlipper_Reflected(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFlipper_Reflected");
     ext::it_80273030(gobj)
 }
 
 pub unsafe extern "C" fn itFlipper_ShieldBounced(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFlipper_ShieldBounced");
     ext::itColl_BounceOffShield(gobj)
 }
 
 pub unsafe extern "C" fn itFlipper_SpinFromFighterRecv(gobj: *mut Item_GObj, vel: *mut Vec, pos: *mut Vec, mut speed: f32) {
+    melee_core::ct!("itFlipper_SpinFromFighterRecv");
     let ip = get_item(gobj);
     *pos = (*ip).pos;
 
@@ -645,6 +682,7 @@ pub unsafe extern "C" fn itFlipper_SpinFromFighterRecv(gobj: *mut Item_GObj, vel
 }
 
 pub unsafe extern "C" fn itFlipper_DmgReceived(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFlipper_DmgReceived");
     let ip = get_item(gobj);
     let attrs = attrs_of(ip);
     let mut pos: Vec = core::mem::zeroed();
@@ -664,20 +702,24 @@ pub unsafe extern "C" fn itFlipper_DmgReceived(gobj: *mut Item_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn itFlipper_EnteredAir(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFlipper_EnteredAir");
     ext::Item_80268E5C(gobj, FLIPPER_MS_AIRBORNE as _, ITEM_ANIM_UPDATE as _);
 }
 
 pub unsafe extern "C" fn itFlipper_Airborne_Anim(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFlipper_Airborne_Anim");
     0
 }
 
-pub unsafe extern "C" fn itFlipper_Airborne_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itFlipper_Airborne_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itFlipper_Airborne_Phys");}
 
 pub unsafe extern "C" fn itFlipper_Airborne_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFlipper_Airborne_Coll");
     ext::it_8026E8C4(gobj, Some(itFlipper_EnterResting), Some(itFlipper_EnterFalling));
     0
 }
 
 pub unsafe extern "C" fn itFlipper_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("itFlipper_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

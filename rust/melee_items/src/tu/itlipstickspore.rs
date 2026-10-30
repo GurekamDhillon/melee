@@ -82,6 +82,7 @@ pub static mut it_803F6680: [ItemStateTable; 2] = [
 ];
 
 pub unsafe fn it_8029A114(gobj: *mut Fighter_GObj, pos: *mut Vec3, mut facing_dir: f32, arg4: i32) {
+    melee_core::ct!("it_8029A114");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
     spawn.kind = It_Kind_LipStick_Spore;
@@ -106,6 +107,7 @@ pub unsafe fn it_8029A114(gobj: *mut Fighter_GObj, pos: *mut Vec3, mut facing_di
 }
 
 pub unsafe fn it_8029A218(owner: *mut HSD_GObj, pos: *mut Vec3, mut facing_dir: f32, arg4: i32) {
+    melee_core::ct!("it_8029A218");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
     spawn.kind = It_Kind_LipStick_Spore;
@@ -130,6 +132,7 @@ pub unsafe fn it_8029A218(owner: *mut HSD_GObj, pos: *mut Vec3, mut facing_dir: 
 }
 
 pub unsafe fn it_8029A31C(gobj: *mut Item_GObj, _owner: *mut Fighter_GObj, _unused: *mut Item) {
+    melee_core::ct!("it_8029A31C");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itLipstickSporeAttributes;
 
@@ -163,6 +166,7 @@ pub unsafe fn it_8029A31C(gobj: *mut Item_GObj, _owner: *mut Fighter_GObj, _unus
 }
 
 pub unsafe fn it_8029A498(gobj: *mut Item_GObj, _owner: *mut Fighter_GObj) {
+    melee_core::ct!("it_8029A498");
     let ip = GET_ITEM(gobj);
 
     ext::it_8026B3A8(gobj);
@@ -174,10 +178,12 @@ pub unsafe fn it_8029A498(gobj: *mut Item_GObj, _owner: *mut Fighter_GObj) {
 }
 
 pub unsafe extern "C" fn itLipstickspore_UnkMotion0_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLipstickspore_UnkMotion0_Anim");
     ext::it_80273130(gobj)
 }
 
 pub unsafe extern "C" fn itLipstickspore_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLipstickspore_UnkMotion0_Phys");
     let ip = GET_ITEM(gobj);
 
     if (*ip).x40_vel.x == 0.0 {
@@ -204,6 +210,7 @@ pub unsafe extern "C" fn itLipstickspore_UnkMotion0_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLipstickspore_UnkMotion0_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLipstickspore_UnkMotion0_Coll");
     if ext::it_8026DFB0(gobj) != 0 {
         return 1;
     }
@@ -211,35 +218,43 @@ pub unsafe extern "C" fn itLipstickspore_UnkMotion0_Coll(gobj: *mut Item_GObj) -
 }
 
 pub unsafe extern "C" fn itLipstickspore_UnkMotion1_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLipstickspore_UnkMotion1_Anim");
     ext::it_80273130(gobj)
 }
 
 pub unsafe extern "C" fn itLipstickspore_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLipstickspore_UnkMotion1_Phys");
     let ip = GET_ITEM(gobj);
     itResetVelocity(ip);
 }
 
 pub unsafe extern "C" fn itLipstickspore_UnkMotion1_Coll(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLipstickspore_UnkMotion1_Coll");
     0
 }
 
 pub unsafe fn itLipstickSpore_Logic37_DmgDealt(_arg0: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLipstickSpore_Logic37_DmgDealt");
     1
 }
 
 pub unsafe fn itLipstickSpore_Logic37_Clanked(_arg0: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLipstickSpore_Logic37_Clanked");
     1
 }
 
 pub unsafe fn itLipstickSpore_Logic37_HitShield(_arg0: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLipstickSpore_Logic37_HitShield");
     1
 }
 
 pub unsafe fn itLipstickSpore_Logic37_Absorbed(_arg0: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLipstickSpore_Logic37_Absorbed");
     1
 }
 
 pub unsafe fn itLipstickSpore_Logic37_Reflected(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLipstickSpore_Logic37_Reflected");
     let ip = GET_ITEM(gobj);
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     ext::it_80273030(gobj);
@@ -248,10 +263,12 @@ pub unsafe fn itLipstickSpore_Logic37_Reflected(gobj: *mut Item_GObj) -> i32 {
 }
 
 pub unsafe fn itLipstickSpore_Logic37_ShieldBounced(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLipstickSpore_Logic37_ShieldBounced");
     ext::itColl_BounceOffShield(gobj);
     0
 }
 
 pub unsafe fn itLipstickSpore_Logic37_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("itLipstickSpore_Logic37_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

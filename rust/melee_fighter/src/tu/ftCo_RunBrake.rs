@@ -47,6 +47,7 @@ pub mod ext {
 }
 
 pub fn ftCo_RunBrake_CheckInput(g: G) -> bool {
+    melee_core::ct!("ftCo_RunBrake_CheckInput");
     let mut lsx_abs = fp(g).input.lstick[0].x;
     if lsx_abs < 0.0 {
         lsx_abs = -lsx_abs;
@@ -59,6 +60,7 @@ pub fn ftCo_RunBrake_CheckInput(g: G) -> bool {
 }
 
 pub fn ftCo_RunBrake_Enter(g: G) {
+    melee_core::ct!("ftCo_RunBrake_Enter");
     let f = fp(g);
     f.cmd_vars[0] = 0;
     f.cmd_vars[1] = 0;
@@ -79,6 +81,7 @@ fn abs_c(x: f32) -> f32 {
 }
 
 pub fn ftCo_RunBrake_Anim(g: G) {
+    melee_core::ct!("ftCo_RunBrake_Anim");
     if fp(g).cmd_vars[1] != 0 {
         let maybe_max_vel = cd().x42C;
         if unsafe { fp(g).mv.co.runbrake.x0 } == 0 {
@@ -106,6 +109,7 @@ pub fn ftCo_RunBrake_Anim(g: G) {
 }
 
 pub fn ftCo_RunBrake_IASA(g: G) {
+    melee_core::ct!("ftCo_RunBrake_IASA");
     if ext::fn_800CAF78(g) {
         return;
     }
@@ -118,6 +122,7 @@ pub fn ftCo_RunBrake_IASA(g: G) {
 }
 
 pub fn ftCo_RunBrake_Phys(g: G) {
+    melee_core::ct!("ftCo_RunBrake_Phys");
     let f = fp(g);
     let friction = cd().run_dash_turn_friction_multiplier * f.co_attrs.ground_friction;
     ext::ftCommon_CalcGroundAccel_Deaccel(f, friction);
@@ -125,5 +130,6 @@ pub fn ftCo_RunBrake_Phys(g: G) {
 }
 
 pub fn ftCo_RunBrake_Coll(g: G) {
+    melee_core::ct!("ftCo_RunBrake_Coll");
     ext::ft_80084280(g);
 }

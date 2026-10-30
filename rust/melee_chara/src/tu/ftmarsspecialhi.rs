@@ -63,6 +63,7 @@ fn cabs(x: f32) -> f32 {
 }
 
 pub fn ftMs_SpecialAirHi_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialAirHi_Enter");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -104,14 +105,17 @@ unsafe fn iasa(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMs_SpecialHi_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialHi_IASA");
     unsafe { iasa(gobj) }
 }
 
 pub fn ftMs_SpecialAirHi_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialAirHi_IASA");
     unsafe { iasa(gobj) }
 }
 
 pub fn ftMs_SpecialHi_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialHi_Phys");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).ground_or_air == GA_Air {
@@ -138,6 +142,7 @@ pub fn ftMs_SpecialHi_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMs_SpecialAirHi_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialAirHi_Phys");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -185,9 +190,11 @@ unsafe fn coll(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMs_SpecialHi_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialHi_Coll");
     unsafe { coll(gobj) }
 }
 
 pub fn ftMs_SpecialAirHi_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialAirHi_Coll");
     unsafe { coll(gobj) }
 }

@@ -111,6 +111,7 @@ unsafe fn HSD_CObjGetViewingMtxPtrDirect(cobj: *mut HSD_CObj) -> MtxPtr {
 /// 1C5B90: draws the joint tree below `jobj`; an instance joint concatenates its child's
 /// inverse matrix, a plain joint lights every fighter's shadow flag first.
 pub unsafe extern "C" fn grDisplay_801C5B90(mut jobj: *mut HSD_JObj, vmtx: MtxPtr, flags: u32, rendermode: u32) {
+    melee_core::ct!("grDisplay_801C5B90");
     let mut mtx: Mtx = [[0.0; 4]; 3];
     let mut fighter_pos: Vec3 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
@@ -160,6 +161,7 @@ pub unsafe extern "C" fn grDisplay_801C5B90(mut jobj: *mut HSD_JObj, vmtx: MtxPt
 
 /// `grDisplay_801C5DB0_surface_impl` (the TARGET_PC body of 1C5DB0).
 pub unsafe extern "C" fn grDisplay_801C5DB0_surface_impl(gobj: *mut HSD_GObj, code: i32) {
+    melee_core::ct!("grDisplay_801C5DB0_surface_impl");
     // Only the original stage callback is hidden by the workbench option.
     if ext::Wb_RenderOption(WB_RENDER_STAGE, ext::ScriptGame_StageOriginalVisible()) == 0
         && ext::ScriptGame_StageSlotOwned(gobj) == 0
@@ -225,6 +227,7 @@ pub unsafe extern "C" fn grDisplay_801C5DB0_surface_impl(gobj: *mut HSD_GObj, co
 
 /// 1C5DB0 (`TARGET_PC` wrapper): the stage render callback.
 pub unsafe extern "C" fn grDisplay_801C5DB0(gobj: *mut HSD_GObj, code: i32) {
+    melee_core::ct!("grDisplay_801C5DB0");
     ext::SurfaceBegin(7);
     grDisplay_801C5DB0_surface_impl(gobj, code);
     ext::SurfaceEnd();
@@ -232,6 +235,7 @@ pub unsafe extern "C" fn grDisplay_801C5DB0(gobj: *mut HSD_GObj, code: i32) {
 
 /// 1C5F60
 pub unsafe extern "C" fn grDisplay_801C5F60(gobj: *mut HSD_GObj, _code: i32) {
+    melee_core::ct!("grDisplay_801C5F60");
     let cobj = (*gobj).hsd_obj as *mut HSD_CObj;
     if ext::HSD_CObjSetCurrent(cobj) != 0 {
         (*gobj).gxlink_prios = 8;

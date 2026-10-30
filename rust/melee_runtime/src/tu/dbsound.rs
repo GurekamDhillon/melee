@@ -105,6 +105,7 @@ impl Default for DbSound {
 
 /// One peak-hold step: a new peak latches for 0xF0 frames, then the peak follows the value.
 pub fn db_peak_hold(peak: &mut i32, hold: &mut i32, x: i32) {
+    melee_core::ct!("db_peak_hold");
     if *peak < x {
         *peak = x;
         *hold = 0xF0;

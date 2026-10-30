@@ -38,6 +38,7 @@ pub mod ext {
 /// `my_lbVector_Len` (static inline).
 #[inline]
 pub fn my_lbVector_Len(v: &Vec3) -> f32 {
+    melee_core::ct!("my_lbVector_Len");
     crate::pure::my_sqrtf(fmadds(v.z, v.z, fmadds(v.x, v.x, v.y * v.y)))
 }
 
@@ -45,6 +46,7 @@ pub fn my_lbVector_Len(v: &Vec3) -> f32 {
 /// chasing `target` from `cur`, with the data offsets `off_x/off_y` (xDC/xE0), the snap radius
 /// `x2c` and the gain `x28` of the attributes.
 pub fn fingergun1_vel(target: &Vec3, cur: &Vec3, off_x: f32, off_y: f32, x2c: f32, x28: f32) -> (f32, f32) {
+    melee_core::ct!("fingergun1_vel");
     let mut pos = *target;
     pos.x += off_x;
     pos.y += off_y;
@@ -65,14 +67,16 @@ pub fn fingergun1_vel(target: &Vec3, cur: &Vec3, off_x: f32, off_y: f32, x2c: f3
 }
 
 pub fn ftMh_FingerBeamEnd_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_FingerBeamEnd_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         ext::ftMh_MS_389_80151018(gobj);
     }
 }
 
-pub fn ftMh_FingerBeamEnd_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_FingerBeamEnd_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_FingerBeamEnd_Coll");}
 
 pub fn ftMh_MS_363_801530A4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_363_801530A4");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*(*fp).ft_data).ext_attr as *const ftMasterHand_SpecialAttrs;
@@ -88,6 +92,7 @@ pub fn ftMh_MS_363_801530A4(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMh_FingerGun1_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_FingerGun1_Anim");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -109,6 +114,7 @@ pub fn ftMh_FingerGun1_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMh_FingerGun1_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_FingerGun1_Phys");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         st::ft_80085134(gobj);
@@ -124,10 +130,11 @@ pub fn ftMh_FingerGun1_Phys(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftMh_FingerGun1_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_FingerGun1_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_FingerGun1_Coll");}
 
 /// Enter FingerGun2 (also the body of the C's `lbl_8015346C_inline`).
 pub fn ftMh_MS_364_801533CC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_364_801533CC");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*(*fp).ft_data).ext_attr as *const ftMasterHand_SpecialAttrs;
@@ -143,6 +150,7 @@ pub fn ftMh_MS_364_801533CC(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMh_FingerGun2_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_FingerGun2_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         unsafe {
             let fp = (*gobj).user_data as *mut Fighter;
@@ -157,10 +165,11 @@ pub fn ftMh_FingerGun2_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftMh_FingerGun2_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_FingerGun2_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_FingerGun2_Coll");}
 
 /// Accessory-4 callback: spawns a bullet from each knee when the script raises its flag.
 pub unsafe extern "C" fn ftMh_MS_365_801535B0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_365_801535B0");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*(*fp).ft_data).ext_attr as *const ftMasterHand_SpecialAttrs;
@@ -177,6 +186,7 @@ pub unsafe extern "C" fn ftMh_MS_365_801535B0(gobj: *mut HSD_GObj) {
 
 /// `ftMh_MS_365_8015364C` (static in the C): spawn one MasterHand bullet at `joint` + (arg2, arg3).
 pub fn ftMh_MS_365_8015364C(gobj: *mut HSD_GObj, joint: *mut HSD_JObj, arg2: f32, arg3: f32) {
+    melee_core::ct!("ftMh_MS_365_8015364C");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*(*fp).ft_data).ext_attr as *const ftMasterHand_SpecialAttrs;

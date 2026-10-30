@@ -203,6 +203,7 @@ pub const zOne2: Vec3 = Vec3 { x: 0.0, y: 0.0, z: 1.0 };
 
 /// `mkVBillBoardMtx` (static): the billboard position matrix from `src = vmtx * jobj->mtx`.
 pub fn mkVBillBoardMtx(jobj_flags: u32, src: &Mtx) -> Mtx {
+    melee_core::ct!("mkVBillBoardMtx");
     let mut dst: Mtx = [[0.0; 4]; 3];
     let pos = mtx_col_vec(src, 3);
     let ay = mtx_col_vec(src, 1);
@@ -231,6 +232,7 @@ pub fn mkVBillBoardMtx(jobj_flags: u32, src: &Mtx) -> Mtx {
 
 /// `mkHBillBoardMtx` (static).
 pub fn mkHBillBoardMtx(jobj_flags: u32, src: &Mtx) -> Mtx {
+    melee_core::ct!("mkHBillBoardMtx");
     let mut dst: Mtx = [[0.0; 4]; 3];
     let pos = mtx_col_vec(src, 3);
     let ax = mtx_col_vec(src, 0);
@@ -265,6 +267,7 @@ pub fn mkHBillBoardMtx(jobj_flags: u32, src: &Mtx) -> Mtx {
 
 /// `mkBillBoardMtx` (static).
 pub fn mkBillBoardMtx(jobj_flags: u32, src: &Mtx) -> Mtx {
+    melee_core::ct!("mkBillBoardMtx");
     let mut dst: Mtx = [[0.0; 4]; 3];
     let mut sx = mtx_col_mag(src, 0);
     let mut sz = mtx_col_mag(src, 2);
@@ -307,6 +310,7 @@ pub fn mkBillBoardMtx(jobj_flags: u32, src: &Mtx) -> Mtx {
 
 /// `mkRBillBoardMtx` (static): `rotate_z` is `jobj->rotate.z`.
 pub fn mkRBillBoardMtx(rotate_z: f32, src: &Mtx) -> Mtx {
+    melee_core::ct!("mkRBillBoardMtx");
     let sx = mtx_col_mag(src, 0);
     let sy = mtx_col_mag(src, 1);
     let sz = mtx_col_mag(src, 2);
@@ -329,6 +333,7 @@ fn set_col_vec(m: &mut Mtx, col: usize, v: &Vec3) {
 /// `HSD_JObjMakePositionMtx` with billboards: `jobj_flags`, `rotate_z` (`jobj->rotate.z`, read
 /// only by the R billboard), the view matrix and the joint's world matrix.
 pub fn HSD_JObjMakePositionMtx(jobj_flags: u32, rotate_z: f32, vmtx: &Mtx, jobj_mtx: &Mtx) -> Mtx {
+    melee_core::ct!("HSD_JObjMakePositionMtx");
     if jobj_flags & JOBJ_BILLBOARD_FIELD != 0 {
         let m = mtx::concat(vmtx, jobj_mtx);
         match jobj_flags & JOBJ_BILLBOARD_FIELD {
@@ -498,6 +503,7 @@ impl DispStatics {
 
 /// `HSD_StateInitDirect`.
 pub fn HSD_StateInitDirect<G: GxBackend>(r: &mut HsdRender, g: &mut G, vtxfmt: u32, rendermode: u32) {
+    melee_core::ct!("HSD_StateInitDirect");
     const GX_VA_CLR0: u32 = 11;
     const GX_POS_XYZ: u32 = 1;
     const GX_CLR_RGBA: u32 = 1;
@@ -542,6 +548,7 @@ pub fn HSD_EraseRect<G: EraseGx>(
     enable_alpha: bool,
     enable_depth: bool,
 ) {
+    melee_core::ct!("HSD_EraseRect");
     const GX_ZT_DISABLE: u32 = 0;
     const GX_ZT_REPLACE: u32 = 1;
     const GX_ALWAYS: u32 = 7;

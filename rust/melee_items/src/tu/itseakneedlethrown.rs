@@ -133,6 +133,7 @@ unsafe fn abs_table_7020() -> f32 {
 }
 
 pub unsafe extern "C" fn it_802AFD8C(parent: *mut Item_GObj, pos: *mut Vec3, kind: u32, facing_dir: f32) -> *mut Item_GObj {
+    melee_core::ct!("it_802AFD8C");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
     spawn.kind = kind as _;
@@ -154,6 +155,7 @@ pub unsafe extern "C" fn it_802AFD8C(parent: *mut Item_GObj, pos: *mut Vec3, kin
 }
 
 pub unsafe extern "C" fn it_802AFEA8(gobj: *mut Item_GObj, owner_gobj: *mut Fighter_GObj, arg2: u32) {
+    melee_core::ct!("it_802AFEA8");
     if !gobj.is_null() && !owner_gobj.is_null() {
         match arg2 {
             0 => it_802AFF08(gobj, owner_gobj),
@@ -164,10 +166,12 @@ pub unsafe extern "C" fn it_802AFEA8(gobj: *mut Item_GObj, owner_gobj: *mut Figh
 }
 
 pub unsafe extern "C" fn itSeakNeedleThrown_Logic109_Destroyed(gobj: *mut Item_GObj) {
+    melee_core::ct!("itSeakNeedleThrown_Logic109_Destroyed");
     (*GET_ITEM(gobj)).owner = null_mut();
 }
 
 pub unsafe extern "C" fn it_802AFF08(gobj: *mut Item_GObj, owner: *mut Fighter_GObj) {
+    melee_core::ct!("it_802AFF08");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSeakNeedleThrownAttributes;
     let child = HSD_JObjGetChild(GET_JOBJ(gobj));
@@ -230,6 +234,7 @@ unsafe fn itSeakNeedleThrown_SetupDrop(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802B00F4(gobj: *mut Item_GObj, owner: *mut Fighter_GObj) {
+    melee_core::ct!("it_802B00F4");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSeakNeedleThrownAttributes;
 
@@ -247,12 +252,14 @@ pub unsafe extern "C" fn it_802B00F4(gobj: *mut Item_GObj, owner: *mut Fighter_G
 }
 
 pub unsafe extern "C" fn itSeakneedlethrown_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSeakneedlethrown_UnkMotion0_Anim");
     let ip = GET_ITEM(gobj);
     (*ip).xDD4_itemVar.seakneedlethrown.xDE4 = (*ip).pos;
     ext::it_80273130(gobj) != 0
 }
 
 pub unsafe extern "C" fn itSeakneedlethrown_UnkMotion1_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSeakneedlethrown_UnkMotion1_Anim");
     let ip = GET_ITEM(gobj);
     let jobj = HSD_JObjGetChild(GET_JOBJ(gobj));
     (*ip).xDD4_itemVar.seakneedlethrown.xDE4 = (*ip).pos;
@@ -261,6 +268,7 @@ pub unsafe extern "C" fn itSeakneedlethrown_UnkMotion1_Anim(gobj: *mut Item_GObj
 }
 
 pub unsafe extern "C" fn itSeakneedlethrown_UnkMotion2_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSeakneedlethrown_UnkMotion2_Anim");
     let ip = GET_ITEM(gobj);
     let child = HSD_JObjGetChild((*gobj).hsd_obj as *mut HSD_JObj);
     (*ip).xDD4_itemVar.seakneedlethrown.xDE4 = (*ip).pos;
@@ -269,10 +277,12 @@ pub unsafe extern "C" fn itSeakneedlethrown_UnkMotion2_Anim(gobj: *mut Item_GObj
 }
 
 pub unsafe extern "C" fn itSeakneedlethrown_UnkMotion3_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSeakneedlethrown_UnkMotion3_Anim");
     ext::it_80273130(gobj) != 0
 }
 
 pub unsafe extern "C" fn itSeakneedlethrown_UnkMotion4_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSeakneedlethrown_UnkMotion4_Anim");
     let ip = GET_ITEM(gobj);
     let jobj = HSD_JObjGetChild(GET_JOBJ(gobj));
     (*ip).xDD4_itemVar.seakneedlethrown.xDE4 = (*ip).pos;
@@ -280,9 +290,10 @@ pub unsafe extern "C" fn itSeakneedlethrown_UnkMotion4_Anim(gobj: *mut Item_GObj
     false
 }
 
-pub unsafe extern "C" fn itSeakneedlethrown_UnkMotion0_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itSeakneedlethrown_UnkMotion0_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itSeakneedlethrown_UnkMotion0_Phys");}
 
 pub unsafe extern "C" fn itSeakneedlethrown_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itSeakneedlethrown_UnkMotion1_Phys");
     let ip = GET_ITEM(gobj);
     (*ip).x40_vel.x = (*ip).xDD4_itemVar.seakneedlethrown.xDD8;
     (*ip).x40_vel.y += (*ip).xDD4_itemVar.seakneedlethrown.xDE0;
@@ -291,14 +302,16 @@ pub unsafe extern "C" fn itSeakneedlethrown_UnkMotion1_Phys(gobj: *mut Item_GObj
     }
 }
 
-pub unsafe extern "C" fn itSeakneedlethrown_UnkMotion2_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itSeakneedlethrown_UnkMotion2_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itSeakneedlethrown_UnkMotion2_Phys");}
 
 pub unsafe extern "C" fn itSeakneedlethrown_UnkMotion3_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itSeakneedlethrown_UnkMotion3_Phys");
     let ip = GET_ITEM(gobj);
     itResetVelocity(ip);
 }
 
 pub unsafe extern "C" fn itSeakneedlethrown_UnkMotion4_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itSeakneedlethrown_UnkMotion4_Phys");
     let ip = GET_ITEM(gobj);
     (*ip).x40_vel.x = (*ip).xDD4_itemVar.seakneedlethrown.xDD8;
     (*ip).x40_vel.y += (*ip).xDD4_itemVar.seakneedlethrown.xDE0;
@@ -338,6 +351,7 @@ unsafe fn itSeakNeedleThrown_CheckGroundHit(gobj: *mut Item_GObj) -> bool {
 }
 
 pub unsafe extern "C" fn itSeakneedlethrown_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSeakneedlethrown_UnkMotion0_Coll");
     let ip = (*gobj).user_data as *mut Item;
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSeakNeedleThrownAttributes;
     let child = HSD_JObjGetChild((*gobj).hsd_obj as *mut HSD_JObj);
@@ -371,6 +385,7 @@ pub unsafe extern "C" fn itSeakneedlethrown_UnkMotion0_Coll(gobj: *mut Item_GObj
 }
 
 pub unsafe extern "C" fn itSeakneedlethrown_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSeakneedlethrown_UnkMotion1_Coll");
     let ip = (*gobj).user_data as *mut Item;
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSeakNeedleThrownAttributes;
     if itSeakNeedleThrown_CheckGroundHit(gobj) {
@@ -415,6 +430,7 @@ unsafe fn itSeakNeedleThrown_Coll2_Rotate(ip: *mut Item, child: *mut HSD_JObj) {
 }
 
 pub unsafe extern "C" fn itSeakneedlethrown_UnkMotion2_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSeakneedlethrown_UnkMotion2_Coll");
     let ip = GET_ITEM(gobj);
     let child = HSD_JObjGetChild((*gobj).hsd_obj as *mut HSD_JObj);
     ext::it_802762BC(ip);
@@ -425,10 +441,12 @@ pub unsafe extern "C" fn itSeakneedlethrown_UnkMotion2_Coll(gobj: *mut Item_GObj
 }
 
 pub unsafe extern "C" fn itSeakneedlethrown_UnkMotion3_Coll(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSeakneedlethrown_UnkMotion3_Coll");
     false
 }
 
 pub unsafe extern "C" fn itSeakneedlethrown_UnkMotion4_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSeakneedlethrown_UnkMotion4_Coll");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSeakNeedleThrownAttributes;
     let child = HSD_JObjGetChild((*gobj).hsd_obj as *mut HSD_JObj);
@@ -462,18 +480,22 @@ unsafe fn logic109_bounce_or_true(gobj: *mut Item_GObj, ip: *mut Item) -> bool {
 }
 
 pub unsafe extern "C" fn it_2725_Logic109_DmgDealt(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_2725_Logic109_DmgDealt");
     logic109_bounce_or_true(gobj, GET_ITEM(gobj))
 }
 
 pub unsafe extern "C" fn it_2725_Logic109_Clanked(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_2725_Logic109_Clanked");
     logic109_bounce_or_true(gobj, GET_ITEM(gobj))
 }
 
 pub unsafe extern "C" fn it_2725_Logic109_DmgReceived(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_2725_Logic109_DmgReceived");
     logic109_bounce_or_true(gobj, GET_ITEM(gobj))
 }
 
 pub unsafe extern "C" fn it_2725_Logic109_Reflected(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_2725_Logic109_Reflected");
     let ip = GET_ITEM(gobj);
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSeakNeedleThrownAttributes;
@@ -508,6 +530,7 @@ pub unsafe extern "C" fn it_2725_Logic109_Reflected(gobj: *mut Item_GObj) -> boo
 }
 
 pub unsafe extern "C" fn it_2725_Logic109_ShieldBounced(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_2725_Logic109_ShieldBounced");
     let ip = GET_ITEM(gobj);
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
 
@@ -527,9 +550,11 @@ pub unsafe extern "C" fn it_2725_Logic109_ShieldBounced(gobj: *mut Item_GObj) ->
 }
 
 pub unsafe extern "C" fn it_2725_Logic109_HitShield(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_2725_Logic109_HitShield");
     logic109_bounce_or_true(gobj, GET_ITEM(gobj))
 }
 
 pub unsafe extern "C" fn itSeakNeedleThrown_Logic109_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("itSeakNeedleThrown_Logic109_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

@@ -40,13 +40,14 @@ pub mod ext {
 }
 
 /// `fn_800DA678` as the C `HSD_GObjEvent` stored in `accessory1_cb`.
-pub unsafe extern "C" fn fn_800DA678_cb(g: *mut HSD_GObj) { fn_800DA678(g) }
+pub unsafe extern "C" fn fn_800DA678_cb(g: *mut HSD_GObj) { melee_core::ct!("fn_800DA678_cb"); fn_800DA678(g) }
 /// `fn_800DA668` as the C `HSD_GObjEvent` stored in `take_dmg_cb`.
-pub unsafe extern "C" fn fn_800DA668_cb(g: *mut HSD_GObj) { fn_800DA668(g) }
+pub unsafe extern "C" fn fn_800DA668_cb(g: *mut HSD_GObj) { melee_core::ct!("fn_800DA668_cb"); fn_800DA668(g) }
 /// `fn_800DA618` as the C `HSD_GObjEvent` handed to `ft_800841B8`.
-pub unsafe extern "C" fn fn_800DA618_cb(g: *mut HSD_GObj) { fn_800DA618(g) }
+pub unsafe extern "C" fn fn_800DA618_cb(g: *mut HSD_GObj) { melee_core::ct!("fn_800DA618_cb"); fn_800DA618(g) }
 
 pub fn fn_800DA4FC(g: G) {
+    melee_core::ct!("fn_800DA4FC");
     fp(g).gr_vel = 0.0;
     ext::Fighter_ChangeMotionState(g, ftCo_MS_CatchAttack as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
     let f = fp(g);
@@ -56,14 +57,16 @@ pub fn fn_800DA4FC(g: G) {
 }
 
 pub fn ftCo_CatchAttack_Anim(g: G) {
+    melee_core::ct!("ftCo_CatchAttack_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::fn_800DA2B0(g);
     }
 }
 
-pub fn ftCo_CatchAttack_IASA(_g: G) {}
+pub fn ftCo_CatchAttack_IASA(_g: G) { melee_core::ct!("ftCo_CatchAttack_IASA");}
 
 pub fn ftCo_CatchAttack_Phys(g: G) {
+    melee_core::ct!("ftCo_CatchAttack_Phys");
     let f = fp(g);
     let fr = crate::hooks::common_data().x64 * f.co_attrs.ground_friction;
     ext::ftCommon_CalcGroundAccel_Deaccel(f, fr);
@@ -71,10 +74,12 @@ pub fn ftCo_CatchAttack_Phys(g: G) {
 }
 
 pub fn ftCo_CatchAttack_Coll(g: G) {
+    melee_core::ct!("ftCo_CatchAttack_Coll");
     ext::ft_800841B8(g, Some(fn_800DA618_cb));
 }
 
 pub fn fn_800DA618(g: G) {
+    melee_core::ct!("fn_800DA618");
     let victim = fp(g).victim_gobj;
     ext::ftCo_800DC920(g, victim);
     ext::ftCo_Fall_Enter(g);
@@ -82,9 +87,11 @@ pub fn fn_800DA618(g: G) {
 }
 
 pub fn fn_800DA668(g: G) {
+    melee_core::ct!("fn_800DA668");
     fp(g).take_dmg_cb = None;
 }
 
 pub fn fn_800DA678(g: G) {
+    melee_core::ct!("fn_800DA678");
     ext::fn_800DA054(g);
 }

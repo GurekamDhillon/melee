@@ -111,6 +111,7 @@ pub static it_803F7B48: [ItemStateTable; 1] =
 
 /// `void it_802CA49C(Item_GObj*)` (2CA49C)
 pub unsafe extern "C" fn it_802CA49C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CA49C");
     let ip = ip_of(gobj);
     let sa = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itPokemonAttributes;
 
@@ -126,21 +127,24 @@ pub unsafe extern "C" fn it_802CA49C(gobj: *mut Item_GObj) {
 }
 
 /// `void it_802CA534(Item_GObj*)` (2CA534)
-pub unsafe extern "C" fn it_802CA534(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn it_802CA534(_gobj: *mut Item_GObj) { melee_core::ct!("it_802CA534");}
 
 /// `void it_802CA538(Item_GObj*, Item_GObj*)` (2CA538)
 pub unsafe extern "C" fn it_802CA538(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CA538");
     ext::it_8026B894(gobj, ref_gobj);
 }
 
 /// `void it_802CA558(Item_GObj*)` (2CA558)
 pub unsafe extern "C" fn it_802CA558(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CA558");
     ext::it_80273454(gobj);
     it_802CA58C(gobj);
 }
 
 /// `void it_802CA58C(Item_GObj*)` (2CA58C)
 pub unsafe extern "C" fn it_802CA58C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CA58C");
     let ip = ip_of(gobj);
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE as u32);
     set_effect_hitlag_callbacks(ip);
@@ -148,6 +152,7 @@ pub unsafe extern "C" fn it_802CA58C(gobj: *mut Item_GObj) {
 
 /// `bool it_802CA5D8(Item_GObj*)` (2CA5D8)
 pub unsafe extern "C" fn it_802CA5D8(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802CA5D8");
     if ext::it_80272C6C(gobj) == 0 {
         it_802CA6A0(gobj);
     }
@@ -156,6 +161,7 @@ pub unsafe extern "C" fn it_802CA5D8(gobj: *mut Item_GObj) -> i32 {
 
 /// `void it_802CA618(Item_GObj*)` (2CA618)
 pub unsafe extern "C" fn it_802CA618(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CA618");
     let ip = ip_of(gobj);
     if (*ip).ground_or_air == GA_Air {
         ext::it_80272860(gobj, (*(*ip).xCC_item_attr).x10_fall_speed, (*(*ip).xCC_item_attr).x14_fall_speed_max);
@@ -164,6 +170,7 @@ pub unsafe extern "C" fn it_802CA618(gobj: *mut Item_GObj) {
 
 /// `bool it_802CA654(Item_GObj*)` (2CA654)
 pub unsafe extern "C" fn it_802CA654(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802CA654");
     if (*ip_of(gobj)).ground_or_air == GA_Air {
         ext::it_8026E15C(gobj, Some(it_802CA534));
     } else {
@@ -174,6 +181,7 @@ pub unsafe extern "C" fn it_802CA654(gobj: *mut Item_GObj) -> i32 {
 
 /// `void it_802CA6A0(Item_GObj*)` (2CA6A0)
 pub unsafe extern "C" fn it_802CA6A0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CA6A0");
     let ip = ip_of(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itKamexAttributes;
 
@@ -189,6 +197,7 @@ pub unsafe extern "C" fn it_802CA6A0(gobj: *mut Item_GObj) {
 
 /// `bool itKamex_UnkMotion1_Anim(Item_GObj*)` (2CA724)
 pub unsafe extern "C" fn itKamex_UnkMotion1_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKamex_UnkMotion1_Anim");
     let ip = (*gobj).user_data as *mut Item;
 
     if ext::it_80272C6C(gobj) == 0 {
@@ -206,6 +215,7 @@ pub unsafe extern "C" fn itKamex_UnkMotion1_Anim(gobj: *mut Item_GObj) -> i32 {
 
 /// `void itKamex_UnkMotion1_Phys(Item_GObj*)` (2CA7FC)
 pub unsafe extern "C" fn itKamex_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itKamex_UnkMotion1_Phys");
     let ip = (*gobj).user_data as *mut Item;
 
     if (*ip).x40_vel.x != 0.0 {
@@ -220,6 +230,7 @@ pub unsafe extern "C" fn itKamex_UnkMotion1_Phys(gobj: *mut Item_GObj) {
 
 /// `bool itKamex_UnkMotion1_Coll(Item_GObj*)` (2CA890)
 pub unsafe extern "C" fn itKamex_UnkMotion1_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKamex_UnkMotion1_Coll");
     if (*ip_of(gobj)).ground_or_air == GA_Air {
         ext::it_8026E15C(gobj, Some(it_802CA534));
     } else {
@@ -230,6 +241,7 @@ pub unsafe extern "C" fn itKamex_UnkMotion1_Coll(gobj: *mut Item_GObj) -> i32 {
 
 /// `void it_802CA8DC(Item_GObj*)` (2CA8DC)
 pub unsafe extern "C" fn it_802CA8DC(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CA8DC");
     let ip = (*gobj).user_data as *mut Item;
     if (*ip).anon_dbc.xDBC_itcmd_var4.flags.x0() != 0 {
         it_802CAB10(gobj);
@@ -240,6 +252,7 @@ pub unsafe extern "C" fn it_802CA8DC(gobj: *mut Item_GObj) {
 
 /// `void it_802CA938(Item_GObj*)` (2CA938)
 pub unsafe extern "C" fn it_802CA938(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CA938");
     let ip = ip_of(gobj);
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE as u32);
     set_effect_hitlag_callbacks(ip);
@@ -247,6 +260,7 @@ pub unsafe extern "C" fn it_802CA938(gobj: *mut Item_GObj) {
 
 /// `bool itKamex_UnkMotion2_Anim(Item_GObj*)` (2CA984)
 pub unsafe extern "C" fn itKamex_UnkMotion2_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKamex_UnkMotion2_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         return 1;
     }
@@ -255,6 +269,7 @@ pub unsafe extern "C" fn itKamex_UnkMotion2_Anim(gobj: *mut Item_GObj) -> i32 {
 
 /// `void itKamex_UnkMotion2_Phys(Item_GObj*)` (2CA9B8)
 pub unsafe extern "C" fn itKamex_UnkMotion2_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itKamex_UnkMotion2_Phys");
     let ip = ip_of(gobj);
     if (*ip).ground_or_air == GA_Air {
         ext::it_80272860(gobj, (*(*ip).xCC_item_attr).x10_fall_speed, (*(*ip).xCC_item_attr).x14_fall_speed_max);
@@ -263,6 +278,7 @@ pub unsafe extern "C" fn itKamex_UnkMotion2_Phys(gobj: *mut Item_GObj) {
 
 /// `bool itKamex_UnkMotion2_Coll(Item_GObj*)` (2CA9F4)
 pub unsafe extern "C" fn itKamex_UnkMotion2_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKamex_UnkMotion2_Coll");
     if (*ip_of(gobj)).ground_or_air == GA_Air {
         ext::it_8026E15C(gobj, Some(it_802CA534));
     } else {
@@ -273,6 +289,7 @@ pub unsafe extern "C" fn itKamex_UnkMotion2_Coll(gobj: *mut Item_GObj) -> i32 {
 
 /// `void it_802CAA40(Item_GObj*)` (2CAA40): `Item_EnterAirStateWithHitlag(gobj, 3)`.
 pub unsafe extern "C" fn it_802CAA40(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CAA40");
     let item = ip_of(gobj);
     ext::it_802762BC(item);
     ext::Item_80268E5C(gobj, 3, ITEM_ANIM_UPDATE as u32);
@@ -281,22 +298,26 @@ pub unsafe extern "C" fn it_802CAA40(gobj: *mut Item_GObj) {
 
 /// `bool itKamex_UnkMotion3_Anim(Item_GObj*)` (2CAAA4)
 pub unsafe extern "C" fn itKamex_UnkMotion3_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKamex_UnkMotion3_Anim");
     ext::it_80279FF8(gobj);
     0
 }
 
 /// `void itKamex_UnkMotion3_Phys(Item_GObj*)` (2CAAC8)
 pub unsafe extern "C" fn itKamex_UnkMotion3_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itKamex_UnkMotion3_Phys");
     ext::it_8027A09C(gobj);
 }
 
 /// `bool itKamex_UnkMotion3_Coll(Item_GObj*)` (2CAAE8)
 pub unsafe extern "C" fn itKamex_UnkMotion3_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKamex_UnkMotion3_Coll");
     ext::it_8027A118(gobj, Some(it_802CA558))
 }
 
 /// `void it_802CAB10(Item_GObj*)` (2CAB10): fire a hydro pump.
 pub unsafe extern "C" fn it_802CAB10(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CAB10");
     let mut spawn: SpawnItem = core::mem::zeroed();
     let ip = ip_of(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itKamexAttributes;
@@ -332,6 +353,7 @@ pub unsafe extern "C" fn it_802CAB10(gobj: *mut Item_GObj) {
 
 /// `void it_2725_Logic31_Spawned(Item_GObj*)` (2CACD0)
 pub unsafe extern "C" fn it_2725_Logic31_Spawned(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_2725_Logic31_Spawned");
     let ip = (*gobj).user_data as *mut Item;
     let sa = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itKamexAttributes;
 
@@ -346,21 +368,25 @@ pub unsafe extern "C" fn it_2725_Logic31_Spawned(gobj: *mut Item_GObj) {
 
 /// `bool itKamex_Logic31_HitShield(Item_GObj*)` (2CADC0)
 pub unsafe extern "C" fn itKamex_Logic31_HitShield(_arg0: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKamex_Logic31_HitShield");
     1
 }
 
 /// `bool itKamex_Logic31_DmgDealt(Item_GObj*)` (2CADC8)
 pub unsafe extern "C" fn itKamex_Logic31_DmgDealt(_arg0: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKamex_Logic31_DmgDealt");
     0
 }
 
 /// `void itKamex_Logic31_EvtUnk(Item_GObj*, Item_GObj*)` (2CADD0)
 pub unsafe extern "C" fn itKamex_Logic31_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("itKamex_Logic31_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }
 
 /// `void it_802CADF0(Item_GObj*)` (2CADF0)
 pub unsafe extern "C" fn it_802CADF0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CADF0");
     let ip = ip_of(gobj);
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
 
@@ -371,6 +397,7 @@ pub unsafe extern "C" fn it_802CADF0(gobj: *mut Item_GObj) {
 
 /// `bool it_802CAE60(Item_GObj*)` (2CAE60)
 pub unsafe extern "C" fn it_802CAE60(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802CAE60");
     let ip = ip_of(gobj);
     (*ip).xD44_lifeTimer -= 1.0;
     if (*ip).xD44_lifeTimer <= 0.0 {
@@ -381,6 +408,7 @@ pub unsafe extern "C" fn it_802CAE60(gobj: *mut Item_GObj) -> i32 {
 
 /// `void it_802CAE94(Item_GObj*)` (2CAE94)
 pub unsafe extern "C" fn it_802CAE94(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CAE94");
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
 
     if ((*jobj).scale.x as f64) < 1.0 {
@@ -395,5 +423,6 @@ pub unsafe extern "C" fn it_802CAE94(gobj: *mut Item_GObj) {
 
 /// `bool it_802CAFB4(Item_GObj*)` (2CAFB4)
 pub unsafe extern "C" fn it_802CAFB4(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802CAFB4");
     ext::it_8026DFB0(gobj)
 }

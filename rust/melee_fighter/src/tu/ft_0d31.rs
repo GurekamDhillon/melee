@@ -162,6 +162,7 @@ fn jobj_of(g: G) -> *mut HSD_JObj {
 
 /// `ftCo_800D3158`: past a blast zone? Enter the matching Dead state and return true.
 pub fn ftCo_800D3158(g: G) -> bool {
+    melee_core::ct!("ftCo_800D3158");
     let f = fp(g);
     let fc = &cd().fall_common;
     if f.x222A_b1() != 0 || f.x2228_b5() != 0 || f.is_sandbag() != 0 {
@@ -214,6 +215,7 @@ pub fn ftCo_800D3158(g: G) -> bool {
 
 /// `ftCo_800D331C`: shared KO cleanup (credit the KO, death callbacks, drop items, metal off).
 pub fn ftCo_800D331C(g: G) {
+    melee_core::ct!("ftCo_800D331C");
     let f = fp(g);
     if !f.victim_gobj.is_null() {
         if f.anon_221b.x221B_b5() != 0 {
@@ -270,6 +272,7 @@ pub fn ftCo_800D331C(g: G) {
 
 /// `ftCo_800D34E0`: KO accounting (falls, stale table, stock, KO credit / self-destruct).
 pub fn ftCo_800D34E0(g: G) {
+    melee_core::ct!("ftCo_800D34E0");
     let f = fp(g);
     let slot = f.player_id as i32;
     let sub = f.is_sub_fighter() as i32;
@@ -305,6 +308,7 @@ pub fn ftCo_800D34E0(g: G) {
 
 /// `ftCo_800D35FC`: rumble this fighter (5) and every other present fighter (6).
 pub fn ftCo_800D35FC(f: &mut Fighter) {
+    melee_core::ct!("ftCo_800D35FC");
     ext::ftCommon_8007EBAC(crate::mtu_ptr::ptr(&(f)), (5) as u32, (cd().x4F8) as u32);
     let me = f as *mut Fighter;
     let mut cur = h::plink_head(HSD_GOBJ_PLINK_FIGHTER);
@@ -400,10 +404,12 @@ fn spawn_ko_gfx(g: G, pos: &Vec3, angle: &f32) {
 }
 
 pub fn ftCo_800D3680(g: G) {
+    melee_core::ct!("ftCo_800D3680");
     dead_side(g, 1, 0x88, true, -1.5707964, ext::Stage_GetBlastZoneLeftOffset, 0.0)
 }
 
 pub fn ftCo_800D38B8(f: &mut Fighter, arg1: i32) {
+    melee_core::ct!("ftCo_800D38B8");
     ext::ft_800881D8(crate::mtu_ptr::ptr(&(f)), (arg1) as i32, (0x7F) as u8, (0x40) as u8);
     if f.x2225_b6() == 0 {
         ext::ft_8008805C(crate::mtu_ptr::ptr(&(f)), (arg1) as i32);
@@ -420,29 +426,32 @@ fn dead_countdown(g: G) {
     }
 }
 
-pub fn ftCo_DeadLeft_Anim(g: G) { dead_countdown(g) }
-pub fn ftCo_DeadLeft_Cam(_g: G) {}
+pub fn ftCo_DeadLeft_Anim(g: G) { melee_core::ct!("ftCo_DeadLeft_Anim"); dead_countdown(g) }
+pub fn ftCo_DeadLeft_Cam(_g: G) { melee_core::ct!("ftCo_DeadLeft_Cam");}
 
 pub fn ftCo_800D3950(g: G) {
+    melee_core::ct!("ftCo_800D3950");
     dead_side(g, 2, 0x89, true, 1.5707964, ext::Stage_GetBlastZoneRightOffset, 3.1415927)
 }
 
-pub fn ftCo_DeadRight_Anim(g: G) { dead_countdown(g) }
-pub fn ftCo_DeadRight_Cam(_g: G) {}
+pub fn ftCo_DeadRight_Anim(g: G) { melee_core::ct!("ftCo_DeadRight_Anim"); dead_countdown(g) }
+pub fn ftCo_DeadRight_Cam(_g: G) { melee_core::ct!("ftCo_DeadRight_Cam");}
 
 pub fn ftCo_800D3BC8(g: G) {
+    melee_core::ct!("ftCo_800D3BC8");
     dead_side(g, 0, 0x61, false, 0.0, ext::Stage_GetBlastZoneBottomOffset, 1.5707964)
 }
 
-pub fn ftCo_DeadDown_Anim(g: G) { dead_countdown(g) }
-pub fn ftCo_DeadDown_Cam(_g: G) {}
+pub fn ftCo_DeadDown_Anim(g: G) { melee_core::ct!("ftCo_DeadDown_Anim"); dead_countdown(g) }
+pub fn ftCo_DeadDown_Cam(_g: G) { melee_core::ct!("ftCo_DeadDown_Cam");}
 
 pub fn ftCo_800D3E40(g: G) {
+    melee_core::ct!("ftCo_800D3E40");
     dead_side(g, 3, 0x61, false, 3.1415927, ext::Stage_GetBlastZoneTopOffset, 4.712389)
 }
 
-pub fn ftCo_DeadUp_Anim(g: G) { dead_countdown(g) }
-pub fn ftCo_DeadUp_Cam(_g: G) {}
+pub fn ftCo_DeadUp_Anim(g: G) { melee_core::ct!("ftCo_DeadUp_Anim"); dead_countdown(g) }
+pub fn ftCo_DeadUp_Cam(_g: G) { melee_core::ct!("ftCo_DeadUp_Cam");}
 
 /// Shared body of ftCo_800D40B8 / ftCo_800D41C4 (DeadUpStar / DeadUpStarIce).
 fn dead_up_star(g: G, msid: i32) {
@@ -463,11 +472,13 @@ fn dead_up_star(g: G, msid: i32) {
 }
 
 pub fn ftCo_800D40B8(g: G) {
+    melee_core::ct!("ftCo_800D40B8");
     dead_up_star(g, ftCo_MS_DeadUpStar as i32);
     unsafe { fp(g).mv.co.unk_deadup.x68 = 0 };
 }
 
 pub fn ftCo_800D41C4(g: G) {
+    melee_core::ct!("ftCo_800D41C4");
     fp(g).set_x2227_b6(1);
     dead_up_star(g, ftCo_MS_DeadUpStarIce as i32);
     ext::ftCo_80090AC0(fp(g));
@@ -476,6 +487,7 @@ pub fn ftCo_800D41C4(g: G) {
 }
 
 pub fn ftCo_DeadUpStar_Anim(g: G) {
+    melee_core::ct!("ftCo_DeadUpStar_Anim");
     let f = fp(g);
     let d = cd();
     unsafe {
@@ -522,10 +534,11 @@ pub fn ftCo_DeadUpStar_Anim(g: G) {
     }
 }
 
-pub fn ftCo_DeadUpStar_Cam(g: G) { ext::ftCamera_80076320(crate::mtu_ptr::ptr(&(g))) }
+pub fn ftCo_DeadUpStar_Cam(g: G) { melee_core::ct!("ftCo_DeadUpStar_Cam"); ext::ftCamera_80076320(crate::mtu_ptr::ptr(&(g))) }
 
 /// `ftCo_800D4580(gobj, msid)`: enter DeadUpFall (fall toward the screen).
 pub fn ftCo_800D4580(g: G, arg1: i32) {
+    melee_core::ct!("ftCo_800D4580");
     let fc = &cd().fall_common;
     ftCo_800D331C(g);
     let f = fp(g);
@@ -553,11 +566,13 @@ pub fn ftCo_800D4580(g: G, arg1: i32) {
 }
 
 pub fn ftCo_800D4780(g: G) {
+    melee_core::ct!("ftCo_800D4780");
     ftCo_800D4580(g, 6);
     unsafe { fp(g).mv.co.unk_deadup.x68 = 0 };
 }
 
 pub fn ftCo_800D47B8(g: G) {
+    melee_core::ct!("ftCo_800D47B8");
     fp(g).set_x2227_b6(1);
     ftCo_800D4580(g, 9);
     ext::ftCo_80090AC0(fp(g));
@@ -567,6 +582,7 @@ pub fn ftCo_800D47B8(g: G) {
 
 /// `ftCo_800D481C(gobj, msid)`: the screen-hit part of DeadUpFall.
 pub fn ftCo_800D481C(g: G, arg1: i32) {
+    melee_core::ct!("ftCo_800D481C");
     h_change_motion(g, arg1, (Ft_MF_SkipRumble | Ft_MF_SkipColAnim) as u32, 0.0, 1.0, 0.0);
     fp(g).set_x2220_b7(1);
     let j = jobj_of(g);
@@ -589,6 +605,7 @@ pub fn ftCo_800D481C(g: G, arg1: i32) {
 }
 
 pub fn ftCo_DeadUpFall_Anim(g: G) {
+    melee_core::ct!("ftCo_DeadUpFall_Anim");
     let fc = &cd().fall_common;
     let f = fp(g);
     unsafe {
@@ -658,6 +675,7 @@ pub fn ftCo_DeadUpFall_Anim(g: G) {
 fn to_rt(v: &Vec3) -> melee_core::vec::Vec3 { melee_core::vec::Vec3 { x: v.x, y: v.y, z: v.z } }
 
 pub fn ftCo_DeadUpFall_Phys(g: G) {
+    melee_core::ct!("ftCo_DeadUpFall_Phys");
     let ca = &cd().fall_common;
     let f = fp(g);
     unsafe {

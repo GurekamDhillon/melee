@@ -19,15 +19,17 @@ pub use crate::gr::trivial::grtcaptain::{
     grTCaptain_OnTouchLine,
 };
 
-pub unsafe extern "C" fn grTCaptain_OnDemoInit(_unused: i32) {}
+pub unsafe extern "C" fn grTCaptain_OnDemoInit(_unused: i32) { melee_core::ct!("grTCaptain_OnDemoInit");}
 
 pub unsafe extern "C" fn grTCaptain_OnInit() {
+    melee_core::ct!("grTCaptain_OnInit");
     Ground_InitTargetStage(grTCaptain_8021FD04);
 }
 
-pub unsafe extern "C" fn grTCaptain_OnLoad() {}
+pub unsafe extern "C" fn grTCaptain_OnLoad() { melee_core::ct!("grTCaptain_OnLoad");}
 
 pub unsafe extern "C" fn grTCaptain_8021FD04(gobj_id: i32) -> *mut HSD_GObj {
+    melee_core::ct!("grTCaptain_8021FD04");
     let callbacks = (&raw mut grTCa_StageCallbacks as *mut StageCallbacks).add(gobj_id as usize);
     let gobj = ext::Ground_GetStageGObj(gobj_id);
     if !gobj.is_null() {
@@ -38,15 +40,16 @@ pub unsafe extern "C" fn grTCaptain_8021FD04(gobj_id: i32) -> *mut HSD_GObj {
     gobj
 }
 
-pub unsafe extern "C" fn grTCaptain_8021FE20(_arg0: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grTCaptain_8021FE20(_arg0: *mut HSD_GObj) { melee_core::ct!("grTCaptain_8021FE20");}
 
-pub unsafe extern "C" fn grTCaptain_8021FE24(_arg0: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grTCaptain_8021FE24(_arg0: *mut HSD_GObj) { melee_core::ct!("grTCaptain_8021FE24");}
 
-pub unsafe extern "C" fn grTCaptain_8021FEB4(_arg0: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grTCaptain_8021FEB4(_arg0: *mut HSD_GObj) { melee_core::ct!("grTCaptain_8021FEB4");}
 
-pub unsafe extern "C" fn grTCaptain_8021FF30(_argo: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grTCaptain_8021FF30(_argo: *mut HSD_GObj) { melee_core::ct!("grTCaptain_8021FF30");}
 
 pub unsafe extern "C" fn grTCaptain_OnCheckShadowRender(_arg0: *mut Vec3, _arg1: i32, _arg2: *mut HSD_JObj) -> i32 {
+    melee_core::ct!("grTCaptain_OnCheckShadowRender");
     1
 }
 

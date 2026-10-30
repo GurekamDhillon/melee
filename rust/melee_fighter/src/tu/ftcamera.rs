@@ -37,6 +37,7 @@ fn fp<'a>(g: *mut HSD_GObj) -> &'a mut Fighter {
 
 /// `ftCamera_80076018`: scale both vectors by `mul`.
 pub fn ftcamera_80076018(inp: &UnkFloat6_Camera, out: &mut UnkFloat6_Camera, mul: f32) {
+    melee_core::ct!("ftcamera_80076018");
     out.x0.x = inp.x0.x * mul;
     out.x0.y = inp.x0.y * mul;
     out.x0.z = inp.x0.z * mul;
@@ -60,6 +61,7 @@ fn set_h(cb: &mut CmSubject, s: &UnkFloat6_Camera, facing: f32) {
 
 /// `ftCamera_80076064`: initialise the camera box from the fighter's position (snap).
 pub fn ftcamera_80076064(fp: &mut Fighter) {
+    melee_core::ct!("ftcamera_80076064");
     let cb = unsafe { &mut *fp.x890_cameraBox };
     let mut sp: UnkFloat6_Camera = unsafe { core::mem::zeroed() };
     ftcamera_80076018(unsafe { &*(*fp.ft_data).x3C }, &mut sp, fp.x34_scale.y);
@@ -78,6 +80,7 @@ pub fn ftcamera_80076064(fp: &mut Fighter) {
 
 /// `ftCamera_UpdateCameraBox`.
 pub fn ftcamera_update_camera_box(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftcamera_update_camera_box");
     let f = fp(gobj);
     let cb = unsafe { &mut *f.x890_cameraBox };
     let mut s: UnkFloat6_Camera = unsafe { core::mem::zeroed() };
@@ -92,12 +95,14 @@ pub fn ftcamera_update_camera_box(gobj: *mut HSD_GObj) {
 
 /// `ftCamera_800762F4`: refresh only the bone position.
 pub fn ftcamera_800762f4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftcamera_800762f4");
     let f = fp(gobj);
     crate::ftlib::ftlib_800866dc(gobj, unsafe { &mut (*f.x890_cameraBox).bone_pos });
 }
 
 /// `ftCamera_80076320`: camera box pinned to the blast-zone top (Star KO / Screen KO).
 pub fn ftcamera_80076320(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftcamera_80076320");
     let cb = unsafe { &mut *fp(gobj).x890_cameraBox };
     ftcamera_update_camera_box(gobj);
     let mut center = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -112,12 +117,12 @@ pub fn ftcamera_80076320(gobj: *mut HSD_GObj) {
 // ---- C names (the bodies above are the oracle-checked ports; tests/tu_ftcamera.rs calls these)
 
 /// `ftCamera_80076018`.
-pub fn ftCamera_80076018(inp: &UnkFloat6_Camera, out: &mut UnkFloat6_Camera, mul: f32) { ftcamera_80076018(inp, out, mul) }
+pub fn ftCamera_80076018(inp: &UnkFloat6_Camera, out: &mut UnkFloat6_Camera, mul: f32) { melee_core::ct!("ftCamera_80076018"); ftcamera_80076018(inp, out, mul) }
 /// `ftCamera_80076064`.
-pub fn ftCamera_80076064(fp: &mut Fighter) { ftcamera_80076064(fp) }
+pub fn ftCamera_80076064(fp: &mut Fighter) { melee_core::ct!("ftCamera_80076064"); ftcamera_80076064(fp) }
 /// `ftCamera_UpdateCameraBox` (Fighter_UpdateCameraBox).
-pub fn ftCamera_UpdateCameraBox(gobj: *mut HSD_GObj) { ftcamera_update_camera_box(gobj) }
+pub fn ftCamera_UpdateCameraBox(gobj: *mut HSD_GObj) { melee_core::ct!("ftCamera_UpdateCameraBox"); ftcamera_update_camera_box(gobj) }
 /// `ftCamera_800762F4`.
-pub fn ftCamera_800762F4(gobj: *mut HSD_GObj) { ftcamera_800762f4(gobj) }
+pub fn ftCamera_800762F4(gobj: *mut HSD_GObj) { melee_core::ct!("ftCamera_800762F4"); ftcamera_800762f4(gobj) }
 /// `ftCamera_80076320`.
-pub fn ftCamera_80076320(gobj: *mut HSD_GObj) { ftcamera_80076320(gobj) }
+pub fn ftCamera_80076320(gobj: *mut HSD_GObj) { melee_core::ct!("ftCamera_80076320"); ftcamera_80076320(gobj) }

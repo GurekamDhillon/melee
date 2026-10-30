@@ -174,6 +174,7 @@ fn caps_allowed(g: G) -> bool {
 }
 
 pub fn ftCo_80091A2C(g: G) -> bool {
+    melee_core::ct!("ftCo_80091A2C");
     if !caps_allowed(g) {
         return false;
     }
@@ -186,6 +187,7 @@ fn inlineA0(f: &Fighter) -> bool {
 }
 
 pub fn ftCo_80091A4C(g: G) -> bool {
+    melee_core::ct!("ftCo_80091A4C");
     if !caps_allowed(g) {
         return false;
     }
@@ -202,6 +204,7 @@ pub fn ftCo_80091A4C(g: G) -> bool {
 }
 
 pub fn ftCo_80091AD8(g: G, mv_x20: i32) -> bool {
+    melee_core::ct!("ftCo_80091AD8");
     if !caps_allowed(g) {
         return false;
     }
@@ -223,15 +226,18 @@ pub fn ftCo_80091AD8(g: G, mv_x20: i32) -> bool {
 }
 
 pub fn ftCo_80091B90(g: G, mv_x20: i32) {
+    melee_core::ct!("ftCo_80091B90");
     guard(fp(g)).x20 = mv_x20;
 }
 
 pub fn ftCo_80091B9C(g: G) {
+    melee_core::ct!("ftCo_80091B9C");
     guard(fp(g)).x24 = f2i32(cd().x68 as f64);
 }
 
 /// static `ftCo_80091BC4`: steer the shield toward the stick.
 pub fn ftCo_80091BC4(f: &mut Fighter) {
+    melee_core::ct!("ftCo_80091BC4");
     let c = cd();
     let mut stick_rad = ext::lb_8000D008(f.input.lstick[0].y, f.input.lstick[0].x * f.facing_dir);
     if stick_rad < 0.0 {
@@ -292,6 +298,7 @@ fn set_shield_scale(f: &Fighter) {
 }
 
 pub fn ftCo_80091D58(f: &mut Fighter) {
+    melee_core::ct!("ftCo_80091D58");
     set_shield_scale(f);
 }
 
@@ -372,6 +379,7 @@ fn ftCo_GuardPoseTree(f: &mut Fighter, pose: *mut HSD_Joint, row: &mut i32) -> *
 }
 
 pub fn ftCo_80091E78(g: G, arg1: f32) {
+    melee_core::ct!("ftCo_80091E78");
     let f = fp(g);
     if f.reflecting() == 0 && f.anon_221b.x221B_b0() == 0 {
         return;
@@ -429,10 +437,12 @@ fn ftCo_80092450_inline(g: G) {
 
 /// static `ftCo_80092158`.
 pub fn ftCo_80092158(g: G, arg1: i32, arg2: *mut HSD_JObj) {
+    melee_core::ct!("ftCo_80092158");
     ftCo_80092158_inline(g, arg1, arg2);
 }
 
 pub fn ftCo_800921DC(g: G) {
+    melee_core::ct!("ftCo_800921DC");
     let j = shield_joint(fp(g));
     ftCo_80092158_inline(g, 1047, j);
     let f = fp(g);
@@ -459,6 +469,7 @@ pub fn ftCo_800921DC(g: G) {
 }
 
 pub fn ftCo_800923B4(g: G) {
+    melee_core::ct!("ftCo_800923B4");
     match ftGetTemplateKind(fp(g)) {
         k if k == Ft_Kind_Yoshi as i32 => ext::ftYs_Init_8012BECC(g),
         k if k == Ft_Kind_Mars as i32 => {
@@ -471,10 +482,12 @@ pub fn ftCo_800923B4(g: G) {
 }
 
 pub fn ftCo_80092450(g: G) {
+    melee_core::ct!("ftCo_80092450");
     ftCo_80092450_inline(g);
 }
 
 pub fn ftCo_800924C0(g: G) {
+    melee_core::ct!("ftCo_800924C0");
     ext::Fighter_ChangeMotionState(g, ftCo_MS_GuardOn as i32, Ft_MF_SkipAnim as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ext::ftAnim_8006EBA4(g);
     let f = fp(g);
@@ -489,6 +502,7 @@ pub fn ftCo_800924C0(g: G) {
 }
 
 pub fn ftCo_800925A4(g: G) -> bool {
+    melee_core::ct!("ftCo_800925A4");
     let f = fp(g);
     let c = cd();
     if f.anon_221b.x221B_b0() != 0 {
@@ -518,6 +532,7 @@ pub fn ftCo_800925A4(g: G) -> bool {
 }
 
 pub fn ftCo_GuardOn_Anim(g: G) {
+    melee_core::ct!("ftCo_GuardOn_Anim");
     guard(fp(g)).x0 += 1.0;
     if !ftCo_800925A4(g) {
         let f = fp(g);
@@ -546,6 +561,7 @@ fn inlineC0(g: G) -> bool {
 }
 
 pub fn ftCo_GuardOn_IASA(g: G) {
+    melee_core::ct!("ftCo_GuardOn_IASA");
     let _ = inlineC0(g)
         || ftCo_80093694(g)
         || ext::ftCo_8009515C(g)
@@ -558,16 +574,19 @@ pub fn ftCo_GuardOn_IASA(g: G) {
 }
 
 pub fn ftCo_GuardOn_Phys(g: G) {
+    melee_core::ct!("ftCo_GuardOn_Phys");
     ext::ft_80084F3C(g);
     ext::ftColl_8007AEE0(g);
     ext::ftColl_8007AEF8(g);
 }
 
 pub fn ftCo_GuardOn_Coll(g: G) {
+    melee_core::ct!("ftCo_GuardOn_Coll");
     ext::ft_800845B4(g);
 }
 
 pub fn ftCo_800928CC(g: G) {
+    melee_core::ct!("ftCo_800928CC");
     if ftGetTemplateKind(fp(g)) == Ft_Kind_Yoshi as i32 {
         ext::ftYs_Shield_8012C1D4(g);
     } else {
@@ -576,6 +595,7 @@ pub fn ftCo_800928CC(g: G) {
 }
 
 pub fn ftCo_80092908(g: G) {
+    melee_core::ct!("ftCo_80092908");
     ext::Fighter_ChangeMotionState(g, ftCo_MS_Guard as i32, Ft_MF_SkipAnim as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     let j = shield_joint(fp(g));
     ftCo_80092158_inline(g, 1048, j);
@@ -585,6 +605,7 @@ pub fn ftCo_80092908(g: G) {
 }
 
 pub fn ftCo_Guard_Anim(g: G) {
+    melee_core::ct!("ftCo_Guard_Anim");
     guard(fp(g)).x0 += 1.0;
     if !ftCo_800925A4(g) {
         ftCo_80091E78(g, 1.0);
@@ -592,6 +613,7 @@ pub fn ftCo_Guard_Anim(g: G) {
 }
 
 pub fn ftCo_Guard_IASA(g: G) {
+    melee_core::ct!("ftCo_Guard_IASA");
     let _ = inlineC0(g)
         || ext::ftCo_8009515C(g)
         || ext::ftCo_8009980C(g)
@@ -602,16 +624,19 @@ pub fn ftCo_Guard_IASA(g: G) {
 }
 
 pub fn ftCo_Guard_Phys(g: G) {
+    melee_core::ct!("ftCo_Guard_Phys");
     ext::ft_80084F3C(g);
     ext::ftColl_8007AEE0(g);
     ext::ftColl_8007AEF8(g);
 }
 
 pub fn ftCo_Guard_Coll(g: G) {
+    melee_core::ct!("ftCo_Guard_Coll");
     ext::ft_800845B4(g);
 }
 
 pub fn ftCo_80092BCC(g: G) {
+    melee_core::ct!("ftCo_80092BCC");
     let f = fp(g);
     if f.input.held_buttons[0] & HSD_PAD_LR as u32 == 0 {
         guard(f).xC = 1;
@@ -620,6 +645,7 @@ pub fn ftCo_80092BCC(g: G) {
 
 /// `ftCo_80092BE8` (also the `inlineC0` callback).
 pub unsafe extern "C" fn ftCo_80092BE8(g: G) {
+    melee_core::ct!("ftCo_80092BE8");
     let f = fp(g);
     ext::pl_8003E114(f.player_id as i32, f.is_sub_fighter() as i32, f.shield_health);
     if ftGetTemplateKind(fp(g)) == Ft_Kind_Yoshi as i32 {
@@ -630,11 +656,13 @@ pub unsafe extern "C" fn ftCo_80092BE8(g: G) {
 }
 
 pub fn ftCo_80092C54(g: G) {
+    melee_core::ct!("ftCo_80092C54");
     ext::Fighter_ChangeMotionState(g, ftCo_MS_GuardOff as i32, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ext::ft_PlaySFX(fp(g), 127, 127, 64);
 }
 
 pub fn ftCo_GuardOff_Anim(g: G) {
+    melee_core::ct!("ftCo_GuardOff_Anim");
     guard(fp(g)).x0 += 1.0;
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ft_8008A2BC(g);
@@ -642,6 +670,7 @@ pub fn ftCo_GuardOff_Anim(g: G) {
 }
 
 pub fn ftCo_GuardOff_IASA(g: G) {
+    melee_core::ct!("ftCo_GuardOff_IASA");
     if guard(fp(g)).x1C == 0
         || (!ext::ftCo_SpecialS_CheckInput(g)
             && !ext::ftCo_Attack100_CheckInput(g)
@@ -666,15 +695,18 @@ pub fn ftCo_GuardOff_IASA(g: G) {
 }
 
 pub fn ftCo_GuardOff_Phys(g: G) {
+    melee_core::ct!("ftCo_GuardOff_Phys");
     ext::ft_80084F3C(g);
 }
 
 pub fn ftCo_GuardOff_Coll(g: G) {
+    melee_core::ct!("ftCo_GuardOff_Coll");
     ext::ft_800845B4(g);
 }
 
 /// `ftCo_80092E50`: the absorb hitbox's on-hit callback.
 pub unsafe extern "C" fn ftCo_80092E50(g: G) {
+    melee_core::ct!("ftCo_80092E50");
     let b = fp(g).x19B0 as u32 == 10;
     if ftGetTemplateKind(fp(g)) == Ft_Kind_Yoshi as i32 {
         ext::ftYs_Shield_8012C600(g, b);
@@ -687,12 +719,14 @@ pub unsafe extern "C" fn ftCo_80092E50(g: G) {
 }
 
 pub fn ftCo_80092ED8(arg0: i32, arg1: f32) -> f32 {
+    melee_core::ct!("ftCo_80092ED8");
     let c = cd();
     let inner = fmadds(arg1, c.x2E8 - c.x2E4, c.x2E4);
     fmadds(c.x28C, arg0 as f32 * (1.0 - inner), c.x290)
 }
 
 pub fn ftCo_80092F2C(g: G, arg1: bool) {
+    melee_core::ct!("ftCo_80092F2C");
     ext::Fighter_ChangeMotionState(g, ftCo_MS_GuardSetOff as i32, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     let f = fp(g);
     f.hitlag_cb = Some(ftCo_80093240);
@@ -745,6 +779,7 @@ fn ftCo_Ucf084ShieldSdi(f: &Fighter) -> bool {
 
 /// `ftCo_80093240`: GuardSetOff hitlag callback (shield SDI).
 pub unsafe extern "C" fn ftCo_80093240(g: G) {
+    melee_core::ct!("ftCo_80093240");
     let f = fp(g);
     let c = cd();
     if f.allow_sdi() != 0 && f.ground_or_air == GA_Ground as _ {
@@ -761,6 +796,7 @@ pub unsafe extern "C" fn ftCo_80093240(g: G) {
 
 /// `ftCo_800932DC`: GuardSetOff post-hitlag callback.
 pub unsafe extern "C" fn ftCo_800932DC(g: G) {
+    melee_core::ct!("ftCo_800932DC");
     let f = fp(g);
     let c = cd();
     if f.ground_or_air == GA_Ground as _ {
@@ -775,6 +811,7 @@ pub unsafe extern "C" fn ftCo_800932DC(g: G) {
 }
 
 pub fn ftCo_GuardSetOff_Anim(g: G) {
+    melee_core::ct!("ftCo_GuardSetOff_Anim");
     ftCo_80093BC0(g);
     if !ext::ftAnim_IsFramesRemaining(g) {
         if guard(fp(g)).xC != 0 {
@@ -790,14 +827,16 @@ pub fn ftCo_GuardSetOff_Anim(g: G) {
     }
 }
 
-pub fn ftCo_GuardSetOff_IASA(_g: G) {}
+pub fn ftCo_GuardSetOff_IASA(_g: G) { melee_core::ct!("ftCo_GuardSetOff_IASA");}
 
 pub fn ftCo_GuardSetOff_Phys(g: G) {
+    melee_core::ct!("ftCo_GuardSetOff_Phys");
     ext::ft_80084F3C(g);
     ext::ftColl_8007AEE0(g);
 }
 
 pub fn ftCo_GuardSetOff_Coll(g: G) {
+    melee_core::ct!("ftCo_GuardSetOff_Coll");
     if fp(g).allow_sdi() == 0 {
         ext::ft_800845B4(g);
     } else {
@@ -806,6 +845,7 @@ pub fn ftCo_GuardSetOff_Coll(g: G) {
 }
 
 pub fn ftCo_80093694(g: G) -> bool {
+    melee_core::ct!("ftCo_80093694");
     let f = fp(g);
     let w = cd().powershield_input_window;
     if guard(f).x0 < w as f32 && f.input.pressed_buttons & PAD_RL != 0 && (f.active_timer.trigger as i32) < w {
@@ -816,6 +856,7 @@ pub fn ftCo_80093694(g: G) -> bool {
 }
 
 pub fn ftCo_8009370C(g: G, on_reflect: HSD_GObjEvent) {
+    melee_core::ct!("ftCo_8009370C");
     let f = fp(g);
     let c = cd();
     let mut reflect = ReflectDesc::zeroed();
@@ -831,6 +872,7 @@ pub fn ftCo_8009370C(g: G, on_reflect: HSD_GObjEvent) {
 
 /// `ftCo_80093790`: the powershield reflect callback.
 pub unsafe extern "C" fn ftCo_80093790(g: G) {
+    melee_core::ct!("ftCo_80093790");
     ext::ftCommon_8007DB24(g);
     let j = shield_joint(fp(g));
     ftCo_80092158_inline(g, 1050, j);
@@ -839,6 +881,7 @@ pub unsafe extern "C" fn ftCo_80093790(g: G) {
 }
 
 pub fn ftCo_80093850(g: G) {
+    melee_core::ct!("ftCo_80093850");
     if ftGetTemplateKind(fp(g)) == Ft_Kind_Yoshi as i32 {
         ext::ftYs_Shield_8012C850(g);
     } else {
@@ -847,6 +890,7 @@ pub fn ftCo_80093850(g: G) {
 }
 
 pub fn ftCo_8009388C(g: G) {
+    melee_core::ct!("ftCo_8009388C");
     let start = fp(g).cur_anim_frame;
     ext::Fighter_ChangeMotionState(g, ftCo_MS_GuardReflect as i32, (Ft_MF_SkipAnim | Ft_MF_KeepGfx) as u32, start, 1.0, 0.0, core::ptr::null_mut());
     let f = fp(g);
@@ -864,6 +908,7 @@ pub fn ftCo_8009388C(g: G) {
 }
 
 pub fn ftCo_800939B4(g: G) {
+    melee_core::ct!("ftCo_800939B4");
     match ftGetTemplateKind(fp(g)) {
         k if k == Ft_Kind_Yoshi as i32 => ext::ftYs_Shield_8012C914(g),
         k if k == Ft_Kind_Mars as i32 => {
@@ -876,6 +921,7 @@ pub fn ftCo_800939B4(g: G) {
 }
 
 pub fn ftCo_80093A50(g: G) {
+    melee_core::ct!("ftCo_80093A50");
     ext::Fighter_ChangeMotionState(g, 182, Ft_MF_SkipAnim as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ext::ftAnim_8006EBA4(g);
     let f = fp(g);
@@ -893,6 +939,7 @@ pub fn ftCo_80093A50(g: G) {
 }
 
 pub fn ftCo_80093BC0(g: G) {
+    melee_core::ct!("ftCo_80093BC0");
     let f = fp(g);
     if f.x221C_b3() != 0 {
         f.set_x221C_b3(0);
@@ -915,6 +962,7 @@ pub fn ftCo_80093BC0(g: G) {
 }
 
 pub fn ftCo_GuardReflect_Anim(g: G) {
+    melee_core::ct!("ftCo_GuardReflect_Anim");
     // ftCo_80093BC0_inline: the same body as ftCo_80093BC0.
     ftCo_80093BC0(g);
     // ftCo_GuardOn_Anim_inline: switches on `fp->kind`, not the template kind.
@@ -935,6 +983,7 @@ pub fn ftCo_GuardReflect_Anim(g: G) {
 }
 
 pub fn ftCo_GuardReflect_IASA(g: G) {
+    melee_core::ct!("ftCo_GuardReflect_IASA");
     let _ = inlineC0(g)
         || ext::ftCo_8009515C(g)
         || ext::ftCo_8009980C(g)
@@ -946,22 +995,26 @@ pub fn ftCo_GuardReflect_IASA(g: G) {
 }
 
 pub fn ftCo_GuardReflect_Phys(g: G) {
+    melee_core::ct!("ftCo_GuardReflect_Phys");
     ext::ft_80084F3C(g);
     ext::ftColl_8007AEE0(g);
     ext::ftColl_8007AEF8(g);
 }
 
 pub fn ftCo_GuardReflect_Coll(g: G) {
+    melee_core::ct!("ftCo_GuardReflect_Coll");
     ext::ft_800845B4(g);
 }
 
 pub fn ftCo_80094098(g: G, pos: *mut f32) -> f32 {
+    melee_core::ct!("ftCo_80094098");
     let f = fp(g);
     ext::lb_8000B1CC(shield_joint(f), core::ptr::null_mut(), pos as *mut Vec3);
     inlineB0(fp(g))
 }
 
 pub fn ftCo_80094138(f: &mut Fighter) {
+    melee_core::ct!("ftCo_80094138");
     guard(f).x1C = cd().x2B8;
     guard(f).x10 = 0.0;
 }

@@ -189,6 +189,7 @@ crate::globals! {
 /// gm_801A659C: the trophy lookup for the current mode.
 /// (`bool` is `typedef int bool` in this codebase: the callee's int result is returned as is.)
 pub unsafe fn gm_801A659C(arg0: i32) -> i32 {
+    melee_core::ct!("gm_801A659C");
     match ext::gm_GetCurrentGameMode() as u32 {
         GM_CLASSIC_GOVER => ext::gm_80160474(arg0 as u32, GM_CLASSIC),
         GM_ADVENTURE_GOVER => ext::gm_80160474(arg0 as u32, GM_ADVENTURE),
@@ -199,6 +200,7 @@ pub unsafe fn gm_801A659C(arg0: i32) -> i32 {
 
 /// gm_801A6630: store the exit byte and leave the scene.
 pub unsafe fn gm_801A6630(arg0: i32) {
+    melee_core::ct!("gm_801A6630");
     let tmp = ext::gm_GetCurrentSceneExitData() as *mut u8;
     *tmp = arg0 as u8;
     ext::gm_801A4B60();
@@ -207,6 +209,7 @@ pub unsafe fn gm_801A6630(arg0: i32) {
 /// fn_801A6664: the player-flash proc: animate, then ping-pong the capture texture of the
 /// foreground SObj (gm_804D6754) and the fading overlay SObj (gm_804D677C).
 pub unsafe extern "C" fn fn_801A6664(arg0: *mut HSD_GObj) {
+    melee_core::ct!("fn_801A6664");
     ext::HSD_JObjAnimAll(get_jobj(arg0));
     if gm_804D6758 != 0 {
         ext::HSD_SObjLib_803A4740((*gm_804D6754).hsd_obj.cast());
@@ -260,11 +263,13 @@ pub unsafe extern "C" fn fn_801A6664(arg0: *mut HSD_GObj) {
 
 /// fn_801A6844: animate the trophy model.
 pub unsafe extern "C" fn fn_801A6844(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801A6844");
     ext::HSD_JObjAnimAll(get_jobj(gobj));
 }
 
 /// fn_801A6868: while the fighter is above the rest height, sink it by 1/300 of the drop.
 pub unsafe extern "C" fn fn_801A6868(_unused: *mut HSD_GObj) {
+    melee_core::ct!("fn_801A6868");
     let mut spC = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ext::Player_LoadPlayerCoords(0, &mut spC);
     if spC.y >= gm_803DB2D4.y {
@@ -275,6 +280,7 @@ pub unsafe extern "C" fn fn_801A6868(_unused: *mut HSD_GObj) {
 
 /// gm_801A68D8: spawn the demo fighter on a dummy stage.
 pub unsafe fn gm_801A68D8() {
+    melee_core::ct!("gm_801A68D8");
     ext::gm_GetCurrentSceneEnterData();
     hsd::Stage_InitScene(melee_types::St_Kind_Dummy, null_mut());
     ext::Item_80266FA8();
@@ -310,6 +316,7 @@ pub unsafe fn gm_801A68D8() {
 
 /// fn_801A6A48: capture the screen into gm_804809D0[gm_804D6784].
 pub unsafe extern "C" fn fn_801A6A48(gobj: *mut HSD_GObj, arg1: i32) {
+    melee_core::ct!("fn_801A6A48");
     if ext::HSD_CObjSetCurrent((*gobj).hsd_obj.cast()) != 0 {
         ext::HSD_SObjLib_803A54EC(gobj, arg1);
         gm_804D6780 = 1;
@@ -320,6 +327,7 @@ pub unsafe extern "C" fn fn_801A6A48(gobj: *mut HSD_GObj, arg1: i32) {
 
 /// fn_801A6ACC: capture colour and depth into gm_804808F8.x0[gm_804D675C].
 pub unsafe extern "C" fn fn_801A6ACC(gobj: *mut HSD_GObj, _unused: i32) {
+    melee_core::ct!("fn_801A6ACC");
     if ext::HSD_CObjSetCurrent((*gobj).hsd_obj.cast()) != 0 {
         ext::Camera_800313E0(gobj, 1);
         gm_804D6758 = 1;
@@ -331,6 +339,7 @@ pub unsafe extern "C" fn fn_801A6ACC(gobj: *mut HSD_GObj, _unused: i32) {
 
 /// fn_801A6B6C: when the camera animation finishes, free the scene.
 pub unsafe extern "C" fn fn_801A6B6C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801A6B6C");
     let cobj: *mut HSD_CObj = (*gobj).hsd_obj.cast();
     ext::HSD_CObjAnim(cobj);
     let aobj: *mut HSD_AObj = (*cobj).aobj;
@@ -353,11 +362,13 @@ pub unsafe extern "C" fn fn_801A6B6C(gobj: *mut HSD_GObj) {
 
 /// fn_801A6C30: advance the camera animation.
 pub unsafe extern "C" fn fn_801A6C30(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801A6C30");
     ext::HSD_CObjAnim((*gobj).hsd_obj.cast());
 }
 
 /// gm_801A6C54: the first capture camera (colour+depth into gm_804808F8).
 pub unsafe fn gm_801A6C54() {
+    melee_core::ct!("gm_801A6C54");
     let gobj = ext::GObj_Create(0x13, 0x14, 0);
     let cobj = ext::lb_80013B14((*(*gm_804D6748).cameras).desc.cast());
     ext::HSD_GObjObject_80390A70(gobj, HSD_GObj_CameraKind, cobj.cast());
@@ -378,6 +389,7 @@ pub unsafe fn gm_801A6C54() {
 
 /// fn_801A6D78: render pass of the second capture camera.
 pub unsafe extern "C" fn fn_801A6D78(gobj: *mut HSD_GObj, _unused: i32) {
+    melee_core::ct!("fn_801A6D78");
     if ext::HSD_CObjSetCurrent((*gobj).hsd_obj.cast()) != 0 {
         ext::HSD_GObj_80390ED0(gobj, 7);
         ext::HSD_CObjEndCurrent();
@@ -386,6 +398,7 @@ pub unsafe extern "C" fn fn_801A6D78(gobj: *mut HSD_GObj, _unused: i32) {
 
 /// gm_801A6DC0: the second capture camera (gm_80480964), whose proc ends the scene.
 pub unsafe fn gm_801A6DC0() {
+    melee_core::ct!("gm_801A6DC0");
     let gobj = ext::GObj_Create(0x13, 0x14, 0);
     let cobj = ext::lb_80013B14((*(*gm_804D6748).cameras).desc.cast());
     ext::HSD_GObjObject_80390A70(gobj, HSD_GObj_CameraKind, cobj.cast());
@@ -406,6 +419,7 @@ pub unsafe fn gm_801A6DC0() {
 
 /// gm_801A6EE4: load the scene's archives for the current mode.
 pub unsafe fn gm_801A6EE4() {
+    melee_core::ct!("gm_801A6EE4");
     let var_r29: GameModeKind;
 
     ext::gm_GetCurrentSceneEnterData();
@@ -454,6 +468,7 @@ pub unsafe fn gm_801A6EE4() {
 
 /// `initImages` (static inline): allocate the two overlay capture images.
 pub unsafe fn initImages() {
+    melee_core::ct!("initImages");
     for i in 0..2usize {
         gm_804809D0[i].image_ptr = null_mut();
         ext::lb_800121FC(addr_of_mut!(gm_804809D0[i]), 0x1EA, 0x1E0, 5, 0);
@@ -462,6 +477,7 @@ pub unsafe fn initImages() {
 
 /// `gm_801A7070_SetupMain` (static inline): the fighter model's pedestal joint tree.
 pub unsafe fn gm_801A7070_SetupMain(priority: u8) {
+    melee_core::ct!("gm_801A7070_SetupMain");
     let gobj = ext::GObj_Create(0xE, 0xF, priority);
     gm_804D6768 = gobj;
     let jobj = ext::HSD_JObjLoadJoint(gm_804D6798);
@@ -480,11 +496,13 @@ pub unsafe fn gm_801A7070_SetupMain(priority: u8) {
 
 /// `getTrophyTranslateZ` (static inline).
 pub unsafe fn getTrophyTranslateZ(trophy: i32) -> f32 {
+    melee_core::ct!("getTrophyTranslateZ");
     ext::Toy_803060BC(trophy, 2)
 }
 
 /// `gm_801A7070_SetupTrophy` (static inline): the trophy model, parented under the pedestal.
 pub unsafe fn gm_801A7070_SetupTrophy(priority: u8) {
+    melee_core::ct!("gm_801A7070_SetupTrophy");
     let gobj = ext::GObj_Create(0xE, 0xF, priority);
     gm_804D6778 = gobj;
     let jobj = ext::HSD_JObjLoadJoint((**(*gm_804D67AC).models).joint);
@@ -522,6 +540,7 @@ pub unsafe fn gm_801A7070_SetupTrophy(priority: u8) {
 
 /// gm_Scene_ToyFall_OnEnter.
 pub unsafe extern "C" fn gm_Scene_ToyFall_OnEnter(_unused: *mut c_void) {
+    melee_core::ct!("gm_Scene_ToyFall_OnEnter");
     gm_804D6740 = 0x1E;
     gm_804D6750 = 0x320;
     gm_804D6754 = null_mut();
@@ -589,6 +608,7 @@ pub unsafe extern "C" fn gm_Scene_ToyFall_OnEnter(_unused: *mut c_void) {
 
 /// gm_Scene_ToyFall_OnFrame: count down, then START leaves.
 pub unsafe extern "C" fn gm_Scene_ToyFall_OnFrame() {
+    melee_core::ct!("gm_Scene_ToyFall_OnFrame");
     if gm_804D6740 != 0 {
         gm_804D6740 -= 1;
     } else if ext::gm_GetButtonsTriggered(ext::gm_801BF010() as u8) & PAD_BUTTON_START != 0 {

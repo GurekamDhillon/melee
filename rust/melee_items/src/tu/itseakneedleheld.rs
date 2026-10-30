@@ -100,6 +100,7 @@ pub static mut it_803F70A8: [ItemStateTable; 1] = [
 ];
 
 pub unsafe extern "C" fn it_802B18B0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802B18B0");
     let jobj = GET_JOBJ(gobj);
     let ip = GET_ITEM(gobj);
     let child = HSD_JObjGetChild(jobj);
@@ -140,6 +141,7 @@ pub unsafe extern "C" fn it_802B19AC(
     kind: ItemKind,
     facing_dir: f32,
 ) -> *mut Item_GObj {
+    melee_core::ct!("it_802B19AC");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
     spawn.kind = kind;
@@ -158,10 +160,12 @@ pub unsafe extern "C" fn it_802B19AC(
 }
 
 pub unsafe extern "C" fn itSeakNeedleHeld_Logic110_PickedUp(gobj: *mut Item_GObj) {
+    melee_core::ct!("itSeakNeedleHeld_Logic110_PickedUp");
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE);
 }
 
 pub unsafe extern "C" fn itSeakneedleheld_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSeakneedleheld_UnkMotion0_Anim");
     let jobj = GET_JOBJ(gobj);
     let ip = GET_ITEM(gobj);
     let needle = HSD_JObjGetChild(jobj);
@@ -198,12 +202,14 @@ pub unsafe extern "C" fn itSeakneedleheld_UnkMotion0_Anim(gobj: *mut Item_GObj) 
     false
 }
 
-pub unsafe extern "C" fn itSeakneedleheld_UnkMotion0_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itSeakneedleheld_UnkMotion0_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itSeakneedleheld_UnkMotion0_Phys");}
 
 pub unsafe extern "C" fn itSeakneedleheld_UnkMotion0_Coll(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSeakneedleheld_UnkMotion0_Coll");
     false
 }
 
 pub unsafe extern "C" fn itSeakNeedleHeld_Logic110_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("itSeakNeedleHeld_Logic110_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

@@ -150,6 +150,7 @@ impl HsdRender {
 /// stage callback has `flags_b0` and applies `Ground_801C20E0`'s per-light overrides (DIFFUSE /
 /// SPECULAR / 0x400 bits from the stage's override table); neither is modelled here.
 pub fn stage_light_descs(d: &Dat, map_head: u32) -> Vec<u32> {
+    melee_core::ct!("stage_light_descs");
     let mut v = Vec::new();
     let Some(groups) = d.ptr(map_head + 8) else {
         return v;

@@ -51,6 +51,7 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 }
 
 pub fn ftDk_SpecialAirS_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialAirS_Enter");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *mut ftDonkeyAttributes;
@@ -63,11 +64,12 @@ pub fn ftDk_SpecialAirS_Enter(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftDk_SpecialS_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftDk_SpecialS_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftDk_SpecialS_IASA");}
 
-pub fn ftDk_SpecialAirS_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftDk_SpecialAirS_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftDk_SpecialAirS_IASA");}
 
 pub fn ftDk_SpecialAirS_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialAirS_Phys");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *mut ftDonkeyAttributes;
@@ -79,6 +81,7 @@ pub fn ftDk_SpecialAirS_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftDk_SpecialS_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialS_Coll");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).cmd_vars[0] != 0 {
@@ -92,6 +95,7 @@ pub fn ftDk_SpecialS_Coll(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftDk_SpecialAirS_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialAirS_Coll");
     if st::ft_80081D0C(gobj) != 0 {
         doGroundTransition(gobj);
     }
@@ -99,6 +103,7 @@ pub fn ftDk_SpecialAirS_Coll(gobj: *mut HSD_GObj) {
 
 /// `doAirTransition` (static, forward-declared then defined below the Coll functions).
 pub fn doAirTransition(gobj: *mut HSD_GObj) {
+    melee_core::ct!("doAirTransition");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, ftDk_MS_SpecialAirS as i32, coll_mf);
@@ -110,6 +115,7 @@ pub fn doAirTransition(gobj: *mut HSD_GObj) {
 
 /// `doGroundTransition` (static).
 pub fn doGroundTransition(gobj: *mut HSD_GObj) {
+    melee_core::ct!("doGroundTransition");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, ftDk_MS_SpecialS as i32, coll_mf);

@@ -64,11 +64,13 @@ pub mod ext {
 macro_rules! ret_if { ($g:expr; $($n:ident),*) => { $( if ext::$n($g) { return; } )* } }
 
 pub fn ftCo_800C97A8(g: G) -> bool {
+    melee_core::ct!("ftCo_800C97A8");
     let f = fp(g);
     f.input.lstick[0].x * f.facing_dir <= cd().x34
 }
 
 pub fn ftCo_Turn_CheckInput(g: G) -> bool {
+    melee_core::ct!("ftCo_Turn_CheckInput");
     if ftCo_800C97A8(g) {
         ftCo_Turn_Enter_Basic(g);
         return true;
@@ -77,6 +79,7 @@ pub fn ftCo_Turn_CheckInput(g: G) -> bool {
 }
 
 pub fn ftCo_Turn_Enter(g: G, msid: i32, flags: u32, arg3: f32, frames_to_turn: f32, anim_start: f32) {
+    melee_core::ct!("ftCo_Turn_Enter");
     let f = fp(g);
     let neg = -f.facing_dir;
     let t = unsafe { &mut f.mv.co.turn };
@@ -91,11 +94,13 @@ pub fn ftCo_Turn_Enter(g: G, msid: i32, flags: u32, arg3: f32, frames_to_turn: f
 }
 
 pub fn ftCo_Turn_Enter_Basic(g: G) {
+    melee_core::ct!("ftCo_Turn_Enter_Basic");
     let frames = fp(g).co_attrs.standing_turn_frames;
     ftCo_Turn_Enter(g, ftCo_MS_Turn as i32, Ft_MF_None, 0.0, frames, 0.0);
 }
 
 pub fn ftCo_Turn_Anim_Inner(g: G) {
+    melee_core::ct!("ftCo_Turn_Anim_Inner");
     let f = fp(g);
     let t = unsafe { &mut f.mv.co.turn };
     if t.frames_to_turn > 0.0 {
@@ -110,6 +115,7 @@ pub fn ftCo_Turn_Anim_Inner(g: G) {
 }
 
 pub fn ftCo_Turn_Anim(g: G) {
+    melee_core::ct!("ftCo_Turn_Anim");
     ftCo_Turn_Anim_Inner(g);
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ft_8008A2BC(g);
@@ -118,6 +124,7 @@ pub fn ftCo_Turn_Anim(g: G) {
 
 /// TARGET_PC `ftCo_Turn_Ucf073Dashback` (UCF 0.73 dashback for MELEE_SLP playback).
 pub fn ftCo_Turn_Ucf073Dashback(f: &mut Fighter) {
+    melee_core::ct!("ftCo_Turn_Ucf073Dashback");
     let port = f.player_id as i32;
     if ext::Replay_UcfVersion(f.x618_player_id as i32) != 73 {
         return;
@@ -142,6 +149,7 @@ pub fn ftCo_Turn_Ucf073Dashback(f: &mut Fighter) {
 
 /// TARGET_PC `ftCo_Turn_Ucf084Dashback` (UCF 0.84 dashback).
 pub fn ftCo_Turn_Ucf084Dashback(f: &mut Fighter) {
+    melee_core::ct!("ftCo_Turn_Ucf084Dashback");
     let port = f.x618_player_id as i32;
     if ext::Replay_UcfVersion(port) != 84 || f.is_sub_fighter() != 0 {
         return;
@@ -164,6 +172,7 @@ pub fn ftCo_Turn_Ucf084Dashback(f: &mut Fighter) {
 }
 
 pub fn ftCo_Turn_IASA(g: G) {
+    melee_core::ct!("ftCo_Turn_IASA");
     {
         let f = fp(g);
         let (just, has, x1c) = unsafe { (f.mv.co.turn.just_turned, f.mv.co.turn.has_turned, f.mv.co.turn.x1C) };
@@ -210,14 +219,17 @@ pub fn ftCo_Turn_IASA(g: G) {
 }
 
 pub fn ftCo_Turn_Phys(g: G) {
+    melee_core::ct!("ftCo_Turn_Phys");
     ext::ft_80084F3C(g);
 }
 
 pub fn ftCo_Turn_Coll(g: G) {
+    melee_core::ct!("ftCo_Turn_Coll");
     ext::ft_80083F88(g);
 }
 
 pub fn fn_800C9C2C(g: G) -> bool {
+    melee_core::ct!("fn_800C9C2C");
     let f = fp(g);
     let fa = unsafe { f.mv.co.turn.facing_after };
     if f.input.lstick[0].x * fa >= cd().dash_smash_stick_threshold && (f.active_timer.lstick.x as i32) < cd().dash_smash_window {
@@ -228,6 +240,7 @@ pub fn fn_800C9C2C(g: G) -> bool {
 }
 
 pub fn ftCo_Turn_Enter_Smash(g: G) {
+    melee_core::ct!("ftCo_Turn_Enter_Smash");
     let f = fp(g);
     let facing = f.facing_dir;
     let neg = -f.facing_dir;

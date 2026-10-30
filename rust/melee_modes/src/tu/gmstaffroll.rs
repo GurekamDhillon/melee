@@ -226,6 +226,7 @@ pub const STAFF_COUNT: usize = 198;
 /// A `GXColor` read through `*(s32*)`: the console's big-endian word.
 #[inline(always)]
 pub fn color_word(c: &GXColor) -> i32 {
+    melee_core::ct!("color_word");
     u32::from_be_bytes([c.r, c.g, c.b, c.a]) as i32
 }
 
@@ -508,26 +509,32 @@ pub static mut gm_803DBFD8_extra: StaffRollExtraData = StaffRollExtraData {
 /* 4D42CC */ pub static mut gm_804D42CC: GXColor = GXColor { r: 0xB4, g: 0xFF, b: 0xFF, a: 0xFF };
 
 pub unsafe extern "C" fn gm_801AA644(_arg0: i16) -> i32 {
+    melee_core::ct!("gm_801AA644");
     ext::gmMainLib_8015EDD4()
 }
 
 pub unsafe extern "C" fn gm_801AA664(ckind: i16) -> i32 {
+    melee_core::ct!("gm_801AA664");
     ext::gm_IsCKindUnlocked(ckind as u8)
 }
 
 pub unsafe extern "C" fn gm_801AA688(_arg0: i16) -> i32 {
+    melee_core::ct!("gm_801AA688");
     (ext::gm_IsCKindUnlocked(CKind_Mars as u8) != 0 || ext::gm_IsCKindUnlocked(CKind_Emblem as u8) != 0) as i32
 }
 
 pub unsafe extern "C" fn gm_801AA6D8(arg0: i16) -> i32 {
+    melee_core::ct!("gm_801AA6D8");
     ext::Toy_803048C0(arg0 as i32)
 }
 
 pub unsafe extern "C" fn gm_801AA6FC(_arg0: i16) -> i32 {
+    melee_core::ct!("gm_801AA6FC");
     (ext::Toy_803048C0(0x10B) != 0 || ext::Toy_803048C0(0x10A) != 0 || ext::Toy_803048C0(0x109) != 0) as i32
 }
 
 pub unsafe extern "C" fn gm_801AA774(_arg0: i16) -> i32 {
+    melee_core::ct!("gm_801AA774");
     (ext::Toy_803048C0(0x107) != 0 || ext::Toy_803048C0(0x108) != 0) as i32
 }
 
@@ -603,6 +610,7 @@ unsafe fn HSD_JObjGetMtxPtr(jobj: *mut HSD_JObj) -> *mut [f32; 4] {
 }
 
 pub unsafe extern "C" fn gm_Scene_StaffRoll_OnFrame() {
+    melee_core::ct!("gm_Scene_StaffRoll_OnFrame");
     if gm_804D6814 >= 0x134D {
         ext::lbAudioAx_80028B90();
         ext::lbAudioAx_800236DC();
@@ -611,6 +619,7 @@ pub unsafe extern "C" fn gm_Scene_StaffRoll_OnFrame() {
 }
 
 pub unsafe extern "C" fn fn_801AA7F8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801AA7F8");
     let cobj = (*gobj).hsd_obj as *mut HSD_CObj;
     if gm_804D6818 == 0 {
         let mut i = 0;
@@ -633,6 +642,7 @@ pub const Gm_GObj_GXLink_PlyCursor: usize = 9;
 
 /// Render callback of the staff-roll camera: draws the entry text windows back to front.
 pub unsafe extern "C" fn fn_801AA854(gobj: *mut HSD_GObj, _code: i32) {
+    melee_core::ct!("fn_801AA854");
     let mut gobj = gobj;
     let cobj = (*gobj).hsd_obj as *mut HSD_CObj;
     let mut sp10: Mtx = [[0.0; 4]; 3];
@@ -670,6 +680,7 @@ pub unsafe extern "C" fn fn_801AA854(gobj: *mut HSD_GObj, _code: i32) {
 /* 480D58 */ pub static mut gm_80480D58: [*mut HSD_Text; 6] = [null_mut(); 6];
 
 pub unsafe extern "C" fn fn_801AAA28(gobj: *mut HSD_GObj, code: i32) {
+    melee_core::ct!("fn_801AAA28");
     ext::HSD_GObj_803910D8(gobj, code);
     if ext::HSD_CObjSetCurrent((*gobj).hsd_obj as *mut HSD_CObj) != 0 {
         let mut i = 0;
@@ -687,6 +698,7 @@ pub unsafe extern "C" fn fn_801AAA28(gobj: *mut HSD_GObj, code: i32) {
 }
 
 pub unsafe extern "C" fn fn_801AAABC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801AAABC");
     let lobj = (*gobj).hsd_obj as *mut HSD_LObj;
     if gm_804D6818 == 0 {
         let mut i = 0;
@@ -698,6 +710,7 @@ pub unsafe extern "C" fn fn_801AAABC(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_801AAB18(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801AAB18");
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     if gm_804D6818 == 0 {
         let mut i = 0;
@@ -724,6 +737,7 @@ unsafe fn passes(i: usize) -> bool {
 /// Builds/removes the text windows of every credit entry that scrolled in/out, then depth-sorts the
 /// visible ones (`staffInfoSortBuf`).
 pub unsafe extern "C" fn fn_801AAB74(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801AAB74");
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
 
     if gm_804D6818 == 0 {
@@ -914,6 +928,7 @@ unsafe fn gm_801AB200_ptcl(idx: i32, color: *const GXColor) {
 
 /// The credits cursor/selection/animation driver (a GObj proc).
 pub unsafe extern "C" fn fn_801AB200(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801AB200");
     let mut cursor_jobj: *mut HSD_JObj = null_mut();
     let mut jobj_pair: [*mut HSD_JObj; 2] = [null_mut(); 2];
     let mut temp_jobj: *mut HSD_JObj = null_mut();
@@ -1300,6 +1315,7 @@ pub unsafe extern "C" fn fn_801AB200(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_801AC67C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801AC67C");
     let fog = (*gobj).hsd_obj as *mut HSD_Fog;
     if gm_804D6818 == 0 {
         let mut i = 0;
@@ -1312,6 +1328,7 @@ pub unsafe extern "C" fn fn_801AC67C(gobj: *mut HSD_GObj) {
 
 /// Scene setup: load the staff-roll scene data, build the camera/light/fog/model GObjs, start the BGM.
 pub unsafe extern "C" fn gm_Scene_StaffRoll_OnEnter(_unused: *mut c_void) {
+    melee_core::ct!("gm_Scene_StaffRoll_OnEnter");
     let mut jobj_arr: [*mut HSD_JObj; 2] = [null_mut(); 2];
     let gx_link: u8 = 11;
 
@@ -1448,7 +1465,7 @@ pub unsafe extern "C" fn gm_Scene_StaffRoll_OnEnter(_unused: *mut c_void) {
     }
 }
 
-pub unsafe extern "C" fn gm_Scene_StaffRoll_OnExit(_unused: *mut c_void) {}
+pub unsafe extern "C" fn gm_Scene_StaffRoll_OnExit(_unused: *mut c_void) { melee_core::ct!("gm_Scene_StaffRoll_OnExit");}
 
 #[allow(dead_code)]
 const _N: *const c_void = null();

@@ -38,11 +38,12 @@ pub mod ext {
     }
 }
 
-pub fn ftMh_Poke1_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_Poke1_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_Poke1_Coll");}
 
-pub fn ftMh_FingerBeamStart_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_FingerBeamStart_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_FingerBeamStart_Coll");}
 
 pub fn ftMh_FingerBeamLoop_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_FingerBeamLoop_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         unsafe {
             let fp = (*gobj).user_data as *mut Fighter;
@@ -64,11 +65,12 @@ pub fn ftMh_FingerBeamLoop_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftMh_FingerBeamLoop_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_FingerBeamLoop_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_FingerBeamLoop_Coll");}
 
 /// Accessory-4 callback: once the script flags it, spawns four MasterHand lasers and starts their
 /// three looping sounds.
 pub unsafe extern "C" fn ftMh_MS_362_80152E28(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_362_80152E28");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         if (*fp).cmd_vars[0] == 0 {
@@ -95,6 +97,7 @@ pub unsafe extern "C" fn ftMh_MS_362_80152E28(gobj: *mut HSD_GObj) {
 
 /// `ftMh_MS_362_80152F80` (static in the C): enter FingerBeamEnd and stop the three beam sounds.
 pub fn ftMh_MS_362_80152F80(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_362_80152F80");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         st::Fighter_ChangeMotionState(gobj, ftMh_MS_FingerBeamEnd as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());

@@ -24,6 +24,7 @@ pub mod ext {
 }
 
 pub fn ftPe_AttackS4_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_AttackS4_Enter");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         (*fp).set_allow_interrupt(0);
@@ -44,6 +45,7 @@ pub fn ftPe_AttackS4_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftPe_AttackS4_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_AttackS4_IASA");
     unsafe {
         if (*((*gobj).user_data as *mut Fighter)).allow_interrupt() != 0 {
             st::ftCo_Wait_IASA(gobj);

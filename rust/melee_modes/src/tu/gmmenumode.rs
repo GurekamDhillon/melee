@@ -249,6 +249,7 @@ pub static mut gm_Mode_Menu_States: [GameModeState; 2] = unsafe {
 };
 
 pub unsafe extern "C" fn onEnterDebug(arg0: *mut GameModeState) {
+    melee_core::ct!("onEnterDebug");
     let data = ext::gm_GetGameModeStateEnterData(arg0) as *mut DebugSoundTestData;
     (*data).x0 = &raw mut ext::un_803F9FA4 as *mut c_void;
     (*data).x4 = 0;
@@ -264,6 +265,7 @@ unsafe fn open(data: *mut MenuEnterData, kind: MenuKind, sel: u32) {
 }
 
 pub unsafe extern "C" fn onEnter(scene: *mut GameModeState) {
+    melee_core::ct!("onEnter");
     let data = (*scene).info.enter_data as *mut MenuEnterData;
     ext::lbCardNew_AllocWorkArea();
     ext::lbCardGame_LoadArchive(0);
@@ -341,6 +343,7 @@ pub unsafe extern "C" fn onEnter(scene: *mut GameModeState) {
 }
 
 pub unsafe extern "C" fn onExit(arg0: *mut GameModeState) {
+    melee_core::ct!("onExit");
     let data = (*arg0).info.exit_data as *mut MenuExitData;
 
     ext::gm_SetPendingGameMode((*data).pending_mode as u8);

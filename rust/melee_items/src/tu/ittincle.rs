@@ -68,6 +68,7 @@ crate::kinds_jobj_inl!();
 /// `HSD_JObjSetScaleX` (baselib/jobj.h, static inline)
 #[inline]
 pub unsafe fn HSD_JObjSetScaleX(jobj: *mut HSD_JObj, x: f32) {
+    melee_core::ct!("HSD_JObjSetScaleX");
     hsd_assert(!jobj.is_null(), "(jobj)");
     (*jobj).scale.x = x;
     if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
@@ -111,6 +112,7 @@ pub static mut it_803F9000: [ItemStateTable; 13] = [
 ];
 
 pub unsafe extern "C" fn it_802EB5C8(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802EB5C8");
     let mut pos: Vec3 = core::mem::zeroed();
     let ip = GET_ITEM(gobj);
 
@@ -129,11 +131,13 @@ pub unsafe extern "C" fn it_802EB5C8(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itTincle_Logic13_DmgReceived(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTincle_Logic13_DmgReceived");
     it_802EC18C(gobj);
     false
 }
 
 pub unsafe extern "C" fn itTincle_Logic13_DmgDealt(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTincle_Logic13_DmgDealt");
     if (*GET_ITEM(gobj)).msid != 7 {
         it_802EC1F4(gobj);
     }
@@ -141,6 +145,7 @@ pub unsafe extern "C" fn itTincle_Logic13_DmgDealt(gobj: *mut Item_GObj) -> bool
 }
 
 pub unsafe extern "C" fn it_802EB6DC(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802EB6DC");
     let ip = GET_ITEM(gobj);
     let sa = SA(ip);
 
@@ -168,10 +173,12 @@ pub unsafe extern "C" fn it_802EB6DC(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itTincle_UnkMotion0_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTincle_UnkMotion0_Anim");
     false
 }
 
 pub unsafe extern "C" fn itTincle_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itTincle_UnkMotion0_Phys");
     let ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.tincle.x20 <= 0 {
         it_802EB870(gobj);
@@ -181,11 +188,13 @@ pub unsafe extern "C" fn itTincle_UnkMotion0_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itTincle_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTincle_UnkMotion0_Coll");
     ext::it_8026DA08(gobj);
     false
 }
 
 pub unsafe extern "C" fn it_802EB870(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802EB870");
     let ip = GET_ITEM(gobj);
     let sa = SA(ip);
 
@@ -201,10 +210,12 @@ pub unsafe extern "C" fn it_802EB870(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itTincle_UnkMotion1_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTincle_UnkMotion1_Anim");
     false
 }
 
 pub unsafe extern "C" fn itTincle_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itTincle_UnkMotion1_Phys");
     let ip = GET_ITEM(gobj);
     if (*ip).pos.y <= (*ip).xDD4_itemVar.tincle.x5C {
         it_802EBA00(gobj);
@@ -212,11 +223,13 @@ pub unsafe extern "C" fn itTincle_UnkMotion1_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itTincle_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTincle_UnkMotion1_Coll");
     ext::it_8026E414(gobj, Some(it_802EBA00));
     false
 }
 
 pub unsafe extern "C" fn it_802EBA00(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802EBA00");
     let ip = GET_ITEM(gobj);
     let sa = SA(ip);
     let dur_f = (*sa).x28 as f32;
@@ -246,6 +259,7 @@ pub unsafe extern "C" fn it_802EBA00(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itTincle_UnkMotion2_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTincle_UnkMotion2_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE);
     }
@@ -253,6 +267,7 @@ pub unsafe extern "C" fn itTincle_UnkMotion2_Anim(gobj: *mut Item_GObj) -> bool 
 }
 
 pub unsafe extern "C" fn itTincle_UnkMotion2_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itTincle_UnkMotion2_Phys");
     let ip = GET_ITEM(gobj);
     let bounce_count = (*ip).xDD4_itemVar.tincle.x3C;
     let sa = SA(ip);
@@ -314,6 +329,7 @@ pub unsafe extern "C" fn itTincle_UnkMotion2_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itTincle_UnkMotion2_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTincle_UnkMotion2_Coll");
     if ext::it_8026DAA8(gobj) != 0 {
         it_802EC870(gobj, 1);
     }
@@ -321,6 +337,7 @@ pub unsafe extern "C" fn itTincle_UnkMotion2_Coll(gobj: *mut Item_GObj) -> bool 
 }
 
 pub unsafe extern "C" fn it_802EBD14(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802EBD14");
     let ip = GET_ITEM(gobj);
     (*ip).xDD4_itemVar.tincle.x30 = (*ip).msid as f32;
     (*ip).xDD4_itemVar.tincle.x44 = (*ip).x40_vel.y;
@@ -336,10 +353,12 @@ pub unsafe extern "C" fn it_802EBD14(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itTincle_UnkMotion3_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTincle_UnkMotion3_Anim");
     false
 }
 
 pub unsafe extern "C" fn itTincle_UnkMotion3_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itTincle_UnkMotion3_Phys");
     let ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.tincle.x20 == 0 {
         (*ip).pos.y = (*ip).xDD4_itemVar.tincle.x4C;
@@ -352,11 +371,13 @@ pub unsafe extern "C" fn itTincle_UnkMotion3_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itTincle_UnkMotion3_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTincle_UnkMotion3_Coll");
     ext::it_8026E414(gobj, Some(it_802EC18C));
     false
 }
 
 pub unsafe extern "C" fn it_802EBE5C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802EBE5C");
     let ip = GET_ITEM(gobj);
     let data = SA(ip);
 
@@ -374,10 +395,12 @@ pub unsafe extern "C" fn it_802EBE5C(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itTincle_UnkMotion4_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTincle_UnkMotion4_Anim");
     false
 }
 
 pub unsafe extern "C" fn itTincle_UnkMotion4_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itTincle_UnkMotion4_Phys");
     let ip = GET_ITEM(gobj);
     let sa = SA(ip);
     if (*ip).xDD4_itemVar.tincle.x20 == 0 {
@@ -395,11 +418,13 @@ pub unsafe extern "C" fn itTincle_UnkMotion4_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itTincle_UnkMotion4_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTincle_UnkMotion4_Coll");
     ext::it_8026E414(gobj, Some(it_802EC18C));
     false
 }
 
 pub unsafe extern "C" fn it_802EBFAC(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802EBFAC");
     let ip = GET_ITEM(gobj);
     let sa = SA(ip);
     let dist = (*ip).xDD4_itemVar.tincle.x5C - (*ip).pos.y;
@@ -438,10 +463,12 @@ pub unsafe extern "C" fn it_802EBFAC(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itTincle_UnkMotion5_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTincle_UnkMotion5_Anim");
     false
 }
 
 pub unsafe extern "C" fn itTincle_UnkMotion5_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itTincle_UnkMotion5_Phys");
     let ip = GET_ITEM(gobj);
     if (*ip).x40_vel.y <= 0.0 {
         itResetVelocity(ip);
@@ -455,11 +482,13 @@ pub unsafe extern "C" fn itTincle_UnkMotion5_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itTincle_UnkMotion5_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTincle_UnkMotion5_Coll");
     ext::it_8026DAA8(gobj);
     false
 }
 
 pub unsafe extern "C" fn it_802EC18C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802EC18C");
     let ip = GET_ITEM(gobj);
     itResetVelocity(ip);
     ext::it_802756D0(gobj);
@@ -469,6 +498,7 @@ pub unsafe extern "C" fn it_802EC18C(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802EC1F4(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802EC1F4");
     let ip = GET_ITEM(gobj);
     itResetVelocity(ip);
     ext::it_802756D0(gobj);
@@ -478,6 +508,7 @@ pub unsafe extern "C" fn it_802EC1F4(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itTincle_UnkMotion7_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTincle_UnkMotion7_Anim");
     let ip = GET_ITEM(gobj);
 
     if (*ip).xDD4_itemVar.tincle.x20 == 0 {
@@ -496,9 +527,10 @@ pub unsafe extern "C" fn itTincle_UnkMotion7_Anim(gobj: *mut Item_GObj) -> bool 
     false
 }
 
-pub unsafe extern "C" fn itTincle_UnkMotion7_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itTincle_UnkMotion7_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itTincle_UnkMotion7_Phys");}
 
 pub unsafe extern "C" fn itTincle_UnkMotion7_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTincle_UnkMotion7_Coll");
     let ip = GET_ITEM(gobj);
     if (*ip).ground_or_air == GA_Air {
         ext::it_8026E414(gobj, Some(it_802EC3F4));
@@ -512,27 +544,32 @@ pub unsafe extern "C" fn itTincle_UnkMotion7_Coll(gobj: *mut Item_GObj) -> bool 
 }
 
 pub unsafe extern "C" fn it_802EC35C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802EC35C");
     let ip = GET_ITEM(gobj);
     (*ip).pos.z = -10.0;
     ext::Item_80268E5C(gobj, 8, ITEM_ANIM_UPDATE);
 }
 
 pub unsafe extern "C" fn itTincle_UnkMotion8_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTincle_UnkMotion8_Anim");
     false
 }
 
 pub unsafe extern "C" fn itTincle_UnkMotion8_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itTincle_UnkMotion8_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = (*ip).xCC_item_attr;
     ext::it_80272860(gobj, (*attrs).x10_fall_speed, (*attrs).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itTincle_UnkMotion8_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTincle_UnkMotion8_Coll");
     ext::it_8026E414(gobj, Some(it_802EC3F4));
     false
 }
 
 pub unsafe extern "C" fn it_802EC3F4(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802EC3F4");
     let ip = (*gobj).user_data as *mut Item;
     itResetVelocity(ip);
     (*ip).xDC8_word.flags.set_x1A(0);
@@ -544,20 +581,23 @@ pub unsafe extern "C" fn it_802EC3F4(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itTincle_UnkMotion9_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTincle_UnkMotion9_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         it_802EC4D0(gobj);
     }
     false
 }
 
-pub unsafe extern "C" fn itTincle_UnkMotion9_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itTincle_UnkMotion9_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itTincle_UnkMotion9_Phys");}
 
 pub unsafe extern "C" fn itTincle_UnkMotion9_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTincle_UnkMotion9_Coll");
     ext::it_8026D62C(gobj, Some(it_802EC35C));
     false
 }
 
 pub unsafe extern "C" fn it_802EC4D0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802EC4D0");
     let ip = GET_ITEM(gobj);
     let data = SA(ip);
 
@@ -573,6 +613,7 @@ pub unsafe extern "C" fn it_802EC4D0(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itTincle_UnkMotion10_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTincle_UnkMotion10_Anim");
     let ip = GET_ITEM(gobj);
 
     if ext::it_80272C6C(gobj) == 0 {
@@ -586,32 +627,37 @@ pub unsafe extern "C" fn itTincle_UnkMotion10_Anim(gobj: *mut Item_GObj) -> bool
     false
 }
 
-pub unsafe extern "C" fn itTincle_UnkMotion10_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itTincle_UnkMotion10_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itTincle_UnkMotion10_Phys");}
 
 pub unsafe extern "C" fn itTincle_UnkMotion10_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTincle_UnkMotion10_Coll");
     ext::it_8026D62C(gobj, Some(it_802EC35C));
     false
 }
 
 pub unsafe extern "C" fn it_802EC604(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802EC604");
     ext::Item_80268E5C(gobj, 0xB, ITEM_ANIM_UPDATE);
 }
 
 pub unsafe extern "C" fn itTincle_UnkMotion11_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTincle_UnkMotion11_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         it_802EC69C(gobj);
     }
     false
 }
 
-pub unsafe extern "C" fn itTincle_UnkMotion11_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itTincle_UnkMotion11_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itTincle_UnkMotion11_Phys");}
 
 pub unsafe extern "C" fn itTincle_UnkMotion11_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTincle_UnkMotion11_Coll");
     ext::it_8026D62C(gobj, Some(it_802EC35C));
     false
 }
 
 pub unsafe extern "C" fn it_802EC69C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802EC69C");
     let ip = GET_ITEM(gobj);
     let sa = SA(ip);
 
@@ -635,10 +681,12 @@ pub unsafe extern "C" fn it_802EC69C(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itTincle_UnkMotion12_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTincle_UnkMotion12_Anim");
     false
 }
 
 pub unsafe extern "C" fn itTincle_UnkMotion12_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itTincle_UnkMotion12_Phys");
     let ip = GET_ITEM(gobj);
     if (*ip).x40_vel.y <= 0.0 {
         itResetVelocity(ip);
@@ -652,19 +700,23 @@ pub unsafe extern "C" fn itTincle_UnkMotion12_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itTincle_UnkMotion12_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTincle_UnkMotion12_Coll");
     ext::it_8026DAA8(gobj);
     false
 }
 
 pub unsafe extern "C" fn it_802EC830(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802EC830");
     ext::Item_8026A8EC(gobj);
 }
 
 pub unsafe extern "C" fn it_802EC850(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802EC850");
     ext::it_8026B894(gobj, ref_gobj);
 }
 
 pub unsafe extern "C" fn it_802EC870(gobj: *mut Item_GObj, arg1: i32) {
+    melee_core::ct!("it_802EC870");
     let ip = GET_ITEM(gobj);
     let sa = SA(ip);
 
@@ -698,6 +750,7 @@ pub unsafe extern "C" fn it_802EC870(gobj: *mut Item_GObj, arg1: i32) {
 }
 
 pub unsafe extern "C" fn it_802EC9E8(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802EC9E8");
     let ip = GET_ITEM(gobj);
     let mut ecb: _itECB = (*ip).xDD4_itemVar.tincle.x68;
 
@@ -714,6 +767,7 @@ pub unsafe extern "C" fn it_802EC9E8(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802ECA70(gobj: *mut HSD_GObj) -> *mut Item_GObj {
+    melee_core::ct!("it_802ECA70");
     let mut pos = Vec3 { x: 0.0, y: 200.0, z: 0.0 };
     let new_gobj = ext::it_8027B5B0(It_Kind_Tincle, &mut pos, null_mut(), null_mut(), 1);
 
@@ -733,14 +787,17 @@ pub unsafe extern "C" fn it_802ECA70(gobj: *mut HSD_GObj) -> *mut Item_GObj {
 }
 
 pub unsafe extern "C" fn it_802ECC8C(arg0: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802ECC8C");
     (*GET_ITEM(arg0)).xDD4_itemVar.tincle.x20
 }
 
 pub unsafe extern "C" fn it_802ECC98(arg0: *mut Item_GObj, arg1: f32) {
+    melee_core::ct!("it_802ECC98");
     (*GET_ITEM(arg0)).xDD4_itemVar.tincle.x54 = arg1;
 }
 
 pub unsafe extern "C" fn it_802ECCA4(gobj: *mut Item_GObj, kind: *mut i32, pos: *mut Vec3) {
+    melee_core::ct!("it_802ECCA4");
     let ip = GET_ITEM(gobj);
     *pos = (*ip).pos;
     (*pos).y += (*ip).xDD4_itemVar.tincle.x50;

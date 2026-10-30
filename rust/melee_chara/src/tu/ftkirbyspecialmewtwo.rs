@@ -121,6 +121,7 @@ unsafe fn set_cbs(gobj: G) {
 
 /// Charge readout for the HUD. Returns -1 when there is no shadow ball.
 pub fn ftKb_SpecialNMt_80106F44(gobj: G, out_charge: &mut i32, out_max: &mut i32) -> i32 {
+    melee_core::ct!("ftKb_SpecialNMt_80106F44");
     unsafe {
         if !gobj.is_null() {
             let fp = fpp(gobj);
@@ -153,6 +154,7 @@ fn is_mt_special_n_motion(msid: i32) -> bool {
 }
 
 pub fn ftKb_SpecialNMt_80106F9C(gobj: G) -> bool {
+    melee_core::ct!("ftKb_SpecialNMt_80106F9C");
     unsafe {
         if !gobj.is_null() {
             let fp = (*gobj).user_data as *mut Fighter;
@@ -166,6 +168,7 @@ pub fn ftKb_SpecialNMt_80106F9C(gobj: G) -> bool {
 }
 
 pub fn ftKb_SpecialNMt_80106FEC(gobj: G) -> bool {
+    melee_core::ct!("ftKb_SpecialNMt_80106FEC");
     unsafe {
         if !gobj.is_null() {
             let fp = (*gobj).user_data as *mut Fighter;
@@ -186,6 +189,7 @@ pub fn ftKb_SpecialNMt_80106FEC(gobj: G) -> bool {
 
 /// Clears the Mewtwo copy ability state and effects.
 pub fn ftKb_SpecialNMt_80107040(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNMt_80107040");
     unsafe {
         if gobj.is_null() {
             return;
@@ -218,6 +222,7 @@ unsafe fn release_ball(gobj: G) {
 
 /// Full cleanup of the Mewtwo copy ability state.
 pub fn ftKb_SpecialNMt_8010709C(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNMt_8010709C");
     unsafe {
         if gobj.is_null() {
             return;
@@ -232,6 +237,7 @@ pub fn ftKb_SpecialNMt_8010709C(gobj: G) {
 
 /// Mewtwo copy cleanup with charge check.
 pub fn ftKb_SpecialNMt_80107130(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNMt_80107130");
     unsafe {
         if gobj.is_null() {
             return;
@@ -251,6 +257,7 @@ pub fn ftKb_SpecialNMt_80107130(gobj: G) {
 
 /// `ftKb_SpecialNMt_SetRecoil` (static inline): launch recoil proportional to the charge.
 pub fn ftKb_SpecialNMt_SetRecoil(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNMt_SetRecoil");
     unsafe {
         let fp = fpp(gobj);
         let da = &*da_of(fp);
@@ -265,6 +272,7 @@ pub fn ftKb_SpecialNMt_SetRecoil(gobj: G) {
 
 /// Fires the shadow ball (cmd_vars[1] == 1 on the End states).
 pub fn ftKb_SpecialNMt_801071FC(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNMt_801071FC");
     unsafe {
         let fp = fpp(gobj);
         let da = &*da_of(fp);
@@ -292,6 +300,7 @@ pub fn ftKb_SpecialNMt_801071FC(gobj: G) {
 
 /// Charge-step sfx ladder (cmd_vars[2] != 0 while charging).
 pub fn ftKb_SpecialNMt_80107410(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNMt_80107410");
     unsafe {
         let sfx_table = &ftKb_Init_803CB828;
         let fp = fpp(gobj);
@@ -330,6 +339,7 @@ pub fn ftKb_SpecialNMt_80107410(gobj: G) {
 
 /// Ground Shadow Ball entry (from the copy ability's neutral B).
 pub fn ftKb_SpecialNMt_80107568(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNMt_80107568");
     unsafe {
         let fp = fpp(gobj);
         let da = &*da_of(fp);
@@ -348,6 +358,7 @@ pub fn ftKb_SpecialNMt_80107568(gobj: G) {
 
 /// Air Shadow Ball entry.
 pub fn ftKb_SpecialNMt_80107638(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNMt_80107638");
     unsafe {
         let fp = fpp(gobj);
         let da = &*da_of(fp);
@@ -366,6 +377,7 @@ pub fn ftKb_SpecialNMt_80107638(gobj: G) {
 /// Spawn the held shadow ball once the cmd says so (cmd_vars[3] == 1, no ball yet).
 /// `ftKb_SpecialNMt_CreateHeldShadow` (static inline); `pos1` / `pos2` are the C's scratch vectors.
 pub fn ftKb_SpecialNMt_CreateHeldShadow(gobj: G, pos1: &mut Vec3, pos2: &mut Vec3) {
+    melee_core::ct!("ftKb_SpecialNMt_CreateHeldShadow");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).cmd_vars[3] == 1 && (*fp).u.kb.x98.is_null() {
@@ -405,10 +417,12 @@ unsafe fn start_anim(gobj: G, end_ms: i32, loop_ms: i32, clear_x0: bool) {
 }
 
 pub fn ftKb_MtSpecialNStart_Anim(gobj: G) {
+    melee_core::ct!("ftKb_MtSpecialNStart_Anim");
     unsafe { start_anim(gobj, ftKb_MS_MtSpecialNEnd as i32, ftKb_MS_MtSpecialNLoop as i32, false) }
 }
 
 pub fn ftKb_MtSpecialAirNStart_Anim(gobj: G) {
+    melee_core::ct!("ftKb_MtSpecialAirNStart_Anim");
     unsafe { start_anim(gobj, ftKb_MS_MtSpecialAirNEnd as i32, ftKb_MS_MtSpecialAirNLoop as i32, true) }
 }
 
@@ -443,14 +457,17 @@ unsafe fn loop_anim(gobj: G, offset: &Vec3, full_ms: i32) {
 }
 
 pub fn ftKb_MtSpecialNLoop_Anim(gobj: G) {
+    melee_core::ct!("ftKb_MtSpecialNLoop_Anim");
     unsafe { loop_anim(gobj, &ftKb_Init_803B7570, ftKb_MS_MtSpecialNLoopFull as i32) }
 }
 
 pub fn ftKb_MtSpecialAirNLoop_Anim(gobj: G) {
+    melee_core::ct!("ftKb_MtSpecialAirNLoop_Anim");
     unsafe { loop_anim(gobj, &ftKb_Init_803B757C, ftKb_MS_MtSpecialAirNLoopFull as i32) }
 }
 
 pub fn ftKb_MtSpecialNLoopFull_Anim(gobj: G) {
+    melee_core::ct!("ftKb_MtSpecialNLoopFull_Anim");
     unsafe {
         let ft = fpp(gobj);
         let da = &*da_of(ft);
@@ -461,6 +478,7 @@ pub fn ftKb_MtSpecialNLoopFull_Anim(gobj: G) {
 
 /// Note: the Air variant clears `x8.i` (the C differs from the ground one here).
 pub fn ftKb_MtSpecialAirNLoopFull_Anim(gobj: G) {
+    melee_core::ct!("ftKb_MtSpecialAirNLoopFull_Anim");
     unsafe {
         let ft = fpp(gobj);
         let da = &*da_of(ft);
@@ -470,6 +488,7 @@ pub fn ftKb_MtSpecialAirNLoopFull_Anim(gobj: G) {
 }
 
 pub fn ftKb_MtSpecialNCancel_Anim(gobj: G) {
+    melee_core::ct!("ftKb_MtSpecialNCancel_Anim");
     unsafe {
         release_ball(gobj);
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -479,6 +498,7 @@ pub fn ftKb_MtSpecialNCancel_Anim(gobj: G) {
 }
 
 pub fn ftKb_MtSpecialNEnd_Anim(gobj: G) {
+    melee_core::ct!("ftKb_MtSpecialNEnd_Anim");
     unsafe {
         ftKb_SpecialNMt_801071FC(gobj);
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -489,10 +509,12 @@ pub fn ftKb_MtSpecialNEnd_Anim(gobj: G) {
 
 /// `ftKb_MtSpecialAirNCancel_Anim_inline` (static inline): identity.
 pub fn ftKb_MtSpecialAirNCancel_Anim_inline(arg0: *mut Item_GObj) -> *mut Item_GObj {
+    melee_core::ct!("ftKb_MtSpecialAirNCancel_Anim_inline");
     arg0
 }
 
 pub fn ftKb_MtSpecialAirNCancel_Anim(gobj: G) {
+    melee_core::ct!("ftKb_MtSpecialAirNCancel_Anim");
     unsafe {
         if !gobj.is_null() {
             let fp = fpp(gobj);
@@ -514,6 +536,7 @@ pub fn ftKb_MtSpecialAirNCancel_Anim(gobj: G) {
 }
 
 pub fn ftKb_MtSpecialAirNEnd_Anim(gobj: G) {
+    melee_core::ct!("ftKb_MtSpecialAirNEnd_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = &*da_of(fp);
@@ -528,18 +551,19 @@ pub fn ftKb_MtSpecialAirNEnd_Anim(gobj: G) {
     }
 }
 
-pub fn ftKb_MtSpecialNStart_IASA(_gobj: G) {}
-pub fn ftKb_MtSpecialNCancel_IASA(_gobj: G) {}
-pub fn ftKb_MtSpecialNEnd_IASA(_gobj: G) {}
-pub fn ftKb_MtSpecialAirNStart_IASA(_gobj: G) {}
-pub fn ftKb_MtSpecialAirNCancel_IASA(_gobj: G) {}
-pub fn ftKb_MtSpecialAirNEnd_IASA(_gobj: G) {}
+pub fn ftKb_MtSpecialNStart_IASA(_gobj: G) { melee_core::ct!("ftKb_MtSpecialNStart_IASA");}
+pub fn ftKb_MtSpecialNCancel_IASA(_gobj: G) { melee_core::ct!("ftKb_MtSpecialNCancel_IASA");}
+pub fn ftKb_MtSpecialNEnd_IASA(_gobj: G) { melee_core::ct!("ftKb_MtSpecialNEnd_IASA");}
+pub fn ftKb_MtSpecialAirNStart_IASA(_gobj: G) { melee_core::ct!("ftKb_MtSpecialAirNStart_IASA");}
+pub fn ftKb_MtSpecialAirNCancel_IASA(_gobj: G) { melee_core::ct!("ftKb_MtSpecialAirNCancel_IASA");}
+pub fn ftKb_MtSpecialAirNEnd_IASA(_gobj: G) { melee_core::ct!("ftKb_MtSpecialAirNEnd_IASA");}
 
 const SIGN_BIT: u32 = 0x8000_0000;
 
 /// Loop IASA (ground): A or B leaves for End once the transition timer is done, the sign bit
 /// (the C's `0x80000000`) cancels; a caught-state check aborts first.
 pub fn ftKb_MtSpecialNLoop_IASA(gobj: G) {
+    melee_core::ct!("ftKb_MtSpecialNLoop_IASA");
     unsafe {
         let fp = fpp(gobj);
         if ext::ftCo_8009917C(gobj) {
@@ -566,6 +590,7 @@ pub fn ftKb_MtSpecialNLoop_IASA(gobj: G) {
 }
 
 pub fn ftKb_MtSpecialNLoopFull_IASA(gobj: G) {
+    melee_core::ct!("ftKb_MtSpecialNLoopFull_IASA");
     unsafe {
         let fp = fpp(gobj);
         if ext::ftCo_8009917C(gobj) {
@@ -587,6 +612,7 @@ pub fn ftKb_MtSpecialNLoopFull_IASA(gobj: G) {
 }
 
 pub fn ftKb_MtSpecialAirNLoop_IASA(gobj: G) {
+    melee_core::ct!("ftKb_MtSpecialAirNLoop_IASA");
     unsafe {
         let fp = fpp(gobj);
         let input = (*fp).input.pressed_buttons;
@@ -609,6 +635,7 @@ pub fn ftKb_MtSpecialAirNLoop_IASA(gobj: G) {
 }
 
 pub fn ftKb_MtSpecialAirNLoopFull_IASA(gobj: G) {
+    melee_core::ct!("ftKb_MtSpecialAirNLoopFull_IASA");
     unsafe {
         let input = (*fpp(gobj)).input.pressed_buttons;
         if (input & HSD_PAD_A as u32) != 0 || (input & HSD_PAD_B as u32) != 0 {

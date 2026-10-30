@@ -67,14 +67,17 @@ pub static mut lbl_804D65D4: i32 = 0;
 pub static mut lbl_804D65D8: i32 = 0;
 
 pub fn gm_80180AE4() -> i32 {
+    melee_core::ct!("gm_80180AE4");
     unsafe { lbl_80472EC8[0].wrapping_mul(0xA) }
 }
 
 pub fn gm_80180AF4() -> *mut Fighter_GObj {
+    melee_core::ct!("gm_80180AF4");
     ext::Player_GetEntity(1)
 }
 
 pub fn gm_80180B18() {
+    melee_core::ct!("gm_80180B18");
     unsafe {
         for i in 0..0x1Bi32 {
             let idx = ext::gm_CKindToSelKind(i as u8);
@@ -87,6 +90,7 @@ pub fn gm_80180B18() {
 }
 
 pub fn gm_80180BA0() {
+    melee_core::ct!("gm_80180BA0");
     unsafe {
         for i in 0..0x1Bi32 {
             let idx = ext::gm_CKindToSelKind(i as u8);
@@ -97,6 +101,7 @@ pub fn gm_80180BA0() {
 }
 
 pub unsafe extern "C" fn fn_80180C14(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80180C14");
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     if lbl_80472E48.b10() != 0 {
         ext::HSD_JObjClearFlagsAll(jobj, JOBJ_HIDDEN as u32);
@@ -114,6 +119,7 @@ unsafe fn digit_jobj(jobj: *mut HSD_JObj, nexts: u32) -> *mut HSD_JObj {
 }
 
 pub unsafe extern "C" fn fn_80180C60(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80180C60");
     let st = &mut lbl_80472E48;
     let ec8 = &mut lbl_80472EC8;
 
@@ -231,6 +237,7 @@ pub unsafe extern "C" fn fn_80180C60(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe fn fn_80181598() {
+    melee_core::ct!("fn_80181598");
     let st = &mut lbl_80472E48;
     if ext::gm_801A4624() != 0 {
         return;
@@ -277,10 +284,12 @@ pub unsafe fn fn_80181598() {
 }
 /// `fn_80181598` registered as a proc (the C casts a `void(void)` to `HSD_GObjEvent`).
 pub unsafe extern "C" fn fn_80181598_cb(_gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80181598_cb");
     fn_80181598()
 }
 
 pub fn fn_80181708() {
+    melee_core::ct!("fn_80181708");
     unsafe {
         lbl_80472EC8 = [0; 4];
         let st = &mut lbl_80472E48;
@@ -323,6 +332,7 @@ pub fn fn_80181708() {
 }
 
 pub fn gm_80181998() {
+    melee_core::ct!("gm_80181998");
     unsafe {
         lbl_804D65C8 = ext::lbArchive_80016DBC(
             c"IfHrNoCn".as_ptr(),
@@ -343,6 +353,7 @@ pub fn gm_80181998() {
 }
 
 pub fn gm_80181A00(arg0: i32, arg1: i32) {
+    melee_core::ct!("gm_80181A00");
     unsafe {
         lbl_80472E48.unk_4 = arg0;
         lbl_80472E48.unk_8 = arg1;

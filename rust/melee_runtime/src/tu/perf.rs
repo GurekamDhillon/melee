@@ -36,14 +36,16 @@ pub mod ext {
 }
 // END GENERATED EXT
 pub unsafe fn HSD_PerfInitStat() {
+    melee_core::ct!("HSD_PerfInitStat");
     HSD_PerfLastStat = HSD_PerfCurrentStat;
     HSD_PerfCurrentStat = HSD_PerfStat::zeroed();
 }
-pub unsafe fn HSD_PerfSetStartTime() { start_time = ext::OSGetTime(); }
-pub unsafe fn HSD_PerfSetCPUTime() { HSD_PerfCurrentStat.cpu_time = ext::OSGetTime().wrapping_sub(start_time) as f32 / ((__OSBusClock / 4) / 60) as f32; }
-pub unsafe fn HSD_PerfSetDrawTime() { HSD_PerfCurrentStat.draw_time = ext::OSGetTime().wrapping_sub(start_time) as f32 / ((__OSBusClock / 4) / 60) as f32; }
-pub unsafe fn HSD_PerfSetTotalTime() { HSD_PerfCurrentStat.total_time = ext::OSGetTime().wrapping_sub(start_time) as f32 / ((__OSBusClock / 4) / 60) as f32; }
+pub unsafe fn HSD_PerfSetStartTime() { melee_core::ct!("HSD_PerfSetStartTime"); start_time = ext::OSGetTime(); }
+pub unsafe fn HSD_PerfSetCPUTime() { melee_core::ct!("HSD_PerfSetCPUTime"); HSD_PerfCurrentStat.cpu_time = ext::OSGetTime().wrapping_sub(start_time) as f32 / ((__OSBusClock / 4) / 60) as f32; }
+pub unsafe fn HSD_PerfSetDrawTime() { melee_core::ct!("HSD_PerfSetDrawTime"); HSD_PerfCurrentStat.draw_time = ext::OSGetTime().wrapping_sub(start_time) as f32 / ((__OSBusClock / 4) / 60) as f32; }
+pub unsafe fn HSD_PerfSetTotalTime() { melee_core::ct!("HSD_PerfSetTotalTime"); HSD_PerfCurrentStat.total_time = ext::OSGetTime().wrapping_sub(start_time) as f32 / ((__OSBusClock / 4) / 60) as f32; }
 pub unsafe fn HSD_PerfCountEnvelopeBlending(n: i32) {
+    melee_core::ct!("HSD_PerfCountEnvelopeBlending");
     assert!(n < 32, "HSD_PerfCountEnvelopeBlending: n < 32");
     HSD_PerfCurrentStat.env_blend[n as usize] = HSD_PerfCurrentStat.env_blend[n as usize].wrapping_add(1);
 }

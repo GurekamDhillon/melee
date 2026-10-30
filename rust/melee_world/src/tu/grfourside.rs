@@ -268,10 +268,11 @@ unsafe fn zrandi(n: i32) -> i32 {
 }
 
 /// 1F2D0C
-pub unsafe extern "C" fn grFourside_801F2D0C(_arg: i32) {}
+pub unsafe extern "C" fn grFourside_801F2D0C(_arg: i32) { melee_core::ct!("grFourside_801F2D0C");}
 
 /// 1F2D10
 pub unsafe extern "C" fn grFourside_801F2D10() {
+    melee_core::ct!("grFourside_801F2D10");
     yakumono_param = ext::Ground_GetYakumonoParam() as *mut grFourside_YakumonoParam;
     ext::stage_info.unk8C.set_b4(0);
     ext::stage_info.unk8C.set_b5(1);
@@ -287,15 +288,17 @@ pub unsafe extern "C" fn grFourside_801F2D10() {
 }
 
 /// 1F2DA0
-pub unsafe extern "C" fn grFourside_801F2DA0() {}
+pub unsafe extern "C" fn grFourside_801F2DA0() { melee_core::ct!("grFourside_801F2DA0");}
 
 /// 1F2DA4
 pub unsafe extern "C" fn grFourside_801F2DA4() {
+    melee_core::ct!("grFourside_801F2DA4");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
 
 /// 1F2DD0: sets up stage gobj `gobj_id` with its row of the callback table.
 pub unsafe extern "C" fn grFourside_801F2DD0(gobj_id: i32) -> *mut HSD_GObj {
+    melee_core::ct!("grFourside_801F2DD0");
     let callbacks = &raw mut grFs_StageCallbacks[gobj_id as usize];
     let gobj = ext::Ground_GetStageGObj(gobj_id);
     if !gobj.is_null() {
@@ -307,28 +310,31 @@ pub unsafe extern "C" fn grFourside_801F2DD0(gobj_id: i32) -> *mut HSD_GObj {
 
 /// stageGObj0_OnInit
 pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj0_OnInit");
     Ground_StartMapAnim(gobj);
 }
 
 /// 1F2EF0
-pub unsafe extern "C" fn grFourside_801F2EF0(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grFourside_801F2EF0(_arg: *mut HSD_GObj) { melee_core::ct!("grFourside_801F2EF0");}
 
 /// 1F2EF4
-pub unsafe extern "C" fn grFourside_801F2EF4(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grFourside_801F2EF4(_arg: *mut HSD_GObj) { melee_core::ct!("grFourside_801F2EF4");}
 
 /// stageGObj2_OnInit
 pub unsafe extern "C" fn stageGObj2_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj2_OnInit");
     Ground_StartMapAnim(gobj);
 }
 
 /// 1F2F2C
-pub unsafe extern "C" fn grFourside_801F2F2C(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grFourside_801F2F2C(_arg: *mut HSD_GObj) { melee_core::ct!("grFourside_801F2F2C");}
 
 /// 1F2F30
-pub unsafe extern "C" fn grFourside_801F2F30(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grFourside_801F2F30(_arg: *mut HSD_GObj) { melee_core::ct!("grFourside_801F2F30");}
 
 /// 1F2F34: gobj 6 (sky): the three billboards, the render callback and the hit-count callback.
 pub unsafe extern "C" fn grFourside_801F2F34(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grFourside_801F2F34");
     let gp = (*gobj).user_data as *mut Ground;
     ext::Ground_InitMapColl((*gobj).hsd_obj as *mut HSD_JObj, (*gp).map_id as i32);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
@@ -355,12 +361,13 @@ pub unsafe extern "C" fn grFourside_801F2F34(gobj: *mut HSD_GObj) {
 
 /// 1F3078
 pub unsafe extern "C" fn grFourside_801F3078(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grFourside_801F3078");
     ext::Ground_UpdateMapColl(gobj);
     ext::lb_800115F4();
 }
 
 /// 1F309C
-pub unsafe extern "C" fn grFourside_801F309C(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grFourside_801F309C(_arg: *mut HSD_GObj) { melee_core::ct!("grFourside_801F309C");}
 
 /// 1F30A0 (mpLib_JointCollisionCallback): counts the hits on the UFO (map gobj 5).
 pub unsafe extern "C" fn grFourside_801F30A0(
@@ -371,6 +378,7 @@ pub unsafe extern "C" fn grFourside_801F30A0(
     _ground_kind: u32,
     _delta_y: f32,
 ) {
+    melee_core::ct!("grFourside_801F30A0");
     let gobj = ext::Ground_GetMapGObj(5);
     let mut val = ((*coll).x34_flags.b1234() as i32) << 3;
     let gp1 = (*gobj).user_data as *mut Ground;
@@ -382,6 +390,7 @@ pub unsafe extern "C" fn grFourside_801F30A0(
 
 /// 1F30F0
 pub unsafe extern "C" fn grFourside_801F30F0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grFourside_801F30F0");
     let gp = (*gobj).user_data as *mut Ground;
     (*gp).x10_flags.set_b2(0);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
@@ -389,13 +398,14 @@ pub unsafe extern "C" fn grFourside_801F30F0(gobj: *mut HSD_GObj) {
 }
 
 /// 1F314C
-pub unsafe extern "C" fn grFourside_801F314C(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grFourside_801F314C(_arg: *mut HSD_GObj) { melee_core::ct!("grFourside_801F314C");}
 
 /// 1F3150
-pub unsafe extern "C" fn grFourside_801F3150(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grFourside_801F3150(_arg: *mut HSD_GObj) { melee_core::ct!("grFourside_801F3150");}
 
 /// 1F3154: gobj 1 (crane) init.
 pub unsafe extern "C" fn grFourside_801F3154(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grFourside_801F3154");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let crane_iron = ext::Ground_801C3FA4(gobj, 4);
@@ -414,6 +424,7 @@ pub unsafe extern "C" fn grFourside_801F3154(gobj: *mut HSD_GObj) {
 
 /// `static inline void grFourside_UpdateCrane(Ground*, HSD_GObj*)`: one step of the crane's machine.
 pub unsafe fn grFourside_UpdateCrane(gp: *mut Ground, hsd_gobj: *mut HSD_GObj) {
+    melee_core::ct!("grFourside_UpdateCrane");
     let c = &raw mut (*gp).u.foursideCrane;
     let yp = yakumono_param;
     match (*c).x0 {
@@ -539,16 +550,19 @@ pub unsafe fn grFourside_UpdateCrane(gp: *mut Ground, hsd_gobj: *mut HSD_GObj) {
 
 /// `static inline float grFourside_GetCraneY(Ground*)`
 pub unsafe fn grFourside_GetCraneY(gp: *mut Ground) -> f32 {
+    melee_core::ct!("grFourside_GetCraneY");
     (*gp).u.foursideCrane.xC
 }
 
 /// `static inline HSD_JObj* grFourside_GetCraneIron(HSD_GObj*)`
 pub unsafe fn grFourside_GetCraneIron(gobj: *mut HSD_GObj) -> *mut HSD_JObj {
+    melee_core::ct!("grFourside_GetCraneIron");
     ext::Ground_801C3FA4(gobj, 4)
 }
 
 /// 1F3274: the crane per frame.
 pub unsafe extern "C" fn grFourside_801F3274(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grFourside_801F3274");
     let gp = (*gobj).user_data as *mut Ground;
     let crane_iron = grFourside_GetCraneIron(gobj);
     grFourside_UpdateCrane(gp, gobj);
@@ -557,10 +571,11 @@ pub unsafe extern "C" fn grFourside_801F3274(gobj: *mut HSD_GObj) {
 }
 
 /// 1F37F8
-pub unsafe extern "C" fn grFourside_801F37F8(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grFourside_801F37F8(_arg: *mut HSD_GObj) { melee_core::ct!("grFourside_801F37F8");}
 
 /// 1F37FC: gobj 5 (UFO) init.
 pub unsafe extern "C" fn grFourside_801F37FC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grFourside_801F37FC");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     ext::Ground_InitMapColl(jobj, (*gp).map_id as i32);
@@ -579,6 +594,7 @@ pub unsafe extern "C" fn grFourside_801F37FC(gobj: *mut HSD_GObj) {
 
 /// `static inline void grFourside_801F3894_inline(...)`: one step of the UFO's machine.
 pub unsafe fn grFourside_801F3894_inline(gobj: *mut HSD_GObj, gp: *mut Ground, jobj: *mut HSD_JObj, state: u8, prev_building: u8) {
+    melee_core::ct!("grFourside_801F3894_inline");
     let u = &raw mut (*gp).u.foursideUfo;
     let yp = yakumono_param;
     match state {
@@ -673,6 +689,7 @@ pub unsafe fn grFourside_801F3894_inline(gobj: *mut HSD_GObj, gp: *mut Ground, j
 
 /// 1F3894: the UFO per frame.
 pub unsafe extern "C" fn grFourside_801F3894(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grFourside_801F3894");
     let gp = (*gobj).user_data as *mut Ground;
     let state = (*gp).u.foursideUfo.x0;
     let prev_building = (*gp).u.foursideUfo.x1;
@@ -681,10 +698,11 @@ pub unsafe extern "C" fn grFourside_801F3894(gobj: *mut HSD_GObj) {
 }
 
 /// 1F3B6C
-pub unsafe extern "C" fn grFourside_801F3B6C(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grFourside_801F3B6C(_arg: *mut HSD_GObj) { melee_core::ct!("grFourside_801F3B6C");}
 
 /// 1F3B70: while the UFO is above the camera limit, pins the camera subject to its position.
 pub unsafe extern "C" fn grFourside_801F3B70(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grFourside_801F3B70");
     let mut local18: Vec = core::mem::zeroed();
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = ext::Ground_801C3FA4(gobj, 1);
@@ -707,6 +725,7 @@ pub unsafe extern "C" fn grFourside_801F3B70(gobj: *mut HSD_GObj) {
 
 /// 1F3C40: gobj 3 (helicopter) init.
 pub unsafe extern "C" fn grFourside_801F3C40(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grFourside_801F3C40");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     (*gp).x11_flags.set_b012(1);
@@ -718,6 +737,7 @@ pub unsafe extern "C" fn grFourside_801F3C40(gobj: *mut HSD_GObj) {
 
 /// 1F3CC8: the helicopter per frame.
 pub unsafe extern "C" fn grFourside_801F3CC8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grFourside_801F3CC8");
     let mut pos: Vec3 = core::mem::zeroed();
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -779,10 +799,11 @@ pub unsafe extern "C" fn grFourside_801F3CC8(gobj: *mut HSD_GObj) {
 }
 
 /// 1F3F0C
-pub unsafe extern "C" fn grFourside_801F3F0C(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grFourside_801F3F0C(_arg: *mut HSD_GObj) { melee_core::ct!("grFourside_801F3F0C");}
 
 /// 1F3F10: is the helicopter in the way of the UFO's building 0/1 sequence?
 pub unsafe extern "C" fn grFourside_801F3F10() -> i32 {
+    melee_core::ct!("grFourside_801F3F10");
     let gobj = ext::Ground_GetMapGObj(3);
     let gp = (*gobj).user_data as *mut Ground;
     if ((*gp).u.fourside2.x0 == 1 && (*gp).u.fourside2.x1 == 0) || ((*gp).u.fourside2.x0 == 3 && (*gp).u.fourside2.x4 <= 700) {
@@ -794,6 +815,7 @@ pub unsafe extern "C" fn grFourside_801F3F10() -> i32 {
 /// fn_801F3F74: the sky's render callback: turns the three billboards towards the camera, then
 /// draws the stage.
 pub unsafe extern "C" fn fn_801F3F74(gobj: *mut HSD_GObj, renderpass: i32) {
+    melee_core::ct!("fn_801F3F74");
     let mut eye: Vec3 = core::mem::zeroed();
     if renderpass as u32 == 1 {
         let gp = (*gobj).user_data as *mut Ground;
@@ -820,6 +842,7 @@ pub unsafe extern "C" fn fn_801F3F74(gobj: *mut HSD_GObj, renderpass: i32) {
 
 /// 1F41E8
 pub unsafe extern "C" fn grFourside_801F41E8(a: *mut Vec3, _arg: i32, joint: *mut HSD_JObj) -> i32 {
+    melee_core::ct!("grFourside_801F41E8");
     let mut b: Vec3 = core::mem::zeroed();
     ext::lb_8000B1CC(joint, null_mut(), &mut b);
     if (*a).y > b.y {

@@ -87,6 +87,7 @@ unsafe fn head_of(h: *mut Handle) -> *mut Handle {
 /// # Safety
 /// The allocator must have been set up by `lbMemory_8001564C`.
 pub unsafe fn lbMemory_80014E24(arena_lo: *mut c_void, arena_hi: *mut c_void) -> *mut Handle {
+    melee_core::ct!("lbMemory_80014E24");
     if a().free_heap.is_null() {
         ext::__assert(FILE, 66, "_p(free_heap)");
     }
@@ -108,6 +109,7 @@ pub unsafe fn lbMemory_80014E24(arena_lo: *mut c_void, arena_hi: *mut c_void) ->
 /// # Safety
 /// `handle` is a heap handle of this allocator (or null, which asserts).
 pub unsafe fn lbMemory_80014EEC(handle: *mut Handle) {
+    melee_core::ct!("lbMemory_80014EEC");
     if handle.is_null() {
         ext::__assert(FILE, 84, "handle");
     }
@@ -126,6 +128,7 @@ pub unsafe fn lbMemory_80014EEC(handle: *mut Handle) {
 /// # Safety
 /// `h` is a heap handle of this allocator.
 pub unsafe fn lbMemory_80014F7C(h: *mut Handle) -> u32 {
+    melee_core::ct!("lbMemory_80014F7C");
     let mut r4 = u32_of((*h).x4_lo);
     let mut iter = head_of(h);
     let mut sum: u32 = 0;
@@ -147,6 +150,7 @@ pub unsafe fn lbMemory_80014F7C(h: *mut Handle) -> u32 {
 /// # Safety
 /// `arg0` is a heap handle of this allocator.
 pub unsafe fn lbMemory_80014FC8(arg0: *mut Handle, size: usize) -> *mut Handle {
+    melee_core::ct!("lbMemory_80014FC8");
     let mut least_leftover: u32 = 0x4000_0000;
     let mut lo: *mut c_void = null_mut();
     if a().free_mem.is_null() {
@@ -231,6 +235,7 @@ pub unsafe fn lbMemory_80014FC8(arg0: *mut Handle, size: usize) -> *mut Handle {
 /// # Safety
 /// `h` is a heap handle of this allocator.
 pub unsafe fn lbMemFreeToHeap(h: *mut Handle, arg1: *mut c_void) {
+    melee_core::ct!("lbMemFreeToHeap");
     let mut handle = (*h).xC_prev;
     let mut r6 = head_of(h);
 
@@ -250,6 +255,7 @@ pub unsafe fn lbMemFreeToHeap(h: *mut Handle, arg1: *mut c_void) {
 
 /// `fn_80015184` (the timer handler) minus the entry: one step of the RAM copy.
 pub fn fn_80015184_body() {
+    melee_core::ct!("fn_80015184_body");
     unsafe {
         let p = addr_of_mut!(a().x6A0_mgr);
         if (*p).size == 0 {
@@ -297,6 +303,7 @@ pub unsafe extern "C-unwind" fn fn_80015184(_alarm: *mut OSAlarm, _context: *mut
 /// # Safety
 /// `h` is a heap handle of this allocator.
 pub unsafe fn lbMemory_8001529C(h: *mut Handle, arg1: Option<unsafe extern "C" fn(u32)>, arg2: u32) -> u32 {
+    melee_core::ct!("lbMemory_8001529C");
     a().x6E8 = arg1;
     a().x6E0 = arg2;
     a().x6E4 = (*h).x4_lo;
@@ -337,6 +344,7 @@ unsafe fn start_ram_copy(old: u32, current: u32, size: u32, next: *mut Handle) {
 /// `lbMemory_80015320`: the compaction state machine, one block per step. `_handle` is the next block to move
 /// (a `Handle*`), 0 when done.
 pub fn lbMemory_80015320_body(_arg0: i32, _handle: usize, _arg2: *mut c_void, cancelflag: i32) {
+    melee_core::ct!("lbMemory_80015320_body");
     unsafe {
         let handle = _handle as *mut Handle;
         let currentp = addr_of_mut!(a().x6E4);
@@ -392,6 +400,7 @@ pub unsafe extern "C-unwind" fn lbMemory_80015320(arg0: i32, handle: usize, arg2
 /// # Safety
 /// Both pointers valid for writes.
 pub unsafe fn lbMemory_800154BC(arena_lo: *mut usize, arena_hi: *mut usize) {
+    melee_core::ct!("lbMemory_800154BC");
     *arena_lo = a().a_arenaLo as usize;
     *arena_hi = a().a_arenaHi as usize;
 }
@@ -401,6 +410,7 @@ pub unsafe fn lbMemory_800154BC(arena_lo: *mut usize, arena_hi: *mut usize) {
 /// # Safety
 /// As `lbMemory_80014E24`.
 pub unsafe fn lbMemory_800154D4(arena_lo: *mut c_void, arena_hi: *mut c_void) -> *mut Handle {
+    melee_core::ct!("lbMemory_800154D4");
     a().x69C = lbMemory_80014E24(arena_lo, arena_hi);
     a().x69C
 }
@@ -410,6 +420,7 @@ pub unsafe fn lbMemory_800154D4(arena_lo: *mut c_void, arena_hi: *mut c_void) ->
 /// # Safety
 /// The ARAM heap handle must exist.
 pub unsafe fn lbMemory_800155A4() {
+    melee_core::ct!("lbMemory_800155A4");
     let handle = a().x69C;
     if handle.is_null() {
         ext::__assert(FILE, 352, "handle");
@@ -431,6 +442,7 @@ pub unsafe fn lbMemory_800155A4() {
 /// # Safety
 /// Not reentrant.
 pub unsafe fn lbMemory_8001564C() {
+    melee_core::ct!("lbMemory_8001564C");
     let mut freed_size: u32 = 0;
 
     a().a_arenaLo = ext::ARAlloc(0x20) as usize as *mut c_void;

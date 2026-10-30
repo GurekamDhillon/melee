@@ -59,6 +59,7 @@ pub static mut gm_Mode_HanyuCss_States: [GameModeState; 2] = [
 
 /// 1BED3C
 pub unsafe extern "C" fn gm_801BED3C(arg0: *mut GameModeState) {
+    melee_core::ct!("gm_801BED3C");
     let temp_r31 = ext::gm_GetGameModeStateEnterData(arg0) as *mut CSSData;
     (*temp_r31).vs = *ext::gmVsMelee_GetVsData();
     ext::gm_80164F18();
@@ -69,6 +70,7 @@ pub unsafe extern "C" fn gm_801BED3C(arg0: *mut GameModeState) {
 
 /// 1BEDA8
 pub unsafe extern "C" fn gm_801BEDA8(arg0: *mut GameModeState) {
+    melee_core::ct!("gm_801BEDA8");
     let css = ext::gm_GetGameModeStateEnterData(arg0) as *mut CSSData;
     let vs = ext::gmVsMelee_GetVsData();
     if (*css).pending_scene_change == 2 {

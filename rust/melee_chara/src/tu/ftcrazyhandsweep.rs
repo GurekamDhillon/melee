@@ -9,9 +9,10 @@ pub use crate::chars::r2::ftCrazyHand::ftcrazyhandsweep::{fn_8015746C, ftCh_Swee
 pub use crate::chars::r8::ftCrazyHand::ftcrazyhandsweep::ftCh_SweepLoop_IASA;
 
 pub fn ftCh_SweepLoop_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_SweepLoop_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         crate::tu::ftcrazyhandtagcancel::ftCh_GrabUnk1_8015BC88(gobj);
     }
 }
 
-pub fn ftCh_SweepLoop_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftCh_SweepLoop_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_SweepLoop_Coll");}

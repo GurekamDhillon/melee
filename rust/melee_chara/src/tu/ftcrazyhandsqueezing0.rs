@@ -10,9 +10,10 @@ pub use crate::chars::r2::ftCrazyHand::ftcrazyhandsqueezing0::ftCh_Squeezing0_Ph
 pub use crate::chars::r8::ftCrazyHand::ftcrazyhandsqueezing0::ftCh_Squeezing0_IASA;
 
 pub fn ftCh_Squeezing0_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Squeezing0_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         crate::tu::ftcrazyhandtagcancel::ftCh_GrabUnk1_8015BC88(gobj);
     }
 }
 
-pub fn ftCh_Squeezing0_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftCh_Squeezing0_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_Squeezing0_Coll");}

@@ -79,11 +79,13 @@ unsafe fn set_effect_hitlag_callbacks(fp: *mut Fighter) {
 
 /// `ftKb_SpecialN_800F5800`: current position (the root module's Fighter-only half).
 pub fn ftKb_SpecialN_800F5800(gobj: *mut HSD_GObj, vec: &mut Vec3) {
+    melee_core::ct!("ftKb_SpecialN_800F5800");
     unsafe { crate::chars::ftKirby::ftkirbyspecials::ftKb_SpecialN_800F5800(&*fpp(gobj), vec) }
 }
 
 /// `ftKb_SpecialAirLw_800F539C`: clear the hat item pointer.
 pub fn ftKb_SpecialAirLw_800F539C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialAirLw_800F539C");
     unsafe {
         (*fpp(gobj)).u.kb.hat.x0 = core::ptr::null_mut();
     }
@@ -91,6 +93,7 @@ pub fn ftKb_SpecialAirLw_800F539C(gobj: *mut HSD_GObj) {
 
 /// `fn_800F53AC_SpawnEffect` (static inline).
 pub fn fn_800F53AC_SpawnEffect(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_800F53AC_SpawnEffect");
     unsafe {
         let fp = fpp(gobj);
         let ef_id = if (*fp).ground_or_air == GA_Air { 0x497 } else { 0x496 };
@@ -104,6 +107,7 @@ pub fn fn_800F53AC_SpawnEffect(gobj: *mut HSD_GObj) {
 
 /// `fn_800F53AC_CleanupItem` (static inline).
 pub fn fn_800F53AC_CleanupItem(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_800F53AC_CleanupItem");
     unsafe {
         let fp = fpp(gobj);
         let item = (*fp).u.kb.hat.x0;
@@ -116,6 +120,7 @@ pub fn fn_800F53AC_CleanupItem(gobj: *mut HSD_GObj) {
 
 /// `fn_800F53AC` (accessory4 callback: hat item spawn / cleanup).
 pub fn fn_800F53AC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_800F53AC");
     unsafe {
         let fp = fpp(gobj);
         let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -147,10 +152,12 @@ pub fn fn_800F53AC(gobj: *mut HSD_GObj) {
 
 /// `fn_800F53AC` as the `accessory4_cb` entry.
 pub unsafe extern "C" fn cb_fn_800F53AC(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_800F53AC");
     fn_800F53AC(g);
 }
 
 pub fn ftKb_SpecialAirLw_800F5524(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialAirLw_800F5524");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.kb.hat.x0.is_null() {
@@ -161,6 +168,7 @@ pub fn ftKb_SpecialAirLw_800F5524(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_SpecialS_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialS_Coll");
     unsafe {
         if st::ft_80082708(gobj) != 0 {
             return;
@@ -175,6 +183,7 @@ pub fn ftKb_SpecialS_Coll(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_SpecialAirS_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialAirS_Coll");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftKb_DatAttrs;
@@ -192,6 +201,7 @@ pub fn ftKb_SpecialAirS_Coll(gobj: *mut HSD_GObj) {
 
 /// Fills the victim collision box from the Kirby attributes (`ftKb_SpecialN_800F5820`).
 pub fn ftKb_SpecialN_800F5820(gobj: *mut HSD_GObj, victim_coll_box: *mut ftCollisionBox, victim_scale_x: f32) {
+    melee_core::ct!("ftKb_SpecialN_800F5820");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftKb_DatAttrs;
@@ -206,6 +216,7 @@ pub fn ftKb_SpecialN_800F5820(gobj: *mut HSD_GObj, victim_coll_box: *mut ftColli
 
 /// `ftKb_SpecialN_800F5874`: the two radians of the Kirby common-data ext attrs.
 pub fn ftKb_SpecialN_800F5874(arg0: *mut Vec2) {
+    melee_core::ct!("ftKb_SpecialN_800F5874");
     unsafe {
         let cd = (*crate::tu::ftkirbyspecialn::ftKb_KirbyFtData()).ext_attr as *const ftCommonData;
         (*arg0).x = (*cd).x9C_radians;
@@ -215,6 +226,7 @@ pub fn ftKb_SpecialN_800F5874(arg0: *mut Vec2) {
 
 /// `ftKb_SpecialN_800F5898`: Kirby's hat-less item joint (`ft_data->x48_items[4]`).
 pub fn ftKb_SpecialN_800F5898(gobj: *mut HSD_GObj) -> *mut HSD_Joint {
+    melee_core::ct!("ftKb_SpecialN_800F5898");
     unsafe {
         let fp = fpp(gobj);
         let ca = (*fp).ft_data;

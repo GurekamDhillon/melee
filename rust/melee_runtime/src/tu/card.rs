@@ -132,6 +132,7 @@ pub static mut requests: [CardRequest; 32] = [CardRequest {
     callback: None,
 }; 32];
 pub unsafe extern "C" fn checkOpen(mut state: *mut CardState) -> i32 {
+    melee_core::ct!("checkOpen");
     let mut i: i32 = 0;
     let mut result: i32 = 0;
     i = 0 as i32;
@@ -145,6 +146,7 @@ pub unsafe extern "C" fn checkOpen(mut state: *mut CardState) -> i32 {
     return result;
 }
 pub unsafe extern "C" fn hsd_803A949C(mut chan: s32, mut card_result: s32) {
+    melee_core::ct!("hsd_803A949C");
     let mut state: *mut CardState = ::core::ptr::null_mut::<CardState>();
     let mut block: *mut u8 = ::core::ptr::null_mut::<u8>();
     let mut result: s32 = 0;
@@ -1155,6 +1157,7 @@ pub unsafe extern "C" fn hsd_803A949C(mut chan: s32, mut card_result: s32) {
     );
 }
 pub unsafe extern "C" fn fn_803AA790() -> i32 {
+    melee_core::ct!("fn_803AA790");
     let mut entry: *mut CardRequest = ::core::ptr::null_mut::<CardRequest>();
     let mut result: s32 = 0;
     let mut state: *mut CardState = ::core::ptr::null_mut::<CardState>();
@@ -1309,6 +1312,7 @@ pub unsafe extern "C" fn retryCardOpen(
     mut filename: *const i8,
     mut file_info: *mut CARDFileInfo,
 ) -> s32 {
+    melee_core::ct!("retryCardOpen");
     let mut i: s32 = 0;
     let mut result: s32 = 0;
     i = 0 as i32 as s32;
@@ -1327,6 +1331,7 @@ pub unsafe extern "C" fn retryCardFastOpen(
     mut file_no: s32,
     mut file_info: *mut CARDFileInfo,
 ) -> s32 {
+    melee_core::ct!("retryCardFastOpen");
     let mut i: s32 = 0;
     let mut result: s32 = 0;
     i = 0 as i32 as s32;
@@ -1347,6 +1352,7 @@ pub unsafe extern "C" fn retryCardReadAsync(
     mut offset: s32,
     mut callback: CARDCallback,
 ) -> s32 {
+    melee_core::ct!("retryCardReadAsync");
     let mut i: s32 = 0;
     let mut result: s32 = 0;
     i = 0 as i32 as s32;
@@ -1367,6 +1373,7 @@ pub unsafe extern "C" fn retryCardWriteAsync(
     mut offset: s32,
     mut callback: CARDCallback,
 ) -> s32 {
+    melee_core::ct!("retryCardWriteAsync");
     let mut i: s32 = 0;
     let mut result: s32 = 0;
     i = 0 as i32 as s32;
@@ -1381,6 +1388,7 @@ pub unsafe extern "C" fn retryCardWriteAsync(
 }
 #[inline]
 pub unsafe extern "C" fn retryCardClose(mut file_info: *mut CARDFileInfo) -> s32 {
+    melee_core::ct!("retryCardClose");
     let mut i: s32 = 0;
     let mut result: s32 = 0;
     i = 0 as i32 as s32;
@@ -1401,6 +1409,7 @@ pub unsafe extern "C" fn retryCardCreateAsync(
     mut file_info: *mut CARDFileInfo,
     mut callback: CARDCallback,
 ) -> s32 {
+    melee_core::ct!("retryCardCreateAsync");
     let mut i: s32 = 0;
     let mut result: s32 = 0;
     i = 0 as i32 as s32;
@@ -1419,6 +1428,7 @@ pub unsafe extern "C" fn retryCardGetStatus(
     mut file_no: s32,
     mut stat: *mut CARDStat,
 ) -> s32 {
+    melee_core::ct!("retryCardGetStatus");
     let mut i: s32 = 0;
     let mut result: s32 = 0;
     i = 0 as i32 as s32;
@@ -1438,6 +1448,7 @@ pub unsafe extern "C" fn retryCardSetStatusAsync(
     mut stat: *mut CARDStat,
     mut callback: CARDCallback,
 ) -> s32 {
+    melee_core::ct!("retryCardSetStatusAsync");
     let mut i: s32 = 0;
     let mut result: s32 = 0;
     i = 0 as i32 as s32;
@@ -1452,6 +1463,7 @@ pub unsafe extern "C" fn retryCardSetStatusAsync(
 }
 #[inline]
 pub unsafe extern "C" fn setupCardIcons(mut cmd: *const CardCmd) -> i32 {
+    melee_core::ct!("setupCardIcons");
     let mut bit: u32 = 0;
     let mut k: s32 = 0;
     bit = 0 as u32;
@@ -1476,6 +1488,7 @@ pub unsafe extern "C" fn setupCardIcons(mut cmd: *const CardCmd) -> i32 {
 }
 #[inline]
 pub unsafe extern "C" fn unpackCardStat(mut cmd: *const CardCmd, mut stat: *mut CARDStat) {
+    melee_core::ct!("unpackCardStat");
     let mut k: s32 = 0;
     (*(*cmd).state).icon_info.banner_format = ((*stat).bannerFormat as i32
         & 3 as i32) as u8;
@@ -1499,6 +1512,7 @@ pub unsafe extern "C" fn unpackCardStat(mut cmd: *const CardCmd, mut stat: *mut 
         .wrapping_sub(used.card_div((*(*cmd).state).sector_size)) as s32;
 }
 pub unsafe extern "C" fn rollbackCardCommands(mut snap: s32) {
+    melee_core::ct!("rollbackCardCommands");
     let mut saved: s32 = snap;
     while saved != curr_tail {
         commands[saved as usize].r#type = CARD_CMD_NONE;
@@ -1516,6 +1530,7 @@ pub unsafe extern "C" fn initHeaderBlockCommand(
     mut banner: *mut c_void,
     mut icons: *mut c_void,
 ) {
+    melee_core::ct!("initHeaderBlockCommand");
     (*buf).r#type = CARD_CMD_READ_HEADER;
     (*buf).state = state;
     (*buf).anon_8.read_header.index = block as s32;
@@ -1531,6 +1546,7 @@ pub unsafe extern "C" fn queueHeaderBlock(
     mut banner: *mut c_void,
     mut icons: *mut c_void,
 ) -> s32 {
+    melee_core::ct!("queueHeaderBlock");
     let mut buf: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
@@ -1557,6 +1573,7 @@ pub unsafe extern "C" fn queueHeaderBlocks(
     mut banner: *mut c_void,
     mut icons: *mut c_void,
 ) -> s32 {
+    melee_core::ct!("queueHeaderBlocks");
     let mut i: u32 = 0;
     let mut result: i32 = 0;
     i = 0 as u32;
@@ -1576,6 +1593,7 @@ pub unsafe extern "C" fn queueHeaderBlocks(
     return 0 as s32;
 }
 pub unsafe extern "C" fn hsd_803AAA48() {
+    melee_core::ct!("hsd_803AAA48");
     let mut result: s32 = 0;
     let mut chan: s32 = 0;
     's_8: loop {
@@ -2564,6 +2582,7 @@ pub unsafe extern "C" fn hsd_803AAA48() {
     };
 }
 pub unsafe extern "C" fn fn_803AC168(mut cmd: *const CardCmd) -> i32 {
+    melee_core::ct!("fn_803AC168");
     let mut intr: BOOL = 0;
     let mut mode: s32 = 0;
     let mut read_idx: s32 = 0;
@@ -2600,6 +2619,7 @@ pub unsafe extern "C" fn fn_803AC168(mut cmd: *const CardCmd) -> i32 {
     return 0 as i32;
 }
 pub unsafe extern "C" fn fn_803AC258(mut state: *mut CardState, mut block_idx: s32) -> s32 {
+    melee_core::ct!("fn_803AC258");
     let mut cmd: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
@@ -2626,6 +2646,7 @@ pub unsafe extern "C" fn fn_803AC258(mut state: *mut CardState, mut block_idx: s
     return fn_803AC168(&raw mut cmd) as s32;
 }
 pub unsafe extern "C" fn fn_803AC2A4(mut state: *mut CardState) -> s32 {
+    melee_core::ct!("fn_803AC2A4");
     let mut cmd: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
@@ -2647,9 +2668,11 @@ pub unsafe extern "C" fn fn_803AC2A4(mut state: *mut CardState) -> s32 {
     return fn_803AC168(&raw mut cmd) as s32;
 }
 pub unsafe extern "C" fn fn_803AC2D4() {
+    melee_core::ct!("fn_803AC2D4");
     hsd_804D7998 = curr_tail as i32;
 }
 pub unsafe extern "C" fn fn_803AC2E0() {
+    melee_core::ct!("fn_803AC2E0");
     let mut saved: s32 = 0;
     if hsd_804D7998 < 0 as i32 {
         return;
@@ -2663,11 +2686,13 @@ pub unsafe extern "C" fn fn_803AC2E0() {
     ::core::ptr::write_volatile(&mut curr_tail as *mut s32, hsd_804D7998 as s32);
 }
 pub unsafe extern "C" fn fn_803AC334() {
+    melee_core::ct!("fn_803AC334");
     hsd_804D7998 = -(1 as i32);
 }
 pub unsafe extern "C" fn hsd_803AC340(
     mut icon_info: *mut CardIconInfo,
 ) -> i32 {
+    melee_core::ct!("hsd_803AC340");
     let mut data: *mut u8 = icon_info as *mut c_void as *mut u8;
     let mut banner_size: i32 = 0;
     let mut icon_size: i32 = 0;
@@ -2718,6 +2743,7 @@ pub unsafe extern "C" fn hsd_803AC3E0(
     mut file_flags: i32,
     mut data: *mut u8,
 ) {
+    melee_core::ct!("hsd_803AC3E0");
     (*state).file_flags[file_idx as usize] = file_flags;
     (*state).file_sizes[file_idx as usize] = file_size;
     (*state).file_data[file_idx as usize] = data;
@@ -2733,6 +2759,7 @@ pub unsafe extern "C" fn fn_803AC3F8(
     mut data: *mut u8,
     mut file_idx: s32,
 ) {
+    melee_core::ct!("fn_803AC3F8");
     let mut start: s32 = 0;
     let mut i: s32 = 0;
     if file_idx as i32 + 1 as i32
@@ -2773,6 +2800,7 @@ pub unsafe extern "C" fn fn_803AC3F8(
     }
 }
 pub unsafe extern "C" fn hsd_803AC558(mut state: *mut CardState, mut data: *mut u8) {
+    melee_core::ct!("hsd_803AC558");
     let mut i: i32 = 0;
     i = 0 as i32;
     while i < 3 as i32 {
@@ -2799,6 +2827,7 @@ pub unsafe extern "C" fn hsd_803AC558(mut state: *mut CardState, mut data: *mut 
     }
 }
 pub unsafe extern "C" fn fn_803AC634(mut state: *mut CardState, mut file_idx: s32) -> u32 {
+    melee_core::ct!("fn_803AC634");
     if (*state).file_sizes[file_idx as usize] <= 0 as i32 {
         return 0 as u32;
     }
@@ -2833,6 +2862,7 @@ pub unsafe extern "C" fn fn_803AC634(mut state: *mut CardState, mut file_idx: s3
 }
 #[inline]
 pub unsafe extern "C" fn fn_803AC6B8_first_block_count(mut state: *mut CardState) -> u32 {
+    melee_core::ct!("fn_803AC6B8_first_block_count");
     if (*state).file_sizes[0 as i32 as usize] <= 0 as i32 {
         return 0 as u32;
     }
@@ -2856,6 +2886,7 @@ pub unsafe extern "C" fn fn_803AC6B8_first_block_count(mut state: *mut CardState
         .wrapping_add(1 as u32);
 }
 pub unsafe extern "C" fn fn_803AC6B8(mut state: *mut CardState, mut file_idx: s32) -> s32 {
+    melee_core::ct!("fn_803AC6B8");
     let mut sector_size: u32 = 0;
     let mut remaining: s32 = 0;
     let mut usable: u32 = 0;
@@ -2917,6 +2948,7 @@ pub unsafe extern "C" fn fn_803AC6B8_blocks_before(
     mut state: *mut CardState,
     mut file_idx: s32,
 ) -> s32 {
+    melee_core::ct!("fn_803AC6B8_blocks_before");
     let mut total: s32 = 0;
     let mut i: s32 = 0;
     if file_idx >= 9 as i32 {
@@ -2943,6 +2975,7 @@ pub unsafe extern "C" fn fn_803AC7DC_block_count(
     mut state: *mut CardState,
     mut file_idx: s32,
 ) -> s32 {
+    melee_core::ct!("fn_803AC7DC_block_count");
     let mut blocks: s32 = 0;
     if (*state).file_sizes[file_idx as usize] <= 0 as i32 {
         blocks = 0 as i32 as s32;
@@ -2979,6 +3012,7 @@ pub unsafe extern "C" fn fn_803AC7DC_block_count(
     return blocks;
 }
 pub unsafe extern "C" fn fn_803AC7DC(mut state: *mut CardState) -> s32 {
+    melee_core::ct!("fn_803AC7DC");
     let mut total: s32 = 0 as s32;
     let mut spare_blocks: s32 = 0 as s32;
     let mut i: s32 = 0;
@@ -3020,6 +3054,7 @@ pub unsafe extern "C" fn fn_803AC7DC(mut state: *mut CardState) -> s32 {
 }
 #[inline]
 pub unsafe extern "C" fn fn_803ACB74(mut seq_a: s32, mut seq_b: s32) -> s32 {
+    melee_core::ct!("fn_803ACB74");
     if seq_a < 0 as i32 {
         return -(1 as s32);
     }
@@ -3041,6 +3076,7 @@ pub unsafe extern "C" fn fn_803ACB74(mut seq_a: s32, mut seq_b: s32) -> s32 {
     return seq_a - seq_b;
 }
 pub unsafe extern "C" fn fn_803ACBE8(mut state: *mut CardState, mut block_idx: s32) -> s32 {
+    melee_core::ct!("fn_803ACBE8");
     let mut sector_size: u32 = (*state).sector_size;
     let mut temp: u32 = (*state).header_size.wrapping_add(sector_size);
     let mut num: u32 = temp.wrapping_add(0x2f as u32);
@@ -3057,6 +3093,7 @@ pub unsafe extern "C" fn fn_803ACC0C(
     mut expected_data: *mut c_void,
     mut data_size: s32,
 ) -> s32 {
+    melee_core::ct!("fn_803ACC0C");
     let mut result: s32 = 0;
     let mut retries: s32 = 0;
     let mut buf: *mut u8 = ::core::ptr::null_mut::<u8>();
@@ -3132,6 +3169,7 @@ pub unsafe extern "C" fn fn_803ACD58(
     mut banner: *mut c_void,
     mut icons: *mut c_void,
 ) -> s32 {
+    melee_core::ct!("fn_803ACD58");
     let mut banner_size: s32 = 0;
     let mut i: s32 = 0;
     let mut icons_start: s32 = 0;
@@ -3263,6 +3301,7 @@ pub unsafe extern "C" fn fn_803ACF30(
     mut banner: *mut c_void,
     mut icons: *mut c_void,
 ) -> s32 {
+    melee_core::ct!("fn_803ACF30");
     let mut buf: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
@@ -3307,6 +3346,7 @@ pub unsafe extern "C" fn fn_803ACFC0_header(
     mut state: *mut CardState,
     mut hdr_offset: s32,
 ) -> *mut u8 {
+    melee_core::ct!("fn_803ACFC0_header");
     return (*state).sector_buf.offset(hdr_offset as isize);
 }
 #[inline]
@@ -3314,6 +3354,7 @@ pub unsafe extern "C" fn fn_803ACFC0_checksum_start(
     mut hdr_offset: s32,
     mut state: *mut CardState,
 ) -> *mut u8 {
+    melee_core::ct!("fn_803ACFC0_checksum_start");
     return (*state).sector_buf.offset(hdr_offset as isize);
 }
 pub unsafe extern "C" fn fn_803ACFC0(
@@ -3325,6 +3366,7 @@ pub unsafe extern "C" fn fn_803ACFC0(
     mut payload_size: s32,
     mut file_idx: s32,
 ) -> s32 {
+    melee_core::ct!("fn_803ACFC0");
     let mut sector_size: u32 = 0;
     let mut retries: s32 = 0;
     let mut buf: *mut u8 = ::core::ptr::null_mut::<u8>();
@@ -3446,6 +3488,7 @@ pub unsafe extern "C" fn fn_803ACFC0(
 }
 #[inline]
 pub unsafe extern "C" fn fn_803AD16C_total_blocks(mut state: *mut CardState) -> s32 {
+    melee_core::ct!("fn_803AD16C_total_blocks");
     return (*state).num_blocks;
 }
 #[inline]
@@ -3453,6 +3496,7 @@ pub unsafe extern "C" fn fn_803AD16C_logical_index(
     mut blocks_before: s32,
     mut i: s32,
 ) -> s32 {
+    melee_core::ct!("fn_803AD16C_logical_index");
     return blocks_before + i;
 }
 #[inline]
@@ -3460,14 +3504,16 @@ pub unsafe extern "C" fn fn_803AD16C_file_size(
     mut state: *mut CardState,
     mut file_idx: s32,
 ) -> s32 {
+    melee_core::ct!("fn_803AD16C_file_size");
     return (*state).file_sizes[file_idx as usize];
 }
 #[inline]
 pub unsafe extern "C" fn fn_803AD16C_nonnegative(mut logical: s32) -> i32 {
+    melee_core::ct!("fn_803AD16C_nonnegative");
     return (logical >= 0 as i32) as i32;
 }
 #[inline]
-pub unsafe extern "C" fn fn_803AD16C_own(mut value: *mut c_void) {}
+pub unsafe extern "C" fn fn_803AD16C_own(mut value: *mut c_void) { melee_core::ct!("fn_803AD16C_own");}
 #[inline]
 pub unsafe extern "C" fn fn_803AD16C_queue_clear(
     mut state: *mut CardState,
@@ -3475,6 +3521,7 @@ pub unsafe extern "C" fn fn_803AD16C_queue_clear(
     mut offset: s32,
     mut file_idx: s32,
 ) -> s32 {
+    melee_core::ct!("fn_803AD16C_queue_clear");
     let mut cmd: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
@@ -3507,6 +3554,7 @@ pub unsafe extern "C" fn fn_803AD16C_queue_read(
     mut state: *mut CardState,
     mut phys: s32,
 ) -> s32 {
+    melee_core::ct!("fn_803AD16C_queue_read");
     let mut cmd: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
@@ -3543,6 +3591,7 @@ pub unsafe extern "C" fn fn_803AD16C_queue_write(
     mut block_id: s32,
     mut seq: s32,
 ) -> s32 {
+    melee_core::ct!("fn_803AD16C_queue_write");
     let mut cmd: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
@@ -3581,6 +3630,7 @@ pub unsafe extern "C" fn fn_803AD16C_queue_write_last(
     mut block_id: s32,
     mut seq: s32,
 ) -> s32 {
+    melee_core::ct!("fn_803AD16C_queue_write_last");
     let mut tail: [s32; 2] = [0; 2];
     let mut cmd: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
@@ -3615,6 +3665,7 @@ pub unsafe extern "C" fn fn_803AD16C_queue_write_last(
     return fn_803AC168(&raw mut cmd) as s32;
 }
 pub unsafe extern "C" fn fn_803AD16C(mut state: *mut CardState) -> s32 {
+    melee_core::ct!("fn_803AD16C");
     let mut ids: [s32; 64] = [0; 64];
     let mut seq: [s32; 64] = [0; 64];
     let mut newmap: [s32; 64] = [0; 64];
@@ -3890,6 +3941,7 @@ pub unsafe extern "C" fn fn_803ADE4C(
     mut file_no: i32,
     mut callback: CardCallback,
 ) -> i32 {
+    melee_core::ct!("fn_803ADE4C");
     let mut cmd_open: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
@@ -3976,6 +4028,7 @@ pub unsafe extern "C" fn queueCardReadCommand(
     mut length: s32,
     mut offset: s32,
 ) -> s32 {
+    melee_core::ct!("queueCardReadCommand");
     let mut command: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
@@ -4007,6 +4060,7 @@ pub unsafe extern "C" fn calculateDataBlockSize(
     mut file_idx: s32,
     mut block_idx: s32,
 ) -> s32 {
+    melee_core::ct!("calculateDataBlockSize");
     if file_idx == 0 as i32 && block_idx == 0 as i32 {
         return (*state)
             .sector_size
@@ -4025,6 +4079,7 @@ pub unsafe extern "C" fn calculateFileBlockCount(
     mut state: *mut CardState,
     mut file_idx: s32,
 ) -> s32 {
+    melee_core::ct!("calculateFileBlockCount");
     let mut file_size: s32 = (*state).file_sizes[file_idx as usize];
     if file_size <= 0 as i32 {
         return 0 as s32
@@ -4066,6 +4121,7 @@ pub unsafe extern "C" fn retryCardRead(
     mut length: s32,
     mut offset: s32,
 ) -> s32 {
+    melee_core::ct!("retryCardRead");
     let mut result: s32 = 0;
     let mut retries: s32 = 0;
     retries = 0 as i32 as s32;
@@ -4085,6 +4141,7 @@ pub unsafe extern "C" fn retryCardRead(
 }
 #[inline]
 pub unsafe extern "C" fn cancelQueuedCardCommands() {
+    melee_core::ct!("cancelQueuedCardCommands");
     let mut snap: s32 = hsd_804D7998 as s32;
     if snap >= 0 as i32 {
         let mut saved: s32 = snap;
@@ -4106,6 +4163,7 @@ pub unsafe extern "C" fn queueCardClearCommand(
     mut dst: *mut u8,
     mut size: s32,
 ) -> s32 {
+    melee_core::ct!("queueCardClearCommand");
     let mut command: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
@@ -4138,6 +4196,7 @@ pub unsafe extern "C" fn queueClearDataBlock(
     mut dst: *mut u8,
     mut size: s32,
 ) -> s32 {
+    melee_core::ct!("queueClearDataBlock");
     return if size == 0 as i32 {
         0 as s32
     } else {
@@ -4150,6 +4209,7 @@ pub unsafe extern "C" fn cardDataBlockOffset(
     mut sector_size: u32,
     mut data_block: s32,
 ) -> s32 {
+    melee_core::ct!("cardDataBlockOffset");
     let mut temp: u32 = (*state).header_size.wrapping_add(sector_size);
     let mut idx: u32 = 0;
     temp = temp.wrapping_add(0x2f as u32).card_div(sector_size);
@@ -4164,6 +4224,7 @@ pub unsafe extern "C" fn queueReadDataBlock(
     mut dst: *mut u8,
     mut size: s32,
 ) -> i32 {
+    melee_core::ct!("queueReadDataBlock");
     let mut sector_size: u32 = (*state).sector_size;
     let mut temp: u32 = (*state).header_size.wrapping_add(sector_size);
     let mut num: u32 = temp.wrapping_add(0x2f as u32);
@@ -4187,6 +4248,7 @@ pub unsafe extern "C" fn readCardDataBlockFirst(
     mut dst: *mut u8,
     mut length: s32,
 ) -> s32 {
+    melee_core::ct!("readCardDataBlockFirst");
     let mut offset: s32 = cardDataBlockOffset(state, sector_size, data_block);
     let mut buf: *mut u8 = (*state).sector_buf;
     let mut hdr_offset: s32 = 0;
@@ -4236,6 +4298,7 @@ pub unsafe extern "C" fn readCardDataBlockFinal(
     mut dst: *mut u8,
     mut length: s32,
 ) -> s32 {
+    melee_core::ct!("readCardDataBlockFinal");
     let mut read_offset: u32 = 0;
     let mut buf: *mut u8 = ::core::ptr::null_mut::<u8>();
     let mut retries: s32 = 0;
@@ -4300,6 +4363,7 @@ pub unsafe extern "C" fn fn_803ADF90(
     mut async_0: i32,
     mut callback: CardCallback,
 ) -> i32 {
+    melee_core::ct!("fn_803ADF90");
     let mut dst: *mut u8 = ::core::ptr::null_mut::<u8>();
     let mut remaining: s32 = 0;
     let mut block_map: [s32; 64] = [0; 64];
@@ -4482,6 +4546,7 @@ pub unsafe extern "C" fn fn_803ADF90(
 }
 #[inline]
 pub unsafe extern "C" fn fn_803AE7F8_rewind() {
+    melee_core::ct!("fn_803AE7F8_rewind");
     let mut snap: s32 = hsd_804D7998 as s32;
     if snap >= 0 as i32 {
         let mut saved: s32 = snap;
@@ -4499,6 +4564,7 @@ pub unsafe extern "C" fn fn_803AE7F8_rewind() {
 }
 #[inline]
 pub unsafe extern "C" fn fn_803AE7F8_close(mut state: *mut CardState) {
+    melee_core::ct!("fn_803AE7F8_close");
     let mut retries: s32 = 0;
     retries = 0 as i32 as s32;
     while retries < 10 as i32 {
@@ -4515,6 +4581,7 @@ pub unsafe extern "C" fn fn_803AE7F8(
     mut async_0: i32,
     mut callback: CardCallback,
 ) -> i32 {
+    melee_core::ct!("fn_803AE7F8");
     let mut current_block: u64;
     let mut st: *mut CardState = state;
     let mut block_map: [[s32; 64]; 3] = [[0; 64]; 3];
@@ -5126,6 +5193,7 @@ pub unsafe extern "C" fn fn_803AE7F8(
 }
 #[inline]
 pub unsafe extern "C" fn fn_803AF3F0_chunk_size(mut state: *mut CardState) -> s32 {
+    melee_core::ct!("fn_803AF3F0_chunk_size");
     return (*state).sector_size.wrapping_sub(0x20 as u32) as s32;
 }
 #[inline]
@@ -5137,6 +5205,7 @@ pub unsafe extern "C" fn fn_803AF3F0_queue_verify_first(
     mut data: *mut c_void,
     mut size: s32,
 ) -> s32 {
+    melee_core::ct!("fn_803AF3F0_queue_verify_first");
     if size == 0 as i32 {
         return 0 as s32;
     }
@@ -5175,6 +5244,7 @@ pub unsafe extern "C" fn fn_803AF3F0_queue_verify_final(
     mut data: *mut c_void,
     mut size: s32,
 ) -> s32 {
+    melee_core::ct!("fn_803AF3F0_queue_verify_final");
     let mut result: s32 = 0;
     if size == 0 as i32 {
         return 0 as s32;
@@ -5216,6 +5286,7 @@ pub unsafe extern "C" fn fn_803AF3F0_queue_write_first(
     mut size: s32,
     mut file_idx: s32,
 ) -> s32 {
+    melee_core::ct!("fn_803AF3F0_queue_write_first");
     let mut cmd: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
@@ -5284,6 +5355,7 @@ pub unsafe extern "C" fn fn_803AF3F0_queue_write_final(
     mut size: s32,
     mut file_idx: s32,
 ) -> s32 {
+    melee_core::ct!("fn_803AF3F0_queue_write_final");
     let mut cmd: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
@@ -5346,6 +5418,7 @@ pub unsafe extern "C" fn fn_803AF3F0_queue_write_final(
 }
 #[inline]
 pub unsafe extern "C" fn fn_803AF3F0_rewind() {
+    melee_core::ct!("fn_803AF3F0_rewind");
     let mut snap: s32 = hsd_804D7998 as s32;
     if snap >= 0 as i32 {
         let mut saved: s32 = snap;
@@ -5363,6 +5436,7 @@ pub unsafe extern "C" fn fn_803AF3F0_rewind() {
 }
 #[inline]
 pub unsafe extern "C" fn fn_803AF3F0_close(mut state: *mut CardState) {
+    melee_core::ct!("fn_803AF3F0_close");
     let mut retries: s32 = 0;
     retries = 0 as i32 as s32;
     while retries < 10 as i32 {
@@ -5378,6 +5452,7 @@ pub unsafe extern "C" fn fn_803AF3F0_open(
     mut file_no: s32,
     mut info: *mut CARDFileInfo,
 ) -> s32 {
+    melee_core::ct!("fn_803AF3F0_open");
     let mut retries: s32 = 0;
     let mut open_result: s32 = 0;
     retries = 0 as i32 as s32;
@@ -5398,6 +5473,7 @@ pub unsafe extern "C" fn fn_803AF3F0_check_seq(
     mut current_seq: s32,
     mut needs_rewrite: *mut s32,
 ) {
+    melee_core::ct!("fn_803AF3F0_check_seq");
     let mut i: s32 = 0;
     i = 0 as i32 as s32;
     while i < count {
@@ -5418,6 +5494,7 @@ pub unsafe extern "C" fn fn_803AF3F0_calc_file_blocks(
     mut file_blocks: *mut s32,
     mut total_blocks: *mut s32,
 ) {
+    melee_core::ct!("fn_803AF3F0_calc_file_blocks");
     if (*state).file_sizes[file_idx as usize] <= 0 as i32 {
         *file_blocks = 0 as i32 as s32;
     } else if file_idx == 0 as i32 {
@@ -5459,6 +5536,7 @@ pub unsafe extern "C" fn fn_803AF3F0(
     mut async_0: i32,
     mut callback: CardCallback,
 ) -> i32 {
+    melee_core::ct!("fn_803AF3F0");
     let mut current_block: u64;
     let mut block_map: [[s32; 64]; 3] = [[0; 64]; 3];
     let mut needs_rewrite: s32 = 0;
@@ -5897,6 +5975,7 @@ pub unsafe extern "C" fn fn_803AF3F0(
 }
 #[inline]
 pub unsafe extern "C" fn fn_803B0120_first_chunk(mut state: *mut CardState) -> s32 {
+    melee_core::ct!("fn_803B0120_first_chunk");
     let mut sector_size: u32 = (*state).sector_size;
     return sector_size.wrapping_sub(0x20 as u32) as s32
         - (*state).header_size.wrapping_add(0x30 as u32).card_rem(sector_size)
@@ -5904,6 +5983,7 @@ pub unsafe extern "C" fn fn_803B0120_first_chunk(mut state: *mut CardState) -> s
 }
 #[inline]
 pub unsafe extern "C" fn fn_803B0120_rewind() {
+    melee_core::ct!("fn_803B0120_rewind");
     let mut snap: s32 = hsd_804D7998 as s32;
     if snap >= 0 as i32 {
         let mut saved: s32 = snap;
@@ -5921,6 +6001,7 @@ pub unsafe extern "C" fn fn_803B0120_rewind() {
 }
 #[inline]
 pub unsafe extern "C" fn fn_803B0120_close(mut state: *mut CardState) {
+    melee_core::ct!("fn_803B0120_close");
     let mut retries: s32 = 0;
     retries = 0 as i32 as s32;
     while retries < 10 as i32 {
@@ -5932,6 +6013,7 @@ pub unsafe extern "C" fn fn_803B0120_close(mut state: *mut CardState) {
 }
 #[inline]
 pub unsafe extern "C" fn fn_803B0120_close_result(mut state: *mut CardState) -> s32 {
+    melee_core::ct!("fn_803B0120_close_result");
     let mut result: s32 = 0;
     let mut retries: s32 = 0;
     let mut ret: s32 = 0;
@@ -5951,6 +6033,7 @@ pub unsafe extern "C" fn fn_803B0120_block_offset(
     mut state: *mut CardState,
     mut block_idx: s32,
 ) -> s32 {
+    melee_core::ct!("fn_803B0120_block_offset");
     let mut size: u32 = (*state).sector_size;
     let mut temp: u32 = (*state).header_size.wrapping_add(size);
     let mut num: u32 = temp.wrapping_add(0x2f as u32);
@@ -5967,6 +6050,7 @@ pub unsafe extern "C" fn fn_803B0120_queue_verify(
     mut data: *mut c_void,
     mut size: s32,
 ) -> s32 {
+    melee_core::ct!("fn_803B0120_queue_verify");
     let mut result: s32 = 0;
     if size == 0 as i32 {
         return 0 as s32;
@@ -6008,6 +6092,7 @@ pub unsafe extern "C" fn fn_803B0120_queue_write(
     mut size: s32,
     mut file_idx: s32,
 ) -> s32 {
+    melee_core::ct!("fn_803B0120_queue_write");
     let mut cmd: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
@@ -6075,6 +6160,7 @@ pub unsafe extern "C" fn fn_803B0120(
     mut async_0: i32,
     mut callback: CardCallback,
 ) -> i32 {
+    melee_core::ct!("fn_803B0120");
     let mut current_block: u64;
     let mut block_map: [[s32; 64]; 3] = [[0; 64]; 3];
     let mut needs_rewrite: s32 = 0;
@@ -6525,6 +6611,7 @@ pub unsafe extern "C" fn queueVerifyCardHeader(
     mut banner: *mut c_void,
     mut icons: *mut c_void,
 ) -> s32 {
+    melee_core::ct!("queueVerifyCardHeader");
     let mut block_idx: u32 = 0;
     let mut result: s32 = 0;
     block_idx = 0 as u32;
@@ -6552,6 +6639,7 @@ pub unsafe extern "C" fn fn_803B0E9C_write_block(
     mut state: *mut CardState,
     mut block_idx: s32,
 ) -> s32 {
+    melee_core::ct!("fn_803B0E9C_write_block");
     let mut write_size: u32 = (*state).sector_size;
     let mut offset: s32 = write_size.wrapping_mul(block_idx as u32) as s32;
     let mut buf: *mut u8 = (*state).sector_buf;
@@ -6577,6 +6665,7 @@ pub unsafe extern "C" fn fn_803B0E9C_write_block_final(
     mut state: *mut CardState,
     mut block_idx: s32,
 ) -> s32 {
+    melee_core::ct!("fn_803B0E9C_write_block_final");
     let mut write_size: u32 = (*state).sector_size;
     let mut retries: s32 = 0;
     let mut result: s32 = 0;
@@ -6602,6 +6691,7 @@ pub unsafe extern "C" fn fn_803B0E9C_read_first(
     mut state: *mut CardState,
     mut sector_size: u32,
 ) -> s32 {
+    melee_core::ct!("fn_803B0E9C_read_first");
     let mut read_size: u32 = sector_size;
     let mut buf: *mut u8 = (*state).sector_buf;
     let mut retries: s32 = 0;
@@ -6628,6 +6718,7 @@ pub unsafe extern "C" fn fn_803B0E9C(
     mut is_new: i32,
     mut async_0: i32,
 ) -> i32 {
+    melee_core::ct!("fn_803B0E9C");
     let mut digest: [u8; 48] = [0; 48];
     let mut cmd_done: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
@@ -6975,6 +7066,7 @@ pub unsafe extern "C" fn fn_803B1338_queue_write(
     mut init_buf: *mut CardCmdBuf,
     mut buf: *mut CardCmdBuf,
 ) -> s32 {
+    melee_core::ct!("fn_803B1338_queue_write");
     let mut ofs: s32 = fn_803ACBE8(state, phys);
     let mut result: s32 = 0;
     if phys == 0 as i32 {
@@ -7009,10 +7101,12 @@ pub unsafe extern "C" fn fn_803B1338_data_at(
     mut file_payload: *mut u8,
     mut offset: s32,
 ) -> *mut u8 {
+    melee_core::ct!("fn_803B1338_data_at");
     return file_payload.offset(offset as isize);
 }
 #[inline]
 pub unsafe extern "C" fn fn_803B1338_data_size(mut state: *mut CardState) -> s32 {
+    melee_core::ct!("fn_803B1338_data_size");
     return (*state).sector_size.wrapping_sub(0x20 as u32) as s32;
 }
 #[inline]
@@ -7026,6 +7120,7 @@ pub unsafe extern "C" fn fn_803B1338_queue_write_data(
     mut init_buf: *mut CardCmdBuf,
     mut buf: *mut CardCmdBuf,
 ) -> s32 {
+    melee_core::ct!("fn_803B1338_queue_write_data");
     let mut ofs: s32 = fn_803ACBE8(state, phys);
     let mut data: *mut u8 = fn_803B1338_data_at(fdata, offset);
     let mut size: s32 = fn_803B1338_data_size(state);
@@ -7061,6 +7156,7 @@ pub unsafe extern "C" fn fn_803B1338(
     mut state: *mut CardState,
     mut async_0: i32,
 ) -> i32 {
+    melee_core::ct!("fn_803B1338");
     let mut cmd0: CardCmdBuf = CardCmdBuf {
         cmd: CardCmd {
             r#type: CARD_CMD_NONE,
@@ -7854,6 +7950,7 @@ pub unsafe extern "C" fn fn_803B1F78(
     mut icons: *mut c_void,
     mut callback: CardCallback,
 ) -> i32 {
+    melee_core::ct!("fn_803B1F78");
     let mut cmd_create: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
@@ -7995,6 +8092,7 @@ pub unsafe extern "C" fn fn_803B21E8(
     mut icons: *mut c_void,
     mut callback: CardCallback,
 ) -> i32 {
+    melee_core::ct!("fn_803B21E8");
     let mut cmd_set_status: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
@@ -8077,6 +8175,7 @@ pub unsafe extern "C" fn fn_803B21E8(
     return 0 as i32;
 }
 pub unsafe extern "C" fn hsd_803B2374() {
+    melee_core::ct!("hsd_803B2374");
     let mut i: i32 = 0;
     hsd_804D7990 = 0 as i32 as s32;
     hsd_804D7994 = 0 as i32 as s32;
@@ -8110,6 +8209,7 @@ pub unsafe extern "C" fn hsd_803B24E4(
     mut sector_size: i32,
     mut work_buf: *mut c_void,
 ) {
+    melee_core::ct!("hsd_803B24E4");
     memset(
         state as *mut c_void,
         0 as i32,
@@ -8125,6 +8225,7 @@ pub unsafe extern "C" fn hsd_803B2550(
     mut filename: *const i8,
     mut callback: CardCallback,
 ) -> i32 {
+    melee_core::ct!("hsd_803B2550");
     let mut file_no_copy: s32 = 0;
     let mut chan: s32 = (*state).chan;
     let mut i: s32 = 0;
@@ -8175,6 +8276,7 @@ pub unsafe extern "C" fn hsd_803B2550(
     return 0 as i32;
 }
 pub unsafe extern "C" fn hsd_803B2674(mut state: *mut CardState) -> i32 {
+    melee_core::ct!("hsd_803B2674");
     let mut blocks: s32 = 0;
     (*state).header_size = hsd_803AC340(&raw mut (*state).icon_info) as u32;
     blocks = (0x2f as u32)
@@ -8191,6 +8293,7 @@ pub unsafe extern "C" fn fn_803B26CC(
     mut icons: *mut c_void,
     mut callback: CardCallback,
 ) -> i32 {
+    melee_core::ct!("fn_803B26CC");
     let mut result: s32 = 0;
     (*state).header_size = hsd_803AC340(&raw mut (*state).icon_info) as u32;
     hsd_804D7998 = curr_tail as i32;
@@ -8215,6 +8318,7 @@ pub unsafe extern "C" fn hsd_803B27F4(
     mut icons: *mut c_void,
     mut callback: CardCallback,
 ) -> i32 {
+    melee_core::ct!("hsd_803B27F4");
     let mut read_idx: s32 = hsd_804D7990;
     let mut write_idx: s32 = hsd_804D7994;
     if read_idx == write_idx {
@@ -8242,6 +8346,7 @@ pub unsafe extern "C" fn hsd_803B286C(
     mut icons: *mut c_void,
     mut callback: CardCallback,
 ) -> i32 {
+    melee_core::ct!("hsd_803B286C");
     memcpy(
         &raw mut (*state).comment as *mut i8
             as *mut c_void,
@@ -8275,6 +8380,7 @@ pub unsafe extern "C" fn hsd_803B2928(
     mut icons: *mut c_void,
     mut callback: CardCallback,
 ) -> i32 {
+    melee_core::ct!("hsd_803B2928");
     memcpy(
         &raw mut (*state).comment as *mut i8
             as *mut c_void,
@@ -8306,6 +8412,7 @@ pub unsafe extern "C" fn hsd_803B29D8(
     mut buf: *mut u8,
     mut callback: CardCallback,
 ) -> i32 {
+    melee_core::ct!("hsd_803B29D8");
     let mut read_idx: s32 = hsd_804D7990;
     let mut write_idx: s32 = hsd_804D7994;
     if read_idx == write_idx {
@@ -8330,6 +8437,7 @@ pub unsafe extern "C" fn hsd_803B2A4C(
     mut buf: *mut u8,
     mut callback: CardCallback,
 ) -> i32 {
+    melee_core::ct!("hsd_803B2A4C");
     let mut read_idx: s32 = 0;
     let mut write_idx: s32 = 0;
     if (*state).file_sizes[file_idx as usize] <= 0 as i32 {
@@ -8357,6 +8465,7 @@ pub unsafe extern "C" fn hsd_SetCardIconInfo(
     mut state: *mut CardState,
     mut icon_info: *mut CardIconInfo,
 ) -> i32 {
+    melee_core::ct!("hsd_SetCardIconInfo");
     memcpy(
         &raw mut (*state).icon_info as *mut c_void,
         icon_info as *const c_void,

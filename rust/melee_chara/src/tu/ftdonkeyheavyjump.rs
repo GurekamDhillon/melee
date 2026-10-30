@@ -10,16 +10,19 @@ use melee_types::*;
 pub use crate::chars::r5::ftDonkey::ftdonkeyheavyjump::ftDk_HeavyJump_Coll;
 
 pub fn ftDk_HeavyJump_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_HeavyJump_IASA");
     if melee_fighter::tu::ftCo_ItemThrow::ftCo_80094EA4(gobj) {
         return;
     }
 }
 
 pub fn ftDk_HeavyJump_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_HeavyJump_Phys");
     melee_fighter::tu::ftCo_Jump::ftCo_Jump_Phys_Inner(gobj);
 }
 
 pub fn ftDk_MS_348_800E04A4(gobj: *mut HSD_GObj, arg1: i32) {
+    melee_core::ct!("ftDk_MS_348_800E04A4");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let donkey_attr = (*fp).x2CC;
@@ -33,6 +36,7 @@ pub fn ftDk_MS_348_800E04A4(gobj: *mut HSD_GObj, arg1: i32) {
 }
 
 pub fn ftDk_HeavyWait1_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_HeavyWait1_Anim");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         if (*fp).mv.dk.unk7.x8 <= 0.0 {

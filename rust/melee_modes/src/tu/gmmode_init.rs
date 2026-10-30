@@ -18,9 +18,11 @@ unsafe fn reset(s: *mut gmm_x0_528_t, stocks: u8) {
 }
 
 pub unsafe extern "C" fn gm_Mode_Adventure_OnInit() {
+    melee_core::ct!("gm_Mode_Adventure_OnInit");
     reset(gmMainLib_8015CDD4(), 3);
 }
 
 pub unsafe extern "C" fn gm_Mode_AllStar_OnInit() {
+    melee_core::ct!("gm_Mode_AllStar_OnInit");
     reset(gmMainLib_8015CDE0(), 1);
 }

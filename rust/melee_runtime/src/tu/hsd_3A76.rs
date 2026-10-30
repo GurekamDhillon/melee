@@ -134,6 +134,7 @@ unsafe fn push_style_byte(text: *mut HSD_Text, b: u8) {
 /// `HSD_SisLib_803A7684` (0x803A7684): push a style entry of type `flags & 0x7F` on the text's
 /// style stack (type 5 stores the stream position `cursor`).
 pub unsafe fn HSD_SisLib_803A7684(text: *mut HSD_Text, cursor: *const u8, flags: u8) {
+    melee_core::ct!("HSD_SisLib_803A7684");
     match flags & 0x7F {
         1 => {
             ensure_style_room(text, 5);
@@ -184,6 +185,7 @@ pub unsafe fn HSD_SisLib_803A7684(text: *mut HSD_Text, cursor: *const u8, flags:
 /// restoring the text's state from it (and removing it if `flags & 0x80` matches the entry's).
 /// Returns the saved stream position for type 5, else 0.
 pub unsafe fn HSD_SisLib_803A7F0C(text: *mut HSD_Text, flags: i32) -> i32 {
+    melee_core::ct!("HSD_SisLib_803A7F0C");
     let flag_hi = flags & 0x80;
     let target_type = flags & 0x7F;
     let mut pos: i32 = (*text).x6C as i32;
@@ -282,6 +284,7 @@ unsafe fn kern_pair(glyph_code: u32, glyph_tex: *const u8) -> (i32, i32) {
 /// `HSD_SisLib_803A8134` (0x803A8134): measure the line starting at `cursor`. Writes the width
 /// and height to `out_width` / `out_height`; style-stack changes made while measuring are undone.
 pub unsafe fn HSD_SisLib_803A8134(mut cursor: *mut u8, text: *mut HSD_Text, out_width: &mut f32, out_height: &mut f32) {
+    melee_core::ct!("HSD_SisLib_803A8134");
     let saved_scale_x = (*text).x80.x;
     let saved_scale_y = (*text).x80.y;
     let saved_spacing = (*text).x78.x;
@@ -398,6 +401,7 @@ unsafe fn sisFitLineToBox(text: *mut HSD_Text, measured_width: f32) {
 /// `HSD_SisLib_803A84BC` (0x803A84BC): GObj render callback (`pass == 2` draws) or, with a NULL
 /// `gobj`, a direct draw of the text whose guest address is `pass`.
 pub unsafe fn HSD_SisLib_803A84BC(gobj: *mut HSD_GObj, pass: i32) {
+    melee_core::ct!("HSD_SisLib_803A84BC");
     let text: *mut HSD_Text;
     if !gobj.is_null() {
         if pass as u32 != 2 {
@@ -893,11 +897,13 @@ unsafe fn sis_render_text(gobj: *mut HSD_GObj, text: *mut HSD_Text) {
 
 /// `HSD_SisLib_803A945C` (0x803A945C)
 pub unsafe fn HSD_SisLib_803A945C(path: *mut i8) -> *mut HSD_Archive {
+    melee_core::ct!("HSD_SisLib_803A945C");
     ext::lbArchive_LoadArchive(path)
 }
 
 /// `HSD_SisLib_803A947C` (0x803A947C)
 pub unsafe fn HSD_SisLib_803A947C(archive: *mut HSD_Archive) {
+    melee_core::ct!("HSD_SisLib_803A947C");
     ext::lbArchive_80016EFC(archive);
 }
 

@@ -23,11 +23,13 @@ use super::ftlipstickswing::fp;
 
 /// `ftCo_8008A698(fp)`: holding an item that is not hold kind 2.
 pub fn ftCo_8008A698(f: &Fighter) -> bool {
+    melee_core::ct!("ftCo_8008A698");
     !f.item_gobj.is_null() && ext::itGetHoldKind(f.item_gobj) != 2
 }
 
 /// `ftCo_8008A6D8(gobj, anim_id)`: switch to wait animation `anim_id` (-1: none).
 pub fn ftCo_8008A6D8(gobj: *mut HSD_GObj, anim_id: i32) {
+    melee_core::ct!("ftCo_8008A6D8");
     if anim_id != -1 {
         set_wait_anim(gobj, anim_id);
     }
@@ -60,6 +62,7 @@ fn inline_a0(f: &Fighter) -> bool {
 /// static inline `getAnimID(table)`: weighted pick, `HSD_Randi(100) + 1` against the running
 /// sum of `y` until the `x == -1` terminator (running off it is the C's fatal assert).
 pub fn get_anim_id_with(mut table: *const WaitStruct, roll: i32) -> i32 {
+    melee_core::ct!("get_anim_id_with");
     let max = roll + 1;
     let mut count = 0i32;
     unsafe {
@@ -78,6 +81,7 @@ pub fn get_anim_id_with(mut table: *const WaitStruct, roll: i32) -> i32 {
 /// `ftCo_8008A7A8(gobj, table)`: at the end of the wait loop, replay (holding an item, unless
 /// Mewtwo or Fox-template) or pick a different wait animation from `table`.
 pub fn ftCo_8008A7A8(gobj: *mut HSD_GObj, arg1: *const WaitStruct) {
+    melee_core::ct!("ftCo_8008A7A8");
     let f = fp(gobj);
     if ext::ftAnim_IsFramesRemaining(gobj) {
         return;

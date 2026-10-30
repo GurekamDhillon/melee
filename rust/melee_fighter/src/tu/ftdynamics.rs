@@ -134,6 +134,7 @@ fn cb40_inline(data: *mut DynamicsData) {
 
 /// `ftCo_8009CB40` (static). `arg3` is a FigaTree* also used as an int count (truncated to s32).
 pub fn ftCo_8009CB40(f: &mut Fighter, bone_idx: isize, arg2: i32, arg3: *mut FigaTree) {
+    melee_core::ct!("ftCo_8009CB40");
     let dy = unsafe { (*f.ft_data).x2C };
     if unsafe { (*dy).anon_0.dynamicsNum } == 0 {
         return;
@@ -172,6 +173,7 @@ fn num_over(f: &Fighter, line: u32) {
 
 /// `ftCo_8009CF84`: set up the fighter's own dynamic bones.
 pub fn ftCo_8009CF84(f: &mut Fighter) {
+    melee_core::ct!("ftCo_8009CF84");
     let data = f.ft_data;
     let dy = unsafe { (*data).x2C };
     f.dynamics_num = unsafe { (*dy).anon_0.dynamicsNum };
@@ -251,20 +253,21 @@ fn kirby_hat_parts(f: &mut Fighter, kind: FighterKind, dyn_idx: usize, line: u32
     }
 }
 
-pub fn ftCo_8009D074(f: &mut Fighter) { kirby_hat(f, Ft_Kind_Koopa, 2, 135) }
-pub fn ftCo_8009D18C(f: &mut Fighter) { kirby_hat(f, Ft_Kind_Zelda, 2, 167) }
-pub fn ftCo_8009D2A4(f: &mut Fighter) { kirby_hat(f, Ft_Kind_Nana, 2, 199) }
-pub fn ftCo_8009D3BC(f: &mut Fighter) { kirby_hat(f, Ft_Kind_Falco, 2, 232) }
-pub fn ftCo_8009D4D4(f: &mut Fighter) { kirby_hat(f, Ft_Kind_Kirby, 1, 265) }
-pub fn ftCo_8009D5EC(f: &mut Fighter) { kirby_hat(f, Ft_Kind_Mars, 0, 298) }
-pub fn ftCo_8009D704(f: &mut Fighter) { kirby_hat(f, Ft_Kind_Link, 2, 331) }
-pub fn ftCo_8009D81C(f: &mut Fighter) { kirby_hat_parts(f, Ft_Kind_Yoshi, 3, 364) }
-pub fn ftCo_8009D920(f: &mut Fighter) { kirby_hat(f, Ft_Kind_Luigi, 1, 388) }
-pub fn ftCo_8009DA38(f: &mut Fighter) { kirby_hat(f, Ft_Kind_Ganon, 1, 421) }
-pub fn ftCo_8009DB50(f: &mut Fighter) { kirby_hat_parts(f, Ft_Kind_Purin, 4, 455) }
+pub fn ftCo_8009D074(f: &mut Fighter) { melee_core::ct!("ftCo_8009D074"); kirby_hat(f, Ft_Kind_Koopa, 2, 135) }
+pub fn ftCo_8009D18C(f: &mut Fighter) { melee_core::ct!("ftCo_8009D18C"); kirby_hat(f, Ft_Kind_Zelda, 2, 167) }
+pub fn ftCo_8009D2A4(f: &mut Fighter) { melee_core::ct!("ftCo_8009D2A4"); kirby_hat(f, Ft_Kind_Nana, 2, 199) }
+pub fn ftCo_8009D3BC(f: &mut Fighter) { melee_core::ct!("ftCo_8009D3BC"); kirby_hat(f, Ft_Kind_Falco, 2, 232) }
+pub fn ftCo_8009D4D4(f: &mut Fighter) { melee_core::ct!("ftCo_8009D4D4"); kirby_hat(f, Ft_Kind_Kirby, 1, 265) }
+pub fn ftCo_8009D5EC(f: &mut Fighter) { melee_core::ct!("ftCo_8009D5EC"); kirby_hat(f, Ft_Kind_Mars, 0, 298) }
+pub fn ftCo_8009D704(f: &mut Fighter) { melee_core::ct!("ftCo_8009D704"); kirby_hat(f, Ft_Kind_Link, 2, 331) }
+pub fn ftCo_8009D81C(f: &mut Fighter) { melee_core::ct!("ftCo_8009D81C"); kirby_hat_parts(f, Ft_Kind_Yoshi, 3, 364) }
+pub fn ftCo_8009D920(f: &mut Fighter) { melee_core::ct!("ftCo_8009D920"); kirby_hat(f, Ft_Kind_Luigi, 1, 388) }
+pub fn ftCo_8009DA38(f: &mut Fighter) { melee_core::ct!("ftCo_8009DA38"); kirby_hat(f, Ft_Kind_Ganon, 1, 421) }
+pub fn ftCo_8009DB50(f: &mut Fighter) { melee_core::ct!("ftCo_8009DB50"); kirby_hat_parts(f, Ft_Kind_Purin, 4, 455) }
 
 /// `ftCo_8009DC54`: Jigglypuff costume 2/3 accessory dynamics (sets 1..2).
 pub fn ftCo_8009DC54(f: &mut Fighter) {
+    melee_core::ct!("ftCo_8009DC54");
     let idx: isize = match f.x619_costume_id {
         2 => 0,
         3 => 1,
@@ -291,6 +294,7 @@ pub fn ftCo_8009DC54(f: &mut Fighter) {
 
 /// `ftCo_8009DD94` (static): step the dynamics for one frame.
 pub fn ftCo_8009DD94(g: G, arg1: i32) {
+    melee_core::ct!("ftCo_8009DD94");
     let f = fp(g);
     let n = f.dynamics_num as isize;
     let mut scale_x = 0.0f32;
@@ -356,12 +360,14 @@ pub fn ftCo_8009DD94(g: G, arg1: i32) {
 
 /// `ftCo_8009E0A8`.
 pub fn ftCo_8009E0A8(g: G) {
+    melee_core::ct!("ftCo_8009E0A8");
     let b = fp(g).x2228_b1() as i32;
     ftCo_8009DD94(g, b);
 }
 
 /// `ftCo_UnloadDynamicBones`.
 pub fn ftCo_UnloadDynamicBones(f: &mut Fighter) {
+    melee_core::ct!("ftCo_UnloadDynamicBones");
     let mut i = 0;
     while i < f.dynamics_num {
         ext::lb_8000FD18(&mut f.dynamic_bone_sets[i as usize].dyn_desc);
@@ -395,11 +401,13 @@ fn set_each(f: &mut Fighter, flag: i32) {
 
 /// `ftCo_8009E140`.
 pub fn ftCo_8009E140(f: &mut Fighter, arg1: i32) {
+    melee_core::ct!("ftCo_8009E140");
     set_all(f, arg1);
 }
 
 /// `ftCo_8009E1D4` (static): find `arg2` in tree `arg0`, return the node at the same place in `arg1`.
 pub fn ftCo_8009E1D4(a0: *mut HSD_JObj, a1: *mut HSD_JObj, a2: *mut HSD_JObj) -> *mut HSD_JObj {
+    melee_core::ct!("ftCo_8009E1D4");
     if a0 == a2 {
         return a1;
     }
@@ -422,6 +430,7 @@ pub fn ftCo_8009E1D4(a0: *mut HSD_JObj, a1: *mut HSD_JObj, a2: *mut HSD_JObj) ->
 
 /// `ftCo_8009E318`: toggle whether `part` is driven by dynamics; -1 if no set holds it.
 pub fn ftCo_8009E318(g: G, arg1: i32, arg2: f32) -> i32 {
+    melee_core::ct!("ftCo_8009E318");
     let f = fp(g);
     let pj = part(f, arg1).joint;
     let mut i = 0usize;
@@ -468,6 +477,7 @@ fn reanim(f: &mut Fighter, i: usize, frame: f32, speed: f32) {
 
 /// `ftCo_8009E4A8` (static).
 pub fn ftCo_8009E4A8(f: &mut Fighter) {
+    melee_core::ct!("ftCo_8009E4A8");
     let frame = f.cur_anim_frame;
     let speed = f.frame_speed_mul;
     if x594_b4(f) {
@@ -499,6 +509,7 @@ fn is_marth_like(f: &Fighter) -> bool {
 
 /// `ftCo_8009E614` (static): Marth / Roy sword-trail dynamics vs lb_80011ABC's mode.
 pub fn ftCo_8009E614(f: &mut Fighter) {
+    melee_core::ct!("ftCo_8009E614");
     if is_marth_like(f) && f.x2227_b6() == 0 {
         let x = ext::lb_80011ABC();
         if x == -1 {
@@ -526,6 +537,7 @@ pub fn ftCo_8009E614(f: &mut Fighter) {
 
 /// `ftCo_8009E714`: spawn a dynamics impulse at a point in `bone_id`'s space. Returns false.
 pub fn ftCo_8009E714(g: G, bone_id: i32, arg2: i32, x: f32, y: f32, a5: f32, a6: f32, a7: f32) -> bool {
+    melee_core::ct!("ftCo_8009E714");
     let j = part(fp(g), bone_id).joint;
     let mut out = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut inv = Vec3 { x, y, z: 0.0 };
@@ -538,6 +550,7 @@ pub fn ftCo_8009E714(g: G, bone_id: i32, arg2: i32, x: f32, y: f32, a5: f32, a6:
 /// `ftCo_8009E7B4`: re-evaluate which sets are animation- vs physics-driven after a motion change.
 /// `arg1` is the motion's `[u8; 2]` pair (only `[0][1]` is read).
 pub fn ftCo_8009E7B4(f: &mut Fighter, arg1: *const [u8; 2]) {
+    melee_core::ct!("ftCo_8009E7B4");
     if f.anim_id != -1 {
         let b6 = f.x2227_b6();
         if b6 != 0 {
@@ -586,5 +599,6 @@ pub fn ftCo_8009E7B4(f: &mut Fighter, arg1: *const [u8; 2]) {
 
 /// `ftCo_8009EAF8`.
 pub fn ftCo_8009EAF8(_g: G) {
+    melee_core::ct!("ftCo_8009EAF8");
     ext::Ground_801C4E20();
 }

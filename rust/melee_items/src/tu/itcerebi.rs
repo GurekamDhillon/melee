@@ -81,6 +81,7 @@ unsafe fn Item_EnterAirStateWithHitlagAndStateDesc(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itCerebi_Logic23_Spawned(gobj: *mut Item_GObj) {
+    melee_core::ct!("itCerebi_Logic23_Spawned");
     let item = GET_ITEM(gobj);
     let attr = (*(*item).xC4_article_data).x4_specialAttributes as *mut f32;
     (*item).facing_dir = 0.0;
@@ -90,17 +91,20 @@ pub unsafe extern "C" fn itCerebi_Logic23_Spawned(gobj: *mut Item_GObj) {
 
 /// 2D3F4C
 pub unsafe extern "C" fn it_802D3F4C(gobj: *mut Item_GObj, arg1: *mut Item_GObj) {
+    melee_core::ct!("it_802D3F4C");
     ext::it_8026B894(gobj, arg1);
 }
 
 /// 2D3F6C
 pub unsafe extern "C" fn it_802D3F6C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D3F6C");
     ext::it_80273454(gobj);
     it_802D3FA0(gobj);
 }
 
 /// 2D3FA0
 pub unsafe extern "C" fn it_802D3FA0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D3FA0");
     let item = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
     let mut f: f32 = 1.0;
@@ -110,20 +114,23 @@ pub unsafe extern "C" fn it_802D3FA0(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itCerebi_UnkMotion1_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itCerebi_UnkMotion1_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         it_802D4070(gobj);
     }
     false
 }
 
-pub unsafe extern "C" fn itCerebi_UnkMotion1_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itCerebi_UnkMotion1_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itCerebi_UnkMotion1_Phys");}
 
 pub unsafe extern "C" fn itCerebi_UnkMotion1_Coll(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itCerebi_UnkMotion1_Coll");
     false
 }
 
 /// 2D4070
 pub unsafe extern "C" fn it_802D4070(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D4070");
     let item = GET_ITEM(gobj);
     let attrs = (*(*item).xC4_article_data).x4_specialAttributes as *mut f32;
 
@@ -138,6 +145,7 @@ pub unsafe extern "C" fn it_802D4070(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itCerebi_UnkMotion2_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itCerebi_UnkMotion2_Anim");
     let item = GET_ITEM(gobj);
     if (*item).pos.y > ext::Stage_GetBlastZoneTopOffset() {
         return true;
@@ -146,25 +154,30 @@ pub unsafe extern "C" fn itCerebi_UnkMotion2_Anim(gobj: *mut Item_GObj) -> bool 
 }
 
 pub unsafe extern "C" fn itCerebi_UnkMotion2_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itCerebi_UnkMotion2_Phys");
     let item = GET_ITEM(gobj);
     (*item).x40_vel.y += *((*(*item).xC4_article_data).x4_specialAttributes as *mut f32).add(3);
 }
 
 pub unsafe extern "C" fn itCerebi_UnkMotion2_Coll(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itCerebi_UnkMotion2_Coll");
     false
 }
 
 /// 2D4168
 pub unsafe extern "C" fn it_802D4168(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D4168");
     Item_EnterAirStateWithHitlagAndStateDesc(gobj);
 }
 
 pub unsafe extern "C" fn itCerebi_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itCerebi_UnkMotion0_Anim");
     ext::it_80279FF8(gobj);
     false
 }
 
 pub unsafe extern "C" fn itCerebi_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itCerebi_UnkMotion0_Phys");
     if ext::it_8027A09C(gobj) != 0 {
         ext::it_80273454(gobj);
         let item = GET_ITEM(gobj);
@@ -177,5 +190,6 @@ pub unsafe extern "C" fn itCerebi_UnkMotion0_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itCerebi_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itCerebi_UnkMotion0_Coll");
     ext::it_8027A118(gobj, Some(it_802D3F6C)) != 0
 }

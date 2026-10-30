@@ -43,6 +43,7 @@ pub mod ext {
 }
 
 pub fn ftCo_HammerLanding_Enter(g: G) {
+    melee_core::ct!("ftCo_HammerLanding_Enter");
     unsafe { fp(g).mv.co.hammerlanding.x4 = cd().x6B4 as f32 };
     let flags = ext::ftCo_800C54C4(fp(g));
     let start = ext::ftCo_800C548C(fp(g));
@@ -51,6 +52,7 @@ pub fn ftCo_HammerLanding_Enter(g: G) {
 }
 
 pub fn ftCo_HammerLanding_Anim(g: G) {
+    melee_core::ct!("ftCo_HammerLanding_Anim");
     ext::ftCo_800C4F64(g);
     if unsafe { fp(g).mv.co.hammerlanding.x4 } <= 0.0 {
         ext::ftCo_800C4ED8(g);
@@ -58,12 +60,14 @@ pub fn ftCo_HammerLanding_Anim(g: G) {
     unsafe { fp(g).mv.co.hammerlanding.x4 -= 1.0 };
 }
 
-pub fn ftCo_HammerLanding_IASA(_g: G) {}
+pub fn ftCo_HammerLanding_IASA(_g: G) { melee_core::ct!("ftCo_HammerLanding_IASA");}
 
 pub fn ftCo_HammerLanding_Phys(g: G) {
+    melee_core::ct!("ftCo_HammerLanding_Phys");
     ext::ft_80084F3C(g);
 }
 
 pub fn ftCo_HammerLanding_Coll(g: G) {
+    melee_core::ct!("ftCo_HammerLanding_Coll");
     ext::ftCo_HammerWait_Coll(g);
 }

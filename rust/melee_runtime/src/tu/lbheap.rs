@@ -125,6 +125,7 @@ unsafe fn create_if_destroyed(i: usize) {
 /// # Safety
 /// `arg0` is a heap index.
 pub unsafe fn lbHeap_800158D0(arg0: i32, arg1: i32) {
+    melee_core::ct!("lbHeap_800158D0");
     (*heap_ptr(arg0 as usize)).transient = arg1;
 }
 
@@ -133,6 +134,7 @@ pub unsafe fn lbHeap_800158D0(arg0: i32, arg1: i32) {
 /// # Safety
 /// `arg0` is a heap index.
 pub unsafe fn lbHeap_800158E8(arg0: i32) -> i32 {
+    melee_core::ct!("lbHeap_800158E8");
     (*heap_ptr(arg0 as usize)).transient
 }
 
@@ -142,6 +144,7 @@ pub unsafe fn lbHeap_800158E8(arg0: i32) -> i32 {
 /// # Safety
 /// The heaps were set up by `lbHeap_80015F3C`.
 pub unsafe fn lbHeap_80015900() {
+    melee_core::ct!("lbHeap_80015900");
     // 0 and 1 are reserved for HSD and ARAM
     for i in 2..LBHEAP_HEAP_COUNT {
         if (*heap_ptr(i)).transient == 1 {
@@ -209,6 +212,7 @@ pub unsafe fn lbHeap_80015900() {
 /// # Safety
 /// `arg0` is a heap index.
 pub unsafe fn lbHeap_80015BB8(arg0: i32) -> LbHeapStatus {
+    melee_core::ct!("lbHeap_80015BB8");
     (*heap_ptr(arg0 as usize)).status
 }
 
@@ -217,6 +221,7 @@ pub unsafe fn lbHeap_80015BB8(arg0: i32) -> LbHeapStatus {
 /// # Safety
 /// `heap_id` is a heap index.
 pub unsafe fn lbHeap_80015BD0(heap_id: i32, size: usize) -> *mut c_void {
+    melee_core::ct!("lbHeap_80015BD0");
     let enabled = ext::OSDisableInterrupts();
     let p = heap_ptr(heap_id as usize);
     let result: *mut c_void;
@@ -251,6 +256,7 @@ pub unsafe fn lbHeap_80015BD0(heap_id: i32, size: usize) -> *mut c_void {
 /// # Safety
 /// `arg0` is a heap index.
 pub unsafe fn lbHeap_80015CA8(arg0: i32, arg1: *mut c_void) {
+    melee_core::ct!("lbHeap_80015CA8");
     let enabled = ext::OSDisableInterrupts();
     let p = heap_ptr(arg0 as usize);
 
@@ -274,6 +280,7 @@ pub unsafe fn lbHeap_80015CA8(arg0: i32, arg1: *mut c_void) {
 /// # Safety
 /// `heap0` is a heap index.
 pub unsafe fn lbHeap_80015D6C(heap0: u32, cb: Option<unsafe extern "C" fn(u32)>, heap1: u32) -> i32 {
+    melee_core::ct!("lbHeap_80015D6C");
     let enabled = ext::OSDisableInterrupts();
     let p = heap_ptr(heap0 as usize);
     let var_r30: i32;
@@ -293,6 +300,7 @@ pub unsafe fn lbHeap_80015D6C(heap0: u32, cb: Option<unsafe extern "C" fn(u32)>,
 /// # Safety
 /// `name` is valid for `cap` bytes when `cap > 0`.
 pub unsafe fn lbHeap_IdOfHandle(handle: *mut c_void, name: *mut c_char, cap: i32) -> i32 {
+    melee_core::ct!("lbHeap_IdOfHandle");
     for i in 0..LBHEAP_HEAP_COUNT {
         let h = heap_ptr(i);
         if (*h).status == LbHeapStatus_Create && (*h).r#type != 0 && (*h).handle as *mut c_void == handle {
@@ -321,6 +329,7 @@ pub unsafe fn lbHeap_IdOfHandle(handle: *mut c_void, name: *mut c_char, cap: i32
 /// # Safety
 /// The heaps were set up by `lbHeap_80015F3C`.
 pub unsafe fn lbHeap_80015DF8() {
+    melee_core::ct!("lbHeap_80015DF8");
     use ext::OsArg::{I, S, U};
     let nm = |i: usize| S(lbHeap_803BA448[i].as_ptr() as *const c_char);
     ext::OSReport("[lbHeap] -- Report --\n", &[]);
@@ -360,6 +369,7 @@ pub unsafe fn lbHeap_80015DF8() {
 /// # Safety
 /// Not reentrant.
 pub unsafe fn lbHeap_80015F3C() {
+    melee_core::ct!("lbHeap_80015F3C");
     ext::HSD_GetNextArena(addr_of_mut!(lbHeap_80431FA0.arena_lo), addr_of_mut!(lbHeap_80431FA0.arena_hi));
     super::lbmemory::lbMemory_800154BC(addr_of_mut!(lbHeap_80431FA0.aram_lo), addr_of_mut!(lbHeap_80431FA0.aram_hi));
 
@@ -404,6 +414,7 @@ pub unsafe fn lbHeap_80015F3C() {
 
 /// `lbHeap_Capacity` (PC): the size of heap `heap` (0 out of range).
 pub fn lbHeap_Capacity(heap: i32) -> u32 {
+    melee_core::ct!("lbHeap_Capacity");
     if heap >= 0 && (heap as usize) < LBHEAP_HEAP_COUNT {
         unsafe { (*heap_ptr(heap as usize)).size }
     } else {
@@ -413,6 +424,7 @@ pub fn lbHeap_Capacity(heap: i32) -> u32 {
 
 /// `lbHeap_Free` (PC): the free bytes of heap `heap` (0 out of range, destroyed or without a handle).
 pub fn lbHeap_Free(heap: i32) -> u32 {
+    melee_core::ct!("lbHeap_Free");
     unsafe {
         if heap < 0 || heap as usize >= LBHEAP_HEAP_COUNT {
             return 0;
@@ -434,6 +446,7 @@ pub fn lbHeap_Free(heap: i32) -> u32 {
 
 /// `lbHeap_StageSlotTryAlloc` (lbheap_stage_slots.inc): a non-asserting allocation from the main heap.
 pub unsafe fn lbHeap_StageSlotTryAlloc(size: u32) -> *mut c_void {
+    melee_core::ct!("lbHeap_StageSlotTryAlloc");
     let p = heap_ptr(0);
     if size == 0 || (*p).status != LbHeapStatus_Create || (*p).r#type != 0 {
         return null_mut();
@@ -443,6 +456,7 @@ pub unsafe fn lbHeap_StageSlotTryAlloc(size: u32) -> *mut c_void {
 
 /// `lbHeap_StageSlotDump` (lbheap_stage_slots.inc): diagnostic dump of the main heap's cells.
 pub unsafe fn lbHeap_StageSlotDump(mode: i32) {
+    melee_core::ct!("lbHeap_StageSlotDump");
     let p = heap_ptr(0);
     if (*p).status != LbHeapStatus_Create || (*p).r#type != 0 {
         return;

@@ -104,6 +104,7 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 
 /// C `bool`: Ness is charging a live PK Flash (grounded or aerial Hold motion).
 pub fn ftNs_SpecialN_CheckSpecialNHold(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftNs_SpecialN_CheckSpecialNHold");
     unsafe {
         if !gobj.is_null() {
             let fp = fpp(gobj);
@@ -120,6 +121,7 @@ pub fn ftNs_SpecialN_CheckSpecialNHold(gobj: *mut HSD_GObj) -> bool {
 
 /// Clear Ness's callbacks and PK Flash's item GObj pointer.
 pub fn ftNs_SpecialN_SetNULL(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialN_SetNULL");
     unsafe {
         if gobj.is_null() {
             return;
@@ -138,6 +140,7 @@ pub fn ftNs_SpecialN_SetNULL(gobj: *mut HSD_GObj) {
 
 /// Clear PK Flash's owner pointer, Ness's pointer to the item, and reset callbacks.
 pub fn ftNs_SpecialN_ItemPKFlushSetNULL(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialN_ItemPKFlushSetNULL");
     unsafe {
         if gobj.is_null() {
             return;
@@ -156,6 +159,7 @@ pub fn ftNs_SpecialN_ItemPKFlushSetNULL(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_PKFlash_Init(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_PKFlash_Init");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).u.ns.pkflash_gobj.is_null() {
@@ -188,6 +192,7 @@ unsafe fn reset_pkflash_attrs(fp: *mut Fighter) {
 }
 
 pub fn ftNs_SpecialNStart_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialNStart_Enter");
     unsafe {
         let fp = fpp(gobj);
         st::Fighter_ChangeMotionState(gobj, ftNs_MS_SpecialNStart as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -198,6 +203,7 @@ pub fn ftNs_SpecialNStart_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_SpecialAirNStart_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirNStart_Enter");
     unsafe {
         let fp = fpp(gobj);
         st::Fighter_ChangeMotionState(gobj, ftNs_MS_SpecialAirNStart as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -209,6 +215,7 @@ pub fn ftNs_SpecialAirNStart_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_SpecialNStart_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialNStart_Anim");
     unsafe {
         let fp = fpp(gobj);
         if st::ftAnim_IsFramesRemaining(gobj) != 0 {
@@ -254,10 +261,12 @@ unsafe fn release_anim(gobj: *mut HSD_GObj, end_msid: i32, release_msid: i32) {
 }
 
 pub fn ftNs_SpecialNRelease_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialNRelease_Anim");
     unsafe { release_anim(gobj, ftNs_MS_SpecialNEnd as i32, ftNs_MS_SpecialNRelease as i32) }
 }
 
 pub fn ftNs_SpecialNEnd_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialNEnd_Anim");
     unsafe {
         let fp = fpp(gobj);
         SetPKFlashAttr(gobj);
@@ -269,6 +278,7 @@ pub fn ftNs_SpecialNEnd_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_SpecialAirNStart_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirNStart_Anim");
     unsafe {
         let fp = fpp(gobj);
         if st::ftAnim_IsFramesRemaining(gobj) != 0 {
@@ -281,10 +291,12 @@ pub fn ftNs_SpecialAirNStart_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_SpecialAirNRelease_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirNRelease_Anim");
     unsafe { release_anim(gobj, ftNs_MS_SpecialAirNEnd as i32, ftNs_MS_SpecialAirNRelease as i32) }
 }
 
 pub fn ftNs_SpecialAirNEnd_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirNEnd_Anim");
     unsafe {
         let fp = fpp(gobj);
         let sa = (*fp).dat_attrs as *const ftNessAttributes;
@@ -302,7 +314,7 @@ pub fn ftNs_SpecialAirNEnd_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftNs_SpecialNStart_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftNs_SpecialNStart_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftNs_SpecialNStart_IASA");}
 
 /// Shared IASA of the two Hold motions: after the minimum charge, letting go of B drops the flash.
 unsafe fn release_iasa(gobj: *mut HSD_GObj) {
@@ -320,15 +332,17 @@ unsafe fn release_iasa(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_SpecialNRelease_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialNRelease_IASA");
     unsafe { release_iasa(gobj) }
 }
 
-pub fn ftNs_SpecialNEnd_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftNs_SpecialNEnd_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftNs_SpecialNEnd_IASA");}
 
-pub fn ftNs_SpecialAirNStart_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftNs_SpecialAirNStart_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftNs_SpecialAirNStart_IASA");}
 
 pub fn ftNs_SpecialAirNRelease_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirNRelease_IASA");
     unsafe { release_iasa(gobj) }
 }
 
-pub fn ftNs_SpecialAirNEnd_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftNs_SpecialAirNEnd_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftNs_SpecialAirNEnd_IASA");}

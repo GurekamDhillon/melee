@@ -49,6 +49,7 @@ pub mod ext {
 
 /// Starts the walk when the stick is past the walk threshold in the facing direction.
 pub fn ftDk_MS_341_800DFA98(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftDk_MS_341_800DFA98");
     if ext::ftWalkCommon_800DFC70(gobj) {
         ftDk_MS_341_800DFAE4(gobj, 0.0);
         true
@@ -58,6 +59,7 @@ pub fn ftDk_MS_341_800DFA98(gobj: *mut HSD_GObj) -> bool {
 }
 
 pub fn ftDk_MS_341_800DFAE4(gobj: *mut HSD_GObj, argf: f32) {
+    melee_core::ct!("ftDk_MS_341_800DFAE4");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let a = (*fp).x2CC;
@@ -78,10 +80,12 @@ pub fn ftDk_MS_341_800DFAE4(gobj: *mut HSD_GObj, argf: f32) {
 }
 
 pub fn ftDk_HeavyWalk_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_HeavyWalk_Anim");
     ext::ftWalkCommon_800DFDDC(gobj);
 }
 
 pub fn ftDk_HeavyWalk_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_HeavyWalk_IASA");
     if !super::ftdonkeyheavyturn::ext::ftCo_80094EA4(gobj)
         && !super::ftdonkeyheavyturn::ext::ftDk_MS_347_800E0378(gobj)
         && !super::ftdonkeyheavywait0::ftDk_MS_341_800DF938(gobj)
@@ -91,5 +95,6 @@ pub fn ftDk_HeavyWalk_IASA(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftDk_HeavyWalk_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_HeavyWalk_Phys");
     ext::ftWalkCommon_800E0060(gobj);
 }

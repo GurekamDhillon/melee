@@ -94,14 +94,17 @@ static mut un_804D7048: *mut HSD_Joint = null_mut();
 static mut un_804D704C: *mut HSD_JObj = null_mut();
 
 pub unsafe extern "C" fn un_8032110C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("un_8032110C");
     ext::HSD_JObjAnimAll(GET_JOBJ(gobj));
 }
 
 pub unsafe extern "C" fn un_80321130(gobj: *mut HSD_GObj) {
+    melee_core::ct!("un_80321130");
     ext::HSD_JObjAnimAll(GET_JOBJ(gobj));
 }
 
 pub unsafe extern "C" fn un_80321154(gobj: *mut HSD_GObj) {
+    melee_core::ct!("un_80321154");
     ext::HSD_JObjAnimAll(GET_JOBJ(gobj));
 }
 
@@ -121,6 +124,7 @@ unsafe fn vi1202_SetupChild(child: *mut HSD_JObj) {
 }
 
 pub unsafe extern "C" fn un_80321178() {
+    melee_core::ct!("un_80321178");
     let mut i: isize = 0;
     while !(*(*un_804D7040).models.offset(i)).is_null() {
         let model = *(*un_804D7040).models.offset(i);
@@ -142,6 +146,7 @@ pub unsafe extern "C" fn un_80321178() {
 }
 
 pub unsafe extern "C" fn vi1202_RunFrame(gobj: *mut HSD_GObj) {
+    melee_core::ct!("vi1202_RunFrame");
     let cobj = GET_COBJ(gobj);
     ext::HSD_CObjAnim(cobj);
     if (*(*cobj).aobj).curr_frame == 100.0 {
@@ -154,6 +159,7 @@ pub unsafe extern "C" fn vi1202_RunFrame(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn vi1202_Scene_OnEnter(arg: *mut c_void) {
+    melee_core::ct!("vi1202_Scene_OnEnter");
     ext::lbAudioAx_80023694();
     ext::lbAudioAx_800236DC();
     ext::efLib_Init();
@@ -220,5 +226,6 @@ pub unsafe extern "C" fn vi1202_Scene_OnEnter(arg: *mut c_void) {
 }
 
 pub unsafe extern "C" fn vi1202_Scene_OnFrame() {
+    melee_core::ct!("vi1202_Scene_OnFrame");
     ext::vi_8031CAAC();
 }

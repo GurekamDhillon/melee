@@ -63,7 +63,7 @@ unsafe fn set_damage_callback(fp: *mut Fighter) {
 }
 
 /// `ftKp_Init_80132B38` (ftkoopa.c): the empty damage callback, as a Fighter callback entry.
-pub unsafe extern "C" fn cb_ftKp_Init_80132B38(_g: *mut HSD_GObj) {}
+pub unsafe extern "C" fn cb_ftKp_Init_80132B38(_g: *mut HSD_GObj) { melee_core::ct!("cb_ftKp_Init_80132B38");}
 
 /// `Fighter_SetEffectHitlagCallbacks` (ft/inlines.h).
 #[inline(always)]
@@ -83,6 +83,7 @@ unsafe fn enter_tail(gobj: *mut HSD_GObj, fp: *mut Fighter) {
 }
 
 pub fn ftKp_SpecialHi_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialHi_Enter");
     unsafe {
         let fp = fpp(gobj);
         st::Fighter_ChangeMotionState(gobj, 0x167, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -95,6 +96,7 @@ pub fn ftKp_SpecialHi_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKp_SpecialAirHi_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialAirHi_Enter");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -110,6 +112,7 @@ pub fn ftKp_SpecialAirHi_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKp_SpecialHi_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialHi_Anim");
     unsafe {
         let fp = fpp(gobj);
         (*fp).mv.co.walk.middle_anim_frame += 1.0;
@@ -121,6 +124,7 @@ pub fn ftKp_SpecialHi_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKp_SpecialAirHi_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialAirHi_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -150,10 +154,11 @@ pub fn ftKp_SpecialAirHi_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftKp_SpecialHi_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftKp_SpecialAirHi_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftKp_SpecialHi_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftKp_SpecialHi_IASA");}
+pub fn ftKp_SpecialAirHi_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftKp_SpecialAirHi_IASA");}
 
 pub fn ftKp_SpecialHi_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialHi_Phys");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -167,6 +172,7 @@ pub fn ftKp_SpecialHi_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKp_SpecialAirHi_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialAirHi_Phys");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -191,10 +197,12 @@ unsafe fn tilt_shell(fp: *mut Fighter) {
 
 /// `ftKp_SpecialHi_Coll_inline` (static).
 pub fn ftKp_SpecialHi_Coll_inline(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialHi_Coll_inline");
     unsafe { tilt_shell(fpp(gobj)) }
 }
 
 pub fn ftKp_SpecialHi_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialHi_Coll");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -215,6 +223,7 @@ pub fn ftKp_SpecialHi_Coll(gobj: *mut HSD_GObj) {
 
 /// `ftKp_SpecialAirHi_Coll_inline` (static inline): airborne -> grounded motion swap.
 pub fn ftKp_SpecialAirHi_Coll_inline(gobj: *mut HSD_GObj, fp: *mut Fighter, da: *mut ftKoopaAttributes) {
+    melee_core::ct!("ftKp_SpecialAirHi_Coll_inline");
     unsafe {
         st::ftCommon_8007D7FC(&mut *fp);
         // `da->x70 = da->x70;` is a no-op store; the range test below can never hold.
@@ -231,6 +240,7 @@ pub fn ftKp_SpecialAirHi_Coll_inline(gobj: *mut HSD_GObj, fp: *mut Fighter, da: 
 
 /// `ftKp_SpecialAirHi_Coll_inline_2` (static inline).
 pub fn ftKp_SpecialAirHi_Coll_inline_2(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialAirHi_Coll_inline_2");
     unsafe {
         ftKp_SpecialN_80135780(gobj);
         tilt_shell(fpp(gobj));
@@ -238,6 +248,7 @@ pub fn ftKp_SpecialAirHi_Coll_inline_2(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKp_SpecialAirHi_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialAirHi_Coll");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);

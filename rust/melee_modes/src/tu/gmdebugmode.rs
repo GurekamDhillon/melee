@@ -205,11 +205,13 @@ pub static mut gm_Mode_Debug_States: [GameModeState; 16] = unsafe {
 
 /// 1B099C
 pub unsafe extern "C" fn onExitIntro(_unused: *mut GameModeState) {
+    melee_core::ct!("onExitIntro");
     ext::gm_SetNextGameModeStateId(0); // onEnterMenu0
 }
 
 /// 1B09C0
 pub unsafe extern "C" fn onEnterMenu0(arg0: *mut GameModeState) {
+    melee_core::ct!("onEnterMenu0");
     let temp_r3 = ext::gm_GetGameModeStateEnterData(arg0) as *mut enterMenu0_Data;
     (*temp_r3).x0 = &raw mut ext::un_803FA4E0 as *mut c_void;
     (*temp_r3).x4 = fn_801B09F8 as *const () as *mut c_void;
@@ -217,6 +219,7 @@ pub unsafe extern "C" fn onEnterMenu0(arg0: *mut GameModeState) {
 
 /// 1B09F8
 pub unsafe extern "C" fn fn_801B09F8(arg0: i32) -> i32 {
+    melee_core::ct!("fn_801B09F8");
     if arg0 == 0 {
         sfxBack();
         ext::gm_ChangeGameModeAfterCurrentScene(GM_TITLE as i32);
@@ -227,6 +230,7 @@ pub unsafe extern "C" fn fn_801B09F8(arg0: i32) -> i32 {
 
 /// 1B0A34
 pub unsafe extern "C" fn onEnterMenu1(arg0: *mut GameModeState) {
+    melee_core::ct!("onEnterMenu1");
     let temp_r3 = ext::gm_GetGameModeStateEnterData(arg0) as *mut enterMenu0_Data;
     (*temp_r3).x0 = &raw mut ext::un_803FA790 as *mut c_void;
     (*temp_r3).x4 = fn_801B0A8C as *const () as *mut c_void;
@@ -238,6 +242,7 @@ pub unsafe extern "C" fn onEnterMenu1(arg0: *mut GameModeState) {
 
 /// 1B0A8C
 pub unsafe extern "C" fn fn_801B0A8C(arg0: i32) -> i32 {
+    melee_core::ct!("fn_801B0A8C");
     if arg0 == 0 {
         sfxBack();
         ext::gm_SetNextGameModeStateId(0);
@@ -248,6 +253,7 @@ pub unsafe extern "C" fn fn_801B0A8C(arg0: i32) -> i32 {
 
 /// 1B0AC8
 pub unsafe extern "C" fn onEnterMenu2(arg0: *mut GameModeState) {
+    melee_core::ct!("onEnterMenu2");
     let temp_r3 = ext::gm_GetGameModeStateEnterData(arg0) as *mut enterMenu0_Data;
     (*temp_r3).x0 = &raw mut ext::un_803FC4CC as *mut c_void;
     (*temp_r3).x4 = fn_801B0A8C as *const () as *mut c_void;
@@ -255,16 +261,19 @@ pub unsafe extern "C" fn onEnterMenu2(arg0: *mut GameModeState) {
 
 /// 1B0B00
 pub unsafe extern "C" fn onEnterPrize(arg0: *mut GameModeState) {
+    melee_core::ct!("onEnterPrize");
     ext::un_802FFEE0(ext::gm_GetGameModeStateEnterData(arg0));
 }
 
 /// 1B0B24
 pub unsafe extern "C" fn onExitPrize(_arg0: *mut GameModeState) {
+    melee_core::ct!("onExitPrize");
     ext::gm_SetNextGameModeStateId(2);
 }
 
 /// 1B0B48
 pub unsafe extern "C" fn onEnterVs(arg0: *mut GameModeState) {
+    melee_core::ct!("onEnterVs");
     ext::un_802FFF2C(ext::gm_GetGameModeStateEnterData(arg0) as *mut StartMeleeData);
     ext::lbAudioAx_80026F2C(0x12);
     ext::lbAudioAx_8002702C(2, 0x20);
@@ -274,6 +283,7 @@ pub unsafe extern "C" fn onEnterVs(arg0: *mut GameModeState) {
 
 /// 1B0B8C
 pub unsafe extern "C" fn onEnterResults0(arg0: *mut GameModeState) {
+    melee_core::ct!("onEnterResults0");
     let temp_r3 = ext::gm_GetGameModeStateEnterData(arg0) as *mut ResultsMatchInfo;
     ext::gm_80177724(temp_r3);
     (*temp_r3).match_end = vs_exit_data.match_end;
@@ -281,12 +291,14 @@ pub unsafe extern "C" fn onEnterResults0(arg0: *mut GameModeState) {
 
 /// 1B0BF0
 pub unsafe extern "C" fn onExitResults0(arg0: *mut GameModeState) {
+    melee_core::ct!("onExitResults0");
     ext::gm_GetGameModeStateExitData(arg0);
     ext::gm_SetNextGameModeStateId(0);
 }
 
 /// 1B0C18
 pub unsafe extern "C" fn onEnterIntroEasy(arg0: *mut GameModeState) {
+    melee_core::ct!("onEnterIntroEasy");
     let temp_r31 = ext::gm_GetGameModeStateEnterData(arg0);
     ext::gm_80168F88();
     ext::un_80301BA8(temp_r31);
@@ -294,11 +306,13 @@ pub unsafe extern "C" fn onEnterIntroEasy(arg0: *mut GameModeState) {
 
 /// 1B0C50
 pub unsafe extern "C" fn onEnterIntroAllstar(arg0: *mut GameModeState) {
+    melee_core::ct!("onEnterIntroAllstar");
     ext::un_80301C64(ext::gm_GetGameModeStateEnterData(arg0) as *mut un_80301C64_t);
 }
 
 /// 1B0C74
 pub unsafe extern "C" fn onEnterGameOver(arg0: *mut GameModeState) {
+    melee_core::ct!("onEnterGameOver");
     let data = ext::gm_GetGameModeStateEnterData(arg0) as *mut DebugGameOverData;
     (*data).x0 = 0x1869F;
     (*data).x8 = 1;
@@ -311,6 +325,7 @@ pub unsafe extern "C" fn onEnterGameOver(arg0: *mut GameModeState) {
 
 /// 1B0CF0
 pub unsafe extern "C" fn onEnterApproach(arg0: *mut GameModeState) {
+    melee_core::ct!("onEnterApproach");
     let temp_r3 = ext::gm_GetGameModeStateEnterData(arg0) as *mut u8;
     *temp_r3.add(1) = 0;
 
@@ -332,6 +347,7 @@ pub unsafe extern "C" fn onEnterApproach(arg0: *mut GameModeState) {
 
 /// 1B0DD0
 pub unsafe extern "C" fn onEnterResults1(arg0: *mut GameModeState) {
+    melee_core::ct!("onEnterResults1");
     let mut sfx_result: u64 = 0;
     let data = ext::gm_GetGameModeStateEnterData(arg0) as *mut DebugResultsData;
     let match_end = &raw mut (*data).match_end;
@@ -371,6 +387,7 @@ pub unsafe extern "C" fn onEnterResults1(arg0: *mut GameModeState) {
 
 /// 1B0F1C
 pub unsafe extern "C" fn onExitResults1(_arg0: *mut GameModeState) {
+    melee_core::ct!("onExitResults1");
     ext::lbAudioAx_800236DC();
     if ext::HSD_PadCopyStatus[0].button & HSD_PAD_L != 0 {
         ext::gm_SetNextGameModeStateId(11); // onEnterResults1
@@ -381,6 +398,7 @@ pub unsafe extern "C" fn onExitResults1(_arg0: *mut GameModeState) {
 
 /// 1B0F60
 pub unsafe extern "C" fn onEnterMemCard(arg0: *mut GameModeState) {
+    melee_core::ct!("onEnterMemCard");
     let data = ext::gm_GetGameModeStateEnterData(arg0) as *mut DebugMemcardData;
     (*data).x0 = 1;
     (*data).x4 = 0;
@@ -388,6 +406,7 @@ pub unsafe extern "C" fn onEnterMemCard(arg0: *mut GameModeState) {
 
 /// 1B0F90
 pub unsafe extern "C" fn onExitMemCard(arg0: *mut GameModeState) {
+    melee_core::ct!("onExitMemCard");
     ext::gm_GetGameModeStateExitData(arg0);
     ext::gm_SetNextGameModeStateId(0);
 }

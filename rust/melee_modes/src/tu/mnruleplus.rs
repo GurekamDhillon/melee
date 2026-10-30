@@ -356,6 +356,7 @@ unsafe extern "C" fn mnRulePlus_IsOptionVisible(mut sel: u8) -> i32 {
     };
 }
 pub unsafe extern "C" fn fn_8023201C(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8023201C");
     let mut data: *mut MenuRulesPlusData = (*mn_804D6BE0).user_data
         as *mut MenuRulesPlusData;
     let mut buttons: u32 = 0;
@@ -468,6 +469,7 @@ pub unsafe extern "C" fn mn_80232458(
     mut value: u8,
     mut direction: u8,
 ) -> *mut AnimLoopSettings {
+    melee_core::ct!("mn_80232458");
     let mut count: u8 = 0;
     if option as i32 != 1
         && option as i32 != 2
@@ -525,6 +527,7 @@ pub unsafe extern "C" fn mn_802324E4(
     mut time_limit: u8,
     mut data: *mut MenuRulesPlusData,
 ) {
+    melee_core::ct!("mn_802324E4");
     let mut i: i32 = 0;
     let mut local_indices: JObjIndices = JObjIndices { idx: [0; 4] };
     let mut jobjs: *mut *mut HSD_JObj = core::ptr::null_mut::<*mut HSD_JObj>();
@@ -567,6 +570,7 @@ pub unsafe extern "C" fn mn_80232660(
     mut jobj: *mut HSD_JObj,
     mut option: u8,
 ) {
+    melee_core::ct!("mn_80232660");
     let mut frame: f32 = 0.;
     match option as i32 {
         1 | 2 | 3 | 4 => {
@@ -706,6 +710,7 @@ pub unsafe extern "C" fn mn_802327A4(
     mut arg1: u32,
     mut arg2: u32,
 ) {
+    melee_core::ct!("mn_802327A4");
     let mut option_roots: [*mut HSD_JObj; 6] = [null_mut(); 6];
     let mut jobj_parts: [*mut HSD_JObj; 17] = [null_mut(); 17];
     let mut jobj_map: [u16; 17] = [0; 17];
@@ -899,6 +904,7 @@ pub unsafe extern "C" fn mn_80232D4C(
     mut arg1: u32,
     mut arg2: u32,
 ) {
+    melee_core::ct!("mn_80232D4C");
     let mut data: *mut MenuRulesPlusData = (*gobj).user_data as *mut MenuRulesPlusData;
     let mut raw_selection: u32 = 0;
     let mut selection: u8 = 0;
@@ -984,6 +990,7 @@ pub unsafe extern "C" fn mn_80232D4C(
     };
 }
 pub unsafe extern "C" fn fn_80232F44(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80232F44");
     let mut data: *mut MenuRulesPlusData = (*gobj).user_data as *mut MenuRulesPlusData;
     let mut anim_settings: *mut AnimLoopSettings = core::ptr::null_mut::<
         AnimLoopSettings,
@@ -1148,6 +1155,7 @@ unsafe extern "C" fn mnRulePlus_CountVisibleBefore(mut limit: u8) -> i32 {
     return count;
 }
 pub unsafe extern "C" fn mn_80233218(mut state: MenuState) -> *mut HSD_GObj {
+    melee_core::ct!("mn_80233218");
     let mut sub_count_ptr: *mut u16 = null_mut();
     let mut rules: *mut GameRules = null_mut();
     let mut gobj: *mut HSD_GObj = null_mut();
@@ -1485,6 +1493,7 @@ pub unsafe extern "C" fn mn_80233218(mut state: MenuState) -> *mut HSD_GObj {
     return gobj;
 }
 pub unsafe extern "C" fn mn_802339FC() {
+    melee_core::ct!("mn_802339FC");
     let mut state: MenuState = MENU_STATE_IDLE;
     let mut think: *mut HSD_GObjProc = null_mut();
     mn_804A04F0.prev_menu = mn_804A04F0.cur_menu;

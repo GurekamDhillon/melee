@@ -120,10 +120,12 @@ pub static mut ifTime_match_timer_models: DynamicModelDesc = unsafe { core::mem:
 
 /// `memzero` (lb_00B0.c): the real behaviour, used unless a test installs a hook.
 pub fn memzero_default(mem: *mut c_void, size: i32) {
+    melee_core::ct!("memzero_default");
     unsafe { core::ptr::write_bytes(mem as *mut u8, 0, size as usize) }
 }
 
 pub unsafe extern "C" fn ifTime_LoadModels() -> bool {
+    melee_core::ct!("ifTime_LoadModels");
     let mut scinftim_scene_models: *mut *mut DynamicModelDesc = null_mut();
     let archive = ext::ifAll_GetArchive();
     ext::lbArchive_LoadSections(
@@ -142,6 +144,7 @@ pub unsafe extern "C" fn ifTime_LoadModels() -> bool {
 }
 
 pub unsafe extern "C" fn ifTime_SetDigit(jobj: *mut HSD_JObj, frame: u32) {
+    melee_core::ct!("ifTime_SetDigit");
     let aobj = (*(*(*(*jobj).u.dobj).mobj).tobj).aobj;
     ext::HSD_AObjReqAnim(aobj, (frame & 0xFF) as f32);
     let aobj = (*(*(*(*jobj).u.dobj).mobj).tobj).aobj;
@@ -158,6 +161,7 @@ fn tens_digit(x: i32) -> u32 {
 }
 
 pub unsafe extern "C" fn ifTime_SetTime(jobj: *mut HSD_JObj, seconds: i32, centiseconds: i32) {
+    melee_core::ct!("ifTime_SetTime");
     let rules = ext::gm_GetStartMeleeRules();
     let hours: i32;
 
@@ -200,6 +204,7 @@ pub unsafe extern "C" fn ifTime_SetTime(jobj: *mut HSD_JObj, seconds: i32, centi
 }
 
 pub unsafe extern "C" fn ifTime_HideTimers() {
+    melee_core::ct!("ifTime_HideTimers");
     let x = &raw mut ifTime_data;
     if !(*x).match_timer.is_null() {
         ext::HSD_JObjSetFlagsAll((*(*x).match_timer).hsd_obj.cast(), JOBJ_HIDDEN as u32);
@@ -210,6 +215,7 @@ pub unsafe extern "C" fn ifTime_HideTimers() {
 }
 
 pub unsafe extern "C" fn ifTime_ShowTimers() {
+    melee_core::ct!("ifTime_ShowTimers");
     let x = &raw mut ifTime_data;
     if !(*x).match_timer.is_null() {
         let jobj: *mut HSD_JObj = (*(*x).match_timer).hsd_obj.cast();
@@ -223,6 +229,7 @@ pub unsafe extern "C" fn ifTime_ShowTimers() {
 }
 
 pub unsafe extern "C" fn ifTime_GetCountdownSeconds() -> i32 {
+    melee_core::ct!("ifTime_GetCountdownSeconds");
     let centiseconds = ext::gm_8016AF0C() as i32;
     let mut seconds = ext::gm_8016AEEC() as i32;
     if centiseconds == 0 {
@@ -238,12 +245,14 @@ pub unsafe extern "C" fn ifTime_GetCountdownSeconds() -> i32 {
 
 #[inline]
 pub unsafe extern "C" fn ifTime_GetCountdownSeconds_dontinline() -> i32 {
+    melee_core::ct!("ifTime_GetCountdownSeconds_dontinline");
     ifTime_GetCountdownSeconds()
 }
 
 /// The match timer and the countdown (the two `GObj_SetupGXLink` sites below): the Atlas retail
 /// mask hides this element's render only (never its proc); empty by default.
 pub unsafe extern "C" fn ifTime_RenderGuarded(gobj: *mut HSD_GObj, pass: i32) {
+    melee_core::ct!("ifTime_RenderGuarded");
     if ext::Ui_RetailHidden(AT_RE_HUD_TIMER) != 0 {
         return;
     }
@@ -251,6 +260,7 @@ pub unsafe extern "C" fn ifTime_RenderGuarded(gobj: *mut HSD_GObj, pass: i32) {
 }
 
 pub unsafe extern "C" fn ifTime_UpdateCountdown(arg0: *mut HSD_GObj) {
+    melee_core::ct!("ifTime_UpdateCountdown");
     let x = &raw mut ifTime_data;
     let jobj: *mut HSD_JObj = (*arg0).hsd_obj.cast();
     let f = ifTime_GetCountdownSeconds();
@@ -265,6 +275,7 @@ pub unsafe extern "C" fn ifTime_UpdateCountdown(arg0: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn ifTime_FreeCountdown() {
+    melee_core::ct!("ifTime_FreeCountdown");
     let x = &raw mut ifTime_data;
     if !(*x).countdown_timer.is_null() {
         ext::HSD_GObjFree((*x).countdown_timer);
@@ -273,6 +284,7 @@ pub unsafe extern "C" fn ifTime_FreeCountdown() {
 }
 
 pub unsafe extern "C" fn ifTime_UpdateTimers(arg0: *mut HSD_GObj) {
+    melee_core::ct!("ifTime_UpdateTimers");
     let x = &raw mut ifTime_data;
     let jobj: *mut HSD_JObj = (*arg0).hsd_obj.cast();
 
@@ -304,6 +316,7 @@ pub unsafe extern "C" fn ifTime_UpdateTimers(arg0: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn ifTime_CreateTimers() {
+    melee_core::ct!("ifTime_CreateTimers");
     let rules = ext::gm_GetStartMeleeRules();
     if (*rules).x1_0() == 0 && (*rules).timer_enabled() == 0 {
         ifTime_data.match_timer = null_mut();
@@ -343,11 +356,13 @@ pub unsafe extern "C" fn ifTime_CreateTimers() {
 }
 
 pub unsafe extern "C" fn ifTime_Reset() {
+    melee_core::ct!("ifTime_Reset");
     let x = &raw mut ifTime_data;
     ext::memzero(x.cast(), core::mem::size_of::<ifTime_data>() as i32);
 }
 
 pub unsafe extern "C" fn ifTime_FreeTimers() {
+    melee_core::ct!("ifTime_FreeTimers");
     let x = &raw mut ifTime_data;
     if !(*x).match_timer.is_null() {
         ext::HSD_GObjFree((*x).match_timer);
@@ -360,6 +375,7 @@ pub unsafe extern "C" fn ifTime_FreeTimers() {
 }
 
 pub unsafe extern "C" fn ifTime_IsTimerHidden() -> bool {
+    melee_core::ct!("ifTime_IsTimerHidden");
     let x = &raw mut ifTime_data;
     if !(*x).match_timer.is_null() && (ext::HSD_JObjGetFlags((*(*x).match_timer).hsd_obj.cast()) & JOBJ_HIDDEN as u32) != 0 {
         return true;

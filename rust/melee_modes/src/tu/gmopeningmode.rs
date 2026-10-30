@@ -428,6 +428,7 @@ pub static mut gm_Mode_DebugCutscene_States: [GameModeState; 13] = unsafe {
 };
 
 pub unsafe extern "C" fn onExitTitle(arg0: *mut GameModeState) {
+    melee_core::ct!("onExitTitle");
     let temp_r3 = ext::gm_GetGameModeStateExitData(arg0) as *mut i32;
     // TARGET_PC: no /develop.ini on retail ISOs, so DbLevel stays Master: let Y (or B) open the
     // debug menu.
@@ -461,6 +462,7 @@ pub unsafe extern "C" fn onExitTitle(arg0: *mut GameModeState) {
 }
 
 pub unsafe extern "C" fn gm_SetupTitleDemo() {
+    melee_core::ct!("gm_SetupTitleDemo");
     // Uninitialised locals read as 0 (gwtool), so the pools start zeroed.
     let mut character_pool = [0i32; 29];
     let mut stage_pool = [0i32; 30];
@@ -567,6 +569,7 @@ pub unsafe extern "C" fn gm_SetupTitleDemo() {
 }
 
 pub unsafe extern "C" fn gm_PreloadTitleDemo() {
+    melee_core::ct!("gm_PreloadTitleDemo");
     let var_r31: *mut GameCache = &mut (*ext::lbDvd_GetPreloadCacheScene()).game_cache;
     ext::lbDvd_80018C6C();
 
@@ -595,6 +598,7 @@ pub unsafe extern "C" fn gm_PreloadTitleDemo() {
 }
 
 pub unsafe extern "C" fn onEnterVs(arg0: *mut GameModeState) {
+    melee_core::ct!("onEnterVs");
     let temp_r30: *mut VsModeData = &mut (*ext::gmMainLib_804D3EE0).modes.table[GmVsMode_Opening as usize];
     let md = ext::gm_GetGameModeStateEnterData(arg0) as *mut StartMeleeData;
     ext::gm_80167BC8(temp_r30);
@@ -633,63 +637,78 @@ pub unsafe extern "C" fn onEnterVs(arg0: *mut GameModeState) {
 }
 
 pub unsafe extern "C" fn gm_801BF634(arg0: i32, character_kind: i32) {
+    melee_core::ct!("gm_801BF634");
     gm_8049E548.c_kind[arg0 as usize] = character_kind as u8;
 }
 
 pub unsafe extern "C" fn gm_801BF648(arg0: i32) -> i32 {
+    melee_core::ct!("gm_801BF648");
     gm_8049E548.c_kind[arg0 as usize] as i32
 }
 
 pub unsafe extern "C" fn gm_801BF65C(arg0: i32, arg1: i8) {
+    melee_core::ct!("gm_801BF65C");
     gm_8049E548.x4[arg0 as usize] = arg1 as u8;
 }
 
 pub unsafe extern "C" fn gm_801BF670(arg0: i32) -> u8 {
+    melee_core::ct!("gm_801BF670");
     gm_8049E548.x4[arg0 as usize]
 }
 
 pub unsafe extern "C" fn gm_801BF684(arg0: i32) {
+    melee_core::ct!("gm_801BF684");
     gm_8049E548.unk_C = arg0 as u16;
 }
 
 /// @returns ::GrKind
 pub unsafe extern "C" fn gm_801BF694() -> u8 {
+    melee_core::ct!("gm_801BF694");
     gm_8049E548.unk_C as u8
 }
 
 pub unsafe extern "C" fn gm_801BF6A8(arg0: i32) {
+    melee_core::ct!("gm_801BF6A8");
     gm_8049E548.unk_A = arg0 as u8;
 }
 
 pub unsafe extern "C" fn gm_801BF6B8() -> u8 {
+    melee_core::ct!("gm_801BF6B8");
     gm_8049E548.unk_A
 }
 
 pub unsafe extern "C" fn gm_801BF6C8(arg0: i32) {
+    melee_core::ct!("gm_801BF6C8");
     gm_8049E548.unk_8 = arg0 as u8;
 }
 
 pub unsafe extern "C" fn gm_801BF6D8() -> i32 {
+    melee_core::ct!("gm_801BF6D8");
     gm_8049E548.unk_8 as i32
 }
 
 pub unsafe extern "C" fn gm_801BF6E8(arg0: i32) {
+    melee_core::ct!("gm_801BF6E8");
     gm_8049E548.unk_9 = arg0 as u8;
 }
 
 pub unsafe extern "C" fn gm_801BF6F8() -> i32 {
+    melee_core::ct!("gm_801BF6F8");
     gm_8049E548.unk_9 as i32
 }
 
 pub unsafe extern "C" fn gm_801BF708(arg0: i8) {
+    melee_core::ct!("gm_801BF708");
     gm_8049E548.unk_E = arg0;
 }
 
 pub unsafe extern "C" fn gm_801BF718() -> u8 {
+    melee_core::ct!("gm_801BF718");
     gm_8049E548.unk_E as u8
 }
 
 pub unsafe extern "C" fn onEnterCutsceneLuigi(_arg: *mut GameModeState) {
+    melee_core::ct!("onEnterCutsceneLuigi");
     ext::un_804D6F3C[1] = 1;
     ext::un_804D6F3C[3] = 1;
     ext::vi0401_8031D020(0xE, ext::HSD_Randi(4));
@@ -711,11 +730,13 @@ pub unsafe extern "C" fn onEnterCutsceneLuigi(_arg: *mut GameModeState) {
 }
 
 pub unsafe extern "C" fn onExitRegendCongrats(_arg: *mut GameModeState) {
+    melee_core::ct!("onExitRegendCongrats");
     ext::gm_SetPendingGameMode(GM_TITLE as u8);
     ext::gm_SetNewGameModePending();
 }
 
 pub unsafe extern "C" fn onEnterMovie(_arg: *mut GameModeState) {
+    melee_core::ct!("onEnterMovie");
     let temp_r31 = ext::lbDvd_GetPreloadCacheScene();
     ext::lbDvd_SetupVsPreloadCache();
     (*temp_r31).is_heap_persistent[1] = 0;
@@ -723,13 +744,16 @@ pub unsafe extern "C" fn onEnterMovie(_arg: *mut GameModeState) {
 }
 
 pub unsafe extern "C" fn onExitMovie(_arg: *mut GameModeState) {
+    melee_core::ct!("onExitMovie");
     ext::lbMthp_8001F800();
 }
 
 pub unsafe extern "C" fn onExitHowto(_arg: *mut GameModeState) {
+    melee_core::ct!("onExitHowto");
     ext::lbMthp_8001F800();
 }
 
 pub unsafe extern "C" fn onExitOmake15(_arg: *mut GameModeState) {
+    melee_core::ct!("onExitOmake15");
     ext::lbMthp_8001F800();
 }

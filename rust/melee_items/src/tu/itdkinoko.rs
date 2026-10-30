@@ -67,6 +67,7 @@ unsafe fn sa<'a, T>(ip: *mut Item) -> &'a T {
 
 /// `itDKinoko_Logic27_Spawned`: face away from the origin, reset the slide, enter motion 1.
 pub unsafe extern "C" fn itDKinoko_Logic27_Spawned(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itDKinoko_Logic27_Spawned");
     let it = item_of(gobj);
     if (*it).pos.x > 0.0 {
         (*it).facing_dir = -1.0;
@@ -83,6 +84,7 @@ pub unsafe extern "C" fn itDKinoko_Logic27_Spawned(gobj: *mut HSD_GObj) {
 
 /// `it_80293A70`: launch along the slide speed and play the landing effect.
 pub unsafe extern "C" fn it_80293A70(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_80293A70");
     let it = item_of(gobj);
     (*it).x40_vel.x = (*it).xDD4_itemVar.kinoko.x0;
     (*it).x40_vel.y = 0.0;
@@ -95,11 +97,13 @@ pub unsafe extern "C" fn it_80293A70(gobj: *mut HSD_GObj) {
 
 /// `itDkinoko_UnkMotion0_Anim` (returns false).
 pub unsafe extern "C" fn itDkinoko_UnkMotion0_Anim(_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDkinoko_UnkMotion0_Anim");
     false
 }
 
 /// `itDkinoko_UnkMotion0_Phys`: slide at `attrs->x0` in the facing direction while grounded.
 pub unsafe extern "C" fn itDkinoko_UnkMotion0_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itDkinoko_UnkMotion0_Phys");
     let it = item_of(gobj);
     let attrs = sa::<KinokoAttrs>(it);
     if (*it).ground_or_air != GA_Air {
@@ -110,6 +114,7 @@ pub unsafe extern "C" fn itDkinoko_UnkMotion0_Phys(gobj: *mut HSD_GObj) {
 
 /// `itDkinoko_UnkMotion0_Coll`: bounce off walls, track the floor normal.
 pub unsafe extern "C" fn itDkinoko_UnkMotion0_Coll(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDkinoko_UnkMotion0_Coll");
     let it = item_of(gobj);
     let cd: *mut CollData = &mut (*it).x378_itemColl;
 
@@ -131,21 +136,25 @@ pub unsafe extern "C" fn itDkinoko_UnkMotion0_Coll(gobj: *mut HSD_GObj) -> bool 
 
 /// `it_80293BE8`: enter motion 1.
 pub unsafe extern "C" fn it_80293BE8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_80293BE8");
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);
 }
 
 /// `it_80293C10`: enter motion 1 keeping the hitboxes.
 pub unsafe extern "C" fn it_80293C10(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_80293C10");
     ext::Item_80268E5C(gobj, 1, (ITEM_UNK_0x1 as u32) | (ITEM_HIT_PRESERVE as u32));
 }
 
 /// `itDkinoko_UnkMotion1_Anim` (returns false).
 pub unsafe extern "C" fn itDkinoko_UnkMotion1_Anim(_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDkinoko_UnkMotion1_Anim");
     false
 }
 
 /// `itDkinoko_UnkMotion1_Phys`: fall, then decelerate the slide by `sa->x4` (snapping to zero).
 pub unsafe extern "C" fn itDkinoko_UnkMotion1_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itDkinoko_UnkMotion1_Phys");
     let it = item_of(gobj);
     let attr = &*(*it).xCC_item_attr;
     let sa = sa::<KinokoAttrs>(it);
@@ -167,6 +176,7 @@ pub unsafe extern "C" fn itDkinoko_UnkMotion1_Phys(gobj: *mut HSD_GObj) {
 
 /// `itDkinoko_UnkMotion1_Coll`: floor tracking while grounded.
 pub unsafe extern "C" fn itDkinoko_UnkMotion1_Coll(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDkinoko_UnkMotion1_Coll");
     let it = item_of(gobj);
     let cd: *mut CollData = &mut (*it).x378_itemColl;
 
@@ -179,11 +189,13 @@ pub unsafe extern "C" fn itDkinoko_UnkMotion1_Coll(gobj: *mut HSD_GObj) -> bool 
 
 /// `itDKinoko_Logic27_DmgDealt`: always true.
 pub unsafe extern "C" fn itDKinoko_Logic27_DmgDealt(_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDKinoko_Logic27_DmgDealt");
     true
 }
 
 /// `itDKinoko_Logic27_EvtUnk`: `it_8026B894`.
 pub unsafe extern "C" fn itDKinoko_Logic27_EvtUnk(gobj: *mut HSD_GObj, gobj_2: *mut HSD_GObj) {
+    melee_core::ct!("itDKinoko_Logic27_EvtUnk");
     ext::it_8026B894(gobj, gobj_2);
 }
 

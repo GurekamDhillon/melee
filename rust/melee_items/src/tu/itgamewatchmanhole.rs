@@ -118,6 +118,7 @@ pub static mut it_803F78D8: [ItemStateTable; 1] = [
 
 /// `HSD_GObj* it_802C65E4(Item_GObj* gobj, Vec* vec, enum Fighter_Part arg2, float arg3)`
 pub unsafe extern "C" fn it_802C65E4(gobj: *mut HSD_GObj, vec: *mut Vec, arg2: Fighter_Part, arg3: f32) -> *mut HSD_GObj {
+    melee_core::ct!("it_802C65E4");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = It_Kind_GameWatch_Manhole;
     Item_InitSpawnPosition(&mut spawn, vec, false);
@@ -133,6 +134,7 @@ pub unsafe extern "C" fn it_802C65E4(gobj: *mut HSD_GObj, vec: *mut Vec, arg2: F
 }
 
 pub unsafe extern "C" fn itGameWatchManhole_Logic72_Destroyed(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGameWatchManhole_Logic72_Destroyed");
     let ip = GET_ITEM(gobj);
     if !(*ip).owner.is_null() {
         ext::ftGw_AttackLw3_ItemManholeRemove((*ip).owner);
@@ -140,6 +142,7 @@ pub unsafe extern "C" fn itGameWatchManhole_Logic72_Destroyed(gobj: *mut HSD_GOb
 }
 
 pub unsafe extern "C" fn it_802C6718(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802C6718");
     let ip = GET_ITEM(gobj);
     if !ip.is_null() {
         if !(*ip).owner.is_null() {
@@ -150,14 +153,17 @@ pub unsafe extern "C" fn it_802C6718(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_802C6764(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802C6764");
     ext::it_8026B724(gobj);
 }
 
 pub unsafe extern "C" fn it_802C6784(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802C6784");
     ext::it_8026B73C(gobj);
 }
 
 pub unsafe extern "C" fn itGameWatchManhole_Logic72_PickedUp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGameWatchManhole_Logic72_PickedUp");
     let ip = GET_ITEM(gobj);
     (*ip).xDAC_itcmd_var0 = 0;
     ext::it_8026BB44(gobj);
@@ -170,6 +176,7 @@ pub unsafe extern "C" fn itGameWatchManhole_Logic72_PickedUp(gobj: *mut HSD_GObj
 /// `itGamewatchmanhole_UnkMotion0_Anim_inline` (static inline): the callee's raw int, or `true`.
 #[inline]
 pub unsafe fn itGamewatchmanhole_UnkMotion0_Anim_inline(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itGamewatchmanhole_UnkMotion0_Anim_inline");
     let ip = GET_ITEM(gobj);
     if !(*ip).owner.is_null() {
         return ext::ftGw_AttackLw3_ItemCheckManholeRemove((*ip).owner);
@@ -178,6 +185,7 @@ pub unsafe fn itGamewatchmanhole_UnkMotion0_Anim_inline(gobj: *mut HSD_GObj) -> 
 }
 
 pub unsafe extern "C" fn itGamewatchmanhole_UnkMotion0_Anim(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itGamewatchmanhole_UnkMotion0_Anim");
     let ip = GET_ITEM(gobj);
     let mut vec: Vec = Vec { x: 0.0, y: 0.0, z: 0.0 };
     if (*ip).xDAC_itcmd_var0 != 0 {
@@ -195,5 +203,6 @@ pub unsafe extern "C" fn itGamewatchmanhole_UnkMotion0_Anim(gobj: *mut HSD_GObj)
 }
 
 pub unsafe extern "C" fn itGameWatchManhole_Logic72_EvtUnk(gobj: *mut HSD_GObj, gobj2: *mut HSD_GObj) {
+    melee_core::ct!("itGameWatchManhole_Logic72_EvtUnk");
     ext::it_8026B894(gobj, gobj2);
 }

@@ -74,6 +74,7 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 
 /// `updateVelocity` (static): punch ground velocity from the charge count.
 pub fn updateVelocity(gobj: *mut HSD_GObj) {
+    melee_core::ct!("updateVelocity");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *mut ftDonkeyAttributes;
@@ -103,6 +104,7 @@ unsafe fn enter_common(gobj: *mut HSD_GObj, full_ms: i32, start_ms: i32) {
 }
 
 pub fn ftDk_SpecialN_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialN_Enter");
     unsafe {
         let fp = fpp(gobj);
         enter_common(gobj, ftDk_MS_SpecialNFull as i32, ftDk_MS_SpecialNStart as i32);
@@ -114,6 +116,7 @@ pub fn ftDk_SpecialN_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftDk_SpecialAirN_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialAirN_Enter");
     unsafe {
         enter_common(gobj, ftDk_MS_SpecialAirNFull as i32, ftDk_MS_SpecialAirNStart as i32);
         setCallbacks(gobj);
@@ -122,6 +125,7 @@ pub fn ftDk_SpecialAirN_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftDk_SpecialNLoop_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialNLoop_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *mut ftDonkeyAttributes;
@@ -168,6 +172,7 @@ unsafe fn scale_damage(gobj: *mut HSD_GObj, fp: *mut Fighter, da: *mut ftDonkeyA
 }
 
 pub fn ftDk_SpecialN_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialN_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *mut ftDonkeyAttributes;
@@ -191,6 +196,7 @@ pub fn ftDk_SpecialN_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftDk_SpecialNFull_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialNFull_Anim");
     unsafe {
         let fp = fpp(gobj);
         punch_effect(gobj, fp);
@@ -210,6 +216,7 @@ pub fn ftDk_SpecialNFull_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftDk_SpecialAirNLoop_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialAirNLoop_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *mut ftDonkeyAttributes;
@@ -237,6 +244,7 @@ unsafe fn air_end(gobj: *mut HSD_GObj, fp: *mut Fighter, da: *mut ftDonkeyAttrib
 }
 
 pub fn ftDk_SpecialAirN_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialAirN_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *mut ftDonkeyAttributes;
@@ -251,6 +259,7 @@ pub fn ftDk_SpecialAirN_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftDk_SpecialAirNFull_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialAirNFull_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *mut ftDonkeyAttributes;
@@ -261,9 +270,10 @@ pub fn ftDk_SpecialAirNFull_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftDk_SpecialNStart_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftDk_SpecialNStart_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftDk_SpecialNStart_IASA");}
 
 pub fn ftDk_SpecialNLoop_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialNLoop_IASA");
     unsafe {
         let fp = fpp(gobj);
         if !ext::ftCo_8009917C(gobj) {
@@ -285,10 +295,10 @@ pub fn ftDk_SpecialNLoop_IASA(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftDk_SpecialNCancel_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftDk_SpecialN_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftDk_SpecialNFull_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftDk_SpecialAirNStart_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftDk_SpecialAirNCancel_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftDk_SpecialAirN_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftDk_SpecialAirNFull_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftDk_SpecialNCancel_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftDk_SpecialNCancel_IASA");}
+pub fn ftDk_SpecialN_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftDk_SpecialN_IASA");}
+pub fn ftDk_SpecialNFull_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftDk_SpecialNFull_IASA");}
+pub fn ftDk_SpecialAirNStart_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftDk_SpecialAirNStart_IASA");}
+pub fn ftDk_SpecialAirNCancel_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftDk_SpecialAirNCancel_IASA");}
+pub fn ftDk_SpecialAirN_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftDk_SpecialAirN_IASA");}
+pub fn ftDk_SpecialAirNFull_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftDk_SpecialAirNFull_IASA");}

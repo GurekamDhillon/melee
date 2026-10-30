@@ -11,6 +11,7 @@ pub use crate::chars::r2::ftCrazyHand::ftcrazyhandtagrockpaper::fn_8015AAC8;
 pub use crate::chars::r8::ftCrazyHand::ftcrazyhandtagrockpaper::ftCh_TagRockPaper_IASA;
 
 pub fn ftCh_TagRockPaper_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_TagRockPaper_Anim");
     if bl::ftBossLib_8015C2E0() || bl::ftBossLib_8015C358() {
         crate::tu::ftcrazyhandtagcancel::ftCh_GrabUnk1_8015BC88(gobj);
     }
@@ -20,6 +21,6 @@ pub fn ftCh_TagRockPaper_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftCh_TagRockPaper_Phys(_gobj: *mut HSD_GObj) {}
+pub fn ftCh_TagRockPaper_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_TagRockPaper_Phys");}
 
-pub fn ftCh_TagRockPaper_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftCh_TagRockPaper_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_TagRockPaper_Coll");}

@@ -8,14 +8,17 @@ pub use super::hsd::{
     HSD_JObjSetTranslateZWithMtxDirty, HSD_JObjGetTranslation,
 };
 pub unsafe fn HSD_JObjGetTranslationX(jobj: *mut HSD_JObj) -> f32 {
+    melee_core::ct!("HSD_JObjGetTranslationX");
     super::hsd::hsd_assert(!jobj.is_null(), 582, c"jobj");
     (*jobj).translate.x
 }
 pub unsafe fn HSD_JObjGetTranslationY(jobj: *mut HSD_JObj) -> f32 {
+    melee_core::ct!("HSD_JObjGetTranslationY");
     super::hsd::hsd_assert(!jobj.is_null(), 588, c"jobj");
     (*jobj).translate.y
 }
 pub unsafe fn HSD_JObjGetTranslationZ(jobj: *mut HSD_JObj) -> f32 {
+    melee_core::ct!("HSD_JObjGetTranslationZ");
     super::hsd::hsd_assert(!jobj.is_null(), 594, c"jobj");
     (*jobj).translate.z
 }

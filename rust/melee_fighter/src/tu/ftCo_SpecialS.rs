@@ -56,6 +56,7 @@ fn caps(f: &Fighter) -> bool {
 
 /// Check `SpecialS` input without entering the state.
 pub fn ftCo_SpecialS_HasInput(f: &Fighter) -> bool {
+    melee_core::ct!("ftCo_SpecialS_HasInput");
     if !caps(f) {
         return false;
     }
@@ -63,6 +64,7 @@ pub fn ftCo_SpecialS_HasInput(f: &Fighter) -> bool {
 }
 
 pub fn ftCo_SpecialS_CheckInput(g: G) -> bool {
+    melee_core::ct!("ftCo_SpecialS_CheckInput");
     let f = fp(g);
     if !caps(f) {
         return false;
@@ -82,6 +84,7 @@ pub fn ftCo_SpecialS_CheckInput(g: G) -> bool {
 
 /// static `doEnter`.
 pub fn doEnter(g: G) {
+    melee_core::ct!("doEnter");
     let f = fp(g);
     let gv = f.gr_vel;
     let a = -(gv * (1.0 - f.co_attrs.specials_ground_speed_retention));

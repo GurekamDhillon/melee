@@ -56,6 +56,7 @@ pub mod ext {
 
 /// `ftCo_800DB464` as the `accessory1_cb` value.
 pub unsafe extern "C" fn ftCo_800DB464_cb(g: G) {
+    melee_core::ct!("ftCo_800DB464_cb");
     ext::ftCo_800DB464(g)
 }
 
@@ -74,6 +75,7 @@ fn hsd_jobj_set_scale(j: *mut HSD_JObj, scale: &Vec3) {
 }
 
 pub fn ftCo_800BD620(g: G) {
+    melee_core::ct!("ftCo_800BD620");
     let f = fp(g);
     let victim = unsafe { (*f.victim_gobj).user_data as *mut Fighter };
     f.set_x2226_b2(0);
@@ -95,13 +97,15 @@ fn inline_a0(f: &mut Fighter, arg1: i32) {
     ext::ftKb_SpecialN_800F598C(f.victim_gobj, arg1);
 }
 
-pub fn ftCo_CaptureWaitKirby_Anim(_g: G) {}
+pub fn ftCo_CaptureWaitKirby_Anim(_g: G) { melee_core::ct!("ftCo_CaptureWaitKirby_Anim");}
 
 pub fn ftCo_800BD6EC_noinline(g: G) {
+    melee_core::ct!("ftCo_800BD6EC_noinline");
     ftCo_800BD6EC(g);
 }
 
 pub fn ftCo_800BD6EC(g: G) {
+    melee_core::ct!("ftCo_800BD6EC");
     let f = fp(g);
     let cd = crate::hooks::common_data();
     if f.input.lstick[0].y >= cd.tap_jump_threshold && (f.active_timer.lstick.y as i32) < cd.tap_jump_window {
@@ -135,6 +139,7 @@ fn inline_b0(g: G) {
 }
 
 pub fn ftCo_CaptureWaitKirby_IASA(g: G) {
+    melee_core::ct!("ftCo_CaptureWaitKirby_IASA");
     let jobj = unsafe { (*g).hsd_obj as *mut HSD_JObj };
     let user = unsafe { (*g).user_data as *mut Fighter };
     if ext::ftKb_SpecialN_800F5A38(fp(g).victim_gobj, user) {
@@ -156,6 +161,6 @@ pub fn ftCo_CaptureWaitKirby_IASA(g: G) {
     }
 }
 
-pub fn ftCo_CaptureWaitKirby_Phys(_g: G) {}
+pub fn ftCo_CaptureWaitKirby_Phys(_g: G) { melee_core::ct!("ftCo_CaptureWaitKirby_Phys");}
 
-pub fn ftCo_CaptureWaitKirby_Coll(_g: G) {}
+pub fn ftCo_CaptureWaitKirby_Coll(_g: G) { melee_core::ct!("ftCo_CaptureWaitKirby_Coll");}

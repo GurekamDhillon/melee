@@ -79,18 +79,22 @@ unsafe fn set_effect_hitlag_callbacks(fp: *mut Fighter) {
 
 /// `ftLg_SpecialS_SetVars` as a Fighter callback entry (`x21EC`).
 pub unsafe extern "C" fn cb_ftLg_SpecialS_SetVars(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftLg_SpecialS_SetVars");
     ftLg_SpecialS_SetVars(g);
 }
 /// `ftLg_SpecialS_SetGFX` as a Fighter callback entry (`accessory4_cb`).
 pub unsafe extern "C" fn cb_ftLg_SpecialS_SetGFX(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftLg_SpecialS_SetGFX");
     ftLg_SpecialS_SetGFX(g);
 }
 /// `ftLg_SpecialS_OnGiveDamage` as a Fighter callback entry (`deal_dmg_cb`).
 pub unsafe extern "C" fn cb_ftLg_SpecialS_OnGiveDamage(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftLg_SpecialS_OnGiveDamage");
     ftLg_SpecialS_OnGiveDamage(g);
 }
 /// `ftCommon_8007F76C(gobj)` as a Fighter callback entry (`x21F8`).
 pub unsafe extern "C" fn cb_ftCommon_8007F76C(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftCommon_8007F76C");
     melee_fighter::ftcommon2::ftcommon_8007f76c(&mut *fpp(g));
 }
 
@@ -132,6 +136,7 @@ const transition_flags3: u32 = (Ft_MF_KeepGfx
 
 /// Luigi's Green Missile GFX callback.
 pub fn ftLg_SpecialS_SetGFX(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialS_SetGFX");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).x2219_b0() == 0 {
@@ -143,6 +148,7 @@ pub fn ftLg_SpecialS_SetGFX(gobj: *mut HSD_GObj) {
 
 /// Luigi's Green Missile Setup (RNG + calculations).
 pub fn ftLg_SpecialS_SetVars(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialS_SetVars");
     unsafe {
         let fp = fpp(gobj);
         let sa = (*fp).dat_attrs as *const ftLuigiAttributes;
@@ -163,6 +169,7 @@ pub fn ftLg_SpecialS_SetVars(gobj: *mut HSD_GObj) {
 
 /// Luigi's grounded Green Missile Motion State handler.
 pub fn ftLg_SpecialS_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialS_Enter");
     unsafe {
         let fp = fpp(gobj);
         let sa = (*fp).dat_attrs as *const ftLuigiAttributes;
@@ -175,6 +182,7 @@ pub fn ftLg_SpecialS_Enter(gobj: *mut HSD_GObj) {
 
 /// Luigi's aerial Green Missile Motion State handler.
 pub fn ftLg_SpecialAirS_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirS_Enter");
     unsafe {
         let fp = fpp(gobj);
         let sa = (*fp).dat_attrs as *const ftLuigiAttributes;
@@ -188,6 +196,7 @@ pub fn ftLg_SpecialAirS_Enter(gobj: *mut HSD_GObj) {
 
 /// Luigi's Green Missile OnGiveDamage callback.
 pub fn ftLg_SpecialS_OnGiveDamage(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialS_OnGiveDamage");
     unsafe {
         let fp = fpp(gobj);
         (*fp).self_vel.x = 0.0;
@@ -201,22 +210,25 @@ pub fn ftLg_SpecialS_OnGiveDamage(gobj: *mut HSD_GObj) {
 // ---- SStart ----
 
 pub fn ftLg_SpecialSStart_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialSStart_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         ftLg_SpecialSHold_Enter(gobj);
     }
 }
 
 pub fn ftLg_SpecialAirSStart_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirSStart_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         ftLg_SpecialAirSHold_Enter(gobj);
     }
 }
 
-pub fn ftLg_SpecialSStart_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftLg_SpecialSStart_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftLg_SpecialSStart_IASA");}
 
-pub fn ftLg_SpecialAirSStart_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftLg_SpecialAirSStart_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftLg_SpecialAirSStart_IASA");}
 
 pub fn ftLg_SpecialSStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialSStart_Phys");
     unsafe {
         let fp = fpp(gobj);
         let sa = (*fp).dat_attrs as *const ftLuigiAttributes;
@@ -228,6 +240,7 @@ pub fn ftLg_SpecialSStart_Phys(gobj: *mut HSD_GObj) {
 // ---- SHold ----
 
 pub fn ftLg_SpecialSHold_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialSHold_Anim");
     unsafe {
         let fp = fpp(gobj);
         let sa = (*fp).dat_attrs as *const ftLuigiAttributes;
@@ -243,6 +256,7 @@ pub fn ftLg_SpecialSHold_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftLg_SpecialAirSHold_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirSHold_Anim");
     unsafe {
         let fp = fpp(gobj);
         let sa = (*fp).dat_attrs as *const ftLuigiAttributes;
@@ -258,6 +272,7 @@ pub fn ftLg_SpecialAirSHold_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftLg_SpecialSHold_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialSHold_IASA");
     unsafe {
         let fp = fpp(gobj);
         if ((*fp).input.held_buttons[0] as i32 & HSD_PAD_B) == 0 {
@@ -267,6 +282,7 @@ pub fn ftLg_SpecialSHold_IASA(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftLg_SpecialAirSHold_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirSHold_IASA");
     unsafe {
         let fp = fpp(gobj);
         if ((*fp).input.held_buttons[0] as i32 & HSD_PAD_B) == 0 {
@@ -277,6 +293,7 @@ pub fn ftLg_SpecialAirSHold_IASA(gobj: *mut HSD_GObj) {
 
 /// Luigi's grounded Green Missile Charge Motion State handler.
 pub fn ftLg_SpecialSHold_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialSHold_Enter");
     unsafe {
         st::Fighter_ChangeMotionState(gobj, ftLg_MS_SpecialSHold as i32, Ft_MF_KeepSfx as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
         (*fpp(gobj)).accessory4_cb = Some(cb_ftLg_SpecialS_SetGFX);
@@ -285,6 +302,7 @@ pub fn ftLg_SpecialSHold_Enter(gobj: *mut HSD_GObj) {
 
 /// Luigi's aerial Green Missile Charge Motion State handler.
 pub fn ftLg_SpecialAirSHold_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirSHold_Enter");
     unsafe {
         st::Fighter_ChangeMotionState(gobj, ftLg_MS_SpecialAirSHold as i32, Ft_MF_KeepSfx as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
         (*fpp(gobj)).accessory4_cb = Some(cb_ftLg_SpecialS_SetGFX);
@@ -297,6 +315,7 @@ pub fn ftLg_SpecialAirSHold_Enter(gobj: *mut HSD_GObj) {
 /// converted to `u32` like the C's argument.
 #[inline(always)]
 pub fn charge_damage(charge_frames: i32, slope: f32, tilt: f32) -> u32 {
+    melee_core::ct!("charge_damage");
     fmadds(charge_frames as f32, slope, tilt) as u32
 }
 
@@ -318,6 +337,7 @@ unsafe fn anim_charge_damage(gobj: *mut HSD_GObj, fp: *mut Fighter) {
 
 /// Luigi's grounded Green Missile Launch Animation callback.
 pub fn ftLg_SpecialS_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialS_Anim");
     unsafe {
         let fp = fpp(gobj);
         anim_charge_damage(gobj, fp);
@@ -330,6 +350,7 @@ pub fn ftLg_SpecialS_Anim(gobj: *mut HSD_GObj) {
 
 /// Luigi's aerial Green Missile Launch Animation callback.
 pub fn ftLg_SpecialAirS_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirS_Anim");
     unsafe {
         let fp = fpp(gobj);
         anim_charge_damage(gobj, fp);
@@ -339,12 +360,13 @@ pub fn ftLg_SpecialAirS_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftLg_SpecialS_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftLg_SpecialS_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftLg_SpecialS_IASA");}
 
-pub fn ftLg_SpecialAirS_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftLg_SpecialAirS_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftLg_SpecialAirS_IASA");}
 
 /// `ftLuigi_SpecialS_Setup` (static inline).
 pub fn ftLuigi_SpecialS_Setup(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLuigi_SpecialS_Setup");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).x2219_b0() == 0 {
@@ -362,6 +384,7 @@ pub fn ftLuigi_SpecialS_Setup(gobj: *mut HSD_GObj) {
 
 /// Luigi's grounded Green Missile Launch Motion State handler.
 pub fn ftLg_SpecialSLaunch_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialSLaunch_Enter");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).mv.lg.SpecialS.isMisfire != 0 {
@@ -376,6 +399,7 @@ pub fn ftLg_SpecialSLaunch_Enter(gobj: *mut HSD_GObj) {
 
 /// Luigi's aerial Green Missile Launch Motion State handler.
 pub fn ftLg_SpecialAirSLaunch_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirSLaunch_Enter");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).mv.lg.SpecialS.isMisfire != 0 {
@@ -391,6 +415,7 @@ pub fn ftLg_SpecialAirSLaunch_Enter(gobj: *mut HSD_GObj) {
 // ---- SMisfire ----
 
 pub fn ftLg_SpecialSMisfire_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialSMisfire_Anim");
     unsafe {
         let fp = fpp(gobj);
         anim_charge_damage(gobj, fp);
@@ -402,6 +427,7 @@ pub fn ftLg_SpecialSMisfire_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftLg_SpecialAirSMisfire_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirSMisfire_Anim");
     unsafe {
         let fp = fpp(gobj);
         anim_charge_damage(gobj, fp);
@@ -411,12 +437,13 @@ pub fn ftLg_SpecialAirSMisfire_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftLg_SpecialSMisfire_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftLg_SpecialSMisfire_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftLg_SpecialSMisfire_IASA");}
 
-pub fn ftLg_SpecialAirSMisfire_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftLg_SpecialAirSMisfire_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftLg_SpecialAirSMisfire_IASA");}
 
 /// Luigi's grounded Green Missile Misfire Motion State handler.
 pub fn ftLg_SpecialSMisfire_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialSMisfire_Enter");
     st::Fighter_ChangeMotionState(gobj, ftLg_MS_SpecialSMisfire as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ftLuigi_SpecialS_RemoveGFX(gobj);
     ftLuigi_SpecialS_Setup(gobj);
@@ -424,6 +451,7 @@ pub fn ftLg_SpecialSMisfire_Enter(gobj: *mut HSD_GObj) {
 
 /// Luigi's aerial Green Missile Misfire Motion State handler.
 pub fn ftLg_SpecialAirSMisfire_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirSMisfire_Enter");
     st::Fighter_ChangeMotionState(gobj, ftLg_MS_SpecialAirSMisfire as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ftLuigi_SpecialS_RemoveGFX(gobj);
     ftLuigi_SpecialS_Setup(gobj);
@@ -431,21 +459,23 @@ pub fn ftLg_SpecialAirSMisfire_Enter(gobj: *mut HSD_GObj) {
 
 // ---- SFly (S2) ----
 
-pub fn ftLg_SpecialS2_Anim(_gobj: *mut HSD_GObj) {}
+pub fn ftLg_SpecialS2_Anim(_gobj: *mut HSD_GObj) { melee_core::ct!("ftLg_SpecialS2_Anim");}
 
 pub fn ftLg_SpecialAirS2_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirS2_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         ftLg_SpecialAirSEnd_Enter(gobj);
     }
 }
 
-pub fn ftLg_SpecialS2_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftLg_SpecialS2_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftLg_SpecialS2_IASA");}
 
-pub fn ftLg_SpecialAirS2_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftLg_SpecialAirS2_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftLg_SpecialAirS2_IASA");}
 
-pub fn ftLg_SpecialS2_Phys(_gobj: *mut HSD_GObj) {}
+pub fn ftLg_SpecialS2_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("ftLg_SpecialS2_Phys");}
 
 pub fn ftLg_SpecialAirS2_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirS2_Phys");
     unsafe {
         let fp = fpp(gobj);
         let sa = (*fp).dat_attrs as *const ftLuigiAttributes;
@@ -460,9 +490,10 @@ pub fn ftLg_SpecialAirS2_Phys(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftLg_SpecialS2_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftLg_SpecialS2_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftLg_SpecialS2_Coll");}
 
 pub fn ftLg_SpecialAirS2_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirS2_Coll");
     unsafe {
         let fp0 = fpp(gobj);
         if st::ft_80081D0C(gobj) != 0 {
@@ -478,6 +509,7 @@ pub fn ftLg_SpecialAirS2_Coll(gobj: *mut HSD_GObj) {
 
 /// Luigi's Green Missile Fly Setup.
 pub fn ftLg_SpecialSFly_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialSFly_Enter");
     unsafe {
         let fp = fpp(gobj);
         let sa = (*fp).dat_attrs as *const ftLuigiAttributes;
@@ -518,11 +550,12 @@ pub fn ftLg_SpecialSFly_Enter(gobj: *mut HSD_GObj) {
 
 // ---- SEnd ----
 
-pub fn ftLg_SpecialSEnd_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftLg_SpecialSEnd_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftLg_SpecialSEnd_IASA");}
 
-pub fn ftLg_SpecialAirSEnd_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftLg_SpecialAirSEnd_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftLg_SpecialAirSEnd_IASA");}
 
 pub fn ftLg_SpecialSEnd_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialSEnd_Phys");
     unsafe {
         let fp = fpp(gobj);
         let sa = (*fp).dat_attrs as *const ftLuigiAttributes;
@@ -532,6 +565,7 @@ pub fn ftLg_SpecialSEnd_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftLg_SpecialAirSEnd_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirSEnd_Phys");
     unsafe {
         let fp = fpp(gobj);
         let sa = (*fp).dat_attrs as *const ftLuigiAttributes;
@@ -542,6 +576,7 @@ pub fn ftLg_SpecialAirSEnd_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftLg_SpecialAirSEnd_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirSEnd_Coll");
     unsafe {
         let fp = fpp(gobj);
         if st::ft_80081D0C(gobj) != 0 {
@@ -553,6 +588,7 @@ pub fn ftLg_SpecialAirSEnd_Coll(gobj: *mut HSD_GObj) {
 
 /// Luigi's Green Missile End air -> ground Motion State handler.
 pub fn ftLg_SpecialSEnd_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialSEnd_Enter");
     unsafe {
         let fp = fpp(gobj);
         let sa = (*fp).dat_attrs as *const ftLuigiAttributes;
@@ -564,6 +600,7 @@ pub fn ftLg_SpecialSEnd_Enter(gobj: *mut HSD_GObj) {
 
 /// Luigi's Green Missile End ground -> air Motion State handler.
 pub fn ftLg_SpecialAirSEnd_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirSEnd_Enter");
     unsafe {
         let fp = fpp(gobj);
         let sa = (*fp).dat_attrs as *const ftLuigiAttributes;

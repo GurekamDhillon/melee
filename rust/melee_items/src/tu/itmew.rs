@@ -82,6 +82,7 @@ unsafe fn Item_EnterAirStateWithHitlagAndStateDesc(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itMew_Logic22_Spawned(gobj: *mut Item_GObj) {
+    melee_core::ct!("itMew_Logic22_Spawned");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut MewVars;
 
@@ -91,10 +92,12 @@ pub unsafe extern "C" fn itMew_Logic22_Spawned(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802D3B6C(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D3B6C");
     ext::it_8026B894(gobj, ref_gobj);
 }
 
 pub unsafe extern "C" fn it_802D3B8C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D3B8C");
     let ip = GET_ITEM(gobj);
 
     ext::it_80273454(gobj);
@@ -103,6 +106,7 @@ pub unsafe extern "C" fn it_802D3B8C(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802D3BE0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D3BE0");
     let ip = GET_ITEM(gobj);
     let jobj = HSD_GObjGetHSDObj(gobj) as *mut HSD_JObj;
 
@@ -112,19 +116,22 @@ pub unsafe extern "C" fn it_802D3BE0(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itMew_UnkMotion1_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMew_UnkMotion1_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         it_802D3C9C(gobj);
     }
     false
 }
 
-pub unsafe extern "C" fn itMew_UnkMotion1_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itMew_UnkMotion1_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itMew_UnkMotion1_Phys");}
 
 pub unsafe extern "C" fn itMew_UnkMotion1_Coll(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMew_UnkMotion1_Coll");
     false
 }
 
 pub unsafe extern "C" fn it_802D3C9C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D3C9C");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut MewVars;
 
@@ -139,6 +146,7 @@ pub unsafe extern "C" fn it_802D3C9C(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itMew_UnkMotion2_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMew_UnkMotion2_Anim");
     let ip = GET_ITEM(gobj);
 
     if (*ip).pos.y > ext::Stage_GetBlastZoneTopOffset() {
@@ -148,25 +156,30 @@ pub unsafe extern "C" fn itMew_UnkMotion2_Anim(gobj: *mut Item_GObj) -> bool {
 }
 
 pub unsafe extern "C" fn itMew_UnkMotion2_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itMew_UnkMotion2_Phys");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut MewVars;
     (*ip).x40_vel.y += (*attr).xC;
 }
 
 pub unsafe extern "C" fn itMew_UnkMotion2_Coll(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMew_UnkMotion2_Coll");
     false
 }
 
 pub unsafe extern "C" fn it_802D3D94(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D3D94");
     Item_EnterAirStateWithHitlagAndStateDesc(gobj);
 }
 
 pub unsafe extern "C" fn itMew_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMew_UnkMotion0_Anim");
     ext::it_80279FF8(gobj);
     false
 }
 
 pub unsafe extern "C" fn itMew_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itMew_UnkMotion0_Phys");
     if ext::it_8027A09C(gobj) != 0 {
         let ip_arg = GET_ITEM(gobj);
         ext::it_80273454(gobj);
@@ -179,5 +192,6 @@ pub unsafe extern "C" fn itMew_UnkMotion0_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itMew_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMew_UnkMotion0_Coll");
     ext::it_8027A118(gobj, Some(it_802D3B8C)) != 0
 }

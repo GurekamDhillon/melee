@@ -12,6 +12,7 @@ pub mod ext {
 
 /// `ftCh_GrabUnk1_8015B800`: show the fighter again, turn it around and cut the capture.
 pub fn ftCh_GrabUnk1_8015B800(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_GrabUnk1_8015B800");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         (*fp).set_invisible(0);

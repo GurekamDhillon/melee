@@ -61,6 +61,7 @@ const ftPk_SpecialN_Cmd3: usize = 3;
 
 /// `doEnter` (static).
 pub fn doEnter(gobj: G, msid: ftPikachu_MotionState) {
+    melee_core::ct!("doEnter");
     unsafe {
         let fp = fpp(gobj);
         st::Fighter_ChangeMotionState(gobj, msid as i32, Ft_MF_None, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -73,10 +74,12 @@ pub fn doEnter(gobj: G, msid: ftPikachu_MotionState) {
 }
 
 pub fn ftPk_SpecialN_Enter(gobj: G) {
+    melee_core::ct!("ftPk_SpecialN_Enter");
     doEnter(gobj, ftPk_MS_SpecialN);
 }
 
 pub fn ftPk_SpecialAirN_Enter(gobj: G) {
+    melee_core::ct!("ftPk_SpecialAirN_Enter");
     doEnter(gobj, ftPk_MS_SpecialAirN);
 }
 
@@ -96,6 +99,7 @@ unsafe fn spawn_jolt(gobj: G, fp: *mut Fighter, pika_attr: *mut ftPikachuAttribu
 }
 
 pub fn ftPk_SpecialN_Anim(gobj: G) {
+    melee_core::ct!("ftPk_SpecialN_Anim");
     unsafe {
         let fp = fpp(gobj);
         let pika_attr = da(fp);
@@ -113,6 +117,7 @@ pub fn ftPk_SpecialN_Anim(gobj: G) {
 }
 
 pub fn ftPk_SpecialAirN_Anim(gobj: G) {
+    melee_core::ct!("ftPk_SpecialAirN_Anim");
     unsafe {
         let fp = fpp(gobj);
         let pika_attr = da(fp);
@@ -133,9 +138,9 @@ pub fn ftPk_SpecialAirN_Anim(gobj: G) {
     }
 }
 
-pub fn ftPk_SpecialN_IASA(_gobj: G) {}
+pub fn ftPk_SpecialN_IASA(_gobj: G) { melee_core::ct!("ftPk_SpecialN_IASA");}
 
-pub fn ftPk_SpecialAirN_IASA(_gobj: G) {}
+pub fn ftPk_SpecialAirN_IASA(_gobj: G) { melee_core::ct!("ftPk_SpecialAirN_IASA");}
 
 /// The effect spawn shared by `ftPk_SpecialN_SpawnEffect0/1`.
 unsafe fn spawn_effect(gobj: G, gfx_id: i32) {
@@ -152,14 +157,17 @@ unsafe fn spawn_effect(gobj: G, gfx_id: i32) {
 }
 
 pub fn ftPk_SpecialN_SpawnEffect0(gobj: G) {
+    melee_core::ct!("ftPk_SpecialN_SpawnEffect0");
     unsafe { spawn_effect(gobj, 1214) }
 }
 
 pub fn ftPk_SpecialN_SpawnEffect1(gobj: G) {
+    melee_core::ct!("ftPk_SpecialN_SpawnEffect1");
     unsafe { spawn_effect(gobj, 1215) }
 }
 
 pub fn ftPk_SpecialN_80124DC8(gobj: G) {
+    melee_core::ct!("ftPk_SpecialN_80124DC8");
     unsafe {
         let fp = fpp(gobj);
         let pika_attr = da(fp);
@@ -178,11 +186,14 @@ pub fn ftPk_SpecialN_80124DC8(gobj: G) {
 /// `ftPk_SpecialN_80124DC8` / `ftPk_SpecialN_SpawnEffect0/1` as Fighter callback entries
 /// (`x21EC` and `accessory4_cb`, stored by ftpikachuspecials.c).
 pub unsafe extern "C" fn cb_ftPk_SpecialN_80124DC8(g: G) {
+    melee_core::ct!("cb_ftPk_SpecialN_80124DC8");
     ftPk_SpecialN_80124DC8(g);
 }
 pub unsafe extern "C" fn cb_ftPk_SpecialN_SpawnEffect0(g: G) {
+    melee_core::ct!("cb_ftPk_SpecialN_SpawnEffect0");
     ftPk_SpecialN_SpawnEffect0(g);
 }
 pub unsafe extern "C" fn cb_ftPk_SpecialN_SpawnEffect1(g: G) {
+    melee_core::ct!("cb_ftPk_SpecialN_SpawnEffect1");
     ftPk_SpecialN_SpawnEffect1(g);
 }

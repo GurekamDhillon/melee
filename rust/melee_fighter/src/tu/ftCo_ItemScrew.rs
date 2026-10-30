@@ -49,6 +49,7 @@ pub mod ext {
 }
 
 pub fn ftCo_ItemScrew_Enter(g: G) {
+    melee_core::ct!("ftCo_ItemScrew_Enter");
     ext::ftCommon_8007D5D4(fp(g));
     ext::Fighter_ChangeMotionState(g, ftCo_MS_ItemScrew as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ext::ftCo_800CB110(g, false, cd().x800);
@@ -56,24 +57,29 @@ pub fn ftCo_ItemScrew_Enter(g: G) {
 }
 
 pub fn ftCo_ItemScrew_Anim(g: G) {
+    melee_core::ct!("ftCo_ItemScrew_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ftCo_Fall_Enter(g);
     }
 }
 
 pub fn ftCo_ItemScrew_IASA(g: G) {
+    melee_core::ct!("ftCo_ItemScrew_IASA");
     ext::ftCo_Jump_IASA(g);
 }
 
 pub fn ftCo_ItemScrew_Phys(g: G) {
+    melee_core::ct!("ftCo_ItemScrew_Phys");
     ext::ftCo_Jump_Phys_Inner(g);
 }
 
 pub fn ftCo_ItemScrew_Coll(g: G) {
+    melee_core::ct!("ftCo_ItemScrew_Coll");
     ext::ft_800831CC(g, ext::ftCo_80096CC8, ext::ft_80082B1C);
 }
 
 pub fn ft_800D2E7C(g: G, v: &mut Vec3) {
+    melee_core::ct!("ft_800D2E7C");
     v.x *= cd().x800;
     v.y *= cd().x800;
     ext::ftCommon_8007D5D4(fp(g));
@@ -81,19 +87,23 @@ pub fn ft_800D2E7C(g: G, v: &mut Vec3) {
 }
 
 pub fn ftCo_ItemScrewAir_Anim(g: G) {
+    melee_core::ct!("ftCo_ItemScrewAir_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ftCo_FallAerial_Enter(g);
     }
 }
 
 pub fn ftCo_ItemScrewAir_IASA(g: G) {
+    melee_core::ct!("ftCo_ItemScrewAir_IASA");
     ext::ftCo_JumpAerial_IASA(g);
 }
 
 pub fn ftCo_ItemScrewAir_Phys(g: G) {
+    melee_core::ct!("ftCo_ItemScrewAir_Phys");
     ext::ft_80084DB0(g);
 }
 
 pub fn ftCo_ItemScrewAir_Coll(g: G) {
+    melee_core::ct!("ftCo_ItemScrewAir_Coll");
     ext::ft_800831CC(g, ext::ftCo_80096CC8, ext::ft_80082B1C);
 }

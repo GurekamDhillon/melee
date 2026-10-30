@@ -44,6 +44,7 @@ pub mod ext {
 }
 
 pub fn ftCo_800C5B88(g: G, arg1: i32) {
+    melee_core::ct!("ftCo_800C5B88");
     let f = fp(g);
     unsafe {
         f.mv.co.hammerkneebend.x4 = arg1;
@@ -57,6 +58,7 @@ pub fn ftCo_800C5B88(g: G, arg1: i32) {
 }
 
 pub fn ftCo_HammerKneeBend_Anim(g: G) {
+    melee_core::ct!("ftCo_HammerKneeBend_Anim");
     ext::ftCo_800C4F64(g);
     if unsafe { fp(g).mv.co.hammerkneebend.x8 } <= 0.0 {
         ext::ftCo_800C5A98(g);
@@ -65,13 +67,16 @@ pub fn ftCo_HammerKneeBend_Anim(g: G) {
 }
 
 pub fn ftCo_HammerKneeBend_IASA(g: G) {
+    melee_core::ct!("ftCo_HammerKneeBend_IASA");
     ext::ftCo_KneeBend_Check_ShortHop(g);
 }
 
 pub fn ftCo_HammerKneeBend_Phys(g: G) {
+    melee_core::ct!("ftCo_HammerKneeBend_Phys");
     ext::ft_80084F3C(g);
 }
 
 pub fn ftCo_HammerKneeBend_Coll(g: G) {
+    melee_core::ct!("ftCo_HammerKneeBend_Coll");
     ext::ftCo_HammerWait_Coll(g);
 }

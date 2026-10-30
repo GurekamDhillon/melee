@@ -7,11 +7,13 @@ pub type G = *mut HSD_GObj;
 
 #[inline(always)]
 pub(crate) fn fp<'a>(g: G) -> &'a mut Fighter {
+    melee_core::ct!("fp");
     unsafe { &mut *((*g).user_data as *mut Fighter) }
 }
 
 /// `ftCo_800C7070(gobj)`: enter RebirthWait, set x2219_b2 and x2219_b1.
 pub fn ftco_800c7070(g: G) {
+    melee_core::ct!("ftco_800c7070");
     ext::Fighter_ChangeMotionState(g, ftCo_MS_RebirthWait, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
     let f = fp(g);
     f.set_x2219_b2(1);

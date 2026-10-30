@@ -63,6 +63,7 @@ pub static mut it_803F57B0: [ItemStateTable; 5] = [
 
 /// 284854: spawns a bat at `pos` (z forced to 0).
 pub unsafe extern "C" fn it_80284854(pos: *mut Vec3) -> *mut Item_GObj {
+    melee_core::ct!("it_80284854");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
     (*pos).z = 0.0;
@@ -90,6 +91,7 @@ pub unsafe extern "C" fn it_80284854(pos: *mut Vec3) -> *mut Item_GObj {
 }
 
 pub unsafe extern "C" fn itBat_Logic11_Spawned(gobj: *mut Item_GObj) {
+    melee_core::ct!("itBat_Logic11_Spawned");
     let item = GET_ITEM(gobj);
     let ap = (*(*item).xC4_article_data).x4_specialAttributes as *mut itBatAttributes;
 
@@ -102,6 +104,7 @@ pub unsafe extern "C" fn itBat_Logic11_Spawned(gobj: *mut Item_GObj) {
 
 /// 284974
 pub unsafe extern "C" fn it_80284974(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_80284974");
     let item = GET_ITEM(gobj);
     itResetVelocity(item);
     (*item).xD50_landNum = 0;
@@ -110,28 +113,33 @@ pub unsafe extern "C" fn it_80284974(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itBat_UnkMotion0_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itBat_UnkMotion0_Anim");
     false
 }
 
-pub unsafe extern "C" fn itBat_UnkMotion0_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itBat_UnkMotion0_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itBat_UnkMotion0_Phys");}
 
 pub unsafe extern "C" fn itBat_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itBat_UnkMotion0_Coll");
     ext::it_8026D62C(gobj, Some(it_802849F0));
     false
 }
 
 /// 2849F0
 pub unsafe extern "C" fn it_802849F0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802849F0");
     let item = GET_ITEM(gobj);
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);
     (*item).xD50_landNum = 0;
 }
 
 pub unsafe extern "C" fn itBat_UnkMotion3_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itBat_UnkMotion3_Anim");
     false
 }
 
 pub unsafe extern "C" fn itBat_UnkMotion3_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itBat_UnkMotion3_Phys");
     let item = GET_ITEM(gobj);
     let attr = (*item).xCC_item_attr;
     ext::it_80272860(gobj, (*attr).x10_fall_speed, (*attr).x14_fall_speed_max);
@@ -139,11 +147,13 @@ pub unsafe extern "C" fn itBat_UnkMotion3_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itBat_UnkMotion3_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itBat_UnkMotion3_Coll");
     ext::it_8026E15C(gobj, Some(it_80284974));
     false
 }
 
 pub unsafe extern "C" fn itBat_Logic11_PickedUp(gobj: *mut Item_GObj) {
+    melee_core::ct!("itBat_Logic11_PickedUp");
     let item = GET_ITEM(gobj);
     let child = HSD_JObjGetChild(GET_JOBJ(gobj));
 
@@ -153,16 +163,19 @@ pub unsafe extern "C" fn itBat_Logic11_PickedUp(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itBat_UnkMotion2_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itBat_UnkMotion2_Anim");
     false
 }
 
-pub unsafe extern "C" fn itBat_UnkMotion2_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itBat_UnkMotion2_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itBat_UnkMotion2_Phys");}
 
 pub unsafe extern "C" fn itBat_UnkMotion2_Coll(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itBat_UnkMotion2_Coll");
     false
 }
 
 pub unsafe extern "C" fn itBat_Logic11_Dropped(gobj: *mut Item_GObj) {
+    melee_core::ct!("itBat_Logic11_Dropped");
     let child = HSD_JObjGetChild((*gobj).hsd_obj as *mut HSD_JObj);
 
     ext::it_8026B390(gobj);
@@ -171,6 +184,7 @@ pub unsafe extern "C" fn itBat_Logic11_Dropped(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itBat_Logic11_Thrown(gobj: *mut Item_GObj) {
+    melee_core::ct!("itBat_Logic11_Thrown");
     let child = HSD_JObjGetChild((*gobj).hsd_obj as *mut HSD_JObj);
 
     ext::it_8026B390(gobj);
@@ -179,21 +193,25 @@ pub unsafe extern "C" fn itBat_Logic11_Thrown(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itBat_Logic11_EnteredAir(gobj: *mut Item_GObj) {
+    melee_core::ct!("itBat_Logic11_EnteredAir");
     ext::Item_80268E5C(gobj, 4, ITEM_ANIM_UPDATE);
 }
 
 pub unsafe extern "C" fn itBat_UnkMotion4_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itBat_UnkMotion4_Anim");
     false
 }
 
-pub unsafe extern "C" fn itBat_UnkMotion4_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itBat_UnkMotion4_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itBat_UnkMotion4_Phys");}
 
 pub unsafe extern "C" fn itBat_UnkMotion4_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itBat_UnkMotion4_Coll");
     ext::it_8026E8C4(gobj, Some(it_80284974), Some(it_802849F0));
     false
 }
 
 pub unsafe extern "C" fn itBat_Logic11_DmgDealt(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itBat_Logic11_DmgDealt");
     let item = GET_ITEM(gobj);
 
     if (*item).msid == 3 {
@@ -204,23 +222,28 @@ pub unsafe extern "C" fn itBat_Logic11_DmgDealt(gobj: *mut Item_GObj) -> bool {
 }
 
 pub unsafe extern "C" fn itBat_Logic11_Reflected(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itBat_Logic11_Reflected");
     ext::it_80273030(gobj) != 0
 }
 
 pub unsafe extern "C" fn itBat_Logic11_Clanked(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itBat_Logic11_Clanked");
     ext::itColl_BounceOffVictim(gobj);
     false
 }
 
 pub unsafe extern "C" fn itBat_Logic11_HitShield(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itBat_Logic11_HitShield");
     ext::itColl_BounceOffVictim(gobj);
     false
 }
 
 pub unsafe extern "C" fn itBat_Logic11_ShieldBounced(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itBat_Logic11_ShieldBounced");
     ext::itColl_BounceOffShield(gobj) != 0
 }
 
 pub unsafe extern "C" fn itBat_Logic11_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itBat_Logic11_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

@@ -57,6 +57,7 @@ pub mod ext {
 // END GENERATED EXT
 
 pub unsafe fn caller_note(pc: u32) {
+    melee_core::ct!("caller_note");
     let mut worst = 0;
     for i in 0..8 {
         if caller_pc[i] == pc {
@@ -69,6 +70,7 @@ pub unsafe fn caller_note(pc: u32) {
     caller_hits[worst] = 1;
 }
 pub unsafe fn caller_dump() {
+    melee_core::ct!("caller_dump");
     for i in 0..8 {
         if caller_hits[i] > 64 {
             OSReport("heap:   from 0x%08X x%d\n", &[OsArg::U(caller_pc[i]), OsArg::I(caller_hits[i])]);
@@ -76,6 +78,7 @@ pub unsafe fn caller_dump() {
     }
 }
 pub unsafe fn hist_note(size: i32) {
+    melee_core::ct!("hist_note");
     let mut worst = 0;
     for i in 0..12 {
         if hist_size[i] == size {
@@ -88,6 +91,7 @@ pub unsafe fn hist_note(size: i32) {
     hist_hits[worst] = 1;
 }
 pub unsafe fn hist_dump() {
+    melee_core::ct!("hist_dump");
     for i in 0..12 {
         if hist_hits[i] > 64 {
             OSReport("heap:   size %5d x %d\n", &[OsArg::I(hist_size[i]), OsArg::I(hist_hits[i])]);
@@ -95,6 +99,7 @@ pub unsafe fn hist_dump() {
     }
 }
 pub unsafe fn hsd_note(size: i32, freeing: i32) {
+    melee_core::ct!("hsd_note");
     if hsd_trace < 0 { hsd_trace = ext::PcTraceHeapEnabled(); }
     if hsd_trace == 0 { return; }
     if freeing != 0 {
@@ -114,6 +119,7 @@ pub unsafe fn hsd_note(size: i32, freeing: i32) {
     }
 }
 pub unsafe fn HSD_Free(ptr: *mut c_void) {
+    melee_core::ct!("HSD_Free");
     let caller = return_address(0) as usize as u32;
     ext::Snap_NoteMem(0, ptr, caller, 1);
     hsd_note(0, 1);
@@ -121,6 +127,7 @@ pub unsafe fn HSD_Free(ptr: *mut c_void) {
     ext::OSFreeToHeap(heap, ptr);
 }
 pub unsafe fn HSD_MemAlloc(size: i32) -> *mut c_void {
+    melee_core::ct!("HSD_MemAlloc");
     if size <= 0 { return core::ptr::null_mut(); }
     let heap = ext::HSD_GetHeap();
     let adr = ext::OSAllocFromHeap(heap, size as u32);

@@ -98,6 +98,7 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 }
 
 pub fn ftPe_Init_OnDeath(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_Init_OnDeath");
     unsafe {
         let fp = fpp(gobj);
         (*fp).u.pe.has_float = 1;
@@ -128,6 +129,7 @@ pub fn ftPe_Init_OnDeath(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftPe_Init_OnLoad(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_Init_OnLoad");
     unsafe {
         let fp = fpp(gobj);
         let ext_attrs = (*(*fp).ft_data).ext_attr as *mut ftPe_DatAttrs;
@@ -148,25 +150,30 @@ pub fn ftPe_Init_OnLoad(gobj: *mut HSD_GObj) {
 
 /// `ftPe_Init_OnDeath2` as a Fighter callback entry (`death2_cb` / `death3_cb` / `take_dmg_cb`).
 pub unsafe extern "C" fn cb_ftPe_Init_OnDeath2(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftPe_Init_OnDeath2");
     ftPe_Init_OnDeath2(g);
 }
 
 pub fn ftPe_Init_OnDeath2(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_Init_OnDeath2");
     crate::tu::ftpeachspecialhi::ftPe_8011D598(gobj);
     ext::ftPe_SpecialN_OnDeath2(gobj);
     crate::tu::ftpeachspeciallw::ftPe_SpecialLw_8011CFA0(gobj);
 }
 
 pub fn ftPe_Init_OnItemPickup(gobj: *mut HSD_GObj, flag: i32) {
+    melee_core::ct!("ftPe_Init_OnItemPickup");
     crate::tu::ftclink::Fighter_OnItemPickup(gobj, flag, 1, 1);
 }
 
 pub fn ftPe_Init_OnItemDrop(gobj: *mut HSD_GObj, flag: i32) {
+    melee_core::ct!("ftPe_Init_OnItemDrop");
     crate::tu::ftclink::Fighter_OnItemDrop(gobj, flag, 1, 1);
 }
 
 /// `COPY_ATTRS(gobj, ftPe_DatAttrs)`.
 pub fn ftPe_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_Init_LoadSpecialAttrs");
     unsafe {
         let fp = fpp(gobj);
         *((*fp).dat_attrs as *mut ftPe_DatAttrs) = *((*(*fp).ft_data).ext_attr as *const ftPe_DatAttrs);
@@ -175,6 +182,7 @@ pub fn ftPe_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
 
 /// Toggle the visibility of model part 2 (parasol-or-hand part): hidden (`-1`) becomes shown (`0`).
 pub fn ftPe_Init_8011B93C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_Init_8011B93C");
     let result = ext::ftParts_80074A74(gobj, 2);
     if result == -1 {
         st::ftParts_80074A4C(gobj, 2, 0);

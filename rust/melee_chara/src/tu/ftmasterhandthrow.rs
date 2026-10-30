@@ -9,4 +9,4 @@ pub use crate::chars::r2::ftMasterHand::ftmasterhandthrow::ftMh_Throw_Phys;
 pub use crate::chars::r4::ftMasterHand::ftmasterhandthrow::ftMh_MS_379_80155014;
 pub use crate::chars::r8::ftMasterHand::ftmasterhandthrow::ftMh_Throw_IASA;
 
-pub fn ftMh_Throw_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_Throw_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_Throw_Coll");}

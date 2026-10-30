@@ -230,8 +230,9 @@ pub use melee_types::HSD_Chan as HsdChan;
 /// state.c's `matstate`.
 pub use melee_types::HSD_MaterialState as MatState;
 
-pub fn rgba(c: melee_types::GXColor) -> Rgba { [c.r, c.g, c.b, c.a] }
+pub fn rgba(c: melee_types::GXColor) -> Rgba { melee_core::ct!("rgba"); [c.r, c.g, c.b, c.a] }
 pub fn gxcolor(c: Rgba) -> melee_types::GXColor {
+    melee_core::ct!("gxcolor");
     melee_types::GXColor { r: c[0], g: c[1], b: c[2], a: c[3] }
 }
 
@@ -631,41 +632,45 @@ impl HsdRender {
 
 /// `HSD_MulColor` (util.c): per channel `a * b / 255`.
 pub fn mul_color(a: Rgba, b: Rgba) -> Rgba {
+    melee_core::ct!("mul_color");
     let m = |x: u8, y: u8| ((x as u32 * y as u32) / 255) as u8;
     [m(a[0], b[0]), m(a[1], b[1]), m(a[2], b[2]), m(a[3], b[3])]
 }
 
-pub fn HSD_SetupChannelMode<G: GxBackend>(r: &mut HsdRender, g: &mut G, mode: u32) { r.setup_channel_mode(g, mode); }
+pub fn HSD_SetupChannelMode<G: GxBackend>(r: &mut HsdRender, g: &mut G, mode: u32) { melee_core::ct!("HSD_SetupChannelMode"); r.setup_channel_mode(g, mode); }
 pub fn HSD_SetupPEMode<G: GxBackend>(r: &mut HsdRender, g: &mut G, flags: u32, pe: Option<&melee_types::HSD_PEDesc>) {
+    melee_core::ct!("HSD_SetupPEMode");
     r.setup_pe_mode(g, flags, pe.map(pe_bytes));
 }
 fn pe_bytes(pe: &melee_types::HSD_PEDesc) -> [u8; 12] {
     [pe.flags,pe.ref0,pe.ref1,pe.dst_alpha,pe.r#type,pe.src_factor,pe.dst_factor,pe.logic_op,pe.z_comp,pe.alpha_comp0,pe.alpha_op,pe.alpha_comp1]
 }
-pub fn setupTevMode_last<G: GxBackend>(r: &mut HsdRender, g: &mut G) { r.setup_tev_mode_last(g); }
+pub fn setupTevMode_last<G: GxBackend>(r: &mut HsdRender, g: &mut G) { melee_core::ct!("setupTevMode_last"); r.setup_tev_mode_last(g); }
 pub fn HSD_SetupRenderModeWithCustomPE<G: GxBackend>(r: &mut HsdRender, g: &mut G, mode: u32, pe: Option<&melee_types::HSD_PEDesc>) {
+    melee_core::ct!("HSD_SetupRenderModeWithCustomPE");
     r.setup_render_mode_with_custom_pe(g, mode, pe.map(pe_bytes));
 }
-pub fn HSD_SetupRenderMode<G: GxBackend>(r: &mut HsdRender, g: &mut G, mode: u32) { r.setup_render_mode(g, mode); }
+pub fn HSD_SetupRenderMode<G: GxBackend>(r: &mut HsdRender, g: &mut G, mode: u32) { melee_core::ct!("HSD_SetupRenderMode"); r.setup_render_mode(g, mode); }
 pub fn HSD_SetMaterialColor(r: &mut HsdRender, a: melee_types::GXColor, d: melee_types::GXColor, s: melee_types::GXColor, alpha: f32) {
+    melee_core::ct!("HSD_SetMaterialColor");
     r.set_material_color(rgba(a),rgba(d),rgba(s),alpha);
 }
-pub fn HSD_SetMaterialShininess(r: &mut HsdRender, s: f32) { r.set_material_shininess(s); }
-pub fn HSD_StateSetLineWidth<G: GxBackend>(r: &mut HsdRender,g: &mut G,w: u8,t: i32) { r.state_set_line_width(g,w,t); }
-pub fn HSD_StateSetPointSize<G: GxBackend>(r: &mut HsdRender,g: &mut G,s: u8,t: i32) { r.state_set_point_size(g,s,t); }
-pub fn HSD_StateSetCullMode<G: GxBackend>(r: &mut HsdRender,g: &mut G,m: i32) { r.state_set_cull_mode(g,m as u32); }
-pub fn HSD_StateSetBlendMode<G: GxBackend>(r: &mut HsdRender,g: &mut G,t: i32,s: i32,d: i32,o: i32) { r.state_set_blend_mode(g,t as u32,s as u32,d as u32,o as u32); }
-pub fn HSD_StateSetZMode<G: GxBackend>(r: &mut HsdRender,g: &mut G,e: i32,f: i32,u: i32) { r.state_set_z_mode(g,e != 0,f as u32,u != 0); }
-pub fn HSD_StateSetAlphaCompare<G: GxBackend>(r: &mut HsdRender,g: &mut G,c0: i32,r0: u8,op: i32,c1: i32,r1: u8) { r.state_set_alpha_compare(g,c0 as u32,r0,op as u32,c1 as u32,r1); }
-pub fn HSD_StateSetColorUpdate<G: GxBackend>(r: &mut HsdRender,g: &mut G,x: i32) { r.state_set_color_update(g,x != 0); }
-pub fn HSD_StateSetAlphaUpdate<G: GxBackend>(r: &mut HsdRender,g: &mut G,x: i32) { r.state_set_alpha_update(g,x != 0); }
-pub fn HSD_StateSetDstAlpha<G: GxBackend>(r: &mut HsdRender,g: &mut G,x: i32,a: u8) { r.state_set_dst_alpha(g,x != 0,a); }
-pub fn HSD_StateSetZCompLoc<G: GxBackend>(r: &mut HsdRender,g: &mut G,x: i32) { r.state_set_z_comp_loc(g,x != 0); }
-pub fn HSD_StateSetDither<G: GxBackend>(r: &mut HsdRender,g: &mut G,x: i32) { r.state_set_dither(g,x != 0); }
-pub fn _HSD_StateInvalidatePrimitive(r: &mut HsdRender) { r.invalidate_primitive(); }
-pub fn _HSD_StateInvalidateVtxAttr<G: GxBackend>(r: &mut HsdRender,g: &mut G) { r.clear_vtx_desc(g); }
-pub fn _HSD_StateInvalidateRenderMode(r: &mut HsdRender) { r.invalidate_render_mode(); }
-pub fn HSD_StateInvalidate<G: GxBackend>(r: &mut HsdRender,g: &mut G,mask: i32) { r.state_invalidate(g,mask); }
+pub fn HSD_SetMaterialShininess(r: &mut HsdRender, s: f32) { melee_core::ct!("HSD_SetMaterialShininess"); r.set_material_shininess(s); }
+pub fn HSD_StateSetLineWidth<G: GxBackend>(r: &mut HsdRender,g: &mut G,w: u8,t: i32) { melee_core::ct!("HSD_StateSetLineWidth"); r.state_set_line_width(g,w,t); }
+pub fn HSD_StateSetPointSize<G: GxBackend>(r: &mut HsdRender,g: &mut G,s: u8,t: i32) { melee_core::ct!("HSD_StateSetPointSize"); r.state_set_point_size(g,s,t); }
+pub fn HSD_StateSetCullMode<G: GxBackend>(r: &mut HsdRender,g: &mut G,m: i32) { melee_core::ct!("HSD_StateSetCullMode"); r.state_set_cull_mode(g,m as u32); }
+pub fn HSD_StateSetBlendMode<G: GxBackend>(r: &mut HsdRender,g: &mut G,t: i32,s: i32,d: i32,o: i32) { melee_core::ct!("HSD_StateSetBlendMode"); r.state_set_blend_mode(g,t as u32,s as u32,d as u32,o as u32); }
+pub fn HSD_StateSetZMode<G: GxBackend>(r: &mut HsdRender,g: &mut G,e: i32,f: i32,u: i32) { melee_core::ct!("HSD_StateSetZMode"); r.state_set_z_mode(g,e != 0,f as u32,u != 0); }
+pub fn HSD_StateSetAlphaCompare<G: GxBackend>(r: &mut HsdRender,g: &mut G,c0: i32,r0: u8,op: i32,c1: i32,r1: u8) { melee_core::ct!("HSD_StateSetAlphaCompare"); r.state_set_alpha_compare(g,c0 as u32,r0,op as u32,c1 as u32,r1); }
+pub fn HSD_StateSetColorUpdate<G: GxBackend>(r: &mut HsdRender,g: &mut G,x: i32) { melee_core::ct!("HSD_StateSetColorUpdate"); r.state_set_color_update(g,x != 0); }
+pub fn HSD_StateSetAlphaUpdate<G: GxBackend>(r: &mut HsdRender,g: &mut G,x: i32) { melee_core::ct!("HSD_StateSetAlphaUpdate"); r.state_set_alpha_update(g,x != 0); }
+pub fn HSD_StateSetDstAlpha<G: GxBackend>(r: &mut HsdRender,g: &mut G,x: i32,a: u8) { melee_core::ct!("HSD_StateSetDstAlpha"); r.state_set_dst_alpha(g,x != 0,a); }
+pub fn HSD_StateSetZCompLoc<G: GxBackend>(r: &mut HsdRender,g: &mut G,x: i32) { melee_core::ct!("HSD_StateSetZCompLoc"); r.state_set_z_comp_loc(g,x != 0); }
+pub fn HSD_StateSetDither<G: GxBackend>(r: &mut HsdRender,g: &mut G,x: i32) { melee_core::ct!("HSD_StateSetDither"); r.state_set_dither(g,x != 0); }
+pub fn _HSD_StateInvalidatePrimitive(r: &mut HsdRender) { melee_core::ct!("_HSD_StateInvalidatePrimitive"); r.invalidate_primitive(); }
+pub fn _HSD_StateInvalidateVtxAttr<G: GxBackend>(r: &mut HsdRender,g: &mut G) { melee_core::ct!("_HSD_StateInvalidateVtxAttr"); r.clear_vtx_desc(g); }
+pub fn _HSD_StateInvalidateRenderMode(r: &mut HsdRender) { melee_core::ct!("_HSD_StateInvalidateRenderMode"); r.invalidate_render_mode(); }
+pub fn HSD_StateInvalidate<G: GxBackend>(r: &mut HsdRender,g: &mut G,mask: i32) { melee_core::ct!("HSD_StateInvalidate"); r.state_invalidate(g,mask); }
 
 pub mod ext {
     use super::Rgba;

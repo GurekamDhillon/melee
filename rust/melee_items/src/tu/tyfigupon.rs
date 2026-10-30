@@ -236,6 +236,7 @@ unsafe fn ud_of(gobj: *mut HSD_GObj) -> *mut TyFiguponUD {
 
 /// Attach the (optional) anim / matanim / shapeanim symbols of the panel archive to `jobj`.
 pub unsafe fn _tyFigupon_80314AA8(jobj: *mut HSD_JObj, anim_str: *const i8, matanim_str: *const i8, shapeanim_str: *const i8) {
+    melee_core::ct!("_tyFigupon_80314AA8");
     let data = _tyFigupon_804D6EF4;
     let ajoint = if !anim_str.is_null() { ext::HSD_ArchiveGetPublicAddress((*data).archive, anim_str) } else { core::ptr::null_mut() };
     let majoint = if !matanim_str.is_null() { ext::HSD_ArchiveGetPublicAddress((*data).archive, matanim_str) } else { core::ptr::null_mut() };
@@ -246,6 +247,7 @@ pub unsafe fn _tyFigupon_80314AA8(jobj: *mut HSD_JObj, anim_str: *const i8, mata
 
 /// Number of obtainable trophies the player holds of the lottery's categories.
 pub unsafe fn _tyFigupon_80314B54() -> i32 {
+    melee_core::ct!("_tyFigupon_80314B54");
     let mut count = 0;
     for i in 0..TY_TROPHY_COUNT {
         if Toy_80304CC8(i) && Toy_803048C0(i) != 0 {
@@ -260,6 +262,7 @@ pub unsafe fn _tyFigupon_80314B54() -> i32 {
 
 /// Scene camera render callback: clear to dark blue and draw the lights pass.
 pub unsafe extern "C" fn _tyFigupon_80314BE4(gobj: *mut HSD_GObj, _unused: i32) {
+    melee_core::ct!("_tyFigupon_80314BE4");
     if ext::HSD_CObjSetCurrent((*gobj).hsd_obj as *mut HSD_CObj) != 0 {
         ext::HSD_SetEraseColor(0x19, 0x19, 0x33, 0xFF);
         ext::HSD_CObjEraseScreen((*gobj).hsd_obj as *mut HSD_CObj, 1, 0, 0);
@@ -271,6 +274,7 @@ pub unsafe extern "C" fn _tyFigupon_80314BE4(gobj: *mut HSD_GObj, _unused: i32) 
 
 /// A falling coin: drops toward `jobjs[2]`, then is freed with a landing sound.
 pub unsafe extern "C" fn _tyFigupon_80314C5C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("_tyFigupon_80314C5C");
     let tp1 = (*gobj).user_data as *mut Toy;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let temp_r29 = _tyFigupon_804D6EF4;
@@ -336,6 +340,7 @@ pub unsafe extern "C" fn _tyFigupon_80314C5C(gobj: *mut HSD_GObj) {
 
 /// Lever / pull animation proc.
 pub unsafe extern "C" fn _tyFigupon_803152BC(arg0: *mut HSD_GObj) {
+    melee_core::ct!("_tyFigupon_803152BC");
     let temp_r30 = ud_of(arg0);
     let temp_r31 = _tyFigupon_804D6EF4;
     if !temp_r30.is_null() {
@@ -365,6 +370,7 @@ pub unsafe extern "C" fn _tyFigupon_803152BC(arg0: *mut HSD_GObj) {
 /// Show `arg0` in `arg2` digit jobjs starting at `jobjs[arg1]` (`arg3 == 1`: the counter-up
 /// frame mapping). `arg4` was an address the C never reads.
 pub unsafe fn _tyFigupon_803153EC(arg0: i32, arg1: i32, arg2: i32, arg3: i32, _arg4: i32) {
+    melee_core::ct!("_tyFigupon_803153EC");
     let mut digits_s: [i32; 4] = [0; 4];
     let temp_r30 = _tyFigupon_804D6EF4;
     let mut num = arg0;
@@ -400,6 +406,7 @@ pub unsafe fn _tyFigupon_803153EC(arg0: i32, arg1: i32, arg2: i32, arg3: i32, _a
 
 /// The "NEW!" banner countdown (hidden again when it hits 0).
 pub unsafe extern "C" fn _tyFigupon_80315574(_gobj: *mut HSD_GObj) {
+    melee_core::ct!("_tyFigupon_80315574");
     let data = _tyFigupon_804D6EF0;
     if (*data).x24 == 0 {
         (*(*data).x18).hidden = 1;
@@ -468,6 +475,7 @@ unsafe fn setupBetAnim(ef4_arg: *mut un_804D6EF4_t) {
 
 /// The lottery state machine (one step per frame; `ef4->x5C` is the phase).
 pub unsafe extern "C" fn _tyFigupon_803155C8(_gobj: *mut HSD_GObj) {
+    melee_core::ct!("_tyFigupon_803155C8");
     let aa8 = &raw mut Toy_804A2AA8;
     let ef4 = _tyFigupon_804D6EF4;
     let data = _tyFigupon_804D6EF0;
@@ -671,6 +679,7 @@ unsafe fn tyFigupon_FinishCoinDrop(gobj: *mut HSD_GObj, ud: *mut TyFiguponUD, ef
 
 /// Coin-insert animation proc: spends one coin (10 balance) per two frames of the bet.
 pub unsafe extern "C" fn _tyFigupon_80315C44(arg0: *mut HSD_GObj) {
+    melee_core::ct!("_tyFigupon_80315C44");
     let mut ef4_l = _tyFigupon_804D6EF4;
     let mut ud = ud_of(arg0);
     if !ud.is_null() {
@@ -733,6 +742,7 @@ pub unsafe extern "C" fn _tyFigupon_80315C44(arg0: *mut HSD_GObj) {
 
 /// The won trophy falls into view and lands.
 pub unsafe extern "C" fn _tyFigupon_80316170(arg0: *mut HSD_GObj) {
+    melee_core::ct!("_tyFigupon_80316170");
     let aa8 = &raw mut Toy_804A2AA8;
     let y = HSD_JObjGetTranslationY(&*((*arg0).hsd_obj as *mut HSD_JObj));
     let mut ud = ud_of(arg0);
@@ -762,6 +772,7 @@ pub unsafe extern "C" fn _tyFigupon_80316170(arg0: *mut HSD_GObj) {
 
 /// Whether trophy `arg0`'s category counts as a "real" win (the C's `var_r30`).
 pub unsafe fn _tyFigupon_8031638C(arg0: i16) -> i32 {
+    melee_core::ct!("_tyFigupon_8031638C");
     let temp_r0 = Toy_803060BC(arg0 as i32, 6) as i32;
     let mut var_r30 = 0;
     match temp_r0 {
@@ -780,6 +791,7 @@ pub unsafe fn _tyFigupon_8031638C(arg0: i16) -> i32 {
 
 /// Award trophy `arg0`: show its model, unlock it, save, and show the name / "NEW!" popup.
 pub unsafe fn _tyFigupon_80316420(arg0: i32) {
+    melee_core::ct!("_tyFigupon_80316420");
     let id = arg0 as i16;
     let ef4_l = _tyFigupon_804D6EF4;
     let data = _tyFigupon_804D6EF0;
@@ -820,6 +832,7 @@ pub unsafe fn _tyFigupon_80316420(arg0: i32) {
 
 /// Camera orbit proc: the C-stick tilts the view about the interest point.
 pub unsafe extern "C" fn _tyFigupon_803168DC(arg0: *mut HSD_GObj) {
+    melee_core::ct!("_tyFigupon_803168DC");
     let data = &raw mut Toy_804A2AA8;
     let cobj = (*arg0).hsd_obj as *mut HSD_CObj;
     let mut interest = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -884,12 +897,14 @@ pub unsafe extern "C" fn _tyFigupon_803168DC(arg0: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn _tyFigupon_80316BF8(_arg0: *mut HSD_GObj) {
+    melee_core::ct!("_tyFigupon_80316BF8");
     ext::lbAudioAx_80023F28(0x35);
     ext::HSD_GObjProc_RemoveProc(ext::HSD_GObj_CurrentInvokedProc);
 }
 
 /// Machine input proc: bet up/down, max bet, pull the lever, leave.
 pub unsafe extern "C" fn _tyFigupon_80316C24(arg0: *mut HSD_GObj) {
+    melee_core::ct!("_tyFigupon_80316C24");
     let ef4_l = _tyFigupon_804D6EF4;
     let data = _tyFigupon_804D6EF0;
     let stick_scroll: f32;
@@ -1006,6 +1021,7 @@ unsafe fn tyFigupon_CountAvailable(result: *mut i32) {
 
 /// Build the machine's panel, background, coin, digit, bet, lever and parlor objects.
 pub unsafe fn _tyFigupon_8031753C() {
+    melee_core::ct!("_tyFigupon_8031753C");
     let ef4_l = _tyFigupon_804D6EF4;
     let mut new_count: i32 = 0;
     if (*ef4_l).archive.is_null() {
@@ -1135,6 +1151,7 @@ pub unsafe fn _tyFigupon_8031753C() {
 
 /// Cameras, text objects and the input procs of the scene.
 pub unsafe fn _tyFigupon_80317A60() {
+    melee_core::ct!("_tyFigupon_80317A60");
     let data = _tyFigupon_804D6EF0;
     let ef4_l = _tyFigupon_804D6EF4;
     let cam_desc =
@@ -1229,6 +1246,7 @@ unsafe fn tyFigupon_UpdateRemainingCount(ef4_arg: *mut un_804D6EF4_t) {
 }
 
 pub unsafe fn tyFigupon_Scene_OnEnter(_arg0: *mut c_void) {
+    melee_core::ct!("tyFigupon_Scene_OnEnter");
     let mut sp20: *mut c_void = core::ptr::null_mut();
     let mut ef4_2: *mut un_804D6EF4_t = core::ptr::null_mut();
     _tyFigupon_804D6EF0 = ext::HSD_MemAlloc(core::mem::size_of::<TyFiguponData>() as i32) as *mut TyFiguponData;
@@ -1299,6 +1317,7 @@ unsafe fn ToyMode_set_state1() {
 
 /// Release the scene's pointers (the objects themselves are freed by the scene exit).
 pub unsafe fn _tyFigupon_803181BC() -> i32 {
+    melee_core::ct!("_tyFigupon_803181BC");
     let ef4_l = _tyFigupon_804D6EF4;
     let temp_r31 = _tyFigupon_804D6EF0;
     let ed4 = Toy_sbss_804D6ED4;
@@ -1341,6 +1360,7 @@ pub unsafe fn _tyFigupon_803181BC() -> i32 {
 }
 
 pub unsafe fn tyFigupon_Scene_OnFrame() {
+    melee_core::ct!("tyFigupon_Scene_OnFrame");
     let state = toy_mode_state();
     if (*state).x4 != 0 {
         _tyFigupon_803181BC();
@@ -1352,6 +1372,7 @@ pub unsafe fn tyFigupon_Scene_OnFrame() {
 /// (`gm_801623D8() / 10`), 1 the bet retail has chosen (1 to 20), 2 nonzero while a draw is
 /// running, -1 when the scene's state is not there.
 pub unsafe fn tyFigupon_PcReadback(what: i32) -> i32 {
+    melee_core::ct!("tyFigupon_PcReadback");
     let ef4_l = _tyFigupon_804D6EF4;
     match what {
         0 => (ext::gm_801623D8() as u32 / 10) as i32,

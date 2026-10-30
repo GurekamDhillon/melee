@@ -19,9 +19,10 @@ pub use crate::gr::trivial::grshrine::{
 /// `static void* yakumono_param`.
 pub static mut yakumono_param: *mut c_void = core::ptr::null_mut();
 
-pub unsafe extern "C" fn grShrine_80201C60(_arg0: i32) {}
+pub unsafe extern "C" fn grShrine_80201C60(_arg0: i32) { melee_core::ct!("grShrine_80201C60");}
 
 pub unsafe extern "C" fn grShrine_80201C64() {
+    melee_core::ct!("grShrine_80201C64");
     yakumono_param = ext::Ground_GetYakumonoParam();
     grShrine_80201D20(0);
     grShrine_80201D20(1);
@@ -44,9 +45,10 @@ pub unsafe extern "C" fn grShrine_80201C64() {
     }
 }
 
-pub unsafe extern "C" fn grShrine_UnkStage0_OnLoad() {}
+pub unsafe extern "C" fn grShrine_UnkStage0_OnLoad() { melee_core::ct!("grShrine_UnkStage0_OnLoad");}
 
 pub unsafe extern "C" fn grShrine_80201D20(arg0: i32) -> *mut HSD_GObj {
+    melee_core::ct!("grShrine_80201D20");
     let callbacks = (&raw mut grSh_StageCallbacks as *mut StageCallbacks).add(arg0 as usize);
     let gobj = ext::Ground_GetStageGObj(arg0);
     if !gobj.is_null() {
@@ -57,23 +59,25 @@ pub unsafe extern "C" fn grShrine_80201D20(arg0: i32) -> *mut HSD_GObj {
     gobj
 }
 
-pub unsafe extern "C" fn grShrine_80201E3C(_arg0: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grShrine_80201E3C(_arg0: *mut HSD_GObj) { melee_core::ct!("grShrine_80201E3C");}
 
-pub unsafe extern "C" fn grShrine_80201E40(_arg0: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grShrine_80201E40(_arg0: *mut HSD_GObj) { melee_core::ct!("grShrine_80201E40");}
 
 pub unsafe extern "C" fn grShrine_80201E44(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grShrine_80201E44");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
     (*gp).x11_flags.set_b012(2);
 }
 
-pub unsafe extern "C" fn grShrine_80201E90(_arg0: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grShrine_80201E90(_arg0: *mut HSD_GObj) { melee_core::ct!("grShrine_80201E90");}
 
-pub unsafe extern "C" fn grShrine_80201E94(_arg0: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grShrine_80201E94(_arg0: *mut HSD_GObj) { melee_core::ct!("grShrine_80201E94");}
 
-pub unsafe extern "C" fn grShrine_80201E98(_arg0: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grShrine_80201E98(_arg0: *mut HSD_GObj) { melee_core::ct!("grShrine_80201E98");}
 
 pub unsafe extern "C" fn grShrine_80201E9C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grShrine_80201E9C");
     let gp = GET_GROUND(gobj);
     ext::Ground_InitMapColl((*gobj).hsd_obj as *mut HSD_JObj, (*gp).map_id as i32);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
@@ -83,13 +87,15 @@ pub unsafe extern "C" fn grShrine_80201E9C(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grShrine_80201F1C(arg0: *mut HSD_GObj) {
+    melee_core::ct!("grShrine_80201F1C");
     ext::Ground_UpdateMapColl(arg0);
     ext::lb_800115F4();
 }
 
-pub unsafe extern "C" fn grShrine_80201F40(_arg0: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grShrine_80201F40(_arg0: *mut HSD_GObj) { melee_core::ct!("grShrine_80201F40");}
 
 pub unsafe extern "C" fn grShrine_80201F4C(a: *mut Vec3, _unused: i32, joint: *mut HSD_JObj) -> i32 {
+    melee_core::ct!("grShrine_80201F4C");
     let mut b = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ext::lb_8000B1CC(joint, core::ptr::null_mut(), &mut b);
     if (*a).y > b.y { 1 } else { 0 }

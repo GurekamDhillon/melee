@@ -39,6 +39,7 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 /// `ftCheckThrowB0` (ft/inlines.h): test and clear throw_flags_b0.
 #[inline(always)]
 pub(crate) fn ftCheckThrowB0(fp: &mut Fighter) -> bool {
+    melee_core::ct!("ftCheckThrowB0");
     unsafe {
         if fp.anon_2210.anon_0.throw_flags_b0() != 0 {
             fp.anon_2210.anon_0.set_throw_flags_b0(0);
@@ -66,6 +67,7 @@ fn updateBomb(gobj: *mut HSD_GObj, msid: i32) -> bool {
 
 /// `spawnBomb` (static): the script's throw_flags_b0 pulse creates the bomb in the hand.
 pub fn spawnBomb(gobj: *mut HSD_GObj) {
+    melee_core::ct!("spawnBomb");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftLk_DatAttrs;
@@ -88,6 +90,7 @@ pub fn spawnBomb(gobj: *mut HSD_GObj) {
 
 /// `spawnBomb` as a Fighter callback entry.
 pub unsafe extern "C" fn cb_spawnBomb(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_spawnBomb");
     spawnBomb(g);
 }
 
@@ -105,10 +108,12 @@ fn doEnter(gobj: *mut HSD_GObj, msid0: i32, msid1: i32) {
 }
 
 pub fn ftLk_SpecialLw_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialLw_Enter");
     doEnter(gobj, 108, ftLk_MS_SpecialLw as i32);
 }
 
 pub fn ftLk_SpecialAirLw_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialAirLw_Enter");
     doEnter(gobj, 112, ftLk_MS_SpecialAirLw as i32);
 }
 
@@ -120,9 +125,11 @@ fn doAnim(gobj: *mut HSD_GObj, cb: fn(*mut HSD_GObj)) {
 }
 
 pub fn ftLk_SpecialLw_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialLw_Anim");
     doAnim(gobj, st::ft_8008A2BC);
 }
 
 pub fn ftLk_SpecialAirLw_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialAirLw_Anim");
     doAnim(gobj, st::ftCo_Fall_Enter);
 }

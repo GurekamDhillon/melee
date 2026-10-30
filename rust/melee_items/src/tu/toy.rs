@@ -239,6 +239,7 @@ pub(crate) use cstr;
 
 /// The `%s` of a C string pointer, for `OSReport` text.
 pub unsafe fn c_str(p: *const i8) -> String {
+    melee_core::ct!("c_str");
     if p.is_null() {
         return String::from("(null)");
     }
@@ -548,6 +549,7 @@ unsafe fn TOY_COUNT() -> *mut i16 {
 /// `(TyModeState*) Toy_804A284C`.
 #[inline]
 pub unsafe fn toy_mode_state() -> *mut TyModeState {
+    melee_core::ct!("toy_mode_state");
     &raw mut Toy_804A284C as *mut TyModeState
 }
 
@@ -559,6 +561,7 @@ fn hsd_assert_fail(line: u32) -> ! {
 
 /// All trophies unlocked?
 pub unsafe fn un_80304470() -> bool {
+    melee_core::ct!("un_80304470");
     let mut sum = 0;
     for i in 0..8 {
         sum += Toy_80304B94(i);
@@ -582,6 +585,7 @@ pub unsafe fn un_80304470() -> bool {
 }
 
 pub unsafe fn un_80304510() -> bool {
+    melee_core::ct!("un_80304510");
     let mut sum = 0;
     for i in 0..9 {
         sum += Toy_80304B94(i);
@@ -606,23 +610,27 @@ unsafe fn all_unlocked(sp: &[i16]) -> bool {
 }
 
 pub unsafe fn un_803045A0() -> bool {
+    melee_core::ct!("un_803045A0");
     let sp: [i16; 26] = [0, 3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 39, 42, 45, 48, 51, 54, 57, 60, 63, 66, 69, 72, 75];
     all_unlocked(&sp)
 }
 
 /// Duplicate of `un_803045A0` with different data.
 pub unsafe fn un_80304690() -> bool {
+    melee_core::ct!("un_80304690");
     let sp: [i16; 26] = [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34, 37, 40, 43, 46, 49, 52, 55, 58, 61, 64, 67, 70, 73, 76];
     all_unlocked(&sp)
 }
 
 /// Duplicate of `un_803045A0` with different data.
 pub unsafe fn un_80304780() -> bool {
+    melee_core::ct!("un_80304780");
     let sp: [i16; 26] = [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35, 38, 41, 44, 47, 50, 53, 56, 59, 62, 65, 68, 71, 74, 77];
     all_unlocked(&sp)
 }
 
 pub unsafe fn Toy_GetTrophyTotal() -> i32 {
+    melee_core::ct!("Toy_GetTrophyTotal");
     if ext::gm_IsCurrently1PMode() != 0 || ext::gm_GetCurrentGameMode() as i32 == GM_TOY_LOTTERY as i32 {
         *toy_u16(0x258 / 2) as i16 as i32
     } else {
@@ -632,6 +640,7 @@ pub unsafe fn Toy_GetTrophyTotal() -> i32 {
 
 /// `_Toy_GetTrophyTotal(toy)` (static inline; PC reads the real symbol).
 pub unsafe fn _Toy_GetTrophyTotal() -> i32 {
+    melee_core::ct!("_Toy_GetTrophyTotal");
     if ext::gm_IsCurrently1PMode() != 0 || ext::gm_GetCurrentGameMode() as i32 == GM_TOY_LOTTERY as i32 {
         return *toy_u16(0x12C) as i16 as i32;
     }
@@ -639,6 +648,7 @@ pub unsafe fn _Toy_GetTrophyTotal() -> i32 {
 }
 
 pub unsafe fn Toy_803048C0(arg0: i32) -> i32 {
+    melee_core::ct!("Toy_803048C0");
     // Ported from m-ex (Unlock Everything / Unlock All Trophies / Have 99 of Every Trophy):
     // opt-in with MELEE_MEX=have_99_trophies.
     if ext::Mex_Enabled(cstr!("have_99_trophies")) != 0 {
@@ -648,19 +658,23 @@ pub unsafe fn Toy_803048C0(arg0: i32) -> i32 {
 }
 
 pub unsafe fn Toy_80304924(arg0: i32) -> bool {
+    melee_core::ct!("Toy_80304924");
     *getTrophyFlags().offset(arg0 as isize) & 0x8000 != 0
 }
 
 pub unsafe fn Toy_80304988(arg0: i32) {
+    melee_core::ct!("Toy_80304988");
     let v = getTrophyFlags();
     *v.offset(arg0 as isize) = *v.offset(arg0 as isize) ^ 0x8000;
 }
 
 pub unsafe fn Toy_803049F4(arg0: i32) -> bool {
+    melee_core::ct!("Toy_803049F4");
     *getTrophyFlags().offset(arg0 as isize) & 0x4000 != 0
 }
 
 pub unsafe fn Toy_80304A58(arg0: i32) {
+    melee_core::ct!("Toy_80304A58");
     let v = getTrophyFlags();
     if Toy_803049F4(arg0) {
         *v.offset(arg0 as isize) = *v.offset(arg0 as isize) ^ 0x4000;
@@ -668,6 +682,7 @@ pub unsafe fn Toy_80304A58(arg0: i32) {
 }
 
 pub unsafe fn Toy_80304B0C(arg0: i32) -> bool {
+    melee_core::ct!("Toy_80304B0C");
     let mut s: u16 = 0;
     let v: *mut u16;
     if toy_scene_mode() {
@@ -680,6 +695,7 @@ pub unsafe fn Toy_80304B0C(arg0: i32) -> bool {
 }
 
 pub unsafe fn Toy_80304B94(option: i32) -> i32 {
+    melee_core::ct!("Toy_80304B94");
     // Every case calls lbLang_IsSettingJP() and yields the same value for both languages except 5.
     match option {
         7 => {
@@ -727,6 +743,7 @@ pub unsafe fn Toy_80304B94(option: i32) -> i32 {
 }
 
 pub unsafe fn Toy_80304CC8(arg0: i32) -> bool {
+    melee_core::ct!("Toy_80304CC8");
     let mut v = _Toy_sbss_804D6EB4;
     if ext::lbLang_IsSettingUS() != 0 {
         while *v != -1 {
@@ -740,10 +757,12 @@ pub unsafe fn Toy_80304CC8(arg0: i32) -> bool {
 }
 
 pub unsafe fn _Toy_80304CC8_noinline(arg0: i32) -> bool {
+    melee_core::ct!("_Toy_80304CC8_noinline");
     Toy_80304CC8(arg0)
 }
 
 pub unsafe fn _Toy_80304D30() -> i32 {
+    melee_core::ct!("_Toy_80304D30");
     let mut sp14 = [0i32; 9];
     let mut x: i32 = 0;
 
@@ -796,6 +815,7 @@ pub unsafe fn _Toy_80304D30() -> i32 {
 
 /// Pick a trophy matching the lottery request. `-1` if none.
 pub unsafe fn Toy_80305058(arg0: i32, arg1: i32, arg2: i32, farg0: f32) -> i32 {
+    melee_core::ct!("Toy_80305058");
     let mut obtained_arr = [0i32; TY_TROPHY_COUNT as usize];
     let mut new_arr = [0i32; TY_TROPHY_COUNT as usize];
     let default_flags = toy_flags();
@@ -930,6 +950,7 @@ unsafe fn trophy_enabled_inline(id: i32) -> bool {
 }
 
 pub unsafe fn _Toy_803053C4(target_value: i32, mut count: i32, flag: i32) {
+    melee_core::ct!("_Toy_803053C4");
     let default_flags = toy_flags();
     if flag != 0 {
         while count != 0 {
@@ -976,6 +997,7 @@ pub unsafe fn _Toy_803053C4(target_value: i32, mut count: i32, flag: i32) {
 /// Unlock `trophy_id` (first time: set the new bit and bump the count) and add `add_value`
 /// (saturating at 0xFF) to its collected count.
 pub unsafe fn Toy_SetUnlockState(trophy_id: i32, add_value: i32) {
+    melee_core::ct!("Toy_SetUnlockState");
     let trophy_table = toy_flags();
     let table_now = || -> *mut u16 {
         if toy_scene_mode() {
@@ -1048,6 +1070,7 @@ pub unsafe fn Toy_SetUnlockState(trophy_id: i32, add_value: i32) {
 }
 
 pub unsafe fn Toy_80305918(arg0: i8, arg1: i32, arg2: i32) {
+    melee_core::ct!("Toy_80305918");
     if arg0 == 8 {
         return;
     }
@@ -1106,6 +1129,7 @@ unsafe fn pad(slot: u8) -> *mut HSD_PadStatus {
 }
 
 pub unsafe fn Toy_80305B88() -> i32 {
+    melee_core::ct!("Toy_80305B88");
     let mut button: u32 = 0;
     for i in 0..4 {
         button = (*pad(i as u8)).trigger;
@@ -1118,6 +1142,7 @@ pub unsafe fn Toy_80305B88() -> i32 {
 }
 
 pub unsafe fn Toy_80305C44() -> i32 {
+    melee_core::ct!("Toy_80305C44");
     let mut button: u32 = 0;
     for i in 0..4 {
         button = (*pad(i as u8)).button;
@@ -1130,6 +1155,7 @@ pub unsafe fn Toy_80305C44() -> i32 {
 }
 
 pub unsafe fn Toy_80305D00() -> f32 {
+    melee_core::ct!("Toy_80305D00");
     let mut ret: f32 = 0.0;
     for i in 0..4 {
         let mut val = (*pad(i as u8)).nml_stickX;
@@ -1150,6 +1176,7 @@ fn abs_f(v: f32) -> f32 {
 }
 
 pub unsafe fn Toy_80305DB0() -> f32 {
+    melee_core::ct!("Toy_80305DB0");
     let mut ret: f32 = 0.0;
     for i in 0..4 {
         ret = (*pad(i as u8)).nml_stickY;
@@ -1162,6 +1189,7 @@ pub unsafe fn Toy_80305DB0() -> f32 {
 }
 
 pub unsafe fn Toy_80305EB4() -> f32 {
+    melee_core::ct!("Toy_80305EB4");
     let mut ret: f32 = 0.0;
     for i in 0..4 {
         ret = (*pad(i as u8)).nml_subStickX;
@@ -1174,6 +1202,7 @@ pub unsafe fn Toy_80305EB4() -> f32 {
 }
 
 pub unsafe fn Toy_80305FB8() -> f32 {
+    melee_core::ct!("Toy_80305FB8");
     let mut ret: f32 = 0.0;
     for i in 0..4 {
         ret = (*pad(i as u8)).nml_subStickY;
@@ -1191,6 +1220,7 @@ pub unsafe fn Toy_80305FB8() -> f32 {
 
 /// Trophy parameter `field` (0..5 the six position/scale floats, 6 and 7 the type bytes, 8 x04).
 pub unsafe fn Toy_803060BC(trophy_id: i32, field: i32) -> f32 {
+    melee_core::ct!("Toy_803060BC");
     let mut lang_flag = 0;
     let mut found_jp = 0;
     let mut jp_ptr = _Toy_sbss_804D6EC0;
@@ -1232,6 +1262,7 @@ pub unsafe fn Toy_803060BC(trophy_id: i32, field: i32) -> f32 {
 }
 
 pub unsafe fn Toy_803062BC(trophy_id: i32) -> i16 {
+    melee_core::ct!("Toy_803062BC");
     let mut table = Toy_sbss_804D6EDC;
     let mut i = 0;
     while i < TY_TROPHY_COUNT {
@@ -1245,6 +1276,7 @@ pub unsafe fn Toy_803062BC(trophy_id: i32) -> i16 {
 }
 
 pub unsafe fn _Toy_803062EC(arg0: i32, arg1: u32, farg0: f32) {
+    melee_core::ct!("_Toy_803062EC");
     let mut td = _Toy_sbss_804D6EC4;
     loop {
         let id = (*td).id;
@@ -1288,6 +1320,7 @@ unsafe fn getDataiDatFilename() -> *mut i8 {
 }
 
 pub unsafe fn Toy_803063D4(arg0: i32, arg1: i32, arg2: i32) -> i32 {
+    melee_core::ct!("Toy_803063D4");
     let mut result = arg0 + arg1 + 1;
     if ext::lbLang_IsSettingJP() != 0 && ext::lbLang_IsSavedLanguageUS() != 0 {
         let mut ptr = _Toy_sbss_804D6EB8 as *mut i16;
@@ -1316,6 +1349,7 @@ pub unsafe fn Toy_803063D4(arg0: i32, arg1: i32, arg2: i32) -> i32 {
 }
 
 pub unsafe fn _Toy_803064B8(arg0: i16, arg1: i8) -> i16 {
+    melee_core::ct!("_Toy_803064B8");
     let data = _Toy_sbss_804D6EBC as *mut ToyNameData;
     let d = &*data.offset(arg0 as isize);
     match arg1 {
@@ -1350,6 +1384,7 @@ pub unsafe fn _Toy_803064B8(arg0: i16, arg1: i8) -> i16 {
 }
 
 pub unsafe fn _Toy_8030663C() {
+    melee_core::ct!("_Toy_8030663C");
     let ptr = toy_u16(5);
     let mut count: i32 = 0;
     let mut offset: isize = 0;
@@ -1409,6 +1444,7 @@ pub unsafe fn _Toy_8030663C() {
 /// Copy sort key column `arg0` of the sort table into `Toy_sbss_804D6EDC` (`arg1 == 0`
 /// ascending, otherwise descending).
 pub unsafe fn Toy_803067BC(arg0: i32, arg1: i32) {
+    melee_core::ct!("Toy_803067BC");
     let keys = (*_Toy_sbss_804D6E64).key.as_mut_ptr() as *mut i16;
     if arg1 == 0 {
         let src = keys.offset(arg0 as isize);
@@ -1435,6 +1471,7 @@ pub unsafe fn Toy_803067BC(arg0: i32, arg1: i32) {
 // ---------------------------------------------------------------------------------------------
 
 pub unsafe extern "C" fn Toy_803068E0(gobj: *mut HSD_GObj, _unused: i32) {
+    melee_core::ct!("Toy_803068E0");
     if ext::HSD_CObjSetCurrent((*gobj).hsd_obj as *mut HSD_CObj) != 0 {
         ext::HSD_GObj_80390ED0(gobj, 7);
         ext::HSD_CObjEndCurrent();
@@ -1443,10 +1480,12 @@ pub unsafe extern "C" fn Toy_803068E0(gobj: *mut HSD_GObj, _unused: i32) {
 }
 
 pub unsafe extern "C" fn Toy_80306930(gobj: *mut HSD_GObj, _unused: i32) {
+    melee_core::ct!("Toy_80306930");
     ext::HSD_FogSet((*gobj).hsd_obj as *mut HSD_Fog);
 }
 
 pub unsafe extern "C" fn Toy_80306954(gobj: *mut HSD_GObj, _unused: i32) {
+    melee_core::ct!("Toy_80306954");
     let state = Toy_sbss_804D6ED4;
     if ext::HSD_CObjSetCurrent((*gobj).hsd_obj as *mut HSD_CObj) != 0 {
         if _Toy_sbss_804D6E50 == 0 {
@@ -1464,6 +1503,7 @@ pub unsafe extern "C" fn Toy_80306954(gobj: *mut HSD_GObj, _unused: i32) {
 }
 
 pub unsafe extern "C" fn _Toy_80306A0C(arg0: *mut HSD_GObj, _unused: i32) {
+    melee_core::ct!("_Toy_80306A0C");
     let fog = (*arg0).hsd_obj as *mut HSD_Fog;
     if _Toy_sbss_804D6E54 == 0 {
         ext::HSD_FogSet(core::ptr::null_mut());
@@ -1480,6 +1520,7 @@ pub unsafe fn Toy_80306A48(
     archive: *mut HSD_Archive,
     frame: i32,
 ) {
+    melee_core::ct!("Toy_80306A48");
     let anim = if !symbol1.is_null() { ext::HSD_ArchiveGetPublicAddress(archive, symbol1) } else { core::ptr::null_mut() };
     let matanim = if !symbol2.is_null() { ext::HSD_ArchiveGetPublicAddress(archive, symbol2) } else { core::ptr::null_mut() };
     let shapeanim = if !symbol3.is_null() { ext::HSD_ArchiveGetPublicAddress(archive, symbol3) } else { core::ptr::null_mut() };
@@ -1489,6 +1530,7 @@ pub unsafe fn Toy_80306A48(
 }
 
 pub unsafe fn Toy_80306B18(gobj: *mut HSD_GObj, anim_frame: i32, val1: i32, val2: i32) -> *mut HSD_GObjProc {
+    melee_core::ct!("Toy_80306B18");
     let mut proc_ = core::ptr::null_mut();
     let tp = (*gobj).user_data as *mut Toy;
     if !tp.is_null() {
@@ -1503,6 +1545,7 @@ pub unsafe fn Toy_80306B18(gobj: *mut HSD_GObj, anim_frame: i32, val1: i32, val2
 }
 
 pub unsafe extern "C" fn Toy_80306BB8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Toy_80306BB8");
     let tp = (*gobj).user_data as *mut Toy;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     if !tp.is_null() {
@@ -1526,6 +1569,7 @@ pub unsafe extern "C" fn Toy_80306BB8(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn _Toy_80306C5C(arg0: *mut HSD_GObj) {
+    melee_core::ct!("_Toy_80306C5C");
     let data = Toy_sbss_804D6ED4;
     let gobj = (*data).x04;
     let mut lobj = (*gobj).hsd_obj as *mut HSD_LObj;
@@ -1540,10 +1584,12 @@ pub unsafe extern "C" fn _Toy_80306C5C(arg0: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn Toy_RemoveUserData(ptr: *mut c_void) {
+    melee_core::ct!("Toy_RemoveUserData");
     ext::HSD_Free(ptr);
 }
 
 pub unsafe fn Toy_80306D14() {
+    melee_core::ct!("Toy_80306D14");
     let state = toy_mode_state();
     if (*state).x0 == 1 {
         ext::lbAudioAx_800237A8(0xAA, 0x7F, 0x40);
@@ -1553,6 +1599,7 @@ pub unsafe fn Toy_80306D14() {
 }
 
 pub unsafe fn Toy_80306D70(arg0: i32) {
+    melee_core::ct!("Toy_80306D70");
     let mut sp14: *mut *mut LightList = core::ptr::null_mut();
     // THE LIGHT TABLE IS NOT WHERE THE CAST SAYS IT IS (PC): retail reaches this table by
     // aliasing the string symbol preceding it in .data; here the real symbol is named.
@@ -1587,6 +1634,7 @@ pub unsafe fn Toy_80306D70(arg0: i32) {
 }
 
 pub unsafe fn Toy_LoadLObjList(list: *mut *mut LightList, has_anim: *mut i32) -> *mut HSD_LObj {
+    melee_core::ct!("Toy_LoadLObjList");
     let mut list = list;
     let mut prev: *mut HSD_LObj = core::ptr::null_mut();
     let mut first: *mut HSD_LObj = core::ptr::null_mut();
@@ -1627,6 +1675,7 @@ pub unsafe fn Toy_LoadLObjList(list: *mut *mut LightList, has_anim: *mut i32) ->
 }
 
 pub unsafe fn _Toy_80307018() {
+    melee_core::ct!("_Toy_80307018");
     let ptr1 = Toy_sbss_804D6ED8;
     let ptr2 = Toy_sbss_804D6ED4 as *mut tyUnkStruct;
     if (*ptr1).archive.is_null() {
@@ -1654,6 +1703,7 @@ pub unsafe fn _Toy_80307018() {
 /// `data` is `Toy_sbss_804D6E68` viewed as the camera record (`TyCameraData_`); the two
 /// declarations name the same GameCube block, so this reads it through `Toy6E68`.
 pub unsafe fn _Toy_8030715C(cstick_x: f32, cstick_y: f32) {
+    melee_core::ct!("_Toy_8030715C");
     let mut euler = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut light_pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut interest = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -1743,6 +1793,7 @@ unsafe fn Toy_AddPanelAnims(
 
 /// `Toy_RenderPanelGuarded` (TARGET_PC): the Atlas retail mask hides the Gallery panel.
 pub unsafe extern "C" fn Toy_RenderPanelGuarded(gobj: *mut HSD_GObj, pass: i32) {
+    melee_core::ct!("Toy_RenderPanelGuarded");
     if ext::tyList_PcActive() == 0 && ext::Ui_RetailHidden(AT_RE_TOY_PANEL) != 0 {
         return;
     }
@@ -1751,6 +1802,7 @@ pub unsafe extern "C" fn Toy_RenderPanelGuarded(gobj: *mut HSD_GObj, pass: i32) 
 
 /// `Toy_RenderInfoGuarded` (TARGET_PC): the Atlas retail mask hides the Gallery info frame.
 pub unsafe extern "C" fn Toy_RenderInfoGuarded(gobj: *mut HSD_GObj, pass: i32) {
+    melee_core::ct!("Toy_RenderInfoGuarded");
     if ext::tyList_PcActive() == 0 && ext::Ui_RetailHidden(AT_RE_TOY_INFO) != 0 {
         return;
     }
@@ -1765,6 +1817,7 @@ unsafe fn ed8_x8_sobj() -> *mut HSD_SObj {
 }
 
 pub unsafe fn Toy_80307470(arg0: i32) {
+    melee_core::ct!("Toy_80307470");
     let tg = Toy_sbss_804D6ED8;
     if (*tg).archive.is_null() {
         ext::OSReport("*** BG data aren't being loaded!\n");
@@ -1809,6 +1862,7 @@ pub unsafe fn Toy_80307470(arg0: i32) {
 }
 
 pub unsafe fn _Toy_803075E8(arg0: i32) {
+    melee_core::ct!("_Toy_803075E8");
     let td = Toy_sbss_804D6ED8;
     if (*td).archive.is_null() {
         ext::OSReport("*** BG data aren't being loaded!\n");
@@ -1867,6 +1921,7 @@ pub unsafe fn _Toy_803075E8(arg0: i32) {
 }
 
 pub unsafe fn _Toy_80307828(arg0: i32) {
+    melee_core::ct!("_Toy_80307828");
     let data = _Toy_sbss_804D6E68;
     let cobj = (*((*data).x8 as *mut HSD_GObj)).hsd_obj as *mut HSD_CObj;
     let data2 = Toy_sbss_804D6ED4;
@@ -1889,6 +1944,7 @@ pub unsafe fn _Toy_80307828(arg0: i32) {
 }
 
 pub unsafe fn _Toy_803078E4() {
+    melee_core::ct!("_Toy_803078E4");
     // `Toy_sbss_804D6ED8` as `tyLightData`: x0C = ED8.gobj2, x58 = ED8.x58.
     let data = Toy_sbss_804D6ED8;
     let mut syms: [*mut c_void; 7] = [core::ptr::null_mut(); 7];
@@ -1929,6 +1985,7 @@ pub unsafe fn _Toy_803078E4() {
 }
 
 pub unsafe fn _Toy_80307BA0(parent_jobj: *mut HSD_JObj, arg1: i16) -> *mut HSD_JObj {
+    melee_core::ct!("_Toy_80307BA0");
     let state = &raw mut Toy_804A2AA8;
     let mut joint_data: *mut c_void = core::ptr::null_mut();
     if Toy_sbss_804D6EC8.is_null() {
@@ -1959,6 +2016,7 @@ pub unsafe fn _Toy_80307BA0(parent_jobj: *mut HSD_JObj, arg1: i16) -> *mut HSD_J
 }
 
 pub unsafe extern "C" fn Toy_80307E84(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Toy_80307E84");
     let state = &raw mut Toy_804A2AA8;
     let idx = (*state).x0E;
     let x0f_val = (*state).x0F;
@@ -1981,6 +2039,7 @@ pub unsafe extern "C" fn Toy_80307E84(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe fn _Toy_80307F64(arg0: i32, arg1: i32) {
+    melee_core::ct!("_Toy_80307F64");
     let state = &raw mut Toy_804A2AA8;
     let idx = (*state).x0E;
     let jobj1 = (*state).jobj[idx as usize];
@@ -2019,6 +2078,7 @@ pub unsafe fn _Toy_80307F64(arg0: i32, arg1: i32) {
 }
 
 pub unsafe fn Toy_8030813C(trophy_id: i32) -> *mut ToyModelFile {
+    melee_core::ct!("Toy_8030813C");
     let id = trophy_id;
     let mut found = 0;
     let mut ptr: *mut ToyModelFile = core::ptr::null_mut();
@@ -2084,6 +2144,7 @@ unsafe fn setupTrophyEntry(entry: *mut ToyListEntry, trophy_idx: i16) {
 }
 
 pub unsafe fn Toy_80308250(arg0: *mut ToyListEntry, arg1: i16, arg2: i32) {
+    melee_core::ct!("Toy_80308250");
     let mut sym: *mut c_void = core::ptr::null_mut();
     setupTrophyEntry(arg0, arg1);
     if arg2 == 0 {
@@ -2093,15 +2154,18 @@ pub unsafe fn Toy_80308250(arg0: *mut ToyListEntry, arg1: i16, arg2: i32) {
 }
 
 pub unsafe fn Toy_803082F8(idx: i16) -> i32 {
+    melee_core::ct!("Toy_803082F8");
     Toy_803063D4(Toy_80308354(idx) as i16 as i32, 2, 0x128)
 }
 
 pub unsafe fn Toy_80308328(idx: i32) -> i32 {
+    melee_core::ct!("Toy_80308328");
     let id = idx as i16;
     Toy_803063D4(id as i32, 2, 0x128)
 }
 
 pub unsafe fn Toy_80308354(idx: i16) -> i32 {
+    melee_core::ct!("Toy_80308354");
     let target = *Toy_sbss_804D6EDC.offset(idx as isize) as i32;
     let mut entry = _Toy_sbss_804D6EC4;
     let mut i = 0;
@@ -2120,6 +2184,7 @@ pub unsafe fn Toy_80308354(idx: i16) -> i32 {
 }
 
 pub unsafe fn Toy_803083D8(jobj: *mut HSD_JObj, arg1: i32) {
+    melee_core::ct!("Toy_803083D8");
     if arg1 == 0x3E6 {
         ext::HSD_JObjClearFlagsAll(jobj, JOBJ_HIDDEN as u32);
         return;
@@ -2145,6 +2210,7 @@ pub unsafe fn Toy_803083D8(jobj: *mut HSD_JObj, arg1: i32) {
 /// Name/description/series text objects of the viewer (`Toy_sbss_804D6EE0` as `tyDispData`:
 /// the four `HSD_Text*` at +0x144.. are the native record's `texts`).
 pub unsafe fn _Toy_803084A0(arg0: i32) {
+    melee_core::ct!("_Toy_803084A0");
     let id = arg0;
     let display = Toy_sbss_804D6EE0;
     let color = _Toy_color_FFBA00FF;
@@ -2237,6 +2303,7 @@ pub unsafe fn _Toy_803084A0(arg0: i32) {
 
 /// Show the 3D model of a list entry (`arg0` is a `ToyListEntry`).
 pub unsafe fn Toy_803087F4(arg0: *mut ToyListEntry) -> *mut HSD_GObj {
+    melee_core::ct!("Toy_803087F4");
     let entry = arg0;
     let anim = &raw mut Toy_804A2AA8;
     let mut sp_c: *mut c_void = core::ptr::null_mut();
@@ -2306,6 +2373,7 @@ pub unsafe fn Toy_803087F4(arg0: *mut ToyListEntry) -> *mut HSD_GObj {
 }
 
 pub unsafe fn _Toy_80308DC8(cobj: *mut HSD_CObj) {
+    melee_core::ct!("_Toy_80308DC8");
     let mut interest = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut eye_pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let temp_r31 = &raw mut Toy_804A2AA8;
@@ -2336,6 +2404,7 @@ pub unsafe fn _Toy_80308DC8(cobj: *mut HSD_CObj) {
 }
 
 pub unsafe fn _Toy_80308F04(cobj: *mut HSD_CObj) {
+    melee_core::ct!("_Toy_80308F04");
     let mut interest = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     // `(Toy26B8*) &_Toy_804A26B8`: only `x0` (a Vec3 over the first 12 bytes) is used.
     let data = &raw mut _Toy_804A26B8 as *mut Toy26B8;
@@ -2455,6 +2524,7 @@ pub unsafe fn _Toy_80308F04(cobj: *mut HSD_CObj) {
 /// Distance between two points (`NULL` = origin) with the Gekko `frsqrte` Newton-Raphson
 /// square root. Shipping contraction: `x*x + acc` fuses (f32), `3.0 - g*g*v` fuses (f64).
 pub unsafe fn _Toy_80309338(arg0: *mut Vec3, arg1: *mut Vec3) -> f32 {
+    melee_core::ct!("_Toy_80309338");
     let mut sp14 = _Toy_803B88D4;
     let mut var_r3 = arg0;
     let mut var_r4 = arg1;
@@ -2556,6 +2626,7 @@ unsafe fn clear_new_bit(idx: i16) {
 
 /// Per-frame input for the Trophy Gallery's 3D viewer (rotate, zoom, pan, cycle trophies).
 pub unsafe extern "C" fn _Toy_80309404(gobj: *mut HSD_GObj) {
+    melee_core::ct!("_Toy_80309404");
     let cobj = (*gobj).hsd_obj as *mut HSD_CObj;
     let base = &raw mut _Toy_804A26B8 as *mut Toy26B8;
     let ed8 = Toy_sbss_804D6ED8;
@@ -3108,6 +3179,7 @@ unsafe fn cycle_next(display: *mut TyDisplayData, sym_out: &mut *mut c_void) {
 
 /// Trophy / lighting debug viewer (per-frame proc of the camera gobj when the debug chord is held).
 pub unsafe extern "C" fn _Toy_8030B530(arg0: *mut HSD_GObj) {
+    melee_core::ct!("_Toy_8030B530");
     let gobj = arg0;
     let _base = &raw mut _Toy_804A26B8 as *mut Toy26B8;
     let cobj = (*gobj).hsd_obj as *mut HSD_CObj;
@@ -3457,6 +3529,7 @@ pub unsafe extern "C" fn _Toy_8030B530(arg0: *mut HSD_GObj) {
 
 /// Lighting debug camera proc (`MELEE` debug chord with L held).
 pub unsafe extern "C" fn _Toy_8030E110(arg0: *mut HSD_GObj) {
+    melee_core::ct!("_Toy_8030E110");
     let _base = &raw mut _Toy_804A26B8 as *mut Toy26B8;
     let anim = &raw mut Toy_804A2AA8;
     let state = _Toy_sbss_804D6E68;
@@ -3751,6 +3824,7 @@ static mut _Toy_803FE68C: HSD_CameraDescPerspective = HSD_CameraDescPerspective 
 /// Build the scene's cameras (state record slots 0..5 of `Toy_sbss_804D6E68`), the screen
 /// quads, and attach the per-frame viewer proc.
 pub unsafe fn _Toy_8030FA50() {
+    melee_core::ct!("_Toy_8030FA50");
     let mut eye = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut mtx: Mtx = core::mem::zeroed();
     let ed8 = Toy_sbss_804D6ED8;
@@ -3864,6 +3938,7 @@ unsafe fn _Toy_8030FE48_link_entries(data: *mut TyDisplayData, entry_count: i32)
 }
 
 pub unsafe fn _Toy_8030FE48(data: *mut TyDisplayData, arg1: i32) {
+    melee_core::ct!("_Toy_8030FE48");
     let sel = toy_u16(0x12A) as *mut i16; // TOY_SEL
     let mut sort_idx: i32 = 0;
     let mut sym: *mut c_void = core::ptr::null_mut();
@@ -3955,10 +4030,12 @@ pub unsafe fn _Toy_8030FE48(data: *mut TyDisplayData, arg1: i32) {
 }
 
 pub unsafe fn _Toy_803102C4(arg0: i8) {
+    melee_core::ct!("_Toy_803102C4");
     (*_Toy_sbss_804D6E6C).x4 = arg0;
 }
 
 pub unsafe fn Toy_803102D0() {
+    melee_core::ct!("Toy_803102D0");
     if _Toy_sbss_804D6ECC.is_null() {
         _Toy_sbss_804D6ECC = ext::lbArchive_LoadSymbols(
             cstr!("TyDataf.dat"),
@@ -4010,6 +4087,7 @@ unsafe fn toy_sobj_loop(tg2: *mut ToyED8Data, syms: &[*mut c_void; 3]) {
 }
 
 pub unsafe fn Toy_80310324() {
+    melee_core::ct!("Toy_80310324");
     let tg = Toy_sbss_804D6ED8;
     let mut sym: [*mut c_void; 1] = [core::ptr::null_mut()];
     let mut syms: [*mut c_void; 3] = [core::ptr::null_mut(); 3];
@@ -4078,6 +4156,7 @@ pub unsafe fn Toy_80310324() {
 
 /// Tear the viewer down (`arg0 != 0` also releases every archive and gobj).
 pub unsafe fn Toy_80310660(arg0: i32) {
+    melee_core::ct!("Toy_80310660");
     let mut arg = arg0;
     let ty27 = &raw mut Toy_804A2AA8;
     let ty31 = _Toy_sbss_804D6E68;
@@ -4181,6 +4260,7 @@ pub unsafe fn Toy_80310660(arg0: i32) {
 
 /// Debug-window row for one category (`Rea_<c> have/total`).
 pub unsafe fn _Toy_803109A0(arg0: i32, arg1: i32, arg2: i32) {
+    melee_core::ct!("_Toy_803109A0");
     let table = &_Toy_803B8910;
     let mut idx = 0usize;
     while idx < 9 {
@@ -4207,6 +4287,7 @@ pub unsafe fn _Toy_803109A0(arg0: i32, arg1: i32, arg2: i32) {
 
 /// Debug "unlock editor" window proc.
 pub unsafe extern "C" fn _Toy_80310B48(gobj: *mut HSD_GObj) {
+    melee_core::ct!("_Toy_80310B48");
     let mut changed = 0;
     let editor = _Toy_sbss_804D6E5C;
     let mut stick_x: f32 = 0.0;
@@ -4341,6 +4422,7 @@ unsafe fn showDevText(gobj: *mut HSD_GObj, text: *mut *mut DevText) {
 }
 
 pub unsafe fn _Toy_803114E8() {
+    melee_core::ct!("_Toy_803114E8");
     _Toy_sbss_804D6E5C = ext::HSD_MemAlloc(core::mem::size_of::<ToyParamEditor>() as i32) as *mut ToyParamEditor;
     let data = _Toy_sbss_804D6E5C;
     _Toy_sbss_804D6E98 = ext::DevText_Create(1, 0x28, 0x28, 0xE, 9, _Toy_devtext_buf_804A2750.as_mut_ptr() as *mut i8);
@@ -4374,6 +4456,7 @@ pub unsafe fn _Toy_803114E8() {
 
 /// Unlock every trophy in the save (debug).
 pub unsafe fn Toy_80311680() {
+    melee_core::ct!("Toy_80311680");
     let mut var_r29 = ext::gmMainLib_GetTrophyFlags() as *mut u16;
     let temp_r31 = ext::gmMainLib_GetTrophyCategoryFlags() as *mut i16;
     Toy_80311960();
@@ -4396,6 +4479,7 @@ pub unsafe fn Toy_80311680() {
 }
 
 pub unsafe fn _Toy_80311788() {
+    melee_core::ct!("_Toy_80311788");
     _Toy_sbss_804D6E9C = ext::DevText_Create(1, 0x21C, 0x82, 0xA, 7, _Toy_devtext_buf_804A26C4.as_mut_ptr() as *mut i8);
     if !_Toy_sbss_804D6E9C.is_null() {
         let gobj = ext::DevText_GetGObj();
@@ -4428,6 +4512,7 @@ pub unsafe fn _Toy_80311788() {
 
 /// Clear all trophy data (save and scene array).
 pub unsafe fn Toy_80311960() {
+    melee_core::ct!("Toy_80311960");
     let save_data = ext::gmMainLib_GetTrophyFlags() as *mut u16;
     let save_data2 = ext::gmMainLib_GetTrophyCategoryFlags() as *mut i16;
     for i in 0..TY_TROPHY_COUNT as isize {
@@ -4445,6 +4530,7 @@ pub unsafe fn Toy_80311960() {
 }
 
 pub unsafe fn Toy_Scene_OnEnter(_arg0: *mut c_void) {
+    melee_core::ct!("Toy_Scene_OnEnter");
     _Toy_sbss_804D6EA2 = 0;
     _Toy_sbss_804D6E50 = 0;
     _Toy_sbss_804D6EA1 = 0;
@@ -4525,6 +4611,7 @@ pub unsafe fn Toy_Scene_OnEnter(_arg0: *mut c_void) {
 }
 
 pub unsafe fn _Toy_80311F5C() {
+    melee_core::ct!("_Toy_80311F5C");
     let p1 = Toy_sbss_804D6ED8;
     let p2 = _Toy_sbss_804D6E68;
     if !(*p1).archive.is_null() {
@@ -4551,6 +4638,7 @@ pub unsafe fn _Toy_80311F5C() {
 }
 
 pub unsafe fn Toy_Scene_OnFrame() {
+    melee_core::ct!("Toy_Scene_OnFrame");
     let state = toy_mode_state();
     if (*state).x4 != 0 {
         _Toy_80311F5C();
@@ -4560,6 +4648,7 @@ pub unsafe fn Toy_Scene_OnFrame() {
 
 /// Axis gizmo render callback (red/green/blue lines through the camera interest).
 pub unsafe extern "C" fn _Toy_80312050(_gobj: *mut HSD_GObj, _code: i32) {
+    melee_core::ct!("_Toy_80312050");
     let data = _Toy_sbss_804D6E6C;
     let cobj = ext::HSD_CObjGetCurrent();
     if (*data).x4 == 0 {
@@ -4598,6 +4687,7 @@ pub unsafe extern "C" fn _Toy_80312050(_gobj: *mut HSD_GObj, _code: i32) {
 }
 
 pub unsafe fn Toy_Mode_OnInit() {
+    melee_core::ct!("Toy_Mode_OnInit");
     ext::memzero(toy_byte(0) as *mut c_void, 0x25A); // TOY_X194
     _Toy_sbss_804D6EA1 = 0;
     let target_ptr: *mut u16 = if toy_scene_mode() { toy_u16(3) } else { ext::gmMainLib_GetTrophyCategoryFlags() as *mut u16 };
@@ -4607,6 +4697,7 @@ pub unsafe fn Toy_Mode_OnInit() {
 
 /// Copy trophy data between the save (`arg0 == 0` to the scene array) and the scene array.
 pub unsafe fn Toy_8031234C(arg0: i32) {
+    melee_core::ct!("Toy_8031234C");
     let save_data = ext::gmMainLib_GetTrophyFlags() as *mut u16;
     let state_data = ext::gmMainLib_GetTrophyCategoryFlags() as *mut u16;
     if arg0 != 0 {
@@ -4665,6 +4756,7 @@ unsafe fn loadTrophyMetadata() {
 }
 
 pub unsafe fn Toy_803124BC() {
+    melee_core::ct!("Toy_803124BC");
     let mut table1 = ext::gmMainLib_GetTrophyFlags() as *mut u16;
     let table2 = ext::gmMainLib_GetTrophyCategoryFlags() as *mut u16;
     loadTrophyMetadata();
@@ -4680,6 +4772,7 @@ pub unsafe fn Toy_803124BC() {
 }
 
 pub unsafe fn Toy_8031263C() {
+    melee_core::ct!("Toy_8031263C");
     (*toy_mode_state()).x4 = 0;
     let mut table1 = ext::gmMainLib_GetTrophyFlags() as *mut u16;
     let table2 = ext::gmMainLib_GetTrophyCategoryFlags() as *mut u16;
@@ -4697,6 +4790,7 @@ pub unsafe fn Toy_8031263C() {
 }
 
 pub unsafe fn Toy_803127D4() {
+    melee_core::ct!("Toy_803127D4");
     _Toy_sbss_804D6ED0 = core::ptr::null_mut();
     _Toy_sbss_804D6EC4 = core::ptr::null_mut();
     _Toy_sbss_804D6EC0 = core::ptr::null_mut();
@@ -4716,6 +4810,7 @@ pub unsafe fn Toy_803127D4() {
 /// 2 the selected trophy's id, 3 the viewer's state (0 shelf, 1 and 3 moving, 2 examining),
 /// 4 retail's exit request, 5 the full-screen trophy list is up. -1 when the state is not there.
 pub unsafe fn Toy_PcReadback(what: i32) -> i32 {
+    melee_core::ct!("Toy_PcReadback");
     let display = Toy_sbss_804D6EE0;
     let mode = _Toy_sbss_804D6E68;
     match what {

@@ -48,6 +48,7 @@ pub mod ext {
 
 /// `ftCo_ItemParasolGetFallMotionId` (ftCommon/inlines.h).
 pub fn ftCo_ItemParasolGetFallMotionId(g: G, pe_msid: i32, co_msid: i32) -> i32 {
+    melee_core::ct!("ftCo_ItemParasolGetFallMotionId");
     let f = fp(g);
     if f.kind == Ft_Kind_Peach && unsafe { !f.u.pe.parasol_gobj_0.is_null() } {
         pe_msid
@@ -58,10 +59,12 @@ pub fn ftCo_ItemParasolGetFallMotionId(g: G, pe_msid: i32, co_msid: i32) -> i32 
 
 /// `ftCo_ItemParasol_Phys` (ftCommon/inlines.h).
 pub fn ftCo_ItemParasol_Phys(g: G) {
+    melee_core::ct!("ftCo_ItemParasol_Phys");
     ftCo_ItemParasolOpen_Phys(g);
 }
 
 pub fn ftCo_800CEE70(g: G) -> bool {
+    melee_core::ct!("ftCo_800CEE70");
     let f = fp(g);
     if f.x2221_b5() != 0 {
         return false;
@@ -96,14 +99,17 @@ fn enter(g: G, blend: f32) {
 }
 
 pub fn ft_800CEF08(g: G) {
+    melee_core::ct!("ft_800CEF08");
     enter(g, 0.0);
 }
 
 pub fn ftCo_800CEFE0(g: G, _arg1: i32) {
+    melee_core::ct!("ftCo_800CEFE0");
     enter(g, 10.0);
 }
 
 pub fn ftCo_ItemParasolOpen_Anim(g: G) {
+    melee_core::ct!("ftCo_ItemParasolOpen_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         if unsafe { fp(g).mv.co.parasol_open.prev_msid } == ftCo_MS_FallSpecial as i32 {
             ext::ftCo_800CF3C8(g);
@@ -114,6 +120,7 @@ pub fn ftCo_ItemParasolOpen_Anim(g: G) {
 }
 
 pub fn ftCo_ItemParasolOpen_IASA(g: G) {
+    melee_core::ct!("ftCo_ItemParasolOpen_IASA");
     if unsafe { fp(g).mv.co.parasol_open.prev_msid } != ftCo_MS_FallSpecial as i32 {
         if ext::ftCo_SpecialAir_CheckInput(g) { return; }
         if ext::ftCo_80095328(g, core::ptr::null_mut()) { return; }
@@ -124,6 +131,7 @@ pub fn ftCo_ItemParasolOpen_IASA(g: G) {
 }
 
 pub fn ftCo_ItemParasolOpen_Phys(g: G) {
+    melee_core::ct!("ftCo_ItemParasolOpen_Phys");
     let f = fp(g);
     let cd = crate::hooks::common_data();
     let mul = cd.x590;
@@ -142,5 +150,6 @@ pub fn ftCo_ItemParasolOpen_Phys(g: G) {
 }
 
 pub fn ftCo_ItemParasolOpen_Coll(g: G) {
+    melee_core::ct!("ftCo_ItemParasolOpen_Coll");
     ext::ft_8008370C(g, ext::ftCo_Landing_Enter_Basic);
 }

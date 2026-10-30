@@ -65,6 +65,7 @@ fn setCamData(c: &ftCommonData, cam: *mut CmSubject) {
 }
 
 pub fn ftCo_8009EB18(g: G) {
+    melee_core::ct!("ftCo_8009EB18");
     ftCo_ReleaseItemAndVictim(g);
     ext::Fighter_ChangeMotionState(g, ftCo_MS_BarrelWait as i32, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ext::ftAnim_8006EBA4(g);
@@ -79,25 +80,28 @@ pub fn ftCo_8009EB18(g: G) {
     ext::ftCommon_8007EFC0(fp(g), 1);
 }
 
-pub fn ftCo_BarrelWait_Anim(_g: G) {}
+pub fn ftCo_BarrelWait_Anim(_g: G) { melee_core::ct!("ftCo_BarrelWait_Anim");}
 
 pub fn ftCo_BarrelWait_IASA(g: G) {
+    melee_core::ct!("ftCo_BarrelWait_IASA");
     if fp(g).input.pressed_buttons & (HSD_PAD_A | HSD_PAD_B) as u32 != 0 {
         ext::Ground_801C4DD0();
     }
 }
 
-pub fn ftCo_BarrelWait_Phys(_g: G) {}
+pub fn ftCo_BarrelWait_Phys(_g: G) { melee_core::ct!("ftCo_BarrelWait_Phys");}
 
-pub fn ftCo_BarrelWait_Coll(_g: G) {}
+pub fn ftCo_BarrelWait_Coll(_g: G) { melee_core::ct!("ftCo_BarrelWait_Coll");}
 
 /// static `ftCo_8009EC44` (installed as `accessory1_cb`).
 pub unsafe extern "C" fn ftCo_8009EC44(g: G) {
+    melee_core::ct!("ftCo_8009EC44");
     let mut param: f32 = 0.0;
     ext::Ground_801C4DA0(&mut fp(g).cur_pos, &mut param);
 }
 
 pub fn ftCo_8009EC70(g: G, pos: *mut Vec3, arg2: *mut lbColl_80008D30_arg1, kb_angle: f32) {
+    melee_core::ct!("ftCo_8009EC70");
     let f = fp(g);
     f.bury_timer_2 = cd().bury_timer_unk2;
     f.cur_pos = unsafe { *pos };

@@ -114,6 +114,7 @@ unsafe fn itGetJObjGrandchild(gobj: *mut Item_GObj) -> *mut HSD_JObj {
 }
 
 pub unsafe extern "C" fn it_802B62D0(gobj: *mut Item_GObj, pos: *mut Vec3, is_smash_missile: i32, facing_dir: f32) -> *mut Item_GObj {
+    melee_core::ct!("it_802B62D0");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = It_Kind_Samus_Missile;
     Item_InitSpawnPositionFromParent(&mut spawn, gobj, pos);
@@ -145,6 +146,7 @@ pub unsafe extern "C" fn it_802B62D0(gobj: *mut Item_GObj, pos: *mut Vec3, is_sm
 }
 
 pub unsafe extern "C" fn it_802B63F8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802B63F8");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSamusMissileAttributes;
 
@@ -197,6 +199,7 @@ unsafe fn itSamusMissile_ClampTurn(ip: *mut Item, sa: *mut itSamusMissileAttribu
 }
 
 pub unsafe extern "C" fn it_802B64FC(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802B64FC");
     let mut vec3: Vec3 = core::mem::zeroed();
     let mut vec2: Vec3 = core::mem::zeroed();
     let mut vec1: Vec3 = core::mem::zeroed();
@@ -246,6 +249,7 @@ pub unsafe extern "C" fn it_802B64FC(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802B66A8(gobj: *mut Item_GObj) -> *mut c_void {
+    melee_core::ct!("it_802B66A8");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSamusMissileAttributes;
 
@@ -282,6 +286,7 @@ unsafe fn isSamusmissile_MotionAnim(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itSamusmissile_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSamusmissile_UnkMotion0_Anim");
     isSamusmissile_MotionAnim(gobj);
     false
 }
@@ -310,6 +315,7 @@ unsafe fn itSamusmissile_SetRotationX(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itSamusmissile_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itSamusmissile_UnkMotion0_Phys");
     let ip = GET_ITEM(gobj);
     let sa0 = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSamusMissileAttributes;
     let mut vec: Vec3 = core::mem::zeroed();
@@ -329,11 +335,13 @@ pub unsafe extern "C" fn itSamusmissile_UnkMotion0_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itSamusmissile_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSamusmissile_UnkMotion0_Coll");
     ext::it_8026E71C(gobj, Some(it_802B701C));
     false
 }
 
 pub unsafe extern "C" fn it_802B6A60(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802B6A60");
     let ip = GET_ITEM(gobj);
 
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSamusMissileAttributes;
@@ -353,11 +361,13 @@ pub unsafe extern "C" fn it_802B6A60(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itSamusmissile_UnkMotion1_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSamusmissile_UnkMotion1_Anim");
     isSamusmissile_MotionAnim(gobj);
     false
 }
 
 pub unsafe extern "C" fn itSamusmissile_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itSamusmissile_UnkMotion1_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSamusMissileAttributes;
 
@@ -378,11 +388,13 @@ pub unsafe extern "C" fn itSamusmissile_UnkMotion1_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itSamusmissile_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSamusmissile_UnkMotion1_Coll");
     ext::it_8026E71C(gobj, Some(it_802B70A0));
     false
 }
 
 pub unsafe extern "C" fn it_2725_Logic52_DmgDealt(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_2725_Logic52_DmgDealt");
     let ip = GET_ITEM(gobj);
 
     if (*ip).xDD4_itemVar.samusmissile.is_smash_missile == 0 {
@@ -396,6 +408,7 @@ pub unsafe extern "C" fn it_2725_Logic52_DmgDealt(gobj: *mut Item_GObj) -> bool 
 }
 
 pub unsafe extern "C" fn it_2725_Logic52_Clanked(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_2725_Logic52_Clanked");
     let ip = GET_ITEM(gobj);
 
     if (*ip).xDD4_itemVar.samusmissile.is_smash_missile == 0 {
@@ -409,6 +422,7 @@ pub unsafe extern "C" fn it_2725_Logic52_Clanked(gobj: *mut Item_GObj) -> bool {
 }
 
 pub unsafe extern "C" fn it_2725_Logic52_HitShield(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_2725_Logic52_HitShield");
     let ip = GET_ITEM(gobj);
 
     if (*ip).xDD4_itemVar.samusmissile.is_smash_missile == 0 {
@@ -422,6 +436,7 @@ pub unsafe extern "C" fn it_2725_Logic52_HitShield(gobj: *mut Item_GObj) -> bool
 }
 
 pub unsafe extern "C" fn it_2725_Logic52_ShieldBounced(arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_2725_Logic52_ShieldBounced");
     let ip = GET_ITEM(arg0);
     let jobj = GET_JOBJ(arg0);
     if (*ip).xDD4_itemVar.samusmissile.is_smash_missile != 0 {
@@ -443,6 +458,7 @@ pub unsafe extern "C" fn it_2725_Logic52_ShieldBounced(arg0: *mut Item_GObj) -> 
 }
 
 pub unsafe extern "C" fn it_2725_Logic52_Reflected(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_2725_Logic52_Reflected");
     let ip = GET_ITEM(gobj);
     let sa = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSamusMissileAttributes;
     let jobj = GET_JOBJ(gobj);
@@ -465,6 +481,7 @@ pub unsafe extern "C" fn it_2725_Logic52_Reflected(gobj: *mut Item_GObj) -> bool
 }
 
 pub unsafe extern "C" fn it_802B701C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802B701C");
     ext::it_8026BB44(gobj);
     ext::it_8026BD24(gobj);
     ext::it_8027518C(gobj);
@@ -475,10 +492,12 @@ pub unsafe extern "C" fn it_802B701C(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itSamusmissile_UnkMotion3_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSamusmissile_UnkMotion3_Anim");
     ext::it_802751D8(gobj) != 0
 }
 
 pub unsafe extern "C" fn it_802B70A0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802B70A0");
     ext::it_8026BB44(gobj);
     ext::it_8026BD24(gobj);
     ext::it_8027518C(gobj);
@@ -489,6 +508,7 @@ pub unsafe extern "C" fn it_802B70A0(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_2725_Logic52_EvtUnk(gobj: *mut Item_GObj, arg1: *mut Item_GObj) {
+    melee_core::ct!("it_2725_Logic52_EvtUnk");
     let ip = GET_ITEM(gobj);
     ext::it_8026B894(gobj, arg1);
     if (*ip).xDD4_itemVar.samusmissile.owner == arg1 {

@@ -54,6 +54,7 @@ pub mod ext {
 
 /// Left/right wall reflect.
 pub fn ftCo_800C15F4(g: G) -> bool {
+    melee_core::ct!("ftCo_800C15F4");
     let threshold = cd().x1B0;
     let kb_vel_x = fp(g).x8c_kb_vel.x;
     if kb_vel_x < -threshold
@@ -85,6 +86,7 @@ pub fn ftCo_800C15F4(g: G) -> bool {
 
 /// Ceiling reflect.
 pub fn ftCo_800C1718(g: G) -> bool {
+    melee_core::ct!("ftCo_800C1718");
     if fp(g).x8c_kb_vel.y > cd().x1B0
         && fp(g).coll_data.env_flags & Collide_CeilingHug != 0
         && unsafe { fp(g).mv.co.damage.x19 } != ftCo_Surface_Ceiling as u8
@@ -106,6 +108,7 @@ fn ftCo_800C1718_inline(g: G) -> bool {
 
 /// Wall check, then ceiling check.
 pub fn ftCo_800C17CC(g: G) -> bool {
+    melee_core::ct!("ftCo_800C17CC");
     if ftCo_800C15F4(g) {
         return true;
     }
@@ -113,6 +116,7 @@ pub fn ftCo_800C17CC(g: G) -> bool {
 }
 
 pub fn ftCo_800C18A8(g: G, msid: i32, normal: &Vec3, offset: &Vec3) {
+    melee_core::ct!("ftCo_800C18A8");
     let f = fp(g);
     let mut vec0 = Vec3 { x: f.cur_pos.x + offset.x, y: f.cur_pos.y + offset.y, z: f.cur_pos.z + offset.z };
     let mut param = ext::atan2f(-normal.x, normal.y);
@@ -168,6 +172,7 @@ pub fn ftCo_800C18A8(g: G, msid: i32, normal: &Vec3, offset: &Vec3) {
 }
 
 pub fn ftCo_FlyReflect_Anim(g: G) {
+    melee_core::ct!("ftCo_FlyReflect_Anim");
     let f = fp(g);
     unsafe {
         if f.mv.co.damage.x18 != 0 {
@@ -178,14 +183,17 @@ pub fn ftCo_FlyReflect_Anim(g: G) {
 }
 
 pub fn ftCo_FlyReflect_IASA(g: G) {
+    melee_core::ct!("ftCo_FlyReflect_IASA");
     ext::ftCo_DamageFly_IASA(g);
 }
 
 pub fn ftCo_FlyReflect_Phys(g: G) {
+    melee_core::ct!("ftCo_FlyReflect_Phys");
     ext::ft_80084DB0(g);
 }
 
 pub fn ftCo_FlyReflect_Coll(g: G) {
+    melee_core::ct!("ftCo_FlyReflect_Coll");
     if fp(g).motion_id == ftCo_MS_FlyReflectWall as _ {
         if ext::ft_80081F2C(g) {
             ext::ftCo_80090184(g);

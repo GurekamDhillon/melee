@@ -44,6 +44,7 @@ fn fp<'a>(g: G) -> &'a mut Fighter {
 
 /// `ft_8007C630`: initialise both x1614 probes from `ft_data->x38`.
 pub fn ft_8007c630(g: G) {
+    melee_core::ct!("ft_8007c630");
     for i in 0..2usize {
         let f = fp(g);
         let d = unsafe { &mut *(*f.ft_data).x38.add(i) };
@@ -61,6 +62,7 @@ pub fn ft_8007c630(g: G) {
 
 /// `ft_8007C6DC`: per-frame probe update (previous position kept in x14).
 pub fn ft_8007c6dc(g: G) {
+    melee_core::ct!("ft_8007c6dc");
     if ext::gm_8016B0B4() {
         for i in 0..2usize {
             let f = fp(g);
@@ -77,6 +79,7 @@ pub fn ft_8007c6dc(g: G) {
 
 /// `ft_8007C77C`: collect coin items (kind Unk4) overlapping either probe.
 pub fn ft_8007c77c(g: G) {
+    melee_core::ct!("ft_8007c77c");
     if !ext::gm_8016B0B4() {
         return;
     }

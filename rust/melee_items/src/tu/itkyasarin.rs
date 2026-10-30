@@ -153,6 +153,7 @@ pub static mut it_803F90D0: [ItemStateTable; 11] = [
 ];
 
 pub unsafe extern "C" fn itKyasarin_Logic25_Destroyed(gobj: *mut Item_GObj) {
+    melee_core::ct!("itKyasarin_Logic25_Destroyed");
     let ip = get_item(gobj);
     if !(*ip).xDD4_itemVar.kyasarin.x20.is_null() {
         ext::grInishie2_801FD448((*ip).xDD4_itemVar.kyasarin.x20);
@@ -161,10 +162,12 @@ pub unsafe extern "C" fn itKyasarin_Logic25_Destroyed(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802ECD1C(gobj: *mut Item_GObj, v: *mut Vec3) {
+    melee_core::ct!("it_802ECD1C");
     *v = (*get_item(gobj)).pos;
 }
 
 pub unsafe extern "C" fn it_802ECD3C(owner: *mut HSD_GObj, pos: *mut Vec3, facing_dir: f32) -> *mut HSD_GObj {
+    melee_core::ct!("it_802ECD3C");
     let item_gobj = ext::it_8027B5B0(It_Kind_Kyasarin, pos, null_mut(), null_mut(), 1);
     if !item_gobj.is_null() {
         let ip = get_item(item_gobj);
@@ -184,10 +187,12 @@ pub unsafe extern "C" fn it_802ECD3C(owner: *mut HSD_GObj, pos: *mut Vec3, facin
 }
 
 pub unsafe extern "C" fn it_802ECE90(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802ECE90");
     ext::it_8027B730(gobj);
 }
 
 pub unsafe extern "C" fn it_802ECEB0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802ECEB0");
     let ip = get_item(gobj);
     let attr = attrs(ip);
     (*ip).x40_vel.x = (*attr).x4 * (*ip).facing_dir;
@@ -197,6 +202,7 @@ pub unsafe extern "C" fn it_802ECEB0(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itKyasarin_UnkMotion0_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKyasarin_UnkMotion0_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         let ip = get_item(gobj);
         let attr = attrs(ip);
@@ -209,6 +215,7 @@ pub unsafe extern "C" fn itKyasarin_UnkMotion0_Anim(gobj: *mut Item_GObj) -> i32
 }
 
 pub unsafe extern "C" fn itKyasarin_UnkMotion0_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKyasarin_UnkMotion0_Coll");
     let ip = get_item(gobj);
     let attr = attrs(ip);
     if (*ip).facing_dir == 1.0 {
@@ -222,6 +229,7 @@ pub unsafe extern "C" fn itKyasarin_UnkMotion0_Coll(gobj: *mut Item_GObj) -> i32
 }
 
 pub unsafe extern "C" fn it_802ECFE0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802ECFE0");
     let ip = get_item(gobj);
     let attr = attrs(ip);
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE as _);
@@ -230,6 +238,7 @@ pub unsafe extern "C" fn it_802ECFE0(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itKyasarin_UnkMotion1_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKyasarin_UnkMotion1_Anim");
     let ip = get_item(gobj);
     (*ip).xDD4_itemVar.kyasarin.x24 = (*ip).xDD4_itemVar.kyasarin.x24 - 1.0;
     if (*ip).xDD4_itemVar.kyasarin.x24 < 0.0 {
@@ -239,6 +248,7 @@ pub unsafe extern "C" fn itKyasarin_UnkMotion1_Anim(gobj: *mut Item_GObj) -> i32
 }
 
 pub unsafe extern "C" fn itKyasarin_UnkMotion3_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKyasarin_UnkMotion3_Anim");
     let ip = get_item(gobj);
     (*ip).xDD4_itemVar.kyasarin.x24 = (*ip).xDD4_itemVar.kyasarin.x24 - 1.0;
     if (*ip).xDD4_itemVar.kyasarin.x24 < 0.0 {
@@ -248,6 +258,7 @@ pub unsafe extern "C" fn itKyasarin_UnkMotion3_Anim(gobj: *mut Item_GObj) -> i32
 }
 
 pub unsafe extern "C" fn it_802ED0D0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802ED0D0");
     let ip = get_item(gobj);
     let attr = attrs(ip);
     (*ip).x40_vel.x = -(*attr).x4 * (*ip).facing_dir;
@@ -257,6 +268,7 @@ pub unsafe extern "C" fn it_802ED0D0(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itKyasarin_UnkMotion2_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKyasarin_UnkMotion2_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         let ip = get_item(gobj);
         let attr = attrs(ip);
@@ -269,6 +281,7 @@ pub unsafe extern "C" fn itKyasarin_UnkMotion2_Anim(gobj: *mut Item_GObj) -> i32
 }
 
 pub unsafe extern "C" fn itKyasarin_UnkMotion2_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKyasarin_UnkMotion2_Coll");
     let ip = get_item(gobj);
     let attr = attrs(ip);
     if (*ip).facing_dir == 1.0 {
@@ -286,6 +299,7 @@ pub unsafe extern "C" fn itKyasarin_UnkMotion2_Coll(gobj: *mut Item_GObj) -> i32
 }
 
 pub unsafe extern "C" fn it_802ED25C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802ED25C");
     let ip = get_item(gobj);
     let attr = attrs(ip);
     (*ip).x40_vel.x = (*attr).x4 * (*ip).facing_dir;
@@ -295,6 +309,7 @@ pub unsafe extern "C" fn it_802ED25C(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itKyasarin_UnkMotion4_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKyasarin_UnkMotion4_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         let ip = get_item(gobj);
         let attr = attrs(ip);
@@ -308,6 +323,7 @@ pub unsafe extern "C" fn itKyasarin_UnkMotion4_Anim(gobj: *mut Item_GObj) -> i32
 
 #[inline]
 pub unsafe fn itKyasarin_Randi(range: i32) -> i32 {
+    melee_core::ct!("itKyasarin_Randi");
     ext::HSD_Randi(range)
 }
 
@@ -328,6 +344,7 @@ unsafe fn motion4_coll_hit(gobj: *mut Item_GObj, ip: *mut Item, attr: *mut itKya
 }
 
 pub unsafe extern "C" fn itKyasarin_UnkMotion4_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKyasarin_UnkMotion4_Coll");
     let ip = get_item(gobj);
     let attr = attrs(ip);
     if (*ip).facing_dir == 1.0 {
@@ -341,11 +358,13 @@ pub unsafe extern "C" fn itKyasarin_UnkMotion4_Coll(gobj: *mut Item_GObj) -> i32
 }
 
 pub unsafe extern "C" fn it_802ED4F8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802ED4F8");
     ext::Item_80268E5C(gobj, 6, ITEM_ANIM_UPDATE as _);
 }
 
 #[inline]
 pub unsafe fn itKyasarin_TurnAround(gobj: *mut Item_GObj) {
+    melee_core::ct!("itKyasarin_TurnAround");
     let ip = get_item(gobj);
     let jobj = get_jobj(gobj);
     let attr = attrs(ip);
@@ -364,6 +383,7 @@ pub unsafe fn itKyasarin_TurnAround(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itKyasarin_UnkMotion6_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKyasarin_UnkMotion6_Anim");
     let ip = get_item(gobj);
     (*ip).xDD4_itemVar.kyasarin.x2C -= 1.0;
     (*ip).xDD4_itemVar.kyasarin.x28 -= 1.0;
@@ -378,10 +398,12 @@ pub unsafe extern "C" fn itKyasarin_UnkMotion6_Anim(gobj: *mut Item_GObj) -> i32
 }
 
 pub unsafe extern "C" fn it_802ED774(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802ED774");
     ext::Item_80268E5C(gobj, 7, ITEM_ANIM_UPDATE as _);
 }
 
 pub unsafe extern "C" fn itKyasarin_UnkMotion7_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKyasarin_UnkMotion7_Anim");
     let ip = get_item(gobj);
     if ext::it_80272C6C(gobj) == 0 {
         let attr = attrs(ip);
@@ -403,10 +425,12 @@ pub unsafe extern "C" fn itKyasarin_UnkMotion7_Anim(gobj: *mut Item_GObj) -> i32
 }
 
 pub unsafe extern "C" fn it_802ED8BC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802ED8BC");
     ext::Item_80268E5C(gobj, 5, ITEM_ANIM_UPDATE as _);
 }
 
 pub unsafe extern "C" fn itKyasarin_UnkMotion5_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKyasarin_UnkMotion5_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         ext::Item_80268E5C(gobj, 5, ITEM_ANIM_UPDATE as _);
     }
@@ -415,6 +439,7 @@ pub unsafe extern "C" fn itKyasarin_UnkMotion5_Anim(gobj: *mut Item_GObj) -> i32
 
 #[inline]
 pub unsafe fn itKyasarin_UnkMotion8_case3(gobj: *mut Item_GObj) {
+    melee_core::ct!("itKyasarin_UnkMotion8_case3");
     let ip = get_item(gobj);
     let attr = attrs(ip);
     ext::Item_80268E5C(gobj, 3, ITEM_ANIM_UPDATE as _);
@@ -424,6 +449,7 @@ pub unsafe fn itKyasarin_UnkMotion8_case3(gobj: *mut Item_GObj) {
 
 #[inline]
 pub unsafe fn itKyasarin_UnkMotion8_case8(gobj: *mut Item_GObj) {
+    melee_core::ct!("itKyasarin_UnkMotion8_case8");
     let ip = get_item(gobj);
     (*ip).xDD4_itemVar.kyasarin.x3C = (*ip).msid as i32;
     ext::Item_80268E5C(gobj, 8, ITEM_ANIM_UPDATE as _);
@@ -432,6 +458,7 @@ pub unsafe fn itKyasarin_UnkMotion8_case8(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itKyasarin_UnkMotion8_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKyasarin_UnkMotion8_Anim");
     let ip = get_item(gobj);
     if ext::it_80272C6C(gobj) == 0 {
         match (*ip).xDD4_itemVar.kyasarin.x3C {
@@ -452,6 +479,7 @@ pub unsafe extern "C" fn itKyasarin_UnkMotion8_Anim(gobj: *mut Item_GObj) -> i32
 }
 
 pub unsafe extern "C" fn itKyasarin_UnkMotion9_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKyasarin_UnkMotion9_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         ext::Item_80268E5C(gobj, 9, ITEM_ANIM_UPDATE as _);
     }
@@ -459,40 +487,47 @@ pub unsafe extern "C" fn itKyasarin_UnkMotion9_Anim(gobj: *mut Item_GObj) -> i32
 }
 
 pub unsafe extern "C" fn itKyasarin_UnkMotion9_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itKyasarin_UnkMotion9_Phys");
     let ip = get_item(gobj);
     (*ip).x40_vel.y -= (*(*ip).xCC_item_attr).x10_fall_speed;
 }
 
 pub unsafe extern "C" fn itKyasarin_UnkMotion9_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKyasarin_UnkMotion9_Coll");
     ext::it_8027C794(gobj)
 }
 
 pub unsafe extern "C" fn itKyasarin_UnkMotion10_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKyasarin_UnkMotion10_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         ext::Item_80268E5C(gobj, 0xA, ITEM_ANIM_UPDATE as _);
     }
     0
 }
 
-pub unsafe extern "C" fn itKyasarin_UnkMotion10_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itKyasarin_UnkMotion10_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itKyasarin_UnkMotion10_Phys");}
 
 pub unsafe extern "C" fn itKyasarin_UnkMotion10_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKyasarin_UnkMotion10_Coll");
     ext::it_8027C79C(gobj)
 }
 
 #[inline]
 pub unsafe fn itKyasarin_GetCollData(ip: *mut Item) -> *mut CollData {
+    melee_core::ct!("itKyasarin_GetCollData");
     &raw mut (*ip).x378_itemColl
 }
 
 #[inline]
 pub unsafe fn itKyasarin_SetFallCollPos(ip: *mut Item, coll: *mut CollData, pos: *mut Vec3) {
+    melee_core::ct!("itKyasarin_SetFallCollPos");
     (*coll).cur_pos = (*ip).pos;
     *pos = (*ip).pos;
 }
 
 #[inline]
 pub unsafe fn itKyasarin_FlipAndFall(gobj: *mut Item_GObj, jobj: *mut HSD_JObj, ip: *mut Item, pos: *mut Vec3) {
+    melee_core::ct!("itKyasarin_FlipAndFall");
     let coll: *mut CollData = itKyasarin_GetCollData(ip);
 
     HSD_JObjSetRotationXWithMtxDirty(jobj, M_PI as f32);
@@ -504,6 +539,7 @@ pub unsafe fn itKyasarin_FlipAndFall(gobj: *mut Item_GObj, jobj: *mut HSD_JObj, 
 
 #[inline]
 pub unsafe fn itKyasarin_SaveStateAndStop(gobj: *mut Item_GObj) {
+    melee_core::ct!("itKyasarin_SaveStateAndStop");
     let ip = get_item(gobj);
     (*ip).xDD4_itemVar.kyasarin.x3C = (*ip).msid as i32;
     ext::Item_80268E5C(gobj, 8, ITEM_ANIM_UPDATE as _);
@@ -512,6 +548,7 @@ pub unsafe fn itKyasarin_SaveStateAndStop(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802EDDC0(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802EDDC0");
     let ip = get_item(gobj);
     let attr = attrs(ip);
 
@@ -548,5 +585,6 @@ pub unsafe extern "C" fn it_802EDDC0(gobj: *mut Item_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn it_802EE1E0(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802EE1E0");
     ext::it_8026B894(gobj, ref_gobj);
 }

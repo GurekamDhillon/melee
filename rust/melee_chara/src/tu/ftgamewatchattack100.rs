@@ -25,6 +25,7 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 
 /// Mr. Game & Watch's Rapid Jab Start Action State handler.
 pub fn ftGw_Attack100Start_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_Attack100Start_Enter");
     unsafe {
         let fp = fpp(gobj);
         co::ftCo_800D6B00(gobj, ftGw_MS_Attack100Start as i32);
@@ -34,33 +35,39 @@ pub fn ftGw_Attack100Start_Enter(gobj: *mut HSD_GObj) {
 
 /// Rapid Jab Start Collision callback.
 pub fn ftGw_Attack100Start_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_Attack100Start_Coll");
     st::ft_80084104(gobj);
     ftGw_Init_8014A538(gobj);
 }
 
 /// Rapid Jab Loop Animation callback.
 pub fn ftGw_Attack100Loop_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_Attack100Loop_Anim");
     co::ftCo_800D6C60(gobj, ftGw_Attack100End_Enter);
 }
 
 /// Rapid Jab Loop IASA callback.
 pub fn ftGw_Attack100Loop_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_Attack100Loop_IASA");
     co::ftCo_Attack100Loop_IASA(gobj);
 }
 
 /// Rapid Jab Loop Collision callback.
 pub fn ftGw_Attack100Loop_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_Attack100Loop_Coll");
     st::ft_80084104(gobj);
     ftGw_Init_8014A538(gobj);
 }
 
 /// Rapid Jab End Animation callback.
 pub fn ftGw_Attack100End_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_Attack100End_Anim");
     co::ftCo_Attack100End_Anim(gobj);
 }
 
 /// Rapid Jab End Collision callback.
 pub fn ftGw_Attack100End_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_Attack100End_Coll");
     st::ft_80084104(gobj);
     ftGw_Init_8014A538(gobj);
 }

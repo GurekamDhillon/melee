@@ -117,6 +117,7 @@ unsafe fn training_row() -> *mut VsModeData {
 
 /// 1B1B74: the CSS is entered.
 pub unsafe extern "C" fn gm_801B1B74(arg0: *mut GameModeState) {
+    melee_core::ct!("gm_801B1B74");
     let vs_data = training_row();
     let css = ext::gm_GetGameModeStateEnterData(arg0) as *mut CSSData;
     if gm_804D68C1 != 0 {
@@ -135,11 +136,13 @@ pub unsafe extern "C" fn gm_801B1B74(arg0: *mut GameModeState) {
 
 /// `gm_801B07E8_layer` (static): `gm_801B07E8` through a signature the call sites share.
 pub unsafe fn gm_801B07E8_layer(css: *mut CSSData, c_kind: *mut i8, stocks: *mut i8, color: *mut i8, arg4: *mut i8, level: *mut u8) {
+    melee_core::ct!("gm_801B07E8_layer");
     ext::gm_801B07E8(css, c_kind, stocks, color, arg4, level);
 }
 
 /// 1B1C24: the CSS is left; build the training match's players from its choices.
 pub unsafe extern "C" fn gm_801B1C24(arg0: *mut GameModeState) {
+    melee_core::ct!("gm_801B1C24");
     let vs = training_row();
     let css = ext::gm_GetGameModeStateExitData(arg0) as *mut CSSData;
     if (*css).pending_scene_change == 2 {
@@ -202,6 +205,7 @@ pub unsafe extern "C" fn gm_801B1C24(arg0: *mut GameModeState) {
 
 /// 1B1EB8: the SSS is entered.
 pub unsafe extern "C" fn gm_801B1EB8(arg0: *mut GameModeState) {
+    melee_core::ct!("gm_801B1EB8");
     let sss = ext::gm_GetGameModeStateEnterData(arg0) as *mut SSSData;
     (*sss).x1 = 0;
     (*sss).force_stage_id = -1;
@@ -212,6 +216,7 @@ pub unsafe extern "C" fn gm_801B1EB8(arg0: *mut GameModeState) {
 
 /// 1B1EEC: the SSS is left; record the chosen stage.
 pub unsafe extern "C" fn gm_801B1EEC(arg0: *mut GameModeState) {
+    melee_core::ct!("gm_801B1EEC");
     let vs_data = training_row();
     let sss = ext::gm_GetGameModeStateExitData(arg0) as *mut SSSData;
     if (*sss).start_game == 0 {
@@ -227,10 +232,11 @@ pub unsafe extern "C" fn gm_801B1EEC(arg0: *mut GameModeState) {
 }
 
 /// 1B1F6C
-pub unsafe extern "C" fn fn_801B1F6C(_unused: i32) {}
+pub unsafe extern "C" fn fn_801B1F6C(_unused: i32) { melee_core::ct!("fn_801B1F6C");}
 
 /// 1B1F70: the match is entered; build its StartMeleeData from the mode's rows.
 pub unsafe extern "C" fn gm_801B1F70(arg0: *mut GameModeState) {
+    melee_core::ct!("gm_801B1F70");
     let vs = training_row();
     let data = ext::gm_GetGameModeStateEnterData(arg0) as *mut StartMeleeData;
     ext::gm_SetupRulesDefaults(&mut (*data).rules);
@@ -276,6 +282,7 @@ pub unsafe extern "C" fn gm_801B1F70(arg0: *mut GameModeState) {
 
 /// 1B2204: the match is left; record the results.
 pub unsafe extern "C" fn gm_801B2204(arg0: *mut GameModeState) {
+    melee_core::ct!("gm_801B2204");
     let temp_r3 = ext::gm_GetGameModeStateExitData(arg0) as *mut MatchExitInfo;
     ext::gm_80162968((*temp_r3).match_end.frame_count / 60);
     ext::gm_8016247C((*temp_r3).match_end.player_standings[0].xE as i32);
@@ -291,6 +298,7 @@ pub unsafe extern "C" fn gm_801B2204(arg0: *mut GameModeState) {
 
 /// `gm_Mode_Training_OnInit`
 pub unsafe fn gm_Mode_Training_OnInit() {
+    melee_core::ct!("gm_Mode_Training_OnInit");
     let temp_r31 = training_row();
     ext::gm_InitVsMode(temp_r31);
     for i in 0..4usize {
@@ -305,6 +313,7 @@ pub unsafe fn gm_Mode_Training_OnInit() {
 
 /// `gm_Mode_Training_OnLoad`
 pub unsafe fn gm_Mode_Training_OnLoad() {
+    melee_core::ct!("gm_Mode_Training_OnLoad");
     gm_804D68C0 = ext::gm_801677F0();
     gm_804D68C1 = 0;
     // TARGET_PC: scene launch seeds this mode's VsModeData (gmscenelaunch.h)

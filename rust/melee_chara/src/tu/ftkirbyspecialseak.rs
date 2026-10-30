@@ -99,6 +99,7 @@ unsafe fn da(fp: *mut Fighter) -> *mut ftKb_DatAttrs {
 /// `ftKb_SpecialN_set_cbs` (ftKirby/inlines.h, static inline): Kirby's damage callbacks.
 #[inline(always)]
 pub fn ftKb_SpecialN_set_cbs(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialN_set_cbs");
     unsafe {
         let fp = fpp(gobj);
         (*fp).death2_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE74C);
@@ -107,18 +108,20 @@ pub fn ftKb_SpecialN_set_cbs(gobj: *mut HSD_GObj) {
 }
 
 /// `fn_80105FEC`: the empty reflect callback of Kirby's Zelda ability.
-pub fn fn_80105FEC(_gobj: *mut HSD_GObj) {}
+pub fn fn_80105FEC(_gobj: *mut HSD_GObj) { melee_core::ct!("fn_80105FEC");}
 
 /// `fn_80105FEC` as a Fighter / reflect callback entry.
-pub unsafe extern "C" fn cb_fn_80105FEC(_g: *mut HSD_GObj) {}
+pub unsafe extern "C" fn cb_fn_80105FEC(_g: *mut HSD_GObj) { melee_core::ct!("cb_fn_80105FEC");}
 
 /// `fn_80106DB0` as a Fighter callback entry (`accessory4_cb`).
 pub unsafe extern "C" fn cb_fn_80106DB0(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_80106DB0");
     fn_80106DB0(g);
 }
 
 /// Returns `false` when a needle is held (`xB8 != 0`), else `true`.
 pub fn ftKb_SpecialNSk_80105FF0(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftKb_SpecialNSk_80105FF0");
     unsafe {
         // The C loads `GET_FIGHTER(gobj)` before the NULL test (a harmless GC low-memory read).
         if !gobj.is_null() {
@@ -133,6 +136,7 @@ pub fn ftKb_SpecialNSk_80105FF0(gobj: *mut HSD_GObj) -> bool {
 }
 
 pub fn ftKb_SpecialNSk_80106020(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("ftKb_SpecialNSk_80106020");
     unsafe {
         if !gobj.is_null() {
             let ft = fpp(gobj);
@@ -144,6 +148,7 @@ pub fn ftKb_SpecialNSk_80106020(gobj: *mut HSD_GObj) -> i32 {
 
 /// Release every stored needle (one thrown per stored charge) when the held one is dropped.
 pub fn ftKb_SpecialNSk_8010603C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialNSk_8010603C");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -184,6 +189,7 @@ unsafe fn enter_tail(gobj: *mut HSD_GObj, fp: *mut Fighter) {
 }
 
 pub fn ftKb_SpecialNSk_8010612C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialNSk_8010612C");
     unsafe {
         let fp = fpp(gobj);
         st::Fighter_ChangeMotionState(gobj, ftKb_MS_SkSpecialNStart as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -192,6 +198,7 @@ pub fn ftKb_SpecialNSk_8010612C(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_SpecialNSk_801061E4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialNSk_801061E4");
     unsafe {
         let fp = fpp(gobj);
         st::Fighter_ChangeMotionState(gobj, ftKb_MS_SkSpecialAirNStart as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -210,10 +217,12 @@ unsafe fn start_anim(gobj: *mut HSD_GObj, loop_msid: i32) {
 }
 
 pub fn ftKb_SkSpecialNStart_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SkSpecialNStart_Anim");
     unsafe { start_anim(gobj, ftKb_MS_SkSpecialNLoop as i32) }
 }
 
 pub fn ftKb_SkSpecialAirNStart_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SkSpecialAirNStart_Anim");
     unsafe { start_anim(gobj, ftKb_MS_SkSpecialAirNLoop as i32) }
 }
 
@@ -236,10 +245,12 @@ unsafe fn loop_anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_SkSpecialNLoop_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SkSpecialNLoop_Anim");
     unsafe { loop_anim(gobj) }
 }
 
 pub fn ftKb_SkSpecialAirNLoop_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SkSpecialAirNLoop_Anim");
     unsafe { loop_anim(gobj) }
 }
 
@@ -256,6 +267,7 @@ unsafe fn end_anim_step(fp: *mut Fighter) {
 }
 
 pub fn ftKb_SkSpecialNEnd_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SkSpecialNEnd_Anim");
     unsafe {
         let fp = fpp(gobj);
         end_anim_step(fp);
@@ -275,6 +287,7 @@ unsafe fn fall_or_special(gobj: *mut HSD_GObj, da: *mut ftKb_DatAttrs) {
 }
 
 pub fn ftKb_SkSpecialAirNCancel_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SkSpecialAirNCancel_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -286,6 +299,7 @@ pub fn ftKb_SkSpecialAirNCancel_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_SkSpecialAirNEnd_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SkSpecialAirNEnd_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -296,14 +310,15 @@ pub fn ftKb_SkSpecialAirNEnd_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftKb_SkSpecialNStart_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftKb_SkSpecialNCancel_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftKb_SkSpecialNEnd_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftKb_SkSpecialAirNStart_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftKb_SkSpecialAirNCancel_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftKb_SkSpecialAirNEnd_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftKb_SkSpecialNStart_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftKb_SkSpecialNStart_IASA");}
+pub fn ftKb_SkSpecialNCancel_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftKb_SkSpecialNCancel_IASA");}
+pub fn ftKb_SkSpecialNEnd_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftKb_SkSpecialNEnd_IASA");}
+pub fn ftKb_SkSpecialAirNStart_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftKb_SkSpecialAirNStart_IASA");}
+pub fn ftKb_SkSpecialAirNCancel_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftKb_SkSpecialAirNCancel_IASA");}
+pub fn ftKb_SkSpecialAirNEnd_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftKb_SkSpecialAirNEnd_IASA");}
 
 pub fn ftKb_SkSpecialNCancel_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SkSpecialNCancel_Coll");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -314,6 +329,7 @@ pub fn ftKb_SkSpecialNCancel_Coll(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_SkSpecialNEnd_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SkSpecialNEnd_Coll");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -326,12 +342,14 @@ pub fn ftKb_SkSpecialNEnd_Coll(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_SkSpecialAirNCancel_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SkSpecialAirNCancel_Coll");
     if st::ft_80081D0C(gobj) != GA_Ground as i32 {
         ext::ftCo_Landing_Enter_Basic(gobj);
     }
 }
 
 pub fn ftKb_SkSpecialAirNEnd_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SkSpecialAirNEnd_Coll");
     unsafe {
         let fp = fpp(gobj);
         if st::ft_80081D0C(gobj) != 0 {
@@ -344,11 +362,13 @@ pub fn ftKb_SkSpecialAirNEnd_Coll(gobj: *mut HSD_GObj) {
 
 /// `perm_randi` (static inline): `HSD_Randi(n)`.
 pub fn perm_randi(n: i32) -> i32 {
+    melee_core::ct!("perm_randi");
     fh::hsd_randi(n)
 }
 
 /// The scripted needle throw (accessory4 callback of the End states).
 pub fn fn_80106DB0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80106DB0");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);

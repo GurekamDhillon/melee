@@ -178,10 +178,11 @@ unsafe fn Ground_StartMapAnim(gobj: *mut Ground_GObj) {
 }
 
 /// 202B6C
-pub unsafe extern "C" fn grGarden_80202B6C(_arg: i32) {}
+pub unsafe extern "C" fn grGarden_80202B6C(_arg: i32) { melee_core::ct!("grGarden_80202B6C");}
 
 /// 202B70
 pub unsafe extern "C" fn grGarden_80202B70() {
+    melee_core::ct!("grGarden_80202B70");
     yakumono_param = ext::Ground_GetYakumonoParam() as *mut grGarden_YakumonoParam;
     ext::stage_info.unk8C.set_b4(0);
     ext::stage_info.unk8C.set_b5(1);
@@ -201,16 +202,19 @@ pub unsafe extern "C" fn grGarden_80202B70() {
 
 /// 202C24
 pub unsafe extern "C" fn grGarden_80202C24() {
+    melee_core::ct!("grGarden_80202C24");
     ext::Ground_801C53EC(0x64193);
 }
 
 /// 202C4C
 pub unsafe extern "C" fn grGarden_80202C4C() {
+    melee_core::ct!("grGarden_80202C4C");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
 
 /// 202C78
 pub unsafe extern "C" fn grGarden_80202C78(gobj_id: i32) -> *mut HSD_GObj {
+    melee_core::ct!("grGarden_80202C78");
     let callbacks = &raw mut grGd_StageCallbacks[gobj_id as usize];
 
     let gobj = ext::Ground_GetStageGObj(gobj_id);
@@ -226,22 +230,25 @@ pub unsafe extern "C" fn grGarden_80202C78(gobj_id: i32) -> *mut HSD_GObj {
 
 /// `static stageGObj0_OnInit`
 pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj0_OnInit");
     Ground_StartMapAnim(gobj);
 }
 
 /// 202D94
-pub unsafe extern "C" fn grGarden_80202D94(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grGarden_80202D94(_arg: *mut Ground_GObj) { melee_core::ct!("grGarden_80202D94");}
 
 /// 202D98
-pub unsafe extern "C" fn grGarden_80202D98(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grGarden_80202D98(_arg: *mut Ground_GObj) { melee_core::ct!("grGarden_80202D98");}
 
 /// 202D9C
 pub unsafe extern "C" fn grGarden_80202D9C(arg: *mut Ground_GObj) {
+    melee_core::ct!("grGarden_80202D9C");
     ext::ftCo_800C06E8(arg, 4, grGarden_8020349C as *mut c_void);
 }
 
 /// 202DC8
 pub unsafe extern "C" fn grGarden_80202DC8(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grGarden_80202DC8");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
     (*gp).x8_callback = None;
@@ -253,14 +260,16 @@ pub unsafe extern "C" fn grGarden_80202DC8(gobj: *mut Ground_GObj) {
 
 /// 202E48
 pub unsafe extern "C" fn grGarden_80202E48(_arg: *mut Ground_GObj) {
+    melee_core::ct!("grGarden_80202E48");
     ext::lb_800115F4();
 }
 
 /// 202E68
-pub unsafe extern "C" fn grGarden_80202E68(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grGarden_80202E68(_arg: *mut Ground_GObj) { melee_core::ct!("grGarden_80202E68");}
 
 /// 202E6C
 pub unsafe extern "C" fn grGarden_80202E6C(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grGarden_80202E6C");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
     (*gp).x8_callback = None;
@@ -276,13 +285,14 @@ pub unsafe extern "C" fn grGarden_80202E6C(gobj: *mut Ground_GObj) {
 }
 
 /// 202F3C
-pub unsafe extern "C" fn grGarden_80202F3C(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grGarden_80202F3C(_arg: *mut Ground_GObj) { melee_core::ct!("grGarden_80202F3C");}
 
 /// 202F40
-pub unsafe extern "C" fn grGarden_80202F40(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grGarden_80202F40(_arg: *mut Ground_GObj) { melee_core::ct!("grGarden_80202F40");}
 
 /// 202F44
 pub unsafe extern "C" fn grGarden_80202F44(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grGarden_80202F44");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
     (*gp).x8_callback = None;
@@ -291,13 +301,14 @@ pub unsafe extern "C" fn grGarden_80202F44(gobj: *mut Ground_GObj) {
 }
 
 /// 202F9C
-pub unsafe extern "C" fn grGarden_80202F9C(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grGarden_80202F9C(_arg: *mut Ground_GObj) { melee_core::ct!("grGarden_80202F9C");}
 
 /// 202FA0
-pub unsafe extern "C" fn grGarden_80202FA0(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grGarden_80202FA0(_arg: *mut Ground_GObj) { melee_core::ct!("grGarden_80202FA0");}
 
 /// 202FA4
 pub unsafe extern "C" fn grGarden_80202FA4(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grGarden_80202FA4");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
     (*gp).x8_callback = None;
@@ -306,13 +317,14 @@ pub unsafe extern "C" fn grGarden_80202FA4(gobj: *mut Ground_GObj) {
 }
 
 /// 202FFC
-pub unsafe extern "C" fn grGarden_80202FFC(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grGarden_80202FFC(_arg: *mut Ground_GObj) { melee_core::ct!("grGarden_80202FFC");}
 
 /// 203000
-pub unsafe extern "C" fn grGarden_80203000(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grGarden_80203000(_arg: *mut Ground_GObj) { melee_core::ct!("grGarden_80203000");}
 
 /// 203004
 pub unsafe extern "C" fn grGarden_80203004(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grGarden_80203004");
     let gp = GET_GROUND(gobj);
     (*gp).u.garden.xc4 = 0;
     let mut iVar1 = (*yakumono_param).x8;
@@ -326,6 +338,7 @@ pub unsafe extern "C" fn grGarden_80203004(gobj: *mut Ground_GObj) {
 
 /// 203098
 pub unsafe extern "C" fn grGarden_80203098(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grGarden_80203098");
     let gp = GET_GROUND(gobj);
     if ext::grAnime_801C83D0(gobj, 0, 7) != 0 || ext::grAnime_801C84A4(gobj, 0, 7) != 0 {
         if (*gp).u.garden.xc8 == 0 {
@@ -348,10 +361,11 @@ pub unsafe extern "C" fn grGarden_80203098(gobj: *mut Ground_GObj) {
 }
 
 /// 2031A0
-pub unsafe extern "C" fn grGarden_802031A0(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grGarden_802031A0(_arg: *mut Ground_GObj) { melee_core::ct!("grGarden_802031A0");}
 
 /// 2031A4
 pub unsafe extern "C" fn grGarden_802031A4(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grGarden_802031A4");
     let gp = GET_GROUND(gobj);
     let j = ext::Ground_801C3FA4(gobj, 8);
     (*gp).u.garden2.xc4 = ext::grMaterial_801C8CFC(0, 0, gp, j, Some(grGarden_80203498), None, None);
@@ -365,6 +379,7 @@ pub unsafe extern "C" fn grGarden_802031A4(gobj: *mut Ground_GObj) {
 
 /// 203250
 pub unsafe extern "C" fn grGarden_80203250(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grGarden_80203250");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = ext::Ground_801C3FA4(gobj, 0);
 
@@ -407,13 +422,14 @@ pub unsafe extern "C" fn grGarden_80203250(gobj: *mut Ground_GObj) {
 }
 
 /// 203494
-pub unsafe extern "C" fn grGarden_80203494(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grGarden_80203494(_arg: *mut Ground_GObj) { melee_core::ct!("grGarden_80203494");}
 
 /// 203498
-pub unsafe extern "C" fn grGarden_80203498(_item_gobj: *mut Item_GObj, _gp: *mut Ground) {}
+pub unsafe extern "C" fn grGarden_80203498(_item_gobj: *mut Item_GObj, _gp: *mut Ground) { melee_core::ct!("grGarden_80203498");}
 
 /// 20349C
 pub unsafe extern "C" fn grGarden_8020349C(_unk: u32, player: *mut HSD_GObj, water: *mut Vec3) -> i32 {
+    melee_core::ct!("grGarden_8020349C");
     let mut current = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut previous = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut dVar3: f32 = (*yakumono_param).x0;
@@ -439,6 +455,7 @@ pub unsafe extern "C" fn grGarden_8020349C(_unk: u32, player: *mut HSD_GObj, wat
 
 /// 203560
 pub unsafe extern "C" fn grGarden_80203560(param1: f32, vec: *mut Vec3) {
+    melee_core::ct!("grGarden_80203560");
     let gen = ext::grLib_801C96F8(0x753A, 0x1E, vec);
     if !gen.is_null() {
         let srt = (*gen).appsrt;
@@ -450,6 +467,7 @@ pub unsafe extern "C" fn grGarden_80203560(param1: f32, vec: *mut Vec3) {
 
 /// 2035D0
 pub unsafe extern "C" fn grGarden_802035D0(a: *mut Vec3, _b: i32, jobj: *mut HSD_JObj) -> i32 {
+    melee_core::ct!("grGarden_802035D0");
     let mut vec = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ext::lb_8000B1CC(jobj, null_mut(), &mut vec);
     if (*a).y > vec.y {
@@ -461,5 +479,6 @@ pub unsafe extern "C" fn grGarden_802035D0(a: *mut Vec3, _b: i32, jobj: *mut HSD
 
 /// 203624
 pub unsafe extern "C" fn grGarden_80203624() -> f32 {
+    melee_core::ct!("grGarden_80203624");
     -20.0
 }

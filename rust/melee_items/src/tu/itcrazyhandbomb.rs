@@ -74,6 +74,7 @@ pub const JOBJ_HIDDEN: u32 = 1 << 4;
 /// `MTXDegToRad(a)` (dolphin/mtx.h): `a * 0.01745329252f`.
 #[inline]
 pub fn MTXDegToRad(a: f32) -> f32 {
+    melee_core::ct!("MTXDegToRad");
     a * 0.01745329252f32
 }
 
@@ -94,6 +95,7 @@ unsafe fn sa<'a, T>(ip: *mut Item) -> &'a T {
 
 /// `it_802F0F6C` (itcrazyhandbomb.c): spawn a bomb of `kind` from `owner`.
 pub unsafe extern "C" fn it_802F0F6C(owner: *mut HSD_GObj, prev_pos: *mut Vec3, pos: *mut Vec3, kind: ItemKind, facing_dir: f32) {
+    melee_core::ct!("it_802F0F6C");
     let mut spawnitem: SpawnItem = core::mem::zeroed();
     spawnitem.kind = kind;
     spawnitem.prev_pos = *prev_pos;
@@ -107,6 +109,7 @@ pub unsafe extern "C" fn it_802F0F6C(owner: *mut HSD_GObj, prev_pos: *mut Vec3, 
 
 /// `it_802F1030` (itcrazyhandbomb.c): hide and detonate the bomb.
 pub unsafe extern "C" fn it_802F1030(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802F1030");
     ext::HSD_JObjSetFlagsAll((*gobj).hsd_obj as *mut HSD_JObj, JOBJ_HIDDEN);
     ext::it_8026BD24(gobj);
     ext::it_8027518C(gobj);
@@ -118,22 +121,26 @@ pub unsafe extern "C" fn it_802F1030(gobj: *mut HSD_GObj) {
 
 /// `itCrazyHandBomb_Logic86_EvtUnk`: `it_8026B894`.
 pub unsafe extern "C" fn itCrazyHandBomb_Logic86_EvtUnk(gobj: *mut HSD_GObj, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itCrazyHandBomb_Logic86_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }
 
 /// `itCrazyHandBomb_Logic86_DmgDealt`: detonate, true.
 pub unsafe extern "C" fn itCrazyHandBomb_Logic86_DmgDealt(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itCrazyHandBomb_Logic86_DmgDealt");
     it_802F1344(gobj);
     true
 }
 
 /// `itCrazyHandBomb_Logic86_Reflected`: `it_80273030`.
 pub unsafe extern "C" fn itCrazyHandBomb_Logic86_Reflected(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itCrazyHandBomb_Logic86_Reflected");
     ext::it_80273030(gobj)
 }
 
 /// `it_802F10F8` (itcrazyhandbomb.c): launch the bomb upwards at `x0` velocity and arm it.
 pub unsafe extern "C" fn it_802F10F8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802F10F8");
     let ip = item_of(gobj);
     let attrs = sa::<itCrazyHandBombAttributes>(ip);
     ext::it_802762BC(ip);
@@ -144,11 +151,13 @@ pub unsafe extern "C" fn it_802F10F8(gobj: *mut HSD_GObj) {
 
 /// `itCrazyhandbomb_UnkMotion0_Anim` (returns false).
 pub unsafe extern "C" fn itCrazyhandbomb_UnkMotion0_Anim(_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itCrazyhandbomb_UnkMotion0_Anim");
     false
 }
 
 /// `itCrazyhandbomb_UnkMotion0_Phys`: drift with the attribute motion and spin one axis.
 pub unsafe extern "C" fn itCrazyhandbomb_UnkMotion0_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itCrazyhandbomb_UnkMotion0_Phys");
     let ip = item_of(gobj);
     let attrs = sa::<itCrazyHandBombAttributes>(ip);
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -169,6 +178,7 @@ pub unsafe extern "C" fn itCrazyhandbomb_UnkMotion0_Phys(gobj: *mut HSD_GObj) {
 
 /// `itCrazyhandbomb_UnkMotion0_Coll`: detonate when airborne.
 pub unsafe extern "C" fn itCrazyhandbomb_UnkMotion0_Coll(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itCrazyhandbomb_UnkMotion0_Coll");
     let ip = item_of(gobj);
     if (*ip).ground_or_air == GA_Air {
         ext::it_8026E71C(gobj, Some(it_802F1030));
@@ -178,10 +188,11 @@ pub unsafe extern "C" fn itCrazyhandbomb_UnkMotion0_Coll(gobj: *mut HSD_GObj) ->
 
 /// `it_802F1340`: the on-accessory callback once the bomb is armed (empty). The C declares it
 /// with no parameters and stores it as an `HSD_GObjEvent` through a cast (same address either way).
-pub unsafe extern "C" fn it_802F1340() {}
+pub unsafe extern "C" fn it_802F1340() { melee_core::ct!("it_802F1340");}
 
 /// `it_802F1344`: switch to motion 1 and arm the explosion callback.
 pub unsafe extern "C" fn it_802F1344(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802F1344");
     let ip = item_of(gobj);
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);
     (*ip).on_accessory = Some(it_802F13B0);
@@ -189,19 +200,21 @@ pub unsafe extern "C" fn it_802F1344(gobj: *mut HSD_GObj) {
 
 /// `itCrazyhandbomb_UnkMotion1_Anim`: `it_802751D8`.
 pub unsafe extern "C" fn itCrazyhandbomb_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itCrazyhandbomb_UnkMotion1_Anim");
     ext::it_802751D8(gobj)
 }
 
 /// `itCrazyhandbomb_UnkMotion1_Phys` (empty).
-pub unsafe extern "C" fn itCrazyhandbomb_UnkMotion1_Phys(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itCrazyhandbomb_UnkMotion1_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itCrazyhandbomb_UnkMotion1_Phys");}
 
 /// `itCrazyhandbomb_UnkMotion1_Coll` (returns false).
 pub unsafe extern "C" fn itCrazyhandbomb_UnkMotion1_Coll(_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itCrazyhandbomb_UnkMotion1_Coll");
     false
 }
 
 /// `it_802F13B0` (empty), the armed-bomb on-accessory callback.
-pub unsafe extern "C" fn it_802F13B0(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn it_802F13B0(_gobj: *mut HSD_GObj) { melee_core::ct!("it_802F13B0");}
 
 pred_i32! {
     itCrazyhandbomb_UnkMotion0_Anim_p => itCrazyhandbomb_UnkMotion0_Anim;

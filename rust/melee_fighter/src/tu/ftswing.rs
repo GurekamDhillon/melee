@@ -32,11 +32,13 @@ pub static lbl_803C6D70: [[i32; 5]; 6] = [
 ];
 
 pub fn ftCo_FallAerial_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCo_FallAerial_Coll");
     ext::ft_800831CC(gobj, ext::ftCo_80096CC8, ext::ft_80082B1C)
 }
 
 /// `fn_800CCEC4(item_kind)`: swing type. Any other kind is the C's fatal assert.
 pub fn fn_800CCEC4(x: i32) -> i32 {
+    melee_core::ct!("fn_800CCEC4");
     match x {
         12 => 0,
         11 => 1,
@@ -51,6 +53,7 @@ pub fn fn_800CCEC4(x: i32) -> i32 {
 /// `get_anim_id(fp, swing_type, swing)` with the fighter's kind passed in. Under TARGET_PC the
 /// kind is `Geno_DefineBaseKind(kind)` when that is >= 0. Only Captain Falcon has swing 3.
 pub fn get_anim_id_kind(kind: i32, swing_type: i32, arg1: i32) -> i32 {
+    melee_core::ct!("get_anim_id_kind");
     if arg1 != 3 {
         return lbl_803C6D70[swing_type as usize][arg1 as usize];
     }
@@ -63,10 +66,12 @@ pub fn get_anim_id_kind(kind: i32, swing_type: i32, arg1: i32) -> i32 {
 }
 
 pub fn get_anim_id(fp: &Fighter, swing_type: i32, arg1: i32) -> i32 {
+    melee_core::ct!("get_anim_id");
     get_anim_id_kind(fp.kind as i32, swing_type, arg1)
 }
 
 pub fn ftCo_Attack_800CCF58(gobj: *mut HSD_GObj, arg1: i32) {
+    melee_core::ct!("ftCo_Attack_800CCF58");
     let f = super::ftlipstickswing::fp(gobj);
     if arg1 == 0 || arg1 == 1 {
         if ext::ftpickupitem_80094790(gobj) {

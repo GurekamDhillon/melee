@@ -236,9 +236,10 @@ unsafe fn test_random(val: i32) -> i32 {
     if val != 0 { ext::HSD_Randi(val) } else { 0 }
 }
 
-pub unsafe extern "C" fn grInishie2_801FCBC0(_arg: i32) {}
+pub unsafe extern "C" fn grInishie2_801FCBC0(_arg: i32) { melee_core::ct!("grInishie2_801FCBC0");}
 
 pub unsafe extern "C" fn grInishie2_801FCBC4() {
+    melee_core::ct!("grInishie2_801FCBC4");
     yakumono_param = ext::Ground_GetYakumonoParam() as *mut grInishie2_YakumonoParam;
 
     let si = ext::stage_info();
@@ -258,13 +259,15 @@ pub unsafe extern "C" fn grInishie2_801FCBC4() {
     ext::Camera_800311CC(4000.0);
 }
 
-pub unsafe extern "C" fn grInishie2_801FCCAC() {}
+pub unsafe extern "C" fn grInishie2_801FCCAC() { melee_core::ct!("grInishie2_801FCCAC");}
 
 pub unsafe extern "C" fn grInishie2_801FCCB0() {
+    melee_core::ct!("grInishie2_801FCCB0");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
 
 pub unsafe fn grInishie2_801FCCDC(gobj_id: i32) -> *mut HSD_GObj {
+    melee_core::ct!("grInishie2_801FCCDC");
     let callbacks: *mut StageCallbacks = &mut grI2_StageCallbacks[gobj_id as usize];
     let gobj = ext::Ground_GetStageGObj(gobj_id);
 
@@ -295,14 +298,16 @@ pub unsafe fn grInishie2_801FCCDC(gobj_id: i32) -> *mut HSD_GObj {
 
 /// `static void stageGObj0_OnInit(Ground_GObj*)`.
 pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj0_OnInit");
     Ground_StartMapAnim(gobj);
 }
 
-pub unsafe extern "C" fn grInishie2_801FCDFC(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grInishie2_801FCDFC(_gobj: *mut HSD_GObj) { melee_core::ct!("grInishie2_801FCDFC");}
 
-pub unsafe extern "C" fn grInishie2_801FCE00(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grInishie2_801FCE00(_gobj: *mut HSD_GObj) { melee_core::ct!("grInishie2_801FCE00");}
 
 pub unsafe extern "C" fn grInishie2_801FCE04(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grInishie2_801FCE04");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C7FF8(gobj, 1, 7, 0, 0.0, 1.0);
     ext::grAnime_801C7FF8(gobj, 6, 7, 1, 0.0, 1.0);
@@ -324,6 +329,7 @@ pub unsafe extern "C" fn grInishie2_801FCE04(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe fn grInishie2_801FCF2C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grInishie2_801FCF2C");
     let gp = GET_GROUND(gobj);
     let mut time_remaining: u32 = 0;
     if (*gp).u.inishie2.xC4_flags.b0() == 0 {
@@ -347,6 +353,7 @@ pub unsafe fn grInishie2_801FCF2C(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grInishie2_801FCFCC(arg0: *mut HSD_GObj) {
+    melee_core::ct!("grInishie2_801FCFCC");
     grInishie2_801FD0B4(arg0);
     grInishie2_801FD3CC(arg0);
     grInishie2_801FD7A8(arg0);
@@ -354,9 +361,10 @@ pub unsafe extern "C" fn grInishie2_801FCFCC(arg0: *mut HSD_GObj) {
     ext::lb_800115F4();
 }
 
-pub unsafe extern "C" fn grInishie2_801FD014(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grInishie2_801FD014(_gobj: *mut HSD_GObj) { melee_core::ct!("grInishie2_801FD014");}
 
 pub unsafe fn grInishie2_801FD018(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grInishie2_801FD018");
     let gp = (*gobj).user_data as *mut Ground;
 
     (*gp).u.inishie2.xC4_flags.set_b1(1);
@@ -366,6 +374,7 @@ pub unsafe fn grInishie2_801FD018(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe fn grInishie2_801FD0B4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grInishie2_801FD0B4");
     let gp = GET_GROUND(gobj);
 
     if (*gp).u.inishie2.xC4_flags.b1() != 0 {
@@ -398,6 +407,7 @@ pub unsafe fn grInishie2_801FD0B4(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grInishie2_801FD198(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grInishie2_801FD198");
     let gp = GET_GROUND(gobj);
 
     Ground_InitMapCollAndAnim(gobj);
@@ -409,6 +419,7 @@ pub unsafe extern "C" fn grInishie2_801FD198(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grInishie2_801FD224(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grInishie2_801FD224");
     let mut gp = GET_GROUND(gobj);
 
     if (*gp).u.inishie2.xC4_flags.b0() == 0 {
@@ -443,9 +454,10 @@ pub unsafe extern "C" fn grInishie2_801FD224(gobj: *mut HSD_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grInishie2_801FD364(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grInishie2_801FD364(_gobj: *mut HSD_GObj) { melee_core::ct!("grInishie2_801FD364");}
 
 pub unsafe fn grInishie2_801FD368(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grInishie2_801FD368");
     let gp = (*gobj).user_data as *mut Ground;
 
     (*gp).u.inishie2.xC4_flags.set_b3(1);
@@ -457,6 +469,7 @@ pub unsafe fn grInishie2_801FD368(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe fn grInishie2_801FD3CC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grInishie2_801FD3CC");
     let gp = GET_GROUND(gobj);
 
     if (*gp).u.inishie2.xC4_flags.b3() != 0 {
@@ -474,6 +487,7 @@ pub unsafe fn grInishie2_801FD3CC(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe fn grInishie2_801FD448(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grInishie2_801FD448");
     let gp = GET_GROUND(gobj);
     let gp_2 = GET_GROUND((*gp).u.inishie22.xC8);
 
@@ -488,11 +502,13 @@ pub unsafe fn grInishie2_801FD448(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe fn grInishie2_801FD4CC(_gobj: *mut HSD_GObj) {
+    melee_core::ct!("grInishie2_801FD4CC");
     ext::mpLib_80057BC0(0xE);
 }
 
 /// probably chooses which side to spawn Birdo on
 pub unsafe extern "C" fn grInishie2_801FD4F0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grInishie2_801FD4F0");
     let mut vec = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
     let jobj = GET_JOBJ(gobj);
@@ -515,6 +531,7 @@ pub unsafe extern "C" fn grInishie2_801FD4F0(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grInishie2_801FD654(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grInishie2_801FD654");
     let mut vec = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
     let jobj = GET_JOBJ(gobj);
@@ -527,9 +544,10 @@ pub unsafe extern "C" fn grInishie2_801FD654(gobj: *mut HSD_GObj) {
     ext::Ground_UpdateMapColl(gobj);
 }
 
-pub unsafe extern "C" fn grInishie2_801FD740(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grInishie2_801FD740(_gobj: *mut HSD_GObj) { melee_core::ct!("grInishie2_801FD740");}
 
 pub unsafe fn grInishie2_801FD744(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grInishie2_801FD744");
     let gp = GET_GROUND(gobj);
 
     (*gp).u.inishie2.xC4_flags.set_b4(1);
@@ -538,6 +556,7 @@ pub unsafe fn grInishie2_801FD744(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe fn grInishie2_801FD7A8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grInishie2_801FD7A8");
     let gp = GET_GROUND(gobj);
 
     if (*gp).u.inishie2.xC4_flags.b4() != 0 {
@@ -556,6 +575,7 @@ pub unsafe fn grInishie2_801FD7A8(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe fn grInishie2_801FD824(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grInishie2_801FD824");
     let mut spawn_pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
     let gp = GET_GROUND(gobj);
@@ -603,6 +623,7 @@ unsafe fn cam_side(temp_f: f32) -> i32 {
 }
 
 pub unsafe fn grInishie2_801FD9EC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grInishie2_801FD9EC");
     let mut gp = (*gobj).user_data as *mut Ground;
 
     if ext::grAnime_801C83D0(gobj, 1, 1) != 0 {
@@ -662,6 +683,7 @@ pub unsafe fn grInishie2_801FD9EC(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grInishie2_801FDE8C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grInishie2_801FDE8C");
     let gp = GET_GROUND(gobj);
     let jobj = GET_JOBJ(gobj);
     grInishie2_801FD824(gobj);
@@ -696,6 +718,7 @@ unsafe fn grInishie2_801FDED8_inline(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grInishie2_801FDED8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grInishie2_801FDED8");
     ext::Ground_UpdateMapColl(gobj);
     grInishie2_801FD9EC(gobj);
 
@@ -703,10 +726,11 @@ pub unsafe extern "C" fn grInishie2_801FDED8(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe fn grInishie2_801FDFB4(arg0: s32) -> s32 {
+    melee_core::ct!("grInishie2_801FDFB4");
     if arg0 != 0 {
         return ext::HSD_Randi(arg0);
     }
     0
 }
 
-pub unsafe extern "C" fn grInishie2_801FDFE4(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grInishie2_801FDFE4(_gobj: *mut HSD_GObj) { melee_core::ct!("grInishie2_801FDFE4");}

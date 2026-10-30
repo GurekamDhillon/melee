@@ -69,11 +69,13 @@ pub static mut vi_animation_table: [*mut i8; 26] = [
 
 /// `char* viGetCharAnimByIndex(s32)`
 pub unsafe fn viGetCharAnimByIndex(index: i32) -> *mut i8 {
+    melee_core::ct!("viGetCharAnimByIndex");
     vi_animation_table[index as usize]
 }
 
 /// `void vi_8031C9B4(s32, s32)`
 pub unsafe fn vi_8031C9B4(arg0: i32, arg1: i32) {
+    melee_core::ct!("vi_8031C9B4");
     let r3 = ext::gm_8017E440();
     if r3 != 4 {
         ext::gm_801678F8(r3 as i32, arg0, arg1);
@@ -82,6 +84,7 @@ pub unsafe fn vi_8031C9B4(arg0: i32, arg1: i32) {
 
 /// `void vi_8031CA04(HSD_GObj*)`
 pub unsafe fn vi_8031CA04(gobj: *mut HSD_GObj) {
+    melee_core::ct!("vi_8031CA04");
     ext::Camera_800310A0(2);
     (*gobj).gxlink_prios = 9;
     ext::HSD_GObj_80390ED0(gobj, 7);
@@ -96,6 +99,7 @@ pub unsafe fn vi_8031CA04(gobj: *mut HSD_GObj) {
 
 /// `void vi_8031CAAC(void)`
 pub unsafe fn vi_8031CAAC() {
+    melee_core::ct!("vi_8031CAAC");
     let temp_ret: u64 = ext::gm_GetButtonsTriggered(ext::gm_8017E430());
     if (temp_ret & PAD_BUTTON_START) != 0 {
         ext::lbAudioAx_800236DC();

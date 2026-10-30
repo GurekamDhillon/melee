@@ -108,6 +108,7 @@ pub static mut it_803F78E8: [ItemStateTable; 1] = [
 
 /// `HSD_GObj* itGamewatchFire_Spawn(HSD_GObj*, Vec3*, Fighter_Part, float)`
 pub unsafe extern "C" fn itGamewatchFire_Spawn(parent: *mut HSD_GObj, pos: *mut Vec, part: Fighter_Part, dir: f32) -> *mut HSD_GObj {
+    melee_core::ct!("itGamewatchFire_Spawn");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = It_Kind_GameWatch_Fire;
     Item_InitSpawnPosition(&mut spawn, pos, false);
@@ -123,6 +124,7 @@ pub unsafe extern "C" fn itGamewatchFire_Spawn(parent: *mut HSD_GObj, pos: *mut 
 }
 
 pub unsafe extern "C" fn itGamewatchFire_Destroyed(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGamewatchFire_Destroyed");
     let item = GET_ITEM(item_gobj);
     if !(*item).owner.is_null() {
         ext::ftGw_AttackS4_ItemTorchSetFlag((*item).owner);
@@ -130,6 +132,7 @@ pub unsafe extern "C" fn itGamewatchFire_Destroyed(item_gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itGamewatchFire_802C6A2C(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGamewatchFire_802C6A2C");
     let item = GET_ITEM(item_gobj);
     if !item.is_null() {
         itGamewatchFire_Destroyed(item_gobj);
@@ -138,14 +141,17 @@ pub unsafe extern "C" fn itGamewatchFire_802C6A2C(item_gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itGamewatchFire_802C6A78(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGamewatchFire_802C6A78");
     ext::it_8026B724(item_gobj);
 }
 
 pub unsafe extern "C" fn itGamewatchFire_802C6A98(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGamewatchFire_802C6A98");
     ext::it_8026B73C(item_gobj);
 }
 
 pub unsafe extern "C" fn itGamewatchFire_PickedUp(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGamewatchFire_PickedUp");
     let item = GET_ITEM(item_gobj);
     (*item).xDB0_itcmd_var1 = 0;
     (*item).xDAC_itcmd_var0 = 0;
@@ -159,6 +165,7 @@ pub unsafe extern "C" fn itGamewatchFire_PickedUp(item_gobj: *mut HSD_GObj) {
 /// `torchRemoveCheck` (static inline): the callee's raw int, or `true`.
 #[inline]
 pub unsafe fn torchRemoveCheck(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("torchRemoveCheck");
     let item = GET_ITEM(gobj);
     if !(*item).owner.is_null() {
         return ext::ftGw_AttackS4_ItemCheckTorchRemove((*item).owner);
@@ -167,6 +174,7 @@ pub unsafe fn torchRemoveCheck(gobj: *mut HSD_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn itGamewatchFire_Motion0_Anim(item_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itGamewatchFire_Motion0_Anim");
     let item = GET_ITEM(item_gobj);
     let jobj = (*item_gobj).hsd_obj as *mut HSD_JObj;
     if (*item).x5CC_currentAnimFrame == 3.0f32 {
@@ -191,5 +199,6 @@ pub unsafe extern "C" fn itGamewatchFire_Motion0_Anim(item_gobj: *mut HSD_GObj) 
 }
 
 pub unsafe extern "C" fn itGamewatchFire_EvtUnk(item_gobj: *mut HSD_GObj, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGamewatchFire_EvtUnk");
     ext::it_8026B894(item_gobj, ref_gobj);
 }

@@ -43,6 +43,7 @@ pub mod ext {
 }
 
 pub fn ftCo_8009CA0C(g: G, vic: G) {
+    melee_core::ct!("ftCo_8009CA0C");
     let vf = unsafe { (*vic).user_data as *mut Fighter };
     ftCo_ReleaseItemAndVictim(g);
     let f = fp(g);
@@ -66,13 +67,14 @@ pub fn ftCo_8009CA0C(g: G, vic: G) {
     ext::ftCommon_8007E2FC(g);
 }
 
-pub fn ftCo_CaptureCaptain_Anim(_g: G) {}
+pub fn ftCo_CaptureCaptain_Anim(_g: G) { melee_core::ct!("ftCo_CaptureCaptain_Anim");}
 
-pub fn ftCo_CaptureCaptain_IASA(_g: G) {}
+pub fn ftCo_CaptureCaptain_IASA(_g: G) { melee_core::ct!("ftCo_CaptureCaptain_IASA");}
 
-pub fn ftCo_CaptureCaptain_Phys(_g: G) {}
+pub fn ftCo_CaptureCaptain_Phys(_g: G) { melee_core::ct!("ftCo_CaptureCaptain_Phys");}
 
 pub fn ftCo_CaptureCaptain_Coll(g: G) {
+    melee_core::ct!("ftCo_CaptureCaptain_Coll");
     if fp(g).x2226_b2() == 0 {
         ext::ft_80083B68(g);
     }

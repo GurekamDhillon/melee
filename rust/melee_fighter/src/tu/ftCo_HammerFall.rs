@@ -51,6 +51,7 @@ pub mod ext {
 const HSD_PAD_AB: u32 = (HSD_PAD_A | HSD_PAD_B) as u32;
 
 pub fn ftCo_800C5CD4(g: G) -> bool {
+    melee_core::ct!("ftCo_800C5CD4");
     if ext::ftCo_800C5240(g) && fp(g).input.pressed_buttons & HSD_PAD_AB != 0 {
         ftCo_800C5D34(g);
         return true;
@@ -59,6 +60,7 @@ pub fn ftCo_800C5CD4(g: G) -> bool {
 }
 
 pub fn ftCo_800C5D34(g: G) {
+    melee_core::ct!("ftCo_800C5D34");
     let flags = ext::ftCo_800C54C4(fp(g));
     let start = ext::ftCo_800C548C(fp(g));
     ext::Fighter_ChangeMotionState(g, ftCo_MS_HammerFall as i32, flags, start, 1.0, 0.0, core::ptr::null_mut());
@@ -69,6 +71,7 @@ pub fn ftCo_800C5D34(g: G) {
 }
 
 pub fn ftCo_HammerFall_Anim(g: G) {
+    melee_core::ct!("ftCo_HammerFall_Anim");
     ext::ftCo_800C4F64(g);
 }
 
@@ -83,6 +86,7 @@ fn inline_a0(g: G) {
 }
 
 pub fn ftCo_800C5DDC(g: G) -> bool {
+    melee_core::ct!("ftCo_800C5DDC");
     let f = fp(g);
     if f.x2338.y != 0
         && f.input.pressed_buttons & HSD_PAD_A as u32 != 0
@@ -96,13 +100,16 @@ pub fn ftCo_800C5DDC(g: G) -> bool {
 }
 
 pub fn ftCo_HammerFall_IASA(g: G) {
+    melee_core::ct!("ftCo_HammerFall_IASA");
     ftCo_800C5DDC(g);
 }
 
 pub fn ftCo_HammerFall_Phys(g: G) {
+    melee_core::ct!("ftCo_HammerFall_Phys");
     ext::ft_80084DB0(g);
 }
 
 pub fn ftCo_HammerFall_Coll(g: G) {
+    melee_core::ct!("ftCo_HammerFall_Coll");
     ext::ft_80082C74(g, ext::ftCo_HammerLanding_Enter);
 }

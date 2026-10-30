@@ -50,6 +50,7 @@ pub mod ext {
 }
 
 pub fn ftCo_800C44CC(g: G) -> bool {
+    melee_core::ct!("ftCo_800C44CC");
     let f = fp(g);
     if f.dmg.x1860_element == HitElement_Disable as u32 && f.is_sandbag() == 0 {
         match unsafe { f.x2070.anon_0.x2071_b0_3() } {
@@ -65,6 +66,7 @@ pub fn ftCo_800C44CC(g: G) -> bool {
 
 /// static `commonCall`.
 pub fn commonCall(f: &mut Fighter) {
+    melee_core::ct!("commonCall");
     let c = cd();
     let hcap = ext::Player_GetHandicap(f.player_id as i32) as f32;
     let n = (ext::Player_80033BB8(f.player_id as i32) + 1) as f32;
@@ -75,6 +77,7 @@ pub fn commonCall(f: &mut Fighter) {
 }
 
 pub fn ftCo_800C4550(g: G) {
+    melee_core::ct!("ftCo_800C4550");
     // inlines.h `ftCo_ReleaseItemAndVictim`
     ext::ftCommon_8007DB58(g);
     ext::ftCo_8009750C(g);
@@ -88,6 +91,7 @@ pub fn ftCo_800C4550(g: G) {
 }
 
 pub fn ftCo_DamageBind_Anim(g: G) {
+    melee_core::ct!("ftCo_DamageBind_Anim");
     let f = fp(g);
     f.grab_timer -= cd().x670;
     ext::ftCommon_GrabMash(f, cd().x674);
@@ -96,12 +100,14 @@ pub fn ftCo_DamageBind_Anim(g: G) {
     }
 }
 
-pub fn ftCo_DamageBind_IASA(_g: G) {}
+pub fn ftCo_DamageBind_IASA(_g: G) { melee_core::ct!("ftCo_DamageBind_IASA");}
 
 pub fn ftCo_DamageBind_Phys(g: G) {
+    melee_core::ct!("ftCo_DamageBind_Phys");
     ext::ft_80084F3C(g);
 }
 
 pub fn ftCo_DamageBind_Coll(g: G) {
+    melee_core::ct!("ftCo_DamageBind_Coll");
     ext::ft_80084280(g);
 }

@@ -16,6 +16,7 @@ const JOBJ_ROOT_MASK: u32 = JOBJ_ROOT_OPA | JOBJ_ROOT_TEXEDGE | JOBJ_ROOT_XLU;
 /// `HSD_JObjMtxIsDirty` (jobj.h inline).
 #[inline(always)]
 pub unsafe fn HSD_JObjMtxIsDirty(jobj: *mut HSD_JObj) -> bool {
+    melee_core::ct!("HSD_JObjMtxIsDirty");
     assert!(!jobj.is_null(), "HSD_ASSERT(564, jobj)");
     (*jobj).flags & JOBJ_USER_DEF_MTX as u32 == 0 && (*jobj).flags & JOBJ_MTX_DIRTY as u32 != 0
 }
@@ -23,6 +24,7 @@ pub unsafe fn HSD_JObjMtxIsDirty(jobj: *mut HSD_JObj) -> bool {
 /// `HSD_JObjSetMtxDirtySub`: mark `jobj` and, unless it is an instance, every descendant whose matrix is
 /// parent-dependent and not already dirty.
 pub unsafe fn HSD_JObjSetMtxDirtySub(jobj: *mut HSD_JObj) {
+    melee_core::ct!("HSD_JObjSetMtxDirtySub");
     (*jobj).flags |= 0x40;
     if (*jobj).flags & JOBJ_INSTANCE as u32 == 0 {
         let mut child = (*jobj).child;
@@ -44,6 +46,7 @@ unsafe fn HSD_JObjSetMtxDirty(jobj: *mut HSD_JObj) {
 }
 
 pub unsafe fn HSD_JObjGetFlags(jobj: *mut HSD_JObj) -> u32 {
+    melee_core::ct!("HSD_JObjGetFlags");
     if !jobj.is_null() {
         return (*jobj).flags;
     }
@@ -51,6 +54,7 @@ pub unsafe fn HSD_JObjGetFlags(jobj: *mut HSD_JObj) -> u32 {
 }
 
 pub unsafe fn HSD_JObjSetFlags(jobj: *mut HSD_JObj, flags: u32) {
+    melee_core::ct!("HSD_JObjSetFlags");
     if !jobj.is_null() {
         if ((*jobj).flags ^ flags) & JOBJ_CLASSICAL_SCALE as u32 != 0 {
             // manually inlined HSD_JObjSetMtxDirty
@@ -63,6 +67,7 @@ pub unsafe fn HSD_JObjSetFlags(jobj: *mut HSD_JObj, flags: u32) {
 }
 
 pub unsafe fn HSD_JObjSetFlagsAll(jobj: *mut HSD_JObj, flags: u32) {
+    melee_core::ct!("HSD_JObjSetFlagsAll");
     if !jobj.is_null() {
         HSD_JObjSetFlags(jobj, flags);
         if (*jobj).flags & JOBJ_INSTANCE as u32 == 0 {
@@ -76,6 +81,7 @@ pub unsafe fn HSD_JObjSetFlagsAll(jobj: *mut HSD_JObj, flags: u32) {
 }
 
 pub unsafe fn HSD_JObjClearFlags(jobj: *mut HSD_JObj, arg1: u32) {
+    melee_core::ct!("HSD_JObjClearFlags");
     if !jobj.is_null() {
         if ((*jobj).flags ^ arg1) & JOBJ_CLASSICAL_SCALE as u32 != 0 {
             // manually inlined HSD_JObjSetMtxDirty
@@ -88,6 +94,7 @@ pub unsafe fn HSD_JObjClearFlags(jobj: *mut HSD_JObj, arg1: u32) {
 }
 
 pub unsafe fn HSD_JObjClearFlagsAll(jobj: *mut HSD_JObj, flags: u32) {
+    melee_core::ct!("HSD_JObjClearFlagsAll");
     if !jobj.is_null() {
         HSD_JObjClearFlags(jobj, flags);
         if (*jobj).flags & JOBJ_INSTANCE as u32 == 0 {
@@ -102,6 +109,7 @@ pub unsafe fn HSD_JObjClearFlagsAll(jobj: *mut HSD_JObj, flags: u32) {
 
 /// `HSD_JObjGetDObj`: the DObj list head unless the union holds a particle list or a spline.
 pub unsafe fn HSD_JObjGetDObj(jobj: *mut HSD_JObj) -> *mut HSD_DObj {
+    melee_core::ct!("HSD_JObjGetDObj");
     if jobj.is_null() || (*jobj).flags & (JOBJ_PTCL | JOBJ_SPLINE) as u32 != 0 {
         return null_mut();
     }
@@ -121,6 +129,7 @@ unsafe fn UpdateParentTrspBits(mut jobj: *mut HSD_JObj, child: *mut HSD_JObj) {
 }
 
 pub unsafe fn HSD_JObjAddChild(jobj: *mut HSD_JObj, child: *mut HSD_JObj) {
+    melee_core::ct!("HSD_JObjAddChild");
     if jobj.is_null() || child.is_null() {
         return;
     }
@@ -144,6 +153,7 @@ pub unsafe fn HSD_JObjAddChild(jobj: *mut HSD_JObj, child: *mut HSD_JObj) {
 // ---- jobj.h static inlines with the dirty marking (HSD_JObjSetMtxDirty macro expanded) ----
 
 pub unsafe fn HSD_JObjSetRotationYWithMtxDirty(jobj: *mut HSD_JObj, y: f32) {
+    melee_core::ct!("HSD_JObjSetRotationYWithMtxDirty");
     assert!(!jobj.is_null(), "HSD_ASSERT(660, jobj)");
     assert!((*jobj).flags & JOBJ_USE_QUATERNION as u32 == 0, "HSD_ASSERT(661, !(jobj->flags & JOBJ_USE_QUATERNION))");
     (*jobj).rotate.y = y;
@@ -153,6 +163,7 @@ pub unsafe fn HSD_JObjSetRotationYWithMtxDirty(jobj: *mut HSD_JObj, y: f32) {
 }
 
 pub unsafe fn HSD_JObjSetScaleXWithMtxDirty(jobj: *mut HSD_JObj, x: f32) {
+    melee_core::ct!("HSD_JObjSetScaleXWithMtxDirty");
     assert!(!jobj.is_null(), "HSD_ASSERT(776, jobj)");
     (*jobj).scale.x = x;
     if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
@@ -161,6 +172,7 @@ pub unsafe fn HSD_JObjSetScaleXWithMtxDirty(jobj: *mut HSD_JObj, x: f32) {
 }
 
 pub unsafe fn HSD_JObjSetScaleYWithMtxDirty(jobj: *mut HSD_JObj, y: f32) {
+    melee_core::ct!("HSD_JObjSetScaleYWithMtxDirty");
     assert!(!jobj.is_null(), "HSD_ASSERT(791, jobj)");
     (*jobj).scale.y = y;
     if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
@@ -169,6 +181,7 @@ pub unsafe fn HSD_JObjSetScaleYWithMtxDirty(jobj: *mut HSD_JObj, y: f32) {
 }
 
 pub unsafe fn HSD_JObjSetScaleZWithMtxDirty(jobj: *mut HSD_JObj, z: f32) {
+    melee_core::ct!("HSD_JObjSetScaleZWithMtxDirty");
     assert!(!jobj.is_null(), "HSD_ASSERT(806, jobj)");
     (*jobj).scale.z = z;
     if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
@@ -177,6 +190,7 @@ pub unsafe fn HSD_JObjSetScaleZWithMtxDirty(jobj: *mut HSD_JObj, z: f32) {
 }
 
 pub unsafe fn HSD_JObjSetTranslateXWithMtxDirty(jobj: *mut HSD_JObj, x: f32) {
+    melee_core::ct!("HSD_JObjSetTranslateXWithMtxDirty");
     assert!(!jobj.is_null(), "HSD_ASSERT(932, jobj)");
     (*jobj).translate.x = x;
     if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
@@ -185,6 +199,7 @@ pub unsafe fn HSD_JObjSetTranslateXWithMtxDirty(jobj: *mut HSD_JObj, x: f32) {
 }
 
 pub unsafe fn HSD_JObjSetTranslateYWithMtxDirty(jobj: *mut HSD_JObj, y: f32) {
+    melee_core::ct!("HSD_JObjSetTranslateYWithMtxDirty");
     assert!(!jobj.is_null(), "HSD_ASSERT(947, jobj)");
     (*jobj).translate.y = y;
     if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
@@ -193,6 +208,7 @@ pub unsafe fn HSD_JObjSetTranslateYWithMtxDirty(jobj: *mut HSD_JObj, y: f32) {
 }
 
 pub unsafe fn HSD_JObjSetTranslateZWithMtxDirty(jobj: *mut HSD_JObj, z: f32) {
+    melee_core::ct!("HSD_JObjSetTranslateZWithMtxDirty");
     assert!(!jobj.is_null(), "HSD_ASSERT(962, jobj)");
     (*jobj).translate.z = z;
     if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {

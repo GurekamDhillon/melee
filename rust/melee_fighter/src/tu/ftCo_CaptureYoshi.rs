@@ -44,6 +44,7 @@ pub mod ext {
 
 /// `ftCo_800DB464` as the `accessory1_cb` value.
 pub unsafe extern "C" fn ftCo_800DB464_cb(g: G) {
+    melee_core::ct!("ftCo_800DB464_cb");
     ext::ftCo_800DB464(g)
 }
 
@@ -55,6 +56,7 @@ fn release_item_and_victim(g: G) {
 }
 
 pub fn ftCo_800BBB8C(g: G, attacker_gobj: G) {
+    melee_core::ct!("ftCo_800BBB8C");
     let attacker_fp = unsafe { (*attacker_gobj).user_data as *mut Fighter };
     release_item_and_victim(g);
     let f = fp(g);
@@ -72,10 +74,10 @@ pub fn ftCo_800BBB8C(g: G, attacker_gobj: G) {
     ext::ftCommon_8007E2FC(g);
 }
 
-pub fn ftCo_CaptureYoshi_Anim(_g: G) {}
+pub fn ftCo_CaptureYoshi_Anim(_g: G) { melee_core::ct!("ftCo_CaptureYoshi_Anim");}
 
-pub fn ftCo_CaptureYoshi_IASA(_g: G) {}
+pub fn ftCo_CaptureYoshi_IASA(_g: G) { melee_core::ct!("ftCo_CaptureYoshi_IASA");}
 
-pub fn ftCo_CaptureYoshi_Phys(_g: G) {}
+pub fn ftCo_CaptureYoshi_Phys(_g: G) { melee_core::ct!("ftCo_CaptureYoshi_Phys");}
 
-pub fn ftCo_CaptureYoshi_Coll(_g: G) {}
+pub fn ftCo_CaptureYoshi_Coll(_g: G) { melee_core::ct!("ftCo_CaptureYoshi_Coll");}

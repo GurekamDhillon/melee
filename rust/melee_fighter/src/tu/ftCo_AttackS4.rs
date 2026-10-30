@@ -86,6 +86,7 @@ fn sign(x: f32) -> f32 {
 
 /// static `checkLStick`: A with a dash-smash flick.
 pub fn checkLStick(fp: &Fighter) -> bool {
+    melee_core::ct!("checkLStick");
     let c = cd();
     fp.input.pressed_buttons & HSD_PAD_A as u32 != 0
         && crate::ftcommon::abs_c(fp.input.lstick[0].x) >= c.dash_smash_stick_threshold
@@ -94,6 +95,7 @@ pub fn checkLStick(fp: &Fighter) -> bool {
 
 /// `ftCo_AttackS4_CheckInput`.
 pub fn ftCo_AttackS4_CheckInput(g: G) -> bool {
+    melee_core::ct!("ftCo_AttackS4_CheckInput");
     let f = fp(g);
     let (sx, ang) = if checkLStick(f) {
         (sign(f.input.lstick[0].x), ext::ftCo_GetLStickAngle(f))
@@ -111,12 +113,14 @@ pub fn ftCo_AttackS4_CheckInput(g: G) -> bool {
 
 /// static `checkFacingDir`.
 pub fn checkFacingDir(fp: &Fighter) -> bool {
+    melee_core::ct!("checkFacingDir");
     fp.input.pressed_buttons & HSD_PAD_A as u32 != 0
         && fp.input.lstick[0].x * fp.facing_dir >= cd().dash_smash_stick_threshold
 }
 
 /// `ftCo_AttackS4_8008C114`.
 pub fn ftCo_AttackS4_8008C114(g: G) -> bool {
+    melee_core::ct!("ftCo_AttackS4_8008C114");
     let f = fp(g);
     let (sx, ang) = if checkFacingDir(f) {
         (f.facing_dir, ext::ftCo_GetLStickAngle(f))
@@ -134,6 +138,7 @@ pub fn ftCo_AttackS4_8008C114(g: G) -> bool {
 
 /// static `checkItemThrow`.
 pub fn checkItemThrow(g: G, sx: f32) -> bool {
+    melee_core::ct!("checkItemThrow");
     let f = fp(g);
     if !f.item_gobj.is_null() {
         if f.input.held_buttons[0] & HSD_PAD_LR != 0
@@ -164,12 +169,14 @@ pub fn checkItemThrow(g: G, sx: f32) -> bool {
 
 /// `Fighter_SetEffectHitlagCallbacks` (ft/inlines.h).
 pub fn Fighter_SetEffectHitlagCallbacks(f: &mut Fighter) {
+    melee_core::ct!("Fighter_SetEffectHitlagCallbacks");
     f.pre_hitlag_cb = ext::efLib_PauseAll_fn();
     f.post_hitlag_cb = ext::efLib_ResumeAll_fn();
 }
 
 /// `decideFighter` (TARGET_PC: an m-ex onFSmash hook replaces the per-kind switch).
 pub fn decideFighter(g: G, sx: f32, ang: f32) {
+    melee_core::ct!("decideFighter");
     let f = fp(g);
     f.facing_dir = sx;
     if ext::Mex_HasFSmashHook(f.kind as i32) {
@@ -197,6 +204,7 @@ fn has_anim(f: &mut Fighter, msid: ftCommon_MotionState) -> bool {
 
 /// static `doEnter`.
 pub fn doEnter(g: G, a: f32) {
+    melee_core::ct!("doEnter");
     let f = fp(g);
     let c = cd();
     let msid = if a > c.xB8_radians && has_anim(f, ftCo_MS_AttackS4S) {
@@ -218,6 +226,7 @@ pub fn doEnter(g: G, a: f32) {
 }
 
 pub fn ftCo_AttackS4_Anim(g: G) {
+    melee_core::ct!("ftCo_AttackS4_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ft_8008A2BC(g);
     }
@@ -225,6 +234,7 @@ pub fn ftCo_AttackS4_Anim(g: G) {
 
 /// `ftCo_AttackS4_IASA`: the RETURN_IF chain.
 pub fn ftCo_AttackS4_IASA(g: G) {
+    melee_core::ct!("ftCo_AttackS4_IASA");
     if fp(g).allow_interrupt() != 0
         && (ext::ftCo_SpecialS_CheckInput(g)
             || ext::ftCo_Attack100_CheckInput(g)
@@ -256,9 +266,11 @@ pub fn ftCo_AttackS4_IASA(g: G) {
 }
 
 pub fn ftCo_AttackS4_Phys(g: G) {
+    melee_core::ct!("ftCo_AttackS4_Phys");
     ext::ft_80084FA8(g);
 }
 
 pub fn ftCo_AttackS4_Coll(g: G) {
+    melee_core::ct!("ftCo_AttackS4_Coll");
     ext::ft_80084104(g);
 }

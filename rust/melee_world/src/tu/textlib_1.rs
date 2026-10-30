@@ -129,11 +129,13 @@ unsafe fn dispatch(x8: *mut un_80304138_objalloc_t_x8, code: u32) -> i32 {
 
 /// `int un_80302E00(x8*, int)`: runs the entry's callback, then the menu's.
 pub unsafe extern "C" fn un_80302E00(arg0: *mut un_80304138_objalloc_t_x8, arg1: i32) -> i32 {
+    melee_core::ct!("un_80302E00");
     dispatch(arg0, arg1 as u32)
 }
 
 /// `int un_80302EA4(x8*)`: the width in characters a menu needs (entries end at `x0 == 9`).
 pub unsafe extern "C" fn un_80302EA4(mut arg0: *mut un_80304138_objalloc_t_x8) -> i32 {
+    melee_core::ct!("un_80302EA4");
     let mut x = 1i32;
     let mut y = 1i32;
     let mut z = 1i32;
@@ -188,6 +190,7 @@ pub unsafe extern "C" fn un_80302EA4(mut arg0: *mut un_80304138_objalloc_t_x8) -
 /// `static inline GXColor adjust(GXColor)`: halves r, g and b.
 #[inline]
 pub fn adjust(mut c: _GXColor) -> _GXColor {
+    melee_core::ct!("adjust");
     c.r = (c.r as i32 * 50 / 100) as u8;
     c.g = (c.g as i32 * 50 / 100) as u8;
     c.b = (c.b as i32 * 50 / 100) as u8;
@@ -196,6 +199,7 @@ pub fn adjust(mut c: _GXColor) -> _GXColor {
 
 /// `static inline int un_80302FFC_maxlen(x8*)`
 pub unsafe fn un_80302FFC_maxlen(mut thing: *mut un_80304138_objalloc_t_x8) -> i32 {
+    melee_core::ct!("un_80302FFC_maxlen");
     let mut cursor_x = 1;
     while (*thing).x0 != 9 {
         if (*thing).x0 != 0 && (*thing).x0 != 1 {
@@ -211,6 +215,7 @@ pub unsafe fn un_80302FFC_maxlen(mut thing: *mut un_80304138_objalloc_t_x8) -> i
 
 /// `void un_80302FFC(objalloc_t*)`: draws the rows of a menu into its text box.
 pub unsafe extern "C" fn un_80302FFC(arg0: *mut un_80304138_objalloc_t) {
+    melee_core::ct!("un_80302FFC");
     let mut x8 = (*arg0).x8;
     let cursor_x = un_80302FFC_maxlen((*arg0).x8);
     let t = (*arg0).x4;
@@ -260,6 +265,7 @@ pub unsafe extern "C" fn un_80302FFC(arg0: *mut un_80304138_objalloc_t) {
 
 /// `bool un_80303444(objalloc_t*)`: steps the selected row's value up; true when it changed.
 pub unsafe extern "C" fn un_80303444(arg0: *mut un_80304138_objalloc_t) -> i32 {
+    melee_core::ct!("un_80303444");
     let mut ret = false;
     let e = (*arg0).x8.add((*arg0).x0 as usize);
     match (*e).x0 {
@@ -330,6 +336,7 @@ pub unsafe extern "C" fn un_80303444(arg0: *mut un_80304138_objalloc_t) -> i32 {
 
 /// `bool un_80303720(objalloc_t*)`: steps the selected row's value down; true when it changed.
 pub unsafe extern "C" fn un_80303720(arg0: *mut un_80304138_objalloc_t) -> i32 {
+    melee_core::ct!("un_80303720");
     let mut ret = false;
     let e = (*arg0).x8.add((*arg0).x0 as usize);
     match (*e).x0 {
@@ -401,6 +408,7 @@ pub unsafe extern "C" fn un_80303720(arg0: *mut un_80304138_objalloc_t) -> i32 {
 /// `int un_803039A4(u8 pad)`: stick direction bits (0x40000000 left, 0x80000000 right, 0x20000000
 /// down, 0x10000000 up) with a repeat delay held in `un_804D6E4C`.
 pub unsafe extern "C" fn un_803039A4(arg0: u8) -> i32 {
+    melee_core::ct!("un_803039A4");
     let pad = &HSD_PadCopyStatus_ref()[arg0 as usize];
     let mut ret: u32 = 0;
     let button: u8 = if HSD_PadCopyStatus_ref()[0].button as i32 & HSD_PAD_R != 0 { 1 } else { 8 };
@@ -438,6 +446,7 @@ unsafe fn HSD_PadCopyStatus_ref() -> &'static mut [HSD_PadStatus; 4] {
 /// `void un_80303AC4(objalloc_t*)`: reads the pad and moves the cursor / steps the value / fires
 /// the entry callbacks (6 start, 3 right, 2 left, 1 A, 0 B).
 pub unsafe extern "C" fn un_80303AC4(arg0: *mut un_80304138_objalloc_t) {
+    melee_core::ct!("un_80303AC4");
     let trigger = HSD_PadCopyStatus_ref()[0].trigger as i32;
     let stick = un_803039A4(0);
     let buttons = stick | trigger;
@@ -502,6 +511,7 @@ pub unsafe extern "C" fn un_80303AC4(arg0: *mut un_80304138_objalloc_t) {
 
 /// `void fn_80303EF4(HSD_GObj*)`: the menu proc, newest menu first.
 pub unsafe extern "C" fn fn_80303EF4(_gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80303EF4");
     let mut q = un_804D6E40;
     while !q.is_null() {
         if (*q).x1 & 0x20 != 0 {
@@ -534,6 +544,7 @@ pub unsafe extern "C" fn fn_80303EF4(_gobj: *mut HSD_GObj) {
 
 /// `static inline int un_80303FD4_first(x8*)`: index of the first selectable row.
 pub unsafe fn un_80303FD4_first(mut p: *mut un_80304138_objalloc_t_x8) -> i32 {
+    melee_core::ct!("un_80303FD4_first");
     let mut i = 0;
     loop {
         let v = (*p).x0;
@@ -551,6 +562,7 @@ pub unsafe fn un_80303FD4_first(mut p: *mut un_80304138_objalloc_t_x8) -> i32 {
 
 /// `static inline int un_80303FD4_count(x8*)`: number of rows.
 pub unsafe fn un_80303FD4_count(mut p: *mut un_80304138_objalloc_t_x8) -> i32 {
+    melee_core::ct!("un_80303FD4_count");
     let mut n = 0;
     while (*p).x0 != 9 {
         n += 1;
@@ -568,6 +580,7 @@ pub unsafe extern "C" fn un_80303FD4(
     arg4: i32,
     arg5: i32,
 ) {
+    melee_core::ct!("un_80303FD4");
     let mut count2 = 0i32;
     (*arg1).x8 = arg2;
     (*arg1).x1 = 0;
@@ -604,11 +617,13 @@ pub unsafe extern "C" fn un_80303FD4(
 
 /// `void un_80304138(void)`: initialises the menu allocator.
 pub unsafe extern "C" fn un_80304138() {
+    melee_core::ct!("un_80304138");
     ext::HSD_ObjAllocInit(&raw mut un_804A2688, core::mem::size_of::<un_80304138_objalloc_t>() as u32, 4);
 }
 
 /// `HSD_GObj* un_80304168(void*, int, int, int)`: a menu gobj under the DevText gobj's links.
 pub unsafe extern "C" fn un_80304168(arg0: *mut c_void, arg1: i32, arg2: i32, arg3: i32) -> *mut HSD_GObj {
+    melee_core::ct!("un_80304168");
     let gobj = ext::DevText_GetGObj();
     let mut gobj2: *mut HSD_GObj = null_mut();
     if !gobj.is_null() {
@@ -632,6 +647,7 @@ pub unsafe extern "C" fn un_80304210(
     arg3: i32,
     arg4: i32,
 ) -> *mut un_80304138_objalloc_t {
+    melee_core::ct!("un_80304210");
     let obj = ext::HSD_ObjAlloc(&raw mut un_804A2688) as *mut un_80304138_objalloc_t;
     if !obj.is_null() {
         let text = (*arg0).x4;
@@ -656,11 +672,13 @@ pub unsafe extern "C" fn un_80304210(
 
 /// `void un_80304334(objalloc_t*)`: marks the menu for removal.
 pub unsafe extern "C" fn un_80304334(arg0: *mut un_80304138_objalloc_t) {
+    melee_core::ct!("un_80304334");
     (*arg0).x1 |= 1 << 7;
 }
 
 /// `void un_80304344(objalloc_t*)`: closes the menu and every menu opened from it (callback 5 each).
 pub unsafe extern "C" fn un_80304344(mut arg0: *mut un_80304138_objalloc_t) {
+    melee_core::ct!("un_80304344");
     let next = (*arg0).next;
     if !next.is_null() {
         (*next).x1 &= !0x10;

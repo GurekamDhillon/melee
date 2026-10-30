@@ -47,6 +47,7 @@ pub mod ext {
 }
 
 pub fn ftCo_DownSpot_Enter(g: G) {
+    melee_core::ct!("ftCo_DownSpot_Enter");
     let r = ext::ftData_80085FD4(fp(g), ftCo_MS_DownSpotU);
     let msid = if unsafe { (*r).x14 } != 0 { ftCo_MS_DownSpotU } else { ftCo_MS_DownSpotD };
     ext::Fighter_ChangeMotionState(g, msid, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -56,17 +57,20 @@ pub fn ftCo_DownSpot_Enter(g: G) {
 }
 
 pub fn ftCo_DownSpot_Anim(g: G) {
+    melee_core::ct!("ftCo_DownSpot_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ftCo_80097E8C(g);
     }
 }
 
-pub fn ftCo_DownSpot_IASA(_g: G) {}
+pub fn ftCo_DownSpot_IASA(_g: G) { melee_core::ct!("ftCo_DownSpot_IASA");}
 
 pub fn ftCo_DownSpot_Phys(g: G) {
+    melee_core::ct!("ftCo_DownSpot_Phys");
     ext::ft_80084F3C(g);
 }
 
 pub fn ftCo_DownSpot_Coll(g: G) {
+    melee_core::ct!("ftCo_DownSpot_Coll");
     ext::ft_80083F88(g);
 }

@@ -99,17 +99,21 @@ unsafe fn joint_of(fp: *mut Fighter, part: Fighter_Part) -> *mut HSD_JObj {
 }
 
 pub unsafe extern "C" fn cb_ftMr_SpecialS_CreateCape(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftMr_SpecialS_CreateCape");
     ftMr_SpecialS_CreateCape(g);
 }
 pub unsafe extern "C" fn cb_ftMr_SpecialS_EnterHitlag(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftMr_SpecialS_EnterHitlag");
     ftMr_SpecialS_EnterHitlag(g);
 }
 pub unsafe extern "C" fn cb_ftMr_SpecialS_ExitHitlag(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftMr_SpecialS_ExitHitlag");
     ftMr_SpecialS_ExitHitlag(g);
 }
 
 /// `setCallbacks` (static).
 pub fn setCallbacks(fp: *mut Fighter) {
+    melee_core::ct!("setCallbacks");
     unsafe {
         if !(*fp).u.mr.x223C_capeGObj.is_null() {
             (*fp).death2_cb = Some(ext::ftMr_Init_OnTakeDamage);
@@ -122,6 +126,7 @@ pub fn setCallbacks(fp: *mut Fighter) {
 
 /// Accessory-4 callback: spawn the cape item on the script's command.
 pub fn ftMr_SpecialS_CreateCape(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialS_CreateCape");
     unsafe {
         let fp = fpp(gobj);
         let sa = da(fp);
@@ -140,6 +145,7 @@ pub fn ftMr_SpecialS_CreateCape(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMr_SpecialS_Reset(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialS_Reset");
     unsafe {
         let fp = fpp(gobj);
         ftMr_SpecialS_ExitHitlag(gobj);
@@ -150,6 +156,7 @@ pub fn ftMr_SpecialS_Reset(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMr_SpecialS_RemoveCape(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialS_RemoveCape");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.mr.x223C_capeGObj.is_null() {
@@ -160,6 +167,7 @@ pub fn ftMr_SpecialS_RemoveCape(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMr_SpecialS_EnterHitlag(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialS_EnterHitlag");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.mr.x223C_capeGObj.is_null() {
@@ -169,6 +177,7 @@ pub fn ftMr_SpecialS_EnterHitlag(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMr_SpecialS_ExitHitlag(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialS_ExitHitlag");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.mr.x223C_capeGObj.is_null() {
@@ -180,11 +189,13 @@ pub fn ftMr_SpecialS_ExitHitlag(gobj: *mut HSD_GObj) {
 /// True unless the fighter is in SpecialS / SpecialAirS (the pure check is
 /// `chars::ftMario::ftmariospecials`).
 pub fn ftMr_SpecialS_CheckItemCapeRemove(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftMr_SpecialS_CheckItemCapeRemove");
     unsafe { crate::chars::ftMario::ftmariospecials::ftMr_SpecialS_CheckItemCapeRemove(&*fpp(gobj)) }
 }
 
 /// `changeAction` (static).
 pub fn changeAction(gobj: *mut HSD_GObj, msid: i32) {
+    melee_core::ct!("changeAction");
     unsafe {
         st::Fighter_ChangeMotionState(gobj, msid, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
         st::ftAnim_8006EBA4(gobj);
@@ -198,6 +209,7 @@ pub fn changeAction(gobj: *mut HSD_GObj, msid: i32) {
 }
 
 pub fn ftMr_SpecialS_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialS_Enter");
     unsafe {
         (*fpp(gobj)).self_vel.y = 0.0;
         changeAction(gobj, ftMr_MS_SpecialS as i32);
@@ -205,6 +217,7 @@ pub fn ftMr_SpecialS_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMr_SpecialAirS_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialAirS_Enter");
     unsafe {
         let fp = fpp(gobj);
         let sa = da(fp);
@@ -213,12 +226,13 @@ pub fn ftMr_SpecialAirS_Enter(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftMr_SpecialS_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftMr_SpecialS_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMr_SpecialS_IASA");}
 
-pub fn ftMr_SpecialAirS_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftMr_SpecialAirS_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMr_SpecialAirS_IASA");}
 
 /// `reflect` (static): open and close the cape's reflect window from the script flag.
 pub fn reflect(gobj: *mut HSD_GObj) {
+    melee_core::ct!("reflect");
     unsafe {
         let fp = fpp(gobj);
         let sa = da(fp);
@@ -234,6 +248,7 @@ pub fn reflect(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMr_SpecialS_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialS_Phys");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).cmd_vars[0] == 1 {
@@ -249,6 +264,7 @@ pub fn ftMr_SpecialS_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMr_SpecialAirS_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialAirS_Phys");
     unsafe {
         let fp = fpp(gobj);
         let v0 = (*fp).cmd_vars[0];
@@ -277,12 +293,14 @@ pub fn ftMr_SpecialAirS_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMr_SpecialS_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialS_Coll");
     if st::ft_800827A0(gobj) == 0 {
         ftMr_SpecialS_GroundToAir(gobj);
     }
 }
 
 pub fn ftMr_SpecialAirS_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialAirS_Coll");
     if st::ft_80081D0C(gobj) != 0 {
         ftMr_SpecialAirS_AirToGround(gobj);
     }
@@ -291,6 +309,7 @@ pub fn ftMr_SpecialAirS_Coll(gobj: *mut HSD_GObj) {
 /// `collUpdateVars` (static): carry the reflect flag over a ground/air transition (the state
 /// change clears it) and re-arm the callbacks.
 pub fn collUpdateVars(gobj: *mut HSD_GObj) {
+    melee_core::ct!("collUpdateVars");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).mv.mr.SpecialS.reflecting != 0 {
@@ -302,6 +321,7 @@ pub fn collUpdateVars(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMr_SpecialS_GroundToAir(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialS_GroundToAir");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, ftMr_MS_SpecialAirS as i32, transition_flags);
@@ -313,6 +333,7 @@ pub fn ftMr_SpecialS_GroundToAir(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMr_SpecialAirS_AirToGround(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialAirS_AirToGround");
     unsafe {
         let fp = fpp(gobj);
         (*fp).u.mr.x2238_isCapeBoost = 0;

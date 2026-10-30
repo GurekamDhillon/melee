@@ -112,6 +112,7 @@ const anim_update_frame: i32 = 38;
 /// saturating ones (NaN -> 0, negative -> 0, > u32::MAX -> u32::MAX), which is Rust's `as`.
 #[inline(always)]
 pub fn fptoui_ppc(x: f32) -> u32 {
+    melee_core::ct!("fptoui_ppc");
     x as u32
 }
 
@@ -119,25 +120,30 @@ pub fn fptoui_ppc(x: f32) -> u32 {
 /// (u32)((f32)cmd_vars[1] + add)`.
 #[inline(always)]
 pub fn panic_release_damage(panic_damage: i32, mul: f32, add: f32) -> u32 {
+    melee_core::ct!("panic_release_damage");
     let v = fptoui_ppc(panic_damage as f32 * mul);
     fptoui_ppc(v as f32 + add)
 }
 
 /// `ftGw_SpecialLw_ItemPanicSetup` as a Fighter callback entry (accessory4_cb).
 pub unsafe extern "C" fn cb_ftGw_SpecialLw_ItemPanicSetup(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftGw_SpecialLw_ItemPanicSetup");
     ftGw_SpecialLw_ItemPanicSetup(g);
 }
 /// `ftGw_SpecialLw_ItemPanicEnterHitlag` as a Fighter callback entry (pre_hitlag_cb).
 pub unsafe extern "C" fn cb_ftGw_SpecialLw_ItemPanicEnterHitlag(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftGw_SpecialLw_ItemPanicEnterHitlag");
     ftGw_SpecialLw_ItemPanicEnterHitlag(g);
 }
 /// `ftGw_SpecialLw_ItemPanicExitHitlag` as a Fighter callback entry (post_hitlag_cb).
 pub unsafe extern "C" fn cb_ftGw_SpecialLw_ItemPanicExitHitlag(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftGw_SpecialLw_ItemPanicExitHitlag");
     ftGw_SpecialLw_ItemPanicExitHitlag(g);
 }
 
 /// Create the Oil Panic item.
 pub fn ftGw_SpecialLw_ItemPanicSetup(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialLw_ItemPanicSetup");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).u.gw.x2268_panicGObj.is_null() {
@@ -157,6 +163,7 @@ pub fn ftGw_SpecialLw_ItemPanicSetup(gobj: *mut HSD_GObj) {
 
 /// Set Oil Panic flags + clear pointers.
 pub fn ftGw_SpecialLw_ItemPanicSetFlag(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialLw_ItemPanicSetFlag");
     unsafe {
         let fp = fpp(gobj);
         ftGw_SpecialLw_ItemPanicExitHitlag(gobj);
@@ -168,6 +175,7 @@ pub fn ftGw_SpecialLw_ItemPanicSetFlag(gobj: *mut HSD_GObj) {
 
 /// Remove the Oil Panic item.
 pub fn ftGw_SpecialLw_ItemPanicRemove(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialLw_ItemPanicRemove");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.gw.x2268_panicGObj.is_null() {
@@ -179,6 +187,7 @@ pub fn ftGw_SpecialLw_ItemPanicRemove(gobj: *mut HSD_GObj) {
 
 /// Apply hitlag to the Oil Panic item.
 pub fn ftGw_SpecialLw_ItemPanicEnterHitlag(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialLw_ItemPanicEnterHitlag");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.gw.x2268_panicGObj.is_null() {
@@ -189,6 +198,7 @@ pub fn ftGw_SpecialLw_ItemPanicEnterHitlag(gobj: *mut HSD_GObj) {
 
 /// Remove hitlag for the Oil Panic item.
 pub fn ftGw_SpecialLw_ItemPanicExitHitlag(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialLw_ItemPanicExitHitlag");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.gw.x2268_panicGObj.is_null() {
@@ -199,6 +209,7 @@ pub fn ftGw_SpecialLw_ItemPanicExitHitlag(gobj: *mut HSD_GObj) {
 
 /// Update the Oil Panic charge level indicator models.
 pub fn ftGw_SpecialLw_UpdateBucketModel(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialLw_UpdateBucketModel");
     unsafe {
         let fp = fpp(gobj);
         st::ftParts_80074B0C(gobj, 5, 2);
@@ -217,6 +228,7 @@ pub fn ftGw_SpecialLw_UpdateBucketModel(gobj: *mut HSD_GObj) {
 
 /// Grounded Oil Panic Start Motion State handler.
 pub fn ftGw_SpecialLw_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialLw_Enter");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).u.gw.x2238_panicCharge >= ftGw_Panic_Full as i32 {
@@ -232,6 +244,7 @@ pub fn ftGw_SpecialLw_Enter(gobj: *mut HSD_GObj) {
 
 /// Aerial Oil Panic Start Motion State handler.
 pub fn ftGw_SpecialAirLw_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialAirLw_Enter");
     unsafe {
         let fp = fpp(gobj);
         let sa = (*fp).dat_attrs as *const ftGameWatchAttributes;
@@ -265,6 +278,7 @@ unsafe fn update_vars(gobj: *mut HSD_GObj) {
 
 /// Grounded Oil Panic Loop Animation callback.
 pub fn ftGw_SpecialLw_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialLw_Anim");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).cur_anim_frame == anim_update_frame as f32 && (*fp).mv.gw.SpecialLw.isRelease == 0 {
@@ -279,6 +293,7 @@ pub fn ftGw_SpecialLw_Anim(gobj: *mut HSD_GObj) {
 
 /// Aerial Oil Panic Loop Animation callback.
 pub fn ftGw_SpecialAirLw_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialAirLw_Anim");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).cur_anim_frame == anim_update_frame as f32 && (*fp).mv.gw.SpecialLw.isRelease == 0 {
@@ -319,16 +334,19 @@ unsafe fn iasa(gobj: *mut HSD_GObj) {
 
 /// Grounded Oil Panic Loop IASA callback.
 pub fn ftGw_SpecialLw_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialLw_IASA");
     unsafe { iasa(gobj) }
 }
 
 /// Aerial Oil Panic Loop IASA callback.
 pub fn ftGw_SpecialAirLw_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialAirLw_IASA");
     unsafe { iasa(gobj) }
 }
 
 /// Aerial Oil Panic Loop Physics callback.
 pub fn ftGw_SpecialAirLw_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialAirLw_Phys");
     unsafe {
         let fp = fpp(gobj);
         let sa = (*fp).dat_attrs as *const ftGameWatchAttributes;
@@ -340,6 +358,7 @@ pub fn ftGw_SpecialAirLw_Phys(gobj: *mut HSD_GObj) {
 
 /// Grounded Oil Panic Loop Collision callback.
 pub fn ftGw_SpecialLw_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialLw_Coll");
     if st::ft_800827A0(gobj) == 0 {
         ftGw_SpecialLw_GroundToAir(gobj);
     }
@@ -347,6 +366,7 @@ pub fn ftGw_SpecialLw_Coll(gobj: *mut HSD_GObj) {
 
 /// Aerial Oil Panic Loop Collision callback.
 pub fn ftGw_SpecialAirLw_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialAirLw_Coll");
     if st::ft_80081D0C(gobj) != 0 {
         ftGw_SpecialAirLw_AirToGround(gobj);
     }
@@ -370,6 +390,7 @@ unsafe fn update_vars_coll(gobj: *mut HSD_GObj) {
 
 /// Ground -> air Oil Panic Motion State handler.
 pub fn ftGw_SpecialLw_GroundToAir(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialLw_GroundToAir");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, ftGw_MS_SpecialAirLw as i32, transition_flags0);
@@ -379,6 +400,7 @@ pub fn ftGw_SpecialLw_GroundToAir(gobj: *mut HSD_GObj) {
 
 /// Air -> ground Oil Panic Motion State handler.
 pub fn ftGw_SpecialAirLw_AirToGround(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialAirLw_AirToGround");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, ftGw_MS_SpecialLw as i32, transition_flags0);
@@ -401,6 +423,7 @@ unsafe fn update_vars_action(gobj: *mut HSD_GObj) {
 
 /// Restart the grounded loop at `anim_frame` (one frame early, as the C).
 pub fn ftGw_SpecialLw_UpdateAction(gobj: *mut HSD_GObj, anim_frame: f32) {
+    melee_core::ct!("ftGw_SpecialLw_UpdateAction");
     unsafe {
         st::Fighter_ChangeMotionState(
             gobj,
@@ -418,6 +441,7 @@ pub fn ftGw_SpecialLw_UpdateAction(gobj: *mut HSD_GObj, anim_frame: f32) {
 
 /// Restart the aerial loop at `anim_frame` (one frame early, as the C).
 pub fn ftGw_SpecialAirLw_UpdateAction(gobj: *mut HSD_GObj, anim_frame: f32) {
+    melee_core::ct!("ftGw_SpecialAirLw_UpdateAction");
     unsafe {
         st::Fighter_ChangeMotionState(
             gobj,
@@ -435,6 +459,7 @@ pub fn ftGw_SpecialAirLw_UpdateAction(gobj: *mut HSD_GObj, anim_frame: f32) {
 
 /// Grounded Oil Panic Fill Animation callback.
 pub fn ftGw_SpecialLwCatch_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialLwCatch_Anim");
     unsafe {
         let fp = fpp(gobj);
         if st::ftAnim_IsFramesRemaining(gobj) != 0 {
@@ -460,6 +485,7 @@ pub fn ftGw_SpecialLwCatch_Anim(gobj: *mut HSD_GObj) {
 
 /// Aerial Oil Panic Fill Animation callback.
 pub fn ftGw_SpecialAirLwCatch_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialAirLwCatch_Anim");
     unsafe {
         let fp = fpp(gobj);
         if st::ftAnim_IsFramesRemaining(gobj) != 0 {
@@ -484,13 +510,14 @@ pub fn ftGw_SpecialAirLwCatch_Anim(gobj: *mut HSD_GObj) {
 }
 
 /// Grounded Oil Panic Fill IASA callback.
-pub fn ftGw_SpecialLwCatch_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftGw_SpecialLwCatch_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftGw_SpecialLwCatch_IASA");}
 
 /// Aerial Oil Panic Fill IASA callback.
-pub fn ftGw_SpecialAirLwCatch_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftGw_SpecialAirLwCatch_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftGw_SpecialAirLwCatch_IASA");}
 
 /// Check to enter grounded or aerial Oil Panic Fill (the absorb think).
 pub fn ftGw_SpecialLw_AbsorbThink_DecideAction(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialLw_AbsorbThink_DecideAction");
     unsafe {
         let fp = fpp(gobj);
         (*fp).u.gw.x2238_panicCharge += (*fp).AbsorbAttr.x1A48_hitsTaken;
@@ -523,6 +550,7 @@ unsafe fn shoot_apply_damage(gobj: *mut HSD_GObj) {
 
 /// Grounded Oil Panic Release Animation callback.
 pub fn ftGw_SpecialLwShoot_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialLwShoot_Anim");
     unsafe {
         shoot_apply_damage(gobj);
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -533,6 +561,7 @@ pub fn ftGw_SpecialLwShoot_Anim(gobj: *mut HSD_GObj) {
 
 /// Aerial Oil Panic Release Animation callback.
 pub fn ftGw_SpecialAirLwShoot_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialAirLwShoot_Anim");
     unsafe {
         shoot_apply_damage(gobj);
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -542,13 +571,14 @@ pub fn ftGw_SpecialAirLwShoot_Anim(gobj: *mut HSD_GObj) {
 }
 
 /// Grounded Oil Panic Release IASA callback.
-pub fn ftGw_SpecialLwShoot_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftGw_SpecialLwShoot_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftGw_SpecialLwShoot_IASA");}
 
 /// Aerial Oil Panic Release IASA callback.
-pub fn ftGw_SpecialAirLwShoot_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftGw_SpecialAirLwShoot_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftGw_SpecialAirLwShoot_IASA");}
 
 /// Grounded Oil Panic Release Collision callback.
 pub fn ftGw_SpecialLwShoot_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialLwShoot_Coll");
     if st::ft_80082708(gobj) == 0 {
         ftGw_SpecialLwShoot_GroundToAir(gobj);
     }
@@ -556,6 +586,7 @@ pub fn ftGw_SpecialLwShoot_Coll(gobj: *mut HSD_GObj) {
 
 /// Aerial Oil Panic Release Collision callback.
 pub fn ftGw_SpecialAirLwShoot_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialAirLwShoot_Coll");
     if st::ft_80081D0C(gobj) != 0 {
         ftGw_SpecialAirLwShoot_AirToGround(gobj);
     }
@@ -563,6 +594,7 @@ pub fn ftGw_SpecialAirLwShoot_Coll(gobj: *mut HSD_GObj) {
 
 /// Ground -> air Oil Panic Release Motion State handler.
 pub fn ftGw_SpecialLwShoot_GroundToAir(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialLwShoot_GroundToAir");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, ftGw_MS_SpecialAirLwShoot as i32, transition_flags0);
@@ -573,6 +605,7 @@ pub fn ftGw_SpecialLwShoot_GroundToAir(gobj: *mut HSD_GObj) {
 
 /// Air -> ground Oil Panic Release Motion State handler.
 pub fn ftGw_SpecialAirLwShoot_AirToGround(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialAirLwShoot_AirToGround");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, ftGw_MS_SpecialLwShoot as i32, transition_flags0);
@@ -598,6 +631,7 @@ unsafe fn release_oil_tail(gobj: *mut HSD_GObj) {
 
 /// Enter SpecialLwShoot and calculate the damage.
 pub fn ftGw_SpecialLwShoot_ReleaseOil(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialLwShoot_ReleaseOil");
     unsafe {
         st::Fighter_ChangeMotionState(gobj, ftGw_MS_SpecialLwShoot as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
         st::ftAnim_8006EBA4(gobj);
@@ -607,6 +641,7 @@ pub fn ftGw_SpecialLwShoot_ReleaseOil(gobj: *mut HSD_GObj) {
 
 /// Enter SpecialAirLwShoot and calculate the damage.
 pub fn ftGw_SpecialAirLwShoot_ReleaseOil(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialAirLwShoot_ReleaseOil");
     unsafe {
         st::Fighter_ChangeMotionState(gobj, ftGw_MS_SpecialAirLwShoot as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
         st::ftAnim_8006EBA4(gobj);

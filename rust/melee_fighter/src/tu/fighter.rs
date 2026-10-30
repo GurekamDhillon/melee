@@ -34,7 +34,7 @@ fn van(t: &[HSD_GObjEvent], kind: i32) -> usize { match t.get(kind as usize).cop
 fn script_value(fp: &Fighter, field: i32, base: f32) -> f32 { ext::ScriptGame_ModValue(fp.player_id as i32, field, base) }
 
 /// `ftUcf_FlickCounter(port)`: the UCF flick counter (src/fighter.rs).
-pub fn ftUcf_FlickCounter(port: i32) -> i32 { crate::fighter::ftucf_flick_counter(port) }
+pub fn ftUcf_FlickCounter(port: i32) -> i32 { melee_core::ct!("ftUcf_FlickCounter"); crate::fighter::ftucf_flick_counter(port) }
 
 const M_PI_2: f64 = core::f64::consts::FRAC_PI_2;
 
@@ -500,7 +500,7 @@ pub mod ext {
 }
 
 #[inline(always)]
-pub(crate) unsafe fn fpm<'a>(g: G) -> &'a mut Fighter { &mut *((*g).user_data as F) }
+pub(crate) unsafe fn fpm<'a>(g: G) -> &'a mut Fighter { melee_core::ct!("fpm"); &mut *((*g).user_data as F) }
 #[inline(always)]
 unsafe fn jobj_of(g: G) -> J { (*g).hsd_obj as J }
 struct Dirty;
@@ -521,6 +521,7 @@ macro_rules! bits {
 
 /// `Fighter_800679B0`: allocators, PlCo load, per-kind init hooks.
 pub unsafe fn Fighter_800679B0() {
+    melee_core::ct!("Fighter_800679B0");
     ext::HSD_ObjAllocInit(&mut fighter_alloc_data, core::mem::size_of::<Fighter>() as u32, 4);
     ext::HSD_ObjAllocInit(&mut fighter_dat_attrs_alloc_data, 0x424, 4);
     ext::ftData_MexInitKinds();
@@ -544,6 +545,7 @@ pub unsafe fn Fighter_800679B0() {
 
 /// `Fighter_FirstInitialize_80067A84` (TARGET_PC: FT_ANIM_BUF_SIZE figatree buffers).
 pub unsafe fn Fighter_FirstInitialize_80067A84() {
+    melee_core::ct!("Fighter_FirstInitialize_80067A84");
     Fighter_800679B0();
     ext::HSD_ObjAllocInit(&mut fighter_x59C_alloc_data, FT_ANIM_BUF_SIZE as u32, 0x20);
 }
@@ -552,6 +554,7 @@ static mut EXTEND_COPIES: [[*mut core::ffi::c_void; Ft_Kind_Max as usize]; 2] = 
 
 /// `ftCommonData_ExtendKindTable` (static, TARGET_PC): rebuild a PlCo kind table in port order.
 pub unsafe fn ftCommonData_ExtendKindTable(loaded: *mut *mut core::ffi::c_void, slot: usize) -> *mut *mut core::ffi::c_void {
+    melee_core::ct!("ftCommonData_ExtendKindTable");
     let out = &mut EXTEND_COPIES[slot];
     for i in 0..Ft_Kind_Max as i32 {
         let base = ext::Geno_DefineBaseKind(i);
@@ -583,6 +586,7 @@ static mut CPU_TABLES: [[*mut core::ffi::c_void; Ft_Kind_Max as usize]; 8] = [[c
 
 /// `ftCommonData_ExtendCpuTables` (static, TARGET_PC): m-ex kinds take their AI-like row.
 pub unsafe fn ftCommonData_ExtendCpuTables(src: *mut Fighter_804D64FC_t) -> *mut Fighter_804D64FC_t {
+    melee_core::ct!("ftCommonData_ExtendCpuTables");
     if src.is_null() {
         return core::ptr::null_mut();
     }
@@ -614,6 +618,7 @@ pub unsafe fn ftCommonData_ExtendCpuTables(src: *mut Fighter_804D64FC_t) -> *mut
 
 /// `Fighter_LoadCommonData`: PlCo.dat's 23 symbols (TARGET_PC: kind tables rebuilt).
 pub unsafe fn Fighter_LoadCommonData() {
+    melee_core::ct!("Fighter_LoadCommonData");
     let p = ext::lbArchive_LoadSymbols_PlCo();
     let d = |i: isize| *p.offset(i);
     h::P_FT_COMMON_DATA = d(0) as *const ftCommonData;
@@ -643,6 +648,7 @@ pub unsafe fn Fighter_LoadCommonData() {
 
 /// `Fighter_UpdateModelScale`.
 pub unsafe fn Fighter_UpdateModelScale(g: G) {
+    melee_core::ct!("Fighter_UpdateModelScale");
     let fp = fpm(g);
     let ms = ext::ftCommon_GetModelScale(fp);
     let s = Vec3 { x: if fp.x34_scale.z != 1.0 { fp.x34_scale.z } else { ms }, y: ms, z: ms };
@@ -652,6 +658,7 @@ pub unsafe fn Fighter_UpdateModelScale(g: G) {
 
 /// `Fighter_UnkInitReset_80067C98`: respawn reset of the per-life state.
 pub unsafe fn Fighter_UnkInitReset_80067C98(fp: &mut Fighter) {
+    melee_core::ct!("Fighter_UnkInitReset_80067C98");
     fp.x8_spawnNum = Fighter_NewSpawn_80068E40() as i32;
     let mut c = v0();
     let slot = fp.player_id as i32;
@@ -840,6 +847,7 @@ pub unsafe fn Fighter_UnkInitReset_80067C98(fp: &mut Fighter) {
 
 /// `Fighter_UnkProcessDeath_80068354`: (re)spawn setup.
 pub unsafe fn Fighter_UnkProcessDeath_80068354(g: G) {
+    melee_core::ct!("Fighter_UnkProcessDeath_80068354");
     let fp = fpm(g);
     Fighter_UnkInitReset_80067C98(fp);
     set_translate(jobj_of(g), &fp.cur_pos);
@@ -877,6 +885,7 @@ pub unsafe fn Fighter_UnkProcessDeath_80068354(g: G) {
 
 /// `gw_toon_unlit_tree` (static, TARGET_PC): constant-colour render mode on every material.
 pub unsafe fn gw_toon_unlit_tree(mut j: J) -> i32 {
+    melee_core::ct!("gw_toon_unlit_tree");
     let mut n = 0;
     while !j.is_null() {
         if (*j).flags & (JOBJ_PTCL | JOBJ_SPLINE) as u32 == 0 {
@@ -898,6 +907,7 @@ pub unsafe fn gw_toon_unlit_tree(mut j: J) -> i32 {
 
 /// `Fighter_UnkUpdateCostumeJoint_800686E4`.
 pub unsafe fn Fighter_UnkUpdateCostumeJoint_800686E4(g: G) {
+    melee_core::ct!("Fighter_UnkUpdateCostumeJoint_800686E4");
     let fp = fpm(g);
     fp.x108_costume_joint = ext::costume_joint(fp.kind as i32, fp.x619_costume_id);
     ext::ftPartsPObjSetDefaultClass();
@@ -913,6 +923,7 @@ pub unsafe fn Fighter_UnkUpdateCostumeJoint_800686E4(g: G) {
 
 /// `Fighter_UnkUpdateVecFromBones_8006876C`.
 pub unsafe fn Fighter_UnkUpdateVecFromBones_8006876C(fp: &mut Fighter) {
+    melee_core::ct!("Fighter_UnkUpdateVecFromBones_8006876C");
     let j = (*fp.parts.offset(ext::ftParts_GetBoneIndex(fp, 2) as isize)).joint;
     let mut v = v0();
     let mut v2 = v0();
@@ -951,6 +962,7 @@ fn reset_input_timers(fp: &mut Fighter) {
 
 /// `Fighter_ResetInputData_80068854`.
 pub unsafe fn Fighter_ResetInputData_80068854(g: G) {
+    melee_core::ct!("Fighter_ResetInputData_80068854");
     let fp = fpm(g);
     for i in 0..2 {
         fp.input.lstick[i].x = 0.0;
@@ -966,10 +978,11 @@ pub unsafe fn Fighter_ResetInputData_80068854(g: G) {
 }
 
 /// `Fighter_UnkInitLoad_80068914_Inner1` (static): same stores as 80068854.
-pub unsafe fn Fighter_UnkInitLoad_80068914_Inner1(g: G) { Fighter_ResetInputData_80068854(g) }
+pub unsafe fn Fighter_UnkInitLoad_80068914_Inner1(g: G) { melee_core::ct!("Fighter_UnkInitLoad_80068914_Inner1"); Fighter_ResetInputData_80068854(g) }
 
 /// `Fighter_UnkInitLoad_80068914`: first-time fighter field setup from the alloc info.
 pub unsafe fn Fighter_UnkInitLoad_80068914(g: G, arg: &plAllocInfo) {
+    melee_core::ct!("Fighter_UnkInitLoad_80068914");
     let fp = fpm(g);
     fp.kind = arg.internal_id;
     fp.player_id = arg.slot;
@@ -1042,12 +1055,14 @@ pub unsafe fn Fighter_UnkInitLoad_80068914(g: G, arg: &plAllocInfo) {
 
 /// `Fighter_80068E64`: Flat Zone flattens the fighter.
 pub unsafe fn Fighter_80068E64(g: G) {
+    melee_core::ct!("Fighter_80068E64");
     let fp = fpm(g);
     fp.x34_scale.z = if ext::stage_grkind() == Gr_Kind_Flatzone as i32 { cd().x7E4_scaleZ } else { 1.0 };
 }
 
 /// `Fighter_Create_Inline2` (static): cache the common figatrees.
 pub unsafe fn Fighter_Create_Inline2(g: G) {
+    melee_core::ct!("Fighter_Create_Inline2");
     let fp = fpm(g);
     if fp.no_normal_motion() == 0 {
         fp.x2EC = ext::lbAnim_8001E8F8(ext::ftData_80085E50(fp, 0x23));
@@ -1078,6 +1093,7 @@ fn proc_8006DA4C(g: G) { unsafe { Fighter_8006DA4C(g) } }
 
 /// `Fighter_Create`: allocate, load and register a fighter GObj with its 15 procs.
 pub unsafe fn Fighter_Create(input: &plAllocInfo) -> G {
+    melee_core::ct!("Fighter_Create");
     ext::Geno_AnimBankBeforeSpawn();
     let g = ext::GObj_Create(HSD_GOBJ_CLASS_FIGHTER as u16, 8, 0);
     ext::GObj_SetupGXLink(g, Some(crate::tu::ftdrawcommon::ftDrawCommon_80080E18), 5, 0);
@@ -1139,6 +1155,7 @@ static mut PC_TRACE_ENABLED: i32 = -1;
 
 /// `ft_PcTraceMotion` (static, TARGET_PC): MELEE_LOG_MOTION line per state change.
 pub unsafe fn ft_PcTraceMotion(g: G, msid: i32) {
+    melee_core::ct!("ft_PcTraceMotion");
     if PC_TRACE_ENABLED < 0 {
         PC_TRACE_ENABLED = ext::PcTraceMotionEnabled();
     }
@@ -1159,6 +1176,7 @@ fn blend_arg(anim_blend: f32, row: u8) -> f32 {
 
 /// `Fighter_ChangeMotionState`: enter motion state `msid`.
 pub unsafe fn Fighter_ChangeMotionState(g: G, msid: i32, mut flags: u32, anim_start: f32, mut anim_speed: f32, anim_blend: f32, mut arg3: G) {
+    melee_core::ct!("Fighter_ChangeMotionState");
     use ext as e;
     let jobj = jobj_of(g);
     let fp = fpm(g);
@@ -1518,6 +1536,7 @@ pub unsafe fn Fighter_ChangeMotionState(g: G, msid: i32, mut flags: u32, anim_st
 
 /// `Fighter_8006A1BC` (proc 0): hitlag / SDI timers and mushroom queues.
 pub unsafe fn Fighter_8006A1BC(g: G) {
+    melee_core::ct!("Fighter_8006A1BC");
     use ext as e;
     let fp = fpm(g);
     if fp.x221F_b3() != 0 {
@@ -1566,6 +1585,7 @@ pub unsafe fn Fighter_8006A1BC(g: G) {
 
 /// `ftSlippi_IsOffscreen` (static, TARGET_PC).
 pub unsafe fn ftSlippi_IsOffscreen(fp: &Fighter) -> bool {
+    melee_core::ct!("ftSlippi_IsOffscreen");
     use ext as e;
     if e::Slippi_Codes() != 2 && e::Camera_ScriptState() == 0 {
         return e::ifMagnify_802FC998(fp.player_id as i32);
@@ -1581,6 +1601,7 @@ pub unsafe fn ftSlippi_IsOffscreen(fp: &Fighter) -> bool {
 
 /// `Fighter_8006A360` (proc 1): per-frame timers, animation advance, anim callback.
 pub unsafe fn Fighter_8006A360(g: G) {
+    melee_core::ct!("Fighter_8006A360");
     use ext as e;
     let fp = fpm(g);
     if fp.x221F_b3() != 0 {
@@ -1782,6 +1803,7 @@ pub unsafe fn Fighter_8006A360(g: G) {
 
 /// `Fighter_8006ABA0` (proc 2): CPU think (TARGET_PC: LAB virtual pad first).
 pub unsafe fn Fighter_8006ABA0(g: G) {
+    melee_core::ct!("Fighter_8006ABA0");
     use ext as e;
     let fp = fpm(g);
     e::ScriptGame_FighterBenchTick(fp);
@@ -1796,6 +1818,7 @@ pub unsafe fn Fighter_8006ABA0(g: G) {
 
 /// `Fighter_UnkIncrementCounters_8006ABEC`: input-age counters (jump, specials...).
 pub unsafe fn Fighter_UnkIncrementCounters_8006ABEC(g: G) {
+    melee_core::ct!("Fighter_UnkIncrementCounters_8006ABEC");
     use ext as e;
     let fp = fpm(g);
     if e::ftCo_Jump_GetInput(g) {
@@ -1829,6 +1852,7 @@ pub unsafe fn Fighter_UnkIncrementCounters_8006ABEC(g: G) {
 
 /// `Fighter_Spaghetti_8006AD10_Inner1` (static): pressed / released edges.
 pub fn Fighter_Spaghetti_8006AD10_Inner1(fp: &mut Fighter) {
+    melee_core::ct!("Fighter_Spaghetti_8006AD10_Inner1");
     let h0 = fp.input.held_buttons[0];
     let h1 = fp.input.held_buttons[1];
     let pressed = h0 & (h1 ^ h0);
@@ -1844,6 +1868,7 @@ pub fn Fighter_Spaghetti_8006AD10_Inner1(fp: &mut Fighter) {
 
 /// `ftUcf_Cardinal` (static, TARGET_PC): UCF 0.84 cardinal snap of one stick.
 pub fn ftUcf_Cardinal(x: i32, y: i32, out: &mut Vec2) {
+    melee_core::ct!("ftUcf_Cardinal");
     if x >= 80 || x <= -80 {
         if y > 6 || y < -6 {
             return;
@@ -1909,6 +1934,7 @@ static mut CSTICK_COMBO_WAS_HELD: bool = false;
 
 /// `Fighter_Spaghetti_8006AD10` (proc 3): read this frame's input into the fighter.
 pub unsafe fn Fighter_Spaghetti_8006AD10(g: G) {
+    melee_core::ct!("Fighter_Spaghetti_8006AD10");
     use ext as e;
     let fp = fpm(g);
     if fp.x221F_b3() != 0 {
@@ -2130,6 +2156,7 @@ pub unsafe fn Fighter_Spaghetti_8006AD10(g: G) {
 
 /// `Fighter_procUpdate` (proc 4): physics integration.
 pub unsafe fn Fighter_procUpdate(g: G) {
+    melee_core::ct!("Fighter_procUpdate");
     use ext as e;
     use melee_runtime::gekko::{cosf, sinf, sqrtf};
     use melee_runtime::lbtrigf::atan2f;
@@ -2288,6 +2315,7 @@ pub unsafe fn Fighter_procUpdate(g: G) {
 
 /// `Fighter_UnkApplyTransformation_8006C0F0`: Flat Zone's squashed model matrix.
 pub unsafe fn Fighter_UnkApplyTransformation_8006C0F0(g: G) {
+    melee_core::ct!("Fighter_UnkApplyTransformation_8006C0F0");
     use ext as e;
     let fp = fpm(g);
     if fp.x34_scale.z != 1.0 {
@@ -2311,6 +2339,7 @@ pub unsafe fn Fighter_UnkApplyTransformation_8006C0F0(g: G) {
 
 /// `ftReplay_TraceFighter` (static, TARGET_PC).
 pub unsafe fn ftReplay_TraceFighter(fp: &Fighter) {
+    melee_core::ct!("ftReplay_TraceFighter");
     use ext as e;
     if e::Replay_Tracing() != 0 {
         e::Replay_TraceFighter(fp.player_id as i32, fp.is_sub_fighter() as i32, fp.kind as i32, fp.motion_id as i32,
@@ -2321,6 +2350,7 @@ pub unsafe fn ftReplay_TraceFighter(fp: &Fighter) {
 
 /// `Fighter_procMap` (proc 6): map collision callback (+ TARGET_PC curated SyncTest record).
 pub unsafe fn Fighter_procMap(g: G) {
+    melee_core::ct!("Fighter_procMap");
     use ext as e;
     let fp = fpm(g);
     if fp.motion_id == ftCo_MS_Wait as _ && ext::ScriptGame_LabPreviewRow(fp, ftCo_MS_Wait as i32) >= 0 {
@@ -2388,6 +2418,7 @@ pub unsafe fn Fighter_procMap(g: G) {
 
 /// The fighter's curated SyncTest record words (`Fighter_procMap`, MELEE_SYNCTEST_CURATED).
 pub unsafe fn curated_words(fp: &Fighter) -> std::vec::Vec<u32> {
+    melee_core::ct!("curated_words");
     let mut w = vec![
         fp.player_id as u32,
         fp.is_sub_fighter() as u32,
@@ -2413,6 +2444,7 @@ pub unsafe fn curated_words(fp: &Fighter) -> std::vec::Vec<u32> {
 
 /// `Fighter_8006C5F4` (proc 7).
 pub unsafe fn Fighter_8006C5F4(g: G) {
+    melee_core::ct!("Fighter_8006C5F4");
     if fpm(g).x221F_b3() == 0 {
         ext::ft_80089B08(g);
     }
@@ -2420,6 +2452,7 @@ pub unsafe fn Fighter_8006C5F4(g: G) {
 
 /// `Fighter_CallAcessoryCallbacks_8006C624` (proc 8).
 pub unsafe fn Fighter_CallAcessoryCallbacks_8006C624(g: G) {
+    melee_core::ct!("Fighter_CallAcessoryCallbacks_8006C624");
     let fp = fpm(g);
     if fp.x221F_b3() != 0 {
         return;
@@ -2442,6 +2475,7 @@ pub unsafe fn Fighter_CallAcessoryCallbacks_8006C624(g: G) {
 
 /// `Fighter_8006C80C` (proc 9): hitbox / hurtbox world update.
 pub unsafe fn Fighter_8006C80C(g: G) {
+    melee_core::ct!("Fighter_8006C80C");
     use ext as e;
     let fp = fpm(g);
     if fp.x221F_b3() != 0 {
@@ -2469,6 +2503,7 @@ pub unsafe fn Fighter_8006C80C(g: G) {
 
 /// `Fighter_UnkProcessGrab_8006CA5C` (proc 0xC).
 pub unsafe fn Fighter_UnkProcessGrab_8006CA5C(g: G) {
+    melee_core::ct!("Fighter_UnkProcessGrab_8006CA5C");
     use ext as e;
     let fp = fpm(g);
     if fp.x221F_b3() != 0 || e::gm_8016B1C4() {
@@ -2503,6 +2538,7 @@ pub unsafe fn Fighter_UnkProcessGrab_8006CA5C(g: G) {
 
 /// `Fighter_8006CB94` (proc 0xD): hit detection.
 pub unsafe fn Fighter_8006CB94(g: G) {
+    melee_core::ct!("Fighter_8006CB94");
     use ext as e;
     let fp = fpm(g);
     if fp.x221F_b3() == 0 && fp.x2219_b1() == 0 {
@@ -2523,6 +2559,7 @@ pub unsafe fn Fighter_8006CB94(g: G) {
 
 /// `Fighter_UnkTakeDamage_8006CC30` (TARGET_PC: script hit-rule percent commit first).
 pub unsafe fn Fighter_UnkTakeDamage_8006CC30(fp: &mut Fighter, mut d: f32) {
+    melee_core::ct!("Fighter_UnkTakeDamage_8006CC30");
     d = ext::ScriptGame_HitRulePercentCommit(fp, d);
     Fighter_TakeDamage_8006CC7C(fp, d);
     ext::ftCommon_8007EA90(fp, melee_runtime::cabi::f2i32(d as f64));
@@ -2530,6 +2567,7 @@ pub unsafe fn Fighter_UnkTakeDamage_8006CC30(fp: &mut Fighter, mut d: f32) {
 
 /// `Fighter_TakeDamage_8006CC7C` (TARGET_PC: script damage overlay).
 pub unsafe fn Fighter_TakeDamage_8006CC7C(fp: &mut Fighter, mut d: f32) {
+    melee_core::ct!("Fighter_TakeDamage_8006CC7C");
     use ext as e;
     d = e::ScriptGame_ModDamage(fp.player_id as i32, 1, d);
     if fp.x2226_b4() == 0 || fp.x2226_b3() != 0 {
@@ -2551,6 +2589,7 @@ pub unsafe fn Fighter_TakeDamage_8006CC7C(fp: &mut Fighter, mut d: f32) {
 
 /// `Fighter_8006CDA4`: drop held items on a strong hit.
 pub unsafe fn Fighter_8006CDA4(fp: &mut Fighter, arg1: i32) {
+    melee_core::ct!("Fighter_8006CDA4");
     use ext as e;
     let hold = !fp.item_gobj.is_null() && !e::itIsHeavy(fp.item_gobj);
     let tb = !(fp.x2220_b3() != 0 || fp.x2220_b4() != 0 || e::ftCo_8008E984(fp));
@@ -2576,6 +2615,7 @@ pub unsafe fn Fighter_8006CDA4(fp: &mut Fighter, arg1: i32) {
 
 /// `Fighter_8006CF5C`: queue a percent heal.
 pub unsafe fn Fighter_8006CF5C(fp: &mut Fighter, arg1: i32) {
+    melee_core::ct!("Fighter_8006CF5C");
     if fp.x2224_b2() == 0 {
         fp.dmg.x18F0 += arg1;
         ext::ftCo_800BFFD0(fp, 8, 0);
@@ -2585,6 +2625,7 @@ pub unsafe fn Fighter_8006CF5C(fp: &mut Fighter, arg1: i32) {
 
 /// `Fighter_8006CFE0`.
 pub unsafe fn Fighter_8006CFE0(g: G) {
+    melee_core::ct!("Fighter_8006CFE0");
     let fp = fpm(g);
     if fp.x2219_b7() != 0 {
         if fp.allow_sdi() == 0 && fp.dmg.x1954 == 0.0 {
@@ -2596,6 +2637,7 @@ pub unsafe fn Fighter_8006CFE0(g: G) {
 
 /// `Fighter_UnkRecursiveFunc_8006D044`: enter hitlag, chained through `x1A5C`.
 pub unsafe fn Fighter_UnkRecursiveFunc_8006D044(g: G) {
+    melee_core::ct!("Fighter_UnkRecursiveFunc_8006D044");
     let fp = fpm(g);
     if let Some(cb) = fp.pre_hitlag_cb {
         cb(g);
@@ -2613,6 +2655,7 @@ pub unsafe fn Fighter_UnkRecursiveFunc_8006D044(g: G) {
 
 /// `Fighter_8006D10C_Inline2` (static).
 pub unsafe fn Fighter_8006D10C_Inline2(fp: &mut Fighter) {
+    melee_core::ct!("Fighter_8006D10C_Inline2");
     let g = fp.x1A5C;
     if !g.is_null() && fp.x2219_b7() == 0 {
         Fighter_8006CFE0(g);
@@ -2621,6 +2664,7 @@ pub unsafe fn Fighter_8006D10C_Inline2(fp: &mut Fighter) {
 
 /// `Fighter_8006D10C_Inline1` (static).
 pub unsafe fn Fighter_8006D10C_Inline1(g: G) {
+    melee_core::ct!("Fighter_8006D10C_Inline1");
     let fp = fpm(g);
     if fp.x2219_b7() != 0 {
         if fp.allow_sdi() == 0 && fp.dmg.x1954 == 0.0 {
@@ -2639,6 +2683,7 @@ pub unsafe fn Fighter_8006D10C_Inline1(g: G) {
 
 /// `Fighter_8006D10C`: leave hitlag.
 pub unsafe fn Fighter_8006D10C(g: G) {
+    melee_core::ct!("Fighter_8006D10C");
     let fp = fpm(g);
     if let Some(cb) = fp.post_hitlag_cb {
         cb(g);
@@ -2654,12 +2699,14 @@ pub unsafe fn Fighter_8006D10C(g: G) {
 
 /// The shield-hold drain of `Fighter_ProcessHit_8006D1EC` (two fused sites).
 pub fn shield_drain(x284: f32, x288: f32, x2DC: f32, x2E0: f32, dmg_taken: i32, lightshield: f32) -> f32 {
+    melee_core::ct!("shield_drain");
     let inner = fmadds(lightshield, x2E0 - x2DC, x2DC); // fused
     fmadds(x284, dmg_taken as f32 * (1.0f32 - inner), x288) // fused
 }
 
 /// `Fighter_ProcessHit_8006D1EC` (proc 0xE): apply this frame's hit results.
 pub unsafe fn Fighter_ProcessHit_8006D1EC(g: G) {
+    melee_core::ct!("Fighter_ProcessHit_8006D1EC");
     use ext as e;
     let fp = fpm(g);
     let msid = fp.motion_id as i32;
@@ -2865,6 +2912,7 @@ pub unsafe fn Fighter_ProcessHit_8006D1EC(g: G) {
 
 /// `Fighter_8006D9AC` (proc 0x10).
 pub unsafe fn Fighter_8006D9AC(g: G) {
+    melee_core::ct!("Fighter_8006D9AC");
     let fp = fpm(g);
     if fp.x221F_b3() != 0 || fp.x2219_b5() != 0 {
         return;
@@ -2874,6 +2922,7 @@ pub unsafe fn Fighter_8006D9AC(g: G) {
 
 /// `Fighter_UnkCallCameraCallback_8006D9EC` (proc 0x12).
 pub unsafe fn Fighter_UnkCallCameraCallback_8006D9EC(g: G) {
+    melee_core::ct!("Fighter_UnkCallCameraCallback_8006D9EC");
     let fp = fpm(g);
     if fp.x221F_b3() == 0 {
         ext::ftCommon_8008021C(g);
@@ -2888,6 +2937,7 @@ pub unsafe fn Fighter_UnkCallCameraCallback_8006D9EC(g: G) {
 
 /// `Fighter_8006DA4C` (proc 0x16): publish position / facing to the player block.
 pub unsafe fn Fighter_8006DA4C(g: G) {
+    melee_core::ct!("Fighter_8006DA4C");
     use ext as e;
     let fp = fpm(g);
     if fp.x221F_b3() == 0 {
@@ -2900,6 +2950,7 @@ pub unsafe fn Fighter_8006DA4C(g: G) {
 
 /// `Fighter_Unload_8006DABC` (GObj user-data free).
 pub unsafe fn Fighter_Unload_8006DABC(user_data: *mut core::ffi::c_void) {
+    melee_core::ct!("Fighter_Unload_8006DABC");
     use ext as e;
     let fp = &mut *(user_data as F);
     let kind = fp.kind as i32;
@@ -2969,6 +3020,7 @@ unsafe fn ftRb_GenoDefineWord(fp: F) -> u32 {
 
 /// `RB_HashSetLegacy`.
 pub unsafe fn RB_HashSetLegacy(on: i32) {
+    melee_core::ct!("RB_HashSetLegacy");
     ftRb_hash_legacy = if on < 0 { -1 } else { (on != 0) as i32 };
 }
 
@@ -2981,6 +3033,7 @@ unsafe fn ftRb_HashLegacy() -> bool {
 
 /// `RB_FighterHash`: the widened per-fighter words of the curated gameplay hash.
 pub unsafe fn RB_FighterHash(h: u32, fp: &mut Fighter, slot: i32) -> u32 {
+    melee_core::ct!("RB_FighterHash");
     let intr = ext::ScriptGame_IntrWinHashWord(if slot < 12 { (slot >> 1) + 1 + 6 * (slot & 1) } else { 0 });
     let gw = ftRb_GenoDefineWord(fp);
     let legacy = ftRb_HashLegacy();
@@ -2993,6 +3046,7 @@ pub unsafe fn RB_FighterHash(h: u32, fp: &mut Fighter, slot: i32) -> u32 {
 /// `ScriptGame_IntrWinHashWord(..)`, `gw` = the (already tagged) Geno define word, `stocks` =
 /// `Player_GetStocks`, `cpu` = `ftCo_IsCpuControlled` (the last two only read when not `legacy`).
 pub unsafe fn rb_fighter_hash_core(mut h: u32, fp: &Fighter, slot: i32, intr: u32, gw: u32, legacy: bool, stocks: i32, cpu: bool) -> u32 {
+    melee_core::ct!("rb_fighter_hash_core");
     macro_rules! mix { ($v:expr, $n:expr) => { h = ftRb_TraceMix(h, $v, $n) }; }
     ftRb_Region(1, slot);
     mix!((slot as u32).wrapping_add(0x100), "slot");
@@ -3066,6 +3120,7 @@ unsafe fn item_gobjs() -> impl Iterator<Item = G> {
 
 /// `RB_ItemHash`: sum of per-item words (order independent); the count goes to `count_out`.
 pub unsafe fn RB_ItemHash(count_out: Option<&mut u32>) -> u32 {
+    melee_core::ct!("RB_ItemHash");
     let (mut sum, mut n) = (0u32, 0u32);
     for g in item_gobjs() {
         let ip = (*g).user_data as *mut Item;
@@ -3087,6 +3142,7 @@ pub unsafe fn RB_ItemHash(count_out: Option<&mut u32>) -> u32 {
 
 /// `Snap_CuratedItems`.
 pub unsafe fn Snap_CuratedItems() {
+    melee_core::ct!("Snap_CuratedItems");
     static mut SEEN_MAX: u32 = 0;
     static mut SEEN_FRAMES: u32 = 0;
     let mut n = 0u32;
@@ -3140,11 +3196,13 @@ unsafe fn ftRb_GameHash(seed: u32) -> u32 {
 
 /// `RB_GameHash`.
 pub unsafe fn RB_GameHash() -> u32 {
+    melee_core::ct!("RB_GameHash");
     ftRb_GameHash(*ext::HSD_RandSeedPtr())
 }
 
 /// `RB_GameHashForFrame`.
 pub unsafe fn RB_GameHashForFrame(frame: i32) -> u32 {
+    melee_core::ct!("RB_GameHashForFrame");
     let arrived = *ext::HSD_RandSeedPtr();
     let effective = ext::Replay_ChecksumSeed(arrived, frame);
     ext::RbHashSeed(arrived, effective);
@@ -3156,11 +3214,13 @@ pub unsafe fn RB_GameHashForFrame(frame: i32) -> u32 {
 
 /// `RB_NeutralHashWord`.
 pub unsafe fn RB_NeutralHashWord(i: i32) -> u32 {
+    melee_core::ct!("RB_NeutralHashWord");
     if (0..16).contains(&i) { nh_out[i as usize] } else { 0 }
 }
 
 /// `RB_NeutralHash` (NHV1).
 pub unsafe fn RB_NeutralHash() -> u32 {
+    melee_core::ct!("RB_NeutralHash");
     use melee_types::neutral_hash::{nh_fighter, nh_item, nh_mix};
     nh_out = [0; 16];
     nh_out[1] = *ext::HSD_RandSeedPtr();
@@ -3196,6 +3256,7 @@ pub unsafe fn RB_NeutralHash() -> u32 {
 
 /// `RB_Perturb`: negative control, perturbs one hashed value of the first fighter (or item).
 pub unsafe fn RB_Perturb(code: i32) {
+    melee_core::ct!("RB_Perturb");
     if code == 11 {
         let g = h::plink_head(HSD_GOBJ_PLINK_ITEM);
         if !g.is_null() && !(*g).user_data.is_null() {
@@ -3252,6 +3313,7 @@ unsafe fn walk_joints(root: J, mut f: impl FnMut(J, i32)) {
 
 /// `Fighter_BenchSetupMatrices`.
 pub unsafe fn Fighter_BenchSetupMatrices() {
+    melee_core::ct!("Fighter_BenchSetupMatrices");
     for i in 0..6 {
         for j in 0..2 {
             let g = ext::Player_GetEntityAtIndex(i, j);
@@ -3268,6 +3330,7 @@ unsafe fn ftRb_XTree(tagbase: i32, g: G) {
 
 /// `RB_XRegions`.
 pub unsafe fn RB_XRegions() {
+    melee_core::ct!("RB_XRegions");
     let mut n = 0;
     for i in 0..6 {
         for j in 0..2 {
@@ -3316,6 +3379,7 @@ pub struct TechAiObservation {
 
 /// `tech_ai_policy_init` (technical_ai_policy.h).
 pub fn tech_ai_policy_init(s: &mut TechAiPolicy, skill: i32, seed: u32) {
+    melee_core::ct!("tech_ai_policy_init");
     *s = unsafe { core::mem::zeroed() };
     s.skill = skill;
     s.seed = seed;
@@ -3324,6 +3388,7 @@ pub fn tech_ai_policy_init(s: &mut TechAiPolicy, skill: i32, seed: u32) {
 
 /// `tech_ai_random`: xorshift32.
 pub fn tech_ai_random(s: &mut TechAiPolicy) -> u32 {
+    melee_core::ct!("tech_ai_random");
     let mut x = s.seed;
     x ^= x << 13;
     x ^= x >> 17;
@@ -3334,6 +3399,7 @@ pub fn tech_ai_random(s: &mut TechAiPolicy) -> u32 {
 
 /// `tech_ai_policy_step`: type 1 = light analogue L-cancel, type 2 = digital ground-tech attempt.
 pub fn tech_ai_policy_step(s: &mut TechAiPolicy, o: &TechAiObservation) -> i32 {
+    melee_core::ct!("tech_ai_policy_step");
     if s.skill < 1 || s.skill > 3 { return 0; }
     if s.cooldown > 0 { s.cooldown -= 1; }
     if o.floor == 0 || o.type_ < 1 || o.type_ > 2 || !(o.eta > 0.0 && o.eta <= 12.0) {
@@ -3392,6 +3458,7 @@ unsafe fn technical_ai_supported(fp: *mut Fighter) -> bool {
 
 /// `ScriptGame_CpuTechnical`.
 pub unsafe fn ScriptGame_CpuTechnical(slot: i32, owner: i32, skill: i32, seed: i32) -> i32 {
+    melee_core::ct!("ScriptGame_CpuTechnical");
     if slot < 0 || slot >= 6 || owner <= 0 || skill < 0 || skill > 3 ||
         (skill != 0 && seed <= 0) || ext::Netplay_Enabled() != 0 || ext::RB_Enabled() != 0 ||
         ext::Replay_Active() != 0 { return 0; }
@@ -3410,6 +3477,7 @@ pub unsafe fn ScriptGame_CpuTechnical(slot: i32, owner: i32, skill: i32, seed: i
 
 /// `ScriptGame_CpuTechnicalClear`.
 pub unsafe fn ScriptGame_CpuTechnicalClear(owner: i32) {
+    melee_core::ct!("ScriptGame_CpuTechnicalClear");
     ScriptGame_CpuAssistClear(owner);
     for i in 0..6 {
         if owner == 0 || technical_ai_slots[i].owner == owner {
@@ -3420,6 +3488,7 @@ pub unsafe fn ScriptGame_CpuTechnicalClear(owner: i32) {
 
 /// `ScriptGame_CpuTechnicalState`.
 pub unsafe fn ScriptGame_CpuTechnicalState(slot: i32, owner: i32, field: i32) -> i32 {
+    melee_core::ct!("ScriptGame_CpuTechnicalState");
     if slot < 0 || slot >= 6 || owner <= 0 { return 0; }
     let s = &technical_ai_slots[slot as usize];
     if s.owner != owner { return 0; }
@@ -3448,6 +3517,7 @@ unsafe fn assist_floor_ray(fp: &Fighter, vx: f32, vy: f32, horizon: f32, floor: 
 
 /// `technical_ai_overlay`: called once during CPU input synthesis, before LR normalization.
 pub unsafe fn technical_ai_overlay(fp: &mut Fighter) {
+    melee_core::ct!("technical_ai_overlay");
     let mut o = TechAiObservation::default();
     let mut floor = v0();
     if fp.player_id >= 6 || fp.is_sub_fighter() != 0 { return; }
@@ -3498,6 +3568,7 @@ pub unsafe fn technical_ai_overlay(fp: &mut Fighter) {
 
 /// `ScriptGame_CpuTechnicalTest`: disc-free native policy checks; nonzero reports a failed case.
 pub unsafe fn ScriptGame_CpuTechnicalTest() -> i32 {
+    melee_core::ct!("ScriptGame_CpuTechnicalTest");
     let mut a: TechAiPolicy = core::mem::zeroed();
     let mut b: TechAiPolicy = core::mem::zeroed();
     let mut o = TechAiObservation { type_: 1, motion: 65, floor: 1, fresh_shoulder: 1, tech_unlocked: 1, eta: 4.0 };
@@ -3591,6 +3662,7 @@ unsafe fn ca_log(s: &mut CpuAssistSlot, fp: &Fighter, what: &str) {
 
 /// `cpu_assist_roll`: one xorshift32 draw, 0..999.
 pub fn cpu_assist_roll(s: &mut CpuAssistSlot) -> i32 {
+    melee_core::ct!("cpu_assist_roll");
     let mut x = s.seed;
     x ^= x << 13;
     x ^= x >> 17;
@@ -3601,6 +3673,7 @@ pub fn cpu_assist_roll(s: &mut CpuAssistSlot) -> i32 {
 
 /// `cpu_assist_decide`: counts an opportunity of technique `t`, draws once.
 pub fn cpu_assist_decide(s: &mut CpuAssistSlot, t: usize, sub: Option<&mut i32>) -> i32 {
+    melee_core::ct!("cpu_assist_decide");
     let r = cpu_assist_roll(s);
     let p = s.permille[t];
     s.opportunities[t] += 1;
@@ -3616,12 +3689,14 @@ unsafe fn cpu_assist_supported(fp: *mut Fighter) -> bool {
 
 /// `cpu_assist_config_ok`.
 pub fn cpu_assist_config_ok(lc: i32, ps: i32, tech: i32, tdir: i32, wd: i32, ff: i32) -> bool {
+    melee_core::ct!("cpu_assist_config_ok");
     (0..=1000).contains(&lc) && (0..=1000).contains(&ps) && (0..=1000).contains(&tech) &&
         (0..=1000).contains(&wd) && (0..=1000).contains(&ff) && (0..=CA_DIR_RANDOM).contains(&tdir)
 }
 
 /// `ScriptGame_CpuAssist`.
 pub unsafe fn ScriptGame_CpuAssist(slot: i32, owner: i32, lc: i32, ps: i32, tech: i32, tdir: i32, wd: i32, ff: i32, seed: i32) -> i32 {
+    melee_core::ct!("ScriptGame_CpuAssist");
     if slot < 0 || slot >= 6 || owner <= 0 || seed <= 0 || !cpu_assist_config_ok(lc, ps, tech, tdir, wd, ff) ||
         ext::Netplay_Enabled() != 0 || ext::RB_Enabled() != 0 || ext::Replay_Active() != 0 { return 0; }
     let s = &mut cpu_assist_slots[slot as usize];
@@ -3639,6 +3714,7 @@ pub unsafe fn ScriptGame_CpuAssist(slot: i32, owner: i32, lc: i32, ps: i32, tech
 
 /// `ScriptGame_CpuAssistClearSlot`.
 pub unsafe fn ScriptGame_CpuAssistClearSlot(slot: i32, owner: i32) -> i32 {
+    melee_core::ct!("ScriptGame_CpuAssistClearSlot");
     if slot < 0 || slot >= 6 || owner <= 0 { return 0; }
     if cpu_assist_slots[slot as usize].owner != owner { return 0; }
     cpu_assist_slots[slot as usize] = core::mem::zeroed();
@@ -3647,6 +3723,7 @@ pub unsafe fn ScriptGame_CpuAssistClearSlot(slot: i32, owner: i32) -> i32 {
 
 /// `ScriptGame_CpuAssistClear`.
 pub unsafe fn ScriptGame_CpuAssistClear(owner: i32) {
+    melee_core::ct!("ScriptGame_CpuAssistClear");
     for i in 0..6 {
         if owner == 0 || cpu_assist_slots[i].owner == owner {
             cpu_assist_slots[i] = core::mem::zeroed();
@@ -3656,6 +3733,7 @@ pub unsafe fn ScriptGame_CpuAssistClear(owner: i32) {
 
 /// `ScriptGame_CpuAssistState`: 0 enabled, 1..5 permille, 6 tech_dir, 7 seed, 8..12 opportunities, 13..17 performed.
 pub unsafe fn ScriptGame_CpuAssistState(slot: i32, owner: i32, field: i32) -> i32 {
+    melee_core::ct!("ScriptGame_CpuAssistState");
     if slot < 0 || slot >= 6 || owner <= 0 { return 0; }
     let s = &cpu_assist_slots[slot as usize];
     if s.owner != owner { return 0; }
@@ -3698,6 +3776,7 @@ unsafe fn cpu_assist_nearest_foe(fp: &Fighter) -> *mut Fighter {
 
 /// `cpu_assist_seg_dist2`: squared distance from point q to the segment a-b.
 pub fn cpu_assist_seg_dist2(q: &Vec3, a: &Vec3, b: &Vec3) -> f32 {
+    melee_core::ct!("cpu_assist_seg_dist2");
     let (abx, aby, abz) = (b.x - a.x, b.y - a.y, b.z - a.z);
     let (apx, apy, apz) = (q.x - a.x, q.y - a.y, q.z - a.z);
     // fused: abx*abx + aby*aby + abz*abz
@@ -3796,6 +3875,7 @@ fn cpu_assist_air_actionable(m: i32) -> bool {
 
 /// `cpu_assist_overlay`: the per-entity technique assist applied on top of the AI's virtual pad.
 pub unsafe fn cpu_assist_overlay(fp: &mut Fighter) {
+    melee_core::ct!("cpu_assist_overlay");
     if fp.player_id >= 6 || fp.is_sub_fighter() != 0 { return; }
     let s = &mut cpu_assist_slots[fp.player_id as usize];
     if s.owner == 0 { return; }
@@ -3960,6 +4040,7 @@ pub unsafe fn cpu_assist_overlay(fp: &mut Fighter) {
 
 /// `ScriptGame_CpuAssistTest`: disc-free native checks of the pure parts; nonzero reports a failed case.
 pub unsafe fn ScriptGame_CpuAssistTest() -> i32 {
+    melee_core::ct!("ScriptGame_CpuAssistTest");
     let mut a: CpuAssistSlot = core::mem::zeroed();
     let mut b: CpuAssistSlot = core::mem::zeroed();
     let prior = cpu_assist_slots[5];

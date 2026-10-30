@@ -60,6 +60,7 @@ pub mod ext {
 }
 
 pub fn ftCo_Walk_CheckInput(g: G) -> bool {
+    melee_core::ct!("ftCo_Walk_CheckInput");
     if ext::ftWalkCommon_800DFC70(g) {
         ftCo_Walk_Enter(g, 0.0);
         return true;
@@ -68,6 +69,7 @@ pub fn ftCo_Walk_CheckInput(g: G) -> bool {
 }
 
 pub fn ftCo_Walk_CheckInput_Ottotto(g: G) -> bool {
+    melee_core::ct!("ftCo_Walk_CheckInput_Ottotto");
     let f = fp(g);
     if f.input.lstick[0].x * f.facing_dir >= crate::hooks::common_data().teeter_walk_threshold && ext::ftWalkCommon_800DFC70(g) {
         ftCo_Walk_Enter(g, 0.0);
@@ -77,6 +79,7 @@ pub fn ftCo_Walk_CheckInput_Ottotto(g: G) -> bool {
 }
 
 pub fn ftCo_Walk_Enter(g: G, arg8: f32) {
+    melee_core::ct!("ftCo_Walk_Enter");
     let f = fp(g);
     let mut accel_mul = 1.0f32;
     if f.is_metal() != 0 {
@@ -94,10 +97,12 @@ pub fn ftCo_Walk_Enter(g: G, arg8: f32) {
 }
 
 pub fn ftCo_Walk_Anim(g: G) {
+    melee_core::ct!("ftCo_Walk_Anim");
     ext::ftWalkCommon_800DFDDC(g);
 }
 
 pub fn ftCo_Walk_IASA(g: G) {
+    melee_core::ct!("ftCo_Walk_IASA");
     if ext::ftCo_Catch_CheckInput(g) {
         return;
     }
@@ -156,9 +161,11 @@ pub fn ftCo_Walk_IASA(g: G) {
 }
 
 pub fn ftCo_Walk_Phys(g: G) {
+    melee_core::ct!("ftCo_Walk_Phys");
     ext::ftWalkCommon_800E0060(g);
 }
 
 pub fn ftCo_Walk_Coll(g: G) {
+    melee_core::ct!("ftCo_Walk_Coll");
     ext::ft_80084280(g);
 }

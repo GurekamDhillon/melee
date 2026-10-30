@@ -44,6 +44,7 @@ pub mod ext {
 }
 
 pub fn ftCo_8009A804(g: G) {
+    melee_core::ct!("ftCo_8009A804");
     ext::Fighter_ChangeMotionState(g, ftCo_MS_CliffWait as i32, Ft_MF_SkipNametagVis as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     let f = fp(g);
     ext::ftCommon_8007E2F4(f, 511);
@@ -56,6 +57,7 @@ pub fn ftCo_8009A804(g: G) {
 }
 
 pub fn ftCo_CliffWait_Anim(g: G) {
+    melee_core::ct!("ftCo_CliffWait_Anim");
     let f = fp(g);
     if unsafe { f.mv.co.cliff.x4 } > 0.0 {
         f.mv.co.cliff.x4 = unsafe { f.mv.co.cliff.x4 } - 1.0;
@@ -63,6 +65,7 @@ pub fn ftCo_CliffWait_Anim(g: G) {
 }
 
 pub fn ftCo_CliffWait_IASA(g: G) {
+    melee_core::ct!("ftCo_CliffWait_IASA");
     if ext::ftCo_8009AE38(g) {
         return;
     }
@@ -79,15 +82,18 @@ pub fn ftCo_CliffWait_IASA(g: G) {
 }
 
 pub fn ftCo_CliffWait_Phys(g: G) {
+    melee_core::ct!("ftCo_CliffWait_Phys");
     ext::ftCo_CliffCatch_Phys(g);
 }
 
 pub fn ftCo_CliffWait_Coll(g: G) {
+    melee_core::ct!("ftCo_CliffWait_Coll");
     ext::ftCo_CliffCatch_Coll(g);
 }
 
 /// static `ftCo_8009A9AC`.
 pub fn ftCo_8009A9AC(g: G) -> bool {
+    melee_core::ct!("ftCo_8009A9AC");
     let f = fp(g);
     if unsafe { f.mv.co.cliff.x4 } <= 0.0 {
         f.x2064_ledgeCooldown = cd().ledge_cooldown;

@@ -70,6 +70,7 @@ pub unsafe extern "C" fn report_func(
     arg2: *mut usize,
     arg3: __idle_proc,
 ) -> i32 {
+    melee_core::ct!("report_func");
     if let Some(cb) = reportCallback {
         cb(arg1, *arg2);
     }
@@ -79,6 +80,7 @@ pub unsafe extern "C" fn report_func(
 
 /// `HSD_LogInit`.
 pub fn HSD_LogInit() {
+    melee_core::ct!("HSD_LogInit");
     unsafe {
         let out = addr_of_mut!(ext::__files).cast::<_IO_FILE>().add(1); // stdout
         if logFunc.is_none() {
@@ -103,6 +105,7 @@ fn os_panic(file: &str, line: i32, msg: &str) -> ! {
 /// # Safety
 /// `str` and `arg2` are NUL-terminated (or NULL).
 pub unsafe fn __assert(str: *const c_char, arg1: u32, arg2: *const c_char) {
+    melee_core::ct!("__assert");
     crate::tu::lbext::OSReport("assertion \"%s\" failed", &[crate::tu::lbext::OsArg::S(arg2)]);
     HSD_Panic(str, arg1, c"".as_ptr());
 }
@@ -112,6 +115,7 @@ pub unsafe fn __assert(str: *const c_char, arg1: u32, arg2: *const c_char) {
 /// # Safety
 /// `arg0` and `arg2` are NUL-terminated (or NULL).
 pub unsafe fn HSD_Panic(arg0: *const c_char, line: u32, arg2: *const c_char) {
+    melee_core::ct!("HSD_Panic");
     if let Some(cb) = panicCallback {
         ext::OSSaveContext(&mut HSD_Debug_804C2608.context);
         crate::tu::lbext::OSReport("%s in %s on line %d.
@@ -123,10 +127,12 @@ pub unsafe fn HSD_Panic(arg0: *const c_char, line: u32, arg2: *const c_char) {
 
 /// `HSD_SetReportCallback`.
 pub fn HSD_SetReportCallback(cb: ReportCallback) {
+    melee_core::ct!("HSD_SetReportCallback");
     unsafe { reportCallback = cb };
 }
 
 /// `HSD_SetPanicCallback`.
 pub fn HSD_SetPanicCallback(cb: PanicCallback) {
+    melee_core::ct!("HSD_SetPanicCallback");
     unsafe { panicCallback = cb };
 }

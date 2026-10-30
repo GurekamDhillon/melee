@@ -171,6 +171,7 @@ pub static mut un_804D6DA4: *mut SceneDesc = null_mut();
 
 /// The coin-get counter: the Atlas retail mask hides this element's render only (never its proc).
 pub unsafe extern "C" fn ifCoget_RenderGuarded(gobj: *mut HSD_GObj, pass: i32) {
+    melee_core::ct!("ifCoget_RenderGuarded");
     if ext::Ui_RetailHidden(AT_RE_HUD_COIN) != 0 {
         return;
     }
@@ -178,6 +179,7 @@ pub unsafe extern "C" fn ifCoget_RenderGuarded(gobj: *mut HSD_GObj, pass: i32) {
 }
 
 pub unsafe extern "C" fn fn_802FED14(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_802FED14");
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let d = &mut un_803F9E08;
     if d.x0_b1() == 0 {
@@ -208,6 +210,7 @@ pub unsafe extern "C" fn fn_802FED14(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn un_802FEFAC() {
+    melee_core::ct!("un_802FEFAC");
     let sd = un_804D6DA4;
     let gobj_camera = ext::GObj_Create(HSD_GOBJ_CLASS_CAMERA as u16, 21, 0);
     ext::HSD_GObjObject_80390A70(
@@ -237,6 +240,7 @@ pub unsafe extern "C" fn un_802FEFAC() {
 }
 
 pub unsafe extern "C" fn un_802FF128(arg0: i32, arg1: i32, mut arg2: i32, mut arg3: i32) {
+    melee_core::ct!("un_802FF128");
     let d = &mut un_803F9E08;
     if arg3 < 1 {
         arg3 = 1;
@@ -254,11 +258,13 @@ pub unsafe extern "C" fn un_802FF128(arg0: i32, arg1: i32, mut arg2: i32, mut ar
 }
 
 pub unsafe extern "C" fn un_802FF190() {
+    melee_core::ct!("un_802FF190");
     un_803F9E08.set_x0_b0(0);
     un_803F9E08.set_x0_b1(0);
 }
 
 pub unsafe extern "C" fn un_802FF1B4() {
+    melee_core::ct!("un_802FF1B4");
     un_803F9E08.set_x0_b0(1);
     un_803F9E08.set_x0_b1(0);
     un_804D6DA0 = ext::lbArchive_80016DBC(

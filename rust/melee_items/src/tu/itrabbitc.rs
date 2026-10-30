@@ -66,10 +66,12 @@ pub static mut it_803F6270: [ItemStateTable; 5] = [
 ];
 
 pub unsafe extern "C" fn itRabbitC_Logic30_ShieldBounced(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itRabbitC_Logic30_ShieldBounced");
     ext::itColl_BounceOffShield(item_gobj) != 0
 }
 
 pub unsafe extern "C" fn it_80294DC0(pos: *mut Vec3) -> *mut HSD_GObj {
+    melee_core::ct!("it_80294DC0");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
     spawn.kind = It_Kind_RabbitC;
@@ -94,10 +96,12 @@ pub unsafe extern "C" fn it_80294DC0(pos: *mut Vec3) -> *mut HSD_GObj {
 }
 
 pub unsafe extern "C" fn it_80294E78(item_gobj: *mut Item_GObj, arg1: f32) {
+    melee_core::ct!("it_80294E78");
     ext::it_80272F7C(ext::it_80272CC0(item_gobj, 1), arg1);
 }
 
 pub unsafe extern "C" fn it_80294EB0(item_gobj: *mut Item_GObj, input_pos1: *mut Vec3, input_pos2: *mut Vec3) {
+    melee_core::ct!("it_80294EB0");
     let mut pos_var: Vec3 = core::mem::zeroed();
 
     let mut item_jobj_var = ext::it_80272CC0(item_gobj, 8);
@@ -116,6 +120,7 @@ pub unsafe extern "C" fn it_80294EB0(item_gobj: *mut Item_GObj, input_pos1: *mut
 }
 
 pub unsafe extern "C" fn it_802950D4(item_gobj: *mut Item_GObj, arg1: i32) {
+    melee_core::ct!("it_802950D4");
     let item_jobj = ext::it_80272CC0(item_gobj, 3);
     if arg1 != 0 {
         ext::it_80272A18(item_jobj);
@@ -125,10 +130,12 @@ pub unsafe extern "C" fn it_802950D4(item_gobj: *mut Item_GObj, arg1: i32) {
 }
 
 pub unsafe extern "C" fn itRabbitC_Logic31_Spawned(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itRabbitC_Logic31_Spawned");
     it_802951C0(item_gobj);
 }
 
 pub unsafe extern "C" fn it_80295138(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_80295138");
     let item = (*item_gobj).user_data as *mut Item;
     (*item).x40_vel.z = 0.0;
     (*item).x40_vel.y = 0.0;
@@ -138,54 +145,65 @@ pub unsafe extern "C" fn it_80295138(item_gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itRabbitc_UnkMotion0_Anim(_item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itRabbitc_UnkMotion0_Anim");
     false
 }
 
-pub unsafe extern "C" fn itRabbitc_UnkMotion0_Phys(_item_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itRabbitc_UnkMotion0_Phys(_item_gobj: *mut Item_GObj) { melee_core::ct!("itRabbitc_UnkMotion0_Phys");}
 
 pub unsafe extern "C" fn itRabbitc_UnkMotion0_Coll(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itRabbitc_UnkMotion0_Coll");
     ext::it_8026D62C(item_gobj, Some(it_802951C0));
     false
 }
 
 pub unsafe extern "C" fn it_802951C0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802951C0");
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);
 }
 
 pub unsafe extern "C" fn itRabbitc_UnkMotion3_Anim(_item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itRabbitc_UnkMotion3_Anim");
     false
 }
 
 pub unsafe extern "C" fn itRabbitc_UnkMotion1_Phys(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itRabbitc_UnkMotion1_Phys");
     let attr = (*((*item_gobj).user_data as *mut Item)).xCC_item_attr;
     ext::it_80272860(item_gobj, (*attr).x10_fall_speed, (*attr).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itRabbitc_UnkMotion1_Coll(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itRabbitc_UnkMotion1_Coll");
     ext::it_8026E15C(item_gobj, Some(it_80295138));
     false
 }
 
 pub unsafe extern "C" fn itRabbitC_Logic31_PickedUp(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itRabbitC_Logic31_PickedUp");
     ext::Item_80268E5C(item_gobj, 2, ITEM_ANIM_UPDATE);
     ext::it_80272A3C(ext::it_80272CC0(item_gobj, 3));
 }
 
 pub unsafe extern "C" fn itRabbitc_UnkMotion2_Anim(_item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itRabbitc_UnkMotion2_Anim");
     false
 }
 
 pub unsafe extern "C" fn itRabbitC_Logic31_Dropped(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itRabbitC_Logic31_Dropped");
     ext::Item_80268E5C(item_gobj, 1, 6);
     ext::it_80272A18(ext::it_80272CC0(item_gobj, 3));
 }
 
 pub unsafe extern "C" fn itRabbitc_UnkMotion3_Phys(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itRabbitc_UnkMotion3_Phys");
     let attr = (*((*item_gobj).user_data as *mut Item)).xCC_item_attr;
     ext::it_80272860(item_gobj, (*attr).x10_fall_speed, (*attr).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itRabbitc_UnkMotion3_Coll(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itRabbitc_UnkMotion3_Coll");
     if ext::it_8026DA08(item_gobj) != 0 {
         return true;
     }
@@ -193,20 +211,24 @@ pub unsafe extern "C" fn itRabbitc_UnkMotion3_Coll(item_gobj: *mut Item_GObj) ->
 }
 
 pub unsafe extern "C" fn itRabbitC_Logic31_EnteredAir(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itRabbitC_Logic31_EnteredAir");
     ext::Item_80268E5C(item_gobj, 4, ITEM_ANIM_UPDATE);
 }
 
 pub unsafe extern "C" fn itRabbitc_UnkMotion4_Anim(_item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itRabbitc_UnkMotion4_Anim");
     false
 }
 
-pub unsafe extern "C" fn itRabbitc_UnkMotion4_Phys(_item_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itRabbitc_UnkMotion4_Phys(_item_gobj: *mut Item_GObj) { melee_core::ct!("itRabbitc_UnkMotion4_Phys");}
 
 pub unsafe extern "C" fn itRabbitc_UnkMotion4_Coll(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itRabbitc_UnkMotion4_Coll");
     ext::it_8026E8C4(item_gobj, Some(it_80295138), Some(it_802951C0));
     false
 }
 
 pub unsafe extern "C" fn itRabbitC_Logic31_EvtUnk(item_gobj: *mut Item_GObj, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itRabbitC_Logic31_EvtUnk");
     ext::it_8026B894(item_gobj, ref_gobj);
 }

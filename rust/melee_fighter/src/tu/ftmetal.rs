@@ -57,6 +57,7 @@ fn bone<'a>(f: &Fighter, i: i32) -> &'a mut FighterBone {
 /// `ft_800C8170(fp)`: restore each visible part's own JObj lighting flags and DObj blend
 /// classes (the inverse of the metal switch).
 pub fn ft_800C8170(f: &mut Fighter) {
+    melee_core::ct!("ft_800C8170");
     for i in 0..parts_num(f) {
         let b = bone(f, i);
         let bits = unsafe { b.anon_8.anon_0 };
@@ -110,6 +111,7 @@ fn enable_metal(f: &mut Fighter) {
 
 /// `ftCo_800C8348(gobj, timer, health)`: start (or refresh) metal.
 pub fn ftCo_800C8348(gobj: *mut HSD_GObj, timer: i32, health: i32) {
+    melee_core::ct!("ftCo_800C8348");
     let f = fp(gobj);
     f.metal_timer = timer;
     f.metal_health = health;
@@ -122,6 +124,7 @@ pub fn ftCo_800C8348(gobj: *mut HSD_GObj, timer: i32, health: i32) {
 
 /// `ftCo_800C8438(gobj)`: reset metal to the fighter's always-metal default.
 pub fn ftCo_800C8438(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCo_800C8438");
     let f = fp(gobj);
     let am = f.is_always_metal();
     f.set_is_metal(am);
@@ -137,6 +140,7 @@ pub fn ftCo_800C8438(gobj: *mut HSD_GObj) {
 
 /// `ftCo_800C8540(gobj)`: end metal (unless always metal).
 pub fn ftCo_800C8540(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCo_800C8540");
     let f = fp(gobj);
     f.metal_timer = 0;
     f.metal_health = 0;
@@ -152,6 +156,7 @@ pub fn ftCo_800C8540(gobj: *mut HSD_GObj) {
 /// `ft_800C85B8(gobj)`: register every part JObj by its joint desc, then load each joint's
 /// DObj desc onto its part and record the DObjs in `fp->x203C`.
 pub fn ft_800C85B8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ft_800C85B8");
     let f = fp(gobj);
     let joint = unsafe { (*f.ft_data).x5C } as *mut HSD_Joint;
     let mut sp20 = joint;

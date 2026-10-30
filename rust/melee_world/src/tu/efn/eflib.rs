@@ -100,6 +100,7 @@ pub static mut efLib_ParamTable: [EF_ParamEntry; 8] = unsafe { core::mem::zeroed
 
 /// `eflib_create_generator_add_appsrt`
 pub unsafe extern "C" fn eflib_create_generator_add_appsrt(mut generator: *mut *mut HSD_Generator, mut gfx_id: i32, mut jobj: *mut HSD_JObj) {
+    melee_core::ct!("eflib_create_generator_add_appsrt");
     *generator = ext::hsd_8039EFAC(0, gfx_id / 1000, gfx_id, jobj);
     if !(*generator).is_null() {
         let mut appsrt: *mut HSD_psAppSRT = null_mut();
@@ -120,6 +121,7 @@ pub unsafe extern "C" fn eflib_create_generator_add_appsrt(mut generator: *mut *
 
 /// `eflib_create_effect_and_attach`
 pub unsafe extern "C" fn eflib_create_effect_and_attach(mut gfx_id: i32, mut gobj: *mut HSD_GObj, mut jobj: *mut HSD_JObj) -> *mut EF_Effect {
+    melee_core::ct!("eflib_create_effect_and_attach");
     let mut effect: *mut EF_Effect = efLib_Create(gfx_id, gobj);
     if !effect.is_null() {
         let mut effect_jobj: *mut HSD_JObj = null_mut();
@@ -139,6 +141,7 @@ pub unsafe extern "C" fn eflib_create_effect_and_attach(mut gfx_id: i32, mut gob
 
 /// `eflib_generator_add_appsrt`
 pub unsafe extern "C" fn eflib_generator_add_appsrt(mut generator: *mut HSD_Generator, mut status: i32) -> *mut HSD_Generator {
+    melee_core::ct!("eflib_generator_add_appsrt");
     let mut psAppSRT: *mut HSD_psAppSRT = null_mut();
     if !generator.is_null() {
         if { psAppSRT = (*generator).appsrt; psAppSRT }.is_null() {
@@ -154,6 +157,7 @@ pub unsafe extern "C" fn eflib_generator_add_appsrt(mut generator: *mut HSD_Gene
 
 /// `efLib_Init`
 pub unsafe extern "C" fn efLib_Init() {
+    melee_core::ct!("efLib_Init");
     let mut gobj: *mut HSD_GObj = null_mut();
     let mut i: i32 = 0;
     ext::HSD_ObjAllocInit(core::ptr::addr_of_mut!(super::efdata::efLib_AllocData) as *mut _HSD_ObjAllocData, 72_u64 as u32, 4_u32);
@@ -190,6 +194,7 @@ pub unsafe extern "C" fn efLib_Init() {
 
 /// `efLib_SetFlags`
 pub unsafe extern "C" fn efLib_SetFlags(mut gobj: *mut HSD_GObj, mut expire_flags: i32) {
+    melee_core::ct!("efLib_SetFlags");
     let mut gobj_1: *mut HSD_GObj = null_mut();
     let mut gobj_2: *mut HSD_GObj = null_mut();
     let mut effect_1: *mut EF_Effect = null_mut();
@@ -214,6 +219,7 @@ pub unsafe extern "C" fn efLib_SetFlags(mut gobj: *mut HSD_GObj, mut expire_flag
 
 /// `efLib_Destroy`
 pub unsafe extern "C" fn efLib_Destroy(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("efLib_Destroy");
     let mut effect: *mut EF_Effect = (*gobj).user_data as *mut EF_Effect;
     let mut jobj: *mut HSD_JObj = null_mut();
     let mut i: i32 = 0;
@@ -240,6 +246,7 @@ pub unsafe extern "C" fn efLib_Destroy(mut gobj: *mut HSD_GObj) {
 
 /// `efLib_DestroyAll`
 pub unsafe extern "C" fn efLib_DestroyAll(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("efLib_DestroyAll");
     let mut gobj_1: *mut HSD_GObj = null_mut();
     let mut gobj_2: *mut HSD_GObj = null_mut();
     let mut i: i32 = 0;
@@ -286,6 +293,7 @@ pub unsafe extern "C" fn efLib_DestroyAll(mut gobj: *mut HSD_GObj) {
 
 /// `efLib_PauseAll`
 pub unsafe extern "C" fn efLib_PauseAll(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("efLib_PauseAll");
     let mut gobj_1: *mut HSD_GObj = null_mut();
     let mut gobj_2: *mut HSD_GObj = null_mut();
     let mut effect_1: *mut EF_Effect = null_mut();
@@ -310,6 +318,7 @@ pub unsafe extern "C" fn efLib_PauseAll(mut gobj: *mut HSD_GObj) {
 
 /// `efLib_ResumeAll`
 pub unsafe extern "C" fn efLib_ResumeAll(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("efLib_ResumeAll");
     let mut gobj_1: *mut HSD_GObj = null_mut();
     let mut gobj_2: *mut HSD_GObj = null_mut();
     let mut effect_1: *mut EF_Effect = null_mut();
@@ -334,6 +343,7 @@ pub unsafe extern "C" fn efLib_ResumeAll(mut gobj: *mut HSD_GObj) {
 
 /// `efLib_remove_user_data`
 pub unsafe extern "C" fn efLib_remove_user_data(mut user_data: *mut c_void) {
+    melee_core::ct!("efLib_remove_user_data");
     let mut effect: *mut EF_Effect = null_mut();
     let mut effect_2: *mut EF_Effect = null_mut();
     effect = { effect_2 = user_data as *mut EF_Effect; effect_2 };
@@ -350,6 +360,7 @@ pub unsafe extern "C" fn efLib_remove_user_data(mut user_data: *mut c_void) {
 
 /// `efLib_RemoveLast`
 pub unsafe extern "C" fn efLib_RemoveLast() {
+    melee_core::ct!("efLib_RemoveLast");
     let mut gobj: *mut HSD_GObj = null_mut();
     let mut next: *mut HSD_GObj = null_mut();
     gobj = *ext::HSD_GObjPLinkHead.offset(11 as isize);
@@ -383,6 +394,7 @@ pub unsafe extern "C" fn efLib_RemoveLast() {
 
 /// `efLib_Update`
 pub unsafe extern "C" fn efLib_Update(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("efLib_Update");
     let mut effect: *mut EF_Effect = null_mut();
     let mut jobj: *mut HSD_JObj = (*gobj).hsd_obj as *mut HSD_JObj;
     's49: {
@@ -432,6 +444,7 @@ pub unsafe extern "C" fn efLib_Update(mut gobj: *mut HSD_GObj) {
 
 /// `efLib_Create`
 pub unsafe extern "C" fn efLib_Create(mut gfx_id: i32, mut parent_gobj: *mut HSD_GObj) -> *mut EF_Effect {
+    melee_core::ct!("efLib_Create");
     let mut effect: *mut EF_Effect = null_mut();
     let mut desc: *mut EF_EffectDesc = null_mut();
     let mut p_link: u8 = 0;
@@ -531,6 +544,7 @@ pub unsafe extern "C" fn efLib_Create(mut gfx_id: i32, mut parent_gobj: *mut HSD
 
 /// `efLib_Create_Attach`
 pub unsafe extern "C" fn efLib_Create_Attach(mut gfx_id: u32, mut gobj: *mut HSD_GObj, mut jobj: *mut HSD_JObj) -> *mut EF_Effect {
+    melee_core::ct!("efLib_Create_Attach");
     let mut effect: *mut EF_Effect = efLib_Create(gfx_id as i32, gobj);
     if !effect.is_null() {
         let mut effect_jobj: *mut HSD_JObj = null_mut();
@@ -550,6 +564,7 @@ pub unsafe extern "C" fn efLib_Create_Attach(mut gfx_id: u32, mut gobj: *mut HSD
 
 /// `efLib_Create_AttachChild`
 pub unsafe extern "C" fn efLib_Create_AttachChild(mut gfx_id: u32, mut gobj: *mut HSD_GObj, mut jobj: *mut HSD_JObj) -> *mut EF_Effect {
+    melee_core::ct!("efLib_Create_AttachChild");
     let mut effect: *mut EF_Effect = null_mut();
     if !{ effect = eflib_create_effect_and_attach(gfx_id as i32, gobj, jobj); effect }.is_null() {
         ext::lb_8000C290(HSD_GObjGetHSDObj((*effect).gobj) as *mut HSD_JObj, jobj);
@@ -559,6 +574,7 @@ pub unsafe extern "C" fn efLib_Create_AttachChild(mut gfx_id: u32, mut gobj: *mu
 
 /// `efLib_Create_Attach_Scale`
 pub unsafe extern "C" fn efLib_Create_Attach_Scale(mut gfx_id: u32, mut gobj: *mut HSD_GObj, mut jobj: *mut HSD_JObj) -> *mut EF_Effect {
+    melee_core::ct!("efLib_Create_Attach_Scale");
     let mut effect: *mut EF_Effect = null_mut();
     if !{ effect = eflib_create_effect_and_attach(gfx_id as i32, gobj, jobj); effect }.is_null() {
         let mut scale: Vec3 = unsafe { core::mem::zeroed() };
@@ -571,6 +587,7 @@ pub unsafe extern "C" fn efLib_Create_Attach_Scale(mut gfx_id: u32, mut gobj: *m
 
 /// `efLib_Create_AttachChild_Scale`
 pub unsafe extern "C" fn efLib_Create_AttachChild_Scale(mut gfx_id: u32, mut gobj: *mut HSD_GObj, mut jobj: *mut HSD_JObj) -> *mut EF_Effect {
+    melee_core::ct!("efLib_Create_AttachChild_Scale");
     let mut effect: *mut EF_Effect = efLib_Create_Attach(gfx_id, gobj, jobj);
     if !effect.is_null() {
         ext::lb_8000C290(HSD_GObjGetHSDObj((*effect).gobj) as *mut HSD_JObj, jobj);
@@ -586,6 +603,7 @@ pub unsafe extern "C" fn efLib_Create_AttachChild_Scale(mut gfx_id: u32, mut gob
 
 /// `efLib_Create_Attach_Scale_FacingDir`
 pub unsafe extern "C" fn efLib_Create_Attach_Scale_FacingDir(mut gfx_id: u32, mut gobj: *mut HSD_GObj, mut jobj: *mut HSD_JObj) -> *mut EF_Effect {
+    melee_core::ct!("efLib_Create_Attach_Scale_FacingDir");
     let mut effect: *mut EF_Effect = efLib_Create_Attach(gfx_id, gobj, jobj);
     if !effect.is_null() {
         let mut scale: Vec3 = unsafe { core::mem::zeroed() };
@@ -601,6 +619,7 @@ pub unsafe extern "C" fn efLib_Create_Attach_Scale_FacingDir(mut gfx_id: u32, mu
 
 /// `efLib_Create_Attach_Pos`
 pub unsafe extern "C" fn efLib_Create_Attach_Pos(mut gfx_id: u32, mut gobj: *mut HSD_GObj, mut position: *mut Vec) -> *mut EF_Effect {
+    melee_core::ct!("efLib_Create_Attach_Pos");
     let mut jobj: *mut HSD_JObj = null_mut();
     let mut effect: *mut EF_Effect = null_mut();
     effect = efLib_Create(gfx_id as i32, gobj);
@@ -614,6 +633,7 @@ pub unsafe extern "C" fn efLib_Create_Attach_Pos(mut gfx_id: u32, mut gobj: *mut
 
 /// `efLib_render_callback`
 pub unsafe extern "C" fn efLib_render_callback(mut gobj: *mut HSD_GObj, mut code: i32) {
+    melee_core::ct!("efLib_render_callback");
     let mut particles_code: u32 = 0;
     's50: {
         match code {
@@ -641,18 +661,21 @@ pub unsafe extern "C" fn efLib_render_callback(mut gobj: *mut HSD_GObj, mut code
 
 /// `efLib_particles_proc_main`
 pub unsafe extern "C" fn efLib_particles_proc_main(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("efLib_particles_proc_main");
     ext::hsd_8039CEAC((131072 | 262144) as u32);
     ext::hsd_8039EE24((131072 | 262144) as u32);
 }
 
 /// `efLib_particles_proc_aux`
 pub unsafe extern "C" fn efLib_particles_proc_aux(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("efLib_particles_proc_aux");
     ext::hsd_8039CEAC((65536 | 524288) as u32);
     ext::hsd_8039EE24((65536 | 524288) as u32);
 }
 
 /// `efLib_CreateGenerator`
 pub unsafe extern "C" fn efLib_CreateGenerator(mut gfx_id: i32, mut pos: *mut Vec) -> *mut HSD_Generator {
+    melee_core::ct!("efLib_CreateGenerator");
     let mut generator: *mut HSD_Generator = null_mut();
     let mut linkNo: i32 = 0;
     linkNo = 0;
@@ -681,6 +704,7 @@ pub unsafe extern "C" fn efLib_CreateGenerator(mut gfx_id: i32, mut pos: *mut Ve
 
 /// `efLib_CreateGenerator_AddAppSRT`
 pub unsafe extern "C" fn efLib_CreateGenerator_AddAppSRT(mut gfx_id: i32) -> *mut HSD_Generator {
+    melee_core::ct!("efLib_CreateGenerator_AddAppSRT");
     let mut generator: *mut HSD_Generator = null_mut();
     let mut appsrt: *mut HSD_psAppSRT = null_mut();
     generator = ext::hsd_8039F05C(0, gfx_id / 1000, gfx_id);
@@ -698,6 +722,7 @@ pub unsafe extern "C" fn efLib_CreateGenerator_AddAppSRT(mut gfx_id: i32) -> *mu
 
 /// `efLib_CreateGenerator_Translate_FacingDir`
 pub unsafe extern "C" fn efLib_CreateGenerator_Translate_FacingDir(mut gfx_id: i32, mut translation: *mut Vec, mut direction: f32) -> *mut HSD_Generator {
+    melee_core::ct!("efLib_CreateGenerator_Translate_FacingDir");
     let mut generator: *mut HSD_Generator = null_mut();
     let mut appsrt: *mut HSD_psAppSRT = null_mut();
     generator = ext::hsd_8039F05C(0, gfx_id / 1000, gfx_id);
@@ -726,6 +751,7 @@ pub unsafe extern "C" fn efLib_CreateGenerator_Translate_FacingDir(mut gfx_id: i
 
 /// `efLib_CreateGenerator_Attach`
 pub unsafe extern "C" fn efLib_CreateGenerator_Attach(mut gfx_id: i32, mut jobj: *mut HSD_JObj) -> *mut HSD_Generator {
+    melee_core::ct!("efLib_CreateGenerator_Attach");
     let mut generator: *mut HSD_Generator = ext::hsd_8039EFAC(0, gfx_id / 1000, gfx_id, jobj);
     if !generator.is_null() {
         (*generator).r#type = (((*generator).r#type as i32) & (!(1 << 10))) as u16;
@@ -735,6 +761,7 @@ pub unsafe extern "C" fn efLib_CreateGenerator_Attach(mut gfx_id: i32, mut jobj:
 
 /// `efLib_CreateGenerator_Attach_AddAppSRT`
 pub unsafe extern "C" fn efLib_CreateGenerator_Attach_AddAppSRT(mut gfx_id: i32, mut jobj: *mut HSD_JObj) -> *mut HSD_Generator {
+    melee_core::ct!("efLib_CreateGenerator_Attach_AddAppSRT");
     let mut generator: *mut HSD_Generator = ext::hsd_8039EFAC(0, gfx_id / 1000, gfx_id, jobj);
     if !generator.is_null() {
         let mut appsrt: *mut HSD_psAppSRT = null_mut();
@@ -755,6 +782,7 @@ pub unsafe extern "C" fn efLib_CreateGenerator_Attach_AddAppSRT(mut gfx_id: i32,
 
 /// `efLib_CreateGenerator_Attach_Scale`
 pub unsafe extern "C" fn efLib_CreateGenerator_Attach_Scale(mut gfx_id: i32, mut vlist: *mut crate::tu::va::Va, mut gobj: *mut HSD_GObj) -> *mut HSD_Generator {
+    melee_core::ct!("efLib_CreateGenerator_Attach_Scale");
     let mut scale: Vec3 = unsafe { core::mem::zeroed() };
     let mut generator: *mut HSD_Generator = null_mut();
     let mut id: i32 = 0;
@@ -769,6 +797,7 @@ pub unsafe extern "C" fn efLib_CreateGenerator_Attach_Scale(mut gfx_id: i32, mut
 
 /// `efLib_CreateGenerator_AppSRT_SetScale`
 pub unsafe extern "C" fn efLib_CreateGenerator_AppSRT_SetScale(mut gfx_id: i32, mut vlist: *mut crate::tu::va::Va) -> *mut HSD_Generator {
+    melee_core::ct!("efLib_CreateGenerator_AppSRT_SetScale");
     let mut generator: *mut HSD_Generator = null_mut();
     eflib_create_generator_add_appsrt(core::ptr::addr_of_mut!(generator) as *mut *mut HSD_Generator, gfx_id, *((*vlist).arg(8_u32) as *mut *mut HSD_JObj));
     if !generator.is_null() {
@@ -779,6 +808,7 @@ pub unsafe extern "C" fn efLib_CreateGenerator_AppSRT_SetScale(mut gfx_id: i32, 
 
 /// `efLib_CreateGenerator_AppSRT_SetFacingDir`
 pub unsafe extern "C" fn efLib_CreateGenerator_AppSRT_SetFacingDir(mut gfx_id: i32, mut vlist: *mut crate::tu::va::Va) -> *mut HSD_Generator {
+    melee_core::ct!("efLib_CreateGenerator_AppSRT_SetFacingDir");
     let mut generator: *mut HSD_Generator = null_mut();
     let mut direction: f32 = 0.0;
     eflib_create_generator_add_appsrt(core::ptr::addr_of_mut!(generator) as *mut *mut HSD_Generator, gfx_id, *((*vlist).arg(8_u32) as *mut *mut HSD_JObj));
@@ -791,6 +821,7 @@ pub unsafe extern "C" fn efLib_CreateGenerator_AppSRT_SetFacingDir(mut gfx_id: i
 
 /// `efLib_CreateGenerator_AppSRT_SetFacingDirScale`
 pub unsafe extern "C" fn efLib_CreateGenerator_AppSRT_SetFacingDirScale(mut gfx_id: i32, mut vlist: *mut crate::tu::va::Va) -> *mut HSD_Generator {
+    melee_core::ct!("efLib_CreateGenerator_AppSRT_SetFacingDirScale");
     let mut generator: *mut HSD_Generator = null_mut();
     let mut direction: f32 = 0.0;
     let mut jobj: *mut HSD_JObj = null_mut();
@@ -808,6 +839,7 @@ pub unsafe extern "C" fn efLib_CreateGenerator_AppSRT_SetFacingDirScale(mut gfx_
 
 /// `efLib_SpawnParticleEffect`
 pub unsafe extern "C" fn efLib_SpawnParticleEffect(mut bank: i32, mut gfx_id: i32, mut jobj: *mut HSD_JObj, mut flag: i32) {
+    melee_core::ct!("efLib_SpawnParticleEffect");
     let mut generator: *mut HSD_Generator = null_mut();
     let mut root: *mut HSD_JObj = jobj;
     let mut chk: i32 = 0;
@@ -939,6 +971,7 @@ pub unsafe extern "C" fn efLib_SpawnParticleEffect(mut bank: i32, mut gfx_id: i3
 
 /// `efLib_Cb_SPtcl`
 pub unsafe extern "C" fn efLib_Cb_SPtcl(mut linkNo: i32, mut bank: i32, mut gfx_id: i32, mut jobj: *mut HSD_JObj) {
+    melee_core::ct!("efLib_Cb_SPtcl");
     if bank == 30 {
         ext::grLib_801C99C0(bank, gfx_id, jobj, 0);
         return;
@@ -948,6 +981,7 @@ pub unsafe extern "C" fn efLib_Cb_SPtcl(mut linkNo: i32, mut bank: i32, mut gfx_
 
 /// `efLib_Cb_DPtcl`
 pub unsafe extern "C" fn efLib_Cb_DPtcl(mut linkNo: i32, mut bank: i32, mut gfx_id: i32, mut jobj: *mut HSD_JObj) {
+    melee_core::ct!("efLib_Cb_DPtcl");
     if bank == 30 {
         ext::grLib_801C99C0(bank, gfx_id, jobj, 1);
         return;
@@ -957,6 +991,7 @@ pub unsafe extern "C" fn efLib_Cb_DPtcl(mut linkNo: i32, mut bank: i32, mut gfx_
 
 /// `efLib_Cb_ParticleRender`
 pub unsafe extern "C" fn efLib_Cb_ParticleRender(mut particle: *mut HSD_Particle) {
+    melee_core::ct!("efLib_Cb_ParticleRender");
     let mut translate: Vec3 = unsafe { core::mem::zeroed() };
     let mut scale: Vec3 = unsafe { core::mem::zeroed() };
     let mut rot: Quaternion = unsafe { core::mem::zeroed() };
@@ -980,6 +1015,7 @@ pub unsafe extern "C" fn efLib_Cb_ParticleRender(mut particle: *mut HSD_Particle
 
 /// `efLib_Cb_PtclAppSRTHook`
 pub unsafe extern "C" fn efLib_Cb_PtclAppSRTHook(mut r#gen: *mut HSD_Generator) {
+    melee_core::ct!("efLib_Cb_PtclAppSRTHook");
     if (*r#gen).cmdList == ((*(*ext::ptclref_804D0E5C[0 as usize].offset(150 as isize))).cmdList.as_mut_ptr()) {
         ext::hsd_8039D1E4(r#gen, (lbl_803BF810.as_mut_ptr()) as *mut c_void);
     }
@@ -996,6 +1032,7 @@ pub unsafe extern "C" fn efLib_Cb_PtclAppSRTHook(mut r#gen: *mut HSD_Generator) 
 
 /// `efLib_Cb_SetOffsetY_FromParamY`
 pub unsafe extern "C" fn efLib_Cb_SetOffsetY_FromParamY(mut effect: *mut EF_Effect) {
+    melee_core::ct!("efLib_Cb_SetOffsetY_FromParamY");
     let mut sp14: Vec3 = unsafe { core::mem::zeroed() };
     let mut eff_jobj: *mut HSD_JObj = null_mut();
     eff_jobj = HSD_GObjGetHSDObj((*effect).gobj) as *mut HSD_JObj;
@@ -1006,6 +1043,7 @@ pub unsafe extern "C" fn efLib_Cb_SetOffsetY_FromParamY(mut effect: *mut EF_Effe
 
 /// `efLib_Cb_SetScale_FromParamX`
 pub unsafe extern "C" fn efLib_Cb_SetScale_FromParamX(mut effect: *mut EF_Effect) {
+    melee_core::ct!("efLib_Cb_SetScale_FromParamX");
     let mut scale_x: f32 = 0.0;
     let mut scale_y: f32 = 0.0;
     let mut scale_z: f32 = 0.0;
@@ -1020,6 +1058,7 @@ pub unsafe extern "C" fn efLib_Cb_SetScale_FromParamX(mut effect: *mut EF_Effect
 
 /// `efLib_Cb_SetRotYAndTransition`
 pub unsafe extern "C" fn efLib_Cb_SetRotYAndTransition(mut effect: *mut EF_Effect) {
+    melee_core::ct!("efLib_Cb_SetRotYAndTransition");
     let mut temp_d: f64 = 0.0;
     let mut rotate_y: f32 = 0.0;
     let mut eff_jobj: *mut HSD_JObj = null_mut();
@@ -1050,6 +1089,7 @@ pub unsafe extern "C" fn efLib_Cb_SetRotYAndTransition(mut effect: *mut EF_Effec
 
 /// `efLib_Cb_SetJObjOffsetZ`
 pub unsafe extern "C" fn efLib_Cb_SetJObjOffsetZ(mut effect: *mut EF_Effect) {
+    melee_core::ct!("efLib_Cb_SetJObjOffsetZ");
     let mut eff_jobj_child: *mut HSD_JObj = null_mut();
     let mut translate_z: f32 = 0.0;
     let mut eff_jobj: *mut HSD_JObj = null_mut();
@@ -1065,6 +1105,7 @@ pub unsafe extern "C" fn efLib_Cb_SetJObjOffsetZ(mut effect: *mut EF_Effect) {
 
 /// `efLib_Cb_SetRotY_FromFighterDir`
 pub unsafe extern "C" fn efLib_Cb_SetRotY_FromFighterDir(mut effect: *mut EF_Effect) {
+    melee_core::ct!("efLib_Cb_SetRotY_FromFighterDir");
     let mut eff_jobj: *mut HSD_JObj = null_mut();
     let mut half_pi: f64 = 0.0;
     let mut rotate_y: f32 = 0.0;
@@ -1080,6 +1121,7 @@ pub unsafe extern "C" fn efLib_Cb_SetRotY_FromFighterDir(mut effect: *mut EF_Eff
 
 /// `efLib_Cb_SetRotYZ_FromFighter`
 pub unsafe extern "C" fn efLib_Cb_SetRotYZ_FromFighter(mut effect: *mut EF_Effect) {
+    melee_core::ct!("efLib_Cb_SetRotYZ_FromFighter");
     let mut jobj_1: *mut HSD_JObj = null_mut();
     let mut half_pi: f32 = 0.0;
     let mut fighter: *mut Fighter = null_mut();
@@ -1097,6 +1139,7 @@ pub unsafe extern "C" fn efLib_Cb_SetRotYZ_FromFighter(mut effect: *mut EF_Effec
 
 /// `efLib_Cb_Fall_FromParamY`
 pub unsafe extern "C" fn efLib_Cb_Fall_FromParamY(mut effect: *mut EF_Effect) {
+    melee_core::ct!("efLib_Cb_Fall_FromParamY");
     let mut jobj_1: *mut HSD_JObj = null_mut();
     let mut rotate_y: f32 = 0.0;
     let mut rotate_x: f32 = 0.0;
@@ -1120,6 +1163,7 @@ pub unsafe extern "C" fn efLib_Cb_Fall_FromParamY(mut effect: *mut EF_Effect) {
 
 /// `efLib_Cb_SetOffset_FromParams`
 pub unsafe extern "C" fn efLib_Cb_SetOffset_FromParams(mut effect: *mut EF_Effect) {
+    melee_core::ct!("efLib_Cb_SetOffset_FromParams");
     let mut jobj_1: *mut HSD_JObj = null_mut();
     let mut translate_z: f32 = 0.0;
     let mut translate_y: f32 = 0.0;
@@ -1138,6 +1182,7 @@ pub unsafe extern "C" fn efLib_Cb_SetOffset_FromParams(mut effect: *mut EF_Effec
 
 /// `efLib_Cb_LifetimeEndSpawn`
 pub unsafe extern "C" fn efLib_Cb_LifetimeEndSpawn(mut effect: *mut EF_Effect) {
+    melee_core::ct!("efLib_Cb_LifetimeEndSpawn");
     if ((*effect).lifetime as i32) == 1 {
         let _ = ext::hsd_8039EFAC(0, 0, 427, (*effect).attach_jobj);
         (*effect).update = None;
@@ -1147,6 +1192,7 @@ pub unsafe extern "C" fn efLib_Cb_LifetimeEndSpawn(mut effect: *mut EF_Effect) {
 
 /// `efLib_Cb_SetScaleRotY_FromFighter`
 pub unsafe extern "C" fn efLib_Cb_SetScaleRotY_FromFighter(mut effect: *mut EF_Effect) {
+    melee_core::ct!("efLib_Cb_SetScaleRotY_FromFighter");
     let mut half_pi: f64 = 0.0;
     let mut scale_1: Vec3 = unsafe { core::mem::zeroed() };
     let mut scale_2: Vec3 = unsafe { core::mem::zeroed() };
@@ -1177,6 +1223,7 @@ pub unsafe extern "C" fn efLib_Cb_SetScaleRotY_FromFighter(mut effect: *mut EF_E
 
 /// `efLib_Cb_SetRotYZ_FromParamZ_FighterDir`
 pub unsafe extern "C" fn efLib_Cb_SetRotYZ_FromParamZ_FighterDir(mut effect: *mut EF_Effect) {
+    melee_core::ct!("efLib_Cb_SetRotYZ_FromParamZ_FighterDir");
     let mut jobj_1: *mut HSD_JObj = null_mut();
     let mut rotate_z: f32 = 0.0;
     jobj_1 = HSD_GObjGetHSDObj((*effect).gobj) as *mut HSD_JObj;
@@ -1193,6 +1240,7 @@ pub unsafe extern "C" fn efLib_Cb_SetRotYZ_FromParamZ_FighterDir(mut effect: *mu
 
 /// `efLib_Cb_ftMr_SpecialLw`
 pub unsafe extern "C" fn efLib_Cb_ftMr_SpecialLw(mut effect: *mut EF_Effect) {
+    melee_core::ct!("efLib_Cb_ftMr_SpecialLw");
     let mut eff_jobj: *mut HSD_JObj = null_mut();
     let mut eff_child_jobj: *mut HSD_JObj = null_mut();
     let mut eff_child_nxt_jobj: *mut HSD_JObj = null_mut();
@@ -1216,6 +1264,7 @@ pub unsafe extern "C" fn efLib_Cb_ftMr_SpecialLw(mut effect: *mut EF_Effect) {
 
 /// `efLib_Cb_ftLg_SpecialLw`
 pub unsafe extern "C" fn efLib_Cb_ftLg_SpecialLw(mut effect: *mut EF_Effect) {
+    melee_core::ct!("efLib_Cb_ftLg_SpecialLw");
     let mut eff_jobj: *mut HSD_JObj = null_mut();
     let mut eff_child_jobj: *mut HSD_JObj = null_mut();
     let mut eff_child_nxt_jobj: *mut HSD_JObj = null_mut();
@@ -1239,6 +1288,7 @@ pub unsafe extern "C" fn efLib_Cb_ftLg_SpecialLw(mut effect: *mut EF_Effect) {
 
 /// `efLib_Cb_ftKp_SpecialHi`
 pub unsafe extern "C" fn efLib_Cb_ftKp_SpecialHi(mut effect: *mut EF_Effect) {
+    melee_core::ct!("efLib_Cb_ftKp_SpecialHi");
     let mut rotate_z: f32 = 0.0;
     let mut fighter: *mut Fighter = null_mut();
     let mut jobj_1: *mut HSD_JObj = null_mut();
@@ -1262,11 +1312,13 @@ pub unsafe extern "C" fn efLib_Cb_ftKp_SpecialHi(mut effect: *mut EF_Effect) {
 
 /// `efLib_Cb_ftCo_Bury`
 pub unsafe extern "C" fn efLib_Cb_ftCo_Bury(mut effect: *mut EF_Effect) {
+    melee_core::ct!("efLib_Cb_ftCo_Bury");
     ext::ftCo_800C0FCC((*effect).gobj, (*effect).parent_gobj);
 }
 
 /// `efLib_SetTevKonstColor`
 pub unsafe extern "C" fn efLib_SetTevKonstColor(mut jobj: *mut HSD_JObj, mut count: i32, mut konst: u32, mut tev0: u32) {
+    melee_core::ct!("efLib_SetTevKonstColor");
     let mut dobj: *mut HSD_DObj = ext::HSD_JObjGetDObj(jobj);
     let mut mobj: *mut HSD_MObj = if !dobj.is_null() { (*dobj).mobj } else { null_mut() };
     let mut tobj: *mut HSD_TObj = ext::HSD_MObjGetTObj(mobj);
@@ -1285,6 +1337,7 @@ pub unsafe extern "C" fn efLib_SetTevKonstColor(mut jobj: *mut HSD_JObj, mut cou
 
 /// `efLib_SetParamAlpha`
 pub unsafe extern "C" fn efLib_SetParamAlpha(mut gobj: *mut HSD_GObj, mut alpha: u8) {
+    melee_core::ct!("efLib_SetParamAlpha");
     let mut idx: i32 = 0;
     let mut base: *mut EF_ParamEntry = efLib_ParamTable.as_mut_ptr();
     'b61: {
@@ -1314,6 +1367,7 @@ pub unsafe extern "C" fn efLib_SetParamAlpha(mut gobj: *mut HSD_GObj, mut alpha:
 
 /// `efLib_SetParamGfxId`
 pub unsafe extern "C" fn efLib_SetParamGfxId(mut gobj: *mut HSD_GObj, mut gfx_id: i32) {
+    melee_core::ct!("efLib_SetParamGfxId");
     let mut idx: i32 = 0;
     let mut base: *mut EF_ParamEntry = efLib_ParamTable.as_mut_ptr();
     'b64: {
@@ -1343,6 +1397,7 @@ pub unsafe extern "C" fn efLib_SetParamGfxId(mut gobj: *mut HSD_GObj, mut gfx_id
 
 /// `efLib_Cb_ApplyStoredAlpha`
 pub unsafe extern "C" fn efLib_Cb_ApplyStoredAlpha(mut effect: *mut EF_Effect) {
+    melee_core::ct!("efLib_Cb_ApplyStoredAlpha");
     let mut dobj: *mut HSD_DObj = null_mut();
     let mut jobj: *mut HSD_JObj = null_mut();
     let mut mobj: *mut HSD_MObj = null_mut();
@@ -1390,6 +1445,7 @@ pub unsafe extern "C" fn efLib_Cb_ApplyStoredAlpha(mut effect: *mut EF_Effect) {
 
 /// `efLib_Cb_AccumOffset_FromParams`
 pub unsafe extern "C" fn efLib_Cb_AccumOffset_FromParams(mut effect: *mut EF_Effect) {
+    melee_core::ct!("efLib_Cb_AccumOffset_FromParams");
     let mut translate: Vec3 = unsafe { core::mem::zeroed() };
     ext::lb_8000B1CC((*effect).attach_jobj, null_mut(), core::ptr::addr_of_mut!(translate) as *mut Vec);
     translate.x = translate.x + (*effect).params.x;
@@ -1400,6 +1456,7 @@ pub unsafe extern "C" fn efLib_Cb_AccumOffset_FromParams(mut effect: *mut EF_Eff
 
 /// `efLib_CreateGenerator_AppSRT_SetPos`
 pub unsafe extern "C" fn efLib_CreateGenerator_AppSRT_SetPos(mut gfx_id: i32, mut gobj: *mut HSD_GObj, mut jobj: *mut HSD_JObj, mut vec: *mut Vec) -> *mut EF_Effect {
+    melee_core::ct!("efLib_CreateGenerator_AppSRT_SetPos");
     let mut generator: *mut HSD_Generator = null_mut();
     let mut effect: *mut EF_Effect = efLib_Create(0, gobj);
     if !effect.is_null() {
@@ -1413,11 +1470,13 @@ pub unsafe extern "C" fn efLib_CreateGenerator_AppSRT_SetPos(mut gfx_id: i32, mu
 
 /// `HSD_GObjGetHSDObj`
 pub unsafe extern "C" fn HSD_GObjGetHSDObj(mut gobj: *mut HSD_GObj) -> *mut c_void {
+    melee_core::ct!("HSD_GObjGetHSDObj");
     return (*gobj).hsd_obj;
 }
 
 /// `HSD_JObjSetTranslate`
 pub unsafe extern "C" fn HSD_JObjSetTranslate(mut jobj: *mut HSD_JObj, mut translate: *mut Vec) {
+    melee_core::ct!("HSD_JObjSetTranslate");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjSetTranslate: assertion failed"); }
     if !translate.is_null() { (); } else { panic!("HSD_JObjSetTranslate: assertion failed"); }
     (*jobj).translate = *translate;
@@ -1432,11 +1491,13 @@ pub unsafe extern "C" fn HSD_JObjSetTranslate(mut jobj: *mut HSD_JObj, mut trans
 
 /// `HSD_GObjGetUserData`
 pub unsafe extern "C" fn HSD_GObjGetUserData(mut gobj: *mut HSD_GObj) -> *mut c_void {
+    melee_core::ct!("HSD_GObjGetUserData");
     return (*gobj).user_data;
 }
 
 /// `HSD_JObjGetParent`
 pub unsafe extern "C" fn HSD_JObjGetParent(mut jobj: *mut HSD_JObj) -> *mut HSD_JObj {
+    melee_core::ct!("HSD_JObjGetParent");
     if jobj.is_null() {
         return null_mut();
     } else {
@@ -1446,6 +1507,7 @@ pub unsafe extern "C" fn HSD_JObjGetParent(mut jobj: *mut HSD_JObj) -> *mut HSD_
 
 /// `HSD_JObjMtxIsDirty`
 pub unsafe extern "C" fn HSD_JObjMtxIsDirty(mut jobj: *mut HSD_JObj) -> i32 {
+    melee_core::ct!("HSD_JObjMtxIsDirty");
     let mut result: i32 = 0;
     if !jobj.is_null() { (); } else { panic!("HSD_JObjMtxIsDirty: assertion failed"); }
     result = 0;
@@ -1464,6 +1526,7 @@ pub unsafe extern "C" fn HSD_JObjGetMtxPtr(mut jobj: *mut HSD_JObj) -> *mut [f32
 
 /// `HSD_JObjGetScale`
 pub unsafe extern "C" fn HSD_JObjGetScale(mut jobj: *mut HSD_JObj, mut scale: *mut Vec) {
+    melee_core::ct!("HSD_JObjGetScale");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjGetScale: assertion failed"); }
     if !scale.is_null() { (); } else { panic!("HSD_JObjGetScale: assertion failed"); }
     *scale = (*jobj).scale;
@@ -1471,6 +1534,7 @@ pub unsafe extern "C" fn HSD_JObjGetScale(mut jobj: *mut HSD_JObj, mut scale: *m
 
 /// `HSD_JObjSetScale`
 pub unsafe extern "C" fn HSD_JObjSetScale(mut jobj: *mut HSD_JObj, mut scale: *mut Vec) {
+    melee_core::ct!("HSD_JObjSetScale");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjSetScale: assertion failed"); }
     if !scale.is_null() { (); } else { panic!("HSD_JObjSetScale: assertion failed"); }
     (*jobj).scale = *scale;
@@ -1485,12 +1549,14 @@ pub unsafe extern "C" fn HSD_JObjSetScale(mut jobj: *mut HSD_JObj, mut scale: *m
 
 /// `HSD_JObjGetRotationY`
 pub unsafe extern "C" fn HSD_JObjGetRotationY(mut jobj: *mut HSD_JObj) -> f32 {
+    melee_core::ct!("HSD_JObjGetRotationY");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjGetRotationY: assertion failed"); }
     return (*jobj).rotate.y;
 }
 
 /// `HSD_JObjGetTranslation`
 pub unsafe extern "C" fn HSD_JObjGetTranslation(mut jobj: *mut HSD_JObj, mut translate: *mut Vec) {
+    melee_core::ct!("HSD_JObjGetTranslation");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjGetTranslation: assertion failed"); }
     if !translate.is_null() { (); } else { panic!("HSD_JObjGetTranslation: assertion failed"); }
     *translate = (*jobj).translate;
@@ -1498,18 +1564,21 @@ pub unsafe extern "C" fn HSD_JObjGetTranslation(mut jobj: *mut HSD_JObj, mut tra
 
 /// `HSD_JObjGetRotationZ`
 pub unsafe extern "C" fn HSD_JObjGetRotationZ(mut jobj: *mut HSD_JObj) -> f32 {
+    melee_core::ct!("HSD_JObjGetRotationZ");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjGetRotationZ: assertion failed"); }
     return (*jobj).rotate.z;
 }
 
 /// `HSD_JObjGetScaleX`
 pub unsafe extern "C" fn HSD_JObjGetScaleX(mut jobj: *mut HSD_JObj) -> f32 {
+    melee_core::ct!("HSD_JObjGetScaleX");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjGetScaleX: assertion failed"); }
     return (*jobj).scale.x;
 }
 
 /// `HSD_JObjSetScaleX`
 pub unsafe extern "C" fn HSD_JObjSetScaleX(mut jobj: *mut HSD_JObj, mut x: f32) {
+    melee_core::ct!("HSD_JObjSetScaleX");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjSetScaleX: assertion failed"); }
     (*jobj).scale.x = x;
     if !(((*jobj).flags & ((1 << 25) as u32)) != 0) {
@@ -1523,12 +1592,14 @@ pub unsafe extern "C" fn HSD_JObjSetScaleX(mut jobj: *mut HSD_JObj, mut x: f32) 
 
 /// `HSD_JObjGetScaleY`
 pub unsafe extern "C" fn HSD_JObjGetScaleY(mut jobj: *mut HSD_JObj) -> f32 {
+    melee_core::ct!("HSD_JObjGetScaleY");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjGetScaleY: assertion failed"); }
     return (*jobj).scale.y;
 }
 
 /// `HSD_JObjSetScaleY`
 pub unsafe extern "C" fn HSD_JObjSetScaleY(mut jobj: *mut HSD_JObj, mut y: f32) {
+    melee_core::ct!("HSD_JObjSetScaleY");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjSetScaleY: assertion failed"); }
     (*jobj).scale.y = y;
     if !(((*jobj).flags & ((1 << 25) as u32)) != 0) {
@@ -1542,12 +1613,14 @@ pub unsafe extern "C" fn HSD_JObjSetScaleY(mut jobj: *mut HSD_JObj, mut y: f32) 
 
 /// `HSD_JObjGetScaleZ`
 pub unsafe extern "C" fn HSD_JObjGetScaleZ(mut jobj: *mut HSD_JObj) -> f32 {
+    melee_core::ct!("HSD_JObjGetScaleZ");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjGetScaleZ: assertion failed"); }
     return (*jobj).scale.z;
 }
 
 /// `HSD_JObjSetScaleZ`
 pub unsafe extern "C" fn HSD_JObjSetScaleZ(mut jobj: *mut HSD_JObj, mut z: f32) {
+    melee_core::ct!("HSD_JObjSetScaleZ");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjSetScaleZ: assertion failed"); }
     (*jobj).scale.z = z;
     if !(((*jobj).flags & ((1 << 25) as u32)) != 0) {
@@ -1561,6 +1634,7 @@ pub unsafe extern "C" fn HSD_JObjSetScaleZ(mut jobj: *mut HSD_JObj, mut z: f32) 
 
 /// `HSD_JObjSetRotationY`
 pub unsafe extern "C" fn HSD_JObjSetRotationY(mut jobj: *mut HSD_JObj, mut y: f32) {
+    melee_core::ct!("HSD_JObjSetRotationY");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjSetRotationY: assertion failed"); }
     if !(((*jobj).flags & ((1 << 17) as u32)) != 0) { (); } else { panic!("HSD_JObjSetRotationY: assertion failed"); }
     (*jobj).rotate.y = y;
@@ -1575,12 +1649,14 @@ pub unsafe extern "C" fn HSD_JObjSetRotationY(mut jobj: *mut HSD_JObj, mut y: f3
 
 /// `HSD_JObjGetTranslationZ`
 pub unsafe extern "C" fn HSD_JObjGetTranslationZ(mut jobj: *mut HSD_JObj) -> f32 {
+    melee_core::ct!("HSD_JObjGetTranslationZ");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjGetTranslationZ: assertion failed"); }
     return (*jobj).translate.z;
 }
 
 /// `HSD_JObjSetTranslateZ`
 pub unsafe extern "C" fn HSD_JObjSetTranslateZ(mut jobj: *mut HSD_JObj, mut z: f32) {
+    melee_core::ct!("HSD_JObjSetTranslateZ");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjSetTranslateZ: assertion failed"); }
     (*jobj).translate.z = z;
     if !(((*jobj).flags & ((1 << 25) as u32)) != 0) {
@@ -1594,6 +1670,7 @@ pub unsafe extern "C" fn HSD_JObjSetTranslateZ(mut jobj: *mut HSD_JObj, mut z: f
 
 /// `HSD_JObjSetRotationZ`
 pub unsafe extern "C" fn HSD_JObjSetRotationZ(mut jobj: *mut HSD_JObj, mut z: f32) {
+    melee_core::ct!("HSD_JObjSetRotationZ");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjSetRotationZ: assertion failed"); }
     if !(((*jobj).flags & ((1 << 17) as u32)) != 0) { (); } else { panic!("HSD_JObjSetRotationZ: assertion failed"); }
     (*jobj).rotate.z = z;
@@ -1608,24 +1685,28 @@ pub unsafe extern "C" fn HSD_JObjSetRotationZ(mut jobj: *mut HSD_JObj, mut z: f3
 
 /// `HSD_JObjGetTranslationX`
 pub unsafe extern "C" fn HSD_JObjGetTranslationX(mut jobj: *mut HSD_JObj) -> f32 {
+    melee_core::ct!("HSD_JObjGetTranslationX");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjGetTranslationX: assertion failed"); }
     return (*jobj).translate.x;
 }
 
 /// `HSD_JObjGetTranslationY`
 pub unsafe extern "C" fn HSD_JObjGetTranslationY(mut jobj: *mut HSD_JObj) -> f32 {
+    melee_core::ct!("HSD_JObjGetTranslationY");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjGetTranslationY: assertion failed"); }
     return (*jobj).translate.y;
 }
 
 /// `HSD_JObjGetRotationX`
 pub unsafe extern "C" fn HSD_JObjGetRotationX(mut jobj: *mut HSD_JObj) -> f32 {
+    melee_core::ct!("HSD_JObjGetRotationX");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjGetRotationX: assertion failed"); }
     return (*jobj).rotate.x;
 }
 
 /// `HSD_JObjSetTranslateX`
 pub unsafe extern "C" fn HSD_JObjSetTranslateX(mut jobj: *mut HSD_JObj, mut x: f32) {
+    melee_core::ct!("HSD_JObjSetTranslateX");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjSetTranslateX: assertion failed"); }
     (*jobj).translate.x = x;
     if !(((*jobj).flags & ((1 << 25) as u32)) != 0) {
@@ -1639,6 +1720,7 @@ pub unsafe extern "C" fn HSD_JObjSetTranslateX(mut jobj: *mut HSD_JObj, mut x: f
 
 /// `HSD_JObjSetTranslateY`
 pub unsafe extern "C" fn HSD_JObjSetTranslateY(mut jobj: *mut HSD_JObj, mut y: f32) {
+    melee_core::ct!("HSD_JObjSetTranslateY");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjSetTranslateY: assertion failed"); }
     (*jobj).translate.y = y;
     if !(((*jobj).flags & ((1 << 25) as u32)) != 0) {
@@ -1652,6 +1734,7 @@ pub unsafe extern "C" fn HSD_JObjSetTranslateY(mut jobj: *mut HSD_JObj, mut y: f
 
 /// `HSD_JObjSetRotationX`
 pub unsafe extern "C" fn HSD_JObjSetRotationX(mut jobj: *mut HSD_JObj, mut x: f32) {
+    melee_core::ct!("HSD_JObjSetRotationX");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjSetRotationX: assertion failed"); }
     if !(((*jobj).flags & ((1 << 17) as u32)) != 0) { (); } else { panic!("HSD_JObjSetRotationX: assertion failed"); }
     (*jobj).rotate.x = x;
@@ -1666,6 +1749,7 @@ pub unsafe extern "C" fn HSD_JObjSetRotationX(mut jobj: *mut HSD_JObj, mut x: f3
 
 /// `HSD_JObjSetupMatrix`
 pub unsafe extern "C" fn HSD_JObjSetupMatrix(mut jobj: *mut HSD_JObj) {
+    melee_core::ct!("HSD_JObjSetupMatrix");
     if (!(!jobj.is_null())) || (!(HSD_JObjMtxIsDirty(jobj) != 0)) {
         return;
     }

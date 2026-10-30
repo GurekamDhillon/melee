@@ -19,15 +19,17 @@ pub use crate::gr::trivial::grtdonkey::{
     grTDonkey_802204FC, grTDonkey_80220504,
 };
 
-pub unsafe extern "C" fn grTDonkey_80220228(_arg0: i32) {}
+pub unsafe extern "C" fn grTDonkey_80220228(_arg0: i32) { melee_core::ct!("grTDonkey_80220228");}
 
 pub unsafe extern "C" fn grTDonkey_OnInit() {
+    melee_core::ct!("grTDonkey_OnInit");
     Ground_InitTargetStage(grTDonkey_802202CC);
 }
 
-pub unsafe extern "C" fn grTdonkey_UnkStage0_OnLoad() {}
+pub unsafe extern "C" fn grTdonkey_UnkStage0_OnLoad() { melee_core::ct!("grTdonkey_UnkStage0_OnLoad");}
 
 pub unsafe extern "C" fn grTDonkey_802202CC(gobj_id: i32) -> *mut HSD_GObj {
+    melee_core::ct!("grTDonkey_802202CC");
     let callbacks = (&raw mut grTDk_StageCallbacks as *mut StageCallbacks).add(gobj_id as usize);
     let gobj = ext::Ground_GetStageGObj(gobj_id);
     if !gobj.is_null() {
@@ -38,13 +40,13 @@ pub unsafe extern "C" fn grTDonkey_802202CC(gobj_id: i32) -> *mut HSD_GObj {
     gobj
 }
 
-pub unsafe extern "C" fn grTDonkey_802203E8(_arg0: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grTDonkey_802203E8(_arg0: *mut HSD_GObj) { melee_core::ct!("grTDonkey_802203E8");}
 
-pub unsafe extern "C" fn grTDonkey_802203EC(_arg0: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grTDonkey_802203EC(_arg0: *mut HSD_GObj) { melee_core::ct!("grTDonkey_802203EC");}
 
-pub unsafe extern "C" fn grTDonkey_8022047C(_arg0: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grTDonkey_8022047C(_arg0: *mut HSD_GObj) { melee_core::ct!("grTDonkey_8022047C");}
 
-pub unsafe extern "C" fn grTDonkey_802204F8(_arg0: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grTDonkey_802204F8(_arg0: *mut HSD_GObj) { melee_core::ct!("grTDonkey_802204F8");}
 
 pub static mut grTDk_StageCallbacks: [StageCallbacks; 4] = [
     StageCallbacks {

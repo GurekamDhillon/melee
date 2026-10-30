@@ -25,11 +25,13 @@ static mut gm_804D6850: *mut HSD_GObj = core::ptr::null_mut();
 
 /// C `gm_801ACC94`: the address of the movie table.
 pub unsafe fn gm_801ACC94() -> *mut c_void {
+    melee_core::ct!("gm_801ACC94");
     addr_of_mut!(gm_803DD2C0) as *mut c_void
 }
 
 /// C `gm_Scene_HowTo_OnEnter`.
 pub unsafe fn gm_Scene_HowTo_OnEnter(_unused: *mut c_void) {
+    melee_core::ct!("gm_Scene_HowTo_OnEnter");
     let mut gobj = ext::GObj_Create(0x13, 0x14, 0);
     ext::gm_801A9DD0(gobj, 0x280, 0x1E0, 8, 0);
     (*gobj).gxlink_prios = 1 << 0xB;
@@ -48,6 +50,7 @@ pub unsafe fn gm_Scene_HowTo_OnEnter(_unused: *mut c_void) {
 
 /// C `gm_Scene_HowTo_OnFrame`.
 pub unsafe fn gm_Scene_HowTo_OnFrame() {
+    melee_core::ct!("gm_Scene_HowTo_OnFrame");
     let mut var_r31 = false;
     ext::lbMthp_8001F578();
     ext::lbMthp_8001F5C4();

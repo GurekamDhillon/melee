@@ -60,6 +60,7 @@ fn tap_jump_ok(f: &Fighter) -> bool {
 /// static inline `ftCo_800D74A4_inline`.
 #[inline(always)]
 pub fn ftCo_800D74A4_inline(f: &Fighter) -> *mut Fighter_x2D0_t {
+    melee_core::ct!("ftCo_800D74A4_inline");
     f.x2D0
 }
 
@@ -70,6 +71,7 @@ unsafe fn start_state(p: *mut Fighter_x2D0_t, idx: i32) -> i32 {
 }
 
 pub fn ftCo_800D730C(g: G, arg1: bool) -> bool {
+    melee_core::ct!("ftCo_800D730C");
     let f = fp(g);
     let x2d0 = f.x2D0;
     if f.x1968_jumpsUsed as i32 >= ext::ScriptGame_CapsMaxJumps(f) {
@@ -118,6 +120,7 @@ pub fn ftCo_800D730C(g: G, arg1: bool) -> bool {
 }
 
 pub fn ftCo_800D74A4(g: G) {
+    melee_core::ct!("ftCo_800D74A4");
     let f = fp(g);
     let p = ftCo_800D74A4_inline(f);
     f.cmd_vars[0] = 0;
@@ -182,6 +185,7 @@ pub fn ftCo_800D74A4(g: G) {
 }
 
 pub fn ftCo_JumpAerialF1_Anim(g: G) {
+    melee_core::ct!("ftCo_JumpAerialF1_Anim");
     let f = fp(g);
     let tmp = unsafe { (*f.x2D0).x0 };
     ext::ft_800CB6EC(f, tmp);
@@ -196,10 +200,12 @@ pub fn ftCo_JumpAerialF1_Anim(g: G) {
 }
 
 pub fn ftCo_JumpAerialF1_IASA(g: G) {
+    melee_core::ct!("ftCo_JumpAerialF1_IASA");
     ext::ftCo_JumpAerial_IASA(g);
 }
 
 pub fn ftCo_JumpAerialF1_Phys(g: G) {
+    melee_core::ct!("ftCo_JumpAerialF1_Phys");
     let f = fp(g);
     let p = f.x2D0;
     let (a, b) = unsafe { (f.co_attrs.air_drift_stick_mul * (*p).xC, f.co_attrs.air_drift_max * (*p).x10) };
@@ -207,5 +213,6 @@ pub fn ftCo_JumpAerialF1_Phys(g: G) {
 }
 
 pub fn ftCo_JumpAerialF1_Coll(g: G) {
+    melee_core::ct!("ftCo_JumpAerialF1_Coll");
     ext::ft_80082F28(g);
 }

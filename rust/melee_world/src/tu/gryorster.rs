@@ -382,9 +382,10 @@ unsafe fn Ground_SetupStageCallbacks(gobj: *mut Ground_GObj, callbacks: *mut Sta
     }
 }
 
-pub unsafe extern "C" fn grYorster_80201FA0(_unused: i32) {}
+pub unsafe extern "C" fn grYorster_80201FA0(_unused: i32) { melee_core::ct!("grYorster_80201FA0");}
 
 pub unsafe extern "C" fn grYorster_80201FA4() {
+    melee_core::ct!("grYorster_80201FA4");
     grYt_804D6A20.x0 = ext::Ground_GetYakumonoParam() as *mut YorsterParams;
     ext::stage_info.unk8C.set_b4(0);
     ext::stage_info.unk8C.set_b5(1);
@@ -395,17 +396,20 @@ pub unsafe extern "C" fn grYorster_80201FA4() {
     ext::Ground_801C3BB4();
 }
 
-pub unsafe extern "C" fn grYorster_8020200C() {}
+pub unsafe extern "C" fn grYorster_8020200C() { melee_core::ct!("grYorster_8020200C");}
 
 pub unsafe extern "C" fn grYorster_80202010() {
+    melee_core::ct!("grYorster_80202010");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
 
 pub unsafe extern "C" fn grYorster_80202034() -> i32 {
+    melee_core::ct!("grYorster_80202034");
     0
 }
 
 pub unsafe extern "C" fn grYorster_8020203C(gobj_id: i32) -> *mut HSD_GObj {
+    melee_core::ct!("grYorster_8020203C");
     let callbacks = &raw mut grYt_StageCallbacks[gobj_id as usize];
 
     let gobj = ext::Ground_GetStageGObj(gobj_id);
@@ -420,18 +424,21 @@ pub unsafe extern "C" fn grYorster_8020203C(gobj_id: i32) -> *mut HSD_GObj {
 }
 
 pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj0_OnInit");
     Ground_StartMapAnim(gobj);
 }
 
 pub unsafe extern "C" fn grYorster_80202150(_gobj: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("grYorster_80202150");
     0
 }
 
-pub unsafe extern "C" fn grYorster_80202158(_gobj: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grYorster_80202158(_gobj: *mut Ground_GObj) { melee_core::ct!("grYorster_80202158");}
 
-pub unsafe extern "C" fn grYorster_8020215C(_gobj: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grYorster_8020215C(_gobj: *mut Ground_GObj) { melee_core::ct!("grYorster_8020215C");}
 
 pub unsafe extern "C" fn grYorster_80202160(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grYorster_80202160");
     let gp = (*gobj).user_data as *mut Ground;
     grYorster_802022A4(gobj);
     ext::Ground_UpdateMapColl(gobj);
@@ -440,6 +447,7 @@ pub unsafe extern "C" fn grYorster_80202160(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grYorster_802021AC(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grYorster_802021AC");
     let gp = (*gobj).user_data as *mut Ground;
     ext::Ground_InitMapColl((*gobj).hsd_obj as *mut HSD_JObj, (*gp).map_id as i32);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 4);
@@ -450,10 +458,12 @@ pub unsafe extern "C" fn grYorster_802021AC(gobj: *mut Ground_GObj) {
 }
 
 pub unsafe extern "C" fn grYorster_8020224C(_gobj: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("grYorster_8020224C");
     0
 }
 
 pub unsafe extern "C" fn grYorster_80202254(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grYorster_80202254");
     let gp = (*gobj).user_data as *mut Ground;
     if (*gp).u.yorster.xC4 == 0 {
         grYorster_8020266C(gobj);
@@ -461,9 +471,10 @@ pub unsafe extern "C" fn grYorster_80202254(gobj: *mut Ground_GObj) {
     Ground_UpdateWindAndMapColl(gobj);
 }
 
-pub unsafe extern "C" fn grYorster_802022A0(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grYorster_802022A0(_gobj: *mut HSD_GObj) { melee_core::ct!("grYorster_802022A0");}
 
 pub unsafe extern "C" fn grYorster_802022A4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grYorster_802022A4");
     let gp = (*gobj).user_data as *mut Ground;
     let joints: [i32; 9] = [0xA, 0xB, 0xC, 0xD, 0xE, 0xF, 0x10, 0x11, 0x12];
 
@@ -487,6 +498,7 @@ pub unsafe extern "C" fn grYorster_802022A4(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grYorster_80202428(item_gobj: *mut HSD_GObj, gp: *mut Ground, _pos: *mut Vec3, fighter_gobj: *mut HSD_GObj, value: f32) {
+    melee_core::ct!("grYorster_80202428");
     let gp2 = gp;
 
     if ext::ftLib_80086960(fighter_gobj) != 0 {
@@ -512,6 +524,7 @@ pub unsafe extern "C" fn grYorster_802024F0(
     _ground_kind: u32,
     mut delta_y: f32,
 ) {
+    melee_core::ct!("grYorster_802024F0");
     let gp = user_data as *mut Ground;
     let gobj = (*coll).x0_gobj;
     let env = (*coll).x34_flags.b1234() as i32;
@@ -553,6 +566,7 @@ pub unsafe extern "C" fn grYorster_802024F0(
 }
 
 pub unsafe extern "C" fn grYorster_8020266C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grYorster_8020266C");
     let gp = (*gobj).user_data as *mut Ground;
     let gp2 = gp;
     let p = grYt_804D6A20.x0;
@@ -670,9 +684,11 @@ pub unsafe extern "C" fn grYorster_8020266C(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grYorster_80202B5C(_unused: i32) -> *mut DynamicsDesc {
+    melee_core::ct!("grYorster_80202B5C");
     null_mut()
 }
 
 pub unsafe extern "C" fn grYorster_80202B64(_a: *mut Vec3, _unused: i32, _joint: *mut HSD_JObj) -> i32 {
+    melee_core::ct!("grYorster_80202B64");
     1
 }

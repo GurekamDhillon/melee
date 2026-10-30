@@ -59,6 +59,7 @@ pub const M_TAU: f64 = 6.283185307179586;
 
 #[inline]
 pub fn EF_MEX_IS_CUSTOM(id: i32) -> bool {
+    melee_core::ct!("EF_MEX_IS_CUSTOM");
     (EF_MEX_MDL_START..EF_MEX_END).contains(&id)
 }
 
@@ -391,6 +392,7 @@ impl Default for EfAsyncState {
 /// 0x3E8: `0.04f * x + 0.3f` (contracted) clamped to [0.3, 1.5].
 #[inline]
 pub fn dispatch_3e8_scale(x: f32) -> f32 {
+    melee_core::ct!("dispatch_3e8_scale");
     let mut f = fmadds(0.04, x, 0.3);
     if f < 0.3 {
         f = 0.3;
@@ -403,21 +405,25 @@ pub fn dispatch_3e8_scale(x: f32) -> f32 {
 /// 0x427: `0.4f * r + 2.8f` (contracted).
 #[inline]
 pub fn dispatch_427_fall(r: f32) -> f32 {
+    melee_core::ct!("dispatch_427_fall");
     fmadds(0.4, r, 2.8)
 }
 /// `M_TAU * HSD_Randf()` narrowed to f32.
 #[inline]
 pub fn tau_times(r: f32) -> f32 {
+    melee_core::ct!("tau_times");
     (M_TAU * r as f64) as f32
 }
 /// `efAsync_SetEffectFacingDir` / the dispatchers' `rot_y`: ±M_PI_2 as f32.
 #[inline]
 pub fn facing_rot(dir: f32) -> f32 {
+    melee_core::ct!("facing_rot");
     (if dir < 0.0 { -M_PI_2 } else { M_PI_2 }) as f32
 }
 /// `efAsync_MexMiss`'s dedup key (C int arithmetic, wrapping).
 #[inline]
 pub fn mex_miss_key(kind: i32, gfx_id: i32) -> i32 {
+    melee_core::ct!("mex_miss_key");
     kind.wrapping_mul(10000)
         .wrapping_add(gfx_id.wrapping_rem(100000))
         .wrapping_mul(2)
@@ -452,6 +458,7 @@ unsafe fn set_scale3(g: *mut HSD_Generator, v: f32) {
 
 /// Drain `efLib_AnimQueue` (the tail loop of both dispatchers).
 pub unsafe fn drain_anim_queue<H: EfHost + ?Sized>(h: &mut H) {
+    melee_core::ct!("drain_anim_queue");
     while h.ef_data().anim_count != 0 {
         let cnt = h.ef_data().anim_count - 1;
         h.ef_data().anim_count = cnt;
@@ -467,11 +474,13 @@ fn upd(f: unsafe extern "C" fn(*mut EF_Effect)) -> EF_UpdateFn {
 /// The 0x417/0x418/0x41A tint: konst colour for `u32_1`.
 #[inline]
 pub fn tint_konst(c: u32) -> u32 {
+    melee_core::ct!("tint_konst");
     if c.wrapping_add(0xFFA0_0000) == 0x6060 { 0x808080 } else { 0xFFFFFF }
 }
 
 /// efAsync_Dispatch.
 pub unsafe fn efAsync_Dispatch<H: EfHost + ?Sized>(h: &mut H, gfx_id: i32, gobj: *mut HSD_GObj, vl: &mut VaList<'_>) -> *mut c_void {
+    melee_core::ct!("efAsync_Dispatch");
     let mut ret: *mut c_void = null_mut();
     let mut scale = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut translate = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -933,6 +942,7 @@ pub unsafe fn efAsync_Dispatch<H: EfHost + ?Sized>(h: &mut H, gfx_id: i32, gobj:
 
 /// efAsync_LoadAsync.
 pub unsafe fn efAsync_LoadAsync<H: EfHost + ?Sized>(h: &mut H, index: i32) {
+    melee_core::ct!("efAsync_LoadAsync");
     efAsync_MexInit(h);
     if index >= EF_BANK_MAX as i32 || index < 0 {
         return;
@@ -946,6 +956,7 @@ pub unsafe fn efAsync_LoadAsync<H: EfHost + ?Sized>(h: &mut H, index: i32) {
 
 /// efAsync_OnLoad.
 pub unsafe fn efAsync_OnLoad<H: EfHost + ?Sized>(h: &mut H, archive: *mut c_void, data: *mut u8, length: u32, index: i32) {
+    melee_core::ct!("efAsync_OnLoad");
     h.lbArchive_InitializeDAT(archive, data, length);
     let name = h.ef_async().dat_entries[index as usize].effDataTable_name;
     let result = h.HSD_ArchiveGetPublicAddress(archive, name) as *mut EF_DAT_Entry;
@@ -957,6 +968,7 @@ pub unsafe fn efAsync_OnLoad<H: EfHost + ?Sized>(h: &mut H, archive: *mut c_void
 
 /// efAsync_LoadSync.
 pub unsafe fn efAsync_LoadSync<H: EfHost + ?Sized>(h: &mut H, idx: i32) {
+    melee_core::ct!("efAsync_LoadSync");
     efAsync_MexInit(h);
     if idx >= EF_BANK_MAX as i32 || idx < 0 {
         return;
@@ -981,6 +993,7 @@ pub unsafe fn efAsync_LoadSync<H: EfHost + ?Sized>(h: &mut H, idx: i32) {
 
 /// efAsync_QueueProcessDeferred.
 pub unsafe fn efAsync_QueueProcessDeferred<H: EfHost + ?Sized>(h: &mut H, gobj: *mut HSD_GObj, q: *mut EF_QueuedEffect) {
+    melee_core::ct!("efAsync_QueueProcessDeferred");
     let kind = (*q).spawn_kind as u32;
     let id = (*q).gfx_id;
     let j = (*q).jobj;
@@ -1028,6 +1041,7 @@ pub unsafe fn efAsync_QueueProcessDeferred<H: EfHost + ?Sized>(h: &mut H, gobj: 
 
 /// efAsync_QueueFlush.
 pub unsafe fn efAsync_QueueFlush<H: EfHost + ?Sized>(h: &mut H, gobj: *mut HSD_GObj, head: *mut EF_QueuedEffect) {
+    melee_core::ct!("efAsync_QueueFlush");
     let mut cur = (*head).next;
     while !cur.is_null() {
         let next = (*cur).next;
@@ -1039,6 +1053,7 @@ pub unsafe fn efAsync_QueueFlush<H: EfHost + ?Sized>(h: &mut H, gobj: *mut HSD_G
 
 /// efAsync_QueueClear.
 pub unsafe fn efAsync_QueueClear<H: EfHost + ?Sized>(h: &mut H, head: *mut EF_QueuedEffect) {
+    melee_core::ct!("efAsync_QueueClear");
     let mut cur = (*head).next;
     while !cur.is_null() {
         let next = (*cur).next;
@@ -1061,6 +1076,7 @@ unsafe fn enqueue_or_run<H: EfHost + ?Sized>(h: &mut H, gobj: *mut HSD_GObj, hea
 
 /// efAsync_Spawn (variadic tail as `vl`).
 pub unsafe fn efAsync_Spawn<H: EfHost + ?Sized>(h: &mut H, gobj: *mut HSD_GObj, head: *mut EF_QueuedEffect, spawn_kind: u32, gfx_id: u32, jobj: *mut HSD_JObj, mut vl: VaList<'_>) {
+    melee_core::ct!("efAsync_Spawn");
     let ad: *mut HSD_ObjAllocData = &mut h.ef_async().alloc_data;
     let q = h.HSD_ObjAlloc(ad) as *mut EF_QueuedEffect;
     (*q).spawn_kind = spawn_kind as u8;
@@ -1094,6 +1110,7 @@ pub unsafe fn efAsync_Spawn<H: EfHost + ?Sized>(h: &mut H, gobj: *mut HSD_GObj, 
 
 /// efAsync_QueueInit.
 pub unsafe fn efAsync_QueueInit<H: EfHost + ?Sized>(h: &mut H) {
+    melee_core::ct!("efAsync_QueueInit");
     let ad: *mut HSD_ObjAllocData = &mut h.ef_async().alloc_data;
     // sizeof(EF_QueuedEffect) / sizeof(EF_QueuedEffect*) of the native build.
     h.HSD_ObjAllocInit(ad, core::mem::size_of::<EF_QueuedEffect>() as u32, core::mem::size_of::<*mut EF_QueuedEffect>() as u32);
@@ -1107,6 +1124,7 @@ unsafe fn cstr(p: *const c_char) -> String {
 
 /// efAsync_MexInit.
 pub unsafe fn efAsync_MexInit<H: EfHost + ?Sized>(h: &mut H) {
+    melee_core::ct!("efAsync_MexInit");
     if h.ef_async().mex_ready {
         return;
     }
@@ -1133,6 +1151,7 @@ pub unsafe fn efAsync_MexInit<H: EfHost + ?Sized>(h: &mut H) {
 
 /// efAsync_MexNoteArchive (static).
 pub unsafe fn efAsync_MexNoteArchive<H: EfHost + ?Sized>(h: &mut H, bank: i32, archive: *mut c_void) {
+    melee_core::ct!("efAsync_MexNoteArchive");
     if bank < 0 || bank >= EF_BANK_MAX as i32 || archive.is_null() {
         return;
     }
@@ -1149,6 +1168,7 @@ pub unsafe fn efAsync_MexNoteArchive<H: EfHost + ?Sized>(h: &mut H, bank: i32, a
 
 /// efAsync_MexMiss (static).
 pub unsafe fn efAsync_MexMiss<H: EfHost + ?Sized>(h: &mut H, kind: i32, gfx_id: i32, why: &str) {
+    melee_core::ct!("efAsync_MexMiss");
     let key = mex_miss_key(kind, gfx_id);
     let st = h.ef_async();
     for i in 0..st.miss_nseen as usize {
@@ -1175,6 +1195,7 @@ unsafe fn ftkb_is_kirby<H: EfHost + ?Sized>(h: &mut H, k: i32) -> bool {
 pub unsafe fn efAsync_MexResolve<H: EfHost + ?Sized>(
     h: &mut H, mut gobj: *mut HSD_GObj, gfx_id: i32, final_id: &mut i32, is_ptcl: &mut i32, owner: &mut *mut HSD_GObj,
 ) -> i32 {
+    melee_core::ct!("efAsync_MexResolve");
     if gobj.is_null() || !EF_MEX_IS_CUSTOM(gfx_id) {
         return -1;
     }
@@ -1244,6 +1265,7 @@ pub unsafe fn efAsync_MexSpawn<H: EfHost + ?Sized>(
     h: &mut H, gobj: *mut HSD_GObj, head: *mut EF_QueuedEffect, gfx_id: i32, jobj: *mut HSD_JObj, offset: *const Vec3, facing: f32,
     orientation: f32,
 ) {
+    melee_core::ct!("efAsync_MexSpawn");
     let (mut fid, mut ptcl, mut owner) = (0, 0, null_mut());
     if efAsync_MexResolve(h, gobj, gfx_id, &mut fid, &mut ptcl, &mut owner) < 0 {
         return;
@@ -1264,6 +1286,7 @@ pub unsafe fn efAsync_MexSpawn<H: EfHost + ?Sized>(
 
 /// efAsync_MexProcessDeferred (static).
 pub unsafe fn efAsync_MexProcessDeferred<H: EfHost + ?Sized>(h: &mut H, gobj: *mut HSD_GObj, q: *mut EF_QueuedEffect) {
+    melee_core::ct!("efAsync_MexProcessDeferred");
     let id = (*q).gfx_id;
     let (mut fid, mut ptcl, mut owner) = (0, 0, null_mut());
     let ty = efAsync_MexResolve(h, gobj, id, &mut fid, &mut ptcl, &mut owner);
@@ -1337,10 +1360,12 @@ unsafe impl EfHost for NativeEfHost {
 
 /// `efAsync_LoadAsync(index)` on the game's globals.
 pub unsafe fn efAsync_LoadAsync_native(index: i32) {
+    melee_core::ct!("efAsync_LoadAsync_native");
     efAsync_LoadAsync(&mut NativeEfHost, index)
 }
 /// `efAsync_LoadSync(index)` on the game's globals.
 pub unsafe fn efAsync_LoadSync_native(index: i32) {
+    melee_core::ct!("efAsync_LoadSync_native");
     efAsync_LoadSync(&mut NativeEfHost, index)
 }
 /// `efAsync_Spawn(gobj, head, spawn_kind, gfx_id, jobj, ...)` on the game's globals; `tail` is the
@@ -1353,6 +1378,7 @@ pub unsafe fn efAsync_Spawn_native(
     jobj: *mut HSD_JObj,
     tail: &[*mut c_void],
 ) {
+    melee_core::ct!("efAsync_Spawn_native");
     let args: std::vec::Vec<VaArg> = tail.iter().map(|&p| VaArg::Ptr(p)).collect();
     efAsync_Spawn(&mut NativeEfHost, gobj, head, spawn_kind, gfx_id, jobj, VaList::new(&args))
 }

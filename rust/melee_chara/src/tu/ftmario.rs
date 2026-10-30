@@ -66,6 +66,7 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 
 /// `PUSH_ATTRS(fp, ftMario_DatAttrs)`: copy ext_attr into the backup, point dat_attrs at it.
 pub fn ftMr_Init_OnLoadForDrMario(fp: *mut Fighter) {
+    melee_core::ct!("ftMr_Init_OnLoadForDrMario");
     unsafe {
         let backup = (*fp).dat_attrs_backup;
         let src = (*(*fp).ft_data).ext_attr as *const ftMario_DatAttrs;
@@ -75,6 +76,7 @@ pub fn ftMr_Init_OnLoadForDrMario(fp: *mut Fighter) {
 }
 
 pub fn ftMr_Init_OnLoad(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_Init_OnLoad");
     unsafe {
         let fp = fpp(gobj);
         let items = (*(*fp).ft_data).x48_items;
@@ -87,19 +89,23 @@ pub fn ftMr_Init_OnLoad(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMr_Init_OnTakeDamage(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_Init_OnTakeDamage");
     crate::tu::ftmariospecials::ftMr_SpecialS_RemoveCape(gobj);
 }
 
 pub fn ftMr_Init_OnItemPickup(gobj: *mut HSD_GObj, flag: i32) {
+    melee_core::ct!("ftMr_Init_OnItemPickup");
     Fighter_OnItemPickup(gobj, flag, 1, 1);
 }
 
 pub fn ftMr_Init_OnItemDrop(gobj: *mut HSD_GObj, flag: i32) {
+    melee_core::ct!("ftMr_Init_OnItemDrop");
     Fighter_OnItemDrop(gobj, flag, 1, 1);
 }
 
 /// `COPY_ATTRS(gobj, ftMario_DatAttrs)`.
 pub fn ftMr_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_Init_LoadSpecialAttrs");
     unsafe {
         let fp = fpp(gobj);
         *((*fp).dat_attrs as *mut ftMario_DatAttrs) = *((*(*fp).ft_data).ext_attr as *const ftMario_DatAttrs);
@@ -109,6 +115,7 @@ pub fn ftMr_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
 /// `ftMr_Init_GetMotionFileString`: the Vi demo motion file for demo kind 9 / 10. The C leaves
 /// `offset` uninitialised for any other argument; this returns the first entry then.
 pub fn ftMr_Init_GetMotionFileString(arg0: u32) -> &'static str {
+    melee_core::ct!("ftMr_Init_GetMotionFileString");
     let offset = match arg0 {
         9 => 14,
         10 => 15,

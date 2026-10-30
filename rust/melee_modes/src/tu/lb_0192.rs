@@ -103,6 +103,7 @@ pub static mut lb_804D63D0: *mut HSD_Text = core::ptr::null_mut();
 
 /// Drive status -> message index (-1: nothing to show).
 pub unsafe fn lb_80019230() -> i32 {
+    melee_core::ct!("lb_80019230");
     match ext::DVDGetDriveStatus() {
         5 => 0,
         4 => 1,
@@ -117,6 +118,7 @@ pub unsafe fn lb_80019230() -> i32 {
 /// 0192A8: shows the disc message until the drive status goes back to normal; `cb` runs each
 /// frame.
 pub unsafe fn lb_800192A8(cb: Option<unsafe extern "C" fn()>) {
+    melee_core::ct!("lb_800192A8");
     let mut prev_i: i32 = -1;
     let mut i: i32 = lb_80019230();
 

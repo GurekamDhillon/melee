@@ -184,6 +184,7 @@ unsafe fn ftCo_CpuDoubleJumpAfterDelay(mut fp: *mut Fighter) {
 
 /// `ftCo_800A0148`
 pub unsafe fn ftCo_800A0148(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800A0148");
     let mut x1A88: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     if ((*fp).cur_pos.y + (*x1A88).x558) > ext::Stage_GetBlastZoneTopOffset() {
         ftCo_CpuFinishWithNeutralStick(fp);
@@ -213,6 +214,7 @@ pub unsafe fn ftCo_800A0148(mut fp: *mut Fighter) {
 
 /// `ftCo_800A0384`
 pub unsafe fn ftCo_800A0384(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800A0384");
     if ((*fp).cur_pos.y + (*fp).cpu.x558) > ext::Stage_GetBlastZoneTopOffset() {
         ftCo_CpuFinishWithNeutralStick(fp);
     } else if ftCo_800A1CA8(fp) != 0 {
@@ -232,6 +234,7 @@ pub unsafe fn ftCo_800A0384(mut fp: *mut Fighter) {
 
 /// `ftCo_800A0508`
 pub unsafe fn ftCo_800A0508(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800A0508");
     ftCo_CpuSetNeutralStick(fp);
     super::ftcmdscript::ftCo_800B463C(fp, (CpuCmd_PressY as i32) as u8);
     super::ftcmdscript::ftCo_800B46B8(fp, (CpuCmd_WaitFor as i32) as u8, 1 as u8);
@@ -246,6 +249,7 @@ pub unsafe fn ftCo_800A0508(mut fp: *mut Fighter) {
 
 /// `ftCo_800A05F4`
 pub unsafe fn ftCo_800A05F4(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800A05F4");
     if ((*fp).cur_pos.y + (*fp).cpu.x558) > ext::Stage_GetBlastZoneTopOffset() {
         ftCo_CpuFinishWithNeutralStick(fp);
     } else if ftCo_800A1CA8(fp) != 0 {
@@ -266,6 +270,7 @@ pub unsafe fn ftCo_800A05F4(mut fp: *mut Fighter) {
 
 /// `ftCo_800A0798`
 pub unsafe fn ftCo_800A0798(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800A0798");
     if ftCo_800A1CA8(fp) != 0 {
         ftCo_CpuSetNeutralStick(fp);
         super::ftcmdscript::ftCo_800B46B8(fp, (CpuCmd_WaitFor as i32) as u8, 10 as u8);
@@ -291,6 +296,7 @@ pub unsafe fn ftCo_800A0798(mut fp: *mut Fighter) {
 
 /// `ftCo_800A08F0`
 pub unsafe fn ftCo_800A08F0(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800A08F0");
     ftCo_CpuSetNeutralStick(fp);
     if (((*fp).motion_id == ftCo_MS_SquatRv) || ((*fp).motion_id == ftCo_MS_Squat)) || ((*fp).motion_id == ftCo_MS_SquatWait) {
         super::ftcmdscript::ftCo_800B46B8(fp, (CpuCmd_WaitFor as i32) as u8, 1 as u8);
@@ -338,6 +344,7 @@ pub unsafe fn ftCo_800A08F0(mut fp: *mut Fighter) {
 
 /// `ftCo_800A0AF4`
 pub unsafe fn ftCo_800A0AF4(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800A0AF4");
     let mut rand: f32 = ext::HSD_Randf();
     if rand < 0.6f32 {
         super::ftcmdscript::ftCo_800B46B8(fp, (CpuCmd_SetLstickX as i32) as u8, 0 as u8);
@@ -360,11 +367,13 @@ pub unsafe fn ftCo_800A0AF4(mut fp: *mut Fighter) {
 
 /// `ftCo_800A0C8C`
 pub unsafe fn ftCo_800A0C8C(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800A0C8C");
     super::ftcmdscript::ftCo_800B463C(fp, 127 as u8);
 }
 
 /// `ftCo_800A0CB0`
 pub unsafe fn ftCo_800A0CB0(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800A0CB0");
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     if ((*fp).cpu.x7C % 600) == 0 {
         let mut x: f32 = ext::HSD_Randf();
@@ -396,6 +405,7 @@ pub unsafe fn ftCo_800A0CB0(mut fp: *mut Fighter) {
 
 /// `ftCo_800A0DA4`
 pub unsafe fn ftCo_800A0DA4(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800A0DA4");
     let mut i: i32 = 0;
     let mut hurt: *mut FighterHurtCapsule = null_mut();
     let mut temp_r28: *mut CpuFighter = null_mut();
@@ -451,6 +461,7 @@ pub unsafe fn ftCo_800A0DA4(mut fp: *mut Fighter) {
 
 /// `ftCo_800A0F00`
 pub unsafe fn ftCo_800A0F00(mut gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("ftCo_800A0F00");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj) as *mut Fighter;
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     if ext::ft_80087A18(gobj) != 0 {
@@ -471,6 +482,7 @@ pub unsafe fn ftCo_800A0F00(mut gobj: *mut HSD_GObj) -> i32 {
 
 /// `ftCo_800A0FB0`
 pub unsafe fn ftCo_800A0FB0(mut vec_out: *mut Vec, mut line_id_out: *mut i32, mut flags_out: *mut u32, mut normal_out: *mut Vec, mut arg4: i32, mut arg5: i32, mut arg6: i32, mut arg7: f32, mut arg8: f32, mut arg9: f32, mut arg10: f32, mut arg11: f32) -> i32 {
+    melee_core::ct!("ftCo_800A0FB0");
     *line_id_out = (-1_i32);
     {
         let mut ret: i32 = ext::mpCheckFloor(arg7, arg8, arg9, arg10, arg11, vec_out, line_id_out, flags_out, normal_out, arg4, arg5, arg6, None, null_mut());
@@ -483,6 +495,7 @@ pub unsafe fn ftCo_800A0FB0(mut vec_out: *mut Vec, mut line_id_out: *mut i32, mu
 
 /// `ftCo_800A101C`
 pub unsafe fn ftCo_800A101C(mut arg0: *mut Fighter, mut arg1: i32, mut arg2: i32, mut arg3: i32) {
+    melee_core::ct!("ftCo_800A101C");
     let mut sp50: Vec3 = unsafe { core::mem::zeroed() };
     let mut sp44: Vec3 = unsafe { core::mem::zeroed() };
     let mut var_r31: i32 = 0;
@@ -675,43 +688,51 @@ unsafe fn convertStickAxis(mut val: i8) -> f32 {
 
 /// `ftCo_GetCpuLStickX`
 pub unsafe fn ftCo_GetCpuLStickX(mut fp: *mut Fighter) -> f32 {
+    melee_core::ct!("ftCo_GetCpuLStickX");
     return convertStickAxis((*fp).cpu.lstick.x);
 }
 
 /// `ftCo_GetCpuLStickY`
 pub unsafe fn ftCo_GetCpuLStickY(mut fp: *mut Fighter) -> f32 {
+    melee_core::ct!("ftCo_GetCpuLStickY");
     return convertStickAxis((*fp).cpu.lstick.y);
 }
 
 /// `ftCo_GetCpuLTrigger`
 pub unsafe fn ftCo_GetCpuLTrigger(mut fp: *mut Fighter) -> f32 {
+    melee_core::ct!("ftCo_GetCpuLTrigger");
     let mut ret: f32 = ((((*fp).cpu.ltrigger as i32) as f64) / 255.0f64) as f32;
     return if (ret as f64) > 1.0f64 { 1.0f32 } else { ret };
 }
 
 /// `ftCo_GetCpuRTrigger`
 pub unsafe fn ftCo_GetCpuRTrigger(mut fp: *mut Fighter) -> f32 {
+    melee_core::ct!("ftCo_GetCpuRTrigger");
     let mut ret: f32 = ((((*fp).cpu.rtrigger as i32) as f64) / 255.0f64) as f32;
     return if (ret as f64) > 1.0f64 { 1.0f32 } else { ret };
 }
 
 /// `ftCo_GetCpuButtons`
 pub unsafe fn ftCo_GetCpuButtons(mut fp: *mut Fighter) -> u32 {
+    melee_core::ct!("ftCo_GetCpuButtons");
     return (*fp).cpu.buttons;
 }
 
 /// `ftCo_GetCpuCStickX`
 pub unsafe fn ftCo_GetCpuCStickX(mut fp: *mut Fighter) -> f32 {
+    melee_core::ct!("ftCo_GetCpuCStickX");
     return convertStickAxis((*fp).cpu.cstick.x);
 }
 
 /// `ftCo_GetCpuCStickY`
 pub unsafe fn ftCo_GetCpuCStickY(mut fp: *mut Fighter) -> f32 {
+    melee_core::ct!("ftCo_GetCpuCStickY");
     return convertStickAxis((*fp).cpu.cstick.y);
 }
 
 /// `ftCo_800A1AB4`
 pub unsafe fn ftCo_800A1AB4(mut fp0: *mut Fighter, mut fp1: *mut Fighter) -> f32 {
+    melee_core::ct!("ftCo_800A1AB4");
     let mut dx: f32 = (*fp0).cur_pos.x - (*fp1).cur_pos.x;
     let mut dy: f32 = (*fp0).cur_pos.y - (*fp1).cur_pos.y;
     return melee_runtime::gekko::sqrtf(fmadds(dx, dx, dy * dy));
@@ -719,11 +740,13 @@ pub unsafe fn ftCo_800A1AB4(mut fp0: *mut Fighter, mut fp1: *mut Fighter) -> f32
 
 /// `ftCo_800A1B38_noinline`
 pub unsafe fn ftCo_800A1B38_noinline(mut arg0: i32) -> i32 {
+    melee_core::ct!("ftCo_800A1B38_noinline");
     return ftCo_800A1B38(arg0);
 }
 
 /// `ftCo_800A1B38`
 pub unsafe fn ftCo_800A1B38(mut arg0: i32) -> i32 {
+    melee_core::ct!("ftCo_800A1B38");
     if (((ext::grBigBlue_801EF844(arg0) != 0) || (ext::grInishie1_801FCAAC(arg0) != 0)) || (ext::grCorneria_801E2D90(arg0) != 0)) || (ext::grVenom_80206D10(arg0) != 0) {
         return 1;
     }
@@ -737,6 +760,7 @@ unsafe fn ftCo_IsIgnoredFloor(mut line_id: i32) -> i32 {
 
 /// `ftCo_800A1BA8`
 pub unsafe fn ftCo_800A1BA8(mut fp: *mut Fighter) -> i32 {
+    melee_core::ct!("ftCo_800A1BA8");
     let mut other_fp: *mut Fighter = (*fp).cpu.x44;
     if other_fp.is_null() {
         return 0;
@@ -755,6 +779,7 @@ pub unsafe fn ftCo_800A1BA8(mut fp: *mut Fighter) -> i32 {
 
 /// `ftCo_800A1C44`
 pub unsafe fn ftCo_800A1C44(mut fp: *mut Fighter) -> i32 {
+    melee_core::ct!("ftCo_800A1C44");
     if (*fp).x2219_b1() != 0 {
         return 1;
     }
@@ -772,6 +797,7 @@ pub unsafe fn ftCo_800A1C44(mut fp: *mut Fighter) -> i32 {
 
 /// `ftCo_800A1CA8`
 pub unsafe fn ftCo_800A1CA8(mut fp: *mut Fighter) -> i32 {
+    melee_core::ct!("ftCo_800A1CA8");
     return if (*fp).x2168 != 0 { 1 } else { 0 };
 }
 
@@ -847,16 +873,19 @@ unsafe fn ftCo_800A1CC4(mut fp: *mut Fighter, mut var_r29: *mut ftCo_803C6594_t)
 
 /// `ftCo_800A1F3C_noinline`
 pub unsafe fn ftCo_800A1F3C_noinline(mut fp: *mut Fighter, mut arg1: f32, mut arg2: f32, mut arg3: f32) {
+    melee_core::ct!("ftCo_800A1F3C_noinline");
     ftCo_800A1F3C(fp, arg1, arg2, arg3);
 }
 
 /// `ftCo_800A1F3C_noinline2`
 pub unsafe fn ftCo_800A1F3C_noinline2(mut fp: *mut Fighter, mut arg1: f32, mut arg2: f32, mut arg3: f32) {
+    melee_core::ct!("ftCo_800A1F3C_noinline2");
     ftCo_800A1F3C_noinline(fp, arg1, arg2, arg3);
 }
 
 /// `ftCo_800A1F3C`
 pub unsafe fn ftCo_800A1F3C(mut fp: *mut Fighter, mut arg1: f32, mut arg2: f32, mut arg3: f32) {
+    melee_core::ct!("ftCo_800A1F3C");
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     if (*data).x60 == 0 {
         (*data).x54.x = arg1;
@@ -884,6 +913,7 @@ unsafe fn ftCo_800A75DC_set_target(mut fp: *mut Fighter, mut x60: *const i32, mu
 
 /// `ftCo_800A1F98`
 pub unsafe fn ftCo_800A1F98(mut x: i32, mut y: f32) -> i32 {
+    melee_core::ct!("ftCo_800A1F98");
     let mut slope: f32 = 0.0;
     let mut intercept: f32 = 0.0;
     if ext::stage_info.grkind != ((Gr_Kind_Zebes as i32) as u32) {
@@ -901,6 +931,7 @@ pub unsafe fn ftCo_800A1F98(mut x: i32, mut y: f32) -> i32 {
 
 /// `ftCo_IsCpuControlled`
 pub unsafe fn ftCo_IsCpuControlled(mut fp: *mut Fighter) -> i32 {
+    melee_core::ct!("ftCo_IsCpuControlled");
     if ext::Player_8003248C((*fp).player_id as i32, (*fp).is_sub_fighter() as i32) != ((Gm_PKind_Cpu as i32) as u32) {
         return 0;
     }
@@ -912,6 +943,7 @@ pub unsafe fn ftCo_IsCpuControlled(mut fp: *mut Fighter) -> i32 {
 
 /// `ftCo_800A20A0`
 pub unsafe fn ftCo_800A20A0(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800A20A0");
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     if (!(*fp).cpu.x44.is_null()) && ((*fp).ground_or_air == ((GA_Ground as i32) as u32)) {
         let mut other_fp: *mut Fighter = (*data).x44;
@@ -927,6 +959,7 @@ pub unsafe fn ftCo_800A20A0(mut fp: *mut Fighter) {
 
 /// `ftCo_800A2170`
 pub unsafe fn ftCo_800A2170(mut fp0: *mut Fighter, mut fp1: *mut Fighter) -> i32 {
+    melee_core::ct!("ftCo_800A2170");
     let mut temp_r3: *mut mp_UnkStruct0 = null_mut();
     if (*fp0).ground_or_air == ((GA_Air as i32) as u32) {
         return 0;
@@ -946,6 +979,7 @@ pub unsafe fn ftCo_800A2170(mut fp0: *mut Fighter, mut fp1: *mut Fighter) -> i32
 
 /// `ftCo_800A21FC`
 pub unsafe fn ftCo_800A21FC(mut fp: *mut Fighter) -> i32 {
+    melee_core::ct!("ftCo_800A21FC");
     let mut vec: Vec3 = unsafe { core::mem::zeroed() };
     let mut data0: *mut mp_UnkStruct0 = null_mut();
     let mut data1: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
@@ -967,6 +1001,7 @@ pub unsafe fn ftCo_800A21FC(mut fp: *mut Fighter) -> i32 {
 
 /// `ftCo_800A229C`
 pub unsafe fn ftCo_800A229C(mut fp: *mut Fighter, mut arg1: *mut Vec) -> i32 {
+    melee_core::ct!("ftCo_800A229C");
     let mut sp2C: Vec3 = unsafe { core::mem::zeroed() };
     let mut sp20: Vec3 = unsafe { core::mem::zeroed() };
     let mut sp1C: f32 = 0.0;
@@ -1076,6 +1111,7 @@ pub unsafe fn ftCo_800A229C(mut fp: *mut Fighter, mut arg1: *mut Vec) -> i32 {
 
 /// `ftCo_800A2718`
 pub unsafe fn ftCo_800A2718(mut arg0: *mut mp_UnkStruct0) -> i32 {
+    melee_core::ct!("ftCo_800A2718");
     let mut island: *mut mp_UnkStruct0 = arg0;
     if arg0.is_null() {
         return 0;
@@ -1175,6 +1211,7 @@ unsafe fn ftCo_800A2718_dontinline3(mut arg0: *mut mp_UnkStruct0) -> i32 {
 
 /// `ftCo_800A28D0`
 pub unsafe fn ftCo_800A28D0(mut fp: *mut Fighter, mut arg1: f32) -> i32 {
+    melee_core::ct!("ftCo_800A28D0");
     if (*fp).ground_or_air == ((GA_Air as i32) as u32) {
         return 0;
     }
@@ -1200,6 +1237,7 @@ pub unsafe fn ftCo_800A28D0(mut fp: *mut Fighter, mut arg1: f32) -> i32 {
 
 /// `ftCo_800A2998`
 pub unsafe fn ftCo_800A2998(mut fp: *mut Fighter, mut arg1: f32) -> i32 {
+    melee_core::ct!("ftCo_800A2998");
     if (*fp).ground_or_air == ((GA_Air as i32) as u32) {
         return 0;
     }
@@ -1229,6 +1267,7 @@ pub unsafe fn ftCo_800A2998(mut fp: *mut Fighter, mut arg1: f32) -> i32 {
 
 /// `ftCo_800A2A70`
 pub unsafe fn ftCo_800A2A70(mut fp: *mut Fighter, mut arg1: i32) -> f32 {
+    melee_core::ct!("ftCo_800A2A70");
     if (*fp).ground_or_air == ((GA_Air as i32) as u32) {
         return -1.0f32;
     }
@@ -1255,11 +1294,13 @@ pub unsafe fn ftCo_800A2A70(mut fp: *mut Fighter, mut arg1: i32) -> f32 {
 
 /// `ftCo_800A2BD4`
 pub unsafe fn ftCo_800A2BD4(mut fp: *mut Fighter) -> i32 {
+    melee_core::ct!("ftCo_800A2BD4");
     return if (((*fp).facing_dir * ((*fp).cpu.x54.x - (*fp).cur_pos.x)) as f64) >= 0.0f64 { 1 } else { 0 };
 }
 
 /// `ftCo_800A2C08`
 pub unsafe fn ftCo_800A2C08(mut fp: *mut Fighter) -> i32 {
+    melee_core::ct!("ftCo_800A2C08");
     let mut other_fp: *mut Fighter = (*fp).cpu.x44;
     if other_fp.is_null() {
         return 1;
@@ -1287,6 +1328,7 @@ unsafe fn ftCo_800A2C80_inline0(mut fp: *mut Fighter) -> i32 {
 
 /// `ftCo_800A2C80`
 pub unsafe fn ftCo_800A2C80(mut fp: *mut Fighter) -> i32 {
+    melee_core::ct!("ftCo_800A2C80");
     let mut result: i32 = 0;
     let mut temp_data: *mut CpuFighter = null_mut();
     let mut blocked: i32 = 0;
@@ -1428,6 +1470,7 @@ pub unsafe fn ftCo_800A2C80(mut fp: *mut Fighter) -> i32 {
 
 /// `ftCo_800A3134`
 pub unsafe fn ftCo_800A3134(mut fp: *mut Fighter) -> i32 {
+    melee_core::ct!("ftCo_800A3134");
     's79: {
         match (*fp).motion_id {
             191 | 183 => {
@@ -1445,11 +1488,13 @@ pub unsafe fn ftCo_800A3134(mut fp: *mut Fighter) -> i32 {
 
 /// `ftCo_IsGrabbing_dontinline`
 pub unsafe fn ftCo_IsGrabbing_dontinline(mut fp: *mut Fighter) -> i32 {
+    melee_core::ct!("ftCo_IsGrabbing_dontinline");
     return ftCo_IsGrabbing(fp);
 }
 
 /// `ftCo_IsGrabbing`
 pub unsafe fn ftCo_IsGrabbing(mut fp: *mut Fighter) -> i32 {
+    melee_core::ct!("ftCo_IsGrabbing");
     if (*fp).motion_id == ftCo_MS_CatchWait {
         return 1;
     }
@@ -1473,6 +1518,7 @@ pub unsafe fn ftCo_IsGrabbing(mut fp: *mut Fighter) -> i32 {
 
 /// `ftCo_800A3200`
 pub unsafe fn ftCo_800A3200(mut fp: *mut Fighter) -> i32 {
+    melee_core::ct!("ftCo_800A3200");
     's80: {
         match (*fp).motion_id {
             252 => {
@@ -1490,6 +1536,7 @@ pub unsafe fn ftCo_800A3200(mut fp: *mut Fighter) -> i32 {
 
 /// `ftCo_800A3234`
 pub unsafe fn ftCo_800A3234(mut fp: *mut Fighter) -> i32 {
+    melee_core::ct!("ftCo_800A3234");
     let mut sp34: Vec3 = unsafe { core::mem::zeroed() };
     let mut sp28: Vec3 = unsafe { core::mem::zeroed() };
     let mut var_r0: i32 = 0;
@@ -1559,6 +1606,7 @@ unsafe fn inlineC0(mut fp: *mut Fighter) -> i32 {
 
 /// `ftCo_800A3498`
 pub unsafe fn ftCo_800A3498(mut fp: *mut Fighter) -> i32 {
+    melee_core::ct!("ftCo_800A3498");
     let mut temp_r4: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     if (*fp).cpu.xFA_b5() != 0 {
         return 0;
@@ -1584,6 +1632,7 @@ pub unsafe fn ftCo_800A3498(mut fp: *mut Fighter) -> i32 {
 
 /// `ftCo_800A3554`
 pub unsafe fn ftCo_800A3554(mut fp: *mut Fighter, mut arg1: f32) -> i32 {
+    melee_core::ct!("ftCo_800A3554");
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     if (*fp).ground_or_air == ((GA_Air as i32) as u32) {
         return 0;
@@ -1629,6 +1678,7 @@ unsafe fn ftCo_800A2170_it(mut fp: *mut Fighter, mut ip: *mut Item) -> i32 {
 
 /// `ftCo_800A3710`
 pub unsafe fn ftCo_800A3710(mut fp: *mut Fighter) -> i32 {
+    melee_core::ct!("ftCo_800A3710");
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     let mut ip: *mut Item = (*data).x4C;
     if !((*data).xF9_b7() != 0) {
@@ -1658,6 +1708,7 @@ pub unsafe fn ftCo_800A3710(mut fp: *mut Fighter) -> i32 {
 
 /// `ftCo_IsAlly`
 pub unsafe fn ftCo_IsAlly(mut fp0: *mut Fighter, mut fp1: *mut Fighter) -> i32 {
+    melee_core::ct!("ftCo_IsAlly");
     if fp0.is_null() {
         return 0;
     }
@@ -1717,6 +1768,7 @@ unsafe fn ftCo_GetTerminalVelocity(mut fp: *mut Fighter) -> f32 {
 
 /// `ftCo_800A3908`
 pub unsafe fn ftCo_800A3908(mut fp: *mut Fighter, mut arg1: i32) -> i32 {
+    melee_core::ct!("ftCo_800A3908");
     let mut ez: f32 = 0.0;
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     let mut dist: f32 = 0.0;
@@ -1856,6 +1908,7 @@ unsafe fn ftCo_800A4038_inline1(mut x: f32, mut y: f32, mut arg_floor_pos: *mut 
 
 /// `ftCo_800A4038`
 pub unsafe fn ftCo_800A4038(mut fp: *mut Fighter, mut arg1: i32) -> i32 {
+    melee_core::ct!("ftCo_800A4038");
     let mut ez: f32 = 0.0;
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     let mut island: *mut mp_UnkStruct0 = null_mut();
@@ -1981,6 +2034,7 @@ unsafe fn ftCo_800A4768_inline0(mut fp: *mut Fighter, mut p: *mut Vec) -> i32 {
 
 /// `ftCo_800A4768`
 pub unsafe fn ftCo_800A4768(mut fp: *mut Fighter, mut arg1: *mut Vec) -> i32 {
+    melee_core::ct!("ftCo_800A4768");
     let mut pad: u32 = 0;
     let mut island: *mut mp_UnkStruct0 = null_mut();
     let mut best: f32 = 0.0;
@@ -2037,6 +2091,7 @@ pub unsafe fn ftCo_800A4768(mut fp: *mut Fighter, mut arg1: *mut Vec) -> i32 {
 
 /// `ftCo_800A49B4`
 pub unsafe fn ftCo_800A49B4(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800A49B4");
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     let mut dx: f32 = (*fp).cur_pos.x - (*data).x54.x;
     let mut dy: f32 = (*fp).cur_pos.y - (*data).x54.y;
@@ -2081,6 +2136,7 @@ unsafe fn inlineD1(mut fp: *mut Fighter) -> i32 {
 
 /// `ftCo_800A4A40`
 pub unsafe fn ftCo_800A4A40(mut fp: *mut Fighter) -> *mut Fighter {
+    melee_core::ct!("ftCo_800A4A40");
     let mut fp1: *mut Fighter = null_mut();
     let mut cur_fp: *mut Fighter = null_mut();
     let mut cur: *mut HSD_GObj = null_mut();
@@ -2124,6 +2180,7 @@ pub unsafe fn ftCo_800A4A40(mut fp: *mut Fighter) -> *mut Fighter {
 
 /// `ftCo_800A4BEC`
 pub unsafe fn ftCo_800A4BEC(mut fp: *mut Fighter) -> *mut Fighter {
+    melee_core::ct!("ftCo_800A4BEC");
     let mut cur_fp: *mut Fighter = null_mut();
     let mut closest: *mut Fighter = null_mut();
     let mut cur: *mut HSD_GObj = null_mut();
@@ -2179,6 +2236,7 @@ pub unsafe fn ftCo_800A4BEC(mut fp: *mut Fighter) -> *mut Fighter {
 
 /// `ftCo_800A4E8C`
 pub unsafe fn ftCo_800A4E8C(mut fp: *mut Fighter, mut arg1: *mut Vec) -> *mut Fighter {
+    melee_core::ct!("ftCo_800A4E8C");
     let mut cur_fp: *mut Fighter = null_mut();
     let mut closest_fp: *mut Fighter = null_mut();
     let mut cur: *mut HSD_GObj = null_mut();
@@ -2228,6 +2286,7 @@ pub unsafe fn ftCo_800A4E8C(mut fp: *mut Fighter, mut arg1: *mut Vec) -> *mut Fi
 
 /// `ftCo_800A50D4`
 pub unsafe fn ftCo_800A50D4(mut fp: *mut Fighter) -> *mut Fighter {
+    melee_core::ct!("ftCo_800A50D4");
     let mut cur_fp: *mut Fighter = null_mut();
     let mut closest_fp: *mut Fighter = null_mut();
     let mut cur: *mut HSD_GObj = null_mut();
@@ -2274,6 +2333,7 @@ pub unsafe fn ftCo_800A50D4(mut fp: *mut Fighter) -> *mut Fighter {
 
 /// `ftCo_800A5294`
 pub unsafe fn ftCo_800A5294(mut fp: *mut Fighter, mut player_id: i32) -> *mut Fighter {
+    melee_core::ct!("ftCo_800A5294");
     if fp.is_null() {
         return null_mut();
     }
@@ -2300,6 +2360,7 @@ pub unsafe fn ftCo_800A5294(mut fp: *mut Fighter, mut player_id: i32) -> *mut Fi
 
 /// `ftCo_800A53DC`
 pub unsafe fn ftCo_800A53DC(mut fp: *mut Fighter) -> *mut Fighter {
+    melee_core::ct!("ftCo_800A53DC");
     let mut temp_r31: *mut CpuFighter = null_mut();
     let mut var_r30: *mut HSD_GObj = null_mut();
     let mut var_r30_2: *mut HSD_GObj = null_mut();
@@ -2418,6 +2479,7 @@ pub unsafe fn ftCo_800A53DC(mut fp: *mut Fighter) -> *mut Fighter {
 
 /// `ftCo_800A589C`
 pub unsafe fn ftCo_800A589C(mut fp: *mut Fighter) -> *mut Fighter {
+    melee_core::ct!("ftCo_800A589C");
     if fp.is_null() {
         return null_mut();
     }
@@ -2444,6 +2506,7 @@ pub unsafe fn ftCo_800A589C(mut fp: *mut Fighter) -> *mut Fighter {
 
 /// `ftCo_800A5908`
 pub unsafe fn ftCo_800A5908(mut ip: *mut Item) -> i32 {
+    melee_core::ct!("ftCo_800A5908");
     if (*ip).kind == It_Kind_Heart {
         return 1;
     }
@@ -2458,6 +2521,7 @@ pub unsafe fn ftCo_800A5908(mut ip: *mut Item) -> i32 {
 
 /// `ftCo_800A5944`
 pub unsafe fn ftCo_800A5944(mut ip: *mut Item) -> i32 {
+    melee_core::ct!("ftCo_800A5944");
     if (*ip).kind == It_Kind_BombHei {
         return 1;
     }
@@ -2472,11 +2536,13 @@ pub unsafe fn ftCo_800A5944(mut ip: *mut Item) -> i32 {
 
 /// `ftCo_800A5980_dontinline`
 pub unsafe fn ftCo_800A5980_dontinline(mut fp: *mut Fighter) -> i32 {
+    melee_core::ct!("ftCo_800A5980_dontinline");
     return ftCo_800A5980(fp);
 }
 
 /// `ftCo_800A5980`
 pub unsafe fn ftCo_800A5980(mut fp: *mut Fighter) -> i32 {
+    melee_core::ct!("ftCo_800A5980");
     if ((*fp).motion_id >= ftCo_MS_LandingFallSpecial) && ((*fp).motion_id < ftCo_MS_Attack100Start) {
         return 1;
     }
@@ -2488,6 +2554,7 @@ pub unsafe fn ftCo_800A5980(mut fp: *mut Fighter) -> i32 {
 
 /// `ftCo_800A59C0`
 pub unsafe fn ftCo_800A59C0(mut ip: *mut Item) -> i32 {
+    melee_core::ct!("ftCo_800A59C0");
     if ((*(*ip).xCC_item_attr).x0_78() as i32) == 3 {
         return 1;
     }
@@ -2496,6 +2563,7 @@ pub unsafe fn ftCo_800A59C0(mut ip: *mut Item) -> i32 {
 
 /// `ftCo_800A59E4`
 pub unsafe fn ftCo_800A59E4(mut ip: *mut Item) -> i32 {
+    melee_core::ct!("ftCo_800A59E4");
     if ip.is_null() {
         return 0;
     }
@@ -2507,6 +2575,7 @@ pub unsafe fn ftCo_800A59E4(mut ip: *mut Item) -> i32 {
 
 /// `ftCo_800A5A28`
 pub unsafe fn ftCo_800A5A28(mut ip: *mut Item) -> i32 {
+    melee_core::ct!("ftCo_800A5A28");
     's92: {
         match (*ip).kind {
             0 | 6 | 7 | 14 | 15 | 17 | 19 | 20 | 34 => {
@@ -2521,6 +2590,7 @@ pub unsafe fn ftCo_800A5A28(mut ip: *mut Item) -> i32 {
 
 /// `ftCo_800A5A5C`
 pub unsafe fn ftCo_800A5A5C(mut ip: *mut Item) -> i32 {
+    melee_core::ct!("ftCo_800A5A5C");
     's93: {
         match (*ip).kind {
             1 | 2 | 4 | 5 => {
@@ -2535,6 +2605,7 @@ pub unsafe fn ftCo_800A5A5C(mut ip: *mut Item) -> i32 {
 
 /// `ftCo_800A5A90`
 pub unsafe fn ftCo_800A5A90(mut fp: *mut Fighter) -> i32 {
+    melee_core::ct!("ftCo_800A5A90");
     if ((*fp).motion_id >= ftCo_MS_SwordSwing1) && ((*fp).motion_id <= ftCo_MS_StarRodSwingDash) {
         return 1;
     }
@@ -2546,6 +2617,7 @@ pub unsafe fn ftCo_800A5A90(mut fp: *mut Fighter) -> i32 {
 
 /// `ftCo_800A5ACC`
 pub unsafe fn ftCo_800A5ACC(mut fp: *mut Fighter) -> i32 {
+    melee_core::ct!("ftCo_800A5ACC");
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     if !((*data).xF9_b6() != 0) {
         return 0;
@@ -2608,6 +2680,7 @@ pub unsafe fn ftCo_800A5ACC(mut fp: *mut Fighter) -> i32 {
 
 /// `ftCo_800A5CE0`
 pub unsafe fn ftCo_800A5CE0(mut fp: *mut Fighter) -> *mut Fighter {
+    melee_core::ct!("ftCo_800A5CE0");
     let mut cur_fp: *mut Fighter = null_mut();
     let mut closest_enemy: *mut Fighter = null_mut();
     let mut cur: *mut HSD_GObj = null_mut();
@@ -2679,6 +2752,7 @@ unsafe fn ftCo_GetItemDistance(mut fp: *mut Fighter, mut ip: *mut Item) -> f32 {
 
 /// `ftCo_800A5F4C`
 pub unsafe fn ftCo_800A5F4C(mut fp: *mut Fighter, mut arg1: ItemKind) -> *mut Item {
+    melee_core::ct!("ftCo_800A5F4C");
     let mut cur_ip: *mut Item = null_mut();
     let mut closest_ip: *mut Item = null_mut();
     let mut cur: *mut HSD_GObj = null_mut();
@@ -2733,6 +2807,7 @@ pub unsafe fn ftCo_800A5F4C(mut fp: *mut Fighter, mut arg1: ItemKind) -> *mut It
 
 /// `ftCo_800A61D8`
 pub unsafe fn ftCo_800A61D8(mut fp: *mut Fighter) -> *mut Item {
+    melee_core::ct!("ftCo_800A61D8");
     let mut ip: *mut Item = null_mut();
     let mut closest: *mut Item = null_mut();
     let mut cur: *mut HSD_GObj = null_mut();
@@ -2808,6 +2883,7 @@ unsafe fn ftCo_800A648C_inline3(mut cur: *mut HSD_GObj) -> *mut HSD_GObj {
 
 /// `ftCo_800A648C`
 pub unsafe fn ftCo_800A648C(mut fp: *mut Fighter) -> i32 {
+    melee_core::ct!("ftCo_800A648C");
     let mut ip: *mut Item = null_mut();
     let mut closest: *mut Item = null_mut();
     let mut cur: *mut HSD_GObj = null_mut();
@@ -2852,6 +2928,7 @@ unsafe fn ftCo_800A6700_inline0(mut fp: *mut Fighter, mut x: f32, mut y: f32) ->
 
 /// `ftCo_800A6700`
 pub unsafe fn ftCo_800A6700(mut fp: *mut Fighter, mut arg1: *mut Vec, mut arg2: *mut Vec) -> i32 {
+    melee_core::ct!("ftCo_800A6700");
     let mut island: *mut mp_UnkStruct0 = null_mut();
     let mut best: f32 = 0.0;
     let mut px: f32 = 0.0;
@@ -2925,6 +3002,7 @@ pub unsafe fn ftCo_800A6700(mut fp: *mut Fighter, mut arg1: *mut Vec, mut arg2: 
 
 /// `ftCo_800A6A98`
 pub unsafe fn ftCo_800A6A98(mut fp: *mut Fighter, mut arg1: *mut Vec) -> i32 {
+    melee_core::ct!("ftCo_800A6A98");
     let mut __: [u8; 4] = [0; 4];
     let mut dist: f32 = 0.0;
     let mut b: Vec3 = unsafe { core::mem::zeroed() };
@@ -3008,6 +3086,7 @@ unsafe fn ftCo_800A6D2C_inline0(mut mx: f32, mut my: f32, mut fpos: *mut Vec, mu
 
 /// `ftCo_800A6D2C`
 pub unsafe fn ftCo_800A6D2C(mut fp: *mut Fighter, mut arg1: *mut Vec) -> i32 {
+    melee_core::ct!("ftCo_800A6D2C");
     let mut dist: f32 = 0.0;
     let mut b: Vec3 = unsafe { core::mem::zeroed() };
     let mut a: Vec3 = unsafe { core::mem::zeroed() };
@@ -3088,6 +3167,7 @@ pub unsafe fn ftCo_800A6D2C(mut fp: *mut Fighter, mut arg1: *mut Vec) -> i32 {
 
 /// `ftCo_800A6FC4`
 pub unsafe fn ftCo_800A6FC4(mut fp: *mut Fighter, mut arg1: *mut Vec, mut arg2: *mut Vec) -> i32 {
+    melee_core::ct!("ftCo_800A6FC4");
     let mut __: [u8; 8] = [0; 8];
     let mut b: Vec3 = unsafe { core::mem::zeroed() };
     let mut a: Vec3 = unsafe { core::mem::zeroed() };
@@ -3282,6 +3362,7 @@ unsafe fn ftCo_800A75DC_CheckFloor(mut x0: f32, mut above: f32, mut x1: f32, mut
 
 /// `ftCo_800A75DC`
 pub unsafe fn ftCo_800A75DC(mut fp0: *mut Fighter, mut fp1: *mut Fighter) {
+    melee_core::ct!("ftCo_800A75DC");
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp0).cpu) as *mut CpuFighter;
     let mut floor_pos: Vec3 = unsafe { core::mem::zeroed() };
     let mut floor_normal: Vec3 = unsafe { core::mem::zeroed() };
@@ -3382,6 +3463,7 @@ pub unsafe fn ftCo_800A75DC(mut fp0: *mut Fighter, mut fp1: *mut Fighter) {
 
 /// `ftCo_800A7AAC`
 pub unsafe fn ftCo_800A7AAC(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800A7AAC");
     let mut partner: *mut Fighter = null_mut();
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     let mut floor_pos: Vec3 = unsafe { core::mem::zeroed() };
@@ -3500,6 +3582,7 @@ pub unsafe fn ftCo_800A7AAC(mut fp: *mut Fighter) {
 
 /// `ftCo_800A80E4`
 pub unsafe fn ftCo_800A80E4(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800A80E4");
     let mut other_fp: *mut Fighter = (*fp).cpu.x44;
     if (!other_fp.is_null()) && ((*fp).ground_or_air != ((GA_Air as i32) as u32)) {
         let mut dx: f32 = (*fp).cur_pos.x - (*other_fp).cur_pos.x;
@@ -3526,6 +3609,7 @@ unsafe fn ftCo_800A8210_inline0(mut fp: *mut Fighter, mut out: *mut Vec) {
 
 /// `ftCo_800A8210`
 pub unsafe fn ftCo_800A8210(mut fp: *mut Fighter, mut arg1: *mut Vec) -> i32 {
+    melee_core::ct!("ftCo_800A8210");
     let mut out: Vec3 = unsafe { core::mem::zeroed() };
     let mut dir: Vec3 = unsafe { core::mem::zeroed() };
     let mut left: f32 = 0.0;
@@ -3606,6 +3690,7 @@ pub unsafe fn ftCo_800A8210(mut fp: *mut Fighter, mut arg1: *mut Vec) -> i32 {
 
 /// `ftCo_800A866C`
 pub unsafe fn ftCo_800A866C(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800A866C");
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     let mut item: *mut Item = (*fp).cpu.x4C;
     let mut island: *mut mp_UnkStruct0 = null_mut();
@@ -3701,6 +3786,7 @@ unsafe fn ftCo_800A8940_inline0(mut result_in: i32, mut blocked_in: i32, mut lin
 
 /// `ftCo_800A8940`
 pub unsafe fn ftCo_800A8940(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800A8940");
     let mut island: *mut mp_UnkStruct0 = null_mut();
     let mut cur_island: *mut mp_UnkStruct0 = null_mut();
     let mut chosen: *mut mp_UnkStruct0 = null_mut();
@@ -3800,11 +3886,13 @@ pub unsafe fn ftCo_800A8940(mut fp: *mut Fighter) {
 
 /// `ftCo_800A8DE4_noinline`
 pub unsafe fn ftCo_800A8DE4_noinline(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800A8DE4_noinline");
     ftCo_800A8DE4(fp);
 }
 
 /// `ftCo_800A8DE4`
 pub unsafe fn ftCo_800A8DE4(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800A8DE4");
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     if !((*fp).cpu.xFA_b2() != 0) {
         (*data).set_xFA_b2((1 as u8) as u8);
@@ -3846,6 +3934,7 @@ unsafe fn ftCo_CpuStartUpSpecial(mut fp: *mut Fighter) {
 
 /// `ftCo_800A8EB0`
 pub unsafe fn ftCo_800A8EB0(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800A8EB0");
     let mut angle: f32 = 0.0;
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     if (*fp).cpu.level < 9 {
@@ -3877,6 +3966,7 @@ pub unsafe fn ftCo_800A8EB0(mut fp: *mut Fighter) {
 
 /// `ftCo_800A92CC`
 pub unsafe fn ftCo_800A92CC(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800A92CC");
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     if ((if ((*fp).cur_pos.x - (*data).x54.x) < (0 as f32) { -((*fp).cur_pos.x - (*data).x54.x) } else { (*fp).cur_pos.x - (*data).x54.x }) as f64) > 60.0f64 {
         ftCo_CpuStartUpSpecial(fp);
@@ -3950,6 +4040,7 @@ unsafe fn ftCo_800A963C(mut fp: *mut Fighter, mut unused: i32) {
 
 /// `ftCo_800A96B8`
 pub unsafe fn ftCo_800A96B8(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800A96B8");
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     let mut sum: f32 = (*fp).coll_data.cur_pos.y + (*fp).coll_data.ecb.bottom.y;
     let mut tmp: i32 = if (*fp).cpu.x54.y > sum { 1 } else { 0 };
@@ -4010,6 +4101,7 @@ unsafe fn ftCo_IsNearlyZero(mut x: f32) -> i32 {
 
 /// `ftCo_800A9904`
 pub unsafe fn ftCo_800A9904(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800A9904");
     let mut _top: [u8; 8] = [0; 8];
     #[derive(Clone, Copy)] #[repr(C)] struct Local2 { pad: u32, flags: u32, line_id: i32, normal: Vec3, pos: Vec3 }
     let mut ceiling: Local2 = unsafe { core::mem::zeroed() };
@@ -4149,6 +4241,7 @@ unsafe fn ftCo_CpuUseAvailableJump(mut fp: *mut Fighter, mut data: *mut CpuFight
 
 /// `ftCo_800A9CB4`
 pub unsafe fn ftCo_800A9CB4(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800A9CB4");
     let mut __: [u8; 56] = [0; 56];
     let mut stage_pos: Vec3 = unsafe { core::mem::zeroed() };
     let mut unused_time_tmp: f32 = 0.0;
@@ -4270,6 +4363,7 @@ pub unsafe fn ftCo_800A9CB4(mut fp: *mut Fighter) {
 
 /// `ftCo_800AA320`
 pub unsafe fn ftCo_800AA320(mut fp: *mut Fighter, mut stick: *mut i32, mut clamp: *mut i32) {
+    melee_core::ct!("ftCo_800AA320");
     if ftAi_Kind((*fp).kind as i32) == (Ft_Kind_Nana as i32) {
         *stick = 64;
         *clamp = 127;
@@ -4382,6 +4476,7 @@ unsafe fn ftCo_800AA42C_inline0(mut clamp: f32, mut dist: f32, mut near: f32, mu
 
 /// `ftCo_800AA42C`
 pub unsafe fn ftCo_800AA42C(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800AA42C");
     let mut data: *mut CpuFighter = null_mut();
     let mut near: f32 = 0.0;
     let mut dist: f32 = 0.0;
@@ -4441,6 +4536,7 @@ pub unsafe fn ftCo_800AA42C(mut fp: *mut Fighter) {
 
 /// `ftCo_800AA844`
 pub unsafe fn ftCo_800AA844(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800AA844");
     let mut data: *mut CpuFighter = null_mut();
     let mut sp38: i32 = 0;
     let mut sp34: i32 = 0;
@@ -4480,6 +4576,7 @@ pub unsafe fn ftCo_800AA844(mut fp: *mut Fighter) {
 
 /// `ftCo_800AABC8`
 pub unsafe fn ftCo_800AABC8(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800AABC8");
     if isInTeeter(fp) != 0 {
         super::ftcmdscript::ftCo_800B46B8(fp, (CpuCmd_SetLstickY as i32) as u8, 0 as u8);
         super::ftcmdscript::ftCo_800B46B8(fp, (CpuCmd_SetLstickX as i32) as u8, 0 as u8);
@@ -4505,6 +4602,7 @@ unsafe fn ftCo_800AABC8_dontinline(mut fp: *mut Fighter) {
 
 /// `ftCo_800AACD0`
 pub unsafe fn ftCo_800AACD0(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800AACD0");
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     let mut temp_r3_2: *mut mp_UnkStruct0 = null_mut();
     let mut __: [u8; 8] = [0; 8];
@@ -4540,6 +4638,7 @@ pub unsafe fn ftCo_800AACD0(mut fp: *mut Fighter) {
 
 /// `ftCo_800AAF48`
 pub unsafe fn ftCo_800AAF48(mut fp: *mut Fighter) -> i32 {
+    melee_core::ct!("ftCo_800AAF48");
     let mut temp_r29: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     let mut cur: *mut mp_UnkStruct0 = null_mut();
     let mut dx: f32 = 0.0;
@@ -4633,6 +4732,7 @@ pub unsafe fn ftCo_800AAF48(mut fp: *mut Fighter) -> i32 {
 
 /// `ftCo_800AB224`
 pub unsafe fn ftCo_800AB224(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800AB224");
     let mut temp_r31: *mut CpuFighter = null_mut();
     let mut temp_f1: f32 = 0.0;
     let mut var_f1_3: f32 = 0.0;
@@ -4763,6 +4863,7 @@ pub unsafe fn ftCo_800AB224(mut fp: *mut Fighter) {
 
 /// `ftCo_800ABA34`
 pub unsafe fn ftCo_800ABA34(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800ABA34");
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     if (*data).kind == (11 as u32) {
         if (*fp).item_gobj.is_null() {
@@ -4798,6 +4899,7 @@ unsafe fn ftCo_800ABBA8_blk155144r(mut fp: *mut Fighter, mut target: *mut *mut F
 
 /// `ftCo_800ABBA8`
 pub unsafe fn ftCo_800ABBA8(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800ABBA8");
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     let mut target: *mut Fighter = null_mut();
     let mut below: *mut Fighter = null_mut();
@@ -4992,11 +5094,13 @@ unsafe fn inlineG0(mut fp: *mut Fighter) -> i32 {
 
 /// `ftCo_800AC30C_noinline`
 pub unsafe fn ftCo_800AC30C_noinline(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800AC30C_noinline");
     ftCo_800AC30C(fp);
 }
 
 /// `ftCo_800AC30C`
 pub unsafe fn ftCo_800AC30C(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800AC30C");
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     if !(inlineG0(fp) != 0) {
         ftCo_CpuReturnToPreviousBehavior(fp, data);
@@ -5035,6 +5139,7 @@ unsafe fn inlineH1(mut fp: *mut Fighter, mut data: *mut CpuFighter) {
 
 /// `ftCo_800AC434`
 pub unsafe fn ftCo_800AC434(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800AC434");
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     let mut vec: Vec3 = unsafe { core::mem::zeroed() };
     let mut f: f32 = 0.0;
@@ -5059,6 +5164,7 @@ pub unsafe fn ftCo_800AC434(mut fp: *mut Fighter) {
 
 /// `ftCo_800AC5A0`
 pub unsafe fn ftCo_800AC5A0(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800AC5A0");
     let mut data: *mut CpuFighter = null_mut();
     let mut var_r0: i32 = 0;
     let mut stick_x: i8 = 0;
@@ -5106,6 +5212,7 @@ pub unsafe fn ftCo_800AC5A0(mut fp: *mut Fighter) {
 
 /// `ftCo_800AC7D4`
 pub unsafe fn ftCo_800AC7D4(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800AC7D4");
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     let mut temp_r3: *mut Fighter = null_mut();
     let mut temp_r0_2: i32 = 0;
@@ -5153,6 +5260,7 @@ pub unsafe fn ftCo_800AC7D4(mut fp: *mut Fighter) {
 
 /// `ftCo_800ACB44`
 pub unsafe fn ftCo_800ACB44(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800ACB44");
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     let mut temp_r3: *mut Fighter = null_mut();
     let mut temp_f1: f32 = 0.0;
@@ -5192,6 +5300,7 @@ pub unsafe fn ftCo_800ACB44(mut fp: *mut Fighter) {
 
 /// `ftCo_800ACD5C`
 pub unsafe fn ftCo_800ACD5C(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800ACD5C");
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     if (*data).xF9_b1() != 0 {
         let mut enemy: *mut Fighter = (*data).x44;
@@ -5284,6 +5393,7 @@ pub unsafe fn ftCo_800ACD5C(mut fp: *mut Fighter) {
 
 /// `ftCo_800AD42C`
 pub unsafe fn ftCo_800AD42C(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800AD42C");
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     if !(ftCo_800A3554(fp, 1.0f32) != 0) {
         ftCo_CpuReturnToPreviousBehavior(fp, data);
@@ -5303,6 +5413,7 @@ pub unsafe fn ftCo_800AD42C(mut fp: *mut Fighter) {
 
 /// `ftCo_800AD54C`
 pub unsafe fn ftCo_800AD54C(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800AD54C");
     let mut __: [u8; 8] = [0; 8];
     let mut stick: i32 = 0;
     let mut clamp: i32 = 0;
@@ -5335,6 +5446,7 @@ unsafe fn is_capsule_egg_ball(mut kind: ItemKind) -> i32 {
 
 /// `ftCo_800AD7FC`
 pub unsafe fn ftCo_800AD7FC(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800AD7FC");
     let mut enemy: *mut Fighter = null_mut();
     let mut data: *mut CpuFighter = null_mut();
     let mut item: *mut Item = null_mut();
@@ -5398,6 +5510,7 @@ pub unsafe fn ftCo_800AD7FC(mut fp: *mut Fighter) {
 
 /// `ftCo_800ADC28`
 pub unsafe fn ftCo_800ADC28(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800ADC28");
     if (*fp).cpu.x18 == 10 {
         return;
     }
@@ -5830,6 +5943,7 @@ unsafe fn ftCo_CpuDataShouldAct(mut data: *mut CpuFighter) -> i32 {
 
 /// `ftCo_800AE7AC`
 pub unsafe fn ftCo_800AE7AC(mut fp: *mut Fighter, mut arg1: *mut Vec, mut arg2: i32) {
+    melee_core::ct!("ftCo_800AE7AC");
     let mut data0: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     let mut data2: *mut CpuFighter = null_mut();
     let mut data3: *mut CpuFighter = null_mut();
@@ -5895,6 +6009,7 @@ pub unsafe fn ftCo_800AE7AC(mut fp: *mut Fighter, mut arg1: *mut Vec, mut arg2: 
 
 /// `ftCo_800AEA8C`
 pub unsafe fn ftCo_800AEA8C(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800AEA8C");
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     let mut data2: *mut CpuFighter = null_mut();
     let mut flags: [u32; 5] = [0; 5];
@@ -6005,6 +6120,7 @@ unsafe fn ftCo_CpuSetTargetFlags(mut data: *mut CpuFighter) {
 
 /// `ftCo_800AECF0`
 pub unsafe fn ftCo_800AECF0(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800AECF0");
     let mut data2: *mut CpuFighter = null_mut();
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     let mut sp28: Vec3 = unsafe { core::mem::zeroed() };
@@ -6102,6 +6218,7 @@ unsafe fn ftCo_CpuActOnNoTarget(mut fp: *mut Fighter, mut data: *mut CpuFighter)
 
 /// `ftCo_800AEFB8`
 pub unsafe fn ftCo_800AEFB8(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800AEFB8");
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     let mut sp28: Vec3 = unsafe { core::mem::zeroed() };
     let mut cmd: i32 = 0;
@@ -6199,6 +6316,7 @@ unsafe fn ftCo_CpuApproachFoodItemTarget(mut fp: *mut Fighter, mut data: *mut Cp
 
 /// `ftCo_800AF290`
 pub unsafe fn ftCo_800AF290(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800AF290");
     let mut sp54: Vec3 = unsafe { core::mem::zeroed() };
     let mut __: [u8; 24] = [0; 24];
     let mut sp30: Vec3 = unsafe { core::mem::zeroed() };
@@ -6259,6 +6377,7 @@ pub unsafe fn ftCo_800AF290(mut fp: *mut Fighter) {
 
 /// `ftCo_800AF78C`
 pub unsafe fn ftCo_800AF78C(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800AF78C");
     let mut sp4C: Vec3 = unsafe { core::mem::zeroed() };
     let mut __: [u8; 20] = [0; 20];
     let mut approach_pos: Vec3 = unsafe { core::mem::zeroed() };
@@ -6311,6 +6430,7 @@ pub unsafe fn ftCo_800AF78C(mut fp: *mut Fighter) {
 
 /// `ftCo_800AFC40`
 pub unsafe fn ftCo_800AFC40(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800AFC40");
     let mut temp_r31: *mut CpuFighter = null_mut();
     let mut temp_r3_3: *mut Fighter = null_mut();
     let mut var_r0: i32 = 0;
@@ -6362,6 +6482,7 @@ unsafe fn ftCo_CpuActOnPlayer(mut fp: *mut Fighter, mut data: *mut CpuFighter, m
 
 /// `ftCo_800AFE3C`
 pub unsafe fn ftCo_800AFE3C(mut fp: *mut Fighter, mut arg1: i32) {
+    melee_core::ct!("ftCo_800AFE3C");
     let mut temp_r31: *mut CpuFighter = null_mut();
     let mut sp2C: Vec3 = unsafe { core::mem::zeroed() };
     let mut temp_r3_2: *mut Fighter = null_mut();
@@ -6399,6 +6520,7 @@ pub unsafe fn ftCo_800AFE3C(mut fp: *mut Fighter, mut arg1: i32) {
 
 /// `ftCo_800B00F8`
 pub unsafe fn ftCo_800B00F8(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800B00F8");
     let mut sp28: Vec3 = unsafe { core::mem::zeroed() };
     let mut temp_r3: *mut Fighter = null_mut();
     let mut temp_r3_4: i32 = 0;
@@ -6507,6 +6629,7 @@ pub unsafe fn ftCo_800B00F8(mut fp: *mut Fighter) {
 
 /// `ftCo_800B04DC`
 pub unsafe fn ftCo_800B04DC(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800B04DC");
     let mut target_slot: *mut *mut Fighter = null_mut();
     let mut data: *mut CpuFighter = null_mut();
     let mut item_gobj: *mut HSD_GObj = null_mut();
@@ -6593,6 +6716,7 @@ unsafe fn inlineI3(mut fp: *mut Fighter, mut data: *mut CpuFighter) {
 
 /// `ftCo_800B0760`
 pub unsafe fn ftCo_800B0760(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800B0760");
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     (*data).set_xF8_b0((1 as u8) as u8);
     (*data).set_xF9_b2((1 as u8) as u8);
@@ -6620,6 +6744,7 @@ unsafe fn inlineM0(mut x: f32) -> u8 {
 
 /// `ftCo_800B0918`
 pub unsafe fn ftCo_800B0918(mut fp0: *mut Fighter, mut fp1: *mut Fighter) {
+    melee_core::ct!("ftCo_800B0918");
     let mut data: *mut CpuFighter = null_mut();
     data = core::ptr::addr_of_mut!((*fp1).cpu) as *mut CpuFighter;
     (*data).x444 = (*data).x444.offset(1);
@@ -6655,6 +6780,7 @@ unsafe fn inlineJ0(mut fp: *mut Fighter, mut nana_fp: *mut Fighter) -> i32 {
 
 /// `ftCo_800B0AF4`
 pub unsafe fn ftCo_800B0AF4(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800B0AF4");
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     let mut nana_fp: *mut Fighter = ftCo_800A589C(fp);
     if (!nana_fp.is_null()) && (((*data).xFA_b7() as i32) != 0) {
@@ -6694,6 +6820,7 @@ unsafe fn isInCaptureWait(mut fp: *mut Fighter) -> i32 {
 
 /// `ftCo_800B0CA8`
 pub unsafe fn ftCo_800B0CA8(mut fp0: *mut Fighter, mut fp1: *mut Fighter) -> i32 {
+    melee_core::ct!("ftCo_800B0CA8");
     let mut temp_r5_2: *mut HSD_GObj = null_mut();
     let mut temp_r0: i32 = 0;
     let mut temp_r5: i32 = 0;
@@ -6759,6 +6886,7 @@ unsafe fn inlineK0(mut fp0: *mut Fighter) -> i32 {
 
 /// `ftCo_800B0E98`
 pub unsafe fn ftCo_800B0E98(mut fp0: *mut Fighter, mut fp1: *mut Fighter) -> i32 {
+    melee_core::ct!("ftCo_800B0E98");
     let mut temp_r0: i32 = 0;
     if ftCo_800B0CA8(fp0, fp1) != 0 {
         let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp0).cpu) as *mut CpuFighter;
@@ -6833,6 +6961,7 @@ unsafe fn ftCo_CpuUpdateNanaFollow(mut fp: *mut Fighter, mut popo: *mut Fighter,
 
 /// `ftCo_800B101C`
 pub unsafe fn ftCo_800B101C(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800B101C");
     let mut var_r4: *mut HSD_GObj = null_mut();
     let mut temp_f0: f32 = 0.0;
     let mut temp_f2: f32 = 0.0;
@@ -6878,6 +7007,7 @@ pub unsafe fn ftCo_800B101C(mut fp: *mut Fighter) {
 
 /// `ftCo_800B126C`
 pub unsafe fn ftCo_800B126C(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800B126C");
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     (*data).set_xF8_b0((1 as u8) as u8);
     (*data).set_xF9_b2((0 as u8) as u8);
@@ -6903,6 +7033,7 @@ pub unsafe fn ftCo_800B126C(mut fp: *mut Fighter) {
 
 /// `ftCo_800B1478`
 pub unsafe fn ftCo_800B1478(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800B1478");
     let mut data: *mut CpuFighter = null_mut();
     let mut target_slot: *mut *mut Fighter = null_mut();
     let mut target: *mut Fighter = null_mut();
@@ -6945,6 +7076,7 @@ pub unsafe fn ftCo_800B1478(mut fp: *mut Fighter) {
 
 /// `ftCo_800B17D0`
 pub unsafe fn ftCo_800B17D0(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800B17D0");
     let mut data2: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     let mut sp28: Vec3 = unsafe { core::mem::zeroed() };
@@ -6996,6 +7128,7 @@ pub unsafe fn ftCo_800B17D0(mut fp: *mut Fighter) {
 
 /// `ftCo_800B1AB8`
 pub unsafe fn ftCo_800B1AB8(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800B1AB8");
     let mut data2: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     let mut sp28: Vec3 = unsafe { core::mem::zeroed() };
@@ -7047,6 +7180,7 @@ pub unsafe fn ftCo_800B1AB8(mut fp: *mut Fighter) {
 
 /// `ftCo_800B1DA0`
 pub unsafe fn ftCo_800B1DA0(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800B1DA0");
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     ftCo_CpuInitEnemyTarget(fp, data);
     if ((ftCo_CpuDataShouldAct(data) != 0) && ((((*data).x7C % 60) * 5) == 0)) && ((ext::HSD_Randf() as f64) < 0.5f64) {
@@ -7067,6 +7201,7 @@ unsafe fn ftCo_800B1DA0_noinline2(mut fp: *mut Fighter) {
 
 /// `ftCo_800B1EF0`
 pub unsafe fn ftCo_800B1EF0(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800B1EF0");
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     let mut sp28: Vec3 = unsafe { core::mem::zeroed() };
     let mut cmd: i32 = 0;
@@ -7092,6 +7227,7 @@ pub unsafe fn ftCo_800B1EF0(mut fp: *mut Fighter) {
 
 /// `ftCo_800B21C8`
 pub unsafe fn ftCo_800B21C8(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800B21C8");
     let mut data2: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     let mut sp20: Vec3 = unsafe { core::mem::zeroed() };
@@ -7137,6 +7273,7 @@ pub unsafe fn ftCo_800B21C8(mut fp: *mut Fighter) {
 
 /// `ftCo_800B24B8`
 pub unsafe fn ftCo_800B24B8(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800B24B8");
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     let mut sp28: Vec3 = unsafe { core::mem::zeroed() };
     let mut cmd: i32 = 0;
@@ -7162,6 +7299,7 @@ pub unsafe fn ftCo_800B24B8(mut fp: *mut Fighter) {
 
 /// `ftCo_800B2790`
 pub unsafe fn ftCo_800B2790(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800B2790");
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     let mut cmd: i32 = 0;
     let mut line_id: i32 = 0;
@@ -7299,6 +7437,7 @@ unsafe fn ftCo_800B2AFC_IsIgnoredFloor(mut line: i32) -> i32 {
 
 /// `ftCo_800B2AFC`
 pub unsafe fn ftCo_800B2AFC(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800B2AFC");
     's124: {
         match (*fp).cpu.kind {
             0 => {
@@ -7699,6 +7838,7 @@ unsafe fn ftCo_CpuUpdateRecoveryScale(mut fp: *mut Fighter, mut data: *mut CpuFi
 
 /// `ftCo_800B33B0`
 pub unsafe fn ftCo_800B33B0(mut fp: *mut Fighter) {
+    melee_core::ct!("ftCo_800B33B0");
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     let mut temp_data: *mut CpuFighter = null_mut();
     let mut temp_data2: *mut CpuFighter = null_mut();
@@ -7860,6 +8000,7 @@ pub unsafe fn ftCo_800B33B0(mut fp: *mut Fighter) {
 
 /// `ftCo_800B3900`
 pub unsafe fn ftCo_800B3900(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCo_800B3900");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj) as *mut Fighter;
     {
         if ext::ScriptGame_CpuStandTick(fp) != 0 {
@@ -7876,6 +8017,7 @@ pub unsafe fn ftCo_800B3900(mut gobj: *mut HSD_GObj) {
 
 /// `ftCo_800B395C`
 pub unsafe fn ftCo_800B395C(mut gobj: *mut HSD_GObj, mut arg1: i32) -> i32 {
+    melee_core::ct!("ftCo_800B395C");
     let mut fp: *mut Fighter = null_mut();
     let mut temp_r0_2: i32 = 0;
     let mut temp_r30: *mut CpuFighter = null_mut();

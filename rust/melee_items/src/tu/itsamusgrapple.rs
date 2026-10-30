@@ -145,6 +145,7 @@ pub static mut it_803F73A8: [ItemStateTable; 9] = [
 /// `const itSamusGrapple_Hitbox it_803B8660`: the beam's hitbox command (GameCube bit order, built through
 /// the generated accessors).
 pub fn it_803B8660() -> itSamusGrapple_Hitbox {
+    melee_core::ct!("it_803B8660");
     let mut h: itSamusGrapple_Hitbox = unsafe { core::mem::zeroed() };
     // { 11, 0, 0, 0, 139, 0, 0 }
     h.create_hitbox_0.set_opcode(11);
@@ -279,11 +280,13 @@ unsafe fn samus_grapple_state_sync(fp: *mut Fighter) {
 }
 
 pub unsafe extern "C" fn itSamusGrapple_Logic53_Spawned(gobj: *mut Item_GObj) {
+    melee_core::ct!("itSamusGrapple_Logic53_Spawned");
     let ip = GET_ITEM(gobj);
     (*ip).xDD4_itemVar.samusgrapple.unk_10 = None;
 }
 
 pub unsafe extern "C" fn it_802B7160(gobj: *mut Fighter_GObj, data: *mut itSamusGrapple_HitboxData) {
+    melee_core::ct!("it_802B7160");
     let fp = GET_FIGHTER(gobj);
     let hit_group = (*data).create_hitbox.create_hitbox_0.hit_group();
     let hitbox: *mut HitCapsule = &mut (*fp).x914[(*data).create_hitbox.create_hitbox_0.id() as usize];
@@ -341,6 +344,7 @@ pub unsafe extern "C" fn it_802B7160(gobj: *mut Fighter_GObj, data: *mut itSamus
 }
 
 pub unsafe extern "C" fn it_802B743C(gobj: *mut HSD_GObj, ip: *mut Item, type_: i32) {
+    melee_core::ct!("it_802B743C");
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSamusGrappleAttributes;
     let jobj: *mut HSD_JObj;
     let mut anim: *mut HSD_AnimJoint;
@@ -391,6 +395,7 @@ unsafe fn samus_grapple_setup_tail(ip: *mut Item, link_gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_802B75FC(ip: *mut Item, jobj_arg: *mut HSD_JObj, arg2: i32, scale: f32) -> *mut HSD_JObj {
+    melee_core::ct!("it_802B75FC");
     let coeff: f32;
     let mut prev_link: *mut ItemLink;
     let attrs: *mut itSamusGrappleAttributes;
@@ -488,6 +493,7 @@ pub unsafe extern "C" fn it_802B75FC(ip: *mut Item, jobj_arg: *mut HSD_JObj, arg
 }
 
 pub unsafe extern "C" fn it_802B7B84(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802B7B84");
     if !gobj.is_null() {
         let ip = GET_ITEM(gobj);
         if !ip.is_null() {
@@ -515,6 +521,7 @@ pub unsafe extern "C" fn it_802B7B84(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802B7C18(owner: *mut Fighter_GObj, pos: *mut Vec3, facing_dir: f32) -> *mut Item_GObj {
+    melee_core::ct!("it_802B7C18");
     let fp = GET_FIGHTER(owner);
     let mut spawn: SpawnItem = core::mem::zeroed();
 
@@ -611,6 +618,7 @@ unsafe fn fn_802B7E34_anim_inline(gobj: *mut Item_GObj, ip: *mut Item, m: *mut [
 }
 
 pub unsafe extern "C" fn fn_802B7E34(gobj: *mut Item_GObj) {
+    melee_core::ct!("fn_802B7E34");
     let mut m: [[f32; 4]; 3] = core::mem::zeroed();
     let ip = GET_ITEM(gobj);
     let fp = GET_FIGHTER((*ip).owner);
@@ -624,10 +632,12 @@ pub unsafe extern "C" fn fn_802B7E34(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itSamusgrapple_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itSamusgrapple_UnkMotion0_Phys");
     (*GET_ITEM(gobj)).xDD4_itemVar.samusgrapple.unk_10 = Some(fn_802B7E34);
 }
 
 pub unsafe extern "C" fn fn_802B805C(gobj: *mut Item_GObj) {
+    melee_core::ct!("fn_802B805C");
     let ip = GET_ITEM(gobj);
     let mut pos: Vec3 = core::mem::zeroed();
     let mut normal: Vec3;
@@ -685,10 +695,12 @@ pub unsafe extern "C" fn fn_802B805C(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itSamusgrapple_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itSamusgrapple_UnkMotion1_Phys");
     (*GET_ITEM(gobj)).xDD4_itemVar.samusgrapple.unk_10 = Some(fn_802B805C);
 }
 
 pub unsafe extern "C" fn fn_802B8384(gobj: *mut Item_GObj) {
+    melee_core::ct!("fn_802B8384");
     let ip = GET_ITEM(gobj);
     let owner = (*ip).owner;
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSamusGrappleAttributes;
@@ -720,10 +732,12 @@ pub unsafe extern "C" fn fn_802B8384(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itSamusgrapple_UnkMotion2_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itSamusgrapple_UnkMotion2_Phys");
     (*GET_ITEM(gobj)).xDD4_itemVar.samusgrapple.unk_10 = Some(fn_802B8384);
 }
 
 pub unsafe extern "C" fn fn_802B8524(gobj: *mut Item_GObj) {
+    melee_core::ct!("fn_802B8524");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSamusGrappleAttributes;
     let fp = (*(*ip).owner).user_data as *mut Fighter;
@@ -743,10 +757,12 @@ pub unsafe extern "C" fn fn_802B8524(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itSamusgrapple_UnkMotion3_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itSamusgrapple_UnkMotion3_Phys");
     (*GET_ITEM(gobj)).xDD4_itemVar.samusgrapple.unk_10 = Some(fn_802B8524);
 }
 
 pub unsafe extern "C" fn fn_802B8684(gobj: *mut Item_GObj) {
+    melee_core::ct!("fn_802B8684");
     let mut pos: Vec3 = core::mem::zeroed();
     let mut m: [[f32; 4]; 3] = core::mem::zeroed();
 
@@ -774,10 +790,12 @@ pub unsafe extern "C" fn fn_802B8684(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itSamusgrapple_UnkMotion4_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itSamusgrapple_UnkMotion4_Phys");
     (*GET_ITEM(gobj)).xDD4_itemVar.samusgrapple.unk_10 = Some(fn_802B8684);
 }
 
 pub unsafe extern "C" fn fn_802B8814(gobj: *mut Item_GObj) {
+    melee_core::ct!("fn_802B8814");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSamusGrappleAttributes;
     let mut pos: Vec3 = core::mem::zeroed();
@@ -801,6 +819,7 @@ pub unsafe extern "C" fn fn_802B8814(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itSamusgrapple_UnkMotion5_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itSamusgrapple_UnkMotion5_Phys");
     (*GET_ITEM(gobj)).xDD4_itemVar.samusgrapple.unk_10 = Some(fn_802B8814);
 }
 
@@ -819,6 +838,7 @@ unsafe fn itGrappleCheckCollision(head: *mut ItemLink, fp: *mut Fighter, pos: *m
 }
 
 pub unsafe extern "C" fn fn_802B895C(gobj: *mut Item_GObj) {
+    melee_core::ct!("fn_802B895C");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSamusGrappleAttributes;
     let fp = (*(*ip).owner).user_data as *mut Fighter;
@@ -850,10 +870,12 @@ pub unsafe extern "C" fn fn_802B895C(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itSamusgrapple_UnkMotion6_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itSamusgrapple_UnkMotion6_Phys");
     (*GET_ITEM(gobj)).xDD4_itemVar.samusgrapple.unk_10 = Some(fn_802B895C);
 }
 
 pub unsafe extern "C" fn fn_802B8B54(gobj: *mut Item_GObj) {
+    melee_core::ct!("fn_802B8B54");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSamusGrappleAttributes;
     let fp = (*(*ip).owner).user_data as *mut Fighter;
@@ -889,10 +911,12 @@ pub unsafe extern "C" fn fn_802B8B54(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itSamusgrapple_UnkMotion7_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itSamusgrapple_UnkMotion7_Phys");
     (*GET_ITEM(gobj)).xDD4_itemVar.samusgrapple.unk_10 = Some(fn_802B8B54);
 }
 
 pub unsafe extern "C" fn fn_802B8D38(gobj: *mut Item_GObj) {
+    melee_core::ct!("fn_802B8D38");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSamusGrappleAttributes;
     let fp = (*(*ip).owner).user_data as *mut Fighter;
@@ -947,10 +971,12 @@ pub unsafe extern "C" fn fn_802B8D38(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itSamusgrapple_UnkMotion8_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itSamusgrapple_UnkMotion8_Phys");
     (*GET_ITEM(gobj)).xDD4_itemVar.samusgrapple.unk_10 = Some(fn_802B8D38);
 }
 
 pub unsafe extern "C" fn it_802B900C(mut link: *mut ItemLink, pos: *mut Vec3, attrs: *mut itSamusGrappleAttributes, dist: f32) {
+    melee_core::ct!("it_802B900C");
     let mut dir: Vec3 = core::mem::zeroed();
     let mut prev = (*link).prev;
     let mut d: f32;
@@ -982,6 +1008,7 @@ pub unsafe extern "C" fn it_802B900C(mut link: *mut ItemLink, pos: *mut Vec3, at
 }
 
 pub unsafe extern "C" fn it_802B91C4(mut link: *mut ItemLink, pos: *mut Vec3, attrs: *mut itSamusGrappleAttributes, dist: f32) {
+    melee_core::ct!("it_802B91C4");
     let mut dir: Vec3 = core::mem::zeroed();
     let mut prev = (*link).prev;
     let mut d: f32;
@@ -1043,6 +1070,7 @@ unsafe fn it_802B9328_grav(vely: f32) -> f32 {
 }
 
 pub unsafe extern "C" fn it_802B9328(link: *mut ItemLink, pos: *mut Vec3, attrs: *mut itSamusGrappleAttributes, fp: *mut Fighter) -> i32 {
+    melee_core::ct!("it_802B9328");
     let mut cur: *mut ItemLink;
     let mut next: *mut ItemLink;
     let grapple_ip = (*(*fp).u.ss.x223C).user_data as *mut Item;
@@ -1148,6 +1176,7 @@ pub unsafe extern "C" fn it_802B9328(link: *mut ItemLink, pos: *mut Vec3, attrs:
 }
 
 pub unsafe extern "C" fn it_802B99A0(link: *mut ItemLink, pos: *mut Vec3, attrs: *mut itSamusGrappleAttributes, fp: *mut Fighter) -> i32 {
+    melee_core::ct!("it_802B99A0");
     let mut dir: Vec3 = core::mem::zeroed();
     let grapple_ip = (*(*fp).u.ss.x223C).user_data as *mut Item;
     let mut cur: *mut ItemLink;
@@ -1222,6 +1251,7 @@ pub unsafe extern "C" fn it_802B99A0(link: *mut ItemLink, pos: *mut Vec3, attrs:
 }
 
 pub unsafe extern "C" fn it_802B9CE8(mut link: *mut ItemLink, pos: *mut Vec3, attrs: *mut itSamusGrappleAttributes, fp: *mut Fighter) {
+    melee_core::ct!("it_802B9CE8");
     let mut prev: *mut ItemLink;
     let mut d: f32;
     let grapple_ip = (*(*fp).u.ss.x223C).user_data as *mut Item;
@@ -1279,6 +1309,7 @@ pub unsafe extern "C" fn it_802B9CE8(mut link: *mut ItemLink, pos: *mut Vec3, at
 }
 
 pub unsafe extern "C" fn it_802B9FD4(link: *mut ItemLink, pos: *mut Vec3, attrs: *mut itSamusGrappleAttributes) -> bool {
+    melee_core::ct!("it_802B9FD4");
     let mut cur: *mut ItemLink;
     let mut dir: Vec3 = core::mem::zeroed();
     let mut next: *mut ItemLink;
@@ -1315,6 +1346,7 @@ pub unsafe extern "C" fn it_802B9FD4(link: *mut ItemLink, pos: *mut Vec3, attrs:
 }
 
 pub unsafe extern "C" fn it_802BA194(link: *mut ItemLink, pos: *mut Vec3, attrs: *mut itSamusGrappleAttributes, target_dist: f32) -> bool {
+    melee_core::ct!("it_802BA194");
     let mut next: *mut ItemLink;
     let mut cur: *mut ItemLink;
     let mut iter: *mut ItemLink;
@@ -1411,6 +1443,7 @@ unsafe fn Item_RetractChain(
 }
 
 pub unsafe extern "C" fn it_802BA2D8(link: *mut ItemLink, pos: *mut Vec3, attrs: *mut itSamusGrappleAttributes, target_dist: f32) -> bool {
+    melee_core::ct!("it_802BA2D8");
     let mut next: *mut ItemLink = null_mut();
     let mut cur: *mut ItemLink = null_mut();
     let mut remaining: f32 = 0.0;
@@ -1431,6 +1464,7 @@ pub unsafe extern "C" fn it_802BA3BC(
     attrs: *mut itSamusGrappleAttributes,
     target_dist: f32,
 ) -> bool {
+    melee_core::ct!("it_802BA3BC");
     let mut dir: Vec3 = core::mem::zeroed();
     let saved_pos: Vec3;
     let mut link: *mut ItemLink;
@@ -1495,6 +1529,7 @@ pub unsafe extern "C" fn it_802BA3BC(
 }
 
 pub unsafe extern "C" fn it_802BA5DC(tail: *mut ItemLink, head: *mut ItemLink, pos: *mut Vec3, attrs: *mut itSamusGrappleAttributes) {
+    melee_core::ct!("it_802BA5DC");
     let saved_pos: Vec3;
     let mut link: *mut ItemLink;
     let mut head_link: *mut ItemLink;
@@ -1544,6 +1579,7 @@ pub unsafe extern "C" fn it_802BA5DC(tail: *mut ItemLink, head: *mut ItemLink, p
 }
 
 pub unsafe extern "C" fn it_802BA760(link: *mut ItemLink, pos: *mut Vec3, attrs: *mut itSamusGrappleAttributes, fp: *mut Fighter) -> bool {
+    melee_core::ct!("it_802BA760");
     let mut dir: Vec3 = core::mem::zeroed();
     let da = (*(*fp).ft_data).ext_attr as *mut ftSs_DatAttrs;
     let mut cur: *mut ItemLink;
@@ -1591,11 +1627,13 @@ pub unsafe extern "C" fn it_802BA760(link: *mut ItemLink, pos: *mut Vec3, attrs:
 }
 
 pub unsafe extern "C" fn itSamusGrapple_Logic53_PickedUp(gobj: *mut Item_GObj) {
+    melee_core::ct!("itSamusGrapple_Logic53_PickedUp");
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE);
     ext::it_802A2428(gobj);
 }
 
 pub unsafe extern "C" fn it_802BA9B8(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802BA9B8");
     let ip = GET_ITEM(gobj);
     ext::Item_80268E5C(gobj, 3, ITEM_ANIM_UPDATE);
     ext::ftColl_8007AFF8((*ip).xDD4_itemVar.samusgrapple.x8);
@@ -1603,6 +1641,7 @@ pub unsafe extern "C" fn it_802BA9B8(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802BAA08(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802BAA08");
     let ip = GET_ITEM(gobj);
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE);
     ext::ftColl_8007AFF8((*ip).xDD4_itemVar.samusgrapple.x8);
@@ -1610,12 +1649,14 @@ pub unsafe extern "C" fn it_802BAA08(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802BAA58(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802BAA58");
     let ip = GET_ITEM(gobj);
     ext::Item_80268E5C(gobj, 4, ITEM_ANIM_UPDATE);
     ext::it_802A2428(gobj);
 }
 
 pub unsafe extern "C" fn it_802BAA94(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802BAA94");
     let ip = GET_ITEM(gobj);
     ext::Item_80268E5C(gobj, 5, ITEM_ANIM_UPDATE);
     ext::ftColl_8007AFF8((*ip).xDD4_itemVar.samusgrapple.x8);
@@ -1623,6 +1664,7 @@ pub unsafe extern "C" fn it_802BAA94(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802BAAE4(gobj: *mut Item_GObj, vel: *mut Vec3) {
+    melee_core::ct!("it_802BAAE4");
     let ip = GET_ITEM(gobj);
     let link = (*ip).xDD4_itemVar.samusgrapple.x0;
     (*link).vel = *vel;
@@ -1631,17 +1673,20 @@ pub unsafe extern "C" fn it_802BAAE4(gobj: *mut Item_GObj, vel: *mut Vec3) {
 }
 
 pub unsafe extern "C" fn it_802BAB40(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802BAB40");
     ext::Item_80268E5C(gobj, 6, ITEM_ANIM_UPDATE);
     ext::it_802A2428(gobj);
 }
 
 pub unsafe extern "C" fn it_802BAB7C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802BAB7C");
     ext::Item_80268E5C(gobj, 7, ITEM_ANIM_UPDATE);
     ext::it_802A2428(gobj);
 }
 
 /// Set grapple beam state and store duration.
 pub unsafe extern "C" fn it_802BABB8(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802BABB8");
     let ip = (*gobj).user_data as *mut Item;
     let fp = (*(*ip).owner).user_data as *mut Fighter;
     let da = (*(*fp).ft_data).ext_attr as *mut ftSs_DatAttrs;
@@ -1651,6 +1696,7 @@ pub unsafe extern "C" fn it_802BABB8(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802BAC3C(gobj: *mut Fighter_GObj) {
+    melee_core::ct!("it_802BAC3C");
     let fp = GET_FIGHTER(gobj);
     if !(*fp).u.ss.x223C.is_null() {
         it_802B7B84((*fp).u.ss.x223C);
@@ -1662,6 +1708,7 @@ pub unsafe extern "C" fn it_802BAC3C(gobj: *mut Fighter_GObj) {
 }
 
 pub unsafe extern "C" fn it_802BAC80(gobj: *mut Fighter_GObj) {
+    melee_core::ct!("it_802BAC80");
     let fp = GET_FIGHTER(gobj);
     if !(*fp).u.ss.x223C.is_null() {
         let ip = GET_ITEM((*fp).u.ss.x223C);
@@ -1672,6 +1719,7 @@ pub unsafe extern "C" fn it_802BAC80(gobj: *mut Fighter_GObj) {
 }
 
 pub unsafe extern "C" fn it_802BACC4(gobj: *mut Fighter_GObj) {
+    melee_core::ct!("it_802BACC4");
     let fp = GET_FIGHTER(gobj);
     let mut pos: Vec3 = core::mem::zeroed();
     let mut m: [[f32; 4]; 3] = core::mem::zeroed();
@@ -1693,6 +1741,7 @@ pub unsafe extern "C" fn it_802BACC4(gobj: *mut Fighter_GObj) {
 }
 
 pub unsafe extern "C" fn itSamusGrapple_Logic53_EvtUnk(gobj: *mut Item_GObj, arg1: *mut Item_GObj) {
+    melee_core::ct!("itSamusGrapple_Logic53_EvtUnk");
     let item = GET_ITEM(gobj);
     ext::it_8026B894(gobj, arg1);
     if (*item).xDD4_itemVar.samusgrapple.x8 == arg1 {

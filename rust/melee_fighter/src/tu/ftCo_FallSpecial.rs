@@ -62,6 +62,7 @@ pub mod ext {
 }
 
 pub fn ftCo_800968C8(g: G) {
+    melee_core::ct!("ftCo_800968C8");
     let l = fp(g).x2EC;
     ftCo_80096900(g, 1, 0, 1, 1.0, l);
 }
@@ -69,6 +70,7 @@ pub fn ftCo_800968C8(g: G) {
 /// static inline `inline0`.
 #[allow(clippy::too_many_arguments)]
 pub fn inline0(g: G, arg1: i32, arg2: i32, allow_interrupt: i32, mobility: f32, landing_lag: f32, arg6: f32, unk: bool) {
+    melee_core::ct!("inline0");
     if fp(g).x2224_b2() != 0 {
         ext::ftCo_80090780(g);
         return;
@@ -95,14 +97,17 @@ pub fn inline0(g: G, arg1: i32, arg2: i32, allow_interrupt: i32, mobility: f32, 
 }
 
 pub fn ftCo_80096900(g: G, arg1: i32, arg2: i32, allow_interrupt: i32, mobility: f32, landing_lag: f32) {
+    melee_core::ct!("ftCo_80096900");
     inline0(g, arg1, arg2, allow_interrupt, mobility, landing_lag, 0.0, true);
 }
 
 pub fn ftCo_800969D8(g: G, arg1: i32, arg2: i32, allow_interrupt: i32, mobility: f32, landing_lag: f32, arg6: f32) {
+    melee_core::ct!("ftCo_800969D8");
     inline0(g, arg1, arg2, allow_interrupt, mobility, landing_lag, arg6, false);
 }
 
 pub fn ftCo_FallSpecial_Anim(g: G) {
+    melee_core::ct!("ftCo_FallSpecial_Anim");
     let f = fp(g);
     let p = unsafe { core::ptr::addr_of_mut!(f.mv.co.fallspecial.x4) };
     ext::ftCo_Fall_Anim_Inner(g, p, ftCo_SM_FallSpecial, ftCo_SM_FallSpecialF, ftCo_SM_FallSpecialB);
@@ -110,6 +115,7 @@ pub fn ftCo_FallSpecial_Anim(g: G) {
 }
 
 pub fn ftCo_FallSpecial_IASA(g: G) {
+    melee_core::ct!("ftCo_FallSpecial_IASA");
     if ext::ftCo_800CEE70(g) {
         return;
     }
@@ -120,6 +126,7 @@ pub fn ftCo_FallSpecial_IASA(g: G) {
 }
 
 pub fn ftCo_FallSpecial_Phys(g: G) {
+    melee_core::ct!("ftCo_FallSpecial_Phys");
     ext::ftCommon_CheckFallFast(fp(g));
     let f = fp(g);
     let ca = f.co_attrs;
@@ -155,6 +162,7 @@ pub fn ftCo_FallSpecial_Phys(g: G) {
 }
 
 pub fn ftCo_FallSpecial_Coll(g: G) {
+    melee_core::ct!("ftCo_FallSpecial_Coll");
     if ext::Geno_FallSpecialColl(g) != 0 {
         return;
     }
@@ -163,6 +171,7 @@ pub fn ftCo_FallSpecial_Coll(g: G) {
 
 /// Passed as a callback (`bool (*)(Fighter_GObj*, int)`), hence `extern "C"`.
 pub extern "C" fn ftCo_80096CC8(g: G, line_id: i32) -> bool {
+    melee_core::ct!("ftCo_80096CC8");
     let f = fp(g);
     line_id != -1
         && (ext::mpLineGetFlags(line_id) & LINE_FLAG_PLATFORM as u32 == 0 || f.input.lstick[0].y > cd().x25C)
@@ -170,6 +179,7 @@ pub extern "C" fn ftCo_80096CC8(g: G, line_id: i32) -> bool {
 
 /// Passed as a callback (`HSD_GObjEvent`), hence `extern "C"`.
 pub extern "C" fn ftCo_80096D28(g: G) {
+    melee_core::ct!("ftCo_80096D28");
     let f = fp(g);
     let (x10, ai, ll) = unsafe { (f.mv.co.fallspecial.x10, f.mv.co.fallspecial.allow_interrupt, f.mv.co.fallspecial.landing_lag) };
     if x10 != 0 || f.self_vel.y < ext::ftCo_800D0EC8(f) {

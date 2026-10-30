@@ -68,6 +68,7 @@ fn inlineA1(f: &Fighter) -> bool {
 }
 
 pub fn ftCo_8009917C(g: G) -> bool {
+    melee_core::ct!("ftCo_8009917C");
     let f = fp(g);
     let stick_x = if inlineA1(f) {
         f.input.lstick[0].x
@@ -82,6 +83,7 @@ pub fn ftCo_8009917C(g: G) -> bool {
 }
 
 pub fn ftCo_80099264(g: G) -> bool {
+    melee_core::ct!("ftCo_80099264");
     if fp(g).input.held_buttons[0] & HSD_PAD_LR != 0 {
         ftCo_800992A8(g, ftCo_MS_EscapeF, 0);
         return true;
@@ -91,6 +93,7 @@ pub fn ftCo_80099264(g: G) -> bool {
 
 /// static `ftCo_800992A8`.
 pub fn ftCo_800992A8(g: G, msid: i32, arg2: i32) {
+    melee_core::ct!("ftCo_800992A8");
     match fp(g).kind {
         Ft_Kind_Samus => ftCo_80099390(g, msid, arg2),
         Ft_Kind_Yoshi => ftCo_80099438(g, msid, arg2),
@@ -101,6 +104,7 @@ pub fn ftCo_800992A8(g: G, msid: i32, arg2: i32) {
 
 /// static `ftCo_80099314`.
 pub fn ftCo_80099314(g: G, msid: i32, arg2: i32) {
+    melee_core::ct!("ftCo_80099314");
     fp(g).anon_2210.throw_flags = 0;
     ext::Fighter_ChangeMotionState(g, msid, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ext::ftAnim_8006EBA4(g);
@@ -111,6 +115,7 @@ pub fn ftCo_80099314(g: G, msid: i32, arg2: i32) {
 
 /// static `ftCo_80099390` (Samus: the bomb-jump roll).
 pub fn ftCo_80099390(g: G, msid: i32, arg2: i32) {
+    melee_core::ct!("ftCo_80099390");
     let f = fp(g);
     f.cmd_vars[0] = 0;
     unsafe { f.mv.co.escape.x4 = 0 };
@@ -122,6 +127,7 @@ pub fn ftCo_80099390(g: G, msid: i32, arg2: i32) {
 
 /// static `ftCo_80099438` (Yoshi).
 pub fn ftCo_80099438(g: G, msid: i32, arg2: i32) {
+    melee_core::ct!("ftCo_80099438");
     ftCo_80099314(g, msid, arg2);
     ext::ftParts_80074B0C(g, 0, 1);
     ext::ftYs_Init_8012BDA0(g);
@@ -141,6 +147,7 @@ fn ftCheckThrowB3(f: &mut Fighter) -> bool {
 }
 
 pub fn ftCo_Escape_Anim(g: G) {
+    melee_core::ct!("ftCo_Escape_Anim");
     let f = fp(g);
     if ftCheckThrowB3(f) {
         f.facing_dir = -f.facing_dir;
@@ -153,6 +160,7 @@ pub fn ftCo_Escape_Anim(g: G) {
 
 /// static `ftCo_80099564`; an `anim_cb`, hence `extern "C"`.
 pub extern "C" fn ftCo_80099564(g: G) {
+    melee_core::ct!("ftCo_80099564");
     let f = fp(g);
     if f.cmd_vars[0] != 0 && unsafe { f.mv.co.escape.x4 } == 0 {
         ext::ftSs_SpecialLw_8012AEBC(g);
@@ -168,6 +176,7 @@ pub extern "C" fn ftCo_80099564(g: G) {
 
 /// static `ftCo_80099644`; an `anim_cb`, hence `extern "C"`.
 pub extern "C" fn ftCo_80099644(g: G) {
+    melee_core::ct!("ftCo_80099644");
     let f = fp(g);
     if ftCheckThrowB3(f) {
         f.facing_dir = -f.facing_dir;
@@ -184,19 +193,23 @@ pub extern "C" fn ftCo_80099644(g: G) {
 }
 
 pub fn ftCo_Escape_IASA(g: G) {
+    melee_core::ct!("ftCo_Escape_IASA");
     ext::ftCo_8009563C(g);
 }
 
 pub fn ftCo_Escape_Phys(g: G) {
+    melee_core::ct!("ftCo_Escape_Phys");
     ext::ft_80085004(g);
 }
 
 pub fn ftCo_Escape_Coll(g: G) {
+    melee_core::ct!("ftCo_Escape_Coll");
     ext::ft_80084104(g);
 }
 
 /// static `ftCo_80099754`; a `coll_cb`, hence `extern "C"`.
 pub extern "C" fn ftCo_80099754(g: G) {
+    melee_core::ct!("ftCo_80099754");
     let f = fp(g);
     if f.cmd_vars[0] != 0 {
         let da = f.dat_attrs as *mut ftSs_DatAttrs;
@@ -214,12 +227,14 @@ fn inlineB0(f: &Fighter) -> bool {
 
 /// TARGET_PC static `ftCo_Ucf073RimAxis`.
 pub fn ftCo_Ucf073RimAxis(v: f32) -> f32 {
+    melee_core::ct!("ftCo_Ucf073RimAxis");
     let t = fmsubs(if v < 0.0 { -v } else { v }, 80.0, 9.953975677490234e-06);
     ((t as i32).wrapping_add(2)) as f32 / 80.0
 }
 
 /// TARGET_PC static `ftCo_Ucf073BlocksSpotdodge`.
 pub fn ftCo_Ucf073BlocksSpotdodge(f: &Fighter) -> bool {
+    melee_core::ct!("ftCo_Ucf073BlocksSpotdodge");
     if ext::Replay_UcfVersion(f.x618_player_id as i32) != 73 {
         return false;
     }
@@ -243,6 +258,7 @@ pub fn ftCo_Ucf073BlocksSpotdodge(f: &Fighter) -> bool {
 
 /// TARGET_PC static `ftCo_Ucf084RimUnits`.
 pub fn ftCo_Ucf084RimUnits(v: f32) -> i32 {
+    melee_core::ct!("ftCo_Ucf084RimUnits");
     let a = if v < 0.0 { -v } else { v };
     let t = (a as f64).mul_add(80.0, -(9.99999974738e-05f32 as f64)) as f32;
     (t as i32).wrapping_add(2)
@@ -250,6 +266,7 @@ pub fn ftCo_Ucf084RimUnits(v: f32) -> i32 {
 
 /// TARGET_PC static `ftCo_Ucf084BlocksSpotdodge`.
 pub fn ftCo_Ucf084BlocksSpotdodge(f: &Fighter) -> bool {
+    melee_core::ct!("ftCo_Ucf084BlocksSpotdodge");
     if ext::Replay_UcfVersion(f.x618_player_id as i32) != 84 {
         return false;
     }
@@ -272,6 +289,7 @@ pub fn ftCo_Ucf084BlocksSpotdodge(f: &Fighter) -> bool {
 }
 
 pub fn ftCo_80099794(g: G) -> bool {
+    melee_core::ct!("ftCo_80099794");
     let f = fp(g);
     if f.input.held_buttons[0] & HSD_PAD_LR != 0 && inlineB0(f) {
         if ftCo_Ucf073BlocksSpotdodge(f) || ftCo_Ucf084BlocksSpotdodge(f) {
@@ -284,6 +302,7 @@ pub fn ftCo_80099794(g: G) -> bool {
 }
 
 pub fn ftCo_8009980C(g: G) -> bool {
+    melee_core::ct!("ftCo_8009980C");
     let f = fp(g);
     if inlineB0(f) || ext::ftCo_800DF8E8(f) {
         if ftCo_Ucf073BlocksSpotdodge(f) || ftCo_Ucf084BlocksSpotdodge(f) {
@@ -297,6 +316,7 @@ pub fn ftCo_8009980C(g: G) -> bool {
 
 /// static `ftCo_80099894`.
 pub fn ftCo_80099894(g: G) {
+    melee_core::ct!("ftCo_80099894");
     match fp(g).kind {
         Ft_Kind_Yoshi => ftCo_80099954(g),
         _ => ftCo_800998EC(g),
@@ -306,6 +326,7 @@ pub fn ftCo_80099894(g: G) {
 
 /// static `ftCo_800998EC`.
 pub fn ftCo_800998EC(g: G) {
+    melee_core::ct!("ftCo_800998EC");
     ext::Fighter_ChangeMotionState(g, ftCo_MS_EscapeN, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ext::ftAnim_8006EBA4(g);
     fp(g).set_x221D_b5(1);
@@ -313,6 +334,7 @@ pub fn ftCo_800998EC(g: G) {
 
 /// static `ftCo_80099954`.
 pub fn ftCo_80099954(g: G) {
+    melee_core::ct!("ftCo_80099954");
     if fp(g).x5F4_arr[0].idx == 1 {
         ext::ftYs_Init_8012BE3C(g);
     }
@@ -320,17 +342,20 @@ pub fn ftCo_80099954(g: G) {
 }
 
 pub fn ftCo_EscapeN_Anim(g: G) {
+    melee_core::ct!("ftCo_EscapeN_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ft_8008A2BC(g);
     }
 }
 
-pub fn ftCo_EscapeN_IASA(_g: G) {}
+pub fn ftCo_EscapeN_IASA(_g: G) { melee_core::ct!("ftCo_EscapeN_IASA");}
 
 pub fn ftCo_EscapeN_Phys(g: G) {
+    melee_core::ct!("ftCo_EscapeN_Phys");
     ext::ft_80084F3C(g);
 }
 
 pub fn ftCo_EscapeN_Coll(g: G) {
+    melee_core::ct!("ftCo_EscapeN_Coll");
     ext::ft_80084104(g);
 }

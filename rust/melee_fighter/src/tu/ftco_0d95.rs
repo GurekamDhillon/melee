@@ -133,6 +133,7 @@ fn da(f: &Fighter) -> &ftSs_DatAttrs {
 
 /// `fn_800D9558` (frames x9C..xA8, six sparkles, wall probe).
 pub fn fn_800d9558(g: G) -> bool {
+    melee_core::ct!("fn_800d9558");
     let f = fp(g);
     if f.kind != Ft_Kind_Samus {
         return false;
@@ -143,6 +144,7 @@ pub fn fn_800d9558(g: G) -> bool {
 
 /// `fn_800D9930` (frames xAC..xB8, four sparkles, no probe).
 pub fn fn_800d9930(g: G) -> bool {
+    melee_core::ct!("fn_800d9930");
     let f = fp(g);
     if f.kind != Ft_Kind_Samus {
         return false;
@@ -153,6 +155,7 @@ pub fn fn_800d9930(g: G) -> bool {
 
 /// `fn_800D9C64`.
 pub fn fn_800d9c64(g: G) {
+    melee_core::ct!("fn_800d9c64");
     let f = fp(g);
     if f.kind == Ft_Kind_Samus {
         ext::it_802B7B84(unsafe { f.u.ss.x223C });
@@ -161,6 +164,7 @@ pub fn fn_800d9c64(g: G) {
 
 /// `ftCo_800D9C98`.
 pub fn ftco_800d9c98(g: G) {
+    melee_core::ct!("ftco_800d9c98");
     let f = fp(g);
     unsafe {
         if !f.u.ss.x223C.is_null() {

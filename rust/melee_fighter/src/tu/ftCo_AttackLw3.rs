@@ -68,6 +68,7 @@ fn stick_down(f: &Fighter) -> bool {
 
 /// `ftCo_AttackLw3_CheckInput`.
 pub fn ftCo_AttackLw3_CheckInput(g: G) -> bool {
+    melee_core::ct!("ftCo_AttackLw3_CheckInput");
     let f = fp(g);
     if f.input.pressed_buttons & HSD_PAD_A as u32 != 0 && stick_down(f) {
         if !f.item_gobj.is_null() && ext::ftCo_80094E54(f) {
@@ -82,12 +83,14 @@ pub fn ftCo_AttackLw3_CheckInput(g: G) -> bool {
 
 /// static `callUnk` (the x21EC callback).
 pub unsafe extern "C" fn callUnk(g: *mut HSD_GObj) {
+    melee_core::ct!("callUnk");
     ext::ft_800892A0(g);
     ext::ft_80089824(g);
 }
 
 /// static `decideFighter`.
 pub fn decideFighter(g: G) {
+    melee_core::ct!("decideFighter");
     if fp(g).kind == Ft_Kind_GameWatch {
         ext::ftGw_AttackLw3_Enter(g);
     } else {
@@ -97,6 +100,7 @@ pub fn decideFighter(g: G) {
 
 /// static `doEnter`.
 pub fn doEnter(g: G) {
+    melee_core::ct!("doEnter");
     let f = fp(g);
     if !ext::ftpickupitem_80094790(g) {
         f.cmd_vars[CMD_UNK0_BOOL] = 0;
@@ -110,10 +114,12 @@ pub fn doEnter(g: G) {
 
 /// static `wrapper` (fake in the decomp: just decideFighter).
 pub fn wrapper(g: G) {
+    melee_core::ct!("wrapper");
     decideFighter(g);
 }
 
 pub fn ftCo_AttackLw3_Anim(g: G) {
+    melee_core::ct!("ftCo_AttackLw3_Anim");
     let f = fp(g);
     if f.cmd_vars[CMD_UNK0_BOOL] != 0 && unsafe { f.mv.co.attacklw3.x0 } != 0 {
         wrapper(g);
@@ -126,6 +132,7 @@ pub fn ftCo_AttackLw3_Anim(g: G) {
 
 /// static `checkPadA`: re-chain when the script opened the window, else buffer the press.
 pub fn checkPadA(g: G) -> bool {
+    melee_core::ct!("checkPadA");
     let f = fp(g);
     if f.input.pressed_buttons & HSD_PAD_A as u32 != 0 {
         if f.cmd_vars[CMD_UNK0_BOOL] != 0 {
@@ -139,10 +146,12 @@ pub fn checkPadA(g: G) -> bool {
 
 /// static `checkItemThrowInput` (same test as the CheckInput).
 pub fn checkItemThrowInput(g: G) -> bool {
+    melee_core::ct!("checkItemThrowInput");
     ftCo_AttackLw3_CheckInput(g)
 }
 
 pub fn ftCo_AttackLw3_IASA(g: G) {
+    melee_core::ct!("ftCo_AttackLw3_IASA");
     let ai = fp(g).allow_interrupt() != 0;
     if ai {
         if ext::ftCo_AttackS4_CheckInput(g)
@@ -169,9 +178,11 @@ pub fn ftCo_AttackLw3_IASA(g: G) {
 }
 
 pub fn ftCo_AttackLw3_Phys(g: G) {
+    melee_core::ct!("ftCo_AttackLw3_Phys");
     ext::ft_80084F3C(g);
 }
 
 pub fn ftCo_AttackLw3_Coll(g: G) {
+    melee_core::ct!("ftCo_AttackLw3_Coll");
     ext::ft_80084104(g);
 }

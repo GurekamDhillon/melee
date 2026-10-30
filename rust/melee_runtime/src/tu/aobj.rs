@@ -80,14 +80,17 @@ fn hsd_assert(cond: bool, line: u32) {
 }
 
 pub unsafe extern "C" fn HSD_AObjInitAllocData() {
+    melee_core::ct!("HSD_AObjInitAllocData");
     ext::HSD_ObjAllocInit(&raw mut aobj_alloc_data, core::mem::size_of::<HSD_AObj>() as u32, 4);
 }
 
 pub unsafe extern "C" fn HSD_AObjGetAllocData() -> *mut HSD_ObjAllocData {
+    melee_core::ct!("HSD_AObjGetAllocData");
     &raw mut aobj_alloc_data
 }
 
 pub unsafe extern "C" fn HSD_AObjGetFlags(aobj: *mut HSD_AObj) -> u32 {
+    melee_core::ct!("HSD_AObjGetFlags");
     if !aobj.is_null() {
         (*aobj).flags
     } else {
@@ -96,6 +99,7 @@ pub unsafe extern "C" fn HSD_AObjGetFlags(aobj: *mut HSD_AObj) -> u32 {
 }
 
 pub unsafe extern "C" fn HSD_AObjSetFlags(aobj: *mut HSD_AObj, flags: u32) {
+    melee_core::ct!("HSD_AObjSetFlags");
     // TARGET_PC: an impossibly small pointer is treated as absent.
     if (aobj as usize) < 0x1000 {
         return;
@@ -107,6 +111,7 @@ pub unsafe extern "C" fn HSD_AObjSetFlags(aobj: *mut HSD_AObj, flags: u32) {
 }
 
 pub unsafe extern "C" fn HSD_AObjClearFlags(aobj: *mut HSD_AObj, flags: u32) {
+    melee_core::ct!("HSD_AObjClearFlags");
     if !aobj.is_null() {
         let flags = flags & (AOBJ_LOOP | AOBJ_NO_UPDATE);
         (*aobj).flags &= !flags;
@@ -114,6 +119,7 @@ pub unsafe extern "C" fn HSD_AObjClearFlags(aobj: *mut HSD_AObj, flags: u32) {
 }
 
 pub unsafe extern "C" fn HSD_AObjSetFObj(aobj: *mut HSD_AObj, fobj: *mut HSD_FObj) {
+    melee_core::ct!("HSD_AObjSetFObj");
     if aobj.is_null() {
         return;
     }
@@ -124,11 +130,13 @@ pub unsafe extern "C" fn HSD_AObjSetFObj(aobj: *mut HSD_AObj, fobj: *mut HSD_FOb
 }
 
 pub unsafe extern "C" fn HSD_AObjInitEndCallBack() {
+    melee_core::ct!("HSD_AObjInitEndCallBack");
     HSD_AObj_804D762C = 0;
     HSD_AObj_804D7630 = 0;
 }
 
 pub unsafe extern "C" fn HSD_AObjInvokeCallBacks() {
+    melee_core::ct!("HSD_AObjInvokeCallBacks");
     if HSD_AObj_804D762C != 0 && HSD_AObj_804D7630 == 0 {
         let mut list = endcallback_list;
         while !list.is_null() {
@@ -140,6 +148,7 @@ pub unsafe extern "C" fn HSD_AObjInvokeCallBacks() {
 }
 
 pub unsafe extern "C" fn HSD_AObjReqAnim(aobj: *mut HSD_AObj, frame: f32) {
+    melee_core::ct!("HSD_AObjReqAnim");
     if aobj.is_null() {
         return;
     }
@@ -150,6 +159,7 @@ pub unsafe extern "C" fn HSD_AObjReqAnim(aobj: *mut HSD_AObj, frame: f32) {
 }
 
 pub unsafe extern "C" fn HSD_AObjStopAnim(aobj: *mut HSD_AObj, obj: *mut c_void, func: HSD_ObjUpdateFunc) {
+    melee_core::ct!("HSD_AObjStopAnim");
     if aobj.is_null() {
         return;
     }
@@ -158,6 +168,7 @@ pub unsafe extern "C" fn HSD_AObjStopAnim(aobj: *mut HSD_AObj, obj: *mut c_void,
 }
 
 pub unsafe extern "C" fn HSD_AObjInterpretAnim(aobj: *mut HSD_AObj, obj: *mut c_void, update_func: HSD_ObjUpdateFunc) {
+    melee_core::ct!("HSD_AObjInterpretAnim");
     let mut rate: f32;
 
     if aobj.is_null() || (*aobj).flags & AOBJ_NO_ANIM != 0 {
@@ -207,6 +218,7 @@ pub unsafe extern "C" fn HSD_AObjInterpretAnim(aobj: *mut HSD_AObj, obj: *mut c_
 }
 
 pub unsafe extern "C" fn HSD_AObjLoadDesc(aobjdesc: *mut HSD_AObjDesc) -> *mut HSD_AObj {
+    melee_core::ct!("HSD_AObjLoadDesc");
     if aobjdesc.is_null() {
         return null_mut();
     }
@@ -238,6 +250,7 @@ pub unsafe extern "C" fn HSD_AObjLoadDesc(aobjdesc: *mut HSD_AObjDesc) -> *mut H
 }
 
 pub unsafe extern "C" fn HSD_AObjRemove(aobj: *mut HSD_AObj) {
+    melee_core::ct!("HSD_AObjRemove");
     if aobj.is_null() {
         return;
     }
@@ -254,6 +267,7 @@ pub unsafe extern "C" fn HSD_AObjRemove(aobj: *mut HSD_AObj) {
 }
 
 pub unsafe extern "C" fn HSD_AObjAlloc() -> *mut HSD_AObj {
+    melee_core::ct!("HSD_AObjAlloc");
     let new = ext::HSD_ObjAlloc(HSD_AObjGetAllocData()) as *mut HSD_AObj;
     hsd_assert(!new.is_null(), 489);
 
@@ -264,6 +278,7 @@ pub unsafe extern "C" fn HSD_AObjAlloc() -> *mut HSD_AObj {
 }
 
 pub unsafe extern "C" fn HSD_AObjFree(aobj: *mut HSD_AObj) {
+    melee_core::ct!("HSD_AObjFree");
     if aobj.is_null() {
         return;
     }
@@ -410,6 +425,7 @@ unsafe fn JObjForeachAnim(mut obj: *mut HSD_JObj, mask: HSD_TypeMask, func: *mut
 
 /// `HSD_ForeachAnim(obj, type, mask, func, arg_type, ...)`: `arg` is the optional variadic argument.
 pub unsafe extern "C" fn HSD_ForeachAnim(obj: *mut c_void, type_: HSD_Type, mask: HSD_TypeMask, func: *mut c_void, arg_type: AObj_Arg_Type, mut arg: CallbackArg) {
+    melee_core::ct!("HSD_ForeachAnim");
     if obj.is_null() {
         return;
     }
@@ -445,6 +461,7 @@ pub unsafe extern "C" fn HSD_ForeachAnim(obj: *mut c_void, type_: HSD_Type, mask
 }
 
 pub unsafe extern "C" fn HSD_AObjSetRate(aobj: *mut HSD_AObj, rate: f32) {
+    melee_core::ct!("HSD_AObjSetRate");
     if aobj.is_null() {
         return;
     }
@@ -452,6 +469,7 @@ pub unsafe extern "C" fn HSD_AObjSetRate(aobj: *mut HSD_AObj, rate: f32) {
 }
 
 pub unsafe extern "C" fn HSD_AObjSetRewindFrame(aobj: *mut HSD_AObj, frame: f32) {
+    melee_core::ct!("HSD_AObjSetRewindFrame");
     if (aobj as usize) < 0x1000 {
         return;
     }
@@ -462,6 +480,7 @@ pub unsafe extern "C" fn HSD_AObjSetRewindFrame(aobj: *mut HSD_AObj, frame: f32)
 }
 
 pub unsafe extern "C" fn HSD_AObjSetEndFrame(aobj: *mut HSD_AObj, frame: f32) {
+    melee_core::ct!("HSD_AObjSetEndFrame");
     if (aobj as usize) < 0x1000 {
         return;
     }
@@ -472,6 +491,7 @@ pub unsafe extern "C" fn HSD_AObjSetEndFrame(aobj: *mut HSD_AObj, frame: f32) {
 }
 
 pub unsafe extern "C" fn HSD_AObjSetCurrentFrame(aobj: *mut HSD_AObj, frame: f32) {
+    melee_core::ct!("HSD_AObjSetCurrentFrame");
     if aobj.is_null() {
         return;
     }
@@ -483,11 +503,13 @@ pub unsafe extern "C" fn HSD_AObjSetCurrentFrame(aobj: *mut HSD_AObj, frame: f32
 }
 
 pub unsafe extern "C" fn _HSD_AObjForgetMemory(low: *mut c_void, high: *mut c_void) {
+    melee_core::ct!("_HSD_AObjForgetMemory");
     endcallback_list = null_mut();
 }
 
 /// `HSD_AObjGetEndFrame` (aobj.h inline): the animation's last frame.
 pub unsafe fn HSD_AObjGetEndFrame(aobj: *mut HSD_AObj) -> f32 {
+    melee_core::ct!("HSD_AObjGetEndFrame");
     assert!(!aobj.is_null(), "aobj.h:0xAA aobj");
     (*aobj).end_frame
 }

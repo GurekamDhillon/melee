@@ -50,6 +50,7 @@ pub mod ext {
 
 /// static `checkLStick(fp)`: A pressed with the stick flicked up.
 pub fn checkLStick(fp: &Fighter) -> bool {
+    melee_core::ct!("checkLStick");
     fp.input.pressed_buttons & HSD_PAD_A as u32 != 0
         && fp.input.lstick[0].y >= cd().xCC
         && (fp.active_timer.lstick.y as f32) < cd().xD0
@@ -71,6 +72,7 @@ fn enter_common(g: G) -> bool {
 
 /// `ftCo_AttackHi4_CheckInput`.
 pub fn ftCo_AttackHi4_CheckInput(g: G) -> bool {
+    melee_core::ct!("ftCo_AttackHi4_CheckInput");
     let f = fp(g);
     if checkLStick(f) || ext::ftCo_800DF2D8(f) {
         return enter_common(g);
@@ -80,11 +82,13 @@ pub fn ftCo_AttackHi4_CheckInput(g: G) -> bool {
 
 /// static `checkLStickNoD0(fp)`: as checkLStick without the flick timer.
 pub fn checkLStickNoD0(fp: &Fighter) -> bool {
+    melee_core::ct!("checkLStickNoD0");
     fp.input.pressed_buttons & HSD_PAD_A as u32 != 0 && fp.input.lstick[0].y >= cd().xCC
 }
 
 /// `ftCo_AttackHi4_CheckInputNoD0`.
 pub fn ftCo_AttackHi4_CheckInputNoD0(g: G) -> bool {
+    melee_core::ct!("ftCo_AttackHi4_CheckInputNoD0");
     let f = fp(g);
     if checkLStickNoD0(f) || ext::ftCo_800DF2D8(f) {
         return enter_common(g);
@@ -94,6 +98,7 @@ pub fn ftCo_AttackHi4_CheckInputNoD0(g: G) -> bool {
 
 /// `doEnter` (TARGET_PC: m-ex onUSmash first).
 pub fn doEnter(g: G) {
+    melee_core::ct!("doEnter");
     let f = fp(g);
     ext::Mex_OnUSmashDispatch(f.kind as i32, g, core::ptr::null_mut());
     f.set_allow_interrupt(0);
@@ -102,21 +107,25 @@ pub fn doEnter(g: G) {
 }
 
 pub fn ftCo_AttackHi4_Anim(g: G) {
+    melee_core::ct!("ftCo_AttackHi4_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ft_8008A2BC(g);
     }
 }
 
 pub fn ftCo_AttackHi4_IASA(g: G) {
+    melee_core::ct!("ftCo_AttackHi4_IASA");
     if fp(g).allow_interrupt() != 0 {
         ext::ftCo_Wait_IASA(g);
     }
 }
 
 pub fn ftCo_AttackHi4_Phys(g: G) {
+    melee_core::ct!("ftCo_AttackHi4_Phys");
     ext::ft_80084F3C(g);
 }
 
 pub fn ftCo_AttackHi4_Coll(g: G) {
+    melee_core::ct!("ftCo_AttackHi4_Coll");
     ext::ft_80084104(g);
 }

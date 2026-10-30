@@ -51,11 +51,13 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 
 /// `ftCo_800DB464` as the `HSD_GObjEvent` the C stores in `accessory1_cb`.
 pub unsafe extern "C" fn cb_ftCo_800DB464(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftCo_800DB464");
     melee_fighter::tu::ftCo_CapturePulled::ftCo_800DB464(g);
 }
 
 /// `fn_8010A930(gobj, attacker_gobj)`: enter the Yoshi-capture state (motion 0x14B).
 pub fn fn_8010A930(gobj: *mut HSD_GObj, attacker_gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8010A930");
     unsafe {
         let fp = fpp(gobj);
         let attacker_fp = fpp(attacker_gobj);
@@ -75,13 +77,14 @@ pub fn fn_8010A930(gobj: *mut HSD_GObj, attacker_gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftCo_CaptureKirbyYoshi_Anim(_gobj: *mut HSD_GObj) {}
-pub fn ftCo_CaptureKirbyYoshi_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftCo_CaptureKirbyYoshi_Phys(_gobj: *mut HSD_GObj) {}
-pub fn ftCo_CaptureKirbyYoshi_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftCo_CaptureKirbyYoshi_Anim(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCo_CaptureKirbyYoshi_Anim");}
+pub fn ftCo_CaptureKirbyYoshi_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCo_CaptureKirbyYoshi_IASA");}
+pub fn ftCo_CaptureKirbyYoshi_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCo_CaptureKirbyYoshi_Phys");}
+pub fn ftCo_CaptureKirbyYoshi_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCo_CaptureKirbyYoshi_Coll");}
 
 /// `ftKb_SpecialNYs_8010AA2C`: hide Kirby while he is inside Yoshi's egg, then ftColl_8007B62C(gobj, 2).
 pub fn ftKb_SpecialNYs_8010AA2C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialNYs_8010AA2C");
     unsafe {
         let fp = fpp(gobj);
         (*fp).set_invisible(1);

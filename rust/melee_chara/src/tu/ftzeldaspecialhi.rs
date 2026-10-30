@@ -94,6 +94,7 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 /// `ftZd_SpecialHi_801396AC` / `_8013979C` as accessory4 callback entries.
 pub use crate::chars::cb::ftzeldaspecialhi__ftZd_SpecialHi_801396AC as cb_ftZd_SpecialHi_801396AC;
 pub unsafe extern "C" fn cb_ftZd_SpecialHi_8013979C(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftZd_SpecialHi_8013979C");
     ftZd_SpecialHi_8013979C(g);
 }
 
@@ -111,6 +112,7 @@ pub const transition_flags0: u32 = Ft_MF_KeepGfx
 pub const transition_flags1: u32 = transition_flags0 | Ft_MF_KeepColAnimHitStatus;
 
 pub fn ftZd_SpecialHi_801396AC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialHi_801396AC");
     unsafe {
         let fp = fpp(gobj);
         ftZd_SpecialHi_801396E0(gobj);
@@ -119,6 +121,7 @@ pub fn ftZd_SpecialHi_801396AC(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftZd_SpecialHi_801396E0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialHi_801396E0");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).x2219_b0() == 0 {
@@ -136,6 +139,7 @@ pub fn ftZd_SpecialHi_801396E0(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftZd_SpecialHi_8013979C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialHi_8013979C");
     unsafe {
         let fp = fpp(gobj);
         {
@@ -156,6 +160,7 @@ const SIXTY_DEG_RAD: f32 = 60.0_f32 * (M_PI as f32) / 180.0_f32;
 
 /// `ftZelda_SpecialHi_StartAction_Helper(fp)` (static): the shockwave at the hand.
 pub fn ftZelda_SpecialHi_StartAction_Helper(fp: *mut Fighter) {
+    melee_core::ct!("ftZelda_SpecialHi_StartAction_Helper");
     unsafe {
         let bone_index = ext::ftParts_GetBoneIndex(fp, 4);
         let jobj = (*(*fp).parts.add(bone_index as usize)).joint;
@@ -166,6 +171,7 @@ pub fn ftZelda_SpecialHi_StartAction_Helper(fp: *mut Fighter) {
 }
 
 pub fn ftZd_SpecialHi_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialHi_Enter");
     unsafe {
         let mut fp = fpp(gobj);
         (*fp).gr_vel = 0.0;
@@ -182,6 +188,7 @@ pub fn ftZd_SpecialHi_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftZd_SpecialAirHi_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialAirHi_Enter");
     unsafe {
         {
             let fp = fpp(gobj);
@@ -202,21 +209,24 @@ pub fn ftZd_SpecialAirHi_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftZd_SpecialHiStart_0_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialHiStart_0_Anim");
     if !ext::ftAnim_IsFramesRemaining(gobj) {
         ftZd_SpecialHi_8013A058(gobj);
     }
 }
 
 pub fn ftZd_SpecialAirHiStart_0_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialAirHiStart_0_Anim");
     if !ext::ftAnim_IsFramesRemaining(gobj) {
         ftZd_SpecialHi_8013A244(gobj);
     }
 }
 
-pub fn ftZd_SpecialHiStart_0_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftZd_SpecialAirHiStart_0_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftZd_SpecialHiStart_0_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftZd_SpecialHiStart_0_IASA");}
+pub fn ftZd_SpecialAirHiStart_0_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftZd_SpecialAirHiStart_0_IASA");}
 
 pub fn ftZd_SpecialAirHiStart_0_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialAirHiStart_0_Phys");
     unsafe {
         let fp = fpp(gobj);
         let attributes = &*((*fp).dat_attrs as *const ftZelda_DatAttrs);
@@ -227,6 +237,7 @@ pub fn ftZd_SpecialAirHiStart_0_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftZd_SpecialHiStart_1_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialHiStart_1_Anim");
     unsafe {
         let fp = fpp(gobj);
         (*fp).mv.zd.specialhi.x0 = (*fp).mv.zd.specialhi.x0.wrapping_sub(1);
@@ -237,6 +248,7 @@ pub fn ftZd_SpecialHiStart_1_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftZd_SpecialAirHiStart_1_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialAirHiStart_1_Anim");
     unsafe {
         let fp = fpp(gobj);
         (*fp).mv.zd.specialhi.x0 = (*fp).mv.zd.specialhi.x0.wrapping_sub(1);
@@ -246,16 +258,18 @@ pub fn ftZd_SpecialAirHiStart_1_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftZd_SpecialHiStart_1_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftZd_SpecialAirHiStart_1_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftZd_SpecialHiStart_1_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftZd_SpecialHiStart_1_IASA");}
+pub fn ftZd_SpecialAirHiStart_1_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftZd_SpecialAirHiStart_1_IASA");}
 
 pub fn ftZd_SpecialHiStart_1_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialHiStart_1_Phys");
     ext::ftCommon_SetSelfMovementFromGroundedMovement(gobj);
 }
 
-pub fn ftZd_SpecialAirHiStart_1_Phys(_gobj: *mut HSD_GObj) {}
+pub fn ftZd_SpecialAirHiStart_1_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("ftZd_SpecialAirHiStart_1_Phys");}
 
 pub fn ftZd_SpecialHiStart_1_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialHiStart_1_Coll");
     unsafe {
         let fp = fpp(gobj);
         let coll_data = &mut (*fp).coll_data as *mut CollData;
@@ -278,6 +292,7 @@ pub fn ftZd_SpecialHiStart_1_Coll(gobj: *mut HSD_GObj) {
 
 /// `ftZelda_80139D60_Helper(gobj)` (static).
 pub fn ftZelda_80139D60_Helper(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftZelda_80139D60_Helper");
     unsafe {
         let fighter2 = fpp(gobj);
         let attributes2 = &*((*fighter2).dat_attrs as *const ftZelda_DatAttrs);
@@ -316,6 +331,7 @@ unsafe fn handle_teleport_collisions(
 }
 
 pub fn ftZd_SpecialAirHiStart_1_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialAirHiStart_1_Coll");
     unsafe {
         let fp = fpp(gobj);
         let coll_data = &mut (*fp).coll_data as *mut CollData;
@@ -334,6 +350,7 @@ pub fn ftZd_SpecialAirHiStart_1_Coll(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftZd_SpecialHi_80139F6C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialHi_80139F6C");
     unsafe {
         let fp = fpp(gobj);
         ext::ftCommon_8007D60C(fp);
@@ -362,6 +379,7 @@ fn zd_sqrt(var_f4: f32) -> f32 {
 }
 
 pub fn ftZd_SpecialHi_8013A058(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialHi_8013A058");
     unsafe {
         let mut fp = fpp(gobj);
         let mut attributes = &*((*fp).dat_attrs as *const ftZelda_DatAttrs);
@@ -413,6 +431,7 @@ pub fn ftZd_SpecialHi_8013A058(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftZd_SpecialHi_8013A244(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialHi_8013A244");
     unsafe {
         let mut fp = fpp(gobj);
         let mut temp_f2 = (*fp).input.lstick[0].x;
@@ -465,6 +484,7 @@ pub fn ftZd_SpecialHi_8013A244(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftZd_SpecialAirHi_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialAirHi_Anim");
     unsafe {
         let fp = fpp(gobj);
         let attributes = &*((*fp).dat_attrs as *const ftZelda_DatAttrs);
@@ -476,10 +496,11 @@ pub fn ftZd_SpecialAirHi_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftZd_SpecialHi_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftZd_SpecialAirHi_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftZd_SpecialHi_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftZd_SpecialHi_IASA");}
+pub fn ftZd_SpecialAirHi_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftZd_SpecialAirHi_IASA");}
 
 pub fn ftZd_SpecialAirHi_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialAirHi_Phys");
     unsafe {
         let fp = fpp(gobj);
         let attributes = &*((*fp).dat_attrs as *const ftZelda_DatAttrs);
@@ -497,6 +518,7 @@ pub fn ftZd_SpecialAirHi_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftZd_SpecialHi_8013A6A8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialHi_8013A6A8");
     unsafe {
         let fp0 = fpp(gobj);
         let attributes = &*((*fp0).dat_attrs as *const ftZelda_DatAttrs);
@@ -518,6 +540,7 @@ pub fn ftZd_SpecialHi_8013A6A8(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftZd_SpecialHi_8013A764(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialHi_8013A764");
     unsafe {
         let fp0 = fpp(gobj);
         let sa = &*((*fp0).dat_attrs as *const ftZelda_DatAttrs);

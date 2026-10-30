@@ -73,9 +73,10 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
     (*gobj).user_data as *mut Fighter
 }
 
-pub fn ftSb_Init_OnDeath(_gobj: *mut HSD_GObj) {}
+pub fn ftSb_Init_OnDeath(_gobj: *mut HSD_GObj) { melee_core::ct!("ftSb_Init_OnDeath");}
 
 pub fn ftSb_Init_OnLoad(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSb_Init_OnLoad");
     unsafe {
         let fp = fpp(gobj);
         crate::tu::ftfox::push_attrs::<ftSandbagAttributes>(fp);
@@ -86,6 +87,7 @@ pub fn ftSb_Init_OnLoad(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftSb_Init_8014FA30(fp: *mut Fighter) {
+    melee_core::ct!("ftSb_Init_8014FA30");
     unsafe {
         let p = |part: Fighter_Part| (*fp).parts.add(part as usize);
         ext::lb_8000C1C0((*p(FtPart_WaistN)).joint, (*p(FtPart_RLegJ)).joint);
@@ -114,14 +116,16 @@ pub fn ftSb_Init_8014FA30(fp: *mut Fighter) {
 }
 
 pub fn ftSb_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSb_Init_LoadSpecialAttrs");
     unsafe { crate::tu::ftfox::copy_attrs::<ftSandbagAttributes>(gobj) }
 }
 
-pub fn ftSb_Init_OnKnockbackEnter(_gobj: *mut HSD_GObj) {}
+pub fn ftSb_Init_OnKnockbackEnter(_gobj: *mut HSD_GObj) { melee_core::ct!("ftSb_Init_OnKnockbackEnter");}
 
-pub fn ftSb_Init_OnKnockbackExit(_gobj: *mut HSD_GObj) {}
+pub fn ftSb_Init_OnKnockbackExit(_gobj: *mut HSD_GObj) { melee_core::ct!("ftSb_Init_OnKnockbackExit");}
 
 pub fn ftSb_Init_8014FBA4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSb_Init_8014FBA4");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).ground_or_air == GA_Air {
@@ -132,6 +136,6 @@ pub fn ftSb_Init_8014FBA4(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftSb_WaitReverse_Anim(_gobj: *mut HSD_GObj) {}
+pub fn ftSb_WaitReverse_Anim(_gobj: *mut HSD_GObj) { melee_core::ct!("ftSb_WaitReverse_Anim");}
 
-pub fn ftSb_WaitReverse_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftSb_WaitReverse_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftSb_WaitReverse_IASA");}

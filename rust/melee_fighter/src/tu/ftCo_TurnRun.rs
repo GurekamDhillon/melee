@@ -53,6 +53,7 @@ pub mod ext {
 }
 
 pub fn fn_800C9CEC(g: G) -> bool {
+    melee_core::ct!("fn_800C9CEC");
     if ext::ScriptGame_CapsActionAllowed(fp(g), 4) == 0 {
         return false;
     }
@@ -66,6 +67,7 @@ pub fn fn_800C9CEC(g: G) -> bool {
 }
 
 pub fn fn_800C9D40(g: G) -> bool {
+    melee_core::ct!("fn_800C9D40");
     if ext::ScriptGame_CapsActionAllowed(fp(g), 4) == 0 {
         return false;
     }
@@ -78,6 +80,7 @@ pub fn fn_800C9D40(g: G) -> bool {
 }
 
 pub fn ftCo_TurnRun_Enter(g: G, anim_start: f32) {
+    melee_core::ct!("ftCo_TurnRun_Enter");
     let f = fp(g);
     f.cmd_vars[1] = 0;
     unsafe { f.mv.co.turnrun.accel_mul = f.facing_dir };
@@ -90,6 +93,7 @@ pub fn ftCo_TurnRun_Enter(g: G, anim_start: f32) {
 }
 
 pub fn ftCo_TurnRun_Anim(g: G) {
+    melee_core::ct!("ftCo_TurnRun_Anim");
     if fp(g).cmd_vars[1] != 0 {
         if unsafe { fp(g).mv.co.turnrun.x14 } == 0 {
             ext::ftAnim_SetAnimRate(g, 0.0);
@@ -110,6 +114,7 @@ pub fn ftCo_TurnRun_Anim(g: G) {
 }
 
 pub fn ftCo_TurnRun_IASA(g: G) {
+    melee_core::ct!("ftCo_TurnRun_IASA");
     if ext::fn_800CAF78(g) {
         return;
     }
@@ -127,6 +132,7 @@ fn get_accel_and_target(f: &Fighter) -> (f32, f32) {
 }
 
 pub fn ftCo_TurnRun_Phys(g: G) {
+    melee_core::ct!("ftCo_TurnRun_Phys");
     let f = fp(g);
     let (mut accel, target_vel) = get_accel_and_target(f);
     let f = fp(g);
@@ -157,6 +163,7 @@ pub fn ftCo_TurnRun_Phys(g: G) {
 }
 
 pub fn ftCo_TurnRun_Coll(g: G) {
+    melee_core::ct!("ftCo_TurnRun_Coll");
     if !ext::ft_800827A0(g) {
         ext::ftCo_Fall_Enter(g);
         return;

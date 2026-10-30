@@ -105,6 +105,7 @@ unsafe fn attr_of(ip: *mut Item) -> *mut itHassam_ItemVars {
 }
 
 pub unsafe extern "C" fn itHassam_802CDBE0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHassam_802CDBE0");
     let ip = GET_ITEM(gobj);
     let attr = attr_of(ip);
     ext::it_80279C48(gobj);
@@ -115,18 +116,21 @@ pub unsafe extern "C" fn itHassam_802CDBE0(gobj: *mut HSD_GObj) {
     ext::Item_8026AE84(ip, 0x2721, 0x7F, 0x40);
 }
 
-pub unsafe extern "C" fn itHassam_802CDC5C(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itHassam_802CDC5C(_gobj: *mut HSD_GObj) { melee_core::ct!("itHassam_802CDC5C");}
 
 pub unsafe extern "C" fn itHassam_802CDC60(gobj: *mut HSD_GObj, r#ref: *mut HSD_GObj) {
+    melee_core::ct!("itHassam_802CDC60");
     ext::it_8026B894(gobj, r#ref);
 }
 
 pub unsafe extern "C" fn itHassam_802CDC80(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHassam_802CDC80");
     ext::it_80273454(gobj);
     itHassam_802CDCB4(gobj);
 }
 
 pub unsafe extern "C" fn itHassam_802CDCB4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHassam_802CDCB4");
     let ip = GET_ITEM(gobj);
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE as u32);
     Item_SetEffectHitlagCallbacks(ip);
@@ -135,6 +139,7 @@ pub unsafe extern "C" fn itHassam_802CDCB4(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itHassam_UnkMotion0_Anim(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHassam_UnkMotion0_Anim");
     let ip = GET_ITEM(gobj);
     ext::it_8027A160((*(*ip).xBBC_dynamicBoneTable).bones[2], ip);
     if ext::it_80272C6C(gobj) == 0 {
@@ -144,6 +149,7 @@ pub unsafe extern "C" fn itHassam_UnkMotion0_Anim(gobj: *mut HSD_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn itHassam_UnkMotion0_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHassam_UnkMotion0_Phys");
     let ip = GET_ITEM(gobj);
     ext::it_8027A344(gobj);
     if (*ip).ground_or_air == GA_Air as _ {
@@ -153,6 +159,7 @@ pub unsafe extern "C" fn itHassam_UnkMotion0_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itHassam_UnkMotion0_Coll(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHassam_UnkMotion0_Coll");
     let ip = GET_ITEM(gobj);
     if (*ip).ground_or_air == GA_Air as _ {
         ext::it_8026E15C(gobj, Some(itHassam_802CDC5C));
@@ -164,6 +171,7 @@ pub unsafe extern "C" fn itHassam_UnkMotion0_Coll(gobj: *mut HSD_GObj) -> i32 {
 
 /// `Item_GObj* itHassam_802CDE1C(Vec3* vec, Item_GObj* gobj)`: the nearest fighter above `vec`.
 pub unsafe extern "C" fn itHassam_802CDE1C(vec: *mut Vec3, gobj: *mut HSD_GObj) -> *mut HSD_GObj {
+    melee_core::ct!("itHassam_802CDE1C");
     let mut sp20: Vec3 = core::mem::zeroed();
     let mut min_dist: f32 = F32_MAX;
     let fp: *mut Fighter = if !gobj.is_null() { (*gobj).user_data as *mut Fighter } else { null_mut() };
@@ -192,6 +200,7 @@ pub unsafe extern "C" fn itHassam_802CDE1C(vec: *mut Vec3, gobj: *mut HSD_GObj) 
 }
 
 pub unsafe extern "C" fn itHassam_802CDF28(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHassam_802CDF28");
     let mut sp1c: Vec3 = core::mem::zeroed();
     let mut sp10: Vec3 = core::mem::zeroed();
     let ip = GET_ITEM(gobj);
@@ -216,6 +225,7 @@ pub unsafe extern "C" fn itHassam_802CDF28(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itHassam_802CE008(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHassam_802CE008");
     let ip = GET_ITEM(gobj);
     let attr = attr_of(ip);
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE as u32);
@@ -229,6 +239,7 @@ pub unsafe extern "C" fn itHassam_802CE008(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itHassam_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHassam_UnkMotion1_Anim");
     let ip = (*gobj).user_data as *mut Item;
     let attr = attr_of(ip);
     if ext::it_80272C6C(gobj) == 0 {
@@ -265,6 +276,7 @@ pub unsafe extern "C" fn itHassam_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn itHassam_UnkMotion1_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHassam_UnkMotion1_Phys");
     let ip = GET_ITEM(gobj);
     let attr = attr_of(ip);
     ext::it_8027A344(gobj);
@@ -280,6 +292,7 @@ pub unsafe extern "C" fn itHassam_UnkMotion1_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itHassam_UnkMotion1_Coll(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHassam_UnkMotion1_Coll");
     let ip = GET_ITEM(gobj);
     if (*ip).xDAC_itcmd_var0 == 0 {
         if (*ip).ground_or_air == GA_Air as _ {
@@ -293,6 +306,7 @@ pub unsafe extern "C" fn itHassam_UnkMotion1_Coll(gobj: *mut HSD_GObj) -> i32 {
 
 /// `static inline void itHassam_802CE400_sub(HSD_GObj*, int msid, Item_StateChangeFlags)`
 pub unsafe extern "C" fn itHassam_802CE400_sub(gobj: *mut HSD_GObj, msid: i32, flags: u32) {
+    melee_core::ct!("itHassam_802CE400_sub");
     let ip = (*gobj).user_data as *mut Item;
     ext::Item_80268E5C(gobj, msid, flags);
     (*ip).entered_hitlag = Some(ext::cb::efLib_PauseAll);
@@ -301,6 +315,7 @@ pub unsafe extern "C" fn itHassam_802CE400_sub(gobj: *mut HSD_GObj, msid: i32, f
 }
 
 pub unsafe extern "C" fn itHassam_802CE400(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHassam_802CE400");
     let mut cam_pos: Vec3 = core::mem::zeroed();
     let mut sp10: Vec3 = core::mem::zeroed();
     let ip = GET_ITEM(gobj);
@@ -324,6 +339,7 @@ pub unsafe extern "C" fn itHassam_802CE400(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itHassam_UnkMotion2_Anim(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHassam_UnkMotion2_Anim");
     let ip = GET_ITEM(gobj);
     ext::it_8027A160((*(*ip).xBBC_dynamicBoneTable).bones[2], ip);
     if ext::it_80272C6C(gobj) == 0 {
@@ -333,6 +349,7 @@ pub unsafe extern "C" fn itHassam_UnkMotion2_Anim(gobj: *mut HSD_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn itHassam_UnkMotion2_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHassam_UnkMotion2_Phys");
     let ip = GET_ITEM(gobj);
     ext::it_8027A344(gobj);
     (*ip).pos.x += (*ip).xDD4_itemVar.hassam.x5C.x;
@@ -341,22 +358,27 @@ pub unsafe extern "C" fn itHassam_UnkMotion2_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itHassam_UnkMotion2_Coll(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHassam_UnkMotion2_Coll");
     0
 }
 
 pub unsafe extern "C" fn it_802CE640(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802CE640");
     Item_EnterAirStateWithHitlag(gobj, 3);
 }
 
 pub unsafe extern "C" fn itHassam_UnkMotion3_Anim(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHassam_UnkMotion3_Anim");
     ext::it_80279FF8(gobj);
     0
 }
 
 pub unsafe extern "C" fn itHassam_UnkMotion3_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHassam_UnkMotion3_Phys");
     ext::it_8027A09C(gobj);
 }
 
 pub unsafe extern "C" fn itHassam_UnkMotion3_Coll(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHassam_UnkMotion3_Coll");
     ext::it_8027A118(gobj, Some(itHassam_802CDC80))
 }

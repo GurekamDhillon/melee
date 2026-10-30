@@ -34,6 +34,7 @@ const M_PI: f64 = 3.14159265358979323846;
 
 /// `lb_8000D008(point_y, point_x)`: angle of (x, y), 0 at the origin.
 pub fn lb_8000D008(point_y_in: f32, point_x: f32) -> f32 {
+    melee_core::ct!("lb_8000D008");
     let mut point_y = point_y_in;
     let near0 = |v: f32| v < 0.00001 && v > -0.00001;
     if near0(point_x) {
@@ -59,6 +60,7 @@ pub fn lb_8000D008(point_y_in: f32, point_x: f32) -> f32 {
 
 /// `lb_8000D148`: 1 when the segment p0-p1 passes within `threshold` of p2 (or its end points do).
 pub fn lb_8000D148(point0_x: f32, point0_y: f32, point1_x: f32, point1_y: f32, point2_x: f32, point2_y: f32, threshold: f32) -> i32 {
+    melee_core::ct!("lb_8000D148");
     let diff_01_x = point1_x - point0_x;
     let diff_01_y = point0_y - point1_y;
     let cross = point0_y * point1_x;

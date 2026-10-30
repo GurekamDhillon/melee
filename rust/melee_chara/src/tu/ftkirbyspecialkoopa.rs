@@ -105,6 +105,7 @@ unsafe fn ms_for(fp: *mut Fighter, kp: u32, gk: u32) -> i32 {
 }
 
 pub fn ftKb_SpecialNKp_800FA588(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNKp_800FA588");
     unsafe {
         let mut pos: Vec3 = core::mem::zeroed();
         let mut offset: Vec3 = core::mem::zeroed();
@@ -171,6 +172,7 @@ pub fn ftKb_SpecialNKp_800FA588(gobj: G) {
 }
 
 pub fn ftKb_SpecialNKp_800FA7D4(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNKp_800FA7D4");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -188,6 +190,7 @@ pub fn ftKb_SpecialNKp_800FA7D4(gobj: G) {
 }
 
 pub fn ftKb_SpecialNKp_800FA83C(gobj: G) -> i32 {
+    melee_core::ct!("ftKb_SpecialNKp_800FA83C");
     unsafe {
         if !gobj.is_null() {
             let fp = fpp(gobj);
@@ -200,6 +203,7 @@ pub fn ftKb_SpecialNKp_800FA83C(gobj: G) -> i32 {
 }
 
 pub fn ftKb_SpecialNKp_800FA878(gobj: G) -> i32 {
+    melee_core::ct!("ftKb_SpecialNKp_800FA878");
     unsafe {
         if !gobj.is_null() {
             let fp = fpp(gobj);
@@ -224,6 +228,7 @@ unsafe fn start_vars(gobj: G, air: bool) {
 }
 
 pub fn ftKb_SpecialNKp_800FA8B4(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNKp_800FA8B4");
     unsafe {
         let msid = ms_for(fpp(gobj), ftKb_MS_KpSpecialNStart as u32, ftKb_MS_GkSpecialNStart as u32);
         st::Fighter_ChangeMotionState(gobj, msid, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -232,6 +237,7 @@ pub fn ftKb_SpecialNKp_800FA8B4(gobj: G) {
 }
 
 pub fn ftKb_SpecialNKp_800FA958(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNKp_800FA958");
     unsafe {
         let msid = ms_for(fpp(gobj), ftKb_MS_KpSpecialAirNStart as u32, ftKb_MS_GkSpecialAirNStart as u32);
         st::Fighter_ChangeMotionState(gobj, msid, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -240,6 +246,7 @@ pub fn ftKb_SpecialNKp_800FA958(gobj: G) {
 }
 
 pub fn ftKb_KpSpecialNStart_Anim(gobj: G) {
+    melee_core::ct!("ftKb_KpSpecialNStart_Anim");
     unsafe {
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
             let msid = ms_for(fpp(gobj), ftKb_MS_KpSpecialN as u32, ftKb_MS_GkSpecialN as u32);
@@ -271,10 +278,12 @@ unsafe fn loop_anim(gobj: G) {
 }
 
 pub fn ftKb_KpSpecialN_Anim(gobj: G) {
+    melee_core::ct!("ftKb_KpSpecialN_Anim");
     unsafe { loop_anim(gobj) }
 }
 
 pub fn ftKb_KpSpecialAirNStart_Anim(gobj: G) {
+    melee_core::ct!("ftKb_KpSpecialAirNStart_Anim");
     unsafe {
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
             let msid = ms_for(fpp(gobj), ftKb_MS_KpSpecialAirN as u32, ftKb_MS_GkSpecialAirN as u32);
@@ -284,10 +293,11 @@ pub fn ftKb_KpSpecialAirNStart_Anim(gobj: G) {
 }
 
 pub fn ftKb_KpSpecialAirN_Anim(gobj: G) {
+    melee_core::ct!("ftKb_KpSpecialAirN_Anim");
     unsafe { loop_anim(gobj) }
 }
 
-pub fn ftKb_KpSpecialNStart_IASA(_gobj: G) {}
+pub fn ftKb_KpSpecialNStart_IASA(_gobj: G) { melee_core::ct!("ftKb_KpSpecialNStart_IASA");}
 
 /// Shared body of KpSpecialN_IASA / KpSpecialAirN_IASA; `end_kp`/`end_gk` are the end states.
 unsafe fn flame_iasa(gobj: G, end_kp: u32, end_gk: u32) {
@@ -328,17 +338,19 @@ unsafe fn flame_iasa(gobj: G, end_kp: u32, end_gk: u32) {
 }
 
 pub fn ftKb_KpSpecialN_IASA(gobj: G) {
+    melee_core::ct!("ftKb_KpSpecialN_IASA");
     unsafe { flame_iasa(gobj, ftKb_MS_KpSpecialNEnd as u32, ftKb_MS_GkSpecialNEnd as u32) }
 }
 
-pub fn ftKb_KpSpecialNEnd_IASA(_gobj: G) {}
-pub fn ftKb_KpSpecialAirNStart_IASA(_gobj: G) {}
+pub fn ftKb_KpSpecialNEnd_IASA(_gobj: G) { melee_core::ct!("ftKb_KpSpecialNEnd_IASA");}
+pub fn ftKb_KpSpecialAirNStart_IASA(_gobj: G) { melee_core::ct!("ftKb_KpSpecialAirNStart_IASA");}
 
 pub fn ftKb_KpSpecialAirN_IASA(gobj: G) {
+    melee_core::ct!("ftKb_KpSpecialAirN_IASA");
     unsafe { flame_iasa(gobj, ftKb_MS_KpSpecialAirNEnd as u32, ftKb_MS_GkSpecialAirNEnd as u32) }
 }
 
-pub fn ftKb_KpSpecialAirNEnd_IASA(_gobj: G) {}
+pub fn ftKb_KpSpecialAirNEnd_IASA(_gobj: G) { melee_core::ct!("ftKb_KpSpecialAirNEnd_IASA");}
 
 /// Ground -> air Coll body: `kp`/`gk` are the air state ids, `flags` the motion flags.
 unsafe fn coll_to_air(gobj: G, kp: u32, gk: u32, flags: u32) {
@@ -363,20 +375,26 @@ unsafe fn coll_to_ground(gobj: G, kp: u32, gk: u32, flags: u32) {
 }
 
 pub fn ftKb_KpSpecialNStart_Coll(gobj: G) {
+    melee_core::ct!("ftKb_KpSpecialNStart_Coll");
     unsafe { coll_to_air(gobj, ftKb_MS_KpSpecialAirNStart as u32, ftKb_MS_GkSpecialAirNStart as u32, 0x0C4C5080) }
 }
 pub fn ftKb_KpSpecialN_Coll(gobj: G) {
+    melee_core::ct!("ftKb_KpSpecialN_Coll");
     unsafe { coll_to_air(gobj, ftKb_MS_KpSpecialAirN as u32, ftKb_MS_GkSpecialAirN as u32, 0x0C4C5880) }
 }
 pub fn ftKb_KpSpecialNEnd_Coll(gobj: G) {
+    melee_core::ct!("ftKb_KpSpecialNEnd_Coll");
     unsafe { coll_to_air(gobj, ftKb_MS_KpSpecialAirNEnd as u32, ftKb_MS_GkSpecialAirNEnd as u32, 0x0C4C5080) }
 }
 pub fn ftKb_KpSpecialAirNStart_Coll(gobj: G) {
+    melee_core::ct!("ftKb_KpSpecialAirNStart_Coll");
     unsafe { coll_to_ground(gobj, ftKb_MS_KpSpecialN as u32, ftKb_MS_GkSpecialN as u32, 0x0C4C5080) }
 }
 pub fn ftKb_KpSpecialAirN_Coll(gobj: G) {
+    melee_core::ct!("ftKb_KpSpecialAirN_Coll");
     unsafe { coll_to_ground(gobj, ftKb_MS_KpSpecialN as u32, ftKb_MS_GkSpecialN as u32, 0x0C4C5880) }
 }
 pub fn ftKb_KpSpecialAirNEnd_Coll(gobj: G) {
+    melee_core::ct!("ftKb_KpSpecialAirNEnd_Coll");
     unsafe { coll_to_ground(gobj, ftKb_MS_KpSpecialNEnd as u32, ftKb_MS_GkSpecialNEnd as u32, 0x0C4C5080) }
 }

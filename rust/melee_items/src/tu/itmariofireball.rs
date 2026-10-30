@@ -95,6 +95,7 @@ fn sqrtf_accurate(x: f32) -> f32 {
 
 /// 29B6F8
 pub unsafe extern "C" fn it_8029B6F8(gobj: *mut Item_GObj, pos: *mut Vec3, kind: ItemKind, facing_dir: f32) {
+    melee_core::ct!("it_8029B6F8");
     let mut spawn_item: SpawnItem = core::mem::zeroed();
     spawn_item.kind = kind;
     // Item_InitSpawnPositionFromParent(&spawn_item, gobj, pos)
@@ -111,6 +112,7 @@ pub unsafe extern "C" fn it_8029B6F8(gobj: *mut Item_GObj, pos: *mut Vec3, kind:
 
 /// 29B7C0
 pub unsafe extern "C" fn it_8029B7C0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_8029B7C0");
     let it = GET_ITEM(gobj);
     let ap = (*(*it).xC4_article_data).x4_specialAttributes as *mut itUnkAttributes;
     let x0 = (*ap).x0_float;
@@ -125,22 +127,26 @@ pub unsafe extern "C" fn it_8029B7C0(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itMariofireball_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMariofireball_UnkMotion0_Anim");
     let item = GET_ITEM(gobj);
     (*item).xD44_lifeTimer -= 1.0;
     (*item).xD44_lifeTimer <= 0.0
 }
 
 pub unsafe extern "C" fn itMariofireball_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itMariofireball_UnkMotion0_Phys");
     Item_ApplyFallingPhysics(gobj);
 }
 
 /// `calc_dist_2d_accurate` (static): `sqrtf_accurate(SQ(x) + SQ(y))`; `x*x + y*y` contracts to one
 /// `fmadds` (x*x fused with the y*y product).
 pub unsafe extern "C" fn calc_dist_2d_accurate(v: *mut Vec3) -> f64 {
+    melee_core::ct!("calc_dist_2d_accurate");
     sqrtf_accurate(fmadds((*v).x, (*v).x, (*v).y * (*v).y)) as f64
 }
 
 pub unsafe extern "C" fn itMariofireball_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMariofireball_UnkMotion0_Coll");
     ext::it_8026D9A0(gobj);
     if ext::it_8027781C(gobj) != 0 {
         let ip = GET_ITEM(gobj);
@@ -160,29 +166,36 @@ pub unsafe extern "C" fn itMariofireball_UnkMotion0_Coll(gobj: *mut Item_GObj) -
 }
 
 pub unsafe extern "C" fn itMarioFireball_Logic87_DmgDealt(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMarioFireball_Logic87_DmgDealt");
     true
 }
 
 pub unsafe extern "C" fn itMarioFireball_Logic87_Reflected(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMarioFireball_Logic87_Reflected");
     ext::it_80273030(gobj) != 0
 }
 
 pub unsafe extern "C" fn itMarioFireball_Logic87_Clanked(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMarioFireball_Logic87_Clanked");
     true
 }
 
 pub unsafe extern "C" fn itMarioFireball_Logic87_HitShield(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMarioFireball_Logic87_HitShield");
     true
 }
 
 pub unsafe extern "C" fn itMarioFireball_Logic87_Absorbed(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMarioFireball_Logic87_Absorbed");
     true
 }
 
 pub unsafe extern "C" fn itMarioFireball_Logic87_ShieldBounced(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMarioFireball_Logic87_ShieldBounced");
     ext::itColl_BounceOffShield(gobj) != 0
 }
 
 pub unsafe extern "C" fn itMarioFireball_Logic87_EvtUnk(gobj: *mut Item_GObj, referenced_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itMarioFireball_Logic87_EvtUnk");
     ext::it_8026B894(gobj, referenced_gobj);
 }

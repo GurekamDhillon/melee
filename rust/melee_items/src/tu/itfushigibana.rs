@@ -69,6 +69,7 @@ unsafe fn item_of(g: *mut HSD_GObj) -> *mut Item {
 /// `Item_SetEffectHitlagCallbacks` (it/inlines.h): pause / resume the effects around hitlag.
 #[inline]
 pub unsafe fn Item_SetEffectHitlagCallbacks(ip: *mut Item) {
+    melee_core::ct!("Item_SetEffectHitlagCallbacks");
     (*ip).entered_hitlag = Some(ext::cb::efLib_PauseAll);
     (*ip).exited_hitlag = Some(ext::cb::efLib_ResumeAll);
 }
@@ -76,6 +77,7 @@ pub unsafe fn Item_SetEffectHitlagCallbacks(ip: *mut Item) {
 /// `Item_EnterStateWithEffectHitlag` (it/inlines.h).
 #[inline]
 pub unsafe fn Item_EnterStateWithEffectHitlag(gobj: *mut Item_GObj, msid: i32) {
+    melee_core::ct!("Item_EnterStateWithEffectHitlag");
     let ip = item_of(gobj);
     ext::it_802762BC(ip);
     ext::Item_80268E5C(gobj, msid, ITEM_ANIM_UPDATE);
@@ -92,6 +94,7 @@ pub static it_803F82F0: [ItemStateTable; 3] = [
 
 /// `itFushigibana_UnkMotion1_Anim_inline1` (static): enters state 1.
 pub unsafe fn itFushigibana_UnkMotion1_Anim_inline1(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFushigibana_UnkMotion1_Anim_inline1");
     let item = item_of(gobj);
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);
     (*item).entered_hitlag = Some(ext::cb::efLib_PauseAll);
@@ -101,6 +104,7 @@ pub unsafe fn itFushigibana_UnkMotion1_Anim_inline1(gobj: *mut Item_GObj) {
 
 /// `itFushigibana_UnkMotion1_Anim_inline2` (static): the lifetime countdown.
 pub unsafe fn itFushigibana_UnkMotion1_Anim_inline2(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFushigibana_UnkMotion1_Anim_inline2");
     let item = item_of(gobj);
     (*item).xD44_lifeTimer -= 1.0;
     if (*item).xD44_lifeTimer <= 0.0 {
@@ -112,6 +116,7 @@ pub unsafe fn itFushigibana_UnkMotion1_Anim_inline2(gobj: *mut Item_GObj) -> i32
 
 /// `void itFushigibana_Logic29_Spawned(Item_GObj*)`: init from the attributes.
 pub unsafe extern "C" fn itFushigibana_Logic29_Spawned(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFushigibana_Logic29_Spawned");
     let item = item_of(gobj);
     let attrs = (*(*item).xC4_article_data).x4_specialAttributes as *mut itFushigibanaAttributes;
     ext::it_80279CDC(gobj, (*attrs).x0);
@@ -124,6 +129,7 @@ pub unsafe extern "C" fn itFushigibana_Logic29_Spawned(gobj: *mut Item_GObj) {
 
 /// `void it_802D705C(Item_GObj*)`: landed: clears a flag and enters state 1.
 pub unsafe extern "C" fn it_802D705C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D705C");
     let ip = item_of(gobj);
     (*ip).xDCE_flag.anon_0.set_b7(0);
     ext::it_80273454(gobj);
@@ -132,6 +138,7 @@ pub unsafe extern "C" fn it_802D705C(gobj: *mut Item_GObj) {
 
 /// `void it_802D70A4(Item_GObj*)`: enters state 0 with the hitlag callbacks.
 pub unsafe extern "C" fn it_802D70A4(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D70A4");
     Item_EnterStateWithEffectHitlag(gobj, 0);
     ext::it_80273670(gobj, 0, 0.0);
     ext::it_8026BDB4(gobj);
@@ -139,22 +146,26 @@ pub unsafe extern "C" fn it_802D70A4(gobj: *mut Item_GObj) {
 
 /// `bool itFushigibana_UnkMotion0_Anim(Item_GObj*)`.
 pub unsafe extern "C" fn itFushigibana_UnkMotion0_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFushigibana_UnkMotion0_Anim");
     ext::it_80279FF8(gobj);
     0
 }
 
 /// `void itFushigibana_UnkMotion0_Phys(Item_GObj*)`.
 pub unsafe extern "C" fn itFushigibana_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFushigibana_UnkMotion0_Phys");
     ext::it_8027A09C(gobj);
 }
 
 /// `bool itFushigibana_UnkMotion0_Coll(Item_GObj*)`.
 pub unsafe extern "C" fn itFushigibana_UnkMotion0_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFushigibana_UnkMotion0_Coll");
     ext::it_8027A118(gobj, Some(it_802D705C))
 }
 
 /// `void it_802D718C(Item_GObj*)`: enters state 1.
 pub unsafe extern "C" fn it_802D718C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D718C");
     let item = item_of(gobj);
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);
     Item_SetEffectHitlagCallbacks(item);
@@ -163,6 +174,7 @@ pub unsafe extern "C" fn it_802D718C(gobj: *mut Item_GObj) {
 
 /// `bool itFushigibana_UnkMotion1_Anim(Item_GObj*)`: emits the periodic effect, counts the lifetime down.
 pub unsafe extern "C" fn itFushigibana_UnkMotion1_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFushigibana_UnkMotion1_Anim");
     let item = item_of(gobj);
     let attrs = (*(*item).xC4_article_data).x4_specialAttributes as *mut itFushigibanaAttributes;
     if ext::it_80272C6C(gobj) == 0 {
@@ -177,10 +189,11 @@ pub unsafe extern "C" fn itFushigibana_UnkMotion1_Anim(gobj: *mut Item_GObj) -> 
 }
 
 /// `void itFushigibana_UnkMotion1_Phys(Item_GObj*)`.
-pub unsafe extern "C" fn itFushigibana_UnkMotion1_Phys(gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itFushigibana_UnkMotion1_Phys(gobj: *mut Item_GObj) { melee_core::ct!("itFushigibana_UnkMotion1_Phys");}
 
 /// `bool itFushigibana_UnkMotion1_Coll(Item_GObj*)`.
 pub unsafe extern "C" fn itFushigibana_UnkMotion1_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFushigibana_UnkMotion1_Coll");
     ext::it_8026D62C(gobj, Some(it_802D7328));
     ext::it_80276CB8(gobj);
     0
@@ -188,17 +201,20 @@ pub unsafe extern "C" fn itFushigibana_UnkMotion1_Coll(gobj: *mut Item_GObj) -> 
 
 /// `void it_802D7328(Item_GObj*)`: enters state 2 (falling).
 pub unsafe extern "C" fn it_802D7328(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D7328");
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE);
     ext::it_80273670(gobj, 0, 0.0);
 }
 
 /// `bool itFushigibana_UnkMotion2_Anim(Item_GObj*)`.
 pub unsafe extern "C" fn itFushigibana_UnkMotion2_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFushigibana_UnkMotion2_Anim");
     0
 }
 
 /// `void itFushigibana_UnkMotion2_Phys(Item_GObj*)`: gravity.
 pub unsafe extern "C" fn itFushigibana_UnkMotion2_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFushigibana_UnkMotion2_Phys");
     let ip = item_of(gobj);
     let attrs = (*ip).xCC_item_attr;
     ext::it_80272860(gobj, (*attrs).x10_fall_speed, (*attrs).x14_fall_speed_max);
@@ -206,6 +222,7 @@ pub unsafe extern "C" fn itFushigibana_UnkMotion2_Phys(gobj: *mut Item_GObj) {
 
 /// `bool itFushigibana_UnkMotion2_Coll(Item_GObj*)`.
 pub unsafe extern "C" fn itFushigibana_UnkMotion2_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFushigibana_UnkMotion2_Coll");
     ext::it_8026E15C(gobj, Some(it_802D705C));
     0
 }

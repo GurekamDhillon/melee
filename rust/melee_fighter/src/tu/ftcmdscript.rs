@@ -29,6 +29,7 @@ const BUF_LEN: usize = 256;
 
 /// `ftCo_800B3E04`: step the CPU command script by one frame.
 pub fn ftco_800b3e04(fp: &mut Fighter) {
+    melee_core::ct!("ftco_800b3e04");
     let pos = fp.cur_pos;
     let facing = fp.facing_dir;
     let motion_id = fp.motion_id;
@@ -218,11 +219,13 @@ pub fn ftco_800b3e04(fp: &mut Fighter) {
 
 /// `ftCo_800B462C`: reset the script write position.
 pub fn ftco_800b462c(fp: &mut Fighter) {
+    melee_core::ct!("ftco_800b462c");
     fp.cpu.write_pos = fp.cpu.buffer.as_mut_ptr();
 }
 
 /// `ftCo_800B463C`: append one byte to the script buffer.
 pub fn ftco_800b463c(fp: &mut Fighter, cmd: u8) {
+    melee_core::ct!("ftco_800b463c");
     let data = &mut fp.cpu;
     if data.write_pos as usize >= data.buffer.as_ptr() as usize + BUF_LEN {
         panic!("command script buffer over flow!");
@@ -235,12 +238,14 @@ pub fn ftco_800b463c(fp: &mut Fighter, cmd: u8) {
 
 /// `ftCo_800B46B8`.
 pub fn ftco_800b46b8(fp: &mut Fighter, cmd: u8, arg: u8) {
+    melee_core::ct!("ftco_800b46b8");
     ftco_800b463c(fp, cmd);
     ftco_800b463c(fp, arg);
 }
 
 /// `ftCo_800B4778`.
 pub fn ftco_800b4778(fp: &mut Fighter, cmd: u8, arg1: u8, arg2: u8) {
+    melee_core::ct!("ftco_800b4778");
     ftco_800b463c(fp, cmd);
     ftco_800b463c(fp, arg1);
     ftco_800b463c(fp, arg2);
@@ -248,6 +253,7 @@ pub fn ftco_800b4778(fp: &mut Fighter, cmd: u8, arg1: u8, arg2: u8) {
 
 /// `ftCo_800B4880`: copy script `script_idx` from the loaded table into the buffer.
 pub fn ftco_800b4880(fp: &mut Fighter, script_idx: i32) {
+    melee_core::ct!("ftco_800b4880");
     let t = unsafe { ext::Fighter_804D64FC };
     assert!(!t.is_null(), "TODO Fighter_804D64FC not loaded");
     unsafe {
@@ -270,6 +276,7 @@ pub fn ftco_800b4880(fp: &mut Fighter, script_idx: i32) {
 
 /// `ftCo_800B49F4`: terminate the script and start running it.
 pub fn ftco_800b49f4(fp: &mut Fighter) {
+    melee_core::ct!("ftco_800b49f4");
     ftco_800b463c(fp, CpuCmd_Done as u8);
     fp.cpu.csP = fp.cpu.buffer.as_mut_ptr();
     fp.cpu.command_duration = 1;
@@ -277,6 +284,7 @@ pub fn ftco_800b49f4(fp: &mut Fighter) {
 
 /// `ftCo_800B4A78`: clear the CPU inputs and the script.
 pub fn ftco_800b4a78(fp: &mut Fighter) {
+    melee_core::ct!("ftco_800b4a78");
     let data = &mut fp.cpu;
     data.buttons = 0;
     data.lstick.x = 0;
@@ -291,11 +299,11 @@ pub fn ftco_800b4a78(fp: &mut Fighter) {
 }
 
 // C-named entry points for the generated CPU AI (tu::ftCo_0A01_ai).
-pub unsafe fn ftCo_800B3E04(fp: *mut Fighter) { ftco_800b3e04(&mut *fp) }
-pub unsafe fn ftCo_800B462C(fp: *mut Fighter) { ftco_800b462c(&mut *fp) }
-pub unsafe fn ftCo_800B463C(fp: *mut Fighter, cmd: u8) { ftco_800b463c(&mut *fp, cmd) }
-pub unsafe fn ftCo_800B46B8(fp: *mut Fighter, cmd: u8, arg: u8) { ftco_800b46b8(&mut *fp, cmd, arg) }
-pub unsafe fn ftCo_800B4778(fp: *mut Fighter, cmd: u8, a1: u8, a2: u8) { ftco_800b4778(&mut *fp, cmd, a1, a2) }
-pub unsafe fn ftCo_800B4880(fp: *mut Fighter, idx: i32) { ftco_800b4880(&mut *fp, idx) }
-pub unsafe fn ftCo_800B49F4(fp: *mut Fighter) { ftco_800b49f4(&mut *fp) }
-pub unsafe fn ftCo_800B4A78(fp: *mut Fighter) { ftco_800b4a78(&mut *fp) }
+pub unsafe fn ftCo_800B3E04(fp: *mut Fighter) { melee_core::ct!("ftCo_800B3E04"); ftco_800b3e04(&mut *fp) }
+pub unsafe fn ftCo_800B462C(fp: *mut Fighter) { melee_core::ct!("ftCo_800B462C"); ftco_800b462c(&mut *fp) }
+pub unsafe fn ftCo_800B463C(fp: *mut Fighter, cmd: u8) { melee_core::ct!("ftCo_800B463C"); ftco_800b463c(&mut *fp, cmd) }
+pub unsafe fn ftCo_800B46B8(fp: *mut Fighter, cmd: u8, arg: u8) { melee_core::ct!("ftCo_800B46B8"); ftco_800b46b8(&mut *fp, cmd, arg) }
+pub unsafe fn ftCo_800B4778(fp: *mut Fighter, cmd: u8, a1: u8, a2: u8) { melee_core::ct!("ftCo_800B4778"); ftco_800b4778(&mut *fp, cmd, a1, a2) }
+pub unsafe fn ftCo_800B4880(fp: *mut Fighter, idx: i32) { melee_core::ct!("ftCo_800B4880"); ftco_800b4880(&mut *fp, idx) }
+pub unsafe fn ftCo_800B49F4(fp: *mut Fighter) { melee_core::ct!("ftCo_800B49F4"); ftco_800b49f4(&mut *fp) }
+pub unsafe fn ftCo_800B4A78(fp: *mut Fighter) { melee_core::ct!("ftCo_800B4A78"); ftco_800b4a78(&mut *fp) }

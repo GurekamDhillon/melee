@@ -108,6 +108,7 @@ pub struct DbAnim {
 
 /// `"%03.2f"`.
 pub fn format_frame(f: f32) -> String {
+    melee_core::ct!("format_frame");
     format!("{:03.2}", f as f64)
 }
 
@@ -239,6 +240,7 @@ impl DbAnim {
 
 /// `fn_8022697C`: the owner's x21FC flag byte, or 0 when ftLib_80086960 rejects it.
 pub fn fn_8022697c<H: DbAnimHost + ?Sized>(h: &mut H, owner: FighterGObj) -> u8 {
+    melee_core::ct!("fn_8022697c");
     if h.ftLib_80086960(owner) != 0 {
         h.ft_x21FC(owner)
     } else {

@@ -745,6 +745,7 @@ pub static mut gc_lua_fields: [GenoCoverField; 3] = unsafe { [
     ] };
 
 pub unsafe extern "C" fn HSD_JObjGetChild(mut jobj: *mut HSD_JObj) -> *mut HSD_JObj {
+    melee_core::ct!("HSD_JObjGetChild");
     if jobj.is_null() {
         return ::core::ptr::null_mut::<HSD_JObj>()
     } else {
@@ -753,6 +754,7 @@ pub unsafe extern "C" fn HSD_JObjGetChild(mut jobj: *mut HSD_JObj) -> *mut HSD_J
 }
 
 pub unsafe extern "C" fn t_zero(mut p: *mut c_void, mut n: i32) {
+    melee_core::ct!("t_zero");
     let mut b: *mut u8 = p as *mut u8;
     loop {
         let fresh0 = n;
@@ -767,6 +769,7 @@ pub unsafe extern "C" fn t_zero(mut p: *mut c_void, mut n: i32) {
 }
 
 pub unsafe extern "C" fn t_setup() -> *mut TestGenoState {
+    melee_core::ct!("t_setup");
     t_zero(
         &raw mut t_fp as *mut c_void,
         ::core::mem::size_of::<Fighter>() as i32,
@@ -796,6 +799,7 @@ pub unsafe extern "C" fn t_setup() -> *mut TestGenoState {
 }
 
 pub unsafe extern "C" fn t_run(mut script: *mut u32, mut loop_0: i32) {
+    melee_core::ct!("t_run");
     t_fp.x3E4_fighterCmdScript.anon_8.u = script as *mut CmdUnion;
     t_fp.x3E4_fighterCmdScript.timer = 0.0f32 as f32;
     t_fp.x3E4_fighterCmdScript.loop_count = 0 as u32;
@@ -809,12 +813,14 @@ pub unsafe extern "C" fn t_run(mut script: *mut u32, mut loop_0: i32) {
 }
 
 pub unsafe extern "C" fn t_fbits(mut f: f32) -> u32 {
+    melee_core::ct!("t_fbits");
     let mut x: Anon_anon_107 = unsafe { core::mem::zeroed() };
     x.f = f as f32;
     return x.u;
 }
 
 pub unsafe extern "C" fn t_build(mut s: *mut u32) -> i32 {
+    melee_core::ct!("t_build");
     let mut n: i32 = 0 as i32;
     let fresh2 = n;
     n = n + 1;
@@ -1395,6 +1401,7 @@ pub unsafe extern "C" fn t_build(mut s: *mut u32) -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_ftcmd_escape() -> i32 {
+    melee_core::ct!("test_geno_ftcmd_escape");
     let mut st: *mut TestGenoState = t_setup();
     t_build(&raw mut t_script as *mut u32);
     t_run(&raw mut t_script as *mut u32, GENO_MODE_EXEC);
@@ -1448,6 +1455,7 @@ pub unsafe extern "C" fn test_geno_ftcmd_escape() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_ftcmd_loops() -> i32 {
+    melee_core::ct!("test_geno_ftcmd_loops");
     let mut st: *mut TestGenoState = t_setup();
     t_build(&raw mut t_script as *mut u32);
     t_run(&raw mut t_script as *mut u32, GENO_MODE_SKIP);
@@ -1477,6 +1485,7 @@ pub unsafe extern "C" fn test_geno_ftcmd_loops() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_vanilla_script_untouched() -> i32 {
+    melee_core::ct!("test_geno_vanilla_script_untouched");
     let mut st: *mut TestGenoState = t_setup();
     t_script[0 as i32 as usize] = (19 as u32)
         << 26 as i32
@@ -1502,6 +1511,7 @@ pub unsafe extern "C" fn test_geno_vanilla_script_untouched() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_state_resets() -> i32 {
+    melee_core::ct!("test_geno_state_resets");
     let mut st: *mut TestGenoState = t_setup();
     let mut resets: u32 = (*st).resets;
     (*st).la_i[3 as i32 as usize] = 5 as i32 as i32;
@@ -1534,6 +1544,7 @@ pub unsafe extern "C" fn test_geno_state_resets() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_attr_table() -> i32 {
+    melee_core::ct!("test_geno_attr_table");
     if GenoGame_AttrOffset(
         GenoGame_AttrFind(b"max_jumps\0" as *const u8 as *const i8),
     ) != 0x58 as i32
@@ -1608,6 +1619,7 @@ pub unsafe extern "C" fn test_geno_attr_table() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_multijump() -> i32 {
+    melee_core::ct!("test_geno_multijump");
     let mut msid: i32 = 0;
     let mut vy: f32 = 0.;
     let mut i: i32 = 0;
@@ -1686,6 +1698,7 @@ pub unsafe extern "C" fn test_geno_multijump() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_multijump_script_gate() -> i32 {
+    melee_core::ct!("test_geno_multijump_script_gate");
     let mut used: i32 = 0;
     let mut base: i32 = 0;
     let mut msid: i32 = 0;
@@ -1747,6 +1760,7 @@ pub unsafe extern "C" fn test_geno_multijump_script_gate() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_reload_state_callbacks() -> i32 {
+    melee_core::ct!("test_geno_reload_state_callbacks");
     let mut a: *const i8 = b"{\"geno\":5,\"fighters\":[{\"attach\":\"kirby\",\"states\":[{\"name\":\"TutorialB\",\"behavior\":\"geno.ground\",\"subaction\":3}]}]}\0"
         as *const u8 as *const i8;
     let mut b: *const i8 = b"{\"geno\":5,\"fighters\":[{\"attach\":\"kirby\",\"states\":[{\"name\":\"TutorialB\",\"behavior\":\"geno.ground\",\"subaction\":3,\"iasa\":\"interrupt\"}]}]}\0"
@@ -1767,6 +1781,7 @@ pub unsafe extern "C" fn test_geno_reload_state_callbacks() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_effective_script_range() -> i32 {
+    melee_core::ct!("test_geno_effective_script_range");
 
     let mut rc: i32 = 0 as i32;
     Geno_TestInstall(
@@ -1828,6 +1843,7 @@ pub unsafe extern "C" fn test_geno_effective_script_range() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_ordinary_jumps() -> i32 {
+    melee_core::ct!("test_geno_ordinary_jumps");
 
 
     static mut common: ftCommonData = ftCommonData {
@@ -2390,6 +2406,7 @@ pub unsafe extern "C" fn test_geno_ordinary_jumps() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_jump_limits() -> i32 {
+    melee_core::ct!("test_geno_jump_limits");
     let mut rc: i32 = 0 as i32;
     Geno_TestInstall(
         b"{\"geno\":5,\"fighters\":[{\"attach\":\"kirby\",\"jumps\":{\"max\":1e50}}]}\0"
@@ -2431,6 +2448,7 @@ pub unsafe extern "C" fn test_geno_jump_limits() -> i32 {
 pub unsafe extern "C" fn GenoTest_LabScript(
     mut original: u32,
 ) -> *const c_void {
+    melee_core::ct!("GenoTest_LabScript");
     t_subactions[3 as i32 as usize].xC = original as *mut CmdUnion;
     Geno_TestInstall(
         b"{\"geno\":5,\"fighters\":[{\"attach\":\"kirby\",\"states\":[{\"name\":\"TutorialB\",\"subaction\":3,\"iasa\":\"interrupt\"}],\"subactions\":[{\"index\":3,\"words\":[\"0x04000005\",\"0xed030000\",0,5,\"0x2c80100c\",\"0x04000000\",0,\"0xb4990000\",\"0x0a000000\",\"0x5c000000\",\"0xec930000\",3,\"0x40000000\",\"0xed310000\"]}]}]}\0"
@@ -2444,6 +2462,7 @@ pub unsafe extern "C" fn GenoTest_LabScript(
 }
 
 pub unsafe extern "C" fn GenoTest_LabScriptEnd() {
+    melee_core::ct!("GenoTest_LabScriptEnd");
     t_subactions[3 as i32 as usize].xC = ::core::ptr::null_mut::<
         CmdUnion,
     >();
@@ -2451,6 +2470,7 @@ pub unsafe extern "C" fn GenoTest_LabScriptEnd() {
 }
 
 pub unsafe extern "C" fn test_geno_iasa_script_validation() -> i32 {
+    melee_core::ct!("test_geno_iasa_script_validation");
     let mut rc: i32 = 0 as i32;
     Geno_TestInstall(
         b"{\"geno\":5,\"fighters\":[{\"attach\":\"kirby\",\"subactions\":[{\"index\":3,\"words\":[\"0x14000000\",1]},{\"index\":4,\"words\":[\"0xec1f0000\",\"0x5c000000\"]},{\"index\":5,\"words\":[\"0xec230000\",\"0x5c000000\",0]},{\"index\":6,\"words\":[\"0xed030000\",0,1,0,\"0x5c000000\",0]}]}]}\0"
@@ -2490,6 +2510,7 @@ pub unsafe extern "C" fn test_geno_iasa_script_validation() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_state_savestate() -> i32 {
+    melee_core::ct!("test_geno_state_savestate");
     let mut st: *mut TestGenoState = t_setup();
     (*st).la_i[10 as i32 as usize] = 1234 as i32 as i32;
     (*st).la_f[2 as i32 as usize] = 2.5f32 as f32;
@@ -2570,6 +2591,7 @@ pub unsafe extern "C" fn test_geno_state_savestate() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_v1_values() -> i32 {
+    melee_core::ct!("test_geno_v1_values");
     let mut st: *mut TestGenoState = t_setup();
     let mut n: i32 = 0 as i32;
     let mut s: *mut u32 = &raw mut t_script as *mut u32;
@@ -3107,6 +3129,7 @@ pub unsafe extern "C" fn test_geno_v1_values() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_v1_change_action() -> i32 {
+    melee_core::ct!("test_geno_v1_change_action");
     let mut st: *mut TestGenoState = t_setup();
     let mut n: i32 = 0 as i32;
     let mut rc: i32 = 0 as i32;
@@ -3675,6 +3698,7 @@ pub unsafe extern "C" fn test_geno_v1_change_action() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_v1_ground_edge() -> i32 {
+    melee_core::ct!("test_geno_v1_ground_edge");
     let mut st: *mut TestGenoState = t_setup();
     let mut rc: i32 = 0 as i32;
     let mut s: *mut u32 = &raw mut t_script as *mut u32;
@@ -3825,6 +3849,7 @@ pub unsafe extern "C" fn test_geno_v1_ground_edge() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_v1_rehit() -> i32 {
+    melee_core::ct!("test_geno_v1_rehit");
     let mut st: *mut TestGenoState = t_setup();
     let mut rc: i32 = 0 as i32;
     let mut f: i32 = 0;
@@ -3921,6 +3946,7 @@ pub unsafe extern "C" fn test_geno_v1_rehit() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_v1_autolink() -> i32 {
+    melee_core::ct!("test_geno_v1_autolink");
     let mut st: *mut TestGenoState = ::core::ptr::null_mut::<TestGenoState>();
     let mut rc: i32 = 0 as i32;
     let mut dir: f32 = 1.0f32;
@@ -4053,6 +4079,7 @@ pub unsafe extern "C" fn test_geno_v1_autolink() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_v1_special_attrs() -> i32 {
+    melee_core::ct!("test_geno_v1_special_attrs");
     let mut st: *mut TestGenoState = ::core::ptr::null_mut::<TestGenoState>();
     let mut rc: i32 = 0 as i32;
     if Geno_TestInstall(
@@ -4147,6 +4174,7 @@ pub unsafe extern "C" fn test_geno_v1_special_attrs() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_v1_overlay() -> i32 {
+    melee_core::ct!("test_geno_v1_overlay");
     let mut st: *mut TestGenoState = ::core::ptr::null_mut::<TestGenoState>();
     static mut orig: [u32; 4] = [0; 4];
     let mut rc: i32 = 0 as i32;
@@ -4274,6 +4302,7 @@ pub unsafe extern "C" fn test_geno_v1_overlay() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_v1_inert() -> i32 {
+    melee_core::ct!("test_geno_v1_inert");
     let mut st: *mut TestGenoState = t_setup();
     let mut dir: f32 = 1.0f32;
     let mut angle: f32 = 50.0f32;
@@ -4310,11 +4339,12 @@ pub unsafe extern "C" fn test_geno_v1_inert() -> i32 {
     return 0 as i32;
 }
 
-pub unsafe extern "C" fn t_cam(mut gobj: *mut Fighter_GObj) {}
+pub unsafe extern "C" fn t_cam(mut gobj: *mut Fighter_GObj) { melee_core::ct!("t_cam");}
 
-pub unsafe extern "C" fn t_input(mut gobj: *mut Fighter_GObj) {}
+pub unsafe extern "C" fn t_input(mut gobj: *mut Fighter_GObj) { melee_core::ct!("t_input");}
 
 pub unsafe extern "C" fn t_v2_setup() -> *mut TestGenoState {
+    melee_core::ct!("t_v2_setup");
     t_rows[ftCo_MS_Fall as i32 as usize].anim_id = 29
         as i32 as enum_t;
     t_rows[ftCo_MS_Fall as i32 as usize].x4_flags = 0x1234
@@ -4336,6 +4366,7 @@ pub unsafe extern "C" fn t_v2_setup() -> *mut TestGenoState {
 }
 
 pub unsafe extern "C" fn test_geno_v2_states() -> i32 {
+    melee_core::ct!("test_geno_v2_states");
     let mut st: *mut TestGenoState = t_v2_setup();
     let mut r: *mut MotionState = ::core::ptr::null_mut::<MotionState>();
     let mut rc: i32 = 0 as i32;
@@ -4401,6 +4432,7 @@ pub unsafe extern "C" fn test_geno_v2_states() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_v2_change_to_state() -> i32 {
+    melee_core::ct!("test_geno_v2_change_to_state");
     let mut st: *mut TestGenoState = t_v2_setup();
     let mut s: *mut u32 = &raw mut t_script as *mut u32;
     let mut n: i32 = 0 as i32;
@@ -4611,6 +4643,7 @@ pub unsafe extern "C" fn test_geno_v2_change_to_state() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_v2_glide_entry() -> i32 {
+    melee_core::ct!("test_geno_v2_glide_entry");
     let mut st: *mut TestGenoState = t_v2_setup();
     let mut f: i32 = 0;
     let mut rc: i32 = 0 as i32;
@@ -4694,6 +4727,7 @@ pub unsafe extern "C" fn test_geno_v2_glide_entry() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_v2_glide() -> i32 {
+    melee_core::ct!("test_geno_v2_glide");
     let mut st: *mut TestGenoState = t_v2_setup();
     let mut gl: *mut MotionState = ::core::ptr::null_mut::<MotionState>();
     let mut f: i32 = 0;
@@ -4897,6 +4931,7 @@ pub unsafe extern "C" fn test_geno_v2_glide() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_v2_specials() -> i32 {
+    melee_core::ct!("test_geno_v2_specials");
     let mut st: *mut TestGenoState = t_v2_setup();
     let mut r: *mut MotionState = ::core::ptr::null_mut::<MotionState>();
     let mut f: i32 = 0;
@@ -5012,10 +5047,12 @@ pub unsafe extern "C" fn test_geno_v2_specials() -> i32 {
 }
 
 pub unsafe extern "C" fn t_near(mut a: f32, mut b: f32) -> i32 {
+    melee_core::ct!("t_near");
     return (a - b < 0.001f32 && b - a < 0.001f32) as i32;
 }
 
 pub unsafe extern "C" fn test_geno_v3_anim_motion() -> i32 {
+    melee_core::ct!("test_geno_v3_anim_motion");
     let mut st: *mut TestGenoState = ::core::ptr::null_mut::<TestGenoState>();
     let mut up: *mut MotionState = ::core::ptr::null_mut::<MotionState>();
     let mut loop_0: *mut MotionState = ::core::ptr::null_mut::<MotionState>();
@@ -5183,6 +5220,7 @@ pub unsafe extern "C" fn test_geno_v3_anim_motion() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_v3_hidden_glide() -> i32 {
+    melee_core::ct!("test_geno_v3_hidden_glide");
     let mut st: *mut TestGenoState = ::core::ptr::null_mut::<TestGenoState>();
     let mut rc: i32 = 0 as i32;
     if Geno_TestInstall(&raw const t_v3_json as *const i8)
@@ -5356,6 +5394,7 @@ pub unsafe extern "C" fn test_geno_v3_hidden_glide() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_v3_many_states() -> i32 {
+    melee_core::ct!("test_geno_v3_many_states");
     static mut head: [i8; 51] = unsafe {
         ::core::mem::transmute::<
             [u8; 51],
@@ -5472,6 +5511,7 @@ pub unsafe extern "C" fn test_geno_v3_many_states() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_v3_cape() -> i32 {
+    melee_core::ct!("test_geno_v3_cape");
     let mut st: *mut TestGenoState = ::core::ptr::null_mut::<TestGenoState>();
     let mut r: *mut MotionState = ::core::ptr::null_mut::<MotionState>();
     let mut f: i32 = 0;
@@ -5659,6 +5699,7 @@ pub unsafe extern "C" fn test_geno_v3_cape() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_v3_drill() -> i32 {
+    melee_core::ct!("test_geno_v3_drill");
     let mut st: *mut TestGenoState = ::core::ptr::null_mut::<TestGenoState>();
     let mut r: *mut MotionState = ::core::ptr::null_mut::<MotionState>();
     let mut f: i32 = 0;
@@ -5814,6 +5855,7 @@ pub unsafe extern "C" fn test_geno_v3_drill() -> i32 {
 }
 
 pub unsafe extern "C" fn t_drill_rush() -> *mut MotionState {
+    melee_core::ct!("t_drill_rush");
     t_fp.ground_or_air = GA_Air;
     t_fp.motion_id = ftCo_MS_Fall as i32 as FtMotionId;
     Geno_SpecialEnter(&raw mut t_gobj, GENO_SP_AIR_S as i32);
@@ -5849,6 +5891,7 @@ pub unsafe extern "C" fn t_drill_rush() -> *mut MotionState {
 }
 
 pub unsafe extern "C" fn test_geno_v4_drill_pose() -> i32 {
+    melee_core::ct!("test_geno_v4_drill_pose");
     let mut st: *mut TestGenoState = ::core::ptr::null_mut::<TestGenoState>();
     let mut r: *mut MotionState = ::core::ptr::null_mut::<MotionState>();
     let mut f: i32 = 0;
@@ -6010,6 +6053,7 @@ pub unsafe extern "C" fn test_geno_v4_drill_pose() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_v4_tornado_spin() -> i32 {
+    melee_core::ct!("test_geno_v4_tornado_spin");
     let mut st: *mut TestGenoState = ::core::ptr::null_mut::<TestGenoState>();
     let mut r: *mut MotionState = ::core::ptr::null_mut::<MotionState>();
     let mut f: i32 = 0;
@@ -6125,6 +6169,7 @@ pub unsafe extern "C" fn test_geno_v4_tornado_spin() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_lab_stale_fighter() -> i32 {
+    melee_core::ct!("test_geno_lab_stale_fighter");
     static mut saved: StaticPlayer = unsafe { core::mem::zeroed() };
     let mut rc: i32 = 0 as i32;
     t_setup();
@@ -6156,6 +6201,7 @@ pub unsafe extern "C" fn test_geno_lab_stale_fighter() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_player_team_read() -> i32 {
+    melee_core::ct!("test_geno_player_team_read");
     static mut saved1: StaticPlayer = unsafe { core::mem::zeroed() };
     static mut saved2: StaticPlayer = unsafe { core::mem::zeroed() };
     let mut rc: i32 = 0 as i32;
@@ -6212,6 +6258,7 @@ pub unsafe extern "C" fn SceneLaunch_ApplyItemFrequency(
     mut rules: *mut StartMeleeRules,
     mut prefs: *mut GamePrefs,
 ) {
+    melee_core::ct!("SceneLaunch_ApplyItemFrequency");
     let mut frequency: i32 = SceneLaunch_ItemFreq();
     if frequency != -(1 as i32) {
         (*rules).item_freq = (if frequency == -(2 as i32) {
@@ -6224,6 +6271,7 @@ pub unsafe extern "C" fn SceneLaunch_ApplyItemFrequency(
 }
 
 pub unsafe extern "C" fn test_geno_lab_mode_table() -> i32 {
+    melee_core::ct!("test_geno_lab_mode_table");
     let mut m: *mut GameMode = ::core::ptr::null_mut::<GameMode>();
     let mut s: *mut GameModeState = ::core::ptr::null_mut::<GameModeState>();
     let mut found: i32 = 0 as i32;
@@ -6289,6 +6337,7 @@ pub unsafe extern "C" fn test_geno_lab_mode_table() -> i32 {
 }
 
 pub unsafe extern "C" fn test_scene_item_frequency_rules() -> i32 {
+    melee_core::ct!("test_scene_item_frequency_rules");
     let mut live: *mut StartMeleeRules = gm_GetStartMeleeRules() as *mut StartMeleeRules;
     let mut saved: StartMeleeRules = *live;
     let mut prefs: GamePrefs = unsafe { core::mem::zeroed() };
@@ -6356,6 +6405,7 @@ pub unsafe extern "C" fn test_scene_item_frequency_rules() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_lab_rules() -> i32 {
+    melee_core::ct!("test_geno_lab_rules");
     static mut d: StartMeleeData = unsafe { core::mem::zeroed() };
     let mut i: i32 = 0;
     d.rules.set_match_kind(MatchKind_Stock as i32 as u32 as u32);
@@ -6433,6 +6483,7 @@ pub unsafe extern "C" fn test_geno_lab_rules() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_lab_scene() -> i32 {
+    melee_core::ct!("test_geno_lab_scene");
     let mut rc: i32 = 0 as i32;
     SceneLaunch_LoadForTest(
         b"mode=lab;p1=fox;p2=falco/cpu;stage=fd\0" as *const u8
@@ -6472,6 +6523,7 @@ pub unsafe extern "C" fn test_geno_lab_scene() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_lab_select_flow() -> i32 {
+    melee_core::ct!("test_geno_lab_select_flow");
     let mut st: GameModeState = *(&raw mut gm_Mode_Lab_States as *mut GameModeState)
         .offset(0 as i32 as isize);
     gmFrontend_ModeSelect(
@@ -6506,6 +6558,7 @@ pub unsafe extern "C" fn t_streq(
     mut a: *const i8,
     mut b: *const i8,
 ) -> i32 {
+    melee_core::ct!("t_streq");
     if a.is_null() || b.is_null() {
         return 0 as i32;
     }
@@ -6519,6 +6572,7 @@ pub unsafe extern "C" fn t_streq(
 }
 
 pub unsafe extern "C" fn test_geno_lab_mismatch_fields() -> i32 {
+    melee_core::ct!("test_geno_lab_mismatch_fields");
     let mut mi: i32 = 1564 as u64
         as i32;
     let mut pos: i32 = 196 as u64
@@ -6581,12 +6635,14 @@ pub unsafe extern "C" fn test_geno_lab_mismatch_fields() -> i32 {
 }
 
 pub unsafe extern "C" fn t_bitsf(mut b: i32) -> f32 {
+    melee_core::ct!("t_bitsf");
     let mut x: Anon_anon_1134 = unsafe { core::mem::zeroed() };
     x.u = b as u32;
     return x.f;
 }
 
 pub unsafe extern "C" fn test_geno_v5_registry() -> i32 {
+    melee_core::ct!("test_geno_v5_registry");
     let mut rc: i32 = 0 as i32;
     let mut d: *mut Article = ::core::ptr::null_mut::<Article>();
     if Geno_TestInstall(&raw const t_v5_json as *const i8)
@@ -6827,6 +6883,7 @@ pub unsafe extern "C" fn test_geno_v5_registry() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_v5_article_reflection() -> i32 {
+    melee_core::ct!("test_geno_v5_article_reflection");
     static mut item: Item = unsafe { core::mem::zeroed() };
     static mut gobj: HSD_GObj = unsafe { core::mem::zeroed() };
     let mut logic: *mut ItemLogicTable = ::core::ptr::null_mut::<ItemLogicTable>();
@@ -6885,6 +6942,7 @@ pub unsafe extern "C" fn test_geno_v5_article_reflection() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_v5_article_motion() -> i32 {
+    melee_core::ct!("test_geno_v5_article_motion");
     let mut rc: i32 = 0 as i32;
     let mut f: i32 = 0;
     let mut vx: f32 = 2.5f32;
@@ -7002,6 +7060,7 @@ pub unsafe extern "C" fn test_geno_v5_article_motion() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_v5_on_hit() -> i32 {
+    melee_core::ct!("test_geno_v5_on_hit");
     let mut st: *mut TestGenoState = ::core::ptr::null_mut::<TestGenoState>();
     let mut rc: i32 = 0 as i32;
     t_rows[ftCo_MS_Fall as i32 as usize].anim_id = 29
@@ -7186,6 +7245,7 @@ pub unsafe extern "C" fn test_geno_v5_on_hit() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_v51() -> i32 {
+    melee_core::ct!("test_geno_v51");
     let mut st: *mut TestGenoState = ::core::ptr::null_mut::<TestGenoState>();
     let mut rc: i32 = 0 as i32;
     let mut f: i32 = 0;
@@ -7421,6 +7481,7 @@ pub unsafe extern "C" fn test_geno_v51() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_v54_dash() -> i32 {
+    melee_core::ct!("test_geno_v54_dash");
     let mut cx: f32 = 9.0f32;
     let mut cy: f32 = 9.0f32;
     let mut ux: f32 = 0.;
@@ -7621,6 +7682,7 @@ pub unsafe extern "C" fn test_geno_v54_dash() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_v52_lockon() -> i32 {
+    melee_core::ct!("test_geno_v52_lockon");
     let mut fw: f32 = 0.;
     let mut up: f32 = 0.;
     let mut face: f32 = 0.;
@@ -8354,6 +8416,7 @@ pub unsafe extern "C" fn test_geno_v52_lockon() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_fly() -> i32 {
+    melee_core::ct!("test_geno_fly");
 
     if GenoFly_CursorTest() != 0 {
         TestFail(
@@ -8468,6 +8531,7 @@ pub unsafe extern "C" fn test_geno_fly() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_define_snapshot() -> i32 {
+    melee_core::ct!("test_geno_define_snapshot");
     let mut kind: i32 = Ft_Kind_Mex0 as i32;
     let mut rc: i32 = 0 as i32;
     let mut old0: u32 = GenoDefine_ContentIdentity[kind
@@ -8524,6 +8588,7 @@ pub unsafe extern "C" fn test_geno_define_snapshot() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_define_hit_tag() -> i32 {
+    melee_core::ct!("test_geno_define_hit_tag");
     let mut rc: i32 = 0 as i32;
     let mut ck: i32 = 0;
     let mut kind: i32 = 0;
@@ -8620,6 +8685,7 @@ pub unsafe extern "C" fn test_geno_define_hit_tag() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_define_state_hash() -> i32 {
+    melee_core::ct!("test_geno_define_state_hash");
     let mut rc: i32 = 0 as i32;
     let mut kind: i32 = 0;
     let mut s: *mut TestGenoState = ::core::ptr::null_mut::<TestGenoState>();
@@ -8729,6 +8795,7 @@ pub unsafe extern "C" fn test_geno_define_state_hash() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_define_article_digest() -> i32 {
+    melee_core::ct!("test_geno_define_article_digest");
     static mut ig: [HSD_GObj; 2] = unsafe { core::mem::zeroed() };
     static mut it: [Item; 2] = unsafe { core::mem::zeroed() };
     let mut rc: i32 = 0 as i32;
@@ -8899,6 +8966,7 @@ pub unsafe extern "C" fn test_geno_define_article_digest() -> i32 {
 }
 
 pub unsafe extern "C" fn t_rbmix(mut h: u32, mut v: u32) -> u32 {
+    melee_core::ct!("t_rbmix");
     h ^= v;
     h = (h as u32).wrapping_mul(0x1000193 as u32)
         as u32 as u32;
@@ -8907,6 +8975,7 @@ pub unsafe extern "C" fn t_rbmix(mut h: u32, mut v: u32) -> u32 {
 }
 
 pub unsafe extern "C" fn t_rbbits(mut f: f32) -> u32 {
+    melee_core::ct!("t_rbbits");
     let mut u: u32 = 0;
     memcpy(
         &raw mut u as *mut c_void,
@@ -8917,6 +8986,7 @@ pub unsafe extern "C" fn t_rbbits(mut f: f32) -> u32 {
 }
 
 pub unsafe extern "C" fn t_rb_old_formula(mut fp: *mut Fighter, mut h: u32) -> u32 {
+    melee_core::ct!("t_rb_old_formula");
     h = t_rbmix(h, 0x100 as u32);
     h = t_rbmix(h, (*fp).motion_id as u32);
     h = t_rbmix(h, t_rbbits((*fp).cur_pos.x));
@@ -8931,6 +9001,7 @@ pub unsafe extern "C" fn t_rb_old_formula(mut fp: *mut Fighter, mut h: u32) -> u
 }
 
 pub unsafe extern "C" fn test_rb_game_hash() -> i32 {
+    melee_core::ct!("test_rb_game_hash");
     let mut rc: i32 = 0 as i32;
     let mut base: u32 = 0;
     let mut v: u32 = 0;
@@ -9137,6 +9208,7 @@ pub unsafe extern "C" fn tl_setup(
     mut json: *const i8,
     mut st: *mut *mut TestGenoState,
 ) -> i32 {
+    melee_core::ct!("tl_setup");
     let mut kind: i32 = 0;
     t_zero(
         &raw mut t_rows as *mut MotionState as *mut c_void,
@@ -9161,6 +9233,7 @@ pub unsafe extern "C" fn tl_setup(
 }
 
 pub unsafe extern "C" fn test_geno_lua_charge() -> i32 {
+    melee_core::ct!("test_geno_lua_charge");
     let mut st: *mut TestGenoState = ::core::ptr::null_mut::<TestGenoState>();
     let mut lb: *mut GenoLuaBlock = ::core::ptr::null_mut::<GenoLuaBlock>();
     let mut row: *mut MotionState = ::core::ptr::null_mut::<MotionState>();
@@ -9312,6 +9385,7 @@ pub unsafe extern "C" fn test_geno_lua_charge() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_lua_fault() -> i32 {
+    melee_core::ct!("test_geno_lua_fault");
     let mut st: *mut TestGenoState = ::core::ptr::null_mut::<TestGenoState>();
     let mut lb: *mut GenoLuaBlock = ::core::ptr::null_mut::<GenoLuaBlock>();
     let mut row: *mut MotionState = ::core::ptr::null_mut::<MotionState>();
@@ -9377,6 +9451,7 @@ pub unsafe extern "C" fn test_geno_lua_fault() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_lua_digest() -> i32 {
+    melee_core::ct!("test_geno_lua_digest");
     let mut st: *mut TestGenoState = ::core::ptr::null_mut::<TestGenoState>();
     let mut lb: *mut GenoLuaBlock = ::core::ptr::null_mut::<GenoLuaBlock>();
     let mut d0: u32 = 0;
@@ -9480,6 +9555,7 @@ pub unsafe extern "C" fn test_geno_lua_digest() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_lua_counter() -> i32 {
+    melee_core::ct!("test_geno_lua_counter");
     let mut st: *mut TestGenoState = ::core::ptr::null_mut::<TestGenoState>();
     let mut lb: *mut GenoLuaBlock = ::core::ptr::null_mut::<GenoLuaBlock>();
     let mut rc: i32 = 0 as i32;
@@ -9602,6 +9678,7 @@ pub unsafe extern "C" fn test_geno_lua_counter() -> i32 {
 pub unsafe extern "C" fn tc_setup(
     mut json: *const i8,
 ) -> i32 {
+    melee_core::ct!("tc_setup");
     let mut kind: i32 = 0;
     t_zero(
         &raw mut t_rows as *mut MotionState as *mut c_void,
@@ -9627,6 +9704,7 @@ pub unsafe extern "C" fn tc_frame(
     mut sy: f32,
     mut hitlag: i32,
 ) {
+    melee_core::ct!("tc_frame");
     t_fp.input.pressed_buttons = pressed;
     t_fp.input.held_buttons[0 as i32 as usize] = pressed;
     t_fp.input.lstick[0 as i32 as usize].x = sx;
@@ -9660,11 +9738,13 @@ pub unsafe extern "C" fn tc_frame(
 }
 
 pub unsafe extern "C" fn tc_enter_motion(mut motion: i32) {
+    melee_core::ct!("tc_enter_motion");
     t_fp.motion_id = motion as FtMotionId;
     Geno_OnActionChange(&raw mut t_gobj);
 }
 
 pub unsafe extern "C" fn test_geno_combo_parse() -> i32 {
+    melee_core::ct!("test_geno_combo_parse");
     let mut rc: i32 = 0 as i32;
     if Geno_TestInstall(
         b"{\"geno\":10,\"fighters\":[{\"define\":{\"key\":\"combo-v10\",\"name\":\"Combo T\",\"base\":\"mario\",\"common\":\"melee.common.v1\",\"resources\":\"retail:mario\"},\"lua\":{\"source\":\"local M = {} function M.f(ctx) end return M\",\"state\":{\"armed\":\"int\"}},\"states\":[{\"name\":\"Light2\",\"behavior\":\"geno.ground\"},{\"name\":\"Heavy\",\"behavior\":\"geno.ground\"}],\"combo\":{\"buffer\":3,\"max_links\":3,\"ki\":{\"max\":100,\"start\":20,\"on_hit\":5,\"on_block\":1,\"on_taken\":2},\"routes\":[{\"name\":\"L1>L2\",\"from\":\"jab1\",\"to\":\"geno:Light2\",\"input\":\"light\",\"on\":\"hit\",\"window\":[5,20]},{\"name\":\"L1>H\",\"from\":\"jab1\",\"to\":\"geno:Heavy\",\"input\":\"heavy\",\"dir\":\"forward\",\"on\":\"hit\",\"window\":[5,20],\"priority\":5},{\"name\":\"L2>H\",\"from\":\"geno:Light2\",\"to\":\"geno:Heavy\",\"input\":\"heavy\",\"on\":\"hit\",\"ki_cost\":10,\"when\":{\"slot\":\"armed\",\"min\":1}},{\"name\":\"H>L2\",\"from\":[\"geno:Heavy\"],\"to\":\"geno:Light2\",\"input\":\"light\",\"on\":\"contact\"}],\"strings\":[{\"name\":\"L1 L2 H\",\"steps\":[\"jab1\",\"geno:Light2\",\"geno:Heavy\"]}]}}]}\0"
@@ -9901,6 +9981,7 @@ pub unsafe extern "C" fn test_geno_combo_parse() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_combo_routes() -> i32 {
+    melee_core::ct!("test_geno_combo_routes");
     let mut cb: *mut GenoComboBlock = ::core::ptr::null_mut::<GenoComboBlock>();
     let mut lb: *mut GenoLuaBlock = ::core::ptr::null_mut::<GenoLuaBlock>();
     let mut rc: i32 = 0 as i32;
@@ -10194,6 +10275,7 @@ pub unsafe extern "C" fn test_geno_combo_routes() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_combo_digest() -> i32 {
+    melee_core::ct!("test_geno_combo_digest");
     static mut snap_cb: GenoComboBlock = unsafe { core::mem::zeroed() };
     static mut snap_st: TestGenoState = unsafe { core::mem::zeroed() };
     let mut cb: *mut GenoComboBlock = ::core::ptr::null_mut::<GenoComboBlock>();
@@ -10359,6 +10441,7 @@ pub unsafe extern "C" fn test_geno_combo_digest() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_none_guard_contact() -> i32 {
+    melee_core::ct!("test_geno_none_guard_contact");
     static mut rest: [HSD_Joint; 4] = unsafe { core::mem::zeroed() };
     static mut guard: [HSD_Joint; 4] = unsafe { core::mem::zeroed() };
     static mut guard_trees: [*mut HSD_Joint; 3] = [::core::ptr::null::<HSD_Joint>()
@@ -11260,6 +11343,7 @@ pub unsafe extern "C" fn gc_fail(
     mut tail: *const i8,
     mut more: *const i8,
 ) {
+    melee_core::ct!("gc_fail");
     let mut buf: [i8; 400] = [0; 400];
     let mut num: [i8; 12] = [0; 12];
     let mut n: i32 = 0 as i32;
@@ -11346,6 +11430,7 @@ pub unsafe extern "C" fn gc_walk(
     mut nf: i32,
     mut fp: *mut Fighter,
 ) -> i32 {
+    melee_core::ct!("gc_walk");
     let mut w: u32 = 0;
     let mut i: u32 = 0;
     let mut base: u32 = 0;
@@ -11412,6 +11497,7 @@ pub unsafe extern "C" fn gc_walk(
 }
 
 pub unsafe extern "C" fn test_geno_digest_coverage() -> i32 {
+    melee_core::ct!("test_geno_digest_coverage");
     let mut st: *mut TestGenoState = ::core::ptr::null_mut::<TestGenoState>();
     let mut lb: *mut GenoLuaBlock = ::core::ptr::null_mut::<GenoLuaBlock>();
     let mut rc: i32 = 0 as i32;
@@ -11465,6 +11551,7 @@ pub unsafe extern "C" fn test_geno_digest_coverage() -> i32 {
 }
 
 pub unsafe extern "C" fn test_geno_none_independence() -> i32 {
+    melee_core::ct!("test_geno_none_independence");
     static mut a: ftData = ftData {
         x0: ::core::ptr::null::<ftCo_DatAttrs>() as *mut ftCo_DatAttrs,
         ext_attr: ::core::ptr::null::<c_void>() as *mut c_void,
@@ -11584,6 +11671,7 @@ pub unsafe extern "C" fn test_geno_none_independence() -> i32 {
 }
 
 pub unsafe extern "C" fn GenoTestRegisterAll() {
+    melee_core::ct!("GenoTestRegisterAll");
     TestRegister(
         b"geno_none_guard_contact\0" as *const u8 as *const i8,
         Some(

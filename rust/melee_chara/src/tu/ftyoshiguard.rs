@@ -81,6 +81,7 @@ fn common() -> &'static ftCommonData {
 
 /// `ftYs_Init_8012BDA0`: the intangible hurtbox set at on-load of the shield.
 pub fn ftYs_Init_8012BDA0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_Init_8012BDA0");
     unsafe {
         let fp = fpp(gobj);
         ext::ftColl_8007B0C0(gobj, HurtCapsule_Intangible as i32);
@@ -97,6 +98,7 @@ pub fn ftYs_Init_8012BDA0(gobj: *mut HSD_GObj) {
 
 /// `ftYs_Init_8012BE3C`: the shield's hip effect, then the Disabled hurtbox set.
 pub fn ftYs_Init_8012BE3C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_Init_8012BE3C");
     unsafe {
         let fp = fpp(gobj);
         st::ftParts_80074B0C(gobj, 0, 0);
@@ -140,6 +142,7 @@ fn ftYs_Init_8012BECC_sub(gobj: *mut HSD_GObj) {
 
 /// `ftYs_Init_8012BECC`: enter the guard-on state at frame 0 and reset the shield.
 pub fn ftYs_Init_8012BECC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_Init_8012BECC");
     st::Fighter_ChangeMotionState(gobj, ftYs_MS_GuardOn_0 as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
     st::ftAnim_8006EBA4(gobj);
     g::ftCo_80092450(gobj);
@@ -162,6 +165,7 @@ fn spawnEffect(gobj: *mut HSD_GObj) {
 
 /// `ftYs_GuardOn_0_Anim`.
 pub fn ftYs_GuardOn_0_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_GuardOn_0_Anim");
     unsafe {
         let fp = fpp(gobj);
         (*fp).mv.ys.guard.x0 += 1.0;
@@ -178,6 +182,7 @@ pub fn ftYs_GuardOn_0_Anim(gobj: *mut HSD_GObj) {
 
 /// `ftYs_GuardOn_0_IASA`: the first interrupts that leave the guard.
 pub fn ftYs_GuardOn_0_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_GuardOn_0_IASA");
     if melee_fighter::tu::ftCo_ItemThrow::ftCo_8009515C(gobj) {
         return;
     }
@@ -197,11 +202,13 @@ pub fn ftYs_GuardOn_0_IASA(gobj: *mut HSD_GObj) {
 
 /// `ftYs_GuardOn_0_Phys`.
 pub fn ftYs_GuardOn_0_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_GuardOn_0_Phys");
     g::ftCo_GuardOn_Phys(gobj);
 }
 
 /// `ftYs_GuardOn_0_Coll`.
 pub fn ftYs_GuardOn_0_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_GuardOn_0_Coll");
     g::ftCo_GuardOn_Coll(gobj);
 }
 
@@ -223,6 +230,7 @@ fn inlineA0(gobj: *mut HSD_GObj) {
 
 /// `ftYs_Shield_8012C1D4`: enter the guard-hold state (Yoshi's `ftCo_800928CC`).
 pub fn ftYs_Shield_8012C1D4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_Shield_8012C1D4");
     unsafe {
         let fp = fpp(gobj);
         st::Fighter_ChangeMotionState(gobj, ftYs_MS_GuardHold as i32, MF_NONE, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -238,6 +246,7 @@ pub fn ftYs_Shield_8012C1D4(gobj: *mut HSD_GObj) {
 
 /// `ftYs_GuardHold_Anim`.
 pub fn ftYs_GuardHold_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_GuardHold_Anim");
     unsafe {
         let fp = fpp(gobj);
         (*fp).mv.ys.guard.x0 += 1.0;
@@ -254,6 +263,7 @@ pub fn ftYs_GuardHold_Anim(gobj: *mut HSD_GObj) {
 
 /// `ftYs_GuardHold_IASA`: the held-shield interrupts (no state change is taken here).
 pub fn ftYs_GuardHold_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_GuardHold_IASA");
     if !melee_fighter::tu::ftCo_ItemThrow::ftCo_8009515C(gobj)
         && !melee_fighter::tu::ftCo_Escape::ftCo_80099794(gobj)
         && !melee_fighter::tu::ftCo_Escape::ftCo_8009917C(gobj)
@@ -266,22 +276,26 @@ pub fn ftYs_GuardHold_IASA(gobj: *mut HSD_GObj) {
 
 /// `ftYs_GuardHold_Phys`.
 pub fn ftYs_GuardHold_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_GuardHold_Phys");
     g::ftCo_Guard_Phys(gobj);
 }
 
 /// `ftYs_GuardHold_Coll`.
 pub fn ftYs_GuardHold_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_GuardHold_Coll");
     g::ftCo_Guard_Coll(gobj);
 }
 
 /// `ftYs_Shield_8012C49C`: the guard-off state, then the hurtbox set.
 pub fn ftYs_Shield_8012C49C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_Shield_8012C49C");
     st::Fighter_ChangeMotionState(gobj, 343, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ftYs_Init_8012BE3C(gobj);
 }
 
 /// `ftYs_GuardOff_Anim`.
 pub fn ftYs_GuardOff_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_GuardOff_Anim");
     unsafe {
         let fp = fpp(gobj);
         (*fp).mv.ys.guard.x0 += 1.0;
@@ -293,6 +307,7 @@ pub fn ftYs_GuardOff_Anim(gobj: *mut HSD_GObj) {
 
 /// `ftYs_GuardOff_IASA`.
 pub fn ftYs_GuardOff_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_GuardOff_IASA");
     if melee_fighter::tu::ftCo_Escape::ftCo_80099794(gobj) {
         return;
     }
@@ -300,16 +315,19 @@ pub fn ftYs_GuardOff_IASA(gobj: *mut HSD_GObj) {
 
 /// `ftYs_GuardOff_Phys`.
 pub fn ftYs_GuardOff_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_GuardOff_Phys");
     g::ftCo_GuardOff_Phys(gobj);
 }
 
 /// `ftYs_GuardOff_Coll`.
 pub fn ftYs_GuardOff_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_GuardOff_Coll");
     g::ftCo_GuardOff_Coll(gobj);
 }
 
 /// `ftYs_Shield_8012C600`: the guard-damage knockback and the hitlag callbacks.
 pub fn ftYs_Shield_8012C600(gobj: *mut HSD_GObj, arg1: bool) {
+    melee_core::ct!("ftYs_Shield_8012C600");
     unsafe {
         let fp = fpp(gobj);
         st::Fighter_ChangeMotionState(gobj, 0x158, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -335,6 +353,7 @@ pub fn ftYs_Shield_8012C600(gobj: *mut HSD_GObj, arg1: bool) {
 
 /// `ftYs_GuardDamage_Anim`.
 pub fn ftYs_GuardDamage_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_GuardDamage_Anim");
     unsafe {
         let fp = fpp(gobj);
         g::ftCo_80093BC0(gobj);
@@ -349,20 +368,23 @@ pub fn ftYs_GuardDamage_Anim(gobj: *mut HSD_GObj) {
 }
 
 /// `ftYs_GuardDamage_IASA` (empty in the C).
-pub fn ftYs_GuardDamage_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftYs_GuardDamage_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftYs_GuardDamage_IASA");}
 
 /// `ftYs_GuardDamage_Phys`.
 pub fn ftYs_GuardDamage_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_GuardDamage_Phys");
     g::ftCo_GuardSetOff_Phys(gobj);
 }
 
 /// `ftYs_GuardDamage_Coll`.
 pub fn ftYs_GuardDamage_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_GuardDamage_Coll");
     g::ftCo_GuardSetOff_Coll(gobj);
 }
 
 /// `ftYs_Shield_8012C850`: the reflect-start state, with its timers and flags.
 pub fn ftYs_Shield_8012C850(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_Shield_8012C850");
     unsafe {
         let fp = fpp(gobj);
         st::Fighter_ChangeMotionState(gobj, ftYs_MS_GuardOn_1 as i32, 16, (*fp).cur_anim_frame, 1.0, 0.0, core::ptr::null_mut());
@@ -399,6 +421,7 @@ fn ftYs_Shield_8012C914_inline(gobj: *mut HSD_GObj) {
 
 /// `ftYs_Shield_8012C914`: the guard-on state entered from the reflect, then the reset.
 pub fn ftYs_Shield_8012C914(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_Shield_8012C914");
     unsafe {
         let fp = fpp(gobj);
         st::Fighter_ChangeMotionState(gobj, ftYs_MS_GuardOn_1 as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -415,15 +438,17 @@ pub fn ftYs_Shield_8012C914(gobj: *mut HSD_GObj) {
 }
 
 /// `ftYs_Shield_8012CACC` (empty in the C): the reflect callback.
-pub fn ftYs_Shield_8012CACC(_arg0: *mut HSD_GObj) {}
+pub fn ftYs_Shield_8012CACC(_arg0: *mut HSD_GObj) { melee_core::ct!("ftYs_Shield_8012CACC");}
 
 /// The C `ftYs_Shield_8012CACC` as an `HSD_GObjEvent` callback.
 pub unsafe extern "C" fn cb_ftYs_Shield_8012CACC(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftYs_Shield_8012CACC");
     ftYs_Shield_8012CACC(g);
 }
 
 /// `ftYs_GuardOn_1_Anim`.
 pub fn ftYs_GuardOn_1_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_GuardOn_1_Anim");
     unsafe {
         let fp = fpp(gobj);
         g::ftCo_80093BC0(gobj);
@@ -441,21 +466,25 @@ pub fn ftYs_GuardOn_1_Anim(gobj: *mut HSD_GObj) {
 
 /// `ftYs_GuardOn_1_IASA`.
 pub fn ftYs_GuardOn_1_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_GuardOn_1_IASA");
     g::ftCo_GuardReflect_IASA(gobj);
 }
 
 /// `ftYs_GuardOn_1_Phys`.
 pub fn ftYs_GuardOn_1_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_GuardOn_1_Phys");
     g::ftCo_GuardReflect_Phys(gobj);
 }
 
 /// `ftYs_GuardOn_1_Coll`.
 pub fn ftYs_GuardOn_1_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_GuardOn_1_Coll");
     g::ftCo_GuardReflect_Coll(gobj);
 }
 
 /// `ftYs_Shield_8012CC1C`: shield-button press with shield health left drops into the guard-off.
 pub fn ftYs_Shield_8012CC1C(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftYs_Shield_8012CC1C");
     unsafe {
         let fp = fpp(gobj);
         if ((*fp).input.held_buttons[0] & HSD_PAD_LR) != 0 && (*fp).shield_health >= 0.0 {

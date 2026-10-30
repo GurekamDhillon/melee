@@ -57,6 +57,7 @@ pub mod ext {
 }
 
 pub fn fn_800CA5F0(g: G) -> bool {
+    melee_core::ct!("fn_800CA5F0");
     if ext::ScriptGame_CapsActionAllowed(fp(g), 4) == 0 {
         return false;
     }
@@ -69,6 +70,7 @@ pub fn fn_800CA5F0(g: G) -> bool {
 }
 
 pub fn fn_800CA644(g: G) -> bool {
+    melee_core::ct!("fn_800CA644");
     if ext::ScriptGame_CapsActionAllowed(fp(g), 4) == 0 {
         return false;
     }
@@ -81,6 +83,7 @@ pub fn fn_800CA644(g: G) -> bool {
 }
 
 pub fn fn_800CA698(g: G) -> bool {
+    melee_core::ct!("fn_800CA698");
     if ext::ScriptGame_CapsActionAllowed(fp(g), 4) == 0 {
         return false;
     }
@@ -94,10 +97,12 @@ pub fn fn_800CA698(g: G) -> bool {
 }
 
 pub fn ftCo_Run_Enter(g: G, arg0: f32) {
+    melee_core::ct!("ftCo_Run_Enter");
     ftCo_Run_Enter_Full(g, arg0, 0.0, 1.0);
 }
 
 pub fn ftCo_Run_Enter_Full(g: G, arg0: f32, anim_start: f32, anim_speed: f32) {
+    melee_core::ct!("ftCo_Run_Enter_Full");
     ext::Fighter_ChangeMotionState(g, ftCo_MS_Run as i32, Ft_MF_None as u32, anim_start, anim_speed, 0.0, core::ptr::null_mut());
     let f = fp(g);
     unsafe {
@@ -107,6 +112,7 @@ pub fn ftCo_Run_Enter_Full(g: G, arg0: f32, anim_start: f32, anim_speed: f32) {
 }
 
 pub fn ftCo_Run_Anim(g: G) {
+    melee_core::ct!("ftCo_Run_Anim");
     let vel = if ext::ft_GetGroundFrictionMultiplier(fp(g)) < 1.0 {
         unsafe { fp(g).mv.co.run.x4 }
     } else {
@@ -128,6 +134,7 @@ pub fn ftCo_Run_Anim(g: G) {
 }
 
 pub fn ftCo_Run_IASA(g: G) {
+    melee_core::ct!("ftCo_Run_IASA");
     if ext::ftCo_SpecialS_CheckInput(g)
         || ext::ftCo_Attack100_CheckInput(g)
         || ext::ftCo_800D6824(g)
@@ -169,6 +176,7 @@ fn getAccelAndTarget(f: &mut Fighter) -> (f32, f32) {
 }
 
 pub fn ftCo_Run_Phys(g: G) {
+    melee_core::ct!("ftCo_Run_Phys");
     let (mut accel, target_vel) = getAccelAndTarget(fp(g));
     let f = fp(g);
     if target_vel != 0.0 {
@@ -184,5 +192,6 @@ pub fn ftCo_Run_Phys(g: G) {
 }
 
 pub fn ftCo_Run_Coll(g: G) {
+    melee_core::ct!("ftCo_Run_Coll");
     ext::ft_800844EC(g);
 }

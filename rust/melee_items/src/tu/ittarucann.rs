@@ -132,6 +132,7 @@ unsafe fn inline_itTarucann_SetRotationZ(gobj: *mut HSD_GObj) {
 
 /// 295ED4: a fighter enters the barrel.
 pub unsafe extern "C" fn it_80295ED4(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_80295ED4");
     if !gobj.is_null() {
         let ip = (*gobj).user_data as *mut Item;
         if !ip.is_null() {
@@ -145,6 +146,7 @@ pub unsafe extern "C" fn it_80295ED4(gobj: *mut Item_GObj) {
 
 /// 295F38: launches the fighter inside.
 pub unsafe extern "C" fn it_80295F38(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_80295F38");
     let mut launch_pos: Vec3 = core::mem::zeroed();
     let mut params: lbColl_80008D30_arg1;
 
@@ -182,17 +184,20 @@ pub unsafe extern "C" fn it_80295F38(gobj: *mut Item_GObj) {
 
 /// 2960B8
 pub unsafe extern "C" fn it_802960B8(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802960B8");
     let da = (*(*GET_ITEM(gobj)).xC4_article_data).x4_specialAttributes as *mut itTaruCann_DatAttrs;
     (*da).x2C
 }
 
 /// 2960CC
 pub unsafe extern "C" fn it_802960CC(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802960CC");
     let da = (*(*GET_ITEM(gobj)).xC4_article_data).x4_specialAttributes as *mut itTaruCann_DatAttrs;
     (*da).x28
 }
 
 pub unsafe extern "C" fn it_3F14_Logic5_Destroyed(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_3F14_Logic5_Destroyed");
     if !gobj.is_null() {
         let ip = (*gobj).user_data as *mut Item;
         if !ip.is_null() && !(*ip).xDD4_itemVar.tarucann.x20.is_null() {
@@ -202,6 +207,7 @@ pub unsafe extern "C" fn it_3F14_Logic5_Destroyed(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_3F14_Logic5_Spawned(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_3F14_Logic5_Spawned");
     let ip = GET_ITEM(gobj);
     let da = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itTaruCann_DatAttrs;
     (*ip).facing_dir = -1.0;
@@ -228,6 +234,7 @@ pub unsafe extern "C" fn it_3F14_Logic5_Spawned(gobj: *mut Item_GObj) {
 
 /// 2961E8: the common life-timer tick.
 pub unsafe extern "C" fn it_802961E8(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_802961E8");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
     if (*ip).xD44_lifeTimer <= 2.0 {
@@ -252,6 +259,7 @@ pub unsafe extern "C" fn it_802961E8(gobj: *mut Item_GObj) -> bool {
 
 /// 2962E0: roll physics.
 pub unsafe extern "C" fn it_802962E0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802962E0");
     let ip = GET_ITEM(gobj);
     let da = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itTaruCann_DatAttrs;
     let tv = &raw mut (*ip).xDD4_itemVar.tarucann;
@@ -310,6 +318,7 @@ pub unsafe extern "C" fn it_802962E0(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itTarucann_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTarucann_UnkMotion0_Anim");
     let ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.tarucann.x20.is_null() {
         (*ip).xDCC_flag.set_b3(1);
@@ -319,9 +328,10 @@ pub unsafe extern "C" fn itTarucann_UnkMotion0_Anim(gobj: *mut Item_GObj) -> boo
     it_802961E8(gobj)
 }
 
-pub unsafe extern "C" fn itTarucann_UnkMotion0_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itTarucann_UnkMotion0_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itTarucann_UnkMotion0_Phys");}
 
 pub unsafe extern "C" fn itTarucann_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTarucann_UnkMotion0_Coll");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
     let da = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itTaruCann_DatAttrs;
@@ -352,11 +362,13 @@ pub unsafe extern "C" fn itTarucann_UnkMotion0_Coll(gobj: *mut Item_GObj) -> boo
 
 /// 296694
 pub unsafe extern "C" fn it_80296694(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_80296694");
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);
     ext::it_8026B3A8(gobj);
 }
 
 pub unsafe extern "C" fn itTarucann_UnkMotion1_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTarucann_UnkMotion1_Anim");
     let ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.tarucann.x20.is_null() {
         (*ip).xDCC_flag.set_b3(1);
@@ -367,12 +379,14 @@ pub unsafe extern "C" fn itTarucann_UnkMotion1_Anim(gobj: *mut Item_GObj) -> boo
 }
 
 pub unsafe extern "C" fn itTarucann_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itTarucann_UnkMotion1_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = (*ip).xCC_item_attr;
     ext::it_80272860(gobj, (*attrs).x10_fall_speed, (*attrs).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itTarucann_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTarucann_UnkMotion1_Coll");
     let ip = GET_ITEM(gobj);
     let attrs = (*ip).xCC_item_attr;
     let da = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itTaruCann_DatAttrs;
@@ -396,6 +410,7 @@ pub unsafe extern "C" fn itTarucann_UnkMotion1_Coll(gobj: *mut Item_GObj) -> boo
 }
 
 pub unsafe extern "C" fn itTaruCann_Logic5_PickedUp(gobj: *mut Item_GObj) {
+    melee_core::ct!("itTaruCann_Logic5_PickedUp");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itTaruCann_DatAttrs;
     (*ip).xDB0_itcmd_var1 = 1;
@@ -404,6 +419,7 @@ pub unsafe extern "C" fn itTaruCann_Logic5_PickedUp(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itTarucann_UnkMotion2_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTarucann_UnkMotion2_Anim");
     let ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.tarucann.x20.is_null() {
         (*ip).xDCC_flag.set_b3(1);
@@ -413,9 +429,10 @@ pub unsafe extern "C" fn itTarucann_UnkMotion2_Anim(gobj: *mut Item_GObj) -> boo
     false
 }
 
-pub unsafe extern "C" fn itTarucann_UnkMotion2_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itTarucann_UnkMotion2_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itTarucann_UnkMotion2_Phys");}
 
 pub unsafe extern "C" fn it_3F14_Logic5_Dropped(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_3F14_Logic5_Dropped");
     let ip = GET_ITEM(gobj);
     it_802969D8(gobj);
     ext::it_80275444(gobj);
@@ -425,6 +442,7 @@ pub unsafe extern "C" fn it_3F14_Logic5_Dropped(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_3F14_Logic5_Thrown(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_3F14_Logic5_Thrown");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
     ext::lb_8000B804(jobj, (*(*(*ip).xC4_article_data).x10_modelDesc).x0_joint);
@@ -441,6 +459,7 @@ pub unsafe extern "C" fn it_3F14_Logic5_Thrown(gobj: *mut Item_GObj) {
 
 /// 2969D8
 pub unsafe extern "C" fn it_802969D8(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802969D8");
     let ip = GET_ITEM(gobj);
     if !(*ip).xDD4_itemVar.tarucann.x20.is_null() {
         ext::Item_80268E5C(gobj, 6, 0x15);
@@ -454,6 +473,7 @@ pub unsafe extern "C" fn it_802969D8(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itTarucann_UnkMotion6_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTarucann_UnkMotion6_Anim");
     let ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.tarucann.x20.is_null() {
         (*ip).xDCC_flag.set_b3(1);
@@ -464,6 +484,7 @@ pub unsafe extern "C" fn itTarucann_UnkMotion6_Anim(gobj: *mut Item_GObj) -> boo
 }
 
 pub unsafe extern "C" fn itTarucann_UnkMotion6_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itTarucann_UnkMotion6_Phys");
     let attrs = (*GET_ITEM(gobj)).xCC_item_attr;
     ext::it_80272860(gobj, (*attrs).x10_fall_speed, (*attrs).x14_fall_speed_max);
     it_802962E0(gobj);
@@ -471,6 +492,7 @@ pub unsafe extern "C" fn itTarucann_UnkMotion6_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itTarucann_UnkMotion6_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTarucann_UnkMotion6_Coll");
     let ip = GET_ITEM(gobj);
     let attrs = (*ip).xCC_item_attr;
     let da = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itTaruCann_DatAttrs;
@@ -507,11 +529,13 @@ pub unsafe extern "C" fn itTarucann_UnkMotion6_Coll(gobj: *mut Item_GObj) -> boo
 
 /// 296E88
 pub unsafe extern "C" fn it_80296E88(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_80296E88");
     it_80296EF0(gobj);
 }
 
 /// 296EA8
 pub unsafe extern "C" fn it_80296EA8(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_80296EA8");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
     ext::lb_8000B804(jobj, (*(*(*ip).xC4_article_data).x10_modelDesc).x0_joint);
@@ -520,6 +544,7 @@ pub unsafe extern "C" fn it_80296EA8(gobj: *mut Item_GObj) {
 
 /// 296EF0
 pub unsafe extern "C" fn it_80296EF0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_80296EF0");
     let ip = GET_ITEM(gobj);
     (*ip).x40_vel.x = (*ip).xDD4_itemVar.tarucann.x10;
     (*ip).x40_vel.y = 0.0;
@@ -535,6 +560,7 @@ pub unsafe extern "C" fn it_80296EF0(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itTarucann_UnkMotion8_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTarucann_UnkMotion8_Anim");
     let ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.tarucann.x20.is_null() {
         (*ip).xDCC_flag.set_b3(1);
@@ -545,11 +571,13 @@ pub unsafe extern "C" fn itTarucann_UnkMotion8_Anim(gobj: *mut Item_GObj) -> boo
 }
 
 pub unsafe extern "C" fn itTarucann_UnkMotion8_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itTarucann_UnkMotion8_Phys");
     it_802962E0(gobj);
     inline_itTarucann_SetRotationZ(gobj);
 }
 
 pub unsafe extern "C" fn itTarucann_UnkMotion8_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTarucann_UnkMotion8_Coll");
     let ip = GET_ITEM(gobj);
     let da = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itTaruCann_DatAttrs;
     let coll: *mut CollData = &raw mut (*ip).x378_itemColl;
@@ -572,6 +600,7 @@ pub unsafe extern "C" fn itTarucann_UnkMotion8_Coll(gobj: *mut Item_GObj) -> boo
 }
 
 pub unsafe extern "C" fn itTarucann_UnkMotion7_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTarucann_UnkMotion7_Anim");
     let ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.tarucann.x20.is_null() {
         (*ip).xDCC_flag.set_b3(1);
@@ -600,6 +629,7 @@ unsafe fn inline_itTarucann_UnkMotion7_Phys(gobj: *mut Item_GObj) {
 
 /// Returns a `float` in the C (it is stored in the physics slot through a cast).
 pub unsafe extern "C" fn itTarucann_UnkMotion7_Phys(gobj: *mut Item_GObj) -> f32 {
+    melee_core::ct!("itTarucann_UnkMotion7_Phys");
     let ip = GET_ITEM(gobj);
     let da = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itTaruCann_DatAttrs;
     let mut var_f1: f32;
@@ -620,11 +650,13 @@ pub unsafe extern "C" fn itTarucann_UnkMotion7_Phys(gobj: *mut Item_GObj) -> f32
 }
 
 pub unsafe extern "C" fn itTarucann_UnkMotion7_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTarucann_UnkMotion7_Coll");
     itTarucann_UnkMotion8_Coll(gobj)
 }
 
 /// 2975F4
 pub unsafe extern "C" fn it_802975F4(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802975F4");
     let ip = GET_ITEM(gobj);
     ext::Item_80268E5C(gobj, 9, ITEM_ANIM_UPDATE);
     ext::it_8026B3A8(gobj);
@@ -647,6 +679,7 @@ unsafe fn itTarucann_UnkMotion9_Anim_inline(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itTarucann_UnkMotion9_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTarucann_UnkMotion9_Anim");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
     itTarucann_UnkMotion9_Anim_inline(gobj);
@@ -671,14 +704,16 @@ pub unsafe extern "C" fn itTarucann_UnkMotion9_Anim(gobj: *mut Item_GObj) -> boo
     false
 }
 
-pub unsafe extern "C" fn itTarucann_UnkMotion9_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itTarucann_UnkMotion9_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itTarucann_UnkMotion9_Phys");}
 
 pub unsafe extern "C" fn itTarucann_UnkMotion9_Coll(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTarucann_UnkMotion9_Coll");
     false
 }
 
 /// 297790
 pub unsafe extern "C" fn it_80297790(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_80297790");
     let ip = GET_ITEM(gobj);
     let da = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itTaruCann_DatAttrs;
     ext::HSD_JObjClearFlagsAll((*gobj).hsd_obj as *mut HSD_JObj, JOBJ_HIDDEN as u32);
@@ -697,21 +732,26 @@ pub unsafe extern "C" fn it_80297790(gobj: *mut Item_GObj) -> bool {
 }
 
 pub unsafe extern "C" fn itTaruCann_Logic5_DmgDealt(_arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTaruCann_Logic5_DmgDealt");
     false
 }
 
 pub unsafe extern "C" fn itTaruCann_Logic5_Clanked(_arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTaruCann_Logic5_Clanked");
     false
 }
 
 pub unsafe extern "C" fn itTaruCann_Logic5_HitShield(_arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTaruCann_Logic5_HitShield");
     false
 }
 
 pub unsafe extern "C" fn itTaruCann_Logic5_Reflected(_arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTaruCann_Logic5_Reflected");
     false
 }
 
 pub unsafe extern "C" fn itTaruCann_Logic5_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("itTaruCann_Logic5_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

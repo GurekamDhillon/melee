@@ -6,3 +6,7 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
+
+[features]
+# Per-call tracing (ct.rs, tools/rust-port/trace/insert_ct.py). Off in normal builds.
+calltrace = []

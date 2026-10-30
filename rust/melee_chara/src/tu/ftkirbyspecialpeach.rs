@@ -101,23 +101,29 @@ const MF: u32 = (1 << 2) | (1 << 3) | (1 << 7) | (1 << 12) | (1 << 14) | (1 << 1
 
 // Callback entries (extern "C") stored in Fighter fields.
 pub unsafe extern "C" fn cb_fn_8010C288(g: G) {
+    melee_core::ct!("cb_fn_8010C288");
     fn_8010C288(g)
 }
 pub unsafe extern "C" fn cb_fn_8010C344(g: G) {
+    melee_core::ct!("cb_fn_8010C344");
     fn_8010C344(g)
 }
 pub unsafe extern "C" fn cb_fn_8010C44C(g: G) {
+    melee_core::ct!("cb_fn_8010C44C");
     fn_8010C44C(g)
 }
 pub unsafe extern "C" fn cb_ftKb_SpecialNPe_8010C47C(g: G) {
+    melee_core::ct!("cb_ftKb_SpecialNPe_8010C47C");
     ftKb_SpecialNPe_8010C47C(g)
 }
 pub unsafe extern "C" fn cb_fn_8010CD88(g: G) {
+    melee_core::ct!("cb_fn_8010CD88");
     fn_8010CD88(g)
 }
 
 /// `fn_8010C288`: accessory4 callback; spawns the Toad item once.
 pub fn fn_8010C288(gobj: G) {
+    melee_core::ct!("fn_8010C288");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).cmd_vars[2] == 0 {
@@ -137,6 +143,7 @@ pub fn fn_8010C288(gobj: G) {
 
 /// `fn_8010C344`: accessory4 callback; spawns the Toad's spore.
 pub fn fn_8010C344(arg0: G) {
+    melee_core::ct!("fn_8010C344");
     unsafe {
         let fp = (*arg0).user_data as *mut Fighter;
         let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -149,6 +156,7 @@ pub fn fn_8010C344(arg0: G) {
 }
 
 pub fn ftKb_SpecialNPe_8010C3C0(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNPe_8010C3C0");
     unsafe {
         let fp = fpp(gobj);
         ftKb_SpecialNPe_8010C47C(gobj);
@@ -157,6 +165,7 @@ pub fn ftKb_SpecialNPe_8010C3C0(gobj: G) {
 }
 
 pub fn ftKb_SpecialNPe_8010C3F4(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNPe_8010C3F4");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.kb.xD0.is_null() {
@@ -167,6 +176,7 @@ pub fn ftKb_SpecialNPe_8010C3F4(gobj: G) {
 }
 
 pub fn fn_8010C44C(gobj: G) {
+    melee_core::ct!("fn_8010C44C");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.kb.xD0.is_null() {
@@ -176,6 +186,7 @@ pub fn fn_8010C44C(gobj: G) {
 }
 
 pub fn ftKb_SpecialNPe_8010C47C(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNPe_8010C47C");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.kb.xD0.is_null() {
@@ -186,11 +197,13 @@ pub fn ftKb_SpecialNPe_8010C47C(gobj: G) {
 
 /// True unless Kirby is in one of the Toad states (the root module's Fighter-only half).
 pub fn ftKb_SpecialNPe_8010C4AC(gobj: G) -> bool {
+    melee_core::ct!("ftKb_SpecialNPe_8010C4AC");
     unsafe { crate::chars::ftKirby::ftkirbyspecialpeach::ftKb_SpecialNPe_8010C4AC(&*fpp(gobj)) }
 }
 
 /// `inlineA0` (static).
 pub fn inlineA0(gobj: G) {
+    melee_core::ct!("inlineA0");
     unsafe {
         let fp = fpp(gobj);
         st::Fighter_ClearCmdVars(&mut *fp);
@@ -201,6 +214,7 @@ pub fn inlineA0(gobj: G) {
 
 /// `inlineA1` (static).
 pub fn inlineA1(gobj: G, msid: i32) {
+    melee_core::ct!("inlineA1");
     unsafe {
         st::Fighter_ChangeMotionState(gobj, msid, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
         st::ftAnim_8006EBA4(gobj);
@@ -209,6 +223,7 @@ pub fn inlineA1(gobj: G, msid: i32) {
 }
 
 pub fn ftKb_SpecialNPe_8010C4D4(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNPe_8010C4D4");
     unsafe {
         let fp = fpp(gobj);
         (*fp).self_vel.y = 0.0;
@@ -217,6 +232,7 @@ pub fn ftKb_SpecialNPe_8010C4D4(gobj: G) {
 }
 
 pub fn ftKb_SpecialNPe_8010C560(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNPe_8010C560");
     unsafe {
         let fp = fpp(gobj);
         let da = &*((*fp).dat_attrs as *const ftKb_DatAttrs);
@@ -227,6 +243,7 @@ pub fn ftKb_SpecialNPe_8010C560(gobj: G) {
 
 /// `doPeAnim` (static inline): arm the absorb shield on cmd 1, then `cb` when the anim ends.
 pub fn doPeAnim(gobj: G, cb: fn(G)) {
+    melee_core::ct!("doPeAnim");
     unsafe {
         let fp = fpp(gobj);
         let cmd_var1 = (*fp).cmd_vars[1];
@@ -247,17 +264,20 @@ pub fn doPeAnim(gobj: G, cb: fn(G)) {
 }
 
 pub fn ftKb_PeSpecialLw_Anim(gobj: G) {
+    melee_core::ct!("ftKb_PeSpecialLw_Anim");
     doPeAnim(gobj, st::ft_8008A2BC);
 }
 
 pub fn ftKb_PeSpecialAirLw_Anim(gobj: G) {
+    melee_core::ct!("ftKb_PeSpecialAirLw_Anim");
     doPeAnim(gobj, st::ftCo_Fall_Enter);
 }
 
-pub fn ftKb_PeSpecialLw_IASA(_gobj: G) {}
-pub fn ftKb_PeSpecialAirLw_IASA(_gobj: G) {}
+pub fn ftKb_PeSpecialLw_IASA(_gobj: G) { melee_core::ct!("ftKb_PeSpecialLw_IASA");}
+pub fn ftKb_PeSpecialAirLw_IASA(_gobj: G) { melee_core::ct!("ftKb_PeSpecialAirLw_IASA");}
 
 pub fn ftKb_PeSpecialAirLw_Phys(gobj: G) {
+    melee_core::ct!("ftKb_PeSpecialAirLw_Phys");
     unsafe {
         let fp = fpp(gobj);
         let cmd_var0 = (*fp).cmd_vars[0];
@@ -282,12 +302,14 @@ pub fn ftKb_PeSpecialAirLw_Phys(gobj: G) {
 }
 
 pub fn ftKb_PeSpecialLw_Coll(gobj: G) {
+    melee_core::ct!("ftKb_PeSpecialLw_Coll");
     if st::ft_800827A0(gobj) == 0 {
         ftKb_SpecialNPe_8010C8D8(gobj);
     }
 }
 
 pub fn ftKb_PeSpecialAirLw_Coll(gobj: G) {
+    melee_core::ct!("ftKb_PeSpecialAirLw_Coll");
     if st::ft_80081D0C(gobj) != 0 {
         ftKb_SpecialNPe_8010C9CC(gobj);
     }
@@ -310,6 +332,7 @@ unsafe fn rearm(gobj: G) {
 }
 
 pub fn ftKb_SpecialNPe_8010C8D8(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNPe_8010C8D8");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, ftKb_MS_PeSpecialAirLw as i32, MF);
@@ -321,6 +344,7 @@ pub fn ftKb_SpecialNPe_8010C8D8(gobj: G) {
 }
 
 pub fn ftKb_SpecialNPe_8010C9CC(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNPe_8010C9CC");
     unsafe {
         let fp = fpp(gobj);
         (*fp).u.kb.xCC = 0;
@@ -331,6 +355,7 @@ pub fn ftKb_SpecialNPe_8010C9CC(gobj: G) {
 
 /// `doPeHitAnim` (static inline).
 pub fn doPeHitAnim(gobj: G, cb: fn(G)) {
+    melee_core::ct!("doPeHitAnim");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).cmd_vars[3] != 0 {
@@ -344,23 +369,27 @@ pub fn doPeHitAnim(gobj: G, cb: fn(G)) {
 }
 
 pub fn ftKb_PeSpecialLwHit_Anim(gobj: G) {
+    melee_core::ct!("ftKb_PeSpecialLwHit_Anim");
     doPeHitAnim(gobj, st::ft_8008A2BC);
 }
 
 pub fn ftKb_PeSpecialAirLwHit_Anim(gobj: G) {
+    melee_core::ct!("ftKb_PeSpecialAirLwHit_Anim");
     doPeHitAnim(gobj, st::ftCo_Fall_Enter);
 }
 
-pub fn ftKb_PeSpecialLwHit_IASA(_gobj: G) {}
-pub fn ftKb_PeSpecialAirLwHit_IASA(_gobj: G) {}
+pub fn ftKb_PeSpecialLwHit_IASA(_gobj: G) { melee_core::ct!("ftKb_PeSpecialLwHit_IASA");}
+pub fn ftKb_PeSpecialAirLwHit_IASA(_gobj: G) { melee_core::ct!("ftKb_PeSpecialAirLwHit_IASA");}
 
 /// The root module's Fighter-only half, as the C-signature entry.
 pub fn ftKb_PeSpecialAirLwHit_Phys(gobj: G) {
+    melee_core::ct!("ftKb_PeSpecialAirLwHit_Phys");
     unsafe { crate::chars::ftKirby::ftkirbyspecialpeach::ftKb_PeSpecialAirLwHit_Phys(&mut *fpp(gobj)) }
 }
 
 /// `fn_8010CD88`: the absorb shield's hit callback; goes to the Hit state.
 pub fn fn_8010CD88(gobj: G) {
+    melee_core::ct!("fn_8010CD88");
     unsafe {
         let fp = fpp(gobj);
         (*fp).mv.kb.specialn_pe.facing_dir = (*fp).specialn_facing_dir as i32;

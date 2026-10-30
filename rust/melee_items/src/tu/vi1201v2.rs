@@ -149,19 +149,23 @@ static mut un_804D7034: *mut HSD_GObj = null_mut();
 pub static mut un_804D7038: [u8; 8] = [0; 8];
 
 pub unsafe extern "C" fn un_803204B0(arg0: i32, arg1: i32) {
+    melee_core::ct!("un_803204B0");
     un_804D7038[0] = arg0 as u8;
     un_804D7038[1] = arg1 as u8;
 }
 
 pub unsafe extern "C" fn un_803204C0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("un_803204C0");
     ext::HSD_JObjAnimAll(GET_JOBJ(gobj));
 }
 
 pub unsafe extern "C" fn un_803204E4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("un_803204E4");
     ext::HSD_JObjAnimAll(GET_JOBJ(gobj));
 }
 
 pub unsafe extern "C" fn un_80320508(char_kind: CharacterKind, costume: i32) {
+    melee_core::ct!("un_80320508");
     ext::Stage_InitScene(St_Kind_Last, 0);
     ext::Item_80266FA8();
     ext::Item_80266FCC();
@@ -181,6 +185,7 @@ pub unsafe extern "C" fn un_80320508(char_kind: CharacterKind, costume: i32) {
 }
 
 pub unsafe extern "C" fn un_803205F4() {
+    melee_core::ct!("un_803205F4");
     let gobj = ext::GObj_Create(0xE, 0xF, 0);
     let model1 = *(*un_804D7010).models.offset(1);
     let jobj = ext::HSD_JObjLoadJoint((*model1).joint);
@@ -207,6 +212,7 @@ pub unsafe extern "C" fn un_803205F4() {
 }
 
 pub unsafe extern "C" fn un_8032074C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("un_8032074C");
     let jobj = GET_JOBJ(gobj);
     ext::HSD_JObjAnimAll(jobj);
     if ext::mn_8022F298(jobj) == 251.0 {
@@ -228,6 +234,7 @@ unsafe fn GET_EVENTDATA() -> *mut HSD_GObj {
 }
 
 pub unsafe extern "C" fn un_803207C4() {
+    melee_core::ct!("un_803207C4");
     let mut i: isize = 0;
     while !(*(*un_804D7010).models.offset(i)).is_null() {
         if i != 1 {
@@ -252,11 +259,13 @@ pub unsafe extern "C" fn un_803207C4() {
 }
 
 pub unsafe extern "C" fn un_803208F0(gobj: *mut HSD_GObj, unused: i32) {
+    melee_core::ct!("un_803208F0");
     ext::lbShadow_8000F38C(0);
     vi_RunCamera(gobj, &raw const un_804D7028 as *const u8, 0x881);
 }
 
 pub unsafe extern "C" fn un_80320984(gobj: *mut HSD_GObj) {
+    melee_core::ct!("un_80320984");
     let cobj = GET_COBJ(gobj);
     ext::HSD_CObjAnim(cobj);
     if (*(*cobj).aobj).curr_frame == 130.0 || (*(*cobj).aobj).curr_frame == 190.0 {
@@ -272,6 +281,7 @@ pub unsafe extern "C" fn un_80320984(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_80320A1C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80320A1C");
     ext::HSD_FogInterpretAnim((*gobj).hsd_obj as *mut HSD_Fog);
 }
 
@@ -349,6 +359,7 @@ unsafe fn un_80320A40_SetupStand() {
 }
 
 pub unsafe extern "C" fn vi1201v2_Scene_OnEnter(arg: *mut c_void) {
+    melee_core::ct!("vi1201v2_Scene_OnEnter");
     let input = arg as *const u8;
 
     ext::efLib_Init();
@@ -387,5 +398,6 @@ pub unsafe extern "C" fn vi1201v2_Scene_OnEnter(arg: *mut c_void) {
 }
 
 pub unsafe extern "C" fn vi1201v2_Scene_OnFrame() {
+    melee_core::ct!("vi1201v2_Scene_OnFrame");
     ext::vi_8031CAAC();
 }

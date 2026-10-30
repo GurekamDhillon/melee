@@ -45,6 +45,7 @@ unsafe fn da<'a>(fp: *mut Fighter) -> &'a ftLk_DatAttrs {
 
 /// Absorb the Hylian-shield hit (pushes Link back through `ftLk_800EB334`).
 pub fn ftLk_AttackAir_800EB3BC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_AttackAir_800EB3BC");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).x5F4_arr[2].prev == 0 {
@@ -58,6 +59,7 @@ pub fn ftLk_AttackAir_800EB3BC(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftLk_AttackAir_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_AttackAir_Enter");
     unsafe {
         let fp = fpp(gobj);
         melee_fighter::tu::ftCo_AttackAir::ftCo_AttackAir_EnterFromCStick(gobj);
@@ -71,6 +73,7 @@ pub fn ftLk_AttackAir_Enter(gobj: *mut HSD_GObj) {
 
 /// `lwOnHit` (static): the first hit bounces Link up and restarts the drill animation.
 pub fn lwOnHit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("lwOnHit");
     unsafe {
         let fp = fpp(gobj);
         let a = da(fp);
@@ -87,6 +90,7 @@ pub fn lwOnHit(gobj: *mut HSD_GObj) {
 
 /// `lwOnHit` as a Fighter callback entry.
 pub unsafe extern "C" fn cb_lwOnHit(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_lwOnHit");
     lwOnHit(g);
 }
 
@@ -102,6 +106,7 @@ fn lwDoAnimHitCapsule(gobj: *mut HSD_GObj, idx: usize) {
 
 /// `lwOnAnim` (static): re-enable the three hit capsules when the delay counter runs out.
 pub fn lwOnAnim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("lwOnAnim");
     unsafe {
         let fp = fpp(gobj);
         let frame_start = (*fp).mv.lk.attackair.lw_frame_start;
@@ -120,5 +125,6 @@ pub fn lwOnAnim(gobj: *mut HSD_GObj) {
 
 /// `lwOnAnim` as a Fighter callback entry.
 pub unsafe extern "C" fn cb_lwOnAnim(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_lwOnAnim");
     lwOnAnim(g);
 }

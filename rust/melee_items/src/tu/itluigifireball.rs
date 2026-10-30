@@ -93,6 +93,7 @@ fn sqrtf_accurate(x: f32) -> f32 {
 
 /// 2C01AC
 pub unsafe extern "C" fn it_802C01AC(gobj: *mut Item_GObj, pos: *mut Vec3, kind: ItemKind, facing_dir: f32) {
+    melee_core::ct!("it_802C01AC");
     let mut spawn_item: SpawnItem = core::mem::zeroed();
     spawn_item.kind = kind;
     spawn_item.prev_pos = *pos;
@@ -109,6 +110,7 @@ pub unsafe extern "C" fn it_802C01AC(gobj: *mut Item_GObj, pos: *mut Vec3, kind:
 
 /// 2C027C
 pub unsafe extern "C" fn it_802C027C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802C027C");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itUnkAttributes;
     (*ip).x40_vel.x = (*attrs).x0_float * (*ip).facing_dir;
@@ -119,22 +121,26 @@ pub unsafe extern "C" fn it_802C027C(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLuigifireball_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLuigifireball_UnkMotion0_Anim");
     let item = GET_ITEM(gobj);
     (*item).xD44_lifeTimer -= 1.0;
     (*item).xD44_lifeTimer <= 0.0
 }
 
 pub unsafe extern "C" fn itLuigifireball_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLuigifireball_UnkMotion0_Phys");
     Item_ApplyFallingPhysics(gobj);
 }
 
 /// `calc_dist_2d_accurate` (static): `sqrtf_accurate(SQ(x) + SQ(y))`; `x*x + y*y` contracts to one
 /// `fmadds` (x*x fused with the y*y product).
 pub unsafe extern "C" fn calc_dist_2d_accurate(v: *mut Vec3) -> f64 {
+    melee_core::ct!("calc_dist_2d_accurate");
     sqrtf_accurate(fmadds((*v).x, (*v).x, (*v).y * (*v).y)) as f64
 }
 
 pub unsafe extern "C" fn itLuigifireball_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLuigifireball_UnkMotion0_Coll");
     ext::it_8026D9A0(gobj);
     if ext::it_8027781C(gobj) != 0 {
         let ip = GET_ITEM(gobj);
@@ -153,29 +159,36 @@ pub unsafe extern "C" fn itLuigifireball_UnkMotion0_Coll(gobj: *mut Item_GObj) -
 }
 
 pub unsafe extern "C" fn itLuigiFireball_Logic89_DmgDealt(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLuigiFireball_Logic89_DmgDealt");
     true
 }
 
 pub unsafe extern "C" fn itLuigiFireball_Logic89_Reflected(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLuigiFireball_Logic89_Reflected");
     ext::it_80273030(gobj) != 0
 }
 
 pub unsafe extern "C" fn itLuigiFireball_Logic89_Clanked(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLuigiFireball_Logic89_Clanked");
     true
 }
 
 pub unsafe extern "C" fn itLuigiFireball_Logic89_HitShield(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLuigiFireball_Logic89_HitShield");
     true
 }
 
 pub unsafe extern "C" fn itLuigiFireball_Logic89_Absorbed(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLuigiFireball_Logic89_Absorbed");
     true
 }
 
 pub unsafe extern "C" fn itLuigiFireball_Logic89_ShieldBounced(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLuigiFireball_Logic89_ShieldBounced");
     ext::itColl_BounceOffShield(gobj) != 0
 }
 
 pub unsafe extern "C" fn itLuigiFireball_Logic89_EvtUnk(gobj: *mut Item_GObj, referenced_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itLuigiFireball_Logic89_EvtUnk");
     ext::it_8026B894(gobj, referenced_gobj);
 }

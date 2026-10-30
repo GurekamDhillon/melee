@@ -58,6 +58,7 @@ pub mod ext {
 const CMD_SKIP_DECAY: usize = 0;
 
 pub fn ftCo_80099A58(g: G) -> bool {
+    melee_core::ct!("ftCo_80099A58");
     let f = fp(g);
     if ext::ScriptGame_CapsActionAllowed(f, 2) == 0 {
         return false;
@@ -71,6 +72,7 @@ pub fn ftCo_80099A58(g: G) -> bool {
 
 /// static inline `inlineA0`.
 pub fn inlineA0(f: &mut Fighter) {
+    melee_core::ct!("inlineA0");
     let c = cd();
     unsafe { f.mv.co.escapeair.self_vel = f.self_vel };
     if abs_c(f.input.lstick[0].x) < c.escapeair_deadzone.x && abs_c(f.input.lstick[0].y) < c.escapeair_deadzone.y {
@@ -84,6 +86,7 @@ pub fn inlineA0(f: &mut Fighter) {
 }
 
 pub fn ftCo_80099A9C(g: G, timer: i32) {
+    melee_core::ct!("ftCo_80099A9C");
     ext::ftCo_800D705C(g);
     let f = fp(g);
     inlineA0(f);
@@ -95,12 +98,14 @@ pub fn ftCo_80099A9C(g: G, timer: i32) {
 }
 
 pub fn ftCo_EscapeAir_Anim(g: G) {
+    melee_core::ct!("ftCo_EscapeAir_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ftCo_80096900(g, 1, 1, 0, cd().x340, cd().x344);
     }
 }
 
 pub fn ftCo_EscapeAir_IASA(g: G) {
+    melee_core::ct!("ftCo_EscapeAir_IASA");
     let f = fp(g);
     if unsafe { f.mv.co.escapeair.timer } != 0 {
         let self_vel = unsafe { f.mv.co.escapeair.self_vel };
@@ -120,6 +125,7 @@ pub fn ftCo_EscapeAir_IASA(g: G) {
 }
 
 pub fn ftCo_EscapeAir_Phys(g: G) {
+    melee_core::ct!("ftCo_EscapeAir_Phys");
     let f = fp(g);
     if f.cmd_vars[CMD_SKIP_DECAY] == 0 {
         let d = cd().escapeair_decay;
@@ -131,10 +137,12 @@ pub fn ftCo_EscapeAir_Phys(g: G) {
 }
 
 pub fn ftCo_EscapeAir_Coll(g: G) {
+    melee_core::ct!("ftCo_EscapeAir_Coll");
     ext::ft_80082C74(g, Some(ftCo_80099D70));
 }
 
 /// static `ftCo_80099D70`; passed as a callback, hence `extern "C"`.
 pub extern "C" fn ftCo_80099D70(g: G) {
+    melee_core::ct!("ftCo_80099D70");
     ext::ftCo_LandingFallSpecial_Enter(g, 0, cd().x344);
 }

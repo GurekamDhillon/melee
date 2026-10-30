@@ -43,10 +43,12 @@ pub mod ext {
 
 /// `ftCo_8009BC58` as the C `HSD_GObjEvent` handed to `ft_8008403C`.
 pub unsafe extern "C" fn ftCo_8009BC58_cb(g: *mut HSD_GObj) {
+    melee_core::ct!("ftCo_8009BC58_cb");
     ext::ftCo_8009BC58(g)
 }
 
 pub fn ftCo_8009B4D0(g: G) -> bool {
+    melee_core::ct!("ftCo_8009B4D0");
     if ext::ft_8008A1FC(g) {
         ftCo_8009B518(g);
         return true;
@@ -63,16 +65,19 @@ fn inline_a0(g: G, cb: fn(G, i32)) {
 }
 
 pub fn ftCo_8009B518(g: G) {
+    melee_core::ct!("ftCo_8009B518");
     inline_a0(g, ext::ftCo_8009C5A4);
 }
 
 pub fn ftCo_8009B56C(g: G) {
+    melee_core::ct!("ftCo_8009B56C");
     inline_a0(g, ext::ftCo_8009C640);
 }
 
-pub fn ftCo_CargoWait_Anim(_g: G) {}
+pub fn ftCo_CargoWait_Anim(_g: G) { melee_core::ct!("ftCo_CargoWait_Anim");}
 
 pub fn ftCo_CargoWait_IASA(g: G) {
+    melee_core::ct!("ftCo_CargoWait_IASA");
     if ext::ftCo_8009BF3C(g) { return; }
     if ext::ftCo_8009BB1C(g) { return; }
     if ext::ftCo_8009C4F8(g) { return; }
@@ -81,9 +86,11 @@ pub fn ftCo_CargoWait_IASA(g: G) {
 }
 
 pub fn ftCo_CargoWait_Phys(g: G) {
+    melee_core::ct!("ftCo_CargoWait_Phys");
     ext::ft_80084F3C(g);
 }
 
 pub fn ftCo_CargoWait_Coll(g: G) {
+    melee_core::ct!("ftCo_CargoWait_Coll");
     ext::ft_8008403C(g, Some(ftCo_8009BC58_cb));
 }

@@ -73,6 +73,7 @@ unsafe fn set_effect_hitlag_callbacks(fp: *mut Fighter) {
 
 /// `callback` (static): the x21EC hook of the loop.
 pub fn callback(gobj: *mut HSD_GObj) {
+    melee_core::ct!("callback");
     ext::ft_80089824(gobj);
     ext::ft_800892A0(gobj);
 }
@@ -87,6 +88,7 @@ unsafe extern "C" fn cb_ftDk_Init_8010DB3C(gobj: *mut HSD_GObj) {
 
 /// `ftDonkey_8010DE88_inner` (static).
 pub fn ftDonkey_8010DE88_inner(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDonkey_8010DE88_inner");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).x2219_b0() == 0 {
@@ -100,6 +102,7 @@ pub fn ftDonkey_8010DE88_inner(gobj: *mut HSD_GObj) {
 
 /// `doAnim` (static): enter the loop.
 pub fn doAnim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("doAnim");
     unsafe {
         let fp = fpp(gobj);
         (*fp).x21EC = Some(callback_cb);
@@ -111,14 +114,16 @@ pub fn doAnim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftDk_SpecialLwStart_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialLwStart_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         doAnim(gobj);
     }
 }
 
-pub fn ftDk_SpecialLwStart_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftDk_SpecialLwStart_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftDk_SpecialLwStart_IASA");}
 
 pub fn ftDk_SpecialLwLoop_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialLwLoop_Anim");
     unsafe {
         let fp = fpp(gobj);
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -132,11 +137,12 @@ pub fn ftDk_SpecialLwLoop_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftDk_SpecialLwEnd0_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftDk_SpecialLwEnd0_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftDk_SpecialLwEnd0_IASA");}
 
-pub fn ftDk_SpecialLwEnd1_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftDk_SpecialLwEnd1_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftDk_SpecialLwEnd1_IASA");}
 
 pub fn ftDk_SpecialLw_8010E0CC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialLw_8010E0CC");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).x2219_b0() == 0 {
@@ -149,6 +155,7 @@ pub fn ftDk_SpecialLw_8010E0CC(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftDk_SpecialLw_8010E148(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialLw_8010E148");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).x2219_b0() == 0 {
@@ -162,5 +169,6 @@ pub fn ftDk_SpecialLw_8010E148(gobj: *mut HSD_GObj) {
 
 /// `ftDk_SpecialLw_8010E0CC` as a Fighter callback entry (what `chars::cb` points at).
 pub unsafe extern "C" fn cb_ftDk_SpecialLw_8010E0CC(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftDk_SpecialLw_8010E0CC");
     ftDk_SpecialLw_8010E0CC(g);
 }

@@ -42,6 +42,7 @@ fn fp<'a>(g: G) -> &'a mut Fighter {
 
 /// `ftWallJump_8008169C` (UnclePunch: Interrupt_Walljump): `true` if it started a walljump.
 pub fn ftwalljump_8008169c(g: G) -> bool {
+    melee_core::ct!("ftwalljump_8008169c");
     let f = fp(g);
     if f.can_walljump() == 0 {
         return false;

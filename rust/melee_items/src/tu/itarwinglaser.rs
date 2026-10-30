@@ -111,6 +111,7 @@ unsafe fn itArwinglaser_GetCollArg(ip: *mut Item) -> i32 {
 
 /// 2E70BC: the beam's tip segment against the lines, then four 200-unit probes around it.
 pub unsafe extern "C" fn it_802E70BC(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802E70BC");
     let mut sp44: i32 = 0;
     let mut sp40: u32 = 0;
     let mut sp34: Vec3 = core::mem::zeroed();
@@ -161,6 +162,7 @@ pub unsafe extern "C" fn it_802E70BC(gobj: *mut Item_GObj) -> i32 {
 
 /// 2E72E0: spawns a beam of `type_` (0/2 main, 4/5 accessory) at `bone`.
 pub unsafe extern "C" fn it_802E72E0(parent: *mut Item_GObj, bone: *mut HSD_JObj, type_: i32, scale: f32, scale_mult: f32) -> *mut Item_GObj {
+    melee_core::ct!("it_802E72E0");
     let mut spawn: SpawnItem = core::mem::zeroed();
     let mut sp24: Vec3 = core::mem::zeroed();
     let mut z: f32;
@@ -261,6 +263,7 @@ pub unsafe extern "C" fn it_802E72E0(parent: *mut Item_GObj, bone: *mut HSD_JObj
 
 /// 2E7654: spawns an aimed shot from `bone` toward `target`. (No `return` in the C.)
 pub unsafe extern "C" fn it_802E7654(owner: *mut Item_GObj, bone: *mut HSD_JObj, target: *mut Vec3, type_: i32, arg4: i32, scale: f32) -> *mut Item_GObj {
+    melee_core::ct!("it_802E7654");
     let mut spawn: SpawnItem = core::mem::zeroed();
     let mut sp28: Vec3 = core::mem::zeroed();
 
@@ -310,6 +313,7 @@ pub unsafe extern "C" fn it_802E7654(owner: *mut Item_GObj, bone: *mut HSD_JObj,
 
 /// 2E79C8: detaches the accessory beams of a main beam.
 pub unsafe extern "C" fn it_802E79C8(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802E79C8");
     let ip = GET_ITEM(gobj);
     match (*ip).xDD4_itemVar.arwinglaser.xE38 {
         0 | 2 => {
@@ -335,12 +339,14 @@ pub unsafe extern "C" fn it_802E79C8(gobj: *mut Item_GObj) {
 
 /// 2E7A4C
 pub unsafe extern "C" fn it_802E7A4C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802E7A4C");
     let item = GET_ITEM(gobj);
     ext::it_8026B3A8(gobj);
     ext::Item_80268E5C(gobj, (*item).xDD4_itemVar.arwinglaser.xE38, 2);
 }
 
 pub unsafe extern "C" fn itArwinglaser_UnkMotion2_Anim(gobj: *mut Item_GObj) {
+    melee_core::ct!("itArwinglaser_UnkMotion2_Anim");
     let ip = GET_ITEM(gobj);
     (*ip).xDD4_itemVar.arwinglaser.xE24 = (*ip).xDD4_itemVar.arwinglaser.xE18;
     if ext::it_80272C6C(gobj) == 0 {
@@ -350,6 +356,7 @@ pub unsafe extern "C" fn itArwinglaser_UnkMotion2_Anim(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itArwinglaser_UnkMotion3_Anim(gobj: *mut Item_GObj) {
+    melee_core::ct!("itArwinglaser_UnkMotion3_Anim");
     let ip = GET_ITEM(gobj);
     (*ip).xDD4_itemVar.arwinglaser.xE24 = (*ip).xDD4_itemVar.arwinglaser.xE18;
     (*ip).xDD4_itemVar.arwinglaser.xE30 = 1;
@@ -357,6 +364,7 @@ pub unsafe extern "C" fn itArwinglaser_UnkMotion3_Anim(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itArwinglaser_UnkMotion2_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itArwinglaser_UnkMotion2_Phys");
     let mut scale_vec: Vec3 = core::mem::zeroed();
     let jobj = GET_JOBJ(gobj);
     let attrs = (*(*((*gobj).user_data as *mut Item)).xC4_article_data).x4_specialAttributes as *mut ArwingLaserAttr;
@@ -386,6 +394,7 @@ pub unsafe extern "C" fn itArwinglaser_UnkMotion2_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itArwinglaser_UnkMotion3_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itArwinglaser_UnkMotion3_Phys");
     let mut scale_vec: Vec3 = core::mem::zeroed();
     let mut corneria_offset: Vec3 = core::mem::zeroed();
     let jobj = GET_JOBJ(gobj);
@@ -419,6 +428,7 @@ pub unsafe extern "C" fn itArwinglaser_UnkMotion3_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itArwinglaser_UnkMotion2_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itArwinglaser_UnkMotion2_Coll");
     let mut sp40: Vec3 = core::mem::zeroed();
     let mut prev_pos: Vec3;
     let mut curr_pos: Vec3;
@@ -451,6 +461,7 @@ pub unsafe extern "C" fn itArwinglaser_UnkMotion2_Coll(gobj: *mut Item_GObj) -> 
 }
 
 pub unsafe extern "C" fn itArwinglaser_UnkMotion3_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itArwinglaser_UnkMotion3_Coll");
     let mut sp10: Vec3 = core::mem::zeroed();
     let ip = GET_ITEM(gobj);
 
@@ -476,6 +487,7 @@ pub unsafe extern "C" fn itArwinglaser_UnkMotion3_Coll(gobj: *mut Item_GObj) -> 
 }
 
 pub unsafe extern "C" fn itArwinglaser_UnkMotion5_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itArwinglaser_UnkMotion5_Coll");
     let mut trans: Vec3 = core::mem::zeroed();
     let mut scale_vec: Vec3 = core::mem::zeroed();
     let mut rot: Quaternion = core::mem::zeroed();
@@ -503,6 +515,7 @@ pub unsafe extern "C" fn itArwinglaser_UnkMotion5_Coll(gobj: *mut Item_GObj) -> 
 
 /// 2E838C
 pub unsafe extern "C" fn it_802E838C(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_802E838C");
     let mut sp10: Vec3 = core::mem::zeroed();
     let ip = GET_ITEM(gobj);
     ext::lb_8000B1CC((*(*ip).xBBC_dynamicBoneTable).bones[4], null_mut(), &mut sp10);
@@ -514,11 +527,13 @@ pub unsafe extern "C" fn it_802E838C(gobj: *mut Item_GObj) -> bool {
 
 /// 2E8418
 pub unsafe extern "C" fn it_802E8418(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_802E8418");
     true
 }
 
 /// 2E8420: reflected.
 pub unsafe extern "C" fn it_802E8420(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_802E8420");
     let mut sp10: Vec3 = core::mem::zeroed();
     let ip = (*gobj).user_data as *mut Item;
     let jobj = GET_JOBJ(gobj);
@@ -549,6 +564,7 @@ pub unsafe extern "C" fn it_802E8420(gobj: *mut Item_GObj) -> bool {
 
 /// 2E85F4: shield-bounced.
 pub unsafe extern "C" fn it_802E85F4(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_802E85F4");
     let mut sp10: Vec3 = core::mem::zeroed();
     let ip = (*gobj).user_data as *mut Item;
     let jobj = GET_JOBJ(gobj);
@@ -571,5 +587,6 @@ pub unsafe extern "C" fn it_802E85F4(gobj: *mut Item_GObj) -> bool {
 
 /// 2E8784
 pub unsafe extern "C" fn it_802E8784(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_802E8784");
     true
 }

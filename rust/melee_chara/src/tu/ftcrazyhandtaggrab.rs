@@ -83,6 +83,7 @@ unsafe fn func_8015ADD0_inline(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCh_GrabUnk1_8015ADD0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_GrabUnk1_8015ADD0");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         (*fp).cmd_vars[0] = 0;
@@ -125,14 +126,17 @@ unsafe fn tag_anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCh_TagGrab_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_TagGrab_Anim");
     unsafe { tag_anim(gobj) }
 }
 
 pub fn ftCh_TagSqueeze_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_TagSqueeze_Anim");
     unsafe { tag_anim(gobj) }
 }
 
 pub fn ftCh_TagGrab_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_TagGrab_Phys");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*(*fp).ft_data).ext_attr as *const ftCrazyHand_DatAttrs;
@@ -141,4 +145,4 @@ pub fn ftCh_TagGrab_Phys(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftCh_TagGrab_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftCh_TagGrab_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_TagGrab_Coll");}

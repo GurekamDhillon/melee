@@ -52,6 +52,7 @@ pub mod ext {
 
 /// `ftCo_AttackS3_CheckInput`.
 pub fn ftCo_AttackS3_CheckInput(g: G) -> bool {
+    melee_core::ct!("ftCo_AttackS3_CheckInput");
     let f = fp(g);
     if f.input.pressed_buttons & HSD_PAD_A as u32 != 0 && f.input.lstick[0].x * f.facing_dir >= cd().x98 {
         // `ABS(ftCo_GetLStickAngle(fp))`: the macro evaluates its argument twice.
@@ -87,6 +88,7 @@ fn has_anim(f: &mut Fighter, msid: ftCommon_MotionState) -> bool {
 
 /// static `decideAngle`.
 pub fn decideAngle(g: G) {
+    melee_core::ct!("decideAngle");
     let f = fp(g);
     if !ext::ftpickupitem_80094790(g) {
         let a = ext::ftCo_GetLStickAngle(f);
@@ -109,21 +111,25 @@ pub fn decideAngle(g: G) {
 }
 
 pub fn ftCo_AttackS3_Anim(g: G) {
+    melee_core::ct!("ftCo_AttackS3_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ft_8008A2BC(g);
     }
 }
 
 pub fn ftCo_AttackS3_IASA(g: G) {
+    melee_core::ct!("ftCo_AttackS3_IASA");
     if fp(g).allow_interrupt() != 0 {
         ext::ftCo_Wait_IASA(g);
     }
 }
 
 pub fn ftCo_AttackS3_Phys(g: G) {
+    melee_core::ct!("ftCo_AttackS3_Phys");
     ext::ft_80084F3C(g);
 }
 
 pub fn ftCo_AttackS3_Coll(g: G) {
+    melee_core::ct!("ftCo_AttackS3_Coll");
     ext::ft_80084104(g);
 }

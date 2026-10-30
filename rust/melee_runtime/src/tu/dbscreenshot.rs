@@ -65,6 +65,7 @@ pub struct DbScreenshot {
 
 /// `fn_802289F8`: only the "USB:" device is written.
 pub fn fn_802289F8<H: DbScreenshotHost + ?Sized>(h: &mut H, path: &str, buf: i32, len: i32) -> i32 {
+    melee_core::ct!("fn_802289F8");
     match path.strip_prefix("USB:") {
         Some(rest) => h.hsd_80393A5C(rest, buf, len),
         None => -1,

@@ -85,10 +85,12 @@ unsafe fn set_cbs(fp: *mut Fighter) {
 
 /// Accessory callback entry for `fn_801090D4`.
 pub unsafe extern "C" fn cb_fn_801090D4(g: G) {
+    melee_core::ct!("cb_fn_801090D4");
     fn_801090D4(g);
 }
 
 pub fn ftKb_SpecialNIc_80108CE8(gobj: G, it_gobj: G) {
+    melee_core::ct!("ftKb_SpecialNIc_80108CE8");
     unsafe {
         let ft = fpp(gobj);
         if it_gobj == (*ft).u.kb.xC0 {
@@ -99,10 +101,12 @@ pub fn ftKb_SpecialNIc_80108CE8(gobj: G, it_gobj: G) {
 
 /// Callback entry for `ftKb_SpecialNIc_80108D04`.
 pub unsafe extern "C" fn cb_ftKb_SpecialNIc_80108D04(g: G) {
+    melee_core::ct!("cb_ftKb_SpecialNIc_80108D04");
     ftKb_SpecialNIc_80108D04(g);
 }
 
 pub fn ftKb_SpecialNIc_80108D04(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNIc_80108D04");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.kb.xC0.is_null() {
@@ -129,6 +133,7 @@ unsafe fn attach_hat_accessory(gobj: G) {
 }
 
 pub fn ftKb_SpecialNIc_80108D64(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNIc_80108D64");
     unsafe {
         let fp = fpp(gobj);
         (*fp).anon_2210.throw_flags = 0;
@@ -142,6 +147,7 @@ pub fn ftKb_SpecialNIc_80108D64(gobj: G) {
 }
 
 pub fn ftKb_SpecialNIc_80108E14(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNIc_80108E14");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftKb_DatAttrs;
@@ -162,10 +168,11 @@ pub fn ftKb_SpecialNIc_80108E14(gobj: G) {
     }
 }
 
-pub fn ftKb_PpSpecialN_IASA(_gobj: G) {}
-pub fn ftKb_PpSpecialAirN_IASA(_gobj: G) {}
+pub fn ftKb_PpSpecialN_IASA(_gobj: G) { melee_core::ct!("ftKb_PpSpecialN_IASA");}
+pub fn ftKb_PpSpecialAirN_IASA(_gobj: G) { melee_core::ct!("ftKb_PpSpecialAirN_IASA");}
 
 pub fn ftKb_PpSpecialN_Coll(gobj: G) {
+    melee_core::ct!("ftKb_PpSpecialN_Coll");
     unsafe {
         if st::ft_80082708(gobj) == 0 {
             let fp = fpp(gobj);
@@ -182,6 +189,7 @@ pub fn ftKb_PpSpecialN_Coll(gobj: G) {
 }
 
 pub fn ftKb_PpSpecialAirN_Coll(gobj: G) {
+    melee_core::ct!("ftKb_PpSpecialAirN_Coll");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftKb_DatAttrs;
@@ -202,6 +210,7 @@ pub fn ftKb_PpSpecialAirN_Coll(gobj: G) {
 }
 
 pub fn fn_801090D4(gobj: G) {
+    melee_core::ct!("fn_801090D4");
     unsafe {
         let fp = fpp(gobj);
         let cmd = (*fp).cmd_vars[0];
@@ -239,5 +248,6 @@ pub fn fn_801090D4(gobj: G) {
 }
 
 pub fn ftKb_SpecialNYs_80109238(gobj: G) -> Fighter_Part {
+    melee_core::ct!("ftKb_SpecialNYs_80109238");
     unsafe { melee_fighter::hooks::ftparts_get_bone_index(&*fpp(gobj), FtPart_TransN2 as i32) as Fighter_Part }
 }

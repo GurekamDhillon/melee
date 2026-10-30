@@ -39,14 +39,16 @@ pub static mut yakumono_param: *mut grStory_YakumonoParam = core::ptr::null_mut(
 /// `grStory_StageSlotParamSwap` (TARGET_PC): install another stage-slot parameter block, returning
 /// the previous one.
 pub unsafe extern "C" fn grStory_StageSlotParamSwap(param: *mut c_void) -> *mut c_void {
+    melee_core::ct!("grStory_StageSlotParamSwap");
     let previous = yakumono_param as *mut c_void;
     yakumono_param = param as *mut grStory_YakumonoParam;
     previous
 }
 
-pub unsafe extern "C" fn grStory_801E302C(_unused: i32) {}
+pub unsafe extern "C" fn grStory_801E302C(_unused: i32) { melee_core::ct!("grStory_801E302C");}
 
 pub unsafe extern "C" fn grStory_801E3030() {
+    melee_core::ct!("grStory_801E3030");
     yakumono_param = ext::Ground_GetYakumonoParam() as *mut grStory_YakumonoParam;
     ext::stage_info.unk8C.set_b4(0);
     ext::stage_info.unk8C.set_b5(1);
@@ -58,9 +60,10 @@ pub unsafe extern "C" fn grStory_801E3030() {
     ext::Ground_801C3BB4();
 }
 
-pub unsafe extern "C" fn grStory_UnkStage0_OnLoad() {}
+pub unsafe extern "C" fn grStory_UnkStage0_OnLoad() { melee_core::ct!("grStory_UnkStage0_OnLoad");}
 
 pub unsafe extern "C" fn grStory_801E30D8(gobj_id: i32) -> *mut HSD_GObj {
+    melee_core::ct!("grStory_801E30D8");
     let callbacks = (&raw mut grSt_StageCallbacks as *mut StageCallbacks).add(gobj_id as usize);
     let gobj = ext::Ground_GetStageGObj(gobj_id);
     if !gobj.is_null() {
@@ -72,15 +75,16 @@ pub unsafe extern "C" fn grStory_801E30D8(gobj_id: i32) -> *mut HSD_GObj {
 }
 
 pub unsafe extern "C" fn grStory_801E31C0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grStory_801E31C0");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
     (*gp).x11_flags.set_b012(2);
     ext::grMaterial_801C8858(ext::Ground_801C3FA4(gobj, 1), 0x20000000);
 }
 
-pub unsafe extern "C" fn grStory_801E322C(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grStory_801E322C(_gobj: *mut HSD_GObj) { melee_core::ct!("grStory_801E322C");}
 
-pub unsafe extern "C" fn grStory_801E3230(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grStory_801E3230(_gobj: *mut HSD_GObj) { melee_core::ct!("grStory_801E3230");}
 
 /// `reset_shyguy_timer`: the randomised timer is overwritten by the hardcoded 120 right after.
 unsafe fn reset_shyguy_timer(gp: *mut Ground) {
@@ -99,6 +103,7 @@ unsafe fn set_shyguy_spawn_count(gp: *mut Ground, rarity: i32) {
 }
 
 pub unsafe extern "C" fn grStory_801E3234(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grStory_801E3234");
     let gp = GET_GROUND(gobj);
     ext::Ground_InitMapColl((*gobj).hsd_obj as *mut HSD_JObj, (*gp).map_id as i32);
     ext::grAnime_801C7FF8(gobj, 0, 7, 0, 0.0, 1.0);
@@ -108,14 +113,16 @@ pub unsafe extern "C" fn grStory_801E3234(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grStory_801E3334(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grStory_801E3334");
     grStory_801E3418(gobj);
     ext::Ground_UpdateMapColl(gobj);
     ext::lb_800115F4();
 }
 
-pub unsafe extern "C" fn grStory_801E336C(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grStory_801E336C(_gobj: *mut HSD_GObj) { melee_core::ct!("grStory_801E336C");}
 
 pub unsafe extern "C" fn grStory_801E3370(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grStory_801E3370");
     let gp = GET_GROUND(gobj);
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     ext::Ground_InitMapColl(jobj, (*gp).map_id as i32);
@@ -125,11 +132,12 @@ pub unsafe extern "C" fn grStory_801E3370(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grStory_801E33E0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grStory_801E33E0");
     ext::Ground_UpdateMapColl(gobj);
     grStory_801E366C(gobj);
 }
 
-pub unsafe extern "C" fn grStory_801E3414(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grStory_801E3414(_gobj: *mut HSD_GObj) { melee_core::ct!("grStory_801E3414");}
 
 /// `frand_amp1`: a float random number centred at 0 with an amplitude of 1.
 #[inline]
@@ -138,6 +146,7 @@ unsafe fn frand_amp1() -> f32 {
 }
 
 pub unsafe extern "C" fn grStory_801E3418(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grStory_801E3418");
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut spawn_pattern: i32;
     let gp = GET_GROUND(gobj);
@@ -178,6 +187,7 @@ pub unsafe extern "C" fn grStory_801E3418(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grStory_801E366C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grStory_801E366C");
     let gp = GET_GROUND(gobj);
     let t = (*gp).u.randall.timer;
     (*gp).u.randall.timer = t.wrapping_sub(1);
@@ -191,6 +201,7 @@ pub unsafe extern "C" fn grStory_801E366C(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grStory_801E36D8(a: *mut Vec3, _unused: i32, jobj: *mut HSD_JObj) -> i32 {
+    melee_core::ct!("grStory_801E36D8");
     let mut b = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ext::lb_8000B1CC(jobj, core::ptr::null_mut(), &mut b);
     if (*a).y + 1.0 > b.y { 1 } else { 0 }

@@ -127,6 +127,7 @@ unsafe fn fighter_of(owner: *mut HSD_GObj) -> *mut Fighter {
 /// `Item_InitLinkMtx(m, z)` (src/melee/it/kinds/inlines.h, static inline).
 #[inline]
 pub unsafe fn Item_InitLinkMtx(m: *mut Mtx, z: f32) {
+    melee_core::ct!("Item_InitLinkMtx");
     ext::PSMTXIdentity(m as *mut c_void);
     (*m)[0][3] = 0.0;
     (*m)[1][3] = 0.0;
@@ -139,6 +140,7 @@ pub unsafe fn Item_InitLinkMtx(m: *mut Mtx, z: f32) {
 pub unsafe fn Item_RetractChain(link: *mut ItemLink, pos: *mut Vec3, target_dist: f32, max_dist: *const f32,
     next_out: *mut *mut ItemLink, cur_out: *mut *mut ItemLink, remaining_out: *mut f32)
 {
+    melee_core::ct!("Item_RetractChain");
     let mut cur = link;
     let mut next = (*link).prev;
     let mut dir: Vec3 = core::mem::zeroed();
@@ -169,23 +171,27 @@ pub unsafe fn Item_RetractChain(link: *mut ItemLink, pos: *mut Vec3, target_dist
 
 /// `it_802C248C_setupGObj` (static inline): give a link gobj its joint and GX callback.
 pub unsafe fn it_802C248C_setupGObj(link_gobj: *mut HSD_GObj, loaded_jobj: *mut HSD_JObj, callback: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>) {
+    melee_core::ct!("it_802C248C_setupGObj");
     ext::HSD_GObjObject_80390A70(link_gobj, ext::HSD_GObj_JObjKind, loaded_jobj as *mut c_void);
     ext::GObj_SetupGXLink(link_gobj, callback, 6, 0);
 }
 
 /// `it_802C248C_joint24` (static inline).
 pub unsafe fn it_802C248C_joint24(ip: *mut Item) -> *mut HSD_Joint {
+    melee_core::ct!("it_802C248C_joint24");
     (*sa::<itClimbersStringAttributes>(ip)).x24_joint
 }
 
 /// `it_802C248C_joint28` (static inline).
 pub unsafe fn it_802C248C_joint28(ip: *mut Item) -> *mut HSD_Joint {
+    melee_core::ct!("it_802C248C_joint28");
     (*sa::<itClimbersStringAttributes>(ip)).x28_joint
 }
 
 /// `it_802C248C` (itclimbersstring.c, static): build the `x0_count` links of the gum string
 /// from the owner's hand joint `jobj`. Returns the tail link's gobj's hsd_obj, or NULL.
 pub unsafe fn it_802C248C(ip: *mut Item, jobj: *mut HSD_JObj) -> *mut HSD_GObj {
+    melee_core::ct!("it_802C248C");
     let attrs = sa::<itClimbersStringAttributes>(ip);
     let mut prev_link: *mut ItemLink = null_mut();
     let mut head_link: *mut ItemLink = null_mut();
@@ -254,6 +260,7 @@ pub unsafe fn it_802C248C(ip: *mut Item, jobj: *mut HSD_JObj) -> *mut HSD_GObj {
 
 /// `itClimbersstring_Cleanup` (static inline): drop the owner's grip and free the links.
 pub unsafe fn itClimbersstring_Cleanup(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itClimbersstring_Cleanup");
     if !gobj.is_null() {
         let ip = item_of(gobj);
         if !(*ip).owner.is_null() {
@@ -272,6 +279,7 @@ pub unsafe fn itClimbersstring_Cleanup(gobj: *mut HSD_GObj) {
 
 /// `it_802C2750`: the item's destruction; cleanup, then `Item_8026A8EC`.
 pub unsafe extern "C" fn it_802C2750(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802C2750");
     let ip = item_of(gobj);
     if !ip.is_null() {
         if !gobj.is_null() {
@@ -293,6 +301,7 @@ pub unsafe extern "C" fn it_802C2750(gobj: *mut HSD_GObj) {
 
 /// `it_802C27D4`: spawn the gum string from `owner`'s hand (`FtPart_L4thNb`).
 pub unsafe extern "C" fn it_802C27D4(owner: *mut HSD_GObj, pos: *mut Vec3, _msid: i32, dir: f32) -> *mut HSD_GObj {
+    melee_core::ct!("it_802C27D4");
     let fp = fighter_of(owner);
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = It_Kind_IceClimber_GumStrings;
@@ -310,11 +319,13 @@ pub unsafe extern "C" fn it_802C27D4(owner: *mut HSD_GObj, pos: *mut Vec3, _msid
 
 /// `fn_802C28B8`: the on-accessory callback that runs the link-chain solver for the head.
 pub unsafe extern "C" fn fn_802C28B8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_802C28B8");
     it_802C33B8(item_of(gobj));
 }
 
 /// `fn_802C28DC` (static): the first chain solver (`it_802C2EC4`) for the tail link.
 pub unsafe extern "C" fn fn_802C28DC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_802C28DC");
     let ip = item_of(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itClimbersStringAttributes;
     let link = (*ip).xDD4_itemVar.climbersstring.x4;
@@ -332,6 +343,7 @@ pub unsafe extern "C" fn fn_802C28DC(gobj: *mut HSD_GObj) {
 
 /// `fn_802C29E8` (static): the second chain solver (`it_802C30E8`) for the tail link.
 pub unsafe extern "C" fn fn_802C29E8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_802C29E8");
     let ip = item_of(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itClimbersStringAttributes;
     let link = (*ip).xDD4_itemVar.climbersstring.x4;
@@ -350,6 +362,7 @@ pub unsafe extern "C" fn fn_802C29E8(gobj: *mut HSD_GObj) {
 /// `fn_802C2AF4` (static): the retract (`it_802C32D4`) for the head link; picks up the item when
 /// the chain is fully retracted.
 pub unsafe extern "C" fn fn_802C2AF4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_802C2AF4");
     let ip = item_of(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itClimbersStringAttributes;
     let link = (*ip).xDD4_itemVar.climbersstring.x8;
@@ -369,6 +382,7 @@ pub unsafe extern "C" fn fn_802C2AF4(gobj: *mut HSD_GObj) {
 /// `itClimbersstring_UnkMotion3_Anim`: clean up once the owner leaves the grip motions
 /// (0x15B..=0x164).
 pub unsafe extern "C" fn itClimbersstring_UnkMotion3_Anim(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itClimbersstring_UnkMotion3_Anim");
     let ip = item_of(gobj);
     let should_cleanup: bool = if !(*ip).owner.is_null() {
         let action = ext::ftLib_GetMotionId((*ip).owner);
@@ -386,6 +400,7 @@ pub unsafe extern "C" fn itClimbersstring_UnkMotion3_Anim(gobj: *mut HSD_GObj) -
 /// `it_802C2CA8`: pull the chain toward `target`, keeping each bent link `attrs->x8` from the
 /// next one.
 pub unsafe fn it_802C2CA8(link: *mut ItemLink, target: *mut Vec3, attrs: *mut itClimbersStringAttributes, length: f32) {
+    melee_core::ct!("it_802C2CA8");
     let attrs = &*attrs;
     let mut link = link;
     let mut dir: Vec3 = core::mem::zeroed();
@@ -411,6 +426,7 @@ pub unsafe fn it_802C2CA8(link: *mut ItemLink, target: *mut Vec3, attrs: *mut it
 /// `it_802C2DB0`: the falling version of the chain pull, applying gravity `attrs->x14` to each
 /// link before solving.
 pub unsafe fn it_802C2DB0(cur: *mut ItemLink, target: *mut Vec3, attrs: *mut itClimbersStringAttributes, length: f32) {
+    melee_core::ct!("it_802C2DB0");
     let attrs = &*attrs;
     let mut cur = cur;
     let mut dir: Vec3 = core::mem::zeroed();
@@ -436,6 +452,7 @@ pub unsafe fn it_802C2DB0(cur: *mut ItemLink, target: *mut Vec3, attrs: *mut itC
 /// `it_802C2EC4`: solve the chain against the owner's hand position while the owner holds it.
 /// Returns 2 when the chain is settled, 0 when it stopped short.
 pub unsafe fn it_802C2EC4(link: *mut ItemLink, target: *mut Vec3, attrs: *mut itClimbersStringAttributes, ip: *mut Item) -> i32 {
+    melee_core::ct!("it_802C2EC4");
     let attrs = &*attrs;
     let mut cur = link;
     let mut iter = (*link).next;
@@ -485,12 +502,14 @@ pub unsafe fn it_802C2EC4(link: *mut ItemLink, target: *mut Vec3, attrs: *mut it
 
 /// `it_802C2CA8_outline` (static inline): forwards to `it_802C2CA8`.
 pub unsafe fn it_802C2CA8_outline(link: *mut ItemLink, target: *mut Vec3, attrs: *mut itClimbersStringAttributes, length: f32) {
+    melee_core::ct!("it_802C2CA8_outline");
     it_802C2CA8(link, target, attrs, length);
 }
 
 /// `it_802C30E8`: the swinging solver: gravity on each link, then the chain pull; 2 when settled,
 /// 0 when a link is still too close to be moved.
 pub unsafe fn it_802C30E8(link: *mut ItemLink, target: *mut Vec3, attrs: *mut itClimbersStringAttributes, ip: *mut Item) -> i32 {
+    melee_core::ct!("it_802C30E8");
     let attrs = &*attrs;
     let mut cur = link;
     let mut iter = (*link).next;
@@ -541,6 +560,7 @@ pub unsafe fn it_802C30E8(link: *mut ItemLink, target: *mut Vec3, attrs: *mut it
 
 /// `it_802C32D4`: retract the chain to `dist` from `pos`; true once the head is reached.
 pub unsafe fn it_802C32D4(link: *mut ItemLink, pos: *mut Vec3, attrs: *mut itClimbersStringAttributes, _ip: *mut Item, dist: f32) -> bool {
+    melee_core::ct!("it_802C32D4");
     let attrs = &*attrs;
     let mut prev: *mut ItemLink = null_mut();
     let mut cur: *mut ItemLink = null_mut();
@@ -557,6 +577,7 @@ pub unsafe fn it_802C32D4(link: *mut ItemLink, pos: *mut Vec3, attrs: *mut itCli
 
 /// `it_802C33B8`: pin the head link's gobj to the owner's hand, with no offset.
 pub unsafe fn it_802C33B8(ip: *mut Item) {
+    melee_core::ct!("it_802C33B8");
     let mut m: Mtx = [[0.0; 4]; 3];
     let link = (*ip).xDD4_itemVar.climbersstring.x4;
     let jobj = (*(*link).gobj).hsd_obj as *mut HSD_JObj;
@@ -579,6 +600,7 @@ pub unsafe fn it_802C33B8(ip: *mut Item) {
 /// `it_802C3520`: place every link of the chain from the tail's bend point to the head, setting
 /// each link's joint translation and scaling its matrix by `attrs->x8`.
 pub unsafe fn it_802C3520(ip: *mut Item, target: *mut Vec3) {
+    melee_core::ct!("it_802C3520");
     let mut link = (*ip).xDD4_itemVar.climbersstring.x8;
     let attrs = sa::<itClimbersStringAttributes>(ip);
     let mut m: Mtx = [[0.0; 4]; 3];
@@ -636,6 +658,7 @@ pub unsafe fn it_802C3520(ip: *mut Item, target: *mut Vec3) {
 /// `it_2725_Logic70_PickedUp`: show the gum string held (motion 0), then its on-accessory is
 /// `fn_802C28B8`.
 pub unsafe extern "C" fn it_2725_Logic70_PickedUp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_2725_Logic70_PickedUp");
     let ip = item_of(gobj);
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE);
     ext::it_8026BB44(gobj);
@@ -644,6 +667,7 @@ pub unsafe extern "C" fn it_2725_Logic70_PickedUp(gobj: *mut HSD_GObj) {
 
 /// `it_802C3810`: motion 2 (on-accessory `fn_802C29E8`).
 pub unsafe extern "C" fn it_802C3810(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802C3810");
     let item = item_of(gobj);
     ext::Item_80268E5C(gobj, 2, 2);
     ext::it_8026BB20(gobj);
@@ -652,6 +676,7 @@ pub unsafe extern "C" fn it_802C3810(gobj: *mut HSD_GObj) {
 
 /// `it_802C3864`: motion 3 with the retract length set to 2.25 (on-accessory `fn_802C2AF4`).
 pub unsafe extern "C" fn it_802C3864(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802C3864");
     let ip = item_of(gobj);
     let link = (*ip).xDD4_itemVar.climbersstring.x8;
     let mut mtx: Mtx = [[0.0; 4]; 3];
@@ -668,6 +693,7 @@ pub unsafe extern "C" fn it_802C3864(gobj: *mut HSD_GObj) {
 /// `it_802C3950`: motion 1 with the tail link placed at the owner's hand (on-accessory
 /// `fn_802C28DC`).
 pub unsafe extern "C" fn it_802C3950(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802C3950");
     let ip = item_of(gobj);
     let link = (*ip).xDD4_itemVar.climbersstring.x4;
     let mut mtx: Mtx = [[0.0; 4]; 3];
@@ -687,6 +713,7 @@ pub unsafe extern "C" fn it_802C3950(gobj: *mut HSD_GObj) {
 
 /// `it_2725_Logic70_EvtUnk`: `it_8026B894`, then forget the owner if it is the reference.
 pub unsafe extern "C" fn it_2725_Logic70_EvtUnk(arg0: *mut HSD_GObj, arg1: *mut HSD_GObj) {
+    melee_core::ct!("it_2725_Logic70_EvtUnk");
     let ip = item_of(arg0);
     ext::it_8026B894(arg0, arg1);
     if (*ip).xDD4_itemVar.climbersstring.xC == arg1 {
@@ -704,5 +731,6 @@ pub static it_803F76B8: [ItemStateTable; 4] = [
 
 /// `itClimbersstring_UnkMotion3_Anim` as the `int`-returning predicate of the state table.
 pub unsafe extern "C" fn itClimbersstring_UnkMotion3_Anim_p(g: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itClimbersstring_UnkMotion3_Anim_p");
     itClimbersstring_UnkMotion3_Anim(g) as i32
 }

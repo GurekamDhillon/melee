@@ -141,22 +141,26 @@ pub static mut ifStatus_HudInfo: HudIndex = unsafe { core::mem::zeroed() };
 
 /// `memzero` (lb_00B0.c): the real behaviour, used unless a test installs a hook.
 pub fn memzero_default(mem: *mut c_void, size: i32) {
+    melee_core::ct!("memzero_default");
     unsafe { core::ptr::write_bytes(mem as *mut u8, 0, size as usize) }
 }
 
 pub unsafe extern "C" fn ifStatus_GetHUDInfo() -> *mut HudIndex {
+    melee_core::ct!("ifStatus_GetHUDInfo");
     &raw mut ifStatus_HudInfo
 }
 
 /// `HSD_ASSERT`-style `__assert("jobj.h", line, "jobj")` on a null joint.
 #[inline]
 pub fn assert_not_null(j: *mut HSD_JObj, line: i32) {
+    melee_core::ct!("assert_not_null");
     if j.is_null() {
         panic!("__assert jobj.h:{line} jobj");
     }
 }
 
 pub unsafe fn foo(a: f32, b: f32) -> f32 {
+    melee_core::ct!("foo");
     let result;
     if ifStatus_804D6D61 != 0 {
         result = -a - b;
@@ -169,6 +173,7 @@ pub unsafe fn foo(a: f32, b: f32) -> f32 {
 }
 
 pub unsafe fn jobj_flagCheckSetMtxDirtySub(jobj: *mut HSD_JObj) {
+    melee_core::ct!("jobj_flagCheckSetMtxDirtySub");
     if (*jobj).flags & 0x02000000 == 0 && !jobj.is_null() {
         assert_not_null(jobj, 0x234);
         if (((*jobj).flags & 0x800000 == 0 && (*jobj).flags & 0x40 != 0) as i32) == 0 {
@@ -178,10 +183,12 @@ pub unsafe fn jobj_flagCheckSetMtxDirtySub(jobj: *mut HSD_JObj) {
 }
 
 pub unsafe fn jobj_get(_jobj: *mut HSD_JObj, value: *mut UnkX, i: usize) -> *mut HSD_JObj {
+    melee_core::ct!("jobj_get");
     (*value).jobjs[i]
 }
 
 pub unsafe extern "C" fn ifStatus_PercentOnDeathAnimationThink(value: *mut UnkX, _arg1: i32, _arg2: i32) {
+    melee_core::ct!("ifStatus_PercentOnDeathAnimationThink");
     if (*value).flags.randomize_velocity() != 0 {
         for i in 0..4usize {
             let a = 0.6083f32 * ext::HSD_Randf();
@@ -218,10 +225,12 @@ pub unsafe extern "C" fn ifStatus_PercentOnDeathAnimationThink(value: *mut UnkX,
 }
 
 pub unsafe fn offset_rand() -> f32 {
+    melee_core::ct!("offset_rand");
     ext::HSD_Randf() - 0.5
 }
 
 pub unsafe extern "C" fn ifStatus_802F4B84(state: *mut IfDamageState, _is_stamina: i32) {
+    melee_core::ct!("ifStatus_802F4B84");
     let frames = (*state).frames_of_shake_remaining;
     if frames != 0 {
         if frames == 1 {
@@ -271,14 +280,17 @@ fn dig(damage: i16, m: i32, d: i32) -> i32 {
 type AnimBase = *mut *mut *mut HSD_MatAnimJoint;
 /// `(*anim_base)[0]->child->matanim->texanim`
 pub unsafe fn tex0(anim_base: AnimBase) -> *mut _HSD_TexAnim {
+    melee_core::ct!("tex0");
     (*(*(*(**anim_base)).child).matanim).texanim
 }
 /// `(*anim_base)[0]->child->next->next->next->matanim->texanim`
 pub unsafe fn tex3(anim_base: AnimBase) -> *mut _HSD_TexAnim {
+    melee_core::ct!("tex3");
     (*(*(*(*(*(*(**anim_base)).child).next).next).next).matanim).texanim
 }
 
 pub unsafe fn digit_anim(state: *mut IfDamageState, place: usize, anim_base: *mut *mut *mut HSD_MatAnimJoint, digit: u8) {
+    melee_core::ct!("digit_anim");
     let j = (*state).jobjs[place];
     let tobj = (*(*(*j).u.dobj).mobj).tobj;
     ext::HSD_TObjAddAnimAll(tobj, tex0(anim_base));
@@ -287,6 +299,7 @@ pub unsafe fn digit_anim(state: *mut IfDamageState, place: usize, anim_base: *mu
 }
 
 pub unsafe fn ifStatus_InitDamageDigits(state: *mut IfDamageState, anim_base: *mut *mut *mut HSD_MatAnimJoint) {
+    melee_core::ct!("ifStatus_InitDamageDigits");
     let dp = (*state).damage_percent;
     digit_anim(state, ONES, anim_base, dig(dp, 10, 1) as u8);
     digit_anim(state, TENS, anim_base, dig(dp, 100, 10) as u8);
@@ -294,10 +307,12 @@ pub unsafe fn ifStatus_InitDamageDigits(state: *mut IfDamageState, anim_base: *m
 }
 
 pub unsafe fn ifStatus_GetStoredTranslationX(state: *mut IfDamageState, index: i32) -> f32 {
+    melee_core::ct!("ifStatus_GetStoredTranslationX");
     (*state).translation_x[index as usize]
 }
 
 pub unsafe fn set_diffuse(state: *mut IfDamageState, place: usize, color: *mut _GXColor) {
+    melee_core::ct!("set_diffuse");
     let mobj = (*(*(*state).jobjs[place]).u.dobj).mobj;
     (*(*mobj).mat).diffuse.r = (*color).r;
     (*(*mobj).mat).diffuse.g = (*color).g;
@@ -305,6 +320,7 @@ pub unsafe fn set_diffuse(state: *mut IfDamageState, place: usize, color: *mut _
 }
 
 pub unsafe fn lerp_channel(factor: f32, k: usize) -> u8 {
+    melee_core::ct!("lerp_channel");
     let a = ifStatus_804D57A8[k];
     let b = ifStatus_804D57AC[k];
     let v = fmadds(factor, (b as i32 - a as i32) as f32, a as f32);
@@ -318,6 +334,7 @@ pub unsafe fn ifStatus_UpdateDamageDisplay(
     stamina_color: *mut _GXColor,
     normal_color: *mut _GXColor,
 ) {
+    melee_core::ct!("ifStatus_UpdateDamageDisplay");
     if dig((*state).damage_percent, 1000, 100) == 0 {
         ext::HSD_JObjSetFlagsAll((*state).jobjs[HUNDREDS], JOBJ_HIDDEN as u32);
     } else {
@@ -373,6 +390,7 @@ pub unsafe fn ifStatus_UpdateDamageDisplay(
 }
 
 pub unsafe extern "C" fn ifStatus_802F4EDC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ifStatus_802F4EDC");
     let hud = ifStatus_GetHUDInfo();
     let jobj: *mut HSD_JObj = (*gobj).hsd_obj as *mut HSD_JObj;
     let mut state: *mut IfDamageState = null_mut();
@@ -497,6 +515,7 @@ pub unsafe extern "C" fn ifStatus_802F4EDC(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe fn find_player_by_entity(gobj: *mut HSD_GObj) -> *mut IfDamageState {
+    melee_core::ct!("find_player_by_entity");
     for i in 0..6usize {
         if (*ifStatus_GetHUDInfo()).players[i].HUD_parent_entity == gobj {
             return &raw mut (*ifStatus_GetHUDInfo()).players[i];
@@ -506,6 +525,7 @@ pub unsafe fn find_player_by_entity(gobj: *mut HSD_GObj) -> *mut IfDamageState {
 }
 
 pub unsafe extern "C" fn ifStatus_802F5B48(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ifStatus_802F5B48");
     let p = find_player_by_entity(gobj);
     let mut t = (*p).unk9;
     if t != 0 {
@@ -574,6 +594,7 @@ pub unsafe extern "C" fn ifStatus_802F5B48(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe fn getPlayerByHUDParent(parent: *mut HSD_GObj) -> *mut IfDamageState {
+    melee_core::ct!("getPlayerByHUDParent");
     for i in 0..6usize {
         if (*ifStatus_GetHUDInfo()).players[i].HUD_parent_entity == parent {
             return &raw mut (*ifStatus_GetHUDInfo()).players[i];
@@ -583,6 +604,7 @@ pub unsafe fn getPlayerByHUDParent(parent: *mut HSD_GObj) -> *mut IfDamageState 
 }
 
 pub unsafe extern "C" fn ifStatus_802F5DE0(player: *mut HSD_GObj, arg1: i32) {
+    melee_core::ct!("ifStatus_802F5DE0");
     // TARGET_PC: the script's HUD switch and the Atlas retail mask
     if ext::Script_StatusHUDVisible() == 0 || ext::Ui_RetailHidden(AT_RE_HUD_DAMAGE) != 0 {
         return;
@@ -593,6 +615,7 @@ pub unsafe extern "C" fn ifStatus_802F5DE0(player: *mut HSD_GObj, arg1: i32) {
 }
 
 pub unsafe fn getPlayerByNext(gobj: *mut HSD_GObj) -> *mut IfDamageState {
+    melee_core::ct!("getPlayerByNext");
     for i in 0..6usize {
         if (*ifStatus_GetHUDInfo()).players[i].next == gobj {
             return &raw mut (*ifStatus_GetHUDInfo()).players[i];
@@ -602,6 +625,7 @@ pub unsafe fn getPlayerByNext(gobj: *mut HSD_GObj) -> *mut IfDamageState {
 }
 
 pub unsafe extern "C" fn ifStatus_802F5E50(gobj: *mut HSD_GObj, arg1: i32) {
+    melee_core::ct!("ifStatus_802F5E50");
     if ext::Script_StatusHUDVisible() == 0 || ext::Ui_RetailHidden(AT_RE_HUD_DAMAGE) != 0 {
         return;
     }
@@ -612,23 +636,28 @@ pub unsafe extern "C" fn ifStatus_802F5E50(gobj: *mut HSD_GObj, arg1: i32) {
 }
 
 pub unsafe fn ifStatus_GetDamageJObj(jobj: *mut HSD_JObj, i: i32) -> *mut HSD_JObj {
+    melee_core::ct!("ifStatus_GetDamageJObj");
     ifStatus_802F6194(jobj, i)
 }
 
 pub unsafe fn ifStatus_CreateMarkGObj(gobj: *mut *mut HSD_GObj) {
+    melee_core::ct!("ifStatus_CreateMarkGObj");
     *gobj = ext::GObj_Create(0xE, 0xF, 0);
 }
 
 pub unsafe fn ifStatus_GetPlayerCharacter(arg0: i32, chara: *mut u32) {
+    melee_core::ct!("ifStatus_GetPlayerCharacter");
     let idx = arg0 as u8;
     *chara = ext::Player_GetPlayerCharacter(idx as i32);
 }
 
 pub unsafe fn ifStatus_LoadDamageJObj(hud: *mut HudIndex) -> *mut HSD_JObj {
+    melee_core::ct!("ifStatus_LoadDamageJObj");
     ext::HSD_JObjLoadJoint((*hud).damage_num_joint)
 }
 
 pub unsafe extern "C" fn ifStatus_802F5EC0(state: *mut IfDamageState, player_idx: i32) -> *mut HSD_GObj {
+    melee_core::ct!("ifStatus_802F5EC0");
     let hud = ifStatus_GetHUDInfo();
     let jobj: *mut HSD_JObj;
 
@@ -674,6 +703,7 @@ pub unsafe extern "C" fn ifStatus_802F5EC0(state: *mut IfDamageState, player_idx
 }
 
 pub unsafe extern "C" fn ifStatus_802F6194(node: *mut HSD_JObj, n: i32) -> *mut HSD_JObj {
+    melee_core::ct!("ifStatus_802F6194");
     if node.is_null() || n < 0 {
         return null_mut();
     }
@@ -689,6 +719,7 @@ pub unsafe extern "C" fn ifStatus_802F6194(node: *mut HSD_JObj, n: i32) -> *mut 
 }
 
 pub unsafe extern "C" fn ifStatus_802F61FC(state: *mut IfDamageState, player_idx: i32) -> *mut HSD_GObj {
+    melee_core::ct!("ifStatus_802F61FC");
     let hud = ifStatus_GetHUDInfo();
     let idx = player_idx as u8;
     let mut chara: u32 = 0;
@@ -752,6 +783,7 @@ pub unsafe extern "C" fn ifStatus_802F61FC(state: *mut IfDamageState, player_idx
 }
 
 pub unsafe extern "C" fn ifStatus_802F6508(arg0: i32) {
+    melee_core::ct!("ifStatus_802F6508");
     if ext::Player_GetPlayerSlotType(arg0) != Gm_PKind_NA && (ifStatus_804D6D60 as i32) > arg0 {
         let rules = ext::gm_GetStartMeleeRules();
         if (*rules).x2_6() != 0 {
@@ -785,6 +817,7 @@ pub unsafe extern "C" fn ifStatus_802F6508(arg0: i32) {
 }
 
 pub unsafe extern "C" fn ifStatus_802F665C(arg0: i32) {
+    melee_core::ct!("ifStatus_802F665C");
     ext::ifAll_802F343C(arg0);
     ifStatus_804D6D60 = arg0 as u8;
     for i in 0..6 {
@@ -793,6 +826,7 @@ pub unsafe extern "C" fn ifStatus_802F665C(arg0: i32) {
 }
 
 pub unsafe extern "C" fn ifStatus_802F66A4() {
+    melee_core::ct!("ifStatus_802F66A4");
     let hud = ifStatus_GetHUDInfo();
     let mut mrk: *mut *mut DynamicModelDesc = null_mut();
     let mut num: *mut *mut DynamicModelDesc = null_mut();
@@ -816,6 +850,7 @@ pub unsafe extern "C" fn ifStatus_802F66A4() {
 }
 
 pub unsafe extern "C" fn ifStatus_802F6788(player_idx: u8) {
+    melee_core::ct!("ifStatus_802F6788");
     let p_idx = player_idx as i8;
     let player_hud = &raw mut (*ifStatus_GetHUDInfo()).players[(p_idx as i32 & 0xFF) as usize];
     if !(*player_hud).HUD_parent_entity.is_null() {
@@ -830,6 +865,7 @@ pub unsafe extern "C" fn ifStatus_802F6788(player_idx: u8) {
 }
 
 pub unsafe extern "C" fn ifStatus_802F6804() {
+    melee_core::ct!("ifStatus_802F6804");
     for i in 0..6i32 {
         let v = &raw mut (*ifStatus_GetHUDInfo()).players[(i & 0xFF) as usize];
         if !(*v).HUD_parent_entity.is_null() {
@@ -846,6 +882,7 @@ pub unsafe extern "C" fn ifStatus_802F6804() {
 
 /// Hide Percentage Digits
 pub unsafe extern "C" fn ifStatus_802F6898() {
+    melee_core::ct!("ifStatus_802F6898");
     let v = ifStatus_GetHUDInfo();
     for i in 0..6usize {
         (*v).players[i].flags.set_hide_all_digits(1);
@@ -854,6 +891,7 @@ pub unsafe extern "C" fn ifStatus_802F6898() {
 
 /// Show All Percentage Digits
 pub unsafe extern "C" fn ifStatus_802F68F0() {
+    melee_core::ct!("ifStatus_802F68F0");
     let v = ifStatus_GetHUDInfo();
     for i in 0..6usize {
         (*v).players[i].flags.set_hide_all_digits(0);
@@ -861,6 +899,7 @@ pub unsafe extern "C" fn ifStatus_802F68F0() {
 }
 
 pub unsafe extern "C" fn ifStatus_802F6948(player_idx: i32) {
+    melee_core::ct!("ifStatus_802F6948");
     let small_thing = ext::gm_GetStartMeleeRules();
     let hud_player = &raw mut (*ifStatus_GetHUDInfo()).players[player_idx as usize];
     let flags = &raw mut (*hud_player).flags;
@@ -874,6 +913,7 @@ pub unsafe extern "C" fn ifStatus_802F6948(player_idx: i32) {
 }
 
 pub unsafe fn ifStatus_TriggerStockLoss(player_idx: i32, callback: Option<unsafe extern "C" fn(i32)>) {
+    melee_core::ct!("ifStatus_TriggerStockLoss");
     let big_thing = ext::gmVs_GetSceneController();
     (*big_thing).state.unk_D = player_idx as u8;
     let small_thing = ext::gm_GetStartMeleeRules();
@@ -901,6 +941,7 @@ pub unsafe fn ifStatus_TriggerStockLoss(player_idx: i32, callback: Option<unsafe
 }
 
 pub unsafe extern "C" fn ifStatus_802F69C0(player_idx: i32, arg1: i32) {
+    melee_core::ct!("ifStatus_802F69C0");
     let big_thing = ext::gmVs_GetSceneController();
     if (*big_thing).start.match_kind() != 1 && (*big_thing).start.x2_5() != 0 {
         ext::if_802F7C30(arg1);
@@ -909,22 +950,27 @@ pub unsafe extern "C" fn ifStatus_802F69C0(player_idx: i32, arg1: i32) {
 }
 
 pub unsafe extern "C" fn ifStatus_802F6AF8(player_idx: i32) {
+    melee_core::ct!("ifStatus_802F6AF8");
     ifStatus_TriggerStockLoss(player_idx, Some(ext::cb::if_802F7AF8));
 }
 
 pub unsafe extern "C" fn ifStatus_802F6C04(player_idx: i32) {
+    melee_core::ct!("ifStatus_802F6C04");
     ifStatus_TriggerStockLoss(player_idx, Some(ext::cb::if_802F7C30));
 }
 
 pub unsafe extern "C" fn ifStatus_802F6D10(player_idx: i32) {
+    melee_core::ct!("ifStatus_802F6D10");
     ifStatus_TriggerStockLoss(player_idx, Some(ext::cb::if_802F7D08));
 }
 
 pub unsafe extern "C" fn ifStatus_802F6E1C(slot: i32) {
+    melee_core::ct!("ifStatus_802F6E1C");
     ifStatus_802F6508(slot);
 }
 
 pub unsafe extern "C" fn ifStatus_802F6E3C(player_num: i32) {
+    melee_core::ct!("ifStatus_802F6E3C");
     let player = &raw mut (*ifStatus_GetHUDInfo()).players[player_num as usize];
     if !(*player).HUD_parent_entity.is_null() {
         ext::HSD_GObj_80390CAC((*player).HUD_parent_entity);

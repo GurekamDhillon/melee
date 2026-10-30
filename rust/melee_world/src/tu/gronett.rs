@@ -224,9 +224,10 @@ pub static mut grOt_StageData: StageData = StageData {
     joint_count: 0,
 };
 
-pub unsafe extern "C" fn grOnett_801E3734(_arg: i32) {}
+pub unsafe extern "C" fn grOnett_801E3734(_arg: i32) { melee_core::ct!("grOnett_801E3734");}
 
 pub unsafe extern "C" fn grOnett_801E3738() {
+    melee_core::ct!("grOnett_801E3738");
     yakumono_param = ext::Ground_GetYakumonoParam() as *mut grOnett_StageParam;
     ext::stage_info.unk8C.set_b4(0);
     ext::stage_info.unk8C.set_b5(1);
@@ -241,17 +242,20 @@ pub unsafe extern "C" fn grOnett_801E3738() {
     ext::Ground_801C3BB4();
 }
 
-pub unsafe extern "C" fn grOnett_801E37C4() {}
+pub unsafe extern "C" fn grOnett_801E37C4() { melee_core::ct!("grOnett_801E37C4");}
 
 pub unsafe extern "C" fn grOnett_801E37C8() {
+    melee_core::ct!("grOnett_801E37C8");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
 
 pub unsafe extern "C" fn grOnett_801E37EC() -> i32 {
+    melee_core::ct!("grOnett_801E37EC");
     0
 }
 
 pub unsafe extern "C" fn grOnett_801E37F4(gobj_id: i32) -> *mut HSD_GObj {
+    melee_core::ct!("grOnett_801E37F4");
     let callbacks = (&raw mut grOt_803E27E0 as *mut StageCallbacks).add(gobj_id as usize);
     let gobj = ext::Ground_GetStageGObj(gobj_id);
     if !gobj.is_null() {
@@ -261,20 +265,23 @@ pub unsafe extern "C" fn grOnett_801E37F4(gobj_id: i32) -> *mut HSD_GObj {
 }
 
 pub unsafe extern "C" fn grOnett_801E38DC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grOnett_801E38DC");
     let gp = (*gobj).user_data as *mut Ground;
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
     (*gp).x11_flags.set_b012(2);
 }
 
 pub unsafe extern "C" fn grOnett_801E3920(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grOnett_801E3920");
     0
 }
 
-pub unsafe extern "C" fn grOnett_801E3928(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grOnett_801E3928(_gobj: *mut HSD_GObj) { melee_core::ct!("grOnett_801E3928");}
 
-pub unsafe extern "C" fn grOnett_801E392C(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grOnett_801E392C(_gobj: *mut HSD_GObj) { melee_core::ct!("grOnett_801E392C");}
 
 pub unsafe extern "C" fn grOnett_801E3930(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grOnett_801E3930");
     let gp = (*gobj).user_data as *mut Ground;
 
     ext::mpJointSetCb1(0, gp as *mut c_void, Some(grOnett_801E54B4));
@@ -295,6 +302,7 @@ pub unsafe extern "C" fn grOnett_801E3930(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grOnett_801E3A34(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grOnett_801E3A34");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let yp = yakumono_param;
@@ -342,10 +350,12 @@ pub unsafe extern "C" fn grOnett_801E3A34(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grOnett_801E3C58(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grOnett_801E3C58");
     0
 }
 
 pub unsafe extern "C" fn grOnett_801E3C60(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grOnett_801E3C60");
     let gp = (*gobj).user_data as *mut Ground;
 
     grOnett_801E5214(gobj);
@@ -360,9 +370,10 @@ pub unsafe extern "C" fn grOnett_801E3C60(gobj: *mut HSD_GObj) {
     Ground_UpdateWindAndMapColl(gobj);
 }
 
-pub unsafe extern "C" fn grOnett_801E3CE0(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grOnett_801E3CE0(_gobj: *mut HSD_GObj) { melee_core::ct!("grOnett_801E3CE0");}
 
 pub unsafe extern "C" fn grOnett_801E3CE4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grOnett_801E3CE4");
     let gp = (*gobj).user_data as *mut Ground;
 
     ext::Ground_InitMapColl((*gobj).hsd_obj as *mut HSD_JObj, (*gp).map_id as i32);
@@ -382,10 +393,12 @@ pub unsafe extern "C" fn grOnett_801E3CE4(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grOnett_801E3D98(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grOnett_801E3D98");
     0
 }
 
 pub unsafe extern "C" fn grOnett_801E3DA0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grOnett_801E3DA0");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let yp = yakumono_param;
@@ -476,10 +489,11 @@ pub unsafe extern "C" fn grOnett_801E3DA0(gobj: *mut HSD_GObj) {
     ext::Ground_UpdateMapColl(gobj);
 }
 
-pub unsafe extern "C" fn grOnett_801E40E0(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grOnett_801E40E0(_gobj: *mut HSD_GObj) { melee_core::ct!("grOnett_801E40E0");}
 
 /// `mpLib_JointCollisionCallback` of the building
 pub unsafe extern "C" fn grOnett_801E40E4(user_data: *mut c_void, joint_id: i32, coll: *mut CollData, coll_x50: i32, ground_kind: u32, delta_y: f32) {
+    melee_core::ct!("grOnett_801E40E4");
     let gp = user_data as *mut Ground;
     let yp = yakumono_param;
 
@@ -508,10 +522,12 @@ pub unsafe extern "C" fn grOnett_801E40E4(user_data: *mut c_void, joint_id: i32,
 }
 
 pub unsafe extern "C" fn grOnett_801E41B0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grOnett_801E41B0");
     (*((*gobj).user_data as *mut Ground)).u.onettcar.set_x0_b0(0);
 }
 
 pub unsafe extern "C" fn grOnett_801E41C8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grOnett_801E41C8");
     let gp = (*gobj).user_data as *mut Ground;
 
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
@@ -551,16 +567,19 @@ pub unsafe extern "C" fn grOnett_801E41C8(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grOnett_801E43D8(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grOnett_801E43D8");
     0
 }
 
 /// `HSD_RandF_noinline` (file-local inline)
 pub unsafe fn HSD_RandF_noinline() -> f32 {
+    melee_core::ct!("HSD_RandF_noinline");
     ext::HSD_Randf()
 }
 
 /// `grOnett_StartNextCar` (file-local inline)
 pub unsafe fn grOnett_StartNextCar(gp: *mut Ground) {
+    melee_core::ct!("grOnett_StartNextCar");
     let yp = yakumono_param;
     let c = &mut (*gp).u.onettcar;
     let next = c.next_car;
@@ -579,6 +598,7 @@ pub unsafe fn grOnett_StartNextCar(gp: *mut Ground) {
 
 /// `grOnett_WaitCar` (file-local inline)
 pub unsafe fn grOnett_WaitCar(gp: *mut Ground, saved_car: i8) {
+    melee_core::ct!("grOnett_WaitCar");
     let yp = yakumono_param;
     let c = &mut (*gp).u.onettcar;
     let t = c.x108;
@@ -601,6 +621,7 @@ pub unsafe fn grOnett_WaitCar(gp: *mut Ground, saved_car: i8) {
 }
 
 pub unsafe extern "C" fn grOnett_801E43E0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grOnett_801E43E0");
     let gp = (*gobj).user_data as *mut Ground;
     let yp = yakumono_param;
     let saved_car: i8 = (*gp).u.onettcar.curr_car;
@@ -794,9 +815,10 @@ pub unsafe extern "C" fn grOnett_801E43E0(gobj: *mut HSD_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grOnett_801E502C(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grOnett_801E502C(_gobj: *mut HSD_GObj) { melee_core::ct!("grOnett_801E502C");}
 
 pub unsafe extern "C" fn grOnett_801E5030(_igobj: *mut HSD_GObj, gp: *mut Ground) {
+    melee_core::ct!("grOnett_801E5030");
     if (*gp).u.onettcar.state_a as i32 == 4 {
         let s: i32 = if ext::HSD_Randi(2) != 0 { 0x5F37C } else { 0x5F37D };
         ext::Ground_801C53EC(s as u32);
@@ -818,16 +840,19 @@ pub unsafe extern "C" fn grOnett_801E5030(_igobj: *mut HSD_GObj, gp: *mut Ground
 }
 
 pub unsafe extern "C" fn grOnett_801E5140(idx: i32) {
+    melee_core::ct!("grOnett_801E5140");
     let table: [u32; 4] = [0x5F370, 0x5F370, 0x5F371, 0x5F372];
     ext::Ground_801C53EC(table[idx as usize]);
 }
 
 /// `grOnett_SfxLookup` (file-local inline)
 pub unsafe fn grOnett_SfxLookup(table: *mut c_void, idx: i32, ty: i32) -> i32 {
+    melee_core::ct!("grOnett_SfxLookup");
     (*(table as *const [i32; 2]).add(idx as usize))[(ty - 4) as usize]
 }
 
 pub unsafe extern "C" fn grOnett_801E5194(gp: *mut Ground, car_idx: i32, sound_type: i32) {
+    melee_core::ct!("grOnett_801E5194");
     let sfx_table: [[i32; 2]; 4] = [
         [0x5F377, 0x5F376],
         [0x5F377, 0x5F376],
@@ -839,6 +864,7 @@ pub unsafe extern "C" fn grOnett_801E5194(gp: *mut Ground, car_idx: i32, sound_t
 }
 
 pub unsafe extern "C" fn grOnett_801E5214(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grOnett_801E5214");
     let gp = (*gobj).user_data as *mut Ground;
     let yp = yakumono_param;
     for i in 0..2usize {
@@ -910,6 +936,7 @@ pub unsafe extern "C" fn grOnett_801E5214(gobj: *mut HSD_GObj) {
 
 /// `mpLib_JointCollisionCallback` of the awnings
 pub unsafe extern "C" fn grOnett_801E54B4(user_data: *mut c_void, joint_id: i32, coll: *mut CollData, coll_x50: i32, ground_kind: u32, delta_y: f32) {
+    melee_core::ct!("grOnett_801E54B4");
     let gp = user_data as *mut Ground;
     let yp = yakumono_param;
     let temp = (*coll).x34_flags.b1234() as i32;
@@ -929,6 +956,7 @@ pub unsafe extern "C" fn grOnett_801E54B4(user_data: *mut c_void, joint_id: i32,
 }
 
 pub unsafe extern "C" fn grOnett_801E5538(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grOnett_801E5538");
     let gp = (*gobj).user_data as *mut Ground;
     let yp = yakumono_param;
     let new_var2 = (*gp).u.onett.timer;
@@ -955,6 +983,7 @@ pub unsafe extern "C" fn grOnett_801E5538(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grOnett_801E56FC() -> *mut DynamicModelDesc {
+    melee_core::ct!("grOnett_801E56FC");
     let archive = ext::grDatFiles_801C6330(0x1);
     assert!(!archive.is_null(), "HSD_ASSERT(1319, archive)");
     let dat = (*archive).unk4;
@@ -965,10 +994,12 @@ pub unsafe extern "C" fn grOnett_801E56FC() -> *mut DynamicModelDesc {
 }
 
 pub unsafe extern "C" fn grOnett_801E5760(_arg: i32) -> *mut DynamicsDesc {
+    melee_core::ct!("grOnett_801E5760");
     null_mut()
 }
 
 pub unsafe extern "C" fn grOnett_801E5768(a: *mut Vec3, _b: i32, jobj: *mut HSD_JObj) -> i32 {
+    melee_core::ct!("grOnett_801E5768");
     let mut vec = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ext::lb_8000B1CC(jobj, null_mut(), &mut vec);
     if (*a).y > vec.y {

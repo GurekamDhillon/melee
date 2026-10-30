@@ -57,6 +57,7 @@ pub mod ext {
 }
 
 pub fn ftCo_80099F1C(g: G) -> bool {
+    melee_core::ct!("ftCo_80099F1C");
     let f = fp(g);
     f.input.lstick[0].y <= -cd().x464
         && (f.active_timer.lstick.y as f32) < cd().x468
@@ -64,6 +65,7 @@ pub fn ftCo_80099F1C(g: G) -> bool {
 }
 
 pub fn ftCo_80099F9C(g: G) -> bool {
+    melee_core::ct!("ftCo_80099F9C");
     if ext::ftCo_800C5240(g) {
         return ext::ftCo_800C60C8(g);
     }
@@ -90,6 +92,7 @@ fn ftCo_8009A080_Check(g: G) -> bool {
 }
 
 pub fn ftCo_8009A080(g: G) -> bool {
+    melee_core::ct!("ftCo_8009A080");
     if fp(g).input.held_buttons[0] & HSD_PAD_LR != 0 && ftCo_8009A080_Check(g) {
         ftCo_8009A228(g);
         return true;
@@ -98,6 +101,7 @@ pub fn ftCo_8009A080(g: G) -> bool {
 }
 
 pub fn ftCo_8009A134(g: G) -> bool {
+    melee_core::ct!("ftCo_8009A134");
     if ext::mpColl_IsOnPlatform(&mut fp(g).coll_data) {
         ext::mpUpdateFloorSkip(&mut fp(g).coll_data);
         return true;
@@ -106,6 +110,7 @@ pub fn ftCo_8009A134(g: G) -> bool {
 }
 
 pub fn ftCo_8009A184(g: G, msid: i32, mf: u32, anim_start: f32) {
+    melee_core::ct!("ftCo_8009A184");
     ext::ftCommon_8007D5D4(fp(g));
     ext::ftCommon_ClampAirDrift(fp(g));
     fp(g).self_vel.y = cd().x46C;
@@ -115,16 +120,19 @@ pub fn ftCo_8009A184(g: G, msid: i32, mf: u32, anim_start: f32) {
 }
 
 pub fn ftCo_8009A228(g: G) {
+    melee_core::ct!("ftCo_8009A228");
     ftCo_8009A184(g, ftCo_MS_Pass as i32, Ft_MF_None as u32, 0.0);
 }
 
 pub fn ftCo_Pass_Anim(g: G) {
+    melee_core::ct!("ftCo_Pass_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ftCo_Fall_Enter(g);
     }
 }
 
 pub fn ftCo_Pass_IASA(g: G) {
+    melee_core::ct!("ftCo_Pass_IASA");
     let _ = ext::ftCo_SpecialAir_CheckInput(g)
         || ext::ftCo_80095328(g, core::ptr::null_mut())
         || ext::ftCo_800D7100(g)
@@ -136,9 +144,11 @@ pub fn ftCo_Pass_IASA(g: G) {
 }
 
 pub fn ftCo_Pass_Phys(g: G) {
+    melee_core::ct!("ftCo_Pass_Phys");
     ext::ft_80084DB0(g);
 }
 
 pub fn ftCo_Pass_Coll(g: G) {
+    melee_core::ct!("ftCo_Pass_Coll");
     ext::ft_80082F28(g);
 }

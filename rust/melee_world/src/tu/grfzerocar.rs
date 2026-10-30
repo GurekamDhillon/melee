@@ -116,6 +116,7 @@ pub static grFZeroCar_804D4598: [u8; 8] = *b"archive\0";
 
 /// `static inline setup_car_child`
 pub unsafe fn setup_car_child(parent: *mut HSD_JObj, ext_count: i16, offset: i32, scale_factor: f32) {
+    melee_core::ct!("setup_car_child");
     let archive = ext::grDatFiles_801C6330(ext_count as i32);
     assert!(!archive.is_null(), "archive"); // HSD_ASSERTMSG(95, archive, grFZeroCar_804D4598)
 
@@ -140,6 +141,7 @@ pub unsafe fn setup_car_child(parent: *mut HSD_JObj, ext_count: i16, offset: i32
 
 /// 1CAFBC
 pub unsafe extern "C" fn grFZeroCar_801CAFBC(gobj: *mut HSD_GObj, data: *mut c_void, count: i32, mode: i32) {
+    melee_core::ct!("grFZeroCar_801CAFBC");
     let root = (*gobj).hsd_obj as *mut HSD_JObj;
     let ground_scale = ext::Ground_801C0498();
 

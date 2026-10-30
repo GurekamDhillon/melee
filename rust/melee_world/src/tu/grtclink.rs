@@ -19,15 +19,17 @@ pub use crate::gr::trivial::grtclink::{
     grTCLink_80220220,
 };
 
-pub unsafe extern "C" fn grTCLink_8021FF44(_unused: i32) {}
+pub unsafe extern "C" fn grTCLink_8021FF44(_unused: i32) { melee_core::ct!("grTCLink_8021FF44");}
 
 pub unsafe extern "C" fn grTCLink_OnInit() {
+    melee_core::ct!("grTCLink_OnInit");
     Ground_InitTargetStage(grTCLink_8021FFE8);
 }
 
-pub unsafe extern "C" fn grTclink_UnkStage0_OnLoad() {}
+pub unsafe extern "C" fn grTclink_UnkStage0_OnLoad() { melee_core::ct!("grTclink_UnkStage0_OnLoad");}
 
 pub unsafe extern "C" fn grTCLink_8021FFE8(id: i32) -> *mut HSD_GObj {
+    melee_core::ct!("grTCLink_8021FFE8");
     let callbacks = (&raw mut grTCLink_StageCallbacks as *mut StageCallbacks).add(id as usize);
     let gobj = ext::Ground_GetStageGObj(id);
     if !gobj.is_null() {
@@ -39,17 +41,18 @@ pub unsafe extern "C" fn grTCLink_8021FFE8(id: i32) -> *mut HSD_GObj {
 }
 
 pub unsafe extern "C" fn grTCLink_802200D0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grTCLink_802200D0");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
 }
 
-pub unsafe extern "C" fn grTCLink_80220104(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grTCLink_80220104(_gobj: *mut HSD_GObj) { melee_core::ct!("grTCLink_80220104");}
 
-pub unsafe extern "C" fn grTCLink_80220108(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grTCLink_80220108(_gobj: *mut HSD_GObj) { melee_core::ct!("grTCLink_80220108");}
 
-pub unsafe extern "C" fn grTCLink_80220198(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grTCLink_80220198(_gobj: *mut HSD_GObj) { melee_core::ct!("grTCLink_80220198");}
 
-pub unsafe extern "C" fn grTCLink_80220214(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grTCLink_80220214(_gobj: *mut HSD_GObj) { melee_core::ct!("grTCLink_80220214");}
 
 pub static mut grTCLink_StageCallbacks: [StageCallbacks; 4] = [
     StageCallbacks {

@@ -338,6 +338,7 @@ unsafe fn foreach_frame(jobj: *mut HSD_JObj, frame: f64) {
 
 /// `inline0`: freeze a joint's animation on frame `f`.
 pub unsafe fn inline0(jobj: *mut HSD_JObj, f: f32) {
+    melee_core::ct!("inline0");
     foreach_rate(jobj, 0.0);
     foreach_frame(jobj, f as f64);
     ext::HSD_JObjAnimAll(jobj);
@@ -356,6 +357,7 @@ fn slw(x: u32, shift: i32) -> u32 {
 /// One key value of an FObj stream (fobj.c's own reader, restated): the format is the top 3 bits
 /// of `frac`, the fixed-point shift the low 5.
 pub unsafe fn genoArt_FObjValue(p: *mut *mut u8, frac: u8) -> f32 {
+    melee_core::ct!("genoArt_FObjValue");
     let s = *p;
     let scale = (1i32 << (frac & 0x1F)) as f32;
     match frac & 0xE0 {
@@ -384,6 +386,7 @@ pub unsafe fn genoArt_FObjValue(p: *mut *mut u8, frac: u8) -> f32 {
 }
 
 pub unsafe fn genoArt_FObjPacked(p: *mut *mut u8) -> u32 {
+    melee_core::ct!("genoArt_FObjPacked");
     let mut s = *p;
     let mut v = (*s & 0x7F) as u32;
     let mut shift = 7;
@@ -404,6 +407,7 @@ pub unsafe fn genoArt_FObjPacked(p: *mut *mut u8) -> u32 {
 /// sits exactly on `frame` (a frame with no key of its own just holds the previous name), and
 /// stores the largest image index any key selects in `*max_img` (-1 when there is no track).
 pub unsafe fn genoArt_ImageKeyAt(tobj: *mut HSD_TObj, frame: i32, max_img: *mut i32) -> bool {
+    melee_core::ct!("genoArt_ImageKeyAt");
     let mut hit = false;
     *max_img = -1;
     if tobj.is_null() || (*tobj).aobj.is_null() {
@@ -472,6 +476,7 @@ pub unsafe fn genoArt_ImageKeyAt(tobj: *mut HSD_TObj, frame: i32, max_img: *mut 
 
 /// geno_art_text.h `genoArt_Initials`: the first two words, or two letters of a single word.
 pub unsafe fn genoArt_Initials(name: *const u8, out: *mut u8) {
+    melee_core::ct!("genoArt_Initials");
     let mut n = 0usize;
     let mut start = true;
     let mut second = 0u8;
@@ -510,6 +515,7 @@ pub unsafe fn genoArt_Initials(name: *const u8, out: *mut u8) {
 /// retail cast, the external id for an m-ex fighter whose name the loaded GmRst really has, -1
 /// for an m-ex fighter it does not (the caller draws the name then).
 pub unsafe fn gmRst_NameFrame(tobj: *mut HSD_TObj, ck: i32, fk: i32) -> i32 {
+    melee_core::ct!("gmRst_NameFrame");
     let mut max_img = 0i32;
     if !gmRst_IsMex(ck) {
         return ext::gm_80168B34(ck as CharacterKind, fk, 0) as i32;
@@ -524,6 +530,7 @@ pub unsafe fn gmRst_NameFrame(tobj: *mut HSD_TObj, ck: i32, fk: i32) -> i32 {
 /// Give name strip `tobj` a texture of m-ex fighter `ck`'s own name, drawn from its MxDt name,
 /// and point every image its animation can select at it. Scene-heap memory.
 pub unsafe fn gmRst_DrawName(tobj: *mut HSD_TObj, ck: i32, style: i32) {
+    melee_core::ct!("gmRst_DrawName");
     static mut geno_name: [u8; 48] = [0; 48];
     let mut upper = [0u8; 48];
     let mut max_img = 0i32;
@@ -591,6 +598,7 @@ pub unsafe fn gmRst_DrawName(tobj: *mut HSD_TObj, ck: i32, style: i32) {
 /// m-ex "Replace Results Stock and Emblem Matanim", per player: `jobj`'s DObj `dobj_index` takes
 /// IfAll's `symbol` matanim. False when the disc's IfAll has no such symbol (a retail disc).
 pub unsafe fn gmRst_MexAttach(jobj: *mut HSD_JObj, mut dobj_index: i32, stock: bool) -> bool {
+    melee_core::ct!("gmRst_MexAttach");
     if jobj.is_null() {
         return false;
     }
@@ -631,6 +639,7 @@ pub unsafe fn gmRst_MexAttach(jobj: *mut HSD_JObj, mut dobj_index: i32, stock: b
 
 /// The TObj of DObj number `index` of `jobj`.
 pub unsafe fn gmRst_GenoTObjAt(jobj: *mut HSD_JObj, mut index: i32) -> *mut HSD_TObj {
+    melee_core::ct!("gmRst_GenoTObjAt");
     if jobj.is_null() {
         return null_mut();
     }
@@ -651,6 +660,7 @@ pub unsafe fn gmRst_GenoTObjAt(jobj: *mut HSD_JObj, mut index: i32) -> *mut HSD_
 
 /// As ifStock_ReqAnim: every texture-image key selects our scene-owned image.
 pub unsafe fn gmRst_GenoSetImage(tobj: *mut HSD_TObj, desc: *mut HSD_ImageDesc) -> bool {
+    melee_core::ct!("gmRst_GenoSetImage");
     let mut max_img = 0i32;
     if tobj.is_null() || desc.is_null() {
         return false;
@@ -679,6 +689,7 @@ pub unsafe fn gmRst_GenoSetImage(tobj: *mut HSD_TObj, desc: *mut HSD_ImageDesc) 
 
 /// Give `tobj` the package art of Geno define `ck` (`what`: 1 CSP, 2 stock, 3 emblem, 4 results).
 pub unsafe fn gmRst_GenoApplyArt(tobj: *mut HSD_TObj, ck: i32, what: i32, costume: i32) -> bool {
+    melee_core::ct!("gmRst_GenoApplyArt");
     if tobj.is_null() {
         return false;
     }
@@ -738,6 +749,7 @@ pub unsafe fn gmRst_GenoApplyArt(tobj: *mut HSD_TObj, ck: i32, what: i32, costum
 
 /// No visual donor: draw the define's initials with the existing I4 name-strip renderer.
 pub unsafe fn gmRst_GenoLetters(tobj: *mut HSD_TObj, ck: i32) -> bool {
+    melee_core::ct!("gmRst_GenoLetters");
     let mut name = [0u8; 48];
     let mut abbr = [0u8; 3];
     if tobj.is_null() {
@@ -786,12 +798,14 @@ pub unsafe fn gmRst_GenoLetters(tobj: *mut HSD_TObj, ck: i32) -> bool {
 
 /// `gmRst_GenoArtReset`: forget the owned CSS archive.
 pub unsafe fn gmRst_GenoArtReset() {
+    melee_core::ct!("gmRst_GenoArtReset");
     gmRst_GenoChrArt = null_mut();
     gmRst_GenoChrTried = 0;
 }
 
 /// `gmRst_GenoArtClose`: close and free the owned CSS archive.
 pub unsafe fn gmRst_GenoArtClose() {
+    melee_core::ct!("gmRst_GenoArtClose");
     if !gmRst_GenoChrArt.is_null() {
         ext::mnCharSel_PcArtClose();
         ext::lbArchive_80016EFC(gmRst_GenoChrArt);
@@ -802,6 +816,7 @@ pub unsafe fn gmRst_GenoArtClose() {
 /// Own the disc archive for the whole results scene and put the donor fighter's CSS portrait on
 /// `tobj` (palette copied: `TObjRelease` owns its TLUT objects).
 pub unsafe fn gmRst_GenoRetailPortrait(tobj: *mut HSD_TObj, base: i32, costume: i32) -> bool {
+    melee_core::ct!("gmRst_GenoRetailPortrait");
     let mut image: *mut HSD_ImageDesc = null_mut();
     let mut palette: *mut HSD_Tlut = null_mut();
     let mut copy: *mut HSD_Tlut = null_mut();
@@ -860,6 +875,7 @@ pub unsafe fn gmRst_GenoRetailPortrait(tobj: *mut HSD_TObj, base: i32, costume: 
 
 /// Returns true for a Geno define, even if it has no loadable package art.
 pub unsafe fn gmRst_GenoCard(card: *mut HSD_JObj, ck: i32, costume: i32) -> bool {
+    melee_core::ct!("gmRst_GenoCard");
     if ext::Geno_DefineBaseCK(ck) < 0 {
         return false;
     }
@@ -885,6 +901,7 @@ pub unsafe fn gmRst_GenoCard(card: *mut HSD_JObj, ck: i32, costume: i32) -> bool
 
 /// fn_80177748: show each present player's card emblem and result banner.
 pub unsafe fn fn_80177748() {
+    melee_core::ct!("fn_80177748");
     let d = data();
     let temp_r3 = ext::fn_80174274();
     let mut var_r24: i32 = 0;
@@ -933,6 +950,7 @@ pub unsafe fn fn_80177748() {
 
 /// fn_80177920: any pad press on the results card moves the scene on (x1 = 3).
 pub unsafe fn fn_80177920(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80177920");
     let d = data();
     let end = ext::fn_80174274();
     let mut human_controller_count = 0;
@@ -963,6 +981,7 @@ pub unsafe fn fn_80177920(gobj: *mut HSD_GObj) {
 
 /// `pagePrev` (static inline).
 pub unsafe fn pagePrev(slot: i32) -> bool {
+    melee_core::ct!("pagePrev");
     let d = data();
     let pd = addr_of_mut!((*d).player_data[slot as usize]);
     if (*pd).page != 0 {
@@ -977,6 +996,7 @@ pub unsafe fn pagePrev(slot: i32) -> bool {
 
 /// `pageNext` (static inline).
 pub unsafe fn pageNext(slot: i32) -> bool {
+    melee_core::ct!("pageNext");
     let d = data();
     let pd = addr_of_mut!((*d).player_data[slot as usize]);
     if ((*pd).page as i32) < (*d).num_pages as i32 - 1 {
@@ -993,6 +1013,7 @@ const scroll_speed: f32 = 0.2f32;
 
 /// `scrollDown` (static inline).
 pub unsafe fn scrollDown(slot: i32, mut amount: f32) -> bool {
+    melee_core::ct!("scrollDown");
     let arg = slot;
     let d = data();
     let pd = addr_of_mut!((*d).player_data[slot as usize]);
@@ -1013,6 +1034,7 @@ pub unsafe fn scrollDown(slot: i32, mut amount: f32) -> bool {
 
 /// `scrollUp` (static inline).
 pub unsafe fn scrollUp(slot: i32, mut amount: f32) -> bool {
+    melee_core::ct!("scrollUp");
     let d = data();
     let pd = addr_of_mut!((*d).player_data[slot as usize]);
     amount *= scroll_speed;
@@ -1032,6 +1054,7 @@ pub unsafe fn scrollUp(slot: i32, mut amount: f32) -> bool {
 /// next/previous page, and moving the stick up/down scrolls within the current page. True if the
 /// input was handled and the screen needs updating.
 pub unsafe fn fn_80177B7C(slot: i32) -> bool {
+    melee_core::ct!("fn_80177B7C");
     const scroll_deadzone: f32 = 0.3f32;
     let pad = copy_pad(slot as u8 as usize);
     let mut stick_y = (*pad).nml_stickY;
@@ -1057,6 +1080,7 @@ pub unsafe fn fn_80177B7C(slot: i32) -> bool {
 /// fn_80177DD0: a slot's stats page input (a pad: `fn_80177B7C`; no pad: the pages scroll and
 /// turn by themselves).
 pub unsafe fn fn_80177DD0(slot: i32) -> bool {
+    melee_core::ct!("fn_80177DD0");
     let d = data();
     let unk: *mut c_void = addr_of_mut!(super::gmresult::lbl_803D6878).cast();
     let pd = addr_of_mut!((*d).player_data[slot as usize]);
@@ -1127,6 +1151,7 @@ pub unsafe fn fn_80177DD0(slot: i32) -> bool {
 
 /// fn_80178050: the cards' per-frame input / animation state machine (x0_23 phases).
 pub unsafe fn fn_80178050(arg0: *mut HSD_GObj) {
+    melee_core::ct!("fn_80178050");
     let d = data();
     let jobj: *mut HSD_JObj = (*arg0).hsd_obj.cast();
     let match_end = ext::fn_80174274();
@@ -1290,6 +1315,7 @@ unsafe fn fn_801785B0_kind(jobj: *mut HSD_JObj, remove: [i32; 3], keep: i32) {
 
 /// fn_801785B0: the end-of-match banner (which of the four score words shows).
 pub unsafe fn fn_801785B0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801785B0");
     let jobj: *mut HSD_JObj = (*gobj).hsd_obj.cast();
     let match_end = ext::fn_80174274();
     let mode = (*match_end).match_kind;
@@ -1319,6 +1345,7 @@ unsafe fn banner_frames(aobj: *mut HSD_AObj, tex_id: i32) {
 
 /// `fn_80178BB4_init_players` (static inline): set every card's pictures; counts KOs.
 pub unsafe fn fn_80178BB4_init_players(d: *mut ResultsData, match_end: *mut MatchEnd, i: *mut i32, ko_count: *mut i32) {
+    melee_core::ct!("fn_80178BB4_init_players");
     while *i < 6 {
         let ii = *i as usize;
         let pd = addr_of_mut!((*d).player_data[ii]);
@@ -1446,6 +1473,7 @@ pub unsafe fn fn_80178BB4_init_players(d: *mut ResultsData, match_end: *mut Matc
 
 /// fn_80178BB4: results card setup (the scene's first frame).
 pub unsafe fn fn_80178BB4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80178BB4");
     let d = data();
     let match_end = ext::fn_80174274();
     let mut ko_count: i32 = 0;
@@ -1487,6 +1515,7 @@ pub unsafe fn fn_80178BB4(gobj: *mut HSD_GObj) {
 /// fn_801791E4: should the results scene leave the card state (a start press on a cancelled
 /// match, or 160 frames in).
 pub unsafe fn fn_801791E4() -> bool {
+    melee_core::ct!("fn_801791E4");
     let d = data();
     let end = ext::fn_80174274();
 
@@ -1509,11 +1538,13 @@ pub unsafe fn fn_801791E4() -> bool {
 
 /// `fn_80179350_inline` (static inline).
 pub unsafe fn fn_80179350_inline() -> i32 {
+    melee_core::ct!("fn_80179350_inline");
     fn_801791E4() as i32
 }
 
 /// `fn_80179350_update` (static inline): sounds by frame, then the state machine of `x1`.
 pub unsafe fn fn_80179350_update(d: *mut ResultsData, match_end: *mut MatchEnd, arg0: *mut HSD_GObj) {
+    melee_core::ct!("fn_80179350_update");
     if (*d).x8 as u32 == 0 && (*d).x0_4() != 0 {
         ext::gm_SetDbPauseFlag(0);
     }
@@ -1579,6 +1610,7 @@ pub unsafe fn fn_80179350_update(d: *mut ResultsData, match_end: *mut MatchEnd, 
 
 /// fn_80179350: the results scene's per-frame callback.
 pub unsafe fn fn_80179350(arg0: *mut HSD_GObj) {
+    melee_core::ct!("fn_80179350");
     let d = data();
     let match_end = ext::fn_80174274();
     for i in 0..6usize {
@@ -1595,6 +1627,7 @@ pub unsafe fn fn_80179350(arg0: *mut HSD_GObj) {
 
 /// fn_801795D4: how many players placed other than last (0 when nobody did).
 pub unsafe fn fn_801795D4() -> i32 {
+    melee_core::ct!("fn_801795D4");
     let match_end = addr_of_mut!((*addr_of_mut!(lbl_8046E3AC)).match_end);
     let mut count = 0;
 
@@ -1619,6 +1652,7 @@ pub unsafe fn fn_801795D4() -> i32 {
 
 /// fn_801796F0: the placing index of player `arg0` among those who placed.
 pub unsafe fn fn_801796F0(arg0: i32) -> i32 {
+    melee_core::ct!("fn_801796F0");
     let match_end = addr_of_mut!((*addr_of_mut!(lbl_8046E3AC)).match_end);
     let mut count = 0;
 

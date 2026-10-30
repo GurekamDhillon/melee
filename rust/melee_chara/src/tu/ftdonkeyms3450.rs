@@ -31,6 +31,7 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 
 /// `ifSomething` (static).
 pub fn ifSomething(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ifSomething");
     unsafe {
         let fp = fpp(gobj);
         let a = (*fp).x2CC;
@@ -40,6 +41,7 @@ pub fn ifSomething(gobj: *mut HSD_GObj) {
 
 /// Starts the cargo turn when the common turn check fires.
 pub fn ftDk_MS_345_800E0134(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftDk_MS_345_800E0134");
     if ext::ftCo_800C97A8(gobj) {
         ifSomething(gobj);
         return true;

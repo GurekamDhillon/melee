@@ -61,6 +61,7 @@ unsafe fn item_of(g: *mut HSD_GObj) -> *mut Item {
 /// `Item_InitSpawnPosition` (itkinds inlines.h).
 #[inline]
 pub unsafe fn Item_InitSpawnPosition(spawn: *mut SpawnItem, pos: *const Vec, on_plane: bool) {
+    melee_core::ct!("Item_InitSpawnPosition");
     (*spawn).prev_pos = *pos;
     if on_plane {
         (*spawn).prev_pos.z = 0.0;
@@ -71,6 +72,7 @@ pub unsafe fn Item_InitSpawnPosition(spawn: *mut SpawnItem, pos: *const Vec, on_
 /// `Item_InitSpawnCommonFields` (itkinds inlines.h).
 #[inline]
 pub unsafe fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD_GObj, facing_dir: f32, initial_collision: bool) {
+    melee_core::ct!("Item_InitSpawnCommonFields");
     (*spawn).facing_dir = facing_dir;
     (*spawn).x3C_damage = 0;
     (*spawn).vel.z = 0.0;
@@ -85,6 +87,7 @@ pub unsafe fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD
 /// `Item_AttachToParent` (itkinds inlines.h).
 #[inline]
 pub unsafe fn Item_AttachToParent(item_gobj: *mut Item_GObj, parent: *mut HSD_GObj, part: Fighter_Part) -> *mut Item_GObj {
+    melee_core::ct!("Item_AttachToParent");
     ext::Item_8026AB54(item_gobj, parent, part);
     ext::db_80225DD8(item_gobj, parent);
     item_gobj
@@ -93,6 +96,7 @@ pub unsafe fn Item_AttachToParent(item_gobj: *mut Item_GObj, parent: *mut HSD_GO
 /// `Item_AttachGameWatchArticle` (itkinds inlines.h).
 #[inline]
 pub unsafe fn Item_AttachGameWatchArticle(parent: *mut HSD_GObj, part: Fighter_Part, item_gobj: *mut Item_GObj, attributes: *mut *mut c_void) {
+    melee_core::ct!("Item_AttachGameWatchArticle");
     Item_AttachToParent(item_gobj, parent, part);
     ext::it_8027CE64(item_gobj, parent, *attributes);
 }
@@ -106,6 +110,7 @@ pub static it_803F7938: [ItemStateTable; 2] = [
 /// `HSD_GObj* it_802C720C(HSD_GObj* parent, Vec3* pos, Fighter_Part part, float dir)`: spawns the breath item
 /// and attaches it to the fighter.
 pub unsafe extern "C" fn it_802C720C(parent: *mut HSD_GObj, pos: *mut Vec, part: Fighter_Part, dir: f32) -> *mut HSD_GObj {
+    melee_core::ct!("it_802C720C");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = It_Kind_GameWatch_Breath;
     Item_InitSpawnPosition(&mut spawn, pos, false);
@@ -122,6 +127,7 @@ pub unsafe extern "C" fn it_802C720C(parent: *mut HSD_GObj, pos: *mut Vec, part:
 
 /// `void itGameWatchBreath_Logic76_Destroyed(Item_GObj*)`: tells the owner the breath is gone.
 pub unsafe extern "C" fn itGameWatchBreath_Logic76_Destroyed(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itGameWatchBreath_Logic76_Destroyed");
     let item = item_of(item_gobj);
     if !(*item).owner.is_null() {
         ext::ftGw_AttackAirN_ItemSparkySetFlag((*item).owner);
@@ -130,6 +136,7 @@ pub unsafe extern "C" fn itGameWatchBreath_Logic76_Destroyed(item_gobj: *mut Ite
 
 /// `void it_802C7340(Item_GObj*)`: tells the owner and destroys the item.
 pub unsafe extern "C" fn it_802C7340(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802C7340");
     let item = item_of(item_gobj);
     if !item.is_null() {
         if !(*item).owner.is_null() {
@@ -141,16 +148,19 @@ pub unsafe extern "C" fn it_802C7340(item_gobj: *mut Item_GObj) {
 
 /// `void it_802C738C(Item_GObj*)`.
 pub unsafe extern "C" fn it_802C738C(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802C738C");
     ext::it_8026B724(item_gobj);
 }
 
 /// `void it_802C73AC(Item_GObj*)`.
 pub unsafe extern "C" fn it_802C73AC(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802C73AC");
     ext::it_8026B73C(item_gobj);
 }
 
 /// `void itGameWatchBreath_Logic76_PickedUp(Item_GObj*)`.
 pub unsafe extern "C" fn itGameWatchBreath_Logic76_PickedUp(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itGameWatchBreath_Logic76_PickedUp");
     let temp_r3 = (*item_gobj).user_data as *mut Item;
     (*temp_r3).xDAC_itcmd_var0 = 0;
     if !(*temp_r3).owner.is_null() {
@@ -161,11 +171,13 @@ pub unsafe extern "C" fn itGameWatchBreath_Logic76_PickedUp(item_gobj: *mut Item
 
 /// `void it_802C7424(Item_GObj*)`: enters state 1.
 pub unsafe extern "C" fn it_802C7424(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802C7424");
     ext::Item_80268E5C(item_gobj, 1, ITEM_ANIM_UPDATE);
 }
 
 /// `bool itGamewatchbreath_UnkMotion1_Anim(Item_GObj*)`: ends when the fighter's breath is over.
 pub unsafe extern "C" fn itGamewatchbreath_UnkMotion1_Anim(item_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itGamewatchbreath_UnkMotion1_Anim");
     let mut item = item_of(item_gobj);
     let var_r3: i32 = if !(*item).owner.is_null() { ext::ftGw_AttackAirN_ItemCheckSparkyRemove((*item).owner) } else { 1 };
     if var_r3 != 0 {
@@ -180,5 +192,6 @@ pub unsafe extern "C" fn itGamewatchbreath_UnkMotion1_Anim(item_gobj: *mut Item_
 
 /// `void itGameWatchBreath_Logic76_EvtUnk(Item_GObj*, Item_GObj*)`: removes the gobj interaction references.
 pub unsafe extern "C" fn itGameWatchBreath_Logic76_EvtUnk(item_gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("itGameWatchBreath_Logic76_EvtUnk");
     ext::it_8026B894(item_gobj, ref_gobj);
 }

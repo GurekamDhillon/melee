@@ -143,6 +143,7 @@ pub static ftCh_Init_803D4878: ftCh_Init_803D4878_t = ftCh_Init_803D4878_t {
 };
 
 pub fn ftCh_Init_80155FCC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Init_80155FCC");
     if ext::Stage_80225194() == 0xFB {
         ftCh_Init_80156310(gobj);
     } else {
@@ -150,7 +151,7 @@ pub fn ftCh_Init_80155FCC(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftCh_Init_80156014(_gobj: *mut HSD_GObj) {}
+pub fn ftCh_Init_80156014(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_Init_80156014");}
 
 /// `doAnim0(gobj)` (static inline).
 unsafe fn doAnim0(gobj: *mut HSD_GObj) {
@@ -185,6 +186,7 @@ unsafe fn start(gobj: *mut HSD_GObj, cb: unsafe extern "C" fn(*mut HSD_GObj), v:
 }
 
 pub fn ftCh_Wait1_0_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Wait1_0_Anim");
     use melee_fighter::tu::ftbosslib as bl;
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
@@ -352,10 +354,11 @@ pub fn ftCh_Wait1_0_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftCh_Wait1_0_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftCh_Wait1_0_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_Wait1_0_Coll");}
 
 /// Debug pad chooser (static): the port-4 pad picks an attack directly.
 pub fn ftCh_Init_80156AD8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Init_80156AD8");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*(*fp).ft_data).ext_attr as *const ftCrazyHand_DatAttrs;

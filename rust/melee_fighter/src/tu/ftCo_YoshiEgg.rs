@@ -93,12 +93,13 @@ fn set_scale(j: *mut HSD_JObj, s: &Vec3) {
 }
 
 /// C callback-pointer forms (`HSD_GObjEvent`) of the functions stored in Fighter.
-pub unsafe extern "C" fn ftCo_800BC438_cb(g: G) { ext::ftCo_800BC438(g) }
-pub unsafe extern "C" fn ftCo_800BBCC0_cb(g: G) { ftCo_800BBCC0(g) }
-pub unsafe extern "C" fn ftCo_800BC3D0_cb(g: G) { ftCo_800BC3D0(g) }
+pub unsafe extern "C" fn ftCo_800BC438_cb(g: G) { melee_core::ct!("ftCo_800BC438_cb"); ext::ftCo_800BC438(g) }
+pub unsafe extern "C" fn ftCo_800BBCC0_cb(g: G) { melee_core::ct!("ftCo_800BBCC0_cb"); ftCo_800BBCC0(g) }
+pub unsafe extern "C" fn ftCo_800BC3D0_cb(g: G) { melee_core::ct!("ftCo_800BC3D0_cb"); ftCo_800BC3D0(g) }
 
 /// `ftCo_800BBC88`.
 pub fn ftCo_800BBC88(g: G) {
+    melee_core::ct!("ftCo_800BBC88");
     unsafe {
     fp(g).set_invisible(1);
     ext::ftColl_8007B62C(g, 2);
@@ -107,6 +108,7 @@ pub fn ftCo_800BBC88(g: G) {
 
 /// `ftCo_800BBCC0`: accessory4 tween of the fighter and egg scale back to normal.
 pub fn ftCo_800BBCC0(g: G) {
+    melee_core::ct!("ftCo_800BBCC0");
     unsafe {
     let jobj1 = unsafe { (*g).hsd_obj as *mut HSD_JObj };
     let f = fp(g);
@@ -155,6 +157,7 @@ fn inlineA0(g: G) {
 
 /// `ftCo_800BBED4`: enter the egg laid by `arg1` (Yoshi).
 pub fn ftCo_800BBED4(g: G, arg1: G) {
+    melee_core::ct!("ftCo_800BBED4");
     unsafe {
     let jobj = unsafe { (*g).hsd_obj as *mut HSD_JObj };
     if fp(g).ground_or_air == GA_Ground {
@@ -200,6 +203,7 @@ pub fn ftCo_800BBED4(g: G, arg1: G) {
 
 /// `ftCo_YoshiEgg_Anim`: mash out; hatch when the timer runs out.
 pub fn ftCo_YoshiEgg_Anim(g: G) {
+    melee_core::ct!("ftCo_YoshiEgg_Anim");
     unsafe {
     let d = ext::ftYs_SpecialN_GetExtAttr28();
     fp(g).grab_timer -= d;
@@ -239,10 +243,11 @@ pub fn ftCo_YoshiEgg_Anim(g: G) {
 }
 
 /// `ftCo_YoshiEgg_IASA`.
-pub fn ftCo_YoshiEgg_IASA(_g: G) {}
+pub fn ftCo_YoshiEgg_IASA(_g: G) { melee_core::ct!("ftCo_YoshiEgg_IASA");}
 
 /// `ftCo_YoshiEgg_Phys`.
 pub fn ftCo_YoshiEgg_Phys(g: G) {
+    melee_core::ct!("ftCo_YoshiEgg_Phys");
     unsafe {
     if fp(g).ground_or_air == GA_Ground {
         ext::ft_80084F3C(g);
@@ -254,6 +259,7 @@ pub fn ftCo_YoshiEgg_Phys(g: G) {
 
 /// `ftCo_YoshiEgg_Coll`.
 pub fn ftCo_YoshiEgg_Coll(g: G) {
+    melee_core::ct!("ftCo_YoshiEgg_Coll");
     unsafe {
     if fp(g).ground_or_air == GA_Ground {
         ext::ft_8008403C(g, ftCo_800BC3AC);
@@ -265,6 +271,7 @@ pub fn ftCo_YoshiEgg_Coll(g: G) {
 
 /// `ftCo_800BC388`.
 pub fn ftCo_800BC388(g: G) {
+    melee_core::ct!("ftCo_800BC388");
     unsafe {
     ext::ftCommon_8007D7FC(fp(g));
     }
@@ -272,6 +279,7 @@ pub fn ftCo_800BC388(g: G) {
 
 /// `ftCo_800BC3AC`.
 pub fn ftCo_800BC3AC(g: G) {
+    melee_core::ct!("ftCo_800BC3AC");
     unsafe {
     ext::ftCommon_8007D5D4(fp(g));
     }
@@ -279,6 +287,7 @@ pub fn ftCo_800BC3AC(g: G) {
 
 /// `ftCo_800BC3D0`: a hit takes `percent * k` off the egg timer (fused: fmadds).
 pub fn ftCo_800BC3D0(g: G) {
+    melee_core::ct!("ftCo_800BC3D0");
     unsafe {
     let k = ext::ftYs_SpecialN_8012CDB4();
     let f = fp(g);

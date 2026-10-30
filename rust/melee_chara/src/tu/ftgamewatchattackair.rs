@@ -209,6 +209,7 @@ unsafe fn set_item_callbacks(fp: *mut Fighter) {
 
 /// Create the Parachute item.
 pub fn ftGw_AttackAirN_ItemParachuteSetup(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackAirN_ItemParachuteSetup");
     unsafe {
         let mut sp10 = Vec { x: 0.0, y: 0.0, z: 0.0 };
         let fp = fpp(gobj);
@@ -227,6 +228,7 @@ pub fn ftGw_AttackAirN_ItemParachuteSetup(gobj: *mut HSD_GObj) {
 
 /// Parachute accessory callback: landing lag.
 pub fn ftGw_AttackAirN_ItemParachuteOnLand(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackAirN_ItemParachuteOnLand");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.gw.x2258_parachuteGObj.is_null() {
@@ -242,6 +244,7 @@ pub fn ftGw_AttackAirN_ItemParachuteOnLand(gobj: *mut HSD_GObj) {
 
 /// Parachute item flag update on land + clear pointers.
 pub fn ftGw_AttackAirN_ItemParachuteSetFlag(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackAirN_ItemParachuteSetFlag");
     unsafe {
         let fp = fpp(gobj);
         ftGw_AttackAirN_ExitItemHitlag(gobj);
@@ -253,6 +256,7 @@ pub fn ftGw_AttackAirN_ItemParachuteSetFlag(gobj: *mut HSD_GObj) {
 
 /// Remove the Parachute item.
 pub fn ftGw_AttackAirN_ItemParachuteRemove(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackAirN_ItemParachuteRemove");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.gw.x2258_parachuteGObj.is_null() {
@@ -264,6 +268,7 @@ pub fn ftGw_AttackAirN_ItemParachuteRemove(gobj: *mut HSD_GObj) {
 
 /// Create the Turtle item.
 pub fn ftGw_AttackAirN_ItemTurtleSetup(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackAirN_ItemTurtleSetup");
     unsafe {
         let mut sp10 = Vec { x: 0.0, y: 0.0, z: 0.0 };
         let fp = fpp(gobj);
@@ -283,6 +288,7 @@ pub fn ftGw_AttackAirN_ItemTurtleSetup(gobj: *mut HSD_GObj) {
 /// Turtle accessory callback: landing lag. The motion id compared is LandingAirN's on purpose
 /// (the C notes a deliberate mismatch to keep the item animation from freezing).
 pub fn ftGw_AttackAirN_ItemTurtleOnLand(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackAirN_ItemTurtleOnLand");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.gw.x225C_turtleGObj.is_null() {
@@ -298,6 +304,7 @@ pub fn ftGw_AttackAirN_ItemTurtleOnLand(gobj: *mut HSD_GObj) {
 
 /// Turtle item flag update on land + clear pointers.
 pub fn ftGw_AttackAirN_ItemTurtleSetFlag(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackAirN_ItemTurtleSetFlag");
     unsafe {
         let fp = fpp(gobj);
         ftGw_AttackAirN_ExitItemHitlag(gobj);
@@ -309,6 +316,7 @@ pub fn ftGw_AttackAirN_ItemTurtleSetFlag(gobj: *mut HSD_GObj) {
 
 /// Remove the Turtle item.
 pub fn ftGw_AttackAirN_ItemTurtleRemove(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackAirN_ItemTurtleRemove");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.gw.x225C_turtleGObj.is_null() {
@@ -320,6 +328,7 @@ pub fn ftGw_AttackAirN_ItemTurtleRemove(gobj: *mut HSD_GObj) {
 
 /// Create the Sparky item.
 pub fn ftGw_AttackAirN_ItemSparkySetup(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackAirN_ItemSparkySetup");
     unsafe {
         let mut sp10 = Vec { x: 0.0, y: 0.0, z: 0.0 };
         let fp = fpp(gobj);
@@ -338,6 +347,7 @@ pub fn ftGw_AttackAirN_ItemSparkySetup(gobj: *mut HSD_GObj) {
 
 /// Sparky accessory callback: landing lag.
 pub fn ftGw_AttackAirN_ItemSparkyOnLand(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackAirN_ItemSparkyOnLand");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.gw.x2260_sparkyGObj.is_null() {
@@ -353,6 +363,7 @@ pub fn ftGw_AttackAirN_ItemSparkyOnLand(gobj: *mut HSD_GObj) {
 
 /// Sparky item flag update on land + clear pointers.
 pub fn ftGw_AttackAirN_ItemSparkySetFlag(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackAirN_ItemSparkySetFlag");
     unsafe {
         let fp = fpp(gobj);
         ftGw_AttackAirN_ExitItemHitlag(gobj);
@@ -364,6 +375,7 @@ pub fn ftGw_AttackAirN_ItemSparkySetFlag(gobj: *mut HSD_GObj) {
 
 /// Remove the Sparky item.
 pub fn ftGw_AttackAirN_ItemSparkyRemove(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackAirN_ItemSparkyRemove");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.gw.x2260_sparkyGObj.is_null() {
@@ -375,6 +387,7 @@ pub fn ftGw_AttackAirN_ItemSparkyRemove(gobj: *mut HSD_GObj) {
 
 /// Apply hitlag for the available aerial items.
 pub fn ftGw_AttackAirN_EnterItemHitlag(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackAirN_EnterItemHitlag");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.gw.x2258_parachuteGObj.is_null() {
@@ -391,6 +404,7 @@ pub fn ftGw_AttackAirN_EnterItemHitlag(gobj: *mut HSD_GObj) {
 
 /// Remove hitlag for the available aerial items (static in the C).
 pub fn ftGw_AttackAirN_ExitItemHitlag(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackAirN_ExitItemHitlag");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.gw.x2258_parachuteGObj.is_null() {
@@ -407,6 +421,7 @@ pub fn ftGw_AttackAirN_ExitItemHitlag(gobj: *mut HSD_GObj) {
 
 /// Decide G&W's aerial attack motion state from the C stick.
 pub fn ftGw_AttackAirN_DecideAction(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackAirN_DecideAction");
     unsafe {
         let msid = aa::ftCo_AttackAir_GetMsidFromCStick(&*fpp(gobj));
         match msid {
@@ -422,6 +437,7 @@ pub fn ftGw_AttackAirN_DecideAction(gobj: *mut HSD_GObj) {
 
 /// Neutral aerial Action State handler.
 pub fn ftGw_AttackAirN_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackAirN_Enter");
     unsafe {
         let fp = fpp(gobj);
         aa::ftCo_AttackAir_EnterFromMsid(gobj, ftGw_MS_AttackAirN as i32);
@@ -431,11 +447,13 @@ pub fn ftGw_AttackAirN_Enter(gobj: *mut HSD_GObj) {
 
 /// Neutral aerial Animation callback.
 pub fn ftGw_AttackAirN_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackAirN_Anim");
     aa::ftCo_AttackAir_Anim(gobj);
 }
 
 /// Neutral aerial IASA callback.
 pub fn ftGw_AttackAirN_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackAirN_IASA");
     aa::ftCo_AttackAirN_IASA(gobj);
 }
 
@@ -463,11 +481,13 @@ unsafe fn landing_enter(gobj: *mut HSD_GObj, init: fn(*mut HSD_GObj), on_land: u
 
 /// Neutral aerial landing think.
 pub fn ftGw_LandingAirN_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_LandingAirN_Enter");
     unsafe { landing_enter(gobj, ftGw_LandingAirN_Init, cb_ftGw_AttackAirN_ItemParachuteOnLand) }
 }
 
 /// Back aerial Action State handler.
 pub fn ftGw_AttackAirB_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackAirB_Enter");
     unsafe {
         let fp = fpp(gobj);
         aa::ftCo_AttackAir_EnterFromMsid(gobj, ftGw_MS_AttackAirB as i32);
@@ -477,21 +497,25 @@ pub fn ftGw_AttackAirB_Enter(gobj: *mut HSD_GObj) {
 
 /// Back aerial Animation callback.
 pub fn ftGw_AttackAirB_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackAirB_Anim");
     aa::ftCo_AttackAir_Anim(gobj);
 }
 
 /// Back aerial IASA callback.
 pub fn ftGw_AttackAirB_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackAirB_IASA");
     aa::ftCo_AttackAirB_IASA(gobj);
 }
 
 /// Back aerial landing think.
 pub fn ftGw_LandingAirB_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_LandingAirB_Enter");
     unsafe { landing_enter(gobj, ftGw_LandingAirB_Init, cb_ftGw_AttackAirN_ItemTurtleOnLand) }
 }
 
 /// Up aerial Motion State handler.
 pub fn ftGw_AttackAirHi_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackAirHi_Enter");
     unsafe {
         let fp = fpp(gobj);
         aa::ftCo_AttackAir_EnterFromMsid(gobj, ftGw_MS_AttackAirHi as i32);
@@ -501,21 +525,25 @@ pub fn ftGw_AttackAirHi_Enter(gobj: *mut HSD_GObj) {
 
 /// Up aerial Animation callback.
 pub fn ftGw_AttackAirHi_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackAirHi_Anim");
     aa::ftCo_AttackAir_Anim(gobj);
 }
 
 /// Up aerial IASA callback.
 pub fn ftGw_AttackAirHi_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackAirHi_IASA");
     aa::ftCo_AttackAirHi_IASA(gobj);
 }
 
 /// Up aerial landing think.
 pub fn ftGw_LandingAirHi_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_LandingAirHi_Enter");
     unsafe { landing_enter(gobj, ftGw_LandingAirHi_Init, cb_ftGw_AttackAirN_ItemSparkyOnLand) }
 }
 
 /// Neutral aerial landing prefunction (static in the C).
 pub fn ftGw_LandingAirN_Init(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_LandingAirN_Init");
     unsafe {
         let fp = fpp(gobj);
         landair::ftCo_LandingAir_EnterWithMsidLag(gobj, ftGw_MS_LandingAirN as i32, (*fp).co_attrs.landingairn_lag);
@@ -533,6 +561,7 @@ unsafe fn landing_check(gobj: *mut HSD_GObj, msid: u32) {
 
 /// Neutral aerial landing Animation callback.
 pub fn ftGw_LandingAirN_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_LandingAirN_Anim");
     unsafe {
         land::ftCo_Landing_Anim(gobj);
         landing_check(gobj, ftGw_MS_LandingAirN);
@@ -541,11 +570,13 @@ pub fn ftGw_LandingAirN_Anim(gobj: *mut HSD_GObj) {
 
 /// Neutral aerial landing Physics callback.
 pub fn ftGw_LandingAirN_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_LandingAirN_Phys");
     land::ftCo_Landing_Phys(gobj);
 }
 
 /// Neutral aerial landing Collision callback.
 pub fn ftGw_LandingAirN_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_LandingAirN_Coll");
     unsafe {
         land::ftCo_Landing_Coll(gobj);
         landing_check(gobj, ftGw_MS_LandingAirN);
@@ -554,6 +585,7 @@ pub fn ftGw_LandingAirN_Coll(gobj: *mut HSD_GObj) {
 
 /// Back aerial landing prefunction.
 pub fn ftGw_LandingAirB_Init(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_LandingAirB_Init");
     unsafe {
         let fp = fpp(gobj);
         landair::ftCo_LandingAir_EnterWithMsidLag(gobj, ftGw_MS_LandingAirB as i32, (*fp).co_attrs.landingairb_lag);
@@ -562,6 +594,7 @@ pub fn ftGw_LandingAirB_Init(gobj: *mut HSD_GObj) {
 
 /// Back aerial landing Animation callback.
 pub fn ftGw_LandingAirB_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_LandingAirB_Anim");
     unsafe {
         land::ftCo_Landing_Anim(gobj);
         landing_check(gobj, ftGw_MS_LandingAirB);
@@ -570,11 +603,13 @@ pub fn ftGw_LandingAirB_Anim(gobj: *mut HSD_GObj) {
 
 /// Back aerial landing Physics callback.
 pub fn ftGw_LandingAirB_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_LandingAirB_Phys");
     land::ftCo_Landing_Phys(gobj);
 }
 
 /// Back aerial landing Collision callback.
 pub fn ftGw_LandingAirB_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_LandingAirB_Coll");
     unsafe {
         land::ftCo_Landing_Coll(gobj);
         landing_check(gobj, ftGw_MS_LandingAirB);
@@ -583,6 +618,7 @@ pub fn ftGw_LandingAirB_Coll(gobj: *mut HSD_GObj) {
 
 /// Up aerial landing prefunction. Erroneously uses the back aerial's landing lag (as the C).
 pub fn ftGw_LandingAirHi_Init(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_LandingAirHi_Init");
     unsafe {
         let fp = fpp(gobj);
         landair::ftCo_LandingAir_EnterWithMsidLag(gobj, ftGw_MS_LandingAirHi as i32, (*fp).co_attrs.landingairb_lag);
@@ -591,6 +627,7 @@ pub fn ftGw_LandingAirHi_Init(gobj: *mut HSD_GObj) {
 
 /// Up aerial landing Animation callback.
 pub fn ftGw_LandingAirHi_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_LandingAirHi_Anim");
     unsafe {
         land::ftCo_Landing_Anim(gobj);
         landing_check(gobj, ftGw_MS_LandingAirHi);
@@ -599,11 +636,13 @@ pub fn ftGw_LandingAirHi_Anim(gobj: *mut HSD_GObj) {
 
 /// Up aerial landing Physics callback.
 pub fn ftGw_LandingAirHi_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_LandingAirHi_Phys");
     land::ftCo_Landing_Phys(gobj);
 }
 
 /// Up aerial landing Collision callback.
 pub fn ftGw_LandingAirHi_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_LandingAirHi_Coll");
     unsafe {
         land::ftCo_Landing_Coll(gobj);
         landing_check(gobj, ftGw_MS_LandingAirHi);

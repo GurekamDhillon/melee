@@ -145,14 +145,17 @@ unsafe fn bone_pos(jobj: *mut HSD_JObj) -> Vec3 {
 }
 
 pub unsafe extern "C" fn it_802BE598(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802BE598");
     ext::it_8026B724(gobj);
 }
 
 pub unsafe extern "C" fn it_802BE5B8(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802BE5B8");
     ext::it_8026B73C(gobj);
 }
 
 pub unsafe extern "C" fn it_802BE5D8(arg: *mut c_void, frame: f32) {
+    melee_core::ct!("it_802BE5D8");
     let gobj = arg as *mut HSD_GObj;
     let ip = (*gobj).user_data as *mut Item;
     let attrs = ATTRS(ip);
@@ -171,6 +174,7 @@ unsafe fn it_802BE65C_LoadString(ip: *mut Item) -> *mut HSD_JObj {
 }
 
 pub unsafe extern "C" fn it_802BE65C(ip: *mut Item, bone_jobj: *mut HSD_JObj) -> *mut HSD_GObj {
+    melee_core::ct!("it_802BE65C");
     let mut prev_link: *mut ItemLink = null_mut();
     let mut head_link: *mut ItemLink = null_mut();
     let mut tail_link: *mut ItemLink = null_mut();
@@ -268,6 +272,7 @@ unsafe fn it_802BE958_inline(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802BE958(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802BE958");
     if !GET_ITEM(gobj).is_null() {
         it_802BE958_inline(gobj);
         ext::Item_8026A8EC(gobj);
@@ -275,6 +280,7 @@ pub unsafe extern "C" fn it_802BE958(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802BE9D8(owner: *mut HSD_GObj, facing_dir: f32, pos: *mut Vec3, action: i32) -> *mut HSD_GObj {
+    melee_core::ct!("it_802BE9D8");
     let fp = (*owner).user_data as *mut Fighter;
     let mut spawn: SpawnItem = core::mem::zeroed();
 
@@ -305,10 +311,12 @@ pub unsafe extern "C" fn it_802BE9D8(owner: *mut HSD_GObj, facing_dir: f32, pos:
 }
 
 pub unsafe extern "C" fn itNessyoyo_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itNessyoyo_UnkMotion0_Phys");
     it_802BF900(GET_ITEM(gobj));
 }
 
 pub unsafe extern "C" fn itNessyoyo_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itNessyoyo_UnkMotion1_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = ATTRS(ip);
     let link1 = (*ip).xDD4_itemVar.nessyoyo.x8;
@@ -319,6 +327,7 @@ pub unsafe extern "C" fn itNessyoyo_UnkMotion1_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itNessyoyo_UnkMotion2_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itNessyoyo_UnkMotion2_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = ATTRS(ip);
     let link1 = (*ip).xDD4_itemVar.nessyoyo.x8;
@@ -329,6 +338,7 @@ pub unsafe extern "C" fn itNessyoyo_UnkMotion2_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itNessyoyo_UnkMotion3_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itNessyoyo_UnkMotion3_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = ATTRS(ip);
     let link2 = (*ip).xDD4_itemVar.nessyoyo.xC;
@@ -381,6 +391,7 @@ unsafe fn itNessyoyo_UnkMotion3_Anim_UpdateRotation(ip: *mut Item) {
 }
 
 pub unsafe extern "C" fn itNessyoyo_UnkMotion3_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itNessyoyo_UnkMotion3_Anim");
     let ip = GET_ITEM(gobj);
     itNessyoyo_UnkMotion3_Anim_UpdateRotation(ip);
     if itNessyoyo_UnkMotion3_Anim_inline(gobj) {
@@ -391,6 +402,7 @@ pub unsafe extern "C" fn itNessyoyo_UnkMotion3_Anim(gobj: *mut Item_GObj) -> boo
 }
 
 pub unsafe extern "C" fn it_802BF030(link: *mut ItemLink, arg1: i32, offset: f32) -> i32 {
+    melee_core::ct!("it_802BF030");
     let coll = &raw mut (*link).coll_data;
 
     (*coll).last_pos = (*coll).cur_pos;
@@ -418,6 +430,7 @@ pub unsafe extern "C" fn it_802BF030(link: *mut ItemLink, arg1: i32, offset: f32
 }
 
 pub unsafe extern "C" fn it_802BF180(cur: *mut ItemLink, target: *mut Vec3, attrs: *mut itYoyoAttributes, length: f32) {
+    melee_core::ct!("it_802BF180");
     let mut cur = cur;
     let mut dir: Vec3 = core::mem::zeroed();
     let mut prev = (*cur).prev;
@@ -442,6 +455,7 @@ pub unsafe extern "C" fn it_802BF180(cur: *mut ItemLink, target: *mut Vec3, attr
 }
 
 pub unsafe extern "C" fn it_802BF28C(link: *mut ItemLink, target: *mut Vec3, attrs: *mut itYoyoAttributes, ip: *mut Item) -> i32 {
+    melee_core::ct!("it_802BF28C");
     let mut dir: Vec3 = core::mem::zeroed();
     let mut dir2: Vec3 = core::mem::zeroed();
     let min_len = (*attrs).x10_UNK1 * ext::ftLib_80086A0C((*ip).owner);
@@ -510,6 +524,7 @@ unsafe fn it_802BF4A0_adjust_tail(cur: *mut ItemLink, target: *mut Vec3, dir2: *
 }
 
 pub unsafe extern "C" fn it_802BF4A0(link: *mut ItemLink, target: *mut Vec3, attrs: *mut itYoyoAttributes, ip: *mut Item) -> i32 {
+    melee_core::ct!("it_802BF4A0");
     let mut dir: Vec3 = core::mem::zeroed();
     let mut dir2: Vec3 = core::mem::zeroed();
 
@@ -587,6 +602,7 @@ pub unsafe extern "C" fn it_802BF4A0(link: *mut ItemLink, target: *mut Vec3, att
 }
 
 pub unsafe extern "C" fn it_802BF800(item: *mut ItemLink, pos: *mut Vec3, attrs: *mut itYoyoAttributes, ip: *mut Item, dist: f32) -> bool {
+    melee_core::ct!("it_802BF800");
     let mut dir: Vec3 = core::mem::zeroed();
     let size = (*attrs).xC_SIZE * ext::ftLib_80086A0C((*ip).owner);
     let mut prev = (*item).prev;
@@ -616,6 +632,7 @@ pub unsafe extern "C" fn it_802BF800(item: *mut ItemLink, pos: *mut Vec3, attrs:
 }
 
 pub unsafe extern "C" fn it_802BF900(ip: *mut Item) {
+    melee_core::ct!("it_802BF900");
     let mut trans: Mtx = core::mem::zeroed();
     let mut scale: Mtx = core::mem::zeroed();
     let tp = trans.as_mut_ptr() as *mut c_void;
@@ -649,6 +666,7 @@ pub unsafe extern "C" fn it_802BF900(ip: *mut Item) {
 }
 
 pub unsafe extern "C" fn it_802BFAFC(ip: *mut Item, target: *mut Vec3) {
+    melee_core::ct!("it_802BFAFC");
     let mut link = (*ip).xDD4_itemVar.nessyoyo.xC;
     let mut next_pos: Vec3;
     let mut prev_pos: Vec3;
@@ -729,10 +747,12 @@ pub unsafe extern "C" fn it_802BFAFC(ip: *mut Item, target: *mut Vec3) {
 }
 
 pub unsafe extern "C" fn itNessYoyo_Logic59_PickedUp(gobj: *mut Item_GObj) {
+    melee_core::ct!("itNessYoyo_Logic59_PickedUp");
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE as u32);
 }
 
 pub unsafe extern "C" fn it_802BFE5C(gobj: *mut Item_GObj, pos: *mut Vec3, _unused: f32) {
+    melee_core::ct!("it_802BFE5C");
     let ip = GET_ITEM(gobj);
     let link = (*ip).xDD4_itemVar.nessyoyo.x8;
     (*link).vel = *pos;
@@ -747,6 +767,7 @@ pub unsafe extern "C" fn it_802BFE5C(gobj: *mut Item_GObj, pos: *mut Vec3, _unus
 /// `my_sqrtf` (static inline): `3.0 - g*g*x` is a true f64 fma (`fmuladd.f64`).
 #[inline]
 pub unsafe fn my_sqrtf(x: f32) -> f32 {
+    melee_core::ct!("my_sqrtf");
     let half: f64 = 0.5;
     let three: f64 = 3.0;
     if x > 0.0 {
@@ -761,6 +782,7 @@ pub unsafe fn my_sqrtf(x: f32) -> f32 {
 }
 
 pub unsafe extern "C" fn it_802BFEC4(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802BFEC4");
     let ip = GET_ITEM(gobj);
     let link2 = (*ip).xDD4_itemVar.nessyoyo.xC;
     let link1 = (*ip).xDD4_itemVar.nessyoyo.x8;
@@ -774,6 +796,7 @@ pub unsafe extern "C" fn it_802BFEC4(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802C0010(gobj: *mut Item_GObj, vel: *mut Vec3) {
+    melee_core::ct!("it_802C0010");
     let link1 = (*GET_ITEM(gobj)).xDD4_itemVar.nessyoyo.x8;
 
     let pos = bone_pos((*link1).jobj);
@@ -786,6 +809,7 @@ pub unsafe extern "C" fn it_802C0010(gobj: *mut Item_GObj, vel: *mut Vec3) {
 }
 
 pub unsafe extern "C" fn it_2725_Logic59_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_2725_Logic59_EvtUnk");
     let ip = GET_ITEM(gobj);
     ext::it_8026B894(gobj, ref_gobj);
 }

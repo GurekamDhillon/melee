@@ -98,14 +98,17 @@ pub mod ext {
 pub const Collide_FloorMask: i32 = 0x8000 | 0x10000;
 
 pub fn ftDk_Init_OnItemPickup(gobj: *mut HSD_GObj, flag: i32) {
+    melee_core::ct!("ftDk_Init_OnItemPickup");
     Fighter_OnItemPickup(gobj, flag, 1, 1);
 }
 
 pub fn ftDk_Init_OnItemDrop(gobj: *mut HSD_GObj, arg1: i32) {
+    melee_core::ct!("ftDk_Init_OnItemDrop");
     Fighter_OnItemDrop(gobj, arg1, 1, 1);
 }
 
 pub fn ftDk_Init_UnkMotionStates4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_Init_UnkMotionStates4");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*fp).dat_attrs as *const ftDonkeyAttributes;
@@ -116,6 +119,7 @@ pub fn ftDk_Init_UnkMotionStates4(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftDk_Init_OnLoad(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_Init_OnLoad");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let ftdata = (*fp).ft_data;
@@ -138,6 +142,7 @@ pub fn ftDk_Init_OnLoad(gobj: *mut HSD_GObj) {
 
 /// `COPY_ATTRS(gobj, ftDonkeyAttributes)`.
 pub fn ftDk_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_Init_LoadSpecialAttrs");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         *((*fp).dat_attrs as *mut ftDonkeyAttributes) = *((*(*fp).ft_data).ext_attr as *const ftDonkeyAttributes);
@@ -155,6 +160,7 @@ unsafe fn ftCheckThrowB3(fp: *mut Fighter) -> bool {
 }
 
 pub fn ftDk_Init_8010DB3C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_Init_8010DB3C");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let donkey_attr = (*fp).dat_attrs as *const ftDonkeyAttributes;

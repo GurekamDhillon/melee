@@ -25,9 +25,10 @@ pub const ftMh_Init_AnimDatFilename: &str = "PlMhAJ.dat";
 /// `ftMh_Init_CostumeStrings`: (dat, joint) for the single costume; the matanim joint is NULL.
 pub const ftMh_Init_CostumeStrings: [[Option<&str>; 3]; 1] = [[Some(ftMh_Init_803D4090), Some(ftMh_Init_803D409C), None]];
 
-pub fn ftMh_Init_OnDeath(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_Init_OnDeath(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_Init_OnDeath");}
 
 pub fn ftMh_Init_OnLoad(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Init_OnLoad");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let ftdata = (*fp).ft_data;
@@ -82,6 +83,7 @@ pub fn ftMh_Init_OnLoad(gobj: *mut HSD_GObj) {
 
 /// `COPY_ATTRS(gobj, ftMasterHand_SpecialAttrs)`.
 pub fn ftMh_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Init_LoadSpecialAttrs");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         *((*fp).dat_attrs as *mut ftMasterHand_SpecialAttrs) =

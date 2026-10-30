@@ -97,6 +97,7 @@ pub static it_803F83F0: [ItemStateTable; 5] = [
 ];
 
 pub unsafe extern "C" fn it_802D8618(arg0: i32, arg1: *mut Vec3, arg2: i32, arg3: i32) {
+    melee_core::ct!("it_802D8618");
     let gobj = ext::it_8027B5B0(It_Kind_Heiho as _, arg1, null_mut(), null_mut(), 1);
     if gobj.is_null() {
         return;
@@ -109,6 +110,7 @@ pub unsafe extern "C" fn it_802D8618(arg0: i32, arg1: *mut Vec3, arg2: i32, arg3
 }
 
 pub unsafe extern "C" fn it_802D8688(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802D8688");
     let ip = GET_ITEM(gobj);
     ext::it_8027B730(gobj);
     (*ip).xD5C = 0;
@@ -135,6 +137,7 @@ pub unsafe extern "C" fn it_802D8688(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_802D8894(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802D8894");
     let ip = GET_ITEM(gobj);
     (*ip).x40_vel.y = 0.0;
     (*ip).x40_vel.x = 0.0;
@@ -142,10 +145,12 @@ pub unsafe extern "C" fn it_802D8894(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itHeiho_UnkMotion0_Anim(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHeiho_UnkMotion0_Anim");
     0
 }
 
 pub unsafe extern "C" fn itHeiho_UnkMotion0_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHeiho_UnkMotion0_Phys");
     let ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.heiho.x24 == 0 {
         it_802D8918(gobj);
@@ -155,10 +160,12 @@ pub unsafe extern "C" fn itHeiho_UnkMotion0_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itHeiho_UnkMotion0_Coll(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHeiho_UnkMotion0_Coll");
     0
 }
 
 pub unsafe extern "C" fn it_802D8918(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802D8918");
     let ip = GET_ITEM(gobj);
     (*ip).xDD4_itemVar.heiho.x24 = 0;
     it_802D98AC(gobj);
@@ -169,6 +176,7 @@ pub unsafe extern "C" fn it_802D8918(gobj: *mut HSD_GObj) {
 
 /// `static inline itHeiho_UnkMotion1_Anim_inline(Item_GObj*, int i)`
 pub unsafe fn itHeiho_UnkMotion1_Anim_inline(gobj: *mut HSD_GObj, i: i32) {
+    melee_core::ct!("itHeiho_UnkMotion1_Anim_inline");
     let ip = GET_ITEM(gobj);
     (*ip).xDD4_itemVar.heiho.x24 = 0;
     ext::Item_80268E5C(gobj, i, ITEM_ANIM_UPDATE as u32);
@@ -177,6 +185,7 @@ pub unsafe fn itHeiho_UnkMotion1_Anim_inline(gobj: *mut HSD_GObj, i: i32) {
 }
 
 pub unsafe extern "C" fn itHeiho_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHeiho_UnkMotion1_Anim");
     let ip = GET_ITEM(gobj);
     let jobj = HSD_GObjGetHSDObj(gobj) as *mut HSD_JObj;
     let child = HSD_JObjGetChild(jobj);
@@ -191,6 +200,7 @@ pub unsafe extern "C" fn itHeiho_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn itHeiho_UnkMotion1_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHeiho_UnkMotion1_Phys");
     let ip = GET_ITEM(gobj);
     let attr = fattr(ip);
     (*ip).x40_vel.x = (*ip).facing_dir * *attr.offset((*ip).xDD4_itemVar.heiho.x21 as isize + 1);
@@ -211,6 +221,7 @@ pub unsafe extern "C" fn itHeiho_UnkMotion1_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itHeiho_UnkMotion1_Coll(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHeiho_UnkMotion1_Coll");
     let ip = GET_ITEM(gobj);
     let attr = fattr(ip);
     let temp_r31 = ext::it_8026DA70(gobj);
@@ -225,11 +236,13 @@ pub unsafe extern "C" fn itHeiho_UnkMotion1_Coll(gobj: *mut HSD_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn itHeiho_UnkMotion2_Anim(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHeiho_UnkMotion2_Anim");
     0
 }
 
 /// `static it_802D8EC8_inline(Item_GObj*)`
 pub unsafe fn it_802D8EC8_inline(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802D8EC8_inline");
     let ip = (*gobj).user_data as *mut Item;
     let attr = fattr(ip);
     let rand = 2.0f32 * (ext::HSD_Randf() - 0.5);
@@ -244,6 +257,7 @@ pub unsafe fn it_802D8EC8_inline(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itHeiho_UnkMotion2_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHeiho_UnkMotion2_Phys");
     let ip = (*gobj).user_data as *mut Item;
     let it_attr = (*ip).xCC_item_attr;
     ext::it_80272860(gobj, (*it_attr).x10_fall_speed, (*it_attr).x14_fall_speed_max);
@@ -253,14 +267,17 @@ pub unsafe extern "C" fn itHeiho_UnkMotion2_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itHeiho_UnkMotion2_Coll(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHeiho_UnkMotion2_Coll");
     0
 }
 
 pub unsafe extern "C" fn itHeiho_UnkMotion3_Anim(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHeiho_UnkMotion3_Anim");
     0
 }
 
 pub unsafe extern "C" fn itHeiho_UnkMotion3_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHeiho_UnkMotion3_Phys");
     let ip = GET_ITEM(gobj);
     (*ip).x40_vel.y -= (*(*ip).xCC_item_attr).x10_fall_speed;
     if (*ip).xDD4_itemVar.heiho.x24 != 0 {
@@ -271,11 +288,13 @@ pub unsafe extern "C" fn itHeiho_UnkMotion3_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itHeiho_UnkMotion3_Coll(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHeiho_UnkMotion3_Coll");
     ext::it_8026DA70(gobj);
     0
 }
 
 pub unsafe extern "C" fn it_802D8EC8(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("it_802D8EC8");
     let mut ip = (*gobj).user_data as *mut Item;
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut *mut i32;
     if !(*ip).xDD4_itemVar.heiho.x54.is_null() {
@@ -302,6 +321,7 @@ pub unsafe extern "C" fn it_802D8EC8(gobj: *mut HSD_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn it_802D9168(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802D9168");
     let zero: f32 = 0.0;
     let mut sp14: Vec3 = core::mem::zeroed();
     let ip = GET_ITEM(gobj);
@@ -328,6 +348,7 @@ pub unsafe extern "C" fn it_802D9168(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itHeiho_UnkMotion4_Anim(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHeiho_UnkMotion4_Anim");
     let ip = GET_ITEM(gobj);
     let jobj = HSD_GObjGetHSDObj(gobj) as *mut HSD_JObj;
     it_802D98C4((*(*ip).xBBC_dynamicBoneTable).bones[1], ip);
@@ -348,6 +369,7 @@ pub unsafe extern "C" fn itHeiho_UnkMotion4_Anim(gobj: *mut HSD_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn itHeiho_UnkMotion4_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHeiho_UnkMotion4_Phys");
     let ip = GET_ITEM(gobj);
     let attr = fattr(ip);
     (*ip).x40_vel.x = 1.5f32 * ((*ip).facing_dir * *attr.offset((*ip).xDD4_itemVar.heiho.x21 as isize + 1));
@@ -367,6 +389,7 @@ pub unsafe extern "C" fn itHeiho_UnkMotion4_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itHeiho_UnkMotion4_Coll(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHeiho_UnkMotion4_Coll");
     let ip = GET_ITEM(gobj);
     let attr = fattr(ip);
     let temp_r31 = ext::it_8026DA70(gobj);
@@ -381,6 +404,7 @@ pub unsafe extern "C" fn itHeiho_UnkMotion4_Coll(gobj: *mut HSD_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn it_802D96B0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802D96B0");
     let ip = GET_ITEM(gobj);
     if !(*ip).xDD4_itemVar.heiho.x54.is_null() {
         let mut vec: Vec3 = (*ip).pos;
@@ -391,6 +415,7 @@ pub unsafe extern "C" fn it_802D96B0(gobj: *mut HSD_GObj) {
 
 /// `static inline it_802D9714_inline(Item_GObj*)`
 pub unsafe fn it_802D9714_inline(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802D9714_inline");
     let ip = GET_ITEM(gobj);
     (*ip).xDCC_flag.set_b3(1);
     if !(*ip).xDD4_itemVar.heiho.x54.is_null() {
@@ -400,6 +425,7 @@ pub unsafe fn it_802D9714_inline(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_802D9714(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802D9714");
     let ip = (*gobj).user_data as *mut Item;
     if (*ip).xDD4_itemVar.heiho.x22 == 0 {
         if (*ip).pos.x > (20.0 + ext::Stage_GetBlastZoneLeftOffset())
@@ -419,6 +445,7 @@ pub unsafe extern "C" fn it_802D9714(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_802D98AC(arg0: *mut HSD_GObj) {
+    melee_core::ct!("it_802D98AC");
     let ip = (*arg0).user_data as *mut Item;
     (*ip).xDD4_itemVar.heiho.x3C.x = 0.0;
     (*ip).xDD4_itemVar.heiho.x3C.y = 0.0;
@@ -426,9 +453,11 @@ pub unsafe extern "C" fn it_802D98AC(arg0: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_802D98C4(jobj: *mut HSD_JObj, arg1: *mut Item) {
+    melee_core::ct!("it_802D98C4");
     itUpdateVelocityFromBone(jobj, arg1, &raw mut (*arg1).xDD4_itemVar.heiho.x3C);
 }
 
 pub unsafe extern "C" fn it_802D9A0C(jobj: *mut HSD_GObj, arg1: *mut HSD_GObj) {
+    melee_core::ct!("it_802D9A0C");
     ext::it_8026B894(jobj, arg1);
 }

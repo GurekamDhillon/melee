@@ -113,6 +113,7 @@ unsafe fn vert(x: f32, y: f32, z: f32, c: &GXColor) {
 
 /// 014770: draws the quad of a vertical collision line (`arg1 == 2`).
 pub unsafe fn lb_80014770(arg0: *mut Vec3, arg1: i32) -> bool {
+    melee_core::ct!("lb_80014770");
     if arg1 as u32 == 2 {
         ext::GXSetColorUpdate(GX_TRUE);
         ext::GXSetAlphaUpdate(GX_FALSE);
@@ -164,6 +165,7 @@ pub unsafe fn lb_80014770(arg0: *mut Vec3, arg1: i32) -> bool {
 
 /// 0149E0: draws a yellow line strip from a collision-line matrix (`arg1 == 0`).
 pub unsafe fn lb_800149E0(arg0: *mut [f32; 4], arg1: u32) -> bool {
+    melee_core::ct!("lb_800149E0");
     if arg1 == 0 {
         ext::HSD_StateInitDirect(0, 2);
         let mtx = (*ext::HSD_CObjGetCurrent()).view_mtx.as_mut_ptr() as *mut c_void;

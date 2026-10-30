@@ -242,6 +242,7 @@ unsafe fn sfxForward() {
 }
 
 pub unsafe extern "C" fn gm_801AD088() {
+    melee_core::ct!("gm_801AD088");
     let mut spC: *mut SceneDesc = null_mut();
     gm_80480D70.x0 = ext::lbArchive_80016DBC(
         c"NtProge.dat".as_ptr(),
@@ -277,6 +278,7 @@ pub unsafe extern "C" fn gm_801AD088() {
 }
 
 pub unsafe extern "C" fn gm_801AD254(arg0: i32) {
+    melee_core::ct!("gm_801AD254");
     let jobj = gm_80480D70.x4;
 
     match arg0 {
@@ -321,6 +323,7 @@ pub unsafe extern "C" fn gm_801AD254(arg0: i32) {
 }
 
 pub unsafe extern "C" fn gm_Scene_ProgScan_OnFrame() {
+    melee_core::ct!("gm_Scene_ProgScan_OnFrame");
     if gm_80480D70.x1C == 0 {
         gm_80480D70.x1C = gm_80480D70.x1C.wrapping_add(1);
         return;
@@ -377,6 +380,7 @@ pub unsafe extern "C" fn gm_Scene_ProgScan_OnFrame() {
 }
 
 pub unsafe extern "C" fn gm_Scene_ProgScan_OnEnter(arg0: *mut c_void) {
+    melee_core::ct!("gm_Scene_ProgScan_OnEnter");
     let dst = arg0 as *mut i32;
 
     gm_801AD088();
@@ -390,6 +394,7 @@ pub unsafe extern "C" fn gm_Scene_ProgScan_OnEnter(arg0: *mut c_void) {
 }
 
 pub unsafe extern "C" fn gm_Scene_ProgScan_OnExit(arg0: *mut c_void) {
+    melee_core::ct!("gm_Scene_ProgScan_OnExit");
     let dst = arg0 as *mut i32;
     *dst = gm_80480D70.x14;
     ext::lbArchive_80016EFC(gm_80480D70.x0);

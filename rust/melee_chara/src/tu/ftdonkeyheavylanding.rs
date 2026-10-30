@@ -69,6 +69,7 @@ pub mod ext {
 
 /// `checkSomething` (static).
 pub fn checkSomething(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("checkSomething");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         if ext::ftCo_8008E984(fp) {
@@ -83,6 +84,7 @@ pub fn checkSomething(gobj: *mut HSD_GObj) -> bool {
 
 /// `doSomething` (static).
 pub fn doSomething(gobj: *mut HSD_GObj) {
+    melee_core::ct!("doSomething");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let a = (*fp).x2CC;
@@ -91,6 +93,7 @@ pub fn doSomething(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftDk_MS_349_800E06D8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_MS_349_800E06D8");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         if checkSomething(gobj) {
@@ -107,6 +110,7 @@ pub fn ftDk_MS_349_800E06D8(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftDk_HeavyWait2_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_HeavyWait2_Anim");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         ext::ftCo_8008F744(gobj);
@@ -121,5 +125,6 @@ pub fn ftDk_HeavyWait2_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftDk_HeavyWait2_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_HeavyWait2_Phys");
     ext::ftCo_Damage_Phys(gobj);
 }

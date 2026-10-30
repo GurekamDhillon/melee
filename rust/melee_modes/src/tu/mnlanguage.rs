@@ -20,30 +20,36 @@ pub type _MenuInput = ::core::ffi::c_int;
 pub unsafe extern "C" fn HSD_GObjGetUserData(
     mut gobj: *mut HSD_GObj,
 ) -> *mut ::core::ffi::c_void {
+    melee_core::ct!("HSD_GObjGetUserData");
     return (*gobj).user_data;
 }
 #[inline]
 pub unsafe extern "C" fn HSD_GObjGetHSDObj(
     mut gobj: *mut HSD_GObj,
 ) -> *mut ::core::ffi::c_void {
+    melee_core::ct!("HSD_GObjGetHSDObj");
     return (*gobj).hsd_obj;
 }
 pub const HSD_GOBJ_CLASS_ITEM: ::core::ffi::c_int = 6 as ::core::ffi::c_int;
 #[inline]
 pub unsafe extern "C" fn Menu_GetAllInputs() -> u64_0 {
+    melee_core::ct!("Menu_GetAllInputs");
     mn_804A04F0.buttons = mn_80229624(4 as u32_0) as u64_0;
     return mn_804A04F0.buttons;
 }
 #[inline]
 pub unsafe extern "C" fn sfxBack() {
+    melee_core::ct!("sfxBack");
     lbAudioAx_80024030(0 as ::core::ffi::c_int);
 }
 #[inline]
 pub unsafe extern "C" fn sfxMove() {
+    melee_core::ct!("sfxMove");
     lbAudioAx_80024030(2 as ::core::ffi::c_int);
 }
 #[inline]
 pub unsafe extern "C" fn Menu_InitCenterText(mut menu: *mut Menu, mut val: s32) {
+    melee_core::ct!("Menu_InitCenterText");
     let mut text: *mut HSD_Text = HSD_SisLib_803A5ACC(
         0 as ::core::ffi::c_int,
         1 as s32,
@@ -77,6 +83,7 @@ pub static mut mnLanguage_803EF5AC: AnimLoopSettings = AnimLoopSettings {
     loop_frame: -0.1f32,
 };
 pub unsafe extern "C" fn mnLanguage_8024BFE0(mut unused: *mut HSD_GObj) {
+    melee_core::ct!("mnLanguage_8024BFE0");
     let mut temp_r3: u64_0 = 0;
     let mut lang: u8_0 = 0;
     let mut user_data: *mut Menu = HSD_GObjGetUserData(mn_gobj) as *mut Menu;
@@ -154,6 +161,7 @@ pub unsafe extern "C" fn mnLanguage_8024BFE0(mut unused: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn fn_8024C210(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8024C210");
     let mut _pad: [::core::ffi::c_uchar; 4] = [0; 4];
     let mut jobj: *mut HSD_JObj = HSD_GObjGetHSDObj(gobj) as *mut HSD_JObj;
     if mn_8022EC18(jobj as *mut HSD_JObj, &raw mut mnLanguage_803EF5AC, MOBJ_MASK)
@@ -163,6 +171,7 @@ pub unsafe extern "C" fn fn_8024C210(mut gobj: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn fn_8024C270(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8024C270");
     let mut gobjproc: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     let mut menu: *mut Menu = HSD_GObjGetUserData(gobj) as *mut Menu;
     let mut _pad: [::core::ffi::c_uchar; 12] = [0; 12];
@@ -178,6 +187,7 @@ pub unsafe extern "C" fn fn_8024C270(mut gobj: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn fn_8024C2E8(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8024C2E8");
     let mut gobjproc: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     let mut menu: *mut Menu = (*gobj).user_data as *mut Menu;
     let mut jobj: *mut HSD_JObj = HSD_GObjGetHSDObj(gobj) as *mut HSD_JObj;
@@ -207,6 +217,7 @@ pub unsafe extern "C" fn fn_8024C2E8(mut gobj: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn mnLanguage_8024C3C4(mut arg0: *mut HSD_GObj) {
+    melee_core::ct!("mnLanguage_8024C3C4");
     let mut gobj: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     let mut gobjproc: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     let mut jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
@@ -284,6 +295,7 @@ pub unsafe extern "C" fn mnLanguage_8024C3C4(mut arg0: *mut HSD_GObj) {
     Menu_InitCenterText(menu, 0xbf as s32);
 }
 pub unsafe extern "C" fn mnLanguage_8024C5C0(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnLanguage_8024C5C0");
     let mut gobjproc: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     let mut archive: *mut HSD_Archive = ::core::ptr::null_mut::<HSD_Archive>();
     mn_804D6BC8.cooldown = 5 as u16_0;

@@ -71,6 +71,7 @@ pub static mut gm_Mode_DebugGOver_States: [GameModeState; 3] = [
 
 /// 1BEE9C
 pub unsafe extern "C" fn gm_801BEE9C(arg0: *mut GameModeState) {
+    melee_core::ct!("gm_801BEE9C");
     let game_mode = (*arg0).info.exit_data as *mut i8;
     let ckind = ext::gm_80173224(gm_801BF030(), 1);
     if gm_801BEFB0() == CKind_GameWatch && ext::gm_80164430(0x1B) == 0 {
@@ -99,65 +100,78 @@ pub unsafe extern "C" fn gm_801BEE9C(arg0: *mut GameModeState) {
 
 /// 1BEF84
 pub unsafe extern "C" fn gm_801BEF84(_arg: *mut GameModeState) {
+    melee_core::ct!("gm_801BEF84");
     ext::lbMthp_8001F800();
 }
 
 /// 1BEFA4
 pub fn gm_801BEFA4(ckind: i32) {
+    melee_core::ct!("gm_801BEFA4");
     unsafe { gm_8049C178[0] = ckind as u8 }
 }
 
 /// 1BEFB0
 pub fn gm_801BEFB0() -> CharacterKind {
+    melee_core::ct!("gm_801BEFB0");
     unsafe { gm_8049C178[0] as CharacterKind }
 }
 
 /// 1BEFC0
 pub fn gm_801BEFC0(arg0: i32) {
+    melee_core::ct!("gm_801BEFC0");
     unsafe { gm_8049C178[1] = arg0 as u8 }
 }
 
 /// 1BEFD0
 pub fn gm_801BEFD0() -> i32 {
+    melee_core::ct!("gm_801BEFD0");
     unsafe { gm_8049C178[1] as i32 }
 }
 
 /// 1BEFE0
 pub fn gm_801BEFE0(arg0: i8) {
+    melee_core::ct!("gm_801BEFE0");
     unsafe { gm_8049C178[0xA] = arg0 as u8 }
 }
 
 /// 1BEFF0
 pub fn gm_801BEFF0() -> i32 {
+    melee_core::ct!("gm_801BEFF0");
     unsafe { gm_8049C178[0xA] as i32 }
 }
 
 /// 1BF000
 pub fn gm_801BF000(arg0: i8) {
+    melee_core::ct!("gm_801BF000");
     unsafe { gm_8049C178[9] = arg0 as u8 }
 }
 
 /// 1BF010
 pub fn gm_801BF010() -> i32 {
+    melee_core::ct!("gm_801BF010");
     unsafe { gm_8049C178[9] as i32 }
 }
 
 /// 1BF020
 pub fn gm_801BF020(arg0: i8) {
+    melee_core::ct!("gm_801BF020");
     unsafe { gm_8049C178[8] = arg0 as u8 }
 }
 
 /// 1BF030
 pub fn gm_801BF030() -> i32 {
+    melee_core::ct!("gm_801BF030");
     unsafe { gm_8049C178[8] as i32 }
 }
 
 /// 1BF040
 pub fn gm_801BF040(arg0: i8) {
+    melee_core::ct!("gm_801BF040");
     unsafe { gm_8049C178[2] = arg0 as u8 }
 }
 
 /// 1BF050
 pub fn gm_801BF050() -> i32 {
+    melee_core::ct!("gm_801BF050");
     unsafe { gm_8049C178[2] as i32 }
 }

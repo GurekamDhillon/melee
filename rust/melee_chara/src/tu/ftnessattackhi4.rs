@@ -180,22 +180,28 @@ unsafe fn joint(fp: *mut Fighter, part: usize) -> *mut HSD_JObj {
 
 /// C-ABI entries for the callbacks this TU stores in Fighter (`HSD_GObjEvent`).
 pub unsafe extern "C" fn cb_ftNs_AttackHi4_YoyoStartTimedRehit(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftNs_AttackHi4_YoyoStartTimedRehit");
     ftNs_AttackHi4_YoyoStartTimedRehit(&mut *fpp(g))
 }
 pub unsafe extern "C" fn cb_ftNs_AttackHi4_YoyoUpdateHitPos(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftNs_AttackHi4_YoyoUpdateHitPos");
     ftNs_AttackHi4_YoyoUpdateHitPos(g)
 }
 pub unsafe extern "C" fn cb_ftNs_Init_OnDamage(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftNs_Init_OnDamage");
     crate::tu::ftness::ftNs_Init_OnDamage(g)
 }
 pub unsafe extern "C" fn cb_ftNs_AttackHi4_YoyoItemSetUnk(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftNs_AttackHi4_YoyoItemSetUnk");
     ftNs_AttackHi4_YoyoItemSetUnk(g)
 }
 pub unsafe extern "C" fn cb_ftNs_AttackHi4_YoyoItemSetUnk2(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftNs_AttackHi4_YoyoItemSetUnk2");
     ftNs_AttackHi4_YoyoItemSetUnk2(g)
 }
 
 pub fn ftNs_AttackHi4_YoyoUpdateHitPos(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackHi4_YoyoUpdateHitPos");
     unsafe {
         let fp = fpp(gobj);
         let hitbox = &mut (*fp).x914[0] as *mut HitCapsule;
@@ -209,6 +215,7 @@ pub fn ftNs_AttackHi4_YoyoUpdateHitPos(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_AttackHi4_YoyoCheckTimedRehit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackHi4_YoyoCheckTimedRehit");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).cmd_vars[0] == 0 && (*fp).mv.ns.attackhi4.yoyoRehitTimer > 0 {
@@ -223,6 +230,7 @@ pub fn ftNs_AttackHi4_YoyoCheckTimedRehit(gobj: *mut HSD_GObj) {
 
 /// `ftNs_AttackHi4_YoyoApplyDamage` (static): scale the Yo-Yo hitbox damage by the charge.
 pub fn ftNs_AttackHi4_YoyoApplyDamage(unk_float: f32, gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackHi4_YoyoApplyDamage");
     unsafe {
         let fp = fpp(gobj);
         let a = attrs(fp);
@@ -248,6 +256,7 @@ fn push_ecb(coll: &mut CollData, b: &Vec3) {
 
 /// Returns the environment-hit bit set of a swept Yo-Yo probe (see the C `retval`).
 pub fn ftNs_AttackHi4_YoyoCheckEnvColl(gobj: *mut HSD_GObj, ecb_unk: &Vec3, ecb_unk2: &Vec3, float_unk: f32) -> i32 {
+    melee_core::ct!("ftNs_AttackHi4_YoyoCheckEnvColl");
     unsafe {
         let fp = fpp(gobj);
         let mut coll: Box<CollData> = Box::new(CollData::zeroed());
@@ -308,12 +317,14 @@ unsafe fn hand_pos(fp: *mut Fighter) -> Vec3 {
 }
 
 pub fn ftNs_AttackHi4_YoyoSetUnkPos(gobj: *mut HSD_GObj, pos: &mut Vec3) {
+    melee_core::ct!("ftNs_AttackHi4_YoyoSetUnkPos");
     unsafe {
         *pos = hand_pos(fpp(gobj));
     }
 }
 
 pub fn ftNs_AttackHi4_YoyoSetHitPos(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackHi4_YoyoSetHitPos");
     unsafe {
         let fp = fpp(gobj);
         (*fp).u.ns.yoyo_hitbox_pos = hand_pos(fp);
@@ -323,6 +334,7 @@ pub fn ftNs_AttackHi4_YoyoSetHitPos(gobj: *mut HSD_GObj) {
 /// Blend `target` into `cur` by `w`: `target * w + cur * (1 - w)` per axis (one fmadds each).
 #[inline(always)]
 pub fn blend_hit_pos(target: &Vec3, cur: &Vec3, w: f32) -> Vec3 {
+    melee_core::ct!("blend_hit_pos");
     let inv = 1.0 - w;
     Vec3 {
         x: fmadds(target.x, w, cur.x * inv),
@@ -332,6 +344,7 @@ pub fn blend_hit_pos(target: &Vec3, cur: &Vec3, w: f32) -> Vec3 {
 }
 
 pub fn ftNs_AttackHi4_YoyoSetHitPosUnk(gobj: *mut HSD_GObj, pos_unk: f32) {
+    melee_core::ct!("ftNs_AttackHi4_YoyoSetHitPosUnk");
     unsafe {
         let fp = fpp(gobj);
         let sp3c = hand_pos(fp);
@@ -342,6 +355,7 @@ pub fn ftNs_AttackHi4_YoyoSetHitPosUnk(gobj: *mut HSD_GObj, pos_unk: f32) {
 
 /// C `bool`: the Yo-Yo can be charged (nothing in the way and floor under the string).
 pub fn ftNs_AttackHi4_YoyoCheckNoObstruct(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftNs_AttackHi4_YoyoCheckNoObstruct");
     unsafe {
         let fp = fpp(gobj);
         let ecb_x = 0.0_f32;
@@ -370,6 +384,7 @@ pub fn ftNs_AttackHi4_YoyoCheckNoObstruct(gobj: *mut HSD_GObj) -> bool {
 }
 
 pub fn ftNs_AttackHi4_YoyoApplySmash(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackHi4_YoyoApplySmash");
     unsafe {
         let fp = fpp(gobj);
         (*fp).mv.ns.attackhi4.yoyoCurrentFrame = 0;
@@ -404,11 +419,13 @@ pub fn ftNs_AttackHi4_YoyoApplySmash(gobj: *mut HSD_GObj) {
 /// `YoyoSetChargeDamage`: `((1/256 * mul) - 1) * (frames / duration) + 1`.
 #[inline(always)]
 pub fn charge_damage_scale(mul: f32, frames: f32, duration: f32) -> f32 {
+    melee_core::ct!("charge_damage_scale");
     let damage_mul = fmadds(0.0039059999398887157_f32, mul, -1.0);
     fmadds(damage_mul, frames / duration, 1.0)
 }
 
 pub fn ftNs_AttackHi4_YoyoSetChargeDamage(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackHi4_YoyoSetChargeDamage");
     unsafe {
         let fp = fpp(gobj);
         (*fp).mv.ns.attackhi4.yoyoCurrentFrame = 14;
@@ -431,6 +448,7 @@ pub fn ftNs_AttackHi4_YoyoSetChargeDamage(gobj: *mut HSD_GObj) {
 
 /// C `bool`: the Yo-Yo item failed to spawn and Ness dropped back to Wait.
 pub fn ftNs_AttackHi4_YoyoThink_IsRemove(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftNs_AttackHi4_YoyoThink_IsRemove");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).cmd_vars[0] != 0 {
@@ -489,6 +507,7 @@ pub fn ftNs_AttackHi4_YoyoThink_IsRemove(gobj: *mut HSD_GObj) -> bool {
 }
 
 pub fn ftNs_AttackHi4_YoyoSetUnkRate(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackHi4_YoyoSetUnkRate");
     unsafe {
         let fp = fpp(gobj);
         let a = attrs(fp);
@@ -504,6 +523,7 @@ pub fn ftNs_AttackHi4_YoyoSetUnkRate(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_AttackHi4_YoyoCreateItem(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackHi4_YoyoCreateItem");
     unsafe {
         let fp = fpp(gobj);
         let mut sp10 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -524,6 +544,7 @@ pub fn ftNs_AttackHi4_YoyoCreateItem(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_AttackHi4_YoyoItemSetFlag(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackHi4_YoyoItemSetFlag");
     unsafe {
         let fp = fpp(gobj);
         ftNs_AttackHi4_YoyoItemSetUnk2(gobj);
@@ -532,6 +553,7 @@ pub fn ftNs_AttackHi4_YoyoItemSetFlag(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_AttackHi4_YoyoItemDespawn(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackHi4_YoyoItemDespawn");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.ns.yoyo_gobj.is_null() {
@@ -543,6 +565,7 @@ pub fn ftNs_AttackHi4_YoyoItemDespawn(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_AttackHi4_YoyoItemSetUnk(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackHi4_YoyoItemSetUnk");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.ns.yoyo_gobj.is_null() {
@@ -552,6 +575,7 @@ pub fn ftNs_AttackHi4_YoyoItemSetUnk(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_AttackHi4_YoyoItemSetUnk2(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackHi4_YoyoItemSetUnk2");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.ns.yoyo_gobj.is_null() {
@@ -563,12 +587,14 @@ pub fn ftNs_AttackHi4_YoyoItemSetUnk2(gobj: *mut HSD_GObj) {
 /// Arm the Yo-Yo callbacks every smash entry sets last (`x2222_b2 = 1`, deal-damage rehit timer,
 /// hit-position update).
 pub unsafe fn set_yoyo_callbacks(fp: *mut Fighter) {
+    melee_core::ct!("set_yoyo_callbacks");
     (*fp).set_x2222_b2(1);
     (*fp).deal_dmg_cb = Some(cb_ftNs_AttackHi4_YoyoStartTimedRehit);
     (*fp).accessory4_cb = Some(cb_ftNs_AttackHi4_YoyoUpdateHitPos);
 }
 
 pub fn ftNs_AttackHi4_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackHi4_Enter");
     unsafe {
         let fp = fpp(gobj);
         (*fp).set_allow_interrupt(0);
@@ -591,6 +617,7 @@ pub fn ftNs_AttackHi4_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_AttackHi4_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackHi4_Anim");
     unsafe {
         let fp = fpp(gobj);
         (*fp).mv.ns.attackhi4.yoyoCurrentFrame += 1;
@@ -610,6 +637,7 @@ pub fn ftNs_AttackHi4_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_AttackHi4_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackHi4_IASA");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).input.held_buttons[0] as i32 & HSD_PAD_A == 0 {
@@ -623,6 +651,7 @@ pub fn ftNs_AttackHi4_IASA(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_AttackHi4_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackHi4_Phys");
     unsafe {
         st::ft_80084F3C(gobj);
         let fp = fpp(gobj);
@@ -645,6 +674,7 @@ unsafe fn despawn_in_air(gobj: *mut HSD_GObj, fp: *mut Fighter) {
 }
 
 pub fn ftNs_AttackHi4_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackHi4_Coll");
     unsafe {
         let fp = fpp(gobj);
         st::ft_80084104(gobj);
@@ -653,6 +683,7 @@ pub fn ftNs_AttackHi4_Coll(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_AttackHi4Charge_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackHi4Charge_Anim");
     unsafe {
         let fp = fpp(gobj);
         let a = attrs(fp);
@@ -672,6 +703,7 @@ pub fn ftNs_AttackHi4Charge_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_AttackHi4Charge_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackHi4Charge_IASA");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).input.held_buttons[0] as i32 & HSD_PAD_A == 0 {
@@ -681,10 +713,12 @@ pub fn ftNs_AttackHi4Charge_IASA(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_AttackHi4Charge_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackHi4Charge_Phys");
     st::ft_80084F3C(gobj);
 }
 
 pub fn ftNs_AttackHi4Charge_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackHi4Charge_Coll");
     unsafe {
         let fp = fpp(gobj);
         st::ft_80084104(gobj);
@@ -693,6 +727,7 @@ pub fn ftNs_AttackHi4Charge_Coll(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_AttackHi4Charge_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackHi4Charge_Enter");
     unsafe {
         let fp = fpp(gobj);
         st::Fighter_ChangeMotionState(
@@ -712,6 +747,7 @@ pub fn ftNs_AttackHi4Charge_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_AttackHi4Release_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackHi4Release_Anim");
     unsafe {
         let fp = fpp(gobj);
         (*fp).mv.ns.attackhi4.yoyoCurrentFrame += 1;
@@ -725,6 +761,7 @@ pub fn ftNs_AttackHi4Release_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_AttackHi4Release_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackHi4Release_IASA");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).allow_interrupt() != 0 {
@@ -734,6 +771,7 @@ pub fn ftNs_AttackHi4Release_IASA(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_AttackHi4Release_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackHi4Release_Phys");
     unsafe {
         let fp = fpp(gobj);
         st::ft_80084F3C(gobj);
@@ -758,6 +796,7 @@ pub fn ftNs_AttackHi4Release_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_AttackHi4Release_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackHi4Release_Coll");
     unsafe {
         let fp = fpp(gobj);
         st::ft_80084104(gobj);
@@ -766,6 +805,7 @@ pub fn ftNs_AttackHi4Release_Coll(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_AttackHi4Release_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackHi4Release_Enter");
     unsafe {
         let fp = fpp(gobj);
         st::Fighter_ChangeMotionState(

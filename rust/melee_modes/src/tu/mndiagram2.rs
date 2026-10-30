@@ -194,6 +194,7 @@ unsafe fn HSD_GObjGetHSDObj(g:*mut HSD_GObj)->*mut c_void { (*g).hsd_obj }
 unsafe fn HSD_GObjGetUserData(g:*mut HSD_GObj)->*mut c_void { (*g).user_data }
 unsafe fn Menu_GetAllInputs()->u64 { mn_804A04F0.buttons = mn_80229624(4) as u64; mn_804A04F0.buttons }
 pub unsafe extern "C" fn mnDiagram2_ClearStatRows(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnDiagram2_ClearStatRows");
     let mut ptr: *mut Diagram2 = ::core::ptr::null_mut::<Diagram2>();
     let mut data: *mut Diagram2 = ::core::ptr::null_mut::<Diagram2>();
     let mut i: i32 = 0;
@@ -226,6 +227,7 @@ pub unsafe extern "C" fn mnDiagram2_UpdateHeader(
     mut is_name_mode: u8,
     mut entity_idx: u8,
 ) {
+    melee_core::ct!("mnDiagram2_UpdateHeader");
     let mut sp18: Vec3 = Vec3 { x: 0., y: 0., z: 0. };
     let mut data: *mut Diagram2 = ::core::ptr::null_mut::<Diagram2>();
     let mut text: *mut HSD_Text = ::core::ptr::null_mut::<HSD_Text>();
@@ -355,6 +357,7 @@ unsafe extern "C" fn updateDiagramMode(mut is_name_mode: u8) {
     mnDiagram2_UpdateHeader(gobj, is_name_mode, entity_idx);
 }
 pub unsafe extern "C" fn mnDiagram2_HandleInput(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnDiagram2_HandleInput");
     let mut data: *mut Diagram2 = ::core::ptr::null_mut::<Diagram2>();
     let mut result: i32 = 0;
     let mut entity_idx: u8 = 0;
@@ -511,6 +514,7 @@ pub unsafe extern "C" fn mnDiagram2_GetStatValue(
     mut stat_type: u8,
     mut entity_idx: u8,
 ) -> i32 {
+    melee_core::ct!("mnDiagram2_GetStatValue");
     let mut typeVal: u8 = 0;
     let mut idxVal: u8 = 0;
     let mut val16: u16 = 0;
@@ -767,6 +771,7 @@ pub unsafe extern "C" fn mnDiagram2_CreateStatRow(
     mut row_idx: u8,
     mut entity_idx: u8,
 ) {
+    melee_core::ct!("mnDiagram2_CreateStatRow");
     let mut row: u32 = 0;
     let mut px: f32 = 0.;
     let mut py: f32 = 0.;
@@ -935,6 +940,7 @@ pub unsafe extern "C" fn mnDiagram2_PopulateStatRows(
     mut is_name_mode: u8,
     mut entity_idx: u8,
 ) {
+    melee_core::ct!("mnDiagram2_PopulateStatRows");
     let mut limit: i32 = 0;
     let mut idx: i32 = 0;
     let mut i: i32 = 0;
@@ -972,6 +978,7 @@ pub unsafe extern "C" fn mnDiagram2_PopulateStatRows(
     }
 }
 pub unsafe extern "C" fn mnDiagram2_OnAnimComplete(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnDiagram2_OnAnimComplete");
     let mut data: *mut Diagram2 = ::core::ptr::null_mut::<Diagram2>();
     let mut jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut table: *mut AnimLoopSettings = ::core::ptr::null_mut::<AnimLoopSettings>();
@@ -983,6 +990,7 @@ pub unsafe extern "C" fn mnDiagram2_OnAnimComplete(mut gobj: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn mnDiagram2_UpdateScrollArrows(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnDiagram2_UpdateScrollArrows");
     let mut data: *mut Diagram2 = ::core::ptr::null_mut::<Diagram2>();
     let mut jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     data = HSD_GObjGetUserData(gobj) as *mut Diagram2;
@@ -1062,6 +1070,7 @@ pub unsafe extern "C" fn mnDiagram2_UpdateScrollArrows(mut gobj: *mut HSD_GObj) 
     };
 }
 pub unsafe extern "C" fn mnDiagram2_Think(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnDiagram2_Think");
     let mut data: *mut Diagram2 = ::core::ptr::null_mut::<Diagram2>();
     let mut src: *mut u8 = ::core::ptr::null_mut::<u8>();
     let mut mode: u8 = 0;
@@ -1101,6 +1110,7 @@ pub unsafe extern "C" fn mnDiagram2_Think(mut gobj: *mut HSD_GObj) {
     mnDiagram2_UpdateScrollArrows(gobj);
 }
 pub unsafe extern "C" fn mnDiagram2_FreeUserData(mut data: *mut Diagram2) {
+    melee_core::ct!("mnDiagram2_FreeUserData");
     if !(*data).header_text.is_null() {
         HSD_SisLib_803A5CC4((*data).header_text);
     }
@@ -1110,6 +1120,7 @@ pub unsafe extern "C" fn mnDiagram2_InitUserData(
     mut arg: *mut c_void,
     mut unused: i32,
 ) {
+    melee_core::ct!("mnDiagram2_InitUserData");
     let mut data: *mut Diagram2 = arg as *mut Diagram2;
     let mut src: *mut u8 = &raw mut mn_804A04F0 as *mut u8;
     let mut i: i32 = 0;
@@ -1131,6 +1142,7 @@ pub unsafe extern "C" fn mnDiagram2_InitUserData(
     (*data).header_text = ::core::ptr::null_mut::<HSD_Text>();
 }
 pub unsafe extern "C" fn mnDiagram2_Create(mut arg0: i32) {
+    melee_core::ct!("mnDiagram2_Create");
     let mut entity_val: i32 = 0;
     let mut user_data: *mut Diagram2 = ::core::ptr::null_mut::<Diagram2>();
     let mut entity_idx: u8 = 0;
@@ -1271,6 +1283,7 @@ pub unsafe extern "C" fn mnDiagram2_Create(mut arg0: i32) {
     mnDiagram2_UpdateHeader(gobj, is_name as u8, entity_idx);
 }
 pub unsafe extern "C" fn mnDiagram2_Init() {
+    melee_core::ct!("mnDiagram2_Init");
     let mut data: *mut MenuFlow = &raw mut mn_804A04F0;
     let mut gobj: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     (*data).x10 = 1 as u8;
@@ -1287,6 +1300,7 @@ pub unsafe extern "C" fn mnDiagram2_GetRankedFighter(
     mut stat_type: u8,
     mut rank: u8,
 ) -> u8 {
+    melee_core::ct!("mnDiagram2_GetRankedFighter");
     let mut j: i32 = 0;
     let mut entries: [mnDiagram2_SortEntry; 25] = [mnDiagram2_SortEntry {
         anon_0: mnDiagram2_SortEntry_anon_9 {
@@ -1365,6 +1379,7 @@ pub unsafe extern "C" fn mnDiagram2_GetRankedName(
     mut stat_type: u8,
     mut rank: u8,
 ) -> u8 {
+    melee_core::ct!("mnDiagram2_GetRankedName");
     let mut entries: [mnDiagram2_SortEntry; 120] = [mnDiagram2_SortEntry {
         anon_0: mnDiagram2_SortEntry_anon_9 {
             idx: 0,
@@ -1445,6 +1460,7 @@ pub unsafe extern "C" fn mnDiagram2_GetAggregatedFighterRank(
     mut type_0: u8,
     mut idx: u8,
 ) {
+    melee_core::ct!("mnDiagram2_GetAggregatedFighterRank");
     let mut entries: [mnDiagram2_SortEntry; 25] = [mnDiagram2_SortEntry {
         anon_0: mnDiagram2_SortEntry_anon_9 {
             idx: 0,
@@ -1612,6 +1628,7 @@ pub unsafe extern "C" fn mnDiagram2_GetAggregatedFighterRank(
     };
 }
 pub unsafe extern "C" fn mnDiagram2_ClearDetailView(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnDiagram2_ClearDetailView");
     let mut data: *mut Diagram3 = ::core::ptr::null_mut::<Diagram3>();
     let mut ptr: *mut Diagram3 = ::core::ptr::null_mut::<Diagram3>();
     let mut i: i32 = 0;

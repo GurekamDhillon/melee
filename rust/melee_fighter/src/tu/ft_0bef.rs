@@ -20,6 +20,7 @@ pub mod ext {
 
 /// `ftCo_800BEFD4`.
 pub fn ftCo_800BEFD4(g: G) {
+    melee_core::ct!("ftCo_800BEFD4");
     ext::Fighter_ChangeMotionState(g, ftCo_MS_DeadUpFallIce as i32, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     let f = unsafe { &mut *((*g).user_data as *mut Fighter) };
     f.set_x2219_b2(1);

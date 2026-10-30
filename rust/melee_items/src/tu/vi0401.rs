@@ -160,12 +160,14 @@ unsafe fn vi_RunCamera(gobj: *mut HSD_GObj, erase_colors: *mut u8, prio: u64) {
 
 /// `void vi0401_8031D020(int, int)`
 pub unsafe fn vi0401_8031D020(arg0: i32, arg1: i32) {
+    melee_core::ct!("vi0401_8031D020");
     un_804D6F60[0] = arg0 as u8;
     un_804D6F60[1] = arg1 as u8;
 }
 
 /// `void un_8031D030(CharacterKind, int)`
 pub unsafe fn un_8031D030(char_kind: CharacterKind, costume: i32) {
+    melee_core::ct!("un_8031D030");
     let mut pos: Vec = core::mem::zeroed();
 
     Stage_InitScene(St_Kind_Zebes, core::ptr::null_mut());
@@ -224,6 +226,7 @@ unsafe extern "C" fn vi0401_8031D23C(gobj: *mut HSD_GObj) {
 
 /// `void vi0401_Scene_OnEnter(void*)`
 pub unsafe fn vi0401_Scene_OnEnter(data: *mut c_void) {
+    melee_core::ct!("vi0401_Scene_OnEnter");
     let desc = data as *mut ViCharaDesc;
 
     ext::lbAudioAx_800236DC();
@@ -309,6 +312,7 @@ pub unsafe fn vi0401_Scene_OnEnter(data: *mut c_void) {
 
 /// `void vi0401_Scene_OnFrame(void)`
 pub unsafe fn vi0401_Scene_OnFrame() {
+    melee_core::ct!("vi0401_Scene_OnFrame");
     let result: u64 = ext::gm_GetButtonsTriggered(ext::gm_8017E430());
     if (result & PAD_BUTTON_START) != 0 {
         ext::lb_800145F4();

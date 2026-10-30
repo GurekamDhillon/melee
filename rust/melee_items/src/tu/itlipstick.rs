@@ -73,6 +73,7 @@ pub static mut it_803F6310: [ItemStateTable; 6] = [
 ];
 
 pub unsafe fn itLipstick_Logic23_Spawned(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLipstick_Logic23_Spawned");
     let ip = (*gobj).user_data as *mut Item;
     (*ip).xD4C = (*GET_ATTRS(ip)).x0;
     (*ip).xDAC_itcmd_var0 = 0;
@@ -80,11 +81,13 @@ pub unsafe fn itLipstick_Logic23_Spawned(gobj: *mut Item_GObj) {
 }
 
 pub unsafe fn it_80295748(gobj: *mut Item_GObj, pos: *mut Vec) {
+    melee_core::ct!("it_80295748");
     let ip = GET_ITEM(gobj);
     *pos = (*GET_ATTRS(ip)).x4;
 }
 
 pub unsafe fn it_80295770(gobj: *mut Item_GObj, arg1: *mut Vec, arg2: f32, arg3: i32) {
+    melee_core::ct!("it_80295770");
     let ip = GET_ITEM(gobj);
     if (*ip).xD4C > 0 {
         (*ip).xD4C -= 1;
@@ -93,6 +96,7 @@ pub unsafe fn it_80295770(gobj: *mut Item_GObj, arg1: *mut Vec, arg2: f32, arg3:
 }
 
 pub unsafe extern "C" fn it_802957AC(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802957AC");
     let ip = GET_ITEM(gobj);
     ext::it_8026B390(gobj);
     itResetVelocity(ip);
@@ -100,51 +104,61 @@ pub unsafe extern "C" fn it_802957AC(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLipstick_UnkMotion0_Anim(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLipstick_UnkMotion0_Anim");
     0
 }
 
-pub unsafe extern "C" fn itLipstick_UnkMotion0_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itLipstick_UnkMotion0_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itLipstick_UnkMotion0_Phys");}
 
 pub unsafe extern "C" fn itLipstick_UnkMotion0_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLipstick_UnkMotion0_Coll");
     ext::it_8026D62C(gobj, Some(it_8029583C));
     0
 }
 
 pub unsafe extern "C" fn it_8029583C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_8029583C");
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE as u32);
 }
 
 pub unsafe extern "C" fn itLipstick_UnkMotion4_Anim(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLipstick_UnkMotion4_Anim");
     0
 }
 
 pub unsafe extern "C" fn itLipstick_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLipstick_UnkMotion1_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = (*ip).xCC_item_attr;
     ext::it_80272860(gobj, (*attrs).x10_fall_speed, (*attrs).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itLipstick_UnkMotion1_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLipstick_UnkMotion1_Coll");
     ext::it_8026E15C(gobj, Some(it_802957AC));
     0
 }
 
 pub unsafe fn itLipstick_Logic23_PickedUp(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLipstick_Logic23_PickedUp");
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE as u32);
 }
 
 pub unsafe extern "C" fn itLipstick_UnkMotion2_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLipstick_UnkMotion2_Anim");
     (*GET_ITEM(gobj)).xDAC_itcmd_var0 = 1;
     0
 }
 
-pub unsafe extern "C" fn itLipstick_UnkMotion2_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itLipstick_UnkMotion2_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itLipstick_UnkMotion2_Phys");}
 
 pub unsafe fn itLipstick_Logic23_Dropped(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLipstick_Logic23_Dropped");
     ext::Item_80268E5C(gobj, 4, 6);
 }
 
 pub unsafe extern "C" fn itLipstick_UnkMotion4_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLipstick_UnkMotion4_Coll");
     let ip = GET_ITEM(gobj);
 
     if (*ip).xD4C != 0 {
@@ -155,14 +169,17 @@ pub unsafe extern "C" fn itLipstick_UnkMotion4_Coll(gobj: *mut Item_GObj) -> i32
 }
 
 pub unsafe fn itLipstick_Logic23_Thrown(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLipstick_Logic23_Thrown");
     ext::Item_80268E5C(gobj, 3, 6);
 }
 
 pub unsafe extern "C" fn itLipstick_UnkMotion4_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLipstick_UnkMotion4_Phys");
     Item_ApplyFallingPhysics(gobj);
 }
 
 pub unsafe extern "C" fn itLipstick_UnkMotion3_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLipstick_UnkMotion3_Coll");
     let mut ip = GET_ITEM(gobj);
 
     if (*ip).xD4C != 0 {
@@ -190,6 +207,7 @@ pub unsafe extern "C" fn itLipstick_UnkMotion3_Coll(gobj: *mut Item_GObj) -> i32
 }
 
 pub unsafe fn itLipstick_Logic23_DmgDealt(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLipstick_Logic23_DmgDealt");
     let ip = GET_ITEM(gobj);
     if (*ip).msid == 3 || (*ip).msid == 4 {
         ext::itColl_BounceOffVictim(gobj);
@@ -198,36 +216,44 @@ pub unsafe fn itLipstick_Logic23_DmgDealt(gobj: *mut Item_GObj) -> i32 {
 }
 
 pub unsafe fn itLipstick_Logic23_EnteredAir(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLipstick_Logic23_EnteredAir");
     ext::Item_80268E5C(gobj, 5, ITEM_ANIM_UPDATE as u32);
 }
 
 pub unsafe extern "C" fn itLipstick_UnkMotion5_Anim(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLipstick_UnkMotion5_Anim");
     0
 }
 
-pub unsafe extern "C" fn itLipstick_UnkMotion5_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itLipstick_UnkMotion5_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itLipstick_UnkMotion5_Phys");}
 
 pub unsafe extern "C" fn itLipstick_UnkMotion5_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLipstick_UnkMotion5_Coll");
     ext::it_8026E8C4(gobj, Some(it_802957AC), Some(it_8029583C));
     0
 }
 
 pub unsafe fn itLipstick_Logic23_Clanked(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLipstick_Logic23_Clanked");
     itLipstick_Logic23_DmgDealt(gobj)
 }
 
 pub unsafe fn itLipstick_Logic23_Reflected(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLipstick_Logic23_Reflected");
     ext::it_80273030(gobj)
 }
 
 pub unsafe fn itLipstick_Logic23_HitShield(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLipstick_Logic23_HitShield");
     itLipstick_Logic23_DmgDealt(gobj)
 }
 
 pub unsafe fn itLipstick_Logic23_ShieldBounced(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLipstick_Logic23_ShieldBounced");
     ext::itColl_BounceOffShield(gobj)
 }
 
 pub unsafe fn itLipstick_Logic23_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("itLipstick_Logic23_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

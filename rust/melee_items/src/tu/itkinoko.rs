@@ -59,12 +59,14 @@ pub static it_803F6110: [ItemStateTable; 2] = [
 
 /// `HSD_AnimJoint* it_80293660(int idx)` (293660)
 pub unsafe extern "C" fn it_80293660(idx: i32) -> *mut HSD_AnimJoint {
+    melee_core::ct!("it_80293660");
     let attrs = (**ext::it_804D6D24.add(It_Kind_Kinoko as usize)).x4_specialAttributes as *mut KinokoAnim;
     (*attrs.offset(idx as isize + 2)).joint
 }
 
 /// `void itKinoko_Logic26_Spawned(Item_GObj*)` (29366C)
 pub unsafe extern "C" fn itKinoko_Logic26_Spawned(gobj: *mut Item_GObj) {
+    melee_core::ct!("itKinoko_Logic26_Spawned");
     let it = ip_of(gobj);
     if (*it).pos.x > 0.0 {
         (*it).facing_dir = -1.0;
@@ -81,6 +83,7 @@ pub unsafe extern "C" fn itKinoko_Logic26_Spawned(gobj: *mut Item_GObj) {
 
 /// `void it_802936E4(Item_GObj*)` (2936E4)
 pub unsafe extern "C" fn it_802936E4(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802936E4");
     let it = ip_of(gobj);
     (*it).x40_vel.x = (*it).xDD4_itemVar.kinoko.x0;
     (*it).x40_vel.z = 0.0;
@@ -93,11 +96,13 @@ pub unsafe extern "C" fn it_802936E4(gobj: *mut Item_GObj) {
 
 /// `bool itKinoko_UnkMotion0_Anim(Item_GObj*)`
 pub unsafe extern "C" fn itKinoko_UnkMotion0_Anim(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKinoko_UnkMotion0_Anim");
     0
 }
 
 /// `void itKinoko_UnkMotion0_Phys(Item_GObj*)`
 pub unsafe extern "C" fn itKinoko_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itKinoko_UnkMotion0_Phys");
     let it = ip_of(gobj);
     let attrs = (*(*it).xC4_article_data).x4_specialAttributes as *mut KinokoAttrs;
     if (*it).ground_or_air != GA_Air {
@@ -108,6 +113,7 @@ pub unsafe extern "C" fn itKinoko_UnkMotion0_Phys(gobj: *mut Item_GObj) {
 
 /// `bool itKinoko_UnkMotion0_Coll(Item_GObj*)`
 pub unsafe extern "C" fn itKinoko_UnkMotion0_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKinoko_UnkMotion0_Coll");
     let it = ip_of(gobj);
     let cd = &raw mut (*it).x378_itemColl;
 
@@ -129,21 +135,25 @@ pub unsafe extern "C" fn itKinoko_UnkMotion0_Coll(gobj: *mut Item_GObj) -> i32 {
 
 /// `void it_8029385C(Item_GObj*)` (29385C)
 pub unsafe extern "C" fn it_8029385C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_8029385C");
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE as u32);
 }
 
 /// `void it_80293884(Item_GObj*)` (293884)
 pub unsafe extern "C" fn it_80293884(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_80293884");
     ext::Item_80268E5C(gobj, 1, (ITEM_UNK_0x1 | ITEM_HIT_PRESERVE) as u32);
 }
 
 /// `bool itKinoko_UnkMotion1_Anim(Item_GObj*)`
 pub unsafe extern "C" fn itKinoko_UnkMotion1_Anim(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKinoko_UnkMotion1_Anim");
     0
 }
 
 /// `void itKinoko_UnkMotion1_Phys(Item_GObj*)`
 pub unsafe extern "C" fn itKinoko_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itKinoko_UnkMotion1_Phys");
     let it = ip_of(gobj);
     let attr = (*it).xCC_item_attr;
     let sa = (*(*it).xC4_article_data).x4_specialAttributes as *mut KinokoAttrs;
@@ -165,6 +175,7 @@ pub unsafe extern "C" fn itKinoko_UnkMotion1_Phys(gobj: *mut Item_GObj) {
 
 /// `bool itKinoko_UnkMotion1_Coll(Item_GObj*)`
 pub unsafe extern "C" fn itKinoko_UnkMotion1_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKinoko_UnkMotion1_Coll");
     let it = ip_of(gobj);
     let cd = &raw mut (*it).x378_itemColl;
 
@@ -177,10 +188,12 @@ pub unsafe extern "C" fn itKinoko_UnkMotion1_Coll(gobj: *mut Item_GObj) -> i32 {
 
 /// `bool itKinoko_Logic26_DmgDealt(Item_GObj*)`
 pub unsafe extern "C" fn itKinoko_Logic26_DmgDealt(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKinoko_Logic26_DmgDealt");
     1
 }
 
 /// `void itKinoko_Logic26_EvtUnk(Item_GObj*, HSD_GObj*)`
 pub unsafe extern "C" fn itKinoko_Logic26_EvtUnk(gobj: *mut Item_GObj, gobj_2: *mut HSD_GObj) {
+    melee_core::ct!("itKinoko_Logic26_EvtUnk");
     ext::it_8026B894(gobj, gobj_2);
 }

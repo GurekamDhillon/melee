@@ -71,6 +71,7 @@ fn abs_c(x: f32) -> f32 {
 
 /// `ftCo_800BD19C`: squared distance from the fighter to `pos`.
 pub fn ftCo_800BD19C(g: G, pos: &Vec3) -> f32 {
+    melee_core::ct!("ftCo_800BD19C");
     let f = fp(g);
     let dx = f.cur_pos.x - pos.x;
     let dy = f.cur_pos.y - pos.y;
@@ -80,6 +81,7 @@ pub fn ftCo_800BD19C(g: G, pos: &Vec3) -> f32 {
 
 /// `ftCo_800BD1DC`: enter CaptureKirby.
 pub fn ftCo_800BD1DC(g: G, vg: G) {
+    melee_core::ct!("ftCo_800BD1DC");
     let f = fp(g);
     let vf = fp(vg);
     ext::ftCo_ReleaseItemAndVictim(g);
@@ -124,16 +126,17 @@ pub fn ftCo_800BD1DC(g: G, vg: G) {
 }
 
 /// `ftCo_CaptureKirby_Anim`.
-pub fn ftCo_CaptureKirby_Anim(_g: G) {}
+pub fn ftCo_CaptureKirby_Anim(_g: G) { melee_core::ct!("ftCo_CaptureKirby_Anim");}
 /// `ftCo_CaptureKirby_IASA`.
-pub fn ftCo_CaptureKirby_IASA(_g: G) {}
+pub fn ftCo_CaptureKirby_IASA(_g: G) { melee_core::ct!("ftCo_CaptureKirby_IASA");}
 /// `ftCo_CaptureKirby_Phys`.
-pub fn ftCo_CaptureKirby_Phys(_g: G) {}
+pub fn ftCo_CaptureKirby_Phys(_g: G) { melee_core::ct!("ftCo_CaptureKirby_Phys");}
 /// `ftCo_CaptureKirby_Coll`.
-pub fn ftCo_CaptureKirby_Coll(_g: G) {}
+pub fn ftCo_CaptureKirby_Coll(_g: G) { melee_core::ct!("ftCo_CaptureKirby_Coll");}
 
 /// `ftCo_800BD39C`: shrink toward Kirby's mouth and follow it (accessory1 callback).
 pub fn ftCo_800BD39C(g: G) {
+    melee_core::ct!("ftCo_800BD39C");
     let f = fp(g);
     let mut pos = unsafe {
         Vec3 { x: f.mv.co.capturekirby.pos_offset.x, y: f.mv.co.capturekirby.pos_offset.y, z: 0.0 }
@@ -173,5 +176,6 @@ pub fn ftCo_800BD39C(g: G) {
 }
 /// `ftCo_800BD39C` as an `HSD_GObjEvent`.
 pub unsafe extern "C" fn ftCo_800BD39C_cb(g: G) {
+    melee_core::ct!("ftCo_800BD39C_cb");
     ftCo_800BD39C(g)
 }

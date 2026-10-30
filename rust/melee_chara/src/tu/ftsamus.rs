@@ -15,6 +15,7 @@ pub mod ext {
 
 /// `ftSs_Init_80128428`: the take-damage / death callback.
 pub fn ftSs_Init_80128428(gobj: G) {
+    melee_core::ct!("ftSs_Init_80128428");
     ext::ftSs_SpecialN_80129258(gobj);
     ext::ftSs_SpecialS_8012A640(gobj);
     ext::ftCo_800D9C98(gobj);

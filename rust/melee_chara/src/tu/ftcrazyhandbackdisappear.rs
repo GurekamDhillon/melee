@@ -10,6 +10,7 @@ use melee_types::*;
 pub use crate::chars::r8::ftCrazyHand::ftcrazyhandbackdisappear::ftCh_BackDisappear_IASA;
 
 pub fn fn_80159908(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80159908");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*(*fp).ft_data).ext_attr as *const ftCrazyHand_DatAttrs;
@@ -27,6 +28,7 @@ pub fn fn_80159908(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCh_BackDisappear_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_BackDisappear_Anim");
     unsafe {
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
             let fp = (*gobj).user_data as *mut Fighter;
@@ -37,6 +39,7 @@ pub fn ftCh_BackDisappear_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCh_BackDisappear_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_BackDisappear_Phys");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         (*fp).mv.ch.unk0.x0 -= 1.0;
@@ -49,4 +52,4 @@ pub fn ftCh_BackDisappear_Phys(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftCh_BackDisappear_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftCh_BackDisappear_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_BackDisappear_Coll");}

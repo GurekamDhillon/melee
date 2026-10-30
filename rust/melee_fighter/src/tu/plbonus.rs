@@ -117,6 +117,7 @@ fn setPointValue(player: i32, kind: i32, val: u32) {
 
 /// `pl_800386D8`: `arg0->by_attack_hi[arg1]` (unchecked: indexes past the member into x504..)
 pub fn pl_800386D8(arg0: *mut plActionStats, arg1: isize) -> u32 {
+    melee_core::ct!("pl_800386D8");
     unsafe {
         let hi = (arg0 as *const u8).add(0x358 + 4 * (1 + 35)) as *const u32;
         *hi.offset(arg1)
@@ -124,6 +125,7 @@ pub fn pl_800386D8(arg0: *mut plActionStats, arg1: isize) -> u32 {
 }
 
 pub fn pl_800386E8(arg0: *mut pl_800386E8_arg0_t) -> i32 {
+    melee_core::ct!("pl_800386E8");
     unsafe {
         let temp = (*arg0).unk_190.wrapping_add((*arg0).unk_5AC);
         temp.wrapping_add((*arg0).unk_5B0)
@@ -131,6 +133,7 @@ pub fn pl_800386E8(arg0: *mut pl_800386E8_arg0_t) -> i32 {
 }
 
 pub fn fn_80038700(arg0: *const i32, arg1: i32, arg2: i32) -> i32 {
+    melee_core::ct!("fn_80038700");
     let mut sum: i32 = 0;
     let mut i = arg1;
     while i <= arg2 {
@@ -141,10 +144,12 @@ pub fn fn_80038700(arg0: *const i32, arg1: i32, arg2: i32) -> i32 {
 }
 
 pub fn pl_80038788(player: i32, kind: i32, arg2: i32) {
+    melee_core::ct!("pl_80038788");
     setPointValue(player, kind, arg2 as u32);
 }
 
 pub fn pl_80038824(player: i32, kind: i32) {
+    melee_core::ct!("pl_80038824");
     let temp_r31 = tbl(player);
     hsd_assert(ext::gmDecisionGetType(kind) == Gm_DecType_Point, 92, "gmDecisionGetType(kind) == Gm_DecType_Point");
     unsafe {
@@ -154,6 +159,7 @@ pub fn pl_80038824(player: i32, kind: i32) {
 }
 
 pub fn pl_80038898(player: i32, kind: i32) {
+    melee_core::ct!("pl_80038898");
     let temp_r31 = tbl(player);
     hsd_assert(ext::gmDecisionGetType(kind) == Gm_DecType_Point, 103, "gmDecisionGetType(kind) == Gm_DecType_Point");
     unsafe {
@@ -166,10 +172,12 @@ pub fn pl_80038898(player: i32, kind: i32) {
 }
 
 pub fn pl_80038914() -> *mut pl_804D6470_t {
+    melee_core::ct!("pl_80038914");
     unsafe { pl_804D6470 }
 }
 
 pub fn pl_8003891C(player: i32) {
+    melee_core::ct!("pl_8003891C");
     let t = tbl(player);
     ext::plStale_ResetStaleMoveTableForPlayer(player);
     super::plattack::plAttack_8003759C(player as u32);
@@ -315,6 +323,7 @@ pub fn pl_8003891C(player: i32) {
 }
 
 pub fn pl_80038F10(player: i32) {
+    melee_core::ct!("pl_80038F10");
     unsafe {
         let temp_r3 = tbl(player);
         (*temp_r3).xD50 = 0;
@@ -342,6 +351,7 @@ pub fn pl_80038F10(player: i32) {
 }
 
 pub fn fn_80038FB8(player: i32) {
+    melee_core::ct!("fn_80038FB8");
     let temp_r3 = tbl(player);
     for var_ctr in 0..215 {
         unsafe { (*temp_r3).x0_staleMoveTable.x904[var_ctr] = 0 };
@@ -349,6 +359,7 @@ pub fn fn_80038FB8(player: i32) {
 }
 
 pub fn pl_8003906C(player: i32, kind: i32, arg2: *mut u32, arg3: u32, arg4: u32, arg5: u32, arg6: *mut i32) -> i32 {
+    melee_core::ct!("pl_8003906C");
     unsafe {
         if pl_Verify_gm_8016AEDC() {
             if ext::gm_GetFrameCount() <= arg3 {
@@ -384,6 +395,7 @@ pub fn pl_8003906C(player: i32, kind: i32, arg2: *mut u32, arg3: u32, arg4: u32,
 }
 
 pub fn pl_80039238(player: i32, kind: i32, arg2: *mut i32, arg3: u32, arg4: *mut f32, arg6: f32, arg7: f32) -> bool {
+    melee_core::ct!("pl_80039238");
     unsafe {
         let var_r0 = ext::gm_GetFrameCount() != 0 && ext::gm_GetFrameCount() != (-2i32) as u32;
         if var_r0 {
@@ -417,6 +429,7 @@ pub fn pl_80039238(player: i32, kind: i32, arg2: *mut i32, arg3: u32, arg4: *mut
 }
 
 pub fn pl_80039418(player: i32, kind: i32) -> u32 {
+    melee_core::ct!("pl_80039418");
     let table = tbl(player);
     unsafe { (*table).x0_staleMoveTable.x904[kind as usize] }
 }
@@ -432,6 +445,7 @@ fn resetBonuses(player: i32) {
 }
 
 pub fn pl_80039450(player: i32) {
+    melee_core::ct!("pl_80039450");
     let table = tbl(player);
 
     resetBonuses(player);
@@ -460,6 +474,7 @@ pub fn pl_80039450(player: i32) {
 }
 
 pub fn fn_80039618(player: i32) {
+    melee_core::ct!("fn_80039618");
     let table = tbl(player);
     let stats_p = Player_GetActionStats(player);
     let gobj = Player_GetEntity(player);
@@ -767,6 +782,7 @@ pub fn fn_80039618(player: i32) {
 }
 
 pub fn fn_8003B044(player: i32) {
+    melee_core::ct!("fn_8003B044");
     unsafe {
         let temp_r31 = tbl(player);
         let temp_r3 = Player_GetActionStats(player);
@@ -860,6 +876,7 @@ pub fn fn_8003B044(player: i32) {
 }
 
 pub fn fn_8003B9A4(player: i32) {
+    melee_core::ct!("fn_8003B9A4");
     unsafe {
         let temp_r31 = tbl(player);
         let action_stats = Player_GetActionStats(player);
@@ -915,6 +932,7 @@ pub fn fn_8003B9A4(player: i32) {
 }
 
 pub fn fn_8003BD60(player: i32) {
+    melee_core::ct!("fn_8003BD60");
     unsafe {
         let temp_r31 = tbl(player);
         let pl = c();
@@ -962,6 +980,7 @@ pub fn fn_8003BD60(player: i32) {
 }
 
 pub fn fn_8003C340(player: i32) {
+    melee_core::ct!("fn_8003C340");
     let pl = c();
     let temp_r3: i32 = pl_8003E39C(player);
     if temp_r3 == 0 {
@@ -1078,6 +1097,7 @@ pub fn fn_8003C340(player: i32) {
 }
 
 pub fn fn_8003CC84(player: i32) {
+    melee_core::ct!("fn_8003CC84");
     unsafe {
         let temp_r31 = tbl(player);
         Player_GetActionStats(player);
@@ -1150,6 +1170,7 @@ pub fn fn_8003CC84(player: i32) {
 }
 
 pub fn fn_8003D2EC(player: i32) {
+    melee_core::ct!("fn_8003D2EC");
     unsafe {
         let temp_r3 = Player_GetActionStats(player);
         let temp_r27 = &(*temp_r3).attacks.by_attack_counts;

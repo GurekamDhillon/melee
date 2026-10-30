@@ -201,9 +201,11 @@ unsafe fn setup_matrix(j: *mut HSD_JObj) {
 }
 
 pub unsafe fn checkJObjFlags(jobj: *mut HSD_JObj) -> bool {
+    melee_core::ct!("checkJObjFlags");
     (*jobj).flags & ((1 << 5) | (1 << 14)) == 0
 }
 pub unsafe fn lb_8000F9F8(jobj: *mut HSD_JObj) {
+    melee_core::ct!("lb_8000F9F8");
     let child = ji::HSD_JObjGetChild(jobj.as_ref());
     if !child.is_null() { ext::lb_80011C18(child, 1 << 26); }
     if checkJObjFlags(jobj) && !ext::HSD_JObjGetDObj(jobj).is_null() {
@@ -211,6 +213,7 @@ pub unsafe fn lb_8000F9F8(jobj: *mut HSD_JObj) {
     }
 }
 pub unsafe fn lb_8000FA94() {
+    melee_core::ct!("lb_8000FA94");
     for i in 0..320 {
         (*lb_804D63A0).entries[i].desc.lb_unk0.jobj = null_mut();
         (*lb_804D63A0).entries[i].next = if i < 319 { &raw mut (*lb_804D63A0).entries[i + 1] } else { null_mut() };
@@ -225,11 +228,13 @@ pub unsafe fn lb_8000FA94() {
     lb_804D63B4 = 0;
 }
 pub unsafe fn lb_8000FCDC() {
+    melee_core::ct!("lb_8000FCDC");
     lb_804D63A0 = ext::HSD_MemAlloc(core::mem::size_of::<lb_804D63A0_t>() as i32).cast();
     lb_804D63A8 = ext::HSD_MemAlloc(core::mem::size_of::<lb_804D63A8_t>() as i32).cast();
     lb_8000FA94();
 }
 pub unsafe fn lb_8000FD18(desc: *mut DynamicsDesc) {
+    melee_core::ct!("lb_8000FD18");
     let mut cur = (*desc).data;
     while !cur.is_null() {
         let next = (*cur).next;
@@ -240,6 +245,7 @@ pub unsafe fn lb_8000FD18(desc: *mut DynamicsDesc) {
     (*desc).data = null_mut();
 }
 pub unsafe fn popDynamicsData() -> *mut DynamicsData {
+    melee_core::ct!("popDynamicsData");
     let entry = cur_data;
     if entry.is_null() { return null_mut(); }
     cur_data = (*entry).next;
@@ -247,6 +253,7 @@ pub unsafe fn popDynamicsData() -> *mut DynamicsData {
     entry
 }
 pub unsafe fn lb_8000FD48(mut jobj: *mut HSD_JObj, desc: *mut DynamicsDesc, max_count: usize) {
+    melee_core::ct!("lb_8000FD48");
     if desc.is_null() { return; }
     if jobj.is_null() { (*desc).data = null_mut(); return; }
     (*desc).count = 0;
@@ -295,6 +302,7 @@ pub unsafe fn lb_8000FD48(mut jobj: *mut HSD_JObj, desc: *mut DynamicsDesc, max_
     }
 }
 pub unsafe fn inlineA0() -> *mut lb_80011A50_t {
+    melee_core::ct!("inlineA0");
     let ret = lb_804D63AC;
     if ret.is_null() { return null_mut(); }
     lb_804D63AC = (*ret).next;
@@ -303,6 +311,7 @@ pub unsafe fn inlineA0() -> *mut lb_80011A50_t {
     ret
 }
 pub unsafe fn inlineA1() -> *mut lb_80011A50_t {
+    melee_core::ct!("inlineA1");
     let mut cur = lb_804D63B0;
     if cur.is_null() { return null_mut(); }
     let mut ret = cur;
@@ -314,6 +323,7 @@ pub unsafe fn inlineA1() -> *mut lb_80011A50_t {
     ret
 }
 pub unsafe fn lb_800100B0(arg0: *mut lb_80011A50_t, _arg1: f32) -> *mut lb_80011A50_t {
+    melee_core::ct!("lb_800100B0");
     let mut ret = inlineA0();
     if ret.is_null() {
         ret = inlineA1();
@@ -334,6 +344,7 @@ pub unsafe fn lb_800100B0(arg0: *mut lb_80011A50_t, _arg1: f32) -> *mut lb_80011
     ret
 }
 pub unsafe fn lb_800101C8(arg0: *mut Vec, arg1: *mut Vec) -> f32 {
+    melee_core::ct!("lb_800101C8");
     let mut cur = lb_804D63B0;
     *arg1 = Vec { x: 0.0, y: 0.0, z: 0.0 };
     while !cur.is_null() {
@@ -358,8 +369,9 @@ pub unsafe fn lb_800101C8(arg0: *mut Vec, arg1: *mut Vec) -> f32 {
     }
     ext::lbVector_Normalize(arg1)
 }
-pub unsafe fn lb_800103B8(a: *mut Vec, b: *mut Vec) -> f32 { lb_800101C8(a, b) }
+pub unsafe fn lb_800103B8(a: *mut Vec, b: *mut Vec) -> f32 { melee_core::ct!("lb_800103B8"); lb_800101C8(a, b) }
 pub unsafe fn lb_800103D8(vec: *mut Vec, x0: f32, x1: f32, x2: f32, x3: f32, offset: f32) -> bool {
+    melee_core::ct!("lb_800103D8");
     let dist0 = x1 - offset;
     let dist1 = x3 - offset;
     if dist0 == dist1 { return dist0 > 1e-10f32; }
@@ -372,10 +384,12 @@ pub unsafe fn lb_800103D8(vec: *mut Vec, x0: f32, x1: f32, x2: f32, x3: f32, off
     false
 }
 pub fn approximatelyZeroVec3(vec: Vec) -> bool {
+    melee_core::ct!("approximatelyZeroVec3");
     !(vec.x >= 0.00001 || vec.x <= -0.00001 || vec.y >= 0.00001 || vec.y <= -0.00001 || vec.z >= 0.00001 || vec.z <= -0.00001)
 }
-pub fn absf(x: f32) -> f32 { if x < 0.0 { -x } else { x } }
+pub fn absf(x: f32) -> f32 { melee_core::ct!("absf"); if x < 0.0 { -x } else { x } }
 pub unsafe fn groundHeight(data: *mut DynamicsData, floor_point: *mut Vec) -> f32 {
+    melee_core::ct!("groundHeight");
     absf((*data).desc.lb_unk0.unk_2C.y - (*floor_point).y)
 }
 
@@ -389,6 +403,7 @@ fn mp(m: &mut Mtx) -> *mut [f32; 4] { m.as_mut_ptr() as *mut [f32; 4] }
 pub unsafe fn lb_8001044C(desc: *mut DynamicsDesc, colliders_raw: *mut c_void, num_colliders: i32,
                           pos_y: f32, use_floor_fn: bool, part: Fighter_Part,
                           first_active: i32, ground_check: bool) {
+    melee_core::ct!("lb_8001044C");
     let mut parent_mtx: Mtx = core::mem::zeroed();
     let mut temp_mtx: Mtx = core::mem::zeroed();
     let mut bone_mtx: Mtx = core::mem::zeroed();
@@ -771,6 +786,7 @@ pub unsafe fn lb_8001044C(desc: *mut DynamicsDesc, colliders_raw: *mut c_void, n
     d.unk_2C.z = parent_mtx[2][3];
 }
 pub unsafe fn lb_800115F4() {
+    melee_core::ct!("lb_800115F4");
     let mut total_scale = 0.0f32;
     let mut cur = lb_804D63B0;
     while !cur.is_null() {
@@ -797,6 +813,7 @@ pub unsafe fn lb_800115F4() {
     } else if lb_804D63B4 > 0 { -1 } else { 0 };
 }
 pub unsafe fn lb_80011710(arg0: *mut DynamicsDesc, arg1: *mut DynamicsDesc) {
+    melee_core::ct!("lb_80011710");
     (*arg1).pos = (*arg0).pos;
     let data0 = (&raw const (*(*arg0).data).desc.lb_unk1.array).cast::<lb_00F9_UnkDesc1Inner>();
     let mut data1 = (*arg1).data;
@@ -816,6 +833,7 @@ pub unsafe fn lb_80011710(arg0: *mut DynamicsDesc, arg1: *mut DynamicsDesc) {
     }
 }
 pub unsafe fn lb_800117F4(arg0: *mut DynamicsDesc, arg1: *mut GXColor, _arg2: *mut GXColor, arg3: i32, arg4: u32) -> bool {
+    melee_core::ct!("lb_800117F4");
     if (*arg1).a < 255 { if arg4 != 2 { return false; } }
     else if arg4 != 0 { return false; }
     let mut view = [[0.0f32; 4]; 3];
@@ -840,6 +858,7 @@ pub unsafe fn lb_800117F4(arg0: *mut DynamicsDesc, arg1: *mut GXColor, _arg2: *m
     true
 }
 pub unsafe fn lb_800119DC(arg0: *mut Vec, arg1: i32, arg2: f32, arg3: f32, arg4: f32) {
+    melee_core::ct!("lb_800119DC");
     let mut e: lb_80011A50_t = core::mem::zeroed();
     e.x0 = 2; e.x1 = 100; e.x4 = *arg0;
     e.unk_scale = arg2; e.x24 = arg3; e.unk_count0 = arg1; e.unk_angle_float = arg4;
@@ -847,10 +866,11 @@ pub unsafe fn lb_800119DC(arg0: *mut Vec, arg1: i32, arg2: f32, arg3: f32, arg4:
     lb_800100B0(&mut e, arg2);
 }
 pub unsafe fn lb_80011A50(arg0: *mut Vec, arg1: i32, arg2: f32, arg3: f32, arg4: f32, arg5: f32, arg6: f32, arg7: f32, arg8: f32) -> *mut lb_80011A50_t {
+    melee_core::ct!("lb_80011A50");
     let mut e: lb_80011A50_t = core::mem::zeroed();
     e.x0 = 1; e.x1 = 0; e.x4 = *arg0;
     e.unk_scale = arg2; e.x24 = arg3; e.unk_count0 = arg1; e.unk_angle_float = arg4;
     e.x10 = arg5; e.x14 = arg6; e.x18 = arg7; e.x1C = arg8;
     lb_800100B0(&mut e, arg2)
 }
-pub unsafe fn lb_80011ABC() -> i32 { lb_804D63B4 }
+pub unsafe fn lb_80011ABC() -> i32 { melee_core::ct!("lb_80011ABC"); lb_804D63B4 }

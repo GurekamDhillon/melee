@@ -82,6 +82,7 @@ unsafe fn init_flash_attrs(fp: *mut Fighter) {
 
 /// `ftKb_NsSpecialNStart_Anim_inline` (static): spawn the PK Flash item at the waist.
 pub fn ftKb_NsSpecialNStart_Anim_inline(gobj: G, flash_pos: &mut Vec3) {
+    melee_core::ct!("ftKb_NsSpecialNStart_Anim_inline");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).u.kb.ns_flash_gobj.is_null() {
@@ -98,6 +99,7 @@ pub fn ftKb_NsSpecialNStart_Anim_inline(gobj: G, flash_pos: &mut Vec3) {
 }
 
 pub fn ftKb_SpecialNNs_800FED38(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNNs_800FED38");
     unsafe {
         let fp = fpp(gobj);
         change_ms(gobj, ftKb_MS_NsSpecialNStart as i32, Ft_MF_None as u32);
@@ -109,6 +111,7 @@ pub fn ftKb_SpecialNNs_800FED38(gobj: G) {
 }
 
 pub fn ftKb_SpecialNNs_800FEDD0(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNNs_800FEDD0");
     unsafe {
         let fp = fpp(gobj);
         change_ms(gobj, ftKb_MS_NsSpecialAirNStart as i32, Ft_MF_None as u32);
@@ -121,6 +124,7 @@ pub fn ftKb_SpecialNNs_800FEDD0(gobj: G) {
 }
 
 pub fn ftKb_NsSpecialNStart_Anim(gobj: G) {
+    melee_core::ct!("ftKb_NsSpecialNStart_Anim");
     unsafe {
         let fp = fpp(gobj);
         let mut flash_pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -133,6 +137,7 @@ pub fn ftKb_NsSpecialNStart_Anim(gobj: G) {
 }
 
 pub fn ftKb_NsSpecialAirNStart_Anim(gobj: G) {
+    melee_core::ct!("ftKb_NsSpecialAirNStart_Anim");
     unsafe {
         let fp = fpp(gobj);
         let mut flash_pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -178,14 +183,17 @@ unsafe fn hold_anim(gobj: G, end_ms: i32, hold1_ms: i32) {
 }
 
 pub fn ftKb_NsSpecialNHold_Anim(gobj: G) {
+    melee_core::ct!("ftKb_NsSpecialNHold_Anim");
     unsafe { hold_anim(gobj, ftKb_MS_NsSpecialNEnd as i32, ftKb_MS_NsSpecialNHold1 as i32) }
 }
 
 pub fn ftKb_NsSpecialAirNHold_Anim(gobj: G) {
+    melee_core::ct!("ftKb_NsSpecialAirNHold_Anim");
     unsafe { hold_anim(gobj, ftKb_MS_NsSpecialAirNEnd as i32, ftKb_MS_NsSpecialAirNHold1 as i32) }
 }
 
 pub fn ftKb_NsSpecialNEnd_Anim(gobj: G) {
+    melee_core::ct!("ftKb_NsSpecialNEnd_Anim");
     unsafe {
         let fp = fpp(gobj);
         ftKb_SetNsFlashAttr(gobj);
@@ -197,6 +205,7 @@ pub fn ftKb_NsSpecialNEnd_Anim(gobj: G) {
 }
 
 pub fn ftKb_NsSpecialAirNEnd_Anim(gobj: G) {
+    melee_core::ct!("ftKb_NsSpecialAirNEnd_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = &*((*fp).dat_attrs as *const ftKb_DatAttrs);
@@ -212,10 +221,10 @@ pub fn ftKb_NsSpecialAirNEnd_Anim(gobj: G) {
     }
 }
 
-pub fn ftKb_NsSpecialNStart_IASA(_gobj: G) {}
-pub fn ftKb_NsSpecialNEnd_IASA(_gobj: G) {}
-pub fn ftKb_NsSpecialAirNStart_IASA(_gobj: G) {}
-pub fn ftKb_NsSpecialAirNEnd_IASA(_gobj: G) {}
+pub fn ftKb_NsSpecialNStart_IASA(_gobj: G) { melee_core::ct!("ftKb_NsSpecialNStart_IASA");}
+pub fn ftKb_NsSpecialNEnd_IASA(_gobj: G) { melee_core::ct!("ftKb_NsSpecialNEnd_IASA");}
+pub fn ftKb_NsSpecialAirNStart_IASA(_gobj: G) { melee_core::ct!("ftKb_NsSpecialAirNStart_IASA");}
+pub fn ftKb_NsSpecialAirNEnd_IASA(_gobj: G) { melee_core::ct!("ftKb_NsSpecialAirNEnd_IASA");}
 
 /// Shared Hold IASA: count the release delay down; once it hit 0 and B is let go, drop the flash.
 unsafe fn hold_iasa(gobj: G) {
@@ -249,22 +258,27 @@ unsafe fn hold_iasa(gobj: G) {
 }
 
 pub fn ftKb_NsSpecialNHold_IASA(gobj: G) {
+    melee_core::ct!("ftKb_NsSpecialNHold_IASA");
     unsafe { hold_iasa(gobj) }
 }
 
 pub fn ftKb_NsSpecialAirNHold_IASA(gobj: G) {
+    melee_core::ct!("ftKb_NsSpecialAirNHold_IASA");
     unsafe { hold_iasa(gobj) }
 }
 
 /// The root module's Fighter-only half, as the C-signature entry.
 pub fn ftKb_NsSpecialAirNStart_Phys(gobj: G) {
+    melee_core::ct!("ftKb_NsSpecialAirNStart_Phys");
     unsafe { crate::chars::ftKirby::ftkirbyspecialness::ftKb_NsSpecialAirNStart_Phys(&mut *fpp(gobj)) }
 }
 
 pub fn ftKb_NsSpecialAirNHold_Phys(gobj: G) {
+    melee_core::ct!("ftKb_NsSpecialAirNHold_Phys");
     ftKb_NsSpecialAirNStart_Phys(gobj);
 }
 
 pub fn ftKb_NsSpecialAirNEnd_Phys(gobj: G) {
+    melee_core::ct!("ftKb_NsSpecialAirNEnd_Phys");
     ftKb_NsSpecialAirNStart_Phys(gobj);
 }

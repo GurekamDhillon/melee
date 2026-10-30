@@ -97,6 +97,7 @@ fn set_damage_cb(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftLk_SpecialN_GetIndex(gobj: *mut HSD_GObj) -> ftLk_SpecialNIndex {
+    melee_core::ct!("ftLk_SpecialN_GetIndex");
     let mut result = ftLk_SpecialNIndex_None;
     if !gobj.is_null() {
         unsafe {
@@ -119,6 +120,7 @@ pub fn ftLk_SpecialN_GetIndex(gobj: *mut HSD_GObj) -> ftLk_SpecialNIndex {
 }
 
 pub fn ftLk_SpecialN_UnsetArrow(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialN_UnsetArrow");
     if !gobj.is_null() {
         unsafe {
             let fp = fpp(gobj);
@@ -133,6 +135,7 @@ pub fn ftLk_SpecialN_UnsetArrow(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftLk_SpecialN_UnsetFv14(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialN_UnsetFv14");
     if !gobj.is_null() {
         unsafe {
             let fp = fpp(gobj);
@@ -148,10 +151,12 @@ pub fn ftLk_SpecialN_UnsetFv14(gobj: *mut HSD_GObj) {
 
 /// `ftLk_SpecialN_IsActiveAnd2071b6(gobj)`: the fighter-only body is `chars::ftLink`'s.
 pub fn ftLk_SpecialN_IsActiveAnd2071b6(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftLk_SpecialN_IsActiveAnd2071b6");
     unsafe { crate::chars::ftLink::ftlinkspecialn::ftLk_SpecialN_IsActiveAnd2071b6(&*fpp(gobj)) }
 }
 
 pub fn ftLk_SpecialN_ProcessFv10(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialN_ProcessFv10");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.lk.arrow_gobj.is_null() {
@@ -163,6 +168,7 @@ pub fn ftLk_SpecialN_ProcessFv10(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftLk_SpecialN_ProcessFv14(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialN_ProcessFv14");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.lk.x14.is_null() {
@@ -237,6 +243,7 @@ fn animate(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftLk_SpecialN_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialN_Enter");
     unsafe {
         let fp = fpp(gobj);
         let a = da(fp);
@@ -268,6 +275,7 @@ unsafe fn air_abort(gobj: *mut HSD_GObj, a: &ftLk_DatAttrs) {
 }
 
 pub fn ftLk_SpecialAirN_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialAirN_Enter");
     unsafe {
         let fp = fpp(gobj);
         let a = da(fp);
@@ -288,6 +296,7 @@ pub fn ftLk_SpecialAirN_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftLk_SpecialNStart_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialNStart_Anim");
     unsafe {
         let fp = fpp(gobj);
         let a = da(fp);
@@ -312,6 +321,7 @@ pub fn ftLk_SpecialNStart_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftLk_SpecialNLoop_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialNLoop_Anim");
     animate(gobj);
 }
 
@@ -337,6 +347,7 @@ fn updateParts(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftLk_SpecialNEnd_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialNEnd_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         ftLk_SpecialN_UnsetFv14(gobj);
         updateParts(gobj);
@@ -347,6 +358,7 @@ pub fn ftLk_SpecialNEnd_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftLk_SpecialAirNStart_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialAirNStart_Anim");
     unsafe {
         let fp = fpp(gobj);
         let a = da(fp);
@@ -370,10 +382,12 @@ pub fn ftLk_SpecialAirNStart_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftLk_SpecialAirNLoop_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialAirNLoop_Anim");
     animate(gobj);
 }
 
 pub fn ftLk_SpecialAirNEnd_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialAirNEnd_Anim");
     unsafe {
         let a = da(fpp(gobj));
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -406,6 +420,7 @@ fn start_iasa(gobj: *mut HSD_GObj, end_msid: i32) {
 }
 
 pub fn ftLk_SpecialNStart_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialNStart_IASA");
     start_iasa(gobj, ftLk_MS_SpecialNEnd as i32);
 }
 
@@ -423,20 +438,23 @@ fn doLoopIASA(gobj: *mut HSD_GObj, msid: i32) {
 }
 
 pub fn ftLk_SpecialNLoop_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialNLoop_IASA");
     doLoopIASA(gobj, ftLk_MS_SpecialNEnd as i32);
 }
 
-pub fn ftLk_SpecialNEnd_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftLk_SpecialNEnd_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftLk_SpecialNEnd_IASA");}
 
 pub fn ftLk_SpecialAirNStart_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialAirNStart_IASA");
     start_iasa(gobj, ftLk_MS_SpecialAirNEnd as i32);
 }
 
 pub fn ftLk_SpecialAirNLoop_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialAirNLoop_IASA");
     doLoopIASA(gobj, ftLk_MS_SpecialAirNEnd as i32);
 }
 
-pub fn ftLk_SpecialAirNEnd_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftLk_SpecialAirNEnd_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftLk_SpecialAirNEnd_IASA");}
 
 /// `doEndColl` (static inline): fire the arrow when the script's cmd_vars[1] pulse arrives.
 fn doEndColl(gobj: *mut HSD_GObj) {
@@ -485,14 +503,17 @@ fn doAirColl(gobj: *mut HSD_GObj, msid: i32) {
 }
 
 pub fn ftLk_SpecialNStart_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialNStart_Coll");
     doColl(gobj, ftLk_MS_SpecialAirNStart as i32);
 }
 
 pub fn ftLk_SpecialNLoop_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialNLoop_Coll");
     doColl(gobj, ftLk_MS_SpecialAirNLoop as i32);
 }
 
 pub fn ftLk_SpecialNEnd_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialNEnd_Coll");
     unsafe {
         let fp = fpp(gobj);
         doEndColl(gobj);
@@ -505,14 +526,17 @@ pub fn ftLk_SpecialNEnd_Coll(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftLk_SpecialAirNStart_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialAirNStart_Coll");
     doAirColl(gobj, ftLk_MS_SpecialNStart as i32);
 }
 
 pub fn ftLk_SpecialAirNLoop_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialAirNLoop_Coll");
     doAirColl(gobj, ftLk_MS_SpecialNLoop as i32);
 }
 
 pub fn ftLk_SpecialAirNEnd_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialAirNEnd_Coll");
     unsafe {
         let fp = fpp(gobj);
         doEndColl(gobj);

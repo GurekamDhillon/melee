@@ -50,16 +50,19 @@ melee_core::gc_layout!(MnInfoDataLayout, "MnInfoDataLayout", size 0xE0, align 4,
 pub unsafe extern "C" fn HSD_GObjGetUserData(
     mut gobj: *mut HSD_GObj,
 ) -> *mut ::core::ffi::c_void {
+    melee_core::ct!("HSD_GObjGetUserData");
     return (*gobj).user_data;
 }
 pub const JOBJ_HIDDEN: ::core::ffi::c_int = (1 as ::core::ffi::c_int)
     << 4 as ::core::ffi::c_int;
 #[inline]
 pub unsafe extern "C" fn sfxBack() {
+    melee_core::ct!("sfxBack");
     lbAudioAx_80024030(0 as ::core::ffi::c_int);
 }
 #[inline]
 pub unsafe extern "C" fn sfxMove() {
+    melee_core::ct!("sfxMove");
     lbAudioAx_80024030(2 as ::core::ffi::c_int);
 }
 pub static mut mnInfo_804A0958: StaticModelDesc = StaticModelDesc {
@@ -73,6 +76,7 @@ pub static mut gap_10_804D6C7C_sbss: u32_0 = 0;
 pub static mut mnInfo_804D6C78: *mut HSD_GObj = ::core::ptr::null::<HSD_GObj>()
     as *mut HSD_GObj;
 pub unsafe extern "C" fn mnInfo_80251A08(mut arg0: s32) -> s32 {
+    melee_core::ct!("mnInfo_80251A08");
     match arg0 {
         62 => return 0 as s32,
         52 => {
@@ -91,6 +95,7 @@ pub unsafe extern "C" fn mnInfo_80251A08(mut arg0: s32) -> s32 {
     };
 }
 pub unsafe extern "C" fn mnInfo_80251AA4() -> s32 {
+    melee_core::ct!("mnInfo_80251AA4");
     let mut i: s32 = 0;
     let mut var_r30: s32 = 0 as s32;
     i = 0 as ::core::ffi::c_int as s32;
@@ -104,18 +109,22 @@ pub unsafe extern "C" fn mnInfo_80251AA4() -> s32 {
 }
 #[inline]
 pub unsafe extern "C" fn mnInfo_80251AFC_inline(mut i: s32) -> bool_0 {
+    melee_core::ct!("mnInfo_80251AFC_inline");
     let mut unlock_state: s32 = mnInfo_80251A08(mnInfo_804A0968[i as usize] as s32);
     return (unlock_state == 0 as ::core::ffi::c_int) as ::core::ffi::c_int;
 }
 #[inline]
 pub unsafe extern "C" fn mnInfo_80251AFC_inline_2(mut j: s32) -> u32_0 {
+    melee_core::ct!("mnInfo_80251AFC_inline_2");
     return *gmMainLib_8015D804(mnInfo_804A0968[j as usize] as s32);
 }
 #[inline]
 pub unsafe extern "C" fn mnInfo_80251AFC_inline_3(mut ids: *mut u8_0, mut i: s32) -> s32 {
+    melee_core::ct!("mnInfo_80251AFC_inline_3");
     return *ids.offset(i as isize) as s32;
 }
 pub unsafe extern "C" fn mnInfo_80251AFC() {
+    melee_core::ct!("mnInfo_80251AFC");
     let mut i: s32 = 0;
     let mut j: s32 = 0;
     let mut _pad: [::core::ffi::c_uchar; 8] = [0; 8];
@@ -263,6 +272,7 @@ pub unsafe extern "C" fn mnInfo_80251D58(
     mut arg2: u32_0,
     mut arg3: u32_0,
 ) -> s32 {
+    melee_core::ct!("mnInfo_80251D58");
     let mut sp34: [::core::ffi::c_char; 5] = [0; 5];
     let mut sp30: [::core::ffi::c_char; 3] = [0; 3];
     let mut sp2C: [::core::ffi::c_char; 3] = [0; 3];
@@ -342,6 +352,7 @@ pub unsafe extern "C" fn mnInfo_80251F04(
     mut arg1: s32,
     mut arg2: u32_0,
 ) {
+    melee_core::ct!("mnInfo_80251F04");
     let mut sp16: s16 = 0;
     let mut unused: s16 = 0;
     let mut slot: *mut *mut HSD_Text = ::core::ptr::null_mut::<*mut HSD_Text>();
@@ -378,6 +389,7 @@ pub unsafe extern "C" fn mnInfo_80251F04(
 }
 #[inline]
 pub unsafe extern "C" fn mnInfo_CountUnlocked() -> s32 {
+    melee_core::ct!("mnInfo_CountUnlocked");
     let mut i: s32 = 0;
     let mut count: s32 = 0 as s32;
     i = 0 as ::core::ffi::c_int as s32;
@@ -391,6 +403,7 @@ pub unsafe extern "C" fn mnInfo_CountUnlocked() -> s32 {
 }
 #[inline]
 pub unsafe extern "C" fn mnInfo_CreateEntries(mut id: u32_0) {
+    melee_core::ct!("mnInfo_CreateEntries");
     let mut trophy: *mut u8_0 = ::core::ptr::null_mut::<u8_0>();
     let mut i: s32 = 0;
     let mut gobj: *mut mnInfo_GObj = ::core::ptr::null_mut::<mnInfo_GObj>();
@@ -409,6 +422,7 @@ pub unsafe extern "C" fn mnInfo_CreateEntries(mut id: u32_0) {
 }
 #[inline]
 pub unsafe extern "C" fn mnInfo_FreeEntries() {
+    melee_core::ct!("mnInfo_FreeEntries");
     let mut j: s32 = 0;
     let mut data2: *mut MnInfoData = ::core::ptr::null_mut::<MnInfoData>();
     let mut data3: *mut MnInfoData = ::core::ptr::null_mut::<MnInfoData>();
@@ -428,6 +442,7 @@ pub unsafe extern "C" fn mnInfo_FreeEntries() {
     }
 }
 pub unsafe extern "C" fn fn_80251FE4() {
+    melee_core::ct!("fn_80251FE4");
     let mut data: *mut MnInfoData = ::core::ptr::null_mut::<MnInfoData>();
     let mut buttons: u64_0 = 0;
     let mut count: s32 = 0;
@@ -485,6 +500,7 @@ pub unsafe extern "C" fn fn_80251FE4() {
     }
 }
 pub unsafe extern "C" fn mnInfo_802522B8(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnInfo_802522B8");
     let mut count: s32 = 0;
     let mut data: *mut MnInfoData = ::core::ptr::null_mut::<MnInfoData>();
     let mut jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
@@ -511,6 +527,7 @@ pub unsafe extern "C" fn mnInfo_802522B8(mut gobj: *mut HSD_GObj) {
     );
 }
 pub unsafe extern "C" fn fn_802523B8(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_802523B8");
     HSD_GObjFree(gobj);
 }
 #[inline]
@@ -518,6 +535,7 @@ pub unsafe extern "C" fn fn_802523D8_inline(
     mut data: *mut MnInfoData,
     mut gobj: *mut HSD_GObj,
 ) {
+    melee_core::ct!("fn_802523D8_inline");
     let mut proc_0: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     let mut jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut _pad: [::core::ffi::c_uchar; 16] = [0; 16];
@@ -573,6 +591,7 @@ pub unsafe extern "C" fn fn_802523D8_inline(
     };
 }
 pub unsafe extern "C" fn fn_802523D8(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_802523D8");
     let mut data: *mut MnInfoData = HSD_GObjGetUserData(gobj) as *mut MnInfoData;
     let mut _pad: [::core::ffi::c_uchar; 4] = [0; 4];
     fn_802523D8_inline(data, gobj);
@@ -582,6 +601,7 @@ pub unsafe extern "C" fn fn_80252548_inline(
     mut data: *mut MnInfoData,
     mut gobj: *mut HSD_GObj,
 ) {
+    melee_core::ct!("fn_80252548_inline");
     let mut proc_0: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     let mut jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut i: s32 = 0;
@@ -669,11 +689,13 @@ pub unsafe extern "C" fn fn_80252548_inline(
     };
 }
 pub unsafe extern "C" fn fn_80252548(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80252548");
     let mut data: *mut MnInfoData = HSD_GObjGetUserData(gobj) as *mut MnInfoData;
     let mut _pad: [::core::ffi::c_uchar; 8] = [0; 8];
     fn_80252548_inline(data, gobj);
 }
 pub unsafe extern "C" fn mnInfo_80252720(mut data: *mut MnInfoData) {
+    melee_core::ct!("mnInfo_80252720");
     (*data).scroll_idx = 0 as u8_0;
     (*data).anim_timer = 10 as u32_0;
     (*data).description = ::core::ptr::null_mut::<HSD_Text>();
@@ -703,6 +725,7 @@ pub unsafe extern "C" fn mnInfo_80252720(mut data: *mut MnInfoData) {
     >();
 }
 pub unsafe extern "C" fn mnInfo_80252758() -> s32 {
+    melee_core::ct!("mnInfo_80252758");
     let mut user_data: *mut MnInfoData = ::core::ptr::null_mut::<MnInfoData>();
     let mut proc_0: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     let mut gobj: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();

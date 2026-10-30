@@ -117,16 +117,19 @@ unsafe fn lbCardGame_SetupArchive() {
 
 /// 1A5244
 pub unsafe fn gmVsMelee_GetVsData() -> *mut VsModeData {
+    melee_core::ct!("gmVsMelee_GetVsData");
     &mut (*gmMainLib_804D3EE0).modes.table[GmVsMode_Melee as usize]
 }
 
 /// 1A5250
 pub unsafe fn gmVsMelee_GetKOCounts() -> *mut u8 {
+    melee_core::ct!("gmVsMelee_GetKOCounts");
     ko_counts.as_mut_ptr()
 }
 
 /// 1A5258: per human player, `lbTime_8000AF74` of the count and the standing's x20.
 pub unsafe fn gmVsMelee_UpdateKOCounts(ko: *mut u8, end: *mut MatchEnd) {
+    melee_core::ct!("gmVsMelee_UpdateKOCounts");
     for i in 0..GM_MAX_PLAYERS as usize {
         if (*end).player_standings[i].pkind as i32 == Gm_PKind_Human as i32 {
             *ko.add(i) = ext::lbTime_8000AF74(*ko.add(i) as u32, (*end).player_standings[i].x20 as i32) as u8;
@@ -139,6 +142,7 @@ pub use crate::gm_ptr::gmVsMelee_WasAnyPlayerHuman;
 
 /// 1A5360 (static): the human player with the smallest `is_small_loser` (teams: team's in the high byte).
 pub unsafe fn findSmallestLoser(end: *mut MatchEnd) -> u8 {
+    melee_core::ct!("findSmallestLoser");
     let mut loser: i32 = 0xFFFF; // U16_MAX
     let mut player_idx: isize = 0;
     let mut losers = [0i32; GM_MAX_PLAYERS as usize];
@@ -170,17 +174,20 @@ pub unsafe fn findSmallestLoser(end: *mut MatchEnd) -> u8 {
 
 /// 1A5598
 pub unsafe fn gmVsMelee_Mode_OnInit() {
+    melee_core::ct!("gmVsMelee_Mode_OnInit");
     ext::gm_InitVsMode(&mut (*gmMainLib_804D3EE0).modes.table[GmVsMode_Melee as usize]);
     ext::gmMainLib_8015CDEC();
 }
 
 /// 1A55C4
 pub unsafe fn gmVsMelee_ResetKOCounts() {
+    melee_core::ct!("gmVsMelee_ResetKOCounts");
     ext::memzero(ko_counts.as_mut_ptr() as *mut c_void, core::mem::size_of_val(&ko_counts) as isize);
 }
 
 /// 1A55EC
 pub unsafe fn gmVsMelee_Mode_OnLoad() {
+    melee_core::ct!("gmVsMelee_Mode_OnLoad");
     // m-ex "Disable KO Star Deletion When Leaving CSS" (opt-in MELEE_MEX=keep_ko_stars), then the
     // scene launch seed (MELEE_SCENE=mode=vs;...), TARGET_PC.
     if ext::Mex_Enabled("keep_ko_stars") != 0 {
@@ -191,10 +198,11 @@ pub unsafe fn gmVsMelee_Mode_OnLoad() {
 }
 
 /// 1A5614
-pub fn gm_Mode_Vs_OnUnload() {}
+pub fn gm_Mode_Vs_OnUnload() { melee_core::ct!("gm_Mode_Vs_OnUnload");}
 
 /// 1A5618
 pub unsafe fn gmVsMelee_EnterCss(state: *mut GameModeState, vs: *mut VsModeData, match_type: CSSMatchType) {
+    melee_core::ct!("gmVsMelee_EnterCss");
     let css = ext::gm_GetGameModeStateEnterData(state) as *mut CSSData;
     if (*vs).start.players[4].slot_type as i32 != Gm_PKind_NA as i32 || (*vs).start.players[5].slot_type as i32 != Gm_PKind_NA as i32 {
         ext::OSReport("gw: scene: six-slot CSS route refused; returning to menus\n");
@@ -215,6 +223,7 @@ pub unsafe fn gmVsMelee_EnterCss(state: *mut GameModeState, vs: *mut VsModeData,
 
 /// 1A5680
 pub unsafe fn gmVsMelee_ExitCss(state: *mut GameModeState, vs: *mut VsModeData) {
+    melee_core::ct!("gmVsMelee_ExitCss");
     let css = ext::gm_GetGameModeStateExitData(state) as *mut CSSData;
     // ONLINE PLAY sent the player here to pick a fighter: back to it, not on to the SSS
     if ext::Frontend_OnlinePick() == 1 {
@@ -252,6 +261,7 @@ pub unsafe fn gmVsMelee_ExitCss(state: *mut GameModeState, vs: *mut VsModeData) 
 
 /// 1A5754
 pub unsafe fn gmVsMelee_EnterSss(state: *mut GameModeState, vs: *mut VsModeData) {
+    melee_core::ct!("gmVsMelee_EnterSss");
     let sss = ext::gm_GetGameModeStateEnterData(state) as *mut SSSData;
     (*sss).vs = *vs;
     ext::gm_80167FC4(sss);
@@ -259,6 +269,7 @@ pub unsafe fn gmVsMelee_EnterSss(state: *mut GameModeState, vs: *mut VsModeData)
 
 /// 1A57A8
 pub unsafe fn gmVsMelee_ExitSss(state: *mut GameModeState, vs: *mut VsModeData, cancel_state_id: u8) {
+    melee_core::ct!("gmVsMelee_ExitSss");
     let sss = ext::gm_GetGameModeStateExitData(state) as *mut SSSData;
     // ONLINE PLAY sent the host here to pick the stage: back to it, not into a match
     if ext::Frontend_OnlinePick() == 2 {
@@ -278,6 +289,7 @@ pub unsafe fn gmVsMelee_ExitSss(state: *mut GameModeState, vs: *mut VsModeData, 
 
 /// 1A583C
 pub unsafe fn gmVsMelee_EnterVs(state: *mut GameModeState, vs: *mut VsModeData, start_cb: gm_StartMeleeCallback, player_cb: gm_PlayerInitCallback) {
+    melee_core::ct!("gmVsMelee_EnterVs");
     let start = ext::gm_GetGameModeStateEnterData(state) as *mut StartMeleeData;
 
     ext::gm_80167BC8(vs);
@@ -318,6 +330,7 @@ pub unsafe fn gmVsMelee_EnterVs(state: *mut GameModeState, vs: *mut VsModeData, 
 
 /// 1A5AF0: `id0` is the next state id if one or zero winners, `id1` if several.
 pub unsafe fn gmVsMelee_ExitVs(state: *mut GameModeState, mut id0: u8, id1: u8) {
+    melee_core::ct!("gmVsMelee_ExitVs");
     let exit = ext::gm_GetGameModeStateExitData(state) as *mut MatchExitInfo;
     // an online STAGE RUN: the peers exchange the stage-end tuple; returns at once outside a run
     let mut w: i32 = -1;
@@ -368,6 +381,7 @@ pub unsafe fn gmVsMelee_ExitVs(state: *mut GameModeState, mut id0: u8, id1: u8) 
 
 /// 1A5C3C
 pub unsafe fn gmVsMelee_EnterSuddenDeath(state: *mut GameModeState, vs: *mut VsModeData, start_cb: gm_StartMeleeCallback, player_cb: gm_PlayerInitCallback) {
+    melee_core::ct!("gmVsMelee_EnterSuddenDeath");
     let start = ext::gm_GetGameModeStateEnterData(state) as *mut StartMeleeData;
     (*start).rules = (*vs).start.rules;
 
@@ -391,12 +405,14 @@ pub unsafe fn gmVsMelee_EnterSuddenDeath(state: *mut GameModeState, vs: *mut VsM
 
 /// 1A5EC8
 pub unsafe fn gmVsMelee_ExitSuddenDeath(state: *mut GameModeState) {
+    melee_core::ct!("gmVsMelee_ExitSuddenDeath");
     let exit_data = ext::gm_GetGameModeStateExitData(state) as *mut MatchExitInfo;
     ext::gm_80166CCC(&mut gmVsMelee_VsExitInfo.match_end, &mut (*exit_data).match_end);
 }
 
 /// 1A5F00
 pub unsafe fn gmVsMelee_EnterResults(state: *mut GameModeState) {
+    melee_core::ct!("gmVsMelee_EnterResults");
     let enter_data = ext::gm_GetGameModeStateEnterData(state) as *mut ResultsMatchInfo;
     ext::gm_80177724(enter_data);
     (*enter_data).match_end = gmVsMelee_VsExitInfo.match_end;
@@ -404,6 +420,7 @@ pub unsafe fn gmVsMelee_EnterResults(state: *mut GameModeState) {
 
 /// 1A5F64
 pub unsafe fn gmVsMelee_ExitResults(state: *mut GameModeState, vs: *mut VsModeData, state_id: u8) {
+    melee_core::ct!("gmVsMelee_ExitResults");
     let ko = ko_counts.as_mut_ptr();
     let match_end: *mut MatchEnd = &mut gmVsMelee_VsExitInfo.match_end;
     // an online match in a room: back to ONLINE PLAY (same room) instead of the CSS

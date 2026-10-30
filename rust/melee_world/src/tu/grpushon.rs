@@ -158,9 +158,10 @@ pub static mut grPushOn_803E7B90: HSD_LightDesc = HSD_LightDesc {
     u: HSD_LightDesc_u { p: unsafe { &raw mut grPushOn_804D4948 as *mut c_void } },
 };
 
-pub unsafe extern "C" fn grPushOn_802182C4(_arg: i32) {}
+pub unsafe extern "C" fn grPushOn_802182C4(_arg: i32) { melee_core::ct!("grPushOn_802182C4");}
 
 pub unsafe extern "C" fn grPushOn_802182C8() {
+    melee_core::ct!("grPushOn_802182C8");
     yakumono_param = ext::Ground_GetYakumonoParam() as *mut grPushon_YakumonoParam;
     ext::stage_info.unk8C.set_b4(0);
     ext::stage_info.unk8C.set_b5(1);
@@ -170,6 +171,7 @@ pub unsafe extern "C" fn grPushOn_802182C8() {
 }
 
 pub unsafe extern "C" fn grPushOn_80218330() {
+    melee_core::ct!("grPushOn_80218330");
     let mut vec = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     grPushOn_802183E4(2);
     let gobj = ext::Ground_GetP1Fighter();
@@ -181,6 +183,7 @@ pub unsafe extern "C" fn grPushOn_80218330() {
 }
 
 pub unsafe extern "C" fn grPushOn_80218378() {
+    melee_core::ct!("grPushOn_80218378");
     ext::grZakoGenerator_801CAE04(core::ptr::null_mut());
     // `bool` is `int` in the game's headers
     let mut val = (*yakumono_param).x18;
@@ -198,6 +201,7 @@ pub unsafe extern "C" fn grPushOn_80218378() {
 }
 
 pub unsafe extern "C" fn grPushOn_802183E4(gobj_id: i32) -> *mut HSD_GObj {
+    melee_core::ct!("grPushOn_802183E4");
     let callbacks = (&raw mut grPushOn_StageCallbacks as *mut StageCallbacks).add(gobj_id as usize);
     let gobj = ext::Ground_GetStageGObj(gobj_id);
     if !gobj.is_null() {
@@ -209,6 +213,7 @@ pub unsafe extern "C" fn grPushOn_802183E4(gobj_id: i32) -> *mut HSD_GObj {
 }
 
 pub unsafe extern "C" fn grPushOn_802184CC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grPushOn_802184CC");
     let gp = GET_GROUND(gobj);
     let mut cam_offset = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
@@ -230,11 +235,12 @@ pub unsafe extern "C" fn grPushOn_802184CC(gobj: *mut HSD_GObj) {
     ext::Ground_801C38AC(fmadds(0.5, a + b, -cam_offset.x));
 }
 
-pub unsafe extern "C" fn grPushOn_80218598(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grPushOn_80218598(_arg: *mut HSD_GObj) { melee_core::ct!("grPushOn_80218598");}
 
-pub unsafe extern "C" fn grPushOn_8021859C(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grPushOn_8021859C(_arg: *mut HSD_GObj) { melee_core::ct!("grPushOn_8021859C");}
 
 pub unsafe extern "C" fn grPushOn_802185A0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grPushOn_802185A0");
     let gp = GET_GROUND(gobj);
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     ext::ftCo_800C07F8(gobj, 3, fn_802192A4 as *mut c_void);
@@ -247,6 +253,7 @@ pub unsafe extern "C" fn grPushOn_802185A0(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_80218678() -> i32 {
+    melee_core::ct!("fn_80218678");
     let gobj = ext::Ground_GetMapGObj(1);
     if !gobj.is_null() {
         let gp = (*gobj).user_data as *mut Ground;
@@ -258,6 +265,7 @@ pub unsafe extern "C" fn fn_80218678() -> i32 {
 }
 
 pub unsafe extern "C" fn grPushOn_802186C8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grPushOn_802186C8");
     let gp = (*gobj).user_data as *mut Ground;
     let mut vec = grPushOn_803B8440;
     ext::Ground_801C3D44(fn_80218678 as *mut c_void, 25.0, 20.0);
@@ -279,9 +287,10 @@ pub unsafe extern "C" fn grPushOn_802186C8(gobj: *mut HSD_GObj) {
     (*gp).u.map.set_xC4_b0(0);
 }
 
-pub unsafe extern "C" fn grPushOn_802187A4(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grPushOn_802187A4(_arg: *mut HSD_GObj) { melee_core::ct!("grPushOn_802187A4");}
 
 pub unsafe extern "C" fn grPushOn_802187A8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grPushOn_802187A8");
     let gp = GET_GROUND(gobj);
     (*gp).u.pushon.gobj = *ext::HSD_GObjGXLinkHead.add(4) as *mut c_void;
     // TARGET_PC: take the fighters' light object (classifier 12) from the link instead of its head
@@ -311,6 +320,7 @@ pub unsafe extern "C" fn grPushOn_802187A8(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grPushOn_80218888(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grPushOn_80218888");
     let mut player_pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut light_pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sorted = [0i32; 20];
@@ -469,9 +479,10 @@ pub unsafe extern "C" fn grPushOn_80218888(gobj: *mut HSD_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grPushOn_80218ED0(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grPushOn_80218ED0(_arg: *mut HSD_GObj) { melee_core::ct!("grPushOn_80218ED0");}
 
 pub unsafe extern "C" fn grPushOn_80218ED4(gobj: *mut HSD_GObj) -> *mut HSD_LObj {
+    melee_core::ct!("grPushOn_80218ED4");
     let mut lobj: *mut HSD_LObj;
     if gobj.is_null() {
         return core::ptr::null_mut();
@@ -502,6 +513,7 @@ unsafe fn hsd_lobj_set_next(lobj: *mut HSD_LObj, next: *mut HSD_LObj) {
 }
 
 pub unsafe extern "C" fn grPushOn_80218FC0(gobj: *mut HSD_GObj) -> *mut HSD_LObj {
+    melee_core::ct!("grPushOn_80218FC0");
     let mut lobj: *mut HSD_LObj;
     if gobj.is_null() {
         return core::ptr::null_mut();
@@ -532,6 +544,7 @@ pub unsafe extern "C" fn fn_802190A0(
     ground_kind: mpLib_GroundEnum,
     _delta_y: f32,
 ) {
+    melee_core::ct!("fn_802190A0");
     let gp = user_data as *mut Ground;
     let flags = *((&raw const (*coll).x34_flags) as *const u8);
     if ((flags >> 3) & 0xF) == 1 && ground_kind.wrapping_sub(1) <= 1 {
@@ -540,6 +553,7 @@ pub unsafe extern "C" fn fn_802190A0(
 }
 
 pub unsafe extern "C" fn grPushOn_802190D0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grPushOn_802190D0");
     let cur = (*gobj).hsd_obj as *mut HSD_LObj;
     let scale = ext::Ground_801C0498();
     let mut pos: Vec3;
@@ -566,12 +580,14 @@ pub unsafe extern "C" fn grPushOn_802190D0(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grPushOn_80219204(arg0: i32, out1: *mut i32, out2: *mut i32) {
+    melee_core::ct!("grPushOn_80219204");
     let idx = (arg0 - 0x99) as usize;
     *out1 = (*yakumono_param).x1c[idx].x0;
     *out2 = (*yakumono_param).x1c[idx].x4 as i32;
 }
 
 pub unsafe extern "C" fn grPushOn_80219230(mut arg0: i32) -> i32 {
+    melee_core::ct!("grPushOn_80219230");
     let mut i: i32 = 0;
     // TARGET_PC: Race to the Finish's x10c is a retail CharacterKind lookup.
     {
@@ -598,6 +614,7 @@ pub unsafe extern "C" fn grPushOn_80219230(mut arg0: i32) -> i32 {
 }
 
 pub unsafe extern "C" fn fn_802192A4(_arg0: *mut c_void, gobj: *mut HSD_GObj, result: *mut i32) -> i32 {
+    melee_core::ct!("fn_802192A4");
     let mut sp14 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let scale = ext::Ground_801C0498();
     ext::ftLib_80086644(gobj, &mut sp14);
@@ -618,6 +635,7 @@ pub unsafe extern "C" fn fn_802192A4(_arg0: *mut c_void, gobj: *mut HSD_GObj, re
 }
 
 pub unsafe extern "C" fn grPushOn_80219458(arg0: i32) -> *mut DynamicsDesc {
+    melee_core::ct!("grPushOn_80219458");
     if arg0 != -1 {
         let joint = ext::mpJointFromLine(arg0);
         if joint != -1 {

@@ -99,10 +99,12 @@ fn abs_f(x: f32) -> f32 {
 }
 
 pub unsafe extern "C" fn itZeldaDinFire_GetOwner(gobj: *mut Item_GObj) -> *mut Fighter_GObj {
+    melee_core::ct!("itZeldaDinFire_GetOwner");
     (*GET_ITEM(gobj)).owner
 }
 
 pub unsafe extern "C" fn it_802C3AFC(gobj: *mut Item_GObj, cd: *mut CollData) -> bool {
+    melee_core::ct!("it_802C3AFC");
     let ip = GET_ITEM(gobj);
     let mut ret = false;
     ext::it_8026DA08(gobj);
@@ -124,6 +126,7 @@ pub unsafe extern "C" fn it_802C3AFC(gobj: *mut Item_GObj, cd: *mut CollData) ->
 }
 
 pub unsafe extern "C" fn it_802C3BAC(gobj: *mut Item_GObj, vec: *mut Vec, facing_dir: f32, arg3: f32) -> *mut Item_GObj {
+    melee_core::ct!("it_802C3BAC");
     let mut si: SpawnItem = core::mem::zeroed();
     si.kind = It_Kind_Zelda_DinFire;
     // Item_InitSpawnPositionFromParent(&si, gobj, vec)
@@ -160,6 +163,7 @@ pub unsafe extern "C" fn it_802C3BAC(gobj: *mut Item_GObj, vec: *mut Vec, facing
 }
 
 pub unsafe extern "C" fn itZeldaDinFire_Logic65_Destroyed(gobj: *mut Item_GObj) {
+    melee_core::ct!("itZeldaDinFire_Logic65_Destroyed");
     let ip = GET_ITEM(gobj);
     ext::it_802725D4(gobj);
     if !(*ip).xDD4_itemVar.zeldadinfire.xDE0.is_null() {
@@ -176,6 +180,7 @@ pub unsafe extern "C" fn itZeldaDinFire_Logic65_Destroyed(gobj: *mut Item_GObj) 
 }
 
 pub unsafe extern "C" fn it_802C3D44(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802C3D44");
     if !gobj.is_null() {
         let ip = GET_ITEM(gobj);
         if !ip.is_null() {
@@ -187,6 +192,7 @@ pub unsafe extern "C" fn it_802C3D44(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802C3D74(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802C3D74");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut ItZeldaDinFire_ItemVars;
@@ -229,6 +235,7 @@ unsafe fn itZeldadinfire_UnkMotion0_Anim_inline(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itZeldadinfire_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itZeldadinfire_UnkMotion0_Anim");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut ItZeldaDinFire_ItemVars;
@@ -257,6 +264,7 @@ pub unsafe extern "C" fn itZeldadinfire_UnkMotion0_Anim(gobj: *mut Item_GObj) ->
 }
 
 pub unsafe extern "C" fn itZeldadinfire_UnkMotion1_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itZeldadinfire_UnkMotion1_Anim");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut ItZeldaDinFire_ItemVars;
@@ -287,6 +295,7 @@ pub unsafe extern "C" fn itZeldadinfire_UnkMotion1_Anim(gobj: *mut Item_GObj) ->
 }
 
 pub unsafe extern "C" fn itZeldadinfire_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itZeldadinfire_UnkMotion0_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut ItZeldaDinFire_ItemVars;
     let mut f1: f32 = 0.0;
@@ -319,11 +328,13 @@ pub unsafe extern "C" fn itZeldadinfire_UnkMotion0_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itZeldadinfire_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itZeldadinfire_UnkMotion1_Phys");
     let ip = GET_ITEM(gobj);
     itResetVelocity(ip);
 }
 
 pub unsafe extern "C" fn itZeldadinfire_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itZeldadinfire_UnkMotion0_Coll");
     let ip = GET_ITEM(gobj);
     if it_802C3AFC(gobj, &mut (*ip).x378_itemColl) {
         itZeldadinfire_UnkMotion0_Anim_inline(gobj);
@@ -332,10 +343,12 @@ pub unsafe extern "C" fn itZeldadinfire_UnkMotion0_Coll(gobj: *mut Item_GObj) ->
 }
 
 pub unsafe extern "C" fn itZeldadinfire_UnkMotion1_Coll(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itZeldadinfire_UnkMotion1_Coll");
     false
 }
 
 pub unsafe extern "C" fn itZeldaDinFire_Logic65_Reflected(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itZeldaDinFire_Logic65_Reflected");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
     (*ip).xDD4_itemVar.zeldadinfire.xDDC = 1;
@@ -348,13 +361,16 @@ pub unsafe extern "C" fn itZeldaDinFire_Logic65_Reflected(gobj: *mut Item_GObj) 
 }
 
 pub unsafe extern "C" fn itZeldaDinFire_Logic65_Clanked(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itZeldaDinFire_Logic65_Clanked");
     true
 }
 
 pub unsafe extern "C" fn itZeldaDinFire_Logic65_Absorbed(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itZeldaDinFire_Logic65_Absorbed");
     true
 }
 
 pub unsafe extern "C" fn itZeldaDinFire_Logic65_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("itZeldaDinFire_Logic65_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

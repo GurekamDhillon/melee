@@ -62,6 +62,7 @@ pub static mut it_803F94A0: [ItemStateTable; 3] = [
 ];
 
 pub unsafe extern "C" fn it_802F2F34(gobj: *mut HSD_GObj, attr: *mut itYoshiEggLay_DatAttrs) {
+    melee_core::ct!("it_802F2F34");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
     spawn.kind = (*attr).kind;
@@ -87,6 +88,7 @@ pub unsafe extern "C" fn it_802F2F34(gobj: *mut HSD_GObj, attr: *mut itYoshiEggL
 }
 
 pub unsafe extern "C" fn it_802F3020(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802F3020");
     let item = GET_ITEM(item_gobj);
     ext::it_8026B3A8(item_gobj);
     ext::Item_80268E5C(item_gobj, 1, ITEM_ANIM_UPDATE);
@@ -94,6 +96,7 @@ pub unsafe extern "C" fn it_802F3020(item_gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_27CF_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("it_27CF_UnkMotion1_Anim");
     let mut ip = GET_ITEM(gobj);
     (*ip).xD44_lifeTimer -= 1.0;
     if (*ip).xD44_lifeTimer <= 0.0 {
@@ -109,22 +112,26 @@ pub unsafe extern "C" fn it_27CF_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> bool {
 }
 
 pub unsafe extern "C" fn it_27CF_UnkMotion1_Phys(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_27CF_UnkMotion1_Phys");
     let attr = (*GET_ITEM(item_gobj)).xCC_item_attr;
     ext::it_80272860(item_gobj, (*attr).x10_fall_speed, (*attr).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn it_27CF_UnkMotion1_Coll(item_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("it_27CF_UnkMotion1_Coll");
     ext::it_8026E15C(item_gobj, Some(it_802F317C));
     false
 }
 
 pub unsafe extern "C" fn it_802F317C(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802F317C");
     let item = GET_ITEM(item_gobj);
     itResetVelocity(item);
     ext::Item_80268E5C(item_gobj, 0, ITEM_ANIM_UPDATE);
 }
 
 pub unsafe extern "C" fn it_27CF_UnkMotion0_Anim(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("it_27CF_UnkMotion0_Anim");
     let mut ip = GET_ITEM(gobj);
     (*ip).xD44_lifeTimer -= 1.0;
     if (*ip).xD44_lifeTimer <= 0.0 {
@@ -139,14 +146,16 @@ pub unsafe extern "C" fn it_27CF_UnkMotion0_Anim(gobj: *mut HSD_GObj) -> bool {
     false
 }
 
-pub unsafe extern "C" fn it_27CF_UnkMotion0_Phys(_item_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn it_27CF_UnkMotion0_Phys(_item_gobj: *mut HSD_GObj) { melee_core::ct!("it_27CF_UnkMotion0_Phys");}
 
 pub unsafe extern "C" fn it_27CF_UnkMotion0_Coll(item_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("it_27CF_UnkMotion0_Coll");
     ext::it_8026D62C(item_gobj, Some(it_802F3020));
     false
 }
 
 pub unsafe extern "C" fn it_802F3290(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802F3290");
     let item_jobj = GET_JOBJ(item_gobj);
     let item = GET_ITEM(item_gobj);
     itResetVelocity(item);
@@ -157,6 +166,7 @@ pub unsafe extern "C" fn it_802F3290(item_gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_27CF_UnkMotion2_Anim(item_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("it_27CF_UnkMotion2_Anim");
     let item = GET_ITEM(item_gobj);
     (*item).xD44_lifeTimer -= 1.0;
     if (*item).xD44_lifeTimer <= 0.0 {
@@ -166,11 +176,13 @@ pub unsafe extern "C" fn it_27CF_UnkMotion2_Anim(item_gobj: *mut HSD_GObj) -> bo
 }
 
 pub unsafe extern "C" fn it_27CF_Logic114_DmgReceived(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_27CF_Logic114_DmgReceived");
     let item = GET_ITEM(item_gobj);
     (*item).xD44_lifeTimer = fmadds(-((*item).xCA0 as f32), (*item).xDD4_itemVar.yoshiegglay.x0, (*item).xD44_lifeTimer);
     false
 }
 
 pub unsafe extern "C" fn it_27CF_Logic114_EvtUnk(item_gobj: *mut Item_GObj, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_27CF_Logic114_EvtUnk");
     ext::it_8026B894(item_gobj, ref_gobj);
 }

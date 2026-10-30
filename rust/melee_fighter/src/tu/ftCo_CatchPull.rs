@@ -53,12 +53,13 @@ pub mod ext {
 }
 
 /// `fn_800DA190` as the C `HSD_GObjEvent` stored in `accessory1_cb`.
-pub unsafe extern "C" fn fn_800DA190_cb(g: *mut HSD_GObj) { fn_800DA190(g) }
+pub unsafe extern "C" fn fn_800DA190_cb(g: *mut HSD_GObj) { melee_core::ct!("fn_800DA190_cb"); fn_800DA190(g) }
 /// `fn_800DA004` as the C `HSD_GObjEvent` handed to `ft_800841B8`.
-pub unsafe extern "C" fn fn_800DA004_cb(g: *mut HSD_GObj) { fn_800DA004(g) }
+pub unsafe extern "C" fn fn_800DA004_cb(g: *mut HSD_GObj) { melee_core::ct!("fn_800DA004_cb"); fn_800DA004(g) }
 
 /// `fn_800D9CE8`: the grab connected; enter CatchPull (0xD5) or CatchDashPull (0xD7).
 pub fn fn_800D9CE8(g: G) {
+    melee_core::ct!("fn_800D9CE8");
     let f = fp(g);
     f.gr_vel = 0.0;
     let frame = f.cur_anim_frame;
@@ -116,6 +117,7 @@ pub fn fn_800D9CE8(g: G) {
 }
 
 pub fn ftCo_CatchPull_Anim(g: G) {
+    melee_core::ct!("ftCo_CatchPull_Anim");
     let f = fp(g);
     let mut should_transition = false;
     match f.kind {
@@ -155,9 +157,10 @@ pub fn ftCo_CatchPull_Anim(g: G) {
     }
 }
 
-pub fn ftCo_CatchPull_IASA(_g: G) {}
+pub fn ftCo_CatchPull_IASA(_g: G) { melee_core::ct!("ftCo_CatchPull_IASA");}
 
 pub fn ftCo_CatchPull_Phys(g: G) {
+    melee_core::ct!("ftCo_CatchPull_Phys");
     let f = fp(g);
     let fr = crate::hooks::common_data().x64 * f.co_attrs.ground_friction;
     ext::ftCommon_CalcGroundAccel_Deaccel(f, fr);
@@ -165,10 +168,12 @@ pub fn ftCo_CatchPull_Phys(g: G) {
 }
 
 pub fn ftCo_CatchPull_Coll(g: G) {
+    melee_core::ct!("ftCo_CatchPull_Coll");
     ext::ft_800841B8(g, Some(fn_800DA004_cb));
 }
 
 pub fn fn_800DA004(g: G) {
+    melee_core::ct!("fn_800DA004");
     let victim = fp(g).victim_gobj;
     ext::ftCo_800DC920(g, victim);
     ext::ftCo_Fall_Enter(g);
@@ -177,6 +182,7 @@ pub fn fn_800DA004(g: G) {
 
 /// `fn_800DA054`: while holding, release when the victim drifts out of reach, else walk toward it.
 pub fn fn_800DA054(g: G) {
+    melee_core::ct!("fn_800DA054");
     let f = fp(g);
     let victim = unsafe { &mut *((*f.victim_gobj).user_data as *mut Fighter) };
     if victim.x2226_b2() != 0 {
@@ -216,6 +222,7 @@ pub fn fn_800DA054(g: G) {
 }
 
 pub fn fn_800DA190(g: G) {
+    melee_core::ct!("fn_800DA190");
     match fp(g).kind {
         6 | 13 | 20 => {}
         _ => fn_800DA054(g),

@@ -39,6 +39,7 @@ pub mod ext {
 }
 
 pub fn ftCo_8009B818(g: G) -> bool {
+    melee_core::ct!("ftCo_8009B818");
     if ext::ftCo_800C97A8(g) {
         ftCo_8009B860(g);
         return true;
@@ -47,6 +48,7 @@ pub fn ftCo_8009B818(g: G) -> bool {
 }
 
 pub fn ftCo_8009B860(g: G) {
+    melee_core::ct!("ftCo_8009B860");
     let f = fp(g);
     let a = unsafe { &*f.x2CC };
     ext::ftCo_Turn_Enter(g, a.x4_motion_state + 4, 0, 0.0, a.cargo_hold.x20_TURN_SPEED, 0.0);
@@ -54,6 +56,7 @@ pub fn ftCo_8009B860(g: G) {
 }
 
 pub fn ftCo_CargoTurn_Anim(g: G) {
+    melee_core::ct!("ftCo_CargoTurn_Anim");
     let f = fp(g);
     unsafe {
         if f.mv.co.walk.fast_anim_frame > 0.0 {
@@ -71,6 +74,7 @@ pub fn ftCo_CargoTurn_Anim(g: G) {
 }
 
 pub fn ftCo_CargoTurn_IASA(g: G) {
+    melee_core::ct!("ftCo_CargoTurn_IASA");
     if ext::ftCo_8009BF3C(g) {
         return;
     }
@@ -80,9 +84,11 @@ pub fn ftCo_CargoTurn_IASA(g: G) {
 }
 
 pub fn ftCo_CargoTurn_Phys(g: G) {
+    melee_core::ct!("ftCo_CargoTurn_Phys");
     ext::ft_80084F3C(g);
 }
 
 pub fn ftCo_CargoTurn_Coll(g: G) {
+    melee_core::ct!("ftCo_CargoTurn_Coll");
     ext::ftCo_CargoWait_Coll(g);
 }

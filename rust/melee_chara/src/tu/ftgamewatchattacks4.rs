@@ -71,19 +71,23 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 
 /// `ftGw_ItemTorchSetup` as a Fighter callback entry (accessory4_cb).
 pub unsafe extern "C" fn cb_ftGw_ItemTorchSetup(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftGw_ItemTorchSetup");
     ftGw_ItemTorchSetup(g);
 }
 /// `ftGw_AttackS4_ItemTorchEnterHitlag` as a Fighter callback entry (pre_hitlag_cb).
 pub unsafe extern "C" fn cb_ftGw_AttackS4_ItemTorchEnterHitlag(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftGw_AttackS4_ItemTorchEnterHitlag");
     ftGw_AttackS4_ItemTorchEnterHitlag(g);
 }
 /// `ftGw_AttackS4_ItemTorchExitHitlag` as a Fighter callback entry (post_hitlag_cb).
 pub unsafe extern "C" fn cb_ftGw_AttackS4_ItemTorchExitHitlag(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftGw_AttackS4_ItemTorchExitHitlag");
     ftGw_AttackS4_ItemTorchExitHitlag(g);
 }
 
 /// Spawn the Fire Attack Torch and set up callbacks.
 pub fn ftGw_ItemTorchSetup(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_ItemTorchSetup");
     unsafe {
         let mut sp10 = Vec { x: 0.0, y: 0.0, z: 0.0 };
         let fp = fpp(gobj);
@@ -105,6 +109,7 @@ pub fn ftGw_ItemTorchSetup(gobj: *mut HSD_GObj) {
 
 /// Set flags on the Torch (clear the pointer after ending its hitlag).
 pub fn ftGw_AttackS4_ItemTorchSetFlag(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackS4_ItemTorchSetFlag");
     unsafe {
         let fp = fpp(gobj);
         ftGw_AttackS4_ItemTorchExitHitlag(gobj);
@@ -114,6 +119,7 @@ pub fn ftGw_AttackS4_ItemTorchSetFlag(gobj: *mut HSD_GObj) {
 
 /// Remove the Torch on damage.
 pub fn ftGw_AttackS4_ItemTorchOnDamage(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackS4_ItemTorchOnDamage");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.gw.x2254_fireGObj.is_null() {
@@ -125,6 +131,7 @@ pub fn ftGw_AttackS4_ItemTorchOnDamage(gobj: *mut HSD_GObj) {
 
 /// Apply hitlag to the Torch.
 pub fn ftGw_AttackS4_ItemTorchEnterHitlag(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackS4_ItemTorchEnterHitlag");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.gw.x2254_fireGObj.is_null() {
@@ -135,6 +142,7 @@ pub fn ftGw_AttackS4_ItemTorchEnterHitlag(gobj: *mut HSD_GObj) {
 
 /// End hitlag for the Torch.
 pub fn ftGw_AttackS4_ItemTorchExitHitlag(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackS4_ItemTorchExitHitlag");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.gw.x2254_fireGObj.is_null() {
@@ -145,6 +153,7 @@ pub fn ftGw_AttackS4_ItemTorchExitHitlag(gobj: *mut HSD_GObj) {
 
 /// Forward Smash Collision callback.
 pub fn ftGw_AttackS4_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackS4_Coll");
     st::ft_80084104(gobj);
     ftGw_Init_8014A538(gobj);
 }

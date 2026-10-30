@@ -53,10 +53,12 @@ pub mod ext {
 }
 // END GENERATED EXT
 pub unsafe fn snap_note_render(_data: *mut HSD_ObjAllocData, _delta: i32) {
+    melee_core::ct!("snap_note_render");
     // The shipping C disabled registration after render writes became undoable.
     let _ = ext::Snap_InRender();
 }
 pub unsafe fn HSD_ObjAllocTopUp() {
+    melee_core::ct!("HSD_ObjAllocTopUp");
     let n = ext::Snap_RenderPoolCount();
     for i in 0..n {
         let d = ext::Snap_RenderPoolAt(i).cast::<HSD_ObjAllocData>();
@@ -68,6 +70,7 @@ pub unsafe fn HSD_ObjAllocTopUp() {
     }
 }
 pub unsafe fn HSD_ObjAllocReport() {
+    melee_core::ct!("HSD_ObjAllocReport");
     let mut d = alloc_datas;
     while !d.is_null() {
         OSReport("objpool %p size=%d used=%d free=%d peak=%d\n", &[OsArg::U(d as usize as u32), OsArg::I((*d).size as i32), OsArg::I((*d).used as i32), OsArg::I((*d).free as i32), OsArg::I((*d).peak as i32)]);
@@ -75,10 +78,12 @@ pub unsafe fn HSD_ObjAllocReport() {
     }
 }
 pub unsafe fn HSD_ObjSetHeap(size: u32, ptr: *mut c_void) {
+    melee_core::ct!("HSD_ObjSetHeap");
     obj_heap.curr = ptr as usize; obj_heap.top = ptr as usize;
     obj_heap.remain = size; obj_heap.size = size;
 }
 pub unsafe fn HSD_ObjAllocAddFree(data: *mut HSD_ObjAllocData, mut num: u32) -> i32 {
+    melee_core::ct!("HSD_ObjAllocAddFree");
     assert!(!data.is_null(), "HSD_ObjAllocAddFree: data");
     if oa_trace < 0 { oa_trace = ext::PcTraceHeapEnabled(); }
     if oa_trace != 0 {
@@ -127,6 +132,7 @@ pub unsafe fn HSD_ObjAllocAddFree(data: *mut HSD_ObjAllocData, mut num: u32) -> 
     num as i32
 }
 pub unsafe fn HSD_ObjAlloc(data: *mut HSD_ObjAllocData) -> *mut c_void {
+    melee_core::ct!("HSD_ObjAlloc");
     if (*data).num_limit_flag() != 0 && (*data).used >= (*data).num_limit { return core::ptr::null_mut(); }
     if (*data).heap_limit_flag() != 0 {
         let size = if obj_heap.top != 0 { obj_heap.remain } else { ext::OSCheckHeap(ext::HSD_GetHeap()) as u32 };
@@ -149,6 +155,7 @@ pub unsafe fn HSD_ObjAlloc(data: *mut HSD_ObjAllocData) -> *mut c_void {
     cur.cast()
 }
 pub unsafe fn HSD_ObjFree(data: *mut HSD_ObjAllocData, obj: *mut c_void) {
+    melee_core::ct!("HSD_ObjFree");
     ext::Snap_NoteObj(data.cast(), obj, 1);
     snap_note_render(data, -1);
     write_unaligned(obj.cast::<*mut HSD_ObjAllocLink>(), (*data).freehead);
@@ -157,6 +164,7 @@ pub unsafe fn HSD_ObjFree(data: *mut HSD_ObjAllocData, obj: *mut c_void) {
     (*data).used = (*data).used.wrapping_sub(1);
 }
 pub unsafe fn removeAll(data: *mut HSD_ObjAllocData) {
+    melee_core::ct!("removeAll");
     let mut cur = addr_of_mut!(alloc_datas);
     while !(*cur).is_null() {
         if *cur == data { *cur = (**cur).next; }
@@ -164,6 +172,7 @@ pub unsafe fn removeAll(data: *mut HSD_ObjAllocData) {
     }
 }
 pub unsafe fn HSD_ObjAllocInit(data: *mut HSD_ObjAllocData, size: usize, align: u32) {
+    melee_core::ct!("HSD_ObjAllocInit");
     assert!(!data.is_null(), "HSD_ObjAllocInit: data");
     removeAll(data);
     data.write(HSD_ObjAllocData::zeroed());
@@ -174,4 +183,4 @@ pub unsafe fn HSD_ObjAllocInit(data: *mut HSD_ObjAllocData, size: usize, align: 
     (*data).next = alloc_datas;
     alloc_datas = data;
 }
-pub unsafe fn _HSD_ObjAllocForgetMemory(_low: *mut c_void, _high: *mut c_void) { alloc_datas = core::ptr::null_mut(); }
+pub unsafe fn _HSD_ObjAllocForgetMemory(_low: *mut c_void, _high: *mut c_void) { melee_core::ct!("_HSD_ObjAllocForgetMemory"); alloc_datas = core::ptr::null_mut(); }

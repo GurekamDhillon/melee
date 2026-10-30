@@ -76,6 +76,7 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 /// `PUSH_ATTRS(fp, T)` (ft/inlines.h): copy the loaded `ext_attr` block into the fighter's backup
 /// buffer and make that the live `dat_attrs`.
 pub unsafe fn push_attrs<T: Copy>(fp: *mut Fighter) {
+    melee_core::ct!("push_attrs");
     let backup = (*fp).dat_attrs_backup;
     let src = (*(*fp).ft_data).ext_attr as *const T;
     *((*fp).dat_attrs_backup as *mut T) = *src;
@@ -84,6 +85,7 @@ pub unsafe fn push_attrs<T: Copy>(fp: *mut Fighter) {
 
 /// `COPY_ATTRS(gobj, T)` (ft/inlines.h): overwrite the live `dat_attrs` with `ext_attr`.
 pub unsafe fn copy_attrs<T: Copy>(gobj: *mut HSD_GObj) {
+    melee_core::ct!("copy_attrs");
     let fp = fpp(gobj);
     let dst = (*fp).dat_attrs as *mut T;
     let src = (*(*fp).ft_data).ext_attr as *const T;
@@ -92,26 +94,32 @@ pub unsafe fn copy_attrs<T: Copy>(gobj: *mut HSD_GObj) {
 
 /// C `bool`: whether the blaster is out.
 pub fn ftFx_Init_800E5534(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftFx_Init_800E5534");
     unsafe { !(*fpp(gobj)).u.fx.x222C_blasterGObj.is_null() }
 }
 
 pub fn ftFx_Init_800E5588(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_Init_800E5588");
     ext::ftFx_SpecialN_RemoveBlaster(gobj);
 }
 
 pub fn ftFx_Init_OnItemPickup(gobj: *mut HSD_GObj, flag: i32) {
+    melee_core::ct!("ftFx_Init_OnItemPickup");
     crate::tu::ftclink::Fighter_OnItemPickup(gobj, flag, 1, 1);
 }
 
 pub fn ftFx_Init_OnItemDrop(gobj: *mut HSD_GObj, flag: i32) {
+    melee_core::ct!("ftFx_Init_OnItemDrop");
     crate::tu::ftclink::Fighter_OnItemDrop(gobj, flag, 1, 1);
 }
 
 pub fn ftFx_Init_OnLoadForFalco(fp: *mut Fighter) {
+    melee_core::ct!("ftFx_Init_OnLoadForFalco");
     unsafe { push_attrs::<ftFox_DatAttrs>(fp) }
 }
 
 pub fn ftFx_Init_OnLoad(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_Init_OnLoad");
     unsafe {
         let fp = fpp(gobj);
         let item_list = (*(*fp).ft_data).x48_items;
@@ -125,5 +133,6 @@ pub fn ftFx_Init_OnLoad(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_Init_LoadSpecialAttrs");
     unsafe { copy_attrs::<ftFox_DatAttrs>(gobj) }
 }

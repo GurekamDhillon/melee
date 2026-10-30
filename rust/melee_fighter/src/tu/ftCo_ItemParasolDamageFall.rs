@@ -37,20 +37,24 @@ pub mod ext {
 }
 
 pub fn ftCo_800CF4DC(g: G) {
+    melee_core::ct!("ftCo_800CF4DC");
     ext::Fighter_ChangeMotionState(g, ftCo_MS_ItemParasolDamageFall as i32, Ft_MF_KeepFastFall, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ext::ftCommon_ClampAirDrift(fp(g));
 }
 
-pub fn ftCo_ItemParasolDamageFall_Anim(_g: G) {}
+pub fn ftCo_ItemParasolDamageFall_Anim(_g: G) { melee_core::ct!("ftCo_ItemParasolDamageFall_Anim");}
 
 pub fn ftCo_ItemParasolDamageFall_IASA(g: G) {
+    melee_core::ct!("ftCo_ItemParasolDamageFall_IASA");
     ext::ftCo_DamageFall_IASA(g);
 }
 
 pub fn ftCo_ItemParasolDamageFall_Phys(g: G) {
+    melee_core::ct!("ftCo_ItemParasolDamageFall_Phys");
     ext::ft_80084DB0(g);
 }
 
 pub fn ftCo_ItemParasolDamageFall_Coll(g: G) {
+    melee_core::ct!("ftCo_ItemParasolDamageFall_Coll");
     ext::ft_8008370C(g, ext::ftCo_80090984);
 }

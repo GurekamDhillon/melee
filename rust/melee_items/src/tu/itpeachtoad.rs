@@ -92,6 +92,7 @@ unsafe fn itpeachtoad_inline_2(item: *mut Item) -> bool {
 
 /// 2BDE18
 pub unsafe extern "C" fn it_802BDE18(item_gobj: *mut Item_GObj, pos: *mut Vec3, part: u32, kind: ItemKind, facing_dir: f32) -> *mut Item_GObj {
+    melee_core::ct!("it_802BDE18");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
     spawn.kind = kind;
@@ -120,12 +121,14 @@ pub unsafe extern "C" fn it_802BDE18(item_gobj: *mut Item_GObj, pos: *mut Vec3, 
 }
 
 pub unsafe extern "C" fn itPeachToad_Logic91_Destroyed(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itPeachToad_Logic91_Destroyed");
     let item = GET_ITEM(item_gobj);
     itpeachtoad_inline_1(item);
 }
 
 /// 2BDF40
 pub unsafe extern "C" fn it_802BDF40(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802BDF40");
     let item = GET_ITEM(item_gobj);
     if !item.is_null() {
         itpeachtoad_inline_1(item);
@@ -135,15 +138,18 @@ pub unsafe extern "C" fn it_802BDF40(item_gobj: *mut Item_GObj) {
 
 /// 2BDFA0
 pub unsafe extern "C" fn it_802BDFA0(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802BDFA0");
     ext::it_8026B724(item_gobj);
 }
 
 /// 2BDFC0
 pub unsafe extern "C" fn it_802BDFC0(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802BDFC0");
     ext::it_8026B73C(item_gobj);
 }
 
 pub unsafe extern "C" fn itPeachToad_Logic91_PickedUp(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itPeachToad_Logic91_PickedUp");
     ext::Item_80268E5C(item_gobj, 0, ITEM_ANIM_UPDATE);
     ext::Item_802694CC(item_gobj);
     ext::it_8026BB44(item_gobj);
@@ -151,6 +157,7 @@ pub unsafe extern "C" fn itPeachToad_Logic91_PickedUp(item_gobj: *mut Item_GObj)
 }
 
 pub unsafe extern "C" fn itPeachtoad_UnkMotion0_Anim(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPeachtoad_UnkMotion0_Anim");
     let mut item = GET_ITEM(item_gobj);
     if (*item).x5CC_currentAnimFrame == 7.0 {
         ext::it_8026BB20(item_gobj);
@@ -170,6 +177,7 @@ pub unsafe extern "C" fn itPeachtoad_UnkMotion0_Anim(item_gobj: *mut Item_GObj) 
 
 /// 2BE100
 pub unsafe extern "C" fn it_802BE100(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802BE100");
     let hsd_jobj = (*item_gobj).hsd_obj as *mut HSD_JObj;
     ext::Item_80268E5C(item_gobj, 1, ITEM_ANIM_UPDATE);
     ext::lb_8000BA0C(hsd_jobj, 10.0);
@@ -179,6 +187,7 @@ pub unsafe extern "C" fn it_802BE100(item_gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itPeachtoad_UnkMotion1_Anim(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPeachtoad_UnkMotion1_Anim");
     let mut item = GET_ITEM(item_gobj);
     if (*item).x5CC_currentAnimFrame >= 60.0 {
         ext::it_8026BB44(item_gobj);
@@ -192,5 +201,6 @@ pub unsafe extern "C" fn itPeachtoad_UnkMotion1_Anim(item_gobj: *mut Item_GObj) 
 }
 
 pub unsafe extern "C" fn itPeachToad_Logic91_EvtUnk(item_gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("itPeachToad_Logic91_EvtUnk");
     ext::it_8026B894(item_gobj, ref_gobj);
 }

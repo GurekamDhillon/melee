@@ -56,6 +56,7 @@ fn is_kirby(kind: FighterKind) -> bool {
 
 /// `ftCo_AttackDash_CheckInput`.
 pub fn ftCo_AttackDash_CheckInput(g: G) -> bool {
+    melee_core::ct!("ftCo_AttackDash_CheckInput");
     let f = fp(g);
     if f.input.pressed_buttons & HSD_PAD_A as u32 != 0 {
         if !f.item_gobj.is_null() {
@@ -76,6 +77,7 @@ pub fn ftCo_AttackDash_CheckInput(g: G) -> bool {
 
 /// static `decideFighter`: `switch (FTKB_CANON_KIND(kind))`.
 pub fn decideFighter(g: G) {
+    melee_core::ct!("decideFighter");
     if is_kirby(fp(g).kind) {
         ext::ftKb_SpecialN_800F1F68(g);
     } else {
@@ -85,6 +87,7 @@ pub fn decideFighter(g: G) {
 
 /// static `doEnter`.
 pub fn doEnter(g: G) {
+    melee_core::ct!("doEnter");
     let f = fp(g);
     f.set_allow_interrupt(0);
     ext::Fighter_ChangeMotionState(g, ftCo_MS_AttackDash as i32, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -93,6 +96,7 @@ pub fn doEnter(g: G) {
 }
 
 pub fn ftCo_AttackDash_Anim(g: G) {
+    melee_core::ct!("ftCo_AttackDash_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ft_8008A2BC(g);
     }
@@ -100,16 +104,19 @@ pub fn ftCo_AttackDash_Anim(g: G) {
 
 /// `ftCo_AttackDash_SetMv0`: `mv.co.attackdash.x0 = p_ftCommonData->x68` (float -> int).
 pub fn ftCo_AttackDash_SetMv0(g: G) {
+    melee_core::ct!("ftCo_AttackDash_SetMv0");
     fp(g).mv.co.attackdash.x0 = cd().x68 as i32;
 }
 
 pub fn ftCo_AttackDash_IASA(g: G) {
+    melee_core::ct!("ftCo_AttackDash_IASA");
     if !ext::ftCo_800D8AE0(g) && fp(g).allow_interrupt() != 0 {
         ext::ftCo_Wait_IASA(g);
     }
 }
 
 pub fn ftCo_AttackDash_Phys(g: G) {
+    melee_core::ct!("ftCo_AttackDash_Phys");
     let f = fp(g);
     let fr = cd().x50 * f.co_attrs.ground_friction;
     let dir = f.facing_dir;
@@ -117,5 +124,6 @@ pub fn ftCo_AttackDash_Phys(g: G) {
 }
 
 pub fn ftCo_AttackDash_Coll(g: G) {
+    melee_core::ct!("ftCo_AttackDash_Coll");
     ext::ft_80084104(g);
 }

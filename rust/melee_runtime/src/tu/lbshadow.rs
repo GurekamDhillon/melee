@@ -95,6 +95,7 @@ const FILE: &str = "src/melee/lb/lbshadow.c";
 
 /// lbshadow.c `splGetCardinalTangent` (14 fused sites).
 pub fn splGetCardinalTangent(p: &mut Vec3, cp: &[Vec3], tension: f32, u: f32) {
+    melee_core::ct!("splGetCardinalTangent");
     let u2 = u * u;
     let car0 = tension * (fmadds(-3.0, u2, 4.0 * u) - 1.0);
     let car1 = fmadds(3.0 * (2.0 - tension), u2, 2.0 * (tension - 3.0) * u);
@@ -111,6 +112,7 @@ pub fn splGetCardinalTangent(p: &mut Vec3, cp: &[Vec3], tension: f32, u: f32) {
 
 /// lbshadow.c `splGetBSplineTangent` (11 fused sites).
 pub fn splGetBSplineTangent(p: &mut Vec3, cp: &[Vec3], u: f32) {
+    melee_core::ct!("splGetBSplineTangent");
     let u2 = u * u;
     let u_1 = 1.0 - u;
     let half = 0.5f32;
@@ -129,6 +131,7 @@ pub fn splGetBSplineTangent(p: &mut Vec3, cp: &[Vec3], u: f32) {
 
 /// lbshadow.c `splGetBezierTangent` (12 fused sites).
 pub fn splGetBezierTangent(p: &mut Vec3, cp: &[Vec3], u: f32) {
+    melee_core::ct!("splGetBezierTangent");
     let u_1 = u - 1.0;
     let u2 = u * u;
     let bez0 = -3.0 * u_1 * u_1;
@@ -147,6 +150,7 @@ pub fn splGetBezierTangent(p: &mut Vec3, cp: &[Vec3], u: f32) {
 /// lbshadow.c `lbShadow_8000E9F0`: the tangent of `spline` at `u` in [0, 1] (no-op outside),
 /// by type: 0 linear, 1 Bezier, 2 B-spline, 3 cardinal; any other type leaves `p` alone.
 pub fn lbShadow_8000E9F0(p: &mut Vec3, spline: &HSD_Spline, mut u: f32) {
+    melee_core::ct!("lbShadow_8000E9F0");
     if u < 0.0 || u > 1.0 {
         return;
     }
@@ -179,6 +183,7 @@ pub fn lbShadow_8000E9F0(p: &mut Vec3, spline: &HSD_Spline, mut u: f32) {
 /// # Safety
 /// `lbshadow` must be valid for writes; `jobj` is handed to the shadow system.
 pub unsafe fn lbShadow_8000ED54(lbshadow: *mut LbShadow, jobj: *mut HSD_JObj) {
+    melee_core::ct!("lbShadow_8000ED54");
     if lbshadow.is_null() {
         __assert(FILE, 0x36, "lbshadow");
     }
@@ -208,6 +213,7 @@ pub unsafe fn lbShadow_8000ED54(lbshadow: *mut LbShadow, jobj: *mut HSD_JObj) {
 /// # Safety
 /// `lbshadow` must be valid for reads.
 pub unsafe fn lbShadow_8000EE8C(lbshadow: *mut LbShadow) {
+    melee_core::ct!("lbShadow_8000EE8C");
     if lbshadow.is_null() {
         __assert(FILE, 0x62, "lbshadow");
     }
@@ -227,6 +233,7 @@ unsafe fn any_flag(lbs: *mut LbShadow) -> bool {
 /// # Safety
 /// `gobj` must be a valid fighter GObj.
 pub unsafe fn lbShadow_8000EEE0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("lbShadow_8000EEE0");
     if (ext::ftLib_80086960(gobj) != 0) {
         let lbs = ext::ftLib_800872B0(gobj);
         if !lbs.is_null() {
@@ -245,6 +252,7 @@ pub unsafe fn lbShadow_8000EEE0(gobj: *mut HSD_GObj) {
 /// # Safety
 /// The fighter player link (`ext::HSD_GObjPLinkHead`) must be valid.
 pub unsafe fn lbShadow_8000EFEC() {
+    melee_core::ct!("lbShadow_8000EFEC");
     let mut count = 0i32;
     let head = *ext::HSD_GObjPLinkHead.add(HSD_GOBJ_PLINK_FIGHTER as usize);
     let mut g = head;
@@ -291,6 +299,7 @@ fn shadow_chan() -> HSD_Chan {
 /// # Safety
 /// `shadow` (with camera and texture) must be valid.
 pub unsafe fn lbShadow_8000F214(shadow: *mut HSD_Shadow) {
+    melee_core::ct!("lbShadow_8000F214");
     let cobj = (*shadow).camera;
     let mut chan = shadow_chan();
     ext::HSD_SetupChannelAll(&mut chan);
@@ -329,6 +338,7 @@ pub unsafe fn lbShadow_8000F214(shadow: *mut HSD_Shadow) {
 /// # Safety
 /// The fighter player link, the light GX link and every fighter must be valid.
 pub unsafe fn lbShadow_8000F38C(arg0: i32) {
+    melee_core::ct!("lbShadow_8000F38C");
     let mut rect = HSD_ViewingRect::zeroed();
     let mut light_pos = Vec3::zeroed();
     let mut light_dir = Vec3::zeroed();

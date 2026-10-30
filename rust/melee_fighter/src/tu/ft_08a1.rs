@@ -50,6 +50,7 @@ fn fp<'a>(g: G) -> &'a mut Fighter {
 
 /// `ft_8008A2BC`: end an action. Master/Crazy Hand have their own wait; everyone else Waits.
 pub fn ft_8008A2BC(g: G) {
+    melee_core::ct!("ft_8008A2BC");
     if h::ftlib_get_kind(g) == Ft_Kind_MasterH {
         ext::ftMh_MS_389_80151018(g);
     } else if h::ftlib_get_kind(g) == Ft_Kind_CrezyH {
@@ -61,12 +62,14 @@ pub fn ft_8008A2BC(g: G) {
 
 /// `ft_8008A324`: [`ft_8008A348`] with the default blend (-1).
 pub fn ft_8008A324(g: G) {
+    melee_core::ct!("ft_8008A324");
     ft_8008A348(g, -1.0);
 }
 
 /// `ft_8008A348`: into `ftCo_MS_Wait` (or DownSpot / the 800C5240 state), closing Peach's
 /// parasol, then the Link / Young Link Wait hooks.
 pub fn ft_8008A348(g: G, anim_blend: f32) {
+    melee_core::ct!("ft_8008A348");
     let f = fp(g);
     if f.x2224_b2() != 0 {
         ext::ftCo_DownSpot_Enter(g);

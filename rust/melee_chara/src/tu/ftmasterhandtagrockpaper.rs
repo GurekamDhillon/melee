@@ -43,6 +43,7 @@ pub mod ext {
 pub const neg1: f32 = -1.0;
 
 pub fn ftMh_TagRockPaper_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_TagRockPaper_Anim");
     unsafe {
         if bl::ftBossLib_8015C31C() || bl::ftBossLib_8015C3A0() || st::ftAnim_IsFramesRemaining(gobj) == 0 {
             let fp = (*gobj).user_data as *mut Fighter;
@@ -53,9 +54,10 @@ pub fn ftMh_TagRockPaper_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftMh_TagRockPaper_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_TagRockPaper_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_TagRockPaper_Coll");}
 
 pub fn ftMh_TagGrab_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_TagGrab_Anim");
     unsafe {
         if bl::ftBossLib_8015C31C() || bl::ftBossLib_8015C3A0() || st::ftAnim_IsFramesRemaining(gobj) == 0 {
             let fp = (*gobj).user_data as *mut Fighter;
@@ -66,9 +68,10 @@ pub fn ftMh_TagGrab_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftMh_TagGrab_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_TagGrab_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_TagGrab_Coll");}
 
 pub fn ftMh_TagSqueeze_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_TagSqueeze_Anim");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
 
@@ -94,17 +97,19 @@ pub fn ftMh_TagSqueeze_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftMh_TagSqueeze_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_TagSqueeze_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_TagSqueeze_Coll");}
 
 pub fn ftMh_TagFail_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_TagFail_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         ftMh_MS_389_80151018(gobj);
     }
 }
 
-pub fn ftMh_TagFail_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_TagFail_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_TagFail_Coll");}
 
 pub fn ftMh_TagCancel_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_TagCancel_Anim");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         (*fp).mv.mh.unk0.x24 -= 1.0;
@@ -119,6 +124,7 @@ pub fn ftMh_TagCancel_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMh_TagCancel_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_TagCancel_Phys");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*(*fp).ft_data).ext_attr as *const ftMasterHand_SpecialAttrs;
@@ -127,6 +133,7 @@ pub fn ftMh_TagCancel_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMh_TagCancel_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_TagCancel_Coll");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         if (*fp).mv.mh.unk0.x18 == 0.0 {

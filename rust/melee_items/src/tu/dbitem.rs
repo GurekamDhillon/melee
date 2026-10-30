@@ -11,6 +11,7 @@ pub static mut db_ShowItemCollisionBubbles: i32 = 0;
 
 /// `fn_8022697C` (dbanim.c): the owner's x21FC flag byte, or 0 for a non-fighter.
 pub unsafe fn fn_8022697C(owner: *mut HSD_GObj) -> u8 {
+    melee_core::ct!("fn_8022697C");
     if ftLib_80086960(owner) {
         let ft = (*owner).user_data as *mut Fighter;
         (*ft).x21FC_flag.byte
@@ -20,6 +21,7 @@ pub unsafe fn fn_8022697C(owner: *mut HSD_GObj) -> u8 {
 }
 
 pub unsafe fn db_80225DD8(item: *mut HSD_GObj, owner: *mut HSD_GObj) {
+    melee_core::ct!("db_80225DD8");
     let it = (*item).user_data as *mut Item;
     if !ftLib_80086960(owner) {
         (*it).anon_daa.xDAA_byte |= db_ShowItemCollisionBubbles as u8;
@@ -64,26 +66,32 @@ pub static mut db_ItemAndPokemonMenu: DbItemAndPokemonMenu = DbItemAndPokemonMen
 };
 
 pub unsafe fn db_ShowEnemyStompRange() -> u32 {
+    melee_core::ct!("db_ShowEnemyStompRange");
     db_ItemAndPokemonMenu.ShowEnemyStompRange
 }
 
 pub unsafe fn db_ShowItemPickupRange() -> u32 {
+    melee_core::ct!("db_ShowItemPickupRange");
     db_ItemAndPokemonMenu.ShowItemPickupRange
 }
 
 pub unsafe fn db_ShowCoinPickupRange() -> u32 {
+    melee_core::ct!("db_ShowCoinPickupRange");
     db_ItemAndPokemonMenu.ShowCoinPickupRange
 }
 
 pub unsafe fn db_GetCurrentlySelectedPokemon() -> i32 {
+    melee_core::ct!("db_GetCurrentlySelectedPokemon");
     db_ItemAndPokemonMenu.CurrentlySelectedPokemon
 }
 
 pub unsafe fn db_AreItemSpawnsEnabled() -> i32 {
+    melee_core::ct!("db_AreItemSpawnsEnabled");
     db_ItemAndPokemonMenu.ItemSpawnsEnabled
 }
 
 pub unsafe fn db_80225D64(item: *mut HSD_GObj, _owner: *mut HSD_GObj) {
+    melee_core::ct!("db_80225D64");
     let it = (*item).user_data as *mut Item;
     (*it).anon_daa.xDAA_byte |= db_ShowItemCollisionBubbles as u8;
 }

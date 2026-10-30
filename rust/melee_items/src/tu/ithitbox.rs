@@ -47,6 +47,7 @@ unsafe fn item(gobj: *mut HSD_GObj) -> *mut Item {
 }
 
 pub unsafe extern "C" fn it_802753DC(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802753DC");
     let item = item(item_gobj);
     (*item).xC34_damageDealt = 0;
     (*item).xC40 = 1.0;
@@ -59,14 +60,17 @@ pub unsafe extern "C" fn it_802753DC(item_gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_80275414(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_80275414");
     (*item(item_gobj)).xDCD_flag.anon_0.set_b7(1);
 }
 
 pub unsafe extern "C" fn it_8027542C(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_8027542C");
     (*item(item_gobj)).xDCD_flag.anon_0.set_b7(0);
 }
 
 pub unsafe extern "C" fn it_80275444(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_80275444");
     let item = item(item_gobj);
     (*item).xDCD_flag.anon_0.set_b5(1);
     (*item).xDCD_flag.anon_0.set_b7(1);
@@ -74,6 +78,7 @@ pub unsafe extern "C" fn it_80275444(item_gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_80275474(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_80275474");
     let item = item(item_gobj);
     (*item).xDCD_flag.anon_0.set_b5(0);
     (*item).xDCD_flag.anon_0.set_b7(0);
@@ -81,14 +86,17 @@ pub unsafe extern "C" fn it_80275474(item_gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_802754A4(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802754A4");
     (*item(item_gobj)).xDCE_flag.anon_0.set_b2(1);
 }
 
 pub unsafe extern "C" fn it_802754BC(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802754BC");
     (*item(item_gobj)).xDCE_flag.anon_0.set_b2(0);
 }
 
 pub unsafe extern "C" fn it_802754D4(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802754D4");
     let item = item(item_gobj);
     (*item).xDCE_flag.anon_0.set_b0(1);
     (*item).xDCE_flag.anon_0.set_b2(1);
@@ -96,6 +104,7 @@ pub unsafe extern "C" fn it_802754D4(item_gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_80275504(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_80275504");
     let item = item(item_gobj);
     (*item).xDCE_flag.anon_0.set_b0(0);
     (*item).xDCE_flag.anon_0.set_b2(0);
@@ -103,6 +112,7 @@ pub unsafe extern "C" fn it_80275504(item_gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_80275534(item_gobj: *mut HSD_GObj, scale: f32) {
+    melee_core::ct!("it_80275534");
     let item = item(item_gobj);
     let mut var_ctr = 0usize;
     while var_ctr < 4 {
@@ -115,6 +125,7 @@ pub unsafe extern "C" fn it_80275534(item_gobj: *mut HSD_GObj, scale: f32) {
 }
 
 pub unsafe extern "C" fn it_80275594(item_gobj: *mut HSD_GObj, idx: i32, mult: f32) {
+    melee_core::ct!("it_80275594");
     let item = item(item_gobj);
     let hitcapsule = &mut (*item).x5D4_hitboxes[idx as usize].hit;
     if hitcapsule.state != HitCapsule_Disabled {
@@ -123,6 +134,7 @@ pub unsafe extern "C" fn it_80275594(item_gobj: *mut HSD_GObj, idx: i32, mult: f
 }
 
 pub unsafe extern "C" fn it_802755C0(item_gobj: *mut HSD_GObj, scale: f32) {
+    melee_core::ct!("it_802755C0");
     let item = item(item_gobj);
     let mut var_ctr = 0usize;
     while var_ctr < 4 {
@@ -135,6 +147,7 @@ pub unsafe extern "C" fn it_802755C0(item_gobj: *mut HSD_GObj, scale: f32) {
 }
 
 pub unsafe extern "C" fn it_80275640(item_gobj: *mut HSD_GObj, arg1: f32) {
+    melee_core::ct!("it_80275640");
     let item = item(item_gobj);
     let mut i = 0usize;
     while i < 4 {
@@ -149,29 +162,35 @@ pub unsafe extern "C" fn it_80275640(item_gobj: *mut HSD_GObj, arg1: f32) {
 }
 
 pub unsafe extern "C" fn it_802756D0(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802756D0");
     (*item(item_gobj)).xD0C = 2;
 }
 
 pub unsafe extern "C" fn it_802756E0(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802756E0");
     (*item(item_gobj)).xD0C = 0;
     ext::it_802714C0(item_gobj);
 }
 
 pub unsafe extern "C" fn it_8027570C(item_gobj: *mut HSD_GObj, idx: i32) {
+    melee_core::ct!("it_8027570C");
     (*item(item_gobj)).x5D4_hitboxes[idx as usize].hit.set_x40_b0(0);
 }
 
 pub unsafe extern "C" fn it_8027572C(item_gobj: *mut HSD_GObj, idx: i32) {
+    melee_core::ct!("it_8027572C");
     (*item(item_gobj)).x5D4_hitboxes[idx as usize].hit.set_x40_b0(1);
 }
 
 pub unsafe extern "C" fn it_8027574C(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_8027574C");
     let item = item(item_gobj);
     ext::it_80274D04(item_gobj, &raw mut (*item).xB54);
     ext::it_80274D6C(item_gobj);
 }
 
 pub unsafe extern "C" fn it_80275788(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_80275788");
     let item = item(item_gobj);
     let state = HitCapsule_Unk4;
     let mut var_ctr = 0usize;
@@ -186,6 +205,7 @@ pub unsafe extern "C" fn it_80275788(item_gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_80275820(item_gobj: *mut HSD_GObj, arg1: *mut Vec3, arg2: *mut Vec3, idx: i32) {
+    melee_core::ct!("it_80275820");
     let item = item(item_gobj);
     let hitcapsule = &mut (*item).x5D4_hitboxes[idx as usize].hit;
     if hitcapsule.state != HitCapsule_Disabled {
@@ -195,6 +215,7 @@ pub unsafe extern "C" fn it_80275820(item_gobj: *mut HSD_GObj, arg1: *mut Vec3, 
 }
 
 pub unsafe extern "C" fn it_80275870(item_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("it_80275870");
     let item = item(item_gobj);
     let mut var_ctr = 0usize;
     while var_ctr < 4 {
@@ -207,6 +228,7 @@ pub unsafe extern "C" fn it_80275870(item_gobj: *mut HSD_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn it_802758D4(item_gobj: *mut HSD_GObj) -> f32 {
+    melee_core::ct!("it_802758D4");
     let item = item(item_gobj);
     let mut damage = 0.0f32;
     let mut disable_chk = false;

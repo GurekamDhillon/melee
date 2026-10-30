@@ -57,11 +57,13 @@ pub static mut it_803F6370: [ItemStateTable; 5] = [
 ];
 
 pub unsafe extern "C" fn itSpyCloak_Logic33_Spawned(gobj: *mut Item_GObj) {
+    melee_core::ct!("itSpyCloak_Logic33_Spawned");
     it_80295D04(gobj);
 }
 
 /// 295C68
 pub unsafe extern "C" fn it_80295C68(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_80295C68");
     let item = GET_ITEM(gobj);
     (*item).x40_vel.z = 0.0;
     (*item).x40_vel.y = 0.0;
@@ -71,12 +73,14 @@ pub unsafe extern "C" fn it_80295C68(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itSpycloak_UnkMotion0_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSpycloak_UnkMotion0_Anim");
     false
 }
 
-pub unsafe extern "C" fn itSpycloak_UnkMotion0_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itSpycloak_UnkMotion0_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itSpycloak_UnkMotion0_Phys");}
 
 pub unsafe extern "C" fn itSpycloak_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSpycloak_UnkMotion0_Coll");
     ext::it_8026D62C(gobj, Some(it_80295D04));
     ext::it_80276CB8(gobj);
     false
@@ -84,14 +88,17 @@ pub unsafe extern "C" fn itSpycloak_UnkMotion0_Coll(gobj: *mut Item_GObj) -> boo
 
 /// 295D04
 pub unsafe extern "C" fn it_80295D04(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_80295D04");
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);
 }
 
 pub unsafe extern "C" fn itSpycloak_UnkMotion3_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSpycloak_UnkMotion3_Anim");
     false
 }
 
 pub unsafe extern "C" fn itSpycloak_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itSpycloak_UnkMotion1_Phys");
     let item = GET_ITEM(gobj);
     let attr = (*item).xCC_item_attr;
 
@@ -99,23 +106,28 @@ pub unsafe extern "C" fn itSpycloak_UnkMotion1_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itSpycloak_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSpycloak_UnkMotion1_Coll");
     ext::it_8026E15C(gobj, Some(it_80295C68));
     false
 }
 
 pub unsafe extern "C" fn itSpyCloak_Logic33_PickedUp(gobj: *mut Item_GObj) {
+    melee_core::ct!("itSpyCloak_Logic33_PickedUp");
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE);
 }
 
 pub unsafe extern "C" fn itSpycloak_UnkMotion2_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSpycloak_UnkMotion2_Anim");
     false
 }
 
 pub unsafe extern "C" fn itSpyCloak_Logic33_Dropped(gobj: *mut Item_GObj) {
+    melee_core::ct!("itSpyCloak_Logic33_Dropped");
     ext::Item_80268E5C(gobj, 1, 6);
 }
 
 pub unsafe extern "C" fn itSpycloak_UnkMotion3_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itSpycloak_UnkMotion3_Phys");
     let item = GET_ITEM(gobj);
     let attr = (*item).xCC_item_attr;
 
@@ -123,6 +135,7 @@ pub unsafe extern "C" fn itSpycloak_UnkMotion3_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itSpycloak_UnkMotion3_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSpycloak_UnkMotion3_Coll");
     if ext::it_8026DA08(gobj) != 0 {
         return true;
     }
@@ -130,20 +143,24 @@ pub unsafe extern "C" fn itSpycloak_UnkMotion3_Coll(gobj: *mut Item_GObj) -> boo
 }
 
 pub unsafe extern "C" fn itSpyCloak_Logic33_EnteredAir(gobj: *mut Item_GObj) {
+    melee_core::ct!("itSpyCloak_Logic33_EnteredAir");
     ext::Item_80268E5C(gobj, 4, ITEM_ANIM_UPDATE);
 }
 
 pub unsafe extern "C" fn itSpycloak_UnkMotion4_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSpycloak_UnkMotion4_Anim");
     false
 }
 
-pub unsafe extern "C" fn itSpycloak_UnkMotion4_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itSpycloak_UnkMotion4_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itSpycloak_UnkMotion4_Phys");}
 
 pub unsafe extern "C" fn itSpycloak_UnkMotion4_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSpycloak_UnkMotion4_Coll");
     ext::it_8026E8C4(gobj, Some(it_80295C68), Some(it_80295D04));
     false
 }
 
 pub unsafe extern "C" fn itSpyCloak_Logic33_EvtUnk(gobj: *mut Item_GObj, r: *mut HSD_GObj) {
+    melee_core::ct!("itSpyCloak_Logic33_EvtUnk");
     ext::it_8026B894(gobj, r);
 }

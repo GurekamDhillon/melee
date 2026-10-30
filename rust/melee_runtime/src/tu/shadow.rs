@@ -132,9 +132,11 @@ unsafe fn cobj_view_mtx(c: *mut HSD_CObj) -> *mut Mtx {
 pub static mut shadow_alloc_data: HSD_ObjAllocData =
     unsafe { core::mem::zeroed() };
 pub unsafe fn HSD_ShadowGetAllocData() -> *mut HSD_ObjAllocData {
+    melee_core::ct!("HSD_ShadowGetAllocData");
     addr_of_mut!(shadow_alloc_data)
 }
 pub unsafe fn HSD_ShadowInitAllocData() {
+    melee_core::ct!("HSD_ShadowInitAllocData");
     ext::HSD_ObjAllocInit(
         HSD_ShadowGetAllocData(),
         core::mem::size_of::<HSD_Shadow>() as u32,
@@ -142,6 +144,7 @@ pub unsafe fn HSD_ShadowInitAllocData() {
     );
 }
 pub unsafe fn makeShadowTObj() -> *mut HSD_TObj {
+    melee_core::ct!("makeShadowTObj");
     let t = ext::HSD_TObjAlloc();
     (*t).src = 0;
     (*t).wrap_s = 0;
@@ -151,6 +154,7 @@ pub unsafe fn makeShadowTObj() -> *mut HSD_TObj {
     t
 }
 pub unsafe fn HSD_ShadowAlloc() -> *mut HSD_Shadow {
+    melee_core::ct!("HSD_ShadowAlloc");
     let s = ext::HSD_ObjAlloc(HSD_ShadowGetAllocData()).cast::<HSD_Shadow>();
     s.write(HSD_Shadow::zeroed());
     (*s).camera = ext::HSD_CObjAlloc();
@@ -168,6 +172,7 @@ pub unsafe fn HSD_ShadowAlloc() -> *mut HSD_Shadow {
     s
 }
 pub unsafe fn HSD_ShadowRemove(s: *mut HSD_Shadow) {
+    melee_core::ct!("HSD_ShadowRemove");
     if s.is_null() {
         return;
     }
@@ -196,12 +201,14 @@ pub unsafe fn HSD_ShadowRemove(s: *mut HSD_Shadow) {
     ext::HSD_ObjFree(HSD_ShadowGetAllocData(), s.cast());
 }
 pub unsafe fn HSD_ShadowInit(s: *mut HSD_Shadow) {
+    melee_core::ct!("HSD_ShadowInit");
     assert!(!s.is_null());
     let d = &*(*(*s).texture).imagedesc;
     ext::GXSetTexCopySrc(0, 0, d.width, d.height);
     ext::GXSetTexCopyDst(d.width, d.height, 0x20, 0);
 }
 pub unsafe fn HSD_ShadowSetSize(s: *mut HSD_Shadow, w: u16, h: u16) {
+    melee_core::ct!("HSD_ShadowSetSize");
     assert!(!s.is_null() && w > 0 && h > 0);
     let d = (*(*s).texture).imagedesc;
     if (*d).image_ptr.is_null() || (*d).width != w || (*d).height != h {
@@ -218,6 +225,7 @@ pub unsafe fn HSD_ShadowSetSize(s: *mut HSD_Shadow, w: u16, h: u16) {
     }
 }
 pub unsafe fn drawBackgroundRect(s: *mut HSD_Shadow) {
+    melee_core::ct!("drawBackgroundRect");
     let c = (*s).camera;
     ext::GXLoadPosMtxImm(identity_mtx(), 0);
     perf_count_mtx_load();
@@ -238,6 +246,7 @@ pub unsafe fn drawBackgroundRect(s: *mut HSD_Shadow) {
     
 }
 pub unsafe fn HSD_ShadowStartRender(s: *mut HSD_Shadow) {
+    melee_core::ct!("HSD_ShadowStartRender");
     assert!(!s.is_null());
     assert!(!(*s).camera.is_null() && !(*s).texture.is_null());
     let d = (*(*s).texture).imagedesc;
@@ -303,6 +312,7 @@ pub unsafe fn HSD_ShadowStartRender(s: *mut HSD_Shadow) {
     ext::HSD_CObjEndCurrent();
 }
 pub unsafe fn HSD_ShadowEndRender(s: *mut HSD_Shadow) {
+    melee_core::ct!("HSD_ShadowEndRender");
     assert!(!s.is_null());
     let d = (*(*s).texture).imagedesc;
     if (*d).image_ptr.is_null() {
@@ -314,6 +324,7 @@ pub unsafe fn HSD_ShadowEndRender(s: *mut HSD_Shadow) {
     makeMatrix(s);
 }
 pub unsafe fn HSD_ShadowSetActive(s: *mut HSD_Shadow, active: i32) {
+    melee_core::ct!("HSD_ShadowSetActive");
     assert!(!s.is_null());
     if ((*s).active != 0) == (active != 0) {
         return;
@@ -330,6 +341,7 @@ pub unsafe fn HSD_ShadowSetActive(s: *mut HSD_Shadow, active: i32) {
     }
 }
 pub unsafe fn HSD_ShadowAddObject(s: *mut HSD_Shadow, j: *mut HSD_JObj) {
+    melee_core::ct!("HSD_ShadowAddObject");
     if s.is_null() || j.is_null() {
         return;
     }
@@ -344,6 +356,7 @@ pub unsafe fn HSD_ShadowAddObject(s: *mut HSD_Shadow, j: *mut HSD_JObj) {
     jobj_ref(j);
 }
 pub unsafe fn HSD_ShadowDeleteObject(s: *mut HSD_Shadow, j: *mut HSD_JObj) {
+    melee_core::ct!("HSD_ShadowDeleteObject");
     if s.is_null() {
         return;
     }
@@ -365,6 +378,7 @@ pub unsafe fn HSD_ShadowDeleteObject(s: *mut HSD_Shadow, j: *mut HSD_JObj) {
     }
 }
 pub unsafe fn makeMatrix(s: *mut HSD_Shadow) {
+    melee_core::ct!("makeMatrix");
     let c = (*s).camera;
     let p = &(*c).projection_param;
     let mut mprj: Mtx = [[0.0; 4]; 3];
@@ -384,6 +398,7 @@ pub unsafe fn HSD_ShadowSetViewingRect(
     l: f32,
     r: f32,
 ) {
+    melee_core::ct!("HSD_ShadowSetViewingRect");
     assert!(!s.is_null());
     let c = (*s).camera;
     let distance = ext::HSD_CObjGetEyeDistance(c);
@@ -411,6 +426,7 @@ pub unsafe fn HSD_ViewingRectInit(
     u: *mut Vec3,
     perspective: i32,
 ) {
+    melee_core::ct!("HSD_ViewingRectInit");
     assert!(!r.is_null());
     let mut v = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     (*r).origin = *p;
@@ -427,6 +443,7 @@ pub unsafe fn HSD_ViewingRectInit(
     (*r).perspective = perspective;
 }
 pub unsafe fn HSD_ViewingRectCheck(r: *mut HSD_ViewingRect) -> i32 {
+    melee_core::ct!("HSD_ViewingRectCheck");
     assert!(!r.is_null());
     ((*r).top > (*r).bottom && (*r).right > (*r).left) as i32
 }
@@ -438,6 +455,7 @@ pub unsafe fn HSD_ViewingRectAddRect(
     mut l: f32,
     mut right: f32,
 ) {
+    melee_core::ct!("HSD_ViewingRectAddRect");
     assert!(!r.is_null() && !p.is_null());
     let mut o2p = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut e2p = Vec3 { x: 0.0, y: 0.0, z: 0.0 };

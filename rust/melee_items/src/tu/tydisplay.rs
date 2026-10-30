@@ -410,11 +410,13 @@ unsafe fn tysort<T: Copy>(base: *mut T, lo: i32, hi: i32, lt: &dyn Fn(&T, &T) ->
 
 /// Sort `TySortElem`s ascending by their float `val` (position records are sorted through it).
 pub unsafe fn _tyDisplay_8031830C(base: *mut TySortElem, lo: i32, hi: i32) {
+    melee_core::ct!("_tyDisplay_8031830C");
     tysort(base, lo, hi, &|a: &TySortElem, b: &TySortElem| a.val < b.val);
 }
 
 /// Sort descending by `val` read as an integer.
 pub unsafe fn _tyDisplay_80318714(base: *mut TySortElem, lo: i32, hi: i32) {
+    melee_core::ct!("_tyDisplay_80318714");
     tysort(base as *mut TySortElemInt, lo, hi, &|a: &TySortElemInt, b: &TySortElemInt| a.val > b.val);
 }
 
@@ -495,6 +497,7 @@ unsafe fn layout_sort_pos(grid: *mut TyDspGrid, n2: i32) {
 /// `_tyDisplay_80318B1C`: pick the trophies shown (`arg0` of them, rotated by a random start)
 /// and store each id and its int sort value in `grid->sort`.
 pub unsafe fn _tyDisplay_80318B1C(arg0: i32) {
+    melee_core::ct!("_tyDisplay_80318B1C");
     let grid = _tyDisplay_804D6F14;
     let rand_result = if arg0 > 1 { ext::HSD_Randi(arg0 - 1) } else { 0 };
     let mut start = rand_result;
@@ -570,6 +573,7 @@ unsafe fn _tyDisplay_80318CB4_place_toys(grid: *mut TyDspGrid, cfg: *mut TyDspCo
 
 /// Spiral ("ring") layout (`arg0 != 0` fixed spacing, else jittered and randomised).
 pub unsafe fn _tyDisplay_80318CB4(arg0: i32) {
+    melee_core::ct!("_tyDisplay_80318CB4");
     let grid = _tyDisplay_804D6F14;
     let cfg = _tyDisplay_804D6F18;
     let mut ring_count: i32 = 0;
@@ -690,6 +694,7 @@ pub unsafe fn _tyDisplay_80318CB4(arg0: i32) {
 
 /// Row layout (staggered when `arg0 != 0`).
 pub unsafe fn _tyDisplay_80319540(arg0: i32) {
+    melee_core::ct!("_tyDisplay_80319540");
     let cfg = _tyDisplay_804D6F18;
     let grid = _tyDisplay_804D6F14;
     let mut row: i32 = 0;
@@ -763,6 +768,7 @@ pub unsafe fn _tyDisplay_80319540(arg0: i32) {
 
 /// Pyramid layout (`arg0 != 0` flips it).
 pub unsafe fn _tyDisplay_80319994(arg0: i32) {
+    melee_core::ct!("_tyDisplay_80319994");
     let cfg = _tyDisplay_804D6F18;
     let grid = _tyDisplay_804D6F14;
     let mut xoff: f32 = 0.0;
@@ -846,6 +852,7 @@ pub unsafe fn _tyDisplay_80319994(arg0: i32) {
 
 /// Fit the camera (position, fov, pan limits) and the table backdrop to the laid-out grid.
 pub unsafe fn _tyDisplay_80319EF0() {
+    melee_core::ct!("_tyDisplay_80319EF0");
     let mut interest = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp28 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let grid = _tyDisplay_804D6F14;
@@ -984,6 +991,7 @@ unsafe fn camera_aim_tail(cfg: *mut TyDspConfig) {
 
 /// Per-frame camera proc: stick pans, C-stick / triggers zoom, A resets, B / START leave.
 pub unsafe extern "C" fn _tyDisplay_8031A4EC(arg0: *mut HSD_GObj) {
+    melee_core::ct!("_tyDisplay_8031A4EC");
     let mut interest = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut eye = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let cobj = (*arg0).hsd_obj as *mut HSD_CObj;
@@ -1064,6 +1072,7 @@ pub unsafe extern "C" fn _tyDisplay_8031A4EC(arg0: *mut HSD_GObj) {
 
 /// Debug "place trophies" camera proc (L held on entry): moves the held model with the d-pad.
 pub unsafe extern "C" fn _tyDisplay_8031A94C(arg0: *mut HSD_GObj) {
+    melee_core::ct!("_tyDisplay_8031A94C");
     let mut sp7c = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp70 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let cfg = _tyDisplay_804D6F18;
@@ -1196,6 +1205,7 @@ pub unsafe extern "C" fn _tyDisplay_8031A94C(arg0: *mut HSD_GObj) {
 
 /// Load the backdrop (table) model into `bg->gobj4`.
 pub unsafe fn _tyDisplay_8031B1FC() {
+    melee_core::ct!("_tyDisplay_8031B1FC");
     let ptr = _tyDisplay_804D6F1C;
     let zero = 0;
     if (*ptr).archive.is_null() {
@@ -1227,6 +1237,7 @@ pub unsafe fn _tyDisplay_8031B1FC() {
 
 /// Load the scene lights (and fog) into the camera record.
 pub unsafe fn _tyDisplay_8031B328() {
+    melee_core::ct!("_tyDisplay_8031B328");
     let ptr = _tyDisplay_804D6F1C;
     let scene = Toy_sbss_804D6ED4;
     let mut lobj: *mut HSD_LObj = core::ptr::null_mut();
@@ -1300,6 +1311,7 @@ unsafe fn tyDisplay_SetGridSize(cfg: *mut TyDspConfig, grid: *mut TyDspGrid) {
 }
 
 pub unsafe fn tyDisplay_Scene_OnEnter(_arg0: *mut c_void) {
+    melee_core::ct!("tyDisplay_Scene_OnEnter");
     let mut sp18: *mut c_void = core::ptr::null_mut();
     _tyDisplay_804D6F10 = ext::HSD_MemAlloc((core::mem::size_of::<*mut HSD_JObj>() * _tyDisplay_804D6F10_len) as i32) as *mut *mut HSD_JObj;
     _tyDisplay_804D6F14 = ext::HSD_MemAlloc(core::mem::size_of::<TyDspGrid>() as i32) as *mut TyDspGrid;
@@ -1383,6 +1395,7 @@ pub unsafe fn tyDisplay_Scene_OnEnter(_arg0: *mut c_void) {
 
 /// Tear the scene down (only clears the pointers: the scene's gobjs are freed by the scene exit).
 pub unsafe fn _tyDisplay_8031B850() {
+    melee_core::ct!("_tyDisplay_8031B850");
     let anim = &raw mut Toy_804A2AA8;
     let ptr = _tyDisplay_804D6F1C;
     let pgobj = _tyDisplay_804D6F18;
@@ -1433,6 +1446,7 @@ pub unsafe fn _tyDisplay_8031B850() {
 }
 
 pub unsafe fn tyDisplay_Scene_OnFrame() {
+    melee_core::ct!("tyDisplay_Scene_OnFrame");
     let state = toy_mode_state();
     if (*state).x4 != 0 {
         _tyDisplay_8031B850();
@@ -1442,6 +1456,7 @@ pub unsafe fn tyDisplay_Scene_OnFrame() {
 
 /// The display-table row for trophy `id` (US table first under the US language, else the JP one).
 pub unsafe fn tyDisplay_8031B9DC(id: i32) -> *mut TyDspEntry {
+    melee_core::ct!("tyDisplay_8031B9DC");
     let mut found = false;
     let mut p: *mut TyDspEntry = core::ptr::null_mut();
     if ext::lbLang_IsSettingUS() != 0 {
@@ -1477,6 +1492,7 @@ pub unsafe fn tyDisplay_8031B9DC(id: i32) -> *mut TyDspEntry {
 
 /// Store a debug-edited position component and refresh the debug window.
 pub unsafe fn _tyDisplay_8031BA78(arg0: i32, arg1: i32, farg0: f32) {
+    melee_core::ct!("_tyDisplay_8031BA78");
     let data = tyDisplay_8031B9DC(arg0);
     match arg1 {
         1 => {}
@@ -1494,21 +1510,25 @@ pub unsafe fn _tyDisplay_8031BA78(arg0: i32, arg1: i32, farg0: f32) {
 
 /// Joint symbol name of category `idx` (the C returns the address as an `s32`).
 pub unsafe fn tyDisplay_8031BB34(idx: i8) -> *const i8 {
+    melee_core::ct!("tyDisplay_8031BB34");
     table_name(&_tyDisplay_803B8988, idx)
 }
 
 /// Matanim symbol name of category `idx`.
 pub unsafe fn tyDisplay_8031BB94(idx: i8) -> *const i8 {
+    melee_core::ct!("tyDisplay_8031BB94");
     table_name(&_tyDisplay_803B8A34, idx)
 }
 
 /// Archive file name of category `arg0` (the C returns the address as an `s32`).
 pub unsafe fn _tyDisplay_8031BBF4(arg0: i8) -> *const i8 {
+    melee_core::ct!("_tyDisplay_8031BBF4");
     table_name(&_tyDisplay_803B8AE0, arg0)
 }
 
 /// Build the display gobj for trophy `arg0` (its category model on a root jobj plus the stand).
 pub unsafe fn _tyDisplay_8031BC54(arg0: i32) -> *mut HSD_GObj {
+    melee_core::ct!("_tyDisplay_8031BC54");
     let id = arg0;
     let data = _tyDisplay_804D6F1C;
     let entry = tyDisplay_8031B9DC(id);
@@ -1550,6 +1570,7 @@ pub unsafe fn _tyDisplay_8031BC54(arg0: i32) -> *mut HSD_GObj {
 
 /// Show trophy `arg0`'s 3D model (scaled 0.6, shifted right) next to the debug window.
 pub unsafe fn _tyDisplay_8031BF34(arg0: i32) {
+    melee_core::ct!("_tyDisplay_8031BF34");
     let anim = &raw mut Toy_804A2AA8;
     if !_tyDisplay_804D6F2C.is_null() && !_tyDisplay_804A2DD0.archive.is_null() {
         ext::lbArchive_80016EFC(_tyDisplay_804A2DD0.archive);
@@ -1569,6 +1590,7 @@ pub unsafe fn _tyDisplay_8031BF34(arg0: i32) {
 
 /// Create the debug position window.
 pub unsafe fn _tyDisplay_8031C1D0() {
+    melee_core::ct!("_tyDisplay_8031C1D0");
     _tyDisplay_804D6F24 = ext::DevText_Create(1, 40, 40, 9, 3, _tyDisplay_devtext_buf.as_mut_ptr() as *mut i8);
     if !_tyDisplay_804D6F24.is_null() {
         let gobj = ext::DevText_GetGObj();
@@ -1587,10 +1609,12 @@ pub unsafe fn _tyDisplay_8031C1D0() {
 }
 
 pub unsafe fn tyDisplay_8031C2CC() {
+    melee_core::ct!("tyDisplay_8031C2CC");
     Toy_803124BC();
 }
 
 pub unsafe fn tyDisplay_8031C2EC() -> i32 {
+    melee_core::ct!("tyDisplay_8031C2EC");
     if Toy_80304B0C(5) {
         if ext::HSD_Randi(2) == 0 {
             return Toy_80305058(2, 5, 1, 65.0);
@@ -1601,6 +1625,7 @@ pub unsafe fn tyDisplay_8031C2EC() -> i32 {
 
 /// Collect up to `max` other collected trophies of the same category and kind as `id`.
 pub unsafe fn tyDisplay_8031C354(id: i32, buf: *mut i32, max: i32, kind: i32) -> i32 {
+    melee_core::ct!("tyDisplay_8031C354");
     let mut kind = kind;
     let mut buf = buf;
     if id == -1 {
@@ -1642,6 +1667,7 @@ pub unsafe fn tyDisplay_8031C354(id: i32, buf: *mut i32, max: i32, kind: i32) ->
 /// Load the display archives for trophy `arg0` (returns 1 if its category archive was already
 /// loaded, -1 for no trophy).
 pub unsafe fn tyDisplay_8031C454(arg0: i32) -> i32 {
+    melee_core::ct!("tyDisplay_8031C454");
     // Retail reads the archive file names past the two symbol tables laid out back to back; the
     // port links the tables separately, so the file-name table is named directly.
     let tables = &_tyDisplay_803B8AE0;
@@ -1673,6 +1699,7 @@ pub unsafe fn tyDisplay_8031C454(arg0: i32) -> i32 {
 
 /// Build the standalone display model for trophy `arg0` (null if its archive is not loaded).
 pub unsafe fn tyDisplay_8031C5E4(arg0: i32) -> *mut HSD_JObj {
+    melee_core::ct!("tyDisplay_8031C5E4");
     let archives = &raw mut _tyDisplay_804A2DE8 as *mut *mut HSD_Archive;
     let entry = tyDisplay_8031B9DC(arg0);
     if (*archives.add((*entry).x04 as usize)).is_null() {
@@ -1722,6 +1749,7 @@ pub unsafe fn tyDisplay_8031C5E4(arg0: i32) -> *mut HSD_JObj {
 }
 
 pub unsafe fn tyDisplay_8031C8B8() {
+    melee_core::ct!("tyDisplay_8031C8B8");
     for i in 0..0x2Busize {
         _tyDisplay_804A2DE8[i] = core::ptr::null_mut();
     }

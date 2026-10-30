@@ -62,12 +62,14 @@ pub static mut it_803F62C0: [ItemStateTable; 5] = [
 ];
 
 pub unsafe extern "C" fn itMetalB_Logic32_Spawned(gobj: *mut Item_GObj) {
+    melee_core::ct!("itMetalB_Logic32_Spawned");
     let it = GET_ITEM(gobj);
     (*it).xDCE_flag.anon_0.set_b7(0);
     it_80295498(gobj);
 }
 
 pub unsafe extern "C" fn it_802953FC(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802953FC");
     let it = (*gobj).user_data as *mut Item;
     itResetVelocity(it);
 
@@ -76,12 +78,14 @@ pub unsafe extern "C" fn it_802953FC(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itMetalb_UnkMotion0_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMetalb_UnkMotion0_Anim");
     false
 }
 
-pub unsafe extern "C" fn itMetalb_UnkMotion0_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itMetalb_UnkMotion0_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itMetalb_UnkMotion0_Phys");}
 
 pub unsafe extern "C" fn itMetalb_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMetalb_UnkMotion0_Coll");
     ext::it_8026D62C(gobj, Some(it_80295498));
     ext::it_80276CB8(gobj);
 
@@ -89,42 +93,51 @@ pub unsafe extern "C" fn itMetalb_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool 
 }
 
 pub unsafe extern "C" fn it_80295498(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_80295498");
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);
 }
 
 pub unsafe extern "C" fn itMetalb_UnkMotion3_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMetalb_UnkMotion3_Anim");
     false
 }
 
 pub unsafe extern "C" fn itMetalb_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itMetalb_UnkMotion1_Phys");
     let it = (*gobj).user_data as *mut Item;
     ext::it_80272860(gobj, (*(*it).xCC_item_attr).x10_fall_speed, (*(*it).xCC_item_attr).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itMetalb_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMetalb_UnkMotion1_Coll");
     ext::it_8026E15C(gobj, Some(it_802953FC));
 
     false
 }
 
 pub unsafe extern "C" fn itMetalB_Logic32_PickedUp(gobj: *mut Item_GObj) {
+    melee_core::ct!("itMetalB_Logic32_PickedUp");
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE);
 }
 
 pub unsafe extern "C" fn itMetalb_UnkMotion2_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMetalb_UnkMotion2_Anim");
     false
 }
 
 pub unsafe extern "C" fn itMetalB_Logic32_Dropped(gobj: *mut Item_GObj) {
+    melee_core::ct!("itMetalB_Logic32_Dropped");
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE | ITEM_DROP_UPDATE);
 }
 
 pub unsafe extern "C" fn itMetalb_UnkMotion3_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itMetalb_UnkMotion3_Phys");
     let it = (*gobj).user_data as *mut Item;
     ext::it_80272860(gobj, (*(*it).xCC_item_attr).x10_fall_speed, (*(*it).xCC_item_attr).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itMetalb_UnkMotion3_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMetalb_UnkMotion3_Coll");
     if ext::it_8026DA08(gobj) != 0 {
         return true;
     }
@@ -132,6 +145,7 @@ pub unsafe extern "C" fn itMetalb_UnkMotion3_Coll(gobj: *mut Item_GObj) -> bool 
 }
 
 pub unsafe extern "C" fn itMetalB_Logic32_DmgReceived(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMetalB_Logic32_DmgReceived");
     let it = GET_ITEM(gobj);
     let go = ext::it_8027236C(gobj);
 
@@ -149,21 +163,25 @@ pub unsafe extern "C" fn itMetalB_Logic32_DmgReceived(gobj: *mut Item_GObj) -> b
 }
 
 pub unsafe extern "C" fn itMetalB_Logic32_EnteredAir(gobj: *mut Item_GObj) {
+    melee_core::ct!("itMetalB_Logic32_EnteredAir");
     ext::Item_80268E5C(gobj, 4, ITEM_ANIM_UPDATE);
 }
 
 pub unsafe extern "C" fn itMetalb_UnkMotion4_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMetalb_UnkMotion4_Anim");
     false
 }
 
-pub unsafe extern "C" fn itMetalb_UnkMotion4_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itMetalb_UnkMotion4_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itMetalb_UnkMotion4_Phys");}
 
 pub unsafe extern "C" fn itMetalb_UnkMotion4_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMetalb_UnkMotion4_Coll");
     ext::it_8026E8C4(gobj, Some(it_802953FC), Some(it_80295498));
 
     false
 }
 
 pub unsafe extern "C" fn itMetalB_Logic32_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itMetalB_Logic32_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

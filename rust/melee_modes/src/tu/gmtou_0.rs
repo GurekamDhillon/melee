@@ -199,6 +199,7 @@ unsafe fn t500(tm: *mut TmData, i: i32) -> *mut HSD_Text {
 // ---------------------------------------------------------------------------------------------
 
 pub unsafe extern "C" fn fn_80190ABC(mode: i32) {
+    melee_core::ct!("fn_80190ABC");
     let mut mode = mode;
     let state = st();
     let tm = gm_GetTournamentData();
@@ -294,6 +295,7 @@ unsafe fn lbl_803D9D20_x0(i: i32) -> u8 {
 }
 
 pub unsafe extern "C" fn gm_80190EA4() {
+    melee_core::ct!("gm_80190EA4");
     let tmdata = gm_GetTournamentData();
 
     fn_80190174((*(*lbl_804D664C).cameras).desc);
@@ -332,6 +334,7 @@ pub unsafe extern "C" fn gm_80190EA4() {
 
 /// Initializes the time menu state when entering the time selection screen.
 pub unsafe extern "C" fn gm_80190FE4(arg0: i32) {
+    melee_core::ct!("gm_80190FE4");
     let tm = gm_GetTournamentData();
 
     if ext::mn_8022F218() == 0 {
@@ -363,6 +366,7 @@ pub unsafe extern "C" fn gm_80190FE4(arg0: i32) {
 }
 
 pub unsafe extern "C" fn fn_801910E0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801910E0");
     let counter = addr_of_mut!(lbl_804799B8.xC_counter);
     let jobj = gobj_jobj(gobj);
 
@@ -374,6 +378,7 @@ pub unsafe extern "C" fn fn_801910E0(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_80191154(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80191154");
     let state = st();
     let tm = gm_GetTournamentData();
     let jobj = gobj_jobj(gobj);
@@ -405,6 +410,7 @@ unsafe fn fn_80191240_dec_flash_timer() -> u8 {
 
 /// Updates the visibility and flash animation for a Tournament Mode option icon.
 pub unsafe extern "C" fn fn_80191240(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80191240");
     let tm = gm_GetTournamentData();
     let val = fn_8018F62C(&*gobj) as i32;
     let mut jobj = gobj_jobj(gobj);
@@ -445,6 +451,7 @@ pub unsafe extern "C" fn fn_80191240(gobj: *mut HSD_GObj) {
 
 /// Updates text visibility and menu state for tournament bracket options.
 pub unsafe extern "C" fn fn_801913BC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801913BC");
     let tm = gm_GetTournamentData();
     let idx = fn_8018F62C(&*gobj);
     let jobj = gobj_jobj(gobj);
@@ -527,6 +534,7 @@ pub unsafe extern "C" fn fn_801913BC(gobj: *mut HSD_GObj) {
 
 /// Updates the visibility and animation state of a Tournament Mode menu option.
 pub unsafe extern "C" fn fn_80191678(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80191678");
     let tmdata = gm_GetTournamentData();
     let idx = fn_8018F62C(&*gobj) as i32;
     let jobj = gobj_jobj(gobj);
@@ -553,6 +561,7 @@ pub unsafe extern "C" fn fn_80191678(gobj: *mut HSD_GObj) {
 
 /// Updates menu option selection animation.
 pub unsafe extern "C" fn fn_8019175C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8019175C");
     let tm = gm_GetTournamentData();
     fn_8018F62C(&*gobj);
     let root_jobj = gobj_jobj(gobj);
@@ -599,6 +608,7 @@ pub unsafe extern "C" fn fn_8019175C(gobj: *mut HSD_GObj) {
 
 /// Updates visibility and animation frame of a Training Mode HUD element.
 pub unsafe extern "C" fn fn_801918F0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801918F0");
     let tm = gm_GetTournamentData();
     let jobj = gobj_jobj(gobj);
 
@@ -637,6 +647,7 @@ pub unsafe extern "C" fn fn_801918F0(gobj: *mut HSD_GObj) {
 
 /// Updates the tournament bracket display visibility and animation.
 pub unsafe extern "C" fn fn_80191A54(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80191A54");
     let td = gm_GetTournamentData();
     let jobj = gobj_jobj(gobj);
     let jobj_copy = jobj;
@@ -662,6 +673,7 @@ pub unsafe extern "C" fn fn_80191A54(gobj: *mut HSD_GObj) {
 
 /// Updates button highlight animation based on current menu option.
 pub unsafe extern "C" fn fn_80191B5C(gobj: *mut c_void) {
+    melee_core::ct!("fn_80191B5C");
     let timers = st();
     let tm = gm_GetTournamentData();
     let jobj = (*(gobj as *mut HSD_GObj)).hsd_obj as *mut HSD_JObj;
@@ -683,6 +695,7 @@ pub unsafe extern "C" fn fn_80191B5C(gobj: *mut c_void) {
 
 /// Updates JObj visibility based on current menu option selection.
 pub unsafe extern "C" fn fn_80191CA4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80191CA4");
     let tm = gm_GetTournamentData();
     let jobj = gobj_jobj(gobj);
     if (*tm).cur_option <= 9 {
@@ -698,6 +711,7 @@ pub unsafe extern "C" fn fn_80191CA4(gobj: *mut HSD_GObj) {
 
 /// GObj callback for tournament bracket slot UI elements.
 pub unsafe extern "C" fn fn_80191D38(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80191D38");
     let tm = gm_GetTournamentData();
     let idx = fn_8018F62C(&*gobj) as i32;
     let jobj = gobj_jobj(gobj);
@@ -737,6 +751,7 @@ pub unsafe extern "C" fn fn_80191D38(gobj: *mut HSD_GObj) {
 
 /// Updates visibility and position of a tournament bracket player entry JObj.
 pub unsafe extern "C" fn fn_80191E9C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80191E9C");
     let tm = gm_GetTournamentData();
     let idx = fn_8018F62C(&*gobj) as i32;
     let jobj = gobj_jobj(gobj);
@@ -773,6 +788,7 @@ unsafe fn fn_80191FD4_is_selected(hud: i32, slot: i32, tm: *mut TmData) -> bool 
 }
 
 pub unsafe extern "C" fn fn_80191FD4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80191FD4");
     let state = st();
     let tm = gm_GetTournamentData();
     let idx = fn_8018F62C(&*gobj);
@@ -868,6 +884,7 @@ pub unsafe extern "C" fn fn_80191FD4(gobj: *mut HSD_GObj) {
 
 /// Updates tournament menu cursor JObj visibility and position.
 pub unsafe extern "C" fn fn_8019237C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8019237C");
     let tm = gm_GetTournamentData();
     let jobj = gobj_jobj(gobj);
 
@@ -893,6 +910,7 @@ pub unsafe extern "C" fn fn_8019237C(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_8019249C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8019249C");
     let tmdata = gm_GetTournamentData();
     let mut cur_option = (*tmdata).cur_option;
     let jobj = gobj_jobj(gobj);
@@ -932,6 +950,7 @@ pub unsafe extern "C" fn fn_8019249C(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_80192690(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80192690");
     let tmdata = gm_GetTournamentData();
     let jobj = gobj_jobj(gobj);
 
@@ -949,6 +968,7 @@ pub unsafe extern "C" fn fn_80192690(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_80192758(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80192758");
     let data = st();
     let tmdata = gm_GetTournamentData();
     let jobj = gobj_jobj(gobj);
@@ -998,6 +1018,7 @@ pub unsafe extern "C" fn fn_80192758(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_80192938() {
+    melee_core::ct!("fn_80192938");
     let state = st();
     let tm = gm_GetTournamentData();
     lbl_804D6658 = 0;
@@ -1090,6 +1111,7 @@ pub unsafe extern "C" fn fn_80192938() {
 }
 
 pub unsafe extern "C" fn fn_80192BB0() {
+    melee_core::ct!("fn_80192BB0");
     fn_8019035C(1, *(*lbl_804D664C).models.add(2), 0, 0x1A, 2, 1, Some(fn_8019175C), 0.0);
 
     let mut i: i32 = 0;
@@ -1113,6 +1135,7 @@ pub unsafe extern "C" fn fn_80192BB0() {
 }
 
 pub unsafe extern "C" fn fn_80192E6C() {
+    melee_core::ct!("fn_80192E6C");
     let m = (*lbl_804D6650).models;
     fn_8019035C(1, *m.add(4), 0, 0x1A, 2, 1, Some(fn_801918F0), 0.0);
     fn_8019035C(1, *m.add(7), 0, 0x1A, 2, 1, Some(fn_80191A54), 0.0);
@@ -1157,6 +1180,7 @@ pub unsafe extern "C" fn fn_80192E6C() {
 }
 
 pub unsafe extern "C" fn fn_80193230() {
+    melee_core::ct!("fn_80193230");
     fn_8019035C(0, *(*lbl_804D664C).models.add(5), 0, 0x1A, 2, 1, Some(fn_801910E0), 0.0);
     fn_8019035C(0, *(*lbl_804D664C).models.add(4), 0, 0x1A, 2, 1, Some(fn_80191154), 0.0);
     fn_80192BB0();
@@ -1168,6 +1192,7 @@ pub unsafe extern "C" fn fn_80193230() {
 }
 
 pub unsafe extern "C" fn fn_80193308() {
+    melee_core::ct!("fn_80193308");
     let color = lbl_804DA78C;
     let tm = gm_GetTournamentData();
     let lbl = lbl_804D663C;
@@ -1251,6 +1276,7 @@ pub unsafe extern "C" fn fn_80193308() {
 }
 
 pub unsafe extern "C" fn fn_801935B8() {
+    melee_core::ct!("fn_801935B8");
     let state = st();
     let tm = gm_GetTournamentData();
     fn_8018FBE0(0, 0, 0, 5, 5, 0x3e7, 3);
@@ -1321,6 +1347,7 @@ unsafe fn tmSettings_StepUp(menu: *mut i32, mt: *const i32) {
 
 /// Redraw the settings HUD after input.
 pub unsafe fn tmSettings_Refresh(mask: u32) {
+    melee_core::ct!("tmSettings_Refresh");
     if mask & 0x300 != 0 {
         fn_80190ABC(0);
         fn_80190ABC(2);
@@ -1338,6 +1365,7 @@ unsafe fn mt_p() -> *const i32 {
 }
 
 pub unsafe extern "C" fn fn_801937C4(arg0: *mut i32, arg1: u32, arg2: u32) {
+    melee_core::ct!("fn_801937C4");
     if arg1 & 0x40001 != 0 {
         tmSettings_StepDown(arg0, mt_p());
     } else if arg1 & 0x80002 != 0 {
@@ -1381,6 +1409,7 @@ pub unsafe extern "C" fn fn_801937C4(arg0: *mut i32, arg1: u32, arg2: u32) {
 }
 
 pub unsafe extern "C" fn fn_80193B58(arg0: *mut i32, arg1: u32, arg2: u32) {
+    melee_core::ct!("fn_80193B58");
     let state = st();
     let mt = mt_p();
     let mut clamp_val: i32 = 0;
@@ -1496,6 +1525,7 @@ pub unsafe extern "C" fn fn_80193B58(arg0: *mut i32, arg1: u32, arg2: u32) {
 }
 
 pub unsafe extern "C" fn fn_80193FCC(arg0: *mut i32, arg1: u32, arg2: u32) {
+    melee_core::ct!("fn_80193FCC");
     let state = st();
     let mt = mt_p();
     let mut clamp_val: i32 = 0;
@@ -1707,6 +1737,7 @@ pub unsafe extern "C" fn fn_80193FCC(arg0: *mut i32, arg1: u32, arg2: u32) {
 }
 
 pub unsafe extern "C" fn fn_80194658(arg0: *mut i32, arg1: u32, arg2: u32) {
+    melee_core::ct!("fn_80194658");
     let mut changed: i32 = 0;
 
     let idx = *arg0;
@@ -1788,6 +1819,7 @@ pub unsafe extern "C" fn fn_80194658(arg0: *mut i32, arg1: u32, arg2: u32) {
 
 /// Handles tournament rules menu input.
 pub unsafe extern "C" fn fn_801949B4(arg0: *mut i32, arg1: u32, arg2: u32) {
+    melee_core::ct!("fn_801949B4");
     if arg1 & 0x40001 != 0 {
         tmSettings_StepDown(arg0, mt_p());
     } else if arg1 & 0x80002 != 0 {
@@ -1826,6 +1858,7 @@ pub unsafe extern "C" fn fn_801949B4(arg0: *mut i32, arg1: u32, arg2: u32) {
 }
 
 pub unsafe extern "C" fn fn_80194BC4(arg0: *mut i32, arg1: u32, arg2: u32) {
+    melee_core::ct!("fn_80194BC4");
     if *mt_p() != 0 {
         return;
     }
@@ -1861,6 +1894,7 @@ pub unsafe extern "C" fn fn_80194BC4(arg0: *mut i32, arg1: u32, arg2: u32) {
 
 /// Handles button input for tournament mode menu navigation.
 pub unsafe extern "C" fn fn_80194D84(state: *mut i32, buttons: u32, trigger: u32) {
+    melee_core::ct!("fn_80194D84");
     if buttons & (PAD_BUTTON_LEFT | PAD_STICK_LEFT) != 0 {
         if *state > 6 {
             sfxMove();
@@ -1917,6 +1951,7 @@ unsafe fn tm_x37(base: *mut i32, idx: i32) -> *mut TmUnkMenuData {
 
 /// Handles tournament settings menu input (entrant configuration).
 pub unsafe extern "C" fn fn_80194F30(state_ptr: *mut i32, buttons: u32, trigger: u32) {
+    melee_core::ct!("fn_80194F30");
     let state = st();
     let tm = state_ptr as *mut TmData;
 
@@ -2085,6 +2120,7 @@ unsafe fn fn_801953C8_apply(tm: *mut TmData, candidate: i32) {
 }
 
 pub unsafe extern "C" fn fn_801953C8(state_ptr: *mut i32, buttons: u32, trigger: u32) {
+    melee_core::ct!("fn_801953C8");
     let tm = state_ptr as *mut TmData;
 
     let idx = slot_idx();
@@ -2220,6 +2256,7 @@ pub unsafe extern "C" fn fn_801953C8(state_ptr: *mut i32, buttons: u32, trigger:
 
 /// Handles name entry/selection input for tournament mode.
 pub unsafe extern "C" fn fn_80195AF0(state_ptr: *mut i32, buttons: u32, trigger: u32) {
+    melee_core::ct!("fn_80195AF0");
     let menu = st();
 
     if trigger & PAD_BUTTON_START != 0 {
@@ -2297,6 +2334,7 @@ unsafe fn fn_80195CCC_IsUniqueEntry(tm: *mut TmData, count: i32, slot: i32, sele
 }
 
 pub unsafe extern "C" fn fn_80195CCC(arg: *mut i32, buttons: u32, trigger: u32) {
+    melee_core::ct!("fn_80195CCC");
     let mut menu: *mut u8 = st_byte(0);
     let tm_alt = arg as *mut TmData;
 
@@ -2401,6 +2439,7 @@ pub unsafe extern "C" fn fn_80195CCC(arg: *mut i32, buttons: u32, trigger: u32) 
 }
 
 pub unsafe extern "C" fn fn_8019610C(state: *mut i32, buttons: u32, trigger: u32) {
+    melee_core::ct!("fn_8019610C");
     let mut i: i32 = 1;
 
     if buttons & (PAD_BUTTON_UP | PAD_STICK_UP) != 0 {
@@ -2459,6 +2498,7 @@ pub unsafe extern "C" fn fn_8019610C(state: *mut i32, buttons: u32, trigger: u32
 
 /// Tournament Mode per-frame update handler.
 pub unsafe extern "C" fn gm_Scene_TouSetup_OnFrame() {
+    melee_core::ct!("gm_Scene_TouSetup_OnFrame");
     let tm = gm_GetTournamentData();
     let r30 = fn_8018F674(4);
     let r29 = fn_8018F640(4);
@@ -2492,6 +2532,7 @@ pub unsafe extern "C" fn gm_Scene_TouSetup_OnFrame() {
 }
 
 pub unsafe extern "C" fn gm_Scene_TouSetup_OnEnter(_arg0: *mut c_void) {
+    melee_core::ct!("gm_Scene_TouSetup_OnEnter");
     ext::lbAudioAx_80026F2C(0x12);
     ext::lbAudioAx_8002702C(2, 8);
     ext::lbAudioAx_80027168();
@@ -2528,6 +2569,7 @@ pub unsafe extern "C" fn gm_Scene_TouSetup_OnEnter(_arg0: *mut c_void) {
 
 /// Scene OnLeave callback for gm_18A5. Frees archive resources.
 pub unsafe extern "C" fn gm_Scene_TouSetup_OnExit(_arg: *mut c_void) {
+    melee_core::ct!("gm_Scene_TouSetup_OnExit");
     ext::lbArchive_80016EFC(lbl_804D6640);
     ext::lbArchive_80016EFC(lbl_804D6644);
     ext::lbArchive_80016EFC(lbl_804D6648);

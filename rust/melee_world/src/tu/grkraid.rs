@@ -181,6 +181,7 @@ pub static mut yakumono_param: *mut grKraid_YakumonoParam = null_mut();
 pub static mut grKr_804D6A0C: i32 = 0;
 
 pub unsafe extern "C" fn grKraid_OnInit() {
+    melee_core::ct!("grKraid_OnInit");
     yakumono_param = ext::Ground_GetYakumonoParam() as *mut grKraid_YakumonoParam;
     let si = ext::stage_info();
     (*si).unk8C.set_b4(0);
@@ -196,13 +197,15 @@ pub unsafe extern "C" fn grKraid_OnInit() {
     ext::Ground_801C3BB4();
 }
 
-pub unsafe extern "C" fn grKraid_OnLoad() {}
+pub unsafe extern "C" fn grKraid_OnLoad() { melee_core::ct!("grKraid_OnLoad");}
 
 pub unsafe extern "C" fn grKraid_OnStart() {
+    melee_core::ct!("grKraid_OnStart");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
 
 pub unsafe fn grKraid_801FE0C4(gobj_id: i32) -> *mut HSD_GObj {
+    melee_core::ct!("grKraid_801FE0C4");
     let callbacks: *mut StageCallbacks = &mut grKr_StageCallbacks[gobj_id as usize];
     let gobj = ext::Ground_GetStageGObj(gobj_id);
 
@@ -219,10 +222,12 @@ pub unsafe fn grKraid_801FE0C4(gobj_id: i32) -> *mut HSD_GObj {
 
 /// `static void stageGObj0_OnInit(Ground_GObj*)`.
 pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj0_OnInit");
     Ground_StartMapAnim(gobj);
 }
 
 pub unsafe extern "C" fn grKraid_801FE1EC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grKraid_801FE1EC");
     let gp = (*gobj).user_data as *mut Ground;
     let mut scale = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
@@ -235,6 +240,7 @@ pub unsafe extern "C" fn grKraid_801FE1EC(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grKraid_801FE2D0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grKraid_801FE2D0");
     let master = ext::HSD_PadMasterStatus.as_mut_ptr();
     let gp = GET_GROUND(gobj);
     if (*master.add(1)).trigger & PAD_BUTTON_A != 0 {
@@ -249,12 +255,14 @@ pub unsafe extern "C" fn grKraid_801FE2D0(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grKraid_801FE360(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grKraid_801FE360");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as enum_t, 0);
     (*gp).x11_flags.set_b012(2);
 }
 
 pub unsafe extern "C" fn grKraid_801FE3B4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grKraid_801FE3B4");
     let gp = GET_GROUND(gobj);
     let jobj = GET_JOBJ(gobj);
 
@@ -271,6 +279,7 @@ pub unsafe extern "C" fn grKraid_801FE3B4(gobj: *mut HSD_GObj) {
 pub static grKr_803B8278: Vec3 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
 pub unsafe extern "C" fn grKraid_801FE440(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grKraid_801FE440");
     let gp = GET_GROUND(gobj);
     let jobj = ext::Ground_801C3FA4(gobj, 0);
     let mut pos = grKr_803B8278;
@@ -315,6 +324,7 @@ pub unsafe extern "C" fn grKraid_801FE440(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe fn grKraid_801FE6D8(hand: *mut HSD_JObj, param2: f32) {
+    melee_core::ct!("grKraid_801FE6D8");
     let map = (*ext::Ground_GetMapGObj(3)).user_data as *mut Ground;
     let mut handpos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     if (*map).u.kraid.x4 == 0.0 {
@@ -342,6 +352,7 @@ pub unsafe fn grKraid_801FE6D8(hand: *mut HSD_JObj, param2: f32) {
 }
 
 pub unsafe extern "C" fn grKraid_801FE818(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grKraid_801FE818");
     let gp = GET_GROUND(gobj);
     (*gp).u.kraid2.x10 = ext::Ground_801C3FA4(gobj, 31);
     (*gp).u.kraid2.x14 = ext::Ground_801C3FA4(gobj, 47);
@@ -382,6 +393,7 @@ pub unsafe extern "C" fn grKraid_801FE818(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grKraid_801FEA00(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grKraid_801FEA00");
     let gp = GET_GROUND(gobj);
     let jobj = GET_JOBJ(gobj);
     match (*gp).u.kraid2.x0 {
@@ -482,6 +494,7 @@ pub unsafe extern "C" fn grKraid_801FEA00(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe fn grKraid_801FEE54(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grKraid_801FEE54");
     let gp = GET_GROUND(gobj);
     let jobj = GET_JOBJ(gobj);
     let mut i_var3: i32;
@@ -510,6 +523,7 @@ pub unsafe fn grKraid_801FEE54(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe fn grKraid_801FF068(gobj: *mut HSD_GObj, val: i32) {
+    melee_core::ct!("grKraid_801FF068");
     let mut gp = GET_GROUND(gobj);
 
     (*gp).u.kraid.x1 = val as i8;
@@ -523,6 +537,7 @@ pub unsafe fn grKraid_801FF068(gobj: *mut HSD_GObj, val: i32) {
 }
 
 pub unsafe fn grKraid_801FF0E0(gobj: *mut HSD_GObj, flag: i32) -> bool {
+    melee_core::ct!("grKraid_801FF0E0");
     let gp = GET_GROUND(gobj);
     let val = if flag == 1 { 0x9e } else { 0x82 };
     let comp = (*gp).u.kraid2.xC >= val;
@@ -532,7 +547,7 @@ pub unsafe fn grKraid_801FF0E0(gobj: *mut HSD_GObj, flag: i32) -> bool {
     comp
 }
 
-pub unsafe fn grKraid_801FF150(_gobj: *mut HSD_GObj) {}
+pub unsafe fn grKraid_801FF150(_gobj: *mut HSD_GObj) { melee_core::ct!("grKraid_801FF150");}
 
 #[allow(dead_code)]
 type _Unused = c_void;

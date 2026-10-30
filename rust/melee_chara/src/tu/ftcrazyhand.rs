@@ -53,9 +53,10 @@ pub mod ext {
     }
 }
 
-pub fn ftCh_Init_OnDeath(_gobj: *mut HSD_GObj) {}
+pub fn ftCh_Init_OnDeath(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_Init_OnDeath");}
 
 pub fn ftCh_Init_OnLoad(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Init_OnLoad");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let ftdata = (*fp).ft_data;
@@ -111,6 +112,7 @@ pub fn ftCh_Init_OnLoad(gobj: *mut HSD_GObj) {
 
 /// `COPY_ATTRS(gobj, ftCrazyHand_DatAttrs)`.
 pub fn ftCh_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Init_LoadSpecialAttrs");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         *((*fp).dat_attrs as *mut ftCrazyHand_DatAttrs) = *((*(*fp).ft_data).ext_attr as *const ftCrazyHand_DatAttrs);

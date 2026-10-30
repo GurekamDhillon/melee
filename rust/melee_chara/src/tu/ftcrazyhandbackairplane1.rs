@@ -33,6 +33,7 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 }
 
 pub fn ftCh_Init_801592D4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Init_801592D4");
     unsafe {
         let fp = fpp(gobj);
         let da = (*(*fp).ft_data).ext_attr as *const ftCrazyHand_DatAttrs;
@@ -50,6 +51,7 @@ pub fn ftCh_Init_801592D4(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCh_BackAirplane1_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_BackAirplane1_Anim");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).cmd_vars[1] != 0 {
@@ -69,6 +71,7 @@ pub fn ftCh_BackAirplane1_Anim(gobj: *mut HSD_GObj) {
 
 /// `ftCh_UpdateBossMotion(gobj, fp, da)` (ftCrazyHand/inlines.h, static inline).
 pub fn ftCh_UpdateBossMotion(gobj: *mut HSD_GObj, fp: *mut Fighter, da: *const ftCrazyHand_DatAttrs) {
+    melee_core::ct!("ftCh_UpdateBossMotion");
     unsafe {
         st::ft_80085134(gobj);
         let target = (*fp).mv.ch.unk0.xC;
@@ -83,6 +86,7 @@ pub fn ftCh_UpdateBossMotion(gobj: *mut HSD_GObj, fp: *mut Fighter, da: *const f
 }
 
 pub fn ftCh_BackAirplane1_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_BackAirplane1_Phys");
     unsafe {
         let fp = fpp(gobj);
         let da = (*(*fp).ft_data).ext_attr as *const ftCrazyHand_DatAttrs;
@@ -91,6 +95,7 @@ pub fn ftCh_BackAirplane1_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCh_BackAirplane1_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_BackAirplane1_Coll");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).mv.ch.unk0.x18 == 0.0 {

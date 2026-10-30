@@ -101,11 +101,13 @@ pub static mut lbl_80473700: TrainingModeState = unsafe { core::mem::zeroed() };
 pub static mut gm_80473814: CssSubStruct = unsafe { core::mem::zeroed() };
 
 pub unsafe fn gm_80188454(idx: i32) -> i32 {
+    melee_core::ct!("gm_80188454");
     // `char_data[idx]` (the C does not bound-check idx)
     *(&raw const lbl_80473700 as *const i32).offset(2 + idx as isize)
 }
 
 pub unsafe fn fn_8018846C() -> i32 {
+    melee_core::ct!("fn_8018846C");
     let ptr = &raw mut lbl_80473700 as *mut i32;
     let result = ext::pl_8004134C(0);
     let p = ptr.offset(ext::Player_GetPlayerCharacter(0) as isize + 2);
@@ -123,6 +125,7 @@ pub unsafe fn fn_8018846C() -> i32 {
 }
 
 pub unsafe fn fn_801884F8() -> i32 {
+    melee_core::ct!("fn_801884F8");
     let state = &mut lbl_80473700;
     let mut result = ext::pl_80041300(0);
     if result != 0 {
@@ -136,6 +139,7 @@ pub unsafe fn fn_801884F8() -> i32 {
 }
 
 pub unsafe fn fn_80188550(arg0: i32) {
+    melee_core::ct!("fn_80188550");
     let state = &mut lbl_80473700;
     let current = state.count;
 
@@ -182,6 +186,7 @@ pub unsafe fn fn_80188550(arg0: i32) {
 }
 
 pub unsafe fn fn_80188644() {
+    melee_core::ct!("fn_80188644");
     let mut sp10 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let state = &mut lbl_80473700;
     let mut saved_count = state.count;
@@ -246,16 +251,19 @@ unsafe fn next_chain(arg0: *mut HSD_JObj) -> [*mut HSD_JObj; 3] {
 }
 
 pub unsafe fn fn_80188738(arg0: *mut HSD_JObj) {
+    melee_core::ct!("fn_80188738");
     let val = if ext::pl_800412D0(0) > 999 { 999 } else { ext::pl_800412D0(0) };
     show_digits(next_chain(arg0), val);
 }
 
 pub unsafe fn fn_80188910(arg0: *mut HSD_JObj) {
+    melee_core::ct!("fn_80188910");
     let val = if fn_8018846C() > 999 { 999 } else { fn_8018846C() };
     show_digits(next_chain(arg0), val);
 }
 
 pub unsafe fn fn_80188B3C(arg0: *mut HSD_JObj) {
+    melee_core::ct!("fn_80188B3C");
     let state = &mut lbl_80473700;
     let mut val = ext::pl_80041300(0);
     if val != 0 {
@@ -275,6 +283,7 @@ pub unsafe fn fn_80188B3C(arg0: *mut HSD_JObj) {
 }
 
 pub unsafe fn fn_80188D3C(arg0: *mut HSD_JObj) {
+    melee_core::ct!("fn_80188D3C");
     let val = gm_80473814.menu_values[4];
 
     let j2 = jobj_child(arg0);
@@ -309,6 +318,7 @@ fn text_x(tx: f32) -> f32 {
 }
 
 pub unsafe extern "C" fn fn_80188EE8(_gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80188EE8");
     let state = &mut lbl_80473700;
     let sub = &raw mut gm_80473814;
 
@@ -444,6 +454,7 @@ unsafe fn wrap_row(sub: &mut CssSubStruct, buttons: u64, max: u32) {
 }
 
 pub unsafe fn fn_801891F4() {
+    melee_core::ct!("fn_801891F4");
     let sub: &mut CssSubStruct = &mut *(&raw mut gm_80473814);
     let buttons = ext::gm_801A36C0(lbl_80473700.mode as u8);
 
@@ -625,9 +636,11 @@ pub unsafe fn fn_801891F4() {
 }
 /// `fn_801891F4` registered as a proc (the C casts a `void(void)` to `HSD_GObjEvent`).
 pub unsafe extern "C" fn fn_801891F4_cb(_gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801891F4_cb");
     fn_801891F4()
 }
 pub unsafe fn fn_80189B88() {
+    melee_core::ct!("fn_80189B88");
     let sub = &mut gm_80473814;
     sub.x00 = 0;
     sub.x01 = 0;
@@ -658,6 +671,7 @@ pub unsafe fn fn_80189B88() {
 }
 
 pub unsafe fn gm_80189CDC(arg0: *mut StartMeleeData) {
+    melee_core::ct!("gm_80189CDC");
     let arg0 = &mut *arg0;
     let state = &mut lbl_80473700;
 
@@ -682,6 +696,7 @@ pub unsafe fn gm_80189CDC(arg0: *mut StartMeleeData) {
 }
 
 pub unsafe fn fn_8018A000() -> *mut HSD_Text {
+    melee_core::ct!("fn_8018A000");
     let state = &mut lbl_80473700;
     ext::memzero(state.result_cache.as_mut_ptr() as *mut c_void, core::mem::size_of_val(&state.result_cache) as i32);
     lbl_804D6628 = ext::lbArchive_80016DBC(

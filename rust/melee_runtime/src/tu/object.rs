@@ -38,6 +38,7 @@ pub mod ext {
 }
 // END GENERATED EXT
 pub unsafe extern "C" fn ObjInfoInit() {
+    melee_core::ct!("ObjInfoInit");
     ext::hsdInitClassInfo(core::ptr::addr_of_mut!(hsdObj), core::ptr::addr_of_mut!(ext::hsdClass),
         b"sysdolphin_base_library\0".as_ptr().cast_mut().cast(), b"hsd_obj\0".as_ptr().cast_mut().cast(),
         core::mem::size_of::<HSD_ObjInfo>() as i32, core::mem::size_of::<HSD_Obj>() as i32);

@@ -25,6 +25,7 @@ pub mod ext {
 /// `my_lbVector_Len` (static inline).
 #[inline]
 pub fn my_lbVector_Len(v: &Vec3) -> f32 {
+    melee_core::ct!("my_lbVector_Len");
     crate::pure::my_sqrtf(fmadds(v.z, v.z, fmadds(v.x, v.x, v.y * v.y)))
 }
 
@@ -32,6 +33,7 @@ pub fn my_lbVector_Len(v: &Vec3) -> f32 {
 /// chasing `target` from `cur`, with the data offsets `off_x/off_y` (x98/x9C), the snap radius
 /// `x2c` and the gain `x28` of the attributes.
 pub fn poke1_vel(target: &Vec3, cur: &Vec3, off_x: f32, off_y: f32, x2c: f32, x28: f32) -> (f32, f32) {
+    melee_core::ct!("poke1_vel");
     let mut pos = *target;
     pos.x += off_x;
     pos.y += off_y;
@@ -51,9 +53,10 @@ pub fn poke1_vel(target: &Vec3, cur: &Vec3, off_x: f32, off_y: f32, x2c: f32, x2
     }
 }
 
-pub fn ftMh_PaperCrush_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_PaperCrush_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_PaperCrush_Coll");}
 
 pub fn ftMh_MS_358_80152880(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_358_80152880");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*(*fp).ft_data).ext_attr as *const ftMasterHand_SpecialAttrs;
@@ -66,6 +69,7 @@ pub fn ftMh_MS_358_80152880(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMh_Poke1_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Poke1_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         unsafe {
             let fp = (*gobj).user_data as *mut Fighter;
@@ -84,12 +88,14 @@ pub fn ftMh_Poke1_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMh_Poke2_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Poke2_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         ext::ftMh_MS_389_80151018(gobj);
     }
 }
 
 pub fn ftMh_Poke1_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Poke1_Phys");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         st::ft_80085134(gobj);

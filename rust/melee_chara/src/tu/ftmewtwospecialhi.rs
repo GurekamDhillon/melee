@@ -133,6 +133,7 @@ pub fn ftCommon_HandleTeleportCollisions(
     angle_clamp: i32,
     on_collide: fn(*mut HSD_GObj),
 ) {
+    melee_core::ct!("ftCommon_HandleTeleportCollisions");
     unsafe {
         let coll = &(*fp).coll_data;
         let lim = (90.0f32 + angle_clamp as f32) * 0.01745329252f32;
@@ -156,6 +157,7 @@ pub fn ftCommon_HandleTeleportCollisions(
 
 /// Create Teleport Start GFX.
 pub fn ftMt_SpecialHi_CreateGFX(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialHi_CreateGFX");
     unsafe {
         let fp = fpp(gobj);
         ftMt_SpecialHi_SetStartGFX(gobj);
@@ -165,6 +167,7 @@ pub fn ftMt_SpecialHi_CreateGFX(gobj: *mut HSD_GObj) {
 
 /// Setup Teleport Start GFX.
 pub fn ftMt_SpecialHi_SetStartGFX(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialHi_SetStartGFX");
     unsafe {
         let fp0 = fpp(gobj);
         let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -179,6 +182,7 @@ pub fn ftMt_SpecialHi_SetStartGFX(gobj: *mut HSD_GObj) {
 
 /// Setup Teleport End GFX.
 pub fn ftMt_SpecialHi_SetEndGFX(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialHi_SetEndGFX");
     unsafe {
         let fp0 = fpp(gobj);
         let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -193,6 +197,7 @@ pub fn ftMt_SpecialHi_SetEndGFX(gobj: *mut HSD_GObj) {
 
 /// Grounded Teleport Start Motion State handler.
 pub fn ftMt_SpecialHiStart_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialHiStart_Enter");
     unsafe {
         let fp0 = fpp(gobj);
         (*fp0).gr_vel = 0.0;
@@ -210,6 +215,7 @@ pub fn ftMt_SpecialHiStart_Enter(gobj: *mut HSD_GObj) {
 
 /// Aerial Teleport Start Motion State handler.
 pub fn ftMt_SpecialAirHiStart_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialAirHiStart_Enter");
     unsafe {
         let fp = fpp(gobj);
         let a = da(fp);
@@ -227,6 +233,7 @@ pub fn ftMt_SpecialAirHiStart_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMt_SpecialHiStart_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialHiStart_Anim");
     unsafe {
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
             ftMt_SpecialHi_Enter(gobj);
@@ -235,6 +242,7 @@ pub fn ftMt_SpecialHiStart_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMt_SpecialAirHiStart_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialAirHiStart_Anim");
     unsafe {
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
             ftMt_SpecialAirHi_Enter(gobj);
@@ -242,10 +250,11 @@ pub fn ftMt_SpecialAirHiStart_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftMt_SpecialHiStart_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftMt_SpecialAirHiStart_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftMt_SpecialHiStart_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMt_SpecialHiStart_IASA");}
+pub fn ftMt_SpecialAirHiStart_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMt_SpecialAirHiStart_IASA");}
 
 pub fn ftMt_SpecialAirHiStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialAirHiStart_Phys");
     unsafe {
         let fp0 = fpp(gobj);
         let a = da(fp0);
@@ -255,6 +264,7 @@ pub fn ftMt_SpecialAirHiStart_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMt_SpecialHiLost_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialHiLost_Anim");
     unsafe {
         let fp = fpp(gobj);
         (*fp).mv.mt.SpecialHi.travelFrames -= 1;
@@ -265,6 +275,7 @@ pub fn ftMt_SpecialHiLost_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMt_SpecialAirHiLost_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialAirHiLost_Anim");
     unsafe {
         let fp = fpp(gobj);
         (*fp).mv.mt.SpecialHi.travelFrames -= 1;
@@ -274,11 +285,12 @@ pub fn ftMt_SpecialAirHiLost_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftMt_SpecialHiLost_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftMt_SpecialAirHiLost_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftMt_SpecialAirHiLost_Phys(_gobj: *mut HSD_GObj) {}
+pub fn ftMt_SpecialHiLost_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMt_SpecialHiLost_IASA");}
+pub fn ftMt_SpecialAirHiLost_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMt_SpecialAirHiLost_IASA");}
+pub fn ftMt_SpecialAirHiLost_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMt_SpecialAirHiLost_Phys");}
 
 pub fn ftMt_SpecialHiLost_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialHiLost_Coll");
     unsafe {
         let fp0 = fpp(gobj);
         if st::ft_80082708(gobj) == 0 {
@@ -301,6 +313,7 @@ pub fn ftMt_SpecialHiLost_Coll(gobj: *mut HSD_GObj) {
 
 /// `ftMewtwo_SpecialHi_CheckTimer` (static).
 pub fn ftMewtwo_SpecialHi_CheckTimer(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftMewtwo_SpecialHi_CheckTimer");
     unsafe {
         let fp = fpp(gobj);
         let a = da(fp);
@@ -315,6 +328,7 @@ pub fn ftMewtwo_SpecialHi_CheckTimer(gobj: *mut HSD_GObj) -> bool {
 }
 
 pub fn ftMt_SpecialAirHiLost_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialAirHiLost_Coll");
     unsafe {
         let fp0 = fpp(gobj);
         let a = da(fp0);
@@ -337,6 +351,7 @@ pub fn ftMt_SpecialAirHiLost_Coll(gobj: *mut HSD_GObj) {
 
 /// `ftMewtwo_SpecialHi_SetVars` (static inline): the Teleport-zoom entry bookkeeping.
 pub fn ftMewtwo_SpecialHi_SetVars(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMewtwo_SpecialHi_SetVars");
     unsafe {
         let fp = fpp(gobj);
         let a = da(fp);
@@ -356,6 +371,7 @@ pub fn ftMewtwo_SpecialHi_SetVars(gobj: *mut HSD_GObj) {
 
 /// Grounded Teleport Zoom Motion State handler.
 pub fn ftMt_SpecialHi_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialHi_Enter");
     unsafe {
         let fp = fpp(gobj);
         let a = da(fp);
@@ -405,6 +421,7 @@ const stick_epsilon: f32 = 0.001;
 
 /// Aerial Teleport Zoom Motion State handler.
 pub fn ftMt_SpecialAirHi_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialAirHi_Enter");
     unsafe {
         let fp = fpp(gobj);
         let a = da(fp);
@@ -453,10 +470,11 @@ pub fn ftMt_SpecialAirHi_Enter(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftMt_SpecialHi_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftMt_SpecialAirHi_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftMt_SpecialHi_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMt_SpecialHi_IASA");}
+pub fn ftMt_SpecialAirHi_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMt_SpecialAirHi_IASA");}
 
 pub fn ftMt_SpecialAirHi_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialAirHi_Phys");
     unsafe {
         let fp = fpp(gobj);
         let a = da(fp);
@@ -477,6 +495,7 @@ pub fn ftMt_SpecialAirHi_Phys(gobj: *mut HSD_GObj) {
 
 /// Grounded Teleport End Motion State handler.
 pub fn ftMt_SpecialHiLost_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialHiLost_Enter");
     unsafe {
         let fp = fpp(gobj);
         let a = da(fp);
@@ -492,6 +511,7 @@ pub fn ftMt_SpecialHiLost_Enter(gobj: *mut HSD_GObj) {
 
 /// Aerial Teleport End Motion State handler.
 pub fn ftMt_SpecialAirHiLost_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialAirHiLost_Enter");
     unsafe {
         let fp = fpp(gobj);
         let a = da(fp);

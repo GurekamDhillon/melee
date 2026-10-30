@@ -53,10 +53,12 @@ fn cliff_enter_state(g: G, msid: i32) {
 }
 
 pub fn ftCo_8009AE14(g: G) {
+    melee_core::ct!("ftCo_8009AE14");
     ext::ftCommon_8007D7FC(fp(g));
 }
 
 pub fn ftCo_8009AE38(g: G) -> bool {
+    melee_core::ct!("ftCo_8009AE38");
     let f = fp(g);
     if f.input.pressed_buttons & (HSD_PAD_A | HSD_PAD_B) as u32 != 0 || ext::ftCo_800DF6F8(f) {
         ftCo_8009AEA4(g);
@@ -67,6 +69,7 @@ pub fn ftCo_8009AE38(g: G) -> bool {
 
 /// static `ftCo_8009AEA4`.
 pub fn ftCo_8009AEA4(g: G) {
+    melee_core::ct!("ftCo_8009AEA4");
     let msid = if fp(g).dmg.x1830_percent < cd().x488 as f32 { ftCo_MS_CliffAttackQuick } else { ftCo_MS_CliffAttackSlow };
     cliff_enter_state(g, msid as i32);
     fp(g).set_x221D_b5(1);
@@ -74,20 +77,24 @@ pub fn ftCo_8009AEA4(g: G) {
 }
 
 pub fn ftCo_CliffAttack_Anim(g: G) {
+    melee_core::ct!("ftCo_CliffAttack_Anim");
     ext::ftCo_CliffClimb_Anim(g);
 }
 
-pub fn ftCo_CliffAttack_IASA(_g: G) {}
+pub fn ftCo_CliffAttack_IASA(_g: G) { melee_core::ct!("ftCo_CliffAttack_IASA");}
 
 pub fn ftCo_CliffAttack_Phys(g: G) {
+    melee_core::ct!("ftCo_CliffAttack_Phys");
     ext::ftCo_CliffClimb_Phys(g);
 }
 
 pub fn ftCo_CliffAttack_Coll(g: G) {
+    melee_core::ct!("ftCo_CliffAttack_Coll");
     ext::ftCo_CliffClimb_Coll(g);
 }
 
 pub fn ftCo_8009AFD4(g: G) -> bool {
+    melee_core::ct!("ftCo_8009AFD4");
     let f = fp(g);
     if f.input.pressed_buttons & HSD_PAD_LR as u32 != 0 || ext::ftCo_800DF72C(f) {
         ext::ftCo_8009B040(g);

@@ -56,6 +56,7 @@ impl TObjRt {
 
 /// `HSD_TObjLoadDesc` over the descriptor chain starting at `td` (`TObjLoad`).
 pub fn load_desc_list(d: &Dat, mut td: Option<u32>) -> Vec<TObjRt> {
+    melee_core::ct!("load_desc_list");
     let mut v = Vec::new();
     while let Some(o) = td {
         if v.len() > 16 {
@@ -109,6 +110,7 @@ pub fn load_desc_list(d: &Dat, mut td: Option<u32>) -> Vec<TObjRt> {
 /// `HSD_TObjAssignResources`: texmap ids, PT texture matrices and texcoords. Returns the number
 /// of texcoords used.
 pub fn assign_resources(list: &mut [TObjRt]) -> u32 {
+    melee_core::ct!("assign_resources");
     if list.is_empty() {
         return 0;
     }
@@ -351,15 +353,19 @@ pub static mut default_class: *mut HSD_TObjInfo = null_mut();
 pub static mut tobj_head: *mut HSD_TObj = null_mut();
 
 pub unsafe extern "C" fn HSD_TObjRemoveAnim(p: *mut HSD_TObj) {
+    melee_core::ct!("HSD_TObjRemoveAnim");
     if !p.is_null() { ext::HSD_AObjRemove((*p).aobj); (*p).aobj = null_mut(); }
 }
 pub unsafe extern "C" fn HSD_TObjRemoveAnimAll(mut p: *mut HSD_TObj) {
+    melee_core::ct!("HSD_TObjRemoveAnimAll");
     while !p.is_null() { HSD_TObjRemoveAnim(p); p = (*p).next; }
 }
 pub unsafe extern "C" fn lookupTextureAnim(id: i32, mut a: *mut HSD_TexAnim) -> *mut HSD_TexAnim {
+    melee_core::ct!("lookupTextureAnim");
     while !a.is_null() { if (*a).id == id as u32 { return a; } a = (*a).next; } null_mut()
 }
 pub unsafe extern "C" fn HSD_TObjAddAnim(p: *mut HSD_TObj, anim: *mut HSD_TexAnim) {
+    melee_core::ct!("HSD_TObjAddAnim");
     if p.is_null() { return; }
     let a = lookupTextureAnim((*p).id as i32, anim);
     if a.is_null() { return; }
@@ -380,16 +386,19 @@ pub unsafe extern "C" fn HSD_TObjAddAnim(p: *mut HSD_TObj, anim: *mut HSD_TexAni
     (*p).tlut_no=-1;
 }
 pub unsafe extern "C" fn HSD_TObjAddAnimAll(mut p:*mut HSD_TObj,a:*mut HSD_TexAnim) {
+    melee_core::ct!("HSD_TObjAddAnimAll");
     while !p.is_null() { HSD_TObjAddAnim(p,a);p=(*p).next; }
 }
 pub unsafe extern "C" fn HSD_TObjReqAnimByFlags(p:*mut HSD_TObj,frame:f32,flags:u32) {
+    melee_core::ct!("HSD_TObjReqAnimByFlags");
     if !p.is_null() && flags & 0x10 != 0 { ext::HSD_AObjReqAnim((*p).aobj,frame); }
 }
 pub unsafe extern "C" fn HSD_TObjReqAnimAllByFlags(mut p:*mut HSD_TObj,frame:f32,flags:u32) {
+    melee_core::ct!("HSD_TObjReqAnimAllByFlags");
     while !p.is_null() {HSD_TObjReqAnimByFlags(p,frame,flags);p=(*p).next;}
 }
-pub unsafe extern "C" fn HSD_TObjReqAnim(p:*mut HSD_TObj,frame:f32) {HSD_TObjReqAnimByFlags(p,frame,0x10);}
-pub unsafe extern "C" fn HSD_TObjReqAnimAll(p:*mut HSD_TObj,frame:f32) {HSD_TObjReqAnimAllByFlags(p,frame,0x10);}
+pub unsafe extern "C" fn HSD_TObjReqAnim(p:*mut HSD_TObj,frame:f32) { melee_core::ct!("HSD_TObjReqAnim");HSD_TObjReqAnimByFlags(p,frame,0x10);}
+pub unsafe extern "C" fn HSD_TObjReqAnimAll(p:*mut HSD_TObj,frame:f32) { melee_core::ct!("HSD_TObjReqAnimAll");HSD_TObjReqAnimAllByFlags(p,frame,0x10);}
 
 fn vec(v:Vec3)->math::Vec3 {math::Vec3{x:v.x,y:v.y,z:v.z}}
 fn color(v:GXColor)->crate::hsd_util::GxColor {crate::hsd_util::GxColor{r:v.r,g:v.g,b:v.b,a:v.a}}
@@ -410,6 +419,7 @@ unsafe fn logic_view(p:*mut HSD_TObj)->logic::HsdTObj<*mut HSD_ImageDesc> {
     }
 }
 pub unsafe extern "C" fn TObjUpdateFunc(obj:*mut c_void,kind:i32,value:*mut HSD_ObjData) {
+    melee_core::ct!("TObjUpdateFunc");
     if obj.is_null(){return;}
     let p=obj.cast::<HSD_TObj>();
     let mut view=logic_view(p);
@@ -430,11 +440,13 @@ pub unsafe extern "C" fn TObjUpdateFunc(obj:*mut c_void,kind:i32,value:*mut HSD_
     if let Some(t)=view.tev {(*x.tev).konst=native_color(t.konst);(*x.tev).tev0=native_color(t.tev0);(*x.tev).tev1=native_color(t.tev1);}
 }
 pub unsafe extern "C" fn HSD_TObjAnim(p:*mut HSD_TObj) {
+    melee_core::ct!("HSD_TObjAnim");
     if !p.is_null(){ext::HSD_AObjInterpretAnim((*p).aobj,p.cast(),Some(TObjUpdateFunc));}
 }
-pub unsafe extern "C" fn HSD_TObjAnimAll(mut p:*mut HSD_TObj) {while !p.is_null(){HSD_TObjAnim(p);p=(*p).next;}}
+pub unsafe extern "C" fn HSD_TObjAnimAll(mut p:*mut HSD_TObj) { melee_core::ct!("HSD_TObjAnimAll");while !p.is_null(){HSD_TObjAnim(p);p=(*p).next;}}
 
 pub unsafe extern "C" fn TObjLoad(p:*mut HSD_TObj,d:*mut HSD_TObjDesc)->i32 {
+    melee_core::ct!("TObjLoad");
     (*p).next=HSD_TObjLoadDesc((*d).next);
     (*p).id=(*d).id;(*p).src=(*d).src;(*p).mtxid=GX_IDENTITY;
     (*p).rotate.x=(*d).rotate.x;(*p).rotate.y=(*d).rotate.y;(*p).rotate.z=(*d).rotate.z;
@@ -444,6 +456,7 @@ pub unsafe extern "C" fn TObjLoad(p:*mut HSD_TObj,d:*mut HSD_TObjDesc)->i32 {
     (*p).lod=(*d).lod;(*p).aobj=null_mut();(*p).flags|=logic::TEX_MTX_DIRTY;(*p).tlut_no=-1;(*p).tev=HSD_TObjTevLoadDesc((*d).tev);0
 }
 pub unsafe extern "C" fn HSD_TObjLoadDesc(d:*mut HSD_TObjDesc)->*mut HSD_TObj {
+    melee_core::ct!("HSD_TObjLoadDesc");
     if d.is_null(){return null_mut();}
     let ci=if (*d).class_name.is_null(){null_mut()}else{ext::hsdSearchClassInfo((*d).class_name)};
     let p=if ci.is_null(){HSD_TObjAlloc()}else{ext::hsdNew(ci).cast::<HSD_TObj>()};
@@ -452,18 +465,22 @@ pub unsafe extern "C" fn HSD_TObjLoadDesc(d:*mut HSD_TObjDesc)->*mut HSD_TObj {
     ((*info).load.expect("TObj load method"))(p,d);p
 }
 pub unsafe extern "C" fn HSD_TlutLoadDesc(d:*mut HSD_TlutDesc)->*mut HSD_Tlut {
+    melee_core::ct!("HSD_TlutLoadDesc");
     if d.is_null(){return null_mut();}let p=HSD_TlutAlloc();core::ptr::copy_nonoverlapping(d.cast::<u8>(),p.cast(),size_of::<HSD_Tlut>());p
 }
 pub unsafe extern "C" fn HSD_TObjTevLoadDesc(d:*mut HSD_TObjTevDesc)->*mut HSD_TObjTev {
+    melee_core::ct!("HSD_TObjTevLoadDesc");
     if d.is_null(){return null_mut();}let p=HSD_TObjTevAlloc();core::ptr::copy_nonoverlapping(d.cast::<u8>(),p.cast(),size_of::<HSD_TObjTev>());p
 }
 pub unsafe extern "C" fn _HSD_TObjGetCurrentByType(from:*mut HSD_TObj,mapping:u32)->*mut HSD_TObj {
+    melee_core::ct!("_HSD_TObjGetCurrentByType");
     let mut p=if from.is_null(){tobj_head}else{(*from).next};
     while !p.is_null(){if (*p).flags&15==mapping{return p;}p=(*p).next;}null_mut()
 }
 /// tobj.c `MakeTextureMtx`: translate, rotate and scale matrices concatenated onto `tobj->mtx` through the
 /// matrix library (callees are hooks, like the C).
 pub unsafe extern "C" fn MakeTextureMtx(tobj: *mut HSD_TObj) {
+    melee_core::ct!("MakeTextureMtx");
     let t = &mut *tobj;
     assert!(t.repeat_s != 0 && t.repeat_t != 0, "tobj.c:589 tobj->repeat_s && tobj->repeat_t");
     let sx = if t.scale.x.abs() < f32::EPSILON { 0.0 } else { t.repeat_s as f32 / t.scale.x };
@@ -483,6 +500,7 @@ pub unsafe extern "C" fn MakeTextureMtx(tobj: *mut HSD_TObj) {
     ext::PSMTXConcat(mp, mtxp, mtxp);
 }
 pub unsafe extern "C" fn TObjSetupMtx(p: *mut HSD_TObj) {
+    melee_core::ct!("TObjSetupMtx");
     let kind = (*p).flags & 15;
     if kind == super::TEX_COORD_TOON {
         return;
@@ -549,6 +567,7 @@ pub unsafe extern "C" fn TObjSetupMtx(p: *mut HSD_TObj) {
     }
 }
 pub unsafe extern "C" fn setupTextureCoordGen(p:*mut HSD_TObj){
+    melee_core::ct!("setupTextureCoordGen");
     let x=&*p;
     match x.flags&15{
         super::TEX_COORD_SHADOW=>ext::GXSetTexCoordGen2(x.coord,GX_TG_MTX3x4,GX_TG_POS,GX_PNMTX0,0,x.mtxid),
@@ -558,11 +577,13 @@ pub unsafe extern "C" fn setupTextureCoordGen(p:*mut HSD_TObj){
     }
 }
 pub unsafe extern "C" fn setupTextureCoordGenBump(p:*mut HSD_TObj){
+    melee_core::ct!("setupTextureCoordGenBump");
     let mask=ext::HSD_LObjGetLightMaskDiffuse();let i=(mask&255).trailing_zeros();let i=if i>=8{0}else{i};
     ext::GXSetTexCoordGen2((*p).coord.wrapping_add(1),GX_TG_BUMP0+i,HSD_TexCoordID2TexGenSrc((*p).coord),GX_IDENTITY,0,GX_PTIDENTITY);
 }
-pub unsafe extern "C" fn setupTextureCoordGenToon(p:*mut HSD_TObj){ext::GXSetTexCoordGen2((*p).coord,GX_TG_SRTG,(*p).src,GX_IDENTITY,0,GX_PTIDENTITY);}
+pub unsafe extern "C" fn setupTextureCoordGenToon(p:*mut HSD_TObj){ melee_core::ct!("setupTextureCoordGenToon");ext::GXSetTexCoordGen2((*p).coord,GX_TG_SRTG,(*p).src,GX_IDENTITY,0,GX_PTIDENTITY);}
 pub unsafe extern "C" fn HSD_TObjSetupTextureCoordGen(mut p:*mut HSD_TObj){
+    melee_core::ct!("HSD_TObjSetupTextureCoordGen");
     while !p.is_null(){
         if (*p).id!=GX_TEXMAP_NULL{
             if (*p).flags&super::TEX_BUMP!=0{setupTextureCoordGen(p);setupTextureCoordGenBump(p);}
@@ -585,18 +606,21 @@ fn volatile_tev(bump:bool)->HSD_TevDesc{
     d.u.tevconf=c;d
 }
 pub unsafe extern "C" fn TObjSetupTevModulateShadow(mut p:*mut HSD_TObj){
+    melee_core::ct!("TObjSetupTevModulateShadow");
     let mut d=volatile_tev(false);
     while !p.is_null()&&(*p).flags&15==super::TEX_COORD_SHADOW{
         d.stage=ext::HSD_StateAssignTev() as u32;d.coord=(*p).coord;d.map=(*p).id;ext::HSD_SetupTevStage(&mut d);p=(*p).next;
     }
 }
 pub unsafe extern "C" fn SetupEmbossBumpTev(p:*mut HSD_TObj){
+    melee_core::ct!("SetupEmbossBumpTev");
     let mut d=volatile_tev(true);d.stage=ext::HSD_StateAssignTev() as u32;d.coord=(*p).coord;d.map=(*p).id;
     d.u.tevconf.clr_op=GX_TEV_ADD;d.u.tevconf.alpha_op=GX_TEV_ADD;d.u.tevconf.clr_clamp=0;ext::HSD_SetupTevStage(&mut d);
     d.stage=ext::HSD_StateAssignTev() as u32;d.coord=(*p).coord.wrapping_add(1);
     d.u.tevconf.clr_op=GX_TEV_SUB;d.u.tevconf.alpha_op=GX_TEV_SUB;d.u.tevconf.clr_clamp=1;ext::HSD_SetupTevStage(&mut d);
 }
 pub unsafe extern "C" fn HSD_TObjSetupVolatileTev(mut p:*mut HSD_TObj,_rendermode:u32){
+    melee_core::ct!("HSD_TObjSetupVolatileTev");
     while !p.is_null(){
         if (*p).id!=GX_TEXMAP_NULL{
             if (*p).flags&super::TEX_BUMP!=0{SetupEmbossBumpTev(p);}
@@ -606,6 +630,7 @@ pub unsafe extern "C" fn HSD_TObjSetupVolatileTev(mut p:*mut HSD_TObj,_rendermod
 }
 
 pub unsafe extern "C" fn MakeColorGenTExp(_lightmap:u32,p:*mut HSD_TObj,c:*mut *mut HSD_TExp,a:*mut *mut HSD_TExp,list:*mut *mut HSD_TExp,_repeat:i32){
+    melee_core::ct!("MakeColorGenTExp");
     let tev=(*p).tev;let mut used=[false;9];
     let colors=[(*tev).color_a,(*tev).color_b,(*tev).color_c,(*tev).color_d];
     let alphas=[(*tev).alpha_a,(*tev).alpha_b,(*tev).alpha_c,(*tev).alpha_d];
@@ -652,6 +677,7 @@ pub unsafe extern "C" fn MakeColorGenTExp(_lightmap:u32,p:*mut HSD_TObj,c:*mut *
     }
 }
 pub unsafe extern "C" fn TObjMakeTExp(p:*mut HSD_TObj,lightmap:u32,done:u32,c:*mut *mut HSD_TExp,a:*mut *mut HSD_TExp,list:*mut *mut HSD_TExp){
+    melee_core::ct!("TObjMakeTExp");
     let repeat=done&((*p).flags&super::TEX_LIGHTMAP_MASK);
     let mut cs=usize::MAX as *mut HSD_TExp;let mut als=cs;
     let e=ext::HSD_TExpTev(list);
@@ -679,6 +705,7 @@ pub unsafe extern "C" fn TObjMakeTExp(p:*mut HSD_TObj,lightmap:u32,done:u32,c:*m
 }
 
 pub unsafe extern "C" fn HSD_TObjAssignResources(mut p:*mut HSD_TObj)->i32{
+    melee_core::ct!("HSD_TObjAssignResources");
     let mut pointers=std::vec::Vec::new();let mut objects=std::vec::Vec::new();
     while !p.is_null(){
         let x=&*p;pointers.push(p);
@@ -689,9 +716,11 @@ pub unsafe extern "C" fn HSD_TObjAssignResources(mut p:*mut HSD_TObj)->i32{
     for (p,x) in pointers.into_iter().zip(objects){(*p).id=x.id;(*p).coord=x.coord;(*p).mtxid=x.mtxid;}n as i32
 }
 pub unsafe extern "C" fn DifferentTluts(a:*mut HSD_Tlut,b:*mut HSD_Tlut)->i32{
+    melee_core::ct!("DifferentTluts");
     logic::different_tluts(&logic::HsdTlut{n_entries:(*a).n_entries,..Default::default()},&logic::HsdTlut{n_entries:(*b).n_entries,..Default::default()}) as i32
 }
 pub unsafe extern "C" fn HSD_TObjSetup(mut p:*mut HSD_TObj){
+    melee_core::ct!("HSD_TObjSetup");
     tobj_head=p;if p.is_null(){return;}
     let n=HSD_TObjAssignResources(p);if n>0{ext::HSD_StateRegisterTexGen(HSD_Index2TexCoord((n-1) as u32) as i32);}
     let mut tluts=[null_mut::<HSD_Tlut>();8];let mut count=0;let mut small=GX_TLUT0;let mut big=GX_BIGTLUT0;
@@ -724,38 +753,44 @@ pub unsafe extern "C" fn HSD_TObjSetup(mut p:*mut HSD_TObj){
     }
 }
 pub unsafe extern "C" fn HSD_TObjRemove(p:*mut HSD_TObj){
+    melee_core::ct!("HSD_TObjRemove");
     if !p.is_null(){let ci=(*p).parent.parent.class_info;((*ci).release.expect("release"))(p.cast());let ci=(*p).parent.parent.class_info;((*ci).destroy.expect("destroy"))(p.cast());}
 }
-pub unsafe extern "C" fn HSD_TObjRemoveAll(mut p:*mut HSD_TObj){while !p.is_null(){let next=(*p).next;HSD_TObjRemove(p);p=next;}}
-pub unsafe extern "C" fn HSD_TObjGetNext(p:*mut HSD_TObj)->*mut HSD_TObj{if p.is_null(){null_mut()}else{(*p).next}}
+pub unsafe extern "C" fn HSD_TObjRemoveAll(mut p:*mut HSD_TObj){ melee_core::ct!("HSD_TObjRemoveAll");while !p.is_null(){let next=(*p).next;HSD_TObjRemove(p);p=next;}}
+pub unsafe extern "C" fn HSD_TObjGetNext(p:*mut HSD_TObj)->*mut HSD_TObj{ melee_core::ct!("HSD_TObjGetNext");if p.is_null(){null_mut()}else{(*p).next}}
 pub unsafe extern "C" fn HSD_TObjSetDefaultClass(info:*mut HSD_TObjInfo){
+    melee_core::ct!("HSD_TObjSetDefaultClass");
     if !info.is_null(){assert!(ext::hsdIsDescendantOf(info.cast(),addr_of_mut!(hsdTObj).cast())!=0,"tobj.c:2027 descendant");}default_class=info;
 }
-pub unsafe extern "C" fn HSD_TObjGetDefaultClass()->*mut HSD_TObjInfo{if default_class.is_null(){addr_of_mut!(hsdTObj)}else{default_class}}
-pub unsafe extern "C" fn HSD_TObjAlloc()->*mut HSD_TObj{let p=ext::hsdNew(addr_of_mut!((*HSD_TObjGetDefaultClass()).parent)).cast::<HSD_TObj>();assert!(!p.is_null(),"tobj.c:2040 new");p}
-pub unsafe extern "C" fn HSD_TObjFree(p:*mut HSD_TObj){if !p.is_null(){((*(*p).parent.parent.class_info).destroy.expect("destroy"))(p.cast());}}
-pub unsafe extern "C" fn HSD_TlutAlloc()->*mut HSD_Tlut{let p=ext::hsdAllocMemPiece(size_of::<HSD_Tlut>() as i32).cast::<HSD_Tlut>();assert!(!p.is_null(),"tobj.c:2069 tlut");core::ptr::write_bytes(p,0,1);p}
-pub unsafe extern "C" fn HSD_TlutFree(p:*mut HSD_Tlut){ext::hsdFreeMemPiece(p.cast(),size_of::<HSD_Tlut>() as i32);}
-pub unsafe extern "C" fn HSD_TlutRemove(p:*mut HSD_Tlut){if !p.is_null(){ext::hsdFreeMemPiece(p.cast(),size_of::<HSD_Tlut>() as i32);}}
-pub unsafe extern "C" fn HSD_TObjTevAlloc()->*mut HSD_TObjTev{let p=ext::hsdAllocMemPiece(size_of::<HSD_TObjTev>() as i32).cast::<HSD_TObjTev>();assert!(!p.is_null(),"tobj.c:2112 tev");core::ptr::write_bytes(p,0,1);p}
-pub unsafe extern "C" fn HSD_TObjTevFree(p:*mut HSD_TObjTev){ext::hsdFreeMemPiece(p.cast(),size_of::<HSD_TObjTev>() as i32);}
-pub unsafe extern "C" fn HSD_TObjTevRemove(p:*mut HSD_TObjTev){if !p.is_null(){HSD_TObjTevFree(p);}}
-pub unsafe extern "C" fn HSD_ImageDescAlloc()->*mut HSD_ImageDesc{let p=ext::hsdAllocMemPiece(size_of::<HSD_ImageDesc>() as i32).cast::<HSD_ImageDesc>();assert!(!p.is_null(),"tobj.c:2155 idesc");core::ptr::write_bytes(p,0,1);p}
-pub unsafe extern "C" fn HSD_ImageDescFree(p:*mut HSD_ImageDesc){ext::hsdFreeMemPiece(p.cast(),size_of::<HSD_ImageDesc>() as i32);}
+pub unsafe extern "C" fn HSD_TObjGetDefaultClass()->*mut HSD_TObjInfo{ melee_core::ct!("HSD_TObjGetDefaultClass");if default_class.is_null(){addr_of_mut!(hsdTObj)}else{default_class}}
+pub unsafe extern "C" fn HSD_TObjAlloc()->*mut HSD_TObj{ melee_core::ct!("HSD_TObjAlloc");let p=ext::hsdNew(addr_of_mut!((*HSD_TObjGetDefaultClass()).parent)).cast::<HSD_TObj>();assert!(!p.is_null(),"tobj.c:2040 new");p}
+pub unsafe extern "C" fn HSD_TObjFree(p:*mut HSD_TObj){ melee_core::ct!("HSD_TObjFree");if !p.is_null(){((*(*p).parent.parent.class_info).destroy.expect("destroy"))(p.cast());}}
+pub unsafe extern "C" fn HSD_TlutAlloc()->*mut HSD_Tlut{ melee_core::ct!("HSD_TlutAlloc");let p=ext::hsdAllocMemPiece(size_of::<HSD_Tlut>() as i32).cast::<HSD_Tlut>();assert!(!p.is_null(),"tobj.c:2069 tlut");core::ptr::write_bytes(p,0,1);p}
+pub unsafe extern "C" fn HSD_TlutFree(p:*mut HSD_Tlut){ melee_core::ct!("HSD_TlutFree");ext::hsdFreeMemPiece(p.cast(),size_of::<HSD_Tlut>() as i32);}
+pub unsafe extern "C" fn HSD_TlutRemove(p:*mut HSD_Tlut){ melee_core::ct!("HSD_TlutRemove");if !p.is_null(){ext::hsdFreeMemPiece(p.cast(),size_of::<HSD_Tlut>() as i32);}}
+pub unsafe extern "C" fn HSD_TObjTevAlloc()->*mut HSD_TObjTev{ melee_core::ct!("HSD_TObjTevAlloc");let p=ext::hsdAllocMemPiece(size_of::<HSD_TObjTev>() as i32).cast::<HSD_TObjTev>();assert!(!p.is_null(),"tobj.c:2112 tev");core::ptr::write_bytes(p,0,1);p}
+pub unsafe extern "C" fn HSD_TObjTevFree(p:*mut HSD_TObjTev){ melee_core::ct!("HSD_TObjTevFree");ext::hsdFreeMemPiece(p.cast(),size_of::<HSD_TObjTev>() as i32);}
+pub unsafe extern "C" fn HSD_TObjTevRemove(p:*mut HSD_TObjTev){ melee_core::ct!("HSD_TObjTevRemove");if !p.is_null(){HSD_TObjTevFree(p);}}
+pub unsafe extern "C" fn HSD_ImageDescAlloc()->*mut HSD_ImageDesc{ melee_core::ct!("HSD_ImageDescAlloc");let p=ext::hsdAllocMemPiece(size_of::<HSD_ImageDesc>() as i32).cast::<HSD_ImageDesc>();assert!(!p.is_null(),"tobj.c:2155 idesc");core::ptr::write_bytes(p,0,1);p}
+pub unsafe extern "C" fn HSD_ImageDescFree(p:*mut HSD_ImageDesc){ melee_core::ct!("HSD_ImageDescFree");ext::hsdFreeMemPiece(p.cast(),size_of::<HSD_ImageDesc>() as i32);}
 pub unsafe extern "C" fn HSD_ImageDescCopyFromEFB(p:*mut HSD_ImageDesc,x:u16,y:u16,clear:u8,sync:i32){
+    melee_core::ct!("HSD_ImageDescCopyFromEFB");
     if p.is_null(){return;}ext::GXSetTexCopySrc(x,y,(*p).width,(*p).height);ext::GXSetTexCopyDst((*p).width,(*p).height,(*p).format,((*p).mipmap!=0) as u8);
     if clear!=0{ext::HSD_StateSetZMode(1,GX_LEQUAL as i32,1);}ext::GXCopyTex((*p).image_ptr,clear);if sync!=0{ext::GXPixModeSync();ext::GXInvalidateTexAll();}
 }
 pub unsafe extern "C" fn TObjRelease(o:*mut HSD_Class){
+    melee_core::ct!("TObjRelease");
     let p=o.cast::<HSD_TObj>();ext::HSD_AObjRemove((*p).aobj);HSD_TlutRemove((*p).tlut);HSD_TObjTevRemove((*p).tev);
     if !(*p).tluttbl.is_null(){let mut i=0;while !(*(*p).tluttbl.add(i)).is_null(){HSD_TlutRemove(*(*p).tluttbl.add(i));i+=1;}ext::HSD_Free((*p).tluttbl.cast());}
     ((*hsdTObj.parent.head.parent).release.expect("parent release"))(o);
 }
 pub unsafe extern "C" fn TObjAmnesia(info:*mut HSD_ClassInfo){
+    melee_core::ct!("TObjAmnesia");
     if info==default_class.cast(){default_class=null_mut();}if info==addr_of_mut!(hsdTObj).cast(){tobj_head=null_mut();}
     ((*hsdTObj.parent.head.parent).amnesia.expect("parent amnesia"))(info);
 }
 pub unsafe extern "C" fn TObjInfoInit(){
+    melee_core::ct!("TObjInfoInit");
     ext::hsdInitClassInfo(addr_of_mut!(hsdTObj.parent),addr_of_mut!(ext::hsdObj),c"sysdolphin_base_library".as_ptr().cast_mut(),c"hsd_tobj".as_ptr().cast_mut(),size_of::<HSD_TObjInfo>() as i32,size_of::<HSD_TObj>() as i32);
     hsdTObj.parent.release=Some(TObjRelease);hsdTObj.parent.amnesia=Some(TObjAmnesia);hsdTObj.load=Some(TObjLoad);hsdTObj.make_texp=Some(TObjMakeTExp);hsdTObj.make_mtx=Some(MakeTextureMtx);
 }

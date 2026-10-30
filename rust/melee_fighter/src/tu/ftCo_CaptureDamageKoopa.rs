@@ -70,30 +70,34 @@ fn anim(g: G, cb: fn(G)) {
 
 /// `ftCo_800BC9C8`.
 pub fn ftCo_800BC9C8(g: G) {
+    melee_core::ct!("ftCo_800BC9C8");
     enter(g, ftCo_MS_CaptureDamageKoopa as i32);
 }
 /// `ftCo_CaptureDamageKoopa_Anim`.
 pub fn ftCo_CaptureDamageKoopa_Anim(g: G) {
+    melee_core::ct!("ftCo_CaptureDamageKoopa_Anim");
     anim(g, ext::ftCo_800BCC20);
 }
 /// `ftCo_CaptureDamageKoopa_IASA`.
-pub fn ftCo_CaptureDamageKoopa_IASA(_g: G) {}
+pub fn ftCo_CaptureDamageKoopa_IASA(_g: G) { melee_core::ct!("ftCo_CaptureDamageKoopa_IASA");}
 /// `ftCo_CaptureDamageKoopa_Phys`.
-pub fn ftCo_CaptureDamageKoopa_Phys(_g: G) {}
+pub fn ftCo_CaptureDamageKoopa_Phys(_g: G) { melee_core::ct!("ftCo_CaptureDamageKoopa_Phys");}
 /// `ftCo_CaptureDamageKoopa_Coll`.
-pub fn ftCo_CaptureDamageKoopa_Coll(_g: G) {}
+pub fn ftCo_CaptureDamageKoopa_Coll(_g: G) { melee_core::ct!("ftCo_CaptureDamageKoopa_Coll");}
 
 /// `ftCo_800BCAF4`.
 pub fn ftCo_800BCAF4(g: G) {
+    melee_core::ct!("ftCo_800BCAF4");
     enter(g, ftCo_MS_CaptureDamageKoopaAir as i32);
 }
 /// `ftCo_CaptureDamageKoopaAir_Anim`.
 pub fn ftCo_CaptureDamageKoopaAir_Anim(g: G) {
+    melee_core::ct!("ftCo_CaptureDamageKoopaAir_Anim");
     anim(g, ext::ftCo_800BCD00);
 }
 /// `ftCo_CaptureDamageKoopaAir_IASA`.
-pub fn ftCo_CaptureDamageKoopaAir_IASA(_g: G) {}
+pub fn ftCo_CaptureDamageKoopaAir_IASA(_g: G) { melee_core::ct!("ftCo_CaptureDamageKoopaAir_IASA");}
 /// `ftCo_CaptureDamageKoopaAir_Phys`.
-pub fn ftCo_CaptureDamageKoopaAir_Phys(_g: G) {}
+pub fn ftCo_CaptureDamageKoopaAir_Phys(_g: G) { melee_core::ct!("ftCo_CaptureDamageKoopaAir_Phys");}
 /// `ftCo_CaptureDamageKoopaAir_Coll`.
-pub fn ftCo_CaptureDamageKoopaAir_Coll(_g: G) {}
+pub fn ftCo_CaptureDamageKoopaAir_Coll(_g: G) { melee_core::ct!("ftCo_CaptureDamageKoopaAir_Coll");}

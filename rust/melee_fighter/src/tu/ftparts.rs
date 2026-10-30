@@ -59,6 +59,7 @@ static mut COMPLAINED: i32 = 0;
 /// static `ftParts_DObjAt` (TARGET_PC `FT_DOBJ_AT`): bounds-checked `dobj_list->data[idx]`;
 /// out of range logs (at most 8 times) and gives NULL.
 pub fn ftParts_DObjAt(dobj_list: *const DObjList, idx: i32, _where: &str) -> *mut HSD_DObj {
+    melee_core::ct!("ftParts_DObjAt");
     unsafe {
         if dobj_list.is_null() || (*dobj_list).data.is_null() || idx < 0 || idx as u32 >= (*dobj_list).count {
             if COMPLAINED < 8 {
@@ -86,6 +87,7 @@ unsafe fn each_entry(vis: &FtPartsVis, lookup: *mut FtPartsVisLookup, mut f: imp
 /// `ftParts_80074B6C(fp, vis, idx, dobj_list)`: show the selected model variant of each part
 /// model, hide the rest. (`cleared[idx] = 1` sits inside the model loop in the C.)
 pub fn ftParts_80074B6C(f: &Fighter, vis: &mut FtPartsVis, idx: i32, dobj_list: *const DObjList) {
+    melee_core::ct!("ftParts_80074B6C");
     let lookup = vis.xC[idx as usize];
     if lookup.is_null() || vis.cleared[idx as usize] != 0 {
         return;
@@ -106,6 +108,7 @@ pub fn ftParts_80074B6C(f: &Fighter, vis: &mut FtPartsVis, idx: i32, dobj_list: 
 
 /// `ftParts_80074CA0(vis, idx, dobj_list)`: show every DObj of row `idx`.
 pub fn ftParts_80074CA0(vis: &mut FtPartsVis, idx: i32, dobj_list: *const DObjList) {
+    melee_core::ct!("ftParts_80074CA0");
     let lookup = vis.xC[idx as usize];
     if !lookup.is_null() && vis.cleared[idx as usize] == 0 {
         unsafe { each_entry(vis, lookup, |_, _, d| ext::HSD_DObjClearFlags(ftParts_DObjAt(dobj_list, d as i32, "ftParts_80074CA0"), 1)) };
@@ -115,6 +118,7 @@ pub fn ftParts_80074CA0(vis: &mut FtPartsVis, idx: i32, dobj_list: *const DObjLi
 
 /// `ftParts_80074D7C(vis, idx, dobj_list)`: hide every DObj of row `idx`.
 pub fn ftParts_80074D7C(vis: &mut FtPartsVis, idx: i32, dobj_list: *const DObjList) {
+    melee_core::ct!("ftParts_80074D7C");
     let lookup = vis.xC[idx as usize];
     if !lookup.is_null() && vis.cleared[idx as usize] != 0 {
         unsafe { each_entry(vis, lookup, |_, _, d| ext::HSD_DObjSetFlags(ftParts_DObjAt(dobj_list, d as i32, "ftParts_80074D7C"), 1)) };
@@ -124,6 +128,7 @@ pub fn ftParts_80074D7C(vis: &mut FtPartsVis, idx: i32, dobj_list: *const DObjLi
 
 /// `ftParts_80074B0C(gobj, model_idx, val)`: select a model variant.
 pub fn ftParts_80074B0C(gobj: *mut HSD_GObj, model_idx: i32, val: i32) {
+    melee_core::ct!("ftParts_80074B0C");
     let f = super::ftlipstickswing::fp(gobj);
     if val != f.x5F4_arr[model_idx as usize].idx as i32 {
         f.x5F4_arr[model_idx as usize].idx = val as _;
@@ -135,6 +140,7 @@ pub fn ftParts_80074B0C(gobj: *mut HSD_GObj, model_idx: i32, val: i32) {
 
 /// `ftParts_80074E58(fp)`: allocate the part and DObj arrays and mark the root parts.
 pub fn ftParts_80074E58(f: &mut Fighter) {
+    melee_core::ct!("ftParts_80074E58");
     f.parts = ext::HSD_ObjAlloc(ext::fighter_parts_alloc_data()) as *mut FighterBone;
     f.dobj_list.data = ext::HSD_ObjAlloc(ext::fighter_dobj_list_alloc_data()) as *mut *mut HSD_DObj;
     let n = unsafe { (**crate::hooks::ft_parts_table().add(f.kind as usize)).parts_num };
@@ -154,6 +160,7 @@ pub fn ftParts_80074E58(f: &mut Fighter) {
 }
 
 pub fn ftParts_JObjSetRotation(jobj: *mut HSD_JObj, quat: *const Vec4) {
+    melee_core::ct!("ftParts_JObjSetRotation");
     ext::HSD_JObjSetRotation(jobj, quat);
     ext::HSD_JObjClearFlags(jobj, JOBJ_USE_QUATERNION as u32);
 }
@@ -174,16 +181,18 @@ fn rot_target(f: &Fighter, part_idx: i32, what: &str) -> *mut HSD_JObj {
     }
 }
 
-pub fn ftPartSetRotX(f: &Fighter, part_idx: i32, v: f32) { ext::HSD_JObjSetRotationX(rot_target(f, part_idx, "set fighter rot x"), v) }
-pub fn ftPartSetRotY(f: &Fighter, part_idx: i32, v: f32) { ext::HSD_JObjSetRotationY(rot_target(f, part_idx, "set fighter rot y"), v) }
-pub fn ftPartSetRotZ(f: &Fighter, part_idx: i32, v: f32) { ext::HSD_JObjSetRotationZ(rot_target(f, part_idx, "set fighter rot z"), v) }
+pub fn ftPartSetRotX(f: &Fighter, part_idx: i32, v: f32) { melee_core::ct!("ftPartSetRotX"); ext::HSD_JObjSetRotationX(rot_target(f, part_idx, "set fighter rot x"), v) }
+pub fn ftPartSetRotY(f: &Fighter, part_idx: i32, v: f32) { melee_core::ct!("ftPartSetRotY"); ext::HSD_JObjSetRotationY(rot_target(f, part_idx, "set fighter rot y"), v) }
+pub fn ftPartSetRotZ(f: &Fighter, part_idx: i32, v: f32) { melee_core::ct!("ftPartSetRotZ"); ext::HSD_JObjSetRotationZ(rot_target(f, part_idx, "set fighter rot z"), v) }
 
 pub fn ftPartGetRotX(f: &Fighter, part_idx: i32) -> f32 {
+    melee_core::ct!("ftPartGetRotX");
     melee_types::inline::HSD_JObjGetRotationX(unsafe { &*rot_target(f, part_idx, "get fighter rot x") })
 }
 
 /// `ftPartGetRotZ`: returns the Y rotation, as the C does.
 pub fn ftPartGetRotZ(f: &Fighter, part_idx: i32) -> f32 {
+    melee_core::ct!("ftPartGetRotZ");
     melee_types::inline::HSD_JObjGetRotationY(unsafe { &*rot_target(f, part_idx, "get fighter rot y") })
 }
 
@@ -194,6 +203,7 @@ pub use super::ftparts_render::*;
 /// `ftParts_SetupParts(gobj)`: walk the model's joint tree in the fighter's part order, filling
 /// `parts[]` (model joint, flags, tree depth, DObj ranges) and the DObj list.
 pub unsafe fn ftParts_SetupParts(fighter_obj: *mut HSD_GObj) {
+    melee_core::ct!("ftParts_SetupParts");
     let mut jobj = (*fighter_obj).hsd_obj as *mut HSD_JObj;
     let fp = (*fighter_obj).user_data as *mut Fighter;
     let mut part: u32 = 0;
@@ -246,6 +256,7 @@ pub unsafe fn ftParts_SetupParts(fighter_obj: *mut HSD_GObj) {
 
 /// `ftParts_8007462C(gobj)`: the same walk over the animation skeleton, filling `parts[].x4_jobj2`.
 pub unsafe fn ftParts_8007462C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftParts_8007462C");
     let fp = (*gobj).user_data as *mut Fighter;
     let mut i: u32 = 0;
     let mut jobj = (*fp).x8AC_animSkeleton;
@@ -284,6 +295,7 @@ pub unsafe fn ftParts_8007462C(gobj: *mut HSD_GObj) {
 
 /// `ftParts_800749CC(gobj)`: initialise the fighter's part-visibility state (`x5AC`) for its costume.
 pub unsafe fn ftParts_800749CC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftParts_800749CC");
     let fp = (*gobj).user_data as *mut Fighter;
     // the visibility rows are indexed by the costume's visibility row (FT_COSTUME_VIS_IDX = Mex_CostumeVisIdx)
     crate::tu::ftparts_render::ftParts_8007487C(
@@ -301,6 +313,7 @@ pub unsafe fn ftParts_800749CC(gobj: *mut HSD_GObj) {
 
 /// `ftParts_800750C8(fp, arg1, arg2)`: show (`arg2`) or hide model `arg1`, then the per-kind model event.
 pub unsafe fn ftParts_800750C8(fp: *mut Fighter, arg1: u32, arg2: bool) {
+    melee_core::ct!("ftParts_800750C8");
     let kind = (*fp).kind as usize;
     let vis: *mut FtPartsVis = &mut (*fp).x5AC;
     let ev = |model: u32| {
@@ -333,6 +346,7 @@ pub unsafe fn ftParts_800750C8(fp: *mut Fighter, arg1: u32, arg2: bool) {
 
 /// `ftParts_80075240(list, n)`: the n-th TObj over the DObj list's materials.
 pub unsafe fn ftParts_80075240(list: *mut DObjList, n: i32) -> *mut HSD_TObj {
+    melee_core::ct!("ftParts_80075240");
     let mut tobj_i = 0;
     for i in 0..(*list).count as usize {
         let dobj = *(*list).data.add(i);

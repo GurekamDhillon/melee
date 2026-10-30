@@ -135,6 +135,7 @@ unsafe extern "C" fn mnEvent_CountUnlocked() -> i32 {
     return count;
 }
 pub unsafe extern "C" fn mnEvent_8024CE74() -> i32 {
+    melee_core::ct!("mnEvent_8024CE74");
     let mut count: i32 = 0;
     if DbLevel as i32 > DbLKind_DebugDevelop as i32 {
         return 0x2a as i32;
@@ -181,6 +182,7 @@ pub unsafe extern "C" fn mnEvent_8024CE74() -> i32 {
     return 0x15 as i32;
 }
 pub unsafe extern "C" fn mnEvent_8024D014(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnEvent_8024D014");
     let mut jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut data: *mut MnEventData = (*gobj).user_data as *mut MnEventData;
     let mut tree: *mut HSD_JObj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -199,6 +201,7 @@ pub unsafe extern "C" fn mnEvent_8024D014(mut gobj: *mut HSD_GObj) {
     };
 }
 pub unsafe extern "C" fn mnEvent_8024D0CC(mut gobj: *mut HSD_GObj, mut ckind: i32) {
+    melee_core::ct!("mnEvent_8024D0CC");
     let mut tree: *mut HSD_JObj = (*gobj).hsd_obj as *mut HSD_JObj;
     let mut jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut frame: f32 = 0.;
@@ -349,9 +352,11 @@ pub unsafe extern "C" fn mnEvent_8024D4E0(
     mut jobj: *mut HSD_JObj,
     mut translate: *mut Vec3,
 ) {
+    melee_core::ct!("mnEvent_8024D4E0");
     HSD_JObjSetTranslate(jobj, translate);
 }
 pub unsafe extern "C" fn mnEvent_8024D5B0(mut gobj: *mut HSD_GObj, mut event: u8) {
+    melee_core::ct!("mnEvent_8024D5B0");
     let mut time_text: *mut HSD_Text = ::core::ptr::null_mut::<HSD_Text>();
     let mut temp_r3: *mut HSD_Text = ::core::ptr::null_mut::<HSD_Text>();
     let mut sp18: [::core::ffi::c_char; 4] = [0; 4];
@@ -438,6 +443,7 @@ pub unsafe extern "C" fn mnEvent_8024D5B0(mut gobj: *mut HSD_GObj, mut event: u8
     HSD_SisLib_803A6B98(time_text, 0.0f32, 0.0f32, b"\xEF\xBC\x8D\0" as *const u8 as *const ::core::ffi::c_char, &[]);
 }
 pub unsafe extern "C" fn mnEvent_8024D7E0(mut gobj: *mut HSD_GObj, mut idx: i32) {
+    melee_core::ct!("mnEvent_8024D7E0");
     let mut data: *mut MnEventData = (*gobj).user_data as *mut MnEventData;
     let mut text: *mut HSD_Text = ::core::ptr::null_mut::<HSD_Text>();
     let mut sis_idx: i32 = 0;
@@ -463,6 +469,7 @@ pub unsafe extern "C" fn mnEvent_8024D7E0(mut gobj: *mut HSD_GObj, mut idx: i32)
 }
 #[inline]
 pub unsafe extern "C" fn mnEvent_RefreshRows(mut first_event: i32) {
+    melee_core::ct!("mnEvent_RefreshRows");
     let mut i: i32 = 0;
     i = 0 as ::core::ffi::c_int as i32;
     while i < 9 as ::core::ffi::c_int {
@@ -475,6 +482,7 @@ pub unsafe extern "C" fn mnEvent_ShowSelected(
     mut user_data: *mut MnEventData,
     mut jobj_09: *mut *mut HSD_JObj,
 ) {
+    melee_core::ct!("mnEvent_ShowSelected");
     let mut event: i32 = 0;
     let mut event_id: i32 = 0;
     let mut event_gobj: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
@@ -510,6 +518,7 @@ pub unsafe extern "C" fn mnEvent_SetPageCursorY(
     mut jobj_0C: *mut *mut HSD_JObj,
     mut jobj_0B: *mut *mut HSD_JObj,
 ) {
+    melee_core::ct!("mnEvent_SetPageCursorY");
     let mut page: u8 = 0;
     let mut tree: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut y_a: f32 = 0.;
@@ -524,6 +533,7 @@ pub unsafe extern "C" fn mnEvent_SetPageCursorY(
     HSD_JObjSetTranslateY(*jobj_0B, page as f32 * (y_b - y_a));
 }
 pub unsafe extern "C" fn mnEvent_8024D864(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnEvent_8024D864");
     let mut page: u8 = 0;
     let mut data: *mut MnEventData = ::core::ptr::null_mut::<MnEventData>();
     let mut up_jobj_0B: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
@@ -653,9 +663,11 @@ pub unsafe extern "C" fn mnEvent_8024D864(mut gobj: *mut HSD_GObj) {
 }
 #[inline]
 pub unsafe extern "C" fn GET_EVENTDATA(mut gobj: *mut HSD_GObj) -> *mut MnEventData {
+    melee_core::ct!("GET_EVENTDATA");
     return (*gobj).user_data as *mut MnEventData;
 }
 pub unsafe extern "C" fn mnEvent_8024E1B4(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnEvent_8024E1B4");
     let mut tree: *mut HSD_JObj = (*gobj).hsd_obj as *mut HSD_JObj;
     let mut tmp: *mut MnEventData = ::core::ptr::null_mut::<MnEventData>();
     let mut data: *mut MnEventData = GET_EVENTDATA(gobj);
@@ -694,6 +706,7 @@ pub unsafe extern "C" fn mnEvent_8024E1B4(mut gobj: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn mnEvent_8024E2A0(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnEvent_8024E2A0");
     let mut proc_0: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     let mut jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut tree: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
@@ -716,6 +729,7 @@ pub unsafe extern "C" fn mnEvent_8024E2A0(mut gobj: *mut HSD_GObj) {
     };
 }
 pub unsafe extern "C" fn mnEvent_8024E34C(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnEvent_8024E34C");
     let mut proc_0: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     let mut tree: *mut HSD_JObj = (*gobj).hsd_obj as *mut HSD_JObj;
     let mut data: *mut MnEventData = (*gobj).user_data as *mut MnEventData;
@@ -754,6 +768,7 @@ pub unsafe extern "C" fn mnEvent_SetPageY(
     mut y_a: f32,
     mut y_b: f32,
 ) {
+    melee_core::ct!("mnEvent_SetPageY");
     y_b = page as f32 * (y_b - y_a);
     HSD_JObjSetTranslateY(jobj_0B, y_b);
 }
@@ -761,6 +776,7 @@ pub unsafe extern "C" fn mnEvent_8024E420(
     mut data: *mut MnEventData,
     mut event_idx: i32,
 ) {
+    melee_core::ct!("mnEvent_8024E420");
     let mut max_events: i32 = 0;
     let mut i: ::core::ffi::c_int = 0;
     max_events = mnEvent_8024CE74();
@@ -782,6 +798,7 @@ pub unsafe extern "C" fn mnEvent_8024E420(
     }
 }
 pub unsafe extern "C" fn mnEvent_8024E524(mut event_idx: i32) {
+    melee_core::ct!("mnEvent_8024E524");
     let mut page: u8 = 0;
     let mut jobj_0B: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut jobj_0C: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
@@ -854,6 +871,7 @@ pub unsafe extern "C" fn mnEvent_8024E838(
     mut event_idx: ::core::ffi::c_int,
     mut first_time: bool,
 ) {
+    melee_core::ct!("mnEvent_8024E838");
     let mut proc_0: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     let mut archive: *mut HSD_Archive = ::core::ptr::null_mut::<HSD_Archive>();
     mn_804D6BC8.cooldown = 5 as u16;

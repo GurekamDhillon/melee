@@ -66,6 +66,7 @@ unsafe fn SetActionFromFacingDirection(gobj: G, left_id: u32, right_id: u32) {
 }
 
 pub fn ftPr_SpecialHi_Enter(gobj: G) {
+    melee_core::ct!("ftPr_SpecialHi_Enter");
     unsafe {
         SetActionFromFacingDirection(gobj, 365, 367);
         st::ftAnim_8006EBA4(gobj);
@@ -74,6 +75,7 @@ pub fn ftPr_SpecialHi_Enter(gobj: G) {
 }
 
 pub fn ftPr_SpecialAirHi_Enter(gobj: G) {
+    melee_core::ct!("ftPr_SpecialAirHi_Enter");
     unsafe {
         SetActionFromFacingDirection(gobj, 366, 368);
         st::ftAnim_8006EBA4(gobj);
@@ -94,6 +96,7 @@ unsafe fn sleep_hit_rule(fighter: *mut Fighter) {
 }
 
 pub fn ftPr_SpecialHi_Anim(fighter_gobj: G) {
+    melee_core::ct!("ftPr_SpecialHi_Anim");
     unsafe {
         let fighter = fpp(fighter_gobj);
         sleep_hit_rule(fighter);
@@ -104,6 +107,7 @@ pub fn ftPr_SpecialHi_Anim(fighter_gobj: G) {
 }
 
 pub fn ftPr_SpecialAirHi_Anim(fighter_gobj: G) {
+    melee_core::ct!("ftPr_SpecialAirHi_Anim");
     unsafe {
         let fighter = fpp(fighter_gobj);
         sleep_hit_rule(fighter);
@@ -113,16 +117,18 @@ pub fn ftPr_SpecialAirHi_Anim(fighter_gobj: G) {
     }
 }
 
-pub fn ftPr_SpecialHi_IASA(_gobj: G) {}
-pub fn ftPr_SpecialAirHi_IASA(_gobj: G) {}
+pub fn ftPr_SpecialHi_IASA(_gobj: G) { melee_core::ct!("ftPr_SpecialHi_IASA");}
+pub fn ftPr_SpecialAirHi_IASA(_gobj: G) { melee_core::ct!("ftPr_SpecialAirHi_IASA");}
 
 pub fn ftPr_SpecialHi_Coll(gobj: G) {
+    melee_core::ct!("ftPr_SpecialHi_Coll");
     if st::ft_800827A0(gobj) == 0 {
         ftPr_SpecialHi_8013CD34(gobj);
     }
 }
 
 pub fn ftPr_SpecialAirHi_Coll(gobj: G) {
+    melee_core::ct!("ftPr_SpecialAirHi_Coll");
     if st::ft_CheckGroundAndLedge(gobj, 0) != 0 {
         ftPr_SpecialHi_8013CDD8(gobj);
         return;
@@ -133,6 +139,7 @@ pub fn ftPr_SpecialAirHi_Coll(gobj: G) {
 }
 
 pub fn ftPr_SpecialHi_8013CD34(gobj: G) {
+    melee_core::ct!("ftPr_SpecialHi_8013CD34");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_8007D5D4(&mut *fp);
@@ -162,6 +169,7 @@ pub fn ftPr_SpecialHi_8013CD34(gobj: G) {
 }
 
 pub fn ftPr_SpecialHi_8013CDD8(fighter_gobj: G) {
+    melee_core::ct!("ftPr_SpecialHi_8013CDD8");
     unsafe {
         let fighter = fpp(fighter_gobj);
         st::ftCommon_8007D7FC(&mut *fighter);
@@ -191,6 +199,7 @@ pub fn ftPr_SpecialHi_8013CDD8(fighter_gobj: G) {
 }
 
 pub fn ftPr_SpecialHi_8013CE7C(fighter_gobj: G) {
+    melee_core::ct!("ftPr_SpecialHi_8013CE7C");
     unsafe {
         let fighter = fpp(fighter_gobj);
         (*fighter).accessory4_cb = None;

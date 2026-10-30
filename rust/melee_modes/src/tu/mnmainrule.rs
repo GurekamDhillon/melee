@@ -157,12 +157,14 @@ melee_core::gc_layout!(JObjIndices6, "JObjIndices6", size 0x6, align 1, [
 pub unsafe extern "C" fn HSD_GObjGetUserData(
     mut gobj: *mut HSD_GObj,
 ) -> *mut ::core::ffi::c_void {
+    melee_core::ct!("HSD_GObjGetUserData");
     return (*gobj).user_data;
 }
 pub const JOBJ_HIDDEN: ::core::ffi::c_int = (1 as ::core::ffi::c_int)
     << 4 as ::core::ffi::c_int;
 #[inline]
 pub unsafe extern "C" fn HSD_JObjGetChild(mut jobj: *mut HSD_JObj) -> *mut HSD_JObj {
+    melee_core::ct!("HSD_JObjGetChild");
     if jobj.is_null() {
         return ::core::ptr::null_mut::<HSD_JObj>()
     } else {
@@ -172,14 +174,17 @@ pub unsafe extern "C" fn HSD_JObjGetChild(mut jobj: *mut HSD_JObj) -> *mut HSD_J
 pub const U32_TO_F32: ::core::ffi::c_double = 4503599627370496.0f64;
 #[inline]
 pub unsafe extern "C" fn sfxBack() {
+    melee_core::ct!("sfxBack");
     lbAudioAx_80024030(0 as ::core::ffi::c_int);
 }
 #[inline]
 pub unsafe extern "C" fn sfxForward() {
+    melee_core::ct!("sfxForward");
     lbAudioAx_80024030(1 as ::core::ffi::c_int);
 }
 #[inline]
 pub unsafe extern "C" fn sfxMove() {
+    melee_core::ct!("sfxMove");
     lbAudioAx_80024030(2 as ::core::ffi::c_int);
 }
 pub static mut mn_803EC600: [u16_0; 8] = [
@@ -423,9 +428,11 @@ pub static mut mn_804D6BD0: *mut HSD_GObj = ::core::ptr::null::<HSD_GObj>()
     as *mut HSD_GObj;
 #[inline]
 pub unsafe extern "C" fn mn_8022F538_GetHoveredSelection() -> u8_0 {
+    melee_core::ct!("mn_8022F538_GetHoveredSelection");
     return mn_804A04F0.hovered_selection as u8_0;
 }
 pub unsafe extern "C" fn fn_8022F538(mut arg0: *mut HSD_GObj) {
+    melee_core::ct!("fn_8022F538");
     let mut data: *mut mn_802307F8_value_view = ::core::ptr::null_mut::<
         mn_802307F8_value_view,
     >();
@@ -721,6 +728,7 @@ pub unsafe extern "C" fn mn_8022FB88(
     mut arg0: u8_0,
     mut arg1: *mut ::core::ffi::c_void,
 ) {
+    melee_core::ct!("mn_8022FB88");
     let mut data: *mut mn_802307F8_t = arg1 as *mut mn_802307F8_t;
     let mut digit_indices: [u8_0; 4] = [
         2 as ::core::ffi::c_int as u8_0,
@@ -817,6 +825,7 @@ pub static mut mn_804DBE08: JObjIndices5 = JObjIndices5 {
     ],
 };
 pub unsafe extern "C" fn mn_8022FD18(mut arg0: u8_0) {
+    melee_core::ct!("mn_8022FD18");
     let mut pad: [u8_0; 8] = [0; 8];
     let mut data: *mut mn_802307F8_t = (*mn_804D6BD0).user_data as *mut mn_802307F8_t;
     let mut stock_digits: JObjIndices2 = JObjIndices2 { idx: [0; 2] };
@@ -914,6 +923,7 @@ pub unsafe extern "C" fn mn_8022FD18(mut arg0: u8_0) {
 }
 #[inline]
 pub unsafe extern "C" fn mn_8022FEC8_AnimDigit(mut jobj: *mut HSD_JObj, mut digit: u8_0) {
+    melee_core::ct!("mn_8022FEC8_AnimDigit");
     HSD_JObjReqAnimAll(jobj, digit as f32_0);
     HSD_JObjAnimAll(jobj);
 }
@@ -922,6 +932,7 @@ pub unsafe extern "C" fn mn_8022FEC8_AnimDamageDigits(
     mut value: u8_0,
     mut data: *mut mn_802307F8_t,
 ) {
+    melee_core::ct!("mn_8022FEC8_AnimDamageDigits");
     mn_8022FEC8_AnimDigit(
         HSD_JObjGetChild(
             (*data)
@@ -948,6 +959,7 @@ pub unsafe extern "C" fn mn_8022FEC8_GetSettings(
     mut rule_kind: u8_0,
     mut rule_value: u8_0,
 ) -> *mut AnimLoopSettings {
+    melee_core::ct!("mn_8022FEC8_GetSettings");
     let mut default_value: u8_0 = 0;
     if rule_kind as ::core::ffi::c_int != 0 as ::core::ffi::c_int
         && rule_kind as ::core::ffi::c_int != 2 as ::core::ffi::c_int
@@ -967,6 +979,7 @@ pub unsafe extern "C" fn mn_8022FEC8_AnimStockDigits(
     mut data: *mut mn_802307F8_t,
     mut value: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("mn_8022FEC8_AnimStockDigits");
     let mut digit_jobjs: *mut *mut HSD_JObj = ::core::ptr::null_mut::<*mut HSD_JObj>();
     let mut digit_jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut digit_jobj2: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
@@ -985,6 +998,7 @@ pub unsafe extern "C" fn mn_8022FEC8(
     mut arg2: u8_0,
     mut arg3: u8_0,
 ) {
+    melee_core::ct!("mn_8022FEC8");
     let mut settings: *mut AnimLoopSettings = ::core::ptr::null_mut::<
         AnimLoopSettings,
     >();
@@ -1046,6 +1060,7 @@ pub unsafe extern "C" fn mn_80230198(
     mut jobj: *mut HSD_JObj,
     mut mode: u8_0,
 ) {
+    melee_core::ct!("mn_80230198");
     let mut settings: *mut AnimLoopSettings = ::core::ptr::null_mut::<
         AnimLoopSettings,
     >();
@@ -1086,6 +1101,7 @@ pub unsafe extern "C" fn mn_80230274_InitOptionRoots(
     mut count: u8_0,
     mut i: *mut s32,
 ) {
+    melee_core::ct!("mn_80230274_InitOptionRoots");
     let mut option_root: *mut *mut HSD_JObj = ::core::ptr::null_mut::<*mut HSD_JObj>();
     let mut j8: u8_0 = 0;
     let mut j: s32 = 0;
@@ -1142,6 +1158,7 @@ pub unsafe extern "C" fn mn_80230274(
     mut arg1: ::core::ffi::c_int,
     mut arg2: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("mn_80230274");
     let mut option_roots: [*mut HSD_JObj; 8] = [::core::ptr::null_mut::<HSD_JObj>(); 8];
     let mut roots: [*mut HSD_JObj; 17] = [::core::ptr::null_mut::<HSD_JObj>(); 17];
     let mut pad_: [u8_0; 4] = [0; 4];
@@ -1399,6 +1416,7 @@ pub unsafe extern "C" fn mn_802307F8(
     mut arg1: s32,
     mut arg2: s32,
 ) {
+    melee_core::ct!("mn_802307F8");
     let mut text: *mut HSD_Text = ::core::ptr::null_mut::<HSD_Text>();
     let mut text_id: u8_0 = 0;
     if !(*arg0).text.is_null() {
@@ -1439,6 +1457,7 @@ pub unsafe extern "C" fn mn_802308F0(
     mut arg1: ::core::ffi::c_int,
     mut arg2: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("mn_802308F0");
     let mut data: *mut mn_802307F8_t = HSD_GObjGetUserData(gobj) as *mut mn_802307F8_t;
     let mut sel: u16_0 = 0;
     let mut kind: u8_0 = 0;
@@ -1474,6 +1493,7 @@ pub unsafe extern "C" fn mn_802308F0(
     };
 }
 pub unsafe extern "C" fn fn_802309F0(mut arg0: *mut HSD_GObj) {
+    melee_core::ct!("fn_802309F0");
     let mut rules: *mut GameRules = ::core::ptr::null_mut::<GameRules>();
     let mut jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut anim: *mut AnimLoopSettings = ::core::ptr::null_mut::<AnimLoopSettings>();
@@ -1638,6 +1658,7 @@ pub unsafe extern "C" fn mn_80230D18(
     mut arg1: *mut HSD_JObj,
     mut arg2: ::core::ffi::c_int,
 ) -> s32 {
+    melee_core::ct!("mn_80230D18");
     let mut rules: *mut GameRules = ::core::ptr::null_mut::<GameRules>();
     let mut ret: s32 = 0;
     let mut i: s32 = 0;
@@ -1674,6 +1695,7 @@ pub unsafe extern "C" fn mn_80230D18(
 }
 #[inline]
 pub unsafe extern "C" fn mn_80230E38_CountVisible(mut limit: u8_0) -> s32 {
+    melee_core::ct!("mn_80230E38_CountVisible");
     let mut option_index: u8_0 = 0;
     let mut visible: s32 = 0;
     let mut i: s32 = 0;
@@ -1697,6 +1719,7 @@ pub unsafe extern "C" fn mn_80230E38_CountVisible(mut limit: u8_0) -> s32 {
     return count;
 }
 pub unsafe extern "C" fn mn_80230E38(mut arg0: ::core::ffi::c_int) -> *mut HSD_GObj {
+    melee_core::ct!("mn_80230E38");
     let mut operand_pad: [u8_0; 12] = [0; 12];
     let mut jobj_map: [u16_0; 17] = [0; 17];
     let mut jobj_parts: [*mut HSD_JObj; 17] = [::core::ptr::null_mut::<HSD_JObj>(); 17];
@@ -2080,12 +2103,14 @@ pub unsafe extern "C" fn mn_80230E38(mut arg0: ::core::ffi::c_int) -> *mut HSD_G
 pub unsafe extern "C" fn mn_80231634(
     mut arg0: *mut mn_80231634_t,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("mn_80231634");
     if arg0.is_null() {
         return 0 as ::core::ffi::c_int;
     }
     return (*arg0).x10;
 }
 pub unsafe extern "C" fn mn_8023164C() {
+    melee_core::ct!("mn_8023164C");
     let mut proc_0: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     let mut mode: s32 = 0;
     mn_804A04F0.prev_menu = mn_804A04F0.cur_menu;
@@ -2113,6 +2138,7 @@ pub unsafe extern "C" fn mn_8023164C() {
     HSD_GObj_80390CD4(mn_80230E38(mode as ::core::ffi::c_int) as *mut HSD_GObj);
 }
 pub unsafe extern "C" fn mn_80231714() {
+    melee_core::ct!("mn_80231714");
     let mut proc_0: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     let mut mode: s32 = 0;
     mn_804A04F0.prev_menu = mn_804A04F0.cur_menu;
@@ -2144,12 +2170,14 @@ pub unsafe extern "C" fn mn_802317E4(
     mut archive: *mut HSD_Archive,
     mut arg1: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("mn_802317E4");
     mn_80231804(archive, arg1);
 }
 pub unsafe extern "C" fn mn_80231804(
     mut archive: *mut HSD_Archive,
     mut arg1: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("mn_80231804");
     let mut temp_r3: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     let mut _pad: [::core::ffi::c_uchar; 4] = [0; 4];
     mn_804D6BC8.cooldown = 0x14 as u16_0;
@@ -2201,6 +2229,7 @@ pub unsafe extern "C" fn mn_80231804(
     lbAudioAx_80023F28(gmMainLib_8015ECB0());
 }
 pub unsafe extern "C" fn mn_80231F80(mut arg0: u8_0) -> bool_0 {
+    melee_core::ct!("mn_80231F80");
     if gm_GetCurrentGameMode() as ::core::ffi::c_int
         == GM_TOURNAMENT as ::core::ffi::c_int
         && arg0 as ::core::ffi::c_int == 1 as ::core::ffi::c_int

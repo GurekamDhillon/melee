@@ -142,6 +142,7 @@ unsafe fn hide_lb_child(jobj: *mut HSD_JObj, idx: i32) {
 // ---------------------------------------------------------------------------------------------
 
 pub unsafe extern "C" fn gmTitle_801A12C4() -> *mut HSD_GObj {
+    melee_core::ct!("gmTitle_801A12C4");
     let gobj = ext::GObj_Create(HSD_GOBJ_CLASS_UI as u16, 15, 0);
     let jobj = ext::HSD_JObjLoadJoint(model_desc_0.joint);
     ext::HSD_GObjObject_80390A70(gobj, ext::HSD_GObj_JObjKind, jobj as *mut c_void);
@@ -158,6 +159,7 @@ pub unsafe extern "C" fn gmTitle_801A12C4() -> *mut HSD_GObj {
 
 /// Animation callback for background.
 pub unsafe extern "C" fn gmTitle_801A146C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("gmTitle_801A146C");
     ext::mn_8022ED6C(gobj_jobj(gobj), addr_of_mut!(loop_settings_1));
 }
 
@@ -173,6 +175,7 @@ unsafe fn isActiveTitle() -> bool {
 
 /// Set up title screen animated background.
 pub unsafe extern "C" fn fn_801A1498_inline() {
+    melee_core::ct!("fn_801A1498_inline");
     let gobj = ext::GObj_Create(HSD_GOBJ_CLASS_UI as u16, 15, 0);
     let jobj = ext::HSD_JObjLoadJoint(model_desc_1.joint);
     ext::HSD_GObjObject_80390A70(gobj, ext::HSD_GObj_JObjKind, jobj as *mut c_void);
@@ -188,6 +191,7 @@ pub unsafe extern "C" fn fn_801A1498_inline() {
 }
 
 pub unsafe extern "C" fn fn_801A1498(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801A1498");
     let jobj = gobj_jobj(gobj);
     if ext::gm_804D67EC > 5400 {
         ext::mn_8022ED6C(jobj, addr_of_mut!(loop_settings_0));
@@ -205,6 +209,7 @@ pub unsafe extern "C" fn fn_801A1498(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn gmTitle_801A1630(gobj: *mut HSD_GObj) {
+    melee_core::ct!("gmTitle_801A1630");
     ext::mn_8022ED6C(gobj_jobj(gobj), addr_of_mut!(loop_settings_0));
 }
 
@@ -217,6 +222,7 @@ unsafe fn isEmblemUnlocked() -> bool {
 }
 
 pub unsafe extern "C" fn gmTitle_801A165C() -> *mut HSD_GObj {
+    melee_core::ct!("gmTitle_801A165C");
     let gobj = ext::GObj_Create(HSD_GOBJ_CLASS_UI as u16, 15, 0);
     let jobj = ext::HSD_JObjLoadJoint(model_desc_0.joint);
     let kind = ext::HSD_GObj_JObjKind;
@@ -250,6 +256,7 @@ pub unsafe extern "C" fn gmTitle_801A165C() -> *mut HSD_GObj {
 }
 
 pub unsafe extern "C" fn gmTitle_801A1814(gobj: *mut HSD_GObj, _unused: i32) {
+    melee_core::ct!("gmTitle_801A1814");
     if ext::HSD_CObjSetCurrent((*gobj).hsd_obj as *mut HSD_CObj) != 0 {
         ext::HSD_GObj_80390ED0(gobj, 0x7);
         ext::HSD_CObjEndCurrent();
@@ -257,6 +264,7 @@ pub unsafe extern "C" fn gmTitle_801A1814(gobj: *mut HSD_GObj, _unused: i32) {
 }
 
 pub unsafe extern "C" fn gmTitle_801A185C() {
+    melee_core::ct!("gmTitle_801A185C");
     let gobj = ext::GObj_Create(HSD_GOBJ_CLASS_CAMERA as u16, 20, 0);
     let cobj = ext::lb_80013B14(cobj_desc);
     ext::HSD_GObjObject_80390A70(gobj, ext::HSD_GObj_CameraKind, cobj as *mut c_void);
@@ -265,6 +273,7 @@ pub unsafe extern "C" fn gmTitle_801A185C() {
 }
 
 pub unsafe extern "C" fn gmTitle_801A18D4(gobj: *mut HSD_GObj, _unused: i32) {
+    melee_core::ct!("gmTitle_801A18D4");
     let erase_color: GXColor = (*fog_desc).color;
     if ext::HSD_CObjSetCurrent((*gobj).hsd_obj as *mut HSD_CObj) != 0 {
         ext::HSD_SetEraseColor(erase_color.r, erase_color.g, erase_color.b, erase_color.a);
@@ -274,6 +283,7 @@ pub unsafe extern "C" fn gmTitle_801A18D4(gobj: *mut HSD_GObj, _unused: i32) {
 }
 
 pub unsafe extern "C" fn gmTitle_801A1944() {
+    melee_core::ct!("gmTitle_801A1944");
     let gobj = ext::GObj_Create(HSD_GOBJ_CLASS_CAMERA as u16, 20, 0);
     let cobj = ext::lb_80013B14(cobj_desc);
     ext::HSD_GObjObject_80390A70(gobj, ext::HSD_GObj_CameraKind, cobj as *mut c_void);
@@ -281,6 +291,7 @@ pub unsafe extern "C" fn gmTitle_801A1944() {
 }
 
 pub unsafe extern "C" fn gmTitle_801A19AC() {
+    melee_core::ct!("gmTitle_801A19AC");
     let gobj = ext::GObj_Create(HSD_GOBJ_CLASS_LIGHT as u16, 3, 128);
     let lobj = ext::lb_80011AC4(list_list);
     ext::HSD_GObjObject_80390A70(gobj, ext::HSD_GObj_LightKind as u8, lobj as *mut c_void);
@@ -288,10 +299,12 @@ pub unsafe extern "C" fn gmTitle_801A19AC() {
 }
 
 pub unsafe extern "C" fn gmTitle_801A1A18(gobj: *mut HSD_GObj) {
+    melee_core::ct!("gmTitle_801A1A18");
     ext::HSD_FogInterpretAnim((*gobj).hsd_obj as *mut HSD_Fog);
 }
 
 pub unsafe extern "C" fn gmTitle_801A1A3C() -> *mut HSD_GObj {
+    melee_core::ct!("gmTitle_801A1A3C");
     let gobj = ext::GObj_Create(HSD_GOBJ_CLASS_FOG as u16, 3, 0);
     let fog = ext::HSD_FogLoadDesc(fog_desc);
     ext::HSD_GObjObject_80390A70(gobj, ext::HSD_GObj_FogKind as u8, fog as *mut c_void);
@@ -301,6 +314,7 @@ pub unsafe extern "C" fn gmTitle_801A1A3C() -> *mut HSD_GObj {
 }
 
 pub unsafe extern "C" fn gmTitle_801A1AC0() -> *mut HSD_Archive {
+    melee_core::ct!("gmTitle_801A1AC0");
     let dat = b"GmTtAll.dat\0";
     let usd = b"GmTtAll.usd\0";
     let p = |s: &'static [u8]| s.as_ptr() as usize as u64;
@@ -339,6 +353,7 @@ pub unsafe extern "C" fn gmTitle_801A1AC0() -> *mut HSD_Archive {
 }
 
 pub unsafe extern "C" fn gm_Scene_Title_OnFrame() {
+    melee_core::ct!("gm_Scene_Title_OnFrame");
     let input = ext::gm_GetButtonsTriggered(4) as i32;
     if countdown_timer != 0 {
         countdown_timer -= 1;
@@ -388,6 +403,7 @@ pub unsafe extern "C" fn gm_Scene_Title_OnFrame() {
 /// Converts ASCII to the Shift-JIS full-width run the SIS text renderer takes; returns the
 /// position of the terminator.
 pub unsafe extern "C" fn gmTitle_801A1D38(src: *const c_char, dst: *mut c_char) -> *mut c_char {
+    melee_core::ct!("gmTitle_801A1D38");
     let mut src = src;
     let mut dst = dst;
     while *src != 0 {
@@ -420,6 +436,7 @@ pub unsafe extern "C" fn gmTitle_801A1D38(src: *const c_char, dst: *mut c_char) 
 }
 
 pub unsafe extern "C" fn gm_Scene_Title_OnEnter(_unused: *mut c_void) {
+    melee_core::ct!("gm_Scene_Title_OnEnter");
     ext::lbAudioAx_800236DC();
     countdown_timer = 20;
     frame_count = 0;

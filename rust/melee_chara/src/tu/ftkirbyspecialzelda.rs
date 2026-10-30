@@ -54,6 +54,7 @@ unsafe fn set_effect_hitlag_callbacks(fp: *mut Fighter) {
 
 /// `ftKb_SpecialNZd_Helper` (static inline): clear the reflect state, load the gravity delay.
 pub fn ftKb_SpecialNZd_Helper(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialNZd_Helper");
     unsafe {
         let fp = fpp(gobj);
         let attributes = da(fp);
@@ -64,6 +65,7 @@ pub fn ftKb_SpecialNZd_Helper(gobj: *mut HSD_GObj) {
 
 /// `fn_80105A34` (static): ground bubble effect on the Kirby root joint, spawned once.
 pub fn fn_80105A34(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80105A34");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).x2219_b0() == 0 {
@@ -78,6 +80,7 @@ pub fn fn_80105A34(gobj: *mut HSD_GObj) {
 
 /// `fn_80105AB0` (static): the aerial variant, spawned once.
 pub fn fn_80105AB0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80105AB0");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).x2219_b0() == 0 {
@@ -91,15 +94,18 @@ pub fn fn_80105AB0(gobj: *mut HSD_GObj) {
 
 /// `fn_80105A34` as a Fighter callback entry (`accessory4_cb`).
 pub unsafe extern "C" fn cb_fn_80105A34(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_80105A34");
     fn_80105A34(g);
 }
 
 /// `fn_80105AB0` as a Fighter callback entry (`accessory4_cb`).
 pub unsafe extern "C" fn cb_fn_80105AB0(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_80105AB0");
     fn_80105AB0(g);
 }
 
 pub fn ftKb_SpecialNZd_80105B2C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialNZd_80105B2C");
     unsafe {
         let fp = fpp(gobj);
         st::Fighter_ChangeMotionState(gobj, ftKb_MS_ZdSpecialN as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -110,6 +116,7 @@ pub fn ftKb_SpecialNZd_80105B2C(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_SpecialNZd_80105BA8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialNZd_80105BA8");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -136,6 +143,7 @@ unsafe fn reflect_anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_ZdSpecialN_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_ZdSpecialN_Anim");
     unsafe {
         reflect_anim(gobj);
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -145,6 +153,7 @@ pub fn ftKb_ZdSpecialN_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_ZdSpecialAirN_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_ZdSpecialAirN_Anim");
     unsafe {
         reflect_anim(gobj);
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -153,10 +162,11 @@ pub fn ftKb_ZdSpecialAirN_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftKb_ZdSpecialN_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftKb_ZdSpecialAirN_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftKb_ZdSpecialN_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftKb_ZdSpecialN_IASA");}
+pub fn ftKb_ZdSpecialAirN_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftKb_ZdSpecialAirN_IASA");}
 
 pub fn ftKb_ZdSpecialAirN_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_ZdSpecialAirN_Phys");
     unsafe {
         let fp = fpp(gobj);
         let var1 = (*fp).mv.zd.specialn.x0;
@@ -172,12 +182,14 @@ pub fn ftKb_ZdSpecialAirN_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_ZdSpecialN_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_ZdSpecialN_Coll");
     if st::ft_80082708(gobj) == GA_Ground as i32 {
         ftKb_SpecialNSk_80105E8C(gobj);
     }
 }
 
 pub fn ftKb_ZdSpecialAirN_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_ZdSpecialAirN_Coll");
     if st::ft_80081D0C(gobj) != GA_Ground as i32 {
         ftKb_SpecialNSk_80105F3C(gobj);
     }
@@ -196,6 +208,7 @@ unsafe fn after_swap(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_SpecialNSk_80105E8C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialNSk_80105E8C");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, ftKb_MS_ZdSpecialAirN as i32, ftZd_MF_SpecialN_Coll);
@@ -204,6 +217,7 @@ pub fn ftKb_SpecialNSk_80105E8C(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_SpecialNSk_80105F3C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialNSk_80105F3C");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, ftKb_MS_ZdSpecialN as i32, ftZd_MF_SpecialN_Coll);

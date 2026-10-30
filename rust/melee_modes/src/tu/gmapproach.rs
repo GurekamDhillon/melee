@@ -182,6 +182,7 @@ pub mod ext {
 
 /// `static void fn_801AD920(HSD_GObj* gobj)`: the idle step of the approach models (the GX proc).
 pub unsafe extern "C" fn fn_801AD920(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801AD920");
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let var_r3: *mut HSD_JObj = if (*gobj).hsd_obj.is_null() { core::ptr::null_mut() } else { (*jobj).child };
     let var_r4: *mut HSD_JObj = if var_r3.is_null() { core::ptr::null_mut() } else { (*var_r3).next };
@@ -220,6 +221,7 @@ pub unsafe extern "C" fn fn_801AD920(gobj: *mut HSD_GObj) {
 
 /// `static void gm_801ADB04(void)`: loads the approach scene (camera, light, model) and starts its proc.
 pub fn gm_801ADB04() {
+    melee_core::ct!("gm_801ADB04");
     unsafe {
         let mut spc: *mut SceneDesc = core::ptr::null_mut();
         GM_80480D98.x0 = ext::lbArchive_80016DBC("NtAppro", &mut spc, "ScNtcApproach_scene_data", 0);
@@ -249,6 +251,7 @@ pub fn gm_801ADB04() {
 
 /// `gm_Scene_Approach_OnFrame`: after 180 frames, the start button (or A) leaves the scene.
 pub fn gm_Scene_Approach_OnFrame() {
+    melee_core::ct!("gm_Scene_Approach_OnFrame");
     unsafe {
         let old = GM_80480D98.xC;
         GM_80480D98.xC = GM_80480D98.xC.wrapping_add(1);
@@ -260,6 +263,7 @@ pub fn gm_Scene_Approach_OnFrame() {
 
 /// `gm_Scene_Approach_OnEnter(arg0)`: arg0[0] is the scene kind (clamped to the approach set), arg0[1] the pad.
 pub fn gm_Scene_Approach_OnEnter(arg0_: *mut c_void) {
+    melee_core::ct!("gm_Scene_Approach_OnEnter");
     unsafe {
         let arg0 = arg0_ as *const i8;
         gm_801ADB04();
@@ -289,6 +293,7 @@ pub fn gm_Scene_Approach_OnEnter(arg0_: *mut c_void) {
 
 /// `gm_Scene_Approach_OnExit(exit_data)`: unload the scene archive and stop its audio.
 pub fn gm_Scene_Approach_OnExit(_exit_data: *mut c_void) {
+    melee_core::ct!("gm_Scene_Approach_OnExit");
     unsafe {
         ext::lbArchive_80016EFC(GM_80480D98.x0);
         ext::lbAudioAx_800236DC();

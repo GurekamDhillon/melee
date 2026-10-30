@@ -208,28 +208,33 @@ pub const ftKb_MF_SpecialN_LoopRumble_Coll: u32 = ftKb_MF_SpecialN_Loop_Coll | F
 
 #[inline(always)]
 pub(crate) unsafe fn fpp(gobj: G) -> *mut Fighter {
+    melee_core::ct!("fpp");
     (*gobj).user_data as *mut Fighter
 }
 
 #[inline(always)]
 pub(crate) unsafe fn da_of(fp: *mut Fighter) -> *const ftKb_DatAttrs {
+    melee_core::ct!("da_of");
     (*fp).dat_attrs as *const ftKb_DatAttrs
 }
 
 #[inline(always)]
 pub(crate) unsafe fn change_ms(gobj: G, ms: i32, flags: u32) {
+    melee_core::ct!("change_ms");
     st::Fighter_ChangeMotionState(gobj, ms, flags, 0.0, 1.0, 0.0, core::ptr::null_mut());
 }
 
 /// `Fighter_SetEffectHitlagCallbacks` (ft/inlines.h).
 #[inline(always)]
 pub(crate) unsafe fn set_effect_hitlag_callbacks(fp: *mut Fighter) {
+    melee_core::ct!("set_effect_hitlag_callbacks");
     (*fp).pre_hitlag_cb = Some(crate::chars::cb::ext__efLib_PauseAll);
     (*fp).post_hitlag_cb = Some(crate::chars::cb::ext__efLib_ResumeAll);
 }
 
 /// `ftKb_SpecialN_set_cbs` (ftKirby/inlines.h): death2 / take-damage callbacks of the swallow.
 pub fn ftKb_SpecialN_set_cbs(gobj: G) {
+    melee_core::ct!("ftKb_SpecialN_set_cbs");
     unsafe {
         let fp = fpp(gobj);
         (*fp).death2_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE74C);
@@ -240,6 +245,7 @@ pub fn ftKb_SpecialN_set_cbs(gobj: G) {
 /// `FTKB_IS_KIRBY` (ft/forward.h, TARGET_PC).
 #[allow(non_snake_case)]
 pub fn FTKB_IS_KIRBY(kind: i32) -> bool {
+    melee_core::ct!("FTKB_IS_KIRBY");
     melee_fighter::tu::ftco_800c7220::ftkb_is_kirby(kind as FighterKind)
 }
 
@@ -247,30 +253,39 @@ pub fn FTKB_IS_KIRBY(kind: i32) -> bool {
 // Callbacks stored in Fighter fields (extern "C" entries of the Rust ports below).
 // ---------------------------------------------------------------------------------------------
 pub unsafe extern "C" fn cb_fn_800F6178(g: G) {
+    melee_core::ct!("cb_fn_800F6178");
     fn_800F6178(g)
 }
 pub unsafe extern "C" fn cb_fn_800F6210(g: G) {
+    melee_core::ct!("cb_fn_800F6210");
     fn_800F6210(g)
 }
 pub unsafe extern "C" fn cb_fn_800F6280(g: G) {
+    melee_core::ct!("cb_fn_800F6280");
     fn_800F6280(g)
 }
 pub unsafe extern "C" fn cb_fn_800F6318(g: G) {
+    melee_core::ct!("cb_fn_800F6318");
     fn_800F6318(g)
 }
 pub unsafe extern "C" fn cb_ftCo_800BD1DC(g: G, victim: G) {
+    melee_core::ct!("cb_ftCo_800BD1DC");
     ext::ftCo_800BD1DC(g, victim)
 }
 pub unsafe extern "C" fn cb_fn_800F6588(g: G) {
+    melee_core::ct!("cb_fn_800F6588");
     fn_800F6588(g)
 }
 pub unsafe extern "C" fn cb_fn_800F6638(g: G) {
+    melee_core::ct!("cb_fn_800F6638");
     fn_800F6638(g)
 }
 pub unsafe extern "C" fn cb_fn_800F66E8(g: G) {
+    melee_core::ct!("cb_fn_800F66E8");
     fn_800F66E8(g)
 }
 pub unsafe extern "C" fn cb_fn_800F6798(g: G) {
+    melee_core::ct!("cb_fn_800F6798");
     fn_800F6798(g)
 }
 
@@ -283,48 +298,62 @@ pub unsafe extern "C" fn cb_fn_800F6798(g: G) {
 // C-signature entries over the root module's Fighter-only halves.
 // ---------------------------------------------------------------------------------------------
 pub fn ftKb_SpecialN_800F58AC(gobj: G, victim_self_vel: &mut Vec3, victim_facing_dir: f32) -> f32 {
+    melee_core::ct!("ftKb_SpecialN_800F58AC");
     unsafe { half::ftKb_SpecialN_800F58AC(&*fpp(gobj), victim_self_vel, victim_facing_dir) }
 }
 /// Returns `floor.flags & 0x100` (an int: MSL `bool` is int).
 pub fn ftKb_SpecialN_800F597C(gobj: G) -> i32 {
+    melee_core::ct!("ftKb_SpecialN_800F597C");
     unsafe { half::ftKb_SpecialN_800F597C(&*fpp(gobj)) }
 }
 pub fn ftKb_SpecialN_800F5A04(gobj: G, arg1: f32) {
+    melee_core::ct!("ftKb_SpecialN_800F5A04");
     unsafe { half::ftKb_SpecialN_800F5A04(&mut *fpp(gobj), arg1) }
 }
 pub fn ftKb_SpecialN_800F5A38(gobj: G, victim_fp: *mut Fighter) -> bool {
+    melee_core::ct!("ftKb_SpecialN_800F5A38");
     unsafe { half::ftKb_SpecialN_800F5A38(&*fpp(gobj), &*victim_fp) }
 }
 pub fn ftKb_SpecialN_800F5A60(gobj: G) -> f32 {
+    melee_core::ct!("ftKb_SpecialN_800F5A60");
     unsafe { half::ftKb_SpecialN_800F5A60(&*fpp(gobj)) }
 }
 pub fn ftKb_SpecialN_800F5A88(gobj: G) -> f32 {
+    melee_core::ct!("ftKb_SpecialN_800F5A88");
     unsafe { half::ftKb_SpecialN_800F5A88(&*fpp(gobj)) }
 }
 pub fn ftKb_SpecialN_800F5AB0(gobj: G) -> f32 {
+    melee_core::ct!("ftKb_SpecialN_800F5AB0");
     unsafe { half::ftKb_SpecialN_800F5AB0(&*fpp(gobj)) }
 }
 pub fn ftKb_SpecialN_800F5AF0(gobj: G) -> f32 {
+    melee_core::ct!("ftKb_SpecialN_800F5AF0");
     unsafe { half::ftKb_SpecialN_800F5AF0(&*fpp(gobj)) }
 }
 pub fn ftKb_SpecialN_800F5B00(gobj: G) -> f32 {
+    melee_core::ct!("ftKb_SpecialN_800F5B00");
     unsafe { half::ftKb_SpecialN_800F5B00(&*fpp(gobj)) }
 }
 pub fn ftKb_SpecialN_800F5B10(gobj: G) -> f32 {
+    melee_core::ct!("ftKb_SpecialN_800F5B10");
     unsafe { half::ftKb_SpecialN_800F5B10(&*fpp(gobj)) }
 }
 pub fn ftKb_SpecialN_800F5B20(gobj: G, out: &mut Vec2) {
+    melee_core::ct!("ftKb_SpecialN_800F5B20");
     unsafe { half::ftKb_SpecialN_800F5B20(&*fpp(gobj), out) }
 }
 pub fn ftKb_SpecialN_800F5B3C(gobj: G) -> f32 {
+    melee_core::ct!("ftKb_SpecialN_800F5B3C");
     unsafe { half::ftKb_SpecialN_800F5B3C(&*fpp(gobj)) }
 }
 pub fn ftKb_SpecialN_800F5B4C(gobj: G) -> f32 {
+    melee_core::ct!("ftKb_SpecialN_800F5B4C");
     unsafe { half::ftKb_SpecialN_800F5B4C(&*fpp(gobj)) }
 }
 
 /// `ftKb_SpecialN_800F58D8`: spit-out velocity of a swallowed fighter (star); returns gravity.
 pub fn ftKb_SpecialN_800F58D8(gobj: G, victim_self_vel: &mut Vec3, victim_facing_dir: f32) -> f32 {
+    melee_core::ct!("ftKb_SpecialN_800F58D8");
     unsafe {
         let fp = fpp(gobj);
         let da = &*da_of(fp);
@@ -338,6 +367,7 @@ pub fn ftKb_SpecialN_800F58D8(gobj: G, victim_self_vel: &mut Vec3, victim_facing
 }
 
 pub fn ftKb_SpecialN_800F5954(gobj: G) {
+    melee_core::ct!("ftKb_SpecialN_800F5954");
     unsafe {
         let fp = fpp(gobj);
         ext::mpUpdateFloorSkip(&mut (*fp).coll_data);
@@ -345,6 +375,7 @@ pub fn ftKb_SpecialN_800F5954(gobj: G) {
 }
 
 pub fn ftKb_SpecialN_800F598C(gobj: G, arg1: i32) {
+    melee_core::ct!("ftKb_SpecialN_800F598C");
     unsafe {
         let fp = fpp(gobj);
         let da = &*da_of(fp);
@@ -358,6 +389,7 @@ pub fn ftKb_SpecialN_800F598C(gobj: G, arg1: i32) {
 
 /// `ftKb_KirbyFtData` (TARGET_PC): the Kirby ftData, or the first m-ex Kirby-based fighter's.
 pub fn ftKb_KirbyFtData() -> *mut ftData {
+    melee_core::ct!("ftKb_KirbyFtData");
     unsafe {
         let list = &melee_fighter::tu::ftdata::gFtDataList;
         if !list[Ft_Kind_Kirby as usize].is_null() {
@@ -379,21 +411,26 @@ unsafe fn ext_attr() -> *const ftKb_DatAttrs {
 }
 
 pub fn ftKb_SpecialN_800F5A70() -> f32 {
+    melee_core::ct!("ftKb_SpecialN_800F5A70");
     unsafe { (*ext_attr()).specialn_gravity_of_inhaled }
 }
 pub fn ftKb_SpecialN_800F5A98() -> f32 {
+    melee_core::ct!("ftKb_SpecialN_800F5A98");
     unsafe { (*ext_attr()).specialn_spit_spin }
 }
 pub fn ftKb_SpecialN_800F5AC0() -> f32 {
+    melee_core::ct!("ftKb_SpecialN_800F5AC0");
     unsafe { (*ext_attr()).specialn_star_duration_divisor }
 }
 pub fn ftKb_SpecialN_800F5AD8() -> f32 {
+    melee_core::ct!("ftKb_SpecialN_800F5AD8");
     unsafe { (*ext_attr()).specialn_star_deceleration_rate }
 }
 
 /// `ftKb_SpecialN_800F5B5C`: where the swallowed target is held (`cur_pos` + offset * facing).
 /// The x add is a fused site in the shipping build (`fmadds(off, facing, cur_pos.x)`).
 pub fn ftKb_SpecialN_800F5B5C(gobj: G, output: &mut Vec3) {
+    melee_core::ct!("ftKb_SpecialN_800F5B5C");
     unsafe {
         let fp = fpp(gobj);
         let da = &*da_of(fp);
@@ -405,6 +442,7 @@ pub fn ftKb_SpecialN_800F5B5C(gobj: G, output: &mut Vec3) {
 
 /// `ftKb_SpecialN_800F5BA4`: roll for losing the copy ability on hit.
 pub fn ftKb_SpecialN_800F5BA4(fp: *mut Fighter) {
+    melee_core::ct!("ftKb_SpecialN_800F5BA4");
     unsafe {
         let da = &*da_of(fp);
         if FTKB_IS_KIRBY((*fp).kind as i32)
@@ -420,6 +458,7 @@ pub fn ftKb_SpecialN_800F5BA4(fp: *mut Fighter) {
 }
 
 pub fn ftKb_SpecialN_800F5C34(fp: *mut Fighter) {
+    melee_core::ct!("ftKb_SpecialN_800F5C34");
     unsafe {
         let da = &*da_of(fp);
         if FTKB_IS_KIRBY((*fp).kind as i32)
@@ -446,6 +485,7 @@ pub fn ftKb_SpecialN_800F5C34(fp: *mut Fighter) {
 
 /// `ftKb_SpecialN_800F5D04`: lose the copy ability (and spawn the ability star when `arg1`).
 pub fn ftKb_SpecialN_800F5D04(gobj: G, arg1: bool) {
+    melee_core::ct!("ftKb_SpecialN_800F5D04");
     unsafe {
         let fp = fpp(gobj);
         ext::ftKb_SpecialN_800F19AC(gobj);
@@ -473,6 +513,7 @@ unsafe fn inhale_pos(fp: *mut Fighter, da: &ftKb_DatAttrs) -> Vec3 {
 }
 
 pub fn ftKb_SpecialN_800F5DE8(gobj: G) {
+    melee_core::ct!("ftKb_SpecialN_800F5DE8");
     unsafe {
         let fp = fpp(gobj);
         let da = &*da_of(fp);
@@ -489,6 +530,7 @@ pub fn ftKb_SpecialN_800F5DE8(gobj: G) {
 }
 
 pub fn ftKb_SpecialN_800F5EA8(gobj: G) {
+    melee_core::ct!("ftKb_SpecialN_800F5EA8");
     unsafe {
         let fp = fpp(gobj);
         let da = &*da_of(fp);
@@ -526,14 +568,17 @@ unsafe fn inhale_enter(gobj: G, ms: i32, capture_cb: unsafe extern "C" fn(G), re
 }
 
 pub fn ftKb_SpecialN_800F5F68(gobj: G) {
+    melee_core::ct!("ftKb_SpecialN_800F5F68");
     unsafe { inhale_enter(gobj, ftKb_MS_SpecialN as i32, cb_fn_800F6210, cb_fn_800F6178) }
 }
 
 pub fn ftKb_SpecialN_800F6070(gobj: G) {
+    melee_core::ct!("ftKb_SpecialN_800F6070");
     unsafe { inhale_enter(gobj, ftKb_MS_SpecialAirN as i32, cb_fn_800F6318, cb_fn_800F6280) }
 }
 
 pub fn fn_800F6178(gobj: G) {
+    melee_core::ct!("fn_800F6178");
     unsafe {
         let fp = fpp(gobj);
         ext::it_802F23EC((*fp).target_item_gobj, gobj, -(*fp).facing_dir);
@@ -546,6 +591,7 @@ pub fn fn_800F6178(gobj: G) {
 }
 
 pub fn fn_800F6210(gobj: G) {
+    melee_core::ct!("fn_800F6210");
     unsafe {
         let fp = fpp(gobj);
         change_ms(gobj, ftKb_MS_SpecialNCapture0 as i32, 0x212);
@@ -556,6 +602,7 @@ pub fn fn_800F6210(gobj: G) {
 }
 
 pub fn fn_800F6280(gobj: G) {
+    melee_core::ct!("fn_800F6280");
     unsafe {
         let fp = fpp(gobj);
         ext::it_802F23EC((*fp).target_item_gobj, gobj, -(*fp).facing_dir);
@@ -568,6 +615,7 @@ pub fn fn_800F6280(gobj: G) {
 }
 
 pub fn fn_800F6318(gobj: G) {
+    melee_core::ct!("fn_800F6318");
     unsafe {
         let fp = fpp(gobj);
         change_ms(gobj, ftKb_MS_SpecialAirNCapture0 as i32, 0x212);
@@ -579,6 +627,7 @@ pub fn fn_800F6318(gobj: G) {
 
 /// `fn_800F64C8` (walk-anim callback of the Eat walk: `ftWalkCommon_800DFEC8`'s `arg_cb`).
 pub fn fn_800F64C8(gobj: G, anim_start: f32) {
+    melee_core::ct!("fn_800F64C8");
     unsafe {
         let fp = fpp(gobj);
         let ca = &(*fp).co_attrs;
@@ -601,6 +650,7 @@ pub fn fn_800F64C8(gobj: G, anim_start: f32) {
 }
 
 pub fn fn_800F6588(gobj: G) {
+    melee_core::ct!("fn_800F6588");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, ftKb_MS_SpecialAirN as i32, ftKb_MF_SpecialN_Loop_Coll);
@@ -612,6 +662,7 @@ pub fn fn_800F6588(gobj: G) {
 }
 
 pub fn fn_800F6638(gobj: G) {
+    melee_core::ct!("fn_800F6638");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_8007D7FC(&mut *fp);
@@ -624,6 +675,7 @@ pub fn fn_800F6638(gobj: G) {
 }
 
 pub fn fn_800F66E8(gobj: G) {
+    melee_core::ct!("fn_800F66E8");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_8007D5D4(&mut *fp);
@@ -636,6 +688,7 @@ pub fn fn_800F66E8(gobj: G) {
 }
 
 pub fn fn_800F6798(gobj: G) {
+    melee_core::ct!("fn_800F6798");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, ftKb_MS_SpecialNLoop as i32, ftKb_MF_SpecialN_LoopRumble_Coll);
@@ -652,6 +705,7 @@ pub fn fn_800F6798(gobj: G) {
 
 /// `ftKb_SpecialN_SetHitlagCb` (static inline).
 pub fn ftKb_SpecialN_SetHitlagCb(gobj: G, ms: i32, mf: u32) {
+    melee_core::ct!("ftKb_SpecialN_SetHitlagCb");
     unsafe {
         let fp = fpp(gobj);
         change_ms(gobj, ms, mf);
@@ -668,6 +722,7 @@ pub fn ftKb_SpecialN_SetThrowCb(
     release_cb: HSD_GObjEvent,
     throw_cb: HSD_GObjInteraction,
 ) {
+    melee_core::ct!("ftKb_SpecialN_SetThrowCb");
     unsafe {
         let fp = fpp(gobj);
         ext::ftCommon_8007E2D0(fp, mask, capture_cb, release_cb, throw_cb);
@@ -693,18 +748,21 @@ unsafe fn inhale_anim(gobj: G, ms: i32, capture_cb: unsafe extern "C" fn(G), rel
 }
 
 pub fn ftKb_SpecialN_Anim(gobj: G) {
+    melee_core::ct!("ftKb_SpecialN_Anim");
     unsafe { inhale_anim(gobj, 0x162, cb_fn_800F6210, cb_fn_800F6178) }
 }
 
 pub fn ftKb_SpecialAirN_Anim(gobj: G) {
+    melee_core::ct!("ftKb_SpecialAirN_Anim");
     unsafe { inhale_anim(gobj, 0x174, cb_fn_800F6318, cb_fn_800F6280) }
 }
 
-pub fn ftKb_SpecialNLoop_Anim(_gobj: G) {}
-pub fn ftKb_SpecialAirNLoop_Anim(_gobj: G) {}
+pub fn ftKb_SpecialNLoop_Anim(_gobj: G) { melee_core::ct!("ftKb_SpecialNLoop_Anim");}
+pub fn ftKb_SpecialAirNLoop_Anim(_gobj: G) { melee_core::ct!("ftKb_SpecialAirNLoop_Anim");}
 
 /// `ftKb_SpecialNCapture_EnterState` (static inline).
 pub fn ftKb_SpecialNCapture_EnterState(gobj: G, ms: i32) {
+    melee_core::ct!("ftKb_SpecialNCapture_EnterState");
     unsafe {
         let fp = fpp(gobj);
         change_ms(gobj, ms, 0x10);
@@ -714,6 +772,7 @@ pub fn ftKb_SpecialNCapture_EnterState(gobj: G, ms: i32) {
 }
 
 pub fn ftKb_SpecialNCapture0_Anim(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNCapture0_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = &*da_of(fp);
@@ -730,6 +789,7 @@ pub fn ftKb_SpecialNCapture0_Anim(gobj: G) {
 }
 
 pub fn ftKb_SpecialNCapture_Anim(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNCapture_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = &*da_of(fp);
@@ -746,14 +806,17 @@ pub fn ftKb_SpecialNCapture_Anim(gobj: G) {
 }
 
 pub fn ftKb_SpecialNCapture1_Anim(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNCapture1_Anim");
     ftKb_SpecialN_800F5DE8(gobj);
 }
 
 pub fn ftKb_SpecialAirNCapture_Anim(gobj: G) {
+    melee_core::ct!("ftKb_SpecialAirNCapture_Anim");
     ftKb_SpecialN_800F5EA8(gobj);
 }
 
 pub fn ftKb_SpecialAirNCaptured_Anim(gobj: G) {
+    melee_core::ct!("ftKb_SpecialAirNCaptured_Anim");
     unsafe {
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
             let fp = fpp(gobj);
@@ -766,11 +829,12 @@ pub fn ftKb_SpecialAirNCaptured_Anim(gobj: G) {
     }
 }
 
-pub fn ftKb_EatWait_Anim(_gobj: G) {}
-pub fn ftKb_SpecialAirNCaptureWait_Anim(_gobj: G) {}
+pub fn ftKb_EatWait_Anim(_gobj: G) { melee_core::ct!("ftKb_EatWait_Anim");}
+pub fn ftKb_SpecialAirNCaptureWait_Anim(_gobj: G) { melee_core::ct!("ftKb_SpecialAirNCaptureWait_Anim");}
 
 /// `ftKb_SpecialNSpit_Anim_inline` (static inline).
 pub fn ftKb_SpecialNSpit_Anim_inline(gobj: G, victim: G) {
+    melee_core::ct!("ftKb_SpecialNSpit_Anim_inline");
     unsafe {
         if !victim.is_null() {
             let fp = fpp(gobj);
@@ -808,6 +872,7 @@ unsafe fn spit_item(gobj: G, fp: *mut Fighter) {
 }
 
 pub fn ftKb_SpecialNSpit0_Anim(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNSpit0_Anim");
     unsafe {
         let fp = fpp(gobj);
         spit_item(gobj, fp);
@@ -818,6 +883,7 @@ pub fn ftKb_SpecialNSpit0_Anim(gobj: G) {
 }
 
 pub fn ftKb_SpecialNSpit_Anim(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNSpit_Anim");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).cmd_vars[0] != 0 {
@@ -830,6 +896,7 @@ pub fn ftKb_SpecialNSpit_Anim(gobj: G) {
 }
 
 pub fn ftKb_SpecialNSpit1_Anim(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNSpit1_Anim");
     unsafe {
         let fp = fpp(gobj);
         spit_item(gobj, fp);
@@ -840,6 +907,7 @@ pub fn ftKb_SpecialNSpit1_Anim(gobj: G) {
 }
 
 pub fn ftKb_SpecialAirNSpit_Anim(gobj: G) {
+    melee_core::ct!("ftKb_SpecialAirNSpit_Anim");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).cmd_vars[0] != 0 {
@@ -865,6 +933,7 @@ unsafe fn drink_item(fp: *mut Fighter) {
 }
 
 pub fn ftKb_SpecialNDrink0_Anim(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNDrink0_Anim");
     unsafe {
         drink_item(fpp(gobj));
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -875,6 +944,7 @@ pub fn ftKb_SpecialNDrink0_Anim(gobj: G) {
 
 /// `ftKb_SpecialNDrink_Anim_inline` (static inline).
 pub fn ftKb_SpecialNDrink_Anim_inline(gobj: G, victim_gobj: G) {
+    melee_core::ct!("ftKb_SpecialNDrink_Anim_inline");
     unsafe {
         let fp = fpp(gobj);
         (*fp).u.kb.xE0 = ext::ftCo_800BD9E0(gobj, victim_gobj);
@@ -896,6 +966,7 @@ unsafe fn drink_fighter(gobj: G, fp: *mut Fighter) {
 }
 
 pub fn ftKb_SpecialNDrink_Anim(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNDrink_Anim");
     unsafe {
         drink_fighter(gobj, fpp(gobj));
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -905,6 +976,7 @@ pub fn ftKb_SpecialNDrink_Anim(gobj: G) {
 }
 
 pub fn ftKb_SpecialNDrink1_Anim(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNDrink1_Anim");
     unsafe {
         drink_item(fpp(gobj));
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -914,6 +986,7 @@ pub fn ftKb_SpecialNDrink1_Anim(gobj: G) {
 }
 
 pub fn ftKb_SpecialAirNDrink_Anim(gobj: G) {
+    melee_core::ct!("ftKb_SpecialAirNDrink_Anim");
     unsafe {
         drink_fighter(gobj, fpp(gobj));
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -923,6 +996,7 @@ pub fn ftKb_SpecialAirNDrink_Anim(gobj: G) {
 }
 
 pub fn ftKb_EatTurn_Anim(gobj: G) {
+    melee_core::ct!("ftKb_EatTurn_Anim");
     unsafe {
         let fp = fpp(gobj);
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -937,6 +1011,7 @@ pub fn ftKb_EatTurn_Anim(gobj: G) {
 }
 
 pub fn ftKb_SpecialAirNCaptureTurn_Anim(gobj: G) {
+    melee_core::ct!("ftKb_SpecialAirNCaptureTurn_Anim");
     unsafe {
         let fp = fpp(gobj);
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -951,10 +1026,12 @@ pub fn ftKb_SpecialAirNCaptureTurn_Anim(gobj: G) {
 }
 
 pub fn ftKb_EatWalk_Anim(gobj: G) {
+    melee_core::ct!("ftKb_EatWalk_Anim");
     ext::ftWalkCommon_800DFDDC(gobj);
 }
 
 pub fn ftKb_EatJump1_Anim(gobj: G) {
+    melee_core::ct!("ftKb_EatJump1_Anim");
     unsafe {
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
             let fp = fpp(gobj);
@@ -968,13 +1045,14 @@ pub fn ftKb_EatJump1_Anim(gobj: G) {
     }
 }
 
-pub fn ftKb_EatJump2_Anim(_gobj: G) {}
+pub fn ftKb_EatJump2_Anim(_gobj: G) { melee_core::ct!("ftKb_EatJump2_Anim");}
 
 // ---------------------------------------------------------------------------------------------
 // IASA callbacks
 // ---------------------------------------------------------------------------------------------
 
 pub fn ftKb_SpecialNLoop_IASA(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNLoop_IASA");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).u.kb.xE4 != 0 {
@@ -988,6 +1066,7 @@ pub fn ftKb_SpecialNLoop_IASA(gobj: G) {
 }
 
 pub fn ftKb_SpecialAirNLoop_IASA(gobj: G) {
+    melee_core::ct!("ftKb_SpecialAirNLoop_IASA");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).u.kb.xE4 != 0 {
@@ -1047,22 +1126,28 @@ unsafe fn wait_turn(gobj: G, ms: i32) -> bool {
 }
 
 pub fn ftKb_EatWait_ItemEat(gobj: G) -> bool {
+    melee_core::ct!("ftKb_EatWait_ItemEat");
     unsafe { wait_eat(gobj, (*fpp(gobj)).target_item_gobj, 0x170) }
 }
 pub fn ftKb_EatWait_ItemSpit(gobj: G) -> bool {
+    melee_core::ct!("ftKb_EatWait_ItemSpit");
     unsafe { wait_spit(gobj, (*fpp(gobj)).target_item_gobj, 0x172) }
 }
 pub fn ftKb_EatWait_FighterEat(gobj: G) -> bool {
+    melee_core::ct!("ftKb_EatWait_FighterEat");
     unsafe { wait_eat(gobj, (*fpp(gobj)).victim_gobj, 0x16F) }
 }
 pub fn ftKb_EatWait_FighterSpit(gobj: G) -> bool {
+    melee_core::ct!("ftKb_EatWait_FighterSpit");
     unsafe { wait_spit(gobj, (*fpp(gobj)).victim_gobj, 0x171) }
 }
 pub fn ftKb_EatWait_Turn(gobj: G) -> bool {
+    melee_core::ct!("ftKb_EatWait_Turn");
     unsafe { wait_turn(gobj, 0x16B) }
 }
 
 pub fn ftKb_EatWait_IASA(gobj: G) {
+    melee_core::ct!("ftKb_EatWait_IASA");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).u.kb.xF4_b0() != 0 {
@@ -1117,22 +1202,28 @@ pub fn ftKb_EatWait_IASA(gobj: G) {
 }
 
 pub fn ftKb_SpecialAirNCaptureWait_ItemEat(gobj: G) -> bool {
+    melee_core::ct!("ftKb_SpecialAirNCaptureWait_ItemEat");
     unsafe { wait_eat(gobj, (*fpp(gobj)).target_item_gobj, 0x17B) }
 }
 pub fn ftKb_SpecialAirNCaptureWait_ItemSpit(gobj: G) -> bool {
+    melee_core::ct!("ftKb_SpecialAirNCaptureWait_ItemSpit");
     unsafe { wait_spit(gobj, (*fpp(gobj)).target_item_gobj, 0x17D) }
 }
 pub fn ftKb_SpecialAirNCaptureWait_FighterEat(gobj: G) -> bool {
+    melee_core::ct!("ftKb_SpecialAirNCaptureWait_FighterEat");
     unsafe { wait_eat(gobj, (*fpp(gobj)).victim_gobj, 0x17A) }
 }
 pub fn ftKb_SpecialAirNCaptureWait_FighterSpit(gobj: G) -> bool {
+    melee_core::ct!("ftKb_SpecialAirNCaptureWait_FighterSpit");
     unsafe { wait_spit(gobj, (*fpp(gobj)).victim_gobj, 0x17C) }
 }
 pub fn ftKb_SpecialAirNCaptureWait_Turn(gobj: G) -> bool {
+    melee_core::ct!("ftKb_SpecialAirNCaptureWait_Turn");
     unsafe { wait_turn(gobj, 0x17E) }
 }
 
 pub fn ftKb_SpecialAirNCaptureWait_IASA(gobj: G) {
+    melee_core::ct!("ftKb_SpecialAirNCaptureWait_IASA");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).u.kb.xF4_b0() != 0 {
@@ -1155,6 +1246,7 @@ pub fn ftKb_SpecialAirNCaptureWait_IASA(gobj: G) {
 }
 
 pub fn ftKb_EatWalk_IASA(gobj: G) {
+    melee_core::ct!("ftKb_EatWalk_IASA");
     unsafe {
         let jump_input = ext::ftCo_Jump_GetInput(gobj);
         let var;
@@ -1185,6 +1277,7 @@ pub fn ftKb_EatWalk_IASA(gobj: G) {
 }
 
 pub fn ftKb_EatJump1_IASA(gobj: G) {
+    melee_core::ct!("ftKb_EatJump1_IASA");
     ext::ftCo_KneeBend_Check_ShortHop(gobj);
 }
 
@@ -1193,15 +1286,18 @@ pub fn ftKb_EatJump1_IASA(gobj: G) {
 // ---------------------------------------------------------------------------------------------
 
 pub fn ftKb_EatWalk_Phys(gobj: G) {
+    melee_core::ct!("ftKb_EatWalk_Phys");
     ext::ftWalkCommon_800E0060(gobj);
 }
 
 pub fn ftKb_EatJump2_Phys(gobj: G) {
+    melee_core::ct!("ftKb_EatJump2_Phys");
     ext::ftCo_Jump_Phys_Inner(gobj);
 }
 
 /// `ftKb_SpecialN_800F9090`: release the swallowed item when Kirby (without a hat) is hit.
 pub fn ftKb_SpecialN_800F9090(gobj: G) {
+    melee_core::ct!("ftKb_SpecialN_800F9090");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).target_item_gobj.is_null()

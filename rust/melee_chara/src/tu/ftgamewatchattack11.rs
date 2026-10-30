@@ -103,23 +103,28 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 
 /// `ftGw_Attack11_ItemGreenhouseSetup` as a Fighter callback entry (accessory4_cb).
 pub unsafe extern "C" fn cb_ftGw_Attack11_ItemGreenhouseSetup(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftGw_Attack11_ItemGreenhouseSetup");
     ftGw_Attack11_ItemGreenhouseSetup(g);
 }
 /// `ftGw_Attack11_DecideAction` as a Fighter callback entry (accessory4_cb).
 pub unsafe extern "C" fn cb_ftGw_Attack11_DecideAction(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftGw_Attack11_DecideAction");
     ftGw_Attack11_DecideAction(g);
 }
 /// `ftGw_Attack11_ItemGreenhouseEnterHitlag` as a Fighter callback entry (pre_hitlag_cb).
 pub unsafe extern "C" fn cb_ftGw_Attack11_ItemGreenhouseEnterHitlag(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftGw_Attack11_ItemGreenhouseEnterHitlag");
     ftGw_Attack11_ItemGreenhouseEnterHitlag(g);
 }
 /// `ftGw_Attack11_ItemGreenhouseExitHitlag` as a Fighter callback entry (post_hitlag_cb).
 pub unsafe extern "C" fn cb_ftGw_Attack11_ItemGreenhouseExitHitlag(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftGw_Attack11_ItemGreenhouseExitHitlag");
     ftGw_Attack11_ItemGreenhouseExitHitlag(g);
 }
 
 /// Create the Insecticide Spray item.
 pub fn ftGw_Attack11_ItemGreenhouseSetup(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_Attack11_ItemGreenhouseSetup");
     unsafe {
         let mut sp10 = Vec { x: 0.0, y: 0.0, z: 0.0 };
         let fp = fpp(gobj);
@@ -147,6 +152,7 @@ pub fn ftGw_Attack11_ItemGreenhouseSetup(gobj: *mut HSD_GObj) {
 
 /// Decide the jab attack: tell the sprayer which jab state G&W is in.
 pub fn ftGw_Attack11_DecideAction(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_Attack11_DecideAction");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.gw.x224C_greenhouseGObj.is_null() {
@@ -177,6 +183,7 @@ pub fn ftGw_Attack11_DecideAction(gobj: *mut HSD_GObj) {
 
 /// Set flags on the Insecticide Sprayer (clear the pointer after ending its hitlag).
 pub fn ftGw_Attack11_ItemGreenhouseSetFlag(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_Attack11_ItemGreenhouseSetFlag");
     unsafe {
         let fp = fpp(gobj);
         ftGw_Attack11_ItemGreenhouseExitHitlag(gobj);
@@ -186,6 +193,7 @@ pub fn ftGw_Attack11_ItemGreenhouseSetFlag(gobj: *mut HSD_GObj) {
 
 /// Remove the Insecticide Sprayer.
 pub fn ftGw_Attack11_ItemGreenhouseRemove(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_Attack11_ItemGreenhouseRemove");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.gw.x224C_greenhouseGObj.is_null() {
@@ -197,6 +205,7 @@ pub fn ftGw_Attack11_ItemGreenhouseRemove(gobj: *mut HSD_GObj) {
 
 /// Apply hitlag to the Insecticide Sprayer.
 pub fn ftGw_Attack11_ItemGreenhouseEnterHitlag(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_Attack11_ItemGreenhouseEnterHitlag");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.gw.x224C_greenhouseGObj.is_null() {
@@ -207,6 +216,7 @@ pub fn ftGw_Attack11_ItemGreenhouseEnterHitlag(gobj: *mut HSD_GObj) {
 
 /// Remove hitlag from the Insecticide Sprayer.
 pub fn ftGw_Attack11_ItemGreenhouseExitHitlag(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_Attack11_ItemGreenhouseExitHitlag");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.gw.x224C_greenhouseGObj.is_null() {
@@ -217,6 +227,7 @@ pub fn ftGw_Attack11_ItemGreenhouseExitHitlag(gobj: *mut HSD_GObj) {
 
 /// Mr. Game & Watch's Jab Motion State handler.
 pub fn ftGw_Attack11_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_Attack11_Enter");
     unsafe {
         let fp = fpp(gobj);
         if !melee_fighter::tu::ftpickupitem::ftpickupitem_80094790(gobj) {
@@ -236,11 +247,13 @@ pub fn ftGw_Attack11_Enter(gobj: *mut HSD_GObj) {
 
 /// Mr. Game & Watch's Jab IASA callback.
 pub fn ftGw_Attack11_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_Attack11_IASA");
     co::ftCo_Attack11_IASA(gobj);
 }
 
 /// Mr. Game & Watch's Jab Collision callback.
 pub fn ftGw_Attack11_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_Attack11_Coll");
     st::ft_80084104(gobj);
     ftGw_Init_8014A538(gobj);
 }

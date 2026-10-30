@@ -70,6 +70,7 @@ unsafe fn da<'a>(fp: *mut Fighter) -> &'a ftLk_DatAttrs {
 
 /// `on21EC` (static): decide whether the throw was a smash (dash-smash window) input.
 pub fn on21EC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("on21EC");
     unsafe {
         let fp = fpp(gobj);
         let cd = fh::common_data();
@@ -86,23 +87,28 @@ pub fn on21EC(gobj: *mut HSD_GObj) {
 
 /// `on21EC` as a Fighter callback entry.
 pub unsafe extern "C" fn cb_on21EC(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_on21EC");
     on21EC(g);
 }
 
 /// `ftLk_SepcialS_Get2219b5(gobj)`: the fighter-only body is `chars::ftLink`'s.
 pub fn ftLk_SepcialS_Get2219b5(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftLk_SepcialS_Get2219b5");
     unsafe { crate::chars::ftLink::ftlinkspecials::ftLk_SepcialS_Get2219b5(&*fpp(gobj)) }
 }
 
 pub fn ftLk_SpecialS_Is2071b0_5to13(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftLk_SpecialS_Is2071b0_5to13");
     unsafe { matches!((*fpp(gobj)).x2070.anon_0.x2071_b0_3(), 5..=13) }
 }
 
 pub fn ftLk_SpecialS_Is2071b0_1to13(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftLk_SpecialS_Is2071b0_1to13");
     unsafe { matches!((*fpp(gobj)).x2070.anon_0.x2071_b0_3(), 1..=13) }
 }
 
 pub fn ftLk_SpecialS_RemoveBoomerang0(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftLk_SpecialS_RemoveBoomerang0");
     unsafe {
         let fp = fpp(gobj);
         (*fp).u.lk.used_boomerang = 0;
@@ -112,6 +118,7 @@ pub fn ftLk_SpecialS_RemoveBoomerang0(gobj: *mut HSD_GObj) -> bool {
 }
 
 pub fn ftLk_SpecialS_RemoveBoomerang1(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialS_RemoveBoomerang1");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.lk.boomerang_gobj.is_null() {
@@ -126,6 +133,7 @@ pub fn ftLk_SpecialS_RemoveBoomerang1(gobj: *mut HSD_GObj) {
 /// `calcAnglePos` (static): the throw angle from the stick (clamped to +-x18*x1C) and the spawn
 /// offset `dist` along it, mirrored by the facing. Returns the angle in [0, tau).
 pub fn calcAnglePos(fp: &Fighter, a: &ftLk_DatAttrs, pos: &mut Vec3, dist: f32) -> f32 {
+    melee_core::ct!("calcAnglePos");
     let mut angle: f32 = 0.0;
     let lstick_y = fp.input.lstick[0].y;
     let da_x18_mul_x1c = a.x18 * a.x1C;
@@ -164,6 +172,7 @@ pub fn calcAnglePos(fp: &Fighter, a: &ftLk_DatAttrs, pos: &mut Vec3, dist: f32) 
 
 /// `onAccessory4` (static): spawn the boomerang on the script's throw pulse, then aim it.
 pub fn onAccessory4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("onAccessory4");
     unsafe {
         let fp = fpp(gobj);
         let a = da(fp);
@@ -193,10 +202,12 @@ pub fn onAccessory4(gobj: *mut HSD_GObj) {
 
 /// `onAccessory4` as a Fighter callback entry.
 pub unsafe extern "C" fn cb_onAccessory4(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_onAccessory4");
     onAccessory4(g);
 }
 
 pub fn ftLk_SpecialS_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialS_Enter");
     unsafe {
         let fp = fpp(gobj);
         (*fp).anon_2210.throw_flags = 0;
@@ -213,6 +224,7 @@ pub fn ftLk_SpecialS_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftLk_SpecialAirS_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialAirS_Enter");
     unsafe {
         let fp = fpp(gobj);
         (*fp).anon_2210.throw_flags = 0;
@@ -245,10 +257,12 @@ fn doS2Anim(gobj: *mut HSD_GObj, cb: fn(*mut HSD_GObj)) {
 }
 
 pub fn ftLk_SpecialS2_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialS2_Anim");
     doS2Anim(gobj, st::ft_8008A2BC);
 }
 
 pub fn ftLk_SpecialAirS2_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialAirS2_Anim");
     doS2Anim(gobj, st::ftCo_Fall_Enter);
 }
 
@@ -265,6 +279,7 @@ fn checkBoomerangSomething(gobj: *mut HSD_GObj) -> bool {
 }
 
 pub fn ftLk_SpecialS2_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialS2_IASA");
     unsafe {
         let fp = fpp(gobj);
         if checkBoomerangSomething(gobj) && !(*fp).u.lk.boomerang_gobj.is_null() {
@@ -280,6 +295,7 @@ fn checkAirBoomerangSomething(gobj: *mut HSD_GObj) -> bool {
 }
 
 pub fn ftLk_SpecialAirS2_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialAirS2_IASA");
     unsafe {
         let fp = fpp(gobj);
         if checkAirBoomerangSomething(gobj) && !(*fp).u.lk.boomerang_gobj.is_null() {
@@ -289,6 +305,7 @@ pub fn ftLk_SpecialAirS2_IASA(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftLk_SpecialS2_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialS2_Coll");
     unsafe {
         let fp = fpp(gobj);
         if st::ft_80082708(gobj) == 0 {
@@ -301,6 +318,7 @@ pub fn ftLk_SpecialS2_Coll(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftLk_SpecialAirS2_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialAirS2_Coll");
     unsafe {
         let fp = fpp(gobj);
         if st::ft_80081D0C(gobj) != 0 {

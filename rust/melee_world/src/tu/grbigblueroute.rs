@@ -342,6 +342,7 @@ pub static mut grBb_Route_carJObjIds: [i16; 30] = [
 pub static mut grBb_Route_803B83E0: Vec3 = Vec3 { x: 0.0, y: 1.0, z: 0.0 };
 
 pub unsafe extern "C" fn grBigBlueRoute_8020B864(_arg: i32) {
+    melee_core::ct!("grBigBlueRoute_8020B864");
     let gobj = ext::Ground_GetMapGObj(0x1F);
     if !gobj.is_null() {
         ext::Ground_801C4A08(gobj);
@@ -350,6 +351,7 @@ pub unsafe extern "C" fn grBigBlueRoute_8020B864(_arg: i32) {
 }
 
 pub unsafe extern "C" fn grBigBlueRoute_8020B89C() {
+    melee_core::ct!("grBigBlueRoute_8020B89C");
     yakumono_param = ext::Ground_GetYakumonoParam() as *mut grBigBlueRoute_YakumonoParam;
     let si = ext::stage_info();
     (*si).unk8C.set_b4(0);
@@ -365,6 +367,7 @@ pub unsafe extern "C" fn grBigBlueRoute_8020B89C() {
 }
 
 pub unsafe extern "C" fn grBigBlueRoute_8020B920() {
+    melee_core::ct!("grBigBlueRoute_8020B920");
     let mut fighter_pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let fighter = ext::Ground_GetP1Fighter();
     if !fighter.is_null() {
@@ -375,6 +378,7 @@ pub unsafe extern "C" fn grBigBlueRoute_8020B920() {
 }
 
 pub unsafe extern "C" fn grBigBlueRoute_8020B95C() {
+    melee_core::ct!("grBigBlueRoute_8020B95C");
     ext::grZakoGenerator_801CAE04(null_mut());
     if ext::gm_8016B3D8() == 0 {
         return;
@@ -392,6 +396,7 @@ pub unsafe extern "C" fn grBigBlueRoute_8020B95C() {
 }
 
 pub unsafe fn grBigBlueRoute_8020B9D4(gobj_id: i32) -> *mut HSD_GObj {
+    melee_core::ct!("grBigBlueRoute_8020B9D4");
     let callbacks: *mut StageCallbacks = &mut grBb_Route_StageCallbacks[gobj_id as usize];
     let gobj = ext::Ground_GetStageGObj(gobj_id);
 
@@ -420,24 +425,27 @@ pub unsafe fn grBigBlueRoute_8020B9D4(gobj_id: i32) -> *mut HSD_GObj {
 }
 
 pub unsafe extern "C" fn grBigBlueRoute_8020BABC(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grBigBlueRoute_8020BABC");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as enum_t, 0);
     (*gp).x11_flags.set_b012(2);
 }
 
-pub unsafe extern "C" fn grBigBlueRoute_8020BB08(_arg: *mut Ground_GObj) {}
-pub unsafe extern "C" fn grBigBlueRoute_8020BB0C(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grBigBlueRoute_8020BB08(_arg: *mut Ground_GObj) { melee_core::ct!("grBigBlueRoute_8020BB08");}
+pub unsafe extern "C" fn grBigBlueRoute_8020BB0C(_arg: *mut Ground_GObj) { melee_core::ct!("grBigBlueRoute_8020BB0C");}
 
 pub unsafe extern "C" fn grBigBlueRoute_8020BB10(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grBigBlueRoute_8020BB10");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as enum_t, 0);
     ext::grAnime_801C77FC(gobj, 0, 7);
 }
 
-pub unsafe extern "C" fn grBigBlueRoute_8020BB60(_arg: *mut Ground_GObj) {}
-pub unsafe extern "C" fn grBigBlueRoute_8020BB64(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grBigBlueRoute_8020BB60(_arg: *mut Ground_GObj) { melee_core::ct!("grBigBlueRoute_8020BB60");}
+pub unsafe extern "C" fn grBigBlueRoute_8020BB64(_arg: *mut Ground_GObj) { melee_core::ct!("grBigBlueRoute_8020BB64");}
 
 pub unsafe extern "C" fn grBigBlueRoute_8020BB68(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grBigBlueRoute_8020BB68");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as enum_t, 0);
     ext::grAnime_801C77FC(gobj, 0, 7);
@@ -450,15 +458,17 @@ pub unsafe extern "C" fn grBigBlueRoute_8020BB68(gobj: *mut Ground_GObj) {
     ext::Ground_801C4E70(jobj, jobj2, jobj3, jobj4, jobj5, jobj6);
 }
 
-pub unsafe extern "C" fn grBigBlueRoute_8020BC2C(_arg: *mut Ground_GObj) {}
-pub unsafe extern "C" fn grBigBlueRoute_8020BC30(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grBigBlueRoute_8020BC2C(_arg: *mut Ground_GObj) { melee_core::ct!("grBigBlueRoute_8020BC2C");}
+pub unsafe extern "C" fn grBigBlueRoute_8020BC30(_arg: *mut Ground_GObj) { melee_core::ct!("grBigBlueRoute_8020BC30");}
 
 pub unsafe extern "C" fn grBigBlueRoute_8020BC34(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grBigBlueRoute_8020BC34");
     let gp = GET_GROUND(gobj);
     (*gp).u.car.xC4 = grBigBlueRoute_8020B9D4(4);
 }
 
 pub unsafe extern "C" fn grBigBlueRoute_8020BC68(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grBigBlueRoute_8020BC68");
     let mut origin = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let gp = GET_GROUND(gobj);
 
@@ -492,6 +502,7 @@ pub unsafe extern "C" fn grBigBlueRoute_8020BC68(gobj: *mut Ground_GObj) {
 }
 
 pub unsafe extern "C" fn grBigBlueRoute_8020BF38(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grBigBlueRoute_8020BF38");
     let gp = GET_GROUND(gobj);
     let mut checkpoint = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut fighter_pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -534,9 +545,10 @@ pub unsafe extern "C" fn grBigBlueRoute_8020BF38(gobj: *mut Ground_GObj) {
     ext::lb_800115F4();
 }
 
-pub unsafe extern "C" fn grBigBlueRoute_8020C13C(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grBigBlueRoute_8020C13C(_arg: *mut Ground_GObj) { melee_core::ct!("grBigBlueRoute_8020C13C");}
 
 pub unsafe extern "C" fn grBigBlueRoute_8020C140(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grBigBlueRoute_8020C140");
     let gp = (*gobj).user_data as *mut Ground;
 
     ext::grFZeroCar_801CAFBC(gobj, addr_of_mut!(grBb_Route_carJObjIds) as *mut c_void, 30, 0);
@@ -549,11 +561,13 @@ pub unsafe extern "C" fn grBigBlueRoute_8020C140(gobj: *mut Ground_GObj) {
 }
 
 pub unsafe extern "C" fn grBigBlueRoute_8020C1DC(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grBigBlueRoute_8020C1DC");
     grBigBlueRoute_8020C85C(gobj);
     grBigBlueRoute_8020CD20(gobj);
 }
 
 pub unsafe extern "C" fn grBigBlueRoute_8020C210(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grBigBlueRoute_8020C210");
     let gp = GET_GROUND(gobj);
     ext::HSD_Free((*gp).u.car.car_info);
 }
@@ -562,6 +576,7 @@ pub unsafe extern "C" fn grBigBlueRoute_8020C210(gobj: *mut Ground_GObj) {
 const CAR_BYTES: usize = 31 * core::mem::size_of::<RouteEntry>();
 
 pub unsafe fn grBigBlueRoute_8020C238(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grBigBlueRoute_8020C238");
     let root_jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let gp = (*gobj).user_data as *mut Ground;
     let mut spline_pt = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -618,6 +633,7 @@ unsafe fn re_at(gp: *mut Ground, i: usize) -> *mut RouteEntry {
 }
 
 pub unsafe fn grBigBlueRoute_8020C530(arg0: *mut Ground_GObj) -> s32 {
+    melee_core::ct!("grBigBlueRoute_8020C530");
     let gp = (*arg0).user_data as *mut Ground;
     let mut count: s32 = 0;
 
@@ -651,6 +667,7 @@ pub unsafe fn grBigBlueRoute_8020C530(arg0: *mut Ground_GObj) -> s32 {
 
 /// `static inline grBigBlueRoute_SpawnRoute`.
 pub unsafe fn grBigBlueRoute_SpawnRoute(route_idx: s32, gp: *mut Ground, gobj: *mut Ground_GObj) {
+    melee_core::ct!("grBigBlueRoute_SpawnRoute");
     let mut route_idx = route_idx;
     if route_idx == 0 {
         route_idx = 30;
@@ -741,6 +758,7 @@ pub unsafe fn grBigBlueRoute_SpawnRoute(route_idx: s32, gp: *mut Ground, gobj: *
 }
 
 pub unsafe extern "C" fn grBigBlueRoute_8020C85C(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grBigBlueRoute_8020C85C");
     let gp = GET_GROUND(gobj);
 
     if !(((*gp).u.car.x108 as f32) < 1.0f32 + (*yakumono_param).x40) {
@@ -757,6 +775,7 @@ pub unsafe extern "C" fn grBigBlueRoute_8020C85C(gobj: *mut Ground_GObj) {
 }
 
 pub unsafe extern "C" fn grBigBlueRoute_8020CD20(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grBigBlueRoute_8020CD20");
     let gp = GET_GROUND(gobj);
     let root_jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -1077,6 +1096,7 @@ pub unsafe extern "C" fn grBigBlueRoute_8020CD20(gobj: *mut Ground_GObj) {
 }
 
 pub unsafe fn grBigBlueRoute_8020DA9C(desc: *mut grBigBlueRoute_8020DA9C_t) -> i32 {
+    melee_core::ct!("grBigBlueRoute_8020DA9C");
     if desc.is_null() {
         return 0;
     }
@@ -1084,6 +1104,7 @@ pub unsafe fn grBigBlueRoute_8020DA9C(desc: *mut grBigBlueRoute_8020DA9C_t) -> i
 }
 
 pub unsafe fn grBigBlueRoute_8020DAB4(jobjs: *mut *mut HSD_JObj, scale: f32, count: i32) {
+    melee_core::ct!("grBigBlueRoute_8020DAB4");
     let mut countdown: i32 = 30;
 
     if jobjs.is_null() {
@@ -1134,6 +1155,7 @@ pub unsafe fn grBigBlueRoute_8020DAB4(jobjs: *mut *mut HSD_JObj, scale: f32, cou
 }
 
 pub unsafe fn grBigBlueRoute_8020DD64(v: *mut Vec3) -> f32 {
+    melee_core::ct!("grBigBlueRoute_8020DD64");
     let mag = ext::lbVector_Normalize(v);
     let x = (*v).x;
 
@@ -1167,6 +1189,7 @@ pub unsafe fn grBigBlueRoute_8020DD64(v: *mut Vec3) -> f32 {
 }
 
 pub unsafe fn grBigBlueRoute_8020DE48() -> *mut DynamicModelDesc {
+    melee_core::ct!("grBigBlueRoute_8020DE48");
     let archive = ext::grDatFiles_801C6330(0x2);
     assert_(!archive.is_null(), 1495, "archive");
     let dat = (*archive).unk4;
@@ -1178,11 +1201,13 @@ pub unsafe fn grBigBlueRoute_8020DE48() -> *mut DynamicModelDesc {
 }
 
 pub unsafe extern "C" fn fn_8020DEAC() {
+    melee_core::ct!("fn_8020DEAC");
     ext::Ground_801C53EC(0x77A12);
 }
 
 /// Clamp camera position to stage bounds.
 pub unsafe extern "C" fn grBigBlueRoute_8020DED4(pos: *mut Vec3) {
+    melee_core::ct!("grBigBlueRoute_8020DED4");
     let mut x = (*pos).x;
     let mut y = (*pos).y;
 
@@ -1200,6 +1225,7 @@ pub unsafe extern "C" fn grBigBlueRoute_8020DED4(pos: *mut Vec3) {
 }
 
 pub unsafe extern "C" fn grBigBlueRoute_8020DF80(a: *mut Vec3, _arg: i32, joint: *mut HSD_JObj) -> i32 {
+    melee_core::ct!("grBigBlueRoute_8020DF80");
     let mut b = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
     ext::lb_8000B1CC(joint, null_mut(), &mut b);

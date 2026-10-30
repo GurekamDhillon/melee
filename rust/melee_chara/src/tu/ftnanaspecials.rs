@@ -116,6 +116,7 @@ pub static mut ftNn_Unk2_803CDD60: ftCollisionBox = ftCollisionBox {
 
 /// `ftNn_Init_801238E4`: release the Popo link (also inlined into the Anim callbacks).
 pub fn ftNn_Init_801238E4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNn_Init_801238E4");
     unsafe {
         let fp = fpp(gobj);
         ext::ftPartSetRotX(fp, 0, 0.0);
@@ -132,6 +133,7 @@ pub fn ftNn_Init_801238E4(gobj: *mut HSD_GObj) {
 /// `ftNn_Init_80123954`: Nana's attempt to rejoin Popo after a Popo-side state change. Returns
 /// whether Nana is still free (false once she was snapped back to Popo).
 pub fn ftNn_Init_80123954(nana_gobj: *mut HSD_GObj, pp_ga: GroundOrAir) -> bool {
+    melee_core::ct!("ftNn_Init_80123954");
     unsafe {
         if nana_gobj.is_null() {
             return true;
@@ -188,6 +190,7 @@ pub fn ftNn_Init_80123954(nana_gobj: *mut HSD_GObj, pp_ga: GroundOrAir) -> bool 
 }
 
 pub fn ftNn_Init_80123B10(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftNn_Init_80123B10");
     unsafe {
         match (*fpp(gobj)).motion_id as i32 {
             359 | 360 => false,
@@ -209,6 +212,7 @@ fn ftPp_SpecialS_0_Anim_inline(nana_gobj: *mut HSD_GObj) {
 }
 
 pub fn ftPp_SpecialS_0_Anim(nana_gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialS_0_Anim");
     unsafe {
         let nana_fp = fpp(nana_gobj);
         let popo_gobj = ext::Player_GetEntityAtIndex((*nana_fp).player_id as i32, 0);
@@ -224,6 +228,7 @@ pub fn ftPp_SpecialS_0_Anim(nana_gobj: *mut HSD_GObj) {
 }
 
 pub fn ftPp_SpecialS_1_Anim(nana_gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialS_1_Anim");
     unsafe {
         let nana_fp = fpp(nana_gobj);
         let attrs = (*nana_fp).dat_attrs as *const ftIceClimberAttributes;
@@ -244,8 +249,8 @@ pub fn ftPp_SpecialS_1_Anim(nana_gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftPp_SpecialS_0_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftPp_SpecialS_1_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftPp_SpecialS_0_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftPp_SpecialS_0_IASA");}
+pub fn ftPp_SpecialS_1_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftPp_SpecialS_1_IASA");}
 
 /// Shared body of `ftPp_SpecialS_0_Phys` / `ftPp_SpecialS_1_Phys`: mirror Popo's momentum.
 unsafe fn copy_popo_phys(nana_gobj: *mut HSD_GObj) {
@@ -260,10 +265,12 @@ unsafe fn copy_popo_phys(nana_gobj: *mut HSD_GObj) {
 }
 
 pub fn ftPp_SpecialS_0_Phys(nana_gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialS_0_Phys");
     unsafe { copy_popo_phys(nana_gobj) }
 }
 
 pub fn ftPp_SpecialS_1_Phys(nana_gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialS_1_Phys");
     unsafe { copy_popo_phys(nana_gobj) }
 }
 
@@ -355,6 +362,7 @@ unsafe fn coll_follow(
 }
 
 pub fn ftPp_SpecialS_0_Coll(nana_gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialS_0_Coll");
     unsafe {
         let nana_fp = fpp(nana_gobj);
         let popo_gobj = ext::Player_GetEntityAtIndex((*nana_fp).player_id as i32, 0);
@@ -372,6 +380,7 @@ pub fn ftPp_SpecialS_0_Coll(nana_gobj: *mut HSD_GObj) {
 }
 
 pub fn ftPp_SpecialS_1_Coll(nana_gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialS_1_Coll");
     unsafe {
         let nana_fp = fpp(nana_gobj);
         let popo_gobj = ext::Player_GetEntityAtIndex((*nana_fp).player_id as i32, 0);

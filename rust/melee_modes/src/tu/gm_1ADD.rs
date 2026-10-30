@@ -264,6 +264,7 @@ unsafe fn HSD_JObjAddTranslationY(jobj: *mut HSD_JObj, y: f32) {
 
 /// `gm_801ADDD8()`: clear the list head, mark it (`unkC = -0x3E7`) and build the scene.
 pub unsafe fn gm_801ADDD8() {
+    melee_core::ct!("gm_801ADDD8");
     memzero(&raw mut gm_803DD4D0 as *mut u8, core::mem::size_of::<unkd4d0>());
     gm_803DD4D0.unkC = -0x3E7;
     gm_801AEBB0();
@@ -271,6 +272,7 @@ pub unsafe fn gm_801ADDD8() {
 
 /// `gm_801ADE1C(arg0, arg1, arg2, arg3)`: append a message box with text id `arg1` at (`arg2`, `arg3`); always true.
 pub unsafe fn gm_801ADE1C(arg0: i32, arg1: i32, arg2: f32, arg3: f32) -> bool {
+    melee_core::ct!("gm_801ADE1C");
     let mut cur: *mut unkd4d0 = &raw mut gm_803DD4D0;
     let next = ext::HSD_MemAlloc(core::mem::size_of::<unkd4d0>() as isize) as *mut unkd4d0;
     memzero(next as *mut u8, core::mem::size_of::<unkd4d0>());
@@ -342,6 +344,7 @@ unsafe fn button_setup(temp: *mut unkd4d0_8) {
 /// every box whose id is `arg0`; always true. Note the C keeps scanning boxes after a match, and one allocated
 /// button is linked into every matching box.
 pub unsafe fn gm_801AE050(arg0: i32, arg1: i32, arg2: i32, arg3: f32, arg4: f32) -> bool {
+    melee_core::ct!("gm_801AE050");
     let mut var_r31 = gm_803DD4D0.next;
     let temp_r3 = ext::HSD_MemAlloc(core::mem::size_of::<unkd4d0_8>() as isize) as *mut unkd4d0_8;
     memzero(temp_r3 as *mut u8, core::mem::size_of::<unkd4d0_8>());
@@ -379,6 +382,7 @@ pub unsafe fn gm_801AE050(arg0: i32, arg1: i32, arg2: i32, arg3: f32, arg4: f32)
 
 /// `gm_801AE44C(arg0, val)`: move the label joint of every box `arg0` by `-val` in Y.
 pub unsafe fn gm_801AE44C(arg0: i32, val: f32) {
+    melee_core::ct!("gm_801AE44C");
     let mut cur = gm_803DD4D0.next;
     while !cur.is_null() {
         if (*cur).unkC == arg0 {
@@ -391,6 +395,7 @@ pub unsafe fn gm_801AE44C(arg0: i32, val: f32) {
 
 /// `gm_801AE544(arg0, val)`: as gm_801AE44C, on the child of that joint.
 pub unsafe fn gm_801AE544(arg0: i32, val: f32) {
+    melee_core::ct!("gm_801AE544");
     let mut cur = gm_803DD4D0.next;
     while !cur.is_null() {
         if (*cur).unkC == arg0 {
@@ -434,16 +439,19 @@ unsafe fn recolor_matching(arg1: bool, r: u8, g: u8, b: u8) {
 
 /// `gm_801AE640(arg0, arg1)`: highlight (0xFF, 0xCC, 0x33) every button whose id is `arg1`.
 pub unsafe fn gm_801AE640(_arg0: i32, arg1: bool) {
+    melee_core::ct!("gm_801AE640");
     recolor_matching(arg1, 0xFF, 0xCC, 0x33);
 }
 
 /// `gm_801AE74C(arg0, arg1)`: grey out (0x66) every button whose id is `arg1`.
 pub unsafe fn gm_801AE74C(_arg0: i32, arg1: bool) {
+    melee_core::ct!("gm_801AE74C");
     recolor_matching(arg1, 0x66, 0x66, 0x66);
 }
 
 /// `gm_801AE848(arg0)`: free every box whose id is `arg0` with its buttons, unlinking it from the list.
 pub unsafe fn gm_801AE848(arg0: i32) {
+    melee_core::ct!("gm_801AE848");
     let mut var_r31 = gm_803DD4D0.next;
     while !var_r31.is_null() {
         if (*var_r31).unkC == arg0 {
@@ -482,6 +490,7 @@ pub unsafe fn gm_801AE848(arg0: i32) {
 
 /// `fn_801AE948(arg0)`: the window's per-frame proc; re-apply every box's and button's position.
 pub unsafe fn fn_801AE948(_arg0: *mut HSD_GObj) {
+    melee_core::ct!("fn_801AE948");
     let mut var_r31 = gm_803DD4D0.next;
     while !var_r31.is_null() {
         let mut var_r30 = (*var_r31).unk8;
@@ -503,6 +512,7 @@ pub unsafe fn fn_801AE948(_arg0: *mut HSD_GObj) {
 /// `gm_801AEBB0()`: load NtMsgWin.dat and the message SIS, create the camera and the SIS text group, and
 /// start the per-frame proc.
 pub unsafe fn gm_801AEBB0() {
+    melee_core::ct!("gm_801AEBB0");
     ext::lbArchive_80016DBC("NtMsgWin.dat", &raw mut gm_804D6868, "ScNtcCommon_scene_data", 0);
 
     if ext::lbLang_IsSavedLanguageUS() {
@@ -525,6 +535,7 @@ pub unsafe fn gm_801AEBB0() {
 
 /// `gm_801AECC4(model_idx)`: create a window piece from model `model_idx` (the box, 1, hides two of its parts).
 pub unsafe fn gm_801AECC4(model_idx: i32) -> *mut HSD_GObj {
+    melee_core::ct!("gm_801AECC4");
     let gobj = ext::GObj_Create(9, 13, 0);
     let model = *(*gm_804D6868).models.offset(model_idx as isize);
     let jobj = ext::HSD_JObjLoadJoint((*model).joint);
@@ -542,6 +553,7 @@ pub unsafe fn gm_801AECC4(model_idx: i32) -> *mut HSD_GObj {
 
 /// `gm_801AEDC8()`: the triggers of every connected controller, OR'd.
 pub unsafe fn gm_801AEDC8() -> u32 {
+    melee_core::ct!("gm_801AEDC8");
     let mut result = 0u32;
     for i in 0..4usize {
         if ext::hsd_pad_master_status_err(i) == 0 {

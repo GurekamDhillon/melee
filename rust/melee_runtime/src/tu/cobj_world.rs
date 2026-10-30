@@ -28,11 +28,13 @@ unsafe fn assert_cobj(line: u32, cobj: *mut HSD_CObj) {
 
 /// `HSD_CObjGetFlags`.
 pub unsafe fn HSD_CObjGetFlags(cobj: *mut HSD_CObj) -> u32 {
+    melee_core::ct!("HSD_CObjGetFlags");
     (*cobj).flags
 }
 
 /// `HSD_CObjGetFov`.
 pub unsafe fn HSD_CObjGetFov(cobj: *mut HSD_CObj) -> f32 {
+    melee_core::ct!("HSD_CObjGetFov");
     if cobj.is_null() || (*cobj).projection_type != PROJ_PERSPECTIVE {
         return 0.0;
     }
@@ -41,6 +43,7 @@ pub unsafe fn HSD_CObjGetFov(cobj: *mut HSD_CObj) -> f32 {
 
 /// `HSD_CObjGetAspect` (TARGET_PC: refreshes an auto view first).
 pub unsafe fn HSD_CObjGetAspect(cobj: *mut HSD_CObj) -> f32 {
+    melee_core::ct!("HSD_CObjGetAspect");
     HSD_CObjUpdateView(cobj);
     if cobj.is_null() || (*cobj).projection_type != PROJ_PERSPECTIVE {
         return 0.0;
@@ -50,6 +53,7 @@ pub unsafe fn HSD_CObjGetAspect(cobj: *mut HSD_CObj) -> f32 {
 
 /// `HSD_CObjGetAuthoredAspect`.
 pub unsafe fn HSD_CObjGetAuthoredAspect(cobj: *mut HSD_CObj) -> f32 {
+    melee_core::ct!("HSD_CObjGetAuthoredAspect");
     if !cobj.is_null() && (*cobj).view_auto != 0 {
         return (*cobj).view_authored_aspect;
     }
@@ -58,6 +62,7 @@ pub unsafe fn HSD_CObjGetAuthoredAspect(cobj: *mut HSD_CObj) -> f32 {
 
 /// `HSD_CObjSetAspect`.
 pub unsafe fn HSD_CObjSetAspect(cobj: *mut HSD_CObj, aspect: f32) {
+    melee_core::ct!("HSD_CObjSetAspect");
     if cobj.is_null() || (*cobj).projection_type != PROJ_PERSPECTIVE {
         return;
     }
@@ -70,6 +75,7 @@ pub unsafe fn HSD_CObjSetAspect(cobj: *mut HSD_CObj, aspect: f32) {
 
 /// `HSD_CObjGetPerspective`: `*top = fov`, `*bottom = aspect` (either may be NULL).
 pub unsafe fn HSD_CObjGetPerspective(cobj: *mut HSD_CObj, top: *mut f32, bottom: *mut f32) {
+    melee_core::ct!("HSD_CObjGetPerspective");
     HSD_CObjUpdateView(cobj);
     if cobj.is_null() || (*cobj).projection_type != PROJ_PERSPECTIVE {
         return;
@@ -84,6 +90,7 @@ pub unsafe fn HSD_CObjGetPerspective(cobj: *mut HSD_CObj, top: *mut f32, bottom:
 
 /// `HSD_CObjGetScissor`.
 pub unsafe fn HSD_CObjGetScissor(cobj: *mut HSD_CObj, scissor: *mut _Scissor) {
+    melee_core::ct!("HSD_CObjGetScissor");
     if cobj.is_null() {
         return;
     }
@@ -92,6 +99,7 @@ pub unsafe fn HSD_CObjGetScissor(cobj: *mut HSD_CObj, scissor: *mut _Scissor) {
 
 /// `HSD_CObjGetViewportf`.
 pub unsafe fn HSD_CObjGetViewportf(cobj: *mut HSD_CObj, viewport: *mut _HSD_RectF32) {
+    melee_core::ct!("HSD_CObjGetViewportf");
     if cobj.is_null() {
         return;
     }
@@ -100,6 +108,7 @@ pub unsafe fn HSD_CObjGetViewportf(cobj: *mut HSD_CObj, viewport: *mut _HSD_Rect
 
 /// `HSD_CObjSetViewportf`.
 pub unsafe fn HSD_CObjSetViewportf(cobj: *mut HSD_CObj, viewport: *mut _HSD_RectF32) {
+    melee_core::ct!("HSD_CObjSetViewportf");
     if cobj.is_null() {
         return;
     }
@@ -108,6 +117,7 @@ pub unsafe fn HSD_CObjSetViewportf(cobj: *mut HSD_CObj, viewport: *mut _HSD_Rect
 
 /// `HSD_CObjSetProjectionType`.
 pub unsafe fn HSD_CObjSetProjectionType(cobj: *mut HSD_CObj, proj_type: u32) {
+    melee_core::ct!("HSD_CObjSetProjectionType");
     if cobj.is_null() {
         return;
     }
@@ -116,24 +126,28 @@ pub unsafe fn HSD_CObjSetProjectionType(cobj: *mut HSD_CObj, proj_type: u32) {
 
 /// `HSD_CObjGetInterest`.
 pub unsafe fn HSD_CObjGetInterest(cobj: *mut HSD_CObj, interest: *mut Vec) {
+    melee_core::ct!("HSD_CObjGetInterest");
     assert_cobj(709, cobj);
     cx::HSD_WObjGetPosition((*cobj).interest.cast(), interest.cast());
 }
 
 /// `HSD_CObjSetInterest`.
 pub unsafe fn HSD_CObjSetInterest(cobj: *mut HSD_CObj, interest: *mut Vec) {
+    melee_core::ct!("HSD_CObjSetInterest");
     assert_cobj(721, cobj);
     cx::HSD_WObjSetPosition((*cobj).interest.cast(), interest.cast());
 }
 
 /// `HSD_CObjGetEyePosition`.
 pub unsafe fn HSD_CObjGetEyePosition(cobj: *mut HSD_CObj, position: *mut Vec) {
+    melee_core::ct!("HSD_CObjGetEyePosition");
     assert_cobj(733, cobj);
     cx::HSD_WObjGetPosition((*cobj).eyepos.cast(), position.cast());
 }
 
 /// `HSD_CObjSetEyePosition`.
 pub unsafe fn HSD_CObjSetEyePosition(cobj: *mut HSD_CObj, position: *mut Vec) {
+    melee_core::ct!("HSD_CObjSetEyePosition");
     assert_cobj(745, cobj);
     cx::HSD_WObjSetPosition((*cobj).eyepos.cast(), position.cast());
 }
@@ -156,6 +170,7 @@ unsafe fn vec_normalize_check(src: *mut Vec, dst: *mut Vec) -> i32 {
 
 /// `HSD_CObjGetEyeVector`: 0 and the unit view direction, or -1 and (0, 0, -1).
 pub unsafe fn HSD_CObjGetEyeVector(cobj: *mut HSD_CObj, eye: *mut Vec) -> i32 {
+    melee_core::ct!("HSD_CObjGetEyeVector");
     if !cobj.is_null() && !(*cobj).eyepos.is_null() && !(*cobj).interest.is_null() && !eye.is_null() {
         let mut eyepos: Vec = core::mem::zeroed();
         let mut interest: Vec = core::mem::zeroed();
@@ -249,6 +264,7 @@ unsafe fn roll2upvec(cobj: *mut HSD_CObj, up: *mut Vec, roll: f32) -> i32 {
 
 /// `HSD_CObjGetUpVector`: 0 and the up vector, or -1 and (0, 1, 0).
 pub unsafe fn HSD_CObjGetUpVector(cobj: *mut HSD_CObj, up: *mut Vec) -> i32 {
+    melee_core::ct!("HSD_CObjGetUpVector");
     if !cobj.is_null() && !up.is_null() {
         if (*cobj).flags & COBJ_UP_VECTOR_ != 0 {
             *up = (*cobj).u.up;
@@ -270,6 +286,7 @@ static mut UY2: Vec = Vec { x: 0.0, y: 1.0, z: 0.0 };
 
 /// `HSD_CObjSetUpVector`.
 pub unsafe fn HSD_CObjSetUpVector(cobj: *mut HSD_CObj, mut up: *mut Vec) {
+    melee_core::ct!("HSD_CObjSetUpVector");
     if cobj.is_null() || up.is_null() {
         return;
     }
@@ -287,6 +304,7 @@ pub unsafe fn HSD_CObjSetUpVector(cobj: *mut HSD_CObj, mut up: *mut Vec) {
 
 /// `HSD_CObjSetRoll`.
 pub unsafe fn HSD_CObjSetRoll(cobj: *mut HSD_CObj, roll: f32) {
+    melee_core::ct!("HSD_CObjSetRoll");
     if cobj.is_null() {
         return;
     }
@@ -352,6 +370,7 @@ pub unsafe fn HSD_CObjGetInvViewingMtxPtr(cobj: *mut HSD_CObj) -> *mut [f32; 4] 
 
 /// `HSD_CObjSetScissorx4`.
 pub unsafe fn HSD_CObjSetScissorx4(cobj: *mut HSD_CObj, left: u16, right: u16, top: u16, bottom: u16) {
+    melee_core::ct!("HSD_CObjSetScissorx4");
     if cobj.is_null() {
         return;
     }
@@ -363,6 +382,7 @@ pub unsafe fn HSD_CObjSetScissorx4(cobj: *mut HSD_CObj, left: u16, right: u16, t
 
 /// `HSD_CObjSetViewportfx4`.
 pub unsafe fn HSD_CObjSetViewportfx4(cobj: *mut HSD_CObj, left: f32, right: f32, top: f32, bottom: f32) {
+    melee_core::ct!("HSD_CObjSetViewportfx4");
     if cobj.is_null() {
         return;
     }
@@ -374,6 +394,7 @@ pub unsafe fn HSD_CObjSetViewportfx4(cobj: *mut HSD_CObj, left: f32, right: f32,
 
 /// `HSD_CObjGetOrtho`.
 pub unsafe fn HSD_CObjGetOrtho(cobj: *mut HSD_CObj, top: *mut f32, bottom: *mut f32, left: *mut f32, right: *mut f32) {
+    melee_core::ct!("HSD_CObjGetOrtho");
     if cobj.is_null() || (*cobj).projection_type != PROJ_ORTHO {
         return;
     }

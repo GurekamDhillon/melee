@@ -127,11 +127,13 @@ unsafe fn set_effect_hitlag_cbs(fp: *mut Fighter) {
 
 /// `ftZd_Init_801393AC` (ft/kinds/ftZelda/ftzelda.c): not ported yet (a callback address only here).
 pub unsafe extern "C" fn ftZd_Init_801393AC(_gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_Init_801393AC");
     { unsafe { let _ = crate::tu::ftzelda::ftZd_Init_801393AC(_gobj as _); } return; };
 }
 
 /// `ftZd_SpecialLw_8013ADB4` (accessory callback: the transform's spark on the top joint).
 pub unsafe extern "C" fn ftZd_SpecialLw_8013ADB4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialLw_8013ADB4");
     let fp = fpp(gobj);
     if (*fp).x2219_b0() == 0 {
         ext::efSync_Spawn(1276, gobj, joint(fp, 104));
@@ -143,6 +145,7 @@ pub unsafe extern "C" fn ftZd_SpecialLw_8013ADB4(gobj: *mut HSD_GObj) {
 
 /// `ftZd_SpecialLw_8013AE30` (accessory callback: the transform's spark on the hips).
 pub unsafe extern "C" fn ftZd_SpecialLw_8013AE30(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialLw_8013AE30");
     let fp = fpp(gobj);
     if (*fp).x2219_b0() == 0 {
         ext::efSync_Spawn(1277, gobj, joint(fp, FtPart_HipN as usize));
@@ -154,6 +157,7 @@ pub unsafe extern "C" fn ftZd_SpecialLw_8013AE30(gobj: *mut HSD_GObj) {
 
 /// `ftZd_SpecialLw_8013AEAC` (accessory callback: Zelda_TransformToSubcharacter).
 pub unsafe extern "C" fn ftZd_SpecialLw_8013AEAC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialLw_8013AEAC");
     let fp = fpp(gobj);
     (*fp).accessory4_cb = None;
     ext::ftCommon_8007EFC8(gobj, ext::ftSk_SpecialLw_80114758);
@@ -178,6 +182,7 @@ unsafe fn start_action_helper(gobj: *mut HSD_GObj) {
 
 /// `ftZd_SpecialLw_Enter` (AS 355, Zelda_AS_355_Transform_Grounded).
 pub fn ftZd_SpecialLw_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialLw_Enter");
     unsafe {
         st::Fighter_ChangeMotionState(gobj, 355, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
         st::ftAnim_8006EBA4(gobj);
@@ -187,6 +192,7 @@ pub fn ftZd_SpecialLw_Enter(gobj: *mut HSD_GObj) {
 
 /// `ftZd_SpecialAirLw_Enter` (AS 357, Zelda_AS_357_Transform_Aerial).
 pub fn ftZd_SpecialAirLw_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialAirLw_Enter");
     unsafe {
         st::Fighter_ChangeMotionState(gobj, 357, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
         st::ftAnim_8006EBA4(gobj);
@@ -196,6 +202,7 @@ pub fn ftZd_SpecialAirLw_Enter(gobj: *mut HSD_GObj) {
 
 /// `ftZd_SpecialLw_8013B4D8` (AS_ZeldaFinishTransformation): AS 356 grounded, 358 aerial.
 pub fn ftZd_SpecialLw_8013B4D8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialLw_8013B4D8");
     unsafe {
         let fp = fpp(gobj);
         let sa = da_of(fp);
@@ -207,6 +214,7 @@ pub fn ftZd_SpecialLw_8013B4D8(gobj: *mut HSD_GObj) {
 
 /// `ftZd_SpecialLw_8013B540`: 1 while the transform's motion is one of the two that may hand off.
 pub fn ftZd_SpecialLw_8013B540(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("ftZd_SpecialLw_8013B540");
     unsafe {
         let fp = fpp(gobj);
         let action_state_index = (*fp).motion_id;
@@ -219,6 +227,7 @@ pub fn ftZd_SpecialLw_8013B540(gobj: *mut HSD_GObj) -> i32 {
 
 /// `ftZd_SpecialLw_8013B574`: consume the cmd_vars[1] pulse while the item is out (motions 345, 348).
 pub fn ftZd_SpecialLw_8013B574(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftZd_SpecialLw_8013B574");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.zd.x222C.is_null() {
@@ -238,6 +247,7 @@ pub fn ftZd_SpecialLw_8013B574(gobj: *mut HSD_GObj) -> bool {
 
 /// `ftZd_SpecialLw_8013B5EC`: destroy the transform's item (if any) and clear the damage hooks.
 pub fn ftZd_SpecialLw_8013B5EC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialLw_8013B5EC");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.zd.x222C.is_null() {

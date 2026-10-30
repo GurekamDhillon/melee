@@ -233,6 +233,7 @@ unsafe fn hsd_assert(line: u32, cond: bool, msg: &core::ffi::CStr) {
 /// ever freed by the heap reset of a scene exit, and a stage switch overwrote the pointer in
 /// `grZakoGenerator_801CAE04` without freeing it. Called after the outgoing stage's procs are gone.
 pub unsafe extern "C" fn grZakoGenerator_StageSlotRelease() {
+    melee_core::ct!("grZakoGenerator_StageSlotRelease");
     if !lbl_8049F030.x4.is_null() {
         ext::HSD_Free(lbl_8049F030.x4.cast());
     }
@@ -246,6 +247,7 @@ pub unsafe extern "C" fn grZakoGenerator_801CA394(
     callback: grZakoGenerator_SpawnFunc,
     arg4: f32,
 ) -> *mut grZakoGenerator_Config {
+    melee_core::ct!("grZakoGenerator_801CA394");
     let mut config = ext::HSD_MemAlloc(size_of::<grZakoGenerator_Config>() as i32) as *mut grZakoGenerator_Config;
     if !config.is_null() {
         let spawns = ext::HSD_MemAlloc(count.wrapping_mul(size_of::<grZakoGenerator_Spawn>() as i32)) as *mut grZakoGenerator_Spawn;
@@ -274,6 +276,7 @@ unsafe fn grZakoGenerator_801CA43C_inline(t: f32, spawns: *mut grZakoGenerator_S
 }
 
 pub unsafe extern "C" fn grZakoGenerator_801CA43C(config: *mut grZakoGenerator_Config, jobj: *mut HSD_JObj, height: f32) -> i32 {
+    melee_core::ct!("grZakoGenerator_801CA43C");
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut spawned: i32 = 0;
 
@@ -334,6 +337,7 @@ pub unsafe extern "C" fn grZakoGenerator_801CA43C(config: *mut grZakoGenerator_C
 }
 
 pub unsafe extern "C" fn grZakoGenerator_801CA67C() -> *mut grZakoGenerator_Data {
+    melee_core::ct!("grZakoGenerator_801CA67C");
     let pointp = ext::HSD_MemAlloc(size_of::<grZakoGenerator_Data>() as i32) as *mut grZakoGenerator_Data;
 
     hsd_assert(0x52, !pointp.is_null(), c"pointp");
@@ -358,6 +362,7 @@ pub unsafe extern "C" fn grZakoGenerator_801CA67C() -> *mut grZakoGenerator_Data
 }
 
 pub unsafe extern "C" fn grZakoGenerator_801CA8B4(arg0: i32) {
+    melee_core::ct!("grZakoGenerator_801CA8B4");
     if !lbl_8049F030.x4.is_null() && lbl_8049F030.xA_b0() != 0 {
         let right = ext::Stage_GetBlastZoneRightOffset();
         let left = ext::Stage_GetBlastZoneLeftOffset();
@@ -454,6 +459,7 @@ pub unsafe extern "C" fn grZakoGenerator_801CA8B4(arg0: i32) {
 }
 
 pub unsafe extern "C" fn grZakoGenerator_801CAC14(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grZakoGenerator_801CAC14");
     let ip = (*gobj).user_data as *mut Item;
     let kind = ext::itGetKind(gobj);
     let entries = &raw mut (*lbl_8049F030.x4).entries as *mut grZakoGenerator_Entry;
@@ -476,6 +482,7 @@ pub unsafe extern "C" fn grZakoGenerator_801CAC14(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grZakoGenerator_801CACB8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grZakoGenerator_801CACB8");
     let ip = (*gobj).user_data as *mut Item;
     let kind = ext::itGetKind(gobj);
 
@@ -507,14 +514,17 @@ pub unsafe extern "C" fn grZakoGenerator_801CACB8(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_801CADBC(_gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801CADBC");
     grZakoGenerator_801CA8B4(0);
 }
 
 pub unsafe extern "C" fn grZakoGenerator_801CADE0() {
+    melee_core::ct!("grZakoGenerator_801CADE0");
     grZakoGenerator_801CA8B4(1);
 }
 
 pub unsafe extern "C" fn grZakoGenerator_801CAE04(arg0: *mut grZakoGenerator_SpawnDesc) -> *mut HSD_GObj {
+    melee_core::ct!("grZakoGenerator_801CAE04");
     let data = grZakoGenerator_801CA67C();
     let gobj = ext::GObj_Create(2, 4, 0);
 
@@ -531,6 +541,7 @@ pub unsafe extern "C" fn grZakoGenerator_801CAE04(arg0: *mut grZakoGenerator_Spa
 }
 
 pub unsafe extern "C" fn grZakoGenerator_801CAEB0(arg0: i32, arg1: i32) {
+    melee_core::ct!("grZakoGenerator_801CAEB0");
     let entries = &raw mut (*lbl_8049F030.x4).entries as *mut grZakoGenerator_Entry;
     let mut i = 80;
     while i < 81 {
@@ -544,10 +555,12 @@ pub unsafe extern "C" fn grZakoGenerator_801CAEB0(arg0: i32, arg1: i32) {
 }
 
 pub unsafe extern "C" fn grZakoGenerator_801CAEF0(arg0: i32) {
+    melee_core::ct!("grZakoGenerator_801CAEF0");
     lbl_8049F030.set_xA_b0(arg0 as u8);
 }
 
 pub unsafe extern "C" fn grZakoGenerator_801CAF08() {
+    melee_core::ct!("grZakoGenerator_801CAF08");
     lbl_8049F030.set_xA_b0(0);
     let mut cur = *ext::HSD_GObjPLinkHead.add(HSD_GOBJ_PLINK_ITEM as usize);
 

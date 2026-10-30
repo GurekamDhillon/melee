@@ -26,6 +26,7 @@ pub mod ext {
 
 /// `ftCo_800CECE8`: A pressed during the combo window -> second hit.
 pub fn ftCo_800CECE8(g: G) -> bool {
+    melee_core::ct!("ftCo_800CECE8");
     let f = fp(g);
     if f.cmd_vars[0] != 0 && (f.input.pressed_buttons & HSD_PAD_A as u32) != 0 {
         ftCo_800CED30(g);
@@ -36,6 +37,7 @@ pub fn ftCo_800CECE8(g: G) -> bool {
 
 /// `ftCo_800CED30`: only Link and Young Link have AttackS42 (else `__assert` at line 0x36).
 pub fn ftCo_800CED30(g: G) {
+    melee_core::ct!("ftCo_800CED30");
     let kind = fp(g).kind;
     if kind != Ft_Kind_Link && kind != Ft_Kind_CLink {
         panic!("ftattacks4combo.c:54: don't have smash42 motion!!!");
@@ -45,14 +47,15 @@ pub fn ftCo_800CED30(g: G) {
     ext::ftAnim_8006EBA4(g);
 }
 
-pub fn ftCo_AttackS42_Anim(g: G) { ext::ftCo_AttackS4_Anim(g) }
+pub fn ftCo_AttackS42_Anim(g: G) { melee_core::ct!("ftCo_AttackS42_Anim"); ext::ftCo_AttackS4_Anim(g) }
 
 pub fn ftCo_AttackS42_IASA(g: G) {
+    melee_core::ct!("ftCo_AttackS42_IASA");
     if fp(g).allow_interrupt() != 0 {
         ext::ftCo_Wait_IASA(g);
     }
 }
 
-pub fn ftCo_AttackS42_Phys(g: G) { ext::ftCo_AttackS4_Phys(g) }
+pub fn ftCo_AttackS42_Phys(g: G) { melee_core::ct!("ftCo_AttackS42_Phys"); ext::ftCo_AttackS4_Phys(g) }
 
-pub fn ftCo_AttackS42_Coll(g: G) { ext::ftCo_AttackS4_Coll(g) }
+pub fn ftCo_AttackS42_Coll(g: G) { melee_core::ct!("ftCo_AttackS42_Coll"); ext::ftCo_AttackS4_Coll(g) }

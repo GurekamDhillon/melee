@@ -72,6 +72,7 @@ pub mod ext {
 
 /// The retail message table `psUsbMessages` (0x8040A9D0), each field NUL-padded to its slot.
 pub fn ps_usb_messages() -> ParticleUsbMessages {
+    melee_core::ct!("ps_usb_messages");
     fn put<const N: usize>(dst: &mut [i8; N], s: &str) {
         for (d, b) in dst.iter_mut().zip(s.bytes()) {
             *d = b as i8;
@@ -350,6 +351,7 @@ impl Hsd3933 {
 /// `hsd_80393A5C` (0x80393A5C): write `size` bytes at guest address `data` to `filename` on the
 /// host. Returns the byte count, -5 if USB is not ready, -1 on open failure, else the short write.
 pub fn hsd_80393A5C<H: Hsd3933Host + ?Sized>(h: &mut H, filename: &str, data: i32, size: i32) -> i32 {
+    melee_core::ct!("hsd_80393A5C");
     let messages = ps_usb_messages();
     let ready = if *h.hsd_804D78A0() == 0 {
         false

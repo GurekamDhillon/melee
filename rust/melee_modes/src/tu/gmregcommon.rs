@@ -27,12 +27,14 @@ const NUM_OPPONENTS: usize = 3;
 
 /// gm_8017BE8C: how many of the first three opponents are not ChKind_None.
 pub unsafe fn gm_8017BE8C(opps: *const i8) -> i32 {
+    melee_core::ct!("gm_8017BE8C");
     crate::gm_ptr::gm_8017BE8C(core::slice::from_raw_parts(opps, NUM_OPPONENTS))
 }
 
 /// gmRegSetupEnemyColorTable: give every opponent a costume colour that differs from `color` and
 /// from the other opponents' (0xFF marks "needs a colour").
 pub unsafe fn gmRegSetupEnemyColorTable(ckind: i8, color: u8, ckinds: *const i8, colors: *mut u8) {
+    melee_core::ct!("gmRegSetupEnemyColorTable");
     let ncolors = ext::gm_GetNumCostumesForCKind(ckind as u8);
     let none = ChKind_None as i8;
     for i in 0..NUM_OPPONENTS {

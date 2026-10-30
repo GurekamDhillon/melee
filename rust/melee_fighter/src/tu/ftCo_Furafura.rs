@@ -42,6 +42,7 @@ pub mod ext {
 }
 
 pub fn ftCo_80099010(g: G) {
+    melee_core::ct!("ftCo_80099010");
     ext::Fighter_ChangeMotionState(g, ftCo_MS_Furafura as i32, (Ft_MF_SkipModel | Ft_MF_SkipMatAnim) as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     let f = fp(g);
     f.shield_health = cd().x280_unkShieldHealth;
@@ -55,6 +56,7 @@ pub fn ftCo_80099010(g: G) {
 }
 
 pub fn ftCo_Furafura_Anim(g: G) {
+    melee_core::ct!("ftCo_Furafura_Anim");
     let f = fp(g);
     f.shield_health = cd().x280_unkShieldHealth;
     f.grab_timer -= cd().x300;
@@ -64,12 +66,14 @@ pub fn ftCo_Furafura_Anim(g: G) {
     }
 }
 
-pub fn ftCo_Furafura_IASA(_g: G) {}
+pub fn ftCo_Furafura_IASA(_g: G) { melee_core::ct!("ftCo_Furafura_IASA");}
 
 pub fn ftCo_Furafura_Phys(g: G) {
+    melee_core::ct!("ftCo_Furafura_Phys");
     ext::ft_80084F3C(g);
 }
 
 pub fn ftCo_Furafura_Coll(g: G) {
+    melee_core::ct!("ftCo_Furafura_Coll");
     ext::ft_80083F88(g);
 }

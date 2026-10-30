@@ -70,6 +70,7 @@ static it_803F6F08: [i32; 7] = [0, 1, 2, 3, 4, 5, 6];
 static it_803F6F24: [i32; 7] = [3, 4, 5, 0, 1, 2, 6];
 
 pub unsafe fn it_802AF1A4(facing_dir: f32, owner_gobj: *mut Fighter_GObj, vec: *mut Vec3, arg3: Fighter_Part, arg4: i32) -> *mut HSD_GObj {
+    melee_core::ct!("it_802AF1A4");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = arg4;
     Item_InitSpawnPosition(&mut spawn, vec, true);
@@ -88,6 +89,7 @@ pub unsafe fn it_802AF1A4(facing_dir: f32, owner_gobj: *mut Fighter_GObj, vec: *
 }
 
 pub unsafe fn itLinkBow_Logic100_Destroyed(arg0: *mut Item_GObj) {
+    melee_core::ct!("itLinkBow_Logic100_Destroyed");
     if !arg0.is_null() {
         let item = GET_ITEM(arg0);
         if !(*item).owner.is_null() {
@@ -101,12 +103,14 @@ pub unsafe fn itLinkBow_Logic100_Destroyed(arg0: *mut Item_GObj) {
 }
 
 pub unsafe fn it_802AF304(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802AF304");
     if !gobj.is_null() {
         ext::Item_8026A8EC(gobj);
     }
 }
 
 pub unsafe fn it_802AF32C(arg0: *mut HSD_GObj) {
+    melee_core::ct!("it_802AF32C");
     let item = GET_ITEM(arg0);
     let mut arg1: u32 = 0;
 
@@ -133,6 +137,7 @@ pub unsafe fn it_802AF32C(arg0: *mut HSD_GObj) {
 }
 
 pub unsafe fn itLinkBow_Logic100_PickedUp(arg0: *mut Item_GObj) {
+    melee_core::ct!("itLinkBow_Logic100_PickedUp");
     let item = GET_ITEM(arg0);
     let jobj = HSD_GObjGetHSDObj(arg0) as *mut HSD_JObj;
     let mut scale: Vec3 = core::mem::zeroed();
@@ -169,6 +174,7 @@ pub unsafe fn itLinkBow_Logic100_PickedUp(arg0: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLinkbow_UnkMotion5_Anim(arg0: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLinkbow_UnkMotion5_Anim");
     let item = GET_ITEM(arg0);
     let jobj = HSD_GObjGetHSDObj(arg0) as *mut HSD_JObj;
     let mut scale: Vec3 = core::mem::zeroed();
@@ -212,9 +218,10 @@ pub unsafe extern "C" fn itLinkbow_UnkMotion5_Anim(arg0: *mut Item_GObj) -> i32 
     0
 }
 
-pub unsafe extern "C" fn itLinkbow_UnkMotion5_Phys(_arg0: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itLinkbow_UnkMotion5_Phys(_arg0: *mut HSD_GObj) { melee_core::ct!("itLinkbow_UnkMotion5_Phys");}
 
 pub unsafe extern "C" fn itLinkbow_UnkMotion5_Coll(arg0: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLinkbow_UnkMotion5_Coll");
     let item = GET_ITEM(arg0);
     let jobj = HSD_GObjGetHSDObj(arg0) as *mut HSD_JObj;
     let mut scale: Vec3 = core::mem::zeroed();
@@ -226,15 +233,18 @@ pub unsafe extern "C" fn itLinkbow_UnkMotion5_Coll(arg0: *mut Item_GObj) -> i32 
 }
 
 pub unsafe extern "C" fn itLinkbow_UnkMotion6_Anim(_arg0: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLinkbow_UnkMotion6_Anim");
     1
 }
 
-pub unsafe extern "C" fn itLinkbow_UnkMotion6_Phys(_arg0: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itLinkbow_UnkMotion6_Phys(_arg0: *mut HSD_GObj) { melee_core::ct!("itLinkbow_UnkMotion6_Phys");}
 
 pub unsafe extern "C" fn itLinkbow_UnkMotion6_Coll(_arg0: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLinkbow_UnkMotion6_Coll");
     1
 }
 
 pub unsafe fn itLinkBow_Logic100_EvtUnk(arg0: *mut Item_GObj, arg1: *mut Item_GObj) {
+    melee_core::ct!("itLinkBow_Logic100_EvtUnk");
     ext::it_8026B894(arg0, arg1);
 }

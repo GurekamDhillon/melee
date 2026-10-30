@@ -120,23 +120,29 @@ pub const coll_mf: u32 = Ft_MF_KeepColAnimHitStatus
 
 /// Callback entries stored into Fighter (C function pointers).
 pub unsafe extern "C" fn cb_onAccessory4(g: G) {
+    melee_core::ct!("cb_onAccessory4");
     onAccessory4(g);
 }
 pub unsafe extern "C" fn cb_onHitAccessory4(g: G) {
+    melee_core::ct!("cb_onHitAccessory4");
     onHitAccessory4(g);
 }
 pub unsafe extern "C" fn cb_onEnterHitlag(g: G) {
+    melee_core::ct!("cb_onEnterHitlag");
     onEnterHitlag(g);
 }
 pub unsafe extern "C" fn cb_onExitHitlag(g: G) {
+    melee_core::ct!("cb_onExitHitlag");
     onExitHitlag(g);
 }
 pub unsafe extern "C" fn cb_onUnkHit(g: G) {
+    melee_core::ct!("cb_onUnkHit");
     onUnkHit(g);
 }
 
 /// `onAccessory4` (static): spawns Toad on the script's accessory pulse.
 pub fn onAccessory4(gobj: G) {
+    melee_core::ct!("onAccessory4");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).cmd_vars[cmd_accessory4] != 0 {
@@ -162,6 +168,7 @@ pub fn onAccessory4(gobj: G) {
 
 /// `doHitAccessory4` (static): spore burst above Toad.
 pub fn doHitAccessory4(gobj: G) {
+    melee_core::ct!("doHitAccessory4");
     unsafe {
         let fp = fpp(gobj);
         let mut pos: Vec3 = core::mem::zeroed();
@@ -173,6 +180,7 @@ pub fn doHitAccessory4(gobj: G) {
 }
 
 pub fn onHitAccessory4(gobj: G) {
+    melee_core::ct!("onHitAccessory4");
     unsafe {
         let fp = fpp(gobj);
         doHitAccessory4(gobj);
@@ -181,6 +189,7 @@ pub fn onHitAccessory4(gobj: G) {
 }
 
 pub fn ftPe_SpecialN_DoDeath2(gobj: G) {
+    melee_core::ct!("ftPe_SpecialN_DoDeath2");
     unsafe {
         let fp = fpp(gobj);
         onExitHitlag(gobj);
@@ -191,6 +200,7 @@ pub fn ftPe_SpecialN_DoDeath2(gobj: G) {
 }
 
 pub fn ftPe_SpecialN_OnDeath2(gobj: G) {
+    melee_core::ct!("ftPe_SpecialN_OnDeath2");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.pe.toad_gobj.is_null() {
@@ -201,6 +211,7 @@ pub fn ftPe_SpecialN_OnDeath2(gobj: G) {
 }
 
 pub fn onEnterHitlag(gobj: G) {
+    melee_core::ct!("onEnterHitlag");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.pe.toad_gobj.is_null() {
@@ -210,6 +221,7 @@ pub fn onEnterHitlag(gobj: G) {
 }
 
 pub fn onExitHitlag(gobj: G) {
+    melee_core::ct!("onExitHitlag");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.pe.toad_gobj.is_null() {
@@ -220,6 +232,7 @@ pub fn onExitHitlag(gobj: G) {
 
 /// `reset` (static).
 pub fn reset(gobj: G) {
+    melee_core::ct!("reset");
     unsafe {
         let fp = fpp(gobj);
         (*fp).cmd_vars[cmd_phys_state] = 0;
@@ -232,6 +245,7 @@ pub fn reset(gobj: G) {
 }
 
 pub fn ftPe_SpecialN_Enter(gobj: G) {
+    melee_core::ct!("ftPe_SpecialN_Enter");
     unsafe {
         (*fpp(gobj)).self_vel.y = 0.0;
         st::Fighter_ChangeMotionState(gobj, ftPe_MS_SpecialN as i32, Ft_MF_None, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -241,6 +255,7 @@ pub fn ftPe_SpecialN_Enter(gobj: G) {
 }
 
 pub fn ftPe_SpecialAirN_Enter(gobj: G) {
+    melee_core::ct!("ftPe_SpecialAirN_Enter");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -253,6 +268,7 @@ pub fn ftPe_SpecialAirN_Enter(gobj: G) {
 
 /// `doAnim` (static): absorb-shield window, then `cb` once the animation ends.
 pub fn doAnim(gobj: G, cb: fn(G)) {
+    melee_core::ct!("doAnim");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -272,18 +288,21 @@ pub fn doAnim(gobj: G, cb: fn(G)) {
 }
 
 pub fn ftPe_SpecialN_Anim(gobj: G) {
+    melee_core::ct!("ftPe_SpecialN_Anim");
     doAnim(gobj, st::ft_8008A2BC);
 }
 
 pub fn ftPe_SpecialAirN_Anim(gobj: G) {
+    melee_core::ct!("ftPe_SpecialAirN_Anim");
     doAnim(gobj, st::ftCo_Fall_Enter);
 }
 
-pub fn ftPe_SpecialN_IASA(_gobj: G) {}
+pub fn ftPe_SpecialN_IASA(_gobj: G) { melee_core::ct!("ftPe_SpecialN_IASA");}
 
-pub fn ftPe_SpecialAirN_IASA(_gobj: G) {}
+pub fn ftPe_SpecialAirN_IASA(_gobj: G) { melee_core::ct!("ftPe_SpecialAirN_IASA");}
 
 pub fn ftPe_SpecialAirN_Phys(gobj: G) {
+    melee_core::ct!("ftPe_SpecialAirN_Phys");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -307,12 +326,14 @@ pub fn ftPe_SpecialAirN_Phys(gobj: G) {
 }
 
 pub fn ftPe_SpecialN_Coll(gobj: G) {
+    melee_core::ct!("ftPe_SpecialN_Coll");
     if st::ft_800827A0(gobj) == 0 {
         doColl(gobj);
     }
 }
 
 pub fn ftPe_SpecialAirN_Coll(gobj: G) {
+    melee_core::ct!("ftPe_SpecialAirN_Coll");
     if st::ft_80081D0C(gobj) != 0 {
         doAirColl(gobj);
     }
@@ -320,6 +341,7 @@ pub fn ftPe_SpecialAirN_Coll(gobj: G) {
 
 /// `setupColl` (static).
 pub fn setupColl(gobj: G) {
+    melee_core::ct!("setupColl");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -339,6 +361,7 @@ pub fn setupColl(gobj: G) {
 
 /// `doColl` (static).
 pub fn doColl(gobj: G) {
+    melee_core::ct!("doColl");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, ftPe_MS_SpecialAirN as i32, coll_mf);
@@ -351,6 +374,7 @@ pub fn doColl(gobj: G) {
 
 /// `doAirColl` (static).
 pub fn doAirColl(gobj: G) {
+    melee_core::ct!("doAirColl");
     unsafe {
         let fp = fpp(gobj);
         (*fp).u.pe.specialairn_used = 0;
@@ -361,6 +385,7 @@ pub fn doAirColl(gobj: G) {
 
 /// `doHitAnim` (static).
 pub fn doHitAnim(gobj: G, cb: fn(G)) {
+    melee_core::ct!("doHitAnim");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).cmd_vars[cmd_hit_anim_state] != 0 {
@@ -374,19 +399,22 @@ pub fn doHitAnim(gobj: G, cb: fn(G)) {
 }
 
 pub fn ftPe_SpecialNHit_Anim(gobj: G) {
+    melee_core::ct!("ftPe_SpecialNHit_Anim");
     doHitAnim(gobj, st::ft_8008A2BC);
 }
 
 pub fn ftPe_SpecialAirNHit_Anim(gobj: G) {
+    melee_core::ct!("ftPe_SpecialAirNHit_Anim");
     doHitAnim(gobj, st::ftCo_Fall_Enter);
 }
 
-pub fn ftPe_SpecialNHit_IASA(_gobj: G) {}
+pub fn ftPe_SpecialNHit_IASA(_gobj: G) { melee_core::ct!("ftPe_SpecialNHit_IASA");}
 
-pub fn ftPe_SpecialAirNHit_IASA(_gobj: G) {}
+pub fn ftPe_SpecialAirNHit_IASA(_gobj: G) { melee_core::ct!("ftPe_SpecialAirNHit_IASA");}
 
 /// `onUnkHit` (static): the absorb shield was hit; switch to the Hit motion.
 pub fn onUnkHit(gobj: G) {
+    melee_core::ct!("onUnkHit");
     unsafe {
         let fp = fpp(gobj);
         (*fp).mv.pe.specialn.facing_dir = (*fp).specialn_facing_dir as i32;

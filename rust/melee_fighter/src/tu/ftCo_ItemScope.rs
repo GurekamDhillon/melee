@@ -42,16 +42,19 @@ pub mod ext {
 }
 
 pub unsafe extern "C" fn fn_800D8378_c(g: G) {
+    melee_core::ct!("fn_800D8378_c");
     ext::fn_800D8378(g)
 }
 
 pub fn fn_800D86E0(g: G) {
+    melee_core::ct!("fn_800D86E0");
     let msid = ext::fn_800D769C(fp(g), ftCo_MS_ItemScopeEnd as i32);
     ext::Fighter_ChangeMotionState(g, msid, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
     fp(g).take_dmg_cb = Some(fn_800D8378_c);
 }
 
 pub fn fn_800D874C(g: G) {
+    melee_core::ct!("fn_800D874C");
     let msid = ext::fn_800D769C(fp(g), ftCo_MS_ItemScopeAirEnd as i32);
     ext::Fighter_ChangeMotionState(g, msid, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ext::ftCommon_ClampAirDrift(fp(g));
@@ -59,6 +62,7 @@ pub fn fn_800D874C(g: G) {
 }
 
 pub fn fn_800D87C0(g: G) {
+    melee_core::ct!("fn_800D87C0");
     ext::ftCommon_8007D7FC(fp(g));
     let msid = ext::fn_800D769C(fp(g), ftCo_MS_ItemScopeEnd as i32);
     let f = fp(g);
@@ -67,6 +71,7 @@ pub fn fn_800D87C0(g: G) {
 }
 
 pub fn fn_800D8838(g: G) {
+    melee_core::ct!("fn_800D8838");
     ext::ftCommon_8007D5D4(fp(g));
     let msid = ext::fn_800D769C(fp(g), ftCo_MS_ItemScopeAirEnd as i32);
     let f = fp(g);
@@ -76,29 +81,35 @@ pub fn fn_800D8838(g: G) {
 }
 
 pub fn ftCo_ItemScopeEnd_Anim(g: G) {
+    melee_core::ct!("ftCo_ItemScopeEnd_Anim");
     ext::ftCo_ItemScopeFire_Anim(g);
 }
 
 pub fn ftCo_ItemScopeAirEnd_Anim(g: G) {
+    melee_core::ct!("ftCo_ItemScopeAirEnd_Anim");
     ext::ftCo_ItemScopeFire_Anim(g);
 }
 
-pub fn ftCo_ItemScopeEnd_IASA(_g: G) {}
+pub fn ftCo_ItemScopeEnd_IASA(_g: G) { melee_core::ct!("ftCo_ItemScopeEnd_IASA");}
 
-pub fn ftCo_ItemScopeAirEnd_IASA(_g: G) {}
+pub fn ftCo_ItemScopeAirEnd_IASA(_g: G) { melee_core::ct!("ftCo_ItemScopeAirEnd_IASA");}
 
 pub fn ftCo_ItemScopeEnd_Phys(g: G) {
+    melee_core::ct!("ftCo_ItemScopeEnd_Phys");
     ext::ftCo_800CDE54(g);
 }
 
 pub fn ftCo_ItemScopeAirEnd_Phys(g: G) {
+    melee_core::ct!("ftCo_ItemScopeAirEnd_Phys");
     ext::ftCo_800CDE74(g);
 }
 
 pub fn ftCo_ItemScopeEnd_Coll(g: G) {
+    melee_core::ct!("ftCo_ItemScopeEnd_Coll");
     ext::ft_800841B8(g, fn_800D8838);
 }
 
 pub fn ftCo_ItemScopeAirEnd_Coll(g: G) {
+    melee_core::ct!("ftCo_ItemScopeAirEnd_Coll");
     ext::ft_80082C74(g, fn_800D87C0);
 }

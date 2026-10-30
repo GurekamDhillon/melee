@@ -69,6 +69,7 @@ fn inline_ko(g: G) {
 
 /// `ftCo_800C8C84`: start the stamina KO when HP reached 0.
 pub fn ftco_800c8c84(g: G) -> bool {
+    melee_core::ct!("ftco_800c8c84");
     let f = fp(g);
     if f.x2224_b2() == 0
         && f.x2225_b7() != 0
@@ -83,6 +84,7 @@ pub fn ftco_800c8c84(g: G) -> bool {
 
 /// `ftCo_800C8D00`.
 pub fn ftco_800c8d00(g: G) {
+    melee_core::ct!("ftco_800c8d00");
     if fp(g).x2224_b3() == 0 {
         return;
     }
@@ -111,12 +113,14 @@ pub fn ftco_800c8d00(g: G) {
 
 /// `fn_800C8E40(fp, sfx)`: plays `ft_data->x4C_sfx->xC` (the argument is unused, as in C).
 pub fn fn_800c8e40(f: &mut Fighter, _sfx: *mut FtSFX) {
+    melee_core::ct!("fn_800c8e40");
     let id = unsafe { (*(*f.ft_data).x4C_sfx).xC };
     ext::ft_PlaySFX(crate::mtu_ptr::ptr(&(f)), (id) as i32, (127) as u8, (64) as u8);
 }
 
 /// `fn_800C8E74`.
 pub fn fn_800c8e74(g: G) {
+    melee_core::ct!("fn_800c8e74");
     let f = fp(g);
     if f.kind == Ft_Kind_MasterH || f.kind == Ft_Kind_CrezyH {
         if f.kind == Ft_Kind_MasterH {
@@ -136,6 +140,7 @@ pub fn fn_800c8e74(g: G) {
 
 /// `ftCo_800C8F6C`: cache the KO MObj and set its diffuse colour (PlCo x7D8).
 pub fn ftco_800c8f6c() {
+    melee_core::ct!("ftco_800c8f6c");
     let dobj = ext::HSD_JObjGetDObj(ext::HSD_JObjLoadJoint(unsafe { crate::tu::fighter::Fighter_804D6504 } as *mut core::ffi::c_void)) as *mut HSD_DObj;
     unsafe {
         let mobj = if !dobj.is_null() { (*dobj).mobj } else { core::ptr::null_mut() };
@@ -149,6 +154,7 @@ pub fn ftco_800c8f6c() {
 
 /// `ftCo_800C8FC4`.
 pub fn ftco_800c8fc4(g: G) {
+    melee_core::ct!("ftco_800c8fc4");
     let f = fp(g);
     if (ext::Player_GetMoreFlagsBit0((f.player_id as i32) as i32) as u8) != 0 {
         let cd = h::common_data();
@@ -162,5 +168,6 @@ pub fn ftco_800c8fc4(g: G) {
 
 /// `ftCo_800C9034`.
 pub fn ftco_800c9034(g: G) {
+    melee_core::ct!("ftco_800c9034");
     h::ftco_800d4f24(g, 0);
 }

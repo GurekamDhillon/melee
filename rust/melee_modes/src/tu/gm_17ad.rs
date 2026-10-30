@@ -22,6 +22,7 @@ const Gm_PKind_NA: u8 = 3;
 /// inlines.h `gmClampResultStat`.
 #[inline]
 pub fn gmClampResultStat(value: i32) -> i32 {
+    melee_core::ct!("gmClampResultStat");
     if value > 999999 {
         999999
     } else if value < -999999 {
@@ -115,11 +116,13 @@ kills_by! {
 }
 
 pub unsafe fn fn_8017B010(arg0: i32) -> i32 {
+    melee_core::ct!("fn_8017B010");
     let p = standings(arg0);
     gmClampResultStat((*p).x24.wrapping_sub((*p).self_destructs as i32))
 }
 
 pub unsafe fn fn_8017B410(arg0: i32) -> i32 {
+    melee_core::ct!("fn_8017B410");
     let p = standings(arg0);
     let var_r3: i32 = if ext::lbLang_IsSavedLanguageUS() != 0 {
         // (u32)(f32)(x5C / 30.4788f)
@@ -131,6 +134,7 @@ pub unsafe fn fn_8017B410(arg0: i32) -> i32 {
 }
 
 pub unsafe fn fn_8017B91C(arg0: i32) -> i32 {
+    melee_core::ct!("fn_8017B91C");
     let p = standings(arg0);
     let var_r3: u32 = if ext::lbLang_IsSavedLanguageUS() != 0 {
         // (u32)(f32)((f32)x94 / 30.4788): the divisor is a double literal
@@ -142,6 +146,7 @@ pub unsafe fn fn_8017B91C(arg0: i32) -> i32 {
 }
 
 pub unsafe fn fn_8017B9F4(arg0: i32) -> i32 {
+    melee_core::ct!("fn_8017B9F4");
     let p = standings(arg0);
     let var_r3: u32 = if ext::lbLang_IsSavedLanguageUS() != 0 {
         (((*p).x98 as f32 as f64 / 30.4788f64) as f32) as u32

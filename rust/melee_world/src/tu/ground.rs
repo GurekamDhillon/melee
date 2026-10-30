@@ -442,6 +442,7 @@ pub static mut Ground_804D6954: i16 = 0;
 
 /// A SYNTHESISED ROW MAY HAVE NO StageCallbacks[]: "no table" is "nothing matched".
 pub unsafe extern "C" fn Ground_MexStageCallbacks(grkind: i32) -> *mut StageCallbacks {
+    melee_core::ct!("Ground_MexStageCallbacks");
     if stage_datas[grkind as usize].is_null() {
         return null_mut();
     }
@@ -454,28 +455,36 @@ pub unsafe extern "C" fn Ground_MexStageCallbacks(grkind: i32) -> *mut StageCall
 }
 
 pub unsafe extern "C" fn Ground_MexOnInit() {
+    melee_core::ct!("Ground_MexOnInit");
     ext::Mex_GrOnInit();
 }
 pub unsafe extern "C" fn Ground_MexOnDemoInit(arg: i32) {
+    melee_core::ct!("Ground_MexOnDemoInit");
     ext::Mex_GrOnDemoInit(arg);
 }
 pub unsafe extern "C" fn Ground_MexOnLoad() {
+    melee_core::ct!("Ground_MexOnLoad");
     ext::Mex_GrOnLoad();
 }
 pub unsafe extern "C" fn Ground_MexOnStart() {
+    melee_core::ct!("Ground_MexOnStart");
     ext::Mex_GrOnStart();
 }
 pub unsafe extern "C" fn Ground_MexCallback4() -> i32 {
+    melee_core::ct!("Ground_MexCallback4");
     (ext::Mex_GrCallback4() != 0) as i32
 }
 pub unsafe extern "C" fn Ground_MexOnTouchLine(index: i32) -> *mut DynamicsDesc {
+    melee_core::ct!("Ground_MexOnTouchLine");
     ext::Mex_GrOnTouchLine(index) as *mut DynamicsDesc
 }
 pub unsafe extern "C" fn Ground_MexOnCheckShadowRender(pos: *mut Vec3, arg1: i32, jobj: *mut HSD_JObj) -> i32 {
+    melee_core::ct!("Ground_MexOnCheckShadowRender");
     (ext::Mex_GrOnCheckShadowRender(pos as *mut c_void, arg1, jobj as *mut c_void) != 0) as i32
 }
 
 pub unsafe extern "C" fn Ground_MexInitStages() {
+    melee_core::ct!("Ground_MexInitStages");
     if Ground_MexInitStages_done {
         return;
     }
@@ -513,11 +522,12 @@ pub unsafe extern "C" fn Ground_MexInitStages() {
     }
 }
 
-pub unsafe extern "C" fn Ground_OnStart() {}
+pub unsafe extern "C" fn Ground_OnStart() { melee_core::ct!("Ground_OnStart");}
 
-pub unsafe extern "C" fn Ground_801BFFAC(_arg0: i32) {}
+pub unsafe extern "C" fn Ground_801BFFAC(_arg0: i32) { melee_core::ct!("Ground_801BFFAC");}
 
 pub unsafe extern "C" fn Ground_801BFFB0() {
+    melee_core::ct!("Ground_801BFFB0");
     ext::grDatFiles_801C6288();
     stage_info.flags = 0;
     stage_info.x6D0 = -1;
@@ -582,22 +592,26 @@ pub unsafe extern "C" fn Ground_801BFFB0() {
 }
 
 pub unsafe extern "C" fn zeroBuffer() {
+    melee_core::ct!("zeroBuffer");
     for i in 0..buffer_size {
         *Ground_804D6950.add(i) = 0;
     }
 }
 
 pub unsafe extern "C" fn Ground_801C0378(_arg0: i32) {
+    melee_core::ct!("Ground_801C0378");
     ext::ftCo_800C06C0();
     Ground_804D6950 = ext::HSD_MemAlloc(buffer_size as i32) as *mut u8;
     zeroBuffer();
 }
 
 pub unsafe extern "C" fn mem_free(ptr: *mut c_void) {
+    melee_core::ct!("mem_free");
     ext::HSD_Free(ptr);
 }
 
 pub unsafe extern "C" fn Ground_801C0498() -> f32 {
+    melee_core::ct!("Ground_801C0498");
     if !stage_info.param.is_null() {
         (*stage_info.param).y
     } else {
@@ -606,6 +620,7 @@ pub unsafe extern "C" fn Ground_801C0498() -> f32 {
 }
 
 pub unsafe extern "C" fn alloc_user_data_ground() -> *mut Ground {
+    melee_core::ct!("alloc_user_data_ground");
     let gp = ext::HSD_MemAlloc(size_of::<Ground>() as i32) as *mut Ground;
     // TARGET_PC: Slippi's Init Stage Data clears this block
     if !gp.is_null() {
@@ -616,6 +631,7 @@ pub unsafe extern "C" fn alloc_user_data_ground() -> *mut Ground {
 }
 
 pub unsafe extern "C" fn Ground_SetParamY(y: f32) {
+    melee_core::ct!("Ground_SetParamY");
     if !stage_info.param.is_null() {
         (*stage_info.param).y = y;
     } else {
@@ -624,66 +640,86 @@ pub unsafe extern "C" fn Ground_SetParamY(y: f32) {
 }
 
 pub unsafe extern "C" fn Ground_801C0508() -> i32 {
+    melee_core::ct!("Ground_801C0508");
     let temp_r3 = stage_info.param;
     if !temp_r3.is_null() { (*temp_r3).x4 as i32 } else { 128 }
 }
 
 pub unsafe extern "C" fn Ground_801C052C(arg0: *mut _GXColor) {
+    melee_core::ct!("Ground_801C052C");
     (*stage_info.param).xB8 = *arg0;
 }
 pub unsafe extern "C" fn Ground_801C0544(arg0: *mut _GXColor) {
+    melee_core::ct!("Ground_801C0544");
     (*stage_info.param).xC0 = *arg0;
 }
 pub unsafe extern "C" fn Ground_801C055C(arg0: *mut _GXColor) {
+    melee_core::ct!("Ground_801C055C");
     (*stage_info.param).xD0 = *arg0;
 }
 pub unsafe extern "C" fn Ground_801C0574(arg0: *mut _GXColor) {
+    melee_core::ct!("Ground_801C0574");
     (*stage_info.param).xD8 = *arg0;
 }
 pub unsafe extern "C" fn Ground_801C058C(arg0: *mut _GXColor) {
+    melee_core::ct!("Ground_801C058C");
     (*stage_info.param).xC4 = *arg0;
 }
 pub unsafe extern "C" fn Ground_801C05A4(arg0: *mut _GXColor) {
+    melee_core::ct!("Ground_801C05A4");
     (*stage_info.param).xCC = *arg0;
 }
 pub unsafe extern "C" fn Ground_801C05BC(arg0: *mut _GXColor) {
+    melee_core::ct!("Ground_801C05BC");
     (*stage_info.param).xD4 = *arg0;
 }
 pub unsafe extern "C" fn Ground_801C05D4(arg0: *mut _GXColor) {
+    melee_core::ct!("Ground_801C05D4");
     (*stage_info.param).xBC = *arg0;
 }
 pub unsafe extern "C" fn Ground_801C05EC(arg0: *mut _GXColor) {
+    melee_core::ct!("Ground_801C05EC");
     (*stage_info.param).xC8 = *arg0;
 }
 pub unsafe extern "C" fn Ground_801C0604() -> *mut _GXColor {
+    melee_core::ct!("Ground_801C0604");
     &raw mut (*stage_info.param).xB8
 }
 pub unsafe extern "C" fn Ground_801C0618() -> *mut _GXColor {
+    melee_core::ct!("Ground_801C0618");
     &raw mut (*stage_info.param).xC0
 }
 pub unsafe extern "C" fn Ground_801C062C() -> *mut _GXColor {
+    melee_core::ct!("Ground_801C062C");
     &raw mut (*stage_info.param).xD0
 }
 pub unsafe extern "C" fn Ground_801C0640() -> *mut _GXColor {
+    melee_core::ct!("Ground_801C0640");
     &raw mut (*stage_info.param).xD8
 }
 pub unsafe extern "C" fn Ground_801C0654() -> *mut _GXColor {
+    melee_core::ct!("Ground_801C0654");
     &raw mut (*stage_info.param).xC4
 }
 pub unsafe extern "C" fn Ground_801C0668() -> *mut _GXColor {
+    melee_core::ct!("Ground_801C0668");
     &raw mut (*stage_info.param).xCC
 }
 pub unsafe extern "C" fn Ground_801C067C() -> *mut _GXColor {
+    melee_core::ct!("Ground_801C067C");
     &raw mut (*stage_info.param).xD4
 }
 pub unsafe extern "C" fn Ground_801C0690() -> *mut _GXColor {
+    melee_core::ct!("Ground_801C0690");
     &raw mut (*stage_info.param).xBC
 }
 pub unsafe extern "C" fn Ground_801C06A4() -> *mut _GXColor {
+    melee_core::ct!("Ground_801C06A4");
     &raw mut (*stage_info.param).xC8
 }
 
 pub unsafe extern "C" fn Ground_801C06B8(arg0: GrKind) {
+    melee_core::ct!("Ground_801C06B8");
     Ground_MexInitStages();
     if stage_datas[arg0 as usize].is_null() {
         return;
@@ -700,6 +736,7 @@ pub unsafe extern "C" fn Ground_801C06B8(arg0: GrKind) {
 }
 
 pub unsafe extern "C" fn Ground_801C0754(pair: *mut StageIdPair) {
+    melee_core::ct!("Ground_801C0754");
     Ground_MexInitStages();
     ext::StageSkin_ApplyForLoad(
         (*pair).grkind as i32,
@@ -736,6 +773,7 @@ pub unsafe extern "C" fn Ground_801C0754(pair: *mut StageIdPair) {
 }
 
 pub unsafe extern "C" fn Ground_TTMod_BuildCollData(orig: *mut MapCollData, level: i32, nplat: i32) -> *mut MapCollData {
+    melee_core::ct!("Ground_TTMod_BuildCollData");
     let ovc = (*orig).vert_count;
     let olc = (*orig).line_count;
     let ojc = (*orig).joint_count;
@@ -829,6 +867,7 @@ pub unsafe extern "C" fn Ground_TTMod_BuildCollData(orig: *mut MapCollData, leve
 }
 
 pub unsafe extern "C" fn Ground_TTMod_InitLines(merged: *mut MapCollData, nplat: i32) {
+    melee_core::ct!("Ground_TTMod_InitLines");
     let gline = ext::mpGetGroundCollLine();
     let olc = (*merged).line_count - nplat;
     for i in 0..nplat {
@@ -839,6 +878,7 @@ pub unsafe extern "C" fn Ground_TTMod_InitLines(merged: *mut MapCollData, nplat:
 }
 
 pub unsafe extern "C" fn Ground_801C0800(pair: *mut StageIdPair) {
+    melee_core::ct!("Ground_801C0800");
     if stage_datas[(*pair).grkind as usize].is_null() {
         return;
     }
@@ -914,6 +954,7 @@ pub unsafe extern "C" fn Ground_801C0800(pair: *mut StageIdPair) {
 }
 
 pub unsafe extern "C" fn Ground_801C0A70(pos: *mut Vec3) -> i32 {
+    melee_core::ct!("Ground_801C0A70");
     if ext::HSD_Randi(2) != 0 {
         let enabled_stages: [GrKind; 27] = [
             Gr_Kind_Castle,
@@ -968,6 +1009,7 @@ pub unsafe extern "C" fn Ground_801C0A70(pos: *mut Vec3) -> i32 {
 }
 
 pub unsafe extern "C" fn Ground_801C0C2C(arg0: *mut HSD_GObj) {
+    melee_core::ct!("Ground_801C0C2C");
     let mut sp50 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp44 = sp50;
     let mut sp38 = sp50;
@@ -1065,6 +1107,7 @@ pub unsafe extern "C" fn Ground_801C0C2C(arg0: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn Ground_OnLoad(pair: *mut StageIdPair) {
+    melee_core::ct!("Ground_OnLoad");
     if stage_datas[(*pair).grkind as usize].is_null() {
         return;
     }
@@ -1090,6 +1133,7 @@ struct QueueNode {
 }
 
 pub unsafe extern "C" fn Ground_801C0FB8(pair: *mut StageIdPair) {
+    melee_core::ct!("Ground_801C0FB8");
     if stage_datas[(*pair).grkind as usize].is_null() {
         return;
     }
@@ -1108,6 +1152,7 @@ pub unsafe extern "C" fn Ground_801C0FB8(pair: *mut StageIdPair) {
 }
 
 pub unsafe extern "C" fn Ground_DemoInit(pair: *mut StageIdPair, arg1: i32) {
+    melee_core::ct!("Ground_DemoInit");
     if stage_datas[(*pair).grkind as usize].is_null() {
         return;
     }
@@ -1115,6 +1160,7 @@ pub unsafe extern "C" fn Ground_DemoInit(pair: *mut StageIdPair, arg1: i32) {
 }
 
 pub unsafe extern "C" fn Ground_801C10B8(arg0: *mut HSD_GObj, arg1: HSD_GObjEvent) {
+    melee_core::ct!("Ground_801C10B8");
     let temp_r3 = ext::HSD_MemAlloc(size_of::<QueueNode>() as i32) as *mut QueueNode;
     if !temp_r3.is_null() {
         (*temp_r3).unk0 = stage_info.x6A4;
@@ -1127,9 +1173,10 @@ pub unsafe extern "C" fn Ground_801C10B8(arg0: *mut HSD_GObj, arg1: HSD_GObjEven
     }
 }
 
-pub unsafe extern "C" fn Ground_801C1154() {}
+pub unsafe extern "C" fn Ground_801C1154() { melee_core::ct!("Ground_801C1154");}
 
 pub unsafe extern "C" fn Ground_801C1158() {
+    melee_core::ct!("Ground_801C1158");
     match stage_info.grkind {
         Gr_Kind_PStadium => ext::grStadium_801D39A0(Ground_GetMapGObj(1)),
         Gr_Kind_Corneria | Gr_Kind_Venom => ext::grCorneria_801E2A6C(),
@@ -1138,6 +1185,7 @@ pub unsafe extern "C" fn Ground_801C1158() {
 }
 
 pub unsafe extern "C" fn Ground_801C11AC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Ground_801C11AC");
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let tmp = 1.0f32;
     let mut scale = Vec3 { x: tmp, y: tmp, z: tmp };
@@ -1146,6 +1194,7 @@ pub unsafe extern "C" fn Ground_801C11AC(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn Ground_801C126C(node: *mut HSD_Joint, depth: *mut i32) -> *mut HSD_Joint {
+    melee_core::ct!("Ground_801C126C");
     *depth -= 1;
     if *depth < 0 {
         return node;
@@ -1166,6 +1215,7 @@ pub unsafe extern "C" fn Ground_801C126C(node: *mut HSD_Joint, depth: *mut i32) 
 }
 
 pub unsafe extern "C" fn Ground_801C13D0(arg0: i32, depth: i32) -> *mut HSD_JObj {
+    melee_core::ct!("Ground_801C13D0");
     let mut result: *mut HSD_JObj = null_mut();
     let archive = ext::grDatFiles_801C6330(arg0);
     if !archive.is_null() && arg0 < (*(*archive).unk4).unkC {
@@ -1183,6 +1233,7 @@ pub unsafe extern "C" fn Ground_801C13D0(arg0: i32, depth: i32) -> *mut HSD_JObj
 
 /// `Ground_803B7E0C`: the identity joint `get_jobj_inline` loads with a uniform scale.
 pub unsafe extern "C" fn get_jobj_inline(phi_f0: f32) -> *mut HSD_JObj {
+    melee_core::ct!("get_jobj_inline");
     let mut sp14: HSD_Joint = core::mem::zeroed();
     sp14.scale = Vec3 { x: 1.0, y: 1.0, z: 1.0 };
     sp14.scale.x = phi_f0;
@@ -1197,6 +1248,7 @@ pub unsafe extern "C" fn get_jobj_inline(phi_f0: f32) -> *mut HSD_JObj {
 }
 
 pub unsafe extern "C" fn Ground_GetStageGObj(map_id: i32) -> *mut Ground_GObj {
+    melee_core::ct!("Ground_GetStageGObj");
     let slot_gobj = ext::ScriptGame_StageSlotGround(map_id);
     if !slot_gobj.is_null() {
         return slot_gobj;
@@ -1310,6 +1362,7 @@ pub unsafe extern "C" fn Ground_GetStageGObj(map_id: i32) -> *mut Ground_GObj {
 }
 
 pub unsafe extern "C" fn Ground_801C1A20(arg0: *mut HSD_Joint, arg1: i32) -> *mut HSD_GObj {
+    melee_core::ct!("Ground_801C1A20");
     let temp_r30 = ext::GObj_Create(HSD_GOBJ_CLASS_STAGE as u16, 5, 0);
     if temp_r30.is_null() {
         return null_mut();
@@ -1350,6 +1403,7 @@ pub unsafe extern "C" fn Ground_801C1A20(arg0: *mut HSD_Joint, arg1: i32) -> *mu
 }
 
 pub unsafe extern "C" fn Ground_801C1CD0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Ground_801C1CD0");
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let gp = (*gobj).user_data as *mut Ground;
     ext::HSD_JObjAnimAll(jobj);
@@ -1361,6 +1415,7 @@ pub unsafe extern "C" fn Ground_801C1CD0(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn Ground_801C1D38(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Ground_801C1D38");
     let gp = (*gobj).user_data as *mut Ground;
     if let Some(f) = (*gp).xC_callback {
         f(gobj);
@@ -1369,6 +1424,7 @@ pub unsafe extern "C" fn Ground_801C1D38(gobj: *mut HSD_GObj) {
 
 /// Reuse preloaded slot joints; preserve the retail callback priorities.
 pub unsafe extern "C" fn Ground_StageSlotPrepare(gobj: *mut HSD_GObj, map_id: i32) {
+    melee_core::ct!("Ground_StageSlotPrepare");
     let gp = (*gobj).user_data as *mut Ground;
     ext::HSD_GObjProc_RemoveAllProcs(gobj);
     core::ptr::write_bytes(gp as *mut u8, 0, size_of::<Ground>());
@@ -1386,43 +1442,53 @@ pub unsafe extern "C" fn Ground_StageSlotPrepare(gobj: *mut HSD_GObj, map_id: i3
 }
 
 pub unsafe extern "C" fn Ground_801C1D6C(arg0: u32) {
+    melee_core::ct!("Ground_801C1D6C");
     stage_info.flags |= arg0;
 }
 
 pub unsafe extern "C" fn Ground_801C1D84() -> u32 {
+    melee_core::ct!("Ground_801C1D84");
     stage_info.flags & 0x330
 }
 
 pub unsafe extern "C" fn Ground_801C1D98() -> u32 {
+    melee_core::ct!("Ground_801C1D98");
     stage_info.flags & 0x20
 }
 
 pub unsafe extern "C" fn Ground_801C1DAC() -> u32 {
+    melee_core::ct!("Ground_801C1DAC");
     stage_info.flags & 0x100
 }
 
 pub unsafe extern "C" fn Ground_801C1DC0() -> u32 {
+    melee_core::ct!("Ground_801C1DC0");
     stage_info.flags & 0x80
 }
 
 pub unsafe extern "C" fn Ground_801C1DD4() -> i32 {
+    melee_core::ct!("Ground_801C1DD4");
     stage_info.x6D0 as i32
 }
 
 pub unsafe extern "C" fn Ground_801C1DE4(arg0: *mut i32, arg1: *mut i32) {
+    melee_core::ct!("Ground_801C1DE4");
     *arg0 = stage_info.x6D4 as i32;
     *arg1 = stage_info.x6D2 as i32;
 }
 
 pub unsafe extern "C" fn Ground_801C1E00(arg0: i32) {
+    melee_core::ct!("Ground_801C1E00");
     stage_info.unk8C.set_b2(arg0 as u8);
 }
 
 pub unsafe extern "C" fn Ground_801C1E18() -> i32 {
+    melee_core::ct!("Ground_801C1E18");
     stage_info.unk8C.b2() as i32
 }
 
 pub unsafe extern "C" fn Ground_801C1E2C(gobj: *mut HSD_GObj, code: i32) {
+    melee_core::ct!("Ground_801C1E2C");
     if ext::Camera_80030A78() != 0 {
         return;
     }
@@ -1437,11 +1503,13 @@ pub unsafe extern "C" fn Ground_801C1E2C(gobj: *mut HSD_GObj, code: i32) {
 }
 
 pub unsafe extern "C" fn Ground_801C1E84() -> *mut HSD_GObj {
+    melee_core::ct!("Ground_801C1E84");
     stage_info.x12C
 }
 
 /// `static inline HSD_FogDesc* foo(void)`: the first fog desc of a model flagged for fog.
 pub unsafe extern "C" fn foo() -> *mut HSD_FogDesc {
+    melee_core::ct!("foo");
     ext::grDatFiles_GetArchive();
     let archive = ext::grDatFiles_GetArchive();
     let kind = stage_info.grkind as i32;
@@ -1476,6 +1544,7 @@ pub unsafe extern "C" fn foo() -> *mut HSD_FogDesc {
 }
 
 pub unsafe extern "C" fn Ground_801C1E94() {
+    melee_core::ct!("Ground_801C1E94");
     let stageinfo = &raw mut stage_info;
     let phi_r0 = foo();
     if !phi_r0.is_null() {
@@ -1495,6 +1564,7 @@ pub unsafe extern "C" fn Ground_801C1E94() {
 }
 
 pub unsafe extern "C" fn Ground_ApplyStageBackgroundColor() {
+    melee_core::ct!("Ground_ApplyStageBackgroundColor");
     if !stage_info.x12C.is_null() {
         let fog = (*stage_info.x12C).hsd_obj as *mut HSD_Fog;
         if !fog.is_null() {
@@ -1506,6 +1576,7 @@ pub unsafe extern "C" fn Ground_ApplyStageBackgroundColor() {
 }
 
 pub unsafe extern "C" fn Ground_801C205C(color: *mut _GXColor) {
+    melee_core::ct!("Ground_801C205C");
     if !stage_info.x12C.is_null() && !color.is_null() {
         let fog = (*stage_info.x12C).hsd_obj as *mut HSD_Fog;
         if !fog.is_null() {
@@ -1515,6 +1586,7 @@ pub unsafe extern "C" fn Ground_801C205C(color: *mut _GXColor) {
 }
 
 pub unsafe extern "C" fn Ground_801C2090(color: *mut _GXColor) -> i32 {
+    melee_core::ct!("Ground_801C2090");
     if !stage_info.x12C.is_null() && !color.is_null() {
         let fog = (*stage_info.x12C).hsd_obj as *mut HSD_Fog;
         if !fog.is_null() {
@@ -1526,6 +1598,7 @@ pub unsafe extern "C" fn Ground_801C2090(color: *mut _GXColor) -> i32 {
 }
 
 pub unsafe extern "C" fn Ground_801C20D0() -> f32 {
+    melee_core::ct!("Ground_801C20D0");
     stage_info.cam_info.cam_vertical_tilt
 }
 
@@ -1548,6 +1621,7 @@ impl LightOverrideEntry {
 }
 
 pub unsafe extern "C" fn find_light_override(archive: *mut UnkArchiveStruct, desc: *mut HSD_LightDesc, b6: *mut i32, b7: *mut i32, b5: *mut i32) -> i32 {
+    melee_core::ct!("find_light_override");
     let dat = (*archive).unk4;
     let count = (*dat).unk1C;
 
@@ -1566,6 +1640,7 @@ pub unsafe extern "C" fn find_light_override(archive: *mut UnkArchiveStruct, des
 }
 
 pub unsafe extern "C" fn find_light_override_in_dat(dat: *mut UnkStageDat, array_dat: *mut UnkStageDat, desc: *mut HSD_LightDesc, b6: *mut i32, b7: *mut i32, b5: *mut i32) -> i32 {
+    melee_core::ct!("find_light_override_in_dat");
     let count = (*dat).unk1C;
 
     if count != 0 {
@@ -1583,6 +1658,7 @@ pub unsafe extern "C" fn find_light_override_in_dat(dat: *mut UnkStageDat, array
 }
 
 pub unsafe extern "C" fn Ground_801C20E0(archive: *mut UnkArchiveStruct, lightset: *mut *mut LightList) -> *mut *mut LightList {
+    melee_core::ct!("Ground_801C20E0");
     let mut b6 = 0i32;
     let mut b7 = 0i32;
     let mut b5 = 0i32;
@@ -1644,6 +1720,7 @@ pub unsafe extern "C" fn Ground_801C20E0(archive: *mut UnkArchiveStruct, lightse
 }
 
 pub unsafe extern "C" fn Ground_801C2374(lobj: *mut HSD_LObj) {
+    melee_core::ct!("Ground_801C2374");
     let mut vec = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let vec_mul = Ground_801C0498();
     let mut cur = lobj;
@@ -1665,6 +1742,7 @@ pub unsafe extern "C" fn Ground_801C2374(lobj: *mut HSD_LObj) {
 }
 
 pub unsafe extern "C" fn Ground_801C247C(arg0: i32, arg1: i32) -> *mut HSD_Spline {
+    melee_core::ct!("Ground_801C247C");
     let archive = ext::grDatFiles_801C6330(arg0);
     assert!(!archive.is_null(), "ground.c:2017 HSD_ASSERT(2017, archive)");
     if !(*archive).unk4.is_null() && arg1 < (*(*archive).unk4).unk14 {
@@ -1676,6 +1754,7 @@ pub unsafe extern "C" fn Ground_801C247C(arg0: i32, arg1: i32) -> *mut HSD_Splin
 
 /// Resolve the StKind of the row that actually exists (m-ex added stages have a wildcard row).
 pub unsafe extern "C" fn Ground_MexParamStkind(stkind: StKind) -> StKind {
+    melee_core::ct!("Ground_MexParamStkind");
     if stage_info.param.is_null() {
         return stkind;
     }
@@ -1701,6 +1780,7 @@ pub unsafe extern "C" fn Ground_MexParamStkind(stkind: StKind) -> StKind {
 }
 
 pub unsafe extern "C" fn Ground_801C24F8(stkind: StKind, arg1: u32, arg2: *mut i32) -> i32 {
+    melee_core::ct!("Ground_801C24F8");
     let mut stkind = stkind;
     let mut arg1 = arg1;
     let phi_r30_0 = (*stage_info.param).stage_params;
@@ -1870,15 +1950,18 @@ pub unsafe extern "C" fn Ground_801C24F8(stkind: StKind, arg1: u32, arg2: *mut i
 }
 
 pub unsafe extern "C" fn Ground_801C28AC(stkind: StKind, arg1: u32, arg2: *mut i32) -> i32 {
+    melee_core::ct!("Ground_801C28AC");
     Ground_801C24F8(stkind, arg1, arg2)
 }
 
 /// Not reached on PC (the lookup falls back to zeros): the vanilla failure path, a spin.
 pub unsafe extern "C" fn panicMissingStageParam(stkind: StKind, count: i32) -> ! {
+    melee_core::ct!("panicMissingStageParam");
     panic!("ground.c:2310 not found stage param in DAT(grkind={} stkind={},num={})", stage_info.grkind, stkind, count);
 }
 
 pub unsafe extern "C" fn Ground_801C28CC(arg0: *mut i32, stkind: StKind) {
+    melee_core::ct!("Ground_801C28CC");
     let mut param = (*stage_info.param).stage_params;
     let count = (*stage_info.param).stage_param_count as isize;
     let stkind = Ground_MexParamStkind(stkind);
@@ -1919,10 +2002,12 @@ pub unsafe extern "C" fn Ground_801C28CC(arg0: *mut i32, stkind: StKind) {
 }
 
 pub unsafe extern "C" fn Ground_801C2AD8() -> *mut i32 {
+    melee_core::ct!("Ground_801C2AD8");
     stage_info_xA0()
 }
 
 pub unsafe extern "C" fn Ground_801C2AE8(stkind: StKind) -> f32 {
+    melee_core::ct!("Ground_801C2AE8");
     let mut phi_r5 = (*stage_info.param).stage_params;
     let stkind = Ground_MexParamStkind(stkind);
     let mut i = 0;
@@ -1938,14 +2023,17 @@ pub unsafe extern "C" fn Ground_801C2AE8(stkind: StKind) -> f32 {
 }
 
 pub unsafe extern "C" fn Ground_GetMapGObj(map_id: i32) -> *mut Ground_GObj {
+    melee_core::ct!("Ground_GetMapGObj");
     stage_info.map_gobjs[map_id as usize]
 }
 
 pub unsafe extern "C" fn Ground_801C2BBC(map_gobj: *mut Ground_GObj, index: i32) {
+    melee_core::ct!("Ground_801C2BBC");
     stage_info.map_gobjs[index as usize] = map_gobj;
 }
 
 pub unsafe extern "C" fn Ground_801C2BD4(arg0: *mut c_void) {
+    melee_core::ct!("Ground_801C2BD4");
     for i in 0..Gr_CObj_Max {
         if stage_info.x694[i] == arg0 {
             return;
@@ -1963,6 +2051,7 @@ pub unsafe extern "C" fn Ground_801C2BD4(arg0: *mut c_void) {
 }
 
 pub unsafe extern "C" fn Ground_801C2C8C(arg0: *mut c_void) -> i32 {
+    melee_core::ct!("Ground_801C2C8C");
     for i in 0..4 {
         if stage_info.x694[i] == arg0 {
             return 1;
@@ -1972,14 +2061,17 @@ pub unsafe extern "C" fn Ground_801C2C8C(arg0: *mut c_void) -> i32 {
 }
 
 pub unsafe extern "C" fn Ground_801C2CF4(i: i32) -> *mut HSD_JObj {
+    melee_core::ct!("Ground_801C2CF4");
     stage_info.x280[i as usize]
 }
 
 pub unsafe extern "C" fn Ground_801C2D0C(i: i32, jobj: *mut HSD_JObj) {
+    melee_core::ct!("Ground_801C2D0C");
     stage_info.x280[i as usize] = jobj;
 }
 
 pub unsafe extern "C" fn Ground_801C2D24(arg0: i32, arg1: *mut Vec3) -> i32 {
+    melee_core::ct!("Ground_801C2D24");
     let mut sp20 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp14 = sp20;
     if arg0 == 8 {
@@ -2025,6 +2117,7 @@ pub unsafe extern "C" fn Ground_801C2D24(arg0: i32, arg1: *mut Vec3) -> i32 {
 }
 
 pub unsafe extern "C" fn Ground_InitMapColl(jobj: *mut HSD_JObj, arg1: i32) -> i32 {
+    melee_core::ct!("Ground_InitMapColl");
     if ext::ScriptGame_StageSlotCollision(arg1) != 0 {
         return 1;
     }
@@ -2060,6 +2153,7 @@ pub unsafe extern "C" fn Ground_InitMapColl(jobj: *mut HSD_JObj, arg1: i32) -> i
 }
 
 pub unsafe extern "C" fn Ground_UpdateMapColl(arg0: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("Ground_UpdateMapColl");
     if ext::ScriptGame_StageSlotCollision((*((*arg0).user_data as *mut Ground)).map_id as i32) != 0 {
         return 1;
     }
@@ -2107,6 +2201,7 @@ pub unsafe extern "C" fn Ground_UpdateMapColl(arg0: *mut Ground_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn Ground_801C3128(gobj_id: i32, arg1: Option<unsafe extern "C" fn(i32)>) -> i32 {
+    melee_core::ct!("Ground_801C3128");
     ext::mpGetGroundCollJoint();
     let mut result = 0;
     let max = (*stage_datas[stage_info.grkind as usize]).joint_count as i32;
@@ -2133,6 +2228,7 @@ pub unsafe extern "C" fn Ground_801C3128(gobj_id: i32, arg1: Option<unsafe exter
 }
 
 pub unsafe extern "C" fn Ground_801C3214(gobj_id: i32) -> i32 {
+    melee_core::ct!("Ground_801C3214");
     if *Ground_804D6950.offset(gobj_id as isize) == 1 {
         *Ground_804D6950.offset(gobj_id as isize) = 0;
         return Ground_801C3128(gobj_id, Some(ext::cb::mpJointListAdd));
@@ -2141,6 +2237,7 @@ pub unsafe extern "C" fn Ground_801C3214(gobj_id: i32) -> i32 {
 }
 
 pub unsafe extern "C" fn Ground_801C3260(arg0: i32) -> i32 {
+    melee_core::ct!("Ground_801C3260");
     if *Ground_804D6950.offset(arg0 as isize) == 0 {
         *Ground_804D6950.offset(arg0 as isize) = 1;
         return Ground_801C3128(arg0, Some(ext::cb::mpLib_80057BC0));
@@ -2149,10 +2246,12 @@ pub unsafe extern "C" fn Ground_801C3260(arg0: i32) -> i32 {
 }
 
 pub unsafe extern "C" fn Ground_801C32AC(gobj_id: i32) {
+    melee_core::ct!("Ground_801C32AC");
     Ground_801C3128(gobj_id, Some(ext::cb::mpLib_80057424));
 }
 
 pub unsafe extern "C" fn Ground_801C32D4(arg0: i32, arg1: i32) -> i32 {
+    melee_core::ct!("Ground_801C32D4");
     ext::mpGetGroundCollJoint();
     let max = (*stage_datas[stage_info.grkind as usize]).joint_count as i32;
     let mut cur = (*stage_datas[stage_info.grkind as usize]).joints;
@@ -2179,6 +2278,7 @@ pub unsafe extern "C" fn Ground_801C32D4(arg0: i32, arg1: i32) -> i32 {
 }
 
 pub unsafe extern "C" fn Ground_801C33C0(arg0: i32, arg1: i32) -> i32 {
+    melee_core::ct!("Ground_801C33C0");
     ext::mpGetGroundCollJoint();
     let max = (*stage_datas[stage_info.grkind as usize]).joint_count as i32;
     let mut cur = (*stage_datas[stage_info.grkind as usize]).joints;
@@ -2220,6 +2320,7 @@ struct JointEntry {
 }
 
 pub unsafe extern "C" fn Ground_801C34AC(map_id: i32, root: *mut HSD_JObj, joint: *mut HSD_Joint) {
+    melee_core::ct!("Ground_801C34AC");
     let mut jobj = root;
     let mut prev_index: i32 = -1;
     let archive = ext::grDatFiles_801C6330(map_id);
@@ -2290,6 +2391,7 @@ pub unsafe extern "C" fn Ground_801C34AC(map_id: i32, root: *mut HSD_JObj, joint
 }
 
 pub unsafe extern "C" fn Ground_801C36F4(map_id: i32, root: *mut HSD_JObj, joint: *mut c_void) {
+    melee_core::ct!("Ground_801C36F4");
     let archive = ext::grDatFiles_801C6330(map_id);
     assert!(!archive.is_null(), "ground.c:2936 HSD_ASSERT(2936, archive)");
     if root.is_null() || joint.is_null() {
@@ -2329,27 +2431,33 @@ pub unsafe extern "C" fn Ground_801C36F4(map_id: i32, root: *mut HSD_JObj, joint
 }
 
 pub unsafe extern "C" fn Ground_801C3880(val: f32) {
+    melee_core::ct!("Ground_801C3880");
     stage_info.cam_info.cam_bounds.top = val;
 }
 
 pub unsafe extern "C" fn Ground_801C3890(val: f32) {
+    melee_core::ct!("Ground_801C3890");
     stage_info.cam_info.cam_bounds.bottom = val;
 }
 
 pub unsafe extern "C" fn Ground_801C38A0(val: f32) {
+    melee_core::ct!("Ground_801C38A0");
     stage_info.cam_info.cam_bounds.left = val;
 }
 
 pub unsafe extern "C" fn Ground_801C38AC(val: f32) {
+    melee_core::ct!("Ground_801C38AC");
     stage_info.cam_info.cam_bounds.right = val;
 }
 
 pub unsafe extern "C" fn Ground_801C38BC(x: f32, y: f32) {
+    melee_core::ct!("Ground_801C38BC");
     stage_info.cam_info.cam_x_offset = x;
     stage_info.cam_info.cam_y_offset = y;
 }
 
 pub unsafe extern "C" fn Ground_801C38D0(tilt: f32, pan: f32, a: f32, b: f32) {
+    melee_core::ct!("Ground_801C38D0");
     stage_info.cam_info.cam_vertical_tilt = tilt;
     stage_info.cam_info.cam_pan_degrees = pan;
     stage_info.cam_info.x20 = a;
@@ -2357,11 +2465,13 @@ pub unsafe extern "C" fn Ground_801C38D0(tilt: f32, pan: f32, a: f32, b: f32) {
 }
 
 pub unsafe extern "C" fn Ground_801C38EC(depth: f32, zoom: f32) {
+    melee_core::ct!("Ground_801C38EC");
     stage_info.cam_info.cam_max_depth = depth;
     stage_info.cam_info.cam_zoom_rate = zoom;
 }
 
 pub unsafe extern "C" fn Ground_801C3900(arg8: f32, arg9: f32, arg_a: f32, arg_b: f32, up: f32, down: f32, left: f32, right: f32) {
+    melee_core::ct!("Ground_801C3900");
     stage_info.cam_info.x3C = arg8;
     stage_info.cam_info.pausecam_zpos_min = arg9;
     stage_info.cam_info.pausecam_zpos_init = arg_a;
@@ -2373,6 +2483,7 @@ pub unsafe extern "C" fn Ground_801C3900(arg8: f32, arg9: f32, arg_a: f32, arg_b
 }
 
 pub unsafe extern "C" fn Ground_801C392C(x: f32, y: f32, z: f32, fov: f32, vert: f32, horz: f32) {
+    melee_core::ct!("Ground_801C392C");
     stage_info.cam_info.fixed_cam_pos.x = x;
     stage_info.cam_info.fixed_cam_pos.y = y;
     stage_info.cam_info.fixed_cam_pos.z = z;
@@ -2382,34 +2493,42 @@ pub unsafe extern "C" fn Ground_801C392C(x: f32, y: f32, z: f32, fov: f32, vert:
 }
 
 pub unsafe extern "C" fn Ground_801C3950(zoom: f32) {
+    melee_core::ct!("Ground_801C3950");
     stage_info.cam_info.cam_fixed_zoom = zoom;
 }
 
 pub unsafe extern "C" fn Ground_801C3960(ratio: f32) {
+    melee_core::ct!("Ground_801C3960");
     stage_info.cam_info.cam_track_ratio = ratio;
 }
 
 pub unsafe extern "C" fn Ground_801C3970(smooth: f32) {
+    melee_core::ct!("Ground_801C3970");
     stage_info.cam_info.cam_track_smooth = smooth;
 }
 
 pub unsafe extern "C" fn Ground_801C3980(top: f32) {
+    melee_core::ct!("Ground_801C3980");
     stage_info.blast_zone.top = top;
 }
 
 pub unsafe extern "C" fn Ground_801C3990(bottom: f32) {
+    melee_core::ct!("Ground_801C3990");
     stage_info.blast_zone.bottom = bottom;
 }
 
 pub unsafe extern "C" fn Ground_801C39A0(left: f32) {
+    melee_core::ct!("Ground_801C39A0");
     stage_info.blast_zone.left = left;
 }
 
 pub unsafe extern "C" fn Ground_801C39B0(right: f32) {
+    melee_core::ct!("Ground_801C39B0");
     stage_info.blast_zone.right = right;
 }
 
 pub unsafe extern "C" fn Ground_801C39C0() {
+    melee_core::ct!("Ground_801C39C0");
     let mut sp20 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp14 = sp20;
     let mut sp8 = sp20;
@@ -2514,6 +2633,7 @@ pub unsafe extern "C" fn Ground_801C39C0() {
 }
 
 pub unsafe extern "C" fn Ground_801C3BB4() {
+    melee_core::ct!("Ground_801C3BB4");
     let mut sp1C = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp10 = sp1C;
     let lft: f32;
@@ -2597,6 +2717,7 @@ pub unsafe extern "C" fn Ground_801C3BB4() {
 type StageProbe = Option<unsafe extern "C" fn(*mut Vec, i32) -> i32>;
 
 pub unsafe extern "C" fn Ground_801C3D44(arg0: *mut c_void, arg8: f32, arg9: f32) -> i32 {
+    melee_core::ct!("Ground_801C3D44");
     stage_info.unk8C.set_b6(1);
     stage_info.x70C = 0.5f32 * arg8;
     stage_info.x710 = 0.5f32 * arg9;
@@ -2611,6 +2732,7 @@ pub unsafe extern "C" fn Ground_801C3D44(arg0: *mut c_void, arg8: f32, arg9: f32
 }
 
 pub unsafe extern "C" fn Ground_801C3DB4(arg0: *mut c_void, arg8: f32, arg9: f32) -> i32 {
+    melee_core::ct!("Ground_801C3DB4");
     stage_info.unk8C.set_b7(1);
     stage_info.x718 = 0.5f32 * arg8;
     stage_info.x71C = 0.5f32 * arg9;
@@ -2624,6 +2746,7 @@ pub unsafe extern "C" fn Ground_801C3DB4(arg0: *mut c_void, arg8: f32, arg9: f32
 }
 
 pub unsafe extern "C" fn Ground_801C3E18(jobj: *mut HSD_JObj) -> *mut HSD_AObj {
+    melee_core::ct!("Ground_801C3E18");
     if jobj.is_null() {
         return null_mut();
     }
@@ -2642,6 +2765,7 @@ pub unsafe extern "C" fn Ground_801C3E18(jobj: *mut HSD_JObj) -> *mut HSD_AObj {
 }
 
 pub unsafe extern "C" fn Ground_801C3F20(arg0: *mut HSD_JObj) -> f32 {
+    melee_core::ct!("Ground_801C3F20");
     let aobj = Ground_801C3E18(arg0);
     if !aobj.is_null() {
         return (*aobj).curr_frame;
@@ -2650,6 +2774,7 @@ pub unsafe extern "C" fn Ground_801C3F20(arg0: *mut HSD_JObj) -> f32 {
 }
 
 pub unsafe extern "C" fn Ground_801C3FA4(gobj: *mut HSD_GObj, depth: i32) -> *mut HSD_JObj {
+    melee_core::ct!("Ground_801C3FA4");
     let mut depth = depth;
     let mut jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     if (*gobj).hsd_obj.is_null() {
@@ -2685,6 +2810,7 @@ pub unsafe extern "C" fn Ground_801C3FA4(gobj: *mut HSD_GObj, depth: i32) -> *mu
 }
 
 pub unsafe extern "C" fn Ground_801C4100(jobj: *mut HSD_JObj) -> *mut HSD_JObj {
+    melee_core::ct!("Ground_801C4100");
     let mut jobj = jobj;
     if (*jobj).flags & JOBJ_INSTANCE as u32 == 0 && !jchild(jobj).is_null() {
         return jchild(jobj);
@@ -2799,6 +2925,7 @@ pub static mut Ground_TTMod_BoxJoint: HSD_Joint = unsafe {
 };
 
 pub unsafe extern "C" fn Ground_TTMod_AddPlatformBoxes(level: i32) {
+    melee_core::ct!("Ground_TTMod_AddPlatformBoxes");
     let mut scale = Ground_801C0498();
 
     let nplat = ext::TTMod_PlatformCount(level);
@@ -2845,6 +2972,7 @@ pub unsafe extern "C" fn Ground_TTMod_AddPlatformBoxes(level: i32) {
 }
 
 pub unsafe extern "C" fn Ground_801C4210() -> i32 {
+    melee_core::ct!("Ground_801C4210");
     let mut count: i32 = 0;
     {
         // Data-driven Break-the-Targets layout (mods/targettest/<name>.tt)
@@ -2882,6 +3010,7 @@ pub unsafe extern "C" fn Ground_801C4210() -> i32 {
 }
 
 pub unsafe extern "C" fn Ground_801C42AC() {
+    melee_core::ct!("Ground_801C42AC");
     let mut sp8: BobOmbRain = core::mem::zeroed();
     for i in 0xFC..0x104usize {
         let jobj = stage_info.x280[i];
@@ -2895,6 +3024,7 @@ pub unsafe extern "C" fn Ground_801C42AC() {
 }
 
 pub unsafe extern "C" fn Ground_801C4338() {
+    melee_core::ct!("Ground_801C4338");
     stage_info.x6D4 = stage_info.x6D4.wrapping_sub(1);
     if stage_info.x6D4 == 0 {
         stage_info.flags |= 0x20;
@@ -2902,20 +3032,24 @@ pub unsafe extern "C" fn Ground_801C4338() {
 }
 
 pub unsafe extern "C" fn Ground_801C4368(slope: *mut f32, intercept: *mut f32) {
+    melee_core::ct!("Ground_801C4368");
     *slope = stage_info.x724;
     *intercept = stage_info.x724 - stage_info.x728;
 }
 
 pub unsafe extern "C" fn Ground_801C438C(val: f32) {
+    melee_core::ct!("Ground_801C438C");
     stage_info.x728 = stage_info.x724;
     stage_info.x724 = val;
 }
 
 pub unsafe extern "C" fn Ground_801C43A4(arg0: *mut c_void) {
+    melee_core::ct!("Ground_801C43A4");
     ext::grZebes_801DA3F4(arg0 as *mut Vec);
 }
 
 pub unsafe extern "C" fn Ground_801C43C4(arg0: *mut c_void) -> i32 {
+    melee_core::ct!("Ground_801C43C4");
     let tmp = (*ext::grDatFiles_GetArchive()).unk4;
     let mut phi_r4 = (*tmp).unk20;
     let max = (*tmp).unk24;
@@ -2934,6 +3068,7 @@ pub unsafe extern "C" fn Ground_801C43C4(arg0: *mut c_void) -> i32 {
 }
 
 pub unsafe extern "C" fn Ground_801C445C(lobj: *mut HSD_LObj) {
+    melee_core::ct!("Ground_801C445C");
     let mut pos0 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut pos1 = pos0;
     let mut pos2 = pos0;
@@ -2979,10 +3114,12 @@ pub unsafe extern "C" fn Ground_801C445C(lobj: *mut HSD_LObj) {
 }
 
 pub unsafe extern "C" fn Ground_801C461C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Ground_801C461C");
     Ground_801C445C((*gobj).hsd_obj as *mut HSD_LObj);
 }
 
 pub unsafe extern "C" fn Ground_801C4640(gobj: *mut HSD_GObj, _unused: i32) {
+    melee_core::ct!("Ground_801C4640");
     ext::HSD_LObj_803668EC((*gobj).hsd_obj as *mut HSD_LObj);
     ext::HSD_LObjSetupInit(ext::HSD_CObjGetCurrent());
 }
@@ -3033,6 +3170,7 @@ pub static mut Ground_804D451C: LightList = unsafe {
 pub static mut Ground_803E06C8: [*mut LightList; 3] = unsafe { [&raw mut Ground_804D451C, &raw mut Ground_804D450C, null_mut()] };
 
 pub unsafe extern "C" fn Ground_801C466C() {
+    melee_core::ct!("Ground_801C466C");
     let mut callbacks: *mut StageCallbacks;
     let mut archive: *mut UnkArchiveStruct;
     let mut selected: *mut *mut LightList;
@@ -3154,6 +3292,7 @@ pub unsafe extern "C" fn Ground_801C466C() {
 }
 
 pub unsafe extern "C" fn Ground_801C498C() -> *mut HSD_GObj {
+    melee_core::ct!("Ground_801C498C");
     let mut gobj = *ext::HSD_GObjPLinkHead.offset(HSD_GOBJ_PLINK_LIGHT as isize);
     while !gobj.is_null() {
         if (*gobj).classifier as i32 == HSD_GOBJ_CLASS_GROUND {
@@ -3165,6 +3304,7 @@ pub unsafe extern "C" fn Ground_801C498C() -> *mut HSD_GObj {
 }
 
 pub unsafe extern "C" fn Ground_801C49B4() -> *mut *mut LightList {
+    melee_core::ct!("Ground_801C49B4");
     let archive = ext::grDatFiles_GetArchive();
     if !stage_info.map_plit.is_null() {
         return Ground_801C20E0(archive, stage_info.map_plit);
@@ -3173,12 +3313,14 @@ pub unsafe extern "C" fn Ground_801C49B4() -> *mut *mut LightList {
 }
 
 pub unsafe extern "C" fn Ground_GetYakumonoParam() -> *mut c_void {
+    melee_core::ct!("Ground_GetYakumonoParam");
     // grtrace report: only the trace switch is a call
     let _ = ext::Mex_GrTrace();
     stage_info.yakumono_param
 }
 
 pub unsafe extern "C" fn removeStageGObj(gobj: *mut HSD_GObj) {
+    melee_core::ct!("removeStageGObj");
     let obj = (*gobj).hsd_obj;
     for i in 0..4 {
         if stage_info.x694[i] == obj {
@@ -3190,6 +3332,7 @@ pub unsafe extern "C" fn removeStageGObj(gobj: *mut HSD_GObj) {
 
 /// Stage destroy ground gobj
 pub unsafe extern "C" fn Ground_801C4A08(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Ground_801C4A08");
     if gobj.is_null() {
         return;
     }
@@ -3221,6 +3364,7 @@ pub unsafe extern "C" fn Ground_801C4A08(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn Ground_801C4B50(spline: *mut HSD_Spline, arg1: *mut Vec3, result: *mut Vec3, arg8: f32) {
+    melee_core::ct!("Ground_801C4B50");
     let mut vec0 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut vec1 = vec0;
     let mut vec2 = vec0;
@@ -3276,6 +3420,7 @@ pub unsafe extern "C" fn Ground_801C4B50(spline: *mut HSD_Spline, arg1: *mut Vec
 }
 
 pub unsafe extern "C" fn Ground_801C4D70(arg0: *mut HSD_GObj, arg1: *mut Vec3, arg8: f32) -> i32 {
+    melee_core::ct!("Ground_801C4D70");
     stage_info.x72C = arg0;
     stage_info.x730 = *arg1;
     stage_info.x73C = arg8;
@@ -3283,12 +3428,14 @@ pub unsafe extern "C" fn Ground_801C4D70(arg0: *mut HSD_GObj, arg1: *mut Vec3, a
 }
 
 pub unsafe extern "C" fn Ground_801C4DA0(arg0: *mut Vec3, arg1: *mut f32) -> i32 {
+    melee_core::ct!("Ground_801C4DA0");
     *arg0 = stage_info.x730;
     *arg1 = stage_info.x73C;
     1
 }
 
 pub unsafe extern "C" fn Ground_801C4DD0() -> i32 {
+    melee_core::ct!("Ground_801C4DD0");
     let stkind = stage_info.grkind;
     if stkind == Gr_Kind_Kongo {
         ext::grKongo_801D8270(stage_info.x72C);
@@ -3299,6 +3446,7 @@ pub unsafe extern "C" fn Ground_801C4DD0() -> i32 {
 }
 
 pub unsafe extern "C" fn Ground_801C4E20() -> i32 {
+    melee_core::ct!("Ground_801C4E20");
     let stkind = stage_info.grkind;
     if stkind == Gr_Kind_Kongo {
         ext::grKongo_801D828C(stage_info.x72C);
@@ -3309,6 +3457,7 @@ pub unsafe extern "C" fn Ground_801C4E20() -> i32 {
 }
 
 pub unsafe extern "C" fn Ground_801C4E70(arg0: *mut HSD_JObj, arg1: *mut HSD_JObj, arg2: *mut HSD_JObj, arg3: *mut HSD_JObj, arg4: *mut HSD_JObj, arg5: *mut HSD_JObj) {
+    melee_core::ct!("Ground_801C4E70");
     let mut vec = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     stage_info.unk8C.set_b3(1);
     ext::lb_8000B1CC(arg0, null_mut(), &mut vec);
@@ -3331,6 +3480,7 @@ fn abs_f(x: f32) -> f32 {
 }
 
 pub unsafe extern "C" fn Ground_801C4FAC(cobj: *mut HSD_CObj) {
+    melee_core::ct!("Ground_801C4FAC");
     let mut sp74 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp68;
     let mut sp5C;
@@ -3413,14 +3563,17 @@ pub unsafe extern "C" fn Ground_801C4FAC(cobj: *mut HSD_CObj) {
 }
 
 pub unsafe extern "C" fn Ground_801C53EC(arg0: u32) {
+    melee_core::ct!("Ground_801C53EC");
     ext::lbAudioAx_800237A8(arg0 as i32, 0x7F, 0x40);
 }
 
 pub unsafe extern "C" fn Ground_801C5414(arg0: i32, arg1: i32) {
+    melee_core::ct!("Ground_801C5414");
     ext::lbAudioAx_80023870(arg0, 0x7F, 0x40, arg1);
 }
 
 pub unsafe extern "C" fn Ground_801C5440(gp: *mut Ground, i: i32, arg2: u32) {
+    melee_core::ct!("Ground_801C5440");
     if i < 0 || i >= 8 {
         return;
     }
@@ -3442,6 +3595,7 @@ pub unsafe extern "C" fn Ground_801C5440(gp: *mut Ground, i: i32, arg2: u32) {
 }
 
 pub unsafe extern "C" fn Ground_801C54DC(gp: *mut Ground, i: i32) -> i32 {
+    melee_core::ct!("Ground_801C54DC");
     if i < 0 || i >= 8 {
         return 0;
     }
@@ -3452,6 +3606,7 @@ pub unsafe extern "C" fn Ground_801C54DC(gp: *mut Ground, i: i32) -> i32 {
 }
 
 pub unsafe extern "C" fn Ground_801C5544(gp: *mut Ground, i: i32) {
+    melee_core::ct!("Ground_801C5544");
     if i < 0 || i >= 8 {
         return;
     }
@@ -3466,6 +3621,7 @@ pub unsafe extern "C" fn Ground_801C5544(gp: *mut Ground, i: i32) {
 }
 
 pub unsafe extern "C" fn Ground_801C55AC(gp: *mut Ground) {
+    melee_core::ct!("Ground_801C55AC");
     if !gp.is_null() {
         for i in 0..8 {
             Ground_801C5544(gp, i);
@@ -3474,6 +3630,7 @@ pub unsafe extern "C" fn Ground_801C55AC(gp: *mut Ground) {
 }
 
 pub unsafe extern "C" fn Ground_801C5630(gp: *mut Ground, i: i32, val: f32) {
+    melee_core::ct!("Ground_801C5630");
     if i < 0 || i >= 8 {
         return;
     }
@@ -3483,6 +3640,7 @@ pub unsafe extern "C" fn Ground_801C5630(gp: *mut Ground, i: i32, val: f32) {
 }
 
 pub unsafe extern "C" fn Ground_801C5694(gp: *mut Ground, i: i32, val: f32) {
+    melee_core::ct!("Ground_801C5694");
     if i < 0 || i >= 8 {
         return;
     }
@@ -3492,6 +3650,7 @@ pub unsafe extern "C" fn Ground_801C5694(gp: *mut Ground, i: i32, val: f32) {
 }
 
 pub unsafe extern "C" fn Ground_801C5700(i: i32) -> *mut DynamicsDesc {
+    melee_core::ct!("Ground_801C5700");
     if let Some(f) = stage_info.on_touch_line {
         return f(i);
     }
@@ -3499,43 +3658,53 @@ pub unsafe extern "C" fn Ground_801C5700(i: i32) -> *mut DynamicsDesc {
 }
 
 pub unsafe extern "C" fn Ground_801C5740(arg0: i32) {
+    melee_core::ct!("Ground_801C5740");
     stage_info.x6D8 = arg0;
 }
 
 pub unsafe extern "C" fn Ground_801C5750() {
+    melee_core::ct!("Ground_801C5750");
     stage_info.x6D8 = 0;
 }
 
 pub unsafe extern "C" fn Ground_801C5764() -> i32 {
+    melee_core::ct!("Ground_801C5764");
     stage_info.x6D8
 }
 
 pub unsafe extern "C" fn Ground_801C5774() -> i32 {
+    melee_core::ct!("Ground_801C5774");
     stage_info.x6DC as i32
 }
 
 pub unsafe extern "C" fn Ground_801C5784(arg0: i32) {
+    melee_core::ct!("Ground_801C5784");
     stage_info.x740 = arg0;
 }
 
 pub unsafe extern "C" fn Ground_801C5794() -> i32 {
+    melee_core::ct!("Ground_801C5794");
     stage_info.x740
 }
 
 pub unsafe extern "C" fn Ground_GetP1Fighter() -> *mut Fighter_GObj {
+    melee_core::ct!("Ground_GetP1Fighter");
     ext::Player_GetEntity(0)
 }
 
 pub unsafe extern "C" fn Ground_GetP1Fighter2() -> *mut Fighter_GObj {
+    melee_core::ct!("Ground_GetP1Fighter2");
     ext::Player_GetEntityAtIndex(0, 1)
 }
 
 /// `arg0` is unused by the implementation; the game's only caller materializes an explicit 0.
 pub unsafe extern "C" fn Ground_801C57F0(_arg0: i32) -> f32 {
+    melee_core::ct!("Ground_801C57F0");
     stage_info.x6E0
 }
 
 pub unsafe extern "C" fn Ground_EnableMatchCamera() {
+    melee_core::ct!("Ground_EnableMatchCamera");
     if (*stage_info.param).x4C_fixed_cam != 0 {
         ext::Camera_SetModeToFixed();
     } else {
@@ -3544,17 +3713,20 @@ pub unsafe extern "C" fn Ground_EnableMatchCamera() {
 }
 
 pub unsafe extern "C" fn Ground_801C5840() -> i32 {
+    melee_core::ct!("Ground_801C5840");
     let i = ext::HSD_Randi(1);
     stage_info.x6E4[i as usize]
 }
 
 pub unsafe extern "C" fn initSinglePlayerDisplay(stageinfo: *mut StageInfo) {
+    melee_core::ct!("initSinglePlayerDisplay");
     let display_id = ext::tyDisplay_8031C2EC();
     ext::tyDisplay_8031C454(display_id);
     (*stageinfo).x6E4[0] = display_id;
 }
 
 pub unsafe extern "C" fn Ground_801C5878() {
+    melee_core::ct!("Ground_801C5878");
     ext::tyDisplay_8031C2CC();
     if ext::gm_IsCurrently1PMode() != 0 {
         initSinglePlayerDisplay(&raw mut stage_info);
@@ -3564,6 +3736,7 @@ pub unsafe extern "C" fn Ground_801C5878() {
 }
 
 pub unsafe extern "C" fn Ground_801C58E0(arg0: i32, arg1: i32) -> *mut Item_GObj {
+    melee_core::ct!("Ground_801C58E0");
     let tmp = arg0;
     let mut sp10 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     Ground_801C2D24(arg1, &mut sp10);
@@ -3581,6 +3754,7 @@ struct PairListEntry {
 }
 
 pub unsafe extern "C" fn Ground_801C5940() -> i32 {
+    melee_core::ct!("Ground_801C5940");
     let mut vals = [0i32; 32];
     let vals_count = 32usize;
     let archive = ext::grDatFiles_GetArchive();
@@ -3611,36 +3785,44 @@ pub unsafe extern "C" fn Ground_801C5940() -> i32 {
 }
 
 pub unsafe extern "C" fn Ground_801C5A28() {
+    melee_core::ct!("Ground_801C5A28");
     ext::Toy_803124BC();
     ext::Toy_8031234C(0);
     ext::Toy_80305918(0, 0, 1);
 }
 
 pub unsafe extern "C" fn Ground_801C5A60() {
+    melee_core::ct!("Ground_801C5A60");
     ext::Toy_8031234C(1);
 }
 
 pub unsafe extern "C" fn Ground_801C5A84(arg0: i32) {
+    melee_core::ct!("Ground_801C5A84");
     stage_info.x98 = arg0;
 }
 
 pub unsafe extern "C" fn Ground_801C5A94() -> i32 {
+    melee_core::ct!("Ground_801C5A94");
     stage_info.x98
 }
 
 pub unsafe extern "C" fn Ground_801C5AA4(arg0: i32) {
+    melee_core::ct!("Ground_801C5AA4");
     stage_info.unk8C.set_b1(arg0 as u8);
 }
 
 pub unsafe extern "C" fn Ground_801C5ABC() -> i32 {
+    melee_core::ct!("Ground_801C5ABC");
     stage_info.unk8C.b1() as i32
 }
 
 pub unsafe extern "C" fn Ground_801C5AD0(i: i32) -> u32 {
+    melee_core::ct!("Ground_801C5AD0");
     (*stage_datas[i as usize]).flags2
 }
 
 pub unsafe extern "C" fn Ground_801C5AEC(v: *mut Vec3, arg1: *mut Vec3, arg2: *mut Vec3, arg3: *mut Vec3) {
+    melee_core::ct!("Ground_801C5AEC");
     ext::lbVector_EulerAnglesFromONB(v, arg1, arg2, arg3);
     if !(abs_f((*v).x) < 30000.0) {
         (*v).x = 0.0;
@@ -3657,6 +3839,7 @@ pub unsafe extern "C" fn Ground_801C5AEC(v: *mut Vec3, arg1: *mut Vec3, arg2: *m
 // ground_stage_slots.inc / ground_stage_slot_lighting.inc / ground_stage_slot_retail.inc
 
 pub unsafe extern "C" fn Ground_StageSlotDataFile(kind: i32) -> *const i8 {
+    melee_core::ct!("Ground_StageSlotDataFile");
     if kind < 0 || kind as u32 as usize >= STAGE_DATAS_LEN || stage_datas[kind as usize].is_null() {
         return core::ptr::null();
     }
@@ -3665,6 +3848,7 @@ pub unsafe extern "C" fn Ground_StageSlotDataFile(kind: i32) -> *const i8 {
 
 /// The audited FD group-0 callbacks' joint table (the C's `STAGE_SLOT_FIXTURE` build leaves it out).
 pub unsafe extern "C" fn Ground_StageSlotJoints(kind: i32, count: *mut u32) -> *const GrJoint {
+    melee_core::ct!("Ground_StageSlotJoints");
     *count = 0;
     if kind < 0 || kind as u32 as usize >= STAGE_DATAS_LEN || stage_datas[kind as usize].is_null() {
         return core::ptr::null();
@@ -3674,6 +3858,7 @@ pub unsafe extern "C" fn Ground_StageSlotJoints(kind: i32, count: *mut u32) -> *
 }
 
 pub unsafe extern "C" fn Ground_StageSlotFighterLightingClear() {
+    melee_core::ct!("Ground_StageSlotFighterLightingClear");
     ext::HSD_LObjDeleteCurrentAll(null_mut());
     ext::HSD_FogSet(null_mut());
     ext::HSD_StateInvalidate(-1);
@@ -3692,6 +3877,7 @@ pub unsafe extern "C" fn Ground_StageSlotFighterLightingClear() {
 }
 
 pub unsafe extern "C" fn Ground_StageSlotFighterLightingRebuild() {
+    melee_core::ct!("Ground_StageSlotFighterLightingRebuild");
     ext::ScriptGame_StageSlotRetailCaptureResume();
     ext::ftCo_8009F4A4();
     ext::ScriptGame_StageSlotRetailCaptureEnd();
@@ -3700,6 +3886,7 @@ pub unsafe extern "C" fn Ground_StageSlotFighterLightingRebuild() {
 }
 
 pub unsafe extern "C" fn Ground_StageSlotRetailInstall(pair: *mut StageIdPair, archive: *mut HSD_Archive) {
+    melee_core::ct!("Ground_StageSlotRetailInstall");
     let stage = stage_datas[(*pair).grkind as usize];
     Ground_801BFFB0();
     stage_info.grkind = (*pair).grkind;

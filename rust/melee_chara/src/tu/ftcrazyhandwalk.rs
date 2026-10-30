@@ -41,6 +41,7 @@ pub mod ext {
 }
 
 pub fn ftCh_WalkWait_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_WalkWait_Anim");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         (*fp).mv.ch.unk0.x8 -= 1;
@@ -55,6 +56,7 @@ pub fn ftCh_WalkWait_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCh_WalkWait_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_WalkWait_Phys");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*(*fp).ft_data).ext_attr as *const ftCrazyHand_DatAttrs;
@@ -64,11 +66,12 @@ pub fn ftCh_WalkWait_Phys(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftCh_WalkLoop_Coll(_gobj: *mut HSD_GObj) {}
-pub fn ftCh_WalkWait_Coll(_gobj: *mut HSD_GObj) {}
-pub fn ftCh_WalkShoot_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftCh_WalkLoop_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_WalkLoop_Coll");}
+pub fn ftCh_WalkWait_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_WalkWait_Coll");}
+pub fn ftCh_WalkShoot_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_WalkShoot_Coll");}
 
 pub fn ftCh_WalkShoot_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_WalkShoot_Anim");
     unsafe {
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
             ext::ftCh_GrabUnk1_8015BC88(gobj);

@@ -66,6 +66,7 @@ pub mod ext {
 }
 
 pub fn ftCo_CargoWait2_Anim(g: G) {
+    melee_core::ct!("ftCo_CargoWait2_Anim");
     ext::ftCo_8008F744(g);
     let f = fp(g);
     if f.x221C_b6() == 0 {
@@ -78,10 +79,12 @@ pub fn ftCo_CargoWait2_Anim(g: G) {
 }
 
 pub fn ftCo_CargoWait2_Phys(g: G) {
+    melee_core::ct!("ftCo_CargoWait2_Phys");
     ext::ftCo_Damage_Phys(g);
 }
 
 pub fn ftCo_CargoWait2_Coll(g: G) {
+    melee_core::ct!("ftCo_CargoWait2_Coll");
     if fp(g).ground_or_air == GA_Ground {
         if ext::ft_80082708(g) == GA_Ground {
             ext::ftCommon_8007D5D4(fp(g));
@@ -118,6 +121,7 @@ fn inline_a0(f: &Fighter) -> i32 {
 }
 
 pub fn ftCo_8009BF3C(g: G) -> bool {
+    melee_core::ct!("ftCo_8009BF3C");
     let msid = inline_a0(fp(g));
     if msid != fp(g).motion_id {
         ftCo_8009C02C(g, msid);
@@ -127,6 +131,7 @@ pub fn ftCo_8009BF3C(g: G) -> bool {
 }
 
 pub fn ftCo_8009C02C(g: G, msid: i32) {
+    melee_core::ct!("ftCo_8009C02C");
     let mf: u32 = if fp(g).ground_or_air == GA_Air { 1 } else { 0 };
     let msid1 = if fp(g).ground_or_air == GA_Air { msid.wrapping_add(4) } else { msid };
     ext::Fighter_ChangeMotionState(g, msid1, mf, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -140,6 +145,7 @@ pub fn ftCo_8009C02C(g: G, msid: i32) {
 }
 
 pub fn ftCo_CargoThrowF_Anim(g: G) {
+    melee_core::ct!("ftCo_CargoThrowF_Anim");
     ext::ftCo_800DD724(g);
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ftCommon_8007D92C(g);
@@ -147,10 +153,12 @@ pub fn ftCo_CargoThrowF_Anim(g: G) {
 }
 
 pub fn ftCo_CargoThrowF_IASA(g: G) {
+    melee_core::ct!("ftCo_CargoThrowF_IASA");
     ext::ftCo_ThrowF_IASA(g);
 }
 
 pub fn ftCo_CargoThrowF_Phys(g: G) {
+    melee_core::ct!("ftCo_CargoThrowF_Phys");
     ext::ftCo_ThrowF_Phys(g);
 }
 
@@ -184,88 +192,108 @@ fn inline_b1(g: G, cb: fn(&mut Fighter), offset: i32) {
 }
 
 pub fn ftCo_8009C170(g: G) {
+    melee_core::ct!("ftCo_8009C170");
     inline_b1(g, ext::ftCommon_8007D5D4, 4);
 }
 
 /// `ftCo_8009C170` as the C `HSD_GObjEvent` handed to `ft_8008403C`.
 pub unsafe extern "C" fn ftCo_8009C170_cb(g: G) {
+    melee_core::ct!("ftCo_8009C170_cb");
     ftCo_8009C170(g)
 }
 
 pub fn ftCo_CargoThrowF_Coll(g: G) {
+    melee_core::ct!("ftCo_CargoThrowF_Coll");
     ext::ft_8008403C(g, Some(ftCo_8009C170_cb));
 }
 
 pub fn ftCo_CargoThrowB_Anim(g: G) {
+    melee_core::ct!("ftCo_CargoThrowB_Anim");
     ext::ftCo_ThrowB_Anim(g);
 }
 
 pub fn ftCo_CargoThrowB_IASA(g: G) {
+    melee_core::ct!("ftCo_CargoThrowB_IASA");
     ext::ftCo_ThrowB_IASA(g);
 }
 
 pub fn ftCo_CargoThrowB_Phys(g: G) {
+    melee_core::ct!("ftCo_CargoThrowB_Phys");
     ext::ftCo_ThrowB_Phys(g);
 }
 
 pub fn ftCo_CargoThrowB_Coll(g: G) {
+    melee_core::ct!("ftCo_CargoThrowB_Coll");
     ext::ft_8008403C(g, Some(ftCo_8009C170_cb));
 }
 
 pub fn ftCo_CargoThrowHi_Anim(g: G) {
+    melee_core::ct!("ftCo_CargoThrowHi_Anim");
     ext::ftCo_ThrowHi_Anim(g);
 }
 
 pub fn ftCo_CargoThrowHi_IASA(g: G) {
+    melee_core::ct!("ftCo_CargoThrowHi_IASA");
     ext::ftCo_ThrowHi_IASA(g);
 }
 
 pub fn ftCo_CargoThrowHi_Phys(g: G) {
+    melee_core::ct!("ftCo_CargoThrowHi_Phys");
     ext::ftCo_ThrowHi_Phys(g);
 }
 
 pub fn ftCo_CargoThrowHi_Coll(g: G) {
+    melee_core::ct!("ftCo_CargoThrowHi_Coll");
     ext::ft_8008403C(g, Some(ftCo_8009C170_cb));
 }
 
 pub fn ftCo_CargoThrowLw_Anim(g: G) {
+    melee_core::ct!("ftCo_CargoThrowLw_Anim");
     ext::ftCo_ThrowLw_Anim(g);
 }
 
 pub fn ftCo_CargoThrowLw_IASA(g: G) {
+    melee_core::ct!("ftCo_CargoThrowLw_IASA");
     ext::ftCo_ThrowLw_IASA(g);
 }
 
 pub fn ftCo_CargoThrowLw_Phys(g: G) {
+    melee_core::ct!("ftCo_CargoThrowLw_Phys");
     ext::ftCo_ThrowLw_Phys(g);
 }
 
 pub fn ftCo_CargoThrowLw_Coll(g: G) {
+    melee_core::ct!("ftCo_CargoThrowLw_Coll");
     ext::ft_8008403C(g, Some(ftCo_8009C170_cb));
 }
 
 pub fn ftCo_CargoThrowAir_Anim(g: G) {
+    melee_core::ct!("ftCo_CargoThrowAir_Anim");
     ext::ftCo_800DD724(g);
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ftCommon_8007D92C(g);
     }
 }
 
-pub fn ftCo_CargoThrowAir_IASA(_g: G) {}
+pub fn ftCo_CargoThrowAir_IASA(_g: G) { melee_core::ct!("ftCo_CargoThrowAir_IASA");}
 
 pub fn ftCo_CargoThrowAir_Phys(g: G) {
+    melee_core::ct!("ftCo_CargoThrowAir_Phys");
     ext::ft_80084DB0(g);
 }
 
 pub fn ftCo_CargoThrowAir_Coll(g: G) {
+    melee_core::ct!("ftCo_CargoThrowAir_Coll");
     ext::ft_80082C74(g, Some(ftCo_8009C45C_cb));
 }
 
 pub fn ftCo_8009C45C(g: G) {
+    melee_core::ct!("ftCo_8009C45C");
     inline_b1(g, ext::ftCommon_8007D7FC, -4);
 }
 
 /// `ftCo_8009C45C` as the C `HSD_GObjEvent` handed to `ft_80082C74`.
 pub unsafe extern "C" fn ftCo_8009C45C_cb(g: G) {
+    melee_core::ct!("ftCo_8009C45C_cb");
     ftCo_8009C45C(g)
 }

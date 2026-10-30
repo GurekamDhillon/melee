@@ -110,17 +110,21 @@ unsafe fn ftCheckThrowB0(fp: *mut Fighter) -> bool {
 
 /// Gobj entries for the ported `&mut Fighter` callbacks.
 pub fn ftPk_SpecialAirLwLoop1_Phys(gobj: G) {
+    melee_core::ct!("ftPk_SpecialAirLwLoop1_Phys");
     unsafe { crate::chars::ftPikachu::ftpikachuspeciallw::ftPk_SpecialAirLwLoop1_Phys(&mut *fpp(gobj)) }
 }
 pub fn ftPk_SpecialLw_SetState_Unk0(gobj: G) {
+    melee_core::ct!("ftPk_SpecialLw_SetState_Unk0");
     unsafe { crate::chars::ftPikachu::ftpikachuspeciallw::ftPk_SpecialLw_SetState_Unk0(&mut *fpp(gobj)) }
 }
 pub fn ftPk_SpecialLw_SetState_Unk1(gobj: G) {
+    melee_core::ct!("ftPk_SpecialLw_SetState_Unk1");
     unsafe { crate::chars::ftPikachu::ftpikachuspeciallw::ftPk_SpecialLw_SetState_Unk1(&mut *fpp(gobj)) }
 }
 
 /// `ftPk_SpecialLw_CheckProperty`: true for the Thunder property values 1, 2 and 4..=13.
 pub fn ftPk_SpecialLw_CheckProperty(gobj: G) -> bool {
+    melee_core::ct!("ftPk_SpecialLw_CheckProperty");
     unsafe {
         let fp = fpp(gobj);
         let value = (*fp).x2070.anon_0.x2071_b0_3() as i32;
@@ -129,6 +133,7 @@ pub fn ftPk_SpecialLw_CheckProperty(gobj: G) -> bool {
 }
 
 pub fn ftPk_SpecialLw_80127608(gobj: G) {
+    melee_core::ct!("ftPk_SpecialLw_80127608");
     unsafe {
         let fp = fpp(gobj);
         ext::Camera_RequestQuake(QuakeKind_Small, &mut (*fp).cur_pos);
@@ -138,6 +143,7 @@ pub fn ftPk_SpecialLw_80127608(gobj: G) {
 
 /// True when the Thunder cloud's bolt is close enough to strike (and starts it).
 pub fn ftPk_SpecialLw_8012765C(gobj: G) -> bool {
+    melee_core::ct!("ftPk_SpecialLw_8012765C");
     unsafe {
         let fp = fpp(gobj);
         let pika_attr = da(fp);
@@ -168,6 +174,7 @@ pub fn ftPk_SpecialLw_8012765C(gobj: G) -> bool {
 
 /// `ftPk_SpecialLw_SpawnEffect`: the accessory4 callback that spawns the cloud.
 pub fn ftPk_SpecialLw_SpawnEffect(gobj: G) {
+    melee_core::ct!("ftPk_SpecialLw_SpawnEffect");
     unsafe {
         let fp = fpp(gobj);
         let pika_attr = da(fp);
@@ -194,6 +201,7 @@ pub fn ftPk_SpecialLw_SpawnEffect(gobj: G) {
 }
 /// `ftPk_SpecialLw_SpawnEffect` as the `accessory4_cb` entry.
 pub unsafe extern "C" fn cb_ftPk_SpecialLw_SpawnEffect(g: G) {
+    melee_core::ct!("cb_ftPk_SpecialLw_SpawnEffect");
     ftPk_SpecialLw_SpawnEffect(g);
 }
 
@@ -210,14 +218,17 @@ unsafe fn start_anim(gobj: G, msid: i32) {
 }
 
 pub fn ftPk_SpecialLwStart_Anim(gobj: G) {
+    melee_core::ct!("ftPk_SpecialLwStart_Anim");
     unsafe { start_anim(gobj, 360) }
 }
 
 pub fn ftPk_SpecialAirLwStart_Anim(gobj: G) {
+    melee_core::ct!("ftPk_SpecialAirLwStart_Anim");
     unsafe { start_anim(gobj, 364) }
 }
 
 pub fn ftPk_SpecialLwLoop0_Anim(gobj: G) {
+    melee_core::ct!("ftPk_SpecialLwLoop0_Anim");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).mv.pk.specialhi.x4 == 3 || (*fp).cmd_vars[0] != 0 {
@@ -243,6 +254,7 @@ pub fn ftPk_SpecialLwLoop0_Anim(gobj: G) {
 }
 
 pub fn ftPk_SpecialAirLwLoop0_Anim(gobj: G) {
+    melee_core::ct!("ftPk_SpecialAirLwLoop0_Anim");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).mv.pk.specialhi.x4 == 3 || (*fp).cmd_vars[0] != 0 {

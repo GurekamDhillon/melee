@@ -116,6 +116,7 @@ fn c_abs(x: f32) -> f32 {
 /// `Item_InitSpawnCommonFields` (itkinds inlines.h).
 #[inline]
 pub unsafe fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD_GObj, facing_dir: f32, initial_collision: bool) {
+    melee_core::ct!("Item_InitSpawnCommonFields");
     (*spawn).facing_dir = facing_dir;
     (*spawn).x3C_damage = 0;
     (*spawn).vel.z = 0.0;
@@ -130,6 +131,7 @@ pub unsafe fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD
 /// `itResetVelocity` (it/inlines.h): zeroes the velocity.
 #[inline]
 pub unsafe fn itResetVelocity(ip: *mut Item) {
+    melee_core::ct!("itResetVelocity");
     (*ip).x40_vel.z = 0.0;
     (*ip).x40_vel.y = 0.0;
     (*ip).x40_vel.x = 0.0;
@@ -148,6 +150,7 @@ pub static it_803F5D28: [ItemStateTable; 6] = [
 /// `Item_GObj* it_8028EB88(Item_GObj* ref, Vec3* pos, f32 facing_dir, f32 decel)`: spawns the Freeze item at
 /// `pos` (at the reference item's position when there is one) and starts it sliding with `decel`.
 pub unsafe extern "C" fn it_8028EB88(ref_gobj: *mut Item_GObj, pos: *mut Vec, facing_dir: f32, decel: f32) -> *mut Item_GObj {
+    melee_core::ct!("it_8028EB88");
     let mut spawn: SpawnItem = core::mem::zeroed();
     let mut ip: *mut Item = null_mut(); // uninitialised in the C when `ref_gobj` is NULL (zero in the game build)
     if !ref_gobj.is_null() {
@@ -172,6 +175,7 @@ pub unsafe extern "C" fn it_8028EB88(ref_gobj: *mut Item_GObj, pos: *mut Vec, fa
 
 /// `void it_8028EC98(Item_GObj*, f32 vel)`.
 pub unsafe extern "C" fn it_8028EC98(gobj: *mut Item_GObj, vel: f32) {
+    melee_core::ct!("it_8028EC98");
     let ip = item_of(gobj);
     (*ip).xDD4_itemVar.freeze.x10 = vel;
     ext::it_80275158(gobj, (*ext::it_804D6D28).x30_lifetime as f32);
@@ -179,11 +183,13 @@ pub unsafe extern "C" fn it_8028EC98(gobj: *mut Item_GObj, vel: f32) {
 
 /// `void it_8028ECE0(Item_GObj*)`: forgets the linked item.
 pub unsafe extern "C" fn it_8028ECE0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_8028ECE0");
     (*item_of(gobj)).xDD4_itemVar.freeze.unk_1C = null_mut();
 }
 
 /// `Item* it_8028ECF0(Item_GObj*, Vec3*)`: copies the position out.
 pub unsafe extern "C" fn it_8028ECF0(gobj: *mut Item_GObj, v: *mut Vec) -> *mut Item {
+    melee_core::ct!("it_8028ECF0");
     let ip = item_of(gobj);
     (*v).x = (*ip).pos.x;
     (*v).y = (*ip).pos.y;
@@ -193,6 +199,7 @@ pub unsafe extern "C" fn it_8028ECF0(gobj: *mut Item_GObj, v: *mut Vec) -> *mut 
 
 /// `void itFreeze_Logic17_Destroyed(Item_GObj*)`: releases the linked item.
 pub unsafe extern "C" fn itFreeze_Logic17_Destroyed(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFreeze_Logic17_Destroyed");
     let ip = item_of(gobj);
     if !(*ip).xDD4_itemVar.freeze.unk_1C.is_null() {
         ext::it_802E37A4((*ip).xDD4_itemVar.freeze.unk_1C);
@@ -202,6 +209,7 @@ pub unsafe extern "C" fn itFreeze_Logic17_Destroyed(gobj: *mut Item_GObj) {
 
 /// `void it_3F14_Logic17_Spawned(Item_GObj*)`: faces the centre, clears the vars, enters state 1.
 pub unsafe extern "C" fn it_3F14_Logic17_Spawned(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_3F14_Logic17_Spawned");
     let ip = item_of(gobj);
     if (*ip).pos.x > 0.0 {
         (*ip).facing_dir = -1.0;
@@ -220,6 +228,7 @@ pub unsafe extern "C" fn it_3F14_Logic17_Spawned(gobj: *mut Item_GObj) {
 /// `void it_8028EDBC(Item_GObj*)`: rolling speed `x0` along the ground: accelerates with the slope's `x4.x`,
 /// clamps to the attribute maximum, turns the item to the rolling direction.
 pub unsafe extern "C" fn it_8028EDBC(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_8028EDBC");
     let ip = item_of(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itUnkAttributes;
 
@@ -257,6 +266,7 @@ pub unsafe extern "C" fn it_8028EDBC(gobj: *mut Item_GObj) {
 
 /// `void it_8028EF34(Item_GObj*)`: back to rolling (state 0) at speed `x0`.
 pub unsafe extern "C" fn it_8028EF34(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_8028EF34");
     let ip = item_of(gobj);
     (*ip).x40_vel.x = (*ip).xDD4_itemVar.freeze.x0;
     (*ip).x40_vel.z = 0.0;
@@ -267,16 +277,19 @@ pub unsafe extern "C" fn it_8028EF34(gobj: *mut Item_GObj) {
 
 /// `bool itFreeze_UnkMotion0_Anim(Item_GObj*)`.
 pub unsafe extern "C" fn itFreeze_UnkMotion0_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFreeze_UnkMotion0_Anim");
     0
 }
 
 /// `void itFreeze_UnkMotion0_Phys(Item_GObj*)`.
 pub unsafe extern "C" fn itFreeze_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFreeze_UnkMotion0_Phys");
     it_8028EDBC(gobj);
 }
 
 /// `bool itFreeze_UnkMotion0_Coll(Item_GObj*)`: map collision while rolling: floor slope, wall turn-around, jobj roll.
 pub unsafe extern "C" fn itFreeze_UnkMotion0_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFreeze_UnkMotion0_Coll");
     let ip = item_of(gobj);
     let jobj = jobj_of(gobj);
     let cd = &raw mut (*ip).x378_itemColl;
@@ -309,16 +322,19 @@ pub unsafe extern "C" fn itFreeze_UnkMotion0_Coll(gobj: *mut Item_GObj) -> i32 {
 
 /// `void it_8028F1D8(Item_GObj*)`: enters the falling state (1).
 pub unsafe extern "C" fn it_8028F1D8(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_8028F1D8");
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);
 }
 
 /// `bool itFreeze_UnkMotion3_Anim(Item_GObj*)`.
 pub unsafe extern "C" fn itFreeze_UnkMotion3_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFreeze_UnkMotion3_Anim");
     0
 }
 
 /// `void itFreeze_UnkMotion1_Phys(Item_GObj*)`: gravity.
 pub unsafe extern "C" fn itFreeze_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFreeze_UnkMotion1_Phys");
     let ip = item_of(gobj);
     let attrs = (*ip).xCC_item_attr;
     ext::it_80272860(gobj, (*attrs).x10_fall_speed, (*attrs).x14_fall_speed_max);
@@ -326,6 +342,7 @@ pub unsafe extern "C" fn itFreeze_UnkMotion1_Phys(gobj: *mut Item_GObj) {
 
 /// `bool itFreeze_UnkMotion1_Coll(Item_GObj*)`: landing.
 pub unsafe extern "C" fn itFreeze_UnkMotion1_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFreeze_UnkMotion1_Coll");
     let it = item_of(gobj);
     let cd = &raw mut (*it).x378_itemColl;
 
@@ -338,6 +355,7 @@ pub unsafe extern "C" fn itFreeze_UnkMotion1_Coll(gobj: *mut Item_GObj) -> i32 {
 
 /// `void itFreeze_Logic17_PickedUp(Item_GObj*)`: releases the linked item, enters the held state (2).
 pub unsafe extern "C" fn itFreeze_Logic17_PickedUp(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFreeze_Logic17_PickedUp");
     let item = (*gobj).user_data as *mut Item;
     let linked = (*item).xDD4_itemVar.freeze.unk_1C;
     if !linked.is_null() {
@@ -349,21 +367,25 @@ pub unsafe extern "C" fn itFreeze_Logic17_PickedUp(gobj: *mut Item_GObj) {
 
 /// `bool itFreeze_UnkMotion2_Anim(Item_GObj*)`.
 pub unsafe extern "C" fn itFreeze_UnkMotion2_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFreeze_UnkMotion2_Anim");
     0
 }
 
 /// `void itFreeze_Logic17_Dropped(Item_GObj*)`.
 pub unsafe extern "C" fn itFreeze_Logic17_Dropped(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFreeze_Logic17_Dropped");
     ext::Item_80268E5C(gobj, 1, 6);
 }
 
 /// `void itFreeze_Logic17_Thrown(Item_GObj*)`.
 pub unsafe extern "C" fn itFreeze_Logic17_Thrown(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFreeze_Logic17_Thrown");
     ext::Item_80268E5C(gobj, 3, 6);
 }
 
 /// `void itFreeze_UnkMotion3_Phys(Item_GObj*)`: gravity.
 pub unsafe extern "C" fn itFreeze_UnkMotion3_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFreeze_UnkMotion3_Phys");
     let ip = (*gobj).user_data as *mut Item;
     let it_attr = (*ip).xCC_item_attr;
     ext::it_80272860(gobj, (*it_attr).x10_fall_speed, (*it_attr).x14_fall_speed_max);
@@ -371,6 +393,7 @@ pub unsafe extern "C" fn itFreeze_UnkMotion3_Phys(gobj: *mut Item_GObj) {
 
 /// `bool itFreeze_UnkMotion3_Coll(Item_GObj*)`.
 pub unsafe extern "C" fn itFreeze_UnkMotion3_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFreeze_UnkMotion3_Coll");
     if ext::it_8026DAA8(gobj) != 0 {
         return 1;
     }
@@ -379,41 +402,49 @@ pub unsafe extern "C" fn itFreeze_UnkMotion3_Coll(gobj: *mut Item_GObj) -> i32 {
 
 /// `bool itFreeze_Logic17_DmgDealt(Item_GObj*)`.
 pub unsafe extern "C" fn itFreeze_Logic17_DmgDealt(arg0: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFreeze_Logic17_DmgDealt");
     1
 }
 
 /// `bool itFreeze_Logic17_Clanked(Item_GObj*)`.
 pub unsafe extern "C" fn itFreeze_Logic17_Clanked(arg0: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFreeze_Logic17_Clanked");
     1
 }
 
 /// `bool itFreeze_Logic17_HitShield(Item_GObj*)`.
 pub unsafe extern "C" fn itFreeze_Logic17_HitShield(arg0: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFreeze_Logic17_HitShield");
     1
 }
 
 /// `bool itFreeze_Logic17_Absorbed(Item_GObj*)`.
 pub unsafe extern "C" fn itFreeze_Logic17_Absorbed(arg0: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFreeze_Logic17_Absorbed");
     1
 }
 
 /// `bool itFreeze_Logic17_Reflected(Item_GObj*)`.
 pub unsafe extern "C" fn itFreeze_Logic17_Reflected(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFreeze_Logic17_Reflected");
     ext::it_80273030(gobj)
 }
 
 /// `bool itFreeze_Logic17_ShieldBounced(Item_GObj*)`.
 pub unsafe extern "C" fn itFreeze_Logic17_ShieldBounced(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFreeze_Logic17_ShieldBounced");
     ext::itColl_BounceOffShield(gobj)
 }
 
 /// `bool itFreeze_Logic17_DmgReceived(Item_GObj*)`.
 pub unsafe extern "C" fn itFreeze_Logic17_DmgReceived(arg0: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFreeze_Logic17_DmgReceived");
     1
 }
 
 /// `void it_8028F434(Item_GObj*, f32 vel, Item_GObj* ref)`: starts the slide with deceleration `|vel|`, linked to `ref`.
 pub unsafe extern "C" fn it_8028F434(gobj: *mut Item_GObj, mut vel: f32, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_8028F434");
     let ip = item_of(gobj);
     itResetVelocity(ip);
     if vel < 0.0 {
@@ -428,11 +459,13 @@ pub unsafe extern "C" fn it_8028F434(gobj: *mut Item_GObj, mut vel: f32, ref_gob
 
 /// `bool itFreeze_UnkMotion4_Anim(Item_GObj*)`.
 pub unsafe extern "C" fn itFreeze_UnkMotion4_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFreeze_UnkMotion4_Anim");
     0
 }
 
 /// `void itFreeze_UnkMotion4_Phys(Item_GObj*)`: applies the stored initial speed, then decelerates by `x14` to zero.
 pub unsafe extern "C" fn itFreeze_UnkMotion4_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFreeze_UnkMotion4_Phys");
     let ip = item_of(gobj);
     {
         let x10 = (*ip).xDD4_itemVar.freeze.x10;
@@ -468,6 +501,7 @@ pub unsafe extern "C" fn itFreeze_UnkMotion4_Phys(gobj: *mut Item_GObj) {
 
 /// `itFreeze_ClearLinkedItem` (static inline): releases the linked item.
 pub unsafe fn itFreeze_ClearLinkedItem(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFreeze_ClearLinkedItem");
     let ip = item_of(gobj);
     let linked = (*ip).xDD4_itemVar.freeze.unk_1C;
     if !linked.is_null() {
@@ -478,6 +512,7 @@ pub unsafe fn itFreeze_ClearLinkedItem(gobj: *mut Item_GObj) {
 
 /// `itFreeze_ResetToMotion0` (static inline): back to rolling at speed `x0`.
 pub unsafe fn itFreeze_ResetToMotion0(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFreeze_ResetToMotion0");
     let ip = item_of(gobj);
     (*ip).x40_vel.x = (*ip).xDD4_itemVar.freeze.x0;
     (*ip).x40_vel.z = 0.0;
@@ -488,6 +523,7 @@ pub unsafe fn itFreeze_ResetToMotion0(gobj: *mut Item_GObj) {
 
 /// `bool itFreeze_UnkMotion4_Coll(Item_GObj*)`: during the slide: wall hit -> wait state, no link -> roll again.
 pub unsafe extern "C" fn itFreeze_UnkMotion4_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFreeze_UnkMotion4_Coll");
     let ip = item_of(gobj);
     let jobj = jobj_of(gobj);
     let cd = &raw mut (*ip).x378_itemColl;
@@ -519,6 +555,7 @@ pub unsafe extern "C" fn itFreeze_UnkMotion4_Coll(gobj: *mut Item_GObj) -> i32 {
 
 /// `void it_8028F7C8(Item_GObj*)`: stops and enters the 90-frame wait (state 5).
 pub unsafe extern "C" fn it_8028F7C8(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_8028F7C8");
     let ip = item_of(gobj);
     itResetVelocity(ip);
     ext::it_8026B390(gobj);
@@ -528,14 +565,16 @@ pub unsafe extern "C" fn it_8028F7C8(gobj: *mut Item_GObj) {
 
 /// `bool itFreeze_UnkMotion5_Anim(Item_GObj*)`.
 pub unsafe extern "C" fn itFreeze_UnkMotion5_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFreeze_UnkMotion5_Anim");
     0
 }
 
 /// `void itFreeze_UnkMotion5_Phys(Item_GObj*)`.
-pub unsafe extern "C" fn itFreeze_UnkMotion5_Phys(gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itFreeze_UnkMotion5_Phys(gobj: *mut Item_GObj) { melee_core::ct!("itFreeze_UnkMotion5_Phys");}
 
 /// `bool itFreeze_UnkMotion5_Coll(Item_GObj*)`: counts the wait down, then rolls again.
 pub unsafe extern "C" fn itFreeze_UnkMotion5_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFreeze_UnkMotion5_Coll");
     let ip = item_of(gobj);
     ext::it_8026D62C(gobj, Some(it_8028F1D8));
     if (*ip).xDD4_itemVar.freeze.x18 <= 0 {
@@ -553,11 +592,13 @@ pub unsafe extern "C" fn itFreeze_UnkMotion5_Coll(gobj: *mut Item_GObj) -> i32 {
 
 /// `void itFreeze_Logic17_EvtUnk(Item_GObj*, Item_GObj*)`: removes the gobj interaction references.
 pub unsafe extern "C" fn itFreeze_Logic17_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("itFreeze_Logic17_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }
 
 /// `void it_8028F8E4(Item_GObj*)`: marks the flag, stops, and runs the map probe from the current position.
 pub unsafe extern "C" fn it_8028F8E4(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_8028F8E4");
     let ip = item_of(gobj);
     (*ip).xDCC_flag.set_b3(1);
     ext::it_8026B390(gobj);
@@ -568,6 +609,7 @@ pub unsafe extern "C" fn it_8028F8E4(gobj: *mut Item_GObj) {
 
 /// `void it_8028F968(Item_GObj*)`.
 pub unsafe extern "C" fn it_8028F968(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_8028F968");
     let ip = item_of(gobj);
     ext::it_80273454(gobj);
     (*ip).xDCC_flag.set_b3(0);
@@ -576,5 +618,6 @@ pub unsafe extern "C" fn it_8028F968(gobj: *mut Item_GObj) {
 
 /// `void it_8028F9B8(Item_GObj*)`: destroys the item.
 pub unsafe extern "C" fn it_8028F9B8(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_8028F9B8");
     ext::Item_8026A8EC(gobj);
 }

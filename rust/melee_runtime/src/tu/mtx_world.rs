@@ -15,6 +15,7 @@ unsafe fn rd(p: *const [f32; 4]) -> Mtx {
 
 /// `HSD_MtxGetScale(mtx, scale)`: the scale of the three basis vectors.
 pub unsafe fn HSD_MtxGetScale(m: *mut [f32; 4], scale: *mut Vec) {
+    melee_core::ct!("HSD_MtxGetScale");
     let r = crate::hsd_mtx::get_scale(&rd(m));
     (*scale).x = r.x;
     (*scale).y = r.y;
@@ -23,6 +24,7 @@ pub unsafe fn HSD_MtxGetScale(m: *mut [f32; 4], scale: *mut Vec) {
 
 /// `HSD_MtxInverseConcat(inv, src, dest)`: `dest = inv^-1 * src` (a singular `inv` copies `src`).
 pub unsafe fn HSD_MtxInverseConcat(inv: *mut [f32; 4], src: *mut [f32; 4], dest: *mut [f32; 4]) {
+    melee_core::ct!("HSD_MtxInverseConcat");
     let r = crate::hsd_mtx::inverse_concat(&rd(inv), &rd(src));
     dest.cast::<Mtx>().write(r);
 }

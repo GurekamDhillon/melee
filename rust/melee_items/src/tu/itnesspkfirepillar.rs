@@ -55,6 +55,7 @@ kinds_jobj_inl!();
 
 /// `float get_min_life(void)`
 pub unsafe extern "C" fn get_min_life() -> f32 {
+    melee_core::ct!("get_min_life");
     1.0
 }
 
@@ -84,6 +85,7 @@ unsafe fn itNesspkfirepillar_INLINE_SpawnItem_Init(spawnitem: *mut SpawnItem, of
 }
 
 pub unsafe extern "C" fn itNesspkfirepillar_802AA494(parent1_gobj: *mut HSD_GObj, parent2_gobj: *mut HSD_GObj, offset: *mut Vec3, facing_dir: f32) {
+    melee_core::ct!("itNesspkfirepillar_802AA494");
     let mut spawnitem: SpawnItem = core::mem::zeroed();
     itNesspkfirepillar_INLINE_SpawnItem_Init(&mut spawnitem, offset, facing_dir, parent1_gobj, parent2_gobj);
     let item_gobj = ext::Item_80268B18(&mut spawnitem);
@@ -94,6 +96,7 @@ pub unsafe extern "C" fn itNesspkfirepillar_802AA494(parent1_gobj: *mut HSD_GObj
 }
 
 pub unsafe extern "C" fn itNesspkfirepillar_802AA55C(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itNesspkfirepillar_802AA55C");
     let item = GET_ITEM(item_gobj);
     let attrs = (*(*item).xC4_article_data).x4_specialAttributes as *mut itNessPKFirepillarAttributes;
     ext::Item_80268E5C(item_gobj, 0, ITEM_ANIM_UPDATE as u32);
@@ -117,6 +120,7 @@ unsafe fn itNesspkfirepillar_INLINE_Anim_SetScale(item_gobj: *mut Item_GObj, sca
 }
 
 pub unsafe extern "C" fn itNesspkfirepillar_UnkMotion0_Anim(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itNesspkfirepillar_UnkMotion0_Anim");
     let item = GET_ITEM(item_gobj);
     let attrs = (*(*item).xC4_article_data).x4_specialAttributes as *mut itNessPKFirepillarAttributes;
     let mut scale = (*attrs).scale + ((*item).xD44_lifeTimer * (1.0 - (*attrs).scale)) / (*attrs).x0;
@@ -126,6 +130,7 @@ pub unsafe extern "C" fn itNesspkfirepillar_UnkMotion0_Anim(item_gobj: *mut Item
 
 /// @bug sets the item to be in the air
 pub unsafe extern "C" fn itNesspkfirepillar_UnkMotion0_Phys(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itNesspkfirepillar_UnkMotion0_Phys");
     let item = GET_ITEM(item_gobj);
     (*item).ground_or_air = GA_Air;
     if (*item).ground_or_air != 0 {
@@ -136,6 +141,7 @@ pub unsafe extern "C" fn itNesspkfirepillar_UnkMotion0_Phys(item_gobj: *mut Item
 
 /// @bug sets the item to be in the air
 pub unsafe extern "C" fn itNesspkfirepillar_UnkMotion0_Coll(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itNesspkfirepillar_UnkMotion0_Coll");
     let item = GET_ITEM(item_gobj);
     (*item).ground_or_air = GA_Air;
     if (*item).ground_or_air != 0 {
@@ -147,6 +153,7 @@ pub unsafe extern "C" fn itNesspkfirepillar_UnkMotion0_Coll(item_gobj: *mut Item
 }
 
 pub unsafe extern "C" fn itNesspkfirepillar_Logic24_DmgReceived(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itNesspkfirepillar_Logic24_DmgReceived");
     let item = GET_ITEM(item_gobj);
     let attrs = (*(*item).xC4_article_data).x4_specialAttributes as *mut itNessPKFirepillarAttributes;
     // -((xC9C * x4) - lifeTimer): fused site fmadds(xC9C, x4, -lifeTimer)
@@ -158,5 +165,6 @@ pub unsafe extern "C" fn itNesspkfirepillar_Logic24_DmgReceived(item_gobj: *mut 
 }
 
 pub unsafe extern "C" fn itNesspkfirepillar_Logic24_EvtUnk(item_gobj: *mut Item_GObj, parent_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itNesspkfirepillar_Logic24_EvtUnk");
     ext::it_8026B894(item_gobj, parent_gobj);
 }

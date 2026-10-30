@@ -29,6 +29,7 @@ pub mod ext {
 const M_PI: f64 = 3.14159265358979323846;
 
 pub fn ftCh_GrabUnk1_8015B174(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_GrabUnk1_8015B174");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*(*fp).ft_data).ext_attr as *const ftCrazyHand_DatAttrs;
@@ -45,6 +46,7 @@ pub fn ftCh_GrabUnk1_8015B174(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCh_TagFail_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_TagFail_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         unsafe {
             let fp = (*gobj).user_data as *mut Fighter;
@@ -54,12 +56,13 @@ pub fn ftCh_TagFail_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftCh_TagFail_Phys(_gobj: *mut HSD_GObj) {}
+pub fn ftCh_TagFail_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_TagFail_Phys");}
 
-pub fn ftCh_TagFail_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftCh_TagFail_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_TagFail_Coll");}
 
 /// Accessory-4 callback: the camera script, one step per frame, keyed by `mv.ch.unk4.x0`.
 pub unsafe extern "C" fn fn_8015B2C0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8015B2C0");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         match (*fp).mv.ch.unk4.x0 {
@@ -155,6 +158,7 @@ pub unsafe extern "C" fn fn_8015B2C0(gobj: *mut HSD_GObj) {
 
 /// Camera follow callback: the Crazy Hand waist position.
 pub fn fn_8015B4EC(vec: *mut Vec3) -> bool {
+    melee_core::ct!("fn_8015B4EC");
     unsafe {
         let gobj = melee_fighter::tu::ftbosslib::ftBossLib_GetFighterGObj(Ft_Kind_CrezyH);
         if !gobj.is_null() {

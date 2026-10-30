@@ -97,6 +97,7 @@ unsafe fn Item_ClearFlagsAndEnterState(gobj: *mut Item_GObj, ip: *mut Item, msid
 }
 
 pub unsafe extern "C" fn it_802AB3F0(gobj: *mut Item_GObj, out: *mut Vec3, idx: i32) {
+    melee_core::ct!("it_802AB3F0");
     if !gobj.is_null() {
         let ip = GET_ITEM(gobj);
         if !ip.is_null() {
@@ -116,6 +117,7 @@ pub unsafe extern "C" fn it_802AB3F0(gobj: *mut Item_GObj, out: *mut Vec3, idx: 
 }
 
 pub unsafe extern "C" fn it_802AB468(gobj: *mut Item_GObj, out: *mut f32, _unused: i32) {
+    melee_core::ct!("it_802AB468");
     if !gobj.is_null() {
         let ip = GET_ITEM(gobj);
         if !ip.is_null() {
@@ -138,6 +140,7 @@ pub unsafe extern "C" fn it_802AB468(gobj: *mut Item_GObj, out: *mut f32, _unuse
 }
 
 pub unsafe extern "C" fn it_802AB4B8(gobj: *mut Item_GObj, cd: *mut CollData) -> bool {
+    melee_core::ct!("it_802AB4B8");
     let ip = GET_ITEM(gobj);
     let mut ret = false;
     ext::it_8026DA08(gobj);
@@ -159,6 +162,7 @@ pub unsafe extern "C" fn it_802AB4B8(gobj: *mut Item_GObj, cd: *mut CollData) ->
 }
 
 pub unsafe extern "C" fn it_802AB568(gobj: *mut Item_GObj) -> *mut HSD_GObj {
+    melee_core::ct!("it_802AB568");
     if !gobj.is_null() {
         let ip = GET_ITEM(gobj);
         if !ip.is_null() {
@@ -169,6 +173,7 @@ pub unsafe extern "C" fn it_802AB568(gobj: *mut Item_GObj) -> *mut HSD_GObj {
 }
 
 pub unsafe extern "C" fn it_802AB58C(owner: *mut Item_GObj, pos: *mut Vec3, facing_dir: f32) -> *mut HSD_GObj {
+    melee_core::ct!("it_802AB58C");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
     spawn.kind = It_Kind_Ness_PKThunder;
@@ -215,6 +220,7 @@ pub unsafe extern "C" fn it_802AB58C(owner: *mut Item_GObj, pos: *mut Vec3, faci
 }
 
 pub unsafe extern "C" fn it_802AB90C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802AB90C");
     let ip = GET_ITEM(gobj);
 
     ext::it_802725D4(gobj);
@@ -236,6 +242,7 @@ pub unsafe extern "C" fn it_802AB90C(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802AB9C0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802AB9C0");
     if !gobj.is_null() {
         let ip = GET_ITEM(gobj);
         if !ip.is_null() && (*ip).xDD4_itemVar.pkthunder.xF00 == 0 {
@@ -256,6 +263,7 @@ unsafe fn it_802AC58C_ext(g: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802ABA4C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802ABA4C");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itPKThunderAttributes;
 
@@ -275,6 +283,7 @@ pub unsafe extern "C" fn it_802ABA4C(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itNesspkthunderball_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itNesspkthunderball_UnkMotion0_Anim");
     let ip = GET_ITEM(gobj);
 
     match (*ip).xDD4_itemVar.pkthunder.xEF8 {
@@ -342,6 +351,7 @@ unsafe fn itNesspkthunderball_ShiftPositions(ip: *mut Item) {
 }
 
 pub unsafe extern "C" fn itNesspkthunderball_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itNesspkthunderball_UnkMotion0_Phys");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itPKThunderAttributes;
     let mut stick: Vec3 = core::mem::zeroed();
@@ -397,6 +407,7 @@ pub unsafe extern "C" fn itNesspkthunderball_UnkMotion0_Phys(gobj: *mut Item_GOb
 }
 
 pub unsafe extern "C" fn itNesspkthunderball_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itNesspkthunderball_UnkMotion0_Coll");
     let ip = GET_ITEM(gobj);
 
     if it_802AB4B8(gobj, &mut (*ip).x378_itemColl) {
@@ -407,16 +418,19 @@ pub unsafe extern "C" fn itNesspkthunderball_UnkMotion0_Coll(gobj: *mut Item_GOb
 }
 
 pub unsafe extern "C" fn itNessPKThunderball_Logic26_DmgDealt(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itNessPKThunderball_Logic26_DmgDealt");
     it_802AB90C(gobj);
     true
 }
 
 pub unsafe extern "C" fn it_802AC074(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_802AC074");
     it_802AB90C(gobj);
     true
 }
 
 pub unsafe extern "C" fn it_802AC098(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_802AC098");
     let ip = GET_ITEM(gobj);
 
     if !(*ip).xDD4_itemVar.pkthunder.xF04.is_null() {
@@ -452,11 +466,13 @@ pub unsafe extern "C" fn it_802AC098(gobj: *mut Item_GObj) -> bool {
 }
 
 pub unsafe extern "C" fn it_802AC338(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_802AC338");
     it_802AB90C(gobj);
     true
 }
 
 pub unsafe extern "C" fn it_802AC35C(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_802AC35C");
     let ip = GET_ITEM(gobj);
     ext::lbVector_Mirror(&mut (*ip).x40_vel, &mut (*ip).xC58);
     (*ip).x40_vel.z = 0.0;
@@ -466,10 +482,12 @@ pub unsafe extern "C" fn it_802AC35C(gobj: *mut Item_GObj) -> bool {
 }
 
 pub unsafe extern "C" fn it_802AC3F8(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_802AC3F8");
     it_802AB90C(gobj);
     true
 }
 
 pub unsafe extern "C" fn it_802AC41C(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802AC41C");
     ext::it_8026B894(gobj, ref_gobj);
 }

@@ -63,6 +63,7 @@ pub static it_803F7958: [ItemStateTable; 1] = [ItemStateTable {
 
 /// `Item_GObj* it_802C74D8(HSD_GObj* parent, Vec3* pos, Fighter_Part part, float dir)` (2C74D8)
 pub unsafe extern "C" fn it_802C74D8(parent: *mut HSD_GObj, pos: *mut Vec3, part: Fighter_Part, dir: f32) -> *mut Item_GObj {
+    melee_core::ct!("it_802C74D8");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
     spawn.kind = It_Kind_Kirby_GameWatchChefPan;
@@ -94,6 +95,7 @@ pub unsafe extern "C" fn it_802C74D8(parent: *mut HSD_GObj, pos: *mut Vec3, part
 
 /// `void itKirbyGameWatchChefPan_Logic113_Destroyed(Item_GObj*)` (2C75DC)
 pub unsafe extern "C" fn itKirbyGameWatchChefPan_Logic113_Destroyed(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itKirbyGameWatchChefPan_Logic113_Destroyed");
     let item = ip_of(item_gobj);
     if !(*item).owner.is_null() {
         ext::ftKb_SpecialNGw_8010D074((*item).owner);
@@ -102,6 +104,7 @@ pub unsafe extern "C" fn itKirbyGameWatchChefPan_Logic113_Destroyed(item_gobj: *
 
 /// `void it_802C760C(Item_GObj*)` (2C760C)
 pub unsafe extern "C" fn it_802C760C(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802C760C");
     let item = ip_of(item_gobj);
     if !item.is_null() {
         itKirbyGameWatchChefPan_Logic113_Destroyed(item_gobj);
@@ -111,16 +114,19 @@ pub unsafe extern "C" fn it_802C760C(item_gobj: *mut Item_GObj) {
 
 /// `void it_802C7658(Item_GObj*)` (2C7658)
 pub unsafe extern "C" fn it_802C7658(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802C7658");
     ext::it_8026B724(item_gobj);
 }
 
 /// `void it_802C7678(Item_GObj*)` (2C7678)
 pub unsafe extern "C" fn it_802C7678(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802C7678");
     ext::it_8026B73C(item_gobj);
 }
 
 /// `void itKirbyGameWatchChefPan_Logic113_PickedUp(Item_GObj*)` (2C7698)
 pub unsafe extern "C" fn itKirbyGameWatchChefPan_Logic113_PickedUp(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itKirbyGameWatchChefPan_Logic113_PickedUp");
     let item = ip_of(item_gobj);
     if !(*item).owner.is_null() {
         ext::Item_80268E5C(item_gobj, 0, ITEM_ANIM_UPDATE as u32);
@@ -131,6 +137,7 @@ pub unsafe extern "C" fn itKirbyGameWatchChefPan_Logic113_PickedUp(item_gobj: *m
 /// `static inline bool itKirbygamewatchchefpan_UnkMotion0_Anim_inline(Item_GObj*)`
 #[inline]
 pub unsafe fn itKirbygamewatchchefpan_UnkMotion0_Anim_inline(item_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKirbygamewatchchefpan_UnkMotion0_Anim_inline");
     let item = ip_of(item_gobj);
     if !(*item).owner.is_null() {
         return ext::ftKb_SpecialNGw_8010D160((*item).owner);
@@ -140,6 +147,7 @@ pub unsafe fn itKirbygamewatchchefpan_UnkMotion0_Anim_inline(item_gobj: *mut Ite
 
 /// `bool itKirbygamewatchchefpan_UnkMotion0_Anim(Item_GObj*)` (2C76E8)
 pub unsafe extern "C" fn itKirbygamewatchchefpan_UnkMotion0_Anim(item_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKirbygamewatchchefpan_UnkMotion0_Anim");
     let _item = ip_of(item_gobj);
     if itKirbygamewatchchefpan_UnkMotion0_Anim_inline(item_gobj) != 0 {
         itKirbyGameWatchChefPan_Logic113_Destroyed(item_gobj);
@@ -150,5 +158,6 @@ pub unsafe extern "C" fn itKirbygamewatchchefpan_UnkMotion0_Anim(item_gobj: *mut
 
 /// `void itKirbyGameWatchChefPan_Logic113_EvtUnk(Item_GObj*, HSD_GObj*)` (2C7754)
 pub unsafe extern "C" fn itKirbyGameWatchChefPan_Logic113_EvtUnk(item_gobj: *mut Item_GObj, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itKirbyGameWatchChefPan_Logic113_EvtUnk");
     ext::it_8026B894(item_gobj, ref_gobj);
 }

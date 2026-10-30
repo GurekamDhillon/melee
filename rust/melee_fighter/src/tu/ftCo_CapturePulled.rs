@@ -88,11 +88,13 @@ fn grab_timer(f: &Fighter) -> f32 {
 
 /// `ftCo_800DA824`.
 pub fn ftCo_800DA824(f: &mut Fighter) -> f32 {
+    melee_core::ct!("ftCo_800DA824");
     grab_timer(f)
 }
 
 /// `fn_800DA8E4`: enter a CapturePulled state `msid`.
 pub fn fn_800DA8E4(g: G, vg: G, msid: i32) {
+    melee_core::ct!("fn_800DA8E4");
     let f = fp(g);
     let v = fp(vg);
     ext::ftCo_ReleaseItemAndVictim(g);
@@ -133,11 +135,13 @@ fn follow(a0: G, a1: G) {
 
 /// `fn_800DAA40`.
 pub fn fn_800DAA40(a0: G, a1: G) {
+    melee_core::ct!("fn_800DAA40");
     follow(a0, a1)
 }
 
 /// `fn_800DAADC`: enter CapturePulledLw / Hi by ground state and snap to the grabber.
 pub fn fn_800DAADC(a0: G, a1: G) {
+    melee_core::ct!("fn_800DAADC");
     let msid = if fp(a0).ground_or_air == GA_Ground { ftCo_MS_CapturePulledLw } else { ftCo_MS_CapturePulledHi };
     fn_800DA8E4(a0, a1, msid as i32);
     follow(a0, a1);
@@ -151,17 +155,19 @@ pub fn fn_800DAADC(a0: G, a1: G) {
 }
 
 /// `ftCo_CapturePulledHi_Anim`.
-pub fn ftCo_CapturePulledHi_Anim(_g: G) {}
+pub fn ftCo_CapturePulledHi_Anim(_g: G) { melee_core::ct!("ftCo_CapturePulledHi_Anim");}
 /// `ftCo_CapturePulledHi_IASA`.
-pub fn ftCo_CapturePulledHi_IASA(_g: G) {}
+pub fn ftCo_CapturePulledHi_IASA(_g: G) { melee_core::ct!("ftCo_CapturePulledHi_IASA");}
 
 /// `fn_800DAC78`: the grabber's hold joint minus this fighter's XRotN.
 pub fn fn_800DAC78(g: G, out: &mut Vec3) {
+    melee_core::ct!("fn_800DAC78");
     *out = hold_delta(fp(g));
 }
 
 /// `fn_800DAD18`: follow the hold joint; true when it is above x3C4 * scale.
 pub fn fn_800DAD18(g: G) -> bool {
+    melee_core::ct!("fn_800DAD18");
     let f = fp(g);
     let d = hold_delta(f);
     let r = d.y > cd().x3C4 * f.x34_scale.y;
@@ -173,6 +179,7 @@ pub fn fn_800DAD18(g: G) -> bool {
 
 /// `ftCo_CapturePulledHi_Phys`.
 pub fn ftCo_CapturePulledHi_Phys(g: G) {
+    melee_core::ct!("ftCo_CapturePulledHi_Phys");
     let f = fp(g);
     let d = hold_delta(f);
     f.cur_pos.x += d.x;
@@ -182,6 +189,7 @@ pub fn ftCo_CapturePulledHi_Phys(g: G) {
 
 /// `ftCo_CapturePulledHi_Coll`.
 pub fn ftCo_CapturePulledHi_Coll(g: G) {
+    melee_core::ct!("ftCo_CapturePulledHi_Coll");
     if fp(g).x2226_b2() == 0 {
         ext::ft_80083C00(g, Some(fn_800DAECC));
     }
@@ -189,11 +197,13 @@ pub fn ftCo_CapturePulledHi_Coll(g: G) {
 
 /// `fn_800DAECC`.
 pub unsafe extern "C" fn fn_800DAECC(g: G) {
+    melee_core::ct!("fn_800DAECC");
     fn_800DAEEC(g);
 }
 
 /// `fn_800DAEEC`: landed while pulled -> CapturePulledLw.
 pub fn fn_800DAEEC(g: G) {
+    melee_core::ct!("fn_800DAEEC");
     let f = fp(g);
     // ftCommon_AirToGroundStateChange (ftCommon/inlines.h)
     ext::ftCommon_8007D7FC(f);
@@ -212,9 +222,9 @@ pub fn fn_800DAEEC(g: G) {
 }
 
 /// `ftCo_CapturePulledLw_Anim`.
-pub fn ftCo_CapturePulledLw_Anim(_g: G) {}
+pub fn ftCo_CapturePulledLw_Anim(_g: G) { melee_core::ct!("ftCo_CapturePulledLw_Anim");}
 /// `ftCo_CapturePulledLw_IASA`.
-pub fn ftCo_CapturePulledLw_IASA(_g: G) {}
+pub fn ftCo_CapturePulledLw_IASA(_g: G) { melee_core::ct!("ftCo_CapturePulledLw_IASA");}
 
 /// `fn_800DB230_inline`: left the ground while pulled -> CapturePulledHi.
 fn to_air(g: G) {
@@ -232,6 +242,7 @@ fn to_air(g: G) {
 
 /// `ftCo_CapturePulledLw_Phys`.
 pub fn ftCo_CapturePulledLw_Phys(g: G) {
+    melee_core::ct!("ftCo_CapturePulledLw_Phys");
     if fn_800DAD18(g) {
         to_air(g);
     }
@@ -239,6 +250,7 @@ pub fn ftCo_CapturePulledLw_Phys(g: G) {
 
 /// `ftCo_CapturePulledLw_Coll`.
 pub fn ftCo_CapturePulledLw_Coll(g: G) {
+    melee_core::ct!("ftCo_CapturePulledLw_Coll");
     if fp(g).x2226_b2() == 0 {
         ext::ft_8008403C(g, Some(fn_800DB230));
     }
@@ -246,11 +258,13 @@ pub fn ftCo_CapturePulledLw_Coll(g: G) {
 
 /// `fn_800DB230`.
 pub unsafe extern "C" fn fn_800DB230(g: G) {
+    melee_core::ct!("fn_800DB230");
     to_air(g);
 }
 
 /// `ftCo_800DB368`: constrain this fighter's XRotN to the attacker's TransN2.
 pub fn ftCo_800DB368(att: &mut Fighter, f: &mut Fighter) {
+    melee_core::ct!("ftCo_800DB368");
     let constraint = joint(att, FtPart_TransN2 as i32);
     if f.x2226_b2() == 0 {
         let j = joint(f, FtPart_XRotN as i32);
@@ -264,6 +278,7 @@ pub fn ftCo_800DB368(att: &mut Fighter, f: &mut Fighter) {
 
 /// `ftCo_800DB464`: place the fighter at its XRotN (accessory1 callback).
 pub fn ftCo_800DB464(g: G) {
+    melee_core::ct!("ftCo_800DB464");
     let f = fp(g);
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ext::lb_8000B1CC(joint(f, FtPart_XRotN as i32), core::ptr::null(), &mut pos);
@@ -274,11 +289,13 @@ pub fn ftCo_800DB464(g: G) {
 }
 /// `ftCo_800DB464` as an `HSD_GObjEvent`.
 pub unsafe extern "C" fn ftCo_800DB464_cb(g: G) {
+    melee_core::ct!("ftCo_800DB464_cb");
     ftCo_800DB464(g)
 }
 
 /// `ftCo_800DB500`.
 pub fn ftCo_800DB500(g: G) {
+    melee_core::ct!("ftCo_800DB500");
     let f = fp(g);
     if f.x2226_b2() != 0 {
         let i = ext::ftParts_GetBoneIndex(f, FtPart_XRotN as i32);

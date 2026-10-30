@@ -101,6 +101,7 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 
 /// `Fighter_OnItemPickup(gobj, catchItemFlag, bool2, bool3)`: used for all fighters except Kirby and Purin.
 pub fn Fighter_OnItemPickup(gobj: *mut HSD_GObj, catch_item: i32, bool2: i32, bool3: i32) {
+    melee_core::ct!("Fighter_OnItemPickup");
     unsafe {
         let fp = fpp(gobj);
         if !ext::itIsHeavy((*fp).item_gobj) {
@@ -120,6 +121,7 @@ pub fn Fighter_OnItemPickup(gobj: *mut HSD_GObj, catch_item: i32, bool2: i32, bo
 
 /// `Fighter_OnItemInvisible(gobj, flag)`.
 pub fn Fighter_OnItemInvisible(gobj: *mut HSD_GObj, flag: i32) {
+    melee_core::ct!("Fighter_OnItemInvisible");
     unsafe {
         let fp = fpp(gobj);
         if !ext::itIsHeavy((*fp).item_gobj) {
@@ -130,6 +132,7 @@ pub fn Fighter_OnItemInvisible(gobj: *mut HSD_GObj, flag: i32) {
 
 /// `Fighter_OnItemVisible(gobj, flag)`.
 pub fn Fighter_OnItemVisible(gobj: *mut HSD_GObj, flag: i32) {
+    melee_core::ct!("Fighter_OnItemVisible");
     unsafe {
         let fp = fpp(gobj);
         if !ext::itIsHeavy((*fp).item_gobj) {
@@ -140,6 +143,7 @@ pub fn Fighter_OnItemVisible(gobj: *mut HSD_GObj, flag: i32) {
 
 /// `Fighter_OnItemDrop(gobj, dropItemFlag, bool2, bool3)`.
 pub fn Fighter_OnItemDrop(gobj: *mut HSD_GObj, drop_item: i32, bool2: i32, bool3: i32) {
+    melee_core::ct!("Fighter_OnItemDrop");
     ext::ftAnim_80070FB4(gobj, bool2, -1);
     if drop_item != 0 {
         ext::ftAnim_80070CC4(gobj, bool3);
@@ -148,12 +152,14 @@ pub fn Fighter_OnItemDrop(gobj: *mut HSD_GObj, drop_item: i32, bool2: i32, bool3
 
 /// `Fighter_OnKnockbackEnter(gobj, arg1)`.
 pub fn Fighter_OnKnockbackEnter(gobj: *mut HSD_GObj, arg1: i32) {
+    melee_core::ct!("Fighter_OnKnockbackEnter");
     ext::ftAnim_800704F0(gobj, arg1, 3.0);
     ext::ftAnim_800704F0(gobj, 0, 3.0);
 }
 
 /// `Fighter_OnKnockbackExit(gobj, arg1)`.
 pub fn Fighter_OnKnockbackExit(gobj: *mut HSD_GObj, arg1: i32) {
+    melee_core::ct!("Fighter_OnKnockbackExit");
     ext::ftAnim_800704F0(gobj, arg1, 0.0);
     ext::ftAnim_800704F0(gobj, 0, 0.0);
 }
@@ -161,6 +167,7 @@ pub fn Fighter_OnKnockbackExit(gobj: *mut HSD_GObj, arg1: i32) {
 /// `Fighter_SetEffectHitlagCallbacks(fp)`: efLib_PauseAll / efLib_ResumeAll as the hitlag callbacks
 /// (the chars::cb entries panic `TODO` when the game calls them, until efLib is ported).
 pub fn Fighter_SetEffectHitlagCallbacks(fp: *mut Fighter) {
+    melee_core::ct!("Fighter_SetEffectHitlagCallbacks");
     unsafe {
         (*fp).pre_hitlag_cb = Some(crate::chars::cb::ext__efLib_PauseAll);
         (*fp).post_hitlag_cb = Some(crate::chars::cb::ext__efLib_ResumeAll);
@@ -169,18 +176,21 @@ pub fn Fighter_SetEffectHitlagCallbacks(fp: *mut Fighter) {
 
 /// `ftCommon_GroundToAirStateChange(gobj, fp, msid, flags)`.
 pub fn ftCommon_GroundToAirStateChange(gobj: *mut HSD_GObj, fp: *mut Fighter, msid: i32, flags: u32) {
+    melee_core::ct!("ftCommon_GroundToAirStateChange");
     ext::ftCommon_8007D5D4(fp);
     ext::Fighter_ChangeMotionState(gobj, msid, flags, unsafe { (*fp).cur_anim_frame }, 1.0, 0.0, core::ptr::null_mut());
 }
 
 /// `ftCommon_AirToGroundStateChange(gobj, fp, msid, flags)`.
 pub fn ftCommon_AirToGroundStateChange(gobj: *mut HSD_GObj, fp: *mut Fighter, msid: i32, flags: u32) {
+    melee_core::ct!("ftCommon_AirToGroundStateChange");
     ext::ftCommon_8007D7FC(fp);
     ext::Fighter_ChangeMotionState(gobj, msid, flags, unsafe { (*fp).cur_anim_frame }, 1.0, 0.0, core::ptr::null_mut());
 }
 
 /// `getStickDirX(fp)`: -1 for a stick left of centre, else +1.
 pub fn getStickDirX(fp: *mut Fighter) -> i32 {
+    melee_core::ct!("getStickDirX");
     if unsafe { (*fp).input.lstick[0].x } < 0.0 {
         -1
     } else {
@@ -190,6 +200,7 @@ pub fn getStickDirX(fp: *mut Fighter) -> i32 {
 
 /// `ftGetFacingDirInt(fp)`.
 pub fn ftGetFacingDirInt(fp: *mut Fighter) -> i32 {
+    melee_core::ct!("ftGetFacingDirInt");
     if unsafe { (*fp).facing_dir } < 0.0 {
         -1
     } else {
@@ -200,6 +211,7 @@ pub fn ftGetFacingDirInt(fp: *mut Fighter) -> i32 {
 /// `PUSH_ATTRS(fp, T)` (ft/inlines.h): copy `ft_data->ext_attr` into the backup block and point
 /// `dat_attrs` at it.
 pub unsafe fn push_attrs<T: Copy>(fp: *mut Fighter) {
+    melee_core::ct!("push_attrs");
     let backup = (*fp).dat_attrs_backup;
     let src = (*(*fp).ft_data).ext_attr as *const T;
     *((*fp).dat_attrs_backup as *mut T) = *src;
@@ -208,6 +220,7 @@ pub unsafe fn push_attrs<T: Copy>(fp: *mut Fighter) {
 
 /// `COPY_ATTRS(gobj, T)` (ft/inlines.h): copy `ft_data->ext_attr` over the live `dat_attrs` block.
 pub unsafe fn copy_attrs<T: Copy>(gobj: *mut HSD_GObj) {
+    melee_core::ct!("copy_attrs");
     let fp = fpp(gobj);
     let sa2 = (*fp).dat_attrs as *mut T;
     let ext_attr = (*(*fp).ft_data).ext_attr as *const T;
@@ -216,12 +229,14 @@ pub unsafe fn copy_attrs<T: Copy>(gobj: *mut HSD_GObj) {
 
 /// `HSD_JObjMtxIsDirty(jobj)` (jobj.h inline).
 pub unsafe fn HSD_JObjMtxIsDirty(jobj: *mut HSD_JObj) -> bool {
+    melee_core::ct!("HSD_JObjMtxIsDirty");
     let fl = (*jobj).flags;
     fl & JOBJ_USER_DEF_MTX as u32 == 0 && fl & JOBJ_MTX_DIRTY as u32 != 0
 }
 
 /// The `HSD_JObjSetMtxDirty(jobj)` macro (jobj.h).
 pub unsafe fn HSD_JObjSetMtxDirty(jobj: *mut HSD_JObj) {
+    melee_core::ct!("HSD_JObjSetMtxDirty");
     if !jobj.is_null() && !HSD_JObjMtxIsDirty(jobj) {
         ext::HSD_JObjSetMtxDirtySub(jobj);
     }
@@ -229,6 +244,7 @@ pub unsafe fn HSD_JObjSetMtxDirty(jobj: *mut HSD_JObj) {
 
 /// `HSD_JObjSetScale(jobj, scale)` (jobj.h inline; the asserts are debug-only).
 pub unsafe fn HSD_JObjSetScale(jobj: *mut HSD_JObj, scale: *const Vec3) {
+    melee_core::ct!("HSD_JObjSetScale");
     (*jobj).scale = *scale;
     if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
         HSD_JObjSetMtxDirty(jobj);
@@ -237,5 +253,6 @@ pub unsafe fn HSD_JObjSetScale(jobj: *mut HSD_JObj, scale: *const Vec3) {
 
 /// `HSD_JObjGetScale(jobj, scale)` (jobj.h inline).
 pub unsafe fn HSD_JObjGetScale(jobj: *mut HSD_JObj, scale: *mut Vec3) {
+    melee_core::ct!("HSD_JObjGetScale");
     *scale = (*jobj).scale;
 }

@@ -28,6 +28,7 @@ pub const NULL: *mut c_void = core::ptr::null_mut();
 /// (the same helper melee_types' generated accessors use).
 #[inline]
 pub fn bits_get(b: &[u8], shift: u32, w: u32) -> u64 {
+    melee_core::ct!("bits_get");
     let mut v: u128 = 0;
     for &x in b {
         v = (v << 8) | x as u128;
@@ -37,6 +38,7 @@ pub fn bits_get(b: &[u8], shift: u32, w: u32) -> u64 {
 
 #[inline]
 pub fn bits_set(b: &mut [u8], shift: u32, w: u32, val: u64) {
+    melee_core::ct!("bits_set");
     let mut v: u128 = 0;
     for &x in b.iter() {
         v = (v << 8) | x as u128;

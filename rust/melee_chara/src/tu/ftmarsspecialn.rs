@@ -44,10 +44,12 @@ unsafe fn hip_joint(fp: *mut Fighter) -> *mut HSD_JObj {
 
 /// `ftMs_SpecialN_80136730` as a Fighter callback entry (`x21EC`).
 pub unsafe extern "C" fn cb_ftMs_SpecialN_80136730(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftMs_SpecialN_80136730");
     crate::tu::ftmars::ftMs_SpecialN_80136730(g);
 }
 
 pub fn ftMs_SpecialN_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialN_Enter");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -59,6 +61,7 @@ pub fn ftMs_SpecialN_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMs_SpecialAirN_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialAirN_Enter");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -88,24 +91,28 @@ fn doStartAnim(gobj: *mut HSD_GObj, cb: fn(*mut HSD_GObj)) {
 }
 
 pub fn ftMs_SpecialNStart_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialNStart_Anim");
     doStartAnim(gobj, ftMs_SpecialN_80136E74);
 }
 
 pub fn ftMs_SpecialAirNStart_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialAirNStart_Anim");
     doStartAnim(gobj, ftMs_SpecialN_80136EAC);
 }
 
-pub fn ftMs_SpecialNStart_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftMs_SpecialNStart_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMs_SpecialNStart_IASA");}
 
-pub fn ftMs_SpecialAirNStart_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftMs_SpecialAirNStart_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMs_SpecialAirNStart_IASA");}
 
 /// The pure physics live in `chars::ftMars::ftmarsspecialn` (taking the fighter); these are the
 /// callback entries.
 pub fn ftMs_SpecialNStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialNStart_Phys");
     unsafe { crate::chars::ftMars::ftmarsspecialn::ftMs_SpecialNStart_Phys(&mut *fpp(gobj)) }
 }
 
 pub fn ftMs_SpecialAirNStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialAirNStart_Phys");
     unsafe { crate::chars::ftMars::ftmarsspecialn::ftMs_SpecialAirNStart_Phys(&mut *fpp(gobj)) }
 }
 
@@ -129,10 +136,12 @@ fn doLoopAnim(gobj: *mut HSD_GObj, cb: fn(*mut HSD_GObj)) {
 }
 
 pub fn ftMs_SpecialNLoop_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialNLoop_Anim");
     doLoopAnim(gobj, ftMs_SpecialN_80137354);
 }
 
 pub fn ftMs_SpecialAirNLoop_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialAirNLoop_Anim");
     doLoopAnim(gobj, ftMs_SpecialN_801373B8);
 }
 
@@ -148,10 +157,12 @@ fn doLoopIasa(gobj: *mut HSD_GObj, cb: fn(*mut HSD_GObj)) {
 }
 
 pub fn ftMs_SpecialNLoop_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialNLoop_IASA");
     doLoopIasa(gobj, ftMs_SpecialN_80137354);
 }
 
 pub fn ftMs_SpecialAirNLoop_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialAirNLoop_IASA");
     doLoopIasa(gobj, ftMs_SpecialN_801373B8);
 }
 
@@ -181,24 +192,28 @@ fn inlineA0(gobj: *mut HSD_GObj, cb: fn(*mut HSD_GObj)) {
 }
 
 pub fn ftMs_SpecialNEnd_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialNEnd_Anim");
     inlineA0(gobj, |g| st::ft_8008A2BC(g));
 }
 
 pub fn ftMs_SpecialAirNEnd_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialAirNEnd_Anim");
     inlineA0(gobj, |g| st::ftCo_Fall_Enter(g));
 }
 
-pub fn ftMs_SpecialNEnd_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftMs_SpecialNEnd_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMs_SpecialNEnd_IASA");}
 
-pub fn ftMs_SpecialAirNEnd_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftMs_SpecialAirNEnd_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMs_SpecialAirNEnd_IASA");}
 
 pub fn ftMs_SpecialNEnd_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialNEnd_Coll");
     if st::ft_80082708(gobj) == GA_Ground as i32 {
         ftMs_SpecialN_801371FC(gobj);
     }
 }
 
 pub fn ftMs_SpecialAirNEnd_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialAirNEnd_Coll");
     if st::ft_80081D0C(gobj) != GA_Ground as i32 {
         ftMs_SpecialN_801372A8(gobj);
     }
@@ -208,6 +223,7 @@ pub fn ftMs_SpecialAirNEnd_Coll(gobj: *mut HSD_GObj) {
 const MF_END: u32 = (1 << 1) | (1 << 2) | (1 << 3) | (1 << 7) | (1 << 12) | (1 << 14) | (1 << 18) | (1 << 19) | (1 << 22) | (1 << 26) | (1 << 27);
 
 pub fn ftMs_SpecialN_801371FC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialN_801371FC");
     unsafe {
         let fp = fpp(gobj);
         let msid = if (*fp).cmd_vars[0] == 0 { ftMs_MS_SpecialAirNEnd0 } else { ftMs_MS_SpecialAirNEnd1 };
@@ -220,6 +236,7 @@ pub fn ftMs_SpecialN_801371FC(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMs_SpecialN_801372A8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialN_801372A8");
     unsafe {
         let fp = fpp(gobj);
         let msid = if (*fp).cmd_vars[0] == 0 { ftMs_MS_SpecialNEnd0 } else { ftMs_MS_SpecialNEnd1 };
@@ -233,6 +250,7 @@ pub fn ftMs_SpecialN_801372A8(gobj: *mut HSD_GObj) {
 
 /// Charge released on the ground: enter the End state (starting on frame 1) and arm the effect.
 pub fn ftMs_SpecialN_80137354(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialN_80137354");
     unsafe {
         let fp = fpp(gobj);
         let msid = if (*fp).cmd_vars[0] == 0 { ftMs_MS_SpecialNEnd0 } else { ftMs_MS_SpecialNEnd1 };
@@ -242,6 +260,7 @@ pub fn ftMs_SpecialN_80137354(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMs_SpecialN_801373B8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialN_801373B8");
     unsafe {
         let fp = fpp(gobj);
         let msid = if (*fp).cmd_vars[0] == 0 { ftMs_MS_SpecialAirNEnd0 } else { ftMs_MS_SpecialAirNEnd1 };

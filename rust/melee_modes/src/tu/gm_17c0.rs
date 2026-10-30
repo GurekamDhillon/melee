@@ -249,10 +249,12 @@ fn osreport(s: &'static [u8]) {
 
 /// Extend this whitelist when another HP boss uses the 1P controller.
 pub unsafe fn BossHook_Kind(kind: i32) -> i32 {
+    melee_core::ct!("BossHook_Kind");
     (kind == Ft_Kind_MasterH as i32 || kind == Ft_Kind_CrezyH as i32) as i32
 }
 
 pub unsafe fn BossHook_AllSleeping() -> i32 {
+    melee_core::ct!("BossHook_AllSleeping");
     for port in 1..6 {
         let gobj = ext::Player_GetEntity(port);
         if !gobj.is_null() {
@@ -271,6 +273,7 @@ pub unsafe fn BossHook_AllSleeping() -> i32 {
 /// A boss hand whose HP is 0 but that never ran the retail death is driven through the retail stamina KO
 /// (`ftCo_800C8C84`), once per hand. Returns the number of hands driven.
 pub unsafe fn BossHook_DriveDeaths() -> i32 {
+    melee_core::ct!("BossHook_DriveDeaths");
     let mut n = 0;
     for port in 1..3 {
         let gobj = ext::Player_GetEntity(port);
@@ -294,6 +297,7 @@ pub unsafe fn BossHook_DriveDeaths() -> i32 {
 }
 
 pub unsafe fn BossHook_Poll() {
+    melee_core::ct!("BossHook_Poll");
     for port in 1..6 {
         let bit = 1 << port;
         let gobj = ext::Player_GetEntity(port);
@@ -312,6 +316,7 @@ pub unsafe fn BossHook_Poll() {
 }
 
 pub unsafe fn BossHook_Hold(frames: i32) -> i32 {
+    melee_core::ct!("BossHook_Hold");
     if boss_hook.sent_mask == 0 || lbl_804706C0.x0 < 3 || lbl_804706C0.x0 > 8 {
         return 0;
     }
@@ -323,6 +328,7 @@ pub unsafe fn BossHook_Hold(frames: i32) -> i32 {
 }
 
 pub unsafe fn BossHook_Release() -> i32 {
+    melee_core::ct!("BossHook_Release");
     if boss_hook.held == 0 {
         return 0;
     }
@@ -332,6 +338,7 @@ pub unsafe fn BossHook_Release() -> i32 {
 }
 
 pub unsafe fn fn_8017C0C8() {
+    melee_core::ct!("fn_8017C0C8");
     let mut sp8: PlayerInitData = core::mem::zeroed();
     ext::gm_SetupPlayerDefaults(&mut sp8);
     sp8.slot_type = Gm_PKind_Cpu as u8;
@@ -354,6 +361,7 @@ pub unsafe fn fn_8017C0C8() {
 }
 
 pub unsafe extern "C" fn fn_8017C1A4(_unused: *mut HSD_GObj) {
+    melee_core::ct!("fn_8017C1A4");
     let tmp = core::ptr::addr_of_mut!(lbl_804706C0);
 
     let temp_r31 = ext::ftBossLib_8015C74C();
@@ -594,6 +602,7 @@ pub unsafe extern "C" fn fn_8017C1A4(_unused: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_8017C71C() {
+    melee_core::ct!("fn_8017C71C");
     let tmp = core::ptr::addr_of_mut!(lbl_804706C0);
     ext::HSD_GObj_SetupProc(ext::GObj_Create(0xF, 0x11, 0), Some(fn_8017C1A4), 0x15);
     (*tmp).x0 = 0;
@@ -613,6 +622,7 @@ pub unsafe extern "C" fn fn_8017C71C() {
 }
 
 pub unsafe extern "C" fn fn_8017C7A0() {
+    melee_core::ct!("fn_8017C7A0");
     ext::lbBgFlash_8002063C(0x30);
     if ext::Ground_801C1DAC() != 0 {
         ext::gm_8016B350(0x7C85E);
@@ -622,12 +632,14 @@ pub unsafe extern "C" fn fn_8017C7A0() {
 }
 
 pub unsafe extern "C" fn fn_8017C7EC() {
+    melee_core::ct!("fn_8017C7EC");
     let temp_r30 = fn_8017DF28();
     let scene_state = ext::gmVs_GetSceneState();
     (*scene_state).timer_seconds = ext::grPushOn_80219230((*temp_r30).x0.ckind as i32) as _;
 }
 
 pub unsafe fn gm_8017C838() {
+    melee_core::ct!("gm_8017C838");
     let mut sp10: [i8; 3] = [Ft_Kind_None as i8; 3];
 
     let temp_r30 = ext::gm_GetAdventureData();
@@ -670,10 +682,12 @@ pub unsafe fn gm_8017C838() {
 }
 
 pub unsafe fn gm_8017C984(arg0: *mut c_void) {
+    melee_core::ct!("gm_8017C984");
     ext::memzero(arg0, 0x74);
 }
 
 pub unsafe fn gm_8017C9A8(arg0: *mut DebugGameOverData, arg1: *mut Unk1PData, arg2: u8) {
+    melee_core::ct!("gm_8017C9A8");
     (*arg0).x0 = (*arg1).xC.x18 as _;
     (*arg0).x8 = arg2 as _;
     (*arg0).ckind = (*arg1).x0.ckind as _;
@@ -684,6 +698,7 @@ pub unsafe fn gm_8017C9A8(arg0: *mut DebugGameOverData, arg1: *mut Unk1PData, ar
 }
 
 pub unsafe fn gm_8017CA38(arg0: *mut DebugGameOverData, arg1: *mut Unk1PData, arg2: *mut gmm_x0_528_t, arg3: u8) {
+    melee_core::ct!("gm_8017CA38");
     (*arg1).xC.x14 = (*arg0).x18 as _;
     if ext::Script_OnePScripted() == 0 {
         ext::gm_801623FC((*arg1).xC.x14 as i32);
@@ -728,6 +743,7 @@ pub unsafe fn gm_8017CA38(arg0: *mut DebugGameOverData, arg1: *mut Unk1PData, ar
 }
 
 pub unsafe fn gm_8017CBAC(arg0: *mut UnkAdventureData, arg1: *mut gmm_x0_528_t, arg2: u8) {
+    melee_core::ct!("gm_8017CBAC");
     if (ext::gm_GetCurrentGameMode() as u32 == GM_CLASSIC || ext::gm_GetCurrentGameMode() as u32 == GM_ADVENTURE)
         && ext::Script_OnePComplete() != 0
     {
@@ -787,6 +803,7 @@ pub unsafe fn gm_8017CBAC(arg0: *mut UnkAdventureData, arg1: *mut gmm_x0_528_t, 
 }
 
 pub unsafe fn gm_8017CD94(arg0: *mut UnkAdventureData, arg1: i32, arg2: i32, arg3: i32) -> u8 {
+    melee_core::ct!("gm_8017CD94");
     let num_colors = ext::gm_GetNumCostumesForCKind(arg1 as u8);
     if let Some(f) = (*arg0).x0.x54 {
         let result = f(arg2 as u8, (*arg0).x0.x0.cpu_level, arg3 as u8);
@@ -799,6 +816,7 @@ pub unsafe fn gm_8017CD94(arg0: *mut UnkAdventureData, arg1: i32, arg2: i32, arg
 }
 
 pub unsafe fn gm_8017CE34_CountEnemies(arg0: *const i8) -> i32 {
+    melee_core::ct!("gm_8017CE34_CountEnemies");
     let mut count = 0;
     for i in 0..3 {
         // m-ex: the external-id null literal 0x21 is ChKind_None
@@ -810,6 +828,7 @@ pub unsafe fn gm_8017CE34_CountEnemies(arg0: *const i8) -> i32 {
 }
 
 pub unsafe fn gm_8017CE34_SetupColors(arg1: *mut Unk1PData, count: i32, arg2: *mut i8, colors: *mut u8) {
+    melee_core::ct!("gm_8017CE34_SetupColors");
     for color_idx in 0..3usize {
         let num_colors = ext::gm_GetNumCostumesForCKind(*arg2.add(color_idx) as u8);
         let result;
@@ -824,6 +843,7 @@ pub unsafe fn gm_8017CE34_SetupColors(arg1: *mut Unk1PData, count: i32, arg2: *m
 }
 
 pub unsafe fn gm_8017CE34_GetCpuLevel(arg1: *mut Unk1PData) -> u8 {
+    melee_core::ct!("gm_8017CE34_GetCpuLevel");
     (*arg1).x0.cpu_level
 }
 
@@ -839,6 +859,7 @@ pub unsafe fn gm_8017CE34(
     count: i32,
     arg9: i32,
 ) {
+    melee_core::ct!("gm_8017CE34");
     let mut colors = [0u8; 16];
     let mut enemy_level: u8 = 0;
     let mut boss_count: i32 = 0;
@@ -1128,6 +1149,7 @@ pub unsafe fn gm_8017CE34(
 }
 
 pub unsafe fn gm_8017D7AC(arg0: *mut MatchExitInfo, arg1: *mut Unk1PData, arg2: u8) -> i32 {
+    melee_core::ct!("gm_8017D7AC");
     (*arg1).xC.x14 = ext::lbTime_8000AEC8((*arg1).xC.x14 as u32, (*arg0).match_end.player_standings[0].xE as u32) as _;
     if ext::Script_OnePScripted() == 0 {
         ext::gm_8016247C((*arg0).match_end.player_standings[0].xE as i32);
@@ -1203,6 +1225,7 @@ pub unsafe fn gm_8017D7AC(arg0: *mut MatchExitInfo, arg1: *mut Unk1PData, arg2: 
 }
 
 pub unsafe fn pick_random_ckind(arr: *mut u8, used_ckinds: *const u8, preset_ckinds: *const u8) -> i32 {
+    melee_core::ct!("pick_random_ckind");
     let base = arr;
     let mut cursor = base;
     let mut count: i32 = 0;
@@ -1251,20 +1274,24 @@ pub unsafe fn pick_random_ckind(arr: *mut u8, used_ckinds: *const u8, preset_cki
 }
 
 pub unsafe fn fn_8017D9C0(used_ckinds: *const u8, preset_ckinds: *const u8) -> i32 {
+    melee_core::ct!("fn_8017D9C0");
     pick_random_ckind(ext::lbl_803D79F0.as_mut_ptr(), used_ckinds, preset_ckinds)
 }
 
 pub unsafe fn gm_8017DB58(arg0: *mut Unk1PData_x24) {
+    melee_core::ct!("gm_8017DB58");
     for i in 0..3 {
         (*arg0.add(i)).ckind = ChKind_None as _;
     }
 }
 
 pub unsafe fn gm_8017DB6C(arg0: *mut gm_8017DB6C_arg0_t, index: i32) -> u8 {
+    melee_core::ct!("gm_8017DB6C");
     (*arg0.offset(index as isize)).x0
 }
 
 pub unsafe fn gm_8017DB78(arg0: *mut gm_8017DB6C_arg0_t, index: i32) -> u8 {
+    melee_core::ct!("gm_8017DB78");
     (*arg0.offset(index as isize)).x1
 }
 
@@ -1281,6 +1308,7 @@ pub unsafe fn gm_8017DB88(
     arg9: Option<unsafe extern "C" fn(i32, i32) -> f32>,
     arg10: Option<unsafe extern "C" fn(i32, i32) -> f32>,
 ) -> i32 {
+    melee_core::ct!("gm_8017DB88");
     let mut chars = [0u8; 4];
 
     let count = fn_8017DE54(arg1, arg4);
@@ -1333,6 +1361,7 @@ pub unsafe fn gm_8017DB88(
 }
 
 pub unsafe fn fn_8017DD7C(arg0: *mut PlayerInitData, arg1: *mut Unk1PData_x24, _arg2: u8) -> i32 {
+    melee_core::ct!("fn_8017DD7C");
     let mut index: usize = 1;
     for i in 0..3 {
         if (*arg1.add(i)).ckind as i32 != ChKind_None as i32 {
@@ -1358,6 +1387,7 @@ pub unsafe fn fn_8017DD7C(arg0: *mut PlayerInitData, arg1: *mut Unk1PData_x24, _
 }
 
 pub unsafe fn fn_8017DE54(arg0: u8, arg1: *mut u8) -> i32 {
+    melee_core::ct!("fn_8017DE54");
     if arg0 & 0x20 != 0 {
         return 0;
     }
@@ -1383,6 +1413,7 @@ pub unsafe fn fn_8017DE54(arg0: u8, arg1: *mut u8) -> i32 {
 }
 
 pub unsafe fn fn_8017DEC8(arg0: i32) -> *mut Unk1PData {
+    melee_core::ct!("fn_8017DEC8");
     match arg0 {
         0 => core::ptr::addr_of_mut!((*ext::gm_GetAdventureData()).x0),
         1 => core::ptr::addr_of_mut!((*ext::gm_GetAllStarData()).x0),
@@ -1392,6 +1423,7 @@ pub unsafe fn fn_8017DEC8(arg0: i32) -> *mut Unk1PData {
 }
 
 pub unsafe fn fn_8017DF28() -> *mut Unk1PData {
+    melee_core::ct!("fn_8017DF28");
     match ext::gm_GetCurrentGameMode() as u32 {
         GM_CLASSIC => core::ptr::addr_of_mut!((*ext::gm_GetAllStarData()).x0),
         GM_ADVENTURE => core::ptr::addr_of_mut!((*ext::gm_GetAdventureData()).x0),
@@ -1401,6 +1433,7 @@ pub unsafe fn fn_8017DF28() -> *mut Unk1PData {
 }
 
 pub unsafe fn fn_8017DF90() -> u8 {
+    melee_core::ct!("fn_8017DF90");
     match ext::gm_GetCurrentGameMode() as u32 {
         GM_CLASSIC => 1,
         GM_ADVENTURE => 0,
@@ -1410,6 +1443,7 @@ pub unsafe fn fn_8017DF90() -> u8 {
 }
 
 pub unsafe fn gm_8017DFF4(arg0: i32) -> i32 {
+    melee_core::ct!("gm_8017DFF4");
     let var_r3 = fn_8017DEC8(arg0);
     if !var_r3.is_null() {
         return (*var_r3).x0.cpu_level as i32;
@@ -1418,6 +1452,7 @@ pub unsafe fn gm_8017DFF4(arg0: i32) -> i32 {
 }
 
 pub unsafe fn gm_8017E068() -> i32 {
+    melee_core::ct!("gm_8017E068");
     let var_r3 = fn_8017DF28();
     if !var_r3.is_null() {
         return (*var_r3).x0.cpu_level as i32;
@@ -1426,6 +1461,7 @@ pub unsafe fn gm_8017E068() -> i32 {
 }
 
 pub unsafe fn fn_8017E0E4() -> i32 {
+    melee_core::ct!("fn_8017E0E4");
     let var_r3 = fn_8017DF28();
     if !var_r3.is_null() {
         return (*var_r3).xC.xC as i32;
@@ -1434,6 +1470,7 @@ pub unsafe fn fn_8017E0E4() -> i32 {
 }
 
 pub unsafe fn fn_8017E160() -> i32 {
+    melee_core::ct!("fn_8017E160");
     let var_r3 = fn_8017DF28();
     if !var_r3.is_null() {
         for i in 0..3 {
@@ -1447,12 +1484,14 @@ pub unsafe fn fn_8017E160() -> i32 {
 }
 
 pub unsafe fn fn_8017E21C() {
+    melee_core::ct!("fn_8017E21C");
     for i in 0..12 {
         lbl_804706D8[i].x0 = -1;
     }
 }
 
 pub unsafe fn gm_8017E280(arg0: u16, arg1: u32) -> i8 {
+    melee_core::ct!("gm_8017E280");
     let var_r7 = lbl_804706D8.as_mut_ptr();
     for index in 0..12 {
         if arg0 as i32 == (*var_r7.add(index)).x0 as i32 {
@@ -1471,6 +1510,7 @@ pub unsafe fn gm_8017E280(arg0: u16, arg1: u32) -> i8 {
 }
 
 pub unsafe fn fn_8017E318() -> i32 {
+    melee_core::ct!("fn_8017E318");
     let mut sum: i32 = 0;
     for i in 0..12 {
         if lbl_804706D8[i].x0 != -1 {
@@ -1481,6 +1521,7 @@ pub unsafe fn fn_8017E318() -> i32 {
 }
 
 pub unsafe fn fn_8017E3C8() {
+    melee_core::ct!("fn_8017E3C8");
     for i in 0..12 {
         if lbl_804706D8[i].x0 != -1 {
             ext::Toy_SetUnlockState(lbl_804706D8[i].x0 as enum_t, lbl_804706D8[i].x2 as i32);

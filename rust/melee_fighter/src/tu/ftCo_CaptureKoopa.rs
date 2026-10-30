@@ -69,11 +69,13 @@ fn abs_c(x: f32) -> f32 {
 
 /// `ftCo_800BC438`.
 pub fn ftCo_800BC438(g: G) {
+    melee_core::ct!("ftCo_800BC438");
     ext::Fighter_UpdateModelScale(g);
 }
 
 /// `ftCo_800BC458`: the grab timer drains by Bowser's rate; mashing.
 pub fn ftCo_800BC458(g: G) {
+    melee_core::ct!("ftCo_800BC458");
     let f = fp(g);
     f.grab_timer -= ext::ftKp_SpecialS_80132DD0(f.victim_gobj);
     let v = ext::ftKp_SpecialS_80132DE0(f.victim_gobj);
@@ -83,6 +85,7 @@ pub fn ftCo_800BC458(g: G) {
 
 /// `ftCo_800BC4A8`: the struggle wobble and the anim-rate reset.
 pub fn ftCo_800BC4A8(g: G) {
+    melee_core::ct!("ftCo_800BC4A8");
     let f = fp(g);
     unsafe {
         if f.mv.ca.specialhi.vel.y != 0.0 {
@@ -138,26 +141,28 @@ fn enter(g: G, vg: G, cb: fn(G)) {
 
 /// `ftCo_800BC7E0`.
 pub fn ftCo_800BC7E0(g: G, vg: G) {
+    melee_core::ct!("ftCo_800BC7E0");
     enter(g, vg, ext::ftCo_800BC9C8);
 }
 /// `ftCo_CaptureKoopa_Anim`.
-pub fn ftCo_CaptureKoopa_Anim(_g: G) {}
+pub fn ftCo_CaptureKoopa_Anim(_g: G) { melee_core::ct!("ftCo_CaptureKoopa_Anim");}
 /// `ftCo_CaptureKoopa_IASA`.
-pub fn ftCo_CaptureKoopa_IASA(_g: G) {}
+pub fn ftCo_CaptureKoopa_IASA(_g: G) { melee_core::ct!("ftCo_CaptureKoopa_IASA");}
 /// `ftCo_CaptureKoopa_Phys`.
-pub fn ftCo_CaptureKoopa_Phys(_g: G) {}
+pub fn ftCo_CaptureKoopa_Phys(_g: G) { melee_core::ct!("ftCo_CaptureKoopa_Phys");}
 /// `ftCo_CaptureKoopa_Coll`.
-pub fn ftCo_CaptureKoopa_Coll(_g: G) {}
+pub fn ftCo_CaptureKoopa_Coll(_g: G) { melee_core::ct!("ftCo_CaptureKoopa_Coll");}
 
 /// `ftCo_800BC8D4`.
 pub fn ftCo_800BC8D4(g: G, vg: G) {
+    melee_core::ct!("ftCo_800BC8D4");
     enter(g, vg, ext::ftCo_800BCAF4);
 }
 /// `ftCo_CaptureKoopaAir_Anim`.
-pub fn ftCo_CaptureKoopaAir_Anim(_g: G) {}
+pub fn ftCo_CaptureKoopaAir_Anim(_g: G) { melee_core::ct!("ftCo_CaptureKoopaAir_Anim");}
 /// `ftCo_CaptureKoopaAir_IASA`.
-pub fn ftCo_CaptureKoopaAir_IASA(_g: G) {}
+pub fn ftCo_CaptureKoopaAir_IASA(_g: G) { melee_core::ct!("ftCo_CaptureKoopaAir_IASA");}
 /// `ftCo_CaptureKoopaAir_Phys`.
-pub fn ftCo_CaptureKoopaAir_Phys(_g: G) {}
+pub fn ftCo_CaptureKoopaAir_Phys(_g: G) { melee_core::ct!("ftCo_CaptureKoopaAir_Phys");}
 /// `ftCo_CaptureKoopaAir_Coll`.
-pub fn ftCo_CaptureKoopaAir_Coll(_g: G) {}
+pub fn ftCo_CaptureKoopaAir_Coll(_g: G) { melee_core::ct!("ftCo_CaptureKoopaAir_Coll");}

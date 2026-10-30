@@ -92,6 +92,7 @@ unsafe fn Item_ApplyFallingPhysics(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itMball_Destroyed(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itMball_Destroyed");
     let it = GET_ITEM(item_gobj);
     if (*it).xDD4_itemVar.mball.b1() == 0 {
         ext::Item_804A0C64.x1C = ext::Item_804A0C64.x1C.wrapping_sub(1);
@@ -99,6 +100,7 @@ pub unsafe extern "C" fn itMball_Destroyed(item_gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itMball_Spawned(arg0: *mut Item_GObj) {
+    melee_core::ct!("itMball_Spawned");
     let item = GET_ITEM(arg0);
 
     (*item).xDD4_itemVar.mball.set_b0(0);
@@ -107,6 +109,7 @@ pub unsafe extern "C" fn itMball_Spawned(arg0: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itMball_80297944(arg0: *mut Item_GObj) {
+    melee_core::ct!("itMball_80297944");
     let item = GET_ITEM(arg0);
     let jobj = GET_JOBJ(arg0);
     ext::it_8026B390(arg0);
@@ -115,17 +118,20 @@ pub unsafe extern "C" fn itMball_80297944(arg0: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itMball_Motion0_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMball_Motion0_Anim");
     false
 }
 
-pub unsafe extern "C" fn itMball_Motion0_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itMball_Motion0_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itMball_Motion0_Phys");}
 
 pub unsafe extern "C" fn itMball_Motion0_Coll(arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMball_Motion0_Coll");
     ext::it_8026D62C(arg0, Some(itMball_802979D4));
     false
 }
 
 pub unsafe extern "C" fn itMball_802979D4(arg0: *mut Item_GObj) {
+    melee_core::ct!("itMball_802979D4");
     let item = GET_ITEM(arg0);
 
     if (*item).xDD4_itemVar.mball.b0() == 0 {
@@ -136,15 +142,18 @@ pub unsafe extern "C" fn itMball_802979D4(arg0: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itMball_Motion3_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMball_Motion3_Anim");
     false
 }
 
 pub unsafe extern "C" fn itMball_Motion1_Phys(arg0: *mut Item_GObj) {
+    melee_core::ct!("itMball_Motion1_Phys");
     let item = GET_ITEM(arg0);
     ext::it_80272860(arg0, (*(*item).xCC_item_attr).x10_fall_speed, (*(*item).xCC_item_attr).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itMball_Motion1_Coll(arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMball_Motion1_Coll");
     let item = GET_ITEM(arg0);
 
     let previous_vel_x = (*item).x40_vel.x;
@@ -156,33 +165,40 @@ pub unsafe extern "C" fn itMball_Motion1_Coll(arg0: *mut Item_GObj) -> bool {
 }
 
 pub unsafe extern "C" fn itMball_PickedUp(arg0: *mut Item_GObj) {
+    melee_core::ct!("itMball_PickedUp");
     ext::Item_80268E5C(arg0, 2, ITEM_ANIM_UPDATE);
 }
 
 pub unsafe extern "C" fn itMball_Motion2_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMball_Motion2_Anim");
     false
 }
 
-pub unsafe extern "C" fn itMball_Motion2_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itMball_Motion2_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itMball_Motion2_Phys");}
 
 pub unsafe extern "C" fn itMball_Dropped(arg0: *mut Item_GObj) {
+    melee_core::ct!("itMball_Dropped");
     ext::Item_80268E5C(arg0, 3, 6);
 }
 
 pub unsafe extern "C" fn itMball_Thrown(arg0: *mut Item_GObj) {
+    melee_core::ct!("itMball_Thrown");
     ext::Item_80268E5C(arg0, 3, 6);
 }
 
 pub unsafe extern "C" fn itMball_Motion3_Phys(arg0: *mut Item_GObj) {
+    melee_core::ct!("itMball_Motion3_Phys");
     Item_ApplyFallingPhysics(arg0);
 }
 
 pub unsafe extern "C" fn itMball_Motion3_Coll(arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMball_Motion3_Coll");
     ext::it_8026E414(arg0, Some(itMball_80297CC4));
     false
 }
 
 pub unsafe extern "C" fn itMball_DmgDealt(arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMball_DmgDealt");
     ext::it_8026B3A8(arg0);
     ext::it_802725D4(arg0);
     ext::itColl_BounceOffVictim(arg0);
@@ -190,6 +206,7 @@ pub unsafe extern "C" fn itMball_DmgDealt(arg0: *mut Item_GObj) -> bool {
 }
 
 pub unsafe extern "C" fn itMball_EnteredAir(gobj: *mut Item_GObj) {
+    melee_core::ct!("itMball_EnteredAir");
     let ip = GET_ITEM(gobj);
     ext::Item_80268E5C(gobj, 4, ITEM_ANIM_UPDATE);
     (*ip).facing_dir = if (*ip).x40_vel.x + (*ip).x7C.x + (*ip).x88.x >= 0.0 { 1.0 } else { -1.0 };
@@ -197,17 +214,20 @@ pub unsafe extern "C" fn itMball_EnteredAir(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itMball_Motion4_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMball_Motion4_Anim");
     false
 }
 
-pub unsafe extern "C" fn itMball_Motion4_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itMball_Motion4_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itMball_Motion4_Phys");}
 
 pub unsafe extern "C" fn itMball_Motion4_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMball_Motion4_Coll");
     ext::it_8026E8C4(gobj, Some(itMball_80297944), Some(itMball_802979D4));
     false
 }
 
 pub unsafe extern "C" fn itMball_80297CC4(arg0: *mut Item_GObj) {
+    melee_core::ct!("itMball_80297CC4");
     let zero: f32 = 0.0;
     let item = GET_ITEM(arg0);
     let spec_attrs = (*(*item).xC4_article_data).x4_specialAttributes as *mut itMBallAttributes;
@@ -234,6 +254,7 @@ pub unsafe extern "C" fn itMball_80297CC4(arg0: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itMball_OnAccessory(arg0: *mut Item_GObj) {
+    melee_core::ct!("itMball_OnAccessory");
     let item = GET_ITEM(arg0);
     let spec_attrs = (*(*item).xC4_article_data).x4_specialAttributes as *mut itMBallAttributes;
 
@@ -243,18 +264,21 @@ pub unsafe extern "C" fn itMball_OnAccessory(arg0: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itMball_Motion5_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMball_Motion5_Anim");
     let ip = GET_ITEM(gobj);
     Item_TickLifetime(ip)
 }
 
-pub unsafe extern "C" fn itMball_Motion5_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itMball_Motion5_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itMball_Motion5_Phys");}
 
 pub unsafe extern "C" fn itMball_Motion5_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMball_Motion5_Coll");
     ext::it_8026D62C(gobj, Some(itMball_80297E8C));
     false
 }
 
 pub unsafe extern "C" fn itMball_80297E8C(gobj: *mut Item_GObj) {
+    melee_core::ct!("itMball_80297E8C");
     let item = GET_ITEM(gobj);
     let spec_attrs = (*(*item).xC4_article_data).x4_specialAttributes as *mut itMBallAttributes;
     let jobj = GET_JOBJ(gobj);
@@ -277,17 +301,20 @@ pub unsafe extern "C" fn itMball_80297E8C(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itMball_Motion6_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMball_Motion6_Anim");
     let ip = GET_ITEM(gobj);
     Item_TickLifetime(ip)
 }
 
 pub unsafe extern "C" fn itMball_Motion6_Phys(arg0: *mut Item_GObj) {
+    melee_core::ct!("itMball_Motion6_Phys");
     let item = GET_ITEM(arg0);
 
     ext::it_80272860(arg0, (*(*item).xCC_item_attr).x10_fall_speed, (*(*item).xCC_item_attr).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itMball_Motion6_Coll(arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMball_Motion6_Coll");
     let item = GET_ITEM(arg0);
 
     let previous_vel_x = (*item).x40_vel.x;
@@ -299,6 +326,7 @@ pub unsafe extern "C" fn itMball_Motion6_Coll(arg0: *mut Item_GObj) -> bool {
 }
 
 pub unsafe extern "C" fn itMball_Clanked(arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMball_Clanked");
     ext::it_8026B3A8(arg0);
     ext::it_802725D4(arg0);
     ext::itColl_BounceOffVictim(arg0);
@@ -306,11 +334,13 @@ pub unsafe extern "C" fn itMball_Clanked(arg0: *mut Item_GObj) -> bool {
 }
 
 pub unsafe extern "C" fn itMball_Reflected(arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMball_Reflected");
     ext::it_8026B3A8(arg0);
     ext::it_80273030(arg0) != 0
 }
 
 pub unsafe extern "C" fn itMball_HitShield(arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMball_HitShield");
     ext::it_8026B3A8(arg0);
     ext::it_802725D4(arg0);
     ext::itColl_BounceOffVictim(arg0);
@@ -318,10 +348,12 @@ pub unsafe extern "C" fn itMball_HitShield(arg0: *mut Item_GObj) -> bool {
 }
 
 pub unsafe extern "C" fn itMball_ShieldBounced(arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMball_ShieldBounced");
     ext::it_8026B3A8(arg0);
     ext::itColl_BounceOffShield(arg0) != 0
 }
 
 pub unsafe extern "C" fn itMball_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("itMball_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

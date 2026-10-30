@@ -16,10 +16,12 @@ pub static mut HSD_Leak_80407B58: HSD_LeakChecker = HSD_LeakChecker {
 };
 
 pub unsafe fn HSD_LeakGetCapacityPtr(lc: *mut HSD_LeakChecker) -> *mut u32 {
+    melee_core::ct!("HSD_LeakGetCapacityPtr");
     &raw mut (*lc).capacity
 }
 
 pub unsafe fn HSD_LeakReportSpaces(count: u32) {
+    melee_core::ct!("HSD_LeakReportSpaces");
     for _ in 0..count {
         ext::OSReport(" ");
     }
@@ -31,6 +33,7 @@ unsafe fn rd(addr: u32) -> u32 {
 }
 
 pub unsafe fn HSD_Leak_80387DF8(indent: i32) -> i32 {
+    melee_core::ct!("HSD_Leak_80387DF8");
     let lc = &raw mut HSD_Leak_80407B58;
     let mut scan: u32 = ext::lbCommand_803B9840() as usize as u32;
     let mut heap_start_phys: u32 = ext::OSGetConsoleSimulatedMemSize().wrapping_add(0x8000_0000);

@@ -43,6 +43,7 @@ pub mod ext {
 }
 
 pub fn ftCo_8009BC58(g: G) {
+    melee_core::ct!("ftCo_8009BC58");
     let ms = x2cc(fp(g)).x4_motion_state;
     ext::Fighter_ChangeMotionState(g, ms + 6, Ft_MF_KeepFastFall, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ext::ftAnim_SetAnimRate(g, 0.0);
@@ -52,18 +53,21 @@ pub fn ftCo_8009BC58(g: G) {
     ext::ftCo_8009C5A4(fp(g).victim_gobj, ftCo_MS_ShoulderedWait as i32);
 }
 
-pub fn ftCo_CargoFall_Anim(_g: G) {}
+pub fn ftCo_CargoFall_Anim(_g: G) { melee_core::ct!("ftCo_CargoFall_Anim");}
 
 pub fn ftCo_CargoFall_IASA(g: G) {
+    melee_core::ct!("ftCo_CargoFall_IASA");
     if ext::ftCo_8009BF3C(g) {
         return;
     }
 }
 
 pub fn ftCo_CargoFall_Phys(g: G) {
+    melee_core::ct!("ftCo_CargoFall_Phys");
     ext::ft_80084DB0(g);
 }
 
 pub fn ftCo_CargoFall_Coll(g: G) {
+    melee_core::ct!("ftCo_CargoFall_Coll");
     ext::ft_80082C74(g, Some(crate::tu::ftCo_CargoLanding::ftCo_8009BD4C_cb));
 }

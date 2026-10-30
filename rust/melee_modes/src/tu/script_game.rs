@@ -11,8 +11,8 @@ crate::ext_fns! {extern "C" fn PSMTXInverse(a0 : * mut [:: core :: ffi :: c_floa
 crate::ext_fns! {extern "C" fn PSMTXMultVec(a0 : * mut [:: core :: ffi :: c_float ; 4], a1 : * mut Vec, a2 : * mut Vec) -> () = crate::tu::adapt::PSMTXMultVec__416c01;}
 crate::ext_fns! {extern "C" fn OSCheckHeap(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_long;}
 crate::ext_fns! {extern "C" fn DVDConvertPathToEntrynum(a0 : * const :: core :: ffi :: c_char) -> s32;}
-pub unsafe fn OSReport(a0: *mut ::core::ffi::c_char, _va: &[crate::oracle::Va]) { match crate::tu::ext_hook::EXT_HOOK { Some(h) => { h("OSReport", &[a0 as usize as u64]); } None => {} } }
-pub unsafe extern "C" fn __assert(a0 : * const :: core :: ffi :: c_char, a1 : :: core :: ffi :: c_uint, a2 : * const :: core :: ffi :: c_char) -> ! { panic!("TODO(ext) __assert") }
+pub unsafe fn OSReport(a0: *mut ::core::ffi::c_char, _va: &[crate::oracle::Va]) { melee_core::ct!("OSReport"); match crate::tu::ext_hook::EXT_HOOK { Some(h) => { h("OSReport", &[a0 as usize as u64]); } None => {} } }
+pub unsafe extern "C" fn __assert(a0 : * const :: core :: ffi :: c_char, a1 : :: core :: ffi :: c_uint, a2 : * const :: core :: ffi :: c_char) -> ! { melee_core::ct!("__assert"); panic!("TODO(ext) __assert") }
 crate::ext_fns! {extern "C" fn HSD_CObjGetViewingMtx(a0 : * mut HSD_CObj, a1 : * mut [:: core :: ffi :: c_float ; 4]) -> ();}
 crate::ext_fns! {extern "C" fn HSD_CObjGetCurrent() -> * mut HSD_CObj = crate::tu::adapt::HSD_CObjGetCurrent__ad58db;}
 crate::ext_fns! {extern "C" fn Camera_80030730(a0 : :: core :: ffi :: c_float) -> ();}
@@ -186,7 +186,7 @@ crate::ext_fns! {extern "C" fn it_8027C56C(a0 : * mut Item_GObj, a1 : :: core ::
 crate::ext_fns! {extern "C" fn it_802EA9FC(a0 : * mut Vec, a1 : s32) -> * mut Item_GObj = crate::tu::adapt::it_802EA9FC__e2ed70;}
 crate::ext_fns! {extern "C" fn it_802DC4BC(a0 : s32, a1 : * mut Vec, a2 : s32) -> * mut Item_GObj = crate::tu::adapt::it_802DC4BC__cbef47;}
 crate::ext_fns! {extern "C" fn it_802DD7F0(a0 : s32, a1 : * mut Vec, a2 : * mut Vec, a3 : s32) -> * mut Item_GObj = crate::tu::adapt::it_802DD7F0__ea09a6;}
-pub unsafe fn lbArchive_800171CC(a0: *mut *mut HSD_Archive, a1: *const ::core::ffi::c_char, a2: *mut ::core::ffi::c_void, _va: &[crate::oracle::Va]) -> ::core::ffi::c_int { match crate::tu::ext_hook::EXT_HOOK { Some(h) => h("lbArchive_800171CC", &[a0 as usize as u64, a1 as usize as u64, a2 as usize as u64]) as ::core::ffi::c_int, None => panic!("TODO(ext) lbArchive_800171CC") } }
+pub unsafe fn lbArchive_800171CC(a0: *mut *mut HSD_Archive, a1: *const ::core::ffi::c_char, a2: *mut ::core::ffi::c_void, _va: &[crate::oracle::Va]) -> ::core::ffi::c_int { melee_core::ct!("lbArchive_800171CC"); match crate::tu::ext_hook::EXT_HOOK { Some(h) => h("lbArchive_800171CC", &[a0 as usize as u64, a1 as usize as u64, a2 as usize as u64]) as ::core::ffi::c_int, None => panic!("TODO(ext) lbArchive_800171CC") } }
 crate::ext_fns! {extern "C" fn lbAudioAx_800237A8(a0 : enum_t, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int = crate::tu::adapt::lbAudioAx_800237A8__3c5520;}
 crate::ext_fns! {extern "C" fn lbAudioAx_80023F28(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int = crate::tu::adapt::lbAudioAx_80023F28__469606;}
 crate::ext_fns! {extern "C" fn lbAudioAx_80024B94(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int = crate::tu::adapt::lbAudioAx_80024B94__675169;}
@@ -385,6 +385,7 @@ pub use melee_fighter::script_caps::{
 /// script_fighter_caps_target.inc, as the TU defines it: reads the live fighter through this TU's
 /// own callees (the copy in `melee_fighter::script_caps` serves the fighter code below this crate).
 pub unsafe extern "C" fn ScriptGame_CapsFighter(entity: ::core::ffi::c_int) -> *mut Fighter {
+    melee_core::ct!("ScriptGame_CapsFighter");
     if entity < 1 || entity > 12 {
         return core::ptr::null_mut();
     }
@@ -396,6 +397,7 @@ pub unsafe extern "C" fn ScriptGame_CapsFighter(entity: ::core::ffi::c_int) -> *
     }
 }
 pub unsafe extern "C" fn ScriptGame_CapsEntity(fp: *mut Fighter) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_CapsEntity");
     if fp.is_null() {
         return 0;
     }
@@ -469,12 +471,14 @@ pub const HSD_GOBJ_GXLINK_NONE: ::core::ffi::c_uchar = 0xff as ::core::ffi::c_in
 pub unsafe extern "C" fn HSD_GObjGetUserData(
     mut gobj: *mut HSD_GObj,
 ) -> *mut ::core::ffi::c_void {
+    melee_core::ct!("HSD_GObjGetUserData");
     return (*gobj).user_data;
 }
 #[inline]
 pub unsafe extern "C" fn HSD_GObjGetHSDObj(
     mut gobj: *mut HSD_GObj,
 ) -> *mut ::core::ffi::c_void {
+    melee_core::ct!("HSD_GObjGetHSDObj");
     return (*gobj).hsd_obj;
 }
 pub const Collide_WallMask: ::core::ffi::c_int = Collide_LeftWallMask
@@ -485,9 +489,10 @@ pub const Collide_FloorMask: ::core::ffi::c_int = Collide_FloorPush | Collide_Fl
 pub const Collide_LedgeGrabMask: ::core::ffi::c_int = Collide_LeftLedgeGrab
     | Collide_RightLedgeGrab;
 #[inline]
-pub unsafe extern "C" fn GXEnd() {}
+pub unsafe extern "C" fn GXEnd() { melee_core::ct!("GXEnd");}
 #[inline]
 pub unsafe extern "C" fn HSD_JObjGetChild(mut jobj: *mut HSD_JObj) -> *mut HSD_JObj {
+    melee_core::ct!("HSD_JObjGetChild");
     if jobj.is_null() {
         return ::core::ptr::null_mut::<HSD_JObj>()
     } else {
@@ -496,6 +501,7 @@ pub unsafe extern "C" fn HSD_JObjGetChild(mut jobj: *mut HSD_JObj) -> *mut HSD_J
 }
 #[inline]
 pub unsafe extern "C" fn HSD_JObjGetNext(mut jobj: *mut HSD_JObj) -> *mut HSD_JObj {
+    melee_core::ct!("HSD_JObjGetNext");
     if jobj.is_null() {
         return ::core::ptr::null_mut::<HSD_JObj>()
     } else {
@@ -504,6 +510,7 @@ pub unsafe extern "C" fn HSD_JObjGetNext(mut jobj: *mut HSD_JObj) -> *mut HSD_JO
 }
 #[inline]
 pub unsafe extern "C" fn HSD_JObjGetParent(mut jobj: *mut HSD_JObj) -> *mut HSD_JObj {
+    melee_core::ct!("HSD_JObjGetParent");
     if jobj.is_null() {
         return ::core::ptr::null_mut::<HSD_JObj>()
     } else {
@@ -514,6 +521,7 @@ pub unsafe extern "C" fn HSD_JObjGetParent(mut jobj: *mut HSD_JObj) -> *mut HSD_
 pub unsafe extern "C" fn HSD_JObjMtxIsDirty(
     mut jobj: *mut HSD_JObj,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("HSD_JObjMtxIsDirty");
     let mut result: ::core::ffi::c_int = 0;
     if !jobj.is_null() {} else {
         __assert(
@@ -533,6 +541,7 @@ pub unsafe extern "C" fn HSD_JObjMtxIsDirty(
 }
 #[inline]
 pub unsafe extern "C" fn HSD_JObjSetupMatrix(mut jobj: *mut HSD_JObj) {
+    melee_core::ct!("HSD_JObjSetupMatrix");
     if jobj.is_null() || HSD_JObjMtxIsDirty(jobj) == 0 {
         return;
     }
@@ -543,6 +552,7 @@ pub unsafe extern "C" fn HSD_JObjSetRotationX(
     mut jobj: *mut HSD_JObj,
     mut x: ::core::ffi::c_float,
 ) {
+    melee_core::ct!("HSD_JObjSetRotationX");
     if !jobj.is_null() {} else {
         __assert(
             b"src/sysdolphin/baselib/jobj.h\0" as *const u8
@@ -575,6 +585,7 @@ pub unsafe extern "C" fn HSD_JObjSetRotationY(
     mut jobj: *mut HSD_JObj,
     mut y: ::core::ffi::c_float,
 ) {
+    melee_core::ct!("HSD_JObjSetRotationY");
     if !jobj.is_null() {} else {
         __assert(
             b"src/sysdolphin/baselib/jobj.h\0" as *const u8
@@ -607,6 +618,7 @@ pub unsafe extern "C" fn HSD_JObjSetRotationZ(
     mut jobj: *mut HSD_JObj,
     mut z: ::core::ffi::c_float,
 ) {
+    melee_core::ct!("HSD_JObjSetRotationZ");
     if !jobj.is_null() {} else {
         __assert(
             b"src/sysdolphin/baselib/jobj.h\0" as *const u8
@@ -636,6 +648,7 @@ pub unsafe extern "C" fn HSD_JObjSetRotationZ(
 }
 #[inline]
 pub unsafe extern "C" fn HSD_JObjSetScale(mut jobj: *mut HSD_JObj, mut scale: *mut Vec) {
+    melee_core::ct!("HSD_JObjSetScale");
     if !jobj.is_null() {} else {
         __assert(
             b"src/sysdolphin/baselib/jobj.h\0" as *const u8
@@ -664,6 +677,7 @@ pub unsafe extern "C" fn HSD_JObjSetTranslate(
     mut jobj: *mut HSD_JObj,
     mut translate: *mut Vec,
 ) {
+    melee_core::ct!("HSD_JObjSetTranslate");
     if !jobj.is_null() {} else {
         __assert(
             b"src/sysdolphin/baselib/jobj.h\0" as *const u8
@@ -692,6 +706,7 @@ pub unsafe extern "C" fn HSD_JObjGetTranslation(
     mut jobj: *mut HSD_JObj,
     mut translate: *mut Vec,
 ) {
+    melee_core::ct!("HSD_JObjGetTranslation");
     if !jobj.is_null() {} else {
         __assert(
             b"src/sysdolphin/baselib/jobj.h\0" as *const u8
@@ -736,6 +751,7 @@ pub unsafe extern "C" fn script_model_rotation(
     mut rz: ::core::ffi::c_float,
     mut r: *mut [::core::ffi::c_float; 3],
 ) {
+    melee_core::ct!("script_model_rotation");
     let mut d: ::core::ffi::c_float = 0.017453292519943295f32;
     let mut cx: ::core::ffi::c_float = cosf(rx * d);
     let mut sx: ::core::ffi::c_float = sinf(rx * d);
@@ -775,6 +791,7 @@ pub unsafe extern "C" fn script_model_rotation(
 }
 pub const INT_MAX: ::core::ffi::c_int = 0x7fffffff as ::core::ffi::c_int;
 pub unsafe extern "C" fn sz_finite(mut f: ::core::ffi::c_float) -> ::core::ffi::c_int {
+    melee_core::ct!("sz_finite");
     let mut u: Anon_anon_8 = unsafe { core::mem::zeroed::<Anon_anon_8>() };
     u.f = f;
     return (u.i & 0x7f800000 as ::core::ffi::c_uint != 0x7f800000 as ::core::ffi::c_uint)
@@ -784,6 +801,7 @@ pub const SZ_CAP: ::core::ffi::c_int = 64 as ::core::ffi::c_int;
 pub const SZ_VERTICES: ::core::ffi::c_int = 16 as ::core::ffi::c_int;
 pub const SZ_ENTITIES: ::core::ffi::c_int = 12 as ::core::ffi::c_int;
 pub unsafe extern "C" fn sz_validate(mut z: *mut SzDef) -> ::core::ffi::c_int {
+    melee_core::ct!("sz_validate");
     let mut i: ::core::ffi::c_int = 0;
     let mut j: ::core::ffi::c_int = 0;
     let mut area: ::core::ffi::c_float = 0 as ::core::ffi::c_int as ::core::ffi::c_float;
@@ -861,6 +879,7 @@ pub unsafe extern "C" fn sz_contains(
     mut x: ::core::ffi::c_float,
     mut y: ::core::ffi::c_float,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("sz_contains");
     let mut i: ::core::ffi::c_int = 0;
     x -= (*z).dx;
     y -= (*z).dy;
@@ -893,6 +912,7 @@ pub unsafe extern "C" fn sz_slot(
     mut s: *const SzState,
     mut handle: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("sz_slot");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < SZ_CAP {
@@ -910,6 +930,7 @@ pub unsafe extern "C" fn sz_put(
     mut value: *const SzDef,
     mut handle: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("sz_put");
     let mut z: SzDef = *value;
     let mut i: ::core::ffi::c_int = 0;
     let mut at: ::core::ffi::c_int = if handle != 0 {
@@ -970,6 +991,7 @@ pub unsafe extern "C" fn sz_remove(
     mut handle: ::core::ffi::c_int,
     mut owner: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("sz_remove");
     let mut at: ::core::ffi::c_int = sz_slot(s, handle);
     if at < 0 as ::core::ffi::c_int
         || (*s).z[at as usize].live != 1 as ::core::ffi::c_int
@@ -991,6 +1013,7 @@ pub unsafe extern "C" fn sz_emit(
     mut from: *const ::core::ffi::c_int,
     mut mask: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("sz_emit");
     let mut v: *mut SzEvent = ::core::ptr::null_mut::<SzEvent>();
     if mask & (1 as ::core::ffi::c_int) << what - 1 as ::core::ffi::c_int == 0 {
         return;
@@ -1045,6 +1068,7 @@ pub unsafe extern "C" fn sz_step(
     mut mask: ::core::ffi::c_int,
     mut advance: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("sz_step");
     let mut e: ::core::ffi::c_int = 0;
     let mut i: ::core::ffi::c_int = 0;
     let mut j: ::core::ffi::c_int = 0;
@@ -1215,6 +1239,7 @@ pub unsafe extern "C" fn ScriptGame_ModeRead(
     mut slot: ::core::ffi::c_int,
     mut word: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ModeRead");
     if slot < 0 as ::core::ffi::c_int || slot >= SCRIPT_MODE_SLOTS
         || word < 0 as ::core::ffi::c_int || word >= SCRIPT_MODE_WORDS
     {
@@ -1227,6 +1252,7 @@ pub unsafe extern "C" fn ScriptGame_ModeWrite(
     mut word: ::core::ffi::c_int,
     mut value: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("ScriptGame_ModeWrite");
     if slot < 0 as ::core::ffi::c_int || slot >= SCRIPT_MODE_SLOTS
         || word < 0 as ::core::ffi::c_int || word >= SCRIPT_MODE_WORDS
     {
@@ -1235,6 +1261,7 @@ pub unsafe extern "C" fn ScriptGame_ModeWrite(
     script_mode[slot as usize][word as usize] = value as ::core::ffi::c_uint;
 }
 pub unsafe extern "C" fn ScriptGame_ModeActive() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ModeActive");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < SCRIPT_MODE_SLOTS {
@@ -1250,6 +1277,7 @@ pub unsafe extern "C" fn ScriptGame_ClankValue(
     mut is_item: ::core::ffi::c_int,
     mut rebound: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ClankValue");
     let mut g: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     let mut link: ::core::ffi::c_int = if is_item != 0 {
         HSD_GOBJ_PLINK_ITEM
@@ -1300,6 +1328,7 @@ pub const SCRIPT_STAGE_ARCHIVE_MAX: ::core::ffi::c_int = 8 as ::core::ffi::c_int
 pub unsafe extern "C" fn script_mesh_bits(
     mut f: ::core::ffi::c_float,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_mesh_bits");
     let mut u: Anon_anon_11 = unsafe { core::mem::zeroed::<Anon_anon_11>() };
     u.f = f;
     return u.i;
@@ -1307,6 +1336,7 @@ pub unsafe extern "C" fn script_mesh_bits(
 pub unsafe extern "C" fn script_mesh_float(
     mut i: ::core::ffi::c_int,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("script_mesh_float");
     let mut u: Anon_anon_11 = unsafe { core::mem::zeroed::<Anon_anon_11>() };
     u.i = i;
     return u.f;
@@ -1317,6 +1347,7 @@ pub static mut script_stage: Anon_anon_131 = unsafe {
 pub unsafe extern "C" fn ScriptGame_AreaVisible(
     mut area: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_AreaVisible");
     return (area == 0
         || area > 0 as ::core::ffi::c_int && area <= SCRIPT_STAGE_AREAS
             && script_stage.area[(area - 1 as ::core::ffi::c_int) as usize].state
@@ -1325,6 +1356,7 @@ pub unsafe extern "C" fn ScriptGame_AreaVisible(
 pub unsafe extern "C" fn script_area_retiring(
     mut area: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_area_retiring");
     return (area > 0 as ::core::ffi::c_int && area <= SCRIPT_STAGE_AREAS
         && script_stage.area[(area - 1 as ::core::ffi::c_int) as usize].state
             == 3 as ::core::ffi::c_int) as ::core::ffi::c_int;
@@ -1332,6 +1364,7 @@ pub unsafe extern "C" fn script_area_retiring(
 pub unsafe extern "C" fn ScriptGame_StageJointActive(
     mut joint: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageJointActive");
     let mut slot: ::core::ffi::c_int = joint - script_stage.base_j;
     if script_stage.map.is_null() || slot < 0 as ::core::ffi::c_int
         || slot >= script_stage.cap
@@ -1345,6 +1378,7 @@ pub unsafe extern "C" fn ScriptGame_StageJointActive(
 pub unsafe extern "C" fn ScriptGame_StageLineActive(
     mut line: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageLineActive");
     let mut slot: ::core::ffi::c_int = line - script_stage.base_l;
     if script_stage.map.is_null() || slot < 0 as ::core::ffi::c_int
         || slot >= script_stage.cap
@@ -1360,6 +1394,7 @@ pub static mut script_target_old_article: *mut Article = ::core::ptr::null::<Art
 pub unsafe extern "C" fn script_stage_floor_bounds(
     mut out: *mut ::core::ffi::c_float,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_stage_floor_bounds");
     let mut map: *mut MapCollData = mpLib_8004D164();
     let mut lines: *mut CollLine = mpGetGroundCollLine();
     let mut verts: *mut CollVtx = mpGetGroundCollVtx();
@@ -1512,6 +1547,7 @@ pub unsafe extern "C" fn script_stage_floor_bounds(
 pub unsafe extern "C" fn ScriptGame_StageBounds(
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageBounds");
     let mut floor: [::core::ffi::c_float; 5] = [0.; 5];
     let mut box_0: *mut StageBlastZone = ::core::ptr::null_mut::<StageBlastZone>();
     if field >= 8 as ::core::ffi::c_int {
@@ -1558,12 +1594,14 @@ pub static mut script_host_shadow: Option<
     ) -> ::core::ffi::c_int,
 > = None;
 pub unsafe extern "C" fn script_stage_host_allowed() -> ::core::ffi::c_int {
+    melee_core::ct!("script_stage_host_allowed");
     match stage_info.grkind as ::core::ffi::c_int {
         37 | 36 | 10 | 28 | 12 | 16 => return 1 as ::core::ffi::c_int,
         _ => return 0 as ::core::ffi::c_int,
     };
 }
 pub unsafe extern "C" fn script_stage_host_hide(mut hide: ::core::ffi::c_int) {
+    melee_core::ct!("script_stage_host_hide");
     if hide != 0 && ScriptStageHostHidden == 0 {
         script_host_touch = stage_info.on_touch_line;
         script_host_shadow = stage_info.on_check_shadow_render;
@@ -1577,6 +1615,7 @@ pub unsafe extern "C" fn script_stage_host_hide(mut hide: ::core::ffi::c_int) {
     }
 }
 pub unsafe extern "C" fn ScriptGame_StageIsolationClear(mut owner: ::core::ffi::c_int) {
+    melee_core::ct!("ScriptGame_StageIsolationClear");
     if owner == 0 as ::core::ffi::c_int
         || owner > 0 as ::core::ffi::c_int && script_stage_isolation_owner == owner
     {
@@ -1594,6 +1633,7 @@ pub unsafe extern "C" fn ScriptGame_StageIsolationClear(mut owner: ::core::ffi::
     }
 }
 pub unsafe extern "C" fn ScriptGame_StageIsolationWatch() {
+    melee_core::ct!("ScriptGame_StageIsolationWatch");
     if script_stage_isolation_owner != 0
         && (Script_StageIsolationAllowed(script_stage_isolation_owner) == 0
             || Netplay_Enabled() != 0 || RB_Enabled() != 0 || Replay_Active() != 0
@@ -1606,6 +1646,7 @@ pub unsafe extern "C" fn ScriptGame_StageIsolate(
     mut owner: ::core::ffi::c_int,
     mut isolate: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageIsolate");
     if owner <= 0 as ::core::ffi::c_int
         || script_stage_isolation_owner != 0 && script_stage_isolation_owner != owner
     {
@@ -1636,16 +1677,19 @@ pub unsafe extern "C" fn ScriptGame_StageIsolate(
 pub unsafe extern "C" fn ScriptGame_StageIsolationState(
     mut owner: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageIsolationState");
     ScriptGame_StageIsolationWatch();
     return (owner > 0 as ::core::ffi::c_int && script_stage_isolation_owner == owner
         && mpScriptStageIsolationActive() != 0) as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_StageOriginalVisible() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageOriginalVisible");
     ScriptGame_StageIsolationWatch();
     return (script_stage_isolation_owner == 0) as ::core::ffi::c_int;
 }
 pub static mut script_arena: Anon_anon_5 = unsafe { core::mem::zeroed::<Anon_anon_5>() };
 pub unsafe extern "C" fn script_arena_apply() {
+    melee_core::ct!("script_arena_apply");
     if script_arena.owner == 0 {
         return;
     }
@@ -1657,9 +1701,11 @@ pub unsafe extern "C" fn script_arena_apply() {
     stage_info.blast_zone = script_arena.blast;
 }
 pub unsafe extern "C" fn ScriptGame_ArenaOwner() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ArenaOwner");
     return script_arena.owner;
 }
 pub unsafe extern "C" fn script_arena_claim(mut owner: ::core::ffi::c_int) {
+    melee_core::ct!("script_arena_claim");
     if script_arena.owner != 0 {
         return;
     }
@@ -1684,6 +1730,7 @@ pub unsafe extern "C" fn ScriptGame_ArenaOrigin(
     mut y: ::core::ffi::c_int,
     mut frames: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("ScriptGame_ArenaOrigin");
     script_arena_claim(owner);
     script_arena.target_x = script_mesh_float(x);
     script_arena.target_y = script_mesh_float(y);
@@ -1702,6 +1749,7 @@ pub unsafe extern "C" fn ScriptGame_ArenaBounds(
     mut t: ::core::ffi::c_int,
     mut b: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("ScriptGame_ArenaBounds");
     let mut bounds: *mut StageBlastZone = ::core::ptr::null_mut::<StageBlastZone>();
     script_arena_claim(owner);
     bounds = if blast != 0 {
@@ -1721,6 +1769,7 @@ pub unsafe extern "C" fn ScriptGame_ArenaSpawn(
     mut x: ::core::ffi::c_int,
     mut y: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ArenaSpawn");
     let mut jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut parent: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut pos: Vec = unsafe { core::mem::zeroed::<Vec>() };
@@ -1771,6 +1820,7 @@ pub unsafe extern "C" fn ScriptGame_ArenaSpawnPos(
     mut axis: ::core::ffi::c_int,
     mut fallback: ::core::ffi::c_float,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("ScriptGame_ArenaSpawnPos");
     let mut pos: Vec = unsafe { core::mem::zeroed::<Vec>() };
     let mut jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     if slot < 0 as ::core::ffi::c_int || slot > 260 as ::core::ffi::c_int {
@@ -1790,6 +1840,7 @@ pub unsafe extern "C" fn ScriptGame_ArenaSpawnPos(
     };
 }
 pub unsafe extern "C" fn ScriptGame_ArenaRestore() {
+    melee_core::ct!("ScriptGame_ArenaRestore");
     let mut i: ::core::ffi::c_int = 0;
     if script_arena.owner == 0 {
         return;
@@ -1818,6 +1869,7 @@ pub unsafe extern "C" fn ScriptGame_ArenaRestore() {
     script_arena.owner = script_arena.frames;
 }
 pub unsafe extern "C" fn script_arena_frame() {
+    melee_core::ct!("script_arena_frame");
     if script_arena.owner == 0 {
         return;
     }
@@ -1840,6 +1892,7 @@ pub unsafe extern "C" fn ScriptGame_ArenaBound(
     mut field: ::core::ffi::c_int,
     mut fallback: ::core::ffi::c_float,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("ScriptGame_ArenaBound");
     let mut b: *mut StageBlastZone = ::core::ptr::null_mut::<StageBlastZone>();
     let mut value: ::core::ffi::c_float = 0.;
     if script_arena.owner == 0 {
@@ -1876,6 +1929,7 @@ pub unsafe extern "C" fn ScriptGame_ArenaBound(
 pub unsafe extern "C" fn ScriptGame_ArenaRead(
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ArenaRead");
     let mut b: *mut StageBlastZone = ::core::ptr::null_mut::<StageBlastZone>();
     let mut value: ::core::ffi::c_float = 0.;
     if field == 10 as ::core::ffi::c_int {
@@ -1922,6 +1976,7 @@ pub unsafe extern "C" fn ScriptGame_ArenaGroup(
     mut id: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ArenaGroup");
     let mut joints: *mut CollJoint = mpGetGroundCollJoint();
     if id < 0 as ::core::ffi::c_int {
         return script_arena.groups;
@@ -1941,6 +1996,7 @@ pub unsafe extern "C" fn ScriptGame_ArenaGroupSet(
     mut id: ::core::ffi::c_int,
     mut enabled: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("ScriptGame_ArenaGroupSet");
     let mut joint: *mut CollJoint = (mpGetGroundCollJoint
         as unsafe extern "C" fn() -> *mut CollJoint)()
         .offset(id as isize) as *mut CollJoint;
@@ -1978,6 +2034,7 @@ pub unsafe extern "C" fn ScriptGame_ArenaGroupSet(
     };
 }
 pub unsafe extern "C" fn ScriptGame_ArenaRelease(mut owner: ::core::ffi::c_int) {
+    melee_core::ct!("ScriptGame_ArenaRelease");
     let mut id: ::core::ffi::c_int = 0;
     let mut k: ::core::ffi::c_int = 0;
     let mut n: ::core::ffi::c_int = 0;
@@ -2028,6 +2085,7 @@ pub static mut script_camera_params: ScriptCameraParams = unsafe {
 pub unsafe extern "C" fn script_camera_field(
     mut field: ::core::ffi::c_int,
 ) -> *mut ::core::ffi::c_float {
+    melee_core::ct!("script_camera_field");
     let mut c: *mut StageCameraInfo = &raw mut stage_info.cam_info;
     match field {
         0 => return &raw mut (*c).cam_zoom_rate,
@@ -2047,6 +2105,7 @@ pub unsafe extern "C" fn script_camera_field(
 pub unsafe extern "C" fn ScriptGame_CameraFov(
     mut fallback: ::core::ffi::c_float,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("ScriptGame_CameraFov");
     return if script_camera_params.mask
         & (1 as ::core::ffi::c_int) << 2 as ::core::ffi::c_int != 0
     {
@@ -2058,15 +2117,18 @@ pub unsafe extern "C" fn ScriptGame_CameraFov(
 pub unsafe extern "C" fn ScriptGame_CameraParamRead(
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_CameraParamRead");
     let mut p: *mut ::core::ffi::c_float = script_camera_field(field);
     return script_mesh_bits(
         if !p.is_null() { *p } else { 0 as ::core::ffi::c_int as ::core::ffi::c_float },
     );
 }
 pub unsafe extern "C" fn ScriptGame_CameraParamOwner() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_CameraParamOwner");
     return script_camera_params.owner;
 }
 pub unsafe extern "C" fn script_camera_params_release(mut owner: ::core::ffi::c_int) {
+    melee_core::ct!("script_camera_params_release");
     let mut i: ::core::ffi::c_int = 0;
     if script_camera_params.owner == 0
         || owner != 0 && script_camera_params.owner != owner
@@ -2095,6 +2157,7 @@ pub unsafe extern "C" fn script_camera_params_release(mut owner: ::core::ffi::c_
     );
 }
 pub unsafe extern "C" fn ScriptGame_CameraParamsRelease(mut owner: ::core::ffi::c_int) {
+    melee_core::ct!("ScriptGame_CameraParamsRelease");
     script_camera_params_release(owner);
 }
 pub unsafe extern "C" fn ScriptGame_CameraParams(
@@ -2111,6 +2174,7 @@ pub unsafe extern "C" fn ScriptGame_CameraParams(
     mut j: ::core::ffi::c_int,
     mut k: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_CameraParams");
     let mut bits: [::core::ffi::c_int; 10] = [0; 10];
     let mut i: ::core::ffi::c_int = 0;
     let mut v: [::core::ffi::c_float; 10] = [0.; 10];
@@ -2232,6 +2296,7 @@ pub unsafe extern "C" fn ScriptGame_CameraParams(
     return 1 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_CameraParamsTest() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_CameraParamsTest");
     let mut saved: StageCameraInfo = stage_info.cam_info;
     let mut state: ScriptCameraParams = script_camera_params;
     let mut rc: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -2422,6 +2487,7 @@ pub unsafe extern "C" fn ScriptGame_ModValue(
     mut field: ::core::ffi::c_int,
     mut base: ::core::ffi::c_float,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("ScriptGame_ModValue");
     if slot < 0 as ::core::ffi::c_int || slot >= 6 as ::core::ffi::c_int
         || field < 0 as ::core::ffi::c_int || field >= 11 as ::core::ffi::c_int
         || script_fighter_mod[slot as usize].owner == 0
@@ -2435,6 +2501,7 @@ pub unsafe extern "C" fn ScriptGame_ModJump(
     mut field: ::core::ffi::c_int,
     mut base: ::core::ffi::c_float,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("ScriptGame_ModJump");
     return base * sqrtf(ScriptGame_ModValue(slot, field, 1.0f32));
 }
 pub unsafe extern "C" fn ScriptGame_ModDamage(
@@ -2442,6 +2509,7 @@ pub unsafe extern "C" fn ScriptGame_ModDamage(
     mut field: ::core::ffi::c_int,
     mut base: ::core::ffi::c_float,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("ScriptGame_ModDamage");
     let mut damage: ::core::ffi::c_float = 0.;
     if slot < 0 as ::core::ffi::c_int || slot >= 6 as ::core::ffi::c_int
         || field != 0 as ::core::ffi::c_int && field != 1 as ::core::ffi::c_int
@@ -2459,6 +2527,7 @@ pub unsafe extern "C" fn ScriptGame_ModDamage(
 pub unsafe extern "C" fn ScriptGame_FighterModOwner(
     mut slot: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_FighterModOwner");
     return if slot >= 0 as ::core::ffi::c_int && slot < 6 as ::core::ffi::c_int {
         script_fighter_mod[slot as usize].owner
     } else {
@@ -2469,6 +2538,7 @@ pub unsafe extern "C" fn ScriptGame_FighterModRead(
     mut slot: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_FighterModRead");
     if slot < 0 as ::core::ffi::c_int || slot >= 6 as ::core::ffi::c_int
         || field < 0 as ::core::ffi::c_int || field >= 11 as ::core::ffi::c_int
         || script_fighter_mod[slot as usize].owner == 0
@@ -2481,6 +2551,7 @@ pub unsafe extern "C" fn script_mod_shield_reconcile(
     mut fp: *mut Fighter,
     mut base: ::core::ffi::c_float,
 ) {
+    melee_core::ct!("script_mod_shield_reconcile");
     let mut cap: ::core::ffi::c_float = ScriptGame_ModValue(
         (*fp).player_id as ::core::ffi::c_int,
         4 as ::core::ffi::c_int,
@@ -2503,6 +2574,7 @@ pub unsafe extern "C" fn ScriptGame_FighterMod(
     mut g: ::core::ffi::c_int,
     mut h: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_FighterMod");
     let mut m: *mut ScriptFighterMod = ::core::ptr::null_mut::<ScriptFighterMod>();
     let mut bits: [::core::ffi::c_int; 8] = [0; 8];
     let mut i: ::core::ffi::c_int = 0;
@@ -2605,6 +2677,7 @@ pub unsafe extern "C" fn ScriptGame_FighterModExtra(
     mut weight: ::core::ffi::c_int,
     mut regen: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_FighterModExtra");
     let mut bits: [::core::ffi::c_int; 3] = [0; 3];
     let mut i: ::core::ffi::c_int = 0;
     let mut values: [::core::ffi::c_float; 3] = [0.; 3];
@@ -2638,6 +2711,7 @@ pub unsafe extern "C" fn ScriptGame_FighterModExtra(
     return 1 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_FighterModsRelease(mut owner: ::core::ffi::c_int) {
+    melee_core::ct!("ScriptGame_FighterModsRelease");
     let mut slot: ::core::ffi::c_int = 0;
     slot = 0 as ::core::ffi::c_int;
     while slot < 6 as ::core::ffi::c_int {
@@ -2663,6 +2737,7 @@ pub unsafe extern "C" fn ScriptGame_FighterModsRelease(mut owner: ::core::ffi::c
     }
 }
 pub unsafe extern "C" fn ScriptGame_FighterModTest() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_FighterModTest");
     static mut fp: Fighter = unsafe { core::mem::zeroed::<Fighter>() };
     static mut respawn: Fighter = unsafe { core::mem::zeroed::<Fighter>() };
     static mut original: [::core::ffi::c_uchar; 388] = [0; 388];
@@ -3113,6 +3188,7 @@ pub unsafe extern "C" fn script_sim_slot(
     mut token: ::core::ffi::c_int,
     mut create: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_sim_slot");
     let mut i: ::core::ffi::c_int = 0;
     let mut empty: ::core::ffi::c_int = -(1 as ::core::ffi::c_int);
     if token <= 0 as ::core::ffi::c_int {
@@ -3133,12 +3209,14 @@ pub unsafe extern "C" fn script_sim_slot(
 pub unsafe extern "C" fn ScriptGame_SimAvailable(
     mut token: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_SimAvailable");
     return (script_sim_slot(token, 1 as ::core::ffi::c_int) >= 0 as ::core::ffi::c_int)
         as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_SimSize(
     mut token: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_SimSize");
     let mut i: ::core::ffi::c_int = script_sim_slot(token, 0 as ::core::ffi::c_int);
     return if i < 0 as ::core::ffi::c_int {
         -(1 as ::core::ffi::c_int)
@@ -3150,6 +3228,7 @@ pub unsafe extern "C" fn ScriptGame_SimByte(
     mut token: ::core::ffi::c_int,
     mut at: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_SimByte");
     let mut i: ::core::ffi::c_int = script_sim_slot(token, 0 as ::core::ffi::c_int);
     return if i >= 0 as ::core::ffi::c_int && at >= 0 as ::core::ffi::c_int
         && at < script_sim_state[i as usize].size
@@ -3163,6 +3242,7 @@ pub unsafe extern "C" fn ScriptGame_SimCommit(
     mut token: ::core::ffi::c_int,
     mut size: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_SimCommit");
     let mut i: ::core::ffi::c_int = script_sim_slot(token, 1 as ::core::ffi::c_int);
     let mut j: ::core::ffi::c_int = 0;
     if i < 0 as ::core::ffi::c_int || size < 0 as ::core::ffi::c_int
@@ -3189,6 +3269,7 @@ pub unsafe extern "C" fn ScriptGame_SimCommit(
     return 1 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_SimRelease(mut token: ::core::ffi::c_int) {
+    melee_core::ct!("ScriptGame_SimRelease");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < SCRIPT_SIM_OWNERS {
@@ -3206,6 +3287,7 @@ pub unsafe extern "C" fn ScriptGame_SimRelease(mut token: ::core::ffi::c_int) {
 pub unsafe extern "C" fn script_hit_move_tag(
     mut motion: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_hit_move_tag");
     if motion >= ftCo_MS_Attack11 as ::core::ffi::c_int
         && motion <= ftCo_MS_Attack100End as ::core::ffi::c_int
     {
@@ -3245,6 +3327,7 @@ pub static mut script_special_open: [::core::ffi::c_uchar; 12] = [0; 12];
 pub unsafe extern "C" fn script_special_slot(
     mut fp: *mut Fighter,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_special_slot");
     return if !fp.is_null()
         && ((*fp).player_id as ::core::ffi::c_int) < 6 as ::core::ffi::c_int
     {
@@ -3259,6 +3342,7 @@ pub unsafe extern "C" fn script_special_slot(
     };
 }
 pub unsafe extern "C" fn ScriptGame_NoteSpecialInput(mut fp: *mut Fighter) {
+    melee_core::ct!("ScriptGame_NoteSpecialInput");
     let mut e: ::core::ffi::c_int = script_special_slot(fp);
     if e >= 0 as ::core::ffi::c_int {
         script_special_open[e as usize] = 1 as ::core::ffi::c_uchar;
@@ -3268,6 +3352,7 @@ pub unsafe extern "C" fn ScriptGame_NoteMotion(
     mut fp: *mut Fighter,
     mut motion: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("ScriptGame_NoteMotion");
     let mut e: ::core::ffi::c_int = script_special_slot(fp);
     if e >= 0 as ::core::ffi::c_int && motion >= 0 as ::core::ffi::c_int
         && motion < 341 as ::core::ffi::c_int
@@ -3279,6 +3364,7 @@ pub unsafe extern "C" fn script_hit_declared(
     mut fp: *mut Fighter,
     mut profile: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_hit_declared");
     let mut i: ::core::ffi::c_int = 0;
     let mut declared: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     if (*fp).motion_id >= 0x400 as ::core::ffi::c_int {
@@ -3301,6 +3387,7 @@ pub unsafe extern "C" fn script_hit_declared(
 pub unsafe extern "C" fn script_hit_family_move(
     mut fp: *mut Fighter,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_hit_family_move");
     static mut range: [[::core::ffi::c_ushort; 2]; 33] = [
         [
             343 as ::core::ffi::c_int as ::core::ffi::c_ushort,
@@ -3522,6 +3609,7 @@ pub unsafe extern "C" fn script_hit_family_move(
 pub unsafe extern "C" fn ScriptGame_HitFamilyMove(
     mut fp: *mut Fighter,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_HitFamilyMove");
     return script_hit_family_move(fp);
 }
 pub unsafe extern "C" fn ScriptGame_ReportHitContext(
@@ -3530,6 +3618,7 @@ pub unsafe extern "C" fn ScriptGame_ReportHitContext(
     mut element: ::core::ffi::c_int,
     mut item: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("ScriptGame_ReportHitContext");
     let mut a: Anon_anon_11 = unsafe { core::mem::zeroed::<Anon_anon_11>() };
     let mut v: Anon_anon_11 = unsafe { core::mem::zeroed::<Anon_anon_11>() };
     let mut owner: *mut Fighter = attacker;
@@ -3609,6 +3698,7 @@ pub unsafe extern "C" fn ScriptGame_ReportHitContext(
 pub unsafe extern "C" fn ScriptGame_ActionCategory(
     mut motion: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ActionCategory");
     if motion == ftCo_MS_JumpF as ::core::ffi::c_int
         || motion == ftCo_MS_JumpB as ::core::ffi::c_int
     {
@@ -3642,6 +3732,7 @@ pub unsafe extern "C" fn ScriptGame_ActionCategory(
 pub const HR_MAX: ::core::ffi::c_int = 32 as ::core::ffi::c_int;
 pub const HR_FIELDS: ::core::ffi::c_int = 16 as ::core::ffi::c_int;
 pub unsafe extern "C" fn hr_finite(mut x: ::core::ffi::c_float) -> ::core::ffi::c_int {
+    melee_core::ct!("hr_finite");
     let mut v: Anon_anon_107 = unsafe { core::mem::zeroed::<Anon_anon_107>() };
     v.f = x;
     return (v.u & 0x7f800000 as ::core::ffi::c_uint != 0x7f800000 as ::core::ffi::c_uint)
@@ -3650,6 +3741,7 @@ pub unsafe extern "C" fn hr_finite(mut x: ::core::ffi::c_float) -> ::core::ffi::
 pub unsafe extern "C" fn hr_safe_float(
     mut x: ::core::ffi::c_double,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("hr_safe_float");
     if x != x {
         return 0 as ::core::ffi::c_int as ::core::ffi::c_float;
     }
@@ -3666,9 +3758,11 @@ pub unsafe extern "C" fn hr_ratio_valid(
     mut lo: ::core::ffi::c_float,
     mut hi: ::core::ffi::c_float,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("hr_ratio_valid");
     return (hr_finite(x) != 0 && x >= lo && x <= hi) as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn hr_cap(mut x: ::core::ffi::c_float) -> ::core::ffi::c_float {
+    melee_core::ct!("hr_cap");
     if hr_finite(x) == 0 {
         return 1 as ::core::ffi::c_int as ::core::ffi::c_float;
     }
@@ -3684,6 +3778,7 @@ pub unsafe extern "C" fn hr_family_cap(
     mut x: ::core::ffi::c_float,
     mut hi: ::core::ffi::c_float,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("hr_family_cap");
     if hr_finite(x) == 0 {
         return 1 as ::core::ffi::c_int as ::core::ffi::c_float;
     }
@@ -3693,6 +3788,7 @@ pub unsafe extern "C" fn hr_percent_cap(
     mut x: ::core::ffi::c_float,
     mut incoming: ::core::ffi::c_int,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("hr_percent_cap");
     if hr_finite(x) == 0 {
         return 1 as ::core::ffi::c_int as ::core::ffi::c_float;
     }
@@ -3713,6 +3809,7 @@ pub unsafe extern "C" fn hr_evaluate(
     mut status: ::core::ffi::c_int,
     mut contact: ::core::ffi::c_int,
 ) -> HRResult {
+    melee_core::ct!("hr_evaluate");
     let mut v: HRResult = unsafe { core::mem::zeroed::<HRResult>() };
     let mut i: ::core::ffi::c_int = 0;
     let mut percent_damage: ::core::ffi::c_double = 1 as ::core::ffi::c_int
@@ -3845,6 +3942,7 @@ pub static mut script_hit_percent_delta: [::core::ffi::c_float; 12] = [0.; 12];
 pub static mut script_hit_next_handle: ::core::ffi::c_int = 0;
 pub static mut script_hit_capacity_warned: ::core::ffi::c_int = 0;
 pub unsafe extern "C" fn script_hit_entity(mut f: *mut Fighter) -> ::core::ffi::c_int {
+    melee_core::ct!("script_hit_entity");
     return (*f).player_id as ::core::ffi::c_int * 2 as ::core::ffi::c_int
         + (if (*f).is_sub_fighter() as ::core::ffi::c_int != 0 {
             1 as ::core::ffi::c_int
@@ -3855,6 +3953,7 @@ pub unsafe extern "C" fn script_hit_entity(mut f: *mut Fighter) -> ::core::ffi::
 pub unsafe extern "C" fn ScriptGame_HitRulesOwner(
     mut slot: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_HitRulesOwner");
     return if slot >= 0 as ::core::ffi::c_int && slot < 12 as ::core::ffi::c_int {
         script_hit_ports[slot as usize].owner
     } else {
@@ -3864,6 +3963,7 @@ pub unsafe extern "C" fn ScriptGame_HitRulesOwner(
 pub unsafe extern "C" fn ScriptGame_HitRulesCount(
     mut slot: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_HitRulesCount");
     return if slot >= 0 as ::core::ffi::c_int && slot < 12 as ::core::ffi::c_int {
         script_hit_ports[slot as usize].count
     } else {
@@ -3873,6 +3973,7 @@ pub unsafe extern "C" fn ScriptGame_HitRulesCount(
 pub unsafe extern "C" fn ScriptGame_FighterStatus(
     mut slot: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_FighterStatus");
     return if slot >= 0 as ::core::ffi::c_int && slot < 12 as ::core::ffi::c_int {
         script_hit_ports[slot as usize].status
     } else {
@@ -3882,6 +3983,7 @@ pub unsafe extern "C" fn ScriptGame_FighterStatus(
 pub unsafe extern "C" fn script_hr_bits(
     mut f: ::core::ffi::c_float,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_hr_bits");
     let mut u: Anon_anon_11 = unsafe { core::mem::zeroed::<Anon_anon_11>() };
     u.f = f;
     return u.i;
@@ -3889,6 +3991,7 @@ pub unsafe extern "C" fn script_hr_bits(
 pub unsafe extern "C" fn script_hr_float(
     mut b: ::core::ffi::c_int,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("script_hr_float");
     let mut u: Anon_anon_11 = unsafe { core::mem::zeroed::<Anon_anon_11>() };
     u.i = b;
     return u.f;
@@ -3898,6 +4001,7 @@ pub unsafe extern "C" fn ScriptGame_HitRuleRead(
     mut at: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_HitRuleRead");
     let mut r: *mut HRRule = ::core::ptr::null_mut::<HRRule>();
     if slot < 0 as ::core::ffi::c_int || slot >= 12 as ::core::ffi::c_int
         || at < 0 as ::core::ffi::c_int || at >= script_hit_ports[slot as usize].count
@@ -3934,6 +4038,7 @@ pub unsafe extern "C" fn ScriptGame_HitRulesReplace(
     mut count: ::core::ffi::c_int,
     mut status: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_HitRulesReplace");
     let mut next: HRPort = unsafe { core::mem::zeroed::<HRPort>() };
     let mut i: ::core::ffi::c_int = 0;
     let mut j: ::core::ffi::c_int = 0;
@@ -4018,6 +4123,7 @@ pub unsafe extern "C" fn ScriptGame_HitRulesReplace(
     return 1 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_HitRulesRelease(mut owner: ::core::ffi::c_int) {
+    melee_core::ct!("ScriptGame_HitRulesRelease");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < 12 as ::core::ffi::c_int {
@@ -4070,6 +4176,7 @@ pub unsafe extern "C" fn ScriptGame_HitRuleCreate(
     mut hit: *mut HitCapsule,
     mut item: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("ScriptGame_HitRuleCreate");
     let mut m: *mut HRMeta = ::core::ptr::null_mut::<HRMeta>();
     let mut v: HRResult = unsafe { core::mem::zeroed::<HRResult>() };
     let mut p: *mut HRPort = ::core::ptr::null_mut::<HRPort>();
@@ -4192,6 +4299,7 @@ pub unsafe extern "C" fn ScriptGame_HitRuleItemCreate(
     mut item: *mut Item,
     mut hit: *mut HitCapsule,
 ) {
+    melee_core::ct!("ScriptGame_HitRuleItemCreate");
     ScriptGame_HitRuleCreate(
         if !(*item).owner.is_null() && ftLib_80086960((*item).owner) != 0 {
             HSD_GObjGetUserData((*item).owner) as *mut Fighter
@@ -4209,6 +4317,7 @@ pub unsafe extern "C" fn ScriptGame_HitRuleEchoCreate(
     mut grounded: ::core::ffi::c_int,
     mut original: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("ScriptGame_HitRuleEchoCreate");
     let mut m: *mut HRMeta = ::core::ptr::null_mut::<HRMeta>();
     let mut p: *mut HRPort = ::core::ptr::null_mut::<HRPort>();
     let mut v: HRResult = unsafe { core::mem::zeroed::<HRResult>() };
@@ -4256,6 +4365,7 @@ pub unsafe extern "C" fn ScriptGame_HitRuleContact(
     mut value: ::core::ffi::c_float,
     mut knockback: ::core::ffi::c_int,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("ScriptGame_HitRuleContact");
     let mut m: *mut HRMeta = script_hit_metadata(hit, 0 as ::core::ffi::c_int);
     let mut v: HRResult = unsafe { core::mem::zeroed::<HRResult>() };
     let mut w: HRResult = unsafe { core::mem::zeroed::<HRResult>() };
@@ -4357,6 +4467,7 @@ pub unsafe extern "C" fn script_hit_family(
     mut victim: *mut Fighter,
     mut incoming: ::core::ffi::c_int,
 ) -> HRResult {
+    melee_core::ct!("script_hit_family");
     let mut m: *mut HRMeta = script_hit_metadata(hit, 0 as ::core::ffi::c_int);
     let mut entity: ::core::ffi::c_int = script_hit_entity(victim);
     let mut p: *mut HRPort = if incoming != 0 {
@@ -4390,6 +4501,7 @@ pub unsafe extern "C" fn ScriptGame_HitRulePercentQueue(
     mut victim: *mut Fighter,
     mut damage: ::core::ffi::c_float,
 ) {
+    melee_core::ct!("ScriptGame_HitRulePercentQueue");
     let mut outgoing: HRResult = unsafe { core::mem::zeroed::<HRResult>() };
     let mut incoming: HRResult = unsafe { core::mem::zeroed::<HRResult>() };
     let mut scale: ::core::ffi::c_float = 0.;
@@ -4424,6 +4536,7 @@ pub unsafe extern "C" fn ScriptGame_HitRulePercentCommit(
     mut victim: *mut Fighter,
     mut damage: ::core::ffi::c_float,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("ScriptGame_HitRulePercentCommit");
     let mut entity: ::core::ffi::c_int = 0;
     let mut delta: ::core::ffi::c_float = 0.;
     let mut result: ::core::ffi::c_double = 0.;
@@ -4457,6 +4570,7 @@ pub unsafe extern "C" fn ScriptGame_HitRulePercentCommit(
     };
 }
 pub unsafe extern "C" fn ScriptGame_HitRulePercentClear(mut victim: *mut Fighter) {
+    melee_core::ct!("ScriptGame_HitRulePercentClear");
     if !victim.is_null()
         && ((*victim).player_id as ::core::ffi::c_int) < 6 as ::core::ffi::c_int
     {
@@ -4469,6 +4583,7 @@ pub unsafe extern "C" fn ScriptGame_HitRuleWon(
     mut hit: *mut HitCapsule,
     mut victim: *mut Fighter,
 ) {
+    melee_core::ct!("ScriptGame_HitRuleWon");
     let mut m: *mut HRMeta = script_hit_metadata(hit, 0 as ::core::ffi::c_int);
     if !m.is_null() && hr_ordinary((*hit).element as ::core::ffi::c_int) != 0 {
         Geno_GiveStunBonus(victim, (*m).stun);
@@ -4478,6 +4593,7 @@ pub unsafe extern "C" fn ScriptGame_HitRuleContext(
     mut hit: *mut HitCapsule,
     mut victim: *mut Fighter,
 ) {
+    melee_core::ct!("ScriptGame_HitRuleContext");
     let mut m: *mut HRMeta = script_hit_metadata(hit, 0 as ::core::ffi::c_int);
     let mut v: HRResult = unsafe { core::mem::zeroed::<HRResult>() };
     let mut w: HRResult = unsafe { core::mem::zeroed::<HRResult>() };
@@ -4606,6 +4722,7 @@ pub unsafe extern "C" fn ScriptGame_HitRuleRetire(
     mut data: *mut ::core::ffi::c_void,
     mut size: ::core::ffi::c_uint,
 ) {
+    melee_core::ct!("ScriptGame_HitRuleRetire");
     let mut i: ::core::ffi::c_int = 0;
     let mut start: ::core::ffi::c_uint = data as ::core::ffi::c_uint;
     i = 0 as ::core::ffi::c_int;
@@ -4627,10 +4744,12 @@ pub unsafe extern "C" fn ScriptGame_HitRuleRetire(
 pub unsafe extern "C" fn ScriptGame_HitRuleBaseDamage(
     mut hit: *mut HitCapsule,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("ScriptGame_HitRuleBaseDamage");
     let mut m: *mut HRMeta = script_hit_metadata(hit, 0 as ::core::ffi::c_int);
     return if !m.is_null() { (*m).original_damage } else { (*hit).damage };
 }
 pub unsafe extern "C" fn ScriptGame_HitRuleDamageOnly(mut hit: *mut HitCapsule) {
+    melee_core::ct!("ScriptGame_HitRuleDamageOnly");
     let mut m: *mut HRMeta = script_hit_metadata(hit, 0 as ::core::ffi::c_int);
     if m.is_null() {
         return;
@@ -4649,6 +4768,7 @@ pub unsafe extern "C" fn ScriptGame_HitRuleReport(
     mut hit: *mut HitCapsule,
     mut damage: ::core::ffi::c_float,
 ) {
+    melee_core::ct!("ScriptGame_HitRuleReport");
     let mut bits: Anon_anon_11 = unsafe { core::mem::zeroed::<Anon_anon_11>() };
     bits.f = damage;
     Script_GameEvent(
@@ -4684,6 +4804,7 @@ pub unsafe extern "C" fn echo_history(
     mut entity: ::core::ffi::c_int,
     mut age: ::core::ffi::c_int,
 ) -> *const EchoRecord {
+    melee_core::ct!("echo_history");
     let mut r: *const EchoRing = ::core::ptr::null::<EchoRing>();
     if entity < 0 as ::core::ffi::c_int || entity >= ECHO_ENTITIES
         || age < 0 as ::core::ffi::c_int || age >= ECHO_DEPTH
@@ -4710,6 +4831,7 @@ pub unsafe extern "C" fn echo_record(
     mut entity: ::core::ffi::c_int,
     mut value: *const EchoRecord,
 ) {
+    melee_core::ct!("echo_record");
     let mut r: *mut EchoRing = (&raw mut (*s).ring as *mut EchoRing)
         .offset(entity as isize) as *mut EchoRing;
     (*r).record[(*r).head as usize] = *value;
@@ -4725,6 +4847,7 @@ pub unsafe extern "C" fn echo_entity_clear(
     mut s: *mut EchoState,
     mut entity: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("echo_entity_clear");
     memset(
         (&raw mut (*s).ring as *mut EchoRing).offset(entity as isize) as *mut EchoRing
             as *mut ::core::ffi::c_void,
@@ -4736,6 +4859,7 @@ pub static mut script_echo: Anon_anon_13 = unsafe {
     core::mem::zeroed::<Anon_anon_13>()
 };
 pub unsafe extern "C" fn script_echo_entity(mut fp: *mut Fighter) -> ::core::ffi::c_int {
+    melee_core::ct!("script_echo_entity");
     return if !fp.is_null()
         && ((*fp).player_id as ::core::ffi::c_int) < 6 as ::core::ffi::c_int
     {
@@ -4752,6 +4876,7 @@ pub unsafe extern "C" fn script_echo_entity(mut fp: *mut Fighter) -> ::core::ffi
 pub unsafe extern "C" fn script_echo_bits(
     mut f: ::core::ffi::c_float,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_echo_bits");
     let mut u: Anon_anon_11 = unsafe { core::mem::zeroed::<Anon_anon_11>() };
     u.f = f;
     return u.i;
@@ -4759,6 +4884,7 @@ pub unsafe extern "C" fn script_echo_bits(
 pub unsafe extern "C" fn script_echo_float(
     mut i: ::core::ffi::c_int,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("script_echo_float");
     let mut u: Anon_anon_11 = unsafe { core::mem::zeroed::<Anon_anon_11>() };
     u.i = i;
     return u.f;
@@ -4766,11 +4892,13 @@ pub unsafe extern "C" fn script_echo_float(
 pub unsafe extern "C" fn script_echo_scale(
     mut bits: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_echo_scale");
     let mut f: ::core::ffi::c_float = script_echo_float(bits);
     return (f == f && f >= 0 as ::core::ffi::c_int as ::core::ffi::c_float
         && f <= 4 as ::core::ffi::c_int as ::core::ffi::c_float) as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_FighterHistoryDepth() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_FighterHistoryDepth");
     return ECHO_DEPTH;
 }
 pub unsafe extern "C" fn ScriptGame_FighterHistoryRead(
@@ -4779,6 +4907,7 @@ pub unsafe extern "C" fn ScriptGame_FighterHistoryRead(
     mut hit: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_FighterHistoryRead");
     let mut r: *const EchoRecord = echo_history(
         &raw mut script_echo.history,
         entity,
@@ -4843,6 +4972,7 @@ pub unsafe extern "C" fn ScriptGame_FighterHistoryRead(
 pub unsafe extern "C" fn ScriptGame_EchoOwner(
     mut entity: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_EchoOwner");
     let mut i: ::core::ffi::c_int = 0;
     if entity < 0 as ::core::ffi::c_int || entity >= 12 as ::core::ffi::c_int {
         return 0 as ::core::ffi::c_int;
@@ -4857,6 +4987,7 @@ pub unsafe extern "C" fn ScriptGame_EchoOwner(
     return 0 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_EchoNextHandle() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_EchoNextHandle");
     return if script_echo.next_handle == 0x7fffffff as ::core::ffi::c_int {
         0 as ::core::ffi::c_int
     } else {
@@ -4868,6 +4999,7 @@ pub unsafe extern "C" fn ScriptGame_EchoRead(
     mut index: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_EchoRead");
     let mut r: *mut ScriptEchoRule = ::core::ptr::null_mut::<ScriptEchoRule>();
     let mut i: ::core::ffi::c_int = 0;
     let mut n: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -4907,6 +5039,7 @@ pub unsafe extern "C" fn ScriptGame_EchoRead(
 pub unsafe extern "C" fn script_echo_valid(
     mut r: *mut ScriptEchoRule,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_echo_valid");
     return ((*r).owner > 0 as ::core::ffi::c_int && (*r).delay >= 1 as ::core::ffi::c_int
         && (*r).delay <= 60 as ::core::ffi::c_int
         && (*r).r#move >= -(1 as ::core::ffi::c_int)
@@ -4926,6 +5059,7 @@ pub unsafe extern "C" fn ScriptGame_EchoReplace(
     mut owner: ::core::ffi::c_int,
     mut count: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_EchoReplace");
     let mut next: [ScriptEchoRule; 8] = [unsafe {
         core::mem::zeroed::<ScriptEchoRule>()
     }; 8];
@@ -5053,6 +5187,7 @@ pub unsafe extern "C" fn ScriptGame_EchoAddWithHandle(
     mut once: ::core::ffi::c_int,
     mut handle: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_EchoAddWithHandle");
     let mut r: ScriptEchoRule = unsafe { core::mem::zeroed::<ScriptEchoRule>() };
     let mut i: ::core::ffi::c_int = 0;
     let mut j: ::core::ffi::c_int = 0;
@@ -5128,6 +5263,7 @@ pub unsafe extern "C" fn ScriptGame_EchoAdd(
     mut element: ::core::ffi::c_int,
     mut once: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_EchoAdd");
     return ScriptGame_EchoAddWithHandle(
         entity,
         owner,
@@ -5146,6 +5282,7 @@ pub unsafe extern "C" fn ScriptGame_EchoRemove(
     mut handle: ::core::ffi::c_int,
     mut owner: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_EchoRemove");
     let mut i: ::core::ffi::c_int = 0;
     let mut j: ::core::ffi::c_int = 0;
     let mut k: ::core::ffi::c_int = 0;
@@ -5180,6 +5317,7 @@ pub unsafe extern "C" fn ScriptGame_EchoRemove(
     return 0 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_EchoClear(mut owner: ::core::ffi::c_int) {
+    melee_core::ct!("ScriptGame_EchoClear");
     let mut i: ::core::ffi::c_int = 0;
     let mut j: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
@@ -5201,6 +5339,7 @@ pub unsafe extern "C" fn ScriptGame_EchoClear(mut owner: ::core::ffi::c_int) {
     }
 }
 pub unsafe extern "C" fn ScriptGame_EchoReset() {
+    melee_core::ct!("ScriptGame_EchoReset");
     ScriptGame_EchoClear(0 as ::core::ffi::c_int);
     memset(
         &raw mut script_echo as *mut ::core::ffi::c_void,
@@ -5209,6 +5348,7 @@ pub unsafe extern "C" fn ScriptGame_EchoReset() {
     );
 }
 pub unsafe extern "C" fn ScriptGame_EchoFrame() {
+    melee_core::ct!("ScriptGame_EchoFrame");
     let mut i: ::core::ffi::c_int = 0;
     let mut j: ::core::ffi::c_int = 0;
     if script_echo.prepared == 0 {
@@ -5235,6 +5375,7 @@ pub unsafe extern "C" fn ScriptGame_EchoFrame() {
 pub unsafe extern "C" fn script_echo_live_owner(
     mut owner: *mut HSD_GObj,
 ) -> *mut Fighter {
+    melee_core::ct!("script_echo_live_owner");
     let mut g: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     if owner.is_null() {
         return ::core::ptr::null_mut::<Fighter>();
@@ -5256,6 +5397,7 @@ pub unsafe extern "C" fn script_echo_live_owner(
     return ::core::ptr::null_mut::<Fighter>();
 }
 pub unsafe extern "C" fn script_echo_body_actor(mut fp: *mut Fighter) -> *mut Fighter {
+    melee_core::ct!("script_echo_body_actor");
     let mut g: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     if (*fp).x1064_thrownHitbox.state as ::core::ffi::c_int
         != HitCapsule_Disabled as ::core::ffi::c_int
@@ -5277,6 +5419,7 @@ pub unsafe extern "C" fn script_echo_body_actor(mut fp: *mut Fighter) -> *mut Fi
     return ::core::ptr::null_mut::<Fighter>();
 }
 pub unsafe extern "C" fn ScriptGame_EchoCapture(mut fp: *mut Fighter) {
+    melee_core::ct!("ScriptGame_EchoCapture");
     let mut entity: ::core::ffi::c_int = script_echo_entity(fp);
     let mut i: ::core::ffi::c_int = 0;
     let mut j: ::core::ffi::c_int = 0;
@@ -5643,6 +5786,7 @@ pub unsafe extern "C" fn ScriptGame_EchoCapture(mut fp: *mut Fighter) {
     }
 }
 pub unsafe extern "C" fn ScriptGame_EchoPrepare() {
+    melee_core::ct!("ScriptGame_EchoPrepare");
     let mut g: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     if script_echo.prepared != 0 {
         return;
@@ -5657,6 +5801,7 @@ pub unsafe extern "C" fn ScriptGame_EchoPrepare() {
 pub unsafe extern "C" fn ScriptGame_EchoCapsuleCount(
     mut fp: *mut Fighter,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_EchoCapsuleCount");
     let mut entity: ::core::ffi::c_int = script_echo_entity(fp);
     let mut i: ::core::ffi::c_int = 0;
     if entity < 0 as ::core::ffi::c_int {
@@ -5675,6 +5820,7 @@ pub unsafe extern "C" fn ScriptGame_EchoCapsule(
     mut fp: *mut Fighter,
     mut index: ::core::ffi::c_int,
 ) -> *mut HitCapsule {
+    melee_core::ct!("ScriptGame_EchoCapsule");
     let mut entity: ::core::ffi::c_int = script_echo_entity(fp);
     if fp.is_null() || index < 0 as ::core::ffi::c_int {
         return ::core::ptr::null_mut::<HitCapsule>();
@@ -5697,6 +5843,7 @@ pub unsafe extern "C" fn ScriptGame_EchoCapsule(
 pub unsafe extern "C" fn ScriptGame_EchoIsCapsule(
     mut hit: *mut HitCapsule,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_EchoIsCapsule");
     let mut i: ::core::ffi::c_int = 0;
     let mut j: ::core::ffi::c_int = 0;
     let mut k: ::core::ffi::c_int = 0;
@@ -5737,6 +5884,7 @@ pub unsafe extern "C" fn ScriptGame_EchoIsCapsule(
 pub unsafe extern "C" fn script_echo_body_kind(
     mut hit: *mut HitCapsule,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_echo_body_kind");
     let mut i: ::core::ffi::c_int = 0;
     let mut j: ::core::ffi::c_int = 0;
     if ScriptGame_EchoIsCapsule(hit) == 0 {
@@ -5766,6 +5914,7 @@ pub unsafe extern "C" fn ScriptGame_EchoHitIndex(
     mut fp: *mut Fighter,
     mut hit: *mut HitCapsule,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_EchoHitIndex");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < 4 as ::core::ffi::c_int {
@@ -5783,6 +5932,7 @@ pub unsafe extern "C" fn ScriptGame_EchoConnected(
     mut hit: *mut HitCapsule,
     mut victim: *mut Fighter,
 ) {
+    melee_core::ct!("ScriptGame_EchoConnected");
     let mut i: ::core::ffi::c_int = 0;
     let mut j: ::core::ffi::c_int = 0;
     let mut k: ::core::ffi::c_int = 0;
@@ -5842,6 +5992,7 @@ pub unsafe extern "C" fn ScriptGame_EchoSameGroup(
     mut a: *mut HitCapsule,
     mut b: *mut HitCapsule,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_EchoSameGroup");
     return ((*a).x4 == (*b).x4
         && ScriptGame_EchoIsCapsule(a) == ScriptGame_EchoIsCapsule(b)
         && script_echo_body_kind(a) == script_echo_body_kind(b)) as ::core::ffi::c_int;
@@ -5850,6 +6001,7 @@ pub unsafe extern "C" fn ScriptGame_EchoTargetAllowed(
     mut source: *mut Fighter,
     mut target: *mut Fighter,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_EchoTargetAllowed");
     if source.is_null() || target.is_null() || source == target
         || (*source).player_id as ::core::ffi::c_int
             == (*target).player_id as ::core::ffi::c_int
@@ -5865,6 +6017,7 @@ pub unsafe extern "C" fn ScriptGame_EchoBlocked(
     mut hit: *mut HitCapsule,
     mut victim: *mut Fighter,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_EchoBlocked");
     let mut i: ::core::ffi::c_int = 0;
     let mut j: ::core::ffi::c_int = 0;
     let mut k: ::core::ffi::c_int = 0;
@@ -5902,6 +6055,7 @@ pub unsafe extern "C" fn ScriptGame_EchoState(
     mut handle: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_EchoState");
     let mut i: ::core::ffi::c_int = 0;
     let mut j: ::core::ffi::c_int = 0;
     if entity < 0 as ::core::ffi::c_int || entity >= 12 as ::core::ffi::c_int {
@@ -5950,6 +6104,7 @@ pub unsafe extern "C" fn ScriptGame_EchoReportContext(
     mut victim: *mut Fighter,
     mut hit: *mut HitCapsule,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_EchoReportContext");
     let mut entity: ::core::ffi::c_int = script_echo_entity(attacker);
     let mut i: ::core::ffi::c_int = 0;
     let mut j: ::core::ffi::c_int = 0;
@@ -6010,6 +6165,7 @@ pub unsafe extern "C" fn ScriptGame_EchoCredit(
     mut hit: *mut HitCapsule,
     mut damage: ::core::ffi::c_float,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_EchoCredit");
     let mut entity: ::core::ffi::c_int = script_echo_entity(attacker);
     let mut i: ::core::ffi::c_int = 0;
     let mut j: ::core::ffi::c_int = 0;
@@ -6056,6 +6212,7 @@ pub unsafe extern "C" fn ScriptGame_EchoSourceX(
     mut hit: *mut HitCapsule,
     mut fallback: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_EchoSourceX");
     let mut i: ::core::ffi::c_int = 0;
     let mut j: ::core::ffi::c_int = 0;
     let mut k: ::core::ffi::c_int = 0;
@@ -6103,6 +6260,7 @@ pub unsafe extern "C" fn ScriptGame_OnePI(
     mut field: ::core::ffi::c_int,
     mut slot: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_OnePI");
     if field == 0 as ::core::ffi::c_int {
         return gm_GetCurrentSceneIndex() as ::core::ffi::c_int
             >> 3 as ::core::ffi::c_int;
@@ -6116,6 +6274,7 @@ pub unsafe extern "C" fn ScriptGame_OnePI(
     return 0 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_OnePTemplatesClear() {
+    melee_core::ct!("ScriptGame_OnePTemplatesClear");
     memset(
         &raw mut script_onep_template as *mut ScriptOnePTemplate
             as *mut ::core::ffi::c_void,
@@ -6137,6 +6296,7 @@ pub unsafe extern "C" fn ScriptGame_OnePTemplate(
     mut g: ::core::ffi::c_int,
     mut h: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_OnePTemplate");
     let mut t: *mut ScriptOnePTemplate = ::core::ptr::null_mut::<ScriptOnePTemplate>();
     if slot < 0 as ::core::ffi::c_int || slot >= 6 as ::core::ffi::c_int
         || owner <= 0 as ::core::ffi::c_int
@@ -6182,6 +6342,7 @@ pub unsafe extern "C" fn ScriptGame_OnePTemplate(
     return 1 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_OnePSpawn(mut fp: *mut Fighter) {
+    melee_core::ct!("ScriptGame_OnePSpawn");
     let mut t: *mut ScriptOnePTemplate = ::core::ptr::null_mut::<ScriptOnePTemplate>();
     let mut slot: ::core::ffi::c_int = (*fp).player_id as ::core::ffi::c_int;
     if Script_OnePOffline() == 0 || slot < 0 as ::core::ffi::c_int
@@ -6227,6 +6388,7 @@ pub unsafe extern "C" fn ScriptGame_OnePSpawn(mut fp: *mut Fighter) {
     Script_OnePSpawn(slot, script_onep_generation[slot as usize]);
 }
 pub unsafe extern "C" fn ScriptGame_OnePTemplatesRelease(mut owner: ::core::ffi::c_int) {
+    melee_core::ct!("ScriptGame_OnePTemplatesRelease");
     let mut s: ::core::ffi::c_int = 0;
     s = 0 as ::core::ffi::c_int;
     while s < 6 as ::core::ffi::c_int {
@@ -6243,6 +6405,7 @@ pub unsafe extern "C" fn ScriptGame_OnePTemplatesRelease(mut owner: ::core::ffi:
     }
 }
 pub unsafe extern "C" fn ScriptGame_OnePTemplateTest() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_OnePTemplateTest");
     let mut saved: [ScriptOnePTemplate; 6] = [unsafe {
         core::mem::zeroed::<ScriptOnePTemplate>()
     }; 6];
@@ -6330,6 +6493,7 @@ pub unsafe extern "C" fn script_stage_same_file(
     mut a: *const ::core::ffi::c_char,
     mut b: *const ::core::ffi::c_char,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_stage_same_file");
     while *a as ::core::ffi::c_int != 0 && *b as ::core::ffi::c_int != 0 {
         let mut ac: ::core::ffi::c_int = *a as ::core::ffi::c_int;
         let mut bc: ::core::ffi::c_int = *b as ::core::ffi::c_int;
@@ -6348,6 +6512,7 @@ pub unsafe extern "C" fn script_stage_same_file(
     return (*a as ::core::ffi::c_int == *b as ::core::ffi::c_int) as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_StageEnd() {
+    melee_core::ct!("ScriptGame_StageEnd");
     ScriptGame_StageSlotsRelease(0 as ::core::ffi::c_int);
     Script_StageSlotsEnded();
     ScriptGame_VirtualPadRelease(-(1 as ::core::ffi::c_int), 0 as ::core::ffi::c_int);
@@ -6471,6 +6636,7 @@ pub unsafe extern "C" fn ScriptGame_StageEnd() {
 pub unsafe extern "C" fn script_stage_archive(
     mut file: *const ::core::ffi::c_char,
 ) -> *mut HSD_Archive {
+    melee_core::ct!("script_stage_archive");
     let mut i: ::core::ffi::c_int = 0;
     let mut entry: ::core::ffi::c_int = 0;
     let mut bytes: usize = 0;
@@ -6637,6 +6803,7 @@ pub static mut script_enemy_kinds: [::core::ffi::c_int; 7] = [
 pub unsafe extern "C" fn script_enemy_index(
     mut kind: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_enemy_index");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < SCRIPT_ENEMY_KINDS {
@@ -6650,6 +6817,7 @@ pub unsafe extern "C" fn script_enemy_index(
 pub unsafe extern "C" fn script_enemy_preload(
     mut which: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_enemy_preload");
     static mut files: [*const ::core::ffi::c_char; 3] = [
         b"/GrNKr.dat\0" as *const u8 as *const ::core::ffi::c_char,
         b"/GrNSr.dat\0" as *const u8 as *const ::core::ffi::c_char,
@@ -6779,6 +6947,7 @@ pub unsafe extern "C" fn script_enemy_preload(
     return script_stage.enemy_ready[which as usize];
 }
 pub unsafe extern "C" fn ScriptGame_StageGameplayScene() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageGameplayScene");
     if gm_804D6720.is_null() {
         return 0 as ::core::ffi::c_int;
     }
@@ -6790,6 +6959,7 @@ pub unsafe extern "C" fn ScriptGame_StageGameplayScene() -> ::core::ffi::c_int {
 pub unsafe extern "C" fn ScriptGame_StagePrepare(
     mut src: *mut MapCollData,
 ) -> *mut MapCollData {
+    melee_core::ct!("ScriptGame_StagePrepare");
     let mut dst: *mut MapCollData = ::core::ptr::null_mut::<MapCollData>();
     let mut i: ::core::ffi::c_int = 0;
     memset(
@@ -7028,6 +7198,7 @@ pub unsafe extern "C" fn script_box(
     mut cy: ::core::ffi::c_float,
     mut rgb: ::core::ffi::c_uint,
 ) {
+    melee_core::ct!("script_box");
     let mut m: Mtx = [[0.; 4]; 3];
     let mut mv: Mtx = [[0.; 4]; 3];
     let mut f: ::core::ffi::c_int = 0;
@@ -7095,6 +7266,7 @@ pub unsafe extern "C" fn script_mesh_order_bucket(
     mut background: ::core::ffi::c_int,
     mut order: *mut ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_mesh_order_bucket");
     let mut count: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     let mut i: ::core::ffi::c_int = 0;
     let mut n: ::core::ffi::c_int = 0;
@@ -7264,12 +7436,14 @@ pub unsafe extern "C" fn script_mesh_order(
     mut alpha: ::core::ffi::c_int,
     mut order: *mut ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_mesh_order");
     return script_mesh_order_bucket(view, alpha, 0 as ::core::ffi::c_int, order);
 }
 pub unsafe extern "C" fn script_mesh_render(
     mut view: *mut [::core::ffi::c_float; 4],
     mut alpha: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("script_mesh_render");
     let mut order: [::core::ffi::c_int; 256] = [0; 256];
     let mut i: ::core::ffi::c_int = 0;
     let mut count: ::core::ffi::c_int = script_mesh_order(
@@ -7289,6 +7463,7 @@ pub unsafe extern "C" fn script_stage_render_pass(
     mut camera_mode: ::core::ffi::c_int,
     mut code: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_stage_render_pass");
     return (camera_mode == 2 as ::core::ffi::c_int
         && (code == 0 as ::core::ffi::c_int || code == 2 as ::core::ffi::c_int)
         || camera_mode == 3 as ::core::ffi::c_int && code == 2 as ::core::ffi::c_int)
@@ -7299,6 +7474,7 @@ pub unsafe extern "C" fn script_background_render_pass(
     mut main_camera: ::core::ffi::c_int,
     mut fighter_phase: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_background_render_pass");
     return (code == 0 as ::core::ffi::c_int && main_camera != 0
         && fighter_phase == 0 as ::core::ffi::c_int) as ::core::ffi::c_int;
 }
@@ -7306,6 +7482,7 @@ pub unsafe extern "C" fn script_stage_render(
     mut gobj: *mut HSD_GObj,
     mut code: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("script_stage_render");
     let mut view: Mtx = [[0.; 4]; 3];
     let mut tev: HSD_TevDesc = unsafe { core::mem::zeroed::<_HSD_TevDesc>() };
     let mut i: ::core::ffi::c_int = 0;
@@ -7519,6 +7696,7 @@ pub unsafe extern "C" fn script_stage_model_render(
     mut gobj: *mut HSD_GObj,
     mut code: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("script_stage_model_render");
     if Wb_RenderOption(WB_RENDER_STAGE as ::core::ffi::c_int, script_stage_geometry) == 0
         || gx_suppress_draws != 0
     {
@@ -7531,6 +7709,7 @@ pub unsafe extern "C" fn script_background_render(
     mut gobj: *mut HSD_GObj,
     mut code: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("script_background_render");
     let mut view: Mtx = [[0.; 4]; 3];
     let mut alpha: ::core::ffi::c_int = 0;
     let mut i: ::core::ffi::c_int = 0;
@@ -7584,6 +7763,7 @@ pub unsafe extern "C" fn script_background_render(
     HSD_StateInvalidate(-(1 as ::core::ffi::c_int));
 }
 pub unsafe extern "C" fn script_stage_draw_init() {
+    melee_core::ct!("script_stage_draw_init");
     let mut i: ::core::ffi::c_int = 0;
     let mut k: ::core::ffi::c_int = 0;
     let mut p: *mut ::core::ffi::c_float = HSD_MemAlloc(
@@ -7637,9 +7817,11 @@ pub unsafe extern "C" fn script_stage_draw_init() {
     }
 }
 pub unsafe extern "C" fn ScriptGame_StageSetDraw(mut on: ::core::ffi::c_int) {
+    melee_core::ct!("ScriptGame_StageSetDraw");
     script_stage_geometry = (on != 0 as ::core::ffi::c_int) as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_StageReady() {
+    melee_core::ct!("ScriptGame_StageReady");
     let mut map: *mut MapCollData = script_stage.map;
     let mut cv: *mut CollVtx = mpGetGroundCollVtx();
     let mut cl: *mut CollLine = mpGetGroundCollLine();
@@ -7737,6 +7919,7 @@ pub unsafe extern "C" fn ScriptGame_StageReady() {
 }
 pub const SCRIPT_STAGE_SEAM_EPS: ::core::ffi::c_float = 0.05f32;
 pub unsafe extern "C" fn script_stage_seam_current() -> ::core::ffi::c_int {
+    melee_core::ct!("script_stage_seam_current");
     return (!script_stage.map.is_null() && mpLib_8004D164() == script_stage.map
         && script_stage.cap > 0 as ::core::ffi::c_int
         && script_stage.cap <= SCRIPT_STAGE_LINES
@@ -7750,6 +7933,7 @@ pub unsafe extern "C" fn script_stage_seam_current() -> ::core::ffi::c_int {
 pub unsafe extern "C" fn script_stage_seam_slot(
     mut handle: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_stage_seam_slot");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < script_stage.cap {
@@ -7767,6 +7951,7 @@ pub unsafe extern "C" fn script_stage_seam_touch(
     mut left: ::core::ffi::c_int,
     mut right: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_stage_seam_touch");
     let mut a: *mut MapLine = (*script_stage.map)
         .lines
         .offset((script_stage.base_l + left) as isize) as *mut MapLine;
@@ -7799,6 +7984,7 @@ pub unsafe extern "C" fn script_stage_seam_endpoint_valid(
     mut slot: ::core::ffi::c_int,
     mut next: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_stage_seam_endpoint_valid");
     let mut index: ::core::ffi::c_int = script_stage.base_l + slot;
     let mut other: ::core::ffi::c_int = 0;
     let mut line: *mut MapLine = (*script_stage.map).lines.offset(index as isize)
@@ -7864,6 +8050,7 @@ pub unsafe extern "C" fn script_stage_seam_endpoint_valid(
     };
 }
 pub unsafe extern "C" fn script_stage_seam_refresh_area(mut area: ::core::ffi::c_int) {
+    melee_core::ct!("script_stage_seam_refresh_area");
     let mut i: ::core::ffi::c_int = 0;
     mpScriptBatchBegin();
     i = 0 as ::core::ffi::c_int;
@@ -7881,12 +8068,14 @@ pub unsafe extern "C" fn script_stage_seam_refresh_area(mut area: ::core::ffi::c
     mpScriptInvalidateBounding();
 }
 pub unsafe extern "C" fn script_stage_seam_refresh() {
+    melee_core::ct!("script_stage_seam_refresh");
     script_stage_seam_refresh_area(-(1 as ::core::ffi::c_int));
 }
 pub unsafe extern "C" fn script_stage_seam_unlink_endpoint(
     mut slot: ::core::ffi::c_int,
     mut next: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_stage_seam_unlink_endpoint");
     let mut i: ::core::ffi::c_int = 0;
     let mut changed: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     let mut index: ::core::ffi::c_int = script_stage.base_l + slot;
@@ -7936,6 +8125,7 @@ pub unsafe extern "C" fn script_stage_seam_unlink_endpoint(
 pub unsafe extern "C" fn script_stage_seam_clear(
     mut slot: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_stage_seam_clear");
     let mut changed: ::core::ffi::c_int = script_stage_seam_unlink_endpoint(
         slot,
         0 as ::core::ffi::c_int,
@@ -7944,6 +8134,7 @@ pub unsafe extern "C" fn script_stage_seam_clear(
         || changed != 0) as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn script_stage_seam_moved(mut slot: ::core::ffi::c_int) {
+    melee_core::ct!("script_stage_seam_moved");
     let mut line: *mut MapLine = (*script_stage.map)
         .lines
         .offset((script_stage.base_l + slot) as isize) as *mut MapLine;
@@ -7999,6 +8190,7 @@ pub unsafe extern "C" fn ScriptGame_StageLink(
     mut handle_b: ::core::ffi::c_int,
     mut owner: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageLink");
     let mut a: ::core::ffi::c_int = 0;
     let mut b: ::core::ffi::c_int = 0;
     let mut left: ::core::ffi::c_int = 0;
@@ -8113,6 +8305,7 @@ pub unsafe extern "C" fn ScriptGame_StageAddLine(
     mut flags: ::core::ffi::c_int,
     mut handle: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageAddLine");
     let mut u: Anon_anon_102 = unsafe { core::mem::zeroed::<Anon_anon_102>() };
     let mut x0: ::core::ffi::c_float = 0.;
     let mut y0: ::core::ffi::c_float = 0.;
@@ -8255,6 +8448,7 @@ pub unsafe extern "C" fn ScriptGame_StageAddLine(
 pub unsafe extern "C" fn ScriptGame_StageRemove(
     mut handle: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageRemove");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < SCRIPT_STAGE_MODELS {
@@ -8348,6 +8542,7 @@ pub unsafe extern "C" fn script_stage_line_set(
     mut x1: ::core::ffi::c_float,
     mut y1: ::core::ffi::c_float,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_stage_line_set");
     let mut i: ::core::ffi::c_int = 0;
     if script_stage_seam_current() == 0 {
         return 0 as ::core::ffi::c_int;
@@ -8407,6 +8602,7 @@ pub unsafe extern "C" fn ScriptGame_StageMove(
     mut xb: ::core::ffi::c_int,
     mut yb: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageMove");
     let mut u: Anon_anon_102 = unsafe { core::mem::zeroed::<Anon_anon_102>() };
     let mut x: ::core::ffi::c_float = 0.;
     let mut y: ::core::ffi::c_float = 0.;
@@ -8485,6 +8681,7 @@ pub unsafe extern "C" fn ScriptGame_ModelRef(
     mut token: ::core::ffi::c_int,
     mut delta: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ModelRef");
     if asset < 0 as ::core::ffi::c_int || asset >= SCRIPT_MESH_ASSETS {
         return 0 as ::core::ffi::c_int;
     }
@@ -8519,6 +8716,7 @@ pub unsafe extern "C" fn ScriptGame_ModelRefOwned(
     mut owner: ::core::ffi::c_int,
     mut delta: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ModelRefOwned");
     let mut i: ::core::ffi::c_int = 0;
     let mut free_slot: ::core::ffi::c_int = -(1 as ::core::ffi::c_int);
     if owner <= 0 as ::core::ffi::c_int || asset < 0 as ::core::ffi::c_int
@@ -8573,6 +8771,7 @@ pub unsafe extern "C" fn ScriptGame_ModelRefOwned(
     return 1 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn script_model_release_owner_refs(mut owner: ::core::ffi::c_int) {
+    melee_core::ct!("script_model_release_owner_refs");
     let mut i: ::core::ffi::c_int = 0;
     let mut j: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
@@ -8594,6 +8793,7 @@ pub unsafe extern "C" fn script_model_release_owner_refs(mut owner: ::core::ffi:
 pub unsafe extern "C" fn ScriptGame_ModelSlot(
     mut handle: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ModelSlot");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < SCRIPT_MESH_INSTANCES {
@@ -8611,6 +8811,7 @@ pub unsafe extern "C" fn ScriptGame_ModelField(
     mut slot: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ModelField");
     let mut m: *mut ScriptMeshInstance = ::core::ptr::null_mut::<ScriptMeshInstance>();
     if slot < 0 as ::core::ffi::c_int || slot >= SCRIPT_MESH_INSTANCES {
         return 0 as ::core::ffi::c_int;
@@ -8646,6 +8847,7 @@ pub unsafe extern "C" fn ScriptGame_ModelField(
 pub unsafe extern "C" fn ScriptGame_ModelLineOwner(
     mut handle: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ModelLineOwner");
     let mut i: ::core::ffi::c_int = 0;
     let mut j: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
@@ -8670,6 +8872,7 @@ pub unsafe extern "C" fn script_mesh_points(
     mut m: *mut ScriptMeshInstance,
     mut points: *mut [::core::ffi::c_float; 4],
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_mesh_points");
     let mut rot: ::core::ffi::c_float = script_mesh_float(
         (*m).field[SM_ROT as ::core::ffi::c_int as usize],
     ) * 0.017453292519943295f32;
@@ -8771,6 +8974,7 @@ pub unsafe extern "C" fn ScriptGame_ModelSpawn(
     mut count: ::core::ffi::c_int,
     mut first_line: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ModelSpawn");
     let mut candidate: ScriptMeshInstance = unsafe {
         core::mem::zeroed::<ScriptMeshInstance>()
     };
@@ -8936,6 +9140,7 @@ pub unsafe extern "C" fn ScriptGame_ModelSpawn(
 pub unsafe extern "C" fn ScriptGame_ModelSet(
     mut handle: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ModelSet");
     let mut slot: ::core::ffi::c_int = ScriptGame_ModelSlot(handle);
     let mut i: ::core::ffi::c_int = 0;
     let mut candidate: ScriptMeshInstance = unsafe {
@@ -9036,6 +9241,7 @@ pub unsafe extern "C" fn ScriptGame_ModelSet(
 pub unsafe extern "C" fn ScriptGame_ModelDespawn(
     mut handle: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ModelDespawn");
     let mut slot: ::core::ffi::c_int = 0;
     let mut i: ::core::ffi::c_int = 0;
     let mut m: *mut ScriptMeshInstance = ::core::ptr::null_mut::<ScriptMeshInstance>();
@@ -9092,6 +9298,7 @@ pub unsafe extern "C" fn ScriptGame_StageResourceAccess(
     mut handle: ::core::ffi::c_int,
     mut owner: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageResourceAccess");
     let mut i: ::core::ffi::c_int = 0;
     let mut found: ::core::ffi::c_int = -(1 as ::core::ffi::c_int);
     i = 0 as ::core::ffi::c_int;
@@ -9141,6 +9348,7 @@ pub unsafe extern "C" fn ScriptGame_StageResourceAccess(
 pub unsafe extern "C" fn ScriptGame_StageReleaseOwner(
     mut owner: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageReleaseOwner");
     let mut i: ::core::ffi::c_int = 0;
     let mut remaining: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     if owner <= 0 as ::core::ffi::c_int {
@@ -9223,6 +9431,7 @@ pub unsafe extern "C" fn ScriptGame_StageReleaseOwner(
     return remaining;
 }
 pub unsafe extern "C" fn ScriptGame_StageReleaseDeadOwners() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageReleaseDeadOwners");
     let mut owners: [::core::ffi::c_int; 1280] = [0; 1280];
     let mut i: ::core::ffi::c_int = 0;
     let mut j: ::core::ffi::c_int = 0;
@@ -9346,6 +9555,7 @@ pub unsafe extern "C" fn ScriptGame_StageReleaseDeadOwners() -> ::core::ffi::c_i
 pub unsafe extern "C" fn ScriptGame_ModelOwnerTestFixture(
     mut on: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ModelOwnerTestFixture");
     static mut active: ::core::ffi::c_int = 0;
     let mut i: ::core::ffi::c_int = 0;
     if !script_stage.map.is_null() || script_stage.cap != 0 {
@@ -9428,6 +9638,7 @@ pub unsafe extern "C" fn script_stage_joint(
     mut joint: *mut HSD_Joint,
     mut index: *mut ::core::ffi::c_int,
 ) -> *mut HSD_Joint {
+    melee_core::ct!("script_stage_joint");
     let mut found: *mut HSD_Joint = ::core::ptr::null_mut::<HSD_Joint>();
     if joint.is_null() {
         return ::core::ptr::null_mut::<HSD_Joint>();
@@ -9446,6 +9657,7 @@ pub unsafe extern "C" fn script_stage_joint(
 pub unsafe extern "C" fn script_stage_has_instance(
     mut joint: *mut HSD_Joint,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_stage_has_instance");
     while !joint.is_null() {
         if (*joint).flags & JOBJ_INSTANCE as ::core::ffi::c_uint != 0
             || script_stage_has_instance((*joint).child as *mut HSD_Joint) != 0
@@ -9461,6 +9673,7 @@ pub unsafe extern "C" fn script_stage_text(
     mut dst: *mut ::core::ffi::c_char,
     mut cap: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_stage_text");
     let mut i: ::core::ffi::c_int = 0;
     let mut c: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
@@ -9491,6 +9704,7 @@ pub unsafe extern "C" fn ScriptGame_StageAddModel(
     mut rb: ::core::ffi::c_int,
     mut handle: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageAddModel");
     let mut u: Anon_anon_102 = unsafe { core::mem::zeroed::<Anon_anon_102>() };
     let mut file: [::core::ffi::c_char; 260] = [0; 260];
     let mut symbol: [::core::ffi::c_char; 64] = [0; 64];
@@ -9648,6 +9862,7 @@ pub unsafe extern "C" fn ScriptGame_StageAttachModel(
     mut model_handle: ::core::ffi::c_int,
     mut line_handle: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageAttachModel");
     let mut i: ::core::ffi::c_int = 0;
     let mut k: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
@@ -9688,6 +9903,7 @@ pub unsafe extern "C" fn ScriptGame_StageAttachModel(
 pub unsafe extern "C" fn ScriptGame_ProfEnemy(
     mut gobj: *mut HSD_GObj,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ProfEnemy");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < SCRIPT_STAGE_ENEMIES {
@@ -9701,6 +9917,7 @@ pub unsafe extern "C" fn ScriptGame_ProfEnemy(
     return 0 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn script_enemy_sample(mut e: *mut ScriptStageEnemy) {
+    melee_core::ct!("script_enemy_sample");
     let mut ip: *mut Item = HSD_GObjGetUserData((*e).gobj as *mut HSD_GObj) as *mut Item;
     let mut k: ::core::ffi::c_int = 0;
     let mut mask: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -9722,6 +9939,7 @@ pub unsafe extern "C" fn script_enemy_sample(mut e: *mut ScriptStageEnemy) {
     (*e).active_hits = mask;
 }
 pub unsafe extern "C" fn ScriptGame_StageFrame() {
+    melee_core::ct!("ScriptGame_StageFrame");
     if ProfActive() != 0 {
         ProfBegin(GW_PROF_STAGE as ::core::ffi::c_int, 0 as ::core::ffi::c_int);
     }
@@ -9779,6 +9997,7 @@ pub unsafe extern "C" fn ScriptGame_StageLineI(
     mut i: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageLineI");
     if i < 0 as ::core::ffi::c_int || i >= SCRIPT_STAGE_LINES
         || script_stage.line[i as usize].active == 0
         || ScriptGame_AreaVisible(script_stage.line[i as usize].area) == 0
@@ -9795,6 +10014,7 @@ pub unsafe extern "C" fn ScriptGame_StageLineF(
     mut i: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("ScriptGame_StageLineF");
     let mut s: *mut ScriptStageLine = ::core::ptr::null_mut::<ScriptStageLine>();
     if i < 0 as ::core::ffi::c_int || i >= SCRIPT_STAGE_LINES
         || script_stage.line[i as usize].active == 0
@@ -9842,6 +10062,7 @@ pub static mut script_target_article: Article = unsafe {
     }
 };
 pub unsafe extern "C" fn script_target_register() -> ::core::ffi::c_int {
+    melee_core::ct!("script_target_register");
     let mut archive: *mut HSD_Archive = ::core::ptr::null_mut::<HSD_Archive>();
     let mut items: *mut *mut GroundItemData = ::core::ptr::null_mut::<
         *mut GroundItemData,
@@ -9903,6 +10124,7 @@ pub unsafe extern "C" fn script_target_register() -> ::core::ffi::c_int {
 pub unsafe extern "C" fn ScriptGame_StageJoint(
     mut joint_id: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageJoint");
     return (!script_stage.map.is_null() && joint_id >= script_stage.base_j
         && joint_id < script_stage.base_j + script_stage.cap) as ::core::ffi::c_int;
 }
@@ -9911,6 +10133,7 @@ pub unsafe extern "C" fn ScriptGame_SpawnTarget(
     mut yb: ::core::ffi::c_int,
     mut handle: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_SpawnTarget");
     let mut u: Anon_anon_102 = unsafe { core::mem::zeroed::<Anon_anon_102>() };
     let mut pos: Vec = unsafe { core::mem::zeroed::<Vec>() };
     let mut gobj: *mut Item_GObj = ::core::ptr::null_mut::<Item_GObj>();
@@ -9976,6 +10199,7 @@ pub unsafe extern "C" fn ScriptGame_SpawnTarget(
 pub unsafe extern "C" fn ScriptGame_TargetPin(
     mut gobj: *mut Item_GObj,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_TargetPin");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < SCRIPT_STAGE_TARGETS {
@@ -10000,6 +10224,7 @@ pub unsafe extern "C" fn ScriptGame_TargetPin(
 pub unsafe extern "C" fn ScriptGame_TargetDestroyed(
     mut gobj: *mut Item_GObj,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_TargetDestroyed");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < SCRIPT_STAGE_TARGETS {
@@ -10032,6 +10257,7 @@ pub unsafe extern "C" fn ScriptGame_TargetDestroyed(
 pub unsafe extern "C" fn ScriptGame_StageTargetI(
     mut i: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageTargetI");
     return (i >= 0 as ::core::ffi::c_int && i < SCRIPT_STAGE_TARGETS
         && script_stage.target[i as usize].active != 0) as ::core::ffi::c_int;
 }
@@ -10042,6 +10268,7 @@ pub unsafe extern "C" fn ScriptGame_SpawnEnemy(
     mut facing: ::core::ffi::c_int,
     mut handle: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_SpawnEnemy");
     let mut u: Anon_anon_102 = unsafe { core::mem::zeroed::<Anon_anon_102>() };
     let mut pos: Vec = unsafe { core::mem::zeroed::<Vec>() };
     let mut gobj: *mut Item_GObj = ::core::ptr::null_mut::<Item_GObj>();
@@ -10151,6 +10378,7 @@ pub unsafe extern "C" fn script_enemy_terminal(
     mut e: *mut ScriptStageEnemy,
     mut reason: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("script_enemy_terminal");
     if (*e).defeated != 0 {
         return;
     }
@@ -10185,6 +10413,7 @@ pub unsafe extern "C" fn script_enemy_terminal(
 pub unsafe extern "C" fn ScriptGame_EnemyStatus(
     mut handle: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_EnemyStatus");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < SCRIPT_STAGE_ENEMIES {
@@ -10206,6 +10435,7 @@ pub unsafe extern "C" fn ScriptGame_EnemyStatus(
 pub unsafe extern "C" fn script_enemy(
     mut handle: ::core::ffi::c_int,
 ) -> *mut ScriptStageEnemy {
+    melee_core::ct!("script_enemy");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < SCRIPT_STAGE_ENEMIES {
@@ -10222,6 +10452,7 @@ pub unsafe extern "C" fn script_enemy(
 pub unsafe extern "C" fn ScriptGame_EnemyAlive(
     mut handle: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_EnemyAlive");
     return (script_enemy(handle) != ::core::ptr::null_mut::<ScriptStageEnemy>())
         as ::core::ffi::c_int;
 }
@@ -10229,6 +10460,7 @@ pub unsafe extern "C" fn ScriptGame_EnemyI(
     mut handle: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_EnemyI");
     let mut e: *mut ScriptStageEnemy = script_enemy(handle);
     let mut ip: *mut Item = ::core::ptr::null_mut::<Item>();
     if e.is_null() {
@@ -10263,6 +10495,7 @@ pub unsafe extern "C" fn ScriptGame_EnemyF(
     mut handle: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("ScriptGame_EnemyF");
     let mut e: *mut ScriptStageEnemy = script_enemy(handle);
     let mut ip: *mut Item = ::core::ptr::null_mut::<Item>();
     if e.is_null() {
@@ -10284,6 +10517,7 @@ pub unsafe extern "C" fn ScriptGame_EnemyContact(
     mut victim: ::core::ffi::c_int,
     mut group: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_EnemyContact");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < SCRIPT_STAGE_ENEMIES {
@@ -10317,6 +10551,7 @@ pub unsafe extern "C" fn ScriptGame_EnemyReceived(
     mut source: *mut Fighter_GObj,
     mut damage: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("ScriptGame_EnemyReceived");
     let mut i: ::core::ffi::c_int = 0;
     let mut fp: *mut Fighter = if !source.is_null() {
         HSD_GObjGetUserData(source as *mut HSD_GObj) as *mut Fighter
@@ -10348,6 +10583,7 @@ pub unsafe extern "C" fn ScriptGame_EnemyReceived(
 pub unsafe extern "C" fn ScriptGame_EnemyRemove(
     mut handle: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_EnemyRemove");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < SCRIPT_STAGE_ENEMIES {
@@ -10374,6 +10610,7 @@ pub unsafe extern "C" fn ScriptGame_EnemyRemove(
 pub unsafe extern "C" fn ScriptGame_EnemyDefeated(
     mut gobj: *mut Item_GObj,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_EnemyDefeated");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < SCRIPT_STAGE_ENEMIES {
@@ -10395,6 +10632,7 @@ pub unsafe extern "C" fn ScriptGame_EnemyDefeated(
 pub unsafe extern "C" fn ScriptGame_EnemyDestroyed(
     mut gobj: *mut Item_GObj,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_EnemyDestroyed");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < SCRIPT_STAGE_ENEMIES {
@@ -10416,6 +10654,7 @@ pub unsafe extern "C" fn ScriptGame_StageTargetF(
     mut i: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("ScriptGame_StageTargetF");
     if ScriptGame_StageTargetI(i) == 0 {
         return 0 as ::core::ffi::c_int as ::core::ffi::c_float;
     }
@@ -10426,6 +10665,7 @@ pub unsafe extern "C" fn ScriptGame_StageTargetF(
     };
 }
 pub unsafe extern "C" fn script_item(mut index: ::core::ffi::c_int) -> *mut Item {
+    melee_core::ct!("script_item");
     let mut g: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     if index < 0 as ::core::ffi::c_int || HSD_GObjPLinkHead.is_null() {
         return ::core::ptr::null_mut::<Item>();
@@ -10442,6 +10682,7 @@ pub unsafe extern "C" fn script_item(mut index: ::core::ffi::c_int) -> *mut Item
     return ::core::ptr::null_mut::<Item>();
 }
 pub unsafe extern "C" fn ScriptGame_ItemCount() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ItemCount");
     let mut g: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     let mut n: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     if !HSD_GObjPLinkHead.is_null() {
@@ -10457,6 +10698,7 @@ pub unsafe extern "C" fn ScriptGame_ItemI(
     mut index: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ItemI");
     let mut ip: *mut Item = script_item(index);
     let mut p: ::core::ffi::c_int = 0;
     let mut a: ::core::ffi::c_int = 0;
@@ -10516,6 +10758,7 @@ pub unsafe extern "C" fn ScriptGame_ItemF(
     mut index: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("ScriptGame_ItemF");
     let mut ip: *mut Item = script_item(index);
     if ip.is_null() {
         return 0.0f32;
@@ -10534,6 +10777,7 @@ pub unsafe extern "C" fn ScriptGame_ItemF(
 pub unsafe extern "C" fn script_gobj_live(
     mut gobj: *mut HSD_GObj,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_gobj_live");
     let mut cur: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     if gobj.is_null() || HSD_GObjPLinkHead.is_null() {
         return 0 as ::core::ffi::c_int;
@@ -10548,6 +10792,7 @@ pub unsafe extern "C" fn script_gobj_live(
     return 0 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn script_fighter(mut slot: ::core::ffi::c_int) -> *mut Fighter {
+    melee_core::ct!("script_fighter");
     let mut gobj: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     if slot < 0 as ::core::ffi::c_int || slot >= 6 as ::core::ffi::c_int {
         return ::core::ptr::null_mut::<Fighter>();
@@ -10566,6 +10811,7 @@ pub unsafe extern "C" fn script_bench_refused(
     mut owned: ::core::ffi::c_int,
     mut dormant: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_bench_refused");
     let mut ms: ::core::ffi::c_int = 0;
     if fp.is_null() || (*fp).x890_cameraBox.is_null() {
         return 1 as ::core::ffi::c_int;
@@ -10623,6 +10869,7 @@ pub unsafe extern "C" fn script_bench_save(
     mut fp: *mut Fighter,
     mut dormant: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("script_bench_save");
     (*e).fighter = fp;
     (*e).dormant = dormant;
     (*e).cpu = (*fp).cpu;
@@ -10638,6 +10885,7 @@ pub unsafe extern "C" fn script_bench_save(
     (*e).camera_framed = (*(*fp).x890_cameraBox).was_framed() as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn script_bench_assert(mut fp: *mut Fighter) {
+    melee_core::ct!("script_bench_assert");
     (*fp).set_x221F_b3(1 as ::core::ffi::c_uchar as ::core::ffi::c_uchar);
     (*fp).cpu.kind = CpuKind_5;
     (*fp).set_invisible(1 as ::core::ffi::c_uchar as ::core::ffi::c_uchar);
@@ -10653,6 +10901,7 @@ pub unsafe extern "C" fn script_bench_target_live(
     mut target: *mut ::core::ffi::c_void,
     mut plink: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_bench_target_live");
     let mut live: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     if target.is_null() {
         return 1 as ::core::ffi::c_int;
@@ -10673,6 +10922,7 @@ pub unsafe extern "C" fn script_bench_restore(
     mut e: *mut ScriptBenchEntity,
     mut fp: *mut Fighter,
 ) {
+    melee_core::ct!("script_bench_restore");
     let mut lost: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     (*fp).cpu = (*e).cpu;
     if script_bench_target_live(
@@ -10748,6 +10998,7 @@ pub unsafe extern "C" fn script_bench_restore(
         );
 }
 pub unsafe extern "C" fn script_bench_cpu_changed(mut fp: *mut Fighter) {
+    melee_core::ct!("script_bench_cpu_changed");
     let mut slot: ::core::ffi::c_int = (*fp).player_id as ::core::ffi::c_int;
     let mut i: ::core::ffi::c_int = 0;
     if slot < 0 as ::core::ffi::c_int || slot >= 6 as ::core::ffi::c_int
@@ -10770,6 +11021,7 @@ pub unsafe extern "C" fn script_bench_pair(
     mut pair: *mut *mut Fighter,
     mut dormant: *mut ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_bench_pair");
     let mut gobj: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     let ref mut fresh36 = *pair.offset(0 as ::core::ffi::c_int as isize);
     *fresh36 = script_fighter(slot);
@@ -10819,6 +11071,7 @@ pub unsafe extern "C" fn ScriptGame_FighterBenchCheck(
     mut owner: ::core::ffi::c_int,
     mut calling: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_FighterBenchCheck");
     let mut pair: [*mut Fighter; 2] = [::core::ptr::null_mut::<Fighter>(); 2];
     let mut dormant: [::core::ffi::c_int; 2] = [0; 2];
     let mut i: ::core::ffi::c_int = 0;
@@ -10867,6 +11120,7 @@ pub unsafe extern "C" fn ScriptGame_FighterBenchCheck(
 pub unsafe extern "C" fn ScriptGame_FighterBenched(
     mut slot: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_FighterBenched");
     return (slot >= 0 as ::core::ffi::c_int && slot < 6 as ::core::ffi::c_int
         && script_bench[slot as usize].owner != 0 as ::core::ffi::c_int)
         as ::core::ffi::c_int;
@@ -10877,6 +11131,7 @@ pub unsafe extern "C" fn script_bench_entity_read(
     mut dormant: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_bench_entity_read");
     if fp.is_null() {
         return 0 as ::core::ffi::c_int;
     }
@@ -10913,6 +11168,7 @@ pub unsafe extern "C" fn ScriptGame_FighterReserveRead(
     mut entity: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_FighterReserveRead");
     let mut fp: *mut Fighter = ::core::ptr::null_mut::<Fighter>();
     let mut primary: *mut Fighter = ::core::ptr::null_mut::<Fighter>();
     let mut gobj: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
@@ -10961,6 +11217,7 @@ pub unsafe extern "C" fn ScriptGame_FighterBench(
     mut slot: ::core::ffi::c_int,
     mut owner: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_FighterBench");
     let mut result: ::core::ffi::c_int = 0;
     if ProfActive() != 0 {
         ProfBegin(
@@ -10976,6 +11233,7 @@ pub unsafe extern "C" fn ScriptGame_FighterBench_profile_body(
     mut slot: ::core::ffi::c_int,
     mut owner: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_FighterBench_profile_body");
     let mut pair: [*mut Fighter; 2] = [::core::ptr::null_mut::<Fighter>(); 2];
     let mut dormant: [::core::ffi::c_int; 2] = [0; 2];
     let mut i: ::core::ffi::c_int = 0;
@@ -11040,6 +11298,7 @@ pub unsafe extern "C" fn ScriptGame_FighterBench_profile_body(
 pub unsafe extern "C" fn ScriptGame_FighterBenchTick(
     mut fp: *mut Fighter,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_FighterBenchTick");
     let mut slot: ::core::ffi::c_int = (*fp).player_id as ::core::ffi::c_int;
     let mut i: ::core::ffi::c_int = 0;
     if slot < 0 as ::core::ffi::c_int || slot >= 6 as ::core::ffi::c_int
@@ -11065,6 +11324,7 @@ pub unsafe extern "C" fn script_bench_floor(
     mut flags: *mut ::core::ffi::c_uint,
     mut n: *mut Vec,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_bench_floor");
     return mpCheckFloor(
         x,
         y + 0.5f32,
@@ -11083,6 +11343,7 @@ pub unsafe extern "C" fn script_bench_floor(
     ) as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn script_bench_fall(mut fp: *mut Fighter) {
+    melee_core::ct!("script_bench_fall");
     ftCo_Fall_Enter((*fp).gobj as *mut Fighter_GObj);
 }
 pub static mut script_bench_ops: ScriptBenchOps = unsafe {
@@ -11105,6 +11366,7 @@ pub static mut script_bench_ops: ScriptBenchOps = unsafe {
     }
 };
 pub unsafe extern "C" fn script_bench_clean(mut fp: *mut Fighter) {
+    melee_core::ct!("script_bench_clean");
     ftCommon_8007E2FC((*fp).gobj as *mut Fighter_GObj);
     (*fp).xF8_playerNudgeVel.y = 0 as ::core::ffi::c_int as ::core::ffi::c_float;
     (*fp).xF8_playerNudgeVel.x = (*fp).xF8_playerNudgeVel.y;
@@ -11132,6 +11394,7 @@ pub unsafe extern "C" fn script_bench_place(
     mut intangible: ::core::ffi::c_int,
     mut ops: *const ScriptBenchOps,
 ) {
+    melee_core::ct!("script_bench_place");
     let mut pos: Vec = (*fp).cur_pos;
     let mut normal: Vec = unsafe { core::mem::zeroed::<Vec>() };
     let mut floor: ::core::ffi::c_int = -(1 as ::core::ffi::c_int);
@@ -11173,6 +11436,7 @@ pub unsafe extern "C" fn ScriptGame_FighterCall(
     mut fb: ::core::ffi::c_int,
     mut intangible: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_FighterCall");
     let mut result: ::core::ffi::c_int = 0;
     if ProfActive() != 0 {
         ProfBegin(
@@ -11192,6 +11456,7 @@ pub unsafe extern "C" fn ScriptGame_FighterCall_profile_body(
     mut fb: ::core::ffi::c_int,
     mut intangible: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_FighterCall_profile_body");
     let mut b: *mut ScriptBench = ::core::ptr::null_mut::<ScriptBench>();
     let mut i: ::core::ffi::c_int = 0;
     let mut rc: ::core::ffi::c_int = 0;
@@ -11268,6 +11533,7 @@ pub unsafe extern "C" fn ScriptGame_FighterCall_profile_body(
     return 0 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_FighterBenchRelease(mut owner: ::core::ffi::c_int) {
+    melee_core::ct!("ScriptGame_FighterBenchRelease");
     let mut slot: ::core::ffi::c_int = 0;
     let mut i: ::core::ffi::c_int = 0;
     slot = 0 as ::core::ffi::c_int;
@@ -11312,6 +11578,7 @@ pub unsafe extern "C" fn ScriptGame_FighterBenchRelease(mut owner: ::core::ffi::
     }
 }
 pub unsafe extern "C" fn script_bench_frame() {
+    melee_core::ct!("script_bench_frame");
     let mut gobj: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     if HSD_GObjPLinkHead.is_null() {
         return;
@@ -11333,6 +11600,7 @@ pub unsafe extern "C" fn script_bench_test_floor(
     mut flags: *mut ::core::ffi::c_uint,
     mut n: *mut Vec,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_bench_test_floor");
     (*p).x = x as ::core::ffi::c_float;
     (*p).y = (y - 0.25f32) as ::core::ffi::c_float;
     *line = 3 as ::core::ffi::c_int;
@@ -11343,20 +11611,25 @@ pub unsafe extern "C" fn script_bench_test_floor(
     return script_bench_test_floor_on;
 }
 pub unsafe extern "C" fn script_bench_test_fall(mut fp: *mut Fighter) {
+    melee_core::ct!("script_bench_test_fall");
     (*fp).ground_or_air = GA_Air;
     (*fp).motion_id = ftCo_MS_Fall as ::core::ffi::c_int as FtMotionId;
 }
 pub unsafe extern "C" fn script_bench_test_ground(mut fp: *mut Fighter) {
+    melee_core::ct!("script_bench_test_ground");
     (*fp).ground_or_air = GA_Ground;
 }
 pub unsafe extern "C" fn script_bench_test_wait(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("script_bench_test_wait");
     (*(HSD_GObjGetUserData(gobj) as *mut Fighter)).motion_id = ftCo_MS_Wait
         as ::core::ffi::c_int as FtMotionId;
 }
 pub unsafe extern "C" fn script_bench_test_camera(mut fp: *mut Fighter) {
+    melee_core::ct!("script_bench_test_camera");
     (*(*fp).x890_cameraBox).pos = (*fp).cur_pos;
 }
 pub unsafe extern "C" fn ScriptGame_FighterBenchTest() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_FighterBenchTest");
     static mut a: Fighter = unsafe { core::mem::zeroed::<Fighter>() };
     static mut b: Fighter = unsafe { core::mem::zeroed::<Fighter>() };
     static mut ca: CmSubject = unsafe { core::mem::zeroed::<CmSubject>() };
@@ -11772,6 +12045,7 @@ pub unsafe extern "C" fn script_caps_opponent(
     mut to: *mut Fighter,
     mut teams: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_caps_opponent");
     return (!from.is_null() && !to.is_null() && from != to
         && (*from).player_id as ::core::ffi::c_int
             != (*to).player_id as ::core::ffi::c_int
@@ -11784,6 +12058,7 @@ pub unsafe extern "C" fn script_caps_distance2(
     mut a: *mut Fighter,
     mut b: *mut Fighter,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("script_caps_distance2");
     let mut x: ::core::ffi::c_float = (*a).cur_pos.x as ::core::ffi::c_float
         - (*b).cur_pos.x as ::core::ffi::c_float;
     let mut y: ::core::ffi::c_float = (*a).cur_pos.y as ::core::ffi::c_float
@@ -11796,6 +12071,7 @@ pub unsafe extern "C" fn ScriptGame_CapsOpponent(
     mut nth: ::core::ffi::c_int,
     mut exclude: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_CapsOpponent");
     let mut from: *mut Fighter = ScriptGame_CapsFighter(entity);
     let mut radius: ::core::ffi::c_float = script_mesh_float(radius_bits);
     let mut best: ::core::ffi::c_float = 0 as ::core::ffi::c_int as ::core::ffi::c_float;
@@ -11844,6 +12120,7 @@ pub unsafe extern "C" fn script_caps_status_set(
     mut value: ::core::ffi::c_float,
     mut frames: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_caps_status_set");
     if fp.is_null() || owner <= 0 as ::core::ffi::c_int
         || frames < 0 as ::core::ffi::c_int || frames > 3600 as ::core::ffi::c_int
         || !(value >= -(100000 as ::core::ffi::c_int) as ::core::ffi::c_float
@@ -11869,6 +12146,7 @@ pub unsafe extern "C" fn script_caps_status_tick(
     mut s: *mut ScriptCapsStatus,
     mut live: *mut Fighter,
 ) {
+    melee_core::ct!("script_caps_status_tick");
     if (*s).owner != 0
         && (live != (*s).fighter
             || {
@@ -11890,6 +12168,7 @@ pub unsafe extern "C" fn ScriptGame_CapsStatus(
     mut value_bits: ::core::ffi::c_int,
     mut frames: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_CapsStatus");
     let mut rc: ::core::ffi::c_int = 0;
     if entity < 1 as ::core::ffi::c_int || entity > 12 as ::core::ffi::c_int
         || channel < 1 as ::core::ffi::c_int || channel > 4 as ::core::ffi::c_int
@@ -11926,6 +12205,7 @@ pub unsafe extern "C" fn ScriptGame_CapsStatusRead(
     mut channel: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_CapsStatusRead");
     let mut s: *mut ScriptCapsStatus = ::core::ptr::null_mut::<ScriptCapsStatus>();
     if entity < 1 as ::core::ffi::c_int || entity > 12 as ::core::ffi::c_int
         || channel < 1 as ::core::ffi::c_int || channel > 4 as ::core::ffi::c_int
@@ -11950,6 +12230,7 @@ pub unsafe extern "C" fn ScriptGame_CapsStatusRead(
     return 0 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_CapsStatusRelease(mut owner: ::core::ffi::c_int) {
+    melee_core::ct!("ScriptGame_CapsStatusRelease");
     let mut e: ::core::ffi::c_int = 0;
     let mut c: ::core::ffi::c_int = 0;
     e = 0 as ::core::ffi::c_int;
@@ -11973,6 +12254,7 @@ pub unsafe extern "C" fn ScriptGame_CapsStatusRelease(mut owner: ::core::ffi::c_
     }
 }
 pub unsafe extern "C" fn script_caps_status_frame() {
+    melee_core::ct!("script_caps_status_frame");
     let mut e: ::core::ffi::c_int = 0;
     let mut c: ::core::ffi::c_int = 0;
     e = 0 as ::core::ffi::c_int;
@@ -11992,6 +12274,7 @@ pub unsafe extern "C" fn script_caps_status_frame() {
     }
 }
 pub unsafe extern "C" fn ScriptGame_CapsTargetTest() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_CapsTargetTest");
     static mut a: Fighter = unsafe { core::mem::zeroed::<Fighter>() };
     static mut b: Fighter = unsafe { core::mem::zeroed::<Fighter>() };
     static mut c: Fighter = unsafe { core::mem::zeroed::<Fighter>() };
@@ -12112,6 +12395,7 @@ pub unsafe extern "C" fn ScriptGame_CapsMovement(
     mut jumps: ::core::ffi::c_int,
     mut flags: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_CapsMovement");
     let mut value: *mut ScriptCapsMovement = ::core::ptr::null_mut::<
         ScriptCapsMovement,
     >();
@@ -12162,6 +12446,7 @@ pub unsafe extern "C" fn ScriptGame_CapsMovementRead(
     mut entity: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_CapsMovementRead");
     let mut value: *mut ScriptCapsMovement = ::core::ptr::null_mut::<
         ScriptCapsMovement,
     >();
@@ -12206,6 +12491,7 @@ pub unsafe extern "C" fn ScriptGame_CapsMovementRead(
     return 0 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_CapsMovementRelease(mut owner: ::core::ffi::c_int) {
+    melee_core::ct!("ScriptGame_CapsMovementRelease");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < 12 as ::core::ffi::c_int {
@@ -12225,6 +12511,7 @@ pub unsafe extern "C" fn script_caps_action_allowed_value(
     mut entity: ::core::ffi::c_int,
     mut flag: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_caps_action_allowed_value");
     if entity < 1 as ::core::ffi::c_int || entity > 12 as ::core::ffi::c_int {
         return 1 as ::core::ffi::c_int;
     }
@@ -12236,9 +12523,11 @@ pub unsafe extern "C" fn ScriptGame_CapsActionAllowed(
     mut fp: *mut Fighter,
     mut flag: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_CapsActionAllowed");
     return script_caps_action_allowed_value(ScriptGame_CapsEntity(fp), flag);
 }
 pub unsafe extern "C" fn ScriptGame_CapsMovementTest() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_CapsMovementTest");
     let mut saved: [ScriptCapsMovement; 12] = [unsafe {
         core::mem::zeroed::<ScriptCapsMovement>()
     }; 12];
@@ -12439,6 +12728,7 @@ pub unsafe extern "C" fn ScriptArmorCore_Set(
     mut to: ::core::ffi::c_float,
     mut direction: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptArmorCore_Set");
     let mut s: *mut ScriptArmorCoreSlot = ::core::ptr::null_mut::<ScriptArmorCoreSlot>();
     if core.is_null() || type_0 < 1 as ::core::ffi::c_int
         || type_0 > 6 as ::core::ffi::c_int || frames < 0 as ::core::ffi::c_int
@@ -12481,6 +12771,7 @@ pub unsafe extern "C" fn ScriptArmorCore_Eligible(
     mut anim: ::core::ffi::c_float,
     mut side: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptArmorCore_Eligible");
     return (!s.is_null() && (*s).enabled != 0
         && ((*s).state < 0 as ::core::ffi::c_int || (*s).state == state)
         && ((*s).from < 0 as ::core::ffi::c_int as ::core::ffi::c_float
@@ -12495,6 +12786,7 @@ pub unsafe extern "C" fn ScriptArmorCore_Subtract(
     mut side: ::core::ffi::c_int,
     mut kb: ::core::ffi::c_float,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("ScriptArmorCore_Subtract");
     let mut s: *const ScriptArmorCoreSlot = (&raw const (*core).slots
         as *const ScriptArmorCoreSlot)
         .offset(0 as ::core::ffi::c_int as isize) as *const ScriptArmorCoreSlot;
@@ -12513,6 +12805,7 @@ pub unsafe extern "C" fn ScriptArmorCore_React(
     mut kb: ::core::ffi::c_float,
     mut events: *mut ScriptArmorCoreEvent,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptArmorCore_React");
     let mut i: ::core::ffi::c_int = 0;
     let mut mask: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     i = 0 as ::core::ffi::c_int;
@@ -12581,6 +12874,7 @@ pub unsafe extern "C" fn ScriptArmorCore_React(
 pub unsafe extern "C" fn ScriptArmorCore_Tick(
     mut core: *mut ScriptArmorCore,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptArmorCore_Tick");
     let mut i: ::core::ffi::c_int = 0;
     let mut expired: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     i = 0 as ::core::ffi::c_int;
@@ -12607,6 +12901,7 @@ pub static mut script_caps_armor_records: [script_caps_armor_record; 12] = [unsa
 pub unsafe extern "C" fn script_caps_armor_bits(
     mut f: ::core::ffi::c_float,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_caps_armor_bits");
     let mut value: Anon_anon_11 = unsafe { core::mem::zeroed::<Anon_anon_11>() };
     value.f = f;
     return value.i;
@@ -12614,6 +12909,7 @@ pub unsafe extern "C" fn script_caps_armor_bits(
 pub unsafe extern "C" fn script_caps_armor_float(
     mut i: ::core::ffi::c_int,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("script_caps_armor_float");
     let mut value: Anon_anon_11 = unsafe { core::mem::zeroed::<Anon_anon_11>() };
     value.i = i;
     return value.f;
@@ -12621,6 +12917,7 @@ pub unsafe extern "C" fn script_caps_armor_float(
 pub unsafe extern "C" fn script_caps_armor_bound(
     mut fp: *mut Fighter,
 ) -> *mut script_caps_armor_record {
+    melee_core::ct!("script_caps_armor_bound");
     let mut entity: ::core::ffi::c_int = ScriptGame_CapsEntity(fp);
     let mut r: *mut script_caps_armor_record = ::core::ptr::null_mut::<
         script_caps_armor_record,
@@ -12639,6 +12936,7 @@ pub unsafe extern "C" fn script_caps_armor_bound(
 pub unsafe extern "C" fn script_caps_armor_side(
     mut fp: *mut Fighter,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_caps_armor_side");
     return if (*fp).dmg.facing_dir_1 * (*fp).facing_dir
         >= 0 as ::core::ffi::c_int as ::core::ffi::c_float
     {
@@ -12650,6 +12948,7 @@ pub unsafe extern "C" fn script_caps_armor_side(
 pub unsafe extern "C" fn script_caps_armor_element(
     mut fp: *mut Fighter,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_caps_armor_element");
     match (*fp).dmg.x1860_element {
         0 | 1 | 2 | 3 | 4 | 13 | 14 | 15 => return 1 as ::core::ffi::c_int,
         _ => return 0 as ::core::ffi::c_int,
@@ -12666,6 +12965,7 @@ pub unsafe extern "C" fn ScriptGame_ArmorSet(
     mut to_bits: ::core::ffi::c_int,
     mut direction: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ArmorSet");
     let mut fp: *mut Fighter = ScriptGame_CapsFighter(entity);
     let mut r: *mut script_caps_armor_record = ::core::ptr::null_mut::<
         script_caps_armor_record,
@@ -12722,6 +13022,7 @@ pub unsafe extern "C" fn ScriptGame_ArmorRead(
     mut type_0: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ArmorRead");
     let mut fp: *mut Fighter = ::core::ptr::null_mut::<Fighter>();
     let mut r: *mut script_caps_armor_record = ::core::ptr::null_mut::<
         script_caps_armor_record,
@@ -12762,6 +13063,7 @@ pub unsafe extern "C" fn ScriptGame_ArmorClear(
     mut owner: ::core::ffi::c_int,
     mut type_0: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ArmorClear");
     let mut r: *mut script_caps_armor_record = ::core::ptr::null_mut::<
         script_caps_armor_record,
     >();
@@ -12799,6 +13101,7 @@ pub unsafe extern "C" fn ScriptGame_ArmorClear(
     return cleared;
 }
 pub unsafe extern "C" fn ScriptGame_ArmorRelease(mut owner: ::core::ffi::c_int) {
+    melee_core::ct!("ScriptGame_ArmorRelease");
     let mut entity: ::core::ffi::c_int = 0;
     let mut i: ::core::ffi::c_int = 0;
     entity = 0 as ::core::ffi::c_int;
@@ -12832,6 +13135,7 @@ pub unsafe extern "C" fn ScriptGame_ArmorRelease(mut owner: ::core::ffi::c_int) 
     }
 }
 pub unsafe extern "C" fn ScriptGame_ArmorFrame() {
+    melee_core::ct!("ScriptGame_ArmorFrame");
     let mut entity: ::core::ffi::c_int = 0;
     let mut i: ::core::ffi::c_int = 0;
     entity = 0 as ::core::ffi::c_int;
@@ -12869,6 +13173,7 @@ pub unsafe extern "C" fn ScriptGame_ArmorFrame() {
     }
 }
 pub unsafe extern "C" fn ScriptGame_ArmorResetReaction(mut fp: *mut Fighter) {
+    melee_core::ct!("ScriptGame_ArmorResetReaction");
     let mut r: *mut script_caps_armor_record = script_caps_armor_bound(fp);
     if !r.is_null() {
         (*r).absorbed = 0 as ::core::ffi::c_int;
@@ -12878,6 +13183,7 @@ pub unsafe extern "C" fn ScriptGame_ArmorSubtract(
     mut fp: *mut Fighter,
     mut kb: ::core::ffi::c_float,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("ScriptGame_ArmorSubtract");
     let mut r: *mut script_caps_armor_record = script_caps_armor_bound(fp);
     if r.is_null() {
         return kb;
@@ -12899,6 +13205,7 @@ pub unsafe extern "C" fn ScriptGame_ArmorSubtract(
 pub unsafe extern "C" fn ScriptGame_ArmorReact(
     mut fp: *mut Fighter,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ArmorReact");
     let mut r: *mut script_caps_armor_record = script_caps_armor_bound(fp);
     let mut events: [ScriptArmorCoreEvent; 6] = [unsafe {
         core::mem::zeroed::<ScriptArmorCoreEvent>()
@@ -12977,6 +13284,7 @@ pub unsafe extern "C" fn ScriptGame_ArmorReact(
 pub unsafe extern "C" fn ScriptGame_ArmorAbsorbed(
     mut fp: *mut Fighter,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ArmorAbsorbed");
     let mut r: *mut script_caps_armor_record = script_caps_armor_bound(fp);
     return (!r.is_null() && (*r).absorbed != 0 as ::core::ffi::c_int)
         as ::core::ffi::c_int;
@@ -12987,6 +13295,7 @@ pub unsafe extern "C" fn script_caps_armor_formula_sample(
     mut growth: ::core::ffi::c_int,
     mut base: ::core::ffi::c_int,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("script_caps_armor_formula_sample");
     static mut fp: Fighter = unsafe { core::mem::zeroed::<Fighter>() };
     let mut hit: HitCapsule = unsafe { core::mem::zeroed::<HitCapsule>() };
     memset(
@@ -13015,6 +13324,7 @@ pub unsafe extern "C" fn script_caps_armor_formula_sample(
     );
 }
 pub unsafe extern "C" fn ScriptGame_CapsArmorFormulaTest() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_CapsArmorFormulaTest");
     static mut common: ftCommonData = unsafe { core::mem::zeroed::<ftCommonData>() };
     let mut old_common: *mut ftCommonData = p_ftCommonData as *mut ftCommonData;
     let mut old_mod: ScriptFighterMod = script_fighter_mod[0 as ::core::ffi::c_int
@@ -13633,6 +13943,7 @@ pub unsafe extern "C" fn script_caps_threshold(
     mut d: ::core::ffi::c_float,
     mut k: ::core::ffi::c_float,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_caps_threshold");
     return (d > 0 as ::core::ffi::c_int as ::core::ffi::c_float && damage < d
         || k > 0 as ::core::ffi::c_int as ::core::ffi::c_float && kb < k)
         as ::core::ffi::c_int;
@@ -13642,6 +13953,7 @@ pub unsafe extern "C" fn script_caps_hit_threshold(
     mut d: ::core::ffi::c_float,
     mut k: ::core::ffi::c_float,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_caps_hit_threshold");
     let mut selected: Anon_anon_102 = unsafe { core::mem::zeroed::<Anon_anon_102>() };
     selected.i = (*fp).dmg.x186c;
     return script_caps_threshold(selected.f, (*fp).dmg.kb_applied, d, k);
@@ -13651,6 +13963,7 @@ pub unsafe extern "C" fn script_caps_effect_valid(
     mut value: ::core::ffi::c_float,
     mut frames: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_caps_effect_valid");
     return (kind >= 0 as ::core::ffi::c_int && kind < 4 as ::core::ffi::c_int
         && frames > 0 as ::core::ffi::c_int && frames <= 3600 as ::core::ffi::c_int
         && value == value
@@ -13666,6 +13979,7 @@ pub unsafe extern "C" fn script_caps_effect_observe(
     mut s: *mut script_caps_effect,
     mut timer: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("script_caps_effect_observe");
     let mut elapsed: ::core::ffi::c_int = (*s).last_timer - timer;
     if elapsed < 0 as ::core::ffi::c_int {
         (*s).foreign = 1 as ::core::ffi::c_int;
@@ -13681,6 +13995,7 @@ pub unsafe extern "C" fn script_caps_effect_end(
     mut entity: ::core::ffi::c_int,
     mut kind: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("script_caps_effect_end");
     let mut s: *mut script_caps_effect = (&raw mut *(&raw mut script_caps_effects
         as *mut [script_caps_effect; 4])
         .offset((entity - 1 as ::core::ffi::c_int) as isize) as *mut script_caps_effect)
@@ -13742,6 +14057,7 @@ pub unsafe extern "C" fn ScriptGame_CapsEffect(
     mut value_bits: ::core::ffi::c_int,
     mut frames: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_CapsEffect");
     let mut fp: *mut Fighter = ScriptGame_CapsFighter(entity);
     let mut s: *mut script_caps_effect = ::core::ptr::null_mut::<script_caps_effect>();
     let mut value: Anon_anon_102 = unsafe { core::mem::zeroed::<Anon_anon_102>() };
@@ -13841,6 +14157,7 @@ pub unsafe extern "C" fn ScriptGame_CapsEffectRead(
     mut kind: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_CapsEffectRead");
     let mut s: *mut script_caps_effect = ::core::ptr::null_mut::<script_caps_effect>();
     if entity < 1 as ::core::ffi::c_int || entity > 12 as ::core::ffi::c_int
         || kind < 0 as ::core::ffi::c_int || kind > 3 as ::core::ffi::c_int
@@ -13869,6 +14186,7 @@ pub unsafe extern "C" fn ScriptGame_CapsArmour(
     mut damage_bits: ::core::ffi::c_int,
     mut kb_bits: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_CapsArmour");
     let mut fp: *mut Fighter = ScriptGame_CapsFighter(entity);
     let mut s: *mut script_caps_armour = ::core::ptr::null_mut::<script_caps_armour>();
     let mut d: Anon_anon_102 = unsafe { core::mem::zeroed::<Anon_anon_102>() };
@@ -13924,6 +14242,7 @@ pub unsafe extern "C" fn ScriptGame_CapsArmourRead(
     mut entity: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_CapsArmourRead");
     let mut s: *mut script_caps_armour = ::core::ptr::null_mut::<script_caps_armour>();
     let mut value: Anon_anon_11 = unsafe { core::mem::zeroed::<Anon_anon_11>() };
     if entity < 1 as ::core::ffi::c_int || entity > 12 as ::core::ffi::c_int {
@@ -13949,6 +14268,7 @@ pub unsafe extern "C" fn ScriptGame_CapsArmourRead(
 pub unsafe extern "C" fn ScriptGame_CapsNoFlinch(
     mut fp: *mut Fighter,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_CapsNoFlinch");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < 12 as ::core::ffi::c_int {
@@ -13965,6 +14285,7 @@ pub unsafe extern "C" fn ScriptGame_CapsNoFlinch(
     return 0 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_CapsEffectsRelease(mut owner: ::core::ffi::c_int) {
+    melee_core::ct!("ScriptGame_CapsEffectsRelease");
     let mut i: ::core::ffi::c_int = 0;
     let mut k: ::core::ffi::c_int = 0;
     ScriptGame_ArmorRelease(owner);
@@ -13993,9 +14314,11 @@ pub unsafe extern "C" fn ScriptGame_CapsEffectsRelease(mut owner: ::core::ffi::c
     }
 }
 pub unsafe extern "C" fn ScriptGame_CapsEffectsReset() {
+    melee_core::ct!("ScriptGame_CapsEffectsReset");
     ScriptGame_CapsEffectsRelease(0 as ::core::ffi::c_int);
 }
 pub unsafe extern "C" fn ScriptGame_CapsEffectsFrame() {
+    melee_core::ct!("ScriptGame_CapsEffectsFrame");
     let mut i: ::core::ffi::c_int = 0;
     let mut k: ::core::ffi::c_int = 0;
     ScriptGame_ArmorFrame();
@@ -14054,6 +14377,7 @@ pub unsafe extern "C" fn ScriptGame_CapsEffectsFrame() {
 pub unsafe extern "C" fn script_caps_holdable(
     mut kind: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_caps_holdable");
     match kind {
         6 | 7 | 11 | 12 | 14 | 15 | 16 | 17 | 19 | 21 | 22 | 23 | 24 | 25 | 34 => {
             return 1 as ::core::ffi::c_int;
@@ -14064,6 +14388,7 @@ pub unsafe extern "C" fn script_caps_holdable(
 pub unsafe extern "C" fn ScriptGame_CapsGiveItemReason(
     mut reason: ::core::ffi::c_int,
 ) -> *const ::core::ffi::c_char {
+    melee_core::ct!("ScriptGame_CapsGiveItemReason");
     static mut text: [*const ::core::ffi::c_char; 13] = [
         b"ok\0" as *const u8 as *const ::core::ffi::c_char,
         b"no fighter in that slot\0" as *const u8 as *const ::core::ffi::c_char,
@@ -14100,6 +14425,7 @@ pub unsafe extern "C" fn script_caps_give_refuse(
     mut kind: ::core::ffi::c_int,
     mut reason: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_caps_give_refuse");
     OSReport(
         b"script give_item: entity=%d kind=%d refused: %s\n\0" as *const u8
             as *const ::core::ffi::c_char as *mut ::core::ffi::c_char,
@@ -14118,6 +14444,7 @@ pub unsafe extern "C" fn ScriptGame_CapsGiveItem(
     mut owner: ::core::ffi::c_int,
     mut kind: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_CapsGiveItem");
     let mut fp: *mut Fighter = ScriptGame_CapsFighter(entity);
     let mut item: *mut Item_GObj = ::core::ptr::null_mut::<Item_GObj>();
     let mut spawn: SpawnItem = unsafe { core::mem::zeroed::<SpawnItem>() };
@@ -14290,6 +14617,7 @@ pub unsafe extern "C" fn ScriptGame_CapsGiveItem(
     );
 }
 pub unsafe extern "C" fn ScriptGame_CapsEffectsTest() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_CapsEffectsTest");
     let mut failed: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     let mut timer: script_caps_effect = unsafe {
         core::mem::zeroed::<script_caps_effect>()
@@ -14431,6 +14759,7 @@ pub static mut script_skill_frame: ::core::ffi::c_int = 0;
 pub unsafe extern "C" fn script_skill_bits(
     mut f: ::core::ffi::c_float,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_skill_bits");
     let mut u: Anon_anon_11 = unsafe { core::mem::zeroed::<Anon_anon_11>() };
     u.f = f;
     return u.i;
@@ -14438,6 +14767,7 @@ pub unsafe extern "C" fn script_skill_bits(
 pub unsafe extern "C" fn script_skill_fabs(
     mut f: ::core::ffi::c_float,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("script_skill_fabs");
     return if f < 0 as ::core::ffi::c_int as ::core::ffi::c_float { -f } else { f };
 }
 pub unsafe extern "C" fn script_skill_emit(
@@ -14449,6 +14779,7 @@ pub unsafe extern "C" fn script_skill_emit(
     mut f1: ::core::ffi::c_float,
     mut f2: ::core::ffi::c_float,
 ) {
+    melee_core::ct!("script_skill_emit");
     let mut r: *mut ScriptSkillRow = (&raw mut script_skill_ring as *mut ScriptSkillRow)
         .offset((script_skill_head % SK_RING) as isize) as *mut ScriptSkillRow;
     (*r).frame = script_skill_frame;
@@ -14492,6 +14823,7 @@ pub unsafe extern "C" fn script_skill_of(
     mut fp: *mut Fighter,
     mut entity: *mut ::core::ffi::c_int,
 ) -> *mut ScriptSkillRec {
+    melee_core::ct!("script_skill_of");
     let mut e: ::core::ffi::c_int = ScriptGame_CapsEntity(fp);
     if !entity.is_null() {
         *entity = e;
@@ -14509,6 +14841,7 @@ pub unsafe extern "C" fn script_skill_of(
 pub unsafe extern "C" fn script_skill_aerial(
     mut motion: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_skill_aerial");
     return if motion >= ftCo_MS_AttackAirN as ::core::ffi::c_int
         && motion <= ftCo_MS_AttackAirLw as ::core::ffi::c_int
     {
@@ -14523,6 +14856,7 @@ pub unsafe extern "C" fn ScriptGame_SkillLanding(
     mut lag: ::core::ffi::c_float,
     mut lag_final: ::core::ffi::c_float,
 ) {
+    melee_core::ct!("ScriptGame_SkillLanding");
     let mut e: ::core::ffi::c_int = 0;
     let mut aerial: ::core::ffi::c_int = script_skill_aerial(
         (*fp).motion_id as ::core::ffi::c_int,
@@ -14580,6 +14914,7 @@ pub unsafe extern "C" fn ScriptGame_SkillPerfectShield(
     mut projectile: ::core::ffi::c_int,
     mut damage: ::core::ffi::c_float,
 ) {
+    melee_core::ct!("ScriptGame_SkillPerfectShield");
     let mut e: ::core::ffi::c_int = 0;
     let mut a: ::core::ffi::c_int = if !attacker.is_null() {
         ScriptGame_CapsEntity(attacker)
@@ -14610,6 +14945,7 @@ pub unsafe extern "C" fn ScriptGame_SkillHit(
     mut vic: *mut Fighter,
     mut damage: ::core::ffi::c_float,
 ) {
+    melee_core::ct!("ScriptGame_SkillHit");
     let mut ve: ::core::ffi::c_int = 0;
     let mut ae: ::core::ffi::c_int = if !atk.is_null() {
         ScriptGame_CapsEntity(atk)
@@ -14654,6 +14990,7 @@ pub unsafe extern "C" fn script_skill_roll_dir(
     mut e: ::core::ffi::c_int,
     mut forward: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_skill_roll_dir");
     let mut o: ::core::ffi::c_int = ScriptGame_CapsOpponent(
         e,
         script_skill_bits(100000.0f32),
@@ -14684,6 +15021,7 @@ pub unsafe extern "C" fn script_skill_one(
     mut fp: *mut Fighter,
     mut r: *mut ScriptSkillRec,
 ) {
+    melee_core::ct!("script_skill_one");
     let mut m: ::core::ffi::c_int = (*fp).motion_id as ::core::ffi::c_int;
     let mut prev: ::core::ffi::c_int = (*r).motion;
     let mut prev_age: ::core::ffi::c_int = (*r).age;
@@ -15030,6 +15368,7 @@ pub unsafe extern "C" fn script_skill_one(
     }
 }
 pub unsafe extern "C" fn ScriptGame_SkillFrame() {
+    melee_core::ct!("ScriptGame_SkillFrame");
     let mut e: ::core::ffi::c_int = 0;
     script_skill_frame += 1;
     e = 1 as ::core::ffi::c_int;
@@ -15075,6 +15414,7 @@ pub unsafe extern "C" fn ScriptGame_SkillFrame() {
     script_crit_flush();
 }
 pub unsafe extern "C" fn ScriptGame_SkillReset() {
+    melee_core::ct!("ScriptGame_SkillReset");
     memset(
         &raw mut script_skill_rec as *mut ScriptSkillRec as *mut ::core::ffi::c_void,
         0 as ::core::ffi::c_int,
@@ -15089,12 +15429,14 @@ pub unsafe extern "C" fn ScriptGame_SkillReset() {
     script_skill_head = script_skill_n;
 }
 pub unsafe extern "C" fn ScriptGame_SkillRowCount() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_SkillRowCount");
     return script_skill_n;
 }
 pub unsafe extern "C" fn ScriptGame_SkillRow(
     mut idx: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_SkillRow");
     let mut r: *const ScriptSkillRow = ::core::ptr::null::<ScriptSkillRow>();
     if idx < 0 as ::core::ffi::c_int || idx >= script_skill_n {
         return 0 as ::core::ffi::c_int;
@@ -15121,6 +15463,7 @@ pub unsafe extern "C" fn ScriptGame_SkillState(
     mut entity: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_SkillState");
     let mut r: *mut ScriptSkillRec = ::core::ptr::null_mut::<ScriptSkillRec>();
     if entity < 1 as ::core::ffi::c_int || entity > 12 as ::core::ffi::c_int {
         return 0 as ::core::ffi::c_int;
@@ -15144,6 +15487,7 @@ pub unsafe extern "C" fn ScriptGame_SkillState(
 pub unsafe extern "C" fn ScriptGame_SkillConst(
     mut idx: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_SkillConst");
     match idx {
         0 => return script_skill_bits(SK_WAVE_MIN_SPEED),
         1 => return SK_WAVEDASH_MAX_AIRBORNE,
@@ -15172,6 +15516,7 @@ pub unsafe extern "C" fn ScriptGame_ObjectiveRoute(
     mut idx: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ObjectiveRoute");
     let mut kind: ::core::ffi::c_int = if stage_info.grkind as ::core::ffi::c_int
         == Gr_Kind_ShrineRoute as ::core::ffi::c_int
     {
@@ -15353,6 +15698,7 @@ pub static mut script_crit_launches: [ScriptCritLaunch; 8] = [unsafe {
 pub static mut script_crit_npending: ::core::ffi::c_int = 0;
 pub static mut script_crit_rng: ::core::ffi::c_uint = 0x2545f491 as ::core::ffi::c_uint;
 pub unsafe extern "C" fn script_crit_next() -> ::core::ffi::c_uint {
+    melee_core::ct!("script_crit_next");
     let mut x: ::core::ffi::c_uint = script_crit_rng;
     if x == 0 {
         x = 0x2545f491 as ::core::ffi::c_uint;
@@ -15364,12 +15710,14 @@ pub unsafe extern "C" fn script_crit_next() -> ::core::ffi::c_uint {
     return x;
 }
 pub unsafe extern "C" fn script_crit_unit() -> ::core::ffi::c_float {
+    melee_core::ct!("script_crit_unit");
     return (script_crit_next() >> 8 as ::core::ffi::c_int) as ::core::ffi::c_float
         / 16777216.0f32;
 }
 pub unsafe extern "C" fn script_crit_fin(
     mut bits: ::core::ffi::c_int,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("script_crit_fin");
     let mut u: Anon_anon_102 = unsafe { core::mem::zeroed::<Anon_anon_102>() };
     u.i = bits;
     return u.f;
@@ -15377,6 +15725,7 @@ pub unsafe extern "C" fn script_crit_fin(
 pub unsafe extern "C" fn script_crit_ok(
     mut f: ::core::ffi::c_float,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_crit_ok");
     return (script_skill_bits(f) & 0x7f800000 as ::core::ffi::c_int
         != 0x7f800000 as ::core::ffi::c_int) as ::core::ffi::c_int;
 }
@@ -15392,6 +15741,7 @@ pub unsafe extern "C" fn ScriptGame_CritSet(
     mut force: ::core::ffi::c_int,
     mut flags: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_CritSet");
     let mut c: *mut ScriptCritCfg = ::core::ptr::null_mut::<ScriptCritCfg>();
     let mut fp: *mut Fighter = ::core::ptr::null_mut::<Fighter>();
     let mut i: ::core::ffi::c_int = 0;
@@ -15491,6 +15841,7 @@ pub unsafe extern "C" fn ScriptGame_CritRead(
     mut entity: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_CritRead");
     let mut c: *mut ScriptCritCfg = ::core::ptr::null_mut::<ScriptCritCfg>();
     if entity < 1 as ::core::ffi::c_int || entity > 12 as ::core::ffi::c_int {
         return 0 as ::core::ffi::c_int;
@@ -15532,6 +15883,7 @@ pub unsafe extern "C" fn ScriptGame_CritRead(
     return 0 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_CritSeed(mut seed: ::core::ffi::c_int) {
+    melee_core::ct!("ScriptGame_CritSeed");
     script_crit_rng = if seed != 0 {
         seed as ::core::ffi::c_uint
     } else {
@@ -15539,9 +15891,11 @@ pub unsafe extern "C" fn ScriptGame_CritSeed(mut seed: ::core::ffi::c_int) {
     };
 }
 pub unsafe extern "C" fn ScriptGame_CritSeedRead() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_CritSeedRead");
     return script_crit_rng as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_CritRelease(mut owner: ::core::ffi::c_int) {
+    melee_core::ct!("ScriptGame_CritRelease");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < 12 as ::core::ffi::c_int {
@@ -15569,6 +15923,7 @@ pub unsafe extern "C" fn script_crit_launch(
     mut hit: *mut HitCapsule,
     mut victim: *mut Fighter,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("script_crit_launch");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < 8 as ::core::ffi::c_int {
@@ -15582,6 +15937,7 @@ pub unsafe extern "C" fn script_crit_launch(
     return 1.0f32;
 }
 pub unsafe extern "C" fn script_crit_launch_clear(mut victim: *mut Fighter) {
+    melee_core::ct!("script_crit_launch_clear");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < 8 as ::core::ffi::c_int {
@@ -15604,6 +15960,7 @@ pub unsafe extern "C" fn ScriptGame_CritHit(
     mut damage: ::core::ffi::c_float,
     mut projectile: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("ScriptGame_CritHit");
     let mut ae: ::core::ffi::c_int = if !atk.is_null() {
         ScriptGame_CapsEntity(atk)
     } else {
@@ -15733,6 +16090,7 @@ pub unsafe extern "C" fn ScriptGame_CritHit(
     }
 }
 pub unsafe extern "C" fn script_crit_flush() {
+    melee_core::ct!("script_crit_flush");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < script_crit_npending {
@@ -15779,6 +16137,7 @@ pub unsafe extern "C" fn ScriptGame_CritDraws(
     mut n: ::core::ffi::c_int,
     mut chance_bits: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_CritDraws");
     let mut saved: ::core::ffi::c_uint = script_crit_rng;
     let mut i: ::core::ffi::c_int = 0;
     let mut hits: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -15809,6 +16168,7 @@ pub unsafe extern "C" fn script_shock_end(
     mut s: *mut ScriptShock,
     mut why: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("script_shock_end");
     OSReport(
         b"script shock: entity=%d end why=%d hits=%d\n\0" as *const u8
             as *const ::core::ffi::c_char as *mut ::core::ffi::c_char,
@@ -15842,6 +16202,7 @@ pub unsafe extern "C" fn ScriptGame_ShockSet(
     mut bonus: ::core::ffi::c_int,
     mut flags: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ShockSet");
     let mut s: *mut ScriptShock = ::core::ptr::null_mut::<ScriptShock>();
     let mut fp: *mut Fighter = ::core::ptr::null_mut::<Fighter>();
     let mut mult: ::core::ffi::c_float = 0.;
@@ -15934,6 +16295,7 @@ pub unsafe extern "C" fn ScriptGame_ShockRead(
     mut entity: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ShockRead");
     let mut s: *mut ScriptShock = ::core::ptr::null_mut::<ScriptShock>();
     let mut u: Anon_anon_102 = unsafe { core::mem::zeroed::<Anon_anon_102>() };
     if entity < 1 as ::core::ffi::c_int || entity > 12 as ::core::ffi::c_int {
@@ -15960,6 +16322,7 @@ pub unsafe extern "C" fn ScriptGame_ShockRead(
     return 0 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_ShockRelease(mut owner: ::core::ffi::c_int) {
+    melee_core::ct!("ScriptGame_ShockRelease");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < 12 as ::core::ffi::c_int {
@@ -15979,6 +16342,7 @@ pub unsafe extern "C" fn ScriptGame_ShockExtra(
     mut mult_bits: ::core::ffi::c_int,
     mut bonus: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ShockExtra");
     let mut u: Anon_anon_102 = unsafe { core::mem::zeroed::<Anon_anon_102>() };
     let mut extra: ::core::ffi::c_int = 0;
     u.i = mult_bits;
@@ -15998,6 +16362,7 @@ pub unsafe extern "C" fn ScriptGame_ShockTake(
     mut vic: *mut Fighter,
     mut base: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ShockTake");
     let mut e: ::core::ffi::c_int = ScriptGame_CapsEntity(vic);
     let mut extra: ::core::ffi::c_int = 0;
     let mut s: *mut ScriptShock = ::core::ptr::null_mut::<ScriptShock>();
@@ -16039,6 +16404,7 @@ pub unsafe extern "C" fn ScriptGame_ShockTake(
     return extra;
 }
 pub unsafe extern "C" fn script_shock_frame() {
+    melee_core::ct!("script_shock_frame");
     let mut e: ::core::ffi::c_int = 0;
     e = 1 as ::core::ffi::c_int;
     while e <= 12 as ::core::ffi::c_int {
@@ -16060,12 +16426,14 @@ pub unsafe extern "C" fn script_shock_frame() {
     }
 }
 pub unsafe extern "C" fn ScriptGame_ObjectiveKind() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ObjectiveKind");
     return It_Kind_Mato as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_ObjectiveDoor(
     mut idx: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ObjectiveDoor");
     let mut p: Vec = unsafe { core::mem::zeroed::<Vec>() };
     let mut id: ::core::ffi::c_int = 0;
     let mut score: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -16130,6 +16498,7 @@ pub unsafe extern "C" fn ScriptGame_ObjectiveZone(
     mut idx: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ObjectiveZone");
     let mut scale: ::core::ffi::c_float = 0.;
     if stage_info.grkind as ::core::ffi::c_int != Gr_Kind_Pushon as ::core::ffi::c_int
         || idx < 0 as ::core::ffi::c_int || idx > 3 as ::core::ffi::c_int
@@ -16195,6 +16564,7 @@ pub const GW_TURBO_SUPPORTED: ::core::ffi::c_uint = 0x1ff as ::core::ffi::c_uint
 pub unsafe extern "C" fn gw_turbo_frames(
     mut w: ::core::ffi::c_uint,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("gw_turbo_frames");
     let mut f: ::core::ffi::c_uint = (w & GW_TURBO_FRAMES_MASK) >> GW_TURBO_FRAMES_SHIFT;
     return if f == 0 as ::core::ffi::c_uint {
         GW_TURBO_DEFAULT_FRAMES
@@ -16206,6 +16576,7 @@ pub unsafe extern "C" fn gw_turbo_frames(
 pub unsafe extern "C" fn gw_turbo_valid(
     mut w: ::core::ffi::c_uint,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("gw_turbo_valid");
     if w == 0 as ::core::ffi::c_uint {
         return 1 as ::core::ffi::c_int;
     }
@@ -16221,6 +16592,7 @@ pub const IW_IND_FRAMES: ::core::ffi::c_int = 6 as ::core::ffi::c_int;
 pub unsafe extern "C" fn intrwin_key_smash(
     mut k: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("intrwin_key_smash");
     return (k == IW_K_FSMASH as ::core::ffi::c_int
         || k == IW_K_USMASH as ::core::ffi::c_int
         || k == IW_K_DSMASH as ::core::ffi::c_int) as ::core::ffi::c_int;
@@ -16228,6 +16600,7 @@ pub unsafe extern "C" fn intrwin_key_smash(
 pub unsafe extern "C" fn intrwin_key_aerial(
     mut k: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("intrwin_key_aerial");
     return (k >= IW_K_NAIR as ::core::ffi::c_int && k <= IW_K_DAIR as ::core::ffi::c_int)
         as ::core::ffi::c_int;
 }
@@ -16238,6 +16611,7 @@ pub unsafe extern "C" fn intrwin_allows(
     mut cls: ::core::ffi::c_int,
     mut cand: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("intrwin_allows");
     if rules & GW_TURBO_NO_SELF != 0 && cand != IW_K_NONE as ::core::ffi::c_int
         && cand == key
     {
@@ -16285,6 +16659,7 @@ pub unsafe extern "C" fn intrwin_close(
     mut w: *mut IntrWin,
     mut cancelled: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("intrwin_close");
     if cancelled != 0 {
         (*w).cancels += 1;
     }
@@ -16293,10 +16668,12 @@ pub unsafe extern "C" fn intrwin_close(
     (*w).owner = 0 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn intrwin_age(mut w: *mut IntrWin) -> ::core::ffi::c_int {
+    melee_core::ct!("intrwin_age");
     (*w).frames -= 1;
     return ((*w).frames <= 0 as ::core::ffi::c_int) as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn intrwin_carry_set(mut w: *mut IntrWin) {
+    melee_core::ct!("intrwin_carry_set");
     if (*w).rules as ::core::ffi::c_uint & GW_TURBO_NO_MOVE_LOOP != 0
         && (*w).taken
             & (IW_X_CROUCH as ::core::ffi::c_int | IW_X_DASH as ::core::ffi::c_int
@@ -16308,6 +16685,7 @@ pub unsafe extern "C" fn intrwin_carry_set(mut w: *mut IntrWin) {
     }
 }
 pub unsafe extern "C" fn intrwin_carry_tick(mut w: *mut IntrWin) {
+    melee_core::ct!("intrwin_carry_tick");
     if (*w).carry_frames > 0 as ::core::ffi::c_int
         && {
             (*w).carry_frames -= 1;
@@ -16324,6 +16702,7 @@ pub unsafe extern "C" fn intrwin_open_state(
     mut rules: ::core::ffi::c_uint,
     mut jumps: *mut ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("intrwin_open_state");
     let mut key: ::core::ffi::c_int = 0;
     if rules & GW_TURBO_ON == 0 {
         return 0 as ::core::ffi::c_int;
@@ -16380,6 +16759,7 @@ pub static mut ft_intrwin_logged: ::core::ffi::c_int = 0;
 pub unsafe extern "C" fn intrwin_key(
     mut motion: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("intrwin_key");
     if motion >= ftCo_MS_Count as ::core::ffi::c_int {
         return IW_K_SPECIAL as ::core::ffi::c_int;
     }
@@ -16408,6 +16788,7 @@ pub unsafe extern "C" fn ScriptGame_IntrWinAllows(
     mut cls: ::core::ffi::c_int,
     mut cand: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_IntrWinAllows");
     return intrwin_allows(rules as ::core::ffi::c_uint, key, ground, cls, cand);
 }
 pub unsafe extern "C" fn intrwin_open(
@@ -16416,6 +16797,7 @@ pub unsafe extern "C" fn intrwin_open(
     mut kind: ::core::ffi::c_int,
     mut rules: ::core::ffi::c_uint,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("intrwin_open");
     let mut attack: IntrWinAttack = unsafe { core::mem::zeroed::<IntrWinAttack>() };
     let mut opened: ::core::ffi::c_int = 0;
     let mut jumps: ::core::ffi::c_int = 0;
@@ -16452,6 +16834,7 @@ pub unsafe extern "C" fn intrwin_open(
     return opened;
 }
 pub unsafe extern "C" fn intrwin_clear_ind(mut fp: *mut Fighter, mut w: *mut IntrWin) {
+    melee_core::ct!("intrwin_clear_ind");
     if (*w).ind > 0 as ::core::ffi::c_int {
         ftCo_800C0074(fp);
     }
@@ -16461,6 +16844,7 @@ pub unsafe extern "C" fn ScriptGame_IntrWinHit(
     mut fp: *mut Fighter,
     mut kind: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("ScriptGame_IntrWinHit");
     let mut rules: ::core::ffi::c_uint = MatchTurboRules() as ::core::ffi::c_uint;
     let mut entity: ::core::ffi::c_int = 0;
     if rules & GW_TURBO_ON == 0 || fp.is_null() {
@@ -16503,6 +16887,7 @@ pub unsafe extern "C" fn ScriptGame_IntrWinHit(
 pub unsafe extern "C" fn intrwin_attack_want(
     mut fp: *mut Fighter,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("intrwin_attack_want");
     let mut a: ::core::ffi::c_int = ((*fp).input.pressed_buttons & HSD_PAD_A as HSD_Pad
         != 0 as HSD_Pad) as ::core::ffi::c_int;
     if a != 0
@@ -16575,6 +16960,7 @@ pub unsafe extern "C" fn intrwin_exits(
     mut fp: *mut Fighter,
     mut w: *mut IntrWin,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("intrwin_exits");
     let mut ground: ::core::ffi::c_int = ((*fp).ground_or_air as ::core::ffi::c_int
         == GA_Ground as ::core::ffi::c_int) as ::core::ffi::c_int;
     if ground != 0 {
@@ -16907,6 +17293,7 @@ pub unsafe extern "C" fn intrwin_exits(
     return 0 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_IntrWinTick(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("ScriptGame_IntrWinTick");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut entity: ::core::ffi::c_int = 0;
@@ -16974,6 +17361,7 @@ pub unsafe extern "C" fn ScriptGame_IntrWinSet(
     mut exits: ::core::ffi::c_int,
     mut flags: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_IntrWinSet");
     let mut fp: *mut Fighter = ScriptGame_CapsFighter(entity);
     let mut w: *mut IntrWin = ::core::ptr::null_mut::<IntrWin>();
     if entity < 1 as ::core::ffi::c_int || entity > 12 as ::core::ffi::c_int
@@ -17031,6 +17419,7 @@ pub unsafe extern "C" fn ScriptGame_IntrWinRead(
     mut entity: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_IntrWinRead");
     let mut w: *mut IntrWin = ::core::ptr::null_mut::<IntrWin>();
     if entity < 1 as ::core::ffi::c_int || entity > 12 as ::core::ffi::c_int {
         return 0 as ::core::ffi::c_int;
@@ -17061,6 +17450,7 @@ pub unsafe extern "C" fn ScriptGame_IntrWinRead(
     return 0 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_IntrWinRelease(mut owner: ::core::ffi::c_int) {
+    melee_core::ct!("ScriptGame_IntrWinRelease");
     let mut i: ::core::ffi::c_int = 0;
     if owner == 0 {
         i = 0 as ::core::ffi::c_int;
@@ -17095,6 +17485,7 @@ pub unsafe extern "C" fn ScriptGame_IntrWinRelease(mut owner: ::core::ffi::c_int
 pub unsafe extern "C" fn ScriptGame_IntrWinHashWord(
     mut entity: ::core::ffi::c_int,
 ) -> ::core::ffi::c_uint {
+    melee_core::ct!("ScriptGame_IntrWinHashWord");
     let mut w: *mut IntrWin = ::core::ptr::null_mut::<IntrWin>();
     if entity < 1 as ::core::ffi::c_int || entity > 12 as ::core::ffi::c_int {
         return 0 as ::core::ffi::c_uint;
@@ -17120,6 +17511,7 @@ pub unsafe extern "C" fn ScriptGame_IntrWinHashWord(
             .wrapping_mul(0x9e3779b1 as ::core::ffi::c_uint);
 }
 pub unsafe extern "C" fn ScriptGame_IntrWinTest() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_IntrWinTest");
     let mut saved: [IntrWin; 12] = [unsafe { core::mem::zeroed::<IntrWin>() }; 12];
     let mut snap: [IntrWin; 12] = [unsafe { core::mem::zeroed::<IntrWin>() }; 12];
     static mut fake: Fighter = unsafe { core::mem::zeroed::<Fighter>() };
@@ -17676,17 +18068,20 @@ pub unsafe extern "C" fn sm_mix(
     mut h: ::core::ffi::c_uint,
     mut v: ::core::ffi::c_uint,
 ) -> ::core::ffi::c_uint {
+    melee_core::ct!("sm_mix");
     h ^= v;
     h = h.wrapping_mul(0x1000193 as ::core::ffi::c_uint);
     h ^= h >> 15 as ::core::ffi::c_int;
     return h;
 }
 pub unsafe extern "C" fn sm_fbits(mut f: ::core::ffi::c_float) -> ::core::ffi::c_uint {
+    melee_core::ct!("sm_fbits");
     let mut v: Anon_anon_107 = unsafe { core::mem::zeroed::<Anon_anon_107>() };
     v.f = f;
     return v.u;
 }
 pub unsafe extern "C" fn sm_bitsf(mut i: ::core::ffi::c_int) -> ::core::ffi::c_float {
+    melee_core::ct!("sm_bitsf");
     let mut v: Anon_anon_11 = unsafe { core::mem::zeroed::<Anon_anon_11>() };
     v.i = i;
     return v.f;
@@ -17694,6 +18089,7 @@ pub unsafe extern "C" fn sm_bitsf(mut i: ::core::ffi::c_int) -> ::core::ffi::c_f
 pub unsafe extern "C" fn sm_program_digest(
     mut p: *const SmProgram,
 ) -> ::core::ffi::c_uint {
+    melee_core::ct!("sm_program_digest");
     let mut h: ::core::ffi::c_uint = 0x811c9dc5 as ::core::ffi::c_uint;
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
@@ -17709,6 +18105,7 @@ pub unsafe extern "C" fn sm_prog_word(
     mut index: ::core::ffi::c_int,
     mut value: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("sm_prog_word");
     if port < 0 as ::core::ffi::c_int || port >= SM_PORTS
         || index < 0 as ::core::ffi::c_int || index >= SM_PROG_WORDS
     {
@@ -17721,6 +18118,7 @@ pub unsafe extern "C" fn sm_prog_seal(
     mut w: *mut SmWorld,
     mut port: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("sm_prog_seal");
     let mut p: *mut SmProgram = ::core::ptr::null_mut::<SmProgram>();
     let mut r: ::core::ffi::c_int = 0;
     let mut t: ::core::ffi::c_int = 0;
@@ -17828,6 +18226,7 @@ pub unsafe extern "C" fn sm_prog_seal(
     return 1 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn sm_loaded(mut w: *const SmWorld) -> ::core::ffi::c_int {
+    melee_core::ct!("sm_loaded");
     let mut p: ::core::ffi::c_int = 0;
     p = 0 as ::core::ffi::c_int;
     while p < SM_PORTS {
@@ -17839,6 +18238,7 @@ pub unsafe extern "C" fn sm_loaded(mut w: *const SmWorld) -> ::core::ffi::c_int 
     return 0 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn sm_reset(mut w: *mut SmWorld) {
+    melee_core::ct!("sm_reset");
     let mut i: ::core::ffi::c_int = 0;
     let mut b: *mut ::core::ffi::c_uchar = w as *mut ::core::ffi::c_uchar;
     i = 0 as ::core::ffi::c_int;
@@ -17851,6 +18251,7 @@ pub unsafe extern "C" fn sm_mask(
     mut w: *const SmWorld,
     mut port: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("sm_mask");
     let mut i: ::core::ffi::c_int = 0;
     let mut m: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     i = 1 as ::core::ffi::c_int;
@@ -17866,6 +18267,7 @@ pub unsafe extern "C" fn sm_variant(
     mut w: *const SmWorld,
     mut port: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("sm_variant");
     return (*w)
         .prog[port as usize]
         .w[(8 as ::core::ffi::c_int + (sm_mask(w, port) & !(2 as ::core::ffi::c_int)))
@@ -17877,6 +18279,7 @@ pub unsafe extern "C" fn sm_event_init(
     mut port: ::core::ffi::c_int,
     mut target: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("sm_event_init");
     let mut b: *mut ::core::ffi::c_uchar = e as *mut ::core::ffi::c_uchar;
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
@@ -17896,6 +18299,7 @@ pub unsafe extern "C" fn sm_emit(
     mut w: *mut SmWorld,
     mut e: *const SmEvent,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("sm_emit");
     if (*e).port < 0 as ::core::ffi::c_int || (*e).port >= SM_PORTS
         || (*e).kind < 1 as ::core::ffi::c_int || (*e).kind >= SM_NEV
     {
@@ -17923,6 +18327,7 @@ pub static mut sm_status_tag: [::core::ffi::c_uint; 8] = [
 pub unsafe extern "C" fn sm_cause_of(
     mut kind: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("sm_cause_of");
     match kind {
         21 | 22 | 38 => return 1 as ::core::ffi::c_int,
         6 | 28 | 37 | 34 => return 2 as ::core::ffi::c_int,
@@ -17939,6 +18344,7 @@ pub unsafe extern "C" fn sm_status(
     mut port: ::core::ffi::c_int,
     mut id: ::core::ffi::c_int,
 ) -> *const SmStatus {
+    melee_core::ct!("sm_status");
     if port < 0 as ::core::ffi::c_int || port >= SM_PORTS || id < 1 as ::core::ffi::c_int
         || id > SM_NSTATUS
     {
@@ -17956,6 +18362,7 @@ pub unsafe extern "C" fn sm_any_status(
     mut w: *const SmWorld,
     mut port: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("sm_any_status");
     let mut i: ::core::ffi::c_int = 0;
     if port < 0 as ::core::ffi::c_int || port >= SM_PORTS {
         return 0 as ::core::ffi::c_int;
@@ -17974,6 +18381,7 @@ pub unsafe extern "C" fn sm_sustain_damage(
     mut port: ::core::ffi::c_int,
     mut amount: ::core::ffi::c_float,
 ) {
+    melee_core::ct!("sm_sustain_damage");
     let mut next: ::core::ffi::c_float = (*w).sustain[port as usize] + amount;
     let mut delta: ::core::ffi::c_float = 0.;
     if next > 100.0f32 {
@@ -17990,6 +18398,7 @@ pub unsafe extern "C" fn sm_begin_frame(
     mut w: *mut SmWorld,
     mut players: *const SmPlayer,
 ) {
+    melee_core::ct!("sm_begin_frame");
     let mut p: ::core::ffi::c_int = 0;
     let mut i: ::core::ffi::c_int = 0;
     (*w).frame += 1;
@@ -18062,6 +18471,7 @@ pub unsafe extern "C" fn sm_cond(
     mut e: *const SmEvent,
     mut c: *const ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("sm_cond");
     let mut kind: ::core::ffi::c_int = *c.offset(0 as ::core::ffi::c_int as isize);
     let mut a: ::core::ffi::c_int = *c.offset(1 as ::core::ffi::c_int as isize);
     let mut own: SmCtx = unsafe { core::mem::zeroed::<SmCtx>() };
@@ -18239,6 +18649,7 @@ pub unsafe extern "C" fn sm_conds(
     mut e: *const SmEvent,
     mut trig: *const ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("sm_conds");
     let mut i: ::core::ffi::c_int = 0;
     let mut n: ::core::ffi::c_int = *trig.offset(1 as ::core::ffi::c_int as isize);
     i = 0 as ::core::ffi::c_int;
@@ -18261,6 +18672,7 @@ pub unsafe extern "C" fn sm_matches(
     mut e: *const SmEvent,
     mut rule: *const ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("sm_matches");
     let mut t: ::core::ffi::c_int = 0;
     let mut ntrig: ::core::ffi::c_int = *rule.offset(1 as ::core::ffi::c_int as isize);
     let mut tw: *const ::core::ffi::c_int = rule.offset(4 as ::core::ffi::c_int as isize)
@@ -18311,6 +18723,7 @@ pub unsafe extern "C" fn sm_nearest_other(
     mut w: *const SmWorld,
     mut e: *const SmEvent,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("sm_nearest_other");
     let mut p: ::core::ffi::c_int = 0;
     let mut best: ::core::ffi::c_int = -(1 as ::core::ffi::c_int);
     let mut bd: ::core::ffi::c_float = 0 as ::core::ffi::c_int as ::core::ffi::c_float;
@@ -18352,6 +18765,7 @@ pub unsafe extern "C" fn sm_fx_add(
     mut flags: ::core::ffi::c_int,
     mut value: ::core::ffi::c_float,
 ) {
+    melee_core::ct!("sm_fx_add");
     let mut f: *mut SmFx = ::core::ptr::null_mut::<SmFx>();
     if (*w).nfx >= SM_FX {
         (*w).dropped += 1;
@@ -18375,6 +18789,7 @@ pub unsafe extern "C" fn sm_apply(
     mut e: *const SmEvent,
     mut rule: *const ::core::ffi::c_int,
 ) {
+    melee_core::ct!("sm_apply");
     let mut k: ::core::ffi::c_int = 0;
     let mut neff: ::core::ffi::c_int = *rule.offset(2 as ::core::ffi::c_int as isize);
     k = 0 as ::core::ffi::c_int;
@@ -18630,6 +19045,7 @@ pub unsafe extern "C" fn sm_apply(
     }
 }
 pub unsafe extern "C" fn sm_drain(mut w: *mut SmWorld) {
+    melee_core::ct!("sm_drain");
     let mut at: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     let mut lost: [::core::ffi::c_int; 2] = [0; 2];
     let mut p: ::core::ffi::c_int = 0;
@@ -18699,10 +19115,12 @@ pub unsafe extern "C" fn sm_drain(mut w: *mut SmWorld) {
     (*w).nq = 0 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn sm_tick(mut w: *mut SmWorld, mut players: *const SmPlayer) {
+    melee_core::ct!("sm_tick");
     sm_begin_frame(w, players);
     sm_drain(w);
 }
 pub unsafe extern "C" fn sm_hash(mut w: *const SmWorld) -> ::core::ffi::c_uint {
+    melee_core::ct!("sm_hash");
     let mut h: ::core::ffi::c_uint = 0x4d4f4453 as ::core::ffi::c_uint;
     let mut p: ::core::ffi::c_int = 0;
     let mut i: ::core::ffi::c_int = 0;
@@ -18776,6 +19194,7 @@ pub static mut script_mods_x: Anon_anon_29_3 = unsafe {
 pub unsafe extern "C" fn script_mods_fbits(
     mut f: ::core::ffi::c_float,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_mods_fbits");
     let mut u: Anon_anon_11 = unsafe { core::mem::zeroed::<Anon_anon_11>() };
     u.f = f;
     return u.i;
@@ -18793,6 +19212,7 @@ pub static mut script_mods_status_bits: [::core::ffi::c_int; 8] = [
 pub unsafe extern "C" fn script_mods_bits(
     mut mask: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_mods_bits");
     let mut i: ::core::ffi::c_int = 0;
     let mut b: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     i = 1 as ::core::ffi::c_int;
@@ -18805,9 +19225,11 @@ pub unsafe extern "C" fn script_mods_bits(
     return b;
 }
 pub unsafe extern "C" fn ScriptMods_Active() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptMods_Active");
     return sm_loaded(&raw mut script_mods);
 }
 pub unsafe extern "C" fn ScriptMods_Clear() {
+    melee_core::ct!("ScriptMods_Clear");
     sm_reset(&raw mut script_mods);
     memset(
         &raw mut script_mods_x as *mut ::core::ffi::c_void,
@@ -18820,11 +19242,13 @@ pub unsafe extern "C" fn ScriptMods_ProgWord(
     mut index: ::core::ffi::c_int,
     mut value: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptMods_ProgWord");
     return sm_prog_word(&raw mut script_mods, port, index, value);
 }
 pub unsafe extern "C" fn ScriptMods_ProgSeal(
     mut port: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptMods_ProgSeal");
     let mut ok: ::core::ffi::c_int = sm_prog_seal(&raw mut script_mods, port);
     if ok != 0 {
         OSReport(
@@ -18850,6 +19274,7 @@ pub unsafe extern "C" fn script_mods_listens(
     mut port: ::core::ffi::c_int,
     mut kind: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_mods_listens");
     let mut p: *const SmProgram = ::core::ptr::null::<SmProgram>();
     let mut r: ::core::ffi::c_int = 0;
     let mut t: ::core::ffi::c_int = 0;
@@ -18879,6 +19304,7 @@ pub unsafe extern "C" fn script_mods_listens(
 pub unsafe extern "C" fn script_mods_stocks(
     mut port: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_mods_stocks");
     return if port >= 0 as ::core::ffi::c_int && port < 6 as ::core::ffi::c_int {
         Player_GetStocks(port)
     } else {
@@ -18886,6 +19312,7 @@ pub unsafe extern "C" fn script_mods_stocks(
     };
 }
 pub unsafe extern "C" fn script_mods_put(mut e: *const SmEvent) {
+    melee_core::ct!("script_mods_put");
     if sm_emit(&raw mut script_mods, e) != 0 {
         script_mods_x.events += 1;
     }
@@ -18895,6 +19322,7 @@ pub unsafe extern "C" fn script_mods_simple(
     mut port: ::core::ffi::c_int,
     mut target: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("script_mods_simple");
     let mut e: SmEvent = unsafe { core::mem::zeroed::<SmEvent>() };
     if port < 0 as ::core::ffi::c_int || port >= SM_PORTS {
         return;
@@ -18912,6 +19340,7 @@ pub unsafe extern "C" fn script_mods_ctx(
     mut ground: ::core::ffi::c_int,
     mut port: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("script_mods_ctx");
     memset(
         c as *mut ::core::ffi::c_void,
         0 as ::core::ffi::c_int,
@@ -18940,6 +19369,7 @@ pub unsafe extern "C" fn ScriptMods_GameEvent(
     mut c: ::core::ffi::c_int,
     mut d: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("ScriptMods_GameEvent");
     if sm_loaded(&raw mut script_mods) == 0 {
         return;
     }
@@ -19010,6 +19440,7 @@ pub unsafe extern "C" fn ScriptMods_Clank(
     mut damage_a: ::core::ffi::c_float,
     mut damage_b: ::core::ffi::c_float,
 ) {
+    melee_core::ct!("ScriptMods_Clank");
     let mut e: SmEvent = unsafe { core::mem::zeroed::<SmEvent>() };
     if sm_loaded(&raw mut script_mods) == 0 || a < 0 as ::core::ffi::c_int
         || b < 0 as ::core::ffi::c_int || a == b || a >= SM_PORTS || b >= SM_PORTS
@@ -19028,6 +19459,7 @@ pub unsafe extern "C" fn ScriptMods_Clank(
     script_mods_put(&raw mut e);
 }
 pub unsafe extern "C" fn script_mods_apply_fx(mut x: *const SmFx) {
+    melee_core::ct!("script_mods_apply_fx");
     let mut entity: ::core::ffi::c_int = (*x).port + 1 as ::core::ffi::c_int;
     match (*x).op {
         1 => {
@@ -19087,6 +19519,7 @@ pub unsafe extern "C" fn ScriptMods_Read(
     mut what: ::core::ffi::c_int,
     mut idx: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptMods_Read");
     if port < 0 as ::core::ffi::c_int || port >= SM_PORTS {
         return 0 as ::core::ffi::c_int;
     }
@@ -19139,6 +19572,7 @@ pub unsafe extern "C" fn ScriptMods_Read(
     return 0 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptMods_HashWord() -> ::core::ffi::c_uint {
+    melee_core::ct!("ScriptMods_HashWord");
     let mut h: ::core::ffi::c_uint = sm_hash(&raw mut script_mods);
     let mut p: ::core::ffi::c_int = 0;
     if h == 0 as ::core::ffi::c_uint {
@@ -19162,6 +19596,7 @@ pub unsafe extern "C" fn ScriptMods_Poison(
     mut port: ::core::ffi::c_int,
     mut status: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("ScriptMods_Poison");
     if status == 0 as ::core::ffi::c_int {
         script_mods.frame ^= 1 as ::core::ffi::c_int;
     } else if port >= 0 as ::core::ffi::c_int && port < SM_PORTS && status <= SM_NSTATUS
@@ -19171,6 +19606,7 @@ pub unsafe extern "C" fn ScriptMods_Poison(
     }
 }
 pub unsafe extern "C" fn ScriptMods_Test() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptMods_Test");
     static mut saved_w: SmWorld = unsafe { core::mem::zeroed::<SmWorld>() };
     static mut saved_x: [::core::ffi::c_uchar; 64] = [0; 64];
     let mut pl: [SmPlayer; 2] = [unsafe { core::mem::zeroed::<SmPlayer>() }; 2];
@@ -19469,6 +19905,7 @@ pub unsafe extern "C" fn script_build_mix(
     mut h: ::core::ffi::c_uint,
     mut v: ::core::ffi::c_uint,
 ) -> ::core::ffi::c_uint {
+    melee_core::ct!("script_build_mix");
     h ^= v;
     h = h.wrapping_mul(0x1000193 as ::core::ffi::c_uint);
     h ^= h >> 15 as ::core::ffi::c_int;
@@ -19482,6 +19919,7 @@ pub unsafe extern "C" fn ScriptGame_BuildSet(
     mut nops: ::core::ffi::c_int,
     mut nrec: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_BuildSet");
     let mut b: *mut ScriptBuild = ::core::ptr::null_mut::<ScriptBuild>();
     if port < 0 as ::core::ffi::c_int || port >= 6 as ::core::ffi::c_int
         || nops < 0 as ::core::ffi::c_int || nops > 4096 as ::core::ffi::c_int
@@ -19512,6 +19950,7 @@ pub unsafe extern "C" fn ScriptGame_BuildSet(
     return 1 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_BuildClear() {
+    melee_core::ct!("ScriptGame_BuildClear");
     memset(
         &raw mut script_build as *mut ScriptBuild as *mut ::core::ffi::c_void,
         0 as ::core::ffi::c_int,
@@ -19522,6 +19961,7 @@ pub unsafe extern "C" fn ScriptGame_BuildClear() {
 pub unsafe extern "C" fn script_build_live(
     mut port: ::core::ffi::c_int,
 ) -> ::core::ffi::c_uint {
+    melee_core::ct!("script_build_live");
     let mut b: *mut ScriptBuild = (&raw mut script_build as *mut ScriptBuild)
         .offset(port as isize) as *mut ScriptBuild;
     let mut h: ::core::ffi::c_uint = 0x811c9dc5 as ::core::ffi::c_uint;
@@ -19570,6 +20010,7 @@ pub unsafe extern "C" fn ScriptGame_BuildRead(
     mut port: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_BuildRead");
     let mut b: *mut ScriptBuild = ::core::ptr::null_mut::<ScriptBuild>();
     if port < 0 as ::core::ffi::c_int || port >= 6 as ::core::ffi::c_int {
         return 0 as ::core::ffi::c_int;
@@ -19595,6 +20036,7 @@ pub unsafe extern "C" fn ScriptGame_BuildRead(
     return 0 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_BuildHashWord() -> ::core::ffi::c_uint {
+    melee_core::ct!("ScriptGame_BuildHashWord");
     let mut h: ::core::ffi::c_uint = 0 as ::core::ffi::c_uint;
     let mut p: ::core::ffi::c_int = 0;
     let mut any: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -19621,6 +20063,7 @@ pub unsafe extern "C" fn ScriptGame_BuildHashWord() -> ::core::ffi::c_uint {
     };
 }
 pub unsafe extern "C" fn ScriptGame_BuildTest() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_BuildTest");
     let mut saved: [ScriptBuild; 6] = [unsafe { core::mem::zeroed::<ScriptBuild>() }; 6];
     let mut snap: [ScriptBuild; 6] = [unsafe { core::mem::zeroed::<ScriptBuild>() }; 6];
     let mut w0: ::core::ffi::c_uint = 0;
@@ -19786,6 +20229,7 @@ pub static mut script_zones_mask: ::core::ffi::c_int = 0;
 pub unsafe extern "C" fn script_zone_bits(
     mut f: ::core::ffi::c_float,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_zone_bits");
     let mut u: Anon_anon_11 = unsafe { core::mem::zeroed::<Anon_anon_11>() };
     u.f = f;
     return u.i;
@@ -19793,6 +20237,7 @@ pub unsafe extern "C" fn script_zone_bits(
 pub unsafe extern "C" fn script_zone_float(
     mut b: ::core::ffi::c_int,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("script_zone_float");
     let mut u: Anon_anon_11 = unsafe { core::mem::zeroed::<Anon_anon_11>() };
     u.i = b;
     return u.f;
@@ -19801,6 +20246,7 @@ pub unsafe extern "C" fn script_zone_field(
     mut z: *const SzDef,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_zone_field");
     match field {
         0 => return (*z).handle,
         1 => return (*z).owner,
@@ -19830,6 +20276,7 @@ pub unsafe extern "C" fn script_zone_text(
     mut text: ::core::ffi::c_int,
     mut byte: ::core::ffi::c_int,
 ) -> *mut ::core::ffi::c_char {
+    melee_core::ct!("script_zone_text");
     if byte < 0 as ::core::ffi::c_int {
         return ::core::ptr::null_mut::<::core::ffi::c_char>();
     }
@@ -19860,6 +20307,7 @@ pub unsafe extern "C" fn ScriptGame_ZoneField(
     mut slot: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ZoneField");
     return if slot >= 0 as ::core::ffi::c_int && slot < SZ_CAP {
         script_zone_field(
             (&raw mut script_zones.z as *mut SzDef).offset(slot as isize) as *mut SzDef,
@@ -19874,6 +20322,7 @@ pub unsafe extern "C" fn ScriptGame_ZoneText(
     mut text: ::core::ffi::c_int,
     mut byte: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ZoneText");
     let mut c: *mut ::core::ffi::c_char = if slot >= 0 as ::core::ffi::c_int
         && slot < SZ_CAP
     {
@@ -19895,6 +20344,7 @@ pub unsafe extern "C" fn ScriptGame_ZoneDraft(
     mut field: ::core::ffi::c_int,
     mut value: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("ScriptGame_ZoneDraft");
     if field == -(1 as ::core::ffi::c_int) {
         memset(
             &raw mut script_zone_draft as *mut ::core::ffi::c_void,
@@ -19932,6 +20382,7 @@ pub unsafe extern "C" fn ScriptGame_ZoneDraftText(
     mut byte: ::core::ffi::c_int,
     mut value: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("ScriptGame_ZoneDraftText");
     let mut c: *mut ::core::ffi::c_char = script_zone_text(
         &raw mut script_zone_draft,
         text,
@@ -19946,6 +20397,7 @@ pub unsafe extern "C" fn ScriptGame_ZoneCommit(
     mut owner: ::core::ffi::c_int,
     mut serial_floor: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ZoneCommit");
     let mut rc: ::core::ffi::c_int = 0;
     let mut old_serial: ::core::ffi::c_int = script_zones.serial;
     let mut model: ::core::ffi::c_int = -(1 as ::core::ffi::c_int);
@@ -19983,9 +20435,11 @@ pub unsafe extern "C" fn ScriptGame_ZoneRemove(
     mut handle: ::core::ffi::c_int,
     mut owner: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ZoneRemove");
     return sz_remove(&raw mut script_zones, handle, owner);
 }
 pub unsafe extern "C" fn ScriptGame_ZonesRelease(mut owner: ::core::ffi::c_int) {
+    melee_core::ct!("ScriptGame_ZonesRelease");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < SZ_CAP {
@@ -20002,9 +20456,11 @@ pub unsafe extern "C" fn ScriptGame_ZonesRelease(mut owner: ::core::ffi::c_int) 
     }
 }
 pub unsafe extern "C" fn ScriptGame_ZonesArm(mut mask: ::core::ffi::c_int) {
+    melee_core::ct!("ScriptGame_ZonesArm");
     script_zones_mask = mask & 15 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_ZonesFrame(mut terminal: ::core::ffi::c_int) {
+    melee_core::ct!("ScriptGame_ZonesFrame");
     let mut input: [SzInput; 12] = [unsafe { core::mem::zeroed::<SzInput>() }; 12];
     let mut i: ::core::ffi::c_int = 0;
     if script_zones.count == 0 && script_zones.pending == 0 {
@@ -20076,6 +20532,7 @@ pub unsafe extern "C" fn ScriptGame_ZoneEntity(
     mut field: ::core::ffi::c_int,
     mut zone: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ZoneEntity");
     let mut e: *mut SzEntity = ::core::ptr::null_mut::<SzEntity>();
     if entity < 0 as ::core::ffi::c_int || entity >= SZ_ENTITIES {
         return 0 as ::core::ffi::c_int;
@@ -20103,12 +20560,14 @@ pub unsafe extern "C" fn ScriptGame_ZoneEntity(
     };
 }
 pub unsafe extern "C" fn ScriptGame_ZoneEventCount() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ZoneEventCount");
     return script_zones.nev;
 }
 pub unsafe extern "C" fn ScriptGame_ZoneEvent(
     mut event: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ZoneEvent");
     let mut e: *mut SzEvent = ::core::ptr::null_mut::<SzEvent>();
     if event < 0 as ::core::ffi::c_int || event >= script_zones.nev {
         return 0 as ::core::ffi::c_int;
@@ -20137,6 +20596,7 @@ pub unsafe extern "C" fn ScriptGame_ZoneEventText(
     mut text: ::core::ffi::c_int,
     mut byte: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ZoneEventText");
     let mut c: *mut ::core::ffi::c_char = ::core::ptr::null_mut::<::core::ffi::c_char>();
     if event < 0 as ::core::ffi::c_int || event >= script_zones.nev {
         return 0 as ::core::ffi::c_int;
@@ -20172,6 +20632,7 @@ pub unsafe extern "C" fn ScriptGame_ZoneEventText(
 pub unsafe extern "C" fn ScriptGame_ZonesAdapterTest(
     mut owner: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ZonesAdapterTest");
     let mut saved_model: ScriptMeshInstance = unsafe {
         core::mem::zeroed::<ScriptMeshInstance>()
     };
@@ -20351,6 +20812,7 @@ pub unsafe extern "C" fn ScriptGame_ZonesAdapterTest(
 pub static mut script_virtual_pad: [[::core::ffi::c_int; 9]; 2] = [[0; 9]; 2];
 pub static mut script_virtual_seen: [[::core::ffi::c_int; 7]; 2] = [[0; 7]; 2];
 pub unsafe extern "C" fn ScriptGame_VirtualPadObserve(mut fp: *mut Fighter) {
+    melee_core::ct!("ScriptGame_VirtualPadObserve");
     let mut seen: *mut ::core::ffi::c_int = ::core::ptr::null_mut::<
         ::core::ffi::c_int,
     >();
@@ -20383,6 +20845,7 @@ pub unsafe extern "C" fn ScriptGame_VirtualPadSeen(
     mut slot: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_VirtualPadSeen");
     return if slot >= 4 as ::core::ffi::c_int && slot < 6 as ::core::ffi::c_int
         && field >= 0 as ::core::ffi::c_int && field < 7 as ::core::ffi::c_int
     {
@@ -20397,6 +20860,7 @@ pub unsafe extern "C" fn ScriptGame_VirtualPadField(
     mut value: ::core::ffi::c_int,
     mut writing: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_VirtualPadField");
     if slot < 4 as ::core::ffi::c_int || slot >= 6 as ::core::ffi::c_int
         || field < 0 as ::core::ffi::c_int || field >= 9 as ::core::ffi::c_int
     {
@@ -20411,6 +20875,7 @@ pub unsafe extern "C" fn ScriptGame_VirtualPadRelease(
     mut slot: ::core::ffi::c_int,
     mut owner: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("ScriptGame_VirtualPadRelease");
     let mut i: ::core::ffi::c_int = 0;
     if slot < 0 as ::core::ffi::c_int && owner == 0 {
         memset(
@@ -20439,6 +20904,7 @@ pub unsafe extern "C" fn ScriptGame_VirtualPadRelease(
     }
 }
 pub unsafe extern "C" fn ScriptGame_VirtualPadConsume() {
+    melee_core::ct!("ScriptGame_VirtualPadConsume");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < 2 as ::core::ffi::c_int {
@@ -20453,6 +20919,7 @@ pub unsafe extern "C" fn ScriptGame_VirtualPadConsume() {
 pub unsafe extern "C" fn ScriptGame_VirtualPadApply(
     mut fp: *mut Fighter,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_VirtualPadApply");
     let mut v: *mut ::core::ffi::c_int = ::core::ptr::null_mut::<::core::ffi::c_int>();
     let mut active: ::core::ffi::c_int = 0;
     if ((*fp).player_id as ::core::ffi::c_int) < 4 as ::core::ffi::c_int
@@ -20517,6 +20984,7 @@ pub unsafe extern "C" fn script_recycle_policy(
     mut cpu: ::core::ffi::c_int,
     mut benched: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_recycle_policy");
     if fp.is_null() || (*fp).x890_cameraBox.is_null() || slot < 0 as ::core::ffi::c_int
         || slot >= 6 as ::core::ffi::c_int
     {
@@ -20552,6 +21020,7 @@ pub unsafe extern "C" fn script_recycle_check(
     mut slot: ::core::ffi::c_int,
     mut character: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_recycle_check");
     if fp.is_null() || slot < 0 as ::core::ffi::c_int || slot >= 6 as ::core::ffi::c_int
     {
         return 1 as ::core::ffi::c_int;
@@ -20573,6 +21042,7 @@ pub unsafe extern "C" fn ScriptGame_FighterRecycleCheck(
     mut slot: ::core::ffi::c_int,
     mut character: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_FighterRecycleCheck");
     return script_recycle_check(script_fighter(slot), slot, character);
 }
 pub unsafe extern "C" fn ScriptGame_FighterRecycle(
@@ -20583,6 +21053,7 @@ pub unsafe extern "C" fn ScriptGame_FighterRecycle(
     mut fb: ::core::ffi::c_int,
     mut intangible: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_FighterRecycle");
     let mut fp: *mut Fighter = script_fighter(slot);
     let mut x: ::core::ffi::c_float = script_mesh_float(xb);
     let mut y: ::core::ffi::c_float = script_mesh_float(yb);
@@ -20629,6 +21100,7 @@ pub unsafe extern "C" fn ScriptGame_FighterRecycle(
     return 0 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_SixSlotsTest() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_SixSlotsTest");
     static mut fp: Fighter = unsafe { core::mem::zeroed::<Fighter>() };
     let mut saved: [[::core::ffi::c_int; 9]; 2] = [[0; 9]; 2];
     let mut seen: [[::core::ffi::c_int; 7]; 2] = [[0; 7]; 2];
@@ -20888,12 +21360,14 @@ pub static mut script_spine_epoch: ::core::ffi::c_uint = 1 as ::core::ffi::c_uin
 pub static mut script_spine_ground_generation: [::core::ffi::c_uint; 64] = [0; 64];
 pub static mut script_spine_ground_address: [::core::ffi::c_int; 64] = [0; 64];
 pub unsafe extern "C" fn ScriptGame_EntityEpoch() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_EntityEpoch");
     return script_spine_epoch as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_RefsGroundBorn(
     mut id: ::core::ffi::c_int,
     mut address: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("ScriptGame_RefsGroundBorn");
     if id < 0 as ::core::ffi::c_int || id >= 64 as ::core::ffi::c_int {
         return;
     }
@@ -20907,6 +21381,7 @@ pub unsafe extern "C" fn ScriptGame_RefsGroundBorn(
     script_spine_ground_address[id as usize] = address;
 }
 pub unsafe extern "C" fn ScriptGame_RefsSceneEnd() {
+    melee_core::ct!("ScriptGame_RefsSceneEnd");
     memset(
         &raw mut script_spine_ground_address as *mut ::core::ffi::c_int
             as *mut ::core::ffi::c_void,
@@ -20927,6 +21402,7 @@ pub unsafe extern "C" fn ScriptGame_EntityField(
     mut id: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_EntityField");
     let mut fp: *mut Fighter = ::core::ptr::null_mut::<Fighter>();
     let mut ip: *mut Item = ::core::ptr::null_mut::<Item>();
     let mut e: ::core::ffi::c_int = -(1 as ::core::ffi::c_int);
@@ -21118,6 +21594,7 @@ pub unsafe extern "C" fn ScriptGame_EntityAddressField(
     mut address: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_EntityAddressField");
     let mut i: ::core::ffi::c_int = 0;
     let mut id: ::core::ffi::c_int = -(1 as ::core::ffi::c_int);
     let mut found: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -21162,6 +21639,7 @@ pub unsafe extern "C" fn ScriptGame_EntityAddressField(
     };
 }
 pub unsafe extern "C" fn script_mod_shield_clamp(mut slot: ::core::ffi::c_int) {
+    melee_core::ct!("script_mod_shield_clamp");
     let mut i: ::core::ffi::c_int = 0;
     if p_ftCommonData.is_null() {
         return;
@@ -21182,6 +21660,7 @@ pub unsafe extern "C" fn ScriptGame_FighterDealtDamage(
     mut attacker: *mut Fighter,
     mut damage: ::core::ffi::c_float,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("ScriptGame_FighterDealtDamage");
     if !attacker.is_null()
         && script_gobj_live((*attacker).x1064_thrownHitbox.anon_134.owner) != 0
     {
@@ -21202,6 +21681,7 @@ pub unsafe extern "C" fn ScriptGame_ItemModDamage(
     mut item: *mut Item,
     mut damage: ::core::ffi::c_float,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("ScriptGame_ItemModDamage");
     if !item.is_null() && script_gobj_live((*item).owner) != 0 {
         damage = ScriptGame_ModDamage(
             (*(HSD_GObjGetUserData((*item).owner) as *mut Fighter)).player_id
@@ -21217,6 +21697,7 @@ pub unsafe extern "C" fn ScriptGame_CameraFollowTarget(
     mut id: ::core::ffi::c_int,
     mut out: *mut Vec,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_CameraFollowTarget");
     if kind == 1 as ::core::ffi::c_int {
         let mut fp: *mut Fighter = script_fighter(id);
         if fp.is_null() {
@@ -21243,6 +21724,7 @@ pub unsafe extern "C" fn ScriptGame_FighterF(
     mut slot: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("ScriptGame_FighterF");
     let mut fp: *mut Fighter = script_fighter(slot);
     if fp.is_null() {
         return 0.0f32;
@@ -21264,6 +21746,7 @@ pub unsafe extern "C" fn ScriptGame_FighterI(
     mut slot: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_FighterI");
     let mut fp: *mut Fighter = ::core::ptr::null_mut::<Fighter>();
     if field == SCRIPT_I_SLOT_TYPE as ::core::ffi::c_int {
         return if slot >= 0 as ::core::ffi::c_int && slot < 6 as ::core::ffi::c_int {
@@ -21315,6 +21798,7 @@ pub unsafe extern "C" fn ScriptGame_SetPercent(
     mut slot: ::core::ffi::c_int,
     mut percent: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("ScriptGame_SetPercent");
     let mut fp: *mut Fighter = script_fighter(slot);
     if !fp.is_null() {
         if (*fp).kind as ::core::ffi::c_int == Ft_Kind_MasterH as ::core::ffi::c_int
@@ -21344,17 +21828,21 @@ pub unsafe extern "C" fn ScriptGame_SetStocks(
     mut slot: ::core::ffi::c_int,
     mut stocks: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("ScriptGame_SetStocks");
     if slot >= 0 as ::core::ffi::c_int && slot < 6 as ::core::ffi::c_int {
         Player_SetStocks(slot, stocks);
     }
 }
 pub unsafe extern "C" fn ScriptGame_StageKind() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageKind");
     return stage_info.grkind as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_GameMode() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_GameMode");
     return gm_GetCurrentGameMode() as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_LaunchScene(mut game_mode: ::core::ffi::c_int) {
+    melee_core::ct!("ScriptGame_LaunchScene");
     gmMainLib_8046B0F0.resetting = true_0 as ::core::ffi::c_int;
     gm_801A4B60();
 }
@@ -21364,6 +21852,7 @@ pub unsafe extern "C" fn script_lab_mission_i(
     mut fp: *mut Fighter,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_lab_mission_i");
     let mut cd: *mut CollData = &raw mut (*fp).coll_data;
     let mut floor: ::core::ffi::c_int = ((*fp).ground_or_air as ::core::ffi::c_int
         == GA_Ground as ::core::ffi::c_int
@@ -21402,6 +21891,7 @@ pub unsafe extern "C" fn script_lab_mission_i(
 pub unsafe extern "C" fn script_lab_mission_floor_valid(
     mut fp: *mut Fighter,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_lab_mission_floor_valid");
     let mut map: *mut MapCollData = mpLib_8004D164();
     let mut line: ::core::ffi::c_int = (*fp).coll_data.floor.index;
     let mut lines: *mut CollLine = mpGetGroundCollLine();
@@ -21425,6 +21915,7 @@ pub unsafe extern "C" fn script_lab_mission_floor_height(
     mut left: *mut Vec,
     mut right: *mut Vec,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("script_lab_mission_floor_height");
     let mut x: ::core::ffi::c_float = (*fp).coll_data.cur_pos.x as ::core::ffi::c_float
         + (*fp).coll_data.ecb.bottom.x as ::core::ffi::c_float;
     if (*right).x <= (*left).x {
@@ -21442,6 +21933,7 @@ pub unsafe extern "C" fn script_lab_mission_floor_height(
             / ((*right).x as ::core::ffi::c_float - (*left).x as ::core::ffi::c_float);
 }
 pub unsafe extern "C" fn ScriptGame_MissionPlayerTest() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_MissionPlayerTest");
     static mut fp: Fighter = unsafe { core::mem::zeroed::<Fighter>() };
     let mut left: Vec = Vec {
         x: -(10 as ::core::ffi::c_int) as ::core::ffi::c_float,
@@ -21541,6 +22033,7 @@ pub unsafe extern "C" fn script_contact_owner(
     mut line: ::core::ffi::c_int,
     mut part: *mut ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_contact_owner");
     let mut i: ::core::ffi::c_int = 0;
     let mut j: ::core::ffi::c_int = 0;
     let mut h: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -21581,6 +22074,7 @@ pub unsafe extern "C" fn script_contact_line(
     mut fp: *mut Fighter,
     mut surface: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_contact_line");
     let mut cd: *mut CollData = &raw mut (*fp).coll_data;
     match surface {
         0 => {
@@ -21625,6 +22119,7 @@ pub unsafe extern "C" fn script_contact_line(
 pub unsafe extern "C" fn script_contact_valid(
     mut line: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_contact_valid");
     let mut map: *mut MapCollData = mpLib_8004D164();
     let mut lines: *mut CollLine = mpGetGroundCollLine();
     return (!map.is_null() && !lines.is_null() && !mpGetGroundCollVtx().is_null()
@@ -21650,6 +22145,7 @@ pub unsafe extern "C" fn script_contact_sweep(
     mut outx: *mut ::core::ffi::c_float,
     mut outy: *mut ::core::ffi::c_float,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_contact_sweep");
     let mut dx: ::core::ffi::c_float = 0.;
     let mut dy: ::core::ffi::c_float = 0.;
     let mut old_side: ::core::ffi::c_float = 0.;
@@ -21692,6 +22188,7 @@ pub unsafe extern "C" fn ScriptGame_ContactField(
     mut field: ::core::ffi::c_int,
     mut explicit_line: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ContactField");
     let mut fp: *mut Fighter = script_fighter(slot);
     let mut a: Vec = unsafe { core::mem::zeroed::<Vec>() };
     let mut b: Vec = unsafe { core::mem::zeroed::<Vec>() };
@@ -21823,6 +22320,7 @@ pub unsafe extern "C" fn ScriptGame_ContactField(
 pub unsafe extern "C" fn script_contact_flags(
     mut fp: *mut Fighter,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_contact_flags");
     let mut s: ::core::ffi::c_int = 0;
     if fp.is_null() {
         return 0 as ::core::ffi::c_int;
@@ -21866,12 +22364,14 @@ pub unsafe extern "C" fn script_contact_flags(
 pub unsafe extern "C" fn ScriptGame_ContactFlags(
     mut slot: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ContactFlags");
     return script_contact_flags(script_fighter(slot));
 }
 pub unsafe extern "C" fn ScriptGame_ContactCross(
     mut slot: ::core::ffi::c_int,
     mut after: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ContactCross");
     let mut fp: *mut Fighter = script_fighter(slot);
     let mut map: *mut MapCollData = mpLib_8004D164();
     let mut i: ::core::ffi::c_int = 0;
@@ -21930,6 +22430,7 @@ pub unsafe extern "C" fn ScriptGame_ContactCross(
     return -(1 as ::core::ffi::c_int);
 }
 pub unsafe extern "C" fn ScriptGame_ContactsTest() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_ContactsTest");
     static mut fp: Fighter = unsafe { core::mem::zeroed::<Fighter>() };
     static mut saved_instance: ScriptMeshInstance = unsafe {
         core::mem::zeroed::<ScriptMeshInstance>()
@@ -22151,6 +22652,7 @@ pub unsafe extern "C" fn ScriptGame_LabF(
     mut slot: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("ScriptGame_LabF");
     let mut fp: *mut Fighter = script_fighter(slot);
     let mut cd: *mut CollData = ::core::ptr::null_mut::<CollData>();
     if fp.is_null() {
@@ -22237,6 +22739,7 @@ pub unsafe extern "C" fn ScriptGame_LabF(
     return 0.0f32;
 }
 pub unsafe extern "C" fn lab_joint_count(mut fp: *mut Fighter) -> ::core::ffi::c_int {
+    melee_core::ct!("lab_joint_count");
     let mut n: ::core::ffi::c_int = 0;
     if (*fp).parts.is_null() || ftPartsTable.is_null()
         || (*ftPartsTable.offset((*fp).kind as isize)).is_null()
@@ -22256,6 +22759,7 @@ pub unsafe extern "C" fn lab_joint_index(
     mut fp: *mut Fighter,
     mut jobj: *mut HSD_JObj,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("lab_joint_index");
     let mut i: ::core::ffi::c_int = 0;
     let mut n: ::core::ffi::c_int = lab_joint_count(fp);
     if jobj.is_null() {
@@ -22274,6 +22778,7 @@ pub unsafe extern "C" fn ScriptGame_LabI(
     mut slot: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_LabI");
     let mut fp: *mut Fighter = script_fighter(slot);
     if fp.is_null() {
         return -(1 as ::core::ffi::c_int);
@@ -22361,6 +22866,7 @@ pub unsafe extern "C" fn ScriptGame_LabI(
 pub unsafe extern "C" fn ScriptGame_LabAnimSymbol(
     mut slot: ::core::ffi::c_int,
 ) -> *const ::core::ffi::c_char {
+    melee_core::ct!("ScriptGame_LabAnimSymbol");
     let mut fp: *mut Fighter = script_fighter(slot);
     if fp.is_null() || (*fp).x24.is_null() || (*fp).anim_id < 0 as ::core::ffi::c_int
         || (*fp).anim_id > 0x3ff as ::core::ffi::c_int
@@ -22373,6 +22879,7 @@ pub unsafe extern "C" fn lab_hit(
     mut fp: *mut Fighter,
     mut i: ::core::ffi::c_int,
 ) -> *mut HitCapsule {
+    melee_core::ct!("lab_hit");
     if i >= 0 as ::core::ffi::c_int && i < 4 as ::core::ffi::c_int {
         return (&raw mut (*fp).x914 as *mut HitCapsule).offset(i as isize)
             as *mut HitCapsule;
@@ -22387,6 +22894,7 @@ pub unsafe extern "C" fn ScriptGame_HitI(
     mut i: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_HitI");
     let mut fp: *mut Fighter = script_fighter(slot);
     let mut h: *mut HitCapsule = ::core::ptr::null_mut::<HitCapsule>();
     if fp.is_null()
@@ -22451,6 +22959,7 @@ pub unsafe extern "C" fn ScriptGame_HitF(
     mut i: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("ScriptGame_HitF");
     let mut fp: *mut Fighter = script_fighter(slot);
     let mut h: *mut HitCapsule = ::core::ptr::null_mut::<HitCapsule>();
     if fp.is_null()
@@ -22482,6 +22991,7 @@ pub unsafe extern "C" fn ScriptGame_HurtI(
     mut i: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_HurtI");
     let mut fp: *mut Fighter = script_fighter(slot);
     let mut u: *mut FighterHurtCapsule = ::core::ptr::null_mut::<FighterHurtCapsule>();
     if fp.is_null() || i < 0 as ::core::ffi::c_int
@@ -22512,6 +23022,7 @@ pub unsafe extern "C" fn ScriptGame_HurtF(
     mut i: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("ScriptGame_HurtF");
     let mut fp: *mut Fighter = script_fighter(slot);
     let mut u: *mut FighterHurtCapsule = ::core::ptr::null_mut::<FighterHurtCapsule>();
     if fp.is_null() || i < 0 as ::core::ffi::c_int
@@ -22539,6 +23050,7 @@ pub unsafe extern "C" fn ScriptGame_JointF(
     mut i: ::core::ffi::c_int,
     mut comp: ::core::ffi::c_int,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("ScriptGame_JointF");
     let mut fp: *mut Fighter = script_fighter(slot);
     let mut j: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     if fp.is_null() || i < 0 as ::core::ffi::c_int || i >= lab_joint_count(fp)
@@ -22567,6 +23079,7 @@ pub unsafe extern "C" fn ScriptGame_JointMtx(
     mut i: ::core::ffi::c_int,
     mut comp: ::core::ffi::c_int,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("ScriptGame_JointMtx");
     let mut fp: *mut Fighter = script_fighter(slot);
     let mut j: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     if fp.is_null() || i < 0 as ::core::ffi::c_int || i >= lab_joint_count(fp)
@@ -22586,6 +23099,7 @@ pub unsafe extern "C" fn ScriptGame_JointMtx(
 pub unsafe extern "C" fn ScriptGame_FighterFacing(
     mut slot: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_FighterFacing");
     let mut fp: *mut Fighter = script_fighter(slot);
     if fp.is_null() {
         return 0 as ::core::ffi::c_int;
@@ -22597,6 +23111,7 @@ pub unsafe extern "C" fn ScriptGame_FighterFacing(
     };
 }
 pub unsafe extern "C" fn ScriptGame_JointsSetup(mut slot: ::core::ffi::c_int) {
+    melee_core::ct!("ScriptGame_JointsSetup");
     let mut fp: *mut Fighter = script_fighter(slot);
     let mut i: ::core::ffi::c_int = 0;
     let mut n: ::core::ffi::c_int = 0;
@@ -22618,6 +23133,7 @@ pub unsafe extern "C" fn ScriptGame_JointParent(
     mut slot: ::core::ffi::c_int,
     mut i: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_JointParent");
     let mut fp: *mut Fighter = script_fighter(slot);
     let mut j: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     if fp.is_null() || i < 0 as ::core::ffi::c_int || i >= lab_joint_count(fp) {
@@ -22632,6 +23148,7 @@ pub unsafe extern "C" fn ScriptGame_JointParent(
 pub unsafe extern "C" fn ScriptGame_CameraF(
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("ScriptGame_CameraF");
     let mut gobj: *mut HSD_GObj = Camera_80030A50() as *mut HSD_GObj;
     let mut c: *mut HSD_CObj = ::core::ptr::null_mut::<HSD_CObj>();
     if gobj.is_null()
@@ -22680,6 +23197,7 @@ pub unsafe extern "C" fn ScriptGame_LabDebugDraw(
     mut set: ::core::ffi::c_int,
     mut value: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_LabDebugDraw");
     let mut fp: *mut Fighter = script_fighter(slot);
     let mut old: ::core::ffi::c_int = 0;
     if fp.is_null() {
@@ -22705,6 +23223,7 @@ pub unsafe extern "C" fn ScriptGame_LabStageDraw(
     mut mask: ::core::ffi::c_int,
     mut value: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_LabStageDraw");
     let mut now: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     if Camera_80030A50().is_null() {
         return -(1 as ::core::ffi::c_int);
@@ -22766,6 +23285,7 @@ pub unsafe extern "C" fn ScriptGame_LabStageDraw(
     return now;
 }
 pub unsafe extern "C" fn ScriptGame_WbPrepare(mut slot: ::core::ffi::c_int) {
+    melee_core::ct!("ScriptGame_WbPrepare");
     let mut fp: *mut Fighter = script_fighter(slot);
     if fp.is_null() || (*fp).motion_id < ftCo_MS_Entry as ::core::ffi::c_int
         || (*fp).motion_id > ftCo_MS_EntryEnd as ::core::ffi::c_int
@@ -22786,6 +23306,7 @@ pub unsafe extern "C" fn ScriptGame_WbPrepare(mut slot: ::core::ffi::c_int) {
 pub unsafe extern "C" fn ScriptGame_WbTargetJoint(
     mut slot: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_WbTargetJoint");
     let mut fp: *mut Fighter = script_fighter(slot);
     let mut n: ::core::ffi::c_int = 0;
     let mut role: ::core::ffi::c_int = 0;
@@ -22820,6 +23341,7 @@ pub unsafe extern "C" fn ScriptGame_WbTargetJoint(
     return -(1 as ::core::ffi::c_int);
 }
 pub unsafe extern "C" fn script_wb_lines() {
+    melee_core::ct!("script_wb_lines");
     let mut view: Mtx = [[0.; 4]; 3];
     let mut tev: HSD_TevDesc = unsafe { core::mem::zeroed::<_HSD_TevDesc>() };
     let mut chan: HSD_Chan = HSD_Chan {
@@ -22890,6 +23412,7 @@ pub unsafe extern "C" fn script_wb_line(
     mut b: Vec,
     mut rgb: ::core::ffi::c_uint,
 ) {
+    melee_core::ct!("script_wb_line");
     GXBegin(GX_LINES, GX_VTXFMT0, 2 as ::core::ffi::c_ushort);
     GXPosition3f32(a.x, a.y, a.z);
     GXColor4u8(
@@ -22912,6 +23435,7 @@ pub unsafe extern "C" fn script_wb_line(
     GXEnd();
 }
 pub unsafe extern "C" fn ScriptGame_WbDraw() {
+    melee_core::ct!("ScriptGame_WbDraw");
     let mut fp: *mut Fighter = ::core::ptr::null_mut::<Fighter>();
     let mut i: ::core::ffi::c_int = 0;
     let mut pass: ::core::ffi::c_int = 0;
@@ -23123,6 +23647,7 @@ pub unsafe extern "C" fn lab_motion_row(
     mut fp: *mut Fighter,
     mut msid: ::core::ffi::c_int,
 ) -> *mut MotionState {
+    melee_core::ct!("lab_motion_row");
     if msid < 0 as ::core::ffi::c_int {
         return ::core::ptr::null_mut::<MotionState>();
     }
@@ -23147,6 +23672,7 @@ pub unsafe extern "C" fn ScriptGame_LabMotionAnim(
     mut slot: ::core::ffi::c_int,
     mut msid: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_LabMotionAnim");
     let mut fp: *mut Fighter = script_fighter(slot);
     let mut ms: *mut MotionState = ::core::ptr::null_mut::<MotionState>();
     if fp.is_null()
@@ -23162,6 +23688,7 @@ pub unsafe extern "C" fn ScriptGame_LabMotionAnim(
 pub unsafe extern "C" fn ScriptGame_LabCommonCount(
     mut slot: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_LabCommonCount");
     let mut fp: *mut Fighter = script_fighter(slot);
     return if !fp.is_null() { (*fp).x18 } else { -(1 as ::core::ffi::c_int) };
 }
@@ -23169,6 +23696,7 @@ pub unsafe extern "C" fn ScriptGame_LabScript(
     mut slot: ::core::ffi::c_int,
     mut anim: ::core::ffi::c_int,
 ) -> *const ::core::ffi::c_void {
+    melee_core::ct!("ScriptGame_LabScript");
     let mut fp: *mut Fighter = script_fighter(slot);
     if fp.is_null() || (*fp).x24.is_null() {
         return ::core::ptr::null::<::core::ffi::c_void>();
@@ -23185,6 +23713,7 @@ pub unsafe extern "C" fn ScriptGame_LabAnimSymbolFor(
     mut slot: ::core::ffi::c_int,
     mut anim: ::core::ffi::c_int,
 ) -> *const ::core::ffi::c_char {
+    melee_core::ct!("ScriptGame_LabAnimSymbolFor");
     let mut fp: *mut Fighter = script_fighter(slot);
     if fp.is_null() || (*fp).x24.is_null() || anim < 0 as ::core::ffi::c_int
         || anim > 0x3ff as ::core::ffi::c_int
@@ -23203,6 +23732,7 @@ pub static mut lab_preview_row: [::core::ffi::c_int; 6] = [
 ];
 pub static mut lab_preview_face: [::core::ffi::c_int; 6] = [0; 6];
 pub unsafe extern "C" fn lab_row_count(mut fp: *mut Fighter) -> ::core::ffi::c_int {
+    melee_core::ct!("lab_row_count");
     let mut n: ::core::ffi::c_int = 0;
     if fp.is_null() || (*fp).x24.is_null() {
         return 0 as ::core::ffi::c_int;
@@ -23224,6 +23754,7 @@ pub unsafe extern "C" fn lab_row_count(mut fp: *mut Fighter) -> ::core::ffi::c_i
 pub unsafe extern "C" fn ScriptGame_LabRowCount(
     mut slot: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_LabRowCount");
     return lab_row_count(script_fighter(slot));
 }
 pub unsafe extern "C" fn ScriptGame_LabSetPreviewRow(
@@ -23231,6 +23762,7 @@ pub unsafe extern "C" fn ScriptGame_LabSetPreviewRow(
     mut row: ::core::ffi::c_int,
     mut facing: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_LabSetPreviewRow");
     if slot < 0 as ::core::ffi::c_int || slot >= 6 as ::core::ffi::c_int {
         return -(1 as ::core::ffi::c_int);
     }
@@ -23248,6 +23780,7 @@ pub unsafe extern "C" fn ScriptGame_LabPreviewRow(
     mut fp: *mut Fighter,
     mut motion: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_LabPreviewRow");
     let mut slot: ::core::ffi::c_int = (*fp).player_id as ::core::ffi::c_int;
     let mut row: ::core::ffi::c_int = 0;
     if motion != ftCo_MS_Wait as ::core::ffi::c_int || slot < 0 as ::core::ffi::c_int
@@ -23268,6 +23801,7 @@ pub unsafe extern "C" fn ScriptGame_LabPreviewRow(
 pub unsafe extern "C" fn ScriptGame_LabAnimEnd(
     mut slot: ::core::ffi::c_int,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("ScriptGame_LabAnimEnd");
     let mut fp: *mut Fighter = script_fighter(slot);
     if fp.is_null() || (*fp).anim_id < 0 as ::core::ffi::c_int {
         return 0.0f32;
@@ -23275,6 +23809,7 @@ pub unsafe extern "C" fn ScriptGame_LabAnimEnd(
     return ftAnim_8006F484((*fp).gobj as *mut Fighter_GObj);
 }
 pub unsafe extern "C" fn ScriptGame_RngSeed() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_RngSeed");
     return *HSD_RandSeedPtr as ::core::ffi::c_int;
 }
 pub static mut lab_wb_home_set: ::core::ffi::c_int = 0;
@@ -23285,6 +23820,7 @@ pub unsafe extern "C" fn ScriptGame_LabWbHome(
     mut slot: ::core::ffi::c_int,
     mut mode: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_LabWbHome");
     let mut fp: *mut Fighter = script_fighter(slot);
     if fp.is_null() {
         return -(1 as ::core::ffi::c_int);
@@ -23331,6 +23867,7 @@ pub unsafe extern "C" fn ScriptGame_LabSetMotion(
     mut rate_bits: ::core::ffi::c_int,
     mut lift_bits: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_LabSetMotion");
     let mut fp: *mut Fighter = script_fighter(slot);
     let mut ms: *mut MotionState = ::core::ptr::null_mut::<MotionState>();
     let mut rate: Anon_anon_102 = unsafe { core::mem::zeroed::<Anon_anon_102>() };
@@ -23610,11 +24147,13 @@ pub const LAB_NATTRS: ::core::ffi::c_int = (::core::mem::size_of::<
     .wrapping_div(::core::mem::size_of::<Anon_anon_2840>() as usize)
     as ::core::ffi::c_int;
 pub unsafe extern "C" fn ScriptGame_LabAttrCount() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_LabAttrCount");
     return LAB_NATTRS;
 }
 pub unsafe extern "C" fn ScriptGame_LabAttrName(
     mut i: ::core::ffi::c_int,
 ) -> *const ::core::ffi::c_char {
+    melee_core::ct!("ScriptGame_LabAttrName");
     return if i >= 0 as ::core::ffi::c_int && i < LAB_NATTRS {
         lab_attrs[i as usize].name
     } else {
@@ -23625,6 +24164,7 @@ pub unsafe extern "C" fn ScriptGame_LabAttrF(
     mut slot: ::core::ffi::c_int,
     mut i: ::core::ffi::c_int,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("ScriptGame_LabAttrF");
     let mut fp: *mut Fighter = script_fighter(slot);
     let mut base: *mut ::core::ffi::c_uchar = ::core::ptr::null_mut::<
         ::core::ffi::c_uchar,
@@ -23643,6 +24183,7 @@ pub unsafe extern "C" fn lab_dobj(
     mut fp: *mut Fighter,
     mut d: ::core::ffi::c_int,
 ) -> *mut HSD_DObj {
+    melee_core::ct!("lab_dobj");
     if fp.is_null() || d < 0 as ::core::ffi::c_int
         || d >= (*fp).dobj_list.count as ::core::ffi::c_int
         || (*fp).dobj_list.data.is_null()
@@ -23655,6 +24196,7 @@ pub unsafe extern "C" fn lab_tobj(
     mut dobj: *mut HSD_DObj,
     mut t: ::core::ffi::c_int,
 ) -> *mut HSD_TObj {
+    melee_core::ct!("lab_tobj");
     let mut tp: *mut HSD_TObj = ::core::ptr::null_mut::<HSD_TObj>();
     if dobj.is_null() || (*dobj).mobj.is_null() || t < 0 as ::core::ffi::c_int {
         return ::core::ptr::null_mut::<HSD_TObj>();
@@ -23683,6 +24225,7 @@ pub static mut lab_part_ids: Anon_anon_29_4 = unsafe {
     core::mem::zeroed::<Anon_anon_29_4>()
 };
 pub unsafe extern "C" fn part_hash_byte(mut b: ::core::ffi::c_uchar) {
+    melee_core::ct!("part_hash_byte");
     lab_parts_hash[0 as ::core::ffi::c_int as usize] = (lab_parts_hash[0
         as ::core::ffi::c_int as usize] ^ b as ::core::ffi::c_uint)
         .wrapping_mul(16777619 as ::core::ffi::c_uint) as ::core::ffi::c_uint;
@@ -23691,15 +24234,18 @@ pub unsafe extern "C" fn part_hash_byte(mut b: ::core::ffi::c_uchar) {
         .wrapping_mul(2246822519 as ::core::ffi::c_uint) as ::core::ffi::c_uint;
 }
 pub unsafe extern "C" fn part_hash_int(mut v: ::core::ffi::c_uint) {
+    melee_core::ct!("part_hash_int");
     part_hash_byte((v >> 24 as ::core::ffi::c_int) as ::core::ffi::c_uchar);
     part_hash_byte((v >> 16 as ::core::ffi::c_int) as ::core::ffi::c_uchar);
     part_hash_byte((v >> 8 as ::core::ffi::c_int) as ::core::ffi::c_uchar);
     part_hash_byte(v as ::core::ffi::c_uchar);
 }
 pub unsafe extern "C" fn part_hash_float(mut f: ::core::ffi::c_float) {
+    melee_core::ct!("part_hash_float");
     part_hash_int(script_mesh_bits(f) as ::core::ffi::c_uint);
 }
 pub unsafe extern "C" fn ScriptGame_PartsReset(mut owner: ::core::ffi::c_int) {
+    melee_core::ct!("ScriptGame_PartsReset");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < PART_COLORS {
@@ -23734,6 +24280,7 @@ pub unsafe extern "C" fn ScriptGame_PartsReset(mut owner: ::core::ffi::c_int) {
     }
 }
 pub unsafe extern "C" fn ScriptParts_Forget(mut dobj: *mut HSD_DObj) {
+    melee_core::ct!("ScriptParts_Forget");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < PART_COLORS {
@@ -23761,6 +24308,7 @@ pub unsafe extern "C" fn part_id_rgb(
     mut i: ::core::ffi::c_int,
     mut inverted: ::core::ffi::c_int,
 ) -> ::core::ffi::c_uint {
+    melee_core::ct!("part_id_rgb");
     let mut n: ::core::ffi::c_uint = (i as ::core::ffi::c_uint)
         .wrapping_add(1 as ::core::ffi::c_uint);
     let mut rgb: ::core::ffi::c_uint = (16 as ::core::ffi::c_uint)
@@ -23782,6 +24330,7 @@ pub unsafe extern "C" fn part_id_rgb(
 pub unsafe extern "C" fn ScriptParts_Draw(
     mut dobj: *mut HSD_DObj,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptParts_Draw");
     let mut i: ::core::ffi::c_int = 0;
     let mut active: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     let mut rgb: ::core::ffi::c_uint = 0 as ::core::ffi::c_uint;
@@ -23858,6 +24407,7 @@ pub unsafe extern "C" fn ScriptParts_Draw(
 pub unsafe extern "C" fn part_tint_register(
     mut dobj: *mut HSD_DObj,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("part_tint_register");
     let mut d: *mut HSD_TevDesc = ::core::ptr::null_mut::<HSD_TevDesc>();
     let mut used: ::core::ffi::c_uint = 0 as ::core::ffi::c_uint;
     let mut stages: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -23903,6 +24453,7 @@ pub unsafe extern "C" fn part_tint_register(
 pub unsafe extern "C" fn ScriptParts_Tint(
     mut dobj: *mut HSD_DObj,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptParts_Tint");
     let mut i: ::core::ffi::c_int = 0;
     let mut reg: ::core::ffi::c_int = 0;
     let mut stage: ::core::ffi::c_int = 0;
@@ -23984,6 +24535,7 @@ pub unsafe extern "C" fn part_joint_region(
     mut fp: *mut Fighter,
     mut joint: *mut HSD_JObj,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("part_joint_region");
     static mut role: [::core::ffi::c_int; 17] = [
         FtPart_HeadN as ::core::ffi::c_int,
         FtPart_NeckN as ::core::ffi::c_int,
@@ -24067,6 +24619,7 @@ pub unsafe extern "C" fn part_transform(
     mut v: *const ::core::ffi::c_float,
     mut out: *mut ::core::ffi::c_float,
 ) {
+    melee_core::ct!("part_transform");
     let mut k: ::core::ffi::c_int = 0;
     k = 0 as ::core::ffi::c_int;
     while k < 3 as ::core::ffi::c_int {
@@ -24090,6 +24643,7 @@ pub unsafe extern "C" fn part_envelopes(
     mut p: *mut HSD_PObj,
     mut out: *mut PartEnvelope,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("part_envelopes");
     let mut list: *mut HSD_SList = ::core::ptr::null_mut::<HSD_SList>();
     let mut n: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     let mut k: ::core::ffi::c_int = 0;
@@ -24202,6 +24756,7 @@ pub unsafe extern "C" fn part_envelopes(
 pub unsafe extern "C" fn part_component_bytes(
     mut type_0: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("part_component_bytes");
     return if type_0 == GX_U8 as ::core::ffi::c_int
         || type_0 == GX_S8 as ::core::ffi::c_int
     {
@@ -24219,6 +24774,7 @@ pub unsafe extern "C" fn part_component_bytes(
 pub unsafe extern "C" fn part_attr_bytes(
     mut v: *mut HSD_VtxDescList,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("part_attr_bytes");
     if (*v).attr_type as ::core::ffi::c_int == GX_NONE as ::core::ffi::c_int {
         return 0 as ::core::ffi::c_int;
     }
@@ -24303,6 +24859,7 @@ pub unsafe extern "C" fn part_component(
     mut type_0: ::core::ffi::c_int,
     mut frac: ::core::ffi::c_int,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("part_component");
     let mut val: ::core::ffi::c_int = 0;
     if type_0 == GX_F32 as ::core::ffi::c_int {
         let mut x: Anon_anon_1134 = unsafe { core::mem::zeroed::<Anon_anon_1134>() };
@@ -24341,6 +24898,7 @@ pub unsafe extern "C" fn part_vertex(
     mut palette: ::core::ffi::c_int,
     mut out: *mut PartVertex,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("part_vertex");
     let mut v: *mut HSD_VtxDescList = ::core::ptr::null_mut::<HSD_VtxDescList>();
     let mut local: [::core::ffi::c_float; 3] = [
         0 as ::core::ffi::c_int as ::core::ffi::c_float,
@@ -24500,6 +25058,7 @@ pub unsafe extern "C" fn part_triangle(
     mut b: *mut PartVertex,
     mut c: *mut PartVertex,
 ) {
+    melee_core::ct!("part_triangle");
     let mut u: [::core::ffi::c_float; 3] = [0.; 3];
     let mut v: [::core::ffi::c_float; 3] = [0.; 3];
     let mut cross: [::core::ffi::c_float; 3] = [0.; 3];
@@ -24557,6 +25116,7 @@ pub unsafe extern "C" fn part_triangle(
     }
 }
 pub unsafe extern "C" fn part_geometry(mut fp: *mut Fighter, mut part: *mut LabPart) {
+    melee_core::ct!("part_geometry");
     let mut p: *mut HSD_PObj = ::core::ptr::null_mut::<HSD_PObj>();
     let mut polys: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     let mut k: ::core::ffi::c_int = 0;
@@ -24827,6 +25387,7 @@ pub unsafe extern "C" fn part_add(
     mut ordinal: ::core::ffi::c_int,
     mut path: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("part_add");
     let mut part: *mut LabPart = ::core::ptr::null_mut::<LabPart>();
     let mut i: ::core::ffi::c_int = 0;
     if lab_parts_n >= PART_MAX || d.is_null() || joint.is_null() {
@@ -24884,6 +25445,7 @@ pub unsafe extern "C" fn part_item_walk(
     mut path: *mut ::core::ffi::c_int,
     mut depth: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("part_item_walk");
     while !j.is_null() && depth < MAX_FT_PARTS {
         let mut d: *mut HSD_DObj = ::core::ptr::null_mut::<HSD_DObj>();
         let fresh47 = *path;
@@ -24927,6 +25489,7 @@ pub unsafe extern "C" fn part_item_walk(
 pub unsafe extern "C" fn part_refresh(
     mut slot: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("part_refresh");
     let mut fp: *mut Fighter = script_fighter(slot);
     let mut d: ::core::ffi::c_int = 0;
     let mut j: ::core::ffi::c_int = 0;
@@ -25025,6 +25588,7 @@ pub unsafe extern "C" fn ScriptGame_PartsI(
     mut d: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_PartsI");
     let mut part: *mut LabPart = ::core::ptr::null_mut::<LabPart>();
     let mut fp: *mut Fighter = script_fighter(slot);
     if field == PART_I_REFRESH as ::core::ffi::c_int {
@@ -25152,6 +25716,7 @@ pub unsafe extern "C" fn ScriptGame_PartsF(
     mut d: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("ScriptGame_PartsF");
     let mut part: *mut LabPart = ::core::ptr::null_mut::<LabPart>();
     if lab_parts_slot != slot || d < 0 as ::core::ffi::c_int || d >= lab_parts_n
         || lab_parts[d as usize].dobj.is_null()
@@ -25186,6 +25751,7 @@ pub unsafe extern "C" fn ScriptGame_PartsControl(
     mut rgb: ::core::ffi::c_int,
     mut owner: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_PartsControl");
     let mut dobj: *mut HSD_DObj = ::core::ptr::null_mut::<HSD_DObj>();
     let mut i: ::core::ffi::c_int = 0;
     let mut empty: ::core::ffi::c_int = -(1 as ::core::ffi::c_int);
@@ -25285,6 +25851,7 @@ pub unsafe extern "C" fn ScriptGame_PartsJoint(
     mut slot: ::core::ffi::c_int,
     mut joint: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_PartsJoint");
     let mut fp: *mut Fighter = script_fighter(slot);
     if fp.is_null() || joint < 0 as ::core::ffi::c_int || joint >= lab_joint_count(fp) {
         return 0 as ::core::ffi::c_int;
@@ -25294,6 +25861,7 @@ pub unsafe extern "C" fn ScriptGame_PartsJoint(
 pub unsafe extern "C" fn ScriptGame_TintCount(
     mut slot: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_TintCount");
     let mut i: ::core::ffi::c_int = 0;
     let mut n: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     if slot < 0 as ::core::ffi::c_int || slot >= 6 as ::core::ffi::c_int {
@@ -25316,6 +25884,7 @@ pub unsafe extern "C" fn ScriptGame_LabDObjI(
     mut d: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_LabDObjI");
     let mut fp: *mut Fighter = script_fighter(slot);
     let mut dobj: *mut HSD_DObj = ::core::ptr::null_mut::<HSD_DObj>();
     let mut tp: *mut HSD_TObj = ::core::ptr::null_mut::<HSD_TObj>();
@@ -25395,6 +25964,7 @@ pub unsafe extern "C" fn ScriptGame_LabTObjF(
     mut t: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("ScriptGame_LabTObjF");
     let mut fp: *mut Fighter = script_fighter(slot);
     let mut tp: *mut HSD_TObj = ::core::ptr::null_mut::<HSD_TObj>();
     if fp.is_null() {
@@ -25461,6 +26031,7 @@ pub unsafe extern "C" fn ScriptGame_LabTObjF(
 }
 pub static mut script_cpu_override: [::core::ffi::c_uchar; 6] = [0; 6];
 pub unsafe extern "C" fn ScriptGame_CpuModeReset() {
+    melee_core::ct!("ScriptGame_CpuModeReset");
     memset(
         &raw mut script_cpu_override as *mut ::core::ffi::c_uchar
             as *mut ::core::ffi::c_void,
@@ -25474,6 +26045,7 @@ pub unsafe extern "C" fn script_cpu_idle_policy(
     mut override_0: ::core::ffi::c_int,
     mut dflt: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_cpu_idle_policy");
     if override_0 == 3 as ::core::ffi::c_int {
         return 1 as ::core::ffi::c_int;
     }
@@ -25489,6 +26061,7 @@ pub unsafe extern "C" fn script_cpu_idle_policy(
 pub unsafe extern "C" fn ScriptGame_CpuStanding(
     mut fp: *mut Fighter,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_CpuStanding");
     let mut slot: ::core::ffi::c_int = (*fp).player_id as ::core::ffi::c_int;
     if slot < 0 as ::core::ffi::c_int || slot >= 6 as ::core::ffi::c_int
         || Player_GetPlayerSlotType(slot as s32) as ::core::ffi::c_int
@@ -25506,6 +26079,7 @@ pub unsafe extern "C" fn ScriptGame_CpuStanding(
 pub unsafe extern "C" fn ScriptGame_CpuModeInfo(
     mut slot: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_CpuModeInfo");
     let mut d: ::core::ffi::c_int = 0;
     if slot < 0 as ::core::ffi::c_int || slot >= 6 as ::core::ffi::c_int
         || Player_GetPlayerSlotType(slot as s32) as ::core::ffi::c_int
@@ -25546,6 +26120,7 @@ pub unsafe extern "C" fn script_cpu_stand_quiet(
     mut fp: *mut Fighter,
     mut standing: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_cpu_stand_quiet");
     if standing == 0 {
         return 0 as ::core::ffi::c_int;
     }
@@ -25572,6 +26147,7 @@ pub unsafe extern "C" fn script_cpu_stand_quiet(
 pub unsafe extern "C" fn ScriptGame_CpuStandTick(
     mut fp: *mut Fighter,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_CpuStandTick");
     let mut slot: ::core::ffi::c_int = (*fp).player_id as ::core::ffi::c_int;
     if slot >= 0 as ::core::ffi::c_int && slot < 6 as ::core::ffi::c_int
         && script_cpu_override[slot as usize] as ::core::ffi::c_int
@@ -25596,6 +26172,7 @@ pub unsafe extern "C" fn script_cpu_mode_pair(
         ) -> (),
     >,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_cpu_mode_pair");
     let mut i: ::core::ffi::c_int = 0;
     if (*pair.offset(0 as ::core::ffi::c_int as isize)).is_null()
         || (**pair.offset(0 as ::core::ffi::c_int as isize)).is_sub_fighter()
@@ -25656,6 +26233,7 @@ pub unsafe extern "C" fn script_cpu_mode_persist(
         unsafe extern "C" fn(::core::ffi::c_int, ::core::ffi::c_int) -> (),
     >,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_cpu_mode_persist");
     if script_cpu_mode_pair(pair, fight, init) == 0 {
         return 0 as ::core::ffi::c_int;
     }
@@ -25676,6 +26254,7 @@ pub unsafe extern "C" fn ScriptGame_CpuMode(
     mut slot: ::core::ffi::c_int,
     mut fight: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_CpuMode");
     let mut pair: [*mut Fighter; 2] = [::core::ptr::null_mut::<Fighter>(); 2];
     let mut other: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     if slot < 0 as ::core::ffi::c_int || slot >= 6 as ::core::ffi::c_int
@@ -25761,6 +26340,7 @@ pub static mut script_cpu_ctl: [[ScriptCpuCtl; 2]; 6] = [[unsafe {
     core::mem::zeroed::<ScriptCpuCtl>()
 }; 2]; 6];
 pub unsafe extern "C" fn script_cpu_ctl_neutral(mut d: *mut CpuFighter) {
+    melee_core::ct!("script_cpu_ctl_neutral");
     (*d).buttons = 0 as HSD_Pad;
     (*d).lstick.y = 0 as s8;
     (*d).lstick.x = (*d).lstick.y;
@@ -25774,6 +26354,7 @@ pub unsafe extern "C" fn script_cpu_clamp(
     mut lo: ::core::ffi::c_int,
     mut hi: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_cpu_clamp");
     return if v < lo { lo } else if v > hi { hi } else { v };
 }
 pub const GOTO_STEP: ::core::ffi::c_float = 4.0f32;
@@ -25783,6 +26364,7 @@ pub unsafe extern "C" fn script_goto_floor(
     mut depth: ::core::ffi::c_float,
     mut fy: *mut ::core::ffi::c_float,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_goto_floor");
     let mut pos: Vec = unsafe { core::mem::zeroed::<Vec>() };
     let mut flags: ::core::ffi::c_uint = 0 as ::core::ffi::c_uint;
     if mpCheckFloor(
@@ -25812,6 +26394,7 @@ pub unsafe extern "C" fn script_goto_walkable(
     mut y0: ::core::ffi::c_float,
     mut x1: ::core::ffi::c_float,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_goto_walkable");
     let mut dir: ::core::ffi::c_float = if x1 >= x0 { 1.0f32 } else { -1.0f32 };
     let mut x: ::core::ffi::c_float = 0.;
     let mut prev: ::core::ffi::c_float = y0;
@@ -25841,6 +26424,7 @@ pub unsafe extern "C" fn script_goto_reach(
     mut fp: *mut Fighter,
     mut jumps_left: ::core::ffi::c_int,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("script_goto_reach");
     let mut g: ::core::ffi::c_float = (*fp).co_attrs.gravity;
     let mut v1: ::core::ffi::c_float = (*fp).co_attrs.jump_v_initial_velocity;
     let mut v2: ::core::ffi::c_float = v1 * (*fp).co_attrs.air_jump_v_multiplier;
@@ -25859,6 +26443,7 @@ pub unsafe extern "C" fn script_goto_stick(
     mut x: ::core::ffi::c_int,
     mut y: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("script_goto_stick");
     (*fp).cpu.lstick.x = script_cpu_clamp(
         x,
         -(127 as ::core::ffi::c_int),
@@ -25876,6 +26461,7 @@ pub unsafe extern "C" fn script_goto_stick_for(
     mut friction: ::core::ffi::c_float,
     mut radius: ::core::ffi::c_float,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_goto_stick_for");
     let mut adx: ::core::ffi::c_float = if dx < 0.0f32 { -dx } else { dx };
     let mut dir: ::core::ffi::c_float = if dx < 0.0f32 { -1.0f32 } else { 1.0f32 };
     let mut stop: ::core::ffi::c_float = if friction > 0.0f32 {
@@ -25901,6 +26487,7 @@ pub unsafe extern "C" fn script_goto_tick(
     mut fp: *mut Fighter,
     mut c: *mut ScriptCpuCtl,
 ) {
+    melee_core::ct!("script_goto_tick");
     let mut d: *mut CpuFighter = &raw mut (*fp).cpu;
     let mut x: ::core::ffi::c_float = (*fp).cur_pos.x as ::core::ffi::c_float;
     let mut y: ::core::ffi::c_float = (*fp).cur_pos.y as ::core::ffi::c_float;
@@ -26132,6 +26719,7 @@ pub unsafe extern "C" fn script_cpu_ctl_tick(
     mut c: *mut ScriptCpuCtl,
     mut target: *mut Fighter,
 ) {
+    melee_core::ct!("script_cpu_ctl_tick");
     let mut d: *mut CpuFighter = &raw mut (*fp).cpu;
     (*d).x44 = target;
     if (*c).go_state == 1 as ::core::ffi::c_int
@@ -26174,6 +26762,7 @@ pub unsafe extern "C" fn script_cpu_ctl_tick(
     }
 }
 pub unsafe extern "C" fn script_cpu_script_tick(mut fp: *mut Fighter) {
+    melee_core::ct!("script_cpu_script_tick");
     let mut slot: ::core::ffi::c_int = (*fp).player_id as ::core::ffi::c_int;
     let mut i: ::core::ffi::c_int = 0;
     let mut c: *mut ScriptCpuCtl = (&raw mut *(&raw mut script_cpu_ctl
@@ -26204,6 +26793,7 @@ pub unsafe extern "C" fn script_cpu_script_tick(mut fp: *mut Fighter) {
     script_cpu_ctl_tick(fp, c, target);
 }
 pub unsafe extern "C" fn script_cpu_ctl_reset() {
+    melee_core::ct!("script_cpu_ctl_reset");
     memset(
         &raw mut script_cpu_ctl as *mut [ScriptCpuCtl; 2] as *mut ::core::ffi::c_void,
         0 as ::core::ffi::c_int,
@@ -26214,6 +26804,7 @@ pub unsafe extern "C" fn script_cpu_ctl_fighter(
     mut slot: ::core::ffi::c_int,
     mut sub: ::core::ffi::c_int,
 ) -> *mut Fighter {
+    melee_core::ct!("script_cpu_ctl_fighter");
     let mut fp: *mut Fighter = script_fighter(slot);
     let mut other: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     if fp.is_null() {
@@ -26240,6 +26831,7 @@ pub unsafe extern "C" fn script_cpu_ctl_fighter(
 pub unsafe extern "C" fn ScriptGame_CpuScriptMode(
     mut slot: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_CpuScriptMode");
     if ScriptGame_CpuMode(slot, 0 as ::core::ffi::c_int) == 0 {
         return 0 as ::core::ffi::c_int;
     }
@@ -26263,6 +26855,7 @@ pub unsafe extern "C" fn ScriptGame_CpuCtl(
     mut op: ::core::ffi::c_int,
     mut a: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_CpuCtl");
     let mut fp: *mut Fighter = ::core::ptr::null_mut::<Fighter>();
     let mut c: *mut ScriptCpuCtl = ::core::ptr::null_mut::<ScriptCpuCtl>();
     let mut d: *mut CpuFighter = ::core::ptr::null_mut::<CpuFighter>();
@@ -26508,6 +27101,7 @@ pub unsafe extern "C" fn ScriptGame_CpuAttr(
     mut slot: ::core::ffi::c_int,
     mut id: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_CpuAttr");
     let mut fp: *mut Fighter = script_fighter(slot);
     let mut u: Anon_anon_11 = unsafe { core::mem::zeroed::<Anon_anon_11>() };
     if fp.is_null() {
@@ -26591,6 +27185,7 @@ pub unsafe extern "C" fn ScriptGame_CpuAttr(
     return u.i;
 }
 pub unsafe extern "C" fn ScriptGame_CpuCtlTest() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_CpuCtlTest");
     static mut fp: Fighter = unsafe { core::mem::zeroed::<Fighter>() };
     static mut target: Fighter = unsafe { core::mem::zeroed::<Fighter>() };
     let mut c: ScriptCpuCtl = unsafe { core::mem::zeroed::<ScriptCpuCtl>() };
@@ -26905,6 +27500,7 @@ pub unsafe extern "C" fn script_cpu_mode_test_init(
     mut level: ::core::ffi::c_int,
     mut control: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("script_cpu_mode_test_init");
     script_cpu_mode_test_calls += 1;
     (*fp).cpu.kind = (if (*fp).kind as ::core::ffi::c_int
         == Ft_Kind_Nana as ::core::ffi::c_int
@@ -26921,9 +27517,11 @@ pub unsafe extern "C" fn script_cpu_mode_test_persist(
     mut slot: ::core::ffi::c_int,
     mut kind: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("script_cpu_mode_test_persist");
     script_cpu_mode_test_slot_kind = kind;
 }
 pub unsafe extern "C" fn ScriptGame_CpuModeTest() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_CpuModeTest");
     static mut zelda: Fighter = unsafe { core::mem::zeroed::<Fighter>() };
     static mut sheik: Fighter = unsafe { core::mem::zeroed::<Fighter>() };
     static mut nana: Fighter = unsafe { core::mem::zeroed::<Fighter>() };
@@ -27348,6 +27946,7 @@ pub unsafe extern "C" fn ScriptGame_Impulse(
     mut x_bits: ::core::ffi::c_int,
     mut y_bits: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_Impulse");
     let mut fp: *mut Fighter = script_fighter(slot);
     let mut x: Anon_anon_102 = unsafe { core::mem::zeroed::<Anon_anon_102>() };
     let mut y: Anon_anon_102 = unsafe { core::mem::zeroed::<Anon_anon_102>() };
@@ -27393,9 +27992,11 @@ pub unsafe extern "C" fn ScriptGame_Impulse(
     return 1 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_MatchEndHold(mut on: ::core::ffi::c_int) {
+    melee_core::ct!("ScriptGame_MatchEndHold");
     gmVs_SetEndHold(on);
 }
 pub unsafe extern "C" fn ScriptGame_MatchEndPending() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_MatchEndPending");
     return gmVs_GetHeldOutcome();
 }
 pub unsafe extern "C" fn ScriptGame_EnemyHit(
@@ -27406,6 +28007,7 @@ pub unsafe extern "C" fn ScriptGame_EnemyHit(
     mut kbg: ::core::ffi::c_int,
     mut bkb: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_EnemyHit");
     let mut from: *mut Fighter = if from_slot >= 0 as ::core::ffi::c_int {
         script_fighter(from_slot)
     } else {
@@ -27526,6 +28128,7 @@ pub unsafe extern "C" fn ScriptGame_Hit(
     mut kbg: ::core::ffi::c_int,
     mut bkb: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_Hit");
     let mut fp: *mut Fighter = script_fighter(slot);
     let mut from: *mut Fighter = if from_slot >= 0 as ::core::ffi::c_int {
         script_fighter(from_slot)
@@ -27639,6 +28242,7 @@ pub unsafe extern "C" fn ScriptGame_Hit(
 pub unsafe extern "C" fn script_enemy_finite(
     mut value: ::core::ffi::c_float,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_enemy_finite");
     return (value >= -3.402823466e38f32 && value <= 3.402823466e38f32)
         as ::core::ffi::c_int;
 }
@@ -27649,6 +28253,7 @@ pub unsafe extern "C" fn script_enemy_spec(
     mut bkb: ::core::ffi::c_int,
     mut reach: ::core::ffi::c_float,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_enemy_spec");
     return (damage >= 1 as ::core::ffi::c_int && damage <= 30 as ::core::ffi::c_int
         && angle >= 0 as ::core::ffi::c_int && angle <= 361 as ::core::ffi::c_int
         && kbg >= 0 as ::core::ffi::c_int && kbg <= 1000 as ::core::ffi::c_int
@@ -27665,6 +28270,7 @@ pub unsafe extern "C" fn ScriptGame_EnemyStrike(
     mut bkb: ::core::ffi::c_int,
     mut reach_bits: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_EnemyStrike");
     let mut e: *mut ScriptStageEnemy = script_enemy(handle);
     let mut fp: *mut Fighter = script_fighter(slot);
     let mut ip: *mut Item = ::core::ptr::null_mut::<Item>();
@@ -27775,6 +28381,7 @@ pub unsafe extern "C" fn ScriptGame_EnemyHurt(
     mut bkb: ::core::ffi::c_int,
     mut reach_bits: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_EnemyHurt");
     let mut e: *mut ScriptStageEnemy = script_enemy(handle);
     let mut fp: *mut Fighter = script_fighter(from_slot);
     let mut ip: *mut Item = ::core::ptr::null_mut::<Item>();
@@ -27884,6 +28491,7 @@ pub unsafe extern "C" fn ScriptGame_EnemyHurt(
     return (committed != 0 as ::core::ffi::c_int) as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_EnemyTest() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_EnemyTest");
     static mut item: Item = unsafe { core::mem::zeroed::<Item>() };
     static mut source: Fighter = unsafe { core::mem::zeroed::<Fighter>() };
     let mut gobj: HSD_GObj = unsafe { core::mem::zeroed::<HSD_GObj>() };
@@ -28078,6 +28686,7 @@ pub unsafe extern "C" fn ScriptGame_LabKnockback(
     mut pct_bits: ::core::ffi::c_int,
     mut post: ::core::ffi::c_int,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("ScriptGame_LabKnockback");
     let mut fp: *mut Fighter = script_fighter(slot);
     let mut at: *mut Fighter = if attacker_slot >= 0 as ::core::ffi::c_int {
         script_fighter(attacker_slot)
@@ -28166,6 +28775,7 @@ pub unsafe extern "C" fn ScriptGame_LabKnockback(
 pub unsafe extern "C" fn ScriptGame_LabKbLevel(
     mut kb_bits: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_LabKbLevel");
     let mut kb: Anon_anon_102 = unsafe { core::mem::zeroed::<Anon_anon_102>() };
     kb.i = kb_bits;
     return ftCo_8008D8E8(kb.f * (*p_ftCommonData).x154);
@@ -28173,6 +28783,7 @@ pub unsafe extern "C" fn ScriptGame_LabKbLevel(
 pub unsafe extern "C" fn ScriptGame_LabCommonF(
     mut which: ::core::ffi::c_int,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("ScriptGame_LabCommonF");
     let mut d: *mut ftCommonData = p_ftCommonData;
     match which {
         0 => return (*d).x100,
@@ -28209,6 +28820,7 @@ pub unsafe extern "C" fn ScriptGame_LabFloorY(
     mut y_bits: ::core::ffi::c_int,
     mut depth_bits: ::core::ffi::c_int,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("ScriptGame_LabFloorY");
     let mut x: Anon_anon_102 = unsafe { core::mem::zeroed::<Anon_anon_102>() };
     let mut y: Anon_anon_102 = unsafe { core::mem::zeroed::<Anon_anon_102>() };
     let mut d: Anon_anon_102 = unsafe { core::mem::zeroed::<Anon_anon_102>() };
@@ -28241,6 +28853,7 @@ pub unsafe extern "C" fn ScriptGame_LabSetShield(
     mut slot: ::core::ffi::c_int,
     mut health_bits: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_LabSetShield");
     let mut fp: *mut Fighter = script_fighter(slot);
     let mut h: Anon_anon_102 = unsafe { core::mem::zeroed::<Anon_anon_102>() };
     if fp.is_null() {
@@ -28254,6 +28867,7 @@ pub unsafe extern "C" fn ScriptGame_LabSetScale(
     mut slot: ::core::ffi::c_int,
     mut scale_bits: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_LabSetScale");
     let mut fp: *mut Fighter = script_fighter(slot);
     let mut s: Anon_anon_102 = unsafe { core::mem::zeroed::<Anon_anon_102>() };
     if fp.is_null() {
@@ -28276,6 +28890,7 @@ pub unsafe extern "C" fn ScriptGame_LabFlightF(
     mut slot: ::core::ffi::c_int,
     mut which: ::core::ffi::c_int,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("ScriptGame_LabFlightF");
     let mut fp: *mut Fighter = script_fighter(slot);
     if fp.is_null() {
         return 0.0f32;
@@ -28310,6 +28925,7 @@ pub const LAB_NFF: ::core::ffi::c_int = (::core::mem::size_of::<[Anon_anon_2511;
 pub unsafe extern "C" fn ScriptGame_LabFighterAt(
     mut va: ::core::ffi::c_uint,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_LabFighterAt");
     let mut g: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     g = *HSD_GObjPLinkHead.offset(HSD_GOBJ_PLINK_FIGHTER as isize);
     while !g.is_null() {
@@ -28330,6 +28946,7 @@ pub unsafe extern "C" fn ScriptGame_LabFighterAt(
     return -(1 as ::core::ffi::c_int);
 }
 pub unsafe extern "C" fn lab_ffield(mut off: ::core::ffi::c_int) -> ::core::ffi::c_int {
+    melee_core::ct!("lab_ffield");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < LAB_NFF {
@@ -28345,6 +28962,7 @@ pub unsafe extern "C" fn lab_ffield(mut off: ::core::ffi::c_int) -> ::core::ffi:
 pub unsafe extern "C" fn ScriptGame_LabFighterFieldName(
     mut off: ::core::ffi::c_int,
 ) -> *const ::core::ffi::c_char {
+    melee_core::ct!("ScriptGame_LabFighterFieldName");
     let mut i: ::core::ffi::c_int = lab_ffield(off);
     return if i >= 0 as ::core::ffi::c_int {
         lab_ffields[i as usize].name
@@ -28355,10 +28973,12 @@ pub unsafe extern "C" fn ScriptGame_LabFighterFieldName(
 pub unsafe extern "C" fn ScriptGame_LabFighterFieldBase(
     mut off: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_LabFighterFieldBase");
     let mut i: ::core::ffi::c_int = lab_ffield(off);
     return if i >= 0 as ::core::ffi::c_int { lab_ffields[i as usize].off } else { off };
 }
 pub unsafe extern "C" fn ScriptGame_StageJointCapacity() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageJointCapacity");
     let mut count: ::core::ffi::c_int = if !script_stage.map.is_null() {
         script_stage.base_j + script_stage.cap
     } else {
@@ -28373,6 +28993,7 @@ pub unsafe extern "C" fn ScriptGame_StageJointCapacity() -> ::core::ffi::c_int {
 pub unsafe extern "C" fn ScriptGame_AreaFind(
     mut owner: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_AreaFind");
     let mut i: ::core::ffi::c_int = 0;
     let mut j: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
@@ -28399,6 +29020,7 @@ pub unsafe extern "C" fn ScriptGame_AreaFind(
 pub unsafe extern "C" fn ScriptGame_AreaBegin(
     mut owner: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_AreaBegin");
     let mut i: ::core::ffi::c_int = 0;
     let mut j: ::core::ffi::c_int = 0;
     if owner <= 0 as ::core::ffi::c_int || script_stage.loading_area != 0 {
@@ -28443,6 +29065,7 @@ pub unsafe extern "C" fn ScriptGame_AreaPrepare(
     mut owner: ::core::ffi::c_int,
     mut handle: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_AreaPrepare");
     let mut area: ::core::ffi::c_int = ScriptGame_AreaBegin(owner);
     if area > 0 as ::core::ffi::c_int {
         script_stage.area[(area - 1 as ::core::ffi::c_int) as usize].state = 1
@@ -28454,6 +29077,7 @@ pub unsafe extern "C" fn ScriptGame_AreaPrepare(
 pub unsafe extern "C" fn ScriptGame_AreaHandle(
     mut owner: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_AreaHandle");
     let mut area: ::core::ffi::c_int = ScriptGame_AreaFind(owner);
     return if area != 0 {
         script_stage.area[(area - 1 as ::core::ffi::c_int) as usize].handle
@@ -28465,6 +29089,7 @@ pub unsafe extern "C" fn ScriptGame_AreaStatus(
     mut owner: ::core::ffi::c_int,
     mut handle: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_AreaStatus");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while handle > 0 as ::core::ffi::c_int && i < SCRIPT_STAGE_AREAS {
@@ -28481,6 +29106,7 @@ pub unsafe extern "C" fn ScriptGame_AreaActivate(
     mut owner: ::core::ffi::c_int,
     mut handle: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_AreaActivate");
     let mut i: ::core::ffi::c_int = 0;
     if script_stage.loading_area != 0 {
         return 0 as ::core::ffi::c_int;
@@ -28518,6 +29144,7 @@ pub unsafe extern "C" fn ScriptGame_AreaActivate(
     return 0 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn script_area_remove(mut area: ::core::ffi::c_int) {
+    melee_core::ct!("script_area_remove");
     let mut i: ::core::ffi::c_int = 0;
     if script_stage.area[(area - 1 as ::core::ffi::c_int) as usize].state
         == 3 as ::core::ffi::c_int
@@ -28552,6 +29179,7 @@ pub unsafe extern "C" fn script_area_remove(mut area: ::core::ffi::c_int) {
     );
 }
 pub unsafe extern "C" fn ScriptGame_AreaDrain() {
+    melee_core::ct!("ScriptGame_AreaDrain");
     let mut a: ::core::ffi::c_int = 0;
     let mut work: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     a = 0 as ::core::ffi::c_int;
@@ -28621,6 +29249,7 @@ pub unsafe extern "C" fn ScriptGame_AreaDrain() {
     }
 }
 pub unsafe extern "C" fn ScriptGame_AreaEnd(mut success: ::core::ffi::c_int) {
+    melee_core::ct!("ScriptGame_AreaEnd");
     let mut area: ::core::ffi::c_int = script_stage.loading_area;
     script_stage.loading_area = 0 as ::core::ffi::c_int;
     if success == 0 && area != 0 {
@@ -28654,6 +29283,7 @@ pub unsafe extern "C" fn ScriptGame_AreaEnd(mut success: ::core::ffi::c_int) {
 pub unsafe extern "C" fn ScriptGame_AreaUnload(
     mut owner: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_AreaUnload");
     let mut area: ::core::ffi::c_int = 0;
     if script_stage.loading_area != 0 {
         return -(1 as ::core::ffi::c_int);
@@ -28665,6 +29295,7 @@ pub unsafe extern "C" fn ScriptGame_AreaUnload(
     return (area != 0 as ::core::ffi::c_int) as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_AreaUnloadOwner(mut owner: ::core::ffi::c_int) {
+    melee_core::ct!("ScriptGame_AreaUnloadOwner");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < SCRIPT_STAGE_AREAS {
@@ -28677,6 +29308,7 @@ pub unsafe extern "C" fn ScriptGame_AreaUnloadOwner(mut owner: ::core::ffi::c_in
 pub unsafe extern "C" fn ScriptGame_StageStat(
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageStat");
     let mut i: ::core::ffi::c_int = 0;
     let mut n: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     match field {
@@ -28781,6 +29413,7 @@ pub unsafe extern "C" fn ScriptGame_MapBound(
     mut which: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_MapBound");
     let mut b: *mut StageBlastZone = if which != 0 {
         &raw mut stage_info.blast_zone
     } else {
@@ -28811,6 +29444,7 @@ pub unsafe extern "C" fn ScriptGame_MapBounds(
     mut bottom: ::core::ffi::c_int,
     mut top: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("ScriptGame_MapBounds");
     let mut b: *mut StageBlastZone = ::core::ptr::null_mut::<StageBlastZone>();
     if which < 0 as ::core::ffi::c_int {
         Camera_LargeMapRestore();
@@ -28863,6 +29497,7 @@ pub unsafe extern "C" fn ScriptGame_MapBounds(
     );
 }
 pub unsafe extern "C" fn ScriptGame_MapWide() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_MapWide");
     return script_stage.bounds_saved;
 }
 pub const GENO_ITEM_KIND_BASE: ::core::ffi::c_int = GENO_ART_KIND_END;
@@ -28872,6 +29507,7 @@ pub const GENO_ITEM_KIND_END: ::core::ffi::c_int = GENO_ITEM_KIND_BASE
 pub unsafe extern "C" fn script_warm_article(
     mut kind: ::core::ffi::c_int,
 ) -> *mut Article {
+    melee_core::ct!("script_warm_article");
     if kind < 0 as ::core::ffi::c_int || kind >= 5000 as ::core::ffi::c_int {
         return ::core::ptr::null_mut::<Article>();
     }
@@ -28914,6 +29550,7 @@ pub unsafe extern "C" fn script_warm_article(
 pub unsafe extern "C" fn ScriptGame_WarmItemReady(
     mut kind: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_WarmItemReady");
     let mut article: *mut Article = script_warm_article(kind);
     return (!article.is_null() && !(*article).x10_modelDesc.is_null()
         && !(*(*article).x10_modelDesc).x0_joint.is_null()) as ::core::ffi::c_int;
@@ -28922,6 +29559,7 @@ pub unsafe extern "C" fn ScriptGame_WarmDraw(
     mut category: ::core::ffi::c_int,
     mut index: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_WarmDraw");
     let mut joint: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut sub_joint: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut warm_main: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
@@ -29018,6 +29656,7 @@ pub unsafe extern "C" fn ScriptGame_WarmDraw(
 pub unsafe extern "C" fn ScriptGame_WarmModel(
     mut model: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_WarmModel");
     let mut view: Mtx = [[0.; 4]; 3];
     let mut camera: *mut HSD_GObj = Camera_80030A50() as *mut HSD_GObj;
     if camera.is_null() || (*camera).hsd_obj.is_null() {
@@ -29039,6 +29678,7 @@ pub unsafe extern "C" fn ScriptGame_WarmModel(
 pub unsafe extern "C" fn ScriptGame_PlaySound(
     mut id: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_PlaySound");
     return lbAudioAx_800237A8(
         id as enum_t,
         0x7f as ::core::ffi::c_int,
@@ -29050,6 +29690,7 @@ pub unsafe extern "C" fn ScriptGame_PlaySoundOptions(
     mut volume: ::core::ffi::c_int,
     mut pitch: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_PlaySoundOptions");
     let mut voice: ::core::ffi::c_int = 0;
     if id <= 0 as ::core::ffi::c_int || volume < 0 as ::core::ffi::c_int
         || volume > 127 as ::core::ffi::c_int || pitch < -(1200 as ::core::ffi::c_int)
@@ -29066,6 +29707,7 @@ pub unsafe extern "C" fn ScriptGame_PlaySoundOptions(
 pub unsafe extern "C" fn st_dat_u32(
     mut p: *const ::core::ffi::c_uchar,
 ) -> ::core::ffi::c_uint {
+    melee_core::ct!("st_dat_u32");
     return (*p.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_uint)
         << 24 as ::core::ffi::c_int
         | (*p.offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_uint)
@@ -29077,6 +29719,7 @@ pub unsafe extern "C" fn st_dat_u32(
 pub unsafe extern "C" fn st_dat_u16(
     mut p: *const ::core::ffi::c_uchar,
 ) -> ::core::ffi::c_uint {
+    melee_core::ct!("st_dat_u16");
     return (*p.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_uint)
         << 8 as ::core::ffi::c_int
         | *p.offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_uint;
@@ -29084,6 +29727,7 @@ pub unsafe extern "C" fn st_dat_u16(
 pub unsafe extern "C" fn st_dat_s16(
     mut p: *const ::core::ffi::c_uchar,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("st_dat_s16");
     let mut v: ::core::ffi::c_uint = st_dat_u16(p);
     return if v >= 32768 as ::core::ffi::c_uint {
         v as ::core::ffi::c_int - 65536 as ::core::ffi::c_int
@@ -29094,6 +29738,7 @@ pub unsafe extern "C" fn st_dat_s16(
 pub unsafe extern "C" fn st_dat_float(
     mut p: *const ::core::ffi::c_uchar,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("st_dat_float");
     let mut v: Anon_anon_26 = unsafe { core::mem::zeroed::<Anon_anon_26>() };
     v.i = st_dat_u32(p);
     return v.f;
@@ -29104,6 +29749,7 @@ pub unsafe extern "C" fn st_dat_span(
     mut stride: usize,
     mut end: usize,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("st_dat_span");
     return (at <= end
         && (stride == 0 || count <= end.wrapping_sub(at).wrapping_div(stride)))
         as ::core::ffi::c_int;
@@ -29112,6 +29758,7 @@ pub unsafe extern "C" fn st_dat_has_nul(
     mut p: *const ::core::ffi::c_uchar,
     mut n: usize,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("st_dat_has_nul");
     let mut i: usize = 0;
     i = 0 as usize;
     while i < n {
@@ -29127,6 +29774,7 @@ pub unsafe extern "C" fn st_dat_symbol(
     mut name: *const ::core::ffi::c_char,
     mut out: *mut ::core::ffi::c_uint,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("st_dat_symbol");
     let mut i: ::core::ffi::c_uint = 0;
     i = 0 as ::core::ffi::c_uint;
     while i < (*v).npublic {
@@ -29169,6 +29817,7 @@ pub unsafe extern "C" fn st_dat_open(
     mut size: usize,
     mut v: *mut StDatView,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("st_dat_open");
     let mut b: *const ::core::ffi::c_uchar = raw as *const ::core::ffi::c_uchar;
     let mut nr: ::core::ffi::c_uint = 0;
     let mut ne: ::core::ffi::c_uint = 0;
@@ -29282,6 +29931,7 @@ pub unsafe extern "C" fn st_dat_ref(
     mut v: *const StDatView,
     mut field: ::core::ffi::c_uint,
 ) -> ::core::ffi::c_uint {
+    melee_core::ct!("st_dat_ref");
     let mut ne: ::core::ffi::c_uint = st_dat_u32(
         (*v).raw.offset(16 as ::core::ffi::c_int as isize),
     );
@@ -29318,6 +29968,7 @@ pub unsafe extern "C" fn st_dat_line(
     mut i: ::core::ffi::c_uint,
     mut l: *mut StDatLine,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("st_dat_line");
     let mut p: *const ::core::ffi::c_uchar = ::core::ptr::null::<::core::ffi::c_uchar>();
     let mut a: *const ::core::ffi::c_uchar = ::core::ptr::null::<::core::ffi::c_uchar>();
     let mut b: *const ::core::ffi::c_uchar = ::core::ptr::null::<::core::ffi::c_uchar>();
@@ -29425,6 +30076,7 @@ pub unsafe extern "C" fn st_dat_collision(
     mut budget: ::core::ffi::c_uint,
     mut count: *mut ::core::ffi::c_uint,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("st_dat_collision");
     let mut i: ::core::ffi::c_uint = 0;
     let mut k: ::core::ffi::c_uint = 0;
     let mut rc: ::core::ffi::c_int = 0;
@@ -29517,6 +30169,7 @@ pub unsafe extern "C" fn st_dat_object(
     mut off: ::core::ffi::c_uint,
     mut bytes: ::core::ffi::c_uint,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("st_dat_object");
     return (off != 0 && off & 3 as ::core::ffi::c_uint == 0
         && st_dat_span(off as usize, 1 as usize, bytes as usize, (*v).bytes) != 0)
         as ::core::ffi::c_int;
@@ -29526,6 +30179,7 @@ pub unsafe extern "C" fn st_dat_texture(
     mut off: ::core::ffi::c_uint,
     mut m: *mut StDatModels,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("st_dat_texture");
     let mut p: *const ::core::ffi::c_uchar = ::core::ptr::null::<::core::ffi::c_uchar>();
     let mut image: ::core::ffi::c_uint = 0;
     let mut w: ::core::ffi::c_uint = 0;
@@ -29648,6 +30302,7 @@ pub unsafe extern "C" fn st_dat_joint_tree(
     mut depth: ::core::ffi::c_uint,
     mut m: *mut StDatModels,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("st_dat_joint_tree");
     let mut p: *const ::core::ffi::c_uchar = ::core::ptr::null::<::core::ffi::c_uchar>();
     let mut i: ::core::ffi::c_uint = 0;
     let mut dobj: ::core::ffi::c_uint = 0;
@@ -29770,6 +30425,7 @@ pub unsafe extern "C" fn st_dat_models_mask(
     mut m: *mut StDatModels,
     mut mask: ::core::ffi::c_ulonglong,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("st_dat_models_mask");
     let mut head: ::core::ffi::c_uint = 0;
     let mut groups: ::core::ffi::c_uint = 0;
     let mut i: ::core::ffi::c_uint = 0;
@@ -29847,6 +30503,7 @@ pub const STAGE_SLOT_PARTIAL_FALLBACK: ::core::ffi::c_int = 0 as ::core::ffi::c_
 pub unsafe extern "C" fn st_retail_supported(
     mut kind: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("st_retail_supported");
     return (kind == Gr_Kind_Last as ::core::ffi::c_int
         || kind == Gr_Kind_Battle as ::core::ffi::c_int
         || kind == Gr_Kind_Story as ::core::ffi::c_int
@@ -29859,6 +30516,7 @@ pub unsafe extern "C" fn st_retail_capacity(
     mut nj: ::core::ffi::c_int,
     mut cap: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("st_retail_capacity");
     return (nv > 0 as ::core::ffi::c_int && nl > 0 as ::core::ffi::c_int
         && nj > 0 as ::core::ffi::c_int && cap > 0 as ::core::ffi::c_int
         && nv + cap * 2 as ::core::ffi::c_int <= 2048 as ::core::ffi::c_int
@@ -29872,6 +30530,7 @@ pub const ST_SLOT_HEADROOM: ::core::ffi::c_int = 512 as ::core::ffi::c_int
 pub static mut script_stage_music_pending: ::core::ffi::c_int = -(1
     as ::core::ffi::c_int);
 pub unsafe extern "C" fn ScriptGame_StageMusicRequest(mut id: ::core::ffi::c_int) {
+    melee_core::ct!("ScriptGame_StageMusicRequest");
     script_stage_music_pending = if id >= 0 as ::core::ffi::c_int {
         id
     } else {
@@ -29879,9 +30538,11 @@ pub unsafe extern "C" fn ScriptGame_StageMusicRequest(mut id: ::core::ffi::c_int
     };
 }
 pub unsafe extern "C" fn ScriptGame_StageMusicReset() {
+    melee_core::ct!("ScriptGame_StageMusicReset");
     script_stage_music_pending = -(1 as ::core::ffi::c_int);
 }
 pub unsafe extern "C" fn ScriptGame_StageMusicTick(mut ready: ::core::ffi::c_int) {
+    melee_core::ct!("ScriptGame_StageMusicTick");
     let mut id: ::core::ffi::c_int = 0;
     let mut unchanged: ::core::ffi::c_int = 0;
     if ready == 0 || script_stage_music_pending < 0 as ::core::ffi::c_int {
@@ -29910,6 +30571,7 @@ pub unsafe extern "C" fn script_slot(
     mut handle: ::core::ffi::c_int,
     mut owner: ::core::ffi::c_int,
 ) -> *mut ScriptStageSlot {
+    melee_core::ct!("script_slot");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < ST_SLOT_COUNT {
@@ -29927,6 +30589,7 @@ pub unsafe extern "C" fn ScriptGame_StageSlotFile(
     mut kind: ::core::ffi::c_int,
     mut at: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageSlotFile");
     let mut p: *const ::core::ffi::c_char = ::core::ptr::null::<::core::ffi::c_char>();
     if kind < 0 as ::core::ffi::c_int || kind >= Gr_Kind_Count as ::core::ffi::c_int
         || at < 0 as ::core::ffi::c_int || at > 259 as ::core::ffi::c_int
@@ -29967,6 +30630,7 @@ pub unsafe extern "C" fn script_slot_render(
     mut gobj: *mut HSD_GObj,
     mut pass: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("script_slot_render");
     let mut i: ::core::ffi::c_int = 0;
     let mut k: ::core::ffi::c_int = 0;
     if gx_suppress_draws != 0 {
@@ -30014,6 +30678,7 @@ pub unsafe extern "C" fn script_slot_joint(
     mut root: *mut HSD_JObj,
     mut index: *mut ::core::ffi::c_int,
 ) -> *mut HSD_JObj {
+    melee_core::ct!("script_slot_joint");
     let mut p: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     if root.is_null() {
         return ::core::ptr::null_mut::<HSD_JObj>();
@@ -30031,6 +30696,7 @@ pub unsafe extern "C" fn script_slot_joint(
     };
 }
 pub unsafe extern "C" fn script_slot_dispose(mut s: *mut ScriptStageSlot) {
+    melee_core::ct!("script_slot_dispose");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < 2 as ::core::ffi::c_int {
@@ -30091,6 +30757,7 @@ pub unsafe extern "C" fn script_slot_ptr(
     mut p: *const ::core::ffi::c_void,
     mut bytes: ::core::ffi::c_uint,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_slot_ptr");
     let mut at: ::core::ffi::c_uint = (p as *const ::core::ffi::c_uchar)
         .offset_from((*a).data) as ::core::ffi::c_longlong as ::core::ffi::c_uint;
     return (!p.is_null() && at <= (*a).header.data_size
@@ -30102,6 +30769,7 @@ pub unsafe extern "C" fn ScriptGame_StageSlotLoad(
     mut handle: ::core::ffi::c_int,
     mut music: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageSlotLoad");
     static mut models: StDatModels = unsafe { core::mem::zeroed::<StDatModels>() };
     let mut s: *mut ScriptStageSlot = ::core::ptr::null_mut::<ScriptStageSlot>();
     let mut v: StDatView = unsafe { core::mem::zeroed::<StDatView>() };
@@ -30675,6 +31343,7 @@ pub unsafe extern "C" fn ScriptGame_StageSlotMission(
     mut owner: ::core::ffi::c_int,
     mut handle: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageSlotMission");
     let mut s: *mut ScriptStageSlot = ::core::ptr::null_mut::<ScriptStageSlot>();
     let mut i: ::core::ffi::c_int = 0;
     let mut k: ::core::ffi::c_int = 0;
@@ -30963,6 +31632,7 @@ pub unsafe extern "C" fn ScriptGame_StageSlotRead(
     mut field: ::core::ffi::c_int,
     mut index: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageSlotRead");
     let mut s: *mut ScriptStageSlot = script_slot(handle, owner);
     let mut b: *mut StageBlastZone = ::core::ptr::null_mut::<StageBlastZone>();
     let mut p: Vec = unsafe { core::mem::zeroed::<Vec>() };
@@ -31058,6 +31728,7 @@ pub unsafe extern "C" fn ScriptGame_StageSlotAt(
     mut owner: ::core::ffi::c_int,
     mut index: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageSlotAt");
     return if index >= 0 as ::core::ffi::c_int && index < ST_SLOT_COUNT
         && script_slots[index as usize].owner == owner
     {
@@ -31067,6 +31738,7 @@ pub unsafe extern "C" fn ScriptGame_StageSlotAt(
     };
 }
 pub unsafe extern "C" fn script_switch_contacts(mut fp: *mut Fighter) {
+    melee_core::ct!("script_switch_contacts");
     let mut c: *mut CollData = &raw mut (*fp).coll_data;
     (*c).joint_id_only = -(1 as ::core::ffi::c_int);
     (*c).joint_id_skip = (*c).joint_id_only;
@@ -31098,6 +31770,7 @@ pub unsafe extern "C" fn script_switch_contacts(mut fp: *mut Fighter) {
     (*fp).prev_pos = (*fp).cur_pos;
 }
 pub unsafe extern "C" fn script_switch_detach() {
+    melee_core::ct!("script_switch_detach");
     let mut g: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     if HSD_GObjPLinkHead.is_null() {
         return;
@@ -31132,6 +31805,7 @@ pub unsafe extern "C" fn script_switch_detach() {
 pub unsafe extern "C" fn script_switch_room(
     mut s: *mut ScriptStageSlot,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_switch_room");
     let mut i: ::core::ffi::c_int = 0;
     let mut k: ::core::ffi::c_int = 0;
     let mut free: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -31161,6 +31835,7 @@ pub unsafe extern "C" fn ScriptGame_StageSwitchCheck(
     mut owner: ::core::ffi::c_int,
     mut place: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageSwitchCheck");
     let mut g: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     let mut s: *mut ScriptStageSlot = script_slot(handle, owner);
     if s.is_null() {
@@ -31236,6 +31911,7 @@ pub unsafe extern "C" fn ScriptGame_StageSwitchCheck(
     return 0 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn script_switch_clear_lines() {
+    melee_core::ct!("script_switch_clear_lines");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < script_switch.nlines {
@@ -31275,6 +31951,7 @@ pub unsafe extern "C" fn ScriptGame_StageSwitch(
     mut serial: ::core::ffi::c_int,
     mut place: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageSwitch");
     let mut s: *mut ScriptStageSlot = script_slot(handle, owner);
     let mut i: ::core::ffi::c_int = 0;
     let mut rc: ::core::ffi::c_int = 0;
@@ -31669,6 +32346,7 @@ pub unsafe extern "C" fn ScriptGame_StageSlotFree(
     mut handle: ::core::ffi::c_int,
     mut owner: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageSlotFree");
     let mut s: *mut ScriptStageSlot = script_slot(handle, owner);
     if s.is_null() || script_switch.active == handle {
         return 0 as ::core::ffi::c_int;
@@ -31677,6 +32355,7 @@ pub unsafe extern "C" fn ScriptGame_StageSlotFree(
     return 1 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_StageSlotsActive() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageSlotsActive");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < ST_SLOT_COUNT {
@@ -31691,6 +32370,7 @@ pub unsafe extern "C" fn ScriptGame_StageSlotSameJoint(
     mut a: ::core::ffi::c_int,
     mut b: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageSlotSameJoint");
     let mut s: *mut ScriptStageSlot = ::core::ptr::null_mut::<ScriptStageSlot>();
     let mut i: ::core::ffi::c_int = 0;
     let mut ia: ::core::ffi::c_int = -(1 as ::core::ffi::c_int);
@@ -31734,6 +32414,7 @@ pub static mut script_slot_callback_context: *mut ScriptStageSlot = ::core::ptr:
 pub unsafe extern "C" fn ScriptGame_StageSlotArchive(
     mut group: ::core::ffi::c_int,
 ) -> *mut UnkArchiveStruct {
+    melee_core::ct!("ScriptGame_StageSlotArchive");
     let mut s: *mut ScriptStageSlot = script_slot_callback_context;
     if s.is_null() || group < 0 as ::core::ffi::c_int || group >= (*s).ngroups {
         return ::core::ptr::null_mut::<UnkArchiveStruct>();
@@ -31741,12 +32422,14 @@ pub unsafe extern "C" fn ScriptGame_StageSlotArchive(
     return &raw mut script_slot_archive_context;
 }
 pub unsafe extern "C" fn script_slot_ground_free(mut p: *mut ::core::ffi::c_void) {
+    melee_core::ct!("script_slot_ground_free");
     lbHeap_80015CA8(0 as ::core::ffi::c_int, p);
 }
 pub unsafe extern "C" fn script_slot_context_begin(
     mut s: *mut ScriptStageSlot,
     mut saved: *mut StageInfo,
 ) {
+    melee_core::ct!("script_slot_context_begin");
     *saved = stage_info;
     script_slot_callback_context = s;
     memset(
@@ -31782,6 +32465,7 @@ pub unsafe extern "C" fn script_slot_context_begin(
     );
 }
 pub unsafe extern "C" fn script_slot_context_end(mut saved: *const StageInfo) {
+    melee_core::ct!("script_slot_context_end");
     stage_info = *saved;
     script_slot_callback_context = ::core::ptr::null_mut::<ScriptStageSlot>();
     memset(
@@ -31795,6 +32479,7 @@ pub unsafe extern "C" fn ScriptGame_StageSlotDynamic(
     mut owner: ::core::ffi::c_int,
     mut want: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageSlotDynamic");
     let mut s: *mut ScriptStageSlot = script_slot(handle, owner);
     let mut head: *mut UnkStageDat = ::core::ptr::null_mut::<UnkStageDat>();
     let mut g: ::core::ffi::c_int = 0;
@@ -32172,6 +32857,7 @@ pub unsafe extern "C" fn ScriptGame_StageSlotDynamic(
     return (*s).dynamic;
 }
 pub unsafe extern "C" fn script_slot_dynamic_bind() {
+    melee_core::ct!("script_slot_dynamic_bind");
     let mut s: *mut ScriptStageSlot = ::core::ptr::null_mut::<ScriptStageSlot>();
     let mut i: ::core::ffi::c_int = 0;
     if script_switch.active == 0 {
@@ -32247,6 +32933,7 @@ pub unsafe extern "C" fn st_owned_find(
     mut o: *const StOwned,
     mut p: *const ::core::ffi::c_void,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("st_owned_find");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < (*o).count {
@@ -32262,6 +32949,7 @@ pub unsafe extern "C" fn st_owned_add(
     mut p: *mut ::core::ffi::c_void,
     mut borrowed: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("st_owned_add");
     let mut i: ::core::ffi::c_int = st_owned_find(o, p);
     if p.is_null() {
         return 0 as ::core::ffi::c_int;
@@ -32283,6 +32971,7 @@ pub unsafe extern "C" fn st_owned_remove(
     mut o: *mut StOwned,
     mut p: *const ::core::ffi::c_void,
 ) {
+    melee_core::ct!("st_owned_remove");
     let mut i: ::core::ffi::c_int = st_owned_find(o, p);
     if i >= 0 as ::core::ffi::c_int {
         (*o).count -= 1;
@@ -32330,6 +33019,7 @@ pub static mut script_slot_native_ground: ::core::ffi::c_int = 0;
 pub unsafe extern "C" fn ScriptGame_StageSlotOwned(
     mut g: *mut HSD_GObj,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageSlotOwned");
     return (STAGE_SLOT_PARTIAL_FALLBACK == 0 && script_retail_live != 0
         && st_owned_find(&raw mut script_retail_owned, g as *const ::core::ffi::c_void)
             >= 0 as ::core::ffi::c_int
@@ -32338,10 +33028,12 @@ pub unsafe extern "C" fn ScriptGame_StageSlotOwned(
                 >= 0 as ::core::ffi::c_int) as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_StageSlotNativeContext() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageSlotNativeContext");
     return (!script_slot_native.is_null()
         && script_slot_callback_context == script_slot_native) as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_StageSlotCreated(mut g: *mut HSD_GObj) {
+    melee_core::ct!("ScriptGame_StageSlotCreated");
     if STAGE_SLOT_PARTIAL_FALLBACK == 0 && script_retail_live != 0
         && script_retail_capture != 0
     {
@@ -32374,6 +33066,7 @@ pub unsafe extern "C" fn ScriptGame_StageSlotCreated(mut g: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn ScriptGame_StageSlotCanCreate() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageSlotCanCreate");
     if STAGE_SLOT_PARTIAL_FALLBACK == 0 && script_retail_capture != 0 {
         return (script_retail_owned.count < ST_OWNED_MAX) as ::core::ffi::c_int;
     }
@@ -32381,6 +33074,7 @@ pub unsafe extern "C" fn ScriptGame_StageSlotCanCreate() -> ::core::ffi::c_int {
         || script_slot_owned.count < ST_OWNED_MAX) as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_StageSlotDestroyed(mut g: *mut HSD_GObj) {
+    melee_core::ct!("ScriptGame_StageSlotDestroyed");
     script_retail_forget_devices(g);
     st_owned_remove(&raw mut script_retail_owned, g as *const ::core::ffi::c_void);
     st_owned_remove(&raw mut script_slot_owned, g as *const ::core::ffi::c_void);
@@ -32389,6 +33083,7 @@ pub unsafe extern "C" fn script_slot_reset_joints(
     mut j: *mut HSD_JObj,
     mut d: *mut HSD_Joint,
 ) {
+    melee_core::ct!("script_slot_reset_joints");
     if j.is_null() || d.is_null() {
         return;
     }
@@ -32408,6 +33103,7 @@ pub unsafe extern "C" fn script_slot_reset_joints(
 pub unsafe extern "C" fn ScriptGame_StageSlotGround(
     mut id: ::core::ffi::c_int,
 ) -> *mut HSD_GObj {
+    melee_core::ct!("ScriptGame_StageSlotGround");
     let mut s: *mut ScriptStageSlot = script_slot_native;
     let mut g: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     let mut head: *mut UnkStageDat = ::core::ptr::null_mut::<UnkStageDat>();
@@ -32465,6 +33161,7 @@ pub unsafe extern "C" fn ScriptGame_StageSlotGround(
 pub unsafe extern "C" fn ScriptGame_StageSlotCollision(
     mut group: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageSlotCollision");
     let mut s: *mut ScriptStageSlot = script_slot_native;
     let mut head: *mut UnkStageDat = ::core::ptr::null_mut::<UnkStageDat>();
     let mut binding: *const GrJoint = ::core::ptr::null::<GrJoint>();
@@ -32768,6 +33465,7 @@ pub unsafe extern "C" fn ScriptGame_StageSlotCollision(
 pub unsafe extern "C" fn ScriptGame_StageSlotJointUpdate(
     mut source: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageSlotJointUpdate");
     let mut i: ::core::ffi::c_int = 0;
     let mut s: *mut ScriptStageSlot = script_slot_native;
     if ScriptGame_StageSlotNativeContext() == 0
@@ -32833,6 +33531,7 @@ pub unsafe extern "C" fn ScriptGame_StageSlotJointUpdate(
     return 1 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn script_slot_native_scope_begin() {
+    melee_core::ct!("script_slot_native_scope_begin");
     script_slot_proc_heap = lbHeap_Free(0 as ::core::ffi::c_int);
     script_slot_context_begin(script_slot_native, &raw mut script_slot_proc_saved);
     stage_info = script_slot_native_info;
@@ -32842,6 +33541,7 @@ pub unsafe extern "C" fn script_slot_native_scope_begin() {
 pub unsafe extern "C" fn ScriptGame_StageSlotProcBegin(
     mut g: *mut HSD_GObj,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageSlotProcBegin");
     if STAGE_SLOT_PARTIAL_FALLBACK == 0 && script_retail_live != 0
         && st_owned_find(&raw mut script_retail_owned, g as *const ::core::ffi::c_void)
             >= 0 as ::core::ffi::c_int
@@ -32861,6 +33561,7 @@ pub unsafe extern "C" fn ScriptGame_StageSlotProcBegin(
 pub unsafe extern "C" fn ScriptGame_StageSlotParticleBegin(
     mut link: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageSlotParticleBegin");
     if STAGE_SLOT_PARTIAL_FALLBACK == 0 && link == 3 as ::core::ffi::c_int
         && script_retail_live != 0
     {
@@ -32881,6 +33582,7 @@ pub unsafe extern "C" fn ScriptGame_StageSlotParticleBegin(
     return 1 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_StageSlotProcEnd() {
+    melee_core::ct!("ScriptGame_StageSlotProcEnd");
     let mut freebytes: ::core::ffi::c_uint = 0 as ::core::ffi::c_uint;
     if HeapCheckFull() != 0 {
         freebytes = lbHeap_Free(0 as ::core::ffi::c_int);
@@ -32927,6 +33629,7 @@ pub unsafe extern "C" fn ScriptGame_StageSlotProcEnd() {
 pub unsafe extern "C" fn script_slot_native_bytes(
     mut s: *mut ScriptStageSlot,
 ) -> ::core::ffi::c_uint {
+    melee_core::ct!("script_slot_native_bytes");
     return if s == script_slot_native {
         script_slot_native_cost
     } else {
@@ -32934,6 +33637,7 @@ pub unsafe extern "C" fn script_slot_native_bytes(
     };
 }
 pub unsafe extern "C" fn script_slot_native_enter(mut s: *mut ScriptStageSlot) {
+    melee_core::ct!("script_slot_native_enter");
     let mut saved: StageInfo = unsafe { core::mem::zeroed::<StageInfo>() };
     let mut i: ::core::ffi::c_int = 0;
     if (*s).dynamic != 3 as ::core::ffi::c_int {
@@ -33039,6 +33743,7 @@ pub unsafe extern "C" fn script_slot_native_enter(mut s: *mut ScriptStageSlot) {
     );
 }
 pub unsafe extern "C" fn script_slot_native_leave() {
+    melee_core::ct!("script_slot_native_leave");
     let mut s: *mut ScriptStageSlot = script_slot_native;
     let mut saved: StageInfo = unsafe { core::mem::zeroed::<StageInfo>() };
     let mut before: ::core::ffi::c_uint = 0;
@@ -33134,6 +33839,7 @@ pub static mut script_retail: Anon_anon_18_2 = unsafe {
     core::mem::zeroed::<Anon_anon_18_2>()
 };
 pub unsafe extern "C" fn ScriptGame_StageSlotRetailCaptureBegin() {
+    melee_core::ct!("ScriptGame_StageSlotRetailCaptureBegin");
     Script_StageRawStash(
         4 as ::core::ffi::c_int,
         0 as ::core::ffi::c_uint,
@@ -33154,10 +33860,12 @@ pub unsafe extern "C" fn ScriptGame_StageSlotRetailCaptureBegin() {
     script_retail_live = script_retail_capture;
 }
 pub unsafe extern "C" fn ScriptGame_StageSlotRetailCaptureResume() {
+    melee_core::ct!("ScriptGame_StageSlotRetailCaptureResume");
     script_retail_capture = (STAGE_SLOT_PARTIAL_FALLBACK == 0 && script_retail_live != 0)
         as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_StageSlotRetailCaptureEnd() {
+    melee_core::ct!("ScriptGame_StageSlotRetailCaptureEnd");
     st_owned_remove(
         &raw mut script_retail_owned,
         script_stage.draw as *const ::core::ffi::c_void,
@@ -33169,14 +33877,17 @@ pub unsafe extern "C" fn ScriptGame_StageSlotRetailCaptureEnd() {
     script_retail_capture = 0 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_StageSlotRetailLoading() -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_StageSlotRetailLoading");
     return script_retail_loading;
 }
 pub unsafe extern "C" fn ScriptGame_StageSlotRetailBuffer(
     mut p: *mut ::core::ffi::c_void,
 ) {
+    melee_core::ct!("ScriptGame_StageSlotRetailBuffer");
     script_retail.buffer = p;
 }
 pub unsafe extern "C" fn script_retail_forget_devices(mut g: *mut HSD_GObj) {
+    melee_core::ct!("script_retail_forget_devices");
     let mut i: ::core::ffi::c_int = 0;
     if st_owned_find(&raw mut script_retail_owned, g as *const ::core::ffi::c_void)
         < 0 as ::core::ffi::c_int
@@ -33224,6 +33935,7 @@ pub unsafe extern "C" fn script_retail_forget_devices(mut g: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn script_retail_clear_banks() {
+    melee_core::ct!("script_retail_clear_banks");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < 2 as ::core::ffi::c_int {
@@ -33246,10 +33958,12 @@ pub unsafe extern "C" fn script_retail_clear_banks() {
 pub unsafe extern "C" fn script_retail_bank(
     mut bank: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_retail_bank");
     return (bank == 0x1e as ::core::ffi::c_int || bank == 0x40 as ::core::ffi::c_int)
         as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn script_retail_particles() {
+    melee_core::ct!("script_retail_particles");
     let mut node: *mut HSD_SList = hsd_804D78F4 as *mut HSD_SList;
     let mut prevnode: *mut HSD_SList = ::core::ptr::null_mut::<HSD_SList>();
     let mut gen: *mut HSD_Generator = ::core::ptr::null_mut::<HSD_Generator>();
@@ -33331,6 +34045,7 @@ pub unsafe extern "C" fn script_retail_particles() {
     HSD_StageSlotParticlesClear();
 }
 pub unsafe extern "C" fn script_slot_retail_cache_host() -> ::core::ffi::c_int {
+    melee_core::ct!("script_slot_retail_cache_host");
     let mut path: [::core::ffi::c_char; 262] = [0; 262];
     let mut file: *const ::core::ffi::c_char = ::core::ptr::null::<
         ::core::ffi::c_char,
@@ -33406,6 +34121,7 @@ pub unsafe extern "C" fn script_slot_retail_cache_host() -> ::core::ffi::c_int {
     return 1 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn script_slot_retail_metadata(mut s: *mut ScriptStageSlot) {
+    melee_core::ct!("script_slot_retail_metadata");
     let mut i: ::core::ffi::c_int = 0;
     let mut before: ::core::ffi::c_uint = lbHeap_Free(0 as ::core::ffi::c_int);
     (*s).numeric_param = *(*s).param;
@@ -33453,6 +34169,7 @@ pub unsafe extern "C" fn script_slot_retail_metadata(mut s: *mut ScriptStageSlot
 pub unsafe extern "C" fn script_retail_kind(
     mut s: *mut ScriptStageSlot,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_retail_kind");
     static mut files: [*const ::core::ffi::c_char; 5] = [
         b"GrNLa.dat\0" as *const u8 as *const ::core::ffi::c_char,
         b"GrNBa.dat\0" as *const u8 as *const ::core::ffi::c_char,
@@ -33484,6 +34201,7 @@ pub unsafe extern "C" fn script_retail_kind(
 pub unsafe extern "C" fn script_slot_retail_check(
     mut s: *mut ScriptStageSlot,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_slot_retail_check");
     let mut kind: ::core::ffi::c_int = script_retail_kind(s);
     let mut required: ::core::ffi::c_uint = 0;
     if (*s).raw_bytes == 0 || kind < 0 as ::core::ffi::c_int
@@ -33560,6 +34278,7 @@ pub unsafe extern "C" fn script_slot_retail_check(
 pub unsafe extern "C" fn script_retail_prepare(
     mut src: *mut MapCollData,
 ) -> *mut MapCollData {
+    melee_core::ct!("script_retail_prepare");
     let mut dst: *mut MapCollData = ::core::ptr::null_mut::<MapCollData>();
     let mut cap: ::core::ffi::c_int = script_stage.cap;
     if src.is_null()
@@ -33654,6 +34373,7 @@ pub unsafe extern "C" fn script_retail_prepare(
     return dst;
 }
 pub unsafe extern "C" fn script_retail_free_map(mut map: *mut MapCollData) {
+    melee_core::ct!("script_retail_free_map");
     if map.is_null() {
         return;
     }
@@ -33663,6 +34383,7 @@ pub unsafe extern "C" fn script_retail_free_map(mut map: *mut MapCollData) {
     HSD_Free(map as *mut ::core::ffi::c_void);
 }
 pub unsafe extern "C" fn ScriptGame_StageSlotRetailCollision() {
+    melee_core::ct!("ScriptGame_StageSlotRetailCollision");
     let mut old: *mut MapCollData = script_stage.map;
     let mut dst: *mut MapCollData = script_retail.prepared;
     let mut oldv: *mut CollVtx = mpGetGroundCollVtx();
@@ -33761,6 +34482,7 @@ pub unsafe extern "C" fn ScriptGame_StageSlotRetailCollision() {
 pub unsafe extern "C" fn script_retail_pool_check(
     mut where_0: *const ::core::ffi::c_char,
 ) {
+    melee_core::ct!("script_retail_pool_check");
     let mut pools: [*mut HSD_ObjAllocData; 2] = [
         &raw mut gobj_alloc_data,
         &raw mut gobjproc_alloc_data,
@@ -33800,6 +34522,7 @@ pub unsafe extern "C" fn script_retail_pool_check(
     }
 }
 pub unsafe extern "C" fn script_retail_destroy() {
+    melee_core::ct!("script_retail_destroy");
     let mut i: ::core::ffi::c_int = 0;
     let mut g: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     script_retail_capture = 0 as ::core::ffi::c_int;
@@ -33883,6 +34606,7 @@ pub unsafe extern "C" fn script_retail_destroy() {
     );
 }
 pub unsafe extern "C" fn script_retail_items(mut remove_stage: ::core::ffi::c_int) {
+    melee_core::ct!("script_retail_items");
     let mut g: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     let mut next: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     if HSD_GObjPLinkHead.is_null() {
@@ -33950,6 +34674,7 @@ pub const ST_CARRY_BLAST_MARGIN: ::core::ffi::c_float = 1.0f32;
 pub unsafe extern "C" fn st_carry_finite(
     mut x: ::core::ffi::c_float,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("st_carry_finite");
     return (x == x && x <= 3.402823466e38f32 && x >= -3.402823466e38f32)
         as ::core::ffi::c_int;
 }
@@ -33963,6 +34688,7 @@ pub unsafe extern "C" fn st_carry_point(
     mut bottom: ::core::ffi::c_float,
     mut top: ::core::ffi::c_float,
 ) -> StCarry {
+    melee_core::ct!("st_carry_point");
     let mut r: StCarry = StCarry {
         x: x,
         y: y,
@@ -34014,6 +34740,7 @@ pub unsafe extern "C" fn script_retail_carry_floor(
     mut flags: *mut ::core::ffi::c_uint,
     mut normal: *mut Vec,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_retail_carry_floor");
     let mut upper: ::core::ffi::c_float = y + ST_CARRY_FLOOR_RANGE;
     let mut lower: ::core::ffi::c_float = y - ST_CARRY_FLOOR_RANGE;
     let mut distance: ::core::ffi::c_float = ST_CARRY_FLOOR_RANGE
@@ -34074,6 +34801,7 @@ pub unsafe extern "C" fn script_retail_carry_floor(
     return found;
 }
 pub unsafe extern "C" fn script_retail_carry() {
+    melee_core::ct!("script_retail_carry");
     let mut g: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     if HSD_GObjPLinkHead.is_null() {
         return;
@@ -34203,6 +34931,7 @@ pub unsafe extern "C" fn script_retail_visit(
     mut music: ::core::ffi::c_int,
     mut place: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_retail_visit");
     let mut work: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<
         ::core::ffi::c_void,
     >();
@@ -34344,6 +35073,7 @@ pub unsafe extern "C" fn script_slot_retail_switch(
     mut owner: ::core::ffi::c_int,
     mut place: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_slot_retail_switch");
     let mut rc: ::core::ffi::c_int = script_retail_visit(
         s as ::core::ffi::c_uint,
         (*s).raw_bytes,
@@ -34365,6 +35095,7 @@ pub unsafe extern "C" fn script_slot_retail_switch(
 pub unsafe extern "C" fn script_slot_retail_release(
     mut owner: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_slot_retail_release");
     if script_retail.switched == 0 || owner != 0 && owner != script_switch.owner {
         return 1 as ::core::ffi::c_int;
     }
@@ -34390,12 +35121,14 @@ pub unsafe extern "C" fn script_slot_retail_release(
     return 1 as ::core::ffi::c_int;
 }
 pub unsafe extern "C" fn ScriptGame_OnePEndBarrier() {
+    melee_core::ct!("ScriptGame_OnePEndBarrier");
     gm_801A4B60();
 }
 pub unsafe extern "C" fn ScriptGame_OnePTintClear(
     mut slot: ::core::ffi::c_int,
     mut owner: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("ScriptGame_OnePTintClear");
     let mut i: ::core::ffi::c_int = 0;
     i = 0 as ::core::ffi::c_int;
     while i < PART_COLORS {
@@ -34418,6 +35151,7 @@ pub unsafe extern "C" fn ScriptGame_OnePSpawnTint(
     mut owner: ::core::ffi::c_int,
     mut rgb: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("ScriptGame_OnePSpawnTint");
     let mut d: ::core::ffi::c_int = 0;
     let mut i: ::core::ffi::c_int = 0;
     let mut empty: ::core::ffi::c_int = 0;
@@ -34463,6 +35197,7 @@ pub unsafe extern "C" fn script_motion_fighter(
     mut slot: ::core::ffi::c_int,
     mut sub: ::core::ffi::c_int,
 ) -> *mut Fighter {
+    melee_core::ct!("script_motion_fighter");
     let mut g: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     if slot < 0 as ::core::ffi::c_int || slot >= 6 as ::core::ffi::c_int
         || sub < 0 as ::core::ffi::c_int || sub > 1 as ::core::ffi::c_int
@@ -34479,6 +35214,7 @@ pub unsafe extern "C" fn script_motion_fighter(
 pub unsafe extern "C" fn script_motion_item_live(
     mut gobj: *mut HSD_GObj,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("script_motion_item_live");
     let mut cur: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     if gobj.is_null() || HSD_GObjPLinkHead.is_null() {
         return 0 as ::core::ffi::c_int;
@@ -34496,6 +35232,7 @@ pub unsafe extern "C" fn ScriptGame_MotionHeldDraw(
     mut slot: ::core::ffi::c_int,
     mut sub: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_MotionHeldDraw");
     let mut fp: *mut Fighter = script_motion_fighter(slot, sub);
     let mut item: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     if fp.is_null()
@@ -34539,6 +35276,7 @@ pub unsafe extern "C" fn ScriptGame_MotionAnchorI(
     mut item: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("ScriptGame_MotionAnchorI");
     let mut fp: *mut Fighter = script_motion_fighter(slot, sub);
     let mut g: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     if kind == 4 as ::core::ffi::c_int {
@@ -34630,6 +35368,7 @@ pub unsafe extern "C" fn ScriptGame_MotionAnchorF(
     mut item: ::core::ffi::c_int,
     mut field: ::core::ffi::c_int,
 ) -> ::core::ffi::c_float {
+    melee_core::ct!("ScriptGame_MotionAnchorF");
     let mut fp: *mut Fighter = script_motion_fighter(slot, sub);
     let mut g: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     if field < 0 as ::core::ffi::c_int || field > 2 as ::core::ffi::c_int {
@@ -34740,6 +35479,7 @@ pub unsafe extern "C" fn ScriptGame_MotionAnchorF(
 pub const NULL: ::core::ffi::c_long = 0 as ::core::ffi::c_long;
 #[inline]
 pub unsafe extern "C" fn sqrtf(mut x: ::core::ffi::c_float) -> ::core::ffi::c_float {
+    melee_core::ct!("sqrtf");
     let mut y: ::core::ffi::c_float = 0.;
     if x > 0.0f32 {
         let mut guess: ::core::ffi::c_double = __frsqrte(x as ::core::ffi::c_double);
@@ -34758,6 +35498,7 @@ pub unsafe extern "C" fn sqrtf(mut x: ::core::ffi::c_float) -> ::core::ffi::c_fl
     return x;
 }
 pub unsafe extern "C" fn run_static_initializers() {
+    melee_core::ct!("run_static_initializers");
     lab_ffields = [
         Anon_anon_2511 {
             name: b"kind\0" as *const u8 as *const ::core::ffi::c_char,
@@ -34937,6 +35678,7 @@ pub unsafe extern "C" fn ScriptMods_Hit(
     mut atk_damage: ::core::ffi::c_float,
     mut vic_damage: ::core::ffi::c_float,
 ) {
+    melee_core::ct!("ScriptMods_Hit");
     static mut move_tag: [::core::ffi::c_uint; 10] = [
         0 as ::core::ffi::c_int as ::core::ffi::c_uint,
         SM_T_JAB as ::core::ffi::c_int as ::core::ffi::c_uint,
@@ -35037,6 +35779,7 @@ pub unsafe extern "C" fn ScriptMods_Hit(
     script_mods_put(&raw mut e);
 }
 pub unsafe extern "C" fn ScriptGame_StageSlotsRelease(mut owner: ::core::ffi::c_int) {
+    melee_core::ct!("ScriptGame_StageSlotsRelease");
     let mut i: ::core::ffi::c_int = 0;
     if STAGE_SLOT_PARTIAL_FALLBACK == 0 {
         if script_slot_retail_release(owner) == 0 {
@@ -35108,6 +35851,7 @@ pub unsafe extern "C" fn ScriptGame_StageSlotsRelease(mut owner: ::core::ffi::c_
     }
 }
 pub unsafe extern "C" fn ScriptMods_StageFrame() {
+    melee_core::ct!("ScriptMods_StageFrame");
     let mut pl: [SmPlayer; 2] = [unsafe { core::mem::zeroed::<SmPlayer>() }; 2];
     let mut p: ::core::ffi::c_int = 0;
     if sm_loaded(&raw mut script_mods) == 0 {
@@ -35245,6 +35989,7 @@ pub unsafe extern "C" fn ScriptMods_StageFrame() {
     }
 }
 pub unsafe extern "C" fn ScriptGame_StageSlotsFrame() {
+    melee_core::ct!("ScriptGame_StageSlotsFrame");
     let mut s: *mut ScriptStageSlot = ::core::ptr::null_mut::<ScriptStageSlot>();
     let mut g: ::core::ffi::c_int = 0;
     let mut saved: StageInfo = unsafe { core::mem::zeroed::<StageInfo>() };
@@ -35286,6 +36031,7 @@ pub unsafe extern "C" fn ScriptMods_Armor(
     mut absorbed: ::core::ffi::c_int,
     mut broke: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("ScriptMods_Armor");
     let mut e: SmEvent = unsafe { core::mem::zeroed::<SmEvent>() };
     let mut port: ::core::ffi::c_int = entity_0 - 1 as ::core::ffi::c_int;
     if sm_loaded(&raw mut script_mods) == 0 || entity_0 < 1 as ::core::ffi::c_int
@@ -35315,6 +36061,7 @@ pub unsafe extern "C" fn ScriptMods_Skill(
     mut air_frames: ::core::ffi::c_int,
     mut aerial_hit: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("ScriptMods_Skill");
     static mut map: [::core::ffi::c_int; 24] = [
         0 as ::core::ffi::c_int,
         SM_E_LCANCEL as ::core::ffi::c_int,
@@ -35418,6 +36165,7 @@ pub unsafe extern "C" fn ScriptMods_ShockEnd(
     mut entity_0: ::core::ffi::c_int,
     mut why: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("ScriptMods_ShockEnd");
     let mut port: ::core::ffi::c_int = entity_0 - 1 as ::core::ffi::c_int;
     if sm_loaded(&raw mut script_mods) == 0 || entity_0 < 1 as ::core::ffi::c_int
         || entity_0 > 6 as ::core::ffi::c_int || port >= SM_PORTS
@@ -35444,6 +36192,7 @@ pub unsafe extern "C" fn ScriptMods_Crit(
     mut victim_e: ::core::ffi::c_int,
     mut strength: ::core::ffi::c_float,
 ) {
+    melee_core::ct!("ScriptMods_Crit");
     let mut e: SmEvent = unsafe { core::mem::zeroed::<SmEvent>() };
     let mut port: ::core::ffi::c_int = attacker_e - 1 as ::core::ffi::c_int;
     let mut target: ::core::ffi::c_int = if victim_e >= 1 as ::core::ffi::c_int

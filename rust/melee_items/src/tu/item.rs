@@ -256,6 +256,7 @@ unsafe fn HSD_JObjMtxIsDirty(jobj: *mut HSD_JObj) -> bool {
 /// `HSD_JObjSetMtxDirty` (macro).
 #[inline(always)]
 pub unsafe fn HSD_JObjSetMtxDirty(jobj: *mut HSD_JObj) {
+    melee_core::ct!("HSD_JObjSetMtxDirty");
     if !jobj.is_null() && !HSD_JObjMtxIsDirty(jobj) {
         ext::HSD_JObjSetMtxDirtySub(jobj);
     }
@@ -305,6 +306,7 @@ const GENO_ITEM_KIND_END: i32 = GENO_ITEM_KIND_BASE + 64;
 
 /// Check if items are enabled
 pub unsafe extern "C" fn Item_80266F3C() -> bool {
+    melee_core::ct!("Item_80266F3C");
     if ext::gm_8016AE80() != -1 {
         return true;
     }
@@ -313,16 +315,19 @@ pub unsafe extern "C" fn Item_80266F3C() -> bool {
 
 /// Check to load ItCo.dat/usd
 pub unsafe extern "C" fn Item_80266F70() {
+    melee_core::ct!("Item_80266F70");
     ext::it_8027870C(Item_80266F3C() as i32);
 }
 
 /// ItCo prefunction with 0
 pub unsafe extern "C" fn Item_80266FA8() {
+    melee_core::ct!("Item_80266FA8");
     ext::it_8027870C(0);
 }
 
 /// Init item struct?
 pub unsafe extern "C" fn Item_80266FCC() {
+    melee_core::ct!("Item_80266FCC");
     ext::HSD_ObjAllocInit(&raw mut item_alloc_data, core::mem::size_of::<Item>() as u32, 4);
     ext::HSD_ObjAllocInit(&raw mut item_dynamic_bones_alloc_data, core::mem::size_of::<DynamicBoneTable>() as u32, 4);
     ext::HSD_ObjAllocInit(&raw mut item_link_alloc_data, core::mem::size_of::<ItemLink>() as u32, 4);
@@ -379,6 +384,7 @@ pub unsafe extern "C" fn Item_80266FCC() {
 }
 
 pub unsafe extern "C" fn ItUnkHoldKind(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ItUnkHoldKind");
     let it = (*gobj).user_data as *mut Item;
     match (*it).hold_kind {
         4 | 5 | 6 | 7 => {
@@ -392,6 +398,7 @@ pub unsafe extern "C" fn ItUnkHoldKind(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn HSD_JObjSetScaleItem(it: *mut Item, jobj: *mut HSD_JObj, scl: *mut Vec3) {
+    melee_core::ct!("HSD_JObjSetScaleItem");
     (*scl).x = (*it).scl;
     (*scl).y = (*scl).x;
     (*scl).z = (*scl).y;
@@ -399,6 +406,7 @@ pub unsafe extern "C" fn HSD_JObjSetScaleItem(it: *mut Item, jobj: *mut HSD_JObj
 }
 
 pub unsafe extern "C" fn HSD_JObjSetFacingDirItem(jobj: *mut HSD_JObj, it: *mut Item) {
+    melee_core::ct!("HSD_JObjSetFacingDirItem");
     if (*it).xDC8_word.flags.x19() == 1 {
         HSD_JObjSetRotationY(jobj, (M_PI / 2.0 * (*it).facing_dir as f64) as f32);
     }
@@ -406,6 +414,7 @@ pub unsafe extern "C" fn HSD_JObjSetFacingDirItem(jobj: *mut HSD_JObj, it: *mut 
 
 /// Initialize item coordinates?
 pub unsafe extern "C" fn Item_80267130(gobj: *mut HSD_GObj, spawnItem: *mut SpawnItem) {
+    melee_core::ct!("Item_80267130");
     let item_data = get_item(gobj);
     let model = get_jobj(gobj);
 
@@ -471,6 +480,7 @@ pub unsafe extern "C" fn Item_80267130(gobj: *mut HSD_GObj, spawnItem: *mut Spaw
 
 /// Remove Camera Box
 pub unsafe extern "C" fn Item_80267454(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Item_80267454");
     let item_data = (*gobj).user_data as *mut Item;
     if (*item_data).xDCD_flag.anon_0.b01() != 0 && !(*item_data).x520_cameraBox.is_null() {
         ext::Camera_800290D4((*item_data).x520_cameraBox);
@@ -481,6 +491,7 @@ pub unsafe extern "C" fn Item_80267454(gobj: *mut HSD_GObj) {
 
 /// Set Item Hold kind
 pub unsafe extern "C" fn Item_802674AC(spawnItem: *mut SpawnItem) {
+    melee_core::ct!("Item_802674AC");
     let kind = (*spawnItem).kind;
 
     if kind >= GENO_ITEM_KIND_BASE && kind < GENO_ITEM_KIND_END && ext::Geno_ItemActive(kind) != 0 {
@@ -544,6 +555,7 @@ pub unsafe extern "C" fn Item_802674AC(spawnItem: *mut SpawnItem) {
 }
 
 pub unsafe extern "C" fn Item_802675A8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Item_802675A8");
     let item_data = (*gobj).user_data as *mut Item;
     let c = &raw mut Item_804A0C64;
     match (*item_data).hold_kind {
@@ -568,6 +580,7 @@ pub unsafe extern "C" fn Item_802675A8(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn Item_802676F4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Item_802676F4");
     let item_data = (*gobj).user_data as *mut Item;
     let c = &raw mut Item_804A0C64;
     match (*item_data).hold_kind {
@@ -599,6 +612,7 @@ pub unsafe extern "C" fn Item_802676F4(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn Item_8026784C(dropItem: enum_t, _: i32) -> bool {
+    melee_core::ct!("Item_8026784C");
     let c = &raw mut Item_804A0C64;
     let mut result = false;
     match dropItem {
@@ -659,6 +673,7 @@ pub unsafe extern "C" fn Item_8026784C(dropItem: enum_t, _: i32) -> bool {
 }
 
 pub unsafe extern "C" fn Item_80267978(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Item_80267978");
     let item_data = (*gobj).user_data as *mut Item;
     let kind = (*item_data).kind;
     if kind < It_Kind_Kuriboh {
@@ -701,6 +716,7 @@ pub unsafe extern "C" fn Item_80267978(gobj: *mut HSD_GObj) {
 
 /// Initialize item variables
 pub unsafe extern "C" fn Item_80267AA8(gobj: *mut HSD_GObj, spawnItem: *mut SpawnItem) {
+    melee_core::ct!("Item_80267AA8");
     let item_data = get_item(gobj);
     (*item_data).kind = (*spawnItem).kind;
     (*item_data).hold_kind = (*spawnItem).hold_kind;
@@ -869,6 +885,7 @@ pub unsafe extern "C" fn Item_80267AA8(gobj: *mut HSD_GObj, spawnItem: *mut Spaw
 
 /// Setup Item JObj
 pub unsafe extern "C" fn Item_802680CC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Item_802680CC");
     let item_data = get_item(gobj);
     if !(*item_data).xC8_joint.is_null() {
         let jobj = ext::HSD_JObjLoadJoint((*item_data).xC8_joint);
@@ -883,6 +900,7 @@ pub unsafe extern "C" fn Item_802680CC(gobj: *mut HSD_GObj) {
 
 /// Set up item render objects?
 pub unsafe extern "C" fn Item_8026814C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Item_8026814C");
     let mut jobj = get_jobj(gobj);
     while !jobj.is_null() {
         let mut dobj = ext::HSD_JObjGetDObj(jobj);
@@ -918,6 +936,7 @@ pub unsafe extern "C" fn Item_8026814C(gobj: *mut HSD_GObj) {
 
 /// Initialize item bones
 pub unsafe extern "C" fn Item_802682F0(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("Item_802682F0");
     let ip = get_item(gobj);
     if (*(*(*ip).xC4_article_data).x10_modelDesc).x4_bone_count != 0 {
         (*ip).xBBC_dynamicBoneTable = ext::HSD_ObjAlloc(&raw mut item_dynamic_bones_alloc_data) as *mut DynamicBoneTable;
@@ -955,6 +974,7 @@ pub unsafe extern "C" fn Item_802682F0(gobj: *mut HSD_GObj) -> bool {
 
 /// Set item model scale
 pub unsafe extern "C" fn Item_8026849C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Item_8026849C");
     let temp_jobj = get_jobj(gobj);
     let item_data = get_item(gobj);
     let tmp = (*item_data).scl;
@@ -967,6 +987,7 @@ pub unsafe extern "C" fn Item_8026849C(gobj: *mut HSD_GObj) {
 
 /// Set up item dynamic bones
 pub unsafe extern "C" fn Item_80268560(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Item_80268560");
     let ip = get_item(gobj);
     let article_data = (*ip).xC4_article_data;
     if (*article_data).x14_dynamics.is_null() {
@@ -989,6 +1010,7 @@ pub unsafe extern "C" fn Item_80268560(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn foobar(gobj: *mut HSD_GObj) {
+    melee_core::ct!("foobar");
     let it = get_item(gobj);
     match (*it).hold_kind {
         0 | 6 => {
@@ -1008,6 +1030,7 @@ pub unsafe extern "C" fn foobar(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn foobar2(gobj: *mut HSD_GObj) {
+    melee_core::ct!("foobar2");
     let it = get_item(gobj);
     // Check if item is a character item with an owner
     if (*it).kind >= It_Kind_Mario_Fire && (*it).kind < It_Kind_Unk4 && ext::ftLib_80086960((*it).owner) != 0 {
@@ -1018,6 +1041,7 @@ pub unsafe extern "C" fn foobar2(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn foobar3(gobj: *mut HSD_GObj) {
+    melee_core::ct!("foobar3");
     let it = get_item(gobj);
     if (*it).xDCD_flag.anon_0.b01() != 0 {
         if (*it).xDCD_flag.anon_0.b01() == 1 {
@@ -1039,6 +1063,7 @@ static mut reported: [u8; 208] = [0; 208];
 
 /// Create Item
 pub unsafe extern "C" fn Item_8026862C(spawnItem: *mut SpawnItem) -> *mut HSD_GObj {
+    melee_core::ct!("Item_8026862C");
     if (*spawnItem).kind >= 5000 && !geno_art_is_kind((*spawnItem).kind) {
         let parent = (*spawnItem).x0_parent_gobj;
         let cls: i32 = if !parent.is_null() { (*parent).classifier as i32 } else { -1 };
@@ -1124,6 +1149,7 @@ pub unsafe extern "C" fn Item_8026862C(spawnItem: *mut SpawnItem) -> *mut HSD_GO
 
 /// Use the engine's exact hold-category policy (preserves all counters during a query).
 pub unsafe extern "C" fn Item_ScriptSpawnAtCap(spawn: *mut SpawnItem) -> i32 {
+    melee_core::ct!("Item_ScriptSpawnAtCap");
     let mut copy: SpawnItem = *spawn;
     let saved: HSD_ObjAllocUnk = Item_804A0C64;
     Item_802674AC(&raw mut copy);
@@ -1134,6 +1160,7 @@ pub unsafe extern "C" fn Item_ScriptSpawnAtCap(spawn: *mut SpawnItem) -> i32 {
 
 /// A disc-free query fixture: category-zero cap and caller/counter immutability.
 pub unsafe extern "C" fn Item_ScriptSpawnCapTest() -> i32 {
+    melee_core::ct!("Item_ScriptSpawnCapTest");
     let saved: HSD_ObjAllocUnk = Item_804A0C64;
     let mut spawn: SpawnItem = core::mem::zeroed();
     let mut failed = 0;
@@ -1154,6 +1181,7 @@ pub unsafe extern "C" fn Item_ScriptSpawnCapTest() -> i32 {
 
 /// Item spawn prefunction - spawn airborne
 pub unsafe extern "C" fn Item_80268B18(spawnItem: *mut SpawnItem) -> *mut HSD_GObj {
+    melee_core::ct!("Item_80268B18");
     (*spawnItem).x48_ground_or_air = GA_Air;
     (*spawnItem).x10 = 0;
     Item_802674AC(spawnItem);
@@ -1162,6 +1190,7 @@ pub unsafe extern "C" fn Item_80268B18(spawnItem: *mut SpawnItem) -> *mut HSD_GO
 
 /// Item spawn prefunction - spawn grounded
 pub unsafe extern "C" fn Item_80268B5C(spawnItem: *mut SpawnItem) -> *mut HSD_GObj {
+    melee_core::ct!("Item_80268B5C");
     (*spawnItem).x48_ground_or_air = GA_Ground;
     (*spawnItem).x10 = 0;
     Item_802674AC(spawnItem);
@@ -1170,6 +1199,7 @@ pub unsafe extern "C" fn Item_80268B5C(spawnItem: *mut SpawnItem) -> *mut HSD_GO
 
 /// Item spawn prefunction - spawn grounded and toggle unknown true
 pub unsafe extern "C" fn Item_80268B9C(spawnItem: *mut SpawnItem) {
+    melee_core::ct!("Item_80268B9C");
     (*spawnItem).x48_ground_or_air = GA_Ground;
     (*spawnItem).x10 = 1;
     Item_802674AC(spawnItem);
@@ -1180,6 +1210,7 @@ pub unsafe extern "C" fn Item_80268B9C(spawnItem: *mut SpawnItem) {
 pub unsafe extern "C" fn Item_80268BE0(item_jobj: *mut HSD_JObj, anim_joint: *mut HSD_AnimJoint,
                                        matanim_joint: *mut HSD_MatAnimJoint, shapeanim_joint: *mut HSD_ShapeAnimJoint,
                                        item_data: *mut Item) {
+    melee_core::ct!("Item_80268BE0");
     if !item_jobj.is_null() {
         if !anim_joint.is_null() {
             let mut temp_r0 = 0;
@@ -1241,6 +1272,7 @@ pub unsafe extern "C" fn Item_80268BE0(item_jobj: *mut HSD_JObj, anim_joint: *mu
 
 /// Unk Item AObj-related function
 pub unsafe extern "C" fn Item_80268D34(gobj: *mut HSD_GObj, itemStateDesc: *mut ItemStateDesc) {
+    melee_core::ct!("Item_80268D34");
     let item_jobj = get_jobj(gobj);
     let item_data = get_item(gobj);
     ext::HSD_JObjRemoveAnimAll(item_jobj);
@@ -1255,6 +1287,7 @@ pub unsafe extern "C" fn Item_80268D34(gobj: *mut HSD_GObj, itemStateDesc: *mut 
 
 /// Advance item animation?
 pub unsafe extern "C" fn Item_80268DD4(gobj: *mut HSD_GObj, frame: f32) {
+    melee_core::ct!("Item_80268DD4");
     let item_data = get_item(gobj);
     let item_jobj = get_jobj(gobj);
     ext::lb_8000BA0C(item_jobj, (*item_data).x5D0_animFrameSpeed);
@@ -1265,6 +1298,7 @@ pub unsafe extern "C" fn Item_80268DD4(gobj: *mut HSD_GObj, frame: f32) {
 
 /// Copy item script
 pub unsafe extern "C" fn Item_80268E40(item_data: *mut Item, itemStateDesc: *mut ItemStateDesc) {
+    melee_core::ct!("Item_80268E40");
     (*item_data).x524_cmd.anon_8.u = (*itemStateDesc).xC_script as _;
     (*item_data).x524_cmd.loop_count = 0;
     (*item_data).x524_cmd.timer = 0.0;
@@ -1272,6 +1306,7 @@ pub unsafe extern "C" fn Item_80268E40(item_data: *mut Item, itemStateDesc: *mut
 
 /// Change item state
 pub unsafe extern "C" fn Item_80268E5C(gobj: *mut HSD_GObj, msid: enum_t, flags: Item_StateChangeFlags) {
+    melee_core::ct!("Item_80268E5C");
     let mut sp4C: Vec3 = core::mem::zeroed();
     let mut scl: Vec3 = core::mem::zeroed();
 
@@ -1376,6 +1411,7 @@ pub unsafe extern "C" fn Item_80268E5C(gobj: *mut HSD_GObj, msid: enum_t, flags:
 }
 
 pub unsafe extern "C" fn Item_802693E4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Item_802693E4");
     let item_data = (*gobj).user_data as *mut Item;
     if (*item_data).xDC8_word.flags.x5() != 0 {
         Item_8026A0A0(gobj);
@@ -1400,6 +1436,7 @@ pub unsafe extern "C" fn Item_802693E4(gobj: *mut HSD_GObj) {
 
 /// Advance item animation + script?
 pub unsafe extern "C" fn Item_802694CC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Item_802694CC");
     let item_jobj = get_jobj(gobj);
     let item_data = get_item(gobj);
     ext::HSD_JObjAnimAll(item_jobj);
@@ -1409,6 +1446,7 @@ pub unsafe extern "C" fn Item_802694CC(gobj: *mut HSD_GObj) {
 
 /// Item Think - Animation
 pub unsafe extern "C" fn Item_80269528(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Item_80269528");
     let item_data = get_item(gobj);
     if (*item_data).xDC8_word.flags.x9() == 0 {
         Item_802694CC(gobj);
@@ -1450,6 +1488,7 @@ pub unsafe extern "C" fn Item_80269528(gobj: *mut HSD_GObj) {
 
 /// Item Think - Check for Blast Zones
 pub unsafe extern "C" fn Item_802696CC(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("Item_802696CC");
     let item_data = get_item(gobj);
 
     if (*item_data).xDCC_flag.b4567() & 8 != 0 && (*item_data).pos.x > ext::Stage_GetBlastZoneRightOffset() {
@@ -1476,6 +1515,7 @@ pub unsafe extern "C" fn Item_802696CC(gobj: *mut HSD_GObj) -> bool {
 }
 
 pub unsafe extern "C" fn Item_802697D4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Item_802697D4");
     let mut sp1C: Vec3 = core::mem::zeroed();
 
     let item_data = get_item(gobj);
@@ -1517,6 +1557,7 @@ pub unsafe extern "C" fn Item_802697D4(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn Item_80269978(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Item_80269978");
     let item_data = get_item(gobj);
     let mut destroyed = false;
     if let Some(f) = (*item_data).collided {
@@ -1536,6 +1577,7 @@ pub unsafe extern "C" fn Item_80269978(gobj: *mut HSD_GObj) {
 
 /// this function is where the item accessory callback is called if it exists
 pub unsafe extern "C" fn Item_80269A9C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Item_80269A9C");
     let mut item_data = get_item(gobj);
     ext::efAsync_QueueFlush(gobj, (&raw mut (*item_data).xBC0) as *mut c_void);
     if (*item_data).xDC8_word.flags.x9() == 0 {
@@ -1558,6 +1600,7 @@ pub unsafe extern "C" fn Item_80269A9C(gobj: *mut HSD_GObj) {
 
 /// Item Think - Yellow Bar Collision (cb_JumpedOn)
 pub unsafe extern "C" fn Item_80269B60(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Item_80269B60");
     let item_data = (*gobj).user_data as *mut Item;
     if !(*item_data).xCFC.is_null() && (*item_data).jumped_on.is_some() && ((*item_data).jumped_on.unwrap())(gobj) != 0 {
         (*item_data).destroy_type = 2;
@@ -1569,6 +1612,7 @@ pub unsafe extern "C" fn Item_80269B60(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn Item_80269BE4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Item_80269BE4");
     let item_data = (*gobj).user_data as *mut Item;
     if (*item_data).xDD0_flag.anon_0.b5() != 0 {
         ext::it_802701BC(gobj);
@@ -1581,6 +1625,7 @@ pub unsafe extern "C" fn Item_80269BE4(gobj: *mut HSD_GObj) {
 
 /// Item Think - Hit Collision Logic
 pub unsafe extern "C" fn Item_80269C5C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Item_80269C5C");
     ext::it_8026F9A0();
     ext::it_802703E8(gobj);
     ext::it_802706D0(gobj);
@@ -1589,6 +1634,7 @@ pub unsafe extern "C" fn Item_80269C5C(gobj: *mut HSD_GObj) {
 
 /// Add to damage taken
 pub unsafe extern "C" fn Item_80269CA0(item_data: *mut Item, damage: i32) {
+    melee_core::ct!("Item_80269CA0");
     (*item_data).xC9C = (*item_data).xC9C.wrapping_add(damage);
     if (*item_data).xC9C > 999 {
         (*item_data).xC9C = 999;
@@ -1597,6 +1643,7 @@ pub unsafe extern "C" fn Item_80269CA0(item_data: *mut Item, damage: i32) {
 
 /// Set damage struct
 pub unsafe extern "C" fn Item_80269CC4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Item_80269CC4");
     let temp_item = (*gobj).user_data as *mut Item;
 
     (*temp_item).xCA0 = 0;
@@ -1644,6 +1691,7 @@ pub unsafe extern "C" fn Item_80269CC4(gobj: *mut HSD_GObj) {
 
 /// Item Think - Shield Collision
 pub unsafe extern "C" fn Item_80269DC8(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("Item_80269DC8");
     let item_data = (*gobj).user_data as *mut Item;
 
     if (*item_data).xDCE_flag.anon_0.b5() != 0
@@ -1687,6 +1735,7 @@ pub unsafe extern "C" fn Item_80269DC8(gobj: *mut HSD_GObj) -> bool {
 
 /// Item Think - On Reflect
 pub unsafe extern "C" fn Item_80269F14(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("Item_80269F14");
     let temp_item = get_item(gobj);
 
     if (*temp_item).xDCC_flag.b1() == 0 {
@@ -1735,6 +1784,7 @@ pub unsafe extern "C" fn Item_80269F14(gobj: *mut HSD_GObj) -> bool {
 
 /// Item Think - Exit Hitlag Check
 pub unsafe extern "C" fn Item_8026A0A0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Item_8026A0A0");
     let item_data = get_item(gobj);
     if (*item_data).xDC8_word.flags.x7() != 0 {
         if (*item_data).xDC8_word.flags.xA() == 0 && (*item_data).xDC8_word.flags.x8() == 0 {
@@ -1746,6 +1796,7 @@ pub unsafe extern "C" fn Item_8026A0A0(gobj: *mut HSD_GObj) {
 
 /// Item Think - Exit Hitlag Check 2
 pub unsafe extern "C" fn Item_8026A0FC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Item_8026A0FC");
     let item_data = get_item(gobj);
     if (*item_data).xDC8_word.flags.x8() != 0 {
         if (*item_data).xDC8_word.flags.xA() == 0 && (*item_data).xDC8_word.flags.x7() == 0 {
@@ -1756,6 +1807,7 @@ pub unsafe extern "C" fn Item_8026A0FC(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn func_8026A158_helper(atkCollGObj: *mut HSD_GObj) {
+    melee_core::ct!("func_8026A158_helper");
     let temp_item = get_item(atkCollGObj);
     (*temp_item).xDC8_word.flags.set_x8(1);
     Item_8026A158(atkCollGObj);
@@ -1763,6 +1815,7 @@ pub unsafe extern "C" fn func_8026A158_helper(atkCollGObj: *mut HSD_GObj) {
 
 /// Item Think - Enter Hitlag
 pub unsafe extern "C" fn Item_8026A158(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Item_8026A158");
     let item_data = get_item(gobj);
     if let Some(f) = (*item_data).entered_hitlag {
         f(gobj);
@@ -1774,6 +1827,7 @@ pub unsafe extern "C" fn Item_8026A158(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn func_8026A1E8_inline(atkCollGObj: *mut HSD_GObj) {
+    melee_core::ct!("func_8026A1E8_inline");
     let temp_item = get_item(atkCollGObj);
     if (*temp_item).xDC8_word.flags.x8() != 0 {
         if (*temp_item).xDC8_word.flags.xA() == 0 && (*temp_item).xDC8_word.flags.x7() == 0 {
@@ -1785,6 +1839,7 @@ pub unsafe extern "C" fn func_8026A1E8_inline(atkCollGObj: *mut HSD_GObj) {
 
 /// Item Think - Exit Hitlag
 pub unsafe extern "C" fn Item_8026A1E8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Item_8026A1E8");
     let item_data = get_item(gobj);
     if let Some(f) = (*item_data).exited_hitlag {
         f(gobj);
@@ -1796,6 +1851,7 @@ pub unsafe extern "C" fn Item_8026A1E8(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn processCallback(cb: HSD_GObjPredicate, gobj: *mut HSD_GObj, item_data: *mut Item) -> bool {
+    melee_core::ct!("processCallback");
     if let Some(f) = cb {
         if f(gobj) != 0 {
             (*item_data).destroy_type = 2;
@@ -1807,6 +1863,7 @@ pub unsafe extern "C" fn processCallback(cb: HSD_GObjPredicate, gobj: *mut HSD_G
 }
 
 pub unsafe extern "C" fn OnTakeDamageThink(gobj: *mut HSD_GObj, item_data: *mut Item) -> bool {
+    melee_core::ct!("OnTakeDamageThink");
     ext::ScriptGame_EnemyReceived(gobj, (*item_data).xCEC_fighterGObj, (*item_data).xCA0);
     (*item_data).xC9C = (*item_data).xC9C.wrapping_add((*item_data).xCA0);
     if (*item_data).xC9C > 999 {
@@ -1818,6 +1875,7 @@ pub unsafe extern "C" fn OnTakeDamageThink(gobj: *mut HSD_GObj, item_data: *mut 
 }
 
 pub unsafe extern "C" fn OnClankThink(gobj: *mut HSD_GObj, item_data: *mut Item) -> bool {
+    melee_core::ct!("OnClankThink");
     let cb_OnClank = (*(*item_data).xB8_itemLogicTable).clanked;
     if ext::it_80274C78(gobj) != 0 {
         (*item_data).xCA8 = (*item_data).xC48;
@@ -1826,6 +1884,7 @@ pub unsafe extern "C" fn OnClankThink(gobj: *mut HSD_GObj, item_data: *mut Item)
 }
 
 pub unsafe extern "C" fn OnGiveDamageThink(gobj: *mut HSD_GObj, item_data: *mut Item) -> bool {
+    melee_core::ct!("OnGiveDamageThink");
     let cb_OnGiveDamage = (*(*item_data).xB8_itemLogicTable).dmg_dealt;
     if ext::it_80274C78(gobj) != 0 {
         (*item_data).xCA8 = (*item_data).xC34_damageDealt;
@@ -1834,6 +1893,7 @@ pub unsafe extern "C" fn OnGiveDamageThink(gobj: *mut HSD_GObj, item_data: *mut 
 }
 
 pub unsafe extern "C" fn EnterHitlagThink(gobj: *mut HSD_GObj, item_data: *mut Item) {
+    melee_core::ct!("EnterHitlagThink");
     if (*item_data).xDC8_word.flags.x9() == 0 {
         let item_data = GetItemData(gobj);
         if let Some(f) = (*item_data).entered_hitlag {
@@ -1848,6 +1908,7 @@ pub unsafe extern "C" fn EnterHitlagThink(gobj: *mut HSD_GObj, item_data: *mut I
 }
 
 pub unsafe extern "C" fn checkHitLag(min_value: f32, item_data: *mut Item) {
+    melee_core::ct!("checkHitLag");
     if (*item_data).xCBC_hitlagFrames < min_value {
         (*item_data).xCBC_hitlagFrames = min_value;
     }
@@ -1856,6 +1917,7 @@ pub unsafe extern "C" fn checkHitLag(min_value: f32, item_data: *mut Item) {
 
 /// Item Think - Hit Collision
 pub unsafe extern "C" fn Item_8026A294(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Item_8026A294");
     let item_data = get_item(gobj);
 
     if (*item_data).xCC8_knockback != 0.0 || (*item_data).xCA0 != 0 {
@@ -1911,6 +1973,7 @@ pub unsafe extern "C" fn Item_8026A294(gobj: *mut HSD_GObj) {
 
 /// The script prepares the ordinary item damage result. Commit through the same callbacks, hitlag and cleanup.
 pub unsafe extern "C" fn Item_ScriptCommitDamage(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("Item_ScriptCommitDamage");
     if gobj.is_null() || (*get_item(gobj)).xCA0 <= 0 {
         return 0;
     }
@@ -1920,6 +1983,7 @@ pub unsafe extern "C" fn Item_ScriptCommitDamage(gobj: *mut HSD_GObj) -> i32 {
 
 /// Item Think - Process Dynamic Bones
 pub unsafe extern "C" fn Item_8026A788(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Item_8026A788");
     let item_data = (*gobj).user_data as *mut Item;
     let dynamicBonesNum = (*item_data).x374_dynamicBonesNum;
     let mut dynamicBones = (&raw mut (*item_data).xD4_dynamicBones) as *mut Item_DynamicBones;
@@ -1936,6 +2000,7 @@ pub unsafe extern "C" fn Item_8026A788(gobj: *mut HSD_GObj) {
 
 /// Item Think - Spawn
 pub unsafe extern "C" fn Item_8026A810(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Item_8026A810");
     let temp_item = get_item(gobj);
     if let Some(f) = (*(*temp_item).xB8_itemLogicTable).spawned {
         f(gobj);
@@ -1943,6 +2008,7 @@ pub unsafe extern "C" fn Item_8026A810(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn Item_8026A848(gobj: *mut HSD_GObj, fighter_gobj: *mut HSD_GObj) {
+    melee_core::ct!("Item_8026A848");
     let temp_item = get_item(gobj);
     if (*temp_item).hold_kind == 8
         && (*temp_item).kind != It_Kind_Link_Bomb
@@ -1959,6 +2025,7 @@ pub unsafe extern "C" fn Item_8026A848(gobj: *mut HSD_GObj, fighter_gobj: *mut H
 }
 
 pub unsafe extern "C" fn DestroyItemInline(gobj: *mut HSD_GObj, other_ip: *mut Item) {
+    melee_core::ct!("DestroyItemInline");
     let ip = (*gobj).user_data as *mut Item;
     let other = (*other_ip).owner;
 
@@ -1977,6 +2044,7 @@ pub unsafe extern "C" fn DestroyItemInline(gobj: *mut HSD_GObj, other_ip: *mut I
 }
 
 pub unsafe extern "C" fn ItemSwitch(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ItemSwitch");
     let ip = (*gobj).user_data as *mut Item;
     let destroy_type = (*ip).destroy_type;
     match destroy_type {
@@ -1987,12 +2055,14 @@ pub unsafe extern "C" fn ItemSwitch(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn RunGObjCallback(gobj: *mut HSD_GObj, arg1: HSD_GObjEvent) {
+    melee_core::ct!("RunGObjCallback");
     if let Some(f) = arg1 {
         f(gobj);
     }
 }
 
 pub unsafe extern "C" fn func_8026A8EC_inline1(gobj: *mut HSD_GObj) {
+    melee_core::ct!("func_8026A8EC_inline1");
     let ip = get_item(gobj);
     if (*ip).xDC8_word.flags.xE() != 0 {
         ext::ftLib_80087050((*ip).ecb_lock);
@@ -2002,12 +2072,14 @@ pub unsafe extern "C" fn func_8026A8EC_inline1(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn func_8026A8EC_inline2(gobj: *mut HSD_GObj) {
+    melee_core::ct!("func_8026A8EC_inline2");
     let it = get_item(gobj);
     ext::Geno_ItemFamilyEvent(gobj, 2, -1);
     RunGObjCallback(gobj, (*(*it).xB8_itemLogicTable).destroyed);
 }
 
 pub unsafe extern "C" fn func_8026A8EC_inline3(gobj: *mut HSD_GObj) {
+    melee_core::ct!("func_8026A8EC_inline3");
     let it = get_item(gobj);
     if (*it).xDCD_flag.anon_0.b01() != 0 && !(*it).x520_cameraBox.is_null() {
         ext::Camera_800290D4((*it).x520_cameraBox);
@@ -2017,6 +2089,7 @@ pub unsafe extern "C" fn func_8026A8EC_inline3(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn Item_8026A8EC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Item_8026A8EC");
     let ip = get_item(gobj);
 
     if ext::it_80272D1C(gobj) == 0 || ip.is_null() {
@@ -2057,6 +2130,7 @@ pub unsafe extern "C" fn Item_8026A8EC(gobj: *mut HSD_GObj) {
 
 /// Pick up item
 pub unsafe extern "C" fn Item_8026AB54(gobj: *mut HSD_GObj, owner_gobj: *mut HSD_GObj, part: u32) {
+    melee_core::ct!("Item_8026AB54");
     let item_data = get_item(gobj);
 
     ext::it_80273168(gobj); // sets pickup sfx?
@@ -2067,6 +2141,7 @@ pub unsafe extern "C" fn Item_8026AB54(gobj: *mut HSD_GObj, owner_gobj: *mut HSD
 }
 
 pub unsafe extern "C" fn Item_8026ABD8(gobj: *mut HSD_GObj, pos: *mut Vec3, arg2: f32) {
+    melee_core::ct!("Item_8026ABD8");
     let item_data = get_item(gobj);
 
     (*item_data).xC44 = arg2;
@@ -2082,6 +2157,7 @@ pub unsafe extern "C" fn Item_8026ABD8(gobj: *mut HSD_GObj, pos: *mut Vec3, arg2
 }
 
 pub unsafe extern "C" fn Item_8026AC74(gobj: *mut HSD_GObj, arg1: *mut Vec3, arg2: *mut Vec3, arg3: f32) {
+    melee_core::ct!("Item_8026AC74");
     let item_data = GetItemData(gobj);
     (*item_data).xC44 = arg3;
     ext::it_802731A4(gobj);
@@ -2096,6 +2172,7 @@ pub unsafe extern "C" fn Item_8026AC74(gobj: *mut HSD_GObj, arg1: *mut Vec3, arg
 }
 
 pub unsafe extern "C" fn Item_8026AD20(gobj: *mut HSD_GObj, arg1: *mut Vec3, arg2: *mut Vec3, arg3: f32, _arg4: bool) {
+    melee_core::ct!("Item_8026AD20");
     let item_data = GetItemData(gobj);
     ext::it_802731E0(gobj);
     (*item_data).xC44 = arg3;
@@ -2106,6 +2183,7 @@ pub unsafe extern "C" fn Item_8026AD20(gobj: *mut HSD_GObj, arg1: *mut Vec3, arg
 }
 
 pub unsafe extern "C" fn Item_8026ADC0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Item_8026ADC0");
     let item_data = get_item(gobj);
     if let Some(f) = (*(*item_data).xB8_itemLogicTable).entered_air {
         f(gobj);
@@ -2114,6 +2192,7 @@ pub unsafe extern "C" fn Item_8026ADC0(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn Item_OnUserDataRemove(user_data: *mut c_void) {
+    melee_core::ct!("Item_OnUserDataRemove");
     let item_data = user_data as *mut Item;
     ext::ScriptGame_HitRuleRetire(item_data as *mut c_void, core::mem::size_of::<Item>() as u32);
 
@@ -2124,6 +2203,7 @@ pub unsafe extern "C" fn Item_OnUserDataRemove(user_data: *mut c_void) {
 }
 
 pub unsafe extern "C" fn Item_8026AE60() -> u32 {
+    melee_core::ct!("Item_8026AE60");
     let result = ext::it_804D6D14;
     ext::it_804D6D14 = ext::it_804D6D14.wrapping_add(1);
     if ext::it_804D6D14 == 0 {
@@ -2134,6 +2214,7 @@ pub unsafe extern "C" fn Item_8026AE60() -> u32 {
 
 /// An item owned by an m-ex fighter plays that fighter's relative ids (5000..9999) from the fighter's bank.
 pub unsafe extern "C" fn Item_MexSfx(item_data: *mut Item, sfx: enum_t) -> enum_t {
+    melee_core::ct!("Item_MexSfx");
     let owner = (*item_data).mex_original_owner;
     if sfx >= 5000 && sfx < 10000 && !owner.is_null() && ext::ftLib_80086960(owner) != 0 {
         let ssm = ext::Mex_SsmForPortKind(ext::ftLib_GetKind(owner) as i32);
@@ -2145,6 +2226,7 @@ pub unsafe extern "C" fn Item_MexSfx(item_data: *mut Item, sfx: enum_t) -> enum_
 }
 
 pub unsafe extern "C" fn Item_8026AE84(item_data: *mut Item, sfx: enum_t, pan: u8, volume: u8) {
+    melee_core::ct!("Item_8026AE84");
     let sfx = Item_MexSfx(item_data, sfx);
     if sfx != 540000 {
         if sfx != 540001 {
@@ -2156,6 +2238,7 @@ pub unsafe extern "C" fn Item_8026AE84(item_data: *mut Item, sfx: enum_t, pan: u
 }
 
 pub unsafe extern "C" fn Item_8026AF0C(item_data: *mut Item, sfx: enum_t, pan: u8, volume: u8) {
+    melee_core::ct!("Item_8026AF0C");
     let sfx = Item_MexSfx(item_data, sfx);
     if sfx != 540000 {
         if sfx != 540001 {
@@ -2170,6 +2253,7 @@ pub unsafe extern "C" fn Item_8026AF0C(item_data: *mut Item, sfx: enum_t, pan: u
 }
 
 pub unsafe extern "C" fn Item_8026AFA0(item_data: *mut Item, sfx: enum_t, pan: u8, volume: u8) {
+    melee_core::ct!("Item_8026AFA0");
     let sfx = Item_MexSfx(item_data, sfx);
     if sfx != 540000 {
         if sfx != 540001 {
@@ -2184,6 +2268,7 @@ pub unsafe extern "C" fn Item_8026AFA0(item_data: *mut Item, sfx: enum_t, pan: u
 }
 
 pub unsafe extern "C" fn Item_8026B034(item_data: *mut Item) {
+    melee_core::ct!("Item_8026B034");
     if (*item_data).sfx_unk1 != SFX_NONE as _ {
         ext::lbAudioAx_800236B8((*item_data).sfx_unk1 as i32);
     }
@@ -2191,6 +2276,7 @@ pub unsafe extern "C" fn Item_8026B034(item_data: *mut Item) {
 }
 
 pub unsafe extern "C" fn Item_8026B074(item_data: *mut Item) {
+    melee_core::ct!("Item_8026B074");
     if (*item_data).sfx_unk2 != SFX_NONE as _ {
         ext::lbAudioAx_800236B8((*item_data).sfx_unk2 as i32);
     }
@@ -2199,6 +2285,7 @@ pub unsafe extern "C" fn Item_8026B074(item_data: *mut Item) {
 
 /// Stop All Item SFX
 pub unsafe extern "C" fn Item_8026B0B4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Item_8026B0B4");
     let item_data = get_item(gobj);
 
     ext::lbAudioAx_80026510(gobj);
@@ -2236,6 +2323,7 @@ pub unsafe extern "C" fn Item_8026B0B4(gobj: *mut HSD_GObj) {
 
 /// Check if item is grabbable
 pub unsafe extern "C" fn Item_IsGrabbable(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("Item_IsGrabbable");
     let temp_item = (*gobj).user_data as *mut Item;
     if (*temp_item).xDC8_word.flags.x15() != 0 && (*(*temp_item).xB8_itemLogicTable).picked_up.is_some() {
         return true;

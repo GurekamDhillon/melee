@@ -163,6 +163,7 @@ impl Default for DbInit {
 /// The d-pad diagonal filter db_RunEveryFrame applies to both `button` and `repeat`: a
 /// diagonal drops both of its directions.
 pub fn db_filter_dpad(mut b: i32) -> i32 {
+    melee_core::ct!("db_filter_dpad");
     let (u, d, l, r) = (pad::DPADUP as i32, pad::DPADDOWN as i32, pad::DPADLEFT as i32, pad::DPADRIGHT as i32);
     if b & u != 0 {
         if b & l != 0 {

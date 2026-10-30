@@ -87,15 +87,18 @@ unsafe fn fpp(gobj: G) -> *mut Fighter {
 }
 
 pub fn ftPp_Init_OnItemPickup(gobj: G, flag: i32) {
+    melee_core::ct!("ftPp_Init_OnItemPickup");
     Fighter_OnItemPickup(gobj, flag, 1, 1);
 }
 
 pub fn ftPp_Init_OnItemDrop(gobj: G, flag: i32) {
+    melee_core::ct!("ftPp_Init_OnItemDrop");
     Fighter_OnItemDrop(gobj, flag, 1, 1);
 }
 
 /// `PUSH_ATTRS(fp, ftIceClimberAttributes)`.
 pub fn ftPp_Init_OnLoadForNana(fp: *mut Fighter) {
+    melee_core::ct!("ftPp_Init_OnLoadForNana");
     unsafe {
         let backup = (*fp).dat_attrs_backup;
         let src = (*(*fp).ft_data).ext_attr as *const ftIceClimberAttributes;
@@ -105,6 +108,7 @@ pub fn ftPp_Init_OnLoadForNana(fp: *mut Fighter) {
 }
 
 pub fn ftPp_Init_OnLoad(gobj: G) {
+    melee_core::ct!("ftPp_Init_OnLoad");
     unsafe {
         let fp = fpp(gobj);
         let item_list = (*(*fp).ft_data).x48_items;
@@ -121,6 +125,7 @@ pub fn ftPp_Init_OnLoad(gobj: G) {
 }
 
 pub fn ftPp_Init_OnDeath(gobj: G) {
+    melee_core::ct!("ftPp_Init_OnDeath");
     unsafe {
         let fp = fpp(gobj);
         st::ftParts_80074A4C(gobj, 0, 0);
@@ -135,6 +140,7 @@ pub fn ftPp_Init_OnDeath(gobj: G) {
 }
 
 pub fn ftPp_Init_8011F060(gobj: G) {
+    melee_core::ct!("ftPp_Init_8011F060");
     ftPp_Init_8011F190(gobj);
     crate::tu::ftpopospeciallw::ftPp_SpecialHi_80122898(gobj);
     crate::tu::ftpopospecialhi::ftPp_SpecialS_80121164(gobj);
@@ -143,6 +149,7 @@ pub fn ftPp_Init_8011F060(gobj: G) {
 
 /// `COPY_ATTRS(gobj, ftIceClimberAttributes)`.
 pub fn ftPp_Init_LoadSpecialAttrs(gobj: G) {
+    melee_core::ct!("ftPp_Init_LoadSpecialAttrs");
     unsafe {
         let fp = fpp(gobj);
         *((*fp).dat_attrs as *mut ftIceClimberAttributes) = *((*(*fp).ft_data).ext_attr as *const ftIceClimberAttributes);
@@ -150,6 +157,7 @@ pub fn ftPp_Init_LoadSpecialAttrs(gobj: G) {
 }
 
 pub fn ftPp_Init_8011F16C(gobj: G, item_gobj: *mut Item_GObj) {
+    melee_core::ct!("ftPp_Init_8011F16C");
     unsafe {
         let fp = fpp(gobj);
         if item_gobj != (*fp).u.nn.x222C {

@@ -71,6 +71,7 @@ unsafe fn HSD_JObjGetParent(jobj: *mut HSD_JObj) -> *mut HSD_JObj {
 }
 
 pub unsafe extern "C" fn it_8026EB18(gobj: *mut HSD_GObj, arg1: i32, arg2: *mut Vec3) {
+    melee_core::ct!("it_8026EB18");
     let mut m2: Mtx = core::mem::zeroed();
     let mptr: *mut c_void;
     if !arg2.is_null() {
@@ -93,6 +94,7 @@ pub unsafe extern "C" fn it_8026EB18(gobj: *mut HSD_GObj, arg1: i32, arg2: *mut 
 }
 
 pub unsafe extern "C" fn it_8026EBC8(gobj: *mut HSD_GObj, arg1: u16, arg2: *mut u8) {
+    melee_core::ct!("it_8026EBC8");
     let ip = item(gobj);
     let mut cnt: u16 = 0;
     let mut index = arg2;
@@ -108,6 +110,7 @@ pub unsafe extern "C" fn it_8026EBC8(gobj: *mut HSD_GObj, arg1: u16, arg2: *mut 
 }
 
 pub unsafe extern "C" fn it_8026EC54(gobj: *mut HSD_GObj, arg1: u16, arg2: *mut u8) {
+    melee_core::ct!("it_8026EC54");
     let ip = item(gobj);
     let mut cnt: u16 = 0;
     let mut index = arg2;
@@ -123,6 +126,7 @@ pub unsafe extern "C" fn it_8026EC54(gobj: *mut HSD_GObj, arg1: u16, arg2: *mut 
 }
 
 pub unsafe extern "C" fn it_8026ECE0(gobj: *mut HSD_GObj, arg1: u32) -> u32 {
+    melee_core::ct!("it_8026ECE0");
     let mut ret = 0u32;
     let ip = item(gobj);
     if (*ip).kind == It_Kind_Unk4 {
@@ -186,6 +190,7 @@ unsafe fn vars(ip: *mut Item) -> *mut it_266F_ItemVars {
 }
 
 pub unsafe extern "C" fn it_8026EECC_inline_1(gobj: *mut HSD_GObj, arg1: i32, pos: *mut Vec3) {
+    melee_core::ct!("it_8026EECC_inline_1");
     let ip = item(gobj);
     (*ip).xDCF_flag.anon_0.set_b4(1);
     (*ip).xDCF_flag.anon_0.set_b5(0);
@@ -197,6 +202,7 @@ pub unsafe extern "C" fn it_8026EECC_inline_1(gobj: *mut HSD_GObj, arg1: i32, po
 }
 
 pub unsafe extern "C" fn it_8026EECC_inline_2(gobj: *mut HSD_GObj, arg1: i32, pos: *mut Vec3) {
+    melee_core::ct!("it_8026EECC_inline_2");
     let ip = item(gobj);
     (*ip).xDCF_flag.anon_0.set_b4(0);
     (*ip).xDCF_flag.anon_0.set_b5(0);
@@ -204,6 +210,7 @@ pub unsafe extern "C" fn it_8026EECC_inline_2(gobj: *mut HSD_GObj, arg1: i32, po
 }
 
 pub unsafe extern "C" fn it_8026EECC_inline_3(gobj: *mut HSD_GObj, arg1: i32, pos: *mut Vec3) {
+    melee_core::ct!("it_8026EECC_inline_3");
     let ip = item(gobj);
     (*ip).xDCF_flag.anon_0.set_b4(1);
     (*ip).xDCF_flag.anon_0.set_b5(1);
@@ -215,6 +222,7 @@ pub unsafe extern "C" fn it_8026EECC_inline_3(gobj: *mut HSD_GObj, arg1: i32, po
 }
 
 pub unsafe extern "C" fn it_8026EECC_inline_0(gobj: *mut HSD_GObj, pos: *mut Vec3) -> *mut Item {
+    melee_core::ct!("it_8026EECC_inline_0");
     let ip = item(gobj);
     (*ip).xDCF_flag.anon_0.set_b7(0);
     if !(*ip).owner.is_null() && ext::ftLib_80086960((*ip).owner) != 0 {
@@ -230,6 +238,7 @@ pub unsafe extern "C" fn it_8026EECC_inline_0(gobj: *mut HSD_GObj, pos: *mut Vec
 }
 
 pub unsafe extern "C" fn it_8026EECC_inline_sw(gobj: *mut HSD_GObj, arg1: i32, pos: *mut Vec3) {
+    melee_core::ct!("it_8026EECC_inline_sw");
     let ip = item(gobj);
     match ext::Camera_80031060() {
         1 => {
@@ -249,6 +258,7 @@ pub unsafe extern "C" fn it_8026EECC_inline_sw(gobj: *mut HSD_GObj, arg1: i32, p
 }
 
 pub unsafe extern "C" fn it_8026EECC(gobj: *mut HSD_GObj, arg1: i32) {
+    melee_core::ct!("it_8026EECC");
     let ip = item(gobj);
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     if (*ip).anon_daa.xDAA_flag.anon_0.b7() != 0 {

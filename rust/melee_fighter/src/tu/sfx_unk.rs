@@ -7,6 +7,7 @@ use super::crowdsfx::{self, ext, fn_803219AC};
 use crate::types::*;
 
 pub unsafe fn sfx_setupCrowdSFX() {
+    melee_core::ct!("sfx_setupCrowdSFX");
     let gobj = ext::GObj_Create(0x16, 0x17, 0);
     ext::HSD_GObj_SetupProc(gobj, Some(fn_803219AC), 0x13);
     crowdsfx::crowdsfx_ptr = &raw mut crowdsfx::crowdsfx;
@@ -14,6 +15,7 @@ pub unsafe fn sfx_setupCrowdSFX() {
 }
 
 pub unsafe fn sfx_initCrowdSFX(s: *mut CrowdSFX_UnkStruct) {
+    melee_core::ct!("sfx_initCrowdSFX");
     let cfg = &*(crate::tu::fighter::gCrowdConfig as *const CrowdConfig);
     let s = &mut *s;
     s.x0 = 0;

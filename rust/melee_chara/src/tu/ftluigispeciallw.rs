@@ -81,16 +81,19 @@ const FTLUIGI_SPECIALLW_FLAG: u32 = (Ft_MF_KeepGfx
 
 /// `ftLg_SpecialLw_UpdateRot` as a Fighter callback entry (`take_dmg_cb` / `death2_cb`).
 pub unsafe extern "C" fn cb_ftLg_SpecialLw_UpdateRot(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftLg_SpecialLw_UpdateRot");
     ftLg_SpecialLw_UpdateRot(g);
 }
 
 /// Luigi Cyclone Rotation Update (0x801445C4).
 pub fn ftLg_SpecialLw_UpdateRot(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialLw_UpdateRot");
     unsafe { ext::ftPartSetRotX(fpp(gobj), 0, 0.0) }
 }
 
 /// `ftLuigi_SpecialLw_SetVars` (static inline).
 pub fn ftLuigi_SpecialLw_SetVars(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLuigi_SpecialLw_SetVars");
     unsafe {
         let fp = fpp(gobj);
         let luigi_attrs = (*fp).dat_attrs as *const ftLuigiAttributes;
@@ -104,6 +107,7 @@ pub fn ftLuigi_SpecialLw_SetVars(gobj: *mut HSD_GObj) {
 
 /// `ftLuigi_SpecialLw_SetGFX` (static inline).
 pub fn ftLuigi_SpecialLw_SetGFX(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLuigi_SpecialLw_SetGFX");
     unsafe {
         let fp = fpp(gobj);
         let hsd_obj = (*gobj).hsd_obj;
@@ -115,6 +119,7 @@ pub fn ftLuigi_SpecialLw_SetGFX(gobj: *mut HSD_GObj) {
 
 /// Luigi's grounded Cyclone Motion State handler (0x801445F0).
 pub fn ftLg_SpecialLw_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialLw_Enter");
     unsafe {
         let fp = fpp(gobj);
         let luigi_attrs = (*fp).dat_attrs as *const ftLuigiAttributes;
@@ -132,6 +137,7 @@ pub fn ftLg_SpecialLw_Enter(gobj: *mut HSD_GObj) {
 
 /// Luigi's aerial Cyclone Motion State handler (0x80144708).
 pub fn ftLg_SpecialAirLw_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirLw_Enter");
     unsafe {
         let fp = fpp(gobj);
         let luigi_attrs = (*fp).dat_attrs as *const ftLuigiAttributes;
@@ -151,6 +157,7 @@ pub fn ftLg_SpecialAirLw_Enter(gobj: *mut HSD_GObj) {
 
 /// Luigi's grounded Cyclone Animation callback.
 pub fn ftLg_SpecialLw_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialLw_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         unsafe { set_damage_callback(gobj, None) };
         st::ft_8008A2BC(gobj);
@@ -159,6 +166,7 @@ pub fn ftLg_SpecialLw_Anim(gobj: *mut HSD_GObj) {
 
 /// Luigi's aerial Cyclone Animation callback.
 pub fn ftLg_SpecialAirLw_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirLw_Anim");
     unsafe {
         let fp = fpp(gobj);
         let attrs = (*fp).dat_attrs as *const ftLuigiAttributes;
@@ -179,13 +187,14 @@ pub fn ftLg_SpecialAirLw_Anim(gobj: *mut HSD_GObj) {
 }
 
 /// Luigi's grounded Cyclone IASA callback.
-pub fn ftLg_SpecialLw_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftLg_SpecialLw_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftLg_SpecialLw_IASA");}
 
 /// Luigi's aerial Cyclone IASA callback.
-pub fn ftLg_SpecialAirLw_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftLg_SpecialAirLw_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftLg_SpecialAirLw_IASA");}
 
 /// `ftLuigi_SpecialLw_GroundToAir` (static inline): the grounded Cyclone is tapped into the air.
 pub fn ftLuigi_SpecialLw_GroundToAir(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLuigi_SpecialLw_GroundToAir");
     unsafe {
         let fp = fpp(gobj);
         let luigi_attrs = (*fp).dat_attrs as *const ftLuigiAttributes;
@@ -200,6 +209,7 @@ pub fn ftLuigi_SpecialLw_GroundToAir(gobj: *mut HSD_GObj) {
 
 /// Luigi's grounded Cyclone Physics callback (0x80144958).
 pub fn ftLg_SpecialLw_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialLw_Phys");
     unsafe {
         let fp = fpp(gobj);
         let attrs = (*fp).dat_attrs as *const ftLuigiAttributes;
@@ -222,6 +232,7 @@ pub fn ftLg_SpecialLw_Phys(gobj: *mut HSD_GObj) {
 
 /// Luigi's aerial Cyclone Physics callback (0x80144A74C).
 pub fn ftLg_SpecialAirLw_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirLw_Phys");
     unsafe {
         let fp = fpp(gobj);
         let attrs0 = (*fp).dat_attrs as *const ftLuigiAttributes;
@@ -255,6 +266,7 @@ static mut ftLg_SpecialLw_CollisionBox: ftCollisionBox = ftCollisionBox {
 
 /// `ftLuigi_SpecialLw_UnkAngle` (static inline): tilt the model to the floor normal.
 pub fn ftLuigi_SpecialLw_UnkAngle(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLuigi_SpecialLw_UnkAngle");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).cmd_vars[3] != 0 && (*fp).mv.lg.SpecialLw.isUnkColl != 0 {
@@ -269,6 +281,7 @@ pub fn ftLuigi_SpecialLw_UnkAngle(gobj: *mut HSD_GObj) {
 
 /// Luigi's grounded Cyclone Collision callback.
 pub fn ftLg_SpecialLw_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialLw_Coll");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).ground_or_air == GA_Ground {
@@ -290,6 +303,7 @@ pub fn ftLg_SpecialLw_Coll(gobj: *mut HSD_GObj) {
 
 /// `ftLuigi_SpecialAirLw_AirToGround` (static inline): the airborne Cyclone lands.
 pub fn ftLuigi_SpecialAirLw_AirToGround(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLuigi_SpecialAirLw_AirToGround");
     unsafe {
         let fp = fpp(gobj);
         let luigi_attrs = (*fp).dat_attrs as *const ftLuigiAttributes;
@@ -313,6 +327,7 @@ pub fn ftLuigi_SpecialAirLw_AirToGround(gobj: *mut HSD_GObj) {
 
 /// Luigi's aerial Cyclone Collision callback (0x80144CEC).
 pub fn ftLg_SpecialAirLw_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirLw_Coll");
     unsafe {
         let fp = fpp(gobj);
         if ext::ft_800824A0(gobj, &mut ftLg_SpecialLw_CollisionBox) {

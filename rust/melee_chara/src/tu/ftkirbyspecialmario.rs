@@ -80,10 +80,12 @@ unsafe fn fpp(gobj: G) -> *mut Fighter {
 
 /// Accessory callback entry for `fn_800F9260`.
 pub unsafe extern "C" fn cb_fn_800F9260(g: G) {
+    melee_core::ct!("cb_fn_800F9260");
     fn_800F9260(g);
 }
 
 pub fn ftKb_SpecialN_800F9110(gobj: G) {
+    melee_core::ct!("ftKb_SpecialN_800F9110");
     unsafe {
         let fp = fpp(gobj);
         let mut msid = ftKb_MS_MrSpecialN as i32;
@@ -99,6 +101,7 @@ pub fn ftKb_SpecialN_800F9110(gobj: G) {
 }
 
 pub fn ftKb_MrSpecialN_Coll(gobj: G) {
+    melee_core::ct!("ftKb_MrSpecialN_Coll");
     unsafe {
         if st::ft_80082708(gobj) == GA_Ground as i32 {
             ftKb_SpecialNLg_800F951C(gobj);
@@ -126,6 +129,7 @@ unsafe fn pick_pill(gobj: G) -> i32 {
 }
 
 pub fn fn_800F9260(gobj: G) {
+    melee_core::ct!("fn_800F9260");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).u.kb.hat.kind as u32 != Ft_Kind_Kirby as u32 {
@@ -150,6 +154,7 @@ pub fn fn_800F9260(gobj: G) {
 }
 
 pub fn ftKb_SpecialNMr_800F93CC(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNMr_800F93CC");
     unsafe {
         let fp = fpp(gobj);
         let mut msid = ftKb_MS_MrSpecialAirN as i32;
@@ -165,6 +170,7 @@ pub fn ftKb_SpecialNMr_800F93CC(gobj: G) {
 }
 
 pub fn ftKb_MrSpecialAirN_IASA(gobj: G) {
+    melee_core::ct!("ftKb_MrSpecialAirN_IASA");
     unsafe {
         let ft = fpp(gobj);
         if (*ft).cmd_vars[0] != 0 {
@@ -174,6 +180,7 @@ pub fn ftKb_MrSpecialAirN_IASA(gobj: G) {
 }
 
 pub fn ftKb_MrSpecialAirN_Coll(gobj: G) {
+    melee_core::ct!("ftKb_MrSpecialAirN_Coll");
     unsafe {
         if st::ft_80081D0C(gobj) != GA_Ground as i32 {
             ftKb_SpecialNLg_800F9598(gobj);
@@ -182,6 +189,7 @@ pub fn ftKb_MrSpecialAirN_Coll(gobj: G) {
 }
 
 pub fn ftKb_SpecialNLg_800F951C(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNLg_800F951C");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_8007D5D4(&mut *fp);
@@ -197,6 +205,7 @@ pub fn ftKb_SpecialNLg_800F951C(gobj: G) {
 }
 
 pub fn ftKb_SpecialNLg_800F9598(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNLg_800F9598");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_8007D7FC(&mut *fp);

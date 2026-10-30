@@ -61,6 +61,7 @@ pub mod ext {
 
 /// `inlines.h` `ftCo_Cliff_EnterState`.
 pub fn ftCo_Cliff_EnterState(g: G, msid: i32) {
+    melee_core::ct!("ftCo_Cliff_EnterState");
     ext::Fighter_ChangeMotionState(g, msid, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ext::ftAnim_8006EBA4(g);
     ext::ftCommon_8007E2F4(fp(g), 32);
@@ -73,6 +74,7 @@ fn abs_c(x: f32) -> f32 {
 }
 
 pub fn ftCo_8009AA0C(g: G) -> bool {
+    melee_core::ct!("ftCo_8009AA0C");
     let f = fp(g);
     if abs_c(f.input.lstick[0].x) >= cd().x494 || abs_c(f.input.lstick[0].y) >= cd().x494 {
         let x = f.input.lstick[0].x;
@@ -90,6 +92,7 @@ pub fn ftCo_8009AA0C(g: G) -> bool {
 
 /// static `ftCo_8009AAFC`.
 pub fn ftCo_8009AAFC(g: G, arg1: bool, stick_x: f32, angle: f32) -> bool {
+    melee_core::ct!("ftCo_8009AAFC");
     let f = fp(g);
     let c = cd();
     if angle > c.x20_radians || (angle > -c.x20_radians && stick_x * f.facing_dir >= 0.0) {
@@ -109,6 +112,7 @@ pub fn ftCo_8009AAFC(g: G, arg1: bool, stick_x: f32, angle: f32) -> bool {
 
 /// static `ftCo_8009AB9C`.
 pub fn ftCo_8009AB9C(g: G) {
+    melee_core::ct!("ftCo_8009AB9C");
     let msid = if fp(g).dmg.x1830_percent < cd().x488 as f32 { ftCo_MS_CliffClimbQuick } else { ftCo_MS_CliffClimbSlow };
     ftCo_Cliff_EnterState(g, msid as i32);
     fp(g).set_x221D_b5(1);
@@ -116,14 +120,16 @@ pub fn ftCo_8009AB9C(g: G) {
 }
 
 pub fn ftCo_CliffClimb_Anim(g: G) {
+    melee_core::ct!("ftCo_CliffClimb_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ftCommon_8007D92C(g);
     }
 }
 
-pub fn ftCo_CliffClimb_IASA(_g: G) {}
+pub fn ftCo_CliffClimb_IASA(_g: G) { melee_core::ct!("ftCo_CliffClimb_IASA");}
 
 pub fn ftCo_CliffClimb_Phys(g: G) {
+    melee_core::ct!("ftCo_CliffClimb_Phys");
     let f = fp(g);
     if f.ground_or_air == GA_Air {
         let lid = unsafe { f.mv.co.cliff.ledge_id };
@@ -150,6 +156,7 @@ pub fn ftCo_CliffClimb_Phys(g: G) {
 }
 
 pub fn ftCo_CliffClimb_Coll(g: G) {
+    melee_core::ct!("ftCo_CliffClimb_Coll");
     if fp(g).ground_or_air == GA_Air {
         if ext::ft_800821DC(g) {
             ext::ftCo_8009AE14(g);

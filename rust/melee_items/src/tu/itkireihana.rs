@@ -93,6 +93,7 @@ pub static mut it_803F7E28: [ItemStateTable; 5] = [
 ];
 
 pub unsafe extern "C" fn itKireihana_Logic15_Spawned(gobj: *mut Item_GObj) {
+    melee_core::ct!("itKireihana_Logic15_Spawned");
     let item = get_item(gobj);
     let attrs = (*(*item).xC4_article_data).x4_specialAttributes as *mut itkireihanaAttributes;
     (*item).facing_dir = 0.0;
@@ -108,10 +109,12 @@ pub unsafe extern "C" fn itKireihana_Logic15_Spawned(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itKireihana_Logic15_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("itKireihana_Logic15_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }
 
 pub unsafe extern "C" fn it_802D0138(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802D0138");
     let item = get_item(gobj);
     ext::it_80273454(gobj);
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE as _);
@@ -120,6 +123,7 @@ pub unsafe extern "C" fn it_802D0138(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_802D01A0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D01A0");
     let item = get_item(gobj);
     ext::Item_80268E5C(gobj, 1, (ITEM_UNK_0x1 | ITEM_HIT_PRESERVE) as _);
     Item_SetEffectHitlagCallbacks(item);
@@ -128,6 +132,7 @@ pub unsafe extern "C" fn it_802D01A0(gobj: *mut Item_GObj) {
 }
 
 pub unsafe fn itKireihana_UnkMotion1_Anim_inline(gobj: *mut Item_GObj) {
+    melee_core::ct!("itKireihana_UnkMotion1_Anim_inline");
     let item = get_item(gobj);
     ext::it_80273454(gobj);
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE as _);
@@ -136,6 +141,7 @@ pub unsafe fn itKireihana_UnkMotion1_Anim_inline(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itKireihana_UnkMotion1_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKireihana_UnkMotion1_Anim");
     let item = get_item(gobj);
     (*item).xDD4_itemVar.kireihana.x70 = (*item).xDD4_itemVar.kireihana.x8;
     ext::it_8027A160((*(*item).xBBC_dynamicBoneTable).bones[1], item);
@@ -151,6 +157,7 @@ pub unsafe extern "C" fn itKireihana_UnkMotion1_Anim(gobj: *mut Item_GObj) -> i3
 }
 
 pub unsafe extern "C" fn itKireihana_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itKireihana_UnkMotion1_Phys");
     let item = get_item(gobj);
     (*item).xDD4_itemVar.kireihana.timer_unk1 = (*item).xDD4_itemVar.kireihana.timer_unk1.wrapping_sub(1);
     if (*item).xDD4_itemVar.kireihana.timer_unk1 == 0 {
@@ -171,6 +178,7 @@ pub unsafe extern "C" fn itKireihana_UnkMotion1_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itKireihana_UnkMotion1_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKireihana_UnkMotion1_Coll");
     let item = get_item(gobj);
     if ext::it_8026DA08(gobj) == 0 && (*item).xDD4_itemVar.kireihana.x70 < 0.0 && (*item).xDD4_itemVar.kireihana.x8 > 0.0 {
         it_802D03F8(gobj);
@@ -179,6 +187,7 @@ pub unsafe extern "C" fn itKireihana_UnkMotion1_Coll(gobj: *mut Item_GObj) -> i3
 }
 
 pub unsafe extern "C" fn it_802D03F8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802D03F8");
     let item = get_item(gobj);
     ext::Item_80268E5C(gobj, 2, (ITEM_UNK_0x1 | ITEM_HIT_PRESERVE) as _);
     Item_SetEffectHitlagCallbacks(item);
@@ -186,12 +195,14 @@ pub unsafe extern "C" fn it_802D03F8(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe fn itKireihana_UnkMotion2_Anim_inline(gobj: *mut Item_GObj) {
+    melee_core::ct!("itKireihana_UnkMotion2_Anim_inline");
     let item = get_item(gobj);
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE as _);
     Item_SetEffectHitlagCallbacks(item);
 }
 
 pub unsafe extern "C" fn itKireihana_UnkMotion2_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKireihana_UnkMotion2_Anim");
     let item = get_item(gobj);
     ext::it_8027A160((*(*item).xBBC_dynamicBoneTable).bones[1], item);
     if ext::it_80272C6C(gobj) == 0 {
@@ -207,6 +218,7 @@ pub unsafe extern "C" fn itKireihana_UnkMotion2_Anim(gobj: *mut Item_GObj) -> i3
 }
 
 pub unsafe extern "C" fn itKireihana_UnkMotion2_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itKireihana_UnkMotion2_Phys");
     let item = get_item(gobj);
     (*item).xDD4_itemVar.kireihana.timer_unk1 = (*item).xDD4_itemVar.kireihana.timer_unk1.wrapping_sub(1);
     if (*item).xDD4_itemVar.kireihana.timer_unk1 == 0 {
@@ -223,11 +235,13 @@ pub unsafe extern "C" fn itKireihana_UnkMotion2_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itKireihana_UnkMotion2_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKireihana_UnkMotion2_Coll");
     ext::it_8026E248(gobj, Some(it_802D01A0));
     0
 }
 
 pub unsafe extern "C" fn it_802D05D8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802D05D8");
     let item = get_item(gobj);
     ext::Item_80268E5C(gobj, 3, ITEM_ANIM_UPDATE as _);
     Item_SetEffectHitlagCallbacks(item);
@@ -235,6 +249,7 @@ pub unsafe extern "C" fn it_802D05D8(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_802D062C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D062C");
     let item = get_item(gobj);
     ext::Item_80268E5C(gobj, 3, (ITEM_UNK_0x1 | ITEM_HIT_PRESERVE) as _);
     Item_SetEffectHitlagCallbacks(item);
@@ -243,6 +258,7 @@ pub unsafe extern "C" fn it_802D062C(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itKireihana_UnkMotion3_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKireihana_UnkMotion3_Anim");
     let item = get_item(gobj);
     (*item).xDD4_itemVar.kireihana.x70 = (*item).xDD4_itemVar.kireihana.x8;
     ext::it_8027A160((*(*item).xBBC_dynamicBoneTable).bones[1], item);
@@ -253,10 +269,12 @@ pub unsafe extern "C" fn itKireihana_UnkMotion3_Anim(gobj: *mut Item_GObj) -> i3
 }
 
 pub unsafe extern "C" fn itKireihana_UnkMotion3_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itKireihana_UnkMotion3_Phys");
     ext::it_8027A344(gobj);
 }
 
 pub unsafe extern "C" fn itKireihana_UnkMotion3_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKireihana_UnkMotion3_Coll");
     let item = get_item(gobj);
     if ext::it_8026DA08(gobj) == 0 && (*item).xDD4_itemVar.kireihana.x70 < 0.0 && (*item).xDD4_itemVar.kireihana.x8 > 0.0 {
         it_802D07C0(gobj);
@@ -265,18 +283,21 @@ pub unsafe extern "C" fn itKireihana_UnkMotion3_Coll(gobj: *mut Item_GObj) -> i3
 }
 
 pub unsafe extern "C" fn it_802D0774(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D0774");
     let ip = get_item(gobj);
     ext::Item_80268E5C(gobj, 4, ITEM_ANIM_UPDATE as _);
     Item_SetEffectHitlagCallbacks(ip);
 }
 
 pub unsafe extern "C" fn it_802D07C0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D07C0");
     let ip = get_item(gobj);
     ext::Item_80268E5C(gobj, 4, (ITEM_UNK_0x1 | ITEM_HIT_PRESERVE) as _);
     Item_SetEffectHitlagCallbacks(ip);
 }
 
 pub unsafe extern "C" fn itKireihana_UnkMotion4_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKireihana_UnkMotion4_Anim");
     let item = get_item(gobj);
     ext::it_8027A160((*(*item).xBBC_dynamicBoneTable).bones[1], item);
     if ext::it_80272C6C(gobj) == 0 {
@@ -286,6 +307,7 @@ pub unsafe extern "C" fn itKireihana_UnkMotion4_Anim(gobj: *mut Item_GObj) -> i3
 }
 
 pub unsafe extern "C" fn itKireihana_UnkMotion4_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itKireihana_UnkMotion4_Phys");
     let item = get_item(gobj);
     ext::it_8027A344(gobj);
     (*item).xDD4_itemVar.kireihana.fall_speed += (*(*item).xCC_item_attr).x10_fall_speed;
@@ -296,23 +318,28 @@ pub unsafe extern "C" fn itKireihana_UnkMotion4_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itKireihana_UnkMotion4_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKireihana_UnkMotion4_Coll");
     ext::it_8026E248(gobj, Some(it_802D062C));
     0
 }
 
 pub unsafe extern "C" fn it_802D08F0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D08F0");
     Item_EnterAirStateWithHitlagAndStateDesc(gobj);
 }
 
 pub unsafe extern "C" fn itKireihana_UnkMotion0_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKireihana_UnkMotion0_Anim");
     ext::it_80279FF8(gobj);
     0
 }
 
 pub unsafe extern "C" fn itKireihana_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itKireihana_UnkMotion0_Phys");
     ext::it_8027A09C(gobj);
 }
 
 pub unsafe extern "C" fn itKireihana_UnkMotion0_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKireihana_UnkMotion0_Coll");
     ext::it_8027A118(gobj, Some(it_802D0138))
 }

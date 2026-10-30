@@ -158,10 +158,11 @@ unsafe fn GET_GROUND(gobj: *mut HSD_GObj) -> *mut Ground {
 }
 
 /// 21EF38
-pub unsafe extern "C" fn grHeal_8021EF38(_arg0: i32) {}
+pub unsafe extern "C" fn grHeal_8021EF38(_arg0: i32) { melee_core::ct!("grHeal_8021EF38");}
 
 /// 21EF3C
 pub unsafe extern "C" fn grHeal_8021EF3C() {
+    melee_core::ct!("grHeal_8021EF3C");
     grHeal_804D6AF0[0] = ext::Ground_GetYakumonoParam() as *mut grHeal_UnkData;
     ext::stage_info.unk8C.set_b4(0);
     ext::stage_info.unk8C.set_b5(1);
@@ -175,15 +176,17 @@ pub unsafe extern "C" fn grHeal_8021EF3C() {
 }
 
 /// 21EFBC
-pub unsafe extern "C" fn grHeal_8021EFBC() {}
+pub unsafe extern "C" fn grHeal_8021EFBC() { melee_core::ct!("grHeal_8021EFBC");}
 
 /// 21EFC0
 pub unsafe extern "C" fn grHeal_8021EFC0() {
+    melee_core::ct!("grHeal_8021EFC0");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
 
 /// 21EFEC
 pub unsafe extern "C" fn grHeal_8021EFEC(gobj_id: u32) -> *mut Ground_GObj {
+    melee_core::ct!("grHeal_8021EFEC");
     let callbacks = &raw mut stage_callbacks[gobj_id as usize];
     let gobj = ext::Ground_GetStageGObj(gobj_id as i32);
 
@@ -210,6 +213,7 @@ pub unsafe extern "C" fn grHeal_8021EFEC(gobj_id: u32) -> *mut Ground_GObj {
 
 /// 21F0D8
 pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj0_OnInit");
     let gp = GET_GROUND(gobj);
 
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
@@ -224,13 +228,14 @@ pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut Ground_GObj) {
 }
 
 /// 21F178
-pub unsafe extern "C" fn stageGObj0_GObjProc(_gobj: *mut Ground_GObj) {}
+pub unsafe extern "C" fn stageGObj0_GObjProc(_gobj: *mut Ground_GObj) { melee_core::ct!("stageGObj0_GObjProc");}
 
 /// 21F17C
-pub unsafe extern "C" fn stageGObj0_Callback3(_gobj: *mut Ground_GObj) {}
+pub unsafe extern "C" fn stageGObj0_Callback3(_gobj: *mut Ground_GObj) { melee_core::ct!("stageGObj0_Callback3");}
 
 /// 21F180
 pub unsafe extern "C" fn stageGObj1_OnInit(gobj: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj1_OnInit");
     let mut coin_pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut next_players = [0u8; 4];
     let mut next_jobjs: [*mut HSD_JObj; 3] = [null_mut(); 3];
@@ -285,6 +290,7 @@ pub unsafe extern "C" fn stageGObj1_OnInit(gobj: *mut Ground_GObj) {
 
 /// 21F424
 pub unsafe extern "C" fn fn_8021F424() -> i32 {
+    melee_core::ct!("fn_8021F424");
     let ground = ext::Ground_GetMapGObj(1);
     if !ground.is_null() {
         let gp = (*ground).user_data as *mut Ground;
@@ -297,6 +303,7 @@ pub unsafe extern "C" fn fn_8021F424() -> i32 {
 
 /// 21F474
 pub unsafe extern "C" fn stageGObj1_GObjProc(ground: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj1_GObjProc");
     let gp = (*ground).user_data as *mut Ground;
     ext::Ground_801C3D44(fn_8021F424 as *mut c_void, 10.0, 20.0);
     ext::lb_800115F4();
@@ -304,11 +311,12 @@ pub unsafe extern "C" fn stageGObj1_GObjProc(ground: *mut Ground_GObj) {
 }
 
 /// 21F4BC
-pub unsafe extern "C" fn stageGObj1_Callback3(_gobj: *mut Ground_GObj) {}
+pub unsafe extern "C" fn stageGObj1_Callback3(_gobj: *mut Ground_GObj) { melee_core::ct!("stageGObj1_Callback3");}
 
 /// 21F4C0 (`onJointCollision`, an `mpLib_JointCollisionCallback`)
 pub unsafe extern "C" fn onJointCollision(user_data: *mut c_void, _joint_id: i32, coll: *mut CollData,
                                           _coll_x50: i32, ground_kind: u32, _delta_y: f32) {
+    melee_core::ct!("onJointCollision");
     let gp = user_data as *mut Ground;
     if (*coll).x34_flags.b1234() as i32 == 1 && ground_kind.wrapping_sub(1) <= 1 {
         (*gp).u.unk.xC4 = 1;
@@ -317,6 +325,7 @@ pub unsafe extern "C" fn onJointCollision(user_data: *mut c_void, _joint_id: i32
 
 /// 21F4E8
 pub unsafe extern "C" fn grHeal_8021F4E8(arg0: i32, parent_jobj: *mut HSD_JObj) {
+    melee_core::ct!("grHeal_8021F4E8");
     let gobj = grHeal_8021EFEC(4);
     assert!(!gobj.is_null(), "gobj"); // HSD_ASSERT(440, gobj)
     ext::grAnime_801C8138(gobj, 4, 0);
@@ -329,29 +338,31 @@ pub unsafe extern "C" fn grHeal_8021F4E8(arg0: i32, parent_jobj: *mut HSD_JObj) 
 }
 
 /// 21F5C8
-pub unsafe extern "C" fn stageGObj2_OnInit(_gobj: *mut Ground_GObj) {}
+pub unsafe extern "C" fn stageGObj2_OnInit(_gobj: *mut Ground_GObj) { melee_core::ct!("stageGObj2_OnInit");}
 
 /// 21F5D4
-pub unsafe extern "C" fn stageGObj2_GObjProc(_gobj: *mut Ground_GObj) {}
+pub unsafe extern "C" fn stageGObj2_GObjProc(_gobj: *mut Ground_GObj) { melee_core::ct!("stageGObj2_GObjProc");}
 
 /// 21F5D8
-pub unsafe extern "C" fn stageGObj2_Callback3(_gobj: *mut Ground_GObj) {}
+pub unsafe extern "C" fn stageGObj2_Callback3(_gobj: *mut Ground_GObj) { melee_core::ct!("stageGObj2_Callback3");}
 
 /// 21F5DC
 pub unsafe extern "C" fn stageGObj3_OnInit(ground: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj3_OnInit");
     let gp = (*ground).user_data as *mut Ground;
     (*gp).x10_flags.set_b2(0);
     ext::grAnime_801C8138(ground, (*gp).map_id as i32, 0);
 }
 
 /// 21F620
-pub unsafe extern "C" fn stageGObj3_GObjProc(_gobj: *mut Ground_GObj) {}
+pub unsafe extern "C" fn stageGObj3_GObjProc(_gobj: *mut Ground_GObj) { melee_core::ct!("stageGObj3_GObjProc");}
 
 /// 21F624
-pub unsafe extern "C" fn stageGObj3_Callback3(_gobj: *mut Ground_GObj) {}
+pub unsafe extern "C" fn stageGObj3_Callback3(_gobj: *mut Ground_GObj) { melee_core::ct!("stageGObj3_Callback3");}
 
 /// 21F628
 pub unsafe extern "C" fn grHeal_8021F628(arg0: i32, jobj_parent: *mut HSD_JObj) {
+    melee_core::ct!("grHeal_8021F628");
     let gobj = grHeal_8021EFEC(2);
     assert!(!gobj.is_null(), "gobj"); // HSD_ASSERT(513, gobj)
     ext::grAnime_801C8138(gobj, 2, 0);
@@ -363,16 +374,17 @@ pub unsafe extern "C" fn grHeal_8021F628(arg0: i32, jobj_parent: *mut HSD_JObj) 
 }
 
 /// 21F6F8
-pub unsafe extern "C" fn stageGObj4_OnInit(_gobj: *mut Ground_GObj) {}
+pub unsafe extern "C" fn stageGObj4_OnInit(_gobj: *mut Ground_GObj) { melee_core::ct!("stageGObj4_OnInit");}
 
 /// 21F704
-pub unsafe extern "C" fn stageGObj4_GObjProc(_gobj: *mut Ground_GObj) {}
+pub unsafe extern "C" fn stageGObj4_GObjProc(_gobj: *mut Ground_GObj) { melee_core::ct!("stageGObj4_GObjProc");}
 
 /// 21F708
-pub unsafe extern "C" fn stageGObj4_Callback3(_gobj: *mut Ground_GObj) {}
+pub unsafe extern "C" fn stageGObj4_Callback3(_gobj: *mut Ground_GObj) { melee_core::ct!("stageGObj4_Callback3");}
 
 /// 21F70C
 pub unsafe extern "C" fn grHeal_8021F70C(mut character_id: enum_t) -> i32 {
+    melee_core::ct!("grHeal_8021F70C");
     let mut frame: i32 = 0;
 
     if character_id == 19 {
@@ -393,6 +405,7 @@ pub unsafe extern "C" fn grHeal_8021F70C(mut character_id: enum_t) -> i32 {
 
 /// 21F79C
 pub unsafe extern "C" fn grHeal_8021F79C(arg0: i32, idx: i32, arg2: i32) {
+    melee_core::ct!("grHeal_8021F79C");
     let mut bobomb_rain: BobOmbRain = core::mem::zeroed();
 
     let gp = ext::Ground_GetMapGObj(0);

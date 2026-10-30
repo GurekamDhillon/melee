@@ -25,6 +25,7 @@ pub unsafe fn HSD_RObjInitAllocData(
     robj: &mut HSD_ObjAllocData,
     rvalue: &mut HSD_ObjAllocData,
 ) {
+    melee_core::ct!("HSD_RObjInitAllocData");
     unsafe {
         (ext::HSD_ObjAllocInit)(
             robj,
@@ -41,24 +42,29 @@ pub unsafe fn HSD_RObjInitAllocData(
 pub fn HSD_RObjGetAllocData(
     data: &mut HSD_ObjAllocData,
 ) -> &mut HSD_ObjAllocData {
+    melee_core::ct!("HSD_RObjGetAllocData");
     data
 }
 pub fn HSD_RvalueObjGetAllocData(
     data: &mut HSD_ObjAllocData,
 ) -> &mut HSD_ObjAllocData {
+    melee_core::ct!("HSD_RvalueObjGetAllocData");
     data
 }
 /// The native arena owns allocations; freeing transfers ownership to drop.
 pub fn HSD_RObjFree(slot: &mut Option<HsdRObj>) {
+    melee_core::ct!("HSD_RObjFree");
     drop(slot.take());
 }
 pub fn jobj_parent<D: Copy + PartialEq, R: Copy + PartialEq>(
     tree: &JObjTree<D, R>,
     jobj: Option<JObjId>,
 ) -> Option<JObjId> {
+    melee_core::ct!("jobj_parent");
     tree.parent_of(jobj)
 }
 pub fn _HSD_RObjForgetMemory(g: &mut RObjGlobals, low: usize, high: usize) {
+    melee_core::ct!("_HSD_RObjForgetMemory");
     let ptr = g.arg_buf.as_ref().map_or(0, |b| b.as_ptr() as usize);
     if low <= ptr && ptr < high {
         g.forget_memory();

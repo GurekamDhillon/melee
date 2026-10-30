@@ -126,6 +126,7 @@ pub static mut it_803F6630: [ItemStateTable; 1] = [
 
 /// 2993E0: sums the contact normals selected by `flags` into `position1`.
 pub unsafe extern "C" fn it_802993E0(gobj: *mut Item_GObj, flags: i32) {
+    melee_core::ct!("it_802993E0");
     let item = GET_ITEM(gobj);
     let mut pos: Vec3 = core::mem::zeroed();
     pos.z = 0.0;
@@ -154,6 +155,7 @@ pub unsafe extern "C" fn it_802993E0(gobj: *mut Item_GObj, flags: i32) {
 
 /// 299528: turns the beam's heading after a bounce.
 pub unsafe extern "C" fn it_80299528(gobj: *mut Item_GObj, arg1: i32) {
+    melee_core::ct!("it_80299528");
     let ip = GET_ITEM(gobj);
     if arg1 != 0 {
         let angle1 = ext::atan2f((*ip).xDD4_itemVar.lgunbeam.position1.x, (*ip).xDD4_itemVar.lgunbeam.position1.y);
@@ -180,6 +182,7 @@ pub unsafe extern "C" fn it_80299528(gobj: *mut Item_GObj, arg1: i32) {
 
 /// 2996D0: spawns a beam at `pos` heading out of `owner_gobj`.
 pub unsafe extern "C" fn it_802996D0(owner_gobj: *mut HSD_GObj, pos: *mut Vec3, arg2: u32, facing_dir: f32) -> *mut Item_GObj {
+    melee_core::ct!("it_802996D0");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
     spawn.kind = It_Kind_L_Gun_Beam;
@@ -239,6 +242,7 @@ pub unsafe extern "C" fn it_802996D0(owner_gobj: *mut HSD_GObj, pos: *mut Vec3, 
 
 /// 2998A0: enters state 0 and spawns the beam's effect.
 pub unsafe extern "C" fn it_802998A0(gobj: *mut Item_GObj, fighter_gobj: *mut HSD_GObj, arg2: i32) {
+    melee_core::ct!("it_802998A0");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
     let mut sp2C: f32 = 1.0;
@@ -255,6 +259,7 @@ pub unsafe extern "C" fn it_802998A0(gobj: *mut Item_GObj, fighter_gobj: *mut HS
 }
 
 pub unsafe extern "C" fn itLgunbeam_UnkMotion0_Anim(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itLgunbeam_UnkMotion0_Anim");
     if ext::it_80273130(gobj) == 1 {
         ext::efLib_DestroyAll(gobj);
         return true;
@@ -263,6 +268,7 @@ pub unsafe extern "C" fn itLgunbeam_UnkMotion0_Anim(gobj: *mut HSD_GObj) -> bool
 }
 
 pub unsafe extern "C" fn itLgunbeam_UnkMotion0_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itLgunbeam_UnkMotion0_Phys");
     let ip = GET_ITEM(gobj);
 
     (*ip).xDD4_itemVar.lgunbeam.position0 = (*ip).pos;
@@ -282,6 +288,7 @@ pub unsafe extern "C" fn itLgunbeam_UnkMotion0_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itLgunbeam_UnkMotion0_Coll(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itLgunbeam_UnkMotion0_Coll");
     let ip = GET_ITEM(gobj);
     Item_ClampAngle(&mut (*ip).xDD4_itemVar.lgunbeam.angle0);
     let mut flags: i32 = 0;
@@ -312,10 +319,12 @@ pub unsafe extern "C" fn itLgunbeam_UnkMotion0_Coll(gobj: *mut HSD_GObj) -> bool
 }
 
 pub unsafe extern "C" fn itLGunBeam_Logic39_DmgDealt(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLGunBeam_Logic39_DmgDealt");
     false
 }
 
 pub unsafe extern "C" fn itLGunBeam_Logic39_Reflected(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLGunBeam_Logic39_Reflected");
     let ip = GET_ITEM(gobj);
     (*ip).xDD4_itemVar.lgunbeam.angle0 = ((*ip).xDD4_itemVar.lgunbeam.angle0 as f64 + M_PI) as f32;
     Item_ClampAngle(&mut (*ip).xDD4_itemVar.lgunbeam.angle0);
@@ -326,21 +335,26 @@ pub unsafe extern "C" fn itLGunBeam_Logic39_Reflected(gobj: *mut Item_GObj) -> b
 }
 
 pub unsafe extern "C" fn itLGunBeam_Logic39_Clanked(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLGunBeam_Logic39_Clanked");
     true
 }
 
 pub unsafe extern "C" fn itLGunBeam_Logic39_Absorbed(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLGunBeam_Logic39_Absorbed");
     false
 }
 
 pub unsafe extern "C" fn itLGunBeam_Logic39_ShieldBounced(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLGunBeam_Logic39_ShieldBounced");
     true
 }
 
 pub unsafe extern "C" fn itLGunBeam_Logic39_HitShield(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLGunBeam_Logic39_HitShield");
     true
 }
 
 pub unsafe extern "C" fn itLGunBeam_Logic39_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itLGunBeam_Logic39_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

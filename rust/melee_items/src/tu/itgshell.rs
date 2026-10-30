@@ -138,6 +138,7 @@ unsafe fn attrs_of(ip: *mut Item) -> *mut itGShell_Attrs {
 }
 
 pub unsafe extern "C" fn it_8028B8D8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_8028B8D8");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
     if (*ip).xDD4_itemVar.gshell.xDDC <= 0.0 {
@@ -153,6 +154,7 @@ pub unsafe extern "C" fn it_8028B8D8(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_8028B988(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_8028B988");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
     if (*ip).xDD4_itemVar.gshell.xDEC_b1() != 0 {
@@ -169,6 +171,7 @@ pub unsafe extern "C" fn it_8028B988(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_8028BA2C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_8028BA2C");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
     ext::it_80275D5C(gobj, &raw mut (*ip).xC0C);
@@ -187,6 +190,7 @@ pub unsafe extern "C" fn it_8028BA2C(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_8028BAD8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_8028BAD8");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
     match (*ip).msid as i32 {
@@ -212,6 +216,7 @@ pub unsafe extern "C" fn it_8028BAD8(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_8028BC2C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_8028BC2C");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
     match (*ip).msid as i32 {
@@ -251,6 +256,7 @@ pub unsafe extern "C" fn it_8028BC2C(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itGShell_Logic14_Spawned(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGShell_Logic14_Spawned");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
     (*ip).xDD4_itemVar.gshell.xDD4 = (*attrs).x0;
@@ -266,6 +272,7 @@ pub unsafe extern "C" fn itGShell_Logic14_Spawned(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_8028BE54(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_8028BE54");
     let ip = GET_ITEM(gobj);
     ext::it_8026B390(gobj);
     ext::it_80275444(gobj);
@@ -281,12 +288,14 @@ pub unsafe extern "C" fn it_8028BE54(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itGshell_UnkMotion0_Anim(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itGshell_UnkMotion0_Anim");
     0
 }
 
-pub unsafe extern "C" fn itGshell_UnkMotion0_Phys(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itGshell_UnkMotion0_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itGshell_UnkMotion0_Phys");}
 
 pub unsafe extern "C" fn itGshell_UnkMotion0_Coll(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itGshell_UnkMotion0_Coll");
     ext::it_8026D62C(gobj, Some(it_8028C018));
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
@@ -298,11 +307,13 @@ pub unsafe extern "C" fn itGshell_UnkMotion0_Coll(gobj: *mut HSD_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn it_8028C018(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_8028C018");
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE as u32);
     ext::it_80274C88(gobj);
 }
 
 pub unsafe extern "C" fn itGshell_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itGshell_UnkMotion1_Anim");
     let ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.gshell.xDEC_b3() != 0 && (*ip).xDD0_flag.anon_0.b0() != 1 {
         if (*ip).xDD4_itemVar.gshell.xDE4 <= 0.0 {
@@ -316,12 +327,14 @@ pub unsafe extern "C" fn itGshell_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn itGshell_UnkMotion1_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGshell_UnkMotion1_Phys");
     let ip = GET_ITEM(gobj);
     let attr = (*ip).xCC_item_attr;
     ext::it_80272860(gobj, (*attr).x10_fall_speed, (*attr).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itGshell_UnkMotion1_Coll(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itGshell_UnkMotion1_Coll");
     let ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.gshell.xDE8 != 0 {
         ext::it_8026E32C(gobj, Some(it_8028BE54));
@@ -332,6 +345,7 @@ pub unsafe extern "C" fn itGshell_UnkMotion1_Coll(gobj: *mut HSD_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn itGShell_Logic14_PickedUp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGShell_Logic14_PickedUp");
     let ip = GET_ITEM(gobj);
     ext::it_80275474(gobj);
     (*ip).xDD4_itemVar.gshell.set_xDEC_b3(0);
@@ -339,12 +353,14 @@ pub unsafe extern "C" fn itGShell_Logic14_PickedUp(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itGshell_UnkMotion2_Anim(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itGshell_UnkMotion2_Anim");
     0
 }
 
-pub unsafe extern "C" fn itGshell_UnkMotion2_Phys(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itGshell_UnkMotion2_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itGshell_UnkMotion2_Phys");}
 
 pub unsafe extern "C" fn itGShell_Logic14_Thrown(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGShell_Logic14_Thrown");
     let ip = GET_ITEM(gobj);
     (*ip).xDD4_itemVar.gshell.xDE8 = 1;
     ext::Item_80268E5C(gobj, 3, 6);
@@ -352,6 +368,7 @@ pub unsafe extern "C" fn itGShell_Logic14_Thrown(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itGshell_UnkMotion3_Anim(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itGshell_UnkMotion3_Anim");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
     if (*ip).xDD4_itemVar.gshell.xDEC_b1() != 0 {
@@ -369,37 +386,44 @@ pub unsafe extern "C" fn itGshell_UnkMotion3_Anim(gobj: *mut HSD_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn itGshell_UnkMotion3_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGshell_UnkMotion3_Phys");
     let ip = GET_ITEM(gobj);
     let attr = (*ip).xCC_item_attr;
     ext::it_80272860(gobj, (*attr).x10_fall_speed, (*attr).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itGshell_UnkMotion3_Coll(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itGshell_UnkMotion3_Coll");
     ext::it_8026E414(gobj, Some(it_8028BA2C));
     0
 }
 
 pub unsafe extern "C" fn itGShell_Logic14_Dropped(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGShell_Logic14_Dropped");
     ext::Item_80268E5C(gobj, 4, 6);
 }
 
 pub unsafe extern "C" fn itGshell_UnkMotion4_Anim(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itGshell_UnkMotion4_Anim");
     it_8028B988(gobj);
     0
 }
 
 pub unsafe extern "C" fn itGshell_UnkMotion4_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGshell_UnkMotion4_Phys");
     let ip = GET_ITEM(gobj);
     let attr = (*ip).xCC_item_attr;
     ext::it_80272860(gobj, (*attr).x10_fall_speed, (*attr).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itGshell_UnkMotion4_Coll(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itGshell_UnkMotion4_Coll");
     ext::it_8026E414(gobj, Some(it_8028BA2C));
     0
 }
 
 pub unsafe extern "C" fn it_8028C3A8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_8028C3A8");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
     ext::it_8026B3A8(gobj);
@@ -428,6 +452,7 @@ pub unsafe extern "C" fn it_8028C3A8(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itGshell_UnkMotion6_Anim(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itGshell_UnkMotion6_Anim");
     let ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.gshell.xDD8 <= 0.0 {
         if (*ip).xDCD_flag.anon_0.b5() == 0 {
@@ -448,6 +473,7 @@ pub unsafe extern "C" fn itGshell_UnkMotion6_Anim(gobj: *mut HSD_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn itGshell_UnkMotion6_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGshell_UnkMotion6_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
     if abs_c((*ip).x40_vel.x) < (*attrs).x8 && (*ip).xDC8_word.flags.x15() == 0 {
@@ -458,6 +484,7 @@ pub unsafe extern "C" fn itGshell_UnkMotion6_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itGshell_UnkMotion6_Coll(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itGshell_UnkMotion6_Coll");
     ext::it_8026D62C(gobj, Some(it_8028C898));
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
@@ -472,6 +499,7 @@ pub unsafe extern "C" fn itGshell_UnkMotion6_Coll(gobj: *mut HSD_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn it_8028C898(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_8028C898");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
     ext::it_8026B3A8(gobj);
@@ -499,6 +527,7 @@ pub unsafe extern "C" fn it_8028C898(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itGshell_UnkMotion8_Anim(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itGshell_UnkMotion8_Anim");
     let ip = (*gobj).user_data as *mut Item;
     if (*ip).xDD4_itemVar.gshell.xDD8 <= 0.0 {
         if (*ip).xDCD_flag.anon_0.b5() == 0 {
@@ -519,17 +548,20 @@ pub unsafe extern "C" fn itGshell_UnkMotion8_Anim(gobj: *mut HSD_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn itGshell_UnkMotion8_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGshell_UnkMotion8_Phys");
     let ip = GET_ITEM(gobj);
     let attr = (*ip).xCC_item_attr;
     ext::it_80272860(gobj, (*attr).x10_fall_speed, (*attr).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itGshell_UnkMotion8_Coll(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itGshell_UnkMotion8_Coll");
     ext::it_8026E414(gobj, Some(it_8028BA2C));
     0
 }
 
 pub unsafe extern "C" fn itGShell_Logic14_EnteredAir(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGShell_Logic14_EnteredAir");
     let ip = GET_ITEM(gobj);
     (*ip).xDC8_word.flags.set_x1F(1);
     (*ip).xDD4_itemVar.gshell.set_xDEC_b3(0);
@@ -537,12 +569,14 @@ pub unsafe extern "C" fn itGShell_Logic14_EnteredAir(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itGshell_UnkMotion9_Anim(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itGshell_UnkMotion9_Anim");
     0
 }
 
-pub unsafe extern "C" fn itGshell_UnkMotion9_Phys(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itGshell_UnkMotion9_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itGshell_UnkMotion9_Phys");}
 
 pub unsafe extern "C" fn itGshell_UnkMotion9_Coll(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itGshell_UnkMotion9_Coll");
     ext::it_8026E8C4(gobj, Some(it_8028BE54), Some(it_8028C018));
     let ip = GET_ITEM(gobj);
     let mut jobj = GET_JOBJ(gobj);
@@ -556,17 +590,20 @@ pub unsafe extern "C" fn itGshell_UnkMotion9_Coll(gobj: *mut HSD_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn itGShell_Logic14_DmgDealt(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itGShell_Logic14_DmgDealt");
     ext::it_80272940(gobj);
     0
 }
 
 pub unsafe extern "C" fn itGShell_Logic14_DmgReceived(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itGShell_Logic14_DmgReceived");
     ext::it_80272940(gobj);
     it_8028BAD8(gobj);
     0
 }
 
 pub unsafe extern "C" fn itGShell_Logic14_Reflected(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itGShell_Logic14_Reflected");
     let ip = GET_ITEM(gobj);
     ext::it_80273030(gobj);
     (*ip).xDD4_itemVar.gshell.xDD4 = (*ip).xD48_halfLifeTimer;
@@ -575,6 +612,7 @@ pub unsafe extern "C" fn itGShell_Logic14_Reflected(gobj: *mut HSD_GObj) -> i32 
 
 /// `static inline void shellHit(HSD_GObj*)`
 pub unsafe extern "C" fn shellHit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("shellHit");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
     ext::it_802756D0(gobj);
@@ -596,11 +634,13 @@ pub unsafe extern "C" fn shellHit(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itGShell_Logic14_Clanked(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itGShell_Logic14_Clanked");
     shellHit(gobj);
     0
 }
 
 pub unsafe extern "C" fn itGShell_Logic14_HitShield(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itGShell_Logic14_HitShield");
     let ip = GET_ITEM(gobj);
     if (*ip).msid == 3 || (*ip).msid == 4 {
         ext::itColl_BounceOffVictim(gobj);
@@ -611,6 +651,7 @@ pub unsafe extern "C" fn itGShell_Logic14_HitShield(gobj: *mut HSD_GObj) -> i32 
 }
 
 pub unsafe extern "C" fn itGShell_Logic14_ShieldBounced(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itGShell_Logic14_ShieldBounced");
     let ip = GET_ITEM(gobj);
     if (*ip).msid == 3 || (*ip).msid == 4 {
         ext::itColl_BounceOffShield(gobj);
@@ -619,6 +660,7 @@ pub unsafe extern "C" fn itGShell_Logic14_ShieldBounced(gobj: *mut HSD_GObj) -> 
 }
 
 pub unsafe extern "C" fn it_8028CF68(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("it_8028CF68");
     let ip = GET_ITEM(gobj);
     ext::it_80272940(gobj);
     it_8028BC2C(gobj);
@@ -627,5 +669,6 @@ pub unsafe extern "C" fn it_8028CF68(gobj: *mut HSD_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn itGShell_Logic14_EvtUnk(gobj: *mut HSD_GObj, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGShell_Logic14_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

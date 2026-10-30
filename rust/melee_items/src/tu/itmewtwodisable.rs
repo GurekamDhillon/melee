@@ -74,10 +74,12 @@ unsafe fn Item_TickLifetime(ip: *mut Item) -> bool {
 }
 
 pub unsafe extern "C" fn itMewtwoDisable_Logic67_Destroy(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itMewtwoDisable_Logic67_Destroy");
     ext::Item_8026A8EC(item_gobj);
 }
 
 pub unsafe extern "C" fn itMewtwoDisable_Logic67_Destroyed(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itMewtwoDisable_Logic67_Destroyed");
     let item = GET_ITEM(item_gobj);
     if !(*item).xDD4_itemVar.mdisable.owner.is_null() {
         ext::ftMt_SpecialLw_ClearDisableGObj((*item).xDD4_itemVar.mdisable.owner);
@@ -90,6 +92,7 @@ pub unsafe extern "C" fn itMewtwoDisable_Logic67_SpawnMewtwoDisable(
     offset: *mut Vec3,
     facing_dir: f32,
 ) -> *mut Item_GObj {
+    melee_core::ct!("itMewtwoDisable_Logic67_SpawnMewtwoDisable");
     let mut spawnitem: SpawnItem = core::mem::zeroed();
 
     spawnitem.kind = It_Kind_Mewtwo_Disable;
@@ -121,6 +124,7 @@ pub unsafe extern "C" fn itMewtwoDisable_Logic67_SpawnMewtwoDisable(
 }
 
 pub unsafe extern "C" fn it_802C4B38(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802C4B38");
     let item = GET_ITEM(item_gobj);
     let attrs = (*(*item).xC4_article_data).x4_specialAttributes as *mut itMDisableAttributes;
     let fighter_gobj = (*item).xDD4_itemVar.mdisable.owner;
@@ -135,6 +139,7 @@ pub unsafe extern "C" fn it_802C4B38(item_gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802C4BB8(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802C4BB8");
     let item = GET_ITEM(item_gobj);
 
     ext::Item_80268E5C(item_gobj, 0, ITEM_ANIM_UPDATE);
@@ -143,13 +148,15 @@ pub unsafe extern "C" fn it_802C4BB8(item_gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itMewtwodisable_UnkMotion0_Anim(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMewtwodisable_UnkMotion0_Anim");
     let item = GET_ITEM(item_gobj);
     Item_TickLifetime(item)
 }
 
-pub unsafe extern "C" fn itMewtwodisable_UnkMotion0_Phys(_item_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itMewtwodisable_UnkMotion0_Phys(_item_gobj: *mut Item_GObj) { melee_core::ct!("itMewtwodisable_UnkMotion0_Phys");}
 
 pub unsafe extern "C" fn itMewtwodisable_UnkMotion0_Coll(item_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itMewtwodisable_UnkMotion0_Coll");
     let mut coll_flags: u32 = 0;
 
     // coll processing
@@ -162,31 +169,38 @@ pub unsafe extern "C" fn itMewtwodisable_UnkMotion0_Coll(item_gobj: *mut Item_GO
 }
 
 pub unsafe extern "C" fn itMewtwoDisable_Logic67_DmgDealt(_item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMewtwoDisable_Logic67_DmgDealt");
     true
 }
 
 pub unsafe extern "C" fn itMewtwoDisable_Logic67_Reflected(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMewtwoDisable_Logic67_Reflected");
     // process being reflected
     ext::it_80273030(item_gobj) != 0
 }
 
 pub unsafe extern "C" fn itMewtwoDisable_Logic67_Clanked(_item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMewtwoDisable_Logic67_Clanked");
     true
 }
 
 pub unsafe extern "C" fn itMewtwoDisable_Logic67_HitShield(_item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMewtwoDisable_Logic67_HitShield");
     true
 }
 
 pub unsafe extern "C" fn itMewtwoDisable_Logic67_Absorbed(_item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMewtwoDisable_Logic67_Absorbed");
     true
 }
 
 pub unsafe extern "C" fn itMewtwoDisable_Logic67_ShieldBounced(_item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMewtwoDisable_Logic67_ShieldBounced");
     true
 }
 
 pub unsafe extern "C" fn itMewtwoDisable_Logic67_EvtUnk(item_gobj: *mut Item_GObj, ref_owner: *mut Fighter_GObj) {
+    melee_core::ct!("itMewtwoDisable_Logic67_EvtUnk");
     let item = GET_ITEM(item_gobj);
     if (*item).xDD4_itemVar.mdisable.owner == ref_owner {
         (*item).xDD4_itemVar.mdisable.owner = null_mut();

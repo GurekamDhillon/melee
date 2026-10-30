@@ -83,6 +83,7 @@ pub static mut it_mobj: it_MObjInfo = unsafe { core::mem::zeroed() };
 
 /// Sets the static initial values of `it_mobj` (the C data initialiser). Idempotent.
 pub unsafe fn it_mobj_static_init() {
+    melee_core::ct!("it_mobj_static_init");
     let m = &raw mut it_mobj;
     (*m).parent = core::mem::zeroed();
     (*m).parent.head.info_init = Some(it_80277D08);
@@ -145,6 +146,7 @@ fn os_report(_msg: &str) {}
 
 /// `it_80277D08`: registers the `it_mobj` class under `hsdMObj`'s base class.
 pub unsafe extern "C" fn it_80277D08() {
+    melee_core::ct!("it_80277D08");
     let m = &raw mut it_mobj;
     ext::hsdInitClassInfo(
         m as *mut HSD_ClassInfo,
@@ -163,6 +165,7 @@ pub unsafe extern "C" fn it_80277D08() {
 
 /// `fn_80277D8C`: the material setup callback (TEV state, shadow/toon chaining, render mode).
 pub unsafe extern "C" fn fn_80277D8C(mobj: *mut HSD_MObj, rendermode_arg: u32, unused_arg: u32) {
+    melee_core::ct!("fn_80277D8C");
     let _ = unused_arg;
     let mut tobj2: *mut HSD_TObj;
     let mut sp38: HSD_TExp = core::mem::zeroed();
@@ -229,6 +232,7 @@ pub unsafe extern "C" fn fn_80277D8C(mobj: *mut HSD_MObj, rendermode_arg: u32, u
 /// `it_80277F90`: for an item with a light overlay (and no `xDCF.b4`), fills `arg2` with a color constant
 /// and a TEV stage; otherwise returns NULL.
 pub unsafe extern "C" fn it_80277F90(item: *mut Item, mobj: *mut HSD_MObj, arg2: *mut HSD_TExp) -> *mut HSD_TExp {
+    melee_core::ct!("it_80277F90");
     let mut desc: HSD_TevDesc;
     let info = &raw mut it_mobj;
     let reg: i32;
@@ -267,6 +271,7 @@ pub unsafe extern "C" fn it_80277F90(item: *mut Item, mobj: *mut HSD_MObj, arg2:
 
 /// `it_80278108`: the item's color overlay / body color / shadow-ratio TEV stages.
 pub unsafe extern "C" fn it_80278108(item: *mut Item, mobj: *mut HSD_MObj, texp: *mut HSD_TExp) {
+    melee_core::ct!("it_80278108");
     let mut sp168: _GXColor = core::mem::zeroed();
     let mut spFC: HSD_TECnst = core::mem::zeroed();
     let mut sp90: HSD_TECnst = core::mem::zeroed();
@@ -394,6 +399,7 @@ pub unsafe extern "C" fn it_80278108(item: *mut Item, mobj: *mut HSD_MObj, texp:
 
 /// `it_80278574`: walks the jobj tree under `gobj` and sets every material's diffuse color to `arg1`.
 pub unsafe extern "C" fn it_80278574(gobj: *mut HSD_GObj, arg1: *mut _GXColor) {
+    melee_core::ct!("it_80278574");
     let mut var_r31: *mut HSD_JObj = (*gobj).hsd_obj as *mut HSD_JObj;
     while !var_r31.is_null() {
         let mut var_r3: *mut HSD_DObj = ext::HSD_JObjGetDObj(var_r31);

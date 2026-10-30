@@ -35,17 +35,20 @@ pub static mut lbl_803D79E0: [*const c_char; 4] = [
 ];
 
 pub unsafe fn fn_8017BACC(arg0: i32) -> i32 {
+    melee_core::ct!("fn_8017BACC");
     let m = ext::fn_80174274();
     gmClampResultStat((*m).player_standings[arg0 as usize].x9C)
 }
 
 pub unsafe fn fn_8017BB30(arg0: i32) -> i32 {
+    melee_core::ct!("fn_8017BB30");
     let m = ext::fn_80174274();
     gmClampResultStat((*m).player_standings[arg0 as usize].xA0 as i32)
 }
 
 /// `fn_8017BB94_inline(arg0, target)`: the name of player `target` for the kill list of `arg0`.
 pub unsafe fn fn_8017BB94_inline(arg0: i32, target: usize) -> *const c_char {
+    melee_core::ct!("fn_8017BB94_inline");
     let temp_r3_2 = ext::fn_80174274();
     let var_r3: i32 = if arg0 == target as i32 {
         -1
@@ -71,17 +74,21 @@ pub unsafe fn fn_8017BB94_inline(arg0: i32, target: usize) -> *const c_char {
 }
 
 pub unsafe fn fn_8017BB94(arg0: i32) -> *const c_char {
+    melee_core::ct!("fn_8017BB94");
     fn_8017BB94_inline(arg0, 0)
 }
 
 pub unsafe fn fn_8017BC50(arg0: i32) -> *const c_char {
+    melee_core::ct!("fn_8017BC50");
     fn_8017BB94_inline(arg0, 1)
 }
 
 pub unsafe fn fn_8017BD0C(arg0: i32) -> *const c_char {
+    melee_core::ct!("fn_8017BD0C");
     fn_8017BB94_inline(arg0, 2)
 }
 
 pub unsafe fn fn_8017BDC8(arg0: i32) -> *const c_char {
+    melee_core::ct!("fn_8017BDC8");
     fn_8017BB94_inline(arg0, 3)
 }

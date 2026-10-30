@@ -101,6 +101,7 @@ unsafe fn itGetJObjGrandchild(gobj: *mut Item_GObj) -> *mut HSD_JObj {
 }
 
 pub unsafe extern "C" fn itThunder_Logic7_Spawned(gobj: *mut Item_GObj) {
+    melee_core::ct!("itThunder_Logic7_Spawned");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itThunderPokemonAttributes;
     (*ip).facing_dir = 0.0;
@@ -109,13 +110,15 @@ pub unsafe extern "C" fn itThunder_Logic7_Spawned(gobj: *mut Item_GObj) {
     ext::it_80279CDC(gobj, (*attrs).x0);
 }
 
-pub unsafe extern "C" fn it_802CCB10(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn it_802CCB10(_gobj: *mut Item_GObj) { melee_core::ct!("it_802CCB10");}
 
 pub unsafe extern "C" fn it_802CCB14(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CCB14");
     ext::it_8026B894(gobj, ref_gobj);
 }
 
 pub unsafe extern "C" fn itThunder_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itThunder_UnkMotion1_Anim");
     let item = GET_ITEM(gobj);
     let mut jobj = GET_JOBJ(gobj);
 
@@ -137,15 +140,18 @@ pub unsafe extern "C" fn itThunder_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> bool 
 }
 
 pub unsafe extern "C" fn itThunder_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itThunder_UnkMotion1_Phys");
     ext::it_8027A344(gobj);
 }
 
 pub unsafe extern "C" fn itThunder_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itThunder_UnkMotion1_Coll");
     ext::it_8026E15C(gobj, Some(it_802CCB10));
     false
 }
 
 pub unsafe extern "C" fn it_802CCBF8(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CCBF8");
     let item = GET_ITEM(gobj);
     let mut out: f32 = 1.0;
     if (*item).xDD4_itemVar.thunder.x64 != 0 {
@@ -159,6 +165,7 @@ pub unsafe extern "C" fn it_802CCBF8(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802CCC68(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802CCC68");
     let item = GET_ITEM(gobj);
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE);
     Item_SetEffectHitlagCallbacks(item);
@@ -167,6 +174,7 @@ pub unsafe extern "C" fn it_802CCC68(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itThunder_UnkMotion2_Anim_inline2(gobj: *mut Item_GObj) {
+    melee_core::ct!("itThunder_UnkMotion2_Anim_inline2");
     let item = GET_ITEM(gobj);
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE);
     (*item).entered_hitlag = Some(ext::cb::efLib_PauseAll);
@@ -176,6 +184,7 @@ pub unsafe extern "C" fn itThunder_UnkMotion2_Anim_inline2(gobj: *mut Item_GObj)
 }
 
 pub unsafe extern "C" fn itThunder_UnkMotion2_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itThunder_UnkMotion2_Anim");
     let item = GET_ITEM(gobj);
     ext::it_8027A160(itGetJObjGrandchild(gobj), item);
     if ext::it_80272C6C(gobj) == 0 {
@@ -188,6 +197,7 @@ pub unsafe extern "C" fn itThunder_UnkMotion2_Anim(gobj: *mut Item_GObj) -> bool
 }
 
 pub unsafe extern "C" fn itThunder_UnkMotion2_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itThunder_UnkMotion2_Phys");
     let item = GET_ITEM(gobj);
     ext::it_8027A344(gobj);
     if (*item).xDAC_itcmd_var0 != 0 {
@@ -204,19 +214,23 @@ pub unsafe extern "C" fn itThunder_UnkMotion2_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itThunder_UnkMotion2_Coll(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itThunder_UnkMotion2_Coll");
     false
 }
 
 pub unsafe extern "C" fn it_802CCE28(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CCE28");
     Item_EnterAirStateWithHitlagAndStateDesc(gobj);
 }
 
 pub unsafe extern "C" fn itThunder_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itThunder_UnkMotion0_Anim");
     ext::it_80279FF8(gobj);
     false
 }
 
 pub unsafe extern "C" fn itThunder_UnkMotion0_Phys_inline2(gobj: *mut Item_GObj) {
+    melee_core::ct!("itThunder_UnkMotion0_Phys_inline2");
     let item = GET_ITEM(gobj);
     let attrs = (*(*item).xC4_article_data).x4_specialAttributes as *mut itThunderPokemonAttributes;
     (*item).xDD4_itemVar.thunder.x60 = (*attrs).xC as i32;
@@ -228,6 +242,7 @@ pub unsafe extern "C" fn itThunder_UnkMotion0_Phys_inline2(gobj: *mut Item_GObj)
 }
 
 pub unsafe extern "C" fn itThunder_UnkMotion0_Phys_inline(gobj: *mut Item_GObj) {
+    melee_core::ct!("itThunder_UnkMotion0_Phys_inline");
     let item = GET_ITEM(gobj);
     ext::it_80273454(gobj);
     itThunder_UnkMotion0_Phys_inline2(gobj);
@@ -235,11 +250,13 @@ pub unsafe extern "C" fn itThunder_UnkMotion0_Phys_inline(gobj: *mut Item_GObj) 
 }
 
 pub unsafe extern "C" fn itThunder_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itThunder_UnkMotion0_Phys");
     if ext::it_8027A09C(gobj) != 0 {
         itThunder_UnkMotion0_Phys_inline(gobj);
     }
 }
 
 pub unsafe extern "C" fn itThunder_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itThunder_UnkMotion0_Coll");
     ext::it_8027A118(gobj, Some(it_802CCB10)) != 0
 }

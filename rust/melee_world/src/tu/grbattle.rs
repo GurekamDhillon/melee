@@ -194,10 +194,12 @@ pub static mut grNBa_StageData: StageData = StageData {
 };
 
 pub unsafe extern "C" fn grBattle_OnDemoInit(_arg0: i32) {
+    melee_core::ct!("grBattle_OnDemoInit");
     isDemoFight = 1;
 }
 
 pub unsafe extern "C" fn grBattle_OnInit() {
+    melee_core::ct!("grBattle_OnInit");
     yakumono_param = ext::Ground_GetYakumonoParam() as *mut grBattle_YakumonoParam;
     let si = ext::stage_info();
     (*si).unk8C.set_b4(1);
@@ -217,13 +219,15 @@ pub unsafe extern "C" fn grBattle_OnInit() {
     isDemoFight = 0;
 }
 
-pub unsafe extern "C" fn grBattle_OnLoad() {}
+pub unsafe extern "C" fn grBattle_OnLoad() { melee_core::ct!("grBattle_OnLoad");}
 
 pub unsafe extern "C" fn grBattle_OnStart() {
+    melee_core::ct!("grBattle_OnStart");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
 
 pub unsafe fn grBattle_80219D84(gobj_id: i32) -> *mut Ground_GObj {
+    melee_core::ct!("grBattle_80219D84");
     let callbacks: *mut StageCallbacks = &mut grNBa_StageCallbacks[gobj_id as usize];
     let gobj = ext::Ground_GetStageGObj(gobj_id);
 
@@ -252,6 +256,7 @@ pub unsafe fn grBattle_80219D84(gobj_id: i32) -> *mut Ground_GObj {
 }
 
 pub unsafe extern "C" fn grBattle_GObj0_Callback0(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grBattle_GObj0_Callback0");
     let mut v = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let gp = GET_GROUND(gobj);
 
@@ -265,28 +270,32 @@ pub unsafe extern "C" fn grBattle_GObj0_Callback0(gobj: *mut Ground_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grBattle_GObj0_Callback2(_arg0: *mut Ground_GObj) {}
-pub unsafe extern "C" fn grBattle_GObj0_Callback3(_arg0: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grBattle_GObj0_Callback2(_arg0: *mut Ground_GObj) { melee_core::ct!("grBattle_GObj0_Callback2");}
+pub unsafe extern "C" fn grBattle_GObj0_Callback3(_arg0: *mut Ground_GObj) { melee_core::ct!("grBattle_GObj0_Callback3");}
 
 pub unsafe extern "C" fn grBattle_GObj6_Callback0(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grBattle_GObj6_Callback0");
     init_map_coll_and_anim(gobj);
 }
 
 pub unsafe extern "C" fn grBattle_GObj6_Callback2(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grBattle_GObj6_Callback2");
     ext::Ground_UpdateMapColl(gobj);
     ext::lb_800115F4();
 }
-pub unsafe extern "C" fn grBattle_GObj6_Callback3(_arg0: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grBattle_GObj6_Callback3(_arg0: *mut Ground_GObj) { melee_core::ct!("grBattle_GObj6_Callback3");}
 
 pub unsafe extern "C" fn grBattle_GObj5_Callback0(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grBattle_GObj5_Callback0");
     let gp = GET_GROUND(gobj);
     init_map_coll_and_anim(gobj);
     (*gp).x11_flags.set_b012(2);
 }
-pub unsafe extern "C" fn grBattle_GObj5_Callback2(_gobj: *mut Ground_GObj) {}
-pub unsafe extern "C" fn grBattle_GObj5_Callback3(_gobj: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grBattle_GObj5_Callback2(_gobj: *mut Ground_GObj) { melee_core::ct!("grBattle_GObj5_Callback2");}
+pub unsafe extern "C" fn grBattle_GObj5_Callback3(_gobj: *mut Ground_GObj) { melee_core::ct!("grBattle_GObj5_Callback3");}
 
 pub unsafe extern "C" fn grBattle_GObj1_Callback0(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grBattle_GObj1_Callback0");
     let gp = GET_GROUND(gobj);
     let jobj = GET_JOBJ(gobj);
 
@@ -294,11 +303,12 @@ pub unsafe extern "C" fn grBattle_GObj1_Callback0(gobj: *mut Ground_GObj) {
     ext::grMaterial_801C94D8(jobj as *mut c_void);
     (*gp).x11_flags.set_b012(2);
 }
-pub unsafe extern "C" fn grBattle_GObj1_Callback2(_gobj: *mut Ground_GObj) {}
-pub unsafe extern "C" fn grBattle_GObj1_Callback3(_gobj: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grBattle_GObj1_Callback2(_gobj: *mut Ground_GObj) { melee_core::ct!("grBattle_GObj1_Callback2");}
+pub unsafe extern "C" fn grBattle_GObj1_Callback3(_gobj: *mut Ground_GObj) { melee_core::ct!("grBattle_GObj1_Callback3");}
 
 /// `static void setup_unk_gobj`.
 pub unsafe fn setup_unk_gobj(gobj: *mut Ground_GObj) {
+    melee_core::ct!("setup_unk_gobj");
     let gp = GET_GROUND(gobj);
     let jobj = GET_JOBJ(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as enum_t, 0);
@@ -307,16 +317,18 @@ pub unsafe fn setup_unk_gobj(gobj: *mut Ground_GObj) {
 }
 
 pub unsafe extern "C" fn grBattle_GObj2_Callback0(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grBattle_GObj2_Callback0");
     setup_unk_gobj(gobj);
 }
-pub unsafe extern "C" fn grBattle_GObj2_Callback2(_gobj: *mut Ground_GObj) {}
-pub unsafe extern "C" fn grBattle_GObj2_Callback3(_gobj: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grBattle_GObj2_Callback2(_gobj: *mut Ground_GObj) { melee_core::ct!("grBattle_GObj2_Callback2");}
+pub unsafe extern "C" fn grBattle_GObj2_Callback3(_gobj: *mut Ground_GObj) { melee_core::ct!("grBattle_GObj2_Callback3");}
 
 pub unsafe extern "C" fn grBattle_GObj4_Callback0(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grBattle_GObj4_Callback0");
     setup_unk_gobj(gobj);
 }
-pub unsafe extern "C" fn grBattle_GObj4_Callback2(_gobj: *mut Ground_GObj) {}
-pub unsafe extern "C" fn grBattle_GObj4_Callback3(_gobj: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grBattle_GObj4_Callback2(_gobj: *mut Ground_GObj) { melee_core::ct!("grBattle_GObj4_Callback2");}
+pub unsafe extern "C" fn grBattle_GObj4_Callback3(_gobj: *mut Ground_GObj) { melee_core::ct!("grBattle_GObj4_Callback3");}
 
 /// gr/inlines.h `Ground_InitMapCollAndAnim`.
 unsafe fn init_map_coll_and_anim(gobj: *mut Ground_GObj) {
@@ -328,10 +340,12 @@ unsafe fn init_map_coll_and_anim(gobj: *mut Ground_GObj) {
 
 /// `static inline reset_bg_timer`.
 pub unsafe fn reset_bg_timer(gp: *mut Ground) {
+    melee_core::ct!("reset_bg_timer");
     (*gp).u.battle_bg.timer = ext::HSD_Randi(1200) + 2400;
 }
 
 pub unsafe extern "C" fn grBattle_BG_Callback0(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grBattle_BG_Callback0");
     let gp = GET_GROUND(gobj);
     let jobj = GET_JOBJ(gobj);
     (*gp).x11_flags.set_b012(2);
@@ -342,6 +356,7 @@ pub unsafe extern "C" fn grBattle_BG_Callback0(gobj: *mut Ground_GObj) {
 }
 
 pub unsafe extern "C" fn grBattle_BG_Callback2(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grBattle_BG_Callback2");
     let gp = GET_GROUND(gobj);
     let jobj = GET_JOBJ(gobj);
     let indices: [i16; 3] = [1, 2, 4];
@@ -408,4 +423,4 @@ pub unsafe extern "C" fn grBattle_BG_Callback2(gobj: *mut Ground_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grBattle_BG_Callback3(_gobj: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grBattle_BG_Callback3(_gobj: *mut Ground_GObj) { melee_core::ct!("grBattle_BG_Callback3");}

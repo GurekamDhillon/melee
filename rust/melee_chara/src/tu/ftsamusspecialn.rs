@@ -23,6 +23,7 @@ unsafe fn fpg(g: G) -> *mut Fighter {
 
 /// `ftCheckThrowB0` (ft/inlines.h): test and clear throw_flags_b0.
 pub(crate) unsafe fn ftCheckThrowB0(fp: *mut Fighter) -> bool {
+    melee_core::ct!("ftCheckThrowB0");
     if (*fp).anon_2210.anon_0.throw_flags_b0() != 0 {
         (*fp).anon_2210.anon_0.set_throw_flags_b0(0);
         true
@@ -57,6 +58,7 @@ unsafe fn ftSamus_UnkAndDestroyAllEF(gobj: G) {
 
 /// `ftSs_SpecialN_80129258` (ftsamusspecialn.c).
 pub fn ftSs_SpecialN_80129258(gobj: G) {
+    melee_core::ct!("ftSs_SpecialN_80129258");
     unsafe {
         if !gobj.is_null() {
             let fp = fpg(gobj);
@@ -79,6 +81,7 @@ unsafe fn ftSs_SpecialS_8012A168(gobj: G, spawnlocation: *mut Vec3) {
 
 /// `ftSs_SpecialS_8012A074` (ftsamusspecialn.c): spawn the missile at the throw frame.
 pub fn ftSs_SpecialS_8012A074(gobj: G) {
+    melee_core::ct!("ftSs_SpecialS_8012A074");
     unsafe {
         let fp = fpg(gobj);
         let attr = (*fp).dat_attrs as *const ftSs_DatAttrs;

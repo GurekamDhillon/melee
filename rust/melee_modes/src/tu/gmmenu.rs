@@ -7,6 +7,7 @@ use melee_types::*;
 
 /// C `gm_Mode_ClassicGOver_OnLoad`.
 pub unsafe fn gm_Mode_ClassicGOver_OnLoad() {
+    melee_core::ct!("gm_Mode_ClassicGOver_OnLoad");
     let temp = ext::gm_GetAllStarData();
     let var_r0 = if (*temp).x0.x0.ckind == CKind_Zelda as _ && (*temp).x0.xC.x12 != 0 {
         CKind_Seak as u8
@@ -22,6 +23,7 @@ pub unsafe fn gm_Mode_ClassicGOver_OnLoad() {
 
 /// C `gm_Mode_AdventureGOver_OnLoad`.
 pub unsafe fn gm_Mode_AdventureGOver_OnLoad() {
+    melee_core::ct!("gm_Mode_AdventureGOver_OnLoad");
     let temp = ext::gm_GetAdventureData();
     let var_r0 = if (*temp).x0.x0.ckind == CKind_Zelda as _ && (*temp).x0.xC.x12 != 0 {
         CKind_Seak as u8
@@ -37,6 +39,7 @@ pub unsafe fn gm_Mode_AdventureGOver_OnLoad() {
 
 /// C `gm_Mode_AllstarGOver_OnLoad` (the All-Star record is the file-scope `gm_80473A18`).
 pub unsafe fn gm_Mode_AllstarGOver_OnLoad() {
+    melee_core::ct!("gm_Mode_AllstarGOver_OnLoad");
     let tmp = ext::gm_80473A18();
     let var_r0 = if (*tmp).x0.x0.ckind == CKind_Zelda as _ && (*tmp).x0.xC.x12 != 0 {
         CKind_Seak as u8
@@ -52,6 +55,7 @@ pub unsafe fn gm_Mode_AllstarGOver_OnLoad() {
 
 /// C `gm_Mode_Opening_OnLoad`.
 pub unsafe fn gm_Mode_Opening_OnLoad() {
+    melee_core::ct!("gm_Mode_Opening_OnLoad");
     ext::gm_SetGameModeStateId(ext::gm_801BF718());
 }
 

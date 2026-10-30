@@ -81,6 +81,7 @@ melee_core::gc_layout!(MnNameUserDataState, "MnNameUserDataState", size 0x2, ali
 #[allow(unused_imports)] use super::mnmainrule::{mn_80231634_t};
 #[inline]
 pub unsafe extern "C" fn HSD_JObjMtxIsDirty(mut jobj: *mut HSD_JObj) -> bool_0 {
+    melee_core::ct!("HSD_JObjMtxIsDirty");
     let mut result: bool_0 = 0;
     if !jobj.is_null() {} else {
         __assert(
@@ -100,6 +101,7 @@ pub unsafe extern "C" fn HSD_JObjMtxIsDirty(mut jobj: *mut HSD_JObj) -> bool_0 {
 }
 #[inline]
 pub unsafe extern "C" fn HSD_JObjSetTranslateX(mut jobj: *mut HSD_JObj, mut x: f32_0) {
+    melee_core::ct!("HSD_JObjSetTranslateX");
     if !jobj.is_null() {} else {
         __assert(
             b"src/sysdolphin/baselib/jobj.h\0" as *const u8
@@ -117,6 +119,7 @@ pub unsafe extern "C" fn HSD_JObjSetTranslateX(mut jobj: *mut HSD_JObj, mut x: f
 }
 #[inline]
 pub unsafe extern "C" fn HSD_JObjSetTranslateY(mut jobj: *mut HSD_JObj, mut y: f32_0) {
+    melee_core::ct!("HSD_JObjSetTranslateY");
     if !jobj.is_null() {} else {
         __assert(
             b"src/sysdolphin/baselib/jobj.h\0" as *const u8
@@ -134,6 +137,7 @@ pub unsafe extern "C" fn HSD_JObjSetTranslateY(mut jobj: *mut HSD_JObj, mut y: f
 }
 #[inline]
 pub unsafe extern "C" fn HSD_JObjGetTranslationX(mut jobj: *mut HSD_JObj) -> f32_0 {
+    melee_core::ct!("HSD_JObjGetTranslationX");
     if !jobj.is_null() {} else {
         __assert(
             b"src/sysdolphin/baselib/jobj.h\0" as *const u8
@@ -146,6 +150,7 @@ pub unsafe extern "C" fn HSD_JObjGetTranslationX(mut jobj: *mut HSD_JObj) -> f32
 }
 #[inline]
 pub unsafe extern "C" fn HSD_JObjGetTranslationY(mut jobj: *mut HSD_JObj) -> f32_0 {
+    melee_core::ct!("HSD_JObjGetTranslationY");
     if !jobj.is_null() {} else {
         __assert(
             b"src/sysdolphin/baselib/jobj.h\0" as *const u8
@@ -158,14 +163,17 @@ pub unsafe extern "C" fn HSD_JObjGetTranslationY(mut jobj: *mut HSD_JObj) -> f32
 }
 #[inline]
 pub unsafe extern "C" fn sfxBack() {
+    melee_core::ct!("sfxBack");
     lbAudioAx_80024030(0 as ::core::ffi::c_int);
 }
 #[inline]
 pub unsafe extern "C" fn sfxForward() {
+    melee_core::ct!("sfxForward");
     lbAudioAx_80024030(1 as ::core::ffi::c_int);
 }
 #[inline]
 pub unsafe extern "C" fn sfxMove() {
+    melee_core::ct!("sfxMove");
     lbAudioAx_80024030(2 as ::core::ffi::c_int);
 }
 pub static mut mnName_803ED538: [AnimLoopSettings; 4] = [
@@ -345,6 +353,7 @@ pub static mut mnName_StringTerminator: [::core::ffi::c_char; 1] = unsafe {
 pub unsafe extern "C" fn mnName_8023749C(
     mut slot: ::core::ffi::c_int,
 ) -> *mut ::core::ffi::c_char {
+    melee_core::ct!("mnName_8023749C");
     let mut j: ::core::ffi::c_int = 0;
     let mut terminator: s8 = 0;
     let mut new_var: u16_0 = 0;
@@ -382,6 +391,7 @@ pub unsafe extern "C" fn mnName_8023749C(
 pub unsafe extern "C" fn GetNameText(
     mut slot: ::core::ffi::c_int,
 ) -> *mut ::core::ffi::c_char {
+    melee_core::ct!("GetNameText");
     if IsNameValid(slot) == 0 {
         return ::core::ptr::null_mut::<::core::ffi::c_char>();
     }
@@ -391,9 +401,11 @@ pub unsafe extern "C" fn GetNameText(
 }
 #[inline]
 pub unsafe extern "C" fn GetNameCount_noinline() -> ::core::ffi::c_int {
+    melee_core::ct!("GetNameCount_noinline");
     return GetNameCount();
 }
 pub unsafe extern "C" fn GetNameCount() -> ::core::ffi::c_int {
+    melee_core::ct!("GetNameCount");
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     let mut count: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i < 0x78 as ::core::ffi::c_int {
@@ -406,6 +418,7 @@ pub unsafe extern "C" fn GetNameCount() -> ::core::ffi::c_int {
 }
 #[inline]
 pub unsafe extern "C" fn GetNumNameList() -> ::core::ffi::c_int {
+    melee_core::ct!("GetNumNameList");
     let mut i: ::core::ffi::c_int = 0;
     let mut count: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     i = 0 as ::core::ffi::c_int;
@@ -418,6 +431,7 @@ pub unsafe extern "C" fn GetNumNameList() -> ::core::ffi::c_int {
     return count;
 }
 pub unsafe extern "C" fn IsNameListFull() -> bool_0 {
+    melee_core::ct!("IsNameListFull");
     if GetNumNameList() < 0x78 as ::core::ffi::c_int {
         return false_0;
     }
@@ -427,10 +441,12 @@ pub unsafe extern "C" fn IsNameListFull() -> bool_0 {
 pub unsafe extern "C" fn readNameTerminator(
     mut terminator: *const ::core::ffi::c_char,
 ) -> s8 {
+    melee_core::ct!("readNameTerminator");
     return *terminator as s8;
 }
 #[inline]
 pub unsafe extern "C" fn signedCharactersEqual(mut lhs: s8, mut rhs: u8_0) -> bool_0 {
+    melee_core::ct!("signedCharactersEqual");
     return (lhs as ::core::ffi::c_int == rhs as s8 as ::core::ffi::c_int)
         as ::core::ffi::c_int;
 }
@@ -439,6 +455,7 @@ pub unsafe extern "C" fn checkStringRest(
     mut ptr: *const ::core::ffi::c_char,
     mut terminator: s8,
 ) -> bool_0 {
+    melee_core::ct!("checkStringRest");
     let mut c: ::core::ffi::c_char = ::core::mem::transmute::<
         [u8; 4],
         [::core::ffi::c_char; 4],
@@ -459,12 +476,14 @@ pub unsafe extern "C" fn checkStringRest(
 }
 #[inline]
 pub unsafe extern "C" fn unsignedCharacter(mut character: s32) -> u8_0 {
+    melee_core::ct!("unsignedCharacter");
     return character as u8_0;
 }
 pub unsafe extern "C" fn CompareNameStrings(
     mut str1: *mut ::core::ffi::c_char,
     mut str2: *mut ::core::ffi::c_char,
 ) -> s32 {
+    melee_core::ct!("CompareNameStrings");
     let mut string1: C2RustUnnamed_1 = C2RustUnnamed_1 {
         signed_characters: ::core::ptr::null_mut::<::core::ffi::c_char>(),
     };
@@ -521,6 +540,7 @@ pub unsafe extern "C" fn CompareNameStrings(
     };
 }
 pub unsafe extern "C" fn IsNameUnique(mut name: *mut ::core::ffi::c_char) -> bool_0 {
+    melee_core::ct!("IsNameUnique");
     let mut i: ::core::ffi::c_int = 0;
     let mut namedata: *mut ::core::ffi::c_char = ::core::ptr::null_mut::<
         ::core::ffi::c_char,
@@ -545,6 +565,7 @@ pub unsafe extern "C" fn IsNameUnique(mut name: *mut ::core::ffi::c_char) -> boo
     return false_0;
 }
 pub unsafe extern "C" fn DeleteName(mut arg0: u8_0) {
+    melee_core::ct!("DeleteName");
     let mut _2: [u8_0; 8] = [0; 8];
     let mut temp: NameTagData = NameTagData {
         vs_kos: [0; 120],
@@ -630,6 +651,7 @@ pub unsafe extern "C" fn DeleteName(mut arg0: u8_0) {
     }
 }
 pub unsafe extern "C" fn IsNameValid(mut slot: ::core::ffi::c_int) -> bool_0 {
+    melee_core::ct!("IsNameValid");
     if *(&raw mut mnName_StringTerminator as *mut ::core::ffi::c_char)
         as ::core::ffi::c_int
         == (*GetPersistentNameData(slot as u8_0 as s32))
@@ -640,6 +662,7 @@ pub unsafe extern "C" fn IsNameValid(mut slot: ::core::ffi::c_int) -> bool_0 {
     return true_0;
 }
 pub unsafe extern "C" fn CreateNameAtIndex(mut slot: s32) {
+    melee_core::ct!("CreateNameAtIndex");
     let mut idx: s32 = slot & 0xff as s32;
     (*GetPersistentNameData(idx)).namedata[0 as ::core::ffi::c_int as usize] = *(&raw mut mnName_StringTerminator
         as *mut ::core::ffi::c_char);
@@ -647,6 +670,7 @@ pub unsafe extern "C" fn CreateNameAtIndex(mut slot: s32) {
     InitializePersistentNameData(slot);
 }
 pub unsafe extern "C" fn mnName_SortNames(mut arg0: *mut HSD_GObj) {
+    melee_core::ct!("mnName_SortNames");
     let mut result: s32 = 0;
     let mut idx2: u8_0 = 0;
     let mut name2: *mut ::core::ffi::c_char = ::core::ptr::null_mut::<
@@ -786,6 +810,7 @@ pub unsafe extern "C" fn mnName_SortNames(mut arg0: *mut HSD_GObj) {
 pub static mut mnName_804D6BF8: *mut HSD_GObj = ::core::ptr::null::<HSD_GObj>()
     as *mut HSD_GObj;
 pub unsafe extern "C" fn mnName_80237D94(mut arg0: s32, mut arg1: u8_0) -> u8_0 {
+    melee_core::ct!("mnName_80237D94");
     let mut gobj: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     let mut _pad: [::core::ffi::c_uchar; 8] = [0; 8];
     gobj = (*mnName_804D6BF8).user_data as *mut HSD_GObj;
@@ -862,6 +887,7 @@ pub unsafe extern "C" fn mnName_80237D94(mut arg0: s32, mut arg1: u8_0) -> u8_0 
     return arg1;
 }
 pub unsafe extern "C" fn mnName_ConfirmNameDeleteInput(mut arg0: *mut HSD_GObj) {
+    melee_core::ct!("mnName_ConfirmNameDeleteInput");
     let mut col: s32 = 0;
     let mut nameIdx: s32 = 0;
     let mut nameIdxInt: s32 = 0;
@@ -937,6 +963,7 @@ pub unsafe extern "C" fn mnName_ConfirmNameDeleteInput(mut arg0: *mut HSD_GObj) 
 }
 #[inline]
 pub unsafe extern "C" fn mnName_GetHoveredName() -> u8_0 {
+    melee_core::ct!("mnName_GetHoveredName");
     let mut colCount: s32 = 0;
     let mut sel: u8_0 = mn_804A04F0.hovered_selection as u8_0;
     let mut col: s32 = (*((*mnName_804D6BF8).user_data as *mut HSD_GObj)).gx_link as s32
@@ -952,6 +979,7 @@ pub unsafe extern "C" fn mnName_GetHoveredName() -> u8_0 {
 }
 #[inline]
 pub unsafe extern "C" fn mnName_CountValid() -> u8_0 {
+    melee_core::ct!("mnName_CountValid");
     let mut isValid: s32 = 0;
     let mut i: s32 = 0;
     let mut count: u8_0 = 0 as u8_0;
@@ -974,6 +1002,7 @@ pub unsafe extern "C" fn mnName_CountValid() -> u8_0 {
     return count;
 }
 pub unsafe extern "C" fn mnName_MainInput(mut arg0: *mut HSD_GObj) {
+    melee_core::ct!("mnName_MainInput");
     let mut gobj2: *mut MnName_GObj = (*mnName_804D6BF8).user_data as *mut MnName_GObj;
     let mut buttons: u32_0 = mn_80229624(4 as u32_0);
     let mut isFull: s32 = 0;
@@ -1107,6 +1136,7 @@ pub unsafe extern "C" fn mnName_MainInput(mut arg0: *mut HSD_GObj) {
     };
 }
 pub unsafe extern "C" fn fn_80238540(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80238540");
     match mn_804A04F0.x10 as s32 {
         0 => {
             mnName_MainInput(gobj);
@@ -1121,10 +1151,12 @@ pub unsafe extern "C" fn fn_80238540(mut gobj: *mut HSD_GObj) {
     };
 }
 pub unsafe extern "C" fn mnName_802385A0(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnName_802385A0");
     mnName_80238754(gobj);
     mnName_8023A058(gobj);
 }
 pub unsafe extern "C" fn mnName_GetPageCount() -> s32 {
+    melee_core::ct!("mnName_GetPageCount");
     let mut count: s32 = 0 as s32;
     let mut i: s32 = 0;
     let mut extra: s32 = 0;
@@ -1144,6 +1176,7 @@ pub unsafe extern "C" fn mnName_GetPageCount() -> s32 {
     return count / 24 as s32 + extra;
 }
 pub unsafe extern "C" fn mnName_GetColumnCount() -> s32 {
+    melee_core::ct!("mnName_GetColumnCount");
     let mut count: s32 = 0;
     let mut extra: s32 = 0;
     count = GetNumNameList() as s32;
@@ -1157,9 +1190,11 @@ pub unsafe extern "C" fn mnName_GetColumnCount() -> s32 {
 }
 #[inline]
 pub unsafe extern "C" fn mnName_80238754_noinline(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnName_80238754_noinline");
     mnName_80238754(gobj);
 }
 pub unsafe extern "C" fn mnName_80238754(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnName_80238754");
     let mut extra: s32 = 0;
     let mut jobj: *mut HSD_JObj = (*gobj).hsd_obj as *mut HSD_JObj;
     let mut count: s32 = GetNameCount_noinline() as s32;
@@ -1187,12 +1222,14 @@ pub unsafe extern "C" fn mnName_802388D4_noinline(
     mut gobj: *mut HSD_GObj,
     mut index: u8_0,
 ) -> *mut HSD_JObj {
+    melee_core::ct!("mnName_802388D4_noinline");
     return mnName_802388D4(gobj, index);
 }
 pub unsafe extern "C" fn mnName_802388D4(
     mut gobj: *mut HSD_GObj,
     mut index: u8_0,
 ) -> *mut HSD_JObj {
+    melee_core::ct!("mnName_802388D4");
     let mut p: *mut u8_0 = gobj as *mut u8_0;
     let mut result: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     if (index as ::core::ffi::c_int) < 0x18 as ::core::ffi::c_int {
@@ -1235,6 +1272,7 @@ pub unsafe extern "C" fn mnName_80238964_noinline(
     mut target: u8_0,
     mut flag: u8_0,
 ) -> f32_0 {
+    melee_core::ct!("mnName_80238964_noinline");
     return mnName_80238964(index, target, flag);
 }
 pub unsafe extern "C" fn mnName_80238964(
@@ -1242,6 +1280,7 @@ pub unsafe extern "C" fn mnName_80238964(
     mut target: u8_0,
     mut flag: u8_0,
 ) -> f32_0 {
+    melee_core::ct!("mnName_80238964");
     let mut idx: s32 = 0;
     let mut base: *mut AnimLoopSettings = &raw mut mnName_803ED538
         as *mut AnimLoopSettings;
@@ -1382,6 +1421,7 @@ pub unsafe extern "C" fn mnName_80238A04(
     mut target: u8_0,
     mut flag: u8_0,
 ) {
+    melee_core::ct!("mnName_80238A04");
     let mut base: *mut AnimLoopSettings = &raw mut mnName_803ED538
         as *mut AnimLoopSettings;
     let mut jobj2: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
@@ -1477,6 +1517,7 @@ pub unsafe extern "C" fn mnName_80238AE0(
     mut index: u8_0,
     mut arg2: u8_0,
 ) {
+    melee_core::ct!("mnName_80238AE0");
     let mut color: GXColor = _GXColor { r: 0, g: 0, b: 0, a: 0 };
     let mut jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut colorptr: *mut GXColor = ::core::ptr::null_mut::<GXColor>();
@@ -1521,6 +1562,7 @@ pub unsafe extern "C" fn mnName_FindAnimLoop(
     mut tableBase: *const *mut AnimLoopSettings,
     mut frame: f32_0,
 ) -> *mut AnimLoopSettings {
+    melee_core::ct!("mnName_FindAnimLoop");
     let mut i: s32 = 0;
     let mut table: AnimTable = AnimTable {
         entries: [::core::ptr::null_mut::<AnimLoopSettings>(); 6],
@@ -1548,6 +1590,7 @@ pub unsafe extern "C" fn mnName_FindAnimLoop(
 }
 #[inline]
 pub unsafe extern "C" fn mnName_80238C34_inline(mut anim: *mut AnimLoopSettings) -> f32_0 {
+    melee_core::ct!("mnName_80238C34_inline");
     return (*anim).end_frame;
 }
 #[inline]
@@ -1555,6 +1598,7 @@ pub unsafe extern "C" fn mnName_UpdateSelection(
     mut do_update: u8_0,
     mut data: *mut MnName_GObj,
 ) {
+    melee_core::ct!("mnName_UpdateSelection");
     if do_update != 0 {
         let mut prev: u32_0 = (*(data as *mut MnNameUserDataState)).prev_selection
             as u32_0;
@@ -1576,6 +1620,7 @@ pub unsafe extern "C" fn mnName_80238C34(
     mut arg1: u8_0,
     mut arg2: u8_0,
 ) {
+    melee_core::ct!("mnName_80238C34");
     let mut tableBase: *const *mut AnimLoopSettings = &raw const mnName_803B8510
         as *const *mut AnimLoopSettings;
     let mut base: *mut AnimLoopSettings = &raw mut mnName_803ED538
@@ -1673,6 +1718,7 @@ pub unsafe extern "C" fn mnName_80238C34(
     }
 }
 pub unsafe extern "C" fn fn_80239574(mut arg0: *mut HSD_GObj) {
+    melee_core::ct!("fn_80239574");
     let mut current_block: u64;
     let mut anim: *mut AnimLoopSettings = ::core::ptr::null_mut::<AnimLoopSettings>();
     let mut new_var: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
@@ -1831,6 +1877,7 @@ pub unsafe extern "C" fn fn_80239574(mut arg0: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn mnName_80239878(mut arg0: u8_0, mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnName_80239878");
     let mut jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut count: s32 = 0;
     let mut extra: s32 = 0;
@@ -1867,14 +1914,17 @@ pub unsafe extern "C" fn mnName_TextWidth(
     mut start: f32_0,
     mut end: *mut HSD_JObj,
 ) -> f32_0 {
+    melee_core::ct!("mnName_TextWidth");
     return HSD_JObjGetTranslationX(end) - start;
 }
 #[inline]
 pub unsafe extern "C" fn mnName_GetDisplayIndex(mut cell: s32) -> s32 {
+    melee_core::ct!("mnName_GetDisplayIndex");
     let mut index: u16_0 = mnName_NameDisplayOrder[cell as usize] as u16_0;
     return index as s32;
 }
 pub unsafe extern "C" fn mnName_80239A24(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnName_80239A24");
     let mut text_row_height: f32_0 = 0.;
     let mut row: s32 = 0;
     let mut jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
@@ -2047,12 +2097,15 @@ pub unsafe extern "C" fn mnName_80239A24(mut gobj: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn mnName_80239EBC(mut jobj: *mut HSD_JObj, mut y: f32_0) {
+    melee_core::ct!("mnName_80239EBC");
     HSD_JObjSetTranslateY(jobj, y);
 }
 pub unsafe extern "C" fn mnName_80239F5C(mut jobj: *mut HSD_JObj, mut x: f32_0) {
+    melee_core::ct!("mnName_80239F5C");
     HSD_JObjSetTranslateX(jobj, x);
 }
 pub unsafe extern "C" fn mnName_80239FFC(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnName_80239FFC");
     let mut mn: *mut MnName_GObj = gobj as *mut MnName_GObj;
     let mut jobj: *mut HSD_JObj = ::core::mem::transmute::<
         Option<unsafe extern "C" fn(*mut ::core::ffi::c_void) -> ()>,
@@ -2071,6 +2124,7 @@ pub unsafe extern "C" fn mnName_80239FFC(mut gobj: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn mnName_8023A058(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnName_8023A058");
     let mut mn: *mut MnName_GObj = gobj as *mut MnName_GObj;
     let mut jobj: *mut HSD_JObj = ::core::mem::transmute::<
         Option<unsafe extern "C" fn(*mut ::core::ffi::c_void) -> ()>,
@@ -2092,6 +2146,7 @@ pub unsafe extern "C" fn mnName_8023A058(mut gobj: *mut HSD_GObj) {
 pub static mut mnName_804D6BFC: *mut HSD_Text = ::core::ptr::null::<HSD_Text>()
     as *mut HSD_Text;
 pub unsafe extern "C" fn fn_8023A0BC(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8023A0BC");
     let mut end_frame: *mut f32_0 = ::core::ptr::null_mut::<f32_0>();
     let mut jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut sp2C: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
@@ -2176,6 +2231,7 @@ pub unsafe extern "C" fn fn_8023A0BC(mut gobj: *mut HSD_GObj) {
 }
 #[inline]
 pub unsafe extern "C" fn mnName_SetupDeleteCursor(mut sel: s32, mut jobj: *mut HSD_JObj) {
+    melee_core::ct!("mnName_SetupDeleteCursor");
     let mut yes: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut no: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     lb_80011E24(jobj, &raw mut yes, &[(6 as ::core::ffi::c_int) as usize, (-(1 as ::core::ffi::c_int)) as usize]);
@@ -2191,6 +2247,7 @@ pub unsafe extern "C" fn mnName_SetupDeleteCursor(mut sel: s32, mut jobj: *mut H
     HSD_JObjAnimAll(no);
 }
 pub unsafe extern "C" fn mnName_8023A290() {
+    melee_core::ct!("mnName_8023A290");
     let mut sp28: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut sp24: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut sp20: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
@@ -2241,6 +2298,7 @@ pub unsafe extern "C" fn mnName_SetupScrollbarAndText(
     mut scrollbar: *mut HSD_JObj,
     mut user_data: *mut MnName_GObj,
 ) {
+    melee_core::ct!("mnName_SetupScrollbarAndText");
     let mut extra: s32 = 0;
     let mut rows: f32_0 = 0.;
     let mut pos: f32_0 = 0.;
@@ -2278,6 +2336,7 @@ pub unsafe extern "C" fn mnName_SetupScrollbarAndText(
     HSD_SisLib_803A6368(txt, mnName_804D4BE8[sel as usize] as s32);
 }
 pub unsafe extern "C" fn mnName_8023A59C(mut arg0: u8_0) -> *mut HSD_GObj {
+    melee_core::ct!("mnName_8023A59C");
     let mut gobj: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     let mut count: s32 = 0;
     let mut jobj5: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
@@ -2424,6 +2483,7 @@ pub unsafe extern "C" fn mnName_8023A59C(mut arg0: u8_0) -> *mut HSD_GObj {
 pub unsafe extern "C" fn mnName_8023A9B4_GetUserData(
     mut gobj2: *mut MnName_GObj,
 ) -> *mut mn_80231634_t {
+    melee_core::ct!("mnName_8023A9B4_GetUserData");
     return ::core::mem::transmute::<
         Option<unsafe extern "C" fn(*mut ::core::ffi::c_void) -> ()>,
         *mut mn_80231634_t,
@@ -2431,6 +2491,7 @@ pub unsafe extern "C" fn mnName_8023A9B4_GetUserData(
 }
 #[inline]
 pub unsafe extern "C" fn mnName_8023A9B4_ResetDisplayOrder() {
+    melee_core::ct!("mnName_8023A9B4_ResetDisplayOrder");
     let mut i: u32_0 = 0;
     let mut _pad: [::core::ffi::c_uchar; 8] = [0; 8];
     i = 0 as u32_0;
@@ -2442,9 +2503,11 @@ pub unsafe extern "C" fn mnName_8023A9B4_ResetDisplayOrder() {
 }
 #[inline]
 pub unsafe extern "C" fn mnName_8023A9B4_GetGObj() -> *mut MnName_GObj {
+    melee_core::ct!("mnName_8023A9B4_GetGObj");
     return (*mnName_804D6BF8).user_data as *mut MnName_GObj;
 }
 pub unsafe extern "C" fn mnName_8023A9B4(mut arg0: u8_0) {
+    melee_core::ct!("mnName_8023A9B4");
     let mut i: u32_0 = 0;
     let mut gobj2: *mut MnName_GObj = ::core::ptr::null_mut::<MnName_GObj>();
     let mut jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
@@ -2513,6 +2576,7 @@ pub static mut AutoNamesList: *mut *mut u8_0 = ::core::ptr::null::<*mut u8_0>()
     as *mut *mut u8_0;
 #[inline]
 pub unsafe extern "C" fn mnName_InitNameDisplayOrder() {
+    melee_core::ct!("mnName_InitNameDisplayOrder");
     let mut i: u32_0 = 0;
     mn_804A04F0.hovered_selection = 0x18 as u16_0;
     mnName_804D6BFC = ::core::ptr::null_mut::<HSD_Text>();
@@ -2525,6 +2589,7 @@ pub unsafe extern "C" fn mnName_InitNameDisplayOrder() {
     HSD_GObj_80390CD4(mnName_8023A59C(1 as u8_0));
 }
 pub unsafe extern "C" fn mnName_8023AC40() -> s32 {
+    melee_core::ct!("mnName_8023AC40");
     let mut archive: *mut HSD_Archive = mn_804D6BB8;
     let mut proc_0: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     lbArchive_LoadSections(archive, &raw mut mnName_804A06E0.joint, &[(b"MenMainConNmTp_Top_joint\0" as *const u8 as *const ::core::ffi::c_char) as usize, (&raw mut mnName_804A06E0.anim_joint) as usize, (b"MenMainConNmTp_Top_animjoint\0" as *const u8 as *const ::core::ffi::c_char) as usize, (&raw mut mnName_804A06E0.matanim_joint) as usize, (b"MenMainConNmTp_Top_matanim_joint\0" as *const u8 as *const ::core::ffi::c_char) as usize, (&raw mut mnName_804A06E0.shapeanim_joint) as usize, (b"MenMainConNmTp_Top_shapeanim_joint\0" as *const u8
@@ -2578,6 +2643,7 @@ pub static mut mnName_RefuseNameName: [::core::ffi::c_char; 17] = unsafe {
     ::core::mem::transmute::<[u8; 17], [::core::ffi::c_char; 17]>(*b"mnNameRefuseName\0")
 };
 pub unsafe extern "C" fn IsNameNotAllowed(mut name: *mut ::core::ffi::c_char) -> bool_0 {
+    melee_core::ct!("IsNameNotAllowed");
     let mut list: *mut *mut ::core::ffi::c_char = NotAllowedNamesList;
     while !(mnNameNew_NullCharacter as ::core::ffi::c_int
         == **list as ::core::ffi::c_int)

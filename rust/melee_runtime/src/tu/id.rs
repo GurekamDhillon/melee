@@ -8,23 +8,28 @@ pub static mut hsd_iddata: HSD_ObjAllocData = unsafe { core::mem::zeroed() };
 pub static mut default_table: HSD_IDTable = unsafe { core::mem::zeroed() };
 
 pub unsafe fn HSD_IDGetAllocData() -> *mut HSD_ObjAllocData {
+    melee_core::ct!("HSD_IDGetAllocData");
     &raw mut hsd_iddata
 }
 
 pub unsafe fn HSD_IDInitAllocData() {
+    melee_core::ct!("HSD_IDInitAllocData");
     ext::HSD_ObjAllocInit(HSD_IDGetAllocData(), core::mem::size_of::<IDEntry>(), 4);
 }
 
 pub unsafe fn HSD_IDSetup() {
+    melee_core::ct!("HSD_IDSetup");
     (&raw mut default_table).write(HSD_IDTable::zeroed());
 }
 
 #[inline]
 pub fn hash(id: HSD_IDKey) -> u32 {
+    melee_core::ct!("hash");
     (id % 0x65) as u32
 }
 
 pub unsafe fn IDEntryAlloc() -> *mut IDEntry {
+    melee_core::ct!("IDEntryAlloc");
     let entry = ext::HSD_ObjAlloc(HSD_IDGetAllocData()).cast::<IDEntry>();
     assert!(!entry.is_null(), "id.c:67 entry");
     entry.write(IDEntry::zeroed());
@@ -32,6 +37,7 @@ pub unsafe fn IDEntryAlloc() -> *mut IDEntry {
 }
 
 pub unsafe fn IDEntryFree(entry: *mut IDEntry) {
+    melee_core::ct!("IDEntryFree");
     ext::HSD_ObjFree(HSD_IDGetAllocData(), entry.cast());
 }
 
@@ -40,6 +46,7 @@ unsafe fn table_or_default(table: *mut HSD_IDTable) -> *mut HSD_IDTable {
 }
 
 pub unsafe fn HSD_IDInsertToTable(table: *mut HSD_IDTable, id: HSD_IDKey, data: *mut c_void) {
+    melee_core::ct!("HSD_IDInsertToTable");
     let table = table_or_default(table);
     let h = hash(id) as usize;
     let mut entry = (*table).table[h];
@@ -62,6 +69,7 @@ pub unsafe fn HSD_IDInsertToTable(table: *mut HSD_IDTable, id: HSD_IDKey, data: 
 }
 
 pub unsafe fn HSD_IDRemoveByIDFromTable(table: *mut HSD_IDTable, id: HSD_IDKey) {
+    melee_core::ct!("HSD_IDRemoveByIDFromTable");
     let table = table_or_default(table);
     let h = hash(id) as usize;
     let mut prev: *mut IDEntry = core::ptr::null_mut();
@@ -82,6 +90,7 @@ pub unsafe fn HSD_IDRemoveByIDFromTable(table: *mut HSD_IDTable, id: HSD_IDKey) 
 }
 
 pub unsafe fn HSD_IDGetDataFromTable(table: *mut HSD_IDTable, id: HSD_IDKey, success: *mut i32) -> *mut c_void {
+    melee_core::ct!("HSD_IDGetDataFromTable");
     let table = table_or_default(table);
     let mut entry = (*table).table[hash(id) as usize];
     while !entry.is_null() {
@@ -100,6 +109,7 @@ pub unsafe fn HSD_IDGetDataFromTable(table: *mut HSD_IDTable, id: HSD_IDKey, suc
 }
 
 pub unsafe fn _HSD_IDForgetMemory(_low: *mut c_void, _high: *mut c_void) {
+    melee_core::ct!("_HSD_IDForgetMemory");
     (&raw mut default_table).write(HSD_IDTable::zeroed());
 }
 

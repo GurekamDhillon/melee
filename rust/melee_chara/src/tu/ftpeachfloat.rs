@@ -70,10 +70,12 @@ pub mod ext {
 
 /// `ftCo_80096CC8` as the `bool (*)(Fighter_GObj*, int)` callback entry.
 pub unsafe extern "C" fn cb_ftCo_80096CC8(g: *mut HSD_GObj, line_id: i32) -> bool {
+    melee_core::ct!("cb_ftCo_80096CC8");
     ext::ftCo_80096CC8(g, line_id)
 }
 /// `ft_80082B1C` as an `HSD_GObjEvent` entry.
 pub unsafe extern "C" fn cb_ft_80082B1C(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ft_80082B1C");
     ext::ft_80082B1C(g);
 }
 
@@ -84,6 +86,7 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 
 /// `ftPe_Float_CheckContinueInput`: stick up past the tap-jump threshold, or X/Y held.
 pub fn ftPe_Float_CheckContinueInput(fp: &Fighter) -> bool {
+    melee_core::ct!("ftPe_Float_CheckContinueInput");
     fp.input.lstick[0].y >= fh::common_data().tap_jump_threshold || (fp.input.held_buttons[0] & HSD_PAD_XY) != 0
 }
 
@@ -96,6 +99,7 @@ fn checkStartFloatInput(gobj: *mut HSD_GObj) -> bool {
 }
 
 pub fn ftPe_8011BA54(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftPe_8011BA54");
     unsafe {
         let fp = fpp(gobj);
         let float_input = checkStartFloatInput(gobj);
@@ -112,6 +116,7 @@ pub fn ftPe_8011BA54(gobj: *mut HSD_GObj) -> bool {
 }
 
 pub fn ftPe_8011BAD8(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftPe_8011BAD8");
     unsafe {
         let fp = fpp(gobj);
         // TARGET_PC: m-ex "Fighter OnFloat/onFloat - JumpPeak.asm".
@@ -137,6 +142,7 @@ fn spawnParticle(gobj: *mut HSD_GObj, joint: *mut HSD_JObj) {
 }
 
 pub fn ftPe_8011BB6C(gobj: *mut HSD_GObj, arg1: bool) {
+    melee_core::ct!("ftPe_8011BB6C");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftPe_DatAttrs;
@@ -154,6 +160,7 @@ pub fn ftPe_8011BB6C(gobj: *mut HSD_GObj, arg1: bool) {
 }
 
 pub fn ftPe_Float_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_Float_Anim");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).u.pe.x4 > 0.0 {
@@ -166,6 +173,7 @@ pub fn ftPe_Float_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftPe_Float_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_Float_IASA");
     unsafe {
         let fp = fpp(gobj);
         if !ext::ftCo_SpecialAir_CheckInput(gobj) && !crate::tu::ftpeachfloatattack::ftPe_8011BE80(gobj) {
@@ -179,9 +187,11 @@ pub fn ftPe_Float_IASA(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftPe_Float_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_Float_Phys");
     unsafe { melee_fighter::ftcommon::calc_self_accel_drift(&mut *fpp(gobj)) }
 }
 
 pub fn ftPe_Float_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_Float_Coll");
     ext::ft_800831CC(gobj, Some(cb_ftCo_80096CC8), Some(cb_ft_80082B1C));
 }

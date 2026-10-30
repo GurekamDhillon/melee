@@ -71,6 +71,7 @@ unsafe fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD_GOb
 pub static mut it_803F6C98: [ItemStateTable; 1] = [ItemStateTable { anim_id: 0, animated: None, physics_updated: None, collided: None }];
 
 pub unsafe extern "C" fn itKirbyHammer_Logic8_Destroyed(gobj: *mut Item_GObj) {
+    melee_core::ct!("itKirbyHammer_Logic8_Destroyed");
     let it = get_item(gobj);
     if (*it).owner.is_null() {
         return;
@@ -79,10 +80,12 @@ pub unsafe extern "C" fn itKirbyHammer_Logic8_Destroyed(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802ADC34(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802ADC34");
     ext::Item_8026A8EC(gobj);
 }
 
 pub unsafe extern "C" fn setupHammerParticles(parent: *mut HSD_GObj, item_gobj: *mut Item_GObj, sfx: Fighter_Part, vars: u32) {
+    melee_core::ct!("setupHammerParticles");
     let it = get_item(item_gobj);
     (*it).xDD4_itemVar.kirbyhammer.x0 = vars;
     ext::db_80225DD8(item_gobj, parent);
@@ -93,6 +96,7 @@ pub unsafe extern "C" fn setupHammerParticles(parent: *mut HSD_GObj, item_gobj: 
 }
 
 pub unsafe extern "C" fn it_802ADC54(parent: *mut HSD_GObj, pos: *mut Vec, sfx: Fighter_Part, vars: u32, dir: f32) -> *mut Item_GObj {
+    melee_core::ct!("it_802ADC54");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = It_Kind_Kirby_Hammer;
     spawn.prev_pos = *pos;
@@ -106,9 +110,11 @@ pub unsafe extern "C" fn it_802ADC54(parent: *mut HSD_GObj, pos: *mut Vec, sfx: 
 }
 
 pub unsafe extern "C" fn itKirbyHammer_Logic8_PickedUp(gobj: *mut Item_GObj) {
+    melee_core::ct!("itKirbyHammer_Logic8_PickedUp");
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE as _);
 }
 
 pub unsafe extern "C" fn it_802ADDB0(gobj: *mut Item_GObj, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802ADDB0");
     ext::it_8026B894(gobj, ref_gobj);
 }

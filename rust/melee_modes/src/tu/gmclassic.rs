@@ -249,12 +249,14 @@ pub static mut gmClassic_804D68D0: *mut c_void = core::ptr::null_mut();
 /// `gmClassicIntroDataBuffer`
 #[inline(always)]
 pub unsafe fn gmClassicIntroDataBuffer() -> *mut gmClassicIntroData {
+    melee_core::ct!("gmClassicIntroDataBuffer");
     &raw mut gmClassicRuntimeBuf.intro
 }
 
 /// `gm_804908A0` (u8[112]): the order-state bytes.
 #[inline(always)]
 pub unsafe fn gm_804908A0() -> *mut u8 {
+    melee_core::ct!("gm_804908A0");
     (&raw mut gmClassicRuntimeBuf.state) as *mut u8
 }
 
@@ -440,6 +442,7 @@ pub unsafe fn gmClassic_InitMatchupOrder(
     runtime: *mut u8,
     order_offset: i32,
 ) {
+    melee_core::ct!("gmClassic_InitMatchupOrder");
     let mut count = 0;
     let mut m = matchups;
     while (*m).x00 != 0x148 {
@@ -468,6 +471,7 @@ pub unsafe fn gmClassic_801B2BA4(
     arg1: *const u8,
     arg2: *mut gm_803DDEC8Struct,
 ) -> *mut gmClassicMatchup {
+    melee_core::ct!("gmClassic_801B2BA4");
     let mut result: *mut gmClassicMatchup = core::ptr::null_mut();
     let target_char = (*ext::gmMainLib_8015CDC8()).c_kind as i32;
 
@@ -529,6 +533,7 @@ pub unsafe fn gmClassic_801B2BA4(
 
 /// 1B2D54: picks each row's opponent matchup; returns the row that ends the table (or the 0x20 row).
 pub unsafe fn gmClassic_801B2D54(arg0: *mut gm_803DDEC8Struct) -> *mut gm_803DDEC8Struct {
+    melee_core::ct!("gmClassic_801B2D54");
     let o = &raw mut gmClassicRuntimeBuf;
     let order = (&raw mut (*o).state) as *mut u8;
     let mut ptr = arg0;
@@ -615,6 +620,7 @@ pub unsafe fn gmClassic_801B2D54(arg0: *mut gm_803DDEC8Struct) -> *mut gm_803DDE
 
 /// `gm_OnePSceneDirect` (pc): `MELEE_SCENE="mode=classic;p1=..."` skips the character select.
 pub unsafe fn gm_OnePSceneDirect(s: *mut gmm_x0_528_t, d: *mut Unk1PData, game_mode: i32) -> i32 {
+    melee_core::ct!("gm_OnePSceneDirect");
     if ext::SceneLaunch_OnePDirect(game_mode) == 0 {
         return 0;
     }
@@ -638,6 +644,7 @@ pub unsafe fn gm_OnePSceneDirect(s: *mut gmm_x0_528_t, d: *mut Unk1PData, game_m
 
 /// `gm_Mode_Classic_OnLoad`
 pub fn gm_Mode_Classic_OnLoad() {
+    melee_core::ct!("gm_Mode_Classic_OnLoad");
     unsafe {
         let o = &raw mut gmClassicRuntimeBuf;
         let m = &raw mut gmClassic_803DDEC8;
@@ -693,6 +700,7 @@ pub fn gm_Mode_Classic_OnLoad() {
 
 /// `gm_Mode_Classic_OnInit`
 pub fn gm_Mode_Classic_OnInit() {
+    melee_core::ct!("gm_Mode_Classic_OnInit");
     unsafe {
         let temp_r3 = ext::gmMainLib_8015CDC8();
         (*temp_r3).c_kind = ChKind_None as i8;
@@ -706,6 +714,7 @@ pub fn gm_Mode_Classic_OnInit() {
 
 /// `gmClassic_GetStKind` (static inline)
 pub unsafe fn gmClassic_GetStKind(entry: *mut gm_803DDEC8Struct, ad: *mut UnkAllstarData) -> StKind {
+    melee_core::ct!("gmClassic_GetStKind");
     if (*entry).x1 == 0x80 && (*entry).x2 == 1 {
         return ext::gm_801647F8((*ad).x0.x0.ckind as u8) as u16 as StKind;
     }
@@ -714,6 +723,7 @@ pub unsafe fn gmClassic_GetStKind(entry: *mut gm_803DDEC8Struct, ad: *mut UnkAll
 
 /// 1B3500: the intro scene's enter handler
 pub unsafe extern "C" fn gmClassic_801B3500(arg0: *mut GameModeState) {
+    melee_core::ct!("gmClassic_801B3500");
     let sd = ext::gm_GetGameModeStateEnterData(arg0) as *mut gmClassicIntroData;
     let m = &raw mut gmClassic_803DDEC8;
     let idx = ext::gm_8017BE84((*arg0).id as u32) as u8;
@@ -877,6 +887,7 @@ pub unsafe extern "C" fn gmClassic_801B3500(arg0: *mut GameModeState) {
 
 /// 1B3A34: the VS scene's enter handler
 pub unsafe extern "C" fn gmClassic_801B3A34(arg0: *mut GameModeState) {
+    melee_core::ct!("gmClassic_801B3A34");
     let temp_r30 = ext::gm_GetGameModeStateEnterData(arg0) as *mut StartMeleeData;
     let m = &raw mut gmClassic_803DDEC8;
     let temp_r31 = ((&raw mut (*m).x00) as *mut gm_803DDEC8Struct).add(ext::gm_8017BE84((*arg0).id as u32) as u8 as usize);
@@ -914,6 +925,7 @@ pub unsafe extern "C" fn gmClassic_801B3A34(arg0: *mut GameModeState) {
 
 /// 1B3B40: the VS scene's exit handler (records the result, the all-star clear, the time records)
 pub unsafe extern "C" fn gmClassic_801B3B40(arg0: *mut GameModeState) {
+    melee_core::ct!("gmClassic_801B3B40");
     let mei = ext::gm_GetGameModeStateExitData(arg0) as *mut MatchExitInfo;
     let asd = ext::gm_GetAllStarData();
     let m = &raw mut gmClassic_803DDEC8;
@@ -971,18 +983,21 @@ pub unsafe extern "C" fn gmClassic_801B3B40(arg0: *mut GameModeState) {
 
 /// 1B3D44
 pub unsafe extern "C" fn gmClassic_801B3D44(scene: *mut GameModeState) {
+    melee_core::ct!("gmClassic_801B3D44");
     let temp_r31 = ext::gm_GetGameModeStateEnterData(scene) as *mut DebugGameOverData;
     ext::gm_8017C9A8(temp_r31, &raw mut (*ext::gm_GetAllStarData()).x0, 1);
 }
 
 /// 1B3D84
 pub unsafe extern "C" fn gmClassic_801B3D84(scene: *mut GameModeState) {
+    melee_core::ct!("gmClassic_801B3D84");
     let temp_r30 = ext::gm_GetGameModeStateExitData(scene) as *mut DebugGameOverData;
     ext::gm_8017CA38(temp_r30, &raw mut (*ext::gm_GetAllStarData()).x0, ext::gmMainLib_8015CDC8(), 1);
 }
 
 /// 1B3DD8
 pub unsafe extern "C" fn gmClassic_801B3DD8(scene: *mut GameModeState) {
+    melee_core::ct!("gmClassic_801B3DD8");
     let css = ext::gm_GetGameModeStateEnterData(scene) as *mut CSSData;
     let temp_r31 = ext::gmMainLib_8015CDC8();
     ext::gm_801B06B0(
@@ -1001,6 +1016,7 @@ pub unsafe extern "C" fn gmClassic_801B3DD8(scene: *mut GameModeState) {
 
 /// 1B3E44
 pub unsafe extern "C" fn gmClassic_801B3E44(scene: *mut GameModeState) {
+    melee_core::ct!("gmClassic_801B3E44");
     let temp_r30 = ext::gm_GetGameModeStateExitData(scene) as *mut CSSData;
     let temp_r29 = ext::gmMainLib_8015CDC8();
     let temp_r31 = ext::gm_GetAllStarData();
@@ -1031,6 +1047,7 @@ pub unsafe extern "C" fn gmClassic_801B3E44(scene: *mut GameModeState) {
 
 /// 1B3F18
 pub unsafe extern "C" fn gmClassic_801B3F18(_scene: *mut GameModeState) {
+    melee_core::ct!("gmClassic_801B3F18");
     ext::gm_SetPendingGameMode(GM_MENU as u8);
     ext::gm_SetNewGameModePending();
 }

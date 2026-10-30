@@ -63,6 +63,7 @@ pub mod ext {
 }
 
 pub fn ftCo_SquatWait_CheckInput(g: G) -> bool {
+    melee_core::ct!("ftCo_SquatWait_CheckInput");
     if fp(g).input.lstick[0].y < -cd().x90 {
         fn_800D62C4(g);
         return true;
@@ -89,19 +90,23 @@ fn ftCo_SquatWait_Enter_inline(g: G, flags: u32, arg2: bool) {
 
 /// static `fn_800D62C4`.
 pub fn fn_800D62C4(g: G) {
+    melee_core::ct!("fn_800D62C4");
     ftCo_SquatWait_Enter_inline(g, Ft_MF_None as u32, true);
 }
 
 pub fn ftCo_800D638C(g: G) {
+    melee_core::ct!("ftCo_800D638C");
     ftCo_SquatWait_Enter_inline(g, Ft_MF_SkipNametagVis as u32, false);
 }
 
 pub fn ftCo_SquatWait_Anim(g: G) {
+    melee_core::ct!("ftCo_SquatWait_Anim");
     let x28 = unsafe { (*fp(g).ft_data).x28 };
     ext::ftCo_8008A7A8(g, x28);
 }
 
 pub fn ftCo_SquatWait_IASA(g: G) {
+    melee_core::ct!("ftCo_SquatWait_IASA");
     let _ = ext::ftCo_800D68C0(g)
         || ext::ftCo_Attack100_CheckInput(g)
         || ext::ftCo_AttackS4_CheckInput(g)
@@ -120,10 +125,12 @@ pub fn ftCo_SquatWait_IASA(g: G) {
 }
 
 pub fn ftCo_SquatWait_Phys(g: G) {
+    melee_core::ct!("ftCo_SquatWait_Phys");
     ext::ft_80084F3C(g);
     ext::ftColl_8007AEE0(g);
 }
 
 pub fn ftCo_SquatWait_Coll(g: G) {
+    melee_core::ct!("ftCo_SquatWait_Coll");
     ext::ft_80083F88(g);
 }

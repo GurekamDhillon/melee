@@ -82,58 +82,71 @@ pub static mut gm_Mode_SuperSuddenDeath_States: [GameModeState; 9] = unsafe {
 
 /// CSS enter: the Atlas select runs after the retail setup (TARGET_PC).
 pub unsafe extern "C" fn gm_801B8BB4(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B8BB4");
     ext::gmVsMelee_EnterCss(scene, vs_mode(), 3);
     ext::gmFrontend_AtlasSelect(scene, 0, null());
 }
 
 pub unsafe extern "C" fn gm_801B8BE0(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B8BE0");
     ext::gmVsMelee_ExitCss(scene, vs_mode());
 }
 
 pub unsafe extern "C" fn gm_801B8C08(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B8C08");
     ext::gmVsMelee_EnterSss(scene, vs_mode());
     ext::gmFrontend_AtlasSelect(scene, 1, null());
 }
 
 pub unsafe extern "C" fn gm_801B8C30(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B8C30");
     ext::gmVsMelee_ExitSss(scene, vs_mode(), 0);
 }
 
 /// Player setup callback (`gm_ptr::fn_801B8C5C`, round 3), in the `extern "C"` form `gmVsMelee_EnterVs` takes.
 pub unsafe extern "C" fn fn_801B8C5C(arg0: *mut PlayerInitData, unused: *mut PlayerInitData) {
+    melee_core::ct!("fn_801B8C5C");
     crate::gm_ptr::fn_801B8C5C(&mut *arg0, unused);
 }
 
 pub unsafe extern "C" fn gm_801B8C68(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B8C68");
     let data = vs_mode();
     ext::gmVsMelee_EnterVs(scene, data, None, Some(fn_801B8C5C));
 }
 
 pub unsafe extern "C" fn gm_801B8C9C(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B8C9C");
     ext::gmVsMelee_ExitVs(scene, 4, 3);
 }
 
 pub unsafe extern "C" fn gm_801B8CC4(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B8CC4");
     let data = vs_mode();
     ext::gmVsMelee_EnterSuddenDeath(scene, data, None, None);
 }
 
 pub unsafe extern "C" fn gm_801B8CF4(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B8CF4");
     ext::gmVsMelee_ExitSuddenDeath(scene);
 }
 
 pub unsafe extern "C" fn gm_801B8D14(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B8D14");
     ext::gmVsMelee_EnterResults(scene);
 }
 
 pub unsafe extern "C" fn gm_801B8D34(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B8D34");
     ext::gmVsMelee_ExitResults(scene, vs_mode(), 0);
 }
 
 pub unsafe extern "C" fn gm_Mode_SuperSuddenDeath_OnInit() {
+    melee_core::ct!("gm_Mode_SuperSuddenDeath_OnInit");
     ext::gm_InitVsMode(vs_mode());
 }
 
 pub unsafe extern "C" fn gm_Mode_SuperSuddenDeath_OnLoad() {
+    melee_core::ct!("gm_Mode_SuperSuddenDeath_OnLoad");
     ext::gmVsMelee_ResetKOCounts();
 }

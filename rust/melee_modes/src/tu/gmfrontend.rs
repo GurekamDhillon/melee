@@ -607,25 +607,32 @@ unsafe fn put_cstr(out: *mut i8, s: *const i8) {
 // ---- the match-setup rules (GameRules / GamePrefs accessors) ---------------------------------------
 
 pub unsafe extern "C" fn fe_get_mode() -> i32 {
+    melee_core::ct!("fe_get_mode");
     (*ext::gmMainLib_GetGameRules()).mode as i32
 }
 pub unsafe extern "C" fn fe_set_mode(v: i32) {
+    melee_core::ct!("fe_set_mode");
     (*ext::gmMainLib_GetGameRules()).mode = v as u8;
 }
 pub unsafe extern "C" fn fe_is_stock() -> i32 {
+    melee_core::ct!("fe_is_stock");
     ((*ext::gmMainLib_GetGameRules()).mode == 1) as i32
 }
 pub unsafe extern "C" fn fe_get_stocks() -> i32 {
+    melee_core::ct!("fe_get_stocks");
     (*ext::gmMainLib_GetGameRules()).stock_count as i32
 }
 pub unsafe extern "C" fn fe_set_stocks(v: i32) {
+    melee_core::ct!("fe_set_stocks");
     (*ext::gmMainLib_GetGameRules()).stock_count = v as u8;
 }
 pub unsafe extern "C" fn fe_get_time() -> i32 {
+    melee_core::ct!("fe_get_time");
     let r = ext::gmMainLib_GetGameRules();
     if (*r).mode == 1 { (*r).stock_time_limit as i32 } else { (*r).time_limit as i32 }
 }
 pub unsafe extern "C" fn fe_set_time(v: i32) {
+    melee_core::ct!("fe_set_time");
     let r = ext::gmMainLib_GetGameRules();
     if (*r).mode == 1 {
         (*r).stock_time_limit = v as u8;
@@ -634,6 +641,7 @@ pub unsafe extern "C" fn fe_set_time(v: i32) {
     }
 }
 pub unsafe extern "C" fn fe_fmt_time(v: i32, out: *mut i8) {
+    melee_core::ct!("fe_fmt_time");
     if v == 0 {
         put(out, "None");
     } else {
@@ -641,80 +649,103 @@ pub unsafe extern "C" fn fe_fmt_time(v: i32, out: *mut i8) {
     }
 }
 pub unsafe extern "C" fn fe_get_handicap() -> i32 {
+    melee_core::ct!("fe_get_handicap");
     (*ext::gmMainLib_GetGameRules()).handicap as i32
 }
 pub unsafe extern "C" fn fe_set_handicap(v: i32) {
+    melee_core::ct!("fe_set_handicap");
     (*ext::gmMainLib_GetGameRules()).handicap = v as u8;
 }
 pub unsafe extern "C" fn fe_get_ratio() -> i32 {
+    melee_core::ct!("fe_get_ratio");
     (*ext::gmMainLib_GetGameRules()).damage_ratio as i32
 }
 pub unsafe extern "C" fn fe_set_ratio(v: i32) {
+    melee_core::ct!("fe_set_ratio");
     (*ext::gmMainLib_GetGameRules()).damage_ratio = v as u8;
 }
 pub unsafe extern "C" fn fe_fmt_ratio(v: i32, out: *mut i8) {
+    melee_core::ct!("fe_fmt_ratio");
     put(out, &std::format!("{}.{}x", v / 10, v % 10));
 }
 pub unsafe extern "C" fn fe_get_stage_sel() -> i32 {
+    melee_core::ct!("fe_get_stage_sel");
     (*ext::gmMainLib_GetGameRules()).stage_sel as i32
 }
 pub unsafe extern "C" fn fe_set_stage_sel(v: i32) {
+    melee_core::ct!("fe_set_stage_sel");
     (*ext::gmMainLib_GetGameRules()).stage_sel = v as u8;
 }
 pub unsafe extern "C" fn fe_get_items() -> i32 {
+    melee_core::ct!("fe_get_items");
     (*ext::gmMainLib_GetGamePrefs()).item_freq as i8 as i32
 }
 pub unsafe extern "C" fn fe_set_items(v: i32) {
+    melee_core::ct!("fe_set_items");
     (*ext::gmMainLib_GetGamePrefs()).item_freq = v as i8 as u8;
 }
 pub unsafe extern "C" fn fe_get_ff() -> i32 {
+    melee_core::ct!("fe_get_ff");
     ((*ext::gmMainLib_GetGameRules()).friendly_fire & 1) as i32
 }
 pub unsafe extern "C" fn fe_set_ff(v: i32) {
+    melee_core::ct!("fe_set_ff");
     let r = ext::gmMainLib_GetGameRules();
     (*r).friendly_fire = (((*r).friendly_fire as i32 & !1) | (v & 1)) as u8;
 }
 pub unsafe extern "C" fn fe_get_pause() -> i32 {
+    melee_core::ct!("fe_get_pause");
     ((*ext::gmMainLib_GetGameRules()).pause != 0) as i32
 }
 pub unsafe extern "C" fn fe_set_pause(v: i32) {
+    melee_core::ct!("fe_set_pause");
     (*ext::gmMainLib_GetGameRules()).pause = (v != 0) as u8;
 }
 
 // ---- ONLINE: rooms over the internet -----------------------------------------------------------------
 
 pub unsafe extern "C" fn fe_np_get_stocks() -> i32 {
+    melee_core::ct!("fe_np_get_stocks");
     fe_np_stocks
 }
 pub unsafe extern "C" fn fe_np_set_stocks(v: i32) {
+    melee_core::ct!("fe_np_set_stocks");
     fe_np_stocks = v;
 }
 pub unsafe extern "C" fn fe_np_get_minutes() -> i32 {
+    melee_core::ct!("fe_np_get_minutes");
     fe_np_minutes
 }
 pub unsafe extern "C" fn fe_np_set_minutes(v: i32) {
+    melee_core::ct!("fe_np_set_minutes");
     fe_np_minutes = v;
 }
 pub unsafe extern "C" fn fe_np_fmt_minutes(v: i32, out: *mut i8) {
+    melee_core::ct!("fe_np_fmt_minutes");
     put(out, &std::format!("{} min", v));
 }
 pub unsafe extern "C" fn fe_np_get_delay() -> i32 {
+    melee_core::ct!("fe_np_get_delay");
     fe_np_delay
 }
 pub unsafe extern "C" fn fe_np_set_delay(v: i32) {
+    melee_core::ct!("fe_np_set_delay");
     fe_np_delay = v;
 }
 pub unsafe extern "C" fn fe_np_fmt_delay(v: i32, out: *mut i8) {
+    melee_core::ct!("fe_np_fmt_delay");
     put(out, &std::format!("{} frames", v));
 }
 
 /// `Frontend_OnlinePick`.
 pub unsafe fn Frontend_OnlinePick() -> i32 {
+    melee_core::ct!("Frontend_OnlinePick");
     fe_np_pick
 }
 
 /// Copy the biggest texture under `j` - the icon the player just confirmed.
 pub unsafe fn fe_np_find_tex(mut j: *mut HSD_JObj, best: *mut *mut HSD_TObj, area: *mut i32, depth: i32) {
+    melee_core::ct!("fe_np_find_tex");
     // the chosen icon and its own subtree - not its siblings, which are the other icons
     while !j.is_null() && depth < 12 {
         let mut d = ext::HSD_JObjGetDObj(j);
@@ -743,6 +774,7 @@ pub unsafe fn fe_np_find_tex(mut j: *mut HSD_JObj, best: *mut *mut HSD_TObj, are
 /// Keep a copy of an image off the disc (the select screens' art). `which`: 0..FE_NP_MAX_CK-1 a
 /// fighter's icon, -1 the chosen stage's icon.
 pub unsafe fn fe_np_store(which: i32, im: *mut HSD_ImageDesc, tl: *mut HSD_Tlut) {
+    melee_core::ct!("fe_np_store");
     let data: *mut u8;
     let lut: *mut u8;
     let cap: i32;
@@ -842,6 +874,7 @@ unsafe fn capture_into(
 
 /// `Frontend_CaptureCharIcon`: every fighter's CSS icon, captured on each CSS visit.
 pub unsafe fn Frontend_CaptureCharIcon(ck: i32, root: *mut HSD_JObj) {
+    melee_core::ct!("Frontend_CaptureCharIcon");
     if ck < 0 || ck >= FE_NP_MAX_CK as i32 || root.is_null() {
         return;
     }
@@ -870,6 +903,7 @@ pub unsafe fn Frontend_CaptureCharIcon(ck: i32, root: *mut HSD_JObj) {
 
 /// `Frontend_CaptureIcon`: the character (0) or the stage (1) icon the player just confirmed.
 pub unsafe fn Frontend_CaptureIcon(which: i32, root: *mut HSD_JObj) {
+    melee_core::ct!("Frontend_CaptureIcon");
     if which < 0 || which > 1 || root.is_null() {
         return;
     }
@@ -898,12 +932,14 @@ pub unsafe fn Frontend_CaptureIcon(which: i32, root: *mut HSD_JObj) {
 
 /// `fe_np_pick_char`: open VS mode's CSS seeded with this player's last pick.
 pub unsafe fn fe_np_pick_char() {
+    melee_core::ct!("fe_np_pick_char");
     put(addr_of_mut!(fe_np_scene) as *mut i8, &std::format!("mode=vs;at=css;p1=ck:{}/c{}/hu", fe_np_ck, fe_np_color));
     fe_np_open(1, addr_of!(fe_np_scene) as *const i8);
 }
 
 /// A notice over the description strip ("You left the room.").
 pub unsafe fn fe_ol_notice(s: *const i8, bad: i32) {
+    melee_core::ct!("fe_ol_notice");
     let note = addr_of_mut!(fe_ol_note) as *mut i8;
     let mut i = 0usize;
     while !s.is_null() && *s.add(i) != 0 && i < FE_HELP_STR - 1 {
@@ -916,6 +952,7 @@ pub unsafe fn fe_ol_notice(s: *const i8, bad: i32) {
 }
 
 pub unsafe extern "C" fn fe_ol_host() {
+    melee_core::ct!("fe_ol_host");
     if ext::Netplay_MenuBegin(1, fe_np_ck, fe_np_color, fe_np_stocks, fe_np_minutes, fe_np_delay) == 0 {
         fe_np_phase = FE_NP_WORKING;
         fe_switch_screen(addr_of!(fe_screen_wait));
@@ -927,23 +964,29 @@ pub unsafe extern "C" fn fe_ol_host() {
     }
 }
 pub unsafe extern "C" fn fe_np_get_stage_mode() -> i32 {
+    melee_core::ct!("fe_np_get_stage_mode");
     ext::Netplay_StageMode()
 }
 pub unsafe extern "C" fn fe_np_set_stage_mode(v: i32) {
+    melee_core::ct!("fe_np_set_stage_mode");
     ext::Netplay_SetStageMode(v);
 }
 pub unsafe extern "C" fn fe_np_get_turbo() -> i32 {
+    melee_core::ct!("fe_np_get_turbo");
     ext::Netplay_TurboPref()
 }
 pub unsafe extern "C" fn fe_np_set_turbo(v: i32) {
+    melee_core::ct!("fe_np_set_turbo");
     ext::Netplay_SetTurbo(v);
     ext::Settings_SetInt(c"turbo_online".as_ptr(), v);
     ext::OSReport(c"frontend: online Turbo rule -> %s%c".as_ptr(), &[Va::P(if v != 0 { c"on".as_ptr() } else { c"off".as_ptr() }.cast()), Va::I32(10)]);
 }
 pub unsafe extern "C" fn fe_np_get_envoy() -> i32 {
+    melee_core::ct!("fe_np_get_envoy");
     ext::Netplay_EnvoyPref()
 }
 pub unsafe extern "C" fn fe_np_set_envoy(mut v: i32) {
+    melee_core::ct!("fe_np_set_envoy");
     if v != 0 && ext::Netplay_EnvoyAvailable() == 0 {
         // no Envoy mod loaded here: a room that could never start its match
         ext::OSReport(c"frontend: online Envoy rules stay off - the Envoy mod is not loaded%c".as_ptr(), &[Va::I32(10)]);
@@ -954,6 +997,7 @@ pub unsafe extern "C" fn fe_np_set_envoy(mut v: i32) {
     ext::OSReport(c"frontend: online Envoy rules -> %s%c".as_ptr(), &[Va::P(if v != 0 { c"on".as_ptr() } else { c"off".as_ptr() }.cast()), Va::I32(10)]);
 }
 pub unsafe extern "C" fn fe_ol_random() {
+    melee_core::ct!("fe_ol_random");
     if ext::Netplay_RandomBegin(fe_np_ck, fe_np_color, fe_np_stocks, fe_np_minutes, fe_np_delay) == 0 {
         fe_np_phase = FE_NP_WORKING;
         fe_switch_screen(addr_of!(fe_screen_wait));
@@ -965,6 +1009,7 @@ pub unsafe extern "C" fn fe_ol_random() {
     }
 }
 pub unsafe extern "C" fn fe_ol_join() {
+    melee_core::ct!("fe_ol_join");
     if ext::Netplay_MenuHasServer() == 0 {
         fe_ol_notice(c"Online play needs the server address (netplay_server.txt beside the game).".as_ptr(), 1);
         return;
@@ -976,15 +1021,19 @@ pub unsafe extern "C" fn fe_ol_join() {
 // ---- read-only view for the scripting engine ---------------------------------------------------------
 
 pub unsafe fn Frontend_ScreenTitle() -> *const i8 {
+    melee_core::ct!("Frontend_ScreenTitle");
     if !fe.screen.is_null() { (*fe.screen).title } else { c"".as_ptr() }
 }
 pub unsafe fn Frontend_ScreenSubtitle() -> *const i8 {
+    melee_core::ct!("Frontend_ScreenSubtitle");
     if !fe.screen.is_null() { (*fe.screen).subtitle } else { c"".as_ptr() }
 }
 pub unsafe fn Frontend_Cursor() -> i32 {
+    melee_core::ct!("Frontend_Cursor");
     if !fe.screen.is_null() && fe.n_vis > 0 { fe.cursor } else { -1 }
 }
 pub unsafe fn Frontend_CursorLabel() -> *const i8 {
+    melee_core::ct!("Frontend_CursorLabel");
     if fe.screen.is_null() || fe.n_vis <= 0 || (*fe.screen).items.is_null() {
         return c"".as_ptr();
     }
@@ -1001,6 +1050,7 @@ pub unsafe fn Frontend_CursorLabel() -> *const i8 {
 
 /// Back from the CSS the lobby sent this player to: tell the room, and back to the lobby.
 pub unsafe fn Frontend_OnlinePicked(which: i32, a: i32, b: i32) {
+    melee_core::ct!("Frontend_OnlinePicked");
     if which == 1 && a >= 0 {
         fe_np_ck = a;
         fe_np_color = b;
@@ -1033,6 +1083,7 @@ pub unsafe fn Frontend_OnlinePicked(which: i32, a: i32, b: i32) {
 
 /// After an online match in a room: the results screen comes back to the lobby.
 pub unsafe fn Frontend_BackToOnline() {
+    melee_core::ct!("Frontend_BackToOnline");
     fe_np_pick = 0;
     fe_np_phase = FE_NP_IDLE;
     ext::SceneLaunch_SetText(null());
@@ -1044,6 +1095,7 @@ pub unsafe fn Frontend_BackToOnline() {
 }
 
 pub unsafe fn fe_np_open(which: i32, scene: *const i8) {
+    melee_core::ct!("fe_np_open");
     fe_np_pick = which;
     ext::SceneLaunch_SetText(scene);
     fe.continue_to = GM_VS as u8;
@@ -1053,6 +1105,7 @@ pub unsafe fn fe_np_open(which: i32, scene: *const i8) {
 // ---- how the other game modes reach the frontend ---------------------------------------------------
 
 pub unsafe fn gmFrontend_SelectScene(state: *mut GameModeState, sss: i32) {
+    melee_core::ct!("gmFrontend_SelectScene");
     if state.is_null() {
         return;
     }
@@ -1065,6 +1118,7 @@ pub unsafe fn gmFrontend_SelectScene(state: *mut GameModeState, sss: i32) {
 
 /// Training's CSS / SSS states call this from their on_enter.
 pub unsafe fn gmFrontend_TrainingSelect(state: *mut GameModeState, sss: i32) {
+    melee_core::ct!("gmFrontend_TrainingSelect");
     if state.is_null() || ext::Frontend_TrainingSelect() == 0 {
         return;
     }
@@ -1078,6 +1132,7 @@ pub unsafe fn gmFrontend_TrainingSelect(state: *mut GameModeState, sss: i32) {
 
 /// A VS-machinery mode that wants the kit's select under its own name (Geno's LAB).
 pub unsafe fn gmFrontend_ModeSelect(state: *mut GameModeState, _sss: i32, name: *const i8) {
+    melee_core::ct!("gmFrontend_ModeSelect");
     if state.is_null() {
         return;
     }
@@ -1088,6 +1143,7 @@ pub unsafe fn gmFrontend_ModeSelect(state: *mut GameModeState, _sss: i32, name: 
 /// THE ONE ENTRY POINT of the Atlas character and stage select for the modes that have their own
 /// CSS / SSS state.
 pub unsafe fn gmFrontend_AtlasSelect(state: *mut GameModeState, sss: i32, name: *const i8) {
+    melee_core::ct!("gmFrontend_AtlasSelect");
     if state.is_null() || ext::Ui_Ready() == 0 || ext::Ui_SelCanOpen() == 0 || ext::Frontend_NativeSelect() != 0 {
         return;
     }
@@ -1114,18 +1170,21 @@ pub unsafe fn gmFrontend_AtlasSelect(state: *mut GameModeState, sss: i32, name: 
 }
 
 pub unsafe fn gmFrontend_BeginLoading() {
+    melee_core::ct!("gmFrontend_BeginLoading");
     fe.screen = addr_of!(fe_screen_loading);
     fe.loading = 1;
     fe.next_menus = 0;
 }
 
 pub unsafe fn gmFrontend_TakeWarmed() -> i32 {
+    melee_core::ct!("gmFrontend_TakeWarmed");
     let w = fe.warmed;
     fe.warmed = 0;
     w
 }
 
 pub unsafe fn fe_enabled() -> i32 {
+    melee_core::ct!("fe_enabled");
     if fe_enabled_cache < 0 {
         fe_enabled_cache = ext::PcFrontendEnabled();
     }
@@ -1134,6 +1193,7 @@ pub unsafe fn fe_enabled() -> i32 {
 
 /// The menu tree replaces GM_MENU's list screens: MELEE_FRONTEND_MENUS (default on).
 pub unsafe fn fe_menus_on() -> i32 {
+    melee_core::ct!("fe_menus_on");
     if fe_menus_on_cache < 0 {
         fe_menus_on_cache = (fe_enabled() != 0 && ext::PcFrontendMenusEnabled() != 0) as i32;
     }
@@ -1141,12 +1201,14 @@ pub unsafe fn fe_menus_on() -> i32 {
 }
 
 pub unsafe fn fe_rules_enabled() -> i32 {
+    melee_core::ct!("fe_rules_enabled");
     fe_enabled()
 }
 
 /// Called by the top-level mode loop on every mode change: returns `to`, or GM_FRONTEND when a
 /// frontend screen is placed between `from` and `to`.
 pub unsafe fn gmFrontend_Route(from: u8, to: u8) -> u8 {
+    melee_core::ct!("gmFrontend_Route");
     if fe_np_pick != 0 && to == GM_MENU as u8 {
         fe_np_pick = 0; // left the CSS/SSS for the main menu: the online pick is abandoned
         ext::SceneLaunch_SetText(null());
@@ -1199,6 +1261,7 @@ pub unsafe fn gmFrontend_Route(from: u8, to: u8) -> u8 {
 }
 
 pub unsafe fn gmFrontend_ReportedMode() -> u8 {
+    melee_core::ct!("gmFrontend_ReportedMode");
     fe.reported
 }
 
@@ -1206,13 +1269,16 @@ pub unsafe fn gmFrontend_ReportedMode() -> u8 {
 
 /// `fe_canvas_width`: the canvas height times the window's aspect (a float's bits from the host).
 pub unsafe fn fe_canvas_width() -> f32 {
+    melee_core::ct!("fe_canvas_width");
     let v = ext::View_AspectBits();
     FE_H * f32::from_bits(v as u32)
 }
 pub unsafe fn fe_canvas_left() -> f32 {
+    melee_core::ct!("fe_canvas_left");
     (FE_W - fe_canvas_width()) * 0.5f32
 }
 pub unsafe fn fe_canvas_extra() -> f32 {
+    melee_core::ct!("fe_canvas_extra");
     let extra = -fe_canvas_left();
     if extra > 0.0f32 { extra } else { 0.0f32 }
 }
@@ -1245,6 +1311,7 @@ fn help_color() -> GXColor {
 /// A rectangle in 640x480 screen space, y down, with a vertical gradient. The canvas camera is
 /// ortho with y running 0..-480, hence the negation.
 pub unsafe fn fe_rect(x: f32, y: f32, w: f32, h: f32, top: GXColor, bottom: GXColor) {
+    melee_core::ct!("fe_rect");
     ext::GXBegin(GX_QUADS, GX_VTXFMT0, 4);
     ext::GXPosition2f32(x, -y);
     ext::GXColor4u8(top.r, top.g, top.b, top.a);
@@ -1257,12 +1324,14 @@ pub unsafe fn fe_rect(x: f32, y: f32, w: f32, h: f32, top: GXColor, bottom: GXCo
 }
 
 pub unsafe fn fe_solid(x: f32, y: f32, w: f32, h: f32, c: GXColor) {
+    melee_core::ct!("fe_solid");
     fe_rect(x, y, w, h, c, c);
 }
 
 /// A small arrowhead pointing left (dir < 0) or right, centred on (x, y). A quad with two
 /// coincident corners is a triangle. `x + s * 0.5` and `y +- size * 0.6` are fused sites.
 pub unsafe fn fe_arrow(x: f32, y: f32, size: f32, dir: i32, c: GXColor) {
+    melee_core::ct!("fe_arrow");
     let s = if dir < 0 { -size } else { size };
     let tip = fmadds(s, 0.5f32, x);
     let s2 = if dir < 0 { -size } else { size };
@@ -1280,6 +1349,7 @@ pub unsafe fn fe_arrow(x: f32, y: f32, size: f32, dir: i32, c: GXColor) {
 
 /// Load one art-pack texture into the scene heap; a missing one stays flat (`ok` = 0).
 pub unsafe fn fe_tex_load(t: *mut FeTex, name: *const i8) {
+    melee_core::ct!("fe_tex_load");
     let h = ext::GxTex_OpenUI(name);
     (*t).ok = 0;
     (*t).lut = null_mut();
@@ -1313,6 +1383,7 @@ pub unsafe fn fe_tex_load(t: *mut FeTex, name: *const i8) {
 /// by `c`. It sets its own GX state and then invalidates HSD's state cache and restores the
 /// untextured vertex-colour setup the rest of the panels draw with.
 pub unsafe fn fe_tex_quad_uv(t: *mut FeTex, x: f32, y: f32, w: f32, h: f32, u0: f32, v0: f32, u1: f32, v1: f32, c: GXColor) {
+    melee_core::ct!("fe_tex_quad_uv");
     if (*t).ok == 0 {
         return;
     }
@@ -1358,12 +1429,14 @@ pub unsafe fn fe_tex_quad_uv(t: *mut FeTex, x: f32, y: f32, w: f32, h: f32, u0: 
 }
 
 pub unsafe fn fe_tex_quad(t: *mut FeTex, x: f32, y: f32, w: f32, h: f32, c: GXColor) {
+    melee_core::ct!("fe_tex_quad");
     fe_tex_quad_uv(t, x, y, w, h, 0.0f32, 0.0f32, 1.0f32, 1.0f32, c);
 }
 
 /// Legacy panels, rows and buttons share the grid too. The source grid uses their old display
 /// sizes, preserving UV placement at those sizes exactly.
 pub unsafe fn fe_tex_or_solid(which: i32, x: f32, y: f32, w: f32, h: f32, fallback: GXColor) {
+    melee_core::ct!("fe_tex_or_solid");
     let mut bounds = FePanelRect::default();
     let mut aw = FE_BTN_W;
     let mut ah = FE_BTN_H;
@@ -1386,28 +1459,33 @@ pub unsafe fn fe_tex_or_solid(which: i32, x: f32, y: f32, w: f32, h: f32, fallba
 
 /// The toolkit screens are drawn with the kit when its files are there.
 pub unsafe fn fe_kit_available() -> i32 {
+    melee_core::ct!("fe_kit_available");
     ext::kit_load();
     ext::ff_load();
     (ff.state == 1 && kit.state == 1) as i32
 }
 
 pub unsafe fn fm_route_to_menus(kind: u8, sel: u8) {
+    melee_core::ct!("fm_route_to_menus");
     fm.start_kind = kind;
     fm.start_sel = sel;
     fe.next_menus = 1;
 }
 
 pub unsafe fn fm_route_native() -> i32 {
+    melee_core::ct!("fm_route_native");
     fm.native_req
 }
 
 pub unsafe fn fm_route_position(previous: u8, kind: *mut u8, sel: *mut u8) -> i32 {
+    melee_core::ct!("fm_route_position");
     ext::fm_position_for(previous, kind, sel);
     ext::fm_replaced(*kind as i32)
 }
 
 /// VS > Melee from the menus: the MATCH SETUP screen as its own GS_FRONTEND scene.
 pub unsafe fn fe_match_setup_from_menus() {
+    melee_core::ct!("fe_match_setup_from_menus");
     fe.screen = addr_of!(fe_screen_vs_setup);
     fe.continue_to = GM_VS as u8;
     fe.back_to = GM_MENU as u8;
@@ -1418,6 +1496,7 @@ pub unsafe fn fe_match_setup_from_menus() {
 }
 
 pub unsafe fn gmFrontend_NativeRequest(kind: *mut u8, sel: *mut u8) -> i32 {
+    melee_core::ct!("gmFrontend_NativeRequest");
     if fm.native_req == 0 {
         return 0;
     }
@@ -1427,6 +1506,7 @@ pub unsafe fn gmFrontend_NativeRequest(kind: *mut u8, sel: *mut u8) -> i32 {
 }
 
 pub unsafe fn gmFrontend_TakeNativeRequest(kind: *mut u8, sel: *mut u8) -> i32 {
+    melee_core::ct!("gmFrontend_TakeNativeRequest");
     if gmFrontend_NativeRequest(kind, sel) == 0 {
         return 0;
     }
@@ -1435,6 +1515,7 @@ pub unsafe fn gmFrontend_TakeNativeRequest(kind: *mut u8, sel: *mut u8) -> i32 {
 }
 
 pub unsafe fn gmFrontend_NativeReturn(kind: i32, sel: i32) -> i32 {
+    melee_core::ct!("gmFrontend_NativeReturn");
     if fe_menus_on() == 0 || ext::fm_replaced(kind) == 0 {
         return 0;
     }
@@ -1453,6 +1534,7 @@ pub unsafe fn gmFrontend_NativeReturn(kind: i32, sel: i32) -> i32 {
 
 /// The state's on_enter: when this scene is the menu tree, what gmmenumode.c's onEnter does.
 pub unsafe extern "C" fn fe_state_enter(_state: *mut GameModeState) {
+    melee_core::ct!("fe_state_enter");
     if fe.next_menus == 0 {
         return;
     }
@@ -1465,16 +1547,19 @@ pub unsafe extern "C" fn fe_state_enter(_state: *mut GameModeState) {
 
 /// How far row `slot` has slid in: rows arrive one after another.
 pub unsafe fn fe_row_offset(slot: i32) -> f32 {
+    melee_core::ct!("fe_row_offset");
     let t = (fe.frames - 2 * slot) as f32 / 12.0f32;
     (1.0f32 - fe_ease(t)) * 48.0f32
 }
 
 pub unsafe fn fe_rows_shown() -> i32 {
+    melee_core::ct!("fe_rows_shown");
     if fe.n_list < FE_MAX_ROWS as i32 { fe.n_list } else { FE_MAX_ROWS as i32 }
 }
 
 /// The 9-slice frame around the screen.
 pub unsafe fn fe_draw_frame() {
+    melee_core::ct!("fe_draw_frame");
     let l = fe_canvas_left() + FE_FRAME_M;
     let w = fe_canvas_width() - 2.0 * FE_FRAME_M;
     let bounds = FePanelRect { x: l, y: FE_FRAME_M, w, h: FE_H - 2.0 * FE_FRAME_M };
@@ -1482,6 +1567,7 @@ pub unsafe fn fe_draw_frame() {
 }
 
 pub unsafe extern "C" fn fe_draw_panels(_gobj: *mut HSD_GObj, pass: i32) {
+    melee_core::ct!("fe_draw_panels");
     if pass != 0 {
         return;
     }
@@ -1596,6 +1682,7 @@ pub unsafe extern "C" fn fe_draw_panels(_gobj: *mut HSD_GObj, pass: i32) {
 }
 
 pub unsafe extern "C" fn fe_draw_fade(_gobj: *mut HSD_GObj, pass: i32) {
+    melee_core::ct!("fe_draw_fade");
     if pass != 2 {
         return;
     }
@@ -1616,6 +1703,7 @@ pub unsafe extern "C" fn fe_draw_fade(_gobj: *mut HSD_GObj, pass: i32) {
 // ---- text ---------------------------------------------------------------------------------------------
 
 pub unsafe fn fe_text(x: f32, y: f32, scale: f32, align: u8, mut color: GXColor, s: *const i8) -> *mut HSD_Text {
+    melee_core::ct!("fe_text");
     let t = ext::HSD_SisLib_803A6754(0, fe.canvas);
     if t.is_null() {
         return null_mut();
@@ -1635,6 +1723,7 @@ pub unsafe fn fe_text(x: f32, y: f32, scale: f32, align: u8, mut color: GXColor,
 /// Replace a text's string: only when it changes (`cur` keeps what is shown), as a fresh text
 /// object with the old one's position, size and colour.
 pub unsafe fn fe_set_text(pt: *mut *mut HSD_Text, cur: *mut i8, cap: i32, s: *const i8, color: GXColor) {
+    melee_core::ct!("fe_set_text");
     let old = *pt;
     if old.is_null() {
         return;
@@ -1662,6 +1751,7 @@ pub unsafe fn fe_set_text(pt: *mut *mut HSD_Text, cur: *mut i8, cap: i32, s: *co
 }
 
 pub unsafe fn fe_value_string(it: *const FrontendItem, out: *mut i8) {
+    melee_core::ct!("fe_value_string");
     *out = 0;
     if (*it).get.is_none() {
         if (*it).kind == FE_ACTION as u8 && (*it).format.is_some() {
@@ -1696,6 +1786,7 @@ pub unsafe fn fe_value_string(it: *const FrontendItem, out: *mut i8) {
 
 /// Put the visible items into the row slots: labels, values, positions (rows slide in).
 pub unsafe fn fe_refresh_rows() {
+    melee_core::ct!("fe_refresh_rows");
     let mut buf = [0i8; FE_STR];
     for slot in 0..FE_MAX_ROWS {
         let l = fe.label[slot];
@@ -1737,6 +1828,7 @@ pub unsafe fn fe_refresh_rows() {
 /// Recompute which items are visible (a value can hide or show others), keeping the cursor on
 /// the same item where it can.
 pub unsafe fn fe_rebuild_visible() {
+    melee_core::ct!("fe_rebuild_visible");
     let keep = if fe.n_vis > 0 { fe.vis[fe.cursor as usize] } else { -1 };
     let mut button = -1i32;
     fe.n_list = 0;
@@ -1807,6 +1899,7 @@ unsafe fn open_canvas() {
 }
 
 pub unsafe extern "C" fn gm_Scene_Frontend_OnEnter(enter_data: *mut c_void) {
+    melee_core::ct!("gm_Scene_Frontend_OnEnter");
     fe.cursor = 0;
     fe.scroll = 0;
     fe.frames = 0;
@@ -1913,6 +2006,7 @@ pub unsafe extern "C" fn gm_Scene_Frontend_OnEnter(enter_data: *mut c_void) {
 
 /// Show another screen in the same scene: the rows, title and subtitle follow.
 pub unsafe fn fe_switch_screen(s: *const FrontendScreen) {
+    melee_core::ct!("fe_switch_screen");
     if ext::fss_intercepts(s) != 0 {
         ext::fss_switch(s); // the Atlas settings are up: fss_frame moves the host to this screen
         return;
@@ -1967,6 +2061,7 @@ pub unsafe fn fe_switch_screen(s: *const FrontendScreen) {
 
 /// VERSUS > ONLINE from the menus: the ONLINE screen as its own GS_FRONTEND scene.
 pub unsafe fn fe_online_from_menus() {
+    melee_core::ct!("fe_online_from_menus");
     fe.screen = addr_of!(fe_screen_online);
     fe.continue_to = GM_VS as u8;
     fe.back_to = GM_MENU as u8;
@@ -1980,6 +2075,7 @@ pub unsafe fn fe_online_from_menus() {
 
 /// SETTINGS > a page from the menus: that page as its own GS_FRONTEND scene.
 pub unsafe fn fe_settings_from_menus(page: i32) {
+    melee_core::ct!("fe_settings_from_menus");
     if page < 0 || page >= FSP_COUNT {
         return;
     }
@@ -2011,6 +2107,7 @@ pub unsafe fn fe_settings_from_menus(page: i32) {
 
 /// The game's Language screen backs out to the tabbed settings, on the GAME tab at Language.
 pub unsafe fn fe_settings_resume_game() {
+    melee_core::ct!("fe_settings_resume_game");
     ext::OSReport(c"frontend: the Language screen backs out to SETTINGS > GAME, on Language\n".as_ptr(), &[]);
     ext::fe_settings_apply_online();
     fe_ol_note[0] = 0;
@@ -2026,6 +2123,7 @@ pub unsafe fn fe_settings_resume_game() {
 }
 
 pub unsafe fn fe_change(it: *const FrontendItem, dir: i32) {
+    melee_core::ct!("fe_change");
     if (*it).get.is_none() || (*it).set.is_none() {
         return;
     }
@@ -2057,6 +2155,7 @@ pub unsafe fn fe_change(it: *const FrontendItem, dir: i32) {
 
 /// The warm-up behind the loading screen: start counting from what is built now.
 pub unsafe fn fe_load_begin() {
+    melee_core::ct!("fe_load_begin");
     fe.load_frames = 0;
     fe.load_base = ext::Gfx_PipelinesCreated();
     {
@@ -2075,6 +2174,7 @@ pub unsafe fn fe_load_begin() {
 
 /// One frame of the warm-up: the progress bar's value. True when it is time to go.
 pub unsafe fn fe_load_step() -> i32 {
+    melee_core::ct!("fe_load_step");
     let target: f32;
     fe.load_frames += 1;
     let pending = ext::Gfx_PipelinesUrgent();
@@ -2119,6 +2219,7 @@ pub unsafe fn fe_load_step() -> i32 {
 
 /// VS mode's loading state: the warm-up, then the state's exit picks the match.
 pub unsafe fn fe_loading_frame() {
+    melee_core::ct!("fe_loading_frame");
     if fe.leaving != 0 {
         fe.fade += 1;
         if fe.fade >= FE_FADE_FRAMES {
@@ -2139,6 +2240,7 @@ pub unsafe fn fe_loading_frame() {
 
 /// The toolkit row under the pointer (the kit's rows as drawn), or -1.
 pub unsafe fn fe_mouse_row() -> i32 {
+    melee_core::ct!("fe_mouse_row");
     if fe_kit == 0 || fk.on == 0 {
         return -1;
     }
@@ -2154,6 +2256,7 @@ pub unsafe fn fe_mouse_row() -> i32 {
 }
 
 pub unsafe extern "C" fn gm_Scene_Frontend_OnFrame() {
+    melee_core::ct!("gm_Scene_Frontend_OnFrame");
     ext::Controls_Menu(if fe.screen == addr_of!(fe_screen_remap) { fcr_port } else { -1 });
     ext::fms_poll();
     if fm.active != 0 {
@@ -2325,6 +2428,7 @@ pub unsafe extern "C" fn gm_Scene_Frontend_OnFrame() {
 }
 
 pub unsafe extern "C" fn gm_Scene_Frontend_OnExit(_exit_data: *mut c_void) {
+    melee_core::ct!("gm_Scene_Frontend_OnExit");
     ext::fss_exit(); // the host closes the settings screen with the scene (Ui_SceneExit)
     if fm.active != 0 {
         ext::fm_scene_exit();

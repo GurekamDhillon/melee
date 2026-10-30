@@ -65,6 +65,7 @@ fn is_link(f: &Fighter) -> bool {
 
 /// `ftCo_800C3A14`: ledge probe on a copy of the collision data raised by 5.
 pub fn ftco_800c3a14(g: G) -> bool {
+    melee_core::ct!("ftco_800c3a14");
     let f = fp(g);
     let mut coll = f.coll_data;
     coll.ledge_snap_y = (coll.ledge_snap_y as f64 + 5.0) as f32;
@@ -93,6 +94,7 @@ fn zair_input(f: &Fighter) -> bool {
 
 /// `ftCo_800C3B10`: Z-air tether check.
 pub fn ftco_800c3b10(g: G) -> bool {
+    melee_core::ct!("ftco_800c3b10");
     let f = fp(g);
     if !ext::ScriptGame_CapsActionAllowed(f, 8) {
         return false;
@@ -124,6 +126,7 @@ pub fn ftco_800c3b10(g: G) -> bool {
 
 /// `ftCo_800C3BE8`: enter AirCatch (air only).
 pub fn ftco_800c3be8(g: G) {
+    melee_core::ct!("ftco_800c3be8");
     let f = fp(g);
     if f.ground_or_air == GA_Air {
         unsafe { f.mv.co.aircatch.x0 = 0.0 };
@@ -140,6 +143,7 @@ pub fn ftco_800c3be8(g: G) {
 
 /// `ftCo_800C3CC0`: enter AirCatchHit.
 pub fn ftco_800c3cc0(g: G) {
+    melee_core::ct!("ftco_800c3cc0");
     let f = fp(g);
     let ms = if is_link(f) { ftLk_MS_AirCatchHit as i32 } else { ftSs_MS_AirCatchHit as i32 };
     ext::Fighter_ChangeMotionState(g, ms, Ft_MF_KeepFastFall as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -176,6 +180,7 @@ fn link_sfx(f: &mut Fighter, clink: i32, link: i32) {
 
 /// `ftCo_AirCatch_Anim`.
 pub fn ftco_aircatch_anim(g: G) {
+    melee_core::ct!("ftco_aircatch_anim");
     let f = fp(g);
     if is_link(f) {
         let da = unsafe { &*(f.dat_attrs as *const ftLk_DatAttrs) };
@@ -266,14 +271,15 @@ pub fn ftco_aircatch_anim(g: G) {
 }
 
 /// `ftCo_AirCatchHit_Anim` (empty).
-pub fn ftco_aircatchhit_anim(_g: G) {}
+pub fn ftco_aircatchhit_anim(_g: G) { melee_core::ct!("ftco_aircatchhit_anim");}
 /// `ftCo_AirCatch_IASA` (empty).
-pub fn ftco_aircatch_iasa(_g: G) {}
+pub fn ftco_aircatch_iasa(_g: G) { melee_core::ct!("ftco_aircatch_iasa");}
 /// `ftCo_AirCatchHit_IASA` (empty).
-pub fn ftco_aircatchhit_iasa(_g: G) {}
+pub fn ftco_aircatchhit_iasa(_g: G) { melee_core::ct!("ftco_aircatchhit_iasa");}
 
 /// `ftCo_AirCatch_Phys`.
 pub fn ftco_aircatch_phys(g: G) {
+    melee_core::ct!("ftco_aircatch_phys");
     let f = fp(g);
     co::check_fall_fast(f);
     let (gr, tv) = (f.co_attrs.gravity, f.co_attrs.terminal_velocity);
@@ -289,6 +295,7 @@ pub fn ftco_aircatch_phys(g: G) {
 
 /// `ftCo_AirCatchHit_Phys`.
 pub fn ftco_aircatchhit_phys(g: G) {
+    melee_core::ct!("ftco_aircatchhit_phys");
     let f = fp(g);
     f.self_vel = f.pos_delta;
     let (gr, tv) = (f.co_attrs.gravity, f.co_attrs.terminal_velocity);
@@ -297,6 +304,7 @@ pub fn ftco_aircatchhit_phys(g: G) {
 
 /// `ftCo_AirCatch_Coll`.
 pub fn ftco_aircatch_coll(g: G) {
+    melee_core::ct!("ftco_aircatch_coll");
     if ext::ft_80081D0C(g) != GA_Ground {
         ext::ftCo_Landing_Enter(g, ftCo_MS_Landing as i32, false, Ft_MF_None as u32, 0.0, 1.0);
     }

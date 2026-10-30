@@ -98,6 +98,7 @@ unsafe fn HSD_JObjSetRotationXWithMtxDirty(jobj: *mut HSD_JObj, x: f32) {
 }
 #[allow(dead_code)]
 pub unsafe fn HSD_JObjSetRotationYWithMtxDirty(jobj: *mut HSD_JObj, y: f32) {
+    melee_core::ct!("HSD_JObjSetRotationYWithMtxDirty");
     assert!(!jobj.is_null(), "HSD_ASSERT(660, jobj)");
     assert!((*jobj).flags & JOBJ_USE_QUATERNION as u32 == 0, "HSD_ASSERT(661, !(jobj->flags & JOBJ_USE_QUATERNION))");
     (*jobj).rotate.y = y;
@@ -155,6 +156,7 @@ unsafe fn Item_ApplyFallingPhysics(gobj: *mut HSD_GObj) {
 
 /// `itDosei_SetSpeed` (static inline): the animation frame speed and the joint's speed.
 pub unsafe fn itDosei_SetSpeed(gobj: *mut HSD_GObj, ip: *mut Item, speed: f32) {
+    melee_core::ct!("itDosei_SetSpeed");
     let jobj = jobj_of(gobj);
     (*ip).x5D0_animFrameSpeed = speed;
     ext::lb_8000BA0C(jobj, speed);
@@ -162,6 +164,7 @@ pub unsafe fn itDosei_SetSpeed(gobj: *mut HSD_GObj, ip: *mut Item, speed: f32) {
 
 /// `HSD_JObjSetRotationZero` (static inline).
 pub unsafe fn HSD_JObjSetRotationZero(gobj: *mut HSD_GObj) {
+    melee_core::ct!("HSD_JObjSetRotationZero");
     let jobj = jobj_of(gobj);
     HSD_JObjSetRotationX(jobj, 0.0);
     HSD_JObjSetRotationY(jobj, 0.0);
@@ -170,6 +173,7 @@ pub unsafe fn HSD_JObjSetRotationZero(gobj: *mut HSD_GObj) {
 
 /// `HSD_JObjSetRotationZeroWithMtxDirty` (static inline).
 pub unsafe fn HSD_JObjSetRotationZeroWithMtxDirty(gobj: *mut HSD_GObj) {
+    melee_core::ct!("HSD_JObjSetRotationZeroWithMtxDirty");
     let jobj = jobj_of(gobj);
     HSD_JObjSetRotationXWithMtxDirty(jobj, 0.0);
     HSD_JObjSetRotationYWithMtxDirty(jobj, 0.0);
@@ -178,6 +182,7 @@ pub unsafe fn HSD_JObjSetRotationZeroWithMtxDirty(gobj: *mut HSD_GObj) {
 
 /// `itDosei_FacingAngle` (static inline): `it_dosei_facing_angle`.
 pub unsafe fn itDosei_FacingAngle(gobj: *mut HSD_GObj, m: f32) -> f32 {
+    melee_core::ct!("itDosei_FacingAngle");
     it_dosei_facing_angle(&*item_of(gobj), m)
 }
 
@@ -186,6 +191,7 @@ pub static it_803F56B8: [i32; 4] = [0x109, 0x10A, 0x10B, 0];
 
 /// `itDosei_Logic7_Spawned`: reset the velocity and the state variables, then motion 8.
 pub unsafe extern "C" fn itDosei_Logic7_Spawned(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itDosei_Logic7_Spawned");
     let ip = item_of(gobj);
     let article = (*ip).xC4_article_data;
     let attr = &*((*article).x4_specialAttributes as *const itDoseiAttributes);
@@ -201,6 +207,7 @@ pub unsafe extern "C" fn itDosei_Logic7_Spawned(gobj: *mut HSD_GObj) {
 
 /// `itDosei_80281390`: come to rest (motion 0, owner dropped).
 pub unsafe extern "C" fn itDosei_80281390(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itDosei_80281390");
     let ip = item_of(gobj);
     itResetVelocity(ip);
     ext::Item_80268E5C(gobj, 0, 3);
@@ -210,6 +217,7 @@ pub unsafe extern "C" fn itDosei_80281390(gobj: *mut HSD_GObj) {
 
 /// `itDosei_UnkMotion0_Anim`: track the position; after the countdown, start walking.
 pub unsafe extern "C" fn itDosei_UnkMotion0_Anim(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDosei_UnkMotion0_Anim");
     let ip = item_of(gobj);
 
     (*ip).xDD4_itemVar.dosei.xDE4 = (*ip).pos;
@@ -225,10 +233,11 @@ pub unsafe extern "C" fn itDosei_UnkMotion0_Anim(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `itDosei_UnkMotion0_Phys` (empty).
-pub unsafe extern "C" fn itDosei_UnkMotion0_Phys(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itDosei_UnkMotion0_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itDosei_UnkMotion0_Phys");}
 
 /// `itDosei_UnkMotion0_Coll`: land into `itDosei_80282074`.
 pub unsafe extern "C" fn itDosei_UnkMotion0_Coll(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDosei_UnkMotion0_Coll");
     ext::it_8026D62C(gobj, Some(itDosei_80282074));
     ext::it_80276CB8(gobj);
     false
@@ -236,6 +245,7 @@ pub unsafe extern "C" fn itDosei_UnkMotion0_Coll(gobj: *mut HSD_GObj) -> bool {
 
 /// `itDosei_80281734`: choose the turn by the slope under the facing direction.
 pub unsafe extern "C" fn itDosei_80281734(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itDosei_80281734");
     let ip = item_of(gobj);
     if (*ip).facing_dir == 1.0 {
         if (*ip).xDD4_itemVar.dosei.xDF8.x < 0.0 {
@@ -254,6 +264,7 @@ pub unsafe extern "C" fn itDosei_80281734(gobj: *mut HSD_GObj) {
 
 /// `itDosei_802817A0`: start walking (motion 1) at the attribute speed.
 pub unsafe extern "C" fn itDosei_802817A0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itDosei_802817A0");
     let ip = item_of(gobj);
     let jobj = jobj_of(gobj);
     let attr = attrs_of(ip);
@@ -276,6 +287,7 @@ pub unsafe extern "C" fn itDosei_802817A0(gobj: *mut HSD_GObj) {
 
 /// `itDosei_UnkMotion1_Anim`: walk; the frame speed follows the floor slope.
 pub unsafe extern "C" fn itDosei_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDosei_UnkMotion1_Anim");
     let ip = item_of(gobj);
     (*ip).xDD4_itemVar.dosei.xDE4 = (*ip).pos;
     let ip2 = item_of(gobj);
@@ -292,6 +304,7 @@ pub unsafe extern "C" fn itDosei_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> bool {
 
 /// `itDosei_UnkMotion1_Phys`: walk at `unk8` scaled by the frame speed, in the facing direction.
 pub unsafe extern "C" fn itDosei_UnkMotion1_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itDosei_UnkMotion1_Phys");
     let ip = item_of(gobj);
     let attr = attrs_of(ip);
     let v = attr.unk8 * (*ip).x5D0_animFrameSpeed;
@@ -300,6 +313,7 @@ pub unsafe extern "C" fn itDosei_UnkMotion1_Phys(gobj: *mut HSD_GObj) {
 
 /// `itDosei_UnkMotion1_Coll`: stay walking on a flat floor, turn at a wall or a slope.
 pub unsafe extern "C" fn itDosei_UnkMotion1_Coll(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDosei_UnkMotion1_Coll");
     let ip = item_of(gobj);
 
     if ext::it_8026D8A4(gobj, Some(itDosei_80281C6C)) != 0 {
@@ -335,6 +349,7 @@ pub unsafe extern "C" fn itDosei_UnkMotion1_Coll(gobj: *mut HSD_GObj) -> bool {
 
 /// `itDosei_80281C6C`: return to the last position (motion 2).
 pub unsafe extern "C" fn itDosei_80281C6C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itDosei_80281C6C");
     let ip = item_of(gobj);
     (*ip).xDD4_itemVar.dosei.xDD8 = 0;
     (*ip).pos = (*ip).xDD4_itemVar.dosei.xDE4;
@@ -348,6 +363,7 @@ pub unsafe extern "C" fn itDosei_80281C6C(gobj: *mut HSD_GObj) {
 
 /// `itDosei_UnkMotion2_Anim`: reverse direction when the animation ends.
 pub unsafe extern "C" fn itDosei_UnkMotion2_Anim(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDosei_UnkMotion2_Anim");
     let ip = item_of(gobj);
     (*ip).xDD4_itemVar.dosei.xDE4 = (*ip).pos;
     if ext::it_80272C6C(gobj) == 0 {
@@ -360,10 +376,11 @@ pub unsafe extern "C" fn itDosei_UnkMotion2_Anim(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `itDosei_UnkMotion2_Phys` (empty).
-pub unsafe extern "C" fn itDosei_UnkMotion2_Phys(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itDosei_UnkMotion2_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itDosei_UnkMotion2_Phys");}
 
 /// `itDosei_SetupWalk_FC` (static inline): walk again after the turn.
 pub unsafe fn itDosei_SetupWalk_FC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itDosei_SetupWalk_FC");
     let ip = item_of(gobj);
     let jobj = jobj_of(gobj);
     let attr = attrs_of(ip);
@@ -387,6 +404,7 @@ pub unsafe fn itDosei_SetupWalk_FC(gobj: *mut HSD_GObj) {
 
 /// `itDosei_UnkMotion2_Coll`: land into `itDosei_80282074`; restart the walk once counted.
 pub unsafe extern "C" fn itDosei_UnkMotion2_Coll(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDosei_UnkMotion2_Coll");
     let ip = item_of(gobj);
     ext::it_8026D62C(gobj, Some(itDosei_80282074));
     if (*ip).xDD4_itemVar.dosei.xDD8 == 2 {
@@ -398,6 +416,7 @@ pub unsafe extern "C" fn itDosei_UnkMotion2_Coll(gobj: *mut HSD_GObj) -> bool {
 
 /// `itDosei_80282074`: settle (motion 3, owner dropped).
 pub unsafe extern "C" fn itDosei_80282074(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itDosei_80282074");
     let ip = item_of(gobj);
     ext::Item_80268E5C(gobj, 3, 3);
     itDosei_SetSpeed(gobj, ip, 1.0);
@@ -406,6 +425,7 @@ pub unsafe extern "C" fn itDosei_80282074(gobj: *mut HSD_GObj) {
 
 /// `itDosei_UnkMotion3_Anim`: hold the position while the animation plays.
 pub unsafe extern "C" fn itDosei_UnkMotion3_Anim(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDosei_UnkMotion3_Anim");
     let ip = item_of(gobj);
     (*ip).xDD4_itemVar.dosei.xDE4 = (*ip).pos;
     if ext::it_80272C6C(gobj) == 0 {
@@ -416,6 +436,7 @@ pub unsafe extern "C" fn itDosei_UnkMotion3_Anim(gobj: *mut HSD_GObj) -> bool {
 
 /// `itDosei_UnkMotion3_Phys`: fall.
 pub unsafe extern "C" fn itDosei_UnkMotion3_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itDosei_UnkMotion3_Phys");
     let ip = item_of(gobj);
     let attrs = &*(*ip).xCC_item_attr;
     ext::it_80272860(gobj, attrs.x10_fall_speed, attrs.x14_fall_speed_max);
@@ -423,12 +444,14 @@ pub unsafe extern "C" fn itDosei_UnkMotion3_Phys(gobj: *mut HSD_GObj) {
 
 /// `itDosei_UnkMotion5_Coll`: land into `itDosei_802817A0`.
 pub unsafe extern "C" fn itDosei_UnkMotion5_Coll(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDosei_UnkMotion5_Coll");
     ext::it_8026E15C(gobj, Some(itDosei_802817A0));
     false
 }
 
 /// `itDosei_Logic7_PickedUp`: show the body and set the speed; re-face unless already held.
 pub unsafe extern "C" fn itDosei_Logic7_PickedUp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itDosei_Logic7_PickedUp");
     let jobj = jobj_of(gobj);
     let ip = item_of(gobj);
     let attr = attrs_of(ip);
@@ -452,6 +475,7 @@ pub unsafe extern "C" fn itDosei_Logic7_PickedUp(gobj: *mut HSD_GObj) {
 
 /// `itDosei_UnkMotion4_Anim_inline` (static inline): reset the rotation and face the item.
 pub unsafe fn itDosei_UnkMotion4_Anim_inline(gobj: *mut HSD_GObj, jobj: *mut HSD_JObj) {
+    melee_core::ct!("itDosei_UnkMotion4_Anim_inline");
     HSD_JObjSetRotationXWithMtxDirty(jobj, 0.0);
     HSD_JObjSetRotationYWithMtxDirty(jobj, 0.0);
     HSD_JObjSetRotationZWithMtxDirty(jobj, 0.0);
@@ -462,16 +486,19 @@ pub unsafe fn itDosei_UnkMotion4_Anim_inline(gobj: *mut HSD_GObj, jobj: *mut HSD
 
 /// `itDosei_UnkMotion4_GetAnimSpeed` (static inline): `attr->unk0`.
 pub unsafe fn itDosei_UnkMotion4_GetAnimSpeed(attr: *mut itDoseiAttributes) -> f32 {
+    melee_core::ct!("itDosei_UnkMotion4_GetAnimSpeed");
     (*attr).unk0
 }
 
 /// `itDosei_UnkMotion4_GetAttrs` (static inline): the special attributes.
 pub unsafe fn itDosei_UnkMotion4_GetAttrs(ip: *mut Item) -> *mut itDoseiAttributes {
+    melee_core::ct!("itDosei_UnkMotion4_GetAttrs");
     (*(*ip).xC4_article_data).x4_specialAttributes as *mut itDoseiAttributes
 }
 
 /// `itDosei_UnkMotion4_Anim`: when not yet picked up, show the body and set the animation speed.
 pub unsafe extern "C" fn itDosei_UnkMotion4_Anim(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDosei_UnkMotion4_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         let ip = item_of(gobj);
         let jobj = jobj_of(gobj);
@@ -495,15 +522,17 @@ pub unsafe extern "C" fn itDosei_UnkMotion4_Anim(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `itDosei_UnkMotion4_Phys` (empty).
-pub unsafe extern "C" fn itDosei_UnkMotion4_Phys(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itDosei_UnkMotion4_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itDosei_UnkMotion4_Phys");}
 
 /// `itDosei_GetJObj` (static inline): `gobj->hsd_obj`.
 pub unsafe fn itDosei_GetJObj(gobj: *mut HSD_GObj) -> *mut HSD_JObj {
+    melee_core::ct!("itDosei_GetJObj");
     (*gobj).hsd_obj as *mut HSD_JObj
 }
 
 /// `itDosei_Logic7_Dropped`: the body reappears at the dropped speed (motion 5).
 pub unsafe extern "C" fn itDosei_Logic7_Dropped(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itDosei_Logic7_Dropped");
     let ip = item_of(gobj);
     let jobj = itDosei_GetJObj(gobj);
     let attr = attrs_of(ip);
@@ -522,6 +551,7 @@ pub unsafe extern "C" fn itDosei_Logic7_Dropped(gobj: *mut HSD_GObj) {
 
 /// `itDosei_Logic7_Thrown`: launch (motion 5) with the thrown speed `xDE0`.
 pub unsafe extern "C" fn itDosei_Logic7_Thrown(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itDosei_Logic7_Thrown");
     let jobj = jobj_of(gobj);
     let ip = item_of(gobj);
     let attr = attrs_of(ip);
@@ -540,16 +570,19 @@ pub unsafe extern "C" fn itDosei_Logic7_Thrown(gobj: *mut HSD_GObj) {
 
 /// `itDosei_UnkMotion5_Anim` (returns false).
 pub unsafe extern "C" fn itDosei_UnkMotion5_Anim(_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDosei_UnkMotion5_Anim");
     false
 }
 
 /// `itDosei_UnkMotion5_Phys`: fall.
 pub unsafe extern "C" fn itDosei_UnkMotion5_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itDosei_UnkMotion5_Phys");
     Item_ApplyFallingPhysics(gobj);
 }
 
 /// `itDosei_Logic7_EnteredAir`: pick the airborne motion (10, or 6 when the item was dropped).
 pub unsafe extern "C" fn itDosei_Logic7_EnteredAir(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itDosei_Logic7_EnteredAir");
     let ip = item_of(gobj);
     let motion_id: i32 = if (*ip).xDC8_word.flags.x19() == 0 { 0xA } else { 6 };
     ext::Item_80268E5C(gobj, motion_id, 3);
@@ -561,16 +594,18 @@ pub unsafe extern "C" fn itDosei_Logic7_EnteredAir(gobj: *mut HSD_GObj) {
 
 /// `itDosei_UnkMotion6_Anim`: track the position.
 pub unsafe extern "C" fn itDosei_UnkMotion6_Anim(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDosei_UnkMotion6_Anim");
     let ip = item_of(gobj);
     (*ip).xDD4_itemVar.dosei.xDE4 = (*ip).pos;
     false
 }
 
 /// `itDosei_UnkMotion6_Phys` (empty).
-pub unsafe extern "C" fn itDosei_UnkMotion6_Phys(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itDosei_UnkMotion6_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itDosei_UnkMotion6_Phys");}
 
 /// `itDosei_UnkMotion6_Coll`: keep the floor normal, then choose the turn.
 pub unsafe extern "C" fn itDosei_UnkMotion6_Coll(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDosei_UnkMotion6_Coll");
     let ip = item_of(gobj);
     (*ip).xDD4_itemVar.dosei.xDF8 = (*ip).x378_itemColl.floor.normal;
     ext::it_8026E8C4(gobj, Some(itDosei_80281734), Some(itDosei_80282074));
@@ -579,6 +614,7 @@ pub unsafe extern "C" fn itDosei_UnkMotion6_Coll(gobj: *mut HSD_GObj) -> bool {
 
 /// `itDosei_80282BFC`: the idle state (motion 8).
 pub unsafe extern "C" fn itDosei_80282BFC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itDosei_80282BFC");
     let ip = item_of(gobj);
     ext::Item_80268E5C(gobj, 8, 3);
     let jobj = jobj_of(gobj);
@@ -589,6 +625,7 @@ pub unsafe extern "C" fn itDosei_80282BFC(gobj: *mut HSD_GObj) {
 
 /// `itDosei_UnkMotion8_Anim`: track the position.
 pub unsafe extern "C" fn itDosei_UnkMotion8_Anim(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDosei_UnkMotion8_Anim");
     let ip = item_of(gobj);
     (*ip).xDD4_itemVar.dosei.xDE4 = (*ip).pos;
     false
@@ -596,6 +633,7 @@ pub unsafe extern "C" fn itDosei_UnkMotion8_Anim(gobj: *mut HSD_GObj) -> bool {
 
 /// `itDosei_UnkMotion8_Phys`: fall.
 pub unsafe extern "C" fn itDosei_UnkMotion8_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itDosei_UnkMotion8_Phys");
     let ip = item_of(gobj);
     let attrs = &*(*ip).xCC_item_attr;
     ext::it_80272860(gobj, attrs.x10_fall_speed, attrs.x14_fall_speed_max);
@@ -603,12 +641,14 @@ pub unsafe extern "C" fn itDosei_UnkMotion8_Phys(gobj: *mut HSD_GObj) {
 
 /// `itDosei_UnkMotion8_Coll`: land into `itDosei_80282CD4`.
 pub unsafe extern "C" fn itDosei_UnkMotion8_Coll(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDosei_UnkMotion8_Coll");
     ext::it_8026E15C(gobj, Some(itDosei_80282CD4));
     false
 }
 
 /// `itDosei_80282CD4`: stop and enter motion 7.
 pub unsafe extern "C" fn itDosei_80282CD4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itDosei_80282CD4");
     let ip = item_of(gobj);
     itResetVelocity(ip);
     ext::it_802762B0(ip);
@@ -621,6 +661,7 @@ pub unsafe extern "C" fn itDosei_80282CD4(gobj: *mut HSD_GObj) {
 
 /// `itDosei_UnkMotion7_Anim`: count down, then roll (`itDosei_80282DE4`).
 pub unsafe extern "C" fn itDosei_UnkMotion7_Anim(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDosei_UnkMotion7_Anim");
     let ip = item_of(gobj);
     (*ip).xDD4_itemVar.dosei.xDE4 = (*ip).pos;
 
@@ -634,10 +675,11 @@ pub unsafe extern "C" fn itDosei_UnkMotion7_Anim(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `itDosei_UnkMotion7_Phys` (empty).
-pub unsafe extern "C" fn itDosei_UnkMotion7_Phys(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itDosei_UnkMotion7_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itDosei_UnkMotion7_Phys");}
 
 /// `itDosei_UnkMotion7_Coll`: land into `itDosei_80282BFC`.
 pub unsafe extern "C" fn itDosei_UnkMotion7_Coll(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDosei_UnkMotion7_Coll");
     ext::it_8026D62C(gobj, Some(itDosei_80282BFC));
     ext::it_80276CB8(gobj);
     false
@@ -645,6 +687,7 @@ pub unsafe extern "C" fn itDosei_UnkMotion7_Coll(gobj: *mut HSD_GObj) -> bool {
 
 /// `itDosei_80282DE4` (static): start the half-turn of the roll (motion 9).
 pub unsafe fn itDosei_80282DE4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itDosei_80282DE4");
     let ip = item_of(gobj);
     let jobj = jobj_of(gobj);
 
@@ -669,6 +712,7 @@ pub unsafe fn itDosei_80282DE4(gobj: *mut HSD_GObj) {
 /// `itDosei_UnkMotion9_Anim`: advance the roll angle by `PI / unkC` per frame; start walking
 /// when it reaches zero.
 pub unsafe extern "C" fn itDosei_UnkMotion9_Anim(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDosei_UnkMotion9_Anim");
     let ip = item_of(gobj);
     let attr = attrs_of(ip);
 
@@ -692,10 +736,11 @@ pub unsafe extern "C" fn itDosei_UnkMotion9_Anim(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `itDosei_UnkMotion9_Phys` (empty).
-pub unsafe extern "C" fn itDosei_UnkMotion9_Phys(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itDosei_UnkMotion9_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itDosei_UnkMotion9_Phys");}
 
 /// `itDosei_UnkMotion9_Coll`: land; once the roll is done, walk again at the captured frame.
 pub unsafe extern "C" fn itDosei_UnkMotion9_Coll(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDosei_UnkMotion9_Coll");
     let ip = item_of(gobj);
     ext::it_8026D62C(gobj, Some(itDosei_80282074));
     if (*ip).xDD4_itemVar.dosei.xDD8 == 2 {
@@ -709,6 +754,7 @@ pub unsafe extern "C" fn itDosei_UnkMotion9_Coll(gobj: *mut HSD_GObj) -> bool {
 
 /// `itDosei_UnkMotion10_Anim`: track the position at unit speed.
 pub unsafe extern "C" fn itDosei_UnkMotion10_Anim(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDosei_UnkMotion10_Anim");
     let ip = item_of(gobj);
     (*ip).xDD4_itemVar.dosei.xDE4 = (*ip).pos;
     let jobj = jobj_of(gobj);
@@ -718,16 +764,18 @@ pub unsafe extern "C" fn itDosei_UnkMotion10_Anim(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `itDosei_UnkMotion10_Phys` (empty).
-pub unsafe extern "C" fn itDosei_UnkMotion10_Phys(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itDosei_UnkMotion10_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itDosei_UnkMotion10_Phys");}
 
 /// `itDosei_UnkMotion10_Coll`: land into `itDosei_80282CD4`, or back to `itDosei_80282BFC`.
 pub unsafe extern "C" fn itDosei_UnkMotion10_Coll(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDosei_UnkMotion10_Coll");
     ext::it_8026E8C4(gobj, Some(itDosei_80282CD4), Some(itDosei_80282BFC));
     false
 }
 
 /// `itDosei_Logic7_DmgReceived`: launch from the hit (motion 0xB), scaled by the attributes.
 pub unsafe extern "C" fn itDosei_Logic7_DmgReceived(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itDosei_Logic7_DmgReceived");
     let ip = item_of(gobj);
     let attr = attrs_of(ip);
 
@@ -756,6 +804,7 @@ pub unsafe extern "C" fn itDosei_Logic7_DmgReceived(gobj: *mut HSD_GObj) -> i32 
 
 /// `itDosei_UnkMotion11_Anim`: track the position; hold motion 11.
 pub unsafe extern "C" fn itDosei_UnkMotion11_Anim(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDosei_UnkMotion11_Anim");
     let ip = item_of(gobj);
     (*ip).xDD4_itemVar.dosei.xDE4 = (*ip).pos;
     if ext::it_80272C6C(gobj) == 0 {
@@ -766,6 +815,7 @@ pub unsafe extern "C" fn itDosei_UnkMotion11_Anim(gobj: *mut HSD_GObj) -> bool {
 
 /// `itDosei_UnkMotion11_Phys`: fall.
 pub unsafe extern "C" fn itDosei_UnkMotion11_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itDosei_UnkMotion11_Phys");
     let ip = item_of(gobj);
     let attrs = &*(*ip).xCC_item_attr;
     ext::it_80272860(gobj, attrs.x10_fall_speed, attrs.x14_fall_speed_max);
@@ -773,12 +823,14 @@ pub unsafe extern "C" fn itDosei_UnkMotion11_Phys(gobj: *mut HSD_GObj) {
 
 /// `itDosei_UnkMotion11_Coll`: land into `itDosei_80281390`.
 pub unsafe extern "C" fn itDosei_UnkMotion11_Coll(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDosei_UnkMotion11_Coll");
     ext::it_8026E15C(gobj, Some(itDosei_80281390));
     false
 }
 
 /// `itDosei_Logic7_DmgDealt`: the hit sound; a thrown Dosei bounces off its victim.
 pub unsafe extern "C" fn itDosei_Logic7_DmgDealt(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDosei_Logic7_DmgDealt");
     let ip = item_of(gobj);
     ext::Item_8026AF0C(ip, it_803F56B8[ext::HSD_Randi(3) as usize], 127, 64);
     if (*ip).msid == 5 {
@@ -790,28 +842,33 @@ pub unsafe extern "C" fn itDosei_Logic7_DmgDealt(gobj: *mut HSD_GObj) -> bool {
 
 /// `itDosei_Logic7_Reflected`: `it_80273030`.
 pub unsafe extern "C" fn itDosei_Logic7_Reflected(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itDosei_Logic7_Reflected");
     ext::it_80273030(gobj)
 }
 
 /// `itDosei_Logic7_Clanked`: bounce off the victim; false.
 pub unsafe extern "C" fn itDosei_Logic7_Clanked(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDosei_Logic7_Clanked");
     ext::itColl_BounceOffVictim(gobj);
     false
 }
 
 /// `itDosei_Logic7_HitShield`: bounce off the victim; false.
 pub unsafe extern "C" fn itDosei_Logic7_HitShield(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itDosei_Logic7_HitShield");
     ext::itColl_BounceOffVictim(gobj);
     false
 }
 
 /// `itDosei_Logic7_ShieldBounced`: `itColl_BounceOffShield`.
 pub unsafe extern "C" fn itDosei_Logic7_ShieldBounced(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itDosei_Logic7_ShieldBounced");
     ext::itColl_BounceOffShield(gobj)
 }
 
 /// `itDosei_Logic7_EvtUnk`: `it_8026B894`.
 pub unsafe extern "C" fn itDosei_Logic7_EvtUnk(gobj: *mut HSD_GObj, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itDosei_Logic7_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }
 

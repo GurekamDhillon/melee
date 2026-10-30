@@ -77,6 +77,7 @@ pub static mut it_803F7AC8: [ItemStateTable; 1] = [
 
 /// 2C9588
 pub unsafe extern "C" fn it_802C9588(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802C9588");
     let item = GET_ITEM(item_gobj);
     let attr = (*(*item).xC4_article_data).x4_specialAttributes as *mut itChicoritaAttr;
     ext::it_80279C48(item_gobj);
@@ -89,20 +90,23 @@ pub unsafe extern "C" fn it_802C9588(item_gobj: *mut Item_GObj) {
 }
 
 /// 2C9618
-pub unsafe extern "C" fn it_802C9618(_item_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn it_802C9618(_item_gobj: *mut HSD_GObj) { melee_core::ct!("it_802C9618");}
 
 pub unsafe extern "C" fn itChicorita_Logic1_EvtUnk(item_gobj: *mut Item_GObj, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itChicorita_Logic1_EvtUnk");
     ext::it_8026B894(item_gobj, ref_gobj);
 }
 
 /// 2C963C
 pub unsafe extern "C" fn it_802C963C(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802C963C");
     ext::it_80273454(item_gobj);
     it_802C9670(item_gobj);
 }
 
 /// 2C9670
 pub unsafe extern "C" fn it_802C9670(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802C9670");
     let item = (*item_gobj).user_data as *mut Item;
     let article = (*item).xC4_article_data;
     let attr = (*article).x4_specialAttributes as *mut itChicoritaAttr;
@@ -114,6 +118,7 @@ pub unsafe extern "C" fn it_802C9670(item_gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itChicorita_UnkMotion0_Anim(item_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itChicorita_UnkMotion0_Anim");
     let mut item_jobj = GET_JOBJ(item_gobj);
     let mut item = GET_ITEM(item_gobj);
     if item_jobj.is_null() {
@@ -167,10 +172,12 @@ unsafe fn itChicorita_Phys(item_gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itChicorita_UnkMotion0_Phys(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itChicorita_UnkMotion0_Phys");
     itChicorita_Phys(item_gobj);
 }
 
 pub unsafe extern "C" fn itChicorita_UnkMotion0_Coll(item_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itChicorita_UnkMotion0_Coll");
     if (*((*item_gobj).user_data as *mut Item)).ground_or_air == GA_Air {
         ext::it_8026E15C(item_gobj, Some(it_802C9618));
     } else {
@@ -181,6 +188,7 @@ pub unsafe extern "C" fn itChicorita_UnkMotion0_Coll(item_gobj: *mut HSD_GObj) -
 
 /// 2C989C: the accessory callback; throws a leaf when the event script raised the flag.
 pub unsafe extern "C" fn it_802C989C(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802C989C");
     let item = (*item_gobj).user_data as *mut Item;
     if (*item).anon_dbc.xDBC_itcmd_var4.flags.x0() != 0 {
         it_802C9B20(item_gobj);
@@ -190,10 +198,12 @@ pub unsafe extern "C" fn it_802C989C(item_gobj: *mut HSD_GObj) {
 
 /// 2C98E4
 pub unsafe extern "C" fn it_802C98E4(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802C98E4");
     ext::Item_80268E5C(item_gobj, 1, ITEM_ANIM_UPDATE);
 }
 
 pub unsafe extern "C" fn itChicorita_UnkMotion1_Anim(item_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itChicorita_UnkMotion1_Anim");
     let mut item_jobj = GET_JOBJ(item_gobj);
     let item = GET_ITEM(item_gobj);
     if item_jobj.is_null() {
@@ -209,10 +219,12 @@ pub unsafe extern "C" fn itChicorita_UnkMotion1_Anim(item_gobj: *mut HSD_GObj) -
 }
 
 pub unsafe extern "C" fn itChicorita_UnkMotion1_Phys(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itChicorita_UnkMotion1_Phys");
     itChicorita_Phys(item_gobj);
 }
 
 pub unsafe extern "C" fn itChicorita_UnkMotion1_Coll(item_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itChicorita_UnkMotion1_Coll");
     if (*((*item_gobj).user_data as *mut Item)).ground_or_air == GA_Air {
         ext::it_8026E15C(item_gobj, Some(it_802C9618));
     } else {
@@ -223,25 +235,30 @@ pub unsafe extern "C" fn itChicorita_UnkMotion1_Coll(item_gobj: *mut HSD_GObj) -
 
 /// 2C9A74
 pub unsafe extern "C" fn it_802C9A74(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802C9A74");
     ext::it_802762BC((*item_gobj).user_data as *mut Item);
     ext::Item_80268E5C(item_gobj, 2, ITEM_ANIM_UPDATE);
 }
 
 pub unsafe extern "C" fn itChicorita_UnkMotion2_Anim(item_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itChicorita_UnkMotion2_Anim");
     ext::it_80279FF8(item_gobj);
     false
 }
 
 pub unsafe extern "C" fn itChicorita_UnkMotion2_Phys(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itChicorita_UnkMotion2_Phys");
     ext::it_8027A09C(item_gobj);
 }
 
 pub unsafe extern "C" fn itChicorita_UnkMotion2_Coll(item_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itChicorita_UnkMotion2_Coll");
     ext::it_8027A118(item_gobj, Some(it_802C963C)) != 0
 }
 
 /// 2C9B20: throws a leaf (1 fused site: `prev_pos.x += x8 * facing_dir`).
 pub unsafe extern "C" fn it_802C9B20(chicorita_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802C9B20");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
     let chicorita = GET_ITEM(chicorita_gobj);
@@ -266,6 +283,7 @@ pub unsafe extern "C" fn it_802C9B20(chicorita_gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itChicoritaLeaf_Logic30_Spawned(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itChicoritaLeaf_Logic30_Spawned");
     let item = GET_ITEM(item_gobj);
     (*item).xD44_lifeTimer = (*((*(*item).xC4_article_data).x4_specialAttributes as *mut itChicoritaLeafAttr)).timer;
     ext::it_80274740(item_gobj);
@@ -275,23 +293,28 @@ pub unsafe extern "C" fn itChicoritaLeaf_Logic30_Spawned(item_gobj: *mut Item_GO
 }
 
 pub unsafe extern "C" fn itChicoritaLeaf_Logic30_HitShield(_item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itChicoritaLeaf_Logic30_HitShield");
     false
 }
 
 pub unsafe extern "C" fn itChicoritaLeaf_Logic30_EvtUnk(item_gobj: *mut Item_GObj, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itChicoritaLeaf_Logic30_EvtUnk");
     ext::it_8026B894(item_gobj, ref_gobj);
 }
 
 pub unsafe extern "C" fn itChicoritaLeaf_Logic30_Reflected(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itChicoritaLeaf_Logic30_Reflected");
     ext::it_80273030(item_gobj) != 0
 }
 
 /// 2C9CC0
 pub unsafe extern "C" fn it_802C9CC0(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802C9CC0");
     ext::Item_80268E5C(item_gobj, 0, ITEM_ANIM_UPDATE);
 }
 
 pub unsafe extern "C" fn itChicoritaleaf_UnkMotion0_Anim(item_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itChicoritaleaf_UnkMotion0_Anim");
     let item = (*item_gobj).user_data as *mut Item;
     if (*item).xD44_lifeTimer <= 0.0 {
         return true;
@@ -300,8 +323,9 @@ pub unsafe extern "C" fn itChicoritaleaf_UnkMotion0_Anim(item_gobj: *mut HSD_GOb
     false
 }
 
-pub unsafe extern "C" fn itChicoritaleaf_UnkMotion0_Phys(_item_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itChicoritaleaf_UnkMotion0_Phys(_item_gobj: *mut HSD_GObj) { melee_core::ct!("itChicoritaleaf_UnkMotion0_Phys");}
 
 pub unsafe extern "C" fn itChicoritaleaf_UnkMotion0_Coll(item_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itChicoritaleaf_UnkMotion0_Coll");
     ext::it_8026DFB0(item_gobj) != 0
 }

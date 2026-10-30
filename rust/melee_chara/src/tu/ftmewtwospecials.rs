@@ -75,31 +75,37 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 
 /// `ftMt_SpecialS_SetFlags` as an `HSD_GObjEvent` entry (the `ftCommon_8007E2D0` grab callback).
 pub unsafe extern "C" fn cb_ftMt_SpecialS_SetFlags(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftMt_SpecialS_SetFlags");
     ftMt_SpecialS_SetFlags(g)
 }
 
 /// `ftMt_SpecialS_ReflectThink` as an `HSD_GObjEvent` entry (`accessory4_cb`).
 pub unsafe extern "C" fn cb_ftMt_SpecialS_ReflectThink(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftMt_SpecialS_ReflectThink");
     ftMt_SpecialS_ReflectThink(g)
 }
 
 /// `ftMt_SpecialS_OnReflect` as an `HSD_GObjEvent` entry (`reflect_hit_cb`).
 pub unsafe extern "C" fn cb_ftMt_SpecialS_OnReflect(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftMt_SpecialS_OnReflect");
     ftMt_SpecialS_OnReflect(g)
 }
 
 /// `ftCo_800BCF18` as an `HSD_GObjInteraction` entry (`grabbed_cb`, ground).
 pub unsafe extern "C" fn cb_ftCo_800BCF18(g: *mut HSD_GObj, victim: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftCo_800BCF18");
     melee_fighter::tu::ftCo_CaptureMewtwo::ftCo_800BCF18(g, victim)
 }
 
 /// `ftCo_800BD000` as an `HSD_GObjInteraction` entry (`grabbed_cb`, air).
 pub unsafe extern "C" fn cb_ftCo_800BD000(g: *mut HSD_GObj, victim: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftCo_800BD000");
     melee_fighter::tu::ftCo_CaptureMewtwo::ftCo_800BD000(g, victim)
 }
 
 /// `ftMewtwo_SpecialS_SetGrab` (static inline): arm the grab, or keep the held victim.
 pub fn ftMewtwo_SpecialS_SetGrab(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMewtwo_SpecialS_SetGrab");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).victim_gobj.is_null() {
@@ -118,6 +124,7 @@ pub fn ftMewtwo_SpecialS_SetGrab(gobj: *mut HSD_GObj) {
 
 /// `ftMewtwo_SpecialAirS_SetGrab` (static inline): the aerial version of the above.
 pub fn ftMewtwo_SpecialAirS_SetGrab(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMewtwo_SpecialAirS_SetGrab");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).victim_gobj.is_null() {
@@ -136,6 +143,7 @@ pub fn ftMewtwo_SpecialAirS_SetGrab(gobj: *mut HSD_GObj) {
 
 /// Grounded Confusion Motion State handler.
 pub fn ftMt_SpecialS_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialS_Enter");
     unsafe {
         let fp = fpp(gobj);
         (*fp).anon_2210.throw_flags = 0;
@@ -151,6 +159,7 @@ pub fn ftMt_SpecialS_Enter(gobj: *mut HSD_GObj) {
 
 /// Aerial Confusion Motion State handler.
 pub fn ftMt_SpecialAirS_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialAirS_Enter");
     unsafe {
         let fp = fpp(gobj);
         let a = (*fp).dat_attrs as *const ftMewtwoAttributes;
@@ -172,6 +181,7 @@ pub fn ftMt_SpecialAirS_Enter(gobj: *mut HSD_GObj) {
 /// `ftMewtwo_SetGrabVictim` (static inline): on the script's cmd_vars[0] pulse, hand the grabbed
 /// victim to the throw.
 pub fn ftMewtwo_SetGrabVictim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMewtwo_SetGrabVictim");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).cmd_vars[0] != 0 {
@@ -187,6 +197,7 @@ pub fn ftMewtwo_SetGrabVictim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMt_SpecialS_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialS_Anim");
     unsafe {
         ftMewtwo_SetGrabVictim(gobj);
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -196,6 +207,7 @@ pub fn ftMt_SpecialS_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMt_SpecialAirS_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialAirS_Anim");
     unsafe {
         ftMewtwo_SetGrabVictim(gobj);
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -206,6 +218,7 @@ pub fn ftMt_SpecialAirS_Anim(gobj: *mut HSD_GObj) {
 
 /// `ftMewtwo_SpecialS_SetReflect` (static inline): re-arm the bubble across a ground/air switch.
 pub fn ftMewtwo_SpecialS_SetReflect(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMewtwo_SpecialS_SetReflect");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).mv.mt.SpecialS.isConfusionReflect() != 0 {
@@ -217,6 +230,7 @@ pub fn ftMewtwo_SpecialS_SetReflect(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMt_SpecialS_GroundToAir(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialS_GroundToAir");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, ftMt_MS_SpecialAirS as i32, FTMEWTWO_SPECIALS_COLL_FLAG);
@@ -228,6 +242,7 @@ pub fn ftMt_SpecialS_GroundToAir(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMt_SpecialAirS_AirToGround(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialAirS_AirToGround");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, ftMt_MS_SpecialS as i32, FTMEWTWO_SPECIALS_COLL_FLAG);
@@ -240,6 +255,7 @@ pub fn ftMt_SpecialAirS_AirToGround(gobj: *mut HSD_GObj) {
 
 /// Confusion reflect think function (`accessory4_cb`).
 pub fn ftMt_SpecialS_ReflectThink(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialS_ReflectThink");
     unsafe {
         let fp = fpp(gobj);
         let a = (*fp).dat_attrs as *const ftMewtwoAttributes;

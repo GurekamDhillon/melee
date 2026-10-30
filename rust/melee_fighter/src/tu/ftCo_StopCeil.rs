@@ -41,14 +41,17 @@ pub mod ext {
 
 /// `ftCo_80096CC8` as a callback value.
 pub unsafe extern "C" fn ftCo_80096CC8_cb(g: G, line_id: i32) -> bool {
+    melee_core::ct!("ftCo_80096CC8_cb");
     ext::ftCo_80096CC8(g, line_id)
 }
 /// `ft_80082B1C` as a callback value.
 pub unsafe extern "C" fn ft_80082B1C_cb(g: G) {
+    melee_core::ct!("ft_80082B1C_cb");
     ext::ft_80082B1C(g)
 }
 
 pub fn ftCo_8009EF68(g: G) -> bool {
+    melee_core::ct!("ftCo_8009EF68");
     if fp(g).coll_data.env_flags & Collide_CeilingHug as i32 != 0 {
         ftCo_8009EFA4(g);
         return true;
@@ -58,6 +61,7 @@ pub fn ftCo_8009EF68(g: G) -> bool {
 
 /// static `ftCo_8009EFA4`.
 pub fn ftCo_8009EFA4(g: G) {
+    melee_core::ct!("ftCo_8009EFA4");
     let f = fp(g);
     f.anon_2210.throw_flags = 0;
     let mut vec = Vec3 { x: 0.0, y: f.coll_data.ecb.top.y, z: 0.0 };
@@ -74,6 +78,7 @@ pub fn ftCo_8009EFA4(g: G) {
 }
 
 pub fn ftCo_StopCeil_Anim(g: G) {
+    melee_core::ct!("ftCo_StopCeil_Anim");
     let f = fp(g);
     // ftCheckThrowB3
     let b3 = unsafe {
@@ -89,10 +94,11 @@ pub fn ftCo_StopCeil_Anim(g: G) {
     }
 }
 
-pub fn ftCo_StopCeil_IASA(_g: G) {}
+pub fn ftCo_StopCeil_IASA(_g: G) { melee_core::ct!("ftCo_StopCeil_IASA");}
 
-pub fn ftCo_StopCeil_Phys(_g: G) {}
+pub fn ftCo_StopCeil_Phys(_g: G) { melee_core::ct!("ftCo_StopCeil_Phys");}
 
 pub fn ftCo_StopCeil_Coll(g: G) {
+    melee_core::ct!("ftCo_StopCeil_Coll");
     ext::ft_80083464(g, ftCo_80096CC8_cb, ft_80082B1C_cb);
 }

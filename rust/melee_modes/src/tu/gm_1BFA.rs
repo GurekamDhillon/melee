@@ -385,6 +385,7 @@ pub fn gm_Mode_ChallengerApproach_States() -> [GameModeState; 4] {
 
 /// `gm_ModeState_Approach_OnEnter`: hand the challenger's CPU kind and the human slot to the vs scene.
 pub unsafe extern "C" fn gm_ModeState_Approach_OnEnter(arg0: *mut GameModeState) {
+    melee_core::ct!("gm_ModeState_Approach_OnEnter");
     let vs = ext::gm_GetGameModeStateEnterData(arg0) as *mut VsApproachData;
     let challenger = ext::gm_GetChallengerData();
     (*vs).cpu_ckind = (*challenger).cpu_ckind;
@@ -394,6 +395,7 @@ pub unsafe extern "C" fn gm_ModeState_Approach_OnEnter(arg0: *mut GameModeState)
 
 /// `gm_ModeState_ApproachVs_OnEnter`: the stock match against the challenger (human in slot 0, CPU in 1).
 pub unsafe extern "C" fn gm_ModeState_ApproachVs_OnEnter(state: *mut GameModeState) {
+    melee_core::ct!("gm_ModeState_ApproachVs_OnEnter");
     let start = ext::gm_GetGameModeStateEnterData(state) as *mut StartMeleeData;
     let challenger = ext::gm_GetChallengerData();
     ext::gm_SetupRulesDefaults(addr_of_mut!((*start).rules));
@@ -422,6 +424,7 @@ pub unsafe extern "C" fn gm_ModeState_ApproachVs_OnEnter(state: *mut GameModeSta
 
 /// `onExitVs` (static): record the match, unlock or re-lock the challenger, then go back or to the prize scene.
 pub unsafe extern "C" fn onExitVs(state: *mut GameModeState) {
+    melee_core::ct!("onExitVs");
     let mei = ext::gm_GetGameModeStateExitData(state) as *mut MatchExitInfo;
     let challenger = ext::gm_GetChallengerData();
     ext::gm_80162968((*mei).match_end.frame_count / GM_FPS as u32);
@@ -445,6 +448,7 @@ pub unsafe extern "C" fn onExitVs(state: *mut GameModeState) {
 /// `gm_801BFC60` (static, `dont_inline`): fill the first prize entry in place, later ones in a fresh
 /// allocation linked from `arg4`; returns the slot where the next entry's address goes.
 pub unsafe fn gm_801BFC60(arg0: u32, arg1: i32, arg2: u32, arg3: u32, arg4: *mut *mut c_void) -> *mut *mut c_void {
+    melee_core::ct!("gm_801BFC60");
     if arg1 == 0 {
         let e = ext::if_Scene_Prize_EnterData();
         (*e).x0 = arg0 as u16;
@@ -466,6 +470,7 @@ pub unsafe fn gm_801BFC60(arg0: u32, arg1: i32, arg2: u32, arg3: u32, arg4: *mut
 /// `gm_ModeState_Prize_OnEnter`: list the unlocked fighters, then the owned trophies (newly seen ones
 /// first stamped with the time), as a linked list starting at `if_Scene_Prize_EnterData`.
 pub unsafe extern "C" fn gm_ModeState_Prize_OnEnter(arg0: *mut GameModeState) {
+    melee_core::ct!("gm_ModeState_Prize_OnEnter");
     ext::gm_GetGameModeStateEnterData(arg0);
     let mut var_r31: *mut *mut c_void = null_mut();
     ext::gm_GetChallengerData();
@@ -532,6 +537,7 @@ pub unsafe extern "C" fn gm_ModeState_Prize_OnEnter(arg0: *mut GameModeState) {
 
 /// `onExitPrize` (static): back to the mode the challenge interrupted.
 pub unsafe extern "C" fn onExitPrize(_state: *mut GameModeState) {
+    melee_core::ct!("onExitPrize");
     ext::gm_SetPendingGameMode((*ext::gm_GetChallengerData()).curr_mode);
     ext::gm_SetNewGameModePending();
 }

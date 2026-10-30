@@ -182,27 +182,33 @@ unsafe fn ftCheckThrowB3(fp: *mut Fighter) -> bool {
 
 /// `ftPe_SpecialHi_8011D620` as an `HSD_GObjEvent` (pre-hitlag callback).
 pub unsafe extern "C" fn cb_ftPe_SpecialHi_8011D620(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftPe_SpecialHi_8011D620");
     ftPe_SpecialHi_8011D620(g);
 }
 /// `ftPe_SpecialHi_8011D650` as an `HSD_GObjEvent` (post-hitlag callback).
 pub unsafe extern "C" fn cb_ftPe_SpecialHi_8011D650(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftPe_SpecialHi_8011D650");
     ftPe_SpecialHi_8011D650(g);
 }
 /// `ftPe_SpecialHi_8011D424` as the Accessory4 callback entry.
 pub unsafe extern "C" fn cb_ftPe_SpecialHi_8011D424(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftPe_SpecialHi_8011D424");
     ftPe_SpecialHi_8011D424(g);
 }
 /// `ftPe_SpecialHi_8011DD8C` as an `HSD_GObjEvent` (landing callback).
 pub unsafe extern "C" fn cb_ftPe_SpecialHi_8011DD8C(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftPe_SpecialHi_8011DD8C");
     ftPe_SpecialHi_8011DD8C(g);
 }
 /// `ftPe_SpecialHi_8011E064` as an `HSD_GObjEvent` (landing callback).
 pub unsafe extern "C" fn cb_ftPe_SpecialHi_8011E064(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftPe_SpecialHi_8011E064");
     ftPe_SpecialHi_8011E064(g);
 }
 
 /// Accessory4 callback (subaction event): the capsule becomes the parasol.
 pub fn ftPe_SpecialHi_8011D424(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_SpecialHi_8011D424");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).mv.pe.specialhi.kind == It_Kind_Capsule {
@@ -235,6 +241,7 @@ pub fn ftPe_SpecialHi_8011D424(gobj: *mut HSD_GObj) {
 
 /// Give the held parasol item back: returns true if a stashed item was restored.
 pub fn ftPe_8011D518(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftPe_8011D518");
     unsafe {
         let fp = fpp(gobj);
         (*fp).u.pe.parasol_gobj_0 = core::ptr::null_mut();
@@ -254,6 +261,7 @@ pub fn ftPe_8011D518(gobj: *mut HSD_GObj) -> bool {
 }
 
 pub fn ftPe_8011D598(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_8011D598");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.pe.parasol_gobj_0.is_null() {
@@ -274,10 +282,12 @@ fn ensureUnkItem(gobj: *mut HSD_GObj, cb: fn(*mut Item_GObj)) {
 }
 
 pub fn ftPe_SpecialHi_8011D620(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_SpecialHi_8011D620");
     ensureUnkItem(gobj, ext::it_802BDBF8);
 }
 
 pub fn ftPe_SpecialHi_8011D650(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_SpecialHi_8011D650");
     ensureUnkItem(gobj, ext::it_802BDC18);
 }
 
@@ -302,6 +312,7 @@ fn notUsingParasol(fp: *mut Fighter) -> bool {
 }
 
 pub fn ftPe_SpecialHi_NotActive(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftPe_SpecialHi_NotActive");
     unsafe {
         let fp = fpp(gobj);
         let msid = (*fp).motion_id as i32;
@@ -338,12 +349,14 @@ fn doEnter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftPe_SpecialHi_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_SpecialHi_Enter");
     st::Fighter_ChangeMotionState(gobj, ftPe_MS_SpecialHiStart as i32, FtMoveId_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     st::ftAnim_8006EBA4(gobj);
     doEnter(gobj);
 }
 
 pub fn ftPe_SpecialAirHi_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_SpecialAirHi_Enter");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftPe_DatAttrs;
@@ -356,6 +369,7 @@ pub fn ftPe_SpecialAirHi_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftPe_SpecialHiStart_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_SpecialHiStart_Anim");
     unsafe {
         let fp = fpp(gobj);
         if !checkCmdVar2(&mut *fp) && st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -372,10 +386,12 @@ pub fn ftPe_SpecialHiStart_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftPe_SpecialAirHiStart_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_SpecialAirHiStart_Anim");
     ftPe_SpecialHiStart_Anim(gobj);
 }
 
 pub fn ftPe_SpecialHiStart_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_SpecialHiStart_IASA");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftPe_DatAttrs;
@@ -396,10 +412,12 @@ pub fn ftPe_SpecialHiStart_IASA(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftPe_SpecialAirHiStart_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_SpecialAirHiStart_IASA");
     ftPe_SpecialHiStart_IASA(gobj);
 }
 
 pub fn ftPe_SpecialHiStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_SpecialHiStart_Phys");
     unsafe {
         if (*fpp(gobj)).ground_or_air == GA_Air {
             st::ft_80085154(gobj);
@@ -410,6 +428,7 @@ pub fn ftPe_SpecialHiStart_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftPe_SpecialAirHiStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_SpecialAirHiStart_Phys");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftPe_DatAttrs;
@@ -427,6 +446,7 @@ pub fn ftPe_SpecialAirHiStart_Phys(gobj: *mut HSD_GObj) {
 
 /// `ftPe_SpecialHi_8011DD8C` (static): landing after the start phase.
 pub fn ftPe_SpecialHi_8011DD8C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_SpecialHi_8011DD8C");
     unsafe {
         let da = (*fpp(gobj)).dat_attrs as *const ftPe_DatAttrs;
         st::ftCo_LandingFallSpecial_Enter(gobj, 0, (*da).x74);
@@ -450,18 +470,21 @@ fn doColl(gobj: *mut HSD_GObj, cb: HSD_GObjEvent) {
 }
 
 pub fn ftPe_SpecialHiStart_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_SpecialHiStart_Coll");
     doColl(gobj, Some(cb_ftPe_SpecialHi_8011DD8C));
 }
 
 pub fn ftPe_SpecialAirHiStart_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_SpecialAirHiStart_Coll");
     doColl(gobj, Some(cb_ftPe_SpecialHi_8011DD8C));
 }
 
-pub fn ftPe_SpecialHiEnd_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftPe_SpecialHiEnd_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftPe_SpecialHiEnd_IASA");}
 
-pub fn ftPe_SpecialAirHiEnd_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftPe_SpecialAirHiEnd_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftPe_SpecialAirHiEnd_IASA");}
 
 pub fn ftPe_SpecialHiEnd_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_SpecialHiEnd_Phys");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).ground_or_air == GA_Air {
@@ -476,6 +499,7 @@ pub fn ftPe_SpecialHiEnd_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftPe_SpecialAirHiEnd_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_SpecialAirHiEnd_Phys");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftPe_DatAttrs;
@@ -490,13 +514,16 @@ pub fn ftPe_SpecialAirHiEnd_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftPe_SpecialHi_8011E064(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_SpecialHi_8011E064");
     ftPe_SpecialHi_8011DD8C(gobj);
 }
 
 pub fn ftPe_SpecialHiEnd_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_SpecialHiEnd_Coll");
     doColl(gobj, Some(cb_ftPe_SpecialHi_8011E064));
 }
 
 pub fn ftPe_SpecialAirHiEnd_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_SpecialAirHiEnd_Coll");
     doColl(gobj, Some(cb_ftPe_SpecialHi_8011E064));
 }

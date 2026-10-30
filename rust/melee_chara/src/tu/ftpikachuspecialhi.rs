@@ -185,20 +185,25 @@ unsafe fn handle_teleport_collisions(gobj: G, fp: *mut Fighter, angle_clamp: i32
 
 /// Gobj entries for the ported `&mut Fighter` callbacks.
 pub fn ftPk_SpecialAirHiEnd_Phys(gobj: G) {
+    melee_core::ct!("ftPk_SpecialAirHiEnd_Phys");
     unsafe { crate::chars::ftPikachu::ftpikachuspecialhi::ftPk_SpecialAirHiEnd_Phys(&mut *fpp(gobj)) }
 }
 pub fn ftPk_SpecialAirHiStart0_Phys(gobj: G) {
+    melee_core::ct!("ftPk_SpecialAirHiStart0_Phys");
     unsafe { crate::chars::ftPikachu::ftpikachuspecialhi::ftPk_SpecialAirHiStart0_Phys(&mut *fpp(gobj)) }
 }
 pub fn ftPk_SpecialHiStart1_Phys(gobj: G) {
+    melee_core::ct!("ftPk_SpecialHiStart1_Phys");
     unsafe { crate::chars::ftPikachu::ftpikachuspecialhi::ftPk_SpecialHiStart1_Phys(&mut *fpp(gobj)) }
 }
 /// `ftPk_SpecialHi_UpdateVel`: points velocity toward the facing direction.
 pub fn ftPk_SpecialHi_UpdateVel(gobj: G) {
+    melee_core::ct!("ftPk_SpecialHi_UpdateVel");
     unsafe { crate::chars::ftPikachu::ftpikachuspecialhi::ftPk_SpecialHi_UpdateVel(&mut *fpp(gobj)) }
 }
 /// `ftPk_SpecialHi_UpdateVel` as the `x21F8` callback entry.
 pub unsafe extern "C" fn cb_ftPk_SpecialHi_UpdateVel(g: G) {
+    melee_core::ct!("cb_ftPk_SpecialHi_UpdateVel");
     ftPk_SpecialHi_UpdateVel(g);
 }
 
@@ -218,28 +223,32 @@ unsafe fn enter(gobj: G, msid: i32) {
 }
 
 pub fn ftPk_SpecialHi_Enter(gobj: G) {
+    melee_core::ct!("ftPk_SpecialHi_Enter");
     unsafe { enter(gobj, 353) }
 }
 
 pub fn ftPk_SpecialAirHi_Enter(gobj: G) {
+    melee_core::ct!("ftPk_SpecialAirHi_Enter");
     unsafe { enter(gobj, 356) }
 }
 
 pub fn ftPk_SpecialHiStart0_Anim(gobj: G) {
+    melee_core::ct!("ftPk_SpecialHiStart0_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         ftPk_SpecialHi_80126C0C(gobj);
     }
 }
 
 pub fn ftPk_SpecialAirHiStart0_Anim(gobj: G) {
+    melee_core::ct!("ftPk_SpecialAirHiStart0_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         ftPk_SpecialHi_80126E1C(gobj);
     }
 }
 
-pub fn ftPk_SpecialHiStart0_IASA(_gobj: G) {}
+pub fn ftPk_SpecialHiStart0_IASA(_gobj: G) { melee_core::ct!("ftPk_SpecialHiStart0_IASA");}
 
-pub fn ftPk_SpecialAirHiStart0_IASA(_gobj: G) {}
+pub fn ftPk_SpecialAirHiStart0_IASA(_gobj: G) { melee_core::ct!("ftPk_SpecialAirHiStart0_IASA");}
 
 /// The spark effect of `Start1_Anim`: `jitter` is the C's `6` / `10` (ground / air); the offset is
 /// `jitter * rand - jitter / 2`.
@@ -273,19 +282,22 @@ unsafe fn start1_anim(gobj: G, jitter: f32, minus: f32, motion_change: fn(G)) {
 }
 
 pub fn ftPk_SpecialHiStart1_Anim(gobj: G) {
+    melee_core::ct!("ftPk_SpecialHiStart1_Anim");
     unsafe { start1_anim(gobj, 6.0, 3.0, ftPk_SpecialHi_MotionChangeUpdateVel_Unk0) }
 }
 
 pub fn ftPk_SpecialAirHiStart1_Anim(gobj: G) {
+    melee_core::ct!("ftPk_SpecialAirHiStart1_Anim");
     unsafe { start1_anim(gobj, 10.0, 5.0, ftPk_SpecialHi_MotionChangeUpdateVel_Unk1) }
 }
 
-pub fn ftPk_SpecialHiStart1_IASA(_gobj: G) {}
+pub fn ftPk_SpecialHiStart1_IASA(_gobj: G) { melee_core::ct!("ftPk_SpecialHiStart1_IASA");}
 
-pub fn ftPk_SpecialAirHiStart1_IASA(_gobj: G) {}
+pub fn ftPk_SpecialAirHiStart1_IASA(_gobj: G) { melee_core::ct!("ftPk_SpecialAirHiStart1_IASA");}
 
 /// `ftPk_SpecialHi_8012642C`: aims the model along the velocity and clears the transN offsets.
 pub fn ftPk_SpecialHi_8012642C(gobj: G) {
+    melee_core::ct!("ftPk_SpecialHi_8012642C");
     unsafe {
         let fp = fpp(gobj);
         let pika_attr = da(fp);
@@ -318,6 +330,7 @@ pub fn ftPk_SpecialHi_8012642C(gobj: G) {
 }
 
 pub fn ftPk_SpecialAirHiStart1_Phys(gobj: G) {
+    melee_core::ct!("ftPk_SpecialAirHiStart1_Phys");
     ftPk_SpecialHi_8012642C(gobj);
 }
 
@@ -329,6 +342,7 @@ unsafe fn hit_wall(fp: *mut Fighter) -> bool {
 }
 
 pub fn ftPk_SpecialHiStart1_Coll(gobj: G) {
+    melee_core::ct!("ftPk_SpecialHiStart1_Coll");
     unsafe {
         let fp = fpp(gobj);
         let pika_attr = da(fp);
@@ -372,6 +386,7 @@ unsafe fn ftPikachu_GetBool(gobj: G) -> bool {
 }
 
 pub fn ftPk_SpecialAirHiStart1_Coll(gobj: G) {
+    melee_core::ct!("ftPk_SpecialAirHiStart1_Coll");
     unsafe {
         let fp = fpp(gobj);
         let pika_attr = da(fp);
@@ -396,6 +411,7 @@ pub fn ftPk_SpecialAirHiStart1_Coll(gobj: G) {
 }
 
 pub fn ftPk_SpecialHi_ChangeMotion_Unk02(gobj: G) {
+    melee_core::ct!("ftPk_SpecialHi_ChangeMotion_Unk02");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_8007D60C(&mut *fp);
@@ -406,6 +422,7 @@ pub fn ftPk_SpecialHi_ChangeMotion_Unk02(gobj: G) {
 }
 
 pub fn ftPk_SpecialHi_ChangeMotion_Unk03(gobj: G) {
+    melee_core::ct!("ftPk_SpecialHi_ChangeMotion_Unk03");
     unsafe {
         let fighter2 = fpp(gobj);
         st::ftCommon_8007D7FC(&mut *fighter2);
@@ -441,6 +458,7 @@ unsafe fn stick_mag(fp: *mut Fighter) -> f32 {
 
 /// Grounded Quick Attack zip.
 pub fn ftPk_SpecialHi_80126C0C(gobj: G) {
+    melee_core::ct!("ftPk_SpecialHi_80126C0C");
     unsafe {
         let fp = fpp(gobj);
         let coll_data = &(*fp).coll_data as *const CollData;
@@ -494,6 +512,7 @@ pub fn ftPk_SpecialHi_80126C0C(gobj: G) {
 
 /// Aerial Quick Attack zip.
 pub fn ftPk_SpecialHi_80126E1C(gobj: G) {
+    melee_core::ct!("ftPk_SpecialHi_80126E1C");
     unsafe {
         let fp = fpp(gobj);
         let pika_attr = da(fp);
@@ -559,6 +578,7 @@ fn return_and_fill_stack() -> bool {
 
 /// Whether to perform a second zip: the stick is held and differs enough from the first zip's.
 pub fn ftPk_SpecialHi_80127064(gobj: G) -> bool {
+    melee_core::ct!("ftPk_SpecialHi_80127064");
     unsafe {
         let fp = fpp(gobj);
         let pika_attr = da(fp);
@@ -579,6 +599,7 @@ pub fn ftPk_SpecialHi_80127064(gobj: G) -> bool {
 }
 
 pub fn ftPk_SpecialHiEnd_Anim(gobj: G) {
+    melee_core::ct!("ftPk_SpecialHiEnd_Anim");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).cmd_vars[0] == 1 {
@@ -598,6 +619,7 @@ pub fn ftPk_SpecialHiEnd_Anim(gobj: G) {
 }
 
 pub fn ftPk_SpecialAirHiEnd_Anim(gobj: G) {
+    melee_core::ct!("ftPk_SpecialAirHiEnd_Anim");
     unsafe {
         let fp = fpp(gobj);
         let sa = da(fp);
@@ -615,11 +637,12 @@ pub fn ftPk_SpecialAirHiEnd_Anim(gobj: G) {
     }
 }
 
-pub fn ftPk_SpecialHiEnd_IASA(_gobj: G) {}
+pub fn ftPk_SpecialHiEnd_IASA(_gobj: G) { melee_core::ct!("ftPk_SpecialHiEnd_IASA");}
 
-pub fn ftPk_SpecialAirHiEnd_IASA(_gobj: G) {}
+pub fn ftPk_SpecialAirHiEnd_IASA(_gobj: G) { melee_core::ct!("ftPk_SpecialAirHiEnd_IASA");}
 
 pub fn ftPk_SpecialHiEnd_Coll(gobj: G) {
+    melee_core::ct!("ftPk_SpecialHiEnd_Coll");
     unsafe {
         let fp = fpp(gobj);
         let pika_attr = da(fp);
@@ -630,6 +653,7 @@ pub fn ftPk_SpecialHiEnd_Coll(gobj: G) {
 }
 
 pub fn ftPk_SpecialAirHiEnd_Coll(gobj: G) {
+    melee_core::ct!("ftPk_SpecialAirHiEnd_Coll");
     unsafe {
         let fp = fpp(gobj);
         let pika_attr = da(fp);
@@ -643,6 +667,7 @@ pub fn ftPk_SpecialAirHiEnd_Coll(gobj: G) {
 }
 
 pub fn ftPk_SpecialHi_MotionChangeUpdateVel_Unk0(gobj: G) {
+    melee_core::ct!("ftPk_SpecialHi_MotionChangeUpdateVel_Unk0");
     unsafe {
         let fp = fpp(gobj);
         let pika_attr = da(fp);
@@ -660,6 +685,7 @@ pub fn ftPk_SpecialHi_MotionChangeUpdateVel_Unk0(gobj: G) {
 }
 
 pub fn ftPk_SpecialHi_MotionChangeUpdateVel_Unk1(gobj: G) {
+    melee_core::ct!("ftPk_SpecialHi_MotionChangeUpdateVel_Unk1");
     unsafe {
         let fp = fpp(gobj);
         let pika_attr = da(fp);

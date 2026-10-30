@@ -32,6 +32,7 @@ pub mod ext {
 
 /// `ftCo_800C6150`.
 pub fn ftCo_800C6150(g: G) {
+    melee_core::ct!("ftCo_800C6150");
     ext::Fighter_ChangeMotionState(g, ftCo_MS_Rebirth as i32, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     let f = fp(g);
     f.set_x2219_b2(1);

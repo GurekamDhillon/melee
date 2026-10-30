@@ -325,9 +325,10 @@ unsafe fn Ground_SetupStageCallbacks(gobj: *mut Ground_GObj, callbacks: *mut Sta
     }
 }
 
-pub unsafe extern "C" fn grZebesRoute_8020B160(_arg: i32) {}
+pub unsafe extern "C" fn grZebesRoute_8020B160(_arg: i32) { melee_core::ct!("grZebesRoute_8020B160");}
 
 pub unsafe extern "C" fn grZebesRoute_8020B164() {
+    melee_core::ct!("grZebesRoute_8020B164");
     yakumono_param = ext::Ground_GetYakumonoParam() as *mut grZebesRoute_YakumonoParam;
     ext::stage_info.unk8C.set_b4(0);
     ext::stage_info.unk8C.set_b5(1);
@@ -339,10 +340,12 @@ pub unsafe extern "C" fn grZebesRoute_8020B164() {
 }
 
 pub unsafe extern "C" fn grZebesRoute_8020B1D4() {
+    melee_core::ct!("grZebesRoute_8020B1D4");
     grZebesRoute_8020B548();
 }
 
 pub unsafe extern "C" fn grZebesRoute_8020B1F4() {
+    melee_core::ct!("grZebesRoute_8020B1F4");
     ext::grZakoGenerator_801CAE04(null_mut());
     let mut val = (*yakumono_param).zako_spawn_chance;
     if val != 0 {
@@ -358,10 +361,12 @@ pub unsafe extern "C" fn grZebesRoute_8020B1F4() {
 }
 
 pub unsafe extern "C" fn grZebesRoute_8020B258() -> i32 {
+    melee_core::ct!("grZebesRoute_8020B258");
     0
 }
 
 pub unsafe extern "C" fn grZebesRoute_8020B260(gobj_id: i32) -> *mut Ground_GObj {
+    melee_core::ct!("grZebesRoute_8020B260");
     let callbacks = &raw mut grZe_Route_StageCallbacks[gobj_id as usize];
     let gobj = ext::Ground_GetStageGObj(gobj_id);
 
@@ -375,30 +380,35 @@ pub unsafe extern "C" fn grZebesRoute_8020B260(gobj_id: i32) -> *mut Ground_GObj
 }
 
 pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj0_OnInit");
     Ground_StartMapAnim(gobj);
 }
 
 pub unsafe extern "C" fn grZebesRoute_8020B374(_arg: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("grZebesRoute_8020B374");
     0
 }
 
-pub unsafe extern "C" fn grZebesRoute_8020B37C(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grZebesRoute_8020B37C(_arg: *mut Ground_GObj) { melee_core::ct!("grZebesRoute_8020B37C");}
 
-pub unsafe extern "C" fn grZebesRoute_8020B380(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grZebesRoute_8020B380(_arg: *mut Ground_GObj) { melee_core::ct!("grZebesRoute_8020B380");}
 
 pub unsafe extern "C" fn stageGObj2_OnInit(gobj: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj2_OnInit");
     Ground_StartMapAnim(gobj);
 }
 
 pub unsafe extern "C" fn grZebesRoute_8020B3B0(_arg: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("grZebesRoute_8020B3B0");
     0
 }
 
-pub unsafe extern "C" fn grZebesRoute_8020B3B8(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grZebesRoute_8020B3B8(_arg: *mut Ground_GObj) { melee_core::ct!("grZebesRoute_8020B3B8");}
 
-pub unsafe extern "C" fn grZebesRoute_8020B3BC(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grZebesRoute_8020B3BC(_arg: *mut Ground_GObj) { melee_core::ct!("grZebesRoute_8020B3BC");}
 
 pub unsafe extern "C" fn grZebesRoute_8020B3C0(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grZebesRoute_8020B3C0");
     let gp = (*gobj).user_data as *mut Ground;
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
     (*gp).x8_callback = None;
@@ -408,10 +418,12 @@ pub unsafe extern "C" fn grZebesRoute_8020B3C0(gobj: *mut Ground_GObj) {
 }
 
 pub unsafe extern "C" fn grZebesRoute_8020B424(_arg: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("grZebesRoute_8020B424");
     0
 }
 
 pub unsafe extern "C" fn grZebesRoute_8020B42C(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grZebesRoute_8020B42C");
     let gp = (*gobj).user_data as *mut Ground;
     let mut pos: Vec3 = grZe_Route_803B83A0.player_pos;
 
@@ -435,7 +447,7 @@ pub unsafe extern "C" fn grZebesRoute_8020B42C(gobj: *mut Ground_GObj) {
     ext::lb_800115F4();
 }
 
-pub unsafe extern "C" fn grZebesRoute_8020B4D4(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grZebesRoute_8020B4D4(_arg: *mut Ground_GObj) { melee_core::ct!("grZebesRoute_8020B4D4");}
 
 /// @copydoc mpLib_JointCollisionCallback
 pub unsafe extern "C" fn fn_8020B4D8(
@@ -446,6 +458,7 @@ pub unsafe extern "C" fn fn_8020B4D8(
     ground_kind: u32,
     _delta_y: f32,
 ) {
+    melee_core::ct!("fn_8020B4D8");
     if (*coll).x34_flags.b1234() as i32 == 1 && ext::Ground_GetP1Fighter() == (*coll).x0_gobj && ground_kind == 1 {
         ext::stage_info.flags |= 0x10;
     }
@@ -476,6 +489,7 @@ unsafe fn HSD_LObjGetType_padstack(lobj: *mut HSD_LObj) -> i32 {
 }
 
 pub unsafe extern "C" fn grZebesRoute_8020B548() {
+    melee_core::ct!("grZebesRoute_8020B548");
     let gobj = *ext::HSD_GObjGXLinkHead.add(4);
     hsd_assert(361, !gobj.is_null(), c"gobj");
     let first_lobj = (*gobj).hsd_obj as *mut HSD_LObj;
@@ -538,9 +552,11 @@ pub unsafe extern "C" fn grZebesRoute_8020B548() {
 }
 
 pub unsafe extern "C" fn grZebesRoute_8020B854(_arg: i32) -> *mut DynamicsDesc {
+    melee_core::ct!("grZebesRoute_8020B854");
     null_mut()
 }
 
 pub unsafe extern "C" fn grZebesRoute_8020B85C(_arg: *mut Vec3, _arg0: i32, _jobj: *mut HSD_JObj) -> i32 {
+    melee_core::ct!("grZebesRoute_8020B85C");
     1
 }

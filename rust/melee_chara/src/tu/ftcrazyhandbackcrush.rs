@@ -10,6 +10,7 @@ pub use crate::chars::r2::ftCrazyHand::ftcrazyhandbackcrush::ftCh_BackCrush_Phys
 pub use crate::chars::r8::ftCrazyHand::ftcrazyhandbackcrush::ftCh_BackCrush_IASA;
 
 pub fn ftCh_Init_801597F0(gobj: *mut HSD_GObj, cb: HSD_GObjEvent) {
+    melee_core::ct!("ftCh_Init_801597F0");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         st::Fighter_ChangeMotionState(gobj, 0x173, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -19,6 +20,7 @@ pub fn ftCh_Init_801597F0(gobj: *mut HSD_GObj, cb: HSD_GObjEvent) {
 }
 
 pub fn ftCh_BackCrush_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_BackCrush_Anim");
     unsafe {
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
             let fp = (*gobj).user_data as *mut Fighter;
@@ -29,4 +31,4 @@ pub fn ftCh_BackCrush_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftCh_BackCrush_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftCh_BackCrush_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_BackCrush_Coll");}

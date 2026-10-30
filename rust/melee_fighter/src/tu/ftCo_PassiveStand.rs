@@ -43,6 +43,7 @@ pub mod ext {
 }
 
 pub fn ftCo_80098928(g: G) -> bool {
+    melee_core::ct!("ftCo_80098928");
     if ext::ftCo_800986B0(g) {
         let f = fp(g);
         let x = f.input.lstick[0].x;
@@ -57,6 +58,7 @@ pub fn ftCo_80098928(g: G) -> bool {
 }
 
 pub fn ftCo_800989D4(g: G, msid: i32) {
+    melee_core::ct!("ftCo_800989D4");
     let f = fp(g);
     if f.ground_or_air == GA_Air {
         ext::ftCommon_8007D7FC(f);
@@ -73,17 +75,20 @@ pub fn ftCo_800989D4(g: G, msid: i32) {
 }
 
 pub fn ftCo_PassiveStand_Anim(g: G) {
+    melee_core::ct!("ftCo_PassiveStand_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ft_8008A2BC(g);
     }
 }
 
-pub fn ftCo_PassiveStand_IASA(_g: G) {}
+pub fn ftCo_PassiveStand_IASA(_g: G) { melee_core::ct!("ftCo_PassiveStand_IASA");}
 
 pub fn ftCo_PassiveStand_Phys(g: G) {
+    melee_core::ct!("ftCo_PassiveStand_Phys");
     ext::ft_80084FA8(g);
 }
 
 pub fn ftCo_PassiveStand_Coll(g: G) {
+    melee_core::ct!("ftCo_PassiveStand_Coll");
     ext::ft_80084104(g);
 }

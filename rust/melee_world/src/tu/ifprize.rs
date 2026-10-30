@@ -259,6 +259,7 @@ pub static mut un_804D6D98: *mut HSD_Archive = null_mut();
 pub static mut un_804D6D9C: *mut SceneDesc = null_mut();
 
 pub unsafe extern "C" fn un_802FE3F8(a: i32, b: i32, c: *mut i16, d: *mut i16) {
+    melee_core::ct!("un_802FE3F8");
     let mut x: *mut un_803F9B30 = &raw mut un_803F9B30[0];
     while (*x).x0 != 66 {
         if (*x).x0 == a {
@@ -279,18 +280,21 @@ pub unsafe extern "C" fn un_802FE3F8(a: i32, b: i32, c: *mut i16, d: *mut i16) {
 
 #[inline]
 pub unsafe extern "C" fn un_802FE3F8_inner(a: i32, b: i32, c: *mut i16, d: *mut i16) {
+    melee_core::ct!("un_802FE3F8_inner");
     un_802FE3F8(a, b, c, d);
 }
 
 /// ifPrize_Scene_OnEnter will inline un_802FE3F8 otherwise
 #[inline]
 pub unsafe extern "C" fn un_802FE3F8_noinline(a: i32, b: i32, c: *mut i16, d: *mut i16) {
+    melee_core::ct!("un_802FE3F8_noinline");
     un_802FE3F8_inner(a, b, c, d);
 }
 
 /// The prize counter: the Atlas retail mask hides this element's render only (never its proc);
 /// empty by default.
 pub unsafe extern "C" fn ifPrize_RenderGuarded(gobj: *mut HSD_GObj, pass: i32) {
+    melee_core::ct!("ifPrize_RenderGuarded");
     if ext::Ui_RetailHidden(AT_RE_HUD_PRIZE) != 0 {
         return;
     }
@@ -298,6 +302,7 @@ pub unsafe extern "C" fn ifPrize_RenderGuarded(gobj: *mut HSD_GObj, pass: i32) {
 }
 
 pub unsafe extern "C" fn fn_802FE470(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_802FE470");
     let st = &raw mut un_803F9D48;
     if (*st).x1 != 4 {
         let jobj = HSD_GObjGetHSDObj(gobj) as *mut HSD_JObj;
@@ -349,6 +354,7 @@ pub unsafe extern "C" fn fn_802FE470(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn un_802FE6A8() {
+    melee_core::ct!("un_802FE6A8");
     let st = &raw mut un_803F9D48;
     let gobj_camera = ext::GObj_Create(HSD_GOBJ_CLASS_CAMERA as u16, 20, 0);
     ext::HSD_GObjObject_80390A70(
@@ -388,6 +394,7 @@ pub unsafe extern "C" fn un_802FE6A8() {
 }
 
 pub unsafe extern "C" fn un_802FE8CC() {
+    melee_core::ct!("un_802FE8CC");
     let st = &raw mut un_803F9D48;
     if (*st).x0a() == 0 || (*st).x0b() == 0 {
         return;
@@ -398,6 +405,7 @@ pub unsafe extern "C" fn un_802FE8CC() {
 
 /// Needed for `.data` ordering
 pub unsafe extern "C" fn setArchive() {
+    melee_core::ct!("setArchive");
     un_804D6D98 = ext::lbArchive_80016DBC(
         c"IfPrize".as_ptr().cast(),
         (&raw mut un_804D6D9C).cast(),
@@ -413,6 +421,7 @@ pub unsafe extern "C" fn setArchive() {
 
 #[inline]
 pub unsafe extern "C" fn un_802FE918_update_x3(x3_ptr: *mut u8, r: *mut i32) {
+    melee_core::ct!("un_802FE918_update_x3");
     let old_x3 = *x3_ptr as i32;
     // the C leaves `new_x3` uninitialised when no iteration breaks (zero in the build)
     let mut new_x3: i32 = 0;
@@ -430,6 +439,7 @@ pub unsafe extern "C" fn un_802FE918_update_x3(x3_ptr: *mut u8, r: *mut i32) {
 }
 
 pub unsafe extern "C" fn un_802FE918(a: i32, b: i32, c: i32) {
+    melee_core::ct!("un_802FE918");
     let st = &raw mut un_803F9D48;
     let i: i32;
     let mut sp14 = datetime { year: 0, month: 0, day: 0, hour: 0, minute: 0, second: 0 };
@@ -483,6 +493,7 @@ pub unsafe extern "C" fn un_802FE918(a: i32, b: i32, c: i32) {
 }
 
 pub unsafe extern "C" fn ifPrize_Scene_OnEnter(arg0_: *mut c_void) {
+    melee_core::ct!("ifPrize_Scene_OnEnter");
     let st = &raw mut un_803F9D48;
     let arg0 = arg0_ as *mut un_802FEBE0_OnEnter_arg0;
 
@@ -512,4 +523,4 @@ pub unsafe extern "C" fn ifPrize_Scene_OnEnter(arg0_: *mut c_void) {
     un_802FE6A8();
 }
 
-pub unsafe extern "C" fn ifPrize_Scene_OnExit(_unused: *mut c_void) {}
+pub unsafe extern "C" fn ifPrize_Scene_OnExit(_unused: *mut c_void) { melee_core::ct!("ifPrize_Scene_OnExit");}

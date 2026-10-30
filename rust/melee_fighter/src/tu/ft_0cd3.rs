@@ -22,28 +22,29 @@ fn enter(g: G, arg1: i32, flags: i32, arg2: i32, arg3: f32) {
 }
 
 /// `ftCo_800CD350`: SwordSwing enter.
-pub fn ftco_800cd350(g: G, arg1: i32, arg2: i32, arg3: f32) { enter(g, arg1, 0, arg2, arg3) }
-pub fn ftco_swordswing_anim(g: G) { c::ftco_800cd1bc(g) }
-pub fn ftco_swordswing_iasa(g: G) { c::ftco_800cd204(g) }
-pub fn ftco_swordswing_phys(g: G) { c::ftco_800cd278(g) }
-pub fn ftco_swordswing_coll(g: G) { c::ftco_800cd2c4(g, c::ft_800cd31c) }
+pub fn ftco_800cd350(g: G, arg1: i32, arg2: i32, arg3: f32) { melee_core::ct!("ftco_800cd350"); enter(g, arg1, 0, arg2, arg3) }
+pub fn ftco_swordswing_anim(g: G) { melee_core::ct!("ftco_swordswing_anim"); c::ftco_800cd1bc(g) }
+pub fn ftco_swordswing_iasa(g: G) { melee_core::ct!("ftco_swordswing_iasa"); c::ftco_800cd204(g) }
+pub fn ftco_swordswing_phys(g: G) { melee_core::ct!("ftco_swordswing_phys"); c::ftco_800cd278(g) }
+pub fn ftco_swordswing_coll(g: G) { melee_core::ct!("ftco_swordswing_coll"); c::ftco_800cd2c4(g, c::ft_800cd31c) }
 
 /// `ftCo_800CD418`: BatSwing enter.
-pub fn ftco_800cd418(g: G, arg1: i32, arg2: i32, arg3: f32) { enter(g, arg1, 0, arg2, arg3) }
-pub fn ftco_batswing_anim(g: G) { c::ftco_800cd1bc(g) }
-pub fn ftco_batswing_iasa(g: G) { c::ftco_800cd204(g) }
-pub fn ftco_batswing_phys(g: G) { c::ftco_800cd278(g) }
-pub fn ftco_batswing_coll(g: G) { c::ftco_800cd2c4(g, c::ft_800cd31c) }
+pub fn ftco_800cd418(g: G, arg1: i32, arg2: i32, arg3: f32) { melee_core::ct!("ftco_800cd418"); enter(g, arg1, 0, arg2, arg3) }
+pub fn ftco_batswing_anim(g: G) { melee_core::ct!("ftco_batswing_anim"); c::ftco_800cd1bc(g) }
+pub fn ftco_batswing_iasa(g: G) { melee_core::ct!("ftco_batswing_iasa"); c::ftco_800cd204(g) }
+pub fn ftco_batswing_phys(g: G) { melee_core::ct!("ftco_batswing_phys"); c::ftco_800cd278(g) }
+pub fn ftco_batswing_coll(g: G) { melee_core::ct!("ftco_batswing_coll"); c::ftco_800cd2c4(g, c::ft_800cd31c) }
 
 /// `ftCo_800CD4E0`: ParasolSwing enter (motion flags 0x400).
-pub fn ftco_800cd4e0(g: G, arg1: i32, arg2: i32, arg3: f32) { enter(g, arg1, 0x400, arg2, arg3) }
-pub fn ftco_parasolswing_anim(g: G) { c::ftco_800cd1bc(g) }
-pub fn ftco_parasolswing_iasa(g: G) { c::ftco_800cd204(g) }
-pub fn ftco_parasolswing_phys(g: G) { c::ftco_800cd278(g) }
-pub fn ftco_parasolswing_coll(g: G) { c::ftco_800cd2c4(g, c::ft_800cd31c) }
+pub fn ftco_800cd4e0(g: G, arg1: i32, arg2: i32, arg3: f32) { melee_core::ct!("ftco_800cd4e0"); enter(g, arg1, 0x400, arg2, arg3) }
+pub fn ftco_parasolswing_anim(g: G) { melee_core::ct!("ftco_parasolswing_anim"); c::ftco_800cd1bc(g) }
+pub fn ftco_parasolswing_iasa(g: G) { melee_core::ct!("ftco_parasolswing_iasa"); c::ftco_800cd204(g) }
+pub fn ftco_parasolswing_phys(g: G) { melee_core::ct!("ftco_parasolswing_phys"); c::ftco_800cd278(g) }
+pub fn ftco_parasolswing_coll(g: G) { melee_core::ct!("ftco_parasolswing_coll"); c::ftco_800cd2c4(g, c::ft_800cd31c) }
 
 /// `ftCo_800CD5A8`: HarisenSwing enter.
 pub fn ftco_800cd5a8(g: G, arg1: i32, arg2: i32, arg3: f32) {
+    melee_core::ct!("ftco_800cd5a8");
     let f = fp(g);
     f.cmd_vars[0] = 0;
     unsafe { f.mv.co.swing.x8 = 0.0 };
@@ -55,6 +56,7 @@ pub fn ftco_800cd5a8(g: G, arg1: i32, arg2: i32, arg3: f32) {
 
 /// `ft_800CD604`: Harisen take-damage callback.
 pub extern "C" fn ft_800cd604(g: G) {
+    melee_core::ct!("ft_800cd604");
     let it = fp(g).item_gobj;
     if !it.is_null() {
         ext::it_8029282C(it);
@@ -65,6 +67,7 @@ pub extern "C" fn ft_800cd604(g: G) {
 
 /// `ft_800CD65C`: Harisen deal-damage callback.
 pub extern "C" fn ft_800cd65c(g: G) {
+    melee_core::ct!("ft_800cd65c");
     let it = fp(g).item_gobj;
     if !it.is_null() {
         ext::it_802927E8(it);
@@ -74,6 +77,7 @@ pub extern "C" fn ft_800cd65c(g: G) {
 
 /// `ftCo_HarisenSwing_Anim`.
 pub fn ftco_harisenswing_anim(g: G) {
+    melee_core::ct!("ftco_harisenswing_anim");
     let it = fp(g).item_gobj;
     if !it.is_null() {
         let f = fp(g);
@@ -106,6 +110,6 @@ pub fn ftco_harisenswing_anim(g: G) {
     }
     c::ftco_800cd1bc(g);
 }
-pub fn ftco_harisenswing_iasa(g: G) { c::ftco_800cd204(g) }
-pub fn ftco_harisenswing_phys(g: G) { c::ftco_800cd278(g) }
-pub fn ftco_harisenswing_coll(g: G) { c::ftco_800cd2c4(g, ft_800cd604) }
+pub fn ftco_harisenswing_iasa(g: G) { melee_core::ct!("ftco_harisenswing_iasa"); c::ftco_800cd204(g) }
+pub fn ftco_harisenswing_phys(g: G) { melee_core::ct!("ftco_harisenswing_phys"); c::ftco_800cd278(g) }
+pub fn ftco_harisenswing_coll(g: G) { melee_core::ct!("ftco_harisenswing_coll"); c::ftco_800cd2c4(g, ft_800cd604) }

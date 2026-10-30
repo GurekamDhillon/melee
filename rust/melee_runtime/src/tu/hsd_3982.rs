@@ -55,6 +55,7 @@ static mut lbl_8040BF70: HSD_CameraDescFrustum = HSD_CameraDescFrustum {
 
 /// `fn_803982E4` (0x803982E4): render callback of the overlay camera GObj.
 pub unsafe extern "C" fn fn_803982E4(gobj: *mut HSD_GObj, _unused: i32) {
+    melee_core::ct!("fn_803982E4");
     ext::HSD_CObjSetCurrent((*gobj).hsd_obj as *mut HSD_CObj);
     ext::fn_80392934();
     ext::hsd_8039254C();
@@ -62,6 +63,7 @@ pub unsafe extern "C" fn fn_803982E4(gobj: *mut HSD_GObj, _unused: i32) {
 
 /// `hsd_80398310` (0x80398310): create the overlay camera GObj and register the overlay event.
 pub unsafe fn hsd_80398310(class_id: u16, p_link: u8, obj_kind: u8, gx_link: u32) -> *mut HSD_GObj {
+    melee_core::ct!("hsd_80398310");
     let gobj = ext::GObj_Create(class_id, p_link, obj_kind);
     if gobj.is_null() {
         return null_mut();

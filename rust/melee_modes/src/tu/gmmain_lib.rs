@@ -58,6 +58,7 @@ const gmMainLib_804D3EE4: [i8; 1] = [0];
 /// Static initial values from gmmain_lib.c's `= {...}` initialisers. Call once at boot before
 /// any accessor (the C does this with static data).
 pub unsafe fn gmMainLib_init_statics() {
+    melee_core::ct!("gmMainLib_init_statics");
     gmMainLib_804D3EE0 = addr_of_mut!(gmMainLib_8045A6C0);
     let r = &mut *addr_of_mut!(gmMainLib_DefaultGameRules);
     *r = core::mem::zeroed();
@@ -160,59 +161,73 @@ unsafe fn memzero<T>(p: *mut T, bytes: usize) {
 // ---- accessors -------------------------------------------------------------------------------
 
 pub unsafe fn gmMainLib_GetGameRules() -> *mut GameRules {
+    melee_core::ct!("gmMainLib_GetGameRules");
     addr_of_mut!((*gmMainLib_804D3EE0).x1850)
 }
 
 pub unsafe fn gmMainLib_GetCardData() -> *mut GmCardData {
+    melee_core::ct!("gmMainLib_GetCardData");
     card()
 }
 
 pub unsafe fn gmMainLib_GetNameTagDataBanks() -> *mut NameTagDataBank {
+    melee_core::ct!("gmMainLib_GetNameTagDataBanks");
     addr_of_mut!((*card()).nametag_banks) as *mut NameTagDataBank
 }
 
 pub unsafe fn gmMainLib_GetGamePrefs() -> *mut GamePrefs {
+    melee_core::ct!("gmMainLib_GetGamePrefs");
     addr_of_mut!((*save()).x1CB0)
 }
 
 pub unsafe fn GetPersistentFighterData(selkind: SelectableCharacterKind) -> *mut FighterData {
+    melee_core::ct!("GetPersistentFighterData");
     fighter_base().add(selkind as usize)
 }
 
 pub unsafe fn gmMainLib_GetTrophyFlags() -> *mut u16 {
+    melee_core::ct!("gmMainLib_GetTrophyFlags");
     addr_of_mut!((*save()).trophy_flags) as *mut u16
 }
 
 pub unsafe fn gmMainLib_GetTrophyCategoryFlags() -> *mut u16 {
+    melee_core::ct!("gmMainLib_GetTrophyCategoryFlags");
     addr_of_mut!((*save()).trophy_category_flags)
 }
 
 pub unsafe fn gmMainLib_GetTrophyCount() -> *mut i16 {
+    melee_core::ct!("gmMainLib_GetTrophyCount");
     addr_of_mut!((*save()).trophy_count)
 }
 
 pub unsafe fn GetPersistentNameData(arg0: i32) -> *mut NameTagData {
+    melee_core::ct!("GetPersistentNameData");
     nametag_slot(gmMainLib_GetNameTagDataBanks(), arg0)
 }
 
 pub unsafe fn gmMainLib_8015CCE4() -> *mut gmm_x0_44_t {
+    melee_core::ct!("gmMainLib_8015CCE4");
     addr_of_mut!((*gmMainLib_804D3EE0).unk_44)
 }
 
 
 pub unsafe fn gmMainLib_8015CCFC() -> *mut i32 {
+    melee_core::ct!("gmMainLib_8015CCFC");
     addr_of_mut!((*save()).x1A4C)
 }
 
 pub unsafe fn gmMainLib_GetVsPlayContestants() -> *mut i32 {
+    melee_core::ct!("gmMainLib_GetVsPlayContestants");
     addr_of_mut!((*save()).x1A30)
 }
 
 pub unsafe fn gmMainLib_GetVsPlayTime() -> *mut i32 {
+    melee_core::ct!("gmMainLib_GetVsPlayTime");
     addr_of_mut!((*save()).x1A34)
 }
 
 pub unsafe fn gmMainLib_GetCombinedVSPlayTime() -> *mut i32 {
+    melee_core::ct!("gmMainLib_GetCombinedVSPlayTime");
     addr_of_mut!((*save()).x1A38)
 }
 
@@ -221,35 +236,43 @@ pub unsafe fn gmMainLib_GetCombinedVSPlayTime() -> *mut i32 {
 
 
 pub unsafe fn gmMainLib_GetStaminaMatchTotal() -> *mut u32 {
+    melee_core::ct!("gmMainLib_GetStaminaMatchTotal");
     addr_of_mut!((*save()).stamina_matches)
 }
 
 pub unsafe fn gmMainLib_GetMatchResetCounter() -> *mut u32 {
+    melee_core::ct!("gmMainLib_GetMatchResetCounter");
     addr_of_mut!((*save()).match_resets)
 }
 
 pub unsafe fn gmMainLib_GetSingleplayerTime() -> *mut i32 {
+    melee_core::ct!("gmMainLib_GetSingleplayerTime");
     addr_of_mut!((*save()).x1A3C)
 }
 
 pub unsafe fn gmMainLib_8015CD80() -> *mut i32 {
+    melee_core::ct!("gmMainLib_8015CD80");
     addr_of_mut!((*save()).x1A44)
 }
 
 pub unsafe fn gmMainLib_GetPowerCount() -> *mut u32 {
+    melee_core::ct!("gmMainLib_GetPowerCount");
     addr_of_mut!((*save()).x1A50) as *mut u32
 }
 
 pub unsafe fn gm_GetPowerTime() -> *mut i32 {
+    melee_core::ct!("gm_GetPowerTime");
     addr_of_mut!((*save()).x1A54)
 }
 
 pub unsafe fn gmMainLib_GetTotalDamage() -> *mut i32 {
+    melee_core::ct!("gmMainLib_GetTotalDamage");
     addr_of_mut!((*save()).x1A58)
 }
 
 
 pub unsafe fn gmMainLib_GetSelfDestructTotal() -> *mut i32 {
+    melee_core::ct!("gmMainLib_GetSelfDestructTotal");
     addr_of_mut!((*save()).x1A60)
 }
 
@@ -257,6 +280,7 @@ pub unsafe fn gmMainLib_GetSelfDestructTotal() -> *mut i32 {
 
 
 pub unsafe fn gmMainLib_8015CDEC() {
+    melee_core::ct!("gmMainLib_8015CDEC");
     for i in 0..Gm_Player_NumMax as i32 {
         let ptr = gmMainLib_8015CE44(i, GM_NAMETAG_COUNT as i32);
         if !ptr.is_null() {
@@ -268,6 +292,7 @@ pub unsafe fn gmMainLib_8015CDEC() {
 const PAD_MAX_CONTROLLERS: i32 = 4;
 
 pub unsafe fn gmMainLib_8015CE44(arg0: i32, arg1: i32) -> *mut i8 {
+    melee_core::ct!("gmMainLib_8015CE44");
     if arg1 == GM_NAMETAG_COUNT as i32 {
         if arg0 < PAD_MAX_CONTROLLERS {
             return addr_of_mut!((*gmMainLib_804D3EE0).modes.nametags[arg0 as usize]);
@@ -279,39 +304,48 @@ pub unsafe fn gmMainLib_8015CE44(arg0: i32, arg1: i32) -> *mut i8 {
 }
 
 pub unsafe fn gmMainLib_8015CEB4(arg0: i32) {
+    melee_core::ct!("gmMainLib_8015CEB4");
     let s = &mut (*save()).x1A68;
     *s |= bitset64_mask(arg0 as u32);
 }
 
 pub unsafe fn gmMainLib_8015CEFC(arg0: i32) -> bool {
+    melee_core::ct!("gmMainLib_8015CEFC");
     (*gmMainLib_804D3EE0).thing.save_data.x1A68 & bitset64_mask(arg0 as u32) != 0
 }
 
 pub unsafe fn gmMainLib_8015CF5C(arg0: i32) -> i32 {
+    melee_core::ct!("gmMainLib_8015CF5C");
     (*save()).x1A70[arg0 as usize]
 }
 
 pub unsafe fn gmMainLib_8015CF70(arg0: i32, arg1: i32) {
+    melee_core::ct!("gmMainLib_8015CF70");
     (*save()).x1A70[arg0 as usize] = arg1;
 }
 
 pub unsafe fn gmMainLib_8015CF84() {
+    melee_core::ct!("gmMainLib_8015CF84");
     (*save()).x1B3C = 1;
 }
 
 pub unsafe fn gmMainLib_8015CF94() -> bool {
+    melee_core::ct!("gmMainLib_8015CF94");
     (*save()).x1B3C != 0
 }
 
 pub unsafe fn gmMainLib_8015CFB4(arg0: u8) -> *mut i8 {
+    melee_core::ct!("gmMainLib_8015CFB4");
     addr_of_mut!((*persistent_fighter(arg0)).x78)
 }
 
 pub unsafe fn gmMainLib_8015CFCC(arg0: u8) -> i32 {
+    melee_core::ct!("gmMainLib_8015CFCC");
     selkind_mask(arg0) & (*gmMainLib_8015ED98()).xC
 }
 
 pub unsafe fn gmMainLib_8015D00C(arg0: u8) {
+    melee_core::ct!("gmMainLib_8015D00C");
     (*persistent_fighter_base_x7a(arg0)).anon_0.set_b0(1);
     (*gmMainLib_8015ED98()).xC |= selkind_mask(arg0);
 }
@@ -324,111 +358,137 @@ unsafe fn persistent_fighter_base_x7a(arg0: u8) -> *mut UnkFlagStruct {
 
 
 pub unsafe fn gmMainLib_8015D084(selkind: u8) -> *mut i32 {
+    melee_core::ct!("gmMainLib_8015D084");
     addr_of_mut!((*gmMainLib_8015EDBC()).xB0[selkind as usize])
 }
 
 pub unsafe fn gmMainLib_8015D0C0(arg0: u8) -> *mut i32 {
+    melee_core::ct!("gmMainLib_8015D0C0");
     addr_of_mut!((*persistent_fighter(arg0)).x7C.x88)
 }
 
 pub unsafe fn gmMainLib_8015D0D8(arg0: u8) -> bool {
+    melee_core::ct!("gmMainLib_8015D0D8");
     (*persistent_fighter(arg0)).x7C.b4() != 0
 }
 
 pub unsafe fn gmMainLib_8015D0F4(arg0: u8) -> i32 {
+    melee_core::ct!("gmMainLib_8015D0F4");
     selkind_bit((*gmMainLib_8015ED98()).x10, arg0)
 }
 
 pub unsafe fn gmMainLib_8015D134(arg0: u8) {
+    melee_core::ct!("gmMainLib_8015D134");
     (*persistent_fighter(arg0)).x7C.set_b4(1);
     (*gmMainLib_8015ED98()).x10 |= selkind_mask(arg0);
 }
 
 pub unsafe fn gmMainLib_8015D194(arg0: u8) -> *mut u8 {
+    melee_core::ct!("gmMainLib_8015D194");
     addr_of_mut!((*persistent_fighter(arg0)).x7C.x80)
 }
 
 pub unsafe fn gmMainLib_8015D1AC(arg0: u8) -> i32 {
+    melee_core::ct!("gmMainLib_8015D1AC");
     (*persistent_fighter(arg0)).x7C.b789() as i32
 }
 
 pub unsafe fn gmMainLib_8015D1C8(arg0: u8, stocks: i32) {
+    melee_core::ct!("gmMainLib_8015D1C8");
     (*persistent_fighter(arg0)).x7C.set_b789(stocks as u16);
 }
 
 pub unsafe fn gmMainLib_8015D1E8(arg0: u8) -> *mut i32 {
+    melee_core::ct!("gmMainLib_8015D1E8");
     addr_of_mut!((*persistent_fighter(arg0)).x7C.x8C)
 }
 
 pub unsafe fn gmMainLib_8015D200(arg0: u8) -> bool {
+    melee_core::ct!("gmMainLib_8015D200");
     (*persistent_fighter(arg0)).x7C.b5() != 0
 }
 
 pub unsafe fn gmMainLib_8015D21C(arg0: u8) -> i32 {
+    melee_core::ct!("gmMainLib_8015D21C");
     selkind_bit((*gmMainLib_8015ED98()).x14, arg0)
 }
 
 pub unsafe fn gmMainLib_8015D25C(arg0: u8) {
+    melee_core::ct!("gmMainLib_8015D25C");
     (*persistent_fighter(arg0)).x7C.set_b5(1);
     (*gmMainLib_8015ED98()).x14 |= selkind_mask(arg0);
 }
 
 pub unsafe fn gmMainLib_8015D2BC(arg0: u8) -> *mut u8 {
+    melee_core::ct!("gmMainLib_8015D2BC");
     addr_of_mut!((*persistent_fighter(arg0)).x7C.x81)
 }
 
 pub unsafe fn gmMainLib_8015D2D4(arg0: u8) -> i32 {
+    melee_core::ct!("gmMainLib_8015D2D4");
     (*persistent_fighter(arg0)).x7C.b10_to_12() as i32
 }
 
 pub unsafe fn gmMainLib_8015D2F0(arg0: u8, stocks: i32) {
+    melee_core::ct!("gmMainLib_8015D2F0");
     (*persistent_fighter(arg0)).x7C.set_b10_to_12(stocks as u16);
 }
 
 pub unsafe fn gmMainLib_8015D310(arg0: u8) -> *mut i32 {
+    melee_core::ct!("gmMainLib_8015D310");
     addr_of_mut!((*persistent_fighter(arg0)).x7C.x90)
 }
 
 pub unsafe fn gmMainLib_8015D328(arg0: u8) -> bool {
+    melee_core::ct!("gmMainLib_8015D328");
     (*persistent_fighter(arg0)).x7C.b6() != 0
 }
 
 pub unsafe fn gmMainLib_8015D344(arg0: u8) -> i32 {
+    melee_core::ct!("gmMainLib_8015D344");
     selkind_bit((*gmMainLib_8015ED98()).x18, arg0)
 }
 
 pub unsafe fn gmMainLib_8015D384(arg0: u8) {
+    melee_core::ct!("gmMainLib_8015D384");
     (*persistent_fighter(arg0)).x7C.set_b6(1);
     (*gmMainLib_8015ED98()).x18 |= selkind_mask(arg0);
 }
 
 pub unsafe fn gmMainLib_8015D3E4(arg0: u8) -> *mut u8 {
+    melee_core::ct!("gmMainLib_8015D3E4");
     addr_of_mut!((*persistent_fighter(arg0)).x7C.x82)
 }
 
 pub unsafe fn gmMainLib_8015D3FC(arg0: u8) -> i32 {
+    melee_core::ct!("gmMainLib_8015D3FC");
     (*persistent_fighter(arg0)).x7C.b13_to_15() as i32
 }
 
 pub unsafe fn gmMainLib_8015D418(arg0: u8, stocks: i32) {
+    melee_core::ct!("gmMainLib_8015D418");
     (*persistent_fighter(arg0)).x7C.set_b13_to_15(stocks as u16);
 }
 
 pub unsafe fn gmMainLib_8015D438(arg0: u8) -> *mut u32 {
+    melee_core::ct!("gmMainLib_8015D438");
     addr_of_mut!((*persistent_fighter(arg0)).x7C.x94)
 }
 
 pub unsafe fn gmMainLib_8015D450(arg0: u8) -> *mut i32 {
+    melee_core::ct!("gmMainLib_8015D450");
     addr_of_mut!((*gmMainLib_8015EDBC()).x4C[arg0 as usize])
 }
 
 
 pub unsafe fn gmMainLib_8015D4A8(arg0: u8) -> i32 {
+    melee_core::ct!("gmMainLib_8015D4A8");
     selkind_bit((*gmMainLib_8015ED98()).x1C, arg0)
 }
 
 
 pub unsafe fn gmMainLib_8015D508() -> bool {
+    melee_core::ct!("gmMainLib_8015D508");
     for i in 0..SELKIND_COUNT as usize {
         if (*fighter_base().add(i)).x7C.b0() == 0 {
             return false;
@@ -438,6 +498,7 @@ pub unsafe fn gmMainLib_8015D508() -> bool {
 }
 
 pub unsafe fn gmMainLib_8015D5DC() -> bool {
+    melee_core::ct!("gmMainLib_8015D5DC");
     for i in 0..0x19 {
         if selkind_bit((*gmMainLib_8015EDB0()).x4, i as u8) == 0 {
             return false;
@@ -447,6 +508,7 @@ pub unsafe fn gmMainLib_8015D5DC() -> bool {
 }
 
 pub unsafe fn gmMainLib_8015D640() -> bool {
+    melee_core::ct!("gmMainLib_8015D640");
     for i in 0..0x19 {
         if selkind_bit((*gmMainLib_8015EDBC()).x8, i as u8) == 0 {
             return false;
@@ -456,62 +518,77 @@ pub unsafe fn gmMainLib_8015D640() -> bool {
 }
 
 pub unsafe fn gmMainLib_8015D6A4(arg0: u8) -> *mut i32 {
+    melee_core::ct!("gmMainLib_8015D6A4");
     addr_of_mut!((*persistent_fighter(arg0)).x7C.x98)
 }
 
 pub unsafe fn gmMainLib_8015D6BC(arg0: u8) -> bool {
+    melee_core::ct!("gmMainLib_8015D6BC");
     (*persistent_fighter(arg0)).x7C.b1() != 0
 }
 
 pub unsafe fn gmMainLib_8015D6D8(arg0: u8, arg1: i32) {
+    melee_core::ct!("gmMainLib_8015D6D8");
     (*persistent_fighter(arg0)).x7C.set_b1(arg1 as u16);
 }
 
 pub unsafe fn gmMainLib_8015D6F8(arg0: u8) -> *mut i32 {
+    melee_core::ct!("gmMainLib_8015D6F8");
     addr_of_mut!((*persistent_fighter(arg0)).x7C.x9C)
 }
 
 pub unsafe fn gmMainLib_8015D710(arg0: u8) -> bool {
+    melee_core::ct!("gmMainLib_8015D710");
     (*persistent_fighter(arg0)).x7C.b2() != 0
 }
 
 pub unsafe fn gmMainLib_8015D72C(arg0: u8, arg1: i32) {
+    melee_core::ct!("gmMainLib_8015D72C");
     (*persistent_fighter(arg0)).x7C.set_b2(arg1 as u16);
 }
 
 pub unsafe fn gmMainLib_8015D74C(arg0: u8) -> *mut u16 {
+    melee_core::ct!("gmMainLib_8015D74C");
     addr_of_mut!((*persistent_fighter(arg0)).x7C.xA0)
 }
 
 pub unsafe fn gmMainLib_8015D764(arg0: u8) -> bool {
+    melee_core::ct!("gmMainLib_8015D764");
     (*persistent_fighter(arg0)).x7C.b3() != 0
 }
 
 pub unsafe fn gmMainLib_8015D780(arg0: u8) {
+    melee_core::ct!("gmMainLib_8015D780");
     (*persistent_fighter(arg0)).x7C.set_b3(1);
 }
 
 pub unsafe fn gmMainLib_8015D7A4(arg0: u8) -> *mut u16 {
+    melee_core::ct!("gmMainLib_8015D7A4");
     addr_of_mut!((*persistent_fighter(arg0)).x7C.xA2)
 }
 
 pub unsafe fn gmMainLib_8015D7BC(arg0: u8) -> *mut i32 {
+    melee_core::ct!("gmMainLib_8015D7BC");
     addr_of_mut!((*persistent_fighter(arg0)).x7C.xA4)
 }
 
 pub unsafe fn gmMainLib_8015D7D4(arg0: u8) -> *mut i32 {
+    melee_core::ct!("gmMainLib_8015D7D4");
     addr_of_mut!((*persistent_fighter(arg0)).x7C.xA8)
 }
 
 pub unsafe fn gmMainLib_8015D7EC(arg0: u8) -> *mut u16 {
+    melee_core::ct!("gmMainLib_8015D7EC");
     addr_of_mut!((*persistent_fighter(arg0)).x7C.x7E)
 }
 
 pub unsafe fn gmMainLib_8015D804(arg0: i32) -> *mut u32 {
+    melee_core::ct!("gmMainLib_8015D804");
     addr_of_mut!((*save()).x1B80[arg0 as usize]) as *mut u32
 }
 
 pub unsafe fn gmMainLib_8015D818(arg0: u32) -> i32 {
+    melee_core::ct!("gmMainLib_8015D818");
     if gmMainLib_8015D94C(arg0) == 0 {
         *gmMainLib_8015D804(arg0 as i32) = ext::lbTime_GetTimeInSeconds();
         gmMainLib_8015D888(arg0);
@@ -522,23 +599,28 @@ pub unsafe fn gmMainLib_8015D818(arg0: u32) -> i32 {
 }
 
 pub unsafe fn gmMainLib_8015D888(arg0: u32) {
+    melee_core::ct!("gmMainLib_8015D888");
     bitset_set(&mut (*save()).x1B40, arg0);
 }
 
 
 pub unsafe fn gmMainLib_8015D8D8(arg0: u32) -> i32 {
+    melee_core::ct!("gmMainLib_8015D8D8");
     bitset_test(&(*save()).x1B40, arg0) as i32
 }
 
 pub unsafe fn gmMainLib_8015D8FC(arg0: u32) {
+    melee_core::ct!("gmMainLib_8015D8FC");
     bitset_set(&mut (*save()).x1B4C, arg0);
 }
 
 pub unsafe fn gmMainLib_8015D924(arg0: u32) {
+    melee_core::ct!("gmMainLib_8015D924");
     bitset_clear(&mut (*save()).x1B4C, arg0);
 }
 
 pub unsafe fn gmMainLib_8015D94C(arg0: u32) -> i32 {
+    melee_core::ct!("gmMainLib_8015D94C");
     if ext::Mex_Enabled("unlock_special_messages") != 0 {
         return 1;
     }
@@ -546,10 +628,12 @@ pub unsafe fn gmMainLib_8015D94C(arg0: u32) -> i32 {
 }
 
 pub unsafe fn gmMainLib_8015D970(idx: isize) -> *mut u32 {
+    melee_core::ct!("gmMainLib_8015D970");
     addr_of_mut!((*gmMainLib_8015CCE4()).times[idx as usize]) as *mut u32
 }
 
 pub unsafe fn gmMainLib_8015D984(arg0: u32) -> bool {
+    melee_core::ct!("gmMainLib_8015D984");
     if gmMainLib_8015DA90(arg0) == 0 {
         *gmMainLib_8015D970(arg0 as isize) = ext::lbTime_GetTimeInSeconds();
         gmMainLib_8015D9F4(arg0);
@@ -563,55 +647,68 @@ pub unsafe fn gmMainLib_8015D984(arg0: u32) -> bool {
 }
 
 pub unsafe fn gmMainLib_8015D9F4(arg0: u32) {
+    melee_core::ct!("gmMainLib_8015D9F4");
     bitset_set(&mut (*gmMainLib_8015CCE4()).flags, arg0);
 }
 
 pub unsafe fn gmMainLib_8015DA1C(arg0: u32) -> i32 {
+    melee_core::ct!("gmMainLib_8015DA1C");
     bitset_test(&(*gmMainLib_8015CCE4()).flags, arg0) as i32
 }
 
 pub unsafe fn gmMainLib_8015DA40(arg0: u32) {
+    melee_core::ct!("gmMainLib_8015DA40");
     bitset_set(&mut (*save()).x1B58, arg0);
 }
 
 pub unsafe fn gmMainLib_8015DA68(arg0: u32) {
+    melee_core::ct!("gmMainLib_8015DA68");
     bitset_clear(&mut (*save()).x1B58, arg0);
 }
 
 pub unsafe fn gmMainLib_8015DA90(arg0: u32) -> i32 {
+    melee_core::ct!("gmMainLib_8015DA90");
     bitset_test_word(&(*save()).x1B58, arg0) as i32
 }
 
 pub unsafe fn gmMainLib_8015DAB4(arg0: u32) {
+    melee_core::ct!("gmMainLib_8015DAB4");
     bitset_set(&mut (*save()).x1C88, arg0);
 }
 
 pub unsafe fn gmMainLib_8015DADC(arg0: u32) -> bool {
+    melee_core::ct!("gmMainLib_8015DADC");
     bitset_test(&(*save()).x1C88, arg0) != 0
 }
 
 pub unsafe fn gmMainLib_8015DB00() -> u8 {
+    melee_core::ct!("gmMainLib_8015DB00");
     (*gmMainLib_804D3EE0).unk_1
 }
 
 pub unsafe fn gmMainLib_8015DB0C(arg0: u8) {
+    melee_core::ct!("gmMainLib_8015DB0C");
     (*gmMainLib_804D3EE0).unk_1 = arg0;
 }
 
 pub unsafe fn gmMainLib_8015DB18() {
+    melee_core::ct!("gmMainLib_8015DB18");
     (*gmMainLib_804D3EE0).unk_1 = (*gmMainLib_804D3EE0).unk_1.wrapping_add(1);
 }
 
 pub unsafe fn gmMainLib_8015DB2C(arg0: u8) {
+    melee_core::ct!("gmMainLib_8015DB2C");
     let x = (*gmMainLib_804D3EE0).x39[arg0 as usize];
     (*gmMainLib_804D3EE0).x39[arg0 as usize] = crate::lb::lbTime_8000AF74(x as u32, 1) as u8;
 }
 
 pub unsafe fn gmMainLib_8015DB6C(arg0: u8) -> u8 {
+    melee_core::ct!("gmMainLib_8015DB6C");
     (*gmMainLib_804D3EE0).x39[arg0 as usize]
 }
 
 pub unsafe fn gmMainLib_8015DB80() {
+    melee_core::ct!("gmMainLib_8015DB80");
     for i in 0..11 {
         (*gmMainLib_804D3EE0).x39[i] = 0;
     }
@@ -648,6 +745,7 @@ unsafe fn gmMainLib_ClearNameTag(tag_ptr: *mut u8, tag: u8) {
 }
 
 pub unsafe fn gmMainLib_8015DBF4(arg0: i32) {
+    melee_core::ct!("gmMainLib_8015DBF4");
     let arg0 = arg0 as u8;
     let g = gmMainLib_804D3EE0;
     gmMainLib_AdjustNameTag(addr_of_mut!((*gmMainLib_8015CDC8()).nametag), arg0);
@@ -692,6 +790,7 @@ unsafe fn SetDefaultHandicaps(mode: *mut VsModeData) {
 }
 
 pub unsafe fn gmMainLib_8015EA80() {
+    melee_core::ct!("gmMainLib_8015EA80");
     let modes = addr_of_mut!((*gmMainLib_804D3EE0).modes);
     gmMainLib_8015CDEC();
     let t = addr_of_mut!((*modes).table) as *mut VsModeData;
@@ -714,10 +813,12 @@ pub unsafe fn gmMainLib_8015EA80() {
 }
 
 pub unsafe fn gmMainLib_8015ECB0() -> i32 {
+    melee_core::ct!("gmMainLib_8015ECB0");
     (*gmMainLib_804D3EE0).x1850.bgm as i32
 }
 
 pub unsafe fn gmMainLib_8015ECBC() {
+    melee_core::ct!("gmMainLib_8015ECBC");
     let rules = addr_of_mut!((*gmMainLib_804D3EE0).x1850);
     // m-ex BGM/MenuPlaylist.asm: a weighted draw over the menu playlist when it has weight.
     let n = ext::Mex_MenuPlaylistCount();
@@ -755,30 +856,37 @@ pub unsafe fn gmMainLib_8015ECBC() {
 }
 
 pub unsafe fn gmMainLib_8015ED30() -> i32 {
+    melee_core::ct!("gmMainLib_8015ED30");
     (*gmMainLib_804D3EE0).x1850.unk_xc as i32
 }
 
 pub unsafe fn GetRumbleSettingOfPort(port: isize) -> i32 {
+    melee_core::ct!("GetRumbleSettingOfPort");
     (*save()).x1CB0.rumble_enabled[port as usize] as i32
 }
 
 pub unsafe fn gmMainLib_SetRumbleEnabled(port: isize, enabled: bool) {
+    melee_core::ct!("gmMainLib_SetRumbleEnabled");
     (*gmMainLib_GetGamePrefs()).rumble_enabled[port as usize] = enabled as u8;
 }
 
 pub unsafe fn gmMainLib_8015ED5C() -> i32 {
+    melee_core::ct!("gmMainLib_8015ED5C");
     (*gmMainLib_804D3EE0).x1850.unk_14
 }
 
 pub unsafe fn gmMainLib_8015ED68(port: isize) {
+    melee_core::ct!("gmMainLib_8015ED68");
     (*gmMainLib_804D3EE0).x1850.unk_14 = port as i32;
 }
 
 pub unsafe fn gmMainLib_8015ED74() -> u8 {
+    melee_core::ct!("gmMainLib_8015ED74");
     (*gmMainLib_GetGamePrefs()).sound_balance as u8
 }
 
 pub unsafe fn gmMainLib_8015ED80(arg0: i8) {
+    melee_core::ct!("gmMainLib_8015ED80");
     (*gmMainLib_GetGamePrefs()).sound_balance = arg0;
 }
 
@@ -788,6 +896,7 @@ static mut gmMainLib_PcUnlockedChars: u16 = 0;
 static mut gmMainLib_PcUnlockedStages: u16 = 0;
 
 pub unsafe fn gmMainLib_GetUnlockedCharactersBitmaskPtr() -> *mut u16 {
+    melee_core::ct!("gmMainLib_GetUnlockedCharactersBitmaskPtr");
     if ext::PcUnlockAll() != 0 {
         gmMainLib_PcUnlockedChars = (*save()).unlocked_characters | 0x7FF;
         return addr_of_mut!(gmMainLib_PcUnlockedChars);
@@ -796,10 +905,12 @@ pub unsafe fn gmMainLib_GetUnlockedCharactersBitmaskPtr() -> *mut u16 {
 }
 
 pub unsafe fn gmMainLib_8015ED98() -> *mut gmm_retval_ED98 {
+    melee_core::ct!("gmMainLib_8015ED98");
     addr_of_mut!((*save()).unk_8)
 }
 
 pub unsafe fn gmMainLib_8015EDA4() -> *mut u16 {
+    melee_core::ct!("gmMainLib_8015EDA4");
     if ext::PcUnlockAll() != 0 {
         gmMainLib_PcUnlockedStages = (*save()).x186A | 0x7FF;
         return addr_of_mut!(gmMainLib_PcUnlockedStages);
@@ -808,18 +919,22 @@ pub unsafe fn gmMainLib_8015EDA4() -> *mut u16 {
 }
 
 pub unsafe fn gmMainLib_8015EDB0() -> *mut gmm_retval_EDB0 {
+    melee_core::ct!("gmMainLib_8015EDB0");
     addr_of_mut!((*save()).unk_28)
 }
 
 pub unsafe fn gmMainLib_8015EDBC() -> *mut gmm_retval_EDBC {
+    melee_core::ct!("gmMainLib_8015EDBC");
     addr_of_mut!((*save()).unk_30)
 }
 
 pub unsafe fn gmMainLib_8015EDC8() -> *mut gmm_x1868_1A8_t {
+    melee_core::ct!("gmMainLib_8015EDC8");
     addr_of_mut!((*save()).unk_1A8)
 }
 
 pub unsafe fn gmMainLib_8015EDD4() -> i32 {
+    melee_core::ct!("gmMainLib_8015EDD4");
     if ext::Mex_Enabled("unlock_sound_test") != 0 || ext::PcUnlockAll() != 0 {
         return 1;
     }
@@ -827,14 +942,17 @@ pub unsafe fn gmMainLib_8015EDD4() -> i32 {
 }
 
 pub unsafe fn gmMainLib_8015EDE4() {
+    melee_core::ct!("gmMainLib_8015EDE4");
     (*save()).x186C |= 4;
 }
 
 pub unsafe fn gmMainLib_8015EDF8() {
+    melee_core::ct!("gmMainLib_8015EDF8");
     (*save()).x186C &= !4;
 }
 
 pub unsafe fn gmMainLib_8015EE0C() -> i32 {
+    melee_core::ct!("gmMainLib_8015EE0C");
     if ext::Mex_Enabled("unlock_score_display") != 0 || ext::PcUnlockAll() != 0 {
         return 1;
     }
@@ -842,14 +960,17 @@ pub unsafe fn gmMainLib_8015EE0C() -> i32 {
 }
 
 pub unsafe fn gmMainLib_8015EE1C() {
+    melee_core::ct!("gmMainLib_8015EE1C");
     (*save()).x186C |= 1;
 }
 
 pub unsafe fn gmMainLib_8015EE30() {
+    melee_core::ct!("gmMainLib_8015EE30");
     (*save()).x186C &= !1;
 }
 
 pub unsafe fn gmMainLib_8015EE44() -> i32 {
+    melee_core::ct!("gmMainLib_8015EE44");
     if ext::Mex_Enabled("unlock_random_stage_select") != 0 || ext::PcUnlockAll() != 0 {
         return 1;
     }
@@ -857,15 +978,18 @@ pub unsafe fn gmMainLib_8015EE44() -> i32 {
 }
 
 pub unsafe fn gmMainLib_8015EE54() {
+    melee_core::ct!("gmMainLib_8015EE54");
     (*save()).x186C |= 2;
 }
 
 pub unsafe fn gmMainLib_8015EE68() {
+    melee_core::ct!("gmMainLib_8015EE68");
     (*save()).x186C &= !2;
     (*gmMainLib_GetGamePrefs()).stage_mask = gmMainLib_DefaultGamePrefs.stage_mask;
 }
 
 pub unsafe fn gmMainLib_8015EE90() -> i32 {
+    melee_core::ct!("gmMainLib_8015EE90");
     if ext::Mex_Enabled("unlock_all_star") != 0 || ext::PcUnlockAll() != 0 {
         return 1;
     }
@@ -873,14 +997,17 @@ pub unsafe fn gmMainLib_8015EE90() -> i32 {
 }
 
 pub unsafe fn gmMainLib_8015EEA0() {
+    melee_core::ct!("gmMainLib_8015EEA0");
     (*save()).x186C |= 8;
 }
 
 pub unsafe fn gmMainLib_8015EEB4() {
+    melee_core::ct!("gmMainLib_8015EEB4");
     (*save()).x186C &= !8;
 }
 
 pub unsafe fn gmMainLib_8015EEC8() {
+    melee_core::ct!("gmMainLib_8015EEC8");
     for i in 0..SELKIND_COUNT as usize {
         let data = fighter_base().add(i);
         memzero(addr_of_mut!((*data).x7C), core::mem::size_of::<FighterData_x7C>());
@@ -892,6 +1019,7 @@ pub unsafe fn gmMainLib_8015EEC8() {
 }
 
 pub unsafe fn gmMainLib_8015EF30(stats: *mut GmStats) {
+    melee_core::ct!("gmMainLib_8015EF30");
     (*stats).sd_count = 0;
     (*stats).attacks_hit = 0;
     (*stats).attacks_total = 0;
@@ -914,6 +1042,7 @@ pub unsafe fn gmMainLib_8015EF30(stats: *mut GmStats) {
 }
 
 pub unsafe fn InitializePersistentNameData(arg0: i32) {
+    melee_core::ct!("InitializePersistentNameData");
     let idx = arg0 as u8 as i32;
     let data = nametag_slot(gmMainLib_GetNameTagDataBanks(), idx);
     for i in 0..GM_NAMETAG_COUNT as usize {
@@ -928,6 +1057,7 @@ pub unsafe fn InitializePersistentNameData(arg0: i32) {
 
 /// C `GetNameTagSlot`: the name-tag slot `idx` within the banks.
 pub unsafe fn GetNameTagSlot(banks: *mut NameTagDataBank, idx: i32) -> *mut NameTagData {
+    melee_core::ct!("GetNameTagSlot");
     nametag_slot(banks, idx)
 }
 
@@ -953,38 +1083,46 @@ unsafe fn ResetPersistentFighterData(i: i32) {
 }
 
 pub unsafe fn gmMainLib_8015F150() {
+    melee_core::ct!("gmMainLib_8015F150");
     for i in 0..SELKIND_COUNT as i32 {
         ResetPersistentFighterData(i);
     }
 }
 
 pub unsafe fn gmMainLib_8015F260() {
+    melee_core::ct!("gmMainLib_8015F260");
     for i in 0..GM_NAMETAG_COUNT as i32 {
         InitializePersistentNameData(i);
     }
 }
 
 pub unsafe fn gmMainLib_8015F464() {
+    melee_core::ct!("gmMainLib_8015F464");
     memzero(gmMainLib_8015ED98(), core::mem::size_of::<gmm_retval_ED98>());
 }
 
 pub unsafe fn gmMainLib_8015F490() {
+    melee_core::ct!("gmMainLib_8015F490");
     memzero(gmMainLib_8015EDB0(), core::mem::size_of::<gmm_retval_EDB0>());
 }
 
 pub unsafe fn gmMainLib_8015F4BC() {
+    melee_core::ct!("gmMainLib_8015F4BC");
     memzero(gmMainLib_8015EDBC(), core::mem::size_of::<gmm_retval_EDBC>());
 }
 
 pub unsafe fn gmMainLib_8015F4E8() -> u32 {
+    melee_core::ct!("gmMainLib_8015F4E8");
     (*gmMainLib_GetGamePrefs()).deflicker as u32
 }
 
 pub unsafe fn gmMainLib_8015F4F4(arg0: u8) {
+    melee_core::ct!("gmMainLib_8015F4F4");
     (*save()).x1CB0.deflicker = arg0;
 }
 
 pub unsafe fn gmMainLib_8015F500() {
+    melee_core::ct!("gmMainLib_8015F500");
     let mode = if gmMainLib_8046B0F0.progressive != 0 {
         if gmMainLib_8015F4E8() != 0 { ext::gmMainLib_803D4A80() } else { ext::GXNtsc480Prog() }
     } else if gmMainLib_8015F4E8() != 0 {
@@ -996,6 +1134,7 @@ pub unsafe fn gmMainLib_8015F500() {
 }
 
 pub unsafe fn gmMainLib_8015F588(deflicker: bool) {
+    melee_core::ct!("gmMainLib_8015F588");
     let mode = if gmMainLib_8046B0F0.progressive != 0 {
         if deflicker { ext::gmMainLib_803D4A80() } else { ext::GXNtsc480Prog() }
     } else if deflicker {
@@ -1007,6 +1146,7 @@ pub unsafe fn gmMainLib_8015F588(deflicker: bool) {
 }
 
 pub unsafe fn gmMainLib_8015F600(arg0: i32, arg1: i32) {
+    melee_core::ct!("gmMainLib_8015F600");
     if arg0 == 1 {
         ResetAllPersistentFighterData();
         let s = save() as *mut u8;
@@ -1075,6 +1215,7 @@ pub unsafe fn gmMainLib_8015F600(arg0: i32, arg1: i32) {
 }
 
 pub unsafe fn gmMainLib_8015FA34(arg0: i32) {
+    melee_core::ct!("gmMainLib_8015FA34");
     for i in 1..9 {
         if (arg0 != 0 && arg0 != 2) || ext::lb_8001B6E0(i) != 0 {
             gmMainLib_8015F600(i, 0);
@@ -1094,6 +1235,7 @@ pub unsafe fn gmMainLib_8015FA34(arg0: i32) {
 }
 
 pub unsafe fn gmMainLib_8015FB68() {
+    melee_core::ct!("gmMainLib_8015FB68");
     (*save()).x186C = 0;
     ext::gm_8016505C();
     ext::gm_801647D0();
@@ -1105,6 +1247,7 @@ pub unsafe fn gmMainLib_8015FB68() {
 /// C `gmMainLib_MexApplyTournamentDefaults` (PC only, opt-in through MELEE_MEX): applies the
 /// tournament-standard defaults to the default rules and prefs before they are copied in.
 pub unsafe fn gmMainLib_MexApplyTournamentDefaults() {
+    melee_core::ct!("gmMainLib_MexApplyTournamentDefaults");
     if ext::Mex_Enabled("default_stock_mode") != 0 {
         gmMainLib_DefaultGameRules.mode = 1;
         gmMainLib_DefaultGameRules.time_limit = 0;
@@ -1125,6 +1268,7 @@ pub unsafe fn gmMainLib_MexApplyTournamentDefaults() {
 }
 
 pub unsafe fn gmMainLib_8015FBA4() {
+    melee_core::ct!("gmMainLib_8015FBA4");
     gmMainLib_MexApplyTournamentDefaults();
 
     memzero(gmMainLib_804D3EE0 as *mut u8, core::mem::size_of::<gmm_x0>());
@@ -1145,12 +1289,14 @@ pub unsafe fn gmMainLib_8015FBA4() {
 }
 
 pub unsafe fn gmMainLib_8015FC74() -> i32 {
+    melee_core::ct!("gmMainLib_8015FC74");
     let prev = gmMainLib_8046B0F0.x10;
     gmMainLib_8046B0F0.x10 = ext::lbTime_GetTimeInSeconds() as i32;
     gmMainLib_8046B0F0.x10 - prev
 }
 
 pub unsafe fn gmMainLib_8015FCC0() {
+    melee_core::ct!("gmMainLib_8015FCC0");
     let tmp = addr_of_mut!(gmMainLib_8046B0F0);
     (*tmp).skip_intro = if ext::OSGetResetCode() == 0x8000_0000 { 1 } else { 0 };
     (*tmp).resetting = 0;

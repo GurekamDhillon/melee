@@ -8,6 +8,7 @@ use crate::types::*;
 
 /// `ftCo_800C739C(gobj)`.
 pub fn ftco_800c739c(g: G) {
+    melee_core::ct!("ftco_800c739c");
     let ms = if ftkb_is_kirby(fp(g).kind) {
         ftCo_MS_WalkFast
     } else {
@@ -22,5 +23,6 @@ pub fn ftco_800c739c(g: G) {
 
 /// `ftCo_800C7414(gobj)`: `ft_8008521C(gobj)`.
 pub fn ftco_800c7414(g: G) {
+    melee_core::ct!("ftco_800c7414");
     e0d0::ft_8008521C(g)
 }

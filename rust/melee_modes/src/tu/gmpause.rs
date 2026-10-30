@@ -182,6 +182,7 @@ unsafe fn HSD_JObjGetChild(jobj: *mut HSD_JObj) -> *mut HSD_JObj {
 }
 
 pub unsafe extern "C" fn fn_801A0E34(_arg0: *mut HSD_GObj) {
+    melee_core::ct!("fn_801A0E34");
     if lbl_80479B10.slot != 99 {
         let x = 10.0f32 * ext::HSD_PadMasterStatus[(lbl_80479B10.slot as u8) as usize].nml_stickX;
         let y = 10.0f32 * ext::HSD_PadMasterStatus[(lbl_80479B10.slot as u8) as usize].nml_stickY;
@@ -191,6 +192,7 @@ pub unsafe extern "C" fn fn_801A0E34(_arg0: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn gm_801A0FEC(slot: i32, flag: u8) {
+    melee_core::ct!("gm_801A0FEC");
     // TARGET_PC: the Atlas retail mask hides the panel (flag 0 is retail's own "no panel" path).
     let mut flag = flag;
     if ext::Ui_RetailHidden(AT_RE_PAUSE_PANEL) != 0 {
@@ -222,11 +224,13 @@ pub unsafe extern "C" fn gm_801A0FEC(slot: i32, flag: u8) {
 }
 
 pub unsafe extern "C" fn gm_801A10FC(_slot: i32) {
+    melee_core::ct!("gm_801A10FC");
     lbl_80479B10.slot = 99;
     ext::HSD_JObjSetFlagsAll(lbl_80479B10.background, JOBJ_HIDDEN as u32);
 }
 
 pub unsafe extern "C" fn fn_801A1134() {
+    melee_core::ct!("fn_801A1134");
     let mut scene: *mut SceneDesc = null_mut();
     lbl_804D6700 = ext::lbArchive_80016DBC(
         c"GmPause".as_ptr(),

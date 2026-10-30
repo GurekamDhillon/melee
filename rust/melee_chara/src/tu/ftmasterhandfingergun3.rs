@@ -15,9 +15,10 @@ pub mod ext {
 }
 
 pub fn ftMh_FingerGun3_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_FingerGun3_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         ext::ftMh_MS_389_80151018(gobj);
     }
 }
 
-pub fn ftMh_FingerGun3_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_FingerGun3_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_FingerGun3_Coll");}

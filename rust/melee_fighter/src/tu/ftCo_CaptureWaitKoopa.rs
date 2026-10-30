@@ -39,10 +39,12 @@ pub mod ext {
 
 /// `ftCo_800DB464` as the `accessory1_cb` value.
 pub unsafe extern "C" fn ftCo_800DB464_cb(g: G) {
+    melee_core::ct!("ftCo_800DB464_cb");
     ext::ftCo_800DB464(g)
 }
 
 pub fn ftCo_800BCC20(g: G) {
+    melee_core::ct!("ftCo_800BCC20");
     ext::Fighter_ChangeMotionState(g, ftCo_MS_CaptureWaitKoopa as i32, Ft_MF_None, 0.0, 1.0, 0.0, core::ptr::null_mut());
     let f = fp(g);
     f.accessory1_cb = Some(ftCo_800DB464_cb);
@@ -50,6 +52,7 @@ pub fn ftCo_800BCC20(g: G) {
 }
 
 pub fn ftCo_CaptureWaitKoopa_Anim(g: G) {
+    melee_core::ct!("ftCo_CaptureWaitKoopa_Anim");
     ext::ftCo_800BC458(g);
     if fp(g).grab_timer <= 0.0 {
         ext::ftCo_800DA698(fp(g).victim_gobj, false);
@@ -61,13 +64,14 @@ pub fn ftCo_CaptureWaitKoopa_Anim(g: G) {
     }
 }
 
-pub fn ftCo_CaptureWaitKoopa_IASA(_g: G) {}
+pub fn ftCo_CaptureWaitKoopa_IASA(_g: G) { melee_core::ct!("ftCo_CaptureWaitKoopa_IASA");}
 
-pub fn ftCo_CaptureWaitKoopa_Phys(_g: G) {}
+pub fn ftCo_CaptureWaitKoopa_Phys(_g: G) { melee_core::ct!("ftCo_CaptureWaitKoopa_Phys");}
 
-pub fn ftCo_CaptureWaitKoopa_Coll(_g: G) {}
+pub fn ftCo_CaptureWaitKoopa_Coll(_g: G) { melee_core::ct!("ftCo_CaptureWaitKoopa_Coll");}
 
 pub fn ftCo_800BCD00(g: G) {
+    melee_core::ct!("ftCo_800BCD00");
     ext::Fighter_ChangeMotionState(g, ftCo_MS_CaptureWaitKoopaAir as i32, Ft_MF_None, 0.0, 1.0, 0.0, core::ptr::null_mut());
     let f = fp(g);
     f.accessory1_cb = Some(ftCo_800DB464_cb);
@@ -75,11 +79,12 @@ pub fn ftCo_800BCD00(g: G) {
 }
 
 pub fn ftCo_CaptureWaitKoopaAir_Anim(g: G) {
+    melee_core::ct!("ftCo_CaptureWaitKoopaAir_Anim");
     ftCo_CaptureWaitKoopa_Anim(g);
 }
 
-pub fn ftCo_CaptureWaitKoopaAir_IASA(_g: G) {}
+pub fn ftCo_CaptureWaitKoopaAir_IASA(_g: G) { melee_core::ct!("ftCo_CaptureWaitKoopaAir_IASA");}
 
-pub fn ftCo_CaptureWaitKoopaAir_Phys(_g: G) {}
+pub fn ftCo_CaptureWaitKoopaAir_Phys(_g: G) { melee_core::ct!("ftCo_CaptureWaitKoopaAir_Phys");}
 
-pub fn ftCo_CaptureWaitKoopaAir_Coll(_g: G) {}
+pub fn ftCo_CaptureWaitKoopaAir_Coll(_g: G) { melee_core::ct!("ftCo_CaptureWaitKoopaAir_Coll");}

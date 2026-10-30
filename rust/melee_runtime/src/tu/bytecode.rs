@@ -7,5 +7,6 @@ use crate::random::HsdRand;
 
 /// `HSD_ByteCodeEval(bytecode, args, nb_args)`; the RNG state the C reads globally is passed in.
 pub fn HSD_ByteCodeEval(bytecode: Option<&[u8]>, args: &[f32], nb_args: i32, rand: &mut HsdRand) -> f32 {
+    melee_core::ct!("HSD_ByteCodeEval");
     byte_code_eval(bytecode, args, nb_args, rand)
 }

@@ -44,9 +44,10 @@ unsafe fn get_jobj(gobj: *mut HSD_GObj) -> *mut HSD_JObj {
     (*gobj).hsd_obj as *mut HSD_JObj
 }
 
-pub fn ftMh_BackPunch_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_BackPunch_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_BackPunch_Coll");}
 
 pub fn ftMh_MS_370_80153D2C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_370_80153D2C");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -62,6 +63,7 @@ pub fn ftMh_MS_370_80153D2C(gobj: *mut HSD_GObj) {
 /// `ftMh_MS_370_80153D2C` after `cur_pos.x = pos.x`: split out so the arithmetic can be checked
 /// against the C without the fighter list `ftBossLib_8015C208` reads.
 pub fn ms_370_rest(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ms_370_rest");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let jobj = get_jobj(gobj);
@@ -100,6 +102,7 @@ pub fn ms_370_rest(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMh_BackCrush_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_BackCrush_Anim");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         if (*fp).cmd_vars[0] != 0 {
@@ -128,6 +131,7 @@ pub fn ftMh_BackCrush_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMh_BackCrush_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_BackCrush_Phys");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         (*fp).mv.mh.unk0.x0 -= 1.0;

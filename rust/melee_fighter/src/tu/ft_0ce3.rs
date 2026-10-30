@@ -43,6 +43,7 @@ fn set_cbs(f: &mut Fighter) {
 
 /// `ftCo_800CE3E0`: grounded FireFlowerShoot enter.
 pub fn ftco_800ce3e0(g: G) {
+    melee_core::ct!("ftco_800ce3e0");
     unsafe { fp(g).anon_2210.throw_flags = 0 };
     reset_vars(fp(g));
     e::Fighter_ChangeMotionState(g, ftCo_MS_FireFlowerShoot as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -52,6 +53,7 @@ pub fn ftco_800ce3e0(g: G) {
 
 /// `ftCo_800CE480`: aerial FireFlowerShootAir enter.
 pub fn ftco_800ce480(g: G) {
+    melee_core::ct!("ftco_800ce480");
     unsafe { fp(g).anon_2210.throw_flags = 0 };
     reset_vars(fp(g));
     e::Fighter_ChangeMotionState(g, ftCo_MS_FireFlowerShootAir as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -62,6 +64,7 @@ pub fn ftco_800ce480(g: G) {
 
 /// `ft_800CE528`: landed.
 pub extern "C" fn ft_800ce528(g: G) {
+    melee_core::ct!("ft_800ce528");
     let f = fp(g);
     crate::ftcommon3::ftcommon_8007d7fc(f);
     let (a, b) = (f.cur_anim_frame, f.frame_speed_mul);
@@ -71,6 +74,7 @@ pub extern "C" fn ft_800ce528(g: G) {
 
 /// `ft_800CE5A0`: left the ground.
 pub extern "C" fn ft_800ce5a0(g: G) {
+    melee_core::ct!("ft_800ce5a0");
     let f = fp(g);
     c2::ftcommon_8007d5d4(f);
     let (a, b) = (f.cur_anim_frame, f.frame_speed_mul);
@@ -81,6 +85,7 @@ pub extern "C" fn ft_800ce5a0(g: G) {
 
 /// `ftCo_800CE620`: take-damage callback.
 pub extern "C" fn ftco_800ce620(g: G) {
+    melee_core::ct!("ftco_800ce620");
     let it = fp(g).item_gobj;
     if !it.is_null() {
         ext::it_80292EAC(it);
@@ -134,6 +139,7 @@ fn shoot(g: G) {
 
 /// `ftCo_800CE650`: accessory4 callback, the flame stream.
 pub extern "C" fn ftco_800ce650(g: G) {
+    melee_core::ct!("ftco_800ce650");
     let f = fp(g);
     if f.item_gobj.is_null() {
         return;
@@ -200,6 +206,7 @@ pub extern "C" fn ftco_800ce650(g: G) {
 
 /// `ftCo_FireFlowerShoot_Anim`.
 pub fn ftco_fireflowershoot_anim(g: G) {
+    melee_core::ct!("ftco_fireflowershoot_anim");
     let f = fp(g);
     if !f.item_gobj.is_null() {
         if super::ft_0cd1::ft_check_throw_b3(f) {
@@ -212,10 +219,10 @@ pub fn ftco_fireflowershoot_anim(g: G) {
         super::ft_0cdd::ftco_800cde18(g);
     }
 }
-pub fn ftco_fireflowershootair_anim(g: G) { ftco_fireflowershoot_anim(g) }
-pub fn ftco_fireflowershoot_iasa(_g: G) {}
-pub fn ftco_fireflowershootair_iasa(_g: G) {}
-pub fn ftco_fireflowershoot_phys(g: G) { super::ft_0cdd::ftco_800cde54(g) }
-pub fn ftco_fireflowershootair_phys(g: G) { super::ft_0cdd::ftco_800cde74(g) }
-pub fn ftco_fireflowershoot_coll(g: G) { lg::ft_800841B8(g, ft_800ce5a0) }
-pub fn ftco_fireflowershootair_coll(g: G) { lg::ft_80082C74(g, ft_800ce528) }
+pub fn ftco_fireflowershootair_anim(g: G) { melee_core::ct!("ftco_fireflowershootair_anim"); ftco_fireflowershoot_anim(g) }
+pub fn ftco_fireflowershoot_iasa(_g: G) { melee_core::ct!("ftco_fireflowershoot_iasa");}
+pub fn ftco_fireflowershootair_iasa(_g: G) { melee_core::ct!("ftco_fireflowershootair_iasa");}
+pub fn ftco_fireflowershoot_phys(g: G) { melee_core::ct!("ftco_fireflowershoot_phys"); super::ft_0cdd::ftco_800cde54(g) }
+pub fn ftco_fireflowershootair_phys(g: G) { melee_core::ct!("ftco_fireflowershootair_phys"); super::ft_0cdd::ftco_800cde74(g) }
+pub fn ftco_fireflowershoot_coll(g: G) { melee_core::ct!("ftco_fireflowershoot_coll"); lg::ft_800841B8(g, ft_800ce5a0) }
+pub fn ftco_fireflowershootair_coll(g: G) { melee_core::ct!("ftco_fireflowershootair_coll"); lg::ft_80082C74(g, ft_800ce528) }

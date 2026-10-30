@@ -57,6 +57,7 @@ pub mod ext {
 }
 
 pub fn ftCo_Wait_Anim(g: G) {
+    melee_core::ct!("ftCo_Wait_Anim");
     let f = fp(g);
     if f.x2224_b2() != 0 {
         ext::ftCo_DownSpot_Enter(g);
@@ -67,6 +68,7 @@ pub fn ftCo_Wait_Anim(g: G) {
 }
 
 pub fn ftCo_Wait_IASA(g: G) {
+    melee_core::ct!("ftCo_Wait_IASA");
     if ext::ftCo_SpecialS_CheckInput(g) {
         return;
     }
@@ -133,10 +135,12 @@ pub fn ftCo_Wait_IASA(g: G) {
 }
 
 pub fn ftCo_Wait_Phys(g: G) {
+    melee_core::ct!("ftCo_Wait_Phys");
     ext::ft_80084F3C(g);
     ext::ftColl_8007AEE0(g);
 }
 
 pub fn ftCo_Wait_Coll(g: G) {
+    melee_core::ct!("ftCo_Wait_Coll");
     ext::ft_80084280(g);
 }

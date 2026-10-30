@@ -97,6 +97,7 @@ unsafe fn jobj_of(g: *mut HSD_GObj) -> *mut HSD_JObj {
 /// `Item_InitSpawnPosition` (itkinds inlines.h).
 #[inline]
 pub unsafe fn Item_InitSpawnPosition(spawn: *mut SpawnItem, pos: *const Vec, on_plane: bool) {
+    melee_core::ct!("Item_InitSpawnPosition");
     (*spawn).prev_pos = *pos;
     if on_plane {
         (*spawn).prev_pos.z = 0.0;
@@ -107,6 +108,7 @@ pub unsafe fn Item_InitSpawnPosition(spawn: *mut SpawnItem, pos: *const Vec, on_
 /// `Item_InitSpawnCommonFields` (itkinds inlines.h).
 #[inline]
 pub unsafe fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD_GObj, facing_dir: f32, initial_collision: bool) {
+    melee_core::ct!("Item_InitSpawnCommonFields");
     (*spawn).facing_dir = facing_dir;
     (*spawn).x3C_damage = 0;
     (*spawn).vel.z = 0.0;
@@ -127,6 +129,7 @@ pub static it_803F6818: [ItemStateTable; 3] = [
 
 /// `void it_8029CD18(Item_GObj*, int)`: draws the ghost jobj, when there is one, after the item.
 pub unsafe extern "C" fn it_8029CD18(item_gobj: *mut Item_GObj, arg1: i32) {
+    melee_core::ct!("it_8029CD18");
     let item = item_of(item_gobj);
     let jobj = (*item).xDD4_itemVar.foxillusion.xDDC;
     ext::it_8026EECC(item_gobj, arg1);
@@ -139,6 +142,7 @@ pub unsafe extern "C" fn it_8029CD18(item_gobj: *mut Item_GObj, arg1: i32) {
 /// `HSD_JObj* it_8029CD78(Item_GObj*)`: loads the ghost jobj from the article joint, with the item jobj's
 /// rotation and the item scale.
 pub unsafe extern "C" fn it_8029CD78(item_gobj: *mut Item_GObj) -> *mut HSD_JObj {
+    melee_core::ct!("it_8029CD78");
     let mut quat: Quaternion = core::mem::zeroed();
     let item = item_of(item_gobj);
     let temp_r30 = jobj_of(item_gobj);
@@ -155,6 +159,7 @@ pub unsafe extern "C" fn it_8029CD78(item_gobj: *mut Item_GObj) -> *mut HSD_JObj
 
 /// `Item_GObj* it_8029CEB4(HSD_GObj* parent, Vec3* pos, ItemKind, f32 dir)`: spawns the illusion item.
 pub unsafe extern "C" fn it_8029CEB4(parent: *mut HSD_GObj, pos: *mut Vec, kind: ItemKind, dir: f32) -> *mut Item_GObj {
+    melee_core::ct!("it_8029CEB4");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = kind;
     Item_InitSpawnPosition(&mut spawn, pos, false);
@@ -171,6 +176,7 @@ pub unsafe extern "C" fn it_8029CEB4(parent: *mut HSD_GObj, pos: *mut Vec, kind:
 
 /// `bool itFoxIllusion_Logic14_DmgDealt(Item_GObj*)`: clears the hitlag counter.
 pub unsafe extern "C" fn itFoxIllusion_Logic14_DmgDealt(item_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFoxIllusion_Logic14_DmgDealt");
     let item = item_of(item_gobj);
     (*item).xCA8 = 0;
     0
@@ -178,6 +184,7 @@ pub unsafe extern "C" fn itFoxIllusion_Logic14_DmgDealt(item_gobj: *mut Item_GOb
 
 /// `void itFoxIllusion_Logic14_Destroyed(Item_GObj*)`: removes the ghost jobj and the owner link.
 pub unsafe extern "C" fn itFoxIllusion_Logic14_Destroyed(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itFoxIllusion_Logic14_Destroyed");
     let item = item_of(item_gobj);
     if !(*item).xDD4_itemVar.foxillusion.xDDC.is_null() {
         ext::HSD_JObjRemoveAll((*item).xDD4_itemVar.foxillusion.xDDC);
@@ -189,6 +196,7 @@ pub unsafe extern "C" fn itFoxIllusion_Logic14_Destroyed(item_gobj: *mut Item_GO
 
 /// `void it_8029CFF0(Item_GObj*)`: item init: lifetime from the attributes, the model joint, the first state.
 pub unsafe extern "C" fn it_8029CFF0(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_8029CFF0");
     let item = item_of(item_gobj);
     (*item).xD44_lifeTimer = *((*(*item).xC4_article_data).x4_specialAttributes as *const f32);
     (*item).xD5C = 0;
@@ -206,6 +214,7 @@ pub unsafe extern "C" fn it_8029CFF0(item_gobj: *mut Item_GObj) {
 /// `bool itFoxillusion_UnkMotion0_Anim(Item_GObj*)`: creates the ghost jobj when the fighter's cmd var is 2,
 /// ends the item when the fighter says so, counts the lifetime down.
 pub unsafe extern "C" fn itFoxillusion_UnkMotion0_Anim(item_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFoxillusion_UnkMotion0_Anim");
     let temp_r31 = item_of(item_gobj);
     if !(*temp_r31).owner.is_null()
         && ext::ftFx_SpecialS_GetCmdVar2((*temp_r31).owner) == 2
@@ -229,6 +238,7 @@ pub unsafe extern "C" fn itFoxillusion_UnkMotion0_Anim(item_gobj: *mut Item_GObj
 /// `itFoxillusion_Phys` (static inline): copies the fighter's ghost positions / rotations onto the item and
 /// the ghost jobj.
 pub unsafe fn itFoxillusion_Phys(item_gobj: *mut Item_GObj, ghost_pos: *mut Vec) {
+    melee_core::ct!("itFoxillusion_Phys");
     let item = item_of(item_gobj);
     let jobj = jobj_of(item_gobj);
     let ghost_jobj = (*item).xDD4_itemVar.foxillusion.xDDC;
@@ -247,33 +257,39 @@ pub unsafe fn itFoxillusion_Phys(item_gobj: *mut Item_GObj, ghost_pos: *mut Vec)
 
 /// `void itFoxillusion_UnkMotion0_Phys(Item_GObj*)`.
 pub unsafe extern "C" fn itFoxillusion_UnkMotion0_Phys(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itFoxillusion_UnkMotion0_Phys");
     let mut ghost_pos = Vec { x: 0.0, y: 0.0, z: 0.0 };
     itFoxillusion_Phys(item_gobj, &mut ghost_pos);
 }
 
 /// `bool itFoxillusion_UnkMotion0_Coll(Item_GObj*)`: does nothing.
 pub unsafe extern "C" fn itFoxillusion_UnkMotion0_Coll(arg0: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFoxillusion_UnkMotion0_Coll");
     0
 }
 
 /// `bool itFoxillusion_UnkMotion1_Anim(Item_GObj*)`: same as state 0.
 pub unsafe extern "C" fn itFoxillusion_UnkMotion1_Anim(item_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFoxillusion_UnkMotion1_Anim");
     itFoxillusion_UnkMotion0_Anim(item_gobj)
 }
 
 /// `void itFoxillusion_UnkMotion1_Phys(Item_GObj*)`.
 pub unsafe extern "C" fn itFoxillusion_UnkMotion1_Phys(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itFoxillusion_UnkMotion1_Phys");
     let mut ghost_pos = Vec { x: 0.0, y: 0.0, z: 0.0 };
     itFoxillusion_Phys(item_gobj, &mut ghost_pos);
 }
 
 /// `bool itFoxillusion_UnkMotion1_Coll(Item_GObj*)`: does nothing.
 pub unsafe extern "C" fn itFoxillusion_UnkMotion1_Coll(arg0: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFoxillusion_UnkMotion1_Coll");
     0
 }
 
 /// `void it_8029D798(Item_GObj*)`: enters the fade-out state with the second lifetime from the attributes.
 pub unsafe extern "C" fn it_8029D798(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_8029D798");
     let item = item_of(item_gobj);
     let jobj = jobj_of(item_gobj);
     let attr = (*(*item).xC4_article_data).x4_specialAttributes as *const f32;
@@ -284,6 +300,7 @@ pub unsafe extern "C" fn it_8029D798(item_gobj: *mut Item_GObj) {
 
 /// `bool itFoxillusion_UnkMotion2_Anim(Item_GObj*)`: fade-out countdown.
 pub unsafe extern "C" fn itFoxillusion_UnkMotion2_Anim(item_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFoxillusion_UnkMotion2_Anim");
     let item = item_of(item_gobj);
     let tmp = if !(*item).owner.is_null() { ext::ftFx_SpecialS_CheckGhostRemove((*item).owner) != 0 } else { true };
     if tmp {
@@ -299,6 +316,7 @@ pub unsafe extern "C" fn itFoxillusion_UnkMotion2_Anim(item_gobj: *mut Item_GObj
 
 /// `void itFoxillusion_UnkMotion2_Phys(Item_GObj*)`: moves the ghost jobj to the fighter's ghost position.
 pub unsafe extern "C" fn itFoxillusion_UnkMotion2_Phys(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itFoxillusion_UnkMotion2_Phys");
     let mut sp10 = Vec { x: 0.0, y: 0.0, z: 0.0 };
     let item = item_of(item_gobj);
     let jobj = (*item).xDD4_itemVar.foxillusion.xDDC;
@@ -310,10 +328,12 @@ pub unsafe extern "C" fn itFoxillusion_UnkMotion2_Phys(item_gobj: *mut Item_GObj
 
 /// `bool itFoxillusion_UnkMotion2_Coll(Item_GObj*)`: does nothing.
 pub unsafe extern "C" fn itFoxillusion_UnkMotion2_Coll(arg0: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFoxillusion_UnkMotion2_Coll");
     0
 }
 
 /// `void it_8029D948(Item_GObj*, HSD_GObj*)`: removes the gobj interaction references.
 pub unsafe extern "C" fn it_8029D948(item_gobj: *mut Item_GObj, r#ref: *mut HSD_GObj) {
+    melee_core::ct!("it_8029D948");
     ext::it_8026B894(item_gobj, r#ref);
 }

@@ -12,12 +12,14 @@ pub use crate::chars::r3::ftCrazyHand::ftcrazyhandrockcrush1::fn_80158144;
 pub use crate::chars::r8::ftCrazyHand::ftcrazyhandrockcrush1::ftCh_RockCrushDown_IASA;
 
 pub fn ftCh_RockCrushDown_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_RockCrushDown_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         ftCh_GrabUnk1_8015BC88(gobj);
     }
 }
 
 pub fn ftCh_RockCrushDown_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_RockCrushDown_Phys");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*(*fp).ft_data).ext_attr as *const ftCrazyHand_DatAttrs;
@@ -32,4 +34,4 @@ pub fn ftCh_RockCrushDown_Phys(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftCh_RockCrushDown_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftCh_RockCrushDown_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_RockCrushDown_Coll");}

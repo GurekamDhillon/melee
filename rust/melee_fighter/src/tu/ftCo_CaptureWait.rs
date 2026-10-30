@@ -81,11 +81,13 @@ fn yoshi_hurtbox(g: G) {
 
 /// `fn_800DB5D8`.
 pub fn fn_800DB5D8(g: G) {
+    melee_core::ct!("fn_800DB5D8");
     yoshi_hurtbox(g);
 }
 
 /// `fn_800DB6C8`: enter CaptureWait (Hi from CapturePulledHi, else Lw); kind-specific cleanup.
 pub fn fn_800DB6C8(g: G) {
+    melee_core::ct!("fn_800DB6C8");
     let f = fp(g);
     let vf = fp(f.victim_gobj);
     if f.motion_id == ftCo_MS_CapturePulledHi as i32 {
@@ -113,12 +115,14 @@ pub fn fn_800DB6C8(g: G) {
 
 /// `fn_800DB790`.
 pub fn fn_800DB790(g: G) {
+    melee_core::ct!("fn_800DB790");
     ext::Fighter_ChangeMotionState(g, ftCo_MS_CaptureWaitHi as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
     yoshi_hurtbox(g);
 }
 
 /// `fn_800DB8A4`.
 pub fn fn_800DB8A4(g: G) {
+    melee_core::ct!("fn_800DB8A4");
     let f = fp(g);
     unsafe { f.mv.co.capturewait.x0 = (f.mv.co.capturewait.x0 as f64 + 1.0) as f32 };
     f.grab_timer -= cd().grab_timer_decrement;
@@ -128,6 +132,7 @@ pub fn fn_800DB8A4(g: G) {
 
 /// `ftCo_CaptureWaitHi_Anim`.
 pub fn ftCo_CaptureWaitHi_Anim(g: G) {
+    melee_core::ct!("ftCo_CaptureWaitHi_Anim");
     fn_800DB8A4(g);
     let f = fp(g);
     if f.grab_timer <= 0.0 {
@@ -158,16 +163,19 @@ pub fn ftCo_CaptureWaitHi_Anim(g: G) {
 
 /// `ftCo_CaptureWaitHi_IASA`.
 pub fn ftCo_CaptureWaitHi_IASA(g: G) {
+    melee_core::ct!("ftCo_CaptureWaitHi_IASA");
     fn_800DC014(g);
 }
 
 /// `ftCo_CaptureWaitHi_Phys`.
 pub fn ftCo_CaptureWaitHi_Phys(g: G) {
+    melee_core::ct!("ftCo_CaptureWaitHi_Phys");
     pulled::fn_800DAD18(g);
 }
 
 /// `ftCo_CaptureWaitHi_Coll`.
 pub fn ftCo_CaptureWaitHi_Coll(g: G) {
+    melee_core::ct!("ftCo_CaptureWaitHi_Coll");
     if fp(g).x2226_b2() == 0 {
         ext::ft_80083C00(g, Some(fn_800DBAC4));
     }
@@ -175,17 +183,20 @@ pub fn ftCo_CaptureWaitHi_Coll(g: G) {
 
 /// `fn_800DBAC4`.
 pub unsafe extern "C" fn fn_800DBAC4(g: G) {
+    melee_core::ct!("fn_800DBAC4");
     fn_800DBBF8(g);
 }
 
 /// `fn_800DBAE4`.
 pub fn fn_800DBAE4(g: G) {
+    melee_core::ct!("fn_800DBAE4");
     ext::Fighter_ChangeMotionState(g, ftCo_MS_CaptureWaitLw as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
     yoshi_hurtbox(g);
 }
 
 /// `fn_800DBBF8`: landed while held -> CaptureWaitLw.
 pub fn fn_800DBBF8(g: G) {
+    melee_core::ct!("fn_800DBBF8");
     let before = fp(g);
     ext::ftCommon_8007D7FC(before);
     ext::Fighter_ChangeMotionState(g, ftCo_MS_CaptureWaitLw as i32, Ft_MF_UpdateCmd as u32, before.cur_anim_frame, 1.0, 0.0, core::ptr::null_mut());
@@ -195,11 +206,13 @@ pub fn fn_800DBBF8(g: G) {
 
 /// `ftCo_CaptureWaitLw_Anim`.
 pub fn ftCo_CaptureWaitLw_Anim(g: G) {
+    melee_core::ct!("ftCo_CaptureWaitLw_Anim");
     ftCo_CaptureWaitHi_Anim(g);
 }
 
 /// `ftCo_CaptureWaitLw_IASA`.
 pub fn ftCo_CaptureWaitLw_IASA(g: G) {
+    melee_core::ct!("ftCo_CaptureWaitLw_IASA");
     fn_800DC014(g);
 }
 
@@ -221,6 +234,7 @@ fn to_air(g: G) {
 
 /// `ftCo_CaptureWaitLw_Phys`.
 pub fn ftCo_CaptureWaitLw_Phys(g: G) {
+    melee_core::ct!("ftCo_CaptureWaitLw_Phys");
     if pulled::fn_800DAD18(g) {
         to_air(g);
     }
@@ -228,6 +242,7 @@ pub fn ftCo_CaptureWaitLw_Phys(g: G) {
 
 /// `ftCo_CaptureWaitLw_Coll`.
 pub fn ftCo_CaptureWaitLw_Coll(g: G) {
+    melee_core::ct!("ftCo_CaptureWaitLw_Coll");
     if fp(g).x2226_b2() == 0 {
         ext::ft_8008403C(g, Some(fn_800DBED4));
     }
@@ -235,11 +250,13 @@ pub fn ftCo_CaptureWaitLw_Coll(g: G) {
 
 /// `fn_800DBED4`.
 pub unsafe extern "C" fn fn_800DBED4(g: G) {
+    melee_core::ct!("fn_800DBED4");
     to_air(g);
 }
 
 /// `fn_800DC014`: X/Y early in the hold buffers a jump-out.
 pub fn fn_800DC014(g: G) {
+    melee_core::ct!("fn_800DC014");
     let f = fp(g);
     unsafe {
         if f.mv.co.capturewait.x0 < cd().x3AC && f.input.pressed_buttons as u32 & HSD_PAD_XY != 0 {
@@ -250,5 +267,6 @@ pub fn fn_800DC014(g: G) {
 
 /// `fn_800DC044`: stick up past the tap-jump threshold.
 pub fn fn_800DC044(g: G) -> bool {
+    melee_core::ct!("fn_800DC044");
     fp(g).input.lstick[0].y >= cd().tap_jump_threshold
 }

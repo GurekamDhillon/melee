@@ -80,6 +80,7 @@ pub static mut it_803F7118: [ItemStateTable; 3] = [
 ];
 
 pub unsafe extern "C" fn it_802B2890(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802B2890");
     let ip = GET_ITEM(gobj);
     (*ip).owner = null_mut();
     (*ip).xDC8_word.flags.set_x13(0);
@@ -87,6 +88,7 @@ pub unsafe extern "C" fn it_802B2890(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802B28C8(gobj: *mut Item_GObj, pos: *mut Vec3, offset: *mut Vec3, facing_dir: f32, _unused: f32) {
+    melee_core::ct!("it_802B28C8");
     let ip = (*gobj).user_data as *mut Item;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
 
@@ -102,6 +104,7 @@ pub unsafe extern "C" fn it_802B28C8(gobj: *mut Item_GObj, pos: *mut Vec3, offse
 }
 
 pub unsafe extern "C" fn it_802B2A10(parent: *mut Fighter_GObj, pos: *mut Vec3, part: i32, facing_dir: f32) -> *mut Item_GObj {
+    melee_core::ct!("it_802B2A10");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
     spawn.kind = It_Kind_Yoshi_EggThrow;
@@ -124,10 +127,12 @@ pub unsafe extern "C" fn it_802B2A10(parent: *mut Fighter_GObj, pos: *mut Vec3, 
 }
 
 pub unsafe extern "C" fn itYoshiEggThrow_Logic43_PickedUp(gobj: *mut Item_GObj) {
+    melee_core::ct!("itYoshiEggThrow_Logic43_PickedUp");
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE);
 }
 
 pub unsafe extern "C" fn it_802B2B08(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802B2B08");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itYoshiEggThrowAttributes;
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);
@@ -135,6 +140,7 @@ pub unsafe extern "C" fn it_802B2B08(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itYoshieggthrow_UnkMotion1_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itYoshieggthrow_UnkMotion1_Anim");
     let ip = GET_ITEM(gobj);
 
     if (*ip).xD44_lifeTimer <= 0.0 {
@@ -147,17 +153,20 @@ pub unsafe extern "C" fn itYoshieggthrow_UnkMotion1_Anim(gobj: *mut Item_GObj) -
 }
 
 pub unsafe extern "C" fn itYoshieggthrow_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itYoshieggthrow_UnkMotion1_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = (*ip).xCC_item_attr;
     ext::it_80272860(gobj, (*attrs).x10_fall_speed, (*attrs).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itYoshieggthrow_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itYoshieggthrow_UnkMotion1_Coll");
     ext::it_8026E5A0(gobj, Some(it_802B2C38));
     false
 }
 
 pub unsafe extern "C" fn it_802B2C04(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_802B2C04");
     if (*((*gobj).user_data as *mut Item)).msid != 2 {
         it_802B2C38(gobj);
     }
@@ -180,6 +189,7 @@ unsafe fn spawn2(gobj: *mut HSD_GObj, jobj: *mut HSD_JObj) {
 }
 
 pub unsafe extern "C" fn it_802B2C38(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802B2C38");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itYoshiEggThrowAttributes;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -196,10 +206,12 @@ pub unsafe extern "C" fn it_802B2C38(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itYoshieggthrow_UnkMotion2_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itYoshieggthrow_UnkMotion2_Anim");
     ext::it_802751D8(gobj) != 0
 }
 
 pub unsafe extern "C" fn it_2725_Logic43_Clanked(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_2725_Logic43_Clanked");
     let ip = GET_ITEM(gobj);
     if (*ip).msid != 2 {
         it_802B2C38(gobj);
@@ -208,10 +220,12 @@ pub unsafe extern "C" fn it_2725_Logic43_Clanked(gobj: *mut Item_GObj) -> bool {
 }
 
 pub unsafe extern "C" fn it_802B2E5C(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_802B2E5C");
     ext::it_80273030(gobj) != 0
 }
 
 pub unsafe extern "C" fn it_802B2E7C(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_802B2E7C");
     let ip = GET_ITEM(gobj);
     if (*ip).msid != 2 {
         it_802B2C38(gobj);
@@ -220,9 +234,11 @@ pub unsafe extern "C" fn it_802B2E7C(gobj: *mut Item_GObj) -> bool {
 }
 
 pub unsafe extern "C" fn it_802B2F88(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_802B2F88");
     ext::itColl_BounceOffShield(gobj) != 0
 }
 
 pub unsafe extern "C" fn it_802B2FA8(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802B2FA8");
     ext::it_8026B894(gobj, ref_gobj);
 }

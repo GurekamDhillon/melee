@@ -49,6 +49,7 @@ pub mod ext {
 }
 
 pub fn ftCo_SpecialAir_CheckInput(g: G) -> bool {
+    melee_core::ct!("ftCo_SpecialAir_CheckInput");
     if ext::ScriptGame_CapsActionAllowed(fp(g), 16) == 0 {
         return false;
     }

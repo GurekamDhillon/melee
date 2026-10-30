@@ -44,6 +44,7 @@ pub mod ext {
 }
 
 pub fn ftCo_8009B170(g: G) -> bool {
+    melee_core::ct!("ftCo_8009B170");
     if ext::ftCo_Jump_GetInput(g) != 0 {
         ftCo_8009B1B8(g);
         return true;
@@ -53,6 +54,7 @@ pub fn ftCo_8009B170(g: G) -> bool {
 
 /// static `ftCo_8009B1B8`.
 pub fn ftCo_8009B1B8(g: G) {
+    melee_core::ct!("ftCo_8009B1B8");
     let msid = if fp(g).dmg.x1830_percent < crate::hooks::common_data().x488 as f32 { ftCo_MS_CliffJumpQuick1 } else { ftCo_MS_CliffJumpSlow1 };
     // inlines.h `ftCo_Cliff_EnterState`
     ext::Fighter_ChangeMotionState(g, msid as i32, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -63,18 +65,21 @@ pub fn ftCo_8009B1B8(g: G) {
 }
 
 pub fn ftCo_CliffJump1_Anim(g: G) {
+    melee_core::ct!("ftCo_CliffJump1_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ftCo_8009B2F8(g);
     }
 }
 
-pub fn ftCo_CliffJump1_IASA(_g: G) {}
+pub fn ftCo_CliffJump1_IASA(_g: G) { melee_core::ct!("ftCo_CliffJump1_IASA");}
 
 pub fn ftCo_CliffJump1_Phys(g: G) {
+    melee_core::ct!("ftCo_CliffJump1_Phys");
     ext::ftCo_CliffCatch_Phys(g);
 }
 
 pub fn ftCo_CliffJump1_Coll(g: G) {
+    melee_core::ct!("ftCo_CliffJump1_Coll");
     ext::ftCo_CliffClimb_Coll(g);
 }
 
@@ -84,6 +89,7 @@ fn jump2_msid(g: G) -> i32 {
 
 /// static `ftCo_8009B2F8`.
 pub fn ftCo_8009B2F8(g: G) {
+    melee_core::ct!("ftCo_8009B2F8");
     let msid = jump2_msid(g);
     ext::Fighter_ChangeMotionState(g, msid, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ext::ftAnim_8006EBA4(g);
@@ -94,6 +100,7 @@ pub fn ftCo_8009B2F8(g: G) {
 }
 
 pub fn ftCo_8009B390(g: G, force_mul: f32) {
+    melee_core::ct!("ftCo_8009B390");
     let msid = jump2_msid(g);
     ext::Fighter_ChangeMotionState(g, msid, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ext::ftAnim_8006EBA4(g);
@@ -103,14 +110,16 @@ pub fn ftCo_8009B390(g: G, force_mul: f32) {
 }
 
 pub fn ftCo_CliffJump2_Anim(g: G) {
+    melee_core::ct!("ftCo_CliffJump2_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ftCo_Fall_Enter(g);
     }
 }
 
-pub fn ftCo_CliffJump2_IASA(_g: G) {}
+pub fn ftCo_CliffJump2_IASA(_g: G) { melee_core::ct!("ftCo_CliffJump2_IASA");}
 
 pub fn ftCo_CliffJump2_Phys(g: G) {
+    melee_core::ct!("ftCo_CliffJump2_Phys");
     let f = fp(g);
     if unsafe { f.mv.co.cliffjump.x0 } == 0 {
         f.mv.co.cliffjump.x0 = 1;
@@ -120,5 +129,6 @@ pub fn ftCo_CliffJump2_Phys(g: G) {
 }
 
 pub fn ftCo_CliffJump2_Coll(g: G) {
+    melee_core::ct!("ftCo_CliffJump2_Coll");
     ext::ft_800835B0(g, ext::ftCo_80096CC8, ext::ft_80082B1C);
 }

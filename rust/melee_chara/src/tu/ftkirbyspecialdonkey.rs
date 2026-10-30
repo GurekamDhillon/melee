@@ -143,6 +143,7 @@ unsafe fn punch_lunge(fp: *mut Fighter) {
 
 /// `ftKb_SpecialNDk_800FF8EC`: enter the ground Giant Punch charge (or the full-charge swing).
 pub fn ftKb_SpecialNDk_800FF8EC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialNDk_800FF8EC");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftKb_DatAttrs;
@@ -173,6 +174,7 @@ pub fn ftKb_SpecialNDk_800FF8EC(gobj: *mut HSD_GObj) {
 
 /// `ftKb_SpecialNDk_800FFA10`: the aerial entry (same, without the ground-to-air `ftCommon_8007D7FC`).
 pub fn ftKb_SpecialNDk_800FFA10(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialNDk_800FFA10");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftKb_DatAttrs;
@@ -201,6 +203,7 @@ pub fn ftKb_SpecialNDk_800FFA10(gobj: *mut HSD_GObj) {
 
 /// `ftKb_DkSpecialNLoop_Anim`: count a swing at the start of each loop; at full charge leave to Wait.
 pub fn ftKb_DkSpecialNLoop_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_DkSpecialNLoop_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftKb_DatAttrs;
@@ -218,6 +221,7 @@ pub fn ftKb_DkSpecialNLoop_Anim(gobj: *mut HSD_GObj) {
 
 /// `ftKb_DkSpecialN_Anim`: the ground swing.
 pub fn ftKb_DkSpecialN_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_DkSpecialN_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftKb_DatAttrs;
@@ -242,6 +246,7 @@ pub fn ftKb_DkSpecialN_Anim(gobj: *mut HSD_GObj) {
 
 /// `ftKb_DkSpecialNFull_Anim`: the full-charge ground swing (no damage ramp).
 pub fn ftKb_DkSpecialNFull_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_DkSpecialNFull_Anim");
     unsafe {
         let fp = fpp(gobj);
         swing_effect(gobj, fp);
@@ -262,6 +267,7 @@ pub fn ftKb_DkSpecialNFull_Anim(gobj: *mut HSD_GObj) {
 
 /// `ftKb_DkSpecialAirNLoop_Anim`: as the ground loop, leaving to Fall.
 pub fn ftKb_DkSpecialAirNLoop_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_DkSpecialAirNLoop_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftKb_DatAttrs;
@@ -292,6 +298,7 @@ unsafe fn air_swing_end(gobj: *mut HSD_GObj, fp: *mut Fighter, da: *const ftKb_D
 
 /// `ftKb_DkSpecialAirN_Anim`: the aerial swing.
 pub fn ftKb_DkSpecialAirN_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_DkSpecialAirN_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftKb_DatAttrs;
@@ -305,6 +312,7 @@ pub fn ftKb_DkSpecialAirN_Anim(gobj: *mut HSD_GObj) {
 
 /// `ftKb_DkSpecialAirNFull_Anim`: the full-charge aerial swing.
 pub fn ftKb_DkSpecialAirNFull_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_DkSpecialAirNFull_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftKb_DatAttrs;
@@ -313,10 +321,11 @@ pub fn ftKb_DkSpecialAirNFull_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftKb_DkSpecialNStart_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftKb_DkSpecialNStart_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftKb_DkSpecialNStart_IASA");}
 
 /// `ftKb_DkSpecialNLoop_IASA`: B releases the punch, a shoulder press queues the cancel.
 pub fn ftKb_DkSpecialNLoop_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_DkSpecialNLoop_IASA");
     unsafe {
         let fp = fpp(gobj);
         if !melee_fighter::tu::ftCo_Escape::ftCo_8009917C(gobj) {
@@ -338,13 +347,14 @@ pub fn ftKb_DkSpecialNLoop_IASA(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftKb_DkSpecialNCancel_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftKb_DkSpecialN_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftKb_DkSpecialNFull_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftKb_DkSpecialAirNStart_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftKb_DkSpecialNCancel_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftKb_DkSpecialNCancel_IASA");}
+pub fn ftKb_DkSpecialN_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftKb_DkSpecialN_IASA");}
+pub fn ftKb_DkSpecialNFull_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftKb_DkSpecialNFull_IASA");}
+pub fn ftKb_DkSpecialAirNStart_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftKb_DkSpecialAirNStart_IASA");}
 
 /// `ftKb_DkSpecialAirNLoop_IASA`: as the ground loop without the `ftCo_8009917C` guard.
 pub fn ftKb_DkSpecialAirNLoop_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_DkSpecialAirNLoop_IASA");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).input.pressed_buttons & (HSD_PAD_B as u32) != 0 {
@@ -364,6 +374,6 @@ pub fn ftKb_DkSpecialAirNLoop_IASA(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftKb_DkSpecialAirNCancel_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftKb_DkSpecialAirN_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftKb_DkSpecialAirNFull_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftKb_DkSpecialAirNCancel_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftKb_DkSpecialAirNCancel_IASA");}
+pub fn ftKb_DkSpecialAirN_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftKb_DkSpecialAirN_IASA");}
+pub fn ftKb_DkSpecialAirNFull_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftKb_DkSpecialAirNFull_IASA");}

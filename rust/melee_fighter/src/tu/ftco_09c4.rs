@@ -50,6 +50,7 @@ pub mod ext {
 
 /// `ftCo_8009C4F8`.
 pub fn ftCo_8009C4F8(gobj: G) -> bool {
+    melee_core::ct!("ftCo_8009C4F8");
     if ext::ftCo_80099F1C(gobj) {
         ftCo_8009C540(gobj);
         return true;
@@ -59,6 +60,7 @@ pub fn ftCo_8009C4F8(gobj: G) -> bool {
 
 /// `ftCo_8009C540` (static).
 pub fn ftCo_8009C540(gobj: G) {
+    melee_core::ct!("ftCo_8009C540");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         ext::ftCo_8009A184(gobj, (*(*fp).x2CC).x4_motion_state + 6, Ft_MF_None as MotionFlags, 0.0);

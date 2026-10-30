@@ -27,14 +27,17 @@ pub const ftBo_Init_CostumeStrings: [[Option<&str>; 3]; 1] =
 pub mod ext {}
 
 pub fn ftBo_Init_OnItemPickup(gobj: *mut HSD_GObj, flag: i32) {
+    melee_core::ct!("ftBo_Init_OnItemPickup");
     ftinl::Fighter_OnItemPickup(gobj, flag, 0, 0);
 }
 
 pub fn ftBo_Init_OnItemDrop(gobj: *mut HSD_GObj, bool1: i32) {
+    melee_core::ct!("ftBo_Init_OnItemDrop");
     ftinl::Fighter_OnItemDrop(gobj, bool1, 0, 0);
 }
 
 pub fn ftBo_Init_OnLoad(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftBo_Init_OnLoad");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         ftinl::push_attrs::<ftZakoboyAttributes>(fp);
@@ -42,5 +45,6 @@ pub fn ftBo_Init_OnLoad(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftBo_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftBo_Init_LoadSpecialAttrs");
     unsafe { ftinl::copy_attrs::<ftZakoboyAttributes>(gobj) }
 }

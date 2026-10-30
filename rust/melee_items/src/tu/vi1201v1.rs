@@ -147,19 +147,23 @@ pub static mut un_804D7004: [u8; 8] = [0; 8];
 pub static mut player_spawn: Vec3 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
 pub unsafe extern "C" fn un_8031F980(arg0: i32, arg1: i32) {
+    melee_core::ct!("un_8031F980");
     un_804D7004[0] = arg0 as u8;
     un_804D7004[1] = arg1 as u8;
 }
 
 pub unsafe extern "C" fn un_8031F990(gobj: *mut HSD_GObj) {
+    melee_core::ct!("un_8031F990");
     ext::HSD_JObjAnimAll(GET_JOBJ(gobj));
 }
 
 pub unsafe extern "C" fn un_8031F9B4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("un_8031F9B4");
     ext::HSD_JObjAnimAll(GET_JOBJ(gobj));
 }
 
 pub unsafe extern "C" fn un_8031F9D8(char_index: CharacterKind, costume_id: i32) {
+    melee_core::ct!("un_8031F9D8");
     ext::ftDemo_ObjAllocInit();
     ext::Player_InitAllPlayers();
     ext::Player_80036E20(char_index, un_804D6FE8, 0);
@@ -178,6 +182,7 @@ pub unsafe extern "C" fn un_8031F9D8(char_index: CharacterKind, costume_id: i32)
 }
 
 pub unsafe extern "C" fn fn_8031FAA8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8031FAA8");
     let mut pos: Vec = core::mem::zeroed();
     let mut child: *mut HSD_JObj = null_mut();
 
@@ -197,6 +202,7 @@ pub unsafe extern "C" fn fn_8031FAA8(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_8031FB90(gobj: *mut HSD_GObj, unused: i32) {
+    melee_core::ct!("fn_8031FB90");
     if !un_804D7000.is_null() {
         ext::lbShadow_8000F38C(0);
     }
@@ -204,6 +210,7 @@ pub unsafe extern "C" fn fn_8031FB90(gobj: *mut HSD_GObj, unused: i32) {
 }
 
 pub unsafe extern "C" fn fn_8031FC30(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8031FC30");
     let cobj = GET_COBJ(gobj);
     ext::HSD_CObjAnim(cobj);
     if (*(*cobj).aobj).curr_frame == 120.0 {
@@ -219,6 +226,7 @@ pub unsafe extern "C" fn fn_8031FC30(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_8031FCBC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8031FCBC");
     if (un_804D6FF8 as f32) >= 100.0 {
         ext::HSD_GObjFree(gobj);
     } else {
@@ -319,6 +327,7 @@ unsafe fn un_8031FD18_SetupStand() {
 }
 
 pub unsafe extern "C" fn vi1201v1_Scene_OnEnter(arg: *mut c_void) {
+    melee_core::ct!("vi1201v1_Scene_OnEnter");
     let input = arg as *const u8;
 
     un_804D6FFC = *input;
@@ -363,5 +372,6 @@ pub unsafe extern "C" fn vi1201v1_Scene_OnEnter(arg: *mut c_void) {
 }
 
 pub unsafe extern "C" fn vi1201v1_Scene_OnFrame() {
+    melee_core::ct!("vi1201v1_Scene_OnFrame");
     ext::vi_8031CAAC();
 }

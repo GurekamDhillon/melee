@@ -84,11 +84,13 @@ static mut un_804D6F68: *mut SceneDesc = core::ptr::null_mut();
 
 /// `void un_8031D6E4(HSD_GObj*)`
 pub unsafe extern "C" fn un_8031D6E4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("un_8031D6E4");
     ext::HSD_JObjAnimAll((*gobj).hsd_obj as *mut HSD_JObj);
 }
 
 /// `void un_8031D708(void)`
 pub unsafe fn un_8031D708() {
+    melee_core::ct!("un_8031D708");
     let mut i: usize = 0;
     while !(*(*un_804D6F68).models.add(i)).is_null() {
         let gobj = ext::GObj_Create(0xE, 0xF, 0);
@@ -110,6 +112,7 @@ pub unsafe fn un_8031D708() {
 
 /// `void vi_8031D80C(HSD_GObj*)`
 pub unsafe extern "C" fn vi_8031D80C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("vi_8031D80C");
     let cobj = (*gobj).hsd_obj as *mut HSD_CObj;
     ext::HSD_CObjAnim(cobj);
     let aobj = (*cobj).aobj;
@@ -122,6 +125,7 @@ pub unsafe extern "C" fn vi_8031D80C(gobj: *mut HSD_GObj) {
 
 /// `void vi0402_Scene_OnEnter(void*)`
 pub unsafe fn vi0402_Scene_OnEnter(arg0: *mut c_void) {
+    melee_core::ct!("vi0402_Scene_OnEnter");
     ext::lbAudioAx_800236DC();
     ext::efLib_Init();
     ext::efAsync_LoadSync(0);
@@ -152,5 +156,6 @@ pub unsafe fn vi0402_Scene_OnEnter(arg0: *mut c_void) {
 
 /// `void vi0402_Scene_OnFrame(void)`
 pub unsafe fn vi0402_Scene_OnFrame() {
+    melee_core::ct!("vi0402_Scene_OnFrame");
     vi_8031CAAC();
 }

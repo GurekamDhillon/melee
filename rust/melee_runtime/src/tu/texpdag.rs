@@ -73,6 +73,7 @@ pub unsafe fn assign_reg(
     list: *mut HSD_TExpDag,
     order: *const i32,
 ) -> i32 {
+    melee_core::ct!("assign_reg");
     let mut color_refs = [0u8; 4];
     let mut alpha_refs = [0u8; 4];
     let (mut min_color, mut min_alpha) = (4, 4);
@@ -136,6 +137,7 @@ pub unsafe fn order_dag(
     min: *mut i32,
     min_order: *mut i32,
 ) {
+    melee_core::ct!("order_dag");
     done_set |= bit(idx as u32);
     ready_set &= !bit(idx as u32);
     *order.offset(depth as isize) = idx as u8 as i32;
@@ -195,6 +197,7 @@ pub unsafe fn CalcDistance(
     num: i32,
     depth: i32,
 ) {
+    melee_core::ct!("CalcDistance");
     for idx in 0..num {
         if *tevs.offset(idx as isize) == tev {
             if *dist.offset(idx as isize) < depth {
@@ -231,6 +234,7 @@ pub unsafe fn HSD_TExpMakeDag(
     root: *mut HSD_TExp,
     list: *mut HSD_TExpDag,
 ) -> i32 {
+    melee_core::ct!("HSD_TExpMakeDag");
     assert_eq!(h.HSD_TExpGetType(root), 1, "texpdag.c:238: TEV root");
     let mut tevs = [null_mut(); 32];
     let mut dist = [0; 32];
@@ -305,6 +309,7 @@ pub unsafe fn make_dependancy_mtx(
     list: *mut HSD_TExpDag,
     dep_mtx: *mut u32,
 ) {
+    melee_core::ct!("make_dependancy_mtx");
     for i in 0..num {
         *dep_mtx.offset(i as isize) = 0;
         let dag = list.offset(i as isize);
@@ -319,6 +324,7 @@ pub unsafe fn make_full_dependancy_mtx(
     dep: *const u32,
     full: *mut u32,
 ) {
+    melee_core::ct!("make_full_dependancy_mtx");
     for i in 0..num {
         *full.offset(i as isize) = *dep.offset(i as isize);
     }
@@ -349,6 +355,7 @@ pub unsafe fn HSD_TExpSchedule(
     result: *mut *mut HSD_TExp,
     resource: *mut HSD_TExpRes,
 ) {
+    melee_core::ct!("HSD_TExpSchedule");
     use melee_types::{
         GX_CA_A0, GX_CA_A1, GX_CA_A2, GX_CA_APREV, GX_CC_A0, GX_CC_A1,
         GX_CC_A2, GX_CC_APREV, GX_CC_C0, GX_CC_C1, GX_CC_C2, GX_CC_CPREV,
@@ -412,6 +419,7 @@ const CLEAR_ARG: _HSD_TEArg = _HSD_TEArg {
     exp: null_mut(),
 };
 pub unsafe fn SimplifySrc(h: &mut dyn TExpDagHost, exp: *mut HSD_TExp) -> i32 {
+    melee_core::ct!("SimplifySrc");
     let mut result = false;
     for i in 0..4 {
         if (*exp).tev.c_in[i].r#type != 1 {
@@ -539,6 +547,7 @@ pub unsafe fn SimplifyThis(
     h: &mut dyn TExpDagHost,
     exp: *mut HSD_TExp,
 ) -> i32 {
+    melee_core::ct!("SimplifyThis");
     let mut result = 0;
     let mut passes = 0u32;
     loop {
@@ -712,6 +721,7 @@ pub unsafe fn SimplifyByMerge(
     h: &mut dyn TExpDagHost,
     exp: *mut HSD_TExp,
 ) -> i32 {
+    melee_core::ct!("SimplifyByMerge");
     let mut result = 0;
     let mut passes = 0u32;
     loop {
@@ -881,6 +891,7 @@ pub unsafe fn HSD_TExpSimplify(
     h: &mut dyn TExpDagHost,
     exp: *mut HSD_TExp,
 ) -> i32 {
+    melee_core::ct!("HSD_TExpSimplify");
     if h.HSD_TExpGetType(exp) != 1 {
         return 0;
     }
@@ -894,6 +905,7 @@ pub unsafe fn HSD_TExpSimplify2(
     h: &mut dyn TExpDagHost,
     exp: *mut HSD_TExp,
 ) -> i32 {
+    melee_core::ct!("HSD_TExpSimplify2");
     for i in 0..4 {
         let src = (*exp).tev.c_in[i];
         if src.r#type == 1 && src.sel == 1 && IsThroughColor(&*src.exp) {

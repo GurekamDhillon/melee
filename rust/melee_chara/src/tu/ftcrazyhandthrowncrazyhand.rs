@@ -7,6 +7,7 @@ use melee_types::*;
 
 /// `ftCh_GrabUnk1_8015B850(gobj, msid)`: `msid` is unused by the C.
 pub fn ftCh_GrabUnk1_8015B850(gobj: *mut HSD_GObj, _msid: i32) {
+    melee_core::ct!("ftCh_GrabUnk1_8015B850");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let victim_fp = (*(*fp).victim_gobj).user_data as *mut Fighter;
@@ -20,7 +21,7 @@ pub fn ftCh_GrabUnk1_8015B850(gobj: *mut HSD_GObj, _msid: i32) {
     }
 }
 
-pub fn ftCo_ThrownCrazyHand_Anim(_gobj: *mut HSD_GObj) {}
-pub fn ftCo_ThrownCrazyHand_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftCo_ThrownCrazyHand_Phys(_gobj: *mut HSD_GObj) {}
-pub fn ftCo_ThrownCrazyHand_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftCo_ThrownCrazyHand_Anim(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCo_ThrownCrazyHand_Anim");}
+pub fn ftCo_ThrownCrazyHand_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCo_ThrownCrazyHand_IASA");}
+pub fn ftCo_ThrownCrazyHand_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCo_ThrownCrazyHand_Phys");}
+pub fn ftCo_ThrownCrazyHand_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCo_ThrownCrazyHand_Coll");}

@@ -57,6 +57,7 @@ unsafe fn da(fp: *mut Fighter) -> *const MarsAttributes {
 
 /// `ftMs_SpecialS_80137A68` as a Fighter callback entry (`x21EC`).
 pub unsafe extern "C" fn cb_ftMs_SpecialS_80137A68(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftMs_SpecialS_80137A68");
     ftMs_SpecialS_80137A68(g);
 }
 
@@ -71,6 +72,7 @@ unsafe fn start_s1(gobj: *mut HSD_GObj, fp: *mut Fighter) {
 }
 
 pub fn ftMs_SpecialS_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialS_Enter");
     unsafe {
         let fp = fpp(gobj);
         (*fp).self_vel.y = 0.0;
@@ -79,6 +81,7 @@ pub fn ftMs_SpecialS_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMs_SpecialAirS_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialAirS_Enter");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -106,6 +109,7 @@ unsafe fn chain_iasa(gobj: *mut HSD_GObj, next: fn(*mut HSD_GObj)) {
 }
 
 pub fn ftMs_SpecialAirS1_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialAirS1_IASA");
     unsafe { chain_iasa(gobj, ftMs_SpecialS_80137A9C) }
 }
 
@@ -122,18 +126,22 @@ unsafe fn phys12(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMs_SpecialAirS1_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialAirS1_Phys");
     unsafe { phys12(gobj) }
 }
 
 pub fn ftMs_SpecialS2_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialS2_IASA");
     unsafe { chain_iasa(gobj, ftMs_SpecialS_80137E0C) }
 }
 
 pub fn ftMs_SpecialS2_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialS2_Phys");
     unsafe { phys12(gobj) }
 }
 
 pub fn ftMs_SpecialS2_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialS2_Coll");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).ground_or_air == GA_Ground {
@@ -158,6 +166,7 @@ fn pick(motion_id: i32, table: &[(i32, i32)]) -> i32 {
 }
 
 pub fn ftMs_SpecialS_80137940(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialS_80137940");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_8007D5D4(&mut *fp);
@@ -167,6 +176,7 @@ pub fn ftMs_SpecialS_80137940(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMs_SpecialS_801379D0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialS_801379D0");
     unsafe {
         let fp = fpp(gobj);
         (*fp).u.ms.x222C = 0;
@@ -178,6 +188,7 @@ pub fn ftMs_SpecialS_801379D0(gobj: *mut HSD_GObj) {
 
 /// Callback installed in `x21EC` by the chain starters: reset the attack counter.
 pub fn ftMs_SpecialS_80137A68(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialS_80137A68");
     melee_fighter::ft0892::ft_80089824(gobj);
     ext::ft_800892A0(gobj);
 }
@@ -194,6 +205,7 @@ unsafe fn chain_start(gobj: *mut HSD_GObj, pick_ids: &dyn Fn(f32) -> (i32, i32))
 }
 
 pub fn ftMs_SpecialS_80137A9C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialS_80137A9C");
     unsafe {
         let x21c = fh::common_data().x21C;
         chain_start(gobj, &|y| if y > x21c { (350, 359) } else { (351, 360) });
@@ -201,10 +213,12 @@ pub fn ftMs_SpecialS_80137A9C(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMs_SpecialS3_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialS3_IASA");
     unsafe { chain_iasa(gobj, ftMs_SpecialS_80138148) }
 }
 
 pub fn ftMs_SpecialS3_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialS3_Coll");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).ground_or_air == GA_Ground {
@@ -218,6 +232,7 @@ pub fn ftMs_SpecialS3_Coll(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMs_SpecialS_80137CBC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialS_80137CBC");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_8007D5D4(&mut *fp);
@@ -227,6 +242,7 @@ pub fn ftMs_SpecialS_80137CBC(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMs_SpecialS_80137D60(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialS_80137D60");
     unsafe {
         let fp = fpp(gobj);
         (*fp).u.ms.x222C = 0;
@@ -237,6 +253,7 @@ pub fn ftMs_SpecialS_80137D60(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMs_SpecialS_80137E0C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialS_80137E0C");
     unsafe {
         let x21c = fh::common_data().x21C;
         chain_start(gobj, &|y| {
@@ -251,9 +268,10 @@ pub fn ftMs_SpecialS_80137E0C(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftMs_SpecialS4_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftMs_SpecialS4_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMs_SpecialS4_IASA");}
 
 pub fn ftMs_SpecialS4_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialS4_Coll");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).ground_or_air == GA_Ground {
@@ -267,6 +285,7 @@ pub fn ftMs_SpecialS4_Coll(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMs_SpecialS_80137FF8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialS_80137FF8");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_8007D5D4(&mut *fp);
@@ -276,6 +295,7 @@ pub fn ftMs_SpecialS_80137FF8(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMs_SpecialS_8013809C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialS_8013809C");
     unsafe {
         let fp = fpp(gobj);
         (*fp).u.ms.x222C = 0;
@@ -286,6 +306,7 @@ pub fn ftMs_SpecialS_8013809C(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMs_SpecialS_80138148(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialS_80138148");
     unsafe {
         let x21c = fh::common_data().x21C;
         chain_start(gobj, &|y| {

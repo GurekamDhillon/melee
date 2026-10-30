@@ -130,6 +130,7 @@ unsafe fn set_hitlag_cbs(fp: *mut Fighter) {
 
 /// Accessory callback entry for `fn_800F21E8`.
 pub unsafe extern "C" fn cb_fn_800F21E8(g: G) {
+    melee_core::ct!("cb_fn_800F21E8");
     fn_800F21E8(g);
 }
 
@@ -141,6 +142,7 @@ unsafe fn slope_rot(fp: *mut Fighter) -> f32 {
 }
 
 pub fn fn_800F21E8(gobj: G) {
+    melee_core::ct!("fn_800F21E8");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -164,6 +166,7 @@ pub fn fn_800F21E8(gobj: G) {
 }
 
 pub fn ftKb_AttackDashAir_800F22D4(gobj: G) {
+    melee_core::ct!("ftKb_AttackDashAir_800F22D4");
     unsafe { ext::ftPartSetRotX(fpp(gobj), 0, 0.0) }
 }
 
@@ -183,14 +186,16 @@ unsafe fn enter(gobj: G, msid: u32) {
 }
 
 pub fn ftKb_SpecialHi_Enter(gobj: G) {
+    melee_core::ct!("ftKb_SpecialHi_Enter");
     unsafe { enter(gobj, ftKb_MS_SpecialHi1 as u32) }
 }
 
 pub fn ftKb_SpecialAirHi_Enter(gobj: G) {
+    melee_core::ct!("ftKb_SpecialAirHi_Enter");
     unsafe { enter(gobj, ftKb_MS_SpecialAirHi1 as u32) }
 }
 
-pub fn ftKb_SpecialHi3_Anim(_gobj: G) {}
+pub fn ftKb_SpecialHi3_Anim(_gobj: G) { melee_core::ct!("ftKb_SpecialHi3_Anim");}
 
 unsafe fn end_anim(gobj: G) {
     let fp = fpp(gobj);
@@ -205,12 +210,14 @@ unsafe fn end_anim(gobj: G) {
 }
 
 pub fn ftKb_SpecialHi4_Anim(gobj: G) {
+    melee_core::ct!("ftKb_SpecialHi4_Anim");
     unsafe { end_anim(gobj) }
 }
 
-pub fn ftKb_SpecialAirHi3_Anim(_gobj: G) {}
+pub fn ftKb_SpecialAirHi3_Anim(_gobj: G) { melee_core::ct!("ftKb_SpecialAirHi3_Anim");}
 
 pub fn ftKb_SpecialAirHiEnd_Anim(gobj: G) {
+    melee_core::ct!("ftKb_SpecialAirHiEnd_Anim");
     unsafe { end_anim(gobj) }
 }
 
@@ -233,17 +240,19 @@ unsafe fn reverse_iasa(gobj: G) {
 }
 
 pub fn ftKb_SpecialHi1_IASA(gobj: G) {
+    melee_core::ct!("ftKb_SpecialHi1_IASA");
     unsafe { reverse_iasa(gobj) }
 }
-pub fn ftKb_SpecialHi2_IASA(_gobj: G) {}
-pub fn ftKb_SpecialHi3_IASA(_gobj: G) {}
-pub fn ftKb_SpecialHi4_IASA(_gobj: G) {}
+pub fn ftKb_SpecialHi2_IASA(_gobj: G) { melee_core::ct!("ftKb_SpecialHi2_IASA");}
+pub fn ftKb_SpecialHi3_IASA(_gobj: G) { melee_core::ct!("ftKb_SpecialHi3_IASA");}
+pub fn ftKb_SpecialHi4_IASA(_gobj: G) { melee_core::ct!("ftKb_SpecialHi4_IASA");}
 pub fn ftKb_SpecialAirHi1_IASA(gobj: G) {
+    melee_core::ct!("ftKb_SpecialAirHi1_IASA");
     unsafe { reverse_iasa(gobj) }
 }
-pub fn ftKb_SpecialAirHi2_IASA(_gobj: G) {}
-pub fn ftKb_SpecialAirHi3_IASA(_gobj: G) {}
-pub fn ftKb_SpecialAirHiEnd_IASA(_gobj: G) {}
+pub fn ftKb_SpecialAirHi2_IASA(_gobj: G) { melee_core::ct!("ftKb_SpecialAirHi2_IASA");}
+pub fn ftKb_SpecialAirHi3_IASA(_gobj: G) { melee_core::ct!("ftKb_SpecialAirHi3_IASA");}
+pub fn ftKb_SpecialAirHiEnd_IASA(_gobj: G) { melee_core::ct!("ftKb_SpecialAirHiEnd_IASA");}
 
 /// Ground drift shared by Hi1/Hi2 Phys after the gravity step.
 unsafe fn ground_drift(fp: *mut Fighter) {
@@ -258,6 +267,7 @@ unsafe fn ground_drift(fp: *mut Fighter) {
 }
 
 pub fn ftKb_SpecialHi1_Phys(gobj: G) {
+    melee_core::ct!("ftKb_SpecialHi1_Phys");
     unsafe {
         let fp = fpp(gobj);
         st::ft_80084FA8(gobj);
@@ -267,6 +277,7 @@ pub fn ftKb_SpecialHi1_Phys(gobj: G) {
 }
 
 pub fn ftKb_SpecialHi2_Phys(gobj: G) {
+    melee_core::ct!("ftKb_SpecialHi2_Phys");
     unsafe {
         let fp = fpp(gobj);
         st::ft_80085134(gobj);
@@ -276,6 +287,7 @@ pub fn ftKb_SpecialHi2_Phys(gobj: G) {
 }
 
 pub fn ftKb_SpecialHi3_Phys(gobj: G) {
+    melee_core::ct!("ftKb_SpecialHi3_Phys");
     unsafe {
         crate::chars::ftKirby::ftkirbyspecialhi::ftKb_SpecialHi3_Phys(&mut *fpp(gobj));
     }
@@ -299,19 +311,23 @@ unsafe fn air_hi_phys(gobj: G) {
 }
 
 pub fn ftKb_SpecialAirHi1_Phys(gobj: G) {
+    melee_core::ct!("ftKb_SpecialAirHi1_Phys");
     unsafe { air_hi_phys(gobj) }
 }
 pub fn ftKb_SpecialAirHi2_Phys(gobj: G) {
+    melee_core::ct!("ftKb_SpecialAirHi2_Phys");
     unsafe { air_hi_phys(gobj) }
 }
 
 pub fn ftKb_SpecialAirHi3_Phys(gobj: G) {
+    melee_core::ct!("ftKb_SpecialAirHi3_Phys");
     unsafe {
         crate::chars::ftKirby::ftkirbyspecialhi::ftKb_SpecialAirHi3_Phys(&mut *fpp(gobj));
     }
 }
 
 pub fn ftKb_SpecialHi1_Coll(gobj: G) {
+    melee_core::ct!("ftKb_SpecialHi1_Coll");
     unsafe {
         let fp = fpp(gobj);
         if st::ft_80082708(gobj) == GA_Ground as i32 {
@@ -352,6 +368,7 @@ unsafe fn land_on_ledge(gobj: G, fp: *mut Fighter, from_air: bool, msid: i32) {
 }
 
 pub fn ftKb_SpecialHi2_Coll(gobj: G) {
+    melee_core::ct!("ftKb_SpecialHi2_Coll");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).mv.kb.specialn_pe.facing_dir > 0x14 {
@@ -373,6 +390,7 @@ pub fn ftKb_SpecialHi2_Coll(gobj: G) {
 }
 
 pub fn ftKb_SpecialHi3_Coll(gobj: G) {
+    melee_core::ct!("ftKb_SpecialHi3_Coll");
     unsafe {
         let fp = fpp(gobj);
         let i = dir_arg(fp);
@@ -387,6 +405,7 @@ pub fn ftKb_SpecialHi3_Coll(gobj: G) {
 }
 
 pub fn ftKb_SpecialHi4_Coll(gobj: G) {
+    melee_core::ct!("ftKb_SpecialHi4_Coll");
     unsafe {
         let fp = fpp(gobj);
         if st::ft_80082708(gobj) == GA_Ground as i32 {
@@ -403,6 +422,7 @@ pub fn ftKb_SpecialHi4_Coll(gobj: G) {
 }
 
 pub fn ftKb_SpecialAirHi2_Coll(gobj: G) {
+    melee_core::ct!("ftKb_SpecialAirHi2_Coll");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).mv.kb.specialn_pe.facing_dir > 0x14 {
@@ -424,6 +444,7 @@ pub fn ftKb_SpecialAirHi2_Coll(gobj: G) {
 }
 
 pub fn ftKb_SpecialAirHi3_Coll(gobj: G) {
+    melee_core::ct!("ftKb_SpecialAirHi3_Coll");
     unsafe {
         let fp = fpp(gobj);
         let i = dir_arg(fp);
@@ -438,6 +459,7 @@ pub fn ftKb_SpecialAirHi3_Coll(gobj: G) {
 }
 
 pub fn ftKb_SpecialAirHiEnd_Coll(gobj: G) {
+    melee_core::ct!("ftKb_SpecialAirHiEnd_Coll");
     unsafe {
         let fp = fpp(gobj);
         if st::ft_80081D0C(gobj) != GA_Ground as i32 {

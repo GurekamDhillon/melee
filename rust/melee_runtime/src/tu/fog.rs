@@ -82,6 +82,7 @@ pub static mut hsdFogAdj: HSD_ClassInfo = {
 };
 /// `HSD_FogSet`.
 pub unsafe fn HSD_FogSet(fog: *mut HSD_Fog) {
+    melee_core::ct!("HSD_FogSet");
     let mut tbl: GXFogAdjTable = core::mem::zeroed();
     let mut v = [0.0f32; 6];
     // `struct { f32 x0; f32 v[6]; } proj`
@@ -142,6 +143,7 @@ pub unsafe fn HSD_FogSet(fog: *mut HSD_Fog) {
 
 /// `HSD_FogAlloc`.
 pub unsafe fn HSD_FogAlloc() -> *mut HSD_Fog {
+    melee_core::ct!("HSD_FogAlloc");
     let fog = ext::hsdNew(addr_of_mut!(hsdFog).cast()) as *mut HSD_Fog;
     assert!(!fog.is_null(), "fog.c:0x8C fog");
     fog
@@ -149,6 +151,7 @@ pub unsafe fn HSD_FogAlloc() -> *mut HSD_Fog {
 
 /// `HSD_FogLoadDesc`.
 pub unsafe fn HSD_FogLoadDesc(desc: *mut HSD_FogDesc) -> *mut HSD_Fog {
+    melee_core::ct!("HSD_FogLoadDesc");
     let fog = HSD_FogAlloc();
     assert!(!fog.is_null(), "fog.c:0x99 fog");
     HSD_FogInit(fog, desc);
@@ -160,6 +163,7 @@ pub unsafe fn HSD_FogLoadDesc(desc: *mut HSD_FogDesc) -> *mut HSD_Fog {
 
 /// `HSD_FogInit`.
 pub unsafe fn HSD_FogInit(fog: *mut HSD_Fog, desc: *mut HSD_FogDesc) {
+    melee_core::ct!("HSD_FogInit");
     if !fog.is_null() {
         if !desc.is_null() {
             (*fog).r#type = (*desc).r#type;
@@ -182,6 +186,7 @@ pub unsafe fn HSD_FogInit(fog: *mut HSD_Fog, desc: *mut HSD_FogDesc) {
 
 /// `HSD_FogAdjAlloc`.
 pub unsafe fn HSD_FogAdjAlloc() -> *mut HSD_FogAdj {
+    melee_core::ct!("HSD_FogAdjAlloc");
     let adj = ext::hsdNew(addr_of_mut!(hsdFogAdj)) as *mut HSD_FogAdj;
     assert!(!adj.is_null(), "fog.c:0xD6 adj");
     adj
@@ -189,6 +194,7 @@ pub unsafe fn HSD_FogAdjAlloc() -> *mut HSD_FogAdj {
 
 /// `HSD_FogAdjLoadDesc`.
 pub unsafe fn HSD_FogAdjLoadDesc(desc: *mut HSD_FogAdjDesc) -> *mut HSD_FogAdj {
+    melee_core::ct!("HSD_FogAdjLoadDesc");
     let adj = HSD_FogAdjAlloc();
     assert!(!adj.is_null(), "fog.c:0xE6 adj");
     HSD_FogAdjInit(adj, desc);
@@ -197,6 +203,7 @@ pub unsafe fn HSD_FogAdjLoadDesc(desc: *mut HSD_FogAdjDesc) -> *mut HSD_FogAdj {
 
 /// `HSD_FogAdjInit`.
 pub unsafe fn HSD_FogAdjInit(adj: *mut HSD_FogAdj, desc: *mut HSD_FogAdjDesc) {
+    melee_core::ct!("HSD_FogAdjInit");
     if !adj.is_null() {
         if !desc.is_null() {
             (*adj).width = (*desc).width;
@@ -218,6 +225,7 @@ pub unsafe fn HSD_FogAdjInit(adj: *mut HSD_FogAdj, desc: *mut HSD_FogAdjDesc) {
 
 /// `HSD_Fog_8037DE7C` (HSD_FogAddAnim): replace the fog AObj with one loaded from `desc`.
 pub unsafe fn HSD_Fog_8037DE7C(fog: *mut HSD_Fog, desc: *mut HSD_AObjDesc) {
+    melee_core::ct!("HSD_Fog_8037DE7C");
     if !fog.is_null() {
         if !(*fog).aobj.is_null() {
             ext::HSD_AObjRemove((*fog).aobj);
@@ -228,11 +236,13 @@ pub unsafe fn HSD_Fog_8037DE7C(fog: *mut HSD_Fog, desc: *mut HSD_AObjDesc) {
 
 /// `HSD_FogReqAnim`.
 pub unsafe fn HSD_FogReqAnim(fog: *mut HSD_Fog, frame: f32) {
+    melee_core::ct!("HSD_FogReqAnim");
     HSD_FogReqAnimByFlags(fog, 0x7FF, frame);
 }
 
 /// `HSD_FogReqAnimByFlags`.
 pub unsafe fn HSD_FogReqAnimByFlags(fog: *mut HSD_Fog, flags: u32, frame: f32) {
+    melee_core::ct!("HSD_FogReqAnimByFlags");
     if fog.is_null() || flags & 0x200 == 0 {
         return;
     }
@@ -241,6 +251,7 @@ pub unsafe fn HSD_FogReqAnimByFlags(fog: *mut HSD_Fog, flags: u32, frame: f32) {
 
 /// `HSD_FogInterpretAnim`.
 pub unsafe fn HSD_FogInterpretAnim(fog: *mut HSD_Fog) {
+    melee_core::ct!("HSD_FogInterpretAnim");
     if !fog.is_null() {
         ext::HSD_AObjInterpretAnim((*fog).aobj, fog as *mut c_void, Some(FogUpdateFunc));
     }
@@ -248,6 +259,7 @@ pub unsafe fn HSD_FogInterpretAnim(fog: *mut HSD_Fog) {
 
 /// `FogUpdateFunc(obj, type, val)`.
 pub unsafe extern "C" fn FogUpdateFunc(obj: *mut c_void, ty: i32, val: *mut HSD_ObjData) {
+    melee_core::ct!("FogUpdateFunc");
     let fog = obj as *mut HSD_Fog;
     if !fog.is_null() {
         match ty {
@@ -270,6 +282,7 @@ pub unsafe extern "C" fn FogUpdateFunc(obj: *mut c_void, ty: i32, val: *mut HSD_
 /// `FogRelease` (class `release`): drop the adj (ref_DEC, then its release + destroy), remove the
 /// AObj, then the parent class release.
 pub unsafe extern "C" fn FogRelease(o: *mut HSD_Class) {
+    melee_core::ct!("FogRelease");
     let fog = o as *mut HSD_Fog;
     if !(*fog).fog_adj.is_null() {
         let adj = (*fog).fog_adj;
@@ -290,6 +303,7 @@ pub unsafe extern "C" fn FogRelease(o: *mut HSD_Class) {
 
 /// `FogInfoInit`.
 pub unsafe extern "C" fn FogInfoInit() {
+    melee_core::ct!("FogInfoInit");
     ext::hsdInitClassInfo(
         addr_of_mut!(hsdFog).cast(),
         hsd_obj_ptr().cast(),
@@ -303,6 +317,7 @@ pub unsafe extern "C" fn FogInfoInit() {
 
 /// `FogAdjInfoInit`.
 pub unsafe extern "C" fn FogAdjInfoInit() {
+    melee_core::ct!("FogAdjInfoInit");
     ext::hsdInitClassInfo(
         addr_of_mut!(hsdFogAdj).cast(),
         hsd_obj_ptr().cast(),

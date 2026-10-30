@@ -87,6 +87,7 @@ pub static it_803F6150: [ItemStateTable; 6] = [
 
 /// `static inline void thing(void* gobj)`
 pub unsafe extern "C" fn thing(gobj: *mut c_void) {
+    melee_core::ct!("thing");
     let it = GET_ITEM(gobj as *mut HSD_GObj);
     if (*it).xD4C <= 0 {
         ext::it_80272A3C(ext::it_80272CC0(gobj as *mut HSD_GObj, 3));
@@ -94,6 +95,7 @@ pub unsafe extern "C" fn thing(gobj: *mut c_void) {
 }
 
 pub unsafe extern "C" fn it_80293D94(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_80293D94");
     let item = GET_ITEM(gobj);
     if (*item).xDC8_word.flags.xB() == 0 && (*item).xDC8_word.flags.xA() != 0 {
         ext::it_8026BC14(gobj);
@@ -101,6 +103,7 @@ pub unsafe extern "C" fn it_80293D94(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_80293DCC(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("it_80293DCC");
     let item = GET_ITEM(gobj);
     let article = (*item).xC4_article_data;
     let temp_r31 = (*article).x4_specialAttributes as *mut itHammerData;
@@ -112,6 +115,7 @@ pub unsafe extern "C" fn it_80293DCC(gobj: *mut HSD_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn it_80293E34(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_80293E34");
     let mut sp30: Vec3 = core::mem::zeroed();
     let mut sp24: Vec3 = core::mem::zeroed();
     let mut result: Vec3 = core::mem::zeroed();
@@ -133,11 +137,13 @@ pub unsafe extern "C" fn it_80293E34(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itHammer_Logic28_Spawned(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHammer_Logic28_Spawned");
     (*GET_ITEM(gobj)).xD4C = 1;
     it_8029402C(gobj);
 }
 
 pub unsafe extern "C" fn it_80293F84(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_80293F84");
     let temp_r4 = GET_ITEM(gobj);
     itResetVelocity(temp_r4);
     ext::it_8026B390(gobj);
@@ -146,32 +152,38 @@ pub unsafe extern "C" fn it_80293F84(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itHammer_UnkMotion0_Anim(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHammer_UnkMotion0_Anim");
     0
 }
 
-pub unsafe extern "C" fn itHammer_UnkMotion0_Phys(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itHammer_UnkMotion0_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itHammer_UnkMotion0_Phys");}
 
 pub unsafe extern "C" fn itHammer_UnkMotion0_Coll(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHammer_UnkMotion0_Coll");
     ext::it_8026D62C(gobj, Some(it_8029402C));
     0
 }
 
 pub unsafe extern "C" fn it_8029402C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_8029402C");
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE as u32);
     thing(gobj as *mut c_void);
 }
 
 pub unsafe extern "C" fn itHammer_UnkMotion4_Anim(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHammer_UnkMotion4_Anim");
     0
 }
 
 pub unsafe extern "C" fn itHammer_UnkMotion1_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHammer_UnkMotion1_Phys");
     let it = GET_ITEM(gobj);
     let temp_r4 = (*it).xCC_item_attr;
     ext::it_80272860(gobj, (*temp_r4).x10_fall_speed, (*temp_r4).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itHammer_UnkMotion1_Coll(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHammer_UnkMotion1_Coll");
     let it = GET_ITEM(gobj);
     if (*it).xD4C != 0 {
         ext::it_8026E15C(gobj, Some(it_80293F84));
@@ -181,6 +193,7 @@ pub unsafe extern "C" fn itHammer_UnkMotion1_Coll(gobj: *mut HSD_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn itHammer_Logic28_PickedUp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHammer_Logic28_PickedUp");
     let item = GET_ITEM(gobj);
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE as u32);
     (*item).entered_hitlag = core::mem::transmute::<unsafe extern "C" fn(*mut HSD_GObj), HSD_GObjEvent>(it_80293D94);
@@ -189,6 +202,7 @@ pub unsafe extern "C" fn itHammer_Logic28_PickedUp(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itHammer_UnkMotion3_Anim(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHammer_UnkMotion3_Anim");
     let it = GET_ITEM(gobj);
     if (*it).xD4C == 0 {
         it_802941A4(gobj);
@@ -197,22 +211,26 @@ pub unsafe extern "C" fn itHammer_UnkMotion3_Anim(gobj: *mut HSD_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn it_802941A4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802941A4");
     ext::Item_80268E5C(gobj, 3, ITEM_ANIM_UPDATE as u32);
     thing(gobj as *mut c_void);
 }
 
 pub unsafe extern "C" fn itHammer_Logic28_Dropped(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHammer_Logic28_Dropped");
     ext::Item_80268E5C(gobj, 1, 6);
     thing(gobj as *mut c_void);
 }
 
 pub unsafe extern "C" fn itHammer_UnkMotion4_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHammer_UnkMotion4_Phys");
     let it = GET_ITEM(gobj);
     let temp_r4 = (*it).xCC_item_attr;
     ext::it_80272860(gobj, (*temp_r4).x10_fall_speed, (*temp_r4).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itHammer_UnkMotion4_Coll(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHammer_UnkMotion4_Coll");
     if ext::it_8026DA08(gobj) != 0 {
         return 1;
     }
@@ -220,21 +238,25 @@ pub unsafe extern "C" fn itHammer_UnkMotion4_Coll(gobj: *mut HSD_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn itHammer_Logic28_EnteredAir(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHammer_Logic28_EnteredAir");
     ext::Item_80268E5C(gobj, 5, ITEM_ANIM_UPDATE as u32);
     thing(gobj as *mut c_void);
 }
 
 pub unsafe extern "C" fn itHammer_UnkMotion5_Anim(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHammer_UnkMotion5_Anim");
     0
 }
 
-pub unsafe extern "C" fn itHammer_UnkMotion5_Phys(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itHammer_UnkMotion5_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itHammer_UnkMotion5_Phys");}
 
 pub unsafe extern "C" fn itHammer_UnkMotion5_Coll(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHammer_UnkMotion5_Coll");
     ext::it_8026E8C4(gobj, Some(it_80293F84), Some(it_8029402C));
     0
 }
 
 pub unsafe extern "C" fn itHammer_Logic28_EvtUnk(igobj: *mut HSD_GObj, gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHammer_Logic28_EvtUnk");
     ext::it_8026B894(igobj, gobj);
 }

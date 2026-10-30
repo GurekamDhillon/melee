@@ -51,6 +51,7 @@ pub mod ext {
 
 /// `fn_800DC070`: enter CaptureJump (the victim is released first).
 pub fn fn_800DC070(g: G) {
+    melee_core::ct!("fn_800DC070");
     let f = fp(g);
     let victim = f.victim_gobj;
     ext::ftCommon_8007D5D4(f);
@@ -63,6 +64,7 @@ pub fn fn_800DC070(g: G) {
 
 /// `ftCo_CaptureJump_Anim`.
 pub fn ftCo_CaptureJump_Anim(g: G) {
+    melee_core::ct!("ftCo_CaptureJump_Anim");
     let f = fp(g);
     unsafe { f.mv.co.buryjump.x0 += 1.0 };
     if !ext::ftAnim_IsFramesRemaining(g) {
@@ -72,6 +74,7 @@ pub fn ftCo_CaptureJump_Anim(g: G) {
 
 /// `ftCo_CaptureJump_IASA`.
 pub fn ftCo_CaptureJump_IASA(g: G) {
+    melee_core::ct!("ftCo_CaptureJump_IASA");
     let f = fp(g);
     if unsafe { f.mv.ca.specials.grav } >= cd().x3B8 {
         if ext::ftCo_SpecialAir_CheckInput(g) { return; }
@@ -87,6 +90,7 @@ pub fn ftCo_CaptureJump_IASA(g: G) {
 
 /// `ftCo_CaptureJump_Phys`.
 pub fn ftCo_CaptureJump_Phys(g: G) {
+    melee_core::ct!("ftCo_CaptureJump_Phys");
     let f = fp(g);
     let (gr, tv) = (f.co_attrs.gravity, f.co_attrs.terminal_velocity);
     ext::ftCommon_Fall(f, gr, tv);
@@ -95,5 +99,6 @@ pub fn ftCo_CaptureJump_Phys(g: G) {
 
 /// `ftCo_CaptureJump_Coll`.
 pub fn ftCo_CaptureJump_Coll(g: G) {
+    melee_core::ct!("ftCo_CaptureJump_Coll");
     ext::ftCo_AirCatchHit_Coll(g);
 }

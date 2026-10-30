@@ -46,6 +46,7 @@ pub mod ext {
 }
 
 pub fn ftCo_8009BB1C(g: G) -> bool {
+    melee_core::ct!("ftCo_8009BB1C");
     let b = ext::ftCo_Jump_GetInput(g);
     if b != 0 {
         ext::ftCo_8009B9C8(g, b as i32);
@@ -55,6 +56,7 @@ pub fn ftCo_8009BB1C(g: G) -> bool {
 }
 
 pub fn ftCo_8009BB64(g: G) {
+    melee_core::ct!("ftCo_8009BB64");
     ext::ftCommon_8007D5D4(fp(g));
     let ms = x2cc(fp(g)).x4_motion_state;
     ext::Fighter_ChangeMotionState(g, ms + 7, Ft_MF_None, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -63,18 +65,21 @@ pub fn ftCo_8009BB64(g: G) {
     ext::ftCo_8009C5A4(fp(g).victim_gobj, ftCo_MS_ShoulderedWait as i32);
 }
 
-pub fn ftCo_CargoJump_Anim(_g: G) {}
+pub fn ftCo_CargoJump_Anim(_g: G) { melee_core::ct!("ftCo_CargoJump_Anim");}
 
 pub fn ftCo_CargoJump_IASA(g: G) {
+    melee_core::ct!("ftCo_CargoJump_IASA");
     if ext::ftCo_8009BF3C(g) {
         return;
     }
 }
 
 pub fn ftCo_CargoJump_Phys(g: G) {
+    melee_core::ct!("ftCo_CargoJump_Phys");
     ext::ftCo_Jump_Phys_Inner(g);
 }
 
 pub fn ftCo_CargoJump_Coll(g: G) {
+    melee_core::ct!("ftCo_CargoJump_Coll");
     ext::ftCo_CargoFall_Coll(g);
 }

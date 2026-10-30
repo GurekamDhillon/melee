@@ -67,6 +67,7 @@ pub mod ext {
 }
 
 pub fn ftCo_8009A3C8(g: G) -> bool {
+    melee_core::ct!("ftCo_8009A3C8");
     let f = fp(g);
     if f.coll_data.env_flags & Collide_Edge != 0 && f.is_sandbag() == 0 {
         ftCo_8009A410(g);
@@ -76,6 +77,7 @@ pub fn ftCo_8009A3C8(g: G) -> bool {
 }
 
 pub fn ftCo_8009A410(g: G) {
+    melee_core::ct!("ftCo_8009A410");
     ext::Fighter_ChangeMotionState(g, ftCo_MS_Ottotto as i32, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     let f = fp(g);
     f.self_vel.z = 0.0;
@@ -85,12 +87,14 @@ pub fn ftCo_8009A410(g: G) {
 }
 
 pub fn ftCo_Ottotto_Anim(g: G) {
+    melee_core::ct!("ftCo_Ottotto_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ftCo_8009A6B8(g);
     }
 }
 
 pub fn ftCo_Ottotto_IASA(g: G) {
+    melee_core::ct!("ftCo_Ottotto_IASA");
     let _ = ext::ftCo_SpecialS_CheckInput(g)
         || ext::ftCo_Attack100_CheckInput(g)
         || ext::ftCo_800D6824(g)
@@ -112,7 +116,7 @@ pub fn ftCo_Ottotto_IASA(g: G) {
         || ext::ftCo_Walk_CheckInput_Ottotto(g);
 }
 
-pub fn ftCo_Ottotto_Phys(_g: G) {}
+pub fn ftCo_Ottotto_Phys(_g: G) { melee_core::ct!("ftCo_Ottotto_Phys");}
 
 /// Shared body of `ftCo_Ottotto_Coll` / `ftCo_OttottoWait_Coll` (identical math).
 fn coll(g: G) {
@@ -137,10 +141,12 @@ fn coll(g: G) {
 }
 
 pub fn ftCo_Ottotto_Coll(g: G) {
+    melee_core::ct!("ftCo_Ottotto_Coll");
     coll(g);
 }
 
 pub fn ftCo_8009A6B8(g: G) {
+    melee_core::ct!("ftCo_8009A6B8");
     ext::Fighter_ChangeMotionState(g, ftCo_MS_OttottoWait as i32, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ext::ft_80088770(fp(g));
     ext::ft_800887CC(fp(g));
@@ -149,14 +155,16 @@ pub fn ftCo_8009A6B8(g: G) {
     ext::ft_80088328(f, sfx, 127, 64);
 }
 
-pub fn ftCo_OttottoWait_Anim(_g: G) {}
+pub fn ftCo_OttottoWait_Anim(_g: G) { melee_core::ct!("ftCo_OttottoWait_Anim");}
 
 pub fn ftCo_OttottoWait_IASA(g: G) {
+    melee_core::ct!("ftCo_OttottoWait_IASA");
     ftCo_Ottotto_IASA(g);
 }
 
-pub fn ftCo_OttottoWait_Phys(_g: G) {}
+pub fn ftCo_OttottoWait_Phys(_g: G) { melee_core::ct!("ftCo_OttottoWait_Phys");}
 
 pub fn ftCo_OttottoWait_Coll(g: G) {
+    melee_core::ct!("ftCo_OttottoWait_Coll");
     coll(g);
 }

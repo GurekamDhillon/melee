@@ -168,10 +168,11 @@ unsafe fn Ground_StartMapAnim(gobj: *mut HSD_GObj) {
 }
 
 /// grFigureGet_OnDemoInit
-pub unsafe extern "C" fn grFigureGet_OnDemoInit(_unused: i32) {}
+pub unsafe extern "C" fn grFigureGet_OnDemoInit(_unused: i32) { melee_core::ct!("grFigureGet_OnDemoInit");}
 
 /// grFigureGet_OnInit
 pub unsafe extern "C" fn grFigureGet_OnInit() {
+    melee_core::ct!("grFigureGet_OnInit");
     yakumono_param = ext::Ground_GetYakumonoParam() as *mut grFigureGet_Params;
     ext::stage_info.unk8C.set_b4(0);
     ext::stage_info.unk8C.set_b5(1);
@@ -182,15 +183,17 @@ pub unsafe extern "C" fn grFigureGet_OnInit() {
 }
 
 /// grFigureGet_OnLoad
-pub unsafe extern "C" fn grFigureGet_OnLoad() {}
+pub unsafe extern "C" fn grFigureGet_OnLoad() { melee_core::ct!("grFigureGet_OnLoad");}
 
 /// grFigureGet_OnStart
 pub unsafe extern "C" fn grFigureGet_OnStart() {
+    melee_core::ct!("grFigureGet_OnStart");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
 
 /// grFigureGet_802195CC: sets up stage gobj `gobj_id` with its row of the callback table.
 pub unsafe extern "C" fn grFigureGet_802195CC(gobj_id: i32) -> *mut HSD_GObj {
+    melee_core::ct!("grFigureGet_802195CC");
     let callbacks = &raw mut grFigureGet_StageCallbacks[gobj_id as usize];
     let gobj = ext::Ground_GetStageGObj(gobj_id);
     if !gobj.is_null() {
@@ -202,18 +205,20 @@ pub unsafe extern "C" fn grFigureGet_802195CC(gobj_id: i32) -> *mut HSD_GObj {
 
 /// stageGObj0_OnInit
 pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj0_OnInit");
     Ground_StartMapAnim(gobj);
 }
 
 /// grFigureGet_802196E8
-pub unsafe extern "C" fn grFigureGet_802196E8(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grFigureGet_802196E8(_gobj: *mut HSD_GObj) { melee_core::ct!("grFigureGet_802196E8");}
 
 /// grFigureGet_802196EC
-pub unsafe extern "C" fn grFigureGet_802196EC(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grFigureGet_802196EC(_gobj: *mut HSD_GObj) { melee_core::ct!("grFigureGet_802196EC");}
 
 /// grFigureGet_802196F0: picks the three trophies, resets the drop state and installs the
 /// joint callback.
 pub unsafe extern "C" fn grFigureGet_802196F0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grFigureGet_802196F0");
     let gp = (*gobj).user_data as *mut Ground;
     let mut sp14: i32 = 0;
 
@@ -259,6 +264,7 @@ pub unsafe extern "C" fn grFigureGet_802196F0(gobj: *mut HSD_GObj) {
 
 /// grFigureGet_80219898: the per-frame drop timer; once every coin is out, scores the catch.
 pub unsafe extern "C" fn grFigureGet_80219898(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grFigureGet_80219898");
     let gp = (*gobj).user_data as *mut Ground;
 
     let mut var_r28 = *ext::HSD_GObjPLinkHead.add(HSD_GOBJ_PLINK_FIGHTER as usize);
@@ -314,7 +320,7 @@ pub unsafe extern "C" fn grFigureGet_80219898(gobj: *mut HSD_GObj) {
 }
 
 /// grFigureGet_80219B0C
-pub unsafe extern "C" fn grFigureGet_80219B0C(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grFigureGet_80219B0C(_gobj: *mut HSD_GObj) { melee_core::ct!("grFigureGet_80219B0C");}
 
 /// grFigureGet_80219B10 (mpLib_JointCollisionCallback): collects a coin that touches the platform.
 pub unsafe extern "C" fn grFigureGet_80219B10(
@@ -325,6 +331,7 @@ pub unsafe extern "C" fn grFigureGet_80219B10(
     _ground_kind: u32,
     _delta_y: f32,
 ) {
+    melee_core::ct!("grFigureGet_80219B10");
     let gp = user_data as *mut Ground;
     let item_gobj = (*coll).x0_gobj;
     if (*coll).x34_flags.b1234() as i32 == 5
@@ -354,6 +361,7 @@ pub unsafe extern "C" fn grFigureGet_80219B10(
 
 /// grFigureGet_80219C34: one more coin that will never be caught.
 pub unsafe extern "C" fn grFigureGet_80219C34(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grFigureGet_80219C34");
     if gobj.is_null() {
         return;
     }
@@ -363,6 +371,7 @@ pub unsafe extern "C" fn grFigureGet_80219C34(gobj: *mut HSD_GObj) {
 
 /// grFigureGet_80219C50: all three coins are either caught or lost.
 pub unsafe extern "C" fn grFigureGet_80219C50(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grFigureGet_80219C50");
     if gobj.is_null() {
         return 0;
     }

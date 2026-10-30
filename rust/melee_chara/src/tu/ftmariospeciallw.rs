@@ -77,16 +77,19 @@ const transition_flags: u32 = (Ft_MF_KeepGfx
 
 /// `updateRot` (static) as a Fighter callback entry (`take_dmg_cb` / `death2_cb`).
 pub unsafe extern "C" fn cb_updateRot(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_updateRot");
     updateRot(g);
 }
 
 /// `updateRot` (static): reset the Tornado spin on being hit.
 pub fn updateRot(gobj: *mut HSD_GObj) {
+    melee_core::ct!("updateRot");
     unsafe { ext::ftPartSetRotX(fpp(gobj), 0, 0.0) }
 }
 
 /// `setGfx` (static).
 pub fn setGfx(gobj: *mut HSD_GObj) {
+    melee_core::ct!("setGfx");
     unsafe {
         let fp = fpp(gobj);
         let hsd_obj_ptr = (*gobj).hsd_obj;
@@ -98,6 +101,7 @@ pub fn setGfx(gobj: *mut HSD_GObj) {
 
 /// `setCallbacks` (static).
 pub fn setCallbacks(gobj: *mut HSD_GObj) {
+    melee_core::ct!("setCallbacks");
     unsafe {
         let fp = fpp(gobj);
         (*fp).take_dmg_cb = Some(cb_updateRot);
@@ -107,6 +111,7 @@ pub fn setCallbacks(gobj: *mut HSD_GObj) {
 
 /// `doStartMotion` (static).
 pub fn doStartMotion(gobj: *mut HSD_GObj) {
+    melee_core::ct!("doStartMotion");
     unsafe {
         let fp = fpp(gobj);
         let sa = (*fp).dat_attrs as *const ftMario_DatAttrs;
@@ -121,6 +126,7 @@ pub fn doStartMotion(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMr_SpecialLw_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialLw_Enter");
     unsafe {
         let fp = fpp(gobj);
         let sa = (*fp).dat_attrs as *const ftMario_DatAttrs;
@@ -135,6 +141,7 @@ pub fn ftMr_SpecialLw_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMr_SpecialAirLw_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialAirLw_Enter");
     unsafe {
         let fp = fpp(gobj);
         let sa = (*fp).dat_attrs as *const ftMario_DatAttrs;
@@ -150,6 +157,7 @@ pub fn ftMr_SpecialAirLw_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMr_SpecialAirLw_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialAirLw_Anim");
     unsafe {
         let fp = fpp(gobj);
         let sa = (*fp).dat_attrs as *const ftMario_DatAttrs;
@@ -168,12 +176,13 @@ pub fn ftMr_SpecialAirLw_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftMr_SpecialLw_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftMr_SpecialLw_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMr_SpecialLw_IASA");}
 
-pub fn ftMr_SpecialAirLw_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftMr_SpecialAirLw_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMr_SpecialAirLw_IASA");}
 
 /// `doPhys` (static): the grounded Tornado is tapped into the air.
 pub fn doPhys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("doPhys");
     unsafe {
         let fp = fpp(gobj);
         let sa = (*fp).dat_attrs as *const ftMario_DatAttrs;
@@ -195,6 +204,7 @@ pub fn doPhys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMr_SpecialLw_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialLw_Phys");
     unsafe {
         let fp0 = fpp(gobj);
         let sa = (*fp0).dat_attrs as *const ftMario_DatAttrs;
@@ -217,6 +227,7 @@ pub fn ftMr_SpecialLw_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMr_SpecialAirLw_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialAirLw_Phys");
     unsafe {
         let fp = fpp(gobj);
         let sa = (*fp).dat_attrs as *const ftMario_DatAttrs;
@@ -242,6 +253,7 @@ pub fn ftMr_SpecialAirLw_Phys(gobj: *mut HSD_GObj) {
 
 /// `doColl` (static): tilt the model to the floor normal while the Tornado is on it.
 pub fn doColl(gobj: *mut HSD_GObj) {
+    melee_core::ct!("doColl");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).cmd_vars[3] != 0 && (*fp).mv.mr.SpecialLw.isUnkColl != 0 {
@@ -263,6 +275,7 @@ static mut coll_box: ftCollisionBox = ftCollisionBox {
 };
 
 pub fn ftMr_SpecialLw_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialLw_Coll");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).ground_or_air == GA_Ground {
@@ -284,6 +297,7 @@ pub fn ftMr_SpecialLw_Coll(gobj: *mut HSD_GObj) {
 
 /// `doAirCollIfUnk` (static): the airborne Tornado lands.
 pub fn doAirCollIfUnk(gobj: *mut HSD_GObj) {
+    melee_core::ct!("doAirCollIfUnk");
     unsafe {
         let fp = fpp(gobj);
         let sa = (*fp).dat_attrs as *const ftMario_DatAttrs;
@@ -306,6 +320,7 @@ pub fn doAirCollIfUnk(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMr_SpecialAirLw_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialAirLw_Coll");
     unsafe {
         let fp = fpp(gobj);
         if ext::ft_800824A0(gobj, &mut coll_box) {

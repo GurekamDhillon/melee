@@ -59,6 +59,7 @@ pub mod ext {
 
 /// `ftCo_ReleaseItemAndVictim` (ftCommon/inlines.h).
 pub fn ftCo_ReleaseItemAndVictim(g: G) {
+    melee_core::ct!("ftCo_ReleaseItemAndVictim");
     ext::ftCommon_8007DB58(g);
     ext::ftCo_8009750C(g);
     ext::ftCo_800DD168(g);
@@ -66,6 +67,7 @@ pub fn ftCo_ReleaseItemAndVictim(g: G) {
 
 /// `ftCo_Barrel_ApplyKnockback` (ftCommon/inlines.h).
 pub fn ftCo_Barrel_ApplyKnockback(f: &mut Fighter, mut kb_angle: f32, hit: *mut HitCapsule) {
+    melee_core::ct!("ftCo_Barrel_ApplyKnockback");
     if kb_angle < 0.0 {
         kb_angle += 360.0;
     }
@@ -80,10 +82,12 @@ pub fn ftCo_Barrel_ApplyKnockback(f: &mut Fighter, mut kb_angle: f32, hit: *mut 
 }
 
 pub unsafe extern "C" fn ftCo_Barrel_Death2_Cb(g: G) {
+    melee_core::ct!("ftCo_Barrel_Death2_Cb");
     ftCo_Barrel_Take_Dmg_Cb(g);
 }
 
 pub fn ftCo_Barrel_Enter(g: G, item: *mut Item_GObj) {
+    melee_core::ct!("ftCo_Barrel_Enter");
     ftCo_ReleaseItemAndVictim(g);
     ext::Fighter_ChangeMotionState(g, ftCo_MS_Barrel as i32, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ext::ftAnim_8006EBA4(g);
@@ -108,10 +112,12 @@ pub fn ftCo_Barrel_Enter(g: G, item: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn ftCo_Barrel_Take_Dmg_Cb(g: G) {
+    melee_core::ct!("ftCo_Barrel_Take_Dmg_Cb");
     ext::it_80295F38(fp(g).mv.co.barrel.x8);
 }
 
 pub fn ftCo_Barrel_Anim(g: G) {
+    melee_core::ct!("ftCo_Barrel_Anim");
     let f = fp(g);
     unsafe {
         if f.mv.co.barrel.x0 != 0 {
@@ -124,6 +130,7 @@ pub fn ftCo_Barrel_Anim(g: G) {
 }
 
 pub fn ftCo_Barrel_IASA(g: G) {
+    melee_core::ct!("ftCo_Barrel_IASA");
     let f = fp(g);
     unsafe {
         if f.mv.co.barrel.x4 != 0 {
@@ -135,17 +142,19 @@ pub fn ftCo_Barrel_IASA(g: G) {
     }
 }
 
-pub fn ftCo_Barrel_Phys(_g: G) {}
+pub fn ftCo_Barrel_Phys(_g: G) { melee_core::ct!("ftCo_Barrel_Phys");}
 
-pub fn ftCo_Barrel_Coll(_g: G) {}
+pub fn ftCo_Barrel_Coll(_g: G) { melee_core::ct!("ftCo_Barrel_Coll");}
 
 pub unsafe extern "C" fn ftCo_Barrel_Accessory1_Cb(g: G) {
+    melee_core::ct!("ftCo_Barrel_Accessory1_Cb");
     let f = fp(g);
     ext::it_8026C334(f.mv.co.barrel.x8, &mut f.cur_pos);
 }
 
 /// static `fn_800C9290` (installed as `x21EC`).
 pub unsafe extern "C" fn fn_800C9290(g: G) {
+    melee_core::ct!("fn_800C9290");
     let owner = ext::itGetOwner(fp(g).mv.co.barrel.x8);
     if ext::ftLib_80086960(owner) {
         ext::ftColl_8007B8CC(fp(g), owner);
@@ -153,6 +162,7 @@ pub unsafe extern "C" fn fn_800C9290(g: G) {
 }
 
 pub fn ftCo_800C92E4(g: G, arg1: &Vec3, arg2: *mut Vec3, arg3: *mut lbColl_80008D30_arg1, kb_angle: f32) {
+    melee_core::ct!("ftCo_800C92E4");
     let mut hit = SmallerHitCapsule::zeroed();
     {
         let jobj = unsafe { (*g).hsd_obj as *mut HSD_JObj };

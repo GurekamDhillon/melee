@@ -67,6 +67,7 @@ pub static mut it_803F9490: [ItemStateTable; 1] = [ItemStateTable {
 }];
 
 pub unsafe extern "C" fn it_802F2D98(gobj: *mut Item_GObj, owner_gobj: *mut Fighter_GObj) {
+    melee_core::ct!("it_802F2D98");
     let item = get_item(gobj);
     (*item).atk_victim = owner_gobj;
     (*item).grab_victim = owner_gobj;
@@ -84,16 +85,19 @@ pub unsafe extern "C" fn it_802F2D98(gobj: *mut Item_GObj, owner_gobj: *mut Figh
 }
 
 pub unsafe extern "C" fn itKirbyyoshispecialn_UnkMotion0_Anim(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKirbyyoshispecialn_UnkMotion0_Anim");
     0
 }
 
-pub unsafe extern "C" fn itKirbyyoshispecialn_UnkMotion0_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itKirbyyoshispecialn_UnkMotion0_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itKirbyyoshispecialn_UnkMotion0_Phys");}
 
 pub unsafe extern "C" fn itKirbyyoshispecialn_UnkMotion0_Coll(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKirbyyoshispecialn_UnkMotion0_Coll");
     0
 }
 
 pub unsafe extern "C" fn it_802F2E7C(gobj: *mut Item_GObj, has_destroy_type: i32) {
+    melee_core::ct!("it_802F2E7C");
     let item = get_item(gobj);
     ext::it_80275070(gobj, (*(*(*item).xC4_article_data).x10_modelDesc).x8_bone_attach_id);
     let jobj = ext::ftLib_80086630((*item).grab_victim, ext::ftKb_SpecialNYs_80109238((*item).grab_victim));

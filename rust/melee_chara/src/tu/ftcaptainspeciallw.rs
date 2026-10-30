@@ -78,11 +78,13 @@ unsafe fn set_effect_hitlag_callbacks(fp: *mut Fighter) {
 
 /// `ftCa_SpecialHi_800E400C` as a Fighter callback entry (`deal_dmg_cb`).
 pub unsafe extern "C" fn cb_ftCa_SpecialHi_800E400C(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftCa_SpecialHi_800E400C");
     ftCa_SpecialHi_800E400C(g);
 }
 
 /// `ftCa_Special_Inline_Check_Flag` (static inline): test and clear throw_flags_b1.
 pub fn ftCa_Special_Inline_Check_Flag(fp: &mut Fighter) -> bool {
+    melee_core::ct!("ftCa_Special_Inline_Check_Flag");
     unsafe {
         if fp.anon_2210.anon_0.throw_flags_b1() != 0 {
             fp.anon_2210.anon_0.set_throw_flags_b1(0);
@@ -95,6 +97,7 @@ pub fn ftCa_Special_Inline_Check_Flag(fp: &mut Fighter) -> bool {
 
 /// Flame effect on the kicking foot, once per move (then ftCommon_8007DB24 on later flags).
 pub fn ftCa_SpecialHi_800E3EAC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialHi_800E3EAC");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -127,6 +130,7 @@ pub fn ftCa_SpecialHi_800E3EAC(gobj: *mut HSD_GObj) {
 
 /// On-hit callback: count hits and slow the kick down.
 pub fn ftCa_SpecialHi_800E400C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialHi_800E400C");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -139,6 +143,7 @@ pub fn ftCa_SpecialHi_800E400C(gobj: *mut HSD_GObj) {
 
 /// `ftCa_SpecialLw_Anim_inline` (static inline): `air` picks SpecialLwEndAir.
 pub fn ftCa_SpecialLw_Anim_inline(gobj: *mut HSD_GObj, air: i32) {
+    melee_core::ct!("ftCa_SpecialLw_Anim_inline");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -155,6 +160,7 @@ pub fn ftCa_SpecialLw_Anim_inline(gobj: *mut HSD_GObj, air: i32) {
 }
 
 pub fn ftCa_SpecialLw_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialLw_Anim");
     unsafe {
         let fp = fpp(gobj);
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -165,12 +171,14 @@ pub fn ftCa_SpecialLw_Anim(gobj: *mut HSD_GObj) {
 
 /// `ftCa_Special_Inline_Friction` (static inline).
 pub fn ftCa_Special_Inline_Friction(fp: &mut Fighter) {
+    melee_core::ct!("ftCa_Special_Inline_Friction");
     let friction = unsafe { fp.mv.ca.speciallw.friction };
     fp.self_vel.x *= friction;
     fp.self_vel.y *= friction;
 }
 
 pub fn ftCa_SpecialLw_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialLw_Phys");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).ground_or_air == GA_Ground {
@@ -186,6 +194,7 @@ pub fn ftCa_SpecialLw_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCa_SpecialLwEnd_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialLwEnd_Phys");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -207,6 +216,7 @@ pub fn ftCa_SpecialLwEnd_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCa_SpecialLwEndAir_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialLwEndAir_Phys");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).ground_or_air == GA_Ground {
@@ -224,11 +234,13 @@ pub fn ftCa_SpecialLwEndAir_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCa_SpecialAirLw_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialAirLw_Phys");
     st::ft_80085134(gobj);
     ftCa_SpecialHi_800E3EAC(gobj);
 }
 
 pub fn ftCa_SpecialAirLwEnd_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialAirLwEnd_Phys");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -243,6 +255,7 @@ pub fn ftCa_SpecialAirLwEnd_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCa_SpecialLw_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialLw_Coll");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).ground_or_air == GA_Ground {
@@ -267,6 +280,7 @@ pub fn ftCa_SpecialLw_Coll(gobj: *mut HSD_GObj) {
 
 /// `doColl` (static): land into `msid` when air collision reports ground.
 pub fn doColl(gobj: *mut HSD_GObj, msid: i32) {
+    melee_core::ct!("doColl");
     if st::ft_80081D0C(gobj) != GA_Ground as i32 {
         unsafe {
             let fp = fpp(gobj);
@@ -279,9 +293,11 @@ pub fn doColl(gobj: *mut HSD_GObj, msid: i32) {
 }
 
 pub fn ftCa_SpecialAirLw_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialAirLw_Coll");
     doColl(gobj, ftCa_MS_SpecialAirLwEnd as i32);
 }
 
 pub fn ftCa_SpecialAirLwEndAir_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialAirLwEndAir_Coll");
     doColl(gobj, ftCa_MS_SpecialAirLwEnd as i32);
 }

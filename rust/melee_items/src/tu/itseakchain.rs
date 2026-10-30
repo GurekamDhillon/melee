@@ -202,10 +202,12 @@ pub static it_803B8680: Vec3 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 pub static it_803B868C: Vec3 = Vec3 { x: 0.0, y: 0.0, z: 0.1 };
 
 pub unsafe extern "C" fn it_802BAEEC(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802BAEEC");
     ext::it_8026B724(gobj);
 }
 
 pub unsafe extern "C" fn it_802BAF0C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802BAF0C");
     ext::it_8026B73C(gobj);
 }
 
@@ -222,6 +224,7 @@ unsafe fn it_802BAF2C_Load_x68(ip: *mut Item) -> *mut HSD_JObj {
 }
 
 pub unsafe extern "C" fn it_802BAF2C(ip: *mut Item, jobj: *mut HSD_JObj) -> i32 {
+    melee_core::ct!("it_802BAF2C");
     let mut prev_link: *mut ItemLink;
     let mut head_link: *mut ItemLink = null_mut();
     let mut tail_link: *mut ItemLink = null_mut();
@@ -299,6 +302,7 @@ pub unsafe extern "C" fn it_802BAF2C(ip: *mut Item, jobj: *mut HSD_JObj) -> i32 
 /// `inlineA0` (static inline)
 #[inline]
 pub unsafe fn inlineA0(gobj: *mut Item_GObj) {
+    melee_core::ct!("inlineA0");
     if !gobj.is_null() {
         let ip = GET_ITEM(gobj);
         if !(*ip).owner.is_null() {
@@ -318,6 +322,7 @@ pub unsafe fn inlineA0(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802BB20C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802BB20C");
     if !GET_ITEM(gobj).is_null() {
         inlineA0(gobj);
         ext::Item_8026A8EC(gobj);
@@ -325,6 +330,7 @@ pub unsafe extern "C" fn it_802BB20C(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itSeakChain_Spawn(parent_gobj: *mut Fighter_GObj, arg1: *mut Point3d, facing_dir: f32) -> *mut Item_GObj {
+    melee_core::ct!("itSeakChain_Spawn");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
     let fp = (*parent_gobj).user_data as *mut Fighter;
@@ -352,10 +358,12 @@ pub unsafe extern "C" fn itSeakChain_Spawn(parent_gobj: *mut Fighter_GObj, arg1:
 }
 
 pub unsafe extern "C" fn fn_802BB428(gobj: *mut Item_GObj) {
+    melee_core::ct!("fn_802BB428");
     it_802BCA30(GET_ITEM(gobj));
 }
 
 pub unsafe extern "C" fn fn_802BB44C(gobj: *mut Item_GObj) {
+    melee_core::ct!("fn_802BB44C");
     let mut vec: Vec3 = core::mem::zeroed();
     let mut mtx: Mtx = core::mem::zeroed();
 
@@ -382,6 +390,7 @@ pub unsafe extern "C" fn fn_802BB44C(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn fn_802BB574(gobj: *mut Item_GObj) {
+    melee_core::ct!("fn_802BB574");
     let mut vec: Vec3 = core::mem::zeroed();
     let ip = GET_ITEM(gobj);
     let sa = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSeakChain_Attrs;
@@ -407,6 +416,7 @@ pub unsafe extern "C" fn fn_802BB574(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn fn_802BB694(gobj: *mut Item_GObj) {
+    melee_core::ct!("fn_802BB694");
     let mut vec: Vec3 = core::mem::zeroed();
     let mut mtx: Mtx = core::mem::zeroed();
     let ip = GET_ITEM(gobj);
@@ -422,6 +432,7 @@ pub unsafe extern "C" fn fn_802BB694(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn fn_802BB784(gobj: *mut Item_GObj) {
+    melee_core::ct!("fn_802BB784");
     let mut vec: Vec3 = core::mem::zeroed();
     let mut mtx: Mtx = core::mem::zeroed();
 
@@ -442,6 +453,7 @@ pub unsafe extern "C" fn fn_802BB784(gobj: *mut Item_GObj) {
 
 /// `notInSpecialS` (static)
 pub unsafe fn notInSpecialS(gobj: *mut Fighter_GObj) -> bool {
+    melee_core::ct!("notInSpecialS");
     if !gobj.is_null() {
         let msid = ext::ftLib_GetMotionId(gobj);
         if msid >= ftSk_MS_SpecialSStart as i32 && msid <= ftSk_MS_SpecialAirSEnd as i32 {
@@ -453,6 +465,7 @@ pub unsafe fn notInSpecialS(gobj: *mut Fighter_GObj) -> bool {
 }
 
 pub unsafe extern "C" fn itSeakchain_UnkMotion4_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSeakchain_UnkMotion4_Anim");
     let ip = GET_ITEM(gobj);
     if notInSpecialS((*ip).owner) {
         inlineA0(gobj);
@@ -462,6 +475,7 @@ pub unsafe extern "C" fn itSeakchain_UnkMotion4_Anim(gobj: *mut Item_GObj) -> bo
 }
 
 pub unsafe extern "C" fn it_802BB938(link: *mut ItemLink, arg1: i32, arg2: f32) -> i32 {
+    melee_core::ct!("it_802BB938");
     let coll: *mut CollData = &mut (*link).coll_data;
 
     if !(*link).next.is_null() && (*(*link).next).x2C_b0() != 0 {
@@ -496,10 +510,12 @@ pub unsafe extern "C" fn it_802BB938(link: *mut ItemLink, arg1: i32, arg2: f32) 
 }
 
 pub unsafe extern "C" fn it_802BBAEC(link: *mut ItemLink, arg1: i32, arg2: f32) -> i32 {
+    melee_core::ct!("it_802BBAEC");
     it_802BB938(link, arg1, arg2)
 }
 
 pub unsafe extern "C" fn it_802BBB0C(mut link: *mut ItemLink, offset: *mut Vec3, sa: *mut itSeakChain_Attrs, scale: f32) {
+    melee_core::ct!("it_802BBB0C");
     let mut pos: Vec3 = core::mem::zeroed();
     let mut prev = (*link).prev;
 
@@ -523,6 +539,7 @@ pub unsafe extern "C" fn it_802BBB0C(mut link: *mut ItemLink, offset: *mut Vec3,
 }
 
 pub unsafe extern "C" fn it_802BBC38(mut link: *mut ItemLink, offset: *mut Vec3, sa: *mut itSeakChain_Attrs, scale: f32) {
+    melee_core::ct!("it_802BBC38");
     let mut origin: Vec3 = core::mem::zeroed();
     let mut prev = (*link).prev;
 
@@ -546,6 +563,7 @@ pub unsafe extern "C" fn it_802BBC38(mut link: *mut ItemLink, offset: *mut Vec3,
 }
 
 pub unsafe extern "C" fn it_802BBD64(link: *mut ItemLink, arg1: *mut Vec3, sa: *mut itSeakChain_Attrs) -> i32 {
+    melee_core::ct!("it_802BBD64");
     let mut vec: Vec3 = core::mem::zeroed();
     let mut cur = link;
     let mut prev = (*link).next;
@@ -583,6 +601,7 @@ pub unsafe extern "C" fn it_802BBD64(link: *mut ItemLink, arg1: *mut Vec3, sa: *
 }
 
 pub unsafe extern "C" fn it_802BBED0(link: *mut ItemLink, arg1: *mut Point3d, sa: *mut itSeakChain_Attrs) -> i32 {
+    melee_core::ct!("it_802BBED0");
     let mut pos: Point3d = core::mem::zeroed();
     let mut cur = link;
     let mut prev = (*link).next;
@@ -657,6 +676,7 @@ unsafe fn itSeakChain_clamp_x14(link: *mut ItemLink, attrs: *mut itSeakChain_Att
 }
 
 pub unsafe extern "C" fn it_802BC080(link: *mut ItemLink, target: *mut Vec3, ip: *mut Item) {
+    melee_core::ct!("it_802BC080");
     let mut dir: Vec3 = core::mem::zeroed();
     let mut iter = (*link).prev;
     let mut cur = link;
@@ -836,6 +856,7 @@ pub unsafe extern "C" fn it_802BC080(link: *mut ItemLink, target: *mut Vec3, ip:
 }
 
 pub unsafe extern "C" fn it_802BC94C(arg0: *mut ItemLink, arg1: *mut Vec3, sa: *mut itSeakChain_Attrs, farg0: f32) -> bool {
+    melee_core::ct!("it_802BC94C");
     let mut var_r30: *mut ItemLink = null_mut();
     let mut var_r29: *mut ItemLink = null_mut();
     let mut var_f1: f32 = 0.0;
@@ -850,6 +871,7 @@ pub unsafe extern "C" fn it_802BC94C(arg0: *mut ItemLink, arg1: *mut Vec3, sa: *
 }
 
 pub unsafe extern "C" fn it_802BCA30(ip: *mut Item) {
+    melee_core::ct!("it_802BCA30");
     let link = (*ip).xDD4_itemVar.seakchain.x0;
     let jobj0 = (*(*link).gobj).hsd_obj as *mut HSD_JObj;
     let mut mtx: Mtx = core::mem::zeroed();
@@ -871,6 +893,7 @@ unsafe fn it_802BCB88_prev(link: *mut ItemLink) -> *mut ItemLink {
 }
 
 pub unsafe extern "C" fn it_802BCB88(ip: *mut Item, vec: *mut Vec3) {
+    melee_core::ct!("it_802BCB88");
     let mut link = (*ip).xDD4_itemVar.seakchain.x4;
     let sa = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSeakChain_Attrs;
     let stride: i32 = (*sa).x0 / 3;
@@ -946,12 +969,14 @@ pub unsafe extern "C" fn it_802BCB88(ip: *mut Item, vec: *mut Vec3) {
 }
 
 pub unsafe extern "C" fn it_2725_Logic54_PickedUp(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_2725_Logic54_PickedUp");
     let item = GET_ITEM(gobj);
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE);
     (*item).on_accessory = Some(fn_802BB428);
 }
 
 pub unsafe extern "C" fn it_802BCED4(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802BCED4");
     let ip = GET_ITEM(gobj);
     ext::ftColl_8007AFF8((*ip).xDD4_itemVar.seakchain.parent_gobj);
     ext::Item_80268E5C(gobj, 3, ITEM_ANIM_UPDATE);
@@ -959,6 +984,7 @@ pub unsafe extern "C" fn it_802BCED4(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802BCF2C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802BCF2C");
     let ip = GET_ITEM(gobj);
     ext::ftColl_8007AFF8((*ip).xDD4_itemVar.seakchain.parent_gobj);
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE);
@@ -966,12 +992,14 @@ pub unsafe extern "C" fn it_802BCF2C(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802BCF84(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802BCF84");
     let ip = GET_ITEM(gobj);
     ext::Item_80268E5C(gobj, 4, ITEM_ANIM_UPDATE);
     (*ip).on_accessory = Some(fn_802BB784);
 }
 
 pub unsafe extern "C" fn it_802BCFC4(gobj: *mut Item_GObj, vel: *mut Vec3) {
+    melee_core::ct!("it_802BCFC4");
     let ip = GET_ITEM(gobj);
     let link = (*ip).xDD4_itemVar.seakchain.x0;
     let mut pos: Vec3 = core::mem::zeroed();
@@ -994,6 +1022,7 @@ pub unsafe extern "C" fn it_802BCFC4(gobj: *mut Item_GObj, vel: *mut Vec3) {
 }
 
 pub unsafe extern "C" fn itSeakChain_Logic54_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Fighter_GObj) {
+    melee_core::ct!("itSeakChain_Logic54_EvtUnk");
     let item = GET_ITEM(gobj);
     ext::it_8026B894(gobj, ref_gobj);
     if (*item).xDD4_itemVar.seakchain.parent_gobj == ref_gobj {

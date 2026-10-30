@@ -99,70 +99,83 @@ pub static mut gm_Mode_GiantVs_States: [GameModeState; 9] = unsafe {
 
 /// 1B8FB8
 pub unsafe extern "C" fn gm_801B8FB8(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B8FB8");
     ext::gmVsMelee_EnterCss(scene, giant_row(), 4);
     ext::gmFrontend_AtlasSelect(scene, 0, core::ptr::null());
 }
 
 /// 1B8FE4
 pub unsafe extern "C" fn gm_801B8FE4(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B8FE4");
     ext::gmVsMelee_ExitCss(scene, giant_row());
 }
 
 /// 1B900C
 pub unsafe extern "C" fn gm_801B900C(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B900C");
     ext::gmVsMelee_EnterSss(scene, giant_row());
     ext::gmFrontend_AtlasSelect(scene, 1, core::ptr::null());
 }
 
 /// 1B9034
 pub unsafe extern "C" fn gm_801B9034(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B9034");
     ext::gmVsMelee_ExitSss(scene, giant_row(), 0);
 }
 
 /// 1B9060: C-ABI entry of the (round-3 verified) `gm_ptr::fn_801B9060`, the per-player setup
 /// callback gmVsMelee_EnterVs / EnterSuddenDeath run.
 pub unsafe extern "C" fn fn_801B9060(arg0: *mut PlayerInitData, unused: *mut PlayerInitData) {
+    melee_core::ct!("fn_801B9060");
     crate::gm_ptr::fn_801B9060(&mut *arg0, unused)
 }
 
 /// 1B9084
 pub unsafe extern "C" fn gm_801B9084(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B9084");
     let data = giant_row();
     ext::gmVsMelee_EnterVs(scene, data, None, Some(fn_801B9060));
 }
 
 /// 1B90B8
 pub unsafe extern "C" fn gm_801B90B8(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B90B8");
     ext::gmVsMelee_ExitVs(scene, 4, 3);
 }
 
 /// 1B90E0
 pub unsafe extern "C" fn gm_801B90E0(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B90E0");
     let data = giant_row();
     ext::gmVsMelee_EnterSuddenDeath(scene, data, None, Some(fn_801B9060));
 }
 
 /// 1B9114
 pub unsafe extern "C" fn gm_801B9114(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B9114");
     ext::gmVsMelee_ExitSuddenDeath(scene);
 }
 
 /// 1B9134
 pub unsafe extern "C" fn gm_801B9134(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B9134");
     ext::gmVsMelee_EnterResults(scene);
 }
 
 /// 1B9154
 pub unsafe extern "C" fn gm_801B9154(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B9154");
     ext::gmVsMelee_ExitResults(scene, giant_row(), 0);
 }
 
 /// 1B9174 (`gm_Mode_GiantVs_OnInit`)
 pub fn gm_Mode_GiantVs_OnInit() {
+    melee_core::ct!("gm_Mode_GiantVs_OnInit");
     unsafe { ext::gm_InitVsMode(giant_row()) }
 }
 
 /// `gm_Mode_GiantVs_OnLoad`
 pub fn gm_Mode_GiantVs_OnLoad() {
+    melee_core::ct!("gm_Mode_GiantVs_OnLoad");
     ext::gmVsMelee_ResetKOCounts();
 }

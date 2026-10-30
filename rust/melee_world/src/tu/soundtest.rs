@@ -854,6 +854,7 @@ macro_rules! to_mode {
 
 /// `void un_802FF7DC(void)`: loads the sound test archive's symbols into the menu rows.
 pub unsafe extern "C" fn un_802FF7DC() {
+    melee_core::ct!("un_802FF7DC");
     let data = &raw mut un_803F9FA4;
     ext::lbArchive_LoadSymbols((*data).x160.as_ptr(), &raw mut un_804D6DA8 as *mut c_void, (*data).x16C.as_ptr());
     let syms = un_804D6DA8;
@@ -867,10 +868,12 @@ pub unsafe extern "C" fn un_802FF7DC() {
 
 /// `bool un_802FF884(char*)`
 pub unsafe extern "C" fn un_802FF884(_arg0: *mut i8) -> i32 {
+    melee_core::ct!("un_802FF884");
     0
 }
 
 pub unsafe extern "C" fn un_802FF88C(_arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_802FF88C");
     un_804D5858 = 0x7F;
     un_804D6DB8 = 0;
     un_804D5854 = 0x7F;
@@ -894,11 +897,13 @@ pub unsafe extern "C" fn un_802FF88C(_arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn un_802FF934(_arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_802FF934");
     ext::lbAudioAx_80024C08(un_804D6DBC);
     0
 }
 
 pub unsafe extern "C" fn un_802FF958(_arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_802FF958");
     let mut tmp = un_804D5854 as u8;
     ext::lbAudioAx_800245F4(tmp as i32);
     tmp = un_804D5858 as u8;
@@ -909,6 +914,7 @@ pub unsafe extern "C" fn un_802FF958(_arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn un_802FF99C(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_802FF99C");
     let tmp = un_804D6DAC as u8;
     ext::lbAudioAx_80024634(tmp as i32);
     un_802FFB58(arg0);
@@ -916,6 +922,7 @@ pub unsafe extern "C" fn un_802FF99C(arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn un_802FF9DC(_arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_802FF9DC");
     un_804D6DB4 = 0;
     let mut i: i32 = 0;
     while i < un_804D6DB0 {
@@ -929,6 +936,7 @@ pub unsafe extern "C" fn un_802FF9DC(_arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn un_802FFB58(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_802FFB58");
     if arg0 == 1 {
         ext::lbAudioAx_80023694();
         ext::lbAudioAx_80023B24(*sym_ptr(5).offset(un_804D6DB4 as isize));
@@ -939,6 +947,7 @@ pub unsafe extern "C" fn un_802FFB58(arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn un_802FFBAC(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_802FFBAC");
     if arg0 == 1 {
         if un_804D585C == un_804D6DB8 {
             let x = un_804D6DC0.wrapping_add(1) & 1;
@@ -958,6 +967,7 @@ pub unsafe extern "C" fn un_802FFBAC(arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn un_802FFC30(_arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_802FFC30");
     ext::lbAudioAx_800236DC();
     ext::lbAudioAx_800245D4(0x7F);
     ext::lbAudioAx_800245F4(0x7F);
@@ -966,6 +976,7 @@ pub unsafe extern "C" fn un_802FFC30(_arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn un_802FFC6C(update_scene: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_802FFC6C");
     if update_scene == 1 {
         ext::lbAudioAx_80023694();
         sfx_back();
@@ -980,11 +991,13 @@ pub unsafe extern "C" fn un_802FFC6C(update_scene: soundtest_callback_arg0) -> i
 }
 
 pub unsafe extern "C" fn fn_802FFCC8(_arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("fn_802FFCC8");
     0
 }
 
 /// `void un_802FFCD0(int count, void* data)`: fills `data[0..count]` with `data[count]`.
 pub unsafe extern "C" fn un_802FFCD0(count: i32, data: *mut c_void) {
+    melee_core::ct!("un_802FFCD0");
     let arr = data as *mut i32;
     let mut i = 0;
     while i < count {
@@ -995,6 +1008,7 @@ pub unsafe extern "C" fn un_802FFCD0(count: i32, data: *mut c_void) {
 
 /// `void un_802FFD94(int arg0, void* arg1, soundtest_callback arg2)`: opens a sub-menu on confirm.
 pub unsafe extern "C" fn un_802FFD94(arg0: i32, arg1: *mut c_void, arg2: soundtest_callback) {
+    melee_core::ct!("un_802FFD94");
     if arg0 == 1 {
         let d = ext::un_80302DF0();
         sfx_forward();
@@ -1004,6 +1018,7 @@ pub unsafe extern "C" fn un_802FFD94(arg0: i32, arg1: *mut c_void, arg2: soundte
 }
 
 pub unsafe extern "C" fn fn_802FFE0C(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("fn_802FFE0C");
     match arg0 {
         0 => {
             sfx_back();
@@ -1020,6 +1035,7 @@ pub unsafe extern "C" fn fn_802FFE0C(arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn fn_802FFE6C(update_scene: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("fn_802FFE6C");
     let mut res = update_scene as i32;
     if update_scene == 0 {
         sfx_back();
@@ -1030,6 +1046,7 @@ pub unsafe extern "C" fn fn_802FFE6C(update_scene: soundtest_callback_arg0) -> i
 }
 
 pub unsafe extern "C" fn un_802FFEA4(update_scene: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_802FFEA4");
     if update_scene == 1 {
         sfx_forward();
         ext::gm_SetNextGameModeStateId(0x4);
@@ -1040,6 +1057,7 @@ pub unsafe extern "C" fn un_802FFEA4(update_scene: soundtest_callback_arg0) -> i
 
 /// `void un_802FFEE0(struct UnkSoundTestData0*)`
 pub unsafe extern "C" fn un_802FFEE0(arg0: *mut UnkSoundTestData0) {
+    melee_core::ct!("un_802FFEE0");
     let v = un_803FA258.x12C as u16;
     let val: u16 = if (v as i32) < 0x3E { v } else { 0x3E };
     (*arg0).x0 = val;
@@ -1051,6 +1069,7 @@ pub unsafe extern "C" fn un_802FFEE0(arg0: *mut UnkSoundTestData0) {
 /// `void un_802FFF2C(StartMeleeData*)`: the settings block -> a match start description. The C reads the
 /// block through the `un_803FA128_x130_t` overlay of `&un_803FA258`.
 pub unsafe extern "C" fn un_802FFF2C(arg0: *mut StartMeleeData) {
+    melee_core::ct!("un_802FFF2C");
     let r = &raw mut (*arg0).rules;
     let s = &raw mut un_803FA258 as *mut un_803FA128_x130_t;
     ext::gm_SetupRulesDefaults(r);
@@ -1129,11 +1148,13 @@ to_mode! {
 }
 
 pub unsafe extern "C" fn un_80300218(_arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_80300218");
     ext::lbLang_SetSavedLanguage(un_803FA258.x0);
     0
 }
 
 pub unsafe extern "C" fn un_80300248(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_80300248");
     if un_803FA258.x4[0] != 0 && arg0 == 1 {
         sfx_forward();
         ext::gmMainLib_8015FB68();
@@ -1142,6 +1163,7 @@ pub unsafe extern "C" fn un_80300248(arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn un_80300290(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_80300290");
     if arg0 == 1 {
         let x = ext::un_80302DF0();
         sfx_forward();
@@ -1161,23 +1183,27 @@ unsafe fn load_f4(src: *mut u8) {
 }
 
 pub unsafe extern "C" fn un_80300338(_arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_80300338");
     load_f4(save_base());
     0
 }
 
 pub unsafe extern "C" fn un_80300378(_arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_80300378");
     un_803FA258.xF0 &= 0xFFFE;
     load_f4(save_base());
     0
 }
 
 pub unsafe extern "C" fn un_803003C4(_arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_803003C4");
     un_803FA258.xF0 &= 0xFFFC;
     load_f4(save_base());
     0
 }
 
 pub unsafe extern "C" fn un_80300410(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_80300410");
     if arg0 == 1 {
         sfx_forward();
         let dst = save_base();
@@ -1207,6 +1233,7 @@ open_menu! {
 }
 
 pub unsafe extern "C" fn un_80300758(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_80300758");
     if arg0 == 1 {
         un_802FFCD0(4, (&raw mut un_803FA258 as *mut u8).add(0x10) as *mut c_void);
     }
@@ -1214,6 +1241,7 @@ pub unsafe extern "C" fn un_80300758(arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn un_80300790(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_80300790");
     if arg0 == 1 {
         un_802FFCD0(4, (&raw mut un_803FA258 as *mut u8).add(0x24) as *mut c_void);
     }
@@ -1232,6 +1260,7 @@ open_menu! {
 }
 
 pub unsafe extern "C" fn un_803009E0(_arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_803009E0");
     match un_804D6DD8 {
         2 => {
             let new_var = ext::gmMainLib_8015D06C(un_804D6DC8 as u8);
@@ -1249,6 +1278,7 @@ pub unsafe extern "C" fn un_803009E0(_arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn un_80300A88(_arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_80300A88");
     match un_804D6DD8 {
         3 => {
             if un_804D6DCC >= 1 {
@@ -1261,6 +1291,7 @@ pub unsafe extern "C" fn un_80300A88(_arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn un_80300AF4(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_80300AF4");
     if arg0 == 1 {
         sfx_forward();
         let data = &raw mut un_803FA258;
@@ -1276,6 +1307,7 @@ pub unsafe extern "C" fn un_80300AF4(arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn un_80300B58(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_80300B58");
     if arg0 == 1 {
         sfx_forward();
         let data = &raw mut un_803FA258;
@@ -1291,6 +1323,7 @@ pub unsafe extern "C" fn un_80300B58(arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn un_80300BBC(update_scene: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_80300BBC");
     if update_scene == 1 {
         ext::Toy_803124BC();
         ext::Toy_80311680();
@@ -1301,6 +1334,7 @@ pub unsafe extern "C" fn un_80300BBC(update_scene: soundtest_callback_arg0) -> i
 }
 
 pub unsafe extern "C" fn un_80300BF8(update_scene: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_80300BF8");
     if update_scene == 1 {
         ext::Toy_803124BC();
         ext::Toy_SetUnlockState(0xE6, 1);
@@ -1311,6 +1345,7 @@ pub unsafe extern "C" fn un_80300BF8(update_scene: soundtest_callback_arg0) -> i
 }
 
 pub unsafe extern "C" fn un_80300C3C(update_scene: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_80300C3C");
     if update_scene == 1 {
         ext::Toy_803124BC();
         ext::Toy_SetUnlockState(0xC9, 1);
@@ -1321,6 +1356,7 @@ pub unsafe extern "C" fn un_80300C3C(update_scene: soundtest_callback_arg0) -> i
 }
 
 pub unsafe extern "C" fn un_80300C80(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_80300C80");
     if arg0 == 1 {
         let ptr = ext::gmMainLib_8015CCF0();
         *ptr = un_804D6DDC.wrapping_mul(10) as u32;
@@ -1332,6 +1368,7 @@ pub unsafe extern "C" fn un_80300C80(arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn fn_80300CC8(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("fn_80300CC8");
     match arg0 {
         0 => {
             sfx_back();
@@ -1356,6 +1393,7 @@ pub unsafe extern "C" fn fn_80300CC8(arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn un_80300D78(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_80300D78");
     if arg0 == 1 {
         ext::lbAudioAx_80024030(1);
         un_804D6DE0 = un_804D6DF0;
@@ -1368,6 +1406,7 @@ pub unsafe extern "C" fn un_80300D78(arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn fn_80300DE0(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("fn_80300DE0");
     let ptr = ext::gmMainLib_8015D06C(un_804D6DC8 as u8);
     match arg0 {
         0 => {
@@ -1386,6 +1425,7 @@ pub unsafe extern "C" fn fn_80300DE0(arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn un_80300E74(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_80300E74");
     if arg0 == 1 {
         ext::lbAudioAx_80024030(1);
         un_804D6DD8 = 2;
@@ -1395,6 +1435,7 @@ pub unsafe extern "C" fn un_80300E74(arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn fn_80300ED0(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("fn_80300ED0");
     match arg0 {
         0 => {
             sfx_back();
@@ -1412,6 +1453,7 @@ pub unsafe extern "C" fn fn_80300ED0(arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn un_80300F3C(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_80300F3C");
     if arg0 == 1 {
         ext::lbAudioAx_80024030(1);
         un_804D6DD8 = 3;
@@ -1421,6 +1463,7 @@ pub unsafe extern "C" fn un_80300F3C(arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn un_80300F98(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_80300F98");
     if arg0 == 1 {
         let temp_r31 = ext::gmMainLib_GetKOTotal();
         sfx_forward();
@@ -1432,6 +1475,7 @@ pub unsafe extern "C" fn un_80300F98(arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn un_80301028(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_80301028");
     if arg0 == 1 {
         let ptr = ext::gmMainLib_8015CDD4();
         (*ptr).x5 = un_804D5908.wrapping_sub(1) as u8;
@@ -1443,6 +1487,7 @@ pub unsafe extern "C" fn un_80301028(arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn un_80301074(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_80301074");
     if arg0 == 1 {
         let ptr = ext::gmMainLib_8015CDC8();
         (*ptr).x5 = un_804D590C.wrapping_sub(1) as u8;
@@ -1454,6 +1499,7 @@ pub unsafe extern "C" fn un_80301074(arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn un_803010C0(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_803010C0");
     if arg0 == 1 {
         let ptr = ext::gmMainLib_8015CDE0();
         (*ptr).x5 = un_804D5910.wrapping_sub(1) as u8;
@@ -1465,6 +1511,7 @@ pub unsafe extern "C" fn un_803010C0(arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn fn_8030110C(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("fn_8030110C");
     match arg0 {
         0 => {
             sfx_back();
@@ -1500,6 +1547,7 @@ pub unsafe extern "C" fn fn_8030110C(arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn fn_803011EC(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("fn_803011EC");
     match arg0 {
         0 => {
             sfx_back();
@@ -1522,6 +1570,7 @@ pub unsafe extern "C" fn fn_803011EC(arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn un_80301280(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_80301280");
     if arg0 == 1 {
         ext::lbAudioAx_80024030(1);
         un_802FFD94(arg0 as i32, &raw mut un_803FCD34 as *mut c_void, Some(fn_803011EC));
@@ -1530,6 +1579,7 @@ pub unsafe extern "C" fn un_80301280(arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn un_803012D4(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_803012D4");
     if arg0 == 1 {
         ext::lbAudioAx_80024030(1);
         un_802FFD94(arg0 as i32, &raw mut un_803FCD34 as *mut c_void, Some(fn_8030110C));
@@ -1538,6 +1588,7 @@ pub unsafe extern "C" fn un_803012D4(arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn un_80301328(update_scene: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_80301328");
     if update_scene == 1 {
         sfx_forward();
         ext::gm_801BF708(0x0);
@@ -1548,6 +1599,7 @@ pub unsafe extern "C" fn un_80301328(update_scene: soundtest_callback_arg0) -> i
 }
 
 pub unsafe extern "C" fn un_8030136C(update_scene: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_8030136C");
     if update_scene == 1 {
         sfx_forward();
         ext::gm_801BF708(0x5);
@@ -1563,6 +1615,7 @@ open_menu! {
 }
 
 pub unsafe extern "C" fn un_80301634(_arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_80301634");
     ext::lbCardNew_AllocWorkArea();
     ext::lbCardGame_LoadArchive(0);
     let r31 = ext::HSD_MemAlloc(ext::lbSnap_8001E210());
@@ -1577,6 +1630,7 @@ pub unsafe extern "C" fn un_80301634(_arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn un_803016D8(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_803016D8");
     if arg0 != 1 {
         return 0;
     }
@@ -1585,6 +1639,7 @@ pub unsafe extern "C" fn un_803016D8(arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn un_80301734(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_80301734");
     if arg0 != 1 {
         return 0;
     }
@@ -1593,6 +1648,7 @@ pub unsafe extern "C" fn un_80301734(arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn un_8030178C(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_8030178C");
     if arg0 != 1 {
         return 0;
     }
@@ -1604,6 +1660,7 @@ pub unsafe extern "C" fn un_8030178C(arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn un_80301800(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_80301800");
     if arg0 != 1 {
         return 0;
     }
@@ -1612,6 +1669,7 @@ pub unsafe extern "C" fn un_80301800(arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn un_80301840(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_80301840");
     if arg0 != 1 {
         return 0;
     }
@@ -1624,11 +1682,13 @@ pub unsafe extern "C" fn un_80301840(arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe fn gw_dev_save_profile() {
+    melee_core::ct!("gw_dev_save_profile");
     ext::lbCardNew_AllocWorkArea();
     ext::lb_8001C87C();
 }
 
 pub unsafe extern "C" fn gw_dev_unlock_all_chars(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("gw_dev_unlock_all_chars");
     if arg0 != 1 {
         return 0;
     }
@@ -1638,6 +1698,7 @@ pub unsafe extern "C" fn gw_dev_unlock_all_chars(arg0: soundtest_callback_arg0) 
 }
 
 pub unsafe extern "C" fn gw_dev_unlock_all_stages(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("gw_dev_unlock_all_stages");
     if arg0 != 1 {
         return 0;
     }
@@ -1647,6 +1708,7 @@ pub unsafe extern "C" fn gw_dev_unlock_all_stages(arg0: soundtest_callback_arg0)
 }
 
 pub unsafe extern "C" fn un_803018BC(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_803018BC");
     if arg0 != 1 {
         return 0;
     }
@@ -1656,6 +1718,7 @@ pub unsafe extern "C" fn un_803018BC(arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn un_8030191C(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_8030191C");
     if arg0 != 1 {
         return 0;
     }
@@ -1664,6 +1727,7 @@ pub unsafe extern "C" fn un_8030191C(arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn un_80301964(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_80301964");
     if arg0 != 1 {
         return 0;
     }
@@ -1693,6 +1757,7 @@ pub unsafe extern "C" fn un_80301964(arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn un_80301A64(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_80301A64");
     if arg0 != 1 {
         return 0;
     }
@@ -1712,6 +1777,7 @@ pub unsafe extern "C" fn un_80301A64(arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn un_80301AD4(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_80301AD4");
     if arg0 != 1 {
         return 0;
     }
@@ -1731,6 +1797,7 @@ pub unsafe extern "C" fn un_80301AD4(arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn un_80301B48(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_80301B48");
     match arg0 {
         0 => {
             sfx_back();
@@ -1748,6 +1815,7 @@ pub unsafe extern "C" fn un_80301B48(arg0: soundtest_callback_arg0) -> i32 {
 
 /// `void un_80301BA8(struct UnkSoundTestData1* out)`
 pub unsafe extern "C" fn un_80301BA8(out: *mut UnkSoundTestData1) {
+    melee_core::ct!("un_80301BA8");
     let d = &raw mut un_803FA258;
     (*out).unk_0 = (*d).x104;
     (*out).unk_4 = (*d).x108;
@@ -1778,11 +1846,13 @@ pub unsafe extern "C" fn un_80301BA8(out: *mut UnkSoundTestData1) {
 
 /// `void un_80301C64(un_80301C64_t*)`
 pub unsafe extern "C" fn un_80301C64(arg0: *mut un_80301C64_t) {
+    melee_core::ct!("un_80301C64");
     (*arg0).x0 = un_803FA258.x138;
     (*arg0).x4 = 0;
 }
 
 pub unsafe extern "C" fn un_80301C80(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_80301C80");
     match arg0 {
         0 => {
             sfx_back();
@@ -1799,6 +1869,7 @@ pub unsafe extern "C" fn un_80301C80(arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn un_80301CE0(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_80301CE0");
     match arg0 {
         6 => {
             sfx_forward();
@@ -1814,6 +1885,7 @@ pub unsafe extern "C" fn un_80301CE0(arg0: soundtest_callback_arg0) -> i32 {
 }
 
 pub unsafe extern "C" fn un_80301D7C(arg0: soundtest_callback_arg0) -> i32 {
+    melee_core::ct!("un_80301D7C");
     if arg0 == 1 {
         sfx_forward();
         ext::gm_801BEB74(un_803FA258.x188.wrapping_sub(1) as u8);

@@ -119,6 +119,7 @@ static initial_pos: Vec = Vec { x: 0.0, y: 0.0, z: 0.0 };
 /// `Ground_InitScene` (gr/inlines.h, static inline).
 #[inline]
 pub unsafe fn Ground_InitScene() {
+    melee_core::ct!("Ground_InitScene");
     ext::Camera_Init(6);
     ext::lb_8000FCDC();
     ext::mpColl_80041C78();
@@ -147,6 +148,7 @@ unsafe fn vi_RunCamera(gobj: *mut HSD_GObj, erase_colors: *mut u8, prio: u64) {
 
 /// `void vi0102_8031CB00(int, int)`
 pub unsafe fn vi0102_8031CB00(mario_costume: i32, luigi_costume: i32) {
+    melee_core::ct!("vi0102_8031CB00");
     Stage_InitScene(St_Kind_Castle, core::ptr::null_mut());
     ext::Item_80266FA8();
     ext::Item_80266FCC();
@@ -184,11 +186,13 @@ pub unsafe fn vi0102_8031CB00(mario_costume: i32, luigi_costume: i32) {
 
 /// `void vi0102_JObjCallback(HSD_GObj*)`
 pub unsafe extern "C" fn vi0102_JObjCallback(gobj: *mut HSD_GObj) {
+    melee_core::ct!("vi0102_JObjCallback");
     ext::HSD_JObjAnimAll((*gobj).hsd_obj as *mut HSD_JObj);
 }
 
 /// `void vi0102_CameraCallback(HSD_GObj*, int)`
 pub unsafe extern "C" fn vi0102_CameraCallback(gobj: *mut HSD_GObj, unused: i32) {
+    melee_core::ct!("vi0102_CameraCallback");
     ext::lbShadow_8000F38C(0);
     vi_RunCamera(gobj, &raw mut erase_colors_vi0102 as *mut u8, 0x881);
 }
@@ -209,6 +213,7 @@ unsafe extern "C" fn vi0102_RunFrame(gobj: *mut HSD_GObj) {
 
 /// `void vi0102_Scene_OnEnter(void*)`
 pub unsafe fn vi0102_Scene_OnEnter(arg: *mut c_void) {
+    melee_core::ct!("vi0102_Scene_OnEnter");
     let desc = arg as *mut ViCharaDesc;
 
     ext::lbAudioAx_800236DC();
@@ -259,5 +264,6 @@ pub unsafe fn vi0102_Scene_OnEnter(arg: *mut c_void) {
 
 /// `void vi0102_Scene_OnFrame(void)`
 pub unsafe fn vi0102_Scene_OnFrame() {
+    melee_core::ct!("vi0102_Scene_OnFrame");
     vi_8031CAAC();
 }

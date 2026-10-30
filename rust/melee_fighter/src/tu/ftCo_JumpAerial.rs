@@ -85,15 +85,18 @@ impl ji::JObjDirty for Dirty {
 
 #[inline(always)]
 pub(crate) fn tap_jump_ok(f: &Fighter) -> bool {
+    melee_core::ct!("tap_jump_ok");
     ext::FighterControls_TapJumpOff(f.player_id as i32) == 0
 }
 #[inline(always)]
 pub(crate) fn caps_max_jumps(f: &Fighter) -> i32 {
+    melee_core::ct!("caps_max_jumps");
     ext::ScriptGame_CapsMaxJumps(f)
 }
 
 /// Yoshi's flip: count down, rotate the root joint by -180/arg1 degrees, turn round at half.
 pub fn ft_800CB6EC(f: &mut Fighter, arg1: i32) {
+    melee_core::ct!("ft_800CB6EC");
     unsafe {
         if f.mv.co.jumpaerial.x0 != 0 {
             f.mv.co.jumpaerial.x0 -= 1;
@@ -107,6 +110,7 @@ pub fn ft_800CB6EC(f: &mut Fighter, arg1: i32) {
 }
 
 pub fn ft_did_jump(f: &mut Fighter, arg1: bool) -> bool {
+    melee_core::ct!("ft_did_jump");
     if (f.x1968_jumpsUsed as i32) < caps_max_jumps(f)
         && ((tap_jump_ok(f)
             && f.input.lstick[0].y >= cd().tap_jump_threshold
@@ -120,6 +124,7 @@ pub fn ft_did_jump(f: &mut Fighter, arg1: bool) -> bool {
 }
 
 pub fn ftCo_800CB870(g: G) -> bool {
+    melee_core::ct!("ftCo_800CB870");
     if ext::ftCo_800C5240(g) {
         return false;
     }
@@ -130,6 +135,7 @@ pub fn ftCo_800CB870(g: G) -> bool {
 }
 
 pub fn ftCo_800CB8E0(g: G) -> bool {
+    melee_core::ct!("ftCo_800CB8E0");
     if ext::ftCo_800C5240(g) {
         return false;
     }
@@ -140,6 +146,7 @@ pub fn ftCo_800CB8E0(g: G) -> bool {
 }
 
 pub fn ftCo_JumpAerial_CheckInput(g: G, arg1: bool) -> bool {
+    melee_core::ct!("ftCo_JumpAerial_CheckInput");
     if ft_did_jump(fp(g), arg1) {
         if ext::ft_800D2D0C(g) {
             let f = fp(g);
@@ -165,6 +172,7 @@ pub fn ftCo_JumpAerial_CheckInput(g: G, arg1: bool) -> bool {
 /// static inline `ft_SetVec`.
 #[inline(always)]
 pub fn ft_SetVec(dst: &mut Vec3, src: &Vec3) {
+    melee_core::ct!("ft_SetVec");
     dst.x = src.x;
     dst.y = src.y;
     dst.z = src.z;
@@ -173,6 +181,7 @@ pub fn ft_SetVec(dst: &mut Vec3, src: &Vec3) {
 /// static inline `ft_JumpAerial_Sound`.
 #[inline(always)]
 pub fn ft_JumpAerial_Sound(f: &mut Fighter, kind: FighterKind) {
+    melee_core::ct!("ft_JumpAerial_Sound");
     if kind != Ft_Kind_Mewtwo && (kind >= 0x10 || kind != Ft_Kind_Ness) && !f.x197C.is_null() {
         ext::ft_PlaySFX(f, 0x11B, 127, 64);
     }
@@ -181,6 +190,7 @@ pub fn ft_JumpAerial_Sound(f: &mut Fighter, kind: FighterKind) {
 /// static inline `ft_JumpAerial_MarkAir` (TARGET_PC): keeps a script's extra jumps used.
 #[inline(always)]
 pub fn ft_JumpAerial_MarkAir(f: &mut Fighter) {
+    melee_core::ct!("ft_JumpAerial_MarkAir");
     let used = f.x1968_jumpsUsed;
     ext::ftCommon_8007D5D4(f);
     if used > 1 {
@@ -189,6 +199,7 @@ pub fn ft_JumpAerial_MarkAir(f: &mut Fighter) {
 }
 
 pub fn ftCo_800CBAC4(g: G, msid: i32, vel: &Vec3, arg3: bool) {
+    melee_core::ct!("ftCo_800CBAC4");
     ext::Mex_OnDoubleJumpDispatch(fp(g).kind as i32, g, core::ptr::null_mut());
     ext::Fighter_ChangeMotionState(g, msid, Ft_MF_SkipNametagVis, 0.0, 1.0, 0.0, core::ptr::null_mut());
     let f = fp(g);
@@ -213,6 +224,7 @@ fn fwd_msid(f: &Fighter) -> i32 {
 }
 
 pub fn ftCo_JumpAerial_Enter_Basic(g: G) {
+    melee_core::ct!("ftCo_JumpAerial_Enter_Basic");
     ft_JumpAerial_MarkAir(fp(g));
     let f = fp(g);
     f.cmd_vars[0] = 1;
@@ -225,6 +237,7 @@ pub fn ftCo_JumpAerial_Enter_Basic(g: G) {
 }
 
 pub fn ftNs_JumpAerial_Enter(g: G) {
+    melee_core::ct!("ftNs_JumpAerial_Enter");
     let v = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ft_JumpAerial_MarkAir(fp(g));
     let f = fp(g);
@@ -239,6 +252,7 @@ pub fn ftNs_JumpAerial_Enter(g: G) {
 }
 
 pub fn ftYs_JumpAerial_Enter(g: G) {
+    melee_core::ct!("ftYs_JumpAerial_Enter");
     let ys = fp(g).dat_attrs as *const ftYoshiAttributes;
     ft_JumpAerial_MarkAir(fp(g));
     let f = fp(g);
@@ -271,30 +285,36 @@ fn pe_mt_enter(g: G) {
 }
 
 pub fn ftPe_JumpAerial_Enter(g: G) {
+    melee_core::ct!("ftPe_JumpAerial_Enter");
     pe_mt_enter(g);
 }
 
 pub fn ftMt_JumpAerial_Enter(g: G) {
+    melee_core::ct!("ftMt_JumpAerial_Enter");
     pe_mt_enter(g);
 }
 
 pub fn ftCo_JumpAerial_Anim(g: G) {
+    melee_core::ct!("ftCo_JumpAerial_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ftCo_FallAerial_Enter(g);
     }
 }
 
 pub fn ftYs_JumpAerial_Anim_Cb(g: G) {
+    melee_core::ct!("ftYs_JumpAerial_Anim_Cb");
     let ys = fp(g).dat_attrs as *const ftYoshiAttributes;
     ftCo_JumpAerial_Anim(g);
     let a = unsafe { (*ys).x0 };
     ft_800CB6EC(fp(g), a);
 }
 pub unsafe extern "C" fn ftYs_JumpAerial_Anim_Cb_c(g: G) {
+    melee_core::ct!("ftYs_JumpAerial_Anim_Cb_c");
     ftYs_JumpAerial_Anim_Cb(g)
 }
 
 pub fn ftCo_JumpAerial_IASA(g: G) {
+    melee_core::ct!("ftCo_JumpAerial_IASA");
     if ext::ftCo_SpecialAir_CheckInput(g) { return; }
     if ext::ftCo_80095328(g, core::ptr::null_mut()) { return; }
     if ext::ftCo_800D7100(g) { return; }
@@ -310,10 +330,12 @@ pub fn ftCo_JumpAerial_IASA(g: G) {
 }
 
 pub fn ftCo_JumpAerial_Phys(g: G) {
+    melee_core::ct!("ftCo_JumpAerial_Phys");
     ext::ft_80084DB0(g);
 }
 
 pub fn ftNs_JumpAerial_Phys_Cb(g: G) {
+    melee_core::ct!("ftNs_JumpAerial_Phys_Cb");
     let f = fp(g);
     let v = unsafe { f.mv.co.jumpaerial.init_h_vel };
     ext::ftCommon_CalcSelfAccel_DriftFrom(f, v);
@@ -329,19 +351,23 @@ pub fn ftNs_JumpAerial_Phys_Cb(g: G) {
     f.self_vel.y = ext::ScriptGame_ModValue(f.player_id as i32, 6, f.self_vel.y);
 }
 pub unsafe extern "C" fn ftNs_JumpAerial_Phys_Cb_c(g: G) {
+    melee_core::ct!("ftNs_JumpAerial_Phys_Cb_c");
     ftNs_JumpAerial_Phys_Cb(g)
 }
 
 pub fn ftCo_JumpAerial_Phys_Cb(g: G) {
+    melee_core::ct!("ftCo_JumpAerial_Phys_Cb");
     ext::ftCommon_CalcSelfAccel_Drift(fp(g));
     ext::ft_800851D0(g);
     let f = fp(g);
     f.self_vel.y = ext::ScriptGame_ModValue(f.player_id as i32, 6, f.self_vel.y);
 }
 pub unsafe extern "C" fn ftCo_JumpAerial_Phys_Cb_c(g: G) {
+    melee_core::ct!("ftCo_JumpAerial_Phys_Cb_c");
     ftCo_JumpAerial_Phys_Cb(g)
 }
 
 pub fn ftCo_JumpAerial_Coll(g: G) {
+    melee_core::ct!("ftCo_JumpAerial_Coll");
     ext::ft_800835B0(g, ext::ftCo_80096CC8, ext::ft_80082B1C);
 }

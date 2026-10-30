@@ -72,6 +72,7 @@ unsafe fn spawn_effect(gobj: *mut HSD_GObj, fp: *mut Fighter) {
 }
 
 pub fn ftDk_SpecialHi_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialHi_Enter");
     unsafe {
         let fp = fpp(gobj);
         let a = da(fp);
@@ -88,6 +89,7 @@ pub fn ftDk_SpecialHi_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftDk_SpecialAirHi_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialAirHi_Enter");
     unsafe {
         let fp = fpp(gobj);
         let a = da(fp);
@@ -103,6 +105,7 @@ pub fn ftDk_SpecialAirHi_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftDk_SpecialAirHi_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialAirHi_Anim");
     unsafe {
         let fp = fpp(gobj);
         let a = da(fp);
@@ -117,11 +120,12 @@ pub fn ftDk_SpecialAirHi_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftDk_SpecialHi_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftDk_SpecialHi_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftDk_SpecialHi_IASA");}
 
-pub fn ftDk_SpecialAirHi_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftDk_SpecialAirHi_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftDk_SpecialAirHi_IASA");}
 
 pub fn ftDk_SpecialHi_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialHi_Phys");
     unsafe {
         let fp = fpp(gobj);
         let a = da(fp);
@@ -137,10 +141,12 @@ pub fn ftDk_SpecialHi_Phys(gobj: *mut HSD_GObj) {
 
 /// Air Phys: the already-ported Fighter-level body, entered from the GObj.
 pub fn ftDk_SpecialAirHi_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialAirHi_Phys");
     unsafe { ftDk_SpecialAirHi_Phys_fp(&mut *fpp(gobj)) }
 }
 
 pub fn ftDk_SpecialHi_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialHi_Coll");
     unsafe {
         let fp = fpp(gobj);
         let a = da(fp);
@@ -154,6 +160,7 @@ pub fn ftDk_SpecialHi_Coll(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftDk_SpecialAirHi_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialAirHi_Coll");
     unsafe {
         let fp = fpp(gobj);
         let a = da(fp);

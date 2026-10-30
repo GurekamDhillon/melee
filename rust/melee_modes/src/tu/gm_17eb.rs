@@ -48,54 +48,67 @@ unsafe fn entry(difficulty: u8, stage_slot: u8) -> &'static AllstarStageEntry {
 }
 
 pub unsafe fn gm_GetAllStarData() -> *mut UnkAllstarData {
+    melee_core::ct!("gm_GetAllStarData");
     core::ptr::addr_of_mut!(lbl_80472CB0)
 }
 
 pub unsafe fn gm_8017EB3C(difficulty: u8, stage_slot: u8) -> u8 {
+    melee_core::ct!("gm_8017EB3C");
     entry(difficulty, stage_slot).stage_kind
 }
 
 pub unsafe fn gm_8017EB64(difficulty: u8, stage_slot: u8, arg2: u8) -> u8 {
+    melee_core::ct!("gm_8017EB64");
     entry(difficulty, stage_slot).pad_6[arg2 as usize * 3]
 }
 
 pub unsafe fn gm_8017EB98(difficulty: u8, stage_slot: u8, arg2: u8) -> u8 {
+    melee_core::ct!("gm_8017EB98");
     entry(difficulty, stage_slot).pad_6[arg2 as usize * 3 + 1]
 }
 
 pub unsafe fn gm_8017EBCC(difficulty: u8, stage_slot: u8, arg2: u8) -> u8 {
+    melee_core::ct!("gm_8017EBCC");
     entry(difficulty, stage_slot).pad_6[arg2 as usize * 3 + 2]
 }
 
 pub unsafe fn gm_8017EC00(difficulty: u8, stage_slot: u8) -> f32 {
+    melee_core::ct!("gm_8017EC00");
     entry(difficulty, stage_slot).scale2_pct as f32 / 100.0
 }
 
 pub unsafe fn gm_8017EC50(difficulty: u8, stage_slot: u8) -> f32 {
+    melee_core::ct!("gm_8017EC50");
     entry(difficulty, stage_slot).scale3_pct as f32 / 100.0
 }
 
 pub unsafe fn gm_8017ECA0(difficulty: u8, stage_slot: u8, arg2: u8) -> u8 {
+    melee_core::ct!("gm_8017ECA0");
     entry(difficulty, stage_slot).pad_14[arg2 as usize * 3]
 }
 
 pub unsafe fn gm_8017ECD4(difficulty: u8, stage_slot: u8, arg2: u8) -> u8 {
+    melee_core::ct!("gm_8017ECD4");
     entry(difficulty, stage_slot).pad_14[arg2 as usize * 3 + 1]
 }
 
 pub unsafe fn gm_8017ED08(difficulty: u8, stage_slot: u8, arg2: u8) -> u8 {
+    melee_core::ct!("gm_8017ED08");
     entry(difficulty, stage_slot).pad_14[arg2 as usize * 3 + 2]
 }
 
 pub unsafe fn gm_8017ED3C(difficulty: u8, stage_slot: u8) -> f32 {
+    melee_core::ct!("gm_8017ED3C");
     entry(difficulty, stage_slot).scale0_pct as f32 / 100.0
 }
 
 pub unsafe fn gm_8017ED8C(difficulty: u8, stage_slot: u8) -> f32 {
+    melee_core::ct!("gm_8017ED8C");
     entry(difficulty, stage_slot).scale1_pct as f32 / 100.0
 }
 
 pub unsafe fn fn_8017EDDC() -> i32 {
+    melee_core::ct!("fn_8017EDDC");
     if ext::gm_GetCurrentGameMode() as i32 == GM_CLASSIC as i32 {
         let p = &*gm_GetAllStarData();
         if p.x0.xC.xD == 0 && p.x0.x0.cpu_level >= 2 && p.x0.xC.x20 < 0x5208 {
@@ -113,6 +126,7 @@ unsafe fn set_flag(arg0: *mut MatchEnd, byte: usize, bit: u32) {
 
 /// The C takes the `MatchEnd*` as an `int` (a GameCube pointer); native code takes the pointer.
 pub unsafe fn fn_8017EE40(arg0: *mut MatchEnd) {
+    melee_core::ct!("fn_8017EE40");
     let rules = ext::gm_GetStartMeleeRules();
     let allstar = gm_GetAllStarData();
 

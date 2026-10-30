@@ -144,28 +144,35 @@ fn pi_2_facing(fp: *mut Fighter) -> f32 {
 
 /// The Fighter callback entries of this TU (the statics stored in the SetCall inline).
 pub unsafe extern "C" fn cb_fn_8012EC7C(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_8012EC7C");
     fn_8012EC7C(g);
 }
 pub unsafe extern "C" fn cb_fn_8012EDE8(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_8012EDE8");
     fn_8012EDE8(g);
 }
 pub unsafe extern "C" fn cb_fn_8012EFC0(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_8012EFC0");
     fn_8012EFC0(g);
 }
 pub unsafe extern "C" fn cb_fn_8012EFF4(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_8012EFF4");
     fn_8012EFF4(g);
 }
 pub unsafe extern "C" fn cb_fn_8013295C(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_8013295C");
     fn_8013295C(g);
 }
 
 /// `fn_8012EFF4` over the gobj (the round-1 port, `fn_8012EFF4_fp`, takes the fighter).
 pub fn fn_8012EFF4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8012EFF4");
     unsafe { fn_8012EFF4_fp(&mut *fpp(gobj)) }
 }
 
 /// `ftYoshi_SpecialS_SetCall(gobj)` (static inline).
 pub unsafe fn ftYoshi_SpecialS_SetCall(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYoshi_SpecialS_SetCall");
     let fp = fpp(gobj);
     (*fp).death2_cb = Some(cb_fn_8012EC7C);
     (*fp).take_dmg_cb = Some(cb_fn_8012EDE8);
@@ -175,6 +182,7 @@ pub unsafe fn ftYoshi_SpecialS_SetCall(gobj: *mut HSD_GObj) {
 
 /// `ftYs_SpecialS_SpawnWallBounceEffect(gobj, cd, facing_right)` (static inline).
 pub unsafe fn ftYs_SpecialS_SpawnWallBounceEffect(gobj: *mut HSD_GObj, cd: *mut CollData, facing_right: bool) {
+    melee_core::ct!("ftYs_SpecialS_SpawnWallBounceEffect");
     let fp = fpp(gobj);
     let mut angle: f32;
     let mut pos: Vec3 = (*fp).cur_pos;
@@ -198,6 +206,7 @@ fn ext_atan2f(y: f32, x: f32) -> f32 {
 }
 
 pub fn ftYs_SpecialS_8012EB48(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialS_8012EB48");
     unsafe {
         let fp = fpp(gobj);
         match (*fp).cmd_vars[0] {
@@ -233,6 +242,7 @@ pub fn ftYs_SpecialS_8012EB48(gobj: *mut HSD_GObj) {
 
 /// `fn_8012EC7C_inline(gobj)` (static inline); `fn_8012EC7C` is the same body.
 pub unsafe fn fn_8012EC7C_inline(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8012EC7C_inline");
     let fp = fpp(gobj);
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let motion = (*fp).motion_id as i32;
@@ -252,6 +262,7 @@ pub unsafe fn fn_8012EC7C_inline(gobj: *mut HSD_GObj) {
 
 /// `ftYs_SpecialS_UpdateScale(gobj, scale)` (static inline).
 pub unsafe fn ftYs_SpecialS_UpdateScale(gobj: *mut HSD_GObj, scale: *mut Vec3) {
+    melee_core::ct!("ftYs_SpecialS_UpdateScale");
     let fp = fpp(gobj);
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let x8 = (*fp).mv.ys.specials.x8;
@@ -268,12 +279,14 @@ pub unsafe fn ftYs_SpecialS_UpdateScale(gobj: *mut HSD_GObj, scale: *mut Vec3) {
 
 /// `ftYs_SpecialS_UpdateScale2(gobj)` (static inline): the same with a local scale.
 pub unsafe fn ftYs_SpecialS_UpdateScale2(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialS_UpdateScale2");
     let mut scale = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ftYs_SpecialS_UpdateScale(gobj, &mut scale);
 }
 
 /// `ftYs_SpecialS_WrapAndSetRotX(gobj)` (static inline).
 pub unsafe fn ftYs_SpecialS_WrapAndSetRotX(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialS_WrapAndSetRotX");
     let fp = fpp(gobj);
     while (*fp).mv.ys.specials.x14 < 0.0 {
         (*fp).mv.ys.specials.x14 = ((*fp).mv.ys.specials.x14 as f64 + 2.0 * M_PI) as f32;
@@ -286,6 +299,7 @@ pub unsafe fn ftYs_SpecialS_WrapAndSetRotX(gobj: *mut HSD_GObj) {
 
 /// `ftYs_SpecialS_CheckButtonPressure(gobj)` (static inline).
 pub unsafe fn ftYs_SpecialS_CheckButtonPressure(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("ftYs_SpecialS_CheckButtonPressure");
     let fp = fpp(gobj);
     let attrs = &*((*fp).dat_attrs as *const ftYoshiAttributes);
     let mut result = 0;
@@ -299,24 +313,30 @@ pub unsafe fn ftYs_SpecialS_CheckButtonPressure(gobj: *mut HSD_GObj) -> i32 {
 /// `perm_vel_inline(fp)` / `perm_neg_inline` / `perm_mul_inline` / `perm_vel_x_inline` (static inlines the
 /// decompilation's permuter left in the file) and `stack_pad_hack` (stack-layout padding: no state).
 pub unsafe fn perm_vel_inline(fp: *mut Fighter) -> f32 {
+    melee_core::ct!("perm_vel_inline");
     (*fp).gr_vel
 }
 pub fn perm_neg_inline(x: f32) -> f32 {
+    melee_core::ct!("perm_neg_inline");
     -x
 }
 pub fn perm_mul_inline(a: f32, b: f32) -> f32 {
+    melee_core::ct!("perm_mul_inline");
     a * b
 }
 pub unsafe fn perm_vel_x_inline(fp: *mut Fighter) -> f32 {
+    melee_core::ct!("perm_vel_x_inline");
     (*fp).self_vel.x
 }
-pub fn stack_pad_hack() {}
+pub fn stack_pad_hack() { melee_core::ct!("stack_pad_hack");}
 
 pub fn fn_8012EC7C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8012EC7C");
     unsafe { fn_8012EC7C_inline(gobj) }
 }
 
 pub fn fn_8012EDE8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8012EDE8");
     unsafe {
         let fp = fpp(gobj);
         let motion = (*fp).motion_id as i32;
@@ -331,11 +351,13 @@ pub fn fn_8012EDE8(gobj: *mut HSD_GObj) {
 }
 
 pub fn fn_8012EFC0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8012EFC0");
     ext::ft_80089824(gobj);
     ext::ft_800892A0(gobj);
 }
 
 pub fn ftYs_SpecialS_8012F0DC(gobj: *mut HSD_GObj, arg1: i32, arg2: i32, arg3: f32) {
+    melee_core::ct!("ftYs_SpecialS_8012F0DC");
     unsafe {
         let fp = fpp(gobj);
         let attributes = &*((*fp).dat_attrs as *const ftYoshiAttributes);
@@ -361,6 +383,7 @@ pub fn ftYs_SpecialS_8012F0DC(gobj: *mut HSD_GObj, arg1: i32, arg2: i32, arg3: f
 }
 
 pub fn ftYs_SpecialS_8012F35C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialS_8012F35C");
     unsafe {
         let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
         let fp = fpp(gobj);
@@ -396,6 +419,7 @@ pub fn ftYs_SpecialS_8012F35C(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftYs_SpecialS_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialS_Enter");
     unsafe {
         let fp = fpp(gobj);
         let attributes = &*((*fp).dat_attrs as *const ftYoshiAttributes);
@@ -415,6 +439,7 @@ pub fn ftYs_SpecialS_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftYs_SpecialAirS_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirS_Enter");
     unsafe {
         let fp = fpp(gobj);
         let attributes = &*((*fp).dat_attrs as *const ftYoshiAttributes);
@@ -433,6 +458,7 @@ pub fn ftYs_SpecialAirS_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftYs_SpecialAirSStart_0_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirSStart_0_Anim");
     unsafe {
         let fp = fpp(gobj);
         let attributes = &*((*fp).dat_attrs as *const ftYoshiAttributes);
@@ -456,6 +482,7 @@ pub fn ftYs_SpecialAirSStart_0_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftYs_SpecialAirSLoop_0_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirSLoop_0_Anim");
     unsafe {
         let fp = fpp(gobj);
         let attributes = &*((*fp).dat_attrs as *const ftYoshiAttributes);
@@ -503,6 +530,7 @@ pub fn ftYs_SpecialAirSLoop_0_Anim(gobj: *mut HSD_GObj) {
 
 /// `ftYs_SpecialS_UpdateLoop1Rotation(fp, attrs)` (static inline).
 pub unsafe fn ftYs_SpecialS_UpdateLoop1Rotation(fp: *mut Fighter, attrs: &ftYoshiAttributes) {
+    melee_core::ct!("ftYs_SpecialS_UpdateLoop1Rotation");
     let abs_x10 = abs_c((*fp).mv.ys.specials.x10);
     let abs_vel = abs_c((*fp).gr_vel);
     let abs_xe4 = abs_c(attrs.xE4);
@@ -526,6 +554,7 @@ pub unsafe fn ftYs_SpecialS_UpdateLoop1Rotation(fp: *mut Fighter, attrs: &ftYosh
 
 /// `ftYs_SpecialS_UpdateLoop1Rotation2(fp, angle, total)` (static inline).
 pub unsafe fn ftYs_SpecialS_UpdateLoop1Rotation2(fp: *mut Fighter, angle: *mut f32, total: f32) {
+    melee_core::ct!("ftYs_SpecialS_UpdateLoop1Rotation2");
     if (*fp).mv.ys.specials.x10 > 0.0 {
         let delta: f32;
         if (*fp).gr_vel > 0.0 {
@@ -553,6 +582,7 @@ pub unsafe fn ftYs_SpecialS_UpdateLoop1Rotation2(fp: *mut Fighter, angle: *mut f
 }
 
 pub fn ftYs_SpecialAirSLoop_1_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirSLoop_1_Anim");
     unsafe {
         let mut angle: f32 = 0.0;
         let fp = fpp(gobj);
@@ -588,6 +618,7 @@ pub fn ftYs_SpecialAirSLoop_1_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftYs_SpecialAirSEnd_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirSEnd_Anim");
     unsafe {
         let mut sp2c = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
         let fp = fpp(gobj);
@@ -608,6 +639,7 @@ pub fn ftYs_SpecialAirSEnd_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftYs_SpecialAirSStart_1_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirSStart_1_Anim");
     unsafe {
         let fp = fpp(gobj);
         (*fp).mv.ys.specials.x24 = 0.0;
@@ -623,6 +655,7 @@ pub fn ftYs_SpecialAirSStart_1_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftYs_SpecialAirSLoop_2_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirSLoop_2_Anim");
     unsafe {
         let fp = fpp(gobj);
         let attributes = &*((*fp).dat_attrs as *const ftYoshiAttributes);
@@ -643,6 +676,7 @@ pub fn ftYs_SpecialAirSLoop_2_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftYs_SpecialAirSLoop_3_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirSLoop_3_Anim");
     unsafe {
         let fp = fpp(gobj);
         let attributes = &*((*fp).dat_attrs as *const ftYoshiAttributes);
@@ -702,6 +736,7 @@ pub fn ftYs_SpecialAirSLoop_3_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftYs_SpecialAirSLanding_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirSLanding_Anim");
     unsafe {
         let mut sp30 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
         let fp = fpp(gobj);
@@ -727,9 +762,10 @@ pub fn ftYs_SpecialAirSLanding_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftYs_SpecialAirSStart_0_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftYs_SpecialAirSStart_0_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftYs_SpecialAirSStart_0_IASA");}
 
 pub fn ftYs_SpecialAirSLoop_0_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirSLoop_0_IASA");
     unsafe {
         let fp = fpp(gobj);
         let attributes = &*((*fp).dat_attrs as *const ftYoshiAttributes);
@@ -776,6 +812,7 @@ pub fn ftYs_SpecialAirSLoop_0_IASA(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftYs_SpecialAirSLoop_1_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirSLoop_1_IASA");
     unsafe {
         let fp = fpp(gobj);
         let attributes = &*((*fp).dat_attrs as *const ftYoshiAttributes);
@@ -788,9 +825,10 @@ pub fn ftYs_SpecialAirSLoop_1_IASA(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftYs_SpecialAirSEnd_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftYs_SpecialAirSEnd_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftYs_SpecialAirSEnd_IASA");}
 
 pub fn ftYs_SpecialAirSLoop_2_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirSLoop_2_IASA");
     unsafe {
         let fp = fpp(gobj);
         let attributes = &*((*fp).dat_attrs as *const ftYoshiAttributes);
@@ -804,6 +842,7 @@ pub fn ftYs_SpecialAirSLoop_2_IASA(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftYs_SpecialAirSLoop_3_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirSLoop_3_IASA");
     unsafe {
         let fp = fpp(gobj);
         let attributes = &*((*fp).dat_attrs as *const ftYoshiAttributes);
@@ -817,6 +856,7 @@ pub fn ftYs_SpecialAirSLoop_3_IASA(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftYs_SpecialAirSEnd_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirSEnd_Phys");
     unsafe {
         let fp = fpp(gobj);
         ext::ftCommon_CalcGroundAccel_Deaccel(fp, (*fp).co_attrs.ground_friction);
@@ -825,6 +865,7 @@ pub fn ftYs_SpecialAirSEnd_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftYs_SpecialAirSStart_1_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirSStart_1_Phys");
     unsafe {
         let fp = fpp(gobj);
         let attributes = &*((*fp).dat_attrs as *const ftYoshiAttributes);
@@ -852,14 +893,17 @@ unsafe fn air_s_loop_phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftYs_SpecialAirSLoop_2_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirSLoop_2_Phys");
     unsafe { air_s_loop_phys(gobj) }
 }
 
 pub fn ftYs_SpecialAirSLoop_3_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirSLoop_3_Phys");
     unsafe { air_s_loop_phys(gobj) }
 }
 
 pub fn ftYs_SpecialAirSLanding_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirSLanding_Phys");
     unsafe {
         let fp = fpp(gobj);
         let attributes = &*((*fp).dat_attrs as *const ftYoshiAttributes);
@@ -869,6 +913,7 @@ pub fn ftYs_SpecialAirSLanding_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftYs_SpecialAirSLoop_0_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirSLoop_0_Phys");
     unsafe {
         let fp = fpp(gobj);
         let attributes = &*((*fp).dat_attrs as *const ftYoshiAttributes);
@@ -936,6 +981,7 @@ pub fn ftYs_SpecialAirSLoop_0_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftYs_SpecialAirSLoop_1_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirSLoop_1_Phys");
     unsafe {
         let fp = fpp(gobj);
         (*fp).gr_vel = fmadds((*fp).mv.ys.specials.x20, ext::mpLib_800569EC((*fp).coll_data.floor.flags as u32), (*fp).gr_vel);
@@ -965,6 +1011,7 @@ pub fn ftYs_SpecialAirSLoop_1_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftYs_SpecialAirSStart_0_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirSStart_0_Coll");
     unsafe {
         let fp = fpp(gobj);
         if ext::ft_80082708(gobj) == 0 {
@@ -975,6 +1022,7 @@ pub fn ftYs_SpecialAirSStart_0_Coll(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftYs_SpecialAirSLoop_0_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirSLoop_0_Coll");
     unsafe {
         let fp = fpp(gobj);
         let attributes = &*((*fp).dat_attrs as *const ftYoshiAttributes);
@@ -1007,6 +1055,7 @@ pub fn ftYs_SpecialAirSLoop_0_Coll(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftYs_SpecialAirSLoop_1_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirSLoop_1_Coll");
     unsafe {
         let fp = fpp(gobj);
         let attributes = &*((*fp).dat_attrs as *const ftYoshiAttributes);
@@ -1049,6 +1098,7 @@ pub fn ftYs_SpecialAirSLoop_1_Coll(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftYs_SpecialAirSEnd_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirSEnd_Coll");
     unsafe {
         let fp = fpp(gobj);
         if ext::ft_80082708(gobj) == GA_Ground as i32 {
@@ -1059,6 +1109,7 @@ pub fn ftYs_SpecialAirSEnd_Coll(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftYs_SpecialAirSStart_1_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirSStart_1_Coll");
     unsafe {
         let fp = fpp(gobj);
         (*fp).mv.ys.specials.x30 = 0;
@@ -1070,6 +1121,7 @@ pub fn ftYs_SpecialAirSStart_1_Coll(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftYs_SpecialAirSLoop_2_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirSLoop_2_Coll");
     unsafe {
         let fp = fpp(gobj);
         let attributes = &*((*fp).dat_attrs as *const ftYoshiAttributes);
@@ -1133,6 +1185,7 @@ pub fn ftYs_SpecialAirSLoop_2_Coll(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftYs_SpecialAirSLoop_3_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirSLoop_3_Coll");
     unsafe {
         let fp = fpp(gobj);
         let attributes = &*((*fp).dat_attrs as *const ftYoshiAttributes);
@@ -1194,6 +1247,7 @@ pub fn ftYs_SpecialAirSLoop_3_Coll(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftYs_SpecialAirSLanding_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirSLanding_Coll");
     unsafe {
         let fp = fpp(gobj);
         (*fp).mv.ys.specials.x30 = 0;
@@ -1205,6 +1259,7 @@ pub fn ftYs_SpecialAirSLanding_Coll(gobj: *mut HSD_GObj) {
 }
 
 pub fn fn_8013295C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8013295C");
     unsafe {
         let fp = fpp(gobj);
         ext::ftPartSetRotY(fp, 0, pi_2_facing(fp));

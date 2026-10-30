@@ -182,11 +182,13 @@ fn class_of(info: *mut HSD_CObjInfo) -> *mut HSD_ClassInfo {
 
 /// `HSD_CObjGetNear`.
 pub unsafe fn HSD_CObjGetNear(cobj: *mut HSD_CObj) -> f32 {
+    melee_core::ct!("HSD_CObjGetNear");
     if cobj.is_null() { 0.0 } else { (*cobj).near }
 }
 
 /// `HSD_CObjSetNear`.
 pub unsafe fn HSD_CObjSetNear(cobj: *mut HSD_CObj, v: f32) {
+    melee_core::ct!("HSD_CObjSetNear");
     if !cobj.is_null() {
         (*cobj).near = v;
     }
@@ -194,11 +196,13 @@ pub unsafe fn HSD_CObjSetNear(cobj: *mut HSD_CObj, v: f32) {
 
 /// `HSD_CObjGetFar`.
 pub unsafe fn HSD_CObjGetFar(cobj: *mut HSD_CObj) -> f32 {
+    melee_core::ct!("HSD_CObjGetFar");
     if cobj.is_null() { 0.0 } else { (*cobj).far }
 }
 
 /// `HSD_CObjSetFar`.
 pub unsafe fn HSD_CObjSetFar(cobj: *mut HSD_CObj, v: f32) {
+    melee_core::ct!("HSD_CObjSetFar");
     if !cobj.is_null() {
         (*cobj).far = v;
     }
@@ -206,6 +210,7 @@ pub unsafe fn HSD_CObjSetFar(cobj: *mut HSD_CObj, v: f32) {
 
 /// `HSD_CObjUpdateView` (TARGET_PC): an auto-view perspective camera's aspect follows the window.
 pub unsafe fn HSD_CObjUpdateView(cobj: *mut HSD_CObj) {
+    melee_core::ct!("HSD_CObjUpdateView");
     if !cobj.is_null() && (*cobj).view_auto != 0 && (*cobj).projection_type == PROJ_PERSPECTIVE_ {
         let scale = f32::from_bits(ext::View_ProjectionScaleBits() as u32);
         (*cobj).projection_param.perspective.aspect = (*cobj).view_authored_aspect * scale;
@@ -214,6 +219,7 @@ pub unsafe fn HSD_CObjUpdateView(cobj: *mut HSD_CObj) {
 
 /// `HSD_CObjGetProjectionType`.
 pub unsafe fn HSD_CObjGetProjectionType(cobj: *mut HSD_CObj) -> i32 {
+    melee_core::ct!("HSD_CObjGetProjectionType");
     HSD_CObjUpdateView(cobj);
     if cobj.is_null() {
         return 1;
@@ -223,6 +229,7 @@ pub unsafe fn HSD_CObjGetProjectionType(cobj: *mut HSD_CObj) -> i32 {
 
 /// `HSD_CObjSetViewport`.
 pub unsafe fn HSD_CObjSetViewport(cobj: *mut HSD_CObj, viewport: *const _HSD_RectS16) {
+    melee_core::ct!("HSD_CObjSetViewport");
     if cobj.is_null() {
         return;
     }
@@ -234,6 +241,7 @@ pub unsafe fn HSD_CObjSetViewport(cobj: *mut HSD_CObj, viewport: *const _HSD_Rec
 
 /// `HSD_CObjSetScissor`.
 pub unsafe fn HSD_CObjSetScissor(cobj: *mut HSD_CObj, scissor: *const _Scissor) {
+    melee_core::ct!("HSD_CObjSetScissor");
     if cobj.is_null() {
         return;
     }
@@ -242,6 +250,7 @@ pub unsafe fn HSD_CObjSetScissor(cobj: *mut HSD_CObj, scissor: *const _Scissor) 
 
 /// `HSD_CObjSetPerspective`.
 pub unsafe fn HSD_CObjSetPerspective(cobj: *mut HSD_CObj, fov: f32, aspect: f32) {
+    melee_core::ct!("HSD_CObjSetPerspective");
     if cobj.is_null() {
         return;
     }
@@ -256,6 +265,7 @@ pub unsafe fn HSD_CObjSetPerspective(cobj: *mut HSD_CObj, fov: f32, aspect: f32)
 
 /// `HSD_CObjSetFrustum`.
 pub unsafe fn HSD_CObjSetFrustum(cobj: *mut HSD_CObj, top: f32, bottom: f32, left: f32, right: f32) {
+    melee_core::ct!("HSD_CObjSetFrustum");
     if cobj.is_null() {
         return;
     }
@@ -268,6 +278,7 @@ pub unsafe fn HSD_CObjSetFrustum(cobj: *mut HSD_CObj, top: f32, bottom: f32, lef
 
 /// `HSD_CObjSetOrtho`.
 pub unsafe fn HSD_CObjSetOrtho(cobj: *mut HSD_CObj, top: f32, bottom: f32, left: f32, right: f32) {
+    melee_core::ct!("HSD_CObjSetOrtho");
     if cobj.is_null() {
         return;
     }
@@ -280,6 +291,7 @@ pub unsafe fn HSD_CObjSetOrtho(cobj: *mut HSD_CObj, top: f32, bottom: f32, left:
 
 /// `HSD_CObjSetFlags`.
 pub unsafe fn HSD_CObjSetFlags(cobj: *mut HSD_CObj, flags: u32) {
+    melee_core::ct!("HSD_CObjSetFlags");
     if !cobj.is_null() {
         (*cobj).flags |= flags;
     }
@@ -287,6 +299,7 @@ pub unsafe fn HSD_CObjSetFlags(cobj: *mut HSD_CObj, flags: u32) {
 
 /// `HSD_CObjClearFlags`.
 pub unsafe fn HSD_CObjClearFlags(cobj: *mut HSD_CObj, flags: u32) {
+    melee_core::ct!("HSD_CObjClearFlags");
     if !cobj.is_null() {
         (*cobj).flags &= !flags;
     }
@@ -294,11 +307,13 @@ pub unsafe fn HSD_CObjClearFlags(cobj: *mut HSD_CObj, flags: u32) {
 
 /// `HSD_CObjSetMtxDirty`.
 pub unsafe fn HSD_CObjSetMtxDirty(cobj: *mut HSD_CObj) {
+    melee_core::ct!("HSD_CObjSetMtxDirty");
     (*cobj).flags |= (1 << 30) | (1 << 31);
 }
 
 /// `HSD_CObjMtxIsDirty`.
 pub unsafe fn HSD_CObjMtxIsDirty(cobj: *mut HSD_CObj) -> bool {
+    melee_core::ct!("HSD_CObjMtxIsDirty");
     ((*cobj).flags & (1 << 30)) != 0
         || (!(*cobj).eyepos.is_null() && ((*(*cobj).eyepos).flags & 2) != 0)
         || (!(*cobj).interest.is_null() && ((*(*cobj).interest).flags & 2) != 0)
@@ -306,12 +321,14 @@ pub unsafe fn HSD_CObjMtxIsDirty(cobj: *mut HSD_CObj) -> bool {
 
 /// `HSD_CObjGetEyePositionWObj`.
 pub unsafe fn HSD_CObjGetEyePositionWObj(cobj: *mut HSD_CObj) -> *mut HSD_WObj {
+    melee_core::ct!("HSD_CObjGetEyePositionWObj");
     hsd_assert!(685, !cobj.is_null(), "cobj");
     (*cobj).eyepos
 }
 
 /// `HSD_CObjGetInterestWObj`.
 pub unsafe fn HSD_CObjGetInterestWObj(cobj: *mut HSD_CObj) -> *mut HSD_WObj {
+    melee_core::ct!("HSD_CObjGetInterestWObj");
     hsd_assert!(661, !cobj.is_null(), "cobj");
     (*cobj).interest
 }
@@ -320,6 +337,7 @@ pub unsafe fn HSD_CObjGetInterestWObj(cobj: *mut HSD_CObj) -> *mut HSD_WObj {
 
 /// `HSD_CObjEraseScreen`.
 pub unsafe fn HSD_CObjEraseScreen(cobj: *mut HSD_CObj, enable_color: i32, enable_alpha: i32, enable_depth: i32) {
+    melee_core::ct!("HSD_CObjEraseScreen");
     if cobj.is_null() || (enable_color == 0 && enable_alpha == 0 && enable_depth == 0) {
         return;
     }
@@ -355,6 +373,7 @@ pub unsafe fn HSD_CObjEraseScreen(cobj: *mut HSD_CObj, enable_color: i32, enable
 
 /// `HSD_CObjRemoveAnimByFlags`.
 pub unsafe fn HSD_CObjRemoveAnimByFlags(cobj: *mut HSD_CObj, _flags: u32) {
+    melee_core::ct!("HSD_CObjRemoveAnimByFlags");
     if cobj.is_null() {
         return;
     }
@@ -366,6 +385,7 @@ pub unsafe fn HSD_CObjRemoveAnimByFlags(cobj: *mut HSD_CObj, _flags: u32) {
 
 /// `HSD_CObjRemoveAnim`.
 pub unsafe fn HSD_CObjRemoveAnim(cobj: *mut HSD_CObj) {
+    melee_core::ct!("HSD_CObjRemoveAnim");
     if cobj.is_null() {
         return;
     }
@@ -374,6 +394,7 @@ pub unsafe fn HSD_CObjRemoveAnim(cobj: *mut HSD_CObj) {
 
 /// `HSD_CObjAddAnim`.
 pub unsafe fn HSD_CObjAddAnim(cobj: *mut HSD_CObj, canim: *mut HSD_CameraAnim) {
+    melee_core::ct!("HSD_CObjAddAnim");
     if cobj.is_null() || canim.is_null() {
         return;
     }
@@ -387,6 +408,7 @@ pub unsafe fn HSD_CObjAddAnim(cobj: *mut HSD_CObj, canim: *mut HSD_CameraAnim) {
 
 /// `CObjUpdateFunc` (static): the AObj track writer (type 5-7 all write `x`, as in the C).
 pub unsafe extern "C" fn CObjUpdateFunc(obj: *mut c_void, type_: i32, val: *mut HSD_ObjData) {
+    melee_core::ct!("CObjUpdateFunc");
     let cobj = obj as *mut HSD_CObj;
     if cobj.is_null() {
         return;
@@ -423,6 +445,7 @@ pub unsafe extern "C" fn CObjUpdateFunc(obj: *mut c_void, type_: i32, val: *mut 
 
 /// `HSD_CObjAnim`.
 pub unsafe fn HSD_CObjAnim(cobj: *mut HSD_CObj) {
+    melee_core::ct!("HSD_CObjAnim");
     if cobj.is_null() {
         return;
     }
@@ -433,6 +456,7 @@ pub unsafe fn HSD_CObjAnim(cobj: *mut HSD_CObj) {
 
 /// `HSD_CObjReqAnim`.
 pub unsafe fn HSD_CObjReqAnim(cobj: *mut HSD_CObj, startframe: f32) {
+    melee_core::ct!("HSD_CObjReqAnim");
     if cobj.is_null() {
         return;
     }
@@ -444,6 +468,7 @@ pub unsafe fn HSD_CObjReqAnim(cobj: *mut HSD_CObj, startframe: f32) {
 /// `makeProjectionMtx` on the raw record: the GX projection type and `mtx` (untouched, type 0, for
 /// an unknown projection type).
 pub unsafe fn makeProjectionMtx(cobj: *mut HSD_CObj, m: &mut Mtx44) -> u32 {
+    melee_core::ct!("makeProjectionMtx");
     HSD_CObjUpdateView(cobj);
     let c = &*cobj;
     let mp = (m as *mut Mtx44).cast::<c_void>();
@@ -688,6 +713,7 @@ unsafe fn set_up(c: *mut HSD_CObj, v: Vec3) {
 }
 /// `HSD_CObjSetFov`: perspective cameras only.
 pub unsafe fn HSD_CObjSetFov(cobj: *mut HSD_CObj, fov: f32) {
+    melee_core::ct!("HSD_CObjSetFov");
     if cobj.is_null() || (*cobj).projection_type != 1 {
         return;
     }
@@ -696,6 +722,7 @@ pub unsafe fn HSD_CObjSetFov(cobj: *mut HSD_CObj, fov: f32) {
 
 /// `HSD_CObjSetupViewingMtx`.
 pub unsafe fn HSD_CObjSetupViewingMtx(cobj: *mut HSD_CObj) {
+    melee_core::ct!("HSD_CObjSetupViewingMtx");
     if (*cobj).flags & 2 == 0 && HSD_CObjMtxIsDirty(cobj) {
         let mut eyepos: melee_types::Vec = core::mem::zeroed();
         let mut up_vec: melee_types::Vec = core::mem::zeroed();
@@ -714,6 +741,7 @@ pub unsafe fn HSD_CObjSetupViewingMtx(cobj: *mut HSD_CObj) {
 
 /// `HSD_CObjSetCurrent`.
 pub unsafe fn HSD_CObjSetCurrent(cobj: *mut HSD_CObj) -> bool {
+    melee_core::ct!("HSD_CObjSetCurrent");
     HSD_CObjUpdateView(cobj);
     if cobj.is_null() {
         return false;
@@ -741,17 +769,20 @@ pub unsafe fn HSD_CObjSetCurrent(cobj: *mut HSD_CObj) -> bool {
 
 /// `HSD_CObjEndCurrent`.
 pub fn HSD_CObjEndCurrent() {
+    melee_core::ct!("HSD_CObjEndCurrent");
     ext::_HSD_ZListSort();
     ext::_HSD_ZListDisp();
 }
 
 /// `HSD_CObjGetCurrent`.
 pub unsafe fn HSD_CObjGetCurrent() -> *mut HSD_CObj {
+    melee_core::ct!("HSD_CObjGetCurrent");
     current
 }
 
 /// `HSD_CObjSetDefaultClass`.
 pub unsafe fn HSD_CObjSetDefaultClass(info: *mut HSD_ClassInfo) {
+    melee_core::ct!("HSD_CObjSetDefaultClass");
     if !info.is_null() {
         // The line number is made up in the C too (the function is not in the original binary).
         hsd_assert!(1946, ext::hsdIsDescendantOf(info as *mut c_void, class_of(addr_of_mut!(hsdCObj)) as *mut c_void) != 0, "hsdIsDescendantOf(info, &hsdCObj)");
@@ -761,6 +792,7 @@ pub unsafe fn HSD_CObjSetDefaultClass(info: *mut HSD_ClassInfo) {
 
 /// `HSD_CObjAlloc`.
 pub unsafe fn HSD_CObjAlloc() -> *mut HSD_CObj {
+    melee_core::ct!("HSD_CObjAlloc");
     let info = if !default_class.is_null() { default_class } else { class_of(addr_of_mut!(hsdCObj)) };
     let cobj = ext::hsdNew(info) as *mut HSD_CObj;
     hsd_assert!(1954, !cobj.is_null(), "cobj");
@@ -777,6 +809,7 @@ unsafe fn CObjResetFlags(cobj: *mut HSD_CObj, flags: u32) {
 
 /// `CObjLoad` (static): the class's `load` method.
 pub unsafe extern "C" fn CObjLoad(cobj: *mut HSD_CObj, desc: *mut HSD_CObjDesc) -> i32 {
+    melee_core::ct!("CObjLoad");
     let up = Vec3 { x: 0.0, y: 1.0, z: 0.0 };
     let d = &(*desc).common;
     (*cobj).flags = d.flags as u32;
@@ -821,6 +854,7 @@ pub unsafe extern "C" fn CObjLoad(cobj: *mut HSD_CObj, desc: *mut HSD_CObjDesc) 
 
 /// `HSD_CObjInit`.
 pub unsafe fn HSD_CObjInit(cobj: *mut HSD_CObj, desc: *mut HSD_CObjDesc) {
+    melee_core::ct!("HSD_CObjInit");
     if cobj.is_null() || desc.is_null() {
         return;
     }
@@ -829,6 +863,7 @@ pub unsafe fn HSD_CObjInit(cobj: *mut HSD_CObj, desc: *mut HSD_CObjDesc) {
 
 /// `HSD_CObjLoadDesc`.
 pub unsafe fn HSD_CObjLoadDesc(desc: *mut HSD_CObjDesc) -> *mut HSD_CObj {
+    melee_core::ct!("HSD_CObjLoadDesc");
     if desc.is_null() {
         return null_mut();
     }
@@ -850,6 +885,7 @@ pub unsafe fn HSD_CObjLoadDesc(desc: *mut HSD_CObjDesc) -> *mut HSD_CObj {
 
 /// `CObjInit` (static): the class's `init` method.
 pub unsafe extern "C" fn CObjInit(o: *mut HSD_Class) -> i32 {
+    melee_core::ct!("CObjInit");
     let parent = hsdCObj.parent.parent.head.parent;
     let status = ((*parent).init.unwrap())(o);
     if status < 0 {
@@ -868,6 +904,7 @@ pub unsafe extern "C" fn CObjInit(o: *mut HSD_Class) -> i32 {
 
 /// `CObjRelease`: the class's `release` method.
 pub unsafe extern "C" fn CObjRelease(o: *mut HSD_Class) {
+    melee_core::ct!("CObjRelease");
     let cobj = o as *mut HSD_CObj;
     ext::HSD_AObjRemove((*cobj).aobj);
     crate::tu::wobj::HSD_WObjUnref(HSD_CObjGetEyePositionWObj(cobj));
@@ -881,6 +918,7 @@ pub unsafe extern "C" fn CObjRelease(o: *mut HSD_Class) {
 
 /// `CObjAmnesia` (static): the class's `amnesia` method.
 pub unsafe extern "C" fn CObjAmnesia(info: *mut HSD_ClassInfo) {
+    melee_core::ct!("CObjAmnesia");
     if info == default_class {
         default_class = null_mut();
     }
@@ -893,6 +931,7 @@ pub unsafe extern "C" fn CObjAmnesia(info: *mut HSD_ClassInfo) {
 
 /// `CObjInfoInit` (static).
 pub unsafe extern "C" fn CObjInfoInit() {
+    melee_core::ct!("CObjInfoInit");
     ext::hsdInitClassInfo(
         class_of(addr_of_mut!(hsdCObj)),
         hsd_obj_ptr(),

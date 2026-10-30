@@ -108,6 +108,7 @@ pub static mut gm_Mode_Camera_States: [GameModeState; 5] = unsafe {
 
 /// 1B23F0
 pub fn gm_801B23F0() {
+    melee_core::ct!("gm_801B23F0");
     let size = ext::GXGetTexBufferSize(640, 480, 4, 0, 0);
     ext::lbDvd_80017740(0, 2006, 4, 4, (size.wrapping_add(31)) & !31u32, 0, 1, 32, 0);
     ext::lbDvd_80017740(0, 2007, 4, 4, ext::lbSnap_8001E204() as u32, 0, 1, 32, 0);
@@ -116,6 +117,7 @@ pub fn gm_801B23F0() {
 
 /// 1B24B4
 pub unsafe extern "C" fn gm_801B24B4(_arg0: *mut GameModeState) {
+    melee_core::ct!("gm_801B24B4");
     let temp_r31 = &raw mut (*ext::lbDvd_GetPreloadCacheScene()).game_cache;
     ext::lbDvd_SetupVsPreloadCache();
     (*temp_r31).mode_kind = GM_CAMERA_MODE as u8;
@@ -127,6 +129,7 @@ pub unsafe extern "C" fn gm_801B24B4(_arg0: *mut GameModeState) {
 
 /// 1B2510
 pub unsafe extern "C" fn gm_801B2510(state: *mut GameModeState) {
+    melee_core::ct!("gm_801B2510");
     let data = ext::gm_GetGameModeStateExitData(state) as *mut i32;
     let temp_r0 = *data;
     if temp_r0 == 1 || temp_r0 == 2 {
@@ -136,6 +139,7 @@ pub unsafe extern "C" fn gm_801B2510(state: *mut GameModeState) {
 
 /// 1B254C
 pub unsafe extern "C" fn gm_801B254C(state: *mut GameModeState) {
+    melee_core::ct!("gm_801B254C");
     let temp_r31 = row();
     let temp_r30 = ext::gm_GetGameModeStateEnterData(state) as *mut CSSData;
     let temp_r3 = ext::gmVsMelee_GetKOCounts();
@@ -154,6 +158,7 @@ pub unsafe extern "C" fn gm_801B254C(state: *mut GameModeState) {
 
 /// 1B25D4
 pub unsafe extern "C" fn gm_801B25D4(state: *mut GameModeState) {
+    melee_core::ct!("gm_801B25D4");
     let temp_r31 = row();
     let temp_r3 = ext::gm_GetGameModeStateExitData(state) as *mut CSSData;
     if (*temp_r3).pending_scene_change == 2 {
@@ -175,6 +180,7 @@ pub unsafe extern "C" fn gm_801B25D4(state: *mut GameModeState) {
 
 /// 1B26AC
 pub unsafe extern "C" fn gm_801B26AC(state: *mut GameModeState) {
+    melee_core::ct!("gm_801B26AC");
     let vs = row();
     let sss = ext::gm_GetGameModeStateEnterData(state) as *mut SSSData;
     (*sss).vs = *vs;
@@ -184,6 +190,7 @@ pub unsafe extern "C" fn gm_801B26AC(state: *mut GameModeState) {
 
 /// 1B2704
 pub unsafe extern "C" fn gm_801B2704(arg0: *mut GameModeState) {
+    melee_core::ct!("gm_801B2704");
     let temp_r31 = row();
     let var_r3 = ext::gm_GetGameModeStateExitData(arg0) as *mut SSSData;
     if (*var_r3).start_game != 0 {
@@ -198,6 +205,7 @@ pub unsafe extern "C" fn gm_801B2704(arg0: *mut GameModeState) {
 
 /// 1B2790
 pub unsafe extern "C" fn gm_PrepCameraModeVSScene(state: *mut GameModeState) {
+    melee_core::ct!("gm_PrepCameraModeVSScene");
     let vs = row();
     let start = ext::gm_GetGameModeStateEnterData(state) as *mut StartMeleeData;
     ext::gm_80167BC8(vs);
@@ -240,6 +248,7 @@ pub unsafe extern "C" fn gm_PrepCameraModeVSScene(state: *mut GameModeState) {
 
 /// 1B2AF8
 pub unsafe extern "C" fn gm_801B2AF8(_arg0: *mut GameModeState) {
+    melee_core::ct!("gm_801B2AF8");
     let vs = row();
     let ko_counts = ext::gmVsMelee_GetKOCounts();
     ext::gm_80168638(&raw mut ext::gmVsMelee_VsExitInfo.match_end);
@@ -251,5 +260,6 @@ pub unsafe extern "C" fn gm_801B2AF8(_arg0: *mut GameModeState) {
 
 /// `gm_Mode_Camera_OnInit`
 pub fn gm_Mode_Camera_OnInit() {
+    melee_core::ct!("gm_Mode_Camera_OnInit");
     unsafe { ext::gm_InitVsMode(row()) }
 }

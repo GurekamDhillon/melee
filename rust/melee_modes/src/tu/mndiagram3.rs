@@ -153,9 +153,10 @@ rw pub MenMainConB3_Top: StaticModelDesc = unsafe {core::mem::zeroed()};
 rw pub MenMainCursorB3_Top: StaticModelDesc = unsafe {core::mem::zeroed()};
 rw pub mn_804D4B64: GXColor = unsafe {core::mem::zeroed()};
 }
-pub unsafe fn Menu_GetAllInputs()->u64 { mn_804A04F0.buttons=mn_80229624(4) as u64;mn_804A04F0.buttons }
+pub unsafe fn Menu_GetAllInputs()->u64 { melee_core::ct!("Menu_GetAllInputs"); mn_804A04F0.buttons=mn_80229624(4) as u64;mn_804A04F0.buttons }
 
 pub unsafe extern "C" fn mnDiagram3_PopulateRankings(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnDiagram3_PopulateRankings");
     let mut position: Vec3 = Vec3 { x: 0., y: 0., z: 0. };
     let mut max_time: u32 = 0;
     let mut sp58: [u8; 16] = [0; 16];
@@ -479,6 +480,7 @@ pub unsafe extern "C" fn mnDiagram3_PopulateRankings(mut gobj: *mut HSD_GObj) {
 pub use crate::mn_r4::mnDiagram3_GetRowSpacing;
 #[inline]
 pub unsafe extern "C" fn mnDiagram3_ClearRowLabels(mut data: *mut Diagram3) {
+    melee_core::ct!("mnDiagram3_ClearRowLabels");
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     let mut check_data: *mut Diagram3 = data;
     let mut text_data: *mut Diagram3 = data;
@@ -501,6 +503,7 @@ pub unsafe extern "C" fn mnDiagram3_RebuildRowLabels(
     mut pos: *mut Vec3,
     mut count: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("mnDiagram3_RebuildRowLabels");
     let mut spacing: f32 = 0.;
     let mut i: ::core::ffi::c_int = 0;
     let mut base_idx: ::core::ffi::c_int = 0;
@@ -536,6 +539,7 @@ pub unsafe extern "C" fn mnDiagram3_RebuildRowLabels(
 }
 #[inline]
 pub unsafe extern "C" fn mnDiagram3_RefreshRankings(mut diagram_gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnDiagram3_RefreshRankings");
     mnDiagram2_ClearDetailView(diagram_gobj);
     mnDiagram3_PopulateRankings(diagram_gobj);
 }
@@ -545,6 +549,7 @@ pub unsafe extern "C" fn mnDiagram3_PositionPopup(
     mut n: u8,
     mut cur: *mut Diagram3,
 ) {
+    melee_core::ct!("mnDiagram3_PositionPopup");
     let mut spacing: f32 = 0.;
     spacing = mnDiagram3_GetRowSpacing(&*cur);
     HSD_JObjSetTranslateX(
@@ -562,6 +567,7 @@ pub unsafe extern "C" fn mnDiagram3_PositionPopup(
     );
 }
 pub unsafe extern "C" fn mnDiagram3_HandleInput(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnDiagram3_HandleInput");
     let mut base: *mut ::core::ffi::c_char = &raw mut mnDiagram3_803EEC10
         as *mut ::core::ffi::c_char;
     let mut data: *mut Diagram3 = (*mnDiagram3_804D6C20).user_data as *mut Diagram3;
@@ -713,6 +719,7 @@ pub unsafe extern "C" fn mnDiagram3_HandleInput(mut gobj: *mut HSD_GObj) {
 
 
 pub unsafe extern "C" fn mnDiagram3_UpdateScrollArrows(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnDiagram3_UpdateScrollArrows");
     let mut data: *mut Diagram3 = ::core::ptr::null_mut::<Diagram3>();
     let mut jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut new_var: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
@@ -740,6 +747,7 @@ pub unsafe extern "C" fn mnDiagram3_UpdateScrollArrows(mut gobj: *mut HSD_GObj) 
     };
 }
 pub unsafe extern "C" fn mnDiagram3_OnAnimComplete(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnDiagram3_OnAnimComplete");
     let mut data: *mut Diagram3 = ::core::ptr::null_mut::<Diagram3>();
     let mut jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut table: *mut AnimLoopSettings = ::core::ptr::null_mut::<AnimLoopSettings>();
@@ -753,6 +761,7 @@ pub unsafe extern "C" fn mnDiagram3_OnAnimComplete(mut gobj: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn mnDiagram3_Think(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnDiagram3_Think");
     let mut data: *mut Diagram3 = ::core::ptr::null_mut::<Diagram3>();
     let mut src: *mut u8 = ::core::ptr::null_mut::<u8>();
     let mut mode: u8 = 0;
@@ -788,12 +797,14 @@ pub unsafe extern "C" fn mnDiagram3_Think(mut gobj: *mut HSD_GObj) {
     };
 }
 pub unsafe extern "C" fn mnDiagram3_FreeUserData(mut arg0: *mut ::core::ffi::c_void) {
+    melee_core::ct!("mnDiagram3_FreeUserData");
     HSD_Free(arg0);
 }
 pub unsafe extern "C" fn mnDiagram3_InitUserData(
     mut data: *mut Diagram3,
     mut arg1: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("mnDiagram3_InitUserData");
     let mut src: *mut u8 = ::core::ptr::null_mut::<u8>();
     let mut i: ::core::ffi::c_int = 0;
     let mut _pad: [::core::ffi::c_uchar; 8] = [0; 8];
@@ -832,9 +843,11 @@ pub unsafe extern "C" fn mnDiagram3_InitUserData(
 pub unsafe extern "C" fn mnDiagram3_LoadJoint(
     mut archive: *mut StaticModelDesc,
 ) -> *mut HSD_JObj {
+    melee_core::ct!("mnDiagram3_LoadJoint");
     return HSD_JObjLoadJoint((*archive).joint as *mut HSD_Joint);
 }
 pub unsafe extern "C" fn mnDiagram3_Create(mut arg0: ::core::ffi::c_int) {
+    melee_core::ct!("mnDiagram3_Create");
     let mut archive: *mut StaticModelDesc = &raw mut MenMainConB3_Top;
     let mut gobj: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     let mut jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
@@ -900,6 +913,7 @@ pub unsafe extern "C" fn mnDiagram3_SetupRows(
     mut popup_data: *mut Diagram3,
     mut count: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("mnDiagram3_SetupRows");
     let mut spacing: f32 = 0.;
     let mut row_spacing: f32 = 0.;
     let mut i: ::core::ffi::c_int = 0;
@@ -965,6 +979,7 @@ pub unsafe extern "C" fn mnDiagram3_CreatePopup(
     mut data: *mut Diagram3,
     mut archive: *mut StaticModelDesc,
 ) -> *mut HSD_JObj {
+    melee_core::ct!("mnDiagram3_CreatePopup");
     let mut popup: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     let mut popup_jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     popup = GObj_Create(6 as u16, 7 as u8, 0x80 as u8);
@@ -995,6 +1010,7 @@ pub unsafe extern "C" fn mnDiagram3_CreatePopup(
     return popup_jobj;
 }
 pub unsafe extern "C" fn mnDiagram3_Init(mut arg0: *mut ::core::ffi::c_void) {
+    melee_core::ct!("mnDiagram3_Init");
     let mut new_var: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<
         ::core::ffi::c_void,
     >();

@@ -93,6 +93,7 @@ pub struct DbCpu {
 
 /// One row, as `"\n%d %d %2d %d %2.2f %2.2f %2.2f"` prints it (floats promoted to double).
 pub fn format_cpu_row(p: &CpuHandicapRow) -> String {
+    melee_core::ct!("format_cpu_row");
     format!(
         "\n{} {} {:2} {} {:2.2} {:2.2} {:2.2}",
         p.player_state,
@@ -107,6 +108,7 @@ pub fn format_cpu_row(p: &CpuHandicapRow) -> String {
 
 /// The Setup sequence every db overlay uses after DevText_Create.
 pub(crate) fn show_overlay<H: DevTextHost + ?Sized>(h: &mut H, gobj: Option<u32>, t: DevTextId, bg: Rgba, fg: Rgba, sx: f32, sy: f32) {
+    melee_core::ct!("show_overlay");
     h.DevText_Show(gobj, t);
     h.DevText_HideCursor(t);
     h.DevText_SetBGColor(t, bg);

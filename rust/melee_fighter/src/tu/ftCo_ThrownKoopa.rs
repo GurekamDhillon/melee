@@ -36,6 +36,7 @@ pub mod ext {
 
 /// `ftCo_800DE508` as the `accessory1_cb` value.
 pub unsafe extern "C" fn ftCo_800DE508_cb(g: G) {
+    melee_core::ct!("ftCo_800DE508_cb");
     ext::ftCo_800DE508(g)
 }
 
@@ -51,30 +52,32 @@ fn thrown_enter(g: G, msid: i32, mf: u32, anim_start: f32) {
 }
 
 pub fn ftCo_800BCDE0(g: G, msid: i32) {
+    melee_core::ct!("ftCo_800BCDE0");
     thrown_enter(g, msid, Ft_MF_None, 0.0);
     ext::ftAnim_8006EBA4(g);
 }
 
 pub fn ftCo_800BCE64(g: G, msid: i32) {
+    melee_core::ct!("ftCo_800BCE64");
     let mf = Ft_MF_SkipMatAnim | Ft_MF_SkipColAnim | Ft_MF_UpdateCmd | Ft_MF_SkipItemVis | Ft_MF_Unk19
         | Ft_MF_SkipModelPartVis | Ft_MF_SkipModelFlags | Ft_MF_Unk27;
     let start = fp(g).cur_anim_frame;
     thrown_enter(g, msid, mf, start);
 }
 
-pub fn ftCo_ThrownKoopaF_Anim(_g: G) {}
-pub fn ftCo_ThrownKoopaF_IASA(_g: G) {}
-pub fn ftCo_ThrownKoopaF_Phys(_g: G) {}
-pub fn ftCo_ThrownKoopaF_Coll(_g: G) {}
-pub fn ftCo_ThrownKoopaB_Anim(_g: G) {}
-pub fn ftCo_ThrownKoopaB_IASA(_g: G) {}
-pub fn ftCo_ThrownKoopaB_Phys(_g: G) {}
-pub fn ftCo_ThrownKoopaB_Coll(_g: G) {}
-pub fn ftCo_ThrownKoopaAirF_Anim(_g: G) {}
-pub fn ftCo_ThrownKoopaAirF_IASA(_g: G) {}
-pub fn ftCo_ThrownKoopaAirF_Phys(_g: G) {}
-pub fn ftCo_ThrownKoopaAirF_Coll(_g: G) {}
-pub fn ftCo_ThrownKoopaAirB_Anim(_g: G) {}
-pub fn ftCo_ThrownKoopaAirB_IASA(_g: G) {}
-pub fn ftCo_ThrownKoopaAirB_Phys(_g: G) {}
-pub fn ftCo_ThrownKoopaAirB_Coll(_g: G) {}
+pub fn ftCo_ThrownKoopaF_Anim(_g: G) { melee_core::ct!("ftCo_ThrownKoopaF_Anim");}
+pub fn ftCo_ThrownKoopaF_IASA(_g: G) { melee_core::ct!("ftCo_ThrownKoopaF_IASA");}
+pub fn ftCo_ThrownKoopaF_Phys(_g: G) { melee_core::ct!("ftCo_ThrownKoopaF_Phys");}
+pub fn ftCo_ThrownKoopaF_Coll(_g: G) { melee_core::ct!("ftCo_ThrownKoopaF_Coll");}
+pub fn ftCo_ThrownKoopaB_Anim(_g: G) { melee_core::ct!("ftCo_ThrownKoopaB_Anim");}
+pub fn ftCo_ThrownKoopaB_IASA(_g: G) { melee_core::ct!("ftCo_ThrownKoopaB_IASA");}
+pub fn ftCo_ThrownKoopaB_Phys(_g: G) { melee_core::ct!("ftCo_ThrownKoopaB_Phys");}
+pub fn ftCo_ThrownKoopaB_Coll(_g: G) { melee_core::ct!("ftCo_ThrownKoopaB_Coll");}
+pub fn ftCo_ThrownKoopaAirF_Anim(_g: G) { melee_core::ct!("ftCo_ThrownKoopaAirF_Anim");}
+pub fn ftCo_ThrownKoopaAirF_IASA(_g: G) { melee_core::ct!("ftCo_ThrownKoopaAirF_IASA");}
+pub fn ftCo_ThrownKoopaAirF_Phys(_g: G) { melee_core::ct!("ftCo_ThrownKoopaAirF_Phys");}
+pub fn ftCo_ThrownKoopaAirF_Coll(_g: G) { melee_core::ct!("ftCo_ThrownKoopaAirF_Coll");}
+pub fn ftCo_ThrownKoopaAirB_Anim(_g: G) { melee_core::ct!("ftCo_ThrownKoopaAirB_Anim");}
+pub fn ftCo_ThrownKoopaAirB_IASA(_g: G) { melee_core::ct!("ftCo_ThrownKoopaAirB_IASA");}
+pub fn ftCo_ThrownKoopaAirB_Phys(_g: G) { melee_core::ct!("ftCo_ThrownKoopaAirB_Phys");}
+pub fn ftCo_ThrownKoopaAirB_Coll(_g: G) { melee_core::ct!("ftCo_ThrownKoopaAirB_Coll");}

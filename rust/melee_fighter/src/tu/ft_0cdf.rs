@@ -8,6 +8,7 @@ use crate::types::*;
 
 /// `it_8026B594` through `gobj->user_data` (group 5's melee_items::itlib port, verified there).
 pub fn it_8026b594(i: *mut HSD_GObj) -> bool {
+    melee_core::ct!("it_8026b594");
     unsafe { melee_items::itlib::it_8026b594(&*((*i).user_data as *const Item)) }
 }
 
@@ -45,16 +46,19 @@ fn shoot_enter(g: G, full: i32, empty: i32, air: bool) {
 
 /// `ftCo_800CDF5C`: grounded LGunShoot enter.
 pub fn ftco_800cdf5c(g: G) {
+    melee_core::ct!("ftco_800cdf5c");
     shoot_enter(g, ftCo_MS_LGunShoot as i32, ftCo_MS_LGunShootEmpty as i32, false)
 }
 
 /// `ftCo_800CE010`: aerial LGunShootAir enter.
 pub fn ftco_800ce010(g: G) {
+    melee_core::ct!("ftco_800ce010");
     shoot_enter(g, ftCo_MS_LGunShootAir as i32, ftCo_MS_LGunShootAirEmpty as i32, true)
 }
 
 /// `ftCo_800CE0CC`: landed (air -> ground) keeping the frame.
 pub extern "C" fn ftco_800ce0cc(g: G) {
+    melee_core::ct!("ftco_800ce0cc");
     let f = fp(g);
     crate::ftcommon3::ftcommon_8007d7fc(f);
     let id = if f.motion_id as i32 == ftCo_MS_LGunShootAir as i32 { ftCo_MS_LGunShoot } else { ftCo_MS_LGunShootEmpty };
@@ -65,6 +69,7 @@ pub extern "C" fn ftco_800ce0cc(g: G) {
 
 /// `ftCo_800CE14C`: left the ground keeping the frame.
 pub extern "C" fn ftco_800ce14c(g: G) {
+    melee_core::ct!("ftco_800ce14c");
     let f = fp(g);
     crate::ftcommon2::ftcommon_8007d5d4(f);
     let id = if f.motion_id as i32 == ftCo_MS_LGunShoot as i32 { ftCo_MS_LGunShootAir } else { ftCo_MS_LGunShootAirEmpty };
@@ -76,6 +81,7 @@ pub extern "C" fn ftco_800ce14c(g: G) {
 
 /// `ftCo_800CE1D4`: accessory4 callback, fires the shot when throw flag b0 is set.
 pub extern "C" fn ftco_800ce1d4(g: G) {
+    melee_core::ct!("ftco_800ce1d4");
     let f = fp(g);
     if f.item_gobj.is_null() {
         return;
@@ -105,11 +111,11 @@ pub extern "C" fn ftco_800ce1d4(g: G) {
     }
 }
 
-pub fn ftco_lgunshoot_anim(g: G) { super::ft_0cdd::ftco_800cde18(g) }
-pub fn ftco_lgunshootair_anim(g: G) { super::ft_0cdd::ftco_800cde18(g) }
-pub fn ftco_lgunshoot_iasa(_g: G) {}
-pub fn ftco_lgunshootair_iasa(_g: G) {}
-pub fn ftco_lgunshoot_phys(g: G) { super::ft_0cdd::ftco_800cde54(g) }
-pub fn ftco_lgunshootair_phys(g: G) { super::ft_0cdd::ftco_800cde74(g) }
-pub fn ftco_lgunshoot_coll(g: G) { ext::ft_800841B8(g, ftco_800ce14c) }
-pub fn ftco_lgunshootair_coll(g: G) { ext::ft_80082C74(g, ftco_800ce0cc) }
+pub fn ftco_lgunshoot_anim(g: G) { melee_core::ct!("ftco_lgunshoot_anim"); super::ft_0cdd::ftco_800cde18(g) }
+pub fn ftco_lgunshootair_anim(g: G) { melee_core::ct!("ftco_lgunshootair_anim"); super::ft_0cdd::ftco_800cde18(g) }
+pub fn ftco_lgunshoot_iasa(_g: G) { melee_core::ct!("ftco_lgunshoot_iasa");}
+pub fn ftco_lgunshootair_iasa(_g: G) { melee_core::ct!("ftco_lgunshootair_iasa");}
+pub fn ftco_lgunshoot_phys(g: G) { melee_core::ct!("ftco_lgunshoot_phys"); super::ft_0cdd::ftco_800cde54(g) }
+pub fn ftco_lgunshootair_phys(g: G) { melee_core::ct!("ftco_lgunshootair_phys"); super::ft_0cdd::ftco_800cde74(g) }
+pub fn ftco_lgunshoot_coll(g: G) { melee_core::ct!("ftco_lgunshoot_coll"); ext::ft_800841B8(g, ftco_800ce14c) }
+pub fn ftco_lgunshootair_coll(g: G) { melee_core::ct!("ftco_lgunshootair_coll"); ext::ft_80082C74(g, ftco_800ce0cc) }

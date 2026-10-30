@@ -279,6 +279,7 @@ impl Hsd393C {
 /// `xfb_out[0..2]` receive their addresses, `xfb_cur` the last-drawn one (and is zeroed if its
 /// value is moved into `xfb_out[0]`). Returns how many `xfb_out` slots were filled.
 pub fn hsd_803941E8<H: Hsd393CHost + ?Sized>(h: &mut H, xfb_out: &mut [i32; 2], mut xfb_cur: Option<&mut u32>) -> i32 {
+    melee_core::ct!("hsd_803941E8");
     h.HSD_VIWaitXFBFlushNoYield();
     let last_draw = h.HSD_VIGetXFBLastDrawDone();
 

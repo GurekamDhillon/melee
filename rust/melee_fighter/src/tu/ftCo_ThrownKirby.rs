@@ -92,13 +92,16 @@ fn jobj_set_scale(j: *mut HSD_JObj, s: &Vec3) {
 }
 
 pub unsafe extern "C" fn ftCo_800BE7C0_cb(g: G) {
+    melee_core::ct!("ftCo_800BE7C0_cb");
     ftCo_800BE7C0(g)
 }
 pub unsafe extern "C" fn ftCo_800BE6AC_cb(g: G) {
+    melee_core::ct!("ftCo_800BE6AC_cb");
     ftCo_800BE6AC(g)
 }
 
 pub fn ftCo_800BD9E0(g: G, victim_gobj: G) -> i32 {
+    melee_core::ct!("ftCo_800BD9E0");
     let mut victim_kind = fp(victim_gobj).kind as i32;
     {
         let copy = ext::Geno_DefineKirbyCopy(victim_kind);
@@ -121,6 +124,7 @@ pub fn ftCo_800BD9E0(g: G, victim_gobj: G) -> i32 {
 }
 
 pub fn ftCo_800BDA50(g: G) {
+    melee_core::ct!("ftCo_800BDA50");
     let f = fp(g);
     if unsafe { f.u.kb.hat.kind } as i32 != Ft_Kind_Kirby as i32 {
         unsafe { tk(f).anon_18.anon_0.set_x18_b1(1) };
@@ -128,6 +132,7 @@ pub fn ftCo_800BDA50(g: G) {
 }
 
 pub fn ftCo_800BDA74(g: G, normal: &mut Vec3) {
+    melee_core::ct!("ftCo_800BDA74");
     let f = fp(g);
     let bx = &mut tk(f).coll_box as *mut ftCollisionBox;
     if ext::ft_800824A0(g, bx) {
@@ -192,6 +197,7 @@ fn inline_b2(g: G, thrower: G, scale: &mut Vec3, msid: i32, vel_func: fn(G, *mut
 }
 
 pub fn ftCo_800BDB58(g: G, thrower: G) {
+    melee_core::ct!("ftCo_800BDB58");
     let mut scale = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     inline_b2(g, thrower, &mut scale, ftCo_MS_ThrownKirbyStar as i32, ext::ftKb_SpecialN_800F58AC, ext::ftKb_SpecialN_800F5A88, false);
     let f = fp(g);
@@ -201,8 +207,8 @@ pub fn ftCo_800BDB58(g: G, thrower: G) {
     ext::ftKb_SpecialN_800F5820(thrower, bx, scale.x);
 }
 
-pub fn ftCo_ThrownKirbyStar_Anim(_g: G) {}
-pub fn ftCo_ThrownKirbyStar_IASA(_g: G) {}
+pub fn ftCo_ThrownKirbyStar_Anim(_g: G) { melee_core::ct!("ftCo_ThrownKirbyStar_Anim");}
+pub fn ftCo_ThrownKirbyStar_IASA(_g: G) { melee_core::ct!("ftCo_ThrownKirbyStar_IASA");}
 
 /// static inline `inlineA0`: star speed decay. `SQ(x) + SQ(y)` is one fmuladd -> fmadds.
 fn inline_a0(g: G) {
@@ -250,14 +256,17 @@ fn star_coll(g: G) {
 }
 
 pub fn ftCo_ThrownKirbyStar_Phys(g: G) {
+    melee_core::ct!("ftCo_ThrownKirbyStar_Phys");
     star_phys(g);
 }
 
 pub fn ftCo_ThrownKirbyStar_Coll(g: G) {
+    melee_core::ct!("ftCo_ThrownKirbyStar_Coll");
     star_coll(g);
 }
 
 pub fn ftCo_800BE000(g: G, thrower: G) {
+    melee_core::ct!("ftCo_800BE000");
     let mut scale = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     inline_b2(g, thrower, &mut scale, ftCo_MS_ThrownCopyStar as i32, ext::ftKb_SpecialN_800F58D8, ext::ftKb_SpecialN_800F5AB0, true);
     ext::ftColl_8007AFF8(g);
@@ -265,18 +274,21 @@ pub fn ftCo_800BE000(g: G, thrower: G) {
     ext::ftKb_SpecialN_800F5820(thrower, bx, scale.x);
 }
 
-pub fn ftCo_ThrownCopyStar_Anim(_g: G) {}
-pub fn ftCo_ThrownCopyStar_IASA(_g: G) {}
+pub fn ftCo_ThrownCopyStar_Anim(_g: G) { melee_core::ct!("ftCo_ThrownCopyStar_Anim");}
+pub fn ftCo_ThrownCopyStar_IASA(_g: G) { melee_core::ct!("ftCo_ThrownCopyStar_IASA");}
 
 pub fn ftCo_ThrownCopyStar_Phys(g: G) {
+    melee_core::ct!("ftCo_ThrownCopyStar_Phys");
     star_phys(g);
 }
 
 pub fn ftCo_ThrownCopyStar_Coll(g: G) {
+    melee_core::ct!("ftCo_ThrownCopyStar_Coll");
     star_coll(g);
 }
 
 pub fn ftCo_800BE494(g: G) {
+    melee_core::ct!("ftCo_800BE494");
     ext::Fighter_ChangeMotionState(g, ftCo_MS_ThrownKirby as i32, Ft_MF_Unk06, 0.0, 1.0, 0.0, core::ptr::null_mut());
     let f = fp(g);
     f.take_dmg_2_cb = Some(ftCo_800BE7C0_cb);
@@ -314,10 +326,11 @@ pub fn ftCo_800BE494(g: G) {
     fp(g).accessory4_cb = Some(ftCo_800BE6AC_cb);
 }
 
-pub fn ftCo_ThrownKirby_Anim(_g: G) {}
-pub fn ftCo_ThrownKirby_IASA(_g: G) {}
+pub fn ftCo_ThrownKirby_Anim(_g: G) { melee_core::ct!("ftCo_ThrownKirby_Anim");}
+pub fn ftCo_ThrownKirby_IASA(_g: G) { melee_core::ct!("ftCo_ThrownKirby_IASA");}
 
 pub fn ftCo_ThrownKirby_Phys(g: G) {
+    melee_core::ct!("ftCo_ThrownKirby_Phys");
     let d = ext::ftKb_SpecialN_800F5AC0();
     let f = fp(g);
     f.grab_timer -= d;
@@ -332,7 +345,7 @@ pub fn ftCo_ThrownKirby_Phys(g: G) {
     }
 }
 
-pub fn ftCo_ThrownKirby_Coll(_g: G) {}
+pub fn ftCo_ThrownKirby_Coll(_g: G) { melee_core::ct!("ftCo_ThrownKirby_Coll");}
 
 /// SSE mulss operand rule (first NaN operand wins); matches the C oracle's operand order for NaN sign.
 #[inline(never)]
@@ -341,6 +354,7 @@ fn mulss(a: f32, b: f32) -> f32 {
 }
 
 pub fn ftCo_800BE6AC(g: G) {
+    melee_core::ct!("ftCo_800BE6AC");
     let j = jobj(g);
     let gt = fp(g).grab_timer;
     let t = tk(fp(g));
@@ -353,5 +367,6 @@ pub fn ftCo_800BE6AC(g: G) {
 }
 
 pub fn ftCo_800BE7C0(g: G) {
+    melee_core::ct!("ftCo_800BE7C0");
     ext::Fighter_UpdateModelScale(g);
 }

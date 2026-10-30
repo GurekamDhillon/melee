@@ -15,6 +15,7 @@ unsafe extern "C" fn wait10_init_cb(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCh_GrabUnk1_8015BA34(gobj: *mut HSD_GObj, cb: HSD_GObjEvent, pos: *mut Vec3) {
+    melee_core::ct!("ftCh_GrabUnk1_8015BA34");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         if (*fp).u.mh.x2258 == ftMh_MS_Wait2_0 as i32 {
@@ -40,6 +41,7 @@ pub fn ftCh_GrabUnk1_8015BA34(gobj: *mut HSD_GObj, cb: HSD_GObjEvent, pos: *mut 
 }
 
 pub fn ftCh_TagCancel_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_TagCancel_Anim");
     unsafe {
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
             let fp = (*gobj).user_data as *mut Fighter;
@@ -52,6 +54,7 @@ pub fn ftCh_TagCancel_Anim(gobj: *mut HSD_GObj) {
 
 /// `static inline ftCh_UpdateBossMotion(gobj, fp, da)` (inlines.h).
 pub fn ftCh_UpdateBossMotion(gobj: *mut HSD_GObj, fp: *mut Fighter, da: *const ftCrazyHand_DatAttrs) {
+    melee_core::ct!("ftCh_UpdateBossMotion");
     unsafe {
         st::ft_80085134(gobj);
         let pos = &*(&raw const (*fp).mv.ch.unk0.xC);
@@ -61,6 +64,7 @@ pub fn ftCh_UpdateBossMotion(gobj: *mut HSD_GObj, fp: *mut Fighter, da: *const f
 }
 
 pub fn ftCh_TagCancel_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_TagCancel_Phys");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*(*fp).ft_data).ext_attr as *const ftCrazyHand_DatAttrs;
@@ -69,6 +73,7 @@ pub fn ftCh_TagCancel_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCh_TagCancel_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_TagCancel_Coll");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         if (*fp).mv.ch.unk0.x18 == 0.0 {
@@ -83,6 +88,7 @@ pub fn ftCh_TagCancel_Coll(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCh_GrabUnk1_8015BC88(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_GrabUnk1_8015BC88");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*(*fp).ft_data).ext_attr as *const ftCrazyHand_DatAttrs;

@@ -83,6 +83,7 @@ fn hip_joint(g: G) -> *mut HSD_JObj {
 
 /// `ftCo_80097570`: true = the hip faces up.
 pub fn ftCo_80097570(g: G) -> bool {
+    melee_core::ct!("ftCo_80097570");
     let jobj = hip_joint(g);
     HSD_JObjSetupMatrix(jobj);
     let m = unsafe { &(*jobj).mtx };
@@ -91,6 +92,7 @@ pub fn ftCo_80097570(g: G) -> bool {
 }
 
 pub fn ftCo_80097630(f: &mut Fighter, sfx_ids: &[i32; 4], threshold: f32) {
+    melee_core::ct!("ftCo_80097630");
     let c = cd();
     // The third arm repeats x1F4 in C, so sfx_ids[2] is never chosen.
     let id = if threshold >= c.x1F0 {
@@ -107,11 +109,13 @@ pub fn ftCo_80097630(f: &mut Fighter, sfx_ids: &[i32; 4], threshold: f32) {
 
 /// static inline `ftCo_800976A4_inline`.
 pub fn ftCo_800976A4_inline(f: &Fighter, dist: &mut f32) {
+    melee_core::ct!("ftCo_800976A4_inline");
     *dist *= f.co_attrs.weight;
 }
 
 /// static `ftCo_800976A4`: landing effect, sounds and quake.
 pub fn ftCo_800976A4(g: G) {
+    melee_core::ct!("ftCo_800976A4");
     let f = fp(g);
     let vel_x = f.self_vel.x + f.x8c_kb_vel.x;
     let vel_y = f.self_vel.y + f.x8c_kb_vel.y;
@@ -143,6 +147,7 @@ pub fn ftCo_800976A4(g: G) {
 
 /// static inline `ftCo_800978D4_inline`.
 pub fn ftCo_800978D4_inline(g: G, param: &mut f32) {
+    melee_core::ct!("ftCo_800978D4_inline");
     let f = fp(g);
     *param = ext::atan2f(-f.coll_data.floor.normal.x, f.coll_data.floor.normal.y);
     spawn_406(g, param);
@@ -157,12 +162,14 @@ fn spawn_406(g: G, param: &mut f32) {
 }
 
 pub fn ftCo_800978D4(g: G) {
+    melee_core::ct!("ftCo_800978D4");
     let mut param = 0.0f32;
     ftCo_800978D4_inline(g, &mut param);
 }
 
 /// static `ftCo_8009794C`.
 pub fn ftCo_8009794C(g: G) {
+    melee_core::ct!("ftCo_8009794C");
     if fp(g).ground_or_air == GA_Air {
         ext::ftCommon_8007D7FC(fp(g));
     }
@@ -188,6 +195,7 @@ fn abs_c(x: f32) -> f32 {
 
 /// static `ftCo_80097AF4`: the Sandbag's bounce.
 pub fn ftCo_80097AF4(g: G) {
+    melee_core::ct!("ftCo_80097AF4");
     let jobj = hip_joint(g);
     HSD_JObjSetupMatrix(jobj);
     let m = unsafe { &(*jobj).mtx };
@@ -227,6 +235,7 @@ pub fn ftCo_80097AF4(g: G) {
 
 /// static `inlineA1`.
 pub fn inlineA1(g: G) {
+    melee_core::ct!("inlineA1");
     if fp(g).is_sandbag() != 0 {
         ftCo_80097AF4(g);
     } else {
@@ -235,15 +244,18 @@ pub fn inlineA1(g: G) {
 }
 
 pub fn ftCo_80097D40(g: G) {
+    melee_core::ct!("ftCo_80097D40");
     inlineA1(g);
     unsafe { fp(g).mv.co.downspot.x4 = 0 };
 }
 
 pub fn ftCo_80097D88(g: G) {
+    melee_core::ct!("ftCo_80097D88");
     inlineA1(g);
 }
 
 pub fn ftCo_DownBound_Anim(g: G) {
+    melee_core::ct!("ftCo_DownBound_Anim");
     if ext::ftAnim_IsFramesRemaining(g) {
         return;
     }
@@ -256,13 +268,15 @@ pub fn ftCo_DownBound_Anim(g: G) {
     ftCo_80097E8C(g);
 }
 
-pub fn ftCo_DownBound_IASA(_g: G) {}
+pub fn ftCo_DownBound_IASA(_g: G) { melee_core::ct!("ftCo_DownBound_IASA");}
 
 pub fn ftCo_DownBound_Phys(g: G) {
+    melee_core::ct!("ftCo_DownBound_Phys");
     ext::ft_80084F3C(g);
 }
 
 pub fn ftCo_DownBound_Coll(g: G) {
+    melee_core::ct!("ftCo_DownBound_Coll");
     if ext::ft_80082708(g) == GA_Ground as i32 {
         ext::ftCo_Fall_Enter(g);
     } else {
@@ -271,6 +285,7 @@ pub fn ftCo_DownBound_Coll(g: G) {
 }
 
 pub fn ftCo_80097E8C(g: G) {
+    melee_core::ct!("ftCo_80097E8C");
     if fp(g).ground_or_air == GA_Air {
         ext::ftCommon_8007D7FC(fp(g));
     }
@@ -287,6 +302,7 @@ pub fn ftCo_80097E8C(g: G) {
 }
 
 pub fn ftCo_80097F38(g: G) {
+    melee_core::ct!("ftCo_80097F38");
     let msid = if fp(g).motion_id == ftCo_MS_DownDamageU as _ { ftCo_MS_DownWaitU } else { ftCo_MS_DownWaitD };
     ext::Fighter_ChangeMotionState(g, msid as i32, MF_WAIT, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ext::ftAnim_8006EBA4(g);
@@ -294,6 +310,7 @@ pub fn ftCo_80097F38(g: G) {
 }
 
 pub fn ftCo_DownWait_Anim(g: G) {
+    melee_core::ct!("ftCo_DownWait_Anim");
     let f = fp(g);
     if f.x2224_b2() == 0 {
         unsafe { f.mv.co.downwait.x0 -= 1.0 };
@@ -305,6 +322,7 @@ pub fn ftCo_DownWait_Anim(g: G) {
 }
 
 pub fn ftCo_DownWait_IASA(g: G) {
+    melee_core::ct!("ftCo_DownWait_IASA");
     if ext::ftCo_800984D4(g) {
         return;
     }
@@ -315,9 +333,11 @@ pub fn ftCo_DownWait_IASA(g: G) {
 }
 
 pub fn ftCo_DownWait_Phys(g: G) {
+    melee_core::ct!("ftCo_DownWait_Phys");
     ext::ft_80084F3C(g);
 }
 
 pub fn ftCo_DownWait_Coll(g: G) {
+    melee_core::ct!("ftCo_DownWait_Coll");
     ext::ft_80083F88(g);
 }

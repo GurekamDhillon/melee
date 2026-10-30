@@ -176,6 +176,7 @@ pub static mut filename: [u8; 25] = *b"SuperSmashBros0110290334\0";
 
 /// 01C600
 pub unsafe extern "C" fn lb_8001C600() {
+    melee_core::ct!("lb_8001C600");
     let prev = state.probe_status;
     state.probe_status = ext::CARDProbe(0);
     if state.probe_status != prev {
@@ -185,6 +186,7 @@ pub unsafe extern "C" fn lb_8001C600() {
 
 /// 01C658
 pub unsafe extern "C" fn lb_8001C658() -> *mut i8 {
+    melee_core::ct!("lb_8001C658");
     let ticks = ext::OSGetTime();
     let timer_clock = (ext::OS_BusClock / 4) as i64;
     let seconds = (ticks / timer_clock) as u32;
@@ -210,6 +212,7 @@ pub unsafe extern "C" fn lb_8001C658() -> *mut i8 {
 
 /// `getCurrentIcon`
 pub unsafe extern "C" fn getCurrentIcon() -> *mut c_void {
+    melee_core::ct!("getCurrentIcon");
     if ext::Mex_Enabled(b"use_save_banner_1\0".as_ptr() as *const i8) != 0 {
         return *state.icon_data.add(1);
     }
@@ -225,6 +228,7 @@ pub unsafe extern "C" fn getCurrentIcon() -> *mut c_void {
 
 /// 01C87C
 pub unsafe extern "C" fn lb_8001C87C() -> u32 {
+    melee_core::ct!("lb_8001C87C");
     ext::lb_8001B7E0(
         0,
         filename.as_mut_ptr() as *mut i8,
@@ -236,6 +240,7 @@ pub unsafe extern "C" fn lb_8001C87C() -> u32 {
 
 /// 01C8BC
 pub unsafe extern "C" fn lb_8001C8BC() -> i32 {
+    melee_core::ct!("lb_8001C8BC");
     assert!(state.enable != 0, "lbcardgame.c:320 enable");
     let a4 = lb_8001C658();
     let a5 = getCurrentIcon();
@@ -253,6 +258,7 @@ pub unsafe extern "C" fn lb_8001C8BC() -> i32 {
 
 /// `updateCardStatus`
 pub unsafe extern "C" fn updateCardStatus() -> u32 {
+    melee_core::ct!("updateCardStatus");
     let unk_status = state.unk_status;
     state.unk_status = 0;
     match state.card_status {
@@ -278,11 +284,13 @@ pub unsafe extern "C" fn updateCardStatus() -> u32 {
 
 /// 01CBAC
 pub unsafe extern "C" fn lbCardGame_SetCardStatus(status: u32) {
+    melee_core::ct!("lbCardGame_SetCardStatus");
     state.card_status = status;
 }
 
 /// 01CBBC
 pub unsafe extern "C" fn lb_8001CBBC() -> u32 {
+    melee_core::ct!("lb_8001CBBC");
     if updateCardStatus() != LbCardStatus_0 {
         return LbCardResult_Invalid;
     }
@@ -300,6 +308,7 @@ pub unsafe extern "C" fn lb_8001CBBC() -> u32 {
 
 /// 01CC30
 pub unsafe extern "C" fn fn_8001CC30(arg0: i32) {
+    melee_core::ct!("fn_8001CC30");
     if arg0 != 0 {
         state.card_status = LbCardStatus_2;
     }
@@ -307,11 +316,13 @@ pub unsafe extern "C" fn fn_8001CC30(arg0: i32) {
 
 /// 01CC4C
 pub unsafe extern "C" fn lb_8001CC4C() -> i32 {
+    melee_core::ct!("lb_8001CC4C");
     ext::lb_8001BA44(0, filename.as_ptr() as *const i8, (&raw mut state.unk_status) as *mut c_void)
 }
 
 /// `dont_inline_helper`
 pub unsafe extern "C" fn dont_inline_helper() -> u32 {
+    melee_core::ct!("dont_inline_helper");
     if updateCardStatus() != 0 {
         return LbCardResult_Invalid;
     }
@@ -331,6 +342,7 @@ pub unsafe extern "C" fn dont_inline_helper() -> u32 {
 
 /// 01CC84
 pub unsafe extern "C" fn lb_8001CC84() {
+    melee_core::ct!("lb_8001CC84");
     loop {
         match state.x10 {
             0 => {
@@ -364,6 +376,7 @@ pub unsafe extern "C" fn lb_8001CC84() {
 
 /// 01CDB4
 pub unsafe extern "C" fn lb_8001CDB4() {
+    melee_core::ct!("lb_8001CDB4");
     while state.dirty != 0 || state.x10 != 0 {
         ext::wait_idle();
         lb_8001CC84();
@@ -372,6 +385,7 @@ pub unsafe extern "C" fn lb_8001CDB4() {
 
 /// 01CE00
 pub unsafe extern "C" fn lbCardGame_SaveChanges() {
+    melee_core::ct!("lbCardGame_SaveChanges");
     assert!(state.enable != 0, "lbcardgame.c:675 enable");
     let add = ext::gmMainLib_8015FC74();
     let p = ext::gm_GetPowerTime();
@@ -381,6 +395,7 @@ pub unsafe extern "C" fn lbCardGame_SaveChanges() {
 
 /// 01CE78
 pub unsafe extern "C" fn lbCardGame_DecideGameMode() -> u8 {
+    melee_core::ct!("lbCardGame_DecideGameMode");
     updateCardStatus();
     if state.card_status != LbCardStatus_0 && state.card_status != LbCardStatus_4 {
         return GM_MEMCARD as u8;
@@ -390,11 +405,13 @@ pub unsafe extern "C" fn lbCardGame_DecideGameMode() -> u8 {
 
 /// `gobj1_Proc`
 pub unsafe extern "C" fn gobj1_Proc(gobj: *mut HSD_GObj) {
+    melee_core::ct!("gobj1_Proc");
     ext::HSD_JObjAnimAll((*gobj).hsd_obj as *mut HSD_JObj);
 }
 
 /// `gobj0_RenderFunc`
 pub unsafe extern "C" fn gobj0_RenderFunc(gobj: *mut HSD_GObj, arg1: i32) {
+    melee_core::ct!("gobj0_RenderFunc");
     if state.x10 == 1 {
         ext::HSD_GObj_803910D8(gobj, arg1);
     }
@@ -435,6 +452,7 @@ unsafe fn jobj_set_translate_y(jobj: *mut HSD_JObj, y: f32) {
 
 /// 01CF18
 pub unsafe extern "C" fn lbCardGame_InitScene() {
+    melee_core::ct!("lbCardGame_InitScene");
     if !state.scene_data.is_null() {
         let scene = &*state.scene_data;
         let mut gobj = ext::GObj_Create(HSD_GOBJ_CLASS_MEMCARD as u16, HSD_GOBJ_PLINK_MEMCARD, 0);
@@ -462,6 +480,7 @@ pub unsafe extern "C" fn lbCardGame_InitScene() {
 
 /// 01D164
 pub unsafe extern "C" fn lbCardGame_LoadArchive(jobj_translate_idx: i32) {
+    melee_core::ct!("lbCardGame_LoadArchive");
     if state.icon_data.is_null() {
         ext::lbArchive_80016DBC(
             b"LbMcGame.\0".as_ptr() as *const i8,
@@ -482,6 +501,7 @@ pub unsafe extern "C" fn lbCardGame_LoadArchive(jobj_translate_idx: i32) {
 
 /// 01D1F4
 pub unsafe extern "C" fn lbCardGame_Reset() {
+    melee_core::ct!("lbCardGame_Reset");
     state.icon_data = null_mut();
     state.scene_data = null_mut();
     state.enable = 0;
@@ -492,6 +512,7 @@ pub unsafe extern "C" fn lbCardGame_Reset() {
 
 /// 01D21C
 pub unsafe extern "C" fn lbCardGame_Init() {
+    melee_core::ct!("lbCardGame_Init");
     state.probe_status = ext::CARDProbe(0);
     state.unk_status = 0;
     state.card_status = LbCardStatus_0;

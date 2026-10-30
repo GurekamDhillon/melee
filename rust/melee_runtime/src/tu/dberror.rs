@@ -74,6 +74,7 @@ pub mod ext {
 /// # Safety
 /// `OSGetCurrentContext` returns a live context.
 pub unsafe fn db_ClearFPUExceptions(h: &mut dyn DbErrorHost) {
+    melee_core::ct!("db_ClearFPUExceptions");
     let m = h.PPCMfmsr();
     h.PPCMtmsr(m | 0x900);
     let ctx = h.OSGetCurrentContext();
@@ -84,6 +85,7 @@ pub unsafe fn db_ClearFPUExceptions(h: &mut dyn DbErrorHost) {
 
 /// `fn_HSDPanicHandler` (0x80228AB4).
 pub fn fn_HSDPanicHandler(h: &mut dyn DbErrorHost, ctx: *mut OSContext) {
+    melee_core::ct!("fn_HSDPanicHandler");
     h.HSD_VISetUserPreRetraceCallback();
     h.HSD_VISetUserPostRetraceCallback();
     h.lb_80019A48();
@@ -97,6 +99,7 @@ pub fn fn_HSDPanicHandler(h: &mut dyn DbErrorHost, ctx: *mut OSContext) {
 
 /// `fn_OSErrorHandler` (0x80228B28); the C's two varargs are `dsisr` and `dar`.
 pub fn fn_OSErrorHandler(h: &mut dyn DbErrorHost, error: u16, ctx: *mut OSContext, dsisr: i32, dar: i32) {
+    melee_core::ct!("fn_OSErrorHandler");
     h.HSD_VISetUserPreRetraceCallback();
     h.HSD_VISetUserPostRetraceCallback();
     h.lb_80019A48();
@@ -112,6 +115,7 @@ pub fn fn_OSErrorHandler(h: &mut dyn DbErrorHost, error: u16, ctx: *mut OSContex
 /// `db_SetupCrashHandler` (0x80228C4C): without a debugger, install the handlers for every OS
 /// error except 4, 7, 8 and 9.
 pub fn db_SetupCrashHandler(h: &mut dyn DbErrorHost) {
+    melee_core::ct!("db_SetupCrashHandler");
     if h.DBIsDebuggerPresent() == 0 {
         let mem = h.OSAllocFromArenaLo(0x2000, 4);
         h.hsd_80393DA0(mem, 0x2000);

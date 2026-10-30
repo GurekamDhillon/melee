@@ -45,12 +45,14 @@ fn fp<'a>(g: G) -> &'a mut Fighter {
 
 /// `HSD_JObjMtxIsDirty` (jobj.h inline).
 pub fn hsd_jobj_mtx_is_dirty(j: *mut HSD_JObj) -> bool {
+    melee_core::ct!("hsd_jobj_mtx_is_dirty");
     let fl = unsafe { (*j).flags };
     fl & JOBJ_USER_DEF_MTX as u32 == 0 && fl & JOBJ_MTX_DIRTY as u32 != 0
 }
 
 /// The `HSD_JObjSetMtxDirty(jobj)` macro (jobj.h).
 pub fn hsd_jobj_set_mtx_dirty(j: *mut HSD_JObj) {
+    melee_core::ct!("hsd_jobj_set_mtx_dirty");
     if !j.is_null() && !hsd_jobj_mtx_is_dirty(j) {
         ext::HSD_JObjSetMtxDirtySub(j);
     }
@@ -58,6 +60,7 @@ pub fn hsd_jobj_set_mtx_dirty(j: *mut HSD_JObj) {
 
 /// `HSD_JObjSetRotationY` (jobj.h inline; the asserts are debug-only).
 pub fn hsd_jobj_set_rotation_y(j: *mut HSD_JObj, y: f32) {
+    melee_core::ct!("hsd_jobj_set_rotation_y");
     unsafe {
         (*j).rotate.y = y;
         if (*j).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
@@ -79,6 +82,7 @@ fn inline_a0(g: G) {
 
 /// `ftCo_800C3598`.
 pub fn ftco_800c3598(g: G) {
+    melee_core::ct!("ftco_800c3598");
     let f = fp(g);
     inline_a0(g);
     let cd = h::common_data();
@@ -101,6 +105,7 @@ pub fn ftco_800c3598(g: G) {
 
 /// `ftCo_800C36DC`.
 pub fn ftco_800c36dc(g: G) {
+    melee_core::ct!("ftco_800c36dc");
     let f = fp(g);
     inline_a0(g);
     f.xF0_ground_kb_vel = h::common_data().x654 * -f.specialn_facing_dir;
@@ -110,6 +115,7 @@ pub fn ftco_800c36dc(g: G) {
 
 /// `ftCo_800C37A0`.
 pub fn ftco_800c37a0(g: G) {
+    melee_core::ct!("ftco_800c37a0");
     let f = fp(g);
     if f.dmg.x18F4 == 0 {
         return;

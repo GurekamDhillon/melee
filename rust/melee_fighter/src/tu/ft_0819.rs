@@ -55,6 +55,7 @@ fn ecb_span(f: &Fighter) -> Vec3 {
 
 /// `ft_80081938`: sets `dmg.x1930.xC` and copies it to `x0`.
 pub fn ft_80081938(g: G) {
+    melee_core::ct!("ft_80081938");
     let f = fp(g);
     f.dmg.x1930.xC = ecb_span(f);
     f.dmg.x1930.x0 = f.dmg.x1930.xC;
@@ -62,6 +63,7 @@ pub fn ft_80081938(g: G) {
 
 /// `ft_800819A8`: sets `dmg.x1930.x0`.
 pub fn ft_800819a8(g: G) {
+    melee_core::ct!("ft_800819a8");
     let f = fp(g);
     f.dmg.x1930.x0 = ecb_span(f);
 }
@@ -86,6 +88,7 @@ fn inline_a0(g: G) {
 
 /// `ft_80081A00`.
 pub fn ft_80081a00(g: G) -> bool {
+    melee_core::ct!("ft_80081a00");
     let f = fp(g);
     if f.x2219_b1() == 0 && f.x2223_b4() == 0 {
         f.set_x2223_b5(1);

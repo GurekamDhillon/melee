@@ -176,6 +176,7 @@ pub mod ext {
 pub static mut gm_804D6858: *mut HSD_GObj = null_mut();
 
 pub unsafe extern "C" fn gm_Scene_Omake15_OnEnter(_unused: *mut c_void) {
+    melee_core::ct!("gm_Scene_Omake15_OnEnter");
     let mut gobj = ext::GObj_Create(0x13, 0x14, 0);
     ext::gm_801A9DD0(gobj, 0x280, 0x1E0, 8, 0);
     (*gobj).gxlink_prios = 0x800;
@@ -201,6 +202,7 @@ unsafe fn sfxForward() {
 }
 
 pub unsafe extern "C" fn gm_Scene_Omake15_OnFrame() {
+    melee_core::ct!("gm_Scene_Omake15_OnFrame");
     let mut var_r31 = false;
 
     ext::lbMthp_8001F578();

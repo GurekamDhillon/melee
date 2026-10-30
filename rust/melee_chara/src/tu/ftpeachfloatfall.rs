@@ -30,6 +30,7 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 }
 
 pub fn ftPe_UpdateFloatDir(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_UpdateFloatDir");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftPe_DatAttrs;
@@ -52,17 +53,20 @@ pub fn ftPe_UpdateFloatDir(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftPe_FloatFall_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_FloatFall_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         ext::ftCo_FallAerial_Enter(gobj);
     }
 }
 
-pub fn ftPe_FloatFall_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftPe_FloatFall_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftPe_FloatFall_IASA");}
 
 pub fn ftPe_FloatFall_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_FloatFall_Phys");
     fext::ftCo_JumpAerial_Phys_Cb(gobj);
 }
 
 pub fn ftPe_FloatFall_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_FloatFall_Coll");
     fext::ft_800831CC(gobj, Some(cb_ftCo_80096CC8), Some(cb_ft_80082B1C));
 }

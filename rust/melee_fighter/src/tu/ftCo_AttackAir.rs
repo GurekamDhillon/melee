@@ -86,16 +86,19 @@ fn pressed_a(f: &Fighter) -> bool {
 
 /// static `checkItemThrowInput`.
 pub fn checkItemThrowInput(g: G) -> bool {
+    melee_core::ct!("checkItemThrowInput");
     throw_or_decide(g)
 }
 
 /// `ftCo_AttackAir_CheckItemThrowInput` (same body as checkItemThrowInput).
 pub fn ftCo_AttackAir_CheckItemThrowInput(g: G) -> bool {
+    melee_core::ct!("ftCo_AttackAir_CheckItemThrowInput");
     throw_or_decide(g)
 }
 
 /// static `decideFighter`.
 pub fn decideFighter(g: G) {
+    melee_core::ct!("decideFighter");
     match fp(g).kind {
         Ft_Kind_Link | Ft_Kind_CLink => ext::ftLk_AttackAir_Enter(g),
         Ft_Kind_GameWatch => ext::ftGw_AttackAirN_DecideAction(g),
@@ -105,6 +108,7 @@ pub fn decideFighter(g: G) {
 
 /// `ftCo_AttackAir_GetMsidFromCStick`.
 pub fn ftCo_AttackAir_GetMsidFromCStick(f: &Fighter) -> i32 {
+    melee_core::ct!("ftCo_AttackAir_GetMsidFromCStick");
     let (x, y, angle);
     if ext::ftCo_800DF478(f) {
         x = f.input.cstick[0].x;
@@ -132,11 +136,13 @@ pub fn ftCo_AttackAir_GetMsidFromCStick(f: &Fighter) -> i32 {
 }
 
 pub fn ftCo_AttackAir_EnterFromCStick(g: G) {
+    melee_core::ct!("ftCo_AttackAir_EnterFromCStick");
     let msid = ftCo_AttackAir_GetMsidFromCStick(fp(g));
     ftCo_AttackAir_EnterFromMsid(g, msid);
 }
 
 pub fn ftCo_AttackAir_EnterFromMsid(g: G, msid: i32) {
+    melee_core::ct!("ftCo_AttackAir_EnterFromMsid");
     let f = fp(g);
     f.set_allow_interrupt(0);
     f.cmd_vars[0] = 0;
@@ -158,6 +164,7 @@ fn check_throw_b3(f: &mut Fighter) -> bool {
 }
 
 pub fn ftCo_AttackAir_Anim(g: G) {
+    melee_core::ct!("ftCo_AttackAir_Anim");
     let f = fp(g);
     if check_throw_b3(f) {
         f.facing_dir = -f.facing_dir;
@@ -180,25 +187,32 @@ fn do_iasa(g: G) {
 }
 
 pub fn ftCo_AttackAirN_IASA(g: G) {
+    melee_core::ct!("ftCo_AttackAirN_IASA");
     do_iasa(g);
 }
 pub fn ftCo_AttackAirF_IASA(g: G) {
+    melee_core::ct!("ftCo_AttackAirF_IASA");
     do_iasa(g);
 }
 pub fn ftCo_AttackAirB_IASA(g: G) {
+    melee_core::ct!("ftCo_AttackAirB_IASA");
     do_iasa(g);
 }
 pub fn ftCo_AttackAirHi_IASA(g: G) {
+    melee_core::ct!("ftCo_AttackAirHi_IASA");
     do_iasa(g);
 }
 pub fn ftCo_AttackAirLw_IASA(g: G) {
+    melee_core::ct!("ftCo_AttackAirLw_IASA");
     do_iasa(g);
 }
 
 pub fn ftCo_AttackAir_Phys(g: G) {
+    melee_core::ct!("ftCo_AttackAir_Phys");
     ext::ft_80084DB0(g);
 }
 
 pub fn ftCo_AttackAir_Coll(g: G) {
+    melee_core::ct!("ftCo_AttackAir_Coll");
     ext::ft_80082C74(g, Some(ext::ftCo_LandingAir_EnterWithLag));
 }

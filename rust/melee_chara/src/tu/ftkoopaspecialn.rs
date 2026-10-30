@@ -100,6 +100,7 @@ pub const ftKp_Init_803CF2A0: [i32; 96] = [
 
 /// `ftKp_SpecialN_80134ACC_inline` (static inline): pick the next flame direction.
 pub fn ftKp_SpecialN_80134ACC_inline(gobj: *mut HSD_GObj, dirs: &[i32; 96]) -> i32 {
+    melee_core::ct!("ftKp_SpecialN_80134ACC_inline");
     unsafe {
         let fp = fpp(gobj);
         let new_facing = match (*fp).mv.kp.specialn.facing_dir {
@@ -119,6 +120,7 @@ pub fn ftKp_SpecialN_80134ACC_inline(gobj: *mut HSD_GObj, dirs: &[i32; 96]) -> i
 
 /// Which of the three flame sfx tiers the breath uses (`f < 0.3333f`, `f < 0.6666f`, else).
 pub fn flame_sfx(kind: FighterKind, f: f32) -> i32 {
+    melee_core::ct!("flame_sfx");
     let koopa = kind == Ft_Kind_Koopa;
     if f < 0.3333_f32 {
         if koopa { 0x24A2B } else { 0x1D4F3 }
@@ -132,6 +134,7 @@ pub fn flame_sfx(kind: FighterKind, f: f32) -> i32 {
 }
 
 pub fn ftKp_SpecialLw_80134ACC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialLw_80134ACC");
     unsafe {
         let fp = fpp(gobj);
         let da = &*da(fp);
@@ -171,6 +174,7 @@ pub fn ftKp_SpecialLw_80134ACC(gobj: *mut HSD_GObj) {
 
 /// `ftKp_SpecialLw_80134D78` (`ftKp_Init_UnkMotionStates3` calls it): refill the flame meters.
 pub fn ftKp_SpecialLw_80134D78(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialLw_80134D78");
     unsafe {
         let fp = fpp(gobj);
         let da = &*da(fp);
@@ -188,6 +192,7 @@ pub fn ftKp_SpecialLw_80134D78(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKp_SpecialLw_80134DE0(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("ftKp_SpecialLw_80134DE0");
     unsafe {
         if !gobj.is_null() {
             let fp = fpp(gobj);
@@ -200,6 +205,7 @@ pub fn ftKp_SpecialLw_80134DE0(gobj: *mut HSD_GObj) -> i32 {
 }
 
 pub fn ftKp_SpecialLw_80134E1C(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("ftKp_SpecialLw_80134E1C");
     unsafe {
         if !gobj.is_null() {
             let fp = fpp(gobj);
@@ -213,6 +219,7 @@ pub fn ftKp_SpecialLw_80134E1C(gobj: *mut HSD_GObj) -> i32 {
 
 /// `ftKp_SpecialN_Enter_inline` (static).
 pub fn ftKp_SpecialN_Enter_inline(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialN_Enter_inline");
     unsafe {
         let fp = fpp(gobj);
         (*fp).mv.kp.specialn.x0 = 0;
@@ -226,17 +233,20 @@ pub fn ftKp_SpecialN_Enter_inline(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKp_SpecialN_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialN_Enter");
     st::Fighter_ChangeMotionState(gobj, 0x155, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ftKp_SpecialN_Enter_inline(gobj);
 }
 
 pub fn ftKp_SpecialAirN_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialAirN_Enter");
     st::Fighter_ChangeMotionState(gobj, 0x158, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ftKp_SpecialN_Enter_inline(gobj);
 }
 
 /// `ftKp_SpecialN_Anim_inline_2` (static): quake on every `x20`th frame.
 pub fn ftKp_SpecialN_Anim_inline_2(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialN_Anim_inline_2");
     unsafe {
         let fp = fpp(gobj);
         let da = &*da(fp);
@@ -250,6 +260,7 @@ pub fn ftKp_SpecialN_Anim_inline_2(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKp_SpecialN_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialN_Anim");
     unsafe {
         ftKp_SpecialN_Anim_inline_1(&mut *fpp(gobj));
     }
@@ -257,16 +268,17 @@ pub fn ftKp_SpecialN_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKp_SpecialAirN_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialAirN_Anim");
     unsafe {
         ftKp_SpecialN_Anim_inline_1(&mut *fpp(gobj));
     }
     ftKp_SpecialN_Anim_inline_2(gobj);
 }
 
-pub fn ftKp_SpecialNStart_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftKp_SpecialNEnd_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftKp_SpecialAirNStart_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftKp_SpecialAirNEnd_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftKp_SpecialNStart_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftKp_SpecialNStart_IASA");}
+pub fn ftKp_SpecialNEnd_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftKp_SpecialNEnd_IASA");}
+pub fn ftKp_SpecialAirNStart_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftKp_SpecialAirNStart_IASA");}
+pub fn ftKp_SpecialAirNEnd_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftKp_SpecialAirNEnd_IASA");}
 
 /// Shared body of the two loop IASAs; `end_msid` is the End state entered when B is released
 /// (0x157 on the ground, 0x15A in the air).
@@ -307,15 +319,18 @@ unsafe fn n_iasa(gobj: *mut HSD_GObj, end_msid: i32) {
 }
 
 pub fn ftKp_SpecialN_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialN_IASA");
     unsafe { n_iasa(gobj, 0x157) }
 }
 
 pub fn ftKp_SpecialAirN_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialAirN_IASA");
     unsafe { n_iasa(gobj, 0x15A) }
 }
 
 /// `ftKp_SpecialN_80135780_inline` (static): intangible body while the script bit is set.
 pub fn ftKp_SpecialN_80135780_inline(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialN_80135780_inline");
     st::ftParts_80074B0C(gobj, 0, 1);
     for bone in [0x37, 0x30, 0x3C, 0x21, 0x3D, 0x22, 0xF, 6, 0x10, 7, 0x13, 0xA] {
         ext::ftColl_8007B128(gobj, bone, HurtCapsule_Intangible as i32);
@@ -325,12 +340,14 @@ pub fn ftKp_SpecialN_80135780_inline(gobj: *mut HSD_GObj) {
 
 /// `ftKp_SpecialN_80135780_inline_2` (static).
 pub fn ftKp_SpecialN_80135780_inline_2(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialN_80135780_inline_2");
     st::ftParts_80074B0C(gobj, 0, 0);
     ext::ftColl_8007B0C0(gobj, HurtCapsule_Enabled as i32);
     ext::ftCommon_8007F5CC(gobj, 1);
 }
 
 pub fn ftKp_SpecialN_80135780(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialN_80135780");
     unsafe {
         let fp = fpp(gobj);
         let bit = if (*fp).ground_or_air == GA_Ground { (*fp).cmd_vars[2] } else { (*fp).cmd_vars[1] };

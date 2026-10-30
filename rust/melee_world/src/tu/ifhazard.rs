@@ -74,6 +74,7 @@ unsafe fn HSD_GObjGetHSDObj(gobj: *mut HSD_GObj) -> *mut c_void {
 }
 
 pub unsafe extern "C" fn un_802FD604(arg: i32) {
+    melee_core::ct!("un_802FD604");
     let jobj = HSD_GObjGetHSDObj(un_804D6D80) as *mut HSD_JObj;
     ext::HSD_JObjReqAnimAll(jobj, 0.0);
     ext::HSD_JObjAnimAll(jobj);
@@ -82,18 +83,22 @@ pub unsafe extern "C" fn un_802FD604(arg: i32) {
 }
 
 pub unsafe extern "C" fn un_802FD65C() {
+    melee_core::ct!("un_802FD65C");
     un_804D6D88 = 0;
 }
 
 pub unsafe extern "C" fn un_802FD668() {
+    melee_core::ct!("un_802FD668");
     un_804D6D8C = 1;
 }
 
 pub unsafe extern "C" fn un_802FD674() {
+    melee_core::ct!("un_802FD674");
     un_804D6D8C = 0;
 }
 
 pub unsafe extern "C" fn fn_802FD680(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_802FD680");
     let jobj = HSD_GObjGetHSDObj(gobj) as *mut HSD_JObj;
     if un_804D6D84 != 0 {
         un_804D6D84 -= 1;
@@ -105,6 +110,7 @@ pub unsafe extern "C" fn fn_802FD680(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_802FD6CC(gobj: *mut HSD_GObj, pass: i32) {
+    melee_core::ct!("fn_802FD6CC");
     // TARGET_PC: the Atlas retail mask (empty by default).
     if ext::Ui_RetailHidden(AT_RE_HUD_HAZARD) != 0 {
         return;
@@ -114,9 +120,10 @@ pub unsafe extern "C" fn fn_802FD6CC(gobj: *mut HSD_GObj, pass: i32) {
     }
 }
 
-pub unsafe extern "C" fn un_802FD704() {}
+pub unsafe extern "C" fn un_802FD704() { melee_core::ct!("un_802FD704");}
 
 pub unsafe extern "C" fn un_802FD708(desc: *mut DynamicModelDesc, arg1: i32) {
+    melee_core::ct!("un_802FD708");
     let gobj = ext::GObj_Create(HSD_GOBJ_CLASS_UI as u16, 15, 0);
     let jobj = ext::HSD_JObjLoadJoint((*desc).joint);
     ext::HSD_GObjObject_80390A70(gobj, ext::HSD_GObj_JObjKind, jobj.cast());
@@ -140,15 +147,18 @@ pub unsafe extern "C" fn un_802FD708(desc: *mut DynamicModelDesc, arg1: i32) {
 }
 
 pub unsafe extern "C" fn un_802FD8A0(desc: *mut DynamicModelDesc) {
+    melee_core::ct!("un_802FD8A0");
     un_802FD708(desc, 0);
 }
 
 pub unsafe extern "C" fn un_802FD8C4(desc: *mut DynamicModelDesc) {
+    melee_core::ct!("un_802FD8C4");
     un_802FD708(desc, 1);
 }
 
 pub unsafe extern "C" fn un_802FD8E8(desc: *mut DynamicModelDesc) {
+    melee_core::ct!("un_802FD8E8");
     un_802FD708(desc, 2);
 }
 
-pub unsafe extern "C" fn un_802FD90C() {}
+pub unsafe extern "C" fn un_802FD90C() { melee_core::ct!("un_802FD90C");}

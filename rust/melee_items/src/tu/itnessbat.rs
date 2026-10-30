@@ -98,6 +98,7 @@ unsafe fn itNessbat_RemoveItem(gobj: *mut Item_GObj) -> bool {
 
 /// 2AD478: spawns the bat on a fighter's bone.
 pub unsafe extern "C" fn it_802AD478(gobj: *mut Item_GObj, pos: *mut Vec3, part: Fighter_Part, facing_dir: f32) -> *mut HSD_GObj {
+    melee_core::ct!("it_802AD478");
     let mut spawn: SpawnItem = core::mem::zeroed();
     let bat: *mut Item_GObj;
 
@@ -123,6 +124,7 @@ pub unsafe extern "C" fn it_802AD478(gobj: *mut Item_GObj, pos: *mut Vec3, part:
 
 /// 2AD590: spawns the bat at the fighter's hand position.
 pub unsafe extern "C" fn it_802AD590(gobj: *mut Fighter_GObj, part: Fighter_Part) -> *mut Item_GObj {
+    melee_core::ct!("it_802AD590");
     let mut spawn: SpawnItem = core::mem::zeroed();
     let bat: *mut Item_GObj;
     let mut pos: Vec3 = core::mem::zeroed();
@@ -151,6 +153,7 @@ pub unsafe extern "C" fn it_802AD590(gobj: *mut Fighter_GObj, part: Fighter_Part
 }
 
 pub unsafe extern "C" fn it_802AD6B8(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802AD6B8");
     if !gobj.is_null() {
         let ip = GET_ITEM(gobj);
         (*ip).xDD4_itemVar.nessbat.x0 = null_mut();
@@ -160,6 +163,7 @@ pub unsafe extern "C" fn it_802AD6B8(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_2725_Logic58_PickedUp(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_2725_Logic58_PickedUp");
     let ip = GET_ITEM(gobj);
     if ((*ip).xDAC_itcmd_var0 | (*ip).xDB0_itcmd_var1 | (*ip).xDB4_itcmd_var2 | (*ip).xDB8_itcmd_var3) != 0 {
         ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE as u32);
@@ -170,6 +174,7 @@ pub unsafe extern "C" fn it_2725_Logic58_PickedUp(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itNessbat_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itNessbat_UnkMotion0_Anim");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
     let child = HSD_JObjGetChild(jobj);
@@ -196,13 +201,15 @@ pub unsafe extern "C" fn itNessbat_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool
     false
 }
 
-pub unsafe extern "C" fn itNessbat_UnkMotion0_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itNessbat_UnkMotion0_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itNessbat_UnkMotion0_Phys");}
 
 pub unsafe extern "C" fn itNessbat_UnkMotion0_Coll(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itNessbat_UnkMotion0_Coll");
     false
 }
 
 pub unsafe extern "C" fn itNessbat_UnkMotion1_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itNessbat_UnkMotion1_Anim");
     if !gobj.is_null() {
         let ip = GET_ITEM(gobj);
         if !ip.is_null() {
@@ -218,12 +225,14 @@ pub unsafe extern "C" fn itNessbat_UnkMotion1_Anim(gobj: *mut Item_GObj) -> bool
     false
 }
 
-pub unsafe extern "C" fn itNessbat_UnkMotion1_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itNessbat_UnkMotion1_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itNessbat_UnkMotion1_Phys");}
 
 pub unsafe extern "C" fn itNessbat_UnkMotion1_Coll(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itNessbat_UnkMotion1_Coll");
     false
 }
 
 pub unsafe extern "C" fn itNessBat_Logic58_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("itNessBat_Logic58_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

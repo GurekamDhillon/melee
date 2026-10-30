@@ -65,6 +65,7 @@ fn walk_type_of(f: &mut Fighter, walk_vel: f32) -> FtWalkType {
 
 /// `ftWalkCommon_GetWalkType`.
 pub fn ftwalkcommon_get_walk_type(g: G) -> FtWalkType {
+    melee_core::ct!("ftwalkcommon_get_walk_type");
     let f = fp(g);
     let v = fc::abs_c(f.gr_vel);
     walk_type_of(f, v)
@@ -72,11 +73,13 @@ pub fn ftwalkcommon_get_walk_type(g: G) -> FtWalkType {
 
 /// `ftWalkCommon_GetWalkType_800DFBF8_fake` (static inline; same arithmetic).
 pub fn ftwalkcommon_get_walk_type_800dfbf8_fake(g: G) -> FtWalkType {
+    melee_core::ct!("ftwalkcommon_get_walk_type_800dfbf8_fake");
     ftwalkcommon_get_walk_type(g)
 }
 
 /// `ftWalkCommon_800DFC70`.
 pub fn ftwalkcommon_800dfc70(g: G) -> bool {
+    melee_core::ct!("ftwalkcommon_800dfc70");
     let f = fp(g);
     f.input.lstick[0].x * f.facing_dir >= hooks::common_data().walk_stick_threshold
 }
@@ -88,6 +91,7 @@ pub fn ftwalkcommon_800dfca4(
     middle_anim_frame: f32, fast_anim_frame: f32, slow_anim_rate: f32, middle_anim_rate: f32,
     fast_anim_rate: f32, accel_mul: f32,
 ) {
+    melee_core::ct!("ftwalkcommon_800dfca4");
     walk(fp(g)).accel_mul = accel_mul;
     let wt = ftwalkcommon_get_walk_type_800dfbf8_fake(g);
     let new_msid = msid.wrapping_add(wt as i32);
@@ -108,6 +112,7 @@ pub fn ftwalkcommon_800dfca4(
 
 /// `ftWalkCommon_800DFDDC`.
 pub fn ftwalkcommon_800dfddc(g: G) {
+    melee_core::ct!("ftwalkcommon_800dfddc");
     let f = fp(g);
     let mut mv_x0 = if hooks::ground_friction_mul(f) < 1.0 { walk(f).x0 } else { f.gr_vel };
     let mut anim_rate = 0.0f32; // uninitialised in C on an unknown walk type: zero-init build
@@ -129,6 +134,7 @@ pub fn ftwalkcommon_800dfddc(g: G) {
 
 /// `ftWalkCommon_800DFEC8`.
 pub fn ftwalkcommon_800dfec8(g: G, arg_cb: fn(G, f32)) {
+    melee_core::ct!("ftwalkcommon_800dfec8");
     let wt = ftwalkcommon_get_walk_type_800dfbf8_fake(g);
     let f = fp(g);
     let base = walk(f).msid as i32;
@@ -163,6 +169,7 @@ fn get_walk_accel(f: &Fighter, mul: f32) -> f32 {
 
 /// `ftWalkCommon_800E0060`.
 pub fn ftwalkcommon_800e0060(g: G) {
+    melee_core::ct!("ftwalkcommon_800e0060");
     let f = fp(g);
     let cd = hooks::common_data();
     let accel_mul = walk(f).accel_mul;

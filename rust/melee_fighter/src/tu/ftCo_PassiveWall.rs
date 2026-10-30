@@ -72,6 +72,7 @@ fn cb_80082B1C(g: G) {
 }
 
 pub fn ftCo_800C1D38(g: G) -> bool {
+    melee_core::ct!("ftCo_800C1D38");
     let ef = fp(g).coll_data.env_flags;
     if (ef & Collide_RightWallHug != 0 || ef & Collide_LeftWallHug != 0) && ext::ftCo_800986B0(g) {
         let msid = if ftCo_800C1E0C(fp(g)) { ftCo_MS_PassiveWallJump } else { ftCo_MS_PassiveWall } as i32;
@@ -87,10 +88,12 @@ pub fn ftCo_800C1D38(g: G) -> bool {
 }
 
 pub fn ftCo_800C1E0C(f: &Fighter) -> bool {
+    melee_core::ct!("ftCo_800C1E0C");
     (f.x67E as f32) < cd().x250 || f.input.lstick[0].y >= cd().tap_jump_threshold
 }
 
 pub fn ftCo_800C1E64(g: G, msid: i32, timer: i32, vel_y_exponent: i32, facing_dir: f32) {
+    melee_core::ct!("ftCo_800C1E64");
     let f = fp(g);
     f.cmd_vars[0] = 1;
     f.facing_dir = -facing_dir;
@@ -133,6 +136,7 @@ pub fn ftCo_800C1E64(g: G, msid: i32, timer: i32, vel_y_exponent: i32, facing_di
 }
 
 pub fn ftCo_PassiveWall_Anim(g: G) {
+    melee_core::ct!("ftCo_PassiveWall_Anim");
     let f = fp(g);
     if unsafe { f.mv.co.passivewall.timer } != 0 {
         let t = unsafe {
@@ -171,6 +175,7 @@ pub fn ftCo_PassiveWall_Anim(g: G) {
 }
 
 pub fn ftCo_PassiveWall_IASA(g: G) {
+    melee_core::ct!("ftCo_PassiveWall_IASA");
     if unsafe { fp(g).mv.co.passivewall.timer } == 0 {
         if ext::ftCo_SpecialAir_CheckInput(g)
             || ext::ftCo_80095328(g, core::ptr::null_mut())
@@ -194,6 +199,7 @@ pub fn ftCo_PassiveWall_IASA(g: G) {
 }
 
 pub fn ftCo_PassiveWall_Phys(g: G) {
+    melee_core::ct!("ftCo_PassiveWall_Phys");
     if unsafe { fp(g).mv.co.passivewall.timer } == 0 {
         ext::ftCommon_CheckFallFast(fp(g));
         let f = fp(g);
@@ -210,6 +216,7 @@ pub fn ftCo_PassiveWall_Phys(g: G) {
 }
 
 pub fn ftCo_PassiveWall_Coll(g: G) {
+    melee_core::ct!("ftCo_PassiveWall_Coll");
     if unsafe { fp(g).mv.co.passivewall.timer } != 0 {
         ext::ft_80083318(g, cb_80096CC8, cb_80082B1C);
     } else {

@@ -9,6 +9,7 @@ use crate::tu::gmmain_lib::gmMainLib_804D3EE0;
 
 /// C `gm_801BEE58`: hands the Melee VS record to the SSS enter data.
 pub unsafe fn gm_801BEE58(arg0: *mut GameModeState) {
+    melee_core::ct!("gm_801BEE58");
     let var_r3 = ext::gm_GetGameModeStateEnterData(arg0) as *mut SSSData;
     (*var_r3).vs = (*gmMainLib_804D3EE0).modes.table[GmVsMode_Melee as usize];
 }

@@ -72,18 +72,21 @@ pub static mut it_803F5AB0: [ItemStateTable; 11] = [
 ];
 
 pub unsafe extern "C" fn it_8028B08C(_item_gobj: *mut Item_GObj, statenum: i32) -> i32 {
+    melee_core::ct!("it_8028B08C");
     // `static int it_803F5B60[]`
     static it_803F5B60: [i32; 8] = [20, 16, 45, 2, 20, 30, 40, 16];
     it_803F5B60[it_803F5AB0[statenum as usize].anim_id as usize]
 }
 
 pub unsafe extern "C" fn itParasol_Logic13_Spawned(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itParasol_Logic13_Spawned");
     let item = GET_ITEM(item_gobj);
     (*item).xDCE_flag.anon_0.set_b7(0);
     it_8028B17C(item_gobj);
 }
 
 pub unsafe extern "C" fn it_8028B0EC(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_8028B0EC");
     let item = GET_ITEM(item_gobj);
     ext::it_8026B390(item_gobj);
     itResetVelocity(item);
@@ -91,17 +94,20 @@ pub unsafe extern "C" fn it_8028B0EC(item_gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itParasol_UnkMotion0_Anim(_item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itParasol_UnkMotion0_Anim");
     false
 }
 
-pub unsafe extern "C" fn itParasol_UnkMotion0_Phys(_item_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itParasol_UnkMotion0_Phys(_item_gobj: *mut Item_GObj) { melee_core::ct!("itParasol_UnkMotion0_Phys");}
 
 pub unsafe extern "C" fn itParasol_UnkMotion0_Coll(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itParasol_UnkMotion0_Coll");
     ext::it_8026D62C(item_gobj, Some(it_8028B17C));
     false
 }
 
 pub unsafe extern "C" fn it_8028B17C(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_8028B17C");
     ext::Item_80268E5C(item_gobj, 1, ITEM_ANIM_UPDATE);
 }
 
@@ -116,6 +122,7 @@ unsafe fn jobj_child(jobj: *mut HSD_JObj) -> *mut HSD_JObj {
 }
 
 pub unsafe extern "C" fn itParasol_UnkMotion2_Anim(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itParasol_UnkMotion2_Anim");
     let item = GET_ITEM(item_gobj);
     let attrs = (*(*item).xC4_article_data).x4_specialAttributes as *mut f32;
     let mut jobj = GET_JOBJ(item_gobj);
@@ -149,6 +156,7 @@ unsafe fn decelerateItemX(item: *mut Item, decel_x: f32) {
 }
 
 pub unsafe extern "C" fn itParasol_UnkMotion1_Phys(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itParasol_UnkMotion1_Phys");
     let item = GET_ITEM(item_gobj);
     let attr = (*item).xCC_item_attr;
     let attrs = (*(*item).xC4_article_data).x4_specialAttributes as *mut f32;
@@ -157,21 +165,25 @@ pub unsafe extern "C" fn itParasol_UnkMotion1_Phys(item_gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itParasol_UnkMotion2_Coll(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itParasol_UnkMotion2_Coll");
     ext::it_8026E15C(item_gobj, Some(it_8028B0EC));
     false
 }
 
 pub unsafe extern "C" fn itParasol_Logic13_Dropped(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itParasol_Logic13_Dropped");
     itParasol_Logic13_Thrown(item_gobj);
 }
 
 pub unsafe extern "C" fn itParasol_Logic13_Thrown(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itParasol_Logic13_Thrown");
     let item = GET_ITEM(item_gobj);
     ext::Item_8026AE84(item, 0xF7, 0x7F, 0x40);
     ext::Item_80268E5C(item_gobj, 2, ITEM_ANIM_UPDATE | ITEM_DROP_UPDATE);
 }
 
 pub unsafe extern "C" fn itParasol_UnkMotion2_Phys(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itParasol_UnkMotion2_Phys");
     let item = GET_ITEM(item_gobj);
     let attr = (*item).xCC_item_attr;
     let attrs = (*(*item).xC4_article_data).x4_specialAttributes as *mut f32;
@@ -180,52 +192,62 @@ pub unsafe extern "C" fn itParasol_UnkMotion2_Phys(item_gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itParasol_Logic13_DmgDealt(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itParasol_Logic13_DmgDealt");
     ext::itColl_BounceOffVictim(item_gobj);
     false
 }
 
 pub unsafe extern "C" fn itParasol_Logic13_Clanked(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itParasol_Logic13_Clanked");
     ext::itColl_BounceOffVictim(item_gobj);
     false
 }
 
 pub unsafe extern "C" fn itParasol_Logic13_HitShield(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itParasol_Logic13_HitShield");
     ext::itColl_BounceOffVictim(item_gobj);
     false
 }
 
 pub unsafe extern "C" fn itParasol_Logic13_Reflected(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itParasol_Logic13_Reflected");
     ext::it_80273030(item_gobj) != 0
 }
 
 pub unsafe extern "C" fn itParasol_Logic13_ShieldBounced(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itParasol_Logic13_ShieldBounced");
     ext::itColl_BounceOffShield(item_gobj) != 0
 }
 
 pub unsafe extern "C" fn itParasol_Logic13_EnteredAir(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itParasol_Logic13_EnteredAir");
     ext::Item_80268E5C(item_gobj, 3, ITEM_ANIM_UPDATE);
 }
 
 pub unsafe extern "C" fn itParasol_UnkMotion3_Anim(_item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itParasol_UnkMotion3_Anim");
     false
 }
 
-pub unsafe extern "C" fn itParasol_UnkMotion3_Phys(_item_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itParasol_UnkMotion3_Phys(_item_gobj: *mut Item_GObj) { melee_core::ct!("itParasol_UnkMotion3_Phys");}
 
 pub unsafe extern "C" fn itParasol_UnkMotion3_Coll(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itParasol_UnkMotion3_Coll");
     ext::it_8026E8C4(item_gobj, Some(it_8028B0EC), Some(it_8028B17C));
     false
 }
 
 pub unsafe extern "C" fn itParasol_Logic13_PickedUp(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itParasol_Logic13_PickedUp");
     it_8028B618(item_gobj, 1.0);
 }
 
 pub unsafe extern "C" fn itParasol_UnkMotion10_Anim(_item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itParasol_UnkMotion10_Anim");
     false
 }
 
-pub unsafe extern "C" fn itParasol_UnkMotion10_Phys(_item_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itParasol_UnkMotion10_Phys(_item_gobj: *mut Item_GObj) { melee_core::ct!("itParasol_UnkMotion10_Phys");}
 
 /// `animSpeed` (static inline)
 #[inline]
@@ -239,33 +261,41 @@ unsafe fn animSpeed(item_gobj: *mut Item_GObj, speed: f32, statenum: i32) {
 }
 
 pub unsafe extern "C" fn it_8028B618(item_gobj: *mut Item_GObj, speed: f32) {
+    melee_core::ct!("it_8028B618");
     animSpeed(item_gobj, speed, 4);
 }
 
 pub unsafe extern "C" fn it_8028B648(item_gobj: *mut Item_GObj, speed: f32) {
+    melee_core::ct!("it_8028B648");
     animSpeed(item_gobj, speed, 5);
 }
 
 pub unsafe extern "C" fn it_8028B6B0(item_gobj: *mut Item_GObj, speed: f32) {
+    melee_core::ct!("it_8028B6B0");
     animSpeed(item_gobj, speed, 6);
 }
 
 pub unsafe extern "C" fn it_8028B718(item_gobj: *mut Item_GObj, speed: f32) {
+    melee_core::ct!("it_8028B718");
     animSpeed(item_gobj, speed, 7);
 }
 
 pub unsafe extern "C" fn it_8028B780(item_gobj: *mut Item_GObj, speed: f32) {
+    melee_core::ct!("it_8028B780");
     animSpeed(item_gobj, speed, 8);
 }
 
 pub unsafe extern "C" fn it_8028B7E8(item_gobj: *mut Item_GObj, speed: f32) {
+    melee_core::ct!("it_8028B7E8");
     animSpeed(item_gobj, speed, 9);
 }
 
 pub unsafe extern "C" fn it_8028B850(item_gobj: *mut Item_GObj, speed: f32) {
+    melee_core::ct!("it_8028B850");
     animSpeed(item_gobj, speed, 10);
 }
 
 pub unsafe extern "C" fn itParasol_Logic13_EvtUnk(item_gobj: *mut Item_GObj, arg1: *mut HSD_GObj) {
+    melee_core::ct!("itParasol_Logic13_EvtUnk");
     ext::it_8026B894(item_gobj, arg1);
 }

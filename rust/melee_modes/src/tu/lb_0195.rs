@@ -110,6 +110,7 @@ pub static mut lb_804329F0: lb_804329F0_t = unsafe { core::mem::zeroed() };
 
 /// 01955C
 pub unsafe extern "C" fn lb_8001955C() {
+    melee_core::ct!("lb_8001955C");
     if ext::HSD_PadGetResetSwitch() != 0 {
         ext::lbAudioAx_80027DBC();
         while ext::lbCardNew_CompleteNextTask() == 11 {}
@@ -127,12 +128,14 @@ pub unsafe extern "C" fn lb_8001955C() {
 
 /// 0195D0
 pub unsafe fn lb_800195D0() {
+    melee_core::ct!("lb_800195D0");
     ext::lb_800192A8(Some(lb_8001955C));
     ext::lb_8001CC84();
 }
 
 /// 0195FC
 pub unsafe extern "C" fn fn_800195FC() {
+    melee_core::ct!("fn_800195FC");
     ext::HSD_PadRenewRawStatus(0);
     ext::lb_8001C600();
     ext::lbSnap_8001D2BC();
@@ -140,6 +143,7 @@ pub unsafe extern "C" fn fn_800195FC() {
 
 /// 019628: recomputes the sampling period from the two slot periods and (re)arms the alarm.
 pub unsafe fn lb_80019628() {
+    melee_core::ct!("lb_80019628");
     let new_val: i64 = lb_804329F0.x38 as i64;
     let tmp = &raw mut lb_804329F0.x0[0];
 
@@ -202,11 +206,13 @@ pub unsafe fn lb_80019628() {
 
 /// 019880
 pub unsafe fn lb_80019880(arg0: u64) {
+    melee_core::ct!("lb_80019880");
     lb_804329F0.x38 = arg0;
 }
 
 /// 019894
 pub unsafe fn lb_80019894() -> u8 {
+    melee_core::ct!("lb_80019894");
     let enabled = ext::OSDisableInterrupts();
     let count = ext::HSD_PadGetRawQueueCount();
     lb_80019628();
@@ -216,11 +222,13 @@ pub unsafe fn lb_80019894() -> u8 {
 
 /// 0198E0
 pub unsafe fn lb_800198E0() {
+    melee_core::ct!("lb_800198E0");
     ext::HSD_PadRenewMasterStatus();
 }
 
 /// 019900
 pub unsafe fn lb_80019900() {
+    melee_core::ct!("lb_80019900");
     for i in 0..2 {
         lb_804329F0.x0[i].x8 = lb_804329F0.x0[i].x8.wrapping_add(lb_804329F0.x40);
         if lb_804329F0.x0[i].x8 >= lb_804329F0.x0[i].x0 {
@@ -241,11 +249,13 @@ pub unsafe fn lb_80019900() {
 
 /// 019A30
 pub unsafe fn lb_80019A30(index: i32) -> bool {
+    melee_core::ct!("lb_80019A30");
     lb_804329F0.x0[index as usize].x10 != 0
 }
 
 /// 019A48
 pub unsafe fn lb_80019A48() {
+    melee_core::ct!("lb_80019A48");
     let enabled = ext::OSDisableInterrupts();
 
     if lb_804329F0.x48 != 0 {
@@ -257,6 +267,7 @@ pub unsafe fn lb_80019A48() {
 
 /// 019AAC
 pub unsafe fn lb_80019AAC(arg0: Event) {
+    melee_core::ct!("lb_80019AAC");
     (arg0.unwrap())();
 
     let frame_ticks: f32 = (1.0f32 / 60.0f32) * (os_timer_clock() as f32);

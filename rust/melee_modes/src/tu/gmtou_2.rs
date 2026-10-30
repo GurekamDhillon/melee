@@ -115,6 +115,7 @@ unsafe fn timers() -> *mut TmAnimTimers {
 // ---------------------------------------------------------------------------------------------
 
 pub unsafe extern "C" fn fn_8019BA08(idx: u8, jobj: *mut HSD_JObj) {
+    melee_core::ct!("fn_8019BA08");
     let mut jobj = jobj;
     let tmd = gm_GetTournamentData();
 
@@ -163,6 +164,7 @@ pub unsafe extern "C" fn fn_8019BA08(idx: u8, jobj: *mut HSD_JObj) {
 }
 
 pub unsafe extern "C" fn fn_8019BF18(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8019BF18");
     let jobj = gobj_jobj(gobj);
 
     if (*timers()).x4 > 800 {
@@ -174,6 +176,7 @@ pub unsafe extern "C" fn fn_8019BF18(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_8019BF8C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8019BF8C");
     let selection = (*gm_GetTournamentData()).cur_option;
     let jobj = gobj_jobj(gobj);
     if selection <= 0x1A || selection >= 0x1F {
@@ -189,6 +192,7 @@ pub unsafe extern "C" fn fn_8019BF8C(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_8019C048(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8019C048");
     let tmd = gm_GetTournamentData();
     let idx = fn_8018F62C(&*gobj) as i32;
     let jobj = gobj_jobj(gobj);
@@ -257,6 +261,7 @@ pub unsafe extern "C" fn fn_8019C048(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_8019C3EC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8019C3EC");
     let tmd = gm_GetTournamentData();
     let idx = fn_8018F62C(&*gobj) as i32;
     let jobj = gobj_jobj(gobj);
@@ -280,6 +285,7 @@ unsafe fn GetTmData() -> *mut TmData {
 }
 
 pub unsafe extern "C" fn fn_8019C570(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8019C570");
     let tmd = GetTmData();
 
     let idx = fn_8018F62C(&*gobj) as u64;
@@ -304,6 +310,7 @@ pub unsafe extern "C" fn fn_8019C570(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_8019C6AC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8019C6AC");
     GetTmData();
     let jobj = gobj_jobj(gobj);
 
@@ -316,6 +323,7 @@ pub unsafe extern "C" fn fn_8019C6AC(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_8019C744(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8019C744");
     let tmd = gm_GetTournamentData();
     let idx = fn_8018F62C(&*gobj) as i32;
     let jobj = gobj_jobj(gobj);
@@ -342,6 +350,7 @@ pub unsafe extern "C" fn fn_8019C744(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_8019CA38(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8019CA38");
     let tmd = gm_GetTournamentData();
     let idx = fn_8018F62C(&*gobj) as i32;
     let jobj = gobj_jobj(gobj);
@@ -368,6 +377,7 @@ pub unsafe extern "C" fn fn_8019CA38(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_8019CBFC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8019CBFC");
     GetTmData();
     let jobj = gobj_jobj(gobj);
 
@@ -378,6 +388,7 @@ pub unsafe extern "C" fn fn_8019CBFC(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_8019CC74(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8019CC74");
     let tmd = gm_GetTournamentData();
     let idx = fn_8018F62C(&*gobj) as i32;
     let jobj = gobj_jobj(gobj);
@@ -393,6 +404,7 @@ pub unsafe extern "C" fn fn_8019CC74(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_8019CDBC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8019CDBC");
     let tmd = gm_GetTournamentData();
     let jobj = gobj_jobj(gobj);
     let idx = fn_8018F62C(&*gobj);
@@ -428,6 +440,7 @@ pub unsafe extern "C" fn fn_8019CDBC(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_8019CFA4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8019CFA4");
     let data = GetTmData();
     let mut jobj = jnext(jnext(jchild(gobj_jobj(gobj))));
 
@@ -437,6 +450,7 @@ pub unsafe extern "C" fn fn_8019CFA4(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_8019D074(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8019D074");
     let tmd = gm_GetTournamentData();
     let idx = fn_8018F62C(&*gobj) as i32;
     let jobj = gobj_jobj(gobj);
@@ -452,10 +466,12 @@ pub unsafe extern "C" fn fn_8019D074(gobj: *mut HSD_GObj) {
 
 #[inline]
 pub unsafe fn gmTournament_GetJObj(gobj: *mut HSD_GObj) -> *mut HSD_JObj {
+    melee_core::ct!("gmTournament_GetJObj");
     gobj_jobj(gobj)
 }
 
 pub unsafe extern "C" fn fn_8019D1BC() {
+    melee_core::ct!("fn_8019D1BC");
     let tmd = gm_GetTournamentData();
     let m = (*lbl_804D6694).models;
     // char name_buf[16][0x14]; sized for the largest bracket (see the module note)
@@ -612,6 +628,7 @@ pub unsafe extern "C" fn fn_8019D1BC() {
 }
 
 pub unsafe extern "C" fn fn_8019DD60() {
+    melee_core::ct!("fn_8019DD60");
     let tmd = gm_GetTournamentData();
     if (*tmd).x2C == 0 {
         if gm_804771C4.match_type == 1 {
@@ -690,6 +707,7 @@ unsafe fn get_match_player_index_xF(player: i32) -> i32 {
 }
 
 pub unsafe extern "C" fn gm_Scene_TouAlt_OnFrame() {
+    melee_core::ct!("gm_Scene_TouAlt_OnFrame");
     let mut vsdata: TmVsData = core::mem::zeroed();
     let mut confirmed: i32 = 0;
     let tmd = gm_GetTournamentData();
@@ -870,6 +888,7 @@ pub unsafe extern "C" fn gm_Scene_TouAlt_OnFrame() {
 }
 
 pub unsafe extern "C" fn gm_8019ECAC_OnEnter_inline() {
+    melee_core::ct!("gm_8019ECAC_OnEnter_inline");
     lbl_804D6688 = ext::lbArchive_80016DBC(
         b"GmTou1p\0".as_ptr() as *const c_char,
         addr_of_mut!(lbl_804D6690) as *mut c_void,
@@ -884,6 +903,7 @@ pub unsafe extern "C" fn gm_8019ECAC_OnEnter_inline() {
 }
 
 pub unsafe extern "C" fn gm_8019E634() {
+    melee_core::ct!("gm_8019E634");
     let tmd = gm_GetTournamentData();
     let hmn_cpu = (*tmd).hmn_cpu_count;
     let mut indices: [i32; 4] = [lbl_803B7D3C[0], lbl_803B7D3C[1], lbl_803B7D3C[2], lbl_803B7D3C[3]];
@@ -1020,6 +1040,7 @@ pub unsafe extern "C" fn gm_8019E634() {
 }
 
 pub unsafe extern "C" fn gm_Scene_TouAlt_OnEnter(_arg0: *mut c_void) {
+    melee_core::ct!("gm_Scene_TouAlt_OnEnter");
     // struct { StKind stkind; CharacterKind char_id[4]; u32 color[4]; } local (zero-initialised)
     let mut local_stkind: StKind = 0;
     let mut local_char_id: [CharacterKind; 4] = [0; 4];
@@ -1071,11 +1092,13 @@ pub unsafe extern "C" fn gm_Scene_TouAlt_OnEnter(_arg0: *mut c_void) {
 }
 
 pub unsafe extern "C" fn gm_Scene_TouAlt_OnExit(_arg0: *mut c_void) {
+    melee_core::ct!("gm_Scene_TouAlt_OnExit");
     ext::lbArchive_80016EFC(lbl_804D6688);
     ext::lbArchive_80016EFC(lbl_804D668C);
 }
 
 pub unsafe extern "C" fn fn_8019EE80(arg0: *mut TmVsData) {
+    melee_core::ct!("fn_8019EE80");
     let game_cache = addr_of_mut!((*ext::lbDvd_GetPreloadCacheScene()).game_cache);
     let mut i: i32 = 0;
     while i < (*gm_GetTournamentData()).x30 as i32 {
@@ -1092,6 +1115,7 @@ pub unsafe extern "C" fn fn_8019EE80(arg0: *mut TmVsData) {
 }
 
 pub unsafe extern "C" fn fn_8019EF08(arg0: *mut TmVsData) {
+    melee_core::ct!("fn_8019EF08");
     let game_cache = addr_of_mut!((*ext::lbDvd_GetPreloadCacheScene()).game_cache);
     let mut i = 0;
     while i < 4 {

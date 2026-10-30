@@ -38,6 +38,7 @@ pub mod ext {
 }
 
 pub fn ftCo_8009F39C(g: G) {
+    melee_core::ct!("ftCo_8009F39C");
     fp(g).x8c_kb_vel.y = 0.0;
     ext::Fighter_ChangeMotionState(g, ftCo_MS_MissFoot as i32, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     let f = fp(g);
@@ -48,17 +49,20 @@ pub fn ftCo_8009F39C(g: G) {
 }
 
 pub fn ftCo_MissFoot_Anim(g: G) {
+    melee_core::ct!("ftCo_MissFoot_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ftCo_80090780(g);
     }
 }
 
-pub fn ftCo_MissFoot_IASA(_g: G) {}
+pub fn ftCo_MissFoot_IASA(_g: G) { melee_core::ct!("ftCo_MissFoot_IASA");}
 
 pub fn ftCo_MissFoot_Phys(g: G) {
+    melee_core::ct!("ftCo_MissFoot_Phys");
     ext::ft_80084DB0(g);
 }
 
 pub fn ftCo_MissFoot_Coll(g: G) {
+    melee_core::ct!("ftCo_MissFoot_Coll");
     ext::ft_80082F28(g);
 }

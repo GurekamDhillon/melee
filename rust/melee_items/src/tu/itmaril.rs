@@ -108,6 +108,7 @@ unsafe fn Item_EnterStateWithEffectHitlag(gobj: *mut Item_GObj, msid: i32) {
 
 /// `itMaril_UnkMotion2_Anim_inline` (static)
 pub unsafe extern "C" fn itMaril_UnkMotion2_Anim_inline(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMaril_UnkMotion2_Anim_inline");
     let ip = GET_ITEM(gobj);
     (*ip).xD44_lifeTimer -= 1.0;
     (*ip).xD44_lifeTimer <= 0.0
@@ -115,6 +116,7 @@ pub unsafe extern "C" fn itMaril_UnkMotion2_Anim_inline(gobj: *mut Item_GObj) ->
 
 /// 2D66F8
 pub unsafe extern "C" fn it_802D66F8(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_802D66F8");
     if ext::it_80273130(gobj) == 1 {
         ext::efLib_DestroyAll(gobj);
         return true;
@@ -124,6 +126,7 @@ pub unsafe extern "C" fn it_802D66F8(gobj: *mut Item_GObj) -> bool {
 
 /// 2D6740
 pub unsafe extern "C" fn it_802D6740(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D6740");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itMarilAttributes;
     (*ip).x40_vel.y += (*attr).xC;
@@ -133,6 +136,7 @@ pub unsafe extern "C" fn it_802D6740(gobj: *mut Item_GObj) {
 
 /// 2D6798
 pub unsafe extern "C" fn it_802D6798(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_802D6798");
     let mut coll = ext::it_8026D9A0(gobj);
     coll |= ext::it_80276308(gobj);
     coll |= ext::it_802763E0(gobj);
@@ -145,40 +149,48 @@ pub unsafe extern "C" fn it_802D6798(gobj: *mut Item_GObj) -> bool {
 
 /// 2D6808
 pub unsafe extern "C" fn it_802D6808(_arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_802D6808");
     false
 }
 
 /// 2D6810
 pub unsafe extern "C" fn it_802D6810(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_802D6810");
     ext::it_80273030(gobj) != 0
 }
 
 /// 2D6830
 pub unsafe extern "C" fn it_802D6830(_arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_802D6830");
     true
 }
 
 /// 2D6838
 pub unsafe extern "C" fn it_802D6838(_arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_802D6838");
     false
 }
 
 /// 2D6840
 pub unsafe extern "C" fn it_802D6840(_arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_802D6840");
     true
 }
 
 /// 2D6848
 pub unsafe extern "C" fn it_802D6848(_arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_802D6848");
     true
 }
 
 /// 2D6850
 pub unsafe extern "C" fn it_802D6850(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D6850");
     ext::it_8026B894(gobj, ref_gobj);
 }
 
 pub unsafe extern "C" fn itMaril_Logic28_Spawned(gobj: *mut Item_GObj) {
+    melee_core::ct!("itMaril_Logic28_Spawned");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itMarilAttributes;
     (*ip).xDD4_itemVar.maril.x60.anon_0.set_x0(0);
@@ -191,6 +203,7 @@ pub unsafe extern "C" fn itMaril_Logic28_Spawned(gobj: *mut Item_GObj) {
 
 /// 2D68FC
 pub unsafe extern "C" fn it_802D68FC(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D68FC");
     Item_EnterStateWithEffectHitlag(gobj, 0);
     ext::it_80273670(gobj, 0, 0.0);
     ext::it_8026BDB4(gobj);
@@ -198,6 +211,7 @@ pub unsafe extern "C" fn it_802D68FC(gobj: *mut Item_GObj) {
 
 /// `itMaril_UnkMotion1_Coll_inline` (static)
 pub unsafe extern "C" fn itMaril_UnkMotion1_Coll_inline(gobj: *mut Item_GObj) {
+    melee_core::ct!("itMaril_UnkMotion1_Coll_inline");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itMarilAttributes;
     if (*ip).xDD4_itemVar.maril.x60.anon_0.x0() == 0 {
@@ -211,20 +225,24 @@ pub unsafe extern "C" fn itMaril_UnkMotion1_Coll_inline(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itMaril_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMaril_UnkMotion0_Anim");
     ext::it_80279FF8(gobj);
     false
 }
 
 pub unsafe extern "C" fn itMaril_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itMaril_UnkMotion0_Phys");
     ext::it_8027A09C(gobj);
 }
 
 pub unsafe extern "C" fn itMaril_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMaril_UnkMotion0_Coll");
     ext::it_8027A118(gobj, Some(it_802D69E4)) != 0
 }
 
 /// 2D69E4
 pub unsafe extern "C" fn it_802D69E4(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D69E4");
     let ip = GET_ITEM(gobj);
     ext::it_80273454(gobj);
     ext::it_802762BC(ip);
@@ -236,6 +254,7 @@ pub unsafe extern "C" fn it_802D69E4(gobj: *mut Item_GObj) {
 
 /// 2D6A54
 pub unsafe extern "C" fn it_802D6A54(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D6A54");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itMarilAttributes;
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);
@@ -247,6 +266,7 @@ pub unsafe extern "C" fn it_802D6A54(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itMaril_UnkMotion1_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMaril_UnkMotion1_Anim");
     let ip = GET_ITEM(gobj);
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     ext::it_8027A160((*(*ip).xBBC_dynamicBoneTable).bones[1], ip);
@@ -263,12 +283,14 @@ pub unsafe extern "C" fn itMaril_UnkMotion1_Anim(gobj: *mut Item_GObj) -> bool {
 }
 
 pub unsafe extern "C" fn itMaril_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itMaril_UnkMotion1_Phys");
     let ip = GET_ITEM(gobj);
     ext::it_8027A344(gobj);
     (*ip).x40_vel.x = (*ip).xDD4_itemVar.maril.x64;
 }
 
 pub unsafe extern "C" fn itMaril_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMaril_UnkMotion1_Coll");
     let coll = ext::it_8026DB40(gobj);
     if ext::it_80272C6C(gobj) == 0 {
         if coll & 1 != 0 {
@@ -284,29 +306,35 @@ pub unsafe extern "C" fn itMaril_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool {
 
 /// 2D6DDC
 pub unsafe extern "C" fn it_802D6DDC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802D6DDC");
     ext::Item_80268E5C(gobj, 2, ITEM_UNK_0x1);
 }
 
 pub unsafe extern "C" fn itMaril_UnkMotion2_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMaril_UnkMotion2_Anim");
     itMaril_UnkMotion2_Anim_inline(gobj)
 }
 
 pub unsafe extern "C" fn itMaril_UnkMotion2_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itMaril_UnkMotion2_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = (*ip).xCC_item_attr;
     ext::it_80272860(gobj, (*attrs).x10_fall_speed, (*attrs).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itMaril_UnkMotion2_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMaril_UnkMotion2_Coll");
     ext::it_8026E15C(gobj, Some(it_802D69E4));
     false
 }
 
 pub unsafe extern "C" fn itMaril_UnkMotion3_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMaril_UnkMotion3_Anim");
     itMaril_UnkMotion2_Anim(gobj)
 }
 
 pub unsafe extern "C" fn itMaril_UnkMotion3_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itMaril_UnkMotion3_Phys");
     itMaril_UnkMotion2_Phys(gobj);
 }
 
@@ -324,6 +352,7 @@ unsafe fn it_802D6F00_inline(gobj: *mut Item_GObj) {
 
 /// 2D6F00
 pub unsafe extern "C" fn it_802D6F00(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_802D6F00");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itMarilAttributes;
     if (*ip).xC9C as f32 >= (*attr).x14 {
@@ -335,5 +364,6 @@ pub unsafe extern "C" fn it_802D6F00(gobj: *mut Item_GObj) -> bool {
 
 /// 2D6FB0
 pub unsafe extern "C" fn it_802D6FB0(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D6FB0");
     ext::it_8026B894(gobj, ref_gobj);
 }

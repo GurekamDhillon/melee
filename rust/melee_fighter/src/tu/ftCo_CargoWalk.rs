@@ -42,6 +42,7 @@ pub mod ext {
 }
 
 pub fn ftCo_8009B67C(g: G) -> bool {
+    melee_core::ct!("ftCo_8009B67C");
     if ext::ftWalkCommon_800DFC70(g) {
         ftCo_8009B6C8(g, 0.0);
         return true;
@@ -51,6 +52,7 @@ pub fn ftCo_8009B67C(g: G) -> bool {
 
 /// `ftCo_8009B6C8` (static in the C).
 pub fn ftCo_8009B6C8(g: G, anim_start: f32) {
+    melee_core::ct!("ftCo_8009B6C8");
     let f = fp(g);
     let a = unsafe { &*f.x2CC };
     ext::ftWalkCommon_800DFCA4(g, a.x4_motion_state + 1, Ft_MF_None, anim_start, a.x8, a.xC, a.x10, a.x14, a.x18, a.x1C, 1.0);
@@ -60,10 +62,12 @@ pub fn ftCo_8009B6C8(g: G, anim_start: f32) {
 }
 
 pub fn ftCo_CargoWalk_Anim(g: G) {
+    melee_core::ct!("ftCo_CargoWalk_Anim");
     ext::ftWalkCommon_800DFDDC(g);
 }
 
 pub fn ftCo_CargoWalk_IASA(g: G) {
+    melee_core::ct!("ftCo_CargoWalk_IASA");
     if ext::ftCo_8009BF3C(g) { return; }
     if ext::ftCo_8009BB1C(g) { return; }
     if ext::ftCo_8009C4F8(g) { return; }
@@ -72,9 +76,11 @@ pub fn ftCo_CargoWalk_IASA(g: G) {
 }
 
 pub fn ftCo_CargoWalk_Phys(g: G) {
+    melee_core::ct!("ftCo_CargoWalk_Phys");
     ext::ftWalkCommon_800E0060(g);
 }
 
 pub fn ftCo_CargoWalk_Coll(g: G) {
+    melee_core::ct!("ftCo_CargoWalk_Coll");
     ext::ftCo_CargoWait_Coll(g);
 }

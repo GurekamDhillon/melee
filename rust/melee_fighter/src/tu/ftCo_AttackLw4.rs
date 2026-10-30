@@ -50,6 +50,7 @@ pub mod ext {
 
 /// static `checkLStick(fp)`: A pressed with the stick flicked down.
 pub fn checkLStick(fp: &Fighter) -> bool {
+    melee_core::ct!("checkLStick");
     fp.input.pressed_buttons & HSD_PAD_A as u32 != 0
         && fp.input.lstick[0].y <= cd().xD4
         && (fp.active_timer.lstick.y as f32) < cd().xD8
@@ -57,6 +58,7 @@ pub fn checkLStick(fp: &Fighter) -> bool {
 
 /// `ftCo_AttackLw4_CheckInput`.
 pub fn ftCo_AttackLw4_CheckInput(g: G) -> bool {
+    melee_core::ct!("ftCo_AttackLw4_CheckInput");
     let f = fp(g);
     if checkLStick(f) || ext::ftCo_800DF3A8(f) {
         if !f.item_gobj.is_null() && (ext::ftCo_80094E54(f) || ext::ftCo_800DF3DC(f)) {
@@ -75,6 +77,7 @@ pub fn ftCo_AttackLw4_CheckInput(g: G) -> bool {
 
 /// static `doEnter`.
 pub fn doEnter(g: G) {
+    melee_core::ct!("doEnter");
     let f = fp(g);
     ext::Mex_OnDSmashDispatch(f.kind as i32, g, core::ptr::null_mut());
     f.set_allow_interrupt(0);
@@ -83,21 +86,25 @@ pub fn doEnter(g: G) {
 }
 
 pub fn ftCo_AttackLw4_Anim(g: G) {
+    melee_core::ct!("ftCo_AttackLw4_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ft_8008A2BC(g);
     }
 }
 
 pub fn ftCo_AttackLw4_IASA(g: G) {
+    melee_core::ct!("ftCo_AttackLw4_IASA");
     if fp(g).allow_interrupt() != 0 {
         ext::ftCo_Wait_IASA(g);
     }
 }
 
 pub fn ftCo_AttackLw4_Phys(g: G) {
+    melee_core::ct!("ftCo_AttackLw4_Phys");
     ext::ft_80084F3C(g);
 }
 
 pub fn ftCo_AttackLw4_Coll(g: G) {
+    melee_core::ct!("ftCo_AttackLw4_Coll");
     ext::ft_80084104(g);
 }

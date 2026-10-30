@@ -141,11 +141,13 @@ pub static it_803B8650: Vec4 = Vec4 { x: 0.0, y: 0.0, z: 0.0, w: 0.0 };
 pub static mut it_804D6D48: f32 = 0.0;
 
 pub unsafe extern "C" fn it_802A2418(obj: *mut Item_GObj) {
+    melee_core::ct!("it_802A2418");
     let item = GET_ITEM(obj);
     (*item).xDD4_itemVar.linkhookshot.x10 = None;
 }
 
 pub unsafe fn it_802A2428(obj: *mut HSD_GObj) {
+    melee_core::ct!("it_802A2428");
     let item = GET_ITEM(obj);
     let jobj = HSD_GObjGetHSDObj(obj) as *mut HSD_JObj;
     let item_owner = GET_ITEM((*item).owner);
@@ -157,10 +159,12 @@ pub unsafe fn it_802A2428(obj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_802A2474(arg0: *mut c_void) {
+    melee_core::ct!("it_802A2474");
     ext::HSD_ObjFree(&raw mut ext::item_link_alloc_data, arg0);
 }
 
 pub unsafe extern "C" fn it_802A24A0(obj: *mut HSD_GObj, arg1: i32) {
+    melee_core::ct!("it_802A24A0");
     let link = (*obj).user_data as *mut ItemLink;
     if (*link).x2C_b0() != 0 {
         ext::HSD_GObj_JObjCallback(obj, arg1);
@@ -168,6 +172,7 @@ pub unsafe extern "C" fn it_802A24A0(obj: *mut HSD_GObj, arg1: i32) {
 }
 
 pub unsafe fn it_802A24D0(arg0: *mut ItemLink, arg8: f32) {
+    melee_core::ct!("it_802A24D0");
     let coll_data = &raw mut (*arg0).coll_data;
     (*coll_data).cur_pos = (*arg0).pos;
     (*coll_data).last_pos = (*coll_data).cur_pos;
@@ -177,10 +182,12 @@ pub unsafe fn it_802A24D0(arg0: *mut ItemLink, arg8: f32) {
 }
 
 pub unsafe fn link_fighter_compare(fp: *mut Fighter) -> bool {
+    melee_core::ct!("link_fighter_compare");
     (*fp).motion_id == 0x168 || (*fp).motion_id == 0x169 || (*fp).motion_id == 0xD4 || (*fp).motion_id == 0xD6
 }
 
 pub unsafe fn it_802A2568_inline(link: *mut ItemLink, jobj: *mut HSD_JObj, gobj: *mut HSD_GObj, pos: *mut Vec3) {
+    melee_core::ct!("it_802A2568_inline");
     (*link).jobj = jobj;
     (*link).gobj = gobj;
     (*link).vel = *pos;
@@ -193,6 +200,7 @@ pub unsafe fn it_802A2568_inline(link: *mut ItemLink, jobj: *mut HSD_JObj, gobj:
 }
 
 pub unsafe fn it_link_get_joint(arg0: *mut Item, var_r31: i32) -> *mut HSD_JObj {
+    melee_core::ct!("it_link_get_joint");
     let temp_r3_4 = (*(*arg0).xC4_article_data).x4_specialAttributes as *mut itLinkHookshotAttributes;
     if (var_r31 % 2) != 0 {
         ext::HSD_JObjLoadJoint((*temp_r3_4).x54)
@@ -202,16 +210,19 @@ pub unsafe fn it_link_get_joint(arg0: *mut Item, var_r31: i32) -> *mut HSD_JObj 
 }
 
 pub unsafe fn it_link_get_joint_c(arg0: *mut Item) -> *mut HSD_JObj {
+    melee_core::ct!("it_link_get_joint_c");
     let temp_r3_4 = (*(*arg0).xC4_article_data).x4_specialAttributes as *mut itLinkHookshotAttributes;
     ext::HSD_JObjLoadJoint((*temp_r3_4).x5C)
 }
 
 /// `t * a + (1.0F - t) * b`: the left product fuses into the add.
 pub fn it_link_lerp(a: f32, b: f32, t: f32) -> f32 {
+    melee_core::ct!("it_link_lerp");
     t.mul_add(a, (1.0_f32 - t) * b)
 }
 
 pub unsafe fn it_link_attr_math(attr: *mut itLinkHookshotAttributes, arg2: i32, arg8: f32) {
+    melee_core::ct!("it_link_attr_math");
     let var_f0: f32;
     let var_f1: f32;
     if arg2 != 0 {
@@ -235,6 +246,7 @@ pub unsafe fn it_link_attr_math(attr: *mut itLinkHookshotAttributes, arg2: i32, 
 }
 
 pub unsafe fn it_802A2568(arg0: *mut Item, arg1: *mut HSD_JObj, arg2: i32, arg8: f32) -> *mut HSD_JObj {
+    melee_core::ct!("it_802A2568");
     let attr = (*(*arg0).xC4_article_data).x4_specialAttributes as *mut itLinkHookshotAttributes;
     let mut pos: Vec3 = *(&raw const it_803B8650 as *const Vec3);
     let mut last_link: *mut ItemLink = null_mut();
@@ -306,6 +318,7 @@ pub unsafe fn it_802A2568(arg0: *mut Item, arg1: *mut HSD_JObj, arg2: i32, arg8:
 }
 
 pub unsafe fn it_802A2B10(arg0: *mut Item_GObj) {
+    melee_core::ct!("it_802A2B10");
     if !arg0.is_null() {
         let item = (*arg0).user_data as *mut Item;
         if !item.is_null() {
@@ -331,6 +344,7 @@ pub unsafe fn it_802A2B10(arg0: *mut Item_GObj) {
 }
 
 pub unsafe fn it_802A2BA4(arg0: *mut Fighter_GObj, arg1: *mut Vec3, arg2: f32, arg3: i32) -> *mut Item_GObj {
+    melee_core::ct!("it_802A2BA4");
     let fp = (*arg0).user_data as *mut Fighter;
     let mut spawn_item: SpawnItem = core::mem::zeroed();
     if !link_fighter_compare(fp) {
@@ -365,6 +379,7 @@ pub unsafe fn it_802A2BA4(arg0: *mut Fighter_GObj, arg1: *mut Vec3, arg2: f32, a
 }
 
 pub unsafe extern "C" fn itLinkhookshot_UnkMotion8_Anim(arg0: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLinkhookshot_UnkMotion8_Anim");
     let mut var_r5: i32 = 0;
     let item = GET_ITEM(arg0);
     let jobj = (*arg0).hsd_obj as *mut HSD_JObj;
@@ -384,6 +399,7 @@ pub unsafe extern "C" fn itLinkhookshot_UnkMotion8_Anim(arg0: *mut Item_GObj) ->
 }
 
 pub unsafe extern "C" fn fn_802A2E4C(arg0: *mut Item_GObj) {
+    melee_core::ct!("fn_802A2E4C");
     let item = GET_ITEM(arg0);
     let fp = GET_FIGHTER((*item).owner);
     it_802A6944(item, (*fp).x34_scale.y);
@@ -393,11 +409,13 @@ pub unsafe extern "C" fn fn_802A2E4C(arg0: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLinkhookshot_UnkMotion0_Phys(arg0: *mut Item_GObj) {
+    melee_core::ct!("itLinkhookshot_UnkMotion0_Phys");
     let item = GET_ITEM(arg0);
     (*item).xDD4_itemVar.linkhookshot.x10 = Some(fn_802A2E4C);
 }
 
 pub unsafe fn it_802A2EE4_inline(m: *mut [f32; 4], item_link: *mut ItemLink, pos: *mut Vec3) {
+    melee_core::ct!("it_802A2EE4_inline");
     ext::PSMTXIdentity(m as *mut c_void);
     (*m.add(0))[3] = 0.0;
     (*m.add(1))[3] = 0.0;
@@ -410,6 +428,7 @@ pub unsafe fn it_802A2EE4_inline(m: *mut [f32; 4], item_link: *mut ItemLink, pos
 }
 
 pub unsafe fn it_802A2EE4_inline_alt(item_link: *mut ItemLink, pos: *mut Vec3) {
+    melee_core::ct!("it_802A2EE4_inline_alt");
     let zero = 0.0_f32;
     let mut m: Mtx = core::mem::zeroed();
     let mp = m.as_mut_ptr();
@@ -425,14 +444,17 @@ pub unsafe fn it_802A2EE4_inline_alt(item_link: *mut ItemLink, pos: *mut Vec3) {
 }
 
 pub unsafe fn it_802A2EE4_inline_alt_mtx_first(item_link: *mut ItemLink, pos: *mut Vec3) {
+    melee_core::ct!("it_802A2EE4_inline_alt_mtx_first");
     it_802A2EE4_inline_alt(item_link, pos);
 }
 
 pub unsafe fn it_802A2EE4_inline_alt_pad(item_link: *mut ItemLink, pos: *mut Vec3) {
+    melee_core::ct!("it_802A2EE4_inline_alt_pad");
     it_802A2EE4_inline_alt(item_link, pos);
 }
 
 pub unsafe extern "C" fn it_802A2EE4(arg0: *mut Item_GObj) {
+    melee_core::ct!("it_802A2EE4");
     let mut pos: Vec3 = core::mem::zeroed();
     let mut pos_2: Vec3;
 
@@ -473,11 +495,13 @@ pub unsafe extern "C" fn it_802A2EE4(arg0: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLinkhookshot_UnkMotion1_Phys(arg0: *mut Item_GObj) {
+    melee_core::ct!("itLinkhookshot_UnkMotion1_Phys");
     let item = GET_ITEM(arg0);
     (*item).xDD4_itemVar.linkhookshot.x10 = Some(it_802A2EE4);
 }
 
 pub unsafe fn mtx_reset(m: *mut [f32; 4]) {
+    melee_core::ct!("mtx_reset");
     let zero = 0.0_f32;
     (*m.add(0))[3] = zero;
     (*m.add(1))[3] = zero;
@@ -485,12 +509,14 @@ pub unsafe fn mtx_reset(m: *mut [f32; 4]) {
 }
 
 pub unsafe fn vec3_eq_mtx(vec: *mut Vec3, m: *mut [f32; 4]) {
+    melee_core::ct!("vec3_eq_mtx");
     (*vec).x = (*m.add(0))[3];
     (*vec).y = (*m.add(1))[3];
     (*vec).z = (*m.add(2))[3];
 }
 
 pub unsafe fn fn_802A3110_inline(item_link: *mut ItemLink, pos: *mut Vec3) {
+    melee_core::ct!("fn_802A3110_inline");
     let mut m: Mtx = core::mem::zeroed();
     let mp = m.as_mut_ptr();
     ext::PSMTXIdentity(mp as *mut c_void);
@@ -501,6 +527,7 @@ pub unsafe fn fn_802A3110_inline(item_link: *mut ItemLink, pos: *mut Vec3) {
 }
 
 pub unsafe extern "C" fn fn_802A3110(arg0: *mut HSD_GObj) {
+    melee_core::ct!("fn_802A3110");
     let mut vec: Vec3 = core::mem::zeroed();
     let item = GET_ITEM(arg0);
     let attr = (*(*item).xC4_article_data).x4_specialAttributes as *mut itLinkHookshotAttributes;
@@ -521,11 +548,13 @@ pub unsafe extern "C" fn fn_802A3110(arg0: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itLinkhookshot_UnkMotion2_Phys(arg0: *mut Item_GObj) {
+    melee_core::ct!("itLinkhookshot_UnkMotion2_Phys");
     let item = GET_ITEM(arg0);
     (*item).xDD4_itemVar.linkhookshot.x10 = Some(fn_802A3110);
 }
 
 pub unsafe extern "C" fn it_802A3254(arg0: *mut Item_GObj) {
+    melee_core::ct!("it_802A3254");
     let mut pos: Vec3 = core::mem::zeroed();
     let item = GET_ITEM(arg0);
     let attr = (*(*item).xC4_article_data).x4_specialAttributes as *mut itLinkHookshotAttributes;
@@ -542,15 +571,18 @@ pub unsafe extern "C" fn it_802A3254(arg0: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLinkhookshot_UnkMotion3_Phys(arg0: *mut Item_GObj) {
+    melee_core::ct!("itLinkhookshot_UnkMotion3_Phys");
     let item = GET_ITEM(arg0);
     (*item).xDD4_itemVar.linkhookshot.x10 = Some(it_802A3254);
 }
 
 pub unsafe fn fn_802A33A0_GetFighter(item: *mut Item) -> *mut Fighter {
+    melee_core::ct!("fn_802A33A0_GetFighter");
     (*(*item).owner).user_data as *mut Fighter
 }
 
 pub unsafe extern "C" fn fn_802A33A0(arg0: *mut Item_GObj) {
+    melee_core::ct!("fn_802A33A0");
     let mut vec: Vec3 = core::mem::zeroed();
     let mut m: Mtx = core::mem::zeroed();
 
@@ -574,11 +606,13 @@ pub unsafe extern "C" fn fn_802A33A0(arg0: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLinkhookshot_UnkMotion4_Phys(arg0: *mut Item_GObj) {
+    melee_core::ct!("itLinkhookshot_UnkMotion4_Phys");
     let item = GET_ITEM(arg0);
     (*item).xDD4_itemVar.linkhookshot.x10 = Some(fn_802A33A0);
 }
 
 pub unsafe extern "C" fn it_802A3500(arg0: *mut Item_GObj) {
+    melee_core::ct!("it_802A3500");
     let mut pos: Vec3 = core::mem::zeroed();
     let mut m: Mtx = core::mem::zeroed();
     let item = GET_ITEM(arg0);
@@ -600,11 +634,13 @@ pub unsafe extern "C" fn it_802A3500(arg0: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLinkhookshot_UnkMotion5_Phys(arg0: *mut Item_GObj) {
+    melee_core::ct!("itLinkhookshot_UnkMotion5_Phys");
     let item = GET_ITEM(arg0);
     (*item).xDD4_itemVar.linkhookshot.x10 = Some(it_802A3500);
 }
 
 pub unsafe extern "C" fn it_802A3630(arg0: *mut Item_GObj) {
+    melee_core::ct!("it_802A3630");
     let mut pos: Vec3 = core::mem::zeroed();
     let item = GET_ITEM(arg0);
     let attr = (*(*item).xC4_article_data).x4_specialAttributes as *mut itLinkHookshotAttributes;
@@ -636,11 +672,13 @@ pub unsafe extern "C" fn it_802A3630(arg0: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLinkhookshot_UnkMotion6_Phys(arg0: *mut Item_GObj) {
+    melee_core::ct!("itLinkhookshot_UnkMotion6_Phys");
     let item = GET_ITEM(arg0);
     (*item).xDD4_itemVar.linkhookshot.x10 = Some(it_802A3630);
 }
 
 pub unsafe extern "C" fn it_802A3828(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802A3828");
     let mut pos: Vec3 = core::mem::zeroed();
     let mut m: Mtx = core::mem::zeroed();
     let item = GET_ITEM(gobj);
@@ -675,11 +713,13 @@ pub unsafe extern "C" fn it_802A3828(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLinkhookshot_UnkMotion7_Phys(arg0: *mut Item_GObj) {
+    melee_core::ct!("itLinkhookshot_UnkMotion7_Phys");
     let item = GET_ITEM(arg0);
     (*item).xDD4_itemVar.linkhookshot.x10 = Some(it_802A3828);
 }
 
 pub unsafe extern "C" fn it_802A39FC(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802A39FC");
     let item = (*gobj).user_data as *mut Item;
     let attr = (*(*item).xC4_article_data).x4_specialAttributes as *mut itLinkHookshotAttributes;
     let mut pos: Vec3 = core::mem::zeroed();
@@ -739,6 +779,7 @@ pub unsafe extern "C" fn it_802A39FC(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLinkhookshot_UnkMotion8_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLinkhookshot_UnkMotion8_Phys");
     let item = GET_ITEM(gobj);
     (*item).xDD4_itemVar.linkhookshot.x10 = Some(it_802A39FC);
 }
@@ -750,6 +791,7 @@ fn len3(x: f32, y: f32, z: f32) -> f32 {
 }
 
 pub unsafe fn it_802A3C98(arg0: *mut Vec3, arg1: *mut Vec3, arg2: *mut Vec3) -> f32 {
+    melee_core::ct!("it_802A3C98");
     (*arg2).x = (*arg0).x - (*arg1).x;
     (*arg2).y = (*arg0).y - (*arg1).y;
     (*arg2).z = (*arg0).z - (*arg1).z;
@@ -763,6 +805,7 @@ pub unsafe fn it_802A3C98(arg0: *mut Vec3, arg1: *mut Vec3, arg2: *mut Vec3) -> 
 }
 
 pub unsafe fn it_802A3D90(item_link: *mut ItemLink) -> i32 {
+    melee_core::ct!("it_802A3D90");
     let coll = &raw mut (*item_link).coll_data;
     (*coll).last_pos = (*coll).cur_pos;
     (*coll).cur_pos = (*item_link).pos;
@@ -776,6 +819,7 @@ pub unsafe fn it_802A3D90(item_link: *mut ItemLink) -> i32 {
 }
 
 pub unsafe fn it_802A3E50(item_link: *mut ItemLink, arg1: FighterKind, arg8: f32) -> i32 {
+    melee_core::ct!("it_802A3E50");
     let coll = &raw mut (*item_link).coll_data;
     let item_link_next = (*item_link).next;
     let flag = (*item_link).x2C_b1() != 0;
@@ -829,6 +873,7 @@ pub unsafe fn it_802A3E50(item_link: *mut ItemLink, arg1: FighterKind, arg8: f32
 }
 
 pub unsafe fn it_802A40D0(item_link: *mut ItemLink, arg8: f32) -> i32 {
+    melee_core::ct!("it_802A40D0");
     let coll = &raw mut (*item_link).coll_data;
     let item_link_next = (*item_link).next;
 
@@ -874,6 +919,7 @@ pub unsafe fn it_802A40D0(item_link: *mut ItemLink, arg8: f32) -> i32 {
 }
 
 pub unsafe fn it_802A42F4(item_link: *mut ItemLink, arg8: f32) -> i32 {
+    melee_core::ct!("it_802A42F4");
     let coll = &raw mut (*item_link).coll_data;
     (*coll).last_pos = (*coll).cur_pos;
     (*coll).last_pos.y = arg8;
@@ -888,22 +934,26 @@ pub unsafe fn it_802A42F4(item_link: *mut ItemLink, arg8: f32) -> i32 {
 }
 
 pub unsafe fn it_802A43B8(item_link: *mut ItemLink) {
+    melee_core::ct!("it_802A43B8");
     (*item_link).coll_data.cur_pos = (*item_link).pos;
     (*item_link).coll_data.last_pos = (*item_link).coll_data.cur_pos;
 }
 
 pub unsafe fn it_802A43EC(item_link: *mut ItemLink) {
+    melee_core::ct!("it_802A43EC");
     (*item_link).coll_data.last_pos = (*item_link).coll_data.cur_pos;
     (*item_link).coll_data.cur_pos = (*item_link).pos;
 }
 
 pub unsafe fn it_802A4420(item_link: *mut ItemLink) {
+    melee_core::ct!("it_802A4420");
     (*item_link).pos.x += (*item_link).vel.x;
     (*item_link).pos.y += (*item_link).vel.y;
     (*item_link).pos.z += (*item_link).vel.z;
 }
 
 pub unsafe fn it_802A4454(item_link: *mut ItemLink) {
+    melee_core::ct!("it_802A4454");
     let mut sp10: Vec3 = core::mem::zeroed();
 
     if ext::mpLib_80054ED8((*item_link).x1CC) != 0 {
@@ -923,6 +973,7 @@ unsafe fn place(dst: *mut Vec3, vec: *const Vec3, w: f32, base: *const Vec3) {
 }
 
 pub unsafe fn it_802A44CC(mut link_0: *mut ItemLink, arg1: *mut Vec3, arg2: *mut itLinkHookshotAttributes, arg8: f32) {
+    melee_core::ct!("it_802A44CC");
     let mut vec: Vec3 = core::mem::zeroed();
 
     let mut link_1 = (*link_0).prev;
@@ -948,16 +999,19 @@ pub unsafe fn it_802A44CC(mut link_0: *mut ItemLink, arg1: *mut Vec3, arg2: *mut
 }
 
 pub unsafe fn test_comp(vec0: *mut Vec3, vec1: *mut Vec3, vec2: *mut Vec3, arg2: *const f32) {
+    melee_core::ct!("test_comp");
     (*vec0).x = (*vec2).x.mul_add(*arg2, (*vec1).x);
     (*vec0).y = (*vec2).y.mul_add(*arg2, (*vec1).y);
     (*vec0).z = (*vec2).z.mul_add(*arg2, (*vec1).z);
 }
 
 pub unsafe fn it_802A4758_permuterslop(link_0: *mut ItemLink) -> *mut Vec3 {
+    melee_core::ct!("it_802A4758_permuterslop");
     &raw mut (*link_0).pos
 }
 
 pub unsafe fn it_802A4758(mut link_0: *mut ItemLink, arg1: *mut Vec3, arg2: *mut itLinkHookshotAttributes, mut arg8: f32) {
+    melee_core::ct!("it_802A4758");
     let mut vec: Vec3 = core::mem::zeroed();
     let mut link_1 = (*link_0).prev;
 
@@ -982,6 +1036,7 @@ pub unsafe fn it_802A4758(mut link_0: *mut ItemLink, arg1: *mut Vec3, arg2: *mut
 }
 
 pub unsafe fn it_802A49B0(mut link_0: *mut ItemLink, arg1: *mut Vec3, arg2: *mut itLinkHookshotAttributes, arg8: f32) {
+    melee_core::ct!("it_802A49B0");
     let mut vec: Vec3 = core::mem::zeroed();
 
     let mut link_1 = (*link_0).prev;
@@ -1003,6 +1058,7 @@ pub unsafe fn it_802A49B0(mut link_0: *mut ItemLink, arg1: *mut Vec3, arg2: *mut
 }
 
 pub unsafe fn it_802A6A78_normalize_diff(a: *mut Vec3, b: *mut Vec3, vec: *mut Vec3) -> f64 {
+    melee_core::ct!("it_802A6A78_normalize_diff");
     (*vec).x = (*a).x - (*b).x;
     (*vec).y = (*a).y - (*b).y;
     (*vec).z = (*a).z - (*b).z;
@@ -1016,10 +1072,12 @@ pub unsafe fn it_802A6A78_normalize_diff(a: *mut Vec3, b: *mut Vec3, vec: *mut V
 
 /// MSL `sqrtf` expansion (the C shifts its volatile spill slot with `*(&y + 6)`; same value).
 pub fn it_802A4BFC_sqrtf_offset(x: f32) -> f32 {
+    melee_core::ct!("it_802A4BFC_sqrtf_offset");
     sqrtf(x)
 }
 
 pub unsafe fn it_802A4BFC_normalize_diff(a: *mut Vec3, b: *mut Vec3, vec: *mut Vec3) -> f64 {
+    melee_core::ct!("it_802A4BFC_normalize_diff");
     (*vec).x = (*a).x - (*b).x;
     (*vec).y = (*a).y - (*b).y;
     (*vec).z = (*a).z - (*b).z;
@@ -1033,6 +1091,7 @@ pub unsafe fn it_802A4BFC_normalize_diff(a: *mut Vec3, b: *mut Vec3, vec: *mut V
 }
 
 pub unsafe fn it_802A4BFC(mut link_0: *mut ItemLink, arg1: *mut Vec3, attr: *mut itLinkHookshotAttributes, fp: *mut Fighter) -> i32 {
+    melee_core::ct!("it_802A4BFC");
     let mut vec: Vec3 = core::mem::zeroed();
     let mut pos0: Vec3 = core::mem::zeroed();
     let mut pos1: Vec3 = core::mem::zeroed();
@@ -1115,6 +1174,7 @@ pub unsafe fn it_802A4BFC(mut link_0: *mut ItemLink, arg1: *mut Vec3, attr: *mut
 }
 
 pub unsafe fn it_802A5320(link_0: *mut ItemLink, arg1: *mut Vec3, attr: *mut itLinkHookshotAttributes, fp: *mut Fighter) -> i32 {
+    melee_core::ct!("it_802A5320");
     let mut vec: Vec3 = core::mem::zeroed();
 
     let mut cur = link_0;
@@ -1179,6 +1239,7 @@ pub unsafe fn it_802A5320(link_0: *mut ItemLink, arg1: *mut Vec3, attr: *mut itL
 }
 
 pub unsafe fn it_802A5770_inline(link_1: *mut ItemLink, arg2: *mut itLinkHookshotAttributes, arg3: *mut Fighter, var_r29: i32) {
+    melee_core::ct!("it_802A5770_inline");
     if var_r29 == (*arg2).x2C / 2 {
         let width = (*arg2).x30;
         it_802A3E50(link_1, (*arg3).kind, width);
@@ -1188,6 +1249,7 @@ pub unsafe fn it_802A5770_inline(link_1: *mut ItemLink, arg2: *mut itLinkHooksho
 }
 
 pub unsafe fn it_802A5770(link_0: *mut ItemLink, arg1: *mut Vec3, arg2: *mut itLinkHookshotAttributes, arg3: *mut Fighter) {
+    melee_core::ct!("it_802A5770");
     let anchor = arg1;
     let attr = arg2;
     let fp = arg3;
@@ -1241,6 +1303,7 @@ pub unsafe fn it_802A5770(link_0: *mut ItemLink, arg1: *mut Vec3, arg2: *mut itL
 }
 
 pub unsafe fn it_802A5AE0(link_0: *mut ItemLink, arg1: *mut Vec3, arg2: *mut itLinkHookshotAttributes) -> i32 {
+    melee_core::ct!("it_802A5AE0");
     let mut vec: Vec3 = core::mem::zeroed();
     let mut sp30: Vec3 = core::mem::zeroed();
 
@@ -1283,6 +1346,7 @@ pub unsafe fn it_802A5AE0(link_0: *mut ItemLink, arg1: *mut Vec3, arg2: *mut itL
 }
 
 pub unsafe fn it_802A5E28(mut link_0: *mut ItemLink, arg1: *mut Vec3, arg2: *mut itLinkHookshotAttributes, arg8: f32) -> i32 {
+    melee_core::ct!("it_802A5E28");
     let mut vec: Vec3 = core::mem::zeroed();
 
     let mut link_1 = (*link_0).prev;
@@ -1309,6 +1373,7 @@ pub unsafe fn it_802A5E28(mut link_0: *mut ItemLink, arg1: *mut Vec3, arg2: *mut
 }
 
 pub unsafe fn it_802A5FE0(mut link_0: *mut ItemLink, link_0_2: *mut ItemLink, arg2: *mut Vec3, arg3: *mut itLinkHookshotAttributes, arg8: f32) -> i32 {
+    melee_core::ct!("it_802A5FE0");
     let mut vec: Vec3 = core::mem::zeroed();
     let mut speed: Vec3 = core::mem::zeroed();
 
@@ -1366,10 +1431,12 @@ pub unsafe fn it_802A5FE0(mut link_0: *mut ItemLink, link_0_2: *mut ItemLink, ar
 }
 
 pub unsafe fn it_802A4758_no_inline(link_0: *mut ItemLink, arg1: *mut Vec3, arg2: *mut itLinkHookshotAttributes, arg8: f32) {
+    melee_core::ct!("it_802A4758_no_inline");
     it_802A4758(link_0, arg1, arg2, arg8);
 }
 
 pub unsafe fn it_802A6474(tail: *mut ItemLink, head: *mut ItemLink, pos: *mut Vec3, attrs: *mut itLinkHookshotAttributes) {
+    melee_core::ct!("it_802A6474");
     let mut dir: Vec3 = core::mem::zeroed();
     let mut speed: Vec3 = core::mem::zeroed();
 
@@ -1411,6 +1478,7 @@ pub unsafe fn it_802A6474(tail: *mut ItemLink, head: *mut ItemLink, pos: *mut Ve
 }
 
 pub unsafe fn it_802A678C(mut link_0: *mut ItemLink, arg1: *mut Vec3, arg2: *mut itLinkHookshotAttributes, arg8: f32) -> i32 {
+    melee_core::ct!("it_802A678C");
     let mut vec: Vec3 = core::mem::zeroed();
 
     let mut link_1 = (*link_0).prev;
@@ -1437,6 +1505,7 @@ pub unsafe fn it_802A678C(mut link_0: *mut ItemLink, arg1: *mut Vec3, arg2: *mut
 }
 
 pub unsafe fn it_802A6944(item: *mut Item, _scl: f32) {
+    melee_core::ct!("it_802A6944");
     let mut m: Mtx = core::mem::zeroed();
     let zero = 0.0_f32;
     let mp = m.as_mut_ptr();
@@ -1456,14 +1525,17 @@ pub unsafe fn it_802A6944(item: *mut Item, _scl: f32) {
 }
 
 pub unsafe fn it_802A6A78_get_next(link_0: *mut ItemLink, link_1: *mut *mut ItemLink) {
+    melee_core::ct!("it_802A6A78_get_next");
     *link_1 = (*link_0).next;
 }
 
 pub unsafe fn it_802A6A78_get_pos(link_0: *mut ItemLink) -> *mut Vec3 {
+    melee_core::ct!("it_802A6A78_get_pos");
     &raw mut (*link_0).pos
 }
 
 pub unsafe fn it_802A6A78_normalize_diff_rev(b: *mut Vec3, a: *mut Vec3, vec: *mut Vec3) -> f64 {
+    melee_core::ct!("it_802A6A78_normalize_diff_rev");
     (*vec).x = (*a).x - (*b).x;
     (*vec).y = (*a).y - (*b).y;
     (*vec).z = (*a).z - (*b).z;
@@ -1476,6 +1548,7 @@ pub unsafe fn it_802A6A78_normalize_diff_rev(b: *mut Vec3, a: *mut Vec3, vec: *m
 }
 
 pub unsafe fn it_802A6A78(mut link_0: *mut ItemLink, arg1: *mut Vec3, arg2: *mut itLinkHookshotAttributes, arg3: *mut Fighter) -> i32 {
+    melee_core::ct!("it_802A6A78");
     let mut vec: Vec3 = core::mem::zeroed();
     let mut link_1: *mut ItemLink = null_mut();
 
@@ -1545,6 +1618,7 @@ unsafe fn basis(arg2: *mut Vec3, vec0: *mut Vec3, vec1: *mut Vec3) {
 }
 
 pub unsafe fn it_802A6DC8(arg0: *mut HSD_JObj, arg1: *mut Vec3, arg2: *mut Vec3) {
+    melee_core::ct!("it_802A6DC8");
     let mut m: Mtx = core::mem::zeroed();
     let mut vec1: Vec3 = core::mem::zeroed();
     let mut vec0: Vec3 = core::mem::zeroed();
@@ -1575,6 +1649,7 @@ pub unsafe fn it_802A6DC8(arg0: *mut HSD_JObj, arg1: *mut Vec3, arg2: *mut Vec3)
 }
 
 pub unsafe fn it_802A6F80(arg0: *mut HSD_JObj, arg1: *mut Vec3, arg2: *mut Vec3, arg3: f32) {
+    melee_core::ct!("it_802A6F80");
     let mut m1: Mtx = core::mem::zeroed();
     let mut m0: Mtx = core::mem::zeroed();
     let mut vec1: Vec3 = core::mem::zeroed();
@@ -1613,6 +1688,7 @@ pub unsafe fn it_802A6F80(arg0: *mut HSD_JObj, arg1: *mut Vec3, arg2: *mut Vec3,
 }
 
 pub unsafe fn it_802A7168(arg0: *mut Item, arg1: *mut Vec3, arg8: f32) {
+    melee_core::ct!("it_802A7168");
     let mut vec: Vec3;
     let mut vec_2: Vec3;
     let mut vec_3: Vec3;
@@ -1657,6 +1733,7 @@ pub unsafe fn it_802A7168(arg0: *mut Item, arg1: *mut Vec3, arg8: f32) {
 }
 
 pub unsafe fn it_802A7384(item: *mut Item, arg1: *mut Vec3, arg8: f32) {
+    melee_core::ct!("it_802A7384");
     let mut next_pos: Vec3;
     let mut prev_pos: Vec3;
     let mut cur_pos: Vec3;
@@ -1707,6 +1784,7 @@ pub unsafe fn it_802A7384(item: *mut Item, arg1: *mut Vec3, arg8: f32) {
 }
 
 pub unsafe fn itLinkHookshot_Logic20_PickedUp_inline(arg0: *mut HSD_GObj) {
+    melee_core::ct!("itLinkHookshot_Logic20_PickedUp_inline");
     let item = GET_ITEM(arg0);
     let jobj = (*arg0).hsd_obj as *mut HSD_JObj;
     if !(*(*item).owner).user_data.is_null() {
@@ -1718,11 +1796,13 @@ pub unsafe fn itLinkHookshot_Logic20_PickedUp_inline(arg0: *mut HSD_GObj) {
 }
 
 pub unsafe fn itLinkHookshot_Logic20_PickedUp(arg0: *mut Item_GObj) {
+    melee_core::ct!("itLinkHookshot_Logic20_PickedUp");
     ext::Item_80268E5C(arg0, 0, ITEM_ANIM_UPDATE as u32);
     itLinkHookshot_Logic20_PickedUp_inline(arg0);
 }
 
 pub unsafe fn it_802A76EC(arg0: *mut HSD_GObj) {
+    melee_core::ct!("it_802A76EC");
     let item = GET_ITEM(arg0);
     ext::Item_80268E5C(arg0, 3, ITEM_ANIM_UPDATE as u32);
     ext::ftColl_8007AFF8((*item).xDD4_itemVar.linkhookshot.x8);
@@ -1730,6 +1810,7 @@ pub unsafe fn it_802A76EC(arg0: *mut HSD_GObj) {
 }
 
 pub unsafe fn it_802A7764(arg0: *mut HSD_GObj) {
+    melee_core::ct!("it_802A7764");
     let item = GET_ITEM(arg0);
     ext::Item_80268E5C(arg0, 2, ITEM_ANIM_UPDATE as u32);
     ext::ftColl_8007AFF8((*item).xDD4_itemVar.linkhookshot.x8);
@@ -1737,11 +1818,13 @@ pub unsafe fn it_802A7764(arg0: *mut HSD_GObj) {
 }
 
 pub unsafe fn it_802A77DC(arg0: *mut Item_GObj) {
+    melee_core::ct!("it_802A77DC");
     ext::Item_80268E5C(arg0, 4, ITEM_ANIM_UPDATE as u32);
     itLinkHookshot_Logic20_PickedUp_inline(arg0);
 }
 
 pub unsafe fn it_802A7840(arg0: *mut HSD_GObj) {
+    melee_core::ct!("it_802A7840");
     let item = GET_ITEM(arg0);
     ext::Item_80268E5C(arg0, 5, ITEM_ANIM_UPDATE as u32);
     ext::ftColl_8007AFF8((*item).xDD4_itemVar.linkhookshot.x8);
@@ -1749,6 +1832,7 @@ pub unsafe fn it_802A7840(arg0: *mut HSD_GObj) {
 }
 
 pub unsafe fn it_802A78B8(arg0: *mut HSD_GObj, arg1: *mut Vec3) {
+    melee_core::ct!("it_802A78B8");
     let item = GET_ITEM(arg0);
     let item_link = (*item).xDD4_itemVar.linkhookshot.x0;
     (*item_link).vel = *arg1;
@@ -1757,16 +1841,19 @@ pub unsafe fn it_802A78B8(arg0: *mut HSD_GObj, arg1: *mut Vec3) {
 }
 
 pub unsafe fn it_802A793C(arg0: *mut HSD_GObj) {
+    melee_core::ct!("it_802A793C");
     ext::Item_80268E5C(arg0, 6, ITEM_ANIM_UPDATE as u32);
     itLinkHookshot_Logic20_PickedUp_inline(arg0);
 }
 
 pub unsafe fn it_802A79A0(arg0: *mut HSD_GObj) {
+    melee_core::ct!("it_802A79A0");
     ext::Item_80268E5C(arg0, 7, ITEM_ANIM_UPDATE as u32);
     itLinkHookshot_Logic20_PickedUp_inline(arg0);
 }
 
 pub unsafe fn it_802A7A04(arg0: *mut HSD_GObj) {
+    melee_core::ct!("it_802A7A04");
     let item = GET_ITEM(arg0);
     let fp = (*(*item).owner).user_data as *mut Fighter;
     let lk_attr = (*fp).dat_attrs as *mut ftLk_DatAttrs;
@@ -1777,6 +1864,7 @@ pub unsafe fn it_802A7A04(arg0: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_802A7AAC(arg0: *mut HSD_GObj) {
+    melee_core::ct!("it_802A7AAC");
     let fp = (*arg0).user_data as *mut Fighter;
     if !(*fp).u.lk.xC.is_null() {
         it_802A2B10((*fp).u.lk.xC);
@@ -1788,6 +1876,7 @@ pub unsafe extern "C" fn it_802A7AAC(arg0: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_802A7AF0(arg0: *mut HSD_GObj) {
+    melee_core::ct!("it_802A7AF0");
     let fp = (*arg0).user_data as *mut Fighter;
     if !(*fp).u.lk.xC.is_null() {
         let item = GET_ITEM((*fp).u.lk.xC);
@@ -1798,6 +1887,7 @@ pub unsafe extern "C" fn it_802A7AF0(arg0: *mut HSD_GObj) {
 }
 
 pub unsafe fn it_802A7B34_6944_inline(item: *mut Item) {
+    melee_core::ct!("it_802A7B34_6944_inline");
     let item_link = (*item).xDD4_itemVar.linkhookshot.x0;
     let jobj = (*(*item_link).gobj).hsd_obj as *mut HSD_JObj;
 
@@ -1817,6 +1907,7 @@ pub unsafe fn it_802A7B34_6944_inline(item: *mut Item) {
 }
 
 pub unsafe extern "C" fn it_802A7B34(arg0: *mut HSD_GObj) {
+    melee_core::ct!("it_802A7B34");
     let mut vec: Vec3 = core::mem::zeroed();
 
     let fp = GET_FIGHTER(arg0);
@@ -1836,6 +1927,7 @@ pub unsafe extern "C" fn it_802A7B34(arg0: *mut HSD_GObj) {
 }
 
 pub unsafe fn it_802A7D40(arg0: *mut Item_GObj, arg1: *mut Item_GObj) {
+    melee_core::ct!("it_802A7D40");
     let item = GET_ITEM(arg0);
     ext::it_8026B894(arg0, arg1);
     if (*item).xDD4_itemVar.linkhookshot.x8 == arg1 {

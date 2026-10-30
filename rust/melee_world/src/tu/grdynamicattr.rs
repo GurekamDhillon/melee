@@ -53,6 +53,7 @@ pub static mut grDynamicAttr_804D6964: *mut grDynamicAttr_UnkStruct = null_mut()
 
 /// 1CA0B4
 pub unsafe extern "C" fn grDynamicAttr_801CA0B4() {
+    melee_core::ct!("grDynamicAttr_801CA0B4");
     let mut prev: *mut grDynamicAttr_UnkStruct = null_mut();
     grDynamicAttr_804D6960 = null_mut();
     grDynamicAttr_804D6964 = null_mut();
@@ -72,6 +73,7 @@ pub unsafe extern "C" fn grDynamicAttr_801CA0F8(
     f: f32,
     arg3: i32,
 ) -> *mut grDynamicAttr_UnkStruct {
+    melee_core::ct!("grDynamicAttr_801CA0F8");
     // HSD_ASSERT(55, floor_id != GC_Id_None)
     if floor_id as i32 == GC_Id_None {
         panic!("grdynamicattr.c:55 floor_id!=GC_Id_None");
@@ -93,6 +95,7 @@ pub unsafe extern "C" fn grDynamicAttr_801CA0F8(
 
 /// 1CA1C0
 pub unsafe extern "C" fn grDynamicAttr_801CA1C0(arg: *mut grDynamicAttr_UnkStruct) {
+    melee_core::ct!("grDynamicAttr_801CA1C0");
     if arg.is_null() {
         return;
     }
@@ -121,6 +124,7 @@ pub unsafe extern "C" fn grDynamicAttr_801CA1C0(arg: *mut grDynamicAttr_UnkStruc
 
 /// 1CA224
 pub unsafe extern "C" fn grDynamicAttr_801CA224() {
+    melee_core::ct!("grDynamicAttr_801CA224");
     let mut cur = grDynamicAttr_804D6960;
     while !cur.is_null() {
         let next = (*cur).next;
@@ -137,11 +141,13 @@ pub unsafe extern "C" fn grDynamicAttr_801CA224() {
 /// `static inline f32 do_sqrtf(f32)`: MSL's `sqrtf` (math_ppc.h, Newton-Raphson on `__frsqrte`).
 #[inline]
 pub fn do_sqrtf(x: f32) -> f32 {
+    melee_core::ct!("do_sqrtf");
     melee_runtime::gekko::sqrtf(x)
 }
 
 /// 1CA284
 pub unsafe extern "C" fn grDynamicAttr_801CA284(v: *mut Vec3, arg1: i32) -> i32 {
+    melee_core::ct!("grDynamicAttr_801CA284");
     let mut cur = grDynamicAttr_804D6960;
     while !cur.is_null() {
         if ext::mpLinesConnected(arg1, (*cur).unk14) != 0 {

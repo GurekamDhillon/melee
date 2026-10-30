@@ -168,6 +168,7 @@ pub static mut grMc_8049F43C: [i32; 31] = [0; 31];
 
 #[inline(always)]
 pub unsafe fn grMc_8049F440() -> *mut i32 {
+    melee_core::ct!("grMc_8049F440");
     (&raw mut grMc_8049F43C as *mut i32).add(1)
 }
 
@@ -315,9 +316,10 @@ pub static mut yakumono_param: *mut GrMcYakumonoParam = null_mut();
 /// `static s32 grMc_804D69D4`
 pub static mut grMc_804D69D4: i32 = 0;
 
-pub unsafe extern "C" fn grMuteCity_801EFC68(_arg: i32) {}
+pub unsafe extern "C" fn grMuteCity_801EFC68(_arg: i32) { melee_core::ct!("grMuteCity_801EFC68");}
 
 pub unsafe extern "C" fn grMuteCity_801EFC6C() {
+    melee_core::ct!("grMuteCity_801EFC6C");
     yakumono_param = ext::Ground_GetYakumonoParam() as *mut GrMcYakumonoParam;
     ext::stage_info.unk8C.set_b4(0);
     ext::stage_info.unk8C.set_b5(0);
@@ -329,17 +331,20 @@ pub unsafe extern "C" fn grMuteCity_801EFC6C() {
     ext::un_802FD65C();
 }
 
-pub unsafe extern "C" fn grMuteCity_801EFCDC() {}
+pub unsafe extern "C" fn grMuteCity_801EFCDC() { melee_core::ct!("grMuteCity_801EFCDC");}
 
 pub unsafe extern "C" fn grMuteCity_801EFCE0() {
+    melee_core::ct!("grMuteCity_801EFCE0");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
 
 pub unsafe extern "C" fn grMuteCity_801EFD04() -> i32 {
+    melee_core::ct!("grMuteCity_801EFD04");
     0
 }
 
 pub unsafe extern "C" fn grMuteCity_801EFD0C(gobj_id: i32) -> *mut HSD_GObj {
+    melee_core::ct!("grMuteCity_801EFD0C");
     let callbacks = (&raw mut grMc_StageCallbacks as *mut StageCallbacks).add(gobj_id as usize);
     let gobj = ext::Ground_GetStageGObj(gobj_id);
 
@@ -363,6 +368,7 @@ pub unsafe extern "C" fn grMuteCity_801EFD0C(gobj_id: i32) -> *mut HSD_GObj {
 }
 
 pub unsafe extern "C" fn grMuteCity_801EFDF8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grMuteCity_801EFDF8");
     let mut sp1c = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let gp = (*gobj).user_data as *mut Ground;
 
@@ -439,10 +445,12 @@ static light_ref_dist: f32 = 0.99;
 static grMc_804D46CC: i32 = 0x1;
 
 pub unsafe extern "C" fn grMuteCity_801F0118(_arg: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grMuteCity_801F0118");
     0
 }
 
 pub unsafe extern "C" fn grMuteCity_801F0120(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grMuteCity_801F0120");
     let ground = (*gobj).user_data as *mut Ground;
     if !(*ground).u.mutecity.x110.is_null() {
         ext::HSD_LObjSetDistAttn((*ground).u.mutecity.x110, light_ref_br, light_ref_dist, grMc_804D46CC);
@@ -458,9 +466,10 @@ pub unsafe extern "C" fn grMuteCity_801F0120(gobj: *mut HSD_GObj) {
     ext::lb_800115F4();
 }
 
-pub unsafe extern "C" fn grMuteCity_801F01B0(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grMuteCity_801F01B0(_arg: *mut HSD_GObj) { melee_core::ct!("grMuteCity_801F01B0");}
 
 pub unsafe extern "C" fn grMuteCity_801F01B4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grMuteCity_801F01B4");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
 
@@ -477,15 +486,18 @@ pub unsafe extern "C" fn grMuteCity_801F01B4(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grMuteCity_801F0288(_arg: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grMuteCity_801F0288");
     0
 }
 
 #[inline(always)]
 pub unsafe fn grMuteCity_801F0290_get_target(gp: *mut Ground) -> f32 {
+    melee_core::ct!("grMuteCity_801F0290_get_target");
     (*gp).u.mutecity2.xCC
 }
 
 pub unsafe extern "C" fn grMuteCity_801F0290(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grMuteCity_801F0290");
     let gp = (*gobj).user_data as *mut Ground;
     let target = grMuteCity_801F0290_get_target(gp);
     let current = (*gp).u.mutecity2.xD0;
@@ -515,19 +527,21 @@ pub unsafe extern "C" fn grMuteCity_801F0290(gobj: *mut HSD_GObj) {
     ext::Ground_UpdateMapColl(gobj);
 }
 
-pub unsafe extern "C" fn grMuteCity_801F040C(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grMuteCity_801F040C(_arg: *mut HSD_GObj) { melee_core::ct!("grMuteCity_801F040C");}
 
 pub unsafe extern "C" fn stageGObj36_37_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj36_37_OnInit");
     Ground_StartMapAnim(gobj);
 }
 
 pub unsafe extern "C" fn grMuteCity_801F043C(_arg: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grMuteCity_801F043C");
     0
 }
 
-pub unsafe extern "C" fn grMuteCity_801F0444(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grMuteCity_801F0444(_arg: *mut HSD_GObj) { melee_core::ct!("grMuteCity_801F0444");}
 
-pub unsafe extern "C" fn grMuteCity_801F0448(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grMuteCity_801F0448(_arg: *mut HSD_GObj) { melee_core::ct!("grMuteCity_801F0448");}
 
 /// `s16 grMc_803E34A4[30]`
 pub static mut grMc_803E34A4: [i16; 30] = [
@@ -537,6 +551,7 @@ pub static mut grMc_803E34A4: [i16; 30] = [
 ];
 
 pub unsafe extern "C" fn grMuteCity_801F044C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grMuteCity_801F044C");
     let gp = (*gobj).user_data as *mut Ground;
     ext::grFZeroCar_801CAFBC(gobj, (&raw mut grMc_803E34A4) as *mut c_void, 0x1C, 0);
     grMuteCity_801F0F4C(gobj);
@@ -544,12 +559,13 @@ pub unsafe extern "C" fn grMuteCity_801F044C(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grMuteCity_801F04A8(_arg: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grMuteCity_801F04A8");
     0
 }
 
-pub unsafe extern "C" fn grMuteCity_801F04B0(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grMuteCity_801F04B0(_arg: *mut HSD_GObj) { melee_core::ct!("grMuteCity_801F04B0");}
 
-pub unsafe extern "C" fn grMuteCity_801F04B4(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grMuteCity_801F04B4(_arg: *mut HSD_GObj) { melee_core::ct!("grMuteCity_801F04B4");}
 
 /// `grMc_CmdEntry`
 #[repr(C)]
@@ -613,6 +629,7 @@ pub static mut grMc_803E34E0: [GrMcCmdEntry; 132] = [
 ];
 
 pub unsafe extern "C" fn grMuteCity_801F04B8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grMuteCity_801F04B8");
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let gp = (*gobj).user_data as *mut Ground;
 
@@ -782,10 +799,11 @@ pub unsafe extern "C" fn grMuteCity_801F04B8(gobj: *mut HSD_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grMuteCity_801F0948(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grMuteCity_801F0948(_arg: *mut HSD_GObj) { melee_core::ct!("grMuteCity_801F0948");}
 
 #[inline(always)]
 pub unsafe fn grMc_SplineEvalWrapped(result: *mut Vec3, spline: *mut HSD_Spline, t: f32) {
+    melee_core::ct!("grMc_SplineEvalWrapped");
     let mut a = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut b = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let frac: f32;
@@ -811,6 +829,7 @@ pub unsafe fn grMc_SplineEvalWrapped(result: *mut Vec3, spline: *mut HSD_Spline,
 
 #[inline(always)]
 pub unsafe fn grMc_SplineTangentWrapped(result: *mut Vec3, spline: *mut HSD_Spline, t: f32) {
+    melee_core::ct!("grMc_SplineTangentWrapped");
     let mut a = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut b = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let frac: f32;
@@ -835,6 +854,7 @@ pub unsafe fn grMc_SplineTangentWrapped(result: *mut Vec3, spline: *mut HSD_Spli
 }
 
 pub unsafe extern "C" fn grMuteCity_801F094C(arg0: *mut HSD_JObj, arg1: *mut HSD_Spline, arg2: *mut Vec3, mut var_f29: f32) -> f32 {
+    melee_core::ct!("grMuteCity_801F094C");
     let mut sp78 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp6c = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp60 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -871,6 +891,7 @@ pub unsafe extern "C" fn grMuteCity_801F094C(arg0: *mut HSD_JObj, arg1: *mut HSD
 }
 
 pub unsafe extern "C" fn grMuteCity_801F0D20(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grMuteCity_801F0D20");
     let mut sp28 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp1c = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp10 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -941,6 +962,7 @@ pub static mut grMc_803E3B7C: [GrMcTrackInitData; 30] = [
 ];
 
 pub unsafe extern "C" fn grMuteCity_801F0F4C(_gobj: *mut HSD_GObj) {
+    melee_core::ct!("grMuteCity_801F0F4C");
     for i in 0..30usize {
         let mut pos = grMc_803E3B7C[i].pos;
         if (pos as f64) > 1.0 {
@@ -963,6 +985,7 @@ pub unsafe extern "C" fn grMuteCity_801F0F4C(_gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grMuteCity_801F106C(i: i32) {
+    melee_core::ct!("grMuteCity_801F106C");
     let e = ce(i as usize);
     let flags16 = (*e).x20;
     let yp = yakumono_param;
@@ -1044,6 +1067,7 @@ pub unsafe extern "C" fn grMuteCity_801F106C(i: i32) {
 
 #[inline(always)]
 pub unsafe fn grMc_DistanceSquared(a: *const Vec3, b: *const Vec3) -> f32 {
+    melee_core::ct!("grMc_DistanceSquared");
     let dx = (*a).x - (*b).x;
     let dy = (*a).y - (*b).y;
     let dz = (*a).z - (*b).z;
@@ -1051,6 +1075,7 @@ pub unsafe fn grMc_DistanceSquared(a: *const Vec3, b: *const Vec3) -> f32 {
 }
 
 pub unsafe extern "C" fn grMuteCity_801F1328() {
+    melee_core::ct!("grMuteCity_801F1328");
     let arr = grMc_8049F440();
 
     for i in 1..30isize {
@@ -1144,6 +1169,7 @@ car_age_fns! {
 }
 
 pub unsafe extern "C" fn grMuteCity_801F1A0C(_gobj: *mut HSD_GObj, _gp: *mut Ground) {
+    melee_core::ct!("grMuteCity_801F1A0C");
     ext::Ground_801C53EC(0x5CC60);
 }
 
@@ -1163,25 +1189,30 @@ pub static mut grMc_803E3C6C: [Option<unsafe extern "C" fn(*mut HSD_GObj, *mut G
 
 #[inline(always)]
 pub unsafe fn grMc_GetTrackMidpoint(gp: *mut Ground) -> f32 {
+    melee_core::ct!("grMc_GetTrackMidpoint");
     0.5f32 * ((*gp).u.mutecity.xD4 + (*gp).u.mutecity.xD8)
 }
 
 #[inline(always)]
 pub unsafe fn grMc_WreckAge() -> f32 {
+    melee_core::ct!("grMc_WreckAge");
     (*yakumono_param).x30
 }
 
 #[inline(always)]
 pub unsafe fn grMc_SmokeAge() -> f32 {
+    melee_core::ct!("grMc_SmokeAge");
     (*yakumono_param).x2C
 }
 
 #[inline(always)]
 pub unsafe fn grMc_RandomWreckOffset() -> f32 {
+    melee_core::ct!("grMc_RandomWreckOffset");
     fmadds(1.0471976f32, ext::HSD_Randf(), -0.5235988f32)
 }
 
 pub unsafe extern "C" fn grMuteCity_801F1A34(arg0: *mut HSD_GObj, arg1: *mut HSD_GObj) {
+    melee_core::ct!("grMuteCity_801F1A34");
     let mut car_pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp_e8 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp_d8 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -1384,6 +1415,7 @@ pub unsafe extern "C" fn grMuteCity_801F1A34(arg0: *mut HSD_GObj, arg1: *mut HSD
 }
 
 pub unsafe extern "C" fn grMuteCity_801F28A8() -> *mut DynamicModelDesc {
+    melee_core::ct!("grMuteCity_801F28A8");
     let archive = ext::grDatFiles_801C6330(38);
     if archive.is_null() {
         panic!("HSD_ASSERT(2135, archive) grmutecity.c");
@@ -1403,9 +1435,10 @@ pub struct GrMcStackPadArg {
 }
 
 /// "Fake function: exists only to reproduce the retail stack layout."
-pub unsafe extern "C" fn grMc_StackPad(_arg: GrMcStackPadArg) {}
+pub unsafe extern "C" fn grMc_StackPad(_arg: GrMcStackPadArg) { melee_core::ct!("grMc_StackPad");}
 
 pub unsafe extern "C" fn grMuteCity_801F290C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grMuteCity_801F290C");
     let gp = (*gobj).user_data as *mut Ground;
 
     if ext::grLib_801C96E8(gobj) != 0 {
@@ -1465,6 +1498,7 @@ pub unsafe extern "C" fn grMuteCity_801F290C(gobj: *mut HSD_GObj) {
 
 /// "Retail never sets the return value" (the PC build returns the generator or NULL).
 pub unsafe extern "C" fn grMuteCity_801F2AB0(arg0: i32, jobj: *mut HSD_JObj) -> *mut HSD_Generator {
+    melee_core::ct!("grMuteCity_801F2AB0");
     let gen = ext::grLib_801C9808(arg0, arg0 / 1000, jobj);
 
     if !gen.is_null() {
@@ -1489,6 +1523,7 @@ pub unsafe extern "C" fn grMuteCity_801F2AB0(arg0: i32, jobj: *mut HSD_JObj) -> 
 
 /// `mpLib_JointCollisionCallback`
 pub unsafe extern "C" fn fn_801F2B58(user_data: *mut c_void, joint_id: i32, coll: *mut CollData, coll_x50: i32, ground_kind: u32, delta_y: f32) {
+    melee_core::ct!("fn_801F2B58");
     let b1234 = (*coll).x34_flags.b1234() as i32;
 
     if grMc_804D69D4 != 1 {
@@ -1519,6 +1554,7 @@ pub unsafe extern "C" fn fn_801F2B58(user_data: *mut c_void, joint_id: i32, coll
 }
 
 pub unsafe extern "C" fn grMuteCity_801F2BBC(arg0: i32) -> *mut DynamicsDesc {
+    melee_core::ct!("grMuteCity_801F2BBC");
     if grMc_804D69D4 == 1 {
         if arg0 == 0x31 {
             return (*yakumono_param).x8;
@@ -1534,6 +1570,7 @@ pub unsafe extern "C" fn grMuteCity_801F2BBC(arg0: i32) -> *mut DynamicsDesc {
 }
 
 pub unsafe extern "C" fn grMuteCity_801F2C10(pos: *mut Vec3, arg: i32, jobj: *mut HSD_JObj) -> i32 {
+    melee_core::ct!("grMuteCity_801F2C10");
     let gobj = ext::Ground_GetMapGObj(0x1E);
     if !gobj.is_null() {
         let gp = (*gobj).user_data as *mut Ground;

@@ -72,6 +72,7 @@ pub mod ext {
 
 /// static inline `ftCo_Fall_inline`.
 pub fn ftCo_Fall_inline(g: G) -> bool {
+    melee_core::ct!("ftCo_Fall_inline");
     if fp(g).x2224_b2() != 0 {
         ext::ftCo_80090780(g);
         return true;
@@ -84,6 +85,7 @@ pub fn ftCo_Fall_inline(g: G) -> bool {
 }
 
 pub fn ftCo_Fall_Enter(g: G) {
+    melee_core::ct!("ftCo_Fall_Enter");
     if ext::ftLib_GetKind(g) == Ft_Kind_MasterH {
         ext::ftMh_MS_389_80151018(g);
         return;
@@ -107,6 +109,7 @@ pub fn ftCo_Fall_Enter(g: G) {
 }
 
 pub fn ftCo_Fall_Enter_YoshiEgg(g: G) {
+    melee_core::ct!("ftCo_Fall_Enter_YoshiEgg");
     if !ftCo_Fall_inline(g) {
         ext::Fighter_ChangeMotionState(g, ftCo_MS_Fall, Ft_MF_Unk06, 0.0, 1.0, -1.0, core::ptr::null_mut());
         let f = fp(g);
@@ -118,10 +121,12 @@ pub fn ftCo_Fall_Enter_YoshiEgg(g: G) {
 }
 
 pub fn ftCo_Fall_Enter_YoshiEgg_Kirby(g: G) {
+    melee_core::ct!("ftCo_Fall_Enter_YoshiEgg_Kirby");
     ftCo_Fall_Enter_YoshiEgg(g);
 }
 
 pub fn ftCo_800CC988(g: G, arg1: f32) {
+    melee_core::ct!("ftCo_800CC988");
     if arg1 != 0.0 {
         ext::HSD_JObjAnimAll(fp(g).x8AC_animSkeleton);
         if arg1 != 1.0 {
@@ -133,6 +138,7 @@ pub fn ftCo_800CC988(g: G, arg1: f32) {
 }
 
 pub fn ftCo_Fall_Anim(g: G) {
+    melee_core::ct!("ftCo_Fall_Anim");
     let f = fp(g);
     if f.is_sandbag() == 0 {
         let p = unsafe { core::ptr::addr_of_mut!(f.mv.co.fall.x4) };
@@ -142,6 +148,7 @@ pub fn ftCo_Fall_Anim(g: G) {
 }
 
 pub fn ftCo_Fall_IASA_Inner(g: G) -> bool {
+    melee_core::ct!("ftCo_Fall_IASA_Inner");
     ext::ftCo_SpecialAir_CheckInput(g)
         || ext::ftCo_80095328(g, core::ptr::null_mut())
         || ext::ftCo_800D7100(g)
@@ -157,6 +164,7 @@ pub fn ftCo_Fall_IASA_Inner(g: G) -> bool {
 
 /// `mv_x4` points into the fighter's motion vars (raw: it aliases `fp->mv`).
 pub fn ftCo_Fall_Anim_Inner(g: G, mv_x4: *mut f32, neutral_smid: i32, forwards_smid: i32, backwards_smid: i32) {
+    melee_core::ct!("ftCo_Fall_Anim_Inner");
     let f = fp(g);
     let c = cd();
     let mut frac = f.self_vel.x / f.co_attrs.air_drift_max;
@@ -191,13 +199,16 @@ pub fn ftCo_Fall_Anim_Inner(g: G, mv_x4: *mut f32, neutral_smid: i32, forwards_s
 }
 
 pub fn ftCo_Fall_IASA(g: G) {
+    melee_core::ct!("ftCo_Fall_IASA");
     ftCo_Fall_IASA_Inner(g);
 }
 
 pub fn ftCo_Fall_Phys(g: G) {
+    melee_core::ct!("ftCo_Fall_Phys");
     ext::ft_80084DB0(g);
 }
 
 pub fn ftCo_Fall_Coll(g: G) {
+    melee_core::ct!("ftCo_Fall_Coll");
     ext::ft_800831CC(g, crate::tu::ftCo_FallSpecial::ftCo_80096CC8, Some(ext::ft_80082B1C));
 }

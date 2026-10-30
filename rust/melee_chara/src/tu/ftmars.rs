@@ -62,15 +62,18 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 }
 
 pub fn ftMs_Init_OnItemPickup(gobj: *mut HSD_GObj, flag: i32) {
+    melee_core::ct!("ftMs_Init_OnItemPickup");
     Fighter_OnItemPickup(gobj, flag, 0, 1);
 }
 
 pub fn ftMs_Init_OnItemDrop(gobj: *mut HSD_GObj, flag: i32) {
+    melee_core::ct!("ftMs_Init_OnItemDrop");
     Fighter_OnItemDrop(gobj, flag, 0, 1);
 }
 
 /// `PUSH_ATTRS(fp, MarsAttributes)`: copy ext_attr into the backup, point dat_attrs at it.
 pub fn ftMs_Init_OnLoadForRoy(fp: *mut Fighter) {
+    melee_core::ct!("ftMs_Init_OnLoadForRoy");
     unsafe {
         let backup = (*fp).dat_attrs_backup;
         let src = (*(*fp).ft_data).ext_attr as *const MarsAttributes;
@@ -80,6 +83,7 @@ pub fn ftMs_Init_OnLoadForRoy(fp: *mut Fighter) {
 }
 
 pub fn ftMs_Init_OnLoad(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_Init_OnLoad");
     unsafe {
         let fp = fpp(gobj);
         let backup = (*fp).dat_attrs_backup;
@@ -91,6 +95,7 @@ pub fn ftMs_Init_OnLoad(gobj: *mut HSD_GObj) {
 
 /// `COPY_ATTRS(gobj, MarsAttributes)`.
 pub fn ftMs_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_Init_LoadSpecialAttrs");
     unsafe {
         let fp = fpp(gobj);
         *((*fp).dat_attrs as *mut MarsAttributes) = *((*(*fp).ft_data).ext_attr as *const MarsAttributes);
@@ -120,17 +125,21 @@ unsafe fn spawn_n_effect(gobj: *mut HSD_GObj, id_mars: i32, id_emblem: i32) {
 
 /// Accessory-4 callback of the neutral-B ground end.
 pub fn ftMs_SpecialN_801365A8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialN_801365A8");
     unsafe { spawn_n_effect(gobj, 1266, 1297) }
 }
 
 /// Accessory-4 callback of the neutral-B air end.
 pub fn ftMs_SpecialN_8013666C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialN_8013666C");
     unsafe { spawn_n_effect(gobj, 1267, 1298) }
 }
 
 pub unsafe extern "C" fn cb_ftMs_SpecialN_801365A8(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftMs_SpecialN_801365A8");
     ftMs_SpecialN_801365A8(g);
 }
 pub unsafe extern "C" fn cb_ftMs_SpecialN_8013666C(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftMs_SpecialN_8013666C");
     ftMs_SpecialN_8013666C(g);
 }

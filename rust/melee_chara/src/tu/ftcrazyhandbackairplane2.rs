@@ -61,6 +61,7 @@ pub mod ext {
 }
 
 pub fn ftCh_BackAirplane2_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_BackAirplane2_Anim");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         if (*fp).cmd_vars[0] != 0 {
@@ -82,4 +83,4 @@ pub fn ftCh_BackAirplane2_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftCh_BackAirplane2_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftCh_BackAirplane2_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_BackAirplane2_Coll");}

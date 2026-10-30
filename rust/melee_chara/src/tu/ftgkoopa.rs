@@ -80,10 +80,12 @@ pub mod ext {
 }
 
 pub fn ftGk_Init_UnkMotionStates3(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGk_Init_UnkMotionStates3");
     ext::ftKp_Init_UnkMotionStates3(gobj);
 }
 
 pub fn ftGk_Init_OnLoad(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGk_Init_OnLoad");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let ftdata = (*fp).ft_data;
@@ -98,14 +100,17 @@ pub fn ftGk_Init_OnLoad(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftGk_Init_OnItemPickup(gobj: *mut HSD_GObj, flag: i32) {
+    melee_core::ct!("ftGk_Init_OnItemPickup");
     Fighter_OnItemPickup(gobj, flag, 1, 1);
 }
 
 pub fn ftGk_Init_OnItemDrop(gobj: *mut HSD_GObj, bool1: i32) {
+    melee_core::ct!("ftGk_Init_OnItemDrop");
     Fighter_OnItemDrop(gobj, bool1, 1, 1);
 }
 
 pub fn ftGk_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGk_Init_LoadSpecialAttrs");
     ext::ftKp_Init_LoadSpecialAttrs(gobj);
 }
 
@@ -115,6 +120,7 @@ pub fn ftGk_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
 /// the shipping build compiles with `-ftrivial-auto-var-init=zero`, so `offset - 14` is -14 and
 /// the lookup reads before the table. That is not representable: `None`.
 pub fn ftGk_Init_GetMotionFileString(arg0: i32) -> Option<&'static str> {
+    melee_core::ct!("ftGk_Init_GetMotionFileString");
     let offset: i32 = match arg0 {
         15 => 14,
         _ => return None,

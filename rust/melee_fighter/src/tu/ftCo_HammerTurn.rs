@@ -62,6 +62,7 @@ fn hsd_jobj_set_rotation_y(j: *mut HSD_JObj, y: f32) {
 }
 
 pub fn ftCo_800C576C(g: G) -> bool {
+    melee_core::ct!("ftCo_800C576C");
     if ext::ftCo_800C97A8(g) {
         ftCo_800C57B4(g);
         return true;
@@ -70,6 +71,7 @@ pub fn ftCo_800C576C(g: G) -> bool {
 }
 
 pub fn ftCo_800C57B4(g: G) {
+    melee_core::ct!("ftCo_800C57B4");
     let flags = ext::ftCo_800C54C4(fp(g));
     let c = ext::ftCo_800C548C(fp(g));
     ext::ftCo_Turn_Enter(g, ftCo_MS_HammerTurn as i32, flags, 0.0, cd().x6B0 as f32, c);
@@ -77,6 +79,7 @@ pub fn ftCo_800C57B4(g: G) {
 }
 
 pub fn ftCo_HammerTurn_Anim(g: G) {
+    melee_core::ct!("ftCo_HammerTurn_Anim");
     ext::ftCo_800C4F64(g);
     unsafe {
         if fp(g).mv.co.walk.fast_anim_frame != 0.0 {
@@ -100,15 +103,18 @@ pub fn ftCo_HammerTurn_Anim(g: G) {
 }
 
 pub fn ftCo_HammerTurn_IASA(g: G) {
+    melee_core::ct!("ftCo_HammerTurn_IASA");
     if ext::ftCo_800C5A50(g) {
         return;
     }
 }
 
 pub fn ftCo_HammerTurn_Phys(g: G) {
+    melee_core::ct!("ftCo_HammerTurn_Phys");
     ext::ft_80084F3C(g);
 }
 
 pub fn ftCo_HammerTurn_Coll(g: G) {
+    melee_core::ct!("ftCo_HammerTurn_Coll");
     ext::ftCo_HammerWait_Coll(g);
 }

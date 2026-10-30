@@ -49,11 +49,13 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 
 /// `ftNs_SpecialS_ItemPKFireSpawn` as the Accessory4 callback entry.
 pub unsafe extern "C" fn cb_ftNs_SpecialS_ItemPKFireSpawn(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftNs_SpecialS_ItemPKFireSpawn");
     ftNs_SpecialS_ItemPKFireSpawn(g);
 }
 
 /// Accessory4 callback (subaction event 0x60): spawns the PK Fire item once `throw_flags_b0` is set.
 pub fn ftNs_SpecialS_ItemPKFireSpawn(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialS_ItemPKFireSpawn");
     unsafe {
         let fp = fpp(gobj);
         let ness_attr = (*fp).dat_attrs as *const ftNessAttributes;
@@ -95,6 +97,7 @@ pub fn ftNs_SpecialS_ItemPKFireSpawn(gobj: *mut HSD_GObj) {
 
 /// 0x80116C94: grounded PK Fire enter.
 pub fn ftNs_SpecialS_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialS_Enter");
     unsafe {
         let fp = fpp(gobj);
         (*fp).anon_2210.throw_flags = 0;
@@ -107,6 +110,7 @@ pub fn ftNs_SpecialS_Enter(gobj: *mut HSD_GObj) {
 
 /// 0x80116D04: aerial PK Fire enter.
 pub fn ftNs_SpecialAirS_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirS_Enter");
     unsafe {
         let fp = fpp(gobj);
         (*fp).anon_2210.throw_flags = 0;
@@ -118,32 +122,38 @@ pub fn ftNs_SpecialAirS_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_SpecialS_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialS_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         st::ft_8008A2BC(gobj);
     }
 }
 
 pub fn ftNs_SpecialAirS_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirS_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         st::ftCo_Fall_Enter(gobj);
     }
 }
 
 pub fn ftNs_SpecialS_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialS_Phys");
     st::ft_80084F3C(gobj);
 }
 
 pub fn ftNs_SpecialAirS_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirS_Phys");
     st::ft_80084EEC(gobj);
 }
 
 pub fn ftNs_SpecialS_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialS_Coll");
     if st::ft_800827A0(gobj) == 0 {
         st::ftCo_Fall_Enter(gobj);
     }
 }
 
 pub fn ftNs_SpecialAirS_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirS_Coll");
     unsafe {
         let fp = fpp(gobj);
         let ness_attr = (*fp).dat_attrs as *const ftNessAttributes;

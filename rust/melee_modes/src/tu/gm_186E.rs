@@ -63,6 +63,7 @@ pub static mut lbl_804736B0: gm_804736B0_t =
     gm_804736B0_t { x0: 0, x4: 0, x8: null_mut(), xC: null_mut() };
 
 pub unsafe extern "C" fn fn_80186EFC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80186EFC");
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let state = &mut lbl_804736B0;
     ext::HSD_JObjReqAnimAll(state.xC, 0.0);
@@ -128,6 +129,7 @@ pub static lbl_803D9498: [gm_80186F6C_Entry; 28] = [
 ];
 
 pub unsafe extern "C" fn fn_80186F6C(arg0: *mut HSD_GObj) {
+    melee_core::ct!("fn_80186F6C");
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let jobj = (*arg0).hsd_obj as *mut HSD_JObj;
     let child = lbl_804736B0.x8;
@@ -164,6 +166,7 @@ pub unsafe extern "C" fn fn_80186F6C(arg0: *mut HSD_GObj) {
 }
 
 pub unsafe fn fn_801873F0() -> *mut HSD_GObjProc {
+    melee_core::ct!("fn_801873F0");
     ext::ftDemo_ObjAllocInit();
     ext::Player_InitAllPlayers();
     ext::Player_80036E20(lbl_804D6618.x0, lbl_804D6610, 1);
@@ -178,6 +181,7 @@ pub unsafe fn fn_801873F0() -> *mut HSD_GObjProc {
 }
 
 pub unsafe extern "C" fn fn_80187494(gobj: *mut HSD_GObj, _arg1: i32) {
+    melee_core::ct!("fn_80187494");
     let temp_ret = ext::HSD_CObjSetCurrent((*gobj).hsd_obj as *mut HSD_CObj);
     if temp_ret != 0 {
         ext::Camera_800313E0(gobj, 1);
@@ -188,6 +192,7 @@ pub unsafe extern "C" fn fn_80187494(gobj: *mut HSD_GObj, _arg1: i32) {
 }
 
 pub unsafe fn fn_801874FC() {
+    melee_core::ct!("fn_801874FC");
     let mut sp8: *mut HSD_JObj = null_mut();
 
     let gobj = ext::GObj_Create(0xE, 0xF, 0);
@@ -208,6 +213,7 @@ pub unsafe fn fn_801874FC() {
 }
 
 pub fn fn_80187714() {
+    melee_core::ct!("fn_80187714");
     ext::Camera_Init(6);
     ext::lb_8000FCDC();
     ext::mpColl_80041C78();
@@ -221,6 +227,7 @@ pub fn fn_80187714() {
 }
 
 pub fn gm_Scene_IntroAllstar_OnFrame() {
+    melee_core::ct!("gm_Scene_IntroAllstar_OnFrame");
     unsafe {
         if lbl_804736B0.x0 != 0 {
             ext::lbArchive_80016EFC(lbl_804D6610);
@@ -231,6 +238,7 @@ pub fn gm_Scene_IntroAllstar_OnFrame() {
 }
 
 pub unsafe fn gm_Scene_IntroAllstar_OnEnter(arg0_: *mut core::ffi::c_void) {
+    melee_core::ct!("gm_Scene_IntroAllstar_OnEnter");
     let arg0 = arg0_ as *mut enterdata;
 
     lbl_804736B0.x0 = 0;

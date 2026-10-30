@@ -36,25 +36,29 @@ fn jobj(g: G) -> *mut HSD_JObj {
 
 /// `ftCo_800DC284`: enter CaptureDamageHi.
 pub fn ftco_800dc284(g: G) {
+    melee_core::ct!("ftco_800dc284");
     ext::Fighter_ChangeMotionState(g, ftCo_MS_CaptureDamageHi as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
     fp(g).mv.co.capturedamage.x4 = 0.0;
     ext::fn_800DB5D8(g);
 }
 
 pub fn ftco_capturedamagehi_anim(g: G) {
+    melee_core::ct!("ftco_capturedamagehi_anim");
     ext::fn_800DB8A4(g);
     if !h::ftanim_is_frames_remaining(g) {
         ext::fn_800DB790(g);
     }
 }
 
-pub fn ftco_capturedamagehi_iasa(_g: G) {}
+pub fn ftco_capturedamagehi_iasa(_g: G) { melee_core::ct!("ftco_capturedamagehi_iasa");}
 
 pub fn ftco_capturedamagehi_phys(g: G) {
+    melee_core::ct!("ftco_capturedamagehi_phys");
     ext::fn_800DAD18(g);
 }
 
 pub fn ftco_capturedamagehi_coll(g: G) {
+    melee_core::ct!("ftco_capturedamagehi_coll");
     if fp(g).x2226_b2() == 0 {
         ext::ft_80083C00(g, Some(fn_800dc384));
     }
@@ -62,11 +66,13 @@ pub fn ftco_capturedamagehi_coll(g: G) {
 
 /// `fn_800DC384` (HSD_GObjEvent).
 pub unsafe extern "C" fn fn_800dc384(g: *mut HSD_GObj) {
+    melee_core::ct!("fn_800dc384");
     fn_800dc404(g);
 }
 
 /// `ftCo_800DC3A4`: enter CaptureDamageLw.
 pub fn ftco_800dc3a4(g: G) {
+    melee_core::ct!("ftco_800dc3a4");
     ext::Fighter_ChangeMotionState(g, ftCo_MS_CaptureDamageLw as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
     fp(g).mv.co.capturedamage.x4 = 0.0;
     ext::fn_800DB5D8(g);
@@ -74,6 +80,7 @@ pub fn ftco_800dc3a4(g: G) {
 
 /// `fn_800DC404`: switch to CaptureDamageLw keeping the frame.
 pub fn fn_800dc404(g: G) {
+    melee_core::ct!("fn_800dc404");
     let f = fp(g);
     ext::Fighter_ChangeMotionState(g, ftCo_MS_CaptureDamageLw as i32, Ft_MF_UpdateCmd, f.cur_anim_frame, 1.0, 0.0, core::ptr::null_mut());
     ext::fn_800DB5D8(g);
@@ -81,13 +88,14 @@ pub fn fn_800dc404(g: G) {
 }
 
 pub fn ftco_capturedamagelw_anim(g: G) {
+    melee_core::ct!("ftco_capturedamagelw_anim");
     ext::fn_800DB8A4(g);
     if !h::ftanim_is_frames_remaining(g) {
         ext::fn_800DBAE4(g);
     }
 }
 
-pub fn ftco_capturedamagelw_iasa(_g: G) {}
+pub fn ftco_capturedamagelw_iasa(_g: G) { melee_core::ct!("ftco_capturedamagelw_iasa");}
 
 /// Shared body of `ftCo_CaptureDamageLw_Phys_inline` / `fn_800DC624_inline`: back to Hi.
 fn to_hi(g: G) {
@@ -103,12 +111,14 @@ fn to_hi(g: G) {
 }
 
 pub fn ftco_capturedamagelw_phys(g: G) {
+    melee_core::ct!("ftco_capturedamagelw_phys");
     if ext::fn_800DAD18(g) {
         to_hi(g);
     }
 }
 
 pub fn ftco_capturedamagelw_coll(g: G) {
+    melee_core::ct!("ftco_capturedamagelw_coll");
     if fp(g).x2226_b2() == 0 {
         ext::ft_8008403C(g, Some(fn_800dc624));
     }
@@ -116,5 +126,6 @@ pub fn ftco_capturedamagelw_coll(g: G) {
 
 /// `fn_800DC624` (HSD_GObjEvent).
 pub unsafe extern "C" fn fn_800dc624(g: *mut HSD_GObj) {
+    melee_core::ct!("fn_800dc624");
     to_hi(g);
 }

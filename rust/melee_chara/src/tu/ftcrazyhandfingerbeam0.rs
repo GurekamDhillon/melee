@@ -48,16 +48,18 @@ pub mod ext {
 }
 
 pub fn ftCh_FingerBeamStart_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_FingerBeamStart_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         ext::ftCh_GrabUnk1_8015BC88(gobj);
     }
 }
 
-pub fn ftCh_FingerBeamStart_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftCh_FingerBeamStart_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_FingerBeamStart_Coll");}
 
 /// Accessory-4 callback: spawns a CrazyHand bomb for each of the four cmd_vars flags set by the
 /// motion script, at a bone plus a data offset.
 pub unsafe extern "C" fn fn_801588B8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801588B8");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*(*fp).ft_data).ext_attr as *const ftCrazyHand_DatAttrs;

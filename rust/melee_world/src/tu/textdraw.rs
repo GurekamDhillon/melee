@@ -120,6 +120,7 @@ pub static mut devtext_drawlist: *mut DevText = null_mut();
 
 /// `int DevText_StrLen(char*)`: NULL gives 0.
 pub unsafe extern "C" fn DevText_StrLen(mut str: *mut i8) -> i32 {
+    melee_core::ct!("DevText_StrLen");
     if !str.is_null() {
         let mut length = 0i32;
         loop {
@@ -137,6 +138,7 @@ pub unsafe extern "C" fn DevText_StrLen(mut str: *mut i8) -> i32 {
 
 /// `void DevText_NumToStr(int, char*)`: decimal digits, '-' first for a negative (`-INT_MIN` wraps).
 pub unsafe extern "C" fn DevText_NumToStr(mut num: i32, mut str: *mut i8) {
+    melee_core::ct!("DevText_NumToStr");
     let mut length = 0i32;
     if num < 0 {
         *str = b'-' as i8;
@@ -169,11 +171,13 @@ pub unsafe extern "C" fn DevText_NumToStr(mut num: i32, mut str: *mut i8) {
 
 /// `HSD_GObj* DevText_GetGObj(void)`
 pub unsafe extern "C" fn DevText_GetGObj() -> *mut HSD_GObj {
+    melee_core::ct!("DevText_GetGObj");
     devtext_gobj
 }
 
 /// `void DevText_InitPool(void)`: chains the 32 boxes into the free list; clears the draw list.
 pub unsafe extern "C" fn DevText_InitPool() {
+    melee_core::ct!("DevText_InitPool");
     let e = &raw mut devtext_pool.entries as *mut DevText;
     (*e).prev = null_mut();
     for i in 0..31usize {
@@ -187,6 +191,7 @@ pub unsafe extern "C" fn DevText_InitPool() {
 
 /// `void DevText_Remove(DevText** ptext)`: unlinks `*ptext` (a list head) onto the free list.
 pub unsafe extern "C" fn DevText_Remove(ptext: *mut *mut DevText) {
+    melee_core::ct!("DevText_Remove");
     let text = *ptext;
     let next = (*text).next;
     if !next.is_null() {
@@ -207,6 +212,7 @@ pub unsafe extern "C" fn DevText_Remove(ptext: *mut *mut DevText) {
 
 /// TARGET_PC `void DevText_Unlink(DevText*)`: unlinks by the box (not by a list-head address).
 pub unsafe extern "C" fn DevText_Unlink(text: *mut DevText) {
+    melee_core::ct!("DevText_Unlink");
     if text.is_null() {
         return;
     }
@@ -225,6 +231,7 @@ pub unsafe extern "C" fn DevText_Unlink(text: *mut DevText) {
 
 /// TARGET_PC `bool DevText_IsListed(DevText*)`
 pub unsafe extern "C" fn DevText_IsListed(text: *mut DevText) -> i32 {
+    melee_core::ct!("DevText_IsListed");
     let mut cur = devtext_drawlist;
     while !cur.is_null() {
         if cur == text {
@@ -237,6 +244,7 @@ pub unsafe extern "C" fn DevText_IsListed(text: *mut DevText) -> i32 {
 
 /// `void DevText_SetupCObj(void)`: the orthographic camera, built once.
 pub unsafe extern "C" fn DevText_SetupCObj() {
+    melee_core::ct!("DevText_SetupCObj");
     if devtext_cobj.is_null() {
         let mut viewport = _HSD_RectS16 { xmin: 0, xmax: 640, ymin: 0, ymax: 480 };
         let mut scissor = _Scissor { left: 0, right: 640, top: 0, bottom: 480 };
@@ -266,6 +274,7 @@ pub unsafe extern "C" fn DevText_SetupCObj() {
 /// `void DevText_Draw(DevText*)`: background boxes, the character grid, the blinking cursor.
 /// The `a * b + c` sites are f32 fused multiply-adds (shipping contraction).
 pub unsafe extern "C" fn DevText_Draw(text: *mut DevText) {
+    melee_core::ct!("DevText_Draw");
     let t = &mut *text;
     if ext::Wb_RenderActive() != 0 {
         return;
@@ -330,6 +339,7 @@ pub unsafe extern "C" fn DevText_Draw(text: *mut DevText) {
 
 /// `void DevText_DrawAll(HSD_GObj*, int pass)`: the bottom-half pass draws the whole list.
 pub unsafe extern "C" fn DevText_DrawAll(_gobj: *mut HSD_GObj, pass: i32) {
+    melee_core::ct!("DevText_DrawAll");
     if pass as u32 == HSD_RP_BOTTOMHALF as u32 {
         let mut text = devtext_drawlist;
         ext::HSD_FogSet(null_mut());
@@ -343,6 +353,7 @@ pub unsafe extern "C" fn DevText_DrawAll(_gobj: *mut HSD_GObj, pass: i32) {
 
 /// `void DevText_CreateCObj(...)`: the overlay camera gobj.
 pub unsafe extern "C" fn DevText_CreateCObj(classifier: i32, p_link: i32, gobj_priority: i32, gx_link: i32, gx_priority: u8) {
+    melee_core::ct!("DevText_CreateCObj");
     let gobj = ext::GObj_Create(classifier as u16, p_link as u8, gobj_priority as u8);
     if !gobj.is_null() {
         let cobj = ext::HSD_CObjLoadDesc(&raw mut devtext_CObjDesc as *mut HSD_CObjDesc);
@@ -365,6 +376,7 @@ pub unsafe extern "C" fn DevText_Setup(
     render_priority: i32,
     camera_priority: u8,
 ) -> *mut HSD_GObj {
+    melee_core::ct!("DevText_Setup");
     devtext_setup_classifier = classifier;
     devtext_setup_p_link = p_link;
     devtext_setup_priority = priority;
@@ -394,6 +406,7 @@ pub unsafe extern "C" fn DevText_Setup(
 /// `void DevText_AddToList(DevText** list, DevText* text)`: inserts into the id-sorted list after the
 /// last entry with id <= the new one (the C never sets `next->prev`).
 pub unsafe extern "C" fn DevText_AddToList(list: *mut *mut DevText, text: *mut DevText) {
+    melee_core::ct!("DevText_AddToList");
     if !(*list).is_null() {
         let mut next = *list;
         let mut prev: *mut DevText = null_mut();
@@ -420,5 +433,6 @@ pub unsafe extern "C" fn DevText_AddToList(list: *mut *mut DevText, text: *mut D
 
 /// `void DevText_Show(HSD_GObj*, DevText*)`
 pub unsafe extern "C" fn DevText_Show(_gobj: *mut HSD_GObj, text: *mut DevText) {
+    melee_core::ct!("DevText_Show");
     DevText_AddToList(&raw mut devtext_drawlist, text);
 }

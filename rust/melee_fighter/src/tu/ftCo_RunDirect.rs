@@ -53,10 +53,12 @@ pub mod ext {
 }
 
 pub fn ftCo_RunDirect_Anim(g: G) {
+    melee_core::ct!("ftCo_RunDirect_Anim");
     ext::ftCo_Run_Anim(g);
 }
 
 pub fn ftCo_RunDirect_IASA(g: G) {
+    melee_core::ct!("ftCo_RunDirect_IASA");
     if ext::ftCo_SpecialS_CheckInput(g) { return; }
     if ext::ftCo_Attack100_CheckInput(g) { return; }
     if ext::ftCo_800D6824(g) { return; }
@@ -78,9 +80,11 @@ pub fn ftCo_RunDirect_IASA(g: G) {
 }
 
 pub fn ftCo_RunDirect_Phys(g: G) {
+    melee_core::ct!("ftCo_RunDirect_Phys");
     ext::ftCo_Run_Phys(g);
 }
 
 pub fn ftCo_RunDirect_Coll(g: G) {
+    melee_core::ct!("ftCo_RunDirect_Coll");
     ext::ftCo_Run_Coll(g);
 }

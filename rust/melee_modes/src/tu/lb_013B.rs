@@ -51,6 +51,7 @@ pub type lb_803BA248_fn = unsafe fn(*mut ColorOverlay) -> bool;
 
 /// 013BB8
 pub unsafe fn lb_80013BB8(arg0: *mut ColorOverlay) -> bool {
+    melee_core::ct!("lb_80013BB8");
     (*arg0).x0_timer = (*arg0).x0_timer.wrapping_add((*(*arg0).x8_ptr1).unk.timer() as i32);
     (*arg0).x8_ptr1 = (*arg0).x8_ptr1.add(1);
     false
@@ -58,6 +59,7 @@ pub unsafe fn lb_80013BB8(arg0: *mut ColorOverlay) -> bool {
 
 /// 013BE4
 pub unsafe fn lb_80013BE4(arg0: *mut ColorOverlay) -> bool {
+    melee_core::ct!("lb_80013BE4");
     (*arg0).set_x7C_flag2(0);
     (*arg0).set_x7C_color_enable(0);
     (*arg0).x8_ptr1 = (*arg0).x8_ptr1.add(1);
@@ -85,6 +87,7 @@ unsafe fn load_light_color(arg0: *mut ColorOverlay) {
 
 /// 013C18
 pub unsafe fn lb_80013C18(arg0: *mut ColorOverlay) -> bool {
+    melee_core::ct!("lb_80013C18");
     let rot2 = (*(*arg0).x8_ptr1).light_rot2;
     (*arg0).set_x7C_light_enable(rot2.light_enable() as u8);
     (*arg0).x74_light_rot_x = rot2.x() as f32;
@@ -98,6 +101,7 @@ pub unsafe fn lb_80013C18(arg0: *mut ColorOverlay) -> bool {
 
 /// 013D68
 pub unsafe fn lb_80013D68(arg0: *mut ColorOverlay) -> bool {
+    melee_core::ct!("lb_80013D68");
     (*arg0).x8_ptr1 = (*arg0).x8_ptr1.add(1);
     load_light_color(arg0);
     (*arg0).x8_ptr1 = (*arg0).x8_ptr1.add(1);
@@ -106,6 +110,7 @@ pub unsafe fn lb_80013D68(arg0: *mut ColorOverlay) -> bool {
 
 /// 013E3C
 pub unsafe fn lb_80013E3C(arg0: *mut ColorOverlay) -> bool {
+    melee_core::ct!("lb_80013E3C");
     let f = (*(*arg0).x8_ptr1).unk.timer() as i32 as f32;
     (*arg0).x8_ptr1 = (*arg0).x8_ptr1.add(1);
     let c = (*(*arg0).x8_ptr1).light_color;
@@ -119,6 +124,7 @@ pub unsafe fn lb_80013E3C(arg0: *mut ColorOverlay) -> bool {
 
 /// 013F78
 pub unsafe fn lb_80013F78(arg0: *mut ColorOverlay) -> bool {
+    melee_core::ct!("lb_80013F78");
     let rot1 = (*(*arg0).x8_ptr1).light_rot1;
     (*arg0).x74_light_rot_x = rot1.x() as f32;
     (*arg0).x78_light_rot_yz = rot1.yz() as f32;
@@ -128,6 +134,7 @@ pub unsafe fn lb_80013F78(arg0: *mut ColorOverlay) -> bool {
 
 /// 013FF0
 pub unsafe fn lb_80013FF0(arg0: *mut ColorOverlay) -> bool {
+    melee_core::ct!("lb_80013FF0");
     (*arg0).set_x7C_flag2(0);
     (*arg0).x8_ptr1 = (*arg0).x8_ptr1.add(1);
     false
@@ -135,6 +142,7 @@ pub unsafe fn lb_80013FF0(arg0: *mut ColorOverlay) -> bool {
 
 /// 014014
 pub unsafe fn lb_80014014(arg0: *mut ColorOverlay) -> bool {
+    melee_core::ct!("lb_80014014");
     (*arg0).set_x7C_color_enable(1);
     (*arg0).x8_ptr1 = (*arg0).x8_ptr1.add(1);
     let c = (*(*arg0).x8_ptr1).light_color;
@@ -156,6 +164,7 @@ pub unsafe fn lb_80014014(arg0: *mut ColorOverlay) -> bool {
 
 /// 0140F8
 pub unsafe fn lb_800140F8(arg0: *mut ColorOverlay) -> bool {
+    melee_core::ct!("lb_800140F8");
     let f = (*(*arg0).x8_ptr1).unk.timer() as i32 as f32;
     (*arg0).x8_ptr1 = (*arg0).x8_ptr1.add(1);
     let c = (*(*arg0).x8_ptr1).light_color;
@@ -169,6 +178,7 @@ pub unsafe fn lb_800140F8(arg0: *mut ColorOverlay) -> bool {
 
 /// 014234
 pub unsafe fn lb_80014234(arg0: *mut ColorOverlay) -> bool {
+    melee_core::ct!("lb_80014234");
     (*arg0).set_x7C_color_enable(0);
     (*arg0).x8_ptr1 = (*arg0).x8_ptr1.add(1);
     false
@@ -184,6 +194,7 @@ pub static lb_803BA248: [Option<lb_803BA248_fn>; 22] = [
 /// 014258: runs the overlay's command stream until a command ends the frame, then advances the
 /// color / light blends and the priority timer. `true` = the animation is over.
 pub unsafe fn lb_80014258(gobj: *mut Fighter_GObj, arg1: *mut c_void, cmd: FtCmd2) -> bool {
+    melee_core::ct!("lb_80014258");
     let co = arg1 as *mut ColorOverlay;
 
     if !(*co).x8_ptr1.is_null() {
@@ -239,6 +250,7 @@ pub unsafe fn lb_80014258(gobj: *mut Fighter_GObj, arg1: *mut c_void, cmd: FtCmd
 
 /// 014498
 pub unsafe fn lb_80014498(arg0: *mut ColorOverlay) {
+    melee_core::ct!("lb_80014498");
     (*arg0).x8_ptr1 = core::ptr::null_mut();
     (*arg0).x4_pri = 0;
     (*arg0).x28_colanim.ptr = core::ptr::null_mut();
@@ -248,6 +260,7 @@ pub unsafe fn lb_80014498(arg0: *mut ColorOverlay) {
 
 /// 0144C8
 pub unsafe fn lb_800144C8(arg0: *mut ColorOverlay, arg1: *mut Fighter_804D653C_t, arg2: i32, arg3: i32) -> bool {
+    melee_core::ct!("lb_800144C8");
     if (*arg1.offset((*arg0).x28_colanim.i as isize)).unk4 <= (*arg1.offset(arg2 as isize)).unk4 {
         (*arg0).x28_colanim.i = arg2;
         (*arg0).x4_pri = arg3;
@@ -263,24 +276,28 @@ pub unsafe fn lb_800144C8(arg0: *mut ColorOverlay, arg1: *mut Fighter_804D653C_t
 
 /// 014534
 pub unsafe fn lb_80014534() {
+    melee_core::ct!("lb_80014534");
     ext::lbArchive_80017040(core::ptr::null_mut(), c"LbRb.dat".as_ptr(), (&raw mut lb_804D63C0) as *mut c_void,
                             c"lbRumbleData".as_ptr(), 0);
 }
 
 /// 014574
 pub unsafe fn lb_80014574(arg0: u8, arg1: i32, arg2: i32, arg3: i32) {
+    melee_core::ct!("lb_80014574");
     let e = lb_804D63C0.offset(arg2 as isize);
     ext::HSD_PadRumbleAdd(arg0, arg1, if arg3 != 0 { arg3 } else { -2 }, (*e).unk4 as i32, (*e).unk);
 }
 
 /// 0145C0
 pub unsafe fn lb_800145C0(slot: u8) {
+    melee_core::ct!("lb_800145C0");
     ext::HSD_PadRumbleRemove(slot);
     ext::HSD_PadRumbleOn(slot);
 }
 
 /// 0145F4
 pub unsafe fn lb_800145F4() {
+    melee_core::ct!("lb_800145F4");
     for i in 0..4 {
         lb_800145C0(i as u8);
     }

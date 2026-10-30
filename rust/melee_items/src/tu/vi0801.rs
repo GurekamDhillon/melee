@@ -120,10 +120,12 @@ unsafe extern "C" fn vi0801_8031ED70(gobj: *mut HSD_GObj, unused: i32) {
 }
 
 pub unsafe extern "C" fn vi0801_8031EE60(gobj: *mut HSD_GObj) {
+    melee_core::ct!("vi0801_8031EE60");
     ext::HSD_JObjAnimAll(GET_JOBJ(gobj));
 }
 
 pub unsafe extern "C" fn vi0801_8031EE84() {
+    melee_core::ct!("vi0801_8031EE84");
     let mut i: i32 = 0;
     while !(*(*un_804D6FB8).models.offset(i as isize)).is_null() {
         let model = *(*un_804D6FB8).models.offset(i as isize);
@@ -154,6 +156,7 @@ pub unsafe extern "C" fn vi0801_8031EE84() {
 }
 
 pub unsafe extern "C" fn vi0801_8031EFE4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("vi0801_8031EFE4");
     let cobj = (*gobj).hsd_obj as *mut HSD_CObj;
     ext::HSD_CObjAnim(cobj);
     if (*(*cobj).aobj).curr_frame == 75.0 || (*(*cobj).aobj).curr_frame == 160.0 {
@@ -169,6 +172,7 @@ pub unsafe extern "C" fn vi0801_8031EFE4(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn vi0801_Scene_OnEnter(unused: *mut c_void) {
+    melee_core::ct!("vi0801_Scene_OnEnter");
     ext::lbAudioAx_800236DC();
     ext::efLib_Init();
     ext::efAsync_LoadSync(0);
@@ -215,5 +219,6 @@ pub unsafe extern "C" fn vi0801_Scene_OnEnter(unused: *mut c_void) {
 }
 
 pub unsafe extern "C" fn vi0801_Scene_OnFrame() {
+    melee_core::ct!("vi0801_Scene_OnFrame");
     ext::vi_8031CAAC();
 }

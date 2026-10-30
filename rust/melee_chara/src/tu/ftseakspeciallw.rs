@@ -69,6 +69,7 @@ pub mod ext {
 }
 
 pub unsafe extern "C" fn cb_ftZd_SpecialLw_8013B4D8(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftZd_SpecialLw_8013B4D8");
     ext::ftZd_SpecialLw_8013B4D8(g);
 }
 
@@ -101,17 +102,21 @@ unsafe fn set_effect_hitlag_callbacks(fp: *mut Fighter) {
 }
 
 pub unsafe extern "C" fn cb_fn_80114034(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_80114034");
     fn_80114034(g);
 }
 pub unsafe extern "C" fn cb_fn_801140B0(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_801140B0");
     fn_801140B0(g);
 }
 pub unsafe extern "C" fn cb_fn_8011412C(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_8011412C");
     fn_8011412C(g);
 }
 
 /// Ground transform start effect (accessory callback).
 pub fn fn_80114034(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80114034");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).x2219_b0() == 0 {
@@ -125,6 +130,7 @@ pub fn fn_80114034(gobj: *mut HSD_GObj) {
 
 /// Transform-finish effect (accessory callback).
 pub fn fn_801140B0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801140B0");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).x2219_b0() == 0 {
@@ -138,6 +144,7 @@ pub fn fn_801140B0(gobj: *mut HSD_GObj) {
 
 /// Swap to Zelda (accessory callback at the end of the transform start).
 pub fn fn_8011412C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8011412C");
     unsafe {
         let fp = fpp(gobj);
         (*fp).accessory4_cb = None;
@@ -167,6 +174,7 @@ unsafe fn enter_tail(gobj: *mut HSD_GObj) {
 
 /// Sheik_AS_361_Transform_Grounded
 pub fn ftSk_SpecialLw_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialLw_Enter");
     st::Fighter_ChangeMotionState(gobj, 0x169, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
     st::ftAnim_8006EBA4(gobj);
     unsafe { enter_tail(gobj) }
@@ -174,21 +182,23 @@ pub fn ftSk_SpecialLw_Enter(gobj: *mut HSD_GObj) {
 
 /// Sheik_AS_363_Transform_Aerial
 pub fn ftSk_SpecialAirLw_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialAirLw_Enter");
     st::Fighter_ChangeMotionState(gobj, 0x16B, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
     st::ftAnim_8006EBA4(gobj);
     unsafe { enter_tail(gobj) }
 }
 
-pub fn ftSk_SpecialLw_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftSk_SpecialLw_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftSk_SpecialLw_IASA");}
 
-pub fn ftSk_SpecialAirLw_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftSk_SpecialAirLw_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftSk_SpecialAirLw_IASA");}
 
-pub fn ftSk_SpecialLw2_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftSk_SpecialLw2_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftSk_SpecialLw2_IASA");}
 
-pub fn ftSk_SpecialAirLw2_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftSk_SpecialAirLw2_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftSk_SpecialAirLw2_IASA");}
 
 /// AS_SheikFinishTransformation
 pub fn ftSk_SpecialLw_80114758(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialLw_80114758");
     unsafe {
         let fp = fpp(gobj);
         let attributes = da(fp);

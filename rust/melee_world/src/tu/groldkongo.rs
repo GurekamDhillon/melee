@@ -256,9 +256,10 @@ pub static mut grOk_StageData: StageData = StageData {
     joint_count: 2,
 };
 
-pub unsafe extern "C" fn grOldKongo_8020F468(_arg: i32) {}
+pub unsafe extern "C" fn grOldKongo_8020F468(_arg: i32) { melee_core::ct!("grOldKongo_8020F468");}
 
 pub unsafe extern "C" fn grOldKongo_8020F46C() {
+    melee_core::ct!("grOldKongo_8020F46C");
     yakumono_param = ext::Ground_GetYakumonoParam() as *mut grOldKongo_YakumonoParam;
     ext::stage_info.unk8C.set_b4(0);
     ext::stage_info.unk8C.set_b5(1);
@@ -270,19 +271,22 @@ pub unsafe extern "C" fn grOldKongo_8020F46C() {
     ext::Ground_801C3BB4();
 }
 
-pub unsafe extern "C" fn grOldKongo_8020F4E4() {}
+pub unsafe extern "C" fn grOldKongo_8020F4E4() { melee_core::ct!("grOldKongo_8020F4E4");}
 
 pub unsafe extern "C" fn grOldKongo_8020F4E8() {
+    melee_core::ct!("grOldKongo_8020F4E8");
     let gobj = ext::Ground_GetMapGObj(1);
     ext::ftCo_800C0764(gobj, 2, grOldKongo_80210454 as usize as *mut c_void);
     ext::grZakoGenerator_801CAE04(null_mut());
 }
 
 pub unsafe extern "C" fn grOldKongo_8020F524() -> i32 {
+    melee_core::ct!("grOldKongo_8020F524");
     0
 }
 
 pub unsafe extern "C" fn setupStageCallbacks(gobj_id: i32) -> *mut HSD_GObj {
+    melee_core::ct!("setupStageCallbacks");
     let callbacks = (&raw mut stage_callbacks as *mut StageCallbacks).add(gobj_id as usize);
     let gobj = ext::Ground_GetStageGObj(gobj_id);
     if !gobj.is_null() {
@@ -292,35 +296,41 @@ pub unsafe extern "C" fn setupStageCallbacks(gobj_id: i32) -> *mut HSD_GObj {
 }
 
 pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj0_OnInit");
     Ground_StartMapAnim(gobj);
 }
 
 pub unsafe extern "C" fn stageGObj0_Callback1(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("stageGObj0_Callback1");
     0
 }
 
-pub unsafe extern "C" fn stageGObj0_GObjProc(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn stageGObj0_GObjProc(_arg: *mut HSD_GObj) { melee_core::ct!("stageGObj0_GObjProc");}
 
-pub unsafe extern "C" fn stageGObj0_Callback3(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn stageGObj0_Callback3(_arg: *mut HSD_GObj) { melee_core::ct!("stageGObj0_Callback3");}
 
 pub unsafe extern "C" fn stageGObj3_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj3_OnInit");
     let gp = (*gobj).user_data as *mut Ground;
     Ground_InitMapCollAndAnim(gobj);
     (*gp).x10_flags.set_b5(1);
 }
 
 pub unsafe extern "C" fn stageGObj3_Callback1(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("stageGObj3_Callback1");
     0
 }
 
 pub unsafe extern "C" fn stageGObj3_GObjProc(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj3_GObjProc");
     ext::Ground_UpdateMapColl(gobj);
     ext::lb_800115F4();
 }
 
-pub unsafe extern "C" fn stageGObj3_Callback3(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn stageGObj3_Callback3(_arg: *mut HSD_GObj) { melee_core::ct!("stageGObj3_Callback3");}
 
 pub unsafe extern "C" fn stageGObj1_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj1_OnInit");
     let mut sp14 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -346,10 +356,12 @@ pub unsafe extern "C" fn stageGObj1_OnInit(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn stageGObj1_Callback1(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("stageGObj1_Callback1");
     0
 }
 
 pub unsafe fn grOldKongo_8020F888_inline(gp: *mut Ground) {
+    melee_core::ct!("grOldKongo_8020F888_inline");
     let vel = (*gp).u.taru.xE4;
     let yp = yakumono_param;
     if vel > 0.0 {
@@ -371,6 +383,7 @@ pub unsafe fn grOldKongo_8020F888_inline(gp: *mut Ground) {
 }
 
 pub unsafe extern "C" fn stageGObj1_GObjProc(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj1_GObjProc");
     let mut sp3C = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let yp = yakumono_param;
     let gp = (*gobj).user_data as *mut Ground;
@@ -535,9 +548,10 @@ pub unsafe extern "C" fn stageGObj1_GObjProc(gobj: *mut HSD_GObj) {
     }
 }
 
-pub unsafe extern "C" fn stageGObj1_Callback3(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn stageGObj1_Callback3(_arg: *mut HSD_GObj) { melee_core::ct!("stageGObj1_Callback3");}
 
 pub unsafe extern "C" fn stageGObj2_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj2_OnInit");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let yp = yakumono_param;
@@ -546,10 +560,12 @@ pub unsafe extern "C" fn stageGObj2_OnInit(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn stageGObj2_Callback1(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("stageGObj2_Callback1");
     0
 }
 
 pub unsafe extern "C" fn stageGObj2_GObjProc(arg0: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj2_GObjProc");
     let mut left: f32 = 0.0;
     let mut right: f32 = 0.0;
     let mut center: f32 = 0.0;
@@ -593,9 +609,10 @@ pub unsafe extern "C" fn stageGObj2_GObjProc(arg0: *mut HSD_GObj) {
     }
 }
 
-pub unsafe extern "C" fn stageGObj2_Callback3(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn stageGObj2_Callback3(_arg: *mut HSD_GObj) { melee_core::ct!("stageGObj2_Callback3");}
 
 pub unsafe extern "C" fn grOldKongo_80210454(ground_gobj: *mut HSD_GObj, keep: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grOldKongo_80210454");
     let mut pos_gnd = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut pos_ft = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut unk: f32 = 0.0;
@@ -632,6 +649,7 @@ pub unsafe extern "C" fn grOldKongo_80210454(ground_gobj: *mut HSD_GObj, keep: *
 }
 
 pub unsafe extern "C" fn grOldKongo_802105AC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grOldKongo_802105AC");
     let gp = (*gobj).user_data as *mut Ground;
     if (*gp).u.taru.xC6 == 1 {
         (*gp).u.taru.xC6 = 2;
@@ -639,6 +657,7 @@ pub unsafe extern "C" fn grOldKongo_802105AC(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grOldKongo_802105C8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grOldKongo_802105C8");
     let gp = (*gobj).user_data as *mut Ground;
     if (*gp).u.taru.xC6 != 1 {
         return;
@@ -654,6 +673,7 @@ pub unsafe extern "C" fn grOldKongo_802105C8(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grOldKongo_80210650() -> f32 {
+    melee_core::ct!("grOldKongo_80210650");
     let yp = &*yakumono_param;
     let total: i32 = yp.rrate_barrel_ld as i32 + yp.rrate_barrel_l as i32 + yp.rrate_barrel_lu as i32
         + yp.rrate_barrel_u as i32 + yp.rrate_barrel_ru as i32 + yp.rrate_barrel_r as i32
@@ -696,10 +716,12 @@ pub unsafe extern "C" fn grOldKongo_80210650() -> f32 {
 }
 
 pub unsafe extern "C" fn grOldKongo_80210780(_gobj: i32) -> *mut DynamicsDesc {
+    melee_core::ct!("grOldKongo_80210780");
     null_mut()
 }
 
 pub unsafe extern "C" fn grOldKongo_80210788(a: *mut Vec3, _arg: i32, joint: *mut HSD_JObj) -> i32 {
+    melee_core::ct!("grOldKongo_80210788");
     let mut b = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ext::lb_8000B1CC(joint, null_mut(), &mut b);
     if (*a).y > b.y {

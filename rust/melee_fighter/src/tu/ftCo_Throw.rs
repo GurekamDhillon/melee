@@ -146,19 +146,24 @@ fn part_joint(f: &Fighter, part: Fighter_Part) -> *mut HSD_JObj {
 
 /// TU-local callbacks as values.
 pub unsafe extern "C" fn fn_800DD568_cb(g: G) {
+    melee_core::ct!("fn_800DD568_cb");
     fn_800DD568(g)
 }
 pub unsafe extern "C" fn fn_800DD5EC_cb(g: G) {
+    melee_core::ct!("fn_800DD5EC_cb");
     fn_800DD5EC(g)
 }
 pub unsafe extern "C" fn fn_800DD684_cb(g: G) {
+    melee_core::ct!("fn_800DD684_cb");
     fn_800DD684(g)
 }
 pub unsafe extern "C" fn fn_800DD6E4_cb(g: G, arg: i32) -> bool {
+    melee_core::ct!("fn_800DD6E4_cb");
     fn_800DD6E4(g, arg)
 }
 
 pub fn ftCo_800DD100(g: G) {
+    melee_core::ct!("ftCo_800DD100");
     let f = fp(g);
     let victim = f.victim_gobj;
     if !victim.is_null() {
@@ -172,6 +177,7 @@ pub fn ftCo_800DD100(g: G) {
 }
 
 pub fn ftCo_800DD168(g: G) {
+    melee_core::ct!("ftCo_800DD168");
     let f = fp(g);
     let victim = f.victim_gobj;
     if !victim.is_null() {
@@ -186,6 +192,7 @@ pub fn ftCo_800DD168(g: G) {
 }
 
 pub fn ftCo_800DD1E4(g: G) -> bool {
+    melee_core::ct!("ftCo_800DD1E4");
     let f = fp(g);
     let mut msid = f.motion_id;
     let i1 = {
@@ -217,6 +224,7 @@ pub fn ftCo_800DD1E4(g: G) -> bool {
 }
 
 pub fn ftCo_800DD398(g: G, msid: i32, victim_msid: i32, anim_speed: f32) {
+    melee_core::ct!("ftCo_800DD398");
     unsafe {
         let f = fp(g);
         f.cmd_vars[0] = 0;
@@ -243,6 +251,7 @@ pub fn ftCo_800DD398(g: G, msid: i32, victim_msid: i32, anim_speed: f32) {
 }
 
 pub fn ftCo_800DD4B0(g: G, msid: i32) {
+    melee_core::ct!("ftCo_800DD4B0");
     let f = fp(g);
     let victim = fp(f.victim_gobj);
     let throw_index = msid.wrapping_sub(219);
@@ -263,6 +272,7 @@ pub fn ftCo_800DD4B0(g: G, msid: i32) {
 }
 
 pub fn fn_800DD568(g: G) {
+    melee_core::ct!("fn_800DD568");
     unsafe {
         ext::ftAnim_SetAnimRate(g, 1.0);
         ext::ftAnim_8006EBA4(g);
@@ -280,6 +290,7 @@ pub fn fn_800DD568(g: G) {
 }
 
 pub fn fn_800DD5EC(g: G) {
+    melee_core::ct!("fn_800DD5EC");
     unsafe {
         // TARGET_PC: fast-forward to the release, at most the longest throw (600 frames).
         let mut guard = 0;
@@ -318,6 +329,7 @@ pub fn fn_800DD5EC(g: G) {
 }
 
 pub fn fn_800DD684(g: G) {
+    melee_core::ct!("fn_800DD684");
     let victim = fp(g).victim_gobj;
     if !victim.is_null() {
         ext::ftCo_800DC920(g, victim);
@@ -327,10 +339,12 @@ pub fn fn_800DD684(g: G) {
 }
 
 pub fn fn_800DD6E4(_g: G, arg: i32) -> bool {
+    melee_core::ct!("fn_800DD6E4");
     arg != -1 && ext::mpLineGetFlags(arg) & LINE_FLAG_PLATFORM as u32 == 0
 }
 
 pub fn ftCo_800DD724(g: G) {
+    melee_core::ct!("ftCo_800DD724");
     unsafe {
         let f = fp(g);
         let b4 = unsafe {
@@ -385,6 +399,7 @@ pub fn ftCo_800DD724(g: G) {
 }
 
 pub fn ftCo_ThrowF_Anim(g: G) {
+    melee_core::ct!("ftCo_ThrowF_Anim");
     ext::ftMt_SpecialN_Shoot(g);
     ftCo_800DD724(g);
     if !ext::ftAnim_IsFramesRemaining(g) {
@@ -396,9 +411,10 @@ pub fn ftCo_ThrowF_Anim(g: G) {
     }
 }
 
-pub fn ftCo_ThrowF_IASA(_g: G) {}
+pub fn ftCo_ThrowF_IASA(_g: G) { melee_core::ct!("ftCo_ThrowF_IASA");}
 
 pub fn ftCo_ThrowF_Phys(g: G) {
+    melee_core::ct!("ftCo_ThrowF_Phys");
     unsafe {
         let f = fp(g);
         if f.ground_or_air == GA_Air {
@@ -459,32 +475,40 @@ fn throw_anim(g: G) {
 }
 
 pub fn ftCo_ThrowF_Coll(g: G) {
+    melee_core::ct!("ftCo_ThrowF_Coll");
     throw_coll(g);
 }
 
 pub fn ftCo_ThrowB_Anim(g: G) {
+    melee_core::ct!("ftCo_ThrowB_Anim");
     throw_anim(g);
 }
-pub fn ftCo_ThrowB_IASA(_g: G) {}
+pub fn ftCo_ThrowB_IASA(_g: G) { melee_core::ct!("ftCo_ThrowB_IASA");}
 pub fn ftCo_ThrowB_Phys(g: G) {
+    melee_core::ct!("ftCo_ThrowB_Phys");
     throw_phys(g);
 }
 pub fn ftCo_ThrowB_Coll(g: G) {
+    melee_core::ct!("ftCo_ThrowB_Coll");
     throw_coll(g);
 }
 
 pub fn ftCo_ThrowHi_Anim(g: G) {
+    melee_core::ct!("ftCo_ThrowHi_Anim");
     throw_anim(g);
 }
-pub fn ftCo_ThrowHi_IASA(_g: G) {}
+pub fn ftCo_ThrowHi_IASA(_g: G) { melee_core::ct!("ftCo_ThrowHi_IASA");}
 pub fn ftCo_ThrowHi_Phys(g: G) {
+    melee_core::ct!("ftCo_ThrowHi_Phys");
     throw_phys(g);
 }
 pub fn ftCo_ThrowHi_Coll(g: G) {
+    melee_core::ct!("ftCo_ThrowHi_Coll");
     throw_coll(g);
 }
 
 pub fn ftCo_ThrowHi_Cam(g: G) {
+    melee_core::ct!("ftCo_ThrowHi_Cam");
     let f = fp(g);
     if is_kirby(f.kind) && f.motion_id == 221 {
         ext::ftCamera_800762F4(g);
@@ -494,17 +518,21 @@ pub fn ftCo_ThrowHi_Cam(g: G) {
 }
 
 pub fn ftCo_ThrowLw_Anim(g: G) {
+    melee_core::ct!("ftCo_ThrowLw_Anim");
     throw_anim(g);
 }
-pub fn ftCo_ThrowLw_IASA(_g: G) {}
+pub fn ftCo_ThrowLw_IASA(_g: G) { melee_core::ct!("ftCo_ThrowLw_IASA");}
 pub fn ftCo_ThrowLw_Phys(g: G) {
+    melee_core::ct!("ftCo_ThrowLw_Phys");
     throw_phys(g);
 }
 pub fn ftCo_ThrowLw_Coll(g: G) {
+    melee_core::ct!("ftCo_ThrowLw_Coll");
     throw_coll(g);
 }
 
 pub fn ftCo_800DDDE4(g: G, g2: G, arg: bool) {
+    melee_core::ct!("ftCo_800DDDE4");
     let fpp: *mut Fighter = fp(g);
     let fp2p: *mut Fighter = fp(g2);
     unsafe {
@@ -587,14 +615,17 @@ pub fn ftCo_800DDDE4(g: G, g2: G, arg: bool) {
 }
 
 pub fn ftCo_800DE2A8(g: G, other: G) {
+    melee_core::ct!("ftCo_800DE2A8");
     ftCo_800DDDE4(g, other, true);
 }
 
 pub fn ftCo_800DE2CC(g: G, other: G) {
+    melee_core::ct!("ftCo_800DE2CC");
     ftCo_800DDDE4(g, other, false);
 }
 
 pub fn ftCo_800DE2F0(g: G) {
+    melee_core::ct!("ftCo_800DE2F0");
     let mut hit = HitCapsule::zeroed();
     ext::lbColl_80008D30(&mut hit, &cd().x380);
     ext::ftColl_800788D4(g);

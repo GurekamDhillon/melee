@@ -63,14 +63,17 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 pub use crate::chars::cb::ftyoshispecialhi__fn_8012E110 as cb_fn_8012E110;
 /// `fn_8012E3B4` as a callback entry.
 pub unsafe extern "C" fn cb_fn_8012E3B4(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_8012E3B4");
     fn_8012E3B4(g);
 }
 /// `fn_8012E44C` as a callback entry.
 pub unsafe extern "C" fn cb_fn_8012E44C(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_8012E44C");
     fn_8012E44C(g);
 }
 
 pub fn ftYs_SpecialS_8012DF18(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialS_8012DF18");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).target_item_gobj.is_null() {
@@ -92,6 +95,7 @@ pub fn ftYs_SpecialS_8012DF18(gobj: *mut HSD_GObj) {
 
 /// The egg's throw velocity from the stick: `arg1` receives the vector.
 pub fn ftYs_SpecialS_8012DF8C(gobj: *mut HSD_GObj, arg1: *mut Vec3) {
+    melee_core::ct!("ftYs_SpecialS_8012DF8C");
     unsafe {
         let fp = fpp(gobj);
         let da = &*((*fp).dat_attrs as *const ftYs_DatAttrs);
@@ -128,10 +132,12 @@ pub fn ftYs_SpecialS_8012DF8C(gobj: *mut HSD_GObj, arg1: *mut Vec3) {
 
 /// `ftYs_SpecialS_8012DF8C_outline(gobj, vec)` (static inline).
 pub fn ftYs_SpecialS_8012DF8C_outline(gobj: *mut HSD_GObj, vec: *mut Vec3) {
+    melee_core::ct!("ftYs_SpecialS_8012DF8C_outline");
     ftYs_SpecialS_8012DF8C(gobj, vec);
 }
 
 pub fn fn_8012E110(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8012E110");
     unsafe {
         let fp = fpp(gobj);
         let da = &*((*fp).dat_attrs as *const ftYs_DatAttrs);
@@ -165,6 +171,7 @@ pub fn fn_8012E110(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftYs_SpecialS_8012E270(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialS_8012E270");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.ys.x2238.is_null() && (*fp).mv.ys.specials.x0 == 0 {
@@ -177,10 +184,12 @@ pub fn ftYs_SpecialS_8012E270(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftYs_SpecialHi_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialHi_Coll");
     ext::ft_8008403C(gobj, Some(cb_fn_8012E3B4));
 }
 
 pub fn ftYs_SpecialAirHi_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirHi_Coll");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).mv.ys.specialhi.x0 != 0 {

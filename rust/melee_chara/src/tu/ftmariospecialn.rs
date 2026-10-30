@@ -82,11 +82,13 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 
 /// `ftMr_SpecialN_ItemFireSpawn` as a Fighter callback entry (`accessory4_cb`).
 pub unsafe extern "C" fn cb_ftMr_SpecialN_ItemFireSpawn(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftMr_SpecialN_ItemFireSpawn");
     ftMr_SpecialN_ItemFireSpawn(g);
 }
 
 /// `pickMegavitamin` (static): `arr[HSD_Randi(outpos)]`, shifting the current colour to previous.
 pub fn pickMegavitamin(fp: &mut Fighter, arr: &[i32], outpos: i32) -> i32 {
+    melee_core::ct!("pickMegavitamin");
     let result = arr[ext::HSD_Randi(outpos) as usize];
     unsafe {
         fp.u.mr.x2230_vitaminPrev = fp.u.mr.x222C_vitaminCurr;
@@ -97,6 +99,7 @@ pub fn pickMegavitamin(fp: &mut Fighter, arr: &[i32], outpos: i32) -> i32 {
 
 /// Get random Megavitamin color combo for Dr. Mario.
 pub fn ftMr_SpecialN_VitaminRandom(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("ftMr_SpecialN_VitaminRandom");
     unsafe {
         let fp = &mut *fpp(gobj);
         let mut arr = [0i32; 9];
@@ -112,6 +115,7 @@ pub fn ftMr_SpecialN_VitaminRandom(gobj: *mut HSD_GObj) -> i32 {
 }
 
 pub fn ftMr_SpecialN_ItemFireSpawn(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialN_ItemFireSpawn");
     unsafe {
         let fp = fpp(gobj);
         let flag_res = if (*fp).anon_2210.anon_0.throw_flags_b0() != 0 {
@@ -142,6 +146,7 @@ pub fn ftMr_SpecialN_ItemFireSpawn(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMr_SpecialAirN_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialAirN_IASA");
     unsafe {
         if (*fpp(gobj)).cmd_vars[0] != 0 {
             ext::ftCo_Fall_IASA_Inner(gobj);

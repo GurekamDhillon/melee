@@ -288,19 +288,23 @@ pub static lbl_803D5630: [u32; 6] = [u32::MAX, 0x7C858, 0x7C862, 0x7C85F, 0x7C85
 
 
 pub unsafe fn fn_8016AE60() -> *mut lbl_8046B488_t {
+    melee_core::ct!("fn_8016AE60");
     ext::gm_1601_GetUnkData()
 }
 
 
 pub unsafe fn gm_8016AE94() -> f32 {
+    melee_core::ct!("gm_8016AE94");
     (*gmVs_GetSceneController()).state.unk_34
 }
 
 pub unsafe fn gm_8016AEA4() -> u64 {
+    melee_core::ct!("gm_8016AEA4");
     (*gm_GetStartMeleeRules()).x20
 }
 
 pub unsafe fn gm_8016AEB8() -> i32 {
+    melee_core::ct!("gm_8016AEB8");
     (*gm_GetStartMeleeRules()).x28
 }
 
@@ -308,16 +312,19 @@ pub unsafe fn gm_8016AEB8() -> i32 {
 
 
 pub unsafe fn gm_8016AEFC() -> u16 {
+    melee_core::ct!("gm_8016AEFC");
     (*gmVs_GetSceneController()).state.unk_2C
 }
 
 
 
 pub unsafe fn gm_GetStKind() -> u16 {
+    melee_core::ct!("gm_GetStKind");
     (*gm_GetStartMeleeRules()).stkind
 }
 
 pub unsafe fn gm_8016B014() -> bool {
+    melee_core::ct!("gm_8016B014");
     if (*gm_GetStartMeleeRules()).x4_2() != 0 && !ext::gm_8016A1F8() {
         let mut i: i32 = 1;
         while i < 6 {
@@ -335,29 +342,35 @@ pub unsafe fn gm_8016B014() -> bool {
 }
 
 pub unsafe fn gm_8016B094() -> bool {
+    melee_core::ct!("gm_8016B094");
     (*gm_GetStartMeleeRules()).match_kind() == 1
 }
 
 pub unsafe fn gm_8016B0B4() -> bool {
+    melee_core::ct!("gm_8016B0B4");
     (*gm_GetStartMeleeRules()).match_kind() == 2
 }
 
 pub unsafe fn gm_8016B0D4() -> i32 {
+    melee_core::ct!("gm_8016B0D4");
     (*gm_GetStartMeleeRules()).friendly_fire() as i32
 }
 
 
 pub unsafe fn gm_8016B0FC() -> i32 {
+    melee_core::ct!("gm_8016B0FC");
     (*gm_GetStartMeleeRules()).single_button() as i32
 }
 
 
 
 pub unsafe fn fn_8016B138() {
+    melee_core::ct!("fn_8016B138");
     (*gm_GetStartMeleeRules()).is_teams = 0;
 }
 
 pub unsafe fn gm_8016B14C() -> bool {
+    melee_core::ct!("gm_8016B14C");
     (*gm_GetStartMeleeRules()).is_teams == 0
 }
 
@@ -365,15 +378,18 @@ pub unsafe fn gm_8016B14C() -> bool {
 
 
 pub unsafe fn gm_8016B1C4() -> i32 {
+    melee_core::ct!("gm_8016B1C4");
     (*gm_GetStartMeleeRules()).x5_2() as i32
 }
 
 
 pub unsafe fn gm_8016B1EC() -> bool {
+    melee_core::ct!("gm_8016B1EC");
     (*gmVs_GetSceneController()).state.unk_0 == 0
 }
 
 pub unsafe fn gm_8016B204() -> bool {
+    melee_core::ct!("gm_8016B204");
     let rules = gm_GetStartMeleeRules();
     if (*rules).time_limit == 0 || (*rules).timer_enabled() == 0 {
         return true;
@@ -383,6 +399,7 @@ pub unsafe fn gm_8016B204() -> bool {
 
 
 pub unsafe fn gm_8016B248() -> f32 {
+    melee_core::ct!("gm_8016B248");
     (*gm_GetStartMeleeRules()).x30
 }
 
@@ -394,40 +411,49 @@ unsafe fn seconds_to_ticks(sec: f32) -> u64 {
 }
 
 pub unsafe fn gm_SetGameSpeed(speed: f32) {
+    melee_core::ct!("gm_SetGameSpeed");
     ext::lb_80019880(seconds_to_ticks(1.0f32 / 60.0f32 / speed));
 }
 
 pub unsafe fn gm_ResetGameSpeed() {
+    melee_core::ct!("gm_ResetGameSpeed");
     ext::lb_80019880(seconds_to_ticks(1.0f32 / 60.0f32 / controller.start.game_speed));
 }
 
 pub unsafe fn gm_8016B328() {
+    melee_core::ct!("gm_8016B328");
     (*gmVs_GetSceneController()).state.terminate_match = 1;
 }
 
 pub unsafe fn gm_8016B33C(arg0: i32) {
+    melee_core::ct!("gm_8016B33C");
     (*gmVs_GetSceneController()).state.unk_B = (arg0 + 1) as u8;
 }
 
 pub unsafe fn gm_8016B350(arg0: i32) {
+    melee_core::ct!("gm_8016B350");
     (*gmVs_GetSceneController()).state.unk_10 = arg0 + 1;
 }
 
 pub unsafe fn gm_8016B364(arg0: i32) {
+    melee_core::ct!("gm_8016B364");
     (*gmVs_GetSceneController()).state.unk_14 = arg0 + 1;
 }
 
 pub unsafe fn gm_8016B378(arg0: i8) {
+    melee_core::ct!("gm_8016B378");
     (*gmVs_GetSceneController()).state.unk_18 = arg0 as u8;
 }
 
 pub unsafe fn fn_8016B388(arg0: i32, arg1: i32) {
+    melee_core::ct!("fn_8016B388");
     (*gmVs_GetSceneController()).state.fighters[arg0 as usize].x6 = arg1 as u16;
 }
 
 
 
 pub unsafe fn gm_IsCurrently1PMode_inline() -> bool {
+    melee_core::ct!("gm_IsCurrently1PMode_inline");
     // m-ex "enable_c_stick_1p": the patch makes the game never report a single-player mode
     if ext::Mex_Enabled(b"enable_c_stick_1p\0".as_ptr() as *mut i8) != 0 {
         return false;
@@ -440,6 +466,7 @@ pub unsafe fn gm_IsCurrently1PMode_inline() -> bool {
 }
 
 pub unsafe fn get_unk_float() -> f32 {
+    melee_core::ct!("get_unk_float");
     if gm_IsCurrently1PMode_inline() {
         1.0
     } else {
@@ -453,10 +480,12 @@ pub unsafe fn get_unk_float() -> f32 {
 }
 
 pub unsafe fn gm_IsCurrently1PMode() -> bool {
+    melee_core::ct!("gm_IsCurrently1PMode");
     ext::gm_Is1PMode(ext::gm_GetCurrentGameMode())
 }
 
 pub unsafe fn fn_8016B4BC() -> bool {
+    melee_core::ct!("fn_8016B4BC");
     let mut sp8: i32 = 0;
     let mut sp_c: i32 = 0;
     if gm_8016B1A8() {
@@ -469,6 +498,7 @@ pub unsafe fn fn_8016B4BC() -> bool {
 }
 
 pub unsafe fn fn_8016B510() -> bool {
+    melee_core::ct!("fn_8016B510");
     if (*gm_GetStartMeleeRules()).x9 == 2 && ext::Ground_801C1D98() != 0 {
         return true;
     }
@@ -476,6 +506,7 @@ pub unsafe fn fn_8016B510() -> bool {
 }
 
 pub unsafe fn gm_8016B558() -> i32 {
+    melee_core::ct!("gm_8016B558");
     let mut count = 0;
     for i in 0..6i32 {
         if ext::Player_GetPlayerSlotType(i) != Gm_PKind_NA {
@@ -486,6 +517,7 @@ pub unsafe fn gm_8016B558() -> i32 {
 }
 
 pub unsafe fn fn_8016B5B0() -> f32 {
+    melee_core::ct!("fn_8016B5B0");
     if gm_IsCurrently1PMode_inline() {
         let mut var_f1: f32 = 3.0;
         if controller.state.unk_0 != 0 {
@@ -512,6 +544,7 @@ pub unsafe fn fn_8016B5B0() -> f32 {
 }
 
 pub unsafe fn gm_8016B6E8(arg0: i32, arg1: i32) {
+    melee_core::ct!("gm_8016B6E8");
     let tmp = gmVs_GetSceneController();
     if arg0 == 0 {
         (*tmp).state.unk_2E = ext::lbTime_8000AF24((*tmp).state.unk_2E as u32, arg1) as u16;
@@ -519,21 +552,25 @@ pub unsafe fn gm_8016B6E8(arg0: i32, arg1: i32) {
 }
 
 pub unsafe fn fn_8016B728() -> u8 {
+    melee_core::ct!("fn_8016B728");
     (*gmVs_GetSceneController()).state.unk_C
 }
 
 pub unsafe fn fn_8016B738(arg0: i32) {
+    melee_core::ct!("fn_8016B738");
     let tmp = gmVs_GetSceneController();
     (*tmp).state.unk_C = ext::lbTime_8000AF74((*tmp).state.unk_C as u32, arg0) as u8;
 }
 
 
 pub unsafe extern "C" fn fn_8016B784() {
+    melee_core::ct!("fn_8016B784");
     (*gmVs_GetSceneController()).state.hud_enabled = 1;
     ext::grStadium_801D4150();
 }
 
 pub unsafe extern "C" fn fn_8016B7B4(arg0: i32) {
+    melee_core::ct!("fn_8016B7B4");
     ext::Ground_801C1154();
     if arg0 == 3 {
         ext::grStadium_801D4084();
@@ -544,6 +581,7 @@ pub unsafe extern "C" fn fn_8016B7B4(arg0: i32) {
 }
 
 pub unsafe extern "C" fn fn_8016B7F8() {
+    melee_core::ct!("fn_8016B7F8");
     let tmp = gmVs_GetSceneController();
     ext::ftLib_800868A4();
     ext::Stage_802252E4((*tmp).start.stkind as StKind, null_mut());
@@ -557,6 +595,7 @@ pub unsafe extern "C" fn fn_8016B7F8() {
 }
 
 pub unsafe extern "C" fn fn_8016B88C(arg0: i32) {
+    melee_core::ct!("fn_8016B88C");
     ext::Ground_801C1158();
     if arg0 == 0 {
         ext::grStadium_801D40C8();
@@ -565,6 +604,7 @@ pub unsafe extern "C" fn fn_8016B88C(arg0: i32) {
 }
 
 pub unsafe fn gm_8016B8D4(arg0: i32, slot_type: u8) {
+    melee_core::ct!("gm_8016B8D4");
     (*gmVs_GetSceneController()).state.fighters[arg0 as usize].x1 = 0x82;
     (*gmVs_GetSceneController()).state.fighters[arg0 as usize].slot_type = slot_type;
     ext::grStadium_801D3B4C(arg0, slot_type as i32);
@@ -595,6 +635,7 @@ unsafe fn pause_pressed(pad: *const HSD_PadStatus) -> i32 {
 }
 
 pub unsafe fn fn_8016B918() {
+    melee_core::ct!("fn_8016B918");
     let rules = gm_GetStartMeleeRules();
     if (*rules).is_vs() == 0 {
         return;
@@ -626,6 +667,7 @@ pub unsafe fn fn_8016B918() {
 }
 
 pub unsafe extern "C" fn gm_AnyControllerPressedStart() -> i32 {
+    melee_core::ct!("gm_AnyControllerPressedStart");
     for i in 0..4usize {
         let pad = addr_of!(HSD_PadMasterStatus[i]);
         if (*pad).err == 0 && ((*pad).trigger & HSD_PAD_START) != 0 {
@@ -636,6 +678,7 @@ pub unsafe extern "C" fn gm_AnyControllerPressedStart() -> i32 {
 }
 
 pub unsafe extern "C" fn gm_AnyControllerPressedZ() -> i32 {
+    melee_core::ct!("gm_AnyControllerPressedZ");
     for i in 0..4usize {
         let pad = addr_of!(HSD_PadMasterStatus[i]);
         if (*pad).err == 0 && ((*pad).trigger & HSD_PAD_Z) != 0 {
@@ -646,6 +689,7 @@ pub unsafe extern "C" fn gm_AnyControllerPressedZ() -> i32 {
 }
 
 pub unsafe fn gm_DefaultVSGetPauser() -> i32 {
+    melee_core::ct!("gm_DefaultVSGetPauser");
     if gm_IsCurrently1PMode_inline()
         || ext::gm_GetCurrentGameMode() as u32 == GM_CHALLENGER_APPROACH
         || (ext::gm_GetCurrentGameMode() as u32 == GM_VS && ext::gm_GetCurrentSceneIndex() == 0x81)
@@ -681,6 +725,7 @@ pub unsafe fn gm_DefaultVSGetPauser() -> i32 {
 }
 
 pub unsafe fn gm_CameraModeVSGetPauser() -> i32 {
+    melee_core::ct!("gm_CameraModeVSGetPauser");
     for var_r30 in 0..4i32 {
         let temp_r3 = addr_of!(HSD_PadCopyStatus[(var_r30 as u8) as usize]);
         if (*temp_r3).err == 0 {
@@ -701,6 +746,7 @@ pub unsafe fn gm_CameraModeVSGetPauser() -> i32 {
 }
 
 pub unsafe fn gm_GetFFAOutcome() -> MatchOutcome {
+    melee_core::ct!("gm_GetFFAOutcome");
     if controller.start.x4_2() != 0 && ext::Player_GetP1Stock() == 0 {
         return OUTCOME_1P_GAME_OVER;
     }
@@ -730,6 +776,7 @@ pub unsafe fn gm_GetFFAOutcome() -> MatchOutcome {
 }
 
 pub unsafe fn gm_GetTeamBattleOutcome() -> MatchOutcome {
+    melee_core::ct!("gm_GetTeamBattleOutcome");
     if controller.start.x4_2() != 0 {
         let mut enemy_stocks_count: i32 = 0;
         let mut enemy_character_count: i32 = 0;
@@ -793,6 +840,7 @@ static mut gmVs_end_hold: i32 = 0;
 static mut gmVs_held_outcome: i32 = 0;
 
 pub unsafe fn gmVs_SetEndHold(on: i32) {
+    melee_core::ct!("gmVs_SetEndHold");
     gmVs_end_hold = (on != 0) as i32;
     if gmVs_end_hold == 0 {
         gmVs_held_outcome = 0;
@@ -800,6 +848,7 @@ pub unsafe fn gmVs_SetEndHold(on: i32) {
 }
 
 pub unsafe fn gmVs_GetHeldOutcome() -> i32 {
+    melee_core::ct!("gmVs_GetHeldOutcome");
     gmVs_held_outcome
 }
 
@@ -812,6 +861,7 @@ unsafe fn gmVs_HoldOutcome(outcome: MatchOutcome) -> MatchOutcome {
 }
 
 pub unsafe fn gm_GetMatchOutcome() -> MatchOutcome {
+    melee_core::ct!("gm_GetMatchOutcome");
     gmVs_held_outcome = 0;
     if controller.state.match_result as u32 != OUTCOME_NONE {
         return controller.state.match_result as MatchOutcome;
@@ -852,6 +902,7 @@ pub unsafe fn gm_GetMatchOutcome() -> MatchOutcome {
 }
 
 pub unsafe fn fn_8016C46C(arg0: i32) {
+    melee_core::ct!("fn_8016C46C");
     if (*gmVs_GetSceneController()).state.unk_9 != 0 {
         match ext::gm_GetCurrentGameMode() as u32 {
             GM_CLASSIC => {
@@ -871,6 +922,7 @@ pub unsafe fn fn_8016C46C(arg0: i32) {
 }
 
 pub unsafe fn fn_8016C4F4(arg0: *mut MatchEnd) {
+    melee_core::ct!("fn_8016C4F4");
     for i in 0..6usize {
         if (*arg0).player_standings[i].pkind != 3 {
             ext::pl_80039450(i as i32);
@@ -896,6 +948,7 @@ unsafe fn refresh_match_end(tmp: *mut MatchEnd) {
 }
 
 pub unsafe fn gm_8016C5C0(pl_slot: i32) -> i32 {
+    melee_core::ct!("gm_8016C5C0");
     let tmp = gm_8016B774();
     refresh_match_end(tmp);
     if (*gm_GetStartMeleeRules()).is_teams == 0 {
@@ -905,26 +958,31 @@ pub unsafe fn gm_8016C5C0(pl_slot: i32) -> i32 {
 }
 
 pub unsafe fn gm_GetMatchEndPlayerScore(pl_slot: i32) -> i32 {
+    melee_core::ct!("gm_GetMatchEndPlayerScore");
     let match_end = gm_8016B774();
     refresh_match_end(match_end);
     (*match_end).player_standings[pl_slot as usize].score
 }
 
 pub unsafe fn gm_8016C6C0(arg0: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("gm_8016C6C0");
     gm_8016C5C0(ext::ftLib_80086BE0(arg0) as i32)
 }
 
 pub unsafe fn gm_8016C75C(player: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("gm_8016C75C");
     let match_end = gm_8016B774();
     refresh_match_end(match_end);
     (*match_end).player_standings[ext::ftLib_80086BE0(player) as usize].x20 as i32
 }
 
 pub unsafe extern "C" fn fn_8016C7D0(_gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8016C7D0");
     ext::fn_80171DC4();
 }
 
 pub unsafe fn fn_8016C7F0() {
+    melee_core::ct!("fn_8016C7F0");
     let mut sp24: i32 = 0;
     let mut sp20: i32 = 0;
 
@@ -996,6 +1054,7 @@ unsafe fn gm_GetSlotByPlayerId(pauser_id: i32) -> i8 {
 }
 
 pub unsafe fn gm_DoPauseChecksAndRoutine(arg0: *mut VsSceneController, arg1: i32) {
+    melee_core::ct!("gm_DoPauseChecksAndRoutine");
     if (*arg0).state.unpause_timer == 0 && (*arg0).state.hud_enabled != 0 && (*arg0).start.disable_pausing() == 0 {
         let pauser: i32;
         if let Some(f) = (*arg0).start.check_for_pauser_override {
@@ -1057,6 +1116,7 @@ unsafe fn gm_GetPlayerPressingUnpause() -> i32 {
 }
 
 pub unsafe fn gm_DoUnpauseChecksAndRoutine(arg0: *mut VsSceneController, arg1: i32) {
+    melee_core::ct!("gm_DoUnpauseChecksAndRoutine");
     if (*arg0).state.pause_timer != 0 {
         return;
     }
@@ -1092,6 +1152,7 @@ pub unsafe fn gm_DoUnpauseChecksAndRoutine(arg0: *mut VsSceneController, arg1: i
 }
 
 pub unsafe fn fn_8016CD98(scene: *mut VsSceneController) {
+    melee_core::ct!("fn_8016CD98");
     if (*scene).state.hud_enabled == 0 {
         return;
     }
@@ -1142,6 +1203,7 @@ pub unsafe fn fn_8016CD98(scene: *mut VsSceneController) {
 }
 
 pub unsafe fn fn_8016CF4C(slot: i32, match_result: MatchOutcome) {
+    melee_core::ct!("fn_8016CF4C");
     ext::gm_801A10FC(slot);
     ext::Ui_RetailPause(slot, 0); // the match ends from the pause: the Atlas pause goes
     controller.state.match_result = match_result as u8;
@@ -1164,6 +1226,7 @@ static mut gmVs_pending_end: i32 = OUTCOME_NONE as i32;
 
 /// Geno LAB: end the running VS match from outside the pause menu, at the start of the next VS frame.
 pub unsafe fn gmVs_EndMatch(outcome: i32) {
+    melee_core::ct!("gmVs_EndMatch");
     gmVs_pending_end = outcome;
 }
 
@@ -1197,6 +1260,7 @@ unsafe fn fn_8016CFE0_inline() {
 }
 
 pub unsafe fn fn_8016CFE0() {
+    melee_core::ct!("fn_8016CFE0");
     let tmp = gmVs_GetSceneController();
     if gmVs_TakePendingEnd() {
         return;
@@ -1259,6 +1323,7 @@ pub unsafe fn fn_8016CFE0() {
 }
 
 pub unsafe fn gm_Scene_Training_OnFrame() {
+    melee_core::ct!("gm_Scene_Training_OnFrame");
     let tmp = gmVs_GetSceneController();
 
     fn_8016CFE0_inline();
@@ -1285,6 +1350,7 @@ pub unsafe fn gm_Scene_Training_OnFrame() {
 }
 
 pub unsafe fn fn_8016D538() -> bool {
+    melee_core::ct!("fn_8016D538");
     let mut result = true;
 
     if gm_8016B3D8() {
@@ -1305,6 +1371,7 @@ pub unsafe fn fn_8016D538() -> bool {
 }
 
 pub unsafe fn fn_8016D634() {
+    melee_core::ct!("fn_8016D634");
     let tmp = addr_of_mut!(controller);
 
     let old = controller.state.unk_30;
@@ -1353,6 +1420,7 @@ pub unsafe fn fn_8016D634() {
 }
 
 pub unsafe fn gm_Scene_Vs_OnFrame() {
+    melee_core::ct!("gm_Scene_Vs_OnFrame");
     if let Some(f) = controller.start.on_frame_start {
         f();
     }
@@ -1373,6 +1441,7 @@ pub unsafe fn gm_Scene_Vs_OnFrame() {
 }
 
 pub unsafe fn fn_8016D8AC(arg0: i32, arg1: *mut PlayerInitData) {
+    melee_core::ct!("fn_8016D8AC");
     let tmp = gmVs_GetSceneController();
     let a = arg0 as usize;
 
@@ -1477,6 +1546,7 @@ pub unsafe fn fn_8016D8AC(arg0: i32, arg1: *mut PlayerInitData) {
 }
 
 pub unsafe fn fn_8016DCC0(arg0: *mut StartMeleeData) {
+    melee_core::ct!("fn_8016DCC0");
     let tmp = addr_of_mut!(controller);
 
     // memzero(&controller, sizeof(VsSceneState)): the GameCube's size for the call, the whole native record cleared
@@ -1607,6 +1677,7 @@ unsafe fn setPlayerUnk45(i: i32) {
 }
 
 pub unsafe fn fn_8016DEEC() {
+    melee_core::ct!("fn_8016DEEC");
     let tmp = addr_of_mut!(controller);
     let mut sp18 = [0.0f32; 6];
     let mut sp_c: Vec3 = core::mem::zeroed();
@@ -1662,6 +1733,7 @@ pub unsafe fn fn_8016DEEC() {
 }
 
 pub unsafe fn fn_8016E124() {
+    melee_core::ct!("fn_8016E124");
     let mut var_r27: usize = 0;
     let mut sp10 = [-1i32; 7];
 
@@ -1777,6 +1849,7 @@ unsafe fn neutral_spawn_set(slot: i32, spawn_id: i32, is_teams: bool) {
 }
 
 pub unsafe fn fn_8016E2BC() {
+    melee_core::ct!("fn_8016E2BC");
     let mut sp24: Vec3 = core::mem::zeroed();
     let mut sp18: Vec3 = core::mem::zeroed();
 
@@ -1896,6 +1969,7 @@ pub unsafe fn fn_8016E2BC() {
 }
 
 pub unsafe fn fn_8016E5C0(arg0: *mut StartMeleeData) -> i32 {
+    melee_core::ct!("fn_8016E5C0");
     if (*arg0).rules.xA != 0 {
         return (*arg0).rules.xA as i32;
     }
@@ -1918,6 +1992,7 @@ pub unsafe fn fn_8016E5C0(arg0: *mut StartMeleeData) -> i32 {
 }
 
 pub unsafe fn fn_8016E730(arg0: *mut StartMeleeData) {
+    melee_core::ct!("fn_8016E730");
     // MELEE_SLP playback: the match the console started - rules, players and RNG seed
     if ext::Replay_Active() != 0 {
         *HSD_RandSeedPtr = ext::Replay_ApplyMatch(arg0 as *mut c_void);
@@ -1980,10 +2055,12 @@ pub unsafe fn fn_8016E730(arg0: *mut StartMeleeData) {
 
 /// A function pointer for `db_RunEveryFrame` (a callee out of the TU: the C passes its address on).
 pub unsafe extern "C" fn db_RunEveryFrame_ptr() {
+    melee_core::ct!("db_RunEveryFrame_ptr");
     ext::db_RunEveryFrame();
 }
 
 pub unsafe fn gm_Scene_Vs_OnEnter(arg0: *mut c_void) {
+    melee_core::ct!("gm_Scene_Vs_OnEnter");
     let tmp = arg0 as *mut StartMeleeData;
     fn_8016E730(tmp);
     if (*tmp).rules.x1_2() != 0 {
@@ -2013,6 +2090,7 @@ unsafe fn gm_8016E9C8_inline() -> bool {
 }
 
 pub unsafe fn gm_Scene_Vs_OnExit(user_data: *mut c_void) {
+    melee_core::ct!("gm_Scene_Vs_OnExit");
     let data = user_data as *mut EndMeleeData;
     let tmp = addr_of_mut!(controller);
 
@@ -2061,6 +2139,7 @@ pub unsafe fn gm_Scene_Vs_OnExit(user_data: *mut c_void) {
 }
 
 pub unsafe fn gm_Scene_SuddenDeath_OnEnter(user_data: *mut c_void) {
+    melee_core::ct!("gm_Scene_SuddenDeath_OnEnter");
     let data = user_data as *mut StartMeleeData;
     (*data).rules.x6 = 1;
     fn_8016E730(data);
@@ -2070,6 +2149,7 @@ pub unsafe fn gm_Scene_SuddenDeath_OnEnter(user_data: *mut c_void) {
 }
 
 pub unsafe fn gm_Scene_Training_OnEnter(user_data: *mut c_void) {
+    melee_core::ct!("gm_Scene_Training_OnEnter");
     let data = user_data as *mut StartMeleeData;
 
     fn_8016E730(data);
@@ -2091,6 +2171,7 @@ pub unsafe fn gm_Scene_Training_OnEnter(user_data: *mut c_void) {
 }
 
 pub unsafe fn gm_8016ECE8() -> f32 {
+    melee_core::ct!("gm_8016ECE8");
     let mut var_f29: f32 = 0.0;
     let mut count: i32 = 0;
     for i in 0..6i32 {
@@ -2109,6 +2190,7 @@ pub unsafe fn gm_8016ECE8() -> f32 {
 }
 
 pub unsafe fn gm_8016EDDC(arg0: i32, arg1: *mut PlayerInitData) -> bool {
+    melee_core::ct!("gm_8016EDDC");
     let mut sp18: Vec3 = core::mem::zeroed();
 
     if controller.state.is_singleplayer == 0 && ext::Player_GetPlayerSlotType(arg0) == Gm_PKind_NA && ext::Player_GetEntity(arg0).is_null() {
@@ -2141,6 +2223,7 @@ pub unsafe fn gm_8016EDDC(arg0: i32, arg1: *mut PlayerInitData) -> bool {
 }
 
 pub unsafe fn fn_8016EF98(arg0: i32) -> i32 {
+    melee_core::ct!("fn_8016EF98");
     if controller.state.is_singleplayer == 0 && !ext::Player_GetEntity(arg0).is_null() {
         ext::ifStatus_802F6788(arg0 as u8);
         ext::Player_80031EBC(arg0);
@@ -2151,10 +2234,12 @@ pub unsafe fn fn_8016EF98(arg0: i32) -> i32 {
 }
 
 pub unsafe fn gm_8016F00C(arg0: i32) {
+    melee_core::ct!("gm_8016F00C");
     ext::fn_8016719C(arg0, 0);
 }
 
 pub unsafe fn fn_8016F030(arg0: *mut StartMeleeData) {
+    melee_core::ct!("fn_8016F030");
     ext::gm_SetupRulesDefaults(addr_of_mut!((*arg0).rules));
     for i in 0..6usize {
         ext::gm_SetupPlayerDefaults(addr_of_mut!((*arg0).players[i]));
@@ -2162,6 +2247,7 @@ pub unsafe fn fn_8016F030(arg0: *mut StartMeleeData) {
 }
 
 pub unsafe fn getPort(player: *mut PlayerInitData, i: i32) -> i32 {
+    melee_core::ct!("getPort");
     let slot = (*player).slot as i32;
     if slot == 0 {
         i
@@ -2171,6 +2257,7 @@ pub unsafe fn getPort(player: *mut PlayerInitData, i: i32) -> i32 {
 }
 
 pub unsafe fn gm_LoadRumbleEnabled(start: *mut StartMeleeData) {
+    melee_core::ct!("gm_LoadRumbleEnabled");
     for i in 0..GM_MAX_PLAYERS as usize {
         if (*start).players[i].slot_type == Gm_PKind_Human as u8 && i < 4 {
             let r = ext::gm_RumbleEnabledForPlayer(getPort(addr_of_mut!((*start).players[i]), i as i32), (*start).players[i].nametag as i32);
@@ -2182,18 +2269,22 @@ pub unsafe fn gm_LoadRumbleEnabled(start: *mut StartMeleeData) {
 }
 
 pub unsafe fn gm_8016F120(arg0: i32) -> i32 {
+    melee_core::ct!("gm_8016F120");
     ext::gmMainLib_8015DADC(arg0 as u32) as i32
 }
 
 pub unsafe fn fn_8016F140(arg0: i32) {
+    melee_core::ct!("fn_8016F140");
     ext::gmMainLib_8015DAB4(arg0 as u32);
 }
 
 pub unsafe fn fn_8016F160(arg0: i32, arg1: i32) -> i32 {
+    melee_core::ct!("fn_8016F160");
     ext::pl_80039418(arg0, arg1) as i32
 }
 
 pub unsafe fn gm_8016B3D8() -> bool {
+    melee_core::ct!("gm_8016B3D8");
     match ext::gm_GetCurrentGameMode() as u32 {
         GM_CLASSIC | GM_ADVENTURE | GM_ALLSTAR => true,
         _ => false,
@@ -2201,6 +2292,7 @@ pub unsafe fn gm_8016B3D8() -> bool {
 }
 
 pub unsafe fn gm_8016B3A0() -> bool {
+    melee_core::ct!("gm_8016B3A0");
     if ext::gm_GetCurrentGameMode() as u32 == GM_SUPER_SUDDEN_DEATH_VS {
         return true;
     }

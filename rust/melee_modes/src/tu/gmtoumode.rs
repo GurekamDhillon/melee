@@ -95,11 +95,13 @@ pub static mut gm_Mode_Tournament_States: [GameModeState; 8] = [
 ];
 
 pub unsafe extern "C" fn gm_801B1724(_arg0: *mut GameModeState) {
+    melee_core::ct!("gm_801B1724");
     ext::lbCardNew_AllocWorkArea();
     ext::lbCardGame_LoadArchive(0);
 }
 
 pub unsafe extern "C" fn gm_801B174C(arg0: *mut GameModeState) {
+    melee_core::ct!("gm_801B174C");
     let sss = (*arg0).info.enter_data as *mut SSSData;
     (*sss).x1 = 0;
     (*sss).no_lras = 1;
@@ -108,6 +110,7 @@ pub unsafe extern "C" fn gm_801B174C(arg0: *mut GameModeState) {
 }
 
 pub unsafe extern "C" fn gm_801B1788(arg0: *mut GameModeState) {
+    melee_core::ct!("gm_801B1788");
     let sss = (*arg0).info.exit_data as *mut SSSData;
     if (*sss).start_game != 0 {
         ext::gm_SetNextGameModeStateId(4);
@@ -125,11 +128,13 @@ pub unsafe extern "C" fn gm_801B1788(arg0: *mut GameModeState) {
 }
 
 pub unsafe extern "C" fn gm_801B1810(arg0: *mut GameModeState) {
+    melee_core::ct!("gm_801B1810");
     let data = (*arg0).info.enter_data as *mut StartMeleeData;
     gm_801905F0(data);
 }
 
 pub unsafe extern "C" fn gm_801B1834(state: *mut GameModeState) {
+    melee_core::ct!("gm_801B1834");
     let mei = (*state).info.exit_data as *mut MatchExitInfo;
     if ext::gmVsMelee_WasAnyPlayerHuman(&mut (*mei).match_end) != 0 {
         ext::gm_SetupHumanResultsScreen((*mei).match_end.match_kind, (*mei).match_end.outcome);
@@ -143,6 +148,7 @@ pub unsafe extern "C" fn gm_801B1834(state: *mut GameModeState) {
 }
 
 pub unsafe extern "C" fn gm_801B18D4(arg0: *mut GameModeState) {
+    melee_core::ct!("gm_801B18D4");
     let src = addr_of_mut!(gm_804876D8);
     let smd = (*arg0).info.enter_data as *mut StartMeleeData;
 
@@ -157,17 +163,20 @@ pub unsafe extern "C" fn gm_801B18D4(arg0: *mut GameModeState) {
 }
 
 pub unsafe extern "C" fn gm_801B1A2C(arg0: *mut GameModeState) {
+    melee_core::ct!("gm_801B1A2C");
     let mei = (*arg0).info.exit_data as *mut MatchExitInfo;
     ext::gm_801629B4((*mei).match_end.frame_count / 60);
     crate::gm_ptr::gm_80166CCC(&mut gm_80487810.match_end, &mut (*mei).match_end);
 }
 
 pub unsafe extern "C" fn gm_801B1A84(arg0: *mut GameModeState) {
+    melee_core::ct!("gm_801B1A84");
     let rmi = (*arg0).info.enter_data as *mut ResultsMatchInfo;
     (*rmi).match_end = gm_80487810.match_end;
 }
 
 pub unsafe extern "C" fn gm_801B1AD4(arg0: *mut GameModeState) {
+    melee_core::ct!("gm_801B1AD4");
     let rmi = (*arg0).info.enter_data as *mut ResultsMatchInfo;
     gm_80477738 = (*rmi).match_end;
 

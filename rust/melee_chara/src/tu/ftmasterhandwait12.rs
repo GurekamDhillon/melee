@@ -18,6 +18,7 @@ unsafe extern "C" fn wait10_init_cb(gobj: *mut HSD_GObj) {
 
 /// `static inline ftMh_UpdateBossMotion(gobj, fp, da)` (inlines.h).
 pub fn ftMh_UpdateBossMotion(gobj: *mut HSD_GObj, fp: *mut Fighter, da: *const ftMasterHand_SpecialAttrs) {
+    melee_core::ct!("ftMh_UpdateBossMotion");
     unsafe {
         st::ft_80085134(gobj);
         let pos = &*(&raw const (*fp).mv.mh.unk0.xC);
@@ -27,6 +28,7 @@ pub fn ftMh_UpdateBossMotion(gobj: *mut HSD_GObj, fp: *mut Fighter, da: *const f
 }
 
 pub fn ftMh_MS_389_80150DC4(gobj: *mut HSD_GObj, cb: HSD_GObjEvent, pos: *const Vec3) {
+    melee_core::ct!("ftMh_MS_389_80150DC4");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         if (*fp).u.mh.x2258 == ftMh_MS_Wait2_0 as i32 {
@@ -52,6 +54,7 @@ pub fn ftMh_MS_389_80150DC4(gobj: *mut HSD_GObj, cb: HSD_GObjEvent, pos: *const 
 }
 
 pub fn ftMh_Wait1_2_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Wait1_2_Phys");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*(*fp).ft_data).ext_attr as *const ftMasterHand_SpecialAttrs;
@@ -60,6 +63,7 @@ pub fn ftMh_Wait1_2_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMh_Wait1_2_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Wait1_2_Coll");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         if (*fp).mv.mh.unk0.x18 == 0.0 {
@@ -74,6 +78,7 @@ pub fn ftMh_Wait1_2_Coll(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMh_MS_389_80151018(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_389_80151018");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*(*fp).ft_data).ext_attr as *const ftMasterHand_SpecialAttrs;

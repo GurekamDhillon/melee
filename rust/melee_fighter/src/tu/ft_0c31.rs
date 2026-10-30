@@ -82,6 +82,7 @@ fn leader(f: &Fighter, index: i32) -> G {
 /// `ftCo_800C61B0` (Entry_Enter): wait `Player_GetUnk4C` frames, invisible, root squashed to
 /// `x6C4` in Y.
 pub fn ftCo_800C61B0(g: G) {
+    melee_core::ct!("ftCo_800C61B0");
     let f = fp(g);
     let timer = crate::player::get_unk4c(f.player_id as i32);
     let e = entry(f);
@@ -108,6 +109,7 @@ pub fn ftCo_800C61B0(g: G) {
 
 /// `ftCo_Entry_Anim`.
 pub fn ftCo_Entry_Anim(g: G) {
+    melee_core::ct!("ftCo_Entry_Anim");
     if entry(fp(g)).timer == 0 {
         ftCo_800C6408(g);
     }
@@ -115,19 +117,21 @@ pub fn ftCo_Entry_Anim(g: G) {
     e.timer = e.timer.wrapping_sub(1);
 }
 /// `ftCo_Entry_IASA`: empty.
-pub fn ftCo_Entry_IASA(_g: G) {}
+pub fn ftCo_Entry_IASA(_g: G) { melee_core::ct!("ftCo_Entry_IASA");}
 /// `ftCo_Entry_Phys`: empty.
-pub fn ftCo_Entry_Phys(_g: G) {}
+pub fn ftCo_Entry_Phys(_g: G) { melee_core::ct!("ftCo_Entry_Phys");}
 /// `fn_800C63BC` (static): `ftCommon_8007D7FC`.
 pub fn fn_800C63BC(g: G) {
+    melee_core::ct!("fn_800C63BC");
     crate::ftcommon3::ftcommon_8007d7fc(fp(g));
 }
 /// `fn_800C63E0` (static): `ftCommon_8007D5D4`.
 pub fn fn_800C63E0(g: G) {
+    melee_core::ct!("fn_800C63E0");
     crate::ftcommon2::ftcommon_8007d5d4(fp(g));
 }
 /// `ftCo_Entry_Coll`: empty.
-pub fn ftCo_Entry_Coll(_g: G) {}
+pub fn ftCo_Entry_Coll(_g: G) { melee_core::ct!("ftCo_Entry_Coll");}
 
 /// The accessory's position: `cur_pos` shifted back by `ftCommon_800804EC` along the facing.
 fn accessory_pos(f: &Fighter) -> Vec3 {
@@ -136,6 +140,7 @@ fn accessory_pos(f: &Fighter) -> Vec3 {
 
 /// `ftCo_800C6408` (EntryStart_Enter): the trophy stand appears, the entry beam and sfx.
 pub fn ftCo_800C6408(g: G) {
+    melee_core::ct!("ftCo_800C6408");
     let f = fp(g);
     entry(f).timer = cd().x6BC;
     ext::Fighter_ChangeMotionState(g, ftCo_MS_EntryStart as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -168,6 +173,7 @@ pub fn ftCo_800C6408(g: G) {
 
 /// `ftCo_EntryStart_Anim`.
 pub fn ftCo_EntryStart_Anim(g: G) {
+    melee_core::ct!("ftCo_EntryStart_Anim");
     let e = entry(fp(g));
     e.timer = e.timer.wrapping_sub(1);
     if e.timer == 0 {
@@ -175,10 +181,11 @@ pub fn ftCo_EntryStart_Anim(g: G) {
     }
 }
 /// `ftCo_EntryStart_IASA`: empty.
-pub fn ftCo_EntryStart_IASA(_g: G) {}
+pub fn ftCo_EntryStart_IASA(_g: G) { melee_core::ct!("ftCo_EntryStart_IASA");}
 
 /// `ftCo_EntryStart_Phys`: the root unsquashes and the stand rises over `x6BC` frames.
 pub fn ftCo_EntryStart_Phys(g: G) {
+    melee_core::ct!("ftCo_EntryStart_Phys");
     let f = fp(g);
     let r6 = cd().x6BC;
     let f4 = cd().x6C4;
@@ -216,6 +223,7 @@ fn coll(g: G) {
 
 /// `ftCo_EntryStart_Coll`: the ECB bottom follows the stand (the leader's for Nana).
 pub fn ftCo_EntryStart_Coll(g: G) {
+    melee_core::ct!("ftCo_EntryStart_Coll");
     coll(g);
 }
 
@@ -242,15 +250,18 @@ fn accessory_follow(g: G, out_of_line: bool) {
 
 /// `fn_800C69F4` (EntryStart's accessory callback).
 pub fn fn_800C69F4(g: G) {
+    melee_core::ct!("fn_800C69F4");
     accessory_follow(g, true);
 }
 /// `fn_800C69F4` as the C `HSD_GObjEvent` stored in `accessory1_cb`.
 pub unsafe extern "C" fn fn_800C69F4_cb(g: *mut HSD_GObj) {
+    melee_core::ct!("fn_800C69F4_cb");
     fn_800C69F4(g)
 }
 
 /// `HSD_JObjSetMtxDirty` (out-of-line, defined in this TU).
 pub fn HSD_JObjSetMtxDirty(j: *mut HSD_JObj) {
+    melee_core::ct!("HSD_JObjSetMtxDirty");
     if j.is_null() || ji::HSD_JObjMtxIsDirty(unsafe { &*j }) {
         return;
     }
@@ -259,6 +270,7 @@ pub fn HSD_JObjSetMtxDirty(j: *mut HSD_JObj) {
 
 /// `ftCo_800C6B6C` (EntryEnd_Enter): full scale, top of the stand, then EntryEnd.
 pub fn ftCo_800C6B6C(g: G) {
+    melee_core::ct!("ftCo_800C6B6C");
     let f = fp(g);
     entry(f).timer = cd().x6C0;
     let s = entry(f).x8;
@@ -278,6 +290,7 @@ pub fn ftCo_800C6B6C(g: G) {
 
 /// `ftCo_EntryEnd_Anim`: at 0, the optional respawn invincibility, then Fall / Wait.
 pub fn ftCo_EntryEnd_Anim(g: G) {
+    melee_core::ct!("ftCo_EntryEnd_Anim");
     let f = fp(g);
     let e = entry(f);
     e.timer = e.timer.wrapping_sub(1);
@@ -289,10 +302,11 @@ pub fn ftCo_EntryEnd_Anim(g: G) {
     }
 }
 /// `ftCo_EntryEnd_IASA`: empty.
-pub fn ftCo_EntryEnd_IASA(_g: G) {}
+pub fn ftCo_EntryEnd_IASA(_g: G) { melee_core::ct!("ftCo_EntryEnd_IASA");}
 
 /// `ftCo_EntryEnd_Phys`: the stand sinks back over `x6BC` frames.
 pub fn ftCo_EntryEnd_Phys(g: G) {
+    melee_core::ct!("ftCo_EntryEnd_Phys");
     let f = fp(g);
     if f.is_sub_fighter() == 0 {
         let t = entry(f).timer as f32 / cd().x6BC as f32;
@@ -309,14 +323,17 @@ pub fn ftCo_EntryEnd_Phys(g: G) {
 
 /// `ftCo_EntryEnd_Coll`: as [`ftCo_EntryStart_Coll`].
 pub fn ftCo_EntryEnd_Coll(g: G) {
+    melee_core::ct!("ftCo_EntryEnd_Coll");
     coll(g);
 }
 
 /// `fn_800C6F34` (EntryEnd's accessory callback).
 pub fn fn_800C6F34(g: G) {
+    melee_core::ct!("fn_800C6F34");
     accessory_follow(g, true);
 }
 /// `fn_800C6F34` as the C `HSD_GObjEvent` stored in `accessory1_cb`.
 pub unsafe extern "C" fn fn_800C6F34_cb(g: *mut HSD_GObj) {
+    melee_core::ct!("fn_800C6F34_cb");
     fn_800C6F34(g)
 }

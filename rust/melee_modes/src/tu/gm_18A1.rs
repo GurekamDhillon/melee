@@ -112,14 +112,17 @@ fn row(difficulty: u8, stage_slot: u8) -> &'static ClassicStageEntry {
 }
 
 pub fn gm_8018A160(difficulty: u8, stage_slot: u8) -> u8 {
+    melee_core::ct!("gm_8018A160");
     row(difficulty, stage_slot).stage_kind
 }
 
 pub fn gm_8018A188(difficulty: u8, stage_slot: u8) -> f32 {
+    melee_core::ct!("gm_8018A188");
     row(difficulty, stage_slot).scale0_pct as f32 / 100.0
 }
 
 pub fn gm_8018A1D8(difficulty: u8, stage_slot: u8) -> f32 {
+    melee_core::ct!("gm_8018A1D8");
     row(difficulty, stage_slot).scale1_pct as f32 / 100.0
 }
 
@@ -131,22 +134,27 @@ fn pad6(difficulty: u8, stage_slot: u8, n: usize) -> u8 {
 }
 
 pub fn gm_8018A228(difficulty: u8, stage_slot: u8, idx: u8) -> u8 {
+    melee_core::ct!("gm_8018A228");
     pad6(difficulty, stage_slot, idx as usize * 3)
 }
 
 pub fn gm_8018A25C(difficulty: u8, stage_slot: u8, arg2: u8) -> u8 {
+    melee_core::ct!("gm_8018A25C");
     pad6(difficulty, stage_slot, arg2 as usize * 3 + 1)
 }
 
 pub fn gm_8018A290(difficulty: u8, stage_slot: u8, idx: u8) -> u8 {
+    melee_core::ct!("gm_8018A290");
     pad6(difficulty, stage_slot, 2 + idx as usize * 3)
 }
 
 pub fn gm_8018A2C4(difficulty: u8, stage_slot: u8) -> f32 {
+    melee_core::ct!("gm_8018A2C4");
     row(difficulty, stage_slot).scale0_pct as f32 / 100.0
 }
 
 pub fn gm_8018A314(difficulty: u8, stage_slot: u8) -> f32 {
+    melee_core::ct!("gm_8018A314");
     row(difficulty, stage_slot).scale1_pct as f32 / 100.0
 }
 
@@ -158,6 +166,7 @@ fn set_bit(arg0: &mut MatchEnd, i: usize, n: u32) {
 
 /// `fn_8018A364(int)`: the C takes the MatchEnd pointer as an `int` (32-bit guest address).
 pub unsafe fn fn_8018A364(arg0: *mut MatchEnd) {
+    melee_core::ct!("fn_8018A364");
     let arg0 = &mut *arg0;
     let rules = ext::gm_GetStartMeleeRules();
     let data = &mut gm_80473A18;

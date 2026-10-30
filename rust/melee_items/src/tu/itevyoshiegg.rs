@@ -103,6 +103,7 @@ pub static mut it_803F6728: [ItemStateTable; 6] = [
 ];
 
 pub unsafe extern "C" fn itEvYoshiEgg_Spawn(pos: *mut Vec) {
+    melee_core::ct!("itEvYoshiEgg_Spawn");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = It_Kind_EvYoshiEgg;
     spawn.prev_pos = *pos;
@@ -117,16 +118,19 @@ pub unsafe extern "C" fn itEvYoshiEgg_Spawn(pos: *mut Vec) {
 }
 
 pub unsafe extern "C" fn itEvYoshiEgg_Logic42_Destroyed(_gobj: *mut Item_GObj) {
+    melee_core::ct!("itEvYoshiEgg_Logic42_Destroyed");
     ext::gm_801BEB68(1);
 }
 
 pub unsafe extern "C" fn itEvYoshiEgg_Logic42_Spawned(gobj: *mut Item_GObj) {
+    melee_core::ct!("itEvYoshiEgg_Logic42_Spawned");
     let it = get_item(gobj);
     (*it).xDD4_itemVar.evyoshiegg.xDD4 = 0;
     it_8029B268(gobj);
 }
 
 pub unsafe extern "C" fn it_8029B1D8(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_8029B1D8");
     let ip = get_item(gobj);
     ext::it_8026B390(gobj);
     itResetVelocity(ip);
@@ -134,58 +138,70 @@ pub unsafe extern "C" fn it_8029B1D8(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itEvyoshiegg_UnkMotion0_Anim(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itEvyoshiegg_UnkMotion0_Anim");
     0
 }
 
-pub unsafe extern "C" fn itEvyoshiegg_UnkMotion0_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itEvyoshiegg_UnkMotion0_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itEvyoshiegg_UnkMotion0_Phys");}
 
 pub unsafe extern "C" fn itEvyoshiegg_UnkMotion0_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itEvyoshiegg_UnkMotion0_Coll");
     ext::it_8026D62C(gobj, Some(it_8029B268));
     0
 }
 
 pub unsafe extern "C" fn it_8029B268(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_8029B268");
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE as _);
 }
 
 pub unsafe extern "C" fn itEvyoshiegg_UnkMotion3_Anim(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itEvyoshiegg_UnkMotion3_Anim");
     0
 }
 
 pub unsafe extern "C" fn itEvyoshiegg_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itEvyoshiegg_UnkMotion1_Phys");
     let ip = get_item(gobj);
     let attrs = (*ip).xCC_item_attr;
     ext::it_80272860(gobj, (*attrs).x10_fall_speed, (*attrs).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itEvyoshiegg_UnkMotion1_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itEvyoshiegg_UnkMotion1_Coll");
     ext::it_8026E32C(gobj, Some(it_8029B1D8));
     0
 }
 
 pub unsafe extern "C" fn itEvYoshiEgg_Logic42_PickedUp(gobj: *mut Item_GObj) {
+    melee_core::ct!("itEvYoshiEgg_Logic42_PickedUp");
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE as _);
 }
 
 pub unsafe extern "C" fn itEvyoshiegg_UnkMotion2_Anim(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itEvyoshiegg_UnkMotion2_Anim");
     0
 }
 
-pub unsafe extern "C" fn itEvyoshiegg_UnkMotion2_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itEvyoshiegg_UnkMotion2_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itEvyoshiegg_UnkMotion2_Phys");}
 
 pub unsafe extern "C" fn itEvYoshiEgg_Logic42_Dropped(gobj: *mut Item_GObj) {
+    melee_core::ct!("itEvYoshiEgg_Logic42_Dropped");
     itEvYoshiEgg_Logic42_Thrown(gobj);
 }
 
 pub unsafe extern "C" fn itEvYoshiEgg_Logic42_Thrown(gobj: *mut Item_GObj) {
+    melee_core::ct!("itEvYoshiEgg_Logic42_Thrown");
     ext::Item_80268E5C(gobj, 3, 6);
 }
 
 pub unsafe extern "C" fn itEvyoshiegg_UnkMotion3_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itEvyoshiegg_UnkMotion3_Phys");
     Item_ApplyFallingPhysics(gobj);
 }
 
 pub unsafe extern "C" fn itEvyoshiegg_UnkMotion3_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itEvyoshiegg_UnkMotion3_Coll");
     if ext::it_8026DA08(gobj) != 0 {
         return it_3F14_Logic42_DmgDealt(gobj);
     }
@@ -193,6 +209,7 @@ pub unsafe extern "C" fn itEvyoshiegg_UnkMotion3_Coll(gobj: *mut Item_GObj) -> i
 }
 
 pub unsafe extern "C" fn itEvyoshiegg_UnkMotion5_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itEvyoshiegg_UnkMotion5_Anim");
     let ip = get_item(gobj);
     if (*ip).xDD4_itemVar.evyoshiegg.xDD8 == 40 {
         ext::gm_801BEB68(1);
@@ -204,13 +221,15 @@ pub unsafe extern "C" fn itEvyoshiegg_UnkMotion5_Anim(gobj: *mut Item_GObj) -> i
     1
 }
 
-pub unsafe extern "C" fn itEvyoshiegg_UnkMotion5_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itEvyoshiegg_UnkMotion5_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itEvyoshiegg_UnkMotion5_Phys");}
 
 pub unsafe extern "C" fn itEvyoshiegg_UnkMotion5_Coll(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itEvyoshiegg_UnkMotion5_Coll");
     0
 }
 
 pub unsafe extern "C" fn itEvyoshiegg_BounceOff(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itEvyoshiegg_BounceOff");
     let ip = get_item(gobj);
     (*ip).x40_vel.x = 0.0;
     (*ip).x40_vel.y = 1.5;
@@ -219,22 +238,27 @@ pub unsafe extern "C" fn itEvyoshiegg_BounceOff(gobj: *mut Item_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn it_3F14_Logic42_DmgDealt(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_3F14_Logic42_DmgDealt");
     itEvyoshiegg_BounceOff(gobj)
 }
 
 pub unsafe extern "C" fn it_3F14_Logic42_Clanked(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_3F14_Logic42_Clanked");
     itEvyoshiegg_BounceOff(gobj)
 }
 
 pub unsafe extern "C" fn it_3F14_Logic42_HitShield(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_3F14_Logic42_HitShield");
     itEvyoshiegg_BounceOff(gobj)
 }
 
 pub unsafe extern "C" fn it_3F14_Logic42_Reflected(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_3F14_Logic42_Reflected");
     itEvyoshiegg_BounceOff(gobj)
 }
 
 pub unsafe extern "C" fn dmgReceived(gobj: *mut Item_GObj) {
+    melee_core::ct!("dmgReceived");
     let ip = get_item(gobj);
     ext::HSD_JObjSetFlagsAll((*gobj).hsd_obj as *mut HSD_JObj, JOBJ_HIDDEN as _);
     ext::it_802756D0(gobj);
@@ -247,6 +271,7 @@ pub unsafe extern "C" fn dmgReceived(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itEvYoshiEgg_Logic42_DmgReceived(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itEvYoshiEgg_Logic42_DmgReceived");
     let ip = get_item(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itEvYoshiEgg_DatAttrs;
     let mut val: f32;
@@ -265,20 +290,24 @@ pub unsafe extern "C" fn itEvYoshiEgg_Logic42_DmgReceived(gobj: *mut Item_GObj) 
 }
 
 pub unsafe extern "C" fn itEvYoshiEgg_Logic42_EnteredAir(gobj: *mut Item_GObj) {
+    melee_core::ct!("itEvYoshiEgg_Logic42_EnteredAir");
     ext::Item_80268E5C(gobj, 4, ITEM_ANIM_UPDATE as _);
 }
 
 pub unsafe extern "C" fn itEvyoshiegg_UnkMotion4_Anim(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itEvyoshiegg_UnkMotion4_Anim");
     0
 }
 
-pub unsafe extern "C" fn itEvyoshiegg_UnkMotion4_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itEvyoshiegg_UnkMotion4_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itEvyoshiegg_UnkMotion4_Phys");}
 
 pub unsafe extern "C" fn itEvyoshiegg_UnkMotion4_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itEvyoshiegg_UnkMotion4_Coll");
     ext::it_8026E8C4(gobj, Some(it_8029B1D8), Some(it_8029B268));
     0
 }
 
 pub unsafe extern "C" fn itEvYoshiEgg_Logic42_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("itEvYoshiEgg_Logic42_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

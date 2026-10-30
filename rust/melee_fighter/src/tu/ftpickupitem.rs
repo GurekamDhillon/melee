@@ -86,8 +86,8 @@ pub mod ext {
 }
 
 /// C callback-pointer forms (`HSD_GObjEvent`) of the functions stored in Fighter.
-pub unsafe extern "C" fn ftCo_800974C4_cb(g: G) { ext::ftCo_800974C4(g) }
-pub unsafe extern "C" fn ftpickupitem_80094DF8_cb(g: G) { ftpickupitem_80094DF8(g) }
+pub unsafe extern "C" fn ftCo_800974C4_cb(g: G) { melee_core::ct!("ftCo_800974C4_cb"); ext::ftCo_800974C4(g) }
+pub unsafe extern "C" fn ftpickupitem_80094DF8_cb(g: G) { melee_core::ct!("ftpickupitem_80094DF8_cb"); ftpickupitem_80094DF8(g) }
 
 /// `ftCheckThrowB3` (ft/inlines.h): test and clear throw_flags_b3.
 fn check_throw_b3(f: &mut Fighter) -> bool {
@@ -122,6 +122,7 @@ fn in_box(f: &Fighter, off: &Quaternion, x_range: f32, y_range: f32, pos: &Vec3)
 
 /// `geno_consumable_collect` (TARGET_PC): the Geno item-family event for consumables.
 pub fn geno_consumable_collect(item: I, port: i32) {
+    melee_core::ct!("geno_consumable_collect");
     let k = ext::itGetKind(item);
     if k == It_Kind_Heart as i32
         || k == It_Kind_Tomato as i32
@@ -141,6 +142,7 @@ pub fn geno_consumable_collect(item: I, port: i32) {
 
 /// `ftpickupitem_80094150`: is `item_gobj` in this fighter's pickup box?
 pub fn ftpickupitem_80094150(g: G, item_gobj: I) -> bool {
+    melee_core::ct!("ftpickupitem_80094150");
     if ext::Item_IsGrabbable(item_gobj)
         && (fp(g).x2222_b4() == 0 || ext::it_8026B47C(item_gobj) == 0)
         && (fp(g).item_gobj.is_null() || ext::it_8026B4F0(item_gobj))
@@ -168,6 +170,7 @@ pub fn ftpickupitem_80094150(g: G, item_gobj: I) -> bool {
 
 /// `ftpickupitem_800942A0`: the nearest pickable item (`flags` bit 0 light, bit 1 heavy).
 pub fn ftpickupitem_800942A0(g: G, flags: u32) -> I {
+    melee_core::ct!("ftpickupitem_800942A0");
     let f = fp(g);
     if ext::ftCo_IsCpuControlled(f) && fp(g).cpu.kind as i32 == 28 {
         return core::ptr::null_mut();
@@ -258,6 +261,7 @@ fn use_item(g: G, item_gobj: I, star: fn(G, I), hammer: fn(G)) -> bool {
 
 /// `ftpickupitem_8009447C`: use an instant item on the grab frame; true = state changed.
 pub fn ftpickupitem_8009447C(g: G, item_gobj: I) -> bool {
+    melee_core::ct!("ftpickupitem_8009447C");
     assert!(!item_gobj.is_null(), "ftGetImmItem item_gobj is NULL!!");
     if ext::it_8026B30C(item_gobj) == 5 {
         geno_consumable_collect(item_gobj, fp(g).player_id as i32);
@@ -268,6 +272,7 @@ pub fn ftpickupitem_8009447C(g: G, item_gobj: I) -> bool {
 
 /// `ftpickupitem_80094694`: enter LightGet / HeavyGet.
 pub fn ftpickupitem_80094694(g: G, msid: i32, looping: bool) {
+    melee_core::ct!("ftpickupitem_80094694");
     let anim_spd = if msid == ftCo_MS_HeavyGet as i32 {
         let sy = fp(g).x34_scale.y;
         let e = ext::Fighter_804D6524_x8();
@@ -298,6 +303,7 @@ pub fn ftpickupitem_80094694(g: G, msid: i32, looping: bool) {
 
 /// `ftpickupitem_80094790`: start a pickup if an item is in reach.
 pub fn ftpickupitem_80094790(g: G) -> bool {
+    melee_core::ct!("ftpickupitem_80094790");
     if fp(g).x1978.is_null() {
         let it = ftpickupitem_800942A0(g, 3);
         if !it.is_null() {
@@ -314,6 +320,7 @@ pub fn ftpickupitem_80094790(g: G) -> bool {
 
 /// `ftpickupitem_80094818`: per-kind pickup callback and the pickup stat.
 pub fn ftpickupitem_80094818(g: G, arg1: bool) {
+    melee_core::ct!("ftpickupitem_80094818");
     let f = fp(g);
     if !f.x1978.is_null() {
         ext::pl_8003E17C(f.player_id as i32, f.is_sub_fighter() as i32, f.x1978);
@@ -328,6 +335,7 @@ pub fn ftpickupitem_80094818(g: G, arg1: bool) {
 
 /// `ftpickupitem_800948A8`: take `item_gobj` into the hand.
 pub fn ftpickupitem_800948A8(g: G, item_gobj: I) {
+    melee_core::ct!("ftpickupitem_800948A8");
     let f = fp(g);
     if !f.item_gobj.is_null() {
         f.x1978 = item_gobj;
@@ -357,6 +365,7 @@ pub fn ftpickupitem_800948A8(g: G, item_gobj: I) {
 
 /// `ftpickupitem_Anim`.
 pub fn ftpickupitem_Anim(g: G) {
+    melee_core::ct!("ftpickupitem_Anim");
     if check_throw_b3(fp(g)) {
         let x0 = unsafe { fp(g).mv.co.itemget.x0 };
         let item_gobj = ftpickupitem_800942A0(g, if x0 != 0 { 2 } else { 1 });
@@ -391,20 +400,23 @@ pub fn ftpickupitem_Anim(g: G) {
 }
 
 /// `ftpickupitem_IASA`.
-pub fn ftpickupitem_IASA(_g: G) {}
+pub fn ftpickupitem_IASA(_g: G) { melee_core::ct!("ftpickupitem_IASA");}
 
 /// `ftpickupitem_Phys`.
 pub fn ftpickupitem_Phys(g: G) {
+    melee_core::ct!("ftpickupitem_Phys");
     ext::ft_80084F3C(g);
 }
 
 /// `ftpickupitem_Coll`.
 pub fn ftpickupitem_Coll(g: G) {
+    melee_core::ct!("ftpickupitem_Coll");
     ext::ft_800841B8(g, ftpickupitem_80094D90);
 }
 
 /// `ftpickupitem_80094B6C`: use an instant item that was picked up mid-state.
 pub fn ftpickupitem_80094B6C(g: G, item_gobj: I) {
+    melee_core::ct!("ftpickupitem_80094B6C");
     assert!(!item_gobj.is_null(), "ftGetImmItem item_gobj is NULL!!");
     if ext::it_8026B30C(item_gobj) == 5 {
         geno_consumable_collect(item_gobj, fp(g).player_id as i32);
@@ -422,6 +434,7 @@ pub fn ftpickupitem_80094B6C(g: G, item_gobj: I) {
 
 /// `ftpickupitem_80094D90`: landed mid-pickup.
 pub fn ftpickupitem_80094D90(g: G) {
+    melee_core::ct!("ftpickupitem_80094D90");
     ext::ftCo_8009750C(g);
     if !fp(g).item_gobj.is_null() {
         ftpickupitem_80094B6C(g, fp(g).item_gobj);
@@ -434,6 +447,7 @@ pub fn ftpickupitem_80094D90(g: G) {
 
 /// `ftpickupitem_80094DF8`: take_dmg callback (light pickup).
 pub fn ftpickupitem_80094DF8(g: G) {
+    melee_core::ct!("ftpickupitem_80094DF8");
     if !fp(g).item_gobj.is_null() {
         ftpickupitem_80094B6C(g, fp(g).item_gobj);
     }

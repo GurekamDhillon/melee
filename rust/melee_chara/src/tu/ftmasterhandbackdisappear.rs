@@ -53,6 +53,7 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 
 /// `ftMh_UpdateBossMotion(gobj, fp, da)` (ftMasterHand/inlines.h, static inline).
 pub fn ftMh_UpdateBossMotion(gobj: *mut HSD_GObj, fp: *mut Fighter, da: *const ftMasterHand_SpecialAttrs) {
+    melee_core::ct!("ftMh_UpdateBossMotion");
     unsafe {
         st::ft_80085134(gobj);
         let target = (*fp).mv.mh.unk0.xC;
@@ -63,12 +64,14 @@ pub fn ftMh_UpdateBossMotion(gobj: *mut HSD_GObj, fp: *mut Fighter, da: *const f
 /// `my_lbVector_Len` (static inline).
 #[inline]
 pub fn my_lbVector_Len(v: &Vec3) -> f32 {
+    melee_core::ct!("my_lbVector_Len");
     crate::pure::my_sqrtf(fmadds(v.z, v.z, fmadds(v.x, v.x, v.y * v.y)))
 }
 
 /// The arithmetic of `ftMh_Wait1_1_Phys` after `ftBossLib_8015C208`: the (self_vel.x, self_vel.y)
 /// chasing `target` (the other fighter's position) from `cur`, with the offsets/gain of `da`.
 pub fn wait1_1_vel(target: &Vec3, cur: &Vec3, da: &ftMasterHand_SpecialAttrs) -> (f32, f32) {
+    melee_core::ct!("wait1_1_vel");
     let mut pos = *target;
     pos.x += da.x108;
     pos.y += da.x10C;
@@ -90,10 +93,12 @@ pub fn wait1_1_vel(target: &Vec3, cur: &Vec3, da: &ftMasterHand_SpecialAttrs) ->
 
 /// `ftMh_MS_375_80154A2C` as a Fighter callback entry (`grab_cb`).
 pub unsafe extern "C" fn cb_ftMh_MS_375_80154A2C(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftMh_MS_375_80154A2C");
     crate::chars::r9::ftMasterHand::ftmasterhandbackdisappear::ftMh_MS_375_80154A2C(g)
 }
 
 pub fn ftMh_BackDisappear_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_BackDisappear_Anim");
     unsafe {
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
             let fp = fpp(gobj);
@@ -105,6 +110,7 @@ pub fn ftMh_BackDisappear_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMh_BackDisappear_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_BackDisappear_IASA");
     unsafe {
         let fp = fpp(gobj);
         if st::Player_GetPlayerSlotType((*fp).player_id as i32) == 0 {
@@ -113,9 +119,10 @@ pub fn ftMh_BackDisappear_IASA(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftMh_BackDisappear_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_BackDisappear_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_BackDisappear_Coll");}
 
 pub fn ftMh_MS_372_801542E0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_372_801542E0");
     unsafe {
         let fp = fpp(gobj);
         let da = (*(*fp).ft_data).ext_attr as *const ftMasterHand_SpecialAttrs;
@@ -126,6 +133,7 @@ pub fn ftMh_MS_372_801542E0(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMh_Wait1_1_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Wait1_1_Anim");
     unsafe {
         let fp = fpp(gobj);
         let timer = (*fp).mv.mh.unk0.x8.wrapping_sub(1);
@@ -143,6 +151,7 @@ pub fn ftMh_Wait1_1_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMh_Wait1_1_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Wait1_1_Phys");
     unsafe {
         let fp = fpp(gobj);
         let da = (*(*fp).ft_data).ext_attr as *const ftMasterHand_SpecialAttrs;
@@ -156,9 +165,10 @@ pub fn ftMh_Wait1_1_Phys(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftMh_Wait1_1_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_Wait1_1_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_Wait1_1_Coll");}
 
 pub fn ftMh_MS_373_801545A0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_373_801545A0");
     unsafe {
         let fp = fpp(gobj);
         st::Fighter_ChangeMotionState(gobj, 374, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -175,6 +185,7 @@ pub fn ftMh_MS_373_801545A0(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMh_Grab_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Grab_IASA");
     unsafe {
         let fp = fpp(gobj);
         if st::Player_GetPlayerSlotType((*fp).player_id as i32) == 0 {
@@ -183,15 +194,17 @@ pub fn ftMh_Grab_IASA(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftMh_Grab_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_Grab_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_Grab_Coll");}
 
 pub fn ftMh_Fail_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Fail_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         ftMh_MS_389_80151018(gobj);
     }
 }
 
 pub fn ftMh_Fail_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Fail_Phys");
     unsafe {
         let fp = fpp(gobj);
         let da = (*(*fp).ft_data).ext_attr as *const ftMasterHand_SpecialAttrs;
@@ -199,9 +212,10 @@ pub fn ftMh_Fail_Phys(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftMh_Fail_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_Fail_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_Fail_Coll");}
 
 pub fn ftMh_Cancel_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Cancel_Anim");
     unsafe {
         let fp = fpp(gobj);
         (*fp).mv.mh.unk0.x24 -= 1.0;
@@ -217,6 +231,7 @@ pub fn ftMh_Cancel_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMh_Cancel_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Cancel_Phys");
     unsafe {
         let fp = fpp(gobj);
         let da = (*(*fp).ft_data).ext_attr as *const ftMasterHand_SpecialAttrs;
@@ -225,6 +240,7 @@ pub fn ftMh_Cancel_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMh_Cancel_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Cancel_Coll");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).mv.mh.unk0.x18 == 0.0 {

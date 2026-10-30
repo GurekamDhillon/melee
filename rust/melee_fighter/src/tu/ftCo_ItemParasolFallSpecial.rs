@@ -38,14 +38,16 @@ pub mod ext {
 }
 
 pub fn ftCo_800CF3C8(g: G) {
+    melee_core::ct!("ftCo_800CF3C8");
     let ms = crate::tu::ftCo_ItemParasolOpen::ftCo_ItemParasolGetFallMotionId(
         g, ftPe_MS_ItemParasolFall as i32, ftCo_MS_ItemParasolFallSpecial as i32);
     ext::Fighter_ChangeMotionState(g, ms, Ft_MF_SkipHit | Ft_MF_SkipParasol, 0.0, 1.0, 0.0, core::ptr::null_mut());
 }
 
-pub fn ftCo_ItemParasolFallSpecial_Anim(_g: G) {}
+pub fn ftCo_ItemParasolFallSpecial_Anim(_g: G) { melee_core::ct!("ftCo_ItemParasolFallSpecial_Anim");}
 
 pub fn ftCo_ItemParasolFallSpecial_IASA(g: G) {
+    melee_core::ct!("ftCo_ItemParasolFallSpecial_IASA");
     if fp(g).input.lstick[0].y <= crate::hooks::common_data().close_parasol_threshold && ext::ft_80087988(g) {
         ext::ftCo_800968C8(g);
     } else if ext::ftCo_800CB870(g) {
@@ -54,9 +56,11 @@ pub fn ftCo_ItemParasolFallSpecial_IASA(g: G) {
 }
 
 pub fn ftCo_ItemParasolFallSpecial_Phys(g: G) {
+    melee_core::ct!("ftCo_ItemParasolFallSpecial_Phys");
     ext::ftCo_ItemParasol_Phys(g);
 }
 
 pub fn ftCo_ItemParasolFallSpecial_Coll(g: G) {
+    melee_core::ct!("ftCo_ItemParasolFallSpecial_Coll");
     ext::ft_8008370C(g, ext::ftCo_LandingFallSpecial_Enter_Basic);
 }

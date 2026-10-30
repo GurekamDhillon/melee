@@ -25,6 +25,7 @@ pub mod ext {
 }
 
 pub fn ftMh_CaptureWaitMasterHand_80155D1C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_CaptureWaitMasterHand_80155D1C");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         (*fp).set_invisible(0);
@@ -33,15 +34,16 @@ pub fn ftMh_CaptureWaitMasterHand_80155D1C(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftMh_CaptureWaitMasterHand_Anim(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_CaptureWaitMasterHand_Anim(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_CaptureWaitMasterHand_Anim");}
 
-pub fn ftMh_CaptureWaitMasterHand_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_CaptureWaitMasterHand_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_CaptureWaitMasterHand_IASA");}
 
-pub fn ftMh_CaptureWaitMasterHand_Phys(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_CaptureWaitMasterHand_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_CaptureWaitMasterHand_Phys");}
 
-pub fn ftMh_CaptureWaitMasterHand_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_CaptureWaitMasterHand_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_CaptureWaitMasterHand_Coll");}
 
 pub fn ftMh_CaptureWaitMasterHand_80155D6C(gobj: *mut HSD_GObj, _arg1: i32) {
+    melee_core::ct!("ftMh_CaptureWaitMasterHand_80155D6C");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let victim_fp = (*(*fp).victim_gobj).user_data as *mut Fighter;
@@ -56,10 +58,10 @@ pub fn ftMh_CaptureWaitMasterHand_80155D6C(gobj: *mut HSD_GObj, _arg1: i32) {
     }
 }
 
-pub fn ftMh_ThrownMasterHand_Anim(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_ThrownMasterHand_Anim(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_ThrownMasterHand_Anim");}
 
-pub fn ftMh_ThrownMasterHand_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_ThrownMasterHand_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_ThrownMasterHand_IASA");}
 
-pub fn ftMh_ThrownMasterHand_Phys(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_ThrownMasterHand_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_ThrownMasterHand_Phys");}
 
-pub fn ftMh_ThrownMasterHand_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_ThrownMasterHand_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_ThrownMasterHand_Coll");}

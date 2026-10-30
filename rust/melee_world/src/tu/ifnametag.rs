@@ -162,11 +162,13 @@ pub static mut un_804D6D7C: i32 = 0;
 
 /// `memzero` (lb_00B0.c): the real behaviour, used unless a test installs a hook.
 pub fn memzero_default(mem: *mut c_void, size: i32) {
+    melee_core::ct!("memzero_default");
     unsafe { core::ptr::write_bytes(mem as *mut u8, 0, size as usize) }
 }
 
 /// 2FC9B4: texture frame of a plate model.
 pub unsafe extern "C" fn un_802FC9B4(slot: u8, arg1: u8, arg2: u8, arg3: u8) -> f32 {
+    melee_core::ct!("un_802FC9B4");
     let player_id: u8 = ext::Player_GetPlayerId(slot as i32) as u8;
     if arg2 != 0 {
         if arg3 == 0 {
@@ -184,6 +186,7 @@ pub unsafe extern "C" fn un_802FC9B4(slot: u8, arg1: u8, arg2: u8, arg3: u8) -> 
 }
 
 pub unsafe extern "C" fn NameTag_RenderCallback(gobj: *mut HSD_GObj, pass: i32) {
+    melee_core::ct!("NameTag_RenderCallback");
     if ext::Ui_RetailHidden(AT_RE_HUD_NAMETAG) != 0 {
         return;
     }
@@ -191,6 +194,7 @@ pub unsafe extern "C" fn NameTag_RenderCallback(gobj: *mut HSD_GObj, pass: i32) 
 }
 
 pub unsafe extern "C" fn fn_802FCAC4(gobj: *mut HSD_GObj, _pass: i32) {
+    melee_core::ct!("fn_802FCAC4");
     // Do not move the live nametag text offscreen just to hide a capture.
     if ext::Wb_RenderActive() != 0 && ext::ifAll_IsHUDHidden() != 0 {
         return;
@@ -209,6 +213,7 @@ pub unsafe extern "C" fn fn_802FCAC4(gobj: *mut HSD_GObj, _pass: i32) {
 }
 
 pub unsafe extern "C" fn un_802FCBA0() {
+    melee_core::ct!("un_802FCBA0");
     let mut x: *mut *mut DynamicModelDesc = null_mut();
     let archive = ext::ifAll_GetArchive();
     ext::lbArchive_LoadSections(*archive, (&raw mut x).cast(), c"ScInfPnm_scene_models".as_ptr().cast(), &[]);
@@ -226,10 +231,12 @@ pub unsafe extern "C" fn un_802FCBA0() {
 
 #[inline]
 pub unsafe extern "C" fn has_nametag(slot: i32) -> bool {
+    melee_core::ct!("has_nametag");
     !(ext::Player_GetPlayerSlotType(slot) != Gm_PKind_Human || ext::Player_GetNametagSlotID(slot) == NAMETAG_DISABLED)
 }
 
 pub unsafe extern "C" fn fn_802FCC44(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_802FCC44");
     let mut vec = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut vec2 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let slot = HSD_GObjGetUserData(gobj) as *mut u8;
@@ -278,6 +285,7 @@ pub unsafe extern "C" fn fn_802FCC44(gobj: *mut HSD_GObj) {
 
 #[inline]
 pub unsafe extern "C" fn inlineA1(var_f31: f32) -> f32 {
+    melee_core::ct!("inlineA1");
     let q = var_f31 as i32;
     if q >= 16 {
         28.0
@@ -287,6 +295,7 @@ pub unsafe extern "C" fn inlineA1(var_f31: f32) -> f32 {
 }
 
 pub unsafe extern "C" fn NameTag_Create(slot: i32) {
+    melee_core::ct!("NameTag_Create");
     let gobj = ext::GObj_Create(HSD_GOBJ_CLASS_UI as u16, 15, 0);
     un_804A1EE0[slot as usize] = gobj;
     {
@@ -321,6 +330,7 @@ pub unsafe extern "C" fn NameTag_Create(slot: i32) {
 }
 
 pub unsafe extern "C" fn un_802FD28C(slot: i32) {
+    melee_core::ct!("un_802FD28C");
     let jobj = (*un_804A1EE0[slot as usize]).hsd_obj as *mut HSD_JObj;
     let team = ext::Player_GetTeam(slot) as u8;
     let a2 = ext::gm_8016B168() as u8;
@@ -338,6 +348,7 @@ pub unsafe extern "C" fn un_802FD28C(slot: i32) {
 }
 
 pub unsafe extern "C" fn un_802FD404() {
+    melee_core::ct!("un_802FD404");
     un_804D6D70[0] = 1;
     un_804D6D70[1] = 1;
     un_804D6D70[2] = 1;
@@ -347,18 +358,22 @@ pub unsafe extern "C" fn un_802FD404() {
 }
 
 pub unsafe extern "C" fn un_802FD428() {
+    melee_core::ct!("un_802FD428");
     ext::memzero((&raw mut un_804D6D70).cast(), core::mem::size_of::<[u8; GM_PLAYER_NUM_MAX]>() as i32);
 }
 
 pub unsafe extern "C" fn un_802FD450() {
+    melee_core::ct!("un_802FD450");
     un_804D6D6C = 1;
 }
 
 pub unsafe extern "C" fn un_802FD45C() {
+    melee_core::ct!("un_802FD45C");
     un_804D6D6C = 0;
 }
 
 pub unsafe extern "C" fn un_802FD468() {
+    melee_core::ct!("un_802FD468");
     for i in 0..GM_PLAYER_NUM_MAX {
         if !un_804A1EE0[i].is_null() {
             ext::HSD_GObjFree(un_804A1EE0[i]);
@@ -369,10 +384,12 @@ pub unsafe extern "C" fn un_802FD468() {
 
 #[inline]
 pub unsafe extern "C" fn un_802FD4C8_inline(arg0: i32) -> *mut HSD_GObj {
+    melee_core::ct!("un_802FD4C8_inline");
     ext::GObj_Create(0xE, arg0 as u8, 0)
 }
 
 pub unsafe extern "C" fn un_802FD4C8() {
+    melee_core::ct!("un_802FD4C8");
     for i in 0..GM_PLAYER_NUM_MAX {
         un_804A1EE0[i] = null_mut();
     }

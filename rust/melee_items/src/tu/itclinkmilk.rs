@@ -84,6 +84,7 @@ unsafe fn Item_ClearCmdVars(ip: *mut Item) {
 
 /// `it_802C8B28` (itclinkmilk.c): spawn the milk bottle for `parent`, bound to `bone`.
 pub unsafe extern "C" fn it_802C8B28(parent: *mut HSD_GObj, pos: *mut Vec3, bone: u32, facing_dir: f32) -> *mut HSD_GObj {
+    melee_core::ct!("it_802C8B28");
     if parent.is_null() {
         return null_mut();
     }
@@ -104,6 +105,7 @@ pub unsafe extern "C" fn it_802C8B28(parent: *mut HSD_GObj, pos: *mut Vec3, bone
 
 /// `it_802C8C34` (itclinkmilk.c): detach from the owner and destroy.
 pub unsafe extern "C" fn it_802C8C34(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802C8C34");
     if !gobj.is_null() {
         let ip = item_of(gobj);
         if !ip.is_null() {
@@ -116,6 +118,7 @@ pub unsafe extern "C" fn it_802C8C34(gobj: *mut HSD_GObj) {
 
 /// `it_2725_Logic80_PickedUp`: pick the anim side from the facing direction.
 pub unsafe extern "C" fn it_2725_Logic80_PickedUp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_2725_Logic80_PickedUp");
     let ip = item_of(gobj);
     if (*ip).facing_dir == 1.0 {
         ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE);
@@ -127,6 +130,7 @@ pub unsafe extern "C" fn it_2725_Logic80_PickedUp(gobj: *mut HSD_GObj) {
 
 /// `itCLinkMilk_NotifyParent` (static inline): release the owner's milk reference.
 pub unsafe fn itCLinkMilk_NotifyParent(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itCLinkMilk_NotifyParent");
     if !gobj.is_null() {
         let ip = item_of(gobj);
         if !ip.is_null() {
@@ -142,6 +146,7 @@ pub unsafe fn itCLinkMilk_NotifyParent(gobj: *mut HSD_GObj) {
 
 /// `itCLinkMilk_Destroy` (static inline): clear the references; true if there was an item.
 pub unsafe fn itCLinkMilk_Destroy(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itCLinkMilk_Destroy");
     if !gobj.is_null() {
         let ip = item_of(gobj);
         if !ip.is_null() {
@@ -156,6 +161,7 @@ pub unsafe fn itCLinkMilk_Destroy(gobj: *mut HSD_GObj) -> bool {
 /// `itClinkmilk_UnkMotion1_Anim`: show the bottle while the flag is set; follow the owner's
 /// state; destroy when the owner is gone.
 pub unsafe extern "C" fn itClinkmilk_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itClinkmilk_UnkMotion1_Anim");
     let ip = item_of(gobj);
     let child = HSD_JObjGetChild((*gobj).hsd_obj as *mut HSD_JObj);
     let grandchild = HSD_JObjGetChild((*gobj).hsd_obj as *mut HSD_JObj);
@@ -190,15 +196,17 @@ pub unsafe extern "C" fn itClinkmilk_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> boo
 }
 
 /// `itClinkmilk_UnkMotion1_Phys` (empty).
-pub unsafe extern "C" fn itClinkmilk_UnkMotion1_Phys(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itClinkmilk_UnkMotion1_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itClinkmilk_UnkMotion1_Phys");}
 
 /// `itClinkmilk_UnkMotion1_Coll` (returns false).
 pub unsafe extern "C" fn itClinkmilk_UnkMotion1_Coll(_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itClinkmilk_UnkMotion1_Coll");
     false
 }
 
 /// `itCLinkMilk_Logic80_EvtUnk`: `it_8026B894`.
 pub unsafe extern "C" fn itCLinkMilk_Logic80_EvtUnk(gobj: *mut HSD_GObj, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itCLinkMilk_Logic80_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }
 

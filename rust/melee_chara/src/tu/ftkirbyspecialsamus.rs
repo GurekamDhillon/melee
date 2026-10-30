@@ -71,6 +71,7 @@ pub static ftKb_Init_803CB6C0: [u32; 6] = [260006, 260009, 260012, 260015, 26001
 
 /// Charge Shot status readout for the HUD. Returns -1 when no shot is charging.
 pub fn ftKb_SpecialNSs_800FCC14(gobj: G, out1: &mut i32, out2: &mut i32) -> i32 {
+    melee_core::ct!("ftKb_SpecialNSs_800FCC14");
     unsafe {
         if !gobj.is_null() {
             let fp = fpp(gobj);
@@ -87,6 +88,7 @@ pub fn ftKb_SpecialNSs_800FCC14(gobj: G, out1: &mut i32, out2: &mut i32) -> i32 
 }
 
 pub fn ftKb_SpecialNSs_800FCC6C(gobj: G) -> bool {
+    melee_core::ct!("ftKb_SpecialNSs_800FCC6C");
     unsafe {
         if !gobj.is_null() {
             let fp = fpp(gobj);
@@ -100,6 +102,7 @@ pub fn ftKb_SpecialNSs_800FCC6C(gobj: G) -> bool {
 }
 
 pub fn ftKb_SpecialNSs_800FCCBC(gobj: G) -> bool {
+    melee_core::ct!("ftKb_SpecialNSs_800FCCBC");
     unsafe {
         if !gobj.is_null() {
             let fp = fpp(gobj);
@@ -111,6 +114,7 @@ pub fn ftKb_SpecialNSs_800FCCBC(gobj: G) -> bool {
 
 /// `ftKb_SpecialNSs_it_802B5974` (static inline): release the charge-shot item.
 pub fn ftKb_SpecialNSs_it_802B5974(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNSs_it_802B5974");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.kb.xA4.is_null() {
@@ -122,6 +126,7 @@ pub fn ftKb_SpecialNSs_it_802B5974(gobj: G) {
 
 /// `ftKb_SpecialNSs_DestroyChargeShot` (static inline).
 pub fn ftKb_SpecialNSs_DestroyChargeShot(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNSs_DestroyChargeShot");
     unsafe {
         if !gobj.is_null() {
             let fp = fpp(gobj);
@@ -133,6 +138,7 @@ pub fn ftKb_SpecialNSs_DestroyChargeShot(gobj: G) {
 
 /// `ftKb_ChargeShot_inline` (static inline).
 pub fn ftKb_ChargeShot_inline(gobj: G) {
+    melee_core::ct!("ftKb_ChargeShot_inline");
     if !gobj.is_null() {
         ftKb_SpecialNSs_it_802B5974(gobj);
         ftKb_SpecialNSs_DestroyChargeShot(gobj);
@@ -140,6 +146,7 @@ pub fn ftKb_ChargeShot_inline(gobj: G) {
 }
 
 pub fn ftKb_SpecialNSs_800FCD04(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNSs_800FCD04");
     unsafe {
         if !gobj.is_null() {
             let fp = fpp(gobj);
@@ -152,6 +159,7 @@ pub fn ftKb_SpecialNSs_800FCD04(gobj: G) {
 }
 
 pub fn ftKb_SpecialNSs_800FCD60(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNSs_800FCD60");
     unsafe {
         if !gobj.is_null() {
             let fp = fpp(gobj);
@@ -163,6 +171,7 @@ pub fn ftKb_SpecialNSs_800FCD60(gobj: G) {
 
 /// `ftKb_SpecialNSs_800FCDE0_inline` (static inline): aerial shot recoil.
 pub fn ftKb_SpecialNSs_800FCDE0_inline(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNSs_800FCDE0_inline");
     unsafe {
         let fp = fpp(gobj);
         let da = &*((*fp).dat_attrs as *const ftKb_DatAttrs);
@@ -172,6 +181,7 @@ pub fn ftKb_SpecialNSs_800FCDE0_inline(gobj: G) {
 
 /// `facing_to_angle` (static inline).
 pub fn facing_to_angle(fp: &Fighter) -> f64 {
+    melee_core::ct!("facing_to_angle");
     if fp.facing_dir == 1.0 {
         0.0
     } else {
@@ -181,6 +191,7 @@ pub fn facing_to_angle(fp: &Fighter) -> f64 {
 
 /// Fires the charged shot (cmd_vars[1] == 1).
 pub fn ftKb_SpecialNSs_800FCDE0(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNSs_800FCDE0");
     unsafe {
         let fp = fpp(gobj);
         let da = &*((*fp).dat_attrs as *const ftKb_DatAttrs);
@@ -225,6 +236,7 @@ unsafe fn spawn_charge(gobj: G, fp: *mut Fighter) {
 }
 
 pub fn ftKb_SsSpecialNStart_Anim(gobj: G) {
+    melee_core::ct!("ftKb_SsSpecialNStart_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = &*((*fp).dat_attrs as *const ftKb_DatAttrs);
@@ -243,11 +255,13 @@ pub fn ftKb_SsSpecialNStart_Anim(gobj: G) {
 
 /// The charge-level index into `ftKb_Init_803CB6C0`: `(int)(5.0f * ratio)`.
 pub fn charge_sfx_index(charge: i32, charge_time: f32) -> usize {
+    melee_core::ct!("charge_sfx_index");
     let ratio = if charge != 0 { charge as f32 / charge_time } else { 0.0 };
     ((5.0f32 * ratio) as i32) as usize
 }
 
 pub fn ftKb_SsSpecialNHold_Anim(gobj: G) {
+    melee_core::ct!("ftKb_SsSpecialNHold_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = &*((*fp).dat_attrs as *const ftKb_DatAttrs);
@@ -272,6 +286,7 @@ pub fn ftKb_SsSpecialNHold_Anim(gobj: G) {
 }
 
 pub fn ftKb_SsSpecialNCancel_Anim(gobj: G) {
+    melee_core::ct!("ftKb_SsSpecialNCancel_Anim");
     ftKb_ChargeShot_inline(gobj);
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         st::ft_8008A2BC(gobj);
@@ -279,6 +294,7 @@ pub fn ftKb_SsSpecialNCancel_Anim(gobj: G) {
 }
 
 pub fn ftKb_SsSpecialN_Anim(gobj: G) {
+    melee_core::ct!("ftKb_SsSpecialN_Anim");
     ftKb_SpecialNSs_800FCDE0(gobj);
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         st::ft_8008A2BC(gobj);
@@ -286,6 +302,7 @@ pub fn ftKb_SsSpecialN_Anim(gobj: G) {
 }
 
 pub fn ftKb_SsSpecialAirNStart_Anim(gobj: G) {
+    melee_core::ct!("ftKb_SsSpecialAirNStart_Anim");
     unsafe {
         let fp = fpp(gobj);
         spawn_charge(gobj, fp);
@@ -298,6 +315,7 @@ pub fn ftKb_SsSpecialAirNStart_Anim(gobj: G) {
 }
 
 pub fn ftKb_SsSpecialAirN_Anim(gobj: G) {
+    melee_core::ct!("ftKb_SsSpecialAirN_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = &*((*fp).dat_attrs as *const ftKb_DatAttrs);
@@ -312,9 +330,10 @@ pub fn ftKb_SsSpecialAirN_Anim(gobj: G) {
     }
 }
 
-pub fn ftKb_SsSpecialNStart_IASA(_gobj: G) {}
+pub fn ftKb_SsSpecialNStart_IASA(_gobj: G) { melee_core::ct!("ftKb_SsSpecialNStart_IASA");}
 
 pub fn ftKb_SsSpecialNHold_IASA(gobj: G) {
+    melee_core::ct!("ftKb_SsSpecialNHold_IASA");
     unsafe {
         let fp = fpp(gobj);
         if ext::ftCo_8009917C(gobj) {
@@ -334,12 +353,13 @@ pub fn ftKb_SsSpecialNHold_IASA(gobj: G) {
     }
 }
 
-pub fn ftKb_SsSpecialNCancel_IASA(_gobj: G) {}
-pub fn ftKb_SsSpecialN_IASA(_gobj: G) {}
-pub fn ftKb_SsSpecialAirNStart_IASA(_gobj: G) {}
-pub fn ftKb_SsSpecialAirN_IASA(_gobj: G) {}
+pub fn ftKb_SsSpecialNCancel_IASA(_gobj: G) { melee_core::ct!("ftKb_SsSpecialNCancel_IASA");}
+pub fn ftKb_SsSpecialN_IASA(_gobj: G) { melee_core::ct!("ftKb_SsSpecialN_IASA");}
+pub fn ftKb_SsSpecialAirNStart_IASA(_gobj: G) { melee_core::ct!("ftKb_SsSpecialAirNStart_IASA");}
+pub fn ftKb_SsSpecialAirN_IASA(_gobj: G) { melee_core::ct!("ftKb_SsSpecialAirN_IASA");}
 
 pub fn ftKb_SsSpecialNHold_Coll(gobj: G) {
+    melee_core::ct!("ftKb_SsSpecialNHold_Coll");
     unsafe {
         let fp = fpp(gobj);
         if st::ft_80082708(gobj) == GA_Ground as i32 {

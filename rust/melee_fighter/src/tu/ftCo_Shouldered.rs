@@ -61,10 +61,12 @@ pub mod ext {
 
 /// `ftCo_800DB464` as the `accessory1_cb` value.
 pub unsafe extern "C" fn ftCo_800DB464_cb(g: G) {
+    melee_core::ct!("ftCo_800DB464_cb");
     ext::ftCo_800DB464(g)
 }
 
 pub fn ftCo_8009C5A4(g: G, msid: i32) {
+    melee_core::ct!("ftCo_8009C5A4");
     let f = fp(g);
     if f.motion_id as i32 != msid || msid != ftCo_MS_ShoulderedWait as i32 {
         let flags = if f.x2222_b6() != 0 { Ft_MF_FreezeState } else { Ft_MF_None };
@@ -76,6 +78,7 @@ pub fn ftCo_8009C5A4(g: G, msid: i32) {
 }
 
 pub fn ftCo_8009C640(g: G, msid: i32) {
+    melee_core::ct!("ftCo_8009C640");
     let f = fp(g);
     let c = cd();
     // `(int) (percent * x4A0 + x4A4)`: one fused site (fmadds), saturating conversion.
@@ -121,6 +124,7 @@ fn release_hit(victim_g: G, victim: *mut Fighter, attacker: *mut Fighter, c1: G,
 
 /// static `ftCo_8009C744`.
 pub fn ftCo_8009C744(g: G) {
+    melee_core::ct!("ftCo_8009C744");
     let f = fp(g) as *mut Fighter;
     unsafe {
         let vic_gobj = (*f).victim_gobj;
@@ -137,6 +141,7 @@ fn inline_a0(g: G) -> f32 {
 }
 
 pub fn ftCo_Shouldered_Anim(g: G) {
+    melee_core::ct!("ftCo_Shouldered_Anim");
     let v = inline_a0(fp(g).victim_gobj);
     let mash = ext::ftCommon_GrabMash(fp(g), v);
     unsafe { fp(g).mv.co.shouldered.x4 = mash as i32 };
@@ -168,8 +173,8 @@ pub fn ftCo_Shouldered_Anim(g: G) {
     }
 }
 
-pub fn ftCo_Shouldered_IASA(_g: G) {}
+pub fn ftCo_Shouldered_IASA(_g: G) { melee_core::ct!("ftCo_Shouldered_IASA");}
 
-pub fn ftCo_Shouldered_Phys(_g: G) {}
+pub fn ftCo_Shouldered_Phys(_g: G) { melee_core::ct!("ftCo_Shouldered_Phys");}
 
-pub fn ftCo_Shouldered_Coll(_g: G) {}
+pub fn ftCo_Shouldered_Coll(_g: G) { melee_core::ct!("ftCo_Shouldered_Coll");}

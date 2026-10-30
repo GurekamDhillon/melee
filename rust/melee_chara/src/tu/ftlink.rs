@@ -65,6 +65,7 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 
 /// `Fighter_SetDamageCallback(gobj, ftLk_800EAF58)` (ft/inlines.h): take_dmg_cb and death2_cb.
 pub fn Fighter_SetDamageCallback_ftLk_800EAF58(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Fighter_SetDamageCallback_ftLk_800EAF58");
     unsafe {
         let fp = fpp(gobj);
         (*fp).take_dmg_cb = Some(cb_ftLk_800EAF58);
@@ -74,25 +75,30 @@ pub fn Fighter_SetDamageCallback_ftLk_800EAF58(gobj: *mut HSD_GObj) {
 
 /// `ftLk_800EAF38` as a Fighter callback entry.
 pub unsafe extern "C" fn cb_ftLk_800EAF38(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftLk_800EAF38");
     ftLk_800EAF38(g);
 }
 
 /// `ftLk_800EAF58` as a Fighter callback entry.
 pub unsafe extern "C" fn cb_ftLk_800EAF58(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftLk_800EAF58");
     ftLk_800EAF58(g);
 }
 
 /// `ftLk_800EB334` as a Fighter callback entry (the shield-hit callback).
 pub unsafe extern "C" fn cb_ftLk_800EB334(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftLk_800EB334");
     ftLk_800EB334(g);
 }
 
 pub fn ftLk_Init_BoomerangExists(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftLk_Init_BoomerangExists");
     unsafe { !(*fpp(gobj)).u.lk.boomerang_gobj.is_null() }
 }
 
 /// `PUSH_ATTRS(fp, ftLk_DatAttrs)`: copy ext_attr into the backup, point dat_attrs at it.
 pub fn ftLk_Init_OnLoadForCLink(fp: *mut Fighter) {
+    melee_core::ct!("ftLk_Init_OnLoadForCLink");
     unsafe {
         let backup = (*fp).dat_attrs_backup;
         let src = (*(*fp).ft_data).ext_attr as *const ftLk_DatAttrs;
@@ -102,6 +108,7 @@ pub fn ftLk_Init_OnLoadForCLink(fp: *mut Fighter) {
 }
 
 pub fn ftLk_Init_OnLoad(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_Init_OnLoad");
     unsafe {
         let fp = fpp(gobj);
         let ftdata = (*fp).ft_data;
@@ -122,11 +129,13 @@ pub fn ftLk_Init_OnLoad(gobj: *mut HSD_GObj) {
 
 /// Damage callback (death3 of the boomerang): drop a flying boomerang.
 pub fn ftLk_800EAF38(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_800EAF38");
     ftLk_SpecialS_RemoveBoomerang1(gobj);
 }
 
 /// Damage callback: drop the boomerang, the bomb/arrow/bow state and the Young Link milk.
 pub fn ftLk_800EAF58(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_800EAF58");
     ftLk_SpecialS_RemoveBoomerang1(gobj);
     melee_fighter::tu::ftco_0d8e::ftco_800d94d8(gobj);
     ftLk_SpecialN_ProcessFv10(gobj);
@@ -135,6 +144,7 @@ pub fn ftLk_800EAF58(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftLk_Init_OnItemPickupExt(gobj: *mut HSD_GObj, flag: i32) {
+    melee_core::ct!("ftLk_Init_OnItemPickupExt");
     unsafe {
         let fp = fpp(gobj);
         if st::itIsHeavy((*fp).item_gobj) == 1 {
@@ -146,6 +156,7 @@ pub fn ftLk_Init_OnItemPickupExt(gobj: *mut HSD_GObj, flag: i32) {
 }
 
 pub fn ftLk_Init_OnItemDropExt(gobj: *mut HSD_GObj, flag: i32) {
+    melee_core::ct!("ftLk_Init_OnItemDropExt");
     unsafe {
         let fp = fpp(gobj);
         if st::itIsHeavy((*fp).item_gobj) == 1 {
@@ -157,15 +168,18 @@ pub fn ftLk_Init_OnItemDropExt(gobj: *mut HSD_GObj, flag: i32) {
 }
 
 pub fn ftLk_Init_OnItemPickup(gobj: *mut HSD_GObj, flag: i32) {
+    melee_core::ct!("ftLk_Init_OnItemPickup");
     Fighter_OnItemPickup(gobj, flag, 1, 1);
 }
 
 pub fn ftLk_Init_OnItemDrop(gobj: *mut HSD_GObj, flag: i32) {
+    melee_core::ct!("ftLk_Init_OnItemDrop");
     Fighter_OnItemDrop(gobj, flag, 1, 1);
 }
 
 /// `COPY_ATTRS(gobj, ftLk_DatAttrs)`, then the model-scale adjustment of the Spin Attack offset.
 pub fn ftLk_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_Init_LoadSpecialAttrs");
     unsafe {
         let fp = fpp(gobj);
         let sa2 = (*fp).dat_attrs as *mut ftLk_DatAttrs;
@@ -178,6 +192,7 @@ pub fn ftLk_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
 
 /// Body of `ftLk_800EB334` up to its sound call: the shield-hit push-back velocity.
 pub fn shield_push(fp: &mut Fighter) {
+    melee_core::ct!("shield_push");
     let ea = unsafe { &*((*fp.ft_data).ext_attr as *const ftLk_DatAttrs) };
     let resultf = melee_fighter::tu::ftCo_Guard::ftCo_80092ED8(fp.x19A4, ea.xD8);
     fp.gr_vel = resultf * fh::common_data().x294;
@@ -186,6 +201,7 @@ pub fn shield_push(fp: &mut Fighter) {
 }
 
 pub fn ftLk_800EB334(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_800EB334");
     unsafe {
         let fp = &mut *fpp(gobj);
         shield_push(fp);

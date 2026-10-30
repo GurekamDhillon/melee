@@ -74,6 +74,7 @@ pub static it_803F6C18: [i32; 6] = [
 ];
 
 pub unsafe extern "C" fn it_802AC43C(gobj: *mut Fighter_GObj, ball: *mut Item_GObj, pos: *mut Vec3, trail_idx: i32, arg4: i32, facing_dir: f32) -> *mut Item_GObj {
+    melee_core::ct!("it_802AC43C");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
     if trail_idx < 0 || trail_idx > 5 {
@@ -115,6 +116,7 @@ pub unsafe extern "C" fn it_802AC43C(gobj: *mut Fighter_GObj, ball: *mut Item_GO
 }
 
 pub unsafe extern "C" fn it_802AC58C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802AC58C");
     if !gobj.is_null() {
         let ip = GET_ITEM(gobj);
         ext::it_802725D4(gobj);
@@ -125,6 +127,7 @@ pub unsafe extern "C" fn it_802AC58C(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802AC5D8(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802AC5D8");
     if !gobj.is_null() {
         let ip = GET_ITEM(gobj);
         if !ip.is_null() {
@@ -135,10 +138,12 @@ pub unsafe extern "C" fn it_802AC5D8(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802AC604(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802AC604");
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE as u32);
 }
 
 pub unsafe extern "C" fn itNesspkthundertrail_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itNesspkthundertrail_UnkMotion0_Anim");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
     let child = HSD_JObjGetChild(jobj);
@@ -157,6 +162,7 @@ pub unsafe extern "C" fn itNesspkthundertrail_UnkMotion0_Anim(gobj: *mut Item_GO
 }
 
 pub unsafe extern "C" fn itNesspkthundertrail_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itNesspkthundertrail_UnkMotion0_Phys");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
 
@@ -182,5 +188,6 @@ pub unsafe extern "C" fn itNesspkthundertrail_UnkMotion0_Phys(gobj: *mut Item_GO
 }
 
 pub unsafe extern "C" fn itNesspkthundertrail_UnkMotion0_Coll(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itNesspkthundertrail_UnkMotion0_Coll");
     false
 }

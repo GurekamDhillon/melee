@@ -67,6 +67,7 @@ pub static mut ftMObj: HSD_MObjInfo = {
 
 /// `&ftMObj`.
 pub fn ftMObj_ptr() -> *mut HSD_MObjInfo {
+    melee_core::ct!("ftMObj_ptr");
     &raw mut ftMObj
 }
 
@@ -122,6 +123,7 @@ fn cnst_template() -> HSD_TECnst {
 }
 
 pub unsafe extern "C" fn ftMaterial_800BF260() {
+    melee_core::ct!("ftMaterial_800BF260");
     ext::hsdInitClassInfo(crate::mtu_ptr::ptr(&((&raw mut ftMObj).cast::<c_void>())), crate::mtu_ptr::ptr(&((&raw mut melee_runtime::tu::mobj::native::hsdMObj).cast::<c_void>())), crate::mtu_ptr::ptr(&(c"sysdolphin_base_library".as_ptr() as *mut c_char)), crate::mtu_ptr::ptr(&(c"ft_mobj".as_ptr() as *mut c_char)), (size_of::<HSD_MObjInfo>() as i32) as i32, (size_of::<HSD_MObj>() as i32) as i32);
     // The C stores a three-argument function in the two-argument setup slot.
     ftMObj.setup = Some(core::mem::transmute::<
@@ -214,6 +216,7 @@ pub unsafe extern "C-unwind" fn ftMaterial_800BF2B8(mut mobj: *mut HSD_MObj, mut
 
 /// `ftMaterial_800BF534(fp, mobj, texp, rendermode)`: the light-overlay constant and TEV stage.
 pub unsafe fn ftMaterial_800BF534(fp: *mut Fighter, mobj: *mut HSD_MObj, texp: *mut HSD_TExp, rendermode: u32) -> *mut HSD_TExp {
+    melee_core::ct!("ftMaterial_800BF534");
     let overlay = (ext::ftCo_800C0658(crate::mtu_ptr::ptr(&(&mut *fp))) as *mut ColorOverlay);
     if (*overlay).x7C_flag2() != 0 && (*overlay).x7C_light_enable() != 0 {
         if rendermode & RENDER_XLU as u32 == 0 && (*fp).x2223_b2() == 0 {
@@ -246,6 +249,7 @@ pub unsafe fn ftMaterial_800BF534(fp: *mut Fighter, mobj: *mut HSD_MObj, texp: *
 
 /// `ftMaterial_800BF6BC(fp, mobj, texp)`: the fighter colour overlay as a TEV blend stage.
 pub unsafe fn ftMaterial_800BF6BC(fp: *mut Fighter, mobj: *mut HSD_MObj, texp: *mut HSD_TExp) {
+    melee_core::ct!("ftMaterial_800BF6BC");
     if (*fp).x2223_b3() != 0 {
         return;
     }
@@ -350,6 +354,7 @@ pub unsafe fn ftMaterial_800BF6BC(fp: *mut Fighter, mobj: *mut HSD_MObj, texp: *
 
 /// `ftMaterial_800BFB4C(gobj, diffuse)`: set the diffuse colour of every material of the fighter's model.
 pub unsafe fn ftMaterial_800BFB4C(gobj: *mut HSD_GObj, diffuse: *const GXColor) {
+    melee_core::ct!("ftMaterial_800BFB4C");
     let mut cur = (*gobj).hsd_obj as *mut HSD_JObj;
     while !cur.is_null() {
         let mut dobj = (ext::HSD_JObjGetDObj(crate::mtu_ptr::ptr(&(cur))) as *mut HSD_DObj);

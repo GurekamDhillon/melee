@@ -137,6 +137,7 @@ unsafe fn da(fp: *mut Fighter) -> *mut ftMewtwoAttributes {
 /// `ftMt_SpecialN_GetChargeLevel`: -1 unless Mewtwo is holding a Shadow Ball, else 0 with the
 /// charge and the cycle count written out.
 pub fn ftMt_SpecialN_GetChargeLevel(gobj: *mut HSD_GObj, charge_level: &mut i32, charge_cycles: &mut i32) -> i32 {
+    melee_core::ct!("ftMt_SpecialN_GetChargeLevel");
     unsafe {
         if !gobj.is_null() {
             let fp = fpp(gobj);
@@ -153,6 +154,7 @@ pub fn ftMt_SpecialN_GetChargeLevel(gobj: *mut HSD_GObj, charge_level: &mut i32,
 }
 
 pub fn ftMt_SpecialN_CheckShadowBallRemove(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftMt_SpecialN_CheckShadowBallRemove");
     unsafe {
         if !gobj.is_null() {
             let fp = fpp(gobj);
@@ -182,6 +184,7 @@ pub fn ftMt_SpecialN_CheckShadowBallRemove(gobj: *mut HSD_GObj) -> bool {
 }
 
 pub fn ftMt_SpecialN_CheckShadowBallCancel(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftMt_SpecialN_CheckShadowBallCancel");
     unsafe {
         if !gobj.is_null() {
             let msid = (*fpp(gobj)).motion_id as u32;
@@ -204,6 +207,7 @@ pub fn ftMt_SpecialN_CheckShadowBallCancel(gobj: *mut HSD_GObj) -> bool {
 
 /// `ftMewtwo_SpecialN_ClearGObj` (static inline): drop the charge-effect handle.
 pub fn ftMewtwo_SpecialN_ClearGObj(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMewtwo_SpecialN_ClearGObj");
     unsafe {
         if !gobj.is_null() {
             let fp = fpp(gobj);
@@ -216,6 +220,7 @@ pub fn ftMewtwo_SpecialN_ClearGObj(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMt_SpecialN_SetNULL(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialN_SetNULL");
     unsafe {
         if !gobj.is_null() {
             let fp = fpp(gobj);
@@ -229,6 +234,7 @@ pub fn ftMt_SpecialN_SetNULL(gobj: *mut HSD_GObj) {
 
 /// `ftMewtwo_SpecialN_RemoveHeldShadowBall` (static inline).
 pub fn ftMewtwo_SpecialN_RemoveHeldShadowBall(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMewtwo_SpecialN_RemoveHeldShadowBall");
     unsafe {
         let fp = fpp(gobj);
         let mut fp2 = fp;
@@ -252,12 +258,14 @@ pub fn ftMewtwo_SpecialN_RemoveHeldShadowBall(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMt_SpecialN_OnTakeDamage(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialN_OnTakeDamage");
     if !gobj.is_null() {
         ftMewtwo_SpecialN_RemoveHeldShadowBall(gobj);
     }
 }
 
 pub fn ftMt_SpecialN_OnDeath(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialN_OnDeath");
     unsafe {
         if !gobj.is_null() {
             let fp = fpp(gobj);
@@ -288,6 +296,7 @@ pub fn ftMt_SpecialN_OnDeath(gobj: *mut HSD_GObj) {
 /// `ftMewtwo_SpecialN_GetPos` (static): the Shadow Ball's hold position, 2 units in front of the
 /// right shoulder, z cleared.
 pub fn ftMewtwo_SpecialN_GetPos(fp: *mut Fighter, sp38: &mut Vec3) {
+    melee_core::ct!("ftMewtwo_SpecialN_GetPos");
     unsafe {
         let sp2c = Vec3 { x: 0.0, y: 0.0, z: 2.0 };
         ext::lb_8000B1CC((*(*fp).parts.add(FtPart_RShoulderN as usize)).joint, &sp2c, sp38);
@@ -297,6 +306,7 @@ pub fn ftMewtwo_SpecialN_GetPos(fp: *mut Fighter, sp38: &mut Vec3) {
 
 /// `ftMewtwo_SpecialN_SetRecoil` (static).
 pub fn ftMewtwo_SpecialN_SetRecoil(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMewtwo_SpecialN_SetRecoil");
     unsafe {
         let fp = fpp(gobj);
         let a = da(fp);
@@ -312,6 +322,7 @@ pub fn ftMewtwo_SpecialN_SetRecoil(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMt_SpecialN_ReleaseShadowBall(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialN_ReleaseShadowBall");
     unsafe {
         let fp = fpp(gobj);
         let a = da(fp);
@@ -357,6 +368,7 @@ pub fn ftMt_SpecialN_ReleaseShadowBall(gobj: *mut HSD_GObj) {
 pub const shadowBallSFX: [u32; 4] = [200121, 200124, 200127, 200130];
 
 pub fn ftMt_SpecialN_PlayChargeSFX(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialN_PlayChargeSFX");
     unsafe {
         let fp = fpp(gobj);
         let a = da(fp);
@@ -396,6 +408,7 @@ pub fn ftMt_SpecialN_PlayChargeSFX(gobj: *mut HSD_GObj) {
 
 /// `ftMewtwo_SpecialN_ChangeAction` (static inline), the grounded entry.
 pub fn ftMewtwo_SpecialN_ChangeAction(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMewtwo_SpecialN_ChangeAction");
     unsafe {
         let fp = fpp(gobj);
         let a = da(fp);
@@ -420,11 +433,13 @@ pub fn ftMewtwo_SpecialN_ChangeAction(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMt_SpecialN_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialN_Enter");
     ftMewtwo_SpecialN_ChangeAction(gobj);
 }
 
 /// `ftMewtwo_SpecialAirN_ChangeAction` (static inline), the aerial entry.
 pub fn ftMewtwo_SpecialAirN_ChangeAction(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMewtwo_SpecialAirN_ChangeAction");
     unsafe {
         let fp = fpp(gobj);
         let a = da(fp);
@@ -448,6 +463,7 @@ pub fn ftMewtwo_SpecialAirN_ChangeAction(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMt_SpecialAirN_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialAirN_Enter");
     ftMewtwo_SpecialAirN_ChangeAction(gobj);
 }
 
@@ -479,6 +495,7 @@ fn create_held_shadow(gobj: *mut HSD_GObj, fp: *mut Fighter) {
 }
 
 pub fn ftMt_SpecialNStart_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialNStart_Anim");
     unsafe {
         let fp = fpp(gobj);
         let a = da(fp);
@@ -499,6 +516,7 @@ pub fn ftMt_SpecialNStart_Anim(gobj: *mut HSD_GObj) {
 
 /// `ftMewtwo_SpecialN_CreateHeldShadow` (static inline), the version the Loop callbacks call.
 pub fn ftMewtwo_SpecialN_CreateHeldShadow(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMewtwo_SpecialN_CreateHeldShadow");
     unsafe { create_held_shadow(gobj, fpp(gobj)) }
 }
 
@@ -542,10 +560,12 @@ unsafe fn loop_anim(gobj: *mut HSD_GObj, full_msid: i32, full_x2348: i32) {
 }
 
 pub fn ftMt_SpecialNLoop_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialNLoop_Anim");
     unsafe { loop_anim(gobj, ftMt_MS_SpecialNLoopFull as i32, 1) }
 }
 
 pub fn ftMt_SpecialNLoopFull_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialNLoopFull_Anim");
     unsafe {
         let fp = fpp(gobj);
         let a = da(fp);
@@ -556,6 +576,7 @@ pub fn ftMt_SpecialNLoopFull_Anim(gobj: *mut HSD_GObj) {
 
 /// `ftMewtwo_SpecialN_RemoveShadowBall2` (static inline).
 pub fn ftMewtwo_SpecialN_RemoveShadowBall2(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMewtwo_SpecialN_RemoveShadowBall2");
     unsafe {
         if !gobj.is_null() {
             let fp = fpp(gobj);
@@ -569,6 +590,7 @@ pub fn ftMewtwo_SpecialN_RemoveShadowBall2(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMt_SpecialNCancel_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialNCancel_Anim");
     unsafe {
         ftMewtwo_SpecialN_RemoveShadowBall2(gobj);
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -578,6 +600,7 @@ pub fn ftMt_SpecialNCancel_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMt_SpecialNEnd_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialNEnd_Anim");
     unsafe {
         ftMt_SpecialN_ReleaseShadowBall(gobj);
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -587,6 +610,7 @@ pub fn ftMt_SpecialNEnd_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMt_SpecialAirNStart_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialAirNStart_Anim");
     unsafe {
         let fp = fpp(gobj);
         let a = da(fp);
@@ -607,10 +631,12 @@ pub fn ftMt_SpecialAirNStart_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMt_SpecialAirNLoop_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialAirNLoop_Anim");
     unsafe { loop_anim(gobj, ftMt_MS_SpecialAirNLoopFull as i32, 1) }
 }
 
 pub fn ftMt_SpecialAirNLoopFull_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialAirNLoopFull_Anim");
     unsafe {
         let fp = fpp(gobj);
         let a = da(fp);
@@ -620,6 +646,7 @@ pub fn ftMt_SpecialAirNLoopFull_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMt_SpecialAirNCancel_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialAirNCancel_Anim");
     unsafe {
         ftMewtwo_SpecialN_RemoveShadowBall2(gobj);
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -629,6 +656,7 @@ pub fn ftMt_SpecialAirNCancel_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMt_SpecialAirNEnd_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialAirNEnd_Anim");
     unsafe {
         let fp = fpp(gobj);
         let a = da(fp);
@@ -644,6 +672,7 @@ pub fn ftMt_SpecialAirNEnd_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMt_SpecialNLoop_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialNLoop_IASA");
     unsafe {
         let fp = fpp(gobj);
         if ext::ftCo_8009917C(gobj) {
@@ -670,6 +699,7 @@ pub fn ftMt_SpecialNLoop_IASA(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMt_SpecialNLoopFull_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialNLoopFull_IASA");
     unsafe {
         let fp = fpp(gobj);
         if ext::ftCo_8009917C(gobj) {
@@ -694,6 +724,7 @@ pub fn ftMt_SpecialNLoopFull_IASA(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMt_SpecialAirNLoop_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialAirNLoop_IASA");
     unsafe {
         let fp = fpp(gobj);
         let recent_input = (*fp).input.pressed_buttons;
@@ -716,6 +747,7 @@ pub fn ftMt_SpecialAirNLoop_IASA(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMt_SpecialAirNLoopFull_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialAirNLoopFull_IASA");
     unsafe {
         let fp = fpp(gobj);
         let recent_input = (*fp).input.pressed_buttons;
@@ -737,6 +769,7 @@ pub fn ftMt_SpecialAirNLoopFull_IASA(gobj: *mut HSD_GObj) {
 
 /// `ftMewtwo_SpecialN_LaunchShadowBall` (static inline).
 pub fn ftMewtwo_SpecialN_LaunchShadowBall(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMewtwo_SpecialN_LaunchShadowBall");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).kind as i32 == Ft_Kind_Mewtwo as i32 {
@@ -764,5 +797,6 @@ pub fn ftMewtwo_SpecialN_LaunchShadowBall(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMt_SpecialN_Shoot(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialN_Shoot");
     ftMewtwo_SpecialN_LaunchShadowBall(gobj);
 }

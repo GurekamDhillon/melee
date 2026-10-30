@@ -290,6 +290,7 @@ unsafe fn strtoul10(s: *const i8) -> u32 {
 
 /// `convertSdkResult`
 pub unsafe extern "C" fn convertSdkResult(sdk_result: i32) -> u32 {
+    melee_core::ct!("convertSdkResult");
     match sdk_result {
         -1 | -2 | -3 => LbCardResult_DeviceError,
         -4 => LbCardResult_NoFile,
@@ -302,11 +303,13 @@ pub unsafe extern "C" fn convertSdkResult(sdk_result: i32) -> u32 {
 
 /// `lb_80019C38_noinline`
 pub unsafe extern "C" fn lb_80019C38_noinline() -> *mut CardTask {
+    melee_core::ct!("lb_80019C38_noinline");
     getNewTask()
 }
 
 /// 019C38
 pub unsafe extern "C" fn getNewTask() -> *mut CardTask {
+    melee_core::ct!("getNewTask");
     let mut i = 0;
     let mut result = &raw mut state.task_array[0];
     while i < TASK_MAX {
@@ -322,6 +325,7 @@ pub unsafe extern "C" fn getNewTask() -> *mut CardTask {
 
 /// `resetTaskArray`
 pub unsafe extern "C" fn resetTaskArray() {
+    melee_core::ct!("resetTaskArray");
     for i in 0..TASK_MAX {
         state.task_array[i].r#type = LbCardNewTask_None;
     }
@@ -329,6 +333,7 @@ pub unsafe extern "C" fn resetTaskArray() {
 
 /// 019CB0
 pub unsafe extern "C" fn executeNextTask(mut result: u32) -> i32 {
+    melee_core::ct!("executeNextTask");
     loop {
         let mut i = 0;
         let mut task: *mut CardTask = null_mut();
@@ -383,6 +388,7 @@ pub unsafe extern "C" fn executeNextTask(mut result: u32) -> i32 {
 
 /// `resetState`
 pub unsafe extern "C" fn resetState(chan: i32, save_data: *mut c_void, status_out: *mut i32, callback: LbCardOnFinishedCallback) {
+    melee_core::ct!("resetState");
     state.chan = chan;
     state.save_data = save_data;
     state.status = status_out;
@@ -404,6 +410,7 @@ pub unsafe extern "C" fn resetState(chan: i32, save_data: *mut c_void, status_ou
 
 /// `onCardComplete`
 pub unsafe extern "C" fn onCardComplete(_chan: i32, result: i32) {
+    melee_core::ct!("onCardComplete");
     let error = convertSdkResult(result) as i32;
     if error != 0 {
         state.saved_error = error;
@@ -413,6 +420,7 @@ pub unsafe extern "C" fn onCardComplete(_chan: i32, result: i32) {
 
 /// `convertHsdResult`
 pub unsafe extern "C" fn convertHsdResult(hsd_result: i32) -> i32 {
+    melee_core::ct!("convertHsdResult");
     (match hsd_result {
         0 | 1 => LbCardResult_Ready,
         -261 | -260 | -259 | -258 => LbCardResult_2,
@@ -424,6 +432,7 @@ pub unsafe extern "C" fn convertHsdResult(hsd_result: i32) -> i32 {
 
 /// 01A0B0
 pub unsafe extern "C" fn fn_8001A0B0(file_idx: i32, hsd_error: i32) {
+    melee_core::ct!("fn_8001A0B0");
     let error = convertHsdResult(hsd_error);
     state.unk_38[file_idx as usize].lb_error = error;
     state.unk_38[file_idx as usize].hsd_result = hsd_error;
@@ -435,6 +444,7 @@ pub unsafe extern "C" fn fn_8001A0B0(file_idx: i32, hsd_error: i32) {
 
 /// 01A184
 pub unsafe extern "C" fn taskMount() -> i32 {
+    melee_core::ct!("taskMount");
     let mut did_disable = false;
     let mut enabled = 0;
     state.tasks_remaining = 0;
@@ -469,6 +479,7 @@ pub unsafe extern "C" fn taskMount() -> i32 {
 
 /// 01A3A4
 pub unsafe extern "C" fn taskCheck() -> i32 {
+    melee_core::ct!("taskCheck");
     state.tasks_remaining = 0;
     let enabled = ext::OSDisableInterrupts();
     let check_result = ext::CARDCheckAsync(state.chan, Some(onCardComplete));
@@ -487,6 +498,7 @@ pub unsafe extern "C" fn taskCheck() -> i32 {
 
 /// `setTaskFilename`
 pub unsafe extern "C" fn setTaskFilename(filename: *const i8, file_entries: *mut c_void) {
+    melee_core::ct!("setTaskFilename");
     let task = getNewTask();
     (*task).r#type = LbCardNewTask_Open;
     (*task).result_mask = 1;
@@ -511,6 +523,7 @@ pub struct SnapshotNode {
 
 /// `setupCardEntries` (static inline in the C)
 pub unsafe extern "C" fn setupCardEntries(ctx: *mut CardState, icon: *mut c_void, mut entry: *mut LbCardEntry) {
+    melee_core::ct!("setupCardEntries");
     ext::hsd_SetCardIconInfo(ctx, icon as *mut CardIconInfo);
     let mut i = 0;
     while (*entry).file_size != -1 {
@@ -524,6 +537,7 @@ pub unsafe extern "C" fn setupCardEntries(ctx: *mut CardState, icon: *mut c_void
 
 /// 01A594
 pub unsafe extern "C" fn taskOpen(filename: *const i8, entries: *mut LbCardEntry) -> i32 {
+    melee_core::ct!("taskOpen");
     state.tasks_remaining = 0;
     if state.sectorsize != SECTOR_SIZE {
         state.saved_error = LbCardResult_BadSectorSize as i32;
@@ -567,6 +581,7 @@ pub unsafe extern "C" fn taskOpen(filename: *const i8, entries: *mut LbCardEntry
 
 /// 01A860
 pub unsafe extern "C" fn taskUnk3() -> i32 {
+    melee_core::ct!("taskUnk3");
     state.tasks_remaining = 0;
     match state.saved_error {
         0 | 2 => state.saved_error = 1,
@@ -577,6 +592,7 @@ pub unsafe extern "C" fn taskUnk3() -> i32 {
 
 /// 01A8A4
 pub unsafe extern "C" fn taskFormat() -> i32 {
+    melee_core::ct!("taskFormat");
     let mut did_disable = 0;
     let mut enabled = 0;
     state.tasks_remaining = 0;
@@ -602,6 +618,7 @@ pub unsafe extern "C" fn taskFormat() -> i32 {
 
 /// 01A9CC
 pub unsafe extern "C" fn taskDelete(filename: *mut i8) -> i32 {
+    melee_core::ct!("taskDelete");
     state.tasks_remaining = 0;
     let enabled = ext::OSDisableInterrupts();
     let delete_result = ext::CARDDeleteAsync(state.chan, filename, Some(onCardComplete));
@@ -620,6 +637,7 @@ pub unsafe extern "C" fn taskDelete(filename: *mut i8) -> i32 {
 
 /// 01AAE4
 pub unsafe extern "C" fn taskRename(old_name: *const i8, new_name: *const i8) -> i32 {
+    melee_core::ct!("taskRename");
     state.tasks_remaining = 0;
     let enabled = ext::OSDisableInterrupts();
     let rename_result = ext::CARDRenameAsync(state.chan, old_name, new_name, Some(onCardComplete));
@@ -638,6 +656,7 @@ pub unsafe extern "C" fn taskRename(old_name: *const i8, new_name: *const i8) ->
 
 /// 01AC04
 pub unsafe extern "C" fn taskCreate(filename: *const i8) -> i32 {
+    melee_core::ct!("taskCreate");
     let hsd_result = ext::hsd_803B286C(
         &raw mut state.card_state,
         filename,
@@ -658,6 +677,7 @@ pub unsafe extern "C" fn taskCreate(filename: *const i8) -> i32 {
 
 /// `readCardFileSize` (volatile read)
 pub unsafe extern "C" fn readCardFileSize(file_size: *const i32) -> i32 {
+    melee_core::ct!("readCardFileSize");
     core::ptr::read_volatile(file_size)
 }
 
@@ -691,16 +711,19 @@ unsafe fn taskReadWrite(entries: *mut LbCardEntry, write: bool) -> i32 {
 
 /// 01ACEC
 pub unsafe extern "C" fn taskRead(entries: *mut LbCardEntry) -> i32 {
+    melee_core::ct!("taskRead");
     taskReadWrite(entries, false)
 }
 
 /// 01AE38
 pub unsafe extern "C" fn taskWrite(entries: *mut LbCardEntry) -> i32 {
+    melee_core::ct!("taskWrite");
     taskReadWrite(entries, true)
 }
 
 /// 01AF84
 pub unsafe extern "C" fn taskSetStatus() -> i32 {
+    melee_core::ct!("taskSetStatus");
     let hsd_result = ext::hsd_803B2928(&raw mut state.card_state, state.comment, state.banner, state.icons, Some(fn_8001A0B0));
     state.saved_error = convertHsdResult(hsd_result);
     if state.saved_error == 0 {
@@ -714,6 +737,7 @@ pub unsafe extern "C" fn taskSetStatus() -> i32 {
 
 /// 01B068
 pub unsafe extern "C" fn taskReadHeader() -> i32 {
+    melee_core::ct!("taskReadHeader");
     let hsd_result = ext::hsd_803B27F4(&raw mut state.card_state, state.comment as *mut c_void, state.banner, state.icons, Some(fn_8001A0B0));
     state.saved_error = convertHsdResult(hsd_result);
     if state.saved_error == 0 {
@@ -727,6 +751,7 @@ pub unsafe extern "C" fn taskReadHeader() -> i32 {
 
 /// 01B14C
 pub unsafe extern "C" fn taskListSnapshots() -> i32 {
+    melee_core::ct!("taskListSnapshots");
     const NODES_LEN: usize = 127;
     let mut head: *mut SnapshotNode = null_mut();
     let mut stat: CARDStat = core::mem::zeroed();
@@ -780,6 +805,7 @@ pub unsafe extern "C" fn taskListSnapshots() -> i32 {
 
 /// 01B614
 pub unsafe extern "C" fn taskFindFile(filename: *const i8) -> i32 {
+    melee_core::ct!("taskFindFile");
     let mut card_stat: CARDStat = core::mem::zeroed();
     let mut fileno = 0;
     state.tasks_remaining = 0;
@@ -804,11 +830,13 @@ pub unsafe extern "C" fn taskFindFile(filename: *const i8) -> i32 {
 
 /// 01B6E0
 pub unsafe extern "C" fn lb_8001B6E0(file_idx: i32) -> i32 {
+    melee_core::ct!("lb_8001B6E0");
     state.unk_38[file_idx as usize].lb_error
 }
 
 /// 01B6F8
 pub unsafe extern "C" fn lbCardNew_CompleteNextTask() -> i32 {
+    melee_core::ct!("lbCardNew_CompleteNextTask");
     ext::hsd_803AAA48();
     let enabled = ext::OSDisableInterrupts();
     let mut result = if state.tasks_remaining != 0 { LbCardResult_Busy as i32 } else { state.saved_error };
@@ -821,6 +849,7 @@ pub unsafe extern "C" fn lbCardNew_CompleteNextTask() -> i32 {
 
 /// 01B760
 pub unsafe extern "C" fn lbCardNew_CompleteAllTasks(mut result: i32) -> i32 {
+    melee_core::ct!("lbCardNew_CompleteAllTasks");
     if result == LbCardResult_Busy as i32 {
         loop {
             result = lbCardNew_CompleteNextTask();
@@ -835,6 +864,7 @@ pub unsafe extern "C" fn lbCardNew_CompleteAllTasks(mut result: i32) -> i32 {
 
 /// `setupTask` (static inline in the C)
 pub unsafe extern "C" fn setupTask(r#type: u32, result_mask: i32) -> *mut CardTask {
+    melee_core::ct!("setupTask");
     let task = getNewTask();
     (*task).r#type = r#type;
     (*task).result_mask = result_mask;
@@ -843,6 +873,7 @@ pub unsafe extern "C" fn setupTask(r#type: u32, result_mask: i32) -> *mut CardTa
 
 /// `lb_8001A4CC_dontinline`
 pub unsafe extern "C" fn lb_8001A4CC_dontinline(filename: *const i8, file_entries: *mut c_void) {
+    melee_core::ct!("lb_8001A4CC_dontinline");
     setTaskFilename(filename, file_entries);
 }
 
@@ -862,6 +893,7 @@ unsafe fn finish(mut result: i32) -> i32 {
 
 /// 01B7E0
 pub unsafe extern "C" fn lb_8001B7E0(chan: i32, filename: *mut i8, file_entries: *mut c_void, save_data: *mut c_void, status_out: *mut i32) -> u32 {
+    melee_core::ct!("lb_8001B7E0");
     resetState(chan, save_data, status_out, None);
     setupTask(LbCardNewTask_Mount, resultMask_16);
     setupTask(LbCardNewTask_Check, resultMask_Ready | resultMask_Malformed);
@@ -873,6 +905,7 @@ pub unsafe extern "C" fn lb_8001B7E0(chan: i32, filename: *mut i8, file_entries:
 
 /// 01B8C8
 pub unsafe extern "C" fn lb_8001B8C8(chan: i32) -> i32 {
+    melee_core::ct!("lb_8001B8C8");
     resetState(chan, null_mut(), null_mut(), None);
     setupTask(LbCardNewTask_Mount, resultMask_16);
     setupTask(LbCardNewTask_Check, resultMask_Ready | resultMask_Malformed);
@@ -883,6 +916,7 @@ pub unsafe extern "C" fn lb_8001B8C8(chan: i32) -> i32 {
 
 /// `lbCardNew_DeleteSnap`
 pub unsafe extern "C" fn lbCardNew_DeleteSnap(chan: i32, filename: *const i8, status_out: *mut c_void) -> i32 {
+    melee_core::ct!("lbCardNew_DeleteSnap");
     resetState(chan, null_mut(), status_out as *mut i32, None);
     setupTask(LbCardNewTask_Mount, resultMask_16);
     setupTask(LbCardNewTask_Check, resultMask_Ready | resultMask_Malformed);
@@ -895,6 +929,7 @@ pub unsafe extern "C" fn lbCardNew_DeleteSnap(chan: i32, filename: *const i8, st
 
 /// 01BA44
 pub unsafe extern "C" fn lb_8001BA44(chan: i32, filename: *const i8, status_out: *mut c_void) -> i32 {
+    melee_core::ct!("lb_8001BA44");
     resetState(chan, null_mut(), status_out as *mut i32, None);
     setupTask(LbCardNewTask_Mount, 0x10000);
     setupTask(LbCardNewTask_Check, 0x201);
@@ -916,6 +951,7 @@ pub unsafe extern "C" fn lb_8001BB48(
     icons: *mut c_void,
     status_out: *mut c_void,
 ) -> i32 {
+    melee_core::ct!("lb_8001BB48");
     resetState(chan, save_data, status_out as *mut i32, None);
     let mut task = lb_80019C38_noinline();
     (*task).r#type = LbCardNewTask_Mount;
@@ -948,6 +984,7 @@ pub unsafe extern "C" fn lb_8001BC18(
     icons: *mut c_void,
     status_out: *mut i32,
 ) -> i32 {
+    melee_core::ct!("lb_8001BC18");
     resetState(chan, save_data, status_out, None);
     setupTask(LbCardNewTask_Mount, 0x10000);
     let size = 0x20;
@@ -964,6 +1001,7 @@ pub unsafe extern "C" fn lb_8001BC18(
 
 /// 01BD34
 pub unsafe extern "C" fn lb_8001BD34(chan: i32, filename: *const i8, file_entries: *mut c_void, status_out: *mut c_void) -> i32 {
+    melee_core::ct!("lb_8001BD34");
     resetState(chan, null_mut(), status_out as *mut i32, None);
     setupTask(LbCardNewTask_Mount, 0x10000);
     setupTask(LbCardNewTask_Check, 0x201);
@@ -985,6 +1023,7 @@ pub unsafe extern "C" fn lb_8001BE30(
     status_out: *mut c_void,
     callback: *mut c_void,
 ) -> i32 {
+    melee_core::ct!("lb_8001BE30");
     resetState(chan, null_mut(), status_out as *mut i32, core::mem::transmute::<*mut c_void, LbCardOnFinishedCallback>(callback));
     let mut task = getNewTask();
     (*task).r#type = LbCardNewTask_Mount;
@@ -1019,6 +1058,7 @@ pub unsafe extern "C" fn lb_8001BF04(
     icons: *mut c_void,
     status_out: *mut c_void,
 ) -> i32 {
+    melee_core::ct!("lb_8001BF04");
     resetState(chan, null_mut(), status_out as *mut i32, None);
     let mut task = lb_80019C38_noinline();
     (*task).r#type = LbCardNewTask_Mount;
@@ -1045,6 +1085,7 @@ pub unsafe extern "C" fn lb_8001BF04(
 
 /// 01BFD8
 pub unsafe extern "C" fn lb_8001BFD8(chan: i32, snapshot_entries: *mut lbCardNew_SnapshotEntry, free_blocks: *mut i32, free_files: *mut i32) -> i32 {
+    melee_core::ct!("lb_8001BFD8");
     resetState(chan, null_mut(), null_mut(), None);
     setupTask(LbCardNewTask_Mount, resultMask_16);
     setupTask(LbCardNewTask_Check, resultMask_Ready | resultMask_Malformed);
@@ -1060,6 +1101,7 @@ pub unsafe extern "C" fn lb_8001BFD8(chan: i32, snapshot_entries: *mut lbCardNew
 
 /// 01C0F4
 pub unsafe extern "C" fn lb_8001C0F4(chan: i32, name_a: *const i8, name_b: *const i8, name_c: *const i8, status_out: *mut c_void) -> i32 {
+    melee_core::ct!("lb_8001C0F4");
     resetState(chan, null_mut(), status_out as *mut i32, None);
     let mut task = lb_80019C38_noinline();
     (*task).r#type = LbCardNewTask_Mount;
@@ -1117,6 +1159,7 @@ pub unsafe extern "C" fn lb_8001C0F4(chan: i32, name_a: *const i8, name_b: *cons
 
 /// 01C2D8
 pub unsafe extern "C" fn lb_8001C2D8(chan: i32, company: *const i8, game_name: *const i8, filename: *const i8) -> i32 {
+    melee_core::ct!("lb_8001C2D8");
     resetState(chan, null_mut(), null_mut(), None);
     setupTask(LbCardNewTask_Mount, 0x10000);
     setupTask(LbCardNewTask_Check, 0x201);
@@ -1132,6 +1175,7 @@ pub unsafe extern "C" fn lb_8001C2D8(chan: i32, company: *const i8, game_name: *
 
 /// `lbCardNew_ProbeEx`
 pub unsafe extern "C" fn lbCardNew_ProbeEx(chan: i32) -> i32 {
+    melee_core::ct!("lbCardNew_ProbeEx");
     let mut memsize: i32 = 0;
     let mut sectorsize: i32 = 0;
     convertSdkResult(ext::CARDProbeEx(chan, &mut memsize, &mut sectorsize)) as i32
@@ -1139,6 +1183,7 @@ pub unsafe extern "C" fn lbCardNew_ProbeEx(chan: i32) -> i32 {
 
 /// 01C4A8
 pub unsafe extern "C" fn lb_8001C4A8(file_entries: *mut c_void, icon_data: *mut c_void) -> i32 {
+    melee_core::ct!("lb_8001C4A8");
     let ctx = &raw mut state.card_state;
     let mut entry = file_entries as *mut LbCardEntry;
     ext::hsd_803B24E4(ctx, 0, SECTOR_SIZE, state.lib_area);
@@ -1156,6 +1201,7 @@ pub unsafe extern "C" fn lb_8001C4A8(file_entries: *mut c_void, icon_data: *mut 
 
 /// `lbCardNew_AllocWorkArea`
 pub unsafe extern "C" fn lbCardNew_AllocWorkArea() {
+    melee_core::ct!("lbCardNew_AllocWorkArea");
     if state.work_area.is_null() {
         state.work_area = ext::HSD_MemAlloc(0xA000);
         state.lib_area = ext::HSD_MemAlloc(0x2000);
@@ -1164,12 +1210,14 @@ pub unsafe extern "C" fn lbCardNew_AllocWorkArea() {
 
 /// `lbCardNew_ForgetMemory`
 pub unsafe extern "C" fn lbCardNew_ForgetMemory() {
+    melee_core::ct!("lbCardNew_ForgetMemory");
     state.lib_area = null_mut();
     state.work_area = null_mut();
 }
 
 /// `lbCardNew_Init`
 pub unsafe extern "C" fn lbCardNew_Init() {
+    melee_core::ct!("lbCardNew_Init");
     ext::hsd_803B2374();
     resetState(0, null_mut(), null_mut(), None);
     state.tasks_remaining = 0;

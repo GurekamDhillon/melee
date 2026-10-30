@@ -8,7 +8,7 @@
 //! ```text
 //! melee selftest
 //! melee hashlog --words GOLDEN.csv --out CANDIDATE.csv [--frames N]
-//! melee golden --iso DISC.iso --out CANDIDATE.csv [--scenario pad_falcon_fox_fd|pad_falcon_wolf_fd] [--mods DIR [--enable id,id]] [--frames N] [--seed-from GOLDEN.csv] [--audio]
+//! melee golden --iso DISC.iso --out CANDIDATE.csv [--scenario pad_falcon_fox_fd|pad_falcon_wolf_fd] [--mods DIR [--enable id,id]] [--frames N] [--calltrace OUT [--calltrace-frames A-B]] [--seed-from GOLDEN.csv] [--audio]
 //!              [--from-snapshot FILE.snap [--start N]] [--dump-state N:FILE]
 //! melee diff --scenario NAME (--frame N | --first) [--snap FILE] [--max N] [--all]   (docs/rust-port/notes/diff.md)
 //! ```
@@ -547,6 +547,7 @@ fn golden(args: &[String]) -> ExitCode {
                 self.audio_frame();
                 return h < 100;
             }
+            melee_core::ct::begin_frame(self.sim.frame as i64 + 1);
             let r = self.sim.step();
             if r && self.time_secs < 180 && self.sim.frame == audio::clock_end(self.sim.go_frame_for_hud(), self.time_secs) - 1 {
                 self.halted = Some(0);
@@ -584,6 +585,20 @@ fn golden(args: &[String]) -> ExitCode {
             w
         }
     }
+    // `--calltrace OUT [--calltrace-frames A-B]`: the ordered TU call list per frame (needs `--features calltrace`;
+    // tools/rust-port/trace/seqdiff.py compares it with the C build's MELEE_CALLTRACE_SEQ).
+    let calltrace_out = get("--calltrace");
+    if calltrace_out.is_some() {
+        if !melee_core::ct::ENABLED {
+            eprintln!("melee: --calltrace needs a build with `--features calltrace` (cargo build -p melee --release --features calltrace)");
+            return ExitCode::from(2);
+        }
+        if let Some((a, b)) = get("--calltrace-frames").and_then(|v| v.split_once('-').map(|(a, b)| (a.to_string(), b.to_string()))) {
+            if let (Ok(a), Ok(b)) = (a.parse::<i64>(), b.parse::<i64>()) {
+                melee_core::ct::set_range(a, b);
+            }
+        }
+    }
     let wav_path = get("--audio-wav");
     let trace_path = get("--audio-trace");
     let injected = seed_from.is_some();
@@ -603,6 +618,12 @@ fn golden(args: &[String]) -> ExitCode {
         }
         Ok(n)
     });
+    if let Some(p) = &calltrace_out {
+        match melee_core::ct::write(p) {
+            Ok(n) => eprintln!("melee: {n} calls written to {p}"),
+            Err(e) => eprintln!("melee: {p}: {e}"),
+        }
+    }
     match res {
         Ok(n) => {
             eprintln!("melee: wrote {n} frames to {out} (native match, {scenario}{})",

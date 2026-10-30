@@ -206,9 +206,10 @@ pub static mut grOp_StageData: StageData = StageData {
     joint_count: 0,
 };
 
-pub unsafe extern "C" fn grOldPupupu_802107DC(_arg: i32) {}
+pub unsafe extern "C" fn grOldPupupu_802107DC(_arg: i32) { melee_core::ct!("grOldPupupu_802107DC");}
 
 pub unsafe extern "C" fn grOldPupupu_802107E0() {
+    melee_core::ct!("grOldPupupu_802107E0");
     yakumono_param = ext::Ground_GetYakumonoParam() as *mut grOldpupupu_YakumonoParam;
     ext::stage_info.unk8C.set_b4(0);
     ext::stage_info.unk8C.set_b5(1);
@@ -225,18 +226,21 @@ pub unsafe extern "C" fn grOldPupupu_802107E0() {
     grOp_804D6A9C = null_mut();
 }
 
-pub unsafe extern "C" fn grOldPupupu_80210884() {}
+pub unsafe extern "C" fn grOldPupupu_80210884() { melee_core::ct!("grOldPupupu_80210884");}
 
 pub unsafe extern "C" fn grOldPupupu_80210888() {
+    melee_core::ct!("grOldPupupu_80210888");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
 
 pub unsafe extern "C" fn grOldPupupu_802108AC() -> i32 {
+    melee_core::ct!("grOldPupupu_802108AC");
     0
 }
 
 /// Spells out `Ground_SetupStageCallbacks` (no `Mex_GrBind`) so that it stays out-of-line.
 pub unsafe extern "C" fn grOldPupupu_802108B4(arg0: i32) -> *mut HSD_GObj {
+    melee_core::ct!("grOldPupupu_802108B4");
     let callbacks = (&raw mut grOp_StageCallbacks as *mut StageCallbacks).add(arg0 as usize);
     let gobj = ext::Ground_GetStageGObj(arg0);
     if !gobj.is_null() {
@@ -258,18 +262,21 @@ pub unsafe extern "C" fn grOldPupupu_802108B4(arg0: i32) -> *mut HSD_GObj {
 }
 
 pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj0_OnInit");
     Ground_StartMapAnim(gobj);
 }
 
 pub unsafe extern "C" fn grOldPupupu_802109C8(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grOldPupupu_802109C8");
     0
 }
 
-pub unsafe extern "C" fn grOldPupupu_802109D0(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grOldPupupu_802109D0(_arg: *mut HSD_GObj) { melee_core::ct!("grOldPupupu_802109D0");}
 
-pub unsafe extern "C" fn grOldPupupu_802109D4(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grOldPupupu_802109D4(_arg: *mut HSD_GObj) { melee_core::ct!("grOldPupupu_802109D4");}
 
 pub unsafe extern "C" fn grOldPupupu_802109D8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grOldPupupu_802109D8");
     let gp = (*gobj).user_data as *mut Ground;
     (*gp).u.oldpupupu.xC4 = 0;
     (*gp).u.oldpupupu.xC8 = 0;
@@ -279,10 +286,12 @@ pub unsafe extern "C" fn grOldPupupu_802109D8(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grOldPupupu_80210A1C(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grOldPupupu_80210A1C");
     0
 }
 
 pub unsafe extern "C" fn grOldPupupu_80210A24(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grOldPupupu_80210A24");
     let gp = (*gobj).user_data as *mut Ground;
     let v = &mut (*gp).u.oldpupupu;
     if (grOp_804D6A9C as usize as i32) == 0 && v.xD0 == 1 {
@@ -296,57 +305,66 @@ pub unsafe extern "C" fn grOldPupupu_80210A24(gobj: *mut HSD_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grOldPupupu_80210B00(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grOldPupupu_80210B00(_arg: *mut HSD_GObj) { melee_core::ct!("grOldPupupu_80210B00");}
 
 pub unsafe extern "C" fn grOldPupupu_80210B04(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grOldPupupu_80210B04");
     let gp = (*gobj).user_data as *mut Ground;
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
     (*gp).x10_flags.set_b5(1);
 }
 
 pub unsafe extern "C" fn grOldPupupu_80210B48(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grOldPupupu_80210B48");
     0
 }
 
-pub unsafe extern "C" fn grOldPupupu_80210B50(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grOldPupupu_80210B50(_arg: *mut HSD_GObj) { melee_core::ct!("grOldPupupu_80210B50");}
 
-pub unsafe extern "C" fn grOldPupupu_80210B54(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grOldPupupu_80210B54(_arg: *mut HSD_GObj) { melee_core::ct!("grOldPupupu_80210B54");}
 
 pub unsafe extern "C" fn grOldPupupu_80210B58(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grOldPupupu_80210B58");
     let gp = (*gobj).user_data as *mut Ground;
     Ground_InitMapCollAndAnim(gobj);
     (*gp).x11_flags.set_b012(1);
 }
 
 pub unsafe extern "C" fn grOldPupupu_80210BB8(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grOldPupupu_80210BB8");
     0
 }
 
 pub unsafe extern "C" fn grOldPupupu_80210BC0(_gobj: *mut HSD_GObj) {
+    melee_core::ct!("grOldPupupu_80210BC0");
     ext::lb_800115F4();
 }
 
-pub unsafe extern "C" fn grOldPupupu_80210BE0(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grOldPupupu_80210BE0(_arg: *mut HSD_GObj) { melee_core::ct!("grOldPupupu_80210BE0");}
 
 pub unsafe extern "C" fn grOldPupupu_80210BE4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grOldPupupu_80210BE4");
     let gp = (*gobj).user_data as *mut Ground;
     ext::HSD_JObjSetFlagsAll((*gobj).hsd_obj as *mut HSD_JObj, JOBJ_HIDDEN as u32);
     (*gp).x11_flags.set_b012(2);
 }
 
 pub unsafe extern "C" fn grOldPupupu_80210C2C(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grOldPupupu_80210C2C");
     0
 }
 
 pub unsafe extern "C" fn grOldPupupu_80210C34(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grOldPupupu_80210C34");
     if ext::grAnime_801C83D0(gobj, 0, 7) != 0 {
         ext::Ground_801C4A08(gobj);
     }
 }
 
-pub unsafe extern "C" fn grOldPupupu_80210C78(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grOldPupupu_80210C78(_arg: *mut HSD_GObj) { melee_core::ct!("grOldPupupu_80210C78");}
 
 pub unsafe extern "C" fn grOldPupupu_80210C7C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grOldPupupu_80210C7C");
     let gp = (*gobj).user_data as *mut Ground;
     let yp = yakumono_param;
     let x2 = (*yp).x2 as i32;
@@ -361,17 +379,20 @@ pub unsafe extern "C" fn grOldPupupu_80210C7C(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grOldPupupu_80210D08(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grOldPupupu_80210D08");
     0
 }
 
 /// `grOldPupupu_GetSpawnJObj` (file-local inline): `HSD_ASSERT(0x216, jobj)`
 pub unsafe fn grOldPupupu_GetSpawnJObj(gobj: *mut HSD_GObj) -> *mut HSD_JObj {
+    melee_core::ct!("grOldPupupu_GetSpawnJObj");
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     assert!(!jobj.is_null(), "HSD_ASSERT(0x216, jobj) groldpupupu.c");
     jobj
 }
 
 pub unsafe extern "C" fn grOldPupupu_80210D10(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grOldPupupu_80210D10");
     let mut cam_left: f32 = 0.0;
     let mut cam_right: f32 = 0.0;
     let mut cam_center: f32 = 0.0;
@@ -435,9 +456,10 @@ pub unsafe extern "C" fn grOldPupupu_80210D10(gobj: *mut HSD_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grOldPupupu_8021110C(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grOldPupupu_8021110C(_arg: *mut HSD_GObj) { melee_core::ct!("grOldPupupu_8021110C");}
 
 pub unsafe extern "C" fn grOldPupupu_80211110(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grOldPupupu_80211110");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
@@ -447,15 +469,17 @@ pub unsafe extern "C" fn grOldPupupu_80211110(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grOldPupupu_8021118C(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grOldPupupu_8021118C");
     0
 }
 
-pub unsafe extern "C" fn grOldPupupu_80211194(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grOldPupupu_80211194(_arg: *mut HSD_GObj) { melee_core::ct!("grOldPupupu_80211194");}
 
-pub unsafe extern "C" fn grOldPupupu_80211198(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grOldPupupu_80211198(_arg: *mut HSD_GObj) { melee_core::ct!("grOldPupupu_80211198");}
 
 /// `randrange` (file-local inline)
 pub unsafe fn randrange(min: i32, max: i32) -> i32 {
+    melee_core::ct!("randrange");
     if min > max {
         let diff = min.wrapping_sub(max);
         let rng = if diff != 0 { ext::HSD_Randi(diff) } else { 0 };
@@ -470,6 +494,7 @@ pub unsafe fn randrange(min: i32, max: i32) -> i32 {
 }
 
 pub unsafe extern "C" fn grOldPupupu_8021119C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grOldPupupu_8021119C");
     let gp = (*gobj).user_data as *mut Ground;
     let yp = yakumono_param;
     ext::ftCo_800C06E8(gobj, 0xA, fn_802112F4 as usize as *mut c_void);
@@ -485,10 +510,12 @@ pub unsafe extern "C" fn grOldPupupu_8021119C(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grOldPupupu_80211284(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grOldPupupu_80211284");
     0
 }
 
 pub unsafe extern "C" fn grOldPupupu_8021128C(vec: *mut Vec, max_x: f32, mut min_x: f32, max_y: f32, mut min_y: f32) -> i32 {
+    melee_core::ct!("grOldPupupu_8021128C");
     let max_x_actual: f32;
     let max_y_actual: f32;
     if max_x > min_x {
@@ -512,6 +539,7 @@ pub unsafe extern "C" fn grOldPupupu_8021128C(vec: *mut Vec, max_x: f32, mut min
 }
 
 pub unsafe extern "C" fn fn_802112F4(gobj: *mut HSD_GObj, fighter_gobj: *mut HSD_GObj, vel: *mut Vec3) -> i32 {
+    melee_core::ct!("fn_802112F4");
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let yp = yakumono_param;
     ext::ftLib_80086644(fighter_gobj, &mut pos);
@@ -541,6 +569,7 @@ pub unsafe extern "C" fn fn_802112F4(gobj: *mut HSD_GObj, fighter_gobj: *mut HSD
 
 /// `grOldPupupu_SyncSecondary` (file-local inline)
 pub unsafe fn grOldPupupu_SyncSecondary(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grOldPupupu_SyncSecondary");
     let gp = (*gobj).user_data as *mut Ground;
     let other_gp = (*ext::Ground_GetMapGObj(1)).user_data as *mut Ground;
     (*other_gp).u.oldpupupu.xC4 = (*gp).u.oldpupupu.xC4;
@@ -552,6 +581,7 @@ pub unsafe fn grOldPupupu_SyncSecondary(gobj: *mut HSD_GObj) {
 
 /// `grOldPupupu_Advance` (file-local inline)
 pub unsafe fn grOldPupupu_Advance(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grOldPupupu_Advance");
     let gp = (*gobj).user_data as *mut Ground;
     (*gp).u.oldpupupu.xC4 = (*gp).u.oldpupupu.xC4.wrapping_add(1);
     if (*gp).u.oldpupupu.xC4 >= 3 {
@@ -562,6 +592,7 @@ pub unsafe fn grOldPupupu_Advance(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grOldPupupu_802113E0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grOldPupupu_802113E0");
     let gp = (*gobj).user_data as *mut Ground;
     let yp = yakumono_param;
 
@@ -685,15 +716,17 @@ pub unsafe extern "C" fn grOldPupupu_802113E0(gobj: *mut HSD_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grOldPupupu_80211C0C(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grOldPupupu_80211C0C(_arg: *mut HSD_GObj) { melee_core::ct!("grOldPupupu_80211C0C");}
 
-pub unsafe extern "C" fn grOldPupupu_80211C10(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grOldPupupu_80211C10(_arg: *mut HSD_GObj) { melee_core::ct!("grOldPupupu_80211C10");}
 
 pub unsafe extern "C" fn grOldPupupu_80211C14(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grOldPupupu_80211C14");
     0
 }
 
 pub unsafe extern "C" fn grOldPupupu_80211C1C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grOldPupupu_80211C1C");
     let gp = (*gobj).user_data as *mut Ground;
     let other_gp = (*ext::Ground_GetMapGObj(7)).user_data as *mut Ground;
 
@@ -702,13 +735,15 @@ pub unsafe extern "C" fn grOldPupupu_80211C1C(gobj: *mut HSD_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grOldPupupu_80211C9C(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grOldPupupu_80211C9C(_arg: *mut HSD_GObj) { melee_core::ct!("grOldPupupu_80211C9C");}
 
 pub unsafe extern "C" fn grOldPupupu_80211CA0(_gobj: i32) -> *mut DynamicsDesc {
+    melee_core::ct!("grOldPupupu_80211CA0");
     null_mut()
 }
 
 pub unsafe extern "C" fn grOldPupupu_80211CA8(a: *mut Vec3, _arg: i32, joint: *mut HSD_JObj) -> i32 {
+    melee_core::ct!("grOldPupupu_80211CA8");
     let mut b = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ext::lb_8000B1CC(joint, null_mut(), &mut b);
     if (*a).y > b.y {

@@ -46,6 +46,7 @@ pub mod ext {
 }
 
 pub fn ftCo_800C55CC(g: G) -> bool {
+    melee_core::ct!("ftCo_800C55CC");
     if ext::ftWalkCommon_800DFC70(g) {
         ftCo_800C5614(g);
         return true;
@@ -54,6 +55,7 @@ pub fn ftCo_800C55CC(g: G) -> bool {
 }
 
 pub fn ftCo_800C5614(g: G) {
+    melee_core::ct!("ftCo_800C5614");
     let f = fp(g);
     let mut accel_mul = 1.0f32;
     if f.x34_scale.y != 1.0 {
@@ -70,19 +72,23 @@ pub fn ftCo_800C5614(g: G) {
 }
 
 pub fn ftCo_HammerWalk_Anim(g: G) {
+    melee_core::ct!("ftCo_HammerWalk_Anim");
     ext::ftCo_800C4F64(g);
 }
 
 pub fn ftCo_HammerWalk_IASA(g: G) {
+    melee_core::ct!("ftCo_HammerWalk_IASA");
     if ext::ftCo_800C5A50(g) { return; }
     if ext::ftCo_800C60C8(g) { return; }
     if ext::ftCo_800C4E4C(g) { return; }
 }
 
 pub fn ftCo_HammerWalk_Phys(g: G) {
+    melee_core::ct!("ftCo_HammerWalk_Phys");
     ext::ftWalkCommon_800E0060(g);
 }
 
 pub fn ftCo_HammerWalk_Coll(g: G) {
+    melee_core::ct!("ftCo_HammerWalk_Coll");
     ext::ftCo_HammerWait_Coll(g);
 }

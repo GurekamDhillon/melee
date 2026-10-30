@@ -38,6 +38,7 @@ static mut cancel: bool = false;
 /// The DevCom completion callback of the blocking loads: marks the request done (the body, so that the
 /// assert path can unwind in tests; the `extern "C"` entry below is what DevCom is handed).
 pub fn lbFile_8001615C_body(cancelflag: i32) {
+    melee_core::ct!("lbFile_8001615C_body");
     if cancelflag != 0 {
         ext::__assert(FILE, 19, "!cancelflag");
     }
@@ -46,6 +47,7 @@ pub fn lbFile_8001615C_body(cancelflag: i32) {
 
 /// `lbFile_8001615C`: the DevCom completion callback of the blocking loads.
 pub unsafe extern "C" fn lbFile_8001615C(_dcreq: i32, _args: usize, _buf: *mut c_void, cancelflag: i32) {
+    melee_core::ct!("lbFile_8001615C");
     lbFile_8001615C_body(cancelflag);
 }
 
@@ -62,6 +64,7 @@ fn waitForDisc() {
 
 /// `lbFile_800161C4`: blocking DevCom request of `size` bytes.
 pub fn lbFile_800161C4(file: i32, src: usize, dst: usize, size: usize, ty: i32, pri: i32) {
+    melee_core::ct!("lbFile_800161C4");
     unsafe { cancel = false };
     ext::HSD_DevComRequest(file, src, dst, size, ty, pri, Some(lbFile_8001615C), 0);
     waitForDisc();
@@ -93,6 +96,7 @@ unsafe fn strcpy(dst: *mut u8, src: *const u8) {
 /// # Safety
 /// `basename` must be a NUL-terminated string.
 pub unsafe fn lbFileGetFullName(basename: *const c_char) -> *mut c_char {
+    melee_core::ct!("lbFileGetFullName");
     let result = addr_of_mut!(RESULT) as *mut u8;
     let mut cur = basename as *const u8;
     let mut pos: i32 = 0;
@@ -125,6 +129,7 @@ pub unsafe fn lbFileGetFullName(basename: *const c_char) -> *mut c_char {
 
 /// `lbFile_8001634C`: the length of the disc file number `fileno`.
 pub fn lbFile_8001634C(fileno: i32) -> usize {
+    melee_core::ct!("lbFile_8001634C");
     let mut info: DVDFileInfo = DVDFileInfo::zeroed();
     let intr = ext::OSDisableInterrupts();
     if ext::DVDFastOpen(fileno, &mut info) == 0 {
@@ -142,6 +147,7 @@ pub fn lbFile_8001634C(fileno: i32) -> usize {
 /// # Safety
 /// `basename` must be a NUL-terminated string.
 pub unsafe fn lbFileGetSize(basename: *const c_char) -> usize {
+    melee_core::ct!("lbFileGetSize");
     let filename = lbFileGetFullName(basename);
     let entry_num = ext::DVDConvertPathToEntrynum(filename);
     if entry_num == -1 {
@@ -163,6 +169,7 @@ fn round_up_32(x: usize) -> usize {
 /// # Safety
 /// `size` must be valid for writes.
 pub unsafe fn lbFile_800164A4(file: i32, dst: usize, size: *mut usize, pri: i32, callback: HSD_DevComCallback, args: usize) {
+    melee_core::ct!("lbFile_800164A4");
     *size = lbFile_8001634C(file);
     let ty = if dst >= 0x8000_0000 { 0x21 } else { 0x23 };
     ext::HSD_DevComRequest(file, 0, dst, round_up_32(*size), ty, pri, callback, args);
@@ -174,6 +181,7 @@ pub unsafe fn lbFile_800164A4(file: i32, dst: usize, size: *mut usize, pri: i32,
 /// # Safety
 /// `basename` is a NUL-terminated string, `size` valid for writes.
 pub unsafe fn lbFile_80016580(basename: *const c_char, dst: *mut c_void, size: *mut usize, callback: HSD_DevComCallback, args: usize) {
+    melee_core::ct!("lbFile_80016580");
     let filename = lbFileGetFullName(basename);
     let entry_num = ext::DVDConvertPathToEntrynum(filename);
     if entry_num == -1 {
@@ -188,6 +196,7 @@ pub unsafe fn lbFile_80016580(basename: *const c_char, dst: *mut c_void, size: *
 /// # Safety
 /// As `lbFile_80016580`.
 pub unsafe fn lbFile_8001668C(basename: *const c_char, dst: *mut c_void, size: *mut usize) {
+    melee_core::ct!("lbFile_8001668C");
     cancel = false;
     lbFile_80016580(basename, dst, size, Some(lbFile_8001615C), 0);
     waitForDisc();
@@ -207,6 +216,7 @@ unsafe fn lbFile_80016760_inline(heap_id: i32, basename: *const c_char, dst: *mu
 /// # Safety
 /// `basename` is a NUL-terminated string, `dst`/`size` valid for writes.
 pub unsafe fn lbFile_80016760(basename: *const c_char, dst: *mut *mut c_void, size: *mut usize) {
+    melee_core::ct!("lbFile_80016760");
     cancel = false;
     lbFile_80016760_inline(0, basename, dst, size);
 }
@@ -216,6 +226,7 @@ pub unsafe fn lbFile_80016760(basename: *const c_char, dst: *mut *mut c_void, si
 /// # Safety
 /// As `lbFile_80016760`.
 pub unsafe fn lbFile_LoadToHeap(heap_id: i32, basename: *const c_char, size: *mut usize) -> *mut c_void {
+    melee_core::ct!("lbFile_LoadToHeap");
     let mut dst: *mut c_void = core::ptr::null_mut();
     cancel = false;
     lbFile_80016760_inline(heap_id, basename, &mut dst, size);
@@ -228,6 +239,7 @@ pub unsafe fn lbFile_LoadToHeap(heap_id: i32, basename: *const c_char, size: *mu
 /// # Safety
 /// `basename` is a NUL-terminated string, `size` valid for writes.
 pub unsafe fn lbFile_LoadInto(basename: *const c_char, dst: *mut c_void, cap: usize, size: *mut usize) -> i32 {
+    melee_core::ct!("lbFile_LoadInto");
     let n = lbFileGetSize(basename);
     if dst.is_null() || round_up_32(n) > cap {
         return 0;
@@ -245,6 +257,7 @@ pub unsafe fn lbFile_LoadInto(basename: *const c_char, dst: *mut c_void, cap: us
 /// # Safety
 /// As `lbFile_80016760`.
 pub unsafe fn lbFile_800168A0(heap_id: i32, basename: *const c_char, dst: *mut *mut c_void, size: *mut usize) -> bool {
+    melee_core::ct!("lbFile_800168A0");
     *dst = ext::lbDvd_8001819C(basename) as *mut c_void;
     if !(*dst).is_null() {
         *size = lbFileGetSize(basename);
@@ -258,6 +271,7 @@ pub unsafe fn lbFile_800168A0(heap_id: i32, basename: *const c_char, dst: *mut *
 
 /// Current value of `cancel` (for the state oracle).
 pub fn cancel_flag() -> bool {
+    melee_core::ct!("cancel_flag");
     unsafe { cancel }
 }
 /// The static name buffer (for the state oracle).
@@ -266,5 +280,6 @@ pub fn result_buffer() -> [u8; MAX_FILENAME_LENGTH] {
 }
 /// Sets `cancel` (for the state oracle).
 pub fn set_cancel(v: bool) {
+    melee_core::ct!("set_cancel");
     unsafe { cancel = v }
 }

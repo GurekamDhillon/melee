@@ -64,6 +64,7 @@ unsafe fn Item_SetEffectHitlagCallbacks(ip: *mut Item) {
 }
 
 pub unsafe extern "C" fn itPorygon2_Logic26_Spawned(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itPorygon2_Logic26_Spawned");
     let item = GET_ITEM(item_gobj);
     ext::it_80279CDC(item_gobj, (*item).scl);
     ext::Item_8026AE84(item, 0x273E, 0x7F, 0x40);
@@ -71,12 +72,14 @@ pub unsafe extern "C" fn itPorygon2_Logic26_Spawned(item_gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802D5B14(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D5B14");
     let item = GET_ITEM(item_gobj);
     ext::Item_80268E5C(item_gobj as *mut HSD_GObj, 0, ITEM_ANIM_UPDATE);
     Item_SetEffectHitlagCallbacks(item);
 }
 
 pub unsafe extern "C" fn itPorygon2_UnkMotion0_Anim(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPorygon2_UnkMotion0_Anim");
     let item = GET_ITEM(item_gobj);
     if ext::it_80272C6C(item_gobj) == 0 {
         it_802D5C00(item_gobj);
@@ -86,15 +89,18 @@ pub unsafe extern "C" fn itPorygon2_UnkMotion0_Anim(item_gobj: *mut Item_GObj) -
 }
 
 pub unsafe extern "C" fn itPorygon2_UnkMotion0_Phys(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itPorygon2_UnkMotion0_Phys");
     ext::it_8027A344(item_gobj);
 }
 
 pub unsafe extern "C" fn itPorygon2_UnkMotion0_Coll(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPorygon2_UnkMotion0_Coll");
     ext::it_8026DA08(item_gobj);
     false
 }
 
 pub unsafe extern "C" fn it_802D5C00(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D5C00");
     let item = GET_ITEM(item_gobj);
     ext::Item_80268E5C(item_gobj, 1, ITEM_ANIM_UPDATE);
     Item_SetEffectHitlagCallbacks(item);
@@ -102,6 +108,7 @@ pub unsafe extern "C" fn it_802D5C00(item_gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itPorygon2_UnkMotion1_Anim(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPorygon2_UnkMotion1_Anim");
     let item = GET_ITEM(item_gobj);
     if ext::it_80272C6C(item_gobj) == 0 {
         return true;
@@ -111,13 +118,16 @@ pub unsafe extern "C" fn itPorygon2_UnkMotion1_Anim(item_gobj: *mut Item_GObj) -
 }
 
 pub unsafe extern "C" fn itPorygon2_UnkMotion1_Phys(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itPorygon2_UnkMotion1_Phys");
     ext::it_8027A344(item_gobj);
 }
 
 pub unsafe extern "C" fn itPorygon2_UnkMotion1_Coll(_item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPorygon2_UnkMotion1_Coll");
     false
 }
 
 pub unsafe extern "C" fn it_802D5CD8(item_gobj: *mut Item_GObj, arg1: *mut HSD_GObj) {
+    melee_core::ct!("it_802D5CD8");
     ext::it_8026B894(item_gobj, arg1);
 }

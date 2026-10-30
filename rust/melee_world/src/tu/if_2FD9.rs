@@ -97,6 +97,7 @@ fn hsd_assert(cond: bool, what: &str) {
 /// `HSD_JObjMtxIsDirty` (baselib/jobj.h, static inline).
 #[inline]
 pub unsafe fn HSD_JObjMtxIsDirty(jobj: *mut HSD_JObj) -> bool {
+    melee_core::ct!("HSD_JObjMtxIsDirty");
     hsd_assert(!jobj.is_null(), "(jobj)");
     (*jobj).flags & JOBJ_USER_DEF_MTX as u32 == 0 && (*jobj).flags & JOBJ_MTX_DIRTY as u32 != 0
 }
@@ -112,6 +113,7 @@ unsafe fn HSD_JObjSetMtxDirty(jobj: *mut HSD_JObj) {
 /// `HSD_JObjSetRotationZ` (baselib/jobj.h, static inline)
 #[inline]
 pub unsafe fn HSD_JObjSetRotationZ(jobj: *mut HSD_JObj, z: f32) {
+    melee_core::ct!("HSD_JObjSetRotationZ");
     hsd_assert(!jobj.is_null(), "(jobj)");
     hsd_assert((*jobj).flags & JOBJ_USE_QUATERNION as u32 == 0, "!(jobj->flags & JOBJ_USE_QUATERNION)");
     (*jobj).rotate.z = z;
@@ -123,6 +125,7 @@ pub unsafe fn HSD_JObjSetRotationZ(jobj: *mut HSD_JObj, z: f32) {
 /// `HSD_JObjSetTranslateX` (baselib/jobj.h, static inline)
 #[inline]
 pub unsafe fn HSD_JObjSetTranslateX(jobj: *mut HSD_JObj, x: f32) {
+    melee_core::ct!("HSD_JObjSetTranslateX");
     hsd_assert(!jobj.is_null(), "(jobj)");
     (*jobj).translate.x = x;
     if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
@@ -133,6 +136,7 @@ pub unsafe fn HSD_JObjSetTranslateX(jobj: *mut HSD_JObj, x: f32) {
 /// `HSD_JObjSetTranslateY` (baselib/jobj.h, static inline)
 #[inline]
 pub unsafe fn HSD_JObjSetTranslateY(jobj: *mut HSD_JObj, y: f32) {
+    melee_core::ct!("HSD_JObjSetTranslateY");
     hsd_assert(!jobj.is_null(), "(jobj)");
     (*jobj).translate.y = y;
     if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
@@ -143,6 +147,7 @@ pub unsafe fn HSD_JObjSetTranslateY(jobj: *mut HSD_JObj, y: f32) {
 /// `HSD_JObjSetTranslateZ` (baselib/jobj.h, static inline)
 #[inline]
 pub unsafe fn HSD_JObjSetTranslateZ(jobj: *mut HSD_JObj, z: f32) {
+    melee_core::ct!("HSD_JObjSetTranslateZ");
     hsd_assert(!jobj.is_null(), "(jobj)");
     (*jobj).translate.z = z;
     if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
@@ -153,22 +158,26 @@ pub unsafe fn HSD_JObjSetTranslateZ(jobj: *mut HSD_JObj, z: f32) {
 /// `HSD_GObjGetHSDObj` (baselib/gobj.h, static inline)
 #[inline]
 pub unsafe fn HSD_GObjGetHSDObj(gobj: *mut HSD_GObj) -> *mut c_void {
+    melee_core::ct!("HSD_GObjGetHSDObj");
     (*gobj).hsd_obj
 }
 
 /// `void un_802FD910(void)`: hide the arrows.
 pub unsafe extern "C" fn un_802FD910() {
+    melee_core::ct!("un_802FD910");
     un_804D6D90 = 1;
 }
 
 /// `void un_802FD91C(void)`: show the arrows.
 pub unsafe extern "C" fn un_802FD91C() {
+    melee_core::ct!("un_802FD91C");
     un_804D6D90 = 0;
 }
 
 /// `void un_802FD928(u8 slot, u8 arg1, GXColor* arg2)`: puts a human player's arrow into the first
 /// free of four rows (side `arg1`, tint `*arg2`).
 pub unsafe extern "C" fn un_802FD928(slot: u8, arg1: u8, arg2: *mut _GXColor) {
+    melee_core::ct!("un_802FD928");
     if slot >= 4 {
         return;
     }
@@ -193,6 +202,7 @@ pub unsafe extern "C" fn un_802FD928(slot: u8, arg1: u8, arg2: *mut _GXColor) {
 
 /// `void un_802FD9D8(u8 slot)`: drops the player's arrow rows.
 pub unsafe extern "C" fn un_802FD9D8(slot: u8) {
+    melee_core::ct!("un_802FD9D8");
     for i in 0..4usize {
         if un_804A1F10.x2C[i] == slot {
             un_804A1F10.x24[slot as usize] = 0;
@@ -203,6 +213,7 @@ pub unsafe extern "C" fn un_802FD9D8(slot: u8) {
 
 /// `void fn_802FDA4C(HSD_GObj*, int pass)`: GX callback; draws the arrow unless they are hidden.
 pub unsafe extern "C" fn fn_802FDA4C(gobj: *mut HSD_GObj, pass: i32) {
+    melee_core::ct!("fn_802FDA4C");
     if un_804D6D90 == 0 {
         ext::HSD_GObj_JObjCallback(gobj, pass);
     }
@@ -224,6 +235,7 @@ unsafe fn tint(jobj: *mut HSD_JObj, c: _GXColor, depth: usize) {
 /// `void fn_802FDA78(HSD_GObj*)`: per-arrow proc (user data points at its slot number). The
 /// `2.6f * j + v[..]` is an f32 fused multiply-add (shipping contraction).
 pub unsafe extern "C" fn fn_802FDA78(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_802FDA78");
     let p = &raw mut un_804A1F10;
     let v: [f32; 4] = [0.0, -1.3, -2.6, -3.9];
     let jobj = HSD_GObjGetHSDObj(gobj) as *mut HSD_JObj;
@@ -273,6 +285,7 @@ pub unsafe extern "C" fn fn_802FDA78(gobj: *mut HSD_GObj) {
 
 /// `void un_802FE260(void)`: loads "Stc_rarwmdls" and builds the four arrow gobjs.
 pub unsafe extern "C" fn un_802FE260() {
+    melee_core::ct!("un_802FE260");
     let p = &raw mut un_804A1F10;
     un_804D6D90 = 0;
     ext::lbArchive_LoadSections(
@@ -302,6 +315,7 @@ pub unsafe extern "C" fn un_802FE260() {
 
 /// `void un_802FE390(void)`: frees the arrow gobjs.
 pub unsafe extern "C" fn un_802FE390() {
+    melee_core::ct!("un_802FE390");
     for i in 0..4usize {
         if !un_804A1F10.x4[i].is_null() {
             ext::HSD_GObjFree(un_804A1F10.x4[i]);

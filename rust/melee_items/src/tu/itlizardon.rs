@@ -92,6 +92,7 @@ pub static mut it_803F7C00: [ItemStateTable; 1] = [
 ];
 
 pub unsafe fn it_802CB8AC(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CB8AC");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
     (*ip).xDAC_itcmd_var0 = 0;
@@ -106,24 +107,28 @@ pub unsafe fn it_802CB8AC(gobj: *mut Item_GObj) {
     ext::Item_8026AE84(ip, 0x2719, 0x7F, 0x40);
 }
 
-pub unsafe extern "C" fn it_802CB93C(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn it_802CB93C(_gobj: *mut HSD_GObj) { melee_core::ct!("it_802CB93C");}
 
 pub unsafe fn it_802CB940(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CB940");
     ext::it_8026B894(gobj, ref_gobj);
 }
 
 pub unsafe extern "C" fn it_802CB960(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CB960");
     ext::it_80273454(gobj);
     it_802CB994(gobj);
 }
 
 pub unsafe fn it_802CB994(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CB994");
     let ip = GET_ITEM(gobj);
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE as u32);
     Item_SetEffectHitlagCallbacks(ip);
 }
 
 pub unsafe extern "C" fn itLizardon_UnkMotion1_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLizardon_UnkMotion1_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         it_802CBAA8(gobj);
     }
@@ -131,6 +136,7 @@ pub unsafe extern "C" fn itLizardon_UnkMotion1_Anim(gobj: *mut Item_GObj) -> i32
 }
 
 pub unsafe extern "C" fn itLizardon_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLizardon_UnkMotion1_Phys");
     let ip = GET_ITEM(gobj);
 
     if (*ip).ground_or_air == GA_Air {
@@ -140,6 +146,7 @@ pub unsafe extern "C" fn itLizardon_UnkMotion1_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLizardon_UnkMotion1_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLizardon_UnkMotion1_Coll");
     let ip = GET_ITEM(gobj);
     if (*ip).ground_or_air == GA_Air {
         ext::it_8026E15C(gobj, Some(it_802CB93C));
@@ -150,12 +157,14 @@ pub unsafe extern "C" fn itLizardon_UnkMotion1_Coll(gobj: *mut Item_GObj) -> i32
 }
 
 pub unsafe fn it_802CBAA8_inline(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CBAA8_inline");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
     (*ip).xDD4_itemVar.lizardon.x70 = (*attrs).x28 + ext::HSD_Randi((*attrs).x2C - (*attrs).x28);
 }
 
 pub unsafe fn it_802CBAA8(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CBAA8");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
 
@@ -173,6 +182,7 @@ pub unsafe fn it_802CBAA8(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLizardon_UnkMotion2_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLizardon_UnkMotion2_Anim");
     let ip = GET_ITEM(gobj);
     if ext::it_80272C6C(gobj) == 0 {
         if (*ip).xDD4_itemVar.lizardon.x60 <= 0 {
@@ -187,20 +197,24 @@ pub unsafe extern "C" fn itLizardon_UnkMotion2_Anim(gobj: *mut Item_GObj) -> i32
 }
 
 pub unsafe extern "C" fn itLizardon_UnkMotion2_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLizardon_UnkMotion2_Phys");
     itLizardon_UnkMotion1_Phys(gobj);
 }
 
 pub unsafe extern "C" fn itLizardon_UnkMotion2_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLizardon_UnkMotion2_Coll");
     itLizardon_UnkMotion1_Coll(gobj)
 }
 
 pub unsafe fn it_802CBD24_inline(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CBD24_inline");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
     (*ip).xDD4_itemVar.lizardon.x70 = (*attrs).x28 + ext::HSD_Randi((*attrs).x2C - (*attrs).x28);
 }
 
 pub unsafe extern "C" fn it_802CBD24(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CBD24");
     let mut bone_pos: Vec3 = core::mem::zeroed();
     let mut scale: f32;
     let mut facing: f32;
@@ -277,12 +291,14 @@ pub unsafe extern "C" fn it_802CBD24(gobj: *mut Item_GObj) {
 }
 
 pub unsafe fn it_802CBFE4(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CBFE4");
     let ip = GET_ITEM(gobj);
     ext::Item_80268E5C(gobj, 3, ITEM_ANIM_UPDATE as u32);
     Item_SetEffectHitlagCallbacks(ip);
 }
 
 pub unsafe extern "C" fn itLizardon_UnkMotion3_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLizardon_UnkMotion3_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         return 1;
     }
@@ -290,31 +306,38 @@ pub unsafe extern "C" fn itLizardon_UnkMotion3_Anim(gobj: *mut Item_GObj) -> i32
 }
 
 pub unsafe extern "C" fn itLizardon_UnkMotion3_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLizardon_UnkMotion3_Phys");
     itLizardon_UnkMotion1_Phys(gobj);
 }
 
 pub unsafe extern "C" fn itLizardon_UnkMotion3_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLizardon_UnkMotion3_Coll");
     itLizardon_UnkMotion1_Coll(gobj)
 }
 
 pub unsafe fn it_802CC0EC(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CC0EC");
     Item_EnterAirStateWithHitlagAndStateDesc(gobj);
 }
 
 pub unsafe extern "C" fn it_802CC160(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802CC160");
     ext::it_80279FF8(gobj);
     0
 }
 
 pub unsafe extern "C" fn it_802CC184(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CC184");
     ext::it_8027A09C(gobj);
 }
 
 pub unsafe extern "C" fn it_802CC1A4(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802CC1A4");
     ext::it_8027A118(gobj, Some(it_802CB960))
 }
 
 pub unsafe fn it_802CC1CC(gobj: *mut Item_GObj, kind: ItemKind) {
+    melee_core::ct!("it_802CC1CC");
     let mut spawn: SpawnItem = core::mem::zeroed();
     let mut bone_pos: Vec3 = core::mem::zeroed();
     let ip = GET_ITEM(gobj);
@@ -362,6 +385,7 @@ pub unsafe fn it_802CC1CC(gobj: *mut Item_GObj, kind: ItemKind) {
 }
 
 pub unsafe fn itLizardon_Logic34_Spawned(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLizardon_Logic34_Spawned");
     let ip = (*gobj).user_data as *mut Item;
     let hsd_obj = (*gobj).hsd_obj;
     let f = 0.71428573_f32;
@@ -371,6 +395,7 @@ pub unsafe fn itLizardon_Logic34_Spawned(gobj: *mut Item_GObj) {
 }
 
 pub unsafe fn itLizardon_Logic35_Spawned(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLizardon_Logic35_Spawned");
     let ip = (*gobj).user_data as *mut Item;
     let hsd_obj = (*gobj).hsd_obj;
     let f = 0.71428573_f32;
@@ -380,6 +405,7 @@ pub unsafe fn itLizardon_Logic35_Spawned(gobj: *mut Item_GObj) {
 }
 
 pub unsafe fn itLizardon_Logic36_Spawned(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLizardon_Logic36_Spawned");
     let ip = (*gobj).user_data as *mut Item;
     let hsd_obj = (*gobj).hsd_obj;
     let f = 0.71428573_f32;
@@ -389,6 +415,7 @@ pub unsafe fn itLizardon_Logic36_Spawned(gobj: *mut Item_GObj) {
 }
 
 pub unsafe fn itLizardon_Logic37_Spawned(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLizardon_Logic37_Spawned");
     let ip = (*gobj).user_data as *mut Item;
     let hsd_obj = (*gobj).hsd_obj;
     let f = 0.71428573_f32;
@@ -398,22 +425,27 @@ pub unsafe fn itLizardon_Logic37_Spawned(gobj: *mut Item_GObj) {
 }
 
 pub unsafe fn itLizardon_Logic37_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("itLizardon_Logic37_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }
 
 pub unsafe fn itLizardon_Logic37_Reflected(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLizardon_Logic37_Reflected");
     ext::it_80273030(gobj)
 }
 
 pub unsafe fn itLizardon_Logic37_HitShield(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLizardon_Logic37_HitShield");
     1
 }
 
 pub unsafe fn itLizardon_Logic37_Absorbed(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLizardon_Logic37_Absorbed");
     1
 }
 
 pub unsafe fn it_802CC5D4(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CC5D4");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
     ext::it_80275158(gobj, (*attrs).x0);
@@ -424,11 +456,13 @@ pub unsafe fn it_802CC5D4(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802CC650(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802CC650");
     let ip = GET_ITEM(gobj);
     Item_TickLifetime(ip) as i32
 }
 
 pub unsafe extern "C" fn it_802CC684(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CC684");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
 
@@ -438,5 +472,6 @@ pub unsafe extern "C" fn it_802CC684(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802CC6C4(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802CC6C4");
     ext::it_8026DFB0(gobj)
 }

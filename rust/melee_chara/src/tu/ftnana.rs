@@ -62,6 +62,7 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 }
 
 pub fn ftNn_Init_OnLoad(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNn_Init_OnLoad");
     unsafe {
         let fp = fpp(gobj);
         (*fp).set_x2222_b4(1);
@@ -72,6 +73,7 @@ pub fn ftNn_Init_OnLoad(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNn_Init_OnDeath(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNn_Init_OnDeath");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftIceClimberAttributes;
@@ -88,14 +90,17 @@ pub fn ftNn_Init_OnDeath(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNn_Init_80122FAC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNn_Init_80122FAC");
     crate::tu::ftnanaspecials::ftNn_Init_801238E4(gobj);
 }
 
 pub fn ftNn_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNn_Init_LoadSpecialAttrs");
     unsafe { copy_attrs::<ftIceClimberAttributes>(gobj) }
 }
 
 pub fn ftNn_Init_8012300C(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftNn_Init_8012300C");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).x221F_b3() == 0 && (*fp).x2219_b5() == 0 {
@@ -113,5 +118,6 @@ pub fn ftNn_Init_8012300C(gobj: *mut HSD_GObj) -> bool {
 }
 
 pub fn ftNn_Init_8012309C(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftNn_Init_8012309C");
     unsafe { crate::chars::ftNana::ftnana::ftNn_Init_8012309C(&*fpp(gobj)) }
 }

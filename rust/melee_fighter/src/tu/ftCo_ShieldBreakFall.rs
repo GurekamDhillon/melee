@@ -41,6 +41,7 @@ pub mod ext {
 }
 
 pub fn ftCo_80098D90(g: G) {
+    melee_core::ct!("ftCo_80098D90");
     ext::Fighter_ChangeMotionState(
         g,
         ftCo_MS_ShieldBreakFall as i32,
@@ -54,14 +55,16 @@ pub fn ftCo_80098D90(g: G) {
     ext::ftCommon_8007EBAC(fp(g), 8, 0);
 }
 
-pub fn ftCo_ShieldBreakFall_Anim(_g: G) {}
+pub fn ftCo_ShieldBreakFall_Anim(_g: G) { melee_core::ct!("ftCo_ShieldBreakFall_Anim");}
 
-pub fn ftCo_ShieldBreakFall_IASA(_g: G) {}
+pub fn ftCo_ShieldBreakFall_IASA(_g: G) { melee_core::ct!("ftCo_ShieldBreakFall_IASA");}
 
 pub fn ftCo_ShieldBreakFall_Phys(g: G) {
+    melee_core::ct!("ftCo_ShieldBreakFall_Phys");
     ext::ft_80084EEC(g);
 }
 
 pub fn ftCo_ShieldBreakFall_Coll(g: G) {
+    melee_core::ct!("ftCo_ShieldBreakFall_Coll");
     ext::ft_80082C74(g, crate::tu::ftCo_ShieldBreakDown::ftCo_80098E3C);
 }

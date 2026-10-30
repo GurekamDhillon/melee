@@ -42,9 +42,10 @@ pub mod ext {
     }
 }
 
-pub fn ftCh_PaperCrush_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftCh_PaperCrush_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_PaperCrush_Coll");}
 
 pub fn ftCh_Poke1_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Poke1_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         unsafe {
             let fp = (*gobj).user_data as *mut Fighter;
@@ -72,11 +73,12 @@ pub fn ftCh_Poke1_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftCh_Poke1_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftCh_Poke1_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_Poke1_Coll");}
 
 /// Accessory-4 callback: once the script flags it, spawns four MasterHand lasers and starts their
 /// three looping sounds.
 pub unsafe extern "C" fn fn_80158534(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80158534");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         if (*fp).cmd_vars[0] == 0 {
@@ -102,6 +104,7 @@ pub unsafe extern "C" fn fn_80158534(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCh_Init_8015868C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Init_8015868C");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         st::Fighter_ChangeMotionState(gobj, 0x168, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -116,9 +119,10 @@ pub fn ftCh_Init_8015868C(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCh_Poke2_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Poke2_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         ftCh_GrabUnk1_8015BC88(gobj);
     }
 }
 
-pub fn ftCh_Poke2_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftCh_Poke2_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_Poke2_Coll");}

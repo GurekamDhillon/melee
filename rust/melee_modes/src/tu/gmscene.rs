@@ -218,31 +218,38 @@ fn bit64(bit: i32) -> u64 {
 
 /// `ProfBenchFrame`: the benchmark's frame source (TARGET_PC).
 pub unsafe extern "C" fn ProfBenchFrame() -> i32 {
+    melee_core::ct!("ProfBenchFrame");
     (gm_80479D58.unk_0 as i32).wrapping_sub(1)
 }
 
 pub unsafe extern "C" fn gm_GetDbPauseFlag(bit: i32) -> i32 {
+    melee_core::ct!("gm_GetDbPauseFlag");
     (gm_80479D58.unk_10.x0 as u64 & bit64(bit)) as i32
 }
 
 pub unsafe extern "C" fn gm_801A4624() -> i32 {
+    melee_core::ct!("gm_801A4624");
     gm_80479D58.unk_10.x0 as i32
 }
 
 pub unsafe extern "C" fn gm_SetDbPauseFlag(bit: i32) {
+    melee_core::ct!("gm_SetDbPauseFlag");
     gm_80479D58.unk_10.x0 = (gm_80479D58.unk_10.x0 as u64 | bit64(bit)) as u8;
 }
 
 pub unsafe extern "C" fn gm_ClearDbPauseFlag(bit: i32) {
+    melee_core::ct!("gm_ClearDbPauseFlag");
     gm_80479D58.unk_10.x0 = (gm_80479D58.unk_10.x0 as u64 & !bit64(bit)) as u8;
 }
 
 pub unsafe extern "C" fn gm_801A46B8(bit: i32) -> i32 {
+    melee_core::ct!("gm_801A46B8");
     (gm_80479D58.unk_10.x2 as u64 & bit64(bit)) as i32
 }
 
 /// DPad-up + X pressed on any pad.
 pub unsafe extern "C" fn fn_801A46F4() -> i32 {
+    melee_core::ct!("fn_801A46F4");
     let mut i: i32 = 0;
     while i < 4 {
         let pad = ext::HSD_PadMasterStatus.as_ptr().add(i as u8 as usize);
@@ -256,6 +263,7 @@ pub unsafe extern "C" fn fn_801A46F4() -> i32 {
 
 /// Z triggered on any pad.
 pub unsafe extern "C" fn fn_801A47E4() -> i32 {
+    melee_core::ct!("fn_801A47E4");
     let mut i: i32 = 0;
     while i < 4 {
         let pad = ext::HSD_PadMasterStatus.as_ptr().add(i as u8 as usize);
@@ -268,6 +276,7 @@ pub unsafe extern "C" fn fn_801A47E4() -> i32 {
 }
 
 pub unsafe extern "C" fn gm_801A48A4(arg0: u8) -> u64 {
+    melee_core::ct!("gm_801A48A4");
     let mut arg0 = arg0;
     let mut result: u64 = 0;
     let mut i = 0;
@@ -282,6 +291,7 @@ pub unsafe extern "C" fn gm_801A48A4(arg0: u8) -> u64 {
 }
 
 pub unsafe extern "C" fn gm_801A4970(db_input: *mut gm_DbPauseInputHandlers) {
+    melee_core::ct!("gm_801A4970");
     let mut i: i32 = 0;
     while i < 4 {
         let pad = ext::HSD_PadMasterStatus.as_ptr().add(i as u8 as usize);
@@ -328,60 +338,72 @@ pub unsafe extern "C" fn gm_801A4970(db_input: *mut gm_DbPauseInputHandlers) {
 }
 
 pub unsafe extern "C" fn gm_SetDbPauseInputHandlers(check_db_pause: Pred, check_db_framestep: Pred) {
+    melee_core::ct!("gm_SetDbPauseInputHandlers");
     gm_80479D58.unk_10.db_input.check_pause = check_db_pause;
     gm_80479D58.unk_10.db_input.check_framestep = check_db_framestep;
 }
 
 pub unsafe extern "C" fn gm_801A4B1C() {
+    melee_core::ct!("gm_801A4B1C");
     gm_SetDbPauseInputHandlers(Some(fn_801A46F4), Some(fn_801A47E4));
 }
 
 pub unsafe extern "C" fn gm_SetPreGObjProcCallback(cb: Option<unsafe extern "C" fn()>) {
+    melee_core::ct!("gm_SetPreGObjProcCallback");
     gm_80479D58.unk_10.pre_gobj_proc = cb;
 }
 
 pub unsafe extern "C" fn gm_801A4B50(arg0: i32) {
+    melee_core::ct!("gm_801A4B50");
     gm_80479D58.unk_10.unk_34 = arg0;
 }
 
 /// Ask the scene loop to end (the scene exits normally).
 pub unsafe extern "C" fn gm_801A4B60() {
+    melee_core::ct!("gm_801A4B60");
     gm_80479D58.unk_C = 1;
 }
 
 /// Ask the scene loop to end without running the rest of the frame.
 pub unsafe extern "C" fn gm_801A4B74() {
+    melee_core::ct!("gm_801A4B74");
     gm_80479D58.unk_C = 2;
 }
 
 pub unsafe extern "C" fn gm_801A4B88(info: *mut GameSceneInfo) {
+    melee_core::ct!("gm_801A4B88");
     gm_804D6720 = info;
     ext::View_SceneBegin(if !info.is_null() { (*info).scene_kind as i32 } else { -1 });
 }
 
 /// The current scene's enter data.
 pub unsafe extern "C" fn gm_GetCurrentSceneEnterData() -> *mut c_void {
+    melee_core::ct!("gm_GetCurrentSceneEnterData");
     (*gm_804D6720).enter_data
 }
 
 /// The current scene's exit data.
 pub unsafe extern "C" fn gm_GetCurrentSceneExitData() -> *mut c_void {
+    melee_core::ct!("gm_GetCurrentSceneExitData");
     (*gm_804D6720).exit_data
 }
 
 pub unsafe extern "C" fn gm_801A4BA8() -> u32 {
+    melee_core::ct!("gm_801A4BA8");
     gm_80479D58.unk_0
 }
 
 pub unsafe extern "C" fn gm_801A4BB8() -> u32 {
+    melee_core::ct!("gm_801A4BB8");
     gm_80479D58.unk_8
 }
 
 pub unsafe extern "C" fn gm_801A4BC8() -> *mut HSD_GObj {
+    melee_core::ct!("gm_801A4BC8");
     gm_804D672C
 }
 
-pub unsafe extern "C" fn fn_801A4BD0(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn fn_801A4BD0(_gobj: *mut HSD_GObj) { melee_core::ct!("fn_801A4BD0");}
 
 /// `OSSecondsToTicks(1.0F / GM_FPS)`: f32 divide, `OS_TIMER_CLOCK` (u32 `__OSBusClock / 4`) to f32,
 /// f32 multiply, f32 -> u64 (saturating).
@@ -394,6 +416,7 @@ unsafe fn one_frame_ticks() -> u64 {
 
 /// Per-scene setup (before the scene's `on_enter` runs).
 pub unsafe extern "C" fn gm_801A4BD4() {
+    melee_core::ct!("gm_801A4BD4");
     ext::ifMagnify_LogicDisarm(); // the magnifier re-arms when a match creates it
     ext::Camera_ForgetGameCamera();
     ext::Player_ForgetEntities();
@@ -464,6 +487,7 @@ fn sdiv64(a: i64, d: i64) -> i64 {
 }
 
 pub unsafe fn mnLoadScreen_Release(why: *const c_char) {
+    melee_core::ct!("mnLoadScreen_Release");
     if mnLoadScreen_holding == 0 {
         return;
     }
@@ -506,6 +530,7 @@ pub unsafe fn mnLoadScreen_Release(why: *const c_char) {
 }
 
 pub unsafe fn mnLoadScreen_Begin(info: *mut GameSceneInfo) {
+    melee_core::ct!("mnLoadScreen_Begin");
     mnLoadScreen_holding = 0;
     mnLoadScreen_panel = null_mut();
     mnLoadScreen_text = null_mut();
@@ -567,6 +592,7 @@ pub unsafe fn mnLoadScreen_Begin(info: *mut GameSceneInfo) {
 
 /// True while the scene is being held (the caller skips the scene's own frame).
 pub unsafe fn mnLoadScreen_Frame() -> bool {
+    melee_core::ct!("mnLoadScreen_Frame");
     if mnLoadScreen_holding == 0 {
         return false;
     }
@@ -632,6 +658,7 @@ pub static mut mnOverlay_captionbuf: [i8; 2 * OVERLAY_CAPTION_COLS] = [0; 2 * OV
 pub static mut mnOverlay_toastbuf: [i8; 2 * OVERLAY_CAPTION_COLS] = [0; 2 * OVERLAY_CAPTION_COLS];
 
 pub unsafe fn mnOverlay_Make(gobj: *mut HSD_GObj, id: i8, x: i32, y: i32, w: i32, h: i32, buf: *mut i8, bg: GXColor) -> *mut DevText {
+    melee_core::ct!("mnOverlay_Make");
     let dim = GXColor { r: 150, g: 150, b: 160, a: 255 };
     let t = ext::DevText_Create(id, x, y, w, h, buf);
     if t.is_null() {
@@ -650,6 +677,7 @@ pub unsafe fn mnOverlay_Make(gobj: *mut HSD_GObj, id: i8, x: i32, y: i32, w: i32
 }
 
 pub unsafe fn mnOverlay_Begin() {
+    melee_core::ct!("mnOverlay_Begin");
     let panel = GXColor { r: 10, g: 10, b: 16, a: 220 };
     let plate = GXColor { r: 20, g: 24, b: 40, a: 180 };
 
@@ -668,6 +696,7 @@ pub unsafe fn mnOverlay_Begin() {
 
 /// A one-line box, sized to the text so its plate is not a full-width bar behind six characters.
 pub unsafe fn mnOverlay_Line(t: *mut DevText, str: *mut i8) {
+    melee_core::ct!("mnOverlay_Line");
     if t.is_null() {
         return;
     }
@@ -693,6 +722,7 @@ pub static mut mnOverlay_Reshow_seen: i32 = 0;
 
 /// F10: put every overlay box back on screen (re-list boxes that fell out of DevText's list).
 pub unsafe fn mnOverlay_Reshow() {
+    melee_core::ct!("mnOverlay_Reshow");
     let n = ext::Overlay_GetReshowCount();
     if n == mnOverlay_Reshow_seen {
         return;
@@ -715,6 +745,7 @@ pub unsafe fn mnOverlay_Reshow() {
 }
 
 pub unsafe fn mnOverlay_Frame() {
+    melee_core::ct!("mnOverlay_Frame");
     mnOverlay_Reshow();
 
     // The run label shows only while the F9 panel is open.
@@ -754,6 +785,7 @@ pub unsafe fn mnOverlay_Frame() {
 }
 
 pub unsafe extern "C" fn gm_FindGameSceneHandler(kind: u8) -> *mut GameScene {
+    melee_core::ct!("gm_FindGameSceneHandler");
     let mut cur = ext::gm_GetAllGameScenes();
     while (*cur).kind as u32 != GS_COUNT {
         if (*cur).kind == kind {
@@ -781,6 +813,7 @@ pub static mut gm_onep_interstage: i32 = 0;
 /// The scene loop: run `on_frame` once per logic frame, step the GObj procs, render, until the
 /// scene sets `unk_C`.
 pub unsafe extern "C" fn gm_801A4D34(on_frame: Option<unsafe extern "C" fn()>, info: *mut GameSceneInfo) {
+    melee_core::ct!("gm_801A4D34");
     let mut pad_queue_count: i32;
     let mut i: i32;
     let temp_r25: *mut gm_80479D58_t = &raw mut gm_80479D58;
@@ -1042,6 +1075,7 @@ pub unsafe extern "C" fn gm_801A4D34(on_frame: Option<unsafe extern "C" fn()>, i
 /// The retail state has handled its exit; no next scene is loaded yet. Pump input/scripts and
 /// drawing, but no retail proc, timer or AI frame.
 pub unsafe extern "C" fn gm_OnePInterstage() {
+    melee_core::ct!("gm_OnePInterstage");
     gm_onep_interstage = 1;
     gm_801A4D34(None, null_mut());
     gm_onep_interstage = 0;

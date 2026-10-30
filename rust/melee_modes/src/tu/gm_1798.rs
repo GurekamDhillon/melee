@@ -335,6 +335,7 @@ unsafe fn HSD_JObjGetNext(jobj: *mut HSD_JObj) -> *mut HSD_JObj {
 
 /// The results camera/scale tables only have 32 rows; retail Popo and sentinels lie beyond them.
 pub unsafe fn gmResult_TableKind(kind: i32) -> i32 {
+    melee_core::ct!("gmResult_TableKind");
     let row = ext::gm_MexVanillaKind(kind, 1);
     if (row as u32) < 32 {
         row
@@ -346,6 +347,7 @@ pub unsafe fn gmResult_TableKind(kind: i32) -> i32 {
 /// m-ex "reduce result screen lag": only the model for the slot being rendered stays visible
 /// (`show_slot >= 0`), or every model (`show_slot < 0`). Opt-in: `MELEE_MEX=reduce_result_screen_lag`.
 pub unsafe fn gm_1798_MexSetResultModels(show_slot: i32) {
+    melee_core::ct!("gm_1798_MexSetResultModels");
     if ext::Mex_Enabled(b"reduce_result_screen_lag\0".as_ptr() as *const i8) == 0 {
         return;
     }
@@ -362,10 +364,12 @@ pub unsafe fn gm_1798_MexSetResultModels(show_slot: i32) {
 }
 
 pub unsafe fn get_big_loser(slot: i32, match_end: *mut MatchEnd) -> i32 {
+    melee_core::ct!("get_big_loser");
     (*match_end).player_standings[slot as usize].is_big_loser as i32
 }
 
 pub unsafe fn fn_80179990_img_at(imgs: *mut HSD_ImageDesc, slot: i32) -> *mut HSD_ImageDesc {
+    melee_core::ct!("fn_80179990_img_at");
     imgs.add(slot as usize)
 }
 
@@ -380,6 +384,7 @@ unsafe fn big_loser_of(match_end: *mut MatchEnd, slot: usize) -> i32 {
 }
 
 pub unsafe fn fn_80179854() {
+    melee_core::ct!("fn_80179854");
     let mut color1 = _GXColor { r: 0, g: 0, b: 0, a: 0 };
     let mut color2 = _GXColor { r: 0, g: 0, b: 0, a: 0x3C };
     let match_end = core::ptr::addr_of_mut!(lbl_8046E3AC.match_end);
@@ -398,12 +403,14 @@ pub unsafe fn fn_80179854() {
 }
 
 pub unsafe fn fn_80179990_set_erase_color(match_end: *mut MatchEnd, slot: i32) {
+    melee_core::ct!("fn_80179990_set_erase_color");
     let s = &(*match_end).player_standings[slot as usize];
     let color = ext::gm_80160968(ext::gm_80160854(slot as u8, s.team, ((*match_end).is_teams == 1) as u8, s.pkind));
     ext::HSD_SetEraseColor(color.r, color.g, color.b, color.a);
 }
 
 pub unsafe fn fn_80179990_copy_efb(imgs: *mut HSD_ImageDesc, slot: i32, w: *const u16, h: *const u16) {
+    melee_core::ct!("fn_80179990_copy_efb");
     ext::HSD_ImageDescCopyFromEFB(
         imgs.add(slot as usize),
         (0x140 - (*w as i32 / 4) * 2) as u16,
@@ -414,6 +421,7 @@ pub unsafe fn fn_80179990_copy_efb(imgs: *mut HSD_ImageDesc, slot: i32, w: *cons
 }
 
 pub unsafe fn fn_80179990_copy_efb_at(imgs: *mut HSD_ImageDesc, slot: i32, w: *const u16, h: *const u16, x: *const u16, y: *const u16) {
+    melee_core::ct!("fn_80179990_copy_efb_at");
     ext::HSD_ImageDescCopyFromEFB(
         imgs.add(slot as usize),
         (*x as i32 + (0x140 - (*w as i32 / 4) * 2)) as u16,
@@ -424,6 +432,7 @@ pub unsafe fn fn_80179990_copy_efb_at(imgs: *mut HSD_ImageDesc, slot: i32, w: *c
 }
 
 pub unsafe fn fn_80179990(arg0: *mut HSD_GObj, _arg1: i32, arg2: i32) {
+    melee_core::ct!("fn_80179990");
     let disp = core::ptr::addr_of_mut!(lbl_8046E1B0);
     let match_end = core::ptr::addr_of_mut!(lbl_8046E3AC.match_end);
     let st = core::ptr::addr_of_mut!(lbl_8046E3AC);
@@ -508,18 +517,22 @@ pub unsafe fn fn_80179990(arg0: *mut HSD_GObj, _arg1: i32, arg2: i32) {
 }
 
 pub unsafe fn fn_80179D3C(gobj: *mut HSD_GObj, arg1: i32) {
+    melee_core::ct!("fn_80179D3C");
     fn_80179990(gobj, arg1, 0);
 }
 
 pub unsafe fn fn_80179D60(gobj: *mut HSD_GObj, arg1: i32) {
+    melee_core::ct!("fn_80179D60");
     fn_80179990(gobj, arg1, 1);
 }
 
 pub unsafe fn fn_80179D84(gobj: *mut HSD_GObj, arg1: i32) {
+    melee_core::ct!("fn_80179D84");
     fn_80179990(gobj, arg1, 2);
 }
 
 pub unsafe fn fn_80179DA8(gobj: *mut HSD_GObj, arg1: i32) {
+    melee_core::ct!("fn_80179DA8");
     fn_80179990(gobj, arg1, 3);
 }
 
@@ -538,26 +551,32 @@ unsafe fn draw_result_cobj(gobj: *mut HSD_GObj, slot: i32) {
 }
 
 pub unsafe fn fn_80179DCC(gobj: *mut HSD_GObj, _arg1: i32) {
+    melee_core::ct!("fn_80179DCC");
     draw_result_cobj(gobj, 0);
 }
 
 pub unsafe fn fn_80179E34(gobj: *mut HSD_GObj, _arg1: i32) {
+    melee_core::ct!("fn_80179E34");
     draw_result_cobj(gobj, 1);
 }
 
 pub unsafe fn fn_80179E9C(gobj: *mut HSD_GObj, _arg1: i32) {
+    melee_core::ct!("fn_80179E9C");
     draw_result_cobj(gobj, 2);
 }
 
 pub unsafe fn fn_80179F04(gobj: *mut HSD_GObj, _arg1: i32) {
+    melee_core::ct!("fn_80179F04");
     draw_result_cobj(gobj, 3);
 }
 
 pub unsafe fn fn_80179F6C(idx: i32, value: *mut HSD_GObj) {
+    melee_core::ct!("fn_80179F6C");
     lbl_8046E38C[idx as usize] = value;
 }
 
 pub unsafe fn fn_80179F84(jobj: *mut HSD_JObj) {
+    melee_core::ct!("fn_80179F84");
     let mut child = HSD_JObjGetChild(jobj);
 
     for i in 0..4 {
@@ -569,6 +588,7 @@ pub unsafe fn fn_80179F84(jobj: *mut HSD_JObj) {
 }
 
 pub unsafe fn fn_8017A004() {
+    melee_core::ct!("fn_8017A004");
     let data = core::ptr::addr_of_mut!(ext::lbl_8046DBE8);
     let gobj = ext::GObj_Create(0xB, 3, 0);
     let lobj = ext::lb_80011AC4((*(*data).pnlsce).lights);
@@ -577,6 +597,7 @@ pub unsafe fn fn_8017A004() {
 }
 
 pub unsafe fn fn_8017A078(arg0: i32) {
+    melee_core::ct!("fn_8017A078");
     let config = core::ptr::addr_of!(ext::lbl_803B7B68);
     let st = core::ptr::addr_of_mut!(lbl_8046E3AC);
     let mut eye = (*config).x24;
@@ -616,6 +637,7 @@ pub unsafe fn fn_8017A078(arg0: i32) {
 }
 
 pub unsafe fn fn_8017A318(arg0: i32) -> *mut HSD_GObj {
+    melee_core::ct!("fn_8017A318");
     let scissor_init = _Scissor { left: 270, right: 370, top: 124, bottom: 276 };
     let config = core::ptr::addr_of!(ext::lbl_803B7B68);
     let match_end = core::ptr::addr_of_mut!(lbl_8046E3AC.match_end);
@@ -689,6 +711,7 @@ pub unsafe fn fn_8017A318(arg0: i32) -> *mut HSD_GObj {
 }
 
 pub unsafe fn fn_8017A67C(mut kind: CharacterKind, arg1: i32, arg2: i32) -> *mut Fighter_GObj {
+    melee_core::ct!("fn_8017A67C");
     let config = core::ptr::addr_of!(ext::lbl_803B7B68);
     let match_end = core::ptr::addr_of_mut!(lbl_8046E3AC.match_end);
     let st = core::ptr::addr_of_mut!(lbl_8046E3AC);
@@ -772,11 +795,13 @@ pub unsafe fn fn_8017A67C(mut kind: CharacterKind, arg1: i32, arg2: i32) -> *mut
 }
 
 pub unsafe fn inline1(imgs: *mut HSD_ImageDesc, slot: i32, w: *const u16, h: *const u16) {
+    melee_core::ct!("inline1");
     (*imgs.add(slot as usize)).image_ptr = core::ptr::null_mut();
     ext::lb_800121FC(imgs.add(slot as usize), *w as i32, *h as i32, 5, 0);
 }
 
 pub unsafe fn fn_8017A9B4(slot: i32) {
+    melee_core::ct!("fn_8017A9B4");
     let disp = core::ptr::addr_of_mut!(lbl_8046E1B0);
     let match_end = core::ptr::addr_of_mut!(lbl_8046E3AC.match_end);
     let st = core::ptr::addr_of_mut!(lbl_8046E3AC);
@@ -798,6 +823,7 @@ pub unsafe fn fn_8017A9B4(slot: i32) {
 }
 
 pub unsafe fn fn_8017AA78(arg0: *const u8) {
+    melee_core::ct!("fn_8017AA78");
     let st = core::ptr::addr_of_mut!(lbl_8046E3AC);
 
     ext::memzero(

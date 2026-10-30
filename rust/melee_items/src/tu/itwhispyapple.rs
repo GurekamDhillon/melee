@@ -96,6 +96,7 @@ fn ABS(x: f32) -> f32 {
 
 /// `itResetVelocity` comes from `kinds_inl`.
 pub unsafe extern "C" fn itWhispyapple_UnkMotion0_Anim_inline(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itWhispyapple_UnkMotion0_Anim_inline");
     let jobj = GET_JOBJ(gobj);
     let ip = GET_ITEM(gobj);
     let child = HSD_JObjGetChild(jobj);
@@ -114,6 +115,7 @@ pub unsafe extern "C" fn itWhispyapple_UnkMotion0_Anim_inline(gobj: *mut Item_GO
 }
 
 pub unsafe extern "C" fn it_802EE200(parent: *mut HSD_GObj, pos: *mut Vec3, threshold1: f32, mut threshold2: f32) -> *mut Item_GObj {
+    melee_core::ct!("it_802EE200");
     let mut spawn: SpawnItem = core::mem::zeroed();
     let mut rand = ext::HSD_Randf();
     let facing_dir: f32;
@@ -162,6 +164,7 @@ pub unsafe extern "C" fn it_802EE200(parent: *mut HSD_GObj, pos: *mut Vec3, thre
 }
 
 pub unsafe extern "C" fn it_802EE374(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802EE374");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itWhispyAppleAttributes;
 
@@ -177,6 +180,7 @@ pub unsafe extern "C" fn it_802EE374(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itWhispyapple_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itWhispyapple_UnkMotion0_Anim");
     let ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.whispyapple.xDD8 == 1 {
         ext::it_8026B3A8(gobj);
@@ -185,6 +189,7 @@ pub unsafe extern "C" fn itWhispyapple_UnkMotion0_Anim(gobj: *mut Item_GObj) -> 
 }
 
 pub unsafe extern "C" fn itWhispyapple_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itWhispyapple_UnkMotion0_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = (*ip).xCC_item_attr;
 
@@ -209,6 +214,7 @@ unsafe fn itWhispyapple_UnkMotion0_Coll_inline(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itWhispyapple_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itWhispyapple_UnkMotion0_Coll");
     let ip = (*gobj).user_data as *mut Item;
 
     if (*ip).xDD4_itemVar.whispyapple.xDD8 == 1 {
@@ -227,6 +233,7 @@ pub unsafe extern "C" fn itWhispyapple_UnkMotion0_Coll(gobj: *mut Item_GObj) -> 
 }
 
 pub unsafe extern "C" fn it_802EE6A0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802EE6A0");
     let ip = GET_ITEM(gobj);
     let val: f32 = 0.0;
     (*ip).x40_vel.x = val;
@@ -236,31 +243,37 @@ pub unsafe extern "C" fn it_802EE6A0(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itWhispyapple_UnkMotion1_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itWhispyapple_UnkMotion1_Anim");
     itWhispyapple_UnkMotion0_Anim_inline(gobj)
 }
 
-pub unsafe extern "C" fn itWhispyapple_UnkMotion1_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itWhispyapple_UnkMotion1_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itWhispyapple_UnkMotion1_Phys");}
 
 pub unsafe extern "C" fn itWhispyapple_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itWhispyapple_UnkMotion1_Coll");
     ext::it_8026D62C(gobj, Some(fn_802EE7FC));
     false
 }
 
 pub unsafe extern "C" fn fn_802EE7FC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_802EE7FC");
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE);
 }
 
 pub unsafe extern "C" fn itWhispyapple_UnkMotion5_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itWhispyapple_UnkMotion5_Anim");
     itWhispyapple_UnkMotion0_Anim_inline(gobj)
 }
 
 pub unsafe extern "C" fn itWhispyapple_UnkMotion5_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itWhispyapple_UnkMotion5_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = (*ip).xCC_item_attr;
     ext::it_80272860(gobj, (*attrs).x10_fall_speed, (*attrs).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itWhispyapple_UnkMotion5_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itWhispyapple_UnkMotion5_Coll");
     let ip = GET_ITEM(gobj);
 
     let coll = ext::it_8026DAA8(gobj);
@@ -276,6 +289,7 @@ pub unsafe extern "C" fn itWhispyapple_UnkMotion5_Coll(gobj: *mut Item_GObj) -> 
 }
 
 pub unsafe extern "C" fn it_802EEA08(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802EEA08");
     let jobj = GET_JOBJ(gobj);
     let child = HSD_JObjGetChild(jobj);
     ext::HSD_JObjClearFlagsAll(child, JOBJ_HIDDEN as u32);
@@ -283,12 +297,14 @@ pub unsafe extern "C" fn it_802EEA08(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itWhispyapple_UnkMotion3_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itWhispyapple_UnkMotion3_Anim");
     false
 }
 
-pub unsafe extern "C" fn itWhispyapple_UnkMotion3_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itWhispyapple_UnkMotion3_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itWhispyapple_UnkMotion3_Phys");}
 
 pub unsafe extern "C" fn it_802EEA70(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802EEA70");
     let ip = GET_ITEM(gobj);
     let child = HSD_JObjGetChild(GET_JOBJ(gobj));
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -303,6 +319,7 @@ pub unsafe extern "C" fn it_802EEA70(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802EEB28(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802EEB28");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
     let child = HSD_JObjGetChild(jobj);
@@ -315,21 +332,25 @@ pub unsafe extern "C" fn it_802EEB28(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itWhispyApple_Logic18_EnteredAir(gobj: *mut Item_GObj) {
+    melee_core::ct!("itWhispyApple_Logic18_EnteredAir");
     ext::Item_80268E5C(gobj, 6, ITEM_ANIM_UPDATE);
 }
 
 pub unsafe extern "C" fn itWhispyapple_UnkMotion6_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itWhispyapple_UnkMotion6_Anim");
     itWhispyapple_UnkMotion0_Anim_inline(gobj)
 }
 
-pub unsafe extern "C" fn itWhispyapple_UnkMotion6_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itWhispyapple_UnkMotion6_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itWhispyapple_UnkMotion6_Phys");}
 
 pub unsafe extern "C" fn itWhispyapple_UnkMotion6_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itWhispyapple_UnkMotion6_Coll");
     ext::it_8026E8C4(gobj, Some(it_802EE6A0), Some(fn_802EE7FC));
     false
 }
 
 pub unsafe extern "C" fn it_802EED00(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802EED00");
     let jobj = GET_JOBJ(gobj);
     let ip = GET_ITEM(gobj);
     let mut pos: Vec3;
@@ -349,39 +370,47 @@ pub unsafe extern "C" fn it_802EED00(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itWhispyapple_UnkMotion7_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itWhispyapple_UnkMotion7_Anim");
     itWhispyapple_UnkMotion0_Anim_inline(gobj)
 }
 
-pub unsafe extern "C" fn itWhispyapple_UnkMotion7_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itWhispyapple_UnkMotion7_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itWhispyapple_UnkMotion7_Phys");}
 
 pub unsafe extern "C" fn itWhispyapple_UnkMotion7_Coll(_item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itWhispyapple_UnkMotion7_Coll");
     false
 }
 
 pub unsafe extern "C" fn it_802EEED0(_item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_802EEED0");
     true
 }
 
 pub unsafe extern "C" fn it_802EEED8(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_802EEED8");
     ext::it_802725D4(gobj);
     ext::itColl_BounceOffVictim(gobj);
     false
 }
 
 pub unsafe extern "C" fn it_802EEF10(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_802EEF10");
     ext::it_80273030(gobj) != 0
 }
 
 pub unsafe extern "C" fn it_802EEF30(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_802EEF30");
     ext::it_802725D4(gobj);
     ext::itColl_BounceOffVictim(gobj);
     false
 }
 
 pub unsafe extern "C" fn it_802EEF68(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_802EEF68");
     ext::itColl_BounceOffShield(gobj) != 0
 }
 
 pub unsafe extern "C" fn it_802EEF88(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802EEF88");
     ext::it_8026B894(gobj, ref_gobj);
 }

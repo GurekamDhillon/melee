@@ -300,16 +300,19 @@ pub static mut mpLib_804D8150: [_GXColor; 2] = [_GXColor { r: 64_u8, g: 64_u8, b
 
 /// `mpScriptInvalidateBounding`
 pub unsafe fn mpScriptInvalidateBounding() {
+    melee_core::ct!("mpScriptInvalidateBounding");
     didCheckBounding = 0;
 }
 
 /// `mpScriptBatchBegin`
 pub unsafe fn mpScriptBatchBegin() {
+    melee_core::ct!("mpScriptBatchBegin");
     scriptBatchDepth = scriptBatchDepth + 1;
 }
 
 /// `mpScriptBatchEnd`
 pub unsafe fn mpScriptBatchEnd() {
+    melee_core::ct!("mpScriptBatchEnd");
     if (scriptBatchDepth <= 0) || ({ scriptBatchDepth = scriptBatchDepth - 1; scriptBatchDepth } != 0) {
         return;
     }
@@ -331,26 +334,31 @@ unsafe fn mpScriptIslandRefresh(mut joint: i32, mut start: i32, mut count: i32, 
 
 /// `mpLib_8004D164`
 pub unsafe fn mpLib_8004D164() -> *mut MapCollData {
+    melee_core::ct!("mpLib_8004D164");
     return mpLib_804D64B4;
 }
 
 /// `mpGetGroundCollVtx`
 pub unsafe fn mpGetGroundCollVtx() -> *mut CollVtx {
+    melee_core::ct!("mpGetGroundCollVtx");
     return groundCollVtx;
 }
 
 /// `mpGetGroundCollLine`
 pub unsafe fn mpGetGroundCollLine() -> *mut CollLine {
+    melee_core::ct!("mpGetGroundCollLine");
     return groundCollLine;
 }
 
 /// `mpGetGroundCollJoint`
 pub unsafe fn mpGetGroundCollJoint() -> *mut CollJoint {
+    melee_core::ct!("mpGetGroundCollJoint");
     return groundCollJoint;
 }
 
 /// `mpPruneEmptyLines`
 pub unsafe fn mpPruneEmptyLines(mut coll_data: *mut MapCollData) {
+    melee_core::ct!("mpPruneEmptyLines");
     let mut line: *mut MapLine = null_mut();
     let mut verts: *mut Vec2 = (*coll_data).verts;
     let mut i: i32 = 0;
@@ -401,6 +409,7 @@ pub unsafe fn mpPruneEmptyLines(mut coll_data: *mut MapCollData) {
 
 /// `mpLibLoad`
 pub unsafe fn mpLibLoad(mut coll_data: *mut MapCollData) {
+    melee_core::ct!("mpLibLoad");
     let mut f0: f32 = 0.0;
     let mut f1: f32 = 0.0;
     let mut f2: f32 = 0.0;
@@ -541,6 +550,7 @@ pub unsafe fn mpLibLoad(mut coll_data: *mut MapCollData) {
 
 /// `mpLineGetNext`
 pub unsafe fn mpLineGetNext(mut line_id: i32) -> i32 {
+    melee_core::ct!("mpLineGetNext");
     let mut result: i16 = (*(*groundCollLine.offset(line_id as isize)).x0).next_id1;
     let mut ret: i32 = result as i32;
     if !(ext::ScriptGame_StageLineActive(line_id) != 0) {
@@ -561,6 +571,7 @@ pub unsafe fn mpLineGetNext(mut line_id: i32) -> i32 {
 
 /// `mpLineGetPrev`
 pub unsafe fn mpLineGetPrev(mut line_id: i32) -> i32 {
+    melee_core::ct!("mpLineGetPrev");
     let mut result: i16 = (*(*groundCollLine.offset(line_id as isize)).x0).prev_id1;
     let mut ret: i32 = result as i32;
     if !(ext::ScriptGame_StageLineActive(line_id) != 0) {
@@ -608,6 +619,7 @@ unsafe fn mpRemap2d(mut x_out: *mut f32, mut y_out: *mut f32, mut ax0: f32, mut 
 
 /// `mpLib_8004DD90_Floor`
 pub unsafe fn mpLib_8004DD90_Floor(mut line_id: i32, mut vec: *mut Vec, mut y_out: *mut f32, mut flags_out: *mut u32, mut normal_out: *mut Vec) -> i32 {
+    melee_core::ct!("mpLib_8004DD90_Floor");
     let mut dir: i32 = 0;
     let mut x0: f32 = 0.0;
     let mut y0: f32 = 0.0;
@@ -680,6 +692,7 @@ pub unsafe fn mpLib_8004DD90_Floor(mut line_id: i32, mut vec: *mut Vec, mut y_ou
 
 /// `mpLib_8004E090_Ceiling`
 pub unsafe fn mpLib_8004E090_Ceiling(mut line_id: i32, mut vec: *mut Vec, mut y_out: *mut f32, mut flags_out: *mut u32, mut normal_out: *mut Vec) -> i32 {
+    melee_core::ct!("mpLib_8004E090_Ceiling");
     let mut dir: i32 = 0;
     let mut x0: f32 = 0.0;
     let mut y0: f32 = 0.0;
@@ -750,6 +763,7 @@ pub unsafe fn mpLib_8004E090_Ceiling(mut line_id: i32, mut vec: *mut Vec, mut y_
 
 /// `mpLib_8004E398_LeftWall`
 pub unsafe fn mpLib_8004E398_LeftWall(mut line_id: i32, mut vec: *mut Vec, mut x_out: *mut f32, mut flags_out: *mut u32, mut normal_out: *mut Vec) -> i32 {
+    melee_core::ct!("mpLib_8004E398_LeftWall");
     let mut dir: i32 = 0;
     let mut x0: f32 = 0.0;
     let mut y0: f32 = 0.0;
@@ -818,6 +832,7 @@ pub unsafe fn mpLib_8004E398_LeftWall(mut line_id: i32, mut vec: *mut Vec, mut x
 
 /// `mpLib_8004E684_RightWall`
 pub unsafe fn mpLib_8004E684_RightWall(mut line_id: i32, mut vec: *mut Vec, mut x_out: *mut f32, mut flags_out: *mut u32, mut normal_out: *mut Vec) -> i32 {
+    melee_core::ct!("mpLib_8004E684_RightWall");
     let mut dir: i32 = 0;
     let mut x0: f32 = 0.0;
     let mut y0: f32 = 0.0;
@@ -888,6 +903,7 @@ pub unsafe fn mpLib_8004E684_RightWall(mut line_id: i32, mut vec: *mut Vec, mut 
 
 /// `mpLineIntersection`
 pub unsafe fn mpLineIntersection(mut a0x: f32, mut a0y: f32, mut a1x: f32, mut a1y: f32, mut b0x: f32, mut b0y: f32, mut b1x: f32, mut b1y: f32, mut int_x: *mut f32, mut int_y: *mut f32) -> i32 {
+    melee_core::ct!("mpLineIntersection");
     let mut b1_below_a: i32 = 0;
     let mut b2_above_a: i32 = 0;
     if a0x <= a1x {
@@ -978,6 +994,7 @@ pub unsafe fn mpLineIntersection(mut a0x: f32, mut a0y: f32, mut a1x: f32, mut a
 
 /// `mpLineIntersectionH`
 pub unsafe fn mpLineIntersectionH(mut int_x: *mut f32, mut int_y: *mut f32, mut a0x: f32, mut a0y: f32, mut a1x: f32, mut b0x: f32, mut b0y: f32, mut b1x: f32, mut b1y: f32) -> i32 {
+    melee_core::ct!("mpLineIntersectionH");
     let mut max_ax: f32 = 0.0;
     let mut min_ax: f32 = 0.0;
     let mut dbx: f64 = 0.0;
@@ -1034,6 +1051,7 @@ unsafe fn mpLineGetCollLine(mut line_id: i32) -> *mut CollLine {
 
 /// `mpLib_8004ED5C`
 pub unsafe fn mpLib_8004ED5C(mut line_id: i32, mut x0_out: *mut f32, mut y0_out: *mut f32, mut x1_out: *mut f32, mut y1_out: *mut f32) {
+    melee_core::ct!("mpLib_8004ED5C");
     let mut calculated_distance: i32 = 0;
     let mut line: *mut CollLine = mpLineGetCollLine(line_id);
     let mut i0: i32 = 0;
@@ -1074,6 +1092,7 @@ pub unsafe fn mpLib_8004ED5C(mut line_id: i32, mut x0_out: *mut f32, mut y0_out:
 
 /// `mpCheckFloor`
 pub unsafe fn mpCheckFloor(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f32, mut y_offset: f32, mut vec_out: *mut Vec, mut line_id_out: *mut i32, mut flags_out: *mut u32, mut normal_out: *mut Vec, mut line_id_skip: i32, mut joint_id_skip: i32, mut joint_id_only: i32, mut cb: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> i32>, mut gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("mpCheckFloor");
     let mut min_dist2_f30: f32 = 0.0;
     let mut joint: *mut CollJoint = null_mut();
     let mut i_r28: i32 = 0;
@@ -1207,6 +1226,7 @@ pub unsafe fn mpCheckFloor(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f32, m
 
 /// `mpCheckFloorRemap`
 pub unsafe fn mpCheckFloorRemap(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f32, mut y_offset: f32, mut vec_out: *mut Vec, mut line_id_out: *mut i32, mut flags_out: *mut u32, mut normal_out: *mut Vec, mut line_id_skip: i32, mut joint_id_skip: i32, mut joint_id_only: i32, mut cb: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> i32>, mut gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("mpCheckFloorRemap");
     let mut min_dist2: f32 = f32::MAX;
     let mut old_x: f32 = ax;
     let mut old_y: f32 = ay;
@@ -1357,6 +1377,7 @@ pub unsafe fn mpCheckFloorRemap(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f
 
 /// `mpCheckCeiling`
 pub unsafe fn mpCheckCeiling(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f32, mut vec_out: *mut Vec, mut line_id_out: *mut i32, mut flags_out: *mut u32, mut normal_out: *mut Vec, mut joint_id_skip: i32, mut joint_id_only: i32) -> i32 {
+    melee_core::ct!("mpCheckCeiling");
     let mut min_dist2: f32 = f32::MAX;
     let mut joint: *mut CollJoint = null_mut();
     let mut i_r28: i32 = 0;
@@ -1479,6 +1500,7 @@ pub unsafe fn mpCheckCeiling(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f32,
 
 /// `mpCheckCeilingRemap`
 pub unsafe fn mpCheckCeilingRemap(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f32, mut vec_out: *mut Vec, mut line_id_out: *mut i32, mut flags_out: *mut u32, mut normal_out: *mut Vec, mut joint_id_skip: i32, mut joint_id_only: i32) -> i32 {
+    melee_core::ct!("mpCheckCeilingRemap");
     let mut min_f30: f32 = f32::MAX;
     let mut f29: f32 = ax;
     let mut f28: f32 = ay;
@@ -1622,6 +1644,7 @@ pub unsafe fn mpCheckCeilingRemap(mut ax: f32, mut ay: f32, mut bx: f32, mut by:
 
 /// `mpLineIntersectionV`
 pub unsafe fn mpLineIntersectionV(mut int_x: *mut f32, mut int_y: *mut f32, mut a0x: f32, mut a0y: f32, mut a1y: f32, mut b0x: f32, mut b0y: f32, mut b1x: f32, mut b1y: f32) -> i32 {
+    melee_core::ct!("mpLineIntersectionV");
     let mut min_ay: f32 = 0.0;
     let mut max_ay: f32 = 0.0;
     let mut dbx: f64 = 0.0;
@@ -1674,6 +1697,7 @@ pub unsafe fn mpLineIntersectionV(mut int_x: *mut f32, mut int_y: *mut f32, mut 
 
 /// `mpCheckLeftWall`
 pub unsafe fn mpCheckLeftWall(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f32, mut vec_out: *mut Vec, mut line_id_out: *mut i32, mut flags_out: *mut u32, mut normal_out: *mut Vec, mut joint_id_skip: i32, mut joint_id_only: i32) -> i32 {
+    melee_core::ct!("mpCheckLeftWall");
     let mut min_dist2: f32 = 0.0;
     let mut joint: *mut CollJoint = null_mut();
     let mut i: i32 = 0;
@@ -1802,6 +1826,7 @@ pub unsafe fn mpCheckLeftWall(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f32
 
 /// `mpCheckLeftWallRemap`
 pub unsafe fn mpCheckLeftWallRemap(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f32, mut vec_out: *mut Vec, mut line_id_out: *mut i32, mut flags_out: *mut u32, mut normal_out: *mut Vec, mut joint_id_skip: i32, mut joint_id_only: i32) -> i32 {
+    melee_core::ct!("mpCheckLeftWallRemap");
     let mut min_dist2: f32 = 0.0;
     let mut old_x: f32 = ax;
     let mut old_y: f32 = ay;
@@ -1945,6 +1970,7 @@ pub unsafe fn mpCheckLeftWallRemap(mut ax: f32, mut ay: f32, mut bx: f32, mut by
 
 /// `mpCheckRightWall`
 pub unsafe fn mpCheckRightWall(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f32, mut vec_out: *mut Vec, mut line_id_out: *mut i32, mut flags_out: *mut u32, mut normal_out: *mut Vec, mut joint_id_skip: i32, mut joint_id_only: i32) -> i32 {
+    melee_core::ct!("mpCheckRightWall");
     let mut min_dist2: f32 = 0.0;
     let mut joint: *mut CollJoint = null_mut();
     let mut i: i32 = 0;
@@ -2073,6 +2099,7 @@ pub unsafe fn mpCheckRightWall(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f3
 
 /// `mpCheckRightWallRemap`
 pub unsafe fn mpCheckRightWallRemap(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f32, mut vec_out: *mut Vec, mut line_id_out: *mut i32, mut flags_out: *mut u32, mut normal_out: *mut Vec, mut joint_id_skip: i32, mut joint_id_only: i32) -> i32 {
+    melee_core::ct!("mpCheckRightWallRemap");
     let mut min_dist2: f32 = 0.0;
     let mut old_x: f32 = ax;
     let mut old_y: f32 = ay;
@@ -2216,6 +2243,7 @@ pub unsafe fn mpCheckRightWallRemap(mut ax: f32, mut ay: f32, mut bx: f32, mut b
 
 /// `mpLib_800511A4_RightWall`
 pub unsafe fn mpLib_800511A4_RightWall(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f32, mut cx: f32, mut cy: f32, mut dx: f32, mut dy: f32, mut line_id_out: *mut i32, mut joint_id_skip: i32, mut joint_id_only: i32) -> i32 {
+    melee_core::ct!("mpLib_800511A4_RightWall");
     let mut min_dist2: f32 = 0.0;
     let mut joint: *mut CollJoint = null_mut();
     let mut i: i32 = 0;
@@ -2340,6 +2368,7 @@ pub unsafe fn mpLib_800511A4_RightWall(mut ax: f32, mut ay: f32, mut bx: f32, mu
 
 /// `mpLib_800515A0_LeftWall`
 pub unsafe fn mpLib_800515A0_LeftWall(mut a0x: f32, mut a0y: f32, mut a1x: f32, mut a1y: f32, mut b0x: f32, mut b0y: f32, mut b1x: f32, mut b1y: f32, mut line_id_out: *mut i32, mut joint_id_skip: i32, mut joint_id_only: i32) -> i32 {
+    melee_core::ct!("mpLib_800515A0_LeftWall");
     let mut min_dist2: f32 = 0.0;
     let mut joint: *mut CollJoint = null_mut();
     let mut i: i32 = 0;
@@ -2464,6 +2493,7 @@ pub unsafe fn mpLib_800515A0_LeftWall(mut a0x: f32, mut a0y: f32, mut a1x: f32, 
 
 /// `mpLib_8005199C_Floor`
 pub unsafe fn mpLib_8005199C_Floor(mut vec: *mut Vec, mut joint_id_skip: i32, mut joint_id_only: i32) -> i32 {
+    melee_core::ct!("mpLib_8005199C_Floor");
     let mut line_id: i32 = (-1_i32);
     let mut x: f32 = (*vec).x;
     let mut y: f32 = (*vec).y;
@@ -2542,6 +2572,7 @@ pub unsafe fn mpLib_8005199C_Floor(mut vec: *mut Vec, mut joint_id_skip: i32, mu
 
 /// `mpLib_80051BA8_Floor`
 pub unsafe fn mpLib_80051BA8_Floor(mut out_vec: *mut Vec, mut line_id_skip: i32, mut joint_id_skip: i32, mut joint_id_only: i32, mut dir: i32, mut left: f32, mut bottom: f32, mut right: f32, mut top: f32) -> i32 {
+    melee_core::ct!("mpLib_80051BA8_Floor");
     let mut min: f32 = 0.0;
     let mut out_x: f32 = 0.0;
     let mut out_y: f32 = 0.0;
@@ -2676,6 +2707,7 @@ pub unsafe fn mpLib_80051BA8_Floor(mut out_vec: *mut Vec, mut line_id_skip: i32,
 
 /// `mpCheckMultiple`
 pub unsafe fn mpCheckMultiple(mut x0: f32, mut y0: f32, mut x1: f32, mut y1: f32, mut pos_out: *mut Vec, mut line_id_out: *mut i32, mut flags_out: *mut u32, mut normal_out: *mut Vec, mut checks: u32, mut joint_id_skip: i32, mut joint_id_only: i32) -> i32 {
+    melee_core::ct!("mpCheckMultiple");
     let mut dx: f32 = 0.0;
     let mut dy: f32 = 0.0;
     let mut min_dist2: f32 = 0.0;
@@ -2803,11 +2835,13 @@ pub unsafe fn mpCheckMultiple(mut x0: f32, mut y0: f32, mut x1: f32, mut y1: f32
 
 /// `mpCheckAllRemap`
 pub unsafe fn mpCheckAllRemap(mut pos_out: *mut Vec, mut line_id_out: *mut i32, mut flags_out: *mut u32, mut normal_out: *mut Vec, mut joint_id_skip: i32, mut joint_id_only: i32, mut x0: f32, mut y0: f32, mut x1: f32, mut y1: f32) -> i32 {
+    melee_core::ct!("mpCheckAllRemap");
     return mpCheckMultiple(x0, y0, x1, y1, pos_out, line_id_out, flags_out, normal_out, 31 as u32, joint_id_skip, joint_id_only);
 }
 
 /// `mpCheckAll`
 pub unsafe fn mpCheckAll(mut pos_out: *mut Vec, mut line_id_out: *mut i32, mut flags_out: *mut u32, mut normal_out: *mut Vec, mut joint_id_skip: i32, mut joint_id_only: i32, mut x0: f32, mut y0: f32, mut x1: f32, mut y1: f32) -> i32 {
+    melee_core::ct!("mpCheckAll");
     return mpCheckMultiple(x0, y0, x1, y1, pos_out, line_id_out, flags_out, normal_out, 15 as u32, joint_id_skip, joint_id_only);
 }
 
@@ -2887,6 +2921,7 @@ unsafe fn mpLineIterNonResult(mut new_id: i32, mut line_id: i32) -> i32 {
 
 /// `mpLineNextNonFloor`
 pub unsafe fn mpLineNextNonFloor(mut line_id: i32) -> i32 {
+    melee_core::ct!("mpLineNextNonFloor");
     let mut first_line: *mut MapLine = null_mut();
     let mut line: *mut MapLine = null_mut();
     let mut new_id: i32 = 0;
@@ -2907,6 +2942,7 @@ pub unsafe fn mpLineNextNonFloor(mut line_id: i32) -> i32 {
 
 /// `mpLinePrevNonFloor`
 pub unsafe fn mpLinePrevNonFloor(mut line_id: i32) -> i32 {
+    melee_core::ct!("mpLinePrevNonFloor");
     let mut first_line: *mut MapLine = null_mut();
     let mut line: *mut MapLine = null_mut();
     let mut new_id: i32 = 0;
@@ -2927,6 +2963,7 @@ pub unsafe fn mpLinePrevNonFloor(mut line_id: i32) -> i32 {
 
 /// `mpLinePrevNonCeiling`
 pub unsafe fn mpLinePrevNonCeiling(mut line_id: i32) -> i32 {
+    melee_core::ct!("mpLinePrevNonCeiling");
     let mut first_line: *mut MapLine = null_mut();
     let mut line: *mut MapLine = null_mut();
     let mut new_id: i32 = 0;
@@ -2947,6 +2984,7 @@ pub unsafe fn mpLinePrevNonCeiling(mut line_id: i32) -> i32 {
 
 /// `mpLineNextNonCeiling`
 pub unsafe fn mpLineNextNonCeiling(mut line_id: i32) -> i32 {
+    melee_core::ct!("mpLineNextNonCeiling");
     let mut first_line: *mut MapLine = null_mut();
     let mut line: *mut MapLine = null_mut();
     let mut new_id: i32 = 0;
@@ -2967,6 +3005,7 @@ pub unsafe fn mpLineNextNonCeiling(mut line_id: i32) -> i32 {
 
 /// `mpLineNextNonLeftWall`
 pub unsafe fn mpLineNextNonLeftWall(mut line_id: i32) -> i32 {
+    melee_core::ct!("mpLineNextNonLeftWall");
     let mut first_line: *mut MapLine = null_mut();
     let mut line: *mut MapLine = null_mut();
     let mut new_id: i32 = 0;
@@ -2987,6 +3026,7 @@ pub unsafe fn mpLineNextNonLeftWall(mut line_id: i32) -> i32 {
 
 /// `mpLinePrevNonLeftWall`
 pub unsafe fn mpLinePrevNonLeftWall(mut line_id: i32) -> i32 {
+    melee_core::ct!("mpLinePrevNonLeftWall");
     let mut first_line: *mut MapLine = null_mut();
     let mut line: *mut MapLine = null_mut();
     let mut new_id: i32 = 0;
@@ -3007,6 +3047,7 @@ pub unsafe fn mpLinePrevNonLeftWall(mut line_id: i32) -> i32 {
 
 /// `mpLinePrevNonRightWall`
 pub unsafe fn mpLinePrevNonRightWall(mut line_id: i32) -> i32 {
+    melee_core::ct!("mpLinePrevNonRightWall");
     let mut first_line: *mut MapLine = null_mut();
     let mut line: *mut MapLine = null_mut();
     let mut new_id: i32 = 0;
@@ -3027,6 +3068,7 @@ pub unsafe fn mpLinePrevNonRightWall(mut line_id: i32) -> i32 {
 
 /// `mpLineNextNonRightWall`
 pub unsafe fn mpLineNextNonRightWall(mut line_id: i32) -> i32 {
+    melee_core::ct!("mpLineNextNonRightWall");
     let mut first_line: *mut MapLine = null_mut();
     let mut line: *mut MapLine = null_mut();
     let mut new_id: i32 = 0;
@@ -3067,6 +3109,7 @@ unsafe fn mpLineWalkNon(mut line_id: i32, mut kind: i32, mut next: i32) -> i32 {
 
 /// `mpLib_80053394_Floor`
 pub unsafe fn mpLib_80053394_Floor(mut line_id: i32) -> i32 {
+    melee_core::ct!("mpLib_80053394_Floor");
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
             if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4252, line_id)); panic!("mpLib_80053394_Floor: assertion failed"); }
@@ -3077,6 +3120,7 @@ pub unsafe fn mpLib_80053394_Floor(mut line_id: i32) -> i32 {
 
 /// `mpLib_80053448_Floor`
 pub unsafe fn mpLib_80053448_Floor(mut line_id: i32) -> i32 {
+    melee_core::ct!("mpLib_80053448_Floor");
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
             if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4261, line_id)); panic!("mpLib_80053448_Floor: assertion failed"); }
@@ -3135,6 +3179,7 @@ unsafe fn mpLineGetNextCheckResultFirst(mut result: i32, mut line: *mut MapLine)
 
 /// `mpLib_800534FC_Floor`
 pub unsafe fn mpLib_800534FC_Floor(mut line_id: i32) -> i32 {
+    melee_core::ct!("mpLib_800534FC_Floor");
     let mut line: *mut MapLine = null_mut();
     let mut result: i32 = 0;
     let mut new_id: i32 = 0;
@@ -3199,6 +3244,7 @@ unsafe fn mpLineGetPrevCheckResultFirst(mut result: i32, mut line: *mut MapLine)
 
 /// `mpLib_800536CC_Floor`
 pub unsafe fn mpLib_800536CC_Floor(mut line_id: i32) -> i32 {
+    melee_core::ct!("mpLib_800536CC_Floor");
     let mut line: *mut MapLine = null_mut();
     let mut new_id: i32 = 0;
     let mut result: i32 = 0;
@@ -3231,6 +3277,7 @@ pub unsafe fn mpLib_800536CC_Floor(mut line_id: i32) -> i32 {
 
 /// `mpLib_8005389C_Ceiling`
 pub unsafe fn mpLib_8005389C_Ceiling(mut line_id: i32) -> i32 {
+    melee_core::ct!("mpLib_8005389C_Ceiling");
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
             if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4314, line_id)); panic!("mpLib_8005389C_Ceiling: assertion failed"); }
@@ -3241,6 +3288,7 @@ pub unsafe fn mpLib_8005389C_Ceiling(mut line_id: i32) -> i32 {
 
 /// `mpLib_80053950_Ceiling`
 pub unsafe fn mpLib_80053950_Ceiling(mut line_id: i32) -> i32 {
+    melee_core::ct!("mpLib_80053950_Ceiling");
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
             if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4323, line_id)); panic!("mpLib_80053950_Ceiling: assertion failed"); }
@@ -3251,6 +3299,7 @@ pub unsafe fn mpLib_80053950_Ceiling(mut line_id: i32) -> i32 {
 
 /// `mpLib_80053A04_Ceiling`
 pub unsafe fn mpLib_80053A04_Ceiling(mut line_id: i32) -> i32 {
+    melee_core::ct!("mpLib_80053A04_Ceiling");
     let mut line: *mut MapLine = null_mut();
     let mut result: i32 = 0;
     let mut new_id: i32 = 0;
@@ -3283,6 +3332,7 @@ pub unsafe fn mpLib_80053A04_Ceiling(mut line_id: i32) -> i32 {
 
 /// `mpLib_80053BD4_Ceiling`
 pub unsafe fn mpLib_80053BD4_Ceiling(mut line_id: i32) -> i32 {
+    melee_core::ct!("mpLib_80053BD4_Ceiling");
     let mut result: i32 = 0;
     let mut new_id: i32 = 0;
     {
@@ -3313,6 +3363,7 @@ pub unsafe fn mpLib_80053BD4_Ceiling(mut line_id: i32) -> i32 {
 
 /// `mpLib_80053DA4_Floor`: the end (right vertex) of the floor run `line_id` belongs to
 pub unsafe fn mpLib_80053DA4_Floor(mut line_id: i32, mut pos_out: *mut Vec3) {
+    melee_core::ct!("mpLib_80053DA4_Floor");
     lineid_check(4428, line_id);
 
     // `goto skip; loop: line_id = next_id; skip: next_id = ...; if (...) goto loop;`
@@ -3335,6 +3386,7 @@ pub unsafe fn mpLib_80053DA4_Floor(mut line_id: i32, mut pos_out: *mut Vec3) {
 
 /// `mpLib_80053ECC_Floor`: the start (left vertex) of the floor run `line_id` belongs to
 pub unsafe fn mpLib_80053ECC_Floor(mut line_id: i32, mut vec: *mut Vec) {
+    melee_core::ct!("mpLib_80053ECC_Floor");
     lineid_check(4448, line_id);
 
     // `goto skip; loop: line_id = prev_id; skip: prev_id = ...; if (...) goto loop;`
@@ -3362,6 +3414,7 @@ unsafe fn mpLineGetKindInline(mut line_id: i32) -> u32 {
 
 /// `mpFloorGetRight`
 pub unsafe fn mpFloorGetRight(mut line_id: i32, mut pos_out: *mut Vec) {
+    melee_core::ct!("mpFloorGetRight");
     let mut kind: u32 = 0;
     #[derive(Clone, Copy)] #[repr(C)] struct Local11 { id: i32 }
     let mut w: Local11 = unsafe { core::mem::zeroed() };
@@ -3401,6 +3454,7 @@ pub unsafe fn mpFloorGetRight(mut line_id: i32, mut pos_out: *mut Vec) {
 
 /// `mpFloorGetLeft`
 pub unsafe fn mpFloorGetLeft(mut line_id: i32, mut pos_out: *mut Vec) {
+    melee_core::ct!("mpFloorGetLeft");
     let mut kind: u32 = 0;
     #[derive(Clone, Copy)] #[repr(C)] struct Local11 { id: i32 }
     let mut w: Local11 = unsafe { core::mem::zeroed() };
@@ -3440,6 +3494,7 @@ pub unsafe fn mpFloorGetLeft(mut line_id: i32, mut pos_out: *mut Vec) {
 
 /// `mpCeilingGetRight`
 pub unsafe fn mpCeilingGetRight(mut line_id: i32, mut pos_out: *mut Vec) {
+    melee_core::ct!("mpCeilingGetRight");
     let mut kind: u32 = 0;
     #[derive(Clone, Copy)] #[repr(C)] struct Local11 { id: i32 }
     let mut w: Local11 = unsafe { core::mem::zeroed() };
@@ -3481,6 +3536,7 @@ pub unsafe fn mpCeilingGetRight(mut line_id: i32, mut pos_out: *mut Vec) {
 
 /// `mpCeilingGetLeft`
 pub unsafe fn mpCeilingGetLeft(mut line_id: i32, mut pos_out: *mut Vec) {
+    melee_core::ct!("mpCeilingGetLeft");
     let mut kind: u32 = 0;
     #[derive(Clone, Copy)] #[repr(C)] struct Local11 { id: i32 }
     let mut w: Local11 = unsafe { core::mem::zeroed() };
@@ -3522,6 +3578,7 @@ pub unsafe fn mpCeilingGetLeft(mut line_id: i32, mut pos_out: *mut Vec) {
 
 /// `mpLeftWallGetTop`
 pub unsafe fn mpLeftWallGetTop(mut line_id: i32, mut pos_out: *mut Vec) {
+    melee_core::ct!("mpLeftWallGetTop");
     let mut kind: u32 = 0;
     #[derive(Clone, Copy)] #[repr(C)] struct Local11 { id: i32 }
     let mut w: Local11 = unsafe { core::mem::zeroed() };
@@ -3563,6 +3620,7 @@ pub unsafe fn mpLeftWallGetTop(mut line_id: i32, mut pos_out: *mut Vec) {
 
 /// `mpLeftWallGetBottom`
 pub unsafe fn mpLeftWallGetBottom(mut line_id: i32, mut pos_out: *mut Vec) {
+    melee_core::ct!("mpLeftWallGetBottom");
     let mut kind: u32 = 0;
     #[derive(Clone, Copy)] #[repr(C)] struct Local11 { id: i32 }
     let mut w: Local11 = unsafe { core::mem::zeroed() };
@@ -3604,6 +3662,7 @@ pub unsafe fn mpLeftWallGetBottom(mut line_id: i32, mut pos_out: *mut Vec) {
 
 /// `mpRightWallGetTop`
 pub unsafe fn mpRightWallGetTop(mut line_id: i32, mut pos_out: *mut Vec) {
+    melee_core::ct!("mpRightWallGetTop");
     let mut kind: u32 = 0;
     #[derive(Clone, Copy)] #[repr(C)] struct Local11 { id: i32 }
     let mut w: Local11 = unsafe { core::mem::zeroed() };
@@ -3645,6 +3704,7 @@ pub unsafe fn mpRightWallGetTop(mut line_id: i32, mut pos_out: *mut Vec) {
 
 /// `mpRightWallGetBottom`
 pub unsafe fn mpRightWallGetBottom(mut line_id: i32, mut pos_out: *mut Vec) {
+    melee_core::ct!("mpRightWallGetBottom");
     let mut line_offset: i32 = 0;
     #[derive(Clone, Copy)] #[repr(C)] struct Local11 { id: i32 }
     let mut w: Local11 = unsafe { core::mem::zeroed() };
@@ -3686,6 +3746,7 @@ pub unsafe fn mpRightWallGetBottom(mut line_id: i32, mut pos_out: *mut Vec) {
 
 /// `mpLineGetV1Pos`
 pub unsafe fn mpLineGetV1Pos(mut line_id: i32, mut pos_out: *mut Vec) {
+    melee_core::ct!("mpLineGetV1Pos");
     let mut v1: *mut CollVtx = null_mut();
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
@@ -3700,6 +3761,7 @@ pub unsafe fn mpLineGetV1Pos(mut line_id: i32, mut pos_out: *mut Vec) {
 
 /// `mpLineGetV0Pos`
 pub unsafe fn mpLineGetV0Pos(mut line_id: i32, mut pos_out: *mut Vec) {
+    melee_core::ct!("mpLineGetV0Pos");
     let mut v0: *mut CollVtx = null_mut();
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
@@ -3714,6 +3776,7 @@ pub unsafe fn mpLineGetV0Pos(mut line_id: i32, mut pos_out: *mut Vec) {
 
 /// `mpLineGetKind`
 pub unsafe fn mpLineGetKind(mut line_id: i32) -> i32 {
+    melee_core::ct!("mpLineGetKind");
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
             if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4573, line_id)); panic!("mpLineGetKind: assertion failed"); }
@@ -3724,6 +3787,7 @@ pub unsafe fn mpLineGetKind(mut line_id: i32) -> i32 {
 
 /// `mpLineGetFlags`
 pub unsafe fn mpLineGetFlags(mut line_id: i32) -> u32 {
+    melee_core::ct!("mpLineGetFlags");
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
             if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4583, line_id)); panic!("mpLineGetFlags: assertion failed"); }
@@ -3734,6 +3798,7 @@ pub unsafe fn mpLineGetFlags(mut line_id: i32) -> u32 {
 
 /// `mpLib_80054D68`
 pub unsafe fn mpLib_80054D68(mut line_id: i32, mut flags: u32) {
+    melee_core::ct!("mpLib_80054D68");
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
             if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4595, line_id)); panic!("mpLib_80054D68: assertion failed"); }
@@ -3748,6 +3813,7 @@ pub unsafe fn mpLib_80054D68(mut line_id: i32, mut flags: u32) {
 
 /// `mpLineGetNormal`
 pub unsafe fn mpLineGetNormal(mut line_id: i32, mut normal_out: *mut Vec) -> *mut Vec {
+    melee_core::ct!("mpLineGetNormal");
     let mut line: *mut MapLine = null_mut();
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
@@ -3770,6 +3836,7 @@ pub unsafe fn mpLineGetNormal(mut line_id: i32, mut normal_out: *mut Vec) -> *mu
 
 /// `mpLib_80054ED8`
 pub unsafe fn mpLib_80054ED8(mut line_id: i32) -> i32 {
+    melee_core::ct!("mpLib_80054ED8");
     if !(ext::ScriptGame_StageLineActive(line_id) != 0) {
         return 0;
     }
@@ -3821,6 +3888,7 @@ unsafe fn mpLineGetPrevFrom(mut line: *mut MapLine, mut flags_base: *const u32) 
 
 /// `mpLinesConnected`
 pub unsafe fn mpLinesConnected(mut start_id: i32, mut target_id: i32) -> i32 {
+    melee_core::ct!("mpLinesConnected");
     let mut line_id: i32 = 0;
     let mut kind: u32 = 0;
     let mut start_line: *mut MapLine = null_mut();
@@ -3860,6 +3928,7 @@ pub unsafe fn mpLinesConnected(mut start_id: i32, mut target_id: i32) -> i32 {
 
 /// `mpLib_800552B0`
 pub unsafe fn mpLib_800552B0(mut joint_id: i32, mut jobj: *mut HSD_JObj, mut z: i32) {
+    melee_core::ct!("mpLib_800552B0");
     let mut i: i32 = 0;
     let mut r7: *mut HSD_JObj = null_mut();
     {
@@ -3903,6 +3972,7 @@ pub unsafe fn mpLib_800552B0(mut joint_id: i32, mut jobj: *mut HSD_JObj, mut z: 
 
 /// `mpJointHide`
 pub unsafe fn mpJointHide(mut joint_id: i32) {
+    melee_core::ct!("mpJointHide");
     let mut joint: *mut CollJoint = null_mut();
     let mut line: *mut CollLine = null_mut();
     let mut count: i32 = 0;
@@ -3942,6 +4012,7 @@ pub unsafe fn mpJointHide(mut joint_id: i32) {
 
 /// `mpJointUnhide`
 pub unsafe fn mpJointUnhide(mut joint_id: i32) {
+    melee_core::ct!("mpJointUnhide");
     let mut joint: *mut CollJoint = null_mut();
     let mut line: *mut CollLine = null_mut();
     let mut vtx: *mut CollVtx = null_mut();
@@ -3992,6 +4063,7 @@ pub unsafe fn mpJointUnhide(mut joint_id: i32) {
 
 /// `mpJointUpdateDynamics`
 pub unsafe fn mpJointUpdateDynamics(mut joint_id: i32) {
+    melee_core::ct!("mpJointUpdateDynamics");
     let mut TAN30: f64 = 0.577350295784245f64;
     let mut TAN60: f64 = 1.7320508368950045f64;
     let mut joint: *mut CollJoint = core::ptr::addr_of_mut!(*groundCollJoint.offset(joint_id as isize)) as *mut CollJoint;
@@ -4047,6 +4119,7 @@ pub unsafe fn mpJointUpdateDynamics(mut joint_id: i32) {
 
 /// `mpLib_80055E24`
 pub unsafe fn mpLib_80055E24(mut joint_id: i32) {
+    melee_core::ct!("mpLib_80055E24");
     let mut var_r6: i32 = 0;
     let mut joint: *mut CollJoint = core::ptr::addr_of_mut!(*groundCollJoint.offset(joint_id as isize)) as *mut CollJoint;
     mpJointUpdateDynamics(joint_id);
@@ -4059,6 +4132,7 @@ pub unsafe fn mpLib_80055E24(mut joint_id: i32) {
 
 /// `mpLib_80055E9C`
 pub unsafe fn mpLib_80055E9C(mut joint_id: i32) {
+    melee_core::ct!("mpLib_80055E9C");
     if ext::ScriptGame_StageSlotJointUpdate(joint_id) != 0 {
         return;
     }
@@ -4247,6 +4321,7 @@ pub unsafe fn mpLib_80055E9C(mut joint_id: i32) {
 
 /// `mpJointUpdateBounding`
 pub unsafe fn mpJointUpdateBounding(mut joint_id: i32) {
+    melee_core::ct!("mpJointUpdateBounding");
     let mut joint: *mut CollJoint = core::ptr::addr_of_mut!(*groundCollJoint.offset(joint_id as isize)) as *mut CollJoint;
     let mut vtx: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*joint).inner).vtx_start as isize)) as *mut CollVtx;
     let mut count: i32 = (*(*joint).inner).vtx_count as i32;
@@ -4274,6 +4349,7 @@ pub unsafe fn mpJointUpdateBounding(mut joint_id: i32) {
 
 /// `mpLib_8005667C`
 pub unsafe fn mpLib_8005667C(mut joint_id: i32) {
+    melee_core::ct!("mpLib_8005667C");
     let mut var_r6: i32 = 0;
     let mut joint: *mut CollJoint = core::ptr::addr_of_mut!(*groundCollJoint.offset(joint_id as isize)) as *mut CollJoint;
     if (!(((*joint).flags & (((CollJoint_Hidden as i32) | (CollJoint_B11 as i32)) as u32)) != 0)) && (((*joint).flags & ((CollJoint_Enabled as i32) as u32)) != 0) {
@@ -4284,6 +4360,7 @@ pub unsafe fn mpLib_8005667C(mut joint_id: i32) {
 
 /// `mpVtxGetPos`
 pub unsafe fn mpVtxGetPos(mut vtx_id: i32, mut x_out: *mut f32, mut y_out: *mut f32) {
+    melee_core::ct!("mpVtxGetPos");
     let mut vtx: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset(vtx_id as isize)) as *mut CollVtx;
     *x_out = (*vtx).pos.x;
     *y_out = (*vtx).pos.y;
@@ -4291,6 +4368,7 @@ pub unsafe fn mpVtxGetPos(mut vtx_id: i32, mut x_out: *mut f32, mut y_out: *mut 
 
 /// `mpVtxSetPos`
 pub unsafe fn mpVtxSetPos(mut vtx_id: i32, mut x: f32, mut y: f32) {
+    melee_core::ct!("mpVtxSetPos");
     let mut vtx: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset(vtx_id as isize)) as *mut CollVtx;
     (*vtx).pos.x = x;
     (*vtx).pos.y = y;
@@ -4298,6 +4376,7 @@ pub unsafe fn mpVtxSetPos(mut vtx_id: i32, mut x: f32, mut y: f32) {
 
 /// `mpLineSetPos`
 pub unsafe fn mpLineSetPos(mut line_id: i32, mut x0: f32, mut y0: f32, mut x1: f32, mut y1: f32) {
+    melee_core::ct!("mpLineSetPos");
     let mut line: *mut CollLine = core::ptr::addr_of_mut!(*groundCollLine.offset(line_id as isize)) as *mut CollLine;
     mpVtxSetPos((*(*line).x0).v0_idx as i32, x0, y0);
     mpVtxSetPos((*(*line).x0).v1_idx as i32, x1, y1);
@@ -4305,6 +4384,7 @@ pub unsafe fn mpLineSetPos(mut line_id: i32, mut x0: f32, mut y0: f32, mut x1: f
 
 /// `mpLib_80056758`
 pub unsafe fn mpLib_80056758(mut line_id: i32, mut x0: f32, mut y0: f32, mut x1: f32, mut y1: f32) {
+    melee_core::ct!("mpLib_80056758");
     let mut line: *mut CollLine = core::ptr::addr_of_mut!(*groundCollLine.offset(line_id as isize)) as *mut CollLine;
     let mut vtx: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*line).x0).v0_idx as isize)) as *mut CollVtx;
     (*vtx).pos.x = (*vtx).x0 + x0;
@@ -4316,6 +4396,7 @@ pub unsafe fn mpLib_80056758(mut line_id: i32, mut x0: f32, mut y0: f32, mut x1:
 
 /// `mpGetSpeed`
 pub unsafe fn mpGetSpeed(mut line_id: i32, mut pos: *mut Vec, mut speed: *mut Vec) -> i32 {
+    melee_core::ct!("mpGetSpeed");
     let mut new_x: f32 = 0.0;
     let mut new_y: f32 = 0.0;
     let mut v0_r5: *mut CollVtx = null_mut();
@@ -4359,11 +4440,13 @@ unsafe fn mpLib_StageRow() -> i32 {
 
 /// `mpLib_800569EC`
 pub unsafe fn mpLib_800569EC(mut unk: u32) -> f32 {
+    melee_core::ct!("mpLib_800569EC");
     return (*(*mpLib_803BF248[mpLib_StageRow() as usize].x4)[(unk as u8) as usize]).x0;
 }
 
 /// `mpLib_80056A1C`
 pub unsafe fn mpLib_80056A1C(mut arg0: i32, mut arg1: *mut i32) -> *mut i32 {
+    melee_core::ct!("mpLib_80056A1C");
     let mut temp: *mut mpLib_803BF248_t_x4 = (*mpLib_803BF248[mpLib_StageRow() as usize].x4)[(arg0 as u8) as usize];
     *arg1 = (*temp).x14[0 as usize];
     return (*temp).x4.as_mut_ptr();
@@ -4371,6 +4454,7 @@ pub unsafe fn mpLib_80056A1C(mut arg0: i32, mut arg1: *mut i32) -> *mut i32 {
 
 /// `mpLib_80056A54`
 pub unsafe fn mpLib_80056A54(mut arg0: i32, mut arg1: *mut i32) -> i32 {
+    melee_core::ct!("mpLib_80056A54");
     let mut temp: *mut mpLib_803BF248_t_x4 = (*mpLib_803BF248[mpLib_StageRow() as usize].x4)[(arg0 as u8) as usize];
     *arg1 = (*temp).x14[2 as usize];
     return (*temp).x14[1 as usize];
@@ -4378,6 +4462,7 @@ pub unsafe fn mpLib_80056A54(mut arg0: i32, mut arg1: *mut i32) -> i32 {
 
 /// `mpLib_80056A8C`
 pub unsafe fn mpLib_80056A8C(mut arg0: i32, mut arg1: *mut i32) -> *mut i32 {
+    melee_core::ct!("mpLib_80056A8C");
     let mut temp: *mut mpLib_803BF248_t_x4 = (*mpLib_803BF248[mpLib_StageRow() as usize].x4)[(arg0 as u8) as usize];
     *arg1 = (*temp).x30[0 as usize];
     return (*temp).x20.as_mut_ptr();
@@ -4385,6 +4470,7 @@ pub unsafe fn mpLib_80056A8C(mut arg0: i32, mut arg1: *mut i32) -> *mut i32 {
 
 /// `mpLib_80056AC4`
 pub unsafe fn mpLib_80056AC4(mut arg0: i32, mut arg1: *mut i32) -> i32 {
+    melee_core::ct!("mpLib_80056AC4");
     let mut temp: *mut mpLib_803BF248_t_x4 = (*mpLib_803BF248[mpLib_StageRow() as usize].x4)[(arg0 as u8) as usize];
     *arg1 = (*temp).x30[2 as usize];
     return (*temp).x30[1 as usize];
@@ -4392,6 +4478,7 @@ pub unsafe fn mpLib_80056AC4(mut arg0: i32, mut arg1: *mut i32) -> i32 {
 
 /// `mpLib_80056AFC`
 pub unsafe fn mpLib_80056AFC(mut arg0: i32, mut arg1: *mut i32) -> *mut i32 {
+    melee_core::ct!("mpLib_80056AFC");
     let mut temp: *mut mpLib_803BF248_t_x4 = (*mpLib_803BF248[mpLib_StageRow() as usize].x4)[(arg0 as u8) as usize];
     *arg1 = (*temp).x4C[0 as usize];
     return (*temp).x3C.as_mut_ptr();
@@ -4399,6 +4486,7 @@ pub unsafe fn mpLib_80056AFC(mut arg0: i32, mut arg1: *mut i32) -> *mut i32 {
 
 /// `mpLib_80056B34`
 pub unsafe fn mpLib_80056B34(mut arg0: i32, mut arg1: *mut i32) -> i32 {
+    melee_core::ct!("mpLib_80056B34");
     let mut temp: *mut mpLib_803BF248_t_x4 = (*mpLib_803BF248[mpLib_StageRow() as usize].x4)[(arg0 as u8) as usize];
     *arg1 = (*temp).x4C[2 as usize];
     return (*temp).x4C[1 as usize];
@@ -4419,6 +4507,7 @@ unsafe fn sqrtf_store(mut x: f32, mut y: *mut f32) -> f32 {
 
 /// `mpJointFromLine`
 pub unsafe fn mpJointFromLine(mut line_id: i32) -> i32 {
+    melee_core::ct!("mpJointFromLine");
     if line_id != (-1_i32) {
         let mut i: i32 = 0;
         let mut v0_idx: i32 = 0;
@@ -4450,6 +4539,7 @@ pub unsafe fn mpJointFromLine(mut line_id: i32) -> i32 {
 /// spent on wall / ceiling lines). The two `goto block_30/55` jumps into the else arm become the
 /// `run` flag. `sqrt_tmp - 4` (a stack-layout hack in the C) is an ordinary scratch float here.
 pub unsafe fn mpLib_80056C54(mut line_id: i32, mut pos: *mut Vec3, mut line_id_out: *mut i32, mut vec_out: *mut Vec3, mut flags_out: *mut u32, mut normal_out: *mut Vec3, mut var_f25: f32, mut arg7: f32) -> i32 {
+    melee_core::ct!("mpLib_80056C54");
     let mut sp64: f32 = 0.0;
     let mut sp58: Vec3 = core::mem::zeroed();
     let mut sp4C: Vec3 = core::mem::zeroed();
@@ -4576,6 +4666,7 @@ pub unsafe fn mpLib_80056C54(mut line_id: i32, mut pos: *mut Vec3, mut line_id_o
 
 /// `mpLib_80057424`
 pub unsafe fn mpLib_80057424(mut joint_id: i32) {
+    melee_core::ct!("mpLib_80057424");
     let mut joint: *mut CollJoint = core::ptr::addr_of_mut!(*groundCollJoint.offset(joint_id as isize)) as *mut CollJoint;
     let mut j_inner: *mut MapJoint = (*joint).inner;
     let mut count: u32 = (*j_inner).vtx_count as u32;
@@ -4594,6 +4685,7 @@ pub unsafe fn mpLib_80057424(mut joint_id: i32) {
 
 /// `mpLib_80057528`
 pub unsafe fn mpLib_80057528(mut line_id: i32) {
+    melee_core::ct!("mpLib_80057528");
     let mut joint_id: i32 = mpJointFromLine(line_id);
     if joint_id != (-1_i32) {
         let mut line: *mut CollLine = core::ptr::addr_of_mut!(*groundCollLine.offset(line_id as isize)) as *mut CollLine;
@@ -4606,6 +4698,7 @@ pub unsafe fn mpLib_80057528(mut line_id: i32) {
 
 /// `mpLib_800575B0`
 pub unsafe fn mpLib_800575B0(mut line_id: i32) {
+    melee_core::ct!("mpLib_800575B0");
     let mut joint_id: i32 = mpJointFromLine(line_id);
     if joint_id != (-1_i32) {
         let mut line: *mut CollLine = core::ptr::addr_of_mut!(*groundCollLine.offset(line_id as isize)) as *mut CollLine;
@@ -4618,6 +4711,7 @@ pub unsafe fn mpLib_800575B0(mut line_id: i32) {
 
 /// `mpJointListAdd`
 pub unsafe fn mpJointListAdd(mut joint_id: i32) {
+    melee_core::ct!("mpJointListAdd");
     let mut joint: *mut CollJoint = null_mut();
     let mut j_inner: *mut MapJoint = null_mut();
     let mut count_r7: i32 = 0;
@@ -4677,6 +4771,7 @@ pub unsafe fn mpJointListAdd(mut joint_id: i32) {
 
 /// `mpJointListUnlink`
 pub unsafe fn mpJointListUnlink(mut arg0: *mut CollJoint) {
+    melee_core::ct!("mpJointListUnlink");
     let mut cur: *mut CollJoint = null_mut();
     if arg0 == jointListStart {
         if arg0 == jointListEnd {
@@ -4704,6 +4799,7 @@ pub unsafe fn mpJointListUnlink(mut arg0: *mut CollJoint) {
 
 /// `mpLib_80057BC0`
 pub unsafe fn mpLib_80057BC0(mut joint_id: i32) {
+    melee_core::ct!("mpLib_80057BC0");
     let mut joint: *mut CollJoint = null_mut();
     let mut j_inner: *mut MapJoint = null_mut();
     let mut count: i32 = 0;
@@ -4762,6 +4858,7 @@ pub unsafe fn mpLib_80057BC0(mut joint_id: i32) {
 
 /// `mpLib_80057FDC`
 pub unsafe fn mpLib_80057FDC(mut joint_id: i32) {
+    melee_core::ct!("mpLib_80057FDC");
     let mut j_inner: *mut MapJoint = null_mut();
     let mut var_r6: i32 = 0;
     let mut joint: *mut CollJoint = core::ptr::addr_of_mut!(*groundCollJoint.offset(joint_id as isize)) as *mut CollJoint;
@@ -4775,6 +4872,7 @@ pub unsafe fn mpLib_80057FDC(mut joint_id: i32) {
 
 /// `mpLib_80058044`
 pub unsafe fn mpLib_80058044(mut joint_id: i32) {
+    melee_core::ct!("mpLib_80058044");
     let mut j_inner: *mut MapJoint = null_mut();
     let mut var_r6: i32 = 0;
     let mut joint: *mut CollJoint = core::ptr::addr_of_mut!(*groundCollJoint.offset(joint_id as isize)) as *mut CollJoint;
@@ -4788,12 +4886,14 @@ pub unsafe fn mpLib_80058044(mut joint_id: i32) {
 
 /// `mpJointSetB10`
 pub unsafe fn mpJointSetB10(mut joint_id: i32) {
+    melee_core::ct!("mpJointSetB10");
     let mut joint: *mut CollJoint = core::ptr::addr_of_mut!(*groundCollJoint.offset(joint_id as isize)) as *mut CollJoint;
     (*joint).flags = (*joint).flags | ((CollJoint_B10 as i32) as u32);
 }
 
 /// `mpJointSetCb1`
 pub unsafe fn mpJointSetCb1(mut joint_id: i32, mut user_data: *mut c_void, mut cb: Option<unsafe extern "C" fn(*mut c_void, i32, *mut CollData, i32, u32, f32)>) {
+    melee_core::ct!("mpJointSetCb1");
     let mut joint: *mut CollJoint = core::ptr::addr_of_mut!(*groundCollJoint.offset(joint_id as isize)) as *mut CollJoint;
     (*joint).cb_0 = cb;
     (*joint).cb_data_0 = user_data as *mut Ground;
@@ -4801,6 +4901,7 @@ pub unsafe fn mpJointSetCb1(mut joint_id: i32, mut user_data: *mut c_void, mut c
 
 /// `mpJointClearCb1`
 pub unsafe fn mpJointClearCb1(mut joint_id: i32) {
+    melee_core::ct!("mpJointClearCb1");
     let mut joint: *mut CollJoint = core::ptr::addr_of_mut!(*groundCollJoint.offset(joint_id as isize)) as *mut CollJoint;
     (*joint).cb_0 = None;
     (*joint).cb_data_0 = null_mut();
@@ -4808,6 +4909,7 @@ pub unsafe fn mpJointClearCb1(mut joint_id: i32) {
 
 /// `mpJointGetCb1`
 pub unsafe fn mpJointGetCb1(mut joint_id: i32, mut cb: *mut Option<unsafe extern "C" fn(*mut c_void, i32, *mut CollData, i32, u32, f32)>, mut user_data: *mut *mut c_void) {
+    melee_core::ct!("mpJointGetCb1");
     let mut joint: *mut CollJoint = core::ptr::addr_of_mut!(*groundCollJoint.offset(joint_id as isize)) as *mut CollJoint;
     *cb = (*joint).cb_0;
     *user_data = (*joint).cb_data_0 as *mut c_void;
@@ -4815,6 +4917,7 @@ pub unsafe fn mpJointGetCb1(mut joint_id: i32, mut cb: *mut Option<unsafe extern
 
 /// `mpLib_8005811C`
 pub unsafe fn mpLib_8005811C(mut coll: *mut CollData, mut ledge_id: i32) {
+    melee_core::ct!("mpLib_8005811C");
     if ledge_id != (-1_i32) {
         let mut joint_id: i32 = mpJointFromLine(ledge_id);
         if joint_id != (-1_i32) {
@@ -4829,6 +4932,7 @@ pub unsafe fn mpLib_8005811C(mut coll: *mut CollData, mut ledge_id: i32) {
 
 /// `mpJointSetCb2`
 pub unsafe fn mpJointSetCb2(mut joint_id: i32, mut gp: *mut c_void, mut cb: Option<unsafe extern "C" fn(*mut c_void, i32, *mut CollData, i32, u32, f32)>) {
+    melee_core::ct!("mpJointSetCb2");
     let mut joint: *mut CollJoint = core::ptr::addr_of_mut!(*groundCollJoint.offset(joint_id as isize)) as *mut CollJoint;
     (*joint).cb_1 = cb;
     (*joint).cb_data_1 = gp as *mut Ground;
@@ -4836,6 +4940,7 @@ pub unsafe fn mpJointSetCb2(mut joint_id: i32, mut gp: *mut c_void, mut cb: Opti
 
 /// `mpJointGetCb2`
 pub unsafe fn mpJointGetCb2(mut joint_id: i32, mut cb: *mut Option<unsafe extern "C" fn(*mut c_void, i32, *mut CollData, i32, u32, f32)>, mut user_data: *mut *mut c_void) {
+    melee_core::ct!("mpJointGetCb2");
     let mut joint: *mut CollJoint = core::ptr::addr_of_mut!(*groundCollJoint.offset(joint_id as isize)) as *mut CollJoint;
     *cb = (*joint).cb_1;
     *user_data = (*joint).cb_data_1 as *mut c_void;
@@ -4850,6 +4955,7 @@ unsafe fn mpLib_GetJointVtxRange(mut joint: *mut CollJoint, mut start: *mut i32,
 
 /// `mpLib_800581DC`
 pub unsafe fn mpLib_800581DC(mut joint_id0: i32, mut joint_id1: i32) {
+    melee_core::ct!("mpLib_800581DC");
     if (ext::ScriptGame_StageJoint(joint_id0) != 0) || (ext::ScriptGame_StageJoint(joint_id1) != 0) {
         return;
     }
@@ -5025,6 +5131,7 @@ pub unsafe fn mpLib_800581DC(mut joint_id0: i32, mut joint_id1: i32) {
 
 /// `mpLib_80058560`
 pub unsafe fn mpLib_80058560() {
+    melee_core::ct!("mpLib_80058560");
     let mut temp_r29: *mut MapCollData = mpLib_804D64B4;
     let mut i: i32 = 0;
     let mut j: i32 = 0;
@@ -5051,6 +5158,7 @@ pub unsafe fn mpLib_80058560() {
 
 /// `mpLib_80058614_Floor`
 pub unsafe fn mpLib_80058614_Floor() {
+    melee_core::ct!("mpLib_80058614_Floor");
     let mut jp: *mut CollJoint = null_mut();
     let mut count_r8: i32 = 0;
     let mut count_r5: i32 = 0;
@@ -5173,12 +5281,14 @@ pub unsafe fn mpLib_80058614_Floor() {
 
 /// `mpLib_800587FC`
 pub unsafe extern "C" fn mpLib_800587FC(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mpLib_800587FC");
     mpLib_80058614_Floor();
     ext::grDynamicAttr_801CA224();
 }
 
 /// `mpLib_80058820`
 pub unsafe fn mpLib_80058820() {
+    melee_core::ct!("mpLib_80058820");
     let mut r#box: *mut mpCollisionBox = mpLib_80458868.as_mut_ptr();
     let mut gobj: *mut HSD_GObj = ext::GObj_Create(1 as u16, 6 as u8, 0 as u8);
     if !gobj.is_null() { (); } else { panic!("mpLib_80058820: assertion failed"); }
@@ -5192,11 +5302,13 @@ pub unsafe fn mpLib_80058820() {
 
 /// `mpCheckedBounding`
 pub unsafe fn mpCheckedBounding() -> i32 {
+    melee_core::ct!("mpCheckedBounding");
     return didCheckBounding;
 }
 
 /// `mpBoundingCheck`
 pub unsafe fn mpBoundingCheck(mut left: f32, mut bottom: f32, mut right: f32, mut top: f32) {
+    melee_core::ct!("mpBoundingCheck");
     let mut curr: *mut CollJoint = jointListStart;
     'l317: while !curr.is_null() {
         if ((ext::ScriptGame_StageJointActive((curr.offset_from(groundCollJoint) as i64) as i32) != 0) && (((*curr).flags & ((CollJoint_Enabled as i32) as u32)) != 0)) && (!(((*curr).flags & ((CollJoint_Hidden as i32) as u32)) != 0)) {
@@ -5217,6 +5329,7 @@ pub unsafe fn mpBoundingCheck(mut left: f32, mut bottom: f32, mut right: f32, mu
 
 /// `mpBoundingCheck2`
 pub unsafe fn mpBoundingCheck2(mut x1: f32, mut y1: f32, mut x2: f32, mut y2: f32) {
+    melee_core::ct!("mpBoundingCheck2");
     let mut right: f32 = 0.0;
     let mut left: f32 = 0.0;
     let mut bottom: f32 = 0.0;
@@ -5240,6 +5353,7 @@ pub unsafe fn mpBoundingCheck2(mut x1: f32, mut y1: f32, mut x2: f32, mut y2: f3
 
 /// `mpBoundingCheck3`
 pub unsafe fn mpBoundingCheck3(mut x0: f32, mut y0: f32, mut x1: f32, mut y1: f32, mut x2: f32, mut y2: f32, mut x3: f32, mut y3: f32) {
+    melee_core::ct!("mpBoundingCheck3");
     let mut right: f32 = 0.0;
     let mut left: f32 = 0.0;
     let mut bottom: f32 = 0.0;
@@ -5283,6 +5397,7 @@ pub unsafe fn mpBoundingCheck3(mut x0: f32, mut y0: f32, mut x1: f32, mut y1: f3
 
 /// `mpUncheckBounding`
 pub unsafe fn mpUncheckBounding() {
+    melee_core::ct!("mpUncheckBounding");
     let mut curr: *mut CollJoint = jointListStart;
     'l318: while !curr.is_null() {
         (*curr).flags = (*curr).flags & ((!(CollJoint_TooFar as i32)) as u32);
@@ -5293,6 +5408,7 @@ pub unsafe fn mpUncheckBounding() {
 
 /// `mpLib_SetupDraw`
 pub unsafe fn mpLib_SetupDraw(mut color: GXColor) {
+    melee_core::ct!("mpLib_SetupDraw");
     let mut spC: HSD_TevDesc = unsafe { core::mem::zeroed() };
     ext::HSD_StateInitTev();
     spC.flags = 0 as u32;
@@ -5313,6 +5429,7 @@ pub unsafe fn mpLib_SetupDraw(mut color: GXColor) {
 
 /// `mpLib_DrawEcbs`
 pub unsafe fn mpLib_DrawEcbs(mut cd: *mut CollData) {
+    melee_core::ct!("mpLib_DrawEcbs");
     let mut spE0: GXColor = GXColor { r: 255 as u8, g: 160 as u8, b: 48 as u8, a: 255 as u8 };
     let mut spDC: GXColor = GXColor { r: 128 as u8, g: 80 as u8, b: 24 as u8, a: 255 as u8 };
     let mut spD8: GXColor = GXColor { r: 255 as u8, g: 90 as u8, b: 32 as u8, a: 255 as u8 };
@@ -5395,6 +5512,7 @@ unsafe fn mpLib_CopyColor(mut color: GXColor) -> GXColor {
 
 /// `mpLib_DrawSnapping`
 pub unsafe fn mpLib_DrawSnapping() {
+    melee_core::ct!("mpLib_DrawSnapping");
     let mut left_snap_color: GXColor = mpLib_804D80E0;
     let mut right_snap_color: GXColor = mpLib_804D80E4;
     let mut item_r28: *mut HSD_GObj = null_mut();
@@ -5521,6 +5639,7 @@ unsafe fn mpLib_DrawMatchingLines(mut value: i32, mut flag: i32, mut color: *con
 
 /// `mpLib_80059554`
 pub unsafe fn mpLib_80059554() {
+    melee_core::ct!("mpLib_80059554");
     let mut line_r7: *mut CollLine = null_mut();
     let mut line_r4: *mut CollLine = null_mut();
     let mut v0_r6: *mut CollVtx = null_mut();
@@ -5796,6 +5915,7 @@ pub unsafe fn mpLib_80059554() {
 
 /// `mpLib_80059E60`
 pub unsafe fn mpLib_80059E60() {
+    melee_core::ct!("mpLib_80059E60");
     let mut sp104: [[f32; 4]; 3] = unsafe { core::mem::zeroed() };
     ext::HSD_LObjSetupInit(ext::HSD_CObjGetCurrent());
     ext::GXSetCullMode((GX_CULL_NONE as i32) as u32);
@@ -5838,6 +5958,7 @@ pub unsafe fn mpLib_80059E60() {
 
 /// `mpLib_DrawCrosses`
 pub unsafe fn mpLib_DrawCrosses(mut idx: *mut i16, mut len: i32, mut arg2: GXColor) {
+    melee_core::ct!("mpLib_DrawCrosses");
     let mut sp34: Vec3 = unsafe { core::mem::zeroed() };
     let mut i: i32 = 0;
     let mut vtx: *mut Vec = null_mut();
@@ -5875,6 +5996,7 @@ pub unsafe fn mpLib_DrawCrosses(mut idx: *mut i16, mut len: i32, mut arg2: GXCol
 
 /// `mpLib_DrawSpecialPoints`
 pub unsafe fn mpLib_DrawSpecialPoints() {
+    melee_core::ct!("mpLib_DrawSpecialPoints");
     mpLib_DrawCrosses(mpLib_SpawnVtxIds.as_mut_ptr(), 4, mpLib_804D8128);
     mpLib_DrawCrosses(mpLib_RespawnVtxIds.as_mut_ptr(), 4, mpLib_804D812C);
     mpLib_DrawCrosses(mpLib_ItemSpawnVtxIds.as_mut_ptr(), 21, mpLib_804D8130);
@@ -5885,6 +6007,7 @@ pub unsafe fn mpLib_DrawSpecialPoints() {
 
 /// `mpLib_8005A2DC`
 pub unsafe fn mpLib_8005A2DC() {
+    melee_core::ct!("mpLib_8005A2DC");
     mpLib_DrawSnapping();
     mpLib_80059E60();
     if mpLib_804D64D0 == 0 {
@@ -5896,6 +6019,7 @@ pub unsafe fn mpLib_8005A2DC() {
 
 /// `mpLib_DrawZones`
 pub unsafe fn mpLib_DrawZones() {
+    melee_core::ct!("mpLib_DrawZones");
     let mut _3: [u8; 4] = [0; 4];
     let mut sp7C: [[f32; 4]; 3] = unsafe { core::mem::zeroed() };
     let mut _2: [u8; 56] = [0; 56];
@@ -6059,6 +6183,7 @@ pub static mut mp_script_isolation: MpScriptIsolation = unsafe { core::mem::zero
 
 /// `mpScriptStageIsolationActive`
 pub unsafe fn mpScriptStageIsolationActive() -> i32 {
+    melee_core::ct!("mpScriptStageIsolationActive");
     ((!mp_script_isolation.map.is_null())
         && mp_script_isolation.map == mpLib_804D64B4
         && mp_script_isolation.lines == groundCollLine
@@ -6067,6 +6192,7 @@ pub unsafe fn mpScriptStageIsolationActive() -> i32 {
 
 /// `mpScriptStageIsolationSet`: hides the original ranges (lines disabled, joint ranges emptied) for a script stage, or restores them
 pub unsafe fn mpScriptStageIsolationSet(lines: i32, joints: i32, isolate: i32) -> i32 {
+    melee_core::ct!("mpScriptStageIsolationSet");
     if isolate == 0 {
         // A replaced/freed scene cannot be restored through stale heap pointers.
         if mpScriptStageIsolationActive() != 0 {

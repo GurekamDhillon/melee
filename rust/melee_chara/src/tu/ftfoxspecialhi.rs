@@ -118,16 +118,20 @@ fn stick_get_dir(x1: f32, x2: f32) -> f32 {
 
 /// `ftCommon_8007F76C` as the `x21F8` callback entry.
 pub unsafe extern "C" fn cb_ftCommon_8007F76C(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftCommon_8007F76C");
     melee_fighter::ftcommon2::ftcommon_8007f76c(&mut *fpp(g));
 }
 pub unsafe extern "C" fn cb_ftFx_SpecialHi_CreateLaunchGFX(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftFx_SpecialHi_CreateLaunchGFX");
     ftFx_SpecialHi_CreateLaunchGFX(g);
 }
 pub unsafe extern "C" fn cb_ftFx_SpecialHi_CreateChargeGFX(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftFx_SpecialHi_CreateChargeGFX");
     ftFx_SpecialHi_CreateChargeGFX(g);
 }
 
 pub fn ftFx_SpecialHi_CreateLaunchGFX(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialHi_CreateLaunchGFX");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).x2219_b0() == 0 {
@@ -141,6 +145,7 @@ pub fn ftFx_SpecialHi_CreateLaunchGFX(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_SpecialHi_CreateChargeGFX(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialHi_CreateChargeGFX");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).x2219_b0() == 0 {
@@ -154,6 +159,7 @@ pub fn ftFx_SpecialHi_CreateChargeGFX(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_SpecialHi_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialHi_Enter");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -169,6 +175,7 @@ pub fn ftFx_SpecialHi_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_SpecialAirHiStart_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirHiStart_Enter");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -186,6 +193,7 @@ pub fn ftFx_SpecialAirHiStart_Enter(gobj: *mut HSD_GObj) {
 
 /// `ftFox_SpecialHi_RotateModel` (static).
 pub fn ftFox_SpecialHi_RotateModel(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFox_SpecialHi_RotateModel");
     unsafe {
         let fp = fpp(gobj);
         let bone = ext::ftParts_GetBoneIndex(fp, FtPart_XRotN as i32);
@@ -195,6 +203,7 @@ pub fn ftFox_SpecialHi_RotateModel(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_SpecialHiHold_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialHiHold_Anim");
     unsafe {
         let fp = fpp(gobj);
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -208,6 +217,7 @@ pub fn ftFx_SpecialHiHold_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_SpecialHiHoldAir_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialHiHoldAir_Anim");
     unsafe {
         let fp = fpp(gobj);
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -222,10 +232,12 @@ pub fn ftFx_SpecialHiHoldAir_Anim(gobj: *mut HSD_GObj) {
 
 /// Gobj entry for the fighter-only port `chars::ftFox::ftfoxspecialhi::ftFx_SpecialHiHoldAir_Phys`.
 pub fn ftFx_SpecialHiHoldAir_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialHiHoldAir_Phys");
     unsafe { crate::chars::ftFox::ftfoxspecialhi::ftFx_SpecialHiHoldAir_Phys(&mut *fpp(gobj)) }
 }
 
 pub fn ftFx_SpecialHi_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialHi_Anim");
     unsafe {
         let fp = fpp(gobj);
         (*fp).mv.fx.SpecialHi.travelFrames -= 1;
@@ -240,6 +252,7 @@ pub fn ftFx_SpecialHi_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_SpecialAirHi_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirHi_Anim");
     unsafe {
         let fp = fpp(gobj);
         (*fp).mv.fx.SpecialHi.travelFrames -= 1;
@@ -254,6 +267,7 @@ pub fn ftFx_SpecialAirHi_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_SpecialHi_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialHi_Phys");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -267,6 +281,7 @@ pub fn ftFx_SpecialHi_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_SpecialAirHi_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirHi_Phys");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -284,6 +299,7 @@ pub fn ftFx_SpecialAirHi_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_SpecialHi_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialHi_Coll");
     unsafe {
         let fp = fpp(gobj);
 
@@ -303,6 +319,7 @@ pub fn ftFx_SpecialHi_Coll(gobj: *mut HSD_GObj) {
 
 /// `ftFox_SpecialHi_IsBound` (static inline).
 pub fn ftFox_SpecialHi_IsBound(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftFox_SpecialHi_IsBound");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -325,6 +342,7 @@ unsafe fn air_hi_coll_facing(gobj: *mut HSD_GObj, fp: *mut Fighter) {
 }
 
 pub fn ftFx_SpecialAirHi_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirHi_Coll");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -361,6 +379,7 @@ pub fn ftFx_SpecialAirHi_Coll(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_SpecialAirHi_AirToGround(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirHi_AirToGround");
     unsafe {
         let fp = fpp(gobj);
         let mut stick_y = (*fp).input.lstick[0].y;
@@ -407,6 +426,7 @@ pub fn ftFx_SpecialAirHi_AirToGround(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_SpecialAirHi_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirHi_Enter");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -448,6 +468,7 @@ pub fn ftFx_SpecialAirHi_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_SpecialHiLanding_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialHiLanding_Phys");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -457,6 +478,7 @@ pub fn ftFx_SpecialHiLanding_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_SpecialHiFall_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialHiFall_Coll");
     if st::ft_CheckGroundAndLedge(gobj, CLIFFCATCH_BOTH) != 0 {
         ftFx_SpecialHiFall_Enter(gobj);
         return;
@@ -467,6 +489,7 @@ pub fn ftFx_SpecialHiFall_Coll(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_SpecialHiFall_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialHiFall_Enter");
     unsafe {
         st::ftCommon_8007D7FC(&mut *fpp(gobj));
         st::Fighter_ChangeMotionState(
@@ -483,6 +506,7 @@ pub fn ftFx_SpecialHiFall_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_SpecialHiFall_AirToGround(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialHiFall_AirToGround");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_8007DB24(gobj);
@@ -495,6 +519,7 @@ pub fn ftFx_SpecialHiFall_AirToGround(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_SpecialHiLanding_GroundToAir(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialHiLanding_GroundToAir");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_8007DB24(gobj);
@@ -504,6 +529,7 @@ pub fn ftFx_SpecialHiLanding_GroundToAir(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_SpecialHiBound_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialHiBound_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -539,6 +565,7 @@ pub fn ftFx_SpecialHiBound_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_SpecialHiBound_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialHiBound_Phys");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).ground_or_air == GA_Air {
@@ -552,6 +579,7 @@ pub fn ftFx_SpecialHiBound_Phys(gobj: *mut HSD_GObj) {
 
 /// `ftFox_SpecialHiBound_SetVars` (static inline): the rebound spark, aimed along the floor.
 pub fn ftFox_SpecialHiBound_SetVars(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFox_SpecialHiBound_SetVars");
     unsafe {
         let fp = fpp(gobj);
         let mut f: f32 = if (*fp).coll_data.env_flags & Collide_FloorMask != 0 {
@@ -573,6 +601,7 @@ pub fn ftFox_SpecialHiBound_SetVars(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_SpecialHiBound_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialHiBound_Enter");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);

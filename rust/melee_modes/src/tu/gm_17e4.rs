@@ -50,14 +50,17 @@ pub mod ext {
 }
 
 pub unsafe fn gm_GetAdventureData() -> *mut UnkAdventureData {
+    melee_core::ct!("gm_GetAdventureData");
     core::ptr::addr_of_mut!(lbl_80472C30)
 }
 
 pub unsafe fn gm_8017E430() -> u8 {
+    melee_core::ct!("gm_8017E430");
     (*gm_GetAdventureData()).x0.x0.slot
 }
 
 pub unsafe fn gm_8017E440() -> u8 {
+    melee_core::ct!("gm_8017E440");
     let r31 = gm_GetAdventureData();
     if ext::gm_RumbleEnabledForPlayer((*r31).x0.x0.slot as i32, (*r31).x0.x0.nametag as i32) == 0 {
         return 4;
@@ -67,6 +70,7 @@ pub unsafe fn gm_8017E440() -> u8 {
 
 /// Number of VS scenes before `scene` in the Adventure state table.
 pub unsafe fn gm_8017E48C(scene: *mut GameModeState) -> u8 {
+    melee_core::ct!("gm_8017E48C");
     let mut count: u8 = 0;
     let mut i = 0usize;
     while (*scene).id != ext::gm_Mode_Adventure_States[i].id {
@@ -80,6 +84,7 @@ pub unsafe fn gm_8017E48C(scene: *mut GameModeState) -> u8 {
 
 /// The `gm_803DE650` record for scene index `arg0`, or NULL.
 pub unsafe fn gm_8017E4C4(arg0: u8) -> *mut gm_803DE650_t {
+    melee_core::ct!("gm_8017E4C4");
     let mut ptr = core::ptr::addr_of_mut!(ext::gm_803DE650) as *mut gm_803DE650_t;
     while (*ptr).x0 != 0xFF {
         if (*ptr).x0 == arg0 {
@@ -97,50 +102,62 @@ unsafe fn entry(difficulty: u8, stage_slot: u8) -> &'static AdventureStageEntry 
 
 /// Adventure stage kind for the given difficulty and stage slot.
 pub unsafe fn gm_8017E500(difficulty: u8, stage_slot: u8) -> u8 {
+    melee_core::ct!("gm_8017E500");
     entry(difficulty, stage_slot).stage_kind
 }
 
 pub unsafe fn gm_8017E528(difficulty: u8, stage_slot: u8) -> f32 {
+    melee_core::ct!("gm_8017E528");
     entry(difficulty, stage_slot).scale0_pct as f32 / 100.0
 }
 
 pub unsafe fn gm_8017E578(difficulty: u8, stage_slot: u8) -> f32 {
+    melee_core::ct!("gm_8017E578");
     entry(difficulty, stage_slot).scale1_pct as f32 / 100.0
 }
 
 pub unsafe fn gm_8017E5C8(difficulty: u8, stage_slot: u8, arg2: u8) -> u8 {
+    melee_core::ct!("gm_8017E5C8");
     entry(difficulty, stage_slot).pad_6[arg2 as usize * 3]
 }
 
 pub unsafe fn gm_8017E5FC(difficulty: u8, stage_slot: u8, arg2: u8) -> u8 {
+    melee_core::ct!("gm_8017E5FC");
     entry(difficulty, stage_slot).pad_6[1 + arg2 as usize * 3]
 }
 
 pub unsafe fn gm_8017E630(difficulty: u8, stage_slot: u8, arg2: u8) -> u8 {
+    melee_core::ct!("gm_8017E630");
     entry(difficulty, stage_slot).pad_6[arg2 as usize * 3 + 2]
 }
 
 pub unsafe fn gm_8017E664(difficulty: u8, stage_slot: u8) -> f32 {
+    melee_core::ct!("gm_8017E664");
     entry(difficulty, stage_slot).scale0_pct as f32 / 100.0
 }
 
 pub unsafe fn gm_8017E6B4(difficulty: u8, stage_slot: u8) -> f32 {
+    melee_core::ct!("gm_8017E6B4");
     entry(difficulty, stage_slot).scale1_pct as f32 / 100.0
 }
 
 pub unsafe fn gm_8017E704(difficulty: u8, stage_slot: u8, arg2: u8) -> u8 {
+    melee_core::ct!("gm_8017E704");
     entry(difficulty, stage_slot).pad_6[0x0E + arg2 as usize * 3]
 }
 
 pub unsafe fn gm_8017E738(difficulty: u8, stage_slot: u8, arg2: u8) -> u8 {
+    melee_core::ct!("gm_8017E738");
     entry(difficulty, stage_slot).pad_6[0xF + arg2 as usize * 3]
 }
 
 pub unsafe fn gm_8017E76C(difficulty: u8, stage_slot: u8, arg2: u8) -> u8 {
+    melee_core::ct!("gm_8017E76C");
     entry(difficulty, stage_slot).pad_6[0x10 + arg2 as usize * 3]
 }
 
 pub unsafe fn gm_8017E7A0(match_result: u8) {
+    melee_core::ct!("gm_8017E7A0");
     if match_result as i32 == OUTCOME_TIMEOUT as i32 {
         ext::Player_LoseStock(0);
         ext::ifStatus_802F6948(0);
@@ -149,10 +166,12 @@ pub unsafe fn gm_8017E7A0(match_result: u8) {
 }
 
 pub unsafe fn gm_8017E7E0() -> i32 {
+    melee_core::ct!("gm_8017E7E0");
     ((*gm_GetAdventureData()).x7C == 0x14) as i32
 }
 
 pub unsafe fn gm_8017E7FC(match_result: u8) {
+    melee_core::ct!("gm_8017E7FC");
     let r31 = gm_GetAdventureData();
     let cond = ext::gm_GetCurrentGameMode() as i32 == GM_ADVENTURE as i32
         && (*r31).x0.x0.cpu_level >= 2
@@ -177,6 +196,7 @@ unsafe fn set_flag(flags: *mut u8, byte: usize, bit: u32) {
 
 /// The C takes the `MatchEnd*` as an `int` (a GameCube pointer); native code takes the pointer.
 pub unsafe fn fn_8017E8A4(arg0: *mut MatchEnd) {
+    melee_core::ct!("fn_8017E8A4");
     let gm = ext::gmVs_GetSceneController();
     let stage = gm_8017E4C4(ext::gm_GetCurrentSceneIndex());
     let adv = core::ptr::addr_of_mut!(lbl_80472C30);

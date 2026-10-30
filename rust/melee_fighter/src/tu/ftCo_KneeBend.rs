@@ -41,6 +41,7 @@ pub mod ext {
 }
 
 pub fn ftCo_KneeBend_Enter(g: G, jump_input: ftCo_JumpInput) {
+    melee_core::ct!("ftCo_KneeBend_Enter");
     let f = fp(g);
     unsafe {
         f.mv.co.kneebend.jump_input = jump_input;
@@ -50,6 +51,7 @@ pub fn ftCo_KneeBend_Enter(g: G, jump_input: ftCo_JumpInput) {
 }
 
 pub fn ftCo_KneeBend_Anim(g: G) {
+    melee_core::ct!("ftCo_KneeBend_Anim");
     let f = fp(g);
     if f.cur_anim_frame >= f.co_attrs.jump_startup_time || !ext::ftAnim_IsFramesRemaining(g) {
         if ext::ft_800D2D0C(g) {
@@ -61,6 +63,7 @@ pub fn ftCo_KneeBend_Anim(g: G) {
 }
 
 pub fn ftCo_KneeBend_Check_ShortHop(g: G) {
+    melee_core::ct!("ftCo_KneeBend_Check_ShortHop");
     let f = fp(g);
     let thr = crate::hooks::common_data().tap_jump_release_threshold;
     let ji = unsafe { f.mv.co.kneebend.jump_input };
@@ -73,6 +76,7 @@ pub fn ftCo_KneeBend_Check_ShortHop(g: G) {
 }
 
 pub fn ftCo_KneeBend_IASA(g: G) {
+    melee_core::ct!("ftCo_KneeBend_IASA");
     if ext::ftCo_Attack100_CheckInput(g) { return; }
     if ext::ftCo_Catch_CheckInput(g) { return; }
     if ext::ftCo_AttackHi4_CheckInputNoD0(g) { return; }
@@ -80,9 +84,11 @@ pub fn ftCo_KneeBend_IASA(g: G) {
 }
 
 pub fn ftCo_KneeBend_Phys(g: G) {
+    melee_core::ct!("ftCo_KneeBend_Phys");
     ext::ft_80084F3C(g);
 }
 
 pub fn ftCo_KneeBend_Coll(g: G) {
+    melee_core::ct!("ftCo_KneeBend_Coll");
     ext::ft_80083F88(g);
 }

@@ -66,10 +66,12 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 }
 
 pub fn ftMt_SpecialLw_ClearDisableGObj(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialLw_ClearDisableGObj");
     unsafe { (*fpp(gobj)).u.mt.x222C_disableGObj = core::ptr::null_mut() }
 }
 
 pub fn ftMt_SpecialLw_RemoveDisable(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialLw_RemoveDisable");
     unsafe {
         if !(*fpp(gobj)).u.mt.x222C_disableGObj.is_null() {
             ext::itMewtwoDisable_Logic67_Destroy((*fpp(gobj)).u.mt.x222C_disableGObj);
@@ -79,6 +81,7 @@ pub fn ftMt_SpecialLw_RemoveDisable(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMt_SpecialLw_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialLw_Anim");
     unsafe {
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
             if !(*fpp(gobj)).u.mt.x222C_disableGObj.is_null() {
@@ -91,6 +94,7 @@ pub fn ftMt_SpecialLw_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMt_SpecialAirLw_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialAirLw_Anim");
     unsafe {
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
             if !(*fpp(gobj)).u.mt.x222C_disableGObj.is_null() {
@@ -103,6 +107,7 @@ pub fn ftMt_SpecialAirLw_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMt_SpecialAirLw_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialAirLw_Phys");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftMewtwoAttributes;
@@ -118,6 +123,7 @@ pub fn ftMt_SpecialAirLw_Phys(gobj: *mut HSD_GObj) {
 /// `ftMt_SpecialLw_CreateDisable` (the `accessory4_cb`): spawn the Disable projectile on the
 /// frame the script sets cmd_vars[0].
 pub fn ftMt_SpecialLw_CreateDisable(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialLw_CreateDisable");
     unsafe {
         let fp = fpp(gobj);
         let mut sp18 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };

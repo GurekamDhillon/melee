@@ -44,16 +44,19 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 }
 
 pub fn ftCa_Init_OnItemPickup(gobj: *mut HSD_GObj, arg1: i32) {
+    melee_core::ct!("ftCa_Init_OnItemPickup");
     Fighter_OnItemPickup(gobj, arg1, 1, 1);
 }
 
 /// Used for both OnItemRelease and OnUnknownItemRelated.
 pub fn ftCa_Init_OnItemDrop(gobj: *mut HSD_GObj, bool1: i32) {
+    melee_core::ct!("ftCa_Init_OnItemDrop");
     Fighter_OnItemDrop(gobj, bool1, 1, 1);
 }
 
 /// `PUSH_ATTRS(fp, ftCaptain_DatAttrs)`: copy ext_attr into the backup, point dat_attrs at it.
 pub fn ftCa_Init_OnLoadForGanon(fp: *mut Fighter) {
+    melee_core::ct!("ftCa_Init_OnLoadForGanon");
     unsafe {
         let backup = (*fp).dat_attrs_backup;
         let src = (*(*fp).ft_data).ext_attr as *const ftCaptain_DatAttrs;
@@ -63,6 +66,7 @@ pub fn ftCa_Init_OnLoadForGanon(fp: *mut Fighter) {
 }
 
 pub fn ftCa_Init_OnLoad(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_Init_OnLoad");
     unsafe {
         let fp = fpp(gobj);
         (*fp).set_can_walljump(1);
@@ -72,6 +76,7 @@ pub fn ftCa_Init_OnLoad(gobj: *mut HSD_GObj) {
 
 /// `COPY_ATTRS(gobj, ftCaptain_DatAttrs)`.
 pub fn ftCa_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_Init_LoadSpecialAttrs");
     unsafe {
         let fp = fpp(gobj);
         *((*fp).dat_attrs as *mut ftCaptain_DatAttrs) = *((*(*fp).ft_data).ext_attr as *const ftCaptain_DatAttrs);

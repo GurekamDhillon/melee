@@ -55,6 +55,7 @@ pub mod ext {
 }
 
 pub fn ftCo_8009F0F0(g: G) -> bool {
+    melee_core::ct!("ftCo_8009F0F0");
     let f = fp(g);
     let m = f.motion_id as i32;
     if (m == ftCo_MS_DownBoundU
@@ -73,6 +74,7 @@ pub fn ftCo_8009F0F0(g: G) -> bool {
 
 /// static `ftCo_8009F184`.
 pub fn ftCo_8009F184(g: G) {
+    melee_core::ct!("ftCo_8009F184");
     let f = fp(g);
     let msid = if f.motion_id as i32 == ftCo_MS_DownWaitU { ftCo_MS_DownDamageU } else { ftCo_MS_DownDamageD };
     ext::ftCo_8008DCE0(g, msid, f.facing_dir);
@@ -80,6 +82,7 @@ pub fn ftCo_8009F184(g: G) {
 }
 
 pub fn ftCo_DownDamage_Anim(g: G) {
+    melee_core::ct!("ftCo_DownDamage_Anim");
     let f = fp(g);
     if f.x2224_b2() == 0 {
         unsafe { f.mv.co.downdamage.x0 -= 1.0 };
@@ -102,13 +105,15 @@ pub fn ftCo_DownDamage_Anim(g: G) {
     }
 }
 
-pub fn ftCo_DownDamage_IASA(_g: G) {}
+pub fn ftCo_DownDamage_IASA(_g: G) { melee_core::ct!("ftCo_DownDamage_IASA");}
 
 pub fn ftCo_DownDamage_Phys(g: G) {
+    melee_core::ct!("ftCo_DownDamage_Phys");
     ext::ftCo_Damage_Phys(g);
 }
 
 pub fn ftCo_DownDamage_Coll(g: G) {
+    melee_core::ct!("ftCo_DownDamage_Coll");
     if fp(g).ground_or_air == GA_Ground {
         if ext::ft_80082708(g) == GA_Ground {
             ext::ftCo_8008FC94(g);

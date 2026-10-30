@@ -52,6 +52,7 @@ pub const coll_mf: u32 = (Ft_MF_KeepGfx
 
 /// `doEnter` (static): enter the Pikachu or Pichu variant of the state, clearing the cmd vars.
 pub fn doEnter(gobj: G, pk_msid: i32, pc_msid: i32) {
+    melee_core::ct!("doEnter");
     unsafe {
         let fp = fpp(gobj);
         let mut msid = pk_msid;
@@ -69,16 +70,19 @@ pub fn doEnter(gobj: G, pk_msid: i32, pc_msid: i32) {
 }
 
 pub fn ftKb_SpecialNPk_800F9FD4(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNPk_800F9FD4");
     doEnter(gobj, ftKb_MS_PkSpecialN as i32, ftKb_MS_PcSpecialN as i32);
 }
 
 pub fn ftKb_SpecialNPk_800FA064(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNPk_800FA064");
     doEnter(gobj, ftKb_MS_PkSpecialAirN as i32, ftKb_MS_PcSpecialAirN as i32);
 }
 
 /// Jolt spawn position: `(scale.y * (off.x * facing)) + cur.x`, `(off.y * scale.y) + cur.y`, both
 /// fused (f32 `fmadds`: the product of the first is rounded to f32 before it enters the fma).
 pub fn jolt_pos(scale_y: f32, off: Vec2, facing: f32, cur: Vec3) -> Vec3 {
+    melee_core::ct!("jolt_pos");
     Vec3 { x: fmadds(scale_y, off.x * facing, cur.x), y: fmadds(off.y, scale_y, cur.y), z: 0.0 }
 }
 
@@ -104,6 +108,7 @@ unsafe fn spawn_jolt(gobj: G, fp: *mut Fighter, pk_off: Vec2, pc_off: Vec2) {
 }
 
 pub fn ftKb_PkSpecialN_Anim(gobj: G) {
+    melee_core::ct!("ftKb_PkSpecialN_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = &*((*fp).dat_attrs as *const ftKb_DatAttrs);
@@ -115,6 +120,7 @@ pub fn ftKb_PkSpecialN_Anim(gobj: G) {
 }
 
 pub fn ftKb_PkSpecialAirN_Anim(gobj: G) {
+    melee_core::ct!("ftKb_PkSpecialAirN_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = &*((*fp).dat_attrs as *const ftKb_DatAttrs);
@@ -137,8 +143,8 @@ pub fn ftKb_PkSpecialAirN_Anim(gobj: G) {
     }
 }
 
-pub fn ftKb_PkSpecialN_IASA(_gobj: G) {}
-pub fn ftKb_PkSpecialAirN_IASA(_gobj: G) {}
+pub fn ftKb_PkSpecialN_IASA(_gobj: G) { melee_core::ct!("ftKb_PkSpecialN_IASA");}
+pub fn ftKb_PkSpecialAirN_IASA(_gobj: G) { melee_core::ct!("ftKb_PkSpecialAirN_IASA");}
 
 /// Ground -> air; keeps the animation frame.
 unsafe fn coll_change(gobj: G, pk_ms: i32, pc_ms: i32, fp: *mut Fighter) {
@@ -151,6 +157,7 @@ unsafe fn coll_change(gobj: G, pk_ms: i32, pc_ms: i32, fp: *mut Fighter) {
 }
 
 pub fn ftKb_PkSpecialN_Coll(gobj: G) {
+    melee_core::ct!("ftKb_PkSpecialN_Coll");
     unsafe {
         if st::ft_80082708(gobj) == GA_Ground as i32 {
             let fp = fpp(gobj);
@@ -161,6 +168,7 @@ pub fn ftKb_PkSpecialN_Coll(gobj: G) {
 }
 
 pub fn ftKb_PkSpecialAirN_Coll(gobj: G) {
+    melee_core::ct!("ftKb_PkSpecialAirN_Coll");
     unsafe {
         if st::ft_80081D0C(gobj) == GA_Air as i32 {
             let fp = fpp(gobj);

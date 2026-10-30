@@ -67,6 +67,7 @@ unsafe fn fpp(gobj: G) -> *mut Fighter {
 }
 
 pub fn ftPp_SpecialAirN_Enter(gobj: G) {
+    melee_core::ct!("ftPp_SpecialAirN_Enter");
     unsafe {
         let fp = fpp(gobj);
         let icattr = (*fp).dat_attrs as *const ftIceClimberAttributes;
@@ -90,10 +91,11 @@ pub fn ftPp_SpecialAirN_Enter(gobj: G) {
     }
 }
 
-pub fn ftPp_SpecialN_IASA(_gobj: G) {}
-pub fn ftPp_SpecialAirN_IASA(_gobj: G) {}
+pub fn ftPp_SpecialN_IASA(_gobj: G) { melee_core::ct!("ftPp_SpecialN_IASA");}
+pub fn ftPp_SpecialAirN_IASA(_gobj: G) { melee_core::ct!("ftPp_SpecialAirN_IASA");}
 
 pub fn ftPp_SpecialN_Coll(gobj: G) {
+    melee_core::ct!("ftPp_SpecialN_Coll");
     unsafe {
         if st::ft_80082708(gobj) == 0 {
             let fp1 = fpp(gobj);
@@ -112,6 +114,7 @@ pub fn ftPp_SpecialN_Coll(gobj: G) {
 }
 
 pub fn ftPp_SpecialAirN_Coll(gobj: G) {
+    melee_core::ct!("ftPp_SpecialAirN_Coll");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftIceClimberAttributes;
@@ -144,6 +147,7 @@ unsafe fn inlineA0(gobj: G, other_fp: *mut Fighter) {
 }
 
 pub fn ftPp_SpecialN_8011F500(gobj: G) {
+    melee_core::ct!("ftPp_SpecialN_8011F500");
     unsafe {
         let fp = fpp(gobj);
         let cmd_var0 = (*fp).cmd_vars[0];

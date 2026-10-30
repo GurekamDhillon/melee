@@ -11,9 +11,10 @@ pub use crate::chars::r2::ftMasterHand::ftmasterhandsweepwait::{ftMh_MS_348_8015
 pub use crate::chars::r8::ftMasterHand::ftmasterhandsweepwait::ftMh_SweepWait_IASA;
 
 pub fn ftMh_SweepWait_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_SweepWait_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         ftMh_MS_389_80151018(gobj);
     }
 }
 
-pub fn ftMh_SweepWait_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_SweepWait_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_SweepWait_Coll");}

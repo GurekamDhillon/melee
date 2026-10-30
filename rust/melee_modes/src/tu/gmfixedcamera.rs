@@ -100,69 +100,82 @@ pub static mut gm_Mode_CameraVs_States: [GameModeState; 9] = unsafe {
 
 /// 1B9F10
 pub unsafe extern "C" fn gm_801B9F10(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B9F10");
     ext::gmVsMelee_EnterCss(scene, row(), 7);
     ext::gmFrontend_AtlasSelect(scene, 0, core::ptr::null());
 }
 
 /// 1B9F3C
 pub unsafe extern "C" fn gm_801B9F3C(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B9F3C");
     ext::gmVsMelee_ExitCss(scene, row());
 }
 
 /// 1B9F64
 pub unsafe extern "C" fn gm_801B9F64(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B9F64");
     ext::gmVsMelee_EnterSss(scene, row());
     ext::gmFrontend_AtlasSelect(scene, 1, core::ptr::null());
 }
 
 /// 1B9F8C
 pub unsafe extern "C" fn gm_801B9F8C(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B9F8C");
     ext::gmVsMelee_ExitSss(scene, row(), 0);
 }
 
 /// 1B9FB8: the per-match setup callback (`StartMeleeData*, StartMeleeData*`).
 pub unsafe extern "C" fn fn_801B9FB8(start: *mut StartMeleeData, _vs: *mut StartMeleeData) {
+    melee_core::ct!("fn_801B9FB8");
     (*start).rules.on_unpause_override = Some(ext::cb::gm_80165290);
 }
 
 /// 1B9FC8
 pub unsafe extern "C" fn gm_801B9FC8(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B9FC8");
     let data = row();
     ext::gmVsMelee_EnterVs(scene, data, Some(fn_801B9FB8), None);
 }
 
 /// 1B9FFC
 pub unsafe extern "C" fn gm_801B9FFC(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B9FFC");
     ext::gmVsMelee_ExitVs(scene, 4, 3);
 }
 
 /// 1BA024
 pub unsafe extern "C" fn gm_801BA024(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801BA024");
     let data = row();
     ext::gmVsMelee_EnterSuddenDeath(scene, data, Some(fn_801B9FB8), None);
 }
 
 /// 1BA058
 pub unsafe extern "C" fn gm_801BA058(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801BA058");
     ext::gmVsMelee_ExitSuddenDeath(scene);
 }
 
 /// 1BA078
 pub unsafe extern "C" fn gm_801BA078(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801BA078");
     ext::gmVsMelee_EnterResults(scene);
 }
 
 /// 1BA098
 pub unsafe extern "C" fn gm_801BA098(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801BA098");
     ext::gmVsMelee_ExitResults(scene, row(), 0);
 }
 
 /// `gm_Mode_CameraVs_OnInit`
 pub fn gm_Mode_CameraVs_OnInit() {
+    melee_core::ct!("gm_Mode_CameraVs_OnInit");
     unsafe { ext::gm_InitVsMode(row()) }
 }
 
 /// `gm_Mode_CameraVs_OnLoad`
 pub fn gm_Mode_CameraVs_OnLoad() {
+    melee_core::ct!("gm_Mode_CameraVs_OnLoad");
     ext::gmVsMelee_ResetKOCounts();
 }

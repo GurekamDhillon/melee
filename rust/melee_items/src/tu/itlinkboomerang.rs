@@ -121,6 +121,7 @@ pub static mut it_803F6920: [ItemStateTable; 4] = [
 ];
 
 pub unsafe fn norm_xF74(ip: *mut Item) {
+    melee_core::ct!("norm_xF74");
     let angle: f64;
     if (*ip).facing_dir == 1.0 {
         angle = (*ip).xDD4_itemVar.linkboomerang.xF74 as f64;
@@ -131,6 +132,7 @@ pub unsafe fn norm_xF74(ip: *mut Item) {
 }
 
 pub unsafe fn norm_xF74_from_angle(ip: *mut Item, angle_in: f32) {
+    melee_core::ct!("norm_xF74_from_angle");
     let angle: f64;
     if (*ip).facing_dir == 1.0 {
         angle = angle_in as f64;
@@ -141,6 +143,7 @@ pub unsafe fn norm_xF74_from_angle(ip: *mut Item, angle_in: f32) {
 }
 
 pub unsafe fn remove_boomerang(gobj: *mut Item_GObj) {
+    melee_core::ct!("remove_boomerang");
     let ip = GET_ITEM(gobj);
     let owner = (*ip).owner;
     if !owner.is_null() && owner == (*ip).xDD4_itemVar.linkboomerang.xF98 && (*ip).xDD4_itemVar.linkboomerang.xDE8 != 1 {
@@ -149,10 +152,12 @@ pub unsafe fn remove_boomerang(gobj: *mut Item_GObj) {
 }
 
 pub unsafe fn it_8029FDBC(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_8029FDBC");
     ((*GET_ITEM(gobj)).msid == 0) as i32
 }
 
 pub unsafe fn it_8029FDDC(gobj: *mut Item_GObj, arg1: i32) {
+    melee_core::ct!("it_8029FDDC");
     let ip = GET_ITEM(gobj);
     ext::it_8026EECC(gobj, arg1);
     for i in 0..2 {
@@ -164,6 +169,7 @@ pub unsafe fn it_8029FDDC(gobj: *mut Item_GObj, arg1: i32) {
 }
 
 pub unsafe fn it_8029FE64(gobj: *mut Item_GObj, i: i32) {
+    melee_core::ct!("it_8029FE64");
     let ip = (*gobj).user_data as *mut Item;
     let jobj = (*ip).xDD4_itemVar.linkboomerang.xF90[i as usize];
     let idx = (*ip).xDD4_itemVar.linkboomerang.xDDC[i as usize] as usize;
@@ -177,6 +183,7 @@ pub unsafe fn it_8029FE64(gobj: *mut Item_GObj, i: i32) {
 }
 
 pub unsafe fn it_802A013C_inline(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802A013C_inline");
     let ip = (*gobj).user_data as *mut Item;
     for i in 0..2 {
         let jobj = (*ip).xDD4_itemVar.linkboomerang.xF90[i];
@@ -188,6 +195,7 @@ pub unsafe fn it_802A013C_inline(gobj: *mut Item_GObj) {
 }
 
 pub unsafe fn it_802A013C_LoadAnim(attrs: *mut itLinkBoomerangAttributes, i: i32) -> *mut HSD_JObj {
+    melee_core::ct!("it_802A013C_LoadAnim");
     let joint: *mut HSD_Joint;
     let anim_bundle: *mut AnimBundle;
 
@@ -205,6 +213,7 @@ pub unsafe fn it_802A013C_LoadAnim(attrs: *mut itLinkBoomerangAttributes, i: i32
 }
 
 pub unsafe fn it_802A013C(facing_dir: f32, owner_gobj: *mut Fighter_GObj, pos: *mut Vec3, part: Fighter_Part, kind: i32) -> *mut HSD_GObj {
+    melee_core::ct!("it_802A013C");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
     spawn.kind = kind as _;
@@ -246,6 +255,7 @@ pub unsafe fn it_802A013C(facing_dir: f32, owner_gobj: *mut Fighter_GObj, pos: *
 }
 
 pub unsafe fn loop_lb_8000BA0C_gobj(gobj: *mut Item_GObj, mut hobj: *mut HSD_JObj, attrs: *mut itLinkBoomerangAttributes) {
+    melee_core::ct!("loop_lb_8000BA0C_gobj");
     let loop_arg = (*attrs).x30;
     let ip = GET_ITEM(gobj);
     for i in 0..2 {
@@ -257,6 +267,7 @@ pub unsafe fn loop_lb_8000BA0C_gobj(gobj: *mut Item_GObj, mut hobj: *mut HSD_JOb
 }
 
 pub unsafe fn loop_lb_8000BA0C_gobj_1(gobj: *mut Item_GObj, mut hobj: *mut HSD_JObj) {
+    melee_core::ct!("loop_lb_8000BA0C_gobj_1");
     let ip = GET_ITEM(gobj);
     for i in 0..2 {
         hobj = (*ip).xDD4_itemVar.linkboomerang.xF90[i];
@@ -267,6 +278,7 @@ pub unsafe fn loop_lb_8000BA0C_gobj_1(gobj: *mut Item_GObj, mut hobj: *mut HSD_J
 }
 
 pub unsafe fn it_802A0534(gobj: *mut Item_GObj, arg1: *mut Vec3, angle: f32) {
+    melee_core::ct!("it_802A0534");
     // `struct { u32 pad; Quaternion quad; } stack;` (only `quad` is used)
     let mut quad: Quaternion = core::mem::zeroed();
     let ip = (*gobj).user_data as *mut Item;
@@ -297,11 +309,13 @@ pub unsafe fn it_802A0534(gobj: *mut Item_GObj, arg1: *mut Vec3, angle: f32) {
 }
 
 pub unsafe fn it_802A07B4(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802A07B4");
     remove_boomerang(gobj);
     ext::Item_8026A8EC(gobj);
 }
 
 pub unsafe fn it_802A0810(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802A0810");
     let ip = GET_ITEM(gobj);
     for i in 0..2 {
         if !(*ip).xDD4_itemVar.linkboomerang.xF90[i].is_null() {
@@ -313,6 +327,7 @@ pub unsafe fn it_802A0810(gobj: *mut Item_GObj) {
 }
 
 pub unsafe fn itLinkBoomerang_Logic18_Destroyed(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLinkBoomerang_Logic18_Destroyed");
     let ip = GET_ITEM(gobj);
     remove_boomerang(gobj);
     it_802A0810(gobj);
@@ -321,6 +336,7 @@ pub unsafe fn itLinkBoomerang_Logic18_Destroyed(gobj: *mut Item_GObj) {
 }
 
 pub unsafe fn it_802A0930(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802A0930");
     let ip = (*gobj).user_data as *mut Item;
     for i in 0..2usize {
         let mut hobj = (*ip).xDD4_itemVar.linkboomerang.xF90[i];
@@ -341,10 +357,12 @@ pub unsafe fn it_802A0930(gobj: *mut Item_GObj) {
 }
 
 pub unsafe fn it_8029FE64_no_inline(gobj: *mut Item_GObj, i: i32) {
+    melee_core::ct!("it_8029FE64_no_inline");
     it_8029FE64(gobj, i);
 }
 
 pub unsafe fn it_802A0C34_sub_1(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802A0C34_sub_1");
     let ip = (*gobj).user_data as *mut Item;
     let attrs = attrs_of(ip);
     if (*ip).xDB0_itcmd_var1 == 0 {
@@ -364,6 +382,7 @@ pub unsafe fn it_802A0C34_sub_1(gobj: *mut Item_GObj) {
 }
 
 pub unsafe fn it_802A0C34_sub_2(gobj: *mut Item_GObj, rot: *mut Vec3) {
+    melee_core::ct!("it_802A0C34_sub_2");
     let ip = (*gobj).user_data as *mut Item;
     let idx = (*ip).xDD4_itemVar.linkboomerang.xDD8 as usize;
     let child = HSD_JObjGetChild((*gobj).hsd_obj as *mut HSD_JObj);
@@ -383,6 +402,7 @@ pub unsafe fn it_802A0C34_sub_2(gobj: *mut Item_GObj, rot: *mut Vec3) {
 }
 
 pub unsafe fn it_802A0C34(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802A0C34");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
     let mut rot: Vec3 = core::mem::zeroed();
@@ -409,6 +429,7 @@ pub unsafe fn it_802A0C34(gobj: *mut Item_GObj) -> i32 {
 }
 
 pub unsafe fn it_802A0E70(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802A0E70");
     let ip = GET_ITEM(gobj);
     let hobj = (*gobj).hsd_obj as *mut HSD_JObj;
     (*ip).xD0_itemStateDesc = (*(*(*ip).xC4_article_data).xC_itemStates).x0_itemStateDesc.as_mut_ptr();
@@ -422,6 +443,7 @@ pub unsafe fn it_802A0E70(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLinkboomerang_UnkMotion0_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLinkboomerang_UnkMotion0_Anim");
     let ip = GET_ITEM(gobj);
     if !(*ip).xDD4_itemVar.linkboomerang.xF98.is_null() && ext::ftLk_SpecialS_Is2071b0_5to13((*ip).xDD4_itemVar.linkboomerang.xF98) != 0 {
         it_802A07B4(gobj);
@@ -429,21 +451,25 @@ pub unsafe extern "C" fn itLinkboomerang_UnkMotion0_Anim(gobj: *mut Item_GObj) -
     0
 }
 
-pub unsafe fn it_802A0F84(_gobj: *mut Item_GObj) {}
+pub unsafe fn it_802A0F84(_gobj: *mut Item_GObj) { melee_core::ct!("it_802A0F84");}
 
 pub unsafe fn it_802A0F88(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802A0F88");
     ext::Item_80268E5C(gobj, 1, 2);
 }
 
 pub unsafe extern "C" fn itLinkboomerang_UnkMotion1_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLinkboomerang_UnkMotion1_Anim");
     it_802A0C34(gobj)
 }
 
 pub unsafe fn itLinkboomerang_get_x18(attrs: *mut itLinkBoomerangAttributes) -> f32 {
+    melee_core::ct!("itLinkboomerang_get_x18");
     (*attrs).x18
 }
 
 pub unsafe extern "C" fn itLinkboomerang_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLinkboomerang_UnkMotion1_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
     if (*ip).xDD4_itemVar.linkboomerang.xDE8 != 1 {
@@ -461,11 +487,13 @@ pub unsafe extern "C" fn itLinkboomerang_UnkMotion1_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLinkboomerang_UnkMotion1_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLinkboomerang_UnkMotion1_Coll");
     itLinkboomerang_UnkMotion2_Coll(gobj);
     0
 }
 
 pub unsafe fn it_802A10E4(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802A10E4");
     let mut quat: Quaternion = core::mem::zeroed();
 
     let hobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -481,10 +509,12 @@ pub unsafe fn it_802A10E4(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLinkboomerang_UnkMotion2_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLinkboomerang_UnkMotion2_Anim");
     it_802A0C34(gobj)
 }
 
 pub unsafe extern "C" fn itLinkboomerang_UnkMotion2_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLinkboomerang_UnkMotion2_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
     if (*ip).xDD4_itemVar.linkboomerang.xDE8 != 1 {
@@ -502,6 +532,7 @@ pub unsafe extern "C" fn itLinkboomerang_UnkMotion2_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe fn clamp_tau(angle: *mut f32) {
+    melee_core::ct!("clamp_tau");
     if *angle as f64 > M_TAU {
         *angle = (*angle as f64 - M_TAU) as f32;
     } else if (*angle as f64) < -M_TAU {
@@ -510,6 +541,7 @@ pub unsafe fn clamp_tau(angle: *mut f32) {
 }
 
 pub unsafe fn clamp_pi_tau(angle: *mut f32) {
+    melee_core::ct!("clamp_pi_tau");
     if (*angle as f64) < -M_PI {
         *angle = (*angle as f64 + M_TAU) as f32;
     } else if *angle as f64 > M_PI {
@@ -518,10 +550,12 @@ pub unsafe fn clamp_pi_tau(angle: *mut f32) {
 }
 
 pub unsafe fn it_802A13EC_inline(ip: *mut Item) -> f32 {
+    melee_core::ct!("it_802A13EC_inline");
     (*ip).pos.x
 }
 
 pub unsafe fn it_802A13EC(gobj: *mut Item_GObj) -> f32 {
+    melee_core::ct!("it_802A13EC");
     let ip = (*gobj).user_data as *mut Item;
     let mut ret: f32 = 0.0;
     let mut pos: Vec3 = core::mem::zeroed();
@@ -552,6 +586,7 @@ pub unsafe fn it_802A13EC(gobj: *mut Item_GObj) -> f32 {
 }
 
 pub unsafe fn it_802A15EC(gobj: *mut Item_GObj, arg1: *mut Vec3) {
+    melee_core::ct!("it_802A15EC");
     let ip = GET_ITEM(gobj);
     let angle = ext::lbVector_CosAngle(&mut (*ip).x40_vel, arg1);
     if angle < 0.0 {
@@ -568,10 +603,12 @@ pub unsafe fn it_802A15EC(gobj: *mut Item_GObj, arg1: *mut Vec3) {
 }
 
 pub unsafe fn it_802A15EC_no_inline(gobj: *mut Item_GObj, arg1: *mut Vec3) {
+    melee_core::ct!("it_802A15EC_no_inline");
     it_802A15EC(gobj, arg1);
 }
 
 pub unsafe extern "C" fn itLinkboomerang_UnkMotion2_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLinkboomerang_UnkMotion2_Coll");
     let child = HSD_JObjGetChild((*gobj).hsd_obj as *mut HSD_JObj);
     let ip = GET_ITEM(gobj);
     let coll = &raw mut (*ip).x378_itemColl;
@@ -604,10 +641,12 @@ pub unsafe extern "C" fn itLinkboomerang_UnkMotion2_Coll(gobj: *mut Item_GObj) -
 }
 
 pub unsafe fn it_802A19E0_no_inline(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802A19E0_no_inline");
     it_802A19E0(gobj);
 }
 
 pub unsafe fn clamp_angle_pi(angle: *mut f32) {
+    melee_core::ct!("clamp_angle_pi");
     if *angle <= 0.0 {
         *angle = (*angle as f64 + M_PI) as f32;
     } else {
@@ -616,6 +655,7 @@ pub unsafe fn clamp_angle_pi(angle: *mut f32) {
 }
 
 pub unsafe fn it_802A1948(gobj: *mut Item_GObj, arg1: i32) {
+    melee_core::ct!("it_802A1948");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
     clamp_angle_pi(&mut (*ip).xDD4_itemVar.linkboomerang.xF74);
@@ -629,6 +669,7 @@ pub unsafe fn it_802A1948(gobj: *mut Item_GObj, arg1: i32) {
 }
 
 pub unsafe fn it_802A19E0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802A19E0");
     let mut quat: Quaternion = core::mem::zeroed();
 
     let hobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -650,6 +691,7 @@ pub unsafe fn it_802A19E0(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLinkboomerang_UnkMotion3_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLinkboomerang_UnkMotion3_Anim");
     let ip = GET_ITEM(gobj);
     let child = HSD_JObjGetChild((*gobj).hsd_obj as *mut HSD_JObj);
     if (*ip).xDD4_itemVar.linkboomerang.xDE4 != 0 {
@@ -662,6 +704,7 @@ pub unsafe extern "C" fn itLinkboomerang_UnkMotion3_Anim(gobj: *mut Item_GObj) -
 }
 
 pub unsafe fn itLinkboomerang_UnkMotion3_Phys_sub(gobj: *mut Item_GObj, angle: f32) {
+    melee_core::ct!("itLinkboomerang_UnkMotion3_Phys_sub");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
     if (*ip).msid == 3 && angle < (*attrs).x2C {
@@ -685,6 +728,7 @@ pub unsafe fn itLinkboomerang_UnkMotion3_Phys_sub(gobj: *mut Item_GObj, angle: f
 }
 
 pub unsafe fn itLinkboomerang_UnkMotion3_Phys_add_clamp(mut x: f32, y: f32, max: f32) -> f32 {
+    melee_core::ct!("itLinkboomerang_UnkMotion3_Phys_add_clamp");
     x += y;
     if x > max {
         x = max;
@@ -693,6 +737,7 @@ pub unsafe fn itLinkboomerang_UnkMotion3_Phys_add_clamp(mut x: f32, y: f32, max:
 }
 
 pub unsafe extern "C" fn itLinkboomerang_UnkMotion3_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLinkboomerang_UnkMotion3_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
 
@@ -707,6 +752,7 @@ pub unsafe extern "C" fn itLinkboomerang_UnkMotion3_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe fn it_802A1F08(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802A1F08");
     let ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.linkboomerang.xDE8 != 1 && ((*ip).msid == 1 || (*ip).msid == 2) {
         let attrs = attrs_of(ip);
@@ -720,19 +766,23 @@ pub unsafe fn it_802A1F08(gobj: *mut Item_GObj) -> i32 {
 
 /// NOTE: identical to it_802A1F08
 pub unsafe fn it_802A1FA8(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802A1FA8");
     it_802A1F08(gobj)
 }
 
 /// NOTE: identical to it_802A1F08
 pub unsafe fn itLinkBoomerang_Logic18_Absorbed(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLinkBoomerang_Logic18_Absorbed");
     it_802A1F08(gobj)
 }
 
 pub unsafe fn it_802A20E8_inline(ip: *mut Item) -> f32 {
+    melee_core::ct!("it_802A20E8_inline");
     (*ip).pos.x
 }
 
 pub unsafe fn it_802A20E8(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802A20E8");
     let ip = (*gobj).user_data as *mut Item;
     let mut sp14: Vec3 = core::mem::zeroed();
     if (*ip).xDD4_itemVar.linkboomerang.xDE8 != 1 {
@@ -758,6 +808,7 @@ pub unsafe fn it_802A20E8(gobj: *mut Item_GObj) -> i32 {
 
 /// NOTE: identical to it_802A1F08 except for the msid check
 pub unsafe fn it_802A2288(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802A2288");
     let ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.linkboomerang.xDE8 != 1 && (*ip).msid != 3 {
         let attrs = attrs_of(ip);
@@ -770,6 +821,7 @@ pub unsafe fn it_802A2288(gobj: *mut Item_GObj) -> i32 {
 }
 
 pub unsafe fn it_802A2320(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802A2320");
     let ip = GET_ITEM(gobj);
     ext::lbVector_Mirror(&mut (*ip).x40_vel, &mut (*ip).xC58);
     (*ip).xDD4_itemVar.linkboomerang.xF74 = ext::atan2f((*ip).x40_vel.y, (*ip).x40_vel.x);
@@ -779,6 +831,7 @@ pub unsafe fn it_802A2320(gobj: *mut Item_GObj) -> i32 {
 }
 
 pub unsafe fn it_802A23CC(gobj: *mut Item_GObj, arg1: *mut HSD_GObj) {
+    melee_core::ct!("it_802A23CC");
     let ip = GET_ITEM(gobj);
     ext::it_8026B894(gobj, arg1);
     if (*ip).xDD4_itemVar.linkboomerang.xF98 == arg1 {

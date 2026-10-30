@@ -15,6 +15,7 @@ pub use crate::chars::r8::ftMasterHand::ftmasterhandtagapplaud::ftMh_TagApplaud_
 pub use crate::tu::ftcrazyhandthrow::ftCh_Init_8015A560;
 
 pub fn ftMh_TagApplaud_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_TagApplaud_Anim");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         if (*fp).cmd_vars[1] != 0 {
@@ -32,9 +33,10 @@ pub fn ftMh_TagApplaud_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftMh_TagApplaud_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_TagApplaud_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_TagApplaud_Coll");}
 
 pub fn ftMh_MS_383_80155484(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_383_80155484");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let gobj1 = bl::ftBossLib_GetFighterGObj(Ft_Kind_CrezyH);

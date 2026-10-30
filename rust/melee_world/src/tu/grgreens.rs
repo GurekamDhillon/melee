@@ -253,6 +253,7 @@ fn srem(a: i32, b: i32) -> i32 {
 
 /// `static inline randrange`
 pub unsafe fn randrange(min: i32, max: i32) -> i32 {
+    melee_core::ct!("randrange");
     let rng: i32;
     if min > max {
         let diff = min.wrapping_sub(max);
@@ -269,6 +270,7 @@ pub unsafe fn randrange(min: i32, max: i32) -> i32 {
 
 /// `static inline getBlock`
 pub unsafe fn getBlock(gp: *mut Ground, i: i32, j: i32) -> *mut grGreens_BlockVars {
+    melee_core::ct!("getBlock");
     (*(*gp).u.greens.x8_blocks.add(i as usize)).as_mut_ptr().add(j as usize)
 }
 
@@ -292,11 +294,13 @@ unsafe fn Ground_StartMapAnim(gobj: *mut Ground_GObj) {
 
 /// 213458
 pub unsafe extern "C" fn grGreens_80213458(_arg: i32) {
+    melee_core::ct!("grGreens_80213458");
     grGr_804D6AAC = 1;
 }
 
 /// 213460
 pub unsafe extern "C" fn grGreens_Init() {
+    melee_core::ct!("grGreens_Init");
     yakumono_param = ext::Ground_GetYakumonoParam() as *mut grGreens_YakumonoParam;
     ext::stage_info.unk8C.set_b4(0);
     ext::stage_info.unk8C.set_b5(1);
@@ -312,15 +316,17 @@ pub unsafe extern "C" fn grGreens_Init() {
 }
 
 /// 2134F4
-pub unsafe extern "C" fn grGreens_802134F4() {}
+pub unsafe extern "C" fn grGreens_802134F4() { melee_core::ct!("grGreens_802134F4");}
 
 /// 2134F8
 pub unsafe extern "C" fn grGreens_802134F8() {
+    melee_core::ct!("grGreens_802134F8");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
 
 /// 213524
 pub unsafe extern "C" fn grGreens_80213524(id: i32) -> *mut Ground_GObj {
+    melee_core::ct!("grGreens_80213524");
     let cbs = &raw mut grGr_callbacks[id as usize];
     let gobj = ext::Ground_GetStageGObj(id);
     if !gobj.is_null() {
@@ -345,6 +351,7 @@ pub unsafe extern "C" fn grGreens_80213524(id: i32) -> *mut Ground_GObj {
 
 /// 21360C
 pub unsafe extern "C" fn grGreens_8021360C(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grGreens_8021360C");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
     if grGr_804D6AAC != 0 {
@@ -365,60 +372,65 @@ pub unsafe extern "C" fn grGreens_8021360C(gobj: *mut Ground_GObj) {
 }
 
 /// 2138B4
-pub unsafe extern "C" fn grGreens_802138B4(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grGreens_802138B4(_arg: *mut Ground_GObj) { melee_core::ct!("grGreens_802138B4");}
 
 /// 2138B8
-pub unsafe extern "C" fn grGreens_802138B8(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grGreens_802138B8(_arg: *mut Ground_GObj) { melee_core::ct!("grGreens_802138B8");}
 
 /// 2138BC
 pub unsafe extern "C" fn grGreens_802138BC(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grGreens_802138BC");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
     (*gp).x11_flags.set_b012(2);
 }
 
 /// 213908
-pub unsafe extern "C" fn grGreens_80213908(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grGreens_80213908(_arg: *mut Ground_GObj) { melee_core::ct!("grGreens_80213908");}
 
 /// 21390C
-pub unsafe extern "C" fn grGreens_8021390C(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grGreens_8021390C(_arg: *mut Ground_GObj) { melee_core::ct!("grGreens_8021390C");}
 
 /// `static stageGObj1_OnInit`
 pub unsafe extern "C" fn stageGObj1_OnInit(gobj: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj1_OnInit");
     Ground_StartMapAnim(gobj);
 }
 
 /// 213944
-pub unsafe extern "C" fn grGreens_80213944(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grGreens_80213944(_arg: *mut Ground_GObj) { melee_core::ct!("grGreens_80213944");}
 
 /// 213948
-pub unsafe extern "C" fn grGreens_80213948(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grGreens_80213948(_arg: *mut Ground_GObj) { melee_core::ct!("grGreens_80213948");}
 
 /// `static stageGObj3_OnInit`
 pub unsafe extern "C" fn stageGObj3_OnInit(gobj: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj3_OnInit");
     Ground_StartMapAnim(gobj);
 }
 
 /// 213980
-pub unsafe extern "C" fn grGreens_80213980(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grGreens_80213980(_arg: *mut Ground_GObj) { melee_core::ct!("grGreens_80213980");}
 
 /// 213984
-pub unsafe extern "C" fn grGreens_80213984(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grGreens_80213984(_arg: *mut Ground_GObj) { melee_core::ct!("grGreens_80213984");}
 
 /// 213988
 pub unsafe extern "C" fn grGreens_80213988(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grGreens_80213988");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
 }
 
 /// 2139BC
-pub unsafe extern "C" fn grGreens_802139BC(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grGreens_802139BC(_arg: *mut Ground_GObj) { melee_core::ct!("grGreens_802139BC");}
 
 /// 2139C0
-pub unsafe extern "C" fn grGreens_802139C0(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grGreens_802139C0(_arg: *mut Ground_GObj) { melee_core::ct!("grGreens_802139C0");}
 
 /// 2139C4
 pub unsafe extern "C" fn grGreens_802139C4(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grGreens_802139C4");
     let gp = (*gobj).user_data as *mut Ground;
     ext::ftCo_800C06E8(gobj, 9, fn_80213B1C as *mut c_void);
     (*gp).u.greens.x0_flags.whole_thing = 0;
@@ -434,6 +446,7 @@ pub unsafe extern "C" fn grGreens_802139C4(gobj: *mut Ground_GObj) {
 
 /// 213AB4
 pub unsafe extern "C" fn grGreens_80213AB4(vec: *mut Vec, max_x: f32, mut min_x: f32, max_y: f32, mut min_y: f32) -> i32 {
+    melee_core::ct!("grGreens_80213AB4");
     let max_y_actual: f32;
     let max_x_actual: f32;
     if max_x > min_x {
@@ -458,6 +471,7 @@ pub unsafe extern "C" fn grGreens_80213AB4(vec: *mut Vec, max_x: f32, mut min_x:
 
 /// 213B1C (`fn_80213B1C`)
 pub unsafe extern "C" fn fn_80213B1C(ground_gobj: *mut Ground_GObj, fighter_gobj: *mut Fighter_GObj, vec: *mut Vec) -> i32 {
+    melee_core::ct!("fn_80213B1C");
     let mut vec2 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ext::ftLib_80086644(fighter_gobj, &mut vec2);
     (*vec).y = 0.0;
@@ -487,6 +501,7 @@ pub unsafe extern "C" fn fn_80213B1C(ground_gobj: *mut Ground_GObj, fighter_gobj
 
 /// `static inline get_whispy_dir`
 pub unsafe fn get_whispy_dir(gobj: *mut Ground_GObj, pos: *mut Vec3) -> i32 {
+    melee_core::ct!("get_whispy_dir");
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     HSD_JObjGetTranslation(&*jobj, &mut *pos);
     if ext::ftLib_800864A8(pos, null_mut()) == 1.0 { 1 } else { 0 }
@@ -519,6 +534,7 @@ unsafe fn next_pattern(gobj: *mut Ground_GObj) {
 
 /// 213C10
 pub unsafe extern "C" fn grGreens_80213C10(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grGreens_80213C10");
     let bg_gobj = ext::Ground_GetMapGObj(4);
     let gp = GET_GROUND(gobj);
     let bg_gp = GET_GROUND(bg_gobj);
@@ -684,6 +700,7 @@ pub unsafe extern "C" fn grGreens_80213C10(gobj: *mut Ground_GObj) {
 
 /// 214658 (`fn_80214658`)
 pub unsafe extern "C" fn fn_80214658(gobj: *mut Ground_GObj) {
+    melee_core::ct!("fn_80214658");
     let gp = GET_GROUND(gobj);
     (*gp).u.greens.x0_flags.anon_0.set_b0(0);
     grGr_804D6AAD = 0;
@@ -691,6 +708,7 @@ pub unsafe extern "C" fn fn_80214658(gobj: *mut Ground_GObj) {
 
 /// 214674
 pub unsafe extern "C" fn grGreens_80214674(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grGreens_80214674");
     let gp = GET_GROUND(gobj);
     let new_var = gobj;
     ext::Ground_InitMapColl((*gobj).hsd_obj as *mut HSD_JObj, (*gp).map_id as i32);
@@ -712,6 +730,7 @@ pub unsafe extern "C" fn grGreens_80214674(gobj: *mut Ground_GObj) {
 
 /// 21479C
 pub unsafe extern "C" fn grGreens_8021479C(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grGreens_8021479C");
     let gp = GET_GROUND(gobj);
     if (*gp).u.greens.x0_flags.anon_0.b0() == 0 {
         grGreens_802166C4(gobj);
@@ -725,6 +744,7 @@ pub unsafe extern "C" fn grGreens_8021479C(gobj: *mut Ground_GObj) {
 
 /// 214804
 pub unsafe extern "C" fn grGreens_80214804(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grGreens_80214804");
     let gp = GET_GROUND(gobj);
 
     ext::HSD_Free((*gp).u.corneria.xC8 as *mut c_void);
@@ -733,6 +753,7 @@ pub unsafe extern "C" fn grGreens_80214804(gobj: *mut Ground_GObj) {
 
 /// 21483C
 pub unsafe extern "C" fn grGreens_8021483C(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grGreens_8021483C");
     let mut vec = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut left_max: f32 = -3.4028235e38;
     let mut left_min: f32 = 3.4028235e38;
@@ -802,12 +823,14 @@ pub unsafe extern "C" fn grGreens_8021483C(gobj: *mut Ground_GObj) {
 
 /// `static inline BOMB`
 pub unsafe fn BOMB(idx: i32) {
+    melee_core::ct!("BOMB");
     grGr_8049F9E0[idx as usize] =
         if (if (*yakumono_param).x20 != 0 { ext::HSD_Randi((*yakumono_param).x20) } else { 0 }) != 0 { 1 } else { 2 };
 }
 
 /// 214B58
 pub unsafe extern "C" fn grGreens_80214B58(_gobj: *mut Ground_GObj) {
+    melee_core::ct!("grGreens_80214B58");
     let mut i = 0usize;
     while i < 24 {
         grGr_8049F9E0[i] = 0;
@@ -843,6 +866,7 @@ pub unsafe extern "C" fn grGreens_80214B58(_gobj: *mut Ground_GObj) {
 
 /// 214FA8
 pub unsafe extern "C" fn grGreens_80214FA8(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grGreens_80214FA8");
     let gp = GET_GROUND(gobj);
 
     let mut i: u32 = 0;
@@ -878,6 +902,7 @@ pub unsafe extern "C" fn grGreens_80214FA8(gobj: *mut Ground_GObj) {
 
 /// 2150C4
 pub unsafe extern "C" fn grGreens_802150C4(gobj: *mut Ground_GObj, arg1: i32, arg2: i32) {
+    melee_core::ct!("grGreens_802150C4");
     let gp = GET_GROUND(gobj);
 
     if arg2 > 0 && arg1 > 0 && (*blk(gp, arg2 - 1, arg1 - 1)).status() == 3 {
@@ -914,6 +939,7 @@ pub unsafe extern "C" fn grGreens_802150C4(gobj: *mut Ground_GObj, arg1: i32, ar
 
 /// `static inline get_block_material_params`
 pub unsafe fn get_block_material_params(block_type: i32, duration: *mut f32, scale: *mut f32) {
+    melee_core::ct!("get_block_material_params");
     let value: i32 = if block_type == 2 { (*yakumono_param).x28 } else { (*yakumono_param).x24 };
     *duration = value as f32 * ext::Ground_801C0498();
     *scale = 5.0 * ext::Ground_801C0498();
@@ -921,6 +947,7 @@ pub unsafe fn get_block_material_params(block_type: i32, duration: *mut f32, sca
 
 /// 215358
 pub unsafe extern "C" fn grGreens_80215358(gobj: *mut Ground_GObj, col: i32, row: i32, arg3: i32, arg4: i32) {
+    melee_core::ct!("grGreens_80215358");
     let gp = GET_GROUND(gobj);
     let block = blk(gp, row, col);
     let mut vec = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -998,6 +1025,7 @@ pub unsafe extern "C" fn grGreens_80215358(gobj: *mut Ground_GObj, col: i32, row
 
 /// 2159B8
 pub unsafe extern "C" fn grGreens_802159B8(gp: *mut Ground, i: i32, j: i32, gobj: *mut HSD_GObj) {
+    melee_core::ct!("grGreens_802159B8");
     let mut vec = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let item_gobj = (*blk(gp, j, i)).x10;
     if !item_gobj.is_null() && (*blk(gp, j, i)).x1_7() == 0 {
@@ -1029,6 +1057,7 @@ pub unsafe extern "C" fn grGreens_802159B8(gp: *mut Ground, i: i32, j: i32, gobj
 
 /// `static inline find_block`
 pub unsafe fn find_block(gp: *mut Ground, item_gobj: *mut Item_GObj, row: *mut i32, col: *mut i32) -> bool {
+    melee_core::ct!("find_block");
     let mut i = 0;
     while i < 5 {
         let mut j = 0;
@@ -1049,6 +1078,7 @@ pub unsafe fn find_block(gp: *mut Ground, item_gobj: *mut Item_GObj, row: *mut i
 
 /// 215B84 (`fn_80215B84`)
 pub unsafe extern "C" fn fn_80215B84(item_gobj: *mut Item_GObj, gp: *mut Ground, _arg2: *mut Vec, gobj: *mut HSD_GObj, _arg4: f32) {
+    melee_core::ct!("fn_80215B84");
     let ground = gp;
     let mut col: i32 = -1;
     let mut row: i32 = 0;
@@ -1062,6 +1092,7 @@ pub unsafe extern "C" fn fn_80215B84(item_gobj: *mut Item_GObj, gp: *mut Ground,
 
 /// 215D54
 pub unsafe extern "C" fn grGreens_80215D54(gobj: *mut Ground_GObj, arg1: i32, _arg2: i32) -> i32 {
+    melee_core::ct!("grGreens_80215D54");
     let gp = GET_GROUND(gobj);
 
     let mut row: i32 = 1;
@@ -1086,6 +1117,7 @@ pub unsafe extern "C" fn grGreens_80215D54(gobj: *mut Ground_GObj, arg1: i32, _a
 
 /// 215ED8
 pub unsafe extern "C" fn grGreens_80215ED8(gobj: *mut Ground_GObj, col: i32, row: i32) {
+    melee_core::ct!("grGreens_80215ED8");
     let gp = GET_GROUND(gobj);
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut scale: f32;
@@ -1188,6 +1220,7 @@ pub unsafe extern "C" fn grGreens_80215ED8(gobj: *mut Ground_GObj, col: i32, row
 
 /// 2166C4
 pub unsafe extern "C" fn grGreens_802166C4(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grGreens_802166C4");
     let gp = GET_GROUND(gobj);
     let mut weights = [0u8; 6];
 
@@ -1364,6 +1397,7 @@ pub unsafe extern "C" fn grGreens_802166C4(gobj: *mut Ground_GObj) {
 
 /// 216C20
 pub unsafe extern "C" fn grGreens_80216C20(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grGreens_80216C20");
     let gp = GET_GROUND(gobj);
 
     let mut i: i32 = 0;
@@ -1400,6 +1434,7 @@ pub unsafe extern "C" fn grGreens_80216C20(gobj: *mut Ground_GObj) {
 /// 216DE4 (`fn_80216DE4`, an `mpLib_JointCollisionCallback`)
 pub unsafe extern "C" fn fn_80216DE4(user_data: *mut c_void, joint_id: i32, _coll: *mut CollData, _coll_x50: i32,
                                      _ground_kind: u32, _delta_y: f32) {
+    melee_core::ct!("fn_80216DE4");
     let gp = user_data as *mut Ground;
     let mut i: i32 = 0;
     while i < 5 {

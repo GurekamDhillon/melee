@@ -18,6 +18,7 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 }
 
 pub fn ftNs_AttackLw4_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackLw4_Enter");
     unsafe {
         let fp = fpp(gobj);
         (*fp).set_allow_interrupt(0);
@@ -30,6 +31,7 @@ pub fn ftNs_AttackLw4_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_AttackLw4_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackLw4_Anim");
     unsafe {
         let fp = fpp(gobj);
         (*fp).mv.ns.attacklw4.yoyoCurrentFrame += 1;
@@ -49,6 +51,7 @@ pub fn ftNs_AttackLw4_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_AttackLw4_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackLw4_IASA");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).input.held_buttons[0] as i32 & HSD_PAD_A == 0 {
@@ -61,6 +64,7 @@ pub fn ftNs_AttackLw4_IASA(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_AttackLw4_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackLw4_Phys");
     st::ft_80084F3C(gobj);
     hi4::ftNs_AttackHi4_YoyoSetHitPos(gobj);
 }
@@ -77,10 +81,12 @@ fn coll_despawn_in_air(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_AttackLw4_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackLw4_Coll");
     coll_despawn_in_air(gobj);
 }
 
 pub fn ftNs_AttackLw4Charge_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackLw4Charge_Anim");
     unsafe {
         let fp = fpp(gobj);
         let attrs = (*fp).dat_attrs as *const ftNessAttributes;
@@ -94,6 +100,7 @@ pub fn ftNs_AttackLw4Charge_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_AttackLw4Charge_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackLw4Charge_IASA");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).input.held_buttons[0] as i32 & HSD_PAD_A == 0 {
@@ -103,14 +110,17 @@ pub fn ftNs_AttackLw4Charge_IASA(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_AttackLw4Charge_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackLw4Charge_Phys");
     st::ft_80084F3C(gobj);
 }
 
 pub fn ftNs_AttackLw4Charge_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackLw4Charge_Coll");
     coll_despawn_in_air(gobj);
 }
 
 pub fn ftNs_AttackLw4Charge_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackLw4Charge_Enter");
     unsafe {
         let fp = fpp(gobj);
         st::Fighter_ChangeMotionState(
@@ -130,6 +140,7 @@ pub fn ftNs_AttackLw4Charge_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_AttackLw4Release_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackLw4Release_Anim");
     unsafe {
         let fp = fpp(gobj);
         (*fp).mv.ns.attacklw4.yoyoCurrentFrame += 1;
@@ -143,6 +154,7 @@ pub fn ftNs_AttackLw4Release_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_AttackLw4Release_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackLw4Release_IASA");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).allow_interrupt() != 0 {
@@ -155,6 +167,7 @@ pub fn ftNs_AttackLw4Release_IASA(gobj: *mut HSD_GObj) {
 /// `0.20000000298023224f * (frame - 14)` clamped to [0, 1].
 #[inline(always)]
 pub fn release_blend(frame: i32) -> f32 {
+    melee_core::ct!("release_blend");
     let mut v = 0.20000000298023224_f32 * (frame as f32 - 14.0);
     if v >= 1.0 {
         v = 1.0;
@@ -165,6 +178,7 @@ pub fn release_blend(frame: i32) -> f32 {
 }
 
 pub fn ftNs_AttackLw4Release_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackLw4Release_Phys");
     unsafe {
         let fp = fpp(gobj);
         st::ft_80084F3C(gobj);
@@ -178,10 +192,12 @@ pub fn ftNs_AttackLw4Release_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_AttackLw4Release_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackLw4Release_Coll");
     coll_despawn_in_air(gobj);
 }
 
 pub fn ftNs_AttackLw4Release_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackLw4Release_Enter");
     unsafe {
         let fp = fpp(gobj);
         st::Fighter_ChangeMotionState(

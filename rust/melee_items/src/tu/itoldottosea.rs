@@ -136,6 +136,7 @@ unsafe fn attrs_of(ip: *mut Item) -> *mut itOldottoseaAttributes {
 }
 
 pub unsafe extern "C" fn it_802E2470(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802E2470");
     let ip = GET_ITEM(gobj);
     let attr = attrs_of(ip);
 
@@ -163,6 +164,7 @@ pub unsafe extern "C" fn it_802E2470(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_2725_Logic8_DmgReceived(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_2725_Logic8_DmgReceived");
     let ip = GET_ITEM(gobj);
     let attr = attrs_of(ip);
 
@@ -186,6 +188,7 @@ pub unsafe extern "C" fn it_2725_Logic8_DmgReceived(gobj: *mut Item_GObj) -> boo
 }
 
 pub unsafe extern "C" fn it_802E269C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802E269C");
     let ip = GET_ITEM(gobj);
     ext::it_8027CAD8(gobj);
     ext::it_8027C0A8(gobj, (*ip).facing_dir, 1.0);
@@ -193,6 +196,7 @@ pub unsafe extern "C" fn it_802E269C(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itOldottosea_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOldottosea_UnkMotion0_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE);
     }
@@ -200,6 +204,7 @@ pub unsafe extern "C" fn itOldottosea_UnkMotion0_Anim(gobj: *mut Item_GObj) -> b
 }
 
 pub unsafe extern "C" fn itOldottosea_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itOldottosea_UnkMotion0_Phys");
     let ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.oldottosea.x28 == 0 {
         it_802E27B4(gobj);
@@ -209,11 +214,13 @@ pub unsafe extern "C" fn itOldottosea_UnkMotion0_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itOldottosea_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOldottosea_UnkMotion0_Coll");
     ext::it_8026D62C(gobj, Some(it_802E2BC0));
     ext::it_802E35CC(gobj) != 0
 }
 
 pub unsafe extern "C" fn it_802E27B4(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802E27B4");
     let ip = GET_ITEM(gobj);
     let attr = attrs_of(ip);
     let mut pos: Vec3 = core::mem::zeroed();
@@ -244,6 +251,7 @@ pub unsafe extern "C" fn it_802E27B4(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itOldottosea_UnkMotion2_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOldottosea_UnkMotion2_Anim");
     let ip = GET_ITEM(gobj);
     let attr = attrs_of(ip);
     let threshold: i32;
@@ -295,6 +303,7 @@ pub unsafe extern "C" fn itOldottosea_UnkMotion2_Anim(gobj: *mut Item_GObj) -> b
 }
 
 pub unsafe extern "C" fn itOldottosea_UnkMotion2_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itOldottosea_UnkMotion2_Phys");
     let ip = GET_ITEM(gobj);
     let attr = attrs_of(ip);
 
@@ -319,6 +328,7 @@ pub unsafe extern "C" fn itOldottosea_UnkMotion2_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itOldottosea_UnkMotion2_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOldottosea_UnkMotion2_Coll");
     let ip = GET_ITEM(gobj);
     if ext::it_8026D8A4(gobj, Some(it_802E3098)) != 0 {
         if (*ip).x40_vel.x != 0.0 {
@@ -333,6 +343,7 @@ pub unsafe extern "C" fn itOldottosea_UnkMotion2_Coll(gobj: *mut Item_GObj) -> b
 }
 
 pub unsafe extern "C" fn it_802E2BC0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802E2BC0");
     let ip = GET_ITEM(gobj);
     let attr = attrs_of(ip);
     (*ip).xDD4_itemVar.oldottosea.x28 = 0;
@@ -341,21 +352,25 @@ pub unsafe extern "C" fn it_802E2BC0(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itOldottosea_UnkMotion4_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOldottosea_UnkMotion4_Anim");
     false
 }
 
 pub unsafe extern "C" fn itOldottosea_UnkMotion4_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itOldottosea_UnkMotion4_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = (*ip).xCC_item_attr;
     ext::it_80272860(gobj, (*attrs).x10_fall_speed, (*attrs).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itOldottosea_UnkMotion4_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOldottosea_UnkMotion4_Coll");
     ext::it_8026E414(gobj, Some(it_802E269C));
     ext::it_802E35CC(gobj) != 0
 }
 
 pub unsafe extern "C" fn it_802E2C80(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802E2C80");
     let ip = GET_ITEM(gobj);
 
     ext::it_802762BC(ip);
@@ -371,6 +386,7 @@ pub unsafe extern "C" fn it_802E2C80(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itOldottosea_UnkMotion5_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOldottosea_UnkMotion5_Anim");
     let ip = GET_ITEM(gobj);
 
     if ext::it_80272C6C(gobj) == 0 {
@@ -384,6 +400,7 @@ pub unsafe extern "C" fn itOldottosea_UnkMotion5_Anim(gobj: *mut Item_GObj) -> b
 }
 
 pub unsafe extern "C" fn itOldottosea_UnkMotion5_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itOldottosea_UnkMotion5_Phys");
     let ip = GET_ITEM(gobj);
     if (*ip).ground_or_air == GA_Air {
         (*ip).x40_vel.y -= (*(*ip).xCC_item_attr).x10_fall_speed;
@@ -391,6 +408,7 @@ pub unsafe extern "C" fn itOldottosea_UnkMotion5_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itOldottosea_UnkMotion5_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOldottosea_UnkMotion5_Coll");
     let ip = GET_ITEM(gobj);
     if (*ip).ground_or_air == GA_Air {
         ext::it_8026E664(gobj, Some(it_802E2DF4));
@@ -401,6 +419,7 @@ pub unsafe extern "C" fn itOldottosea_UnkMotion5_Coll(gobj: *mut Item_GObj) -> b
 }
 
 pub unsafe extern "C" fn it_802E2DF4(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802E2DF4");
     let ip = GET_ITEM(gobj);
     if (*ip).xCCC_incDamageDirection == (*ip).facing_dir {
         it_802E3098(gobj);
@@ -410,6 +429,7 @@ pub unsafe extern "C" fn it_802E2DF4(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802E2E30(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802E2E30");
     let ip = GET_ITEM(gobj);
     itResetVelocity(ip);
     (*ip).xDD4_itemVar.oldottosea.x24 = 0;
@@ -421,6 +441,7 @@ pub unsafe extern "C" fn it_802E2E30(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itOldottosea_UnkMotion7_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOldottosea_UnkMotion7_Anim");
     let mut ip = GET_ITEM(gobj);
     if ext::it_80272C6C(gobj) == 0 {
         (*ip).xDD4_itemVar.oldottosea.x28 = 0;
@@ -433,6 +454,7 @@ pub unsafe extern "C" fn itOldottosea_UnkMotion7_Anim(gobj: *mut Item_GObj) -> b
 }
 
 pub unsafe extern "C" fn itOldottosea_UnkMotion7_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itOldottosea_UnkMotion7_Phys");
     let ip = GET_ITEM(gobj);
     let attr = attrs_of(ip);
     let mut threshold: i32;
@@ -463,6 +485,7 @@ pub unsafe extern "C" fn itOldottosea_UnkMotion7_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itOldottosea_UnkMotion7_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOldottosea_UnkMotion7_Coll");
     let ip = GET_ITEM(gobj);
     ext::it_8026D62C(gobj, Some(it_802E2BC0));
     if (*ip).x40_vel.x != 0.0 {
@@ -474,6 +497,7 @@ pub unsafe extern "C" fn itOldottosea_UnkMotion7_Coll(gobj: *mut Item_GObj) -> b
 }
 
 pub unsafe extern "C" fn it_802E3098(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802E3098");
     let ip = GET_ITEM(gobj);
 
     itResetVelocity(ip);
@@ -486,6 +510,7 @@ pub unsafe extern "C" fn it_802E3098(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itOldottosea_UnkMotion3_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOldottosea_UnkMotion3_Anim");
     let ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.oldottosea.x28 == 0 {
         (*ip).facing_dir = -(*ip).facing_dir;
@@ -501,9 +526,10 @@ pub unsafe extern "C" fn itOldottosea_UnkMotion3_Anim(gobj: *mut Item_GObj) -> b
     false
 }
 
-pub unsafe extern "C" fn itOldottosea_UnkMotion3_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itOldottosea_UnkMotion3_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itOldottosea_UnkMotion3_Phys");}
 
 pub unsafe extern "C" fn itOldottosea_UnkMotion3_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOldottosea_UnkMotion3_Coll");
     ext::it_8026D62C(gobj, Some(it_802E2BC0));
     ext::it_802E35CC(gobj) != 0
 }

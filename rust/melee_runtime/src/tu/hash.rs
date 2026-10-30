@@ -18,6 +18,7 @@ pub unsafe fn HashSearchEntry(
     key: *mut c_void,
     ptr: *mut *mut HSD_HashEntry,
 ) -> *mut HSD_HashEntry {
+    melee_core::ct!("HashSearchEntry");
     let table = (*hash).table;
     if (*table.offset(idx as isize)).is_null() {
         return core::ptr::null_mut();
@@ -50,6 +51,7 @@ pub unsafe fn HashSearchEntry(
 /// # Safety
 /// As [`HashSearchEntry`]; `success` is null or writable.
 pub unsafe fn HSD_HashSearch(hash: *mut HSD_Hash, key: *mut c_void, success: *mut i32) -> *mut c_void {
+    melee_core::ct!("HSD_HashSearch");
     let getidx = (*(*hash).parent.class_info).getidx.expect("HSD_HashClassInfo.getidx");
     let idx = getidx(hash) as u32;
     assert!(idx < (*hash).table_size, "HSD_ASSERT(113, idx < hash->table_size)");

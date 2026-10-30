@@ -106,6 +106,7 @@ pub static mut it_803F78F8: [ItemStateTable; 2] = [
 
 /// `HSD_GObj* it_802C6C38(Item_GObj* parent, Vec3* pos, enum_t part, float facing_dir)`
 pub unsafe extern "C" fn it_802C6C38(parent: *mut HSD_GObj, pos: *mut Vec, part: enum_t, facing_dir: f32) -> *mut HSD_GObj {
+    melee_core::ct!("it_802C6C38");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = It_Kind_GameWatch_Parachute;
     Item_InitSpawnPosition(&mut spawn, pos, false);
@@ -121,6 +122,7 @@ pub unsafe extern "C" fn it_802C6C38(parent: *mut HSD_GObj, pos: *mut Vec, part:
 }
 
 pub unsafe extern "C" fn itGameWatchParachute_Logic74_Destroyed(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGameWatchParachute_Logic74_Destroyed");
     let ip = GET_ITEM(gobj);
     if !(*ip).owner.is_null() {
         ext::ftGw_AttackAirN_ItemParachuteSetFlag((*ip).owner);
@@ -128,6 +130,7 @@ pub unsafe extern "C" fn itGameWatchParachute_Logic74_Destroyed(gobj: *mut HSD_G
 }
 
 pub unsafe extern "C" fn it_802C6D6C(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802C6D6C");
     let item = GET_ITEM(item_gobj);
     if !item.is_null() {
         if !(*item).owner.is_null() {
@@ -138,14 +141,17 @@ pub unsafe extern "C" fn it_802C6D6C(item_gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_802C6DB8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802C6DB8");
     ext::it_8026B724(gobj);
 }
 
 pub unsafe extern "C" fn it_802C6DD8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802C6DD8");
     ext::it_8026B73C(gobj);
 }
 
 pub unsafe extern "C" fn itGameWatchParachute_Logic74_PickedUp(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGameWatchParachute_Logic74_PickedUp");
     let temp_r3 = (*item_gobj).user_data as *mut Item;
     (*temp_r3).xDAC_itcmd_var0 = 0;
     if !(*temp_r3).owner.is_null() {
@@ -155,11 +161,13 @@ pub unsafe extern "C" fn itGameWatchParachute_Logic74_PickedUp(item_gobj: *mut H
 }
 
 pub unsafe extern "C" fn it_802C6E50(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802C6E50");
     ext::it_8026BB44(gobj);
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE as u32);
 }
 
 pub unsafe extern "C" fn itGamewatchparachute_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itGamewatchparachute_UnkMotion1_Anim");
     let ip = GET_ITEM(gobj);
 
     if (*ip).x5CC_currentAnimFrame == 30.0f32 {
@@ -186,5 +194,6 @@ pub unsafe extern "C" fn itGamewatchparachute_UnkMotion1_Anim(gobj: *mut HSD_GOb
 }
 
 pub unsafe extern "C" fn itGameWatchParachute_Logic74_EvtUnk(gobj: *mut HSD_GObj, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGameWatchParachute_Logic74_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

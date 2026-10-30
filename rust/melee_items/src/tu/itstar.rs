@@ -53,6 +53,7 @@ pub static mut it_803F57A0: [ItemStateTable; 1] = [
 ];
 
 pub unsafe extern "C" fn itStar_Logic10_Spawned(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itStar_Logic10_Spawned");
     let item = GET_ITEM(item_gobj);
     let star = (*(*item).xC4_article_data).x4_specialAttributes as *mut itStar_ItemVars;
     ext::it_8026B390(item_gobj);
@@ -65,20 +66,24 @@ pub unsafe extern "C" fn itStar_Logic10_Spawned(item_gobj: *mut Item_GObj) {
 
 /// 2846D4
 pub unsafe extern "C" fn it_802846D4(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802846D4");
     ext::Item_80268E5C(item_gobj, 0, ITEM_ANIM_UPDATE);
 }
 
 pub unsafe extern "C" fn itStar_UnkMotion0_Anim(_item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itStar_UnkMotion0_Anim");
     false
 }
 
 pub unsafe extern "C" fn itStar_UnkMotion0_Phys(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itStar_UnkMotion0_Phys");
     let item = GET_ITEM(item_gobj);
     let attr = (*item).xCC_item_attr;
     ext::it_80272860(item_gobj, (*attr).x10_fall_speed, (*attr).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itStar_UnkMotion0_Coll(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itStar_UnkMotion0_Coll");
     let item = GET_ITEM(item_gobj);
     let mut val = false;
 
@@ -108,9 +113,11 @@ pub unsafe extern "C" fn itStar_UnkMotion0_Coll(item_gobj: *mut Item_GObj) -> bo
 }
 
 pub unsafe extern "C" fn itStar_Logic10_DmgDealt(_item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itStar_Logic10_DmgDealt");
     true
 }
 
 pub unsafe extern "C" fn itStar_Logic10_EvtUnk(item_gobj: *mut Item_GObj, ref_: *mut HSD_GObj) {
+    melee_core::ct!("itStar_Logic10_EvtUnk");
     ext::it_8026B894(item_gobj, ref_);
 }

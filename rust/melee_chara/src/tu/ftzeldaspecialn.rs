@@ -128,6 +128,7 @@ pub const ftZd_MF_SpecialN_Coll: u32 = ftCommon_GroundAirColl_MF
 
 /// `ftZd_SpecialN_8013A830` (accessory callback; stored into `accessory4_cb`).
 pub unsafe extern "C" fn ftZd_SpecialN_8013A830(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialN_8013A830");
     let fp = fpp(gobj);
     if (*fp).x2219_b0() == 0 {
         ext::efSync_Spawn(1268, gobj, joint(fp, FtPart_TransN as usize));
@@ -139,6 +140,7 @@ pub unsafe extern "C" fn ftZd_SpecialN_8013A830(gobj: *mut HSD_GObj) {
 
 /// `ftZd_SpecialN_8013A8AC` (accessory callback; the air variant's).
 pub unsafe extern "C" fn ftZd_SpecialN_8013A8AC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialN_8013A8AC");
     let fp = fpp(gobj);
     if (*fp).x2219_b0() == 0 {
         ext::efSync_Spawn(1269, gobj, joint(fp, FtPart_TransN as usize));
@@ -150,11 +152,13 @@ pub unsafe extern "C" fn ftZd_SpecialN_8013A8AC(gobj: *mut HSD_GObj) {
 
 /// `ftZd_SpecialN_8013ADB0` (the reflect-hit callback; the body is in chars::r12).
 pub unsafe extern "C" fn ftZd_SpecialN_8013ADB0_cb(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialN_8013ADB0_cb");
     crate::chars::r12::ftZelda::ftzeldaspecialn::ftZd_SpecialN_8013ADB0(gobj)
 }
 
 /// `ftZd_Init_801393AC` (ft/kinds/ftZelda/ftzelda.c): death / take-damage callback, not ported yet.
 pub unsafe extern "C" fn ftZd_Init_801393AC(_gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_Init_801393AC");
     { unsafe { let _ = crate::tu::ftzelda::ftZd_Init_801393AC(_gobj as _); } return; };
 }
 
@@ -168,6 +172,7 @@ unsafe fn start_action_helper(gobj: *mut HSD_GObj) {
 
 /// `ftZd_SpecialN_Enter` (ftzeldaspecialn.c, 8013A7xx block).
 pub fn ftZd_SpecialN_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialN_Enter");
     unsafe {
         let temp_f1: f32 = 0.0;
         let fp = fpp(gobj);
@@ -180,6 +185,7 @@ pub fn ftZd_SpecialN_Enter(gobj: *mut HSD_GObj) {
 
 /// `ftZd_SpecialAirN_Enter`.
 pub fn ftZd_SpecialAirN_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialAirN_Enter");
     unsafe {
         let fp = fpp(gobj);
         let sa = da_of(fp);
@@ -207,6 +213,7 @@ unsafe fn reflect_window(gobj: *mut HSD_GObj) {
 
 /// `ftZd_SpecialN_Anim`.
 pub fn ftZd_SpecialN_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialN_Anim");
     unsafe {
         reflect_window(gobj);
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -217,6 +224,7 @@ pub fn ftZd_SpecialN_Anim(gobj: *mut HSD_GObj) {
 
 /// `ftZd_SpecialAirN_Anim`: falls into `ftCo_Fall_Enter` when the animation ends.
 pub fn ftZd_SpecialAirN_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialAirN_Anim");
     unsafe {
         reflect_window(gobj);
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -227,6 +235,7 @@ pub fn ftZd_SpecialAirN_Anim(gobj: *mut HSD_GObj) {
 
 /// `ftZd_SpecialN_Coll`.
 pub fn ftZd_SpecialN_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialN_Coll");
     unsafe {
         if st::ft_80082708(gobj) == 0 {
             ftZd_SpecialN_8013AC88(gobj);
@@ -236,6 +245,7 @@ pub fn ftZd_SpecialN_Coll(gobj: *mut HSD_GObj) {
 
 /// `ftZd_SpecialAirN_Coll`.
 pub fn ftZd_SpecialAirN_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialAirN_Coll");
     unsafe {
         if st::ft_80081D0C(gobj) != 0 {
             ftZd_SpecialN_8013AD1C(gobj);
@@ -245,6 +255,7 @@ pub fn ftZd_SpecialAirN_Coll(gobj: *mut HSD_GObj) {
 
 /// `ftZd_SpecialN_8013AC88`: ground-to-air transition, reflect hit if the window is open.
 pub fn ftZd_SpecialN_8013AC88(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialN_8013AC88");
     unsafe {
         let fp = fpp(gobj);
         ground_to_air(gobj, fp, 342, ftZd_MF_SpecialN_Coll);
@@ -258,6 +269,7 @@ pub fn ftZd_SpecialN_8013AC88(gobj: *mut HSD_GObj) {
 
 /// `ftZd_SpecialN_8013AD1C`: air-to-ground transition.
 pub fn ftZd_SpecialN_8013AD1C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialN_8013AD1C");
     unsafe {
         let fp = fpp(gobj);
         air_to_ground(gobj, fp, 341, ftZd_MF_SpecialN_Coll);
@@ -271,6 +283,7 @@ pub fn ftZd_SpecialN_8013AD1C(gobj: *mut HSD_GObj) {
 
 /// `ftZd_SpecialAirN_Phys` (8013AB9C): the reflect window's remaining frames, then Fall.
 pub fn ftZd_SpecialAirN_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialAirN_Phys");
     unsafe {
         let fp = fpp(gobj);
         let var1 = (*fp).mv.zd.specialn.x0;

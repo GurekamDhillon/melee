@@ -46,6 +46,7 @@ pub static mut gm_Mode_ToyGallery_States: [GameModeState; 2] = [
 
 /// `onExit` (static, 1BEC80): leave for the main menu.
 pub unsafe extern "C" fn onExit(_state: *mut GameModeState) {
+    melee_core::ct!("onExit");
     ext::gm_SetPendingGameMode(GM_MENU as u8);
     ext::gm_SetNewGameModePending();
 }

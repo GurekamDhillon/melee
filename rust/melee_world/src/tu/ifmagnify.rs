@@ -185,15 +185,18 @@ pub static mut ifMagnify_LogicOffscreen: [u8; 6] = [0; 6];
 
 /// `memzero` (lb_00B0.c): the real behaviour, used unless a test installs a hook.
 pub fn memzero_default(mem: *mut c_void, size: i32) {
+    melee_core::ct!("memzero_default");
     unsafe { core::ptr::write_bytes(mem as *mut u8, 0, size as usize) }
 }
 
 /// The view aspect ratio the window reports, as an int-punned float.
 pub unsafe extern "C" fn ifMagnify_ViewAspect() -> f32 {
+    melee_core::ct!("ifMagnify_ViewAspect");
     f32::from_bits(ext::View_AspectBits() as u32)
 }
 
 pub unsafe extern "C" fn ifMagnify_VisualOffscreen(fighter: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ifMagnify_VisualOffscreen");
     let mut world = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ext::ftLib_80086B90(fighter, &mut world);
     ext::Camera_80030BBC(&mut world, null_mut()) == 0
@@ -201,6 +204,7 @@ pub unsafe extern "C" fn ifMagnify_VisualOffscreen(fighter: *mut HSD_GObj) -> bo
 
 #[inline]
 pub unsafe extern "C" fn ifMagnify_IsHUDVisible() -> bool {
+    melee_core::ct!("ifMagnify_IsHUDVisible");
     if (*ext::gmVs_GetSceneController()).state.hud_enabled == 0 || ext::ifAll_IsHUDHidden() != 0 || ext::Camera_80030130() != 0 {
         return false;
     }
@@ -209,6 +213,7 @@ pub unsafe extern "C" fn ifMagnify_IsHUDVisible() -> bool {
 
 #[inline]
 pub unsafe extern "C" fn ifMagnify_GetPlayerColor(color: *mut _GXColor, slot: i32) {
+    melee_core::ct!("ifMagnify_GetPlayerColor");
     let a0 = slot as u8;
     let team = ext::Player_GetTeam(slot);
     let g = ext::gm_8016B168();
@@ -217,6 +222,7 @@ pub unsafe extern "C" fn ifMagnify_GetPlayerColor(color: *mut _GXColor, slot: i3
 }
 
 pub unsafe extern "C" fn ifMagnify_802FB6E8(slot: i32) -> i32 {
+    melee_core::ct!("ifMagnify_802FB6E8");
     if ifMagnify_802FC998(slot) as i32 != 0 {
         return ifMagnify_804A1DE0.player[slot as usize].state.edge() as i32;
     }
@@ -224,6 +230,7 @@ pub unsafe extern "C" fn ifMagnify_802FB6E8(slot: i32) -> i32 {
 }
 
 pub unsafe extern "C" fn ifMagnify_802FB73C(player: *mut ifMagnifyPlayer, pos: *mut Vec2, out: *mut Vec2) -> *mut ifMagnifyPlayer {
+    melee_core::ct!("ifMagnify_802FB73C");
     let mut horizontal_bound: f32 = 252.70001;
     // TARGET_PC: the horizontal bound follows the window's aspect ratio
     horizontal_bound *= ifMagnify_ViewAspect() / (4.0f32 / 3.0f32);
@@ -295,6 +302,7 @@ pub unsafe extern "C" fn ifMagnify_802FB73C(player: *mut ifMagnifyPlayer, pos: *
 }
 
 pub unsafe extern "C" fn ifMagnify_802FB8C0(gobj: *mut HSD_GObj, code: i32) {
+    melee_core::ct!("ifMagnify_802FB8C0");
     let mut screen_pos = S32Vec2 { x: 0, y: 0 };
     let mut edge_pos = Vec2 { x: 0.0, y: 0.0 };
     let mut dir = Vec2 { x: 0.0, y: 0.0 };
@@ -351,6 +359,7 @@ pub unsafe extern "C" fn ifMagnify_802FB8C0(gobj: *mut HSD_GObj, code: i32) {
 
 #[inline]
 pub unsafe extern "C" fn ifMagnify_GetCornerColors(colors: *mut _GXColor, world_pos: *mut Vec3) {
+    melee_core::ct!("ifMagnify_GetCornerColors");
     for j in 0..4usize {
         let y_class: f32;
         let x_class: f32;
@@ -378,6 +387,7 @@ pub unsafe extern "C" fn ifMagnify_GetCornerColors(colors: *mut _GXColor, world_
 }
 
 pub unsafe extern "C" fn ifMagnify_802FBBDC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ifMagnify_802FBBDC");
     let mut top = 0.0f32;
     let mut bottom = 0.0f32;
     let mut left = 0.0f32;
@@ -539,9 +549,10 @@ pub unsafe extern "C" fn ifMagnify_802FBBDC(gobj: *mut HSD_GObj) {
     }
 }
 
-pub unsafe extern "C" fn ifMagnify_802FC3BC() {}
+pub unsafe extern "C" fn ifMagnify_802FC3BC() { melee_core::ct!("ifMagnify_802FC3BC");}
 
 pub unsafe extern "C" fn ifMagnify_802FC3C0(slot: i32) {
+    melee_core::ct!("ifMagnify_802FC3C0");
     let player = &raw mut ifMagnify_804A1DE0.player[slot as usize];
     let mut child: *mut HSD_JObj = null_mut();
     if !(*player).gobj.is_null() {
@@ -592,6 +603,7 @@ pub unsafe extern "C" fn ifMagnify_802FC3C0(slot: i32) {
 }
 
 pub unsafe extern "C" fn ifMagnify_802FC618() {
+    melee_core::ct!("ifMagnify_802FC618");
     let player0 = &raw mut ifMagnify_804A1DE0.player[0];
     let mut viewport = _HSD_RectS16 { xmin: 0, xmax: 0, ymin: 0, ymax: 0 };
 
@@ -621,6 +633,7 @@ pub unsafe extern "C" fn ifMagnify_802FC618() {
 }
 
 pub unsafe extern "C" fn ifMagnify_802FC750() {
+    melee_core::ct!("ifMagnify_802FC750");
     let base = &raw mut ifMagnify_804A1DE0;
     for i in 0..6usize {
         if !(*base).player[i].gobj.is_null() {
@@ -631,6 +644,7 @@ pub unsafe extern "C" fn ifMagnify_802FC750() {
 }
 
 pub unsafe extern "C" fn ifMagnify_802FC7C0(magnify: *mut ifMagnify) {
+    melee_core::ct!("ifMagnify_802FC7C0");
     // the C reads this const through a volatile pointer
     let default_val: i32 = core::ptr::read_volatile(&raw const ifMagnify_804DDB60);
 
@@ -664,6 +678,7 @@ pub unsafe extern "C" fn ifMagnify_802FC7C0(magnify: *mut ifMagnify) {
 }
 
 pub unsafe extern "C" fn ifMagnify_802FC870() {
+    melee_core::ct!("ifMagnify_802FC870");
     // memzero(&ifMagnify_804A1DE0, 0x74): the GameCube head (model_desc .. player[5]) of the record
     ext::memzero((&raw mut ifMagnify_804A1DE0).cast(), core::mem::offset_of!(ifMagnify, image_descs) as i32);
     ifMagnify_802FC7C0(&raw mut ifMagnify_804A1DE0);
@@ -681,12 +696,14 @@ pub unsafe extern "C" fn ifMagnify_802FC870() {
 }
 
 pub unsafe extern "C" fn ifMagnify_802FC8E8() {
+    melee_core::ct!("ifMagnify_802FC8E8");
     for i in 0..6usize {
         ifMagnify_804A1DE0.player[i].state.set_ignore_offscreen(1);
     }
 }
 
 pub unsafe extern "C" fn ifMagnify_802FC940() {
+    melee_core::ct!("ifMagnify_802FC940");
     for i in 0..6usize {
         ifMagnify_804A1DE0.player[i].state.set_ignore_offscreen(0);
     }
@@ -694,6 +711,7 @@ pub unsafe extern "C" fn ifMagnify_802FC940() {
 
 /// TARGET_PC: stop computing the logic-side off-screen flags (scene init).
 pub unsafe extern "C" fn ifMagnify_LogicDisarm() {
+    melee_core::ct!("ifMagnify_LogicDisarm");
     ifMagnify_LogicArmed = 0;
     for i in 0..6usize {
         ifMagnify_LogicOffscreen[i] = 0;
@@ -703,6 +721,7 @@ pub unsafe extern "C" fn ifMagnify_LogicDisarm() {
 /// TARGET_PC: the render pass's off-screen predicate evaluated by logic (see the C comment),
 /// then the fighters' off-camera flags for the next frame.
 pub unsafe extern "C" fn ifMagnify_UpdateLogicOffscreen() {
+    melee_core::ct!("ifMagnify_UpdateLogicOffscreen");
     let magnify = &raw mut ifMagnify_804A1DE0;
     if ifMagnify_LogicArmed == 0 {
         return;
@@ -728,6 +747,7 @@ pub unsafe extern "C" fn ifMagnify_UpdateLogicOffscreen() {
 }
 
 pub unsafe extern "C" fn ifMagnify_802FC998(ply_slot: i32) -> bool {
+    melee_core::ct!("ifMagnify_802FC998");
     if ifMagnify_LogicArmed != 0 {
         return ifMagnify_LogicOffscreen[ply_slot as usize] != 0;
     }

@@ -1610,6 +1610,7 @@ static offsets_arr_803BC6A4: [[i32; 2]; 75] = [
 // ---- functions ----------------------------------------------------------------------------------
 
 pub unsafe extern "C" fn lbAudioAx_8002305C(arg0: i32, arg1: i32) -> i32 {
+    melee_core::ct!("lbAudioAx_8002305C");
     let size = unk_arr_803BC4A0.len() as i32;
     let mex = ext::Mex_FighterBgmForPortCKind(arg0, arg1);
     if mex >= 0 {
@@ -1622,6 +1623,7 @@ pub unsafe extern "C" fn lbAudioAx_8002305C(arg0: i32, arg1: i32) -> i32 {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80023090(idx: i32) -> i32 {
+    melee_core::ct!("lbAudioAx_80023090");
     if idx < 0 {
         return 0;
     }
@@ -1632,6 +1634,7 @@ pub unsafe extern "C" fn lbAudioAx_80023090(idx: i32) -> i32 {
 }
 
 pub unsafe extern "C" fn lbAudioAx_800230C8(i: i32, lo: *mut i32, hi: *mut i32) -> i32 {
+    melee_core::ct!("lbAudioAx_800230C8");
     if i < 0 {
         return 1;
     }
@@ -1648,6 +1651,7 @@ pub unsafe extern "C" fn lbAudioAx_800230C8(i: i32, lo: *mut i32, hi: *mut i32) 
 }
 
 pub unsafe extern "C" fn lbAudioAx_80023130(arg0: i32) -> i32 {
+    melee_core::ct!("lbAudioAx_80023130");
     if LBAX_MEX_ID(arg0) {
         return arg0 / 10000;
     }
@@ -1662,6 +1666,7 @@ pub unsafe extern "C" fn lbAudioAx_80023130(arg0: i32) -> i32 {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80023220(idx: i32) -> i32 {
+    melee_core::ct!("lbAudioAx_80023220");
     if idx >= 0 && idx < LBAX_N!() {
         return s32_arr_803BB5D0[idx as usize][3] as i32;
     }
@@ -1708,6 +1713,7 @@ unsafe fn fn_80023254(arg0: i32) {
 }
 
 pub unsafe extern "C" fn lbAudioAx_800233EC(arg0: i32) -> i32 {
+    melee_core::ct!("lbAudioAx_800233EC");
     if fn_80026E58(0x21) {
         let slot = lbAudioAx_80023130(arg0);
         match slot {
@@ -1734,16 +1740,19 @@ pub unsafe extern "C" fn lbAudioAx_800233EC(arg0: i32) -> i32 {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80023694() -> i32 {
+    melee_core::ct!("lbAudioAx_80023694");
     ext::HSD_AudioSFXKeyOffAll();
     -1
 }
 
 pub unsafe extern "C" fn lbAudioAx_800236B8(voice: i32) -> i32 {
+    melee_core::ct!("lbAudioAx_800236B8");
     ext::HSD_AudioSFXKeyOff(voice);
     -1
 }
 
 pub unsafe extern "C" fn lbAudioAx_800236DC() -> i32 {
+    melee_core::ct!("lbAudioAx_800236DC");
     ext::AXDriverStop();
     lbl_804D6418 = 0;
     cur_hps_stem[0] = 0;
@@ -1751,10 +1760,12 @@ pub unsafe extern "C" fn lbAudioAx_800236DC() -> i32 {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80023710(arg0: i32) -> bool {
+    melee_core::ct!("lbAudioAx_80023710");
     ext::HSD_AudioSFXCheck(arg0) != 0
 }
 
 pub unsafe extern "C" fn lbAudioAx_80023730() -> bool {
+    melee_core::ct!("lbAudioAx_80023730");
     ext::AXDriverCheck() != 0
 }
 
@@ -1787,6 +1798,7 @@ unsafe fn fn_80023750(id: i32, mut vol: i32, mut pan: i32, track: i32, channel: 
 }
 
 pub unsafe extern "C" fn lbAudioAx_800237A8(id: i32, vol: i32, pan: i32) -> i32 {
+    melee_core::ct!("lbAudioAx_800237A8");
     if LBAX_MEX_ID(id) {
         return fn_80023750(id, vol, pan, 0, 7);
     }
@@ -1798,6 +1810,7 @@ pub unsafe extern "C" fn lbAudioAx_800237A8(id: i32, vol: i32, pan: i32) -> i32 
 }
 
 pub unsafe extern "C" fn lbAudioAx_80023870(id: i32, vol: i32, pan: i32, track: i32) -> i32 {
+    melee_core::ct!("lbAudioAx_80023870");
     if track == 0 {
         return lbAudioAx_800237A8(id, vol, pan);
     }
@@ -1809,6 +1822,7 @@ pub unsafe extern "C" fn lbAudioAx_80023870(id: i32, vol: i32, pan: i32, track: 
 }
 
 pub unsafe extern "C" fn lbAudioAx_8002392C() {
+    melee_core::ct!("lbAudioAx_8002392C");
     ext::lbArchive_LoadSymbols(c"LbAd.dat".as_ptr(), &raw mut lbl_804D6454, c"lbAudioLoadData".as_ptr(), 0);
 }
 
@@ -1827,6 +1841,7 @@ unsafe fn getAudioLoadData(arg0: i32) -> *mut i32 {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80023968(arg0: i32) -> i32 {
+    melee_core::ct!("lbAudioAx_80023968");
     let mut i = 0;
     let mut var_r4 = getAudioLoadData(arg0);
     while *var_r4 != 0x83D60 {
@@ -1837,6 +1852,7 @@ pub unsafe extern "C" fn lbAudioAx_80023968(arg0: i32) -> i32 {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80023A44(arg0: i32, arg1: i32) -> i32 {
+    melee_core::ct!("lbAudioAx_80023A44");
     let var_r3 = getAudioLoadData(arg0);
     *var_r3.offset(arg1 as isize)
 }
@@ -1858,6 +1874,7 @@ fn fn_800269AC_delay() {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80023B24(id: i32) -> i32 {
+    melee_core::ct!("lbAudioAx_80023B24");
     let slot = lbAudioAx_80023130(id) as usize;
 
     if s32_arr_803BB5D0[slot][1] != 5 {
@@ -1928,6 +1945,7 @@ unsafe fn lbAudioAx_80023F28_helper1(filename: *const i8) -> i32 {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80023F28(arg0: i32) -> i32 {
+    melee_core::ct!("lbAudioAx_80023F28");
     if arg0 < 0 || arg0 >= lbAx_BgmN {
         return 1;
     }
@@ -1939,6 +1957,7 @@ pub unsafe extern "C" fn lbAudioAx_80023F28(arg0: i32) -> i32 {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80024030(arg0: i32) {
+    melee_core::ct!("lbAudioAx_80024030");
     static lbl_803BC918: [lbl_803BC918_t; 11] = [
         lbl_803BC918_t { id: 0xAC, track: 0x13, channel: 3 },
         lbl_803BC918_t { id: 0xAD, track: 0x14, channel: 3 },
@@ -1959,14 +1978,17 @@ pub unsafe extern "C" fn lbAudioAx_80024030(arg0: i32) {
 }
 
 pub unsafe extern "C" fn lbAudioAx_800240B4(id: i32) -> i32 {
+    melee_core::ct!("lbAudioAx_800240B4");
     fn_80023750(id, VOL_MAX, PAN_MID, 0, 5)
 }
 
 pub unsafe extern "C" fn lbAudioAx_8002411C(id: i32) -> i32 {
+    melee_core::ct!("lbAudioAx_8002411C");
     fn_80023750(id, VOL_MAX, PAN_MID, 0, 6)
 }
 
 pub unsafe extern "C" fn lbAudioAx_80024184(id: i32, vol: i32, pan: i32, mut track: i32) -> i32 {
+    melee_core::ct!("lbAudioAx_80024184");
     track = match id {
         0x56 => 9,
         0x57 => 8,
@@ -1995,6 +2017,7 @@ pub unsafe extern "C" fn lbAudioAx_80024184(id: i32, vol: i32, pan: i32, mut tra
 }
 
 pub unsafe extern "C" fn lbAudioAx_80024304(mut id: i32) -> i32 {
+    melee_core::ct!("lbAudioAx_80024304");
     let track;
     match id {
         0x8A | 0x8B | 0x8C => {
@@ -2007,10 +2030,12 @@ pub unsafe extern "C" fn lbAudioAx_80024304(mut id: i32) -> i32 {
 }
 
 pub unsafe extern "C" fn lbAudioAx_8002438C(id: i32) -> i32 {
+    melee_core::ct!("lbAudioAx_8002438C");
     fn_80023750(id, VOL_MAX, PAN_MID, 0, 8)
 }
 
 pub unsafe extern "C" fn lbAudioAx_800243F4(id: i32) -> i32 {
+    melee_core::ct!("lbAudioAx_800243F4");
     // The C is a fallthrough switch: entering at the k-th label runs every `track += 1` from there
     // to the end; the first label (0x7C830) first sets track = 0xCB.
     const LABELS: [i32; 28] = [
@@ -2076,6 +2101,7 @@ unsafe fn fn_800244F4() {
 }
 
 pub unsafe extern "C" fn lbAudioAx_800245D4(mut arg0: i32) {
+    melee_core::ct!("lbAudioAx_800245D4");
     if arg0 < 0 {
         arg0 = 0;
     }
@@ -2086,6 +2112,7 @@ pub unsafe extern "C" fn lbAudioAx_800245D4(mut arg0: i32) {
 }
 
 pub unsafe extern "C" fn lbAudioAx_800245F4(mut arg0: i32) -> i32 {
+    melee_core::ct!("lbAudioAx_800245F4");
     if arg0 < 0 {
         arg0 = 0;
     }
@@ -2097,6 +2124,7 @@ pub unsafe extern "C" fn lbAudioAx_800245F4(mut arg0: i32) -> i32 {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80024614(mut arg0: i32) {
+    melee_core::ct!("lbAudioAx_80024614");
     if arg0 < 0 {
         arg0 = 0;
     }
@@ -2107,6 +2135,7 @@ pub unsafe extern "C" fn lbAudioAx_80024614(mut arg0: i32) {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80024634(mut arg0: i32) {
+    melee_core::ct!("lbAudioAx_80024634");
     if arg0 < 0 {
         arg0 = 0;
     }
@@ -2195,6 +2224,7 @@ unsafe fn fn_80024654(arg0: i32) {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80024B1C(voice: i32, mut pan: i32) {
+    melee_core::ct!("lbAudioAx_80024B1C");
     if pan < 0 {
         pan = 0;
     }
@@ -2205,6 +2235,7 @@ pub unsafe extern "C" fn lbAudioAx_80024B1C(voice: i32, mut pan: i32) {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80024B58(voice: i32, mut vol: i32) {
+    melee_core::ct!("lbAudioAx_80024B58");
     if vol < 0 {
         vol = 0;
     }
@@ -2215,6 +2246,7 @@ pub unsafe extern "C" fn lbAudioAx_80024B58(voice: i32, mut vol: i32) {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80024B94(voice: i32, mut arg1: i32) -> i32 {
+    melee_core::ct!("lbAudioAx_80024B94");
     let limit = 0x4B0;
     if arg1 < -limit {
         arg1 = -limit;
@@ -2226,6 +2258,7 @@ pub unsafe extern "C" fn lbAudioAx_80024B94(voice: i32, mut arg1: i32) -> i32 {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80024BD0() -> bool {
+    melee_core::ct!("lbAudioAx_80024BD0");
     let mode = ext::HSD_SynthGetSoundMode();
     sound_mode = mode as i32;
     mode != 1
@@ -2233,6 +2266,7 @@ pub unsafe extern "C" fn lbAudioAx_80024BD0() -> bool {
 
 /// Set sound mode, returns true if successful
 pub unsafe extern "C" fn lbAudioAx_80024C08(mode: u32) -> bool {
+    melee_core::ct!("lbAudioAx_80024C08");
     static to_synth_mode: [u32; 2] = [1, 0];
     match mode {
         AUDIO_MODE_UNK0 | AUDIO_MODE_UNK1 => {
@@ -2251,6 +2285,7 @@ pub unsafe extern "C" fn lbAudioAx_80024C08(mode: u32) -> bool {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80024C84() {
+    melee_core::ct!("lbAudioAx_80024C84");
     lbl_804D640C = 0;
     paused = false;
     lbl_804D38E4 = 1.0;
@@ -2284,6 +2319,7 @@ pub unsafe extern "C" fn lbAudioAx_80024C84() {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80024D50() {
+    melee_core::ct!("lbAudioAx_80024D50");
     lbAudioAx_80024C84();
     lbl_804D641C = 1;
 }
@@ -2306,10 +2342,12 @@ unsafe fn lbAudioAx_StageAudioByte(grkind: i32, which: usize) -> i32 {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80024D78(arg0: i32) {
+    melee_core::ct!("lbAudioAx_80024D78");
     lbl_804D38D8 = lbAudioAx_StageAudioByte(ext::Stage_8022519C(ext::Stage_80225194()), arg0 as usize);
 }
 
 pub unsafe extern "C" fn lbAudioAx_80024DC4(arg0: i32) {
+    melee_core::ct!("lbAudioAx_80024DC4");
     for i in 0..0x10usize {
         if lbl_8043373C[i] == arg0 {
             lbl_80433780[i] = 0xa;
@@ -2326,6 +2364,7 @@ pub unsafe extern "C" fn lbAudioAx_80024DC4(arg0: i32) {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80024E50(pause: bool) {
+    melee_core::ct!("lbAudioAx_80024E50");
     paused = pause;
     if pause {
         ext::AXDriverPause();
@@ -2335,6 +2374,7 @@ pub unsafe extern "C" fn lbAudioAx_80024E50(pause: bool) {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80024E84(arg0: bool) {
+    melee_core::ct!("lbAudioAx_80024E84");
     lbl_804D640C = arg0 as i32;
     if arg0 {
         lbl_804D38E4 = 0.2;
@@ -2354,6 +2394,7 @@ pub unsafe extern "C" fn lbAudioAx_80024E84(arg0: bool) {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80024F08() {
+    melee_core::ct!("lbAudioAx_80024F08");
     ext::HSD_SynthStreamSetVolume(0.0);
     for ch in 2..=9 {
         ext::HSD_AudioPStreamPauseCh(ch);
@@ -2361,6 +2402,7 @@ pub unsafe extern "C" fn lbAudioAx_80024F08() {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80024F6C() {
+    melee_core::ct!("lbAudioAx_80024F6C");
     ext::HSD_SynthStreamSetVolume(synth_volume);
     ext::HSD_AudioPStreamResumeCh(2);
     ext::HSD_AudioPStreamResumeCh(3);
@@ -2375,16 +2417,19 @@ pub unsafe extern "C" fn lbAudioAx_80024F6C() {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80024FDC() {
+    melee_core::ct!("lbAudioAx_80024FDC");
     lbl_804D6430 = 0x1FE;
     lbl_804D6420 += 1;
 }
 
 pub unsafe extern "C" fn lbAudioAx_80024FF4() {
+    melee_core::ct!("lbAudioAx_80024FF4");
     lbl_804D6434 = 0x1E0;
     lbl_804D6424 += 1;
 }
 
 pub unsafe extern "C" fn lbAudioAx_8002500C(arg0: i32) {
+    melee_core::ct!("lbAudioAx_8002500C");
     if arg0 > 0 {
         lbl_804D6420 -= arg0;
         if lbl_804D6420 <= 0 {
@@ -2394,6 +2439,7 @@ pub unsafe extern "C" fn lbAudioAx_8002500C(arg0: i32) {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80025038(arg0: i32) {
+    melee_core::ct!("lbAudioAx_80025038");
     if arg0 > 0 {
         lbl_804D6424 -= arg0;
         if lbl_804D6424 < 0 {
@@ -2403,15 +2449,18 @@ pub unsafe extern "C" fn lbAudioAx_80025038(arg0: i32) {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80025064(arg0: bool, arg1: bool) {
+    melee_core::ct!("lbAudioAx_80025064");
     lbl_804D38C4 = if arg0 { 1.0 } else { 0.0 };
     lbl_804D38C8 = if arg1 { 1.0 } else { 0.0 };
 }
 
 pub unsafe extern "C" fn lbAudioAx_80025098(debug: bool) {
+    melee_core::ct!("lbAudioAx_80025098");
     debug_enabled = debug;
 }
 
 pub fn calcPan(mut current: i32, end: i32, left: i32, right: i32) -> i32 {
+    melee_core::ct!("calcPan");
     if current > end {
         current = end;
     }
@@ -2719,6 +2768,7 @@ pub unsafe extern "C" fn lbAudioAx_800263E8(
     arg9: i32,
     voice: i32,
 ) -> *mut HSD_GObj {
+    melee_core::ct!("lbAudioAx_800263E8");
     if sfx_id < 0x83D60 || LBAX_MEX_ID(sfx_id) {
         let mut params = SoundParams {
             owner,
@@ -2756,6 +2806,7 @@ pub unsafe extern "C" fn lbAudioAx_800263E8(
 }
 
 pub unsafe extern "C" fn lbAudioAx_800264E4(data: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("lbAudioAx_800264E4");
     if !data.is_null() {
         let ud = ud_of(data);
         if ud.is_null() {
@@ -2767,6 +2818,7 @@ pub unsafe extern "C" fn lbAudioAx_800264E4(data: *mut HSD_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80026510(target: *mut HSD_GObj) -> bool {
+    melee_core::ct!("lbAudioAx_80026510");
     let mut count = 0;
     if !target.is_null() {
         let mut cur = ext::HSD_GObjPLinkHead[PLINK_AUDIO_AX as usize];
@@ -2789,6 +2841,7 @@ pub unsafe extern "C" fn lbAudioAx_80026510(target: *mut HSD_GObj) -> bool {
 }
 
 pub unsafe extern "C" fn lbAudioAx_800265C4(target_obj: *mut HSD_GObj, voice: i32) -> bool {
+    melee_core::ct!("lbAudioAx_800265C4");
     let mut cur = ext::HSD_GObjPLinkHead[PLINK_AUDIO_AX as usize];
     while !cur.is_null() {
         let ud = ud_of(cur);
@@ -2921,6 +2974,7 @@ unsafe fn fn_80026E58(arg0: i32) -> bool {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80026E84(mut ckind: i32) -> u64 {
+    melee_core::ct!("lbAudioAx_80026E84");
     let native_base = ext::Geno_DefineBaseCK(ckind);
     if native_base >= 0 {
         ckind = native_base;
@@ -2939,6 +2993,7 @@ pub unsafe extern "C" fn lbAudioAx_80026E84(mut ckind: i32) -> u64 {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80026EBC(stkind: u32) -> u64 {
+    melee_core::ct!("lbAudioAx_80026EBC");
     let imax = s32_arr_803BB6B0.len() as i32;
     let grkind = ext::Stage_8022519C(stkind);
 
@@ -2960,6 +3015,7 @@ pub unsafe extern "C" fn lbAudioAx_80026EBC(stkind: u32) -> u64 {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80026F2C(flags: u32) {
+    melee_core::ct!("lbAudioAx_80026F2C");
     let mut mask: u64 = 0;
 
     if flags & 1 != 0 {
@@ -3001,6 +3057,7 @@ pub unsafe extern "C" fn lbAudioAx_80026F2C(flags: u32) {
 }
 
 pub unsafe extern "C" fn lbAudioAx_8002702C(flags: u32, mut mask: u64) {
+    melee_core::ct!("lbAudioAx_8002702C");
     let mut result: u64 = 0;
 
     mask = mask.wrapping_add(0x48000000000003);
@@ -3057,6 +3114,7 @@ unsafe fn lbAudioAx_80027168_inline_2() {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80027168() {
+    melee_core::ct!("lbAudioAx_80027168");
     lbAudioAx_80027168_inline();
 
     let mut count = 0;
@@ -3104,12 +3162,14 @@ unsafe fn fn_80027488() -> i32 {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80027648() {
+    melee_core::ct!("lbAudioAx_80027648");
     while fn_80027488() == 1 {
         ext::HSD_SynthSFXWaitForLoadCompletion(Some(lb_800195D0_cb));
     }
 }
 
 pub unsafe extern "C" fn lbAudioAx_8002785C() {
+    melee_core::ct!("lbAudioAx_8002785C");
     let mut result: u64 = 0;
 
     if ext::gm_8016B184() != 0 {
@@ -3198,6 +3258,7 @@ unsafe fn load_bank(slot: usize, bank: i32) {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80027AB0(id: i32) {
+    melee_core::ct!("lbAudioAx_80027AB0");
     let lang = setup_audio_lang();
 
     ext::HSD_AudioSFXKeyOffAll();
@@ -3231,6 +3292,7 @@ pub unsafe extern "C" fn lbAudioAx_80027AB0(id: i32) {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80027DBC() {
+    melee_core::ct!("lbAudioAx_80027DBC");
     ext::HSD_AudioSFXKeyOffAll();
     lbAudioAx_800236DC();
     lbAudioAx_80024C84();
@@ -3252,6 +3314,7 @@ unsafe fn lbAudioAx_80027DF8_inline() {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80027DF8() {
+    melee_core::ct!("lbAudioAx_80027DF8");
     if lbl_804D640C == 0 {
         lbl_804D6430 -= 1;
         if lbl_804D6430 <= 0 {
@@ -3331,6 +3394,7 @@ pub unsafe extern "C" fn lbAudioAx_80027DF8() {
 }
 
 pub unsafe extern "C" fn lbAudioAx_8002835C() {
+    melee_core::ct!("lbAudioAx_8002835C");
     ext::HSD_ObjAllocInit(&raw mut lbl_80433710, 0x48, 4);
 }
 
@@ -3432,6 +3496,7 @@ static mut lbl_80433C64: [u8; 53 * 1024] = [0; 53 * 1024];
 static mut lbl_80441064: [u8; 71 * 1024] = [0; 71 * 1024];
 
 pub unsafe extern "C" fn lbAudioAx_8002838C() {
+    melee_core::ct!("lbAudioAx_8002838C");
     let mut rvb_std: AXFX_REVERBSTD = core::mem::zeroed();
     let mut delay: AXFX_DELAY = core::mem::zeroed();
 
@@ -3490,6 +3555,7 @@ pub unsafe extern "C" fn lbAudioAx_8002838C() {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80028690() {
+    melee_core::ct!("lbAudioAx_80028690");
     lbAudioAx_80024BD0();
     fn_800244F4();
     fn_80024654(1);
@@ -3553,14 +3619,17 @@ pub unsafe extern "C" fn lbAudioAx_80028690() {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80028B2C() -> i32 {
+    melee_core::ct!("lbAudioAx_80028B2C");
     ext::AXDriver_8038E5D4()
 }
 
 pub unsafe extern "C" fn lbAudioAx_80028B4C() -> i32 {
+    melee_core::ct!("lbAudioAx_80028B4C");
     ext::AXDriver_8038E5DC()
 }
 
 pub unsafe extern "C" fn lbAudioAx_80028B6C() {
+    melee_core::ct!("lbAudioAx_80028B6C");
     lbl_804D38CC -= 1;
     if lbl_804D38CC < 0 {
         lbl_804D38CC = 0;
@@ -3568,11 +3637,13 @@ pub unsafe extern "C" fn lbAudioAx_80028B6C() {
 }
 
 pub unsafe extern "C" fn lbAudioAx_80028B90() {
+    melee_core::ct!("lbAudioAx_80028B90");
     lbl_804D38CC = 0x7F;
 }
 
 /// lbaudio_stage_slots.inc: the index of the current primary BGM in `hps_files`, or -1.
 pub unsafe extern "C" fn lbAudioAx_StageSlotMusic() -> i32 {
+    melee_core::ct!("lbAudioAx_StageSlotMusic");
     for i in 0..lbAx_BgmN {
         let f = hps_files[i as usize];
         if !f.is_null() && cstr_eq(cur_hps_stem.as_ptr().add(7), f) && cur_hps_stem[..7] == *b"/audio/" {

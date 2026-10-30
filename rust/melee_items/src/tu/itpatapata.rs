@@ -110,6 +110,7 @@ unsafe fn attrs_of(ip: *mut Item) -> *mut itPatapataAttributes {
 }
 
 pub unsafe extern "C" fn it_802E05A0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802E05A0");
     let ip = GET_ITEM(gobj);
 
     ext::it_8027B730(gobj);
@@ -127,15 +128,18 @@ pub unsafe extern "C" fn it_802E05A0(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802E0678(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802E0678");
     ext::it_8027CAD8(gobj);
     it_802E1648(gobj, 1, 2);
 }
 
 pub unsafe extern "C" fn itPatapata_UnkMotion1_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPatapata_UnkMotion1_Anim");
     false
 }
 
 pub unsafe extern "C" fn itPatapata_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itPatapata_UnkMotion1_Phys");
     let ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.patapata.x28 == 0 {
         it_802E0734(gobj);
@@ -145,6 +149,7 @@ pub unsafe extern "C" fn itPatapata_UnkMotion1_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itPatapata_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPatapata_UnkMotion1_Coll");
     let it = GET_ITEM(gobj);
     if (*it).ground_or_air == GA_Air {
         ext::it_8026DA08(gobj);
@@ -155,6 +160,7 @@ pub unsafe extern "C" fn itPatapata_UnkMotion1_Coll(gobj: *mut Item_GObj) -> boo
 }
 
 pub unsafe extern "C" fn it_802E0734(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802E0734");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
 
@@ -195,6 +201,7 @@ pub unsafe extern "C" fn it_802E0734(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itPatapata_UnkMotion2_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPatapata_UnkMotion2_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         it_802E1648(gobj, 2, 2);
     }
@@ -202,6 +209,7 @@ pub unsafe extern "C" fn itPatapata_UnkMotion2_Anim(gobj: *mut Item_GObj) -> boo
 }
 
 pub unsafe extern "C" fn itPatapata_UnkMotion3_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itPatapata_UnkMotion3_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
 
@@ -245,6 +253,7 @@ pub unsafe extern "C" fn itPatapata_UnkMotion3_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itPatapata_UnkMotion3_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPatapata_UnkMotion3_Coll");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
     let landed = ext::it_8026DA08(gobj);
@@ -299,6 +308,7 @@ pub unsafe extern "C" fn itPatapata_UnkMotion3_Coll(gobj: *mut Item_GObj) -> boo
 }
 
 pub unsafe extern "C" fn it_802E0D9C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802E0D9C");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
     match (*ip).xDD4_itemVar.patapata.x40 {
@@ -312,6 +322,7 @@ pub unsafe extern "C" fn it_802E0D9C(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itPatapata_UnkMotion3_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPatapata_UnkMotion3_Anim");
     let ip = GET_ITEM(gobj);
     if ext::it_80272C6C(gobj) == 0 {
         let facing = if (*ip).facing_dir == -1.0 { -1 } else { 1 };
@@ -329,6 +340,7 @@ pub unsafe extern "C" fn itPatapata_UnkMotion3_Anim(gobj: *mut Item_GObj) -> boo
 }
 
 pub unsafe extern "C" fn it_2725_Logic4_DmgReceived(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_2725_Logic4_DmgReceived");
     let ip = GET_ITEM(gobj);
     if (*ip).msid == 6 {
         it_802E1694(gobj);
@@ -339,6 +351,7 @@ pub unsafe extern "C" fn it_2725_Logic4_DmgReceived(gobj: *mut Item_GObj) -> boo
 }
 
 pub unsafe extern "C" fn it_802E0F1C(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_802E0F1C");
     let ip = GET_ITEM(gobj);
     it_802E11E0(gobj);
     ext::Item_8026AE84(ip, 0x12E, 0x7F, 0x40);
@@ -347,19 +360,22 @@ pub unsafe extern "C" fn it_802E0F1C(gobj: *mut Item_GObj) -> bool {
 }
 
 pub unsafe extern "C" fn itPatapata_Logic4_PickedUp(gobj: *mut Item_GObj) {
+    melee_core::ct!("itPatapata_Logic4_PickedUp");
     ext::Item_80268E5C(gobj, 5, ITEM_ANIM_UPDATE);
 }
 
 pub unsafe extern "C" fn itPatapata_UnkMotion5_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPatapata_UnkMotion5_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         ext::Item_80268E5C(gobj, 5, ITEM_ANIM_UPDATE);
     }
     false
 }
 
-pub unsafe extern "C" fn itPatapata_UnkMotion5_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itPatapata_UnkMotion5_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itPatapata_UnkMotion5_Phys");}
 
 pub unsafe extern "C" fn it_2725_Logic4_Dropped(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_2725_Logic4_Dropped");
     let ip = GET_ITEM(gobj);
     ext::it_8027CBA4(gobj);
     (*ip).xDD4_itemVar.patapata.x24 = 0;
@@ -369,6 +385,7 @@ pub unsafe extern "C" fn it_2725_Logic4_Dropped(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itPatapata_UnkMotion7_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPatapata_UnkMotion7_Anim");
     let ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.patapata.x28 <= 0 {
         ext::it_8027CAD8(gobj);
@@ -379,14 +396,16 @@ pub unsafe extern "C" fn itPatapata_UnkMotion7_Anim(gobj: *mut Item_GObj) -> boo
     false
 }
 
-pub unsafe extern "C" fn itPatapata_UnkMotion7_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itPatapata_UnkMotion7_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itPatapata_UnkMotion7_Phys");}
 
 pub unsafe extern "C" fn itPatapata_UnkMotion7_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPatapata_UnkMotion7_Coll");
     ext::it_8026DA08(gobj);
     false
 }
 
 pub unsafe extern "C" fn it_2725_Logic4_Thrown(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_2725_Logic4_Thrown");
     let ip = GET_ITEM(gobj);
     ext::it_8027CB3C(gobj);
     ext::it_80274C88(gobj);
@@ -397,6 +416,7 @@ pub unsafe extern "C" fn it_2725_Logic4_Thrown(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itPatapata_UnkMotion6_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPatapata_UnkMotion6_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         ext::Item_80268E5C(gobj, 6, ITEM_ANIM_UPDATE);
     }
@@ -404,12 +424,14 @@ pub unsafe extern "C" fn itPatapata_UnkMotion6_Anim(gobj: *mut Item_GObj) -> boo
 }
 
 pub unsafe extern "C" fn itPatapata_UnkMotion6_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itPatapata_UnkMotion6_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = (*ip).xCC_item_attr;
     ext::it_80272860(gobj, (*attrs).x10_fall_speed, (*attrs).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itPatapata_UnkMotion6_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPatapata_UnkMotion6_Coll");
     if ext::it_8026DAA8(gobj) & 0xF != 0 {
         it_802E1694(gobj);
     }
@@ -417,6 +439,7 @@ pub unsafe extern "C" fn itPatapata_UnkMotion6_Coll(gobj: *mut Item_GObj) -> boo
 }
 
 pub unsafe extern "C" fn it_802E11E0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802E11E0");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
 
@@ -459,6 +482,7 @@ pub unsafe extern "C" fn it_802E11E0(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itPatapata_UnkMotion4_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPatapata_UnkMotion4_Anim");
     let ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.patapata.x28 == 0 {
         let attrs = attrs_of(ip);
@@ -479,6 +503,7 @@ pub unsafe extern "C" fn itPatapata_UnkMotion4_Anim(gobj: *mut Item_GObj) -> boo
 }
 
 pub unsafe extern "C" fn itPatapata_UnkMotion4_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itPatapata_UnkMotion4_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
     HSD_JObjAddTranslationZ((*(*ip).xBBC_dynamicBoneTable).bones[18], (*ip).xDD4_itemVar.patapata.x2C);
@@ -486,6 +511,7 @@ pub unsafe extern "C" fn itPatapata_UnkMotion4_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itPatapata_UnkMotion4_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPatapata_UnkMotion4_Coll");
     let ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.patapata.x20 == 0 {
         (*ip).xDCC_flag.set_b3(1);
@@ -496,6 +522,7 @@ pub unsafe extern "C" fn itPatapata_UnkMotion4_Coll(gobj: *mut Item_GObj) -> boo
 }
 
 pub unsafe extern "C" fn it_802E15B0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802E15B0");
     let mut pos: Vec3 = core::mem::zeroed();
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let ip = GET_ITEM(gobj);
@@ -513,6 +540,7 @@ pub unsafe extern "C" fn it_802E15B0(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802E1648(gobj: *mut Item_GObj, arg1: i32, arg2: i32) {
+    melee_core::ct!("it_802E1648");
     let ip = GET_ITEM(gobj);
     ext::Item_80268E5C(gobj, arg1, arg2 as _);
     ext::it_80274CAC(gobj);
@@ -520,16 +548,19 @@ pub unsafe extern "C" fn it_802E1648(gobj: *mut Item_GObj, arg1: i32, arg2: i32)
 }
 
 pub unsafe extern "C" fn it_802E1694(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802E1694");
     ext::it_8027327C(gobj, 0x444, 0x130);
     ext::it_8027CE44(gobj);
     ext::Item_8026A8EC(gobj);
 }
 
 pub unsafe extern "C" fn it_802E16D8(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802E16D8");
     ext::it_8026B894(gobj, ref_gobj);
 }
 
 pub unsafe extern "C" fn it_802E16F8(arg0: i32, pos: *mut Vec3, facing: i32) -> *mut Item_GObj {
+    melee_core::ct!("it_802E16F8");
     let mut vel: Vec3 = core::mem::zeroed();
     let gobj = ext::it_8027B5B0(It_Kind_Patapata, pos, null_mut(), &mut vel, 1);
 

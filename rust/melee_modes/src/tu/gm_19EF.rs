@@ -130,6 +130,7 @@ fn sfx_move() {
 }
 
 pub unsafe fn fn_8019EFC4(_pad: *mut HSD_PadStatus) {
+    melee_core::ct!("fn_8019EFC4");
     let st = &mut lbl_80479A98;
     let mut jobj = (*st.x28_gobj).hsd_obj as *mut HSD_JObj;
     if st.x60 != 0 {
@@ -171,6 +172,7 @@ pub unsafe fn fn_8019EFC4(_pad: *mut HSD_PadStatus) {
 
 /// seems to handle "Go!" animations, based on .dat filenames
 pub unsafe fn fn_8019F1D0() {
+    melee_core::ct!("fn_8019F1D0");
     let mut sp8 = [0u8; 28];
     let st = &mut lbl_80479A98;
     let mut count: u8 = 0;
@@ -212,6 +214,7 @@ unsafe fn mobj_of(jobj: *mut HSD_JObj) -> *mut HSD_MObj {
 }
 
 pub unsafe fn fn_8019F2D4(arg0: u32) {
+    melee_core::ct!("fn_8019F2D4");
     let st = &mut lbl_80479A98;
     if lbl_804D66C8.x4 == 0xA {
         ext::gm_80167858(st.x15 as i8 as i32, st.x16 as i32, 0xD, 0xA);
@@ -289,6 +292,7 @@ pub unsafe fn fn_8019F2D4(arg0: u32) {
 }
 
 pub unsafe extern "C" fn fn_8019F6EC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8019F6EC");
     let st = &mut lbl_80479A98;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
 
@@ -315,10 +319,12 @@ pub unsafe extern "C" fn fn_8019F6EC(gobj: *mut HSD_GObj) {
 }
 /// `fn_8019F810` registered as a proc (the C casts a `void(void)` to `HSD_GObjEvent`).
 pub unsafe extern "C" fn fn_8019F810_cb(_gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8019F810_cb");
     fn_8019F810()
 }
 
 pub unsafe fn fn_8019F810() {
+    melee_core::ct!("fn_8019F810");
     let st = &mut lbl_80479A98;
     let trigger = ext::HSD_PadCopyStatus[st.x15 as usize].trigger;
     fn_8019EFC4(&raw mut ext::HSD_PadCopyStatus[st.x15 as usize]);
@@ -434,6 +440,7 @@ unsafe fn inline_character(model: *mut HSD_JObj, object: *mut HSD_GObj, arg0: u3
 }
 
 pub unsafe fn fn_8019F9C4(mut arg0: u32) {
+    melee_core::ct!("fn_8019F9C4");
     let st = &mut lbl_80479A98;
 
     let char_idx = get_char_idx(arg0);
@@ -595,6 +602,7 @@ pub unsafe fn fn_8019F9C4(mut arg0: u32) {
 }
 
 pub unsafe fn gm_Scene_GOver_OnEnter(arg0_: *mut c_void) {
+    melee_core::ct!("gm_Scene_GOver_OnEnter");
     let arg0 = &*(arg0_ as *const DebugGameOverData);
     let st = &mut lbl_80479A98;
 
@@ -623,6 +631,7 @@ pub unsafe fn gm_Scene_GOver_OnEnter(arg0_: *mut c_void) {
 }
 
 pub unsafe fn gm_Scene_GOver_OnExit(arg0_: *mut c_void) {
+    melee_core::ct!("gm_Scene_GOver_OnExit");
     let arg0 = &mut *(arg0_ as *mut DebugGameOverData);
     let st = &lbl_80479A98;
     arg0.x4 = st.x8;
@@ -633,6 +642,7 @@ pub unsafe fn gm_Scene_GOver_OnExit(arg0_: *mut c_void) {
 }
 
 pub unsafe extern "C" fn fn_801A0B60(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801A0B60");
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     ext::HSD_JObjReqAnimAll(jobj, lbl_804D66F8 as f32);
     ext::HSD_JObjAnimAll(jobj);
@@ -656,6 +666,7 @@ pub unsafe extern "C" fn fn_801A0B60(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe fn gm_Scene_ComingSoon_OnEnter(_unused: *mut c_void) {
+    melee_core::ct!("gm_Scene_ComingSoon_OnEnter");
     let mut sp10: *mut SceneDesc = null_mut();
 
     lbl_804D66F8 = 0;
@@ -689,6 +700,7 @@ pub unsafe fn gm_Scene_ComingSoon_OnEnter(_unused: *mut c_void) {
 }
 
 pub unsafe fn gm_Scene_ComingSoon_OnExit(_unused: *mut c_void) {
+    melee_core::ct!("gm_Scene_ComingSoon_OnExit");
     ext::lbArchive_80016EFC(lbl_804D66F0);
     ext::lbAudioAx_800236DC();
 }

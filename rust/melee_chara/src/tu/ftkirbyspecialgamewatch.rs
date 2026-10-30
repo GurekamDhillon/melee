@@ -92,21 +92,26 @@ unsafe fn thumb_bone(fp: *mut Fighter) -> i32 {
 }
 
 pub unsafe extern "C" fn cb_fn_8010CE5C(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_8010CE5C");
     fn_8010CE5C(g);
 }
 pub unsafe extern "C" fn cb_fn_8010CFB0(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_8010CFB0");
     fn_8010CFB0(g);
 }
 pub unsafe extern "C" fn cb_fn_8010D100(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_8010D100");
     fn_8010D100(g);
 }
 pub unsafe extern "C" fn cb_ftKb_SpecialNGw_8010D130(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftKb_SpecialNGw_8010D130");
     ftKb_SpecialNGw_8010D130(g);
 }
 
 /// `fn_8010CE5C` (static, accessory4_cb): on the script's cmd_vars[0] pulse throw one sausage,
 /// picking its slot among the five not used by the last two throws.
 pub fn fn_8010CE5C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8010CE5C");
     unsafe {
         let fp2 = fpp(gobj);
         let da = (*fp2).dat_attrs as *const ftKb_DatAttrs;
@@ -140,6 +145,7 @@ pub fn fn_8010CE5C(gobj: *mut HSD_GObj) {
 
 /// `fn_8010CFB0` (static, accessory4_cb): spawn the chef item at the thumb and arm its callbacks.
 pub fn fn_8010CFB0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8010CFB0");
     unsafe {
         let fp = fpp(gobj);
         let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -156,6 +162,7 @@ pub fn fn_8010CFB0(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_SpecialNGw_8010D074(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialNGw_8010D074");
     unsafe {
         let fp = fpp(gobj);
         ftKb_SpecialNGw_8010D130(gobj);
@@ -164,6 +171,7 @@ pub fn ftKb_SpecialNGw_8010D074(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_SpecialNGw_8010D0A8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialNGw_8010D0A8");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.kb.xDC.is_null() {
@@ -174,6 +182,7 @@ pub fn ftKb_SpecialNGw_8010D0A8(gobj: *mut HSD_GObj) {
 }
 
 pub fn fn_8010D100(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8010D100");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.kb.xDC.is_null() {
@@ -183,6 +192,7 @@ pub fn fn_8010D100(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_SpecialNGw_8010D130(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialNGw_8010D130");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.kb.xDC.is_null() {
@@ -193,6 +203,7 @@ pub fn ftKb_SpecialNGw_8010D130(gobj: *mut HSD_GObj) {
 
 /// `setGwVars` (static inline): `ftGameWatch_SpecialN_SetVars` with the Chef callback.
 pub fn setGwVars(fighter_gobj: *mut HSD_GObj) {
+    melee_core::ct!("setGwVars");
     unsafe {
         let fp = fpp(fighter_gobj);
         (*fp).cmd_vars[0] = 0;
@@ -205,6 +216,7 @@ pub fn setGwVars(fighter_gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_SpecialNGw_8010D188(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialNGw_8010D188");
     unsafe {
         let fp = fpp(gobj);
         (*fp).self_vel.y = 0.0;
@@ -215,6 +227,7 @@ pub fn ftKb_SpecialNGw_8010D188(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_SpecialNGw_8010D204(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialNGw_8010D204");
     unsafe {
         let fp = fpp(gobj);
         (*fp).self_vel.y = 0.0;
@@ -225,6 +238,7 @@ pub fn ftKb_SpecialNGw_8010D204(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_GwSpecialN_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_GwSpecialN_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftKb_DatAttrs;
@@ -243,6 +257,7 @@ pub fn ftKb_GwSpecialN_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_GwSpecialAirN_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_GwSpecialAirN_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftKb_DatAttrs;
@@ -261,6 +276,7 @@ pub fn ftKb_GwSpecialAirN_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_GwSpecialN_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_GwSpecialN_IASA");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftKb_DatAttrs;
@@ -277,6 +293,7 @@ pub fn ftKb_GwSpecialN_IASA(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_GwSpecialAirN_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_GwSpecialAirN_IASA");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftKb_DatAttrs;
@@ -294,6 +311,7 @@ pub fn ftKb_GwSpecialAirN_IASA(gobj: *mut HSD_GObj) {
 
 /// `ftKb_SpecialNGw_8010D660`: restart the ground Chef swing at `arg1 - 1`.
 pub fn ftKb_SpecialNGw_8010D660(gobj: *mut HSD_GObj, arg1: f32) {
+    melee_core::ct!("ftKb_SpecialNGw_8010D660");
     st::Fighter_ChangeMotionState(gobj, ftKb_MS_GwSpecialN as i32, 0x0C4C508C, arg1 - 1.0, 1.0, 0.0, core::ptr::null_mut());
     st::ftAnim_8006EBA4(gobj);
     inline1(gobj);
@@ -301,6 +319,7 @@ pub fn ftKb_SpecialNGw_8010D660(gobj: *mut HSD_GObj, arg1: f32) {
 
 /// `ftKb_SpecialNGw_8010D6D0`: the aerial restart.
 pub fn ftKb_SpecialNGw_8010D6D0(gobj: *mut HSD_GObj, arg1: f32) {
+    melee_core::ct!("ftKb_SpecialNGw_8010D6D0");
     st::Fighter_ChangeMotionState(gobj, ftKb_MS_GwSpecialAirN as i32, 0x0C4C508C, arg1 - 1.0, 1.0, 0.0, core::ptr::null_mut());
     st::ftAnim_8006EBA4(gobj);
     inline1(gobj);

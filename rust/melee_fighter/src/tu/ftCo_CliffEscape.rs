@@ -37,6 +37,7 @@ pub mod ext {
 }
 
 pub fn ftCo_8009B040(g: G) {
+    melee_core::ct!("ftCo_8009B040");
     let msid = if fp(g).dmg.x1830_percent < crate::hooks::common_data().x488 as f32 { ftCo_MS_CliffEscapeQuick } else { ftCo_MS_CliffEscapeSlow };
     // inlines.h `ftCo_Cliff_EnterState`
     ext::Fighter_ChangeMotionState(g, msid as i32, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -48,15 +49,18 @@ pub fn ftCo_8009B040(g: G) {
 }
 
 pub fn ftCo_CliffEscape_Anim(g: G) {
+    melee_core::ct!("ftCo_CliffEscape_Anim");
     ext::ftCo_CliffClimb_Anim(g);
 }
 
-pub fn ftCo_CliffEscape_IASA(_g: G) {}
+pub fn ftCo_CliffEscape_IASA(_g: G) { melee_core::ct!("ftCo_CliffEscape_IASA");}
 
 pub fn ftCo_CliffEscape_Phys(g: G) {
+    melee_core::ct!("ftCo_CliffEscape_Phys");
     ext::ftCo_CliffClimb_Phys(g);
 }
 
 pub fn ftCo_CliffEscape_Coll(g: G) {
+    melee_core::ct!("ftCo_CliffEscape_Coll");
     ext::ftCo_CliffClimb_Coll(g);
 }

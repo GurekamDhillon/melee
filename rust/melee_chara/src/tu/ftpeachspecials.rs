@@ -89,21 +89,26 @@ pub const end_mf: u32 = Ft_MF_SkipColAnim | Ft_MF_UpdateCmd;
 
 /// Callback entries stored into Fighter (C function pointers).
 pub unsafe extern "C" fn cb_reset(g: G) {
+    melee_core::ct!("cb_reset");
     reset(g);
 }
 pub unsafe extern "C" fn cb_doAirEnd0(g: G) {
+    melee_core::ct!("cb_doAirEnd0");
     doAirEnd0(g);
 }
 /// `ftCommon_8007F76C` / `ftCommon_8007F7B4` as Fighter callback entries.
 pub unsafe extern "C" fn cb_ftCommon_8007F76C(g: G) {
+    melee_core::ct!("cb_ftCommon_8007F76C");
     melee_fighter::ftcommon2::ftcommon_8007f76c(&mut *fpp(g));
 }
 pub unsafe extern "C" fn cb_ftCommon_8007F7B4(g: G) {
+    melee_core::ct!("cb_ftCommon_8007F7B4");
     melee_fighter::ftcommon2::ftcommon_8007f7b4(&mut *fpp(g));
 }
 
 /// `reset` (static): the `x21EC` hook set by the Enter functions.
 pub fn reset(gobj: G) {
+    melee_core::ct!("reset");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -120,6 +125,7 @@ pub fn reset(gobj: G) {
 }
 
 pub fn ftPe_SpecialS_Enter(gobj: G) {
+    melee_core::ct!("ftPe_SpecialS_Enter");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -132,6 +138,7 @@ pub fn ftPe_SpecialS_Enter(gobj: G) {
 }
 
 pub fn ftPe_SpecialAirS_Enter(gobj: G) {
+    melee_core::ct!("ftPe_SpecialAirS_Enter");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -144,6 +151,7 @@ pub fn ftPe_SpecialAirS_Enter(gobj: G) {
 
 /// `doAirEnd0` (static): the `hurtbox_detect_cb` of the air jump.
 pub fn doAirEnd0(gobj: G) {
+    melee_core::ct!("doAirEnd0");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).x221C_b5() != 0 {
@@ -178,6 +186,7 @@ pub fn doAirEnd0(gobj: G) {
 }
 
 pub fn ftPe_SpecialSStart_Anim(gobj: G) {
+    melee_core::ct!("ftPe_SpecialSStart_Anim");
     unsafe {
         let fp = fpp(gobj);
         if st::ftAnim_IsFramesRemaining(gobj) != 0 {
@@ -195,6 +204,7 @@ pub fn ftPe_SpecialSStart_Anim(gobj: G) {
 }
 
 pub fn ftPe_SpecialAirSStart_Anim(gobj: G) {
+    melee_core::ct!("ftPe_SpecialAirSStart_Anim");
     unsafe {
         let fp = fpp(gobj);
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -207,11 +217,12 @@ pub fn ftPe_SpecialAirSStart_Anim(gobj: G) {
     }
 }
 
-pub fn ftPe_SpecialSStart_IASA(_gobj: G) {}
+pub fn ftPe_SpecialSStart_IASA(_gobj: G) { melee_core::ct!("ftPe_SpecialSStart_IASA");}
 
-pub fn ftPe_SpecialAirSStart_IASA(_gobj: G) {}
+pub fn ftPe_SpecialAirSStart_IASA(_gobj: G) { melee_core::ct!("ftPe_SpecialAirSStart_IASA");}
 
 pub fn ftPe_SpecialSStart_Coll(gobj: G) {
+    melee_core::ct!("ftPe_SpecialSStart_Coll");
     unsafe {
         let fp = fpp(gobj);
         if st::ft_800827A0(gobj) == 0 {
@@ -225,6 +236,7 @@ pub fn ftPe_SpecialSStart_Coll(gobj: G) {
 }
 
 pub fn ftPe_SpecialAirSStart_Coll(gobj: G) {
+    melee_core::ct!("ftPe_SpecialAirSStart_Coll");
     unsafe {
         let fp = fpp(gobj);
         if st::ft_80081D0C(gobj) != 0 {
@@ -242,6 +254,7 @@ pub fn ftPe_SpecialAirSStart_Coll(gobj: G) {
 }
 
 pub fn ftPe_SpecialAirSJump_Anim(gobj: G) {
+    melee_core::ct!("ftPe_SpecialAirSJump_Anim");
     unsafe {
         if (*fpp(gobj)).cmd_vars[3] != 0 || st::ftAnim_IsFramesRemaining(gobj) == 0 {
             enterAirEndSmash(gobj);
@@ -249,9 +262,10 @@ pub fn ftPe_SpecialAirSJump_Anim(gobj: G) {
     }
 }
 
-pub fn ftPe_SpecialAirSJump_IASA(_gobj: G) {}
+pub fn ftPe_SpecialAirSJump_IASA(_gobj: G) { melee_core::ct!("ftPe_SpecialAirSJump_IASA");}
 
 pub fn ftPe_SpecialAirSJump_Coll(gobj: G) {
+    melee_core::ct!("ftPe_SpecialAirSJump_Coll");
     unsafe {
         let fp = fpp(gobj);
         if st::ft_80081D0C(gobj) != 0 {
@@ -267,6 +281,7 @@ pub fn ftPe_SpecialAirSJump_Coll(gobj: G) {
 
 /// `enterAirJump` (static): launch into the jump arc.
 pub fn enterAirJump(gobj: G) {
+    melee_core::ct!("enterAirJump");
     unsafe {
         let mut fp = fpp(gobj);
         let da = da(fp);
@@ -283,12 +298,13 @@ pub fn enterAirJump(gobj: G) {
     }
 }
 
-pub fn ftPe_SpecialSEnd_IASA(_gobj: G) {}
+pub fn ftPe_SpecialSEnd_IASA(_gobj: G) { melee_core::ct!("ftPe_SpecialSEnd_IASA");}
 
-pub fn ftPe_SpecialAirSEnd_IASA(_gobj: G) {}
+pub fn ftPe_SpecialAirSEnd_IASA(_gobj: G) { melee_core::ct!("ftPe_SpecialAirSEnd_IASA");}
 
 /// `doPostEnd` (static): the bomber's impact burst when the script flagged it.
 pub fn doPostEnd(gobj: G) {
+    melee_core::ct!("doPostEnd");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -307,16 +323,19 @@ pub fn doPostEnd(gobj: G) {
 
 /// `doPostEnd_SmallerStack` (static): identical to [`doPostEnd`].
 pub fn doPostEnd_SmallerStack(gobj: G) {
+    melee_core::ct!("doPostEnd_SmallerStack");
     doPostEnd(gobj);
 }
 
 /// `enterEndSmash` (static).
 pub fn enterEndSmash(gobj: G) {
+    melee_core::ct!("enterEndSmash");
     st::Fighter_ChangeMotionState(gobj, ftPe_MS_SpecialSEnd as i32, Ft_MF_None, 0.0, 1.0, 0.0, core::ptr::null_mut());
     doPostEnd(gobj);
 }
 
 pub fn enterAirEndSmash(gobj: G) {
+    melee_core::ct!("enterAirEndSmash");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);

@@ -54,6 +54,7 @@ fn fp<'a>(g: G) -> &'a mut Fighter {
 
 /// `ft_8007C114`: drop the hammer state if holding one, then clear `x2219_b4`.
 pub fn ft_8007c114(g: G) {
+    melee_core::ct!("ft_8007c114");
     let f = fp(g);
     if !f.item_gobj.is_null() && ext::itGetKind(f.item_gobj) == It_Kind_Hammer as i32 {
         ext::ftCo_800C555C(g);
@@ -63,6 +64,7 @@ pub fn ft_8007c114(g: G) {
 
 /// `ft_8007C17C`: arm the thrown-fighter hitbox on the part named by `ft_data->x34`.
 pub fn ft_8007c17c(g: G) {
+    melee_core::ct!("ft_8007c17c");
     let f = fp(g);
     let x34 = unsafe { &*(*f.ft_data).x34 };
     f.x1064_thrownHitbox.x4 = 0;
@@ -83,6 +85,7 @@ pub fn ft_8007c17c(g: G) {
 
 /// `ft_8007C224`: advance the thrown-fighter hitbox position.
 pub fn ft_8007c224(g: G) {
+    melee_core::ct!("ft_8007c224");
     let hit: *mut HitCapsule = &mut fp(g).x1064_thrownHitbox;
     unsafe {
         match (*hit).state {
@@ -125,6 +128,7 @@ fn push(from: &Fighter, to: &mut Fighter, same_x: bool, same_y: bool) {
 
 /// `ft_8007C2E0(fp0, hit0, fp1, hit1)`. `fp0` and `fp1` are distinct fighters.
 pub fn ft_8007c2e0(fp0: *mut Fighter, hit0: *mut HitCapsule, fp1: *mut Fighter, hit1: *mut HitCapsule) {
+    melee_core::ct!("ft_8007c2e0");
     if ext::lbColl_8000ACFC(fp1, hit0) {
         return;
     }
@@ -148,6 +152,7 @@ pub fn ft_8007c2e0(fp0: *mut Fighter, hit0: *mut HitCapsule, fp1: *mut Fighter, 
 
 /// `ft_8007C4BC`: thrown fighter `g` against every later fighter in the list.
 pub fn ft_8007c4bc(g: G) {
+    melee_core::ct!("ft_8007c4bc");
     let f = fp(g);
     if f.x2227_b2() == 0 {
         return;

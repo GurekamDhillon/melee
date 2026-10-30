@@ -68,6 +68,7 @@ pub static mut HSD_SisLib_804D1110: [*mut HSD_Archive; 5] = [::core::ptr::null::
 pub static mut HSD_SisLib_804D1124: [*mut SIS; 5] = [::core::ptr::null::<SIS>()
     as *mut SIS; 5];
 pub unsafe extern "C" fn HSD_SisLib_Alloc(mut size: s32) -> *mut ::core::ffi::c_void {
+    melee_core::ct!("HSD_SisLib_Alloc");
     let mut best: *mut SisBlock = ::core::ptr::null_mut::<SisBlock>();
     let mut alloc_tail: *mut SisBlock = ::core::ptr::null_mut::<SisBlock>();
     let mut remainder: s32 = 0;
@@ -159,6 +160,7 @@ pub unsafe extern "C" fn HSD_SisLib_Alloc(mut size: s32) -> *mut ::core::ffi::c_
     return sb_read!(best, data) as *mut ::core::ffi::c_void;
 }
 pub unsafe extern "C" fn HSD_SisLib_Free(mut ptr: *mut ::core::ffi::c_void) {
+    melee_core::ct!("HSD_SisLib_Free");
     let mut free_cur: *mut SisBlock = ::core::ptr::null_mut::<SisBlock>();
     let mut free_tail: *mut SisBlock = ::core::ptr::null_mut::<SisBlock>();
     let mut alloc_prev: *mut SisBlock = ::core::ptr::null_mut::<SisBlock>();
@@ -212,6 +214,7 @@ pub unsafe extern "C" fn HSD_SisLib_Free(mut ptr: *mut ::core::ffi::c_void) {
     sb_write!(alloc_cur, next, ::core::ptr::null_mut::<SisBlock>());
 }
 pub unsafe extern "C" fn HSD_SisLib_803A5A2C(mut ptr: *mut ::core::ffi::c_void) {
+    melee_core::ct!("HSD_SisLib_803A5A2C");
     let mut next_text: *mut HSD_Text = ::core::ptr::null_mut::<HSD_Text>();
     let mut alloc: *mut SisBlock = ::core::ptr::null_mut::<SisBlock>();
     let mut curr: *mut HSD_Text = ::core::ptr::null_mut::<HSD_Text>();
@@ -252,6 +255,7 @@ pub unsafe extern "C" fn HSD_SisLib_803A5ACC(
     mut box_w: f32,
     mut box_h: f32,
 ) -> *mut HSD_Text {
+    melee_core::ct!("HSD_SisLib_803A5ACC");
     let mut list_cur: *mut HSD_Text = ::core::ptr::null_mut::<HSD_Text>();
     let mut list_tail: *mut HSD_Text = ::core::ptr::null_mut::<HSD_Text>();
     let mut cam_entry: *mut sislib_UnkAlloc3 = ::core::ptr::null_mut::<
@@ -358,6 +362,7 @@ pub unsafe extern "C" fn HSD_SisLib_803A5ACC(
     return text;
 }
 pub unsafe extern "C" fn HSD_SisLib_803A5CC4(mut text: *mut HSD_Text) {
+    melee_core::ct!("HSD_SisLib_803A5CC4");
     let mut curr: *mut HSD_Text = HSD_SisLib_804D7978;
     while !curr.is_null() {
         let mut next: *mut HSD_Text = (*curr).next;
@@ -374,6 +379,7 @@ pub unsafe extern "C" fn HSD_SisLib_803A5CC4(mut text: *mut HSD_Text) {
     }
 }
 pub unsafe extern "C" fn HSD_SisLib_803A5D30() {
+    melee_core::ct!("HSD_SisLib_803A5D30");
     let mut curr: *mut HSD_Text = HSD_SisLib_804D7978;
     while !curr.is_null() {
         let mut next: *mut HSD_Text = (*curr).next;
@@ -388,6 +394,7 @@ pub unsafe extern "C" fn HSD_SisLib_803A5D30() {
 }
 #[inline]
 pub unsafe extern "C" fn HSD_SisLib_803A5DA0_inline0(mut font_idx: s32) {
+    melee_core::ct!("HSD_SisLib_803A5DA0_inline0");
     let mut curr: *mut HSD_Text = HSD_SisLib_804D7978;
     while !curr.is_null() {
         let mut next: *mut HSD_Text = (*curr).next;
@@ -403,6 +410,7 @@ pub unsafe extern "C" fn HSD_SisLib_803A5DA0_inline0(mut font_idx: s32) {
     }
 }
 pub unsafe extern "C" fn HSD_SisLib_803A5DA0(mut font_idx: s32) {
+    melee_core::ct!("HSD_SisLib_803A5DA0");
     let mut last: *mut sislib_UnkAlloc3 = ::core::ptr::null_mut::<sislib_UnkAlloc3>();
     let mut curr: *mut sislib_UnkAlloc3 = ::core::ptr::null_mut::<sislib_UnkAlloc3>();
     HSD_SisLib_803A5DA0_inline0(font_idx);
@@ -428,6 +436,7 @@ pub unsafe extern "C" fn HSD_SisLib_803A5DA0(mut font_idx: s32) {
 pub static mut HSD_SisLib_804D796C: *mut SisBlock = ::core::ptr::null::<SisBlock>()
     as *mut SisBlock;
 pub unsafe extern "C" fn HSD_SisLib_803A5E70() {
+    melee_core::ct!("HSD_SisLib_803A5E70");
     let mut curr: *mut sislib_UnkAlloc3 = ::core::ptr::null_mut::<sislib_UnkAlloc3>();
     HSD_SisLib_803A5D30();
     curr = HSD_SisLib_804D797C;
@@ -450,6 +459,7 @@ pub unsafe extern "C" fn HSD_SisLib_803A5E70() {
         .wrapping_sub(::core::mem::size_of::<SisBlock>() as usize) as u32);
 }
 pub unsafe extern "C" fn HSD_SisLib_803A5F50(mut font_idx: s32) {
+    melee_core::ct!("HSD_SisLib_803A5F50");
     let mut archive_ptr: *mut *mut HSD_Archive = ::core::ptr::null_mut::<
         *mut HSD_Archive,
     >();
@@ -463,6 +473,7 @@ pub unsafe extern "C" fn HSD_SisLib_803A5F50(mut font_idx: s32) {
     }
 }
 pub unsafe extern "C" fn HSD_SisLib_803A5FBC() {
+    melee_core::ct!("HSD_SisLib_803A5FBC");
     let mut i: ::core::ffi::c_int = 0;
     HSD_SisLib_803A5E70();
     i = 0 as ::core::ffi::c_int;
@@ -477,6 +488,7 @@ pub unsafe extern "C" fn HSD_SisLib_803A5FBC() {
     HSD_Free(HSD_SisLib_804D796C as *mut ::core::ffi::c_void);
 }
 pub unsafe extern "C" fn HSD_SisLib_803A6048(mut size: u32) {
+    melee_core::ct!("HSD_SisLib_803A6048");
     let mut i: ::core::ffi::c_int = 0;
     HSD_SisLib_804D7968 = size as u32;
     used_head = ::core::ptr::null_mut::<SisBlock>();
@@ -497,6 +509,7 @@ pub unsafe extern "C" fn HSD_SisLib_803A6048(mut size: u32) {
     }
 }
 pub unsafe extern "C" fn fn_803A60EC(mut gobj: *mut ::core::ffi::c_void) {
+    melee_core::ct!("fn_803A60EC");
     let mut curr: *mut sislib_UnkAlloc3 = HSD_SisLib_804D797C;
     while !curr.is_null() {
         if (*curr).x4 == gobj as *mut HSD_GObj {
@@ -510,6 +523,7 @@ pub unsafe extern "C" fn sislib_WideCamera(
     mut gobj: *mut HSD_GObj,
     mut pass: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("sislib_WideCamera");
 
     let aspect = f32::from_bits(View_AspectBits() as u32);
     let mut width: ::core::ffi::c_float = 0.;
@@ -529,6 +543,7 @@ pub unsafe extern "C" fn HSD_SisLib_SetWideCanvas(
     mut font_idx: ::core::ffi::c_int,
     mut canvas: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("HSD_SisLib_SetWideCanvas");
     let mut entry: *mut sislib_UnkAlloc3 = HSD_SisLib_804D797C;
     let mut index: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while !entry.is_null() {
@@ -560,6 +575,7 @@ pub unsafe extern "C" fn HSD_SisLib_803A611C(
     mut gx_prio: u8,
     mut render_prio: u32,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("HSD_SisLib_803A611C");
     let mut count: ::core::ffi::c_int = 0;
     let mut list_tail: *mut sislib_UnkAlloc3 = ::core::ptr::null_mut::<
         sislib_UnkAlloc3,
@@ -643,6 +659,7 @@ pub unsafe extern "C" fn HSD_SisLib_803A62A0(
     mut archive_name: *mut ::core::ffi::c_char,
     mut symbol_name: *mut ::core::ffi::c_char,
 ) {
+    melee_core::ct!("HSD_SisLib_803A62A0");
     let mut tmp: *mut HSD_Archive = HSD_SisLib_803A945C(archive_name);
     HSD_SisLib_804D1110[font_idx as usize] = tmp;
     if tmp.is_null() {
@@ -668,6 +685,7 @@ pub unsafe extern "C" fn HSD_SisLib_803A62A0(
     }
 }
 pub unsafe extern "C" fn HSD_SisLib_803A6368(mut text: *mut HSD_Text, mut sis_idx: s32) {
+    melee_core::ct!("HSD_SisLib_803A6368");
     let mut sis_table: *mut *mut SIS = ::core::ptr::null_mut::<*mut SIS>();
     let mut i: s32 = 0;
     sis_table = HSD_SisLib_804D1124[(*text).font_idx as usize] as *mut *mut SIS;

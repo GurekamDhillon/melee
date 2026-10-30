@@ -457,6 +457,7 @@ unsafe fn item_of(gobj: *mut HSD_GObj) -> *mut Item {
 
 /// `it_80279C48`: faces the item toward the nearest fighter of its owner (or a random side when there is none).
 pub unsafe extern "C" fn it_80279C48(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_80279C48");
     let mut v: Vec3 = core::mem::zeroed();
     let item = item_of(item_gobj);
     let gobj = ext::ftLib_8008627C(&raw mut (*item).pos, (*item).owner);
@@ -475,6 +476,7 @@ pub unsafe extern "C" fn it_80279C48(item_gobj: *mut HSD_GObj) {
 
 /// `it_80279CDC`: resets the item's state and scale, clears its flags.
 pub unsafe extern "C" fn it_80279CDC(item_gobj: *mut HSD_GObj, scale: f32) {
+    melee_core::ct!("it_80279CDC");
     it_8027A13C(item_gobj);
     it_80279D5C(item_gobj, scale);
     ext::it_8026B3A8(item_gobj);
@@ -484,11 +486,13 @@ pub unsafe extern "C" fn it_80279CDC(item_gobj: *mut HSD_GObj, scale: f32) {
 
 /// `it_80279D38`: the knockback path (`it_8027B964` with `chk` false).
 pub unsafe extern "C" fn it_80279D38(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_80279D38");
     ext::it_8027B964(item_gobj, 0);
 }
 
 /// `it_80279D5C`: sets the Pokemon's scale on all three axes and resets its spawn counter.
 pub unsafe extern "C" fn it_80279D5C(item_gobj: *mut HSD_GObj, scale: f32) {
+    melee_core::ct!("it_80279D5C");
     let item_jobj = (*item_gobj).hsd_obj as *mut HSD_JObj;
     let item = item_of(item_gobj);
     let mut sp18 = Vec3 { x: scale, y: scale, z: scale };
@@ -510,6 +514,7 @@ unsafe fn it_80279E24_inline(item_gobj: *mut HSD_GObj) {
 
 /// `it_80279E24`: advances the Pokemon's scale animation one frame and sets the next keyframe when due.
 pub unsafe extern "C" fn it_80279E24(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_80279E24");
     let item_jobj = (*item_gobj).hsd_obj as *mut HSD_JObj;
     let item = (*item_gobj).user_data as *mut Item;
     let scale = HSD_JObjGetScaleX(item_jobj);
@@ -535,6 +540,7 @@ pub unsafe extern "C" fn it_80279E24(item_gobj: *mut HSD_GObj) {
 
 /// `it_80279FF8`: grows the Pokemon to its attribute scale, then runs the scale animation.
 pub unsafe extern "C" fn it_80279FF8(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_80279FF8");
     let item = (*item_gobj).user_data as *mut Item;
     if (*item).xDD4_itemVar.pokemon_spawn.x5C == 0 {
         let item_jobj = (*item_gobj).hsd_obj as *mut HSD_JObj;
@@ -553,6 +559,7 @@ pub unsafe extern "C" fn it_80279FF8(item_gobj: *mut HSD_GObj) {
 
 /// `it_8027A09C`: runs the Pokemon's timed movement; true when it finishes (the scale is then restored).
 pub unsafe extern "C" fn it_8027A09C(item_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("it_8027A09C");
     let item = item_of(item_gobj);
     ext::it_80272860(item_gobj, (*item).xDD4_itemVar.pokemon_spawn.x1C, (*item).xDD4_itemVar.pokemon_spawn.x20);
     if (*item).xDD4_itemVar.pokemon_spawn.x24 <= 0.0 {
@@ -565,12 +572,14 @@ pub unsafe extern "C" fn it_8027A09C(item_gobj: *mut HSD_GObj) -> bool {
 
 /// `it_8027A118`: forwards the event to `it_8026E4D0`; never reports a removal.
 pub unsafe extern "C" fn it_8027A118(item_gobj: *mut HSD_GObj, arg1: Option<unsafe extern "C" fn(*mut HSD_GObj)>) -> bool {
+    melee_core::ct!("it_8027A118");
     ext::it_8026E4D0(item_gobj, arg1);
     false
 }
 
 /// `it_8027A13C`: clears the Pokemon's two vectors (x4 and x10).
 pub unsafe extern "C" fn it_8027A13C(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_8027A13C");
     let item = item_of(item_gobj);
     (*item).xDD4_itemVar.pokemon_spawn.x10 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     (*item).xDD4_itemVar.pokemon_spawn.x4 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -578,6 +587,7 @@ pub unsafe extern "C" fn it_8027A13C(item_gobj: *mut HSD_GObj) {
 
 /// `it_8027A160`: the bone's translation (scaled, with |v| < 0.001 zeroed) becomes the per-frame delta.
 pub unsafe extern "C" fn it_8027A160(bone: *mut HSD_JObj, item: *mut Item) {
+    melee_core::ct!("it_8027A160");
     if !bone.is_null() {
         let mut sp1c = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
         let mut sp10: Vec3 = core::mem::zeroed();
@@ -606,6 +616,7 @@ pub unsafe extern "C" fn it_8027A160(bone: *mut HSD_JObj, item: *mut Item) {
 
 /// `it_8027A344`: the Pokemon's velocity from its per-frame delta.
 pub unsafe extern "C" fn it_8027A344(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_8027A344");
     let item = item_of(item_gobj);
     (*item).x40_vel.x = (*item).xDD4_itemVar.pokemon_spawn.x4.z * (*item).facing_dir;
     (*item).x40_vel.y = (*item).xDD4_itemVar.pokemon_spawn.x4.y;
@@ -614,6 +625,7 @@ pub unsafe extern "C" fn it_8027A344(item_gobj: *mut HSD_GObj) {
 /// `it_8027A364`: the total weight of the kinds that may be picked now (1 plus the weights of the kinds
 /// other than the last two picked).
 pub unsafe extern "C" fn it_8027A364(item: *mut Item) -> i32 {
+    melee_core::ct!("it_8027A364");
     let attr = (*(*item).xC4_article_data).x4_specialAttributes as *mut itPokemonSpawn_DatAttrs;
     let mut ret_val = 1i32;
     let start = It_PKind_Start;
@@ -630,6 +642,7 @@ pub unsafe extern "C" fn it_8027A364(item: *mut Item) -> i32 {
 
 /// `it_8027A4D4`: a random Pokemon by weight (with the two rare spawns checked first). Returns the index.
 pub unsafe extern "C" fn it_8027A4D4(item: *mut Item) -> i32 {
+    melee_core::ct!("it_8027A4D4");
     let attr = (*(*item).xC4_article_data).x4_specialAttributes as *mut itPokemonSpawn_DatAttrs;
 
     if ext::HSD_Randi(251) == 0 && ext::Item_804A0E24.rare_spawned == 0 && ext::gm_80165084() != 0 {
@@ -671,6 +684,7 @@ struct PokemonSpawnWeight {
 /// `it_8027A780`: picks a Pokemon from the kind list `arg1` (terminated by `It_PKind_Terminate`), by weight,
 /// skipping the last two picks. Returns the index.
 pub unsafe extern "C" fn it_8027A780(item: *mut Item, arg1: *mut c_void) -> i32 {
+    melee_core::ct!("it_8027A780");
     let mut weights: [PokemonSpawnWeight; 30] = [PokemonSpawnWeight { kind: 0, weight: 0 }; 30];
     let mut cnt = 0i32;
     let attr = (*(*item).xC4_article_data).x4_specialAttributes as *mut itPokemonSpawn_DatAttrs;
@@ -713,6 +727,7 @@ pub unsafe extern "C" fn it_8027A780(item: *mut Item, arg1: *mut c_void) -> i32 
 
 /// `it_8027A9B8`: a Pokemon for the stage's own list (gm_801BEC54), with the rare spawns checked first.
 pub unsafe extern "C" fn it_8027A9B8(item: *mut Item) -> i32 {
+    melee_core::ct!("it_8027A9B8");
     let vec = ext::gm_801BEC54();
     if vec.is_null() {
         return It_PKind_Sonans;
@@ -732,6 +747,7 @@ pub unsafe extern "C" fn it_8027A9B8(item: *mut Item) -> i32 {
 
 /// `it_8027AAA0`: sets up the spawned Pokemon's timers, scales and motion table from its attributes.
 pub unsafe extern "C" fn it_8027AAA0(item1_gobj: *mut HSD_GObj, item2: *mut Item, arg2: i32) {
+    melee_core::ct!("it_8027AAA0");
     let it = item_of(item1_gobj);
     let attr = (*(*it).xC4_article_data).x4_specialAttributes as *mut itPokemonSpawn_DatAttrs;
     let ps = &raw mut (*item2).xDD4_itemVar.pokemon_spawn;
@@ -796,6 +812,7 @@ unsafe fn selectPokemonFromList(item: *mut Item, kinds: *mut ItemKind) -> i32 {
 /// `it_8027AB64`: spawns a Pokemon for the item (the kind from the mode, the list or the selection) and
 /// returns true when a spawn happened.
 pub unsafe extern "C" fn it_8027AB64(item_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("it_8027AB64");
     let mut spawn: SpawnItem = core::mem::zeroed();
     let item = item_of(item_gobj);
     let temp_r3 = ext::gm_8016AEB8();
@@ -861,6 +878,7 @@ pub unsafe extern "C" fn it_8027AB64(item_gobj: *mut HSD_GObj) -> bool {
 
 /// `it_8027ADEC`: spawns effect `arg0` on the jobj `arg2`, scaled by the item's scale over `arg3`.
 pub unsafe extern "C" fn it_8027ADEC(arg0: i32, item_gobj: *mut HSD_GObj, arg2: *mut HSD_JObj, arg3: f32) {
+    melee_core::ct!("it_8027ADEC");
     let item = item_of(item_gobj);
     let mut sp1c: f32 = (*(*item).xCC_item_attr).x60_scale * (1.0f32 / arg3);
     ext::efSync_Spawn(arg0, item_gobj, &[EfArg::Ptr(arg2 as *mut c_void), EfArg::F32P(&raw const sp1c)]);
@@ -868,6 +886,7 @@ pub unsafe extern "C" fn it_8027ADEC(arg0: i32, item_gobj: *mut HSD_GObj, arg2: 
 
 /// `it_8027AE34`: reverses the item's velocity and facing, resets its life timer and rotates it to face.
 pub unsafe extern "C" fn it_8027AE34(item_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("it_8027AE34");
     let item_jobj = (*item_gobj).hsd_obj as *mut HSD_JObj;
     let item = item_of(item_gobj);
     let mut rotate = it_803B8588;
@@ -881,6 +900,7 @@ pub unsafe extern "C" fn it_8027AE34(item_gobj: *mut HSD_GObj) -> bool {
 
 /// `it_8027AF50`: mirrors the velocity off the collision, re-derives the facing and rotates to face.
 pub unsafe extern "C" fn it_8027AF50(item_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("it_8027AF50");
     let item = item_of(item_gobj);
     let item_jobj = (*item_gobj).hsd_obj as *mut HSD_JObj;
     let mut rotate = it_803B8598;
@@ -893,6 +913,7 @@ pub unsafe extern "C" fn it_8027AF50(item_gobj: *mut HSD_GObj) -> bool {
 
 /// `it_8027B070`: copies the owner's attack id, attack instance and attack data onto the item.
 pub unsafe extern "C" fn it_8027B070(item_gobj: *mut HSD_GObj, owner_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_8027B070");
     let item = item_of(item_gobj);
     let fighter = (*owner_gobj).user_data as *mut Fighter;
     (*item).xD88_attackID = (*fighter).x2068_attackID;
@@ -906,6 +927,7 @@ pub unsafe extern "C" fn it_8027B070(item_gobj: *mut HSD_GObj, owner_gobj: *mut 
 
 /// `it_8027B0C4`: the spawned item's attack data, from its parent or its secondary parent.
 pub unsafe extern "C" fn it_8027B0C4(item_gobj: *mut HSD_GObj, spawn: *mut SpawnItem) {
+    melee_core::ct!("it_8027B0C4");
     if ext::ftLib_80086960((*spawn).x0_parent_gobj) != 0 {
         if ext::ftLib_80086960((*spawn).x4_parent_gobj2) != 0 {
             it_8027B070(item_gobj, (*spawn).x4_parent_gobj2);
@@ -934,6 +956,7 @@ pub unsafe extern "C" fn it_8027B0C4(item_gobj: *mut HSD_GObj, spawn: *mut Spawn
 
 /// `it_8027B1F4`: the item's attack data, from its owner or the default when it has none.
 pub unsafe extern "C" fn it_8027B1F4(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_8027B1F4");
     let item = item_of(item_gobj);
     let mut sp10: Struct2070 = core::mem::zeroed();
     sp10.x2070_int = 0;
@@ -953,6 +976,7 @@ pub unsafe extern "C" fn it_8027B1F4(item_gobj: *mut HSD_GObj) {
 
 /// `it_8027B288`: sets the item's attack data word `arg1`, refreshing the attack id when it changed.
 pub unsafe extern "C" fn it_8027B288(item_gobj: *mut HSD_GObj, arg1: u32) {
+    melee_core::ct!("it_8027B288");
     let item = item_of(item_gobj);
     let mut sp14: Struct2070 = core::mem::zeroed();
     sp14.x2070_int = arg1 as i32;
@@ -972,6 +996,7 @@ pub unsafe extern "C" fn it_8027B288(item_gobj: *mut HSD_GObj, arg1: u32) {
 
 /// `it_8027B330`: sets the item's attack id to `arg1` (a new attack instance unless it repeats).
 pub unsafe extern "C" fn it_8027B330(item_gobj: *mut HSD_GObj, arg1: u32) {
+    melee_core::ct!("it_8027B330");
     let item = item_of(item_gobj);
     if arg1 == 1 || arg1 as i32 != (*item).xD88_attackID {
         (*item).xD88_attackID = arg1 as i32;
@@ -981,6 +1006,7 @@ pub unsafe extern "C" fn it_8027B330(item_gobj: *mut HSD_GObj, arg1: u32) {
 
 /// `it_8027B378`: the hit sound/rumble for a fighter that picked up the item (for item-class collisions).
 pub unsafe extern "C" fn it_8027B378(fighter_gobj: *mut HSD_GObj, item_gobj: *mut HSD_GObj, arg2: f32) {
+    melee_core::ct!("it_8027B378");
     if ext::it_8026B6C8(item_gobj) != 0 {
         let temp_r30 = (*ext::ft_80089884(fighter_gobj)).anon_0.x2073;
         let temp_r31 = ext::ftLib_800874BC(fighter_gobj);
@@ -991,6 +1017,7 @@ pub unsafe extern "C" fn it_8027B378(fighter_gobj: *mut HSD_GObj, item_gobj: *mu
 
 /// `it_8027B408`: as `it_8027B378` for the owner of `item_gobj1`.
 pub unsafe extern "C" fn it_8027B408(item_gobj1: *mut HSD_GObj, item_gobj2: *mut HSD_GObj, arg8: f32) {
+    melee_core::ct!("it_8027B408");
     if ext::it_8026B6C8(item_gobj2) != 0 {
         let item1 = item_of(item_gobj1);
         if ext::ftLib_80086960((*item1).owner) != 0 {
@@ -1004,6 +1031,7 @@ pub unsafe extern "C" fn it_8027B408(item_gobj1: *mut HSD_GObj, item_gobj2: *mut
 
 /// `it_8027B4A4`: the fighter's player-state update for an item-class collision.
 pub unsafe extern "C" fn it_8027B4A4(item_gobj1: *mut HSD_GObj, item_gobj2: *mut HSD_GObj) {
+    melee_core::ct!("it_8027B4A4");
     if ext::it_8026B6C8(item_gobj2) != 0 {
         let temp_r31 = ext::ft_800898A8(item_gobj1) as *mut c_void;
         ext::pl_800384DC(item_gobj1, (*ext::ft_80089884(item_gobj1)).anon_0.x2073 as i32, temp_r31);
@@ -1012,6 +1040,7 @@ pub unsafe extern "C" fn it_8027B4A4(item_gobj1: *mut HSD_GObj, item_gobj2: *mut
 
 /// `it_8027B508`: the owner's player-state update from the item's attack data.
 pub unsafe extern "C" fn it_8027B508(item_gobj1: *mut HSD_GObj, item_gobj2: *mut HSD_GObj) {
+    melee_core::ct!("it_8027B508");
     if ext::it_8026B6C8(item_gobj2) != 0 {
         let item1 = item_of(item_gobj1);
         if ext::ftLib_80086960((*item1).owner) != 0 {
@@ -1022,6 +1051,7 @@ pub unsafe extern "C" fn it_8027B508(item_gobj1: *mut HSD_GObj, item_gobj2: *mut
 
 /// `it_8027B564`: the owner's attack data pushed to the player state.
 pub unsafe extern "C" fn it_8027B564(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_8027B564");
     let item = item_of(item_gobj);
     if ext::ftLib_80086960((*item).owner) != 0 {
         let mut sp10 = (*item).xD90;

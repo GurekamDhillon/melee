@@ -129,6 +129,7 @@ fn queue(g: G) -> *mut core::ffi::c_void {
 }
 
 pub fn ftCo_80090984(g: G) {
+    melee_core::ct!("ftCo_80090984");
     if ext::ftCo_80098928(g) {
         return;
     }
@@ -140,6 +141,7 @@ pub fn ftCo_80090984(g: G) {
 
 /// static `ftCo_800909D0`: size the ice block's collision box around the fighter.
 pub fn ftCo_800909D0(f: &mut Fighter) {
+    melee_core::ct!("ftCo_800909D0");
     let radius = f.x34_scale.y * f.co_attrs.damageice_ice_size;
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut offset = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -166,10 +168,12 @@ pub fn ftCo_800909D0(f: &mut Fighter) {
 
 /// static inline `ftCo_SpawnEffect_x415`.
 pub fn ftCo_SpawnEffect_x415(g: G, joint: *mut HSD_JObj, param: &mut f32) {
+    melee_core::ct!("ftCo_SpawnEffect_x415");
     ext::efAsync_Spawn(g, queue(g), 3, 0x415, joint, param as *mut f32 as *mut core::ffi::c_void, core::ptr::null_mut());
 }
 
 pub fn ftCo_80090AC0(f: &mut Fighter) {
+    melee_core::ct!("ftCo_80090AC0");
     let joint = fpj(f, FtPart_XRotN);
     let size = f.co_attrs.damageice_ice_size;
     let scl_y = f.x34_scale.y * size;
@@ -180,6 +184,7 @@ pub fn ftCo_80090AC0(f: &mut Fighter) {
 
 /// static `ftCo_DamageIce_OnHit`.
 pub unsafe extern "C" fn ftCo_DamageIce_OnHit(g: G) {
+    melee_core::ct!("ftCo_DamageIce_OnHit");
     fp(g).set_x2227_b6(0);
 }
 
@@ -249,6 +254,7 @@ fn freeze_tail(g: G) {
 }
 
 pub fn ftCo_DamageIce_Init(g: G) {
+    melee_core::ct!("ftCo_DamageIce_Init");
     ext::ftCo_8009750C(g);
     ext::ftCo_800DD168(g);
     fp(g).set_x2227_b6(1);
@@ -286,6 +292,7 @@ fn ftCo_ReleaseItemAndVictim(g: G) {
 }
 
 pub fn ftCo_DamageIce_HitWhileFrozen(g: G) {
+    melee_core::ct!("ftCo_DamageIce_HitWhileFrozen");
     ftCo_ReleaseItemAndVictim(g);
     fp(g).set_x2227_b6(1);
     ext::Fighter_ChangeMotionState(g, ftCo_MS_DamageIce as i32, (Ft_MF_KeepGfx | Ft_MF_Unk06) as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -294,6 +301,7 @@ pub fn ftCo_DamageIce_HitWhileFrozen(g: G) {
 
 /// static `ftCo_DamageIce_OnHit2`: hits shorten the freeze; fire breaks it.
 pub unsafe extern "C" fn ftCo_DamageIce_OnHit2(g: G) {
+    melee_core::ct!("ftCo_DamageIce_OnHit2");
     let f = fp(g);
     // `grab_timer -= pct * mult`: one fmuladd(-pct, mult, grab_timer).
     f.grab_timer = fmadds(-f.dmg.x1838_percentTemp, cd().damageice_dmg_time_reduction_mult, f.grab_timer);
@@ -303,6 +311,7 @@ pub unsafe extern "C" fn ftCo_DamageIce_OnHit2(g: G) {
 }
 
 pub fn ftCo_DamageIce_Anim(g: G) {
+    melee_core::ct!("ftCo_DamageIce_Anim");
     if fp(g).ground_or_air == GA_Air {
         let rot_x = unsafe { fp(g).mv.co.damageice.rot_speed };
         let jobj = bone_joint(g, FtPart_XRotN);
@@ -318,9 +327,10 @@ pub fn ftCo_DamageIce_Anim(g: G) {
     }
 }
 
-pub fn ftCo_DamageIce_IASA(_g: G) {}
+pub fn ftCo_DamageIce_IASA(_g: G) { melee_core::ct!("ftCo_DamageIce_IASA");}
 
 pub fn ftCo_DamageIce_Phys(g: G) {
+    melee_core::ct!("ftCo_DamageIce_Phys");
     if fp(g).ground_or_air == GA_Air {
         ext::ftCommon_CalcSelfAccel_DeaccelAir(fp(g));
         let f = fp(g);
@@ -333,6 +343,7 @@ pub fn ftCo_DamageIce_Phys(g: G) {
 }
 
 pub fn ftCo_DamageIce_Coll(g: G) {
+    melee_core::ct!("ftCo_DamageIce_Coll");
     if fp(g).ground_or_air == GA_Air {
         ftCo_DamageIce_InAirUpdate(g);
     } else {
@@ -344,6 +355,7 @@ pub fn ftCo_DamageIce_Coll(g: G) {
 }
 
 pub fn ftCo_DamageIce_InAirUpdate(g: G) {
+    melee_core::ct!("ftCo_DamageIce_InAirUpdate");
     let b: *mut ftCollisionBox = unsafe { &mut fp(g).mv.co.damageice.ice_coll };
     let ret = if fp(g).cur_anim_frame <= 3.0 { ext::ft_80082638(g, b) } else { ext::ft_800824A0(g, b) };
     let f = fp(g);
@@ -380,12 +392,14 @@ fn ftCo_SpawnEffect_x406(g: G, vec: &mut Vec3, mut f: f32) {
 
 /// static inline `ftCo_Speed`: two fmuladds (x*x + y*y, then + z*z).
 pub fn ftCo_Speed(f: &Fighter) -> f32 {
+    melee_core::ct!("ftCo_Speed");
     let v = &f.self_vel;
     melee_runtime::gekko::sqrtf(fmadds(v.z, v.z, fmadds(v.x, v.x, v.y * v.y)))
 }
 
 /// static `ftCo_DamageIce_Collide`: the block hits a wall/ceiling: shatter or bounce.
 pub fn ftCo_DamageIce_Collide(g: G, normal: &Vec3, vec: &Vec3) {
+    melee_core::ct!("ftCo_DamageIce_Collide");
     let f = fp(g);
     let mut next_pos = Vec3 {
         x: f.cur_pos.x + vec.x,
@@ -422,6 +436,7 @@ pub fn ftCo_DamageIce_Collide(g: G, normal: &Vec3, vec: &Vec3) {
 }
 
 pub fn ftCo_80091854(g: G) {
+    melee_core::ct!("ftCo_80091854");
     if ext::ftCo_800C5240(g) {
         ext::ftCo_800C5A98(g);
         return;
@@ -443,6 +458,7 @@ pub fn ftCo_80091854(g: G) {
 }
 
 pub fn ftCo_DamageIceJump_Anim(g: G) {
+    melee_core::ct!("ftCo_DamageIceJump_Anim");
     let f = fp(g);
     unsafe {
         if f.mv.co.damageicejump.escape_timer > 0.0 {
@@ -454,12 +470,14 @@ pub fn ftCo_DamageIceJump_Anim(g: G) {
     }
 }
 
-pub fn ftCo_DamageIceJump_IASA(_g: G) {}
+pub fn ftCo_DamageIceJump_IASA(_g: G) { melee_core::ct!("ftCo_DamageIceJump_IASA");}
 
 pub fn ftCo_DamageIceJump_Phys(g: G) {
+    melee_core::ct!("ftCo_DamageIceJump_Phys");
     ext::ft_80084EEC(g);
 }
 
 pub fn ftCo_DamageIceJump_Coll(g: G) {
+    melee_core::ct!("ftCo_DamageIceJump_Coll");
     ext::ft_800831CC(g, ext::ftCo_80096CC8, ext::ft_80082B1C);
 }

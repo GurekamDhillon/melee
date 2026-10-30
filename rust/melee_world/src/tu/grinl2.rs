@@ -52,12 +52,14 @@ pub mod ext {
 
 /// `Ground_StartMapAnim`.
 pub unsafe fn Ground_StartMapAnim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Ground_StartMapAnim");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as enum_t, 0);
 }
 
 /// `Ground_InitMapCollAndAnim`.
 pub unsafe fn Ground_InitMapCollAndAnim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Ground_InitMapCollAndAnim");
     let gp = GET_GROUND(gobj);
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     ext::Ground_InitMapColl(jobj, (*gp).map_id as s32);
@@ -66,12 +68,14 @@ pub unsafe fn Ground_InitMapCollAndAnim(gobj: *mut HSD_GObj) {
 
 /// `Ground_UpdateWindAndMapColl`.
 pub unsafe fn Ground_UpdateWindAndMapColl(gobj: *mut HSD_GObj) {
+    melee_core::ct!("Ground_UpdateWindAndMapColl");
     ext::lb_800115F4();
     ext::Ground_UpdateMapColl(gobj);
 }
 
 /// `Ground_SetupStageCallbacks`.
 pub unsafe fn Ground_SetupStageCallbacks(gobj: *mut HSD_GObj, callbacks: *mut StageCallbacks) {
+    melee_core::ct!("Ground_SetupStageCallbacks");
     let gp = GET_GROUND(gobj);
     (*gp).x8_callback = None;
     (*gp).xC_callback = None;
@@ -90,6 +94,7 @@ pub unsafe fn Ground_SetupStageCallbacks(gobj: *mut HSD_GObj, callbacks: *mut St
 /// `Ground_ClampSymmetric`.
 #[inline]
 pub fn Ground_ClampSymmetric(value: f32, limit: f32, out: &mut f32) {
+    melee_core::ct!("Ground_ClampSymmetric");
     let mut limit = limit;
     if value > limit {
         *out = limit;
@@ -104,6 +109,7 @@ pub fn Ground_ClampSymmetric(value: f32, limit: f32, out: &mut f32) {
 /// `Ground_WrapAngle` (`M_TAU` is a double: the compare and the add are in f64 like the C).
 #[inline]
 pub fn Ground_WrapAngle(angle: &mut f32) {
+    melee_core::ct!("Ground_WrapAngle");
     if (*angle as f64) > M_TAU {
         *angle = (*angle as f64 - M_TAU) as f32;
     } else if (*angle as f64) < -M_TAU {
@@ -114,11 +120,13 @@ pub fn Ground_WrapAngle(angle: &mut f32) {
 /// `ZRANDI(n)`.
 #[inline]
 pub unsafe fn ZRANDI(n: i32) -> i32 {
+    melee_core::ct!("ZRANDI");
     if n != 0 { ext::HSD_Randi(n) } else { 0 }
 }
 
 /// `rand_range(a, b)`.
 pub unsafe fn rand_range(a: i32, b: i32) -> i32 {
+    melee_core::ct!("rand_range");
     if a > b {
         b + ZRANDI(a - b)
     } else if a < b {

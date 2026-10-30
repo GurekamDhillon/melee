@@ -15,8 +15,9 @@ pub static mut hsd_804D79B0:[u8;8]=[0;8];
 pub static mut lbl_804D6398:i32=3;
 const JPEG_EXHAUSTED:u64=0x4a5045475f454f46;
 /// Replacement for the TU-local setjmp/longjmp boundary. Preserve all partial state.
-pub fn jpeg_fail()->! { std::panic::resume_unwind(Box::new(JPEG_EXHAUSTED)) }
+pub fn jpeg_fail()->! { melee_core::ct!("jpeg_fail"); std::panic::resume_unwind(Box::new(JPEG_EXHAUSTED)) }
 pub fn jpeg_try(f:impl FnOnce()->i32)->Option<i32> {
+    melee_core::ct!("jpeg_try");
     match std::panic::catch_unwind(std::panic::AssertUnwindSafe(f)) {
         Ok(v)=>Some(v),Err(e)=>if e.downcast_ref::<u64>()==Some(&JPEG_EXHAUSTED){None}else{std::panic::resume_unwind(e)},
     }
@@ -29,19 +30,23 @@ pub mod ext {
 }
 /// Deterministic native boundary implementation available for oracle hooks.
 pub unsafe fn write_byte(byte:u8) {
+    melee_core::ct!("write_byte");
     if hsd_804D79A0 < hsd_804D79A4.wrapping_offset(hsd_804D79A8 as isize) {
         *hsd_804D79A0=byte; hsd_804D79A0=hsd_804D79A0.add(1);
     } else {jpeg_fail()}
 }
 pub unsafe fn write_bulk(src:*mut core::ffi::c_void,n:usize) {
+    melee_core::ct!("write_bulk");
     if hsd_804D79A0 < hsd_804D79A4.wrapping_offset(hsd_804D79A8 as isize).wrapping_sub(n) {
         core::ptr::copy_nonoverlapping(src.cast::<u8>(),hsd_804D79A0,n);hsd_804D79A0=hsd_804D79A0.add(n);
     } else {jpeg_fail()}
 }
 pub unsafe fn jpegLumaAddress(dest:*mut *mut i32,work:*mut u8,offset:u32) {
+    melee_core::ct!("jpegLumaAddress");
     *dest=core::ptr::addr_of_mut!((*(work.cast::<JpegWork>())).x118).cast::<i32>().add((offset/4) as usize);
 }
 pub unsafe fn hsd_803B3408(image:*mut u8,x:i32,y:i32,width:i32,_height:i32) {
+    melee_core::ct!("hsd_803B3408");
     let stride=((width+15)/16)*64;
     let image_offset=(x/4)*16+(y/4)*stride;
     let work=core::ptr::addr_of_mut!(hsd_804D2648);
@@ -67,6 +72,7 @@ pub unsafe fn hsd_803B3408(image:*mut u8,x:i32,y:i32,width:i32,_height:i32) {
 }
 /// Each row and column uses exactly the f64 fmuladd sites in fn_803B376C.
 pub unsafe fn fn_803B376C(arg:*mut u8) {
+    melee_core::ct!("fn_803B376C");
     let b=arg.cast::<i32>();
     for pass in 0..2 {for i in 0..8 {let stride=if pass==0{1}else{8};let p=b.add(if pass==0{i*8}else{i});
         let a=core::array::from_fn::<i32,8,_>(|j|*p.add(j*stride));
@@ -88,18 +94,20 @@ pub unsafe fn fn_803B376C(arg:*mut u8) {
     }}
     for i in 0..64 {*b.add(i)>>=2;}
 }
-pub fn hsd_803B3CD8_bit_length(value:i32)->i32 {32-(value as u32).leading_zeros() as i32}
-pub fn jpeg_run_bit_length(value:i32)->i32 {hsd_803B3CD8_bit_length(value.wrapping_add(1))}
-pub unsafe fn hsd_803B3CD8_write_byte(byte:u8,_work:*mut *mut JpegWork) {write_byte(byte)}
+pub fn hsd_803B3CD8_bit_length(value:i32)->i32 { melee_core::ct!("hsd_803B3CD8_bit_length");32-(value as u32).leading_zeros() as i32}
+pub fn jpeg_run_bit_length(value:i32)->i32 { melee_core::ct!("jpeg_run_bit_length");hsd_803B3CD8_bit_length(value.wrapping_add(1))}
+pub unsafe fn hsd_803B3CD8_write_byte(byte:u8,_work:*mut *mut JpegWork) { melee_core::ct!("hsd_803B3CD8_write_byte");write_byte(byte)}
 pub unsafe fn hsd_803B3CD8_write_bits(value:i32,length:i32,work:*mut *mut JpegWork) {
+    melee_core::ct!("hsd_803B3CD8_write_bits");
     for bit in (0..length).rev() {
         hsd_804D79B0[0]=hsd_804D79B0[0].wrapping_shl(1);hsd_804D79AC=hsd_804D79AC.wrapping_add(1);
         if value as u32 & shl(1,bit as u32)!=0 {hsd_804D79B0[0]|=1;}
         if hsd_804D79AC==8 {hsd_803B3CD8_write_byte(hsd_804D79B0[0],work);if hsd_804D79B0[0]==255 {hsd_803B3CD8_write_byte(0,work);}hsd_804D79AC=0;hsd_804D79B0[0]=0;}
     }
 }
-pub unsafe fn jpeg_write_run_payload(run:i32,length:i32,work:*mut *mut JpegWork) {hsd_803B3CD8_write_bits(run.wrapping_add(1),length,work)}
+pub unsafe fn jpeg_write_run_payload(run:i32,length:i32,work:*mut *mut JpegWork) { melee_core::ct!("jpeg_write_run_payload");hsd_803B3CD8_write_bits(run.wrapping_add(1),length,work)}
 pub unsafe fn jpeg_encode_component(component:i32,ac_value_out:*mut i32,run_out:*mut i32,value_out:*mut i32,index_out:*mut i32) {
+    melee_core::ct!("jpeg_encode_component");
     let mut work=core::ptr::addr_of_mut!(hsd_804D2648);let c=component as usize;
     let dc_code=if c==0{&lbl_80431678}else{&lbl_8043169C};let dc_length=if c==0{&lbl_80431690}else{&lbl_804316B4};
     let ac_code=if c==0{&TABLES.ac_code_luma}else{&TABLES.ac_code_chroma};let ac_length=if c==0{&TABLES.ac_length_luma}else{&TABLES.ac_length_chroma};
@@ -117,21 +125,25 @@ pub unsafe fn jpeg_encode_component(component:i32,ac_value_out:*mut i32,run_out:
     }
     if *run_out!=0 {hsd_803B3CD8_write_bits(ac_code[0] as i32,ac_length[0] as i32,&mut work);}
 }
-pub unsafe fn hsd_803B3CD8(component:i32) {let(mut a,mut r,mut v,mut i)=(0,0,0,0);jpeg_encode_component(component,&mut a,&mut r,&mut v,&mut i);}
+pub unsafe fn hsd_803B3CD8(component:i32) { melee_core::ct!("hsd_803B3CD8");let(mut a,mut r,mut v,mut i)=(0,0,0,0);jpeg_encode_component(component,&mut a,&mut r,&mut v,&mut i);}
 pub unsafe fn hsd_803B46D4() {
+    melee_core::ct!("hsd_803B46D4");
     for b in [255,224,0,16] {write_byte(b);}
     write_bulk(b"JFIF\0".as_ptr() as *mut _,5);
     for b in [1,2,1,0,72,0,72,0,0] {write_byte(b);}
 }
 pub unsafe fn hsd_803B4A2C() {
+    melee_core::ct!("hsd_803B4A2C");
     for c in 0..2 {for b in [255,219,0,67,c] {write_byte(b);}let q=if c==0{&TABLES.quant_luma}else{&TABLES.quant_chroma};
         for i in 0..64 {write_byte(sdiv(q[lbl_80431638[i] as usize] as i32,lbl_804D6398) as u8);}
     }
 }
 pub unsafe fn hsd_803B4D64(width:u32,height:u32) {
+    melee_core::ct!("hsd_803B4D64");
     for b in [255,192,0,17,8,(height>>8) as u8,height as u8,(width>>8) as u8,width as u8,3,0,34,0,1,17,1,2,17,1] {write_byte(b);}
 }
 pub unsafe fn hsd_803B51C8_inline(image:*mut u8,image_height:i32,image_width:i32,output:*const i8,output_capacity:i32,metadata:*const JpegMetadata,comment:*mut JpegComment,huff_dc_luma:*mut JpegHuffDc,huff_dc_chroma:*mut JpegHuffDc,huff_ac_luma:*mut JpegHuffAc,huff_ac_chroma:*mut JpegHuffAc)->i32 {
+    melee_core::ct!("hsd_803B51C8_inline");
     hsd_804D79A8=output_capacity;hsd_804D79AC=0;hsd_804D79A0=output as *mut u8;hsd_804D79A4=output as *mut u8;hsd_804D2648.prev_dc=[0;3];
     jpeg_try(||{
         write_byte(255);write_byte(216);hsd_803B46D4();
@@ -163,6 +175,7 @@ pub unsafe fn hsd_803B51C8_inline(image:*mut u8,image_height:i32,image_width:i32
 }
 /// The C integer image address becomes a native pointer (no 64-bit truncation).
 pub unsafe fn hsd_803B51C8(image:*mut u8,width:i32,height:i32,out:*mut i8,capacity:i32)->i32 {
+    melee_core::ct!("hsd_803B51C8");
     hsd_803B51C8_inline(image,height,width,out,capacity,&lbl_803B9670,&mut JpegComment::zeroed(),&mut JpegHuffDc::zeroed(),&mut JpegHuffDc::zeroed(),&mut JpegHuffAc::zeroed(),&mut JpegHuffAc::zeroed())
 }
-pub unsafe fn hsd_803B5C2C(scale:i32) {lbl_804D6398=if (1..=10).contains(&scale){scale}else{3};}
+pub unsafe fn hsd_803B5C2C(scale:i32) { melee_core::ct!("hsd_803B5C2C");lbl_804D6398=if (1..=10).contains(&scale){scale}else{3};}

@@ -104,6 +104,7 @@ unsafe fn teardown_blizzard(gobj: G) {
 }
 
 pub fn ftPp_SpecialHi_80122898(gobj: G) {
+    melee_core::ct!("ftPp_SpecialHi_80122898");
     unsafe { teardown_blizzard(gobj) }
 }
 
@@ -120,14 +121,17 @@ unsafe fn enter(gobj: G, msid: u32) {
 }
 
 pub fn ftPp_SpecialLw_Enter(gobj: G) {
+    melee_core::ct!("ftPp_SpecialLw_Enter");
     unsafe { enter(gobj, ftPp_MS_SpecialLw as u32) }
 }
 
 pub fn ftPp_SpecialAirLw_Enter(gobj: G) {
+    melee_core::ct!("ftPp_SpecialAirLw_Enter");
     unsafe { enter(gobj, ftPp_MS_SpecialAirLw as u32) }
 }
 
 pub fn ftPp_SpecialLw_Anim(gobj: G) {
+    melee_core::ct!("ftPp_SpecialLw_Anim");
     unsafe {
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
             teardown_blizzard(gobj);
@@ -137,6 +141,7 @@ pub fn ftPp_SpecialLw_Anim(gobj: G) {
 }
 
 pub fn ftPp_SpecialAirLw_Anim(gobj: G) {
+    melee_core::ct!("ftPp_SpecialAirLw_Anim");
     unsafe {
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
             teardown_blizzard(gobj);
@@ -145,8 +150,8 @@ pub fn ftPp_SpecialAirLw_Anim(gobj: G) {
     }
 }
 
-pub fn ftPp_SpecialLw_IASA(_gobj: G) {}
-pub fn ftPp_SpecialAirLw_IASA(_gobj: G) {}
+pub fn ftPp_SpecialLw_IASA(_gobj: G) { melee_core::ct!("ftPp_SpecialLw_IASA");}
+pub fn ftPp_SpecialAirLw_IASA(_gobj: G) { melee_core::ct!("ftPp_SpecialAirLw_IASA");}
 
 /// `ftPp_set_cbs` (static inline).
 #[inline(always)]
@@ -172,6 +177,7 @@ unsafe fn ftPp_SpecialLw_Coll_inline(gobj: G) {
 }
 
 pub fn fn_80122B54(gobj: G) {
+    melee_core::ct!("fn_80122B54");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_8007D7FC(&mut *fp);
@@ -200,6 +206,7 @@ unsafe fn ftPp_SpecialLw_Coll_Land(gobj: G) {
 }
 
 pub fn ftPp_SpecialLw_Coll(gobj: G) {
+    melee_core::ct!("ftPp_SpecialLw_Coll");
     unsafe {
         if st::ft_80082708(gobj) == GA_Ground as i32 {
             let fp = fpp(gobj);
@@ -212,6 +219,7 @@ pub fn ftPp_SpecialLw_Coll(gobj: G) {
 }
 
 pub fn fn_80122D2C(gobj: G) {
+    melee_core::ct!("fn_80122D2C");
     unsafe {
         let fp = fpp(gobj);
         let mut pos: Vec3 = core::mem::zeroed();

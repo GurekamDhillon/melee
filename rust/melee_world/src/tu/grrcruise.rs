@@ -107,9 +107,10 @@ pub static lbl_803E5014: [Map_VanishDesc; 20] = [
     v(25, 19, 1), v(26, 20, 1), v(27, 21, 1), v(28, 22, 1), v(29, 23, 1),
 ];
 
-pub unsafe extern "C" fn grRCruise_801FF164(_arg: i32) {}
+pub unsafe extern "C" fn grRCruise_801FF164(_arg: i32) { melee_core::ct!("grRCruise_801FF164");}
 
 pub unsafe extern "C" fn grRCruise_801FF168() {
+    melee_core::ct!("grRCruise_801FF168");
     yakumono_param = ext::Ground_GetYakumonoParam() as *mut grRCruise_YakumonoParam;
     ext::stage_info.unk8C.set_b4(1);
     ext::stage_info.unk8C.set_b5(0);
@@ -141,9 +142,10 @@ pub unsafe extern "C" fn grRCruise_801FF168() {
     ext::mpLib_80057BC0(11);
 }
 
-pub unsafe extern "C" fn grRCruise_801FF298() {}
+pub unsafe extern "C" fn grRCruise_801FF298() { melee_core::ct!("grRCruise_801FF298");}
 
 pub unsafe extern "C" fn grRCruise_801FF2C8(gobj_id: i32) -> *mut HSD_GObj {
+    melee_core::ct!("grRCruise_801FF2C8");
     let callbacks = (&raw mut grRc_StageCallbacks as *mut StageCallbacks).add(gobj_id as usize);
     let gobj = ext::Ground_GetStageGObj(gobj_id);
     if !gobj.is_null() {
@@ -155,25 +157,28 @@ pub unsafe extern "C" fn grRCruise_801FF2C8(gobj_id: i32) -> *mut HSD_GObj {
 }
 
 pub unsafe extern "C" fn grRCruise_801FF3B4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grRCruise_801FF3B4");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
 }
 
-pub unsafe extern "C" fn grRCruise_801FF3E8(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grRCruise_801FF3E8(_arg: *mut HSD_GObj) { melee_core::ct!("grRCruise_801FF3E8");}
 
-pub unsafe extern "C" fn grRCruise_801FF3EC(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grRCruise_801FF3EC(_arg: *mut HSD_GObj) { melee_core::ct!("grRCruise_801FF3EC");}
 
 pub unsafe extern "C" fn grRCruise_801FF3F0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grRCruise_801FF3F0");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
     (*gp).x11_flags.set_b012(2);
 }
 
-pub unsafe extern "C" fn grRCruise_801FF43C(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grRCruise_801FF43C(_arg: *mut HSD_GObj) { melee_core::ct!("grRCruise_801FF43C");}
 
-pub unsafe extern "C" fn grRCruise_801FF440(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grRCruise_801FF440(_arg: *mut HSD_GObj) { melee_core::ct!("grRCruise_801FF440");}
 
 pub unsafe extern "C" fn grRCruise_801FF444(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grRCruise_801FF444");
     let gp = GET_GROUND(gobj);
     let g = gobj as *mut c_void;
     ext::mpJointSetCb1(5, g, Some(grRCruise_80200578));
@@ -184,6 +189,7 @@ pub unsafe extern "C" fn grRCruise_801FF444(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grRCruise_801FF5B4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grRCruise_801FF5B4");
     let gp = GET_GROUND(gobj);
     let jobj = GET_JOBJ(gobj);
 
@@ -221,6 +227,7 @@ pub unsafe extern "C" fn grRCruise_801FF5B4(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grRCruise_801FF6D4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grRCruise_801FF6D4");
     let gp = GET_GROUND(gobj);
     if (*gp).u.rcruise.x10 == 0 {
         grRCruise_80201588(gobj);
@@ -232,20 +239,22 @@ pub unsafe extern "C" fn grRCruise_801FF6D4(gobj: *mut HSD_GObj) {
     ext::Ground_UpdateMapColl(gobj);
 }
 
-pub unsafe extern "C" fn grRCruise_801FF738(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grRCruise_801FF738(_arg: *mut HSD_GObj) { melee_core::ct!("grRCruise_801FF738");}
 
 pub unsafe extern "C" fn grRCruise_801FF73C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grRCruise_801FF73C");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
     ext::HSD_JObjSetFlagsAll((*gobj).hsd_obj as *mut HSD_JObj, JOBJ_HIDDEN as u32);
     ext::HSD_JObjClearFlagsAll(ext::Ground_801C3FA4(gobj, 31), JOBJ_HIDDEN as u32);
 }
 
-pub unsafe extern "C" fn grRCruise_801FF79C(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grRCruise_801FF79C(_arg: *mut HSD_GObj) { melee_core::ct!("grRCruise_801FF79C");}
 
-pub unsafe extern "C" fn grRCruise_801FF7A0(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grRCruise_801FF7A0(_arg: *mut HSD_GObj) { melee_core::ct!("grRCruise_801FF7A0");}
 
 pub unsafe extern "C" fn grRCruise_801FF7A4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grRCruise_801FF7A4");
     let stage_gobj = gobj;
     let gp = GET_GROUND(stage_gobj);
     let mut jobj = GET_JOBJ(gobj);
@@ -286,14 +295,16 @@ pub unsafe extern "C" fn grRCruise_801FF7A4(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grRCruise_801FF8E4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grRCruise_801FF8E4");
     let gp = GET_GROUND(gobj);
     ext::grLib_801C9B8C((&raw mut (*gp).u) as *mut c_void);
     ext::Ground_UpdateMapColl(gobj);
 }
 
-pub unsafe extern "C" fn grRCruise_801FF920(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grRCruise_801FF920(_arg: *mut HSD_GObj) { melee_core::ct!("grRCruise_801FF920");}
 
 pub unsafe extern "C" fn grRCruise_801FF924(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grRCruise_801FF924");
     let gp = GET_GROUND(gobj);
     let jobj = GET_JOBJ(gobj);
 
@@ -356,6 +367,7 @@ unsafe fn set_translate(jobj: *mut HSD_JObj, t: &Vec3) {
 }
 
 pub unsafe extern "C" fn grRCruise_801FFADC(arg0: *mut HSD_GObj) {
+    melee_core::ct!("grRCruise_801FFADC");
     let mut sp64 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut cam_offset = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
@@ -389,9 +401,10 @@ pub unsafe extern "C" fn grRCruise_801FFADC(arg0: *mut HSD_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grRCruise_80200070(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grRCruise_80200070(_arg: *mut HSD_GObj) { melee_core::ct!("grRCruise_80200070");}
 
 pub unsafe extern "C" fn grRCruise_80200074(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grRCruise_80200074");
     let gp = GET_GROUND(gobj);
     let jobj = GET_JOBJ(gobj);
 
@@ -409,6 +422,7 @@ pub unsafe extern "C" fn grRCruise_80200074(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grRCruise_80200154(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grRCruise_80200154");
     let gp = (*gobj).user_data as *mut Ground;
     let gp2 = gp;
     let yp = yakumono_param;
@@ -485,7 +499,7 @@ pub unsafe extern "C" fn grRCruise_80200154(gobj: *mut HSD_GObj) {
     ext::Ground_UpdateMapColl(gobj);
 }
 
-pub unsafe extern "C" fn grRCruise_8020045C(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grRCruise_8020045C(_arg: *mut HSD_GObj) { melee_core::ct!("grRCruise_8020045C");}
 
 /// The joint contact callback of the three pop-up blocks (`mpLib_JointCollisionCallback`).
 pub unsafe extern "C" fn fn_80200460(
@@ -496,6 +510,7 @@ pub unsafe extern "C" fn fn_80200460(
     _ground_kind: mpLib_GroundEnum,
     _delta_y: f32,
 ) {
+    melee_core::ct!("fn_80200460");
     let gobj = user_data as *mut HSD_GObj;
     let gp1 = (*gobj).user_data as *mut Ground;
 
@@ -517,6 +532,7 @@ pub unsafe extern "C" fn fn_80200460(
 }
 
 pub unsafe extern "C" fn grRCruise_80200540(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grRCruise_80200540");
     let gp = (*gobj).user_data as *mut Ground;
     (*gp).u.rcruise.x18 = 0.0;
     (*gp).u.rcruise.x14 = 0.0;
@@ -539,6 +555,7 @@ pub unsafe extern "C" fn grRCruise_80200578(
     _ground_kind: mpLib_GroundEnum,
     _delta_y: f32,
 ) {
+    melee_core::ct!("grRCruise_80200578");
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let gobj = user_data as *mut HSD_GObj;
     let gp = (*gobj).user_data as *mut Ground;
@@ -566,6 +583,7 @@ pub unsafe extern "C" fn grRCruise_80200578(
 }
 
 pub unsafe extern "C" fn grRCruise_8020071C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grRCruise_8020071C");
     let gp = GET_GROUND(gobj);
     let yp = yakumono_param;
     let jobj = ext::Ground_801C3FA4(gobj, 8);
@@ -631,6 +649,7 @@ pub unsafe extern "C" fn grRCruise_8020071C(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grRCruise_80200B48(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grRCruise_80200B48");
     let gp = (*gobj).user_data as *mut Ground;
     for i in 0..grRc_803E4FF0.len() {
         let entry = (*gp).u.rcruise.entries.add(i);
@@ -645,6 +664,7 @@ pub unsafe extern "C" fn grRCruise_80200B48(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grRCruise_80200C04(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grRCruise_80200C04");
     let gp = (*gobj).user_data as *mut Ground;
     let yp = yakumono_param;
     for i in 0..grRc_803E4FF0.len() {
@@ -735,6 +755,7 @@ pub unsafe extern "C" fn grRCruise_802010A4(
     _ground_kind: mpLib_GroundEnum,
     _delta_y: f32,
 ) {
+    melee_core::ct!("grRCruise_802010A4");
     let gp = (*(user_data as *mut HSD_GObj)).user_data as *mut Ground;
 
     if (*coll).x34_flags.b1234() as i32 != 1 {
@@ -754,6 +775,7 @@ pub unsafe extern "C" fn grRCruise_802010A4(
 }
 
 pub unsafe extern "C" fn grRCruise_80201110(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grRCruise_80201110");
     let gp = (*gobj).user_data as *mut Ground;
     let lb = (*gp).u.rcruise.x4;
     let mut angle = atan2f((*lb).x4.z, (*lb).x4.x);
@@ -798,6 +820,7 @@ pub unsafe extern "C" fn grRCruise_80201288(
     callback: unsafe extern "C" fn(*mut HSD_DObj, u32),
     flags: u32,
 ) {
+    melee_core::ct!("grRCruise_80201288");
     if !jobj.is_null() {
         let temp_r3 = dobj_of(jobj);
         if !temp_r3.is_null() {
@@ -874,6 +897,7 @@ unsafe fn set_hidden_b(i: usize) {
 }
 
 pub unsafe extern "C" fn grRCruise_80201410(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grRCruise_80201410");
     let gp = GET_GROUND(gobj);
 
     // native `Map_VanishEntry` is wider than the 8-byte descriptor the C sizes the table by
@@ -901,6 +925,7 @@ pub unsafe extern "C" fn grRCruise_80201410(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grRCruise_80201588(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grRCruise_80201588");
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let gp = GET_GROUND(gobj);
 
@@ -959,6 +984,7 @@ pub unsafe extern "C" fn grRCruise_80201588(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grRCruise_80201918(vec: *mut Vec3) {
+    melee_core::ct!("grRCruise_80201918");
     let gobj = ext::Ground_GetMapGObj(3);
     if !gobj.is_null() {
         let gp = GET_GROUND(gobj);
@@ -973,6 +999,7 @@ pub unsafe extern "C" fn grRCruise_80201918(vec: *mut Vec3) {
 }
 
 pub unsafe extern "C" fn grRCruise_80201988(line_id: i32) -> i32 {
+    melee_core::ct!("grRCruise_80201988");
     if ext::stage_info.grkind == Gr_Kind_RCruise && line_id != -1 {
         let joint = ext::mpJointFromLine(line_id);
         let result = joint == 0x1B
@@ -1000,6 +1027,7 @@ pub unsafe extern "C" fn grRCruise_80201988(line_id: i32) -> i32 {
 }
 
 pub unsafe extern "C" fn grRCruise_80201B60(jobj: *mut HSD_JObj, clear: i32) {
+    melee_core::ct!("grRCruise_80201B60");
     let mut dobj = ext::HSD_JObjGetDObj(jobj);
     while !dobj.is_null() {
         if clear != 0 {
@@ -1012,6 +1040,7 @@ pub unsafe extern "C" fn grRCruise_80201B60(jobj: *mut HSD_JObj, clear: i32) {
 }
 
 pub unsafe extern "C" fn fn_80201BE0(gobj: *mut HSD_GObj, pass: i32) {
+    melee_core::ct!("fn_80201BE0");
     if ext::gm_GetDbPauseFlag(1) != 0 || ext::gm_GetDbPauseFlag(2) != 0 || ext::Camera_8003010C() != 0 {
         return;
     }

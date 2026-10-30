@@ -132,21 +132,25 @@ pub mod ext {
 
 /// `gm_GetButtonsPressed(idx)`.
 pub fn gm_GetButtonsPressed(idx: u8) -> u64 {
+    melee_core::ct!("gm_GetButtonsPressed");
     unsafe { controller_map.x0[idx as usize].button }
 }
 
 /// `gm_GetButtonsTriggered(idx)`.
 pub fn gm_GetButtonsTriggered(idx: u8) -> u64 {
+    melee_core::ct!("gm_GetButtonsTriggered");
     unsafe { controller_map.x0[idx as usize].trigger }
 }
 
 /// `gm_801A36C0(idx)`: the repeat-filtered buttons.
 pub fn gm_801A36C0(idx: u8) -> u64 {
+    melee_core::ct!("gm_801A36C0");
     unsafe { controller_map.x0[idx as usize].repeat2 }
 }
 
 /// `gm_801A36E0(idx, arg1)`: set the repeat timer of one port, or of all four when `idx == 4`.
 pub fn gm_801A36E0(idx: i32, arg1: i32) {
+    melee_core::ct!("gm_801A36E0");
     unsafe {
         if idx == PAD_MAX_CONTROLLERS as i32 {
             for i in 0..PAD_MAX_CONTROLLERS {
@@ -160,6 +164,7 @@ pub fn gm_801A36E0(idx: i32, arg1: i32) {
 
 /// `gm_801A3714(idx, arg1, arg2)`: where any of the `arg1` buttons is set, also set `arg2`.
 pub fn gm_801A3714(idx: i32, arg1: u64, arg2: u64) {
+    melee_core::ct!("gm_801A3714");
     unsafe {
         let c = &mut controller_map.x0[idx as usize];
         if arg1 & c.button != 0 {
@@ -179,6 +184,7 @@ pub fn gm_801A3714(idx: i32, arg1: u64, arg2: u64) {
 
 /// `static gm_801A3820(idx, arg1, arg2)`: like gm_801A3714 but needs every `arg1` button held.
 pub fn gm_801A3820(idx: i32, arg1: u64, arg2: u64) {
+    melee_core::ct!("gm_801A3820");
     unsafe {
         let c = &mut controller_map.x0[idx as usize];
         if arg1 == (arg1 & c.button) {
@@ -202,6 +208,7 @@ pub fn gm_801A3820(idx: i32, arg1: u64, arg2: u64) {
 
 /// `static fn_801A396C(idx)`: the held-button repeat generator (`repeat2`, `repeat_timer`, `x2C`).
 pub fn fn_801A396C(idx: i32) {
+    melee_core::ct!("fn_801A396C");
     unsafe {
         let m = &mut controller_map;
         let i = idx as usize;
@@ -236,6 +243,7 @@ pub fn fn_801A396C(idx: i32) {
 /// `gm_EvaluateAllControllerInputs()`: copy the pad status into the map, derive the virtual buttons,
 /// run the repeat generator per port and merge all four ports into slot 4.
 pub fn gm_EvaluateAllControllerInputs() {
+    melee_core::ct!("gm_EvaluateAllControllerInputs");
     unsafe {
         let pads = ext::HSD_PadCopyStatus();
         for i in 0..PAD_MAX_CONTROLLERS {
@@ -277,6 +285,7 @@ pub fn gm_EvaluateAllControllerInputs() {
 /// `gm_801A3E88()`: reset the map to its defaults (repeat tuning 0x14/8/0x28/4/0x64/2) and install
 /// the repeat generator.
 pub fn gm_801A3E88() {
+    melee_core::ct!("gm_801A3E88");
     unsafe {
         // static struct controller_map gm_803DA788 = { { 0 }, NULL, 0x14, 0x8, 0x28, 0x4, 0x64, 0x2 };
         controller_map = controller_map_t {
@@ -298,6 +307,7 @@ pub fn gm_801A3E88() {
 
 /// `gm_801A3EF4()`: run every game mode's `on_init`.
 pub fn gm_801A3EF4() {
+    melee_core::ct!("gm_801A3EF4");
     unsafe {
         let mut scene = ext::gm_GetAllGameModes();
         while (*scene).kind != GM_COUNT as u8 {

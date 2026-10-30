@@ -410,6 +410,7 @@ fn sfxMove() {
 /// `gmCamera_801A2224(arg0, arg1)`: writes the decimal digits of `arg1` (clamped to 9999) as the
 /// (2-byte) sprite indices of the digit table, returns the position after the NUL terminator.
 pub unsafe fn gmCamera_801A2224(mut arg0: *mut u8, mut arg1: u32) -> *mut u8 {
+    melee_core::ct!("gmCamera_801A2224");
     let mut masked_arg1: u32;
     let mut cond_flag: u32 = 0;
     let slus2_arr_ptr: *const u8 = ext::HSD_SisLib_804D1124_arr();
@@ -450,6 +451,7 @@ pub unsafe fn gmCamera_801A2224(mut arg0: *mut u8, mut arg1: u32) -> *mut u8 {
 
 /// `gmCamera_801A2334(arg0, arg1..arg4)`: the score/label text of side `arg0`, placed at (arg1, arg2).
 pub unsafe fn gmCamera_801A2334(arg0: i32, arg1: f32, arg2: f32, arg3: f32, arg4: f32) -> *mut HSD_Text {
+    melee_core::ct!("gmCamera_801A2334");
     let gcu = &raw mut gmCamera_VsCamUiState;
     let text = ext::HSD_SisLib_803A5ACC(3, (*gcu).x54, arg1, arg2, 0.0, 640.0, 32.0);
     (*text).font_size.x = arg3;
@@ -513,6 +515,7 @@ pub unsafe fn gmCamera_801A2334(arg0: i32, arg1: f32, arg2: f32, arg3: f32, arg4
 
 /// `gmCamera_801A253C(arg0, arg1)`: the header state (min of both sides) and the best count, when asked.
 pub unsafe fn gmCamera_801A253C(arg0: *mut i32, arg1: *mut i32) {
+    melee_core::ct!("gmCamera_801A253C");
     let gcu = &raw mut gmCamera_VsCamUiState;
     let result = (*gcu).x24[0].xC.min((*gcu).x24[1].xC);
     (*gcu).x44 = result;
@@ -534,6 +537,7 @@ pub unsafe fn gmCamera_801A253C(arg0: *mut i32, arg1: *mut i32) {
 
 /// `gmCamera_801A25C8()`: read the snapshot slots of both sides.
 pub unsafe fn gmCamera_801A25C8() {
+    melee_core::ct!("gmCamera_801A25C8");
     let gcu = &raw mut gmCamera_VsCamUiState;
     for i in 0..2 {
         (*gcu).x24[i].x0 = ext::lbSnap_8001D40C(i as i32) != 0;
@@ -546,11 +550,13 @@ pub unsafe fn gmCamera_801A25C8() {
 
 /// `gmCamera_801A2640()`: the header text id.
 pub unsafe fn gmCamera_801A2640() -> i32 {
+    melee_core::ct!("gmCamera_801A2640");
     (*&raw const gmCamera_VsCamUiState).x54
 }
 
 /// `gmCamera_801A2650()`: the VS camera's interface (the "SdVsCam" text set) and header text.
 pub unsafe fn gmCamera_801A2650() {
+    melee_core::ct!("gmCamera_801A2650");
     let gcu = &raw mut gmCamera_VsCamUiState;
     (*gcu).x20 = 2;
     ext::HSD_SisLib_803A62A0(3, "SdVsCam", "SIS_VsCameraData");
@@ -580,6 +586,7 @@ unsafe fn gmCamera_FreeTextsWithZero(zero: *mut HSD_Text) {
 
 /// `gmCamera_801A26C0()`: leave the camera mode: unpause the scene and drop the texts.
 pub unsafe fn gmCamera_801A26C0() {
+    melee_core::ct!("gmCamera_801A26C0");
     let hud = ext::gmVs_GetSceneController();
     if ext::gm_GetDbPauseFlag(3) {
         ext::gm_ClearDbPauseFlag(3);
@@ -598,6 +605,7 @@ pub unsafe fn gmCamera_801A26C0() {
 
 /// `gmCamera_801A2798()`: B toggles the camera select; Z confirms into the snapshot mode.
 pub unsafe fn gmCamera_801A2798() {
+    melee_core::ct!("gmCamera_801A2798");
     let trig = ext::hsd_pad_copy_status_trigger(3);
     if trig & PAD_BUTTON_B != 0 {
         let new_var = (gmCamera_VsCamUiState.x14 as u32).wrapping_add(1);
@@ -612,6 +620,7 @@ pub unsafe fn gmCamera_801A2798() {
 
 /// `gmCamera_801A2800()`: enter the snapshot mode: show the camera model, pause the game.
 pub unsafe fn gmCamera_801A2800() {
+    melee_core::ct!("gmCamera_801A2800");
     let temp_r3 = ext::gmVs_GetSceneController();
     gmCamera_VsCamUiState.x10 = 0;
     let mut jobj: *mut HSD_JObj = core::ptr::null_mut();
@@ -632,6 +641,7 @@ pub unsafe fn gmCamera_801A2800() {
 
 /// `gmCamera_801A28AC()`: after a short wait, take the snapshot and check it.
 pub unsafe fn gmCamera_801A28AC() {
+    melee_core::ct!("gmCamera_801A28AC");
     gmCamera_VsCamUiState.x10 += 1;
     if gmCamera_VsCamUiState.x10 > 2 {
         let snap_buf = ext::cmSnap_80031618();
@@ -649,6 +659,7 @@ pub unsafe fn gmCamera_801A28AC() {
 
 /// `gmCamera_801A292C()`: build the result texts for the two sides and the header.
 pub unsafe fn gmCamera_801A292C() {
+    melee_core::ct!("gmCamera_801A292C");
     let tbl = &gmCamera_803DA630;
     gmCamera_FreeTextsWithZero(core::ptr::null_mut());
 
@@ -676,6 +687,7 @@ pub unsafe fn gmCamera_801A292C() {
 
 /// `gmCamera_801A2AAC()`: the result screen: A continues into the chosen mode, B backs out.
 pub unsafe fn gmCamera_801A2AAC() {
+    melee_core::ct!("gmCamera_801A2AAC");
     if ext::lbSnap_8001D338(0) != 0 || ext::lbSnap_8001D338(1) != 0 {
         gmCamera_801A3048(2);
     } else if ext::hsd_pad_copy_status_trigger(3) & PAD_BUTTON_A != 0 {
@@ -710,6 +722,7 @@ pub unsafe fn gmCamera_801A2AAC() {
 
 /// `gmCamera_801A2BB0()`: B backs out to mode 0.
 pub unsafe fn gmCamera_801A2BB0() {
+    melee_core::ct!("gmCamera_801A2BB0");
     if ext::hsd_pad_copy_status_trigger(3) & PAD_BUTTON_B != 0 {
         sfxBack();
         gmCamera_801A3048(0);
@@ -718,6 +731,7 @@ pub unsafe fn gmCamera_801A2BB0() {
 
 /// `gmCamera_801A2BF0_get_translate_x(px18)`: the cursor's x offset for the selected side.
 pub unsafe fn gmCamera_801A2BF0_get_translate_x(px18: *const i32) -> f32 {
+    melee_core::ct!("gmCamera_801A2BF0_get_translate_x");
     if *px18 != 0 {
         return 5.0;
     }
@@ -732,6 +746,7 @@ unsafe fn gmCamera_801A2BF0_get_jobj(px8: *mut *mut HSD_JObj) -> *mut HSD_JObj {
 
 /// `gmCamera_801A2BF0()`: mode 6 enter: animate the cursor and select side 0.
 pub unsafe fn gmCamera_801A2BF0() {
+    melee_core::ct!("gmCamera_801A2BF0");
     let gcus = &raw mut gmCamera_VsCamUiState;
     let px8: *mut *mut HSD_JObj = &mut (*gcus).x8;
     let mut jobj_a: *mut HSD_JObj = core::ptr::null_mut();
@@ -777,6 +792,7 @@ unsafe fn gmCamera_801A2D44_update_selection(jobj_b: *mut *mut HSD_JObj, jobj: *
 
 /// `gmCamera_801A2D44()`: the camera select: confirm, back, or move the cursor.
 pub unsafe fn gmCamera_801A2D44() {
+    melee_core::ct!("gmCamera_801A2D44");
     let gcus = &raw mut gmCamera_VsCamUiState;
     let mut jobj: *mut HSD_JObj = core::ptr::null_mut();
     let mut jobj_b: *mut HSD_JObj = core::ptr::null_mut();
@@ -805,12 +821,14 @@ pub unsafe fn gmCamera_801A2D44() {
 
 /// `gmCamera_801A2FBC()`: the snapshot's picture for the chosen side.
 pub unsafe fn gmCamera_801A2FBC() {
+    melee_core::ct!("gmCamera_801A2FBC");
     let chan = if gmCamera_VsCamUiState.x44 == 0 { 1 } else { 0 };
     ext::lbSnap_8001DF6C(chan);
 }
 
 /// `gmCamera_801A2FFC()`: wait for the card task; done → mode 0, a failure → mode 8.
 pub unsafe fn gmCamera_801A2FFC() {
+    melee_core::ct!("gmCamera_801A2FFC");
     let i = ext::lbCardNew_CompleteNextTask();
     if i != 0xB {
         if i == 0 {
@@ -824,6 +842,7 @@ pub unsafe fn gmCamera_801A2FFC() {
 
 /// `gmCamera_801A3048(i)`: switch the state machine to mode `i` and run its enter.
 pub unsafe fn gmCamera_801A3048(i: i32) {
+    melee_core::ct!("gmCamera_801A3048");
     gmCamera_VsCamUiState.xC = i;
     if let Some(f) = gmCamera_VsCamStateTable[gmCamera_VsCamUiState.xC as usize].x4 {
         f();
@@ -832,6 +851,7 @@ pub unsafe fn gmCamera_801A3048(i: i32) {
 
 /// `gmCamera_801A3098()`: run the current mode's update.
 pub unsafe fn gmCamera_801A3098() {
+    melee_core::ct!("gmCamera_801A3098");
     if let Some(f) = gmCamera_VsCamStateTable[gmCamera_VsCamUiState.xC as usize].x8 {
         f();
     }
@@ -839,6 +859,7 @@ pub unsafe fn gmCamera_801A3098() {
 
 /// `gmCamera_801A30E4()`: show or hide the camera UI's parts for the current mode.
 pub unsafe fn gmCamera_801A30E4() {
+    melee_core::ct!("gmCamera_801A30E4");
     let gcus = &raw mut gmCamera_VsCamUiState;
     let pxc = (*gcus).xC as usize;
     if gmCamera_VsCamStateTable[pxc].flags.x0 != 0 && (*gcus).x14 != 0 && !ext::gm_GetDbPauseFlag(1) {
@@ -859,6 +880,7 @@ pub unsafe fn gmCamera_801A30E4() {
 
 /// `fn_801A31D8(gobj)`: the camera model's per-frame joint update (the GX proc).
 pub unsafe extern "C" fn fn_801A31D8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801A31D8");
     ext::HSD_JObjAnimAll((*gobj).hsd_obj as *mut HSD_JObj);
 }
 
@@ -885,6 +907,7 @@ unsafe fn HSD_JObjSetFlagsAllInline(j: *mut HSD_JObj, f: u32) {
 
 /// `gmCamera_801A31FC()`: enter the VS camera UI: the interface archive, the models, the header text.
 pub unsafe fn gmCamera_801A31FC() {
+    melee_core::ct!("gmCamera_801A31FC");
     ext::cmSnap_800316B4();
     gmCamera_VsCamUiState.x14 = 1;
     gmCamera_VsCamUiState.xC = 0;

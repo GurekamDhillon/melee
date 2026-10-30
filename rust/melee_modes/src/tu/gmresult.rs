@@ -328,11 +328,13 @@ unsafe fn data() -> *mut ResultsData {
 
 /// fn_80174274.
 pub unsafe fn fn_80174274() -> *mut MatchEnd {
+    melee_core::ct!("fn_80174274");
     (*data()).x94
 }
 
 /// fn_80174284: how many of the player's 256 flags are set (reporting each to the game for humans).
 pub unsafe fn fn_80174284(slot: u8) -> i32 {
+    melee_core::ct!("fn_80174284");
     let tmp = (*(*data()).x94).x44C.as_mut_ptr();
     let mut count = 0;
     let do_call = (*(*data()).x94).player_standings[slot as usize].pkind == Gm_PKind_Human as u8;
@@ -350,24 +352,29 @@ pub unsafe fn fn_80174284(slot: u8) -> i32 {
 
 /// fn_80174284_noinline.
 pub unsafe fn fn_80174284_noinline(slot: u8) -> i32 {
+    melee_core::ct!("fn_80174284_noinline");
     fn_80174284(slot)
 }
 
 /// fn_80174338: forward sound.
 pub unsafe fn fn_80174338() {
+    melee_core::ct!("fn_80174338");
     hsd::sfxForward();
 }
 /// fn_8017435C: back sound.
 pub unsafe fn fn_8017435C() {
+    melee_core::ct!("fn_8017435C");
     hsd::sfxBack();
 }
 /// fn_80174380: move sound.
 pub unsafe fn fn_80174380() {
+    melee_core::ct!("fn_80174380");
     hsd::sfxMove();
 }
 
 /// fn_801743C4: whether the stats row is shown for `slot`.
 pub unsafe fn fn_801743C4(slot: i32, entry: *mut StatsEntry) -> i32 {
+    melee_core::ct!("fn_801743C4");
     if (*entry).value >= 0 {
         return 1;
     }
@@ -389,6 +396,7 @@ pub unsafe fn fn_801743C4(slot: i32, entry: *mut StatsEntry) -> i32 {
 
 /// gmResultFindNth (static inline; gm_ptr.rs has the oracle-checked slice version).
 pub unsafe fn gmResultFindNth(values: *const u8, mut n: i32) -> i32 {
+    melee_core::ct!("gmResultFindNth");
     let mut i = 0;
     while i < 256 {
         if *values.add(i as usize) != 0 {
@@ -404,12 +412,14 @@ pub unsafe fn gmResultFindNth(values: *const u8, mut n: i32) -> i32 {
 
 /// gmResultFormatLabel (static inline).
 pub unsafe fn gmResultFormatLabel(slot: i32, entry: *mut StatsEntry, zero: f32, neg30: f32, text: *mut HSD_Text) -> i32 {
+    melee_core::ct!("gmResultFormatLabel");
     let s = ((*entry).get.unwrap())(slot);
     ext::HSD_SisLib_803A6B98(text, zero, neg30, c"%s".as_ptr(), &[Va::P(s.cast())])
 }
 
 /// fn_80174468: fill one row's three texts.
 pub unsafe fn fn_80174468(slot: i32, text1: *mut HSD_Text, text2: *mut HSD_Text, text3: *mut HSD_Text, list: *mut StatsList, entry_idx: i32) {
+    melee_core::ct!("fn_80174468");
     let const_zero = 0.0f32;
     let const_neg30 = -30.0f32;
     let mut label_id: i32 = -1;
@@ -492,6 +502,7 @@ pub unsafe fn fn_80174468(slot: i32, text1: *mut HSD_Text, text2: *mut HSD_Text,
 
 /// fn_801748EC: the stats list for `mode` (searching `list_` for it), or the pair info for `idx`.
 pub unsafe fn fn_801748EC(list_: *mut c_void, mode: i32, idx: i32) -> *mut c_void {
+    melee_core::ct!("fn_801748EC");
     let mut list = list_ as *mut ResultsStatsInfo;
     if mode != 2 {
         while (*list).x0 as i32 != mode {
@@ -504,6 +515,7 @@ pub unsafe fn fn_801748EC(list_: *mut c_void, mode: i32, idx: i32) -> *mut c_voi
 
 /// fn_80174920: free the player's stats texts. (The C declares `u8` and returns nothing.)
 pub unsafe fn fn_80174920(data: *mut ResultsPlayerData) {
+    melee_core::ct!("fn_80174920");
     for i in 0..10usize {
         for row in 0..3usize {
             if !(*data).stats_text[row][i].is_null() {
@@ -516,6 +528,7 @@ pub unsafe fn fn_80174920(data: *mut ResultsPlayerData) {
 
 /// fn_801749B8: clip the stats rows to the panel (render callback of the stats texts).
 pub unsafe extern "C" fn fn_801749B8(_unused: *mut HSD_GObj) {
+    melee_core::ct!("fn_801749B8");
     let mut sp24 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp18 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut spC = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -534,6 +547,7 @@ pub unsafe extern "C" fn fn_801749B8(_unused: *mut HSD_GObj) {
 
 /// fn_80174A60: how many rows of `list` show for `slot`.
 pub unsafe fn fn_80174A60(list: *mut StatsList, slot: i32) -> i32 {
+    melee_core::ct!("fn_80174A60");
     let mut count = 0;
     if (*list).mode != 2 {
         let mut i = 0;
@@ -551,6 +565,7 @@ pub unsafe fn fn_80174A60(list: *mut StatsList, slot: i32) -> i32 {
 
 /// `fn_80174B4C_blk14829` (static inline): pick the player's data and clear its stats texts.
 pub unsafe fn fn_80174B4C_blk14829(data: *mut ResultsData, slot: i32, pdata: *mut *mut ResultsPlayerData, list: *mut *mut StatsList) {
+    melee_core::ct!("fn_80174B4C_blk14829");
     *pdata = addr_of_mut!((*data).player_data[slot as usize]);
     *list = addr_of_mut!(lbl_803D6878).cast();
 
@@ -567,6 +582,7 @@ pub unsafe fn fn_80174B4C_blk14829(data: *mut ResultsData, slot: i32, pdata: *mu
 /// fn_80174B4C: (re)build the stats rows of `slot`'s page at its scroll offset. The row y step
 /// `pos.y += 1.75f * (offset - (start - 1))` is a fused multiply-add.
 pub unsafe fn fn_80174B4C(data: *mut ResultsData, slot: i32) {
+    melee_core::ct!("fn_80174B4C");
     let mut pdata: *mut ResultsPlayerData = null_mut();
     let mut list_base: *mut StatsList = null_mut();
 
@@ -671,6 +687,7 @@ pub unsafe fn fn_80174B4C(data: *mut ResultsData, slot: i32) {
 
 /// fn_80174FD0: set the texture frame of a joint's material.
 pub unsafe fn fn_80174FD0(jobj: *mut HSD_JObj, arg1: i32) {
+    melee_core::ct!("fn_80174FD0");
     let tobj = (*(*(*jobj).u.dobj).mobj).tobj;
     ext::HSD_AObjSetCurrentFrame((*tobj).aobj, arg1 as f32);
     ext::HSD_AObjSetRate((*tobj).aobj, 0.0f32);
@@ -679,11 +696,13 @@ pub unsafe fn fn_80174FD0(jobj: *mut HSD_JObj, arg1: i32) {
 
 /// fn_80175038: render callback of the panel model.
 pub unsafe extern "C" fn fn_80175038(gobj: *mut HSD_GObj, flag: i32) {
+    melee_core::ct!("fn_80175038");
     ext::HSD_JObjDispAll(get_jobj(gobj), null_mut(), ext::HSD_GObj_80390EB8(flag), 0);
 }
 
 /// fn_8017507C: the player's row colour (team colour lightened, or white).
 pub unsafe fn fn_8017507C(slot: i32) -> GXColor {
+    melee_core::ct!("fn_8017507C");
     let mut color = GXColor { r: 0, g: 0, b: 0, a: 0 };
     let me = (*data()).x94;
     if (*me).is_teams == 1 {
@@ -735,6 +754,7 @@ unsafe fn ko_row(text: *mut HSD_Text, y: f32, fmt: &core::ffi::CStr, va: &[Va], 
 
 /// fn_80175240: the KO-count column of `slot`.
 pub unsafe fn fn_80175240(slot: i32) {
+    melee_core::ct!("fn_80175240");
     let d = data();
     let me = (*d).x94;
     if (*me).match_kind != 3 {
@@ -785,6 +805,7 @@ pub unsafe fn fn_80175240(slot: i32) {
 
 /// fn_8017556C: the score/points text for `slot` (KO-count style: signed with +/-).
 pub unsafe fn fn_8017556C(slot: i32) {
+    melee_core::ct!("fn_8017556C");
     let d = data();
     let me = (*d).x94;
     let s = slot as usize;
@@ -827,11 +848,13 @@ pub unsafe fn fn_8017556C(slot: i32) {
 
 /// `matchWasSkipped` (static inline).
 pub unsafe fn matchWasSkipped(me: *mut MatchEnd) -> i32 {
+    melee_core::ct!("matchWasSkipped");
     ((*me).outcome == OUTCOME_NO_CONTEST as u8 || (*me).outcome == OUTCOME_RETRY as u8) as i32
 }
 
 /// fn_801756E0: the points text of a time-match row.
 pub unsafe fn fn_801756E0(slot: i32) {
+    melee_core::ct!("fn_801756E0");
     let d = data();
     let me = (*d).x94;
     let s = slot as usize;
@@ -874,6 +897,7 @@ pub unsafe fn fn_801756E0(slot: i32) {
 
 /// fn_80175880: the time text of a stock-match row (a dash for the winner).
 pub unsafe fn fn_80175880(slot: i32) {
+    melee_core::ct!("fn_80175880");
     let d = data();
     let me = (*d).x94;
     let s = slot as usize;
@@ -919,11 +943,13 @@ pub unsafe fn fn_80175880(slot: i32) {
 
 /// `fn_80175A94_get_match_end` (static inline).
 pub unsafe fn fn_80175A94_get_match_end() -> *mut MatchEnd {
+    melee_core::ct!("fn_80175A94_get_match_end");
     (*data()).x94
 }
 
 /// fn_80175A94: create `slot`'s time/points text at `position` and fill it per match kind.
 pub unsafe fn fn_80175A94(slot: i32, position: *mut Vec3) {
+    melee_core::ct!("fn_80175A94");
     let player = slot as u32 as usize;
     let mut sp24 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut me = (*data()).x94;
@@ -973,6 +999,7 @@ pub unsafe fn fn_80175A94(slot: i32, position: *mut Vec3) {
 
 /// fn_80175C5C: lay out the four players' text columns.
 pub unsafe fn fn_80175C5C() {
+    melee_core::ct!("fn_80175C5C");
     let mut position = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let d = data();
 
@@ -992,6 +1019,7 @@ pub unsafe fn fn_80175C5C() {
 
 /// fn_80175D34: drop the KO-count texts and re-seat the time texts.
 pub unsafe fn fn_80175D34() {
+    melee_core::ct!("fn_80175D34");
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let d = data();
     ext::lb_8000B1CC((*d).x24, null_mut(), &mut pos);
@@ -1031,6 +1059,7 @@ const PLAYER_JOINTS: [(usize, [i32; 4]); 15] = [
 
 /// fn_80175DC8: build the panel model and cache its joints.
 pub unsafe extern "C" fn fn_80175DC8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80175DC8");
     let mut sp108: *mut HSD_JObj = null_mut();
     let mut sp104: *mut HSD_JObj;
     let mut sp100: *mut HSD_JObj;
@@ -1097,6 +1126,7 @@ pub unsafe extern "C" fn fn_80175DC8(gobj: *mut HSD_GObj) {
 
 /// fn_80176A6C: the panel camera and the SIS text bank.
 pub unsafe fn fn_80176A6C() {
+    melee_core::ct!("fn_80176A6C");
     let gobj = ext::GObj_Create(HSD_GOBJ_CLASS_CAMERA as u16, 20, 0);
     if gobj.is_null() {
         ext::OSReport(c"Error : gobj dont't get (gmResultAddPanelCamera)\n".as_ptr(), &[]);
@@ -1128,11 +1158,13 @@ pub unsafe fn fn_80176A6C() {
 
 /// fn_80176BCC.
 pub unsafe extern "C" fn fn_80176BCC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80176BCC");
     ext::HSD_JObjAnimAll(get_jobj(gobj));
 }
 
 /// `fn_80176BF0_inline` (static inline): the series-emblem index of a character kind (-1 = none).
 pub unsafe fn fn_80176BF0_inline(arg1: u8) -> i32 {
+    melee_core::ct!("fn_80176BF0_inline");
     // (TARGET_PC) m-ex characters are indexed through the m-ex insignia table
     if (arg1 as u32) >= ChKind_Mex0 && (arg1 as u32) < ChKind_Cap {
         return ext::Mex_InsigniaForExt(ext::Mex_PortCKindToExt(arg1 as i32));
@@ -1147,6 +1179,7 @@ pub unsafe fn fn_80176BF0_inline(arg1: u8) -> i32 {
 
 /// fn_80176BF0: hide all emblem joints but one; returns the shown one.
 pub unsafe fn fn_80176BF0(arg0: *mut HSD_JObj, arg1: u8, arg2: i32) -> *mut HSD_JObj {
+    melee_core::ct!("fn_80176BF0");
     let mut jobj: *mut HSD_JObj = null_mut();
     let mut var_r31 = 0;
     let mut var_r30: *mut HSD_JObj = null_mut();
@@ -1179,11 +1212,13 @@ pub unsafe fn fn_80176BF0(arg0: *mut HSD_JObj, arg1: u8, arg2: i32) -> *mut HSD_
 
 /// fn_80176D18.
 pub unsafe extern "C" fn fn_80176D18(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80176D18");
     ext::HSD_JObjAnimAll(get_jobj(gobj));
 }
 
 /// fn_80176D3C: put the result emblem models (winner / loser / draw) on the four podium spots.
 pub unsafe fn fn_80176D3C(positions: *mut Vec3) {
+    melee_core::ct!("fn_80176D3C");
     let d = data();
     let me = (*d).x94;
     let mut pos = positions;
@@ -1235,6 +1270,7 @@ pub unsafe fn fn_80176D3C(positions: *mut Vec3) {
 
 /// fn_80176F60: the winner emblem model, the result-title materials and the podium models.
 pub unsafe fn fn_80176F60() {
+    melee_core::ct!("fn_80176F60");
     let d = data();
     let mut sp8 = [Vec3 { x: 0.0, y: 0.0, z: 0.0 }; 4];
 
@@ -1283,6 +1319,7 @@ pub unsafe fn fn_80176F60() {
 
 /// fn_801771C0: the winner (x4), the winning team (x5) and the team's best player (x6).
 pub unsafe fn fn_801771C0(data: *mut ResultsData) {
+    melee_core::ct!("fn_801771C0");
     let me = (*data).x94;
     (*data).x4 = ext::fn_80165418(me) as u8;
     (*data).x5 = ext::fn_801654A0(me) as u8;
@@ -1317,6 +1354,7 @@ pub use crate::gm_r7::gmResult_PcWinner;
 
 /// `gmResultLoadArchive` (static inline).
 pub unsafe fn gmResultLoadArchive(data: *mut ResultsData) {
+    melee_core::ct!("gmResultLoadArchive");
     lbl_804D65B8 = ext::lbArchive_80016DBC(
         c"GmRst".as_ptr(),
         addr_of_mut!((*data).pnlsce).cast(),
@@ -1337,22 +1375,26 @@ pub unsafe fn gmResultLoadArchive(data: *mut ResultsData) {
 
 /// `gmResultReportLightGObj` (static inline).
 pub unsafe fn gmResultReportLightGObj() {
+    melee_core::ct!("gmResultReportLightGObj");
     ext::OSReport(c"Error : gobj dont't get (gmResultAddLight)\n".as_ptr(), &[]);
     hsd::hsd_assert(false, 1753, c"0");
 }
 /// `gmResultReportLightLObj` (static inline).
 pub unsafe fn gmResultReportLightLObj() {
+    melee_core::ct!("gmResultReportLightLObj");
     ext::OSReport(c"Error : lobj dont't get (gmResultAddLight)\n".as_ptr(), &[]);
     hsd::hsd_assert(false, 1759, c"0");
 }
 /// `gmResultReportModelGObj` (static inline).
 pub unsafe fn gmResultReportModelGObj() {
+    melee_core::ct!("gmResultReportModelGObj");
     ext::OSReport(c"Error : gobj dont't get (gmResultAddModel)\n".as_ptr(), &[]);
     hsd::hsd_assert(false, 1765, c"0");
 }
 
 /// gm_Scene_Results_OnEnter: reset the scene state, pick the page count and build the scene.
 pub unsafe extern "C" fn gm_Scene_Results_OnEnter(arg0_: *mut c_void) {
+    melee_core::ct!("gm_Scene_Results_OnEnter");
     let arg0 = arg0_ as *mut ResultsMatchInfo;
     let d = data();
 
@@ -1431,6 +1473,7 @@ pub unsafe extern "C" fn gm_Scene_Results_OnEnter(arg0_: *mut c_void) {
 
 /// gm_Scene_Results_OnExit.
 pub unsafe extern "C" fn gm_Scene_Results_OnExit(_unused: *mut c_void) {
+    melee_core::ct!("gm_Scene_Results_OnExit");
     ext::gmRst_GenoArtClose();
     ext::fn_801701AC();
 }

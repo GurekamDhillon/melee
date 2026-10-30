@@ -142,6 +142,7 @@ unsafe fn set_grab_callbacks(fp: *mut Fighter, grab_cb: unsafe extern "C" fn(*mu
 }
 
 pub fn ftKp_SpecialS_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialS_Enter");
     unsafe {
         let fp = fpp(gobj);
         (*fp).anon_2210.throw_flags = 0;
@@ -156,6 +157,7 @@ pub fn ftKp_SpecialS_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKp_SpecialAirS_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialAirS_Enter");
     unsafe {
         let fp = fpp(gobj);
         (*fp).anon_2210.throw_flags = 0;
@@ -184,6 +186,7 @@ unsafe fn enter_hit(gobj: *mut HSD_GObj, fp: *mut Fighter, msid_hit: i32, msid_l
 }
 
 pub fn ftKp_SpecialS_8013302C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialS_8013302C");
     unsafe {
         let fp = fpp(gobj);
         enter_hit(gobj, fp, 349, 348);
@@ -191,6 +194,7 @@ pub fn ftKp_SpecialS_8013302C(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKp_SpecialS_801330E4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialS_801330E4");
     unsafe {
         let fp = fpp(gobj);
         enter_hit(gobj, fp, 355, 354);
@@ -198,6 +202,7 @@ pub fn ftKp_SpecialS_801330E4(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKp_SpecialS_8013319C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialS_8013319C");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, ftKp_MS_SpecialAirSStart as i32, transition_flags1);
@@ -207,6 +212,7 @@ pub fn ftKp_SpecialS_8013319C(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKp_SpecialS_8013322C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialS_8013322C");
     unsafe {
         let fp1 = fpp(gobj);
         st::ftCommon_AirToGroundStateChange(gobj, &mut *fp1, 347, transition_flags1);
@@ -230,14 +236,17 @@ unsafe fn release_and_fall(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKp_SpecialS_801332C4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialS_801332C4");
     unsafe { release_and_fall(gobj) }
 }
 
 pub fn ftKp_SpecialS_80133398(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialS_80133398");
     unsafe { release_and_fall(gobj) }
 }
 
 pub fn ftKp_SpecialS_801333F8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialS_801333F8");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 350, transition_flags2);
@@ -250,6 +259,7 @@ pub fn ftKp_SpecialS_801333F8(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKp_SpecialS_80133484(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialS_80133484");
     unsafe { release_and_fall(gobj) }
 }
 
@@ -273,46 +283,59 @@ unsafe fn air_end_to_ground(gobj: *mut HSD_GObj, msid: i32, victim_msid: i32) {
 }
 
 pub fn ftKp_SpecialS_801334E4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialS_801334E4");
     unsafe { air_end_to_ground(gobj, 351, ftCo_MS_ThrownKoopaF as i32) }
 }
 
 pub fn ftKp_SpecialS_8013359C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialS_8013359C");
     unsafe { air_end_to_ground(gobj, 352, ftCo_MS_ThrownKoopaB as i32) }
 }
 
 /// Fighter callback entries for the static-address helpers above.
 pub unsafe extern "C" fn cb_ftKp_SpecialS_8013302C(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftKp_SpecialS_8013302C");
     ftKp_SpecialS_8013302C(g);
 }
 pub unsafe extern "C" fn cb_ftKp_SpecialS_801330E4(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftKp_SpecialS_801330E4");
     ftKp_SpecialS_801330E4(g);
 }
 pub unsafe extern "C" fn cb_ftKp_SpecialS_8013319C(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftKp_SpecialS_8013319C");
     ftKp_SpecialS_8013319C(g);
 }
 pub unsafe extern "C" fn cb_ftKp_SpecialS_8013322C(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftKp_SpecialS_8013322C");
     ftKp_SpecialS_8013322C(g);
 }
 pub unsafe extern "C" fn cb_ftKp_SpecialS_801332C4(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftKp_SpecialS_801332C4");
     ftKp_SpecialS_801332C4(g);
 }
 pub unsafe extern "C" fn cb_ftKp_SpecialS_80133398(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftKp_SpecialS_80133398");
     ftKp_SpecialS_80133398(g);
 }
 pub unsafe extern "C" fn cb_ftKp_SpecialS_801333F8(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftKp_SpecialS_801333F8");
     ftKp_SpecialS_801333F8(g);
 }
 pub unsafe extern "C" fn cb_ftKp_SpecialS_80133484(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftKp_SpecialS_80133484");
     ftKp_SpecialS_80133484(g);
 }
 pub unsafe extern "C" fn cb_ftKp_SpecialS_801334E4(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftKp_SpecialS_801334E4");
     ftKp_SpecialS_801334E4(g);
 }
 pub unsafe extern "C" fn cb_ftKp_SpecialS_8013359C(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftKp_SpecialS_8013359C");
     ftKp_SpecialS_8013359C(g);
 }
 
 pub fn ftKp_SpecialSHit_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialSHit_Anim");
     unsafe {
         let fp1 = fpp(gobj);
         let koopa_attr = (*fp1).dat_attrs as *const ftKoopaAttributes;
@@ -341,6 +364,7 @@ pub fn ftKp_SpecialSHit_Anim(gobj: *mut HSD_GObj) {
 
 /// `inlineA1` (static inline): the air Hit0 -> Hit0_1 switch when B was released.
 pub fn inlineA1(gobj: *mut HSD_GObj) {
+    melee_core::ct!("inlineA1");
     unsafe {
         let fp = fpp(gobj);
         st::Fighter_ChangeMotionState(gobj, ftKp_MS_SpecialAirSHit0_1 as i32, transition_flags3, (*fp).cur_anim_frame, 1.0, 0.0, core::ptr::null_mut());
@@ -352,6 +376,7 @@ pub fn inlineA1(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKp_SpecialAirSHit_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialAirSHit_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftKoopaAttributes;
@@ -371,9 +396,9 @@ pub fn ftKp_SpecialAirSHit_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftKp_SpecialSWait_Anim(_gobj: *mut HSD_GObj) {}
+pub fn ftKp_SpecialSWait_Anim(_gobj: *mut HSD_GObj) { melee_core::ct!("ftKp_SpecialSWait_Anim");}
 
-pub fn ftKp_SpecialAirSWait_Anim(_gobj: *mut HSD_GObj) {}
+pub fn ftKp_SpecialAirSWait_Anim(_gobj: *mut HSD_GObj) { melee_core::ct!("ftKp_SpecialAirSWait_Anim");}
 
 /// `doEndFAnim` (static inline): flip the facing on the script's B4 pulse, release the victim on
 /// the cmd_vars[0] pulse, then `cb` at the end of the animation.
@@ -408,18 +433,22 @@ fn doEndBAnim(gobj: *mut HSD_GObj, cb: fn(*mut HSD_GObj)) {
 }
 
 pub fn ftKp_SpecialSEndF_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialSEndF_Anim");
     doEndFAnim(gobj, st::ft_8008A2BC);
 }
 
 pub fn ftKp_SpecialSEndB_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialSEndB_Anim");
     doEndBAnim(gobj, st::ft_8008A2BC);
 }
 
 pub fn ftKp_SpecialAirSEndF_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialAirSEndF_Anim");
     doEndFAnim(gobj, st::ftCo_Fall_Enter);
 }
 
 pub fn ftKp_SpecialAirSEndB_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialAirSEndB_Anim");
     doEndBAnim(gobj, st::ftCo_Fall_Enter);
 }
 
@@ -441,6 +470,7 @@ fn ftKoopa_SpecialS_ChangeAction(gobj: *mut HSD_GObj, kp_msid_f: i32, victim_msi
 }
 
 pub fn ftKp_SpecialSHit_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialSHit_IASA");
     let facing_dir = ftKp_SpecialS_set_dir(gobj);
     if facing_dir != 0 {
         ftKoopa_SpecialS_ChangeAction(
@@ -454,6 +484,7 @@ pub fn ftKp_SpecialSHit_IASA(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKp_SpecialAirSHit_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialAirSHit_IASA");
     let facing_dir = ftKp_SpecialS_set_dir(gobj);
     if facing_dir != 0 {
         ftKoopa_SpecialS_ChangeAction(
@@ -467,6 +498,7 @@ pub fn ftKp_SpecialAirSHit_IASA(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKp_SpecialSWait_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialSWait_IASA");
     unsafe {
         let fp = fpp(gobj);
         let facing_dir = ftKp_SpecialS_set_dir(gobj);
@@ -487,6 +519,7 @@ pub fn ftKp_SpecialSWait_IASA(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKp_SpecialAirSWait_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialAirSWait_IASA");
     unsafe {
         let fp = fpp(gobj);
         let facing_dir = ftKp_SpecialS_set_dir(gobj);
@@ -507,6 +540,7 @@ pub fn ftKp_SpecialAirSWait_IASA(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKp_SpecialAirSStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialAirSStart_Phys");
     unsafe {
         let fp = fpp(gobj);
         let vel_y = (*fp).self_vel.y;

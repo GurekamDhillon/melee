@@ -147,10 +147,11 @@ unsafe fn Ground_InitMapCollAndAnim(gobj: *mut HSD_GObj) {
 }
 
 /// 20DFDC
-pub unsafe extern "C" fn grFigure1_OnDemoInit(_unused: i32) {}
+pub unsafe extern "C" fn grFigure1_OnDemoInit(_unused: i32) { melee_core::ct!("grFigure1_OnDemoInit");}
 
 /// 20DFE0
 pub unsafe extern "C" fn grFigure1_OnInit() {
+    melee_core::ct!("grFigure1_OnInit");
     yakumono_param = ext::Ground_GetYakumonoParam();
     ext::stage_info.unk8C.set_b4(0);
     ext::stage_info.unk8C.set_b5(1);
@@ -162,15 +163,17 @@ pub unsafe extern "C" fn grFigure1_OnInit() {
 }
 
 /// 20E050
-pub unsafe extern "C" fn grFigure1_OnLoad() {}
+pub unsafe extern "C" fn grFigure1_OnLoad() { melee_core::ct!("grFigure1_OnLoad");}
 
 /// 20E054
 pub unsafe extern "C" fn grFigure1_OnStart() {
+    melee_core::ct!("grFigure1_OnStart");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
 
 /// 20E080: sets up stage gobj `gobj_id` with its row of the callback table.
 pub unsafe extern "C" fn grFigure1_8020E080(gobj_id: i32) -> *mut HSD_GObj {
+    melee_core::ct!("grFigure1_8020E080");
     let callbacks = &raw mut grEF1_StageCallbacks[gobj_id as usize];
     let gobj = ext::Ground_GetStageGObj(gobj_id);
     if !gobj.is_null() {
@@ -182,17 +185,19 @@ pub unsafe extern "C" fn grFigure1_8020E080(gobj_id: i32) -> *mut HSD_GObj {
 
 /// 20E168
 pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj0_OnInit");
     Ground_StartMapAnim(gobj);
 }
 
 /// 20E19C
-pub unsafe extern "C" fn grFigure1_8020E19C(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grFigure1_8020E19C(_gobj: *mut HSD_GObj) { melee_core::ct!("grFigure1_8020E19C");}
 
 /// 20E1A0
-pub unsafe extern "C" fn grFigure1_8020E1A0(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grFigure1_8020E1A0(_gobj: *mut HSD_GObj) { melee_core::ct!("grFigure1_8020E1A0");}
 
 /// 20E1A4
 pub unsafe extern "C" fn grFigure1_8020E1A4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grFigure1_8020E1A4");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     ext::Ground_InitMapColl(jobj, (*gp).map_id as i32);
@@ -200,23 +205,25 @@ pub unsafe extern "C" fn grFigure1_8020E1A4(gobj: *mut HSD_GObj) {
 
 /// 20E1D8
 pub unsafe extern "C" fn grFigure1_8020E1D8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grFigure1_8020E1D8");
     ext::Ground_UpdateMapColl(gobj);
     ext::lb_800115F4();
 }
 
 /// 20E1FC
-pub unsafe extern "C" fn grFigure1_8020E1FC(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grFigure1_8020E1FC(_gobj: *mut HSD_GObj) { melee_core::ct!("grFigure1_8020E1FC");}
 
 /// 20E200
 pub unsafe extern "C" fn stageGObj2_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj2_OnInit");
     Ground_InitMapCollAndAnim(gobj);
 }
 
 /// 20E258
-pub unsafe extern "C" fn grFigure1_8020E258(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grFigure1_8020E258(_gobj: *mut HSD_GObj) { melee_core::ct!("grFigure1_8020E258");}
 
 /// 20E25C
-pub unsafe extern "C" fn grFigure1_8020E25C(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grFigure1_8020E25C(_gobj: *mut HSD_GObj) { melee_core::ct!("grFigure1_8020E25C");}
 
 /// 20E270 (the non-static one; grfigure2.c stores its address as its demo-init)
-pub unsafe extern "C" fn grFigure1_8020E270(_n: i32) {}
+pub unsafe extern "C" fn grFigure1_8020E270(_n: i32) { melee_core::ct!("grFigure1_8020E270");}

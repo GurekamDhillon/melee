@@ -10,10 +10,12 @@ static mut RENDER: Option<HsdRender> = None;
 
 /// random.c's `seed` / render seed / forget-memory range.
 pub fn rand() -> &'static mut HsdRand {
+    melee_core::ct!("rand");
     unsafe { RAND.get_or_insert_with(HsdRand::default) }
 }
 
 /// state.c's / tev.c's statics (`HsdRender`).
 pub fn render() -> &'static mut HsdRender {
+    melee_core::ct!("render");
     unsafe { RENDER.get_or_insert_with(HsdRender::default) }
 }

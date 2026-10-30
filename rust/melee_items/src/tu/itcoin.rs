@@ -110,6 +110,7 @@ unsafe fn jobj_of(gobj: *mut HSD_GObj) -> *mut HSD_JObj {
 
 /// `it_802F13B4` (itcoin.c): show the coin's figure or its stack, depending on pause and camera.
 pub unsafe extern "C" fn it_802F13B4(gobj: *mut HSD_GObj, arg1: i32) {
+    melee_core::ct!("it_802F13B4");
     let ip = item_of(gobj);
     let attr = sa::<itCoinAttributes>(ip);
     let jobj = (*jobj_of(gobj)).child;
@@ -139,6 +140,7 @@ pub unsafe extern "C" fn it_802F13B4(gobj: *mut HSD_GObj, arg1: i32) {
 
 /// `itCoin_Logic116_Spawned`: clear the coin's variables and go to motion 0.
 pub unsafe extern "C" fn itCoin_Logic116_Spawned(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itCoin_Logic116_Spawned");
     let ip = item_of(gobj);
     (*ip).xDD4_itemVar.coin.x4 = 0;
     (*ip).xDD4_itemVar.coin.x0 = 0;
@@ -148,6 +150,7 @@ pub unsafe extern "C" fn itCoin_Logic116_Spawned(gobj: *mut HSD_GObj) {
 
 /// `itCoin_Logic116_Destroyed`: release the figure, or award the coin if it was collected.
 pub unsafe extern "C" fn itCoin_Logic116_Destroyed(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itCoin_Logic116_Destroyed");
     let ip = item_of(gobj);
     if (*ip).xDD4_itemVar.coin.x4 != 0 {
         ext::grFigureGet_80219C34((*ip).xDD4_itemVar.coin.x14 as *mut HSD_GObj);
@@ -160,16 +163,19 @@ pub unsafe extern "C" fn itCoin_Logic116_Destroyed(gobj: *mut HSD_GObj) {
 
 /// `it_802F1588`: enter motion 0 keeping the velocity.
 pub unsafe extern "C" fn it_802F1588(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802F1588");
     ext::Item_80268E5C(gobj, 0, ITEM_UNK_0x1 as u32);
 }
 
 /// `itCoin_UnkMotion0_Anim` (returns false).
 pub unsafe extern "C" fn itCoin_UnkMotion0_Anim(_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itCoin_UnkMotion0_Anim");
     false
 }
 
 /// `itCoin_UnkMotion0_Phys`: fall, or follow the thrown speed while `x4` is set.
 pub unsafe extern "C" fn itCoin_UnkMotion0_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itCoin_UnkMotion0_Phys");
     let ip = item_of(gobj);
     if (*ip).xDD4_itemVar.coin.x4 == 0 {
         let attr = &*(*ip).xCC_item_attr;
@@ -182,12 +188,14 @@ pub unsafe extern "C" fn itCoin_UnkMotion0_Phys(gobj: *mut HSD_GObj) {
 
 /// `itCoin_UnkMotion0_Coll`: detect the landing into `it_802F1630`.
 pub unsafe extern "C" fn itCoin_UnkMotion0_Coll(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itCoin_UnkMotion0_Coll");
     ext::it_8026E414(gobj, Some(it_802F1630));
     false
 }
 
 /// `itCoin_ResetRotation` (static inline): zero the three rotations.
 pub unsafe fn itCoin_ResetRotation(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itCoin_ResetRotation");
     let jobj = jobj_of(gobj);
     HSD_JObjSetRotationX(jobj, 0.0);
     HSD_JObjSetRotationY(jobj, 0.0);
@@ -196,6 +204,7 @@ pub unsafe fn itCoin_ResetRotation(gobj: *mut HSD_GObj) {
 
 /// `it_802F1630`: come to rest on the floor (motion 1).
 pub unsafe extern "C" fn it_802F1630(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802F1630");
     let ip = item_of(gobj);
     (*ip).x40_vel.x = 0.0;
     (*ip).x40_vel.y = 0.0;
@@ -207,20 +216,23 @@ pub unsafe extern "C" fn it_802F1630(gobj: *mut HSD_GObj) {
 
 /// `itCoin_UnkMotion1_Anim` (returns false).
 pub unsafe extern "C" fn itCoin_UnkMotion1_Anim(_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itCoin_UnkMotion1_Anim");
     false
 }
 
 /// `itCoin_UnkMotion1_Phys` (empty).
-pub unsafe extern "C" fn itCoin_UnkMotion1_Phys(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itCoin_UnkMotion1_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itCoin_UnkMotion1_Phys");}
 
 /// `itCoin_UnkMotion1_Coll`: a hit while resting restarts the bounce.
 pub unsafe extern "C" fn itCoin_UnkMotion1_Coll(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itCoin_UnkMotion1_Coll");
     ext::it_8026D62C(gobj, Some(it_802F1588));
     false
 }
 
 /// `itCoin_Logic116_PickedUp`: show the coin and go to motion 2.
 pub unsafe extern "C" fn itCoin_Logic116_PickedUp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itCoin_Logic116_PickedUp");
     let jobj = jobj_of(gobj);
     let child = (*jobj).child;
     ext::HSD_JObjClearFlagsAll(child, JOBJ_HIDDEN);
@@ -229,20 +241,23 @@ pub unsafe extern "C" fn itCoin_Logic116_PickedUp(gobj: *mut HSD_GObj) {
 
 /// `itCoin_UnkMotion2_Anim` (returns false).
 pub unsafe extern "C" fn itCoin_UnkMotion2_Anim(_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itCoin_UnkMotion2_Anim");
     false
 }
 
 /// `itCoin_UnkMotion2_Phys` (empty).
-pub unsafe extern "C" fn itCoin_UnkMotion2_Phys(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itCoin_UnkMotion2_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itCoin_UnkMotion2_Phys");}
 
 /// `itCoin_Logic116_EvtUnk`: `it_8026B894`.
 pub unsafe extern "C" fn itCoin_Logic116_EvtUnk(gobj: *mut HSD_GObj, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itCoin_Logic116_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }
 
 /// `itCoin_Logic116_DmgReceived`: launch the coin from the hit, scaled by the damage and the
 /// coin's kind. Returns false.
 pub unsafe extern "C" fn itCoin_Logic116_DmgReceived(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itCoin_Logic116_DmgReceived");
     let ip = item_of(gobj);
     let attr = sa::<itCoinAttributes>(ip);
     let zero: f32 = 0.0;
@@ -298,11 +313,13 @@ pub unsafe extern "C" fn itCoin_Logic116_DmgReceived(gobj: *mut HSD_GObj) -> boo
 
 /// `itCoin_UnkMotion3_Anim` (returns false).
 pub unsafe extern "C" fn itCoin_UnkMotion3_Anim(_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itCoin_UnkMotion3_Anim");
     false
 }
 
 /// `itCoin_UnkMotion3_Phys`: damp the horizontal speed, then fall with the thrown speed.
 pub unsafe extern "C" fn itCoin_UnkMotion3_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itCoin_UnkMotion3_Phys");
     let ip = item_of(gobj);
     let attr = sa::<itCoinAttributes>(ip);
     (*ip).x40_vel.x *= attr.x34;
@@ -312,23 +329,27 @@ pub unsafe extern "C" fn itCoin_UnkMotion3_Phys(gobj: *mut HSD_GObj) {
 
 /// `itCoin_UnkMotion3_Coll`: land into `it_802F1630`.
 pub unsafe extern "C" fn itCoin_UnkMotion3_Coll(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itCoin_UnkMotion3_Coll");
     ext::it_8026E15C(gobj, Some(it_802F1630));
     false
 }
 
 /// `itCoin_Logic116_Thrown`: reset the rotation and go to motion 4.
 pub unsafe extern "C" fn itCoin_Logic116_Thrown(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itCoin_Logic116_Thrown");
     itCoin_ResetRotation(gobj);
     ext::Item_80268E5C(gobj, 4, ITEM_UNK_0x1 as u32);
 }
 
 /// `itCoin_UnkMotion4_Anim` (returns false).
 pub unsafe extern "C" fn itCoin_UnkMotion4_Anim(_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itCoin_UnkMotion4_Anim");
     false
 }
 
 /// `itCoin_UnkMotion4_Phys`: fall.
 pub unsafe extern "C" fn itCoin_UnkMotion4_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itCoin_UnkMotion4_Phys");
     let ip = item_of(gobj);
     let attr = &*(*ip).xCC_item_attr;
     ext::it_80272860(gobj, attr.x10_fall_speed, attr.x14_fall_speed_max);
@@ -336,12 +357,14 @@ pub unsafe extern "C" fn itCoin_UnkMotion4_Phys(gobj: *mut HSD_GObj) {
 
 /// `itCoin_UnkMotion4_Coll`: land into `it_802F1630`.
 pub unsafe extern "C" fn itCoin_UnkMotion4_Coll(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itCoin_UnkMotion4_Coll");
     ext::it_8026E414(gobj, Some(it_802F1630));
     false
 }
 
 /// `itCoin_Logic116_EnteredAir`: face the direction of travel and set the collision facing.
 pub unsafe extern "C" fn itCoin_Logic116_EnteredAir(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itCoin_Logic116_EnteredAir");
     let ip = item_of(gobj);
     ext::Item_80268E5C(gobj, 5, ITEM_ANIM_UPDATE);
 
@@ -354,30 +377,35 @@ pub unsafe extern "C" fn itCoin_Logic116_EnteredAir(gobj: *mut HSD_GObj) {
 
 /// `itCoin_UnkMotion5_Anim` (returns false).
 pub unsafe extern "C" fn itCoin_UnkMotion5_Anim(_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itCoin_UnkMotion5_Anim");
     false
 }
 
 /// `itCoin_UnkMotion5_Phys` (empty).
-pub unsafe extern "C" fn itCoin_UnkMotion5_Phys(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itCoin_UnkMotion5_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itCoin_UnkMotion5_Phys");}
 
 /// `itCoin_UnkMotion5_Coll`: land into `it_802F1630`, or back to `it_802F1588`.
 pub unsafe extern "C" fn itCoin_UnkMotion5_Coll(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itCoin_UnkMotion5_Coll");
     ext::it_8026E8C4(gobj, Some(it_802F1630), Some(it_802F1588));
     false
 }
 
 /// `it_802F2014`: set the item's joint id.
 pub unsafe extern "C" fn it_802F2014(gobj: *mut HSD_GObj, arg1: i32) {
+    melee_core::ct!("it_802F2014");
     (*item_of(gobj)).x378_itemColl.joint_id_only = arg1;
 }
 
 /// `it_802F2020`: the coin's value.
 pub unsafe extern "C" fn it_802F2020(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("it_802F2020");
     (*item_of(gobj)).xDD4_itemVar.coin.x0
 }
 
 /// `it_802F202C`: the landing sound; stop the horizontal speed and cap the fall.
 pub unsafe extern "C" fn it_802F202C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802F202C");
     let ip = item_of(gobj);
     ext::lbAudioAx_800237A8(0xAA, 0x7F, 0x40);
     (*ip).x40_vel.x = 0.0;
@@ -390,6 +418,7 @@ pub unsafe extern "C" fn it_802F202C(gobj: *mut HSD_GObj) {
 /// `it_802F2094` (itcoin.c): spawn a coin (`arg3` is the coin kind; 0 is a stack, else a launched
 /// coin), owned by the figure `arg0`, with value `arg2`.
 pub unsafe extern "C" fn it_802F2094(arg0: *mut HSD_GObj, pos: *mut Vec3, arg2: i32, arg3: i32) -> *mut HSD_GObj {
+    melee_core::ct!("it_802F2094");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = It_Kind_Coin;
     Item_InitSpawnPosition(&mut spawn, pos, false);

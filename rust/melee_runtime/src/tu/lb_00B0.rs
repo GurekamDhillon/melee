@@ -203,6 +203,7 @@ unsafe fn HSD_LObjGetNext(l: *mut HSD_LObj) -> *mut HSD_LObj {
 }
 
 pub unsafe fn lb_8000B074(jobj: *mut HSD_JObj) -> bool {
+    melee_core::ct!("lb_8000B074");
     let aobj = (*jobj).aobj;
     !aobj.is_null() && (*aobj).flags & AOBJ_NO_ANIM == 0
 }
@@ -235,14 +236,17 @@ unsafe fn tree_any(mut jobj: *mut HSD_JObj, hit: impl Fn(u32) -> bool) -> bool {
 }
 
 pub unsafe fn lb_8000B09C(jobj: *mut HSD_JObj) -> bool {
+    melee_core::ct!("lb_8000B09C");
     tree_any(jobj, |f| f & AOBJ_NO_ANIM == 0)
 }
 
 pub unsafe fn lb_8000B134(jobj: *mut HSD_JObj) -> bool {
+    melee_core::ct!("lb_8000B134");
     tree_any(jobj, |f| f & AOBJ_REWINDED != 0)
 }
 
 pub unsafe fn lb_8000B1CC(arg0: *mut HSD_JObj, pos0: *mut Vec, pos1: *mut Vec) {
+    melee_core::ct!("lb_8000B1CC");
     let mut r: Quaternion = core::mem::zeroed();
     let mut s: Vec = core::mem::zeroed();
     if arg0.is_null() {
@@ -278,6 +282,7 @@ pub unsafe fn lb_8000B1CC(arg0: *mut HSD_JObj, pos0: *mut Vec, pos1: *mut Vec) {
 }
 
 pub unsafe fn lb_8000B4FC(jobj: *mut HSD_JObj, joint: *mut HSD_Joint) {
+    melee_core::ct!("lb_8000B4FC");
     if jobj.is_null() || joint.is_null() {
         return;
     }
@@ -293,6 +298,7 @@ pub unsafe fn lb_8000B4FC(jobj: *mut HSD_JObj, joint: *mut HSD_Joint) {
 }
 
 pub unsafe fn lb_8000B5DC(jobj: *mut HSD_JObj, joint: *mut HSD_Joint) {
+    melee_core::ct!("lb_8000B5DC");
     if jobj.is_null() || joint.is_null() {
         return;
     }
@@ -307,6 +313,7 @@ pub unsafe fn lb_8000B5DC(jobj: *mut HSD_JObj, joint: *mut HSD_Joint) {
 }
 
 pub unsafe fn lb_8000B6A4(jobj: *mut HSD_JObj, joint: *mut HSD_Joint) {
+    melee_core::ct!("lb_8000B6A4");
     if jobj.is_null() || joint.is_null() {
         return;
     }
@@ -318,6 +325,7 @@ pub unsafe fn lb_8000B6A4(jobj: *mut HSD_JObj, joint: *mut HSD_Joint) {
 }
 
 pub unsafe fn lb_8000B760(jobj: *mut HSD_JObj, joint: *mut HSD_Joint) {
+    melee_core::ct!("lb_8000B760");
     if jobj.is_null() || joint.is_null() {
         return;
     }
@@ -328,6 +336,7 @@ pub unsafe fn lb_8000B760(jobj: *mut HSD_JObj, joint: *mut HSD_Joint) {
 }
 
 pub unsafe fn lb_8000B804(jobj: *mut HSD_JObj, joint: *mut HSD_Joint) {
+    melee_core::ct!("lb_8000B804");
     if jobj.is_null() || joint.is_null() {
         return;
     }
@@ -345,6 +354,7 @@ pub unsafe fn lb_8000B804(jobj: *mut HSD_JObj, joint: *mut HSD_Joint) {
 
 /// `HSD_JObjWalkTree` callback (static): sets the AObj rate when the walk says so.
 pub unsafe extern "C" fn lb_8000B9D8(jobj: *mut HSD_JObj, arg1: *mut *mut f32, arg2: i32) {
+    melee_core::ct!("lb_8000B9D8");
     let tmp = *arg1;
     if arg2 != 0 {
         ext::HSD_AObjSetRate((*jobj).aobj, *tmp);
@@ -352,11 +362,13 @@ pub unsafe extern "C" fn lb_8000B9D8(jobj: *mut HSD_JObj, arg1: *mut *mut f32, a
 }
 
 pub unsafe fn lb_8000BA0C(jobj: *mut HSD_JObj, mut arg8: f32) {
+    melee_core::ct!("lb_8000BA0C");
     let mut sp10: *mut f32 = &mut arg8;
     ext::HSD_JObjWalkTree(jobj, Some(lb_8000B9D8), &mut sp10);
 }
 
 pub unsafe fn lbDObjSetRateAll(dobj: *mut HSD_DObj, val: f32) {
+    melee_core::ct!("lbDObjSetRateAll");
     if dobj.is_null() {
         return;
     }
@@ -387,6 +399,7 @@ pub unsafe fn lbDObjSetRateAll(dobj: *mut HSD_DObj, val: f32) {
 
 /// (exact copy of the above, but with HSD_AObjReqAnim)
 pub unsafe fn lbDObjReqAnimAll(dobj: *mut HSD_DObj, val: f32) {
+    melee_core::ct!("lbDObjReqAnimAll");
     if dobj.is_null() {
         return;
     }
@@ -416,6 +429,7 @@ pub unsafe fn lbDObjReqAnimAll(dobj: *mut HSD_DObj, val: f32) {
 }
 
 pub unsafe fn lbFindJObjWithAObj(jobj: *mut HSD_JObj) -> *mut HSD_JObj {
+    melee_core::ct!("lbFindJObjWithAObj");
     if jobj.is_null() {
         return null_mut();
     }
@@ -434,6 +448,7 @@ pub unsafe fn lbFindJObjWithAObj(jobj: *mut HSD_JObj) -> *mut HSD_JObj {
 }
 
 pub unsafe fn lbGetJObjFramerate(jobj: *mut HSD_JObj) -> f32 {
+    melee_core::ct!("lbGetJObjFramerate");
     let jobj = lbFindJObjWithAObj(jobj);
     if !jobj.is_null() {
         return (*(*jobj).aobj).framerate;
@@ -442,6 +457,7 @@ pub unsafe fn lbGetJObjFramerate(jobj: *mut HSD_JObj) -> f32 {
 }
 
 pub unsafe fn lbGetJObjCurrFrame(jobj: *mut HSD_JObj) -> f32 {
+    melee_core::ct!("lbGetJObjCurrFrame");
     let jobj = lbFindJObjWithAObj(jobj);
     if !jobj.is_null() {
         return (*(*jobj).aobj).curr_frame;
@@ -450,6 +466,7 @@ pub unsafe fn lbGetJObjCurrFrame(jobj: *mut HSD_JObj) -> f32 {
 }
 
 pub unsafe fn lbGetJObjEndFrame(jobj: *mut HSD_JObj) -> f32 {
+    melee_core::ct!("lbGetJObjEndFrame");
     let jobj = lbFindJObjWithAObj(jobj);
     if !jobj.is_null() {
         return (*(*jobj).aobj).end_frame;
@@ -458,6 +475,7 @@ pub unsafe fn lbGetJObjEndFrame(jobj: *mut HSD_JObj) -> f32 {
 }
 
 pub unsafe fn lb_8000BECC(animjoint: *mut HSD_AnimJoint) -> *mut HSD_AnimJoint {
+    melee_core::ct!("lb_8000BECC");
     if animjoint.is_null() {
         return null_mut();
     }
@@ -476,6 +494,7 @@ pub unsafe fn lb_8000BECC(animjoint: *mut HSD_AnimJoint) -> *mut HSD_AnimJoint {
 }
 
 pub unsafe fn lb_8000BFF0(animjoint: *mut HSD_AnimJoint) -> f32 {
+    melee_core::ct!("lb_8000BFF0");
     let animjoint = lb_8000BECC(animjoint);
     if !animjoint.is_null() {
         return (*(*animjoint).aobjdesc).end_frame;
@@ -484,6 +503,7 @@ pub unsafe fn lb_8000BFF0(animjoint: *mut HSD_AnimJoint) -> f32 {
 }
 
 pub unsafe fn lb_8000C07C(jobj: *mut HSD_JObj, i: i32, arg3: *mut *mut HSD_AnimJoint, arg4: *mut *mut HSD_MatAnimJoint, arg5: *mut *mut HSD_ShapeAnimJoint) {
+    melee_core::ct!("lb_8000C07C");
     let phi_r4 = if !arg3.is_null() { *arg3.offset(i as isize) } else { null_mut() };
     let phi_r5 = if !arg4.is_null() { *arg4.offset(i as isize) } else { null_mut() };
     let phi_r6 = if !arg5.is_null() { *arg5.offset(i as isize) } else { null_mut() };
@@ -491,10 +511,12 @@ pub unsafe fn lb_8000C07C(jobj: *mut HSD_JObj, i: i32, arg3: *mut *mut HSD_AnimJ
 }
 
 pub unsafe fn lb_8000C0E8(jobj: *mut HSD_JObj, i: i32, arg2: *mut DynamicModelDesc) {
+    melee_core::ct!("lb_8000C0E8");
     lb_8000C07C(jobj, i, (*arg2).anims, (*arg2).matanims, (*arg2).shapeanims);
 }
 
 pub unsafe fn memzero(mem: *mut c_void, mut size: i32) {
+    melee_core::ct!("memzero");
     let mut bytes = mem as *mut u8;
     while size != 0 {
         size -= 1;
@@ -504,6 +526,7 @@ pub unsafe fn memzero(mem: *mut c_void, mut size: i32) {
 }
 
 pub unsafe fn lb_8000C1C0(jobj: *mut HSD_JObj, constraint: *mut HSD_JObj) {
+    melee_core::ct!("lb_8000C1C0");
     let robj = ext::HSD_RObjAlloc();
     ext::HSD_RObjSetFlags(robj, 0x9000_0001);
     ext::HSD_RObjSetConstraintObj(robj, constraint as *mut c_void);
@@ -511,6 +534,7 @@ pub unsafe fn lb_8000C1C0(jobj: *mut HSD_JObj, constraint: *mut HSD_JObj) {
 }
 
 pub unsafe fn lb_8000C228(jobj: *mut HSD_JObj, constraint: *mut HSD_JObj) {
+    melee_core::ct!("lb_8000C228");
     let robj = ext::HSD_RObjAlloc();
     ext::HSD_RObjSetFlags(robj, 0x9000_0002);
     ext::HSD_RObjSetConstraintObj(robj, constraint as *mut c_void);
@@ -518,6 +542,7 @@ pub unsafe fn lb_8000C228(jobj: *mut HSD_JObj, constraint: *mut HSD_JObj) {
 }
 
 pub unsafe fn lb_8000C290(jobj: *mut HSD_JObj, constraint: *mut HSD_JObj) {
+    melee_core::ct!("lb_8000C290");
     let robj = ext::HSD_RObjAlloc();
     ext::HSD_RObjSetFlags(robj, 0x9000_0004);
     ext::HSD_RObjSetConstraintObj(robj, constraint as *mut c_void);
@@ -525,11 +550,13 @@ pub unsafe fn lb_8000C290(jobj: *mut HSD_JObj, constraint: *mut HSD_JObj) {
 }
 
 pub unsafe fn lb_8000C2F8(jobj: *mut HSD_JObj, constraint: *mut HSD_JObj) {
+    melee_core::ct!("lb_8000C2F8");
     lb_8000C1C0(jobj, constraint);
     lb_8000C290(jobj, constraint);
 }
 
 pub unsafe fn robj_next(robj: *mut HSD_RObj) -> *mut HSD_RObj {
+    melee_core::ct!("robj_next");
     if !robj.is_null() {
         return (*robj).next;
     }
@@ -537,6 +564,7 @@ pub unsafe fn robj_next(robj: *mut HSD_RObj) -> *mut HSD_RObj {
 }
 
 pub unsafe fn lb_8000C390(jobj: *mut HSD_JObj) {
+    melee_core::ct!("lb_8000C390");
     let mut cur = HSD_JObjGetRObj(jobj);
     loop {
         cur = ext::HSD_RObjGetByType(cur, REFTYPE_JOBJ, 0);
@@ -551,6 +579,7 @@ pub unsafe fn lb_8000C390(jobj: *mut HSD_JObj) {
 }
 
 pub unsafe fn lb_8000C420(jobj: *mut HSD_JObj, flags: u32, limit: f32) {
+    melee_core::ct!("lb_8000C420");
     let robj = ext::HSD_RObjAlloc();
     ext::HSD_RObjSetFlags(robj, flags | 0xA000_0000);
     if !robj.is_null() {
@@ -560,6 +589,7 @@ pub unsafe fn lb_8000C420(jobj: *mut HSD_JObj, flags: u32, limit: f32) {
 }
 
 pub unsafe fn lb_8000C490(jobj1: *mut HSD_JObj, jobj2: *mut HSD_JObj, arg2: *mut HSD_JObj, arg8: f32, arg9: f32) {
+    melee_core::ct!("lb_8000C490");
     let (j1, j2, a2) = (&mut *jobj1, &mut *jobj2, &mut *arg2);
     let mut sp60: Vec = core::mem::zeroed();
     let mut sp54: Vec = core::mem::zeroed();
@@ -629,6 +659,7 @@ pub unsafe fn lb_8000C490(jobj1: *mut HSD_JObj, jobj2: *mut HSD_JObj, arg2: *mut
 }
 
 pub unsafe fn lbCopyJObjSRT(src: *mut HSD_JObj, dst: *mut HSD_JObj) {
+    melee_core::ct!("lbCopyJObjSRT");
     (*dst).rotate = (*src).rotate;
     (*dst).scale = (*src).scale;
     (*dst).translate = (*src).translate;
@@ -641,6 +672,7 @@ pub unsafe fn lbCopyJObjSRT(src: *mut HSD_JObj, dst: *mut HSD_JObj) {
 }
 
 pub unsafe fn lb_8000C868(arg0: *mut HSD_Joint, arg1: *mut HSD_JObj, arg2: *mut HSD_JObj, arg8: f32, arg9: f32) {
+    melee_core::ct!("lb_8000C868");
     let (j0, j1, j2) = (&mut *arg0, &mut *arg1, &mut *arg2);
     let mut sp_c0: Vec = core::mem::zeroed();
     let mut sp_b4: Vec = core::mem::zeroed();
@@ -703,6 +735,7 @@ pub unsafe fn lb_8000C868(arg0: *mut HSD_Joint, arg1: *mut HSD_JObj, arg2: *mut 
 }
 
 pub unsafe fn lbGetFreeColorRegImpl(i0: i32, mut tevdesc: *mut HSD_TevDesc, mut texp1: *mut HSD_TExp, mut texp2: *mut HSD_TExp) -> i32 {
+    melee_core::ct!("lbGetFreeColorRegImpl");
     let mut register_used = [false; 8];
     while !texp1.is_null() {
         if (*texp1).cnst.reg < 8 {
@@ -732,18 +765,22 @@ pub unsafe fn lbGetFreeColorRegImpl(i0: i32, mut tevdesc: *mut HSD_TevDesc, mut 
 }
 
 pub unsafe fn lbGetFreeColorRegister(i0: i32, mobj: *mut HSD_MObj, texp: *mut HSD_TExp) -> i32 {
+    melee_core::ct!("lbGetFreeColorRegister");
     lbGetFreeColorRegImpl(i0, &mut (*(*mobj).tevdesc).desc, (*mobj).texp, texp)
 }
 
 pub fn lb_8000CC8C(i: i32) -> i32 {
+    melee_core::ct!("lb_8000CC8C");
     lb_803B9FC0[i as usize]
 }
 
 pub fn lb_8000CCA4(i: i32) -> i32 {
+    melee_core::ct!("lb_8000CCA4");
     lb_803B9FE0[i as usize]
 }
 
 pub unsafe fn lbGetFreeAlphaRegImpl(i0: i32, mut cur: *mut HSD_TevDesc, arg2: *mut HSD_TExp, arg3: *mut HSD_TExp) -> i32 {
+    melee_core::ct!("lbGetFreeAlphaRegImpl");
     let mut register_used = [false; 8];
     while !cur.is_null() {
         let idx = lb_803BA030[(*cur).u.tevconf.alpha_out_reg as usize];
@@ -761,19 +798,23 @@ pub unsafe fn lbGetFreeAlphaRegImpl(i0: i32, mut cur: *mut HSD_TevDesc, arg2: *m
 }
 
 pub unsafe fn lbGetFreeAlphaRegister(i0: i32, mobj: *mut HSD_MObj, texp: *mut HSD_TExp) -> i32 {
+    melee_core::ct!("lbGetFreeAlphaRegister");
     lbGetFreeAlphaRegImpl(i0, &mut (*(*mobj).tevdesc).desc, (*mobj).texp, texp)
 }
 
 pub fn lb_8000CD90(i: i32) -> i32 {
+    melee_core::ct!("lb_8000CD90");
     lb_803BA000[i as usize]
 }
 
 pub fn lb_8000CDA8(i: i32) -> i32 {
+    melee_core::ct!("lb_8000CDA8");
     lb_803BA020[i as usize]
 }
 
 /// The C has no `return` after the loop (the PPC leaves r3 = NULL); the port returns NULL.
 pub unsafe fn lb_8000CDC0(mut cur: *mut HSD_LObj) -> *mut HSD_LObj {
+    melee_core::ct!("lb_8000CDC0");
     while !cur.is_null() {
         if (*cur).flags & ((1 << 0) | (1 << 1)) == 0 && ext::HSD_LObjGetFlags(cur) & (1 << 5) == 0 {
             return cur;
@@ -784,12 +825,14 @@ pub unsafe fn lb_8000CDC0(mut cur: *mut HSD_LObj) -> *mut HSD_LObj {
 }
 
 pub unsafe fn lb_8000CE30(dobj: *mut HSD_DObj, next: *mut HSD_DObj) {
+    melee_core::ct!("lb_8000CE30");
     if !dobj.is_null() {
         (*dobj).next = next;
     }
 }
 
 pub unsafe fn lb_8000CE40(jobj: *mut HSD_JObj, dobj: *mut HSD_DObj) {
+    melee_core::ct!("lb_8000CE40");
     if !jobj.is_null() {
         (*jobj).u.dobj = dobj;
     }

@@ -147,6 +147,7 @@ static mut un_804D6FCC: *mut HSD_Archive = null_mut();
 static mut un_804D6FD0: [*mut HSD_GObj; 2] = [null_mut(); 2];
 
 pub unsafe extern "C" fn un_8031F294(arg0: i32, arg1: i32) {
+    melee_core::ct!("un_8031F294");
     ext::Stage_InitScene(St_Kind_Battle, 0);
     ext::Item_80266FA8();
     ext::Item_80266FCC();
@@ -203,6 +204,7 @@ pub unsafe extern "C" fn un_8031F294(arg0: i32, arg1: i32) {
 }
 
 pub unsafe extern "C" fn fn_8031F548(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8031F548");
     ext::HSD_JObjAnimAll(GET_JOBJ(gobj));
 }
 
@@ -212,6 +214,7 @@ unsafe extern "C" fn fn_8031F56C(gobj: *mut HSD_GObj, unused: i32) {
 }
 
 pub unsafe extern "C" fn fn_8031F600(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8031F600");
     let cobj = GET_COBJ(gobj);
     ext::HSD_CObjAnim(cobj);
     let aobj = (*cobj).aobj;
@@ -241,6 +244,7 @@ pub unsafe extern "C" fn fn_8031F600(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn vi1101_Scene_OnEnter(arg: *mut c_void) {
+    melee_core::ct!("vi1101_Scene_OnEnter");
     let mut index: u8 = 0;
     let input = arg as *const u8;
     let data = &raw mut un_80400200;
@@ -303,5 +307,6 @@ pub unsafe extern "C" fn vi1101_Scene_OnEnter(arg: *mut c_void) {
 }
 
 pub unsafe extern "C" fn vi1101_Scene_OnFrame() {
+    melee_core::ct!("vi1101_Scene_OnFrame");
     ext::vi_8031CAAC();
 }

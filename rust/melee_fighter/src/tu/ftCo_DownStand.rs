@@ -45,6 +45,7 @@ pub mod ext {
 }
 
 pub fn ftCo_800980BC(g: G) -> bool {
+    melee_core::ct!("ftCo_800980BC");
     let f = fp(g);
     let c = cd();
     if (f.input.lstick[0].y >= c.x244 && ext::ftCo_GetLStickAngle(f) >= c.x20_radians)
@@ -58,21 +59,25 @@ pub fn ftCo_800980BC(g: G) -> bool {
 }
 
 pub fn ftCo_80098160(g: G, msid: i32) {
+    melee_core::ct!("ftCo_80098160");
     ext::Fighter_ChangeMotionState(g, msid, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
 }
 
 pub fn ftCo_DownStand_Anim(g: G) {
+    melee_core::ct!("ftCo_DownStand_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ft_8008A2BC(g);
     }
 }
 
-pub fn ftCo_DownStand_IASA(_g: G) {}
+pub fn ftCo_DownStand_IASA(_g: G) { melee_core::ct!("ftCo_DownStand_IASA");}
 
 pub fn ftCo_DownStand_Phys(g: G) {
+    melee_core::ct!("ftCo_DownStand_Phys");
     ext::ft_80084F3C(g);
 }
 
 pub fn ftCo_DownStand_Coll(g: G) {
+    melee_core::ct!("ftCo_DownStand_Coll");
     ext::ft_80083F88(g);
 }

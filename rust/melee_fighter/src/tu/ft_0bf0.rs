@@ -68,6 +68,7 @@ fn fox_or_ness(g: G, kind: i32) -> bool {
 
 /// `ftCo_800BF034`: DeadUpFallHitCameraIce.
 pub fn ftCo_800BF034(g: G) {
+    melee_core::ct!("ftCo_800BF034");
     enter(g, ftCo_MS_DeadUpFallHitCameraIce);
     if fox_or_ness(g, crate::ft0892::template_kind(fp(g))) {
         return;
@@ -78,6 +79,7 @@ pub fn ftCo_800BF034(g: G) {
 
 /// `ftCo_800BF108`: Sleep.
 pub fn ftCo_800BF108(g: G) {
+    melee_core::ct!("ftCo_800BF108");
     enter(g, ftCo_MS_Sleep);
     let kind = crate::ft0892::template_kind(fp(g));
     if fox_or_ness(g, kind) {
@@ -94,6 +96,7 @@ pub fn ftCo_800BF108(g: G) {
 
 /// `ftCo_800BF228`: is the fighter in one of those two poses.
 pub fn ftCo_800BF228(g: G) -> bool {
+    melee_core::ct!("ftCo_800BF228");
     if g.is_null() {
         return false;
     }

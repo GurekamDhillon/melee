@@ -5,15 +5,18 @@
 pub use crate::random::{HsdRand, SeedSlot};
 
 pub fn HSD_RandRenderBegin(state: &mut HsdRand) {
+    melee_core::ct!("HSD_RandRenderBegin");
     state.render_begin();
 }
 pub fn HSD_RandRenderEnd(state: &mut HsdRand) {
+    melee_core::ct!("HSD_RandRenderEnd");
     state.render_end();
 }
 
 /// random.c's private selector, exposed for callers that need its pointer
 /// identity. The pointer is valid while the state (or redirected seed) stays put.
 pub fn HSD_RandCurrentSeed(state: &mut HsdRand) -> *mut u32 {
+    melee_core::ct!("HSD_RandCurrentSeed");
     if state.render_depth != 0 {
         core::ptr::addr_of_mut!(state.render_seed)
     } else {
@@ -25,12 +28,15 @@ pub fn HSD_RandCurrentSeed(state: &mut HsdRand) -> *mut u32 {
 }
 
 pub fn HSD_Rand(state: &mut HsdRand) -> i32 {
+    melee_core::ct!("HSD_Rand");
     state.rand()
 }
 pub fn HSD_Randf(state: &mut HsdRand) -> f32 {
+    melee_core::ct!("HSD_Randf");
     state.randf()
 }
 pub fn HSD_Randi(state: &mut HsdRand, max_val: i32) -> i32 {
+    melee_core::ct!("HSD_Randi");
     state.randi(max_val)
 }
 pub fn _HSD_RandForgetMemory(
@@ -38,10 +44,12 @@ pub fn _HSD_RandForgetMemory(
     low: *const u8,
     high: *const u8,
 ) {
+    melee_core::ct!("_HSD_RandForgetMemory");
     state.forget_memory(low, high);
 }
 /// random.h's inline empty-range wrapper.
 pub fn randi(state: &mut HsdRand, max_val: i32) -> i32 {
+    melee_core::ct!("randi");
     state.randi_safe(max_val)
 }
 
@@ -77,9 +85,11 @@ pub mod global {
 
 /// `HSD_Randi(max)` over the one process-wide state ([`global`]).
 pub unsafe fn HSD_Randi_global(max_val: i32) -> i32 {
+    melee_core::ct!("HSD_Randi_global");
     global::HSD_Randi(max_val)
 }
 /// `HSD_Randf()` over the one process-wide state ([`global`]).
 pub unsafe fn HSD_Randf_global() -> f32 {
+    melee_core::ct!("HSD_Randf_global");
     global::HSD_Randf()
 }

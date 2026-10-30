@@ -152,6 +152,7 @@ unsafe extern "C" fn HSD_JObjAddTranslationZ(
 }
 
 pub unsafe extern "C" fn hsd_803983A4(mut gen: *mut HSD_Generator) {
+    melee_core::ct!("hsd_803983A4");
     let mut jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     if gen.is_null() {
         return;
@@ -199,6 +200,7 @@ pub unsafe extern "C" fn hsd_803983A4(mut gen: *mut HSD_Generator) {
 /// 32-bit DAT slots before this boundary; command/texture/form records are the
 /// generated native melee_types records, and all offsets remain byte offsets.
 pub unsafe extern "C" fn psInitDataBankLoad(bank:i32,cmd:*const isize,tex:*const isize,refs:*const u32,form:*const isize) {
+    melee_core::ct!("psInitDataBankLoad");
     if !form.is_null() { assert_eq!(*form,*tex,"particle form group count"); }
     let b=bank as usize;hsd_804D0948[b]=refs.cast_mut();psFormGroupArray[b]=*tex as i32;
     psTexGroupArray[b]=tex.add(1) as *mut *mut HSD_PSTexGroup;
@@ -210,6 +212,7 @@ pub unsafe extern "C" fn psInitDataBankLoad(bank:i32,cmd:*const isize,tex:*const
     }
 }
 pub unsafe extern "C" fn psInitDataBankLocate(cmd:*mut isize,tex:*mut isize,form:*mut isize) {
+    melee_core::ct!("psInitDataBankLocate");
     let version=*cmd.cast::<u16>();
     let (num,end,base)=match version {
         0=>{let n=*cmd.add(1) as i32;for i in 0..n {let p=cmd.offset(i as isize+2);*p=(*p).wrapping_add(cmd as isize);} (0,n,cmd.add(2))}
@@ -228,9 +231,10 @@ pub unsafe extern "C" fn psInitDataBankLocate(cmd:*mut isize,tex:*mut isize,form
     }
     if !form.is_null(){for i in 1..=groups{let p=form.offset(i as isize);if *p==0{continue;}*p=(*p).wrapping_add(form as isize);let fg=*p as *mut HSD_PSFormGroup;for j in 0..(*fg).num{let e=(*fg).formTable.as_mut_ptr().add(j as usize);if !(*e).is_null(){*e=(*e).wrapping_add(form as usize);}}}}
 }
-pub unsafe extern "C" fn psInitDataBank(bank:i32,cmd:*mut isize,tex:*mut isize,refs:*mut u32,form:*mut isize){if bank<65{psInitDataBankLocate(cmd,tex,form);psInitDataBankLoad(bank,cmd,tex,refs,form);}}
+pub unsafe extern "C" fn psInitDataBank(bank:i32,cmd:*mut isize,tex:*mut isize,refs:*mut u32,form:*mut isize){ melee_core::ct!("psInitDataBank");if bank<65{psInitDataBankLocate(cmd,tex,form);psInitDataBankLoad(bank,cmd,tex,refs,form);}}
 
 pub unsafe extern "C" fn hsd_80398A08(mut unused: u32) {
+    melee_core::ct!("hsd_80398A08");
     let mut i: ::core::ffi::c_int = 0;
     HSD_ObjAllocInit(
         &raw mut hsd_804D0F60.alloc_data,
@@ -289,6 +293,7 @@ pub unsafe extern "C" fn psGenerateParticle0(
     mut gp: *mut HSD_Generator,
     mut flgInterpret: ::core::ffi::c_int,
 ) -> *mut HSD_Particle {
+    melee_core::ct!("psGenerateParticle0");
     let mut pp: *mut HSD_Particle = ::core::ptr::null_mut::<HSD_Particle>();
     let mut slot: *mut *mut HSD_Particle = ::core::ptr::null_mut::<*mut HSD_Particle>();
     let mut cmd_wait: i16 = 0;
@@ -423,6 +428,7 @@ pub unsafe extern "C" fn hsd_80398F0C(
     mut rate: f32,
     mut angle3: f32,
 ) {
+    melee_core::ct!("hsd_80398F0C");
     psGenerateParticle0(
         ::core::ptr::null_mut::<*mut HSD_Particle>(),
         linkNo as ::core::ffi::c_int,
@@ -452,6 +458,7 @@ pub unsafe extern "C" fn hsd_803991D8(
     mut force: f32,
     mut range: f32,
 ) -> i32 {
+    melee_core::ct!("hsd_803991D8");
     let mut dx: f32 = 0.;
     let mut dy: f32 = 0.;
     let mut dz: f32 = 0.;
@@ -485,6 +492,7 @@ pub unsafe extern "C" fn psEnableTexture(
     mut pp: *mut HSD_Particle,
     mut textures: *const *mut u8,
 ) {
+    melee_core::ct!("psEnableTexture");
     if !textures.is_null() && !(*textures.offset((*pp).poseNum as isize)).is_null() {
         (*pp).kind |= DispTexture as ::core::ffi::c_int as u32;
     }
@@ -496,6 +504,7 @@ pub unsafe extern "C" fn psSpawnChild(
     mut bank: ::core::ffi::c_int,
     mut idx: ::core::ffi::c_int,
 ) -> *mut HSD_Particle {
+    melee_core::ct!("psSpawnChild");
     let mut child: *mut HSD_Particle = ::core::ptr::null_mut::<HSD_Particle>();
     let mut cl: *mut HSD_PSCmdList = ::core::ptr::null_mut::<HSD_PSCmdList>();
     let mut tg: *mut HSD_PSTexGroup = ::core::ptr::null_mut::<HSD_PSTexGroup>();
@@ -544,6 +553,7 @@ pub unsafe extern "C" fn psSpawnChild(
 }
 
 pub unsafe extern "C" fn hsd_8039CEAC(mut mask: u32) {
+    melee_core::ct!("hsd_8039CEAC");
     let mut cur: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<
         ::core::ffi::c_void,
     >();
@@ -585,6 +595,7 @@ pub unsafe extern "C" fn hsd_8039CEAC(mut mask: u32) {
 }
 
 pub unsafe extern "C" fn hsd_8039CF4C(mut index: i32, mut jobj: *mut HSD_JObj) {
+    melee_core::ct!("hsd_8039CF4C");
     if index < 0 as ::core::ffi::c_int || index > 8 as ::core::ffi::c_int {
         return;
     }
@@ -615,6 +626,7 @@ pub unsafe extern "C" fn hsd_8039CF4C(mut index: i32, mut jobj: *mut HSD_JObj) {
 }
 
 pub unsafe extern "C" fn hsd_8039D048(mut particle: *mut ::core::ffi::c_void) {
+    melee_core::ct!("hsd_8039D048");
     let mut flags: u32 = (*(particle as *mut HSD_Particle)).kind;
     if flags & 0x8000 as u32 != 0 {
         let mut p: *mut *mut HSD_JObj = (&raw mut hsd_804D08E8 as *mut *mut HSD_JObj)
@@ -628,6 +640,7 @@ pub unsafe extern "C" fn hsd_8039D048(mut particle: *mut ::core::ffi::c_void) {
 }
 
 pub unsafe extern "C" fn HSD_StageSlotParticleLinkClear() {
+    melee_core::ct!("HSD_StageSlotParticleLinkClear");
     let mut p: *mut HSD_Particle = hsd_804D0908[3 as ::core::ffi::c_int as usize];
     hsd_804D0908[3 as ::core::ffi::c_int as usize] = ::core::ptr::null_mut::<
         HSD_Particle,
@@ -653,6 +666,7 @@ pub unsafe extern "C" fn HSD_StageSlotParticleLinkClear() {
 }
 
 pub unsafe extern "C" fn hsd_8039D0A0(mut gen: *mut HSD_Generator) {
+    melee_core::ct!("hsd_8039D0A0");
     let mut prev: *mut HSD_Particle = ::core::ptr::null_mut::<HSD_Particle>();
     let mut prt: *mut HSD_Particle = ::core::ptr::null_mut::<HSD_Particle>();
     let mut next: *mut HSD_Particle = ::core::ptr::null_mut::<HSD_Particle>();
@@ -707,11 +721,13 @@ pub unsafe extern "C" fn hsd_8039D0A0(mut gen: *mut HSD_Generator) {
 }
 
 pub unsafe extern "C" fn psReadFloat(stream: *mut *mut u8) {
+    melee_core::ct!("psReadFloat");
     hsd_804D78D0 = u32::from_ne_bytes([**stream, *(*stream).add(1), *(*stream).add(2), *(*stream).add(3)]);
     *stream=(*stream).add(4);
 }
 
 pub unsafe extern "C" fn hsd_80398F8C(p: *mut HSD_Particle, angle: f32) {
+        melee_core::ct!("hsd_80398F8C");
         let v = (&*p).vel;
         let (vx, vy, vz) = (v.x, v.y, v.z);
         let azimuth = if fabsf_bitwise(vz) < 1.175_494_4e-38 {
@@ -769,6 +785,7 @@ fn col_add(target: u8, delta: f32) -> u8 {
         val as i32 as u8
     }
 pub unsafe fn interpret(p: *mut HSD_Particle, prev: *mut HSD_Particle) -> *mut HSD_Particle {
+        melee_core::ct!("interpret");
         if (&*p).kind & 0x800 != 0 {
             return (&*p).next;
         }
@@ -1656,7 +1673,7 @@ unsafe fn delete_particle(p:*mut HSD_Particle, prev:*mut HSD_Particle)->*mut HSD
 fn ptr_option<T>(p:*mut T)->Option<*mut T> { if p.is_null(){None}else{Some(p)} }
 unsafe fn remap(bank:u8,idx:i32)->i32 { let r=hsd_804D0948[bank as usize]; if r.is_null(){idx}else{*r.offset(idx as isize) as i32} }
 unsafe fn enable_texture(p:*mut HSD_Particle) { let tg=*psTexGroupArray[(*p).bank as usize].add((*p).texGroup as usize); if !tg.is_null(){psEnableTexture(p,(*tg).texTable.as_ptr());} }
-pub unsafe extern "C" fn hsd_8039930C(p:*mut HSD_Particle,prev:*mut HSD_Particle)->*mut c_void { interpret(p,prev).cast() }
+pub unsafe extern "C" fn hsd_8039930C(p:*mut HSD_Particle,prev:*mut HSD_Particle)->*mut c_void { melee_core::ct!("hsd_8039930C"); interpret(p,prev).cast() }
 unsafe fn memset(p:*mut c_void,v:i32,n:u32)->*mut c_void { core::ptr::write_bytes(p,v as u8,n as usize);p }
 fn OSPanic(_file:*const i8,line:i32,_msg:*const i8)->! { panic!("particle.c OSPanic line {line}") }
 fn __assert(_file:*const i8,line:u32,_msg:*const i8)->! { panic!("particle.c assertion line {line}") }

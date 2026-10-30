@@ -42,6 +42,7 @@ pub mod ext {
 
 /// `ftCo_CalcYScaledKnockback`.
 pub fn ftco_calc_y_scaled_knockback(arg0: f32, scale: f32, arg2: f32) -> f32 {
+    melee_core::ct!("ftco_calc_y_scaled_knockback");
     assert!(scale != 0.0, "ftchangeparam.c:30 scale != 0.0F");
     if arg2 == 0.0 {
         return arg0;
@@ -57,6 +58,7 @@ pub fn ftco_calc_y_scaled_knockback(arg0: f32, scale: f32, arg2: f32) -> f32 {
 
 /// `ftCo_800CF6E8`: size-scale every scalable attribute.
 pub fn ftco_800cf6e8(a: &mut ftCo_DatAttrs, scale: f32) {
+    melee_core::ct!("ftco_800cf6e8");
     if scale == 1.0 {
         return;
     }
@@ -109,6 +111,7 @@ fn fp<'a>(g: *mut HSD_GObj) -> &'a mut Fighter {
 
 /// `ftCo_800D0CBC`: scale the x2D0 table's x14 entries.
 pub fn ftco_800d0cbc(g: *mut HSD_GObj) {
+    melee_core::ct!("ftco_800d0cbc");
     let f = fp(g);
     let t = f.x2D0;
     let count = unsafe { (*t).x28 };
@@ -135,6 +138,7 @@ pub fn ftco_800d0cbc(g: *mut HSD_GObj) {
 
 /// `ftCo_800D0EC8`: negated size-scaled common x310.
 pub fn ftco_800d0ec8(f: &Fighter) -> f32 {
+    melee_core::ct!("ftco_800d0ec8");
     -ftco_calc_y_scaled_knockback(crate::hooks::common_data().x310, f.x34_scale.y, ext::d6524().x30)
 }
 
@@ -151,12 +155,14 @@ fn reload(f: &mut Fighter) {
 
 /// `ftCo_800D0FA0`: reload attributes from the DAT (no modifiers).
 pub fn ftco_800d0fa0(g: *mut HSD_GObj) {
+    melee_core::ct!("ftco_800d0fa0");
     reload(fp(g));
 }
 
 /// `ftCo_800D105C`: reload attributes, then apply size / bunny hood / metal / x2229_b1 and the
 /// per-kind hook.
 pub fn ftco_800d105c(g: *mut HSD_GObj) {
+    melee_core::ct!("ftco_800d105c");
     let f = fp(g);
     reload(f);
     if f.x34_scale.y != 1.0 {

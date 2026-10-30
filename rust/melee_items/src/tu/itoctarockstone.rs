@@ -63,6 +63,7 @@ pub static mut it_803F8E90: [ItemStateTable; 2] = [
 ];
 
 pub unsafe extern "C" fn itOctarockstone_802E878C(gobj: *mut Item_GObj) {
+    melee_core::ct!("itOctarockstone_802E878C");
     let ip = GET_ITEM(gobj);
     (*ip).xD5C = 0;
     (*ip).xDC8_word.flags.set_x15(0);
@@ -71,44 +72,53 @@ pub unsafe extern "C" fn itOctarockstone_802E878C(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itOctarockstone_Logic4_DmgDealt(_arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOctarockstone_Logic4_DmgDealt");
     true
 }
 
 pub unsafe extern "C" fn itOctarockstone_Logic4_Clanked(_arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOctarockstone_Logic4_Clanked");
     true
 }
 
 pub unsafe extern "C" fn itOctarockstone_Logic4_HitShield(_arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOctarockstone_Logic4_HitShield");
     true
 }
 
 pub unsafe extern "C" fn itOctarockstone_Logic4_Absorbed(_arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOctarockstone_Logic4_Absorbed");
     true
 }
 
 pub unsafe extern "C" fn itOctarockstone_Logic4_Reflected(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOctarockstone_Logic4_Reflected");
     ext::it_80273030(gobj);
     false
 }
 
 pub unsafe extern "C" fn itOctarockstone_Logic4_ShieldBounced(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOctarockstone_Logic4_ShieldBounced");
     ext::itColl_BounceOffShield(gobj) != 0
 }
 
 pub unsafe extern "C" fn itOctarockstone_802E883C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itOctarockstone_802E883C");
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE);
 }
 
 pub unsafe extern "C" fn itOctarockstone_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOctarockstone_UnkMotion0_Anim");
     let ip = GET_ITEM(gobj);
     let attrs = (*ip).xCC_item_attr;
     ext::it_80272860(gobj, (*attrs).x10_fall_speed, (*attrs).x14_fall_speed_max);
     false
 }
 
-pub unsafe extern "C" fn itOctarockstone_UnkMotion0_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itOctarockstone_UnkMotion0_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itOctarockstone_UnkMotion0_Phys");}
 
 pub unsafe extern "C" fn itOctarockstone_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOctarockstone_UnkMotion0_Coll");
     let ip = GET_ITEM(gobj);
 
     let coll = ext::it_8026DAA8(gobj);
@@ -123,6 +133,7 @@ pub unsafe extern "C" fn itOctarockstone_UnkMotion0_Coll(gobj: *mut Item_GObj) -
 }
 
 pub unsafe extern "C" fn itOctarockstone_802E890C(gobj: *mut Item_GObj) {
+    melee_core::ct!("itOctarockstone_802E890C");
     let ip = GET_ITEM(gobj);
     ext::it_802762BC(ip);
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);
@@ -130,19 +141,23 @@ pub unsafe extern "C" fn itOctarockstone_802E890C(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itOctarockstone_UnkMotion1_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOctarockstone_UnkMotion1_Anim");
     false
 }
 
 pub unsafe extern "C" fn itOctarockstone_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itOctarockstone_UnkMotion1_Phys");
     let ip = GET_ITEM(gobj);
     (*ip).x40_vel.y -= (*(*ip).xCC_item_attr).x10_fall_speed;
 }
 
 pub unsafe extern "C" fn itOctarockstone_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itOctarockstone_UnkMotion1_Coll");
     ext::it_8026DFB0(gobj) != 0
 }
 
 pub unsafe extern "C" fn itOctarockstone_802E89B0(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("itOctarockstone_802E89B0");
     ext::it_8026B894(gobj, ref_gobj);
 }
 
@@ -157,6 +172,7 @@ fn getX(x1: f32, x2: f32) -> f32 {
 }
 
 pub unsafe extern "C" fn it_802E89D0(gobj: *mut Item_GObj, horiz_speed: f32, min_vy: f32, max_vy: f32) {
+    melee_core::ct!("it_802E89D0");
     let ip = GET_ITEM(gobj);
     let mut pos: Vec3 = core::mem::zeroed();
 
@@ -188,6 +204,7 @@ pub unsafe extern "C" fn it_802E89D0(gobj: *mut Item_GObj, horiz_speed: f32, min
 
 /// Spawns an Octarock stone projectile.
 pub unsafe extern "C" fn it_802E8ADC(gobj: *mut Item_GObj, pos: *mut Vec3, dir: i32, horiz_speed: f32, min_vy: f32, max_vy: f32) {
+    melee_core::ct!("it_802E8ADC");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
     spawn.kind = It_Kind_Octarock_Stone;

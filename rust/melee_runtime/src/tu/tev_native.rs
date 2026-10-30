@@ -104,6 +104,7 @@ const GX_COLOR_NULL: u32 = 0xFF;
 
 /// `HSD_RenderInitAllocData`.
 pub unsafe fn HSD_RenderInitAllocData() {
+    melee_core::ct!("HSD_RenderInitAllocData");
     ext::HSD_ObjAllocInit(addr_of_mut!(render_alloc_data), 28, 4);
     ext::HSD_ObjAllocInit(addr_of_mut!(tevreg_alloc_data), 20, 4);
     ext::HSD_ObjAllocInit(addr_of_mut!(chan_alloc_data), 48, 4);
@@ -111,16 +112,19 @@ pub unsafe fn HSD_RenderInitAllocData() {
 
 /// `HSD_RenderGetAllocData`.
 pub unsafe fn HSD_RenderGetAllocData() -> *mut HSD_ObjAllocData {
+    melee_core::ct!("HSD_RenderGetAllocData");
     addr_of_mut!(render_alloc_data)
 }
 
 /// `HSD_TevRegGetAllocData`.
 pub unsafe fn HSD_TevRegGetAllocData() -> *mut HSD_ObjAllocData {
+    melee_core::ct!("HSD_TevRegGetAllocData");
     addr_of_mut!(tevreg_alloc_data)
 }
 
 /// `HSD_ChanGetAllocData`.
 pub unsafe fn HSD_ChanGetAllocData() -> *mut HSD_ObjAllocData {
+    melee_core::ct!("HSD_ChanGetAllocData");
     addr_of_mut!(chan_alloc_data)
 }
 
@@ -138,6 +142,7 @@ fn CopyRGB(dst: &mut GXColor, src: &GXColor) {
 
 /// `HSD_SetupChannel`.
 pub unsafe fn HSD_SetupChannel(ch: *mut HSD_Chan) {
+    melee_core::ct!("HSD_SetupChannel");
     if ch.is_null() || (*ch).chan == GX_COLOR_NULL {
         return;
     }
@@ -221,6 +226,7 @@ pub unsafe fn HSD_SetupChannel(ch: *mut HSD_Chan) {
 
 /// `HSD_StateSetNumChans`.
 pub unsafe fn HSD_StateSetNumChans(num: i32) {
+    melee_core::ct!("HSD_StateSetNumChans");
     if prev_num_chans != num {
         ext::GXSetNumChans(num as u8);
     }
@@ -228,6 +234,7 @@ pub unsafe fn HSD_StateSetNumChans(num: i32) {
 
 /// `HSD_SetupChannelAll`.
 pub unsafe fn HSD_SetupChannelAll(mut channel: *mut HSD_Chan) {
+    melee_core::ct!("HSD_SetupChannelAll");
     let mut num = 0;
     while !channel.is_null() {
         let temp = HSD_Channel2Num((*channel).chan as i32);
@@ -242,6 +249,7 @@ pub unsafe fn HSD_SetupChannelAll(mut channel: *mut HSD_Chan) {
 
 /// `HSD_StateRegisterTexGen`.
 pub unsafe fn HSD_StateRegisterTexGen(coord: i32) {
+    melee_core::ct!("HSD_StateRegisterTexGen");
     let temp_r3 = HSD_TexCoordID2Num(coord);
     if temp_r3 > num_tex_gens {
         num_tex_gens = temp_r3;
@@ -250,27 +258,32 @@ pub unsafe fn HSD_StateRegisterTexGen(coord: i32) {
 
 /// `HSD_StateSetNumTexGens`.
 pub unsafe fn HSD_StateSetNumTexGens() {
+    melee_core::ct!("HSD_StateSetNumTexGens");
     ext::GXSetNumTexGens(num_tex_gens as u8);
     num_tex_gens = 0;
 }
 
 /// `HSD_StateInitTev`.
 pub unsafe fn HSD_StateInitTev() {
+    melee_core::ct!("HSD_StateInitTev");
     current_tev = 0;
 }
 
 /// `HSD_StateGetCommittedTevStages`.
 pub unsafe fn HSD_StateGetCommittedTevStages() -> i32 {
+    melee_core::ct!("HSD_StateGetCommittedTevStages");
     committed_tev_stages
 }
 
 /// `HSD_StateGetNumTevStages`.
 pub unsafe fn HSD_StateGetNumTevStages() -> i32 {
+    melee_core::ct!("HSD_StateGetNumTevStages");
     current_tev
 }
 
 /// `HSD_StateAssignTev`.
 pub unsafe fn HSD_StateAssignTev() -> i32 {
+    melee_core::ct!("HSD_StateAssignTev");
     let i = current_tev;
     current_tev += 1;
     HSD_Index2TevStage(i)
@@ -278,6 +291,7 @@ pub unsafe fn HSD_StateAssignTev() -> i32 {
 
 /// `HSD_StateSetNumTevStages`.
 pub unsafe fn HSD_StateSetNumTevStages() {
+    melee_core::ct!("HSD_StateSetNumTevStages");
     committed_tev_stages = current_tev;
     ext::GXSetNumTevStages(current_tev as u8);
     current_tev = 0;
@@ -285,6 +299,7 @@ pub unsafe fn HSD_StateSetNumTevStages() {
 
 /// `HSD_SetupTevStage`.
 pub unsafe fn HSD_SetupTevStage(desc: *mut HSD_TevDesc) {
+    melee_core::ct!("HSD_SetupTevStage");
     ext::GXSetTevOrder((*desc).stage, (*desc).coord, (*desc).map, (*desc).color);
     if (*desc).flags == 0 {
         ext::GXSetTevOp((*desc).stage, (*desc).u.tevconf.clr_op);
@@ -303,6 +318,7 @@ pub unsafe fn HSD_SetupTevStage(desc: *mut HSD_TevDesc) {
 
 /// `HSD_SetupTevStageAll`.
 pub unsafe fn HSD_SetupTevStageAll(desc: *mut HSD_TevDesc) {
+    melee_core::ct!("HSD_SetupTevStageAll");
     let mut num = 0;
     let mut td = desc;
     while !td.is_null() {
@@ -320,6 +336,7 @@ pub unsafe fn HSD_SetupTevStageAll(desc: *mut HSD_TevDesc) {
 
 /// `HSD_Channel2Num`.
 pub unsafe fn HSD_Channel2Num(chan: i32) -> i32 {
+    melee_core::ct!("HSD_Channel2Num");
     match chan {
         0 => 1,
         1 => 2,
@@ -334,6 +351,7 @@ pub unsafe fn HSD_Channel2Num(chan: i32) -> i32 {
 
 /// `HSD_Index2TevStage`.
 pub unsafe fn HSD_Index2TevStage(idx: i32) -> i32 {
+    melee_core::ct!("HSD_Index2TevStage");
     match idx {
         0..=15 => idx,
         _ => panic!("tev.c:709 0"),
@@ -342,6 +360,7 @@ pub unsafe fn HSD_Index2TevStage(idx: i32) -> i32 {
 
 /// `HSD_TevStage2Index`.
 pub unsafe fn HSD_TevStage2Index(stage: i32) -> i32 {
+    melee_core::ct!("HSD_TevStage2Index");
     match stage {
         0..=15 => stage,
         _ => panic!("tev.c:762 0"),
@@ -350,6 +369,7 @@ pub unsafe fn HSD_TevStage2Index(stage: i32) -> i32 {
 
 /// `HSD_TevStage2Num`.
 pub unsafe fn HSD_TevStage2Num(stage: i32) -> i32 {
+    melee_core::ct!("HSD_TevStage2Num");
     match stage {
         0..=15 => stage + 1,
         _ => panic!("tev.c:793 0"),
@@ -358,6 +378,7 @@ pub unsafe fn HSD_TevStage2Num(stage: i32) -> i32 {
 
 /// `HSD_SetTevRegAll`.
 pub unsafe fn HSD_SetTevRegAll() {
+    melee_core::ct!("HSD_SetTevRegAll");
     let mut i = 0usize;
     while i < 4 {
         if TevReg[i].c != 0 {
@@ -377,6 +398,7 @@ pub unsafe fn HSD_SetTevRegAll() {
 
 /// `HSD_TexCoordID2Num`.
 pub unsafe fn HSD_TexCoordID2Num(id: i32) -> i32 {
+    melee_core::ct!("HSD_TexCoordID2Num");
     match id {
         0..=7 => id + 1,
         0xFF => 0,
@@ -386,6 +408,7 @@ pub unsafe fn HSD_TexCoordID2Num(id: i32) -> i32 {
 
 /// `ChanUpdateFunc`.
 pub unsafe fn ChanUpdateFunc(chan: *mut HSD_Chan, arg1: i32, arg2: *const f32) {
+    melee_core::ct!("ChanUpdateFunc");
     if !chan.is_null() {
         let v = *arg2 as f64;
         let conv = |x: f64| (crate::cabi::f2u32(x) as u8);
@@ -405,6 +428,7 @@ pub unsafe fn ChanUpdateFunc(chan: *mut HSD_Chan, arg1: i32, arg2: *const f32) {
 
 /// `_HSD_StateInvalidateColorChannel`.
 pub unsafe extern "C" fn _HSD_StateInvalidateColorChannel() {
+    melee_core::ct!("_HSD_StateInvalidateColorChannel");
     core::ptr::copy_nonoverlapping(addr_of_mut!(invalid_prev_ch).cast::<HSD_Chan>(), addr_of_mut!(prev_ch).cast::<HSD_Chan>(), 4);
     prev_amb_invalid[0] = 1;
     prev_amb_invalid[1] = 1;
@@ -415,11 +439,13 @@ pub unsafe extern "C" fn _HSD_StateInvalidateColorChannel() {
 
 /// `_HSD_StateInvalidateTevStage`.
 pub unsafe extern "C" fn _HSD_StateInvalidateTevStage() {
+    melee_core::ct!("_HSD_StateInvalidateTevStage");
     current_tev = 0;
 }
 
 /// `_HSD_StateInvalidateTevRegister`.
 pub unsafe extern "C" fn _HSD_StateInvalidateTevRegister() {
+    melee_core::ct!("_HSD_StateInvalidateTevRegister");
     let mut i = 0;
     while i < 4 {
         TevReg[i].c = 0;
@@ -429,5 +455,6 @@ pub unsafe extern "C" fn _HSD_StateInvalidateTevRegister() {
 
 /// `_HSD_StateInvalidateTexCoordGen`.
 pub unsafe extern "C" fn _HSD_StateInvalidateTexCoordGen() {
+    melee_core::ct!("_HSD_StateInvalidateTexCoordGen");
     num_tex_gens = 0;
 }

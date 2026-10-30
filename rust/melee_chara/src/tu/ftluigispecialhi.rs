@@ -58,6 +58,7 @@ fn stick_get_dir(x1: f32, x2: f32) -> f32 {
 
 /// Luigi's aerial Super Jump Punch Motion State handler.
 pub fn ftLg_SpecialAirHi_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirHi_Enter");
     unsafe {
         let fp = fpp(gobj);
         let attrs = (*fp).dat_attrs as *const ftLuigiAttributes;
@@ -72,6 +73,7 @@ pub fn ftLg_SpecialAirHi_Enter(gobj: *mut HSD_GObj) {
 
 /// Luigi's grounded Super Jump Punch Animation callback.
 pub fn ftLg_SpecialHi_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialHi_Anim");
     unsafe {
         let attrs = (*fpp(gobj)).dat_attrs as *const ftLuigiAttributes;
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -89,11 +91,13 @@ pub fn ftLg_SpecialHi_Anim(gobj: *mut HSD_GObj) {
 
 /// Luigi's aerial Super Jump Punch Animation callback.
 pub fn ftLg_SpecialAirHi_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirHi_Anim");
     ftLg_SpecialHi_Anim(gobj)
 }
 
 /// First half of the IASA: the stick-driven momentum angle (`fp->lstick_angle`).
 pub fn special_hi_iasa_lstick(fp: &mut Fighter) {
+    melee_core::ct!("special_hi_iasa_lstick");
     let luigi_attrs: &ftLuigiAttributes = unsafe { &*(fp.dat_attrs as *const ftLuigiAttributes) };
     let stick_x = fp.input.lstick[0].x;
     let stick_range = stick_get_dir(fp.input.lstick[0].x, 0.0);
@@ -120,6 +124,7 @@ pub fn special_hi_iasa_lstick(fp: &mut Fighter) {
 
 /// Luigi's grounded Super Jump Punch IASA callback.
 pub fn ftLg_SpecialHi_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialHi_IASA");
     unsafe {
         let fp = fpp(gobj);
         let luigi_attrs = (*fp).dat_attrs as *const ftLuigiAttributes;
@@ -141,11 +146,13 @@ pub fn ftLg_SpecialHi_IASA(gobj: *mut HSD_GObj) {
 
 /// Luigi's aerial Super Jump Punch IASA callback.
 pub fn ftLg_SpecialAirHi_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirHi_IASA");
     ftLg_SpecialHi_IASA(gobj)
 }
 
 /// Luigi's grounded Super Jump Punch Physics callback.
 pub fn ftLg_SpecialHi_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialHi_Phys");
     unsafe {
         if (*fpp(gobj)).ground_or_air as i32 == GA_Air as i32 {
             st::ft_80085154(gobj);
@@ -157,6 +164,7 @@ pub fn ftLg_SpecialHi_Phys(gobj: *mut HSD_GObj) {
 
 /// Luigi's aerial Super Jump Punch Physics callback.
 pub fn ftLg_SpecialAirHi_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirHi_Phys");
     unsafe {
         let fp = fpp(gobj);
         let luigi_attrs = (*fp).dat_attrs as *const ftLuigiAttributes;
@@ -175,6 +183,7 @@ pub fn ftLg_SpecialAirHi_Phys(gobj: *mut HSD_GObj) {
 
 /// Luigi's Super Jump Punch Landing check.
 pub fn ftLg_SpecialHi_CheckLanding(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialHi_CheckLanding");
     unsafe {
         st::ftCo_LandingFallSpecial_Enter(
             gobj,
@@ -186,6 +195,7 @@ pub fn ftLg_SpecialHi_CheckLanding(gobj: *mut HSD_GObj) {
 
 /// Luigi's grounded Super Jump Punch Collision callback.
 pub fn ftLg_SpecialHi_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialHi_Coll");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).ground_or_air as i32 == GA_Air as i32 {
@@ -202,6 +212,7 @@ pub fn ftLg_SpecialHi_Coll(gobj: *mut HSD_GObj) {
 
 /// Luigi's aerial Super Jump Punch Collision callback.
 pub fn ftLg_SpecialAirHi_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirHi_Coll");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).ground_or_air as i32 == GA_Air as i32 {

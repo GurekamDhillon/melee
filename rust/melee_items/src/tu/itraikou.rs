@@ -83,6 +83,7 @@ unsafe fn Item_EnterAirStateWithHitlag(gobj: *mut Item_GObj, msid: i32) {
 }
 
 pub unsafe extern "C" fn it_802CF814(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CF814");
     let it = (*gobj).user_data as *mut Item;
     let sa = (*(*it).xC4_article_data).x4_specialAttributes as *mut itPokemonAttributes;
 
@@ -94,13 +95,15 @@ pub unsafe extern "C" fn it_802CF814(gobj: *mut Item_GObj) {
     it_802CFB78(gobj);
 }
 
-pub unsafe extern "C" fn it_802CF880(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn it_802CF880(_gobj: *mut Item_GObj) { melee_core::ct!("it_802CF880");}
 
 pub unsafe extern "C" fn it_802CF884(gobj: *mut Item_GObj, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802CF884");
     ext::it_8026B894(gobj, ref_gobj);
 }
 
 pub unsafe extern "C" fn it_802CF8A4(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CF8A4");
     let it = GET_ITEM(gobj);
 
     ext::Camera_RequestQuake(QuakeKind_Large, null_mut());
@@ -110,6 +113,7 @@ pub unsafe extern "C" fn it_802CF8A4(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802CF908(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CF908");
     let it = (*gobj).user_data as *mut Item;
     let ap = (*it).xC4_article_data;
     let sa = (*ap).x4_specialAttributes as *mut itPokemonAttributes;
@@ -121,6 +125,7 @@ pub unsafe extern "C" fn it_802CF908(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itRaikou_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itRaikou_UnkMotion0_Anim");
     let it = (*gobj).user_data as *mut Item;
     let sa: *mut itPokemonAttributes;
     let timer: i32;
@@ -153,6 +158,7 @@ pub unsafe extern "C" fn itRaikou_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool 
 }
 
 pub unsafe extern "C" fn itRaikou_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itRaikou_UnkMotion0_Phys");
     let it = GET_ITEM(gobj);
     if (*it).ground_or_air == GA_Air {
         ext::it_80272860(gobj, (*(*it).xCC_item_attr).x10_fall_speed, (*(*it).xCC_item_attr).x14_fall_speed_max);
@@ -160,6 +166,7 @@ pub unsafe extern "C" fn itRaikou_UnkMotion0_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itRaikou_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itRaikou_UnkMotion0_Coll");
     let it = GET_ITEM(gobj);
     if (*it).ground_or_air == GA_Air {
         ext::it_8026E248(gobj, Some(it_802CF880));
@@ -170,6 +177,7 @@ pub unsafe extern "C" fn itRaikou_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool 
 }
 
 pub unsafe extern "C" fn it_802CFAFC(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CFAFC");
     let it = (*gobj).user_data as *mut Item;
 
     if (*it).xDAC_itcmd_var0 != 0 {
@@ -184,18 +192,22 @@ pub unsafe extern "C" fn it_802CFAFC(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802CFB78(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CFB78");
     Item_EnterAirStateWithHitlag(gobj, 1);
 }
 
 pub unsafe extern "C" fn itRaikou_UnkMotion1_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itRaikou_UnkMotion1_Anim");
     ext::it_80279FF8(gobj);
     false
 }
 
 pub unsafe extern "C" fn itRaikou_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itRaikou_UnkMotion1_Phys");
     ext::it_8027A09C(gobj);
 }
 
 pub unsafe extern "C" fn itRaikou_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itRaikou_UnkMotion1_Coll");
     ext::it_8027A118(gobj, Some(it_802CF8A4)) != 0
 }

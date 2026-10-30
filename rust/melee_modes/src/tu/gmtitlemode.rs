@@ -54,10 +54,12 @@ pub static mut gm_Mode_Title_States: [GameModeState; 2] = [
 ];
 
 pub unsafe extern "C" fn gmTitleMode_OnEnter(_state: *mut GameModeState) {
+    melee_core::ct!("gmTitleMode_OnEnter");
     ext::lbDvd_SetupVsPreloadCache();
 }
 
 pub unsafe extern "C" fn onExit(scene: *mut GameModeState) {
+    melee_core::ct!("onExit");
     // gm_GetGameModeStateExitData(scene)
     let buttons = (*scene).info.exit_data as *mut i32;
     // TARGET_PC: no /develop.ini on retail ISOs, so DbLevel stays Master: let Y (or B) open the

@@ -9,6 +9,7 @@ pub use crate::stale::ATTACK_COUNTER as unk_804D6480;
 
 /// `plAttack_80037590`
 pub fn plAttack_80037590() {
+    melee_core::ct!("plAttack_80037590");
     unsafe { unk_804D6480 = 1 };
 }
 
@@ -28,6 +29,7 @@ fn clearAttackStats(s: &mut plAttackStats) {
 
 /// `plAttack_8003759C`: resets the player's stats
 pub fn plAttack_8003759C(slot: u32) {
+    melee_core::ct!("plAttack_8003759C");
     let stats = unsafe { &mut *Player_GetActionStats(slot as i32) };
 
     clearAttackStats(&mut stats.attacks);
@@ -61,6 +63,7 @@ pub fn plAttack_8003759C(slot: u32) {
 
 /// `plAttack_80037B08`: returns the old counter, skipping 0 on wrap
 pub fn plAttack_80037B08() -> u16 {
+    melee_core::ct!("plAttack_80037B08");
     unsafe {
         let before = unk_804D6480;
         unk_804D6480 = unk_804D6480.wrapping_add(1);

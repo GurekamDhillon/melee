@@ -281,9 +281,10 @@ pub static mut grPs_StageData: StageData = StageData {
     joint_count: 6,
 };
 
-pub unsafe extern "C" fn grStadium_OnDemoInit(_unused: i32) {}
+pub unsafe extern "C" fn grStadium_OnDemoInit(_unused: i32) { melee_core::ct!("grStadium_OnDemoInit");}
 
 pub unsafe extern "C" fn grStadium_OnInit() {
+    melee_core::ct!("grStadium_OnInit");
     yakumono_param = ext::Ground_GetYakumonoParam() as *mut GrPStadiumYakumonoParam;
 
     ext::stage_info.unk8C.set_b4(0);
@@ -305,18 +306,21 @@ pub unsafe extern "C" fn grStadium_OnInit() {
     ext::mpLib_800581DC(6, 4);
 }
 
-pub unsafe extern "C" fn grStadium_OnLoad() {}
+pub unsafe extern "C" fn grStadium_OnLoad() { melee_core::ct!("grStadium_OnLoad");}
 
 pub unsafe extern "C" fn grStadium_OnStart() {
+    melee_core::ct!("grStadium_OnStart");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
 
 pub unsafe extern "C" fn grStadium_801D10F0() -> i32 {
+    melee_core::ct!("grStadium_801D10F0");
     0
 }
 
 /// Creates a specific sub-type of Ground_GObj for Pokemon Stadium (e.g. id=1 for the jumbotron display)
 pub unsafe extern "C" fn grStadium_801D10F8(id: u32) -> *mut HSD_GObj {
+    melee_core::ct!("grStadium_801D10F8");
     let cb = (&raw mut grPs_StageCallbacks as *mut StageCallbacks).add(id as usize);
     let gobj = ext::Ground_GetStageGObj(id as i32);
 
@@ -339,6 +343,7 @@ pub unsafe extern "C" fn grStadium_801D10F8(id: u32) -> *mut HSD_GObj {
 }
 
 pub unsafe extern "C" fn fn_801D11E4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801D11E4");
     let gp = (*gobj).user_data as *mut Ground;
     let cam = ext::Camera_80029020();
     (*gp).u.display.xF4 = cam;
@@ -357,6 +362,7 @@ pub unsafe extern "C" fn fn_801D11E4(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grStadium_801D1290(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grStadium_801D1290");
     let mut mobj: *mut HSD_MObj = null_mut();
     let gp = (*gobj).user_data as *mut Ground;
 
@@ -375,22 +381,26 @@ pub unsafe extern "C" fn grStadium_801D1290(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grStadium_801D1388(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grStadium_801D1388");
     0
 }
 
 pub unsafe extern "C" fn grStadium_801D1390(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grStadium_801D1390");
     grStadium_801D1E20();
     grStadium_801D2344(gobj);
 }
 
-pub unsafe extern "C" fn grStadium_801D13C4(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grStadium_801D13C4(_gobj: *mut HSD_GObj) { melee_core::ct!("grStadium_801D13C4");}
 
 pub unsafe extern "C" fn fn_801D13C8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801D13C8");
     let gp = (*gobj).user_data as *mut Ground;
     (*gp).u.stadium.set_xC4_b0(0);
 }
 
 pub unsafe extern "C" fn grStadium_801D13E0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grStadium_801D13E0");
     let gr = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
 
@@ -426,10 +436,12 @@ pub unsafe extern "C" fn grStadium_801D13E0(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grStadium_801D1518(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grStadium_801D1518");
     0
 }
 
 pub unsafe extern "C" fn grStadium_801D1520(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grStadium_801D1520");
     let gp = (*gobj).user_data as *mut Ground;
     if (*gp).u.stadium.xC4_b0() == 0 {
         grStadium_801D4548(gobj);
@@ -437,9 +449,10 @@ pub unsafe extern "C" fn grStadium_801D1520(gobj: *mut HSD_GObj) {
     Ground_UpdateWindAndMapColl(gobj);
 }
 
-pub unsafe extern "C" fn grStadium_801D156C(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grStadium_801D156C(_gobj: *mut HSD_GObj) { melee_core::ct!("grStadium_801D156C");}
 
 pub unsafe extern "C" fn grStadium_801D1570(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grStadium_801D1570");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     ext::Ground_InitMapColl(jobj, (*gp).map_id as i32);
@@ -452,18 +465,22 @@ pub unsafe extern "C" fn grStadium_801D1570(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grStadium_801D15FC(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grStadium_801D15FC");
     0
 }
 
 pub unsafe extern "C" fn stageGObj5_GObjProc(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj5_GObjProc");
     ext::Ground_UpdateMapColl(gobj);
 }
 
 pub unsafe extern "C" fn grStadium_801D1624(_gobj: *mut HSD_GObj) {
+    melee_core::ct!("grStadium_801D1624");
     ext::mpLib_80057BC0(4);
 }
 
 pub unsafe extern "C" fn grStadium_801D1648(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grStadium_801D1648");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     ext::Ground_InitMapColl(jobj, (*gp).map_id as i32);
@@ -476,14 +493,17 @@ pub unsafe extern "C" fn grStadium_801D1648(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grStadium_801D16D4(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grStadium_801D16D4");
     0
 }
 
 pub unsafe extern "C" fn stageGObj4_GObjProc(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj4_GObjProc");
     ext::Ground_UpdateMapColl(gobj);
 }
 
 pub unsafe extern "C" fn grStadium_801D16FC(_gobj: *mut HSD_GObj) {
+    melee_core::ct!("grStadium_801D16FC");
     ext::mpLib_80057BC0(3);
 }
 
@@ -491,6 +511,7 @@ pub unsafe extern "C" fn grStadium_801D16FC(_gobj: *mut HSD_GObj) {
 pub static grPs_803B7F68: Vec3 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
 pub unsafe extern "C" fn grStadium_801D1720(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grStadium_801D1720");
     let mut sp14: Vec3;
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -507,14 +528,17 @@ pub unsafe extern "C" fn grStadium_801D1720(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grStadium_801D17E0(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grStadium_801D17E0");
     0
 }
 
 pub unsafe extern "C" fn stageGObj6_GObjProc(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj6_GObjProc");
     ext::Ground_UpdateMapColl(gobj);
 }
 
 pub unsafe extern "C" fn grStadium_801D1808(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grStadium_801D1808");
     let gp = (*gobj).user_data as *mut Ground;
     if !(*gp).u.stadium9.xC8.is_null() {
         ext::grLib_801C9834((*gp).u.stadium9.xC8);
@@ -523,6 +547,7 @@ pub unsafe extern "C" fn grStadium_801D1808(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grStadium_801D1840(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grStadium_801D1840");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
 
@@ -566,14 +591,17 @@ pub unsafe extern "C" fn grStadium_801D1840(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grStadium_801D19D0(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grStadium_801D19D0");
     0
 }
 
 pub unsafe extern "C" fn stageGObj3_GObjProc(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj3_GObjProc");
     ext::Ground_UpdateMapColl(gobj);
 }
 
 pub unsafe extern "C" fn grStadium_801D19F8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grStadium_801D19F8");
     let jobj = ext::Ground_801C3FA4(gobj, 0x12);
     if !jobj.is_null() {
         ext::grLib_801C9908(jobj);
@@ -586,6 +614,7 @@ pub unsafe extern "C" fn grStadium_801D19F8(gobj: *mut HSD_GObj) {
 pub static grPs_803B7F74: Vec3 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
 pub unsafe extern "C" fn grStadium_801D1A38(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grStadium_801D1A38");
     let mut sp14: Vec3;
 
     let gp = (*gobj).user_data as *mut Ground;
@@ -609,10 +638,12 @@ pub unsafe extern "C" fn grStadium_801D1A38(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grStadium_801D1B40(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grStadium_801D1B40");
     0
 }
 
 pub unsafe extern "C" fn grStadium_801D1B48(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grStadium_801D1B48");
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let gp = (*gobj).user_data as *mut Ground;
     let scale = HSD_JObjGetScaleY(&*jobj);
@@ -643,6 +674,7 @@ pub unsafe extern "C" fn grStadium_801D1B48(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grStadium_801D1D84(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grStadium_801D1D84");
     let gp = (*gobj).user_data as *mut Ground;
 
     if !(*gp).u.stadium9.xC8.is_null() {
@@ -658,25 +690,29 @@ pub unsafe extern "C" fn grStadium_801D1D84(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn stageGObj7_8_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj7_8_OnInit");
     Ground_StartMapAnim(gobj);
 }
 
 pub unsafe extern "C" fn grStadium_801D1E10(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grStadium_801D1E10");
     0
 }
 
-pub unsafe extern "C" fn grStadium_801D1E18(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grStadium_801D1E18(_gobj: *mut HSD_GObj) { melee_core::ct!("grStadium_801D1E18");}
 
-pub unsafe extern "C" fn grStadium_801D1E1C(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grStadium_801D1E1C(_gobj: *mut HSD_GObj) { melee_core::ct!("grStadium_801D1E1C");}
 
 #[inline(always)]
 pub unsafe fn mul_vec(v: *mut Vec3, m: f32) {
+    melee_core::ct!("mul_vec");
     (*v).x *= m;
     (*v).y *= m;
     (*v).z *= m;
 }
 
 pub unsafe extern "C" fn grStadium_801D1E20() {
+    melee_core::ct!("grStadium_801D1E20");
     if ext::HSD_Randi(200) == 0 {
         let mut sp_c = Vec3 { x: 0.0, y: -100.0, z: -660.0 };
         let a = ext::HSD_Randi(2);
@@ -715,6 +751,7 @@ unsafe fn GET_WRAPPER(g: *mut HSD_GObj) -> *mut ImageDescWrapper {
 }
 
 pub unsafe extern "C" fn grStadium_801D1EF8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grStadium_801D1EF8");
     let gp = (*gobj).user_data as *mut Ground;
 
     if (*gp).u.display.xF8_0() != 0 {
@@ -778,6 +815,7 @@ pub unsafe extern "C" fn grStadium_801D1EF8(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grStadium_801D21E4(gobj: *mut HSD_GObj, arg1: i32) {
+    melee_core::ct!("grStadium_801D21E4");
     let gp = (*gobj).user_data as *mut Ground;
     let mobj = (*gp).u.display.xCC;
 
@@ -797,6 +835,7 @@ pub unsafe extern "C" fn grStadium_801D21E4(gobj: *mut HSD_GObj, arg1: i32) {
 }
 
 pub unsafe extern "C" fn grStadium_801D2278(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grStadium_801D2278");
     let gp = (*gobj).user_data as *mut Ground;
 
     (*gp).u.display.xE4 = 1;
@@ -819,6 +858,7 @@ pub unsafe extern "C" fn grStadium_801D2278(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grStadium_801D2344(g: *mut HSD_GObj) {
+    melee_core::ct!("grStadium_801D2344");
     let gobj = g;
     let gp = (*gobj).user_data as *mut Ground;
     let temp_r0 = (*gp).u.display.xE4;
@@ -905,6 +945,7 @@ melee_core::gc_layout!(TextWrapper, "TextWrapper", size 0x20, align 4, [
 
 #[inline(always)]
 pub unsafe fn randi_between_2(a: i32, b: i32) -> i32 {
+    melee_core::ct!("randi_between_2");
     let mut result = b;
     if b > a {
         result = a.wrapping_add(randi(b.wrapping_sub(a)));
@@ -916,6 +957,7 @@ pub unsafe fn randi_between_2(a: i32, b: i32) -> i32 {
 
 #[inline(always)]
 pub unsafe fn randi_between(a: i32, b: i32) -> i32 {
+    melee_core::ct!("randi_between");
     if b > a {
         return a.wrapping_add(randi(b.wrapping_sub(a)));
     } else if b < a {
@@ -925,6 +967,7 @@ pub unsafe fn randi_between(a: i32, b: i32) -> i32 {
 }
 
 pub unsafe extern "C" fn grStadium_801D2528(gobj: *mut HSD_GObj, mut arg1: i32, arg2: i32) {
+    melee_core::ct!("grStadium_801D2528");
     let gp = (*gobj).user_data as *mut Ground;
     let yp = yakumono_param;
 
@@ -1091,6 +1134,7 @@ pub unsafe extern "C" fn grStadium_801D2528(gobj: *mut HSD_GObj, mut arg1: i32, 
 }
 
 pub unsafe extern "C" fn grStadium_801D2A60(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grStadium_801D2A60");
     let gp = (*gobj).user_data as *mut Ground;
     let yp = yakumono_param;
     let mut var_r4: i32;
@@ -1155,6 +1199,7 @@ pub static mut grPs_803E14FC: HSD_CameraDescPerspective = HSD_CameraDescPerspect
 };
 
 pub unsafe extern "C" fn grStadium_801D2BEC() -> *mut HSD_GObj {
+    melee_core::ct!("grStadium_801D2BEC");
     let gobj = ext::GObj_Create(0x11, 0x13, 0);
     let cobj = ext::lb_80013B14(&raw mut grPs_803E14FC);
     ext::HSD_CObjSetOrtho(cobj, 0.0, -160.0, 0.0, 250.0);
@@ -1178,6 +1223,7 @@ pub unsafe extern "C" fn grStadium_801D2BEC() -> *mut HSD_GObj {
 }
 
 pub unsafe extern "C" fn grStadium_801D2D78() -> *mut HSD_GObj {
+    melee_core::ct!("grStadium_801D2D78");
     let temp_r3 = ext::GObj_Create(0x11, 0x12, 0);
     ext::GObj_SetupGXLinkMax(temp_r3, Some(grStadium_801D2FD0), 3);
     let wrapper = ext::HSD_MemAlloc(0x1C) as *mut ImageDescWrapper;
@@ -1189,6 +1235,7 @@ pub unsafe extern "C" fn grStadium_801D2D78() -> *mut HSD_GObj {
 }
 
 pub unsafe extern "C" fn grStadium_801D2E24() -> *mut HSD_GObj {
+    melee_core::ct!("grStadium_801D2E24");
     let gobj = ext::GObj_Create(0x11, 0x12, 0);
     ext::GObj_SetupGXLinkMax(gobj, Some(grStadium_801D3084), 3);
     let wrapper = ext::HSD_MemAlloc(core::mem::size_of::<ImageDescWrapper>() as i32) as *mut ImageDescWrapper;
@@ -1200,6 +1247,7 @@ pub unsafe extern "C" fn grStadium_801D2E24() -> *mut HSD_GObj {
 }
 
 pub unsafe extern "C" fn fn_801D2ED0(gobj: *mut HSD_GObj, _unused: i32) {
+    melee_core::ct!("fn_801D2ED0");
     let cobj = (*gobj).hsd_obj as *mut HSD_CObj;
     let wrapper = GET_WRAPPER(gobj);
     if ext::HSD_CObjSetCurrent(cobj) != 0 {
@@ -1222,6 +1270,7 @@ pub unsafe extern "C" fn fn_801D2ED0(gobj: *mut HSD_GObj, _unused: i32) {
 }
 
 pub unsafe extern "C" fn grStadium_801D2FD0(gobj: *mut HSD_GObj, _unused: i32) {
+    melee_core::ct!("grStadium_801D2FD0");
     let wrapper = GET_WRAPPER(gobj);
     let copy = wrapper;
     if (*wrapper).flag() == 0 {
@@ -1241,6 +1290,7 @@ pub unsafe extern "C" fn grStadium_801D2FD0(gobj: *mut HSD_GObj, _unused: i32) {
 }
 
 pub unsafe extern "C" fn grStadium_801D3084(gobj: *mut HSD_GObj, _unused: i32) {
+    melee_core::ct!("grStadium_801D3084");
     let wrapper = GET_WRAPPER(gobj);
     let new_var = wrapper;
     if (*new_var).flag() == 0 {
@@ -1259,6 +1309,7 @@ pub unsafe extern "C" fn grStadium_801D3084(gobj: *mut HSD_GObj, _unused: i32) {
 }
 
 pub unsafe extern "C" fn grStadium_801D3138(gobj: *mut HSD_GObj, desc: *mut HSD_ImageDesc, arg2: *mut *mut HSD_MObj) -> *mut HSD_TObj {
+    melee_core::ct!("grStadium_801D3138");
     let mut jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     while !jobj.is_null() {
         if union_type_dobj(jobj) {
@@ -1303,6 +1354,7 @@ pub unsafe extern "C" fn grStadium_801D3138(gobj: *mut HSD_GObj, desc: *mut HSD_
 }
 
 pub unsafe extern "C" fn grStadium_801D32D0(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grStadium_801D32D0");
     let mut sp28 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp1c = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
@@ -1354,6 +1406,7 @@ pub static grPs_804DAF3C: _GXColor = _GXColor { r: 0xFF, g: 0xFF, b: 0xFF, a: 0x
 pub static mut grPs_8049F040: [u8; 0x100] = [0; 0x100];
 
 pub unsafe extern "C" fn grStadium_801D3460(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grStadium_801D3460");
     let mut sp48: _GXColor;
     let mut sp38: [*const i8; 4] = [core::ptr::null(); 4];
     let mut var_r28: usize;
@@ -1455,6 +1508,7 @@ pub unsafe extern "C" fn grStadium_801D3460(gobj: *mut HSD_GObj) {
 pub static grPs_804DAF60: _GXColor = _GXColor { r: 0xC0, g: 0xC0, b: 0xFF, a: 0xFF };
 
 pub unsafe extern "C" fn grStadium_801D384C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grStadium_801D384C");
     let gp = (*gobj).user_data as *mut Ground;
 
     let temp_r3 = (*gp).u.display.xD4;
@@ -1490,6 +1544,7 @@ pub unsafe extern "C" fn grStadium_801D384C(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grStadium_801D39A0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grStadium_801D39A0");
     let gp = (*gobj).user_data as *mut Ground;
     if (*gp).u.display.xE4 == 1 {
         if ext::gm_8016B184() != 0 || (*gp).u.display.xF8_2() != 0 {
@@ -1504,6 +1559,7 @@ pub unsafe extern "C" fn grStadium_801D39A0(gobj: *mut HSD_GObj) {
 pub static grPs_804DAF70: _GXColor = _GXColor { r: 0xFF, g: 0xFF, b: 0xFF, a: 0xFF };
 
 pub unsafe extern "C" fn grStadium_801D3A0C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grStadium_801D3A0C");
     let mut sp24: _GXColor;
     let gp = (*gobj).user_data as *mut Ground;
     let tmp = (*gp).u.display.xD4;
@@ -1547,6 +1603,7 @@ pub unsafe extern "C" fn grStadium_801D3A0C(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grStadium_801D3B4C(arg0: i32, slot_type: i32) {
+    melee_core::ct!("grStadium_801D3B4C");
     if ext::stage_info.grkind == Gr_Kind_PStadium as _ {
         let gobj = ext::Ground_GetMapGObj(PsType_Display as i32);
         let gp = (*gobj).user_data as *mut Ground;
@@ -1568,6 +1625,7 @@ pub static grPs_803B7F8C: StadiumAlphaPresets = StadiumAlphaPresets { entries: [
 
 #[inline(always)]
 pub unsafe fn grStadium_ScaleColor(value: u8) -> u8 {
+    melee_core::ct!("grStadium_ScaleColor");
     let mut scaled = 1.25f32 * value as f32;
     if scaled > 255.0 {
         scaled = 255.0;
@@ -1576,6 +1634,7 @@ pub unsafe fn grStadium_ScaleColor(value: u8) -> u8 {
 }
 
 pub unsafe extern "C" fn grStadium_801D3BBC(arg0: *mut HSD_GObj) {
+    melee_core::ct!("grStadium_801D3BBC");
     // union { StadiumColor entries[5]; struct { StadiumColor head; StadiumAlphaPresets presets; } s; }
     let mut colors: [[u8; 4]; 5] = [[0; 4]; 5];
     let mut player_num: i32 = 0;
@@ -1669,6 +1728,7 @@ pub unsafe extern "C" fn grStadium_801D3BBC(arg0: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grStadium_801D3F40(arg0: *mut HSD_GObj, arg1: i32) {
+    melee_core::ct!("grStadium_801D3F40");
     let gp = (*arg0).user_data as *mut Ground;
     let text_gobj = (*gp).u.display.xD4;
     let gp2 = (*text_gobj).user_data as *mut TextWrapper;
@@ -1690,36 +1750,42 @@ pub unsafe extern "C" fn grStadium_801D3F40(arg0: *mut HSD_GObj, arg1: i32) {
 }
 
 pub unsafe extern "C" fn grStadium_801D4040() {
+    melee_core::ct!("grStadium_801D4040");
     if ext::stage_info.grkind == Gr_Kind_PStadium as _ {
         grStadium_801D2528(ext::Ground_GetMapGObj(PsType_Display as i32), 0xB, 0);
     }
 }
 
 pub unsafe extern "C" fn grStadium_801D4084() {
+    melee_core::ct!("grStadium_801D4084");
     if ext::stage_info.grkind == Gr_Kind_PStadium as _ {
         grStadium_801D2528(ext::Ground_GetMapGObj(PsType_Display as i32), 0xA, 0);
     }
 }
 
 pub unsafe extern "C" fn grStadium_801D40C8() {
+    melee_core::ct!("grStadium_801D40C8");
     if ext::stage_info.grkind == Gr_Kind_PStadium as _ {
         grStadium_801D2528(ext::Ground_GetMapGObj(PsType_Display as i32), 0xC, 0);
     }
 }
 
 pub unsafe extern "C" fn grStadium_801D410C() {
+    melee_core::ct!("grStadium_801D410C");
     if ext::stage_info.grkind == Gr_Kind_PStadium as _ {
         grStadium_801D2528(ext::Ground_GetMapGObj(PsType_Display as i32), 0xD, 0);
     }
 }
 
 pub unsafe extern "C" fn grStadium_801D4150() {
+    melee_core::ct!("grStadium_801D4150");
     if ext::stage_info.grkind == Gr_Kind_PStadium as _ {
         grStadium_801D2528(ext::Ground_GetMapGObj(PsType_Display as i32), 1, 0);
     }
 }
 
 pub unsafe extern "C" fn grStadium_801D4194(arg0: *mut HSD_GObj) {
+    melee_core::ct!("grStadium_801D4194");
     let gp = (*arg0).user_data as *mut Ground;
     let text_gobj = (*gp).u.display.xD4;
     let gp2 = (*text_gobj).user_data as *mut TextWrapper;
@@ -1736,6 +1802,7 @@ pub unsafe extern "C" fn grStadium_801D4194(arg0: *mut HSD_GObj) {
 
 /// HSD_DevComCallback
 pub unsafe extern "C" fn fn_801D4220(_dcreq: i32, _args: u32, _buf: *mut c_void, cancelflag: i32) {
+    melee_core::ct!("fn_801D4220");
     if cancelflag != 0 {
         panic!("HSD_ASSERT(0x969, !cancelflag) grpstadium.c");
     }
@@ -1751,6 +1818,7 @@ pub unsafe extern "C" fn fn_801D4220(_dcreq: i32, _args: u32, _buf: *mut c_void,
 }
 
 pub unsafe extern "C" fn grStadium_801D42B8() -> i32 {
+    melee_core::ct!("grStadium_801D42B8");
     let map_gobj = ext::Ground_GetMapGObj(2);
     if map_gobj.is_null() {
         panic!("HSD_ASSERT(0x978, map_gobj) grpstadium.c");
@@ -1767,6 +1835,7 @@ pub unsafe extern "C" fn grStadium_801D42B8() -> i32 {
 }
 
 pub unsafe extern "C" fn grStadium_801D4354(gobj: *mut HSD_GObj) -> *mut Ground {
+    melee_core::ct!("grStadium_801D4354");
     (*gobj).user_data as *mut Ground
 }
 
@@ -1805,6 +1874,7 @@ pub static mut lbl_803E1630: [VecScalar; 9] = [
 ];
 
 pub unsafe extern "C" fn grStadium_801D435C(arg0: *mut HSD_GObj) {
+    melee_core::ct!("grStadium_801D435C");
     let gp = (*arg0).user_data as *mut Ground;
     let mut sp_c = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let tbl = &raw mut lbl_803E1630 as *mut VecScalar;
@@ -1843,6 +1913,7 @@ pub unsafe extern "C" fn grStadium_801D435C(arg0: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grStadium_801D4548(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grStadium_801D4548");
     let temp_r31 = (*gobj).user_data as *mut Ground;
     let temp_f31 = ext::Ground_801C0498();
     let yp = yakumono_param;
@@ -2055,6 +2126,7 @@ pub unsafe extern "C" fn grStadium_801D4548(gobj: *mut HSD_GObj) {
 
 /// Check if the display is focused on a specific player
 pub unsafe extern "C" fn grStadium_801D4FF8(pl_slot: i32) -> i32 {
+    melee_core::ct!("grStadium_801D4FF8");
     if ext::stage_info.grkind == Gr_Kind_PStadium as _ {
         let gobj = ext::Ground_GetMapGObj(PsType_Display as i32);
         if !gobj.is_null() {
@@ -2068,15 +2140,18 @@ pub unsafe extern "C" fn grStadium_801D4FF8(pl_slot: i32) -> i32 {
 }
 
 pub unsafe extern "C" fn fn_801D5074(gobj: *mut HSD_GObj, arg1: i32) {
+    melee_core::ct!("fn_801D5074");
     grStadium_801D1EF8(gobj);
     ext::grDisplay_801C5DB0(gobj, arg1);
 }
 
 pub unsafe extern "C" fn grStadium_OnTouchLine(_unused: i32) -> *mut DynamicsDesc {
+    melee_core::ct!("grStadium_OnTouchLine");
     null_mut()
 }
 
 pub unsafe extern "C" fn grStadium_OnCheckShadowRender(arg0: *mut Vec3, _arg1: i32, jobj: *mut HSD_JObj) -> i32 {
+    melee_core::ct!("grStadium_OnCheckShadowRender");
     let mut sp14 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ext::lb_8000B1CC(jobj, null_mut(), &mut sp14);
     if (*arg0).y + 1.0f32 > sp14.y {
@@ -2087,6 +2162,7 @@ pub unsafe extern "C" fn grStadium_OnCheckShadowRender(arg0: *mut Vec3, _arg1: i
 }
 
 pub unsafe extern "C" fn grStadium_801D511C() {
+    melee_core::ct!("grStadium_801D511C");
     let mut size = ext::GXGetTexBufferSize(0xFA, 0xA0, 4, 0, 0);
     ext::lbDvd_80017740(0, 0x7D2, 4, 4, (size.wrapping_add(31)) & !31u32, 0, 7, 0x10, 0);
 

@@ -53,6 +53,7 @@ fn inlineA0(f: &Fighter) -> bool {
 }
 
 pub fn ftCo_800984D4(g: G) -> bool {
+    melee_core::ct!("ftCo_800984D4");
     let f = fp(g);
     if inlineA0(f) || ext::ftCo_800DF644(f) {
         // C declares `bool msid`, but `bool` is int in this build: the id survives intact.
@@ -64,28 +65,33 @@ pub fn ftCo_800984D4(g: G) -> bool {
 }
 
 pub fn ftCo_8009856C(g: G, msid: i32) {
+    melee_core::ct!("ftCo_8009856C");
     ext::Fighter_ChangeMotionState(g, msid, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ext::ftAnim_8006EBA4(g);
 }
 
 pub fn ftCo_DownAttack_Anim(g: G) {
+    melee_core::ct!("ftCo_DownAttack_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ft_8008A2BC(g);
     }
 }
 
-pub fn ftCo_DownAttack_IASA(_g: G) {}
+pub fn ftCo_DownAttack_IASA(_g: G) { melee_core::ct!("ftCo_DownAttack_IASA");}
 
 pub fn ftCo_DownAttack_Phys(g: G) {
+    melee_core::ct!("ftCo_DownAttack_Phys");
     ext::ft_80084F3C(g);
 }
 
 pub fn ftCo_DownAttack_Coll(g: G) {
+    melee_core::ct!("ftCo_DownAttack_Coll");
     ext::ft_80084104(g);
 }
 
 /// `ftCo_80098634`: one ECB offset and position per fighter, in plink order.
 pub fn ftCo_80098634(track: &mut Item_FtTrack) {
+    melee_core::ct!("ftCo_80098634");
     let mut cur = ext::HSD_GObjPLinkHead(HSD_GOBJ_PLINK_FIGHTER as i32);
     let mut i = 0usize;
     while !cur.is_null() {
@@ -103,6 +109,7 @@ pub fn ftCo_80098634(track: &mut Item_FtTrack) {
 }
 
 pub fn ftCo_800986B0(g: G) -> bool {
+    melee_core::ct!("ftCo_800986B0");
     if !ext::ftCo_800C5240(g) {
         let f = fp(g);
         if (f.x680 as f32) < cd().x250 && (f.x684 as i32) >= cd().x1C {
@@ -113,6 +120,7 @@ pub fn ftCo_800986B0(g: G) -> bool {
 }
 
 pub fn ftCo_8009872C(g: G) -> bool {
+    melee_core::ct!("ftCo_8009872C");
     if ftCo_800986B0(g) {
         ext::ftCo_800987D0(g);
         return true;

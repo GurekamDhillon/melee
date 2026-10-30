@@ -231,12 +231,14 @@ fn init_tables() {
 
 /// The TU's `StageCallbacks grTe_StageCallbacks[4]` (built on first use; stable address).
 pub fn stage_callbacks() -> *mut StageCallbacks {
+    melee_core::ct!("stage_callbacks");
     init_tables();
     unsafe { CALLBACKS.as_mut_ptr().cast() }
 }
 
 /// The TU's `StageData grTe_StageData`.
 pub fn stage_data() -> *mut StageData {
+    melee_core::ct!("stage_data");
     init_tables();
     unsafe { STAGE_DATA.as_mut_ptr() }
 }
@@ -244,10 +246,12 @@ pub fn stage_data() -> *mut StageData {
 pub const STAGE_CALLBACKS_LEN: usize = 4;
 
 pub unsafe extern "C" fn grTest_80206E2C(unused_: i32) {
+    melee_core::ct!("grTest_80206E2C");
     
 }
 
 pub unsafe extern "C" fn grTest_80206E30() {
+        melee_core::ct!("grTest_80206E30");
         let si = ext::stage_info();
     (*si).unk8C.set_b4(0);
     (*si).unk8C.set_b5(1);
@@ -264,14 +268,17 @@ pub unsafe extern "C" fn grTest_80206E30() {
 }
 
 pub unsafe extern "C" fn grTest_UnkStage0_OnLoad() {
+    melee_core::ct!("grTest_UnkStage0_OnLoad");
     
 }
 
 pub unsafe extern "C" fn grTest_UnkStage0_OnStart() {
+    melee_core::ct!("grTest_UnkStage0_OnStart");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
 
 pub unsafe extern "C" fn grTest_80207044(gobj_id: i32) -> *mut HSD_GObj {
+    melee_core::ct!("grTest_80207044");
     let callbacks = stage_callbacks().add(gobj_id as usize);
     let gobj = ext::Ground_GetStageGObj(gobj_id);
     if !gobj.is_null() {
@@ -283,22 +290,27 @@ pub unsafe extern "C" fn grTest_80207044(gobj_id: i32) -> *mut HSD_GObj {
 }
 
 pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj0_OnInit");
     inlines::Ground_StartMapAnim(gobj);
 }
 
 pub unsafe extern "C" fn grTest_80207164(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grTest_80207164");
     
 }
 
 pub unsafe extern "C" fn grTest_80207168(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grTest_80207168");
     
 }
 
 pub unsafe extern "C" fn stageGObj2_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj2_OnInit");
     inlines::Ground_InitMapCollAndAnim(gobj);
 }
 
 pub unsafe extern "C" fn grTest_802071C4(gobj: *mut HSD_GObj) {
+        melee_core::ct!("grTest_802071C4");
         let pad = ext::HSD_PadMasterStatus();
     if (*pad.add(1)).trigger & HSD_PAD_A as u32 != 0 {
         let j = ext::Ground_801C3FA4(gobj, 0x10);
@@ -336,21 +348,26 @@ pub unsafe extern "C" fn grTest_802071C4(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grTest_802073AC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grTest_802073AC");
     
 }
 
 pub unsafe extern "C" fn stageGObj2_X8Callback(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj2_X8Callback");
     ext::Ground_UpdateMapColl(gobj);
 }
 
 pub unsafe extern "C" fn stageGObj1_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj1_OnInit");
     inlines::Ground_StartMapAnim(gobj);
 }
 
 pub unsafe extern "C" fn grTest_80207404(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grTest_80207404");
     
 }
 
 pub unsafe extern "C" fn grTest_80207408(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grTest_80207408");
     
 }

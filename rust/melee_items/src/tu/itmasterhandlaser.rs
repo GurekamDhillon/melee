@@ -93,6 +93,7 @@ fn nr_step(guess: f64, x: f64) -> f64 {
 /// volatile slot `*y`.
 #[inline]
 pub unsafe fn sqrtf_store(x: f32, y: *mut f32) -> f32 {
+    melee_core::ct!("sqrtf_store");
     if x > 0.0 {
         let xd = x as f64;
         let mut guess = frsqrte(xd);
@@ -114,6 +115,7 @@ pub unsafe extern "C" fn it_802F0340(
     kind: ItemKind,
     facing_dir: f32,
 ) -> *mut Item_GObj {
+    melee_core::ct!("it_802F0340");
     let mut spawn: SpawnItem = core::mem::zeroed();
     let fp = (*gobj).user_data as *mut Fighter;
     spawn.kind = kind;
@@ -133,11 +135,13 @@ pub unsafe extern "C" fn it_802F0340(
 }
 
 pub unsafe extern "C" fn itMasterHandLaser_Logic84_EvtUnk(gobj: *mut Item_GObj, arg1: *mut Item_GObj) {
+    melee_core::ct!("itMasterHandLaser_Logic84_EvtUnk");
     ext::it_8026B894(gobj, arg1);
 }
 
 /// 2F046C
 pub unsafe extern "C" fn it_802F046C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802F046C");
     if !gobj.is_null() {
         (*GET_ITEM(gobj)).xDD4_itemVar.masterhandlaser.x0 = 1;
     }
@@ -145,6 +149,7 @@ pub unsafe extern "C" fn it_802F046C(gobj: *mut Item_GObj) {
 
 /// 2F0484
 pub unsafe extern "C" fn it_802F0484(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802F0484");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itMasterHandLaserAttributes;
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE);
@@ -154,6 +159,7 @@ pub unsafe extern "C" fn it_802F0484(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itMasterhandlaser_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMasterhandlaser_UnkMotion0_Anim");
     let ip = GET_ITEM(gobj);
     if ext::it_80272C6C(gobj) == 0 {
         it_802F0484(gobj);
@@ -165,14 +171,16 @@ pub unsafe extern "C" fn itMasterhandlaser_UnkMotion0_Anim(gobj: *mut Item_GObj)
     false
 }
 
-pub unsafe extern "C" fn itMasterhandlaser_UnkMotion0_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itMasterhandlaser_UnkMotion0_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itMasterhandlaser_UnkMotion0_Phys");}
 
 pub unsafe extern "C" fn itMasterhandlaser_UnkMotion0_Coll(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMasterhandlaser_UnkMotion0_Coll");
     false
 }
 
 /// 2F05A8
 pub unsafe extern "C" fn it_802F05A8(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802F05A8");
     let mut sp28: Vec3 = core::mem::zeroed();
     let mut sp1C: Vec3 = core::mem::zeroed();
     let ip = GET_ITEM(gobj);
@@ -187,6 +195,7 @@ pub unsafe extern "C" fn it_802F05A8(gobj: *mut Item_GObj) {
 
 /// 2F063C
 pub unsafe extern "C" fn it_802F063C(gobj: *mut Item_GObj, arg1: *mut Item_GObj) {
+    melee_core::ct!("it_802F063C");
     let mut pos_0: Vec3 = core::mem::zeroed();
     let mut pos_1: Vec3 = core::mem::zeroed();
     let mut pos_2: Vec3 = core::mem::zeroed();

@@ -102,12 +102,14 @@ impl JObjDirty for Dirty {
 }
 
 pub fn ftCo_800C0874(g: G, _arg1: *mut core::ffi::c_void, arg2: i32) {
+    melee_core::ct!("ftCo_800C0874");
     if arg2 == BuryType_Unk2 as i32 {
         ext::ftCo_8009EB18(g);
     }
 }
 
 pub fn ftCo_800C08A0(g: G, arg1: G, arg2: *mut DynamicsDesc, arg3: i32) {
+    melee_core::ct!("ftCo_800C08A0");
     let f = fp(g);
     let mut v = ext::ftColl_800765F0(f, core::ptr::null_mut(), unsafe { (*arg2).count } as f32);
     let f = fp(g);
@@ -135,6 +137,7 @@ fn bury_stage(k: i32) -> bool {
 }
 
 pub fn ftCo_800C09B4(g: G) {
+    melee_core::ct!("ftCo_800C09B4");
     let k = ext::stage_info_grkind();
     let f = fp(g);
     f.bury_grkind = k as _;
@@ -145,6 +148,7 @@ pub fn ftCo_800C09B4(g: G) {
 }
 
 pub fn ftCo_800C0A28(g: G, _arg1: *mut core::ffi::c_void, arg2: i32) -> bool {
+    melee_core::ct!("ftCo_800C0A28");
     let f = fp(g);
     if arg2 == BuryType_Unk2 as i32 {
         if f.bury_timer_2 != 0 || f.motion_id as i32 == ftCo_MS_BarrelWait as i32 || f.x1A6A & 0x20 != 0
@@ -159,6 +163,7 @@ pub fn ftCo_800C0A28(g: G, _arg1: *mut core::ffi::c_void, arg2: i32) -> bool {
 }
 
 pub fn ftCo_800C0A98(g: G) {
+    melee_core::ct!("ftCo_800C0A98");
     let f = fp(g);
     if f.bury_timer_1 != 0 {
         f.bury_timer_1 -= 1;
@@ -169,6 +174,7 @@ pub fn ftCo_800C0A98(g: G) {
 }
 
 pub fn ftCo_800C0B20(g: G) {
+    melee_core::ct!("ftCo_800C0B20");
     if fp(g).bury_timer_1 != 0 {
         return;
     }
@@ -206,10 +212,12 @@ pub fn ftCo_800C0B20(g: G) {
 }
 
 pub fn ftCo_800C0C88(arg0: i32) -> bool {
+    melee_core::ct!("ftCo_800C0C88");
     arg0 == BuryType_Unk1 as i32 || arg0 == BuryType_Unk3 as i32
 }
 
 pub fn ftCo_800C0CB8(g: G) -> bool {
+    melee_core::ct!("ftCo_800C0CB8");
     let f = fp(g);
     if f.dmg.x1860_element == HitElement_Ground as u32 && f.ground_or_air as i32 == GA_Ground as i32
         && f.x2227_b6() == 0
@@ -221,6 +229,7 @@ pub fn ftCo_800C0CB8(g: G) -> bool {
 }
 
 pub fn ftCo_800C0D0C(g: G) {
+    melee_core::ct!("ftCo_800C0D0C");
     let mut joint_pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut hip_pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ftCo_ReleaseItemAndVictim(g);
@@ -266,6 +275,7 @@ pub fn ftCo_800C0D0C(g: G) {
 }
 
 pub fn ftCo_Bury_Anim(g: G) {
+    melee_core::ct!("ftCo_Bury_Anim");
     let f = fp(g);
     f.grab_timer -= cd().x610;
     ext::ftCommon_GrabMash(fp(g), cd().x614);
@@ -281,9 +291,10 @@ pub fn ftCo_Bury_Anim(g: G) {
     }
 }
 
-pub fn ftCo_Bury_IASA(_g: G) {}
+pub fn ftCo_Bury_IASA(_g: G) { melee_core::ct!("ftCo_Bury_IASA");}
 
 pub fn ftCo_800C0FCC(arg0: *mut HSD_GObj, arg1: G) {
+    melee_core::ct!("ftCo_800C0FCC");
     let line = unsafe { fp(arg1).mv.co.bury.x20 } as i32;
     if ext::mpLib_80054ED8(line) {
         let mut normal = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -302,6 +313,7 @@ pub fn ftCo_800C0FCC(arg0: *mut HSD_GObj, arg1: G) {
 }
 
 pub fn ftCo_Bury_Phys(g: G) {
+    melee_core::ct!("ftCo_Bury_Phys");
     let f = fp(g);
     let x1c = unsafe { f.mv.co.bury.x1C };
     let bx = unsafe { &mut f.mv.co.bury.coll_box };
@@ -313,6 +325,7 @@ pub fn ftCo_Bury_Phys(g: G) {
 }
 
 pub fn ftCo_Bury_Coll(g: G) {
+    melee_core::ct!("ftCo_Bury_Coll");
     let f = fp(g);
     let bx = unsafe { &raw mut f.mv.co.bury.coll_box };
     if !ext::ft_80082888(g, bx)
@@ -324,6 +337,7 @@ pub fn ftCo_Bury_Coll(g: G) {
 }
 
 pub fn ftCo_800C124C(g: G) {
+    melee_core::ct!("ftCo_800C124C");
     ext::Fighter_ChangeMotionState(g, ftCo_MS_BuryWait as i32,
         (Ft_MF_KeepGfx | Ft_MF_SkipMatAnim | Ft_MF_SkipColAnim) as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ext::ftCommon_8007E2FC(g);
@@ -335,6 +349,7 @@ pub fn ftCo_800C124C(g: G) {
 }
 
 pub fn ftCo_BuryWait_Anim(g: G) {
+    melee_core::ct!("ftCo_BuryWait_Anim");
     let f = fp(g);
     f.grab_timer -= cd().x610;
     ext::ftCommon_GrabMash(fp(g), cd().x614);
@@ -343,15 +358,17 @@ pub fn ftCo_BuryWait_Anim(g: G) {
     }
 }
 
-pub fn ftCo_BuryWait_IASA(_g: G) {}
+pub fn ftCo_BuryWait_IASA(_g: G) { melee_core::ct!("ftCo_BuryWait_IASA");}
 
-pub fn ftCo_BuryWait_Phys(_g: G) {}
+pub fn ftCo_BuryWait_Phys(_g: G) { melee_core::ct!("ftCo_BuryWait_Phys");}
 
 pub fn ftCo_BuryWait_Coll(g: G) {
+    melee_core::ct!("ftCo_BuryWait_Coll");
     ftCo_Bury_Coll(g);
 }
 
 pub fn ftCo_800C13BC(g: G) {
+    melee_core::ct!("ftCo_800C13BC");
     if ext::ftCo_800C5240(g) {
         ext::ftCo_800C5A98(g);
         return;
@@ -367,6 +384,7 @@ pub fn ftCo_800C13BC(g: G) {
 }
 
 pub fn ftCo_BuryJump_Anim(g: G) {
+    melee_core::ct!("ftCo_BuryJump_Anim");
     let f = fp(g);
     unsafe { f.mv.co.buryjump.x0 += 1.0 };
     if !ext::ftAnim_IsFramesRemaining(g) {
@@ -375,6 +393,7 @@ pub fn ftCo_BuryJump_Anim(g: G) {
 }
 
 pub fn ftCo_BuryJump_IASA(g: G) {
+    melee_core::ct!("ftCo_BuryJump_IASA");
     if unsafe { fp(g).mv.ca.specials.grav } >= cd().x61C {
         if ext::ftCo_SpecialAir_CheckInput(g) { return; }
         if ext::ftCo_80095328(g, core::ptr::null_mut()) { return; }
@@ -388,6 +407,7 @@ pub fn ftCo_BuryJump_IASA(g: G) {
 }
 
 pub fn ftCo_BuryJump_Phys(g: G) {
+    melee_core::ct!("ftCo_BuryJump_Phys");
     let f = fp(g);
     let (gr, tv) = (f.co_attrs.gravity, f.co_attrs.terminal_velocity);
     ext::ftCommon_Fall(f, gr, tv);
@@ -395,6 +415,7 @@ pub fn ftCo_BuryJump_Phys(g: G) {
 }
 
 pub fn ftCo_BuryJump_Coll(g: G) {
+    melee_core::ct!("ftCo_BuryJump_Coll");
     let vy = fp(g).self_vel.y;
     if vy >= 0.0 {
         ext::ft_80082D40(g, vy);

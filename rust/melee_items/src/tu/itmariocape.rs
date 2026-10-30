@@ -99,6 +99,7 @@ pub unsafe extern "C" fn it_802B2560(
     part: Fighter_Part,
     kind: ItemKind,
 ) -> *mut Item_GObj {
+    melee_core::ct!("it_802B2560");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = kind;
     Item_InitSpawnPosition(&mut spawn, pos, false);
@@ -112,6 +113,7 @@ pub unsafe extern "C" fn it_802B2560(
 }
 
 pub unsafe extern "C" fn itMarioCape_Logic41_Destroyed(gobj: *mut Item_GObj) {
+    melee_core::ct!("itMarioCape_Logic41_Destroyed");
     let ip = GET_ITEM(gobj);
     if !(*ip).owner.is_null() {
         ext::ftMr_SpecialS_Reset((*ip).owner);
@@ -120,6 +122,7 @@ pub unsafe extern "C" fn itMarioCape_Logic41_Destroyed(gobj: *mut Item_GObj) {
 
 /// 2B2674
 pub unsafe extern "C" fn it_802B2674(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802B2674");
     let ip = GET_ITEM(gobj);
     if !ip.is_null() {
         if !(*ip).owner.is_null() {
@@ -131,15 +134,18 @@ pub unsafe extern "C" fn it_802B2674(gobj: *mut Item_GObj) {
 
 /// 2B26C0
 pub unsafe extern "C" fn it_802B26C0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802B26C0");
     ext::it_8026B724(gobj);
 }
 
 /// 2B26E0
 pub unsafe extern "C" fn it_802B26E0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802B26E0");
     ext::it_8026B73C(gobj);
 }
 
 pub unsafe extern "C" fn it_2725_Logic41_PickedUp(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_2725_Logic41_PickedUp");
     let ip = GET_ITEM(gobj);
     (*ip).xDB0_itcmd_var1 = 0;
     (*ip).xDAC_itcmd_var0 = 0;
@@ -156,6 +162,7 @@ pub unsafe extern "C" fn it_2725_Logic41_PickedUp(gobj: *mut Item_GObj) {
 
 /// `inlineA0` (static)
 pub unsafe extern "C" fn inlineA0(gobj: *mut Item_GObj) {
+    melee_core::ct!("inlineA0");
     let ip = GET_ITEM(gobj);
     if (*ip).xDAC_itcmd_var0 != 0 {
         (*ip).xDAC_itcmd_var0 = 0;
@@ -189,6 +196,7 @@ unsafe fn reset(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itMariocape_UnkMotion1_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMariocape_UnkMotion1_Anim");
     inlineA0(gobj);
     let ip = GET_ITEM(gobj);
     let removed = if !(*ip).owner.is_null() {
@@ -205,5 +213,6 @@ pub unsafe extern "C" fn itMariocape_UnkMotion1_Anim(gobj: *mut Item_GObj) -> bo
 
 /// 2B2870
 pub unsafe extern "C" fn it_802B2870(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802B2870");
     ext::it_8026B894(gobj, ref_gobj);
 }

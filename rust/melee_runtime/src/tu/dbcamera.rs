@@ -151,6 +151,7 @@ pub struct DbCamera {
 /// `cstick_threshold` (static inline).
 #[inline]
 pub fn cstick_threshold(cstick: f32, val: f32) -> f32 {
+    melee_core::ct!("cstick_threshold");
     let a = if cstick < 0.0 { -cstick } else { cstick };
     if a < val {
         0.0
@@ -162,6 +163,7 @@ pub fn cstick_threshold(cstick: f32, val: f32) -> f32 {
 /// fn_80227188's `ABS(v) > 99999.0F ? -1 : (int) v`.
 #[inline]
 pub fn info_int(v: f32) -> i32 {
+    melee_core::ct!("info_int");
     let a = if v < 0.0 { -v } else { v };
     if a > 99999.0 {
         -1
@@ -173,29 +175,34 @@ pub fn info_int(v: f32) -> i32 {
 /// fn_80227EB0 / fn_80227FE0 pan scale: `0.03F * (2.0F * (dist * tanf(MTXDegToRad(fov) / 2)))`.
 #[inline]
 pub fn pan_scale(eye_dist: f32, fov: f32) -> f32 {
+    melee_core::ct!("pan_scale");
     0.03f32 * (2.0f32 * (eye_dist * crate::gekko::tanf((fov * 0.01745329252f32) / 2.0)))
 }
 
 /// fn_80228124 pan scale: `0.03f * (2.0f * (dist * tanf(0.017453292f * fov / 2)))`.
 #[inline]
 pub fn pan_scale_follow(dist: f32, fov: f32) -> f32 {
+    melee_core::ct!("pan_scale_follow");
     0.03f32 * (2.0f32 * (dist * crate::gekko::tanf((0.017453292f32 * fov) / 2.0)))
 }
 
 /// fn_80227D38 dolly: `dist * -(0.05F * arg2 - 1.0F)`; the inner expression is one fmadds.
 #[inline]
 pub fn dolly_follow(dist: f32, arg2: f32) -> f32 {
+    melee_core::ct!("dolly_follow");
     dist * -melee_core::fp::fmsubs(0.05, arg2, 1.0)
 }
 
 /// fn_80227CAC dolly: `dist * (1.0F - 0.05F * y)`; the inner expression is one fused op.
 #[inline]
 pub fn dolly_free(dist: f32, y: f32) -> f32 {
+    melee_core::ct!("dolly_free");
     dist * ((1.0f64 - 0.05f32 as f64 * y as f64) as f32)
 }
 
 /// `fn_802279E8` (Debug_OrbitAroundInterest): `cobj` supplies the eye vector and distance.
 pub fn fn_802279e8(cobj: &CObjView, camera_pos: &mut Vec3, camera_interest: &Vec3, cstick_x: f32, cstick_y: f32) {
+    melee_core::ct!("fn_802279e8");
     if cstick_x != 0.0 || cstick_y != 0.0 {
         let up_vec = Vec3 { x: 0.0, y: 1.0, z: 0.0 };
         let mut forward_vec = cobj.eye_vector;
@@ -441,6 +448,7 @@ fn cobj_of(cam: Option<CObjView>) -> CObjView {
 
 /// `fn_80227B64` (Debug_UpdateFreecamRotation).
 pub fn fn_80227b64<H: DbCameraHost + ?Sized>(h: &mut H, cam: Option<CObjView>, cx: f32, cy: f32) {
+    melee_core::ct!("fn_80227b64");
     if cx != 0.0 || cy != 0.0 {
         let cobj = cobj_of(cam);
         let c = h.cm_80453004();
@@ -451,6 +459,7 @@ pub fn fn_80227b64<H: DbCameraHost + ?Sized>(h: &mut H, cam: Option<CObjView>, c
 
 /// `fn_80227BA8`.
 pub fn fn_80227ba8<H: DbCameraHost + ?Sized>(h: &mut H, cam: Option<CObjView>, arg1: Option<Vec3>, a2: f32, a3: f32) {
+    melee_core::ct!("fn_80227ba8");
     if let Some(target) = arg1 {
         let cobj = cobj_of(cam);
         let c = h.cm_80453004();
@@ -469,6 +478,7 @@ pub fn fn_80227ba8<H: DbCameraHost + ?Sized>(h: &mut H, cam: Option<CObjView>, a
 
 /// `fn_80227CAC` (Debug_UpdateFreecamDolly).
 pub fn fn_80227cac<H: DbCameraHost + ?Sized>(h: &mut H, cam: Option<CObjView>, cy: f32) {
+    melee_core::ct!("fn_80227cac");
     if cy != 0.0 {
         let cobj = cobj_of(cam);
         let fwd = mtx::vec_scale(&cobj.eye_vector, dolly_free(cobj.eye_distance, cy));
@@ -479,6 +489,7 @@ pub fn fn_80227cac<H: DbCameraHost + ?Sized>(h: &mut H, cam: Option<CObjView>, c
 
 /// `fn_80227D38`.
 pub fn fn_80227d38<H: DbCameraHost + ?Sized>(h: &mut H, cam: Option<CObjView>, arg1: Option<Vec3>, a2: f32) {
+    melee_core::ct!("fn_80227d38");
     if let Some(target) = arg1 {
         if a2 != 0.0 {
             let cobj = cobj_of(cam);
@@ -497,6 +508,7 @@ pub fn fn_80227d38<H: DbCameraHost + ?Sized>(h: &mut H, cam: Option<CObjView>, a
 
 /// `fn_80227EB0`: pan both `a1` and `a2` along the camera's left/up vectors.
 pub fn fn_80227eb0(cobj: &CObjView, a1: &mut Vec3, a2: &mut Vec3, x: f32, y: f32) {
+    melee_core::ct!("fn_80227eb0");
     let dist = pan_scale(cobj.eye_distance, cobj.fov);
     if x != 0.0 {
         let v = mtx::vec_scale(&cobj.left_vector, dist * x);
@@ -512,6 +524,7 @@ pub fn fn_80227eb0(cobj: &CObjView, a1: &mut Vec3, a2: &mut Vec3, x: f32, y: f32
 
 /// `fn_80227FE0` (Debug_UpdateFreecamPosition).
 pub fn fn_80227fe0<H: DbCameraHost + ?Sized>(h: &mut H, cam: Option<CObjView>, cx: f32, cy: f32) {
+    melee_core::ct!("fn_80227fe0");
     if cx != 0.0 || cy != 0.0 {
         let cobj = cobj_of(cam);
         let s = pan_scale(cobj.eye_distance, cobj.fov);
@@ -531,6 +544,7 @@ pub fn fn_80227fe0<H: DbCameraHost + ?Sized>(h: &mut H, cam: Option<CObjView>, c
 
 /// `fn_80228124`.
 pub fn fn_80228124<H: DbCameraHost + ?Sized>(h: &mut H, cam: Option<CObjView>, arg1: Option<Vec3>, a2: f32, a3: f32) {
+    melee_core::ct!("fn_80228124");
     if let Some(target) = arg1 {
         let cobj = cobj_of(cam);
         let dist = pan_scale_follow(cobj.eye_distance, cobj.fov);

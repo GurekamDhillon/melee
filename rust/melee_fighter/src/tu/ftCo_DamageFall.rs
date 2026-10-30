@@ -64,6 +64,7 @@ pub mod ext {
 }
 
 pub fn ftCo_80090780(g: G) {
+    melee_core::ct!("ftCo_80090780");
     let f = fp(g);
     if f.ground_or_air == GA_Ground {
         ext::ftCommon_8007D5D4(f);
@@ -84,6 +85,7 @@ fn abs_c(x: f32) -> f32 {
 
 /// TARGET_PC static `ftCo_Ucf084Tumble`: UCF 0.84's tumble stick-out cancel window.
 pub fn ftCo_Ucf084Tumble(f: &Fighter) -> bool {
+    melee_core::ct!("ftCo_Ucf084Tumble");
     let port = f.x618_player_id as i32;
     let prev = f.input.lstick[1].x;
     if ext::Replay_UcfVersion(port) != 84 {
@@ -97,6 +99,7 @@ pub fn ftCo_Ucf084Tumble(f: &Fighter) -> bool {
 }
 
 pub fn ftCo_DamageFall_IASA(g: G) {
+    melee_core::ct!("ftCo_DamageFall_IASA");
     if !ext::ftCo_800C5240(g) {
         if ext::ftCo_SpecialAir_CheckInput(g) {
             return;
@@ -134,5 +137,6 @@ pub fn ftCo_DamageFall_IASA(g: G) {
 }
 
 pub fn ftCo_DamageFall_Coll(g: G) {
+    melee_core::ct!("ftCo_DamageFall_Coll");
     ext::ft_8008370C(g, ext::ftCo_80090984);
 }

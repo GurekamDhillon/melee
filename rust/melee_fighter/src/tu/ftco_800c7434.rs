@@ -7,6 +7,7 @@ use crate::types::*;
 
 /// `ftCo_800C7434(gobj)`: Giga Bowser -> motion state 0xE (Wait).
 pub fn ftco_800c7434(g: G) {
+    melee_core::ct!("ftco_800c7434");
     let ms = if fp(g).kind == Ft_Kind_GKoops {
         0xE
     } else {
@@ -21,16 +22,19 @@ pub fn ftco_800c7434(g: G) {
 
 /// `ftCo_800C74AC(gobj)`: `ft_8008521C(gobj)`.
 pub fn ftco_800c74ac(g: G) {
+    melee_core::ct!("ftco_800c74ac");
     e0d0::ft_8008521C(g)
 }
 
 /// `fn_800C74CC(gobj)`: take_dmg_cb of CaptureLeadead.
 pub unsafe extern "C" fn fn_800c74cc(g: G) {
+    melee_core::ct!("fn_800c74cc");
     ext::it_802EADD8(unsafe { fp(g).mv.co.captureleadead.x0 })
 }
 
 /// `ftCo_800C74F4(gobj)`: hit by a ReDead (leadead) grab -> CaptureLeadead.
 pub fn ftco_800c74f4(g: G) -> bool {
+    melee_core::ct!("ftco_800c74f4");
     let f = fp(g);
     if f.dmg.x1860_element == HitElement_Leadead
         && f.capture_timer == 0
@@ -45,6 +49,7 @@ pub fn ftco_800c74f4(g: G) -> bool {
 
 /// `fn_800C7568(gobj)`: death2_cb of CaptureLeadead.
 pub unsafe extern "C" fn fn_800c7568(g: G) {
+    melee_core::ct!("fn_800c7568");
     ext::it_802EADD8(unsafe { fp(g).mv.co.captureleadead.x0 })
 }
 

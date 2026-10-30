@@ -39,10 +39,12 @@ unsafe fn os_timer_clock() -> u32 {
 }
 
 pub fn lbTime_8000AEC8(a: u32, b: u32) -> u32 {
+    melee_core::ct!("lbTime_8000AEC8");
     if (u32::MAX.wrapping_sub(a)) > b { a.wrapping_add(b) } else { u32::MAX }
 }
 
 pub fn lbTime_8000AEE4(a: u32, b: i32) -> u32 {
+    melee_core::ct!("lbTime_8000AEE4");
     if b > 0 {
         if u32::MAX.wrapping_sub(a) > b as u32 { a.wrapping_add(b as u32) } else { u32::MAX }
     } else if a > b.wrapping_neg() as u32 {
@@ -53,6 +55,7 @@ pub fn lbTime_8000AEE4(a: u32, b: i32) -> u32 {
 }
 
 pub fn lbTime_8000AF24(a: u32, b: i32) -> u32 {
+    melee_core::ct!("lbTime_8000AF24");
     if b > 0 {
         let ab = a & 0xFFFF;
         let c: i32 = 0xFFFF;
@@ -64,6 +67,7 @@ pub fn lbTime_8000AF24(a: u32, b: i32) -> u32 {
 }
 
 pub fn lbTime_8000AF74(a: u32, b: i32) -> u32 {
+    melee_core::ct!("lbTime_8000AF74");
     if b > 0 {
         let lo = 0xFFu32 - (a & 0xFF);
         // `lo > b`: u32 vs int compares unsigned
@@ -74,6 +78,7 @@ pub fn lbTime_8000AF74(a: u32, b: i32) -> u32 {
 }
 
 pub unsafe fn lbTime_GetTimeInSeconds() -> u32 {
+    melee_core::ct!("lbTime_GetTimeInSeconds");
     let ticks: i64 = ext::OSGetTime();
     // OSTime / u32 clock: the u32 converts to s64, so a negative tick count stays negative, then u64
     let mut secs = ticks.wrapping_div(os_timer_clock() as i64) as u64;
@@ -84,5 +89,6 @@ pub unsafe fn lbTime_GetTimeInSeconds() -> u32 {
 }
 
 pub unsafe fn lbTime_8000B028(td: *mut OSCalendarTime, secs: u32) {
+    melee_core::ct!("lbTime_8000B028");
     ext::OSTicksToCalendarTime((secs as u64).wrapping_mul(os_timer_clock() as u64) as i64, td)
 }

@@ -155,6 +155,7 @@ pub mod ext {
 
 /// `bootOnLoad` (gmboot.c): clear the load data; skip the intro to the title, or play it.
 pub fn bootOnLoad(scene: *mut GameModeState) {
+    melee_core::ct!("bootOnLoad");
     unsafe {
         let scene_data = ext::gm_GetGameModeStateEnterData(scene) as *mut loadData;
         (*scene_data).x4 = 0;
@@ -171,6 +172,7 @@ pub fn bootOnLoad(scene: *mut GameModeState) {
 /// `bootOnLeave` (gmboot.c): the Pikmin trophy check, the mode override and the next mode, then the
 /// TARGET_PC scene launch and content probe.
 pub fn bootOnLeave(data: *mut GameModeState) {
+    melee_core::ct!("bootOnLeave");
     unsafe {
         let scene_data = ext::gm_GetGameModeStateExitData(data) as *mut exitData;
 
@@ -200,6 +202,7 @@ pub fn bootOnLeave(data: *mut GameModeState) {
 
 /// `memcardOnLoad` (gmboot.c, the memory-card mode): record that the prompt is the next step.
 pub fn memcardOnLoad(scene: *mut GameModeState) {
+    melee_core::ct!("memcardOnLoad");
     unsafe {
         let temp_r3 = ext::gm_GetGameModeStateEnterData(scene) as *mut loadData;
         (*temp_r3).x4 = 0;

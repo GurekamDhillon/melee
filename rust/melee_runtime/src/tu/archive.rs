@@ -59,6 +59,7 @@ unsafe fn Locate(archive: *mut HSD_Archive) {
 
 /// `HSD_ArchiveParse`: the body between the profiler's begin / end calls (`PC_PROF_BEGIN(GW_PROF_DECODE, file_size)`).
 pub unsafe extern "C" fn HSD_ArchiveParse(archive: *mut HSD_Archive, src: *mut u8, file_size: usize) -> i32 {
+    melee_core::ct!("HSD_ArchiveParse");
     if ext::ProfActive() != 0 {
         ext::ProfBegin(GW_PROF_DECODE as i32, file_size as i32);
     }
@@ -69,6 +70,7 @@ pub unsafe extern "C" fn HSD_ArchiveParse(archive: *mut HSD_Archive, src: *mut u
 
 /// `HSD_ArchiveParse_profile_body`
 pub unsafe extern "C" fn HSD_ArchiveParse_profile_body(archive: *mut HSD_Archive, src: *mut u8, file_size: usize) -> i32 {
+    melee_core::ct!("HSD_ArchiveParse_profile_body");
     if archive.is_null() {
         return -1;
     }
@@ -115,6 +117,7 @@ pub unsafe extern "C" fn HSD_ArchiveParse_profile_body(archive: *mut HSD_Archive
 
 /// `HSD_ArchiveGetPublicAddress`
 pub unsafe extern "C" fn HSD_ArchiveGetPublicAddress(archive: *mut HSD_Archive, symbols: *const i8) -> *mut c_void {
+    melee_core::ct!("HSD_ArchiveGetPublicAddress");
     let want = CStr::from_ptr(symbols);
     let mut i: u32 = 0;
     while i < (*archive).header.nb_public {
@@ -130,6 +133,7 @@ pub unsafe extern "C" fn HSD_ArchiveGetPublicAddress(archive: *mut HSD_Archive, 
 
 /// `HSD_ArchiveGetExtern`
 pub unsafe extern "C" fn HSD_ArchiveGetExtern(archive: *mut HSD_Archive, offset: i32) -> *mut i8 {
+    melee_core::ct!("HSD_ArchiveGetExtern");
     if offset < 0 || (*archive).header.nb_extern <= offset as u32 {
         return null_mut();
     }
@@ -138,6 +142,7 @@ pub unsafe extern "C" fn HSD_ArchiveGetExtern(archive: *mut HSD_Archive, offset:
 
 /// `HSD_ArchiveLocateExtern`: patches every slot of the extern's chain with `addr` (low 32 bits).
 pub unsafe extern "C" fn HSD_ArchiveLocateExtern(archive: *mut HSD_Archive, symbols: *const i8, addr: *mut c_void) {
+    melee_core::ct!("HSD_ArchiveLocateExtern");
     let want = CStr::from_ptr(symbols);
     let mut offset: u32 = u32::MAX;
     let mut i: u32 = 0;

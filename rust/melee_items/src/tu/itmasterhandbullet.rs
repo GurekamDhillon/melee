@@ -83,6 +83,7 @@ pub unsafe extern "C" fn it_802F0AE0(
     vel_x: f32,
     vel_y: f32,
 ) {
+    melee_core::ct!("it_802F0AE0");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = kind;
     spawn.prev_pos = *prev_pos;
@@ -101,11 +102,13 @@ pub unsafe extern "C" fn it_802F0AE0(
 }
 
 pub unsafe extern "C" fn itMasterHandBullet_Logic85_EvtUnk(gobj: *mut Item_GObj, arg1: *mut Item_GObj) {
+    melee_core::ct!("itMasterHandBullet_Logic85_EvtUnk");
     ext::it_8026B894(gobj, arg1);
 }
 
 /// 2F0BE8
 pub unsafe extern "C" fn it_802F0BE8(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802F0BE8");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itMasterHandBulletAttributes;
@@ -120,6 +123,7 @@ pub unsafe extern "C" fn it_802F0BE8(gobj: *mut Item_GObj) {
 
 /// 2F0D2C
 pub unsafe extern "C" fn it_802F0D2C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802F0D2C");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itMasterHandBulletAttributes;
@@ -133,6 +137,7 @@ pub unsafe extern "C" fn it_802F0D2C(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itMasterhandbullet_UnkMotion1_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMasterhandbullet_UnkMotion1_Anim");
     let ip = GET_ITEM(gobj);
     ext::efSync_Spawn(0x405, gobj, &mut (*ip).pos);
     let temp_f1 = (*ip).xDD4_itemVar.masterhandbullet.x0 - 1.0;
@@ -143,39 +148,46 @@ pub unsafe extern "C" fn itMasterhandbullet_UnkMotion1_Anim(gobj: *mut Item_GObj
     false
 }
 
-pub unsafe extern "C" fn itMasterhandbullet_UnkMotion1_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itMasterhandbullet_UnkMotion1_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itMasterhandbullet_UnkMotion1_Phys");}
 
 pub unsafe extern "C" fn itMasterhandbullet_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMasterhandbullet_UnkMotion1_Coll");
     ext::it_8026E15C(gobj, Some(it_802F0F08));
     false
 }
 
 /// 2F0F04
-pub unsafe extern "C" fn it_802F0F04(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn it_802F0F04(_gobj: *mut HSD_GObj) { melee_core::ct!("it_802F0F04");}
 
 /// 2F0F08
-pub unsafe extern "C" fn it_802F0F08(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn it_802F0F08(_gobj: *mut Item_GObj) { melee_core::ct!("it_802F0F08");}
 
 pub unsafe extern "C" fn itMasterHandBullet_Logic83_DmgDealt(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMasterHandBullet_Logic83_DmgDealt");
     true
 }
 
 pub unsafe extern "C" fn itMasterHandBullet_Logic83_Reflected(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMasterHandBullet_Logic83_Reflected");
     ext::it_8027AE34(gobj) != 0
 }
 
 pub unsafe extern "C" fn itMasterHandBullet_Logic83_Clanked(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMasterHandBullet_Logic83_Clanked");
     true
 }
 
 pub unsafe extern "C" fn itMasterHandBullet_Logic83_Absorbed(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMasterHandBullet_Logic83_Absorbed");
     true
 }
 
 pub unsafe extern "C" fn itMasterHandBullet_Logic83_ShieldBounced(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMasterHandBullet_Logic83_ShieldBounced");
     ext::it_8027AF50(gobj) != 0
 }
 
 pub unsafe extern "C" fn itMasterHandBullet_Logic83_HitShield(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMasterHandBullet_Logic83_HitShield");
     true
 }

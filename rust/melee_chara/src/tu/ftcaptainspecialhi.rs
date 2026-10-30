@@ -103,12 +103,15 @@ unsafe fn da(fp: *mut Fighter) -> *const ftCaptain_DatAttrs {
 }
 
 pub unsafe extern "C" fn cb_ftCa_SpecialLw_800E49FC(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftCa_SpecialLw_800E49FC");
     ftCa_SpecialLw_800E49FC(&mut *fpp(g));
 }
 pub unsafe extern "C" fn cb_ftCa_SpecialLw_800E5128(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftCa_SpecialLw_800E5128");
     ftCa_SpecialLw_800E5128(g);
 }
 pub unsafe extern "C" fn cb_ftCa_SpecialLw_800E550C(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftCa_SpecialLw_800E550C");
     ftCa_SpecialLw_800E550C(g);
 }
 
@@ -121,11 +124,13 @@ unsafe fn enter(gobj: *mut HSD_GObj, msid: i32) {
 }
 
 pub fn ftCa_SpecialHi_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialHi_Enter");
     unsafe { enter(gobj, ftCa_MS_SpecialHi as i32) }
 }
 
 /// Shared body of the IASA callbacks once `cmd_vars[0]` is set (`doAirIASA`).
 pub fn doAirIASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("doAirIASA");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -143,6 +148,7 @@ pub fn doAirIASA(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCa_SpecialHi_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialHi_IASA");
     unsafe {
         if (*fpp(gobj)).cmd_vars[0] != 0 {
             doAirIASA(gobj);
@@ -151,6 +157,7 @@ pub fn ftCa_SpecialHi_IASA(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCa_SpecialHi_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialHi_Phys");
     unsafe {
         let fp = &mut *fpp(gobj);
         let da = &*da(fp);
@@ -175,11 +182,13 @@ pub fn ftCa_SpecialHi_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCa_SpecialAirHi_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialAirHi_Enter");
     unsafe { enter(gobj, ftCa_MS_SpecialAirHi as i32) }
 }
 
 /// `doAirColl` (static).
 pub fn doAirColl(gobj: *mut HSD_GObj) {
+    melee_core::ct!("doAirColl");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -196,6 +205,7 @@ pub fn doAirColl(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCa_SpecialHi_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialHi_Coll");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).ground_or_air == GA_Air {
@@ -207,6 +217,7 @@ pub fn ftCa_SpecialHi_Coll(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCa_SpecialAirHi_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialAirHi_Anim");
     unsafe {
         let da = da(fpp(gobj));
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -216,19 +227,23 @@ pub fn ftCa_SpecialAirHi_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCa_SpecialAirHi_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialAirHi_IASA");
     ftCa_SpecialHi_IASA(gobj)
 }
 
 pub fn ftCa_SpecialAirHi_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialAirHi_Phys");
     ftCa_SpecialHi_Phys(gobj)
 }
 
 pub fn ftCa_SpecialAirHi_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialAirHi_Coll");
     ftCa_SpecialHi_Coll(gobj)
 }
 
 /// Grab callback: enter SpecialHiCatch.
 pub fn ftCa_SpecialLw_800E5128(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialLw_800E5128");
     unsafe {
         let fp = fpp(gobj);
         let vic_fp = fpp((*fp).victim_gobj);
@@ -247,15 +262,17 @@ pub fn ftCa_SpecialLw_800E5128(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCa_SpecialHiCatch_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialHiCatch_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         doCatchAnim(gobj);
     }
 }
 
-pub fn ftCa_SpecialHiCatch_IASA(_gobj: *mut HSD_GObj) {}
-pub fn ftCa_SpecialHiCatch_Phys(_gobj: *mut HSD_GObj) {}
+pub fn ftCa_SpecialHiCatch_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCa_SpecialHiCatch_IASA");}
+pub fn ftCa_SpecialHiCatch_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCa_SpecialHiCatch_Phys");}
 
 pub fn ftCa_SpecialHiCatch_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialHiCatch_Coll");
     unsafe {
         if (*fpp(gobj)).anon_221b.x221B_b7() == 0 {
             ext::ft_80083B68(gobj);
@@ -265,6 +282,7 @@ pub fn ftCa_SpecialHiCatch_Coll(gobj: *mut HSD_GObj) {
 
 /// `doCatchAnim` (static): throw the caught victim.
 pub fn doCatchAnim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("doCatchAnim");
     unsafe {
         let fp = fpp(gobj);
         let vic_gobj = (*fp).victim_gobj;
@@ -288,6 +306,7 @@ pub fn doCatchAnim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCa_SpecialHiThrow0_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialHiThrow0_Anim");
     unsafe {
         let fp = fpp(gobj);
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -301,9 +320,10 @@ pub fn ftCa_SpecialHiThrow0_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftCa_SpecialHiThrow0_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftCa_SpecialHiThrow0_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCa_SpecialHiThrow0_IASA");}
 
 pub fn ftCa_SpecialHiThrow0_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialHiThrow0_Phys");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -321,6 +341,7 @@ pub fn ftCa_SpecialHiThrow0_Phys(gobj: *mut HSD_GObj) {
 
 /// Accessory callback: stick to the victim position.
 pub fn ftCa_SpecialLw_800E550C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialLw_800E550C");
     unsafe {
         let fp = fpp(gobj);
         let vic_fp = fpp((*fp).victim_gobj);

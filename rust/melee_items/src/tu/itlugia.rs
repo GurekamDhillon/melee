@@ -98,16 +98,19 @@ pub static mut it_803F7F48: [ItemStateTable; 1] = [
 /// MSL `sqrtf` (three Newton steps; the `volatile` temporary only forces the store).
 #[inline]
 pub fn my_sqrtf(x: f32) -> f32 {
+    melee_core::ct!("my_sqrtf");
     melee_runtime::gekko::sqrtf(x)
 }
 
 /// MSL `sqrtf_accurate` (four Newton steps).
 #[inline]
 pub fn my_sqrtf_accurate(x: f32) -> f32 {
+    melee_core::ct!("my_sqrtf_accurate");
     melee_runtime::gekko::sqrtf_accurate(x)
 }
 
 pub unsafe fn it_2725_Logic17_Spawned(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_2725_Logic17_Spawned");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
     (*ip).xDD4_itemVar.lugia.x64 = (*ip).pos;
@@ -120,9 +123,10 @@ pub unsafe fn it_2725_Logic17_Spawned(gobj: *mut Item_GObj) {
     (*ip).xDD4_itemVar.lugia.xE50.x = 0.0;
 }
 
-pub unsafe extern "C" fn it_802D14D0() {}
+pub unsafe extern "C" fn it_802D14D0() { melee_core::ct!("it_802D14D0");}
 
 pub unsafe fn itLugia_Logic17_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("itLugia_Logic17_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }
 
@@ -133,6 +137,7 @@ unsafe fn child_of(jobj: *mut HSD_JObj) -> *mut HSD_JObj {
 }
 
 pub unsafe extern "C" fn itLugia_UnkMotion1_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLugia_UnkMotion1_Anim");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
     let child = child_of(jobj);
@@ -147,14 +152,17 @@ pub unsafe extern "C" fn itLugia_UnkMotion1_Anim(gobj: *mut Item_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn itLugia_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLugia_UnkMotion1_Phys");
     ext::it_8027A344(gobj);
 }
 
 pub unsafe extern "C" fn itLugia_UnkMotion1_Coll(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLugia_UnkMotion1_Coll");
     0
 }
 
 pub unsafe fn it_802D1580(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D1580");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
     (*ip).xDD4_itemVar.lugia.xE50.x = -(*attrs).x4;
@@ -163,6 +171,7 @@ pub unsafe fn it_802D1580(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLugia_UnkMotion2_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLugia_UnkMotion2_Anim");
     let item = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
     let bone = child_of(jobj);
@@ -172,6 +181,7 @@ pub unsafe extern "C" fn itLugia_UnkMotion2_Anim(gobj: *mut Item_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn itLugia_UnkMotion2_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLugia_UnkMotion2_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
     ext::it_8027A344(gobj);
@@ -188,10 +198,12 @@ pub unsafe extern "C" fn itLugia_UnkMotion2_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLugia_UnkMotion2_Coll(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLugia_UnkMotion2_Coll");
     0
 }
 
 pub unsafe fn it_802D16D4(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D16D4");
     let item = GET_ITEM(gobj);
     ext::Item_80268E5C(gobj, 3, ITEM_ANIM_UPDATE as u32);
     (*item).entered_hitlag = Some(ext::cb::efLib_PauseAll);
@@ -199,6 +211,7 @@ pub unsafe fn it_802D16D4(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLugia_UnkMotion3_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLugia_UnkMotion3_Anim");
     let jobj = GET_JOBJ(gobj);
     let ip = GET_ITEM(gobj);
     let child = child_of(jobj);
@@ -213,6 +226,7 @@ pub unsafe extern "C" fn itLugia_UnkMotion3_Anim(gobj: *mut Item_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn itLugia_UnkMotion3_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLugia_UnkMotion3_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
     ext::it_8027A344(gobj);
@@ -227,10 +241,12 @@ pub unsafe extern "C" fn itLugia_UnkMotion3_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLugia_UnkMotion3_Coll(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLugia_UnkMotion3_Coll");
     0
 }
 
 pub unsafe fn it_802D1830(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D1830");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
 
@@ -245,6 +261,7 @@ pub unsafe fn it_802D1830(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLugia_UnkMotion4_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLugia_UnkMotion4_Anim");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
     let child = child_of(jobj);
@@ -260,6 +277,7 @@ pub unsafe extern "C" fn itLugia_UnkMotion4_Anim(gobj: *mut Item_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn itLugia_UnkMotion4_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLugia_UnkMotion4_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
     ext::it_8027A344(gobj);
@@ -273,10 +291,12 @@ pub unsafe extern "C" fn itLugia_UnkMotion4_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLugia_UnkMotion4_Coll(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLugia_UnkMotion4_Coll");
     0
 }
 
 pub unsafe fn it_802D1A44(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D1A44");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
     let mut pos: Vec3 = core::mem::zeroed();
@@ -296,6 +316,7 @@ pub unsafe fn it_802D1A44(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLugia_UnkMotion5_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLugia_UnkMotion5_Anim");
     let jobj = GET_JOBJ(gobj);
     let ip = GET_ITEM(gobj);
 
@@ -308,14 +329,17 @@ pub unsafe extern "C" fn itLugia_UnkMotion5_Anim(gobj: *mut Item_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn itLugia_UnkMotion5_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLugia_UnkMotion5_Phys");
     ext::it_8027A344(gobj);
 }
 
 pub unsafe extern "C" fn itLugia_UnkMotion5_Coll(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLugia_UnkMotion5_Coll");
     0
 }
 
 pub unsafe extern "C" fn it_802D1BBC(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D1BBC");
     let ip = GET_ITEM(gobj);
 
     if (*ip).xDAC_itcmd_var0 != 0 {
@@ -354,15 +378,18 @@ pub unsafe extern "C" fn it_802D1BBC(gobj: *mut Item_GObj) {
 }
 
 pub unsafe fn it_802D1D40(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D1D40");
     Item_EnterAirStateWithHitlagAndStateDesc(gobj);
 }
 
 pub unsafe extern "C" fn it_802D1DB4(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802D1DB4");
     ext::it_80279FF8(gobj);
     0
 }
 
 pub unsafe extern "C" fn it_802D1DD8(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D1DD8");
     if ext::it_8027A09C(gobj) != 0 {
         let old_ip = GET_ITEM(gobj);
         ext::it_80273454(gobj);
@@ -374,11 +401,13 @@ pub unsafe extern "C" fn it_802D1DD8(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802D1E64(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802D1E64");
     // the C casts `void (*)(void)` to the callback type
     ext::it_8027A118(gobj, Some(core::mem::transmute::<unsafe extern "C" fn(), unsafe extern "C" fn(*mut HSD_GObj)>(it_802D14D0)))
 }
 
 pub unsafe fn it_802D1E8C(gobj: *mut Item_GObj, kind: ItemKind, param: f32) -> *mut Item_GObj {
+    melee_core::ct!("it_802D1E8C");
     let mut spawn: SpawnItem = core::mem::zeroed();
     let ip = GET_ITEM(gobj);
 
@@ -397,10 +426,12 @@ pub unsafe fn it_802D1E8C(gobj: *mut Item_GObj, kind: ItemKind, param: f32) -> *
 
 #[inline]
 pub fn it_802D208C_inline(x: f32, y: f32, z: f32) -> f32 {
+    melee_core::ct!("it_802D208C_inline");
     my_sqrtf(x + y + z)
 }
 
 pub unsafe fn it_802D1F64(gobj: *mut Item_GObj, param: f32) -> Vec3 {
+    melee_core::ct!("it_802D1F64");
     let ip = GET_ITEM(gobj);
     let mut diff: Vec3 = core::mem::zeroed();
 
@@ -420,6 +451,7 @@ pub unsafe fn it_802D1F64(gobj: *mut Item_GObj, param: f32) -> Vec3 {
 }
 
 pub unsafe fn it_802D208C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D208C");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
     let mut target: Vec3;
@@ -456,25 +488,30 @@ pub unsafe fn it_802D208C(gobj: *mut Item_GObj) {
 }
 
 pub unsafe fn itLugia_Logic39_Spawned(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLugia_Logic39_Spawned");
     ext::it_8027ADEC(0x465, gobj, HSD_GObjGetHSDObj(gobj) as *mut HSD_JObj, 0.8);
     it_802D23F4(gobj);
 }
 
 pub unsafe fn itLugia_Logic40_Spawned(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLugia_Logic40_Spawned");
     ext::it_8027ADEC(0x466, gobj, HSD_GObjGetHSDObj(gobj) as *mut HSD_JObj, 0.8);
     it_802D23F4(gobj);
 }
 
 pub unsafe fn itLugia_Logic41_Spawned(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLugia_Logic41_Spawned");
     ext::it_8027ADEC(0x467, gobj, HSD_GObjGetHSDObj(gobj) as *mut HSD_JObj, 0.8);
     it_802D23F4(gobj);
 }
 
 pub unsafe fn it_802D23D4(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D23D4");
     ext::it_8026B894(gobj, ref_gobj);
 }
 
 pub unsafe fn it_802D23F4(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D23F4");
     let ip = GET_ITEM(gobj);
     let attrs = attrs_of(ip);
     (*ip).xD44_lifeTimer = (*attrs).x0;
@@ -485,11 +522,13 @@ pub unsafe fn it_802D23F4(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802D246C(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802D246C");
     let ip = GET_ITEM(gobj);
     Item_TickLifetime(ip) as i32
 }
 
 pub unsafe extern "C" fn it_802D24A0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D24A0");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut f32;
     let mut multiplier: f32 = 0.0;
@@ -507,5 +546,6 @@ pub unsafe extern "C" fn it_802D24A0(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802D24FC(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802D24FC");
     ext::it_8026DA08(gobj)
 }

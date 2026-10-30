@@ -74,6 +74,7 @@ unsafe fn data() -> &'static mut CrowdSFX_UnkStruct {
 }
 
 pub unsafe extern "C" fn fn_803219AC(gobj: G) {
+    melee_core::ct!("fn_803219AC");
     let d = data();
     if d.x4 < 0x10000 {
         d.x4 += 1;
@@ -83,6 +84,7 @@ pub unsafe extern "C" fn fn_803219AC(gobj: G) {
 }
 
 pub unsafe fn un_80321A00(_gobj: G) {
+    melee_core::ct!("un_80321A00");
     let d = data();
     let v = cfg();
 
@@ -120,6 +122,7 @@ pub unsafe fn un_80321A00(_gobj: G) {
 }
 
 pub unsafe fn un_80321AF4(_gobj: G) {
+    melee_core::ct!("un_80321AF4");
     let bx = ext::mpLib_80458868();
     let d = data();
     let old_x24 = d.x24;
@@ -152,10 +155,12 @@ pub unsafe fn un_80321AF4(_gobj: G) {
 }
 
 pub unsafe fn un_80321BF8(arg0: i32) {
+    melee_core::ct!("un_80321BF8");
     data().x2C = ext::lbAudioAx_800240B4(arg0);
 }
 
 pub unsafe fn un_80321C28() {
+    melee_core::ct!("un_80321C28");
     let d = data();
     if ext::lbAudioAx_80023710(d.x2C) != 0 {
         ext::lbAudioAx_800236B8(d.x2C);
@@ -173,6 +178,7 @@ unsafe fn un_80321C70_inline() {
 }
 
 pub unsafe fn un_80321C70() {
+    melee_core::ct!("un_80321C70");
     let d = data();
     if d.x18 >= cfg().max_gasp_count || d.x18 < cfg().x24 {
         return;
@@ -181,12 +187,14 @@ pub unsafe fn un_80321C70() {
 }
 
 pub unsafe fn un_80321CA4(arg: i32) {
+    melee_core::ct!("un_80321CA4");
     let d = data();
     un_80321CE8();
     d.x28 = ext::lbAudioAx_8002411C(arg);
 }
 
 pub unsafe fn un_80321CE8() {
+    melee_core::ct!("un_80321CE8");
     let d = data();
     if ext::lbAudioAx_80023710(d.x28) != 0 {
         ext::lbAudioAx_800236B8(d.x28);
@@ -204,6 +212,7 @@ unsafe fn un_80321CE8_caller(arg0: u32) {
 }
 
 pub unsafe fn un_80321D30(arg0: u32, arg1: f32) {
+    melee_core::ct!("un_80321D30");
     let d = data();
     let cat = un_80322298(arg1);
     if cat >= 2 && un_80321EBC(arg0, arg1) {
@@ -224,6 +233,7 @@ pub unsafe fn un_80321D30(arg0: u32, arg1: f32) {
 }
 
 pub unsafe fn un_80321EBC(arg0: u32, arg1: f32) -> bool {
+    melee_core::ct!("un_80321EBC");
     let d = data();
     let gobj = ext::ftLib_8008741C(arg0);
     if gobj.is_null() {
@@ -281,6 +291,7 @@ unsafe fn restart_x28(sfx: i32) {
 }
 
 pub unsafe fn un_8032201C(arg0: u32, cat: i32) -> bool {
+    melee_core::ct!("un_8032201C");
     let d = data();
 
     match cat {
@@ -303,6 +314,7 @@ pub unsafe fn un_8032201C(arg0: u32, cat: i32) -> bool {
 }
 
 pub unsafe fn un_80322178(arg: i32) {
+    melee_core::ct!("un_80322178");
     match arg {
         3 => restart_x28(0x13d),
         2 => restart_x28(0x13e),
@@ -312,6 +324,7 @@ pub unsafe fn un_80322178(arg: i32) {
 }
 
 pub unsafe fn un_80322258(arg: f32) -> bool {
+    melee_core::ct!("un_80322258");
     let val2c = cfg().horiz_margin;
     let bx = ext::mpLib_80458868();
 
@@ -319,6 +332,7 @@ pub unsafe fn un_80322258(arg: f32) -> bool {
 }
 
 pub unsafe fn un_80322298(arg: f32) -> i32 {
+    melee_core::ct!("un_80322298");
     let v = cfg();
     if arg >= v.kb_threshold_high {
         return 3;
@@ -333,6 +347,7 @@ pub unsafe fn un_80322298(arg: f32) -> i32 {
 }
 
 pub unsafe fn un_803222EC(arg1: f32, arg2: f32) -> f32 {
+    melee_core::ct!("un_803222EC");
     let v = cfg();
     if !(arg2 > v.angle_min) {
         return arg1;
@@ -344,6 +359,7 @@ pub unsafe fn un_803222EC(arg1: f32, arg2: f32) -> f32 {
 }
 
 pub unsafe fn un_80322314() {
+    melee_core::ct!("un_80322314");
     let d = data();
     let v = cfg();
     if d.x18 >= v.max_gasp_count {
@@ -354,6 +370,7 @@ pub unsafe fn un_80322314() {
 }
 
 pub unsafe fn un_8032233C(arg0: u32, arg1: u32) {
+    melee_core::ct!("un_8032233C");
     let d = data();
 
     let gobj = ext::ftLib_8008741C(arg0);
@@ -395,6 +412,7 @@ pub unsafe fn un_8032233C(arg0: u32, arg1: u32) {
 }
 
 pub unsafe fn un_803224DC(spawn_id: i32, pos_x: f32, kb_mag: f32) -> bool {
+    melee_core::ct!("un_803224DC");
     let v = cfg();
 
     let tmp_cat = if kb_mag >= v.kb_threshold_high {
@@ -422,6 +440,7 @@ pub unsafe fn un_803224DC(spawn_id: i32, pos_x: f32, kb_mag: f32) -> bool {
 }
 
 pub unsafe fn un_80322598(arg0: i32, arg1: f32) -> i32 {
+    melee_core::ct!("un_80322598");
     let val14 = (*ext::mpLib_80458868().add(1)).bottom;
     if arg1 >= val14 || arg1 < cfg().recovery_y_low + val14 {
         return 0;

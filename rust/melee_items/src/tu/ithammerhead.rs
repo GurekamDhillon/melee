@@ -69,6 +69,7 @@ pub static it_803F6640: [ItemStateTable; 4] = [
 
 /// `void it_80299C48(Item_GObj* parent, Vec3* pos, Vec3* velocity, f32 facing_dir)`: throw a head.
 pub unsafe extern "C" fn it_80299C48(parent_gobj: *mut HSD_GObj, pos: *mut Vec3, velocity: *mut Vec3, facing_dir: f32) {
+    melee_core::ct!("it_80299C48");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = It_Kind_Hammer_Head as _;
     Item_InitSpawnPositionFromParent(&raw mut spawn, parent_gobj, pos);
@@ -86,12 +87,14 @@ pub unsafe extern "C" fn it_80299C48(parent_gobj: *mut HSD_GObj, pos: *mut Vec3,
 }
 
 pub unsafe extern "C" fn itHammerHead_Logic40_Spawned(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHammerHead_Logic40_Spawned");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itHammerheadAttributes;
     ext::it_80275158(gobj, (*attrs).x4);
 }
 
 pub unsafe extern "C" fn it_80299D7C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_80299D7C");
     let ip = GET_ITEM(gobj);
     if (*ip).ground_or_air != GA_Air as _ {
         ext::it_802762BC(ip);
@@ -101,6 +104,7 @@ pub unsafe extern "C" fn it_80299D7C(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itHammerHead_Logic40_PickedUp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHammerHead_Logic40_PickedUp");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itHammerheadAttributes;
     ext::it_80275158(gobj, (*attrs).x4);
@@ -108,16 +112,19 @@ pub unsafe extern "C" fn itHammerHead_Logic40_PickedUp(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itHammerhead_UnkMotion1_Anim(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHammerhead_UnkMotion1_Anim");
     0
 }
 
-pub unsafe extern "C" fn itHammerhead_UnkMotion1_Phys(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itHammerhead_UnkMotion1_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itHammerhead_UnkMotion1_Phys");}
 
 pub unsafe extern "C" fn itHammerHead_Logic40_Dropped(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHammerHead_Logic40_Dropped");
     itHammerHead_Logic40_Thrown(gobj);
 }
 
 pub unsafe extern "C" fn itHammerHead_Logic40_Thrown(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHammerHead_Logic40_Thrown");
     let ip = GET_ITEM(gobj);
     if (*ip).ground_or_air != GA_Air as _ {
         ext::it_802762BC(ip);
@@ -127,6 +134,7 @@ pub unsafe extern "C" fn itHammerHead_Logic40_Thrown(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itHammerhead_UnkMotion2_Anim(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHammerhead_UnkMotion2_Anim");
     let ip = GET_ITEM(gobj);
     (*ip).xD44_lifeTimer -= 1.0;
     if (*ip).xD44_lifeTimer <= 0.0 {
@@ -139,6 +147,7 @@ pub unsafe extern "C" fn itHammerhead_UnkMotion2_Anim(gobj: *mut HSD_GObj) -> i3
 }
 
 pub unsafe extern "C" fn itHammerhead_UnkMotion2_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHammerhead_UnkMotion2_Phys");
     let ip = GET_ITEM(gobj);
     let attr = (*ip).xCC_item_attr;
     ext::it_80272860(gobj, (*attr).x10_fall_speed, (*attr).x14_fall_speed_max);
@@ -146,20 +155,24 @@ pub unsafe extern "C" fn itHammerhead_UnkMotion2_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itHammerhead_UnkMotion2_Coll(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHammerhead_UnkMotion2_Coll");
     ext::it_8026E15C(gobj, Some(it_80299F94));
     0
 }
 
 pub unsafe extern "C" fn it_80299F94(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_80299F94");
     it_80299FB4(gobj);
 }
 
 /// `static inline Item* it_80299FB4_get(Item_GObj*)`
 pub unsafe extern "C" fn it_80299FB4_get(gobj: *mut HSD_GObj) -> *mut Item {
+    melee_core::ct!("it_80299FB4_get");
     GET_ITEM(gobj)
 }
 
 pub unsafe extern "C" fn it_80299FB4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_80299FB4");
     let ip = it_80299FB4_get(gobj);
     (*ip).x40_vel.y = 0.0;
     (*ip).x40_vel.x = 0.0;
@@ -168,6 +181,7 @@ pub unsafe extern "C" fn it_80299FB4(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itHammerhead_UnkMotion3_Anim(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHammerhead_UnkMotion3_Anim");
     let ip = GET_ITEM(gobj);
     (*ip).xD44_lifeTimer -= 1.0;
     if (*ip).xD44_lifeTimer <= 0.0 {
@@ -179,34 +193,41 @@ pub unsafe extern "C" fn itHammerhead_UnkMotion3_Anim(gobj: *mut HSD_GObj) -> i3
     0
 }
 
-pub unsafe extern "C" fn itHammerhead_UnkMotion3_Phys(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itHammerhead_UnkMotion3_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itHammerhead_UnkMotion3_Phys");}
 
 pub unsafe extern "C" fn itHammerhead_UnkMotion3_Coll(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHammerhead_UnkMotion3_Coll");
     ext::it_8026D62C(gobj, Some(itHammerHead_Logic40_Thrown));
     0
 }
 
 pub unsafe extern "C" fn itHammerHead_Logic40_DmgDealt(_arg0: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHammerHead_Logic40_DmgDealt");
     0
 }
 
 pub unsafe extern "C" fn itHammerHead_Logic40_Clanked(_arg0: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHammerHead_Logic40_Clanked");
     0
 }
 
 pub unsafe extern "C" fn itHammerHead_Logic40_HitShield(_arg0: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHammerHead_Logic40_HitShield");
     0
 }
 
 pub unsafe extern "C" fn itHammerHead_Logic40_Reflected(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHammerHead_Logic40_Reflected");
     ext::it_80273030(gobj);
     0
 }
 
 pub unsafe extern "C" fn itHammerHead_Logic40_DmgReceived(_arg0: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHammerHead_Logic40_DmgReceived");
     0
 }
 
 pub unsafe extern "C" fn itHammerHead_Logic40_EvtUnk(gobj: *mut HSD_GObj, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHammerHead_Logic40_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

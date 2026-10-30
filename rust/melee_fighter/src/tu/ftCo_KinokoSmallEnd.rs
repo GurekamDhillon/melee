@@ -61,9 +61,10 @@ fn call_ev(e: HSD_GObjEvent, g: G) {
 }
 
 /// `ftCo_800D23F4` as the C `HSD_GObjEvent` stored in `mv.co.mushroom.x4` / `take_dmg_cb`.
-pub unsafe extern "C" fn ftCo_800D23F4_cb(g: *mut HSD_GObj) { ftCo_800D23F4(g) }
+pub unsafe extern "C" fn ftCo_800D23F4_cb(g: *mut HSD_GObj) { melee_core::ct!("ftCo_800D23F4_cb"); ftCo_800D23F4(g) }
 
 pub fn Fighter_PoisonMushroomEnd(g: G) -> bool {
+    melee_core::ct!("Fighter_PoisonMushroomEnd");
     if !ext::fn_800D2818(fp(g)) {
         return false;
     }
@@ -76,6 +77,7 @@ pub fn Fighter_PoisonMushroomEnd(g: G) -> bool {
 }
 
 pub fn ftCo_800D23F4(g: G) {
+    melee_core::ct!("ftCo_800D23F4");
     ext::fn_800D2BF8(g);
     fp(g).set_x2220_b6(0);
     let s = fp(g).x34_scale.x;
@@ -103,6 +105,7 @@ fn ftCo_800D2490_inline(g: G, id: i32, arg1: i32) {
 }
 
 pub fn ftCo_800D2490(g: G, arg1: i32) {
+    melee_core::ct!("ftCo_800D2490");
     let id = fp(g).motion_id as i32;
     ext::fn_800D290C(g);
     ext::Fighter_ChangeMotionState(g, ftCo_MS_KinokoSmallEnd as i32, 0x91, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -112,6 +115,7 @@ pub fn ftCo_800D2490(g: G, arg1: i32) {
 
 /// `fn_800D2530` (static in the C).
 pub fn fn_800D2530(g: G) {
+    melee_core::ct!("fn_800D2530");
     ext::fn_800D2CA0(fp(g));
     let (a, s) = (fp(g).cur_anim_frame, fp(g).frame_speed_mul);
     ext::Fighter_ChangeMotionState(g, ftCo_MS_KinokoSmallEnd as i32, 0xC4C5081, a, s, 0.0, core::ptr::null_mut());
@@ -119,16 +123,19 @@ pub fn fn_800D2530(g: G) {
 }
 
 pub fn ftCo_KinokoSmallEnd_Anim(g: G) {
+    melee_core::ct!("ftCo_KinokoSmallEnd_Anim");
     if !ext::fn_800D2A3C(g) {
         ftCo_800D23F4(g);
     }
 }
 
 pub fn ftCo_KinokoSmallEnd_Coll(g: G) {
+    melee_core::ct!("ftCo_KinokoSmallEnd_Coll");
     ext::ft_8008403C(g, fn_800D26A0);
 }
 
 pub fn ftCo_800D2600(g: G, arg1: i32) {
+    melee_core::ct!("ftCo_800D2600");
     let id = fp(g).motion_id as i32;
     ext::fn_800D290C(g);
     ext::Fighter_ChangeMotionState(g, ftCo_MS_KinokoSmallEndAir as i32, 0x91, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -137,6 +144,7 @@ pub fn ftCo_800D2600(g: G, arg1: i32) {
 }
 
 pub fn fn_800D26A0(g: G) {
+    melee_core::ct!("fn_800D26A0");
     ext::fn_800D2CD4(fp(g));
     let (a, s) = (fp(g).cur_anim_frame, fp(g).frame_speed_mul);
     ext::Fighter_ChangeMotionState(g, ftCo_MS_KinokoSmallEndAir as i32, 0xC4C5081, a, s, 0.0, core::ptr::null_mut());
@@ -144,11 +152,13 @@ pub fn fn_800D26A0(g: G) {
 }
 
 pub fn ftCo_KinokoSmallEndAir_Anim(g: G) {
+    melee_core::ct!("ftCo_KinokoSmallEndAir_Anim");
     if !ext::fn_800D2A3C(g) {
         ftCo_800D23F4(g);
     }
 }
 
 pub fn ftCo_KinokoSmallEndAir_Coll(g: G) {
+    melee_core::ct!("ftCo_KinokoSmallEndAir_Coll");
     ext::ft_80082C74(g, fn_800D2530);
 }

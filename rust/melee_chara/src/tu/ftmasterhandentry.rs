@@ -42,6 +42,7 @@ pub mod ext {
 }
 
 pub fn ftMh_MS_343_801510B0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_343_801510B0");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*(*fp).ft_data).ext_attr as *const ftMasterHand_SpecialAttrs;
@@ -58,6 +59,7 @@ pub fn ftMh_MS_343_801510B0(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMh_Entry_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Entry_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         unsafe {
             let fp = (*gobj).user_data as *mut Fighter;
@@ -67,12 +69,13 @@ pub fn ftMh_Entry_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftMh_Entry_Phys(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_Entry_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_Entry_Phys");}
 
-pub fn ftMh_Entry_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_Entry_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_Entry_Coll");}
 
 /// Accessory-4 callback of the entry: the intro camera sequence (static in the C).
 pub unsafe extern "C" fn ftMh_MS_343_801511FC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_343_801511FC");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         match (*fp).mv.mh.unk4.x0 {

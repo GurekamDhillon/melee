@@ -134,6 +134,7 @@ static mut erase_colors_vi0601: GXColor = GXColor { r: 0, g: 0, b: 0, a: 0 };
 
 /// `void vi_8031E6EC(HSD_GObj*)`
 pub unsafe extern "C" fn vi_8031E6EC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("vi_8031E6EC");
     ext::HSD_JObjAnimAll((*gobj).hsd_obj as *mut HSD_JObj);
 }
 
@@ -161,6 +162,7 @@ unsafe extern "C" fn vi0601_GObj_OnRender(gobj: *mut HSD_GObj, _code: i32) {
 
 /// `void fn_8031E800(HSD_GObj*)`
 pub unsafe extern "C" fn fn_8031E800(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8031E800");
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let child: *mut HSD_JObj = if jobj.is_null() { core::ptr::null_mut() } else { (*jobj).child };
 
@@ -172,6 +174,7 @@ pub unsafe extern "C" fn fn_8031E800(gobj: *mut HSD_GObj) {
 
 /// `void un_8031E9B8(void)`
 pub unsafe fn un_8031E9B8() {
+    melee_core::ct!("un_8031E9B8");
     let mut gobj = ext::GObj_Create(0xE, 0xF, 0);
     let mut jobj = ext::HSD_JObjLoadJoint((**(*un_804D6FB0).models).joint);
     ext::HSD_GObjObject_80390A70(gobj, ext::HSD_GObj_JObjKind, jobj as *mut c_void);
@@ -208,6 +211,7 @@ pub unsafe fn un_8031E9B8() {
 
 /// `void vi0601_RunFrame(HSD_GObj*)`
 pub unsafe extern "C" fn vi0601_RunFrame(gobj: *mut HSD_GObj) {
+    melee_core::ct!("vi0601_RunFrame");
     let cobj = (*gobj).hsd_obj as *mut HSD_CObj;
     ext::HSD_CObjAnim(cobj);
 
@@ -222,6 +226,7 @@ pub unsafe extern "C" fn vi0601_RunFrame(gobj: *mut HSD_GObj) {
 
 /// `void vi0601_Scene_OnEnter(void*)`
 pub unsafe fn vi0601_Scene_OnEnter(enter_data: *mut c_void) {
+    melee_core::ct!("vi0601_Scene_OnEnter");
     ext::lbAudioAx_800236DC();
     ext::efLib_Init();
     ext::efAsync_LoadSync(0);
@@ -259,5 +264,6 @@ pub unsafe fn vi0601_Scene_OnEnter(enter_data: *mut c_void) {
 
 /// `void vi0601_Scene_OnFrame(void)`
 pub unsafe fn vi0601_Scene_OnFrame() {
+    melee_core::ct!("vi0601_Scene_OnFrame");
     vi_8031CAAC();
 }

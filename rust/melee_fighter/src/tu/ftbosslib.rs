@@ -45,11 +45,12 @@ fn assert_report(line: i32, cond: bool, msg: &str) {
 }
 
 /// `ftBossLib_8015BD20`: no-op.
-pub fn ftBossLib_8015BD20(_g: G) {}
+pub fn ftBossLib_8015BD20(_g: G) { melee_core::ct!("ftBossLib_8015BD20");}
 
 /// `ftBossLib_8015BD24`: `*arg1 = (arg3/arg0 + HSD_Randi(arg4-arg5) + arg5) / arg2` (int sum,
 /// then int->float, then f32 divide).
 pub fn ftBossLib_8015BD24(arg0: i32, arg1: &mut f32, arg2: f32, arg3: i32, arg4: i32, arg5: i32) {
+    melee_core::ct!("ftBossLib_8015BD24");
     let q = melee_runtime::cabi::sdiv(arg3, arg0);
     let r = h::hsd_randi(arg4.wrapping_sub(arg5));
     let n = q.wrapping_add(r).wrapping_add(arg5);
@@ -58,6 +59,7 @@ pub fn ftBossLib_8015BD24(arg0: i32, arg1: &mut f32, arg2: f32, arg3: i32, arg4:
 
 /// `ftBossLib_ReportGObjSlotType`.
 pub fn ftBossLib_ReportGObjSlotType(g: G) {
+    melee_core::ct!("ftBossLib_ReportGObjSlotType");
     let kind = ext::Player_GetPlayerSlotType(fp(g).player_id as i32);
     assert_report(103, kind == Gm_PKind_Human || kind == Gm_PKind_Boss || kind == Gm_PKind_Cpu,
                   "boss is human or boss!\n");
@@ -78,6 +80,7 @@ fn lb_normalize(v: &mut Vec3) {
 
 /// The arithmetic of `ftBossLib_8015BE40` on plain values: returns (self_vel.x, self_vel.y, *arg2).
 pub fn boss_8015be40_math(target: &Vec3, cur: &Vec3, arg3: f32, arg4: f32) -> (f32, f32, f32) {
+    melee_core::ct!("boss_8015be40_math");
     let mut diff = Vec3 { x: target.x - cur.x, y: target.y - cur.y, z: target.z - cur.z };
     let distance = my_lbvector_len(&diff);
     let out;
@@ -95,6 +98,7 @@ pub fn boss_8015be40_math(target: &Vec3, cur: &Vec3, arg3: f32, arg4: f32) -> (f
 
 /// `ftBossLib_8015BE40`.
 pub fn ftBossLib_8015BE40(g: G, arg1: &Vec3, arg2: &mut f32, arg3: f32, arg4: f32) {
+    melee_core::ct!("ftBossLib_8015BE40");
     let f = fp(g);
     let (x, y, o) = boss_8015be40_math(arg1, &f.cur_pos, arg3, arg4);
     *arg2 = o;
@@ -114,6 +118,7 @@ fn clamp_diff(x_diff: f32, max: f32) -> f32 {
 
 /// `ftBossLib_8015BF74`: `self_vel.x += clamp(target.x - cur.x)`.
 pub fn ftBossLib_8015BF74(g: G, x_diff_max: f32) {
+    melee_core::ct!("ftBossLib_8015BF74");
     let mut v = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ftBossLib_8015C208(g, &mut v);
     let f = fp(g);
@@ -122,6 +127,7 @@ pub fn ftBossLib_8015BF74(g: G, x_diff_max: f32) {
 
 /// `ftBossLib_8015C010`: `self_vel.x = clamp(target.x - cur.x)`.
 pub fn ftBossLib_8015C010(g: G, x_diff_max: f32) {
+    melee_core::ct!("ftBossLib_8015C010");
     let mut v = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ftBossLib_8015C208(g, &mut v);
     let f = fp(g);
@@ -130,6 +136,7 @@ pub fn ftBossLib_8015C010(g: G, x_diff_max: f32) {
 
 /// `ftBossLib_8015C09C`: set facing and the root's Y rotation (`M_PI_2 * dir`, in double).
 pub fn ftBossLib_8015C09C(g: G, facing_dir: f32) {
+    melee_core::ct!("ftBossLib_8015C09C");
     let jobj = unsafe { (*g).hsd_obj as *mut HSD_JObj };
     let f = fp(g);
     f.facing_dir = facing_dir;
@@ -140,6 +147,7 @@ pub fn ftBossLib_8015C09C(g: G, facing_dir: f32) {
 
 /// `ftBossLib_8015C190`: clamp x to floor line 0's ends.
 pub fn ftBossLib_8015C190(g: G) {
+    melee_core::ct!("ftBossLib_8015C190");
     let f = fp(g);
     let mut v = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ext::mpFloorGetRight(0, &mut v);
@@ -156,6 +164,7 @@ pub fn ftBossLib_8015C190(g: G) {
 
 /// `ftBossLib_8015C208`: position of the nearest other fighter.
 pub fn ftBossLib_8015C208(arg0: G, arg1: &mut Vec3) {
+    melee_core::ct!("ftBossLib_8015C208");
     let pos = fp(arg0).cur_pos;
     let g = ftBossLib_8015C244(arg0, &pos);
     crate::ftlib::ftlib_80086644(g, arg1);
@@ -163,34 +172,42 @@ pub fn ftBossLib_8015C208(arg0: G, arg1: &mut Vec3) {
 
 /// `ftBossLib_8015C244`.
 pub fn ftBossLib_8015C244(arg0: G, arg1: &Vec3) -> G {
+    melee_core::ct!("ftBossLib_8015C244");
     crate::ftlib::ftlib_8008627c(arg1, arg0)
 }
 
 pub fn ftBossLib_IsMasterHandEntry() -> bool {
+    melee_core::ct!("ftBossLib_IsMasterHandEntry");
     ftBossLib_GetMotionId(Ft_Kind_MasterH) == ftMh_MS_Entry as i32
 }
 pub fn ftBossLib_8015C2A8() -> bool {
+    melee_core::ct!("ftBossLib_8015C2A8");
     ftBossLib_GetMotionId(Ft_Kind_CrezyH) == 0x183
 }
 pub fn ftBossLib_8015C2E0() -> bool {
+    melee_core::ct!("ftBossLib_8015C2E0");
     let m = ftBossLib_GetMotionId(Ft_Kind_MasterH);
     m == 0x158 || m == 0x159
 }
 pub fn ftBossLib_8015C31C() -> bool {
+    melee_core::ct!("ftBossLib_8015C31C");
     let m = ftBossLib_GetMotionId(Ft_Kind_CrezyH);
     m == 0x181 || m == 0x182
 }
 pub fn ftBossLib_8015C358() -> bool {
+    melee_core::ct!("ftBossLib_8015C358");
     let g = ftBossLib_GetFighterGObj(Ft_Kind_MasterH);
     !g.is_null() && fp(g).x221F_b3() != 0
 }
 pub fn ftBossLib_8015C3A0() -> bool {
+    melee_core::ct!("ftBossLib_8015C3A0");
     let g = ftBossLib_GetFighterGObj(Ft_Kind_CrezyH);
     !g.is_null() && fp(g).x221F_b3() != 0
 }
 
 /// `ftBossLib_GetFighterGObj`: first fighter of `kind` on the fighter p-link.
 pub fn ftBossLib_GetFighterGObj(kind: FighterKind) -> G {
+    melee_core::ct!("ftBossLib_GetFighterGObj");
     let mut cur = h::plink_head(HSD_GOBJ_PLINK_FIGHTER);
     while !cur.is_null() {
         if kind == h::ftlib_get_kind(cur) {
@@ -202,16 +219,19 @@ pub fn ftBossLib_GetFighterGObj(kind: FighterKind) -> G {
 }
 
 pub fn ftBossLib_GetMotionId(kind: FighterKind) -> i32 {
+    melee_core::ct!("ftBossLib_GetMotionId");
     let g = ftBossLib_GetFighterGObj(kind);
     if !g.is_null() { crate::ftlib::get_motion_id(g) } else { ftCo_MS_DeadDown as i32 }
 }
 
 pub fn ftBossLib_8015C4C4() -> i32 {
+    melee_core::ct!("ftBossLib_8015C4C4");
     let g = ftBossLib_GetFighterGObj(Ft_Kind_CrezyH);
     if !g.is_null() { unsafe { fp(g).u.mh.x2250 } } else { 0 }
 }
 
 pub fn ftBossLib_8015C530(cpu_level: i32) -> i32 {
+    melee_core::ct!("ftBossLib_8015C530");
     let g = ftBossLib_GetFighterGObj(Ft_Kind_MasterH);
     if g.is_null() {
         return 0;
@@ -228,6 +248,7 @@ pub fn ftBossLib_8015C530(cpu_level: i32) -> i32 {
 }
 
 pub fn ftBossLib_8015C5F8(g: G) {
+    melee_core::ct!("ftBossLib_8015C5F8");
     let f = fp(g);
     match h::hsd_randi(4) {
         0 => h::play_sfx(f, 0x4E21A, 0x7F, 0x40),
@@ -239,6 +260,7 @@ pub fn ftBossLib_8015C5F8(g: G) {
 }
 
 pub fn ftBossLib_8015C6BC() -> *mut ftMasterHand_SpecialAttrs {
+    melee_core::ct!("ftBossLib_8015C6BC");
     let g = ftBossLib_GetFighterGObj(Ft_Kind_MasterH);
     if g.is_null() {
         return core::ptr::null_mut();
@@ -267,6 +289,7 @@ attr_getter! {
 }
 
 pub fn ftBossLib_8015CA6C(arg0: i32) {
+    melee_core::ct!("ftBossLib_8015CA6C");
     crate::player::player_80036790(0, arg0 as f32);
     let mh = ftBossLib_GetFighterGObj(Ft_Kind_MasterH);
     if !mh.is_null() {
@@ -280,10 +303,12 @@ pub fn ftBossLib_8015CA6C(arg0: i32) {
 }
 
 pub fn ftBossLib_8015CB7C() {
+    melee_core::ct!("ftBossLib_8015CB7C");
     ext::it_8026C42C();
 }
 
 pub fn ftBossLib_8015CB9C(arg0: i32) {
+    melee_core::ct!("ftBossLib_8015CB9C");
     let vec = crate::player::load_player_coords(arg0);
     ext::Camera_8002E818(&vec);
     let mut spc = vec;
@@ -294,5 +319,6 @@ pub fn ftBossLib_8015CB9C(arg0: i32) {
 }
 
 pub fn ftBossLib_8015CC14() {
+    melee_core::ct!("ftBossLib_8015CC14");
     ext::Camera_SetModeToStandard();
 }

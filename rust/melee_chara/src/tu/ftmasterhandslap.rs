@@ -24,14 +24,16 @@ pub mod ext {
 }
 
 pub fn ftMh_Slap_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Slap_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         ext::ftMh_MS_389_80151018(gobj);
     }
 }
 
-pub fn ftMh_Slap_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_Slap_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_Slap_Coll");}
 
 pub fn ftMh_MS_349_80151CA8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_349_80151CA8");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*(*fp).ft_data).ext_attr as *const ftMasterHand_SpecialAttrs;

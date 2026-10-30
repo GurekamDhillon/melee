@@ -74,11 +74,13 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 
 /// `ftLg_SpecialN_FireSpawn` as a Fighter callback entry (`accessory4_cb`).
 pub unsafe extern "C" fn cb_ftLg_SpecialN_FireSpawn(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftLg_SpecialN_FireSpawn");
     ftLg_SpecialN_FireSpawn(g);
 }
 
 /// Luigi's grounded Fireball IASA callback.
 pub fn ftLg_SpecialN_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialN_IASA");
     unsafe {
         if (*fpp(gobj)).cmd_vars[0] != 0 {
             crate::stubs::ftCo_Wait_IASA(gobj);
@@ -88,6 +90,7 @@ pub fn ftLg_SpecialN_IASA(gobj: *mut HSD_GObj) {
 
 /// Luigi's aerial Fireball IASA callback.
 pub fn ftLg_SpecialAirN_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirN_IASA");
     unsafe {
         if (*fpp(gobj)).cmd_vars[0] != 0 {
             ext::ftCo_Fall_IASA_Inner(gobj);
@@ -97,6 +100,7 @@ pub fn ftLg_SpecialAirN_IASA(gobj: *mut HSD_GObj) {
 
 /// Luigi's Fireball Spawn callback.
 pub fn ftLg_SpecialN_FireSpawn(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialN_FireSpawn");
     unsafe {
         let fp = fpp(gobj);
         let flag = if (*fp).anon_2210.anon_0.throw_flags_b0() != 0 {

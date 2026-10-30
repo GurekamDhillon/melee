@@ -14,12 +14,14 @@ pub static mut script_hit_meta_count: i32 = 0;
 
 /// `hr_ordinary(element)`: the element ids the rules apply to.
 pub fn hr_ordinary(e: i32) -> i32 {
+    melee_core::ct!("hr_ordinary");
     (e == 0 || e == 1 || e == 2 || e == 5 || e == 13) as i32
 }
 
 /// `script_hit_metadata(hit, create)`: the capsule's row (open addressing by pointer), or a fresh
 /// one when `create`.
 pub unsafe extern "C" fn script_hit_metadata(h: *mut HitCapsule, create: i32) -> *mut HRMeta {
+    melee_core::ct!("script_hit_metadata");
     // The C hashes the 32-bit address; the cast keeps the low 32 bits.
     let start: u32 = ((h as usize as u32) >> 2) % (HR_META_MAX as u32);
     if create == 0 && script_hit_meta_count == 0 {
@@ -47,6 +49,7 @@ pub unsafe extern "C" fn script_hit_metadata(h: *mut HitCapsule, create: i32) ->
 }
 
 pub unsafe extern "C" fn ScriptGame_HitRuleForget(hit: *mut HitCapsule) {
+    melee_core::ct!("ScriptGame_HitRuleForget");
     let m = script_hit_metadata(hit, 0);
     if !m.is_null() {
         core::ptr::write_bytes(m, 0, 1);
@@ -55,6 +58,7 @@ pub unsafe extern "C" fn ScriptGame_HitRuleForget(hit: *mut HitCapsule) {
 }
 
 pub unsafe extern "C" fn ScriptGame_HitRuleSpecial(hit: *mut HitCapsule) {
+    melee_core::ct!("ScriptGame_HitRuleSpecial");
     let m = script_hit_metadata(hit, 0);
     if !m.is_null() {
         (*hit).damage = (*m).original_damage;
@@ -67,6 +71,7 @@ pub unsafe extern "C" fn ScriptGame_HitRuleSpecial(hit: *mut HitCapsule) {
 }
 
 pub unsafe extern "C" fn ScriptGame_HitRuleDamage(hit: *mut HitCapsule) {
+    melee_core::ct!("ScriptGame_HitRuleDamage");
     let m = script_hit_metadata(hit, 0);
     if m.is_null() {
         return;

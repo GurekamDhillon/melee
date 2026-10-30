@@ -43,6 +43,7 @@ pub mod ext {
 pub static mut prevTev: [u32; 2] = [0; 2];
 
 pub unsafe fn psSetupTevCommon() {
+    melee_core::ct!("psSetupTevCommon");
     GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
     GXSetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, 1,
                     GX_TEVPREV);
@@ -62,8 +63,9 @@ pub unsafe fn psSetupTevCommon() {
     GXSetTevSwapMode(GX_TEVSTAGE1, GX_TEV_SWAP0, GX_TEV_SWAP0);
     GXSetTevSwapMode(GX_TEVSTAGE2, GX_TEV_SWAP0, GX_TEV_SWAP0);
 }
-pub unsafe fn psSetupTevInvalidState() { prevTev[0] = u32::MAX; }
+pub unsafe fn psSetupTevInvalidState() { melee_core::ct!("psSetupTevInvalidState"); prevTev[0] = u32::MAX; }
 pub unsafe fn psSetupTev(pp: *mut HSD_Particle) {
+    melee_core::ct!("psSetupTev");
     let key = (*pp).kind & 0x80100480;
     if key == prevTev[0] { return; }
     prevTev[0] = key;

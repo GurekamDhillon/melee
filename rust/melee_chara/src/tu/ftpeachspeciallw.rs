@@ -117,6 +117,7 @@ unsafe fn table_kind(a: *const ftPe_DatAttrs, i: isize) -> i32 {
 
 /// `pickVeg` (non-static in C): weighted pick from the item table.
 pub fn pickVeg(gobj: *mut HSD_GObj) -> ItemKind {
+    melee_core::ct!("pickVeg");
     unsafe {
         let a = (*fpp(gobj)).dat_attrs as *const ftPe_DatAttrs;
         let count = (*a).speciallw_item_table_count as isize;
@@ -142,6 +143,7 @@ pub fn pickVeg(gobj: *mut HSD_GObj) -> ItemKind {
 }
 
 pub fn ftPe_SpecialLw_8011CFA0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_SpecialLw_8011CFA0");
     unsafe {
         let fp = fpp(gobj);
         let veg_gobj = (*fp).u.pe.veg_gobj;
@@ -186,6 +188,7 @@ fn setupVeg(kind: ItemKind, gobj: *mut HSD_GObj, fp: *mut Fighter, pos: *mut Vec
 
 /// `spawnVeg` (static): the Accessory4 callback that pulls the vegetable.
 pub fn spawnVeg(gobj: *mut HSD_GObj) {
+    melee_core::ct!("spawnVeg");
     unsafe {
         let fp = fpp(gobj);
         let mut pos: Vec3 = core::mem::zeroed();
@@ -198,6 +201,7 @@ pub fn spawnVeg(gobj: *mut HSD_GObj) {
 }
 /// `spawnVeg` as the Accessory4 callback entry.
 pub unsafe extern "C" fn cb_spawnVeg(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_spawnVeg");
     spawnVeg(g);
 }
 
@@ -217,6 +221,7 @@ fn throwVegIfHeld(gobj: *mut HSD_GObj, msid: i32) -> bool {
 }
 
 pub fn ftPe_SpecialLw_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_SpecialLw_Enter");
     unsafe {
         let fp = fpp(gobj);
         if !throwVegIfHeld(gobj, ftCo_MS_LightThrowF4 as i32) {
@@ -229,6 +234,7 @@ pub fn ftPe_SpecialLw_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftPe_SpecialAirLw_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_SpecialAirLw_Enter");
     throwVegIfHeld(gobj, ftCo_MS_LightThrowAirF4 as i32);
 }
 
@@ -244,6 +250,7 @@ pub const coll_mf: MotionFlags = Ft_MF_SkipMatAnim
 
 /// `handleAirColl` (static).
 pub fn handleAirColl(gobj: *mut HSD_GObj) {
+    melee_core::ct!("handleAirColl");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, ftPe_MS_SpecialAirLw as i32, coll_mf);
@@ -253,6 +260,7 @@ pub fn handleAirColl(gobj: *mut HSD_GObj) {
 
 /// `handleColl` (static).
 pub fn handleColl(gobj: *mut HSD_GObj) {
+    melee_core::ct!("handleColl");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, ftPe_MS_SpecialLw as i32, coll_mf);
@@ -269,9 +277,11 @@ fn doAnim(gobj: *mut HSD_GObj, cb: fn(*mut HSD_GObj)) {
 }
 
 pub fn ftPe_SpecialLw_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_SpecialLw_Anim");
     doAnim(gobj, st::ft_8008A2BC);
 }
 
 pub fn ftPe_SpecialAirLw_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_SpecialAirLw_Anim");
     doAnim(gobj, st::ftCo_Fall_Enter);
 }

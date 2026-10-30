@@ -16,6 +16,7 @@ static mut gmMain_804D6594: bool = false;
 
 /// C `gmMain_8015FD24`: the pad library clamp setup, run by `lb_80019AAC`.
 pub unsafe fn gmMain_8015FD24() {
+    melee_core::ct!("gmMain_8015FD24");
     ext::PADSetSpec(5);
     ext::HSD_PadInit(
         5,
@@ -36,10 +37,11 @@ pub unsafe fn gmMain_8015FD24() {
 }
 
 /// C `gmMain_8015FDA0`: the post-retrace callback (empty).
-pub unsafe fn gmMain_8015FDA0(_arg: u32) {}
+pub unsafe fn gmMain_8015FDA0(_arg: u32) { melee_core::ct!("gmMain_8015FDA0");}
 
 /// C `gmMain_8015FDA4`: set the debug level from the develop.ini file and the launch buttons.
 pub unsafe fn gmMain_8015FDA4() {
+    melee_core::ct!("gmMain_8015FDA4");
     if ext::DVDConvertPathToEntrynum("/develop.ini") != -1 {
         ext::set_db_804D6B20(true);
         if ext::db_gameLaunchButtonState() & HSD_PAD_X as u32 != 0 {
@@ -68,10 +70,10 @@ pub unsafe fn gmMain_8015FDA4() {
 }
 
 /// C `init_spr_unk`: the MWERKS_GEKKO SPR setup. Empty on PC.
-pub unsafe fn init_spr_unk() {}
+pub unsafe fn init_spr_unk() { melee_core::ct!("init_spr_unk");}
 
 /// C `__eabi`: the GNU EABI environment stub. Empty.
-pub unsafe fn __eabi() {}
+pub unsafe fn __eabi() { melee_core::ct!("__eabi");}
 
 /// Callees in TUs that are not ported yet and globals owned by other TUs. Each is a settable
 /// hook; unset it panics.

@@ -109,6 +109,7 @@ pub static mut it_803F7898: [ItemStateTable; 4] = [
 
 /// `HSD_GObj* itGamewatchGreenhouse_Spawn(HSD_GObj*, Vec3*, Fighter_Part, float)`
 pub unsafe extern "C" fn itGamewatchGreenhouse_Spawn(parent: *mut HSD_GObj, pos: *mut Vec, part: Fighter_Part, dir: f32) -> *mut HSD_GObj {
+    melee_core::ct!("itGamewatchGreenhouse_Spawn");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = It_Kind_GameWatch_Greenhouse;
     Item_InitSpawnPosition(&mut spawn, pos, false);
@@ -124,6 +125,7 @@ pub unsafe extern "C" fn itGamewatchGreenhouse_Spawn(parent: *mut HSD_GObj, pos:
 }
 
 pub unsafe extern "C" fn itGamewatchGreenhouse_Destroyed(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGamewatchGreenhouse_Destroyed");
     let item = GET_ITEM(item_gobj);
     if !(*item).owner.is_null() {
         ext::ftGw_Attack11_ItemGreenhouseSetFlag((*item).owner);
@@ -131,6 +133,7 @@ pub unsafe extern "C" fn itGamewatchGreenhouse_Destroyed(item_gobj: *mut HSD_GOb
 }
 
 pub unsafe extern "C" fn itGamewatchGreenhouse_802C6328(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGamewatchGreenhouse_802C6328");
     let item = GET_ITEM(item_gobj);
     if !item.is_null() {
         itGamewatchGreenhouse_Destroyed(item_gobj);
@@ -139,14 +142,17 @@ pub unsafe extern "C" fn itGamewatchGreenhouse_802C6328(item_gobj: *mut HSD_GObj
 }
 
 pub unsafe extern "C" fn itGamewatchGreenhouse_802C6374(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGamewatchGreenhouse_802C6374");
     ext::it_8026B724(item_gobj);
 }
 
 pub unsafe extern "C" fn itGamewatchGreenhouse_802C6394(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGamewatchGreenhouse_802C6394");
     ext::it_8026B73C(item_gobj);
 }
 
 pub unsafe extern "C" fn itGamewatchGreenhouse_PickedUp(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGamewatchGreenhouse_PickedUp");
     let item = GET_ITEM(item_gobj);
     (*item).xDB0_itcmd_var1 = 0;
     (*item).xDAC_itcmd_var0 = 0;
@@ -161,24 +167,29 @@ pub unsafe extern "C" fn itGamewatchGreenhouse_PickedUp(item_gobj: *mut HSD_GObj
 }
 
 pub unsafe extern "C" fn itGamewatchGreenhouse_802C6430(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGamewatchGreenhouse_802C6430");
     ext::Item_80268E5C(item_gobj, 0, ITEM_ANIM_UPDATE as u32);
 }
 
 pub unsafe extern "C" fn itGamewatchGreenhouse_802C6458(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGamewatchGreenhouse_802C6458");
     ext::Item_80268E5C(item_gobj, 1, ITEM_ANIM_UPDATE as u32);
 }
 
 pub unsafe extern "C" fn itGamewatchGreenhouse_802C6480(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGamewatchGreenhouse_802C6480");
     ext::Item_80268E5C(item_gobj, 2, ITEM_ANIM_UPDATE as u32);
 }
 
 pub unsafe extern "C" fn itGamewatchGreenhouse_802C64A8(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGamewatchGreenhouse_802C64A8");
     ext::Item_80268E5C(item_gobj, 3, ITEM_ANIM_UPDATE as u32);
 }
 
 /// `greenhouse_Check` (static inline): the callee's raw int, or `true`.
 #[inline]
 pub unsafe fn greenhouse_Check(item_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("greenhouse_Check");
     let item = GET_ITEM(item_gobj);
     if !(*item).owner.is_null() {
         return ext::ftGw_Attack11_ItemGreenhouse_CheckAll((*item).owner);
@@ -187,6 +198,7 @@ pub unsafe fn greenhouse_Check(item_gobj: *mut HSD_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn itGamewatchGreenhouse_Motion3_Anim(item_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itGamewatchGreenhouse_Motion3_Anim");
     if greenhouse_Check(item_gobj) != 0 {
         itGamewatchGreenhouse_Destroyed(item_gobj);
         return 1;
@@ -195,6 +207,7 @@ pub unsafe extern "C" fn itGamewatchGreenhouse_Motion3_Anim(item_gobj: *mut HSD_
 }
 
 pub unsafe extern "C" fn itGamewatchGreenhouse_Motion2_Anim(item_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itGamewatchGreenhouse_Motion2_Anim");
     if ext::it_80272C6C(item_gobj) == 0 {
         ext::Item_80268E5C(item_gobj, 2, ITEM_ANIM_UPDATE as u32);
     }
@@ -206,5 +219,6 @@ pub unsafe extern "C" fn itGamewatchGreenhouse_Motion2_Anim(item_gobj: *mut HSD_
 }
 
 pub unsafe extern "C" fn itGamewatchGreenhouse_EvtUnk(item_gobj: *mut HSD_GObj, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGamewatchGreenhouse_EvtUnk");
     ext::it_8026B894(item_gobj, ref_gobj);
 }

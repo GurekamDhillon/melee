@@ -80,58 +80,71 @@ pub static mut gm_Mode_SingleButtonVs_States: [GameModeState; 9] = unsafe {
 
 /// CSS enter: the Atlas select runs after the retail setup (TARGET_PC).
 pub unsafe extern "C" fn gm_801BA10C(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801BA10C");
     ext::gmVsMelee_EnterCss(scene, vs_mode(), 8);
     ext::gmFrontend_AtlasSelect(scene, 0, null());
 }
 
 pub unsafe extern "C" fn gm_801BA138(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801BA138");
     ext::gmVsMelee_ExitCss(scene, vs_mode());
 }
 
 pub unsafe extern "C" fn gm_801BA160(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801BA160");
     ext::gmVsMelee_EnterSss(scene, vs_mode());
     ext::gmFrontend_AtlasSelect(scene, 1, null());
 }
 
 pub unsafe extern "C" fn gm_801BA188(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801BA188");
     ext::gmVsMelee_ExitSss(scene, vs_mode(), 0);
 }
 
 /// Single Button rule: `rules.single_button = true` (a C bitfield, `StartMeleeRules::set_single_button`).
 pub unsafe extern "C" fn fn_801BA1B4(data: *mut StartMeleeData, unused: *mut StartMeleeData) {
+    melee_core::ct!("fn_801BA1B4");
     (*data).rules.set_single_button(1);
 }
 
 pub unsafe extern "C" fn gm_801BA1C8(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801BA1C8");
     let data = vs_mode();
     ext::gmVsMelee_EnterVs(scene, data, Some(fn_801BA1B4), None);
 }
 
 pub unsafe extern "C" fn gm_801BA1FC(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801BA1FC");
     ext::gmVsMelee_ExitVs(scene, 4, 3);
 }
 
 pub unsafe extern "C" fn gm_801BA224(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801BA224");
     let data = vs_mode();
     ext::gmVsMelee_EnterSuddenDeath(scene, data, Some(fn_801BA1B4), None);
 }
 
 pub unsafe extern "C" fn gm_801BA258(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801BA258");
     ext::gmVsMelee_ExitSuddenDeath(scene);
 }
 
 pub unsafe extern "C" fn gm_801BA278(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801BA278");
     ext::gmVsMelee_EnterResults(scene);
 }
 
 pub unsafe extern "C" fn gm_801BA298(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801BA298");
     ext::gmVsMelee_ExitResults(scene, vs_mode(), 0);
 }
 
 pub unsafe extern "C" fn gm_Mode_SingleButtonVs_OnInit() {
+    melee_core::ct!("gm_Mode_SingleButtonVs_OnInit");
     ext::gm_InitVsMode(vs_mode());
 }
 
 pub unsafe extern "C" fn gm_Mode_SingleButtonVs_OnLoad() {
+    melee_core::ct!("gm_Mode_SingleButtonVs_OnLoad");
     ext::gmVsMelee_ResetKOCounts();
 }

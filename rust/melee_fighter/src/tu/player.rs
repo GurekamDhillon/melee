@@ -130,12 +130,14 @@ const SUB: usize = 2;
 /// `hasExtraFighterId`
 #[inline]
 pub fn hasExtraFighterId(data: &FtMapping) -> bool {
+    melee_core::ct!("hasExtraFighterId");
     data.extra_internal_id != -1
 }
 
 /// `Player_CheckSlot`: `HSD_ASSERTREPORT(102, 0, "cant get player struct! %d\n", slot)`
 #[inline]
 pub fn Player_CheckSlot(slot: i32) {
+    melee_core::ct!("Player_CheckSlot");
     if slot < 0 || !(slot < Gm_Player_NumMax as i32) {
         panic!("src/melee/pl/player.c:102: cant get player struct! {}", slot);
     }
@@ -160,11 +162,13 @@ fn ent(p: &StaticPlayer, i: usize) -> *mut HSD_GObj {
 
 /// `Player_GetPtrForSlot`
 pub fn Player_GetPtrForSlot(slot: i32) -> *mut StaticPlayer {
+    melee_core::ct!("Player_GetPtrForSlot");
     Player_CheckSlot(slot);
     unsafe { &mut player_slots[slot as usize] as *mut StaticPlayer }
 }
 
 pub fn Player_80031790(slot: i32) {
+    melee_core::ct!("Player_80031790");
     let player = sp(slot);
     if player.pkind == Gm_PKind_Human || player.pkind == Gm_PKind_Cpu {
         for i in 0..SUB {
@@ -176,6 +180,7 @@ pub fn Player_80031790(slot: i32) {
 }
 
 pub fn Player_80031848(slot: i32) {
+    melee_core::ct!("Player_80031848");
     let player = sp(slot);
     if player.pkind == Gm_PKind_Human || player.pkind == Gm_PKind_Cpu {
         for i in 0..SUB {
@@ -198,6 +203,7 @@ fn func_8008688C_wrapper(player: &mut StaticPlayer) {
 }
 
 pub fn Player_80031900() {
+    melee_core::ct!("Player_80031900");
     for slot in 0..Gm_Player_NumMax as i32 {
         let player = unsafe { &mut player_slots[slot as usize] };
         Player_CheckSlot(slot);
@@ -206,6 +212,7 @@ pub fn Player_80031900() {
 }
 
 pub fn Player_800319C4(slot: i32, arg1: bool) -> bool {
+    melee_core::ct!("Player_800319C4");
     let player = sp(slot);
     if arg1 {
         for i in 0..SUB {
@@ -224,6 +231,7 @@ pub fn Player_800319C4(slot: i32, arg1: bool) -> bool {
 }
 
 pub fn Player_80031AD0(slot: i32) {
+    melee_core::ct!("Player_80031AD0");
     let mut first_struct: plAllocInfo = unsafe { core::mem::zeroed() };
     let mut second_struct: plAllocInfo = unsafe { core::mem::zeroed() };
     let player = sp(slot);
@@ -274,6 +282,7 @@ pub fn Player_80031AD0(slot: i32) {
 }
 
 pub fn Player_80031CB0(kind: CharacterKind, color: u8) {
+    melee_core::ct!("Player_80031CB0");
     // TARGET_PC: make the Geno define's character-kind mapping before the preload asks for files
     ext::GenoDefine_InitKinds();
     if map(kind).internal_id != -1 {
@@ -287,6 +296,7 @@ pub fn Player_80031CB0(kind: CharacterKind, color: u8) {
 static mut hats_preloaded: bool = false;
 
 pub fn Player_80031D2C(kind: CharacterKind, color: u8) {
+    melee_core::ct!("Player_80031D2C");
     // TARGET_PC: preload Kirby's hat archives once, before any fighter is set up
     unsafe {
         if !hats_preloaded && ext::lbDvd_IsPlanningSixSlot() == 0 {
@@ -303,10 +313,12 @@ pub fn Player_80031D2C(kind: CharacterKind, color: u8) {
 }
 
 pub fn Player_80031DA8(param_1: i32, param_2: i32) {
+    melee_core::ct!("Player_80031DA8");
     ext::ftKb_SpecialN_800EED50(param_1, param_2);
 }
 
 pub fn Player_80031DC8(func_arg: unsafe extern "C" fn(i32, i32)) {
+    melee_core::ct!("Player_80031DC8");
     for slot in 0..Gm_Player_NumMax as i32 {
         Player_CheckSlot(slot);
         let p = unsafe { &mut player_slots[slot as usize] };
@@ -320,6 +332,7 @@ pub fn Player_80031DC8(func_arg: unsafe extern "C" fn(i32, i32)) {
 }
 
 pub fn Player_80031EBC(slot: i32) {
+    melee_core::ct!("Player_80031EBC");
     Player_CheckSlot(slot);
     for i in 0..SUB {
         let player = unsafe { &mut player_slots[slot as usize] };
@@ -333,6 +346,7 @@ pub fn Player_80031EBC(slot: i32) {
 }
 
 pub fn Player_80031FB0(slot: i32, entity_index: i32) {
+    melee_core::ct!("Player_80031FB0");
     let player = sp(slot);
     let t = player.transformed[entity_index as usize] as usize;
     player.player_entity[t] = null_mut();
@@ -343,6 +357,7 @@ pub fn Player_80031FB0(slot: i32, entity_index: i32) {
 }
 
 pub fn Player_80032070(slot: i32, bool_arg: bool) {
+    melee_core::ct!("Player_80032070");
     let player = sp(slot);
 
     if !bool_arg {
@@ -365,11 +380,13 @@ pub fn Player_80032070(slot: i32, bool_arg: bool) {
 }
 
 pub fn Player_8003219C(slot: i32) -> bool {
+    melee_core::ct!("Player_8003219C");
     let player = sp(slot);
     ext::ftLib_8008701C(ent(player, 0))
 }
 
 pub fn Player_8003221C(slot: i32) -> bool {
+    melee_core::ct!("Player_8003221C");
     if Player_GetPlayerState(slot) == 2 {
         let player = sp(slot);
         if !ext::ftLib_8008701C(ent(player, 0)) {
@@ -382,11 +399,13 @@ pub fn Player_8003221C(slot: i32) -> bool {
 
 
 pub fn Player_SetPlayerCharacter(slot: i32, value: CharacterKind) {
+    melee_core::ct!("Player_SetPlayerCharacter");
     sp(slot).ckind = value;
 }
 
 
 pub fn Player_8003248C(slot: i32, arg1: i32) -> Gm_PKind {
+    melee_core::ct!("Player_8003248C");
     let player = sp(slot);
 
     if arg1 == 1 {
@@ -400,11 +419,13 @@ pub fn Player_8003248C(slot: i32, arg1: i32) -> Gm_PKind {
 }
 
 pub fn Player_SetSlottype(slot: i32, value: Gm_PKind) {
+    melee_core::ct!("Player_SetSlottype");
     sp(slot).pkind = value;
 }
 
 
 pub fn Player_80032610(slot: i32, arg1: i32) -> i8 {
+    melee_core::ct!("Player_80032610");
     let error_value: i32 = -1;
     let player = sp(slot);
 
@@ -419,6 +440,7 @@ pub fn Player_80032610(slot: i32, arg1: i32) -> i8 {
 
 
 pub fn Player_80032768(slot: i32, arg_vec: *mut Vec3) {
+    melee_core::ct!("Player_80032768");
     let player = sp(slot);
     unsafe {
         player.player_poses.byIndex[player.transformed[0] as usize] = *arg_vec;
@@ -427,11 +449,13 @@ pub fn Player_80032768(slot: i32, arg_vec: *mut Vec3) {
 }
 
 pub fn Player_80032828(slot: i32, index: i32, arg_vec: *mut Vec3) {
+    melee_core::ct!("Player_80032828");
     let player = sp(slot);
     unsafe { player.player_poses.byIndex[player.transformed[index as usize] as usize] = *arg_vec };
 }
 
 pub fn Player_800328D4(slot: i32, arg_vec: *mut Vec3) {
+    melee_core::ct!("Player_800328D4");
     let player = sp(slot);
     Player_CheckSlot(slot);
 
@@ -448,6 +472,7 @@ pub fn Player_800328D4(slot: i32, arg_vec: *mut Vec3) {
 }
 
 pub fn Player_80032A04(slot: i32, arg_vec: *mut Vec3) {
+    melee_core::ct!("Player_80032A04");
     Player_CheckSlot(slot);
 
     for i in 0..SUB {
@@ -461,6 +486,7 @@ pub fn Player_80032A04(slot: i32, arg_vec: *mut Vec3) {
 }
 
 pub fn Player_SetPlayerAndEntityFacingDirection(slot: i32, facing_dir: f32) {
+    melee_core::ct!("Player_SetPlayerAndEntityFacingDirection");
     let player = sp(slot);
     for i in 0..SUB {
         player.facing_direction = facing_dir;
@@ -471,12 +497,14 @@ pub fn Player_SetPlayerAndEntityFacingDirection(slot: i32, facing_dir: f32) {
 }
 
 pub fn Player_80032BB0(slot: i32) -> f32 {
+    melee_core::ct!("Player_80032BB0");
     let player = sp(slot);
     let temp = ext::ftLib_800869F8(ent(player, 0));
     temp / player.model_scale
 }
 
 pub fn Player_SetScale(slot: i32, scale: f32) {
+    melee_core::ct!("Player_SetScale");
     let player = sp(slot);
     player.model_scale = scale;
     for i in 0..SUB {
@@ -487,78 +515,95 @@ pub fn Player_SetScale(slot: i32, scale: f32) {
 }
 
 pub fn Player_GetSpawnPlatformPos(slot: i32, arg_vec: *mut Vec3) {
+    melee_core::ct!("Player_GetSpawnPlatformPos");
     let player = sp(slot);
     unsafe { *arg_vec = player.player_poses.byVecName.spawn_platform_final_pos };
 }
 
 pub fn Player_SetSpawnPlatformPos(slot: i32, arg_vec: *mut Vec3) {
+    melee_core::ct!("Player_SetSpawnPlatformPos");
     let player = sp(slot);
     unsafe { player.player_poses.byVecName.spawn_platform_final_pos = *arg_vec };
 }
 
 pub fn Player_GetSomePos(slot: i32, arg_vec: *mut Vec3) {
+    melee_core::ct!("Player_GetSomePos");
     let player = sp(slot);
     unsafe { *arg_vec = player.player_poses.byVecName.some_other_player_pos };
 }
 
 pub fn Player_SetSomePos(slot: i32, arg_vec: *mut Vec3) {
+    melee_core::ct!("Player_SetSomePos");
     let player = sp(slot);
     unsafe { player.player_poses.byVecName.some_other_player_pos = *arg_vec };
 }
 
 pub fn Player_80032F30(slot: i32) -> i32 {
+    melee_core::ct!("Player_80032F30");
     sp(slot).unk4E as i32
 }
 
 pub fn Player_80032FA4(slot: i32, arg: i32) {
+    melee_core::ct!("Player_80032FA4");
     sp(slot).unk4E = arg as i8;
 }
 
 pub fn Player_GetFacingDirection(slot: i32) -> f32 {
+    melee_core::ct!("Player_GetFacingDirection");
     sp(slot).facing_direction
 }
 
 pub fn Player_SetFacingDirection(slot: i32, direction: f32) {
+    melee_core::ct!("Player_SetFacingDirection");
     sp(slot).facing_direction = direction;
 }
 
 pub fn Player_SetFacingDirectionConditional(slot: i32, b: bool, direction: f32) {
+    melee_core::ct!("Player_SetFacingDirectionConditional");
     if !b {
         sp(slot).facing_direction = direction;
     }
 }
 
 pub fn Player_GetCostumeId(slot: i32) -> u32 {
+    melee_core::ct!("Player_GetCostumeId");
     sp(slot).costume_id as u32
 }
 
 pub fn Player_SetCostumeId(slot: i32, costume_id: i32) {
+    melee_core::ct!("Player_SetCostumeId");
     sp(slot).costume_id = costume_id as u8;
 }
 
 pub fn Player_GetControllerIndex(slot: i32) -> u8 {
+    melee_core::ct!("Player_GetControllerIndex");
     sp(slot).controller_index as u8
 }
 
 pub fn Player_SetControllerIndex(slot: i32, controller_index: i8) {
+    melee_core::ct!("Player_SetControllerIndex");
     sp(slot).controller_index = controller_index;
 }
 
 
 pub fn Player_SetTeam(slot: i32, team: i8) {
+    melee_core::ct!("Player_SetTeam");
     sp(slot).team = team as u8;
 }
 
 
 pub fn Player_SetPlayerId(slot: i32, player_id: i32) {
+    melee_core::ct!("Player_SetPlayerId");
     sp(slot).player_id = player_id as u8;
 }
 
 pub fn Player_GetCpuLevel(slot: i32) -> i32 {
+    melee_core::ct!("Player_GetCpuLevel");
     sp(slot).cpu_level as i32
 }
 
 pub fn Player_SetPlayerAndEntityCpuLevel(slot: i32, cpu_level: i32) {
+    melee_core::ct!("Player_SetPlayerAndEntityCpuLevel");
     let player = sp(slot);
     player.cpu_level = cpu_level as u8;
     for i in 0..SUB {
@@ -569,10 +614,12 @@ pub fn Player_SetPlayerAndEntityCpuLevel(slot: i32, cpu_level: i32) {
 }
 
 pub fn Player_GetCpuType(slot: i32) -> i32 {
+    melee_core::ct!("Player_GetCpuType");
     sp(slot).cpu_type as i32
 }
 
 pub fn Player_SetPlayerAndEntityCpuType(slot: i32, cpu_type: i32) {
+    melee_core::ct!("Player_SetPlayerAndEntityCpuType");
     let player = sp(slot);
     player.cpu_type = cpu_type as u8;
     for i in 0..SUB {
@@ -583,59 +630,72 @@ pub fn Player_SetPlayerAndEntityCpuType(slot: i32, cpu_type: i32) {
 }
 
 pub fn Player_GetHandicap(slot: i32) -> i32 {
+    melee_core::ct!("Player_GetHandicap");
     sp(slot).handicap as i32
 }
 
 pub fn Player_SetHandicap(slot: i32, handicap: i8) {
+    melee_core::ct!("Player_SetHandicap");
     sp(slot).handicap = handicap as u8;
 }
 
 pub fn Player_GetUnk50(slot: i32) -> f32 {
+    melee_core::ct!("Player_GetUnk50");
     sp(slot).unk50
 }
 
 pub fn Player_GetAttackRatio(slot: i32) -> f32 {
+    melee_core::ct!("Player_GetAttackRatio");
     let mut attack_ratio = sp(slot).attack_ratio;
     attack_ratio = ext::ScriptGame_ModValue(slot, 0, attack_ratio);
     attack_ratio
 }
 
 pub fn Player_SetAttackRatio(slot: i32, attack_ratio: f32) {
+    melee_core::ct!("Player_SetAttackRatio");
     sp(slot).attack_ratio = attack_ratio;
 }
 
 pub fn Player_GetDefenseRatio(slot: i32) -> f32 {
+    melee_core::ct!("Player_GetDefenseRatio");
     let mut defense_ratio = sp(slot).defense_ratio;
     defense_ratio = ext::ScriptGame_ModValue(slot, 1, defense_ratio);
     defense_ratio
 }
 
 pub fn Player_SetDefenseRatio(slot: i32, defense_ratio: f32) {
+    melee_core::ct!("Player_SetDefenseRatio");
     sp(slot).defense_ratio = defense_ratio;
 }
 
 pub fn Player_GetModelScale(slot: i32) -> f32 {
+    melee_core::ct!("Player_GetModelScale");
     sp(slot).model_scale
 }
 
 pub fn Player_SetModelScale(slot: i32, model_scale: f32) {
+    melee_core::ct!("Player_SetModelScale");
     sp(slot).model_scale = model_scale;
 }
 
 pub fn Player_80033BB8(slot: i32) -> i32 {
+    melee_core::ct!("Player_80033BB8");
     ext::gm_8016C5C0(slot)
 }
 
 
 pub fn Player_GetP1Stock() -> i32 {
+    melee_core::ct!("Player_GetP1Stock");
     unsafe { player_slots[0].stocks as i32 }
 }
 
 pub fn Player_SetStocks(slot: i32, stocks: i32) {
+    melee_core::ct!("Player_SetStocks");
     sp(slot).stocks = stocks as i8;
 }
 
 pub fn Player_LoseStock(slot: i32) {
+    melee_core::ct!("Player_LoseStock");
     let player = sp(slot);
     if player.stocks > 0 {
         player.stocks = player.stocks - 1;
@@ -644,36 +704,44 @@ pub fn Player_LoseStock(slot: i32) {
 
 
 pub fn Player_SetCoins(slot: i32, current_coins: i32) {
+    melee_core::ct!("Player_SetCoins");
     sp(slot).current_coins = current_coins;
 }
 
 pub fn Player_GetTotalCoins(slot: i32) -> i32 {
+    melee_core::ct!("Player_GetTotalCoins");
     sp(slot).total_coins
 }
 
 pub fn Player_SetTotalCoins(slot: i32, coins: i32) {
+    melee_core::ct!("Player_SetTotalCoins");
     sp(slot).total_coins = coins;
 }
 
 pub fn Player_GetUnk98(slot: i32) -> i32 {
+    melee_core::ct!("Player_GetUnk98");
     sp(slot).unk98
 }
 
 pub fn Player_SetUnk98(slot: i32, unk98: i32) {
+    melee_core::ct!("Player_SetUnk98");
     sp(slot).unk98 = unk98;
 }
 
 pub fn Player_GetUnk9C(slot: i32) -> i32 {
+    melee_core::ct!("Player_GetUnk9C");
     sp(slot).unk9C
 }
 
 pub fn Player_SetUnk9C(slot: i32, unk9C: i32) {
+    melee_core::ct!("Player_SetUnk9C");
     sp(slot).unk9C = unk9C;
 }
 
 
 
 pub fn Player_SwapTransformedStates(slot: i32, arg1: i32, arg2: i32) {
+    melee_core::ct!("Player_SwapTransformedStates");
     let player = sp(slot);
     let temp_r5 = player.transformed[arg1 as usize];
     player.transformed[arg1 as usize] = player.transformed[arg2 as usize];
@@ -682,6 +750,7 @@ pub fn Player_SwapTransformedStates(slot: i32, arg1: i32, arg2: i32) {
 
 
 pub fn Player_SetHUDDamage(slot: i32, arg1: i32) {
+    melee_core::ct!("Player_SetHUDDamage");
     Player_CheckSlot(slot);
     for i in 0..SUB {
         let player = unsafe { &mut player_slots[slot as usize] };
@@ -693,16 +762,19 @@ pub fn Player_SetHUDDamage(slot: i32, arg1: i32) {
 }
 
 pub fn Player_SetHPByIndex(slot: i32, arg1: i32, arg2: i32) {
+    melee_core::ct!("Player_SetHPByIndex");
     let player = sp(slot);
     unsafe { player.staminas.byIndex[player.transformed[arg1 as usize] as usize] = arg2 as i16 };
 }
 
 pub fn Player_GetOtherStamina(slot: i32) -> i32 {
+    melee_core::ct!("Player_GetOtherStamina");
     let player = sp(slot);
     unsafe { player.staminas.byName.stamina as i32 }
 }
 
 pub fn Player_SetOtherStamina(slot: i32, stamina: i32) {
+    melee_core::ct!("Player_SetOtherStamina");
     let player = sp(slot);
     unsafe { player.staminas.byName.stamina = stamina as i16 };
 }
@@ -710,51 +782,63 @@ pub fn Player_SetOtherStamina(slot: i32, stamina: i32) {
 
 
 pub fn Player_SetMoreFlagsBit2(slot: i32, bit2: u8) {
+    melee_core::ct!("Player_SetMoreFlagsBit2");
     sp(slot).more_flags.set_b2(bit2);
 }
 
 pub fn Player_GetMoreFlagsBit3(slot: i32) -> bool {
+    melee_core::ct!("Player_GetMoreFlagsBit3");
     sp(slot).more_flags.b3() != 0
 }
 
 pub fn Player_SetMoreFlagsBit3(slot: i32, bit3: u8) {
+    melee_core::ct!("Player_SetMoreFlagsBit3");
     sp(slot).more_flags.set_b3(bit3);
 }
 
 pub fn Player_SetMoreFlagsBit4(slot: i32, bit4: u8) {
+    melee_core::ct!("Player_SetMoreFlagsBit4");
     sp(slot).more_flags.set_b4(bit4);
 }
 
 pub fn Player_GetMoreFlagsBit4(slot: i32) -> bool {
+    melee_core::ct!("Player_GetMoreFlagsBit4");
     sp(slot).more_flags.b4() != 0
 }
 
 pub fn Player_GetMoreFlagsBit5(slot: i32) -> bool {
+    melee_core::ct!("Player_GetMoreFlagsBit5");
     sp(slot).more_flags.b5() != 0
 }
 
 pub fn Player_SetMoreFlagsBit5(slot: i32, bit5: u8) {
+    melee_core::ct!("Player_SetMoreFlagsBit5");
     sp(slot).more_flags.set_b5(bit5);
 }
 
 /// `bool` is MSL `int`: the 2-bit field comes back as 0..=3
 pub fn Player_GetMoreFlagsBit6(slot: i32) -> i32 {
+    melee_core::ct!("Player_GetMoreFlagsBit6");
     sp(slot).more_flags.b6() as i32
 }
 
 pub fn Player_SetMoreFlagsBit6(slot: i32, bit6: u8) {
+    melee_core::ct!("Player_SetMoreFlagsBit6");
     sp(slot).more_flags.set_b6(bit6);
 }
 
 pub fn Player_GetFlagsAEBit0(slot: i32) -> u8 {
+    melee_core::ct!("Player_GetFlagsAEBit0");
     sp(slot).flagsAE.b0()
 }
 
 pub fn Player_SetFlagsAEBit0(slot: i32, bit0: u8) {
+    melee_core::ct!("Player_SetFlagsAEBit0");
     sp(slot).flagsAE.set_b0(bit0);
 }
 
 pub fn Player_GetRemainingHPByIndex(slot: i32, index: i32) -> i32 {
+    melee_core::ct!("Player_GetRemainingHPByIndex");
     let player = sp(slot);
     let stamina: u32 = unsafe { player.staminas.byName.stamina as i32 as u32 };
     let result: i32 = unsafe {
@@ -768,6 +852,7 @@ pub fn Player_GetRemainingHPByIndex(slot: i32, index: i32) -> i32 {
 }
 
 pub fn Player_GetFalls(slot: i32) -> i32 {
+    melee_core::ct!("Player_GetFalls");
     let player = sp(slot);
 
     if map(player.ckind).extra_internal_id != -1 && map(player.ckind).has_transformation != 0 {
@@ -778,25 +863,30 @@ pub fn Player_GetFalls(slot: i32) -> i32 {
 }
 
 pub fn Player_GetFallsByIndex(slot: i32, arg1: i32) -> i32 {
+    melee_core::ct!("Player_GetFallsByIndex");
     let player = sp(slot);
     player.falls[player.transformed[arg1 as usize] as usize]
 }
 
 pub fn Player_SetFalls(slot: i32, falls: i32) {
+    melee_core::ct!("Player_SetFalls");
     let player = sp(slot);
     player.falls[player.transformed[0] as usize] = falls;
 }
 
 pub fn Player_SetFallsByIndex(slot: i32, index: i32, falls: i32) {
+    melee_core::ct!("Player_SetFallsByIndex");
     let player = sp(slot);
     player.falls[player.transformed[index as usize] as usize] = falls;
 }
 
 pub fn Player_GetKOsByPlayerIndex(slot: i32, idx: i32) -> i32 {
+    melee_core::ct!("Player_GetKOsByPlayerIndex");
     sp(slot).kos_by_player[idx as usize] as i32
 }
 
 pub fn Player_UpdateKOsBySlot(slot: i32, bool_arg: bool, other_slot: i32) {
+    melee_core::ct!("Player_UpdateKOsBySlot");
     let player = sp(slot);
 
     if !bool_arg {
@@ -828,10 +918,12 @@ pub fn Player_UpdateKOsBySlot(slot: i32, bool_arg: bool, other_slot: i32) {
 }
 
 pub fn Player_GetMatchFrameCount(slot: i32) -> u32 {
+    melee_core::ct!("Player_GetMatchFrameCount");
     sp(slot).match_frame_count
 }
 
 pub fn Player_UpdateMatchFrameCount(slot: i32, condition: bool) {
+    melee_core::ct!("Player_UpdateMatchFrameCount");
     let player = sp(slot);
     if !condition && player.match_frame_count.wrapping_add(0x10000) == 0xffff {
         player.match_frame_count = ext::gm_GetFrameCount();
@@ -839,10 +931,12 @@ pub fn Player_UpdateMatchFrameCount(slot: i32, condition: bool) {
 }
 
 pub fn Player_GetSelfDestructs(slot: i32) -> u32 {
+    melee_core::ct!("Player_GetSelfDestructs");
     sp(slot).self_destructs as u32
 }
 
 pub fn Player_SetSelfDestructs(slot: i32, self_destructs: u32) {
+    melee_core::ct!("Player_SetSelfDestructs");
     if self_destructs > 0xffff || 0 > self_destructs as i32 {
         return;
     }
@@ -851,6 +945,7 @@ pub fn Player_SetSelfDestructs(slot: i32, self_destructs: u32) {
 }
 
 pub fn Player_IncSelfDestructs(slot: i32, condition: i32) {
+    melee_core::ct!("Player_IncSelfDestructs");
     let player = sp(slot);
     if condition == 0 {
         let self_destructs = player.self_destructs;
@@ -862,11 +957,13 @@ pub fn Player_IncSelfDestructs(slot: i32, condition: i32) {
 }
 
 pub fn Player_800353BC(slot: i32) -> bool {
+    melee_core::ct!("Player_800353BC");
     let player = sp(slot);
     player.player_state == 2 && player.flags.b0() != 0
 }
 
 pub fn Player_8003544C(slot: i32, condition: bool) -> bool {
+    melee_core::ct!("Player_8003544C");
     if !condition {
         let player = sp(slot);
         if player.player_state == 2 && player.flags.b0() != 0 {
@@ -878,135 +975,166 @@ pub fn Player_8003544C(slot: i32, condition: bool) -> bool {
 
 /// `bool` is `int` in the C build: the whole value goes through the 1-bit store.
 pub fn Player_SetFlagsBit0(slot: i32, bit0: i32) {
+    melee_core::ct!("Player_SetFlagsBit0");
     sp(slot).flags.set_b0((bit0 & 1) as u8);
 }
 
 
 pub fn Player_SetNametagSlotID(slot: i32, nametag_slot_id: i32) {
+    melee_core::ct!("Player_SetNametagSlotID");
     sp(slot).nametag_slot_id = nametag_slot_id;
 }
 
 pub fn Player_GetFlagsBit1(slot: i32) -> i32 {
+    melee_core::ct!("Player_GetFlagsBit1");
     sp(slot).flags.b1() as i32
 }
 
 pub fn Player_SetFlagsBit1(slot: i32) {
+    melee_core::ct!("Player_SetFlagsBit1");
     sp(slot).flags.set_b1(1);
 }
 
 pub fn Player_UnsetFlagsBit1(slot: i32) {
+    melee_core::ct!("Player_UnsetFlagsBit1");
     sp(slot).flags.set_b1(0);
 }
 
 pub fn Player_GetFlagsBit3(slot: i32) -> i32 {
+    melee_core::ct!("Player_GetFlagsBit3");
     sp(slot).flags.b3() as i32
 }
 
 pub fn Player_SetFlagsBit3(slot: i32, bit3: u8) {
+    melee_core::ct!("Player_SetFlagsBit3");
     sp(slot).flags.set_b3(bit3);
 }
 
 pub fn Player_GetFlagsBit4(slot: i32) -> i32 {
+    melee_core::ct!("Player_GetFlagsBit4");
     sp(slot).flags.b4() as i32
 }
 
 pub fn Player_GetFlagsBit5(slot: i32) -> u8 {
+    melee_core::ct!("Player_GetFlagsBit5");
     sp(slot).flags.is_metal()
 }
 
 pub fn Player_SetFlagsBit5(slot: i32, is_metal: u8) {
+    melee_core::ct!("Player_SetFlagsBit5");
     sp(slot).flags.set_is_metal(is_metal);
 }
 
 pub fn Player_GetFlagsBit6(slot: i32) -> u8 {
+    melee_core::ct!("Player_GetFlagsBit6");
     sp(slot).flags.b6()
 }
 
 pub fn Player_SetFlagsBit6(slot: i32, bit6: u8) {
+    melee_core::ct!("Player_SetFlagsBit6");
     sp(slot).flags.set_b6(bit6);
 }
 
 pub fn Player_GetFlagsBit7(slot: i32) -> u8 {
+    melee_core::ct!("Player_GetFlagsBit7");
     sp(slot).flags.b7()
 }
 
 pub fn Player_SetFlagsBit7(slot: i32, bit7: u8) {
+    melee_core::ct!("Player_SetFlagsBit7");
     sp(slot).flags.set_b7(bit7);
 }
 
 pub fn Player_GetMoreFlagsBit0(slot: i32) -> bool {
+    melee_core::ct!("Player_GetMoreFlagsBit0");
     sp(slot).more_flags.b0() != 0
 }
 
 pub fn Player_GetMoreFlagsBit1(slot: i32) -> bool {
+    melee_core::ct!("Player_GetMoreFlagsBit1");
     sp(slot).more_flags.b1() != 0
 }
 
 pub fn Player_SetMoreFlagsBit1(slot: i32, bit1: u8) {
+    melee_core::ct!("Player_SetMoreFlagsBit1");
     sp(slot).more_flags.set_b1(bit1);
 }
 
 pub fn Player_GetUnk4D(slot: i32) -> i32 {
+    melee_core::ct!("Player_GetUnk4D");
     sp(slot).unk4D as u8 as i32
 }
 
 pub fn Player_SetUnk4D(slot: i32, unk4D: i8) {
+    melee_core::ct!("Player_SetUnk4D");
     sp(slot).unk4D = unk4D;
 }
 
 pub fn Player_GetFlagsAEBit1(slot: i32) -> u8 {
+    melee_core::ct!("Player_GetFlagsAEBit1");
     sp(slot).flagsAE.b1()
 }
 
 /// Declared `u8` in C but falls off the end (no `return`).
 pub fn Player_SetFlagsAEBit1(slot: i32, bit1: u8) {
+    melee_core::ct!("Player_SetFlagsAEBit1");
     sp(slot).flagsAE.set_b1(bit1);
 }
 
 pub fn Player_GetUnk4C(slot: i32) -> i32 {
+    melee_core::ct!("Player_GetUnk4C");
     sp(slot).unk4C as u8 as i32
 }
 
 pub fn Player_SetUnk4C(slot: i32, unk4C: u8) {
+    melee_core::ct!("Player_SetUnk4C");
     sp(slot).unk4C = unk4C as i8;
 }
 
 pub fn Player_80036058(slot: i32) -> bool {
+    melee_core::ct!("Player_80036058");
     let player = sp(slot);
     ext::ftLib_80086F4C(ent(player, 0))
 }
 
 pub fn Player_800360D8(slot: i32) -> f32 {
+    melee_core::ct!("Player_800360D8");
     let player = sp(slot);
     ext::ftLib_80086F80(ent(player, 0))
 }
 
 pub fn Player_SetStructFunc(slot: i32, arg_func: *mut c_void) {
+    melee_core::ct!("Player_SetStructFunc");
     let player = sp(slot);
     player.struct_func = unsafe { core::mem::transmute::<*mut c_void, Option<unsafe extern "C" fn(i32)>>(arg_func) };
 }
 
 pub fn Player_GetActionStats(slot: i32) -> *mut plActionStats {
+    melee_core::ct!("Player_GetActionStats");
     Player_CheckSlot(slot);
     unsafe { core::ptr::addr_of_mut!(player_slots[slot as usize].stale_moves.total_attack_count_struct) }
 }
 
 pub fn Player_GetStaleMoveTableIndexPtr(slot: i32) -> *mut StaleMoveTable {
+    melee_core::ct!("Player_GetStaleMoveTableIndexPtr");
     Player_CheckSlot(slot);
     unsafe { core::ptr::addr_of_mut!(player_slots[slot as usize].stale_moves) }
 }
 
 pub fn Player_GetUnk6A8Ptr(slot: i32) -> *mut pl_x5EC_t {
+    melee_core::ct!("Player_GetUnk6A8Ptr");
     Player_CheckSlot(slot);
     unsafe { core::ptr::addr_of_mut!(player_slots[slot as usize].stale_moves.x5EC) }
 }
 
 pub fn Player_GetStaleMoveTableIndexPtr2(slot: i32) -> *mut pl_StaleMoveTableExt_t {
+    melee_core::ct!("Player_GetStaleMoveTableIndexPtr2");
     Player_CheckSlot(slot);
     unsafe { core::ptr::addr_of_mut!(player_slots[slot as usize].stale_moves) as *mut pl_StaleMoveTableExt_t }
 }
 
 pub fn Player_80036394(slot: i32) -> FighterKind {
+    melee_core::ct!("Player_80036394");
     let player = sp(slot);
     let entity = ent(player, 0);
     if !entity.is_null() {
@@ -1016,6 +1144,7 @@ pub fn Player_80036394(slot: i32) -> FighterKind {
 }
 
 pub fn Player_80036428(slot: i32) -> i32 {
+    melee_core::ct!("Player_80036428");
     let player = sp(slot);
     let entity = ent(player, 0);
     if !entity.is_null() {
@@ -1025,10 +1154,12 @@ pub fn Player_80036428(slot: i32) -> i32 {
 }
 
 pub fn Player_SetUnk45(slot: i32, unk45: i32) {
+    melee_core::ct!("Player_SetUnk45");
     sp(slot).unk45 = unk45 as u8;
 }
 
 pub fn Player_GetUnk45(slot: i32) -> u32 {
+    melee_core::ct!("Player_GetUnk45");
     let player = sp(slot);
     if player.pkind == Gm_PKind_Human {
         return player.unk45 as u32;
@@ -1037,6 +1168,7 @@ pub fn Player_GetUnk45(slot: i32) -> u32 {
 }
 
 pub fn Player_UpdateJoystickCountByIndex(slot: i32, index: i32) {
+    melee_core::ct!("Player_UpdateJoystickCountByIndex");
     let player = sp(slot);
     let transformed = player.transformed[index as usize] as usize;
     player.joystick_direction_input_count[transformed] =
@@ -1044,12 +1176,14 @@ pub fn Player_UpdateJoystickCountByIndex(slot: i32, index: i32) {
 }
 
 pub fn Player_GetJoystickCountByIndex(slot: i32, index: i32) -> i32 {
+    melee_core::ct!("Player_GetJoystickCountByIndex");
     let player = sp(slot);
     let transformed = player.transformed[index as usize] as usize;
     player.joystick_direction_input_count[transformed]
 }
 
 pub fn Player_800366DC(slot: i32, arg1: i32) {
+    melee_core::ct!("Player_800366DC");
     let player = sp(slot);
     for i in 0..SUB {
         if !ent(player, i).is_null() {
@@ -1059,6 +1193,7 @@ pub fn Player_800366DC(slot: i32, arg1: i32) {
 }
 
 pub fn Player_80036790(slot: i32, arg1: f32) {
+    melee_core::ct!("Player_80036790");
     let player = sp(slot);
     for i in 0..SUB {
         if !ent(player, i).is_null() {
@@ -1068,6 +1203,7 @@ pub fn Player_80036790(slot: i32, arg1: f32) {
 }
 
 pub fn Player_80036844(slot: i32, arg1: i32) {
+    melee_core::ct!("Player_80036844");
     let player = sp(slot);
     for i in 0..SUB {
         if !ent(player, i).is_null() {
@@ -1077,16 +1213,19 @@ pub fn Player_80036844(slot: i32, arg1: i32) {
 }
 
 pub fn Player_800368F8(slot: i32) -> bool {
+    melee_core::ct!("Player_800368F8");
     let player = sp(slot);
     ext::ftLib_80086BB4(ent(player, 0))
 }
 
 pub fn Player_80036978(slot: i32, pos: *mut Vec3) {
+    melee_core::ct!("Player_80036978");
     let player = sp(slot);
     ext::ftLib_80086B90(ent(player, 0), pos);
 }
 
 pub fn Player_InitOrResetPlayer(slot: i32) {
+    melee_core::ct!("Player_InitOrResetPlayer");
     let player = sp(slot);
 
     player.player_state = 0;
@@ -1196,16 +1335,19 @@ pub fn Player_InitOrResetPlayer(slot: i32) {
 }
 
 pub fn Player_80036CF0(slot: i32) {
+    melee_core::ct!("Player_80036CF0");
     Player_InitOrResetPlayer(slot);
     ext::pl_8003891C(slot);
 }
 
 pub fn Player_80036D24(slot: i32) {
+    melee_core::ct!("Player_80036D24");
     Player_InitOrResetPlayer(slot);
     ext::pl_80038F10(slot);
 }
 
 pub fn Player_InitAllPlayers() {
+    melee_core::ct!("Player_InitAllPlayers");
     ext::plStale_InitAttackInstance();
     ext::plAttack_80037590();
 
@@ -1216,11 +1358,13 @@ pub fn Player_InitAllPlayers() {
 }
 
 pub fn Player_80036DA4() {
+    melee_core::ct!("Player_80036DA4");
     unsafe { ext::HSD_ObjAllocInit(&mut Player_AllocData, 8, 4) };
     ext::Fighter_FirstInitialize_80067A84();
 }
 
 pub fn Player_80036DD8() {
+    melee_core::ct!("Player_80036DD8");
     let mut sp8: *mut *mut c_void = null_mut();
     unsafe {
         ext::lbArchive_LoadSymbols(
@@ -1234,6 +1378,7 @@ pub fn Player_80036DD8() {
 }
 
 pub fn Player_80036E20(ckind: CharacterKind, archive: *mut HSD_Archive, arg2: i32) {
+    melee_core::ct!("Player_80036E20");
     ext::ftDemo_SetArchiveData(map(ckind).internal_id as i32, archive, arg2);
     if map(ckind).extra_internal_id != -1 && map(ckind).has_transformation == 0 {
         ext::ftDemo_SetArchiveData(map(ckind).extra_internal_id as i32, archive, arg2);
@@ -1241,6 +1386,7 @@ pub fn Player_80036E20(ckind: CharacterKind, archive: *mut HSD_Archive, arg2: i3
 }
 
 pub fn Player_80036EA0(slot: i32) -> *mut HSD_JObj {
+    melee_core::ct!("Player_80036EA0");
     let player = sp(slot);
     let entity = ent(player, 0);
     if !entity.is_null() {
@@ -1250,6 +1396,7 @@ pub fn Player_80036EA0(slot: i32) -> *mut HSD_JObj {
 }
 
 pub fn Player_80036F34(slot: i32, arg1: i32) {
+    melee_core::ct!("Player_80036F34");
     let mut some_struct: plAllocInfo2 = unsafe { core::mem::zeroed() };
     let player = sp(slot);
     some_struct.internal_id = map(player.ckind).internal_id as i32 as FighterKind;
@@ -1268,6 +1415,7 @@ pub fn Player_80036F34(slot: i32, arg1: i32) {
 }
 
 pub fn Player_80037054(slot: i32, arg1: i32) {
+    melee_core::ct!("Player_80037054");
     let mut some_struct: plAllocInfo2 = unsafe { core::mem::zeroed() };
     let player = sp(slot);
     some_struct.internal_id = map(player.ckind).internal_id as i32 as FighterKind;
@@ -1287,6 +1435,7 @@ pub fn Player_80037054(slot: i32, arg1: i32) {
 
 /// TARGET_PC: m-ex character kind `ckind` plays fighter kind `fkind`.
 pub fn Player_MexSetMapping(ckind: i32, fkind: i32) {
+    melee_core::ct!("Player_MexSetMapping");
     let m = map(ckind as CharacterKind);
     m.internal_id = fkind as i8;
     m.extra_internal_id = -1;
@@ -1295,6 +1444,7 @@ pub fn Player_MexSetMapping(ckind: i32, fkind: i32) {
 
 /// TARGET_PC: a Zelda / Sheik template define pair: `ckind` also owns the partner sub-fighter.
 pub fn Player_MexSetPartner(ckind: i32, partner_fkind: i32) {
+    melee_core::ct!("Player_MexSetPartner");
     let m = map(ckind as CharacterKind);
     m.extra_internal_id = partner_fkind as i8;
     m.has_transformation = 1;
@@ -1302,6 +1452,7 @@ pub fn Player_MexSetPartner(ckind: i32, partner_fkind: i32) {
 
 /// TARGET_PC: every scene begins without fighters.
 pub fn Player_ForgetEntities() {
+    melee_core::ct!("Player_ForgetEntities");
     for slot in 0..Gm_Player_NumMax as usize {
         for i in 0..SUB {
             unsafe { player_slots[slot].player_entity[i] = null_mut() };

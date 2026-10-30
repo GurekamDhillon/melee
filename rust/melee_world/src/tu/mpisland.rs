@@ -43,6 +43,7 @@ pub static mut mpIsland_80458E88: mpIsland_80458E88_t = unsafe { core::mem::zero
 
 /// `mpIsland_8005A6F8`
 pub unsafe fn mpIsland_8005A6F8() {
+    melee_core::ct!("mpIsland_8005A6F8");
     mpIsland_80458E88.next = null_mut();
     mpIsland_80458E88.x4 = null_mut();
     mpIsland_80458E88.x8 = null_mut();
@@ -61,6 +62,7 @@ unsafe fn mpIsland_AssertSeg(mut mpisp: *mut mp_UnkStruct0) {
 
 /// `mpIsland_8005A728`
 pub unsafe fn mpIsland_8005A728() {
+    melee_core::ct!("mpIsland_8005A728");
     let mut map: *mut MapCollData = null_mut();
     let mut lines: *mut CollLine = null_mut();
     let mut vtx: *mut CollVtx = null_mut();
@@ -207,6 +209,7 @@ pub unsafe fn mpIsland_8005A728() {
 
 /// `mpIsland_8005AB54`
 pub unsafe fn mpIsland_8005AB54(mut surface_idx: i32) -> *mut mp_UnkStruct0 {
+    melee_core::ct!("mpIsland_8005AB54");
     if super::mplib::mpLib_80054ED8(surface_idx) != 0 {
         let mut v2: *mut CollLine = super::mplib::mpGetGroundCollLine();
         let mut done: i32 = 0;
@@ -245,6 +248,7 @@ pub unsafe fn mpIsland_8005AB54(mut surface_idx: i32) -> *mut mp_UnkStruct0 {
 
 /// `mpIsland_8005AC14`
 pub unsafe fn mpIsland_8005AC14(mut arg0: *mut Vec, mut arg1: f32) -> *mut mp_UnkStruct0 {
+    melee_core::ct!("mpIsland_8005AC14");
     let mut i: i32 = 0;
     if super::mplib::mpCheckFloor((*arg0).x, (*arg0).y, (*arg0).x, (*arg0).y + arg1, 0.0f32, null_mut(), core::ptr::addr_of_mut!(i) as *mut i32, null_mut(), null_mut(), (-1_i32), (-1_i32), (-1_i32), None, null_mut()) != 0 {
         return mpIsland_8005AB54(i);
@@ -254,6 +258,7 @@ pub unsafe fn mpIsland_8005AC14(mut arg0: *mut Vec, mut arg1: f32) -> *mut mp_Un
 
 /// `mpIsland_8005AC8C`
 pub unsafe fn mpIsland_8005AC8C(mut arg0: *mut mp_UnkStruct0) -> i32 {
+    melee_core::ct!("mpIsland_8005AC8C");
     let mut temp_r3: *mut CollJoint = core::ptr::addr_of_mut!(*super::mplib::mpGetGroundCollJoint().offset((*arg0).x28 as isize)) as *mut CollJoint;
     if ((*temp_r3).flags & ((((CollJoint_B10 as i32) | (CollJoint_B9 as i32)) | (CollJoint_B8 as i32)) as u32)) != 0 {
         return 1;
@@ -266,6 +271,7 @@ pub unsafe fn mpIsland_8005AC8C(mut arg0: *mut mp_UnkStruct0) -> i32 {
 
 /// `mpIsland_8005ACE8`
 pub unsafe fn mpIsland_8005ACE8(mut arg0: *mut mp_UnkStruct0, mut arg1: *mut Vec, mut arg2: *mut Vec) {
+    melee_core::ct!("mpIsland_8005ACE8");
     let mut var_r31: i32 = 0;
     let mut var_r30: *mut CollLine = null_mut();
     let mut temp_r29: i32 = 0;
@@ -309,6 +315,7 @@ pub unsafe fn mpIsland_8005ACE8(mut arg0: *mut mp_UnkStruct0, mut arg1: *mut Vec
 /// goto state machine (`loop1_body` / `loop2_body`); each loop is a `while` here, with the
 /// `add_to_prev_*` labels as flags.
 pub unsafe fn mpIsland_8005AE1C(mut arg0: *mut *mut mp_UnkStruct0, mut arg1: *mut *mut mp_UnkStruct0, mut arg2: i32, mut arg3: i32, mut arg4: i32) {
+    melee_core::ct!("mpIsland_8005AE1C");
     let mut prev_b: *mut mp_UnkStruct0 = null_mut();
     let mut prev_a: *mut mp_UnkStruct0 = null_mut();
     let vtx: *mut CollVtx = super::mplib::mpGetGroundCollVtx();
@@ -403,6 +410,7 @@ pub unsafe fn mpIsland_8005AE1C(mut arg0: *mut *mut mp_UnkStruct0, mut arg1: *mu
 
 /// `mpIsland_8005B004`
 pub unsafe fn mpIsland_8005B004(mut arg0: *mut *mut mp_UnkStruct0, mut arg1: *mut *mut mp_UnkStruct0, mut arg2: i32, mut arg3: i32, mut arg4: i32, mut arg5: i32, mut arg6: i32) {
+    melee_core::ct!("mpIsland_8005B004");
     let mut _q0: [u8; 8] = [0; 8];
     let mut cur: *mut mp_UnkStruct0 = null_mut();
     let mut z_val: f32 = 0.0;
@@ -537,6 +545,7 @@ pub unsafe fn mpIsland_8005B004(mut arg0: *mut *mut mp_UnkStruct0, mut arg1: *mu
 
 /// `mpIsland_8005B334`
 pub unsafe fn mpIsland_8005B334(mut arg0: i32, mut arg1: i32, mut arg2: i32, mut arg3: i32) {
+    melee_core::ct!("mpIsland_8005B334");
     let mut temp: *mut mp_UnkStruct0 = null_mut();
     if !mpIsland_80458E88.x8.is_null() {
         (*mpIsland_80458E88.x8).next = null_mut();
@@ -576,6 +585,7 @@ pub unsafe fn mpIsland_8005B334(mut arg0: i32, mut arg1: i32, mut arg2: i32, mut
 
 /// `mpIsland_StageSlotFree`
 pub unsafe fn mpIsland_StageSlotFree() {
+    melee_core::ct!("mpIsland_StageSlotFree");
     let mut lists: [*mut mp_UnkStruct0; 5] = [null_mut(); 5];
     let mut i: i32 = 0;
     lists[0 as usize] = mpIsland_80458E88.next;
@@ -615,6 +625,7 @@ unsafe fn mpIsland_ScriptRecycle(mut list: *mut *mut mp_UnkStruct0, mut dirty: *
 
 /// `mpIsland_ScriptBatch`
 pub unsafe fn mpIsland_ScriptBatch(mut dirty: *const u8, mut count: i32) {
+    melee_core::ct!("mpIsland_ScriptBatch");
     let mut i: i32 = 0;
     let mut any: i32 = 0;
     let mut kind: i32 = 0;

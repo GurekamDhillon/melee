@@ -133,6 +133,7 @@ fn ftCheckThrowB3(fp: &mut Fighter) -> bool {
 
 /// C `bool`: this player has used the taunt and the stage's transmission is ready.
 pub fn ftFx_AppealS_CheckIfUsed(fp: *mut Fighter) -> bool {
+    melee_core::ct!("ftFx_AppealS_CheckIfUsed");
     unsafe {
         let attack_count = ext::Player_GetActionStats((*fp).player_id as i32);
         ext::pl_800386D8(attack_count, FTFOX_APPEALS_ATTACKID) != 0 && ext::grCorneria_801E2D14()
@@ -141,6 +142,7 @@ pub fn ftFx_AppealS_CheckIfUsed(fp: *mut Fighter) -> bool {
 
 /// `ftFox_CheckAppealSCount` (static inline): any of the six slots has used the taunt.
 pub fn ftFox_CheckAppealSCount() -> bool {
+    melee_core::ct!("ftFox_CheckAppealSCount");
     for i in 0..6 {
         let attack_count = ext::Player_GetActionStats(i);
         if ext::pl_800386D8(attack_count, 0x72) != 0 {
@@ -152,6 +154,7 @@ pub fn ftFox_CheckAppealSCount() -> bool {
 
 /// C `bool`: start the taunt when Fox / Falco is on Corneria and nobody used it yet.
 pub fn ftFx_AppealS_CheckInput(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftFx_AppealS_CheckInput");
     unsafe {
         let fp = fpp(gobj);
         let ft_kind = ftGetTemplateKind(&*fp);
@@ -171,10 +174,12 @@ pub fn ftFx_AppealS_CheckInput(gobj: *mut HSD_GObj) -> bool {
 
 /// `ftFox_AppealS_GetLR` (static inline).
 pub fn ftFox_AppealS_GetLR(x1: f32, x2: f32) -> bool {
+    melee_core::ct!("ftFox_AppealS_GetLR");
     x1 != x2
 }
 
 pub fn ftFx_AppealS_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_AppealS_Enter");
     unsafe {
         let fp = fpp(gobj);
         (*fp).mv.fx.AppealS.animCount = 0;
@@ -197,10 +202,12 @@ pub fn ftFx_AppealS_Enter(gobj: *mut HSD_GObj) {
 
 /// `ftFx_AppealS_OnTakeDamage` as a Fighter callback entry (`death1_cb`).
 pub unsafe extern "C" fn cb_ftFx_AppealS_OnTakeDamage(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftFx_AppealS_OnTakeDamage");
     ftFx_AppealS_OnTakeDamage(g);
 }
 
 pub fn ftFx_AppealS_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_AppealS_Anim");
     unsafe {
         let fp = fpp(gobj);
         if ftCheckThrowB3(&mut *fp) {
@@ -238,11 +245,13 @@ pub fn ftFx_AppealS_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_AppealS_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_AppealS_Coll");
     ext::ft_80084280(gobj);
 }
 
 /// Fox & Falco's Special Taunt OnTakeDamage / OnDeath callback (static).
 pub fn ftFx_AppealS_OnTakeDamage(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_AppealS_OnTakeDamage");
     unsafe {
         let fp = fpp(gobj);
         ext::grCorneria_801E2AF4();

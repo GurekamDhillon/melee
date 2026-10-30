@@ -21,6 +21,7 @@ const gmVsMode_State_Prize: i32 = 3 << 6;
 
 /// C `onEnterCss`.
 pub unsafe fn onEnterCss(state: *mut GameModeState) {
+    melee_core::ct!("onEnterCss");
     let vs = addr_of_mut!((*gmMainLib_804D3EE0).modes.table[GmVsMode_Invisible as usize]);
     ext::gmVsMelee_EnterCss(state, vs, VS_INVISIBLE as _);
     // TARGET_PC: the Atlas select, when it can run; else the retail screen.
@@ -29,17 +30,20 @@ pub unsafe fn onEnterCss(state: *mut GameModeState) {
 
 /// C `onExitCss`.
 pub unsafe fn onExitCss(state: *mut GameModeState) {
+    melee_core::ct!("onExitCss");
     ext::gmVsMelee_ExitCss(state, addr_of_mut!((*gmMainLib_804D3EE0).modes.table[GmVsMode_Invisible as usize]));
 }
 
 /// C `onEnterSss`.
 pub unsafe fn onEnterSss(state: *mut GameModeState) {
+    melee_core::ct!("onEnterSss");
     ext::gmVsMelee_EnterSss(state, addr_of_mut!((*gmMainLib_804D3EE0).modes.table[GmVsMode_Invisible as usize]));
     ext::gmFrontend_AtlasSelect(state, 1, core::ptr::null());
 }
 
 /// C `onExitSss`.
 pub unsafe fn onExitSss(state: *mut GameModeState) {
+    melee_core::ct!("onExitSss");
     ext::gmVsMelee_ExitSss(
         state,
         addr_of_mut!((*gmMainLib_804D3EE0).modes.table[GmVsMode_Invisible as usize]),
@@ -49,49 +53,58 @@ pub unsafe fn onExitSss(state: *mut GameModeState) {
 
 /// C `initVsPlayer`: the invisible-mode flag on every player start (the `vs` argument is unused).
 pub unsafe fn initVsPlayer(start: *mut PlayerInitData, _unused: *mut PlayerInitData) {
+    melee_core::ct!("initVsPlayer");
     (*start).set_vs_invisible(1);
 }
 
 /// C `onEnterVs`.
 pub unsafe fn onEnterVs(state: *mut GameModeState) {
+    melee_core::ct!("onEnterVs");
     let vs = addr_of_mut!((*gmMainLib_804D3EE0).modes.table[GmVsMode_Invisible as usize]);
     ext::gmVsMelee_EnterVs(state, vs, None, Some(initVsPlayer));
 }
 
 /// C `onExitVs`.
 pub unsafe fn onExitVs(state: *mut GameModeState) {
+    melee_core::ct!("onExitVs");
     ext::gmVsMelee_ExitVs(state, gmVsMode_State_Results as _, gmVsMode_State_SuddenDeath as _);
 }
 
 /// C `onEnterSuddenDeath`.
 pub unsafe fn onEnterSuddenDeath(state: *mut GameModeState) {
+    melee_core::ct!("onEnterSuddenDeath");
     let vs = addr_of_mut!((*gmMainLib_804D3EE0).modes.table[GmVsMode_Invisible as usize]);
     ext::gmVsMelee_EnterSuddenDeath(state, vs, None, Some(initVsPlayer));
 }
 
 /// C `onExitSuddenDeath`.
 pub unsafe fn onExitSuddenDeath(state: *mut GameModeState) {
+    melee_core::ct!("onExitSuddenDeath");
     ext::gmVsMelee_ExitSuddenDeath(state);
 }
 
 /// C `onEnterResults`.
 pub unsafe fn onEnterResults(state: *mut GameModeState) {
+    melee_core::ct!("onEnterResults");
     ext::gmVsMelee_EnterResults(state);
 }
 
 /// C `onExitResults`.
 pub unsafe fn onExitResults(state: *mut GameModeState) {
+    melee_core::ct!("onExitResults");
     let vs = addr_of_mut!((*gmMainLib_804D3EE0).modes.table[GmVsMode_Invisible as usize]);
     ext::gmVsMelee_ExitResults(state, vs, gmVsMode_State_Css as _);
 }
 
 /// C `gm_Mode_InvisibleVs_OnInit`.
 pub unsafe fn gm_Mode_InvisibleVs_OnInit() {
+    melee_core::ct!("gm_Mode_InvisibleVs_OnInit");
     ext::gm_InitVsMode(addr_of_mut!((*gmMainLib_804D3EE0).modes.table[GmVsMode_Invisible as usize]));
 }
 
 /// C `gm_Mode_InvisibleVs_OnLoad`.
 pub unsafe fn gm_Mode_InvisibleVs_OnLoad() {
+    melee_core::ct!("gm_Mode_InvisibleVs_OnLoad");
     ext::gmVsMelee_ResetKOCounts();
 }
 

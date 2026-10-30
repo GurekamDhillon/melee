@@ -428,6 +428,7 @@ pub const FTKB_COPY_COSTUMES: i32 = 6;
 /// `ftKb_CopyCostumeRow(costume)` (TARGET_PC): which retail row of a per-costume Kirby copy-hat table a
 /// Kirby costume uses (a skin's declared hat row, else m-ex's visibility lookup index, else row 0).
 pub fn ftKb_CopyCostumeRow(costume: i32) -> i32 {
+    melee_core::ct!("ftKb_CopyCostumeRow");
     let mut row = ext::Skins_KirbyRow(Ft_Kind_Kirby as i32, costume);
     if row >= 0 && row < FTKB_COPY_COSTUMES {
         return row;
@@ -458,6 +459,7 @@ unsafe fn hat_slot(k: usize) -> *mut *mut c_void {
 /// `ftKb_hatTable` (`ft_80459B88.hats`, an array: never NULL).
 #[inline(always)]
 pub unsafe fn hat_table(kind: usize) -> *mut KirbyHatStruct {
+    melee_core::ct!("hat_table");
     ft_80459B88.hats[kind]
 }
 
@@ -1241,6 +1243,7 @@ use super::ftkirbydata::{ftKb_Init_803CA9D0, ftKb_Init_803CB3E8, ftKb_Init_803CB
 
 /// `ftKb_Init_800EE528`: forget every loaded hat archive and clear the per-costume archive rows.
 pub fn ftKb_Init_800EE528() {
+    melee_core::ct!("ftKb_Init_800EE528");
     unsafe {
         // C walks `ft_80459B88` as s32[Ft_Kind_Max]: slot 0 is x0, slot i is hats[i - 1].
         for i in 0..Ft_Kind_Max as usize {
@@ -1258,6 +1261,7 @@ pub fn ftKb_Init_800EE528() {
 
 /// `ftKb_Init_OnDeath`: drop the copied hat and, if the player kept one, re-apply it.
 pub fn ftKb_Init_OnDeath(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_Init_OnDeath");
     unsafe {
         let fp = fpp(gobj);
         st::ftParts_80074A4C(gobj, 0, 0);
@@ -1277,6 +1281,7 @@ pub fn ftKb_Init_OnDeath(gobj: *mut HSD_GObj) {
 
 /// `ftKb_Init_OnLoad`: `PUSH_ATTRS(fp, ftKb_DatAttrs)`, multijump, and the four copy-ability articles.
 pub fn ftKb_Init_OnLoad(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_Init_OnLoad");
     unsafe {
         let fp = fpp(gobj);
         let item_list = (*(*fp).ft_data).x48_items;
@@ -1297,6 +1302,7 @@ pub fn ftKb_Init_OnLoad(gobj: *mut HSD_GObj) {
 
 /// `ftKb_Init_800EE74C` (death2/take-damage cleanup of the copied ability, then drop death3_cb).
 pub fn ftKb_Init_800EE74C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_Init_800EE74C");
     unsafe {
         let fp = fpp(gobj);
         ext::ftKb_SpecialAirLw_800F5524(gobj);
@@ -1311,6 +1317,7 @@ pub fn ftKb_Init_800EE74C(gobj: *mut HSD_GObj) {
 
 /// `ftKb_Init_800EE7B8`: the take-damage twin of the above, dropping death1_cb.
 pub fn ftKb_Init_800EE7B8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_Init_800EE7B8");
     unsafe {
         let fp = fpp(gobj);
         ext::ftKb_SpecialAirLw_800F5524(gobj);
@@ -1324,6 +1331,7 @@ pub fn ftKb_Init_800EE7B8(gobj: *mut HSD_GObj) {
 
 /// `ftKb_Init_UnkMotionStates4`: play the "fully charged" flash once the hat's charge counter fills.
 pub fn ftKb_Init_UnkMotionStates4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_Init_UnkMotionStates4");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftKb_DatAttrs;
@@ -1355,6 +1363,7 @@ pub fn ftKb_Init_UnkMotionStates4(gobj: *mut HSD_GObj) {
 
 /// `ftKb_Init_OnItemPickup`: pose the hand model for a light held item.
 pub fn ftKb_Init_OnItemPickup(gobj: *mut HSD_GObj, arg1: bool) {
+    melee_core::ct!("ftKb_Init_OnItemPickup");
     unsafe {
         let fp = fpp(gobj);
         if st::itIsHeavy((*fp).item_gobj) == 0 {
@@ -1372,6 +1381,7 @@ pub fn ftKb_Init_OnItemPickup(gobj: *mut HSD_GObj, arg1: bool) {
 }
 
 pub fn ftKb_Init_OnItemInvisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_Init_OnItemInvisible");
     unsafe {
         let fp = fpp(gobj);
         if st::itIsHeavy((*fp).item_gobj) == 0 {
@@ -1381,11 +1391,13 @@ pub fn ftKb_Init_OnItemInvisible(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_Init_OnItemDrop(gobj: *mut HSD_GObj, bool1: i32) {
+    melee_core::ct!("ftKb_Init_OnItemDrop");
     crate::tu::ftclink::Fighter_OnItemDrop(gobj, bool1, 1, 1);
 }
 
 /// `COPY_ATTRS(gobj, ftKb_DatAttrs)`.
 pub fn ftKb_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_Init_LoadSpecialAttrs");
     unsafe {
         let fp = fpp(gobj);
         *((*fp).dat_attrs as *mut ftKb_DatAttrs) = *((*(*fp).ft_data).ext_attr as *const ftKb_DatAttrs);
@@ -1394,6 +1406,7 @@ pub fn ftKb_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
 
 /// `ftKb_Init_800EEB00(gobj, out)`: Pichu hat's dynamic-bones pointer, or NULL.
 pub fn ftKb_Init_800EEB00(_gobj: *mut HSD_GObj, arg1: *mut *mut ArticleDynamicBones) {
+    melee_core::ct!("ftKb_Init_800EEB00");
     unsafe {
         let hat = hat_table(Ft_Kind_Pichu as usize);
         if hat.is_null() {
@@ -1406,6 +1419,7 @@ pub fn ftKb_Init_800EEB00(_gobj: *mut HSD_GObj, arg1: *mut *mut ArticleDynamicBo
 
 /// `ftKb_Init_800EEB1C(gobj, out)`: Pichu hat's dynamics `x4`, or 0.
 pub fn ftKb_Init_800EEB1C(_gobj: *mut HSD_GObj, arg1: *mut i32) {
+    melee_core::ct!("ftKb_Init_800EEB1C");
     unsafe {
         let hat = hat_table(Ft_Kind_Pichu as usize);
         if hat.is_null() {
@@ -1418,6 +1432,7 @@ pub fn ftKb_Init_800EEB1C(_gobj: *mut HSD_GObj, arg1: *mut i32) {
 
 /// `ftKb_Init_GetMotionFileString(kind)`: the Vi demo motion file name for Kirby's hat kind 11 / 14.
 pub fn ftKb_Init_GetMotionFileString(arg0: i32) -> *mut i8 {
+    melee_core::ct!("ftKb_Init_GetMotionFileString");
     unsafe {
         let mut offset: i32 = 0;
         match arg0 {
@@ -1431,6 +1446,7 @@ pub fn ftKb_Init_GetMotionFileString(arg0: i32) -> *mut i8 {
 
 /// `ftKb_SpecialN_800EEC34(kind, costume, count)`: preload kind's hat archive and costume files async.
 pub fn ftKb_SpecialN_800EEC34(arg0: i32, mut arg1: i32, mut arg2: i32) {
+    melee_core::ct!("ftKb_SpecialN_800EEC34");
     unsafe {
         if arg0 < 0 || arg0 >= Ft_Kind_Max as i32 {
             return;
@@ -1471,6 +1487,7 @@ pub fn ftKb_SpecialN_800EEC34(arg0: i32, mut arg1: i32, mut arg2: i32) {
 
 /// `ftKb_SpecialN_800EED50(kind, costume)`: load kind's hat archive and the costume's hat model.
 pub fn ftKb_SpecialN_800EED50(arg0: i32, arg1: i32) {
+    melee_core::ct!("ftKb_SpecialN_800EED50");
     unsafe {
         if arg0 < 0 || arg0 >= Ft_Kind_Max as i32 {
             return;
@@ -1520,11 +1537,13 @@ pub fn ftKb_SpecialN_800EED50(arg0: i32, arg1: i32) {
 
 /// `ftKb_Init_UnkMotionStates5`: register the hat loader with the player preload.
 pub fn ftKb_Init_UnkMotionStates5() {
+    melee_core::ct!("ftKb_Init_UnkMotionStates5");
     ext::Player_80031DC8(ftKb_SpecialN_800EED50);
 }
 
 /// `ftKb_SpecialN_800EEEC4(gobj, kind)`: call the hat's unload callback, if any.
 pub fn ftKb_SpecialN_800EEEC4(gobj: *mut HSD_GObj, kind: i32) {
+    melee_core::ct!("ftKb_SpecialN_800EEEC4");
     unsafe {
         if let Some(cb) = ftKb_Init_803C9CC8[(kind * 2 + 1) as usize] {
             cb(gobj);
@@ -1534,6 +1553,7 @@ pub fn ftKb_SpecialN_800EEEC4(gobj: *mut HSD_GObj, kind: i32) {
 
 /// `ftKb_UnkMtxFunc0(gobj, arg1, mtx)`: draw the hat model at bone 6.
 pub fn ftKb_UnkMtxFunc0(gobj: *mut HSD_GObj, arg1: i32, mtx: MtxPtr) {
+    melee_core::ct!("ftKb_UnkMtxFunc0");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).u.kb.hat.jobj.is_null() {
@@ -1553,6 +1573,7 @@ pub fn ftKb_UnkMtxFunc0(gobj: *mut HSD_GObj, arg1: i32, mtx: MtxPtr) {
 
 /// `ftKb_Init_UnkMotionStates6`: the hat's jobj, or (a correctness hack in the C) the gobj itself.
 pub fn ftKb_Init_UnkMotionStates6(gobj: *mut HSD_GObj) -> *mut HSD_JObj {
+    melee_core::ct!("ftKb_Init_UnkMotionStates6");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.kb.hat.jobj.is_null() {
@@ -1564,6 +1585,7 @@ pub fn ftKb_Init_UnkMotionStates6(gobj: *mut HSD_GObj) -> *mut HSD_JObj {
 
 /// `ftKb_SpecialN_800EF040(gobj, kind + 1, hat)`: attach the hat's extra body parts from the hat archive.
 pub fn ftKb_SpecialN_800EF040(gobj: *mut HSD_GObj, arg1: i32, hat: *mut KirbyHatStruct) {
+    melee_core::ct!("ftKb_SpecialN_800EF040");
     unsafe {
         let mask = (*hat).hat_dynamics[1] as usize as u32;
         if mask != 0 {
@@ -1635,6 +1657,7 @@ unsafe fn append_dobj(jobj: *mut HSD_JObj, tail: *mut HSD_DObj, dobj: *mut HSD_D
 /// `ftKb_SpecialN_800EF0E4(gobj, kind + 1, indices)`: instantiate the hat's DObjs on the fighter's bones,
 /// recording each bone's first DObj index in `arg2`.
 pub fn ftKb_SpecialN_800EF0E4(gobj: *mut HSD_GObj, arg1: i32, arg2: *mut u8) {
+    melee_core::ct!("ftKb_SpecialN_800EF0E4");
     unsafe {
         let fp = fpp(gobj);
         let mut current_joint: *mut HSD_Joint = null_mut();
@@ -1698,6 +1721,7 @@ pub fn ftKb_SpecialN_800EF0E4(gobj: *mut HSD_GObj, arg1: i32, arg2: *mut u8) {
 
 /// `ftKb_SpecialN_800EF35C(gobj, kind + 1, indices)`: bind the hat's mat-anims to the instantiated DObjs.
 pub fn ftKb_SpecialN_800EF35C(gobj: *mut HSD_GObj, arg1: i32, arg2: *mut u8) {
+    melee_core::ct!("ftKb_SpecialN_800EF35C");
     unsafe {
         let fp = fpp(gobj);
         let costume_data = ftKb_Init_803C9FC8[arg1 as usize];
@@ -1723,6 +1747,7 @@ pub fn ftKb_SpecialN_800EF35C(gobj: *mut HSD_GObj, arg1: i32, arg2: *mut u8) {
 
 /// `ftKb_SpecialN_800EF438(gobj, hat)`: instantiate the hat's second DObj set (`hat_dynamics[2]`).
 pub fn ftKb_SpecialN_800EF438(gobj: *mut HSD_GObj, hat: *mut KirbyHatStruct) {
+    melee_core::ct!("ftKb_SpecialN_800EF438");
     unsafe {
         let root = (*hat).hat_dynamics[2] as *mut HSD_Joint;
         let fp = fpp(gobj);
@@ -1795,6 +1820,7 @@ unsafe fn ftKb_RemoveHatParts(gobj: *mut HSD_GObj, mask: u32) {
 
 /// `ftKb_SpecialN_800EF69C(gobj, kind + 1, hat)`: tear down the hat's DObjs and body parts.
 pub fn ftKb_SpecialN_800EF69C(gobj: *mut HSD_GObj, _arg1: i32, hat: *mut KirbyHatStruct) {
+    melee_core::ct!("ftKb_SpecialN_800EF69C");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.kb.hat.x14.data.is_null() {
@@ -1837,6 +1863,7 @@ pub fn ftKb_SpecialN_800EF69C(gobj: *mut HSD_GObj, _arg1: i32, hat: *mut KirbyHa
 
 /// `ftKb_UnkIntBoolFunc0(fp, arg1, arg2)`: show (arg2) or hide the hat model's parts for model slot `arg1`.
 pub fn ftKb_UnkIntBoolFunc0(fp: *mut Fighter, arg1: i32, arg2: bool) {
+    melee_core::ct!("ftKb_UnkIntBoolFunc0");
     unsafe {
         use ext::{ftParts_80074CA0, ftParts_80074D7C};
         if !(*fp).u.kb.hat.x14.data.is_null() {
@@ -1872,6 +1899,7 @@ pub fn ftKb_UnkIntBoolFunc0(fp: *mut Fighter, arg1: i32, arg2: bool) {
 }
 
 pub fn ftKb_Init_UnkCallbackPairs0_0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_Init_UnkCallbackPairs0_0");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.kb.hat.x14.data.is_null() && (*fp).u.kb.hat.jobj.is_null() {
@@ -1881,6 +1909,7 @@ pub fn ftKb_Init_UnkCallbackPairs0_0(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_Init_UnkCallbackPairs0_1(gobj: *mut HSD_GObj, arg1: i32, arg2: f32) {
+    melee_core::ct!("ftKb_Init_UnkCallbackPairs0_1");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.kb.hat.x14.data.is_null() && (*fp).u.kb.hat.jobj.is_null() {
@@ -1891,6 +1920,7 @@ pub fn ftKb_Init_UnkCallbackPairs0_1(gobj: *mut HSD_GObj, arg1: i32, arg2: f32) 
 
 /// `ftKb_SpecialN_800EFA40`: Mario's hat (the `ft_80459B88.x0` archive).
 pub fn ftKb_SpecialN_800EFA40(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialN_800EFA40");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).u.kb.hat.jobj.is_null() {
@@ -1918,11 +1948,13 @@ unsafe fn ftKb_SpecialN_800EFAF0_inline(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_SpecialN_800EFAF0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialN_800EFAF0");
     unsafe { ftKb_SpecialN_800EFAF0_inline(gobj) }
 }
 
 /// `ftKb_LoadHat` (static inline): load a simple one-JObj hat.
 pub unsafe fn ftKb_LoadHat(gobj: *mut HSD_GObj, fp: *mut Fighter, hat: *mut KirbyHatStruct) {
+    melee_core::ct!("ftKb_LoadHat");
     if hat.is_null() {
         return;
     }
@@ -2050,6 +2082,7 @@ unsafe fn load_hat(gobj: *mut HSD_GObj, fp: *mut Fighter, kind: usize, indices: 
 
 /// `ftKb_SpecialN_800F0FC0`: Captain Falcon's hat.
 pub fn ftKb_SpecialN_800F0FC0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialN_800F0FC0");
     unsafe {
         let fp = fpp(gobj);
         let mut part_dobj_indices = [0u8; 0x90];
@@ -2062,6 +2095,7 @@ pub fn ftKb_SpecialN_800F0FC0(gobj: *mut HSD_GObj) {
 
 /// `ftKb_SpecialN_800F10A4`: unload Captain Falcon's hat.
 pub fn ftKb_SpecialN_800F10A4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialN_800F10A4");
     unsafe {
         let hat = hat_table(Ft_Kind_Captain as usize);
         if hat.is_null() {
@@ -2073,6 +2107,7 @@ pub fn ftKb_SpecialN_800F10A4(gobj: *mut HSD_GObj) {
 
 /// `ftKb_SpecialN_800F10D4`: Yoshi's hat.
 pub fn ftKb_SpecialN_800F10D4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialN_800F10D4");
     unsafe {
         let fp = fpp(gobj);
         let mut part_dobj_indices = [0u8; 0x88];
@@ -2088,6 +2123,7 @@ pub fn ftKb_SpecialN_800F10D4(gobj: *mut HSD_GObj) {
 
 /// `ftKb_SpecialN_800F11AC`: unload Yoshi's hat (hat row 14).
 pub fn ftKb_SpecialN_800F11AC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialN_800F11AC");
     unsafe {
         let fp = fpp(gobj);
         let hat = hat_table(14);
@@ -2101,6 +2137,7 @@ pub fn ftKb_SpecialN_800F11AC(gobj: *mut HSD_GObj) {
 
 /// `ftKb_SpecialN_800F11F0`: Jigglypuff's hat.
 pub fn ftKb_SpecialN_800F11F0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialN_800F11F0");
     unsafe {
         let fp = fpp(gobj);
         let mut part_dobj_indices = [0u8; 0x88];
@@ -2116,6 +2153,7 @@ pub fn ftKb_SpecialN_800F11F0(gobj: *mut HSD_GObj) {
 
 /// `ftKb_SpecialN_800F12C8`: unload Jigglypuff's hat.
 pub fn ftKb_SpecialN_800F12C8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialN_800F12C8");
     unsafe {
         let fp = fpp(gobj);
         let hat = hat_table(Ft_Kind_Purin as usize);
@@ -2129,6 +2167,7 @@ pub fn ftKb_SpecialN_800F12C8(gobj: *mut HSD_GObj) {
 
 /// `ftKb_SpecialN_800F130C`: Dr. Mario's hat.
 pub fn ftKb_SpecialN_800F130C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialN_800F130C");
     unsafe {
         let fp = fpp(gobj);
         let mut part_dobj_indices = [0u8; 0x90];
@@ -2141,6 +2180,7 @@ pub fn ftKb_SpecialN_800F130C(gobj: *mut HSD_GObj) {
 
 /// `ftKb_SpecialN_800F13F0`: unload Dr. Mario's hat.
 pub fn ftKb_SpecialN_800F13F0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialN_800F13F0");
     unsafe {
         let hat = hat_table(Ft_Kind_DrMario as usize);
         if hat.is_null() {
@@ -2153,6 +2193,7 @@ pub fn ftKb_SpecialN_800F13F0(gobj: *mut HSD_GObj) {
 /// `ftKb_SpecialN_800F1420(gobj, colour)`: write the 4-byte colour into the diffuse of every material of
 /// the hat's DObjs named by the fighter's `x5AC.xC[4]` lookup. Returns the last index pointer.
 pub fn ftKb_SpecialN_800F1420(gobj: *mut HSD_GObj, arg1: *const u32) -> *mut u8 {
+    melee_core::ct!("ftKb_SpecialN_800F1420");
     unsafe {
         let fp = fpp(gobj);
         let lookup = (*fp).x5AC.xC[4];
@@ -2182,6 +2223,7 @@ pub fn ftKb_SpecialN_800F1420(gobj: *mut HSD_GObj, arg1: *const u32) -> *mut u8 
 
 /// `ftKb_SpecialN_800F14B4`: Pichu's hat (recoloured with the hat archive's two colour words).
 pub fn ftKb_SpecialN_800F14B4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialN_800F14B4");
     unsafe {
         let fp = fpp(gobj);
         let mut part_dobj_indices = [0u8; 0x88];
@@ -2208,6 +2250,7 @@ pub fn ftKb_SpecialN_800F14B4(gobj: *mut HSD_GObj) {
 
 /// `ftKb_SpecialN_800F15D8`: unload Pichu's hat.
 pub fn ftKb_SpecialN_800F15D8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialN_800F15D8");
     unsafe {
         let fp = fpp(gobj);
         let new_var = hat_table(Ft_Kind_Pichu as usize);
@@ -2222,6 +2265,7 @@ pub fn ftKb_SpecialN_800F15D8(gobj: *mut HSD_GObj) {
 
 /// `ftKb_SpecialN_Enter`: the hat's neutral-B enter callback, or Kirby's own inhale.
 pub fn ftKb_SpecialN_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialN_Enter");
     unsafe {
         let fp = fpp(gobj);
         if let Some(cb) = ftKb_Init_803C9DD0[(*fp).u.kb.hat.kind as usize] {
@@ -2234,6 +2278,7 @@ pub fn ftKb_SpecialN_Enter(gobj: *mut HSD_GObj) {
 
 /// `ftKb_SpecialAirN_Enter`: the aerial counterpart.
 pub fn ftKb_SpecialAirN_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialAirN_Enter");
     unsafe {
         let fp = fpp(gobj);
         if let Some(cb) = ftKb_Init_803C9E54[(*fp).u.kb.hat.kind as usize] {
@@ -2246,6 +2291,7 @@ pub fn ftKb_SpecialAirN_Enter(gobj: *mut HSD_GObj) {
 
 /// `ftKb_SpecialN_800F16D0(gobj, kind)`: register the copied ability's items (articles) for `kind`.
 pub fn ftKb_SpecialN_800F16D0(_gobj: *mut HSD_GObj, kind: i32) {
+    melee_core::ct!("ftKb_SpecialN_800F16D0");
     unsafe {
         let art = |hat: *mut KirbyHatStruct, slot: usize| (*hat).hat_dynamics[slot] as *mut c_void;
         // `hats[idx]` literals are the C's (hat table index = kind - 1 here).
@@ -2332,6 +2378,7 @@ pub fn ftKb_SpecialN_800F16D0(_gobj: *mut HSD_GObj, kind: i32) {
 
 /// `ftKb_SpecialN_800F190C(gobj, kind)`: reset the copy-ability state of Kirby's fighter vars.
 pub fn ftKb_SpecialN_800F190C(gobj: *mut HSD_GObj, _kind: i32) {
+    melee_core::ct!("ftKb_SpecialN_800F190C");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftKb_DatAttrs;
@@ -2369,6 +2416,7 @@ pub fn ftKb_SpecialN_800F190C(gobj: *mut HSD_GObj, _kind: i32) {
 
 /// `ftKb_SpecialN_800F19AC`: the hat's ability cleanup on death (Mewtwo uses 8010709C).
 pub fn ftKb_SpecialN_800F19AC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialN_800F19AC");
     unsafe {
         let fp = fpp(gobj);
         match (*fp).u.kb.hat.kind {
@@ -2396,6 +2444,7 @@ pub fn ftKb_SpecialN_800F19AC(gobj: *mut HSD_GObj) {
 
 /// `ftKb_SpecialN_800F1A8C`: as above for take-damage (Mewtwo uses 80107130).
 pub fn ftKb_SpecialN_800F1A8C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialN_800F1A8C");
     unsafe {
         let fp = fpp(gobj);
         match (*fp).u.kb.hat.kind {
@@ -2422,6 +2471,7 @@ pub fn ftKb_SpecialN_800F1A8C(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_Init_UnkMotionStates3(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_Init_UnkMotionStates3");
     unsafe {
         let fp = fpp(gobj);
         match (*fp).u.kb.hat.kind {
@@ -2433,6 +2483,7 @@ pub fn ftKb_Init_UnkMotionStates3(gobj: *mut HSD_GObj) {
 
 /// `ftKb_SpecialN_800F1BAC(gobj, kind, arg2)`: put on `kind`'s hat (SFX 0x222F3) or keep it (0x222F6).
 pub fn ftKb_SpecialN_800F1BAC(gobj: *mut HSD_GObj, kind: i32, arg2: bool) {
+    melee_core::ct!("ftKb_SpecialN_800F1BAC");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).u.kb.hat.kind as i32 != kind {
@@ -2459,6 +2510,7 @@ pub fn ftKb_SpecialN_800F1BAC(gobj: *mut HSD_GObj, kind: i32, arg2: bool) {
 
 /// `fn_800F1CA0`: hats whose ability is a held-down charge.
 pub fn fn_800F1CA0(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("fn_800F1CA0");
     unsafe {
         let fp = fpp(gobj);
         matches!((*fp).u.kb.hat.kind, Ft_Kind_Captain | Ft_Kind_Seak | Ft_Kind_Popo | Ft_Kind_Nana | Ft_Kind_Samus)
@@ -2466,6 +2518,7 @@ pub fn fn_800F1CA0(gobj: *mut HSD_GObj) -> bool {
 }
 
 pub fn ftKb_SpecialN_800F1CD8(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("ftKb_SpecialN_800F1CD8");
     if fn_800F1CA0(gobj) {
         return 1;
     }
@@ -2476,6 +2529,7 @@ static mut KIRBY_LIKE_CACHE: [i8; Ft_Kind_Max as usize] = [0; Ft_Kind_Max as usi
 
 /// `ftKb_MexKirbyLike(kind)` (TARGET_PC): is m-ex kind `kind` a Kirby clone? Cached per kind once m-ex answers.
 pub fn ftKb_MexKirbyLike(kind: i32) -> i32 {
+    melee_core::ct!("ftKb_MexKirbyLike");
     unsafe {
         if kind < Ft_Kind_Mex0 as i32 || kind >= Ft_Kind_Max as i32 {
             return 0;
@@ -2503,6 +2557,7 @@ fn ftkb_is_kirby(k: FighterKind) -> bool {
 
 /// `ftKb_SpecialN_800F1D24`: per-frame wall-bump dust timer for Kirby-based fighters.
 pub fn ftKb_SpecialN_800F1D24(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialN_800F1D24");
     unsafe {
         let fp = fpp(gobj);
         if ftkb_is_kirby((*fp).kind) {
@@ -2522,6 +2577,7 @@ pub fn ftKb_SpecialN_800F1D24(gobj: *mut HSD_GObj) {
 
 /// `ftKb_SpecialN_800F1DAC`: spawn the bump effect (0x49E) on the first frame of touching a wall/ceiling/floor.
 pub fn ftKb_SpecialN_800F1DAC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialN_800F1DAC");
     unsafe {
         let fp = fpp(gobj);
         let coll = &(*fp).coll_data;
@@ -2560,6 +2616,7 @@ pub fn ftKb_SpecialN_800F1DAC(gobj: *mut HSD_GObj) {
 
 /// `ftKb_SpecialN_800F1F1C(gobj, pos)`: spawn the bump effect at `pos` for Kirby-based fighters.
 pub fn ftKb_SpecialN_800F1F1C(gobj: *mut HSD_GObj, pos: *mut Vec3) {
+    melee_core::ct!("ftKb_SpecialN_800F1F1C");
     unsafe {
         let fp = fpp(gobj);
         if ftkb_is_kirby((*fp).kind) {
@@ -2572,6 +2629,7 @@ pub fn ftKb_SpecialN_800F1F1C(gobj: *mut HSD_GObj, pos: *mut Vec3) {
 /// callbacks from MxDt.dat's MexData.kirby_function, for m-ex INTERNAL kind `internal`. `src` is the
 /// clone base; an empty m-ex row stays empty (NULL means "run Kirby's own inhale").
 pub fn ftKb_MexCopyKindHat(dst: i32, src: i32, internal: i32) {
+    melee_core::ct!("ftKb_MexCopyKindHat");
     unsafe {
         let (d, s) = (dst as usize, src as usize);
         ftKb_Init_803C9FC8[d] = ftKb_Init_803C9FC8[s];

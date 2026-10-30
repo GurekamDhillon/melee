@@ -20,19 +20,22 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 
 /// `ftKb_AttackDash_Anim`: ftCommon's dash-attack animation callback.
 pub fn ftKb_AttackDash_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_AttackDash_Anim");
     melee_fighter::tu::ftCo_AttackDash::ftCo_AttackDash_Anim(gobj);
 }
 
 /// `ftKb_AttackDash_IASA`: ftCommon's dash-attack interrupt check.
 pub fn ftKb_AttackDash_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_AttackDash_IASA");
     melee_fighter::tu::ftCo_AttackDash::ftCo_AttackDash_IASA(gobj);
 }
 
 /// `ftKb_AttackDashAir_IASA`: empty in the C.
-pub fn ftKb_AttackDashAir_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftKb_AttackDashAir_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftKb_AttackDashAir_IASA");}
 
 /// `ftKb_AttackDashAir_Phys`: `ft_80085204(gobj); ftCommon_FallBasic(fp);`.
 pub fn ftKb_AttackDashAir_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_AttackDashAir_Phys");
     unsafe {
         let fp = fpp(gobj);
         st::ft_80085204(gobj);
@@ -42,5 +45,6 @@ pub fn ftKb_AttackDashAir_Phys(gobj: *mut HSD_GObj) {
 
 /// `ftKb_AttackDashAir_800F21C0`: rotation X of part 0.
 pub fn ftKb_AttackDashAir_800F21C0(gobj: *mut HSD_GObj) -> f32 {
+    melee_core::ct!("ftKb_AttackDashAir_800F21C0");
     unsafe { melee_fighter::tu::ftparts::ftPartGetRotX(&*fpp(gobj), 0) }
 }

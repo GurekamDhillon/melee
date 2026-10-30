@@ -18,6 +18,7 @@ pub static mut hsd_804D79C0:i32=0;
 pub static mut hsd_804D79C4:i32=0;
 pub static mut hsd_804D79C8:u8=0;
 pub unsafe fn hsd_803B5C4C_read(mut bits:i32,mut bit_count:i32)->i32 {
+    melee_core::ct!("hsd_803B5C4C_read");
     loop {
         if hsd_804D79C4==0 {
             hsd_804D79C4=8;
@@ -34,9 +35,10 @@ pub unsafe fn hsd_803B5C4C_read(mut bits:i32,mut bit_count:i32)->i32 {
         bit_count=bit_count.wrapping_sub(1);hsd_804D79C4-=1;if bit_count==0{return bits;}
     }
 }
-pub unsafe fn hsd_803B5C4C(bit_count:i32)->i32 {hsd_803B5C4C_read(0,bit_count)}
+pub unsafe fn hsd_803B5C4C(bit_count:i32)->i32 { melee_core::ct!("hsd_803B5C4C");hsd_803B5C4C_read(0,bit_count)}
 fn table_word(offset:usize,index:usize)->u16 {u16::from_be_bytes([lbl_80431090[offset+index*2],lbl_80431090[offset+index*2+1]])}
 pub unsafe fn hsd_803B5D70(ac:i32,component:i32)->i32 {
+    melee_core::ct!("hsd_803B5D70");
     let mut index=0;let mut code=0i32;
     for bit_len in 1..=16 {
         code=code.wrapping_mul(2)|hsd_803B5C4C(1);
@@ -56,6 +58,7 @@ pub unsafe fn hsd_803B5D70(ac:i32,component:i32)->i32 {
     }0
 }
 pub unsafe fn hsd_803B5EA0(component:i32) {
+    melee_core::ct!("hsd_803B5EA0");
     let work=core::ptr::addr_of_mut!(hsd_804D2E70.work);
     let value_bits=hsd_803B5D70(0,component);
     let dc=if value_bits>0 {let mut v=hsd_803B5C4C(value_bits);if v as u32 & shl(1,(value_bits-1) as u32)==0 {v=v.wrapping_sub(shl(1,value_bits as u32).wrapping_sub(1) as i32);}v}else{0};
@@ -72,6 +75,7 @@ pub unsafe fn hsd_803B5EA0(component:i32) {
     }
 }
 pub unsafe fn fn_803B61B4(block:*mut i32) {
+    melee_core::ct!("fn_803B61B4");
     for pass in 0..2 {for i in 0..8 {
         let stride=if pass==0{1}else{8};let p=block.add(if pass==0{i*8}else{i});let a=core::array::from_fn::<i32,8,_>(|j|*p.add(j*stride));
         let odd0=0.980785f64.mul_add(a[7] as f64,-(0.19509f64*a[1] as f64)) as f32;
@@ -92,14 +96,16 @@ pub unsafe fn fn_803B61B4(block:*mut i32) {
     }}
     for i in 0..64 {*block.add(i)>>=2;}
 }
-pub fn jpeg_clamp(value:f32)->i32 {if value<0.0{0}else if 255.0<value{255}else{(value as i32 as u8) as i32}}
+pub fn jpeg_clamp(value:f32)->i32 { melee_core::ct!("jpeg_clamp");if value<0.0{0}else if 255.0<value{255}else{(value as i32 as u8) as i32}}
 pub unsafe fn jpeg_store_rgb565(out:*mut JpegOutput,offset:i32,luminance:i32,cb:i32,cr:i32) {
+    melee_core::ct!("jpeg_store_rgb565");
     let red=jpeg_clamp(1.402f64.mul_add(cr as f64,luminance as f64) as f32) as u8;
     let green=jpeg_clamp(fmadds(-0.7139,cr as f32,fmadds(-0.3441,cb as f32,luminance as f32))) as u8;
     let blue=jpeg_clamp((-0.0012f64).mul_add(cr as f64,fmadds(1.7718,cb as f32,luminance as f32) as f64) as f32) as u8;
     *(*out).pixels.offset(offset as isize)=((red as u16*256)&0xf800)|((green as u16*8)&0x7e0)|(blue as u16>>3);
 }
 pub unsafe fn fn_803B6820(dst:*mut u8,x:i32,y:i32,width:i32,_unused_height:i32) {
+    melee_core::ct!("fn_803B6820");
     let work=core::ptr::addr_of_mut!(hsd_804D2E70.work);
     for i in 0..256 {(*work).luma[i]=(*work).luma[i].wrapping_add(128);}
     let aligned_width=((width+15)/16)*16;
@@ -127,6 +133,7 @@ unsafe fn marker(wanted:u16) {
     }
 }
 pub unsafe fn hsd_803B6BE4_inline(src:*mut i8,size:i32,dst:*mut core::ffi::c_void)->i32 {
+    melee_core::ct!("hsd_803B6BE4_inline");
     hsd_804D79C0=size;hsd_804D79B8=src.cast();hsd_804D79BC=src.cast();hsd_804D2E70.work.prev_dc=[0;3];hsd_804D79C4=0;
     jpeg_try(||{
         for c in 0..2 {marker(0xffdb);hsd_804D79B8=hsd_804D79B8.add(5);
@@ -146,4 +153,4 @@ pub unsafe fn hsd_803B6BE4_inline(src:*mut i8,size:i32,dst:*mut core::ffi::c_voi
         }}width.wrapping_mul(height).wrapping_mul(2)
     }).unwrap_or(0)
 }
-pub unsafe fn hsd_803B6BE4(src:*mut i8,size:i32,dst:*mut core::ffi::c_void)->i32 {hsd_803B6BE4_inline(src,size,dst)}
+pub unsafe fn hsd_803B6BE4(src:*mut i8,size:i32,dst:*mut core::ffi::c_void)->i32 { melee_core::ct!("hsd_803B6BE4");hsd_803B6BE4_inline(src,size,dst)}

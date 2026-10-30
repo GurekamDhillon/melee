@@ -11,6 +11,7 @@ pub use crate::chars::r2::ftCrazyHand::ftcrazyhandsqueezing1::ftCh_Squeezing1_Ph
 pub use crate::chars::r8::ftCrazyHand::ftcrazyhandsqueezing1::ftCh_Squeezing1_IASA;
 
 pub fn ftCh_Init_8015A2B0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Init_8015A2B0");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         (*fp).x1A5C = bl::ftBossLib_GetFighterGObj(Ft_Kind_MasterH);
@@ -20,6 +21,7 @@ pub fn ftCh_Init_8015A2B0(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCh_Squeezing1_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Squeezing1_Anim");
     unsafe {
         if bl::ftBossLib_8015C2E0() || bl::ftBossLib_8015C358() || st::ftAnim_IsFramesRemaining(gobj) == 0 {
             let fp = (*gobj).user_data as *mut Fighter;
@@ -30,4 +32,4 @@ pub fn ftCh_Squeezing1_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftCh_Squeezing1_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftCh_Squeezing1_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_Squeezing1_Coll");}

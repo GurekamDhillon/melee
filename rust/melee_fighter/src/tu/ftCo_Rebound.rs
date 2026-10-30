@@ -39,6 +39,7 @@ pub mod ext {
 }
 
 pub fn ftCo_80099D9C(g: G) {
+    melee_core::ct!("ftCo_80099D9C");
     ext::Fighter_ChangeMotionState(g, ftCo_MS_ReboundStop as i32, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     let f = fp(g);
     let x191c = f.dmg.x191C;
@@ -51,23 +52,27 @@ pub fn ftCo_80099D9C(g: G) {
 }
 
 pub fn ftCo_ReboundStop_Anim(g: G) {
+    melee_core::ct!("ftCo_ReboundStop_Anim");
     ftCo_80099E44(g);
 }
 
 pub fn ftCo_80099E44(g: G) {
+    melee_core::ct!("ftCo_80099E44");
     let speed = unsafe { fp(g).mv.co.rebound.anim_speed };
     ext::Fighter_ChangeMotionState(g, ftCo_MS_Rebound as i32, Ft_MF_None as u32, 0.0, speed, 0.0, core::ptr::null_mut());
 }
 
 pub fn ftCo_Rebound_Anim(g: G) {
+    melee_core::ct!("ftCo_Rebound_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ft_8008A2BC(g);
     }
 }
 
-pub fn ftCo_Rebound_IASA(_g: G) {}
+pub fn ftCo_Rebound_IASA(_g: G) { melee_core::ct!("ftCo_Rebound_IASA");}
 
 pub fn ftCo_Rebound_Phys(g: G) {
+    melee_core::ct!("ftCo_Rebound_Phys");
     let f = fp(g);
     if unsafe { f.mv.co.rebound.x0 } != 0.0 {
         unsafe { f.mv.co.rebound.x0 = 0.0 };
@@ -77,5 +82,6 @@ pub fn ftCo_Rebound_Phys(g: G) {
 }
 
 pub fn ftCo_Rebound_Coll(g: G) {
+    melee_core::ct!("ftCo_Rebound_Coll");
     ext::ft_80083F88(g);
 }

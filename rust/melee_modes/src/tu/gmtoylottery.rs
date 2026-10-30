@@ -47,12 +47,14 @@ pub static mut gm_Mode_ToyLottery_States: [GameModeState; 2] = [
 
 /// `onEnter` (static, 1BECA8).
 pub unsafe extern "C" fn onEnter(_state: *mut GameModeState) {
+    melee_core::ct!("onEnter");
     ext::lbCardNew_AllocWorkArea();
     ext::lbCardGame_LoadArchive(0);
 }
 
 /// `onExit` (static, 1BECD0).
 pub unsafe extern "C" fn onExit(_state: *mut GameModeState) {
+    melee_core::ct!("onExit");
     ext::gm_80172898(4);
     if !ext::gm_80173754(1, 0) {
         ext::gm_SetPendingGameMode(GM_MENU as u8);

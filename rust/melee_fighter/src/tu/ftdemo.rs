@@ -73,6 +73,7 @@ pub mod ext {
 
 /// `initFighter`: plAllocInfo2 -> plAllocInfo, then Fighter_UnkInitLoad_80068914.
 pub fn init_fighter(g: G, a: &plAllocInfo2) {
+    melee_core::ct!("init_fighter");
     let mut t = plAllocInfo::zeroed();
     t.internal_id = a.internal_id;
     t.slot = a.slot;
@@ -82,6 +83,7 @@ pub fn init_fighter(g: G, a: &plAllocInfo2) {
 
 /// The demo anim pair `(a, b)` chosen from `alloc_info->unk8` (TARGET_PC null-callback guard).
 pub fn demo_anim_pair(kind: i32, unk8: i32) -> (i32, i32) {
+    melee_core::ct!("demo_anim_pair");
     if unk8 >= 9 {
         match ext::ftData_UnkDemoCallbacks0(kind) {
             Some(cb) => {
@@ -104,6 +106,7 @@ pub fn demo_anim_pair(kind: i32, unk8: i32) -> (i32, i32) {
 
 /// `ftDemo_CreateFighter`.
 pub fn ftdemo_create_fighter(a: &plAllocInfo2) -> G {
+    melee_core::ct!("ftdemo_create_fighter");
     let g = ext::GObj_Create(HSD_GOBJ_CLASS_FIGHTER as i32, 8, 0);
     ext::GObj_SetupGXLink_ftDrawCommon_80080E18(g, 5, 0);
     let p = ext::HSD_ObjAlloc_fighter();
@@ -142,12 +145,14 @@ pub fn ftdemo_create_fighter(a: &plAllocInfo2) -> G {
 
 /// `ftDemo_ObjAllocInit`.
 pub fn ftdemo_obj_alloc_init() {
+    melee_core::ct!("ftdemo_obj_alloc_init");
     ext::Fighter_800679B0();
     ext::HSD_ObjAllocInit_fighter_x59C(0xB000, 0x20);
 }
 
 /// `ftDemo_SetArchiveData`: resolve a demo anim symbol once per pair.
 pub fn ftdemo_set_archive_data(pairs_idx: i32, archive: *mut HSD_Archive, arr_idx: i32) {
+    melee_core::ct!("ftdemo_set_archive_data");
     const INTS: [i32; 5] = [9, 10, 11, 14, 15];
     let pair = unsafe { &mut *ext::ftData_UnkIntPairs(pairs_idx) };
     if pair.data.is_null() {
@@ -162,6 +167,7 @@ pub fn ftdemo_set_archive_data(pairs_idx: i32, archive: *mut HSD_Archive, arr_id
 
 /// `ftDemo_GetMotionFileString`. NULL callback: HSD_ASSERTREPORT (fatal).
 pub fn ftdemo_get_motion_file_string(cb_idx: i32, cb_arg: i32) -> *mut c_char {
+    melee_core::ct!("ftdemo_get_motion_file_string");
     match ext::ftData_803C24EC(cb_idx) {
         Some(cb) => cb(cb_arg),
         None => panic!("no demo vi anim! {cb_arg}"),
@@ -170,6 +176,7 @@ pub fn ftdemo_get_motion_file_string(cb_idx: i32, cb_arg: i32) -> *mut c_char {
 
 /// `ftDemo_SetFacingDirection`.
 pub fn ftdemo_set_facing_direction(g: G, facing_dir: f32) {
+    melee_core::ct!("ftdemo_set_facing_direction");
     let f = fp(g);
     f.facing_dir = facing_dir;
     let rot = (core::f64::consts::FRAC_PI_2 * f.facing_dir as f64) as f32;

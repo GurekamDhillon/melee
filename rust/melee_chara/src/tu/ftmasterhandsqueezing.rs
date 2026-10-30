@@ -28,6 +28,7 @@ pub mod ext {
 pub use crate::tu::ftcrazyhandbackairplane2::ext::{ftCo_800DE2A8, ftCo_800DE7C0};
 
 pub fn ftMh_Squeezing_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Squeezing_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         unsafe {
             let fp = (*gobj).user_data as *mut Fighter;
@@ -41,6 +42,7 @@ pub fn ftMh_Squeezing_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMh_Squeezing_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Squeezing_Phys");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*(*fp).ft_data).ext_attr as *const ftMasterHand_SpecialAttrs;
@@ -48,9 +50,10 @@ pub fn ftMh_Squeezing_Phys(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftMh_Squeezing_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_Squeezing_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_Squeezing_Coll");}
 
 pub fn ftMh_Throw_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Throw_Anim");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         if (*fp).cmd_vars[0] != 0 {

@@ -165,6 +165,7 @@ unsafe fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD_GOb
 }
 
 pub unsafe extern "C" fn it_802C4D10(gobj: *mut Item_GObj) -> u32 {
+    melee_core::ct!("it_802C4D10");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itMewtwoShadowball_DatAttrs;
     let child = itGetJObjGrandchild(gobj);
@@ -196,6 +197,7 @@ pub unsafe extern "C" fn it_802C4D10(gobj: *mut Item_GObj) -> u32 {
 }
 
 pub unsafe extern "C" fn it_802C4F50(gobj: *mut Item_GObj, cd: *mut CollData) -> bool {
+    melee_core::ct!("it_802C4F50");
     let ip = GET_ITEM(gobj);
     let mut ret = false;
     ext::it_8026DA08(gobj);
@@ -217,6 +219,7 @@ pub unsafe extern "C" fn it_802C4F50(gobj: *mut Item_GObj, cd: *mut CollData) ->
 }
 
 pub unsafe extern "C" fn it_802C5000(parent: *mut Item_GObj, pos: *mut Vec3, bone: i32, kind: i32, facing_dir: f32) -> *mut HSD_GObj {
+    melee_core::ct!("it_802C5000");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
     spawn.kind = kind;
@@ -253,6 +256,7 @@ pub unsafe extern "C" fn it_802C5000(parent: *mut Item_GObj, pos: *mut Vec3, bon
 }
 
 pub unsafe extern "C" fn it_802C519C(parent: *mut Item_GObj, pos: *mut Vec3, kind: i32, max_charge: i32, angle: f32, facing_dir: f32) -> *mut Item_GObj {
+    melee_core::ct!("it_802C519C");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
     spawn.kind = kind;
@@ -315,6 +319,7 @@ pub unsafe extern "C" fn it_802C519C(parent: *mut Item_GObj, pos: *mut Vec3, kin
 }
 
 pub unsafe extern "C" fn it_802C53F0(gobj: *mut Item_GObj, pos: *mut Vec3, angle: f32, mut charge: f32, max_charge: f32) {
+    melee_core::ct!("it_802C53F0");
     let mut jobj: *mut HSD_JObj;
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itMewtwoShadowball_DatAttrs;
@@ -376,6 +381,7 @@ pub unsafe extern "C" fn it_802C53F0(gobj: *mut Item_GObj, pos: *mut Vec3, angle
 }
 
 pub unsafe extern "C" fn it_2725_Logic101_Destroyed(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_2725_Logic101_Destroyed");
     if !gobj.is_null() {
         let ip = (*gobj).user_data as *mut Item;
         ext::efLib_DestroyAll(gobj);
@@ -395,6 +401,7 @@ pub unsafe extern "C" fn it_2725_Logic101_Destroyed(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802C573C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802C573C");
     if !gobj.is_null() {
         let ip = (*gobj).user_data as *mut Item;
         ext::efLib_DestroyAll(gobj);
@@ -404,12 +411,14 @@ pub unsafe extern "C" fn it_802C573C(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_2725_Logic101_PickedUp(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_2725_Logic101_PickedUp");
     let ip = (*gobj).user_data as *mut Item;
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE);
     (*ip).xDD4_itemVar.mewtwoshadowball.x50 = 0.0;
 }
 
 pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMewtwoshadowball_UnkMotion0_Anim");
     let ip = (*gobj).user_data as *mut Item;
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itMewtwoShadowball_DatAttrs;
     let sb = &mut (*ip).xDD4_itemVar.mewtwoshadowball as *mut itMewtwoShadowball_ItemVars;
@@ -455,13 +464,15 @@ pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion0_Anim(gobj: *mut Item_GObj
     false
 }
 
-pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion0_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion0_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itMewtwoshadowball_UnkMotion0_Phys");}
 
 pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion0_Coll(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMewtwoshadowball_UnkMotion0_Coll");
     false
 }
 
 pub unsafe extern "C" fn it_802C5B18(gobj: *mut Item_GObj, arg1: *mut Item_GObj) {
+    melee_core::ct!("it_802C5B18");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itMewtwoShadowball_DatAttrs;
     let sb = &mut (*ip).xDD4_itemVar.mewtwoshadowball as *mut itMewtwoShadowball_ItemVars;
@@ -480,6 +491,7 @@ pub unsafe extern "C" fn it_802C5B18(gobj: *mut Item_GObj, arg1: *mut Item_GObj)
 }
 
 pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion8_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMewtwoshadowball_UnkMotion8_Anim");
     let ip = (*gobj).user_data as *mut Item;
     let jobj = itGetJObjGrandchild(gobj);
     let mut scale: Vec3 = core::mem::zeroed();
@@ -492,6 +504,7 @@ pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion8_Anim(gobj: *mut Item_GObj
 }
 
 pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion8_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itMewtwoshadowball_UnkMotion8_Phys");
     let ip = (*gobj).user_data as *mut Item;
     if (*ip).xDD4_itemVar.mewtwoshadowball.x4C > 0 {
         (*ip).x40_vel.x = (*ip).xDD4_itemVar.mewtwoshadowball.x4.y * cosf((*ip).xDD4_itemVar.mewtwoshadowball.x4.x);
@@ -501,6 +514,7 @@ pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion8_Phys(gobj: *mut Item_GObj
 }
 
 pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion8_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMewtwoshadowball_UnkMotion8_Coll");
     let ip = GET_ITEM(gobj);
     if it_802C4F50(gobj, &mut (*ip).x378_itemColl) {
         it_802C5E5C(gobj);
@@ -509,12 +523,14 @@ pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion8_Coll(gobj: *mut Item_GObj
 }
 
 pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion9_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMewtwoshadowball_UnkMotion9_Anim");
     ext::it_80273130(gobj) != 0
 }
 
-pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion9_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion9_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itMewtwoshadowball_UnkMotion9_Phys");}
 
 pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion9_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMewtwoshadowball_UnkMotion9_Coll");
     let ip = GET_ITEM(gobj);
     if it_802C4F50(gobj, &mut (*ip).x378_itemColl) {
         it_802C5E5C(gobj);
@@ -523,6 +539,7 @@ pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion9_Coll(gobj: *mut Item_GObj
 }
 
 pub unsafe extern "C" fn fn_802C5E18(gobj: *mut Item_GObj) {
+    melee_core::ct!("fn_802C5E18");
     let ip = GET_ITEM(gobj);
 
     (*ip).xDD4_itemVar.mewtwoshadowball.x20 = (*ip).xDD4_itemVar.mewtwoshadowball.x20.wrapping_add(1);
@@ -530,6 +547,7 @@ pub unsafe extern "C" fn fn_802C5E18(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802C5E5C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802C5E5C");
     let ip = GET_ITEM(gobj);
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itMewtwoShadowball_DatAttrs;
@@ -555,6 +573,7 @@ pub unsafe extern "C" fn it_802C5E5C(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion17_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMewtwoshadowball_UnkMotion17_Anim");
     let ip = (*gobj).user_data as *mut Item;
     let mut scale: Vec3 = core::mem::zeroed();
     let grandchild = itGetJObjGrandchild(gobj);
@@ -571,27 +590,33 @@ pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion17_Anim(gobj: *mut Item_GOb
 }
 
 pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion17_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itMewtwoshadowball_UnkMotion17_Phys");
     let ip = GET_ITEM(gobj);
     itResetVelocity(ip);
 }
 
 pub unsafe extern "C" fn itMewtwoshadowball_UnkMotion17_Coll(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMewtwoshadowball_UnkMotion17_Coll");
     false
 }
 
 pub unsafe extern "C" fn itMewtwoShadowball_Logic101_DmgDealt(_arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMewtwoShadowball_Logic101_DmgDealt");
     true
 }
 
 pub unsafe extern "C" fn itMewtwoShadowball_Logic101_Clanked(_arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMewtwoShadowball_Logic101_Clanked");
     true
 }
 
 pub unsafe extern "C" fn itMewtwoShadowball_Logic101_Absorbed(_arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMewtwoShadowball_Logic101_Absorbed");
     true
 }
 
 pub unsafe extern "C" fn it_2725_Logic101_Reflected(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_2725_Logic101_Reflected");
     let ip = (*gobj).user_data as *mut Item;
     let sb = &mut (*ip).xDD4_itemVar.mewtwoshadowball as *mut itMewtwoShadowball_ItemVars;
     (*sb).x4.x = ((*sb).x4.x as f64 + M_PI) as f32;
@@ -605,10 +630,12 @@ pub unsafe extern "C" fn it_2725_Logic101_Reflected(gobj: *mut Item_GObj) -> boo
 }
 
 pub unsafe extern "C" fn itMewtwoShadowball_Logic101_HitShield(_arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMewtwoShadowball_Logic101_HitShield");
     true
 }
 
 pub unsafe extern "C" fn it_2725_Logic101_ShieldBounced(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_2725_Logic101_ShieldBounced");
     let ip = (*gobj).user_data as *mut Item;
     let sb = &mut (*ip).xDD4_itemVar.mewtwoshadowball as *mut itMewtwoShadowball_ItemVars;
     ext::lbVector_Mirror(&mut (*ip).x40_vel, &mut (*ip).xC58);
@@ -623,5 +650,6 @@ pub unsafe extern "C" fn it_2725_Logic101_ShieldBounced(gobj: *mut Item_GObj) ->
 }
 
 pub unsafe extern "C" fn itMewtwoShadowball_Logic101_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("itMewtwoShadowball_Logic101_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

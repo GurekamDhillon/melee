@@ -44,6 +44,7 @@ pub mod ext {
 }
 
 pub fn ftCo_80098E3C(g: G) {
+    melee_core::ct!("ftCo_80098E3C");
     let f = fp(g);
     if f.ground_or_air == GA_Air as _ {
         ext::ftCommon_8007D7FC(f);
@@ -62,17 +63,20 @@ pub fn ftCo_80098E3C(g: G) {
 }
 
 pub fn ftCo_ShieldBreakDown_Anim(g: G) {
+    melee_core::ct!("ftCo_ShieldBreakDown_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ftCo_80098F3C(g);
     }
 }
 
-pub fn ftCo_ShieldBreakDown_IASA(_g: G) {}
+pub fn ftCo_ShieldBreakDown_IASA(_g: G) { melee_core::ct!("ftCo_ShieldBreakDown_IASA");}
 
 pub fn ftCo_ShieldBreakDown_Phys(g: G) {
+    melee_core::ct!("ftCo_ShieldBreakDown_Phys");
     ext::ft_80084F3C(g);
 }
 
 pub fn ftCo_ShieldBreakDown_Coll(g: G) {
+    melee_core::ct!("ftCo_ShieldBreakDown_Coll");
     ext::ft_80083F88(g);
 }

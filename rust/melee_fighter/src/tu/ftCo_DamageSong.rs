@@ -57,6 +57,7 @@ fn ftCo_ReleaseItemAndVictim(g: G) {
 /// static `inlineA0`: the sleep timer. Three fmuladd sites (clang contraction), evaluated
 /// innermost first; Player_GetHandicap is called before Player_80033BB8.
 pub fn inlineA0(f: &Fighter, arg1: bool) -> f32 {
+    melee_core::ct!("inlineA0");
     let c = cd();
     let hc = ext::Player_GetHandicap(f.player_id as i32);
     let t0 = fmadds(c.x628, c.x62C - hc as f32, c.x624);
@@ -70,6 +71,7 @@ pub fn inlineA0(f: &Fighter, arg1: bool) -> f32 {
 }
 
 pub fn ftCo_800C318C(g: G, arg1: bool) {
+    melee_core::ct!("ftCo_800C318C");
     ftCo_ReleaseItemAndVictim(g);
     ext::Fighter_ChangeMotionState(g, ftCo_MS_DamageSong as i32, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     let t = inlineA0(fp(g), arg1);
@@ -90,62 +92,74 @@ fn inlineB0(g: G) -> bool {
 }
 
 pub fn ftCo_DamageSong_Anim(g: G) {
+    melee_core::ct!("ftCo_DamageSong_Anim");
     if !inlineB0(g) && !ext::ftAnim_IsFramesRemaining(g) {
         ftCo_800C3390(g);
     }
 }
 
-pub fn ftCo_DamageSong_IASA(_g: G) {}
+pub fn ftCo_DamageSong_IASA(_g: G) { melee_core::ct!("ftCo_DamageSong_IASA");}
 
 pub fn ftCo_DamageSong_Phys(g: G) {
+    melee_core::ct!("ftCo_DamageSong_Phys");
     ext::ft_80084F3C(g);
 }
 
 pub fn ftCo_DamageSong_Coll(g: G) {
+    melee_core::ct!("ftCo_DamageSong_Coll");
     ext::ft_80084280(g);
 }
 
 /// static `ftCo_800C3390`.
 pub fn ftCo_800C3390(g: G) {
+    melee_core::ct!("ftCo_800C3390");
     ext::Fighter_ChangeMotionState(g, ftCo_MS_DamageSongWait as i32, (Ft_MF_SkipMatAnim | Ft_MF_SkipColAnim) as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
 }
 
 pub fn ftCo_DamageSongWait_Anim(g: G) {
+    melee_core::ct!("ftCo_DamageSongWait_Anim");
     inlineB0(g);
 }
 
-pub fn ftCo_DamageSongWait_IASA(_g: G) {}
+pub fn ftCo_DamageSongWait_IASA(_g: G) { melee_core::ct!("ftCo_DamageSongWait_IASA");}
 
 pub fn ftCo_DamageSongWait_Phys(g: G) {
+    melee_core::ct!("ftCo_DamageSongWait_Phys");
     ext::ft_80084F3C(g);
 }
 
 pub fn ftCo_DamageSongWait_Coll(g: G) {
+    melee_core::ct!("ftCo_DamageSongWait_Coll");
     ext::ft_80084280(g);
 }
 
 /// static `ftCo_800C3480`.
 pub fn ftCo_800C3480(g: G) {
+    melee_core::ct!("ftCo_800C3480");
     ext::Fighter_ChangeMotionState(g, ftCo_MS_DamageSongRv as i32, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
 }
 
 pub fn ftCo_DamageSongRv_Anim(g: G) {
+    melee_core::ct!("ftCo_DamageSongRv_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ft_8008A2BC(g);
     }
 }
 
-pub fn ftCo_DamageSongRv_IASA(_g: G) {}
+pub fn ftCo_DamageSongRv_IASA(_g: G) { melee_core::ct!("ftCo_DamageSongRv_IASA");}
 
 pub fn ftCo_DamageSongRv_Phys(g: G) {
+    melee_core::ct!("ftCo_DamageSongRv_Phys");
     ext::ft_80084F3C(g);
 }
 
 pub fn ftCo_DamageSongRv_Coll(g: G) {
+    melee_core::ct!("ftCo_DamageSongRv_Coll");
     ext::ft_80084280(g);
 }
 
 pub fn ftCo_800C3538(g: G) -> bool {
+    melee_core::ct!("ftCo_800C3538");
     let f = fp(g);
     if f.x2222_b2() != 0 {
         return false;

@@ -53,6 +53,7 @@ const coll_mf: u32 = (Ft_MF_KeepGfx
 
 /// `onAccessory4` (static): spawn the spin effect once, then clear the callback.
 pub fn onAccessory4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("onAccessory4");
     unsafe {
         let fp = fpp(gobj);
         let jobj0 = part_joint(fp, FtPart_TransN);
@@ -78,10 +79,12 @@ pub fn onAccessory4(gobj: *mut HSD_GObj) {
 
 /// `onAccessory4` as a Fighter callback entry.
 pub unsafe extern "C" fn cb_onAccessory4(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_onAccessory4");
     onAccessory4(g);
 }
 
 pub fn ftLk_SpecialAirHi_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialAirHi_Enter");
     unsafe {
         let fp = fpp(gobj);
         let a = da(fp);
@@ -95,6 +98,7 @@ pub fn ftLk_SpecialAirHi_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftLk_SpecialAirHi_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialAirHi_Anim");
     unsafe {
         let a = da(fpp(gobj));
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -103,12 +107,13 @@ pub fn ftLk_SpecialAirHi_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftLk_SpecialHi_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftLk_SpecialHi_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftLk_SpecialHi_IASA");}
 
-pub fn ftLk_SpecialAirHi_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftLk_SpecialAirHi_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftLk_SpecialAirHi_IASA");}
 
 /// `ftLk_SpecialAirHi_Phys(gobj)`: the fighter-only body is [`crate::chars::ftLink::ftlinkspecialhi`].
 pub fn ftLk_SpecialAirHi_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialAirHi_Phys");
     unsafe {
         crate::chars::ftLink::ftlinkspecialhi::ftLk_SpecialAirHi_Phys(&mut *fpp(gobj));
     }
@@ -124,12 +129,14 @@ fn doColl(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftLk_SpecialHi_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialHi_Coll");
     if st::ft_80082708(gobj) == 0 {
         doColl(gobj);
     }
 }
 
 pub fn ftLk_SpecialAirHi_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialAirHi_Coll");
     unsafe {
         let a = da(fpp(gobj));
         if st::ft_CheckGroundAndLedge(gobj, 0) != 0 {
@@ -141,16 +148,19 @@ pub fn ftLk_SpecialAirHi_Coll(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftLk_SpecialHi_ProcessPartLThumbNb(gobj: *mut HSD_GObj) -> Fighter_Part {
+    melee_core::ct!("ftLk_SpecialHi_ProcessPartLThumbNb");
     unsafe { fh::ftparts_get_bone_index(&*fpp(gobj), FtPart_LThumbNb as i32) as Fighter_Part }
 }
 
 /// `ftLk_SpecialHi_GetPosWithAdjustedY(gobj, pos)`: the fighter-only body is `chars::ftLink`'s.
 pub fn ftLk_SpecialHi_GetPosWithAdjustedY(gobj: *mut HSD_GObj, pos: &mut Vec3) {
+    melee_core::ct!("ftLk_SpecialHi_GetPosWithAdjustedY");
     unsafe {
         crate::chars::ftLink::ftlinkspecialhi::ftLk_SpecialHi_GetPosWithAdjustedY(&*fpp(gobj), pos);
     }
 }
 
 pub fn ftLk_SpecialHi_GetFv4(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("ftLk_SpecialHi_GetFv4");
     unsafe { (*fpp(gobj)).u.lk.x4 }
 }

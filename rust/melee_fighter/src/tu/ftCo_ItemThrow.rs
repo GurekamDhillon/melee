@@ -78,15 +78,19 @@ pub mod ext {
 }
 
 pub unsafe extern "C" fn ftCo_80095EFC_c(g: G) {
+    melee_core::ct!("ftCo_80095EFC_c");
     ftCo_80095EFC(g)
 }
 pub unsafe extern "C" fn ftCo_800974C4_c(g: G) {
+    melee_core::ct!("ftCo_800974C4_c");
     ext::ftCo_800974C4(g)
 }
 pub unsafe extern "C" fn ftCo_800961D0_c(g: G) {
+    melee_core::ct!("ftCo_800961D0_c");
     ftCo_800961D0(g)
 }
 pub unsafe extern "C" fn ftCo_80096498_c(g: G) {
+    melee_core::ct!("ftCo_80096498_c");
     ftCo_80096498(g)
 }
 
@@ -96,11 +100,13 @@ fn absf(x: f32) -> f32 {
 }
 
 pub fn ftCo_80094E54(f: &mut Fighter) -> bool {
+    melee_core::ct!("ftCo_80094E54");
     f.input.pressed_buttons & HSD_PAD_A != 0
         && (f.input.held_buttons[0] & HSD_PAD_LR != 0 || ext::it_8026B30C(f.item_gobj) == 0)
 }
 
 pub fn ftCo_80094EA4(g: G) -> bool {
+    melee_core::ct!("ftCo_80094EA4");
     let f = fp(g);
     let mut msid = f.motion_id;
     let (stick_x, stick_y, var_f28, var_f31, stick_angle, ret);
@@ -154,6 +160,7 @@ pub fn ftCo_80094EA4(g: G) -> bool {
 }
 
 pub fn ftCo_8009515C(g: G) -> bool {
+    melee_core::ct!("ftCo_8009515C");
     let f = fp(g);
     if !f.item_gobj.is_null() && f.input.pressed_buttons & HSD_PAD_A != 0 {
         if unsafe { f.mv.co.itemthrow.x20 } != 0 {
@@ -172,6 +179,7 @@ pub fn ftCo_8009515C(g: G) -> bool {
 }
 
 pub fn ftCo_800951D0(g: G) -> bool {
+    melee_core::ct!("ftCo_800951D0");
     let f = fp(g);
     if !f.item_gobj.is_null() && ftCo_80094E54(f) {
         ftCo_80095A30(g);
@@ -181,6 +189,7 @@ pub fn ftCo_800951D0(g: G) -> bool {
 }
 
 pub fn ftCo_80095254(g: G) -> bool {
+    melee_core::ct!("ftCo_80095254");
     let f = fp(g);
     if !f.item_gobj.is_null() && ftCo_80094E54(f) {
         ftCo_800957F4(g, ftCo_MS_LightThrowDash as i32);
@@ -190,6 +199,7 @@ pub fn ftCo_80095254(g: G) -> bool {
 }
 
 pub fn ftCo_800952DC(g: G) -> bool {
+    melee_core::ct!("ftCo_800952DC");
     let f = fp(g);
     if !f.item_gobj.is_null() && f.input.held_buttons[0] & HSD_PAD_LR != 0 {
         ftCo_800957F4(g, ftCo_MS_LightThrowDash as i32);
@@ -199,6 +209,7 @@ pub fn ftCo_800952DC(g: G) -> bool {
 }
 
 pub fn ftCo_80095328(g: G, arg1: *mut bool) -> bool {
+    melee_core::ct!("ftCo_80095328");
     let f = fp(g);
     let (angle, var_f31, var_f30, var_f29, var_f28);
     if !f.item_gobj.is_null() && ext::ftCo_800DF50C(fp(g)) {
@@ -253,6 +264,7 @@ pub fn ftCo_80095328(g: G, arg1: *mut bool) -> bool {
 }
 
 pub fn ftCo_8009563C(g: G) -> bool {
+    melee_core::ct!("ftCo_8009563C");
     let f = fp(g);
     if !f.item_gobj.is_null() && ftCo_80094E54(f) && unsafe { fp(g).mv.co.itemthrow4.unk_timer } != 0 {
         let m = if fp(g).motion_id == ftCo_MS_EscapeF as i32 { ftCo_MS_LightThrowF4 } else { ftCo_MS_LightThrowB4 };
@@ -270,6 +282,7 @@ pub fn ftCo_8009563C(g: G) -> bool {
 
 /// static `ftCo_80095700`: the throw's facing (reversed for the back throws).
 pub fn ftCo_80095700(g: G, arg1: i32) {
+    melee_core::ct!("ftCo_80095700");
     let f = fp(g);
     unsafe {
         match arg1 {
@@ -280,6 +293,7 @@ pub fn ftCo_80095700(g: G, arg1: i32) {
 }
 
 pub fn ftCo_80095744(g: G, arg1: *mut bool) {
+    melee_core::ct!("ftCo_80095744");
     let mut vec = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     if ext::ftGetParasolStatus(g) != -1 {
         if fp(g).motion_id == ftCo_MS_ItemParasolFallSpecial as i32 {
@@ -299,6 +313,7 @@ pub fn ftCo_80095744(g: G, arg1: *mut bool) {
 /// static inline `getAnimSpeed`.
 #[inline(always)]
 pub fn getAnimSpeed(g: G, msid: i32) -> f32 {
+    melee_core::ct!("getAnimSpeed");
     let mut speed = 1.0f32;
     if msid >= ftCo_MS_LightThrowF4 as i32 {
         speed *= cd().x400;
@@ -308,6 +323,7 @@ pub fn getAnimSpeed(g: G, msid: i32) -> f32 {
 }
 
 pub fn ftCo_800957F4(g: G, msid: i32) {
+    melee_core::ct!("ftCo_800957F4");
     let f = fp(g);
     f.cmd_vars[0] = 0;
     f.cmd_vars[1] = 0;
@@ -322,6 +338,7 @@ pub fn ftCo_800957F4(g: G, msid: i32) {
 }
 
 pub fn ftCo_800958FC(g: G, msid: i32) {
+    melee_core::ct!("ftCo_800958FC");
     let f = fp(g);
     f.cmd_vars[0] = 0;
     f.cmd_vars[1] = 0;
@@ -341,6 +358,7 @@ pub fn ftCo_800958FC(g: G, msid: i32) {
 }
 
 pub fn ftCo_80095A30(g: G) {
+    melee_core::ct!("ftCo_80095A30");
     let f = fp(g);
     let c = cd();
     let r29;
@@ -391,6 +409,7 @@ pub fn ftCo_80095A30(g: G) {
 
 /// static `ftCo_80095D5C`: the release velocity from the throw table / the script's override.
 pub fn ftCo_80095D5C(f: &mut Fighter, arg1: &mut Vec3) {
+    melee_core::ct!("ftCo_80095D5C");
     let cmd_var0 = f.cmd_vars[0];
     let mut vel = 1.0f32;
     if cmd_var0 != 0 {
@@ -420,6 +439,7 @@ pub fn ftCo_80095D5C(f: &mut Fighter, arg1: &mut Vec3) {
 }
 
 pub fn ftCo_ItemThrow_Anim(g: G) {
+    melee_core::ct!("ftCo_ItemThrow_Anim");
     let f = fp(g);
     if unsafe { f.anon_2210.anon_0.throw_flags_b4() } != 0 {
         unsafe { f.anon_2210.anon_0.set_throw_flags_b4(0) };
@@ -431,6 +451,7 @@ pub fn ftCo_ItemThrow_Anim(g: G) {
 }
 
 pub fn ftCo_80095EFC(g: G) {
+    melee_core::ct!("ftCo_80095EFC");
     let f = fp(g);
     if f.item_gobj.is_null() {
         return;
@@ -490,13 +511,15 @@ pub fn ftCo_80095EFC(g: G) {
     }
 }
 
-pub fn ftCo_ItemThrow_IASA(_g: G) {}
+pub fn ftCo_ItemThrow_IASA(_g: G) { melee_core::ct!("ftCo_ItemThrow_IASA");}
 
 pub fn ftCo_ItemThrow_Phys(g: G) {
+    melee_core::ct!("ftCo_ItemThrow_Phys");
     ext::ft_80084F3C(g);
 }
 
 pub fn ftCo_LightThrowDash_Phys(g: G) {
+    melee_core::ct!("ftCo_LightThrowDash_Phys");
     let f = fp(g);
     let c = cd();
     if f.cur_anim_frame <= c.x408 {
@@ -507,10 +530,12 @@ pub fn ftCo_LightThrowDash_Phys(g: G) {
 }
 
 pub fn ftCo_LightThrowAir_Phys(g: G) {
+    melee_core::ct!("ftCo_LightThrowAir_Phys");
     ext::ft_80084DB0(g);
 }
 
 pub fn ftCo_800961D0(g: G) {
+    melee_core::ct!("ftCo_800961D0");
     if fp(g).ground_or_air == GA_Air {
         ext::ft_80084DB0(g);
     } else {
@@ -519,16 +544,19 @@ pub fn ftCo_800961D0(g: G) {
 }
 
 pub fn ftCo_LightThrowDashDrop_Coll(g: G) {
+    melee_core::ct!("ftCo_LightThrowDashDrop_Coll");
     ext::ft_80084104(g);
 }
 
 pub fn ftCo_LightThrow_Coll(g: G) {
+    melee_core::ct!("ftCo_LightThrow_Coll");
     ext::ft_800841B8(g, ftCo_80096250);
 }
 
 /// static inline `inlineA0`: switch ground/air throw keeping frame, speed and facing.
 #[inline(always)]
 pub fn inlineA0(g: G, msid: i32) {
+    melee_core::ct!("inlineA0");
     let f = fp(g);
     let facing_dir = f.facing_dir;
     if facing_dir != f.facing_dir1 {
@@ -551,6 +579,7 @@ pub fn inlineA0(g: G, msid: i32) {
 }
 
 pub fn ftCo_80096250(g: G) {
+    melee_core::ct!("ftCo_80096250");
     ext::ftCommon_8007D5D4(fp(g));
     let m = fp(g).motion_id;
     if m >= ftCo_MS_LightThrowF4 as i32 {
@@ -561,10 +590,12 @@ pub fn ftCo_80096250(g: G) {
 }
 
 pub fn ftCo_LightThrowAir_Coll(g: G) {
+    melee_core::ct!("ftCo_LightThrowAir_Coll");
     ext::ft_80082C74(g, ftCo_80096374);
 }
 
 pub fn ftCo_80096374(g: G) {
+    melee_core::ct!("ftCo_80096374");
     ext::ftCommon_8007D7FC(fp(g));
     let m = fp(g).motion_id;
     if m >= ftCo_MS_LightThrowF4 as i32 {
@@ -575,10 +606,12 @@ pub fn ftCo_80096374(g: G) {
 }
 
 pub fn ftCo_HeavyThrow_Coll(g: G) {
+    melee_core::ct!("ftCo_HeavyThrow_Coll");
     ext::ft_800841B8(g, ext::ftCo_80096E68);
 }
 
 pub fn ftCo_80096498(g: G) {
+    melee_core::ct!("ftCo_80096498");
     if fp(g).ground_or_air == GA_Ground {
         if ext::ft_80082708(g) == GA_Ground {
             ext::ftCommon_8007D5D4(fp(g));

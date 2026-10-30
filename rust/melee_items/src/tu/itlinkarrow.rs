@@ -182,6 +182,7 @@ pub static mut it_803F6A28: [ItemStateTable; 5] = [
 
 /// 2A7D8C: draws the two trail objects.
 pub unsafe extern "C" fn it_802A7D8C(gobj: *mut HSD_GObj, arg1: i32) {
+    melee_core::ct!("it_802A7D8C");
     let item = GET_ITEM(gobj);
     if !(*item).xDD4_itemVar.linkarrow.xB4[0].is_null() && (*item).xDAC_itcmd_var0 == 1 {
         ext::HSD_JObjDispAll((*item).xDD4_itemVar.linkarrow.xB4[0], null_mut(), ext::HSD_GObj_80390EB8(arg1), 0);
@@ -194,6 +195,7 @@ pub unsafe extern "C" fn it_802A7D8C(gobj: *mut HSD_GObj, arg1: i32) {
 
 /// 2A7E40: shifts the trail history and updates the trail objects.
 pub unsafe extern "C" fn it_802A7E40(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802A7E40");
     let mut quat: Quaternion = core::mem::zeroed();
     let mut scale: Vec3 = core::mem::zeroed();
 
@@ -229,6 +231,7 @@ pub static mut it_803F6A84: [f32; 16] = [
 
 /// 2A81C4: no `return` in the C; returns the new `x9C` (the last value computed).
 pub unsafe extern "C" fn itLinkArrow_802A81C4(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLinkArrow_802A81C4");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
     let z: f32;
@@ -258,6 +261,7 @@ pub unsafe extern "C" fn itLinkArrow_802A81C4(gobj: *mut Item_GObj) -> i32 {
 
 /// 2A8330: removes the trail objects.
 pub unsafe extern "C" fn it_802A8330(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802A8330");
     if !gobj.is_null() {
         let item = GET_ITEM(gobj);
         if !item.is_null() {
@@ -275,6 +279,7 @@ pub unsafe extern "C" fn it_802A8330(gobj: *mut HSD_GObj) {
 
 /// 2A8398
 pub unsafe extern "C" fn it_802A8398(gobj: *mut Item_GObj, pos: *mut Vec3, pos2: *mut Vec3) {
+    melee_core::ct!("it_802A8398");
     if !gobj.is_null() {
         let item = GET_ITEM(gobj);
         if !item.is_null() {
@@ -286,6 +291,7 @@ pub unsafe extern "C" fn it_802A8398(gobj: *mut Item_GObj, pos: *mut Vec3, pos2:
 
 /// 2A83E0: spawns an arrow (`arg4` = item kind) from fighter `arg1`.
 pub unsafe extern "C" fn it_802A83E0(facing_dir: f32, arg1: *mut Item_GObj, arg2: *mut Vec3, arg3: u32, arg4: i32) -> *mut HSD_GObj {
+    melee_core::ct!("it_802A83E0");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
     (*arg2).z = 0.0;
@@ -343,6 +349,7 @@ unsafe fn itLinkArrow_802A850C_inline_2(gobj: *mut Item_GObj, quat: *mut Quatern
 /// 2A850C: fires the arrow (returns `it_8026EA20`'s result inside the `if`; falls off the end otherwise,
 /// where this port returns 0).
 pub unsafe extern "C" fn itLinkArrow_802A850C(gobj: *mut Item_GObj, arg1: *mut Vec3, arg2: *mut Vec3, arg3: f32, arg4: f32, arg5: f32) -> i32 {
+    melee_core::ct!("itLinkArrow_802A850C");
     let ip = GET_ITEM(gobj);
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let mut attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itLinkArrowAttributes;
@@ -394,6 +401,7 @@ pub unsafe extern "C" fn itLinkArrow_802A850C(gobj: *mut Item_GObj, arg1: *mut V
 }
 
 pub unsafe extern "C" fn itLinkArrow_Logic98_Destroyed(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLinkArrow_Logic98_Destroyed");
     if !gobj.is_null() {
         let item = GET_ITEM(gobj);
         if !item.is_null() {
@@ -420,6 +428,7 @@ pub unsafe extern "C" fn itLinkArrow_Logic98_Destroyed(gobj: *mut Item_GObj) {
 
 /// 2A8A7C
 pub unsafe extern "C" fn it_802A8A7C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802A8A7C");
     if !gobj.is_null() {
         it_802A8330(gobj);
         ext::Item_8026A8EC(gobj);
@@ -427,6 +436,7 @@ pub unsafe extern "C" fn it_802A8A7C(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLinkArrow_Logic98_PickedUp(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLinkArrow_Logic98_PickedUp");
     ext::Item_80268E5C(gobj, 0, 2);
 }
 
@@ -443,6 +453,7 @@ unsafe fn itLinkarrow_UnkMotion1_Anim_inline_s_2(gobj: *mut HSD_GObj, item: *mut
 }
 
 pub unsafe extern "C" fn itLinkarrow_UnkMotion0_Anim(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itLinkarrow_UnkMotion0_Anim");
     let item = GET_ITEM(gobj);
     itLinkarrow_UnkMotion1_Anim_inline_s_2(gobj, item);
     if !(*item).xDD4_itemVar.linkarrow.xE0.is_null() {
@@ -466,14 +477,16 @@ pub unsafe extern "C" fn itLinkarrow_UnkMotion0_Anim(gobj: *mut HSD_GObj) -> boo
     false
 }
 
-pub unsafe extern "C" fn itLinkarrow_UnkMotion0_Phys(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itLinkarrow_UnkMotion0_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itLinkarrow_UnkMotion0_Phys");}
 
 pub unsafe extern "C" fn itLinkarrow_UnkMotion0_Coll(_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itLinkarrow_UnkMotion0_Coll");
     false
 }
 
 /// 2A8C7C
 pub unsafe extern "C" fn it_802A8C7C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802A8C7C");
     let item = GET_ITEM(gobj);
     let attr = (*(*item).xC4_article_data).x4_specialAttributes as *mut itLinkArrowAttributes;
     ext::it_80275158(gobj, (*attr).x0);
@@ -526,6 +539,7 @@ unsafe fn itLinkarrow_UnkMotion1_Anim_inline2(gobj: *mut HSD_GObj, scale1: *mut 
 }
 
 pub unsafe extern "C" fn itLinkarrow_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itLinkarrow_UnkMotion1_Anim");
     let ip = GET_ITEM(gobj);
     let mut scale: Vec3 = core::mem::zeroed();
     let mut scale1: Vec3 = core::mem::zeroed();
@@ -549,6 +563,7 @@ pub unsafe extern "C" fn itLinkarrow_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> boo
 }
 
 pub unsafe extern "C" fn itLinkarrow_UnkMotion1_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itLinkarrow_UnkMotion1_Phys");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itLinkArrowAttributes;
     (*ip).xDD4_itemVar.linkarrow.x18 = (*ip).pos;
@@ -577,6 +592,7 @@ unsafe fn itLinkarrow_UnkMotion1_Coll_inline(gobj: *mut Item_GObj) -> bool {
 }
 
 pub unsafe extern "C" fn itLinkarrow_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLinkarrow_UnkMotion1_Coll");
     let item = GET_ITEM(gobj);
     let attr = (*(*item).xC4_article_data).x4_specialAttributes as *mut itLinkArrowAttributes;
     let jobj = GET_JOBJ(gobj);
@@ -599,6 +615,7 @@ pub unsafe extern "C" fn itLinkarrow_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bo
 }
 
 pub unsafe extern "C" fn itLinkarrow_UnkMotion2_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLinkarrow_UnkMotion2_Anim");
     let item = GET_ITEM(gobj);
     if ext::ftLib_80086A18((*item).xDD4_itemVar.linkarrow.xC4) != 1 {
         return true;
@@ -607,6 +624,7 @@ pub unsafe extern "C" fn itLinkarrow_UnkMotion2_Anim(gobj: *mut Item_GObj) -> bo
 }
 
 pub unsafe extern "C" fn itLinkarrow_UnkMotion2_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itLinkarrow_UnkMotion2_Phys");
     let item = GET_ITEM(gobj);
     let lv = &raw mut (*item).xDD4_itemVar.linkarrow;
     let a = ext::ftCo_80094098((*lv).xC4, &mut (*lv).xC8);
@@ -617,21 +635,25 @@ pub unsafe extern "C" fn itLinkarrow_UnkMotion2_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itLinkarrow_UnkMotion2_Coll(_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itLinkarrow_UnkMotion2_Coll");
     false
 }
 
 pub unsafe extern "C" fn itLinkarrow_UnkMotion3_Anim(_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itLinkarrow_UnkMotion3_Anim");
     false
 }
 
-pub unsafe extern "C" fn itLinkarrow_UnkMotion3_Phys(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itLinkarrow_UnkMotion3_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itLinkarrow_UnkMotion3_Phys");}
 
 pub unsafe extern "C" fn itLinkarrow_UnkMotion3_Coll(_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itLinkarrow_UnkMotion3_Coll");
     false
 }
 
 /// 2A9458: the arrow sticks into the wall.
 pub unsafe extern "C" fn it_802A9458(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802A9458");
     let mut scale: Vec3 = core::mem::zeroed();
 
     let item = GET_ITEM(gobj);
@@ -674,6 +696,7 @@ unsafe fn itlinkarrow_inline_bool(gobj: *mut Item_GObj) -> bool {
 }
 
 pub unsafe extern "C" fn itLinkarrow_UnkMotion4_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLinkarrow_UnkMotion4_Anim");
     let jobj = GET_JOBJ(gobj);
     let ip = GET_ITEM(gobj);
     let zero: i32 = 0;
@@ -715,7 +738,7 @@ pub unsafe extern "C" fn itLinkarrow_UnkMotion4_Anim(gobj: *mut Item_GObj) -> bo
     false
 }
 
-pub unsafe extern "C" fn itLinkarrow_UnkMotion4_Phys(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itLinkarrow_UnkMotion4_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itLinkarrow_UnkMotion4_Phys");}
 
 /// `static inline itLinkarrow_UnkMotion4_Coll_inline`
 #[inline]
@@ -741,6 +764,7 @@ unsafe fn itLinkarrow_UnkMotion4_Coll_inline(gobj: *mut Item_GObj, v: *mut Vec3)
 }
 
 pub unsafe extern "C" fn itLinkarrow_UnkMotion4_Coll(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itLinkarrow_UnkMotion4_Coll");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
     let mut v: Vec3 = core::mem::zeroed();
@@ -759,6 +783,7 @@ pub unsafe extern "C" fn itLinkarrow_UnkMotion4_Coll(gobj: *mut HSD_GObj) -> boo
 }
 
 pub unsafe extern "C" fn itLinkArrow_Logic98_DmgDealt(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLinkArrow_Logic98_DmgDealt");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itLinkArrowAttributes;
     (*ip).x40_vel.x *= (*attr).x14;
@@ -785,6 +810,7 @@ unsafe fn itLinkArrow_Logic98_HitShield_inline(gobj: *mut Item_GObj, scale: *mut
 }
 
 pub unsafe extern "C" fn itLinkArrow_Logic98_HitShield(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLinkArrow_Logic98_HitShield");
     let ip = GET_ITEM(gobj);
     let mut scale: Vec3 = core::mem::zeroed();
     let lv = &raw mut (*ip).xDD4_itemVar.linkarrow;
@@ -811,11 +837,13 @@ pub unsafe extern "C" fn itLinkArrow_Logic98_HitShield(gobj: *mut Item_GObj) -> 
 }
 
 pub unsafe extern "C" fn itLinkArrow_Logic98_Clanked(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLinkArrow_Logic98_Clanked");
     it_802A8330(gobj);
     true
 }
 
 pub unsafe extern "C" fn itLinkArrow_Logic98_Reflected(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLinkArrow_Logic98_Reflected");
     let item = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
 
@@ -843,5 +871,6 @@ pub unsafe extern "C" fn itLinkArrow_Logic98_Reflected(gobj: *mut Item_GObj) -> 
 }
 
 pub unsafe extern "C" fn itLinkArrow_Logic98_EvtUnk(gobj: *mut Item_GObj, arg1: *mut Item_GObj) {
+    melee_core::ct!("itLinkArrow_Logic98_EvtUnk");
     ext::it_8026B894(gobj, arg1);
 }

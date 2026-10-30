@@ -41,14 +41,17 @@ pub mod ext {
 }
 
 pub fn ftFc_Init_OnItemPickup(gobj: *mut HSD_GObj, flag: i32) {
+    melee_core::ct!("ftFc_Init_OnItemPickup");
     crate::tu::ftclink::Fighter_OnItemPickup(gobj, flag, 1, 1);
 }
 
 pub fn ftFc_Init_OnItemDrop(gobj: *mut HSD_GObj, flag: i32) {
+    melee_core::ct!("ftFc_Init_OnItemDrop");
     crate::tu::ftclink::Fighter_OnItemDrop(gobj, flag, 1, 1);
 }
 
 pub fn ftFc_Init_OnLoad(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFc_Init_OnLoad");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let items = (*(*fp).ft_data).x48_items;
@@ -63,5 +66,6 @@ pub fn ftFc_Init_OnLoad(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFc_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFc_Init_LoadSpecialAttrs");
     crate::tu::ftfox::ftFx_Init_LoadSpecialAttrs(gobj);
 }

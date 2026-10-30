@@ -83,10 +83,12 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 }
 
 pub fn ftPk_Init_OnLoadForPichu(fp: *mut Fighter) {
+    melee_core::ct!("ftPk_Init_OnLoadForPichu");
     unsafe { push_attrs::<ftPikachuAttributes>(fp) }
 }
 
 pub fn ftPk_Init_OnLoad(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPk_Init_OnLoad");
     unsafe {
         let fp = fpp(gobj);
         let item_list = (*(*fp).ft_data).x48_items;
@@ -99,15 +101,18 @@ pub fn ftPk_Init_OnLoad(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftPk_Init_OnItemPickup(gobj: *mut HSD_GObj, flag: bool) {
+    melee_core::ct!("ftPk_Init_OnItemPickup");
     Fighter_OnItemPickup(gobj, flag as i32, 0, 0);
 }
 
 pub fn ftPk_Init_OnItemDrop(gobj: *mut HSD_GObj, bool1: bool) {
+    melee_core::ct!("ftPk_Init_OnItemDrop");
     Fighter_OnItemDrop(gobj, bool1 as i32, 0, 0);
 }
 
 /// `COPY_ATTRS`, then every float of `height_attributes` scaled by the fighter's `x34_scale.y`.
 pub fn ftPk_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPk_Init_LoadSpecialAttrs");
     unsafe {
         copy_attrs::<ftPikachuAttributes>(gobj);
         let fp = fpp(gobj);

@@ -1010,6 +1010,7 @@ unsafe extern "C" fn mnStageSw_80236CBC(mut arg0: i8) -> *mut HSD_GObj {
     return gobj;
 }
 pub unsafe extern "C" fn mnStageSw_80237410() {
+    melee_core::ct!("mnStageSw_80237410");
     let mut gobj: *mut HSD_GObj = null_mut();
     let mut proc_0: *mut HSD_GObjProc = null_mut();
     mn_804A04F0.prev_menu = mn_804A04F0.cur_menu;

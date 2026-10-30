@@ -101,11 +101,13 @@ pub mod ext {
 pub static mut grLib_8049EF58: [Vec3; 4] = [Vec3 { x: 0.0, y: 0.0, z: 0.0 }; 4];
 
 pub unsafe extern "C" fn grLib_801C96E8(arg0: *mut HSD_GObj) -> bool {
+    melee_core::ct!("grLib_801C96E8");
     let gp = (*arg0).user_data as *mut Ground;
     (*gp).x10_flags.b4() != 0
 }
 
 pub unsafe fn grLib_801C96F8(arg0: s32, arg1: s32, arg2: *mut Vec3) -> *mut HSD_Generator {
+    melee_core::ct!("grLib_801C96F8");
     let temp_r3 = ext::hsd_8039F05C(0, arg1, arg0);
     if !temp_r3.is_null() {
         let mut phi_r30 = (*temp_r3).appsrt;
@@ -131,27 +133,33 @@ pub unsafe fn grLib_801C96F8(arg0: s32, arg1: s32, arg2: *mut Vec3) -> *mut HSD_
 }
 
 pub unsafe fn grLib_801C97DC(arg0: s32, arg1: s32, arg2: *mut HSD_JObj) {
+    melee_core::ct!("grLib_801C97DC");
     ext::hsd_8039F6CC(0, arg1, arg0, arg2);
 }
 
 pub unsafe fn grLib_801C9808(arg0: s32, arg1: s32, arg2: *mut HSD_JObj) -> *mut HSD_Generator {
+    melee_core::ct!("grLib_801C9808");
     ext::hsd_8039EFAC(0, arg1, arg0, arg2)
 }
 
 pub unsafe fn grLib_801C9834(arg0: *mut HSD_Generator) {
+    melee_core::ct!("grLib_801C9834");
     ext::hsd_8039D4DC(arg0);
 }
 
 pub unsafe fn grLib_801C9854(jobj: *mut HSD_JObj) {
+    melee_core::ct!("grLib_801C9854");
     ext::hsd_8039D5DC(jobj);
 }
 
 pub unsafe fn grLib_801C9874(arg0: *mut HSD_Generator) {
+    melee_core::ct!("grLib_801C9874");
     (*arg0).r#type |= 0x80;
     ext::hsd_8039D4DC(arg0);
 }
 
 pub unsafe fn grLib_801C98A0(jobj: *mut HSD_JObj) {
+    melee_core::ct!("grLib_801C98A0");
     if jobj.is_null() {
         return;
     }
@@ -167,6 +175,7 @@ pub unsafe fn grLib_801C98A0(jobj: *mut HSD_JObj) {
 }
 
 pub unsafe fn grLib_801C9908(jobj: *mut HSD_JObj) {
+    melee_core::ct!("grLib_801C9908");
     let mut jobj = jobj;
     if jobj.is_null() {
         return;
@@ -193,6 +202,7 @@ pub unsafe fn grLib_801C9908(jobj: *mut HSD_JObj) {
 }
 
 pub unsafe fn grLib_801C99C0(bank: s32, gfx_id: s32, jobj: *mut HSD_JObj, flag: s32) {
+    melee_core::ct!("grLib_801C99C0");
     if flag != 0 {
         ext::hsd_8039EFAC(0, bank, gfx_id, jobj);
     } else {
@@ -201,6 +211,7 @@ pub unsafe fn grLib_801C99C0(bank: s32, gfx_id: s32, jobj: *mut HSD_JObj, flag: 
 }
 
 pub unsafe fn grLib_801C9A10() -> *mut Vec3 {
+    melee_core::ct!("grLib_801C9A10");
     ext::Ground_801C2D24(0, &mut grLib_8049EF58[0]);
     ext::Ground_801C2D24(1, &mut grLib_8049EF58[1]);
     ext::Ground_801C2D24(2, &mut grLib_8049EF58[2]);
@@ -209,6 +220,7 @@ pub unsafe fn grLib_801C9A10() -> *mut Vec3 {
 }
 
 pub unsafe fn grLib_801C9A70(arg0: enum_t, v: *mut Vec3) {
+    melee_core::ct!("grLib_801C9A70");
     let i = match arg0 {
         0 => 0,
         1 => 1,
@@ -223,20 +235,24 @@ pub unsafe fn grLib_801C9A70(arg0: enum_t, v: *mut Vec3) {
 }
 
 pub unsafe fn grLib_801C9B20(arg0: *mut HSD_JObj, arg1: *mut DynamicsDesc, arg2: *mut DynamicsDesc) {
+    melee_core::ct!("grLib_801C9B20");
     ext::lb_8000FD48(arg0, arg2, (*arg1).count as u32);
     ext::lb_80011710(arg1, arg2);
 }
 
 pub unsafe fn grLib_801C9B6C(arg0: *mut DynamicsDesc) {
+    melee_core::ct!("grLib_801C9B6C");
     ext::lb_8000FD18(arg0);
 }
 
 pub unsafe fn grLib_801C9B8C(arg0: *mut DynamicsDesc) {
+    melee_core::ct!("grLib_801C9B8C");
     ext::lb_8001044C(arg0, null_mut(), 0, 0.0, 0, 0 as Fighter_Part, 0, 0);
 }
 
 /// `static void grLib_801C9BC8(HSD_GObj*)`.
 pub unsafe extern "C" fn grLib_801C9BC8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grLib_801C9BC8");
     let jobj = GET_JOBJ(gobj);
     ext::HSD_JObjAnimAll(jobj);
     ext::Camera_SetQuakeOffset(HSD_JObjGetTranslationX(jobj), HSD_JObjGetTranslationY(jobj));
@@ -244,6 +260,7 @@ pub unsafe extern "C" fn grLib_801C9BC8(gobj: *mut HSD_GObj) {
 
 /// `static void grLib_801C9C40(HSD_GObj*)`.
 pub unsafe extern "C" fn grLib_801C9C40(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grLib_801C9C40");
     let jobj = GET_JOBJ(gobj);
     let aobj = (*jobj).aobj;
 
@@ -256,6 +273,7 @@ pub unsafe extern "C" fn grLib_801C9C40(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe fn grLib_801C9CEC(kind: CmQuakeKind) -> *mut HSD_GObj {
+    melee_core::ct!("grLib_801C9CEC");
     let quake_idx: usize = if kind == QuakeKind_Loop {
         0
     } else if kind == QuakeKind_Small {
@@ -294,14 +312,17 @@ pub unsafe fn grLib_801C9CEC(kind: CmQuakeKind) -> *mut HSD_GObj {
 }
 
 pub unsafe fn grLib_801C9E40() -> s32 {
+    melee_core::ct!("grLib_801C9E40");
     (*ext::stage_info()).x708 as s32
 }
 
 pub unsafe fn grLib_801C9E50(val: s16) {
+    melee_core::ct!("grLib_801C9E50");
     (*ext::stage_info()).x708 = val;
 }
 
 pub unsafe fn grLib_801C9E60(v: *mut Vec3) -> bool {
+    melee_core::ct!("grLib_801C9E60");
     let id = (*ext::stage_info()).grkind;
 
     if id == Gr_Kind_RCruise {
@@ -353,6 +374,7 @@ unsafe fn PointInsideColl(cd: *mut CollData, point: *mut Vec3, offset: f32) -> b
 }
 
 pub unsafe fn grLib_801C9EE8(point: *mut Vec3, offset: f32) -> bool {
+    melee_core::ct!("grLib_801C9EE8");
     let fighters = *ext::HSD_GObjPLinkHead.add(HSD_GOBJ_PLINK_FIGHTER as usize);
     let mut cur_fighter = fighters;
     while !cur_fighter.is_null() {

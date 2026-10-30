@@ -176,6 +176,7 @@ unsafe fn generator_add_appsrt(mut generator: Gen, status: i32) -> Gen {
 
 /// `efLib_Init`.
 pub unsafe fn efLib_Init() {
+    melee_core::ct!("efLib_Init");
     ext::HSD_ObjAllocInit(&mut EF_DATA.alloc_data, core::mem::size_of::<EF_Effect>() as u32, 4);
     EF_DATA.effect_count = 0;
     ext::efAsync_DatEntries_clear();
@@ -210,14 +211,15 @@ fn plink_table() -> [G; 13] {
 }
 
 /// `efLib_SetFlags` (walk ported in `crate::ef::eflib`).
-pub unsafe fn efLib_SetFlags(gobj: G, expire_flags: i32) { crate::ef::eflib::eflib_set_flags(&plink_table(), gobj, expire_flags) }
+pub unsafe fn efLib_SetFlags(gobj: G, expire_flags: i32) { melee_core::ct!("efLib_SetFlags"); crate::ef::eflib::eflib_set_flags(&plink_table(), gobj, expire_flags) }
 /// `efLib_PauseAll`.
-pub unsafe fn efLib_PauseAll(gobj: G) { crate::ef::eflib::eflib_pause_all(&plink_table(), gobj) }
+pub unsafe fn efLib_PauseAll(gobj: G) { melee_core::ct!("efLib_PauseAll"); crate::ef::eflib::eflib_pause_all(&plink_table(), gobj) }
 /// `efLib_ResumeAll`.
-pub unsafe fn efLib_ResumeAll(gobj: G) { crate::ef::eflib::eflib_resume_all(&plink_table(), gobj) }
+pub unsafe fn efLib_ResumeAll(gobj: G) { melee_core::ct!("efLib_ResumeAll"); crate::ef::eflib::eflib_resume_all(&plink_table(), gobj) }
 
 /// `efLib_Destroy`.
 pub unsafe fn efLib_Destroy(gobj: G) {
+    melee_core::ct!("efLib_Destroy");
     let effect = (*gobj).user_data as *mut EF_Effect;
     if !effect.is_null() && (*effect).is_async == 0 && !gobj.is_null() {
         for e in efLib_ParamTable.iter_mut() {
@@ -234,6 +236,7 @@ pub unsafe fn efLib_Destroy(gobj: G) {
 
 /// `efLib_DestroyAll`.
 pub unsafe fn efLib_DestroyAll(gobj: G) {
+    melee_core::ct!("efLib_DestroyAll");
     for e in efLib_ParamTable.iter_mut() {
         if e.gobj as G == gobj {
             e.gobj = core::ptr::null_mut();
@@ -259,6 +262,7 @@ pub unsafe fn efLib_DestroyAll(gobj: G) {
 
 /// `efLib_remove_user_data`.
 pub unsafe extern "C" fn efLib_remove_user_data(user_data: *mut core::ffi::c_void) {
+    melee_core::ct!("efLib_remove_user_data");
     let effect = user_data as *mut EF_Effect;
     if !(*effect).gobj.is_null() {
         if (*effect).is_async == 0 {
@@ -273,6 +277,7 @@ pub unsafe extern "C" fn efLib_remove_user_data(user_data: *mut core::ffi::c_voi
 
 /// `efLib_RemoveLast`.
 pub unsafe fn efLib_RemoveLast() {
+    melee_core::ct!("efLib_RemoveLast");
     for mut g in plink_heads() {
         while !g.is_null() {
             let next = (*g).next;
@@ -288,6 +293,7 @@ pub unsafe fn efLib_RemoveLast() {
 
 /// `efLib_Update` (GObj proc).
 pub unsafe extern "C" fn efLib_Update(gobj: G) {
+    melee_core::ct!("efLib_Update");
     let jobj = jobj_of(gobj);
     let effect = effect_of(gobj);
     match (*effect).state_flags as i32 {
@@ -331,6 +337,7 @@ pub unsafe extern "C" fn efLib_Update(gobj: G) {
 
 /// `efLib_Create` (TARGET_PC: unloaded/out-of-range bank returns NULL).
 pub unsafe fn efLib_Create(gfx_id: i32, parent_gobj: G) -> *mut EF_Effect {
+    melee_core::ct!("efLib_Create");
     let bank = gfx_id / 1000;
     let data = ext::efAsync_DatEntries_data(bank);
     if data.is_null() {
@@ -398,12 +405,13 @@ pub unsafe fn efLib_Create(gfx_id: i32, parent_gobj: G) -> *mut EF_Effect {
 
 /// `(u32) f`: gwtool's `fptoui.sat.i32` (saturating, negative / NaN -> 0), `melee_runtime::cabi::f2u32`.
 #[inline]
-pub fn f2u32(f: f32) -> u32 { melee_runtime::cabi::f2u32(f as f64) }
+pub fn f2u32(f: f32) -> u32 { melee_core::ct!("f2u32"); melee_runtime::cabi::f2u32(f as f64) }
 /// `(u32) (10.0F * desc->lifetime)`.
-pub fn lifetime_tenths(desc: &EF_EffectDesc) -> u32 { f2u32(10.0f32 * desc.lifetime) }
+pub fn lifetime_tenths(desc: &EF_EffectDesc) -> u32 { melee_core::ct!("lifetime_tenths"); f2u32(10.0f32 * desc.lifetime) }
 
 /// `efLib_Create_Attach`.
 pub unsafe fn efLib_Create_Attach(gfx_id: u32, gobj: G, jobj: J) -> *mut EF_Effect {
+    melee_core::ct!("efLib_Create_Attach");
     let effect = efLib_Create(gfx_id as i32, gobj);
     if !effect.is_null() {
         let ej = jobj_of((*effect).gobj);
@@ -422,6 +430,7 @@ pub unsafe fn efLib_Create_Attach(gfx_id: u32, gobj: G, jobj: J) -> *mut EF_Effe
 
 /// `efLib_Create_AttachChild`.
 pub unsafe fn efLib_Create_AttachChild(gfx_id: u32, gobj: G, jobj: J) -> *mut EF_Effect {
+    melee_core::ct!("efLib_Create_AttachChild");
     let e = efLib_Create_Attach(gfx_id, gobj, jobj);
     if !e.is_null() {
         ext::lb_8000C290(jobj_of((*e).gobj), jobj);
@@ -438,6 +447,7 @@ unsafe fn copy_scale_y(from: G, e: *mut EF_Effect) {
 
 /// `efLib_Create_Attach_Scale`.
 pub unsafe fn efLib_Create_Attach_Scale(gfx_id: u32, gobj: G, jobj: J) -> *mut EF_Effect {
+    melee_core::ct!("efLib_Create_Attach_Scale");
     let e = efLib_Create_Attach(gfx_id, gobj, jobj);
     if !e.is_null() {
         copy_scale_y(gobj, e);
@@ -447,6 +457,7 @@ pub unsafe fn efLib_Create_Attach_Scale(gfx_id: u32, gobj: G, jobj: J) -> *mut E
 
 /// `efLib_Create_AttachChild_Scale`.
 pub unsafe fn efLib_Create_AttachChild_Scale(gfx_id: u32, gobj: G, jobj: J) -> *mut EF_Effect {
+    melee_core::ct!("efLib_Create_AttachChild_Scale");
     let e = efLib_Create_Attach(gfx_id, gobj, jobj);
     if !e.is_null() {
         ext::lb_8000C290(jobj_of((*e).gobj), jobj);
@@ -457,6 +468,7 @@ pub unsafe fn efLib_Create_AttachChild_Scale(gfx_id: u32, gobj: G, jobj: J) -> *
 
 /// `efLib_Create_Attach_Scale_FacingDir`.
 pub unsafe fn efLib_Create_Attach_Scale_FacingDir(gfx_id: u32, gobj: G, jobj: J) -> *mut EF_Effect {
+    melee_core::ct!("efLib_Create_Attach_Scale_FacingDir");
     let e = efLib_Create_Attach(gfx_id, gobj, jobj);
     if !e.is_null() {
         copy_scale_y(gobj, e);
@@ -467,6 +479,7 @@ pub unsafe fn efLib_Create_Attach_Scale_FacingDir(gfx_id: u32, gobj: G, jobj: J)
 
 /// `efLib_Create_Attach_Pos`.
 pub unsafe fn efLib_Create_Attach_Pos(gfx_id: u32, gobj: G, position: &Vec3) -> *mut EF_Effect {
+    melee_core::ct!("efLib_Create_Attach_Pos");
     let e = efLib_Create(gfx_id as i32, gobj);
     if !e.is_null() {
         set_translate(jobj_of((*e).gobj), position);
@@ -476,6 +489,7 @@ pub unsafe fn efLib_Create_Attach_Pos(gfx_id: u32, gobj: G, position: &Vec3) -> 
 
 /// `efLib_render_callback` (GX link).
 pub unsafe extern "C" fn efLib_render_callback(gobj: G, code: i32) {
+    melee_core::ct!("efLib_render_callback");
     let pc = match code {
         0 => 0,
         1 => 1,
@@ -492,18 +506,21 @@ pub unsafe extern "C" fn efLib_render_callback(gobj: G, code: i32) {
 
 /// `efLib_particles_proc_main`.
 pub unsafe extern "C" fn efLib_particles_proc_main(_gobj: G) {
+    melee_core::ct!("efLib_particles_proc_main");
     ext::hsd_8039CEAC(PTCL_SKIP_LINKNO_1 | PTCL_SKIP_LINKNO_2);
     ext::hsd_8039EE24(PTCL_SKIP_LINKNO_1 | PTCL_SKIP_LINKNO_2);
 }
 
 /// `efLib_particles_proc_aux`.
 pub unsafe extern "C" fn efLib_particles_proc_aux(_gobj: G) {
+    melee_core::ct!("efLib_particles_proc_aux");
     ext::hsd_8039CEAC(PTCL_SKIP_LINKNO_0 | PTCL_STAGE_SKIP);
     ext::hsd_8039EE24(PTCL_SKIP_LINKNO_0 | PTCL_STAGE_SKIP);
 }
 
 /// linkNo picked by `efLib_CreateGenerator`.
 pub fn create_generator_link(gfx_id: i32) -> i32 {
+    melee_core::ct!("create_generator_link");
     match gfx_id {
         0x121 => 2,
         0xFF | 0x7918 | 0xFC | 0xF7 => 1,
@@ -513,6 +530,7 @@ pub fn create_generator_link(gfx_id: i32) -> i32 {
 
 /// `efLib_CreateGenerator`.
 pub unsafe fn efLib_CreateGenerator(gfx_id: i32, pos: &Vec3) -> Gen {
+    melee_core::ct!("efLib_CreateGenerator");
     let g = ext::hsd_8039F05C(create_generator_link(gfx_id), gfx_id / 1000, gfx_id);
     if !g.is_null() {
         (*g).pos = *pos;
@@ -522,11 +540,13 @@ pub unsafe fn efLib_CreateGenerator(gfx_id: i32, pos: &Vec3) -> Gen {
 
 /// `efLib_CreateGenerator_AddAppSRT`.
 pub unsafe fn efLib_CreateGenerator_AddAppSRT(gfx_id: i32) -> Gen {
+    melee_core::ct!("efLib_CreateGenerator_AddAppSRT");
     generator_add_appsrt(ext::hsd_8039F05C(0, gfx_id / 1000, gfx_id), 1)
 }
 
 /// `efLib_CreateGenerator_Translate_FacingDir`.
 pub unsafe fn efLib_CreateGenerator_Translate_FacingDir(gfx_id: i32, t: &Vec3, direction: f32) -> Gen {
+    melee_core::ct!("efLib_CreateGenerator_Translate_FacingDir");
     let g = generator_add_appsrt(ext::hsd_8039F05C(0, gfx_id / 1000, gfx_id), 1);
     if !g.is_null() {
         (*(*g).appsrt).translate = *t;
@@ -542,6 +562,7 @@ pub unsafe fn efLib_CreateGenerator_Translate_FacingDir(gfx_id: i32, t: &Vec3, d
 
 /// `efLib_CreateGenerator_Attach`.
 pub unsafe fn efLib_CreateGenerator_Attach(gfx_id: i32, jobj: J) -> Gen {
+    melee_core::ct!("efLib_CreateGenerator_Attach");
     let g = ext::hsd_8039EFAC(0, gfx_id / 1000, gfx_id, jobj);
     if !g.is_null() {
         (*g).r#type &= !(PSAPPSRT_UNK_B10 as u16);
@@ -551,11 +572,13 @@ pub unsafe fn efLib_CreateGenerator_Attach(gfx_id: i32, jobj: J) -> Gen {
 
 /// `efLib_CreateGenerator_Attach_AddAppSRT`.
 pub unsafe fn efLib_CreateGenerator_Attach_AddAppSRT(gfx_id: i32, jobj: J) -> Gen {
+    melee_core::ct!("efLib_CreateGenerator_Attach_AddAppSRT");
     create_generator_add_appsrt(gfx_id, jobj)
 }
 
 /// `efLib_CreateGenerator_Attach_Scale` (va_list: the jobj).
 pub unsafe fn efLib_CreateGenerator_Attach_Scale(gfx_id: i32, jobj: J, gobj: G) -> Gen {
+    melee_core::ct!("efLib_CreateGenerator_Attach_Scale");
     let g = create_generator_add_appsrt(gfx_id, jobj);
     if !g.is_null() {
         let s = get_scale(jobj_of(gobj));
@@ -569,6 +592,7 @@ pub unsafe fn efLib_CreateGenerator_Attach_Scale(gfx_id: i32, jobj: J, gobj: G) 
 
 /// `efLib_CreateGenerator_AppSRT_SetScale` (va_list: jobj, f32*).
 pub unsafe fn efLib_CreateGenerator_AppSRT_SetScale(gfx_id: i32, jobj: J, scale: f32) -> Gen {
+    melee_core::ct!("efLib_CreateGenerator_AppSRT_SetScale");
     let g = create_generator_add_appsrt(gfx_id, jobj);
     if !g.is_null() {
         let a = &mut *(*g).appsrt;
@@ -581,10 +605,11 @@ pub unsafe fn efLib_CreateGenerator_AppSRT_SetScale(gfx_id: i32, jobj: J, scale:
 
 /// `direction < 0.0F ? -M_PI_2 : M_PI_2` stored to f32.
 #[inline]
-pub fn facing_rot(direction: f32) -> f32 { (if direction < 0.0 { -M_PI_2 } else { M_PI_2 }) as f32 }
+pub fn facing_rot(direction: f32) -> f32 { melee_core::ct!("facing_rot"); (if direction < 0.0 { -M_PI_2 } else { M_PI_2 }) as f32 }
 
 /// `efLib_CreateGenerator_AppSRT_SetFacingDir` (va_list: jobj, f32*).
 pub unsafe fn efLib_CreateGenerator_AppSRT_SetFacingDir(gfx_id: i32, jobj: J, direction: f32) -> Gen {
+    melee_core::ct!("efLib_CreateGenerator_AppSRT_SetFacingDir");
     let g = create_generator_add_appsrt(gfx_id, jobj);
     if !g.is_null() {
         (*(*g).appsrt).rot.y = facing_rot(direction);
@@ -594,6 +619,7 @@ pub unsafe fn efLib_CreateGenerator_AppSRT_SetFacingDir(gfx_id: i32, jobj: J, di
 
 /// `efLib_CreateGenerator_AppSRT_SetFacingDirScale` (va_list: jobj, f32*, f32*).
 pub unsafe fn efLib_CreateGenerator_AppSRT_SetFacingDirScale(gfx_id: i32, jobj: J, direction: f32, scale: f32) -> Gen {
+    melee_core::ct!("efLib_CreateGenerator_AppSRT_SetFacingDirScale");
     let g = create_generator_add_appsrt(gfx_id, jobj);
     if !g.is_null() {
         let a = &mut *(*g).appsrt;
@@ -607,6 +633,7 @@ pub unsafe fn efLib_CreateGenerator_AppSRT_SetFacingDirScale(gfx_id: i32, jobj: 
 
 /// `efLib_SpawnParticleEffect`.
 pub unsafe fn efLib_SpawnParticleEffect(bank: i32, gfx_id: i32, jobj: J, flag: bool) {
+    melee_core::ct!("efLib_SpawnParticleEffect");
     let mut chk = 0;
     match gfx_id {
         0x4A38 | 0x4A39 | 0x4A3A | 0xB798 | 0xB799 | 0xB79A => {
@@ -688,6 +715,7 @@ pub unsafe fn efLib_SpawnParticleEffect(bank: i32, gfx_id: i32, jobj: J, flag: b
 
 /// `efLib_Cb_SPtcl`.
 pub unsafe extern "C" fn efLib_Cb_SPtcl(_link: i32, bank: i32, gfx_id: i32, jobj: J) {
+    melee_core::ct!("efLib_Cb_SPtcl");
     if bank == 0x1E {
         ext::grLib_801C99C0(bank, gfx_id, jobj, 0);
         return;
@@ -697,6 +725,7 @@ pub unsafe extern "C" fn efLib_Cb_SPtcl(_link: i32, bank: i32, gfx_id: i32, jobj
 
 /// `efLib_Cb_DPtcl`.
 pub unsafe extern "C" fn efLib_Cb_DPtcl(_link: i32, bank: i32, gfx_id: i32, jobj: J) {
+    melee_core::ct!("efLib_Cb_DPtcl");
     if bank == 0x1E {
         ext::grLib_801C99C0(bank, gfx_id, jobj, 1);
         return;
@@ -706,6 +735,7 @@ pub unsafe extern "C" fn efLib_Cb_DPtcl(_link: i32, bank: i32, gfx_id: i32, jobj
 
 /// `efLib_Cb_ParticleRender`.
 pub unsafe extern "C" fn efLib_Cb_ParticleRender(p: *mut HSD_Particle) {
+    melee_core::ct!("efLib_Cb_ParticleRender");
     if !p.is_null() && !(*p).appsrt.is_null() {
         let t = (*(*p).appsrt).translate;
         let s = (*(*p).appsrt).scale;
@@ -729,6 +759,7 @@ pub static mut lbl_803BF810: [Option<unsafe extern "C" fn(*mut HSD_Particle)>; 3
 
 /// `efLib_Cb_PtclAppSRTHook`.
 pub unsafe extern "C" fn efLib_Cb_PtclAppSRTHook(gen: Gen) {
+    melee_core::ct!("efLib_Cb_PtclAppSRTHook");
     for idx in [0x96, 0x97, 0x98, 0x21B] {
         if (*gen).cmdList == ext::ptclref_cmdList(0, idx) {
             ext::hsd_8039D1E4(gen, lbl_803BF810.as_mut_ptr());
@@ -738,6 +769,7 @@ pub unsafe extern "C" fn efLib_Cb_PtclAppSRTHook(gen: Gen) {
 
 /// `efLib_Cb_SetOffsetY_FromParamY`.
 pub unsafe extern "C" fn efLib_Cb_SetOffsetY_FromParamY(e: *mut EF_Effect) {
+    melee_core::ct!("efLib_Cb_SetOffsetY_FromParamY");
     let ej = jobj_of((*e).gobj);
     let mut v = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ext::lb_8000B1CC((*e).attach_jobj, core::ptr::null(), &mut v);
@@ -747,6 +779,7 @@ pub unsafe extern "C" fn efLib_Cb_SetOffsetY_FromParamY(e: *mut EF_Effect) {
 
 /// `efLib_Cb_SetScale_FromParamX`.
 pub unsafe extern "C" fn efLib_Cb_SetScale_FromParamX(e: *mut EF_Effect) {
+    melee_core::ct!("efLib_Cb_SetScale_FromParamX");
     let j = jobj_of((*e).gobj);
     let x = (*e).params.x * HSD_JObjGetScaleX(&*j);
     HSD_JObjSetScaleX(&mut *j, x, &mut Dirty);
@@ -758,6 +791,7 @@ pub unsafe extern "C" fn efLib_Cb_SetScale_FromParamX(e: *mut EF_Effect) {
 
 /// `efLib_Cb_SetRotYAndTransition`.
 pub unsafe extern "C" fn efLib_Cb_SetRotYAndTransition(e: *mut EF_Effect) {
+    melee_core::ct!("efLib_Cb_SetRotYAndTransition");
     let ud = (*e).user_data as J;
     let ej = jobj_of((*e).gobj);
     if !ud.is_null() {
@@ -777,6 +811,7 @@ pub unsafe extern "C" fn efLib_Cb_SetRotYAndTransition(e: *mut EF_Effect) {
 
 /// `efLib_Cb_SetJObjOffsetZ`.
 pub unsafe extern "C" fn efLib_Cb_SetJObjOffsetZ(e: *mut EF_Effect) {
+    melee_core::ct!("efLib_Cb_SetJObjOffsetZ");
     let ej = jobj_of((*e).gobj);
     let c = if ej.is_null() { core::ptr::null_mut() } else { (*ej).child };
     let z = 2.0f32 + HSD_JObjGetTranslationZ(&*c);
@@ -785,12 +820,14 @@ pub unsafe extern "C" fn efLib_Cb_SetJObjOffsetZ(e: *mut EF_Effect) {
 
 /// `efLib_Cb_SetRotY_FromFighterDir`.
 pub unsafe extern "C" fn efLib_Cb_SetRotY_FromFighterDir(e: *mut EF_Effect) {
+    melee_core::ct!("efLib_Cb_SetRotY_FromFighterDir");
     let ej = jobj_of((*e).gobj);
     set_rot_y(ej, facing_rot((*fighter_of((*e).parent_gobj)).facing_dir));
 }
 
 /// `efLib_Cb_SetRotYZ_FromFighter`.
 pub unsafe extern "C" fn efLib_Cb_SetRotYZ_FromFighter(e: *mut EF_Effect) {
+    melee_core::ct!("efLib_Cb_SetRotYZ_FromFighter");
     let f = fighter_of((*e).parent_gobj);
     let j = jobj_of((*e).gobj);
     let hp = M_PI_2_F - (*f).mv.co.common.x4.x;
@@ -805,6 +842,7 @@ pub unsafe extern "C" fn efLib_Cb_SetRotYZ_FromFighter(e: *mut EF_Effect) {
 
 /// `efLib_Cb_Fall_FromParamY`.
 pub unsafe extern "C" fn efLib_Cb_Fall_FromParamY(e: *mut EF_Effect) {
+    melee_core::ct!("efLib_Cb_Fall_FromParamY");
     let j = jobj_of((*e).gobj);
     let tx = HSD_JObjGetTranslationX(&*j);
     let ty = HSD_JObjGetTranslationY(&*j);
@@ -820,6 +858,7 @@ pub unsafe extern "C" fn efLib_Cb_Fall_FromParamY(e: *mut EF_Effect) {
 
 /// `efLib_Cb_SetOffset_FromParams`.
 pub unsafe extern "C" fn efLib_Cb_SetOffset_FromParams(e: *mut EF_Effect) {
+    melee_core::ct!("efLib_Cb_SetOffset_FromParams");
     let j = jobj_of((*e).gobj);
     let tx = HSD_JObjGetTranslationX(&*j);
     let ty = HSD_JObjGetTranslationY(&*j);
@@ -832,6 +871,7 @@ pub unsafe extern "C" fn efLib_Cb_SetOffset_FromParams(e: *mut EF_Effect) {
 
 /// `efLib_Cb_LifetimeEndSpawn`.
 pub unsafe extern "C" fn efLib_Cb_LifetimeEndSpawn(e: *mut EF_Effect) {
+    melee_core::ct!("efLib_Cb_LifetimeEndSpawn");
     if (*e).lifetime == 1 {
         ext::hsd_8039EFAC(0, 0, 0x1AB, (*e).attach_jobj);
         (*e).update = None;
@@ -841,6 +881,7 @@ pub unsafe extern "C" fn efLib_Cb_LifetimeEndSpawn(e: *mut EF_Effect) {
 
 /// `efLib_Cb_SetScaleRotY_FromFighter`.
 pub unsafe extern "C" fn efLib_Cb_SetScaleRotY_FromFighter(e: *mut EF_Effect) {
+    melee_core::ct!("efLib_Cb_SetScaleRotY_FromFighter");
     let pg = (*e).parent_gobj;
     let j1 = jobj_of(pg);
     let j2 = jobj_of((*e).gobj);
@@ -856,6 +897,7 @@ pub unsafe extern "C" fn efLib_Cb_SetScaleRotY_FromFighter(e: *mut EF_Effect) {
 
 /// `efLib_Cb_SetRotYZ_FromParamZ_FighterDir`.
 pub unsafe extern "C" fn efLib_Cb_SetRotYZ_FromParamZ_FighterDir(e: *mut EF_Effect) {
+    melee_core::ct!("efLib_Cb_SetRotYZ_FromParamZ_FighterDir");
     let j = jobj_of((*e).gobj);
     if (*fighter_of((*e).parent_gobj)).facing_dir < 0.0 {
         set_rot_y(j, -M_PI_2_F);
@@ -886,12 +928,13 @@ unsafe fn special_lw_cb(e: *mut EF_Effect, motion: i32) {
 }
 
 /// `efLib_Cb_ftMr_SpecialLw`.
-pub unsafe extern "C" fn efLib_Cb_ftMr_SpecialLw(e: *mut EF_Effect) { special_lw_cb(e, 349) }
+pub unsafe extern "C" fn efLib_Cb_ftMr_SpecialLw(e: *mut EF_Effect) { melee_core::ct!("efLib_Cb_ftMr_SpecialLw"); special_lw_cb(e, 349) }
 /// `efLib_Cb_ftLg_SpecialLw`.
-pub unsafe extern "C" fn efLib_Cb_ftLg_SpecialLw(e: *mut EF_Effect) { special_lw_cb(e, 357) }
+pub unsafe extern "C" fn efLib_Cb_ftLg_SpecialLw(e: *mut EF_Effect) { melee_core::ct!("efLib_Cb_ftLg_SpecialLw"); special_lw_cb(e, 357) }
 
 /// `efLib_Cb_ftKp_SpecialHi`.
 pub unsafe extern "C" fn efLib_Cb_ftKp_SpecialHi(e: *mut EF_Effect) {
+    melee_core::ct!("efLib_Cb_ftKp_SpecialHi");
     let j1 = jobj_of((*e).gobj);
     let j2 = jobj_of((*(*e).next).gobj);
     let f = fighter_of((*e).parent_gobj);
@@ -911,7 +954,7 @@ pub unsafe extern "C" fn efLib_Cb_ftKp_SpecialHi(e: *mut EF_Effect) {
 }
 
 /// `efLib_Cb_ftCo_Bury`.
-pub unsafe extern "C" fn efLib_Cb_ftCo_Bury(e: *mut EF_Effect) { ext::ftCo_800C0FCC((*e).gobj, (*e).parent_gobj) }
+pub unsafe extern "C" fn efLib_Cb_ftCo_Bury(e: *mut EF_Effect) { melee_core::ct!("efLib_Cb_ftCo_Bury"); ext::ftCo_800C0FCC((*e).gobj, (*e).parent_gobj) }
 
 unsafe fn tobj_of(j: J) -> *mut HSD_TObj {
     let d = ext::HSD_JObjGetDObj(j);
@@ -921,6 +964,7 @@ unsafe fn tobj_of(j: J) -> *mut HSD_TObj {
 
 /// `efLib_SetTevKonstColor`.
 pub unsafe fn efLib_SetTevKonstColor(jobj: J, mut count: i32, konst: u32, tev0: u32) {
+    melee_core::ct!("efLib_SetTevKonstColor");
     let mut t = tobj_of(jobj);
     while count != 0 {
         t = (*t).next;
@@ -945,6 +989,7 @@ fn param_slot(gobj: G) -> Option<usize> {
 
 /// `efLib_SetParamAlpha` (TARGET_PC: indexes the table itself).
 pub unsafe fn efLib_SetParamAlpha(gobj: G, alpha: u8) {
+    melee_core::ct!("efLib_SetParamAlpha");
     if let Some(i) = param_slot(gobj) {
         efLib_ParamTable[i].gobj = gobj as *mut _;
         efLib_ParamTable[i].alpha = alpha as _;
@@ -953,6 +998,7 @@ pub unsafe fn efLib_SetParamAlpha(gobj: G, alpha: u8) {
 
 /// `efLib_SetParamGfxId`.
 pub unsafe fn efLib_SetParamGfxId(gobj: G, gfx_id: i32) {
+    melee_core::ct!("efLib_SetParamGfxId");
     if let Some(i) = param_slot(gobj) {
         efLib_ParamTable[i].gobj = gobj as *mut _;
         efLib_ParamTable[i].gfx_id = gfx_id as _;
@@ -961,6 +1007,7 @@ pub unsafe fn efLib_SetParamGfxId(gobj: G, gfx_id: i32) {
 
 /// `efLib_Cb_ApplyStoredAlpha`.
 pub unsafe extern "C" fn efLib_Cb_ApplyStoredAlpha(e: *mut EF_Effect) {
+    melee_core::ct!("efLib_Cb_ApplyStoredAlpha");
     let h = jobj_of((*e).gobj);
     let mut jobj = if h.is_null() { core::ptr::null_mut() } else { (*h).child };
     let mut t = tobj_of(jobj);
@@ -984,6 +1031,7 @@ pub unsafe extern "C" fn efLib_Cb_ApplyStoredAlpha(e: *mut EF_Effect) {
 
 /// `efLib_Cb_AccumOffset_FromParams`.
 pub unsafe extern "C" fn efLib_Cb_AccumOffset_FromParams(e: *mut EF_Effect) {
+    melee_core::ct!("efLib_Cb_AccumOffset_FromParams");
     let mut t = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ext::lb_8000B1CC((*e).attach_jobj, core::ptr::null(), &mut t);
     t.x += (*e).params.x;
@@ -994,6 +1042,7 @@ pub unsafe extern "C" fn efLib_Cb_AccumOffset_FromParams(e: *mut EF_Effect) {
 
 /// `efLib_CreateGenerator_AppSRT_SetPos`.
 pub unsafe fn efLib_CreateGenerator_AppSRT_SetPos(gfx_id: i32, gobj: G, jobj: J, vec: &Vec3) -> *mut EF_Effect {
+    melee_core::ct!("efLib_CreateGenerator_AppSRT_SetPos");
     let e = efLib_Create(0, gobj);
     if !e.is_null() {
         (*e).update = Some(efLib_Cb_AccumOffset_FromParams);

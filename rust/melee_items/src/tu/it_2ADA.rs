@@ -52,6 +52,7 @@ pub static mut it_803F6C88: [ItemStateTable; 1] = [
 
 /// 2ADA1C: spawns the item at `pos` (z forced to 0) with velocity `vel`.
 pub unsafe extern "C" fn it_802ADA1C(pos: *mut Vec3, vel: *mut Vec3, facing_dir: f32) {
+    melee_core::ct!("it_802ADA1C");
     let mut spawnitem: SpawnItem = core::mem::zeroed();
     spawnitem.kind = It_Kind_Unk1;
     spawnitem.prev_pos = *pos;
@@ -75,6 +76,7 @@ pub unsafe extern "C" fn it_802ADA1C(pos: *mut Vec3, vel: *mut Vec3, facing_dir:
 
 /// `static void it_802ADAF0`
 pub unsafe extern "C" fn it_802ADAF0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802ADAF0");
     let item = GET_ITEM(gobj);
     ext::it_8026B3A8(gobj);
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE);
@@ -83,6 +85,7 @@ pub unsafe extern "C" fn it_802ADAF0(gobj: *mut Item_GObj) {
 
 /// `static bool it_2ADA_UnkMotion0_Anim`
 pub unsafe extern "C" fn it_2ADA_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_2ADA_UnkMotion0_Anim");
     let item = GET_ITEM(gobj);
     (*item).xD44_lifeTimer -= 1.0;
     (*item).xD44_lifeTimer <= 0.0
@@ -90,16 +93,19 @@ pub unsafe extern "C" fn it_2ADA_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
 
 /// `static void it_2ADA_UnkMotion0_Phys`
 pub unsafe extern "C" fn it_2ADA_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_2ADA_UnkMotion0_Phys");
     let attrs = (*GET_ITEM(gobj)).xCC_item_attr;
     ext::it_80272860(gobj, (*attrs).x10_fall_speed, (*attrs).x14_fall_speed_max);
 }
 
 /// `static bool it_2ADA_UnkMotion0_Coll`
 pub unsafe extern "C" fn it_2ADA_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_2ADA_UnkMotion0_Coll");
     ext::it_8026DFB0(gobj) != 0
 }
 
 /// 2ADBE4
 pub unsafe extern "C" fn it_802ADBE4(arg0: *mut Item_GObj, arg1: *mut Item_GObj) {
+    melee_core::ct!("it_802ADBE4");
     ext::it_8026B894(arg0, arg1);
 }

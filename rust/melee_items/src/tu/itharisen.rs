@@ -74,6 +74,7 @@ pub static it_803F5FF0: [ItemStateTable; 10] = [
 ];
 
 pub unsafe extern "C" fn it_802927E8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802927E8");
     let ip = (*gobj).user_data as *mut Item;
     let item_jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itHarisen_DatAttrs;
@@ -83,16 +84,19 @@ pub unsafe extern "C" fn it_802927E8(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_8029282C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_8029282C");
     let ip = GET_ITEM(gobj);
     (*ip).scl = (*(*ip).xCC_item_attr).x60_scale;
     ext::Item_8026849C(gobj);
 }
 
 pub unsafe extern "C" fn itHarisen_Logic24_Spawned(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHarisen_Logic24_Spawned");
     it_8029290C(gobj);
 }
 
 pub unsafe extern "C" fn it_8029287C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_8029287C");
     let ip = GET_ITEM(gobj);
     ext::it_8026B390(gobj);
     itResetVelocity(ip);
@@ -100,70 +104,83 @@ pub unsafe extern "C" fn it_8029287C(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itHarisen_UnkMotion0_Anim(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHarisen_UnkMotion0_Anim");
     0
 }
 
-pub unsafe extern "C" fn itHarisen_UnkMotion0_Phys(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itHarisen_UnkMotion0_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itHarisen_UnkMotion0_Phys");}
 
 pub unsafe extern "C" fn itHarisen_UnkMotion0_Coll(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHarisen_UnkMotion0_Coll");
     ext::it_8026D62C(gobj, Some(it_8029290C));
     0
 }
 
 pub unsafe extern "C" fn it_8029290C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_8029290C");
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE as u32);
 }
 
 pub unsafe extern "C" fn itHarisen_UnkMotion8_Anim(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHarisen_UnkMotion8_Anim");
     0
 }
 
 pub unsafe extern "C" fn itHarisen_UnkMotion1_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHarisen_UnkMotion1_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = (*ip).xCC_item_attr;
     ext::it_80272860(gobj, (*attrs).x10_fall_speed, (*attrs).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itHarisen_UnkMotion1_Coll(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHarisen_UnkMotion1_Coll");
     ext::it_8026E15C(gobj, Some(it_8029287C));
     0
 }
 
 pub unsafe extern "C" fn it_80292998(gobj: *mut HSD_GObj, frame_speed: f32) {
+    melee_core::ct!("it_80292998");
     let ip = GET_ITEM(gobj);
     (*ip).x5D0_animFrameSpeed = frame_speed;
     ext::Item_80268E5C(gobj, 3, ITEM_ANIM_UPDATE as u32);
 }
 
 pub unsafe extern "C" fn it_802929C8(gobj: *mut HSD_GObj, frame_speed: f32) {
+    melee_core::ct!("it_802929C8");
     let ip = GET_ITEM(gobj);
     (*ip).x5D0_animFrameSpeed = frame_speed;
     ext::Item_80268E5C(gobj, 4, ITEM_ANIM_UPDATE as u32);
 }
 
 pub unsafe extern "C" fn it_802929F8(gobj: *mut HSD_GObj, frame_speed: f32) {
+    melee_core::ct!("it_802929F8");
     let ip = GET_ITEM(gobj);
     (*ip).x5D0_animFrameSpeed = frame_speed;
     ext::Item_80268E5C(gobj, 5, ITEM_ANIM_UPDATE as u32);
 }
 
 pub unsafe extern "C" fn it_80292A28(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_80292A28");
     let ip = GET_ITEM(gobj);
     (*ip).x5D0_animFrameSpeed = 1.0;
     ext::Item_80268E5C(gobj, 6, ITEM_ANIM_UPDATE as u32);
 }
 
 pub unsafe extern "C" fn itHarisen_Logic24_PickedUp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHarisen_Logic24_PickedUp");
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE as u32);
 }
 
 pub unsafe extern "C" fn itHarisen_UnkMotion6_Anim(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHarisen_UnkMotion6_Anim");
     0
 }
 
-pub unsafe extern "C" fn itHarisen_UnkMotion6_Phys(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itHarisen_UnkMotion6_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itHarisen_UnkMotion6_Phys");}
 
 pub unsafe extern "C" fn itHarisen_Logic24_Dropped(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHarisen_Logic24_Dropped");
     let mut ip = (*gobj).user_data as *mut Item;
     (*ip).x5D0_animFrameSpeed = 1.0;
     ip = (*gobj).user_data as *mut Item;
@@ -173,6 +190,7 @@ pub unsafe extern "C" fn itHarisen_Logic24_Dropped(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itHarisen_UnkMotion8_Coll(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHarisen_UnkMotion8_Coll");
     let ip = GET_ITEM(gobj);
     if (*ip).xD4C != 0 {
         ext::it_8026E15C(gobj, Some(it_8029287C));
@@ -182,19 +200,23 @@ pub unsafe extern "C" fn itHarisen_UnkMotion8_Coll(gobj: *mut HSD_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn itHarisen_Logic24_Thrown(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHarisen_Logic24_Thrown");
     ext::Item_80268E5C(gobj, 7, 6);
 }
 
 pub unsafe extern "C" fn itHarisen_UnkMotion8_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHarisen_UnkMotion8_Phys");
     Item_ApplyFallingPhysics(gobj);
 }
 
 pub unsafe extern "C" fn itHarisen_UnkMotion7_Coll(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHarisen_UnkMotion7_Coll");
     ext::it_8026E15C(gobj, Some(it_8029287C));
     0
 }
 
 pub unsafe extern "C" fn itHarisen_Logic24_DmgDealt(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHarisen_Logic24_DmgDealt");
     let ip = GET_ITEM(gobj);
     if (*ip).msid == 7 || (*ip).msid == 8 {
         ext::itColl_BounceOffVictim(gobj);
@@ -203,36 +225,44 @@ pub unsafe extern "C" fn itHarisen_Logic24_DmgDealt(gobj: *mut HSD_GObj) -> i32 
 }
 
 pub unsafe extern "C" fn itHarisen_Logic24_EnteredAir(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHarisen_Logic24_EnteredAir");
     ext::Item_80268E5C(gobj, 9, ITEM_ANIM_UPDATE as u32);
 }
 
 pub unsafe extern "C" fn itHarisen_UnkMotion9_Anim(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHarisen_UnkMotion9_Anim");
     0
 }
 
-pub unsafe extern "C" fn itHarisen_UnkMotion9_Phys(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itHarisen_UnkMotion9_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itHarisen_UnkMotion9_Phys");}
 
 pub unsafe extern "C" fn itHarisen_UnkMotion9_Coll(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHarisen_UnkMotion9_Coll");
     ext::it_8026E8C4(gobj, Some(it_8029287C), Some(it_8029290C));
     0
 }
 
 pub unsafe extern "C" fn itHarisen_Logic24_Clanked(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHarisen_Logic24_Clanked");
     itHarisen_Logic24_DmgDealt(gobj)
 }
 
 pub unsafe extern "C" fn itHarisen_Logic24_Reflected(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHarisen_Logic24_Reflected");
     ext::it_80273030(gobj)
 }
 
 pub unsafe extern "C" fn itHarisen_Logic24_HitShield(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHarisen_Logic24_HitShield");
     itHarisen_Logic24_DmgDealt(gobj)
 }
 
 pub unsafe extern "C" fn itHarisen_Logic24_ShieldBounced(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHarisen_Logic24_ShieldBounced");
     ext::itColl_BounceOffShield(gobj)
 }
 
 pub unsafe extern "C" fn itHarisen_Logic24_EvtUnk(gobj: *mut HSD_GObj, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHarisen_Logic24_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

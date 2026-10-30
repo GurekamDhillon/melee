@@ -725,6 +725,7 @@ unsafe fn sethidden(jobj: *mut HSD_JObj, hidden: i32) {
 /// Writes the kerning of the digits of `arg1` (at most four) through `arg0` and returns the pointer
 /// past the terminator slot.
 pub unsafe fn mnCharSel_8025BC20(mut arg0: *mut TextKerning, mut arg1: u32) -> *mut TextKerning {
+    melee_core::ct!("mnCharSel_8025BC20");
     let mut render_zeroes: u32 = 0;
     let kerning = (*HSD_SisLib_804D1124[0].add(41)).kerning;
     if arg1 >= 10000 {
@@ -759,6 +760,7 @@ pub unsafe fn mnCharSel_8025BC20(mut arg0: *mut TextKerning, mut arg1: u32) -> *
 
 /// Fills in the rules text (time / stock count and the mode name) of the CSS.
 pub unsafe fn mnCharSel_8025BD30() {
+    melee_core::ct!("mnCharSel_8025BD30");
     let kerning = (*HSD_SisLib_804D1124[0].add(37)).kerning;
     let match_type = (*mnCharSel_804D6CB0).match_type as u32;
 
@@ -847,6 +849,7 @@ pub unsafe fn mnCharSel_8025BD30() {
 /// `getStickDelta`: the stick's dead-zone-reduced displacement (squared-magnitude minus 200, along
 /// the stick's angle) of `port`.
 pub unsafe fn getStickDelta(port: i32, dx: *mut f32, dy: *mut f32) {
+    melee_core::ct!("getStickDelta");
     let p = pad((port as u8) as usize);
     let stick_x = loadStickValue(&(*p).stickX);
     let stick_y = (*p).stickY as f32;
@@ -864,6 +867,7 @@ pub unsafe fn getStickDelta(port: i32, dx: *mut f32, dy: *mut f32) {
 
 /// `drawTimeText`.
 pub unsafe fn drawTimeText(x: *mut HSD_Text, y: *mut HSD_Text, hours: i32, minutes: i32, seconds: i32, microseconds: i32) {
+    melee_core::ct!("drawTimeText");
     if hours == 0 {
         text_set(x, cstr(c"%02d:%02d"), &[Va::I32(minutes), Va::I32(seconds)]);
         text_set(y, cstr(c"%02d"), &[Va::I32(microseconds)]);
@@ -877,17 +881,21 @@ pub unsafe fn drawTimeText(x: *mut HSD_Text, y: *mut HSD_Text, hours: i32, minut
 }
 
 pub unsafe fn getClassicHighscore(hud: u8) -> u32 {
+    melee_core::ct!("getClassicHighscore");
     ext::gm_80162BD8(hud) as u32
 }
 pub unsafe fn getAdventureHighscore(hud: u8) -> u32 {
+    melee_core::ct!("getAdventureHighscore");
     ext::gm_80162DD4(hud) as u32
 }
 pub unsafe fn getAllStarHighscore(hud: u8) -> u32 {
+    melee_core::ct!("getAllStarHighscore");
     ext::gm_80162FD0(hud) as u32
 }
 
 /// `inline3`: freeze the HUD joint `i` of the CSS model on frame `x + 1` (material animations).
 pub unsafe fn inline3(i: i32, x: f32) -> *mut HSD_JObj {
+    melee_core::ct!("inline3");
     let mut sp5C: *mut HSD_JObj = null_mut();
     let arc = mnCharSel_804D6CC0;
     let frame = x + 1.0f32;
@@ -911,6 +919,7 @@ unsafe fn show_kos(x: *mut HSD_Text, y: i32) {
 /// Fills in the high-score / record texts and HUD of the current mode for fighter icon 0 (`arg0`
 /// set: clear them).
 pub unsafe fn mnCharSel_8025C020(arg0: i32) {
+    melee_core::ct!("mnCharSel_8025C020");
     let mut sp7C: *mut HSD_JObj = null_mut();
     let mut sp7B: u8 = 0;
     let mut sp7A: u8 = 0;
@@ -1119,6 +1128,7 @@ pub unsafe fn mnCharSel_8025C020(arg0: i32) {
 
 /// The K.O. star counter of door `port` (`mode` 0: hide, 1: dim, otherwise bright).
 pub unsafe fn mnCharSel_8025D1C4(port: i32, mode: i32) {
+    melee_core::ct!("mnCharSel_8025D1C4");
     let css = mnCharSel_804D6CB0;
     let mut sp10: *mut HSD_JObj = null_mut();
 
@@ -1201,6 +1211,7 @@ pub unsafe fn mnCharSel_8025D1C4(port: i32, mode: i32) {
 
 /// Plays door `door`'s card frame (portrait, emblem, stock dots) on `frame`, shown or `hidden`.
 pub unsafe fn mnCharSel_8025D5AC(door_idx: i32, mut frame: i32, hidden: i32) {
+    melee_core::ct!("mnCharSel_8025D5AC");
     if mnCharSel_804D6CF5 == 1 {
         if door_idx != 0 {
             let sp5C = animateJoint(mnCharSel_804D6CC4, 4, TOBJ_MASK, frame as f32);
@@ -1240,6 +1251,7 @@ pub unsafe fn mnCharSel_8025D5AC(door_idx: i32, mut frame: i32, hidden: i32) {
 
 /// `isDuplicateCostumeWith`.
 pub unsafe fn isDuplicateCostumeWith(door_idx: i32, css: *mut CSSData, door_count: u8) -> bool {
+    melee_core::ct!("isDuplicateCostumeWith");
     let base_door = door(door_idx as usize);
     let num_doors: i32 = if (*css).match_type as u32 == TRAINING_MODE { 2 } else { door_count as i32 };
 
@@ -1259,11 +1271,13 @@ pub unsafe fn isDuplicateCostumeWith(door_idx: i32, css: *mut CSSData, door_coun
 
 /// `loadCSSValue`.
 pub unsafe fn loadCSSValue(css: *const *mut CSSData) -> *mut CSSData {
+    melee_core::ct!("loadCSSValue");
     core::ptr::read_volatile(css)
 }
 
 /// `isDuplicateCostumeCached`: reads the base door's icon and costume once before the scan.
 pub unsafe fn isDuplicateCostumeCached(door_idx: i32) -> bool {
+    melee_core::ct!("isDuplicateCostumeCached");
     let base_door = door(door_idx as usize);
     let num_doors: i32 = if (*mnCharSel_804D6CB0).match_type as u32 == TRAINING_MODE { 2 } else { mnCharSel_804D6CF5 as i32 };
 
@@ -1281,6 +1295,7 @@ pub unsafe fn isDuplicateCostumeCached(door_idx: i32) -> bool {
 
 /// `isDuplicateCostumeExact`.
 pub unsafe fn isDuplicateCostumeExact(door_idx: i32) -> bool {
+    melee_core::ct!("isDuplicateCostumeExact");
     let num_doors: i32 = if (*mnCharSel_804D6CB0).match_type as u32 == TRAINING_MODE {
         2
     } else {
@@ -1305,6 +1320,7 @@ pub unsafe fn isDuplicateCostumeExact(door_idx: i32) -> bool {
 
 /// `isDuplicateCostume`.
 pub unsafe fn isDuplicateCostume(door_idx: i32) -> bool {
+    melee_core::ct!("isDuplicateCostume");
     let base_door = door(door_idx as usize);
     let num_doors: i32 = if (*mnCharSel_804D6CB0).match_type as u32 == TRAINING_MODE { 2 } else { mnCharSel_804D6CF5 as i32 };
 
@@ -1324,6 +1340,7 @@ pub unsafe fn isDuplicateCostume(door_idx: i32) -> bool {
 
 /// Whether another open door already wears `door`'s fighter in `door`'s costume.
 pub unsafe fn mnCharSel_8025DAA0(door_idx: i32) -> bool {
+    melee_core::ct!("mnCharSel_8025DAA0");
     let num_doors: i32 = if (*mnCharSel_804D6CB0).match_type as u32 == TRAINING_MODE { 2 } else { mnCharSel_804D6CF5 as i32 };
 
     for j in 0..num_doors {
@@ -1341,6 +1358,7 @@ pub unsafe fn mnCharSel_8025DAA0(door_idx: i32) -> bool {
 
 /// `pickUniqueCostume`.
 pub unsafe fn pickUniqueCostume(door_idx: i32) {
+    melee_core::ct!("pickUniqueCostume");
     if mnCharSel_8025DAA0(door_idx) {
         let mut v: i32 = 0;
         loop {
@@ -1355,6 +1373,7 @@ pub unsafe fn pickUniqueCostume(door_idx: i32) {
 
 /// `getHandicapValue`.
 pub unsafe fn getHandicapValue(port: i32) -> i32 {
+    melee_core::ct!("getHandicapValue");
     let hval: i32 = if (*ext::gmMainLib_GetGameRules()).handicap == 1 {
         (ext::gm_801685D4(port as u8, (*player_at(mnCharSel_804D6CB0, port as usize)).nametag) as u8) as i32
     } else {
@@ -1455,6 +1474,7 @@ unsafe fn mnCharSel_MexPortrait(door_idx: i32, icon_idx: i32, costume: i32, reta
 /// Refreshes everything door `arg0` shows: name, costume, portrait, door / handicap / CPU
 /// sliders, team colours and the tag text.
 pub unsafe fn mnCharSel_8025DB34(arg0: u8) {
+    melee_core::ct!("mnCharSel_8025DB34");
     let mut sp90: *mut HSD_JObj = null_mut();
     let mut anim_frame: f32;
     let mut joint: u8;
@@ -1760,6 +1780,7 @@ pub unsafe fn mnCharSel_8025DB34(arg0: u8) {
 
 /// Plays the mode name frame for `idx` and refreshes every door.
 pub unsafe fn mnCharSel_8025EE8C(idx: u8) {
+    melee_core::ct!("mnCharSel_8025EE8C");
     let mut mode_frame: f32;
     let mut sp14: *mut HSD_JObj = null_mut();
     let mut result_jobj: *mut HSD_JObj = null_mut();
@@ -1802,6 +1823,7 @@ pub unsafe fn mnCharSel_8025EE8C(idx: u8) {
 
 /// `updateStockIcons`.
 pub unsafe fn updateStockIcons(stock_data: *mut CSSDoorsData2, stock_jobj: *mut *mut HSD_JObj, mut i: i32) {
+    melee_core::ct!("updateStockIcons");
     lb_find(mnCharSel_804D6CC0, stock_jobj, (*stock_data).xf0[0] as i32);
     super::hsd::HSD_JObjSetTranslateX(*stock_jobj, 7.5f32);
     i = 1;
@@ -1831,6 +1853,7 @@ unsafe fn dobj_mobj(j: *mut HSD_JObj) -> *mut HSD_MObj {
 /// The CSS background's per-frame update: icon and door animation timers, the handicap sliders,
 /// the CPU level scroll and the portrait alpha.
 pub unsafe extern "C" fn fn_8025F0E0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8025F0E0");
     let jobj = get_jobj(gobj);
     let mut sp54: *mut HSD_JObj = null_mut();
     let mut sp4C: *mut HSD_JObj = null_mut();
@@ -2060,6 +2083,7 @@ pub unsafe extern "C" fn fn_8025F0E0(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_8025FAC0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8025FAC0");
     let jobj = get_jobj(gobj);
 
     if mnCharSel_804D6CEC % 40 == 0 {
@@ -2070,11 +2094,13 @@ pub unsafe extern "C" fn fn_8025FAC0(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_8025FB2C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8025FB2C");
     ext::HSD_JObjAnimAll(get_jobj(gobj));
 }
 
 /// `getPlayerForDoor`.
 pub unsafe fn getPlayerForDoor(door_idx: u8) -> i32 {
+    melee_core::ct!("getPlayerForDoor");
     if mnCharSel_804D6CF5 == 1 {
         if door_idx != 0 {
             return mnCharSel_804D6CF1 as i32;
@@ -2086,6 +2112,7 @@ pub unsafe fn getPlayerForDoor(door_idx: u8) -> i32 {
 
 /// Picks a random unlocked icon for door `door_idx` (the Random button).
 pub unsafe fn mnCharSel_8025FB50(door_idx: u8, arg1: i32) {
+    melee_core::ct!("mnCharSel_8025FB50");
     let mut icon_idx: i32;
     let mut icon_jobj: *mut HSD_JObj = null_mut();
 
@@ -2153,6 +2180,7 @@ const PAD_R: u32 = HSD_PAD_R as u32;
 /// Puts door `door_idx`'s token back on the icon of the fighter its player holds; returns 0 when it
 /// did, 1 when the player's fighter is not a playable one.
 pub unsafe fn mnCharSel_8025FDEC(door_idx: u8) -> i32 {
+    melee_core::ct!("mnCharSel_8025FDEC");
     let mut sp10: *mut HSD_JObj = null_mut();
     let mut icon_idx: i32;
 
@@ -2228,6 +2256,7 @@ pub unsafe fn mnCharSel_8025FDEC(door_idx: u8) -> i32 {
 
 /// X / Y cycle door `door_idx`'s costume (skipping ones another door wears).
 pub unsafe fn mnCharSel_CostumeChange(door_idx: i32, input: u32) {
+    melee_core::ct!("mnCharSel_CostumeChange");
     let d = door(door_idx as usize);
     let prev_costume = (*d).costume;
 
@@ -2265,6 +2294,7 @@ pub unsafe fn mnCharSel_CostumeChange(door_idx: i32, input: u32) {
 
 /// `updateCursorDisplay`: cursor state / colour animation and its position.
 pub unsafe fn updateCursorDisplay(jobj: *mut HSD_JObj, cursor: *mut CSSCursorData, state_jobj: *mut *mut HSD_JObj, color_jobj: *mut *mut HSD_JObj) {
+    melee_core::ct!("updateCursorDisplay");
     if (*cursor).x5 != 1 {
         let y = (*cursor).x10;
         if y < 0.2f32 || y > 22.0f32 {
@@ -2343,6 +2373,7 @@ pub unsafe fn updateGrabbedSlider(
     pos: *mut Vec3,
     is_handicap: bool,
 ) {
+    melee_core::ct!("updateGrabbedSlider");
     let base_x: f32;
     let anim_frame: f32;
 
@@ -2398,6 +2429,7 @@ pub unsafe fn updateGrabbedSlider(
 
 /// `cycleTeam`: advances the door's team colour when the cursor clicks its team box.
 pub unsafe fn cycleTeam(cursor: *mut CSSCursorData, dp: *mut CSSDoor, di: i32) {
+    melee_core::ct!("cycleTeam");
     let cx5 = (*cursor).xC;
     if cx5 > (*dp).teambtn_left && cx5 < (*dp).teambtn_right {
         let cy5 = (*cursor).x10;
@@ -2415,6 +2447,7 @@ pub unsafe fn cycleTeam(cursor: *mut CSSCursorData, dp: *mut CSSDoor, di: i32) {
 /// click actions (pick / drop a token, costume change, door toggles, sliders, team box, name tag
 /// list, stock and CPU level buttons, start / back).
 pub unsafe extern "C" fn mnCharSel_CursorThink(gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnCharSel_CursorThink");
     let mut sp98: *mut HSD_JObj = null_mut();
     let mut sp88: Vec3 = core::mem::zeroed();
     let mut sp74: *mut HSD_JObj = null_mut();
@@ -3176,6 +3209,7 @@ pub unsafe extern "C" fn mnCharSel_CursorThink(gobj: *mut HSD_GObj) {
 
 /// `getDoorCount`.
 pub unsafe fn getDoorCount(css: *mut CSSData) -> i32 {
+    melee_core::ct!("getDoorCount");
     if (*css).match_type as u32 == TRAINING_MODE {
         return 2;
     }
@@ -3184,6 +3218,7 @@ pub unsafe fn getDoorCount(css: *mut CSSData) -> i32 {
 
 /// `animateCharModel`: freeze the token model's joint 4 on `frame`.
 pub unsafe fn animateCharModel(jobj: *mut HSD_JObj, frame: f32) {
+    melee_core::ct!("animateCharModel");
     let mut child: *mut HSD_JObj = null_mut();
 
     lb_find(jobj, &mut child, 4);
@@ -3209,6 +3244,7 @@ unsafe fn heading(dx: f32, dy: f32) -> f32 {
 /// The per-frame callback of a fighter token (hand-held icon model): chooses its colour, keeps it
 /// away from the other tokens, steers it onto its icon and eases the displayed position towards it.
 pub unsafe extern "C" fn fn_80262648(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80262648");
     let mut sp24: *mut HSD_JObj = null_mut();
     let model = (*gobj).user_data as *mut CSSCharModel;
     let jobj = get_jobj(gobj);
@@ -3382,6 +3418,7 @@ pub unsafe extern "C" fn fn_80262648(gobj: *mut HSD_GObj) {
 /// The "Start" banner's per-frame callback: shows it when every open door has picked a fighter (and
 /// the teams are valid), and handles the Start button.
 pub unsafe extern "C" fn fn_80262F44(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80262F44");
     let jobj = get_jobj(gobj);
     let mut i: i32;
     let mut valid_count: i32 = 0;
@@ -3534,6 +3571,7 @@ pub unsafe extern "C" fn fn_80262F44(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_80263354(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80263354");
     let jobj = get_jobj(gobj);
     if mnCharSel_804D6CEC % 200 == 0 {
         ext::HSD_JObjReqAnimAll(jobj, 0.0f32);
@@ -3558,6 +3596,7 @@ fn tag_clears_kos(match_type: u8) -> bool {
 
 /// Nametag list think callback: handles scrolling through the nametag list.
 pub unsafe extern "C" fn fn_802633B0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_802633B0");
     let mut list_jobj: *mut HSD_JObj = null_mut();
     let mut arrow_jobj: *mut HSD_JObj = null_mut();
     let mut list_origin_jobj: *mut HSD_JObj = null_mut();
@@ -3879,10 +3918,12 @@ pub unsafe extern "C" fn fn_802633B0(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe fn mnCharSel_80264070() {
+    melee_core::ct!("mnCharSel_80264070");
     mnCharSel_804D6CF4 = 1;
 }
 
 pub unsafe extern "C" fn fn_8026407C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8026407C");
     ext::HSD_FogSet((*gobj).hsd_obj as *mut HSD_Fog);
 }
 
@@ -4424,6 +4465,7 @@ fn clears_kos(mt: u8) -> bool {
 /// tokens, name tags, the mode's high-score texts and the start banner) and returns the result of
 /// `lbAudioAx_80023F28(gmMainLib_8015ECB0())`.
 pub unsafe fn mnCharSel_802640A0() -> i32 {
+    melee_core::ct!("mnCharSel_802640A0");
     let mut sp108: *mut HSD_JObj = null_mut();
     let mut spEC: Vec3 = core::mem::zeroed();
     let spE8: _GXColor;
@@ -5403,6 +5445,7 @@ pub unsafe fn mnCharSel_802640A0() -> i32 {
 
 /// Scene entry: loads the MnSlChr / MnExtAll archives and the SIS text file, then builds the screen.
 pub unsafe extern "C" fn mnCharSel_Scene_OnEnter(arg0: *mut c_void) {
+    melee_core::ct!("mnCharSel_Scene_OnEnter");
     ext::lbCardNew_AllocWorkArea();
     ext::lbCardGame_LoadArchive(0);
     mnCharSel_804D6CB0 = arg0 as *mut CSSData;
@@ -5450,6 +5493,7 @@ pub unsafe extern "C" fn mnCharSel_Scene_OnEnter(arg0: *mut c_void) {
 /// Scene frame: keeps the preload cache current, handles leaving the scene (back / start / name
 /// entry) and the per-state transitions.
 pub unsafe extern "C" fn mnCharSel_Scene_OnFrame() {
+    melee_core::ct!("mnCharSel_Scene_OnFrame");
     let num_slots: i32;
     let mut slot_type: u8;
     let cache: *mut GameCache;
@@ -5603,6 +5647,7 @@ pub unsafe extern "C" fn mnCharSel_Scene_OnFrame() {
 /// Scene exit: frees the archives and, when leaving for a match, preloads the chosen fighters'
 /// sound banks.
 pub unsafe extern "C" fn mnCharSel_Scene_OnExit(unused: *mut c_void) {
+    melee_core::ct!("mnCharSel_Scene_OnExit");
     let num_slots: i32;
     let mut tmp: u64;
     let mut i: i32;
@@ -5672,6 +5717,7 @@ static mut mnCharSel_PcCount: i32 = 0;
 
 /// Release the models before the caller releases their backing archive.
 pub unsafe fn mnCharSel_PcArtClose() {
+    melee_core::ct!("mnCharSel_PcArtClose");
     if !mnCharSel_PcIcons.is_null() && mnCharSel_PcIcons != mnCharSel_PcMenu {
         ext::HSD_JObjRemoveAll(mnCharSel_PcIcons);
     }
@@ -5736,6 +5782,7 @@ unsafe fn mnCharSel_PcOwnTex(j: *mut HSD_JObj) -> *mut HSD_TObj {
 /// The last part's TEV colour 0 (retail's hand: the navy its shading blends from).
 static mut mnCharSel_PcCursorLo: u32 = 0;
 pub unsafe fn mnCharSel_PcArtCursorLo() -> u32 {
+    melee_core::ct!("mnCharSel_PcArtCursorLo");
     mnCharSel_PcCursorLo
 }
 
@@ -5752,6 +5799,7 @@ pub unsafe fn mnCharSel_PcArtCursor(
     geo: *mut f32,
     rgba: *mut u32,
 ) -> i32 {
+    melee_core::ct!("mnCharSel_PcArtCursor");
     let root = if which == 0 { mnCharSel_PcHand } else { mnCharSel_PcToken };
     let j: *mut HSD_JObj;
     let t: *mut HSD_TObj;
@@ -5843,6 +5891,7 @@ unsafe fn mnCharSel_PcCursorProbe() {
 /// Open the art: `archive` is MnSlChr, loaded by the caller for the scene. Returns how many icons
 /// the roster has (retail 25, m-ex mexData's count), 0 on failure.
 pub unsafe fn mnCharSel_PcArtOpen(archive: *mut HSD_Archive) -> i32 {
+    melee_core::ct!("mnCharSel_PcArtOpen");
     let tbl: *mut MnSelectChrDataTable;
     let m: *mut MnSelectChrModels;
     let n: i32;
@@ -5916,6 +5965,7 @@ unsafe fn mnCharSel_PcImage(t: *mut HSD_TObj, img: *mut *mut HSD_ImageDesc, tlut
 /// Icon `i` of the roster: its CharacterKind (-1 = the port has no such fighter), its m-ex external
 /// id (-1 retail), and the texture showing it. Returns 0 past the end.
 pub unsafe fn mnCharSel_PcArtIcon(i: i32, ck: *mut i32, ext_id: *mut i32, img: *mut *mut HSD_ImageDesc, tlut: *mut *mut HSD_Tlut) -> i32 {
+    melee_core::ct!("mnCharSel_PcArtIcon");
     let row: *mut CSSIcon;
     let mut j: *mut HSD_JObj = null_mut();
     let mut t: *mut HSD_TObj = null_mut();
@@ -5941,6 +5991,7 @@ pub unsafe fn mnCharSel_PcArtIcon(i: i32, ck: *mut i32, ext_id: *mut i32, img: *
 
 /// The portrait (CSP) of fighter `ck` in `costume`: the portrait joint animated to its frame.
 pub unsafe fn mnCharSel_PcArtPortrait(mut ck: i32, mut costume: i32, img: *mut *mut HSD_ImageDesc, tlut: *mut *mut HSD_Tlut) -> i32 {
+    melee_core::ct!("mnCharSel_PcArtPortrait");
     if ext::Geno_DefineBaseCK(ck) >= 0 {
         ck = ext::Geno_DefineArtBaseCK(ck);
     }

@@ -43,12 +43,14 @@ pub mod ext {
 }
 
 pub fn ftCo_800CF280(g: G) {
+    melee_core::ct!("ftCo_800CF280");
     ext::Fighter_ChangeMotionState(g, ftCo_MS_ItemParasolFall as i32, Ft_MF_SkipHit | Ft_MF_SkipParasol, 0.0, 1.0, 0.0, core::ptr::null_mut());
 }
 
-pub fn ftCo_ItemParasolFall_Anim(_g: G) {}
+pub fn ftCo_ItemParasolFall_Anim(_g: G) { melee_core::ct!("ftCo_ItemParasolFall_Anim");}
 
 pub fn ftCo_ItemParasolFall_IASA(g: G) {
+    melee_core::ct!("ftCo_ItemParasolFall_IASA");
     if ext::ftCo_SpecialAir_CheckInput(g) { return; }
     if ext::ftCo_80095328(g, core::ptr::null_mut()) { return; }
     if ext::ftCo_800C3B10(g) { return; }
@@ -62,9 +64,11 @@ pub fn ftCo_ItemParasolFall_IASA(g: G) {
 }
 
 pub fn ftCo_ItemParasolFall_Phys(g: G) {
+    melee_core::ct!("ftCo_ItemParasolFall_Phys");
     ext::ftCo_ItemParasol_Phys(g);
 }
 
 pub fn ftCo_ItemParasolFall_Coll(g: G) {
+    melee_core::ct!("ftCo_ItemParasolFall_Coll");
     ext::ft_8008370C(g, ext::ftCo_Landing_Enter_Basic);
 }

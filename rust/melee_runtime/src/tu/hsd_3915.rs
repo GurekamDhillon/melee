@@ -123,6 +123,7 @@ pub static LBL_80408630: [u8; 0x268] = [
 /// # Safety
 /// `dst` must be writable for 2 bytes and `src` readable for 3.
 pub unsafe extern "C" fn hsd_80392194(dst: *mut u8, flags: i32, _unused1: i32, _unused2: i32, src: *const u8) {
+    melee_core::ct!("hsd_80392194");
     *dst = *src;
     let b = if flags & 1 != 0 { *src.add(2) } else { *src.add(1) };
     *dst.add(1) = b;
@@ -150,6 +151,7 @@ impl Default for Hsd3915 {
 
 /// `DrawRectangle`.
 pub fn DrawRectangle<H: Hsd3915Host>(h: &mut H, x_min: f32, y_min: f32, w: f32, hgt: f32, color: &GXColor) {
+    melee_core::ct!("DrawRectangle");
     h.GXBegin(0x80, 0, 4);
     let x_max = x_min + w;
     let y_max = y_min + hgt;
@@ -312,6 +314,7 @@ fn hexval(ch: i32) -> i32 {
 /// # Safety
 /// `list` is null or a terminated record list.
 pub unsafe fn hsd_80391E18<H: Hsd3915Host>(h: &mut H, mut list: *const u8, x1: f32, y1: f32, x2: f32, y2: f32) {
+    melee_core::ct!("hsd_80391E18");
     if list.is_null() {
         return;
     }
@@ -356,6 +359,7 @@ fn hsd_80391F28_len(dy: f32, dx: f32) -> f32 {
 
 /// `hsd_80391F28`: line from (x1, y1) to (x2, y2) with a tick every `1/count`; every fifth longer.
 pub fn hsd_80391F28<H: Hsd3915Host>(h: &mut H, color: &GXColor, x1: f32, y1: f32, x2: f32, y2: f32, count: f32) {
+    melee_core::ct!("hsd_80391F28");
     let dy = y2 - y1;
     let dx = x2 - x1;
     let len = hsd_80391F28_len(dy, dx);
@@ -432,6 +436,7 @@ unsafe fn glyph_row(
 /// `bitmap` has 14 rows of 4-byte words readable; `dst`/`stride`/`w`/`h` describe a writable
 /// framebuffer; `tbl` is null or 4 [`GlyphEntry`].
 pub unsafe fn hsd_803921B8(bitmap: *const u8, mut x: i32, mut y: i32, dst: i32, w: i32, h: i32, stride: i32, tbl: *const GlyphEntry) {
+    melee_core::ct!("hsd_803921B8");
     let default_tbl = lbl_80408898();
     let table: *const GlyphEntry = if tbl.is_null() { default_tbl.as_ptr() } else { tbl };
     let mut off_y: i32 = 0;
@@ -461,6 +466,7 @@ pub unsafe fn hsd_803921B8(bitmap: *const u8, mut x: i32, mut y: i32, dst: i32, 
 /// # Safety
 /// As [`hsd_803921B8`].
 pub unsafe fn hsd_803922FC(bitmap: *const u8, mut x: i32, mut y: i32, parity: i32, dst: i32, w: i32, h: i32, stride: i32, tbl: *const GlyphEntry) {
+    melee_core::ct!("hsd_803922FC");
     let default_tbl = lbl_80408898();
     let table: *const GlyphEntry = if tbl.is_null() { default_tbl.as_ptr() } else { tbl };
     let mut off_y: i32 = 0;

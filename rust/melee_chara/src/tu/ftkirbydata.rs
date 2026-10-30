@@ -465,6 +465,7 @@ pub static mut ftKb_Init_803CB46C: [u8; 127] = [32, 33, 38, 39, 255, 41, 35, 21,
 /// clone base, used only when the disc has no row. The effect id is stored as 0xFF when m-ex says
 /// "no effect bank" (255, or a negative id), which `ftKb_SpecialN_800EEC34`'s existing guard covers.
 pub fn ftKb_MexCopyKindData(dst: i32, src: i32, internal: i32) {
+    melee_core::ct!("ftKb_MexCopyKindData");
     let file = ext::Mex_KirbyCapFile(internal);
     let symbol = ext::Mex_KirbyCapSymbol(internal);
     let effect = ext::Mex_KirbyEffectId(internal);

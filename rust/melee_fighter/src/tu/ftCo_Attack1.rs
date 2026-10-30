@@ -61,6 +61,7 @@ pub mod ext {
 
 /// `ftCo_Attack1_CheckInput`.
 pub fn ftCo_Attack1_CheckInput(g: G) -> bool {
+    melee_core::ct!("ftCo_Attack1_CheckInput");
     let f = fp(g);
     if f.input.pressed_buttons & HSD_PAD_A as u32 != 0 {
         if !f.item_gobj.is_null() {
@@ -109,12 +110,14 @@ pub fn ftCo_Attack1_CheckInput(g: G) -> bool {
 
 /// static `onPkPc21EC` (Pikachu/Pichu x21EC callback).
 pub unsafe extern "C" fn onPkPc21EC(g: *mut HSD_GObj) {
+    melee_core::ct!("onPkPc21EC");
     ext::ft_800892A0(g);
     ext::ft_80089824(g);
 }
 
 /// static `decideAttack11`.
 pub fn decideAttack11(g: G) {
+    melee_core::ct!("decideAttack11");
     if fp(g).kind == Ft_Kind_GameWatch {
         ext::ftGw_Attack11_Enter(g);
     } else {
@@ -124,6 +127,7 @@ pub fn decideAttack11(g: G) {
 
 /// static `getMotionFlags`: Pikachu/Pichu install onPkPc21EC and skip the attack count.
 pub fn getMotionFlags(f: &mut Fighter) -> u32 {
+    melee_core::ct!("getMotionFlags");
     match f.kind {
         Ft_Kind_Pichu | Ft_Kind_Pikachu => {
             f.x21EC = Some(onPkPc21EC);
@@ -135,6 +139,7 @@ pub fn getMotionFlags(f: &mut Fighter) -> u32 {
 
 /// static `checkAttack11`: enter jab 1.
 pub fn checkAttack11(g: G) {
+    melee_core::ct!("checkAttack11");
     let f = fp(g);
     if !ext::ftpickupitem_80094790(g) {
         f.set_allow_interrupt(0);
@@ -152,6 +157,7 @@ pub fn checkAttack11(g: G) {
 }
 
 pub fn ftCo_Attack11_Anim(g: G) {
+    melee_core::ct!("ftCo_Attack11_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ft_8008A2BC(g);
     }
@@ -175,6 +181,7 @@ fn movement_checks(g: G) -> bool {
 }
 
 pub fn ftCo_Attack11_IASA(g: G) {
+    melee_core::ct!("ftCo_Attack11_IASA");
     if fp(g).allow_interrupt() != 0 && tilt_smash_checks(g) {
         return;
     }
@@ -187,15 +194,18 @@ pub fn ftCo_Attack11_IASA(g: G) {
 }
 
 pub fn ftCo_Attack11_Phys(g: G) {
+    melee_core::ct!("ftCo_Attack11_Phys");
     ext::ft_80084FA8(g);
 }
 
 pub fn ftCo_Attack11_Coll(g: G) {
+    melee_core::ct!("ftCo_Attack11_Coll");
     ext::ft_80084104(g);
 }
 
 /// static `doAttack12Rapid`.
 pub fn doAttack12Rapid(g: G) {
+    melee_core::ct!("doAttack12Rapid");
     if fp(g).kind == Ft_Kind_GameWatch {
         ext::ftGw_Attack11_Enter(g);
     } else {
@@ -205,6 +215,7 @@ pub fn doAttack12Rapid(g: G) {
 
 /// static `doAttack12Normal`: enter jab 2.
 pub fn doAttack12Normal(g: G) {
+    melee_core::ct!("doAttack12Normal");
     let f = fp(g);
     if !ext::ftpickupitem_80094790(g) {
         f.set_allow_interrupt(0);
@@ -219,6 +230,7 @@ pub fn doAttack12Normal(g: G) {
 
 /// static `doAttack12`.
 pub fn doAttack12(g: G) {
+    melee_core::ct!("doAttack12");
     match fp(g).kind {
         Ft_Kind_Pikachu | Ft_Kind_Pichu => doAttack12Rapid(g),
         _ => doAttack12Normal(g),
@@ -237,6 +249,7 @@ fn window_tick(f: &mut Fighter) {
 
 /// `checkAttack12`.
 pub fn checkAttack12(g: G) -> bool {
+    melee_core::ct!("checkAttack12");
     let f = fp(g);
     window_tick(f);
     if unsafe { f.mv.co.attack1.x0 } != 0 && f.x2218_b1() != 0 {
@@ -247,12 +260,14 @@ pub fn checkAttack12(g: G) -> bool {
 }
 
 pub fn ftCo_Attack12_Anim(g: G) {
+    melee_core::ct!("ftCo_Attack12_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ft_8008A2BC(g);
     }
 }
 
 pub fn ftCo_Attack12_IASA(g: G) {
+    melee_core::ct!("ftCo_Attack12_IASA");
     if fp(g).allow_interrupt() != 0 && tilt_smash_checks(g) {
         return;
     }
@@ -266,6 +281,7 @@ pub fn ftCo_Attack12_IASA(g: G) {
 
 /// static `doAttack13`: enter jab 3 (Marth re-enters jab 1).
 pub fn doAttack13(g: G) {
+    melee_core::ct!("doAttack13");
     let f = fp(g);
     if ext::ftGetTemplateKind(f) == Ft_Kind_Mars as i32 {
         doAttack12Rapid(g);
@@ -280,6 +296,7 @@ pub fn doAttack13(g: G) {
 
 /// `checkAttack13`.
 pub fn checkAttack13(g: G) -> bool {
+    melee_core::ct!("checkAttack13");
     let f = fp(g);
     window_tick(f);
     if unsafe { f.mv.co.attack1.x0 } != 0 && f.x2218_b1() != 0 {
@@ -290,12 +307,14 @@ pub fn checkAttack13(g: G) -> bool {
 }
 
 pub fn ftCo_Attack13_Anim(g: G) {
+    melee_core::ct!("ftCo_Attack13_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ft_8008A2BC(g);
     }
 }
 
 pub fn ftCo_Attack13_IASA(g: G) {
+    melee_core::ct!("ftCo_Attack13_IASA");
     if !ext::ftCo_Attack_800D6A50(g) && fp(g).allow_interrupt() != 0 {
         ext::ftCo_Wait_IASA(g);
     }

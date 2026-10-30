@@ -16,6 +16,7 @@ pub use melee_core::fp::{fmadds as mtx_madd, force25 as gekko_force25};
 
 /// `PSMTXCopy`: a bit-preserving value copy also represents the `src == dst` no-op.
 pub fn PSMTXCopy(src: &crate::mtx::Mtx) -> crate::mtx::Mtx {
+    melee_core::ct!("PSMTXCopy");
     *src
 }
 

@@ -243,6 +243,7 @@ fn mtx(fp: F) -> MtxPtr {
 
 /// `ftColl_800763C0`: combo count logic.
 pub fn ftcoll_800763c0(attacker: G, victim: G, attack_id: i32) {
+    melee_core::ct!("ftcoll_800763c0");
     if attacker == victim {
         return;
     }
@@ -269,12 +270,14 @@ pub fn ftcoll_800763c0(attacker: G, victim: G, attack_id: i32) {
 
 /// `ftColl_80076444`.
 pub fn ftcoll_80076444(attacker: G, victim: G) {
+    melee_core::ct!("ftcoll_80076444");
     let id = unsafe { (*fpg(attacker)).x2068_attackID } as i32;
     ftcoll_800763c0(attacker, victim, id);
 }
 
 /// `ftColl_8007646C`: combo count from an item's owner.
 pub fn ftcoll_8007646c(item: G, victim: G) {
+    melee_core::ct!("ftcoll_8007646c");
     let owner = ext::itGetOwner(item);
     let msid = ext::itGetAttackId(item);
     if ext::ftLib_80086960(owner) {
@@ -284,6 +287,7 @@ pub fn ftcoll_8007646c(item: G, victim: G) {
 
 /// `ftColl_800764DC`: check to end the victim's combo.
 pub fn ftcoll_800764dc(g: G) {
+    melee_core::ct!("ftcoll_800764dc");
     unsafe {
         let fp = &mut *fpg(g);
         if fp.x2098 != 0 {
@@ -309,6 +313,7 @@ fn combo_count_push(fp: &mut Fighter) {
 
 /// `ftColl_80076528`.
 pub fn ftcoll_80076528(g: G) {
+    melee_core::ct!("ftcoll_80076528");
     unsafe {
         let fp = &mut *fpg(g);
         let v = fp.x2092;
@@ -323,6 +328,7 @@ pub fn ftcoll_80076528(g: G) {
 
 /// `ftColl_800765AC`: clear `victim` from every fighter's combo target.
 pub fn ftcoll_800765ac(victim: G) {
+    melee_core::ct!("ftcoll_800765ac");
     let mut cur = crate::hooks::plink_head(PLINK_FIGHTER);
     while !cur.is_null() {
         unsafe {
@@ -337,6 +343,7 @@ pub fn ftcoll_800765ac(victim: G) {
 
 /// `ftColl_800765F0`.
 pub fn ftcoll_800765f0(fp: &Fighter, victim: G, mut arg2: f32) -> f32 {
+    melee_core::ct!("ftcoll_800765f0");
     let cur = fp.victim_gobj;
     if !cur.is_null() && fp.anon_221b.x221B_b5() == 0 && cur != victim {
         arg2 *= cd().x128;
@@ -349,6 +356,7 @@ pub fn ftcoll_800765f0(fp: &Fighter, victim: G, mut arg2: f32) -> f32 {
 
 /// `ftColl_80076640`.
 pub fn ftcoll_80076640(fp: &mut Fighter, dmg: &mut f32) -> bool {
+    melee_core::ct!("ftcoll_80076640");
     let env = get_env_dmg(*dmg);
     if fp.x221C_b4() != 0 {
         fp.dmg.x1834 -= *dmg;
@@ -370,6 +378,7 @@ pub fn ftcoll_80076640(fp: &mut Fighter, dmg: &mut f32) -> bool {
 
 /// `ftColl_80076764`: append an environment entry to damage log 0.
 pub fn ftcoll_80076764(arg0: i32, arg1: i32, arg2: G, arg3: *mut DynamicsDesc, fp: &Fighter, hurt: *mut FighterHurtCapsule) {
+    melee_core::ct!("ftcoll_80076764");
     let idx = log0_idx();
     if (idx as u32 as usize) < ECHO_COLLISION_LOG_CAPACITY {
         unsafe {
@@ -411,6 +420,7 @@ fn tiplog(kind: i32, gobj: G, hit0: HC, hit1: HC, len: u32, temp_dmg: f32) {
 
 /// `ftColl_80076808`: register `victim` on every enabled capsule of `hit`'s group.
 pub fn ftcoll_80076808(fp: F, hit: HC, arg2: i32, victim: *mut c_void, arg4: bool) {
+    melee_core::ct!("ftcoll_80076808");
     let mut j: i8 = 0;
     let mut i = 0u32;
     while i < cap_count(fp) {
@@ -425,6 +435,7 @@ pub fn ftcoll_80076808(fp: F, hit: HC, arg2: i32, victim: *mut c_void, arg4: boo
 
 /// `ftColl_800768A0`: copy the victim list from a sibling capsule, else reset it.
 pub fn ftcoll_800768a0(fp: F, dst: HC) {
+    melee_core::ct!("ftcoll_800768a0");
     let mut i = 0u32;
     while i < cap_count(fp) {
         let h = cap(fp, i);
@@ -523,6 +534,7 @@ unsafe fn script_clank_observe(a: F, ha: HC, b: F, item: It, hb: HC) {
 
 /// `ftColl_8007699C`: hitbox-vs-hitbox clank between two fighters.
 pub fn ftcoll_8007699c(fp0: F, hit0: HC, fp1: F, hit1: HC) -> bool {
+    melee_core::ct!("ftcoll_8007699c");
     unsafe {
         let (a, b) = ((*hit0).hurt_coll_pos, (*hit1).hurt_coll_pos);
         let mid = Vec3 { x: 0.5 * (a.x + b.x), y: 0.5 * (a.y + b.y), z: 0.5 * (a.z + b.z) };
@@ -542,6 +554,7 @@ pub fn ftcoll_8007699c(fp0: F, hit0: HC, fp1: F, hit1: HC) -> bool {
 
 /// `ftColl_80076CBC`: `fp0`'s hitbox struck `fp1`'s shield.
 pub fn ftcoll_80076cbc(fp0: F, hit0: HC, fp1: F) {
+    melee_core::ct!("ftcoll_80076cbc");
     ftcoll_80076808(fp0, hit0, 1, fp1 as *mut c_void, false);
     unsafe {
         ext::ScriptGame_EchoConnected(hit0, fp1);
@@ -647,6 +660,7 @@ unsafe fn inline_b3(fp0: F, hit0: HC, fp1: F) -> f32 {
 
 /// `ftColl_80076ED8`: `fp0`'s hitbox connected with `fp1`'s hurtbox `hit1`.
 pub fn ftcoll_80076ed8(fp0: F, hit0: HC, fp1: F, hit1: HC) -> bool {
+    melee_core::ct!("ftcoll_80076ed8");
     unsafe {
         let mut dmg = inline_b3(fp0, hit0, fp1);
         if inline_b1(hit0) {
@@ -795,6 +809,7 @@ pub fn ftcoll_80076ed8(fp0: F, hit0: HC, fp1: F, hit1: HC) -> bool {
 
 /// `ftColl_80077464`: an item's hitbox hit `fp`'s reflector.
 pub fn ftcoll_80077464(item: It, hit: HC, fp: F) {
+    melee_core::ct!("ftcoll_80077464");
     unsafe {
         ext::it_8026FAC4(item, hit, 7, fp as *mut c_void, false);
         let damage = get_env_dmg((*hit).damage);
@@ -840,6 +855,7 @@ pub fn ftcoll_80077464(item: It, hit: HC, fp: F) {
 
 /// `ftColl_80077688`: an item's hitbox hit `fp`'s shield.
 pub fn ftcoll_80077688(item: It, hurt: HC, fp: F, pos: *mut Vec3, mut val: f32) {
+    melee_core::ct!("ftcoll_80077688");
     unsafe {
         {
             let f = &*fp;
@@ -958,6 +974,7 @@ unsafe fn inline_item_a1(item: It, hit: HC, fp: F, ef_pos: *const Vec3, dmg: f32
 
 /// `ftColl_80077970`: item hitbox vs fighter hitbox clank.
 pub fn ftcoll_80077970(item: It, hit1: HC, fp: F, hit2: HC) {
+    melee_core::ct!("ftcoll_80077970");
     unsafe {
         let (a, b) = ((*hit1).hurt_coll_pos, (*hit2).hurt_coll_pos);
         let mid = Vec3 { x: (a.x + b.x) * 0.5, y: (a.y + b.y) * 0.5, z: (a.z + b.z) * 0.5 };
@@ -976,6 +993,7 @@ pub fn ftcoll_80077970(item: It, hit1: HC, fp: F, hit2: HC) {
 
 /// `ftColl_80077C60`: an item's hitbox connected with `fp`'s hurtbox `hit2`.
 pub fn ftcoll_80077c60(item: It, hit: HC, fp: F, hit2: HC) -> bool {
+    melee_core::ct!("ftcoll_80077c60");
     unsafe {
         let it = &mut *item;
         if (*it.xCC_item_attr).x0_78() == 4 {
@@ -1192,6 +1210,7 @@ unsafe fn hit_sfx_slot(fp: F, hit: HC) {
 
 /// `ftColl_80078384`.
 pub fn ftcoll_80078384(fp: F, arg1: *mut FighterHurtCapsule, arg2: HC) {
+    melee_core::ct!("ftcoll_80078384");
     unsafe {
         if !hurt_sfx(fp, (*arg1).capsule.state as u32, arg2) {
             hit_sfx_slot(fp, arg2);
@@ -1201,11 +1220,13 @@ pub fn ftcoll_80078384(fp: F, arg1: *mut FighterHurtCapsule, arg2: HC) {
 
 /// `ftColl_80078488`: phantom hit sound.
 pub fn ftcoll_80078488(fp: F) {
+    melee_core::ct!("ftcoll_80078488");
     sfx(fp, 85);
 }
 
 /// `ftColl_800784B4`: clank sound.
 pub fn ftcoll_800784b4(fp: F, a: HC, b: HC) {
+    melee_core::ct!("ftcoll_800784b4");
     unsafe {
         if (*a).element == HitElement_Slash as u32 && (*b).element == HitElement_Slash as u32 {
             sfx(fp, ftColl_803C0C4C[crate::hooks::hsd_randi(3) as usize]);
@@ -1217,6 +1238,7 @@ pub fn ftcoll_800784b4(fp: F, a: HC, b: HC) {
 
 /// `ftColl_80078538`: hit spark.
 pub fn ftcoll_80078538(g: G, pos: *const Vec3, dmg: u32, ignored: f32, scale: f32) {
+    melee_core::ct!("ftcoll_80078538");
     unsafe {
         let fp = fpg(g);
         if scale < cd().x3F0 {
@@ -1243,6 +1265,7 @@ pub fn ftcoll_80078538(g: G, pos: *const Vec3, dmg: u32, ignored: f32, scale: f3
 /// `ftColl_8007861C`: record who damaged `gobj` and with what.
 #[allow(clippy::too_many_arguments)]
 pub fn ftcoll_8007861c(arg0: G, gobj: G, arg2: i32, arg3: i32, arg4: i32, arg5: *mut c_void, arg6: u16, arg7: *mut c_void, arg8: i32) {
+    melee_core::ct!("ftcoll_8007861c");
     unsafe {
         let attacker: F = if arg0.is_null() { core::ptr::null_mut() } else { fpg(arg0) };
         let victim = &mut *fpg(gobj);
@@ -1271,6 +1294,7 @@ pub fn ftcoll_8007861c(arg0: G, gobj: G, arg2: i32, arg3: i32, arg4: i32, arg5: 
 
 /// `ftColl_80078710`.
 pub fn ftcoll_80078710(arg0: G, arg1: G, arg2: *mut c_void) {
+    melee_core::ct!("ftcoll_80078710");
     unsafe {
         let fp = &mut *fpg(arg0);
         let p = &mut fp.x2074 as *mut Struct2074 as *mut c_void;
@@ -1280,6 +1304,7 @@ pub fn ftcoll_80078710(arg0: G, arg1: G, arg2: *mut c_void) {
 
 /// `ftColl_80078754`.
 pub fn ftcoll_80078754(arg0: G, arg1: G, arg2: bool) {
+    melee_core::ct!("ftcoll_80078754");
     unsafe {
         let fp0 = &mut *fpg(arg0);
         let p = &mut fp0.x2074 as *mut Struct2074 as *mut c_void;
@@ -1305,6 +1330,7 @@ unsafe fn item_damage_record(ip: It, victim: G, arg: *mut c_void) {
 
 /// `ftColl_800787B4`.
 pub fn ftcoll_800787b4(arg0: G, arg1: G, arg2: i32) {
+    melee_core::ct!("ftcoll_800787b4");
     unsafe {
         let ip = fpg(arg0) as It;
         let fp = &*fpg(arg1);
@@ -1317,11 +1343,13 @@ pub fn ftcoll_800787b4(arg0: G, arg1: G, arg2: i32) {
 
 /// `ftColl_800788D4`.
 pub fn ftcoll_800788d4(g: G) {
+    melee_core::ct!("ftcoll_800788d4");
     ftcoll_8007861c(core::ptr::null_mut(), g, 0, -10, 0, core::ptr::null_mut(), 0, core::ptr::null_mut(), 0);
 }
 
 /// `ftColl_8007891C`: stale moves + combo + bonus stats for a fighter hit.
 pub fn ftcoll_8007891c(arg0: G, arg1: G, arg2: f32) {
+    melee_core::ct!("ftcoll_8007891c");
     ext::plStale_UpdateStaleMovesFromFighter(arg0, arg1);
     ftcoll_80076444(arg0, arg1);
     unsafe {
@@ -1332,6 +1360,7 @@ pub fn ftcoll_8007891c(arg0: G, arg1: G, arg2: f32) {
 
 /// `ftColl_80078998`: the same for an item hit.
 pub fn ftcoll_80078998(arg0: G, arg1: G, arg2: f32) {
+    melee_core::ct!("ftcoll_80078998");
     ext::plStale_UpdateStaleMovesFromItem(arg0, arg1);
     ftcoll_8007646c(arg0, arg1);
     unsafe {
@@ -1345,6 +1374,7 @@ pub fn ftcoll_80078998(arg0: G, arg1: G, arg2: f32) {
 
 /// `ftColl_80078A2C`: find grabbable fighters.
 pub fn ftcoll_80078a2c(this_gobj: G) {
+    melee_core::ct!("ftcoll_80078a2c");
     unsafe {
         let this_fp = fpg(this_gobj);
         (*this_fp).victim_gobj = core::ptr::null_mut();
@@ -1412,6 +1442,7 @@ pub fn ftcoll_80078a2c(this_gobj: G) {
 /// `ftColl_80078C70`: this fighter's hurt / shield / hitboxes against every other fighter's
 /// hitboxes (clank, shield hit, hurtbox hit).
 pub fn ftcoll_80078c70(this_gobj: G) {
+    melee_core::ct!("ftcoll_80078c70");
     unsafe {
         let this_fp = fpg(this_gobj);
         ext::ScriptGame_EchoPrepare();
@@ -1585,6 +1616,7 @@ pub fn ftcoll_80078c70(this_gobj: G) {
 
 /// `ftColl_8007925C`: this fighter against every item's hitboxes.
 pub fn ftcoll_8007925c(gobj: G) {
+    melee_core::ct!("ftcoll_8007925c");
     unsafe {
         let fp = fpg(gobj);
         let mut coll_pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -1822,6 +1854,7 @@ fn inner_percent(ftd: &ftCommonData, count: i32, pt: f32, unk_count: u32) -> f32
 
 /// `ftColl_80079AB0`.
 pub fn ftcoll_80079ab0(fp: &Fighter, hit: &HitCapsule, unk_count: u32, arg3: f32, attack: f32, defense: f32, weight: f32) -> f32 {
+    melee_core::ct!("ftcoll_80079ab0");
     let ftd = cd();
     let w = weight * ftd.xF4;
     let mut result = if hit.x28 != 0 {
@@ -1838,6 +1871,7 @@ pub fn ftcoll_80079ab0(fp: &Fighter, hit: &HitCapsule, unk_count: u32, arg3: f32
 
 /// `ftColl_80079C70`.
 pub fn ftcoll_80079c70(fp: F, attacker: F, hit: HC, unk_count: i32) -> f32 {
+    melee_core::ct!("ftcoll_80079c70");
     unsafe {
         let f = &*fp;
         let weight = crate::hooks::script_value(f, 9, f.co_attrs.weight);
@@ -1863,6 +1897,7 @@ pub fn ftcoll_80079c70(fp: F, attacker: F, hit: HC, unk_count: i32) -> f32 {
 
 /// `ftColl_80079EA8`.
 pub fn ftcoll_80079ea8(fp: &Fighter, hit: &HitCapsule, unk_count: u32) -> f32 {
+    melee_core::ct!("ftcoll_80079ea8");
     let ftd = cd();
     let w = crate::hooks::script_value(fp, 9, fp.co_attrs.weight) * ftd.xF4;
     let mut result = if hit.x28 != 0 {
@@ -1922,6 +1957,7 @@ unsafe fn hit_fx(g: G, pos: *const Vec3, element: u32, severity: i32, x20: f32, 
 
 /// `ftColl_8007A06C`: pick the strongest entry of a damage log and write the result.
 pub fn ftcoll_8007a06c(gobj: G, dmg_ptr: *mut c_void, log: *mut DmgLogEntry, idx: usize, arg4: i32) {
+    melee_core::ct!("ftcoll_8007a06c");
     if idx == 0 {
         return;
     }
@@ -2101,6 +2137,7 @@ pub fn ftcoll_8007a06c(gobj: G, dmg_ptr: *mut c_void, log: *mut DmgLogEntry, idx
 
 /// `ftColl_8007AB48`: resolve damage log 0 into `fp->dmg`.
 pub fn ftcoll_8007ab48(g: G) {
+    melee_core::ct!("ftcoll_8007ab48");
     unsafe {
         let fp = &mut *fpg(g);
         let p = &mut fp.dmg.facing_dir_1 as *mut f32 as *mut c_void;
@@ -2110,6 +2147,7 @@ pub fn ftcoll_8007ab48(g: G) {
 
 /// `ftColl_8007AB80`: resolve the tip log into `fp->dmg.x1870`.
 pub fn ftcoll_8007ab80(g: G) {
+    melee_core::ct!("ftcoll_8007ab80");
     unsafe {
         let fp = fpg(g);
         (*fp).dmg.x187c = 0.0;
@@ -2121,6 +2159,7 @@ pub fn ftcoll_8007ab80(g: G) {
 
 /// `ftColl_8007ABD0`: set a hitbox's damage from a script value.
 pub fn ftcoll_8007abd0(arg0: HC, arg1: u32, arg2: G) {
+    melee_core::ct!("ftcoll_8007abd0");
     unsafe {
         let fp = fpg(arg2);
         let mut dmg = arg1 as f32;
@@ -2136,12 +2175,14 @@ pub fn ftcoll_8007abd0(arg0: HC, arg1: u32, arg2: G) {
 
 /// `ftColl_8007AC68`.
 pub fn ftcoll_8007ac68(kb_angle: u32) -> bool {
+    melee_core::ct!("ftcoll_8007ac68");
     let c = cd();
     kb_angle != 361 && c.unk_kb_angle_min <= kb_angle && kb_angle <= c.unk_kb_angle_max
 }
 
 /// `ftColl_8007AC9C`.
 pub fn ftcoll_8007ac9c(arg0: HC, arg1: i32, arg2: G) {
+    melee_core::ct!("ftcoll_8007ac9c");
     unsafe {
         let fp = &mut *fpg(arg2);
         (*arg0).kb_angle = arg1 as _;
@@ -2163,6 +2204,7 @@ fn hit_offset(fp: &Fighter, h: &HitCapsule) -> Vec3 {
 
 /// `ftColl_8007AD18`: advance a hitbox's position.
 pub fn ftcoll_8007ad18(fp: &Fighter, h: &mut HitCapsule) {
+    melee_core::ct!("ftcoll_8007ad18");
     let st = h.state as u32;
     if st == HitCapsule_Enabled as u32 {
         let sp = hit_offset(fp, h);
@@ -2181,6 +2223,7 @@ pub fn ftcoll_8007ad18(fp: &Fighter, h: &mut HitCapsule) {
 
 /// `ftColl_8007AE80`.
 pub fn ftcoll_8007ae80(g: G) {
+    melee_core::ct!("ftcoll_8007ae80");
     unsafe {
         let fp = fpg(g);
         for i in 0..4 {
@@ -2191,6 +2234,7 @@ pub fn ftcoll_8007ae80(g: G) {
 
 /// `ftColl_8007AF60`: update the dynamics hit positions.
 pub fn ftcoll_8007af60(g: G) {
+    melee_core::ct!("ftcoll_8007af60");
     unsafe {
         let fp = &mut *fpg(g);
         let mut i = 0usize;
@@ -2204,11 +2248,13 @@ pub fn ftcoll_8007af60(g: G) {
 
 /// `ftColl_8007AFC8`.
 pub fn ftcoll_8007afc8(g: G, hit_idx: i32) {
+    melee_core::ct!("ftcoll_8007afc8");
     unsafe { ext::lbColl_80008428(&mut (*fpg(g)).x914[hit_idx as usize]) }
 }
 
 /// `ftColl_8007AFF8`: clear all hitboxes.
 pub fn ftcoll_8007aff8(g: G) {
+    melee_core::ct!("ftcoll_8007aff8");
     unsafe {
         let fp = fpg(g);
         for i in 0..4 {
@@ -2220,6 +2266,7 @@ pub fn ftcoll_8007aff8(g: G) {
 
 /// `ftColl_8007B064`.
 pub fn ftcoll_8007b064(g: G, arg1: i32) {
+    melee_core::ct!("ftcoll_8007b064");
     unsafe {
         let fp = fpg(g);
         let c: HC = &mut (*fp).x914[arg1 as usize];
@@ -2231,6 +2278,7 @@ pub fn ftcoll_8007b064(g: G, arg1: i32) {
 
 /// `ftColl_8007B0C0`: set every hurtbox's state.
 pub fn ftcoll_8007b0c0(g: G, arg1: u32) {
+    melee_core::ct!("ftcoll_8007b0c0");
     unsafe {
         let fp = &mut *fpg(g);
         let mut i = 0usize;
@@ -2245,6 +2293,7 @@ pub fn ftcoll_8007b0c0(g: G, arg1: u32) {
 
 /// `ftColl_8007B128`: set the state of the hurtbox on `bone_id`.
 pub fn ftcoll_8007b128(g: G, bone_id: i32, state: u32) {
+    melee_core::ct!("ftcoll_8007b128");
     unsafe {
         let fp = &mut *fpg(g);
         let mut i = 0i32;
@@ -2268,6 +2317,7 @@ pub fn ftcoll_8007b128(g: G, bone_id: i32, state: u32) {
 
 /// `ftColl_8007B1B8`: start a shield.
 pub fn ftcoll_8007b1b8(g: G, shield: &ShieldDesc, cb: HSD_GObjEvent) {
+    melee_core::ct!("ftcoll_8007b1b8");
     unsafe {
         let fp = &mut *fpg(g);
         fp.anon_221b.set_x221B_b0(1);
@@ -2284,6 +2334,7 @@ pub fn ftcoll_8007b1b8(g: G, shield: &ShieldDesc, cb: HSD_GObjEvent) {
 
 /// `ftColl_CreateReflectHit`.
 pub fn ftcoll_create_reflect_hit(g: G, reflect: &ReflectDesc, cb: HSD_GObjEvent) {
+    melee_core::ct!("ftcoll_create_reflect_hit");
     unsafe {
         let fp = &mut *fpg(g);
         fp.set_reflecting(1);
@@ -2301,6 +2352,7 @@ pub fn ftcoll_create_reflect_hit(g: G, reflect: &ReflectDesc, cb: HSD_GObjEvent)
 
 /// `ftColl_CreateAbsorbHit`.
 pub fn ftcoll_create_absorb_hit(g: G, absorb: &AbsorbDesc) {
+    melee_core::ct!("ftcoll_create_absorb_hit");
     unsafe {
         let fp = &mut *fpg(g);
         fp.set_x2218_b6(1);
@@ -2326,6 +2378,7 @@ unsafe fn hurtbox_init(fp: &mut Fighter, hurt: *mut FighterHurtCapsule, init: &f
 
 /// `ftColl_8007B320`: build the hurtboxes and dynamics hits from the fighter data.
 pub fn ftcoll_8007b320(g: G) {
+    melee_core::ct!("ftcoll_8007b320");
     unsafe {
         let fp = &mut *fpg(g);
         let x30 = &*(*fp.ft_data).x30;
@@ -2360,6 +2413,7 @@ pub fn ftcoll_8007b320(g: G) {
 
 /// `ftColl_8007B4E0`: reset the hurtboxes from the fighter data.
 pub fn ftcoll_8007b4e0(g: G) {
+    melee_core::ct!("ftcoll_8007b4e0");
     unsafe {
         let fp = &mut *fpg(g);
         let x30 = &*(*fp.ft_data).x30;
@@ -2376,12 +2430,14 @@ pub fn ftcoll_8007b4e0(g: G) {
 
 /// `ftColl_HurtboxInit`.
 pub fn ftcoll_hurtbox_init(fp: &mut Fighter, hurt: *mut FighterHurtCapsule, init: &ftHurtboxInit) {
+    melee_core::ct!("ftcoll_hurtbox_init");
     unsafe { hurtbox_init(fp, hurt, init) };
     fp.set_x221A_b6(1);
 }
 
 /// `ftColl_8007B62C`: set the intangibility kind and its colanim.
 pub fn ftcoll_8007b62c(g: G, arg1: i32) {
+    melee_core::ct!("ftcoll_8007b62c");
     unsafe {
         let fp = &mut *fpg(g);
         fp.x1988 = arg1 as _;
@@ -2402,6 +2458,7 @@ pub fn ftcoll_8007b62c(g: G, arg1: i32) {
 
 /// `ftColl_8007B6A0`.
 pub fn ftcoll_8007b6a0(g: G) {
+    melee_core::ct!("ftcoll_8007b6a0");
     unsafe {
         let fp = &mut *fpg(g);
         fp.set_x2221_b0(1);
@@ -2413,6 +2470,7 @@ pub fn ftcoll_8007b6a0(g: G) {
 
 /// `ftColl_8007B6EC`.
 pub fn ftcoll_8007b6ec(g: G) {
+    melee_core::ct!("ftcoll_8007b6ec");
     unsafe {
         let fp = &mut *fpg(g);
         fp.set_x2221_b0(0);
@@ -2427,6 +2485,7 @@ pub fn ftcoll_8007b6ec(g: G) {
 
 /// `ftColl_8007B760`.
 pub fn ftcoll_8007b760(g: G, arg1: i32) {
+    melee_core::ct!("ftcoll_8007b760");
     unsafe {
         let fp = &mut *fpg(g);
         if arg1 > fp.x1990 {
@@ -2439,6 +2498,7 @@ pub fn ftcoll_8007b760(g: G, arg1: i32) {
 
 /// `ftColl_8007B7A4`.
 pub fn ftcoll_8007b7a4(g: G, arg1: i32) {
+    melee_core::ct!("ftcoll_8007b7a4");
     unsafe {
         let fp = &mut *fpg(g);
         if arg1 > fp.x1994 {
@@ -2451,6 +2511,7 @@ pub fn ftcoll_8007b7a4(g: G, arg1: i32) {
 
 /// `ftColl_8007B7FC`: start star invincibility.
 pub fn ftcoll_8007b7fc(fp: F, arg1: i32) {
+    melee_core::ct!("ftcoll_8007b7fc");
     unsafe {
         let f = &mut *fp;
         f.set_x221D_b6(1);
@@ -2475,11 +2536,13 @@ fn hit_status(fp: &Fighter) -> i32 {
 
 /// `ftColl_8007B868`: the strongest hit status.
 pub fn ftcoll_8007b868(g: G) -> i32 {
+    melee_core::ct!("ftcoll_8007b868");
     unsafe { hit_status(&*fpg(g)) }
 }
 
 /// `ftColl_8007B8E8`: release every fighter thrown by `gobj`.
 pub fn ftcoll_8007b8e8(gobj: G) {
+    melee_core::ct!("ftcoll_8007b8e8");
     let mut cur = crate::hooks::plink_head(PLINK_FIGHTER);
     while !cur.is_null() {
         unsafe {
@@ -2496,6 +2559,7 @@ pub fn ftcoll_8007b8e8(gobj: G) {
 
 /// `ftColl_GetWindOffsetVec`: sum of the active wind devices.
 pub fn ftcoll_get_wind_offset_vec(fgp: G, out: &mut Vec3) {
+    melee_core::ct!("ftcoll_get_wind_offset_vec");
     out.x = 0.0;
     out.y = 0.0;
     out.z = 0.0;
@@ -2526,6 +2590,7 @@ pub fn ftcoll_get_wind_offset_vec(fgp: G, out: &mut Vec3) {
 
 /// `ftColl_8007BA0C`: bury devices.
 pub fn ftcoll_8007ba0c(g: G) {
+    melee_core::ct!("ftcoll_8007ba0c");
     unsafe {
         if (*fpg(g)).x2219_b1() != 0 {
             return;
@@ -2548,6 +2613,7 @@ pub fn ftcoll_8007ba0c(g: G) {
 
 /// `ftColl_8007BAC0`: dynamics (damage) devices.
 pub fn ftcoll_8007bac0(g: G) {
+    melee_core::ct!("ftcoll_8007bac0");
     if ext::gm_8016B1C4() {
         return;
     }
@@ -2578,6 +2644,7 @@ pub fn ftcoll_8007bac0(g: G) {
 
 /// `ftColl_8007BBCC`: lipstick damage taken this frame.
 pub fn ftcoll_8007bbcc(_g: G) -> f32 {
+    melee_core::ct!("ftcoll_8007bbcc");
     let mut dmg: f32 = 0.0;
     let n = log0_idx() as u32 as usize;
     unsafe {
@@ -2603,6 +2670,7 @@ pub fn ftcoll_8007bbcc(_g: G) -> f32 {
 
 /// `ftColl_8007BC90`: find grabbable items.
 pub fn ftcoll_8007bc90(g: G) {
+    melee_core::ct!("ftcoll_8007bc90");
     unsafe {
         let fp = fpg(g);
         (*fp).target_item_gobj = core::ptr::null_mut();
@@ -2655,6 +2723,7 @@ pub fn ftcoll_8007bc90(g: G) {
 
 /// `ftColl_8007BE3C`: apply a deferred hit (x1894 source / x1898 damage).
 pub fn ftcoll_8007be3c(g: G) {
+    melee_core::ct!("ftcoll_8007be3c");
     unsafe {
         let fp = &mut *fpg(g);
         let dmg_count = get_env_dmg(fp.dmg.x1898);
@@ -2728,6 +2797,7 @@ fn fpg_r<'a>(g: G) -> &'a mut Fighter {
 /// `ftColl_8007ABD0(hit, damage, gobj)`: set a capsule's damage from the move's base damage
 /// (size scaling, smash charge, staling) and let the LAB's hit rules adjust it.
 pub fn ftColl_8007ABD0(hit: *mut HitCapsule, damage: u32, gobj: G) {
+    melee_core::ct!("ftColl_8007ABD0");
     let fp = fpg_r(gobj);
     let mut dmg = damage as f32;
     if fp.x34_scale.y != 1.0 {
@@ -2745,6 +2815,7 @@ pub fn ftColl_8007ABD0(hit: *mut HitCapsule, damage: u32, gobj: G) {
 
 /// `ftColl_8007AFF8(gobj)`: disable every hit capsule.
 pub fn ftColl_8007AFF8(gobj: G) {
+    melee_core::ct!("ftColl_8007AFF8");
     let fp = fpg_r(gobj);
     for i in 0..fp.x914.len() {
         unsafe { melee_runtime::tu::lbcollision::lbColl_80008428(&mut fp.x914[i]) };
@@ -2754,6 +2825,7 @@ pub fn ftColl_8007AFF8(gobj: G) {
 
 /// `ftColl_8007B064(gobj, idx)`: enable hit capsule `idx` and clear its victim lists.
 pub fn ftColl_8007B064(gobj: G, idx: i32) {
+    melee_core::ct!("ftColl_8007B064");
     let fp = fpg_r(gobj);
     let capsule: *mut HitCapsule = &mut fp.x914[idx as usize];
     unsafe {
@@ -2765,6 +2837,7 @@ pub fn ftColl_8007B064(gobj: G, idx: i32) {
 
 /// `ftColl_8007B0C0(gobj, state)`: set every hurt capsule's state.
 pub fn ftColl_8007B0C0(gobj: G, state: HurtCapsuleState) {
+    melee_core::ct!("ftColl_8007B0C0");
     let fp = fpg_r(gobj);
     for i in 0..fp.hurt_capsules_len as usize {
         fp.hurt_capsules[i].capsule.state = state;
@@ -2779,6 +2852,7 @@ pub fn ftColl_8007B0C0(gobj: G, state: HurtCapsuleState) {
 
 /// `ftColl_8007B128(gobj, bone_id, state)`: set the state of the hurt capsule on a bone.
 pub fn ftColl_8007B128(gobj: G, bone_id: i32, state: HurtCapsuleState) {
+    melee_core::ct!("ftColl_8007B128");
     let fp = fpg_r(gobj);
     for i in 0..fp.hurt_capsules_len as usize {
         let hurt = &mut fp.hurt_capsules[i];
@@ -2800,6 +2874,7 @@ pub fn ftColl_8007B128(gobj: G, bone_id: i32, state: HurtCapsuleState) {
 
 /// `ftColl_8007B1B8(gobj, shield, cb)`: set up the shield hit sphere.
 pub fn ftColl_8007B1B8(gobj: G, shield: *const ShieldDesc, cb: HSD_GObjEvent) {
+    melee_core::ct!("ftColl_8007B1B8");
     let fp = fpg_r(gobj);
     fp.anon_221b.set_x221B_b0(1);
     fp.anon_221b.set_x221B_b1(0);
@@ -2816,6 +2891,7 @@ pub fn ftColl_8007B1B8(gobj: G, shield: *const ShieldDesc, cb: HSD_GObjEvent) {
 
 /// `ftColl_8007B62C(gobj, kind)`.
 pub fn ftColl_8007B62C(gobj: G, arg1: i32) {
+    melee_core::ct!("ftColl_8007B62C");
     let fp = fpg_r(gobj);
     fp.x1988 = arg1;
     match arg1 {
@@ -2834,6 +2910,7 @@ pub fn ftColl_8007B62C(gobj: G, arg1: i32) {
 
 /// `ftColl_8007B760(gobj, x)`.
 pub fn ftColl_8007B760(gobj: G, arg1: i32) {
+    melee_core::ct!("ftColl_8007B760");
     let fp = fpg_r(gobj);
     if arg1 > fp.x1990 {
         fp.x1990 = arg1;
@@ -2844,6 +2921,7 @@ pub fn ftColl_8007B760(gobj: G, arg1: i32) {
 
 /// `ftColl_CreateAbsorbHit(gobj, absorb)`.
 pub fn ftColl_CreateAbsorbHit(gobj: G, absorb: *const AbsorbDesc) {
+    melee_core::ct!("ftColl_CreateAbsorbHit");
     let fp = fpg_r(gobj);
     fp.set_x2218_b6(1);
     fp.set_x2218_b7(0);
@@ -2856,6 +2934,7 @@ pub fn ftColl_CreateAbsorbHit(gobj: G, absorb: *const AbsorbDesc) {
 
 /// `ftColl_CreateReflectHit(gobj, reflect, cb)`.
 pub fn ftColl_CreateReflectHit(gobj: G, reflect: *const ReflectDesc, cb: HSD_GObjEvent) {
+    melee_core::ct!("ftColl_CreateReflectHit");
     let fp = fpg_r(gobj);
     fp.set_reflecting(1);
     fp.set_x2218_b4(0);
@@ -2873,6 +2952,7 @@ pub fn ftColl_CreateReflectHit(gobj: G, reflect: *const ReflectDesc, cb: HSD_GOb
 
 /// `ftColl_HurtboxInit(fp, hurt, init)`.
 pub fn ftColl_HurtboxInit(fp: *mut Fighter, hurt: *mut FighterHurtCapsule, init: *const ftHurtboxInit) {
+    melee_core::ct!("ftColl_HurtboxInit");
     unsafe {
         (*hurt).capsule.bone_idx = (*init).bone_idx as i32;
         (*hurt).height = (*init).height;

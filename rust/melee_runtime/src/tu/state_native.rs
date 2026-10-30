@@ -165,6 +165,7 @@ pub static mut invalidate_funcs: [InvalidateFunc; 8] = [
 
 /// `HSD_SetupChannelMode`.
 pub unsafe fn HSD_SetupChannelMode(arg0: u32) {
+    melee_core::ct!("HSD_SetupChannelMode");
     let var_r3: i32 = if arg0 & 8 != 0 { 2 } else { 1 };
     ext::HSD_StateSetNumChans(var_r3);
     if arg0 & 8 != 0 {
@@ -209,6 +210,7 @@ pub unsafe fn HSD_SetupChannelMode(arg0: u32) {
 
 /// `HSD_SetupPEMode`.
 pub unsafe fn HSD_SetupPEMode(flags: u32, pe: *mut HSD_PEDesc) {
+    melee_core::ct!("HSD_SetupPEMode");
     if !pe.is_null() {
         HSD_StateSetColorUpdate((*pe).flags as i32 & 1);
         HSD_StateSetAlphaUpdate((*pe).flags as i32 & 2);
@@ -252,6 +254,7 @@ unsafe fn setupTevMode_last() {
 
 /// `HSD_SetupRenderModeWithCustomPE`.
 pub unsafe fn HSD_SetupRenderModeWithCustomPE(rendermode: u32, pe: *mut HSD_PEDesc) {
+    melee_core::ct!("HSD_SetupRenderModeWithCustomPE");
     setupTevMode_last();
     HSD_SetupPEMode(rendermode, pe);
     ext::HSD_SetTevRegAll();
@@ -262,11 +265,13 @@ pub unsafe fn HSD_SetupRenderModeWithCustomPE(rendermode: u32, pe: *mut HSD_PEDe
 
 /// `HSD_SetupRenderMode`.
 pub unsafe fn HSD_SetupRenderMode(rendermode: u32) {
+    melee_core::ct!("HSD_SetupRenderMode");
     HSD_SetupRenderModeWithCustomPE(rendermode, null_mut());
 }
 
 /// `HSD_SetMaterialColor`.
 pub unsafe fn HSD_SetMaterialColor(ambient: GXColor, diffuse: GXColor, specular: GXColor, alpha: f32) {
+    melee_core::ct!("HSD_SetMaterialColor");
     matstate.ambient = ambient;
     matstate.diffuse = diffuse;
     matstate.specular = specular;
@@ -275,11 +280,13 @@ pub unsafe fn HSD_SetMaterialColor(ambient: GXColor, diffuse: GXColor, specular:
 
 /// `HSD_SetMaterialShininess`.
 pub unsafe fn HSD_SetMaterialShininess(shininess: f32) {
+    melee_core::ct!("HSD_SetMaterialShininess");
     matstate.shininess = shininess;
 }
 
 /// `HSD_StateSetLineWidth`.
 pub unsafe fn HSD_StateSetLineWidth(arg0: u8, arg1: i32) {
+    melee_core::ct!("HSD_StateSetLineWidth");
     if state_line_width != arg0 || state_line_tex_offsets != arg1 {
         ext::GXSetLineWidth(arg0, arg1 as u32);
         state_line_width = arg0;
@@ -289,6 +296,7 @@ pub unsafe fn HSD_StateSetLineWidth(arg0: u8, arg1: i32) {
 
 /// `HSD_StateSetCullMode`.
 pub unsafe fn HSD_StateSetCullMode(mode: i32) {
+    melee_core::ct!("HSD_StateSetCullMode");
     if state_cull_mode != mode {
         ext::GXSetCullMode(mode as u32);
         state_cull_mode = mode;
@@ -297,6 +305,7 @@ pub unsafe fn HSD_StateSetCullMode(mode: i32) {
 
 /// `HSD_StateSetBlendMode`.
 pub unsafe fn HSD_StateSetBlendMode(ty: i32, src_factor: i32, dst_factor: i32, op: i32) {
+    melee_core::ct!("HSD_StateSetBlendMode");
     if state_blend_type != ty || state_src_factor != src_factor || state_dst_factor != dst_factor || state_logic_op != op {
         ext::GXSetBlendMode(ty as u32, src_factor as u32, dst_factor as u32, op as u32);
         state_blend_type = ty;
@@ -308,6 +317,7 @@ pub unsafe fn HSD_StateSetBlendMode(ty: i32, src_factor: i32, dst_factor: i32, o
 
 /// `HSD_StateSetZMode`.
 pub unsafe fn HSD_StateSetZMode(arg0: i32, arg1: i32, arg2: i32) {
+    melee_core::ct!("HSD_StateSetZMode");
     let arg0 = if arg0 != 0 { GX_TRUE } else { GX_FALSE };
     let arg2 = if arg2 != 0 { GX_TRUE } else { GX_FALSE };
     if state_z_enable as i32 != arg0 || state_z_func != arg1 || state_z_update as i32 != arg2 {
@@ -320,6 +330,7 @@ pub unsafe fn HSD_StateSetZMode(arg0: i32, arg1: i32, arg2: i32) {
 
 /// `HSD_StateSetPointSize`.
 pub unsafe fn HSD_StateSetPointSize(arg0: u8, arg1: i32) {
+    melee_core::ct!("HSD_StateSetPointSize");
     if state_point_size != arg0 || HSD_State_804D75BC != arg1 {
         ext::GXSetPointSize(arg0, arg1 as u32);
         state_point_size = arg0;
@@ -329,6 +340,7 @@ pub unsafe fn HSD_StateSetPointSize(arg0: u8, arg1: i32) {
 
 /// `HSD_StateSetAlphaCompare`.
 pub unsafe fn HSD_StateSetAlphaCompare(arg0: i32, arg1: u8, arg2: i32, arg3: i32, arg4: u8) {
+    melee_core::ct!("HSD_StateSetAlphaCompare");
     if state_alpha_comp0 != arg0 || state_alpha_ref0 != arg1 || state_alpha_op != arg2 || state_alpha_comp1 != arg3 || state_alpha_ref1 != arg4 {
         ext::GXSetAlphaCompare(arg0 as u32, arg1, arg2 as u32, arg3 as u32, arg4);
         state_alpha_comp0 = arg0;
@@ -341,6 +353,7 @@ pub unsafe fn HSD_StateSetAlphaCompare(arg0: i32, arg1: u8, arg2: i32, arg3: i32
 
 /// `HSD_StateSetColorUpdate`.
 pub unsafe fn HSD_StateSetColorUpdate(arg0: i32) {
+    melee_core::ct!("HSD_StateSetColorUpdate");
     let arg0 = if arg0 != 0 { GX_TRUE } else { GX_FALSE };
     if state_color_update as i32 != arg0 {
         ext::GXSetColorUpdate(arg0 as u8);
@@ -350,6 +363,7 @@ pub unsafe fn HSD_StateSetColorUpdate(arg0: i32) {
 
 /// `HSD_StateSetAlphaUpdate`.
 pub unsafe fn HSD_StateSetAlphaUpdate(arg0: i32) {
+    melee_core::ct!("HSD_StateSetAlphaUpdate");
     let arg0 = if arg0 != 0 { GX_TRUE } else { GX_FALSE };
     if state_alpha_update as i32 != arg0 {
         ext::GXSetAlphaUpdate(arg0 as u8);
@@ -359,6 +373,7 @@ pub unsafe fn HSD_StateSetAlphaUpdate(arg0: i32) {
 
 /// `HSD_StateSetDstAlpha`.
 pub unsafe fn HSD_StateSetDstAlpha(arg0: i32, arg1: u8) {
+    melee_core::ct!("HSD_StateSetDstAlpha");
     let arg0 = if arg0 != 0 { GX_TRUE } else { GX_FALSE };
     if state_enable_dst_alpha as i32 != arg0 || state_dst_alpha != arg1 {
         ext::GXSetDstAlpha(arg0 as u8, arg1);
@@ -369,6 +384,7 @@ pub unsafe fn HSD_StateSetDstAlpha(arg0: i32, arg1: u8) {
 
 /// `HSD_StateSetZCompLoc`.
 pub unsafe fn HSD_StateSetZCompLoc(arg0: i32) {
+    melee_core::ct!("HSD_StateSetZCompLoc");
     let arg0 = if arg0 != 0 { GX_TRUE } else { GX_FALSE };
     if state_before_tex as i32 != arg0 {
         ext::GXSetZCompLoc(arg0 as u8);
@@ -378,6 +394,7 @@ pub unsafe fn HSD_StateSetZCompLoc(arg0: i32) {
 
 /// `HSD_StateSetDither`.
 pub unsafe fn HSD_StateSetDither(arg0: i32) {
+    melee_core::ct!("HSD_StateSetDither");
     let arg0 = if arg0 != 0 { GX_TRUE } else { GX_FALSE };
     if state_dither as i32 != arg0 {
         ext::GXSetDither(arg0 as u8);
@@ -387,6 +404,7 @@ pub unsafe fn HSD_StateSetDither(arg0: i32) {
 
 /// `_HSD_StateInvalidatePrimitive`.
 pub unsafe extern "C" fn _HSD_StateInvalidatePrimitive() {
+    melee_core::ct!("_HSD_StateInvalidatePrimitive");
     state_line_width = 0;
     state_point_size = 0;
     state_cull_mode = -1;
@@ -394,11 +412,13 @@ pub unsafe extern "C" fn _HSD_StateInvalidatePrimitive() {
 
 /// `_HSD_StateInvalidateVtxAttr`.
 pub unsafe extern "C" fn _HSD_StateInvalidateVtxAttr() {
+    melee_core::ct!("_HSD_StateInvalidateVtxAttr");
     ext::HSD_ClearVtxDesc();
 }
 
 /// `_HSD_StateInvalidateRenderMode`.
 pub unsafe extern "C" fn _HSD_StateInvalidateRenderMode() {
+    melee_core::ct!("_HSD_StateInvalidateRenderMode");
     state_blend_type = -1;
     state_src_factor = -1;
     state_dst_factor = -1;
@@ -421,6 +441,7 @@ pub unsafe extern "C" fn _HSD_StateInvalidateRenderMode() {
 
 /// `HSD_StateInvalidate`.
 pub unsafe fn HSD_StateInvalidate(mask: i32) {
+    melee_core::ct!("HSD_StateInvalidate");
     let mut i = 0;
     while invalidate_funcs[i].mask != 0 {
         if mask & invalidate_funcs[i].mask != 0 {

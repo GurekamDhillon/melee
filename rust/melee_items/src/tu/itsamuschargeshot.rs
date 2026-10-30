@@ -130,6 +130,7 @@ unsafe fn itGetJObjGrandchild(gobj: *mut Item_GObj) -> *mut HSD_JObj {
 }
 
 pub unsafe extern "C" fn it_802B5518(gobj: *mut Item_GObj, cd: *mut CollData) -> bool {
+    melee_core::ct!("it_802B5518");
     let ip = GET_ITEM(gobj);
     let mut ret = false;
     ext::it_8026DA08(gobj);
@@ -151,6 +152,7 @@ pub unsafe extern "C" fn it_802B5518(gobj: *mut Item_GObj, cd: *mut CollData) ->
 }
 
 pub unsafe extern "C" fn it_802B55C8(gobj: *mut Fighter_GObj, pos: *mut Vec3, arg2: u32, arg3: i32, facing_dir: f32) -> *mut HSD_GObj {
+    melee_core::ct!("it_802B55C8");
     let mut si: SpawnItem = core::mem::zeroed();
 
     si.kind = arg3 as _;
@@ -176,6 +178,7 @@ pub unsafe extern "C" fn it_802B55C8(gobj: *mut Fighter_GObj, pos: *mut Vec3, ar
 }
 
 pub unsafe extern "C" fn it_802B56E4(gobj: *mut Item_GObj, vec: *mut Vec3, farg0: f32, mut farg1: f32, farg2: f32) {
+    melee_core::ct!("it_802B56E4");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSamusChargeShot_Attributes;
     let sv = &mut (*ip).xDD4_itemVar.samuschargeshot;
@@ -222,6 +225,7 @@ pub unsafe extern "C" fn it_802B56E4(gobj: *mut Item_GObj, vec: *mut Vec3, farg0
 }
 
 pub unsafe extern "C" fn it_2725_Logic108_Destroyed(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_2725_Logic108_Destroyed");
     if !gobj.is_null() {
         let ip = GET_ITEM(gobj);
         ext::efLib_DestroyAll(gobj);
@@ -242,6 +246,7 @@ pub unsafe extern "C" fn it_2725_Logic108_Destroyed(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802B5974(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802B5974");
     if !gobj.is_null() {
         let ip = GET_ITEM(gobj);
         ext::efLib_DestroyAll(gobj);
@@ -251,6 +256,7 @@ pub unsafe extern "C" fn it_802B5974(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_2725_Logic108_PickedUp(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_2725_Logic108_PickedUp");
     let ip = GET_ITEM(gobj);
     let grandchild = itGetJObjGrandchild(gobj);
 
@@ -269,6 +275,7 @@ pub unsafe extern "C" fn it_2725_Logic108_PickedUp(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itSamuschargeshot_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSamuschargeshot_UnkMotion0_Anim");
     let mut scale: Vec3 = core::mem::zeroed();
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSamusChargeShot_Attributes;
@@ -311,13 +318,15 @@ pub unsafe extern "C" fn itSamuschargeshot_UnkMotion0_Anim(gobj: *mut Item_GObj)
     false
 }
 
-pub unsafe extern "C" fn itSamuschargeshot_UnkMotion0_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itSamuschargeshot_UnkMotion0_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itSamuschargeshot_UnkMotion0_Phys");}
 
 pub unsafe extern "C" fn itSamuschargeshot_UnkMotion0_Coll(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSamuschargeshot_UnkMotion0_Coll");
     false
 }
 
 pub unsafe extern "C" fn it_802B5CBC(gobj: *mut Item_GObj, _unused: *mut Fighter_GObj) {
+    melee_core::ct!("it_802B5CBC");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSamusChargeShot_Attributes;
 
@@ -336,6 +345,7 @@ pub unsafe extern "C" fn it_802B5CBC(gobj: *mut Item_GObj, _unused: *mut Fighter
 }
 
 pub unsafe extern "C" fn itSamuschargeshot_UnkMotion8_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSamuschargeshot_UnkMotion8_Anim");
     let mut scale: Vec3 = core::mem::zeroed();
     let ip = (*gobj).user_data as *mut Item;
     let grandchild = itGetJObjGrandchild(gobj);
@@ -349,12 +359,14 @@ pub unsafe extern "C" fn itSamuschargeshot_UnkMotion8_Anim(gobj: *mut Item_GObj)
 }
 
 pub unsafe extern "C" fn itSamuschargeshot_UnkMotion8_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itSamuschargeshot_UnkMotion8_Phys");
     let ip = GET_ITEM(gobj);
     (*ip).x40_vel.x = (*ip).xDD4_itemVar.samuschargeshot.xDDC * cosf((*ip).xDD4_itemVar.samuschargeshot.xDD8);
     (*ip).x40_vel.y = (*ip).xDD4_itemVar.samuschargeshot.xDDC * sinf((*ip).xDD4_itemVar.samuschargeshot.xDD8);
 }
 
 pub unsafe extern "C" fn itSamuschargeshot_UnkMotion8_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSamuschargeshot_UnkMotion8_Coll");
     let ip = GET_ITEM(gobj);
     if it_802B5518(gobj, &mut (*ip).x378_itemColl) {
         return true;
@@ -363,6 +375,7 @@ pub unsafe extern "C" fn itSamuschargeshot_UnkMotion8_Coll(gobj: *mut Item_GObj)
 }
 
 pub unsafe extern "C" fn it_802B5EDC(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802B5EDC");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
 
@@ -386,18 +399,22 @@ pub unsafe extern "C" fn it_802B5EDC(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itSamusChargeshot_Logic108_DmgDealt(_arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSamusChargeshot_Logic108_DmgDealt");
     true
 }
 
 pub unsafe extern "C" fn itSamusChargeshot_Logic108_Clanked(_arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSamusChargeshot_Logic108_Clanked");
     true
 }
 
 pub unsafe extern "C" fn itSamusChargeshot_Logic108_Absorbed(_arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSamusChargeshot_Logic108_Absorbed");
     true
 }
 
 pub unsafe extern "C" fn it_2725_Logic108_Reflected(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_2725_Logic108_Reflected");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
 
@@ -417,10 +434,12 @@ pub unsafe extern "C" fn it_2725_Logic108_Reflected(gobj: *mut Item_GObj) -> boo
 }
 
 pub unsafe extern "C" fn itSamusChargeshot_Logic108_HitShield(_arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSamusChargeshot_Logic108_HitShield");
     true
 }
 
 pub unsafe extern "C" fn it_2725_Logic108_ShieldBounced(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_2725_Logic108_ShieldBounced");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
 
@@ -441,5 +460,6 @@ pub unsafe extern "C" fn it_2725_Logic108_ShieldBounced(gobj: *mut Item_GObj) ->
 }
 
 pub unsafe extern "C" fn itSamusChargeshot_Logic108_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("itSamusChargeshot_Logic108_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

@@ -11,11 +11,13 @@ const HSD_PAD_A: u32 = 0x100;
 
 #[inline(always)]
 pub(crate) fn fp<'a>(g: G) -> &'a mut Fighter {
+    melee_core::ct!("fp");
     unsafe { &mut *((*g).user_data as *mut Fighter) }
 }
 
 /// inlines.h `ftCheckThrowB3`: test and clear `throw_flags_b3`.
 pub fn ft_check_throw_b3(f: &mut Fighter) -> bool {
+    melee_core::ct!("ft_check_throw_b3");
     unsafe {
         if f.anon_2210.anon_0.throw_flags_b3() != 0 {
             f.anon_2210.anon_0.set_throw_flags_b3(0);
@@ -27,6 +29,7 @@ pub fn ft_check_throw_b3(f: &mut Fighter) -> bool {
 }
 /// inlines.h `ftCheckThrowB0`.
 pub fn ft_check_throw_b0(f: &mut Fighter) -> bool {
+    melee_core::ct!("ft_check_throw_b0");
     unsafe {
         if f.anon_2210.anon_0.throw_flags_b0() != 0 {
             f.anon_2210.anon_0.set_throw_flags_b0(0);
@@ -38,6 +41,7 @@ pub fn ft_check_throw_b0(f: &mut Fighter) -> bool {
 }
 /// inlines.h `ftCheckThrowB4`.
 pub fn ft_check_throw_b4(f: &mut Fighter) -> bool {
+    melee_core::ct!("ft_check_throw_b4");
     unsafe {
         if f.anon_2210.anon_0.throw_flags_b4() != 0 {
             f.anon_2210.anon_0.set_throw_flags_b4(0);
@@ -67,6 +71,7 @@ pub mod ext {
 
 /// `ftCo_800CD140(gobj, msid, flags, kind, anim_speed)`: enter a swing state.
 pub fn ftco_800cd140(g: G, arg1: i32, arg2: i32, arg3: i32, arg4: f32) {
+    melee_core::ct!("ftco_800cd140");
     unsafe { fp(g).anon_2210.throw_flags = 0 };
     ext::Fighter_ChangeMotionState(g, arg1, arg2 as u32, 0.0, arg4, 0.0, core::ptr::null_mut());
     ext::ftAnim_8006EBA4(g);
@@ -80,6 +85,7 @@ pub fn ftco_800cd140(g: G, arg1: i32, arg2: i32, arg3: i32, arg4: f32) {
 
 /// `ftCo_800CD1BC` (Anim).
 pub fn ftco_800cd1bc(g: G) {
+    melee_core::ct!("ftco_800cd1bc");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ft_8008A2BC(g);
         crate::ftcommon3::ftcommon_8007e7e4(g, 1);
@@ -88,6 +94,7 @@ pub fn ftco_800cd1bc(g: G) {
 
 /// `ftCo_800CD204` (IASA): A released cancels the repeat; throw flag b3 + still held = smash.
 pub fn ftco_800cd204(g: G) {
+    melee_core::ct!("ftco_800cd204");
     let f = fp(g);
     if f.input.held_buttons[0] as u32 & HSD_PAD_A == 0 {
         unsafe { f.mv.co.swing.x0 = 0 };
@@ -103,6 +110,7 @@ pub static mut FT_80085030: Option<fn(G, f32, f32)> = None;
 
 /// `ftCo_800CD278` (Phys).
 pub fn ftco_800cd278(g: G) {
+    melee_core::ct!("ftco_800cd278");
     let f = fp(g);
     if unsafe { f.mv.co.swing.x4 } != 4 {
         match unsafe { FT_80084FA8 } { Some(h) => h(g), None => crate::ft084e::ft_80084fa8(g) }
@@ -115,6 +123,7 @@ pub fn ftco_800cd278(g: G) {
 
 /// `ftCo_800CD2C4(gobj, cb)` (Coll).
 pub fn ftco_800cd2c4(g: G, cb: unsafe extern "C" fn(G)) {
+    melee_core::ct!("ftco_800cd2c4");
     if !ext::ft_800827A0(g) {
         unsafe { cb(g) };
         ext::ftCo_Fall_Enter(g);
@@ -123,6 +132,7 @@ pub fn ftco_800cd2c4(g: G, cb: unsafe extern "C" fn(G)) {
 
 /// `ft_800CD31C`: take-damage callback, drop the item.
 pub extern "C" fn ft_800cd31c(g: G) {
+    melee_core::ct!("ft_800cd31c");
     if !fp(g).item_gobj.is_null() {
         crate::ftcommon3::ftcommon_8007e7e4(g, 1);
     }

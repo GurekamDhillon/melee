@@ -11,6 +11,7 @@ pub use crate::chars::r2::ftDonkey::ftdonkeyheavyfall::ftDk_HeavyFall_Phys;
 pub use crate::chars::r5::ftDonkey::ftdonkeyheavyfall::ftDk_HeavyFall_Coll;
 
 pub fn ftDk_HeavyFall_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_HeavyFall_IASA");
     if melee_fighter::tu::ftCo_ItemThrow::ftCo_80094EA4(gobj) {
         return;
     }
@@ -18,6 +19,7 @@ pub fn ftDk_HeavyFall_IASA(gobj: *mut HSD_GObj) {
 
 /// `ftDk_MS_347_800E0378(gobj)`: jump input check; returns the C `bool` (0/1).
 pub fn ftDk_MS_347_800E0378(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("ftDk_MS_347_800E0378");
     let result = melee_fighter::tu::ftCo_Jump::ftCo_Jump_GetInput(gobj);
     if result != 0 {
         crate::tu::ftdonkeyheavyjump::ftDk_MS_348_800E04A4(gobj, result as i32);
@@ -28,6 +30,7 @@ pub fn ftDk_MS_347_800E0378(gobj: *mut HSD_GObj) -> i32 {
 }
 
 pub fn ftDk_MS_347_800E03C0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_MS_347_800E03C0");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         st::ftCommon_8007D5D4(&mut *fp);

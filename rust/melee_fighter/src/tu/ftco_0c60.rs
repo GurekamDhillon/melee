@@ -23,6 +23,7 @@ fn fp<'a>(g: G) -> &'a mut Fighter {
 
 /// `ftCo_800C60C8`.
 pub fn ftco_800c60c8(g: G) -> bool {
+    melee_core::ct!("ftco_800c60c8");
     if ext::ftCo_80099F1C(g) {
         ftco_800c6110(g);
         return true;
@@ -32,6 +33,7 @@ pub fn ftco_800c60c8(g: G) -> bool {
 
 /// `ftCo_800C6110`.
 pub fn ftco_800c6110(g: G) {
+    melee_core::ct!("ftco_800c6110");
     ext::ftCo_8009A184(g, ftCo_MS_HammerFall as i32, Ft_MF_None, 0.0);
     ext::ftCo_800C4E94(fp(g));
 }

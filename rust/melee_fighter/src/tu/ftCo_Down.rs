@@ -52,6 +52,7 @@ fn inlineA0(f: &Fighter) -> bool {
 }
 
 pub fn ftCo_Down_CheckInput(g: G) -> bool {
+    melee_core::ct!("ftCo_Down_CheckInput");
     let f = fp(g);
     let stick_x = if ext::ftCo_800DF678(f) {
         f.input.cstick[0].x
@@ -74,24 +75,28 @@ pub fn ftCo_Down_CheckInput(g: G) -> bool {
 
 /// static `ftCo_80098324`.
 pub fn ftCo_80098324(g: G, msid: i32) {
+    melee_core::ct!("ftCo_80098324");
     ext::Fighter_ChangeMotionState(g, msid, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ext::ftAnim_8006EBA4(g);
     ext::ftCommon_SetGroundedKnockbackIfLanded(fp(g));
 }
 
 pub fn ftCo_Down_Anim(g: G) {
+    melee_core::ct!("ftCo_Down_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ft_8008A2BC(g);
     }
 }
 
-pub fn ftCo_Down_IASA(_g: G) {}
+pub fn ftCo_Down_IASA(_g: G) { melee_core::ct!("ftCo_Down_IASA");}
 
 pub fn ftCo_Down_Phys(g: G) {
+    melee_core::ct!("ftCo_Down_Phys");
     ext::ft_80084FA8(g);
 }
 
 pub fn ftCo_Down_Coll(g: G) {
+    melee_core::ct!("ftCo_Down_Coll");
     ext::ft_80084104(g);
 }
 
@@ -101,6 +106,7 @@ fn inlineB0(f: &Fighter) -> bool {
 }
 
 pub fn ftCo_80098400(g: G) -> bool {
+    melee_core::ct!("ftCo_80098400");
     let f = fp(g);
     if inlineB0(f) || ext::ftCo_800DF644(f) {
         let msid = if f.motion_id == ftCo_MS_DownBoundU as _ { ftCo_MS_DownAttackU } else { ftCo_MS_DownAttackD };

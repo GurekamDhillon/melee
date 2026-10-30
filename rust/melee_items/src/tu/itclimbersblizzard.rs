@@ -91,6 +91,7 @@ unsafe fn spawn_item_0z(gobj: *mut Item_GObj, kind: ItemKind, pos: *mut Vec3, fa
 }
 
 pub unsafe extern "C" fn itClimbersBlizzard_Spawn(gobj: *mut Item_GObj, pos: *mut Vec3, facing_dir: f32) -> *mut Item_GObj {
+    melee_core::ct!("itClimbersBlizzard_Spawn");
     let mut spawn: SpawnItem = core::mem::zeroed();
     let spawned = spawn_item_0z(gobj, It_Kind_IceClimber_Blizzard, pos, facing_dir, &mut spawn);
     if !spawned.is_null() {
@@ -108,6 +109,7 @@ pub unsafe extern "C" fn itClimbersBlizzard_Spawn(gobj: *mut Item_GObj, pos: *mu
 
 /// 2C2248: random launch angle inside [xC, x10] (1 fused site: `(x10 - xC) * rand + xC`).
 pub unsafe extern "C" fn itClimbersBlizzard_802C2248(gobj: *mut Item_GObj) {
+    melee_core::ct!("itClimbersBlizzard_802C2248");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itClimbersBlizzardAttributes;
     let rand = ext::HSD_Randf();
@@ -135,21 +137,25 @@ pub unsafe extern "C" fn itClimbersBlizzard_802C2248(gobj: *mut Item_GObj) {
 
 /// 2C2358
 pub unsafe extern "C" fn itClimbersBlizzard_802C2358(gobj: *mut Item_GObj) {
+    melee_core::ct!("itClimbersBlizzard_802C2358");
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE);
 }
 
 pub unsafe extern "C" fn itClimbersBlizzard_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itClimbersBlizzard_UnkMotion0_Anim");
     let ip = GET_ITEM(gobj);
     Item_TickLifetime(ip)
 }
 
 pub unsafe extern "C" fn itClimbersBlizzard_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itClimbersBlizzard_UnkMotion0_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itClimbersBlizzardAttributes;
     (*ip).x40_vel.y += (*attrs).x8;
 }
 
 pub unsafe extern "C" fn itClimbersBlizzard_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itClimbersBlizzard_UnkMotion0_Coll");
     let mut flags: i32 = 0;
     ext::it_8026D9A0(gobj);
     flags |= ext::it_80276308(gobj);
@@ -158,29 +164,36 @@ pub unsafe extern "C" fn itClimbersBlizzard_UnkMotion0_Coll(gobj: *mut Item_GObj
 }
 
 pub unsafe extern "C" fn itClimbersBlizzard_DmgDealt(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itClimbersBlizzard_DmgDealt");
     true
 }
 
 pub unsafe extern "C" fn itClimbersBlizzard_Reflected(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itClimbersBlizzard_Reflected");
     ext::it_80273030(gobj) != 0
 }
 
 pub unsafe extern "C" fn itClimbersBlizzard_Clanked(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itClimbersBlizzard_Clanked");
     true
 }
 
 pub unsafe extern "C" fn itClimbersBlizzard_HitShield(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itClimbersBlizzard_HitShield");
     true
 }
 
 pub unsafe extern "C" fn itClimbersBlizzard_Absorbed(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itClimbersBlizzard_Absorbed");
     true
 }
 
 pub unsafe extern "C" fn itClimbersBlizzard_ShieldBounced(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itClimbersBlizzard_ShieldBounced");
     true
 }
 
 pub unsafe extern "C" fn itClimbersBlizzard_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("itClimbersBlizzard_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

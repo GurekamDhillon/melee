@@ -774,10 +774,12 @@ fn shl1(n: u8) -> i32 {
 }
 
 pub unsafe extern "C" fn gm_801B6320() -> *mut c_void {
+    melee_core::ct!("gm_801B6320");
     &mut (*ext::gmMainLib_804D3EE0).vs.unk_530.unk_584 as *mut gmm_x0_584_t as *mut c_void
 }
 
 pub unsafe extern "C" fn gm_801B632C(arg0: *mut GameModeState) {
+    melee_core::ct!("gm_801B632C");
     let temp_r31 = sel584();
     let temp_r30 = ext::gm_GetGameModeStateEnterData(arg0) as *mut CSSData;
 
@@ -795,6 +797,7 @@ pub unsafe extern "C" fn gm_801B632C(arg0: *mut GameModeState) {
 }
 
 pub unsafe extern "C" fn gm_801B63C4(arg0: *mut GameModeState) {
+    melee_core::ct!("gm_801B63C4");
     let temp_r31 = sel584();
     let temp_r3 = ext::gm_GetGameModeStateExitData(arg0) as *mut CSSData;
 
@@ -815,6 +818,7 @@ pub unsafe extern "C" fn gm_801B63C4(arg0: *mut GameModeState) {
 }
 
 pub unsafe extern "C" fn gm_801B6428(arg0: *mut GameModeState) {
+    melee_core::ct!("gm_801B6428");
     let temp_r3 = ext::gm_GetGameModeStateEnterData(arg0) as *mut StartMeleeData;
 
     let temp_r31 = sel584();
@@ -865,6 +869,7 @@ pub unsafe extern "C" fn gm_801B6428(arg0: *mut GameModeState) {
 }
 
 pub unsafe extern "C" fn gm_801B65D4(arg0: *mut GameModeState) {
+    melee_core::ct!("gm_801B65D4");
     let mut var_r29: i32 = 0;
     let mut sp14: i32 = 0;
     let mut sp10: i32 = 0;
@@ -938,6 +943,7 @@ pub unsafe extern "C" fn gm_801B65D4(arg0: *mut GameModeState) {
 }
 
 pub unsafe extern "C" fn gm_Mode_TargetTest_OnInit() {
+    melee_core::ct!("gm_Mode_TargetTest_OnInit");
     let temp_r4 = sel584();
     // TARGET_PC: m-ex "External Character ID Shifts/Null ID/TargetTest.asm": the null literal is
     // ChKind_None instead of 0x21.
@@ -947,6 +953,7 @@ pub unsafe extern "C" fn gm_Mode_TargetTest_OnInit() {
 }
 
 pub unsafe extern "C" fn gm_Mode_TargetTest_OnLoad() {
+    melee_core::ct!("gm_Mode_TargetTest_OnLoad");
     gm_804D68E8 = ext::gm_801677F0();
     gm_804D68E9 = 0;
     // TARGET_PC: a direct launch (test harness) picks the character
@@ -968,16 +975,19 @@ pub unsafe extern "C" fn gm_Mode_TargetTest_OnLoad() {
 }
 
 pub unsafe extern "C" fn gm_Mode_10ManVs_OnInit() {
+    melee_core::ct!("gm_Mode_10ManVs_OnInit");
     ext::gm_InitVsMode(multiman_row());
 }
 
 pub unsafe extern "C" fn gm_Mode_10ManVs_OnLoad() {
+    melee_core::ct!("gm_Mode_10ManVs_OnLoad");
     gm_804D68F0 = ext::gm_801677F0();
     gm_804D68F1 = 0;
     ext::lbCardNew_AllocWorkArea();
 }
 
 pub unsafe extern "C" fn gm_801B688C(_arg0: i32) -> i32 {
+    melee_core::ct!("gm_801B688C");
     let temp_r29 = multiman_row();
     ext::lbCardNew_AllocWorkArea();
     ext::lbCardGame_LoadArchive(0);
@@ -1017,6 +1027,7 @@ pub unsafe extern "C" fn gm_801B688C(_arg0: i32) -> i32 {
 
 /// `static void gm_801B6AD8_inline(GameModeState* scene, int x)`
 pub unsafe extern "C" fn gm_801B6AD8_inline(scene: *mut GameModeState, x: i32) {
+    melee_core::ct!("gm_801B6AD8_inline");
     let temp_r31 = multiman_row();
     let temp_r3 = ext::gm_GetGameModeStateEnterData(scene) as *mut CSSData;
     (*temp_r31).start.players[0].stocks = 1;
@@ -1045,6 +1056,7 @@ pub unsafe extern "C" fn gm_801B6AD8_inline(scene: *mut GameModeState, x: i32) {
 }
 
 pub unsafe extern "C" fn gm_801B69C0(arg0: *mut StartMeleeData) {
+    melee_core::ct!("gm_801B69C0");
     ext::gmMainLib_GetGameRules();
     (*arg0).rules.set_match_kind(0);
     (*arg0).rules.set_timer_enabled(1);
@@ -1070,10 +1082,12 @@ pub unsafe extern "C" fn gm_801B69C0(arg0: *mut StartMeleeData) {
 }
 
 pub unsafe extern "C" fn gm_801B6AD8(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B6AD8");
     gm_801B6AD8_inline(scene, 0x11);
 }
 
 pub unsafe extern "C" fn gmMultiman_LeaveFinish(start_data: *mut VsModeData, css_data: *mut CSSData) {
+    melee_core::ct!("gmMultiman_LeaveFinish");
     ext::gm_SetupAllPlayerDefaults((*start_data).start.players.as_mut_ptr());
     ext::gm_801B0730(
         css_data,
@@ -1132,6 +1146,7 @@ unsafe fn gmMultiman_InitScoreRules(match_: *mut StartMeleeData) {
 }
 
 pub unsafe extern "C" fn gm_801B6B70(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B6B70");
     let data = multiman_row();
     let css_data = ext::gm_GetGameModeStateExitData(scene) as *mut CSSData;
     if (*css_data).pending_scene_change == 2 {
@@ -1142,6 +1157,7 @@ pub unsafe extern "C" fn gm_801B6B70(scene: *mut GameModeState) {
 }
 
 pub unsafe extern "C" fn gm_801B6BE8(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B6BE8");
     let temp_r31 = multiman_row();
     let temp_r3 = ext::gm_GetGameModeStateEnterData(scene) as *mut StartMeleeData;
 
@@ -1193,6 +1209,7 @@ unsafe fn gmMultiman_SaveCompletionRecord(multiman: *mut VsModeData, data: *mut 
 }
 
 pub unsafe extern "C" fn gm_801B6F44(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B6F44");
     let temp_r29 = multiman_row();
     let temp_r3 = ext::gm_GetGameModeStateExitData(scene) as *mut MatchExitInfo;
     if (*temp_r3).match_end.outcome == OUTCOME_RETRY as u8 {
@@ -1206,10 +1223,12 @@ pub unsafe extern "C" fn gm_801B6F44(scene: *mut GameModeState) {
 }
 
 pub unsafe extern "C" fn gm_801B7044(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B7044");
     gm_801B6AD8_inline(scene, 0x12);
 }
 
 pub unsafe extern "C" fn gm_801B70DC(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B70DC");
     let data = multiman_row();
     let css_data = ext::gm_GetGameModeStateExitData(scene) as *mut CSSData;
     if (*css_data).pending_scene_change == 2 {
@@ -1220,6 +1239,7 @@ pub unsafe extern "C" fn gm_801B70DC(scene: *mut GameModeState) {
 }
 
 pub unsafe extern "C" fn gm_801B7154(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B7154");
     let temp_r31 = multiman_row();
     let temp_r3 = ext::gm_GetGameModeStateEnterData(scene) as *mut StartMeleeData;
 
@@ -1242,6 +1262,7 @@ pub unsafe extern "C" fn gm_801B7154(scene: *mut GameModeState) {
 }
 
 pub unsafe extern "C" fn gm_801B74F0(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B74F0");
     let temp_r29 = multiman_row();
     let temp_r3 = ext::gm_GetGameModeStateExitData(scene) as *mut MatchExitInfo;
     if (*temp_r3).match_end.outcome == OUTCOME_RETRY as u8 {
@@ -1255,10 +1276,12 @@ pub unsafe extern "C" fn gm_801B74F0(scene: *mut GameModeState) {
 }
 
 pub unsafe extern "C" fn gm_801B75F0(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B75F0");
     gm_801B6AD8_inline(scene, 0x13);
 }
 
 pub unsafe extern "C" fn gm_801B7688(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B7688");
     let data = multiman_row();
     let css_data = ext::gm_GetGameModeStateExitData(scene) as *mut CSSData;
     if (*css_data).pending_scene_change == 2 {
@@ -1320,6 +1343,7 @@ unsafe fn gmMultiman_SaveScoreRecord(data: *mut UnkMultimanData, record: *mut i3
 }
 
 pub unsafe extern "C" fn gm_801B7700(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B7700");
     let temp_r30 = multiman_row();
     let temp_r3 = ext::gm_GetGameModeStateEnterData(scene) as *mut StartMeleeData;
 
@@ -1333,6 +1357,7 @@ pub unsafe extern "C" fn gm_801B7700(scene: *mut GameModeState) {
 }
 
 pub unsafe extern "C" fn gm_801B7AA0(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B7AA0");
     let temp_r30 = multiman_row();
     let temp_r3 = ext::gm_GetGameModeStateExitData(scene) as *mut MatchExitInfo;
     if (*temp_r3).match_end.outcome == OUTCOME_RETRY as u8 {
@@ -1346,10 +1371,12 @@ pub unsafe extern "C" fn gm_801B7AA0(scene: *mut GameModeState) {
 }
 
 pub unsafe extern "C" fn gm_801B7B74(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B7B74");
     gm_801B6AD8_inline(scene, 0x14);
 }
 
 pub unsafe extern "C" fn gm_801B7C0C(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B7C0C");
     let data = multiman_row();
     let css_data = ext::gm_GetGameModeStateExitData(scene) as *mut CSSData;
     if (*css_data).pending_scene_change == 2 {
@@ -1360,6 +1387,7 @@ pub unsafe extern "C" fn gm_801B7C0C(scene: *mut GameModeState) {
 }
 
 pub unsafe extern "C" fn gm_801B7C84(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B7C84");
     let temp_r30 = multiman_row();
     let temp_r3 = ext::gm_GetGameModeStateEnterData(scene) as *mut StartMeleeData;
 
@@ -1373,6 +1401,7 @@ pub unsafe extern "C" fn gm_801B7C84(scene: *mut GameModeState) {
 }
 
 pub unsafe extern "C" fn gm_801B8024(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B8024");
     let temp_r29 = multiman_row();
     let temp_r3 = ext::gm_GetGameModeStateExitData(scene) as *mut MatchExitInfo;
     if (*temp_r3).match_end.outcome == OUTCOME_RETRY as u8 {
@@ -1386,10 +1415,12 @@ pub unsafe extern "C" fn gm_801B8024(scene: *mut GameModeState) {
 }
 
 pub unsafe extern "C" fn gm_801B8110(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B8110");
     gm_801B6AD8_inline(scene, 0x15);
 }
 
 pub unsafe extern "C" fn gm_801B81A8(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B81A8");
     let data = multiman_row();
     let css_data = ext::gm_GetGameModeStateExitData(scene) as *mut CSSData;
     if (*css_data).pending_scene_change == 2 {
@@ -1400,6 +1431,7 @@ pub unsafe extern "C" fn gm_801B81A8(scene: *mut GameModeState) {
 }
 
 pub unsafe extern "C" fn gm_801B8220(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B8220");
     let temp_r30 = multiman_row();
     let temp_r3 = ext::gm_GetGameModeStateEnterData(scene) as *mut StartMeleeData;
 
@@ -1413,6 +1445,7 @@ pub unsafe extern "C" fn gm_801B8220(scene: *mut GameModeState) {
 }
 
 pub unsafe extern "C" fn gm_801B8580(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B8580");
     let temp_r30 = multiman_row();
     let temp_r3 = ext::gm_GetGameModeStateExitData(scene) as *mut MatchExitInfo;
     if (*temp_r3).match_end.outcome == OUTCOME_RETRY as u8 {
@@ -1426,10 +1459,12 @@ pub unsafe extern "C" fn gm_801B8580(scene: *mut GameModeState) {
 }
 
 pub unsafe extern "C" fn gm_801B863C(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B863C");
     gm_801B6AD8_inline(scene, 0x16);
 }
 
 pub unsafe extern "C" fn gm_801B86D4(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B86D4");
     let data = multiman_row();
     let css_data = ext::gm_GetGameModeStateExitData(scene) as *mut CSSData;
     if (*css_data).pending_scene_change == 2 {
@@ -1440,6 +1475,7 @@ pub unsafe extern "C" fn gm_801B86D4(scene: *mut GameModeState) {
 }
 
 pub unsafe extern "C" fn gm_801B874C(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B874C");
     let temp_r29 = multiman_row();
     let temp_r3 = ext::gm_GetGameModeStateEnterData(scene) as *mut StartMeleeData;
 
@@ -1478,6 +1514,7 @@ pub unsafe extern "C" fn gm_801B874C(scene: *mut GameModeState) {
 }
 
 pub unsafe extern "C" fn gm_801B8AF8(arg0: *mut GameModeState) {
+    melee_core::ct!("gm_801B8AF8");
     let temp_r30 = multiman_row();
     let temp_r3 = ext::gm_GetGameModeStateExitData(arg0) as *mut MatchExitInfo;
     if (*temp_r3).match_end.outcome == OUTCOME_RETRY as u8 {

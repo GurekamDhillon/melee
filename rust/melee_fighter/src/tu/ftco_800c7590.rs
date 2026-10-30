@@ -14,6 +14,7 @@ use melee_core::fp::fmadds;
 
 /// `ftCo_ReleaseItemAndVictim(gobj)` (ft/kinds/ftCommon/inlines.h).
 pub fn ftco_release_item_and_victim(g: G) {
+    melee_core::ct!("ftco_release_item_and_victim");
     ext::ftCommon_8007DB58(g);
     ext::ftCo_8009750C(g);
     ext::ftCo_800DD168(g);
@@ -21,6 +22,7 @@ pub fn ftco_release_item_and_victim(g: G) {
 
 /// `ftCo_800C7590(gobj)`: enter CaptureLeadead, held by item `dmg.x1868_source`.
 pub fn ftco_800c7590(g: G) {
+    melee_core::ct!("ftco_800c7590");
     ftco_release_item_and_victim(g);
     ext::ftCo_8008DCE0(g, -1, 0.0);
     ext::ftCommon_8007D7FC(fp(g));
@@ -52,6 +54,7 @@ pub fn ftco_800c7590(g: G) {
 
 /// `ftCo_CaptureLeadead_Anim(gobj)`: mash out; at zero release and fly off.
 pub fn ftco_capture_leadead_anim(g: G) {
+    melee_core::ct!("ftco_capture_leadead_anim");
     let f = fp(g);
     let cd = crate::hooks::common_data();
     f.grab_timer -= cd.leadead_grab_timer_step;
@@ -63,23 +66,26 @@ pub fn ftco_capture_leadead_anim(g: G) {
 }
 
 /// `ftCo_CaptureLeadead_IASA(gobj)`: empty.
-pub fn ftco_capture_leadead_iasa(_g: G) {}
+pub fn ftco_capture_leadead_iasa(_g: G) { melee_core::ct!("ftco_capture_leadead_iasa");}
 
 /// `ftCo_CaptureLeadead_Phys(gobj)`: empty.
-pub fn ftco_capture_leadead_phys(_g: G) {}
+pub fn ftco_capture_leadead_phys(_g: G) { melee_core::ct!("ftco_capture_leadead_phys");}
 
 /// `ftCo_CaptureLeadead_Coll(gobj)`: `ft_8008403C(gobj, fn_800C77E0)`.
 pub fn ftco_capture_leadead_coll(g: G) {
+    melee_core::ct!("ftco_capture_leadead_coll");
     ext::ft_8008403C(g, Some(fn_800c77e0))
 }
 
 /// `fn_800C77E0(gobj)`: `ftCo_80090780(gobj)`.
 pub unsafe extern "C" fn fn_800c77e0(g: G) {
+    melee_core::ct!("fn_800c77e0");
     ext::ftCo_80090780(g)
 }
 
 /// `ftCo_800C7800(gobj)`: CaptureCut away from the holder.
 pub fn ftco_800c7800(g: G) {
+    melee_core::ct!("ftco_800c7800");
     let cd = crate::hooks::common_data();
     let f = fp(g);
     if f.ground_or_air == GA_Ground {
@@ -93,6 +99,7 @@ pub fn ftco_800c7800(g: G) {
 
 /// `fn_800C7890(gobj)`: `ftCo_800C7A30(gobj)`.
 pub unsafe extern "C" fn fn_800c7890(g: G) {
+    melee_core::ct!("fn_800c7890");
     super::ftco_800c78b0::ftco_800c7a30(g)
 }
 

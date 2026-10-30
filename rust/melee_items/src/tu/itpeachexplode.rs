@@ -79,6 +79,7 @@ unsafe fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD_GOb
 }
 
 pub unsafe extern "C" fn it_802BD158(gobj: *mut Item_GObj, pos: *mut Vec3, arg2: i32, dir: f32) -> *mut Item_GObj {
+    melee_core::ct!("it_802BD158");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
     spawn.kind = It_Kind_Peach_Explode;
@@ -94,10 +95,12 @@ pub unsafe extern "C" fn it_802BD158(gobj: *mut Item_GObj, pos: *mut Vec3, arg2:
 }
 
 pub unsafe extern "C" fn itPeachExplode_Logic55_DmgDealt(_arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPeachExplode_Logic55_DmgDealt");
     false
 }
 
 pub unsafe extern "C" fn it_802BD248(item_gobj: *mut Item_GObj, owner: *mut Item_GObj, arg2: i32) {
+    melee_core::ct!("it_802BD248");
     let ip = GET_ITEM(item_gobj);
     (*ip).owner = owner;
     (*ip).xD44_lifeTimer = 60.0;
@@ -116,9 +119,11 @@ pub unsafe extern "C" fn it_802BD248(item_gobj: *mut Item_GObj, owner: *mut Item
 }
 
 pub unsafe extern "C" fn itPeachexplode_UnkMotion1_Anim(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPeachexplode_UnkMotion1_Anim");
     ext::it_802751D8(item_gobj) != 0
 }
 
 pub unsafe extern "C" fn itPeachExplode_Logic55_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("itPeachExplode_Logic55_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

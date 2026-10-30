@@ -46,14 +46,15 @@ pub mod ext {
 }
 
 /// `fn_800DA4A0` as the C `HSD_GObjEvent` stored in `accessory1_cb`.
-pub unsafe extern "C" fn fn_800DA4A0_cb(g: *mut HSD_GObj) { fn_800DA4A0(g) }
+pub unsafe extern "C" fn fn_800DA4A0_cb(g: *mut HSD_GObj) { melee_core::ct!("fn_800DA4A0_cb"); fn_800DA4A0(g) }
 /// `fn_800DA490` as the C `HSD_GObjEvent` stored in `take_dmg_cb`.
-pub unsafe extern "C" fn fn_800DA490_cb(g: *mut HSD_GObj) { fn_800DA490(g) }
+pub unsafe extern "C" fn fn_800DA490_cb(g: *mut HSD_GObj) { melee_core::ct!("fn_800DA490_cb"); fn_800DA490(g) }
 /// `fn_800DA440` as the C `HSD_GObjEvent` handed to `ft_800841B8`.
-pub unsafe extern "C" fn fn_800DA440_cb(g: *mut HSD_GObj) { fn_800DA440(g) }
+pub unsafe extern "C" fn fn_800DA440_cb(g: *mut HSD_GObj) { melee_core::ct!("fn_800DA440_cb"); fn_800DA440(g) }
 
 /// `fn_800DA1D8`: pull finished, enter CatchWait holding the victim.
 pub fn fn_800DA1D8(g: G) {
+    melee_core::ct!("fn_800DA1D8");
     fp(g).gr_vel = 0.0;
     ext::Fighter_ChangeMotionState(g, ftCo_MS_CatchWait as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
     let f = fp(g);
@@ -70,6 +71,7 @@ pub fn fn_800DA1D8(g: G) {
 }
 
 pub fn fn_800DA2B0(g: G) {
+    melee_core::ct!("fn_800DA2B0");
     ext::Fighter_ChangeMotionState(g, ftCo_MS_CatchWait as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
     let f = fp(g);
     f.accessory1_cb = Some(fn_800DA4A0_cb);
@@ -77,7 +79,7 @@ pub fn fn_800DA2B0(g: G) {
     ext::ftCommon_8007E2F4(f, 0x1FF);
 }
 
-pub fn ftCo_CatchWait_Anim(_g: G) {}
+pub fn ftCo_CatchWait_Anim(_g: G) { melee_core::ct!("ftCo_CatchWait_Anim");}
 
 fn release_tether(g: G) {
     let kind = fp(g).kind;
@@ -89,6 +91,7 @@ fn release_tether(g: G) {
 }
 
 pub fn ftCo_CatchWait_IASA(g: G) {
+    melee_core::ct!("ftCo_CatchWait_IASA");
     if fn_800DA4C0(g) {
         release_tether(g);
     } else if ext::ftCo_800DD1E4(g) {
@@ -97,6 +100,7 @@ pub fn ftCo_CatchWait_IASA(g: G) {
 }
 
 pub fn ftCo_CatchWait_Phys(g: G) {
+    melee_core::ct!("ftCo_CatchWait_Phys");
     let f = fp(g);
     let fr = crate::hooks::common_data().x64 * f.co_attrs.ground_friction;
     ext::ftCommon_CalcGroundAccel_Deaccel(f, fr);
@@ -104,10 +108,12 @@ pub fn ftCo_CatchWait_Phys(g: G) {
 }
 
 pub fn ftCo_CatchWait_Coll(g: G) {
+    melee_core::ct!("ftCo_CatchWait_Coll");
     ext::ft_800841B8(g, Some(fn_800DA440_cb));
 }
 
 pub fn fn_800DA440(g: G) {
+    melee_core::ct!("fn_800DA440");
     let victim = fp(g).victim_gobj;
     ext::ftCo_800DC920(g, victim);
     ext::ftCo_Fall_Enter(g);
@@ -115,14 +121,17 @@ pub fn fn_800DA440(g: G) {
 }
 
 pub fn fn_800DA490(g: G) {
+    melee_core::ct!("fn_800DA490");
     fp(g).take_dmg_cb = None;
 }
 
 pub fn fn_800DA4A0(g: G) {
+    melee_core::ct!("fn_800DA4A0");
     ext::fn_800DA054(g);
 }
 
 pub fn fn_800DA4C0(g: G) -> bool {
+    melee_core::ct!("fn_800DA4C0");
     if fp(g).input.pressed_buttons & 0x100 != 0 {
         ext::fn_800DA4FC(g);
         return true;

@@ -21,6 +21,7 @@ fn fat_window(kind: u8) -> Option<&'static [i32; 4]> {
 
 /// gm_801A4014 asks before the scene's on_enter: is there a window to frame?
 pub fn Fad_ToyWindowKnown(kind: u8) -> i32 {
+    melee_core::ct!("Fad_ToyWindowKnown");
     match fat_window(kind) {
         Some(w) => (w[2] > 0 && w[3] > 0) as i32,
         None => 0,

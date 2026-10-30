@@ -85,6 +85,7 @@ unsafe fn damage(attr: *mut itPeachTurnipAttributes, i: isize) -> i32 {
 }
 
 pub unsafe extern "C" fn decrease_lifetimer(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("decrease_lifetimer");
     let item = GET_ITEM(item_gobj);
     (*item).xD44_lifeTimer -= 1.0;
     if (*item).xD44_lifeTimer <= 0.0 {
@@ -95,6 +96,7 @@ pub unsafe extern "C" fn decrease_lifetimer(item_gobj: *mut Item_GObj) -> bool {
 
 /// Peach_TurnipTypeDecide - weighted random selection (2BD32C)
 pub unsafe extern "C" fn it_802BD32C(item_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802BD32C");
     let item = GET_ITEM(item_gobj);
     let attr = (*(*item).xC4_article_data).x4_specialAttributes as *mut itPeachTurnipAttributes;
 
@@ -124,10 +126,12 @@ pub unsafe extern "C" fn it_802BD32C(item_gobj: *mut Item_GObj) -> i32 {
 
 /// 2BD45C
 pub unsafe extern "C" fn it_802BD45C(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802BD45C");
     ext::Item_8026A8EC(item_gobj);
 }
 
 pub unsafe extern "C" fn itPeachTurnip_Logic56_Destroyed(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itPeachTurnip_Logic56_Destroyed");
     let item = GET_ITEM(item_gobj);
     // TARGET_PC: an m-ex custom article on Peach's turnip logic keeps other data in xDE4; the
     // thrower is item->owner.
@@ -144,6 +148,7 @@ pub unsafe extern "C" fn itPeachTurnip_Logic56_Destroyed(item_gobj: *mut Item_GO
 
 /// Peach_SpawnAndGiveTurnip (2BD4AC)
 pub unsafe extern "C" fn it_802BD4AC(item_gobj: *mut Item_GObj, pos: *mut Vec3, part: u32, kind: ItemKind, fdir: f32) -> *mut Item_GObj {
+    melee_core::ct!("it_802BD4AC");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
     spawn.kind = kind;
@@ -197,6 +202,7 @@ pub unsafe extern "C" fn it_802BD4AC(item_gobj: *mut Item_GObj, pos: *mut Vec3, 
 
 /// ItemOnSpawn_Turnip
 pub unsafe extern "C" fn itPeachTurnip_Logic56_PickedUp(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itPeachTurnip_Logic56_PickedUp");
     let item = GET_ITEM(item_gobj);
 
     ext::it_80273670(item_gobj, 0, (*item).xDD4_itemVar.peachturnip.xDD8 as f32);
@@ -211,21 +217,25 @@ pub unsafe extern "C" fn itPeachTurnip_Logic56_PickedUp(item_gobj: *mut Item_GOb
 }
 
 pub unsafe extern "C" fn itPeachturnip_UnkMotion4_Anim(_item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPeachturnip_UnkMotion4_Anim");
     false
 }
 
-pub unsafe extern "C" fn itPeachturnip_UnkMotion4_Phys(_item_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itPeachturnip_UnkMotion4_Phys(_item_gobj: *mut Item_GObj) { melee_core::ct!("itPeachturnip_UnkMotion4_Phys");}
 
 pub unsafe extern "C" fn itPeachturnip_UnkMotion1_Anim(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPeachturnip_UnkMotion1_Anim");
     decrease_lifetimer(item_gobj)
 }
 
 pub unsafe extern "C" fn itPeachturnip_UnkMotion1_Phys(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itPeachturnip_UnkMotion1_Phys");
     let temp_r4 = (*GET_ITEM(item_gobj)).xCC_item_attr;
     ext::it_80272860(item_gobj, (*temp_r4).x10_fall_speed, (*temp_r4).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itPeachTurnip_Logic56_Thrown(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itPeachTurnip_Logic56_Thrown");
     let item = GET_ITEM(item_gobj);
     let jobj = GET_JOBJ(item_gobj);
 
@@ -238,11 +248,13 @@ pub unsafe extern "C" fn itPeachTurnip_Logic56_Thrown(item_gobj: *mut Item_GObj)
 }
 
 pub unsafe extern "C" fn itPeachturnip_UnkMotion3_Anim(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPeachturnip_UnkMotion3_Anim");
     decrease_lifetimer(item_gobj)
 }
 
 /// ProjectilePhysics_TurnipVelocity
 pub unsafe extern "C" fn itPeachturnip_UnkMotion3_Phys(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itPeachturnip_UnkMotion3_Phys");
     // Item_ApplyFallingPhysics(item_gobj)
     let attrs = (*GET_ITEM(item_gobj)).xCC_item_attr;
     ext::it_80272860(item_gobj, (*attrs).x10_fall_speed, (*attrs).x14_fall_speed_max);
@@ -250,6 +262,7 @@ pub unsafe extern "C" fn itPeachturnip_UnkMotion3_Phys(item_gobj: *mut Item_GObj
 }
 
 pub unsafe extern "C" fn itPeachturnip_UnkMotion3_Coll(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPeachturnip_UnkMotion3_Coll");
     let first_check: i32 = 0xE;
     let second_check: i32 = 0x3;
 
@@ -264,38 +277,45 @@ pub unsafe extern "C" fn itPeachturnip_UnkMotion3_Coll(item_gobj: *mut Item_GObj
 }
 
 pub unsafe extern "C" fn itPeachTurnip_Logic56_Dropped(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itPeachTurnip_Logic56_Dropped");
     let item = GET_ITEM(item_gobj);
     ext::Item_80268E5C(item_gobj, 3, ITEM_ANIM_UPDATE | ITEM_DROP_UPDATE);
     ext::it_80273670(item_gobj, 0, (*item).xDD4_itemVar.peachturnip.xDD8 as f32);
 }
 
 pub unsafe extern "C" fn itPeachTurnip_Logic56_DmgDealt(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPeachTurnip_Logic56_DmgDealt");
     ext::itColl_BounceOffVictim(item_gobj);
     ext::Item_80268E5C(item_gobj, 1, ITEM_ANIM_UPDATE);
     false
 }
 
 pub unsafe extern "C" fn itPeachTurnip_Logic56_Clanked(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPeachTurnip_Logic56_Clanked");
     ext::itColl_BounceOffVictim(item_gobj);
     false
 }
 
 pub unsafe extern "C" fn itPeachTurnip_Logic56_Reflected(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPeachTurnip_Logic56_Reflected");
     ext::it_80273030(item_gobj);
     false
 }
 
 pub unsafe extern "C" fn itPeachTurnip_Logic56_HitShield(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPeachTurnip_Logic56_HitShield");
     ext::itColl_BounceOffVictim(item_gobj);
     false
 }
 
 pub unsafe extern "C" fn itPeachTurnip_Logic56_ShieldBounced(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPeachTurnip_Logic56_ShieldBounced");
     ext::itColl_BounceOffShield(item_gobj);
     false
 }
 
 pub unsafe extern "C" fn itPeachTurnip_Logic56_EvtUnk(item_gobj: *mut Item_GObj, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itPeachTurnip_Logic56_EvtUnk");
     let item = GET_ITEM(item_gobj);
     if (*item).xDD4_itemVar.peachturnip.xDE4_owner == ref_gobj {
         (*item).xDD4_itemVar.peachturnip.xDE4_owner = null_mut();

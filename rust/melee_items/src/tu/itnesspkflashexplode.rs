@@ -73,6 +73,7 @@ unsafe fn Item_ClearFlagsAndEnterState(gobj: *mut Item_GObj, ip: *mut Item, msid
 }
 
 pub unsafe extern "C" fn it_802AF940(owner: *mut Item_GObj, flash: *mut Item_GObj, pos: *mut Vec3, kind: ItemKind, facing_dir: f32, charge: f32) -> *mut Item_GObj {
+    melee_core::ct!("it_802AF940");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
     spawn.kind = kind;
@@ -99,6 +100,7 @@ pub unsafe extern "C" fn it_802AF940(owner: *mut Item_GObj, flash: *mut Item_GOb
 }
 
 pub unsafe extern "C" fn it_2725_Logic103_Destroyed(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_2725_Logic103_Destroyed");
     if !item_gobj.is_null() {
         let item = GET_ITEM(item_gobj);
         if !item.is_null() {
@@ -109,6 +111,7 @@ pub unsafe extern "C" fn it_2725_Logic103_Destroyed(item_gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802AFA70(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802AFA70");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itFlashExplAttributes;
 
@@ -134,6 +137,7 @@ pub unsafe extern "C" fn it_802AFA70(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itNessPKFlashExplode_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itNessPKFlashExplode_UnkMotion0_Anim");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itFlashExplAttributes;
     let jobj = GET_JOBJ(gobj);
@@ -166,31 +170,38 @@ pub unsafe extern "C" fn itNessPKFlashExplode_UnkMotion0_Anim(gobj: *mut Item_GO
 }
 
 pub unsafe extern "C" fn itNessPKFlashExplode_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itNessPKFlashExplode_UnkMotion0_Phys");
     let it = GET_ITEM(gobj);
     (*it).x40_vel.z = 0.0;
     (*it).x40_vel.y = 0.0;
 }
 
 pub unsafe extern "C" fn itNessPKFlashExplode_UnkMotion0_Coll(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itNessPKFlashExplode_UnkMotion0_Coll");
     false
 }
 
 pub unsafe extern "C" fn itNessPKFlashExplode_Logic103_Clanked(_arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itNessPKFlashExplode_Logic103_Clanked");
     true
 }
 
 pub unsafe extern "C" fn itNessPKFlashExplode_Logic103_Absorbed(_arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itNessPKFlashExplode_Logic103_Absorbed");
     true
 }
 
 pub unsafe extern "C" fn itNessPKFlashExplode_Logic103_ShieldBounced(_arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itNessPKFlashExplode_Logic103_ShieldBounced");
     true
 }
 
 pub unsafe extern "C" fn itNessPKFlashExplode_Logic103_HitShield(_arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itNessPKFlashExplode_Logic103_HitShield");
     true
 }
 
 pub unsafe extern "C" fn itNessPKFlashExplode_Logic103_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("itNessPKFlashExplode_Logic103_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

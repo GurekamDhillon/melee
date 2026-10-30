@@ -64,6 +64,7 @@ static it_804D5518: [i32; 2] = [15, 16];
 
 /// 2BDA40
 pub unsafe extern "C" fn it_802BDA40(_item_gobj: *mut Item_GObj, i: i32) -> i32 {
+    melee_core::ct!("it_802BDA40");
     let row = (it_803F74F8.as_ptr()).offset(i as isize);
     let anim_id = (*row).anim_id;
     if anim_id < 0 || anim_id as usize >= it_804D5518.len() {
@@ -74,6 +75,7 @@ pub unsafe extern "C" fn it_802BDA40(_item_gobj: *mut Item_GObj, i: i32) -> i32 
 
 /// 2BDA64
 pub unsafe extern "C" fn it_802BDA64(parent: *mut HSD_GObj, pos: *mut Vec3, arg2: u32, dir: f32) -> *mut Item_GObj {
+    melee_core::ct!("it_802BDA64");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
     spawn.kind = It_Kind_Peach_Parasol;
@@ -101,6 +103,7 @@ pub unsafe extern "C" fn it_802BDA64(parent: *mut HSD_GObj, pos: *mut Vec3, arg2
 }
 
 pub unsafe extern "C" fn itPeachParasol_Logic60_Destroyed(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itPeachParasol_Logic60_Destroyed");
     let item = GET_ITEM(item_gobj);
     if !(*item).owner.is_null() && ext::ftPe_8011D518((*item).owner) != 0 {
         (*item).owner = null_mut();
@@ -109,6 +112,7 @@ pub unsafe extern "C" fn itPeachParasol_Logic60_Destroyed(item_gobj: *mut Item_G
 
 /// 2BDB94
 pub unsafe extern "C" fn it_802BDB94(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802BDB94");
     let item = GET_ITEM(item_gobj);
     if !item.is_null() {
         itPeachParasol_Logic60_Destroyed(item_gobj);
@@ -118,16 +122,19 @@ pub unsafe extern "C" fn it_802BDB94(item_gobj: *mut Item_GObj) {
 
 /// 2BDBF8
 pub unsafe extern "C" fn it_802BDBF8(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802BDBF8");
     ext::it_8026B724(item_gobj);
 }
 
 /// 2BDC18
 pub unsafe extern "C" fn it_802BDC18(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802BDC18");
     ext::it_8026B73C(item_gobj);
 }
 
 /// 2BDC38
 pub unsafe extern "C" fn it_802BDC38(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_802BDC38");
     let item = GET_ITEM(item_gobj);
     if (*item).msid != 2 {
         return false;
@@ -139,6 +146,7 @@ pub unsafe extern "C" fn it_802BDC38(item_gobj: *mut Item_GObj) -> bool {
 }
 
 pub unsafe extern "C" fn itPeachParasol_Logic60_PickedUp(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itPeachParasol_Logic60_PickedUp");
     let item = GET_ITEM(item_gobj);
     it_802BDDB4(item_gobj, 16.0);
     ext::Item_802694CC(item_gobj);
@@ -146,6 +154,7 @@ pub unsafe extern "C" fn itPeachParasol_Logic60_PickedUp(item_gobj: *mut Item_GO
 }
 
 pub unsafe extern "C" fn itPeachparasol_UnkMotion2_Anim(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPeachparasol_UnkMotion2_Anim");
     let item = GET_ITEM(item_gobj);
     let var_r3: bool = if !(*item).owner.is_null() {
         ext::ftPe_SpecialHi_NotActive((*item).owner) != 0
@@ -160,10 +169,11 @@ pub unsafe extern "C" fn itPeachparasol_UnkMotion2_Anim(item_gobj: *mut Item_GOb
 }
 
 /// 2BDD3C
-pub unsafe extern "C" fn it_802BDD3C(_item_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn it_802BDD3C(_item_gobj: *mut Item_GObj) { melee_core::ct!("it_802BDD3C");}
 
 /// 2BDD40
 pub unsafe extern "C" fn it_802BDD40(item_gobj: *mut Item_GObj, arg8: f32) {
+    melee_core::ct!("it_802BDD40");
     let item = GET_ITEM(item_gobj);
     ext::Item_8026AE84(item, 0xF7, 0x7F, 0x40);
     (*item).x5D0_animFrameSpeed = arg8;
@@ -173,6 +183,7 @@ pub unsafe extern "C" fn it_802BDD40(item_gobj: *mut Item_GObj, arg8: f32) {
 
 /// 2BDDB4
 pub unsafe extern "C" fn it_802BDDB4(item_gobj: *mut Item_GObj, arg8: f32) {
+    melee_core::ct!("it_802BDDB4");
     let item = GET_ITEM(item_gobj);
     (*item).x5D0_animFrameSpeed = arg8;
     ext::Item_80268E5C(item_gobj, 2, ITEM_ANIM_UPDATE);
@@ -180,5 +191,6 @@ pub unsafe extern "C" fn it_802BDDB4(item_gobj: *mut Item_GObj, arg8: f32) {
 }
 
 pub unsafe extern "C" fn itPeachParasol_Logic60_EvtUnk(item_gobj: *mut Item_GObj, arg1: *mut HSD_GObj) {
+    melee_core::ct!("itPeachParasol_Logic60_EvtUnk");
     ext::it_8026B894(item_gobj, arg1);
 }

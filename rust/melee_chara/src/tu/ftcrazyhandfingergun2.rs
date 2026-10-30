@@ -25,6 +25,7 @@ pub mod ext {
 
 /// `ftCh_UpdateBossMotion` (ftCrazyHand/inlines.h, static inline).
 pub unsafe fn ftCh_UpdateBossMotion(gobj: *mut HSD_GObj, fp: *mut Fighter, da: *const ftCrazyHand_DatAttrs) {
+    melee_core::ct!("ftCh_UpdateBossMotion");
     unsafe {
         st::ft_80085134(gobj);
         let xc = (*fp).mv.ch.unk0.xC;
@@ -44,12 +45,14 @@ fn ftCh_FingerGun2_Anim_inline(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCh_FingerGun2_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_FingerGun2_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         ftCh_FingerGun2_Anim_inline(gobj);
     }
 }
 
 pub fn ftCh_FingerGun2_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_FingerGun2_Phys");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*(*fp).ft_data).ext_attr as *const ftCrazyHand_DatAttrs;
@@ -57,4 +60,4 @@ pub fn ftCh_FingerGun2_Phys(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftCh_FingerGun2_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftCh_FingerGun2_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_FingerGun2_Coll");}

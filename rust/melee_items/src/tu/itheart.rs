@@ -68,6 +68,7 @@ pub static it_803F56C8: [ItemStateTable; 5] = [
 
 /// `Item_GObj* it_80283AE4(Item_GObj*, Vec3*, s32)`: spawn a heart at `pos`.
 pub unsafe extern "C" fn it_80283AE4(gobj: *mut HSD_GObj, pos: *mut Vec3, arg2: i32) -> *mut HSD_GObj {
+    melee_core::ct!("it_80283AE4");
     let mut spawn: SpawnItem = core::mem::zeroed();
     let mut item_gobj: *mut HSD_GObj = null_mut();
     if !gobj.is_null() {
@@ -87,12 +88,14 @@ pub unsafe extern "C" fn it_80283AE4(gobj: *mut HSD_GObj, pos: *mut Vec3, arg2: 
 
 /// `void it_80283BD4(Item_GObj*)`
 pub unsafe extern "C" fn it_80283BD4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_80283BD4");
     let ip = GET_ITEM(gobj);
     let vars = (*(*ip).xC4_article_data).x4_specialAttributes as *mut HeartContainerAttr;
     (*ip).xDD4_itemVar.heart.xDD4_heal = (*vars).x4.flags as i32;
 }
 
 pub unsafe extern "C" fn itHeart_Logic8_Spawned(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHeart_Logic8_Spawned");
     let ip = GET_ITEM(gobj);
     let vars = (*(*ip).xC4_article_data).x4_specialAttributes as *mut HeartContainerAttr;
     (*ip).x40_vel.x = 0.0;
@@ -105,6 +108,7 @@ pub unsafe extern "C" fn itHeart_Logic8_Spawned(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itHeart_Logic8_Destroyed(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHeart_Logic8_Destroyed");
     let ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.heart.xDD8.anon_0.b0() != 0 {
         ext::gm_80473A18.x90[(*ip).xDD4_itemVar.heart.xDDC as usize] = 0;
@@ -112,6 +116,7 @@ pub unsafe extern "C" fn itHeart_Logic8_Destroyed(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_80283C7C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_80283C7C");
     let ip = GET_ITEM(gobj);
     ext::it_8026B390(gobj);
     (*ip).x40_vel.x = 0.0;
@@ -121,24 +126,28 @@ pub unsafe extern "C" fn it_80283C7C(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itHeart_UnkMotion0_Anim(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHeart_UnkMotion0_Anim");
     let child = HSD_JObjGetChild(GET_JOBJ(gobj));
     let attrs = (*(*GET_ITEM(gobj)).xC4_article_data).x4_specialAttributes as *mut HeartContainerAttr;
     HSD_JObjAddRotationY(child, (*attrs).x18);
     0
 }
 
-pub unsafe extern "C" fn itHeart_UnkMotion0_Phys(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itHeart_UnkMotion0_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itHeart_UnkMotion0_Phys");}
 
 pub unsafe extern "C" fn itHeart_UnkMotion0_Coll(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHeart_UnkMotion0_Coll");
     ext::it_8026D62C(gobj, Some(it_80283DD4));
     0
 }
 
 pub unsafe extern "C" fn it_80283DD4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_80283DD4");
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE as u32);
 }
 
 pub unsafe extern "C" fn itHeart_UnkMotion3_Anim(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHeart_UnkMotion3_Anim");
     let child = HSD_JObjGetChild(GET_JOBJ(gobj));
     let attrs = (*(*GET_ITEM(gobj)).xC4_article_data).x4_specialAttributes as *mut HeartContainerAttr;
     HSD_JObjAddRotationY(child, (*attrs).x18);
@@ -146,17 +155,20 @@ pub unsafe extern "C" fn itHeart_UnkMotion3_Anim(gobj: *mut HSD_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn itHeart_UnkMotion3_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHeart_UnkMotion3_Phys");
     let item = GET_ITEM(gobj);
     let attr = (*item).xCC_item_attr;
     ext::it_80272860(gobj, (*attr).x10_fall_speed, (*attr).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itHeart_UnkMotion3_Coll(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHeart_UnkMotion3_Coll");
     ext::it_8026E15C(gobj, Some(it_80283C7C));
     0
 }
 
 pub unsafe extern "C" fn itHeart_Logic8_PickedUp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHeart_Logic8_PickedUp");
     let child = HSD_JObjGetChild(GET_JOBJ(gobj));
     ext::HSD_JObjClearFlagsAll(child, JOBJ_HIDDEN as u32);
     HSD_JObjSetRotationY(child, 0.0);
@@ -164,12 +176,14 @@ pub unsafe extern "C" fn itHeart_Logic8_PickedUp(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itHeart_UnkMotion2_Anim(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHeart_UnkMotion2_Anim");
     0
 }
 
-pub unsafe extern "C" fn itHeart_UnkMotion2_Phys(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itHeart_UnkMotion2_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itHeart_UnkMotion2_Phys");}
 
 pub unsafe extern "C" fn itHeart_Logic8_Dropped(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHeart_Logic8_Dropped");
     let child = HSD_JObjGetChild(GET_JOBJ(gobj));
     ext::it_8026B390(gobj);
     ext::HSD_JObjClearFlagsAll(child, JOBJ_HIDDEN as u32);
@@ -178,20 +192,24 @@ pub unsafe extern "C" fn itHeart_Logic8_Dropped(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itHeart_Logic8_EnteredAir(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHeart_Logic8_EnteredAir");
     ext::Item_80268E5C(gobj, 4, ITEM_ANIM_UPDATE as u32);
 }
 
 pub unsafe extern "C" fn itHeart_UnkMotion4_Anim(_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHeart_UnkMotion4_Anim");
     0
 }
 
-pub unsafe extern "C" fn itHeart_UnkMotion4_Phys(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itHeart_UnkMotion4_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itHeart_UnkMotion4_Phys");}
 
 pub unsafe extern "C" fn itHeart_UnkMotion4_Coll(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itHeart_UnkMotion4_Coll");
     ext::it_8026E8C4(gobj, Some(it_80283C7C), Some(it_80283DD4));
     0
 }
 
 pub unsafe extern "C" fn itHeart_Logic8_EvtUnk(gobj: *mut HSD_GObj, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itHeart_Logic8_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

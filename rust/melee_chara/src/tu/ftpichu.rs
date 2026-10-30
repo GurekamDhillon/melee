@@ -77,6 +77,7 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 }
 
 pub fn ftPc_Init_OnLoad(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPc_Init_OnLoad");
     unsafe {
         let fp = fpp(gobj);
         let items = (*(*fp).ft_data).x48_items;
@@ -90,6 +91,7 @@ pub fn ftPc_Init_OnLoad(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftPc_Init_OnDeath(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPc_Init_OnDeath");
     unsafe {
         let fp = fpp(gobj);
         st::ftParts_80074A4C(gobj, 0, 0);
@@ -120,13 +122,16 @@ pub fn ftPc_Init_OnDeath(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftPc_Init_OnItemPickup(gobj: *mut HSD_GObj, flag: bool) {
+    melee_core::ct!("ftPc_Init_OnItemPickup");
     Fighter_OnItemPickup(gobj, flag as i32, 0, 0);
 }
 
 pub fn ftPc_Init_OnItemDrop(gobj: *mut HSD_GObj, bool1: bool) {
+    melee_core::ct!("ftPc_Init_OnItemDrop");
     Fighter_OnItemDrop(gobj, bool1 as i32, 0, 0);
 }
 
 pub fn ftPc_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPc_Init_LoadSpecialAttrs");
     crate::tu::ftpikachu::ftPk_Init_LoadSpecialAttrs(gobj);
 }

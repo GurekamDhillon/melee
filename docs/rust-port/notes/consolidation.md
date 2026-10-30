@@ -120,7 +120,7 @@ From step 7 the engine path is the one being moved forward.
 | # | title | scope |
 |---|---|---|
 | 0 (DONE 2026-10-30) | Green tests | Fix `tu_ft_0d4d_vs_c` (case 42 top-bit hash, from port/integ `ftaction.rs`). Make `pad_marth_sheik_bf` stop at its CSV end rather than running to the timeout. Record the baseline frame counts. |
-| 1 | Rust call trace | Feature `calltrace` in `melee_core`: a `ct!()` entry counter inserted by `tools/rust-port/trace/insert_ct.py` into every `#[no_mangle]`/pub TU fn. `melee golden --calltrace OUT` writes `frame,fn,seq`. Extend `pc/platform/gw_calltrace.c` to log the same per frame. Add `tools/rust-port/trace/seqdiff.py` to report the first divergent call per frame. |
+| 1 (DONE 2026-10-30, C side unbuilt) | Rust call trace | Feature `calltrace` in `melee_core`: a `ct!()` entry counter inserted by `tools/rust-port/trace/insert_ct.py` into every `#[no_mangle]`/pub TU fn. `melee golden --calltrace OUT` writes `frame,fn,seq`. Extend `pc/platform/gw_calltrace.c` to log the same per frame. Add `tools/rust-port/trace/seqdiff.py` to report the first divergent call per frame. |
 | 2 (DONE 2026-10-30) | Diff gate and split baseline | `melee diff --all --frames LIST --subsystem S --baseline-check FILE`. Split `tools/rust-port/diff/baseline.txt` into `baseline/<subsystem>.txt` (fighter, item, stage, camera, effect, particle, hud, rng, gobj) and add `tools/rust-port/gate.sh` (section 3). |
 | 3 (DONE 2026-10-30) | Logic lint, report mode | Add `tools/rust-port/lint_logic.py` and `lint_allow.txt` (section 4). Run in CI with `--report`, so it lists violations without failing. Generate `lint_baseline.txt` (current violations), so that from now on only new violations fail. |
 | 4 | Link generator | Add `tools/rust-port/link/gen_link.py` and the `melee_link` crate. Its `install()` sets every hook to the canonical TU function, using the section-3 table. Its test lists the hooks still left at `todo!()` among trace-reached functions; the goal is 0. Nothing in the goldens changes. |
@@ -155,6 +155,14 @@ Step 0 result: `tu_ft_0d4d_vs_c` case 42 was a NaN sign: `-(a*c - b)` at `ftCo_8
 cpu_fox_falco_dl matches 0..369 (hash divergence from 370, stop at 414 `ftCo_AttackLw3`; STATUS.md's 323 is stale and the
 divergence at 370 predates step 0), cpu_peach 120. Diff baseline unchanged (144 entries).
 
+Step 1 result: `melee_core::ct!("name")` is the first statement of 20708 top-level pub fns in `rust/*/src/tu/**` (inserted by
+`tools/rust-port/trace/insert_ct.py`, idempotent, `--remove`/`--check`); it expands to nothing without the `melee_core/calltrace` feature
+(`cargo build -p melee --release --features calltrace`; the cfg is on the macro definition, so no crate needs its own feature). `melee golden
+--calltrace OUT [--calltrace-frames A-B]` writes `frame,fn,seq` (frame -1 = static init). `pc/platform/gw_calltrace.c` gained
+`MELEE_CALLTRACE_SEQ=<file>` + `MELEE_CALLTRACE_FRAMES=a-b` (ordered per-match-frame list of rvas); `seqdiff.py --c --map --rust` reports the first divergent
+call (case-insensitive names, scope = functions the Rust side logged unless `--all`, `--filter`, `--ignore-inlined`). The Rust side was
+run (pad_falcon_fox_fd 0..130: 3475 calls, legacy path reaches only ftcoll/lbColl leaves). The C side and seqdiff against real C output are NOT
+verified: the trace build (`build_trace.sh`, private root `_build/agents/consol-trace`) rebuilds the Aurora/dawn libs and did not finish this session.
 Step 2 result: see notes/diff.md (2026-10-30). Step 3 result: `tools/rust-port/lint_logic.py` measured R1=4009, R2=5824 bodies (2953 C names
 with bodies in more than one file; the plan's 2353/3404 came from a stricter C index and counted only crates the plan lists, mine also
 flags melee_audio/platform/gx/script/data name clashes), R3=372, R4=278, R5=0; `lint_baseline.txt` holds all 10483, `lint_allow.txt` the glue

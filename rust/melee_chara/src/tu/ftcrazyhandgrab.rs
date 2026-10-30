@@ -15,9 +15,10 @@ pub mod ext {
 }
 
 pub fn ftCh_Grab_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Grab_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         ext::ftCh_Init_8015A030(gobj);
     }
 }
 
-pub fn ftCh_Grab_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftCh_Grab_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_Grab_Coll");}

@@ -95,6 +95,7 @@ pub static mut it_803F8200: [ItemStateTable; 5] = [
 ];
 
 pub unsafe fn it_802D5050(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D5050");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itLuckyAttributes;
     (*ip).facing_dir = 0.0;
@@ -108,11 +109,13 @@ pub unsafe fn it_802D5050(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802D50F0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802D50F0");
     ext::it_80273454(gobj);
     it_802D533C(gobj);
 }
 
 pub unsafe fn it_802D5124(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802D5124");
     let ip = GET_ITEM(gobj);
     let mut result = false;
     match (*ip).xDD4_itemVar.lucky.x60 {
@@ -139,6 +142,7 @@ pub unsafe fn it_802D5124(gobj: *mut Item_GObj) -> i32 {
 }
 
 pub unsafe fn it_802D51C8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802D51C8");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itLuckyAttributes;
     let mut vel: Vec3 = core::mem::zeroed();
@@ -165,6 +169,7 @@ pub unsafe fn it_802D51C8(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_802D52E4(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D52E4");
     let ip = GET_ITEM(gobj);
     if (*ip).xDAC_itcmd_var0 != 0 {
         it_802D51C8(gobj);
@@ -174,6 +179,7 @@ pub unsafe extern "C" fn it_802D52E4(gobj: *mut Item_GObj) {
 }
 
 pub unsafe fn it_802D533C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D533C");
     let ip = GET_ITEM(gobj);
     ext::Item_80268E5C(gobj, (*ip).xDD4_itemVar.lucky.x60, ITEM_ANIM_UPDATE as u32);
     it_802D533C_inline(gobj);
@@ -181,26 +187,30 @@ pub unsafe fn it_802D533C(gobj: *mut Item_GObj) {
 }
 
 pub unsafe fn it_802D533C_inline(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D533C_inline");
     let ip = GET_ITEM(gobj);
     (*ip).xDAC_itcmd_var0 = 0;
     Item_SetEffectHitlagCallbacks(ip);
 }
 
 pub unsafe extern "C" fn it_802D53AC(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802D53AC");
     if ext::it_80272C6C(gobj) == 0 {
         return it_802D5124(gobj);
     }
     0
 }
 
-pub unsafe extern "C" fn it_802D53F0(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn it_802D53F0(_gobj: *mut Item_GObj) { melee_core::ct!("it_802D53F0");}
 
 pub unsafe extern "C" fn it_802D53F4(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802D53F4");
     ext::it_8026D62C(gobj, Some(it_802D546C));
     0
 }
 
 pub unsafe extern "C" fn it_802D5420(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802D5420");
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE as u32);
     ext::it_802756E0(gobj);
     ext::it_802754D4(gobj);
@@ -208,61 +218,73 @@ pub unsafe extern "C" fn it_802D5420(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_802D546C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D546C");
     ext::Item_80268E5C(gobj, 5, ITEM_UNK_0x1 as u32);
     it_802D546C_inline(gobj);
 }
 
 pub unsafe fn it_802D546C_inline(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D546C_inline");
     let ip = GET_ITEM(gobj);
     (*ip).xDAC_itcmd_var0 = 0;
     Item_SetEffectHitlagCallbacks(ip);
 }
 
 pub unsafe extern "C" fn itLucky_UnkMotion5_Anim(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLucky_UnkMotion5_Anim");
     0
 }
 
 pub unsafe extern "C" fn itLucky_UnkMotion5_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLucky_UnkMotion5_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = (*ip).xCC_item_attr;
     ext::it_80272860(gobj, (*attrs).x10_fall_speed, (*attrs).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itLucky_UnkMotion5_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLucky_UnkMotion5_Coll");
     ext::it_8026E15C(gobj, Some(it_802D50F0));
     0
 }
 
 pub unsafe extern "C" fn itLucky_UnkMotion6_Anim(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLucky_UnkMotion6_Anim");
     0
 }
 
 pub unsafe extern "C" fn itLucky_UnkMotion6_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLucky_UnkMotion6_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = (*ip).xCC_item_attr;
     ext::it_80272860(gobj, (*attrs).x10_fall_speed, (*attrs).x14_fall_speed_max);
 }
 
 pub unsafe fn it_802D5560(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802D5560");
     Item_EnterStateWithEffectHitlag(gobj, 0);
     ext::it_80273670(gobj, 0, 0.0);
     ext::it_8026BDB4(gobj);
 }
 
 pub unsafe extern "C" fn it_802D55DC(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802D55DC");
     ext::it_80279FF8(gobj);
     0
 }
 
 pub unsafe extern "C" fn it_802D5600(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D5600");
     ext::it_8027A09C(gobj);
 }
 
 pub unsafe extern "C" fn it_802D5620(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802D5620");
     ext::it_8027A118(gobj, Some(it_802D5420))
 }
 
 pub unsafe fn it_802D5648(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802D5648");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itLuckyAttributes;
     if (*ip).xC9C as f32 >= (*attrs).xC {
@@ -273,6 +295,7 @@ pub unsafe fn it_802D5648(gobj: *mut Item_GObj) -> i32 {
 }
 
 pub unsafe fn it_802D5648_inline(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D5648_inline");
     let ip = GET_ITEM(gobj);
     (*ip).facing_dir = 0.0;
     ext::it_802762BC(ip);
@@ -282,10 +305,12 @@ pub unsafe fn it_802D5648_inline(gobj: *mut Item_GObj) {
 }
 
 pub unsafe fn it_802D56F0(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D56F0");
     ext::it_8026B894(gobj, ref_gobj);
 }
 
 pub unsafe fn it_802D5710_inline(gobj: *mut Item_GObj, pos: *mut Vec3, vel: *mut Vec3, facing: f32) -> *mut Item_GObj {
+    melee_core::ct!("it_802D5710_inline");
     let ip = (*gobj).user_data as *mut Item;
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = It_Kind_Lucky_Egg as _;
@@ -303,6 +328,7 @@ pub unsafe fn it_802D5710_inline(gobj: *mut Item_GObj, pos: *mut Vec3, vel: *mut
 }
 
 pub unsafe fn it_802D5710(gobj: *mut Item_GObj, pos: *mut Vec3, vel: *mut Vec3, facing: f32) -> *mut Item_GObj {
+    melee_core::ct!("it_802D5710");
     let mut result: *mut Item_GObj = null_mut();
     if !gobj.is_null() {
         result = it_802D5710_inline(gobj, pos, vel, facing);
@@ -311,6 +337,7 @@ pub unsafe fn it_802D5710(gobj: *mut Item_GObj, pos: *mut Vec3, vel: *mut Vec3, 
 }
 
 pub unsafe fn itLucky_Logic44_Spawned(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLucky_Logic44_Spawned");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itLuckyEggAttributes;
     ext::it_80275158(gobj, (*attr).x0);
@@ -319,6 +346,7 @@ pub unsafe fn itLucky_Logic44_Spawned(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802D582C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D582C");
     let ip = GET_ITEM(gobj);
     ext::it_8026B390(gobj);
     itResetVelocity(ip);
@@ -326,6 +354,7 @@ pub unsafe extern "C" fn it_802D582C(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802D5884(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802D5884");
     let ip = GET_ITEM(gobj);
     (*ip).xD44_lifeTimer -= 1.0;
     if (*ip).xD44_lifeTimer <= 0.0 {
@@ -334,61 +363,73 @@ pub unsafe extern "C" fn it_802D5884(gobj: *mut Item_GObj) -> i32 {
     0
 }
 
-pub unsafe extern "C" fn it_802D58BC(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn it_802D58BC(_gobj: *mut Item_GObj) { melee_core::ct!("it_802D58BC");}
 
 pub unsafe extern "C" fn it_802D58C0(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802D58C0");
     ext::it_8026D62C(gobj, Some(it_802D58EC));
     0
 }
 
 pub unsafe extern "C" fn it_802D58EC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802D58EC");
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE as u32);
 }
 
 pub unsafe extern "C" fn itLucky_UnkMotion3_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLucky_UnkMotion3_Anim");
     it_802D5884(gobj)
 }
 
 pub unsafe extern "C" fn itLucky_UnkMotion3_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLucky_UnkMotion3_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = (*ip).xCC_item_attr;
     ext::it_80272860(gobj, (*attrs).x10_fall_speed, (*attrs).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itLucky_UnkMotion3_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLucky_UnkMotion3_Coll");
     ext::it_8026E15C(gobj, Some(it_802D582C));
     0
 }
 
 pub unsafe fn itLucky_Logic44_PickedUp(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLucky_Logic44_PickedUp");
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE as u32);
 }
 
 pub unsafe extern "C" fn itLucky_UnkMotion2_Anim(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLucky_UnkMotion2_Anim");
     0
 }
 
-pub unsafe extern "C" fn itLucky_UnkMotion2_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itLucky_UnkMotion2_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itLucky_UnkMotion2_Phys");}
 
 pub unsafe fn itLucky_Logic44_Dropped(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLucky_Logic44_Dropped");
     ext::Item_80268E5C(gobj, 3, ITEM_ANIM_UPDATE as u32);
 }
 
 pub unsafe fn itLucky_Logic44_EnteredAir(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLucky_Logic44_EnteredAir");
     ext::Item_80268E5C(gobj, 4, ITEM_ANIM_UPDATE as u32);
 }
 
 pub unsafe extern "C" fn it_802D5A2C(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802D5A2C");
     it_802D5884(gobj)
 }
 
-pub unsafe extern "C" fn it_802D5A64(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn it_802D5A64(_gobj: *mut Item_GObj) { melee_core::ct!("it_802D5A64");}
 
 pub unsafe extern "C" fn it_802D5A68(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802D5A68");
     ext::it_8026E8C4(gobj, Some(it_802D582C), Some(it_802D58EC));
     0
 }
 
 pub unsafe fn itLucky_Logic44_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("itLucky_Logic44_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

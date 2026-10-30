@@ -245,6 +245,7 @@ unsafe fn st() -> *mut RegClear {
 
 /// fn_8017F008: the bonus-mask byte of the current match kind.
 pub unsafe fn fn_8017F008() -> i32 {
+    melee_core::ct!("fn_8017F008");
     let r3 = ext::fn_80171A88();
     if r3 == 3 {
         4
@@ -273,6 +274,7 @@ unsafe fn time_bonus_on(state: *const RegClear, p2: *const VsSceneController) ->
 
 /// fn_8017F09C: the time bonus.
 pub unsafe fn fn_8017F09C() -> i32 {
+    melee_core::ct!("fn_8017F09C");
     let data = st();
     let p = ext::gmVs_GetSceneController();
     if (*p).start.x4_6() != 0 {
@@ -292,6 +294,7 @@ pub unsafe fn fn_8017F09C() -> i32 {
 
 /// fn_8017F14C: the KO bonus; `arg0` is the MatchEnd (`s32` at GC +0x98).
 pub unsafe fn fn_8017F14C(arg0: *mut c_void) -> i32 {
+    melee_core::ct!("fn_8017F14C");
     let data = st();
     if (*ext::gmVs_GetSceneController()).start.x4_7() != 0 {
         let val = *(arg0 as *const u8).add(0x98).cast::<i32>();
@@ -306,6 +309,7 @@ pub unsafe fn fn_8017F14C(arg0: *mut c_void) -> i32 {
 
 /// fn_8017F1B8: award the bonuses the player earned; returns the bonus total.
 pub unsafe fn fn_8017F1B8() -> i32 {
+    melee_core::ct!("fn_8017F1B8");
     for i in 0..256 {
         if ext::fn_8016F1F0(i) < 0xD7 {
             let mask = fn_8017F008();
@@ -328,11 +332,13 @@ pub unsafe fn fn_8017F1B8() -> i32 {
 
 /// fn_8017F294.
 pub unsafe fn fn_8017F294() -> i32 {
+    melee_core::ct!("fn_8017F294");
     (*st()).x104
 }
 
 /// fn_8017F2A4: build the 8 score texts at (`farg0`, `farg1`).
 pub unsafe fn fn_8017F2A4(arg0: *mut *mut HSD_Text, farg0: f32, farg1: f32) -> i32 {
+    melee_core::ct!("fn_8017F2A4");
     let temp = ext::HSD_SisLib_803A611C(3, null_mut(), 9, 0xD, 0, 0x14, 0, 0x13);
     if ext::lbLang_IsSavedLanguageUS() != 0 {
         ext::HSD_SisLib_803A62A0(3, c"SdDec.usd".as_ptr(), c"SIS_DecisionData".as_ptr());
@@ -363,6 +369,7 @@ pub unsafe fn fn_8017F2A4(arg0: *mut *mut HSD_Text, farg0: f32, farg1: f32) -> i
 
 /// fn_8017F47C: refresh the score texts for the ranking window starting at `arg1`.
 pub unsafe fn fn_8017F47C(arg0: *mut *mut HSD_Text, arg1: i32) -> i32 {
+    melee_core::ct!("fn_8017F47C");
     let mut entry = arg1;
     let mut prev_idx = -999;
     let mut mask = fn_8017F008() as u8;
@@ -410,6 +417,7 @@ pub unsafe fn fn_8017F47C(arg0: *mut *mut HSD_Text, arg1: i32) -> i32 {
 
 /// fn_8017F608: the per-frame refresh of the bonus labels.
 pub unsafe fn fn_8017F608(arg0: *mut c_void) {
+    melee_core::ct!("fn_8017F608");
     let p = arg0 as *mut RegClear;
     let mut sp4C = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp40: Vec3 = lbl_803B7C18;
@@ -526,6 +534,7 @@ pub unsafe fn fn_8017F608(arg0: *mut c_void) {
 
 /// fn_8017FA1C: count the total up towards its target; returns 1 while the screen is live.
 pub unsafe fn fn_8017FA1C(arg0: *mut c_void) -> i32 {
+    melee_core::ct!("fn_8017FA1C");
     let p = arg0 as *mut RegClear;
     let mut sp14 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
@@ -587,6 +596,7 @@ pub unsafe fn fn_8017FA1C(arg0: *mut c_void) -> i32 {
 
 /// fn_8017FBA4: the total's pop-in text.
 pub unsafe fn fn_8017FBA4(arg0: *mut c_void) {
+    melee_core::ct!("fn_8017FBA4");
     let p = arg0 as *mut RegClear;
     let mut sp24 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
@@ -656,6 +666,7 @@ pub unsafe fn fn_8017FBA4(arg0: *mut c_void) {
 
 /// fn_8017FE54: image-event proc: refresh the capture and fade it in with the frame counter.
 pub unsafe extern "C" fn fn_8017FE54(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8017FE54");
     let ev = (*gobj).user_data as *mut RegClearEv;
     let state = st();
 
@@ -674,6 +685,7 @@ pub unsafe extern "C" fn fn_8017FE54(gobj: *mut HSD_GObj) {
 
 /// fn_8017FF1C: the screen's per-frame proc.
 pub unsafe extern "C" fn fn_8017FF1C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8017FF1C");
     let state = st();
     let arg = state as *mut c_void;
     let mut sp28: *mut HSD_JObj = null_mut();
@@ -811,6 +823,7 @@ pub unsafe extern "C" fn fn_8017FF1C(gobj: *mut HSD_GObj) {
 
 /// fn_801803FC: create the result model GObj and prime the labels.
 pub unsafe fn fn_801803FC(arg0: *mut c_void) -> i32 {
+    melee_core::ct!("fn_801803FC");
     let p = arg0 as *mut RegClear;
     let mut sp10: *mut HSD_JObj = null_mut();
     let state = st();
@@ -869,26 +882,31 @@ pub unsafe fn fn_801803FC(arg0: *mut c_void) -> i32 {
 
 /// `fn_80180630_CreateCameraGObj` (static inline).
 pub unsafe fn fn_80180630_CreateCameraGObj() -> *mut HSD_GObj {
+    melee_core::ct!("fn_80180630_CreateCameraGObj");
     ext::GObj_Create(0xE, 0xE, 0)
 }
 
 /// `fn_80180630_LoadLightList` (static inline).
 pub unsafe fn fn_80180630_LoadLightList(state: *mut RegClear) -> *mut c_void {
+    melee_core::ct!("fn_80180630_LoadLightList");
     ext::lb_80011AC4((*state).x5C.cast()).cast()
 }
 
 /// `fn_80180630_LoadCameraDesc` (static inline).
 pub unsafe fn fn_80180630_LoadCameraDesc(state: *mut RegClear) -> *mut c_void {
+    melee_core::ct!("fn_80180630_LoadCameraDesc");
     ext::HSD_CObjLoadDesc((*state).x60.cast()).cast()
 }
 
 /// `fn_80180630_GetModelDesc` (static inline).
 pub unsafe fn fn_80180630_GetModelDesc(state: *mut RegClear) -> *mut DynamicModelDesc {
+    melee_core::ct!("fn_80180630_GetModelDesc");
     addr_of_mut!((*state).x4C)
 }
 
 /// `fn_80180630_SetupSisLib` (static inline).
 pub unsafe fn fn_80180630_SetupSisLib(cam_gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80180630_SetupSisLib");
     ext::HSD_SisLib_803A611C(0, cam_gobj, 9, 0xD, 0, 0xE, 0, 0x13);
     if ext::lbLang_IsSavedLanguageUS() != 0 {
         ext::HSD_SisLib_803A62A0(0, c"SdClr.usd".as_ptr(), c"SIS_ClearData".as_ptr());
@@ -899,6 +917,7 @@ pub unsafe fn fn_80180630_SetupSisLib(cam_gobj: *mut HSD_GObj) {
 
 /// `fn_80180630_CreateLightAndCamera` (static inline).
 pub unsafe fn fn_80180630_CreateLightAndCamera(state: *mut RegClear, cam_gobj: *mut *mut HSD_GObj) {
+    melee_core::ct!("fn_80180630_CreateLightAndCamera");
     let light_gobj = ext::GObj_Create(0xB, 3, 0);
     ext::HSD_GObjObject_80390A70(light_gobj, HSD_GObj_LightKind as u8, fn_80180630_LoadLightList(state));
     ext::GObj_SetupGXLink(light_gobj, Some(ext::HSD_GObj_LObjCallback), 0xA, 0);
@@ -908,12 +927,14 @@ pub unsafe fn fn_80180630_CreateLightAndCamera(state: *mut RegClear, cam_gobj: *
 
 /// `fn_80180630_GetX118` (static inline).
 pub unsafe fn fn_80180630_GetX118(state: *const RegClear) -> u8 {
+    melee_core::ct!("fn_80180630_GetX118");
     (*state).x118
 }
 
 /// fn_80180630: set up the clear screen. `arg0`/`arg1` are the score and bonus-points base,
 /// `arg2` the mode (1 = 1P event, 2 = ..., 3 = bonus stage), `arg3` (bool = int) the 1P flag.
 pub unsafe fn fn_80180630(arg0: i32, arg1: i32, arg2: i32, arg3: i32, arg4: *mut MatchEnd) {
+    melee_core::ct!("fn_80180630");
     let mut sp64: i32 = 0;
     let mut sp60: i32 = 0;
     let mut special_score_value: i32 = 0;
@@ -1057,6 +1078,7 @@ pub unsafe fn fn_80180630(arg0: i32, arg1: i32, arg2: i32, arg3: i32, arg4: *mut
 
 /// fn_80180AC0: whether the player skipped the screen (x116 == 1).
 pub unsafe fn fn_80180AC0() -> i32 {
+    melee_core::ct!("fn_80180AC0");
     if (*st()).x116 == 1 {
         return 1;
     }

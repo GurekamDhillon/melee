@@ -41,6 +41,7 @@ unsafe fn lbVector_Add(a: *mut Vec, b: *mut Vec) -> *mut Vec {
 
 /// `lbVector_Diff` (lb/lbvector.c; ported in melee_runtime): `*out = *a - *b`
 pub unsafe fn lbVector_Diff(a: *mut Vec, b: *mut Vec, out: *mut Vec) -> *mut Vec {
+    melee_core::ct!("lbVector_Diff");
     let r = melee_runtime::lbvector::diff(
         &melee_core::vec::Vec3 { x: (*a).x, y: (*a).y, z: (*a).z },
         &melee_core::vec::Vec3 { x: (*b).x, y: (*b).y, z: (*b).z },
@@ -113,6 +114,7 @@ pub static mut mpColl_LedgeLevelOK: i32 = 0;
 
 /// `mpColl_80041C78`
 pub unsafe fn mpColl_80041C78() {
+    melee_core::ct!("mpColl_80041C78");
     mpColl_804D64A0 = None;
     mpColl_804D64A4 = null_mut();
     mpColl_804D64A8 = None;
@@ -120,6 +122,7 @@ pub unsafe fn mpColl_80041C78() {
 
 /// `mpCollPrev`
 pub unsafe fn mpCollPrev(mut cd: *mut CollData) {
+    melee_core::ct!("mpCollPrev");
     let mut __: [u8; 8] = [0; 8];
     mpColl_804D64A0 = None;
     mpColl_804D64A4 = null_mut();
@@ -155,6 +158,7 @@ unsafe fn clamp_below(mut value: *mut f32, mut max: f32) {
 
 /// `mpCollCheckBounding`
 pub unsafe fn mpCollCheckBounding(mut cd: *mut CollData, mut flags: u32) {
+    melee_core::ct!("mpCollCheckBounding");
     let mut left: f32 = 0.0;
     let mut bottom: f32 = 0.0;
     let mut right: f32 = 0.0;
@@ -184,6 +188,7 @@ pub unsafe fn mpCollCheckBounding(mut cd: *mut CollData, mut flags: u32) {
 
 /// `mpColl_80041EE4`
 pub unsafe fn mpColl_80041EE4(mut cd: *mut CollData) {
+    melee_core::ct!("mpColl_80041EE4");
     (*cd).x0_gobj = null_mut();
     (*cd).x34_flags.set_b0((1 as u8) as u8);
     (*cd).x34_flags.set_b6((0 as u8) as u8);
@@ -235,6 +240,7 @@ pub unsafe fn mpColl_80041EE4(mut cd: *mut CollData) {
 
 /// `mpColl_SetECBSource_JObj`
 pub unsafe fn mpColl_SetECBSource_JObj(mut cd: *mut CollData, mut gobj: *mut HSD_GObj, mut arg1: *mut HSD_JObj, mut arg2: *mut HSD_JObj, mut arg3: *mut HSD_JObj, mut arg4: *mut HSD_JObj, mut arg5: *mut HSD_JObj, mut arg6: *mut HSD_JObj, mut arg7: *mut HSD_JObj, mut arg9: f32) {
+    melee_core::ct!("mpColl_SetECBSource_JObj");
     (*cd).x0_gobj = gobj;
     (*cd).ecb_source.kind = (ECBSource_JObj as i32) as u32;
     (*cd).ecb_source.anon_4.anon_0.x108_joint = arg1;
@@ -268,6 +274,7 @@ pub unsafe fn mpColl_SetECBSource_JObj(mut cd: *mut CollData, mut gobj: *mut HSD
 
 /// `mpColl_SetECBSource_Fixed`
 pub unsafe fn mpColl_SetECBSource_Fixed(mut cd: *mut CollData, mut gobj: *mut HSD_GObj, mut arg1: f32, mut arg2: f32, mut arg3: f32, mut arg4: f32) {
+    melee_core::ct!("mpColl_SetECBSource_Fixed");
     (*cd).x0_gobj = gobj;
     (*cd).ecb_source.kind = (ECBSource_Fixed as i32) as u32;
     (*cd).ecb_source.anon_4.anon_0_0.up = arg1;
@@ -294,6 +301,7 @@ pub unsafe fn mpColl_SetECBSource_Fixed(mut cd: *mut CollData, mut gobj: *mut HS
 
 /// `mpColl_SetLedgeSnap`
 pub unsafe fn mpColl_SetLedgeSnap(mut coll: *mut CollData, mut ledge_snap_x: f32, mut ledge_snap_y: f32, mut ledge_snap_height: f32) {
+    melee_core::ct!("mpColl_SetLedgeSnap");
     (*coll).ledge_snap_x = ledge_snap_x;
     (*coll).ledge_snap_y = ledge_snap_y;
     (*coll).ledge_snap_height = ledge_snap_height;
@@ -301,6 +309,7 @@ pub unsafe fn mpColl_SetLedgeSnap(mut coll: *mut CollData, mut ledge_snap_x: f32
 
 /// `mpColl_80042384`
 pub unsafe fn mpColl_80042384(mut cd: *mut CollData) {
+    melee_core::ct!("mpColl_80042384");
     if (if ((*cd).desired_ecb.top.y - (*cd).desired_ecb.bottom.y) < (0 as f32) { -((*cd).desired_ecb.top.y - (*cd).desired_ecb.bottom.y) } else { (*cd).desired_ecb.top.y - (*cd).desired_ecb.bottom.y }) < 1.0f32 {
         let mut mid: f32 = 0.0;
         (*cd).desired_ecb.top.y = (*cd).desired_ecb.top.y + 1.0f32;
@@ -338,6 +347,7 @@ unsafe fn update_min_max(mut min: *mut f32, mut max: *mut f32, mut val: f32) {
 
 /// `mpColl_LoadECB_JObj`
 pub unsafe fn mpColl_LoadECB_JObj(mut coll: *mut CollData, mut flags: u32) {
+    melee_core::ct!("mpColl_LoadECB_JObj");
     let mut vec: Vec3 = unsafe { core::mem::zeroed() };
     let mut left_x: f32 = 0.0;
     let mut bottom_y: f32 = 0.0;
@@ -478,6 +488,7 @@ unsafe fn clamp_below_2(mut value: *mut f32, mut max: f32) {
 
 /// `mpColl_LoadECB_Fixed`
 pub unsafe fn mpColl_LoadECB_Fixed(mut coll: *mut CollData) {
+    melee_core::ct!("mpColl_LoadECB_Fixed");
     let mut angle: f32 = 0.0;
     let mut sin: f32 = 0.0;
     let mut cos: f32 = 0.0;
@@ -574,6 +585,7 @@ pub unsafe fn mpColl_LoadECB_Fixed(mut coll: *mut CollData) {
 
 /// `mpColl_80042C58`
 pub unsafe fn mpColl_80042C58(mut coll: *mut CollData, mut arg1: *mut ftCollisionBox) {
+    melee_core::ct!("mpColl_80042C58");
     if ((*coll).x130_flags & ((CollData_X130_Clear as i32) as u32)) != 0 {
         (*coll).ecb.top.x = 0.0f32;
         (*coll).ecb.top.y = 0.0f32;
@@ -619,6 +631,7 @@ unsafe fn mpColl_LoadECB_inline(mut coll: *mut CollData, mut i: i32) {
 
 /// `mpColl_LoadECB`
 pub unsafe fn mpColl_LoadECB(mut coll: *mut CollData) {
+    melee_core::ct!("mpColl_LoadECB");
     let mut saved_bottom_x: f32 = 0.0;
     let mut saved_bottom_y: f32 = 0.0;
     if ((*coll).x130_flags & ((CollData_X130_Locked as i32) as u32)) != 0 {
@@ -645,6 +658,7 @@ unsafe fn Vec2_Interpolate(mut time: f32, mut dest: *mut Vec2, mut src: *mut Vec
 
 /// `mpCollInterpolateECB`
 pub unsafe fn mpCollInterpolateECB(mut coll: *mut CollData, mut time: f32) {
+    melee_core::ct!("mpCollInterpolateECB");
     (*coll).prev_ecb = (*coll).ecb;
     if (*coll).x34_flags.b6() != 0 {
         (*coll).ecb = (*coll).x64_ecb;
@@ -715,6 +729,7 @@ unsafe fn mpColl_LeftWall_inline3(mut line_id: i32, mut arr: *mut i32) {
 
 /// `mpColl_80043268`
 pub unsafe fn mpColl_80043268(mut coll: *mut CollData, mut line_id: i32, mut arg2: i32, mut dy: f32) {
+    melee_core::ct!("mpColl_80043268");
     let mut joint_id: i32 = 0;
     joint_id = super::mplib::mpJointFromLine(line_id);
     if joint_id != (-1_i32) {
@@ -755,6 +770,7 @@ unsafe fn mpCollEnd_inline(mut coll: *mut CollData, mut line_id: i32, mut arg2: 
 
 /// `mpCollEnd`
 pub unsafe fn mpCollEnd(mut coll: *mut CollData, mut arg1: i32, mut arg2: i32) {
+    melee_core::ct!("mpCollEnd");
     if (*coll).floor.index != (-1_i32) {
         let mut temp_r3: i32 = ext::grDynamicAttr_801CA284(core::ptr::addr_of_mut!((*coll).cur_pos) as *mut Vec, (*coll).floor.index);
         if temp_r3 != 0 {
@@ -785,6 +801,7 @@ pub unsafe fn mpCollEnd(mut coll: *mut CollData, mut arg1: i32, mut arg2: i32) {
 
 /// `mpColl_80043558`
 pub unsafe fn mpColl_80043558(mut coll: *mut CollData, mut line_id: i32) {
+    melee_core::ct!("mpColl_80043558");
     let mut kind: i32 = 0;
     let mut joint_id: i32 = 0;
     kind = super::mplib::mpLineGetKind(line_id);
@@ -813,11 +830,13 @@ pub unsafe fn mpColl_80043558(mut coll: *mut CollData, mut line_id: i32) {
 
 /// `mpColl_80043670`
 pub unsafe fn mpColl_80043670(mut coll: *mut CollData) {
+    melee_core::ct!("mpColl_80043670");
     (*coll).x130_flags = (*coll).x130_flags | ((CollData_X130_Clear as i32) as u32);
 }
 
 /// `mpColl_80043680`
 pub unsafe fn mpColl_80043680(mut coll: *mut CollData, mut arg1: *mut Vec) {
+    melee_core::ct!("mpColl_80043680");
     (*coll).cur_pos = *arg1;
     (*coll).prev_pos = (*coll).cur_pos;
     (*coll).last_pos = (*coll).prev_pos;
@@ -826,11 +845,13 @@ pub unsafe fn mpColl_80043680(mut coll: *mut CollData, mut arg1: *mut Vec) {
 
 /// `mpCollSetFacingDir`
 pub unsafe fn mpCollSetFacingDir(mut coll: *mut CollData, mut facing_dir: i32) {
+    melee_core::ct!("mpCollSetFacingDir");
     (*coll).facing_dir = facing_dir as i16;
 }
 
 /// `mpColl_800436E4`
 pub unsafe fn mpColl_800436E4(mut coll: *mut CollData, mut arg1: f32) {
+    melee_core::ct!("mpColl_800436E4");
     let mut var_f1: f32 = 0.0;
     var_f1 = arg1;
     if (*coll).ecb_source.kind == ((ECBSource_Fixed as i32) as u32) {
@@ -854,6 +875,7 @@ unsafe fn max_inline(mut a: f32, mut b: f32) -> f32 {
 
 /// `mpColl_80043754`
 pub unsafe fn mpColl_80043754(mut cb: Option<unsafe extern "C" fn(*mut CollData, u32) -> i32>, mut coll: *mut CollData, mut flags: u32) -> i32 {
+    melee_core::ct!("mpColl_80043754");
     let mut vel: Vec3 = unsafe { core::mem::zeroed() };
     let mut __: [u8; 4] = [0; 4];
     let mut dist_right_x: f32 = 0.0;
@@ -916,6 +938,7 @@ pub unsafe fn mpColl_80043754(mut cb: Option<unsafe extern "C" fn(*mut CollData,
 
 /// `mpColl_800439FC`
 pub unsafe fn mpColl_800439FC(mut coll: *mut CollData) {
+    melee_core::ct!("mpColl_800439FC");
     let mut right_dx: f32 = 0.0;
     let mut f1: f32 = 0.0;
     let mut f2: f32 = 0.0;
@@ -942,6 +965,7 @@ pub unsafe fn mpColl_800439FC(mut coll: *mut CollData) {
 
 /// `mpColl_80043ADC`
 pub unsafe fn mpColl_80043ADC(mut coll: *mut CollData) {
+    melee_core::ct!("mpColl_80043ADC");
     let mut left_dx: f32 = 0.0;
     let mut f1: f32 = 0.0;
     let mut f2: f32 = 0.0;
@@ -968,6 +992,7 @@ pub unsafe fn mpColl_80043ADC(mut coll: *mut CollData) {
 
 /// `mpColl_80043BBC`
 pub unsafe fn mpColl_80043BBC(mut coll: *mut CollData, mut line_id_out: *mut i32) -> i32 {
+    melee_core::ct!("mpColl_80043BBC");
     let mut line_id: i32 = super::mplib::mpLinePrevNonFloor((*coll).floor.index);
     let mut bottom_x: f32 = (*coll).cur_pos.x + (*coll).ecb.bottom.x;
     let mut bottom_y: f32 = (*coll).cur_pos.y + (*coll).ecb.bottom.y;
@@ -983,6 +1008,7 @@ pub unsafe fn mpColl_80043BBC(mut coll: *mut CollData, mut line_id_out: *mut i32
 
 /// `mpColl_80043C6C`
 pub unsafe fn mpColl_80043C6C(mut coll: *mut CollData, mut line_id: i32, mut ignore_bottom: i32) {
+    melee_core::ct!("mpColl_80043C6C");
     let mut f1: f32 = 0.0;
     let mut f2: f32 = 0.0;
     let mut y: f32 = 0.0;
@@ -1030,6 +1056,7 @@ pub unsafe fn mpColl_80043C6C(mut coll: *mut CollData, mut line_id: i32, mut ign
 
 /// `mpColl_80043E90`
 pub unsafe fn mpColl_80043E90(mut coll: *mut CollData, mut line_id_out: *mut i32) -> i32 {
+    melee_core::ct!("mpColl_80043E90");
     let mut line_id: i32 = super::mplib::mpLineNextNonFloor((*coll).floor.index);
     let mut bottom_x: f32 = (*coll).cur_pos.x + (*coll).ecb.bottom.x;
     let mut bottom_y: f32 = (*coll).cur_pos.y + (*coll).ecb.bottom.y;
@@ -1045,6 +1072,7 @@ pub unsafe fn mpColl_80043E90(mut coll: *mut CollData, mut line_id_out: *mut i32
 
 /// `mpColl_80043F40`
 pub unsafe fn mpColl_80043F40(mut coll: *mut CollData, mut line_id: i32, mut ignore_bottom: i32) {
+    melee_core::ct!("mpColl_80043F40");
     let mut f1: f32 = 0.0;
     let mut f2: f32 = 0.0;
     let mut y: f32 = 0.0;
@@ -1092,6 +1120,7 @@ pub unsafe fn mpColl_80043F40(mut coll: *mut CollData, mut line_id: i32, mut ign
 
 /// `mpColl_80044164`
 pub unsafe fn mpColl_80044164(mut cd: *mut CollData, mut p_ledge_id: *mut i32) -> i32 {
+    melee_core::ct!("mpColl_80044164");
     let mut left: f32 = 0.0;
     let mut bottom: f32 = 0.0;
     let mut right: f32 = 0.0;
@@ -1140,6 +1169,7 @@ pub unsafe fn mpColl_80044164(mut cd: *mut CollData, mut p_ledge_id: *mut i32) -
 
 /// `mpColl_800443C4`
 pub unsafe fn mpColl_800443C4(mut cd: *mut CollData, mut p_ledge_id: *mut i32) -> i32 {
+    melee_core::ct!("mpColl_800443C4");
     let mut left: f32 = 0.0;
     let mut bottom: f32 = 0.0;
     let mut right: f32 = 0.0;
@@ -1189,6 +1219,7 @@ pub unsafe fn mpColl_800443C4(mut cd: *mut CollData, mut p_ledge_id: *mut i32) -
 
 /// `mpColl_80044628_Floor`
 pub unsafe fn mpColl_80044628_Floor(mut coll: *mut CollData, mut cb: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> i32>, mut gobj: *mut HSD_GObj, mut left_right: i32) -> i32 {
+    melee_core::ct!("mpColl_80044628_Floor");
     let mut y: f32 = 0.0;
     let mut bottom: Vec3 = unsafe { core::mem::zeroed() };
     let mut prev_bottom: Vec3 = unsafe { core::mem::zeroed() };
@@ -1229,6 +1260,7 @@ pub unsafe fn mpColl_80044628_Floor(mut coll: *mut CollData, mut cb: Option<unsa
 
 /// `mpColl_80044838_Floor`
 pub unsafe fn mpColl_80044838_Floor(mut coll: *mut CollData, mut ignore_bottom: i32) -> i32 {
+    melee_core::ct!("mpColl_80044838_Floor");
     let mut bottom: Vec3 = unsafe { core::mem::zeroed() };
     let mut y: f32 = 0.0;
     let mut edge: Vec3 = unsafe { core::mem::zeroed() };
@@ -1261,6 +1293,7 @@ pub unsafe fn mpColl_80044838_Floor(mut coll: *mut CollData, mut ignore_bottom: 
 
 /// `mpColl_80044948_Floor`
 pub unsafe fn mpColl_80044948_Floor(mut coll: *mut CollData) -> i32 {
+    melee_core::ct!("mpColl_80044948_Floor");
     let mut bottom: Vec3 = unsafe { core::mem::zeroed() };
     let mut y: f32 = 0.0;
     let mut edge: Vec3 = unsafe { core::mem::zeroed() };
@@ -1309,6 +1342,7 @@ pub unsafe fn mpColl_80044948_Floor(mut coll: *mut CollData) -> i32 {
 
 /// `mpColl_80044AD8_Ceiling`
 pub unsafe fn mpColl_80044AD8_Ceiling(mut coll: *mut CollData, mut left_right: i32) -> i32 {
+    melee_core::ct!("mpColl_80044AD8_Ceiling");
     let mut y: f32 = 0.0;
     let mut top: Vec3 = unsafe { core::mem::zeroed() };
     let mut prev_top: Vec3 = unsafe { core::mem::zeroed() };
@@ -1342,6 +1376,7 @@ pub unsafe fn mpColl_80044AD8_Ceiling(mut coll: *mut CollData, mut left_right: i
 
 /// `mpColl_80044C74_Ceiling`
 pub unsafe fn mpColl_80044C74_Ceiling(mut coll: *mut CollData) -> i32 {
+    melee_core::ct!("mpColl_80044C74_Ceiling");
     let mut top: Vec3 = unsafe { core::mem::zeroed() };
     let mut y: f32 = 0.0;
     let mut ceiling_end: Vec3 = unsafe { core::mem::zeroed() };
@@ -1392,6 +1427,7 @@ unsafe fn mpColl_RightWall_inline2(mut coll: *mut CollData, mut ax: f32, mut ay:
 
 /// `mpColl_80044E10_RightWall`
 pub unsafe fn mpColl_80044E10_RightWall(mut coll: *mut CollData) -> i32 {
+    melee_core::ct!("mpColl_80044E10_RightWall");
     let mut line_id: i32 = 0;
     let mut left_x: f32 = 0.0;
     let mut left_y: f32 = 0.0;
@@ -1471,6 +1507,7 @@ pub unsafe fn mpColl_80044E10_RightWall(mut coll: *mut CollData) -> i32 {
 
 /// `mpColl_800454A4_RightWall`
 pub unsafe fn mpColl_800454A4_RightWall(mut coll: *mut CollData) -> i32 {
+    melee_core::ct!("mpColl_800454A4_RightWall");
     let mut flags: u32 = 0;
     let mut pos: Vec3 = unsafe { core::mem::zeroed() };
     let mut normal: Vec3 = unsafe { core::mem::zeroed() };
@@ -1662,6 +1699,7 @@ unsafe fn mpColl_LeftWall_inline2(mut coll: *mut CollData, mut ax: f32, mut ay: 
 
 /// `mpColl_80045B74_LeftWall`
 pub unsafe fn mpColl_80045B74_LeftWall(mut coll: *mut CollData) -> i32 {
+    melee_core::ct!("mpColl_80045B74_LeftWall");
     let mut line_id: i32 = 0;
     let mut right_x: f32 = 0.0;
     let mut right_y: f32 = 0.0;
@@ -1741,6 +1779,7 @@ pub unsafe fn mpColl_80045B74_LeftWall(mut coll: *mut CollData) -> i32 {
 
 /// `mpColl_80046224_LeftWall`
 pub unsafe fn mpColl_80046224_LeftWall(mut coll: *mut CollData) -> i32 {
+    melee_core::ct!("mpColl_80046224_LeftWall");
     let mut flags: u32 = 0;
     let mut pos: Vec3 = unsafe { core::mem::zeroed() };
     let mut normal: Vec3 = unsafe { core::mem::zeroed() };
@@ -1974,6 +2013,7 @@ unsafe fn mpCollFloorInline(mut coll: *mut CollData, mut ecb_unlocked: i32, mut 
 
 /// `mpColl_80046904`
 pub unsafe extern "C" fn mpColl_80046904(mut coll: *mut CollData, mut flags: u32) -> i32 {
+    melee_core::ct!("mpColl_80046904");
     let mut prev_b6: i32 = 0;
     let mut squeeze_flags: i32 = 0;
     let mut old_squeeze_flags: i32 = 0;
@@ -2149,6 +2189,7 @@ unsafe fn mpColl_80046F78_inline(mut coll: *mut CollData, mut line_id_out: *mut 
 
 /// `mpColl_80046F78`
 pub unsafe extern "C" fn mpColl_80046F78(mut coll: *mut CollData, mut __: u32) -> i32 {
+    melee_core::ct!("mpColl_80046F78");
     let mut line_id: i32 = 0;
     let mut y: f32 = 0.0;
     if mpColl_80046F78_inline(coll, core::ptr::addr_of_mut!(line_id) as *mut i32) != 0 {
@@ -2283,6 +2324,7 @@ unsafe fn inline1(mut coll: *mut CollData, mut i: i32, mut floor_cb: Option<unsa
 
 /// `mpColl_800471F8`
 pub unsafe fn mpColl_800471F8(mut coll: *mut CollData) -> i32 {
+    melee_core::ct!("mpColl_800471F8");
     mpCollPrev(coll);
     mpColl_LoadECB_inline(coll, 6);
     return inline0(coll, 0, 1);
@@ -2290,6 +2332,7 @@ pub unsafe fn mpColl_800471F8(mut coll: *mut CollData) -> i32 {
 
 /// `mpColl_8004730C`
 pub unsafe fn mpColl_8004730C(mut coll: *mut CollData, mut arg1: *mut ftCollisionBox) -> i32 {
+    melee_core::ct!("mpColl_8004730C");
     mpCollPrev(coll);
     mpColl_80042C58(coll, arg1);
     return inline0(coll, 0, 1);
@@ -2297,6 +2340,7 @@ pub unsafe fn mpColl_8004730C(mut coll: *mut CollData, mut arg1: *mut ftCollisio
 
 /// `mpColl_800473CC`
 pub unsafe fn mpColl_800473CC(mut coll: *mut CollData) -> i32 {
+    melee_core::ct!("mpColl_800473CC");
     mpCollPrev(coll);
     mpColl_LoadECB_inline(coll, 6);
     return inline0(coll, 4, 1);
@@ -2304,6 +2348,7 @@ pub unsafe fn mpColl_800473CC(mut coll: *mut CollData) -> i32 {
 
 /// `mpColl_800474E0`
 pub unsafe fn mpColl_800474E0(mut coll: *mut CollData) -> i32 {
+    melee_core::ct!("mpColl_800474E0");
     mpCollPrev(coll);
     mpColl_LoadECB_inline(coll, 5);
     return inline0(coll, 4, 1);
@@ -2311,6 +2356,7 @@ pub unsafe fn mpColl_800474E0(mut coll: *mut CollData) -> i32 {
 
 /// `mpColl_800475F4`
 pub unsafe fn mpColl_800475F4(mut coll: *mut CollData, mut arg1: *mut ftCollisionBox) -> i32 {
+    melee_core::ct!("mpColl_800475F4");
     mpCollPrev(coll);
     mpColl_80042C58(coll, arg1);
     return inline0(coll, 4, 1);
@@ -2318,6 +2364,7 @@ pub unsafe fn mpColl_800475F4(mut coll: *mut CollData, mut arg1: *mut ftCollisio
 
 /// `mpColl_800476B4`
 pub unsafe fn mpColl_800476B4(mut coll: *mut CollData, mut arg1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> i32>, mut gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("mpColl_800476B4");
     mpCollPrev(coll);
     mpColl_LoadECB_inline(coll, 6);
     return inline1(coll, 3, arg1, gobj);
@@ -2325,6 +2372,7 @@ pub unsafe fn mpColl_800476B4(mut coll: *mut CollData, mut arg1: Option<unsafe e
 
 /// `mpColl_800477E0`
 pub unsafe fn mpColl_800477E0(mut coll: *mut CollData) -> i32 {
+    melee_core::ct!("mpColl_800477E0");
     mpCollPrev(coll);
     mpColl_LoadECB_inline(coll, 6);
     return inline0(coll, 1, 1);
@@ -2332,6 +2380,7 @@ pub unsafe fn mpColl_800477E0(mut coll: *mut CollData) -> i32 {
 
 /// `mpColl_800478F4`
 pub unsafe fn mpColl_800478F4(mut coll: *mut CollData) -> i32 {
+    melee_core::ct!("mpColl_800478F4");
     mpCollPrev(coll);
     mpColl_LoadECB_inline(coll, 5);
     return inline0(coll, 1, 1);
@@ -2339,6 +2388,7 @@ pub unsafe fn mpColl_800478F4(mut coll: *mut CollData) -> i32 {
 
 /// `mpColl_80047A08`
 pub unsafe fn mpColl_80047A08(mut coll: *mut CollData, mut arg1: *mut ftCollisionBox) -> i32 {
+    melee_core::ct!("mpColl_80047A08");
     mpCollPrev(coll);
     mpColl_80042C58(coll, arg1);
     return inline0(coll, 1, 1);
@@ -2346,6 +2396,7 @@ pub unsafe fn mpColl_80047A08(mut coll: *mut CollData, mut arg1: *mut ftCollisio
 
 /// `mpColl_80047AC8`
 pub unsafe fn mpColl_80047AC8(mut coll: *mut CollData, mut arg1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> i32>, mut arg2: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("mpColl_80047AC8");
     mpCollPrev(coll);
     mpColl_LoadECB_inline(coll, 6);
     return inline1(coll, 2, arg1, arg2);
@@ -2353,6 +2404,7 @@ pub unsafe fn mpColl_80047AC8(mut coll: *mut CollData, mut arg1: Option<unsafe e
 
 /// `mpColl_80047BF4`
 pub unsafe fn mpColl_80047BF4(mut coll: *mut CollData, mut arg1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> i32>, mut arg2: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("mpColl_80047BF4");
     mpCollPrev(coll);
     mpColl_LoadECB_inline(coll, 10);
     return inline1(coll, 2, arg1, arg2);
@@ -2360,6 +2412,7 @@ pub unsafe fn mpColl_80047BF4(mut coll: *mut CollData, mut arg1: Option<unsafe e
 
 /// `mpColl_80047D20`
 pub unsafe fn mpColl_80047D20(mut coll: *mut CollData, mut arg1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> i32>, mut arg2: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("mpColl_80047D20");
     mpCollPrev(coll);
     if (*coll).ecb_source.kind == ((ECBSource_JObj as i32) as u32) {
         mpColl_LoadECB_JObj(coll, 18 as u32);
@@ -2372,6 +2425,7 @@ pub unsafe fn mpColl_80047D20(mut coll: *mut CollData, mut arg1: Option<unsafe e
 
 /// `mpColl_80047E14`
 pub unsafe fn mpColl_80047E14(mut coll: *mut CollData, mut arg1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> i32>, mut arg2: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("mpColl_80047E14");
     mpCollPrev(coll);
     mpColl_LoadECB_inline(coll, 6);
     return inline1(coll, 6, arg1, arg2);
@@ -2379,6 +2433,7 @@ pub unsafe fn mpColl_80047E14(mut coll: *mut CollData, mut arg1: Option<unsafe e
 
 /// `mpColl_80047F40`
 pub unsafe fn mpColl_80047F40(mut coll: *mut CollData, mut arg1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> i32>, mut arg2: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("mpColl_80047F40");
     mpCollPrev(coll);
     mpColl_LoadECB_inline(coll, 10);
     return inline1(coll, 6, arg1, arg2);
@@ -2386,6 +2441,7 @@ pub unsafe fn mpColl_80047F40(mut coll: *mut CollData, mut arg1: Option<unsafe e
 
 /// `mpColl_8004806C`
 pub unsafe fn mpColl_8004806C(mut coll: *mut CollData, mut arg1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> i32>, mut arg2: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("mpColl_8004806C");
     mpCollPrev(coll);
     if (*coll).ecb_source.kind == ((ECBSource_JObj as i32) as u32) {
         mpColl_LoadECB_JObj(coll, 18 as u32);
@@ -2398,6 +2454,7 @@ pub unsafe fn mpColl_8004806C(mut coll: *mut CollData, mut arg1: Option<unsafe e
 
 /// `mpColl_80048160`
 pub unsafe fn mpColl_80048160(mut coll: *mut CollData) -> i32 {
+    melee_core::ct!("mpColl_80048160");
     mpCollPrev(coll);
     mpColl_LoadECB_inline(coll, 10);
     return inline0(coll, 0, 1);
@@ -2405,6 +2462,7 @@ pub unsafe fn mpColl_80048160(mut coll: *mut CollData) -> i32 {
 
 /// `mpColl_80048274`
 pub unsafe fn mpColl_80048274(mut coll: *mut CollData) -> i32 {
+    melee_core::ct!("mpColl_80048274");
     mpCollPrev(coll);
     mpColl_LoadECB_inline(coll, 10);
     return inline0(coll, 1, 1);
@@ -2412,6 +2470,7 @@ pub unsafe fn mpColl_80048274(mut coll: *mut CollData) -> i32 {
 
 /// `mpColl_80048388`
 pub unsafe fn mpColl_80048388(mut coll: *mut CollData) -> i32 {
+    melee_core::ct!("mpColl_80048388");
     mpCollPrev(coll);
     if (*coll).ecb_source.kind == ((ECBSource_JObj as i32) as u32) {
         mpColl_LoadECB_JObj(coll, 18 as u32);
@@ -2424,6 +2483,7 @@ pub unsafe fn mpColl_80048388(mut coll: *mut CollData) -> i32 {
 
 /// `mpColl_80048464`
 pub unsafe fn mpColl_80048464(mut coll: *mut CollData) -> i32 {
+    melee_core::ct!("mpColl_80048464");
     mpCollPrev(coll);
     mpColl_LoadECB_inline(coll, 10);
     return inline0(coll, 4, 1);
@@ -2431,6 +2491,7 @@ pub unsafe fn mpColl_80048464(mut coll: *mut CollData) -> i32 {
 
 /// `mpColl_80048578`
 pub unsafe fn mpColl_80048578(mut coll: *mut CollData) -> i32 {
+    melee_core::ct!("mpColl_80048578");
     mpCollPrev(coll);
     if (*coll).ecb_source.kind == ((ECBSource_JObj as i32) as u32) {
         mpColl_LoadECB_JObj(coll, 18 as u32);
@@ -2443,6 +2504,7 @@ pub unsafe fn mpColl_80048578(mut coll: *mut CollData) -> i32 {
 
 /// `mpColl_80048654`
 pub unsafe fn mpColl_80048654(mut coll: *mut CollData) -> i32 {
+    melee_core::ct!("mpColl_80048654");
     mpCollPrev(coll);
     mpColl_LoadECB_inline(coll, 5);
     return inline0(coll, 0, 1);
@@ -2450,6 +2512,7 @@ pub unsafe fn mpColl_80048654(mut coll: *mut CollData) -> i32 {
 
 /// `mpColl_80048768`
 pub unsafe fn mpColl_80048768(mut coll: *mut CollData) -> i32 {
+    melee_core::ct!("mpColl_80048768");
     mpCollPrev(coll);
     if (*coll).ecb_source.kind == ((ECBSource_JObj as i32) as u32) {
         mpColl_LoadECB_JObj(coll, 18 as u32);
@@ -2462,12 +2525,14 @@ pub unsafe fn mpColl_80048768(mut coll: *mut CollData) -> i32 {
 
 /// `mpColl_80048844`
 pub unsafe fn mpColl_80048844(mut coll: *mut CollData) -> i32 {
+    melee_core::ct!("mpColl_80048844");
     mpCollPrev(coll);
     return inline4(coll, 0);
 }
 
 /// `mpColl_800488F4`
 pub unsafe fn mpColl_800488F4(mut coll: *mut CollData) -> i32 {
+    melee_core::ct!("mpColl_800488F4");
     let mut bottom: Vec3 = unsafe { core::mem::zeroed() };
     let mut __: [u8; 12] = [0; 12];
     let mut y: f32 = 0.0;
@@ -2516,6 +2581,7 @@ pub unsafe fn mpColl_800488F4(mut coll: *mut CollData) -> i32 {
 
 /// `mpColl_80048AB0_RightWall`
 pub unsafe fn mpColl_80048AB0_RightWall(mut coll: *mut CollData) -> i32 {
+    melee_core::ct!("mpColl_80048AB0_RightWall");
     let mut line_id: i32 = 0;
     let mut left_x: f32 = 0.0;
     let mut left_y: f32 = 0.0;
@@ -2607,6 +2673,7 @@ pub unsafe fn mpColl_80048AB0_RightWall(mut coll: *mut CollData) -> i32 {
 
 /// `mpColl_800491C8_RightWall`
 pub unsafe fn mpColl_800491C8_RightWall(mut coll: *mut CollData) -> i32 {
+    melee_core::ct!("mpColl_800491C8_RightWall");
     let mut flags: u32 = 0;
     let mut pos: Vec3 = unsafe { core::mem::zeroed() };
     let mut normal: Vec3 = unsafe { core::mem::zeroed() };
@@ -2768,6 +2835,7 @@ pub unsafe fn mpColl_800491C8_RightWall(mut coll: *mut CollData) -> i32 {
 
 /// `mpColl_80049778_LeftWall`
 pub unsafe fn mpColl_80049778_LeftWall(mut coll: *mut CollData) -> i32 {
+    melee_core::ct!("mpColl_80049778_LeftWall");
     let mut line_id: i32 = 0;
     let mut right_x: f32 = 0.0;
     let mut right_y: f32 = 0.0;
@@ -2859,6 +2927,7 @@ pub unsafe fn mpColl_80049778_LeftWall(mut coll: *mut CollData) -> i32 {
 
 /// `mpColl_80049EAC_LeftWall`
 pub unsafe fn mpColl_80049EAC_LeftWall(mut coll: *mut CollData) -> i32 {
+    melee_core::ct!("mpColl_80049EAC_LeftWall");
     let mut flags: u32 = 0;
     let mut pos: Vec3 = unsafe { core::mem::zeroed() };
     let mut normal: Vec3 = unsafe { core::mem::zeroed() };
@@ -3021,6 +3090,7 @@ pub unsafe fn mpColl_80049EAC_LeftWall(mut coll: *mut CollData) -> i32 {
 
 /// `mpColl_8004A45C_Floor`
 pub unsafe fn mpColl_8004A45C_Floor(mut coll: *mut CollData, mut line_id: i32) -> i32 {
+    melee_core::ct!("mpColl_8004A45C_Floor");
     let mut flags: u32 = 0;
     let mut y: f32 = 0.0;
     let mut normal: Vec3 = unsafe { core::mem::zeroed() };
@@ -3078,6 +3148,7 @@ pub unsafe fn mpColl_8004A45C_Floor(mut coll: *mut CollData, mut line_id: i32) -
 
 /// `mpColl_8004A678_Floor`
 pub unsafe fn mpColl_8004A678_Floor(mut coll: *mut CollData, mut line_id: i32) -> i32 {
+    melee_core::ct!("mpColl_8004A678_Floor");
     let mut flags: u32 = 0;
     let mut y: f32 = 0.0;
     let mut normal: Vec3 = unsafe { core::mem::zeroed() };
@@ -3141,6 +3212,7 @@ pub unsafe fn mpColl_8004A678_Floor(mut coll: *mut CollData, mut line_id: i32) -
 
 /// `mpColl_8004A908_Floor`
 pub unsafe fn mpColl_8004A908_Floor(mut coll: *mut CollData, mut line_id: i32) -> i32 {
+    melee_core::ct!("mpColl_8004A908_Floor");
     let mut floor_id: i32 = 0;
     let mut flags: u32 = 0;
     let mut normal: Vec3 = unsafe { core::mem::zeroed() };
@@ -3181,6 +3253,7 @@ pub unsafe fn mpColl_8004A908_Floor(mut coll: *mut CollData, mut line_id: i32) -
 
 /// `mpColl_8004AB80`
 pub unsafe fn mpColl_8004AB80(mut coll: *mut CollData) -> i32 {
+    melee_core::ct!("mpColl_8004AB80");
     let mut top: Vec3 = unsafe { core::mem::zeroed() };
     let mut y: f32 = 0.0;
     let mut ceiling_end: Vec3 = unsafe { core::mem::zeroed() };
@@ -3225,6 +3298,7 @@ pub unsafe fn mpColl_8004AB80(mut coll: *mut CollData) -> i32 {
 
 /// `mpColl_8004ACE4`
 pub unsafe extern "C" fn mpColl_8004ACE4(mut coll: *mut CollData, mut flags: i32) -> i32 {
+    melee_core::ct!("mpColl_8004ACE4");
     let mut touching_floor: i32 = 0;
     let mut left_right: u32 = 0;
     let mut prev_b6: i32 = 0;
@@ -3359,6 +3433,7 @@ pub unsafe extern "C" fn mpColl_8004ACE4(mut coll: *mut CollData, mut flags: i32
 
 /// `mpColl_8004B108`
 pub unsafe fn mpColl_8004B108(mut coll: *mut CollData) -> i32 {
+    melee_core::ct!("mpColl_8004B108");
     mpCollPrev(coll);
     mpColl_LoadECB_inline(coll, 5);
     return inline2(coll, 0);
@@ -3366,6 +3441,7 @@ pub unsafe fn mpColl_8004B108(mut coll: *mut CollData) -> i32 {
 
 /// `mpColl_8004B21C`
 pub unsafe fn mpColl_8004B21C(mut coll: *mut CollData, mut arg1: *mut ftCollisionBox) -> i32 {
+    melee_core::ct!("mpColl_8004B21C");
     mpCollPrev(coll);
     mpColl_80042C58(coll, arg1);
     return inline2(coll, 0);
@@ -3373,6 +3449,7 @@ pub unsafe fn mpColl_8004B21C(mut coll: *mut CollData, mut arg1: *mut ftCollisio
 
 /// `mpColl_8004B2DC`
 pub unsafe fn mpColl_8004B2DC(mut coll: *mut CollData) -> i32 {
+    melee_core::ct!("mpColl_8004B2DC");
     mpCollPrev(coll);
     mpColl_LoadECB_inline(coll, 5);
     return inline2(coll, 2);
@@ -3380,6 +3457,7 @@ pub unsafe fn mpColl_8004B2DC(mut coll: *mut CollData) -> i32 {
 
 /// `mpColl_8004B3F0`
 pub unsafe fn mpColl_8004B3F0(mut coll: *mut CollData, mut arg1: *mut ftCollisionBox) -> i32 {
+    melee_core::ct!("mpColl_8004B3F0");
     mpCollPrev(coll);
     mpColl_80042C58(coll, arg1);
     return inline2(coll, 2);
@@ -3387,6 +3465,7 @@ pub unsafe fn mpColl_8004B3F0(mut coll: *mut CollData, mut arg1: *mut ftCollisio
 
 /// `mpColl_8004B4B0`
 pub unsafe fn mpColl_8004B4B0(mut coll: *mut CollData) -> i32 {
+    melee_core::ct!("mpColl_8004B4B0");
     mpCollPrev(coll);
     mpColl_LoadECB_inline(coll, 5);
     return inline2(coll, 1);
@@ -3394,6 +3473,7 @@ pub unsafe fn mpColl_8004B4B0(mut coll: *mut CollData) -> i32 {
 
 /// `mpColl_8004B5C4`
 pub unsafe fn mpColl_8004B5C4(mut coll: *mut CollData) -> i32 {
+    melee_core::ct!("mpColl_8004B5C4");
     mpCollPrev(coll);
     mpColl_LoadECB_inline(coll, 9);
     return inline2(coll, 1);
@@ -3401,6 +3481,7 @@ pub unsafe fn mpColl_8004B5C4(mut coll: *mut CollData) -> i32 {
 
 /// `mpColl_8004B6D8`
 pub unsafe fn mpColl_8004B6D8(mut coll: *mut CollData) -> i32 {
+    melee_core::ct!("mpColl_8004B6D8");
     let mut top: Vec3 = unsafe { core::mem::zeroed() };
     let mut __: [u8; 12] = [0; 12];
     let mut y: f32 = 0.0;
@@ -3449,6 +3530,7 @@ pub unsafe fn mpColl_8004B6D8(mut coll: *mut CollData) -> i32 {
 
 /// `mpColl_8004B894_RightWall`
 pub unsafe fn mpColl_8004B894_RightWall(mut coll: *mut CollData) -> i32 {
+    melee_core::ct!("mpColl_8004B894_RightWall");
     let mut line_id: i32 = 0;
     let mut left_x: f32 = 0.0;
     let mut left_y: f32 = 0.0;
@@ -3522,6 +3604,7 @@ pub unsafe fn mpColl_8004B894_RightWall(mut coll: *mut CollData) -> i32 {
 
 /// `mpColl_8004BDD4_LeftWall`
 pub unsafe fn mpColl_8004BDD4_LeftWall(mut coll: *mut CollData) -> i32 {
+    melee_core::ct!("mpColl_8004BDD4_LeftWall");
     let mut line_id: i32 = 0;
     let mut right_x: f32 = 0.0;
     let mut right_y: f32 = 0.0;
@@ -3595,6 +3678,7 @@ pub unsafe fn mpColl_8004BDD4_LeftWall(mut coll: *mut CollData) -> i32 {
 
 /// `mpColl_8004C328_Ceiling`
 pub unsafe fn mpColl_8004C328_Ceiling(mut coll: *mut CollData, mut line_id: i32) -> i32 {
+    melee_core::ct!("mpColl_8004C328_Ceiling");
     let mut flags: u32 = 0;
     let mut y: f32 = 0.0;
     let mut normal: Vec3 = unsafe { core::mem::zeroed() };
@@ -3646,6 +3730,7 @@ pub unsafe fn mpColl_8004C328_Ceiling(mut coll: *mut CollData, mut line_id: i32)
 
 /// `mpColl_8004C534`
 pub unsafe extern "C" fn mpColl_8004C534(mut coll: *mut CollData, mut flags: u32) -> i32 {
+    melee_core::ct!("mpColl_8004C534");
     let mut hit_ceiling: i32 = 0;
     if mpColl_8004BDD4_LeftWall(coll) != 0 {
         let _ = mpColl_80049EAC_LeftWall(coll);
@@ -3680,6 +3765,7 @@ pub unsafe extern "C" fn mpColl_8004C534(mut coll: *mut CollData, mut flags: u32
 
 /// `mpColl_8004C750`
 pub unsafe fn mpColl_8004C750(mut coll: *mut CollData) -> i32 {
+    melee_core::ct!("mpColl_8004C750");
     mpCollPrev(coll);
     mpColl_LoadECB_inline(coll, 5);
     return inline3(coll, 2);
@@ -3687,6 +3773,7 @@ pub unsafe fn mpColl_8004C750(mut coll: *mut CollData) -> i32 {
 
 /// `mpCollSqueezeHorizontal`
 pub unsafe fn mpCollSqueezeHorizontal(mut coll: *mut CollData, mut airborne: i32, mut left: f32, mut right: f32) {
+    melee_core::ct!("mpCollSqueezeHorizontal");
     let mut half_width: f32 = 0.5f32 * (((right - left) + (*coll).ecb.right.x) - (*coll).ecb.left.x);
     if !((*coll).x34_flags.b6() != 0) {
         (*coll).x64_ecb = (*coll).ecb;
@@ -3702,6 +3789,7 @@ pub unsafe fn mpCollSqueezeHorizontal(mut coll: *mut CollData, mut airborne: i32
 
 /// `mpCollSqueezeVertical`
 pub unsafe fn mpCollSqueezeVertical(mut coll: *mut CollData, mut airborne: i32, mut top: f32, mut bottom: f32) {
+    melee_core::ct!("mpCollSqueezeVertical");
     let mut height: f32 = ((top - bottom) + (*coll).ecb.top.y) - (*coll).ecb.bottom.y;
     let mut mid_y: f32 = 0.0;
     if !((*coll).x34_flags.b6() != 0) {
@@ -3734,6 +3822,7 @@ pub unsafe fn mpCollSqueezeVertical(mut coll: *mut CollData, mut airborne: i32, 
 
 /// `mpColl_8004CA6C`
 pub unsafe fn mpColl_8004CA6C(mut coll: *mut CollData) -> f32 {
+    melee_core::ct!("mpColl_8004CA6C");
     let mut result: f32 = 1.0f32;
     if (*coll).floor.index != (-1_i32) {
         result = super::mplib::mpLib_800569EC((*coll).floor.flags);
@@ -3743,6 +3832,7 @@ pub unsafe fn mpColl_8004CA6C(mut coll: *mut CollData) -> f32 {
 
 /// `mpCollGetSpeedCeiling`
 pub unsafe fn mpCollGetSpeedCeiling(mut coll: *mut CollData, mut speed: *mut Vec) -> i32 {
+    melee_core::ct!("mpCollGetSpeedCeiling");
     let mut index: i32 = (*coll).ceiling.index;
     let mut top: Vec3 = unsafe { core::mem::zeroed() };
     top.x = (*coll).ecb.top.x;
@@ -3753,6 +3843,7 @@ pub unsafe fn mpCollGetSpeedCeiling(mut coll: *mut CollData, mut speed: *mut Vec
 
 /// `mpCollGetSpeedLeftWall`
 pub unsafe fn mpCollGetSpeedLeftWall(mut coll: *mut CollData, mut speed: *mut Vec) -> i32 {
+    melee_core::ct!("mpCollGetSpeedLeftWall");
     let mut index: i32 = (*coll).left_facing_wall.index;
     let mut top: Vec3 = unsafe { core::mem::zeroed() };
     top.x = (*coll).ecb.top.x;
@@ -3763,6 +3854,7 @@ pub unsafe fn mpCollGetSpeedLeftWall(mut coll: *mut CollData, mut speed: *mut Ve
 
 /// `mpCollGetSpeedRightWall`
 pub unsafe fn mpCollGetSpeedRightWall(mut coll: *mut CollData, mut speed: *mut Vec) -> i32 {
+    melee_core::ct!("mpCollGetSpeedRightWall");
     let mut index: i32 = (*coll).right_facing_wall.index;
     let mut top: Vec3 = unsafe { core::mem::zeroed() };
     top.x = (*coll).ecb.top.x;
@@ -3773,6 +3865,7 @@ pub unsafe fn mpCollGetSpeedRightWall(mut coll: *mut CollData, mut speed: *mut V
 
 /// `mpCollGetSpeedFloor`
 pub unsafe fn mpCollGetSpeedFloor(mut coll: *mut CollData, mut speed: *mut Vec) -> i32 {
+    melee_core::ct!("mpCollGetSpeedFloor");
     let mut index: i32 = (*coll).floor.index;
     let mut top: Vec3 = unsafe { core::mem::zeroed() };
     top.x = (*coll).ecb.top.x;
@@ -3783,21 +3876,25 @@ pub unsafe fn mpCollGetSpeedFloor(mut coll: *mut CollData, mut speed: *mut Vec) 
 
 /// `mpColl_IsOnPlatform`
 pub unsafe fn mpColl_IsOnPlatform(mut coll: *mut CollData) -> i32 {
+    melee_core::ct!("mpColl_IsOnPlatform");
     return (super::mplib::mpLineGetFlags((*coll).floor.index) & ((1 << 8) as u32)) as i32;
 }
 
 /// `mpUpdateFloorSkip`
 pub unsafe fn mpUpdateFloorSkip(mut coll: *mut CollData) {
+    melee_core::ct!("mpUpdateFloorSkip");
     (*coll).floor_skip = (*coll).floor.index;
 }
 
 /// `mpClearFloorSkip`
 pub unsafe fn mpClearFloorSkip(mut coll: *mut CollData) {
+    melee_core::ct!("mpClearFloorSkip");
     (*coll).floor_skip = (-1_i32);
 }
 
 /// `mpCopyCollData`
 pub unsafe fn mpCopyCollData(mut src: *mut CollData, mut dst: *mut CollData, mut arg2: i32) {
+    melee_core::ct!("mpCopyCollData");
     if arg2 == 1 {
         (*dst).x64_ecb = (*src).x64_ecb;
         (*dst).desired_ecb = (*src).desired_ecb;
@@ -3845,6 +3942,7 @@ pub unsafe fn mpCopyCollData(mut src: *mut CollData, mut dst: *mut CollData, mut
 
 /// `mpColl_8004D024`
 pub unsafe fn mpColl_8004D024(mut arg0: *mut Vec) -> i32 {
+    melee_core::ct!("mpColl_8004D024");
     let mut spC: CollData = unsafe { core::mem::zeroed() };
     mpColl_80041EE4(core::ptr::addr_of_mut!(spC) as *mut CollData);
     spC.x34_flags.set_b1234((0 as u8) as u8);

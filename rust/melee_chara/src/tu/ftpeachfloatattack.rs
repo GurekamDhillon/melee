@@ -103,6 +103,7 @@ unsafe fn ftCheckThrowB3(fp: *mut Fighter) -> bool {
 }
 
 pub fn ftPe_8011BE80(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftPe_8011BE80");
     unsafe {
         let fp = fpp(gobj);
         if ((*fp).input.pressed_buttons & HSD_PAD_A as u32) != 0 || ext::ftCo_800DF478(fp) {
@@ -132,6 +133,7 @@ fn ftPe_8011BF34(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftPe_FloatAttackAir_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_FloatAttackAir_Anim");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).u.pe.x4 > 0.0 {
@@ -151,6 +153,7 @@ pub fn ftPe_FloatAttackAir_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftPe_FloatAttackAir_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_FloatAttackAir_IASA");
     unsafe {
         let fp = fpp(gobj);
         if !ftPe_Float_CheckContinueInput(&*fp) {
@@ -167,6 +170,7 @@ pub fn ftPe_FloatAttackAir_IASA(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftPe_FloatAttackAir_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_FloatAttackAir_Phys");
     unsafe {
         if (*fpp(gobj)).mv.pe.floatattack.x0 != 0 {
             st::ft_80084DB0(gobj);

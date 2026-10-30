@@ -37,6 +37,7 @@ pub mod ext {
 }
 
 pub fn ftDk_HeavyTurn_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_HeavyTurn_Anim");
     ext::ftCo_Turn_Anim_Inner(gobj);
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         super::ftdonkeyheavywait0::ftDk_MS_341_800DF980(gobj);
@@ -44,6 +45,7 @@ pub fn ftDk_HeavyTurn_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftDk_HeavyTurn_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_HeavyTurn_IASA");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         if (*fp).mv.dk.unk5.x0 != 0 && !ext::ftCo_80094EA4(gobj) {
@@ -56,6 +58,7 @@ pub fn ftDk_HeavyTurn_IASA(gobj: *mut HSD_GObj) {
 
 /// Re-enter the cargo turn (also the air-collision landing callback of the heavy states).
 pub fn ftDk_MS_345_800E0294(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_MS_345_800E0294");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let a = (*fp).x2CC;
@@ -69,5 +72,6 @@ pub fn ftDk_MS_345_800E0294(gobj: *mut HSD_GObj) {
 
 /// `ftDk_MS_345_800E0294` as a Fighter callback entry (what `chars::cb` points at).
 pub unsafe extern "C" fn cb_ftDk_MS_345_800E0294(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftDk_MS_345_800E0294");
     ftDk_MS_345_800E0294(g);
 }

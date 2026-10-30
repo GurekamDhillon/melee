@@ -292,6 +292,7 @@ pub static mut yakumono_param: *mut grIzumi_YakumonoParam = null_mut();
 
 /// `void* grIzumi_StageSlotParamSwap(void*)` (TARGET_PC): swap the stage-slot parameter block.
 pub unsafe fn grIzumi_StageSlotParamSwap(param: *mut c_void) -> *mut c_void {
+    melee_core::ct!("grIzumi_StageSlotParamSwap");
     let previous = yakumono_param as *mut c_void;
     yakumono_param = param as *mut grIzumi_YakumonoParam;
     previous
@@ -370,9 +371,10 @@ pub static mut ReflectCObjDesc: HSD_CameraDescPerspective = HSD_CameraDescPerspe
     aspect: 1.2173333168029785,
 };
 
-pub unsafe extern "C" fn grIzumi_801CBB84(_x: i32) {}
+pub unsafe extern "C" fn grIzumi_801CBB84(_x: i32) { melee_core::ct!("grIzumi_801CBB84");}
 
 pub unsafe extern "C" fn grIzumi_801CBB88() {
+    melee_core::ct!("grIzumi_801CBB88");
     yakumono_param = ext::Ground_GetYakumonoParam() as *mut grIzumi_YakumonoParam;
     let si = ext::stage_info();
     (*si).unk8C.set_b4(0);
@@ -386,6 +388,7 @@ pub unsafe extern "C" fn grIzumi_801CBB88() {
 }
 
 pub unsafe extern "C" fn grIzumi_OnLoad() {
+    melee_core::ct!("grIzumi_OnLoad");
     let mut gobj = *ext::HSD_GObjPLinkHead.add(HSD_GOBJ_PLINK_LIGHT as usize);
     while !gobj.is_null() {
         if (*gobj).classifier == 0xC {
@@ -409,10 +412,12 @@ unsafe fn lobj_next(lobj: *mut HSD_LObj) -> *mut HSD_LObj {
 }
 
 pub unsafe extern "C" fn grIzumi_OnStart() {
+    melee_core::ct!("grIzumi_OnStart");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
 
 pub unsafe fn grIzumi_801CBCE8(gobj_id: i32) -> *mut HSD_GObj {
+    melee_core::ct!("grIzumi_801CBCE8");
     let callbacks: *mut StageCallbacks = &mut grIz_StageCallbacks[gobj_id as usize];
     let gobj = ext::Ground_GetStageGObj(gobj_id);
 
@@ -442,16 +447,19 @@ pub unsafe fn grIzumi_801CBCE8(gobj_id: i32) -> *mut HSD_GObj {
 }
 
 pub unsafe extern "C" fn grIzumi_801CBDD4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grIzumi_801CBDD4");
     ext::grAnime_801C8138(gobj, (*GET_GROUND(gobj)).map_id as enum_t, 0);
 }
 
 pub unsafe extern "C" fn grIzumi_801CBE10(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grIzumi_801CBE10");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as enum_t, 0);
     (*gp).x11_flags.set_b012(1);
 }
 
 pub unsafe extern "C" fn grIzumi_801CBE64(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grIzumi_801CBE64");
     let gp = GET_GROUND(gobj);
     let mut jobj = GET_JOBJ(gobj);
     ext::Ground_InitMapColl(jobj, (*gp).map_id as s32);
@@ -523,6 +531,7 @@ pub unsafe extern "C" fn grIzumi_801CBE64(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grIzumi_801CC0D4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grIzumi_801CC0D4");
     let gp = GET_GROUND(gobj);
     if !(*gp).u.izumi.xCC.is_null() {
         let gp2 = GET_GROUND((*gp).u.izumi.xCC);
@@ -562,12 +571,14 @@ pub unsafe extern "C" fn grIzumi_801CC0D4(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grIzumi_801CC33C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grIzumi_801CC33C");
     let gp = GET_GROUND(gobj);
     (*gp).x8_callback = None;
     (*gp).xC_callback = None;
 }
 
 pub unsafe extern "C" fn grIzumi_801CC358(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grIzumi_801CC358");
     let mut r29 = false;
     let jobj = GET_JOBJ(gobj);
     let gp = GET_GROUND(gobj);
@@ -687,6 +698,7 @@ pub unsafe extern "C" fn grIzumi_801CC358(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grIzumi_801CCA14(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grIzumi_801CCA14");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as enum_t, 0);
     (*gp).x8_callback = None;
@@ -694,6 +706,7 @@ pub unsafe extern "C" fn grIzumi_801CCA14(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grIzumi_801CCA64(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grIzumi_801CCA64");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as enum_t, 0);
     (*gp).x8_callback = None;
@@ -707,6 +720,7 @@ pub unsafe extern "C" fn grIzumi_801CCA64(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe fn grIzumi_801CCB18(_gobj: *mut HSD_GObj) {
+    melee_core::ct!("grIzumi_801CCB18");
     let j = ext::HSD_ArchiveGetPublicAddress((*ext::grDatFiles_GetArchive()).unk0, b"GrdIzumiStar_TopN_joint\0".as_ptr() as *const i8)
         as *mut HSD_Joint;
     if !j.is_null() {
@@ -720,11 +734,13 @@ pub unsafe fn grIzumi_801CCB18(_gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grIzumi_801CCB90(gobj: *mut HSD_GObj, renderpass: i32) {
+    melee_core::ct!("grIzumi_801CCB90");
     ext::HSD_StateSetPointSize(18, 0);
     ext::grDisplay_801C5DB0(gobj, renderpass);
 }
 
 pub unsafe fn grIzumi_801CCBDC(height: f32, a: *mut Vec3, b: i32, jobj: *mut HSD_JObj) -> *mut HSD_GObj {
+    melee_core::ct!("grIzumi_801CCBDC");
     let gobj = grIzumi_801CBCE8(4);
     if !gobj.is_null() {
         let gp = GET_GROUND(gobj);
@@ -773,6 +789,7 @@ unsafe fn grIzumi_StageSlotReflection(image: *mut HSD_ImageDesc) {
 }
 
 pub unsafe fn grIzumi_801CCD98() -> *mut HSD_GObj {
+    melee_core::ct!("grIzumi_801CCD98");
     let gobj = ext::GObj_Create(0x11, 0x12, 0);
     let cobj = ext::lb_80013B14(addr_of_mut!(ReflectCObjDesc));
     ext::HSD_GObjObject_80390A70(gobj, ext::HSD_GObj_CameraKind, cobj as *mut c_void);
@@ -794,6 +811,7 @@ pub unsafe fn grIzumi_801CCD98() -> *mut HSD_GObj {
 }
 
 pub unsafe extern "C" fn grIzumi_801CCEA0(gobj: *mut HSD_GObj, _renderpass: i32) {
+    melee_core::ct!("grIzumi_801CCEA0");
     let mut mtx: Mtx = [[0.0; 4]; 3];
     let mut vec = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let refl = (*gobj).user_data as *mut IzumiReflection;
@@ -858,6 +876,7 @@ unsafe fn check_flag_4020(jobj: *mut HSD_JObj) -> bool {
 }
 
 pub unsafe fn grIzumi_801CD090(gobj: *mut HSD_GObj, image: *mut HSD_ImageDesc) -> *mut HSD_TObj {
+    melee_core::ct!("grIzumi_801CD090");
     let mut jobj = GET_JOBJ(gobj);
     while !jobj.is_null() {
         if check_flag_4020(jobj) {
@@ -899,6 +918,7 @@ pub unsafe fn grIzumi_801CD090(gobj: *mut HSD_GObj, image: *mut HSD_ImageDesc) -
 }
 
 pub unsafe extern "C" fn grIzumi_801CD220(gobj: *mut HSD_GObj, renderpass: i32) {
+    melee_core::ct!("grIzumi_801CD220");
     let gp = GET_GROUND(gobj);
     let refl = (*(*gp).u.izumi.xC8).user_data as *mut IzumiReflection;
     let tobj = (*gp).u.izumi.xC4;
@@ -910,6 +930,7 @@ pub unsafe extern "C" fn grIzumi_801CD220(gobj: *mut HSD_GObj, renderpass: i32) 
 }
 
 pub unsafe extern "C" fn grIzumi_801CD280(a: *mut Vec3, _b: i32, jobj: *mut HSD_JObj) -> i32 {
+    melee_core::ct!("grIzumi_801CD280");
     let mut vec = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ext::lb_8000B1CC(jobj, null_mut(), &mut vec);
     if (*a).y > vec.y {
@@ -920,6 +941,7 @@ pub unsafe extern "C" fn grIzumi_801CD280(a: *mut Vec3, _b: i32, jobj: *mut HSD_
 }
 
 pub unsafe fn grIzumi_801CD2D4() {
+    melee_core::ct!("grIzumi_801CD2D4");
     let size = ext::GXGetTexBufferSize(80, 60, 4, 0, 0);
     ext::lbDvd_80017740(0, 2001, 4, 4, (size.wrapping_add(31)) & !31, 0, 7, 16, 0);
 }

@@ -110,12 +110,14 @@ fn init_tables() {
 
 /// The TU's `StageCallbacks grTKp_StageCallbacks[4]` (built on first use; stable address).
 pub fn stage_callbacks() -> *mut StageCallbacks {
+    melee_core::ct!("stage_callbacks");
     init_tables();
     unsafe { CALLBACKS.as_mut_ptr().cast() }
 }
 
 /// The TU's `StageData grTKp_StageData`.
 pub fn stage_data() -> *mut StageData {
+    melee_core::ct!("stage_data");
     init_tables();
     unsafe { STAGE_DATA.as_mut_ptr() }
 }
@@ -123,22 +125,27 @@ pub fn stage_data() -> *mut StageData {
 pub const STAGE_CALLBACKS_LEN: usize = 4;
 
 pub unsafe extern "C" fn grTKoopa_80221648(arg0: i32) {
+    melee_core::ct!("grTKoopa_80221648");
     
 }
 
 pub unsafe extern "C" fn grTKoopa_OnInit() {
+    melee_core::ct!("grTKoopa_OnInit");
     inlines::Ground_InitTargetStage(grTKoopa_802216EC);
 }
 
 pub unsafe extern "C" fn grTkoopa_UnkStage0_OnLoad() {
+    melee_core::ct!("grTkoopa_UnkStage0_OnLoad");
     
 }
 
 pub unsafe extern "C" fn grTkoopa_UnkStage0_OnStart() {
+    melee_core::ct!("grTkoopa_UnkStage0_OnStart");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
 
 pub unsafe extern "C" fn grTKoopa_802216EC(gobj_id: i32) -> *mut HSD_GObj {
+    melee_core::ct!("grTKoopa_802216EC");
     let callbacks = stage_callbacks().add(gobj_id as usize);
     let gobj = ext::Ground_GetStageGObj(gobj_id);
     if !gobj.is_null() {
@@ -150,37 +157,46 @@ pub unsafe extern "C" fn grTKoopa_802216EC(gobj_id: i32) -> *mut HSD_GObj {
 }
 
 pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj0_OnInit");
     inlines::Ground_StartMapAnim(gobj);
 }
 
 pub unsafe extern "C" fn grTKoopa_80221808(arg0: *mut HSD_GObj) {
+    melee_core::ct!("grTKoopa_80221808");
     
 }
 
 pub unsafe extern "C" fn grTKoopa_8022180C(arg0: *mut HSD_GObj) {
+    melee_core::ct!("grTKoopa_8022180C");
     
 }
 
 pub unsafe extern "C" fn stageGObj2_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj2_OnInit");
     inlines::Ground_InitMapCollAndAnim(gobj);
 }
 
 pub unsafe extern "C" fn stageGObj2_GObjProc(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj2_GObjProc");
     inlines::Ground_UpdateWindAndMapColl(gobj);
 }
 
 pub unsafe extern "C" fn grTKoopa_8022189C(arg0: *mut HSD_GObj) {
+    melee_core::ct!("grTKoopa_8022189C");
     
 }
 
 pub unsafe extern "C" fn stageGObj1_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj1_OnInit");
     inlines::Ground_InitMapCollAndAnim(gobj);
 }
 
 pub unsafe extern "C" fn stageGObj1_GObjProc(arg0: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj1_GObjProc");
     ext::Ground_UpdateMapColl(arg0);
 }
 
 pub unsafe extern "C" fn grTKoopa_80221918(arg0: *mut HSD_GObj) {
+    melee_core::ct!("grTKoopa_80221918");
     
 }

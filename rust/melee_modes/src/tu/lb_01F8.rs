@@ -94,6 +94,7 @@ pub static mut lbl_804335B8: lbl_804335B8_t = unsafe { core::mem::zeroed() };
 
 /// 01F890: creates the movie SObj over the (not yet allocated) image.
 pub unsafe fn lbMthp8001F890(gobj: *mut HSD_GObj) -> *mut HSD_SObj {
+    melee_core::ct!("lbMthp8001F890");
     let l = &raw mut lbl_804335B8;
     (*l).x70.image_ptr = core::ptr::null_mut();
     (*l).x70.width = (*l).x6C;
@@ -111,6 +112,7 @@ pub unsafe fn lbMthp8001F890(gobj: *mut HSD_GObj) -> *mut HSD_SObj {
 
 /// 01F928: loads the Y (full size) and U / V (half size) textures and draws the SObj.
 pub unsafe fn lbMthp8001F928(gobj: *mut HSD_GObj, arg1: i32) {
+    melee_core::ct!("lbMthp8001F928");
     let l = &raw mut lbl_804335B8;
     let p_width = &raw mut (*l).x6C;
     let p_height = &raw mut (*l).x6E;
@@ -144,6 +146,7 @@ struct Header {
 
 /// 01FAA0: allocates the YUV planes and decodes the first frame of `filename`.
 pub unsafe fn lbMthp8001FAA0(filename: *const i8, width: i32, height: i32) {
+    melee_core::ct!("lbMthp8001FAA0");
     let l = &raw mut lbl_804335B8;
     let mut header: Header = core::mem::zeroed();
     let mut output: i32 = 0;

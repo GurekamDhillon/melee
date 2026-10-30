@@ -68,6 +68,7 @@ unsafe fn fill_fobj(fobj: *mut HSD_FObj, track: *const FigaTrack) {
 /// `static lbAnim_InitFrames(track, frames)`: one FObj per track, chained in order.
 /// `frames <= 0` is undefined in the C (`fobj` is read uninitialised); callers guard `frames != 0`.
 pub unsafe fn lbAnim_InitFrames(mut track: *const FigaTrack, frames: i8) -> *mut HSD_FObj {
+    melee_core::ct!("lbAnim_InitFrames");
     let mut fobj: *mut HSD_FObj = null_mut();
     let mut next: *mut HSD_FObj = null_mut();
     let mut result: *mut HSD_FObj = null_mut();
@@ -93,6 +94,7 @@ pub unsafe fn lbAnim_InitFrames(mut track: *const FigaTrack, frames: i8) -> *mut
 /// advances `track` only for a track it kept, so a skipped track is looked at again on every remaining
 /// iteration (kept bit for bit). Undefined in the C when no track is kept (`fobj` uninitialised).
 pub unsafe fn fn_8001E60C(mut track: *const FigaTrack, frames: i8) -> *mut HSD_FObj {
+    melee_core::ct!("fn_8001E60C");
     let mut fobj: *mut HSD_FObj = null_mut();
     let mut prev: *mut HSD_FObj = null_mut();
     let mut first: *mut HSD_FObj = null_mut();
@@ -157,15 +159,18 @@ unsafe fn set_anim(jobj: *mut HSD_JObj, tree: *const FigaTree, fobjs: unsafe fn(
 
 /// `lbAnim_8001E6D8(jobj, tree, track, frames)`: replace the JObj's animation by one FObj per track.
 pub unsafe fn lbAnim_8001E6D8(jobj: *mut HSD_JObj, tree: *const FigaTree, track: *const FigaTrack, frames: i8) {
+    melee_core::ct!("lbAnim_8001E6D8");
     set_anim(jobj, tree, lbAnim_InitFrames, track, frames)
 }
 
 /// `lbAnim_8001E7E8(jobj, tree, track, frames)`: as `lbAnim_8001E6D8` but via `fn_8001E60C` (no obj_type 5..7).
 pub unsafe fn lbAnim_8001E7E8(jobj: *mut HSD_JObj, tree: *const FigaTree, track: *const FigaTrack, frames: i8) {
+    melee_core::ct!("lbAnim_8001E7E8");
     set_anim(jobj, tree, fn_8001E60C, track, frames)
 }
 
 /// `lbAnim_8001E8F8(tree)`: the animation length, 0.0 for a null tree.
 pub fn lbAnim_8001E8F8(tree: Option<&FigaTree>) -> f32 {
+    melee_core::ct!("lbAnim_8001E8F8");
     tree.map_or(0.0, |t| t.frames)
 }

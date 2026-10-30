@@ -41,6 +41,7 @@ pub static mut gm_Mode_ToyCollection_States: [GameModeState; 2] = [
 ];
 
 pub unsafe extern "C" fn gm_801BED14(_arg: *mut GameModeState) {
+    melee_core::ct!("gm_801BED14");
     ext::gm_SetPendingGameMode(GM_MENU as i32);
     ext::gm_SetNewGameModePending();
 }

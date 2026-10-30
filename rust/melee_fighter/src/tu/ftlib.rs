@@ -47,6 +47,7 @@ pub mod ext {
 
 /// `ftLib_800871A8`: fighter picks up a metal box.
 pub fn ftlib_800871a8(g: G, item: G) {
+    melee_core::ct!("ftlib_800871a8");
     assert!(h::it_get_kind(item) == It_Kind_MetalB as i32, "ftlib.c:1117");
     ext::ftCo_800C8348(g, ext::it_8026B560(item), ext::it_8026B574(item));
     h::ftco_800d105c(g);
@@ -59,6 +60,7 @@ pub fn ftlib_800871a8(g: G, item: G) {
 
 /// `ftLib_80087508`: load one costume's archives for `ft_kind` (C param is s8).
 pub fn ftlib_80087508(ft_kind: i8, arg1: u8) {
+    melee_core::ct!("ftlib_80087508");
     let k = ft_kind as i32;
     ext::ftData_8008572C(k);
     ext::efAsync_LoadSync(ext::ftData_UnkBytePerCharacter(k));
@@ -69,6 +71,7 @@ pub fn ftlib_80087508(ft_kind: i8, arg1: u8) {
 
 /// `ftLib_80087574`: load every costume's archives for `ft_kind`.
 pub fn ftlib_80087574(ft_kind: i8) {
+    melee_core::ct!("ftlib_80087574");
     let k = ft_kind as i32;
     ext::ftData_8008572C(k);
     ext::efAsync_LoadSync(ext::ftData_UnkBytePerCharacter(k));
@@ -83,6 +86,7 @@ pub fn ftlib_80087574(ft_kind: i8) {
 
 /// `ftLib_80087610` (TARGET_PC path): Kirby hat archives for every valid selectable kind.
 pub fn ftlib_80087610(arg0: u8) {
+    melee_core::ct!("ftlib_80087610");
     for i in 0..SELKIND_COUNT as i32 {
         h::ftkb_specialn_800eed50(crate::player::player_800325c8(i as _, 0) as i32, arg0 as i32);
         if i == CKind_Zelda as i32 || i == CKind_Seak as i32 {
@@ -93,6 +97,7 @@ pub fn ftlib_80087610(arg0: u8) {
 
 /// `ftLib_8008777C`: floor slope angle; asserts the fighter is grounded.
 pub fn ftlib_8008777c(g: G) -> f32 {
+    melee_core::ct!("ftlib_8008777c");
     let f = fp(g);
     assert!(f.ground_or_air == GA_Ground, "ftlib.c:1517");
     let n = f.coll_data.floor.normal;
@@ -102,6 +107,7 @@ pub fn ftlib_8008777c(g: G) -> f32 {
 /// `ftLib_UpdateLogicOffCamera` (TARGET_PC, ftlib.c): the off-screen flag `ftLib_80086A8C` writes from
 /// the draw callback, computed from logic (the projection of the camera box through the game camera).
 pub fn ftLib_UpdateLogicOffCamera(gobj: G) {
+    melee_core::ct!("ftLib_UpdateLogicOffCamera");
     let f = fp(gobj);
     if f.x221F_b3() != 0 {
         return; // ftDrawCommon_80080E18 skips the test then too

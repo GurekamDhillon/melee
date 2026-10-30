@@ -119,10 +119,11 @@ fn cd() -> &'static ftCommonData {
 unsafe extern "C" fn fn_800D54A4_cb(g: G) { fn_800D54A4(g) }
 unsafe extern "C" fn fn_800D55B4_cb(g: G) { fn_800D55B4(g) }
 unsafe extern "C" fn fn_800D5A30_cb(g: G) { fn_800D5A30(g) }
-pub(crate) unsafe extern "C" fn fn_800D4DD4_cb(g: G) { fn_800D4DD4(g) }
+pub(crate) unsafe extern "C" fn fn_800D4DD4_cb(g: G) { melee_core::ct!("fn_800D4DD4_cb"); fn_800D4DD4(g) }
 
 /// `fn_800D4DD4`: DeadUpFall accessory: once in phase 3, below the camera bottom, drop the GFX.
 pub fn fn_800D4DD4(g: G) {
+    melee_core::ct!("fn_800D4DD4");
     let f = fp(g);
     if unsafe { f.mv.co.unk_deadup.x44 } == 3 {
         let bottom = ext::Stage_GetCamBoundsBottomOffset();
@@ -132,10 +133,11 @@ pub fn fn_800D4DD4(g: G) {
     }
 }
 
-pub fn ftCo_DeadUpFall_Cam(g: G) { ext::ftCamera_80076320(g) }
+pub fn ftCo_DeadUpFall_Cam(g: G) { melee_core::ct!("ftCo_DeadUpFall_Cam"); ext::ftCamera_80076320(g) }
 
 /// `ftCo_800D4E50`: coin mode (gm_8016B0B4): half the coins drop from the KO point.
 pub fn ftCo_800D4E50(f: &mut Fighter, arg1: &Vec3, arg2: i32, arg8: f32) {
+    melee_core::ct!("ftCo_800D4E50");
     if h::gm_8016b0b4() && f.is_sub_fighter() == 0 {
         let slot = f.player_id as i32;
         let coins = ext::Player_GetCoins((slot) as i32);
@@ -151,6 +153,7 @@ pub fn ftCo_800D4E50(f: &mut Fighter, arg1: &Vec3, arg2: i32, arg8: f32) {
 
 /// `ftCo_800D4F24(gobj, index)`: KO without a blast-zone state (index != 0: the star GFX).
 pub fn ftCo_800D4F24(g: G, index: i32) {
+    melee_core::ct!("ftCo_800D4F24");
     let f = fp(g);
     if f.x221F_b3() != 0 {
         return;
@@ -173,6 +176,7 @@ pub fn ftCo_800D4F24(g: G, index: i32) {
 
 /// `ftCo_800D4FF4`: enter Rebirth (descend on the respawn platform).
 pub fn ftCo_800D4FF4(g: G) {
+    melee_core::ct!("ftCo_800D4FF4");
     h::fighter_unk_process_death(g);
     let f = fp(g);
     f.smash_attrs.x2135 = ext::Player_80032F30((f.player_id as i32) as i32) as i8;
@@ -223,6 +227,7 @@ pub fn ftCo_800D4FF4(g: G) {
 }
 
 pub fn ftCo_Rebirth_Anim(g: G) {
+    melee_core::ct!("ftCo_Rebirth_Anim");
     let f = fp(g);
     ext::ftCo_8008A7A8(g, unsafe { (*f.ft_data).x24 });
     let f = fp(g);
@@ -234,7 +239,7 @@ pub fn ftCo_Rebirth_Anim(g: G) {
     }
 }
 
-pub fn ftCo_Rebirth_IASA(_g: G) {}
+pub fn ftCo_Rebirth_IASA(_g: G) { melee_core::ct!("ftCo_Rebirth_IASA");}
 
 /// Shared body of Rebirth_Phys / RebirthWait_Phys (they differ only in the operand order of
 /// the final products, which is irrelevant: `inv * d` and `d * inv` round the same).
@@ -264,9 +269,10 @@ fn rebirth_phys(g: G) {
     }
 }
 
-pub fn ftCo_Rebirth_Phys(g: G) { rebirth_phys(g) }
+pub fn ftCo_Rebirth_Phys(g: G) { melee_core::ct!("ftCo_Rebirth_Phys"); rebirth_phys(g) }
 
 pub fn ftCo_Rebirth_Coll(g: G) {
+    melee_core::ct!("ftCo_Rebirth_Coll");
     if fp(g).smash_attrs.x2135 == -1 {
         ext::ft_80083DCC(g);
     }
@@ -274,6 +280,7 @@ pub fn ftCo_Rebirth_Coll(g: G) {
 
 /// `fn_800D54A4`: main entity's accessory1 callback: keep the platform under the fighter.
 pub fn fn_800D54A4(g: G) {
+    melee_core::ct!("fn_800D54A4");
     let f = fp(g);
     let other = (ext::Player_GetEntityAtIndex((f.player_id as i32) as i32, (1) as i32) as *mut HSD_GObj);
     if !other.is_null() {
@@ -297,6 +304,7 @@ pub fn fn_800D54A4(g: G) {
 
 /// `fn_800D55B4`: sub entity's accessory1 callback: never below the main entity.
 pub fn fn_800D55B4(g: G) {
+    melee_core::ct!("fn_800D55B4");
     let f = fp(g);
     let o = fp((ext::Player_GetEntityAtIndex((f.player_id as i32) as i32, (0) as i32) as *mut HSD_GObj));
     let oy = o.cur_pos.y;
@@ -308,6 +316,7 @@ pub fn fn_800D55B4(g: G) {
 
 /// `ftCo_800D5600`: Rebirth -> RebirthWait.
 pub fn ftCo_800D5600(g: G) {
+    melee_core::ct!("ftCo_800D5600");
     let f = fp(g);
     ext::mpColl_80043680(&mut f.coll_data, &f.cur_pos);
     f.self_vel.y = 0.0;
@@ -337,6 +346,7 @@ pub fn ftCo_800D5600(g: G) {
 }
 
 pub fn ftCo_RebirthWait_Anim(g: G) {
+    melee_core::ct!("ftCo_RebirthWait_Anim");
     let f = fp(g);
     ext::ftCo_8008A7A8(g, unsafe { (*f.ft_data).x24 });
     let f = fp(g);
@@ -350,6 +360,7 @@ pub fn ftCo_RebirthWait_Anim(g: G) {
 }
 
 pub fn ftCo_RebirthWait_IASA(g: G) {
+    melee_core::ct!("ftCo_RebirthWait_IASA");
     let mut var_r30 = false;
     let f = fp(g);
     let (slot, sub) = (f.player_id as i32, f.is_sub_fighter() as i32);
@@ -388,17 +399,19 @@ pub fn ftCo_RebirthWait_IASA(g: G) {
     ext::pl_80040374((slot) as i32, (sub) as i32);
 }
 
-pub fn ftCo_RebirthWait_Phys(g: G) { rebirth_phys(g) }
+pub fn ftCo_RebirthWait_Phys(g: G) { melee_core::ct!("ftCo_RebirthWait_Phys"); rebirth_phys(g) }
 
-pub fn ftCo_RebirthWait_Coll(g: G) { ext::ft_80083844(g, Some(fn_800D5A30_cb)) }
+pub fn ftCo_RebirthWait_Coll(g: G) { melee_core::ct!("ftCo_RebirthWait_Coll"); ext::ft_80083844(g, Some(fn_800D5A30_cb)) }
 
 pub fn fn_800D5A30(g: G) {
+    melee_core::ct!("fn_800D5A30");
     ext::ftColl_8007B7A4(g, cd().x5D8);
     h::ft_8008a2bc(g);
 }
 
 /// `ftCo_Rebirth_Cam`: the camera box follows the platform target, raised by the camera offset.
 pub fn ftCo_Rebirth_Cam(g: G) {
+    melee_core::ct!("ftCo_Rebirth_Cam");
     let f = fp(g);
     let mut spc: UnkFloat6_Camera = unsafe { core::mem::zeroed() };
     ext::ftCamera_80076018(unsafe { (*f.ft_data).x3C }, &mut spc, f.x34_scale.y);

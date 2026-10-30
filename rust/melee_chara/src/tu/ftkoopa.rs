@@ -88,6 +88,7 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 }
 
 pub fn ftKp_Init_OnDeath(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_Init_OnDeath");
     unsafe {
         let fp = fpp(gobj);
         let koopa_attr = (*fp).dat_attrs as *const ftKoopaAttributes;
@@ -99,11 +100,13 @@ pub fn ftKp_Init_OnDeath(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKp_Init_UnkMotionStates3(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_Init_UnkMotionStates3");
     crate::tu::ftkoopaspecialn::ftKp_SpecialLw_80134D78(gobj);
 }
 
 /// `PUSH_ATTRS(fp, ftKoopaAttributes)`: copy ext_attr into the backup, point dat_attrs at it.
 pub fn ftKp_Init_OnLoadForGKoopa(fp: *mut Fighter) {
+    melee_core::ct!("ftKp_Init_OnLoadForGKoopa");
     unsafe {
         let backup = (*fp).dat_attrs_backup;
         let src = (*(*fp).ft_data).ext_attr as *const ftKoopaAttributes;
@@ -113,6 +116,7 @@ pub fn ftKp_Init_OnLoadForGKoopa(fp: *mut Fighter) {
 }
 
 pub fn ftKp_Init_OnLoad(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_Init_OnLoad");
     unsafe {
         let fp = fpp(gobj);
         let items = (*(*fp).ft_data).x48_items;
@@ -123,18 +127,21 @@ pub fn ftKp_Init_OnLoad(gobj: *mut HSD_GObj) {
 }
 
 /// `ftKp_Init_80132B38`: the empty damage callback.
-pub fn ftKp_Init_80132B38(_gobj: *mut HSD_GObj) {}
+pub fn ftKp_Init_80132B38(_gobj: *mut HSD_GObj) { melee_core::ct!("ftKp_Init_80132B38");}
 
 pub fn ftKp_Init_OnItemPickup(gobj: *mut HSD_GObj, flag: i32) {
+    melee_core::ct!("ftKp_Init_OnItemPickup");
     Fighter_OnItemPickup(gobj, flag, 1, 1);
 }
 
 pub fn ftKp_Init_OnItemDrop(gobj: *mut HSD_GObj, bool1: i32) {
+    melee_core::ct!("ftKp_Init_OnItemDrop");
     Fighter_OnItemDrop(gobj, bool1, 1, 1);
 }
 
 /// `COPY_ATTRS(gobj, ftKoopaAttributes)`.
 pub fn ftKp_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_Init_LoadSpecialAttrs");
     unsafe {
         let fp = fpp(gobj);
         *((*fp).dat_attrs as *mut ftKoopaAttributes) = *((*(*fp).ft_data).ext_attr as *const ftKoopaAttributes);
@@ -154,6 +161,7 @@ fn ftCheckThrowB4(fp: &mut Fighter) -> bool {
 }
 
 pub fn ftKp_SpecialS_80132E30(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialS_80132E30");
     unsafe {
         let fp = fpp(gobj);
         if ftCheckThrowB4(&mut *fp) {

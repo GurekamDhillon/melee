@@ -8,10 +8,12 @@ use crate::gobj::{hsd_gobj_set_init_defaults, GObjSystem, HsdGObjLibInitData};
 
 /// `HSD_GObjSetInitDefaults`: `*arg0 = init_defaults`.
 pub fn HSD_GObjSetInitDefaults<F>() -> HsdGObjLibInitData<F> {
+    melee_core::ct!("HSD_GObjSetInitDefaults");
     hsd_gobj_set_init_defaults()
 }
 
 /// `HSD_GObjInit(arg0)`.
 pub fn HSD_GObjInit<F: Copy, O: Copy>(sys: &mut GObjSystem<F, O>, arg0: &mut HsdGObjLibInitData<F>) {
+    melee_core::ct!("HSD_GObjInit");
     sys.init(arg0)
 }

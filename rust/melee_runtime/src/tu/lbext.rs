@@ -49,6 +49,7 @@ pub static mut H___assert: Option<fn(&str, u32, &str)> = None;
 /// `__assert(file, line, cond)` (sysdolphin/baselib/debug.h, `ATTRIBUTE_NORETURN`): the hook may
 /// log; it (or this function) then panics, the game would hang in OSPanic.
 pub fn __assert(file: &str, line: u32, cond: &str) -> ! {
+    melee_core::ct!("__assert");
     if let Some(f) = unsafe { H___assert } {
         f(file, line, cond);
     }

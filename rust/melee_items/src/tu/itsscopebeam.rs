@@ -96,6 +96,7 @@ pub static mut it_803F6568: [ItemStateTable; 10] = [
 
 /// 298DEC: spawns a beam of charge level `arg2` from the fighter `gobj`.
 pub unsafe extern "C" fn it_80298DEC(gobj: *mut Fighter_GObj, vec: *mut Vec, arg2: i32, arg3: f32) {
+    melee_core::ct!("it_80298DEC");
     let mut si: SpawnItem = core::mem::zeroed();
     si.kind = It_Kind_S_Scope_Beam;
     Item_InitSpawnPositionFromParent(&mut si, gobj, vec);
@@ -111,6 +112,7 @@ pub unsafe extern "C" fn it_80298DEC(gobj: *mut Fighter_GObj, vec: *mut Vec, arg
 
 /// 298ED0
 pub unsafe extern "C" fn it_80298ED0(projectile: *mut HSD_GObj, owner: *mut HSD_GObj) {
+    melee_core::ct!("it_80298ED0");
     let it = GET_ITEM(projectile);
     let jobj = GET_JOBJ(projectile);
     let attrs = (*(*it).xC4_article_data).x4_specialAttributes as *mut ScopeBeamAttrs;
@@ -142,6 +144,7 @@ pub unsafe extern "C" fn it_80298ED0(projectile: *mut HSD_GObj, owner: *mut HSD_
 }
 
 pub unsafe extern "C" fn itSscopebeam_UnkMotion9_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSscopebeam_UnkMotion9_Anim");
     let ip = GET_ITEM(gobj);
     let index = (*ip).xDD4_itemVar.scopebeam.x0;
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut ScopeBeamAttrs;
@@ -163,7 +166,7 @@ pub unsafe extern "C" fn itSscopebeam_UnkMotion9_Anim(gobj: *mut Item_GObj) -> b
     false
 }
 
-pub unsafe extern "C" fn itSscopebeam_UnkMotion9_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itSscopebeam_UnkMotion9_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itSscopebeam_UnkMotion9_Phys");}
 
 #[inline]
 fn ABS(x: f32) -> f32 {
@@ -171,6 +174,7 @@ fn ABS(x: f32) -> f32 {
 }
 
 pub unsafe extern "C" fn itSscopebeam_UnkMotion9_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSscopebeam_UnkMotion9_Coll");
     let ip = GET_ITEM(gobj);
     let coll: *mut CollData = &raw mut (*ip).x378_itemColl;
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut ScopeBeamAttrs;
@@ -217,29 +221,36 @@ pub unsafe extern "C" fn itSscopebeam_UnkMotion9_Coll(gobj: *mut Item_GObj) -> b
 }
 
 pub unsafe extern "C" fn itSScopeBeam_Logic38_DmgDealt(_arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSScopeBeam_Logic38_DmgDealt");
     true
 }
 
 pub unsafe extern "C" fn itSScopeBeam_Logic38_Clanked(_arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSScopeBeam_Logic38_Clanked");
     true
 }
 
 pub unsafe extern "C" fn itSScopeBeam_Logic38_HitShield(_arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSScopeBeam_Logic38_HitShield");
     true
 }
 
 pub unsafe extern "C" fn itSScopeBeam_Logic38_Absorbed(_arg0: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSScopeBeam_Logic38_Absorbed");
     true
 }
 
 pub unsafe extern "C" fn itSScopeBeam_Logic38_ShieldBounced(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSScopeBeam_Logic38_ShieldBounced");
     ext::itColl_BounceOffShield(gobj) != 0
 }
 
 pub unsafe extern "C" fn itSScopeBeam_Logic38_Reflected(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSScopeBeam_Logic38_Reflected");
     ext::it_80273030(gobj) != 0
 }
 
 pub unsafe extern "C" fn itSScopeBeam_Logic38_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("itSScopeBeam_Logic38_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

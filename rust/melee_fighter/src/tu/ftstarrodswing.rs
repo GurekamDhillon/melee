@@ -28,6 +28,7 @@ use super::ftlipstickswing::{fp, item, ft_check_throw_b0};
 
 /// `ftCo_800CD82C(gobj, anim, swing, f)`: enter the Star Rod swing.
 pub fn ftCo_800CD82C(gobj: *mut HSD_GObj, arg1: i32, arg2: i32, arg3: f32) {
+    melee_core::ct!("ftCo_800CD82C");
     let f = fp(gobj);
     f.cmd_vars[0] = 540000;
     f.cmd_vars[1] = 0;
@@ -36,16 +37,17 @@ pub fn ftCo_800CD82C(gobj: *mut HSD_GObj, arg1: i32, arg2: i32, arg3: f32) {
     f.take_dmg_cb = Some(ext::ft_800CD31C);
 }
 
-pub fn ftCo_StarRodSwing_Anim(gobj: *mut HSD_GObj) { ext::ftCo_800CD1BC(gobj) }
-pub fn ftCo_StarRodSwing_IASA(gobj: *mut HSD_GObj) { ext::ftCo_800CD204(gobj) }
-pub fn ftCo_StarRodSwing_Phys(gobj: *mut HSD_GObj) { ext::ftCo_800CD278(gobj) }
-pub fn ftCo_StarRodSwing_Coll(gobj: *mut HSD_GObj) { ext::ftCo_800CD2C4(gobj, Some(ext::ft_800CD31C)) }
+pub fn ftCo_StarRodSwing_Anim(gobj: *mut HSD_GObj) { melee_core::ct!("ftCo_StarRodSwing_Anim"); ext::ftCo_800CD1BC(gobj) }
+pub fn ftCo_StarRodSwing_IASA(gobj: *mut HSD_GObj) { melee_core::ct!("ftCo_StarRodSwing_IASA"); ext::ftCo_800CD204(gobj) }
+pub fn ftCo_StarRodSwing_Phys(gobj: *mut HSD_GObj) { melee_core::ct!("ftCo_StarRodSwing_Phys"); ext::ftCo_800CD278(gobj) }
+pub fn ftCo_StarRodSwing_Coll(gobj: *mut HSD_GObj) { melee_core::ct!("ftCo_StarRodSwing_Coll"); ext::ftCo_800CD2C4(gobj, Some(ext::ft_800CD31C)) }
 
 unsafe extern "C" fn ft_800CD914_cb(gobj: *mut HSD_GObj) { ft_800CD914(gobj) }
 
 /// `ft_800CD914(gobj)`: accessory callback. The C asserts the item kind before its NULL check
 /// (debug-only assert: here it is checked only when the item exists).
 pub fn ft_800CD914(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ft_800CD914");
     let f = fp(gobj);
     let x = unsafe { (*(*f.ft_data).x8).x10 } as usize;
     let mut v = Vec3 { x: 0.0, y: 0.0, z: 0.0 };

@@ -98,6 +98,7 @@ unsafe fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD_GOb
 }
 
 pub unsafe extern "C" fn it_802B4AC8(parent_gobj: *mut Fighter_GObj, pos: *mut Vec3, facing_dir: f32) -> *mut Item_GObj {
+    melee_core::ct!("it_802B4AC8");
     let mut si: SpawnItem = core::mem::zeroed();
     si.kind = It_Kind_Samus_Bomb;
     Item_InitSpawnPositionFromParent(&mut si, parent_gobj, pos);
@@ -113,6 +114,7 @@ pub unsafe extern "C" fn it_802B4AC8(parent_gobj: *mut Fighter_GObj, pos: *mut V
 }
 
 pub unsafe extern "C" fn it_802B4BA0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802B4BA0");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSamusBombAttributes;
 
@@ -125,6 +127,7 @@ pub unsafe extern "C" fn it_802B4BA0(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802B4C10(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802B4C10");
     ext::Item_80268E5C(gobj, 0, 0x11);
 }
 
@@ -164,43 +167,51 @@ unsafe fn itSamusBomb_UnkMotion_PreProcess(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itSamusbomb_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSamusbomb_UnkMotion0_Anim");
     itSamusBomb_UnkMotion_PreProcess(gobj);
     false
 }
 
-pub unsafe extern "C" fn itSamusbomb_UnkMotion0_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itSamusbomb_UnkMotion0_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itSamusbomb_UnkMotion0_Phys");}
 
 pub unsafe extern "C" fn itSamusbomb_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSamusbomb_UnkMotion0_Coll");
     ext::it_8026D62C(gobj, Some(it_802B4CF4));
     false
 }
 
 pub unsafe extern "C" fn it_802B4CF4(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802B4CF4");
     ext::Item_80268E5C(gobj, 1, 0x11);
 }
 
 pub unsafe extern "C" fn itSamusbomb_UnkMotion1_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSamusbomb_UnkMotion1_Anim");
     itSamusBomb_UnkMotion_PreProcess(gobj);
     itSamusBomb_UnkMotion_Process(gobj);
     false
 }
 
 pub unsafe extern "C" fn itSamusbomb_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itSamusbomb_UnkMotion1_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = (*ip).xCC_item_attr;
     ext::it_80272860(gobj, (*attrs).x10_fall_speed, (*attrs).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itSamusbomb_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSamusbomb_UnkMotion1_Coll");
     ext::it_8026E248(gobj, Some(it_802B4C10));
     false
 }
 
 pub unsafe extern "C" fn itSamusBomb_Logic50_EnteredAir(gobj: *mut Item_GObj) {
+    melee_core::ct!("itSamusBomb_Logic50_EnteredAir");
     ext::Item_80268E5C(gobj, 2, 0x11);
 }
 
 pub unsafe extern "C" fn itSamusbomb_UnkMotion2_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSamusbomb_UnkMotion2_Anim");
     itSamusBomb_UnkMotion_PreProcess(gobj);
     itSamusBomb_UnkMotion_Process(gobj);
     false
@@ -221,6 +232,7 @@ fn my_sqrtf(x: f32) -> f32 {
 }
 
 pub unsafe extern "C" fn itSamusbomb_UnkMotion2_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itSamusbomb_UnkMotion2_Phys");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSamusBombAttributes;
 
@@ -235,11 +247,13 @@ pub unsafe extern "C" fn itSamusbomb_UnkMotion2_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itSamusbomb_UnkMotion2_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSamusbomb_UnkMotion2_Coll");
     ext::it_8026E8C4(gobj, Some(it_802B4C10), Some(it_802B4CF4));
     false
 }
 
 pub unsafe extern "C" fn itSamusBomb_Logic50_DmgDealt(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSamusBomb_Logic50_DmgDealt");
     let ip = GET_ITEM(gobj);
     if (*ip).msid != 3 {
         it_802B53CC(gobj);
@@ -248,6 +262,7 @@ pub unsafe extern "C" fn itSamusBomb_Logic50_DmgDealt(gobj: *mut Item_GObj) -> b
 }
 
 pub unsafe extern "C" fn itSamusBomb_Logic50_Clanked(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSamusBomb_Logic50_Clanked");
     let ip = GET_ITEM(gobj);
     if (*ip).msid != 3 {
         it_802B53CC(gobj);
@@ -256,6 +271,7 @@ pub unsafe extern "C" fn itSamusBomb_Logic50_Clanked(gobj: *mut Item_GObj) -> bo
 }
 
 pub unsafe extern "C" fn itSamusBomb_Logic50_HitShield(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSamusBomb_Logic50_HitShield");
     let ip = GET_ITEM(gobj);
     if (*ip).msid != 3 {
         it_802B53CC(gobj);
@@ -264,10 +280,12 @@ pub unsafe extern "C" fn itSamusBomb_Logic50_HitShield(gobj: *mut Item_GObj) -> 
 }
 
 pub unsafe extern "C" fn itSamusBomb_Logic50_ShieldBounced(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSamusBomb_Logic50_ShieldBounced");
     ext::itColl_BounceOffShield(gobj) != 0
 }
 
 pub unsafe extern "C" fn it_2725_Logic50_Reflected(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_2725_Logic50_Reflected");
     let ip = GET_ITEM(gobj);
 
     ext::it_80273030(gobj);
@@ -280,6 +298,7 @@ pub unsafe extern "C" fn it_2725_Logic50_Reflected(gobj: *mut Item_GObj) -> bool
 }
 
 pub unsafe extern "C" fn it_802B53CC(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802B53CC");
     let ip = GET_ITEM(gobj);
 
     ext::Item_80268E5C(gobj, 3, ITEM_ANIM_UPDATE);
@@ -295,10 +314,12 @@ pub unsafe extern "C" fn it_802B53CC(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itSamusbomb_UnkMotion3_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSamusbomb_UnkMotion3_Anim");
     ext::it_802751D8(gobj) != 0
 }
 
 pub unsafe extern "C" fn it_802B5478(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802B5478");
     let ip = GET_ITEM(gobj);
 
     if (*ip).xDD4_itemVar.samusbomb.x0 != 0 {
@@ -313,6 +334,7 @@ pub unsafe extern "C" fn it_802B5478(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itSamusBomb_Logic50_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("itSamusBomb_Logic50_EvtUnk");
     let ip = GET_ITEM(gobj);
     ext::it_8026B894(gobj, ref_gobj);
     (*ip).xDD4_itemVar.samusbomb.owner = null_mut();

@@ -72,6 +72,7 @@ unsafe extern "C" fn resume_all(g: G) { l::efLib_ResumeAll(g) }
 
 /// `efSync_MexSpawn` (static, TARGET_PC).
 pub unsafe fn efSync_MexSpawn(gfx_id: i32, gobj: G, va: &mut Va) -> Obj {
+    melee_core::ct!("efSync_MexSpawn");
     let (ty, id, is_ptcl, owner) = ext::efAsync_MexResolve(gobj, gfx_id);
     if ty < 0 {
         return core::ptr::null_mut();
@@ -192,6 +193,7 @@ unsafe fn gen_scaled(id: u32, gobj: G, va: &mut Va, rot_y: bool) -> Obj {
 
 /// The 12-particle burst of 0x4CF / 0x4D0.
 pub unsafe fn burst(gfx_id: i32, gobj: G, va: &mut Va) -> Obj {
+    melee_core::ct!("burst");
     let translate = *va.vec3();
     let scale = if gfx_id == 0x4CF { va.f32() } else { 1.0f32 };
     let mut ret: *mut EF_Effect = core::ptr::null_mut();
@@ -238,6 +240,7 @@ pub unsafe fn burst(gfx_id: i32, gobj: G, va: &mut Va) -> Obj {
 
 /// The burst particle velocity from its random angles (rot_x, rot_y).
 pub fn burst_params(rx: f32, ry: f32) -> Vec3 {
+    melee_core::ct!("burst_params");
     let px = sinf(ry);
     let t = 2.0f32 * cosf(rx);
     let x = t * px;
@@ -249,6 +252,7 @@ pub fn burst_params(rx: f32, ry: f32) -> Vec3 {
 
 /// `efSync_Spawn`.
 pub unsafe fn efSync_Spawn(mut gfx_id: i32, gobj: G, va: &mut Va) -> Obj {
+    melee_core::ct!("efSync_Spawn");
     EF_DATA.load_kind = 0;
     EF_DATA.anim_count = 0;
     if gfx_id == 0x479 && l::ext::efAsync_DatEntries_data(1).is_null() {

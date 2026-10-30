@@ -64,16 +64,20 @@ const TRANSITION_FLAGS3: u32 = (Ft_MF_KeepGfx | Ft_MF_SkipHit) as u32;
 
 /// Gobj entries for the ported `&mut Fighter` callbacks.
 pub fn ftPk_SpecialAirS1_Phys(gobj: G) {
+    melee_core::ct!("ftPk_SpecialAirS1_Phys");
     unsafe { crate::chars::ftPikachu::ftpikachuspecials::ftPk_SpecialAirS1_Phys(&mut *fpp(gobj)) }
 }
 pub fn ftPk_SpecialAirSEnd_Phys(gobj: G) {
+    melee_core::ct!("ftPk_SpecialAirSEnd_Phys");
     unsafe { crate::chars::ftPikachu::ftpikachuspecials::ftPk_SpecialAirSEnd_Phys(&mut *fpp(gobj)) }
 }
 pub fn ftPk_SpecialSEnd_Phys(gobj: G) {
+    melee_core::ct!("ftPk_SpecialSEnd_Phys");
     unsafe { crate::chars::ftPikachu::ftpikachuspecials::ftPk_SpecialSEnd_Phys(&mut *fpp(gobj)) }
 }
 
 pub fn ftPk_SpecialS_Enter(gobj: G) {
+    melee_core::ct!("ftPk_SpecialS_Enter");
     unsafe {
         let fp = fpp(gobj);
         let sa = da(fp);
@@ -85,6 +89,7 @@ pub fn ftPk_SpecialS_Enter(gobj: G) {
 }
 
 pub fn ftPk_SpecialAirS_Enter(gobj: G) {
+    melee_core::ct!("ftPk_SpecialAirS_Enter");
     unsafe {
         let fp = fpp(gobj);
         let sa = da(fp);
@@ -97,6 +102,7 @@ pub fn ftPk_SpecialAirS_Enter(gobj: G) {
 }
 
 pub fn ftPk_SpecialS_ZeroVelocity(gobj: G) {
+    melee_core::ct!("ftPk_SpecialS_ZeroVelocity");
     unsafe {
         let fp = fpp(gobj);
         (*fp).self_vel.x = 0.0;
@@ -108,26 +114,30 @@ pub fn ftPk_SpecialS_ZeroVelocity(gobj: G) {
 }
 /// `ftPk_SpecialS_ZeroVelocity` as the `deal_dmg_cb` entry.
 pub unsafe extern "C" fn cb_ftPk_SpecialS_ZeroVelocity(g: G) {
+    melee_core::ct!("cb_ftPk_SpecialS_ZeroVelocity");
     ftPk_SpecialS_ZeroVelocity(g);
 }
 
 pub fn ftPk_SpecialSStart_Anim(gobj: G) {
+    melee_core::ct!("ftPk_SpecialSStart_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         ftPk_SpecialS_ChangeMotion_Unk04(gobj);
     }
 }
 
 pub fn ftPk_SpecialAirSStart_Anim(gobj: G) {
+    melee_core::ct!("ftPk_SpecialAirSStart_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         ftPk_SpecialS_ChangeMotion_Unk05(gobj);
     }
 }
 
-pub fn ftPk_SpecialSStart_IASA(_gobj: G) {}
+pub fn ftPk_SpecialSStart_IASA(_gobj: G) { melee_core::ct!("ftPk_SpecialSStart_IASA");}
 
-pub fn ftPk_SpecialAirSStart_IASA(_gobj: G) {}
+pub fn ftPk_SpecialAirSStart_IASA(_gobj: G) { melee_core::ct!("ftPk_SpecialAirSStart_IASA");}
 
 pub fn ftPk_SpecialSStart_Phys(gobj: G) {
+    melee_core::ct!("ftPk_SpecialSStart_Phys");
     unsafe {
         let fp = fpp(gobj);
         let sa = da(fp);
@@ -137,6 +147,7 @@ pub fn ftPk_SpecialSStart_Phys(gobj: G) {
 }
 
 pub fn ftPk_SpecialAirSStart_Phys(gobj: G) {
+    melee_core::ct!("ftPk_SpecialAirSStart_Phys");
     unsafe {
         let fp = fpp(gobj);
         let sa = da(fp);
@@ -148,6 +159,7 @@ pub fn ftPk_SpecialAirSStart_Phys(gobj: G) {
 }
 
 pub fn ftPk_SpecialSHold_Anim(gobj: G) {
+    melee_core::ct!("ftPk_SpecialSHold_Anim");
     unsafe {
         let fp = fpp(gobj);
         let sa = da(fp);
@@ -163,6 +175,7 @@ pub fn ftPk_SpecialSHold_Anim(gobj: G) {
 }
 
 pub fn ftPk_SpecialAirSHold_Anim(gobj: G) {
+    melee_core::ct!("ftPk_SpecialAirSHold_Anim");
     unsafe {
         let fp = fpp(gobj);
         let sa = da(fp);
@@ -178,6 +191,7 @@ pub fn ftPk_SpecialAirSHold_Anim(gobj: G) {
 }
 
 pub fn ftPk_SpecialSHold_IASA(gobj: G) {
+    melee_core::ct!("ftPk_SpecialSHold_IASA");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).input.held_buttons[0] & (HSD_PAD_B as u32) == 0 {
@@ -187,6 +201,7 @@ pub fn ftPk_SpecialSHold_IASA(gobj: G) {
 }
 
 pub fn ftPk_SpecialAirSHold_IASA(gobj: G) {
+    melee_core::ct!("ftPk_SpecialAirSHold_IASA");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).input.held_buttons[0] & (HSD_PAD_B as u32) == 0 {
@@ -196,6 +211,7 @@ pub fn ftPk_SpecialAirSHold_IASA(gobj: G) {
 }
 
 pub fn ftPk_SpecialS_ChangeMotion_Unk04(gobj: G) {
+    melee_core::ct!("ftPk_SpecialS_ChangeMotion_Unk04");
     unsafe {
         st::Fighter_ChangeMotionState(gobj, 344, Ft_MF_KeepSfx as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
         let fp = fpp(gobj);
@@ -204,6 +220,7 @@ pub fn ftPk_SpecialS_ChangeMotion_Unk04(gobj: G) {
 }
 
 pub fn ftPk_SpecialS_ChangeMotion_Unk05(gobj: G) {
+    melee_core::ct!("ftPk_SpecialS_ChangeMotion_Unk05");
     unsafe {
         st::Fighter_ChangeMotionState(gobj, 349, Ft_MF_KeepSfx as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
         let fp = fpp(gobj);
@@ -220,6 +237,7 @@ unsafe fn s0_hit_damage(gobj: G, fp: *mut Fighter, sa: *mut ftPikachuAttributes)
 }
 
 pub fn ftPk_SpecialS0_Anim(gobj: G) {
+    melee_core::ct!("ftPk_SpecialS0_Anim");
     unsafe {
         let fp = fpp(gobj);
         let sa = da(fp);
@@ -232,6 +250,7 @@ pub fn ftPk_SpecialS0_Anim(gobj: G) {
 }
 
 pub fn ftPk_SpecialAirS0_Anim(gobj: G) {
+    melee_core::ct!("ftPk_SpecialAirS0_Anim");
     unsafe {
         let fp = fpp(gobj);
         let sa = da(fp);
@@ -242,11 +261,12 @@ pub fn ftPk_SpecialAirS0_Anim(gobj: G) {
     }
 }
 
-pub fn ftPk_SpecialS0_IASA(_gobj: G) {}
+pub fn ftPk_SpecialS0_IASA(_gobj: G) { melee_core::ct!("ftPk_SpecialS0_IASA");}
 
-pub fn ftPk_SpecialAirS0_IASA(_gobj: G) {}
+pub fn ftPk_SpecialAirS0_IASA(_gobj: G) { melee_core::ct!("ftPk_SpecialAirS0_IASA");}
 
 pub fn ftPk_SpecialS_ChangeMotion_Unk08(gobj: G) {
+    melee_core::ct!("ftPk_SpecialS_ChangeMotion_Unk08");
     unsafe {
         st::Fighter_ChangeMotionState(gobj, 347, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
         let fp = fpp(gobj);
@@ -257,6 +277,7 @@ pub fn ftPk_SpecialS_ChangeMotion_Unk08(gobj: G) {
 }
 
 pub fn ftPk_SpecialS_ChangeMotion_Unk09(gobj: G) {
+    melee_core::ct!("ftPk_SpecialS_ChangeMotion_Unk09");
     unsafe {
         st::Fighter_ChangeMotionState(gobj, 352, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
         let fp = fpp(gobj);
@@ -266,23 +287,25 @@ pub fn ftPk_SpecialS_ChangeMotion_Unk09(gobj: G) {
     }
 }
 
-pub fn ftPk_SpecialS1_Anim(_gobj: G) {}
+pub fn ftPk_SpecialS1_Anim(_gobj: G) { melee_core::ct!("ftPk_SpecialS1_Anim");}
 
 pub fn ftPk_SpecialAirS1_Anim(gobj: G) {
+    melee_core::ct!("ftPk_SpecialAirS1_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         ftPk_SpecialS_ChangeMotion_Unk12(gobj);
     }
 }
 
-pub fn ftPk_SpecialS1_IASA(_gobj: G) {}
+pub fn ftPk_SpecialS1_IASA(_gobj: G) { melee_core::ct!("ftPk_SpecialS1_IASA");}
 
-pub fn ftPk_SpecialAirS1_IASA(_gobj: G) {}
+pub fn ftPk_SpecialAirS1_IASA(_gobj: G) { melee_core::ct!("ftPk_SpecialAirS1_IASA");}
 
-pub fn ftPk_SpecialS1_Phys(_gobj: G) {}
+pub fn ftPk_SpecialS1_Phys(_gobj: G) { melee_core::ct!("ftPk_SpecialS1_Phys");}
 
-pub fn ftPk_SpecialS1_Coll(_gobj: G) {}
+pub fn ftPk_SpecialS1_Coll(_gobj: G) { melee_core::ct!("ftPk_SpecialS1_Coll");}
 
 pub fn ftPk_SpecialAirS1_Coll(gobj: G) {
+    melee_core::ct!("ftPk_SpecialAirS1_Coll");
     unsafe {
         let fp = fpp(gobj);
         if st::ft_80081D0C(gobj) != 0 {
@@ -297,6 +320,7 @@ pub fn ftPk_SpecialAirS1_Coll(gobj: G) {
 }
 
 pub fn ftPk_SpecialS_ChangeMotion_Unk10(gobj: G) {
+    melee_core::ct!("ftPk_SpecialS_ChangeMotion_Unk10");
     unsafe {
         let fp = fpp(gobj);
         let sa = da(fp);
@@ -311,11 +335,12 @@ pub fn ftPk_SpecialS_ChangeMotion_Unk10(gobj: G) {
     }
 }
 
-pub fn ftPk_SpecialSEnd_IASA(_gobj: G) {}
+pub fn ftPk_SpecialSEnd_IASA(_gobj: G) { melee_core::ct!("ftPk_SpecialSEnd_IASA");}
 
-pub fn ftPk_SpecialAirSEnd_IASA(_gobj: G) {}
+pub fn ftPk_SpecialAirSEnd_IASA(_gobj: G) { melee_core::ct!("ftPk_SpecialAirSEnd_IASA");}
 
 pub fn ftPk_SpecialAirSEnd_Coll(gobj: G) {
+    melee_core::ct!("ftPk_SpecialAirSEnd_Coll");
     unsafe {
         let fp = fpp(gobj);
         if st::ft_80081D0C(gobj) != 0 {
@@ -326,6 +351,7 @@ pub fn ftPk_SpecialAirSEnd_Coll(gobj: G) {
 }
 
 pub fn ftPk_SpecialS_ChangeMotion_Unk11(gobj: G) {
+    melee_core::ct!("ftPk_SpecialS_ChangeMotion_Unk11");
     unsafe {
         let fp = fpp(gobj);
         let sa = da(fp);
@@ -336,6 +362,7 @@ pub fn ftPk_SpecialS_ChangeMotion_Unk11(gobj: G) {
 }
 
 pub fn ftPk_SpecialS_ChangeMotion_Unk12(gobj: G) {
+    melee_core::ct!("ftPk_SpecialS_ChangeMotion_Unk12");
     unsafe {
         let fp = fpp(gobj);
         let sa = da(fp);

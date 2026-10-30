@@ -279,6 +279,7 @@ pub mod ext {
 }
 
 pub unsafe extern "C" fn gm_ModeState_ApproachVs_OnExit(arg0: *mut GameModeState) {
+    melee_core::ct!("gm_ModeState_ApproachVs_OnExit");
     let temp_r30 = ext::gm_GetGameModeStateExitData(arg0) as *mut MatchExitInfo;
     let temp_r31 = ext::gm_GetChallengerData();
     ext::gm_80162968((*temp_r30).match_end.frame_count / 60);
@@ -301,6 +302,7 @@ pub unsafe extern "C" fn gm_ModeState_ApproachVs_OnExit(arg0: *mut GameModeState
 }
 
 pub unsafe extern "C" fn gm_ModeState_Prize_OnExit(_arg0: *mut GameModeState) {
+    melee_core::ct!("gm_ModeState_Prize_OnExit");
     ext::gm_SetNextGameModeStateId(0);
 }
 
@@ -312,6 +314,7 @@ struct DebugMenuArg {
 }
 
 pub unsafe extern "C" fn gm_Scene_DebugMenu_OnEnter(arg0_: *mut c_void) {
+    melee_core::ct!("gm_Scene_DebugMenu_OnEnter");
     let arg0 = arg0_ as *mut DebugMenuArg;
     ext::un_802FF710();
     ext::un_802FF6A0();
@@ -359,6 +362,7 @@ pub static mut gm_803DB1F4: [*mut c_char; 0x1A] = [
 pub static mut gm_803DB25C: [i32; 0x1A] = [8; 0x1A];
 
 pub unsafe extern "C" fn gm_Scene_MovieEnd_OnEnter(_arg0: *mut c_void) {
+    melee_core::ct!("gm_Scene_MovieEnd_OnEnter");
     gm_804D6738 = 0;
     gm_804D673C = 0x1E;
     let temp_r3 = ext::GObj_Create(0x13, 0x14, 0);
@@ -379,6 +383,7 @@ pub unsafe extern "C" fn gm_Scene_MovieEnd_OnEnter(_arg0: *mut c_void) {
 }
 
 pub unsafe extern "C" fn gm_Scene_MovieEnd_OnFrame() {
+    melee_core::ct!("gm_Scene_MovieEnd_OnFrame");
     let mut var_r30 = false;
     ext::lbMthp_8001F578();
     let temp_r31 = ext::lbMthp_8001F5C4();

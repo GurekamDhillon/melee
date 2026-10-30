@@ -72,11 +72,13 @@ fn is_kirby(kind: FighterKind) -> bool {
 
 /// `ftCo_800DE9B8`: D-pad up pressed.
 pub fn ftCo_800DE9B8(g: G) -> bool {
+    melee_core::ct!("ftCo_800DE9B8");
     fp(g).input.pressed_buttons & HSD_PAD_DPADUP as u32 != 0
 }
 
 /// `ftCo_800DE9D8`: taunt on D-pad up.
 pub fn ftCo_800DE9D8(g: G) -> bool {
+    melee_core::ct!("ftCo_800DE9D8");
     if ftCo_800DE9B8(g) {
         ftCo_800DEA28(g);
         return true;
@@ -87,6 +89,7 @@ pub fn ftCo_800DE9D8(g: G) -> bool {
 /// `ftCo_800DEA28`: the per-kind taunt entry. Ganondorf's case falls through into the default,
 /// so his taunt is entered twice, as in the C.
 pub fn ftCo_800DEA28(g: G) {
+    melee_core::ct!("ftCo_800DEA28");
     let f = fp(g);
     match f.kind {
         Ft_Kind_CLink => ext::ftCl_Init_80149318(g),
@@ -108,6 +111,7 @@ pub fn ftCo_800DEA28(g: G) {
 /// `ftCo_800DEAE8(gobj, msid0, msid1)`: enter msid1 (the left-facing variant) when facing
 /// left and its animation exists, else msid0.
 pub fn ftCo_800DEAE8(g: G, msid0: i32, msid1: i32) {
+    melee_core::ct!("ftCo_800DEAE8");
     let f = fp(g);
     let ms = unsafe {
         if msid1 >= f.x18 {
@@ -128,6 +132,7 @@ pub fn ftCo_800DEAE8(g: G, msid0: i32, msid1: i32) {
 /// `ftCo_800DEBD0`: side taunt (debug-ROM Peach/Zelda inits, Kirby drops his copy ability;
 /// TARGET_PC: m-ex onTaunt after the motion state).
 pub fn ftCo_800DEBD0(g: G) {
+    melee_core::ct!("ftCo_800DEBD0");
     let kind = fp(g).kind;
     if ext::DbLevel() >= DbLKind_DebugRom as i32 {
         if kind == Ft_Kind_Peach {
@@ -145,12 +150,14 @@ pub fn ftCo_800DEBD0(g: G) {
 }
 
 pub fn ftCo_AppealS_Anim(g: G) {
+    melee_core::ct!("ftCo_AppealS_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ft_8008A2BC(g);
     }
 }
 
 pub fn ftCo_AppealS_IASA(g: G) {
+    melee_core::ct!("ftCo_AppealS_IASA");
     if fp(g).allow_interrupt() == 0 {
         return;
     }
@@ -171,9 +178,11 @@ pub fn ftCo_AppealS_IASA(g: G) {
 }
 
 pub fn ftCo_AppealS_Phys(g: G) {
+    melee_core::ct!("ftCo_AppealS_Phys");
     ext::ft_80084FA8(g);
 }
 
 pub fn ftCo_AppealS_Coll(g: G) {
+    melee_core::ct!("ftCo_AppealS_Coll");
     ext::ft_80084104(g);
 }

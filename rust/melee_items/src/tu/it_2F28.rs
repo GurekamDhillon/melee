@@ -69,6 +69,7 @@ unsafe fn Item_InitSpawnPosition(spawn: *mut SpawnItem, pos: *mut Vec3, on_plane
 
 /// 2F28C8
 pub unsafe extern "C" fn it_802F28C8(item_gobj: *mut Item_GObj, arg1: i32, arg2: f32) {
+    melee_core::ct!("it_802F28C8");
     let item = (*item_gobj).user_data as *mut Item;
     ext::it_8027B4A4((*item).grab_victim, item_gobj);
     ext::it_8027B378((*item).grab_victim, item_gobj, arg2);
@@ -83,6 +84,7 @@ pub unsafe extern "C" fn it_802F28C8(item_gobj: *mut Item_GObj, arg1: i32, arg2:
 
 /// 2F295C: spawns the item; returns `it_802758D4` of it (0 when the spawn failed).
 pub unsafe extern "C" fn it_802F295C(owner_gobj: *mut HSD_GObj, attr: *mut itUnk2_DatAttrs) -> f32 {
+    melee_core::ct!("it_802F295C");
     let mut spawn: SpawnItem = core::mem::zeroed();
     let mut var_f31: f32 = 0.0;
     spawn.kind = It_Kind_Unk2;
@@ -108,6 +110,7 @@ pub unsafe extern "C" fn it_802F295C(owner_gobj: *mut HSD_GObj, attr: *mut itUnk
 
 /// `static void it_802F2A58`
 pub unsafe extern "C" fn it_802F2A58(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802F2A58");
     let item = (*item_gobj).user_data as *mut Item;
     ext::it_8026B3A8(item_gobj);
     ext::Item_80268E5C(item_gobj, 0, ITEM_ANIM_UPDATE);
@@ -116,6 +119,7 @@ pub unsafe extern "C" fn it_802F2A58(item_gobj: *mut Item_GObj) {
 
 /// `static bool it_2F28_UnkMotion0_Anim`
 pub unsafe extern "C" fn it_2F28_UnkMotion0_Anim(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_2F28_UnkMotion0_Anim");
     let item = (*item_gobj).user_data as *mut Item;
     (*item).xD44_lifeTimer = (*item).xD44_lifeTimer - 1.0;
     (*item).xD44_lifeTimer <= 0.0
@@ -123,6 +127,7 @@ pub unsafe extern "C" fn it_2F28_UnkMotion0_Anim(item_gobj: *mut Item_GObj) -> b
 
 /// `static void it_2F28_UnkMotion0_Phys`: sheds `unk2.x0` of speed per frame (x only, when slower: stops x).
 pub unsafe extern "C" fn it_2F28_UnkMotion0_Phys(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_2F28_UnkMotion0_Phys");
     let item = GET_ITEM(item_gobj);
     // SQ(x) + SQ(y): the left product is fused
     let var_f4 = sqrtf(fmadds((*item).x40_vel.x, (*item).x40_vel.x, (*item).x40_vel.y * (*item).x40_vel.y));
@@ -136,10 +141,12 @@ pub unsafe extern "C" fn it_2F28_UnkMotion0_Phys(item_gobj: *mut HSD_GObj) {
 
 /// `static bool it_2F28_UnkMotion0_Coll`
 pub unsafe extern "C" fn it_2F28_UnkMotion0_Coll(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_2F28_UnkMotion0_Coll");
     ext::it_8026DFB0(item_gobj) != 0
 }
 
 /// 2F2BDC
 pub unsafe extern "C" fn it_802F2BDC(item_gobj: *mut Item_GObj, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802F2BDC");
     ext::it_8026B894(item_gobj, ref_gobj);
 }

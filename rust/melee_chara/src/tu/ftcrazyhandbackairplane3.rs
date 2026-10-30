@@ -12,6 +12,7 @@ pub use crate::chars::r4::ftCrazyHand::ftcrazyhandbackairplane3::ftCh_Init_80159
 pub use crate::chars::r8::ftCrazyHand::ftcrazyhandbackairplane3::ftCh_BackAirplane3_IASA;
 
 pub fn ftCh_BackAirplane3_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_BackAirplane3_Anim");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         if (*fp).cmd_vars[0] != 0 {
@@ -31,4 +32,4 @@ pub fn ftCh_BackAirplane3_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftCh_BackAirplane3_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftCh_BackAirplane3_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_BackAirplane3_Coll");}

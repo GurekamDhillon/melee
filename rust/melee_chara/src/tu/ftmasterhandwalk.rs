@@ -75,6 +75,7 @@ pub mod ext {
 }
 
 pub fn ftMh_WalkShoot_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_WalkShoot_Anim");
     unsafe {
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
             ext::ftMh_MS_389_80151018(gobj);
@@ -82,9 +83,9 @@ pub fn ftMh_WalkShoot_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftMh_WalkShoot_Coll(_gobj: *mut HSD_GObj) {}
-pub fn ftMh_Walk2_Coll(_gobj: *mut HSD_GObj) {}
-pub fn ftMh_WalkLoop_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_WalkShoot_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_WalkShoot_Coll");}
+pub fn ftMh_Walk2_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_Walk2_Coll");}
+pub fn ftMh_WalkLoop_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_WalkLoop_Coll");}
 
 /// `my_lbVector_Len` (static inline): `x*x + y*y + z*z` contracts to two fmadds.
 fn my_lbVector_Len(v: &Vec3) -> f32 {
@@ -93,6 +94,7 @@ fn my_lbVector_Len(v: &Vec3) -> f32 {
 }
 
 pub fn ftMh_WalkLoop_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_WalkLoop_Anim");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*(*fp).ft_data).ext_attr as *const ftMasterHand_SpecialAttrs;

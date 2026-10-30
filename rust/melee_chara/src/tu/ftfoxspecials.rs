@@ -82,11 +82,13 @@ fn ftGetTemplateKind(fp: &Fighter) -> i32 {
 }
 
 pub unsafe extern "C" fn cb_ftFx_SpecialS_CreateGFX(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftFx_SpecialS_CreateGFX");
     ftFx_SpecialS_CreateGFX(g);
 }
 
 /// Create the Illusion / Phantasm effect.
 pub fn ftFx_SpecialS_CreateGFX(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialS_CreateGFX");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).x2219_b0() == 0 {
@@ -105,6 +107,7 @@ pub fn ftFx_SpecialS_CreateGFX(gobj: *mut HSD_GObj) {
 
 /// True when Fox / Falco is NOT in any Illusion / Phantasm motion state.
 pub fn ftFx_SpecialS_CheckGhostRemove(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftFx_SpecialS_CheckGhostRemove");
     unsafe {
         let msid = (*fpp(gobj)).motion_id as i32;
         !(msid >= ftFx_MS_SpecialSStart as i32 && msid <= ftFx_MS_SpecialAirSEnd as i32)
@@ -112,19 +115,23 @@ pub fn ftFx_SpecialS_CheckGhostRemove(gobj: *mut HSD_GObj) -> bool {
 }
 
 pub fn ftFx_SpecialS_GetCmdVar2(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("ftFx_SpecialS_GetCmdVar2");
     unsafe { (*fpp(gobj)).cmd_vars[2] as i32 }
 }
 
 /// `*ghostPos = fp->mv.fx.SpecialS.ghostEffectPos[index]` (index unchecked in C).
 pub fn ftFx_SpecialS_CopyGhostPosIndexed(gobj: *mut HSD_GObj, index: i32, ghost_pos: *mut Vec3) {
+    melee_core::ct!("ftFx_SpecialS_CopyGhostPosIndexed");
     unsafe { *ghost_pos = (*fpp(gobj)).mv.fx.SpecialS.ghostEffectPos[index as usize] }
 }
 
 pub fn ftFx_SpecialS_ReturnFloatVarIndexed(gobj: *mut HSD_GObj, index: i32) -> f32 {
+    melee_core::ct!("ftFx_SpecialS_ReturnFloatVarIndexed");
     unsafe { (*fpp(gobj)).mv.fx.SpecialS.blendFrames[index as usize] }
 }
 
 pub fn ftFx_SpecialSStart_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialSStart_Enter");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -141,6 +148,7 @@ pub fn ftFx_SpecialSStart_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_SpecialAirSStart_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirSStart_Enter");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -160,12 +168,14 @@ pub fn ftFx_SpecialAirSStart_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_SpecialSStart_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialSStart_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         ftFx_SpecialS_Enter(gobj);
     }
 }
 
 pub fn ftFx_SpecialAirSStart_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirSStart_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         ftFx_SpecialAirS_Enter(gobj);
     }
@@ -173,11 +183,13 @@ pub fn ftFx_SpecialAirSStart_Anim(gobj: *mut HSD_GObj) {
 
 /// Gobj entry for the fighter-only port `chars::ftFox::ftfoxspecials::ftFx_SpecialAirSStart_Phys`.
 pub fn ftFx_SpecialAirSStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirSStart_Phys");
     unsafe { crate::chars::ftFox::ftfoxspecials::ftFx_SpecialAirSStart_Phys(&mut *fpp(gobj)) }
 }
 
 /// `ftFox_SpecialS_CreateGhostItem` (static inline): spawn the ghost on the script's request.
 pub fn ftFox_SpecialS_CreateGhostItem(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFox_SpecialS_CreateGhostItem");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).cmd_vars[2] == 1 {
@@ -196,6 +208,7 @@ pub fn ftFox_SpecialS_CreateGhostItem(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_SpecialS_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialS_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         ftFx_SpecialSEnd_Enter(gobj);
     }
@@ -203,6 +216,7 @@ pub fn ftFx_SpecialS_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_SpecialAirS_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirS_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         ftFx_SpecialAirSEnd_Enter(gobj);
     }
@@ -223,15 +237,18 @@ unsafe fn dash_iasa(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_SpecialS_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialS_IASA");
     unsafe { dash_iasa(gobj) }
 }
 
 pub fn ftFx_SpecialAirS_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirS_IASA");
     unsafe { dash_iasa(gobj) }
 }
 
 /// `ftFox_SpecialS_SetPhys` (static inline): shift the afterimage history, record this frame.
 pub fn ftFox_SpecialS_SetPhys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFox_SpecialS_SetPhys");
     unsafe {
         let fp = fpp(gobj);
         let s = &mut (*fp).mv.fx.SpecialS;
@@ -249,17 +266,20 @@ pub fn ftFox_SpecialS_SetPhys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_SpecialS_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialS_Phys");
     st::ft_80085088(gobj);
     ftFox_SpecialS_SetPhys(gobj);
 }
 
 pub fn ftFx_SpecialAirS_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirS_Phys");
     st::ft_80085134(gobj);
     ftFox_SpecialS_SetPhys(gobj);
 }
 
 /// `ftFox_SpecialS_SetVars` (static inline): seed the afterimage history.
 pub fn ftFox_SpecialS_SetVars(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFox_SpecialS_SetVars");
     unsafe {
         let fp = fpp(gobj);
         let cur_pos = (*fp).cur_pos;
@@ -277,16 +297,19 @@ pub fn ftFox_SpecialS_SetVars(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_SpecialS_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialS_Enter");
     st::Fighter_ChangeMotionState(gobj, ftFx_MS_SpecialS as i32, Ft_MF_SkipRumble as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ftFox_SpecialS_SetVars(gobj);
 }
 
 pub fn ftFx_SpecialAirS_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirS_Enter");
     st::Fighter_ChangeMotionState(gobj, ftFx_MS_SpecialAirS as i32, Ft_MF_SkipRumble as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ftFox_SpecialS_SetVars(gobj);
 }
 
 pub fn ftFx_SpecialSEnd_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialSEnd_Phys");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -301,6 +324,7 @@ pub fn ftFx_SpecialSEnd_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_SpecialAirSEnd_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirSEnd_Phys");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -317,6 +341,7 @@ pub fn ftFx_SpecialAirSEnd_Phys(gobj: *mut HSD_GObj) {
 
 /// `ftFox_SpecialSEnd_SetVars` (static inline).
 pub fn ftFox_SpecialSEnd_SetVars(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFox_SpecialSEnd_SetVars");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -326,6 +351,7 @@ pub fn ftFox_SpecialSEnd_SetVars(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_SpecialSEnd_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialSEnd_Enter");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -338,6 +364,7 @@ pub fn ftFx_SpecialSEnd_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_SpecialAirSEnd_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirSEnd_Enter");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);

@@ -13,6 +13,7 @@ pub mod ext {
 
 /// `ftCh_Init_80158B3C`.
 pub fn ftCh_Init_80158B3C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Init_80158B3C");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*(*fp).ft_data).ext_attr as *const ftCrazyHand_DatAttrs;

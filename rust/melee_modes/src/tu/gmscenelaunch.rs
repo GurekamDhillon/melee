@@ -65,6 +65,7 @@ pub mod ext {
 
 /// `SceneLaunch_ApplyItemFrequency`: `Off` is a parser sentinel (-2), not frequency index zero.
 pub unsafe fn SceneLaunch_ApplyItemFrequency(rules: *mut StartMeleeRules, prefs: *mut GamePrefs) {
+    melee_core::ct!("SceneLaunch_ApplyItemFrequency");
     let frequency = ext::SceneLaunch_ItemFreq();
     if frequency != -1 {
         (*rules).item_freq = (if frequency == -2 { -1 } else { frequency }) as i8;
@@ -85,6 +86,7 @@ fn SceneLaunch_UntintedEnemy(start: &StartMeleeData, i: usize) -> bool {
 
 /// `SceneLaunch_ApplyTeamCostumes`: share costumes without duplicate tinting on the opposing team.
 pub fn SceneLaunch_ApplyTeamCostumes(start: &mut StartMeleeData) {
+    melee_core::ct!("SceneLaunch_ApplyTeamCostumes");
     for i in 0..GM_MAX {
         if SceneLaunch_UntintedEnemy(start, i) {
             let team = start.players[i].team;
@@ -104,6 +106,7 @@ pub fn SceneLaunch_ApplyTeamCostumes(start: &mut StartMeleeData) {
 /// `SceneLaunch_SeedPlayers`: separate player seeding from preload/scene side effects. Returns how many
 /// slots the scene named.
 pub unsafe fn SceneLaunch_SeedPlayers(vs: *mut VsModeData, dummy_fallback: i32) -> i32 {
+    melee_core::ct!("SceneLaunch_SeedPlayers");
     let players = &mut (*vs).start.players;
     let mut seeded = 0;
     for i in 0..GM_MAX {
@@ -210,6 +213,7 @@ pub unsafe fn SceneLaunch_SeedPlayers(vs: *mut VsModeData, dummy_fallback: i32) 
 /// `SceneLaunch_SeedVs`: seeds a `VsModeData` from the configured scene and jumps the mode state machine
 /// to the requested screen. True when a scene was applied, false when nothing was configured.
 pub unsafe fn SceneLaunch_SeedVs(vs: *mut VsModeData, dummy_fallback: i32) -> i32 {
+    melee_core::ct!("SceneLaunch_SeedVs");
     if ext::SceneLaunch_Active() == 0 || ext::SceneLaunch_VsModeIndex() < 0 {
         return 0;
     }

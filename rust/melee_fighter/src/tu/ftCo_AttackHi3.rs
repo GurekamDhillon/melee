@@ -47,6 +47,7 @@ pub mod ext {
 
 /// `ftCo_AttackHi3_CheckInput`.
 pub fn ftCo_AttackHi3_CheckInput(g: G) -> bool {
+    melee_core::ct!("ftCo_AttackHi3_CheckInput");
     let f = fp(g);
     if f.input.pressed_buttons & HSD_PAD_A as u32 != 0
         && f.input.lstick[0].y >= cd().attackhi3_stick_threshold_y
@@ -64,6 +65,7 @@ pub fn ftCo_AttackHi3_CheckInput(g: G) -> bool {
 
 /// static `doEnter`.
 pub fn doEnter(g: G) {
+    melee_core::ct!("doEnter");
     let f = fp(g);
     f.set_allow_interrupt(0);
     ext::Fighter_ChangeMotionState(g, ftCo_MS_AttackHi3 as i32, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -71,21 +73,25 @@ pub fn doEnter(g: G) {
 }
 
 pub fn ftCo_AttackHi3_Anim(g: G) {
+    melee_core::ct!("ftCo_AttackHi3_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ft_8008A2BC(g);
     }
 }
 
 pub fn ftCo_AttackHi3_IASA(g: G) {
+    melee_core::ct!("ftCo_AttackHi3_IASA");
     if fp(g).allow_interrupt() != 0 {
         ext::ftCo_Wait_IASA(g);
     }
 }
 
 pub fn ftCo_AttackHi3_Phys(g: G) {
+    melee_core::ct!("ftCo_AttackHi3_Phys");
     ext::ft_80084F3C(g);
 }
 
 pub fn ftCo_AttackHi3_Coll(g: G) {
+    melee_core::ct!("ftCo_AttackHi3_Coll");
     ext::ft_80084104(g);
 }

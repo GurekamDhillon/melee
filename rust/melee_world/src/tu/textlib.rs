@@ -62,6 +62,7 @@ unsafe fn memzero(p: *mut u8, n: i32) {
 
 /// `static inline DevText* find_by_id(char id)`: the draw-list entry with that id.
 pub unsafe fn find_by_id(id: i8) -> *mut DevText {
+    melee_core::ct!("find_by_id");
     let mut text = devtext_drawlist;
     while !text.is_null() {
         if (*text).id == id {
@@ -75,6 +76,7 @@ pub unsafe fn find_by_id(id: i8) -> *mut DevText {
 /// `DevText* DevText_Create(char id, int x, int y, int w, int h, char* buf)`: takes a box off the
 /// free list (NULL when `id` is already listed); a failed allocation is the C `HSD_ASSERTREPORT`.
 pub unsafe extern "C" fn DevText_Create(id: i8, x: i32, y: i32, w: i32, h: i32, buf: *mut i8) -> *mut DevText {
+    melee_core::ct!("DevText_Create");
     let bg = _GXColor { r: 0x60, g: 0xD0, b: 0xB0, a: 0x70 };
     if !find_by_id(id).is_null() {
         return null_mut();
@@ -120,6 +122,7 @@ pub unsafe extern "C" fn DevText_Create(id: i8, x: i32, y: i32, w: i32, h: i32, 
 
 /// `void DevText_EraseFirstLine(DevText*)`: scrolls the buffer up one line and clears the last.
 pub unsafe extern "C" fn DevText_EraseFirstLine(text: *mut DevText) {
+    melee_core::ct!("DevText_EraseFirstLine");
     let t = &*text;
     let mut start_of_line = t.buf;
     let line_length = t.w as i32 * 2;
@@ -135,6 +138,7 @@ pub unsafe extern "C" fn DevText_EraseFirstLine(text: *mut DevText) {
 /// `static inline int DevText_Clamp(int val, int max)`
 #[inline]
 pub fn DevText_Clamp(val: i32, max: i32) -> i32 {
+    melee_core::ct!("DevText_Clamp");
     if max <= val {
         max - 1
     } else if val < 0 {
@@ -146,6 +150,7 @@ pub fn DevText_Clamp(val: i32, max: i32) -> i32 {
 
 /// `void DevText_SetCursorXY(DevText*, int, int)`: clamped to the box.
 pub unsafe extern "C" fn DevText_SetCursorXY(text: *mut DevText, mut x: i32, mut y: i32) {
+    melee_core::ct!("DevText_SetCursorXY");
     let t = &mut *text;
     if t.w as i32 <= x {
         x = t.w as i32 - 1;
@@ -163,47 +168,56 @@ pub unsafe extern "C" fn DevText_SetCursorXY(text: *mut DevText, mut x: i32, mut
 
 /// `void DevText_SetCursorX(DevText*, int)`
 pub unsafe extern "C" fn DevText_SetCursorX(text: *mut DevText, x: i32) {
+    melee_core::ct!("DevText_SetCursorX");
     (*text).cursor_x = DevText_Clamp(x, (*text).w as i32) as u8;
 }
 
 /// `void DevText_HideCursor(DevText*)`
 pub unsafe extern "C" fn DevText_HideCursor(text: *mut DevText) {
+    melee_core::ct!("DevText_HideCursor");
     (*text).flags &= !(1 << 4);
 }
 
 /// `void DevText_80302AC0(DevText*)`
 pub unsafe extern "C" fn DevText_80302AC0(text: *mut DevText) {
+    melee_core::ct!("DevText_80302AC0");
     (*text).flags |= 1 << 5;
 }
 
 /// `void DevText_ShowBackground(DevText*)`
 pub unsafe extern "C" fn DevText_ShowBackground(text: *mut DevText) {
+    melee_core::ct!("DevText_ShowBackground");
     (*text).flags &= !(1 << 6);
 }
 
 /// `void DevText_HideBackground(DevText*)`
 pub unsafe extern "C" fn DevText_HideBackground(text: *mut DevText) {
+    melee_core::ct!("DevText_HideBackground");
     (*text).flags |= 1 << 6;
 }
 
 /// `void DevText_ShowText(DevText*)`
 pub unsafe extern "C" fn DevText_ShowText(text: *mut DevText) {
+    melee_core::ct!("DevText_ShowText");
     (*text).flags &= !(1 << 7);
 }
 
 /// `void DevText_HideText(DevText*)`
 pub unsafe extern "C" fn DevText_HideText(text: *mut DevText) {
+    melee_core::ct!("DevText_HideText");
     (*text).flags |= 1 << 7;
 }
 
 /// `void DevText_SetScale(DevText*, f32, f32)`
 pub unsafe extern "C" fn DevText_SetScale(text: *mut DevText, x: f32, y: f32) {
+    melee_core::ct!("DevText_SetScale");
     (*text).scale_x = x;
     (*text).scale_y = y;
 }
 
 /// `void DevText_SetXY(DevText*, int, int)`: never closer than 8 to the screen's top left.
 pub unsafe extern "C" fn DevText_SetXY(text: *mut DevText, mut x: i32, mut y: i32) {
+    melee_core::ct!("DevText_SetXY");
     if x < 8 {
         x = 8;
     }
@@ -216,6 +230,7 @@ pub unsafe extern "C" fn DevText_SetXY(text: *mut DevText, mut x: i32, mut y: i3
 
 /// `u8 DevText_StoreColorIndex(DevText*, u8)`: returns the previous index.
 pub unsafe extern "C" fn DevText_StoreColorIndex(text: *mut DevText, index: u8) -> u8 {
+    melee_core::ct!("DevText_StoreColorIndex");
     let old = (*text).current_color();
     (*text).set_current_color(index);
     old
@@ -223,6 +238,7 @@ pub unsafe extern "C" fn DevText_StoreColorIndex(text: *mut DevText, index: u8) 
 
 /// `GXColor DevText_SetTextColor(DevText*, GXColor)`: sets the current index's colour.
 pub unsafe extern "C" fn DevText_SetTextColor(text: *mut DevText, color: _GXColor) -> _GXColor {
+    melee_core::ct!("DevText_SetTextColor");
     let index = (*text).current_color() as usize;
     let old = (*text).text_colors[index];
     (*text).text_colors[index] = color;
@@ -231,6 +247,7 @@ pub unsafe extern "C" fn DevText_SetTextColor(text: *mut DevText, color: _GXColo
 
 /// `GXColor DevText_SetBGColor(DevText*, GXColor)`
 pub unsafe extern "C" fn DevText_SetBGColor(text: *mut DevText, color: _GXColor) -> _GXColor {
+    melee_core::ct!("DevText_SetBGColor");
     let old = (*text).bg_color;
     (*text).bg_color = color;
     old
@@ -238,12 +255,14 @@ pub unsafe extern "C" fn DevText_SetBGColor(text: *mut DevText, color: _GXColor)
 
 /// `void DevText_Erase(DevText*)`
 pub unsafe extern "C" fn DevText_Erase(text: *mut DevText) {
+    melee_core::ct!("DevText_Erase");
     let t = &*text;
     memzero(t.buf as *mut u8, 2i32.wrapping_mul(t.w as i32).wrapping_mul(t.h as i32));
 }
 
 /// `static inline void DevText_AdvanceLine(DevText*)`
 pub unsafe fn DevText_AdvanceLine(text: *mut DevText) {
+    melee_core::ct!("DevText_AdvanceLine");
     (*text).cursor_x = 0;
     if ((*text).cursor_y as i32) < (*text).h as i32 - 1 {
         (*text).cursor_y += 1;
@@ -255,6 +274,7 @@ pub unsafe fn DevText_AdvanceLine(text: *mut DevText) {
 /// `void DevText_Print(DevText*, char*)`: writes each character with the current colour, wrapping
 /// at the right edge (unless NOWRAP) and on `'\n'`.
 pub unsafe extern "C" fn DevText_Print(text: *mut DevText, str: *mut i8) {
+    melee_core::ct!("DevText_Print");
     if !str.is_null() {
         let mut cur = str;
         while *cur != 0 {
@@ -280,6 +300,7 @@ pub unsafe extern "C" fn DevText_Print(text: *mut DevText, str: *mut i8) {
 
 /// `void DevText_PrintInt(DevText*, int)`
 pub unsafe extern "C" fn DevText_PrintInt(text: *mut DevText, num: i32) {
+    melee_core::ct!("DevText_PrintInt");
     let mut str = [0i8; 16];
     ext::DevText_NumToStr(num, str.as_mut_ptr());
     DevText_Print(text, str.as_mut_ptr());
@@ -287,6 +308,7 @@ pub unsafe extern "C" fn DevText_PrintInt(text: *mut DevText, num: i32) {
 
 /// `void DevText_Printf(DevText*, char* format, ...)` with the variadic arguments as a slice.
 pub unsafe fn DevText_Printf(text: *mut DevText, format: *const i8, args: &[PrintfArg]) {
+    melee_core::ct!("DevText_Printf");
     let mut str = [0i8; 64];
     let f = c_format(format, args);
     let n = f.len().min(63);
@@ -298,10 +320,12 @@ pub unsafe fn DevText_Printf(text: *mut DevText, format: *const i8, args: &[Prin
 
 /// `struct un_80304138_objalloc_t* un_80302DF0(void)`: the current menu.
 pub unsafe extern "C" fn un_80302DF0() -> *mut un_80304138_objalloc_t {
+    melee_core::ct!("un_80302DF0");
     un_804D6E44
 }
 
 /// `void un_80302DF8(struct un_80304138_objalloc_t*, soundtest_callback)`
 pub unsafe extern "C" fn un_80302DF8(arg0: *mut un_80304138_objalloc_t, arg1: soundtest_callback) {
+    melee_core::ct!("un_80302DF8");
     (*arg0).xC = arg1;
 }

@@ -11,9 +11,10 @@ pub use crate::chars::r3::ftMasterHand::ftmasterhandrockcrush::ftMh_MS_356_80152
 pub use crate::chars::r8::ftMasterHand::ftmasterhandrockcrush::{ftMh_RockCrushUp_IASA, ftMh_RockCrushWait_IASA};
 
 /// `ftMh_Drill_Coll` (defined in this C file).
-pub fn ftMh_Drill_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_Drill_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_Drill_Coll");}
 
 pub fn ftMh_RockCrushUp_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_RockCrushUp_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         unsafe {
             let fp = (*gobj).user_data as *mut Fighter;
@@ -24,9 +25,10 @@ pub fn ftMh_RockCrushUp_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftMh_RockCrushUp_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_RockCrushUp_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_RockCrushUp_Coll");}
 
 pub fn ftMh_RockCrushWait_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_RockCrushWait_Anim");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         (*fp).mv.mh.unk0.x8 = (*fp).mv.mh.unk0.x8.wrapping_sub(1);
@@ -41,6 +43,7 @@ pub fn ftMh_RockCrushWait_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMh_RockCrushWait_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_RockCrushWait_Phys");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*(*fp).ft_data).ext_attr as *const ftMasterHand_SpecialAttrs;
@@ -50,4 +53,4 @@ pub fn ftMh_RockCrushWait_Phys(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftMh_RockCrushWait_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_RockCrushWait_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_RockCrushWait_Coll");}

@@ -105,6 +105,7 @@ fn c_abs(x: f32) -> f32 {
 /// `Item_InitSpawnCommonFields` (itkinds inlines.h).
 #[inline]
 pub unsafe fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD_GObj, facing_dir: f32, initial_collision: bool) {
+    melee_core::ct!("Item_InitSpawnCommonFields");
     (*spawn).facing_dir = facing_dir;
     (*spawn).x3C_damage = 0;
     (*spawn).vel.z = 0.0;
@@ -119,6 +120,7 @@ pub unsafe fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD
 /// `Item_InitSpawnPositionFromParent` (itkinds inlines.h).
 #[inline]
 pub unsafe fn Item_InitSpawnPositionFromParent(spawn: *mut SpawnItem, parent: *mut HSD_GObj, pos: *const Vec) {
+    melee_core::ct!("Item_InitSpawnPositionFromParent");
     (*spawn).prev_pos = *pos;
     (*spawn).prev_pos.z = 0.0;
     ext::it_8026BB68(parent, &mut (*spawn).pos);
@@ -127,6 +129,7 @@ pub unsafe fn Item_InitSpawnPositionFromParent(spawn: *mut SpawnItem, parent: *m
 /// `Item_NormalizeAngle` (itkinds inlines.h): wraps into [0, M_TAU] (the arithmetic is in doubles).
 #[inline]
 pub unsafe fn Item_NormalizeAngle(angle: *mut f32) {
+    melee_core::ct!("Item_NormalizeAngle");
     while *angle < 0.0 {
         *angle = (*angle as f64 + M_TAU) as f32;
     }
@@ -138,6 +141,7 @@ pub unsafe fn Item_NormalizeAngle(angle: *mut f32) {
 /// `Item_UpdateRayAnimation` (itkinds inlines.h): velocity from speed / angle, facing, the jobj rotation
 /// and the growing scale.
 pub unsafe fn Item_UpdateRayAnimation(gobj: *mut Item_GObj, ip: *mut Item, jobj: *mut HSD_JObj, max_scale: *const f32, scale_divisor: f32) -> i32 {
+    melee_core::ct!("Item_UpdateRayAnimation");
     (*ip).x40_vel.x = (*ip).xDD4_itemVar.ray.speed * cosf((*ip).xDD4_itemVar.ray.angle);
     (*ip).x40_vel.y = (*ip).xDD4_itemVar.ray.speed * sinf((*ip).xDD4_itemVar.ray.angle);
     (*ip).x40_vel.z = 0.0;
@@ -160,6 +164,7 @@ pub unsafe fn Item_UpdateRayAnimation(gobj: *mut Item_GObj, ip: *mut Item, jobj:
 
 /// `Item_BounceRayOffShield` (itkinds inlines.h).
 pub unsafe fn Item_BounceRayOffShield(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("Item_BounceRayOffShield");
     let ip = item_of(gobj);
     ext::lbVector_Mirror(&mut (*ip).x40_vel, &mut (*ip).xC58);
     (*ip).xDD4_itemVar.ray.scale = 1e-3;
@@ -175,6 +180,7 @@ pub unsafe fn Item_BounceRayOffShield(gobj: *mut Item_GObj) -> i32 {
 
 /// `Item_ResetRayAfterReflection` (itkinds inlines.h).
 pub unsafe fn Item_ResetRayAfterReflection(ip: *mut Item, jobj: *mut HSD_JObj) {
+    melee_core::ct!("Item_ResetRayAfterReflection");
     (*ip).xDD4_itemVar.ray.scale = 1e-3;
     ji::HSD_JObjSetScaleZ(jref(jobj), (*ip).xDD4_itemVar.ray.scale, &mut Dirty);
     (*ip).xDD4_itemVar.ray.angle = ((*ip).xDD4_itemVar.ray.angle as f64 + M_PI) as f32;
@@ -194,12 +200,14 @@ pub static it_803F67D0: [ItemStateTable; 2] = [
 
 /// `bool it_8029C4D4(Item_GObj*, CollData*)`: the shot's segment-vs-map probe from the previous to the current position.
 pub unsafe extern "C" fn it_8029C4D4(item_gobj: *mut Item_GObj, arg1: *mut CollData) -> i32 {
+    melee_core::ct!("it_8029C4D4");
     let item = item_of(item_gobj);
     ext::it_8026E9A4(item_gobj, &mut (*item).xDD4_itemVar.foxlaser.pos, &mut (*item).pos, null_mut())
 }
 
 /// `void it_8029C504(HSD_GObj* parent, Vec3* pos, enum_t msid, int kind, f32 angle, f32 speed)`: spawns a shot.
 pub unsafe extern "C" fn it_8029C504(parent: *mut HSD_GObj, pos: *mut Vec, msid: enum_t, kind: i32, mut angle: f32, speed: f32) {
+    melee_core::ct!("it_8029C504");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
     Item_NormalizeAngle(&mut angle);
@@ -226,16 +234,19 @@ pub unsafe extern "C" fn it_8029C504(parent: *mut HSD_GObj, pos: *mut Vec, msid:
 
 /// `void it_8029C6A4(f32 angle, f32 vel, HSD_GObj* parent, Vec3* vec, int kind)`: Fox's laser (item state 0).
 pub unsafe extern "C" fn it_8029C6A4(angle: f32, vel: f32, parent: *mut HSD_GObj, vec: *mut Vec, kind: i32) {
+    melee_core::ct!("it_8029C6A4");
     it_8029C504(parent, vec, 0, kind, angle, vel);
 }
 
 /// `void it_8029C6CC(f32 angle, f32 vel, HSD_GObj* parent, Vec3* vec, int kind)`: Falco's laser (item state 1).
 pub unsafe extern "C" fn it_8029C6CC(angle: f32, vel: f32, parent: *mut HSD_GObj, vec: *mut Vec, kind: i32) {
+    melee_core::ct!("it_8029C6CC");
     it_8029C504(parent, vec, 1, kind, angle, vel);
 }
 
 /// `bool itFoxlaser_UnkMotion1_Anim(Item_GObj*)`.
 pub unsafe extern "C" fn itFoxlaser_UnkMotion1_Anim(item_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFoxlaser_UnkMotion1_Anim");
     let ip = item_of(item_gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut FoxLaserAttr;
     let jobj = jobj_of(item_gobj);
@@ -244,12 +255,14 @@ pub unsafe extern "C" fn itFoxlaser_UnkMotion1_Anim(item_gobj: *mut Item_GObj) -
 
 /// `void itFoxlaser_UnkMotion1_Phys(Item_GObj*)`: remembers the position.
 pub unsafe extern "C" fn itFoxlaser_UnkMotion1_Phys(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itFoxlaser_UnkMotion1_Phys");
     let item = item_of(item_gobj);
     (*item).xDD4_itemVar.foxlaser.pos = (*item).pos;
 }
 
 /// `bool itFoxlaser_UnkMotion1_Coll(Item_GObj*)`: on a map hit, shortens the lifetime to one frame and keeps the position.
 pub unsafe extern "C" fn itFoxlaser_UnkMotion1_Coll(item_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFoxlaser_UnkMotion1_Coll");
     let item = item_of(item_gobj);
     let pos = (*item).pos;
     if it_8029C4D4(item_gobj, null_mut()) != 0 {
@@ -261,11 +274,13 @@ pub unsafe extern "C" fn itFoxlaser_UnkMotion1_Coll(item_gobj: *mut Item_GObj) -
 
 /// `bool itFoxLaser_Logic94_Clanked(Item_GObj*)`.
 pub unsafe extern "C" fn itFoxLaser_Logic94_Clanked(arg0: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFoxLaser_Logic94_Clanked");
     1
 }
 
 /// `bool itFoxLaser_Logic94_Reflected(Item_GObj*)`: turns around and restarts the ray.
 pub unsafe extern "C" fn itFoxLaser_Logic94_Reflected(item_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFoxLaser_Logic94_Reflected");
     let item = item_of(item_gobj);
     let jobj = jobj_of(item_gobj);
     if (*item).facing_dir != (*item).xC68 {
@@ -278,20 +293,24 @@ pub unsafe extern "C" fn itFoxLaser_Logic94_Reflected(item_gobj: *mut Item_GObj)
 
 /// `bool itFoxLaser_Logic94_Absorbed(Item_GObj*)`.
 pub unsafe extern "C" fn itFoxLaser_Logic94_Absorbed(arg0: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFoxLaser_Logic94_Absorbed");
     1
 }
 
 /// `bool itFoxLaser_Logic94_ShieldBounced(Item_GObj*)`.
 pub unsafe extern "C" fn itFoxLaser_Logic94_ShieldBounced(item_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFoxLaser_Logic94_ShieldBounced");
     Item_BounceRayOffShield(item_gobj)
 }
 
 /// `bool itFoxLaser_Logic94_HitShield(Item_GObj*)`.
 pub unsafe extern "C" fn itFoxLaser_Logic94_HitShield(arg0: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFoxLaser_Logic94_HitShield");
     1
 }
 
 /// `void itFoxLaser_Logic94_EvtUnk(Item_GObj*, HSD_GObj*)`: removes the gobj interaction references.
 pub unsafe extern "C" fn itFoxLaser_Logic94_EvtUnk(item_gobj: *mut Item_GObj, r#ref: *mut HSD_GObj) {
+    melee_core::ct!("itFoxLaser_Logic94_EvtUnk");
     ext::it_8026B894(item_gobj, r#ref);
 }

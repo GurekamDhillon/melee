@@ -819,6 +819,7 @@ unsafe fn grVe_RandRange(fmin: f32, fmax: f32) -> i32 {
 
 /// The three-slot Arwing spawn scheduler.
 pub unsafe extern "C" fn grVenom_8020362C() {
+    melee_core::ct!("grVenom_8020362C");
     let data = &raw mut grVe_803E5348;
 
     if grVe_804D6A40 == 0 {
@@ -947,7 +948,7 @@ pub unsafe extern "C" fn grVenom_8020362C() {
     }
 }
 
-pub unsafe extern "C" fn grVenom_80203B14(_arg: i32) {}
+pub unsafe extern "C" fn grVenom_80203B14(_arg: i32) { melee_core::ct!("grVenom_80203B14");}
 
 #[inline(always)]
 unsafe fn inlineA0() {
@@ -975,6 +976,7 @@ unsafe fn inlineA0() {
 
 /// Stage initialization function for Venom.
 pub unsafe extern "C" fn grVenom_80203B18() {
+    melee_core::ct!("grVenom_80203B18");
     let mut position = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
     yakumono_param = ext::Ground_GetYakumonoParam() as *mut grVenom_YakumonoParam;
@@ -1039,6 +1041,7 @@ pub unsafe extern "C" fn grVenom_80203B18() {
 }
 
 pub unsafe extern "C" fn grVenom_80203DD0() {
+    melee_core::ct!("grVenom_80203DD0");
     let mut gobj = *ext::HSD_GObjPLinkHead.add(HSD_GOBJ_PLINK_LIGHT as usize);
     while !gobj.is_null() {
         if (*gobj).classifier == 0xC {
@@ -1054,14 +1057,17 @@ pub unsafe extern "C" fn grVenom_80203DD0() {
 }
 
 pub unsafe extern "C" fn grVenom_80203E80() {
+    melee_core::ct!("grVenom_80203E80");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
 
 pub unsafe extern "C" fn grVenom_80203EA4() -> i32 {
+    melee_core::ct!("grVenom_80203EA4");
     0
 }
 
 pub unsafe extern "C" fn grVenom_80203EAC(gobj_id: i32) -> *mut Ground_GObj {
+    melee_core::ct!("grVenom_80203EAC");
     // TARGET_PC: `grVe_StageCallbacks[gobj_id]` (the PPC code indexed from the data-run base + 0x44)
     let callbacks = &raw mut grVe_StageCallbacks[gobj_id as usize];
 
@@ -1089,19 +1095,22 @@ pub unsafe extern "C" fn grVenom_80203EAC(gobj_id: i32) -> *mut Ground_GObj {
 }
 
 pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj0_OnInit");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
 }
 
 pub unsafe extern "C" fn grVenom_80203FC4(_arg: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("grVenom_80203FC4");
     0
 }
 
-pub unsafe extern "C" fn grVenom_80203FCC(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grVenom_80203FCC(_arg: *mut Ground_GObj) { melee_core::ct!("grVenom_80203FCC");}
 
-pub unsafe extern "C" fn grVenom_80203FD0(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grVenom_80203FD0(_arg: *mut Ground_GObj) { melee_core::ct!("grVenom_80203FD0");}
 
 pub unsafe extern "C" fn grVenom_80203FD4(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grVenom_80203FD4");
     let mut gp = GET_GROUND(gobj);
 
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
@@ -1118,14 +1127,16 @@ pub unsafe extern "C" fn grVenom_80203FD4(gobj: *mut Ground_GObj) {
 }
 
 pub unsafe extern "C" fn grVenom_802040A4(_arg: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("grVenom_802040A4");
     0
 }
 
-pub unsafe extern "C" fn grVenom_802040AC(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grVenom_802040AC(_arg: *mut Ground_GObj) { melee_core::ct!("grVenom_802040AC");}
 
-pub unsafe extern "C" fn grVenom_802040B0(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grVenom_802040B0(_arg: *mut Ground_GObj) { melee_core::ct!("grVenom_802040B0");}
 
 pub unsafe extern "C" fn fn_802040B4(gobj: *mut Ground_GObj) {
+    melee_core::ct!("fn_802040B4");
     let gp = GET_GROUND(gobj);
     if ext::Stage_80225194() == 0xE4 {
         (*gp).u.venom_platform.smash_taunt_timer = 1;
@@ -1133,6 +1144,7 @@ pub unsafe extern "C" fn fn_802040B4(gobj: *mut Ground_GObj) {
 }
 
 pub unsafe extern "C" fn grVenom_802040F0(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grVenom_802040F0");
     let mut pos1 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut pos2 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let gp = GET_GROUND(gobj);
@@ -1160,10 +1172,12 @@ pub unsafe extern "C" fn grVenom_802040F0(gobj: *mut Ground_GObj) {
 }
 
 pub unsafe extern "C" fn grVenom_8020427C(_arg: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("grVenom_8020427C");
     0
 }
 
 pub unsafe extern "C" fn grVenom_80204284(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grVenom_80204284");
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
     let gp = GET_GROUND(gobj);
@@ -1206,9 +1220,10 @@ pub unsafe extern "C" fn grVenom_80204284(gobj: *mut Ground_GObj) {
     ext::Ground_UpdateMapColl(gobj);
 }
 
-pub unsafe extern "C" fn grVenom_80204424(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grVenom_80204424(_arg: *mut Ground_GObj) { melee_core::ct!("grVenom_80204424");}
 
 pub unsafe extern "C" fn grVenom_80204428(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grVenom_80204428");
     let gp = GET_GROUND(gobj);
 
     (*gp).u.venom2.xC4 = ext::Ground_801C3FA4(gobj, 4);
@@ -1235,10 +1250,12 @@ pub unsafe extern "C" fn grVenom_80204428(gobj: *mut Ground_GObj) {
 }
 
 pub unsafe extern "C" fn grVenom_80204544(_arg: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("grVenom_80204544");
     0
 }
 
 pub unsafe extern "C" fn grVenom_8020454C(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grVenom_8020454C");
     let mut position = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut gp = (*gobj).user_data as *mut Ground;
     let gp_save = gp;
@@ -1371,10 +1388,11 @@ pub unsafe extern "C" fn grVenom_8020454C(gobj: *mut Ground_GObj) {
     grVenom_80204B88(gobj);
 }
 
-pub unsafe extern "C" fn grVenom_80204B84(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grVenom_80204B84(_arg: *mut Ground_GObj) { melee_core::ct!("grVenom_80204B84");}
 
 /// Updates Venom stage lighting colors based on environment state.
 pub unsafe extern "C" fn grVenom_80204B88(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grVenom_80204B88");
     let gp = GET_GROUND(gobj);
     // `*(u8*) &xE0_state.xE0_state_pad`: the first byte of the flag bits in GameCube bit order.
     let env_flags: u8 = (*gp).u.venom2.xE0_state.anon_0.bf_0[0];
@@ -1415,23 +1433,27 @@ pub unsafe extern "C" fn grVenom_80204B88(gobj: *mut Ground_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grVenom_80204CE0(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grVenom_80204CE0(_arg: *mut Ground_GObj) { melee_core::ct!("grVenom_80204CE0");}
 
 pub unsafe extern "C" fn grVenom_80204CE4(_arg: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("grVenom_80204CE4");
     0
 }
 
 pub unsafe extern "C" fn grVenom_80204CEC(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grVenom_80204CEC");
     let gp = GET_GROUND(gobj);
     Ground_UpdateStarFoxSequence(gobj, gp, 1, grVenom_80203EAC);
 }
 
 pub unsafe extern "C" fn grVenom_80204DB0(_gobj: *mut Ground_GObj) {
+    melee_core::ct!("grVenom_80204DB0");
     ext::ifStatus_802F68F0();
     ext::un_802FF620();
 }
 
 pub unsafe extern "C" fn grVenom_80204DD4(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grVenom_80204DD4");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
 
@@ -1441,16 +1463,19 @@ pub unsafe extern "C" fn grVenom_80204DD4(gobj: *mut Ground_GObj) {
 }
 
 pub unsafe extern "C" fn grVenom_80204EF4(_arg: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("grVenom_80204EF4");
     0
 }
 
 pub unsafe extern "C" fn stageGObj9_GObjProc(arg: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj9_GObjProc");
     ext::Ground_UpdateMapColl(arg);
 }
 
-pub unsafe extern "C" fn grVenom_80204F1C(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grVenom_80204F1C(_arg: *mut Ground_GObj) { melee_core::ct!("grVenom_80204F1C");}
 
 pub unsafe extern "C" fn grVenom_80204F20(arg0: *mut Ground_GObj) {
+    melee_core::ct!("grVenom_80204F20");
     let gp = (*arg0).user_data as *mut Ground;
     let jobj = (*arg0).hsd_obj as *mut HSD_JObj;
 
@@ -1489,6 +1514,7 @@ pub unsafe extern "C" fn grVenom_80204F20(arg0: *mut Ground_GObj) {
 }
 
 pub unsafe extern "C" fn grVenom_802052D8(_arg: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("grVenom_802052D8");
     0
 }
 
@@ -1499,6 +1525,7 @@ unsafe fn spawn_offset(arwing_type: i32) -> *const f32 {
 }
 
 pub unsafe extern "C" fn grVenom_802052E0(gobj: *mut Ground_GObj, pos: *mut Vec3) {
+    melee_core::ct!("grVenom_802052E0");
     if !gobj.is_null() {
         let mut jobj_pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
         let gp = (*gobj).user_data as *mut Ground;
@@ -1519,6 +1546,7 @@ pub unsafe extern "C" fn grVenom_802052E0(gobj: *mut Ground_GObj, pos: *mut Vec3
 }
 
 pub unsafe extern "C" fn grVenom_802053B0(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grVenom_802053B0");
     let mut sp28 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp1C = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
@@ -1600,9 +1628,10 @@ pub unsafe extern "C" fn grVenom_802053B0(gobj: *mut Ground_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grVenom_802056AC(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grVenom_802056AC(_arg: *mut Ground_GObj) { melee_core::ct!("grVenom_802056AC");}
 
 pub unsafe extern "C" fn grVenom_802056B0(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grVenom_802056B0");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
 
@@ -1621,10 +1650,12 @@ pub unsafe extern "C" fn grVenom_802056B0(gobj: *mut Ground_GObj) {
 }
 
 pub unsafe extern "C" fn grVenom_80205750(_arg: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("grVenom_80205750");
     0
 }
 
 pub unsafe extern "C" fn grVenom_80205758(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grVenom_80205758");
     let gp = GET_GROUND(gobj);
     let jobj = GET_JOBJ(gobj);
 
@@ -1644,9 +1675,10 @@ pub unsafe extern "C" fn grVenom_80205758(gobj: *mut Ground_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grVenom_80205AD0(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grVenom_80205AD0(_arg: *mut Ground_GObj) { melee_core::ct!("grVenom_80205AD0");}
 
 pub unsafe extern "C" fn grVenom_80205AD4(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grVenom_80205AD4");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = GET_JOBJ(gobj);
 
@@ -1677,14 +1709,17 @@ pub unsafe extern "C" fn grVenom_80205AD4(gobj: *mut Ground_GObj) {
 }
 
 pub unsafe extern "C" fn grVenom_80205DF0(_arg: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("grVenom_80205DF0");
     0
 }
 
 pub unsafe extern "C" fn grVenom_80205DF8(pos: *mut Vec3) -> i32 {
+    melee_core::ct!("grVenom_80205DF8");
     Stage_IsOutsideBlastZone(pos) as i32
 }
 
 pub unsafe extern "C" fn grVenom_80205E84(pos: *mut Vec3) -> i32 {
+    melee_core::ct!("grVenom_80205E84");
     Stage_IsOutsideBlastZoneWithMargin(pos, 20.0f32) as i32
 }
 
@@ -1707,6 +1742,7 @@ unsafe fn fire_kind_for(gobj: *mut Ground_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn grVenom_80205F30(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grVenom_80205F30");
     let mut sp94 = grVe_803B82D0;
     let mut sp88 = grVe_803B82DC;
     let mut sp64 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -1905,9 +1941,10 @@ pub unsafe extern "C" fn grVenom_80205F30(gobj: *mut Ground_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grVenom_80206870(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grVenom_80206870(_arg: *mut Ground_GObj) { melee_core::ct!("grVenom_80206870");}
 
 pub unsafe extern "C" fn grVenom_80206874(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grVenom_80206874");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
 
@@ -1940,32 +1977,38 @@ pub unsafe extern "C" fn grVenom_80206874(gobj: *mut Ground_GObj) {
 }
 
 pub unsafe extern "C" fn grVenom_80206B68(_arg: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("grVenom_80206B68");
     0
 }
 
 pub unsafe extern "C" fn grVenom_80206B70(arg: *mut Ground_GObj) {
+    melee_core::ct!("grVenom_80206B70");
     grVenom_80205F30(arg);
 }
 
-pub unsafe extern "C" fn grVenom_80206B90(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grVenom_80206B90(_arg: *mut Ground_GObj) { melee_core::ct!("grVenom_80206B90");}
 
 pub unsafe extern "C" fn grVenom_80206B94(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grVenom_80206B94");
     let gp = GET_GROUND(gobj);
     ext::smashTaunt_801E2550(gobj, &raw mut (*gp).u.smashtaunt);
 }
 
 pub unsafe extern "C" fn grVenom_80206BBC(_arg: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("grVenom_80206BBC");
     0
 }
 
 pub unsafe extern "C" fn grVenom_80206BC4(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grVenom_80206BC4");
     let gp = GET_GROUND(gobj);
     ext::grCorneria_801E277C(gobj, &raw mut (*gp).u.smashtaunt);
 }
 
-pub unsafe extern "C" fn grVenom_80206BEC(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grVenom_80206BEC(_arg: *mut Ground_GObj) { melee_core::ct!("grVenom_80206BEC");}
 
 pub unsafe extern "C" fn grVenom_80206BF0(arg0: i32) -> i32 {
+    melee_core::ct!("grVenom_80206BF0");
     let var_r30: i32;
 
     if !ext::Ground_GetMapGObj(8).is_null() {
@@ -1988,6 +2031,7 @@ pub unsafe extern "C" fn grVenom_80206BF0(arg0: i32) -> i32 {
 }
 
 pub unsafe extern "C" fn grVenom_80206CB0(arg0: i32) {
+    melee_core::ct!("grVenom_80206CB0");
     let mut gobj = ext::Ground_GetMapGObj(8);
     if !gobj.is_null() {
         if arg0 != 0 {
@@ -2002,6 +2046,7 @@ pub unsafe extern "C" fn grVenom_80206CB0(arg0: i32) {
 }
 
 pub unsafe extern "C" fn grVenom_80206D10(arg0: i32) -> i32 {
+    melee_core::ct!("grVenom_80206D10");
     if ext::stage_info.grkind == Gr_Kind_Venom && arg0 != -1 {
         let result = ext::mpJointFromLine(arg0);
         let diff = (result as u32).wrapping_sub(3);
@@ -2017,10 +2062,12 @@ pub unsafe extern "C" fn grVenom_80206D10(arg0: i32) -> i32 {
 }
 
 pub unsafe extern "C" fn grVenom_80206D74(_arg: i32) -> *mut DynamicsDesc {
+    melee_core::ct!("grVenom_80206D74");
     null_mut()
 }
 
 pub unsafe extern "C" fn grVenom_80206D7C(pos: *mut Vec3, _arg1: i32, arg2: *mut HSD_JObj) -> i32 {
+    melee_core::ct!("grVenom_80206D7C");
     let mut sp20 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp14 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 

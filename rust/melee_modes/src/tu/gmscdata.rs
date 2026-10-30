@@ -318,16 +318,19 @@ pub static mut modes: [GameMode; 48] = unsafe {
 };
 
 pub unsafe extern "C" fn gm_GetAllGameScenes() -> *mut GameScene {
+    melee_core::ct!("gm_GetAllGameScenes");
     scenes.as_mut_ptr()
 }
 
 pub unsafe extern "C" fn gm_GetAllGameModes() -> *mut GameMode {
+    melee_core::ct!("gm_GetAllGameModes");
     modes.as_mut_ptr()
 }
 
 /// Major-scene count derived from the sentinel-terminated `modes` table (m-ex swaps this accessor to
 /// return an MxDt-supplied table; the port exposes the same data-derived count).
 pub unsafe extern "C" fn gm_GetNumGameModes() -> i32 {
+    melee_core::ct!("gm_GetNumGameModes");
     let base = modes.as_mut_ptr();
     let mut cur = base;
     while (*cur).kind as u32 != GM_COUNT {
@@ -339,6 +342,7 @@ pub unsafe extern "C" fn gm_GetNumGameModes() -> i32 {
 /// Minor-scene count derived from the sentinel-terminated `scenes` table. The table has a hole at
 /// GS_0x6, so the count is the number of entries, not the terminator value.
 pub unsafe extern "C" fn gm_GetNumGameScenes() -> i32 {
+    melee_core::ct!("gm_GetNumGameScenes");
     let base = scenes.as_mut_ptr();
     let mut cur = base;
     while (*cur).kind as u32 != GS_COUNT {

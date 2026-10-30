@@ -26,6 +26,7 @@ unsafe fn mtx_is_dirty(jobj: *mut HSD_JObj) -> bool {
 
 /// `HSD_JObjGetFlags`.
 pub unsafe fn HSD_JObjGetFlags(jobj: *mut HSD_JObj) -> u32 {
+    melee_core::ct!("HSD_JObjGetFlags");
     if jobj.is_null() {
         return 0;
     }
@@ -35,6 +36,7 @@ pub unsafe fn HSD_JObjGetFlags(jobj: *mut HSD_JObj) -> u32 {
 /// `HSD_JObjSetMtxDirtySub`: mark `jobj` dirty and, unless it is an instance, every descendant
 /// that is not independent of its parent.
 pub unsafe fn HSD_JObjSetMtxDirtySub(jobj: *mut HSD_JObj) {
+    melee_core::ct!("HSD_JObjSetMtxDirtySub");
     (*jobj).flags |= JOBJ_MTX_DIRTY;
     if (*jobj).flags & JOBJ_INSTANCE == 0 {
         let mut child = (*jobj).child;
@@ -49,6 +51,7 @@ pub unsafe fn HSD_JObjSetMtxDirtySub(jobj: *mut HSD_JObj) {
 
 /// `HSD_JObjSetFlags`.
 pub unsafe fn HSD_JObjSetFlags(jobj: *mut HSD_JObj, flags: u32) {
+    melee_core::ct!("HSD_JObjSetFlags");
     if !jobj.is_null() {
         if ((*jobj).flags ^ flags) & JOBJ_CLASSICAL_SCALE != 0 && !mtx_is_dirty(jobj) {
             HSD_JObjSetMtxDirtySub(jobj);
@@ -59,6 +62,7 @@ pub unsafe fn HSD_JObjSetFlags(jobj: *mut HSD_JObj, flags: u32) {
 
 /// `HSD_JObjSetFlagsAll`.
 pub unsafe fn HSD_JObjSetFlagsAll(jobj: *mut HSD_JObj, flags: u32) {
+    melee_core::ct!("HSD_JObjSetFlagsAll");
     if !jobj.is_null() {
         HSD_JObjSetFlags(jobj, flags);
         if (*jobj).flags & JOBJ_INSTANCE == 0 {
@@ -73,6 +77,7 @@ pub unsafe fn HSD_JObjSetFlagsAll(jobj: *mut HSD_JObj, flags: u32) {
 
 /// `HSD_JObjClearFlags`.
 pub unsafe fn HSD_JObjClearFlags(jobj: *mut HSD_JObj, arg1: u32) {
+    melee_core::ct!("HSD_JObjClearFlags");
     if !jobj.is_null() {
         if ((*jobj).flags ^ arg1) & JOBJ_CLASSICAL_SCALE != 0 && !mtx_is_dirty(jobj) {
             HSD_JObjSetMtxDirtySub(jobj);
@@ -83,6 +88,7 @@ pub unsafe fn HSD_JObjClearFlags(jobj: *mut HSD_JObj, arg1: u32) {
 
 /// `HSD_JObjClearFlagsAll`.
 pub unsafe fn HSD_JObjClearFlagsAll(jobj: *mut HSD_JObj, flags: u32) {
+    melee_core::ct!("HSD_JObjClearFlagsAll");
     if !jobj.is_null() {
         HSD_JObjClearFlags(jobj, flags);
         if (*jobj).flags & JOBJ_INSTANCE == 0 {
@@ -97,6 +103,7 @@ pub unsafe fn HSD_JObjClearFlagsAll(jobj: *mut HSD_JObj, flags: u32) {
 
 /// `HSD_JObjGetDObj`: the DObj list when the union holds one (not a particle / spline JObj).
 pub unsafe fn HSD_JObjGetDObj(jobj: *mut HSD_JObj) -> *mut HSD_DObj {
+    melee_core::ct!("HSD_JObjGetDObj");
     if jobj.is_null() || (*jobj).flags & (JOBJ_PTCL | JOBJ_SPLINE) != 0 {
         return core::ptr::null_mut();
     }
@@ -105,6 +112,7 @@ pub unsafe fn HSD_JObjGetDObj(jobj: *mut HSD_JObj) -> *mut HSD_DObj {
 
 /// `HSD_JObjGetPrev`: the sibling before `jobj` (NULL for a first child or an orphan).
 pub unsafe fn HSD_JObjGetPrev(jobj: *mut HSD_JObj) -> *mut HSD_JObj {
+    melee_core::ct!("HSD_JObjGetPrev");
     if jobj.is_null() || (*jobj).parent.is_null() {
         return core::ptr::null_mut();
     }
@@ -123,6 +131,7 @@ pub unsafe fn HSD_JObjGetPrev(jobj: *mut HSD_JObj) -> *mut HSD_JObj {
 
 /// `RecalcParentTrspBits`.
 pub unsafe fn RecalcParentTrspBits(mut jobj: *mut HSD_JObj) {
+    melee_core::ct!("RecalcParentTrspBits");
     while !jobj.is_null() {
         let mut child = (*jobj).child;
         let mut flags = !JOBJ_ROOT_MASK;
@@ -152,6 +161,7 @@ unsafe fn UpdateParentTrspBits(mut jobj: *mut HSD_JObj, child: *mut HSD_JObj) {
 
 /// `HSD_JObjAddChild`.
 pub unsafe fn HSD_JObjAddChild(jobj: *mut HSD_JObj, child: *mut HSD_JObj) {
+    melee_core::ct!("HSD_JObjAddChild");
     if jobj.is_null() || child.is_null() {
         return;
     }
@@ -174,6 +184,7 @@ pub unsafe fn HSD_JObjAddChild(jobj: *mut HSD_JObj, child: *mut HSD_JObj) {
 
 /// `HSD_JObjReparent`: detach `jobj` from its parent and append it to `parent`; returns the old next sibling.
 pub unsafe fn HSD_JObjReparent(jobj: *mut HSD_JObj, parent: *mut HSD_JObj) -> *mut HSD_JObj {
+    melee_core::ct!("HSD_JObjReparent");
     if jobj.is_null() {
         return core::ptr::null_mut();
     }
@@ -196,6 +207,7 @@ pub unsafe fn HSD_JObjReparent(jobj: *mut HSD_JObj, parent: *mut HSD_JObj) -> *m
 
 /// `HSD_JObjAddNext`.
 pub unsafe fn HSD_JObjAddNext(jobj: *mut HSD_JObj, next: *mut HSD_JObj) {
+    melee_core::ct!("HSD_JObjAddNext");
     if jobj.is_null() || next.is_null() {
         return;
     }

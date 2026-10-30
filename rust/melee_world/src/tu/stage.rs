@@ -288,117 +288,144 @@ unsafe fn arena_bound(field: i32, fallback: f32) -> f32 {
 }
 
 pub unsafe extern "C" fn Stage_GetCamBoundsLeftOffset() -> f32 {
+    melee_core::ct!("Stage_GetCamBoundsLeftOffset");
     arena_bound(0, ext::stage_info.cam_info.cam_bounds.left + ext::stage_info.cam_info.cam_x_offset)
 }
 
 pub unsafe extern "C" fn Stage_GetCamBoundsRightOffset() -> f32 {
+    melee_core::ct!("Stage_GetCamBoundsRightOffset");
     arena_bound(1, ext::stage_info.cam_info.cam_bounds.right + ext::stage_info.cam_info.cam_x_offset)
 }
 
 pub unsafe extern "C" fn Stage_GetCamBoundsTopOffset() -> f32 {
+    melee_core::ct!("Stage_GetCamBoundsTopOffset");
     arena_bound(2, ext::stage_info.cam_info.cam_bounds.top + ext::stage_info.cam_info.cam_y_offset)
 }
 
 pub unsafe extern "C" fn Stage_GetCamBoundsBottomOffset() -> f32 {
+    melee_core::ct!("Stage_GetCamBoundsBottomOffset");
     arena_bound(3, ext::stage_info.cam_info.cam_bounds.bottom + ext::stage_info.cam_info.cam_y_offset)
 }
 
 pub unsafe extern "C" fn Stage_GetCamPanAngleRadians() -> f32 {
+    melee_core::ct!("Stage_GetCamPanAngleRadians");
     0.0174532923847f32 * ext::stage_info.cam_info.cam_pan_degrees
 }
 
 pub unsafe extern "C" fn Stage_GetCamMaxDepth() -> f32 {
+    melee_core::ct!("Stage_GetCamMaxDepth");
     ext::stage_info.cam_info.cam_max_depth
 }
 
 pub unsafe extern "C" fn Stage_GetCamZoomRate() -> f32 {
+    melee_core::ct!("Stage_GetCamZoomRate");
     ext::stage_info.cam_info.cam_zoom_rate
 }
 
 pub unsafe extern "C" fn Stage_GetCamInfoX20() -> f32 {
+    melee_core::ct!("Stage_GetCamInfoX20");
     ext::stage_info.cam_info.x20
 }
 
 pub unsafe extern "C" fn Stage_GetCamInfoX24() -> f32 {
+    melee_core::ct!("Stage_GetCamInfoX24");
     ext::stage_info.cam_info.x24
 }
 
 pub unsafe extern "C" fn Stage_GetCamFixedZoom() -> f32 {
+    melee_core::ct!("Stage_GetCamFixedZoom");
     ext::stage_info.cam_info.cam_fixed_zoom
 }
 
 pub unsafe extern "C" fn Stage_GetCamTrackRatio() -> f32 {
+    melee_core::ct!("Stage_GetCamTrackRatio");
     ext::stage_info.cam_info.cam_track_ratio
 }
 
 pub unsafe extern "C" fn Stage_GetCamTrackSmooth() -> f32 {
+    melee_core::ct!("Stage_GetCamTrackSmooth");
     ext::stage_info.cam_info.cam_track_smooth
 }
 
 pub unsafe extern "C" fn Stage_GetBlastZoneRightOffset() -> f32 {
+    melee_core::ct!("Stage_GetBlastZoneRightOffset");
     arena_bound(5, ext::stage_info.blast_zone.right + ext::stage_info.cam_info.cam_x_offset)
 }
 
 pub unsafe extern "C" fn Stage_GetBlastZoneLeftOffset() -> f32 {
+    melee_core::ct!("Stage_GetBlastZoneLeftOffset");
     arena_bound(4, ext::stage_info.blast_zone.left + ext::stage_info.cam_info.cam_x_offset)
 }
 
 /// named stGetPlyDeadUp according to an assert in ftcamera.c
 pub unsafe extern "C" fn Stage_GetBlastZoneTopOffset() -> f32 {
+    melee_core::ct!("Stage_GetBlastZoneTopOffset");
     arena_bound(6, ext::stage_info.blast_zone.top + ext::stage_info.cam_info.cam_y_offset)
 }
 
 pub unsafe extern "C" fn Stage_GetBlastZoneBottomOffset() -> f32 {
+    melee_core::ct!("Stage_GetBlastZoneBottomOffset");
     arena_bound(7, ext::stage_info.blast_zone.bottom + ext::stage_info.cam_info.cam_y_offset)
 }
 
 pub unsafe extern "C" fn Stage_CalcUnkCamY() -> f32 {
+    melee_core::ct!("Stage_CalcUnkCamY");
     let a = Stage_GetCamBoundsBottomOffset();
     let b = Stage_GetBlastZoneBottomOffset();
     0.5f32 * (a + b)
 }
 
 pub unsafe extern "C" fn Stage_CalcUnkCamYBounds() -> f32 {
+    melee_core::ct!("Stage_CalcUnkCamYBounds");
     let a = Stage_GetCamBoundsBottomOffset();
     let b = Stage_CalcUnkCamY();
     0.5f32 * (a + b)
 }
 
 pub unsafe extern "C" fn Stage_UnkSetVec3TCam_Offset(vec3: *mut Vec3) {
+    melee_core::ct!("Stage_UnkSetVec3TCam_Offset");
     (*vec3).x = arena_bound(8, ext::stage_info.cam_info.cam_x_offset);
     (*vec3).y = arena_bound(9, ext::stage_info.cam_info.cam_y_offset);
     (*vec3).z = 0.0f32;
 }
 
 pub unsafe extern "C" fn Stage_GetPauseCamZPosMin() -> f32 {
+    melee_core::ct!("Stage_GetPauseCamZPosMin");
     ext::stage_info.cam_info.pausecam_zpos_min
 }
 
 pub unsafe extern "C" fn Stage_GetPauseCamZPosInit() -> f32 {
+    melee_core::ct!("Stage_GetPauseCamZPosInit");
     ext::stage_info.cam_info.pausecam_zpos_init
 }
 
 pub unsafe extern "C" fn Stage_GetPauseCamZPosMax() -> f32 {
+    melee_core::ct!("Stage_GetPauseCamZPosMax");
     ext::stage_info.cam_info.pausecam_zpos_max
 }
 
 pub unsafe extern "C" fn Stage_GetCamAngleRadiansUp() -> f32 {
+    melee_core::ct!("Stage_GetCamAngleRadiansUp");
     0.0174532923847f32 * ext::stage_info.cam_info.cam_angle_up
 }
 
 pub unsafe extern "C" fn Stage_GetCamAngleRadiansDown() -> f32 {
+    melee_core::ct!("Stage_GetCamAngleRadiansDown");
     0.0174532923847f32 * ext::stage_info.cam_info.cam_angle_down
 }
 
 pub unsafe extern "C" fn Stage_GetCamAngleRadiansLeft() -> f32 {
+    melee_core::ct!("Stage_GetCamAngleRadiansLeft");
     0.0174532923847f32 * ext::stage_info.cam_info.cam_angle_left
 }
 
 pub unsafe extern "C" fn Stage_GetCamAngleRadiansRight() -> f32 {
+    melee_core::ct!("Stage_GetCamAngleRadiansRight");
     0.0174532923847f32 * ext::stage_info.cam_info.cam_angle_right
 }
 
 pub unsafe extern "C" fn Stage_80224CAC(arg0: *mut Vec3) {
+    melee_core::ct!("Stage_80224CAC");
     let mut another_vec = Vec3 { x: 0.0, y: 0.0, z: -100.0f32 };
     let mut rot_vec = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
@@ -423,22 +450,27 @@ pub unsafe extern "C" fn Stage_80224CAC(arg0: *mut Vec3) {
 }
 
 pub unsafe extern "C" fn Stage_SetVecToFixedCamPos(arg0: *mut Vec3) {
+    melee_core::ct!("Stage_SetVecToFixedCamPos");
     *arg0 = ext::stage_info.cam_info.fixed_cam_pos;
 }
 
 pub unsafe extern "C" fn Stage_GetCamFixedFov() -> f32 {
+    melee_core::ct!("Stage_GetCamFixedFov");
     ext::stage_info.cam_info.fixed_cam_fov
 }
 
 pub unsafe extern "C" fn Stage_80224DC8(arg: i32) -> i32 {
+    melee_core::ct!("Stage_80224DC8");
     (arg == 0x3b || arg == 0x3f || arg == 0x42 || arg == 0x49 || arg == 0x4c) as i32
 }
 
 pub unsafe extern "C" fn Stage_80224E38(arg0: *mut Vec3, arg1: i32) {
+    melee_core::ct!("Stage_80224E38");
     ext::Ground_801C2D24(arg1.wrapping_add(4), arg0);
 }
 
 pub unsafe extern "C" fn Stage_80224E64(arg0: i32, arg_vec: *mut Vec3) {
+    melee_core::ct!("Stage_80224E64");
     let mut bool1: i32;
     let mut counter_f: f32;
     let mut internal_vec = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -486,6 +518,7 @@ pub unsafe extern "C" fn Stage_80224E64(arg0: i32, arg_vec: *mut Vec3) {
 }
 
 pub unsafe extern "C" fn Stage_80224FDC(arg0: *mut Vec3) -> i32 {
+    melee_core::ct!("Stage_80224FDC");
     let mut counter: i32 = 0x15;
     let mut counter2: i32;
     let mut rand_output: i32;
@@ -512,6 +545,7 @@ pub unsafe extern "C" fn Stage_80224FDC(arg0: *mut Vec3) -> i32 {
 }
 
 pub unsafe extern "C" fn Stage_80225074(arg0: i32) -> i32 {
+    melee_core::ct!("Stage_80225074");
     let r31: i32;
     let mut sp_c: i32 = 0;
 
@@ -551,6 +585,7 @@ pub unsafe extern "C" fn Stage_80225074(arg0: i32) -> i32 {
 }
 
 pub unsafe extern "C" fn Stage_80225194() -> StKind {
+    melee_core::ct!("Stage_80225194");
     selected_stage.stkind
 }
 
@@ -558,6 +593,7 @@ pub unsafe extern "C" fn Stage_80225194() -> StKind {
 /// leaves the whole tail zeroed, which reads as Gr_Kind_Unk00 exactly as the vanilla array's
 /// implicit tail would.
 pub unsafe extern "C" fn Stage_MexInitIds() {
+    melee_core::ct!("Stage_MexInitIds");
     if done != 0 {
         return;
     }
@@ -581,16 +617,19 @@ pub unsafe extern "C" fn Stage_MexInitIds() {
 }
 
 pub unsafe extern "C" fn Stage_8022519C(stkind: StKind) -> GrKind {
+    melee_core::ct!("Stage_8022519C");
     Stage_MexInitIds();
     stage_id_map[stkind as usize].grkind
 }
 
 pub unsafe extern "C" fn Stage_802251B4(stkind: StKind) {
+    melee_core::ct!("Stage_802251B4");
     Stage_MexInitIds();
     ext::Ground_801C06B8(stage_id_map[stkind as usize].grkind);
 }
 
 pub unsafe extern "C" fn Stage_802251E8(stkind: StKind, _: *mut i32) {
+    melee_core::ct!("Stage_802251E8");
     Stage_MexInitIds();
     selected_stage.stkind = stkind;
     selected_stage.entry = &raw mut stage_id_map[stkind as usize];
@@ -604,6 +643,7 @@ pub unsafe extern "C" fn Stage_802251E8(stkind: StKind, _: *mut i32) {
 }
 
 pub unsafe extern "C" fn Stage_8022524C() {
+    melee_core::ct!("Stage_8022524C");
     let mut local_data = default_stage_pair;
 
     local_data.grkind = (*selected_stage.entry).grkind;
@@ -613,6 +653,7 @@ pub unsafe extern "C" fn Stage_8022524C() {
 }
 
 pub unsafe extern "C" fn Stage_80225298() {
+    melee_core::ct!("Stage_80225298");
     let mut local_data = default_stage_pair;
 
     local_data.grkind = (*selected_stage.entry).grkind;
@@ -622,6 +663,7 @@ pub unsafe extern "C" fn Stage_80225298() {
 }
 
 pub unsafe extern "C" fn Stage_802252E4(stkind: StKind, _: *mut HSD_GObj) {
+    melee_core::ct!("Stage_802252E4");
     let mut local_data = default_stage_pair;
 
     local_data.grkind = (*selected_stage.entry).grkind;
@@ -631,6 +673,7 @@ pub unsafe extern "C" fn Stage_802252E4(stkind: StKind, _: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn Stage_8022532C(stkind: StKind, arg1: i32) {
+    melee_core::ct!("Stage_8022532C");
     let mut local_data = default_stage_pair;
 
     local_data.grkind = (*selected_stage.entry).grkind;
@@ -642,6 +685,7 @@ pub unsafe extern "C" fn Stage_8022532C(stkind: StKind, arg1: i32) {
 /// stage_stage_slot_retail.inc: keep the external identity used by item scale/music queries in
 /// agreement with the active internal stage, without invoking DVD/scene initialization.
 pub unsafe extern "C" fn Stage_StageSlotSelect(kind: i32) -> i32 {
+    melee_core::ct!("Stage_StageSlotSelect");
     let mut i: usize = 0;
     while i < ST_MEX_EXT_MAX {
         if stage_id_map[i].grkind as i32 == kind {

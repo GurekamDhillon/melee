@@ -133,6 +133,7 @@ pub static it_803F6798: [ItemStateTable; 1] = [ItemStateTable {
 
 /// `void it_8029BAB8(HSD_GObj*, Vec3*, float)` (29BAB8)
 pub unsafe extern "C" fn it_8029BAB8(gobj: *mut HSD_GObj, pos: *mut Vec3, facing_dir: f32) {
+    melee_core::ct!("it_8029BAB8");
     let mut spawn: SpawnItem = core::mem::zeroed();
     (*pos).z = 0.0;
     spawn.kind = It_Kind_Kirby_CBeam;
@@ -150,6 +151,7 @@ pub unsafe extern "C" fn it_8029BAB8(gobj: *mut HSD_GObj, pos: *mut Vec3, facing
 
 /// `void it_8029BB90(Item_GObj*, HSD_GObj*)` (29BB90)
 pub unsafe extern "C" fn it_8029BB90(gobj: *mut Item_GObj, owner: *mut HSD_GObj) {
+    melee_core::ct!("it_8029BB90");
     let ip = ip_of(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itKirbyCutterBeamAttributes;
 
@@ -170,11 +172,13 @@ pub unsafe extern "C" fn it_8029BB90(gobj: *mut Item_GObj, owner: *mut HSD_GObj)
 
 /// `bool itKirbycutterbeam_UnkMotion0_Anim(Item_GObj*)` (29BC88)
 pub unsafe extern "C" fn itKirbycutterbeam_UnkMotion0_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKirbycutterbeam_UnkMotion0_Anim");
     ext::it_80273130(gobj)
 }
 
 /// `void itKirbycutterbeam_UnkMotion0_Phys(Item_GObj*)` (29BCA8)
 pub unsafe extern "C" fn itKirbycutterbeam_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itKirbycutterbeam_UnkMotion0_Phys");
     let ip = ip_of(gobj);
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let child = if jobj.is_null() { null_mut() } else { (*jobj).child };
@@ -201,6 +205,7 @@ pub unsafe extern "C" fn itKirbycutterbeam_UnkMotion0_Phys(gobj: *mut Item_GObj)
 
 /// `bool itKirbycutterbeam_UnkMotion0_Coll(Item_GObj*)` (29BDD4)
 pub unsafe extern "C" fn itKirbycutterbeam_UnkMotion0_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKirbycutterbeam_UnkMotion0_Coll");
     let ip = ip_of(gobj);
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
 
@@ -238,21 +243,25 @@ pub unsafe extern "C" fn itKirbycutterbeam_UnkMotion0_Coll(gobj: *mut Item_GObj)
 
 /// `bool itKirbyCutterBeam_Logic7_DmgDealt(Item_GObj*)` (29BFB4)
 pub unsafe extern "C" fn itKirbyCutterBeam_Logic7_DmgDealt(_arg0: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKirbyCutterBeam_Logic7_DmgDealt");
     0
 }
 
 /// `bool itKirbyCutterBeam_Logic7_Clanked(Item_GObj*)` (29BFBC)
 pub unsafe extern "C" fn itKirbyCutterBeam_Logic7_Clanked(_arg0: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKirbyCutterBeam_Logic7_Clanked");
     1
 }
 
 /// `bool itKirbyCutterBeam_Logic7_Absorbed(Item_GObj*)` (29BFC4)
 pub unsafe extern "C" fn itKirbyCutterBeam_Logic7_Absorbed(_arg0: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKirbyCutterBeam_Logic7_Absorbed");
     1
 }
 
 /// `bool it_2725_Logic7_Reflected(Item_GObj*)` (29BFCC)
 pub unsafe extern "C" fn it_2725_Logic7_Reflected(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_2725_Logic7_Reflected");
     let ip = ip_of(gobj);
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
 
@@ -278,6 +287,7 @@ pub unsafe extern "C" fn it_2725_Logic7_Reflected(gobj: *mut Item_GObj) -> i32 {
 
 /// `bool it_2725_Logic7_ShieldBounced(Item_GObj*)` (29C208)
 pub unsafe extern "C" fn it_2725_Logic7_ShieldBounced(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_2725_Logic7_ShieldBounced");
     let ip = ip_of(gobj);
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
 
@@ -309,10 +319,12 @@ pub unsafe extern "C" fn it_2725_Logic7_ShieldBounced(gobj: *mut Item_GObj) -> i
 
 /// `bool itKirbyCutterBeam_Logic7_HitShield(Item_GObj*)` (29C4AC)
 pub unsafe extern "C" fn itKirbyCutterBeam_Logic7_HitShield(_arg0: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKirbyCutterBeam_Logic7_HitShield");
     1
 }
 
 /// `void it_8029C4B4(Item_GObj*, Item_GObj*)` (29C4B4)
 pub unsafe extern "C" fn it_8029C4B4(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_8029C4B4");
     ext::it_8026B894(gobj, ref_gobj);
 }

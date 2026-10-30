@@ -269,6 +269,7 @@ unsafe fn HSD_JObjGetTranslation(jobj: *mut HSD_JObj, translate: *mut Vec3) {
 /// the arithmetic wrapping like the retargeted build.
 #[inline]
 pub unsafe fn rand_int(mut a: i32, b: i32) -> i32 {
+    melee_core::ct!("rand_int");
     if a > b {
         let c = a.wrapping_sub(b);
         a = b.wrapping_add(if c != 0 { ext::HSD_Randi(c) } else { 0 });
@@ -282,6 +283,7 @@ pub unsafe fn rand_int(mut a: i32, b: i32) -> i32 {
 /// `rand_int_inner` (static inline)
 #[inline]
 pub unsafe fn rand_int_inner(a: i32) -> i32 {
+    melee_core::ct!("rand_int_inner");
     if a != 0 {
         ext::HSD_Randi(a)
     } else {
@@ -300,10 +302,11 @@ unsafe fn sign_random() -> f32 {
 }
 
 /// 216E74
-pub unsafe extern "C" fn grFlatzone_80216E74(_arg0: i32) {}
+pub unsafe extern "C" fn grFlatzone_80216E74(_arg0: i32) { melee_core::ct!("grFlatzone_80216E74");}
 
 /// 216E78
 pub unsafe extern "C" fn grFlatzone_80216E78() {
+    melee_core::ct!("grFlatzone_80216E78");
     yakumono_param = ext::Ground_GetYakumonoParam() as *mut grFlatzone_YakumonoParam;
     ext::stage_info.unk8C.set_b4(0);
     ext::stage_info.unk8C.set_b5(1);
@@ -324,19 +327,21 @@ pub unsafe extern "C" fn grFlatzone_80216E78() {
 }
 
 /// grFlatzone_UnkStage0_OnLoad
-pub unsafe extern "C" fn grFlatzone_UnkStage0_OnLoad() {}
+pub unsafe extern "C" fn grFlatzone_UnkStage0_OnLoad() { melee_core::ct!("grFlatzone_UnkStage0_OnLoad");}
 
 /// grFlatzone_UnkStage0_OnStart
-pub unsafe extern "C" fn grFlatzone_UnkStage0_OnStart() {}
+pub unsafe extern "C" fn grFlatzone_UnkStage0_OnStart() { melee_core::ct!("grFlatzone_UnkStage0_OnStart");}
 
 /// `grFlatzone_80216F48_inline` (static inline)
 #[inline]
 pub unsafe fn grFlatzone_80216F48_inline(arg0: i32) -> *mut HSD_GObj {
+    melee_core::ct!("grFlatzone_80216F48_inline");
     ext::Ground_GetStageGObj(arg0)
 }
 
 /// 216F48: sets up stage gobj `gobj_id` with its row of the callback table.
 pub unsafe extern "C" fn grFlatzone_80216F48(gobj_id: i32) -> *mut HSD_GObj {
+    melee_core::ct!("grFlatzone_80216F48");
     let callbacks = &raw mut grFz_StageCallbacks[gobj_id as usize];
     let gobj = grFlatzone_80216F48_inline(gobj_id);
     if !gobj.is_null() {
@@ -348,23 +353,26 @@ pub unsafe extern "C" fn grFlatzone_80216F48(gobj_id: i32) -> *mut HSD_GObj {
 
 /// stageGObj0_OnInit
 pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj0_OnInit");
     Ground_StartMapAnim(gobj);
 }
 
 /// 217064
-pub unsafe extern "C" fn grFlatzone_80217064(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grFlatzone_80217064(_gobj: *mut HSD_GObj) { melee_core::ct!("grFlatzone_80217064");}
 
 /// 217068
-pub unsafe extern "C" fn grFlatzone_80217068(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grFlatzone_80217068(_gobj: *mut HSD_GObj) { melee_core::ct!("grFlatzone_80217068");}
 
 /// 21706C
 pub unsafe extern "C" fn fn_8021706C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8021706C");
     let gp = (*gobj).user_data as *mut Ground;
     (*gp).u.flatzone.xC4 = 0;
 }
 
 /// 21707C: gobj 2 (the building swap timer).
 pub unsafe extern "C" fn grFlatzone_8021707C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grFlatzone_8021707C");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     ext::Ground_InitMapColl(jobj, (*gp).map_id as i32);
@@ -380,6 +388,7 @@ pub unsafe extern "C" fn grFlatzone_8021707C(gobj: *mut HSD_GObj) {
 /// `grFlatzone_802171D4_inline`
 #[inline]
 pub unsafe fn grFlatzone_802171D4_inline(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grFlatzone_802171D4_inline");
     if !gobj.is_null() {
         let gp = (*gobj).user_data as *mut Ground;
         if !gp.is_null() {
@@ -390,6 +399,7 @@ pub unsafe fn grFlatzone_802171D4_inline(gobj: *mut HSD_GObj) {
 
 /// 2171D4
 pub unsafe extern "C" fn grFlatzone_802171D4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grFlatzone_802171D4");
     let gp = (*gobj).user_data as *mut Ground;
     if (*gp).u.flatzone.xC4 == 0 && (*gp).u.flatzone.xC7 != 0 {
         if (*gp).u.flatzone.xC8 != 0 {
@@ -434,10 +444,11 @@ pub unsafe extern "C" fn grFlatzone_802171D4(gobj: *mut HSD_GObj) {
 }
 
 /// 2173D0
-pub unsafe extern "C" fn grFlatzone_802173D0(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grFlatzone_802173D0(_gobj: *mut HSD_GObj) { melee_core::ct!("grFlatzone_802173D0");}
 
 /// 2173D4
 pub unsafe extern "C" fn grFlatzone_802173D4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grFlatzone_802173D4");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
@@ -446,19 +457,21 @@ pub unsafe extern "C" fn grFlatzone_802173D4(gobj: *mut HSD_GObj) {
 }
 
 /// 217438
-pub unsafe extern "C" fn grFlatzone_80217438(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grFlatzone_80217438(_gobj: *mut HSD_GObj) { melee_core::ct!("grFlatzone_80217438");}
 
 /// 21743C
-pub unsafe extern "C" fn grFlatzone_8021743C(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grFlatzone_8021743C(_gobj: *mut HSD_GObj) { melee_core::ct!("grFlatzone_8021743C");}
 
 /// 217440
 pub unsafe extern "C" fn fn_80217440(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80217440");
     let gp = (*gobj).user_data as *mut Ground;
     (*gp).u.flatzone.xC4 = 0;
 }
 
 /// 217450: gobj 5 (the background machine) init.
 pub unsafe extern "C" fn grFlatzone_80217450(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grFlatzone_80217450");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     ext::Ground_InitMapColl(jobj, (*gp).map_id as i32);
@@ -475,6 +488,7 @@ pub unsafe extern "C" fn grFlatzone_80217450(gobj: *mut HSD_GObj) {
 
 /// 2174EC: gobj 5 per frame: picks the next animation of the background machine.
 pub unsafe extern "C" fn grFlatzone_802174EC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grFlatzone_802174EC");
     let gp = (*gobj).user_data as *mut Ground;
     if (*gp).u.flatzone3.xC4 == 0 && (*gp).u.flatzone3.xC7 != 8 && (*gp).u.flatzone3.xC9 != 0 {
         let cc = (*gp).u.flatzone.xCC;
@@ -508,10 +522,11 @@ pub unsafe extern "C" fn grFlatzone_802174EC(gobj: *mut HSD_GObj) {
 }
 
 /// 217644
-pub unsafe extern "C" fn grFlatzone_80217644(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grFlatzone_80217644(_gobj: *mut HSD_GObj) { melee_core::ct!("grFlatzone_80217644");}
 
 /// 217648: gobj 3 (the crane) init.
 pub unsafe extern "C" fn grFlatzone_80217648(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grFlatzone_80217648");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     ext::Ground_InitMapColl(jobj, (*gp).map_id as i32);
@@ -537,6 +552,7 @@ unsafe fn map2_anim(anim: i32) {
 
 /// 2176BC: gobj 3 per frame: the crane's drop sequence (see the file comment for the aliasing).
 pub unsafe extern "C" fn grFlatzone_802176BC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grFlatzone_802176BC");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let mut trigger_machine = 0;
@@ -659,10 +675,11 @@ pub unsafe extern "C" fn grFlatzone_802176BC(gobj: *mut HSD_GObj) {
 }
 
 /// 217CD0
-pub unsafe extern "C" fn grFlatzone_80217CD0(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grFlatzone_80217CD0(_gobj: *mut HSD_GObj) { melee_core::ct!("grFlatzone_80217CD0");}
 
 /// 217CD4
 pub unsafe extern "C" fn grFlatzone_80217CD4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grFlatzone_80217CD4");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     ext::Ground_InitMapColl(jobj, (*gp).map_id as i32);
@@ -672,6 +689,7 @@ pub unsafe extern "C" fn grFlatzone_80217CD4(gobj: *mut HSD_GObj) {
 
 /// 217D30
 pub unsafe extern "C" fn grFlatzone_80217D30(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grFlatzone_80217D30");
     let gp = (*gobj).user_data as *mut Ground;
     if (*gp).u.flatzone.xC4 != 0 {
         {
@@ -689,10 +707,11 @@ pub unsafe extern "C" fn grFlatzone_80217D30(gobj: *mut HSD_GObj) {
 }
 
 /// 217DA4
-pub unsafe extern "C" fn grFlatzone_80217DA4(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grFlatzone_80217DA4(_gobj: *mut HSD_GObj) { melee_core::ct!("grFlatzone_80217DA4");}
 
 /// 217DA8
 pub unsafe extern "C" fn grFlatzone_80217DA8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grFlatzone_80217DA8");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     ext::Ground_InitMapColl(jobj, (*gp).map_id as i32);
@@ -702,23 +721,25 @@ pub unsafe extern "C" fn grFlatzone_80217DA8(gobj: *mut HSD_GObj) {
 
 /// 217E04
 pub unsafe extern "C" fn grFlatzone_80217E04(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grFlatzone_80217E04");
     grFlatzone_80217D30(gobj);
 }
 
 /// 217E78
-pub unsafe extern "C" fn grFlatzone_80217E78(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grFlatzone_80217E78(_gobj: *mut HSD_GObj) { melee_core::ct!("grFlatzone_80217E78");}
 
 /// 217E7C
-pub unsafe extern "C" fn grFlatzone_80217E7C(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grFlatzone_80217E7C(_gobj: *mut HSD_GObj) { melee_core::ct!("grFlatzone_80217E7C");}
 
 /// 217E88
-pub unsafe extern "C" fn grFlatzone_80217E88(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grFlatzone_80217E88(_gobj: *mut HSD_GObj) { melee_core::ct!("grFlatzone_80217E88");}
 
 /// 217E8C
-pub unsafe extern "C" fn grFlatzone_80217E8C(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grFlatzone_80217E8C(_gobj: *mut HSD_GObj) { melee_core::ct!("grFlatzone_80217E8C");}
 
 /// 217E90: gobj 8 (the item rain) init.
 pub unsafe extern "C" fn grFlatzone_80217E90(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grFlatzone_80217E90");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     ext::Ground_InitMapColl(jobj, (*gp).map_id as i32);
@@ -729,6 +750,7 @@ pub unsafe extern "C" fn grFlatzone_80217E90(gobj: *mut HSD_GObj) {
 
 /// 217EF0: gobj 8 per frame: drops an item every `unk14` frames while the counter runs.
 pub unsafe extern "C" fn grFlatzone_80217EF0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grFlatzone_80217EF0");
     let gp = (*gobj).user_data as *mut Ground;
     if (*gp).u.flatzone3.xC4 != 0 {
         (*gp).u.unk.xC8 = (*yakumono_param).unk10;
@@ -767,10 +789,11 @@ pub unsafe extern "C" fn grFlatzone_80217EF0(gobj: *mut HSD_GObj) {
 }
 
 /// 21805C
-pub unsafe extern "C" fn grFlatzone_8021805C(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grFlatzone_8021805C(_gobj: *mut HSD_GObj) { melee_core::ct!("grFlatzone_8021805C");}
 
 /// 218060: picks the background machine's next (state, step) and starts its animation.
 pub unsafe extern "C" fn grFlatzone_80218060(arg0: i32) {
+    melee_core::ct!("grFlatzone_80218060");
     let gobj = ext::Ground_GetMapGObj(5);
     if !gobj.is_null() {
         let gp = (*gobj).user_data as *mut Ground;
@@ -813,6 +836,7 @@ pub unsafe extern "C" fn grFlatzone_80218060(arg0: i32) {
 /// `grFlatzone_802181B4_inline` (static inline)
 #[inline]
 pub unsafe fn grFlatzone_802181B4_inline() {
+    melee_core::ct!("grFlatzone_802181B4_inline");
     let gobj = ext::Ground_GetMapGObj(5);
     if !gobj.is_null() {
         let gp = (*gobj).user_data as *mut Ground;
@@ -834,11 +858,13 @@ pub unsafe fn grFlatzone_802181B4_inline() {
 
 /// 2181B4
 pub unsafe extern "C" fn grFlatzone_802181B4() {
+    melee_core::ct!("grFlatzone_802181B4");
     grFlatzone_802181B4_inline();
 }
 
 /// 218260
 pub unsafe extern "C" fn grFlatzone_80218260() {
+    melee_core::ct!("grFlatzone_80218260");
     let gobj = ext::Ground_GetMapGObj(5);
     if !gobj.is_null() {
         let gp = (*gobj).user_data as *mut Ground;

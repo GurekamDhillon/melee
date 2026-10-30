@@ -195,11 +195,13 @@ static mut tyList_pc_active: i32 = 0;
 
 /// `int tyList_PcActive(void)` (TARGET_PC)
 pub unsafe fn tyList_PcActive() -> i32 {
+    melee_core::ct!("tyList_PcActive");
     tyList_pc_active
 }
 
 /// `void tyList_PcSetActive(int)` (TARGET_PC)
 pub unsafe fn tyList_PcSetActive(on: i32) {
+    melee_core::ct!("tyList_PcSetActive");
     tyList_pc_active = on;
 }
 
@@ -217,6 +219,7 @@ static mut _tyList_804D6EEC: i32 = 0;
 /// `static char* _tyList_80312834(char* buf, u32 num)`: formats a number into a string buffer
 /// using digit glyphs from the font.
 pub unsafe fn _tyList_80312834(mut buf: *mut i8, mut num: u32) -> *mut i8 {
+    melee_core::ct!("_tyList_80312834");
     let lookup: *mut u8 = (*(ext::HSD_SisLib_804D1124[0] as *mut SisFontData)).digits;
     let original: u32 = num;
     let mut idx: u32;
@@ -255,6 +258,7 @@ pub unsafe fn _tyList_80312834(mut buf: *mut i8, mut num: u32) -> *mut i8 {
 
 /// `static void _tyList_80312904(void* arg0, s8 arg1)` (`arg0` is a `TyListRow` = `TyListArg`)
 pub unsafe fn _tyList_80312904(arg0: *mut TyListArg, arg1: i8) {
+    melee_core::ct!("_tyList_80312904");
     let state: *mut TyListState = &raw mut _tyList_804A2AC0;
     let row: *mut TyListArg = arg0;
     let skip: i32;
@@ -330,6 +334,7 @@ pub unsafe fn _tyList_80312904(arg0: *mut TyListArg, arg1: i8) {
 
 /// `static void _tyList_80312BAC(TyListState*, s8)`
 pub unsafe fn _tyList_80312BAC(state: *mut TyListState, arg1: i8) {
+    melee_core::ct!("_tyList_80312BAC");
     let archive: *mut ToyED8Data = ext::Toy_sbss_804D6ED8;
     let mut trophy_idx: i32;
 
@@ -398,6 +403,7 @@ pub unsafe fn _tyList_80312BAC(state: *mut TyListState, arg1: i8) {
 
 /// `static void _tyList_80312E88(TyListArg*, float)`
 pub unsafe fn _tyList_80312E88(arg: *mut TyListArg, delta: f32) {
+    melee_core::ct!("_tyList_80312E88");
     (*arg).x30 += delta;
 
     if delta == 999.0f32 {
@@ -436,6 +442,7 @@ pub unsafe fn _tyList_80312E88(arg: *mut TyListArg, delta: f32) {
 
 /// `static s32 _tyList_8031305C(void* a, TyListState*, s8 movedFlag)`
 pub unsafe fn _tyList_8031305C(a: *mut c_void, state: *mut TyListState, movedFlag: i8) -> i32 {
+    melee_core::ct!("_tyList_8031305C");
     let mut entry: *mut TyListArg;
     let mut delta: f32;
     let mut i: i32;
@@ -518,6 +525,7 @@ pub unsafe fn _tyList_8031305C(a: *mut c_void, state: *mut TyListState, movedFla
 
 /// `static void _tyList_80313358(TyListState*, s8, s8, s8)`
 pub unsafe fn _tyList_80313358(state: *mut TyListState, arg2: i8, arg3: i8, arg4: i8) {
+    melee_core::ct!("_tyList_80313358");
     if arg2 != -1 {
         (*state).x29E = arg2;
         (*state).x2A1 = arg4;
@@ -549,6 +557,7 @@ pub unsafe fn _tyList_80313358(state: *mut TyListState, arg2: i8, arg3: i8, arg4
 
 /// `static void _tyList_80313464(TyListArg*)`
 pub unsafe fn _tyList_80313464(arg: *mut TyListArg) {
+    melee_core::ct!("_tyList_80313464");
     let state: *mut TyListState = &raw mut _tyList_804A2AC0;
 
     let val: i32 = *ext::Toy_sbss_804D6EDC.add((*arg).idx as usize) as i32;
@@ -567,6 +576,7 @@ pub unsafe fn _tyList_80313464(arg: *mut TyListArg) {
 
 /// `static void* _tyList_80313508(HSD_GObj* parent, char* symbol_name, float x, float y, float z)`
 pub unsafe fn _tyList_80313508(parent: *mut HSD_GObj, symbol_name: *mut i8, x: f32, y: f32, z: f32) -> *mut c_void {
+    melee_core::ct!("_tyList_80313508");
     let archive: *mut ToyED8Data = ext::Toy_sbss_804D6ED8;
     let joint: *mut c_void = ext::HSD_ArchiveGetPublicAddress((*archive).archive, symbol_name);
 
@@ -601,6 +611,7 @@ pub unsafe fn _tyList_80313508(parent: *mut HSD_GObj, symbol_name: *mut i8, x: f
 
 /// `static void _tyList_80313774(void)`
 pub unsafe fn _tyList_80313774() {
+    melee_core::ct!("_tyList_80313774");
     let state: *mut TyListState = &raw mut _tyList_804A2AC0;
     let mode: *mut TyModeState = toy_mode_state();
     let disp: *mut TyDisplayData = ext::Toy_sbss_804D6EE0;
@@ -770,6 +781,7 @@ unsafe fn tyList_80313BD8_inline(state: *mut TyListState, g: *mut TyListGobjEntr
 
 /// `static void _tyList_80313BD8(HSD_GObj*)`
 pub unsafe extern "C" fn _tyList_80313BD8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("_tyList_80313BD8");
     let state: *mut TyListState = &raw mut _tyList_804A2AC0;
     let g: *mut TyListGobjEntry = &raw mut _tyList_804A2D6C;
     let mut f30: f32;
@@ -988,6 +1000,7 @@ pub unsafe extern "C" fn _tyList_80313BD8(gobj: *mut HSD_GObj) {
 
 /// `static void _tyList_8031438C(HSD_GObj*)`
 pub unsafe extern "C" fn _tyList_8031438C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("_tyList_8031438C");
     let state: *mut TyListState = &raw mut _tyList_804A2AC0;
     let entry: *mut TyListGobjEntry = &raw mut _tyList_804A2D6C;
     let archive: *mut ToyED8Data = ext::Toy_sbss_804D6ED8;
@@ -1031,6 +1044,7 @@ pub unsafe extern "C" fn _tyList_8031438C(gobj: *mut HSD_GObj) {
 
 /// `static void _tyList_80314504(HSD_GObj*, int)`
 pub unsafe extern "C" fn _tyList_80314504(gobj: *mut HSD_GObj, unused: i32) {
+    melee_core::ct!("_tyList_80314504");
     // `TyListData* data = (TyListData*) gobj;` (`cobj` at +0x28 is `hsd_obj`)
     let cobj = (*gobj).hsd_obj as *mut HSD_CObj;
 
@@ -1045,6 +1059,7 @@ pub unsafe extern "C" fn _tyList_80314504(gobj: *mut HSD_GObj, unused: i32) {
 
 /// `static void _tyList_8031457C(void)`
 pub unsafe fn _tyList_8031457C() {
+    melee_core::ct!("_tyList_8031457C");
     let entry: *mut TyListGobjEntry = &raw mut _tyList_804A2D6C;
     let archive: *mut ToyED8Data = ext::Toy_sbss_804D6ED8;
     let mut viewport: HSD_RectS16 = core::mem::zeroed();
@@ -1104,6 +1119,7 @@ pub unsafe fn _tyList_8031457C() {
 
 /// `void tyList_803147C4(void)`
 pub unsafe fn tyList_803147C4() {
+    melee_core::ct!("tyList_803147C4");
     tyList_pc_active = 1;
     ext::memzero(&raw mut _tyList_804A2D6C as *mut c_void, core::mem::size_of::<TyListGobjEntry>() as i32);
     _tyList_8031457C();
@@ -1135,6 +1151,7 @@ pub unsafe fn tyList_803147C4() {
 
 /// `static void _tyList_803148E4(s32)`
 pub unsafe fn _tyList_803148E4(arg0: i32) {
+    melee_core::ct!("_tyList_803148E4");
     let state: *mut TyListState = &raw mut _tyList_804A2AC0;
     let entry: *mut TyListGobjEntry = &raw mut _tyList_804A2D6C;
     let gobj_2C4: *mut *mut HSD_GObj = (&raw mut _tyList_804A2D84) as *mut *mut HSD_GObj;

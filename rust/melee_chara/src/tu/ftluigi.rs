@@ -47,6 +47,7 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 }
 
 pub fn ftLg_Init_OnLoad(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_Init_OnLoad");
     unsafe {
         let fp = fpp(gobj);
         let item_list = (*(*fp).ft_data).x48_items;
@@ -62,15 +63,18 @@ pub fn ftLg_Init_OnLoad(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftLg_Init_OnItemPickup(gobj: *mut HSD_GObj, flag: i32) {
+    melee_core::ct!("ftLg_Init_OnItemPickup");
     Fighter_OnItemPickup(gobj, flag, 1, 1);
 }
 
 pub fn ftLg_Init_OnItemDrop(gobj: *mut HSD_GObj, flag: i32) {
+    melee_core::ct!("ftLg_Init_OnItemDrop");
     Fighter_OnItemDrop(gobj, flag, 1, 1);
 }
 
 /// `COPY_ATTRS(gobj, ftLuigiAttributes)`.
 pub fn ftLg_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_Init_LoadSpecialAttrs");
     unsafe {
         let fp = fpp(gobj);
         *((*fp).dat_attrs as *mut ftLuigiAttributes) = *((*(*fp).ft_data).ext_attr as *const ftLuigiAttributes);
@@ -80,6 +84,7 @@ pub fn ftLg_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
 /// `ftLg_Init_GetMotionFileString(arg0)`: the Vi demo file for kind 9 / 10. The C leaves `offset`
 /// uninitialised for any other value (undefined behaviour), so those return `None`.
 pub fn ftLg_Init_GetMotionFileString(arg0: i32) -> Option<&'static str> {
+    melee_core::ct!("ftLg_Init_GetMotionFileString");
     let offset = match arg0 {
         9 => 14,
         10 => 15,

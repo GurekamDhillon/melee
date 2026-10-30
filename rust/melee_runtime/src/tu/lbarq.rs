@@ -86,12 +86,14 @@ melee_core::gc_layout!(lbArqGlobal, "lbArqGlobal", size 0x1EC, align 4, [
 pub static mut lbArq_804316C0: lbArqGlobal = unsafe { core::mem::zeroed() };
 
 pub unsafe extern "C" fn lbArq_80014ABC(arg0: *mut lbArqNode) -> u32 {
+    melee_core::ct!("lbArq_80014ABC");
     (*arg0).state
 }
 
 /// The ARAM request's completion callback (`ARQCallback`): moves the node to the done list, runs
 /// the node's callback if it has one and then returns the node to the free list.
 pub unsafe extern "C" fn lbArq_80014AC4(handle: *mut ARQRequest) {
+    melee_core::ct!("lbArq_80014AC4");
     let global = &raw mut lbArq_804316C0;
     let node = (handle as *mut u8).sub(offset_of!(lbArqNode, arq)) as *mut lbArqNode;
 
@@ -142,6 +144,7 @@ pub unsafe extern "C" fn lbArq_80014AC4(handle: *mut ARQRequest) {
 }
 
 pub unsafe extern "C" fn lbArq_80014BD0(source: u32, dest: *mut c_void, length: usize, callback: lbArqCallback, callback_arg: *mut c_void) {
+    melee_core::ct!("lbArq_80014BD0");
     let global = &raw mut lbArq_804316C0;
 
     ext::DCInvalidateRange(dest, length as u32);
@@ -185,6 +188,7 @@ pub unsafe extern "C" fn lbArq_80014BD0(source: u32, dest: *mut c_void, length: 
 }
 
 pub unsafe extern "C" fn lbArq_80014D2C() {
+    melee_core::ct!("lbArq_80014D2C");
     let global = &raw mut lbArq_804316C0;
     let nodes = (&raw mut (*global).nodes) as *mut lbArqNode;
 

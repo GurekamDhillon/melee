@@ -14,6 +14,7 @@ pub use crate::chars::r8::ftMasterHand::ftmasterhandslam::ftMh_Slam_IASA;
 pub use crate::tu::ftcrazyhandsqueezing1::ftCh_Init_8015A2B0;
 
 pub fn ftMh_Slam_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Slam_Anim");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         if (*fp).cmd_vars[0] != 0 {
@@ -33,9 +34,10 @@ pub fn ftMh_Slam_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftMh_Slam_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_Slam_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_Slam_Coll");}
 
 pub fn ftMh_MS_380_80155194(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_380_80155194");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let gobj1 = bl::ftBossLib_GetFighterGObj(Ft_Kind_CrezyH);

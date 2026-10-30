@@ -144,6 +144,7 @@ fn end(g: G) {
 
 /// `ft_80081B38`: initialise the ECB/collision data from `ft_data->x44`.
 pub fn ft_80081b38(g: G) {
+    melee_core::ct!("ft_80081b38");
     let f = fp(g);
     f.ecb_lock = 0;
     f.coll_data.cur_pos = f.cur_pos;
@@ -170,6 +171,7 @@ pub fn ft_80081b38(g: G) {
 
 /// `ft_80081C88`: rescale the ECB source / ledge snap for `scl_y`.
 pub fn ft_80081c88(g: G, scl_y: f32) {
+    melee_core::ct!("ft_80081c88");
     let f = fp(g);
     let t = x44(f);
     let tmp = t.unkC * scl_y;
@@ -194,6 +196,7 @@ pub fn ft_80081c88(g: G, scl_y: f32) {
 
 /// `ft_80081D0C`: ground collision; `GA_Air` when the fighter left the ground.
 pub fn ft_80081d0c(g: G) -> GroundOrAir {
+    melee_core::ct!("ft_80081d0c");
     let c = begin(fp(g));
     let r = ext::mpColl_800471F8(c);
     end(g);
@@ -234,14 +237,17 @@ fn air_coll(g: G, sdi: fn(*mut CollData) -> bool, cool: fn(*mut CollData) -> boo
 
 /// `ft_80081DD4`.
 pub fn ft_80081dd4(g: G) -> bool {
+    melee_core::ct!("ft_80081dd4");
     air_coll(g, ext::mpColl_800477E0, ext::mpColl_800471F8, ext::mpColl_800473CC)
 }
 /// `ft_80081F2C`.
 pub fn ft_80081f2c(g: G) -> bool {
+    melee_core::ct!("ft_80081f2c");
     air_coll(g, ext::mpColl_80048274, ext::mpColl_80048160, ext::mpColl_80048464)
 }
 /// `ft_80082084`.
 pub fn ft_80082084(g: G) -> bool {
+    melee_core::ct!("ft_80082084");
     air_coll(g, ext::mpColl_80048388, ext::mpColl_80048768, ext::mpColl_80048578)
 }
 
@@ -258,11 +264,13 @@ fn simple(g: G, op: impl FnOnce(*mut CollData) -> bool) -> bool {
 
 /// `ft_800821DC`.
 pub fn ft_800821dc(g: G) -> bool {
+    melee_core::ct!("ft_800821dc");
     simple(g, ext::mpColl_80048160)
 }
 
 /// `ft_CheckGroundAndLedge`.
 pub fn ft_check_ground_and_ledge(g: G, dir: i32) -> bool {
+    melee_core::ct!("ft_check_ground_and_ledge");
     let f = fp(g);
     let cool = f.x2064_ledgeCooldown != 0 || f.x2224_b2() != 0;
     simple(g, |c| {
@@ -277,6 +285,7 @@ pub fn ft_check_ground_and_ledge(g: G, dir: i32) -> bool {
 
 /// `ft_8008239C`.
 pub fn ft_8008239c(g: G, dir: i32, height_attributes: *mut ftCollisionBox) -> bool {
+    melee_core::ct!("ft_8008239c");
     let f = fp(g);
     let mut bx = ftCollisionBox::zeroed();
     let fd = f.facing_dir;
@@ -294,6 +303,7 @@ pub fn ft_8008239c(g: G, dir: i32, height_attributes: *mut ftCollisionBox) -> bo
 
 /// `ft_800824A0` (also `ft_80083E64_inline`).
 pub fn ft_800824a0(g: G, ecb: *mut ftCollisionBox) -> bool {
+    melee_core::ct!("ft_800824a0");
     let fd = fp(g).facing_dir;
     let mut bx = ftCollisionBox::zeroed();
     simple(g, |c| ext::mpColl_8004730C(c, ft_80082838(&mut bx, ecb, fd)))
@@ -312,6 +322,7 @@ fn floor_flag(g: G, op: impl FnOnce(*mut CollData)) -> bool {
 
 /// `ft_80082578`.
 pub fn ft_80082578(g: G) -> bool {
+    melee_core::ct!("ft_80082578");
     floor_flag(g, |c| {
         ext::mpColl_800477E0(c);
     })
@@ -319,6 +330,7 @@ pub fn ft_80082578(g: G) -> bool {
 
 /// `ft_80082638`.
 pub fn ft_80082638(g: G, arg1: *mut ftCollisionBox) -> bool {
+    melee_core::ct!("ft_80082638");
     let fd = fp(g).facing_dir;
     let mut bx = ftCollisionBox::zeroed();
     floor_flag(g, |c| {
@@ -328,6 +340,7 @@ pub fn ft_80082638(g: G, arg1: *mut ftCollisionBox) -> bool {
 
 /// `ft_80082708` (EnvironmentCollision_AllowGroundToAir): `GA_Air` when it fell off a ledge.
 pub fn ft_80082708(g: G) -> GroundOrAir {
+    melee_core::ct!("ft_80082708");
     let c = begin(fp(g));
     let r = ext::mpColl_8004B108(c);
     end(g);
@@ -336,6 +349,7 @@ pub fn ft_80082708(g: G) -> GroundOrAir {
 
 /// `ft_800827A0`.
 pub fn ft_800827a0(g: G) -> bool {
+    melee_core::ct!("ft_800827a0");
     let c = begin(fp(g));
     let r = ext::mpColl_8004B2DC(c);
     end(g);
@@ -344,6 +358,7 @@ pub fn ft_800827a0(g: G) -> bool {
 
 /// `ft_80082838`: mirror `arg1` into `arg0` when facing left, else return `arg1`.
 pub fn ft_80082838(arg0: *mut ftCollisionBox, arg1: *mut ftCollisionBox, arg2: f32) -> *mut ftCollisionBox {
+    melee_core::ct!("ft_80082838");
     if arg2 < 0.0 {
         unsafe {
             let s = *arg1;
@@ -372,16 +387,19 @@ fn box_op(g: G, b: *mut ftCollisionBox, op: fn(*mut CollData, *mut ftCollisionBo
 
 /// `ft_80082888`.
 pub fn ft_80082888(g: G, arg1: *mut ftCollisionBox) -> bool {
+    melee_core::ct!("ft_80082888");
     box_op(g, arg1, ext::mpColl_8004B21C)
 }
 
 /// `ft_80082978`.
 pub fn ft_80082978(g: G, arg1: *mut ftCollisionBox) -> bool {
+    melee_core::ct!("ft_80082978");
     box_op(g, arg1, ext::mpColl_8004B3F0)
 }
 
 /// `ft_80082A68`: snap to the ground within +-10 of `cur_pos`.
 pub fn ft_80082a68(g: G) -> bool {
+    melee_core::ct!("ft_80082a68");
     let f = fp(g);
     f.coll_data.cur_pos = f.cur_pos;
     f.coll_data.last_pos = f.coll_data.cur_pos;
@@ -397,6 +415,7 @@ pub fn ft_80082a68(g: G) -> bool {
 
 /// `ft_80082B1C`: the landing callback (heavy landing vs. basic landing).
 pub fn ft_80082b1c(g: G) {
+    melee_core::ct!("ft_80082b1c");
     let f = fp(g);
     if f.self_vel.y > ext::ftCo_800D0EC8(f) {
         ext::ft_8008A2BC(g);
@@ -407,6 +426,7 @@ pub fn ft_80082b1c(g: G) {
 
 /// `ftCo_AirCatchHit_Coll`.
 pub fn ftco_air_catch_hit_coll(g: G) {
+    melee_core::ct!("ftco_air_catch_hit_coll");
     if simple(g, ext::mpColl_800471F8) {
         ft_80082b1c(g);
     }
@@ -414,6 +434,7 @@ pub fn ftco_air_catch_hit_coll(g: G) {
 
 /// `ft_80082C74`.
 pub fn ft_80082c74(g: G, cb: Ev) {
+    melee_core::ct!("ft_80082c74");
     if ft_80081d0c(g) != GA_Ground {
         cb(g);
     }
@@ -421,6 +442,7 @@ pub fn ft_80082c74(g: G, cb: Ev) {
 
 /// `ft_80082D40` (`arg1` unused).
 pub fn ft_80082d40(g: G, _arg1: f32) {
+    melee_core::ct!("ft_80082d40");
     if simple(g, ext::mpColl_80048768) {
         ft_80082b1c(g);
     }
@@ -428,6 +450,7 @@ pub fn ft_80082d40(g: G, _arg1: f32) {
 
 /// `ft_80082E3C`: another fighter standing on (x221D_b7) a floor joined to the ledge we touch.
 pub fn ft_80082e3c(g: G) -> G {
+    melee_core::ct!("ft_80082e3c");
     let mut cur = crate::hooks::plink_head(HSD_GOBJ_PLINK_FIGHTER);
     while !cur.is_null() {
         if cur != g {
@@ -458,11 +481,13 @@ pub fn ft_80082e3c(g: G) -> G {
 /// `ftGetFacingDirInt2` (static inline).
 #[inline]
 pub fn ft_get_facing_dir_int2(g: G) -> i32 {
+    melee_core::ct!("ft_get_facing_dir_int2");
     dir_int(fp(g))
 }
 
 /// `ft_80082F28`.
 pub fn ft_80082f28(g: G) {
+    melee_core::ct!("ft_80082f28");
     if ft_check_ground_and_ledge(g, ft_get_facing_dir_int2(g)) {
         ft_80082b1c(g);
         return;
@@ -496,6 +521,7 @@ fn ft_80083090_inline(g: G, arg1: CollCb) -> bool {
 
 /// `ft_80083090`.
 pub fn ft_80083090(g: G, arg1: CollCb, cb: Ev) {
+    melee_core::ct!("ft_80083090");
     if ft_80083090_inline(g, arg1) {
         cb(g);
         return;
@@ -517,24 +543,28 @@ fn or_wall_cliff(g: G, hit: bool, cb: Ev) -> bool {
 
 /// `ft_800831CC`.
 pub fn ft_800831cc(g: G, arg1: CollCb, cb: Ev) {
+    melee_core::ct!("ft_800831cc");
     let h = ft_80083090_inline(g, arg1);
     or_wall_cliff(g, h, cb);
 }
 
 /// `ft_80083318`.
 pub fn ft_80083318(g: G, arg1: CollCb, cb: Ev) {
+    melee_core::ct!("ft_80083318");
     let h = cb_coll(g, arg1, ext::mpColl_80047BF4, ext::mpColl_80047F40);
     or_wall_cliff(g, h, cb);
 }
 
 /// `ft_80083464`.
 pub fn ft_80083464(g: G, arg1: CollCb, cb: Ev) {
+    melee_core::ct!("ft_80083464");
     let h = cb_coll(g, arg1, ext::mpColl_80047D20, ext::mpColl_8004806C);
     or_wall_cliff(g, h, cb);
 }
 
 /// `ft_800835B0`.
 pub fn ft_800835b0(g: G, arg1: CollCb, cb: Ev) {
+    melee_core::ct!("ft_800835b0");
     let h = ft_80083090_inline(g, arg1);
     if or_wall_cliff(g, h, cb) {
         return;
@@ -560,12 +590,14 @@ fn dir_coll(g: G, cool: fn(*mut CollData) -> bool, snap: fn(*mut CollData) -> bo
 
 /// `ft_8008370C`.
 pub fn ft_8008370c(g: G, cb: Ev) {
+    melee_core::ct!("ft_8008370c");
     let h = dir_coll(g, ext::mpColl_800471F8, ext::mpColl_800473CC);
     or_wall_cliff(g, h, cb);
 }
 
 /// `ft_80083844` (with `ft_80083844_inline`).
 pub fn ft_80083844(g: G, cb: Ev) {
+    melee_core::ct!("ft_80083844");
     if simple(g, ext::mpColl_80048654) {
         cb(g);
     }
@@ -573,23 +605,27 @@ pub fn ft_80083844(g: G, cb: Ev) {
 
 /// `ft_80083910`.
 pub fn ft_80083910(g: G, cb: Ev) {
+    melee_core::ct!("ft_80083910");
     let h = dir_coll(g, ext::mpColl_80048654, ext::mpColl_800474E0);
     or_wall_cliff(g, h, cb);
 }
 
 /// `ft_80083A48`.
 pub fn ft_80083a48(g: G, cb: Ev) {
+    melee_core::ct!("ft_80083a48");
     let h = ft_check_ground_and_ledge(g, 0);
     or_wall_cliff(g, h, cb);
 }
 
 /// `ft_80083B68`.
 pub fn ft_80083b68(g: G) {
+    melee_core::ct!("ft_80083b68");
     ft_80082578(g);
 }
 
 /// `ft_80083C00`.
 pub fn ft_80083c00(g: G, cb: Ev) {
+    melee_core::ct!("ft_80083c00");
     if ft_80082578(g) {
         cb(g);
     }
@@ -597,6 +633,7 @@ pub fn ft_80083c00(g: G, cb: Ev) {
 
 /// `ft_80083CE4` (with `ft_80083CE4_inline`).
 pub fn ft_80083ce4(g: G, cb1: CollCb, cb2: Ev) {
+    melee_core::ct!("ft_80083ce4");
     if floor_flag(g, |c| {
         ext::mpColl_800476B4(c, cb1, g);
     }) {
@@ -606,6 +643,7 @@ pub fn ft_80083ce4(g: G, cb1: CollCb, cb2: Ev) {
 
 /// `ft_80083DCC`.
 pub fn ft_80083dcc(g: G) {
+    melee_core::ct!("ft_80083dcc");
     let c = begin(fp(g));
     ext::mpColl_800478F4(c);
     end(g);
@@ -614,6 +652,7 @@ pub fn ft_80083dcc(g: G) {
 
 /// `ft_80083E64`.
 pub fn ft_80083e64(g: G, ecb: *mut ftCollisionBox, cb: Ev) {
+    melee_core::ct!("ft_80083e64");
     if ft_800824a0(g, ecb) {
         cb(g);
     }
@@ -621,6 +660,7 @@ pub fn ft_80083e64(g: G, ecb: *mut ftCollisionBox, cb: Ev) {
 
 /// `ft_80083F88`.
 pub fn ft_80083f88(g: G) {
+    melee_core::ct!("ft_80083f88");
     if ft_80082708(g) == GA_Ground {
         ext::ftCo_Fall_Enter(g);
     }
@@ -628,6 +668,7 @@ pub fn ft_80083f88(g: G) {
 
 /// `ft_8008403C`.
 pub fn ft_8008403c(g: G, cb: Ev) {
+    melee_core::ct!("ft_8008403c");
     if ft_80082708(g) == GA_Ground {
         cb(g);
     }
@@ -635,6 +676,7 @@ pub fn ft_8008403c(g: G, cb: Ev) {
 
 /// `ft_80084104`.
 pub fn ft_80084104(g: G) {
+    melee_core::ct!("ft_80084104");
     if !ft_800827a0(g) {
         ext::ftCo_Fall_Enter(g);
     }
@@ -642,6 +684,7 @@ pub fn ft_80084104(g: G) {
 
 /// `ft_800841B8`.
 pub fn ft_800841b8(g: G, cb: Ev) {
+    melee_core::ct!("ft_800841b8");
     if !ft_800827a0(g) {
         cb(g);
     }
@@ -660,6 +703,7 @@ fn stick_coll(g: G, op: fn(*mut CollData) -> bool) -> bool {
 
 /// `ft_80084280`.
 pub fn ft_80084280(g: G) {
+    melee_core::ct!("ft_80084280");
     let f = fp(g);
     let n = f.xF8_playerNudgeVel.x;
     let r = if n != 0.0 && n * f.facing_dir < 0.0 {
@@ -675,6 +719,7 @@ pub fn ft_80084280(g: G) {
 
 /// `ft_800843FC`.
 pub fn ft_800843fc(g: G) {
+    melee_core::ct!("ft_800843fc");
     if stick_coll(g, ext::mpColl_8004B5C4) || ext::ftCo_8009A3C8(g) {
         return;
     }
@@ -683,6 +728,7 @@ pub fn ft_800843fc(g: G) {
 
 /// `ft_800844EC`.
 pub fn ft_800844ec(g: G) {
+    melee_core::ct!("ft_800844ec");
     if ft_80082708(g) != GA_Ground {
         ext::ftCo_8009EDA4(g);
     } else {
@@ -698,6 +744,7 @@ fn ledge_slip(f: &Fighter) -> bool {
 
 /// `ft_800845B4`.
 pub fn ft_800845b4(g: G) {
+    melee_core::ct!("ft_800845b4");
     if ft_80082708(g) == GA_Ground {
         if ledge_slip(fp(g)) {
             ext::ftCo_8009F39C(g);
@@ -709,6 +756,7 @@ pub fn ft_800845b4(g: G) {
 
 /// `ft_800846B0`.
 pub fn ft_800846b0(g: G, b: *mut ftCollisionBox, cb: Ev) {
+    melee_core::ct!("ft_800846b0");
     if !box_op(g, b, ext::mpColl_8004B21C) {
         cb(g);
     }
@@ -716,6 +764,7 @@ pub fn ft_800846b0(g: G, b: *mut ftCollisionBox, cb: Ev) {
 
 /// `ft_800847D0`.
 pub fn ft_800847d0(g: G, b: *mut ftCollisionBox) {
+    melee_core::ct!("ft_800847d0");
     if !box_op(g, b, ext::mpColl_8004B3F0) {
         ext::ftCo_Fall_Enter(g);
     }
@@ -723,6 +772,7 @@ pub fn ft_800847d0(g: G, b: *mut ftCollisionBox) {
 
 /// `ft_800848DC`.
 pub fn ft_800848dc(g: G, cb: Ev) {
+    melee_core::ct!("ft_800848dc");
     if ft_80082708(g) == GA_Ground {
         if ledge_slip(fp(g)) {
             ext::ftCo_8009F39C(g);
@@ -734,16 +784,19 @@ pub fn ft_800848dc(g: G, cb: Ev) {
 
 /// `ft_800849EC`.
 pub fn ft_800849ec(fp1: &mut Fighter, fp2: &mut Fighter) {
+    melee_core::ct!("ft_800849ec");
     ext::mpCopyCollData(&mut fp1.coll_data, &mut fp2.coll_data, 2);
 }
 
 /// `ft_80084A18`.
 pub fn ft_80084a18(g: G) -> bool {
+    melee_core::ct!("ft_80084a18");
     ext::mpLib_80054ED8(fp(g).coll_data.floor.index)
 }
 
 /// `ft_GetGroundFrictionMultiplier`: 1 for the Ice Climbers, else the floor's.
 pub fn ft_get_ground_friction_multiplier(f: &mut Fighter) -> f32 {
+    melee_core::ct!("ft_get_ground_friction_multiplier");
     if f.kind == Ft_Kind_Popo || f.kind == Ft_Kind_Nana {
         return 1.0;
     }
@@ -753,6 +806,7 @@ pub fn ft_get_ground_friction_multiplier(f: &mut Fighter) -> f32 {
 /// `ft_80084A80`: floor-line lookups for `arg0` in 0..=2 (the C reads an uninitialised pointer
 /// otherwise; this panics).
 pub fn ft_80084a80(arg0: i32, g: G, arg1: *mut i32, arg2: *mut i32, arg3: *mut i32) -> bool {
+    melee_core::ct!("ft_80084a80");
     let f = fp(g);
     if f.ground_or_air != GA_Ground {
         return false;
@@ -793,19 +847,23 @@ pub fn ft_80084a80(arg0: i32, g: G, arg1: *mut i32, arg2: *mut i32, arg3: *mut i
 
 /// `ft_80084BFC`.
 pub fn ft_80084bfc(g: G, a: *mut i32, b: *mut i32, c: *mut i32) -> bool {
+    melee_core::ct!("ft_80084bfc");
     ft_80084a80(0, g, a, b, c)
 }
 /// `ft_80084C38`.
 pub fn ft_80084c38(g: G, a: *mut i32, b: *mut i32, c: *mut i32) -> bool {
+    melee_core::ct!("ft_80084c38");
     ft_80084a80(1, g, a, b, c)
 }
 /// `ft_80084C74`.
 pub fn ft_80084c74(g: G, a: *mut i32, b: *mut i32, c: *mut i32) -> bool {
+    melee_core::ct!("ft_80084c74");
     ft_80084a80(2, g, a, b, c)
 }
 
 /// `ft_80084CE4`: a wall between the two fighters' ECB centres. 2 fused sites.
 pub fn ft_80084ce4(attacker: &Fighter, victim: &Fighter) -> bool {
+    melee_core::ct!("ft_80084ce4");
     let ay = fmadds(attacker.coll_data.ecb.top.y + attacker.coll_data.ecb.bottom.y, 0.5, attacker.cur_pos.y);
     let ax = 0.0f32 + attacker.cur_pos.x;
     let vy = fmadds(victim.coll_data.ecb.top.y + victim.coll_data.ecb.bottom.y, 0.5, victim.cur_pos.y);

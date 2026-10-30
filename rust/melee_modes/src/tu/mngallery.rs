@@ -135,11 +135,13 @@ unsafe fn get_804d6c88(g: *mut HSD_GObj) -> *mut mnGallery_804D6C88_userdata {
 
 /// 258940: allocate the movie heap.
 pub unsafe extern "C" fn mnGallery_80258940() {
+    melee_core::ct!("mnGallery_80258940");
     rate_table = ext::HSD_MemAlloc(HEAP_SIZE as i32).cast();
 }
 
 /// 25896C: render callback of the movie camera.
 pub unsafe extern "C" fn mnGallery_8025896C(gobj: *mut HSD_GObj, render_pass: i32) {
+    melee_core::ct!("mnGallery_8025896C");
     let data = mnGallery_804D6C88;
     let cobj = (*gobj).hsd_obj as *mut HSD_CObj;
     if (*get_804d6c88(data)).state == 3 {
@@ -154,6 +156,7 @@ pub unsafe extern "C" fn mnGallery_8025896C(gobj: *mut HSD_GObj, render_pass: i3
 
 /// 258A08: the movie camera.
 pub unsafe extern "C" fn mnGallery_80258A08(gobj: *mut HSD_GObj, width: u16, height: u16, priority: u32) {
+    melee_core::ct!("mnGallery_80258A08");
     let roll = 0.0f32;
     let near_val = 0.0f32;
     let mut eye = Vec3 { x: 0.0, y: 0.0, z: 1.0 };
@@ -191,6 +194,7 @@ pub unsafe extern "C" fn mnGallery_80258A08(gobj: *mut HSD_GObj, width: u16, hei
 
 /// 258BC4: start the selected movie.
 pub unsafe fn mnGallery_80258BC4(data: *mut mnGallery_804D6C88_userdata) {
+    melee_core::ct!("mnGallery_80258BC4");
     let mode = (*data).unk15 as i32;
     if (*data).unk0 != 0 {
         return;
@@ -235,6 +239,7 @@ pub unsafe fn mnGallery_80258BC4(data: *mut mnGallery_804D6C88_userdata) {
 
 /// 258D50: stop the movie.
 pub unsafe fn mnGallery_80258D50(data: *mut mnGallery_804D6C88_userdata) {
+    melee_core::ct!("mnGallery_80258D50");
     if (*data).unk0 != 0 {
         ext::lbMthp_8001F800();
         ext::lbAudioAx_800236DC();
@@ -252,6 +257,7 @@ pub unsafe fn mnGallery_80258D50(data: *mut mnGallery_804D6C88_userdata) {
 
 /// 258DBC: input while a movie plays.
 pub unsafe fn mnGallery_80258DBC(_gobj: *mut HSD_GObj, data: *mut mnGallery_804D6C88_userdata) {
+    melee_core::ct!("mnGallery_80258DBC");
     let mut skip = 0u32;
     let mut buttons = HSD_PadCopyStatus[0].trigger | HSD_PadCopyStatus[1].trigger;
     buttons |= HSD_PadCopyStatus[2].trigger;
@@ -285,6 +291,7 @@ pub unsafe fn mnGallery_80258DBC(_gobj: *mut HSD_GObj, data: *mut mnGallery_804D
 }
 
 pub unsafe fn fn_80258ED0_helper() {
+    melee_core::ct!("fn_80258ED0_helper");
     let data: *mut mnGallery_804D6C88_userdata = (*mnGallery_804D6C88).user_data.cast();
     if !(*data).gobj4.is_null() {
         ext::HSD_GObjFree((*data).gobj4);
@@ -299,6 +306,7 @@ pub unsafe fn fn_80258ED0_helper() {
 
 /// 258ED0: the input proc.
 pub unsafe extern "C" fn fn_80258ED0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80258ED0");
     let data = get_804d6c88(mnGallery_804D6C88);
 
     if mn_804D6BC8.cooldown != 0 {
@@ -354,6 +362,7 @@ pub unsafe extern "C" fn fn_80258ED0(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe fn fn_802590C4_inline(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_802590C4_inline");
     let tmp: *mut mnGallery_804D6C88_userdata = (*gobj).user_data.cast();
     ext::HSD_GObjFree(gobj);
     for i in 0..2 {
@@ -364,6 +373,7 @@ pub unsafe fn fn_802590C4_inline(gobj: *mut HSD_GObj) {
 
 /// 2590C4: animation proc of the list model.
 pub unsafe extern "C" fn fn_802590C4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_802590C4");
     let data: *mut mnGallery_804D6C88_userdata = (*gobj).user_data.cast();
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
 
@@ -392,6 +402,7 @@ pub unsafe extern "C" fn fn_802590C4(gobj: *mut HSD_GObj) {
 
 /// 2591BC: animation proc of a cursor.
 pub unsafe extern "C" fn mnGallery_802591BC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnGallery_802591BC");
     let ud: *mut mnGallery_child_userdata = (*gobj).user_data.cast();
     let gallery = mnGallery_804D6C88;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -430,6 +441,7 @@ pub unsafe extern "C" fn mnGallery_802591BC(gobj: *mut HSD_GObj) {
 
 /// 259604: clear the user data.
 pub unsafe fn mnGallery_80259604(data: *mut mnGallery_804D6C88_userdata) {
+    melee_core::ct!("mnGallery_80259604");
     (*data).unk0 = 0;
     (*data).unk1 = 0;
     (*data).unk2 = 0;
@@ -446,6 +458,7 @@ pub unsafe fn mnGallery_80259604(data: *mut mnGallery_804D6C88_userdata) {
 
 /// 25963C: the list model and the two cursors.
 pub unsafe extern "C" fn mnGallery_8025963C() {
+    melee_core::ct!("mnGallery_8025963C");
     let mut model = addr_of_mut!(mnGallery_804A0BA0);
 
     let gobj = ext::GObj_Create(6, 7, 0x80);
@@ -496,6 +509,7 @@ pub unsafe extern "C" fn mnGallery_8025963C() {
 
 /// 259868: enter the screen.
 pub unsafe extern "C" fn mnGallery_80259868() {
+    melee_core::ct!("mnGallery_80259868");
     mn_804D6BC8.cooldown = 5;
     mn_804A04F0.prev_menu = mn_804A04F0.cur_menu;
     mn_804A04F0.cur_menu = 0x1A;

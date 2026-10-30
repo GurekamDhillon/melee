@@ -133,9 +133,10 @@ pub static mut grSh_Route_StageData: StageData = StageData {
 /// `static struct grShrineRoute_YakumonoParam* yakumono_param`.
 pub static mut yakumono_param: *mut grShrineRoute_YakumonoParam = core::ptr::null_mut();
 
-pub unsafe extern "C" fn grShrineRoute_OnDemoInit(_arg: i32) {}
+pub unsafe extern "C" fn grShrineRoute_OnDemoInit(_arg: i32) { melee_core::ct!("grShrineRoute_OnDemoInit");}
 
 pub unsafe extern "C" fn grShrineRoute_OnInit() {
+    melee_core::ct!("grShrineRoute_OnInit");
     yakumono_param = ext::Ground_GetYakumonoParam() as *mut grShrineRoute_YakumonoParam;
     ext::stage_info.unk8C.set_b4(0);
     ext::stage_info.unk8C.set_b5(0);
@@ -148,10 +149,12 @@ pub unsafe extern "C" fn grShrineRoute_OnInit() {
 }
 
 pub unsafe extern "C" fn grShrineRoute_OnLoad() {
+    melee_core::ct!("grShrineRoute_OnLoad");
     grShrineRoute_802088C0(6);
 }
 
 pub unsafe extern "C" fn grShrineRoute_OnStart() {
+    melee_core::ct!("grShrineRoute_OnStart");
     ext::grZakoGenerator_801CAE04(&raw mut (*yakumono_param).spawn_desc);
     let mut val = (*yakumono_param).x24;
     if val != 0 {
@@ -168,6 +171,7 @@ pub unsafe extern "C" fn grShrineRoute_OnStart() {
 }
 
 pub unsafe extern "C" fn grShrineRoute_802088C0(gobj_id: i32) -> *mut HSD_GObj {
+    melee_core::ct!("grShrineRoute_802088C0");
     let callbacks = (&raw mut stage_callbacks as *mut StageCallbacks).add(gobj_id as usize);
     let gobj = ext::Ground_GetStageGObj(gobj_id);
 
@@ -192,25 +196,28 @@ pub unsafe extern "C" fn grShrineRoute_802088C0(gobj_id: i32) -> *mut HSD_GObj {
 }
 
 pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj0_OnInit");
     Ground_StartMapAnim(gobj);
 }
 
-pub unsafe extern "C" fn grShrineRoute_802089E0(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grShrineRoute_802089E0(_arg: *mut HSD_GObj) { melee_core::ct!("grShrineRoute_802089E0");}
 
-pub unsafe extern "C" fn grShrineRoute_802089E4(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grShrineRoute_802089E4(_arg: *mut HSD_GObj) { melee_core::ct!("grShrineRoute_802089E4");}
 
 pub unsafe extern "C" fn grShrineRoute_802089E8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grShrineRoute_802089E8");
     let gp = GET_GROUND(gobj);
     let jobj = GET_JOBJ(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
     ext::grMaterial_801C94D8(jobj as *mut c_void);
 }
 
-pub unsafe extern "C" fn grShrineRoute_80208A30(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grShrineRoute_80208A30(_arg: *mut HSD_GObj) { melee_core::ct!("grShrineRoute_80208A30");}
 
-pub unsafe extern "C" fn grShrineRoute_80208A34(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grShrineRoute_80208A34(_arg: *mut HSD_GObj) { melee_core::ct!("grShrineRoute_80208A34");}
 
 pub unsafe extern "C" fn fn_80208A38(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80208A38");
     let mut flags = [0u8; 6];
     let gp = (*gobj).user_data as *mut Ground;
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -244,6 +251,7 @@ pub unsafe extern "C" fn fn_80208A38(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grShrineRoute_80208D14(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grShrineRoute_80208D14");
     let gp = (*gobj).user_data as *mut Ground;
     let mut center = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
@@ -297,6 +305,7 @@ pub unsafe extern "C" fn grShrineRoute_80208D14(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grShrineRoute_80208F14() -> i32 {
+    melee_core::ct!("grShrineRoute_80208F14");
     let gobj = ext::Ground_GetMapGObj(4);
     if !gobj.is_null() {
         let gp = GET_GROUND(gobj);
@@ -330,6 +339,7 @@ unsafe fn show_other(gobj: *mut HSD_GObj, pid: i32, id: i32, jidx: i32, m: i32) 
 }
 
 pub unsafe extern "C" fn grShrineRoute_80208F70(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grShrineRoute_80208F70");
     let mut sp88 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp7C = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp68 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -576,9 +586,10 @@ pub unsafe extern "C" fn grShrineRoute_80208F70(gobj: *mut HSD_GObj) {
     ext::lb_800115F4();
 }
 
-pub unsafe extern "C" fn grShrineRoute_80209AEC(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grShrineRoute_80209AEC(_arg: *mut HSD_GObj) { melee_core::ct!("grShrineRoute_80209AEC");}
 
 pub unsafe extern "C" fn grShrineRoute_80209AF0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grShrineRoute_80209AF0");
     let jobj = GET_JOBJ(gobj);
     let gp = GET_GROUND(gobj);
 
@@ -603,6 +614,7 @@ fn abs_f(x: f32) -> f32 {
 }
 
 pub unsafe extern "C" fn grShrineRoute_80209BEC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grShrineRoute_80209BEC");
     let gp = GET_GROUND(gobj);
     let jobj = GET_JOBJ(gobj);
 
@@ -675,9 +687,10 @@ pub unsafe extern "C" fn grShrineRoute_80209BEC(gobj: *mut HSD_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grShrineRoute_8020A100(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grShrineRoute_8020A100(_arg: *mut HSD_GObj) { melee_core::ct!("grShrineRoute_8020A100");}
 
 pub unsafe extern "C" fn grShrineRoute_8020A104(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grShrineRoute_8020A104");
     let gp = GET_GROUND(gobj);
     let mut lgobj = *ext::HSD_GObjPLinkHead.add(HSD_GOBJ_PLINK_LIGHT as usize);
 
@@ -711,6 +724,7 @@ pub unsafe extern "C" fn grShrineRoute_8020A104(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grShrineRoute_8020A21C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grShrineRoute_8020A21C");
     let mut player_pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut light_pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sorted = [0i32; 20];
@@ -870,17 +884,19 @@ pub unsafe extern "C" fn grShrineRoute_8020A21C(gobj: *mut HSD_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grShrineRoute_8020A864(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grShrineRoute_8020A864(_arg: *mut HSD_GObj) { melee_core::ct!("grShrineRoute_8020A864");}
 
 pub unsafe extern "C" fn stageGObj1_3_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj1_3_OnInit");
     Ground_StartMapAnim(gobj);
 }
 
-pub unsafe extern "C" fn grShrineRoute_8020A89C(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grShrineRoute_8020A89C(_arg: *mut HSD_GObj) { melee_core::ct!("grShrineRoute_8020A89C");}
 
-pub unsafe extern "C" fn grShrineRoute_8020A8A0(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grShrineRoute_8020A8A0(_arg: *mut HSD_GObj) { melee_core::ct!("grShrineRoute_8020A8A0");}
 
 pub unsafe extern "C" fn grShrineRoute_8020A8A4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grShrineRoute_8020A8A4");
     let gp = (*gobj).user_data as *mut Ground;
 
     if !(*gp).u.shrineroute3.xC4.is_null() {
@@ -942,6 +958,7 @@ pub static light_config: [grSh_Route_LightConfig; 15] = [
 ];
 
 pub unsafe extern "C" fn grShrineRoute_8020AA40(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grShrineRoute_8020AA40");
     if !gobj.is_null() {
         let mut lobj = (*((*gobj).hsd_obj as *mut HSD_LObj)).next;
         for i in 0..light_config.len() {
@@ -987,6 +1004,7 @@ unsafe fn hsd_lobj_set_next(lobj: *mut HSD_LObj, next: *mut HSD_LObj) {
 }
 
 pub unsafe extern "C" fn grShrineRoute_8020AB58(gobj: *mut HSD_GObj) -> *mut HSD_LObj {
+    melee_core::ct!("grShrineRoute_8020AB58");
     if gobj.is_null() {
         return core::ptr::null_mut();
     }
@@ -1021,6 +1039,7 @@ pub static mut lobj1: HSD_LightDesc = HSD_LightDesc {
 };
 
 pub unsafe extern "C" fn grShrineRoute_8020AC44(gobj: *mut HSD_GObj) -> *mut HSD_LObj {
+    melee_core::ct!("grShrineRoute_8020AC44");
     if gobj.is_null() {
         return core::ptr::null_mut();
     }
@@ -1041,6 +1060,7 @@ pub unsafe extern "C" fn grShrineRoute_8020AC44(gobj: *mut HSD_GObj) -> *mut HSD
 }
 
 pub unsafe extern "C" fn grShrineRoute_8020AD24(arg: i32) -> i32 {
+    melee_core::ct!("grShrineRoute_8020AD24");
     if arg == 1 {
         ext::Ground_801C5740(arg);
         return 1;
@@ -1057,6 +1077,7 @@ pub unsafe extern "C" fn onJointCollision(
     ground_kind: mpLib_GroundEnum,
     _delta_y: f32,
 ) {
+    melee_core::ct!("onJointCollision");
     let gp = user_data as *mut Ground;
 
     if (*coll).x34_flags.b1234() as i32 == 1 && ground_kind == 2 {
@@ -1075,6 +1096,7 @@ pub unsafe extern "C" fn onJointCollision(
 }
 
 pub unsafe extern "C" fn grShrineRoute_8020AE08(gobj: *mut HSD_GObj, player_gobj: *mut HSD_GObj, out: *mut i32) -> i32 {
+    melee_core::ct!("grShrineRoute_8020AE08");
     let gp = (*gobj).user_data as *mut Ground;
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
@@ -1102,6 +1124,7 @@ pub unsafe extern "C" fn grShrineRoute_8020AE08(gobj: *mut HSD_GObj, player_gobj
 }
 
 pub unsafe extern "C" fn grShrineRoute_8020AF38(gobj: *mut HSD_GObj, arg1: i32) {
+    melee_core::ct!("grShrineRoute_8020AF38");
     let ix = (arg1 - 0xBD) as usize;
     let gp = GET_GROUND(gobj);
 
@@ -1127,6 +1150,7 @@ pub unsafe extern "C" fn grShrineRoute_8020AF38(gobj: *mut HSD_GObj, arg1: i32) 
 }
 
 pub unsafe extern "C" fn grShrineRoute_8020B020(gobj: *mut HSD_GObj, r4: i32, r5: i32) {
+    melee_core::ct!("grShrineRoute_8020B020");
     let gp = (*gobj).user_data as *mut Ground;
     let comp = r4 - 189;
     for i in 0..6usize {
@@ -1144,12 +1168,14 @@ pub unsafe extern "C" fn grShrineRoute_8020B020(gobj: *mut HSD_GObj, r4: i32, r5
 }
 
 pub unsafe extern "C" fn grShrineRoute_8020B0AC() {
+    melee_core::ct!("grShrineRoute_8020B0AC");
     for i in 0..7usize {
         ext::mpLib_800575B0(grSh_Route_803E58E0[i] as i32);
     }
 }
 
 pub unsafe extern "C" fn grShrineRoute_OnCheckShadowRender(a: *mut Vec3, _b: i32, jobj: *mut HSD_JObj) -> i32 {
+    melee_core::ct!("grShrineRoute_OnCheckShadowRender");
     let mut vec = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ext::lb_8000B1CC(jobj, core::ptr::null_mut(), &mut vec);
     if (*a).y > vec.y { 1 } else { 0 }
@@ -1157,6 +1183,7 @@ pub unsafe extern "C" fn grShrineRoute_OnCheckShadowRender(a: *mut Vec3, _b: i32
 
 /// TARGET_PC: the read-only view of the Underground Maze's route state for `gd.stage_objectives()`.
 pub unsafe extern "C" fn grShrineRoute_ScriptQuery(field: i32, idx: i32) -> i32 {
+    melee_core::ct!("grShrineRoute_ScriptQuery");
     let gobj = ext::Ground_GetMapGObj(4);
     if gobj.is_null() {
         return -1;

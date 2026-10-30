@@ -58,6 +58,7 @@ fn abs_m(x: f32) -> f32 {
 }
 
 pub fn ftMr_SpecialAirHi_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialAirHi_Enter");
     unsafe {
         let fp = fpp(gobj);
         let sa = (*fp).dat_attrs as *const ftMario_DatAttrs;
@@ -72,6 +73,7 @@ pub fn ftMr_SpecialAirHi_Enter(gobj: *mut HSD_GObj) {
 
 /// `ftMr_SpecialHi_Anim` (0x800E1B24): the end of the move enters FallSpecial.
 pub fn ftMr_SpecialHi_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialHi_Anim");
     unsafe {
         let sa = (*fpp(gobj)).dat_attrs as *const ftMario_DatAttrs;
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -82,11 +84,13 @@ pub fn ftMr_SpecialHi_Anim(gobj: *mut HSD_GObj) {
 
 /// `ftMr_SpecialAirHi_Anim` (0x800E1B84).
 pub fn ftMr_SpecialAirHi_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialAirHi_Anim");
     ftMr_SpecialHi_Anim(gobj)
 }
 
 /// First half of `ftMr_SpecialHi_IASA`: the stick-driven momentum angle (`fp->lstick_angle`).
 pub fn special_hi_iasa_lstick(fp: &mut Fighter) {
+    melee_core::ct!("special_hi_iasa_lstick");
     let sa: &ftMario_DatAttrs = unsafe { &*(fp.dat_attrs as *const ftMario_DatAttrs) };
     let lstick_x = abs_m(fp.input.lstick[0].x);
     let range = sa.specialhi.momentum_stick_range;
@@ -101,6 +105,7 @@ pub fn special_hi_iasa_lstick(fp: &mut Fighter) {
 }
 
 pub fn ftMr_SpecialHi_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialHi_IASA");
     unsafe {
         let fp = fpp(gobj);
         let sa = (*fp).dat_attrs as *const ftMario_DatAttrs;
@@ -117,10 +122,12 @@ pub fn ftMr_SpecialHi_IASA(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMr_SpecialAirHi_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialAirHi_IASA");
     ftMr_SpecialHi_IASA(gobj)
 }
 
 pub fn ftMr_SpecialAirHi_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialAirHi_Phys");
     unsafe {
         let fp = &mut *fpp(gobj);
         let sa = &*(fp.dat_attrs as *const ftMario_DatAttrs);
@@ -139,6 +146,7 @@ pub fn ftMr_SpecialAirHi_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMr_SpecialHi_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialHi_Coll");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).ground_or_air == GA_Air {
@@ -159,5 +167,6 @@ fn ftMr_SpecialHi_CheckLanding_rs(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMr_SpecialAirHi_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialAirHi_Coll");
     ftMr_SpecialHi_Coll(gobj)
 }

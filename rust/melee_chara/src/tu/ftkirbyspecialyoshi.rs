@@ -147,40 +147,52 @@ unsafe fn ea() -> *mut ftKb_DatAttrs {
 use crate::tu::ftkirbyspecialseak::ftKb_SpecialN_set_cbs;
 
 pub fn ftKb_SpecialNYs_80109260(gobj: *mut HSD_GObj, vec: *mut Vec3) {
+    melee_core::ct!("ftKb_SpecialNYs_80109260");
     unsafe { pure::ftKb_SpecialNYs_80109260(&*fpp(gobj), &mut *vec) }
 }
 pub fn ftKb_SpecialNYs_80109290(gobj: *mut HSD_GObj) -> f32 {
+    melee_core::ct!("ftKb_SpecialNYs_80109290");
     unsafe { pure::ftKb_SpecialNYs_80109290(&*fpp(gobj)) }
 }
 pub fn ftKb_SpecialNYs_8010929C(gobj: *mut HSD_GObj) -> f32 {
+    melee_core::ct!("ftKb_SpecialNYs_8010929C");
     unsafe { pure::ftKb_SpecialNYs_8010929C(&*fpp(gobj)) }
 }
 pub fn ftKb_SpecialNYs_801092AC(gobj: *mut HSD_GObj) -> f32 {
+    melee_core::ct!("ftKb_SpecialNYs_801092AC");
     unsafe { pure::ftKb_SpecialNYs_801092AC(&*fpp(gobj)) }
 }
 pub fn ftKb_SpecialNYs_801092BC(gobj: *mut HSD_GObj) -> f32 {
+    melee_core::ct!("ftKb_SpecialNYs_801092BC");
     unsafe { pure::ftKb_SpecialNYs_801092BC(&*fpp(gobj)) }
 }
 pub fn ftKb_SpecialNYs_801092CC(gobj: *mut HSD_GObj) -> f32 {
+    melee_core::ct!("ftKb_SpecialNYs_801092CC");
     unsafe { pure::ftKb_SpecialNYs_801092CC(&*fpp(gobj)) }
 }
 
 pub fn ftKb_SpecialNYs_801092DC() -> f32 {
+    melee_core::ct!("ftKb_SpecialNYs_801092DC");
     unsafe { (*ea()).specialn_ys_egg_breakout_resistance }
 }
 pub fn ftKb_SpecialNYs_801092F4() -> f32 {
+    melee_core::ct!("ftKb_SpecialNYs_801092F4");
     unsafe { (*ea()).specialn_ys_frames_reduced_per_input }
 }
 pub fn ftKb_SpecialNYs_8010930C() -> f32 {
+    melee_core::ct!("ftKb_SpecialNYs_8010930C");
     unsafe { (*ea()).specialn_ys_unk1 }
 }
 pub fn ftKb_SpecialNYs_80109324() -> f32 {
+    melee_core::ct!("ftKb_SpecialNYs_80109324");
     unsafe { (*ea()).specialn_ys_unk2 }
 }
 pub fn ftKb_SpecialNYs_8010933C() -> i32 {
+    melee_core::ct!("ftKb_SpecialNYs_8010933C");
     unsafe { (*ea()).specialn_ys_iframes_on_release as i32 }
 }
 pub fn ftKb_SpecialNYs_80109354(v: *mut Vec3) {
+    melee_core::ct!("ftKb_SpecialNYs_80109354");
     unsafe {
         let cd = ea();
         (*v).x = (*cd).specialn_ys_horizontal_velocity_on_breakout;
@@ -189,6 +201,7 @@ pub fn ftKb_SpecialNYs_80109354(v: *mut Vec3) {
     }
 }
 pub fn ftKb_SpecialNYs_80109380() -> f32 {
+    melee_core::ct!("ftKb_SpecialNYs_80109380");
     unsafe {
         let cd = ea();
         (*cd).specialn_ys_unk3 / (*cd).specialn_ys_damage_multiplier
@@ -201,6 +214,7 @@ unsafe fn samus_hat() -> *mut KirbyHatStruct {
 }
 
 pub fn ftKb_SpecialNYs_801093A0(_gobj: *mut HSD_GObj) -> *mut ftDynamics {
+    melee_core::ct!("ftKb_SpecialNYs_801093A0");
     unsafe {
         let hat = samus_hat();
         if hat.is_null() {
@@ -217,6 +231,7 @@ unsafe fn start_hat_anim(fp: *mut Fighter, hat: *mut KirbyHatStruct, dyn_idx: us
 }
 
 pub fn ftKb_SpecialNYs_801093B4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialNYs_801093B4");
     unsafe {
         let fp = fpp(gobj);
         let hat = samus_hat();
@@ -231,19 +246,24 @@ pub fn ftKb_SpecialNYs_801093B4(gobj: *mut HSD_GObj) {
 
 /// `fn_801095DC`, `fn_80109680`, `fn_80109714`, `fn_801097B8` as Fighter callback entries.
 pub unsafe extern "C" fn cb_fn_801095DC(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_801095DC");
     fn_801095DC(g);
 }
 pub unsafe extern "C" fn cb_fn_80109680(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_80109680");
     fn_80109680(g);
 }
 pub unsafe extern "C" fn cb_fn_80109714(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_80109714");
     fn_80109714(g);
 }
 pub unsafe extern "C" fn cb_fn_801097B8(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_801097B8");
     fn_801097B8(g);
 }
 /// `fn_8010A930` as a Fighter interaction callback entry.
 pub unsafe extern "C" fn cb_fn_8010A930(g: *mut HSD_GObj, attacker: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_8010A930");
     ext::fn_8010A930(g, attacker);
 }
 
@@ -253,6 +273,7 @@ unsafe fn set_grab_cbs(gobj: *mut HSD_GObj, grab: unsafe extern "C" fn(*mut HSD_
 }
 
 pub fn ftKb_SpecialNYs_8010941C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialNYs_8010941C");
     unsafe {
         let fp = fpp(gobj);
         let ys_hat = samus_hat();
@@ -270,6 +291,7 @@ pub fn ftKb_SpecialNYs_8010941C(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_SpecialNYs_801094FC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialNYs_801094FC");
     unsafe {
         let fp = fpp(gobj);
         let ys_hat = samus_hat();
@@ -300,22 +322,27 @@ unsafe fn latch_to(gobj: *mut HSD_GObj, msid: i32, flags: u32, with_item: bool) 
 }
 
 pub fn fn_801095DC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801095DC");
     unsafe { latch_to(gobj, ftKb_MS_YsSpecialNCapture1_1 as i32, 0x81092, true) }
 }
 
 pub fn fn_80109680(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80109680");
     unsafe { latch_to(gobj, ftKb_MS_YsSpecialNCapture1_0 as i32, 0x81092, false) }
 }
 
 pub fn fn_80109714(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80109714");
     unsafe { latch_to(gobj, ftKb_MS_YsSpecialAirNCapture1_1 as i32, 0x81092, true) }
 }
 
 pub fn fn_801097B8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801097B8");
     unsafe { latch_to(gobj, ftKb_MS_YsSpecialAirNCapture1_0 as i32, 0x81092, false) }
 }
 
 pub fn fn_8010984C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8010984C");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, ftKb_MS_YsSpecialAirNCapture2 as i32, ftYs_MF_SpecialN_CollHit);
@@ -325,6 +352,7 @@ pub fn fn_8010984C(gobj: *mut HSD_GObj) {
 }
 
 pub fn fn_801098EC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801098EC");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, ftKb_MS_YsSpecialN1 as i32, ftYs_MF_SpecialN_CollHit);
@@ -334,6 +362,7 @@ pub fn fn_801098EC(gobj: *mut HSD_GObj) {
 }
 
 pub fn fn_8010998C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8010998C");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, ftKb_MS_YsSpecialAirNCapture1_1 as i32, ftYs_MF_SpecialN_Coll);
@@ -342,6 +371,7 @@ pub fn fn_8010998C(gobj: *mut HSD_GObj) {
 }
 
 pub fn fn_80109A84(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80109A84");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_8007D7FC(&mut *fp);
@@ -351,6 +381,7 @@ pub fn fn_80109A84(gobj: *mut HSD_GObj) {
 }
 
 pub fn fn_80109B7C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80109B7C");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_8007D5D4(&mut *fp);
@@ -360,6 +391,7 @@ pub fn fn_80109B7C(gobj: *mut HSD_GObj) {
 }
 
 pub fn fn_80109BF8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80109BF8");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, ftKb_MS_YsSpecialAirN2_0 as i32, ftYs_MF_SpecialN_Coll);
@@ -368,6 +400,7 @@ pub fn fn_80109BF8(gobj: *mut HSD_GObj) {
 }
 
 pub fn fn_80109CF0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80109CF0");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, ftKb_MS_YsSpecialNCapture2_0 as i32, ftYs_MF_SpecialN_Coll);
@@ -379,28 +412,36 @@ pub fn fn_80109CF0(gobj: *mut HSD_GObj) {
 /// `fn_80109CF0` as Fighter callback entries (the Coll ports hand them to `ft_8008403C` /
 /// `ft_80082C74`).
 pub unsafe extern "C" fn cb_fn_8010984C(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_8010984C");
     fn_8010984C(g);
 }
 pub unsafe extern "C" fn cb_fn_801098EC(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_801098EC");
     fn_801098EC(g);
 }
 pub unsafe extern "C" fn cb_fn_8010998C(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_8010998C");
     fn_8010998C(g);
 }
 pub unsafe extern "C" fn cb_fn_80109A84(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_80109A84");
     fn_80109A84(g);
 }
 pub unsafe extern "C" fn cb_fn_80109B7C(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_80109B7C");
     fn_80109B7C(g);
 }
 pub unsafe extern "C" fn cb_fn_80109BF8(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_80109BF8");
     fn_80109BF8(g);
 }
 pub unsafe extern "C" fn cb_fn_80109CF0(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_80109CF0");
     fn_80109CF0(g);
 }
 
 pub fn ftKb_YsSpecialN1_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_YsSpecialN1_Anim");
     unsafe {
         let fp = fpp(gobj);
         ext::HSD_JObjAnimAll((*fp).u.kb.hat.jobj);
@@ -411,6 +452,7 @@ pub fn ftKb_YsSpecialN1_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_YsSpecialAirNCapture2_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_YsSpecialAirNCapture2_Anim");
     unsafe {
         let fp = fpp(gobj);
         ext::HSD_JObjAnimAll((*fp).u.kb.hat.jobj);
@@ -440,6 +482,7 @@ unsafe fn capture_swap(gobj: *mut HSD_GObj, latched: bool, msid: i32, dyn_idx: u
 }
 
 pub fn ftKb_YsSpecialAirNCapture1_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_YsSpecialAirNCapture1_Anim");
     unsafe {
         let fp = fpp(gobj);
         let latched = !(*fp).target_item_gobj.is_null();
@@ -448,6 +491,7 @@ pub fn ftKb_YsSpecialAirNCapture1_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_YsSpecialNCapture1_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_YsSpecialNCapture1_Anim");
     unsafe {
         let fp = fpp(gobj);
         ext::HSD_JObjAnimAll((*fp).u.kb.hat.jobj);
@@ -457,6 +501,7 @@ pub fn ftKb_YsSpecialNCapture1_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_YsSpecialAirCapture2_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_YsSpecialAirCapture2_Anim");
     unsafe {
         let fp = fpp(gobj);
         let latched = !(*fp).target_item_gobj.is_null();
@@ -465,6 +510,7 @@ pub fn ftKb_YsSpecialAirCapture2_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_YsSpecialAirCapture1_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_YsSpecialAirCapture1_Anim");
     unsafe {
         let fp = fpp(gobj);
         ext::HSD_JObjAnimAll((*fp).u.kb.hat.jobj);
@@ -513,6 +559,7 @@ unsafe fn lay_egg_anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_YsSpecialNCapture2_0_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_YsSpecialNCapture2_0_Anim");
     unsafe {
         lay_egg_anim(gobj);
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -522,6 +569,7 @@ pub fn ftKb_YsSpecialNCapture2_0_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_YsSpecialAirN2_1_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_YsSpecialAirN2_1_Anim");
     unsafe {
         lay_egg_anim(gobj);
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -550,6 +598,7 @@ unsafe fn spit_anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_YsSpecialNCapture2_1_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_YsSpecialNCapture2_1_Anim");
     unsafe {
         spit_anim(gobj);
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -559,6 +608,7 @@ pub fn ftKb_YsSpecialNCapture2_1_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_YsSpecialAirN2_0_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_YsSpecialAirN2_0_Anim");
     unsafe {
         spit_anim(gobj);
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
@@ -568,6 +618,7 @@ pub fn ftKb_YsSpecialAirN2_0_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_SpecialNYs_8010A8BC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialNYs_8010A8BC");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).target_item_gobj.is_null() {

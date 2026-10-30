@@ -267,17 +267,21 @@ unsafe fn set_chain_callbacks(fp: *mut Fighter) {
 }
 
 pub unsafe extern "C" fn cb_ftSk_SpecialS_8011097C(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftSk_SpecialS_8011097C");
     ftSk_SpecialS_8011097C(g);
 }
 pub unsafe extern "C" fn cb_ftSk_SpecialS_80110EE8(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftSk_SpecialS_80110EE8");
     ftSk_SpecialS_80110EE8(g);
 }
 pub unsafe extern "C" fn cb_ftSk_SpecialS_ChainSomething(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftSk_SpecialS_ChainSomething");
     ftSk_SpecialS_ChainSomething(g);
 }
 
 /// Stick angle (degrees, smoothed) and magnitude tracking for the chain's aim.
 pub fn ftSk_SpecialS_80110490(fp: *mut Fighter) {
+    melee_core::ct!("ftSk_SpecialS_80110490");
     unsafe {
         let lx = (*fp).input.lstick[0].x;
         let ly = (*fp).input.lstick[0].y;
@@ -330,6 +334,7 @@ pub fn ftSk_SpecialS_80110490(fp: *mut Fighter) {
 
 /// Blend the chain's aim animation (`arg1` = 305 ground / else air) over the base pose.
 pub fn ftSk_SpecialS_80110610(gobj: *mut HSD_GObj, arg1: i32, arg2: f32) {
+    melee_core::ct!("ftSk_SpecialS_80110610");
     unsafe {
         let fp = fpp(gobj);
         let items = (*(*fp).ft_data).x48_items;
@@ -383,6 +388,7 @@ pub fn ftSk_SpecialS_80110610(gobj: *mut HSD_GObj, arg1: i32, arg2: f32) {
 
 /// Stick-flick SFX (the chain's swish) and the stick delta used to wiggle the chain.
 pub fn ftSk_SpecialS_80110788(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialS_80110788");
     unsafe {
         let fp = gobj_fighter(gobj);
         (*fp).u.sk.lstick_delta.x = (*fp).input.lstick[0].x - (*fp).input.lstick[1].x;
@@ -475,6 +481,7 @@ unsafe fn gobj_fighter(gobj: *mut HSD_GObj) -> *mut Fighter {
 
 /// Set hitbox `hitbox_id` of the chain to `new_pos` (the chain item calls this each frame).
 pub fn ftSk_SpecialS_UpdateHitboxes(gobj: *mut HSD_GObj, new_pos: *mut Vec3, hitbox_id: i32) {
+    melee_core::ct!("ftSk_SpecialS_UpdateHitboxes");
     unsafe {
         if gobj.is_null() {
             return;
@@ -502,6 +509,7 @@ pub fn ftSk_SpecialS_UpdateHitboxes(gobj: *mut HSD_GObj, new_pos: *mut Vec3, hit
 }
 
 pub fn ftSk_SpecialS_80110AEC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialS_80110AEC");
     unsafe {
         let fp = fpp(gobj);
 
@@ -554,6 +562,7 @@ fn sumOfSquares(a: f32, b: f32) -> f32 {
 
 /// Per-frame chain hit tracking: re-arm the hitboxes while the chain tip moves fast enough.
 pub fn ftSk_SpecialS_80110BCC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialS_80110BCC");
     unsafe {
         let fp = fpp(gobj);
         let item_gobj = (*fp).u.sk.x8;
@@ -610,6 +619,7 @@ pub fn ftSk_SpecialS_80110BCC(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftSk_SpecialS_80110E4C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialS_80110E4C");
     unsafe {
         let fp = fpp(gobj);
 
@@ -622,6 +632,7 @@ pub fn ftSk_SpecialS_80110E4C(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftSk_SpecialS_CheckAndDestroyChain(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialS_CheckAndDestroyChain");
     unsafe {
         let fp = fpp(gobj);
 
@@ -642,6 +653,7 @@ pub fn ftSk_SpecialS_CheckAndDestroyChain(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftSk_SpecialS_80110EE8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialS_80110EE8");
     unsafe {
         let fp = fpp(gobj);
 
@@ -652,6 +664,7 @@ pub fn ftSk_SpecialS_80110EE8(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftSk_SpecialS_ChainSomething(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialS_ChainSomething");
     unsafe {
         let fp = fpp(gobj);
 
@@ -663,6 +676,7 @@ pub fn ftSk_SpecialS_ChainSomething(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftSk_SpecialS_80110F70(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialS_80110F70");
     unsafe {
         let fp = fpp(gobj);
         (*fp).cmd_vars[0] = 0;
@@ -704,12 +718,14 @@ pub fn ftSk_SpecialS_80110F70(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftSk_SpecialS_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialS_Enter");
     st::Fighter_ChangeMotionState(gobj, 349, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
     st::ftAnim_8006EBA4(gobj);
     ftSk_SpecialS_80110F70(gobj);
 }
 
 pub fn ftSk_SpecialAirS_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialAirS_Enter");
     unsafe {
         let fp = fpp(gobj);
         (*fp).self_vel.y = 0.0;
@@ -741,6 +757,7 @@ fn ftSk_SpecialS_SpawnChain(gobj: *mut HSD_GObj) {
 /// Advance the start timer, spawn the chain at frame `x1C`, launch it the frame after; true when
 /// the start phase is over.
 pub fn ftSk_SpecialS_CheckInitChain(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftSk_SpecialS_CheckInitChain");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -776,12 +793,14 @@ pub fn ftSk_SpecialS_CheckInitChain(gobj: *mut HSD_GObj) -> bool {
 }
 
 pub fn ftSk_SpecialSStart_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialSStart_Anim");
     if ftSk_SpecialS_CheckInitChain(gobj) {
         ftSk_SpecialS_80111830(gobj);
     }
 }
 
 pub fn ftSk_SpecialAirSStart_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialAirSStart_Anim");
     if ftSk_SpecialS_CheckInitChain(gobj) {
         ftSk_SpecialS_80111988(gobj);
     }
@@ -799,6 +818,7 @@ unsafe fn s_anim_released(fp: *mut Fighter, special_attributes: *const ftSeakAtt
 }
 
 pub fn ftSk_SpecialS_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialS_Anim");
     unsafe {
         let fp = fpp(gobj);
         let special_attributes = da(fp);
@@ -817,6 +837,7 @@ pub fn ftSk_SpecialS_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftSk_SpecialAirS_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialAirS_Anim");
     unsafe {
         let fp = fpp(gobj);
         let special_attributes = da(fp);
@@ -834,6 +855,7 @@ pub fn ftSk_SpecialAirS_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftSk_SpecialS_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialS_IASA");
     unsafe {
         let fp = fpp(gobj);
 
@@ -846,6 +868,7 @@ pub fn ftSk_SpecialS_IASA(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftSk_SpecialAirS_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialAirS_IASA");
     unsafe {
         let fp = fpp(gobj);
 
@@ -858,18 +881,21 @@ pub fn ftSk_SpecialAirS_IASA(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftSk_SpecialS_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialS_Coll");
     if st::ft_800827A0(gobj) == 0 {
         ftSk_SpecialS_80111DF8(gobj);
     }
 }
 
 pub fn ftSk_SpecialAirS_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialAirS_Coll");
     if st::ft_80081D0C(gobj) != 0 {
         ftSk_SpecialS_80111EB4(gobj);
     }
 }
 
 pub fn ftSk_SpecialS_80111830(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialS_80111830");
     unsafe {
         let fp = fpp(gobj);
 
@@ -912,6 +938,7 @@ pub fn ftSk_SpecialS_80111830(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftSk_SpecialS_80111988(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialS_80111988");
     unsafe {
         st::Fighter_ChangeMotionState(gobj, 353, 8, 0.0, 1.0, 0.0, core::ptr::null_mut());
         ftSk_SpecialS_80110610(gobj, 308, 0.0);
@@ -955,6 +982,7 @@ unsafe fn end_anim_step(gobj: *mut HSD_GObj, fp: *mut Fighter, special_attribute
 }
 
 pub fn ftSk_SpecialSEnd_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialSEnd_Anim");
     unsafe {
         let fp = fpp(gobj);
         let special_attributes = da(fp);
@@ -968,6 +996,7 @@ pub fn ftSk_SpecialSEnd_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftSk_SpecialAirSEnd_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialAirSEnd_Anim");
     unsafe {
         let fp = fpp(gobj);
         let special_attributes = da(fp);
@@ -981,12 +1010,14 @@ pub fn ftSk_SpecialAirSEnd_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftSk_SpecialSEnd_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialSEnd_Coll");
     if st::ft_800827A0(gobj) == 0 {
         ftSk_SpecialS_80111CB0(gobj);
     }
 }
 
 pub fn ftSk_SpecialS_80111CB0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialS_80111CB0");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 354, transition_flags);
@@ -1002,6 +1033,7 @@ pub fn ftSk_SpecialS_80111CB0(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftSk_SpecialS_80111DF8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialS_80111DF8");
     unsafe {
         st::Fighter_ChangeMotionState(gobj, 351, 8, 0.0, 1.0, 0.0, core::ptr::null_mut());
 
@@ -1022,6 +1054,7 @@ pub fn ftSk_SpecialS_80111DF8(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftSk_SpecialS_80111EB4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialS_80111EB4");
     unsafe {
         st::Fighter_ChangeMotionState(gobj, 354, 8, 0.0, 1.0, 0.0, core::ptr::null_mut());
 
@@ -1043,6 +1076,7 @@ pub fn ftSk_SpecialS_80111EB4(gobj: *mut HSD_GObj) {
 
 /// True unless a needle is held (`u.sk.x4 != 0`); true for a NULL gobj.
 pub fn ftSk_SpecialS_80111F70(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftSk_SpecialS_80111F70");
     unsafe {
         if !gobj.is_null() {
             let fp = fpp(gobj);
@@ -1058,6 +1092,7 @@ pub fn ftSk_SpecialS_80111F70(gobj: *mut HSD_GObj) -> bool {
 
 /// The needle count (`u.sk.x0`); 0 for a NULL gobj.
 pub fn ftSk_SpecialS_80111FA0(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("ftSk_SpecialS_80111FA0");
     unsafe {
         if !gobj.is_null() {
             return (*fpp(gobj)).u.sk.x0;

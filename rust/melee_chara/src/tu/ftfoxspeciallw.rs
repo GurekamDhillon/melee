@@ -120,15 +120,19 @@ unsafe fn held_b(fp: *mut Fighter) -> bool {
 }
 
 pub unsafe extern "C" fn cb_ftFx_SpecialLw_CreateLoopGFX(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftFx_SpecialLw_CreateLoopGFX");
     ftFx_SpecialLw_CreateLoopGFX(g);
 }
 pub unsafe extern "C" fn cb_ftFx_SpecialLw_CreateStartGFX(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftFx_SpecialLw_CreateStartGFX");
     ftFx_SpecialLw_CreateStartGFX(g);
 }
 pub unsafe extern "C" fn cb_ftFx_SpecialLw_CreateReflectGFX(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftFx_SpecialLw_CreateReflectGFX");
     ftFx_SpecialLw_CreateReflectGFX(g);
 }
 pub unsafe extern "C" fn cb_ftFx_SpecialLwHit_Enter(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftFx_SpecialLwHit_Enter");
     ftFx_SpecialLwHit_Enter(g);
 }
 
@@ -146,20 +150,24 @@ unsafe fn create_gfx(gobj: *mut HSD_GObj, gfx_id: i32) {
 }
 
 pub fn ftFx_SpecialLw_CreateLoopGFX(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialLw_CreateLoopGFX");
     unsafe { create_gfx(gobj, 1160) }
 }
 
 /// Create Reflector Start GFX.
 pub fn ftFx_SpecialLw_CreateStartGFX(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialLw_CreateStartGFX");
     unsafe { create_gfx(gobj, 1161) }
 }
 
 pub fn ftFx_SpecialLw_CreateReflectGFX(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialLw_CreateReflectGFX");
     unsafe { create_gfx(gobj, 1162) }
 }
 
 /// `ftFox_SpecialLw_SetVars` (static inline).
 pub fn ftFox_SpecialLw_SetVars(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFox_SpecialLw_SetVars");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -173,12 +181,14 @@ pub fn ftFox_SpecialLw_SetVars(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_SpecialLw_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialLw_Enter");
     st::Fighter_ChangeMotionState(gobj, ftFx_MS_SpecialLwStart as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
     st::ftAnim_8006EBA4(gobj);
     ftFox_SpecialLw_SetVars(gobj);
 }
 
 pub fn ftFx_SpecialAirLw_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirLw_Enter");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -194,12 +204,14 @@ pub fn ftFx_SpecialAirLw_Enter(gobj: *mut HSD_GObj) {
 
 /// `ftFx_SpecialLwLoop_Enter` (static): grounded Reflector Loop.
 pub fn ftFx_SpecialLwLoop_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialLwLoop_Enter");
     st::Fighter_ChangeMotionState(gobj, ftFx_MS_SpecialLwLoop as i32, Ft_MF_KeepGfx as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ftFx_SpecialLw_CreateReflectHit(gobj);
 }
 
 /// `ftFx_SpecialAirLwLoop_Enter` (static): aerial Reflector Loop.
 pub fn ftFx_SpecialAirLwLoop_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirLwLoop_Enter");
     st::Fighter_ChangeMotionState(gobj, ftFx_MS_SpecialAirLwLoop as i32, Ft_MF_KeepGfx as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ftFx_SpecialLw_CreateReflectHit(gobj);
 }
@@ -222,20 +234,24 @@ unsafe fn start_anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_SpecialLwStart_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialLwStart_Anim");
     unsafe { start_anim(gobj) }
 }
 
 pub fn ftFx_SpecialAirLwStart_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirLwStart_Anim");
     unsafe { start_anim(gobj) }
 }
 
 pub fn ftFx_SpecialLwStart_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialLwStart_IASA");
     if ftFx_SpecialLwStart_CheckPass(gobj) {
         return;
     }
 }
 
 pub fn ftFx_SpecialLwStart_CheckPass(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftFx_SpecialLwStart_CheckPass");
     if ext::ftCo_80099F1C(gobj) {
         ftFx_SpecialLwStart_Pass(gobj);
         return true;
@@ -244,6 +260,7 @@ pub fn ftFx_SpecialLwStart_CheckPass(gobj: *mut HSD_GObj) -> bool {
 }
 
 pub fn ftFx_SpecialLwStart_Pass(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialLwStart_Pass");
     unsafe {
         ext::ftCo_8009A184(gobj, ftFx_MS_SpecialAirLwStart as i32, ftFx_MF_SpecialLw_Coll, (*fpp(gobj)).cur_anim_frame);
         ftFx_SpecialLw_CreateReflectHit(gobj);
@@ -262,6 +279,7 @@ unsafe fn air_lw_phys(fp: *mut Fighter) {
 }
 
 pub fn ftFx_SpecialAirLwStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirLwStart_Phys");
     unsafe { air_lw_phys(fpp(gobj)) }
 }
 
@@ -284,14 +302,17 @@ unsafe fn loop_anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_SpecialLwLoop_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialLwLoop_Anim");
     unsafe { loop_anim(gobj) }
 }
 
 pub fn ftFx_SpecialAirLwLoop_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirLwLoop_Anim");
     unsafe { loop_anim(gobj) }
 }
 
 pub fn ftFx_SpecialLwLoop_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialLwLoop_IASA");
     if !ftFx_SpecialLwTurn_Check(gobj) && !ext::ftCo_Jump_CheckInput(gobj) {
         if ftFx_SpecialLwLoop_CheckPass(gobj) {
             return;
@@ -300,6 +321,7 @@ pub fn ftFx_SpecialLwLoop_IASA(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_SpecialAirLwLoop_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirLwLoop_IASA");
     if !ftFx_SpecialLwTurn_Check(gobj) && ext::ftCo_800CB870(gobj) {
         return;
     }
@@ -307,6 +329,7 @@ pub fn ftFx_SpecialAirLwLoop_IASA(gobj: *mut HSD_GObj) {
 
 /// `ftFx_SpecialLwLoop_CheckPass` (static): drop through a platform during the loop.
 pub fn ftFx_SpecialLwLoop_CheckPass(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftFx_SpecialLwLoop_CheckPass");
     if ext::ftCo_80099F1C(gobj) {
         ftFx_SpecialLwLoop_Pass(gobj);
         return true;
@@ -316,6 +339,7 @@ pub fn ftFx_SpecialLwLoop_CheckPass(gobj: *mut HSD_GObj) -> bool {
 
 /// `ftFx_SpecialLwLoop_Pass` (static).
 pub fn ftFx_SpecialLwLoop_Pass(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialLwLoop_Pass");
     unsafe {
         ext::ftCo_8009A184(gobj, ftFx_MS_SpecialAirLwLoop as i32, ftFx_MF_SpecialLw_Coll, (*fpp(gobj)).cur_anim_frame);
         ftFx_SpecialLw_CreateReflectHit(gobj);
@@ -324,21 +348,25 @@ pub fn ftFx_SpecialLwLoop_Pass(gobj: *mut HSD_GObj) {
 
 /// `ftFox_SpecialLw_InlinePhys` (static inline).
 pub fn ftFox_SpecialLw_InlinePhys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFox_SpecialLw_InlinePhys");
     unsafe { air_lw_phys(fpp(gobj)) }
 }
 
 pub fn ftFx_SpecialAirLwLoop_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirLwLoop_Phys");
     ftFox_SpecialLw_InlinePhys(gobj);
     st::ftColl_8007AEF8(gobj);
 }
 
 pub fn ftFx_SpecialLwLoop_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialLwLoop_Coll");
     if st::ft_80082708(gobj) == 0 {
         ftFx_SpecialLwLoop_GroundToAir(gobj);
     }
 }
 
 pub fn ftFx_SpecialAirLwLoop_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirLwLoop_Coll");
     if st::ft_80081D0C(gobj) != 0 {
         ftFx_SpecialAirLwLoop_AirToGround(gobj);
     }
@@ -346,6 +374,7 @@ pub fn ftFx_SpecialAirLwLoop_Coll(gobj: *mut HSD_GObj) {
 
 /// `ftFx_SpecialLwLoop_GroundToAir` (static).
 pub fn ftFx_SpecialLwLoop_GroundToAir(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialLwLoop_GroundToAir");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, ftFx_MS_SpecialAirLwLoop as i32, ftFx_MF_SpecialLw_Coll);
@@ -355,6 +384,7 @@ pub fn ftFx_SpecialLwLoop_GroundToAir(gobj: *mut HSD_GObj) {
 
 /// `ftFx_SpecialAirLwLoop_AirToGround` (static).
 pub fn ftFx_SpecialAirLwLoop_AirToGround(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirLwLoop_AirToGround");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, ftFx_MS_SpecialLwLoop as i32, ftFx_MF_SpecialLw_Coll);
@@ -365,6 +395,7 @@ pub fn ftFx_SpecialAirLwLoop_AirToGround(gobj: *mut HSD_GObj) {
 
 /// `ftFx_SpecialLw_CreateReflectHit` (static): create the reflect bubble.
 pub fn ftFx_SpecialLw_CreateReflectHit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialLw_CreateReflectHit");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *mut ftFox_DatAttrs;
@@ -390,11 +421,13 @@ unsafe fn turn_body(gobj: *mut HSD_GObj) {
 
 /// `ftFx_SpecialLw_Turn` (static): Reflector Turn function.
 pub fn ftFx_SpecialLw_Turn(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialLw_Turn");
     unsafe { turn_body(gobj) }
 }
 
 /// `ftFox_SpecialLw_Turn_Inline` (static inline).
 pub fn ftFox_SpecialLw_Turn_Inline(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFox_SpecialLw_Turn_Inline");
     unsafe { turn_body(gobj) }
 }
 
@@ -414,20 +447,24 @@ unsafe fn turn_anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_SpecialLwTurn_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialLwTurn_Anim");
     unsafe { turn_anim(gobj) }
 }
 
 pub fn ftFx_SpecialAirLwTurn_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirLwTurn_Anim");
     unsafe { turn_anim(gobj) }
 }
 
 pub fn ftFx_SpecialAirLwTurn_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirLwTurn_Phys");
     unsafe { air_lw_phys(fpp(gobj)) };
     st::ftColl_8007AEF8(gobj);
 }
 
 /// `ftFox_SpecialLwTurn_SetVarAll` (static inline).
 pub fn ftFox_SpecialLwTurn_SetVarAll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFox_SpecialLwTurn_SetVarAll");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -441,6 +478,7 @@ pub fn ftFox_SpecialLwTurn_SetVarAll(gobj: *mut HSD_GObj) {
 
 /// Start a Reflector turn when the stick flips; true if it did.
 pub fn ftFx_SpecialLwTurn_Check(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftFx_SpecialLwTurn_Check");
     unsafe {
         let fp = fpp(gobj);
         if ext::ftCo_800C97A8(gobj) {
@@ -460,11 +498,13 @@ pub fn ftFx_SpecialLwTurn_Check(gobj: *mut HSD_GObj) -> bool {
 
 /// `ftFox_SpecialLwHit_CreateReflectInline` (static inline).
 pub fn ftFox_SpecialLwHit_CreateReflectInline(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFox_SpecialLwHit_CreateReflectInline");
     ftFx_SpecialLw_CreateReflectHit(gobj);
 }
 
 /// After a hit: end the move if the button was released, else back to the loop.
 pub fn ftFx_SpecialLwHit_Check(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftFx_SpecialLwHit_Check");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).mv.fx.SpecialLw.releaseLag <= 0 && (*fp).mv.fx.SpecialLw.isRelease != 0 {
@@ -502,20 +542,24 @@ unsafe fn hit_anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_SpecialLwHit_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialLwHit_Anim");
     unsafe { hit_anim(gobj) }
 }
 
 pub fn ftFx_SpecialAirLwHit_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirLwHit_Anim");
     unsafe { hit_anim(gobj) }
 }
 
 pub fn ftFx_SpecialAirLwHit_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirLwHit_Phys");
     unsafe { air_lw_phys(fpp(gobj)) };
     st::ftColl_8007AEF8(gobj);
 }
 
 /// Reflect Hit motion state handler (the `reflect_hit_cb`).
 pub fn ftFx_SpecialLwHit_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialLwHit_Enter");
     unsafe {
         let fp = fpp(gobj);
         let mut sp14 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -541,5 +585,6 @@ pub fn ftFx_SpecialLwHit_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftFx_SpecialAirLwEnd_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirLwEnd_Phys");
     unsafe { air_lw_phys(fpp(gobj)) }
 }

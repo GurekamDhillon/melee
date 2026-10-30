@@ -100,6 +100,7 @@ pub static it_803F7AD8: [ItemStateTable; 3] = [
 
 /// `void it_802C9D40(Item_GObj*)` (2C9D40)
 pub unsafe extern "C" fn it_802C9D40(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802C9D40");
     let ip = ip_of(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itKabigonAttributes;
     (*ip).xDD4_itemVar.kabigon.timer = (*attrs).x4;
@@ -118,20 +119,23 @@ pub unsafe extern "C" fn it_802C9D40(gobj: *mut Item_GObj) {
 }
 
 /// `void it_802C9DFC(Item_GObj*)` (2C9DFC)
-pub unsafe extern "C" fn it_802C9DFC(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn it_802C9DFC(_gobj: *mut Item_GObj) { melee_core::ct!("it_802C9DFC");}
 
 /// `void itKabigon_Logic2_Destroyed(Item_GObj*)` (2C9E00)
 pub unsafe extern "C" fn itKabigon_Logic2_Destroyed(_gobj: *mut Item_GObj) {
+    melee_core::ct!("itKabigon_Logic2_Destroyed");
     ext::Camera_StopQuake(QuakeKind_Small);
 }
 
 /// `void it_802C9E24(Item_GObj*, Item_GObj*)` (2C9E24)
 pub unsafe extern "C" fn it_802C9E24(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802C9E24");
     ext::it_8026B894(gobj, ref_gobj);
 }
 
 /// `void it_802C9E44(Item_GObj*)` (2C9E44)
 pub unsafe extern "C" fn it_802C9E44(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802C9E44");
     let ip = ip_of(gobj);
     (*ip).xDCC_flag.set_b4567(0xE);
     ext::it_80273454(gobj);
@@ -140,6 +144,7 @@ pub unsafe extern "C" fn it_802C9E44(gobj: *mut Item_GObj) {
 
 /// `void it_802C9E8C(Item_GObj*)` (2C9E8C)
 pub unsafe extern "C" fn it_802C9E8C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802C9E8C");
     let ip = ip_of(gobj);
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE as u32);
     set_effect_hitlag_callbacks(ip);
@@ -149,6 +154,7 @@ pub unsafe extern "C" fn it_802C9E8C(gobj: *mut Item_GObj) {
 
 /// `bool itKabigon_UnkMotion0_Anim(Item_GObj*)` (2C9EF0)
 pub unsafe extern "C" fn itKabigon_UnkMotion0_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKabigon_UnkMotion0_Anim");
     let ip = ip_of(gobj);
 
     if (*ip).xDB0_itcmd_var1 != 0 {
@@ -168,6 +174,7 @@ pub unsafe extern "C" fn itKabigon_UnkMotion0_Anim(gobj: *mut Item_GObj) -> i32 
 
 /// `void itKabigon_UnkMotion0_Phys(Item_GObj*)` (2C9F74)
 pub unsafe extern "C" fn itKabigon_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itKabigon_UnkMotion0_Phys");
     let ip = ip_of(gobj);
 
     if (*ip).xDB0_itcmd_var1 == 0 && (*ip).ground_or_air == 1 {
@@ -178,6 +185,7 @@ pub unsafe extern "C" fn itKabigon_UnkMotion0_Phys(gobj: *mut Item_GObj) {
 
 /// `bool itKabigon_UnkMotion0_Coll(Item_GObj*)` (2C9FBC)
 pub unsafe extern "C" fn itKabigon_UnkMotion0_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKabigon_UnkMotion0_Coll");
     let ip = ip_of(gobj);
 
     if (*ip).xDB0_itcmd_var1 == 0 {
@@ -192,6 +200,7 @@ pub unsafe extern "C" fn itKabigon_UnkMotion0_Coll(gobj: *mut Item_GObj) -> i32 
 
 /// `void it_802CA014(Item_GObj*)` (2CA014)
 pub unsafe extern "C" fn it_802CA014(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CA014");
     let ip = (*gobj).user_data as *mut Item;
     if (*ip).xDB0_itcmd_var1 != 0 {
         (*ip).xDD4_itemVar.kabigon.xE44 = (*ip).xDD4_itemVar.kabigon.xE44.wrapping_sub(1);
@@ -206,6 +215,7 @@ pub unsafe extern "C" fn it_802CA014(gobj: *mut Item_GObj) {
 
 /// `void it_802CA074(Item_GObj*)` (2CA074)
 pub unsafe extern "C" fn it_802CA074(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CA074");
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let ip = ip_of(gobj);
 
@@ -222,6 +232,7 @@ pub unsafe extern "C" fn it_802CA074(gobj: *mut Item_GObj) {
 /// `static inline void itKabigon_UnkMotion1_Anim_inline(Item_GObj*, Item*)`
 #[inline]
 pub unsafe fn itKabigon_UnkMotion1_Anim_inline(gobj: *mut Item_GObj, ip: *mut Item) {
+    melee_core::ct!("itKabigon_UnkMotion1_Anim_inline");
     if ext::it_80272C6C(gobj) == 0 {
         let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
         ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE as u32);
@@ -234,6 +245,7 @@ pub unsafe fn itKabigon_UnkMotion1_Anim_inline(gobj: *mut Item_GObj, ip: *mut It
 
 /// `bool itKabigon_UnkMotion1_Anim(Item_GObj*)` (2CA198)
 pub unsafe extern "C" fn itKabigon_UnkMotion1_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKabigon_UnkMotion1_Anim");
     let ip = (*gobj).user_data as *mut Item;
     if (*ip).xDAC_itcmd_var0 == 0 {
         if (*ip).xDD4_itemVar.kabigon.x6C <= 0 {
@@ -254,15 +266,17 @@ pub unsafe extern "C" fn itKabigon_UnkMotion1_Anim(gobj: *mut Item_GObj) -> i32 
 }
 
 /// `void itKabigon_UnkMotion1_Phys(Item_GObj*)` (2CA318)
-pub unsafe extern "C" fn itKabigon_UnkMotion1_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itKabigon_UnkMotion1_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itKabigon_UnkMotion1_Phys");}
 
 /// `bool itKabigon_UnkMotion1_Coll(Item_GObj*)` (2CA31C)
 pub unsafe extern "C" fn itKabigon_UnkMotion1_Coll(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKabigon_UnkMotion1_Coll");
     0
 }
 
 /// `void it_802CA324(Item_GObj*)` (2CA324): `Item_EnterAirStateWithHitlag(gobj, 2)`.
 pub unsafe extern "C" fn it_802CA324(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CA324");
     let item = ip_of(gobj);
     ext::it_802762BC(item);
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE as u32);
@@ -271,22 +285,26 @@ pub unsafe extern "C" fn it_802CA324(gobj: *mut Item_GObj) {
 
 /// `bool itKabigon_UnkMotion2_Anim(Item_GObj*)` (2CA388)
 pub unsafe extern "C" fn itKabigon_UnkMotion2_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKabigon_UnkMotion2_Anim");
     ext::it_80279FF8(gobj);
     0
 }
 
 /// `void itKabigon_UnkMotion2_Phys(Item_GObj*)` (2CA3AC)
 pub unsafe extern "C" fn itKabigon_UnkMotion2_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itKabigon_UnkMotion2_Phys");
     ext::it_8027A09C(gobj);
 }
 
 /// `bool itKabigon_UnkMotion2_Coll(Item_GObj*)` (2CA3CC)
 pub unsafe extern "C" fn itKabigon_UnkMotion2_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKabigon_UnkMotion2_Coll");
     ext::it_8027A118(gobj, Some(it_802C9E44))
 }
 
 /// `void it_802CA3F4(Item_GObj*)` (2CA3F4)
 pub unsafe extern "C" fn it_802CA3F4(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802CA3F4");
     let ip = ip_of(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itKabigonAttributes;
     let mut pos = (*ip).pos;

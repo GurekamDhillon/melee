@@ -111,11 +111,13 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 
 /// `ftCl_Init_80149114` as a Fighter callback entry (the shield-hit callback).
 pub unsafe extern "C" fn cb_ftCl_Init_80149114(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftCl_Init_80149114");
     ftCl_Init_80149114(g);
 }
 
 /// `Fighter_OnItemPickup(gobj, catch, bool2, bool3)` (ft/inlines.h).
 pub fn Fighter_OnItemPickup(gobj: *mut HSD_GObj, catch_item: i32, bool2: i32, bool3: i32) {
+    melee_core::ct!("Fighter_OnItemPickup");
     unsafe {
         let fp = fpp(gobj);
         if st::itIsHeavy((*fp).item_gobj) == 0 {
@@ -135,6 +137,7 @@ pub fn Fighter_OnItemPickup(gobj: *mut HSD_GObj, catch_item: i32, bool2: i32, bo
 
 /// `Fighter_OnItemDrop(gobj, drop, bool2, bool3)` (ft/inlines.h).
 pub fn Fighter_OnItemDrop(gobj: *mut HSD_GObj, drop_item: i32, bool2: i32, bool3: i32) {
+    melee_core::ct!("Fighter_OnItemDrop");
     melee_fighter::ftanim::ftanim_80070fb4(gobj, bool2, -1);
     if drop_item != 0 {
         st::ftAnim_80070CC4(gobj, bool3);
@@ -143,6 +146,7 @@ pub fn Fighter_OnItemDrop(gobj: *mut HSD_GObj, drop_item: i32, bool2: i32, bool3
 
 /// `checkFighter2244` (ftCLink/inlines.h): drop the held milk/item of the taunt.
 pub fn checkFighter2244(gobj: *mut HSD_GObj) {
+    melee_core::ct!("checkFighter2244");
     if gobj.is_null() {
         return;
     }
@@ -156,6 +160,7 @@ pub fn checkFighter2244(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCl_Init_OnLoad(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCl_Init_OnLoad");
     unsafe {
         let fp = fpp(gobj);
         let ftdata = (*fp).ft_data;
@@ -177,6 +182,7 @@ pub fn ftCl_Init_OnLoad(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCl_Init_OnItemPickupExt(gobj: *mut HSD_GObj, flag: i32) {
+    melee_core::ct!("ftCl_Init_OnItemPickupExt");
     unsafe {
         let fp = fpp(gobj);
         if st::itIsHeavy((*fp).item_gobj) == 1 {
@@ -188,6 +194,7 @@ pub fn ftCl_Init_OnItemPickupExt(gobj: *mut HSD_GObj, flag: i32) {
 }
 
 pub fn ftCl_Init_OnItemDropExt(gobj: *mut HSD_GObj, flag: i32) {
+    melee_core::ct!("ftCl_Init_OnItemDropExt");
     unsafe {
         let fp = fpp(gobj);
         if st::itIsHeavy((*fp).item_gobj) == 1 {
@@ -199,19 +206,23 @@ pub fn ftCl_Init_OnItemDropExt(gobj: *mut HSD_GObj, flag: i32) {
 }
 
 pub fn ftCl_Init_OnItemPickup(gobj: *mut HSD_GObj, flag: i32) {
+    melee_core::ct!("ftCl_Init_OnItemPickup");
     Fighter_OnItemPickup(gobj, flag, 1, 1);
 }
 
 pub fn ftCl_Init_OnItemDrop(gobj: *mut HSD_GObj, flag: i32) {
+    melee_core::ct!("ftCl_Init_OnItemDrop");
     Fighter_OnItemDrop(gobj, flag, 1, 1);
 }
 
 pub fn ftCl_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCl_Init_LoadSpecialAttrs");
     ext::ftLk_Init_LoadSpecialAttrs(gobj);
 }
 
 /// `ftCl_Init_80149114`: the shield-hit push-back (fighter-only body: [`shield_push`]).
 pub fn ftCl_Init_80149114(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCl_Init_80149114");
     unsafe {
         let fp = &mut *fpp(gobj);
         shield_push(fp);
@@ -221,6 +232,7 @@ pub fn ftCl_Init_80149114(gobj: *mut HSD_GObj) {
 
 /// Body of `ftCl_Init_80149114` up to its sound call.
 pub fn shield_push(fp: &mut Fighter) {
+    melee_core::ct!("shield_push");
     let ea = unsafe { &*((*fp.ft_data).ext_attr as *const ftLk_DatAttrs) };
     let mut ftmp = ext::ftCo_80092ED8(fp.x19A4, ea.xD8);
     fp.gr_vel = ftmp * fh::common_data().x294;
@@ -233,6 +245,7 @@ pub fn shield_push(fp: &mut Fighter) {
 }
 
 pub fn ftCl_Init_8014919C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCl_Init_8014919C");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).x5F4_arr[2].prev == 0 {
@@ -246,6 +259,7 @@ pub fn ftCl_Init_8014919C(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCl_Init_8014920C(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftCl_Init_8014920C");
     if gobj.is_null() {
         return true;
     }
@@ -266,10 +280,12 @@ pub fn ftCl_Init_8014920C(gobj: *mut HSD_GObj) -> bool {
 }
 
 pub fn ftCl_Init_80149268(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCl_Init_80149268");
     checkFighter2244(gobj);
 }
 
 pub fn ftCl_Init_801492C4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCl_Init_801492C4");
     if !gobj.is_null() {
         unsafe {
             let fp = fpp(gobj);
@@ -282,6 +298,7 @@ pub fn ftCl_Init_801492C4(gobj: *mut HSD_GObj) {
 
 /// C `bool` (int) return of the u32 `cmd_vars[1]`, unnormalised.
 pub fn ftCl_Init_801492F4(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("ftCl_Init_801492F4");
     if !gobj.is_null() {
         unsafe {
             let fp = fpp(gobj);
@@ -294,6 +311,7 @@ pub fn ftCl_Init_801492F4(gobj: *mut HSD_GObj) -> i32 {
 }
 
 pub fn ftCl_Init_80149318(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCl_Init_80149318");
     unsafe {
         let fp = fpp(gobj);
         ext::ftCo_800DEAE8(gobj, 342, 343);

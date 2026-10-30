@@ -52,6 +52,7 @@ unsafe fn mtx_at(p: MP) -> M34 {
 
 /// `ftParts_JObjMakePositionMtx(jobj, mtx, rmtx)`.
 pub unsafe extern "C" fn ftParts_JObjMakePositionMtx(jobj: *mut HSD_JObj, mtx: MP, rmtx: MP) {
+    melee_core::ct!("ftParts_JObjMakePositionMtx");
     let fighter = (*gx::HSD_GObj_804D7814).user_data as *mut Fighter;
     (melee_runtime::tu::jobj::hsdJObj.make_pmtx.unwrap())(jobj, mtx, rmtx);
     if (*fighter).x34_scale.z != 1.0 {
@@ -70,6 +71,7 @@ pub unsafe extern "C" fn ftParts_JObjMakePositionMtx(jobj: *mut HSD_JObj, mtx: M
 }
 
 pub unsafe extern "C" fn ftParts_JObjInfoInit() {
+    melee_core::ct!("ftParts_JObjInfoInit");
     melee_runtime::tu::class::hsdInitClassInfo(
         (&raw mut ftJObj).cast(),
         (&raw mut melee_runtime::tu::jobj::hsdJObj).cast(),
@@ -83,10 +85,12 @@ pub unsafe extern "C" fn ftParts_JObjInfoInit() {
 
 /// `ftParts_80073758(jobj)`: make `jobj` a fighter JObj.
 pub unsafe fn ftParts_80073758(jobj: *mut HSD_JObj) {
+    melee_core::ct!("ftParts_80073758");
     melee_runtime::tu::class::hsdChangeClass(jobj.cast(), (&raw mut ftJObj).cast());
 }
 
 pub unsafe extern "C" fn ftParts_IntpJObjLoad(jobj: *mut HSD_JObj, joint: *mut HSD_Joint, parent: *mut HSD_JObj) -> i32 {
+    melee_core::ct!("ftParts_IntpJObjLoad");
     let dobjdesc = (*joint).u.dobjdesc;
     (*joint).u.dobjdesc = null_mut();
     let ret = (melee_runtime::tu::jobj::hsdJObj.load.unwrap())(jobj, joint, parent);
@@ -95,6 +99,7 @@ pub unsafe extern "C" fn ftParts_IntpJObjLoad(jobj: *mut HSD_JObj, joint: *mut H
 }
 
 pub unsafe extern "C" fn ftParts_IntpJObjInfoInit() {
+    melee_core::ct!("ftParts_IntpJObjInfoInit");
     melee_runtime::tu::class::hsdInitClassInfo(
         (&raw mut ftIntpJObj).cast(),
         (&raw mut melee_runtime::tu::jobj::hsdJObj).cast(),
@@ -158,6 +163,7 @@ unsafe fn ftPartsSetupTexMtx(mut mtx: M34, id: u32) {
 }
 
 pub unsafe extern "C" fn ftPartsSetupRigidMtx(_pobj: *mut HSD_PObj, _vmtx: MP, pmtx: MP, rendermode: u32) {
+    melee_core::ct!("ftPartsSetupRigidMtx");
     let jobj = gx::HSD_JObjGetCurrent();
     let mut mark_jobj: *mut c_void = null_mut();
     let mut mark: u32 = 0;
@@ -179,6 +185,7 @@ pub unsafe extern "C" fn ftPartsSetupRigidMtx(_pobj: *mut HSD_PObj, _vmtx: MP, p
 }
 
 pub unsafe extern "C" fn ftPartsSetupSharedVtxMtx(pobj: *mut HSD_PObj, vmtx: MP, pmtx: MP, rendermode: u32) {
+    melee_core::ct!("ftPartsSetupSharedVtxMtx");
     let mut flags = 0u32;
     let jobj = gx::HSD_JObjGetCurrent();
     let mut mark_jobj: *mut c_void = null_mut();
@@ -225,6 +232,7 @@ pub unsafe extern "C" fn ftPartsSetupSharedVtxMtx(pobj: *mut HSD_PObj, vmtx: MP,
 }
 
 pub unsafe extern "C" fn ftPartsSetupEnvelopeMtx(pobj: *mut HSD_PObj, vmtx: MP, _pmtx: MP, rendermode: u32) {
+    melee_core::ct!("ftPartsSetupEnvelopeMtx");
     let jobj = gx::HSD_JObjGetCurrent();
     melee_runtime::tu::pobj::HSD_PObjClearMtxMark(null_mut(), HSD_MTX_ENVELOPE);
     let flags = ftPartsGetSetupFlags(jobj, rendermode);
@@ -277,6 +285,7 @@ pub unsafe extern "C" fn ftPartsSetupEnvelopeMtx(pobj: *mut HSD_PObj, vmtx: MP, 
 }
 
 pub unsafe extern "C" fn ftParts_PObjSetupMtx(pobj: *mut HSD_PObj, vmtx: MP, pmtx: MP, rendermode: u32) {
+    melee_core::ct!("ftParts_PObjSetupMtx");
     if !ft_jobj_scale.has_z_scale {
         let m = melee_runtime::tu::pobj::hsdPObj.setup_mtx.unwrap();
         m(pobj, vmtx, pmtx, rendermode);
@@ -298,6 +307,7 @@ pub unsafe extern "C" fn ftParts_PObjSetupMtx(pobj: *mut HSD_PObj, vmtx: MP, pmt
 }
 
 pub unsafe extern "C" fn ftParts_PObjInfoInit() {
+    melee_core::ct!("ftParts_PObjInfoInit");
     melee_runtime::tu::class::hsdInitClassInfo(
         (&raw mut ftPObj).cast(),
         (&raw mut melee_runtime::tu::pobj::hsdPObj).cast(),
@@ -311,10 +321,12 @@ pub unsafe extern "C" fn ftParts_PObjInfoInit() {
 }
 
 pub unsafe fn ftPartsPObjSetDefaultClass() {
+    melee_core::ct!("ftPartsPObjSetDefaultClass");
     melee_runtime::tu::pobj::HSD_PObjSetDefaultClass(&raw mut ftPObj);
 }
 
 pub unsafe fn ftPartsPObjClearDefaultClass() {
+    melee_core::ct!("ftPartsPObjClearDefaultClass");
     melee_runtime::tu::pobj::HSD_PObjSetDefaultClass(null_mut());
 }
 
@@ -339,6 +351,7 @@ pub mod ext {
 
 /// `ftParts_8007482C(joint)`: load a joint with the interpolation JObj class as the default.
 pub unsafe fn ftParts_8007482C(joint: *mut HSD_Joint) -> *mut HSD_JObj {
+    melee_core::ct!("ftParts_8007482C");
     ext::HSD_JObjSetDefaultClass((&raw mut ftIntpJObj).cast());
     let jobj = ext::HSD_JObjLoadJoint(joint);
     ext::HSD_JObjSetDefaultClass(null_mut());
@@ -349,6 +362,7 @@ pub unsafe fn ftParts_8007482C(joint: *mut HSD_Joint) -> *mut HSD_JObj {
 /// 0 child of root, taking root's children; 1 child alongside root's children; 2 sibling taking
 /// root's siblings as children; 3 sibling alongside root's siblings.
 pub unsafe fn ftParts_80075304(ty: u8, root: *mut HSD_JObj, new_jobj: *mut HSD_JObj) {
+    melee_core::ct!("ftParts_80075304");
     match ty {
         0 => {
             let child = if root.is_null() { null_mut() } else { (*root).child };
@@ -384,6 +398,7 @@ pub unsafe fn ftParts_80075304(ty: u8, root: *mut HSD_JObj, new_jobj: *mut HSD_J
 /// `ftParts_80074194(fighter, bone, jobj, &dobj_index, tree_depth)`: register a bone's JObj and
 /// its DObjs in the fighter's DObj list.
 pub unsafe fn ftParts_80074194(fighter: *mut Fighter, bone: *mut FighterBone, jobj: *mut HSD_JObj, dobj_index: *mut i32, tree_depth: u32) {
+    melee_core::ct!("ftParts_80074194");
     let mut dobj = melee_runtime::tu::jobj_ptr::HSD_JObjGetDObj(jobj);
     let jobj_flags = (*jobj).flags;
     let mut dobj_count = 0;
@@ -422,6 +437,7 @@ pub unsafe fn ftParts_80074194(fighter: *mut Fighter, bone: *mut FighterBone, jo
 
 /// `ftParts_8007487C(desc, vis, costume_id, arg3, arg4)`: set up a part-visibility table.
 pub unsafe fn ftParts_8007487C(desc: *mut FtPartsDesc, vis: *mut FtPartsVis, costume_id: u32, arg3: *mut DObjList, arg4: *mut DObjList) {
+    melee_core::ct!("ftParts_8007487C");
     let vis_table = (*desc).vis_table as *mut [*mut c_void; 4];
     (*vis).model_num = (*desc).model_num;
     if (*vis).model_num > 11 {
@@ -447,6 +463,7 @@ pub unsafe fn ftParts_8007487C(desc: *mut FtPartsDesc, vis: *mut FtPartsVis, cos
 
 /// `ftParts_800753D4(fp, desc, joint)`: replace a bone's model with a copy of a joint of `joint`'s tree.
 pub unsafe fn ftParts_800753D4(fp: *mut Fighter, arg1: *mut Fighter_804D6540_x0_t, arg2: *mut HSD_Joint) {
+    melee_core::ct!("ftParts_800753D4");
     let mut sp6c = arg2;
     if (*arg1).x3 != 0xFF {
         let mut depth = 0i32;
@@ -475,6 +492,7 @@ pub unsafe fn ftParts_800753D4(fp: *mut Fighter, arg1: *mut Fighter_804D6540_x0_
 
 /// `ftParts_800755E8(fp, desc)`: remove a bone's model.
 pub unsafe fn ftParts_800755E8(fp: *mut Fighter, arg1: *mut Fighter_804D6540_x0_t) {
+    melee_core::ct!("ftParts_800755E8");
     let bone = (*fp).parts.add((*arg1).x0 as usize);
     melee_runtime::tu::jobj::HSD_JObjRemove_ptr((*bone).joint);
     melee_runtime::tu::jobj::HSD_JObjRemove_ptr((*bone).x4_jobj2);
@@ -489,6 +507,7 @@ pub unsafe fn ftParts_800755E8(fp: *mut Fighter, arg1: *mut Fighter_804D6540_x0_
 /// `ftParts_80075650(gobj, jobj, list)`: collect every DObj of a JObj tree into `list` (making
 /// their MObjs fighter MObjs).
 pub unsafe fn ftParts_80075650(_gobj: *mut HSD_GObj, mut jobj: *mut HSD_JObj, arg2: *mut DObjList) {
+    melee_core::ct!("ftParts_80075650");
     let mut var_r30 = 0usize;
     while !jobj.is_null() {
         let mut dobj = melee_runtime::tu::jobj_ptr::HSD_JObjGetDObj(jobj);

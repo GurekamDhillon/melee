@@ -93,6 +93,7 @@ const fn elem(x8: unsafe extern "C" fn(*mut HSD_GObj), xc: u32, x10: u8) -> Elem
 }
 
 pub unsafe extern "C" fn ifStatus_802F6EA4(arg0: i32, arg1: i32, arg2: i32, arg3: i32, arg4: Event, arg5: Event) {
+    melee_core::ct!("ifStatus_802F6EA4");
     if arg0 == 8 {
         if arg4.is_some() {
             (core::mem::transmute::<Event, IfStatusCb>(arg4).unwrap())(-1);
@@ -136,6 +137,7 @@ pub unsafe extern "C" fn ifStatus_802F6EA4(arg0: i32, arg1: i32, arg2: i32, arg3
 }
 
 pub unsafe extern "C" fn ifStatus_802F7034(arg0: *mut c_void) {
+    melee_core::ct!("ifStatus_802F7034");
     let big_thing = ext::gmVs_GetSceneController();
     let a: i32 = if (*big_thing).state.unk_10 != 0 { (*big_thing).state.unk_10 - 1 } else { -1 };
     let b: i32 = if (*big_thing).state.unk_14 != 0 { (*big_thing).state.unk_14 - 1 } else { -1 };
@@ -164,6 +166,7 @@ pub unsafe extern "C" fn ifStatus_802F7034(arg0: *mut c_void) {
 }
 
 pub unsafe extern "C" fn ifStatus_802F7134() {
+    melee_core::ct!("ifStatus_802F7134");
     for i in 0..8usize {
         ifStatus_803F9628[i].x0 = null_mut();
         ifStatus_803F9628[i].x4 = 0;
@@ -185,6 +188,7 @@ pub unsafe extern "C" fn ifStatus_802F7134() {
 
 /// free
 pub unsafe extern "C" fn ifStatus_802F7220() {
+    melee_core::ct!("ifStatus_802F7220");
     for i in 0..8usize {
         if !ifStatus_803F9628[i].x0.is_null() {
             ext::HSD_GObjFree(ifStatus_803F9628[i].x0);

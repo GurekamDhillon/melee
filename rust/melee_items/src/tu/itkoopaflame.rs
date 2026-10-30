@@ -198,6 +198,7 @@ pub static mut ItemStateTable_KoopaFlame: [ItemStateTable; 1] = [ItemStateTable 
 }];
 
 pub unsafe extern "C" fn itKoopaFlame_Update_Direction(gobj: *mut Item_GObj, flags: i32) {
+    melee_core::ct!("itKoopaFlame_Update_Direction");
     let it = get_item(gobj);
     let mut vec: Vec = (*it).xDD4_itemVar.koopaflame.xC_direction;
     Item_ClampAngle(&mut (*it).xDD4_itemVar.koopaflame.x24_angle);
@@ -222,6 +223,7 @@ pub unsafe extern "C" fn itKoopaFlame_Update_Direction(gobj: *mut Item_GObj, fla
 }
 
 pub unsafe extern "C" fn itKoopaFlame_Update_Angle(gobj: *mut Item_GObj, flags: i32) {
+    melee_core::ct!("itKoopaFlame_Update_Angle");
     let it = get_item(gobj);
     if flags != 0 {
         let a = ext::atan2f((*it).xDD4_itemVar.koopaflame.x18_vel.x, (*it).xDD4_itemVar.koopaflame.x18_vel.y);
@@ -256,6 +258,7 @@ pub unsafe extern "C" fn itKoopaFlame_Spawn(
     scale: i32,
     kind: i32,
 ) -> *mut Item_GObj {
+    melee_core::ct!("itKoopaFlame_Spawn");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
     spawn.kind = kind as _;
@@ -316,6 +319,7 @@ pub unsafe extern "C" fn itKoopaFlame_Spawn(
 }
 
 pub unsafe extern "C" fn itKoopaFlame_Setup(gobj_i: *mut Item_GObj, gobj_f: *mut Fighter_GObj, _unk: i32) {
+    melee_core::ct!("itKoopaFlame_Setup");
     let it = get_item(gobj_i);
     Item_ClearFlagsAndEnterState(gobj_i, it, 0);
     let vec = (*it).pos;
@@ -329,6 +333,7 @@ pub unsafe extern "C" fn itKoopaFlame_Setup(gobj_i: *mut Item_GObj, gobj_f: *mut
 }
 
 pub unsafe extern "C" fn itKoopaFlame_UnkMotion0_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKoopaFlame_UnkMotion0_Anim");
     let it = get_item(gobj);
     let attrs = (*(*it).xC4_article_data).x4_specialAttributes as *mut itKoopaFlame_Attributes;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -363,6 +368,7 @@ pub unsafe extern "C" fn itKoopaFlame_UnkMotion0_Anim(gobj: *mut Item_GObj) -> i
 }
 
 pub unsafe extern "C" fn itKoopaFlame_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itKoopaFlame_UnkMotion0_Phys");
     let it = get_item(gobj);
     (*it).xDD4_itemVar.koopaflame.x0_pos = (*it).pos;
     let vx = (*it).xDD4_itemVar.koopaflame.x28_speed * melee_runtime::gekko::sinf((*it).xDD4_itemVar.koopaflame.x24_angle);
@@ -377,6 +383,7 @@ pub unsafe extern "C" fn itKoopaFlame_UnkMotion0_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itKoopaFlame_UnkMotion0_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKoopaFlame_UnkMotion0_Coll");
     let it = get_item(gobj);
     Item_ClampAngle(&mut (*it).xDD4_itemVar.koopaflame.x24_angle);
     (*it).x378_itemColl.ecb_source.anon_4.anon_0_0.up = 3.0;
@@ -406,10 +413,12 @@ pub unsafe extern "C" fn itKoopaFlame_UnkMotion0_Coll(gobj: *mut Item_GObj) -> i
 }
 
 pub unsafe extern "C" fn itKoopaFlame_Logic111_DmgDealt(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKoopaFlame_Logic111_DmgDealt");
     0
 }
 
 pub unsafe extern "C" fn itKoopaFlame_Logic111_Reflected(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKoopaFlame_Logic111_Reflected");
     let it = get_item(gobj);
     (*it).xDD4_itemVar.koopaflame.x24_angle = ((*it).xDD4_itemVar.koopaflame.x24_angle as f64 + M_PI) as f32;
     Item_ClampAngle(&mut (*it).xDD4_itemVar.koopaflame.x24_angle);
@@ -420,15 +429,18 @@ pub unsafe extern "C" fn itKoopaFlame_Logic111_Reflected(gobj: *mut Item_GObj) -
 }
 
 pub unsafe extern "C" fn itKoopaFlame_Logic111_Clanked(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKoopaFlame_Logic111_Clanked");
     0
 }
 
 pub unsafe extern "C" fn itKoopaFlame_Logic111_Absorbed(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKoopaFlame_Logic111_Absorbed");
     ext::efLib_DestroyAll(gobj);
     1
 }
 
 pub unsafe extern "C" fn itKoopaFlame_Logic111_ShieldBounced(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKoopaFlame_Logic111_ShieldBounced");
     let it = get_item(gobj);
     ext::lbVector_Mirror(&mut (*it).x40_vel, &mut (*it).xC58);
     (*it).x40_vel.z = 0.0;
@@ -438,9 +450,11 @@ pub unsafe extern "C" fn itKoopaFlame_Logic111_ShieldBounced(gobj: *mut Item_GOb
 }
 
 pub unsafe extern "C" fn itKoopaFlame_Logic111_HitShield(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itKoopaFlame_Logic111_HitShield");
     0
 }
 
 pub unsafe extern "C" fn itKoopaFlame_Logic111_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("itKoopaFlame_Logic111_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

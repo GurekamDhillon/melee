@@ -146,11 +146,13 @@ unsafe fn get_mncount(g: *mut HSD_GObj) -> *mut MnCountData {
 
 /// `static inline inline_is_row_time`.
 pub fn inline_is_row_time(row: i32) -> bool {
+    melee_core::ct!("inline_is_row_time");
     matches!(row as u32, POWER_TIME | PLAY_TIME | SINGLEPLAYER_TIME | VS_PLAY_TIME | COMBINED_VS_PLAY_TIME)
 }
 
 /// `static inline inline_is_row_char`.
 pub fn inline_is_row_char(row: i32) -> bool {
+    melee_core::ct!("inline_is_row_char");
     matches!(
         row as u32,
         LONGEST_TIME | SECOND_LONGEST_TIME | SHORTEST_TIME | SMASH_CHAMP | SMASH_SAP | SLUG_MEISTER | PUNCHING_BAG | KO_KINGPIN
@@ -160,6 +162,7 @@ pub fn inline_is_row_char(row: i32) -> bool {
 
 /// `static inline inline_update_entries`.
 pub unsafe fn inline_update_entries(gobj: *mut HSD_GObj) {
+    melee_core::ct!("inline_update_entries");
     let userdata = get_mncount(gobj);
     for i in 0..MNCOUNT_VISIBLE_ROWS as i32 {
         mnCount_CreateRow(gobj, i, (*userdata).scroll_pos as u32 + i as u32);
@@ -167,6 +170,7 @@ pub unsafe fn inline_update_entries(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe fn mnCount_8025035C_inline() -> bool {
+    melee_core::ct!("mnCount_8025035C_inline");
     for i in 0..SELKIND_COUNT {
         if (*ext::GetPersistentFighterData(i)).stats.play_time != 0 {
             return false;
@@ -176,18 +180,22 @@ pub unsafe fn mnCount_8025035C_inline() -> bool {
 }
 
 pub unsafe extern "C" fn mnCount_GetMatchTime(selkind: SelectableCharacterKind) -> u32 {
+    melee_core::ct!("mnCount_GetMatchTime");
     (*ext::GetPersistentFighterData(selkind)).stats.play_time
 }
 
 pub unsafe extern "C" fn mnCount_GetKOKingpin(selkind: SelectableCharacterKind) -> u32 {
+    melee_core::ct!("mnCount_GetKOKingpin");
     ext::mnDiagram_GetFighterTotalKOs(selkind as u8) as u32
 }
 
 pub unsafe extern "C" fn mnCount_GetNoDefenseNelly(selkind: SelectableCharacterKind) -> u32 {
+    melee_core::ct!("mnCount_GetNoDefenseNelly");
     ext::mnDiagram_GetFighterTotalFalls(selkind as u8) as u32
 }
 
 pub unsafe extern "C" fn mnCount_GetDisasterMaster(selkind: SelectableCharacterKind) -> u32 {
+    melee_core::ct!("mnCount_GetDisasterMaster");
     (*ext::GetPersistentFighterData(selkind)).stats.sd_count as u32
 }
 
@@ -195,6 +203,7 @@ pub type GetVal = Option<unsafe extern "C" fn(SelectableCharacterKind) -> u32>;
 
 /// 25035C
 pub unsafe extern "C" fn mnCount_8025035C(mut skip_count: i32, get_val_func: GetVal) -> i32 {
+    melee_core::ct!("mnCount_8025035C");
     let f = get_val_func.unwrap();
     let n = SELKIND_COUNT as i32;
     let mut sp18 = [CountEntry { selkind: 0, pad: [0; 3], stat_value: 0 }; SELKIND_COUNT as usize];
@@ -270,23 +279,28 @@ pub unsafe extern "C" fn mnCount_8025035C(mut skip_count: i32, get_val_func: Get
 }
 
 pub unsafe extern "C" fn mnCount_GetSmashChamp(selkind: SelectableCharacterKind) -> u32 {
+    melee_core::ct!("mnCount_GetSmashChamp");
     (*ext::GetPersistentFighterData(selkind)).stats.victories as u32
 }
 
 pub unsafe extern "C" fn mnCount_GetSmashSap(selkind: SelectableCharacterKind) -> u32 {
+    melee_core::ct!("mnCount_GetSmashSap");
     (*ext::GetPersistentFighterData(selkind)).stats.losses as u32
 }
 
 pub unsafe extern "C" fn mnCount_GetSlugMeister(selkind: SelectableCharacterKind) -> u32 {
+    melee_core::ct!("mnCount_GetSlugMeister");
     (*ext::GetPersistentFighterData(selkind)).stats.damage_dealt as u32
 }
 
 pub unsafe extern "C" fn mnCount_GetPunchingBag(selkind: SelectableCharacterKind) -> u32 {
+    melee_core::ct!("mnCount_GetPunchingBag");
     (*ext::GetPersistentFighterData(selkind)).stats.damage_taken as u32
 }
 
 /// 25072C: break a tie between `entries[start_idx..]` by KOs, then falls.
 pub unsafe extern "C" fn mnCount_8025072C(entries: *mut CountEntry, start_idx: i32, mode: i32) -> i32 {
+    melee_core::ct!("mnCount_8025072C");
     let e = |i: i32| -> CountEntry { *entries.offset(i as isize) };
     let kos = |i: i32| -> u32 { mnCount_GetKOKingpin(e(i).selkind as u32) };
     let falls = |i: i32| -> u32 { mnCount_GetNoDefenseNelly(e(i).selkind as u32) };
@@ -342,6 +356,7 @@ pub unsafe extern "C" fn mnCount_8025072C(entries: *mut CountEntry, start_idx: i
 }
 
 pub unsafe fn mnCount_8025092C_inline(_i: i32) -> bool {
+    melee_core::ct!("mnCount_8025092C_inline");
     for i in 0..SELKIND_COUNT {
         if mnCount_GetMatchTime(i) != 0 {
             return false;
@@ -352,6 +367,7 @@ pub unsafe fn mnCount_8025092C_inline(_i: i32) -> bool {
 
 /// 25092C
 pub unsafe extern "C" fn mnCount_8025092C(mut rank: i32, get_val: GetVal, mode: i32) -> i32 {
+    melee_core::ct!("mnCount_8025092C");
     let f = get_val.unwrap();
     let n = SELKIND_COUNT as i32;
     let mut entries = [CountEntry { selkind: 0, pad: [0; 3], stat_value: 0 }; SELKIND_COUNT as usize];
@@ -429,6 +445,7 @@ pub unsafe extern "C" fn mnCount_8025092C(mut rank: i32, get_val: GetVal, mode: 
 }
 
 pub unsafe fn mnCount_CountUnlockedChars() -> i32 {
+    melee_core::ct!("mnCount_CountUnlockedChars");
     let mut c = 0;
     for i in 0..SELKIND_COUNT {
         if ext::gm_IsCKindUnlocked(ext::gm_SelKindToCKind(i as u8)) != 0 {
@@ -439,6 +456,7 @@ pub unsafe fn mnCount_CountUnlockedChars() -> i32 {
 }
 
 pub unsafe fn mnCount_CountUnlockedMaps() -> i32 {
+    melee_core::ct!("mnCount_CountUnlockedMaps");
     let mut c = 0;
     for i in 0..NUM_STAGES {
         if ext::gm_80164430(ext::gm_801641CC(i as u8)) != 0 {
@@ -450,6 +468,7 @@ pub unsafe fn mnCount_CountUnlockedMaps() -> i32 {
 
 /// 250C7C
 pub unsafe extern "C" fn mnCount_GetRowValue_Character(row: u32) -> SelectableCharacterKind {
+    melee_core::ct!("mnCount_GetRowValue_Character");
     match row {
         LONGEST_TIME => mnCount_8025035C(0, Some(mnCount_GetMatchTime)) as u32,
         SECOND_LONGEST_TIME => mnCount_8025035C(1, Some(mnCount_GetMatchTime)) as u32,
@@ -472,11 +491,13 @@ pub unsafe extern "C" fn mnCount_GetRowValue_Character(row: u32) -> SelectableCh
 }
 
 pub unsafe fn mnCount_GetCombinedVSPlayTimeValue() -> u32 {
+    melee_core::ct!("mnCount_GetCombinedVSPlayTimeValue");
     *(ext::gmMainLib_GetCombinedVSPlayTime() as *mut u32)
 }
 
 /// 250DE4
 pub unsafe extern "C" fn mnCount_GetRowValue_Number(row: i32) -> u32 {
+    melee_core::ct!("mnCount_GetRowValue_Number");
     let mut ret: u32;
     match row as u32 {
         POWER_COUNT => ret = *(ext::gmMainLib_GetPowerCount() as *mut u32),
@@ -519,6 +540,7 @@ pub unsafe extern "C" fn mnCount_GetRowValue_Number(row: i32) -> u32 {
 
 /// 250FF8: (re)build one visible row's label and value texts.
 pub unsafe extern "C" fn mnCount_CreateRow(gobj: *mut HSD_GObj, visible_row: i32, data_row: u32) {
+    melee_core::ct!("mnCount_CreateRow");
     let userdata = get_mncount(gobj);
     let label_text = addr_of_mut!((*userdata).labels[visible_row as usize]);
     if !(*label_text).is_null() {
@@ -572,6 +594,7 @@ pub unsafe extern "C" fn mnCount_CreateRow(gobj: *mut HSD_GObj, visible_row: i32
 
 /// 251278: the input proc.
 pub unsafe extern "C" fn mnCount_HandleUserInput(_gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnCount_HandleUserInput");
     let userdata = get_mncount(menu_gobj);
     if mn_804D6BC8.cooldown != 0 {
         mn_804D6BC8.cooldown = mn_804D6BC8.cooldown.wrapping_sub(1);
@@ -619,21 +642,25 @@ unsafe fn update_arrows(userdata: *mut MnCountData, jobj: *mut HSD_JObj) {
 
 /// 2513F4
 pub unsafe extern "C" fn mnCount_UpdateArrowIndicators(gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnCount_UpdateArrowIndicators");
     let userdata = get_mncount(gobj);
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     update_arrows(userdata, jobj);
 }
 
 pub unsafe fn mnCount_UpdateArrowIndicators_noinline(gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnCount_UpdateArrowIndicators_noinline");
     mnCount_UpdateArrowIndicators(gobj);
 }
 
 /// 2514B8
 pub unsafe extern "C" fn fn_802514B8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_802514B8");
     ext::HSD_GObjFree(gobj);
 }
 
 pub unsafe fn fn_802514D8_inline(userdata: *mut MnCountData, gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_802514D8_inline");
     if mn_804A04F0.cur_menu as u32 != MENU_KIND_RECORDS_MISC {
         ext::HSD_GObjProc_RemoveProc(HSD_GObj_CurrentInvokedProc);
         let proc = ext::HSD_GObj_SetupProc(gobj, Some(fn_802514B8), 0);
@@ -659,11 +686,13 @@ pub unsafe fn fn_802514D8_inline(userdata: *mut MnCountData, gobj: *mut HSD_GObj
 
 /// 2514D8
 pub unsafe extern "C" fn fn_802514D8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_802514D8");
     let userdata = get_mncount(gobj);
     fn_802514D8_inline(userdata, gobj);
 }
 
 pub unsafe fn fn_80251640_FreeText(gobj: *mut HSD_GObj, userdata: *mut MnCountData, mut i: i32) {
+    melee_core::ct!("fn_80251640_FreeText");
     let userdata2 = get_mncount(gobj);
     let userdata3 = userdata2;
     loop {
@@ -684,6 +713,7 @@ pub unsafe fn fn_80251640_FreeText(gobj: *mut HSD_GObj, userdata: *mut MnCountDa
 }
 
 pub unsafe fn fn_80251640_InitModel(gobj: *mut HSD_GObj, userdata: *mut MnCountData, mut i: i32) {
+    melee_core::ct!("fn_80251640_InitModel");
     while i < MNCOUNT_VISIBLE_ROWS as i32 {
         mnCount_CreateRow(gobj, i, (*userdata).scroll_pos as u32 + i as u32);
         i += 1;
@@ -698,6 +728,7 @@ pub unsafe fn fn_80251640_InitModel(gobj: *mut HSD_GObj, userdata: *mut MnCountD
 
 /// 251640
 pub unsafe extern "C" fn fn_80251640(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80251640");
     let userdata = get_mncount(gobj);
     if mn_804A04F0.cur_menu as u32 != MENU_KIND_RECORDS_MISC {
         ext::HSD_GObjProc_RemoveProc(HSD_GObj_CurrentInvokedProc);
@@ -719,6 +750,7 @@ pub unsafe extern "C" fn fn_80251640(gobj: *mut HSD_GObj) {
 
 /// 2517E0
 pub unsafe extern "C" fn mnCount_InitUserData(userdata: *mut MnCountData) {
+    melee_core::ct!("mnCount_InitUserData");
     (*userdata).scroll_pos = 0;
     (*userdata).expand_anim_duration = 10;
     for i in 0..MNCOUNT_VISIBLE_ROWS {
@@ -728,10 +760,12 @@ pub unsafe extern "C" fn mnCount_InitUserData(userdata: *mut MnCountData) {
 }
 
 pub unsafe fn mnCount_InitUserData_noinline(userdata: *mut MnCountData) {
+    melee_core::ct!("mnCount_InitUserData_noinline");
     mnCount_InitUserData(userdata);
 }
 
 pub unsafe fn mnCount_AllocUserData() -> *mut MnCountData {
+    melee_core::ct!("mnCount_AllocUserData");
     let user_data = ext::HSD_MemAlloc(core::mem::size_of::<MnCountData>() as i32) as *mut MnCountData;
     if user_data.is_null() {
         ext::OSReport(c"Can't get user_data.\n".as_ptr(), &[]);
@@ -742,6 +776,7 @@ pub unsafe fn mnCount_AllocUserData() -> *mut MnCountData {
 
 /// 25186C
 pub unsafe extern "C" fn mnCount_Create() {
+    melee_core::ct!("mnCount_Create");
     mn_804D6BC8.cooldown = 5;
     mn_804A04F0.prev_menu = mn_804A04F0.cur_menu;
     mn_804A04F0.cur_menu = MENU_KIND_RECORDS_MISC as u8;

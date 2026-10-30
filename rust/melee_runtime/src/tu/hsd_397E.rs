@@ -21,6 +21,7 @@ pub mod ext {
 
 /// `baselib_mfspr`: the non-MWERKS build has only the `default:` arm.
 pub fn baselib_mfspr<H: Hsd397EHost + ?Sized>(h: &mut H, spr: i32) -> i32 {
+    melee_core::ct!("baselib_mfspr");
     h.OSReport(&format!("unsupported no. of special purpose register ({}).", spr));
     0
 }

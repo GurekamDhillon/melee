@@ -21,11 +21,13 @@ fn cd() -> &'static ftCommonData {
 /// GC `fp + 0x2340` as f32 (`mv` word 0).
 #[inline(always)]
 pub(crate) fn mv_f32<'a>(f: &'a mut Fighter, word: usize) -> &'a mut f32 {
+    melee_core::ct!("mv_f32");
     unsafe { &mut *((&mut f.mv as *mut Fighter_MotionVars as *mut f32).add(word)) }
 }
 /// GC `fp + 0x2340 + 4*word` as s32.
 #[inline(always)]
 pub(crate) fn mv_i32<'a>(f: &'a mut Fighter, word: usize) -> &'a mut i32 {
+    melee_core::ct!("mv_i32");
     unsafe { &mut *((&mut f.mv as *mut Fighter_MotionVars as *mut i32).add(word)) }
 }
 
@@ -70,10 +72,12 @@ pub mod ext {
 }
 
 pub unsafe extern "C" fn fn_800D7938_c(g: G) {
+    melee_core::ct!("fn_800D7938_c");
     fn_800D7938(g)
 }
 
 pub fn fn_800D769C(f: &Fighter, msid: i32) -> i32 {
+    melee_core::ct!("fn_800D769C");
     if f.motion_id >= ftCo_MS_ItemScopeStartEmpty as i32 {
         return msid + 8;
     }
@@ -95,14 +99,17 @@ fn start_common(g: G, full: i32, empty: i32, air: bool) {
 }
 
 pub fn ft_800D76B8(g: G) {
+    melee_core::ct!("ft_800D76B8");
     start_common(g, ftCo_MS_ItemScopeStart as i32, ftCo_MS_ItemScopeStartEmpty as i32, false);
 }
 
 pub fn ft_800D7770(g: G) {
+    melee_core::ct!("ft_800D7770");
     start_common(g, ftCo_MS_ItemScopeAirStart as i32, ftCo_MS_ItemScopeAirStartEmpty as i32, true);
 }
 
 pub fn fn_800D7830(g: G) {
+    melee_core::ct!("fn_800D7830");
     ext::ftCommon_8007D7FC(fp(g));
     let f = fp(g);
     let msid = if f.motion_id >= ftCo_MS_ItemScopeStartEmpty as i32 { ftCo_MS_ItemScopeStartEmpty } else { ftCo_MS_ItemScopeStart };
@@ -111,6 +118,7 @@ pub fn fn_800D7830(g: G) {
 }
 
 pub fn fn_800D78B0(g: G) {
+    melee_core::ct!("fn_800D78B0");
     ext::ftCommon_8007D5D4(fp(g));
     let f = fp(g);
     let msid = if f.motion_id >= ftCo_MS_ItemScopeStartEmpty as i32 { ftCo_MS_ItemScopeAirStartEmpty } else { ftCo_MS_ItemScopeAirStart };
@@ -120,6 +128,7 @@ pub fn fn_800D78B0(g: G) {
 }
 
 pub fn fn_800D7938(g: G) {
+    melee_core::ct!("fn_800D7938");
     let f = fp(g);
     if !f.item_gobj.is_null() {
         let n = melee_runtime::cabi::f2i32(*mv_f32(f, 0) as f64);
@@ -131,11 +140,12 @@ pub fn fn_800D7938(g: G) {
     }
 }
 
-pub fn ftCo_ItemScopeStart_Anim(_g: G) {}
+pub fn ftCo_ItemScopeStart_Anim(_g: G) { melee_core::ct!("ftCo_ItemScopeStart_Anim");}
 
-pub fn ftCo_ItemScopeAirStart_Anim(_g: G) {}
+pub fn ftCo_ItemScopeAirStart_Anim(_g: G) { melee_core::ct!("ftCo_ItemScopeAirStart_Anim");}
 
 pub fn fn_800D79B4(g: G, cb_ground: fn(G), cb_air: fn(G, i32)) {
+    melee_core::ct!("fn_800D79B4");
     let f = fp(g);
     if f.item_gobj.is_null() {
         return;
@@ -167,25 +177,31 @@ pub fn fn_800D79B4(g: G, cb_ground: fn(G), cb_air: fn(G, i32)) {
 }
 
 pub fn ftCo_ItemScopeStart_IASA(g: G) {
+    melee_core::ct!("ftCo_ItemScopeStart_IASA");
     fn_800D79B4(g, ext::fn_800D7BDC, ext::fn_800D8140);
 }
 
 pub fn ftCo_ItemScopeAirStart_IASA(g: G) {
+    melee_core::ct!("ftCo_ItemScopeAirStart_IASA");
     fn_800D79B4(g, ext::fn_800D7C60, ext::fn_800D81D0);
 }
 
 pub fn ftCo_ItemScopeStart_Phys(g: G) {
+    melee_core::ct!("ftCo_ItemScopeStart_Phys");
     ext::ftCo_800CDE54(g);
 }
 
 pub fn ftCo_ItemScopeAirStart_Phys(g: G) {
+    melee_core::ct!("ftCo_ItemScopeAirStart_Phys");
     ext::ftCo_800CDE74(g);
 }
 
 pub fn ftCo_ItemScopeStart_Coll(g: G) {
+    melee_core::ct!("ftCo_ItemScopeStart_Coll");
     ext::ft_800841B8(g, fn_800D78B0);
 }
 
 pub fn ftCo_ItemScopeAirStart_Coll(g: G) {
+    melee_core::ct!("ftCo_ItemScopeAirStart_Coll");
     ext::ft_80082C74(g, fn_800D7830);
 }

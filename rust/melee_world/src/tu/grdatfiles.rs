@@ -125,6 +125,7 @@ pub static mut grDatFiles_803E0848: GroundParam = GroundParam {
 pub static mut grDatFiles_803E0924: UnkStageDat = unsafe { core::mem::zeroed() };
 
 pub unsafe fn grDatFiles_801C5FC0(archive: *mut HSD_Archive, data: *mut c_void, length: u32) {
+    melee_core::ct!("grDatFiles_801C5FC0");
     ext::lbArchive_InitializeDAT(archive, data, length);
     let map_ptcl = ext::HSD_ArchiveGetPublicAddress(archive, cs(b"map_ptcl\0")) as *mut HSD_Archive;
     let map_texg = ext::HSD_ArchiveGetPublicAddress(archive, cs(b"map_texg\0")) as *mut HSD_Archive;
@@ -135,6 +136,7 @@ pub unsafe fn grDatFiles_801C5FC0(archive: *mut HSD_Archive, data: *mut c_void, 
 }
 
 pub unsafe fn grDatFiles_801C6038(arg0: *mut c_void, arg1: s32, arg2: s32) {
+    melee_core::ct!("grDatFiles_801C6038");
     let temp_r3 = grDatFiles_801C62B4();
     let si = ext::stage_info();
     if !arg0.is_null() {
@@ -187,6 +189,7 @@ pub unsafe fn grDatFiles_801C6038(arg0: *mut c_void, arg1: s32, arg2: s32) {
 }
 
 pub unsafe fn grDatFiles_801C6228(arg0: *mut UnkStageDat) {
+    melee_core::ct!("grDatFiles_801C6228");
     if !arg0.is_null() && !(*arg0).unk28.is_null() && (*arg0).unk2C != 0 {
         let mut i = 0;
         while i < (*arg0).unk2C {
@@ -200,11 +203,13 @@ pub unsafe fn grDatFiles_801C6228(arg0: *mut UnkStageDat) {
 }
 
 pub unsafe fn grDatFiles_801C6288() {
+    melee_core::ct!("grDatFiles_801C6288");
     ext::memzero(addr_of_mut!(grDatFiles_8049EE10) as *mut c_void, core::mem::size_of::<[UnkArchiveStruct; 4]>() as ssize_t);
 }
 
 /// External linkage under TARGET_PC (an m-ex stage blob calls it by address).
 pub unsafe fn grDatFiles_801C62B4() -> *mut UnkArchiveStruct {
+    melee_core::ct!("grDatFiles_801C62B4");
     let mut i = 0;
     while i < 4 {
         if grDatFiles_8049EE10[i].unk0.is_null() {
@@ -217,6 +222,7 @@ pub unsafe fn grDatFiles_801C62B4() -> *mut UnkArchiveStruct {
 }
 
 pub unsafe fn grDatFiles_GetArchive() -> *mut UnkArchiveStruct {
+    melee_core::ct!("grDatFiles_GetArchive");
     let slot = ext::ScriptGame_StageSlotArchive(0);
     if !slot.is_null() {
         return slot;
@@ -225,6 +231,7 @@ pub unsafe fn grDatFiles_GetArchive() -> *mut UnkArchiveStruct {
 }
 
 pub unsafe fn grDatFiles_801C6330(arg0: s32) -> *mut UnkArchiveStruct {
+    melee_core::ct!("grDatFiles_801C6330");
     let slot_archive = ext::ScriptGame_StageSlotArchive(arg0);
     if !slot_archive.is_null() {
         return slot_archive;
@@ -248,6 +255,7 @@ pub unsafe fn grDatFiles_801C6330(arg0: s32) -> *mut UnkArchiveStruct {
 }
 
 pub unsafe fn grDatFiles_801C6478(data: *mut c_void, length: s32) -> *mut UnkArchiveStruct {
+    melee_core::ct!("grDatFiles_801C6478");
     let archive = ext::lbHeap_80015BD0(0, core::mem::size_of::<HSD_Archive>() as u32) as *mut HSD_Archive;
     ext::lbArchive_InitializeDAT(archive, data, length as u32);
     let arc = grDatFiles_801C62B4();
@@ -263,6 +271,7 @@ pub unsafe fn grDatFiles_801C6478(data: *mut c_void, length: s32) -> *mut UnkArc
 
 /// grdatfiles_stage_slot_retail.inc: the same archive publication as `grDatFiles_801C6038` from a cached visit.
 pub unsafe fn grDatFiles_StageSlotInstall(archive: *mut HSD_Archive) {
+    melee_core::ct!("grDatFiles_StageSlotInstall");
     let dst = grDatFiles_801C62B4();
     let si = ext::stage_info();
     (*dst).unk0 = archive;

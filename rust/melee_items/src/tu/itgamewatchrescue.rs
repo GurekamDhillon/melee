@@ -97,6 +97,7 @@ pub static mut it_803F79C0: [ItemStateTable; 2] = [
 
 /// `Item_GObj* it_802C8038(Item_GObj* parent, Vec3* arg1, s32 arg2, s32 arg3, f32 farg0, f32 farg1)`
 pub unsafe extern "C" fn it_802C8038(parent: *mut HSD_GObj, arg1: *mut Vec, arg2: i32, arg3: i32, farg0: f32, farg1: f32) -> *mut HSD_GObj {
+    melee_core::ct!("it_802C8038");
     let result: *mut HSD_GObj;
     if !parent.is_null() {
         let mut spawn: SpawnItem = core::mem::zeroed();
@@ -120,6 +121,7 @@ pub unsafe extern "C" fn it_802C8038(parent: *mut HSD_GObj, arg1: *mut Vec, arg2
 }
 
 pub unsafe extern "C" fn it_802C8158(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802C8158");
     let item = GET_ITEM(item_gobj);
     if !item_gobj.is_null() && !item.is_null() {
         let temp_r3 = (*item).xDD4_itemVar.gamewatchrescue.xDD8;
@@ -133,19 +135,23 @@ pub unsafe extern "C" fn it_802C8158(item_gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_802C81C8(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802C81C8");
     ext::it_8026B724(item_gobj);
 }
 
 pub unsafe extern "C" fn it_802C81E8(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802C81E8");
     ext::it_8026B73C(item_gobj);
 }
 
 pub unsafe extern "C" fn it_802C8208(hsd_gobj: *mut HSD_GObj, msid: enum_t) {
+    melee_core::ct!("it_802C8208");
     ext::Item_80268E5C(hsd_gobj, msid, ITEM_ANIM_UPDATE as u32);
     ext::Item_802694CC(hsd_gobj);
 }
 
 pub unsafe extern "C" fn itGamewatchrescue_UnkMotion1_Anim(item_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itGamewatchrescue_UnkMotion1_Anim");
     let item1 = GET_ITEM(item_gobj);
     let temp_r3 = (*item1).xDD4_itemVar.gamewatchrescue.xDD8;
     if !temp_r3.is_null() {
@@ -183,12 +189,14 @@ pub unsafe extern "C" fn itGamewatchrescue_UnkMotion1_Anim(item_gobj: *mut HSD_G
     1
 }
 
-pub unsafe extern "C" fn itGamewatchrescue_UnkMotion1_Phys(gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itGamewatchrescue_UnkMotion1_Phys(gobj: *mut HSD_GObj) { melee_core::ct!("itGamewatchrescue_UnkMotion1_Phys");}
 
 pub unsafe extern "C" fn itGamewatchrescue_UnkMotion1_Coll(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itGamewatchrescue_UnkMotion1_Coll");
     0
 }
 
 pub unsafe extern "C" fn itGameWatchRescue_Logic81_EvtUnk(item_gobj1: *mut HSD_GObj, item_gobj2: *mut HSD_GObj) {
+    melee_core::ct!("itGameWatchRescue_Logic81_EvtUnk");
     ext::it_8026B894(item_gobj1, item_gobj2);
 }

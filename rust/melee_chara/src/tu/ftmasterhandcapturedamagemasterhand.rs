@@ -7,8 +7,8 @@ use melee_types::*;
 /// Already ported (round 7): re-exported under this TU.
 pub use crate::chars::r7::ftMasterHand::ftmasterhandcapturedamagemasterhand::ftMh_CaptureDamageMasterHand_80155C94;
 
-pub fn ftMh_CaptureDamageMasterHand_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_CaptureDamageMasterHand_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_CaptureDamageMasterHand_IASA");}
 
-pub fn ftMh_CaptureDamageMasterHand_Phys(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_CaptureDamageMasterHand_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_CaptureDamageMasterHand_Phys");}
 
-pub fn ftMh_CaptureDamageMasterHand_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_CaptureDamageMasterHand_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_CaptureDamageMasterHand_Coll");}

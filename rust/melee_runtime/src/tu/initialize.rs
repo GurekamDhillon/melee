@@ -59,6 +59,7 @@ fn round_down_32b(x: usize) -> usize {
 }
 
 pub unsafe fn HSD_InitComponent() {
+    melee_core::ct!("HSD_InitComponent");
     HSD_OSInit();
     {
         let mut vi_status: HSD_VIStatus = HSD_VIStatus::zeroed();
@@ -87,13 +88,15 @@ pub unsafe fn HSD_InitComponent() {
 }
 
 pub unsafe fn HSD_GXSetFifoObj(fifo: *mut GXFifoObj) {
+    melee_core::ct!("HSD_GXSetFifoObj");
     memReport.gxfifo = iparam_fifo_size;
     DefaultFifoObj = fifo;
 }
 
-pub fn HSD_DVDInit() {}
+pub fn HSD_DVDInit() { melee_core::ct!("HSD_DVDInit");}
 
 pub unsafe fn HSD_AllocateXFB(nbuffer: i32, rm: *mut GXRenderModeObj) -> *mut *mut c_void {
+    melee_core::ct!("HSD_AllocateXFB");
     if rm.is_null() {
         return null_mut();
     }
@@ -124,6 +127,7 @@ pub unsafe fn HSD_AllocateXFB(nbuffer: i32, rm: *mut GXRenderModeObj) -> *mut *m
 }
 
 pub unsafe fn HSD_AllocateFifo(size: u32) -> *mut GXFifoObj {
+    melee_core::ct!("HSD_AllocateFifo");
     let arena_lo0: usize = round_up_32b(ext::OSGetArenaLo() as usize);
     let arena_hi: usize = round_down_32b(ext::OSGetArenaHi() as usize);
     let fifo: *mut GXFifoObj;
@@ -144,6 +148,7 @@ pub unsafe fn HSD_AllocateFifo(size: u32) -> *mut GXFifoObj {
 }
 
 pub unsafe fn HSD_GXInit() {
+    melee_core::ct!("HSD_GXInit");
     let mut lightobj: GXLightObj = GXLightObj::zeroed();
 
     ext::GXInitLightPos(&mut lightobj, 1.0, 0.0, 0.0);
@@ -158,6 +163,7 @@ pub unsafe fn HSD_GXInit() {
 }
 
 pub unsafe fn HSD_OSInit() {
+    melee_core::ct!("HSD_OSInit");
     let old_arena_lo0 = ext::OSGetArenaLo() as usize;
     let old_arena_hi = ext::OSGetArenaHi() as usize;
     memReport.total = ext::OSGetPhysicalMemSize();
@@ -194,19 +200,23 @@ unsafe fn set_synth_heap(h: OSHeapHandle) {
 }
 
 pub unsafe fn HSD_GetHeap() -> OSHeapHandle {
+    melee_core::ct!("HSD_GetHeap");
     current_heap
 }
 
 pub unsafe fn HSD_SetHeap(handle: OSHeapHandle) {
+    melee_core::ct!("HSD_SetHeap");
     current_heap = handle;
 }
 
 pub unsafe fn HSD_GetNextArena(lo: *mut *mut c_void, hi: *mut *mut c_void) {
+    melee_core::ct!("HSD_GetNextArena");
     *lo = hsd_heap_next_arena_lo;
     *hi = hsd_heap_next_arena_hi;
 }
 
 pub unsafe fn HSD_CreateMainHeap(lo: *mut c_void, hi: *mut c_void) -> OSHeapHandle {
+    melee_core::ct!("HSD_CreateMainHeap");
     let cb_table: [unsafe fn(*mut c_void, *mut c_void); 6] = [
         ext::_HSD_AObjForgetMemory,
         ext::_HSD_DispForgetMemory,
@@ -237,10 +247,12 @@ pub unsafe fn HSD_CreateMainHeap(lo: *mut c_void, hi: *mut c_void) -> OSHeapHand
 }
 
 pub unsafe fn HSD_GetCurrentRenderPass() -> HSD_RenderPass {
+    melee_core::ct!("HSD_GetCurrentRenderPass");
     current_render_pass
 }
 
 pub unsafe fn HSD_StartRender(pass: HSD_RenderPass) {
+    melee_core::ct!("HSD_StartRender");
     let rm = vi_render_mode();
     current_render_pass = pass;
     if (*rm).aa != 0 {
@@ -255,9 +267,10 @@ pub unsafe fn HSD_StartRender(pass: HSD_RenderPass) {
 }
 
 /// The C body is a comparison with no effect (it only forces instruction order when matching).
-pub unsafe fn HSD_Init_803755A8() {}
+pub unsafe fn HSD_Init_803755A8() { melee_core::ct!("HSD_Init_803755A8");}
 
 pub unsafe fn HSD_ObjInit() {
+    melee_core::ct!("HSD_ObjInit");
     ext::HSD_ListInitAllocData();
     ext::HSD_AObjInitAllocData();
     ext::HSD_FObjInitAllocData();
@@ -271,6 +284,7 @@ pub unsafe fn HSD_ObjInit() {
 }
 
 pub unsafe fn HSD_ObjDumpStat() {
+    melee_core::ct!("HSD_ObjDumpStat");
     let types: [(unsafe fn() -> *mut HSD_ObjAllocData, &core::ffi::CStr); 13] = [
         (ext::HSD_AObjGetAllocData, c"aobj"),
         (ext::HSD_FObjGetAllocData, c"fobj"),
@@ -309,6 +323,7 @@ unsafe fn hsd_init_parameter_allowed() -> bool {
 }
 
 pub unsafe fn HSD_SetInitParameterU32(param: HSD_InitParam, value: u32) -> bool {
+    melee_core::ct!("HSD_SetInitParameterU32");
     if !hsd_init_parameter_allowed() {
         return false;
     }
@@ -343,6 +358,7 @@ pub unsafe fn HSD_SetInitParameterU32(param: HSD_InitParam, value: u32) -> bool 
 }
 
 pub unsafe fn HSD_SetInitParameterPtr(param: HSD_InitParam, value: *mut c_void) -> bool {
+    melee_core::ct!("HSD_SetInitParameterPtr");
     if !hsd_init_parameter_allowed() {
         return false;
     }

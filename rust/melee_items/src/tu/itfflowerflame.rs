@@ -133,6 +133,7 @@ pub static mut it_803F66C8: [ItemStateTable; 5] = [
 ];
 
 pub unsafe extern "C" fn it_8029A748(arg0: *mut Item_GObj, arg1: *mut Vec, arg2: Fighter_Part, arg3: f32) -> *mut HSD_GObj {
+    melee_core::ct!("it_8029A748");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = It_Kind_F_Flower_Flame;
     Item_InitSpawnPositionFromParent(&mut spawn, arg0, arg1);
@@ -155,6 +156,7 @@ pub unsafe extern "C" fn it_8029A748(arg0: *mut Item_GObj, arg1: *mut Vec, arg2:
 }
 
 pub unsafe extern "C" fn it_8029A89C(arg0: *mut Item_GObj, arg1: f32) {
+    melee_core::ct!("it_8029A89C");
     if !arg0.is_null() {
         let item = get_item(arg0);
         if !item.is_null() {
@@ -166,6 +168,7 @@ pub unsafe extern "C" fn it_8029A89C(arg0: *mut Item_GObj, arg1: f32) {
 }
 
 pub unsafe extern "C" fn it_8029A8F4(arg0: *mut Item_GObj, arg1: *mut Vec) {
+    melee_core::ct!("it_8029A8F4");
     if !arg0.is_null() {
         let item = get_item(arg0);
         if !item.is_null() {
@@ -180,10 +183,12 @@ pub unsafe extern "C" fn it_8029A8F4(arg0: *mut Item_GObj, arg1: *mut Vec) {
 }
 
 pub unsafe extern "C" fn itFFlowerFlame_Logic41_Spawned(arg0: *mut Item_GObj) {
+    melee_core::ct!("itFFlowerFlame_Logic41_Spawned");
     ext::it_8026B3A8(arg0);
 }
 
 pub unsafe extern "C" fn it_8029AA1C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_8029AA1C");
     let item = get_item(gobj);
     (*item).x40_vel.z = 0.0;
     (*item).x40_vel.y = 0.0;
@@ -193,6 +198,7 @@ pub unsafe extern "C" fn it_8029AA1C(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itFflowerflame_UnkMotion0_Anim(arg0: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFflowerflame_UnkMotion0_Anim");
     let ip = get_item(arg0);
     ext::it_80272F7C(ext::it_80272CC0(arg0, 1), (*ip).xDD4_itemVar.fflowerflame.unk);
     let jobj = ext::it_80272CC0(arg0, 2);
@@ -200,19 +206,22 @@ pub unsafe extern "C" fn itFflowerflame_UnkMotion0_Anim(arg0: *mut Item_GObj) ->
     0
 }
 
-pub unsafe extern "C" fn itFflowerflame_UnkMotion0_Phys(_arg0: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itFflowerflame_UnkMotion0_Phys(_arg0: *mut HSD_GObj) { melee_core::ct!("itFflowerflame_UnkMotion0_Phys");}
 
 pub unsafe extern "C" fn itFflowerflame_UnkMotion0_Coll(arg0: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFflowerflame_UnkMotion0_Coll");
     ext::it_8026D62C(arg0, Some(it_8029AB90));
     0
 }
 
 pub unsafe extern "C" fn it_8029AB90(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_8029AB90");
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE as _);
     ext::it_8026B3A8(gobj);
 }
 
 pub unsafe extern "C" fn itFflowerflame_UnkMotion1_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFflowerflame_UnkMotion1_Anim");
     let item = get_item(gobj);
     ext::it_80272F7C(ext::it_80272CC0(gobj, 1), (*item).xDD4_itemVar.fflowerflame.unk);
     let jobj = ext::it_80272CC0(gobj, 2);
@@ -221,32 +230,38 @@ pub unsafe extern "C" fn itFflowerflame_UnkMotion1_Anim(gobj: *mut Item_GObj) ->
 }
 
 pub unsafe extern "C" fn itFflowerflame_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFflowerflame_UnkMotion1_Phys");
     let item = get_item(gobj);
     let temp_r4 = (*item).xCC_item_attr;
     ext::it_80272860(gobj, (*temp_r4).x10_fall_speed, (*temp_r4).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itFflowerflame_UnkMotion1_Coll(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itFflowerflame_UnkMotion1_Coll");
     ext::it_8026DF34(gobj)
 }
 
 pub unsafe extern "C" fn itFFlowerFlame_Logic41_PickedUp(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFFlowerFlame_Logic41_PickedUp");
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE as _);
     ext::it_8026B3A8(gobj);
 }
 
 pub unsafe extern "C" fn itFflowerflame_UnkMotion2_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFflowerflame_UnkMotion2_Anim");
     let ip = get_item(gobj);
     ext::it_80272F7C(ext::it_80272CC0(gobj, 1), (*ip).xDD4_itemVar.fflowerflame.unk);
     0
 }
 
 pub unsafe extern "C" fn itFFlowerFlame_Logic41_Dropped(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFFlowerFlame_Logic41_Dropped");
     ext::Item_80268E5C(gobj, 1, 6);
     ext::it_8026B3A8(gobj);
 }
 
 pub unsafe extern "C" fn itFflowerflame_UnkMotion3_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFflowerflame_UnkMotion3_Anim");
     let item = get_item(gobj);
     ext::it_80272F7C(ext::it_80272CC0(gobj, 1), (*item).xDD4_itemVar.fflowerflame.unk);
     let jobj = ext::it_80272CC0(gobj, 2);
@@ -255,12 +270,14 @@ pub unsafe extern "C" fn itFflowerflame_UnkMotion3_Anim(gobj: *mut Item_GObj) ->
 }
 
 pub unsafe extern "C" fn itFflowerflame_UnkMotion3_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFflowerflame_UnkMotion3_Phys");
     let item = get_item(gobj);
     let attrs = (*item).xCC_item_attr;
     ext::it_80272860(gobj, (*attrs).x10_fall_speed, (*attrs).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itFflowerflame_UnkMotion3_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFflowerflame_UnkMotion3_Coll");
     if ext::it_8026DA08(gobj) != 0 {
         return 1;
     }
@@ -268,11 +285,13 @@ pub unsafe extern "C" fn itFflowerflame_UnkMotion3_Coll(gobj: *mut Item_GObj) ->
 }
 
 pub unsafe extern "C" fn itFFlowerFlame_Logic41_EnteredAir(gobj: *mut Item_GObj) {
+    melee_core::ct!("itFFlowerFlame_Logic41_EnteredAir");
     ext::Item_80268E5C(gobj, 4, ITEM_ANIM_UPDATE as _);
     ext::it_8026B3A8(gobj);
 }
 
 pub unsafe extern "C" fn itFflowerflame_UnkMotion4_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFflowerflame_UnkMotion4_Anim");
     let item = get_item(gobj);
     ext::it_80272F7C(ext::it_80272CC0(gobj, 1), (*item).xDD4_itemVar.fflowerflame.unk);
     let jobj = ext::it_80272CC0(gobj, 2);
@@ -280,13 +299,15 @@ pub unsafe extern "C" fn itFflowerflame_UnkMotion4_Anim(gobj: *mut Item_GObj) ->
     ext::it_80273130(gobj)
 }
 
-pub unsafe extern "C" fn itFflowerflame_UnkMotion4_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itFflowerflame_UnkMotion4_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itFflowerflame_UnkMotion4_Phys");}
 
 pub unsafe extern "C" fn itFflowerflame_UnkMotion4_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itFflowerflame_UnkMotion4_Coll");
     ext::it_8026E8C4(gobj, Some(it_8029AA1C), Some(it_8029AB90));
     0
 }
 
 pub unsafe extern "C" fn itFFlowerFlame_Logic41_EvtUnk(arg0: *mut Item_GObj, arg1: *mut Item_GObj) {
+    melee_core::ct!("itFFlowerFlame_Logic41_EvtUnk");
     ext::it_8026B894(arg0, arg1);
 }

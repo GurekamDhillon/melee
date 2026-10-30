@@ -425,6 +425,7 @@ pub static mut gm_803DBFB4: [u32; 6] = [1250, 2, 394, 1, 65536, 2];
 pub static mut gm_Opening_NoMovie: i32 = 0;
 
 pub unsafe extern "C" fn gm_801A9DD0(arg0: *mut HSD_GObj, arg1: u16, arg2: u16, arg3: i32, arg4: i32) {
+    melee_core::ct!("gm_801A9DD0");
     let roll: f32 = 0.0;
     let near_val: f32 = 0.0;
     let far_val: f32 = 2.0;
@@ -465,6 +466,7 @@ unsafe fn sprint(dst: *mut i8, s: &str) {
 }
 
 pub unsafe extern "C" fn fn_801A9FCC() -> *mut c_void {
+    melee_core::ct!("fn_801A9FCC");
     let lines: *mut PerfLabelLine = gm_80480B38.as_mut_ptr();
 
     (*lines).unk_04 = 0;
@@ -492,12 +494,14 @@ pub unsafe extern "C" fn fn_801A9FCC() -> *mut c_void {
 }
 
 pub unsafe extern "C" fn fn_801AA0E8() {
+    melee_core::ct!("fn_801AA0E8");
     ext::hsd_80392528(Some(core::mem::transmute::<unsafe extern "C" fn() -> *mut c_void, unsafe extern "C" fn()>(
         fn_801A9FCC,
     )));
 }
 
 pub unsafe extern "C" fn gm_Scene_Opening_OnEnter(_arg0: *mut c_void) {
+    melee_core::ct!("gm_Scene_Opening_OnEnter");
     gm_804D67D0 = 0;
     gm_804D67D4 = null_mut();
     gm_804D67D8 = null_mut();
@@ -550,6 +554,7 @@ unsafe fn sfxForward() {
 }
 
 pub unsafe extern "C" fn gm_Scene_Opening_OnFrame() {
+    melee_core::ct!("gm_Scene_Opening_OnFrame");
     // TARGET_PC: no movie => straight on to the title.
     if gm_Opening_NoMovie != 0 {
         ext::gm_801A4B60();

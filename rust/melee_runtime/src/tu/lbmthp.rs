@@ -84,6 +84,7 @@ unsafe fn packed_size(fb: *const THPFrameBuffer) -> u32 {
 /// `fn_8001E910`: the DevCom completion callback of a frame read; advances the file position,
 /// records the read latency, and queues the next frame read when the ring has room.
 pub unsafe extern "C" fn fn_8001E910(_arg0: i32, _arg1: usize, _arg2: *mut c_void, cancelflag: i32) {
+    melee_core::ct!("fn_8001E910");
     let sp = mp();
     if cancelflag != 0 {
         ext::__assert(FILE, 104, "!cancelflag");
@@ -187,6 +188,7 @@ unsafe fn fn_8001EB14(data: *mut THPDecComp, path: *const c_char) -> i32 {
 /// # Safety
 /// `data` must be valid for reads and writes.
 pub unsafe fn fn_8001EBF0(data: *mut THPDecComp) -> usize {
+    melee_core::ct!("fn_8001EBF0");
     (*data).unk_104 = 0x20;
 
     let unk_104_val = (*data).unk_104;
@@ -376,6 +378,7 @@ unsafe fn fn_8001F06C(data: *mut THPDecComp) -> i32 {
 /// # Safety
 /// `stream_player` must be valid for reads and writes.
 pub unsafe fn fn_8001F13C(stream_player: *mut THPDecComp) -> i32 {
+    melee_core::ct!("fn_8001F13C");
     let sp = &mut *stream_player;
     let intr = ext::OSDisableInterrupts();
     if sp.unk_90 != sp.unk_8C && sp.unk_110 == 0 && sp.unk_70 != 0 {
@@ -416,6 +419,7 @@ pub unsafe fn fn_8001F13C(stream_player: *mut THPDecComp) -> i32 {
 
 /// `fn_8001F294`: whether a frame read is in flight (`unk_110`).
 pub fn fn_8001F294() -> i32 {
+    melee_core::ct!("fn_8001F294");
     mp().unk_110
 }
 
@@ -448,6 +452,7 @@ unsafe fn lbMthp_GetFrame(rate_table: *mut *mut u32, mut counter: u32) -> u32 {
 /// `fn_8001F2A4`: the 60 Hz alarm handler; advances the display counter `unk_80` through the rate
 /// table, stops at the end (or wraps when looping), and steps the decoder when the frame changes.
 pub unsafe extern "C" fn fn_8001F2A4(_alarm: *mut OSAlarm, _context: *mut OSContext) {
+    melee_core::ct!("fn_8001F2A4");
     let sp = addr_of_mut!(MoviePlayer);
     let rate_table = addr_of_mut!((*sp).rate_table);
 
@@ -482,6 +487,7 @@ pub unsafe extern "C" fn fn_8001F2A4(_alarm: *mut OSAlarm, _context: *mut OSCont
 /// # Safety
 /// `filename` must be a NUL-terminated string; `buf`, when non-null, must hold `heap_size` bytes.
 pub unsafe fn lbMthp_8001F410(filename: *const c_char, rate_table: *mut u32, mut buf: *mut c_void, heap_size: usize, loop_: i32) {
+    melee_core::ct!("lbMthp_8001F410");
     let sp = addr_of_mut!(MoviePlayer);
 
     if (*sp).power != 0 {
@@ -518,6 +524,7 @@ pub unsafe fn lbMthp_8001F410(filename: *const c_char, rate_table: *mut u32, mut
 
 /// `lbMthp_8001F578`: publishes the decode position to the render side (`unk_90/7C/84`).
 pub fn lbMthp_8001F578() {
+    melee_core::ct!("lbMthp_8001F578");
     let intr = ext::OSDisableInterrupts();
     let sp = mp();
     sp.unk_90 = sp.unk_88;
@@ -528,31 +535,37 @@ pub fn lbMthp_8001F578() {
 
 /// `lbMthp_8001F5C4`: the published display counter (`unk_84`).
 pub fn lbMthp_8001F5C4() -> i32 {
+    melee_core::ct!("lbMthp_8001F5C4");
     mp().unk_84 as i32
 }
 
 /// `lbMthp_8001F5D4`: the last read latency in ticks (`unk_134`).
 pub fn lbMthp_8001F5D4() -> u32 {
+    melee_core::ct!("lbMthp_8001F5D4");
     mp().unk_134 as u32
 }
 
 /// `lbMthp_8001F5E4`: the number of buffered frames (`unk_108`).
 pub fn lbMthp_8001F5E4() -> i32 {
+    melee_core::ct!("lbMthp_8001F5E4");
     mp().unk_108
 }
 
 /// `lbMthp_8001F5F4`: the buffered-frame low-water mark (`unk_10C`).
 pub fn lbMthp_8001F5F4() -> i32 {
+    melee_core::ct!("lbMthp_8001F5F4");
     mp().unk_10C
 }
 
 /// `lbMthp_8001F604`: nonzero once the movie has finished (`unk_144`).
 pub fn lbMthp_8001F604() -> i32 {
+    melee_core::ct!("lbMthp_8001F604");
     mp().unk_144
 }
 
 /// `lbMthp_8001F614`: shows (nonzero) or hides the movie (`unk_148`).
 pub fn lbMthp_8001F614(arg0: i32) {
+    melee_core::ct!("lbMthp_8001F614");
     mp().unk_148 = arg0;
 }
 
@@ -562,6 +575,7 @@ pub fn lbMthp_8001F614(arg0: i32) {
 /// # Safety
 /// `gobj` must be valid; the SObj library must return a valid SObj.
 pub unsafe fn lbMthp_8001F624(gobj: *mut HSD_GObj, width: i32, height: i32) -> *mut HSD_SObj {
+    melee_core::ct!("lbMthp_8001F624");
     lbl_803BAFE8.image_ptr = null_mut();
     lbl_803BAFE8.width = width as u16;
     lbl_803BAFE8.height = height as u16;
@@ -577,6 +591,7 @@ pub unsafe fn lbMthp_8001F624(gobj: *mut HSD_GObj, width: i32, height: i32) -> *
 /// # Safety
 /// `gobj` must be the movie GObj.
 pub unsafe fn lbMthp_8001F67C(gobj: *mut HSD_GObj, arg1: i32) {
+    melee_core::ct!("lbMthp_8001F67C");
     let sp = addr_of_mut!(MoviePlayer);
 
     fn_8001EF5C(sp);
@@ -601,6 +616,7 @@ pub unsafe fn lbMthp_8001F67C(gobj: *mut HSD_GObj, arg1: i32) {
 /// `lbMthp_8001F800`: stops the movie: waits for the in-flight read, cancels the alarm, waits for
 /// the XFB flush and frees the decode memory.
 pub fn lbMthp_8001F800() {
+    melee_core::ct!("lbMthp_8001F800");
     let sp = mp();
     if sp.power != 0 {
         sp.unk_70 = 0;
@@ -620,15 +636,18 @@ pub fn lbMthp_8001F800() {
 
 /// `lbMthp_8001F87C`: marks the player stopped without cleanup.
 pub fn lbMthp_8001F87C() {
+    melee_core::ct!("lbMthp_8001F87C");
     mp().power = 0;
 }
 
 /// `MoviePlayer.power` (test access to the player state the stop calls clear).
 #[doc(hidden)]
 pub fn test_power() -> i32 {
+    melee_core::ct!("test_power");
     mp().power as i32
 }
 #[doc(hidden)]
 pub fn test_set_power(v: i32) {
+    melee_core::ct!("test_set_power");
     mp().power = v as _;
 }

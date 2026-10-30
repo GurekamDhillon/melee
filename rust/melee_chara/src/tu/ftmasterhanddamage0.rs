@@ -109,6 +109,7 @@ pub mod ext {
 
 /// Camera anchor callback (`Camera_8002E948` argument): the Master Hand's waist position.
 pub unsafe extern "C" fn ftMh_MS_343_80151428(vec: *mut Vec3) -> bool {
+    melee_core::ct!("ftMh_MS_343_80151428");
     unsafe {
         let gobj = ext::ftBossLib_GetFighterGObj(Ft_Kind_MasterH);
         if !gobj.is_null() {
@@ -149,6 +150,7 @@ unsafe fn func_80151484_inline1(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMh_MS_343_80151484(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_343_80151484");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         (*fp).cmd_vars[0] = 0;
@@ -191,9 +193,11 @@ unsafe fn damage_anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMh_Damage_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Damage_Anim");
     unsafe { damage_anim(gobj) }
 }
 
 pub fn ftMh_MS_345_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_345_Anim");
     unsafe { damage_anim(gobj) }
 }

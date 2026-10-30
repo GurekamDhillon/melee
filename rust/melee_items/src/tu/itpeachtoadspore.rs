@@ -60,6 +60,7 @@ pub static mut it_803F7548: [ItemStateTable; 1] = [
 
 /// 2BE214
 pub unsafe extern "C" fn it_802BE214(item_gobj: *mut Item_GObj, pos: *mut Vec3, kind: ItemKind, facing_dir: f32) -> *mut Item_GObj {
+    melee_core::ct!("it_802BE214");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
     spawn.kind = kind;
@@ -88,6 +89,7 @@ pub unsafe extern "C" fn it_802BE214(item_gobj: *mut Item_GObj, pos: *mut Vec3, 
 
 /// 2BE2E8
 pub unsafe extern "C" fn it_802BE2E8(item_gobj: *mut Item_GObj, arg1: *mut HSD_GObj) {
+    melee_core::ct!("it_802BE2E8");
     let item_1 = GET_ITEM(item_gobj);
     let item_jobj = (*item_gobj).hsd_obj as *mut HSD_JObj;
     let attr = (*(*item_1).xC4_article_data).x4_specialAttributes as *mut itPeachToadSporeAttributes;
@@ -120,6 +122,7 @@ pub unsafe extern "C" fn it_802BE2E8(item_gobj: *mut Item_GObj, arg1: *mut HSD_G
 }
 
 pub unsafe extern "C" fn itPeachtoadspore_UnkMotion0_Anim(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPeachtoadspore_UnkMotion0_Anim");
     let item = GET_ITEM(item_gobj);
     if (*item).xDAC_itcmd_var0 != 0 {
         return true;
@@ -134,6 +137,7 @@ pub unsafe extern "C" fn itPeachtoadspore_UnkMotion0_Anim(item_gobj: *mut Item_G
 }
 
 pub unsafe extern "C" fn itPeachtoadspore_UnkMotion0_Phys(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itPeachtoadspore_UnkMotion0_Phys");
     let item = GET_ITEM(item_gobj);
     let attr = (*(*item).xC4_article_data).x4_specialAttributes as *mut itPeachToadSporeAttributes;
     (*item).x40_vel.x *= (*attr).x8_speed_decay_rate;
@@ -141,30 +145,36 @@ pub unsafe extern "C" fn itPeachtoadspore_UnkMotion0_Phys(item_gobj: *mut Item_G
 }
 
 pub unsafe extern "C" fn itPeachToadSpore_Logic92_DmgDealt(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPeachToadSpore_Logic92_DmgDealt");
     ext::efLib_DestroyAll(item_gobj);
     true
 }
 
 pub unsafe extern "C" fn itPeachToadSpore_Logic68_Clanked(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPeachToadSpore_Logic68_Clanked");
     ext::efLib_DestroyAll(item_gobj);
     true
 }
 
 pub unsafe extern "C" fn itPeachToadSpore_Logic68_HitShield(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPeachToadSpore_Logic68_HitShield");
     ext::efLib_DestroyAll(item_gobj);
     true
 }
 
 pub unsafe extern "C" fn itPeachToadSpore_Logic68_Absorbed(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPeachToadSpore_Logic68_Absorbed");
     ext::efLib_DestroyAll(item_gobj);
     true
 }
 
 pub unsafe extern "C" fn itPeachToadSpore_Logic68_ShieldBounced(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPeachToadSpore_Logic68_ShieldBounced");
     ext::itColl_BounceOffShield(item_gobj) != 0
 }
 
 pub unsafe extern "C" fn itPeachToadSpore_Logic68_Reflected(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPeachToadSpore_Logic68_Reflected");
     let item = GET_ITEM(item_gobj);
     let life_timer = (*item).xD44_lifeTimer;
     ext::it_80273030(item_gobj);
@@ -173,5 +183,6 @@ pub unsafe extern "C" fn itPeachToadSpore_Logic68_Reflected(item_gobj: *mut Item
 }
 
 pub unsafe extern "C" fn itPeachToadSpore_Logic92_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("itPeachToadSpore_Logic92_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

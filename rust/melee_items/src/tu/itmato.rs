@@ -51,6 +51,7 @@ pub static mut it_803F83E0: [ItemStateTable; 1] = [
 ];
 
 pub unsafe extern "C" fn it_802D84F8(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D84F8");
     let it = GET_ITEM(item_gobj);
     ext::it_8027B730(item_gobj);
     (*it).facing_dir = 0.0;
@@ -60,6 +61,7 @@ pub unsafe extern "C" fn it_802D84F8(item_gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn it_802D8554(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D8554");
     let it = GET_ITEM(item_gobj);
     (*it).x40_vel.y = 0.0;
     (*it).x40_vel.x = 0.0;
@@ -67,10 +69,12 @@ pub unsafe extern "C" fn it_802D8554(item_gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itMato_UnkMotion0_Anim(_item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMato_UnkMotion0_Anim");
     false
 }
 
 pub unsafe extern "C" fn itMato_UnkMotion0_Phys(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itMato_UnkMotion0_Phys");
     let it = GET_ITEM(item_gobj);
     if !(*it).xDD4_itemVar.mato.x0.is_null() {
         let mut pos: Vec3 = core::mem::zeroed();
@@ -83,10 +87,12 @@ pub unsafe extern "C" fn itMato_UnkMotion0_Phys(item_gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itMato_UnkMotion0_Coll(_item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itMato_UnkMotion0_Coll");
     false
 }
 
 pub unsafe extern "C" fn it_802D85F4(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_802D85F4");
     // TARGET_PC: scripted targets are owned by the Lua stage layer, not Ground_801C4210's counter.
     if ext::ScriptGame_TargetDestroyed(item_gobj) != 0 {
         return true;

@@ -21,6 +21,7 @@ pub struct CmSubjectPool {
 
 /// `Camera_80028F5C`: reset a subject to `state` with the default extents.
 pub fn Camera_80028F5C(subject: Option<&mut CmSubject>, state: CmSubjectState) {
+    melee_core::ct!("Camera_80028F5C");
     if let Some(s) = subject {
         s.state = state;
         s.pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -44,6 +45,7 @@ pub fn Camera_80028F5C(subject: Option<&mut CmSubject>, state: CmSubjectState) {
 
 /// `Camera_80029020`: `Camera_80029044(0)`.
 pub fn Camera_80029020(w: &mut CameraWorld, pool: &mut CmSubjectPool) -> usize {
+    melee_core::ct!("Camera_80029020");
     Camera_80029044(w, pool, 0)
 }
 
@@ -51,6 +53,7 @@ pub fn Camera_80029020(w: &mut CameraWorld, pool: &mut CmSubjectPool) -> usize {
 /// (`cm_804D6468`, index 0) and reset it to `state`. The C spins forever after
 /// `OSReport("couldn't get CmSubject struct.\n")` when the pool is empty; this panics.
 pub fn Camera_80029044(w: &mut CameraWorld, pool: &mut CmSubjectPool, state: CmSubjectState) -> usize {
+    melee_core::ct!("Camera_80029044");
     if pool.free == 0 {
         panic!("couldn't get CmSubject struct.");
     }
@@ -67,6 +70,7 @@ pub fn Camera_80029044(w: &mut CameraWorld, pool: &mut CmSubjectPool, state: CmS
 
 /// `Camera_800290D4`: unlink subject `i` and return it to the pool.
 pub fn Camera_800290D4(w: &mut CameraWorld, pool: &mut CmSubjectPool, i: usize) -> CmSubject {
+    melee_core::ct!("Camera_800290D4");
     let s = w.subjects.remove(i);
     if i < w.geno_fly_subject.len() {
         w.geno_fly_subject.remove(i);

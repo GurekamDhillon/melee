@@ -18,20 +18,23 @@ pub mod ext {
 }
 
 pub fn ftMh_RockCrushDown_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_RockCrushDown_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         ext::ftMh_MS_389_80151018(gobj);
     }
 }
 
-pub fn ftMh_RockCrushDown_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_RockCrushDown_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_RockCrushDown_Coll");}
 
 pub fn ftMh_PaperCrush_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_PaperCrush_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         ext::ftMh_MS_389_80151018(gobj);
     }
 }
 
 pub fn ftMh_PaperCrush_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_PaperCrush_Phys");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*(*fp).ft_data).ext_attr as *const ftMasterHand_SpecialAttrs;

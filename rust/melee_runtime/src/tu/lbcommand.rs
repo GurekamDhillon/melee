@@ -49,23 +49,27 @@ unsafe fn next_cmd(info: *mut CommandInfo) {
 
 /// Reset
 pub unsafe extern "C" fn Command_00(info: *mut CommandInfo) {
+    melee_core::ct!("Command_00");
     (*info).anon_8.u = core::ptr::null_mut();
 }
 
 /// SynchronousTimer
 pub unsafe extern "C" fn Command_01(info: *mut CommandInfo) {
+    melee_core::ct!("Command_01");
     (*info).timer += (*(*info).anon_8.u).Command_00.value() as f32;
     next_cmd(info);
 }
 
 /// AsynchronousTimer
 pub unsafe extern "C" fn Command_02(info: *mut CommandInfo) {
+    melee_core::ct!("Command_02");
     (*info).timer = (*(*info).anon_8.u).Command_02.value() as f32 - (*info).frame_count;
     next_cmd(info);
 }
 
 /// SetLoop
 pub unsafe extern "C" fn Command_03(info: *mut CommandInfo) {
+    melee_core::ct!("Command_03");
     let i = &mut *info;
     let lc = i.loop_count as usize;
     i.event_return[lc] = i.anon_8.u.add(1);
@@ -76,6 +80,7 @@ pub unsafe extern "C" fn Command_03(info: *mut CommandInfo) {
 
 /// Execute Loop
 pub unsafe extern "C" fn Command_04(info: *mut CommandInfo) {
+    melee_core::ct!("Command_04");
     let i = &mut *info;
     let lc = i.loop_count as usize;
     let slot = (&raw mut i.event_return[lc - 1]) as *mut u32;
@@ -90,6 +95,7 @@ pub unsafe extern "C" fn Command_04(info: *mut CommandInfo) {
 
 /// Subroutine
 pub unsafe extern "C" fn Command_05(info: *mut CommandInfo) {
+    melee_core::ct!("Command_05");
     next_cmd(info);
     let i = &mut *info;
     let lc = i.loop_count as usize;
@@ -100,6 +106,7 @@ pub unsafe extern "C" fn Command_05(info: *mut CommandInfo) {
 
 /// Return
 pub unsafe extern "C" fn Command_06(info: *mut CommandInfo) {
+    melee_core::ct!("Command_06");
     let i = &mut *info;
     i.loop_count = i.loop_count.wrapping_sub(1);
     i.anon_8.u = i.event_return[i.loop_count as usize];
@@ -107,17 +114,20 @@ pub unsafe extern "C" fn Command_06(info: *mut CommandInfo) {
 
 /// Goto
 pub unsafe extern "C" fn Command_07(info: *mut CommandInfo) {
+    melee_core::ct!("Command_07");
     next_cmd(info);
     (*info).anon_8.u = (*(*info).anon_8.u).Command_07.ptr;
 }
 
 /// SetTimerAnimation
 pub unsafe extern "C" fn Command_08(info: *mut CommandInfo) {
+    melee_core::ct!("Command_08");
     next_cmd(info);
     (*info).timer = F32_MAX;
 }
 
 pub unsafe extern "C" fn Command_09(info: *mut CommandInfo) {
+    melee_core::ct!("Command_09");
     let w = &(*(*info).anon_8.u).Command_09;
     ext::lbBgFlash_80021C48(w.param_1(), w.param_2());
     next_cmd(info);
@@ -143,6 +153,7 @@ pub static lbCommand_803B9840: [Option<unsafe extern "C" fn(*mut CommandInfo)>; 
 ];
 
 pub unsafe extern "C" fn Command_Execute(info: *mut CommandInfo, command: u32) -> bool {
+    melee_core::ct!("Command_Execute");
     if command < 10 {
         (lbCommand_803B9840[command as usize].unwrap())(info);
         return true;

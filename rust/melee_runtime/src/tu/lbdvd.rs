@@ -125,6 +125,7 @@ unsafe fn entry_at(i: usize) -> *mut PreloadEntry {
 // ---- TARGET_PC six-slot budget -------------------------------------------------------------
 
 pub unsafe extern "C" fn lbDvd_IsPlanningSixSlot() -> i32 {
+    melee_core::ct!("lbDvd_IsPlanningSixSlot");
     six_budget_check
 }
 
@@ -203,6 +204,7 @@ unsafe fn lbDvd_SixBudget() -> i32 {
 }
 
 pub unsafe extern "C" fn lbDvd_TrySetupSixSlotCache() -> i32 {
+    melee_core::ct!("lbDvd_TrySetupSixSlotCache");
     let enabled = ext::OSDisableInterrupts(); // C `bool` is `int` (MSL stdbool.h)
     let saved = preloadCache;
     for i in 0..ENTRIES {
@@ -228,6 +230,7 @@ pub unsafe extern "C" fn lbDvd_TrySetupSixSlotCache() -> i32 {
 }
 
 pub unsafe extern "C" fn lbDvd_SixBudgetTest() -> i32 {
+    melee_core::ct!("lbDvd_SixBudgetTest");
     let saved = preloadCache;
     let saved_ok = six_budget_ok;
     let cap = ext::lbHeap_Capacity(4);
@@ -250,6 +253,7 @@ pub unsafe extern "C" fn lbDvd_SixBudgetTest() -> i32 {
 // ---- the cache -----------------------------------------------------------------------------
 
 pub unsafe extern "C" fn lbDvd_SetupVsPreloadCache() {
+    melee_core::ct!("lbDvd_SetupVsPreloadCache");
     lbDvd_80018C6C();
     lbDvd_80018254();
     if six_budget_check != 0 && six_budget_ok == 0 {
@@ -259,6 +263,7 @@ pub unsafe extern "C" fn lbDvd_SetupVsPreloadCache() {
 }
 
 pub unsafe extern "C" fn lbDvd_800174E8(index: i32) {
+    melee_core::ct!("lbDvd_800174E8");
     let entry = entry_at(index as usize);
     if !(*entry).archive.is_null() {
         ext::lbHeap_80015CA8((*entry).heap as i32, (*(*entry).archive).addr);
@@ -270,6 +275,7 @@ pub unsafe extern "C" fn lbDvd_800174E8(index: i32) {
 }
 
 pub unsafe extern "C" fn lbDvd_80017598(heap: i32) -> bool {
+    melee_core::ct!("lbDvd_80017598");
     let mut no_change = false;
     let enabled = ext::OSDisableInterrupts();
     if preloadCache.persistent_heap == heap {
@@ -291,6 +297,7 @@ pub unsafe extern "C" fn lbDvd_80017598(heap: i32) -> bool {
 }
 
 pub unsafe fn lbDvd_80017644(heap: i32) -> bool {
+    melee_core::ct!("lbDvd_80017644");
     let mut no_change = false;
     let enabled = ext::OSDisableInterrupts();
     if preloadCache.persistent_heap == heap {
@@ -308,6 +315,7 @@ pub unsafe fn lbDvd_80017644(heap: i32) -> bool {
 }
 
 pub unsafe extern "C" fn lbDvd_80017700(arg0: i32) {
+    melee_core::ct!("lbDvd_80017700");
     while lbDvd_80017644(arg0) {
         ext::lb_800195D0();
     }
@@ -324,6 +332,7 @@ pub unsafe extern "C" fn lbDvd_80017740(
     arg7: u8,
     effect_index: i32,
 ) -> *mut c_void {
+    melee_core::ct!("lbDvd_80017740");
     let mut free_index: i32 = -1;
 
     for i in 0..ENTRIES {
@@ -371,11 +380,13 @@ pub unsafe extern "C" fn lbDvd_80017740(
 }
 
 pub unsafe extern "C" fn lbDvd_800178E8(arg0: i32, name: *const i8, arg2: i32, arg3: i32, arg4: i32, arg5: i32, arg6: i32, arg7: u8, arg8: i32) {
+    melee_core::ct!("lbDvd_800178E8");
     let entry = ext::DVDConvertPathToEntrynum(ext::lbFileGetFullName(name));
     lbDvd_80017740(arg0, entry, arg2, arg3, arg4 as u32, arg5, arg6, arg7, arg8);
 }
 
 pub unsafe extern "C" fn lbDvd_80017960() {
+    melee_core::ct!("lbDvd_80017960");
     let game_cache = &raw mut preloadCache.new_scene.game_cache;
 
     if (*game_cache).mode_kind as u32 != GM_COUNT {
@@ -438,6 +449,7 @@ unsafe fn lbDvd_CleanupPreloadHeap(heap: i32) -> i32 {
 }
 
 pub unsafe extern "C" fn lbDvd_CachePreloadedFile(index: i32) {
+    melee_core::ct!("lbDvd_CachePreloadedFile");
     let pe = entry_at(index as usize);
 
     let heap = lbDvd_CleanupPreloadHeap((*pe).heap as i32);
@@ -474,6 +486,7 @@ pub unsafe extern "C" fn lbDvd_CachePreloadedFile(index: i32) {
 }
 
 pub unsafe extern "C" fn lbDvd_80017CC4() {
+    melee_core::ct!("lbDvd_80017CC4");
     let mut file_to_cache: i32 = -1;
     let mut file_already_cached: i32 = -1;
     let mut max_load_score: i32 = 0;
@@ -533,6 +546,7 @@ pub unsafe extern "C" fn lbDvd_80017CC4() {
 }
 
 pub unsafe extern "C" fn lbDvd_80017E64(key: i32, index: usize, value: *mut c_void, cancelflag: bool) {
+    melee_core::ct!("lbDvd_80017E64");
     let pe = entry_at(index);
     assert!(!cancelflag, "lbdvd.c:827 0");
     (*pe).state = 3;
@@ -540,6 +554,7 @@ pub unsafe extern "C" fn lbDvd_80017E64(key: i32, index: usize, value: *mut c_vo
 }
 
 pub unsafe extern "C" fn lbDvd_GetPreloadedArchive(entry_num: isize) -> *mut c_void {
+    melee_core::ct!("lbDvd_GetPreloadedArchive");
     let interrupt = ext::OSDisableInterrupts();
 
     let mut i = 0usize;
@@ -648,6 +663,7 @@ unsafe fn cstr_bytes<'a>(p: *const i8) -> &'a [u8] {
 }
 
 pub unsafe extern "C" fn lbDvd_8001819C(basename: *const i8) -> *mut HSD_Archive {
+    melee_core::ct!("lbDvd_8001819C");
     let filename = ext::lbFileGetFullName(basename);
     let archive = lbDvd_GetPreloadedArchive(ext::DVDConvertPathToEntrynum(filename) as isize) as *mut HSD_Archive;
     if ext::DbLevel != DbLKind_Master && preloadCache.preloaded != 0 && archive.is_null() {
@@ -684,14 +700,17 @@ pub unsafe extern "C" fn lbDvd_8001819C(basename: *const i8) -> *mut HSD_Archive
 }
 
 pub unsafe extern "C" fn lbDvd_GetPreloadCacheScene() -> *mut PreloadedGameModeState {
+    melee_core::ct!("lbDvd_GetPreloadCacheScene");
     &raw mut preloadCache.scene
 }
 
 pub unsafe extern "C" fn lbDvd_8001823C() {
+    melee_core::ct!("lbDvd_8001823C");
     (*lbDvd_GetPreloadCacheScene()).mode_scene_changes = preloadCache.new_scene.mode_scene_changes.wrapping_add(1);
 }
 
 pub unsafe extern "C" fn lbDvd_80018254() {
+    melee_core::ct!("lbDvd_80018254");
     if scene_eq(&preloadCache.new_scene, &preloadCache.scene) {
         return;
     }
@@ -773,6 +792,7 @@ unsafe fn inline3(entry: *mut PreloadEntry) -> (bool, bool) {
 }
 
 pub unsafe extern "C" fn lbDvd_800187F4(entry_num: i32) -> i32 {
+    melee_core::ct!("lbDvd_800187F4");
     let mut result = 0;
     let enabled = ext::OSDisableInterrupts(); // C `bool` is `int` (MSL stdbool.h)
     let persistent_heap = preloadCache.persistent_heap;
@@ -827,6 +847,7 @@ unsafe fn lbDvd_800189EC(entry_num: i32) {
 }
 
 pub unsafe extern "C" fn lbDvd_80018A2C(arg0: u8) -> i32 {
+    melee_core::ct!("lbDvd_80018A2C");
     let mut result = 0;
     let enabled = ext::OSDisableInterrupts(); // C `bool` is `int` (MSL stdbool.h)
 
@@ -884,12 +905,14 @@ pub unsafe extern "C" fn lbDvd_80018A2C(arg0: u8) -> i32 {
 }
 
 pub unsafe extern "C" fn lbDvd_80018C2C(arg0: u8) {
+    melee_core::ct!("lbDvd_80018C2C");
     while lbDvd_80018A2C(arg0) == 1 {
         ext::lb_800195D0();
     }
 }
 
 pub unsafe extern "C" fn lbDvd_80018C6C() {
+    melee_core::ct!("lbDvd_80018C6C");
     match preloadCache.persistent_heaps {
         1 => {
             (*lbDvd_GetPreloadCacheScene()).is_heap_persistent[0] = 1;
@@ -919,6 +942,7 @@ unsafe fn inline0() {
 }
 
 pub unsafe extern "C" fn lbDvd_80018CF4(arg0: i32) {
+    melee_core::ct!("lbDvd_80018CF4");
     if preloadCache.persistent_heaps != arg0 {
         (*lbDvd_GetPreloadCacheScene()).mode_scene_changes = preloadCache.new_scene.mode_scene_changes.wrapping_add(1);
     }
@@ -969,10 +993,12 @@ pub unsafe extern "C" fn lbDvd_80018CF4(arg0: i32) {
 }
 
 pub unsafe extern "C" fn lbDvd_80018F58(value: bool) {
+    melee_core::ct!("lbDvd_80018F58");
     preloadCache.preloaded = value as i32;
 }
 
 pub unsafe extern "C" fn lbDvd_80018F68() {
+    melee_core::ct!("lbDvd_80018F68");
     preloadCache.persistent_heaps = 0;
     *lbDvd_GetPreloadCacheScene() = preload_cache_scene;
     preloadCache.new_scene = preload_cache_scene;

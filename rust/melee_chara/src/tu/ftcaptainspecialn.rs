@@ -62,6 +62,7 @@ fn stick_get_dir(x1: f32, x2: f32) -> f32 {
 
 /// `ftCaptain_SpecialN_CreateWindEffect` (static inline): Ganondorf's wind puffs.
 pub fn ftCaptain_SpecialN_CreateWindEffect(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCaptain_SpecialN_CreateWindEffect");
     unsafe {
         let fp = fpp(gobj);
         let cur_frame = (*fp).cur_anim_frame as i32;
@@ -84,6 +85,7 @@ pub fn ftCaptain_SpecialN_CreateWindEffect(gobj: *mut HSD_GObj) {
 
 /// `ftCaptain_SpecialN_GetAngleVel` (static): stick angle of the aerial punch, in radians.
 pub fn ftCaptain_SpecialN_GetAngleVel(fp: &Fighter) -> f32 {
+    melee_core::ct!("ftCaptain_SpecialN_GetAngleVel");
     let da: &ftCaptain_DatAttrs = unsafe { &*(fp.dat_attrs as *const ftCaptain_DatAttrs) };
     let mut stick_y = stick_get_dir(fp.input.lstick[0].y, 0.0);
     let max = da.specialn_stick_range_y_pos;
@@ -103,6 +105,7 @@ pub fn ftCaptain_SpecialN_GetAngleVel(fp: &Fighter) -> f32 {
 }
 
 pub fn ftCa_SpecialN_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialN_Anim");
     ftCaptain_SpecialN_CreateWindEffect(gobj);
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         st::ft_8008A2BC(gobj);
@@ -110,21 +113,24 @@ pub fn ftCa_SpecialN_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCa_SpecialAirN_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialAirN_Anim");
     ftCaptain_SpecialN_CreateWindEffect(gobj);
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         st::ftCo_Fall_Enter(gobj);
     }
 }
 
-pub fn ftCa_SpecialN_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftCa_SpecialN_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCa_SpecialN_IASA");}
 
 /// `ftCa_SpecialAirN_IASA`: the fighter-only body is [`special_air_n_iasa`].
 pub fn ftCa_SpecialAirN_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialAirN_IASA");
     unsafe { special_air_n_iasa(&mut *fpp(gobj)) }
 }
 
 /// Body of `ftCa_SpecialAirN_IASA`: aim the punch on the frame the script sets cmd_vars[0].
 pub fn special_air_n_iasa(fp: &mut Fighter) {
+    melee_core::ct!("special_air_n_iasa");
     let da: &ftCaptain_DatAttrs = unsafe { &*(fp.dat_attrs as *const ftCaptain_DatAttrs) };
     if fp.cmd_vars[0] != 0 {
         fp.cmd_vars[0] = 0;
@@ -136,6 +142,7 @@ pub fn special_air_n_iasa(fp: &mut Fighter) {
 
 /// `doPhys` (static inline): the punch effect on the script's throw_flags_b1 pulse.
 pub fn doPhys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("doPhys");
     unsafe {
         let fp = fpp(gobj);
         let throw_b1 = if (*fp).anon_2210.anon_0.throw_flags_b1() != 0 {
@@ -165,11 +172,13 @@ pub fn doPhys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCa_SpecialN_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialN_Phys");
     doPhys(gobj);
     st::ft_80084FA8(gobj);
 }
 
 pub fn ftCa_SpecialAirN_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialAirN_Phys");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftCaptain_DatAttrs;

@@ -96,6 +96,7 @@ pub static mut gm_Mode_StaminaVs_States: [GameModeState; 4] = unsafe {
 
 /// CSS enter: seed the CSS data from the mode's VS data, then the Atlas select (TARGET_PC).
 pub unsafe extern "C" fn gm_801B91C8(state: *mut GameModeState) {
+    melee_core::ct!("gm_801B91C8");
     let vs = stamina();
     let css = ext::gm_GetGameModeStateEnterData(state) as *mut CSSData;
     (*css).match_type = 2;
@@ -106,16 +107,19 @@ pub unsafe extern "C" fn gm_801B91C8(state: *mut GameModeState) {
 }
 
 pub unsafe extern "C" fn gm_801B922C(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B922C");
     ext::gmVsMelee_ExitCss(scene, stamina());
 }
 
 pub unsafe extern "C" fn gm_801B9254(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B9254");
     ext::gmVsMelee_EnterSss(scene, stamina());
     ext::gmFrontend_AtlasSelect(scene, 1, null());
 }
 
 /// SSS exit: with `start_game` copy the SSS result back and queue the stage music, else go back to state 0.
 pub unsafe extern "C" fn gm_801B927C(state: *mut GameModeState) {
+    melee_core::ct!("gm_801B927C");
     let vs = stamina();
     let sss = ext::gm_GetGameModeStateExitData(state) as *mut SSSData;
     if (*sss).start_game != 0 {
@@ -132,6 +136,7 @@ pub unsafe extern "C" fn gm_801B927C(state: *mut GameModeState) {
 
 /// VS enter: 1 stock, 150 HP, no timer, `fn_801B9850` as the match-start hook.
 pub unsafe extern "C" fn gm_801B931C(state: *mut GameModeState) {
+    melee_core::ct!("gm_801B931C");
     let vs = stamina();
     let start = ext::gm_GetGameModeStateEnterData(state) as *mut StartMeleeData;
 
@@ -161,22 +166,26 @@ pub unsafe extern "C" fn gm_801B931C(state: *mut GameModeState) {
 }
 
 pub unsafe extern "C" fn gm_801B9560(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801B9560");
     let vs = stamina();
     ext::gm_80168710(&raw mut ext::gmVsMelee_VsExitInfo.match_end, vs);
     ext::gmVsMelee_ExitVs(scene, 0, 0);
 }
 
 pub unsafe extern "C" fn gm_Mode_StaminaVs_OnInit() {
+    melee_core::ct!("gm_Mode_StaminaVs_OnInit");
     ext::gm_InitVsMode(stamina());
 }
 
 pub unsafe extern "C" fn gm_Mode_StaminaVs_OnLoad() {
+    melee_core::ct!("gm_Mode_StaminaVs_OnLoad");
     ext::gm_SetGameSpeed(1.0);
     ext::gmVsMelee_ResetKOCounts();
 }
 
 /// Number of players / teams remaining.
 pub unsafe extern "C" fn gm_801B9600() -> i32 {
+    melee_core::ct!("gm_801B9600");
     let mut count = 0;
     let mut i: i32 = 0;
     while i < 4 {
@@ -206,6 +215,7 @@ pub unsafe extern "C" fn gm_801B9600() -> i32 {
 
 /// Handles player elimination and game end (a GObj proc).
 pub unsafe extern "C" fn fn_801B96E8(_unused: *mut HSD_GObj) {
+    melee_core::ct!("fn_801B96E8");
     let mut i: i32 = 0;
     while i < 4 {
         if ext::Player_GetPlayerSlotType(i) != Gm_PKind_NA {
@@ -233,6 +243,7 @@ pub unsafe extern "C" fn fn_801B96E8(_unused: *mut HSD_GObj) {
 
 /// Called on player `slot`'s death with `cond` (the stock-loss flag): start the slow-mo and mark eliminated.
 pub unsafe extern "C" fn gm_801B97C4(slot: i32, cond: i32) {
+    melee_core::ct!("gm_801B97C4");
     if slot < 4 && cond == 0 {
         let elim = (&raw mut gm_804975F8.eliminated).cast::<i32>().offset(slot as isize);
         if *elim == 0 {
@@ -246,6 +257,7 @@ pub unsafe extern "C" fn gm_801B97C4(slot: i32, cond: i32) {
 
 /// Match-start hook: reset the counters and start the elimination proc.
 pub unsafe extern "C" fn fn_801B9850() {
+    melee_core::ct!("fn_801B9850");
     gm_804975F8.done_counter = 0;
     let mut i: i32 = 0;
     while i < 4 {

@@ -77,6 +77,7 @@ unsafe fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD_GOb
 pub static mut it_803F70B8: [ItemStateTable; 1] = [st_row(0, pred_b(itSeakvanish_UnkMotion0_Anim), None, None)];
 
 pub unsafe extern "C" fn it_802B1C60(parent: *mut HSD_GObj, pos: *mut Vec3, dir: f32) -> *mut Item_GObj {
+    melee_core::ct!("it_802B1C60");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
     spawn.kind = It_Kind_Seak_Vanish;
@@ -92,10 +93,12 @@ pub unsafe extern "C" fn it_802B1C60(parent: *mut HSD_GObj, pos: *mut Vec3, dir:
 }
 
 pub unsafe extern "C" fn itSeakVanish_Logic42_DmgDealt(_item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSeakVanish_Logic42_DmgDealt");
     false
 }
 
 pub unsafe extern "C" fn it_802B1D40(item_gobj: *mut Item_GObj, owner: *mut HSD_GObj) {
+    melee_core::ct!("it_802B1D40");
     let item = GET_ITEM(item_gobj);
     (*item).owner = owner;
     (*item).xD44_lifeTimer = 60.0;
@@ -108,9 +111,11 @@ pub unsafe extern "C" fn it_802B1D40(item_gobj: *mut Item_GObj, owner: *mut HSD_
 }
 
 pub unsafe extern "C" fn itSeakvanish_UnkMotion0_Anim(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itSeakvanish_UnkMotion0_Anim");
     ext::it_802751D8(item_gobj) != 0
 }
 
 pub unsafe extern "C" fn it_802B1DCC(item_gobj: *mut Item_GObj, gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802B1DCC");
     ext::it_8026B894(item_gobj, gobj);
 }

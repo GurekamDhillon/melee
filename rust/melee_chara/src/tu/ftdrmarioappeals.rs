@@ -61,6 +61,7 @@ pub mod ext {
 }
 
 pub fn ftDr_AppealS_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDr_AppealS_Anim");
     unsafe {
         let mut fp = (*gobj).user_data as *mut Fighter;
         let mut sp18 = Vec3::zeroed();
@@ -103,9 +104,11 @@ pub fn ftDr_AppealS_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftDr_AppealS_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDr_AppealS_IASA");
     ext::ftCo_AppealS_IASA(gobj);
 }
 
 pub fn ftDr_AppealS_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDr_AppealS_Coll");
     ext::ft_80084280(gobj);
 }

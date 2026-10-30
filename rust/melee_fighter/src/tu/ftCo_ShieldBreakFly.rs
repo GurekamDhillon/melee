@@ -54,6 +54,7 @@ fn spawn_ef(g: G, joint: *mut HSD_JObj, arg2: u32, arg3: u32) {
 }
 
 pub fn ftCo_80098B20(g: G) {
+    melee_core::ct!("ftCo_80098B20");
     ext::ftCommon_8007D5D4(fp(g));
     ext::Fighter_ChangeMotionState(g, 205, 64, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ext::ftAnim_8006EBA4(g);
@@ -71,21 +72,25 @@ pub fn ftCo_80098B20(g: G) {
 }
 
 pub fn ftCo_ShieldBreakFly_Anim(g: G) {
+    melee_core::ct!("ftCo_ShieldBreakFly_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ftCo_80098D90(g);
     }
 }
 
-pub fn ftCo_ShieldBreakFly_IASA(_g: G) {}
+pub fn ftCo_ShieldBreakFly_IASA(_g: G) { melee_core::ct!("ftCo_ShieldBreakFly_IASA");}
 
 pub fn ftCo_ShieldBreakFly_Phys(g: G) {
+    melee_core::ct!("ftCo_ShieldBreakFly_Phys");
     ext::ft_80084EEC(g);
 }
 
 pub fn ftCo_ShieldBreakFly_Coll(g: G) {
+    melee_core::ct!("ftCo_ShieldBreakFly_Coll");
     ext::ft_80082C74(g, crate::tu::ftCo_ShieldBreakDown::ftCo_80098E3C);
 }
 
 pub fn ftCo_80098C9C(g: G) {
+    melee_core::ct!("ftCo_80098C9C");
     ftCo_80098B20(g);
 }

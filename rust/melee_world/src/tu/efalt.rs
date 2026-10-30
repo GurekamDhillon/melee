@@ -42,11 +42,13 @@ pub unsafe trait EfAltHost: EfHost {
 /// 0x49D's child offset: `HSD_JObjGetTranslationZ(jobj) - 6.0f`.
 #[inline]
 pub fn offset_z(z: f32) -> f32 {
+    melee_core::ct!("offset_z");
     z - 6.0
 }
 
 /// efAlt_Spawn.
 pub unsafe fn efAlt_Spawn<H: EfAltHost + ?Sized>(h: &mut H, gfx_id: i32, gobj: *mut HSD_GObj, vl: &mut VaList<'_>) -> *mut c_void {
+    melee_core::ct!("efAlt_Spawn");
     let mut ret: *mut c_void = null_mut();
     h.ef_data().load_kind = EF_LOADKIND_SYNC;
 

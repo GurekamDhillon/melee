@@ -368,18 +368,21 @@ unsafe fn GET_JOBJ(gobj: *mut HSD_GObj) -> *mut HSD_JObj {
 /// `static inline rand_zero`
 #[inline(always)]
 pub unsafe fn rand_zero(n: i32) -> bool {
+    melee_core::ct!("rand_zero");
     (if n != 0 { ext::HSD_Randi(n) } else { 0 }) == 0
 }
 
 /// `static inline grIceMt_GetRandomIndex`
 #[inline(always)]
 pub unsafe fn grIceMt_GetRandomIndex(max: i32, list: *const i32) -> i32 {
+    melee_core::ct!("grIceMt_GetRandomIndex");
     *list.add((if max != 0 { ext::HSD_Randi(max) } else { 0 }) as usize)
 }
 
 /// `static inline grIceMt_GetRandomTimer`
 #[inline(always)]
 pub unsafe fn grIceMt_GetRandomTimer(out: *mut i32) {
+    melee_core::ct!("grIceMt_GetRandomTimer");
     let mut a = (*yakumono_param).x36 as i32;
     let b = (*yakumono_param).x38 as i32;
     if a > b {
@@ -393,10 +396,11 @@ pub unsafe fn grIceMt_GetRandomTimer(out: *mut i32) {
 }
 
 /// 1F6868
-pub unsafe extern "C" fn grIceMt_801F6868(_id: i32) {}
+pub unsafe extern "C" fn grIceMt_801F6868(_id: i32) { melee_core::ct!("grIceMt_801F6868");}
 
 /// 1F686C
 pub unsafe extern "C" fn grIceMt_801F686C() {
+    melee_core::ct!("grIceMt_801F686C");
     let mut field30: i32 = 0;
     let mut field29: i32 = 0;
     let mut field28: i32 = 0;
@@ -497,6 +501,7 @@ pub unsafe extern "C" fn grIceMt_801F686C() {
 
 /// 1F7080
 pub unsafe extern "C" fn grIceMt_801F7080() {
+    melee_core::ct!("grIceMt_801F7080");
     if !grIm_804D69E8.is_null() {
         ext::Ground_801C4A08(grIm_804D69E8);
     }
@@ -529,10 +534,11 @@ pub unsafe extern "C" fn grIceMt_801F7080() {
 }
 
 /// 1F71DC
-pub unsafe extern "C" fn grIceMt_801F71DC() {}
+pub unsafe extern "C" fn grIceMt_801F71DC() { melee_core::ct!("grIceMt_801F71DC");}
 
 /// 1F71E8
 pub unsafe extern "C" fn setupStageCallbacks(gobj_id: i32) -> *mut Ground_GObj {
+    melee_core::ct!("setupStageCallbacks");
     let callbacks = &raw mut stage_callbacks[gobj_id as usize];
     let gobj = ext::Ground_GetStageGObj(gobj_id);
 
@@ -559,6 +565,7 @@ pub unsafe extern "C" fn setupStageCallbacks(gobj_id: i32) -> *mut Ground_GObj {
 
 /// 1F72D4
 pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj0_OnInit");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
     let mut jobj = ext::Ground_801C3FA4(gobj, 18);
@@ -586,18 +593,20 @@ pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut Ground_GObj) {
 }
 
 /// 1F75E4
-pub unsafe extern "C" fn stageGObj0_GObjProc(_arg0: *mut Ground_GObj) {}
+pub unsafe extern "C" fn stageGObj0_GObjProc(_arg0: *mut Ground_GObj) { melee_core::ct!("stageGObj0_GObjProc");}
 
 /// 1F75E8
-pub unsafe extern "C" fn stageGObj0_Callback3(_arg0: *mut Ground_GObj) {}
+pub unsafe extern "C" fn stageGObj0_Callback3(_arg0: *mut Ground_GObj) { melee_core::ct!("stageGObj0_Callback3");}
 
 /// 1F75EC
 pub unsafe extern "C" fn fn_801F75EC(gobj: *mut Ground_GObj) {
+    melee_core::ct!("fn_801F75EC");
     (*GET_GROUND(gobj)).u.icemt9.x14 = 0;
 }
 
 /// 1F75FC
 pub unsafe extern "C" fn stageGObj9_OnInit(gobj: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj9_OnInit");
     let gp = GET_GROUND(gobj);
 
     ext::memzero(&raw mut (*gp).u.icemt9.x18 as *mut c_void, core::mem::size_of_val(&(*gp).u.icemt9.x18) as i32);
@@ -636,6 +645,7 @@ pub unsafe extern "C" fn stageGObj9_OnInit(gobj: *mut Ground_GObj) {
 
 /// 1F7728
 pub unsafe extern "C" fn stageGObj9_GObjProc(gobj: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj9_GObjProc");
     let mut y: f32 = 0.0;
     let gp = (*gobj).user_data as *mut Ground;
     if (*gp).u.icemt9.x14 == 0 {
@@ -648,10 +658,11 @@ pub unsafe extern "C" fn stageGObj9_GObjProc(gobj: *mut Ground_GObj) {
 }
 
 /// 1F77AC
-pub unsafe extern "C" fn stageGObj9_Callback3(_gobj: *mut Ground_GObj) {}
+pub unsafe extern "C" fn stageGObj9_Callback3(_gobj: *mut Ground_GObj) { melee_core::ct!("stageGObj9_Callback3");}
 
 /// 1F77B0
 pub unsafe extern "C" fn stageGObj10_UnkGroundCallback(gobj: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj10_UnkGroundCallback");
     let gp = GET_GROUND(gobj);
     let mut cb: mpLib_JointCollisionCallback = None;
     let mut user_data_out: *mut c_void = null_mut();
@@ -668,6 +679,7 @@ pub unsafe extern "C" fn stageGObj10_UnkGroundCallback(gobj: *mut Ground_GObj) {
 
 /// 1F785C
 pub unsafe extern "C" fn stageGObj10_OnInit(gobj: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj10_OnInit");
     let gp = GET_GROUND(gobj);
     let fi = (*yakumono_param).field_ixs;
 
@@ -702,6 +714,7 @@ pub unsafe extern "C" fn stageGObj10_OnInit(gobj: *mut Ground_GObj) {
 
 /// 1F796C
 pub unsafe extern "C" fn stageGObj10_Callback1(gobj: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("stageGObj10_Callback1");
     let gp = (*gobj).user_data as *mut Ground;
 
     if (*gp).u.icemt10.x0.ids.under != -1 {
@@ -721,6 +734,7 @@ pub unsafe extern "C" fn stageGObj10_Callback1(gobj: *mut Ground_GObj) -> i32 {
 
 /// 1F7A2C
 pub unsafe extern "C" fn stageGObj10_GObjProc(arg0: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj10_GObjProc");
     let gp = (*arg0).user_data as *mut Ground;
     let mut sp30: f32 = 0.0;
     let mut sp24: Vec3 = core::mem::zeroed();
@@ -806,10 +820,11 @@ pub unsafe extern "C" fn stageGObj10_GObjProc(arg0: *mut Ground_GObj) {
 }
 
 /// 1F7D90
-pub unsafe extern "C" fn stageGObj10_Callback3(_gobj: *mut Ground_GObj) {}
+pub unsafe extern "C" fn stageGObj10_Callback3(_gobj: *mut Ground_GObj) { melee_core::ct!("stageGObj10_Callback3");}
 
 /// 1F7D94
 pub unsafe extern "C" fn stageGObj1_OnInit(gobj: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj1_OnInit");
     let gp = GET_GROUND(gobj);
     let mut sp14: [i16; 2] = [1, 2];
     ext::Ground_InitMapColl((*gobj).hsd_obj as *mut HSD_JObj, (*gp).map_id as i32);
@@ -833,6 +848,7 @@ pub unsafe extern "C" fn stageGObj1_OnInit(gobj: *mut Ground_GObj) {
 
 /// 1F7EE8
 pub unsafe extern "C" fn stageGObj1_GObjProc(arg0: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj1_GObjProc");
     grIceMt_801F98A8(arg0);
     ext::Ground_UpdateMapColl(arg0);
 }
@@ -850,11 +866,13 @@ unsafe fn destroy_items(gobj: *mut Ground_GObj, n: usize) {
 
 /// 1F7F1C
 pub unsafe extern "C" fn stageGObj1_Callback3(gobj: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj1_Callback3");
     destroy_items(gobj, 2);
 }
 
 /// 1F7F70
 pub unsafe extern "C" fn stageGObj2_OnInit(arg0: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj2_OnInit");
     let gp = GET_GROUND(arg0);
     let mut sp14: [i16; 2] = [1, 2];
     ext::Ground_InitMapColl((*arg0).hsd_obj as *mut HSD_JObj, (*gp).map_id as i32);
@@ -884,6 +902,7 @@ pub unsafe extern "C" fn stageGObj2_OnInit(arg0: *mut Ground_GObj) {
 
 /// 1F815C
 pub unsafe extern "C" fn stageGObj2_GObjProc(param1: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj2_GObjProc");
     let gp = GET_GROUND(param1);
     grIceMt_801F929C(param1, x100_ptr(gp) as *mut c_void);
     grIceMt_801F929C(param1, x100_ptr(gp).add(4 + 3) as *mut c_void);
@@ -893,11 +912,13 @@ pub unsafe extern "C" fn stageGObj2_GObjProc(param1: *mut Ground_GObj) {
 
 /// 1F81B4
 pub unsafe extern "C" fn stageGObj2_Callback3(gobj: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj2_Callback3");
     destroy_items(gobj, 2);
 }
 
 /// 1F8208
 pub unsafe extern "C" fn stageGObj3_OnInit(arg0: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj3_OnInit");
     let gp = GET_GROUND(arg0);
     let mut sp14: [i16; 4] = [1, 2, 3, 4];
     ext::Ground_InitMapColl((*arg0).hsd_obj as *mut HSD_JObj, (*gp).map_id as i32);
@@ -921,17 +942,20 @@ pub unsafe extern "C" fn stageGObj3_OnInit(arg0: *mut Ground_GObj) {
 
 /// 1F8364
 pub unsafe extern "C" fn stageGObj3_GObjProc(arg0: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj3_GObjProc");
     grIceMt_801F98A8(arg0);
     ext::Ground_UpdateMapColl(arg0);
 }
 
 /// 1F8398
 pub unsafe extern "C" fn stageGObj3_Callback3(gobj: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj3_Callback3");
     destroy_items(gobj, 4);
 }
 
 /// 1F83EC
 pub unsafe extern "C" fn stageGObj4_OnInit(arg0: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj4_OnInit");
     let gp = GET_GROUND(arg0);
     let jobj = (*arg0).hsd_obj as *mut HSD_JObj;
     let mut sp14: [i16; 4] = [1, 2, 3, 4];
@@ -962,6 +986,7 @@ pub unsafe extern "C" fn stageGObj4_OnInit(arg0: *mut Ground_GObj) {
 
 /// 1F85C4
 pub unsafe extern "C" fn stageGObj4_GObjProc(gobj: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj4_GObjProc");
     let gp = (*gobj).user_data as *mut Ground;
     grIceMt_801F929C(gobj, x100_ptr(gp).add(4) as *mut c_void);
     grIceMt_801F98A8(gobj);
@@ -970,11 +995,13 @@ pub unsafe extern "C" fn stageGObj4_GObjProc(gobj: *mut Ground_GObj) {
 
 /// 1F8608
 pub unsafe extern "C" fn stageGObj4_Callback3(gobj: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj4_Callback3");
     destroy_items(gobj, 4);
 }
 
 /// 1F865C
 pub unsafe extern "C" fn stageGObj5_OnInit(arg0: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj5_OnInit");
     let gp = GET_GROUND(arg0);
     let mut sp14: [i16; 5] = [1, 2, 3, 4, 5];
     ext::Ground_InitMapColl((*arg0).hsd_obj as *mut HSD_JObj, (*gp).map_id as i32);
@@ -998,17 +1025,20 @@ pub unsafe extern "C" fn stageGObj5_OnInit(arg0: *mut Ground_GObj) {
 
 /// 1F87C8
 pub unsafe extern "C" fn stageGObj5_GObjProc(param1: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj5_GObjProc");
     grIceMt_801F98A8(param1);
     ext::Ground_UpdateMapColl(param1);
 }
 
 /// 1F87FC: destroys the HSD_GObj* stored in the first five block slots
 pub unsafe extern "C" fn stageGObj5_Callback3(gobj: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj5_Callback3");
     destroy_items(gobj, 5);
 }
 
 /// 1F8850
 pub unsafe extern "C" fn stageGObj6_OnInit(arg0: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj6_OnInit");
     let gp = GET_GROUND(arg0);
     let mut sp14: [i16; 4] = [1, 2, 3, 4];
     ext::Ground_InitMapColl((*arg0).hsd_obj as *mut HSD_JObj, (*gp).map_id as i32);
@@ -1032,17 +1062,20 @@ pub unsafe extern "C" fn stageGObj6_OnInit(arg0: *mut Ground_GObj) {
 
 /// 1F89AC
 pub unsafe extern "C" fn stageGObj6_GObjProc(param1: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj6_GObjProc");
     grIceMt_801F98A8(param1);
     ext::Ground_UpdateMapColl(param1);
 }
 
 /// 1F89E0
 pub unsafe extern "C" fn stageGObj6_Callback3(gobj: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj6_Callback3");
     destroy_items(gobj, 4);
 }
 
 /// 1F8A34
 pub unsafe extern "C" fn stageGObj8_OnInit(gobj: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj8_OnInit");
     let gp = GET_GROUND(gobj);
 
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
@@ -1060,6 +1093,7 @@ pub unsafe extern "C" fn stageGObj8_OnInit(gobj: *mut Ground_GObj) {
 
 /// 1F8B10
 pub unsafe extern "C" fn stageGObj8_GObjProc(arg0: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj8_GObjProc");
     let gp = GET_GROUND(arg0);
     let mul = 0.3f32 * (*gp).u.icemt_bg.x0;
     let jobj = ext::Ground_801C3FA4(arg0, 8);
@@ -1080,10 +1114,11 @@ pub unsafe extern "C" fn stageGObj8_GObjProc(arg0: *mut Ground_GObj) {
 }
 
 /// 1F8C60
-pub unsafe extern "C" fn stageGObj8_Callback3(_arg0: *mut Ground_GObj) {}
+pub unsafe extern "C" fn stageGObj8_Callback3(_arg0: *mut Ground_GObj) { melee_core::ct!("stageGObj8_Callback3");}
 
 /// 1F8C64
 pub unsafe extern "C" fn fn_801F8C64(gobj: *mut Item_GObj, _u1: *mut Ground, _u2: *mut Vec3, _u3: *mut HSD_GObj, _u4: f32) {
+    melee_core::ct!("fn_801F8C64");
     let mut pos: Vec3 = core::mem::zeroed();
     let it = (*gobj).user_data as *mut Item;
     ext::grMaterial_801C8E28(gobj);
@@ -1098,6 +1133,7 @@ pub unsafe extern "C" fn fn_801F8C64(gobj: *mut Item_GObj, _u1: *mut Ground, _u2
 /// 1F8CDC: creates the material items and attaches them to the platform JObjs of the map
 pub unsafe extern "C" fn grIceMt_801F8CDC(gobj: *mut Ground_GObj, joint_indices: *mut i16, block_num: i32,
                                           output_array: *mut *mut HSD_GObj) {
+    melee_core::ct!("grIceMt_801F8CDC");
     let gp = GET_GROUND(gobj);
     let mut parent_jobjs: [*mut HSD_JObj; 20] = [null_mut(); 20];
 
@@ -1135,6 +1171,7 @@ pub unsafe extern "C" fn grIceMt_801F8CDC(gobj: *mut Ground_GObj, joint_indices:
 
 /// 1F8E58
 pub unsafe extern "C" fn fn_801F8E58(arg0: *mut Ground_GObj, out: *mut i32) -> i32 {
+    melee_core::ct!("fn_801F8E58");
     let gp = (*arg0).user_data as *mut Ground;
     let mut list: [i32; 12] = [0; 12];
     let mut max: i32 = 0;
@@ -1162,6 +1199,7 @@ pub unsafe extern "C" fn fn_801F8E58(arg0: *mut Ground_GObj, out: *mut i32) -> i
 
 /// 1F9038
 pub unsafe extern "C" fn fn_801F9038(gobj: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("fn_801F9038");
     let gp = (*gobj).user_data as *mut Ground;
     let mut idx: usize;
 
@@ -1188,6 +1226,7 @@ pub unsafe extern "C" fn fn_801F9038(gobj: *mut Ground_GObj) -> i32 {
 
 /// 1F9150
 pub unsafe extern "C" fn fn_801F9150(arg0: *mut Ground_GObj, out: *mut i32) -> i32 {
+    melee_core::ct!("fn_801F9150");
     let gp = (*arg0).user_data as *mut Ground;
     let next: i16 = 0;
 
@@ -1204,6 +1243,7 @@ pub unsafe extern "C" fn fn_801F9150(arg0: *mut Ground_GObj, out: *mut i32) -> i
 
 /// 1F91A8
 pub unsafe extern "C" fn fn_801F91A8(gobj: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("fn_801F91A8");
     let gp = (*gobj).user_data as *mut Ground;
     let xac = (*yakumono_param).field_ixs;
     let index = *xac.offset((*gp).u.icemt.x1C as isize) as i32;
@@ -1218,6 +1258,7 @@ pub unsafe extern "C" fn fn_801F91A8(gobj: *mut Ground_GObj) -> i32 {
 /// 1F91EC
 pub unsafe extern "C" fn grIceMt_801F91EC(param_1: *mut HSD_GObj, param_2: *mut i16, param_3: i32, param_4: i32,
                                           param_5: i32, param_6: i32, param_7: i32, param_8: mpLib_JointCollisionCallback) {
+    melee_core::ct!("grIceMt_801F91EC");
     let gp = GET_GROUND(param_1);
     *param_2 = 0;
     *param_2.add(1) = 0;
@@ -1235,6 +1276,7 @@ pub unsafe extern "C" fn grIceMt_801F91EC(param_1: *mut HSD_GObj, param_2: *mut 
 
 /// 1F929C
 pub unsafe extern "C" fn grIceMt_801F929C(arg0: *mut HSD_GObj, arg1: *mut c_void) {
+    melee_core::ct!("grIceMt_801F929C");
     let p = arg1 as *mut i16;
 
     if *p != 0 {
@@ -1271,6 +1313,7 @@ unsafe fn break_start(coll: *mut CollData, s: *mut i16, map: i32) {
 /// 1F9338
 pub unsafe extern "C" fn fn_801F9338(user_data: *mut c_void, joint_id: i32, coll: *mut CollData, coll_x50: i32,
                                      ground_kind: u32, delta_y: f32) {
+    melee_core::ct!("fn_801F9338");
     let gp = user_data as *mut Ground;
     break_start(coll, x100_ptr(gp), 2);
     onJointCollision(user_data, joint_id, coll, coll_x50, ground_kind, delta_y);
@@ -1279,6 +1322,7 @@ pub unsafe extern "C" fn fn_801F9338(user_data: *mut c_void, joint_id: i32, coll
 /// 1F9448
 pub unsafe extern "C" fn fn_801F9448(user_data: *mut c_void, joint_id: i32, coll: *mut CollData, coll_x50: i32,
                                      ground_kind: u32, delta_y: f32) {
+    melee_core::ct!("fn_801F9448");
     let gp = user_data as *mut Ground;
     break_start(coll, x100_ptr(gp).add(4 + 3), 2);
     onJointCollision(user_data, joint_id, coll, coll_x50, ground_kind, delta_y);
@@ -1287,6 +1331,7 @@ pub unsafe extern "C" fn fn_801F9448(user_data: *mut c_void, joint_id: i32, coll
 /// 1F9558
 pub unsafe extern "C" fn fn_801F9558(user_data: *mut c_void, joint_id: i32, coll: *mut CollData, coll_x50: i32,
                                      ground_kind: u32, delta_y: f32) {
+    melee_core::ct!("fn_801F9558");
     let gp = user_data as *mut Ground;
     break_start(coll, x100_ptr(gp).add(4), 4);
     onJointCollision(user_data, joint_id, coll, coll_x50, ground_kind, delta_y);
@@ -1294,6 +1339,7 @@ pub unsafe extern "C" fn fn_801F9558(user_data: *mut c_void, joint_id: i32, coll
 
 /// 1F9668
 pub unsafe extern "C" fn grIceMt_801F9668(arg0: f32) {
+    melee_core::ct!("grIceMt_801F9668");
     let bg_gobj = ext::Ground_GetMapGObj(8);
     assert!(!bg_gobj.is_null(), "gricemt.c:0xA37: bg_gobj");
     let bg_gp = GET_GROUND(bg_gobj);
@@ -1304,6 +1350,7 @@ pub unsafe extern "C" fn grIceMt_801F9668(arg0: f32) {
 
 /// 1F96E0
 pub unsafe extern "C" fn grIceMt_801F96E0(arg0: *mut grIceMt_GObj9_GObj10_UnderUpperIdPair, y: f32) -> f32 {
+    melee_core::ct!("grIceMt_801F96E0");
     if (*arg0).under != -1 {
         let mgobj = ext::Ground_GetMapGObj((*arg0).under as i32);
         assert!(!mgobj.is_null(), "gricemt.c:2629: mgobj");
@@ -1324,6 +1371,7 @@ pub unsafe extern "C" fn grIceMt_801F96E0(arg0: *mut grIceMt_GObj9_GObj10_UnderU
 /// `static inline grIceMt_FA0BC_jobjs`: the first of the map's four refreshed joints
 #[inline(always)]
 pub unsafe fn grIceMt_FA0BC_jobjs(g: *mut Ground) -> *mut *mut HSD_JObj {
+    melee_core::ct!("grIceMt_FA0BC_jobjs");
     &raw mut (*g).u.icemt1.x4
 }
 
@@ -1343,12 +1391,14 @@ unsafe fn refresh_joints(gp: *mut Ground) {
 
 /// 1F98A8
 pub unsafe extern "C" fn grIceMt_801F98A8(param1: *mut Ground_GObj) {
+    melee_core::ct!("grIceMt_801F98A8");
     let gp = (*param1).user_data as *mut Ground;
     refresh_joints(gp);
 }
 
 /// 1F993C
 pub unsafe extern "C" fn grIceMt_801F993C(under_id: i32, upper_id: i32) -> f32 {
+    melee_core::ct!("grIceMt_801F993C");
     let y = ext::Ground_801C0498();
 
     let mut upper_ix = 0usize;
@@ -1376,6 +1426,7 @@ pub unsafe extern "C" fn grIceMt_801F993C(under_id: i32, upper_id: i32) -> f32 {
 /// 1F9ACC
 pub unsafe extern "C" fn grIceMt_801F9ACC(ids: *mut grIceMt_GObj9_GObj10_UnderUpperIdPair, _y: f32,
                                           ev: GrIceMtSegmentLookup, arg3: *mut Ground_GObj) -> bool {
+    melee_core::ct!("grIceMt_801F9ACC");
     let mut result = false;
 
     if (*ids).under == -1 || (*ids).upper == -1 {
@@ -1493,6 +1544,7 @@ pub unsafe extern "C" fn grIceMt_801F9ACC(ids: *mut grIceMt_GObj9_GObj10_UnderUp
 
 /// 1FA0BC
 pub unsafe extern "C" fn grIceMt_801FA0BC(ids: *mut grIceMt_GObj9_GObj10_UnderUpperIdPair) {
+    melee_core::ct!("grIceMt_801FA0BC");
     let frame = grIceMt_801F993C((*ids).under as i32, (*ids).upper as i32);
 
     if (*ids).under != -1 {
@@ -1529,6 +1581,7 @@ pub unsafe extern "C" fn grIceMt_801FA0BC(ids: *mut grIceMt_GObj9_GObj10_UnderUp
 /// 1FA364
 pub unsafe extern "C" fn grIceMt_801FA364(state: *mut grIceMt_FA364_State, out: *mut f32, cb: GrIceMtCb,
                                           gobj: *mut Ground_GObj) -> bool {
+    melee_core::ct!("grIceMt_801FA364");
     let mut ret = true;
     let mut next_delay: i32 = 0;
     let table = (yakumono_param as *const u8).add(4) as *const f32;
@@ -1569,6 +1622,7 @@ pub unsafe extern "C" fn grIceMt_801FA364(state: *mut grIceMt_FA364_State, out: 
 
 /// 1FA4CC
 pub unsafe extern "C" fn fn_801FA4CC(num: i32) -> i32 {
+    melee_core::ct!("fn_801FA4CC");
     if num == 1 {
         ext::Ground_801C5740(num);
         1
@@ -1579,6 +1633,7 @@ pub unsafe extern "C" fn fn_801FA4CC(num: i32) -> i32 {
 
 /// 1FA500: the position of `arg1` in the depth-first walk of the map's joints, or -1
 pub unsafe extern "C" fn grIceMt_801FA500(arg0: *mut HSD_GObj, arg1: *mut HSD_JObj) -> i32 {
+    melee_core::ct!("grIceMt_801FA500");
     let mut count = 0;
 
     let mut jobj = (*arg0).hsd_obj as *mut HSD_JObj;
@@ -1617,6 +1672,7 @@ pub unsafe extern "C" fn grIceMt_801FA500(arg0: *mut HSD_GObj, arg1: *mut HSD_JO
 
 /// 1FA6D8
 pub unsafe extern "C" fn grIceMt_801FA6D8() {
+    melee_core::ct!("grIceMt_801FA6D8");
     if ext::Stage_80225194() == 0x4C {
         let gobj = ext::Ground_GetMapGObj(0xA);
         if !gobj.is_null() {
@@ -1630,6 +1686,7 @@ pub unsafe extern "C" fn grIceMt_801FA6D8() {
 
 /// 1FA728
 pub unsafe extern "C" fn grIceMt_801FA728(arg0: *mut Vec3) {
+    melee_core::ct!("grIceMt_801FA728");
     if ext::Stage_80225194() == 0x4C {
         let temp_r3 = ext::Ground_GetMapGObj(10);
         if !temp_r3.is_null() {
@@ -1664,6 +1721,7 @@ pub unsafe extern "C" fn grIceMt_801FA728(arg0: *mut Vec3) {
 /// 1FA7F0: the first fighter touching the field controller's ice flags it
 pub unsafe extern "C" fn onJointCollision(_user_data: *mut c_void, _joint_id: i32, coll: *mut CollData, _coll_x50: i32,
                                           _ground_kind: u32, _delta_y: f32) {
+    melee_core::ct!("onJointCollision");
     if ext::Ground_GetP1Fighter() == (*coll).x0_gobj {
         let gobj = ext::Ground_GetMapGObj(0xA);
         if !gobj.is_null() {
@@ -1677,6 +1735,7 @@ pub unsafe extern "C" fn onJointCollision(_user_data: *mut c_void, _joint_id: i3
 
 /// 1FA854
 pub unsafe extern "C" fn grIceMt_801FA854() {
+    melee_core::ct!("grIceMt_801FA854");
     let gobj = ext::Ground_GetMapGObj(0);
 
     if !gobj.is_null() {

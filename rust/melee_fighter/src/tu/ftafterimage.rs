@@ -125,6 +125,7 @@ fn ring_prev(i: i32) -> i32 {
 /// The vertex work of `ftCo_800C2600`: `fp->x2100` (> 1) ring entries newest first, subdivided
 /// every 5 degrees. Returns the vertices in the order the C hands them to GX (`numVerts + 1`).
 pub fn afterimage_strip(f: &Fighter, params: &itSword_UnkBytes) -> std::vec::Vec<AfterimageVtx> {
+    melee_core::ct!("afterimage_strip");
     let mut vtx_buf = [AfterimageVtx::default(); 152];
     let mut cum_dist = [0.0f32; 3];
     let x20f8 = f.x20F8;
@@ -256,6 +257,7 @@ pub fn afterimage_strip(f: &Fighter, params: &itSword_UnkBytes) -> std::vec::Vec
 
 /// `ftCo_800C2600`: the trail draw callback (render pass 2 only).
 pub fn ftCo_800C2600(g: G, arg1: u32) {
+    melee_core::ct!("ftCo_800C2600");
     use ext::*;
     if arg1 != 2 {
         return;
@@ -306,6 +308,7 @@ pub fn ftCo_800C2600(g: G, arg1: u32) {
 
 /// `ftCo_800C2FD8`: push the sword's current base point and blade axis onto the 3-entry ring.
 pub fn ftCo_800C2FD8(g: G) {
+    melee_core::ct!("ftCo_800C2FD8");
     let f = fp(g);
     if f.x2100 == -1 {
         return;

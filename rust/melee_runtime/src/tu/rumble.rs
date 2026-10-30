@@ -52,11 +52,13 @@ unsafe fn channel(n: u8) -> *mut HSD_RumbleData {
         .add(n as usize)
 }
 pub unsafe fn HSD_PadRumbleOn(n: u8) {
+    melee_core::ct!("HSD_PadRumbleOn");
     let i = disable();
     (*channel(n)).direct_status = 1;
     restore(i);
 }
 pub unsafe fn HSD_PadRumbleOffN(n: u8) {
+    melee_core::ct!("HSD_PadRumbleOffN");
     let i = disable();
     (*channel(n)).direct_status = 0;
     restore(i);
@@ -65,6 +67,7 @@ pub unsafe fn HSD_PadRumbleFree(
     a: *mut HSD_RumbleData,
     b: *mut HSD_PadRumbleListData,
 ) {
+    melee_core::ct!("HSD_PadRumbleFree");
     let r = info();
     let mut p = addr_of_mut!((*a).listdatap);
     while *p != b {
@@ -76,6 +79,7 @@ pub unsafe fn HSD_PadRumbleFree(
     (*r).listdatap = b;
 }
 pub unsafe fn HSD_PadRumbleRemove(n: u8) {
+    melee_core::ct!("HSD_PadRumbleRemove");
     let a = channel(n);
     let i = disable();
     let mut b = (*a).listdatap;
@@ -87,11 +91,13 @@ pub unsafe fn HSD_PadRumbleRemove(n: u8) {
     restore(i);
 }
 pub unsafe fn HSD_PadRumbleRemoveAll() {
+    melee_core::ct!("HSD_PadRumbleRemoveAll");
     for n in 0..4 {
         HSD_PadRumbleRemove(n);
     }
 }
 pub unsafe fn HSD_PadRumbleRemoveId(n: u8, id: i32) {
+    melee_core::ct!("HSD_PadRumbleRemoveId");
     let a = channel(n);
     let i = disable();
     let mut b = (*a).listdatap;
@@ -105,6 +111,7 @@ pub unsafe fn HSD_PadRumbleRemoveId(n: u8, id: i32) {
     restore(i);
 }
 pub unsafe fn HSD_PadRumblePause(n: u8, status: i32) {
+    melee_core::ct!("HSD_PadRumblePause");
     let i = disable();
     let mut b = (*channel(n)).listdatap;
     while !b.is_null() {
@@ -115,11 +122,13 @@ pub unsafe fn HSD_PadRumblePause(n: u8, status: i32) {
     restore(i);
 }
 pub unsafe fn HSD_PadRumblePauseAll() {
+    melee_core::ct!("HSD_PadRumblePauseAll");
     for n in 0..4 {
         HSD_PadRumblePause(n, 1);
     }
 }
 pub unsafe fn HSD_PadRumbleUnpauseAll() {
+    melee_core::ct!("HSD_PadRumbleUnpauseAll");
     for n in 0..4 {
         HSD_PadRumblePause(n, 0);
     }
@@ -128,6 +137,7 @@ pub unsafe fn func_80378430_inline(
     mut p: *mut *mut HSD_PadRumbleListData,
     b: *mut HSD_PadRumbleListData,
 ) {
+    melee_core::ct!("func_80378430_inline");
     while !(*p).is_null() && (**p).pri <= (*b).pri {
         p = addr_of_mut!((**p).next);
     }
@@ -141,6 +151,7 @@ pub unsafe fn HSD_PadRumbleAdd(
     pri: i32,
     list: *mut core::ffi::c_void,
 ) -> i32 {
+    melee_core::ct!("HSD_PadRumbleAdd");
     let r = info();
     let a = channel(n);
     let mut result = 0;
@@ -166,6 +177,7 @@ pub unsafe fn HSD_PadRumbleAdd(
     result
 }
 pub unsafe fn HSD_Rumble_80378524(a: i32) {
+    melee_core::ct!("HSD_Rumble_80378524");
     let i = disable();
     (*info()).unk2 = a as u8;
     restore(i);
@@ -174,6 +186,7 @@ pub unsafe fn HSD_PadRumbleInterpret1(
     a: *mut HSD_PadRumbleListData,
     b: *mut u8,
 ) -> i32 {
+    melee_core::ct!("HSD_PadRumbleInterpret1");
     if (*a).pause == 1 {
         return 0;
     }
@@ -218,6 +231,7 @@ pub unsafe fn HSD_PadRumbleInterpret1(
     0
 }
 pub unsafe fn HSD_PadRumbleInterpret() {
+    melee_core::ct!("HSD_PadRumbleInterpret");
     let r = info();
     for n in 0..4 {
         let a = channel(n);
@@ -248,6 +262,7 @@ pub unsafe fn HSD_PadRumbleInterpret() {
     }
 }
 pub unsafe fn HSD_PadRumbleInit(a: u16, b: *mut core::ffi::c_void) {
+    melee_core::ct!("HSD_PadRumbleInit");
     let r = info();
     (*r).unk2 = 0;
     (*r).max_list = a;

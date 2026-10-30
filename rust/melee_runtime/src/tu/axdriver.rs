@@ -162,15 +162,17 @@ unsafe fn rd_u32(p: *const u8) -> u32 {
 }
 
 pub unsafe extern "C" fn AXDriverAlloc(size: usize) -> *mut c_void {
+    melee_core::ct!("AXDriverAlloc");
     let ptr = AXDriver_804D77D4.add(axfxallocsize as usize);
     axfxallocsize = axfxallocsize.wrapping_add(size as u32);
     hsd_assert(axfxallocsize < axfxmaxsize, 78);
     ptr as *mut c_void
 }
 
-pub unsafe extern "C" fn AXDriverFree(ptr: *mut c_void) {}
+pub unsafe extern "C" fn AXDriverFree(ptr: *mut c_void) { melee_core::ct!("AXDriverFree");}
 
 pub unsafe extern "C" fn AXDriverUnlink(v: *mut HSD_SM, head: *mut *mut HSD_SM) {
+    melee_core::ct!("AXDriverUnlink");
     if !v.is_null() {
         let p = (*v).prev;
         let n = (*v).next;
@@ -222,6 +224,7 @@ unsafe fn AXDriverKeyOff(v: *mut HSD_SM) -> bool {
 
 /// `HSD_AudioSFXKeyOff` before the Lab wrapper (`HSD_AudioSFXKeyOff_raw`).
 pub unsafe extern "C" fn HSD_AudioSFXKeyOff_raw(vid: i32) -> bool {
+    melee_core::ct!("HSD_AudioSFXKeyOff_raw");
     let idx = vid & 0x7F;
     if vid < 0 || idx >= 0x60 {
         return false;
@@ -242,6 +245,7 @@ pub unsafe extern "C" fn HSD_AudioSFXKeyOff_raw(vid: i32) -> bool {
 }
 
 pub unsafe extern "C" fn HSD_AudioSFXKeyOffAll() {
+    melee_core::ct!("HSD_AudioSFXKeyOffAll");
     let enabled = ext::OSDisableInterrupts();
     let mut v = AXDriver_804D7794;
 
@@ -255,6 +259,7 @@ pub unsafe extern "C" fn HSD_AudioSFXKeyOffAll() {
 }
 
 pub unsafe extern "C" fn HSD_AudioSFXKeyOffTrack(track: i32) {
+    melee_core::ct!("HSD_AudioSFXKeyOffTrack");
     let enabled = ext::OSDisableInterrupts();
     let mut v = AXDriver_804D7794;
 
@@ -274,6 +279,7 @@ unsafe fn mix_vol(v: *mut HSD_SM, a: u8, b: u8) -> f32 {
 }
 
 pub unsafe extern "C" fn AXDriverExec(v: *mut HSD_SM) {
+    melee_core::ct!("AXDriverExec");
     let mut i: i32 = 0;
     while i <= 9 {
         let flag: u32 = 1u32 << i;
@@ -353,6 +359,7 @@ pub unsafe extern "C" fn AXDriverExec(v: *mut HSD_SM) {
 }
 
 pub unsafe extern "C" fn parseWait(param_type: u32, param_value: u32) -> u32 {
+    melee_core::ct!("parseWait");
     match param_type {
         0 => param_value & 0xFFFFFF,
         1 | 2 | 3 | 4 | 5 | 14 | 15 | 20 | 21 => 0,
@@ -363,6 +370,7 @@ pub unsafe extern "C" fn parseWait(param_type: u32, param_value: u32) -> u32 {
 }
 
 pub unsafe extern "C" fn AXDriverInterp(v: *mut HSD_SM) {
+    melee_core::ct!("AXDriverInterp");
     while (*v).x30 == AXDriver_804D778C {
         let cmd_word: u32 = *(*v).cmd_stream;
         let cmd_type: u32 = cmd_word >> 0x18;
@@ -645,6 +653,7 @@ unsafe fn HSD_AudioSFXStartParam_impl(sound_id: i32, volume: u8, pan: u8, track:
 
 /// `HSD_AudioSFXStartParam` (TARGET_PC): rollback / Geno-Lab handle replay around the real start.
 pub unsafe extern "C" fn HSD_AudioSFXStartParam(sound_id: i32, volume: u8, pan: u8, track: i32, channel: i32) -> i32 {
+    melee_core::ct!("HSD_AudioSFXStartParam");
     let lab_m = ext::LabSfx_Replay(sound_id);
     let lab_h = ext::LabSfx_Handle();
     if lab_m == 1 {
@@ -673,6 +682,7 @@ pub unsafe extern "C" fn HSD_AudioSFXStartParam(sound_id: i32, volume: u8, pan: 
 }
 
 pub unsafe extern "C" fn HSD_AudioSFXSetPan_raw(vid: i32, pan: u8) -> bool {
+    melee_core::ct!("HSD_AudioSFXSetPan_raw");
     let idx = vid & 0x7F;
     if vid < 0 || idx >= 0x60 {
         return false;
@@ -694,6 +704,7 @@ pub unsafe extern "C" fn HSD_AudioSFXSetPan_raw(vid: i32, pan: u8) -> bool {
 }
 
 pub unsafe extern "C" fn HSD_AudioSFXSetVolumeEx_raw(vid: i32, volume: u8) -> bool {
+    melee_core::ct!("HSD_AudioSFXSetVolumeEx_raw");
     let idx = vid & 0x7F;
     if vid < 0 || idx >= 0x60 {
         return false;
@@ -716,6 +727,7 @@ pub unsafe extern "C" fn HSD_AudioSFXSetVolumeEx_raw(vid: i32, volume: u8) -> bo
 }
 
 pub unsafe extern "C" fn HSD_AudioSFXSetPitchFid_raw(vid: i32, pitch: i16) -> bool {
+    melee_core::ct!("HSD_AudioSFXSetPitchFid_raw");
     let idx = vid & 0x7F;
     if vid < 0 || idx >= 0x60 {
         return false;
@@ -733,6 +745,7 @@ pub unsafe extern "C" fn HSD_AudioSFXSetPitchFid_raw(vid: i32, pitch: i16) -> bo
 }
 
 pub unsafe extern "C" fn HSD_AudioSFXSetMix_raw(vid: i32, aux_bus: i32, send_level: u8) -> bool {
+    melee_core::ct!("HSD_AudioSFXSetMix_raw");
     let idx = vid & 0x7F;
     if vid < 0 || idx >= 0x60 {
         return false;
@@ -769,6 +782,7 @@ pub unsafe extern "C" fn HSD_AudioSFXSetMix_raw(vid: i32, aux_bus: i32, send_lev
 }
 
 pub unsafe extern "C" fn HSD_AudioSFXSetMixGroup(channel: i32, aux_bus: i32, send_level: i8) -> bool {
+    melee_core::ct!("HSD_AudioSFXSetMixGroup");
     if channel < 0 || channel >= 0x10 {
         return false;
     }
@@ -789,6 +803,7 @@ pub unsafe extern "C" fn HSD_AudioSFXSetMixGroup(channel: i32, aux_bus: i32, sen
 }
 
 pub unsafe extern "C" fn HSD_AudioSFXCheck_raw(vid: i32) -> bool {
+    melee_core::ct!("HSD_AudioSFXCheck_raw");
     let idx = vid & 0x7F;
     if vid < 0 || idx >= 0x60 {
         return false;
@@ -810,6 +825,7 @@ unsafe extern "C" fn fn_8038DA5C(result: i32, file_info: *mut DVDFileInfo) {
 }
 
 pub unsafe extern "C" fn AXDriver_8038DA70(path: *const i8, callback: unsafe extern "C" fn()) {
+    melee_core::ct!("AXDriver_8038DA70");
     let mut file_info: DVDFileInfo = core::mem::zeroed();
 
     let entrynum = ext::DVDConvertPathToEntrynum(path);
@@ -892,6 +908,7 @@ pub unsafe extern "C" fn AXDriver_8038DA70(path: *const i8, callback: unsafe ext
 }
 
 pub unsafe extern "C" fn AXDriver_8038DCFC() {
+    melee_core::ct!("AXDriver_8038DCFC");
     if !AXDriver_804D7798.is_null() {
         ext::HSD_AudioFree(AXDriver_804D7798);
     }
@@ -904,6 +921,7 @@ pub unsafe extern "C" fn AXDriver_8038DCFC() {
 }
 
 pub unsafe extern "C" fn AXDriverSetupAux(channel: i32, type_: AXDriverAuxType, param: *mut c_void) -> i32 {
+    melee_core::ct!("AXDriverSetupAux");
     let aux_data_hi = &raw mut AXDriver_804C5A40[channel as usize];
     let aux_data_std = &raw mut AXDriver_804C5E00[channel as usize];
     let aux_data_chorus = &raw mut AXDriver_804C60A8[channel as usize];
@@ -993,6 +1011,7 @@ pub unsafe extern "C" fn AXDriverSetupAux(channel: i32, type_: AXDriverAuxType, 
 }
 
 pub unsafe extern "C" fn HSD_AudioGetAuxHeapSize(type_: AXDriverAuxType, param: *mut c_void) -> i32 {
+    melee_core::ct!("HSD_AudioGetAuxHeapSize");
     let mut result: i32 = 0;
 
     if type_ > 4 || (type_ != 0 && param.is_null()) {
@@ -1035,6 +1054,7 @@ pub unsafe extern "C" fn HSD_AudioGetAuxHeapSize(type_: AXDriverAuxType, param: 
 }
 
 pub unsafe extern "C" fn HSD_AudioSFXSetupAux(channel: i32, type_: i32, param: *mut c_void, heap: *mut u8, heap_size: usize) -> bool {
+    melee_core::ct!("HSD_AudioSFXSetupAux");
     if channel < 0 || channel > 1 {
         return false;
     }
@@ -1048,6 +1068,7 @@ pub unsafe extern "C" fn HSD_AudioSFXSetupAux(channel: i32, type_: i32, param: *
 }
 
 pub unsafe extern "C" fn HSD_AudioSFXGetDefaultAuxParam(type_: AXDriverAuxType, param: *mut c_void) -> bool {
+    melee_core::ct!("HSD_AudioSFXGetDefaultAuxParam");
     if type_ > AXDRIVER_AUX_DELAY || (type_ != AXDRIVER_AUX_OFF && param.is_null()) {
         return false;
     }
@@ -1095,6 +1116,7 @@ pub unsafe extern "C" fn HSD_AudioSFXGetDefaultAuxParam(type_: AXDriverAuxType, 
 }
 
 pub unsafe extern "C" fn HSD_AudioInitMultiPStream(voices: i32, priority: i32, sample_rate: i32, aram_size: i32) {
+    melee_core::ct!("HSD_AudioInitMultiPStream");
     let mut i: usize = 0;
     while i < 0x60 {
         AXDriver_804C45A0[i].flags &= !SM_MASK;
@@ -1120,10 +1142,12 @@ pub unsafe extern "C" fn HSD_AudioInitMultiPStream(voices: i32, priority: i32, s
 }
 
 pub unsafe extern "C" fn AXDriver_8038E5D4_raw() -> i32 {
+    melee_core::ct!("AXDriver_8038E5D4_raw");
     AXDriver_804D77C8
 }
 
 pub unsafe extern "C" fn AXDriver_8038E5DC_raw() -> i32 {
+    melee_core::ct!("AXDriver_8038E5DC_raw");
     AXDriver_804D77D0
 }
 
@@ -1148,6 +1172,7 @@ unsafe fn PStreamPauseCh(vid: i32) -> bool {
 }
 
 pub unsafe extern "C" fn HSD_AudioPStreamPauseCh(channel: i32) -> bool {
+    melee_core::ct!("HSD_AudioPStreamPauseCh");
     if channel < 0 || channel >= 0x10 {
         return false;
     }
@@ -1185,6 +1210,7 @@ unsafe fn PStreamResumeCh(vid: i32) -> bool {
 }
 
 pub unsafe extern "C" fn HSD_AudioPStreamResumeCh(channel: i32) -> bool {
+    melee_core::ct!("HSD_AudioPStreamResumeCh");
     if channel < 0 || channel >= 0x10 {
         return false;
     }
@@ -1202,6 +1228,7 @@ pub unsafe extern "C" fn HSD_AudioPStreamResumeCh(channel: i32) -> bool {
 }
 
 pub unsafe extern "C" fn HSD_AudioPStreamStartChParam(path: *const i8, volume: u8, track: i32) -> bool {
+    melee_core::ct!("HSD_AudioPStreamStartChParam");
     let entrynum = ext::DVDConvertPathToEntrynum(path);
     if AXDriver_804D6038 != -1 {
         ext::HSD_SynthSFXKeyOff(AXDriver_804D6038);
@@ -1212,6 +1239,7 @@ pub unsafe extern "C" fn HSD_AudioPStreamStartChParam(path: *const i8, volume: u
 }
 
 pub unsafe extern "C" fn AXDriverStop() -> bool {
+    melee_core::ct!("AXDriverStop");
     if AXDriver_804D6038 == -1 {
         return false;
     }
@@ -1221,6 +1249,7 @@ pub unsafe extern "C" fn AXDriverStop() -> bool {
 }
 
 pub unsafe extern "C" fn AXDriverPause() -> bool {
+    melee_core::ct!("AXDriverPause");
     if AXDriver_804D6038 == -1 {
         return false;
     }
@@ -1229,6 +1258,7 @@ pub unsafe extern "C" fn AXDriverPause() -> bool {
 }
 
 pub unsafe extern "C" fn AXDriverResume() -> bool {
+    melee_core::ct!("AXDriverResume");
     if AXDriver_804D6038 == -1 {
         return false;
     }
@@ -1237,6 +1267,7 @@ pub unsafe extern "C" fn AXDriverResume() -> bool {
 }
 
 pub unsafe extern "C" fn AXDriverCheck_raw() -> bool {
+    melee_core::ct!("AXDriverCheck_raw");
     if ext::HSD_SynthSFXCheck(AXDriver_804D6038) == -1 {
         return false;
     }
@@ -1259,6 +1290,7 @@ unsafe fn lab_audio(kind: i32, arg: i32, call_real: impl FnOnce(i32) -> i32) -> 
 }
 
 pub unsafe extern "C" fn HSD_AudioSFXKeyOff(vid: i32) -> bool {
+    melee_core::ct!("HSD_AudioSFXKeyOff");
     let lab_m = ext::LabAudio_Replay(1, vid);
     let mut lab_v = ext::LabAudio_Value();
     let lab_real = ext::LabAudio_Real();
@@ -1294,6 +1326,7 @@ lab_wrapper!(5, HSD_AudioSFXSetMix(vid, aux_bus: i32, send_level: u8) = HSD_Audi
 lab_wrapper!(6, HSD_AudioSFXCheck(vid) = HSD_AudioSFXCheck_raw);
 
 pub unsafe extern "C" fn AXDriverCheck() -> bool {
+    melee_core::ct!("AXDriverCheck");
     let lab_m = ext::LabAudio_Replay(7, 0);
     let mut lab_v = ext::LabAudio_Value();
     let lab_real = ext::LabAudio_Real();
@@ -1307,9 +1340,11 @@ pub unsafe extern "C" fn AXDriverCheck() -> bool {
 }
 
 pub unsafe extern "C" fn AXDriver_8038E5D4() -> i32 {
+    melee_core::ct!("AXDriver_8038E5D4");
     lab_audio(8, 0, |_| AXDriver_8038E5D4_raw())
 }
 
 pub unsafe extern "C" fn AXDriver_8038E5DC() -> i32 {
+    melee_core::ct!("AXDriver_8038E5DC");
     lab_audio(9, 0, |_| AXDriver_8038E5DC_raw())
 }

@@ -69,6 +69,7 @@ pub const ftKb_Ca_transition_flags: u32 = Ft_MF_KeepGfx
 
 /// `ftKb_SpecialNCa_800F99BC`: enter Falcon Punch (ground); Ganondorf's hat uses the Warlock Punch id.
 pub fn ftKb_SpecialNCa_800F99BC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialNCa_800F99BC");
     unsafe {
         let mut msid = ftKb_MS_CaSpecialN;
         let fp = fpp(gobj);
@@ -86,6 +87,7 @@ pub fn ftKb_SpecialNCa_800F99BC(gobj: *mut HSD_GObj) {
 
 /// `ftKb_SpecialNCa_800F9A54`: the aerial entry.
 pub fn ftKb_SpecialNCa_800F9A54(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialNCa_800F9A54");
     unsafe {
         let mut msid = ftKb_MS_CaSpecialAirN;
         let fp = fpp(gobj);
@@ -101,15 +103,17 @@ pub fn ftKb_SpecialNCa_800F9A54(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftKb_CaSpecialN_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftKb_CaSpecialN_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftKb_CaSpecialN_IASA");}
 
 /// `ftKb_CaSpecialAirN_IASA`: the fighter-only body is [`ca_special_air_n_iasa`].
 pub fn ftKb_CaSpecialAirN_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_CaSpecialAirN_IASA");
     unsafe { ca_special_air_n_iasa(&mut *fpp(gobj)) }
 }
 
 /// Body of `ftKb_CaSpecialAirN_IASA`: aim the punch on the frame the script sets cmd_vars[0].
 pub fn ca_special_air_n_iasa(fp: &mut Fighter) {
+    melee_core::ct!("ca_special_air_n_iasa");
     let da: &ftKb_DatAttrs = unsafe { &*(fp.dat_attrs as *const ftKb_DatAttrs) };
     if fp.cmd_vars[0] != 0 {
         fp.cmd_vars[0] = 0;
@@ -161,6 +165,7 @@ unsafe fn punch_pulse(gobj: *mut HSD_GObj, fp: *mut Fighter) {
 }
 
 pub fn ftKb_CaSpecialN_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_CaSpecialN_Phys");
     unsafe {
         let fp = fpp(gobj);
         punch_pulse(gobj, fp);
@@ -169,6 +174,7 @@ pub fn ftKb_CaSpecialN_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_CaSpecialAirN_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_CaSpecialAirN_Phys");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftKb_DatAttrs;
@@ -186,6 +192,7 @@ pub fn ftKb_CaSpecialAirN_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_CaSpecialN_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_CaSpecialN_Coll");
     unsafe {
         if st::ft_800827A0(gobj) == 0 {
             let fp = fpp(gobj);
@@ -203,6 +210,7 @@ pub fn ftKb_CaSpecialN_Coll(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKb_CaSpecialAirN_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_CaSpecialAirN_Coll");
     unsafe {
         if st::ft_80081D0C(gobj) != GA_Ground as i32 {
             let fp = fpp(gobj);

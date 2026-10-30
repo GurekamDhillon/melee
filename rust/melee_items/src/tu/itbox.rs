@@ -114,6 +114,7 @@ unsafe fn Item_ApplyFallingPhysics(gobj: *mut Item_GObj) {
 
 /// 286088: spawns a box accessory that follows `parent_gobj`; NULL if the parent is invalid.
 pub unsafe extern "C" fn it_80286088(parent_gobj: *mut Item_GObj) -> *mut Item_GObj {
+    melee_core::ct!("it_80286088");
     let mut result: *mut Item_GObj = null_mut();
     let mut spawn: SpawnItem = core::mem::zeroed();
     let mut pos: Vec3 = core::mem::zeroed();
@@ -156,6 +157,7 @@ pub unsafe extern "C" fn it_80286088(parent_gobj: *mut Item_GObj) -> *mut Item_G
 }
 
 pub unsafe extern "C" fn itBox_Logic1_Spawned(gobj: *mut Item_GObj) {
+    melee_core::ct!("itBox_Logic1_Spawned");
     let ip = GET_ITEM(gobj);
     (*ip).xDCE_flag.anon_0.set_b7(0);
     (*ip).xDD4_itemVar.r#box.opened = 0;
@@ -164,6 +166,7 @@ pub unsafe extern "C" fn itBox_Logic1_Spawned(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itBox_Logic1_Destroyed(gobj: *mut Item_GObj) {
+    melee_core::ct!("itBox_Logic1_Destroyed");
     let ip = GET_ITEM(gobj);
     if !(*ip).xDD4_itemVar.r#box.spawned_gobj.is_null() {
         ext::grKongo_801D8058((*ip).xDD4_itemVar.r#box.spawned_gobj);
@@ -173,6 +176,7 @@ pub unsafe extern "C" fn itBox_Logic1_Destroyed(gobj: *mut Item_GObj) {
 
 /// 286248: spawns item(s) from the box by weighted roll (`arg4` weights the special roll).
 pub unsafe extern "C" fn it_80286248(gobj: *mut Item_GObj, arg1: i32, arg2: i32, arg3: i32, arg4: i32) {
+    melee_core::ct!("it_80286248");
     let ip = GET_ITEM(gobj);
     let mut zero: Vec3 = core::mem::zeroed();
 
@@ -206,6 +210,7 @@ pub unsafe extern "C" fn it_80286248(gobj: *mut Item_GObj, arg1: i32, arg2: i32,
 
 /// 286340: weighted roll, true when one of the three item slots wins.
 pub unsafe extern "C" fn it_80286340(gobj: *mut Item_GObj, arg1: i32, arg2: i32, arg3: i32, arg4: i32) -> bool {
+    melee_core::ct!("it_80286340");
     let sum1 = arg1.wrapping_add(arg2);
     let sum2 = arg3.wrapping_add(sum1);
     let rand = ext::HSD_Randi(arg4.wrapping_add(sum2));
@@ -223,6 +228,7 @@ pub unsafe extern "C" fn it_80286340(gobj: *mut Item_GObj, arg1: i32, arg2: i32,
 
 /// 2863BC: did the box bounce nearly upright? Clears the velocity vectors and sets `xD5C`.
 pub unsafe extern "C" fn it_802863BC(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_802863BC");
     let ip = GET_ITEM(gobj);
     let coll = &mut (*ip).x378_itemColl as *mut CollData;
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itBoxAttributes;
@@ -256,6 +262,7 @@ pub unsafe extern "C" fn it_802863BC(gobj: *mut Item_GObj) -> bool {
 
 /// 286480
 pub unsafe extern "C" fn fn_80286480(gobj: *mut Item_GObj) {
+    melee_core::ct!("fn_80286480");
     let it = GET_ITEM(gobj);
     ext::it_8026B390(gobj);
     itResetVelocity(it);
@@ -263,6 +270,7 @@ pub unsafe extern "C" fn fn_80286480(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itBox_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itBox_UnkMotion0_Anim");
     let ip = GET_ITEM(gobj);
     if (*ip).xD44_lifeTimer <= 1.0 {
         ext::it_802787B4(gobj, 0x421);
@@ -270,9 +278,10 @@ pub unsafe extern "C" fn itBox_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
     false
 }
 
-pub unsafe extern "C" fn itBox_UnkMotion0_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itBox_UnkMotion0_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itBox_UnkMotion0_Phys");}
 
 pub unsafe extern "C" fn itBox_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itBox_UnkMotion0_Coll");
     ext::it_8026D62C(gobj, Some(it_8028655C));
     ext::it_80276CB8(gobj);
     false
@@ -280,16 +289,19 @@ pub unsafe extern "C" fn itBox_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
 
 /// 28655C
 pub unsafe extern "C" fn it_8028655C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_8028655C");
     ext::it_8026B3A8(gobj);
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);
 }
 
 pub unsafe extern "C" fn itBox_UnkMotion4_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itBox_UnkMotion4_Anim");
     false
 }
 
 /// Physics for the thrown box: gravity plus the wobble from the stored rotation velocities.
 pub unsafe extern "C" fn itBox_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itBox_UnkMotion1_Phys");
     let jobj = GET_JOBJ(gobj);
     let ip = GET_ITEM(gobj);
     let attr = (*ip).xCC_item_attr;
@@ -322,26 +334,31 @@ pub unsafe extern "C" fn itBox_UnkMotion1_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itBox_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itBox_UnkMotion1_Coll");
     ext::it_8026E15C(gobj, Some(fn_80286480));
     false
 }
 
 pub unsafe extern "C" fn itBox_Logic1_PickedUp(gobj: *mut Item_GObj) {
+    melee_core::ct!("itBox_Logic1_PickedUp");
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE);
 }
 
 pub unsafe extern "C" fn itBox_UnkMotion2_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itBox_UnkMotion2_Anim");
     false
 }
 
-pub unsafe extern "C" fn itBox_UnkMotion2_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itBox_UnkMotion2_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itBox_UnkMotion2_Phys");}
 
 pub unsafe extern "C" fn itBox_Logic1_Thrown(gobj: *mut Item_GObj) {
+    melee_core::ct!("itBox_Logic1_Thrown");
     ext::it_8026B3A8(gobj);
     ext::Item_80268E5C(gobj, 3, ITEM_ANIM_UPDATE | ITEM_DROP_UPDATE);
 }
 
 pub unsafe extern "C" fn itBox_UnkMotion4_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itBox_UnkMotion4_Phys");
     Item_ApplyFallingPhysics(gobj);
 }
 
@@ -360,6 +377,7 @@ unsafe fn itBox_TryOpen_inline(gobj: *mut Item_GObj) {
 
 /// Collision handler of the dropped box: opens on ground / wall contact.
 pub unsafe extern "C" fn itBox_UnkMotion3_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itBox_UnkMotion3_Coll");
     let ip = GET_ITEM(gobj);
     if ext::it_8026DA08(gobj) != 0 {
         itBox_TryOpen_inline(gobj);
@@ -374,12 +392,14 @@ pub unsafe extern "C" fn itBox_UnkMotion3_Coll(gobj: *mut Item_GObj) -> bool {
 }
 
 pub unsafe extern "C" fn itBox_Logic1_Dropped(gobj: *mut Item_GObj) {
+    melee_core::ct!("itBox_Logic1_Dropped");
     ext::it_8026B3A8(gobj);
     ext::Item_80268E5C(gobj, 4, ITEM_ANIM_UPDATE | ITEM_DROP_UPDATE);
 }
 
 /// Collision handler of the thrown box in the air: breaks on a hard enough landing, else settles.
 pub unsafe extern "C" fn itBox_UnkMotion4_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itBox_UnkMotion4_Coll");
     let mut ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itBoxAttributes;
 
@@ -403,6 +423,7 @@ pub unsafe extern "C" fn itBox_UnkMotion4_Coll(gobj: *mut Item_GObj) -> bool {
 
 /// 286AA4: the box opens empty (smoke effect 0x78, state 6).
 pub unsafe extern "C" fn it_80286AA4(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_80286AA4");
     let ip = GET_ITEM(gobj);
     let mut pos: Vec3;
 
@@ -428,17 +449,20 @@ pub unsafe extern "C" fn it_80286AA4(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itBox_UnkMotion6_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itBox_UnkMotion6_Anim");
     ext::it_802751D8(gobj) != 0
 }
 
-pub unsafe extern "C" fn itBox_UnkMotion6_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itBox_UnkMotion6_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itBox_UnkMotion6_Phys");}
 
 pub unsafe extern "C" fn itBox_UnkMotion6_Coll(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itBox_UnkMotion6_Coll");
     false
 }
 
 /// 286BA0: the box opens and spawns items (state 7).
 pub unsafe extern "C" fn it_80286BA0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_80286BA0");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itBoxAttributes;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -461,6 +485,7 @@ pub unsafe extern "C" fn it_80286BA0(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itBox_UnkMotion7_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itBox_UnkMotion7_Anim");
     let ip = GET_ITEM(gobj);
     (*ip).xDD4_itemVar.r#box.despawn_timer = (*ip).xDD4_itemVar.r#box.despawn_timer.wrapping_sub(1);
     if (*ip).xDD4_itemVar.r#box.despawn_timer > 0 {
@@ -469,13 +494,15 @@ pub unsafe extern "C" fn itBox_UnkMotion7_Anim(gobj: *mut Item_GObj) -> bool {
     true
 }
 
-pub unsafe extern "C" fn itBox_UnkMotion7_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itBox_UnkMotion7_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itBox_UnkMotion7_Phys");}
 
 pub unsafe extern "C" fn itBox_UnkMotion7_Coll(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itBox_UnkMotion7_Coll");
     false
 }
 
 pub unsafe extern "C" fn itBox_Logic1_DmgDealt(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itBox_Logic1_DmgDealt");
     let ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.r#box.opened == 0 {
         itBox_TryOpen_inline(gobj);
@@ -484,6 +511,7 @@ pub unsafe extern "C" fn itBox_Logic1_DmgDealt(gobj: *mut Item_GObj) -> bool {
 }
 
 pub unsafe extern "C" fn itBox_Logic1_Clanked(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itBox_Logic1_Clanked");
     let ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.r#box.opened == 0 {
         itBox_TryOpen_inline(gobj);
@@ -492,6 +520,7 @@ pub unsafe extern "C" fn itBox_Logic1_Clanked(gobj: *mut Item_GObj) -> bool {
 }
 
 pub unsafe extern "C" fn itBox_Logic1_HitShield(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itBox_Logic1_HitShield");
     let ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.r#box.opened == 0 {
         itBox_TryOpen_inline(gobj);
@@ -500,6 +529,7 @@ pub unsafe extern "C" fn itBox_Logic1_HitShield(gobj: *mut Item_GObj) -> bool {
 }
 
 pub unsafe extern "C" fn itBox_Logic1_Reflected(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itBox_Logic1_Reflected");
     let ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.r#box.opened == 0 {
         itBox_TryOpen_inline(gobj);
@@ -509,6 +539,7 @@ pub unsafe extern "C" fn itBox_Logic1_Reflected(gobj: *mut Item_GObj) -> bool {
 
 /// Damage received: breaks open once the accumulated damage reaches the threshold.
 pub unsafe extern "C" fn itBox_Logic1_DmgReceived(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itBox_Logic1_DmgReceived");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itBoxAttributes;
     if (*ip).xDD4_itemVar.r#box.opened == 0 {
@@ -525,6 +556,7 @@ pub unsafe extern "C" fn itBox_Logic1_DmgReceived(gobj: *mut Item_GObj) -> bool 
 }
 
 pub unsafe extern "C" fn itBox_Logic1_EnteredAir(gobj: *mut Item_GObj) {
+    melee_core::ct!("itBox_Logic1_EnteredAir");
     if it_802863BC(gobj) {
         let ip = GET_ITEM(gobj);
         ext::it_8026B390(gobj);
@@ -536,22 +568,26 @@ pub unsafe extern "C" fn itBox_Logic1_EnteredAir(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itBox_UnkMotion5_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itBox_UnkMotion5_Anim");
     false
 }
 
-pub unsafe extern "C" fn itBox_UnkMotion5_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itBox_UnkMotion5_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itBox_UnkMotion5_Phys");}
 
 pub unsafe extern "C" fn itBox_UnkMotion5_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itBox_UnkMotion5_Coll");
     ext::it_8026E8C4(gobj, Some(fn_80286480), Some(it_8028655C));
     false
 }
 
 pub unsafe extern "C" fn itBox_Logic1_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("itBox_Logic1_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }
 
 /// 2870A4: the accessory box floats (state 8) and follows its parent through `it_8028733C`.
 pub unsafe extern "C" fn it_802870A4(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802870A4");
     let ip = GET_ITEM(gobj);
     ext::it_802762B0(ip);
     ext::it_8026B3A8(gobj);
@@ -560,11 +596,13 @@ pub unsafe extern "C" fn it_802870A4(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itBox_UnkMotion8_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itBox_UnkMotion8_Anim");
     false
 }
 
 /// Physics of the floating box: randomly nudges the rotation velocities and applies them.
 pub unsafe extern "C" fn itBox_UnkMotion8_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itBox_UnkMotion8_Phys");
     const DEG_TO_RAD: f64 = 0.01745329238474369;
     const MAX_ROT_VEL: f64 = 0.05235987715423107;
     const TAU: f64 = 6.2831853071795862;
@@ -613,11 +651,13 @@ pub unsafe extern "C" fn itBox_UnkMotion8_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itBox_UnkMotion8_Coll(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itBox_UnkMotion8_Coll");
     false
 }
 
 /// 28733C: accessory callback; makes the item follow its spawned parent's joint.
 pub unsafe extern "C" fn it_8028733C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_8028733C");
     let mut target_pos: Vec3 = core::mem::zeroed();
     let mut vel: Vec3 = core::mem::zeroed();
 

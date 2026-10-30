@@ -79,6 +79,7 @@ fn dispatch_action_state_change(fp: &mut Fighter) {
 
 /// `ftCo_800BFD04`: enter Sleep (hidden, inactive camera).
 pub fn ftco_800bfd04(g: G) {
+    melee_core::ct!("ftco_800bfd04");
     ext::Fighter_ChangeMotionState(g, ftCo_MS_Sleep as i32, Ft_MF_None as MotionFlags, 0.0, 1.0, 0.0, core::ptr::null_mut());
     let fp = fpg(g);
     fp.set_invisible(1);
@@ -92,6 +93,7 @@ pub fn ftco_800bfd04(g: G) {
 
 /// `ftCo_800BFD9C`.
 pub fn ftco_800bfd9c(g: G) {
+    melee_core::ct!("ftco_800bfd9c");
     ftco_800bfd04(g);
     let fp = fpg(g);
     if fp.x2222_b5() != 0 {
@@ -105,9 +107,9 @@ pub fn ftco_800bfd9c(g: G) {
 }
 
 /// `ftCo_Sleep_Anim`: empty.
-pub fn ftco_sleep_anim(_g: G) {}
+pub fn ftco_sleep_anim(_g: G) { melee_core::ct!("ftco_sleep_anim");}
 /// `ftCo_Sleep_IASA`: empty.
-pub fn ftco_sleep_iasa(_g: G) {}
+pub fn ftco_sleep_iasa(_g: G) { melee_core::ct!("ftco_sleep_iasa");}
 
 fn ftco_800bfe74(g: G, c: *mut CommandInfo) { ext::ftAction_80071028(g, c) }
 fn ftco_800bfe94(g: G, c: *mut CommandInfo) { ext::ftAction_800711DC(g, c) }
@@ -118,21 +120,25 @@ fn ftco_800bff14(g: G, c: *mut CommandInfo) { ext::ftAction_80073108(g, c) }
 
 /// `ft_800BFF34` (static): colanim command callback, table 803C6AD0.
 pub fn ft_800bff34(g: G, c: *mut CommandInfo, arg2: i32) {
+    melee_core::ct!("ft_800bff34");
     ftCo_803C6AD0[(arg2 - 0x15) as usize](g, c)
 }
 
 /// `ft_800BFF70` (static): colanim command callback, table 803C6ADC.
 pub fn ft_800bff70(g: G, c: *mut CommandInfo, arg0: i32) {
+    melee_core::ct!("ft_800bff70");
     ftCo_803C6ADC[(arg0 - 21) as usize](g, c)
 }
 
 /// `ftCo_800BFFAC`.
 pub fn ftco_800bffac(fp: &mut Fighter) {
+    melee_core::ct!("ftco_800bffac");
     ext::lb_80014498(&mut fp.x488);
 }
 
 /// `ftCo_800BFFD0`: start colanim `arg1` on the list it belongs to.
 pub fn ftco_800bffd0(fp: &mut Fighter, arg1: i32, arg2: i32) -> bool {
+    melee_core::ct!("ftco_800bffd0");
     if arg1 >= 0x7B {
         if ext::lb_800144C8(&mut fp.x508, unsafe { ext::Fighter_804D6538 }, arg1 - 0x7B, arg2) {
             return true;
@@ -149,11 +155,13 @@ pub fn ftco_800bffd0(fp: &mut Fighter, arg1: i32, arg2: i32) -> bool {
 
 /// `ftCo_800C0074`.
 pub fn ftco_800c0074(fp: &mut Fighter) {
+    melee_core::ct!("ftco_800c0074");
     ext::lb_80014498(&mut fp.x408);
 }
 
 /// `ft_800C0098`.
 pub fn ft_800c0098(fp: &mut Fighter) {
+    melee_core::ct!("ft_800c0098");
     ext::lb_80014498(&mut fp.x508);
     if fp.x2226_b4() != 0 {
         ext::lb_800144C8(&mut fp.x508, unsafe { ext::Fighter_804D6538 }, 0x80 - 0x7B, 0);
@@ -162,6 +170,7 @@ pub fn ft_800c0098(fp: &mut Fighter) {
 
 /// `ftCo_800C0134`.
 pub fn ftco_800c0134(fp: &mut Fighter) {
+    melee_core::ct!("ftco_800c0134");
     ext::lb_80014498(&mut fp.x488);
     dispatch_action_state_change(fp);
     if ext::ftCo_800C53E4(fp) != 0 {
@@ -198,6 +207,7 @@ fn reapply_x488(fp: &mut Fighter) {
 
 /// `ftCo_800C0200`: reset colanim `arg1`'s list and reapply the standing overlays.
 pub fn ftco_800c0200(fp: &mut Fighter, arg1: i32) {
+    melee_core::ct!("ftco_800c0200");
     if arg1 >= 0x7B {
         panic!("don't reset spycloak colanim!");
     }
@@ -212,6 +222,7 @@ pub fn ftco_800c0200(fp: &mut Fighter, arg1: i32) {
 
 /// `ftCo_800C0358`: copy the list of colanim `arg2` from `fp` to `arg1`.
 pub fn ftco_800c0358(fp: &Fighter, arg1: &mut Fighter, arg2: i32) {
+    melee_core::ct!("ftco_800c0358");
     if arg2 >= 0x7B {
         panic!("don't reset spycloak colanim!");
     }
@@ -224,6 +235,7 @@ pub fn ftco_800c0358(fp: &Fighter, arg1: &mut Fighter, arg2: i32) {
 
 /// `ftCo_800C0408`: run the three colanim lists for one frame.
 pub fn ftco_800c0408(g: G) {
+    melee_core::ct!("ftco_800c0408");
     let fp = fpg(g);
     while ext::lb_80014258(g, &mut fpg(g).x508, ft_800bff34) {
         ext::lb_80014498(&mut fpg(g).x508);

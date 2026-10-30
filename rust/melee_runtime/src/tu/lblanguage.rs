@@ -24,11 +24,13 @@ pub mod ext {
 
 /// `lbLang_GetLanguageSetting`.
 pub fn lbLang_GetLanguageSetting() -> enum_t {
+    melee_core::ct!("lbLang_GetLanguageSetting");
     unsafe { (*ext::gmMainLib_804D3EE0()).language as enum_t }
 }
 
 /// `lbLang_SetLanguageSetting`: stores `language` when it is a valid language; returns it as given.
 pub fn lbLang_SetLanguageSetting(language: enum_t) -> enum_t {
+    melee_core::ct!("lbLang_SetLanguageSetting");
     if language >= 0 && language < LANG_COUNT {
         unsafe { (*ext::gmMainLib_804D3EE0()).language = language as u8 };
     }
@@ -37,21 +39,25 @@ pub fn lbLang_SetLanguageSetting(language: enum_t) -> enum_t {
 
 /// `lbLang_IsSettingJP`.
 pub fn lbLang_IsSettingJP() -> bool {
+    melee_core::ct!("lbLang_IsSettingJP");
     unsafe { (*ext::gmMainLib_804D3EE0()).language as enum_t == LANG_JP }
 }
 
 /// `lbLang_IsSettingUS`.
 pub fn lbLang_IsSettingUS() -> bool {
+    melee_core::ct!("lbLang_IsSettingUS");
     unsafe { (*ext::gmMainLib_804D3EE0()).language as enum_t == LANG_US }
 }
 
 /// `lbLang_GetSavedLanguage`.
 pub fn lbLang_GetSavedLanguage() -> enum_t {
+    melee_core::ct!("lbLang_GetSavedLanguage");
     unsafe { (*ext::gmMainLib_GetGamePrefs()).saved_language as enum_t }
 }
 
 /// `lbLang_SetSavedLanguage`.
 pub fn lbLang_SetSavedLanguage(language: enum_t) {
+    melee_core::ct!("lbLang_SetSavedLanguage");
     if language >= 0 && language < LANG_COUNT {
         unsafe { (*ext::gmMainLib_GetGamePrefs()).saved_language = language as u8 };
     }
@@ -59,10 +65,12 @@ pub fn lbLang_SetSavedLanguage(language: enum_t) {
 
 /// `lbLang_IsSavedLanguageJP`.
 pub fn lbLang_IsSavedLanguageJP() -> bool {
+    melee_core::ct!("lbLang_IsSavedLanguageJP");
     unsafe { (*ext::gmMainLib_GetGamePrefs()).saved_language as enum_t == LANG_JP }
 }
 
 /// `lbLang_IsSavedLanguageUS`.
 pub fn lbLang_IsSavedLanguageUS() -> bool {
+    melee_core::ct!("lbLang_IsSavedLanguageUS");
     unsafe { (*ext::gmMainLib_GetGamePrefs()).saved_language as enum_t == LANG_US }
 }

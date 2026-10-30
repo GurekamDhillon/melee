@@ -17,6 +17,7 @@ pub static mut OSREPORT_SINK: Option<fn(&[u8])> = None;
 
 /// Pair the format's conversions with the slice values.
 pub unsafe fn os_report_args(fmt: *const c_char, va: &[usize]) -> std::vec::Vec<PrintfArg> {
+    melee_core::ct!("os_report_args");
     let mut out = std::vec::Vec::new();
     let mut p = fmt as *const u8;
     let mut k = 0usize;
@@ -68,6 +69,7 @@ pub unsafe fn os_report_args(fmt: *const c_char, va: &[usize]) -> std::vec::Vec<
 
 /// The text `OSReport(fmt, ...)` prints.
 pub unsafe fn os_report_text(fmt: *const c_char, va: &[usize]) -> std::vec::Vec<u8> {
+    melee_core::ct!("os_report_text");
     let args = os_report_args(fmt, va);
     c_format(fmt as *const i8, &args)
 }
@@ -85,10 +87,12 @@ fn emit(bytes: &[u8]) {
 
 /// `OSReport(msg, ...)`.
 pub unsafe fn OSReport(msg: *const c_char, va: &[usize]) {
+    melee_core::ct!("OSReport");
     emit(&os_report_text(msg, va));
 }
 
 /// `OSReport` of an already formatted message (callers that format in Rust).
 pub fn OSReport_str(msg: &str) {
+    melee_core::ct!("OSReport_str");
     emit(msg.as_bytes());
 }

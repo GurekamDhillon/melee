@@ -52,12 +52,14 @@ pub static mut gm_Mode_ProgScan_States: [GameModeState; 2] = [
 
 /// gm_801BF8F8: the enter data is a word; set it to 1.
 pub unsafe extern "C" fn gm_801BF8F8(arg0: *mut GameModeState) {
+    melee_core::ct!("gm_801BF8F8");
     let val = ext::gm_GetGameModeStateEnterData(arg0) as *mut i32;
     *val = 1;
 }
 
 /// gm_801BF920: leave to the boot mode.
 pub unsafe extern "C" fn gm_801BF920(arg0: *mut GameModeState) {
+    melee_core::ct!("gm_801BF920");
     ext::gm_GetGameModeStateExitData(arg0);
     ext::gm_ChangeGameModeAfterCurrentScene(GM_BOOT as i32);
 }

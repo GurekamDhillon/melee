@@ -839,9 +839,10 @@ fn abs_f32(x: f32) -> f32 {
 
 // ---- stage data hooks -------------------------------------------------------------------------
 
-pub unsafe extern "C" fn grZebes_801D84A0(_arg: i32) {}
+pub unsafe extern "C" fn grZebes_801D84A0(_arg: i32) { melee_core::ct!("grZebes_801D84A0");}
 
 pub unsafe extern "C" fn grZebes_801D84A4() {
+    melee_core::ct!("grZebes_801D84A4");
     yakumono_param = ext::Ground_GetYakumonoParam() as *mut grZe_YakumonoParam;
     ext::stage_info.unk8C.set_b4(0);
     ext::stage_info.unk8C.set_b5(1);
@@ -855,17 +856,20 @@ pub unsafe extern "C" fn grZebes_801D84A4() {
     grZebes_801DA3E8();
 }
 
-pub unsafe extern "C" fn grZebes_801D8528() {}
+pub unsafe extern "C" fn grZebes_801D8528() { melee_core::ct!("grZebes_801D8528");}
 
 pub unsafe extern "C" fn grZebes_801D852C() {
+    melee_core::ct!("grZebes_801D852C");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
 
 pub unsafe extern "C" fn grZebes_801D8550() -> i32 {
+    melee_core::ct!("grZebes_801D8550");
     0
 }
 
 pub unsafe extern "C" fn grZebes_801D8558(id: i32) -> *mut Ground_GObj {
+    melee_core::ct!("grZebes_801D8558");
     let cbs = &raw mut grZe_callbacks[id as usize];
     let gobj = ext::Ground_GetStageGObj(id);
     if !gobj.is_null() {
@@ -889,6 +893,7 @@ pub unsafe extern "C" fn grZebes_801D8558(id: i32) -> *mut Ground_GObj {
 }
 
 pub unsafe extern "C" fn grZebes_801D8644(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grZebes_801D8644");
     let gp = GET_GROUND(gobj);
     let jobj = GET_JOBJ(gobj);
 
@@ -932,6 +937,7 @@ pub unsafe extern "C" fn grZebes_801D8644(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grZebes_801D8814(_arg: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("grZebes_801D8814");
     0
 }
 
@@ -980,6 +986,7 @@ unsafe fn grZebes_UpdateCollisionColumns(column_width: f32, column_x: *mut f32, 
 /// `grZe_8049F140_GetSpawnPos` (TARGET_PC).
 #[inline(always)]
 pub unsafe fn grZe_8049F140_GetSpawnPos(i: i32, px: *mut f32, py: *mut f32) {
+    melee_core::ct!("grZe_8049F140_GetSpawnPos");
     if i == 0 {
         *px = grZe_8049F140[1].z;
         *py = grZe_8049F158[0].x;
@@ -990,6 +997,7 @@ pub unsafe fn grZe_8049F140_GetSpawnPos(i: i32, px: *mut f32, py: *mut f32) {
 }
 
 pub unsafe extern "C" fn grZebes_801D881C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grZebes_801D881C");
     let mut spot_pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut spot_interest = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut first_column: i32;
@@ -1196,9 +1204,10 @@ pub unsafe extern "C" fn grZebes_801D881C(gobj: *mut HSD_GObj) {
     ext::lb_800115F4();
 }
 
-pub unsafe extern "C" fn grZebes_801D90FC(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grZebes_801D90FC(_arg: *mut Ground_GObj) { melee_core::ct!("grZebes_801D90FC");}
 
 pub unsafe extern "C" fn grZebes_801D9100(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grZebes_801D9100");
     let gp = GET_GROUND(gobj);
     let jobj = GET_JOBJ(gobj);
 
@@ -1231,10 +1240,12 @@ pub unsafe extern "C" fn grZebes_801D9100(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grZebes_801D9254(_arg: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("grZebes_801D9254");
     0
 }
 
 pub unsafe extern "C" fn grZebes_801D925C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grZebes_801D925C");
     let gp = GET_GROUND(gobj);
     let result = grZebes_801DA528(gobj, &raw mut (*gp).u.zebes4 as *mut c_void, 1, 2);
 
@@ -1270,17 +1281,20 @@ pub unsafe extern "C" fn grZebes_801D925C(gobj: *mut HSD_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grZebes_801D93D8(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grZebes_801D93D8(_arg: *mut Ground_GObj) { melee_core::ct!("grZebes_801D93D8");}
 
 pub unsafe extern "C" fn stageGObj5_OnInit(gobj: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj5_OnInit");
     Ground_StartMapAnim(gobj);
 }
 
 pub unsafe extern "C" fn grZebes_801D9408(_arg: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("grZebes_801D9408");
     0
 }
 
 pub unsafe extern "C" fn grZebes_801D9410(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grZebes_801D9410");
     let mut slope = 0.0f32;
     let mut intercept = 0.0f32;
     let jobj = GET_JOBJ(gobj);
@@ -1292,13 +1306,15 @@ pub unsafe extern "C" fn grZebes_801D9410(gobj: *mut Ground_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grZebes_801D94EC(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grZebes_801D94EC(_arg: *mut Ground_GObj) { melee_core::ct!("grZebes_801D94EC");}
 
 pub unsafe extern "C" fn fn_801D94F0(gobj: *mut Ground_GObj) {
+    melee_core::ct!("fn_801D94F0");
     (*GET_GROUND(gobj)).u.zebes.set_x0_b0(0);
 }
 
 pub unsafe extern "C" fn grZebes_801D9508(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grZebes_801D9508");
     let gp = GET_GROUND(gobj);
     let map_a_gobj = ext::Ground_GetMapGObj(6);
     hsd_assert_here(909, !map_a_gobj.is_null(), c"map_a_gobj");
@@ -1310,10 +1326,12 @@ pub unsafe extern "C" fn grZebes_801D9508(gobj: *mut Ground_GObj) {
 }
 
 pub unsafe extern "C" fn grZebes_801D95B0(_arg: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("grZebes_801D95B0");
     0
 }
 
 pub unsafe extern "C" fn grZebes_801D95B8(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grZebes_801D95B8");
     let gp = GET_GROUND(gobj);
     let jobj = GET_JOBJ(gobj);
     let stored_jobj: *mut HSD_JObj = u2p((*gp).u.zebes.x4);
@@ -1341,15 +1359,17 @@ pub unsafe extern "C" fn grZebes_801D95B8(gobj: *mut Ground_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grZebes_801D9754(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grZebes_801D9754(_arg: *mut Ground_GObj) { melee_core::ct!("grZebes_801D9754");}
 
 pub unsafe extern "C" fn grZebes_801D9758(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grZebes_801D9758");
     let gp = GET_GROUND(gobj);
     ext::ftCo_800C07F8(gobj, 3, grZebes_801DCBFC as usize as *mut c_void);
     (*gp).u.zebes.x4 = 1;
 }
 
 pub unsafe extern "C" fn grZebes_801D9798(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grZebes_801D9798");
     let gp = GET_GROUND(gobj);
     let mut delay_min: i32;
     let mut delay_max: i32;
@@ -1402,10 +1422,12 @@ pub unsafe extern "C" fn grZebes_801D9798(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grZebes_801D99D8(_arg: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("grZebes_801D99D8");
     0
 }
 
 pub unsafe extern "C" fn grZebes_801D99E0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grZebes_801D99E0");
     let gp = GET_GROUND(gobj);
     let state = (*gp).u.zebes5.xC8 as i32;
     let entries = &raw mut (*yakumono_param).xA0_entries as *mut grZe_AcidLevelEntry;
@@ -1543,9 +1565,10 @@ pub unsafe extern "C" fn grZebes_801D99E0(gobj: *mut HSD_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grZebes_801D9F2C(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grZebes_801D9F2C(_arg: *mut Ground_GObj) { melee_core::ct!("grZebes_801D9F2C");}
 
 pub unsafe extern "C" fn grZebes_801D9F30(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grZebes_801D9F30");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
     (*gp).u.zebes2.xC4 = 0;
@@ -1553,10 +1576,12 @@ pub unsafe extern "C" fn grZebes_801D9F30(gobj: *mut Ground_GObj) {
 }
 
 pub unsafe extern "C" fn grZebes_801D9F7C(_arg: *mut Ground_GObj) -> i32 {
+    melee_core::ct!("grZebes_801D9F7C");
     0
 }
 
 pub unsafe extern "C" fn grZebes_801D9F84(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grZebes_801D9F84");
     let mut slope = 0.0f32;
     let mut intercept = 0.0f32;
     let gp = GET_GROUND(gobj);
@@ -1588,9 +1613,10 @@ pub unsafe extern "C" fn grZebes_801D9F84(gobj: *mut Ground_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grZebes_801DA0C0(_arg: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grZebes_801DA0C0(_arg: *mut Ground_GObj) { melee_core::ct!("grZebes_801DA0C0");}
 
 pub unsafe extern "C" fn grZebes_801DA0C4(level: f32) {
+    melee_core::ct!("grZebes_801DA0C4");
     let mut color = GXColor { r: 0, g: 0, b: 0, a: 0 };
     let mut idx: u32 = 0;
 
@@ -1635,6 +1661,7 @@ pub unsafe extern "C" fn grZebes_801DA0C4(level: f32) {
 }
 
 pub unsafe extern "C" fn grZebes_801DA254(gobj: *mut Ground_GObj, level: f32) {
+    melee_core::ct!("grZebes_801DA254");
     let gp = GET_GROUND(gobj);
     let mut lobj: *mut HSD_LObj = u2p((*gp).u.zebes4.xDC);
     (*gp).u.zebes4.xDC = p2u(lobj);
@@ -1667,10 +1694,12 @@ pub unsafe extern "C" fn grZebes_801DA254(gobj: *mut Ground_GObj, level: f32) {
 }
 
 pub unsafe extern "C" fn grZebes_801DA3E8() {
+    melee_core::ct!("grZebes_801DA3E8");
     grZe_804D6998 = 0;
 }
 
 pub unsafe extern "C" fn grZebes_801DA3F4(pos: *mut Vec3) {
+    melee_core::ct!("grZebes_801DA3F4");
     if grZe_804D6998 < 10 {
         let gobj = grZebes_801D8558(5);
         if !gobj.is_null() {
@@ -1687,11 +1716,13 @@ pub unsafe extern "C" fn grZebes_801DA3F4(pos: *mut Vec3) {
 }
 
 pub unsafe extern "C" fn grZebes_801DA4FC(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grZebes_801DA4FC");
     grZe_804D6998 = grZe_804D6998.wrapping_sub(1);
     ext::Ground_801C4A08(gobj);
 }
 
 pub unsafe extern "C" fn grZebes_801DA528(arg0: *mut HSD_GObj, arg1: *mut c_void, arg2: i32, arg3: i32) -> i32 {
+    melee_core::ct!("grZebes_801DA528");
     let st = arg1 as *mut grZe_AcidState;
     let yp = yakumono_param;
 
@@ -1814,16 +1845,19 @@ pub unsafe extern "C" fn grZebes_801DA528(arg0: *mut HSD_GObj, arg1: *mut c_void
 }
 
 pub unsafe extern "C" fn fn_801DA9D8(_arg0: *mut Item_GObj, gp: *mut Ground, pos: *mut Vec3, _fobj: *mut HSD_GObj, slope: f32) {
+    melee_core::ct!("fn_801DA9D8");
     (*gp).u.zebes.xC.z += slope;
     (*gp).u.zebes.xC.y = (*pos).x;
 }
 
 pub unsafe extern "C" fn fn_801DA9F0(_arg0: *mut Item_GObj, gp: *mut Ground, pos: *mut Vec3, _fobj: *mut HSD_GObj, slope: f32) {
+    melee_core::ct!("fn_801DA9F0");
     (*gp).u.zebes.xC.y += slope;
     (*gp).u.zebes.xC.x = (*pos).x;
 }
 
 pub unsafe extern "C" fn grZebes_801DAA08() -> i32 {
+    melee_core::ct!("grZebes_801DAA08");
     let mut indices = [0i32; 20];
     let mut count: i32 = 0;
     let mut ptr = bubbles();
@@ -1917,6 +1951,7 @@ pub unsafe extern "C" fn grZebes_801DAA08() -> i32 {
 }
 
 pub unsafe extern "C" fn fn_801DAC90(_arg0: *mut Item_GObj, _arg1: *mut Ground, _arg2: *mut Vec3, _arg3: *mut HSD_GObj, _arg4: f32) {
+    melee_core::ct!("fn_801DAC90");
     let mut i: i32;
     let mut found: i32 = -1;
 
@@ -1938,6 +1973,7 @@ pub unsafe extern "C" fn fn_801DAC90(_arg0: *mut Item_GObj, _arg1: *mut Ground, 
 }
 
 pub unsafe extern "C" fn grZebes_801DAE70(arg0: i32, arg1: u8, x: f32, y: f32, scale: f32) {
+    melee_core::ct!("grZebes_801DAE70");
     if (*bubble(arg0)).x00_active == 0 {
         if (*bubble(arg0)).x20_gobj.is_null() {
             let gobj: *mut Ground_GObj;
@@ -1981,6 +2017,7 @@ pub unsafe extern "C" fn grZebes_801DAE70(arg0: i32, arg1: u8, x: f32, y: f32, s
 }
 
 pub unsafe extern "C" fn grZebes_801DB088(gp: *mut Ground, arg1: i32) -> i32 {
+    melee_core::ct!("grZebes_801DB088");
     let mut result: i32 = 0;
     let yp = yakumono_param;
 
@@ -2193,6 +2230,7 @@ unsafe fn grZebes_801DB3CC_update(base: *mut *mut grZe_BubbleEntry) {
 }
 
 pub unsafe extern "C" fn grZebes_801DB3CC(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grZebes_801DB3CC");
     let mut base = bubbles();
     let mut cur: *mut grZe_BubbleEntry;
     let mut right_idx: i32;
@@ -2376,6 +2414,7 @@ fn grZebes_Subtract(lhs: f32, rhs: f32) -> f32 {
 }
 
 pub unsafe extern "C" fn grZebes_801DBB60(yaku: *mut Item_GObj) -> i32 {
+    melee_core::ct!("grZebes_801DBB60");
     let mut count: i32 = 0;
     let mut max_dist_sq: f32 = -1.0;
     let mut ei: *mut grZe_BubbleEntry;
@@ -2563,6 +2602,7 @@ pub unsafe extern "C" fn grZebes_801DBB60(yaku: *mut Item_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn grZebes_801DC260() {
+    melee_core::ct!("grZebes_801DC260");
     let mut i: i32 = 0;
     while i < 20 {
         let entry = bubble(i);
@@ -2588,6 +2628,7 @@ pub unsafe extern "C" fn grZebes_801DC260() {
 }
 
 pub unsafe extern "C" fn grZebes_801DC408(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grZebes_801DC408");
     let gp = GET_GROUND(gobj);
 
     if (*gp).u.zebes5.xC4 == 0 {
@@ -2665,6 +2706,7 @@ unsafe fn grZebes_SpawnBubbleLine(scales: *mut grZe_BubbleScales, ip: *mut i32, 
 }
 
 pub unsafe extern "C" fn grZebes_801DC744(arg0: i32, arg1: u8) {
+    melee_core::ct!("grZebes_801DC744");
     let mut scales = grZe_803B8044.x0_scales;
     let base = &raw mut grZe_8049F140 as *mut Vec3;
     let mut i: i32 = 0;
@@ -2709,6 +2751,7 @@ pub unsafe extern "C" fn grZebes_801DC744(arg0: i32, arg1: u8) {
 }
 
 pub unsafe extern "C" fn grZebes_801DC9DC(arg0: i32) {
+    melee_core::ct!("grZebes_801DC9DC");
     let mut i: i32;
 
     grZe_804D6994 = 0;
@@ -2735,6 +2778,7 @@ pub unsafe extern "C" fn grZebes_801DC9DC(arg0: i32) {
 }
 
 pub unsafe extern "C" fn grZebes_801DCB64(vec: *mut Vec3, val: i32) -> i32 {
+    melee_core::ct!("grZebes_801DCB64");
     if val < 9 {
         ext::grLib_801C96F8(0xBA, 0, vec);
     } else {
@@ -2744,6 +2788,7 @@ pub unsafe extern "C" fn grZebes_801DCB64(vec: *mut Vec3, val: i32) -> i32 {
 }
 
 pub unsafe extern "C" fn grZebes_801DCBB0(vec: *mut Vec3, val: i32) -> i32 {
+    melee_core::ct!("grZebes_801DCBB0");
     if val < 3 {
         ext::grLib_801C96F8(0xBA, 0, vec);
     } else {
@@ -2753,6 +2798,7 @@ pub unsafe extern "C" fn grZebes_801DCBB0(vec: *mut Vec3, val: i32) -> i32 {
 }
 
 pub unsafe extern "C" fn grZebes_801DCBFC(_gobj: *mut Ground_GObj, fobj: *mut HSD_GObj, arg: *mut c_void) -> i32 {
+    melee_core::ct!("grZebes_801DCBFC");
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut prev = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut slope = 0.0f32;
@@ -2775,14 +2821,17 @@ pub unsafe extern "C" fn grZebes_801DCBFC(_gobj: *mut Ground_GObj, fobj: *mut HS
 }
 
 pub unsafe extern "C" fn grZebes_801DCCB8(_arg: i32) -> *mut DynamicsDesc {
+    melee_core::ct!("grZebes_801DCCB8");
     null_mut()
 }
 
 pub unsafe extern "C" fn grZebes_801DCCC0(_arg: *mut Vec3, _arg0: i32, _jobj: *mut HSD_JObj) -> i32 {
+    melee_core::ct!("grZebes_801DCCC0");
     1
 }
 
 pub unsafe extern "C" fn grZebes_801DCCC8() -> f32 {
+    melee_core::ct!("grZebes_801DCCC8");
     let mut slope = 0.0f32;
     let mut intercept = 0.0f32;
     ext::Ground_801C4368(&mut slope, &mut intercept);

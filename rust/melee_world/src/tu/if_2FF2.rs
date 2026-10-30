@@ -153,6 +153,7 @@ pub static mut un_804A1F58: un_804A1F58_t = unsafe { core::mem::zeroed() };
 
 /// `static inline int fn_802FF218_inline(HSD_GObj*)`: the player index whose gobj this is, or -1.
 pub unsafe fn fn_802FF218_inline(arg0: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("fn_802FF218_inline");
     for x in 0..6usize {
         if un_804A1F58.x8[x].x0 == arg0 {
             return x as i32;
@@ -163,6 +164,7 @@ pub unsafe fn fn_802FF218_inline(arg0: *mut HSD_GObj) -> i32 {
 
 /// `void fn_802FF218(HSD_GObj*)`: refreshes the player's number (blank while `x10 == 1`).
 pub unsafe extern "C" fn fn_802FF218(arg0: *mut HSD_GObj) {
+    melee_core::ct!("fn_802FF218");
     let y = fn_802FF218_inline(arg0);
     if y >= 0 {
         let thing = &raw mut un_804A1F58.x8[y as usize];
@@ -184,10 +186,11 @@ pub unsafe extern "C" fn fn_802FF218(arg0: *mut HSD_GObj) {
 }
 
 /// `void fn_802FF360(void*)`: the texts' render callback (does nothing).
-pub unsafe extern "C" fn fn_802FF360(_arg0: *mut c_void) {}
+pub unsafe extern "C" fn fn_802FF360(_arg0: *mut c_void) { melee_core::ct!("fn_802FF360");}
 
 /// `void un_802FF364(int slot)`: (re)builds the slot's score text at its HUD position.
 pub unsafe extern "C" fn un_802FF364(slot: i32) {
+    melee_core::ct!("un_802FF364");
     let base = &raw mut un_804A1F58;
     let thing = &raw mut (*base).x8[slot as usize];
     let if_all = ext::ifAll_GetPlayerHUDPosition(slot);
@@ -215,12 +218,14 @@ pub unsafe extern "C" fn un_802FF364(slot: i32) {
 
 /// `void un_802FF498(void)`: clears the state and creates the SisLib text list.
 pub unsafe extern "C" fn un_802FF498() {
+    melee_core::ct!("un_802FF498");
     core::ptr::write_bytes(&raw mut un_804A1F58 as *mut u8, 0, core::mem::size_of::<un_804A1F58_t>());
     un_804A1F58.x0 = ext::HSD_SisLib_803A611C(2, ext::ifAll_GetHUDGObj(), 14, 15, 0, 11, 0, 19) as u32;
 }
 
 /// `void un_802FF4FC(void)`: frees every player's gobj and text.
 pub unsafe extern "C" fn un_802FF4FC() {
+    melee_core::ct!("un_802FF4FC");
     for i in 0..6usize {
         let thing = &raw mut un_804A1F58.x8[i];
         if !(*thing).x0.is_null() {
@@ -234,6 +239,7 @@ pub unsafe extern "C" fn un_802FF4FC() {
 
 /// `void un_802FF570(void)`: hides every text (and blanks the numbers).
 pub unsafe extern "C" fn un_802FF570() {
+    melee_core::ct!("un_802FF570");
     for i in 0..6usize {
         let thing = &raw mut un_804A1F58.x8[i];
         (*thing).x10 = 1;
@@ -246,6 +252,7 @@ pub unsafe extern "C" fn un_802FF570() {
 
 /// `void un_802FF620(void)`: rebuilds and shows the texts that exist.
 pub unsafe extern "C" fn un_802FF620() {
+    melee_core::ct!("un_802FF620");
     for i in 0..6usize {
         let thing = &raw mut un_804A1F58.x8[i];
         (*thing).x10 = 0;
@@ -258,6 +265,7 @@ pub unsafe extern "C" fn un_802FF620() {
 
 /// `void un_802FF6A0(void)`: the HUD light gobj.
 pub unsafe extern "C" fn un_802FF6A0() {
+    melee_core::ct!("un_802FF6A0");
     let gobj = ext::GObj_Create(HSD_GOBJ_CLASS_LIGHT as u16, 3, 0);
     let new_var = ext::HSD_LObjLoadDesc(&raw mut light1);
     ext::HSD_GObjObject_80390A70(gobj, ext::HSD_GObj_LightKind as u8, new_var as *mut c_void);
@@ -266,6 +274,7 @@ pub unsafe extern "C" fn un_802FF6A0() {
 
 /// `void un_802FF710(void)`: the HUD camera gobj.
 pub unsafe extern "C" fn un_802FF710() {
+    melee_core::ct!("un_802FF710");
     let gobj = ext::GObj_Create(0x13, 20, 0);
     if !gobj.is_null() {
         let new_var = ext::HSD_CObjLoadDesc(&raw mut un_803F9E60 as *mut HSD_CObjDesc);
@@ -277,6 +286,7 @@ pub unsafe extern "C" fn un_802FF710() {
 
 /// `HSD_GObj* un_802FF78C(void)`: sets the DevText overlay up (and its menu allocator).
 pub unsafe extern "C" fn un_802FF78C() -> *mut HSD_GObj {
+    melee_core::ct!("un_802FF78C");
     let gobj = ext::DevText_Setup(21, 24, 0, 17, 0, 11);
     if !gobj.is_null() {
         ext::un_80304138();

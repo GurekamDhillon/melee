@@ -72,12 +72,15 @@ pub mod ext {
 }
 
 pub unsafe extern "C" fn ftCo_800C4858_cb(g: G) {
+    melee_core::ct!("ftCo_800C4858_cb");
     ftCo_800C4858(g)
 }
 pub unsafe extern "C" fn ftCo_800C48AC_cb(g: G) {
+    melee_core::ct!("ftCo_800C48AC_cb");
     ftCo_800C48AC(g)
 }
 pub unsafe extern "C" fn ftCo_800C4C60_cb(g: G) {
+    melee_core::ct!("ftCo_800C4C60_cb");
     ftCo_800C4C60(g)
 }
 
@@ -88,6 +91,7 @@ fn set_damage_callbacks(f: &mut Fighter) {
 }
 
 pub fn ftCo_800C4724(g: G) {
+    melee_core::ct!("ftCo_800C4724");
     let j = jobj(g);
     let f = fp(g);
     ext::it_80294430(f.item_gobj, f.x2C4.y, f.co_attrs.warp_star_hitbox_scale);
@@ -124,14 +128,17 @@ fn inline_a0(g: G) {
 }
 
 pub fn ftCo_800C4858(g: G) {
+    melee_core::ct!("ftCo_800C4858");
     inline_a0(g);
 }
 
 pub fn ftCo_800C48AC(g: G) {
+    melee_core::ct!("ftCo_800C48AC");
     inline_a0(g);
 }
 
 pub fn ftCo_WarpStarJump_Anim(g: G) {
+    melee_core::ct!("ftCo_WarpStarJump_Anim");
     let f = fp(g);
     ws(f).x1C = ws(f).x1C.wrapping_sub(1);
     let y = f.cur_pos.y;
@@ -140,9 +147,10 @@ pub fn ftCo_WarpStarJump_Anim(g: G) {
     }
 }
 
-pub fn ftCo_WarpStarJump_IASA(_g: G) {}
+pub fn ftCo_WarpStarJump_IASA(_g: G) { melee_core::ct!("ftCo_WarpStarJump_IASA");}
 
 pub fn ftCo_WarpStarJump_Phys(g: G) {
+    melee_core::ct!("ftCo_WarpStarJump_Phys");
     let j = jobj(g);
     assert!(!j.is_null(), "jobj.h:979 jobj");
     let t = unsafe { (*j).translate };
@@ -154,13 +162,15 @@ pub fn ftCo_WarpStarJump_Phys(g: G) {
     ws(f).self_vel = t;
 }
 
-pub fn ftCo_WarpStarJump_Coll(_g: G) {}
+pub fn ftCo_WarpStarJump_Coll(_g: G) { melee_core::ct!("ftCo_WarpStarJump_Coll");}
 
 pub fn ftCo_WarpStarJump_Cam(g: G) {
+    melee_core::ct!("ftCo_WarpStarJump_Cam");
     ext::ftCamera_800762F4(g);
 }
 
 pub fn ftCo_800C4A38(g: G) {
+    melee_core::ct!("ftCo_800C4A38");
     let f = fp(g);
     let ecb = &mut ws(f).ecb as *mut ftCollisionBox;
     ext::it_802944AC(f.item_gobj, ecb);
@@ -189,10 +199,11 @@ pub fn ftCo_800C4A38(g: G) {
     ext::mpColl_80043680(&mut f.coll_data, &mut f.cur_pos);
 }
 
-pub fn ftCo_WarpStarFall_Anim(_g: G) {}
-pub fn ftCo_WarpStarFall_IASA(_g: G) {}
+pub fn ftCo_WarpStarFall_Anim(_g: G) { melee_core::ct!("ftCo_WarpStarFall_Anim");}
+pub fn ftCo_WarpStarFall_IASA(_g: G) { melee_core::ct!("ftCo_WarpStarFall_IASA");}
 
 pub fn ftCo_WarpStarFall_Phys(g: G) {
+    melee_core::ct!("ftCo_WarpStarFall_Phys");
     let c = cd();
     ext::ftCommon_Fall(fp(g), c.x694, c.x698);
     let f = fp(g);
@@ -206,11 +217,13 @@ pub fn ftCo_WarpStarFall_Phys(g: G) {
 }
 
 pub fn ftCo_WarpStarFall_Coll(g: G) {
+    melee_core::ct!("ftCo_WarpStarFall_Coll");
     let ecb = &mut ws(fp(g)).ecb as *mut ftCollisionBox;
     ext::ft_80083E64(g, ecb, Some(ftCo_800C4C60_cb));
 }
 
 pub fn ftCo_800C4C60(g: G) {
+    melee_core::ct!("ftCo_800C4C60");
     let f = fp(g);
     f.facing_dir = ws(f).facing_dir;
     ext::Fighter_ChangeMotionState(g, ftCo_MS_JumpB as i32, Ft_MF_None, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -254,5 +267,6 @@ pub fn ftCo_800C4C60(g: G) {
 }
 
 pub fn ftCo_WarpStarFall_Cam(g: G) {
+    melee_core::ct!("ftCo_WarpStarFall_Cam");
     ext::ftCamera_800762F4(g);
 }

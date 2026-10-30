@@ -14,6 +14,7 @@ pub use crate::chars::r8::ftMasterHand::ftmasterhandsqueeze::ftMh_Squeeze_IASA;
 
 /// `ftMh_UpdateBossMotion` (ftMasterHand/inlines.h, static inline).
 pub unsafe fn ftMh_UpdateBossMotion(gobj: *mut HSD_GObj, fp: *mut Fighter, da: *const ftMasterHand_SpecialAttrs) {
+    melee_core::ct!("ftMh_UpdateBossMotion");
     unsafe {
         st::ft_80085134(gobj);
         let xc = (*fp).mv.mh.unk0.xC;
@@ -22,6 +23,7 @@ pub unsafe fn ftMh_UpdateBossMotion(gobj: *mut HSD_GObj, fp: *mut Fighter, da: *
 }
 
 pub fn ftMh_MS_378_80154A78(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_378_80154A78");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*(*fp).ft_data).ext_attr as *const ftMasterHand_SpecialAttrs;
@@ -39,6 +41,7 @@ pub fn ftMh_MS_378_80154A78(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMh_Squeeze_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Squeeze_Anim");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         if (*fp).cmd_vars[1] != 0 {
@@ -59,6 +62,7 @@ pub fn ftMh_Squeeze_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMh_Squeeze_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Squeeze_Phys");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*(*fp).ft_data).ext_attr as *const ftMasterHand_SpecialAttrs;
@@ -67,6 +71,7 @@ pub fn ftMh_Squeeze_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMh_Squeeze_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Squeeze_Coll");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         if (*fp).mv.mh.unk0.x18 == 0.0 {

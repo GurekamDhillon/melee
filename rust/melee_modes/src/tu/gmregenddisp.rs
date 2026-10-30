@@ -117,6 +117,7 @@ unsafe fn owned_trophies() -> i32 {
 /// fn_801A7FB4: fog proc; the fog animation plays to a frame that depends on how many trophies
 /// are shown (185 up to 5, 200 up to 13, else to the end).
 pub unsafe extern "C" fn fn_801A7FB4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801A7FB4");
     let fog = get_hsd_obj(gobj) as *mut HSD_Fog;
 
     ext::gm_GetCurrentGameMode();
@@ -143,16 +144,19 @@ pub unsafe extern "C" fn fn_801A7FB4(gobj: *mut HSD_GObj) {
 
 /// fn_801A80CC: light proc.
 pub unsafe extern "C" fn fn_801A80CC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801A80CC");
     ext::HSD_LObjAnimAll(get_hsd_obj(gobj) as *mut HSD_LObj);
 }
 
 /// fn_801A80F0: model proc.
 pub unsafe extern "C" fn fn_801A80F0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801A80F0");
     ext::HSD_JObjAnimAll(get_jobj(gobj));
 }
 
 /// gm_801A8114: place the fighter model's child joint from the trophy's table.
 pub unsafe fn gm_801A8114(arg0: *mut HSD_JObj, arg1: i32) {
+    melee_core::ct!("gm_801A8114");
     let transJobj = if arg0.is_null() { null_mut() } else { (*arg0).child };
 
     hsd::HSD_JObjSetTranslateX(transJobj, ext::Toy_803060BC(arg1, 0));
@@ -173,6 +177,7 @@ pub unsafe fn gm_801A8114(arg0: *mut HSD_JObj, arg1: i32) {
 
 /// fn_801A851C: backdrop proc.
 pub unsafe extern "C" fn fn_801A851C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801A851C");
     ext::HSD_JObjAnimAll(get_jobj(gobj));
     hsd::HSD_JObjSetTranslateZ(get_jobj(gobj), 2.0f32);
     if ext::gm_801A4BA8() == 0x174 {
@@ -184,6 +189,7 @@ pub unsafe extern "C" fn fn_801A851C(gobj: *mut HSD_GObj) {
 /// random angular jitter. (`arg2` is only scratch in the C.) Each `a*b + c` is a fused
 /// multiply-add in the shipping build (`fmuladd` -> `fmadds`); the left multiply is the fused one.
 pub unsafe fn gm_801A85E4(jobj: *mut HSD_JObj, arg1: i32, _arg2: i32) {
+    melee_core::ct!("gm_801A85E4");
     if arg1 <= 4 {
         let mut arg2 = 4 - arg1;
         let mut idx = arg2 + 2;
@@ -241,6 +247,7 @@ pub unsafe fn gm_801A85E4(jobj: *mut HSD_JObj, arg1: i32, _arg2: i32) {
 /// gm_801A8D54: the owned trophies' fighter ids (other than the shown fighter), sorted by
 /// descending random key, 0x1A-padded.
 pub unsafe fn gm_801A8D54(arg0: *mut i32) {
+    melee_core::ct!("gm_801A8D54");
     let mut sp84 = [0i32; 0x1A];
 
     for i in 0..0x1A {
@@ -289,16 +296,19 @@ pub use crate::gm_ptr::gm_801A9094_get_entry;
 
 /// `gm_801A9094_get_bg` (static inline): the pedestal stand's joint.
 pub unsafe fn gm_801A9094_get_bg() -> *mut HSD_Joint {
+    melee_core::ct!("gm_801A9094_get_bg");
     ext::HSD_ArchiveGetPublicAddress(gm_804D679C, c"ToyDspStand_Top_joint".as_ptr()) as *mut HSD_Joint
 }
 
 /// `gm_801A9094_create_gobj` (static inline).
 pub unsafe fn gm_801A9094_create_gobj() -> *mut HSD_GObj {
+    melee_core::ct!("gm_801A9094_create_gobj");
     ext::GObj_Create(0xE, 0xF, 0)
 }
 
 /// gm_801A9094: one pedestal (trophy model + stand) per entry, highest slot first.
 pub unsafe fn gm_801A9094() {
+    melee_core::ct!("gm_801A9094");
     let mut sp8C = [0i32; 0x1A];
 
     gm_801A8D54(sp8C.as_mut_ptr());
@@ -338,12 +348,14 @@ pub unsafe fn gm_801A9094() {
 
 /// fn_801A9498: model proc.
 pub unsafe extern "C" fn fn_801A9498(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801A9498");
     ext::HSD_JObjAnimAll(get_jobj(gobj));
 }
 
 /// fn_801A94BC: camera proc; plays the camera animation to a frame that depends on the trophy
 /// count (160 / 190 / end), then counts down gm_804D67C4 and leaves.
 pub unsafe extern "C" fn fn_801A94BC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801A94BC");
     let cobj = get_hsd_obj(gobj) as *mut HSD_CObj;
     ext::gm_GetCurrentGameMode();
     let var_r31 = owned_trophies();
@@ -382,11 +394,13 @@ pub unsafe extern "C" fn fn_801A94BC(gobj: *mut HSD_GObj) {
 
 /// `gm_801A8114_inline` (static): a call to gm_801A8114.
 pub unsafe fn gm_801A8114_inline(arg0: *mut HSD_JObj, arg1: i32) {
+    melee_core::ct!("gm_801A8114_inline");
     gm_801A8114(arg0, arg1);
 }
 
 /// `gm_801A9630_init` (static inline).
 pub unsafe fn gm_801A9630_init(randoms: *mut *mut i32) {
+    melee_core::ct!("gm_801A9630_init");
     for i in 0..0x1Ausize {
         gm_80480A00[i] = null_mut();
     }
@@ -409,6 +423,7 @@ pub unsafe fn gm_801A9630_init(randoms: *mut *mut i32) {
 
 /// `gm_801A9630_fog` (static inline).
 pub unsafe fn gm_801A9630_fog() {
+    melee_core::ct!("gm_801A9630_fog");
     let gobj = ext::GObj_Create(0xE, 3, 0);
     let fog = ext::HSD_FogLoadDesc((*(*gm_804D67A4).fogs).desc);
     ext::HSD_GObjObject_80390A70(gobj, HSD_GObj_FogKind as u8, fog.cast());
@@ -421,6 +436,7 @@ pub unsafe fn gm_801A9630_fog() {
 
 /// `gm_801A9630_light` (static inline).
 pub unsafe fn gm_801A9630_light() {
+    melee_core::ct!("gm_801A9630_light");
     let gobj = ext::GObj_Create(0xB, 3, 0);
     let lobj = ext::lb_80011AC4((*gm_804D67A4).lights);
     ext::HSD_GObjObject_80390A70(gobj, HSD_GObj_LightKind as u8, lobj.cast());
@@ -433,6 +449,7 @@ pub unsafe fn gm_801A9630_light() {
 
 /// `gm_801A9630_camera` (static inline).
 pub unsafe fn gm_801A9630_camera() {
+    melee_core::ct!("gm_801A9630_camera");
     let gobj = ext::GObj_Create(0x13, 0x14, 0);
     let cobj = ext::lb_80013B14((*(*gm_804D67A4).cameras).desc.cast());
     ext::HSD_GObjObject_80390A70(gobj, HSD_GObj_CameraKind, cobj.cast());
@@ -446,6 +463,7 @@ pub unsafe fn gm_801A9630_camera() {
 
 /// gm_801A9630: build the whole scene.
 pub unsafe fn gm_801A9630() {
+    melee_core::ct!("gm_801A9630");
     let mut randoms: *mut i32 = null_mut();
 
     gm_801A9630_init(&mut randoms);

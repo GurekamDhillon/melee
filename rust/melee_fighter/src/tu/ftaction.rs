@@ -31,9 +31,9 @@ pub static mut CURRENT_S_LINK: u8 = 1;
 type G = *mut HSD_GObj;
 
 /// `ftAction_8007296C`: `NEXT_CMD` only.
-pub fn ftAction_8007296C(g: G, cmd: &mut CommandInfo) { crate::ftaction::ftaction_8007296c(g, cmd) }
+pub fn ftAction_8007296C(g: G, cmd: &mut CommandInfo) { melee_core::ct!("ftAction_8007296C"); crate::ftaction::ftaction_8007296c(g, cmd) }
 /// `ftAction_80072E24`: `SKIP_CMD(cmd, 3)`.
-pub fn ftAction_80072E24(g: G, cmd: &mut CommandInfo) { crate::ftaction::ftaction_80072e24(g, cmd) }
+pub fn ftAction_80072E24(g: G, cmd: &mut CommandInfo) { melee_core::ct!("ftAction_80072E24"); crate::ftaction::ftaction_80072e24(g, cmd) }
 pub type FtCmd = fn(G, &mut CommandInfo);
 
 /// `F32_MAX`.
@@ -145,6 +145,7 @@ const K: f32 = 0.003906f32;
 
 /// `ftAction_80071028`: spawn GFX (5 words).
 pub fn ftAction_80071028(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_80071028");
     unsafe {
         let fp = fpm(g);
         if fp.invisible() != 0 {
@@ -175,6 +176,7 @@ pub fn ftAction_80071028(g: G, cmd: &mut CommandInfo) {
 
 /// `ftAction_HitboxSlot` (static, TARGET_PC): ACE hitbox ids >= 4 go to a capsule slot 0-3.
 pub unsafe fn ftAction_HitboxSlot(fp: &mut Fighter, id: u32, create: bool) -> *mut HitCapsule {
+    melee_core::ct!("ftAction_HitboxSlot");
     let n = fp.x914.len();
     if (id as usize) < n {
         return &mut fp.x914[id as usize];
@@ -200,6 +202,7 @@ pub unsafe fn ftAction_HitboxSlot(fp: &mut Fighter, id: u32, create: bool) -> *m
 
 /// `ftAction_8007121C`: create hitbox (6 words).
 pub fn ftAction_8007121C(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_8007121C");
     unsafe {
         let fp = fpm(g);
         let skip = &*(cmd.anon_8.u as *const spawn_hitbox_skip);
@@ -276,6 +279,7 @@ pub fn ftAction_8007121C(g: G, cmd: &mut CommandInfo) {
 
 /// `ftAction_8007162C`: adjust hitbox damage.
 pub fn ftAction_8007162C(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_8007162C");
     unsafe {
         let w = &u(cmd).set_hitbox_damage;
         let h = ftAction_HitboxSlot(fpm(g), w.idx(), false);
@@ -286,6 +290,7 @@ pub fn ftAction_8007162C(g: G, cmd: &mut CommandInfo) {
 
 /// `ftAction_8007169C`: adjust hitbox scale.
 pub fn ftAction_8007169C(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_8007169C");
     unsafe {
         let w = &u(cmd).set_hitbox_scale;
         let h = ftAction_HitboxSlot(fpm(g), w.idx(), false);
@@ -296,6 +301,7 @@ pub fn ftAction_8007169C(g: G, cmd: &mut CommandInfo) {
 
 /// `ftAction_80071708`: hitbox x42 b5/b7 flags.
 pub fn ftAction_80071708(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_80071708");
     unsafe {
         let w = &u(cmd).set_hitbox_x42_b57;
         let h = &mut *ftAction_HitboxSlot(fpm(g), w.idx(), false);
@@ -315,18 +321,21 @@ fn set_hitbox_type(w: &set_hitbox_x42_b57) -> u32 { w.r#type() }
 
 /// `ftAction_80071784`.
 pub fn ftAction_80071784(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_80071784");
     ext::ftColl_8007AFC8(g, unsafe { u(cmd).set_throw_flags.hit_idx() });
     next(cmd);
 }
 
 /// `ftAction_800717D8`.
 pub fn ftAction_800717D8(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_800717D8");
     ext::ftColl_8007AFF8(g);
     next(cmd);
 }
 
 /// `ftAction_80071820`: set one of `cmd_vars`.
 pub fn ftAction_80071820(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_80071820");
     unsafe {
         let w = &u(cmd).set_cmd_var;
         let i = w.idx();
@@ -339,6 +348,7 @@ pub fn ftAction_80071820(g: G, cmd: &mut CommandInfo) {
 
 /// `ftAction_800718A4`.
 pub fn ftAction_800718A4(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_800718A4");
     unsafe {
         let fp = fpm(g);
         match u(cmd).set_throw_flags.hit_idx() {
@@ -355,6 +365,7 @@ pub fn ftAction_800718A4(g: G, cmd: &mut CommandInfo) {
 
 /// `ftAction_80071998`: airborne state.
 pub fn ftAction_80071998(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_80071998");
     unsafe {
         let fp = fpm(g);
         match u(cmd).set_airborne_state.state() {
@@ -369,21 +380,25 @@ pub fn ftAction_80071998(g: G, cmd: &mut CommandInfo) {
 
 /// `ftAction_80071A14`.
 pub fn ftAction_80071A14(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_80071A14");
     ext::ftColl_8007B62C(g, unsafe { u(cmd).set_airborne_state.state() });
     next(cmd);
 }
 /// `ftAction_80071A58`.
 pub fn ftAction_80071A58(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_80071A58");
     ext::ftColl_8007B0C0(g, unsafe { u(cmd).set_airborne_state.state() });
     next(cmd);
 }
 /// `ftAction_80071A9C`: hurt capsule state.
 pub fn ftAction_80071A9C(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_80071A9C");
     unsafe { ext::ftColl_8007B128(g, u(cmd).set_hurt_state.bone_idx(), u(cmd).set_hurt_state.state()) };
     next(cmd);
 }
 /// `ftAction_80071AE8`: jab combo.
 pub fn ftAction_80071AE8(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_80071AE8");
     unsafe {
         let fp = fpm(g);
         if u(cmd).set_jab_combo.disabled() == 0 || !fp.x197C.is_null() {
@@ -394,6 +409,7 @@ pub fn ftAction_80071AE8(g: G, cmd: &mut CommandInfo) {
 }
 /// `ftAction_80071B28`: rapid jab.
 pub fn ftAction_80071B28(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_80071B28");
     unsafe { fpm(g).set_x2218_b2(u(cmd).set_jab_rapid.state() as u8) };
     next(cmd);
 }
@@ -426,6 +442,7 @@ fn stop_behavior(fp: &mut Fighter, behavior: u32) {
 
 /// `ftAction_80071B50`: sound effect (3 words).
 pub fn ftAction_80071B50(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_80071B50");
     unsafe {
         let fp = fpm(g);
         let behavior = u(cmd).sound_effect_0.behavior();
@@ -450,6 +467,7 @@ pub fn ftAction_80071B50(g: G, cmd: &mut CommandInfo) {
 
 /// `ftAction_80071CCC`: smash charge sfx.
 pub fn ftAction_80071CCC(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_80071CCC");
     unsafe {
         let fp = fpm(g);
         let s = (*(*fp.ft_data).x4C_sfx).smash;
@@ -462,22 +480,26 @@ pub fn ftAction_80071CCC(g: G, cmd: &mut CommandInfo) {
 
 /// `ftAction_80071D40`.
 pub fn ftAction_80071D40(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_80071D40");
     unsafe { ext::ftParts_80074B0C(g, u(cmd).set_dobj_flags.idx(), u(cmd).set_dobj_flags.value()) };
     next(cmd);
 }
 /// `ftAction_80071D94`.
 pub fn ftAction_80071D94(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_80071D94");
     ext::ftParts_80074A8C(g);
     next(cmd);
 }
 /// `ftAction_80071DCC`.
 pub fn ftAction_80071DCC(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_80071DCC");
     ext::ftParts_80074ACC(g);
     next(cmd);
 }
 
 /// `ftAction_80071E04`: throw hitbox (3 words).
 pub fn ftAction_80071E04(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_80071E04");
     unsafe {
         let fp = fpm(g);
         let h: *mut HitCapsule = &mut fp.xDF4[u(cmd).set_throw_hitbox_0.idx() as usize];
@@ -501,16 +523,19 @@ pub fn ftAction_80071E04(g: G, cmd: &mut CommandInfo) {
 
 /// `ftAction_80071F34`.
 pub fn ftAction_80071F34(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_80071F34");
     ext::ftCommon_8007F5CC(g, unsafe { u(cmd).unk27.value() });
     next(cmd);
 }
 /// `ftAction_80071F78`: article visibility.
 pub fn ftAction_80071F78(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_80071F78");
     unsafe { fpm(g).set_x221E_b4(u(cmd).set_article_vis.value() as u8) };
     next(cmd);
 }
 /// `ftAction_80071FA0`: fighter visibility.
 pub fn ftAction_80071FA0(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_80071FA0");
     unsafe { fpm(g).set_x221E_b5(u(cmd).set_fighter_vis.value() as u8) };
     next(cmd);
 }
@@ -518,6 +543,7 @@ pub fn ftAction_80071FA0(g: G, cmd: &mut CommandInfo) {
 /// `ftAction_80071FC8`: pseudo-random sfx (7 words). An out-of-range roll leaves `sfx_id`
 /// unset in the C (UB); this plays id 0 then.
 pub fn ftAction_80071FC8(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_80071FC8");
     unsafe {
         let fp = fpm(g);
         let w = &u(cmd).pseudo_random_sfx_0;
@@ -541,6 +567,7 @@ pub fn ftAction_80071FC8(g: G, cmd: &mut CommandInfo) {
 /// `ftAction_80072320`: stage-relative sfx (4 words). `direction` is unset for a
 /// pitch_select past 3 in the C; 0.0 here.
 pub fn ftAction_80072320(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_80072320");
     unsafe {
         let fp = fpm(g);
         let w = &u(cmd).stage_sfx_0;
@@ -587,6 +614,7 @@ pub fn ftAction_80072320(g: G, cmd: &mut CommandInfo) {
 
 /// `ftAction_800726F4`: texture anim.
 pub fn ftAction_800726F4(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_800726F4");
     unsafe {
         let w = &u(cmd).set_tex_anim;
         ext::ftAnim_800704F0(g, w.idx(), w.frame() as f32);
@@ -598,6 +626,7 @@ pub fn ftAction_800726F4(g: G, cmd: &mut CommandInfo) {
 }
 /// `ftAction_800727C8`: part anim.
 pub fn ftAction_800727C8(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_800727C8");
     unsafe {
         let w = &u(cmd).part_anim;
         ext::ftAnim_ApplyPartAnim(g, w.unk1(), w.unk2(), w.unk3() as f32);
@@ -606,6 +635,7 @@ pub fn ftAction_800727C8(g: G, cmd: &mut CommandInfo) {
 }
 /// `ftAction_8007283C`: part anim, no blend.
 pub fn ftAction_8007283C(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_8007283C");
     unsafe {
         let w = &u(cmd).part_anim;
         ext::ftAnim_ApplyPartAnim(g, w.unk1(), w.unk2(), 0.0);
@@ -614,11 +644,13 @@ pub fn ftAction_8007283C(g: G, cmd: &mut CommandInfo) {
 }
 /// `ftAction_80072894`.
 pub fn ftAction_80072894(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_80072894");
     unsafe { ext::ftCommon_8007E83C(g, u(cmd).unk9.unk1(), u(cmd).unk9.unk2() as f32) };
     next(cmd);
 }
 /// `ftAction_800728F8`.
 pub fn ftAction_800728F8(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_800728F8");
     unsafe {
         let w = &u(cmd).unk10;
         if w.unk1() != 0 {
@@ -631,11 +663,13 @@ pub fn ftAction_800728F8(g: G, cmd: &mut CommandInfo) {
 }
 /// `ftAction_8007297C`.
 pub fn ftAction_8007297C(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_8007297C");
     unsafe { ext::ftCommon_8007ECD4(fpm(g), u(cmd).unk11.unk1()) };
     next(cmd);
 }
 /// `ftAction_800729D4`.
 pub fn ftAction_800729D4(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_800729D4");
     unsafe {
         let w = &u(cmd).unk12;
         let (a, b) = (w.unk2() as i32, w.unk3() as i32);
@@ -649,21 +683,25 @@ pub fn ftAction_800729D4(g: G, cmd: &mut CommandInfo) {
 }
 /// `ftAction_80072A5C`.
 pub fn ftAction_80072A5C(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_80072A5C");
     unsafe { ext::ftCo_800BFFD0(fpm(g), u(cmd).unk13.unk1(), u(cmd).unk13.unk2()) };
     next(cmd);
 }
 /// `ftAction_80072ABC`.
 pub fn ftAction_80072ABC(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_80072ABC");
     unsafe { ext::ftCo_800C0200(fpm(g), u(cmd).unk14.unk1()) };
     next(cmd);
 }
 /// `ftAction_80072B14`.
 pub fn ftAction_80072B14(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_80072B14");
     unsafe { fpm(g).set_x221E_b1(u(cmd).unk15.unk1() as u8) };
     next(cmd);
 }
 /// `ftAction_80072B3C`.
 pub fn ftAction_80072B3C(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_80072B3C");
     unsafe {
         let fp = fpm(g);
         fp.x2100 = u(cmd).unk16.unk4() as i8;
@@ -673,21 +711,25 @@ pub fn ftAction_80072B3C(g: G, cmd: &mut CommandInfo) {
 }
 /// `ftAction_80072B94`.
 pub fn ftAction_80072B94(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_80072B94");
     unsafe { ext::ftCo_8009E318(g, u(cmd).unk17.unk1(), fpm(g).cur_anim_frame) };
     next(cmd);
 }
 /// `ftAction_80072BF4`: self damage.
 pub fn ftAction_80072BF4(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_80072BF4");
     unsafe { ext::Fighter_TakeDamage_8006CC7C(fpm(g), u(cmd).unk18.damage_amount() as f32) };
     next(cmd);
 }
 /// `ftAction_80072C6C`.
 pub fn ftAction_80072C6C(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_80072C6C");
     ext::ft_8008A1B8(g, unsafe { u(cmd).unk19.unk1() });
     next(cmd);
 }
 /// `ftAction_80072CB0`.
 pub fn ftAction_80072CB0(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_80072CB0");
     unsafe { fpm(g).set_x2225_b2(u(cmd).unk20.unk1() as u8) };
     next(cmd);
 }
@@ -704,6 +746,7 @@ unsafe fn sfx_with_override(g: G, cmd: &CommandInfo, sfx: i32) {
 
 /// `ftAction_80072CD8`: footstep sfx/gfx.
 pub fn ftAction_80072CD8(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_80072CD8");
     unsafe {
         let fp = fpm(g);
         let (mut sp64, mut sp60, mut gfx) = (0i32, 1i32, 0i32);
@@ -728,6 +771,7 @@ pub fn ftAction_80072CD8(g: G, cmd: &mut CommandInfo) {
 
 /// `ftAction_80072E4C`.
 pub fn ftAction_80072E4C(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_80072E4C");
     unsafe {
         let fp = fpm(g);
         let (mut sp64, mut sp60, mut gfx) = (0i32, 1i32, -1i32);
@@ -757,6 +801,7 @@ pub fn ftAction_80072E4C(g: G, cmd: &mut CommandInfo) {
 
 /// `ftAction_80073008`: smash charge.
 pub fn ftAction_80073008(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_80073008");
     unsafe {
         let rate = u(cmd).smash_charge_0.charge_rate() as f32;
         let frames = u(cmd).smash_charge_0.charge_frames() as f32;
@@ -770,12 +815,14 @@ pub fn ftAction_80073008(g: G, cmd: &mut CommandInfo) {
 
 /// `ftAction_800730B8`.
 pub fn ftAction_800730B8(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_800730B8");
     unsafe { ext::ftCo_800C8B60(fpm(g), u(cmd).unk21.unk1(), u(cmd).unk21.unk2()) };
     next(cmd);
 }
 
 /// `ftAction_80073118`: wind effect (4 words).
 pub fn ftAction_80073118(g: G, cmd: &mut CommandInfo) {
+    melee_core::ct!("ftAction_80073118");
     unsafe {
         let idx = u(cmd).wind_fx_0.bone() as u8;
         next(cmd);
@@ -854,6 +901,7 @@ fn runner_ready(cmd: &mut CommandInfo, speed: f32) -> bool {
 
 /// `ftAction_80073240`: run the subaction script (exec table).
 pub fn ftAction_80073240(g: G) {
+    melee_core::ct!("ftAction_80073240");
     unsafe {
         let fp = fpm(g);
         let speed = fp.frame_speed_mul;
@@ -887,6 +935,7 @@ pub fn ftAction_80073240(g: G) {
 
 /// `ftAction_80073354`: the anim-only runner (clears `throw_flags` when a wait elapses).
 pub fn ftAction_80073354(g: G) {
+    melee_core::ct!("ftAction_80073354");
     unsafe {
         let fp = fpm(g);
         let speed = fp.frame_speed_mul;
@@ -924,6 +973,7 @@ pub fn ftAction_80073354(g: G) {
 
 /// `ftAction_8007349C`: the skip runner (advances by the word-count table).
 pub fn ftAction_8007349C(g: G) {
+    melee_core::ct!("ftAction_8007349C");
     unsafe {
         let fp = fpm(g);
         let speed = fp.frame_speed_mul;

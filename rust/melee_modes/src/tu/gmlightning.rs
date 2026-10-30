@@ -20,23 +20,27 @@ const gmVsMode_State_Prize: i32 = 3 << 6;
 
 /// C `gm_801BA704` (CSS enter; TARGET_PC Atlas select for the CSS).
 pub unsafe fn gm_801BA704(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801BA704");
     ext::gmVsMelee_EnterCss(scene, addr_of_mut!((*gmMainLib_804D3EE0).modes.table[GmVsMode_Lightning as usize]), 9);
     ext::gmFrontend_AtlasSelect(scene, 0, core::ptr::null());
 }
 
 /// C `gm_801BA730` (CSS exit).
 pub unsafe fn gm_801BA730(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801BA730");
     ext::gmVsMelee_ExitCss(scene, addr_of_mut!((*gmMainLib_804D3EE0).modes.table[GmVsMode_Lightning as usize]));
 }
 
 /// C `gm_801BA758` (SSS enter; TARGET_PC Atlas select for the SSS).
 pub unsafe fn gm_801BA758(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801BA758");
     ext::gmVsMelee_EnterSss(scene, addr_of_mut!((*gmMainLib_804D3EE0).modes.table[GmVsMode_Lightning as usize]));
     ext::gmFrontend_AtlasSelect(scene, 1, core::ptr::null());
 }
 
 /// C `gm_801BA780` (SSS exit).
 pub unsafe fn gm_801BA780(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801BA780");
     ext::gmVsMelee_ExitSss(
         scene,
         addr_of_mut!((*gmMainLib_804D3EE0).modes.table[GmVsMode_Lightning as usize]),
@@ -46,48 +50,57 @@ pub unsafe fn gm_801BA780(scene: *mut GameModeState) {
 
 /// C `fn_801BA7AC`: sets game speed to 1.25 for Lightning Melee.
 pub unsafe fn fn_801BA7AC(start: *mut StartMeleeData, _vs: *mut StartMeleeData) {
+    melee_core::ct!("fn_801BA7AC");
     (*start).rules.game_speed = 1.25;
 }
 
 /// C `gm_801BA7B8` (VS enter).
 pub unsafe fn gm_801BA7B8(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801BA7B8");
     let data = addr_of_mut!((*gmMainLib_804D3EE0).modes.table[GmVsMode_Lightning as usize]);
     ext::gmVsMelee_EnterVs(scene, data, Some(fn_801BA7AC), None);
 }
 
 /// C `gm_801BA7EC` (VS exit).
 pub unsafe fn gm_801BA7EC(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801BA7EC");
     ext::gmVsMelee_ExitVs(scene, 4, 3);
 }
 
 /// C `gm_801BA814` (sudden death enter).
 pub unsafe fn gm_801BA814(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801BA814");
     let data = addr_of_mut!((*gmMainLib_804D3EE0).modes.table[GmVsMode_Lightning as usize]);
     ext::gmVsMelee_EnterSuddenDeath(scene, data, Some(fn_801BA7AC), None);
 }
 
 /// C `gm_801BA848` (sudden death exit).
 pub unsafe fn gm_801BA848(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801BA848");
     ext::gmVsMelee_ExitSuddenDeath(scene);
 }
 
 /// C `gm_801BA868` (results enter).
 pub unsafe fn gm_801BA868(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801BA868");
     ext::gmVsMelee_EnterResults(scene);
 }
 
 /// C `gm_801BA888` (results exit).
 pub unsafe fn gm_801BA888(scene: *mut GameModeState) {
+    melee_core::ct!("gm_801BA888");
     ext::gmVsMelee_ExitResults(scene, addr_of_mut!((*gmMainLib_804D3EE0).modes.table[GmVsMode_Lightning as usize]), 0);
 }
 
 /// C `gm_Mode_LightningVs_OnInit`.
 pub unsafe fn gm_Mode_LightningVs_OnInit() {
+    melee_core::ct!("gm_Mode_LightningVs_OnInit");
     ext::gm_InitVsMode(addr_of_mut!((*gmMainLib_804D3EE0).modes.table[GmVsMode_Lightning as usize]));
 }
 
 /// C `gm_Mode_LightningVs_OnLoad`.
 pub unsafe fn gm_Mode_LightningVs_OnLoad() {
+    melee_core::ct!("gm_Mode_LightningVs_OnLoad");
     ext::gmVsMelee_ResetKOCounts();
 }
 

@@ -110,12 +110,14 @@ fn init_tables() {
 
 /// The TU's `StageCallbacks grTSs_StageCallbacks[4]` (built on first use; stable address).
 pub fn stage_callbacks() -> *mut StageCallbacks {
+    melee_core::ct!("stage_callbacks");
     init_tables();
     unsafe { CALLBACKS.as_mut_ptr().cast() }
 }
 
 /// The TU's `StageData grTSs_StageData`.
 pub fn stage_data() -> *mut StageData {
+    melee_core::ct!("stage_data");
     init_tables();
     unsafe { STAGE_DATA.as_mut_ptr() }
 }
@@ -123,22 +125,27 @@ pub fn stage_data() -> *mut StageData {
 pub const STAGE_CALLBACKS_LEN: usize = 4;
 
 pub unsafe extern "C" fn grTSamus_OnDemoInit(unused_: i32) {
+    melee_core::ct!("grTSamus_OnDemoInit");
     
 }
 
 pub unsafe extern "C" fn grTSamus_OnInit() {
+    melee_core::ct!("grTSamus_OnInit");
     inlines::Ground_InitTargetStage(grTSamus_80223624);
 }
 
 pub unsafe extern "C" fn grTSamus_OnLoad() {
+    melee_core::ct!("grTSamus_OnLoad");
     
 }
 
 pub unsafe extern "C" fn grTSamus_OnStart() {
+    melee_core::ct!("grTSamus_OnStart");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
 
 pub unsafe extern "C" fn grTSamus_80223624(arg0: i32) -> *mut HSD_GObj {
+    melee_core::ct!("grTSamus_80223624");
     let callbacks = stage_callbacks().add(arg0 as usize);
     let gobj = ext::Ground_GetStageGObj(arg0);
     if !gobj.is_null() {
@@ -150,37 +157,46 @@ pub unsafe extern "C" fn grTSamus_80223624(arg0: i32) -> *mut HSD_GObj {
 }
 
 pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj0_OnInit");
     inlines::Ground_StartMapAnim(gobj);
 }
 
 pub unsafe extern "C" fn grTSamus_80223740(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grTSamus_80223740");
     
 }
 
 pub unsafe extern "C" fn grTSamus_80223744(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grTSamus_80223744");
     
 }
 
 pub unsafe extern "C" fn stageGObj2_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj2_OnInit");
     inlines::Ground_InitMapCollAndAnim(gobj);
 }
 
 pub unsafe extern "C" fn stageGObj2_GObjProc(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj2_GObjProc");
     inlines::Ground_UpdateWindAndMapColl(gobj);
 }
 
 pub unsafe extern "C" fn grTSamus_802237D4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grTSamus_802237D4");
     
 }
 
 pub unsafe extern "C" fn stageGObj1_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj1_OnInit");
     inlines::Ground_InitMapCollAndAnim(gobj);
 }
 
 pub unsafe extern "C" fn stageGObj1_GObjProc(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj1_GObjProc");
     ext::Ground_UpdateMapColl(gobj);
 }
 
 pub unsafe extern "C" fn grTSamus_80223850(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grTSamus_80223850");
     
 }

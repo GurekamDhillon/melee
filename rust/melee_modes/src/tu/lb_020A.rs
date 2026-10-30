@@ -135,6 +135,7 @@ fn newton_rsqrt(v: f32) -> f64 {
 /// 020AEC: `out` = the accumulated transform from the root down to `jobj`, with every column
 /// rescaled to the matching column length of `jobj`'s own world matrix.
 pub unsafe fn fn_80020AEC(jobj: *mut HSD_JObj, out: *mut Mtx) {
+    melee_core::ct!("fn_80020AEC");
     let mut tmp: Mtx = [[0.0; 4]; 3];
     let mut col: Vec3 = core::mem::zeroed();
     let outp = out as *mut c_void;
@@ -216,6 +217,7 @@ pub unsafe fn fn_80020AEC(jobj: *mut HSD_JObj, out: *mut Mtx) {
 
 /// 020E38: turns `jobj` about its Z axis towards `dir`, clamped to `[-min_angle, max_angle]`.
 pub unsafe fn lbBgFlash_80020E38(jobj: *mut HSD_JObj, dir: *mut Vec3, max_angle: f32, min_angle: f32, _unused: f32) {
+    melee_core::ct!("lbBgFlash_80020E38");
     let dx2 = (*dir).x * (*dir).x;
     let dy2 = (*dir).y * (*dir).y;
     let dz2 = (*dir).z * (*dir).z;
@@ -271,6 +273,7 @@ pub unsafe fn lbBgFlash_80020E38(jobj: *mut HSD_JObj, dir: *mut Vec3, max_angle:
 
 /// 02113C: rotates `jobj` by `angle` about the world-space `axis`.
 pub unsafe fn fn_8002113C(jobj: *mut HSD_JObj, axis: *mut Vec3, angle: f32) {
+    melee_core::ct!("fn_8002113C");
     let mut tmp_mtx: Mtx = [[0.0; 4]; 3];
     let mut rot_mtx: Mtx = [[0.0; 4]; 3];
     let mut result: Mtx = [[0.0; 4]; 3];
@@ -312,12 +315,14 @@ pub unsafe fn fn_8002113C(jobj: *mut HSD_JObj, axis: *mut Vec3, angle: f32) {
 /// `calc_acos` (static inline)
 #[inline]
 pub fn calc_acos(value: f32) -> f32 {
+    melee_core::ct!("calc_acos");
     ext::acosf(value)
 }
 
 /// `sqrtf_store` (static inline): MSL-style `sqrtf` with the Newton steps' `3 - g*g*x` fused.
 #[inline]
 pub fn sqrtf_store(x: f32, y: &mut f32) -> f32 {
+    melee_core::ct!("sqrtf_store");
     if x > 0.0f32 {
         let mut guess = frsqrte(x as f64);
         for _ in 0..3 {
@@ -332,6 +337,7 @@ pub fn sqrtf_store(x: f32, y: &mut f32) -> f32 {
 /// 021410: two-bone IK. Projects the chain onto the plane of `jobj1`'s Z axis, solves the
 /// joint angles by the law of cosines (soft-limited near full extension) and rotates both joints.
 pub unsafe fn lbBgFlash_80021410(data: *mut IKState) {
+    melee_core::ct!("lbBgFlash_80021410");
     let d = &mut *data;
     let mut axis: Vec3 = core::mem::zeroed();
     let mut diff_pos0_pos1: Vec3 = core::mem::zeroed();

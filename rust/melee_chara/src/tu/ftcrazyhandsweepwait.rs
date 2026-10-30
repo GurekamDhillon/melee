@@ -10,9 +10,10 @@ pub use crate::chars::r2::ftCrazyHand::ftcrazyhandsweepwait::{fn_8015755C, ftCh_
 pub use crate::chars::r3::ftCrazyHand::ftcrazyhandsweepwait::{ftCh_Init_8015764C, ftCh_Slap_Anim, ftCh_SweepWait_Anim};
 pub use crate::chars::r8::ftCrazyHand::ftcrazyhandsweepwait::{ftCh_Slap_IASA, ftCh_SweepWait_IASA, ftCh_Walk2_IASA};
 
-pub fn ftCh_SweepWait_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftCh_SweepWait_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_SweepWait_Coll");}
 
 pub fn ftCh_Slap_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Slap_Phys");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*(*fp).ft_data).ext_attr as *const ftCrazyHand_DatAttrs;
@@ -23,6 +24,7 @@ pub fn ftCh_Slap_Phys(gobj: *mut HSD_GObj) {
 
 /// `static void fn_801577B4(gobj)`: accessory4 callback of the slap.
 pub unsafe extern "C" fn fn_801577B4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801577B4");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*(*fp).ft_data).ext_attr as *const ftCrazyHand_DatAttrs;
@@ -34,9 +36,10 @@ pub unsafe extern "C" fn fn_801577B4(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCh_Walk2_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Walk2_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         crate::tu::ftcrazyhandtagcancel::ftCh_GrabUnk1_8015BC88(gobj);
     }
 }
 
-pub fn ftCh_Slap_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftCh_Slap_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_Slap_Coll");}

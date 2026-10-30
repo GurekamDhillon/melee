@@ -114,6 +114,7 @@ unsafe fn child_of(j: *mut HSD_JObj) -> *mut HSD_JObj {
 /// `Item_InitSpawnPosition` (itkinds inlines.h).
 #[inline]
 pub unsafe fn Item_InitSpawnPosition(spawn: *mut SpawnItem, pos: *const Vec, on_plane: bool) {
+    melee_core::ct!("Item_InitSpawnPosition");
     (*spawn).prev_pos = *pos;
     if on_plane {
         (*spawn).prev_pos.z = 0.0;
@@ -124,6 +125,7 @@ pub unsafe fn Item_InitSpawnPosition(spawn: *mut SpawnItem, pos: *const Vec, on_
 /// `Item_InitSpawnCommonFields` (itkinds inlines.h).
 #[inline]
 pub unsafe fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD_GObj, facing_dir: f32, initial_collision: bool) {
+    melee_core::ct!("Item_InitSpawnCommonFields");
     (*spawn).facing_dir = facing_dir;
     (*spawn).x3C_damage = 0;
     (*spawn).vel.z = 0.0;
@@ -138,6 +140,7 @@ pub unsafe fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD
 /// `Item_CopyJObjScale` (itkinds inlines.h): the scale of `src`'s Y onto all three axes of `dst`.
 #[inline]
 pub unsafe fn Item_CopyJObjScale(dst: *mut HSD_JObj, src: *mut HSD_JObj, scale: *mut Vec) {
+    melee_core::ct!("Item_CopyJObjScale");
     let s = ji::HSD_JObjGetScaleY(jref(src));
     (*scale).z = s;
     (*scale).y = s;
@@ -178,6 +181,7 @@ pub static it_803F6E68: [i32; 11] = [0, 9, 9, 3, 9, 9, 6, 7, 8, 9, 10];
 
 /// `itFoxBlaster_PlaySFX` (static inline): the Fox or the Falco sound by item kind.
 pub unsafe fn itFoxBlaster_PlaySFX(item: *mut Item, fox_sfx: u32, falco_sfx: u32) {
+    melee_core::ct!("itFoxBlaster_PlaySFX");
     match (*item).kind {
         It_Kind_Kirby_FoxBlaster | It_Kind_Fox_Blaster => ext::Item_8026AE84(item, fox_sfx as i32, 0x7F, 0x40),
         It_Kind_Kirby_FalcoBlaster | It_Kind_Falco_Blaster => ext::Item_8026AE84(item, falco_sfx as i32, 0x7F, 0x40),
@@ -188,6 +192,7 @@ pub unsafe fn itFoxBlaster_PlaySFX(item: *mut Item, fox_sfx: u32, falco_sfx: u32
 /// `void it_802ADDD0(Item_GObj*, s32 visibility)`: sets the sfx and the jobj hidden flags from whether
 /// the blaster model is visible (and Fox vs Falco).
 pub unsafe extern "C" fn it_802ADDD0(item_gobj: *mut Item_GObj, visibility: i32) {
+    melee_core::ct!("it_802ADDD0");
     if item_gobj.is_null() {
         return;
     }
@@ -216,11 +221,13 @@ pub unsafe extern "C" fn it_802ADDD0(item_gobj: *mut Item_GObj, visibility: i32)
 
 /// `void it_802ADEF0(HSD_GObj*)`: redirects to `it_802ADF10`.
 pub unsafe extern "C" fn it_802ADEF0(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802ADEF0");
     it_802ADF10(item_gobj);
 }
 
 /// `itFoxBlaster_SetShotOffset` (static inline).
 pub unsafe fn itFoxBlaster_SetShotOffset(item: *mut Item, fighter_pos: *mut Vec, fighter_muzzle_pos: *mut Vec) {
+    melee_core::ct!("itFoxBlaster_SetShotOffset");
     let fb = &mut (*item).xDD4_itemVar.foxblaster;
     fb.xE14[0].x = (*fighter_muzzle_pos).x - (*fighter_pos).x;
     fb.xE14[0].y = (*fighter_muzzle_pos).y - (*fighter_pos).y;
@@ -229,6 +236,7 @@ pub unsafe fn itFoxBlaster_SetShotOffset(item: *mut Item, fighter_pos: *mut Vec,
 
 /// `itFoxBlaster_SetShotAngle` (static inline).
 pub unsafe fn itFoxBlaster_SetShotAngle(item: *mut Item, fighter_muzzle_pos: *mut Vec, item_muzzle_pos: *mut Vec) {
+    melee_core::ct!("itFoxBlaster_SetShotAngle");
     let fb = &mut (*item).xDD4_itemVar.foxblaster;
     fb.angle[0] = ext::atan2f(
         (*fighter_muzzle_pos).y - (*item_muzzle_pos).y,
@@ -240,6 +248,7 @@ pub unsafe fn itFoxBlaster_SetShotAngle(item: *mut Item, fighter_muzzle_pos: *mu
 /// `void it_802ADF10(HSD_GObj*)`: if the blaster fired this frame, spawns the muzzle effect at the hold
 /// joints and shifts the six-slot shot history up, clearing the newest slot.
 pub unsafe extern "C" fn it_802ADF10(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802ADF10");
     let mut ft_cur_pos = Vec { x: 0.0, y: 0.0, z: 0.0 };
     let mut ft_hold_joint_pos = Vec { x: 0.0, y: 0.0, z: 0.0 };
     let mut it_hold_joint_pos = Vec { x: 0.0, y: 0.0, z: 0.0 };
@@ -300,6 +309,7 @@ pub unsafe extern "C" fn it_802ADF10(item_gobj: *mut HSD_GObj) {
 
 /// `void it_802AE1D0(Item_GObj*)`: starts the model-transform countdown and installs the accessory callback.
 pub unsafe extern "C" fn it_802AE1D0(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802AE1D0");
     let item = item_of(item_gobj);
     if !item_gobj.is_null() && !item.is_null() {
         (*item).xDD4_itemVar.foxblaster.xDD4 = 1;
@@ -310,6 +320,7 @@ pub unsafe extern "C" fn it_802AE1D0(item_gobj: *mut Item_GObj) {
 
 /// `void it_802AE200(Item_GObj*)`: transforms the fifth-level jobj by `xDD4` and advances the countdown.
 pub unsafe extern "C" fn it_802AE200(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802AE200");
     let item_jobj = (*item_gobj).hsd_obj as *mut HSD_JObj;
     let item = (*item_gobj).user_data as *mut Item;
     let child_jobj_1 = if item_jobj.is_null() { null_mut() } else { (*item_jobj).child };
@@ -342,6 +353,7 @@ pub unsafe extern "C" fn it_802AE200(item_gobj: *mut Item_GObj) {
 
 /// `void it_802AE538(Item_GObj*)`: gun-out start (cmd_var3 = 1): sets the draw-out vars and plays the sound once.
 pub unsafe extern "C" fn it_802AE538(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802AE538");
     let item = (*item_gobj).user_data as *mut Item;
     if (*item).xDD4_itemVar.foxblaster.xDD8 != 4 && !item_gobj.is_null() && !item.is_null() {
         (*item).xDD4_itemVar.foxblaster.xDD8 = 1;
@@ -355,6 +367,7 @@ pub unsafe extern "C" fn it_802AE538(item_gobj: *mut Item_GObj) {
 
 /// `void it_802AE608(Item_GObj*)`: gun put away (cmd_var3 = 2).
 pub unsafe extern "C" fn it_802AE608(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802AE608");
     let item = (*item_gobj).user_data as *mut Item;
     if (*item).xDD4_itemVar.foxblaster.xDD8 != 0 && !item_gobj.is_null() && !item.is_null() {
         (*item).xDD4_itemVar.foxblaster.xDD8 = 3;
@@ -364,6 +377,7 @@ pub unsafe extern "C" fn it_802AE608(item_gobj: *mut Item_GObj) {
 
 /// `void it_802AE63C(Item_GObj*)`: slides the fourth-level jobj's Y by `xDD8` and steps `xDD8`.
 pub unsafe extern "C" fn it_802AE63C(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802AE63C");
     let item_jobj = (*item_gobj).hsd_obj as *mut HSD_JObj;
     let item = (*item_gobj).user_data as *mut Item;
     let child_jobj_1 = if item_jobj.is_null() { null_mut() } else { (*item_jobj).child };
@@ -391,6 +405,7 @@ pub unsafe extern "C" fn it_802AE63C(item_gobj: *mut Item_GObj) {
 
 /// `itFoxBlaster_SetCommandVars` (static inline): all four command vars.
 pub unsafe fn itFoxBlaster_SetCommandVars(item: *mut Item, value: i32) {
+    melee_core::ct!("itFoxBlaster_SetCommandVars");
     (*item).xDB8_itcmd_var3 = value as u32;
     (*item).xDB4_itcmd_var2 = value as u32;
     (*item).xDB0_itcmd_var1 = value as u32;
@@ -399,6 +414,7 @@ pub unsafe fn itFoxBlaster_SetCommandVars(item: *mut Item, value: i32) {
 
 /// `itFoxBlaster_ClearShot` (static inline): zeroes shot slot `index`.
 pub unsafe fn itFoxBlaster_ClearShot(item_gobj: *mut Item_GObj, index: i32) {
+    melee_core::ct!("itFoxBlaster_ClearShot");
     let item = item_of(item_gobj);
     let i = index as usize;
     (*item).xDD4_itemVar.foxblaster.xDE4[i] = 0;
@@ -411,6 +427,7 @@ pub unsafe fn itFoxBlaster_ClearShot(item_gobj: *mut Item_GObj, index: i32) {
 
 /// `void it_802AE7B8(Item_GObj*)`: clears every blaster var and command var.
 pub unsafe extern "C" fn it_802AE7B8(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802AE7B8");
     let item = item_of(item_gobj);
     itFoxBlaster_SetCommandVars(item, 0);
     (*item).xDCC_flag.set_b3(0);
@@ -438,6 +455,7 @@ pub unsafe extern "C" fn it_802AE8A8(
     ft_part: Fighter_Part,
     it_kind: ItemKind,
 ) -> *mut Item_GObj {
+    melee_core::ct!("it_802AE8A8");
     let mut spawn: SpawnItem = core::mem::zeroed();
     let item_gobj: *mut Item_GObj;
     if !fighter_gobj.is_null() {
@@ -460,6 +478,7 @@ pub unsafe extern "C" fn it_802AE8A8(
 /// `Item_GObj* it_802AE994(Fighter_GObj*, Fighter_Part, ItemKind)`: spawns the blaster at the fighter and
 /// starts the command vars at 1.
 pub unsafe extern "C" fn it_802AE994(owner_gobj: *mut Fighter_GObj, ft_part: Fighter_Part, it_kind: ItemKind) -> *mut Item_GObj {
+    melee_core::ct!("it_802AE994");
     let mut spawn: SpawnItem = core::mem::zeroed();
     let mut sp18 = Vec { x: 0.0, y: 0.0, z: 0.0 };
     let item_gobj: *mut Item_GObj;
@@ -485,6 +504,7 @@ pub unsafe extern "C" fn it_802AE994(owner_gobj: *mut Fighter_GObj, ft_part: Fig
 
 /// `void it_802AEAB4(Item_GObj*)`: drops the owner links, kills the effects and destroys the item.
 pub unsafe extern "C" fn it_802AEAB4(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802AEAB4");
     if !item_gobj.is_null() {
         let item = (*item_gobj).user_data as *mut Item;
         (*item).owner = null_mut();
@@ -497,6 +517,7 @@ pub unsafe extern "C" fn it_802AEAB4(item_gobj: *mut Item_GObj) {
 /// `void itFoxBlaster_Logic96_PickedUp(Item_GObj*)`: picks the item state from the fighter's SpecialN action
 /// (or state 10 while a command var is set), then advances the animation and script.
 pub unsafe extern "C" fn itFoxBlaster_Logic96_PickedUp(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("itFoxBlaster_Logic96_PickedUp");
     let mut ft_special_state: i32 = 9;
     let item = (*item_gobj).user_data as *mut Item;
     if ((*item).xDB8_itcmd_var3 | ((*item).xDB4_itcmd_var2 | ((*item).xDAC_itcmd_var0 | (*item).xDB0_itcmd_var1))) != 0 {
@@ -518,6 +539,7 @@ pub unsafe extern "C" fn itFoxBlaster_Logic96_PickedUp(item_gobj: *mut Item_GObj
 
 /// `clear_blaster_references` (static inline): clears the references between the blaster item and the fighter.
 pub unsafe fn clear_blaster_references(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("clear_blaster_references");
     let item = (*item_gobj).user_data as *mut Item;
     if !item_gobj.is_null() && !item.is_null() {
         if (*item).owner == (*item).xDD4_itemVar.foxblaster.owner {
@@ -539,6 +561,7 @@ pub unsafe fn clear_blaster_references(item_gobj: *mut HSD_GObj) {
 
 /// `clear_blaster` (static inline): clears the references (as above) and destroys the item.
 pub unsafe fn clear_blaster(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("clear_blaster");
     let mut item = (*item_gobj).user_data as *mut Item;
     if !item_gobj.is_null() && !item.is_null() {
         if (*item).owner == (*item).xDD4_itemVar.foxblaster.owner {
@@ -568,6 +591,7 @@ pub unsafe fn clear_blaster(item_gobj: *mut HSD_GObj) {
 /// `bool itFoxblaster_UnkMotion8_Anim(HSD_GObj*)`: follows the fighter's SpecialN action (changes the item
 /// state to match), and removes the blaster when the fighter no longer needs it.
 pub unsafe extern "C" fn itFoxblaster_UnkMotion8_Anim(item_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itFoxblaster_UnkMotion8_Anim");
     let item = item_of(item_gobj);
 
     match (*item).msid {
@@ -630,27 +654,31 @@ pub unsafe extern "C" fn itFoxblaster_UnkMotion8_Anim(item_gobj: *mut HSD_GObj) 
 
 /// `void itFoxblaster_UnkMotion8_Phys(HSD_GObj*)`: the two model transforms.
 pub unsafe extern "C" fn itFoxblaster_UnkMotion8_Phys(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itFoxblaster_UnkMotion8_Phys");
     it_802AE63C(item_gobj);
     it_802AE200(item_gobj);
 }
 
 /// `bool itFoxblaster_UnkMotion8_Coll(HSD_GObj*)`: does nothing.
 pub unsafe extern "C" fn itFoxblaster_UnkMotion8_Coll(item_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itFoxblaster_UnkMotion8_Coll");
     0
 }
 
 /// `bool itFoxblaster_UnkMotion9_Anim(HSD_GObj*)`: clears the references and ends the item.
 pub unsafe extern "C" fn itFoxblaster_UnkMotion9_Anim(item_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itFoxblaster_UnkMotion9_Anim");
     ext::efLib_DestroyAll(item_gobj);
     clear_blaster_references(item_gobj);
     1
 }
 
 /// `void itFoxblaster_UnkMotion9_Phys(HSD_GObj*)`: does nothing.
-pub unsafe extern "C" fn itFoxblaster_UnkMotion9_Phys(item_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itFoxblaster_UnkMotion9_Phys(item_gobj: *mut HSD_GObj) { melee_core::ct!("itFoxblaster_UnkMotion9_Phys");}
 
 /// `bool itFoxblaster_UnkMotion9_Coll(HSD_GObj*)`: identical to the Anim callback.
 pub unsafe extern "C" fn itFoxblaster_UnkMotion9_Coll(item_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itFoxblaster_UnkMotion9_Coll");
     ext::efLib_DestroyAll(item_gobj);
     clear_blaster_references(item_gobj);
     1
@@ -658,6 +686,7 @@ pub unsafe extern "C" fn itFoxblaster_UnkMotion9_Coll(item_gobj: *mut HSD_GObj) 
 
 /// `bool itFoxblaster_UnkMotion10_Anim(HSD_GObj*)`: copies the owner's scale onto the item when the owner says so.
 pub unsafe extern "C" fn itFoxblaster_UnkMotion10_Anim(item_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itFoxblaster_UnkMotion10_Anim");
     if !item_gobj.is_null() {
         let it = item_of(item_gobj);
         if !it.is_null() && !(*it).xDD4_itemVar.foxblaster.owner.is_null() {
@@ -672,14 +701,16 @@ pub unsafe extern "C" fn itFoxblaster_UnkMotion10_Anim(item_gobj: *mut HSD_GObj)
 }
 
 /// `void itFoxblaster_UnkMotion10_Phys(HSD_GObj*)`: does nothing.
-pub unsafe extern "C" fn itFoxblaster_UnkMotion10_Phys(item_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itFoxblaster_UnkMotion10_Phys(item_gobj: *mut HSD_GObj) { melee_core::ct!("itFoxblaster_UnkMotion10_Phys");}
 
 /// `bool itFoxblaster_UnkMotion10_Coll(HSD_GObj*)`: does nothing.
 pub unsafe extern "C" fn itFoxblaster_UnkMotion10_Coll(item_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itFoxblaster_UnkMotion10_Coll");
     0
 }
 
 /// `void itFoxBlaster_Logic96_EvtUnk(Item_GObj*, HSD_GObj*)`: removes the gobj interaction references.
 pub unsafe extern "C" fn itFoxBlaster_Logic96_EvtUnk(item_gobj: *mut Item_GObj, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itFoxBlaster_Logic96_EvtUnk");
     ext::it_8026B894(item_gobj, ref_gobj);
 }

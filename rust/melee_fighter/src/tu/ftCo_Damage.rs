@@ -179,6 +179,7 @@ pub static ftCo_803C5520: [[[i32; 3]; 4]; 2] = [
 ];
 
 pub fn ftCo_Damage_CalcAngle(f: &mut Fighter, kb: f32) -> f32 {
+    melee_core::ct!("ftCo_Damage_CalcAngle");
     let c = cd();
     if f.dmg.x1848_kb_angle != 361 {
         if ext::ftColl_8007AC68(f.dmg.x1848_kb_angle as u32) {
@@ -202,11 +203,13 @@ pub fn ftCo_Damage_CalcAngle(f: &mut Fighter, kb: f32) -> f32 {
 }
 
 pub fn ftCo_ScaleBy154(mul: f32) -> f32 {
+    melee_core::ct!("ftCo_ScaleBy154");
     mul * cd().x154
 }
 
 /// C declares `bool` but this build keeps the 0..3 level.
 pub fn ftCo_8008D8E8(v: f32) -> i32 {
+    melee_core::ct!("ftCo_8008D8E8");
     let c = cd();
     let lvl = if v < c.x158 {
         0
@@ -221,6 +224,7 @@ pub fn ftCo_8008D8E8(v: f32) -> i32 {
 }
 
 pub fn ftCo_Damage_CalcKnockback(f: &mut Fighter) {
+    melee_core::ct!("ftCo_Damage_CalcKnockback");
     let c = cd();
     ext::ScriptGame_ArmorResetReaction(f);
     if f.dmg.kb_applied == 0.0 {
@@ -252,6 +256,7 @@ pub fn ftCo_Damage_CalcKnockback(f: &mut Fighter) {
 
 /// static `ftCo_8008DA4C` (see the module note on the uninitialised `result`).
 pub fn ftCo_8008DA4C(g: G, element: u32, arg2: i32) -> bool {
+    melee_core::ct!("ftCo_8008DA4C");
     let f = fp(g);
     if f.dmg.x1838_percentTemp != 0.0 {
         match element {
@@ -267,6 +272,7 @@ pub fn ftCo_8008DA4C(g: G, element: u32, arg2: i32) -> bool {
 }
 
 pub fn ftCo_8008DB10(g: G, element: i32, v: f32) {
+    melee_core::ct!("ftCo_8008DB10");
     let c = cd();
     if fp(g).dmg.x1838_percentTemp == 0.0 {
         return;
@@ -301,6 +307,7 @@ pub fn ftCo_8008DB10(g: G, element: i32, v: f32) {
 }
 
 pub fn ftCo_Damage_CalcVel(f: &mut Fighter, x: f32, y: f32) {
+    melee_core::ct!("ftCo_Damage_CalcVel");
     if f.dmg.x18ac_time_since_hit < cd().xFC {
         f.x8c_kb_vel.x = x;
         f.x8c_kb_vel.y = y;
@@ -322,6 +329,7 @@ pub fn ftCo_Damage_CalcVel(f: &mut Fighter, x: f32, y: f32) {
 
 /// static `calcAngle`.
 pub fn calcAngle(angle: f32) -> f32 {
+    melee_core::ct!("calcAngle");
     let cm = cosf(M_PI_2_F);
     let ca = cosf(angle);
     let sm = M_PI_2_F;
@@ -349,6 +357,7 @@ fn inlineA1(g: G) {
 }
 
 pub fn ftCo_8008DCE0(g: G, arg1: i32, facing_dir: f32) {
+    melee_core::ct!("ftCo_8008DCE0");
     let f = fp(g);
     let c = cd();
     let mut var_r27 = 1;
@@ -529,6 +538,7 @@ pub fn ftCo_8008DCE0(g: G, arg1: i32, facing_dir: f32) {
 }
 
 pub fn ftCo_Damage_CheckAirMotion(f: &Fighter) -> bool {
+    melee_core::ct!("ftCo_Damage_CheckAirMotion");
     let c = cd();
     match f.motion_id as i32 {
         ftCo_MS_JumpF | ftCo_MS_JumpB | ftCo_MS_JumpAerialF | ftCo_MS_JumpAerialB | ftCo_MS_Fall
@@ -543,6 +553,7 @@ pub fn ftCo_Damage_CheckAirMotion(f: &Fighter) -> bool {
 
 /// TARGET_PC static `ftCo_Ucf084Sdi`: UCF 0.84's SDI window.
 pub fn ftCo_Ucf084Sdi(f: &Fighter) -> bool {
+    melee_core::ct!("ftCo_Ucf084Sdi");
     let c = cd();
     let port = f.x618_player_id as i32;
     if ext::Replay_UcfVersion(port) != 84 {
@@ -563,6 +574,7 @@ pub fn ftCo_Ucf084Sdi(f: &Fighter) -> bool {
 }
 
 pub fn ftCo_Damage_OnEveryHitlag(g: G) {
+    melee_core::ct!("ftCo_Damage_OnEveryHitlag");
     let f = fp(g);
     let c = cd();
     if f.allow_sdi() != 0
@@ -582,6 +594,7 @@ pub fn ftCo_Damage_OnEveryHitlag(g: G) {
 }
 
 pub fn ftCo_8008E5A4(f: &mut Fighter) {
+    melee_core::ct!("ftCo_8008E5A4");
     let c = cd();
     if f.input.lstick[0].x != 0.0 || f.input.lstick[0].y != 0.0 {
         let kb_x = f.x8c_kb_vel.x;
@@ -608,6 +621,7 @@ pub fn ftCo_8008E5A4(f: &mut Fighter) {
 }
 
 pub fn ftCo_Damage_OnExitHitlag(g: G) {
+    melee_core::ct!("ftCo_Damage_OnExitHitlag");
     let f = fp(g);
     let c = cd();
     let in_circle = sq_len2(f.input.lstick[0].x, f.input.lstick[0].y) >= c.sdi_min_stick_mag * c.sdi_min_stick_mag;
@@ -646,13 +660,16 @@ pub fn ftCo_Damage_OnExitHitlag(g: G) {
 
 // Rust-ABI callbacks stored in the fighter (C: HSD_GObjEvent).
 pub unsafe extern "C" fn ftCo_Damage_OnEveryHitlag_cb(g: G) {
+    melee_core::ct!("ftCo_Damage_OnEveryHitlag_cb");
     ftCo_Damage_OnEveryHitlag(g)
 }
 pub unsafe extern "C" fn ftCo_Damage_OnExitHitlag_cb(g: G) {
+    melee_core::ct!("ftCo_Damage_OnExitHitlag_cb");
     ftCo_Damage_OnExitHitlag(g)
 }
 
 pub fn ftCo_8008E908(g: G, facing_dir: f32) {
+    melee_core::ct!("ftCo_8008E908");
     let f = fp(g);
     if f.x221D_b7() != 0 {
         f.x2064_ledgeCooldown = cd().ledge_cooldown;
@@ -666,6 +683,7 @@ pub fn ftCo_8008E908(g: G, facing_dir: f32) {
 }
 
 pub fn ftCo_8008E984(f: &Fighter) -> bool {
+    melee_core::ct!("ftCo_8008E984");
     f.dmg.kb_applied == 0.0
         || (f.allow_sdi() != 0 && f.x221A_b3() != 0 && f.dmg.kb_applied < f.dmg.x18A8 + cd().x140)
 }
@@ -683,6 +701,7 @@ fn inlineF0(g: G) {
 }
 
 pub fn ftCo_8008E9D0(g: G) {
+    melee_core::ct!("ftCo_8008E9D0");
     inlineF0(g);
     let scaled = ftCo_ScaleBy154(fp(g).dmg.kb_applied);
     let lvl = ftCo_8008D8E8(scaled);
@@ -701,6 +720,7 @@ fn inlineB0(f: &Fighter) -> bool {
 }
 
 pub fn ftCo_8008EB58(g: G) {
+    melee_core::ct!("ftCo_8008EB58");
     let f = fp(g);
     let c = cd();
     let kb_applied = f.dmg.kb_applied;
@@ -777,6 +797,7 @@ fn capturecut_trace(where_: &str, g: G) {
 }
 
 pub fn ftCo_8008EC90(g: G) {
+    melee_core::ct!("ftCo_8008EC90");
     let mut ret0 = false;
     let f = fp(g);
     let mut facing_dir = 0.0f32;
@@ -912,6 +933,7 @@ pub fn ftCo_8008EC90(g: G) {
 }
 
 pub fn ftCo_8008F744(g: G) {
+    melee_core::ct!("ftCo_8008F744");
     let f = fp(g);
     unsafe {
         if f.mv.co.damage.x0 > 0.0 {
@@ -941,6 +963,7 @@ fn inlineC0(g: G) -> bool {
 }
 
 pub fn ftCo_Damage_Anim(g: G) {
+    melee_core::ct!("ftCo_Damage_Anim");
     ftCo_8008F744(g);
     let f = fp(g);
     if !ext::ftAnim_IsFramesRemaining(g) && f.x221C_b6() == 0 {
@@ -957,6 +980,7 @@ pub fn ftCo_Damage_Anim(g: G) {
 }
 
 pub fn doIasa(g: G) -> bool {
+    melee_core::ct!("doIasa");
     let f = fp(g);
     'ret_inline: {
         if unsafe { f.mv.co.damage.x1A } == 0 {
@@ -990,6 +1014,7 @@ pub fn doIasa(g: G) -> bool {
 }
 
 pub fn ftCo_Damage_IASA(g: G) {
+    melee_core::ct!("ftCo_Damage_IASA");
     let f = fp(g);
     if f.x221C_b6() == 0 {
         if ext::ftCo_800C5240(g) {
@@ -1016,6 +1041,7 @@ pub fn ftCo_Damage_IASA(g: G) {
 }
 
 pub fn ftCo_Damage_Phys(g: G) {
+    melee_core::ct!("ftCo_Damage_Phys");
     let f = fp(g);
     if f.ground_or_air == GA_Air {
         if f.x221C_b6() == 0 {
@@ -1029,6 +1055,7 @@ pub fn ftCo_Damage_Phys(g: G) {
 }
 
 pub fn ftCo_Damage_Coll(g: G) {
+    melee_core::ct!("ftCo_Damage_Coll");
     let f = fp(g);
     if f.ground_or_air == GA_Ground {
         ext::ft_800848DC(g, ftCo_8008FC94);
@@ -1050,10 +1077,12 @@ pub fn ftCo_Damage_Coll(g: G) {
 }
 
 pub fn ftCo_8008FC94(g: G) {
+    melee_core::ct!("ftCo_8008FC94");
     ext::ftCommon_8007D5D4(fp(g));
 }
 
 pub fn ftCo_Damage_SetMv8FromKbThreshold(f: &mut Fighter) {
+    melee_core::ct!("ftCo_Damage_SetMv8FromKbThreshold");
     let c = cd();
     let kb_vel = if f.ground_or_air == GA_Air {
         sqrtf(sq_len3(&Vec3 { x: f.x8c_kb_vel.x, y: f.x8c_kb_vel.y, z: f.x8c_kb_vel.z }))
@@ -1101,6 +1130,7 @@ fn inlineD0(g: G) {
 }
 
 pub fn ftCo_DamageFly_Anim(g: G) {
+    melee_core::ct!("ftCo_DamageFly_Anim");
     inlineD0(g);
     ftCo_8008F744(g);
     let f = fp(g);
@@ -1110,6 +1140,7 @@ pub fn ftCo_DamageFly_Anim(g: G) {
 }
 
 pub fn ftCo_DamageFly_IASA(g: G) {
+    melee_core::ct!("ftCo_DamageFly_IASA");
     if fp(g).x221C_b6() == 0 {
         ext::ftCo_DamageFall_IASA(g);
     } else {
@@ -1135,6 +1166,7 @@ fn inlineE0(g: G) {
 }
 
 pub fn ftCo_DamageFly_Phys(g: G) {
+    melee_core::ct!("ftCo_DamageFly_Phys");
     let f = fp(g);
     if f.ground_or_air == GA_Air {
         inlineE0(g);
@@ -1155,6 +1187,7 @@ pub fn ftCo_DamageFly_Phys(g: G) {
 }
 
 pub fn ftCo_DamageFly_Coll(g: G) {
+    melee_core::ct!("ftCo_DamageFly_Coll");
     if ext::ft_80081DD4(g) {
         ftCo_80090184(g);
     } else {
@@ -1174,6 +1207,7 @@ pub fn ftCo_DamageFly_Coll(g: G) {
 }
 
 pub fn ftCo_80090184(g: G) {
+    melee_core::ct!("ftCo_80090184");
     if ext::ftCo_80098928(g) {
         return;
     }
@@ -1184,6 +1218,7 @@ pub fn ftCo_80090184(g: G) {
 }
 
 pub fn ftCo_DamageFlyRoll_Anim(g: G) {
+    melee_core::ct!("ftCo_DamageFlyRoll_Anim");
     inlineD0(g);
     ftCo_8008F744(g);
     if fp(g).x221C_b6() == 0 {
@@ -1192,6 +1227,7 @@ pub fn ftCo_DamageFlyRoll_Anim(g: G) {
 }
 
 pub fn ftCo_DamageFlyRoll_IASA(g: G) {
+    melee_core::ct!("ftCo_DamageFlyRoll_IASA");
     if fp(g).x221C_b6() == 0 {
         ext::ftCo_DamageFall_IASA(g);
     } else {
@@ -1200,6 +1236,7 @@ pub fn ftCo_DamageFlyRoll_IASA(g: G) {
 }
 
 pub fn ftCo_DamageFlyRoll_Phys(g: G) {
+    melee_core::ct!("ftCo_DamageFlyRoll_Phys");
     let f = fp(g);
     if f.ground_or_air == GA_Air {
         inlineE0(g);
@@ -1222,6 +1259,7 @@ pub fn ftCo_DamageFlyRoll_Phys(g: G) {
 }
 
 pub fn ftCo_DamageFlyRoll_Coll(g: G) {
+    melee_core::ct!("ftCo_DamageFlyRoll_Coll");
     if ext::ft_80081DD4(g) {
         if ext::ftCo_80098928(g) {
             return;

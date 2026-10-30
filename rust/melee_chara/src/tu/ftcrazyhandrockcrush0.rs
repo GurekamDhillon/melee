@@ -16,12 +16,14 @@ pub use crate::chars::r8::ftCrazyHand::ftcrazyhandrockcrush0::ftCh_RockCrushUp_I
 /// `my_lbVector_Len` (static inline).
 #[inline]
 pub fn my_lbVector_Len(v: &Vec3) -> f32 {
+    melee_core::ct!("my_lbVector_Len");
     crate::pure::my_sqrtf(fmadds(v.z, v.z, fmadds(v.x, v.x, v.y * v.y)))
 }
 
 /// The arithmetic of `ftCh_RockCrushUp_Phys` after `ftBossLib_8015C208`: the (self_vel.x, self_vel.y)
 /// chasing `target` (the other fighter's position) from `cur`, with the data offsets/gain of `da`.
 pub fn rockcrush_up_vel(target: &Vec3, cur: &Vec3, da: &ftCrazyHand_DatAttrs) -> (f32, f32) {
+    melee_core::ct!("rockcrush_up_vel");
     let mut pos = *target;
     pos.x += da.x5C;
     pos.y += da.x60;
@@ -42,6 +44,7 @@ pub fn rockcrush_up_vel(target: &Vec3, cur: &Vec3, da: &ftCrazyHand_DatAttrs) ->
 }
 
 pub fn ftCh_Init_80157DF8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Init_80157DF8");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*(*fp).ft_data).ext_attr as *const ftCrazyHand_DatAttrs;
@@ -54,6 +57,7 @@ pub fn ftCh_Init_80157DF8(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCh_RockCrushUp_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_RockCrushUp_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         unsafe {
             let fp = (*gobj).user_data as *mut Fighter;
@@ -72,12 +76,14 @@ pub fn ftCh_RockCrushUp_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCh_RockCrushWait_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_RockCrushWait_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         ftCh_GrabUnk1_8015BC88(gobj);
     }
 }
 
 pub fn ftCh_RockCrushUp_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_RockCrushUp_Phys");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         st::ft_80085134(gobj);
@@ -93,4 +99,4 @@ pub fn ftCh_RockCrushUp_Phys(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftCh_RockCrushUp_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftCh_RockCrushUp_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_RockCrushUp_Coll");}

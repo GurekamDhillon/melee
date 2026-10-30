@@ -171,6 +171,7 @@ unsafe fn getScale() -> f32 {
 
 /// `void un_8031D9E4(int, int, int)`
 pub unsafe fn un_8031D9E4(arg0: i32, arg1: i32, arg2: i32) {
+    melee_core::ct!("un_8031D9E4");
     un_804D6F84[0] = arg0 as u8;
     un_804D6F84[1] = arg1 as u8;
     un_804D6F84[3] = arg2 as u8;
@@ -178,6 +179,7 @@ pub unsafe fn un_8031D9E4(arg0: i32, arg1: i32, arg2: i32) {
 
 /// `void un_8031D9F8(CharacterKind, int, int, int)`; `spawn_count` is the address of three `u8`s.
 pub unsafe fn un_8031D9F8(char_kind: CharacterKind, costume: i32, spawn_mode: i32, spawn_count: usize) {
+    melee_core::ct!("un_8031D9F8");
     let mut v: Vec = core::mem::zeroed();
 
     Stage_InitScene(St_Kind_Greens, core::ptr::null_mut());
@@ -235,12 +237,14 @@ pub unsafe fn un_8031D9F8(char_kind: CharacterKind, costume: i32, spawn_mode: i3
 
 /// `void vi_8031DC80(HSD_GObj*, int)`
 pub unsafe extern "C" fn vi_8031DC80(gobj: *mut HSD_GObj, unused: i32) {
+    melee_core::ct!("vi_8031DC80");
     ext::lbShadow_8000F38C(0);
     vi_RunCamera(gobj, &raw mut erase_colors_vi0501 as *mut u8, 0x281);
 }
 
 /// `void fn_8031DD14(HSD_GObj*)`
 pub unsafe extern "C" fn fn_8031DD14(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8031DD14");
     let cobj = (*gobj).hsd_obj as *mut HSD_CObj;
 
     ext::HSD_CObjAnim(cobj);
@@ -274,6 +278,7 @@ pub unsafe extern "C" fn fn_8031DD14(gobj: *mut HSD_GObj) {
 
 /// `void vi0501_Scene_OnEnter(void*)`
 pub unsafe fn vi0501_Scene_OnEnter(arg: *mut c_void) {
+    melee_core::ct!("vi0501_Scene_OnEnter");
     let desc = arg as *mut ViCharaDesc;
     ext::lbAudioAx_800236DC();
     ext::efLib_Init();
@@ -324,5 +329,6 @@ pub unsafe fn vi0501_Scene_OnEnter(arg: *mut c_void) {
 
 /// `void vi0501_Scene_OnFrame(void)`
 pub unsafe fn vi0501_Scene_OnFrame() {
+    melee_core::ct!("vi0501_Scene_OnFrame");
     vi_8031CAAC();
 }

@@ -141,6 +141,7 @@ unsafe fn hsd_assert(cond: bool, what: &str) {
 }
 
 pub unsafe fn lbSnap_8001D2BC() {
+    melee_core::ct!("lbSnap_8001D2BC");
     for i in 0..2usize {
         let prev = lbSnap_80433380.card_state[i];
         lbSnap_80433380.card_state[i] = ext::CARDProbe(i as i32);
@@ -151,10 +152,12 @@ pub unsafe fn lbSnap_8001D2BC() {
 }
 
 pub unsafe fn lbSnap_8001D338(arg0: i32) -> i32 {
+    melee_core::ct!("lbSnap_8001D338");
     lbSnap_80433380.state_changed[arg0 as usize]
 }
 
 pub unsafe fn lbSnap_8001D350(chan: i32) -> i32 {
+    melee_core::ct!("lbSnap_8001D350");
     let ptr = slot(chan);
     if (*ptr).card_result == 0 && lbSnap_80433380.state_changed[chan as usize] != 0 {
         (*ptr).card_result = 8;
@@ -163,22 +166,27 @@ pub unsafe fn lbSnap_8001D350(chan: i32) -> i32 {
 }
 
 pub unsafe fn lbSnap_8001D394(chan: i32) -> i32 {
+    melee_core::ct!("lbSnap_8001D394");
     (*slot(chan)).num
 }
 
 pub unsafe fn lbSnap_8001D3B0(chan: i32) -> i32 {
+    melee_core::ct!("lbSnap_8001D3B0");
     (*slot(chan)).free_blocks
 }
 
 pub unsafe fn lbSnap_8001D3CC(chan: i32) -> i32 {
+    melee_core::ct!("lbSnap_8001D3CC");
     (*slot(chan)).free_files
 }
 
 pub unsafe fn lbSnap_8001D3E8(chan: i32, index: i32) -> i32 {
+    melee_core::ct!("lbSnap_8001D3E8");
     (*slot(chan)).entries[index as usize].blocks as i32
 }
 
 pub unsafe fn lbSnap_8001D40C(chan: i32) -> i32 {
+    melee_core::ct!("lbSnap_8001D40C");
     let ptr = slot(chan);
     lbSnap_80433380.state_changed[chan as usize] = 0;
     (*ptr).card_result = ext::lb_8001BFD8(
@@ -201,6 +209,7 @@ pub unsafe fn lbSnap_8001D40C(chan: i32) -> i32 {
 }
 
 pub unsafe fn lbSnap_8001D4A4(chan: i32, arg1: *mut i8) {
+    melee_core::ct!("lbSnap_8001D4A4");
     let ptr = slot(chan);
     let time2 = ext::OSGetTime();
     // `OSTicksToSeconds(time2)`: s64 / u32 (promoted to s64), stored in an unsigned int
@@ -229,6 +238,7 @@ pub unsafe fn lbSnap_8001D4A4(chan: i32, arg1: *mut i8) {
 /// C static inline: clear the filename plus its terminating byte.
 #[inline]
 pub unsafe fn lbSnap_ClearText(text: *mut i8) {
+    melee_core::ct!("lbSnap_ClearText");
     for i in 0..0x21usize {
         *text.add(i) = 0;
     }
@@ -236,12 +246,14 @@ pub unsafe fn lbSnap_ClearText(text: *mut i8) {
 
 #[inline]
 pub unsafe fn lbSnap_FormatTime(chan: i32, index: i32, text: *mut i8) {
+    melee_core::ct!("lbSnap_FormatTime");
     hsd_assert(index < (*slot(chan)).num, "index < _p(slot)[chan].num");
     lbSnap_ClearText(text);
     put_str(text as *mut u8, (*slot(chan)).entries[index as usize].time.to_string().as_bytes());
 }
 
 pub unsafe fn lbSnap_8001D5FC(chan: i32, index: i32) -> i32 {
+    melee_core::ct!("lbSnap_8001D5FC");
     let ptr = slot(chan);
     let mut text = [0i8; 0x21];
     if (*ptr).card_result == 0 && lbSnap_80433380.state_changed[chan as usize] != 0 {
@@ -257,6 +269,7 @@ pub unsafe fn lbSnap_8001D5FC(chan: i32, index: i32) -> i32 {
 }
 
 pub unsafe fn lbSnap_8001D7B0(chan: i32, index: i32, jndex: i32) -> i32 {
+    melee_core::ct!("lbSnap_8001D7B0");
     let ptr = slot(chan);
     let mut text1 = [0i8; 0x21];
     let mut text2 = [0i8; 0x21];
@@ -282,6 +295,7 @@ const RGB5A3_MASK_B: u16 = 0x001F;
 
 #[inline]
 pub fn RGB565_TO_RGB5A3(pixel: u16) -> u16 {
+    melee_core::ct!("RGB565_TO_RGB5A3");
     let mut result = (pixel >> 1) & (RGB5A3_MASK_R | RGB5A3_MASK_G);
     result |= pixel & RGB5A3_MASK_B;
     result | RGB5A3_MASK_A
@@ -289,11 +303,13 @@ pub fn RGB565_TO_RGB5A3(pixel: u16) -> u16 {
 
 #[inline]
 pub unsafe fn lbSnap_GetMemSnapIconData() -> *mut u8 {
+    melee_core::ct!("lbSnap_GetMemSnapIconData");
     (*lbSnap_80433380.icon_data).ptr
 }
 
 /// Scale the 448x204 snapshot region to 64x32, centered in the 96x32 banner.
 pub unsafe fn lbSnap_8001DA5C(src: *const u8) {
+    melee_core::ct!("lbSnap_8001DA5C");
     let banner = lbSnap_GetMemSnapIconData();
     let mut src_row_accum: i32 = 0;
     for row in 0..32i32 {
@@ -349,6 +365,7 @@ pub unsafe fn lbSnap_8001DA5C(src: *const u8) {
 }
 
 pub unsafe fn lbSnap_8001DC0C(image: *mut u8) -> i32 {
+    melee_core::ct!("lbSnap_8001DC0C");
     let mut ret = 0;
     let snap = lbSnap_80433380.snap;
     (*snap).x0 = 4;
@@ -398,6 +415,7 @@ pub unsafe fn lbSnap_8001DC0C(image: *mut u8) -> i32 {
 }
 
 pub unsafe fn lbSnap_8001DE8C(arg0: *mut c_void) -> i32 {
+    melee_core::ct!("lbSnap_8001DE8C");
     let mut ret = 0;
     let snap = lbSnap_80433380.snap;
     if (*snap).x0 == 4 {
@@ -415,10 +433,12 @@ pub unsafe fn lbSnap_8001DE8C(arg0: *mut c_void) -> i32 {
 
 #[inline]
 pub unsafe fn lbSnap_GetSaveDataOffset(snap: *mut Unk80433380_0) -> i32 {
+    melee_core::ct!("lbSnap_GetSaveDataOffset");
     (*snap).xC.wrapping_add(core::mem::offset_of!(Unk80433380_0, x38) as i32)
 }
 
 pub unsafe fn lbSnap_8001DF20() -> i32 {
+    melee_core::ct!("lbSnap_8001DF20");
     let snap = lbSnap_80433380.snap;
     lbSnap_803BACC8.entries[0].file_size = lbSnap_GetSaveDataOffset(snap);
     lbSnap_803BACC8.entries[0].data = snap as *mut c_void;
@@ -429,6 +449,7 @@ pub unsafe fn lbSnap_8001DF20() -> i32 {
 }
 
 pub unsafe fn lbSnap_8001DF6C(chan: i32) -> i32 {
+    melee_core::ct!("lbSnap_8001DF6C");
     let ptr = slot(chan);
     let mut text = [0i8; 0x21];
     if (*ptr).card_result == 0 && lbSnap_80433380.state_changed[chan as usize] != 0 {
@@ -456,6 +477,7 @@ pub unsafe fn lbSnap_8001DF6C(chan: i32) -> i32 {
 }
 
 pub unsafe fn lbSnap_8001E058(chan: i32, index: i32) -> i32 {
+    melee_core::ct!("lbSnap_8001E058");
     let ptr = slot(chan);
     let mut text = [0i8; 0x21];
     if (*ptr).card_result == 0 && lbSnap_80433380.state_changed[chan as usize] != 0 {
@@ -479,14 +501,17 @@ pub unsafe fn lbSnap_8001E058(chan: i32, index: i32) -> i32 {
 }
 
 pub fn lbSnap_8001E204() -> i32 {
+    melee_core::ct!("lbSnap_8001E204");
     0x3E840
 }
 
 pub fn lbSnap_8001E210() -> i32 {
+    melee_core::ct!("lbSnap_8001E210");
     0x840
 }
 
 pub unsafe fn lbSnap_8001E218(snap: *mut c_void, slot_: *mut Unk80433380_48) {
+    melee_core::ct!("lbSnap_8001E218");
     lbSnap_80433380.snap = snap as *mut Unk80433380_0;
     lbSnap_80433380.slot = slot_;
     (*lbSnap_80433380.slot).card_result = 8;
@@ -500,11 +525,13 @@ pub unsafe fn lbSnap_8001E218(snap: *mut c_void, slot_: *mut Unk80433380_48) {
 }
 
 pub unsafe fn lbSnap_8001E27C() {
+    melee_core::ct!("lbSnap_8001E27C");
     lbSnap_80433380.snap = null_mut();
     lbSnap_80433380.slot = null_mut();
 }
 
 pub unsafe fn lbSnap_8001E290() {
+    melee_core::ct!("lbSnap_8001E290");
     lbSnap_80433380.icon_data = null_mut();
     for chan in 0..2usize {
         lbSnap_80433380.card_state[chan] = ext::CARDProbe(chan as i32);

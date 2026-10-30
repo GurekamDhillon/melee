@@ -163,6 +163,7 @@ static mut Gq: THPQuantizationPtr = THPQuantizationPtr {
     padding: 0,
 };
 pub unsafe extern "C" fn __THPSlw(mut v: u32, mut n: u32) -> u32 {
+    melee_core::ct!("__THPSlw");
     return if n as u32 & 0x20 as u32 != 0 {
         0 as u32
     } else {
@@ -170,6 +171,7 @@ pub unsafe extern "C" fn __THPSlw(mut v: u32, mut n: u32) -> u32 {
     };
 }
 pub unsafe extern "C" fn __THPSrw(mut v: u32, mut n: u32) -> u32 {
+    melee_core::ct!("__THPSrw");
     return if n as u32 & 0x20 as u32 != 0 {
         0 as u32
     } else {
@@ -177,6 +179,7 @@ pub unsafe extern "C" fn __THPSrw(mut v: u32, mut n: u32) -> u32 {
     };
 }
 pub unsafe extern "C" fn __THPNextWord(mut info: *mut THPFileInfo) -> u32 {
+    melee_core::ct!("__THPNextWord");
     let mut p: *mut u32 = (*info).file as *mut u32;
     p = p.offset(1);
     (*info).file = p as *mut u8;
@@ -184,6 +187,7 @@ pub unsafe extern "C" fn __THPNextWord(mut info: *mut THPFileInfo) -> u32 {
     return core::ptr::read_unaligned(p).to_be();
 }
 pub unsafe extern "C" fn __THPGetBits(mut info: *mut THPFileInfo, mut t: u32) -> u32 {
+    melee_core::ct!("__THPGetBits");
     let mut cnt: u32 = (*info).cnt;
     let mut avail: u32 = (33 as u32).wrapping_sub(cnt);
     let mut hi: u32 = __THPSlw((*info).currByte, cnt.wrapping_sub(1 as u32));
@@ -201,6 +205,7 @@ pub unsafe extern "C" fn __THPGetBits(mut info: *mut THPFileInfo, mut t: u32) ->
     return v;
 }
 pub unsafe extern "C" fn __THPPeek5(mut info: *const THPFileInfo) -> u32 {
+    melee_core::ct!("__THPPeek5");
     let mut cnt: u32 = (*info).cnt;
     let mut avail: u32 = (33 as u32).wrapping_sub(cnt);
     let mut hi: u32 = __THPSlw((*info).currByte, cnt.wrapping_sub(1 as u32));
@@ -213,6 +218,7 @@ pub unsafe extern "C" fn __THPPeek5(mut info: *const THPFileInfo) -> u32 {
     )) >> 27i32;
 }
 pub unsafe extern "C" fn __THPSkipBits(mut info: *mut THPFileInfo, mut t: u32) {
+    melee_core::ct!("__THPSkipBits");
     let mut cnt: u32 = (*info).cnt;
     let mut avail: u32 = (33 as u32).wrapping_sub(cnt);
     if t <= avail {
@@ -228,6 +234,7 @@ pub unsafe extern "C" fn __THPHuffDecodePC(
     mut info: *mut THPFileInfo,
     mut h: *const THPHuffmanTab,
 ) -> s32 {
+    melee_core::ct!("__THPHuffDecodePC");
     let mut idx: u32 = __THPPeek5(info);
     let mut sym: u32 = (*h).quick[idx as usize] as u32;
     let mut code: s32 = 0;
@@ -249,6 +256,7 @@ pub unsafe extern "C" fn __THPHuffDecodePC(
     return *(*h).Vij.offset((code + (*h).valPtr[l as usize]) as isize) as s32;
 }
 pub unsafe extern "C" fn __THPExtend(mut v: u32, mut t: u32) -> s32 {
+    melee_core::ct!("__THPExtend");
     if v < (1 as u32)
         << (t as u32).wrapping_sub(1 as u32)
     {
@@ -265,6 +273,7 @@ pub unsafe extern "C" fn __THPHuffDecodeBlockPC(
     mut ach: *const THPHuffmanTab,
     mut predDC: *mut THPCoeff,
 ) {
+    melee_core::ct!("__THPHuffDecodeBlockPC");
     let mut diff: THPCoeff = 0 as THPCoeff;
     let mut t: s32 = 0;
     let mut k: s32 = 0;
@@ -298,6 +307,7 @@ pub unsafe extern "C" fn __THPHuffDecodeBlockPC(
     }
 }
 pub unsafe extern "C" fn __THPStoreSample(mut dst: *mut THPSample, mut v: f32) {
+    melee_core::ct!("__THPStoreSample");
     let mut i: s32 = (v as f32 * 0.125f32) as s32;
     if i < 0i32 {
         i = 0i32 as s32;
@@ -311,6 +321,7 @@ pub unsafe extern "C" fn __THPInverseDCTPC(
     mut xPos: u32,
     mut rowOff: u32,
 ) {
+    melee_core::ct!("__THPInverseDCTPC");
     let mut q: *const f32 = Gq.value;
     let mut obase: *mut THPSample = Gbase.value;
     let mut wid: u32 = Gwid.value;
@@ -508,6 +519,7 @@ pub unsafe extern "C" fn __THPInverseDCTPC(
     }
 }
 pub unsafe extern "C" fn __THPPrepBitStream(mut info: *mut THPFileInfo) {
+    melee_core::ct!("__THPPrepBitStream");
     let mut ptr: *mut u32 = ::core::ptr::null_mut::<u32>();
     let mut offset: u32 = 0;
     let mut i: u32 = 0;
@@ -600,6 +612,7 @@ pub unsafe extern "C" fn THPDec_8032F8D4(
     mut data: *mut u8,
     mut out: *mut THPDec_8032FD40_Data,
 ) -> s32 {
+    melee_core::ct!("THPDec_8032F8D4");
     let mut hSample: [u8; 4] = [0; 4];
     let mut vSample: [u8; 4] = [0; 4];
     let mut componentId: [u8; 4] = [0; 4];
@@ -761,6 +774,7 @@ pub unsafe extern "C" fn THPDec_8032FD40(
     mut data: *mut THPDec_8032FD40_Data,
     mut num: u16,
 ) -> s32 {
+    melee_core::ct!("THPDec_8032FD40");
     let mut base: s32 = (*data).val0 + 0x4028 as s32;
     let mut a: s32 = 0;
     if (*data).val2 as i32 != 4i32 {
@@ -781,6 +795,7 @@ pub unsafe extern "C" fn THPVideoDecode(
     mut data: *mut ::core::ffi::c_void,
     mut desc: *mut THPDec_8032FD40_Data,
 ) -> *mut THPFileInfo {
+    melee_core::ct!("THPVideoDecode");
     let mut current_block: u64;
     let mut done: u8 = 0;
     let mut info: *mut THPFileInfo = work;
@@ -903,6 +918,7 @@ pub unsafe extern "C" fn THPVideoDecode(
     return ::core::ptr::null_mut::<THPFileInfo>();
 }
 pub unsafe extern "C" fn THPDec_803300E0(mut info: *mut THPFileInfo) {
+    melee_core::ct!("THPDec_803300E0");
     let mut p: *mut u8 = ::core::ptr::null_mut::<u8>();
     let mut i: u8 = 0;
     p = (((*info).scratch as usize).wrapping_add(31) & !31usize) as *mut u8;
@@ -915,6 +931,7 @@ pub unsafe extern "C" fn THPDec_803300E0(mut info: *mut THPFileInfo) {
     }
 }
 pub unsafe extern "C" fn THPDec_80330158(mut info: *mut THPFileInfo) -> u8 {
+    melee_core::ct!("THPDec_80330158");
     let mut tag: [u8; 5] = ::core::mem::transmute::<[u8; 5], [u8; 5]>(*b"JFIF\0");
     let mut length: u16 = 0;
     let mut i: u32 = 0;
@@ -967,6 +984,7 @@ pub unsafe extern "C" fn THPDec_80330158(mut info: *mut THPFileInfo) -> u8 {
     return 0 as u8;
 }
 pub unsafe extern "C" fn THPDec_803302EC(mut data: *mut *mut u8) -> s32 {
+    melee_core::ct!("THPDec_803302EC");
     let mut i: u32 = 0;
     let mut ptr: *mut u8 = *data;
     let mut high: u16 = *ptr.offset(0 as isize) as u16;
@@ -981,6 +999,7 @@ pub unsafe extern "C" fn THPDec_803302EC(mut data: *mut *mut u8) -> s32 {
     return 0 as s32;
 }
 pub unsafe extern "C" fn __THPReadFrameHeader(mut info: *mut THPFileInfo) -> u8 {
+    melee_core::ct!("__THPReadFrameHeader");
     let mut i: u8 = 0;
     let mut j: u8 = 0;
     let mut k: u8 = 0;
@@ -1087,6 +1106,7 @@ pub unsafe extern "C" fn __THPReadFrameHeader(mut info: *mut THPFileInfo) -> u8 
     return 0 as u8;
 }
 pub unsafe extern "C" fn __THPReadQuantizationTable(mut info: *mut THPFileInfo) -> u8 {
+    melee_core::ct!("__THPReadQuantizationTable");
     let mut length: u16 = 0;
     let mut id: u16 = 0;
     let mut i: u16 = 0;
@@ -1135,6 +1155,7 @@ pub unsafe extern "C" fn __THPReadQuantizationTable(mut info: *mut THPFileInfo) 
     return 0 as u8;
 }
 pub unsafe extern "C" fn __THPReadHuffmanTableSpecification(mut info: *mut THPFileInfo) -> u8 {
+    melee_core::ct!("__THPReadHuffmanTableSpecification");
     let mut t_class: u8 = 0;
     let mut id: u8 = 0;
     let mut i: u8 = 0;
@@ -1191,6 +1212,7 @@ pub unsafe extern "C" fn __THPReadHuffmanTableSpecification(mut info: *mut THPFi
     return 0 as u8;
 }
 pub unsafe extern "C" fn __THPReadScaneHeader(mut info: *mut THPFileInfo) -> u8 {
+    melee_core::ct!("__THPReadScaneHeader");
     let mut numComponents: u8 = 0;
     let mut i: u8 = 0;
     let mut ptr: *mut u8 = ::core::ptr::null_mut::<u8>();
@@ -1265,6 +1287,7 @@ pub unsafe extern "C" fn __THPHuffGenerateSizeTable(
     mut tab_index: u8,
     mut huffmanBits: usize,
 ) -> u8 {
+    melee_core::ct!("__THPHuffGenerateSizeTable");
     let mut bits: *mut u8 = ::core::ptr::null_mut::<u8>();
     let mut p: s32 = 0;
     let mut l: s32 = 0;
@@ -1309,6 +1332,7 @@ pub unsafe extern "C" fn __THPHuffGenerateCodeTable(
     mut info: *mut THPFileInfo,
     mut tab_index: u8,
 ) -> u8 {
+    melee_core::ct!("__THPHuffGenerateCodeTable");
     let mut si: s32 = 0;
     let mut code: u32 = 0;
     let mut p: s32 = 0;
@@ -1365,6 +1389,7 @@ pub unsafe extern "C" fn __THPHuffGenerateDecoderTables(
     mut info: *mut THPFileInfo,
     mut tabIndex: u8,
 ) -> i32 {
+    melee_core::ct!("__THPHuffGenerateDecoderTables");
     let mut p: s32 = 0;
     let mut l: s32 = 0;
     let mut h: *mut THPHuffmanTab = ::core::ptr::null_mut::<THPHuffmanTab>();
@@ -1396,6 +1421,7 @@ pub unsafe extern "C" fn __THPHuffGenerateDecoderTables(
     return 0i32;
 }
 pub unsafe extern "C" fn THPDec_803310CC(mut info: *mut THPFileInfo) -> u8 {
+    melee_core::ct!("THPDec_803310CC");
     let mut i: u32 = 0;
     let mut j: s32 = 0;
     (*info).MCUsPerRow = (((*info).xPixelSize as s32 as i32
@@ -1460,6 +1486,7 @@ pub unsafe extern "C" fn THPDec_803310CC(mut info: *mut THPFileInfo) -> u8 {
     return 0 as u8;
 }
 pub unsafe extern "C" fn __THPRestartDefinition(mut info: *mut THPFileInfo) -> u8 {
+    melee_core::ct!("__THPRestartDefinition");
     (*info).RST = 1 as u8;
     (*info).file = (*info).file.offset(2 as isize);
     (*info).nMCU = ((*(*info).file.offset(0 as isize) as i32)
@@ -1476,6 +1503,7 @@ pub unsafe extern "C" fn THPDec_80331340(
     mut tileU: *mut ::core::ffi::c_void,
     mut tileV: *mut ::core::ffi::c_void,
 ) {
+    melee_core::ct!("THPDec_80331340");
     (*info).tileY = tileY as *mut u8;
     (*info).tileU = tileU as *mut u8;
     (*info).tileV = tileV as *mut u8;
@@ -1495,6 +1523,7 @@ pub unsafe extern "C" fn THPDec_803313D0(
     mut tileV: *mut ::core::ffi::c_void,
     mut x: u32,
 ) {
+    melee_core::ct!("THPDec_803313D0");
     let mut width: u32 = x;
     (*info).tileY = tileY as *mut u8;
     (*info).tileU = tileU as *mut u8;
@@ -1510,10 +1539,12 @@ pub unsafe extern "C" fn THPDec_803313D0(
 }
 #[inline]
 pub unsafe extern "C" fn __THPInverseDCTNoYPos(mut in_0: *mut THPCoeff, mut xPos: u32) {
+    melee_core::ct!("__THPInverseDCTNoYPos");
     __THPInverseDCTPC(in_0, xPos, 0 as u32);
 }
 #[inline]
 pub unsafe extern "C" fn __THPInverseDCTY8(mut in_0: *mut THPCoeff, mut xPos: u32) {
+    melee_core::ct!("__THPInverseDCTY8");
     __THPInverseDCTPC(in_0, xPos, Gwid.value.wrapping_mul(8 as u32));
 }
 #[inline]
@@ -1521,9 +1552,11 @@ pub unsafe extern "C" fn __THPHuffDecodeTab(
     mut info: *mut THPFileInfo,
     mut h: *mut THPHuffmanTab,
 ) -> s32 {
+    melee_core::ct!("__THPHuffDecodeTab");
     return __THPHuffDecodePC(info, h);
 }
 pub unsafe extern "C" fn __THPDecompressiMCURow640x480(mut info: *mut THPFileInfo) {
+    melee_core::ct!("__THPDecompressiMCURow640x480");
     let mut cl_num: u8 = 0;
     let mut x_pos: u32 = 0;
     let mut comp: *mut THPComponent = ::core::ptr::null_mut::<THPComponent>();
@@ -1606,6 +1639,7 @@ pub unsafe extern "C" fn __THPDecompressiMCURow640x480(mut info: *mut THPFileInf
     (*info).tileV = (*info).tileV.offset(0xa00 as isize);
 }
 pub unsafe extern "C" fn __THPDecompressiMCURowNxN(mut info: *mut THPFileInfo, mut x: u32) {
+    melee_core::ct!("__THPDecompressiMCURowNxN");
     let mut cl_num: u8 = 0;
     let mut x_pos: u32 = 0;
     let mut comp: *mut THPComponent = ::core::ptr::null_mut::<THPComponent>();
@@ -1707,6 +1741,7 @@ pub unsafe extern "C" fn __THPDecompressiMCURowNxN(mut info: *mut THPFileInfo, m
     );
 }
 pub unsafe extern "C" fn __THPHuffDecodeDCTCompY(mut info: *mut THPFileInfo, mut block: *mut THPCoeff) {
+    melee_core::ct!("__THPHuffDecodeDCTCompY");
     __THPHuffDecodeBlockPC(
         info,
         block,
@@ -1716,6 +1751,7 @@ pub unsafe extern "C" fn __THPHuffDecodeDCTCompY(mut info: *mut THPFileInfo, mut
     );
 }
 pub unsafe extern "C" fn __THPHuffDecodeDCTCompU(mut info: *mut THPFileInfo, mut block: *mut THPCoeff) {
+    melee_core::ct!("__THPHuffDecodeDCTCompU");
     __THPHuffDecodeBlockPC(
         info,
         block,
@@ -1725,6 +1761,7 @@ pub unsafe extern "C" fn __THPHuffDecodeDCTCompU(mut info: *mut THPFileInfo, mut
     );
 }
 pub unsafe extern "C" fn __THPHuffDecodeDCTCompV(mut info: *mut THPFileInfo, mut block: *mut THPCoeff) {
+    melee_core::ct!("__THPHuffDecodeDCTCompV");
     __THPHuffDecodeBlockPC(
         info,
         block,
@@ -1734,6 +1771,7 @@ pub unsafe extern "C" fn __THPHuffDecodeDCTCompV(mut info: *mut THPFileInfo, mut
     );
 }
 pub unsafe extern "C" fn THPInit() {
+    melee_core::ct!("THPInit");
     static mut __THPLCWorkBuffer: [u8; 16128] = [0; 16128];
     __THPLCWork672[0 as usize] = (&raw mut __THPLCWorkBuffer as *mut u8)
         .offset(0 as isize)
@@ -1749,7 +1787,7 @@ pub static mut __THPLCWork672: [*mut u8; 3] = [::core::ptr::null::<u8>() as *mut
 pub const NULL: i32 = 0i32;
 
 /// The TARGET_PC body has no Gekko quantisation registers to initialise.
-pub unsafe extern "C" fn OSInitFastCast() {}
+pub unsafe extern "C" fn OSInitFastCast() { melee_core::ct!("OSInitFastCast");}
 
 #[cfg(test)]
 #[path = "../../tests/thp_state/mod.rs"]

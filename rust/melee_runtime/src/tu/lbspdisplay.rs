@@ -294,6 +294,7 @@ fn hsd_assert(cond: bool, what: &str) {
 }
 
 pub unsafe fn lb_80011AC4(mut list: *mut *mut LightList) -> *mut HSD_LObj {
+    melee_core::ct!("lb_80011AC4");
     let mut prev: *mut HSD_LObj = null_mut();
     let mut first: *mut HSD_LObj = null_mut();
     while !(*list).is_null() {
@@ -315,6 +316,7 @@ pub unsafe fn lb_80011AC4(mut list: *mut *mut LightList) -> *mut HSD_LObj {
 }
 
 pub unsafe fn lb_80011B74(dobj: *mut HSD_DObj, flags: u32) {
+    melee_core::ct!("lb_80011B74");
     if !(*dobj).next.is_null() {
         lb_80011B74((*dobj).next, flags);
     }
@@ -327,6 +329,7 @@ unsafe fn checkJObjFlags(jobj: *mut HSD_JObj) -> bool {
 }
 
 pub unsafe fn lb_80011C18(jobj: *mut HSD_JObj, flags: u32) {
+    melee_core::ct!("lb_80011C18");
     let mut cur = (*jobj).child;
     if !cur.is_null() {
         if !(*cur).child.is_null() { lb_80011C18((*cur).child, flags); }
@@ -439,12 +442,14 @@ unsafe fn jobj_find_many(root: *mut HSD_JObj, result: *mut *mut HSD_JObj, target
 /// C: `int lb_80011E24(HSD_JObj* root, HSD_JObj** result, ...)`; the variadic list is `indices`
 /// (read up to the first -1 terminator, which need not be present).
 pub unsafe fn lb_80011E24(root: *mut HSD_JObj, result: *mut *mut HSD_JObj, indices: &[i32]) -> i32 {
+    melee_core::ct!("lb_80011E24");
     if root.is_null() || result.is_null() { return 0; }
     let mut it = indices.iter().copied().take_while(|&t| t != -1);
     jobj_find_many(root, result, &mut it)
 }
 
 pub unsafe fn lb_8001204C(root: *mut HSD_JObj, result: *mut *mut HSD_JObj, indices: *mut u16, count: i32) -> i32 {
+    melee_core::ct!("lb_8001204C");
     if root.is_null() || result.is_null() || indices.is_null() || count == 0 { return 0; }
     let mut i = 0i32;
     let mut it = core::iter::from_fn(|| {
@@ -460,6 +465,7 @@ unsafe fn setImageFromPreloadedArchive(image_desc: *mut HSD_ImageDesc, entry_num
 }
 
 pub unsafe fn lb_800121FC(image_desc: *mut HSD_ImageDesc, width: i32, height: i32, format: u32, entry_num: i16) -> *mut HSD_ImageDesc {
+    melee_core::ct!("lb_800121FC");
     (*image_desc).width = width as u16;
     (*image_desc).height = height as u16;
     (*image_desc).mipmap = 0;
@@ -475,6 +481,7 @@ pub unsafe fn lb_800121FC(image_desc: *mut HSD_ImageDesc, width: i32, height: i3
 }
 
 pub unsafe fn lb_800122C8(image_desc: *mut HSD_ImageDesc, origx: u16, origy: u16, clear: bool) {
+    melee_core::ct!("lb_800122C8");
     ext::HSD_ImageDescCopyFromEFB(image_desc, origx, origy, clear as u8, 1);
 }
 
@@ -482,6 +489,7 @@ pub unsafe fn lb_800122C8(image_desc: *mut HSD_ImageDesc, origx: u16, origy: u16
 fn f2u8(x: f32) -> u8 { (x as i32) as i8 as u8 }
 
 pub unsafe fn lb_800122F0(img: *mut HSD_ImageDesc, tex: *mut _GXTexObj, factor: f32) {
+    melee_core::ct!("lb_800122F0");
     let color0 = _GXColor {
         r: f2u8(fmadds(-179.0, factor, 255.0)),
         g: f2u8(68.4 * factor),
@@ -550,6 +558,7 @@ pub unsafe fn lb_800122F0(img: *mut HSD_ImageDesc, tex: *mut _GXTexObj, factor: 
 }
 
 pub unsafe fn lb_8001271C(arg0: *mut _GXTexObj, x0: f32, arg2: f32, tex_width: f32, tex_height: f32, scale_x: f32, scale_y: f32) {
+    melee_core::ct!("lb_8001271C");
     let t = tex_width / (ext::GXGetTexObjWidth(arg0) as f32);
     let s = tex_height / (ext::GXGetTexObjHeight(arg0) as f32);
 
@@ -573,6 +582,7 @@ pub unsafe fn lb_8001271C(arg0: *mut _GXTexObj, x0: f32, arg2: f32, tex_width: f
 }
 
 pub unsafe fn lb_8001285C(image_desc: *mut HSD_ImageDesc, tex_obj: *mut _GXTexObj) {
+    melee_core::ct!("lb_8001285C");
     ext::GXInitTexObj(tex_obj, (*image_desc).image_ptr, (*image_desc).width, (*image_desc).height,
                       (*image_desc).format, GX_CLAMP, GX_CLAMP, (*image_desc).mipmap as u8);
     ext::GXGetTexObjFmt(tex_obj);
@@ -600,6 +610,7 @@ unsafe fn setTevAlpha(alpha: u8) {
 }
 
 pub unsafe fn lb_80012994(img: *mut HSD_ImageDesc, alpha: u8, blur_size: u8, x: f32, y: f32, scale_x: f32, scale_y: f32, color_factor: f32) {
+    melee_core::ct!("lb_80012994");
     let mut tex: _GXTexObj = core::mem::zeroed();
     let w = (*img).width as f32;
     let h = (*img).height as f32;
@@ -714,6 +725,7 @@ static mut chan1: HSD_Chan = HSD_Chan {
 };
 
 pub unsafe fn fn_80013614(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80013614");
     let data = (*gobj).user_data as *mut CameraBlurData;
     let mut view_mtx: Mtx = core::mem::zeroed();
     let mut tex_obj: _GXTexObj = core::mem::zeroed();
@@ -782,6 +794,7 @@ unsafe extern "C" fn fn_80013614_cb(gobj: *mut HSD_GObj, _pass: i32) {
 }
 
 pub unsafe fn fn_800138AC(ptr: *mut c_void) {
+    melee_core::ct!("fn_800138AC");
     ext::HSD_Free(ptr);
 }
 unsafe extern "C" fn fn_800138AC_cb(ptr: *mut c_void) {
@@ -789,11 +802,13 @@ unsafe extern "C" fn fn_800138AC_cb(ptr: *mut c_void) {
 }
 
 pub unsafe fn lb_800138CC(gobj: *mut HSD_GObj, blur_callback: HSD_GObjEvent) {
+    melee_core::ct!("lb_800138CC");
     let data = (*gobj).user_data as *mut CameraBlurData;
     (*data).callback = blur_callback;
 }
 
 pub unsafe fn lb_800138D8(gobj: *mut HSD_GObj, size: i8) {
+    melee_core::ct!("lb_800138D8");
     let data = (*gobj).user_data as *mut CameraBlurData;
     (*data).mode = 1;
     (*data).blur_size = size as u8;
@@ -804,6 +819,7 @@ const lb_803B72B4: Vec = Vec { x: 0.0, y: 0.0, z: 0.0 };
 
 pub unsafe fn lb_800138EC(img: *mut HSD_ImageDesc, render_func: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>,
                           prio: i32, alpha: i8, pos_x: f32, pos_y: f32, scale_x: f32, scale_y: f32) -> *mut HSD_GObj {
+    melee_core::ct!("lb_800138EC");
     let zero = 0.0f32;
     let far = 2.0f32;
     let ortho_top = zero;
@@ -851,6 +867,7 @@ pub unsafe fn lb_800138EC(img: *mut HSD_ImageDesc, render_func: Option<unsafe ex
 }
 
 pub unsafe fn lb_80013B14(desc: *mut HSD_CameraDescPerspective) -> *mut HSD_CObj {
+    melee_core::ct!("lb_80013B14");
     let cobj = ext::HSD_CObjLoadDesc(desc as *mut HSD_CObjDesc);
     let mut scissor: _Scissor = core::mem::zeroed();
 

@@ -81,6 +81,7 @@ fn canon_template_kind(f: &Fighter) -> i32 {
 }
 
 pub fn ftCo_Landing_Enter(g: G, msid: i32, allow_interrupt: bool, flags: u32, anim_start: f32, anim_speed: f32) {
+    melee_core::ct!("ftCo_Landing_Enter");
     ext::ftCommon_8007D7FC(fp(g));
     ext::Fighter_ChangeMotionState(g, msid, flags, anim_start, anim_speed, 0.0, core::ptr::null_mut());
     unsafe { fp(g).mv.co.landing.allow_interrupt = allow_interrupt as i32 };
@@ -113,6 +114,7 @@ pub fn ftCo_Landing_Enter(g: G, msid: i32, allow_interrupt: bool, flags: u32, an
 }
 
 pub fn ftCo_Landing_Enter_Basic(g: G) {
+    melee_core::ct!("ftCo_Landing_Enter_Basic");
     if ext::ftCo_800C5240(g) {
         ext::ftCo_HammerLanding_Enter(g);
     } else {
@@ -121,6 +123,7 @@ pub fn ftCo_Landing_Enter_Basic(g: G) {
 }
 
 pub fn ftCo_LandingFallSpecial_Enter_Basic(g: G) {
+    melee_core::ct!("ftCo_LandingFallSpecial_Enter_Basic");
     if ext::ftCo_800C5240(g) {
         ext::ftCo_HammerLanding_Enter(g);
     } else {
@@ -129,6 +132,7 @@ pub fn ftCo_LandingFallSpecial_Enter_Basic(g: G) {
 }
 
 pub fn ftCo_LandingFallSpecial_Enter(g: G, allow_interrupt: bool, landing_lag: f32) {
+    melee_core::ct!("ftCo_LandingFallSpecial_Enter");
     if ext::ftCo_800C5240(g) {
         ext::ftCo_HammerLanding_Enter(g);
     } else {
@@ -138,12 +142,14 @@ pub fn ftCo_LandingFallSpecial_Enter(g: G, allow_interrupt: bool, landing_lag: f
 }
 
 pub fn ftCo_Landing_Anim(g: G) {
+    melee_core::ct!("ftCo_Landing_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ft_8008A2BC(g);
     }
 }
 
 pub fn ftCo_Landing_IASA(g: G) {
+    melee_core::ct!("ftCo_Landing_IASA");
     if fp(g).cur_anim_frame < fp(g).co_attrs.normal_landing_lag { return; }
     if unsafe { fp(g).mv.co.landing.allow_interrupt } == 0 { return; }
     if ext::ftCo_SpecialS_CheckInput(g) { return; }
@@ -171,9 +177,11 @@ pub fn ftCo_Landing_IASA(g: G) {
 }
 
 pub fn ftCo_Landing_Phys(g: G) {
+    melee_core::ct!("ftCo_Landing_Phys");
     ext::ft_80084F3C(g);
 }
 
 pub fn ftCo_Landing_Coll(g: G) {
+    melee_core::ct!("ftCo_Landing_Coll");
     ext::ft_80084280(g);
 }

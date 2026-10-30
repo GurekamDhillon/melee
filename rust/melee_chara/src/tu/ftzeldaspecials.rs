@@ -103,6 +103,7 @@ unsafe fn joint(fp: *mut Fighter, part: usize) -> *mut core::ffi::c_void {
 
 /// `ftZd_Init_801393AC` (ft/kinds/ftZelda/ftzelda.c): not ported yet (a callback address only here).
 pub unsafe extern "C" fn ftZd_Init_801393AC(_gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_Init_801393AC");
     { unsafe { let _ = crate::tu::ftzelda::ftZd_Init_801393AC(_gobj as _); } return; };
 }
 
@@ -127,6 +128,7 @@ unsafe fn spawn_din_fire_on_window(gobj: *mut HSD_GObj, fp: *mut Fighter, sa: *m
 
 /// `ftZd_SpecialS_Enter` (343, Zelda's side B on the ground).
 pub fn ftZd_SpecialS_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialS_Enter");
     unsafe {
         let temp_f1: f32 = 0.0;
         let fp = fpp(gobj);
@@ -146,6 +148,7 @@ pub fn ftZd_SpecialS_Enter(gobj: *mut HSD_GObj) {
 
 /// `ftZd_SpecialAirS_Enter` (346, the aerial side B: stops vertical velocity).
 pub fn ftZd_SpecialAirS_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialAirS_Enter");
     unsafe {
         let temp_f1: f32 = 0.0;
         let fp = fpp(gobj);
@@ -166,6 +169,7 @@ pub fn ftZd_SpecialAirS_Enter(gobj: *mut HSD_GObj) {
 
 /// `ftZd_SpecialSStart_Anim` (AS 343 window: spawn the item on cmd_vars[0] == 1, then 344).
 pub fn ftZd_SpecialSStart_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialSStart_Anim");
     unsafe {
         let fp = fpp(gobj);
         let attributes = da_of(fp);
@@ -183,6 +187,7 @@ pub fn ftZd_SpecialSStart_Anim(gobj: *mut HSD_GObj) {
 
 /// `ftZd_SpecialSLoop_Anim` (AS 344: the item's owner check, then 345 once the pulses are spent).
 pub fn ftZd_SpecialSLoop_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialSLoop_Anim");
     unsafe {
         let fp = fpp(gobj);
         let attributes = da_of(fp);
@@ -212,6 +217,7 @@ pub fn ftZd_SpecialSLoop_Anim(gobj: *mut HSD_GObj) {
 
 /// `ftZd_SpecialSEnd_Anim` (AS 345: reset the side B state, then `ft_8008A2BC` when the anim ends).
 pub fn ftZd_SpecialSEnd_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialSEnd_Anim");
     unsafe {
         let fp = fpp(gobj);
         ft_part_set_rot_x(fp);
@@ -238,6 +244,7 @@ unsafe fn ft_part_set_rot_x(fp: *mut Fighter) {
 
 /// `ftZd_SpecialAirSStart_Anim` (AS 346 window, the aerial version of `SStart_Anim`; ends on 347).
 pub fn ftZd_SpecialAirSStart_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialAirSStart_Anim");
     unsafe {
         let fp = fpp(gobj);
         let attributes = da_of(fp);
@@ -255,6 +262,7 @@ pub fn ftZd_SpecialAirSStart_Anim(gobj: *mut HSD_GObj) {
 
 /// `ftZd_SpecialAirSLoop_Anim` (AS 347: like `SLoop_Anim`, ends on 348 instead of 345).
 pub fn ftZd_SpecialAirSLoop_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialAirSLoop_Anim");
     unsafe {
         let fp = fpp(gobj);
         let attributes = da_of(fp);
@@ -284,6 +292,7 @@ pub fn ftZd_SpecialAirSLoop_Anim(gobj: *mut HSD_GObj) {
 
 /// `ftZd_SpecialAirSEnd_Anim` (AS 348 end: `ftCo_Fall_Enter`, or the landing lag branch).
 pub fn ftZd_SpecialAirSEnd_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialAirSEnd_Anim");
     unsafe {
         let fp = fpp(gobj);
         ft_part_set_rot_x(fp);
@@ -307,10 +316,11 @@ pub fn ftZd_SpecialAirSEnd_Anim(gobj: *mut HSD_GObj) {
 }
 
 /// `ftZd_SpecialSStart_IASA` (empty).
-pub fn ftZd_SpecialSStart_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftZd_SpecialSStart_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftZd_SpecialSStart_IASA");}
 
 /// `ftZd_SpecialSLoop_IASA`: count down xC; release to 345 when spent and B is not held.
 pub fn ftZd_SpecialSLoop_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialSLoop_IASA");
     unsafe {
         let fp = fpp(gobj);
         (*fp).mv.zd.specials.xC -= 1;
@@ -328,13 +338,14 @@ pub fn ftZd_SpecialSLoop_IASA(gobj: *mut HSD_GObj) {
 }
 
 /// `ftZd_SpecialSEnd_IASA` (empty).
-pub fn ftZd_SpecialSEnd_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftZd_SpecialSEnd_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftZd_SpecialSEnd_IASA");}
 
 /// `ftZd_SpecialAirSStart_IASA` (empty).
-pub fn ftZd_SpecialAirSStart_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftZd_SpecialAirSStart_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftZd_SpecialAirSStart_IASA");}
 
 /// `ftZd_SpecialAirSLoop_IASA`: as `SLoop_IASA`, releasing to 348.
 pub fn ftZd_SpecialAirSLoop_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialAirSLoop_IASA");
     unsafe {
         let fp = fpp(gobj);
         (*fp).mv.zd.specials.xC -= 1;
@@ -353,6 +364,7 @@ pub fn ftZd_SpecialAirSLoop_IASA(gobj: *mut HSD_GObj) {
 
 /// `ftZd_SpecialSStart_Phys`: count down x8, then the ground physics.
 pub fn ftZd_SpecialSStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialSStart_Phys");
     unsafe {
         let fp = fpp(gobj);
         let state_var = (*fp).mv.zd.specials.x8;

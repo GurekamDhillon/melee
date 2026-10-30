@@ -58,10 +58,12 @@ fn do_enter(g: G, vg: G, msid: i32, victim_msid: i32) {
 
 /// `ftCo_800BCF18`.
 pub fn ftCo_800BCF18(g: G, vg: G) {
+    melee_core::ct!("ftCo_800BCF18");
     do_enter(g, vg, ftCo_MS_CaptureMewtwo as i32, ftCo_MS_ThrownMewtwo as i32);
 }
 
 /// `ftCo_800BD000`.
 pub fn ftCo_800BD000(g: G, vg: G) {
+    melee_core::ct!("ftCo_800BD000");
     do_enter(g, vg, ftCo_MS_CaptureMewtwoAir as i32, ftCo_MS_ThrownMewtwoAir as i32);
 }

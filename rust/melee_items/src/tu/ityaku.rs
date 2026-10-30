@@ -108,6 +108,7 @@ pub unsafe extern "C" fn it_802E6AEC(
     arg7: Option<unsafe extern "C" fn(*mut Item_GObj, *mut Ground, *mut Vec3, *mut HSD_GObj, f32)>,
     arg8: Option<unsafe extern "C" fn(*mut Item_GObj, *mut Ground, *mut HSD_GObj)>,
 ) -> *mut Item_GObj {
+    melee_core::ct!("it_802E6AEC");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
     spawn.kind = It_PKind_Random;
@@ -159,6 +160,7 @@ pub unsafe extern "C" fn it_802E6AEC(
 }
 
 pub unsafe extern "C" fn it_2E6A_UnkMotion19_Phys(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_2E6A_UnkMotion19_Phys");
     let mut sp24: Vec3 = core::mem::zeroed();
     let mut sp14: Quaternion = core::mem::zeroed();
 
@@ -180,6 +182,7 @@ pub unsafe extern "C" fn it_2E6A_UnkMotion19_Phys(item_gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_2E6A_Logic117_DmgDealt(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_2E6A_Logic117_DmgDealt");
     let item = GET_ITEM(item_gobj);
     if let (Some(f), false) = ((*item).xDD4_itemVar.yaku.x14, (*item).xDD4_itemVar.yaku.x10.is_null()) {
         f(item_gobj, (*item).xDD4_itemVar.yaku.x10);
@@ -188,6 +191,7 @@ pub unsafe extern "C" fn it_2E6A_Logic117_DmgDealt(item_gobj: *mut Item_GObj) ->
 }
 
 pub unsafe extern "C" fn it_2E6A_Logic117_DmgReceived(item_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_2E6A_Logic117_DmgReceived");
     let mut sp10: Vec3 = core::mem::zeroed();
     let item = GET_ITEM(item_gobj);
 
@@ -201,6 +205,7 @@ pub unsafe extern "C" fn it_2E6A_Logic117_DmgReceived(item_gobj: *mut Item_GObj)
 }
 
 pub unsafe extern "C" fn it_802E7054(item_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("it_802E7054");
     let item = GET_ITEM(item_gobj);
     if let (Some(f), false) = ((*item).xDD4_itemVar.yaku.x1C, (*item).xDD4_itemVar.yaku.x10.is_null()) {
         f(item_gobj, (*item).xDD4_itemVar.yaku.x10, (*item).toucher);
@@ -209,5 +214,6 @@ pub unsafe extern "C" fn it_802E7054(item_gobj: *mut HSD_GObj) -> bool {
 }
 
 pub unsafe extern "C" fn it_2E6A_Logic117_EvtUnk(item_gobj: *mut Item_GObj, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_2E6A_Logic117_EvtUnk");
     ext::it_8026B894(item_gobj, ref_gobj);
 }

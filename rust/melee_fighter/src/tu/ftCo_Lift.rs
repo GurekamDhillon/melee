@@ -52,6 +52,7 @@ pub mod ext {
 
 /// `HSD_JObjSetRotationY` (jobj.h static inline).
 pub fn HSD_JObjSetRotationY(jobj: *mut HSD_JObj, y: f32) {
+    melee_core::ct!("HSD_JObjSetRotationY");
     let j = unsafe { &mut *jobj };
     assert!(j.flags & JOBJ_USE_QUATERNION as u32 == 0, "jobj.h: !(jobj->flags & JOBJ_USE_QUATERNION)");
     j.rotate.y = y;
@@ -61,27 +62,31 @@ pub fn HSD_JObjSetRotationY(jobj: *mut HSD_JObj, y: f32) {
 }
 
 /// `ftCo_800974C4` as the C `HSD_GObjEvent` stored in `take_dmg_cb`.
-pub unsafe extern "C" fn ftCo_800974C4_cb(g: *mut HSD_GObj) { ftCo_800974C4(g) }
+pub unsafe extern "C" fn ftCo_800974C4_cb(g: *mut HSD_GObj) { melee_core::ct!("ftCo_800974C4_cb"); ftCo_800974C4(g) }
 
 pub fn ftCo_80096D9C(g: G) {
+    melee_core::ct!("ftCo_80096D9C");
     unsafe { fp(g).mv.co.lift.x0 = 0 };
     ext::Fighter_ChangeMotionState(g, ftCo_MS_LiftWait as i32, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     fp(g).take_dmg_cb = Some(ftCo_800974C4_cb);
 }
 
-pub fn ftCo_LiftWait_Anim(_g: G) {}
+pub fn ftCo_LiftWait_Anim(_g: G) { melee_core::ct!("ftCo_LiftWait_Anim");}
 
 pub fn ftCo_LiftWait_IASA(g: G) {
+    melee_core::ct!("ftCo_LiftWait_IASA");
     if ext::ftCo_80094EA4(g) { return; }
     if ftCo_800970E0(g) { return; }
     if ftCo_80096EF8(g) {}
 }
 
 pub fn ftCo_LiftWait_Phys(g: G) {
+    melee_core::ct!("ftCo_LiftWait_Phys");
     ext::ft_80084F3C(g);
 }
 
 pub fn ftCo_80096E68(g: G) {
+    melee_core::ct!("ftCo_80096E68");
     let it = fp(g).item_gobj;
     if !it.is_null() {
         let mut v = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -93,10 +98,12 @@ pub fn ftCo_80096E68(g: G) {
 }
 
 pub fn ftCo_LiftWait_Coll(g: G) {
+    melee_core::ct!("ftCo_LiftWait_Coll");
     ext::ft_8008403C(g, ftCo_80096E68);
 }
 
 pub fn ftCo_80096EF8(g: G) -> bool {
+    melee_core::ct!("ftCo_80096EF8");
     let f = fp(g);
     if f.input.lstick[0].x * f.facing_dir >= cd().x228 {
         ftCo_80096F48(g);
@@ -106,6 +113,7 @@ pub fn ftCo_80096EF8(g: G) -> bool {
 }
 
 pub fn ftCo_80096F48(g: G) {
+    melee_core::ct!("ftCo_80096F48");
     let f = fp(g);
     let msid = if unsafe { f.mv.co.lift.x0 } == 0 { ftCo_MS_LiftWalk1 } else { ftCo_MS_LiftWalk2 };
     unsafe { f.mv.co.lift.x0 ^= 1 };
@@ -115,6 +123,7 @@ pub fn ftCo_80096F48(g: G) {
 }
 
 pub fn ftCo_LiftWalk_Anim(g: G) {
+    melee_core::ct!("ftCo_LiftWalk_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) && !ftCo_80096EF8(g) {
         ext::Fighter_ChangeMotionState(g, ftCo_MS_LiftWait as i32, Ft_MF_Unk24 as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
         fp(g).take_dmg_cb = Some(ftCo_800974C4_cb);
@@ -122,18 +131,22 @@ pub fn ftCo_LiftWalk_Anim(g: G) {
 }
 
 pub fn ftCo_LiftWalk_IASA(g: G) {
+    melee_core::ct!("ftCo_LiftWalk_IASA");
     if ext::ftCo_80094EA4(g) {}
 }
 
 pub fn ftCo_LiftWalk_Phys(g: G) {
+    melee_core::ct!("ftCo_LiftWalk_Phys");
     ext::ft_80085088(g);
 }
 
 pub fn ftCo_LiftWalk_Coll(g: G) {
+    melee_core::ct!("ftCo_LiftWalk_Coll");
     ext::ft_8008403C(g, ftCo_80096E68);
 }
 
 pub fn ftCo_800970E0(g: G) -> bool {
+    melee_core::ct!("ftCo_800970E0");
     let f = fp(g);
     if f.input.lstick[0].x * f.facing_dir <= cd().x22C {
         ftCo_80097130(g);
@@ -143,6 +156,7 @@ pub fn ftCo_800970E0(g: G) -> bool {
 }
 
 pub fn ftCo_80097130(g: G) {
+    melee_core::ct!("ftCo_80097130");
     let f = fp(g);
     unsafe {
         f.mv.co.lift.x4 = cd().x230;
@@ -155,6 +169,7 @@ pub fn ftCo_80097130(g: G) {
 }
 
 pub fn ftCo_LiftTurn_Anim(g: G) {
+    melee_core::ct!("ftCo_LiftTurn_Anim");
     let part = ext::ftParts_GetBoneIndex(fp(g), FtPart_TransN as i32);
     let jobj = unsafe { (*fp(g).parts.offset(part as isize)).x4_jobj2 };
     unsafe { fp(g).mv.co.lift.x4 -= 1.0 };
@@ -184,18 +199,22 @@ pub fn ftCo_LiftTurn_Anim(g: G) {
 }
 
 pub fn ftCo_LiftTurn_IASA(g: G) {
+    melee_core::ct!("ftCo_LiftTurn_IASA");
     if ext::ftCo_80094EA4(g) {}
 }
 
 pub fn ftCo_LiftTurn_Phys(g: G) {
+    melee_core::ct!("ftCo_LiftTurn_Phys");
     ext::ft_80084F3C(g);
 }
 
 pub fn ftCo_LiftTurn_Coll(g: G) {
+    melee_core::ct!("ftCo_LiftTurn_Coll");
     ext::ft_8008403C(g, ftCo_80096E68);
 }
 
 pub fn ftCo_800974C4(g: G) {
+    melee_core::ct!("ftCo_800974C4");
     let it = fp(g).item_gobj;
     if !it.is_null() {
         let mut v = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -204,6 +223,7 @@ pub fn ftCo_800974C4(g: G) {
 }
 
 pub fn ftCo_8009750C(g: G) {
+    melee_core::ct!("ftCo_8009750C");
     let it = fp(g).item_gobj;
     if !it.is_null() && ext::itIsHeavy(it) {
         let mut v = Vec3 { x: 0.0, y: 0.0, z: 0.0 };

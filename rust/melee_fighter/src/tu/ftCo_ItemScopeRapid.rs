@@ -58,9 +58,11 @@ pub mod ext {
 }
 
 pub unsafe extern "C" fn fn_800D80F4_c(g: G) {
+    melee_core::ct!("fn_800D80F4_c");
     fn_800D80F4(g)
 }
 pub unsafe extern "C" fn fn_800D8378_c(g: G) {
+    melee_core::ct!("fn_800D8378_c");
     ext::fn_800D8378(g)
 }
 
@@ -71,6 +73,7 @@ fn set_cbs(f: &mut Fighter) {
 }
 
 pub fn fn_800D7BDC(g: G) {
+    melee_core::ct!("fn_800D7BDC");
     let msid = ext::fn_800D769C(fp(g), ftCo_MS_ItemScopeRapid as i32);
     ext::Fighter_ChangeMotionState(g, msid, 0x02000000, 0.0, 1.0, 0.0, core::ptr::null_mut());
     let f = fp(g);
@@ -79,6 +82,7 @@ pub fn fn_800D7BDC(g: G) {
 }
 
 pub fn fn_800D7C60(g: G) {
+    melee_core::ct!("fn_800D7C60");
     let msid = ext::fn_800D769C(fp(g), ftCo_MS_ItemScopeAirRapid as i32);
     ext::Fighter_ChangeMotionState(g, msid, 0x02000000, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ext::ftCommon_ClampAirDrift(fp(g));
@@ -88,6 +92,7 @@ pub fn fn_800D7C60(g: G) {
 }
 
 pub fn fn_800D7CEC(g: G) {
+    melee_core::ct!("fn_800D7CEC");
     ext::ftCommon_8007D7FC(fp(g));
     let msid = ext::fn_800D769C(fp(g), ftCo_MS_ItemScopeRapid as i32);
     let f = fp(g);
@@ -96,6 +101,7 @@ pub fn fn_800D7CEC(g: G) {
 }
 
 pub fn fn_800D7D70(g: G) {
+    melee_core::ct!("fn_800D7D70");
     ext::ftCommon_8007D5D4(fp(g));
     let msid = ext::fn_800D769C(fp(g), ftCo_MS_ItemScopeAirRapid as i32);
     let f = fp(g);
@@ -123,14 +129,17 @@ fn rapid_anim(g: G, done: fn(G)) {
 }
 
 pub fn ftCo_ItemScopeRapid_Anim(g: G) {
+    melee_core::ct!("ftCo_ItemScopeRapid_Anim");
     rapid_anim(g, ext::fn_800D86E0);
 }
 
 pub fn ftCo_ItemScopeAirRapid_Anim(g: G) {
+    melee_core::ct!("ftCo_ItemScopeAirRapid_Anim");
     rapid_anim(g, ext::fn_800D874C);
 }
 
 pub fn ftCo_ItemScopeRapid_IASA(g: G) {
+    melee_core::ct!("ftCo_ItemScopeRapid_IASA");
     let f = fp(g);
     if f.input.pressed_buttons & HSD_PAD_A != 0 {
         unsafe { f.mv.co.common.x0 = cd().x5BC };
@@ -138,26 +147,32 @@ pub fn ftCo_ItemScopeRapid_IASA(g: G) {
 }
 
 pub fn ftCo_ItemScopeAirRapid_IASA(g: G) {
+    melee_core::ct!("ftCo_ItemScopeAirRapid_IASA");
     ftCo_ItemScopeRapid_IASA(g);
 }
 
 pub fn ftCo_ItemScopeRapid_Phys(g: G) {
+    melee_core::ct!("ftCo_ItemScopeRapid_Phys");
     ext::ftCo_800CDE54(g);
 }
 
 pub fn ftCo_ItemScopeAirRapid_Phys(g: G) {
+    melee_core::ct!("ftCo_ItemScopeAirRapid_Phys");
     ext::ftCo_800CDE74(g);
 }
 
 pub fn ftCo_ItemScopeRapid_Coll(g: G) {
+    melee_core::ct!("ftCo_ItemScopeRapid_Coll");
     ext::ft_800841B8(g, fn_800D7D70);
 }
 
 pub fn ftCo_ItemScopeAirRapid_Coll(g: G) {
+    melee_core::ct!("ftCo_ItemScopeAirRapid_Coll");
     ext::ft_80082C74(g, fn_800D7CEC);
 }
 
 pub fn fn_800D80F4(g: G) {
+    melee_core::ct!("fn_800D80F4");
     let f = fp(g);
     if !f.item_gobj.is_null() {
         let v = ext::it_80291DAC(f.item_gobj, 0);

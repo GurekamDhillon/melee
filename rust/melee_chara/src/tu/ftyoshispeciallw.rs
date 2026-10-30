@@ -43,11 +43,13 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 
 /// `fn_8012E644` as a Fighter callback entry (accessory4_cb).
 pub unsafe extern "C" fn cb_fn_8012E644(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_8012E644");
     fn_8012E644(g);
 }
 
 /// Spawn the two Yoshi Bomb stars either side of Yoshi's TransN joint.
 pub fn fn_8012E644(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8012E644");
     unsafe {
         let fp = fpp(gobj);
         let da = &*((*fp).dat_attrs as *const ftYs_DatAttrs);
@@ -66,11 +68,13 @@ pub fn fn_8012E644(gobj: *mut HSD_GObj) {
 
 /// `ftYoshi_SpecialLw_SetVars(gobj)` (static inline).
 pub fn ftYoshi_SpecialLw_SetVars(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYoshi_SpecialLw_SetVars");
     unsafe { set_vars(gobj) }
 }
 
 /// `reset(gobj)` (static inline): the same stores as `ftYoshi_SpecialLw_SetVars`, in another order.
 pub fn reset(gobj: *mut HSD_GObj) {
+    melee_core::ct!("reset");
     unsafe { set_vars(gobj) }
 }
 
@@ -86,6 +90,7 @@ unsafe fn set_vars(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftYs_SpecialLw_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialLw_Enter");
     unsafe {
         let fp = fpp(gobj);
         ext::ftCommon_8007D5D4(fp);
@@ -96,6 +101,7 @@ pub fn ftYs_SpecialLw_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftYs_SpecialAirLw_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirLw_Enter");
     unsafe {
         ext::Fighter_ChangeMotionState(gobj, ftYs_MS_SpecialAirLw as i32, Ft_MF_None, 0.0, 1.0, 0.0, core::ptr::null_mut());
         ext::ftAnim_8006EBA4(gobj);
@@ -104,6 +110,7 @@ pub fn ftYs_SpecialAirLw_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftYs_SpecialAirLw_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirLw_Phys");
     unsafe {
         let fp = fpp(gobj);
         let da = &*((*fp).dat_attrs as *const ftYoshiAttributes);
@@ -115,10 +122,12 @@ pub fn ftYs_SpecialAirLw_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftYs_SpecialLw_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialLw_Coll");
     ftYs_SpecialAirLw_Coll(gobj);
 }
 
 pub fn ftYs_SpecialAirLw_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirLw_Coll");
     unsafe {
         let fp = fpp(gobj);
         if ext::ft_CheckGroundAndLedge(gobj, ftinl::ftGetFacingDirInt(fp)) {

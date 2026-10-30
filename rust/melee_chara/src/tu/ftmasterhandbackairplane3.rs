@@ -25,14 +25,16 @@ pub mod ext {
 }
 
 pub fn ftMh_BackAirplane3_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_BackAirplane3_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         ext::ftMh_MS_389_80151018(gobj);
     }
 }
 
-pub fn ftMh_BackAirplane3_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftMh_BackAirplane3_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_BackAirplane3_Coll");}
 
 pub fn ftMh_MS_369_80153B90(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_369_80153B90");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*(*fp).ft_data).ext_attr as *const ftMasterHand_SpecialAttrs;
@@ -50,6 +52,7 @@ pub fn ftMh_MS_369_80153B90(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMh_BackPunch_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_BackPunch_Anim");
     unsafe {
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
             let fp = (*gobj).user_data as *mut Fighter;
@@ -60,6 +63,7 @@ pub fn ftMh_BackPunch_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMh_BackPunch_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_BackPunch_Phys");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         (*fp).mv.mh.unk0.x0 -= 1.0;

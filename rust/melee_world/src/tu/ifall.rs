@@ -433,6 +433,7 @@ pub static mut hidden: u8 = 0;
 static mut archive: *mut HSD_Archive = null_mut();
 
 pub unsafe extern "C" fn ifAll_802F3394() {
+    melee_core::ct!("ifAll_802F3394");
     ext::ifStatus_802F6898();
     ext::ifTime_HideTimers();
     ext::un_802FD450();
@@ -443,6 +444,7 @@ pub unsafe extern "C" fn ifAll_802F3394() {
 }
 
 pub unsafe extern "C" fn ifAll_802F33CC() {
+    melee_core::ct!("ifAll_802F33CC");
     ext::ifStatus_802F68F0();
     ext::ifTime_ShowTimers();
     ext::un_802FD45C();
@@ -453,14 +455,17 @@ pub unsafe extern "C" fn ifAll_802F33CC() {
 }
 
 pub unsafe extern "C" fn ifAll_GetHUDGObj() -> *mut HSD_GObj {
+    melee_core::ct!("ifAll_GetHUDGObj");
     ifAll_804A0FD8.gobj
 }
 
 pub unsafe extern "C" fn ifAll_GetTimerPosition() -> *mut Vec3 {
+    melee_core::ct!("ifAll_GetTimerPosition");
     &raw mut ifAll_804A0FD8.xC
 }
 
 pub unsafe extern "C" fn ifAll_GetPlayerHUDPosition(idx: i32) -> *mut Vec3 {
+    melee_core::ct!("ifAll_GetPlayerHUDPosition");
     (&raw mut ifAll_804A0FD8.x18 as *mut Vec3).offset(idx as isize)
 }
 
@@ -480,6 +485,7 @@ fn ifHUD_FitCentre(x: f32, source_left: f32, source_right: f32, target_left: f32
 }
 
 pub unsafe extern "C" fn ifAll_802F343C(arg0: i32) {
+    melee_core::ct!("ifAll_802F343C");
     let jobj = ifAll_804A0FD8.x8;
     let mut sp_c: *mut HSD_JObj = null_mut();
     let x18 = &raw mut ifAll_804A0FD8.x18 as *mut Vec3;
@@ -567,22 +573,27 @@ pub unsafe extern "C" fn ifAll_802F343C(arg0: i32) {
 }
 
 pub unsafe extern "C" fn ifAll_GetArchive() -> *mut *mut HSD_Archive {
+    melee_core::ct!("ifAll_GetArchive");
     &raw mut archive
 }
 
 pub unsafe extern "C" fn ifAll_HideHUD() {
+    melee_core::ct!("ifAll_HideHUD");
     hidden = 1;
 }
 
 pub unsafe extern "C" fn ifAll_ShowHUD() {
+    melee_core::ct!("ifAll_ShowHUD");
     hidden = 0;
 }
 
 pub unsafe extern "C" fn ifAll_IsHUDHidden() -> i32 {
+    melee_core::ct!("ifAll_IsHUDHidden");
     (ext::Wb_RenderOption(WB_RENDER_HUD, (hidden == 0) as i32) == 0) as i32
 }
 
 pub unsafe extern "C" fn fn_802F36B8(gobj: *mut HSD_GObj, _unused: i32) {
+    melee_core::ct!("fn_802F36B8");
     if ifAll_IsHUDHidden() == 0 {
         if ext::HSD_CObjSetCurrent((*gobj).hsd_obj as *mut HSD_CObj) != 0 {
             ext::HSD_GObj_80390ED0(gobj, 0x7);
@@ -592,6 +603,7 @@ pub unsafe extern "C" fn fn_802F36B8(gobj: *mut HSD_GObj, _unused: i32) {
 }
 
 pub unsafe extern "C" fn ifAll_802F370C(arg0: *mut SceneDesc) {
+    melee_core::ct!("ifAll_802F370C");
     let mut sp_c: *mut HSD_JObj = null_mut();
 
     let gobj = ext::GObj_Create(0xE, 0xF, 0);
@@ -629,6 +641,7 @@ pub unsafe extern "C" fn ifAll_802F370C(arg0: *mut SceneDesc) {
 }
 
 pub unsafe extern "C" fn ifAll_802F390C() {
+    melee_core::ct!("ifAll_802F390C");
     let mut sp14: *mut c_void = null_mut();
 
     let parchive = ifAll_GetArchive();
@@ -672,6 +685,7 @@ pub unsafe extern "C" fn ifAll_802F390C() {
 }
 
 pub unsafe extern "C" fn ifAll_802F3A64() {
+    melee_core::ct!("ifAll_802F3A64");
     ext::un_802FE390();
     ext::ifStock_802FB390();
     ext::ifStock_802FB41C();

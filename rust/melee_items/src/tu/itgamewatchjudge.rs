@@ -135,6 +135,7 @@ pub static mut it_803F7968: [ItemStateTable; 1] = [
 
 /// `HSD_GObj* it_802C7774(float facing_dir, HSD_GObj* parent_gobj, Vec3* pos, s32 part, u32 arg4)`
 pub unsafe extern "C" fn it_802C7774(facing_dir: f32, parent_gobj: *mut HSD_GObj, pos: *mut Vec, part: i32, arg4: u32) -> *mut HSD_GObj {
+    melee_core::ct!("it_802C7774");
     let mut si: SpawnItem = core::mem::zeroed();
     si.kind = It_Kind_GameWatch_Judge;
     Item_InitSpawnPosition(&mut si, pos, false);
@@ -154,6 +155,7 @@ pub unsafe extern "C" fn it_802C7774(facing_dir: f32, parent_gobj: *mut HSD_GObj
 }
 
 pub unsafe extern "C" fn it_802C78B8(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802C78B8");
     let ip = GET_ITEM(item_gobj);
     let jobj = (*item_gobj).hsd_obj as *mut HSD_JObj;
     if !(*ip).owner.is_null() {
@@ -168,6 +170,7 @@ pub unsafe extern "C" fn it_802C78B8(item_gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itGameWatchJudge_Logic77_Destroyed(gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGameWatchJudge_Logic77_Destroyed");
     let ip = GET_ITEM(gobj);
     if !(*ip).owner.is_null() {
         ext::ftGw_SpecialS_ItemJudgementSetFlag((*ip).owner);
@@ -175,6 +178,7 @@ pub unsafe extern "C" fn itGameWatchJudge_Logic77_Destroyed(gobj: *mut HSD_GObj)
 }
 
 pub unsafe extern "C" fn it_802C7A84(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802C7A84");
     let item = GET_ITEM(item_gobj);
     if !item.is_null() {
         itGameWatchJudge_Logic77_Destroyed(item_gobj);
@@ -183,14 +187,17 @@ pub unsafe extern "C" fn it_802C7A84(item_gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_802C7AD0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802C7AD0");
     ext::it_8026B724(gobj);
 }
 
 pub unsafe extern "C" fn it_802C7AF0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802C7AF0");
     ext::it_8026B73C(gobj);
 }
 
 pub unsafe extern "C" fn it_2725_Logic77_PickedUp(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_2725_Logic77_PickedUp");
     let it = GET_ITEM(item_gobj);
     (*it).xDB0_itcmd_var1 = 0;
     (*it).xDAC_itcmd_var0 = 0;
@@ -200,6 +207,7 @@ pub unsafe extern "C" fn it_2725_Logic77_PickedUp(item_gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itGamewatchjudge_UnkMotion0_Anim(item_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itGamewatchjudge_UnkMotion0_Anim");
     it_802C78B8(item_gobj);
     let remove: i32 = {
         let ip = GET_ITEM(item_gobj);
@@ -217,5 +225,6 @@ pub unsafe extern "C" fn itGamewatchjudge_UnkMotion0_Anim(item_gobj: *mut HSD_GO
 }
 
 pub unsafe extern "C" fn itGameWatchJudge_Logic77_EvtUnk(gobj: *mut HSD_GObj, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGameWatchJudge_Logic77_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

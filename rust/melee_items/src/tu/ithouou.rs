@@ -103,6 +103,7 @@ pub static it_803F7FB8: [ItemStateTable; 1] =
 
 /// `void it_2725_Logic18_Spawned(Item_GObj*)` (2D251C)
 pub unsafe extern "C" fn it_2725_Logic18_Spawned(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_2725_Logic18_Spawned");
     let ip = ip_of(gobj);
     let attr = attr_of(ip);
     (*ip).xDD4_itemVar.houou.start_pos = (*ip).pos;
@@ -117,15 +118,17 @@ pub unsafe extern "C" fn it_2725_Logic18_Spawned(gobj: *mut Item_GObj) {
 }
 
 /// `void it_802D25B8(HSD_GObj*)` (2D25B8)
-pub unsafe extern "C" fn it_802D25B8(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn it_802D25B8(_gobj: *mut HSD_GObj) { melee_core::ct!("it_802D25B8");}
 
 /// `void it_802D25BC(Item_GObj*, Item_GObj*)` (2D25BC)
 pub unsafe extern "C" fn it_802D25BC(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D25BC");
     ext::it_8026B894(gobj, ref_gobj);
 }
 
 /// `bool itHouou_UnkMotion1_Anim(Item_GObj*)` (2D25DC)
 pub unsafe extern "C" fn itHouou_UnkMotion1_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itHouou_UnkMotion1_Anim");
     let ip = ip_of(gobj);
     ext::it_8027A160(child_of(gobj), ip);
     if ext::it_80272C6C(gobj) == 0 {
@@ -136,16 +139,19 @@ pub unsafe extern "C" fn itHouou_UnkMotion1_Anim(gobj: *mut Item_GObj) -> i32 {
 
 /// `void itHouou_UnkMotion1_Phys(Item_GObj*)` (2D2640)
 pub unsafe extern "C" fn itHouou_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itHouou_UnkMotion1_Phys");
     ext::it_8027A344(gobj);
 }
 
 /// `bool itHouou_UnkMotion1_Coll(Item_GObj*)` (2D2660)
 pub unsafe extern "C" fn itHouou_UnkMotion1_Coll(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itHouou_UnkMotion1_Coll");
     0
 }
 
 /// `void it_802D2668(Item_GObj*)` (2D2668)
 pub unsafe extern "C" fn it_802D2668(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D2668");
     let ip = ip_of(gobj);
     (*ip).xDD4_itemVar.houou.vel_accum = 0.0;
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE as u32);
@@ -154,6 +160,7 @@ pub unsafe extern "C" fn it_802D2668(gobj: *mut Item_GObj) {
 
 /// `bool itHouou_UnkMotion2_Anim(Item_GObj*)` (2D26BC)
 pub unsafe extern "C" fn itHouou_UnkMotion2_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itHouou_UnkMotion2_Anim");
     let item = ip_of(gobj);
     ext::it_8027A160(child_of(gobj), item);
     0
@@ -161,6 +168,7 @@ pub unsafe extern "C" fn itHouou_UnkMotion2_Anim(gobj: *mut Item_GObj) -> i32 {
 
 /// `void itHouou_UnkMotion2_Phys(Item_GObj*)` (2D26FC)
 pub unsafe extern "C" fn itHouou_UnkMotion2_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itHouou_UnkMotion2_Phys");
     let ip = ip_of(gobj);
     let attr = attr_of(ip);
 
@@ -182,11 +190,13 @@ pub unsafe extern "C" fn itHouou_UnkMotion2_Phys(gobj: *mut Item_GObj) {
 
 /// `bool itHouou_UnkMotion2_Coll(Item_GObj*)` (2D27A8)
 pub unsafe extern "C" fn itHouou_UnkMotion2_Coll(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itHouou_UnkMotion2_Coll");
     0
 }
 
 /// `void it_802D27B0(Item_GObj*)` (2D27B0)
 pub unsafe extern "C" fn it_802D27B0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D27B0");
     let ip = ip_of(gobj);
     ext::Item_80268E5C(gobj, 3, ITEM_ANIM_UPDATE as u32);
     set_effect_hitlag_callbacks(ip);
@@ -194,6 +204,7 @@ pub unsafe extern "C" fn it_802D27B0(gobj: *mut Item_GObj) {
 
 /// `bool itHouou_UnkMotion3_Anim(Item_GObj*)` (2D27FC)
 pub unsafe extern "C" fn itHouou_UnkMotion3_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itHouou_UnkMotion3_Anim");
     let ip = ip_of(gobj);
     ext::it_8027A160(child_of(gobj), ip);
     if ext::it_80272C6C(gobj) == 0 {
@@ -206,6 +217,7 @@ pub unsafe extern "C" fn itHouou_UnkMotion3_Anim(gobj: *mut Item_GObj) -> i32 {
 
 /// `void itHouou_UnkMotion3_Phys(Item_GObj*)` (2D288C)
 pub unsafe extern "C" fn itHouou_UnkMotion3_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itHouou_UnkMotion3_Phys");
     let ip = ip_of(gobj);
     let attr = attr_of(ip);
 
@@ -225,11 +237,13 @@ pub unsafe extern "C" fn itHouou_UnkMotion3_Phys(gobj: *mut Item_GObj) {
 
 /// `bool itHouou_UnkMotion3_Coll(Item_GObj*)` (2D2904)
 pub unsafe extern "C" fn itHouou_UnkMotion3_Coll(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itHouou_UnkMotion3_Coll");
     0
 }
 
 /// `void it_802D290C(Item_GObj*)` (2D290C)
 pub unsafe extern "C" fn it_802D290C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D290C");
     let ip = ip_of(gobj);
     let attr = attr_of(ip);
     ext::Item_80268E5C(gobj, 4, ITEM_ANIM_UPDATE as u32);
@@ -239,6 +253,7 @@ pub unsafe extern "C" fn it_802D290C(gobj: *mut Item_GObj) {
 
 /// `bool itHouou_UnkMotion4_Anim(Item_GObj*)` (2D2970)
 pub unsafe extern "C" fn itHouou_UnkMotion4_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itHouou_UnkMotion4_Anim");
     let ip = ip_of(gobj);
     ext::it_8027A160(child_of(gobj), ip);
     if ext::it_80272C6C(gobj) == 0 {
@@ -249,6 +264,7 @@ pub unsafe extern "C" fn itHouou_UnkMotion4_Anim(gobj: *mut Item_GObj) -> i32 {
 
 /// `void itHouou_UnkMotion4_Phys(Item_GObj*)` (2D29D4)
 pub unsafe extern "C" fn itHouou_UnkMotion4_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itHouou_UnkMotion4_Phys");
     let ip = ip_of(gobj);
     let attr = attr_of(ip);
 
@@ -264,11 +280,13 @@ pub unsafe extern "C" fn itHouou_UnkMotion4_Phys(gobj: *mut Item_GObj) {
 
 /// `bool itHouou_UnkMotion4_Coll(Item_GObj*)` (2D2A50)
 pub unsafe extern "C" fn itHouou_UnkMotion4_Coll(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itHouou_UnkMotion4_Coll");
     0
 }
 
 /// `void it_802D2A58(Item_GObj*)` (2D2A58)
 pub unsafe extern "C" fn it_802D2A58(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D2A58");
     let ip = ip_of(gobj);
     ext::Item_80268E5C(gobj, 5, ITEM_ANIM_UPDATE as u32);
     set_effect_hitlag_callbacks(ip);
@@ -278,6 +296,7 @@ pub unsafe extern "C" fn it_802D2A58(gobj: *mut Item_GObj) {
 
 /// `bool itHouou_UnkMotion5_Anim(Item_GObj*)` (2D2AC0)
 pub unsafe extern "C" fn itHouou_UnkMotion5_Anim(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itHouou_UnkMotion5_Anim");
     let ip = ip_of(gobj);
     ext::it_8027A160(child_of(gobj), ip);
     if ext::it_80272C6C(gobj) == 0 {
@@ -288,16 +307,19 @@ pub unsafe extern "C" fn itHouou_UnkMotion5_Anim(gobj: *mut Item_GObj) -> i32 {
 
 /// `void itHouou_UnkMotion5_Phys(Item_GObj*)` (2D2B24)
 pub unsafe extern "C" fn itHouou_UnkMotion5_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itHouou_UnkMotion5_Phys");
     ext::it_8027A344(gobj);
 }
 
 /// `bool itHouou_UnkMotion5_Coll(Item_GObj*)` (2D2B44)
 pub unsafe extern "C" fn itHouou_UnkMotion5_Coll(_gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itHouou_UnkMotion5_Coll");
     0
 }
 
 /// `void it_802D2B4C(Item_GObj*)` (2D2B4C)
 pub unsafe extern "C" fn it_802D2B4C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D2B4C");
     let ip = ip_of(gobj);
 
     if (*ip).xDAC_itcmd_var0 != 0 {
@@ -314,6 +336,7 @@ pub unsafe extern "C" fn it_802D2B4C(gobj: *mut Item_GObj) {
 
 /// `void it_802D2BE0(Item_GObj*)` (2D2BE0): `Item_EnterAirStateWithHitlagAndStateDesc`.
 pub unsafe extern "C" fn it_802D2BE0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D2BE0");
     let item = ip_of(gobj);
     ext::it_802762BC(item);
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE as u32);
@@ -323,12 +346,14 @@ pub unsafe extern "C" fn it_802D2BE0(gobj: *mut Item_GObj) {
 
 /// `bool it_802D2C54(Item_GObj*)` (2D2C54)
 pub unsafe extern "C" fn it_802D2C54(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802D2C54");
     ext::it_80279FF8(gobj);
     0
 }
 
 /// `void it_802D2C78(Item_GObj*)` (2D2C78)
 pub unsafe extern "C" fn it_802D2C78(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D2C78");
     if ext::it_8027A09C(gobj) != 0 {
         let ip = ip_of(gobj);
         ext::it_80273454(gobj);
@@ -341,11 +366,13 @@ pub unsafe extern "C" fn it_802D2C78(gobj: *mut Item_GObj) {
 
 /// `bool it_802D2D04(Item_GObj*)` (2D2D04)
 pub unsafe extern "C" fn it_802D2D04(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802D2D04");
     ext::it_8027A118(gobj, Some(it_802D25B8))
 }
 
 /// `void it_802D2D2C(Item_GObj*)` (2D2D2C): drop the sacred fire where the line below the start is.
 pub unsafe extern "C" fn it_802D2D2C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D2D2C");
     let mut spawn: SpawnItem = core::mem::zeroed();
     let mut hit_pos = Vec { x: 0.0, y: 0.0, z: 0.0 };
     let mut line_id: i32 = 0;
@@ -396,6 +423,7 @@ pub unsafe extern "C" fn it_802D2D2C(gobj: *mut Item_GObj) {
 
 /// `void it_2725_Logic42_Spawned(Item_GObj*)` (2D2E80)
 pub unsafe extern "C" fn it_2725_Logic42_Spawned(item_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_2725_Logic42_Spawned");
     let item = ip_of(item_gobj);
     let attr = attr_of(item);
     (*item).xD44_lifeTimer = (*attr).timer;
@@ -406,11 +434,13 @@ pub unsafe extern "C" fn it_2725_Logic42_Spawned(item_gobj: *mut Item_GObj) {
 
 /// `void it_802D2ED0(Item_GObj*, Item_GObj*)` (2D2ED0)
 pub unsafe extern "C" fn it_802D2ED0(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D2ED0");
     ext::it_8026B894(gobj, ref_gobj);
 }
 
 /// `void it_802D2EF0(Item_GObj*)` (2D2EF0)
 pub unsafe extern "C" fn it_802D2EF0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D2EF0");
     let ip = ip_of(gobj);
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE as u32);
     set_effect_hitlag_callbacks(ip);
@@ -418,6 +448,7 @@ pub unsafe extern "C" fn it_802D2EF0(gobj: *mut Item_GObj) {
 
 /// `bool it_802D2F3C(Item_GObj*)` (2D2F3C): `Item_TickLifetime`.
 pub unsafe extern "C" fn it_802D2F3C(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802D2F3C");
     let ip = ip_of(gobj);
     if (*ip).xD44_lifeTimer <= 0.0 {
         return 1;
@@ -428,6 +459,7 @@ pub unsafe extern "C" fn it_802D2F3C(gobj: *mut Item_GObj) -> i32 {
 
 /// `void it_802D2F70(Item_GObj*)` (2D2F70)
 pub unsafe extern "C" fn it_802D2F70(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D2F70");
     let mut sp10 = Vec { x: 0.0, y: 0.0, z: 0.0 };
     let ip = ip_of(gobj);
 
@@ -441,5 +473,6 @@ pub unsafe extern "C" fn it_802D2F70(gobj: *mut Item_GObj) {
 
 /// `bool it_802D2FE8(Item_GObj*)` (2D2FE8)
 pub unsafe extern "C" fn it_802D2FE8(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802D2FE8");
     ext::it_8026DA08(gobj)
 }

@@ -30,6 +30,7 @@ pub mod ext {
 }
 
 pub fn ftMh_MS_388_80155A58(gobj_1: *mut HSD_GObj, gobj_2: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_388_80155A58");
     unsafe {
         let ft_1 = (*gobj_1).user_data as *mut Fighter;
         let ft_2 = (*gobj_2).user_data as *mut Fighter;

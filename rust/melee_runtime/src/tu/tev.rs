@@ -11,9 +11,9 @@ pub(crate) fn initial_channels() -> [HsdChan; 4] {
     })
 }
 /// C's GC word mask ignores alpha, not the first native byte.
-pub fn CompareRGB(a: &GXColor, b: &GXColor) -> bool { a.r != b.r || a.g != b.g || a.b != b.b }
-pub fn CompareRGBA(a: &GXColor, b: &GXColor) -> bool { rgba(*a) != rgba(*b) }
-pub fn CopyRGB(dst: &mut GXColor, src: &GXColor) { dst.r = src.r; dst.g = src.g; dst.b = src.b; }
+pub fn CompareRGB(a: &GXColor, b: &GXColor) -> bool { melee_core::ct!("CompareRGB"); a.r != b.r || a.g != b.g || a.b != b.b }
+pub fn CompareRGBA(a: &GXColor, b: &GXColor) -> bool { melee_core::ct!("CompareRGBA"); rgba(*a) != rgba(*b) }
+pub fn CopyRGB(dst: &mut GXColor, src: &GXColor) { melee_core::ct!("CopyRGB"); dst.r = src.r; dst.g = src.g; dst.b = src.b; }
 
 fn cached_color<G: GxBackend>(g: &mut G, cached: &mut GXColor, invalid: &mut bool,
                               chan: u32, color: GXColor, ambient: bool) {
@@ -108,15 +108,18 @@ impl HsdRender {
 }
 
 pub fn HSD_Channel2Num(chan: i32) -> i32 {
+    melee_core::ct!("HSD_Channel2Num");
     match chan { 0..=5 => (chan & 1) + 1, 255 => 0, _ => panic!("HSD_ASSERT tev.c:656") }
 }
-pub fn HSD_Index2TevStage(idx: i32) -> i32 { assert!((0..16).contains(&idx), "HSD_ASSERT tev.c:709"); idx }
-pub fn HSD_TevStage2Index(stage: i32) -> i32 { assert!((0..16).contains(&stage), "HSD_ASSERT tev.c:762"); stage }
-pub fn HSD_TevStage2Num(stage: i32) -> i32 { assert!((0..16).contains(&stage), "HSD_ASSERT tev.c:793"); stage + 1 }
+pub fn HSD_Index2TevStage(idx: i32) -> i32 { melee_core::ct!("HSD_Index2TevStage"); assert!((0..16).contains(&idx), "HSD_ASSERT tev.c:709"); idx }
+pub fn HSD_TevStage2Index(stage: i32) -> i32 { melee_core::ct!("HSD_TevStage2Index"); assert!((0..16).contains(&stage), "HSD_ASSERT tev.c:762"); stage }
+pub fn HSD_TevStage2Num(stage: i32) -> i32 { melee_core::ct!("HSD_TevStage2Num"); assert!((0..16).contains(&stage), "HSD_ASSERT tev.c:793"); stage + 1 }
 pub fn HSD_TexCoordID2Num(id: i32) -> i32 {
+    melee_core::ct!("HSD_TexCoordID2Num");
     match id { 0..=7 => id + 1, 255 => 0, _ => panic!("HSD_ASSERT tev.c:1010") }
 }
 pub fn ChanUpdateFunc(chan: Option<&mut HsdChan>, track: i32, value: f32) {
+    melee_core::ct!("ChanUpdateFunc");
     if let Some(ch) = chan {
         let color = match track { 5..=8 => &mut ch.mat_color, 9..=12 => &mut ch.amb_color, _ => return };
         let mut c = rgba(*color);
@@ -125,19 +128,22 @@ pub fn ChanUpdateFunc(chan: Option<&mut HsdChan>, track: i32, value: f32) {
     }
 }
 pub fn HSD_RenderInitAllocData(r: &mut HsdRender) {
+    melee_core::ct!("HSD_RenderInitAllocData");
     unsafe {
         ext::HSD_ObjAllocInit(&mut r.render_alloc_data, 28, 4);
         ext::HSD_ObjAllocInit(&mut r.tevreg_alloc_data, 20, 4);
         ext::HSD_ObjAllocInit(&mut r.chan_alloc_data, 48, 4);
     }
 }
-pub fn HSD_RenderGetAllocData(r: &mut HsdRender) -> *mut HSD_ObjAllocData { &mut r.render_alloc_data }
-pub fn HSD_TevRegGetAllocData(r: &mut HsdRender) -> *mut HSD_ObjAllocData { &mut r.tevreg_alloc_data }
-pub fn HSD_ChanGetAllocData(r: &mut HsdRender) -> *mut HSD_ObjAllocData { &mut r.chan_alloc_data }
+pub fn HSD_RenderGetAllocData(r: &mut HsdRender) -> *mut HSD_ObjAllocData { melee_core::ct!("HSD_RenderGetAllocData"); &mut r.render_alloc_data }
+pub fn HSD_TevRegGetAllocData(r: &mut HsdRender) -> *mut HSD_ObjAllocData { melee_core::ct!("HSD_TevRegGetAllocData"); &mut r.tevreg_alloc_data }
+pub fn HSD_ChanGetAllocData(r: &mut HsdRender) -> *mut HSD_ObjAllocData { melee_core::ct!("HSD_ChanGetAllocData"); &mut r.chan_alloc_data }
 pub fn HSD_SetupChannel<G: GxBackend>(r: &mut HsdRender, g: &mut G, ch: Option<&HsdChan>) {
+    melee_core::ct!("HSD_SetupChannel");
     if let Some(ch) = ch { r.setup_channel(g, ch); }
 }
 pub unsafe fn HSD_SetupChannelAll<G: GxBackend>(r: &mut HsdRender, g: &mut G, mut ch: *const HsdChan) {
+    melee_core::ct!("HSD_SetupChannelAll");
     let mut num = 0;
     while !ch.is_null() {
         num = num.max(HSD_Channel2Num((*ch).chan as i32)); r.setup_channel(g, &*ch); ch = (*ch).next;
@@ -145,6 +151,7 @@ pub unsafe fn HSD_SetupChannelAll<G: GxBackend>(r: &mut HsdRender, g: &mut G, mu
     r.state_set_num_chans(g, num as u8 as i32);
 }
 pub unsafe fn HSD_SetupTevStageAll<G: GxBackend>(r: &mut HsdRender, g: &mut G, mut d: *const HSD_TevDesc) {
+    melee_core::ct!("HSD_SetupTevStageAll");
     let mut n = 0;
     while !d.is_null() {
         n = n.max(HSD_TevStage2Num((*d).stage as i32)); r.setup_tev_stage(g, &*d); d = (*d).next;
@@ -153,20 +160,20 @@ pub unsafe fn HSD_SetupTevStageAll<G: GxBackend>(r: &mut HsdRender, g: &mut G, m
     // Unlike StateSetNumTevStages, this entry point does not update committed_tev_stages.
     g.set_num_tev_stages(r.current_tev as u8); r.current_tev = 0;
 }
-pub fn HSD_StateSetNumChans<G: GxBackend>(r: &mut HsdRender, g: &mut G, n: i32) { r.state_set_num_chans(g, n); }
-pub fn HSD_StateRegisterTexGen(r: &mut HsdRender, n: i32) { r.state_register_tex_gen(n as u32); }
-pub fn HSD_StateSetNumTexGens<G: GxBackend>(r: &mut HsdRender, g: &mut G) { r.state_set_num_tex_gens(g); }
-pub fn HSD_StateInitTev(r: &mut HsdRender) { r.state_init_tev(); }
-pub fn HSD_StateGetNumTevStages(r: &HsdRender) -> i32 { r.current_tev as i32 }
-pub fn HSD_StateGetCommittedTevStages(r: &HsdRender) -> i32 { r.committed_tev_stages as i32 }
-pub fn HSD_StateAssignTev(r: &mut HsdRender) -> i32 { r.state_assign_tev() as i32 }
-pub fn HSD_StateSetNumTevStages<G: GxBackend>(r: &mut HsdRender, g: &mut G) { r.state_set_num_tev_stages(g); }
-pub fn HSD_SetupTevStage<G: GxBackend>(r: &mut HsdRender, g: &mut G, d: &HSD_TevDesc) { r.setup_tev_stage(g, d); }
-pub fn HSD_SetTevRegAll<G: GxBackend>(r: &mut HsdRender, g: &mut G) { r.set_tev_reg_all(g); }
-pub fn _HSD_StateInvalidateColorChannel(r: &mut HsdRender) { r.invalidate_color_channel(); }
-pub fn _HSD_StateInvalidateTevStage(r: &mut HsdRender) { r.invalidate_tev_stage(); }
-pub fn _HSD_StateInvalidateTevRegister(r: &mut HsdRender) { r.invalidate_tev_register(); }
-pub fn _HSD_StateInvalidateTexCoordGen(r: &mut HsdRender) { r.invalidate_tex_coord_gen(); }
+pub fn HSD_StateSetNumChans<G: GxBackend>(r: &mut HsdRender, g: &mut G, n: i32) { melee_core::ct!("HSD_StateSetNumChans"); r.state_set_num_chans(g, n); }
+pub fn HSD_StateRegisterTexGen(r: &mut HsdRender, n: i32) { melee_core::ct!("HSD_StateRegisterTexGen"); r.state_register_tex_gen(n as u32); }
+pub fn HSD_StateSetNumTexGens<G: GxBackend>(r: &mut HsdRender, g: &mut G) { melee_core::ct!("HSD_StateSetNumTexGens"); r.state_set_num_tex_gens(g); }
+pub fn HSD_StateInitTev(r: &mut HsdRender) { melee_core::ct!("HSD_StateInitTev"); r.state_init_tev(); }
+pub fn HSD_StateGetNumTevStages(r: &HsdRender) -> i32 { melee_core::ct!("HSD_StateGetNumTevStages"); r.current_tev as i32 }
+pub fn HSD_StateGetCommittedTevStages(r: &HsdRender) -> i32 { melee_core::ct!("HSD_StateGetCommittedTevStages"); r.committed_tev_stages as i32 }
+pub fn HSD_StateAssignTev(r: &mut HsdRender) -> i32 { melee_core::ct!("HSD_StateAssignTev"); r.state_assign_tev() as i32 }
+pub fn HSD_StateSetNumTevStages<G: GxBackend>(r: &mut HsdRender, g: &mut G) { melee_core::ct!("HSD_StateSetNumTevStages"); r.state_set_num_tev_stages(g); }
+pub fn HSD_SetupTevStage<G: GxBackend>(r: &mut HsdRender, g: &mut G, d: &HSD_TevDesc) { melee_core::ct!("HSD_SetupTevStage"); r.setup_tev_stage(g, d); }
+pub fn HSD_SetTevRegAll<G: GxBackend>(r: &mut HsdRender, g: &mut G) { melee_core::ct!("HSD_SetTevRegAll"); r.set_tev_reg_all(g); }
+pub fn _HSD_StateInvalidateColorChannel(r: &mut HsdRender) { melee_core::ct!("_HSD_StateInvalidateColorChannel"); r.invalidate_color_channel(); }
+pub fn _HSD_StateInvalidateTevStage(r: &mut HsdRender) { melee_core::ct!("_HSD_StateInvalidateTevStage"); r.invalidate_tev_stage(); }
+pub fn _HSD_StateInvalidateTevRegister(r: &mut HsdRender) { melee_core::ct!("_HSD_StateInvalidateTevRegister"); r.invalidate_tev_register(); }
+pub fn _HSD_StateInvalidateTexCoordGen(r: &mut HsdRender) { melee_core::ct!("_HSD_StateInvalidateTexCoordGen"); r.invalidate_tex_coord_gen(); }
 
 pub mod ext {
     use melee_types::HSD_ObjAllocData;

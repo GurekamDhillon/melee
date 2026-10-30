@@ -14,6 +14,7 @@ macro_rules! HSD_ForeachAnim { ($a:expr,$b:expr,$c:expr,$d:expr,$e:expr,$f:expr 
     ext::HSD_ForeachAnim($a,$b,$c,$d,$e,crate::tu::ext_hook::Val::to_u64($f))
 }; }
 pub unsafe fn __assert(file:*const i8,line:u32,condition:*const i8)->! {
+    melee_core::ct!("__assert");
     panic!("{}:{}: {}",core::ffi::CStr::from_ptr(file).to_string_lossy(),line,core::ffi::CStr::from_ptr(condition).to_string_lossy())
 }
 pub mod ext {
@@ -2514,16 +2515,19 @@ pub static mut geno_combo_entering: i32 = unsafe { core::mem::zeroed() };
 pub unsafe extern "C" fn HSD_GObjGetUserData(
     mut gobj: *mut HSD_GObj,
 ) -> *mut c_void {
+    melee_core::ct!("HSD_GObjGetUserData");
     return (*gobj).user_data;
 }
 
 pub unsafe extern "C" fn HSD_GObjGetHSDObj(
     mut gobj: *mut HSD_GObj,
 ) -> *mut c_void {
+    melee_core::ct!("HSD_GObjGetHSDObj");
     return (*gobj).hsd_obj;
 }
 
 pub unsafe extern "C" fn HSD_JObjGetChild(mut jobj: *mut HSD_JObj) -> *mut HSD_JObj {
+    melee_core::ct!("HSD_JObjGetChild");
     if jobj.is_null() {
         return ::core::ptr::null_mut::<HSD_JObj>()
     } else {
@@ -2532,6 +2536,7 @@ pub unsafe extern "C" fn HSD_JObjGetChild(mut jobj: *mut HSD_JObj) -> *mut HSD_J
 }
 
 pub unsafe extern "C" fn HSD_JObjGetNext(mut jobj: *mut HSD_JObj) -> *mut HSD_JObj {
+    melee_core::ct!("HSD_JObjGetNext");
     if jobj.is_null() {
         return ::core::ptr::null_mut::<HSD_JObj>()
     } else {
@@ -2540,6 +2545,7 @@ pub unsafe extern "C" fn HSD_JObjGetNext(mut jobj: *mut HSD_JObj) -> *mut HSD_JO
 }
 
 pub unsafe extern "C" fn HSD_JObjGetParent(mut jobj: *mut HSD_JObj) -> *mut HSD_JObj {
+    melee_core::ct!("HSD_JObjGetParent");
     if jobj.is_null() {
         return ::core::ptr::null_mut::<HSD_JObj>()
     } else {
@@ -2548,6 +2554,7 @@ pub unsafe extern "C" fn HSD_JObjGetParent(mut jobj: *mut HSD_JObj) -> *mut HSD_
 }
 
 pub unsafe extern "C" fn HSD_JObjMtxIsDirty(mut jobj: *mut HSD_JObj) -> i32 {
+    melee_core::ct!("HSD_JObjMtxIsDirty");
     let mut result: i32 = 0;
     if !jobj.is_null() {} else {
         __assert(
@@ -2567,6 +2574,7 @@ pub unsafe extern "C" fn HSD_JObjMtxIsDirty(mut jobj: *mut HSD_JObj) -> i32 {
 }
 
 pub unsafe extern "C" fn HSD_JObjSetupMatrix(mut jobj: *mut HSD_JObj) {
+    melee_core::ct!("HSD_JObjSetupMatrix");
     if jobj.is_null() || HSD_JObjMtxIsDirty(jobj) == 0 {
         return;
     }
@@ -2574,6 +2582,7 @@ pub unsafe extern "C" fn HSD_JObjSetupMatrix(mut jobj: *mut HSD_JObj) {
 }
 
 pub unsafe extern "C" fn HSD_JObjSetRotationX(mut jobj: *mut HSD_JObj, mut x: f32) {
+    melee_core::ct!("HSD_JObjSetRotationX");
     if !jobj.is_null() {} else {
         __assert(
             b"src/sysdolphin/baselib/jobj.h\0" as *const u8
@@ -2602,6 +2611,7 @@ pub unsafe extern "C" fn HSD_JObjSetRotationX(mut jobj: *mut HSD_JObj, mut x: f3
 }
 
 pub unsafe extern "C" fn HSD_JObjSetRotationY(mut jobj: *mut HSD_JObj, mut y: f32) {
+    melee_core::ct!("HSD_JObjSetRotationY");
     if !jobj.is_null() {} else {
         __assert(
             b"src/sysdolphin/baselib/jobj.h\0" as *const u8
@@ -2630,6 +2640,7 @@ pub unsafe extern "C" fn HSD_JObjSetRotationY(mut jobj: *mut HSD_JObj, mut y: f3
 }
 
 pub unsafe extern "C" fn HSD_JObjSetRotationZ(mut jobj: *mut HSD_JObj, mut z: f32) {
+    melee_core::ct!("HSD_JObjSetRotationZ");
     if !jobj.is_null() {} else {
         __assert(
             b"src/sysdolphin/baselib/jobj.h\0" as *const u8
@@ -2661,6 +2672,7 @@ pub unsafe extern "C" fn HSD_JObjSetTranslate(
     mut jobj: *mut HSD_JObj,
     mut translate: *mut Vec,
 ) {
+    melee_core::ct!("HSD_JObjSetTranslate");
     if !jobj.is_null() {} else {
         __assert(
             b"src/sysdolphin/baselib/jobj.h\0" as *const u8
@@ -2686,6 +2698,7 @@ pub unsafe extern "C" fn HSD_JObjSetTranslate(
 }
 
 pub unsafe extern "C" fn geno_cmd_words(mut w0: u32) -> i32 {
+    melee_core::ct!("geno_cmd_words");
     static mut len: [u8; 59] = [
         1 as i32 as u8,
         1 as i32 as u8,
@@ -2760,6 +2773,7 @@ pub unsafe extern "C" fn geno_cmd_words(mut w0: u32) -> i32 {
 }
 
 pub unsafe extern "C" fn geno_state(mut fp: *mut Fighter) -> *mut GenoState {
+    melee_core::ct!("geno_state");
     let mut p: i32 = if ((*fp).player_id as i32)
         < GENO_PLAYERS
     {
@@ -2782,6 +2796,7 @@ pub unsafe extern "C" fn geno_zero(
     mut p: *mut c_void,
     mut n: i32,
 ) {
+    melee_core::ct!("geno_zero");
     let mut b: *mut u8 = p as *mut u8;
     loop {
         let fresh0 = n;
@@ -2801,6 +2816,7 @@ pub unsafe extern "C" fn hook_log(
     mut st: *mut GenoState,
     mut arg: i32,
 ) -> i32 {
+    melee_core::ct!("hook_log");
     Geno_Event(
         2 as i32,
         (*fp).kind as i32,
@@ -2817,6 +2833,7 @@ pub unsafe extern "C" fn hook_jumps_refill(
     mut st: *mut GenoState,
     mut arg: i32,
 ) -> i32 {
+    melee_core::ct!("hook_jumps_refill");
     let mut used: i32 = (*fp).x1968_jumpsUsed as i32;
     used = if arg <= 0 as i32 {
         1 as i32
@@ -2837,6 +2854,7 @@ pub unsafe extern "C" fn hook_jumps_to_var(
     mut st: *mut GenoState,
     mut arg: i32,
 ) -> i32 {
+    melee_core::ct!("hook_jumps_to_var");
     let mut left: i32 = (*fp).co_attrs.max_jumps
         - (*fp).x1968_jumpsUsed as i32;
     (*st)
@@ -2855,6 +2873,7 @@ pub unsafe extern "C" fn hook_count_frames(
     mut st: *mut GenoState,
     mut arg: i32,
 ) -> i32 {
+    melee_core::ct!("hook_count_frames");
     (*st)
         .la_i[(arg as i32 & GENO_VARS_PER_BANK - 1 as i32)
         as usize] += 1 as i32;
@@ -2875,6 +2894,7 @@ pub unsafe extern "C" fn GenoGame_LockonAim(
     mut up: *mut f32,
     mut face: *mut f32,
 ) {
+    melee_core::ct!("GenoGame_LockonAim");
     let mut a: f32 = 0.0f32;
     let mut lim: f32 = max_deg * M_PI as f32 / 180.0f32;
     *face = (if facing < 0.0f32 { -1.0f32 } else { 1.0f32 }) as f32;
@@ -2912,6 +2932,7 @@ pub unsafe extern "C" fn GenoGame_AimStick(
     mut up: *mut f32,
     mut face: *mut f32,
 ) -> i32 {
+    melee_core::ct!("GenoGame_AimStick");
     let mut a: f32 = 0.;
     let mut ax: f32 = if sx < 0.0f32 { -sx } else { sx };
     let mut hi: f32 = max_up * M_PI as f32 / 180.0f32;
@@ -2939,6 +2960,7 @@ pub unsafe extern "C" fn hook_aim_stick(
     mut st: *mut GenoState,
     mut arg: i32,
 ) -> i32 {
+    melee_core::ct!("hook_aim_stick");
     let mut fw: f32 = 0.;
     let mut up: f32 = 0.;
     let mut face: f32 = (*fp).facing_dir as f32;
@@ -3001,6 +3023,7 @@ pub unsafe extern "C" fn hook_lockon(
     mut st: *mut GenoState,
     mut arg: i32,
 ) -> i32 {
+    melee_core::ct!("hook_lockon");
     let mut cur: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     let mut range: f32 = (arg as i32 & 0xffff as i32)
         as f32;
@@ -3075,6 +3098,7 @@ pub unsafe extern "C" fn GenoGame_DashStick(
     mut cx: *mut f32,
     mut cy: *mut f32,
 ) -> i32 {
+    melee_core::ct!("GenoGame_DashStick");
     let mut a: f32 = 0.;
     if fmadds(sx, sx, sy * sy) < thr * thr || sx == 0.0f32 && sy == 0.0f32 {
         return 0 as i32;
@@ -3101,6 +3125,7 @@ pub unsafe extern "C" fn GenoGame_DashAim(
     mut face: *mut f32,
     mut kind: *mut i32,
 ) {
+    melee_core::ct!("GenoGame_DashAim");
     let mut lr: f32 = if facing < 0.0f32 { -1.0f32 } else { 1.0f32 };
     let mut a: f32 = 0.;
     let mut deg: f32 = 0.;
@@ -3144,6 +3169,7 @@ pub unsafe extern "C" fn GenoGame_Brake(
     mut brake: f32,
     mut max: f32,
 ) {
+    melee_core::ct!("GenoGame_Brake");
     let mut len: f32 = sqrtf(fmadds(*vx, *vx, *vy * *vy)) as f32;
     let mut to: f32 = 0.;
     if len <= 0.0f32 {
@@ -3164,6 +3190,7 @@ pub unsafe extern "C" fn geno_dash_target(
     mut fp: *mut Fighter,
     mut port: i32,
 ) -> *mut Fighter {
+    melee_core::ct!("geno_dash_target");
     let mut cur: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     if HSD_GObjPLinkHead.is_null() {
         return ::core::ptr::null_mut::<Fighter>();
@@ -3189,6 +3216,7 @@ pub unsafe extern "C" fn hook_dash_search(
     mut st: *mut GenoState,
     mut arg: i32,
 ) -> i32 {
+    melee_core::ct!("hook_dash_search");
     let mut range: f32 = (arg as i32 >> 8 as i32
         & 0xffff as i32) as f32;
     let mut best: f32 = -1.0f32;
@@ -3264,6 +3292,7 @@ pub unsafe extern "C" fn hook_dash_aim(
     mut st: *mut GenoState,
     mut arg: i32,
 ) -> i32 {
+    melee_core::ct!("hook_dash_aim");
     let mut o: *mut Fighter = if (*st).move_i[0 as i32 as usize] != 0 {
         geno_dash_target(gobj, fp, (*st).move_i[1 as i32 as usize])
     } else {
@@ -3326,6 +3355,7 @@ pub unsafe extern "C" fn hook_brake(
     mut st: *mut GenoState,
     mut arg: i32,
 ) -> i32 {
+    melee_core::ct!("hook_brake");
     let mut brake: f32 = (arg as i32 & 0xffff as i32)
         as f32 / 1000.0f32;
     let mut max: f32 = (arg as i32 >> 16 as i32
@@ -3346,6 +3376,7 @@ pub unsafe extern "C" fn Geno_MotionAnimRow(
     mut fp: *mut Fighter,
     mut motion: i32,
 ) -> i32 {
+    melee_core::ct!("Geno_MotionAnimRow");
     let mut st: *mut GenoState = geno_state(fp);
     if geno_inert(st) != 0 || (*st).profile < 0 as i32 {
         return -(1 as i32);
@@ -3357,6 +3388,7 @@ pub unsafe extern "C" fn Geno_FallLimit(
     mut fp: *mut Fighter,
     mut terminal: f32,
 ) -> f32 {
+    melee_core::ct!("Geno_FallLimit");
     let mut st: *mut GenoState = geno_state(fp);
     return if !st.is_null() && (*st).fall_limit > terminal {
         (*st).fall_limit
@@ -3369,6 +3401,7 @@ pub unsafe extern "C" fn geno_streq(
     mut a: *const i8,
     mut b: *const i8,
 ) -> i32 {
+    melee_core::ct!("geno_streq");
     while *a as i32 != '\0' as i32
         && *a as i32 == *b as i32
     {
@@ -3381,6 +3414,7 @@ pub unsafe extern "C" fn geno_streq(
 pub unsafe extern "C" fn GenoGame_HookFind(
     mut name: *const i8,
 ) -> i32 {
+    melee_core::ct!("GenoGame_HookFind");
     let mut i: i32 = 0;
     i = 0 as i32;
     while i < GENO_NHOOKS {
@@ -3397,6 +3431,7 @@ pub unsafe extern "C" fn GenoGame_CallHook(
     mut id: i32,
     mut arg: i32,
 ) -> i32 {
+    melee_core::ct!("GenoGame_CallHook");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
@@ -3427,6 +3462,7 @@ pub unsafe extern "C" fn geno_run_event(
     mut st: *mut GenoState,
     mut ev: i32,
 ) {
+    melee_core::ct!("geno_run_event");
     let mut n: i32 = Geno_HookCount(
         (*st).profile as i32,
         ev,
@@ -3444,6 +3480,7 @@ pub unsafe extern "C" fn geno_run_event(
 }
 
 pub unsafe extern "C" fn geno_pool_sync() {
+    melee_core::ct!("geno_pool_sync");
     let mut gen: i32 = Geno_PoolGen();
     let mut n: i32 = 0;
     let mut i: i32 = 0;
@@ -3499,6 +3536,7 @@ pub unsafe extern "C" fn geno_install_overlays(
     mut fp: *mut Fighter,
     mut p: i32,
 ) {
+    melee_core::ct!("geno_install_overlays");
     let mut n: i32 = Geno_OverlayCount(p);
     let mut i: i32 = 0;
     let mut table: *mut Fighter_WaitAnimData = ::core::ptr::null_mut::<
@@ -3577,6 +3615,7 @@ pub unsafe extern "C" fn geno_install_overlays(
 }
 
 pub unsafe extern "C" fn geno_slot_of(mut w: *mut u32) -> i32 {
+    melee_core::ct!("geno_slot_of");
     let mut off: i32 = 0;
     let mut s: i32 = 0;
     let mut n: i32 = 0;
@@ -3610,6 +3649,7 @@ pub unsafe extern "C" fn GenoGame_ScriptRange(
     mut address: u32,
     mut bytes: u32,
 ) -> i32 {
+    melee_core::ct!("GenoGame_ScriptRange");
     let mut s: i32 = 0;
     let mut n: i32 = Geno_SlotCount();
     if bytes == 0 as u32 || address.wrapping_add(bytes) < address
@@ -3643,6 +3683,7 @@ pub unsafe extern "C" fn GenoGame_ScriptRange(
 }
 
 pub unsafe extern "C" fn GenoGame_ScriptOriginal(mut address: u32) -> u32 {
+    melee_core::ct!("GenoGame_ScriptOriginal");
     let mut s: i32 = geno_slot_of(address as *mut u32);
     return if s >= 0 as i32 {
         Geno_OverlayOrig[s as usize] as u32
@@ -3654,6 +3695,7 @@ pub unsafe extern "C" fn GenoGame_ScriptOriginal(mut address: u32) -> u32 {
 pub unsafe extern "C" fn GenoGame_ScriptHasIasa(
     mut script: *const c_void,
 ) -> i32 {
+    melee_core::ct!("GenoGame_ScriptHasIasa");
     let mut current_block: u64;
 
     static mut lengths: [u8; 59] = [
@@ -3911,12 +3953,14 @@ pub unsafe extern "C" fn GenoGame_ScriptHasIasa(
 }
 
 pub unsafe extern "C" fn geno_inert(mut st: *mut GenoState) -> i32 {
+    melee_core::ct!("geno_inert");
     return ((*st).profile < 0 as i32
         && (*st).flags as u32 & GENO_SF_SCRIPT == 0)
         as i32;
 }
 
 pub unsafe extern "C" fn geno_clear_action(mut st: *mut GenoState) {
+    melee_core::ct!("geno_clear_action");
     geno_zero(
         &raw mut (*st).ra_i as *mut i32 as *mut c_void,
         ::core::mem::size_of::<[i32; 64]>() as i32,
@@ -3957,6 +4001,7 @@ pub unsafe extern "C" fn geno_clear_action(mut st: *mut GenoState) {
 }
 
 pub unsafe extern "C" fn Geno_FighterReset(mut fp: *mut Fighter) {
+    melee_core::ct!("Geno_FighterReset");
 
     let mut st: *mut GenoState = geno_state(fp);
     let mut resets: u32 = (*st).resets;
@@ -4011,6 +4056,7 @@ pub unsafe extern "C" fn Geno_FighterReset(mut fp: *mut Fighter) {
 }
 
 pub unsafe extern "C" fn GenoGame_LabReload() -> i32 {
+    melee_core::ct!("GenoGame_LabReload");
     let mut cur: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     let mut n: i32 = 0 as i32;
     if HSD_GObjPLinkHead.is_null() {
@@ -4042,6 +4088,7 @@ pub unsafe extern "C" fn GenoGame_LabReload() -> i32 {
 }
 
 pub unsafe extern "C" fn Geno_OnActionChange(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("Geno_OnActionChange");
     if ProfActive() != 0 {
         ProfBegin(
             GW_PROF_GENO_HOOK as i32,
@@ -4093,6 +4140,7 @@ pub unsafe extern "C" fn Geno_OnActionChange(mut gobj: *mut Fighter_GObj) {
 }
 
 pub unsafe extern "C" fn Geno_OnFrame(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("Geno_OnFrame");
     if ProfActive() != 0 {
         ProfBegin(
             GW_PROF_GENO_HOOK as i32,
@@ -4116,6 +4164,7 @@ pub unsafe extern "C" fn Geno_OnFrame(mut gobj: *mut Fighter_GObj) {
 pub unsafe extern "C" fn GenoGame_AttrFind(
     mut name: *const i8,
 ) -> i32 {
+    melee_core::ct!("GenoGame_AttrFind");
     let mut i: i32 = 0;
     i = 0 as i32;
     while i < GENO_NATTRS {
@@ -4130,6 +4179,7 @@ pub unsafe extern "C" fn GenoGame_AttrFind(
 pub unsafe extern "C" fn GenoGame_AttrIsInt(
     mut index: i32,
 ) -> i32 {
+    melee_core::ct!("GenoGame_AttrIsInt");
     return if index >= 0 as i32 && index < GENO_NATTRS {
         geno_attrs[index as usize].is_int
     } else {
@@ -4140,6 +4190,7 @@ pub unsafe extern "C" fn GenoGame_AttrIsInt(
 pub unsafe extern "C" fn GenoGame_AttrOffset(
     mut index: i32,
 ) -> i32 {
+    melee_core::ct!("GenoGame_AttrOffset");
     return if index >= 0 as i32 && index < GENO_NATTRS {
         geno_attrs[index as usize].offset
     } else {
@@ -4151,6 +4202,7 @@ pub unsafe extern "C" fn geno_apply_special(
     mut fp: *mut Fighter,
     mut p: i32,
 ) {
+    melee_core::ct!("geno_apply_special");
     let mut n: i32 = Geno_SpecialCount(p);
     let mut i: i32 = 0;
     let mut src: *mut u32 = ::core::ptr::null_mut::<u32>();
@@ -4191,6 +4243,7 @@ pub unsafe extern "C" fn geno_apply_special(
 }
 
 pub unsafe extern "C" fn Geno_ApplyAttrs(mut fp: *mut Fighter) {
+    melee_core::ct!("Geno_ApplyAttrs");
     let mut p: i32 = Geno_ProfileForKind(
         (*fp).kind as i32,
     );
@@ -4230,6 +4283,7 @@ pub unsafe extern "C" fn Geno_ApplyAttrs(mut fp: *mut Fighter) {
 pub unsafe extern "C" fn Geno_FighterScale(
     mut fp: *mut Fighter,
 ) -> f32 {
+    melee_core::ct!("Geno_FighterScale");
     let mut p: i32 = Geno_ProfileForKind(
         (*fp).kind as i32,
     );
@@ -4242,6 +4296,7 @@ pub unsafe extern "C" fn Geno_MultiJump(
     mut msid: *mut i32,
     mut vy: *mut f32,
 ) {
+    melee_core::ct!("Geno_MultiJump");
     let mut p: i32 = Geno_ProfileForKind(
         (*fp).kind as i32,
     );
@@ -4303,6 +4358,7 @@ pub unsafe extern "C" fn Geno_MultiJump(
 pub unsafe extern "C" fn geno_var_is_float(
     mut ref_0: i32,
 ) -> i32 {
+    melee_core::ct!("geno_var_is_float");
     return (ref_0 >> 6 as i32 & 3 as i32
         >= GENO_BANK_LA_FLOAT) as i32;
 }
@@ -4311,6 +4367,7 @@ pub unsafe extern "C" fn geno_var(
     mut st: *mut GenoState,
     mut ref_0: i32,
 ) -> *mut c_void {
+    melee_core::ct!("geno_var");
     let mut i: i32 = ref_0 & GENO_VARS_PER_BANK - 1 as i32;
     match ref_0 >> 6 as i32 & 3 as i32 {
         GENO_BANK_LA_INT => {
@@ -4337,6 +4394,7 @@ pub unsafe extern "C" fn geno_var_as(
     mut ref_0: i32,
     mut want_f: i32,
 ) -> GenoWord {
+    melee_core::ct!("geno_var_as");
     let mut r: GenoWord = unsafe { core::mem::zeroed() };
     let mut pb: *mut c_void = geno_var(st, ref_0);
     if geno_var_is_float(ref_0) != 0 {
@@ -4359,6 +4417,7 @@ pub unsafe extern "C" fn geno_operand(
     mut b_is_var: i32,
     mut word: u32,
 ) -> GenoWord {
+    melee_core::ct!("geno_operand");
     let mut r: GenoWord = unsafe { core::mem::zeroed() };
     if b_is_var != 0 {
         return geno_var_as(st, (word & 0xff as u32) as i32, want_f);
@@ -4373,6 +4432,7 @@ pub unsafe extern "C" fn geno_operand_b(
     mut w0: u32,
     mut w1: u32,
 ) -> GenoWord {
+    melee_core::ct!("geno_operand_b");
     return geno_operand(
         st,
         geno_var_is_float(a),
@@ -4387,6 +4447,7 @@ pub unsafe extern "C" fn geno_cmp(
     mut cmp: i32,
     mut y: GenoWord,
 ) -> i32 {
+    melee_core::ct!("geno_cmp");
     if cmp == GENO_CMP_BIT as i32
         || cmp == GENO_CMP_NOBIT as i32
     {
@@ -4427,6 +4488,7 @@ pub unsafe extern "C" fn geno_compare(
     mut cmp: i32,
     mut b: GenoWord,
 ) -> i32 {
+    melee_core::ct!("geno_compare");
     let mut is_f: i32 = geno_var_is_float(a);
     return geno_cmp(is_f, geno_var_as(st, a, is_f), cmp, b);
 }
@@ -4437,6 +4499,7 @@ pub unsafe extern "C" fn geno_arith(
     mut a: i32,
     mut b: GenoWord,
 ) {
+    melee_core::ct!("geno_arith");
     let mut pa: *mut c_void = geno_var(st, a);
     if geno_var_is_float(a) != 0 {
         let mut x: *mut f32 = pa as *mut f32;
@@ -4514,6 +4577,7 @@ pub unsafe extern "C" fn geno_buttons(
     mut fp: *mut Fighter,
     mut pressed: i32,
 ) -> u32 {
+    melee_core::ct!("geno_buttons");
     let mut b: HSD_Pad = unsafe { core::mem::zeroed() };
     let mut m: u32 = 0 as u32;
     if b & HSD_PAD_A as HSD_Pad != 0 {
@@ -4547,6 +4611,7 @@ pub unsafe extern "C" fn geno_buttons(
 }
 
 pub unsafe extern "C" fn geno_val_is_float(mut id: u32) -> i32 {
+    melee_core::ct!("geno_val_is_float");
     if id >= GENO_VAL_SPECIAL_I as i32 as u32 {
         return 0 as i32;
     }
@@ -4572,6 +4637,7 @@ pub unsafe extern "C" fn geno_val_get(
     mut st: *mut GenoState,
     mut id: u32,
 ) -> GenoWord {
+    melee_core::ct!("geno_val_get");
     let mut r: GenoWord = unsafe { core::mem::zeroed() };
     r.u = 0 as u32;
     if id >= GENO_VAL_SPECIAL_F as i32 as u32
@@ -4770,6 +4836,7 @@ pub unsafe extern "C" fn geno_val_put(
     mut id: u32,
     mut v: GenoWord,
 ) -> i32 {
+    melee_core::ct!("geno_val_put");
     if id >= GENO_VAL_MOVE_F0 as i32 as u32
         && id <= GENO_VAL_MOVE_F7 as i32 as u32
     {
@@ -4917,6 +4984,7 @@ pub unsafe extern "C" fn GenoGame_TestCapture(
     mut on: i32,
     mut anim_end: i32,
 ) {
+    melee_core::ct!("GenoGame_TestCapture");
     geno_test_capture = on as i32;
     geno_test_anim_end = anim_end as i32;
     geno_test_changes = 0 as i32 as i32;
@@ -4924,10 +4992,12 @@ pub unsafe extern "C" fn GenoGame_TestCapture(
 }
 
 pub unsafe extern "C" fn GenoGame_TestChanges() -> i32 {
+    melee_core::ct!("GenoGame_TestChanges");
     return geno_test_changes as i32;
 }
 
 pub unsafe extern "C" fn GenoGame_TestLastTarget() -> u32 {
+    melee_core::ct!("GenoGame_TestLastTarget");
     return geno_test_target;
 }
 
@@ -4935,6 +5005,7 @@ pub unsafe extern "C" fn geno_target_motion(
     mut fp: *mut Fighter,
     mut target: u32,
 ) -> i32 {
+    melee_core::ct!("geno_target_motion");
     let mut kind: u32 = target >> 28 as i32;
     let mut id: i32 = (target & 0xffff as u32) as i32;
     if kind == GENO_TGT_MOTION {
@@ -4953,6 +5024,7 @@ pub unsafe extern "C" fn geno_target_ok(
     mut fp: *mut Fighter,
     mut target: u32,
 ) -> i32 {
+    melee_core::ct!("geno_target_ok");
     return (target >> 28 as i32 != GENO_TGT_GENO
         || geno_state_valid(
             geno_state(fp),
@@ -4966,6 +5038,7 @@ pub unsafe extern "C" fn geno_do_change(
     mut st: *mut GenoState,
     mut target: u32,
 ) -> i32 {
+    melee_core::ct!("geno_do_change");
     let mut msid: i32 = 0;
     if target == GENO_TGT_ROLL {
         return if (*fp).ground_or_air as i32
@@ -5101,6 +5174,7 @@ pub unsafe extern "C" fn geno_cond(
     mut st: *mut GenoState,
     mut c: *const GenoCond,
 ) -> i32 {
+    melee_core::ct!("geno_cond");
     let mut kind: i32 = ((*c).head >> 8 as i32
         & 0xff as u32) as i32;
     let mut b_is_var: i32 = ((*c).head & 0x80 as u32 != 0 as u32)
@@ -5186,6 +5260,7 @@ pub unsafe extern "C" fn geno_check_true(
     mut k: *const GenoCheck,
     mut from: i32,
 ) -> i32 {
+    melee_core::ct!("geno_check_true");
     let mut j: u32 = 0;
     j = from as u32;
     while j < (*k).ncond && j < GENO_CHECK_CONDS as u32 {
@@ -5212,6 +5287,7 @@ pub unsafe extern "C" fn geno_register_check(
     mut a1: u32,
     mut a2: u32,
 ) {
+    melee_core::ct!("geno_register_check");
     let mut i: u32 = 0;
     let mut once: u32 = if head & GENO_CHG_ONCE as u32 != 0 {
         1 as u32
@@ -5267,6 +5343,7 @@ pub unsafe extern "C" fn geno_and_check(
     mut a1: u32,
     mut a2: u32,
 ) {
+    melee_core::ct!("geno_and_check");
     let mut k: *mut GenoCheck = ::core::ptr::null_mut::<GenoCheck>();
     let mut j: u32 = 0;
     if (*st).last_check < 0 as i32
@@ -5296,6 +5373,7 @@ pub unsafe extern "C" fn geno_and_check(
 }
 
 pub unsafe extern "C" fn geno_drop_once(mut st: *mut GenoState) {
+    melee_core::ct!("geno_drop_once");
     let mut i: u32 = 0;
     let mut n: u32 = 0 as u32;
     i = 0 as u32;
@@ -5315,6 +5393,7 @@ pub unsafe extern "C" fn geno_drop_once(mut st: *mut GenoState) {
 }
 
 pub unsafe extern "C" fn geno_rehit_tick(mut fp: *mut Fighter, mut st: *mut GenoState) {
+    melee_core::ct!("geno_rehit_tick");
     let mut i: i32 = 0;
     i = 0 as i32;
     while i < GENO_MAX_REHIT {
@@ -5344,6 +5423,7 @@ pub unsafe extern "C" fn geno_rehit_tick(mut fp: *mut Fighter, mut st: *mut Geno
 pub unsafe extern "C" fn Geno_PreAnim(
     mut gobj: *mut Fighter_GObj,
 ) -> i32 {
+    melee_core::ct!("Geno_PreAnim");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
@@ -5399,6 +5479,7 @@ pub unsafe extern "C" fn Geno_PreAnim(
 }
 
 pub unsafe extern "C" fn Geno_CollBegin(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("Geno_CollBegin");
     let mut st: *mut GenoState = geno_state(
         HSD_GObjGetUserData(gobj as *mut HSD_GObj) as *mut Fighter,
     );
@@ -5410,6 +5491,7 @@ pub unsafe extern "C" fn Geno_CollBegin(mut gobj: *mut Fighter_GObj) {
 }
 
 pub unsafe extern "C" fn Geno_CollEnd(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("Geno_CollEnd");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
@@ -5427,6 +5509,7 @@ pub unsafe extern "C" fn Geno_GroundEdge(
     mut fp: *mut Fighter,
     mut landing: i32,
 ) {
+    melee_core::ct!("Geno_GroundEdge");
     let mut st: *mut GenoState = geno_state(fp);
     let mut gobj: *mut Fighter_GObj = (*fp).gobj as *mut Fighter_GObj;
     let mut i: u32 = 0;
@@ -5503,6 +5586,7 @@ pub unsafe extern "C" fn Geno_Autolink(
     mut angle: *mut f32,
     mut kb: *mut f32,
 ) -> i32 {
+    melee_core::ct!("Geno_Autolink");
     let mut st: *mut GenoState = ::core::ptr::null_mut::<GenoState>();
     let mut idx: i32 = 0;
     let mut mode: i32 = 0;
@@ -5578,6 +5662,7 @@ pub unsafe extern "C" fn Geno_FtCmd(
     mut cmd: *mut CommandInfo,
     mut mode: i32,
 ) {
+    melee_core::ct!("Geno_FtCmd");
     if ProfActive() != 0 {
         ProfBegin(
             GW_PROF_GENO_HOOK as i32,
@@ -5947,6 +6032,7 @@ pub unsafe extern "C" fn Geno_HitStunBonus(
     mut idx: i32,
     mut vic: *mut Fighter,
 ) {
+    melee_core::ct!("Geno_HitStunBonus");
     let mut as_0: *mut GenoState = ::core::ptr::null_mut::<GenoState>();
     let mut add: i32 = 0;
     if atk.is_null() || vic.is_null() || idx < 0 as i32
@@ -5964,6 +6050,7 @@ pub unsafe extern "C" fn Geno_HitFlags(
     mut idx: i32,
     mut vic: *mut Fighter,
 ) -> i32 {
+    melee_core::ct!("Geno_HitFlags");
     let mut s: *mut GenoState = ::core::ptr::null_mut::<GenoState>();
     let mut f: i32 = 0;
     if atk.is_null() || vic.is_null() || idx < 0 as i32
@@ -5999,6 +6086,7 @@ pub unsafe extern "C" fn Geno_HitFlags(
 }
 
 pub unsafe extern "C" fn geno_react(mut fp: *mut Fighter) -> i32 {
+    melee_core::ct!("geno_react");
     let mut s: *mut GenoState = geno_state(fp);
     return if (*s).react_frame == geno_stun_frame() {
         (*s).react_flags
@@ -6008,6 +6096,7 @@ pub unsafe extern "C" fn geno_react(mut fp: *mut Fighter) -> i32 {
 }
 
 pub unsafe extern "C" fn Geno_HitReact(mut fp: *mut Fighter) -> i32 {
+    melee_core::ct!("Geno_HitReact");
     let f: i32 = geno_react(fp) as i32;
     let mut lifted: i32 = 0 as i32;
     if f as i32 & GENO_HBF_FORCE_REACTION != 0 {
@@ -6024,6 +6113,7 @@ pub unsafe extern "C" fn Geno_HitReact(mut fp: *mut Fighter) -> i32 {
 }
 
 pub unsafe extern "C" fn Geno_NoHitlag(mut fp: *mut Fighter) -> i32 {
+    melee_core::ct!("Geno_NoHitlag");
     return (geno_react(fp) as i32 & GENO_HBF_NO_HITLAG
         != 0 as i32) as i32;
 }
@@ -6032,6 +6122,7 @@ pub unsafe extern "C" fn Geno_GiveStunBonus(
     mut vic: *mut Fighter,
     mut add: i32,
 ) {
+    melee_core::ct!("Geno_GiveStunBonus");
     let mut vs: *mut GenoState = ::core::ptr::null_mut::<GenoState>();
     if vic.is_null() || add <= 0 as i32 {
         return;
@@ -6046,6 +6137,7 @@ pub unsafe extern "C" fn Geno_GiveStunBonus(
 pub unsafe extern "C" fn Geno_TakeStunBonus(
     mut vic: *mut Fighter,
 ) -> i32 {
+    melee_core::ct!("Geno_TakeStunBonus");
     let mut vs: *mut GenoState = geno_state(vic);
     let mut b: i32 = if (*vs).stun_bonus_frame == geno_stun_frame() {
         (*vs).stun_bonus
@@ -6059,10 +6151,12 @@ pub unsafe extern "C" fn Geno_TakeStunBonus(
 pub unsafe extern "C" fn GenoGame_StateOf(
     mut fp: *mut Fighter,
 ) -> *mut c_void {
+    melee_core::ct!("GenoGame_StateOf");
     return geno_state(fp) as *mut c_void;
 }
 
 pub unsafe extern "C" fn geno_dg(mut h: u32, mut v: u32) -> u32 {
+    melee_core::ct!("geno_dg");
     h ^= v;
     h = (h as u32).wrapping_mul(0x1000193 as u32)
         as u32 as u32;
@@ -6070,12 +6164,14 @@ pub unsafe extern "C" fn geno_dg(mut h: u32, mut v: u32) -> u32 {
 }
 
 pub unsafe extern "C" fn geno_dgf(mut h: u32, mut f: f32) -> u32 {
+    melee_core::ct!("geno_dgf");
     let mut c: Anon_anon_107 = unsafe { core::mem::zeroed() };
     c.f = f;
     return geno_dg(h, c.u);
 }
 
 pub unsafe extern "C" fn GenoDefine_StateDigest(mut fp: *mut Fighter) -> u32 {
+    melee_core::ct!("GenoDefine_StateDigest");
     let mut s: *mut GenoState = ::core::ptr::null_mut::<GenoState>();
     let mut h: u32 = 0x47444946 as u32;
     let mut i: i32 = 0;
@@ -6174,6 +6270,7 @@ pub unsafe extern "C" fn geno_storage_take(
     mut used: *mut u32,
     mut bytes: i32,
 ) -> *mut c_void {
+    melee_core::ct!("geno_storage_take");
     let mut n: u32 = 0;
     let mut result: *mut c_void = ::core::ptr::null_mut::<
         c_void,
@@ -6194,12 +6291,14 @@ pub unsafe extern "C" fn geno_storage_take(
 }
 
 pub unsafe extern "C" fn Geno_ProfileStorageBytes() -> u32 {
+    melee_core::ct!("Geno_ProfileStorageBytes");
     return Geno_ProfileStorageUsed;
 }
 
 pub unsafe extern "C" fn geno_profile_alloc(
     mut bytes: i32,
 ) -> *mut c_void {
+    melee_core::ct!("geno_profile_alloc");
     let mut p: *mut c_void = geno_storage_take(
         &raw mut Geno_ProfileStorage.bytes as *mut u8,
         GENO_PROFILE_STORAGE_BYTES,
@@ -6226,6 +6325,7 @@ pub unsafe extern "C" fn geno_profile_alloc(
 }
 
 pub unsafe extern "C" fn geno_profiles_prepare() {
+    melee_core::ct!("geno_profiles_prepare");
     let mut n: i32 = Geno_ProfileCount();
     if n <= Geno_ProfileCapacity {
         return;
@@ -6259,6 +6359,7 @@ pub unsafe extern "C" fn geno_profiles_prepare() {
 }
 
 pub unsafe extern "C" fn geno_profile_prepare(mut p: i32) {
+    melee_core::ct!("geno_profile_prepare");
     geno_profiles_prepare();
     if p < 0 as i32 || p >= Geno_ProfileCapacity {
         return;
@@ -6284,6 +6385,7 @@ pub unsafe extern "C" fn GenoGame_ParamFind(
     mut family: *const i8,
     mut name: *const i8,
 ) -> i32 {
+    melee_core::ct!("GenoGame_ParamFind");
     let mut i: i32 = 0;
     i = 0 as i32;
     while i < GENO_NPARAMDEFS {
@@ -6338,6 +6440,7 @@ pub unsafe extern "C" fn geno_param(
     mut st: *mut GenoState,
     mut id: i32,
 ) -> f32 {
+    melee_core::ct!("geno_param");
     let mut p: i32 = (*st).profile as i32;
     if p < 0 as i32 || p >= Geno_ProfileCapacity
         || (*Geno_Params.offset(p as isize)).is_null() || id < 0 as i32
@@ -6349,6 +6452,7 @@ pub unsafe extern "C" fn geno_param(
 }
 
 pub unsafe extern "C" fn geno_build_params(mut p: i32) {
+    melee_core::ct!("geno_build_params");
     let mut i: i32 = 0;
     let mut n: i32 = 0;
     let mut b: Anon_anon_1134 = unsafe { core::mem::zeroed() };
@@ -6380,6 +6484,7 @@ pub unsafe extern "C" fn geno_state_valid(
     mut st: *mut GenoState,
     mut s: i32,
 ) -> i32 {
+    melee_core::ct!("geno_state_valid");
     return ((*st).profile >= 0 as i32 && s >= 0 as i32
         && s < GENO_MAX_STATES
         && s < Geno_StateCount((*st).profile as i32))
@@ -6390,6 +6495,7 @@ pub unsafe extern "C" fn geno_cur_state(
     mut fp: *mut Fighter,
     mut st: *mut GenoState,
 ) -> i32 {
+    melee_core::ct!("geno_cur_state");
     let mut s: i32 = (*fp).motion_id - GENO_MOTION_BASE;
     return if geno_state_valid(st, s) != 0 { s } else { -(1 as i32) };
 }
@@ -6398,6 +6504,7 @@ pub unsafe extern "C" fn geno_state_with(
     mut st: *mut GenoState,
     mut bhv: i32,
 ) -> i32 {
+    melee_core::ct!("geno_state_with");
     let mut s: i32 = 0;
     let mut n: i32 = if (*st).profile >= 0 as i32 {
         Geno_StateCount((*st).profile as i32)
@@ -6415,14 +6522,17 @@ pub unsafe extern "C" fn geno_state_with(
 }
 
 pub unsafe extern "C" fn geno_clampf(mut v: f32, mut lo: f32, mut hi: f32) -> f32 {
+    melee_core::ct!("geno_clampf");
     return if v < lo { lo } else if v > hi { hi } else { v };
 }
 
 pub unsafe extern "C" fn geno_absf(mut v: f32) -> f32 {
+    melee_core::ct!("geno_absf");
     return if v < 0.0f32 { -v } else { v };
 }
 
 pub unsafe extern "C" fn geno_anim_ended(mut gobj: *mut Fighter_GObj) -> i32 {
+    melee_core::ct!("geno_anim_ended");
     return if geno_test_capture != 0 {
         geno_test_anim_end as i32
     } else {
@@ -6434,6 +6544,7 @@ pub unsafe extern "C" fn geno_vanilla_row(
     mut fp: *mut Fighter,
     mut msid: i32,
 ) -> *mut MotionState {
+    melee_core::ct!("geno_vanilla_row");
     if msid < 0 as i32 || msid >= GENO_MOTION_BASE {
         return ::core::ptr::null_mut::<MotionState>();
     }
@@ -6455,6 +6566,7 @@ pub unsafe extern "C" fn geno_vanilla_row(
 }
 
 pub unsafe extern "C" fn geno_build_rows(mut fp: *mut Fighter, mut p: i32) {
+    melee_core::ct!("geno_build_rows");
     let mut n: i32 = Geno_StateCount(p);
     let mut s: i32 = 0;
     let mut slot: i32 = 0;
@@ -6565,6 +6677,7 @@ pub unsafe extern "C" fn geno_build_rows(mut fp: *mut Fighter, mut p: i32) {
 }
 
 pub unsafe extern "C" fn geno_v2_build(mut fp: *mut Fighter, mut p: i32) {
+    melee_core::ct!("geno_v2_build");
     if p < 0 as i32 || p >= GENO_MAX_PROFILES {
         return;
     }
@@ -6577,6 +6690,7 @@ pub unsafe extern "C" fn Geno_MotionRow(
     mut fp: *mut Fighter,
     mut msid: i32,
 ) -> *mut MotionState {
+    melee_core::ct!("Geno_MotionRow");
     let mut st: *mut GenoState = geno_state(fp);
     let mut s: i32 = msid - GENO_MOTION_BASE;
     if geno_state_valid(st, s) != 0 && s < *Geno_RowCount.offset((*st).profile as isize)
@@ -6599,6 +6713,7 @@ pub unsafe extern "C" fn geno_start_frame(
     mut st: *mut GenoState,
     mut s: i32,
 ) -> f32 {
+    melee_core::ct!("geno_start_frame");
     if Geno_StateBehavior((*st).profile as i32, s)
         == GENO_BHV_GLIDE as i32
     {
@@ -6617,6 +6732,7 @@ pub unsafe extern "C" fn geno_enter_state(
     mut s: i32,
     mut target: u32,
 ) -> i32 {
+    melee_core::ct!("geno_enter_state");
     let mut b: *const GenoBhvDef = geno_bhv_def(
         Geno_StateBehavior((*st).profile as i32, s),
     );
@@ -6705,6 +6821,7 @@ pub unsafe extern "C" fn geno_go(
     mut st: *mut GenoState,
     mut t: u32,
 ) -> i32 {
+    melee_core::ct!("geno_go");
     if t == GENO_NONE_T {
         return 0 as i32;
     }
@@ -6757,6 +6874,7 @@ pub unsafe extern "C" fn geno_next_of(
     mut st: *mut GenoState,
     mut s: i32,
 ) -> u32 {
+    melee_core::ct!("geno_next_of");
     let mut t: u32 = Geno_StateNext((*st).profile as i32, s) as u32;
     return if t != GENO_NONE_T {
         t
@@ -6769,6 +6887,7 @@ pub unsafe extern "C" fn geno_land_of(
     mut st: *mut GenoState,
     mut s: i32,
 ) -> u32 {
+    melee_core::ct!("geno_land_of");
     let mut t: u32 = Geno_StateLand((*st).profile as i32, s) as u32;
     return if t != GENO_NONE_T {
         t
@@ -6781,12 +6900,14 @@ pub unsafe extern "C" fn geno_lag_of(
     mut st: *mut GenoState,
     mut s: i32,
 ) -> f32 {
+    melee_core::ct!("geno_lag_of");
     let mut b: Anon_anon_1134 = unsafe { core::mem::zeroed() };
     b.u = Geno_StateLagBits((*st).profile as i32, s) as u32;
     return b.f;
 }
 
 pub unsafe extern "C" fn geno_cb_anim_next(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_cb_anim_next");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
@@ -6802,6 +6923,7 @@ pub unsafe extern "C" fn geno_cb_anim_next(mut gobj: *mut Fighter_GObj) {
 }
 
 pub unsafe extern "C" fn geno_cb_anim_loop(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_cb_anim_loop");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     if geno_anim_ended(gobj) != 0 && geno_test_capture == 0 {
@@ -6818,9 +6940,10 @@ pub unsafe extern "C" fn geno_cb_anim_loop(mut gobj: *mut Fighter_GObj) {
     }
 }
 
-pub unsafe extern "C" fn geno_cb_nothing(mut gobj: *mut Fighter_GObj) {}
+pub unsafe extern "C" fn geno_cb_nothing(mut gobj: *mut Fighter_GObj) { melee_core::ct!("geno_cb_nothing");}
 
 pub unsafe extern "C" fn geno_cb_phys_air(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_cb_phys_air");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     if (*geno_state(fp)).fall_ledge != 0 {
@@ -6833,6 +6956,7 @@ pub unsafe extern "C" fn geno_cb_phys_air(mut gobj: *mut Fighter_GObj) {
 }
 
 pub unsafe extern "C" fn geno_cb_phys_air_nodrift(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_cb_phys_air_nodrift");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     ftCommon_Fall(fp, (*fp).co_attrs.gravity, (*fp).co_attrs.terminal_velocity);
@@ -6840,6 +6964,7 @@ pub unsafe extern "C" fn geno_cb_phys_air_nodrift(mut gobj: *mut Fighter_GObj) {
 }
 
 pub unsafe extern "C" fn geno_cb_phys_air_drift(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_cb_phys_air_drift");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     if (*geno_state(fp)).fall_ledge != 0 {
@@ -6853,6 +6978,7 @@ pub unsafe extern "C" fn geno_cb_phys_air_drift(mut gobj: *mut Fighter_GObj) {
 }
 
 pub unsafe extern "C" fn geno_cb_phys_brake(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_cb_phys_brake");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
@@ -6901,10 +7027,12 @@ pub unsafe extern "C" fn geno_cb_phys_brake(mut gobj: *mut Fighter_GObj) {
 }
 
 pub unsafe extern "C" fn geno_cb_phys_ground(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_cb_phys_ground");
     ft_80084F3C(gobj);
 }
 
 pub unsafe extern "C" fn geno_cb_phys_auto(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_cb_phys_auto");
     if (*(HSD_GObjGetUserData(gobj as *mut HSD_GObj) as *mut Fighter)).ground_or_air
         as i32 == GA_Ground as i32
     {
@@ -6915,6 +7043,7 @@ pub unsafe extern "C" fn geno_cb_phys_auto(mut gobj: *mut Fighter_GObj) {
 }
 
 pub unsafe extern "C" fn geno_land(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_land");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
@@ -6954,6 +7083,7 @@ pub unsafe extern "C" fn geno_land(mut gobj: *mut Fighter_GObj) {
 }
 
 pub unsafe extern "C" fn geno_cb_coll_air(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_cb_coll_air");
     if (*geno_state(HSD_GObjGetUserData(gobj as *mut HSD_GObj) as *mut Fighter)).ledge
         == 2 as i32
     {
@@ -6975,22 +7105,27 @@ pub unsafe extern "C" fn geno_cb_coll_air(mut gobj: *mut Fighter_GObj) {
 }
 
 pub unsafe extern "C" fn geno_cb_coll_air_noledge(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_cb_coll_air_noledge");
     ft_80082C74(gobj, Some(geno_land as unsafe extern "C" fn(*mut Fighter_GObj) -> ()));
 }
 
 pub unsafe extern "C" fn geno_cb_coll_ground(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_cb_coll_ground");
     ft_80084104(gobj);
 }
 
 pub unsafe extern "C" fn geno_cb_coll_ground_stop(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_cb_coll_ground_stop");
     ft_80084280(gobj);
 }
 
 pub unsafe extern "C" fn geno_become_air(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_become_air");
     ftCommon_8007D5D4(HSD_GObjGetUserData(gobj as *mut HSD_GObj) as *mut Fighter);
 }
 
 pub unsafe extern "C" fn geno_become_ground(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_become_ground");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut vx: f32 = (*fp).self_vel.x;
@@ -7002,6 +7137,7 @@ pub unsafe extern "C" fn geno_become_ground(mut gobj: *mut Fighter_GObj) {
 }
 
 pub unsafe extern "C" fn geno_coll_both(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_coll_both");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     if (*fp).ground_or_air as i32 == GA_Ground as i32 {
@@ -7021,6 +7157,7 @@ pub unsafe extern "C" fn geno_motion_opts(
     mut st: *mut GenoState,
     mut s: i32,
 ) -> u32 {
+    melee_core::ct!("geno_motion_opts");
     return if s >= 0 as i32 {
         Geno_StateMotion((*st).profile as i32, s) as u32
     } else {
@@ -7032,6 +7169,7 @@ pub unsafe extern "C" fn geno_motion_gravity(
     mut st: *mut GenoState,
     mut s: i32,
 ) -> f32 {
+    melee_core::ct!("geno_motion_gravity");
     let mut b: Anon_anon_1134 = unsafe { core::mem::zeroed() };
     b.u = (if s >= 0 as i32 {
         Geno_StateGravityBits((*st).profile as i32, s)
@@ -7043,6 +7181,7 @@ pub unsafe extern "C" fn geno_motion_gravity(
 }
 
 pub unsafe extern "C" fn geno_cb_phys_anim_motion(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_cb_phys_anim_motion");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
@@ -7109,6 +7248,7 @@ pub unsafe extern "C" fn geno_cb_phys_anim_motion(mut gobj: *mut Fighter_GObj) {
 }
 
 pub unsafe extern "C" fn geno_motion_land(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_motion_land");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
@@ -7136,6 +7276,7 @@ pub unsafe extern "C" fn geno_coll_air_ledge(
     mut both: i32,
     mut land: HSD_GObjEvent,
 ) {
+    melee_core::ct!("geno_coll_air_ledge");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut coll: *mut CollData = &raw mut (*fp).coll_data;
@@ -7202,6 +7343,7 @@ pub unsafe extern "C" fn geno_coll_air_ledge(
 pub unsafe extern "C" fn Geno_FallSpecialColl(
     mut gobj: *mut Fighter_GObj,
 ) -> i32 {
+    melee_core::ct!("Geno_FallSpecialColl");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     if ((*fp).kind as i32) < Ft_Kind_Mex0 as i32
@@ -7222,6 +7364,7 @@ pub unsafe extern "C" fn geno_ledge_mode(
     mut fp: *mut Fighter,
     mut st: *mut GenoState,
 ) -> i32 {
+    melee_core::ct!("geno_ledge_mode");
     let mut s: i32 = geno_cur_state(fp, st);
     return if (*st).ledge >= 0 as i32 {
         (*st).ledge as i32
@@ -7234,6 +7377,7 @@ pub unsafe extern "C" fn geno_ledge_mode(
 pub unsafe extern "C" fn GenoGame_TestLedgeMode(
     mut fp: *mut Fighter,
 ) -> i32 {
+    melee_core::ct!("GenoGame_TestLedgeMode");
     return geno_ledge_mode(fp, geno_state(fp));
 }
 
@@ -7241,10 +7385,12 @@ pub unsafe extern "C" fn GenoGame_TestStartFrame(
     mut fp: *mut Fighter,
     mut s: i32,
 ) -> f32 {
+    melee_core::ct!("GenoGame_TestStartFrame");
     return geno_start_frame(fp, geno_state(fp), s);
 }
 
 pub unsafe extern "C" fn geno_cb_coll_anim_motion(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_cb_coll_anim_motion");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
@@ -7272,6 +7418,7 @@ pub unsafe extern "C" fn geno_cb_coll_anim_motion(mut gobj: *mut Fighter_GObj) {
 }
 
 pub unsafe extern "C" fn geno_jump_held(mut fp: *mut Fighter) -> i32 {
+    melee_core::ct!("geno_jump_held");
     return ((*fp).input.held_buttons[0 as i32 as usize]
         & HSD_PAD_XY as HSD_Pad != 0 as HSD_Pad
         || !p_ftCommonData.is_null()
@@ -7283,6 +7430,7 @@ pub unsafe extern "C" fn geno_in_air_jump(
     mut fp: *mut Fighter,
     mut st: *mut GenoState,
 ) -> i32 {
+    melee_core::ct!("geno_in_air_jump");
     let mut m: i32 = (*fp).motion_id;
     if (*fp).ground_or_air as i32 != GA_Air as i32 {
         return 0 as i32;
@@ -7309,6 +7457,7 @@ pub unsafe extern "C" fn geno_glide_entry(
     mut fp: *mut Fighter,
     mut st: *mut GenoState,
 ) -> i32 {
+    melee_core::ct!("geno_glide_entry");
     let mut start: i32 = 0;
     let mut need: i32 = 0;
     if geno_param(st, GENO_P_GLIDE_ENTRY as i32) == 0.0f32
@@ -7367,6 +7516,7 @@ pub unsafe extern "C" fn geno_glide_start_enter(
     mut st: *mut GenoState,
     mut s: i32,
 ) {
+    melee_core::ct!("geno_glide_start_enter");
     if (*fp).ground_or_air as i32 == GA_Ground as i32 {
         ftCommon_8007D5D4(fp);
     }
@@ -7393,6 +7543,7 @@ pub unsafe extern "C" fn geno_glide_start_enter(
 }
 
 pub unsafe extern "C" fn geno_glide_start_anim(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_glide_start_anim");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
@@ -7408,6 +7559,7 @@ pub unsafe extern "C" fn geno_accel_brake(
     mut stable: f32,
     mut brake: f32,
 ) -> f32 {
+    melee_core::ct!("geno_accel_brake");
     let mut n: f32 = v + a;
     if stable >= 0.0f32 && brake > 0.0f32 {
         if n > stable && v > 0.0f32 {
@@ -7431,6 +7583,7 @@ pub unsafe extern "C" fn geno_accel_brake(
 }
 
 pub unsafe extern "C" fn geno_glide_start_phys(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_glide_start_phys");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
@@ -7459,6 +7612,7 @@ pub unsafe extern "C" fn geno_glide_enter(
     mut st: *mut GenoState,
     mut s: i32,
 ) {
+    melee_core::ct!("geno_glide_enter");
     (*st).move_f[1 as i32 as usize] = geno_param(
         st,
         GENO_P_GLIDE_W0 as i32 + 5 as i32,
@@ -7487,6 +7641,7 @@ pub unsafe extern "C" fn geno_glide_enter(
 }
 
 pub unsafe extern "C" fn geno_glide_step(mut fp: *mut Fighter, mut st: *mut GenoState) {
+    melee_core::ct!("geno_glide_step");
     let mut lr: f32 = if (*fp).facing_dir < 0.0f32 { -1.0f32 } else { 1.0f32 };
     let mut sx: f32 = (*fp).input.lstick[0 as i32 as usize].x;
     let mut sy: f32 = (*fp).input.lstick[0 as i32 as usize].y;
@@ -7661,6 +7816,7 @@ pub unsafe extern "C" fn geno_glide_end(
     mut st: *mut GenoState,
     mut reason: i32,
 ) {
+    melee_core::ct!("geno_glide_end");
     let mut s: i32 = geno_cur_state(fp, st);
     (*st).move_i[1 as i32 as usize] = reason as i32;
     Geno_Event(
@@ -7695,6 +7851,7 @@ pub unsafe extern "C" fn geno_glide_end(
 }
 
 pub unsafe extern "C" fn geno_glide_anim(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_glide_anim");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
@@ -7717,6 +7874,7 @@ pub unsafe extern "C" fn geno_glide_anim(mut gobj: *mut Fighter_GObj) {
 }
 
 pub unsafe extern "C" fn geno_glide_iasa(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_glide_iasa");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
@@ -7731,6 +7889,7 @@ pub unsafe extern "C" fn geno_glide_iasa(mut gobj: *mut Fighter_GObj) {
 }
 
 pub unsafe extern "C" fn geno_glide_phys(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_glide_phys");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
@@ -7743,6 +7902,7 @@ pub unsafe extern "C" fn geno_glide_phys(mut gobj: *mut Fighter_GObj) {
 }
 
 pub unsafe extern "C" fn geno_glide_coll(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_glide_coll");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
@@ -7757,9 +7917,10 @@ pub unsafe extern "C" fn geno_glide_attack_enter(
     mut fp: *mut Fighter,
     mut st: *mut GenoState,
     mut s: i32,
-) {}
+) { melee_core::ct!("geno_glide_attack_enter");}
 
 pub unsafe extern "C" fn geno_glide_attack_phys(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_glide_attack_phys");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     ftCommon_Fall(fp, (*fp).co_attrs.gravity, (*fp).co_attrs.terminal_velocity);
@@ -7772,6 +7933,7 @@ pub unsafe extern "C" fn geno_glide_landing_enter(
     mut st: *mut GenoState,
     mut s: i32,
 ) {
+    melee_core::ct!("geno_glide_landing_enter");
     (*fp).gr_vel = (*fp).self_vel.x as f32;
 }
 
@@ -7781,12 +7943,14 @@ pub unsafe extern "C" fn geno_glide_end_enter(
     mut st: *mut GenoState,
     mut s: i32,
 ) {
+    melee_core::ct!("geno_glide_end_enter");
     if geno_param(st, GENO_P_GLIDE_END_HELPLESS as i32) != 0.0f32 {
         ftCommon_UseAllJumps(fp);
     }
 }
 
 pub unsafe extern "C" fn geno_glide_after_anim(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_glide_after_anim");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
@@ -7807,23 +7971,28 @@ pub unsafe extern "C" fn geno_glide_after_anim(mut gobj: *mut Fighter_GObj) {
 }
 
 pub unsafe extern "C" fn geno_glide_end_phys(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_glide_end_phys");
     geno_glide_attack_phys(gobj);
 }
 
 pub unsafe extern "C" fn GenoGame_TestModelRotX() -> f32 {
+    melee_core::ct!("GenoGame_TestModelRotX");
     return geno_test_rotx;
 }
 
 pub unsafe extern "C" fn GenoGame_TestJointRate() -> f32 {
+    melee_core::ct!("GenoGame_TestJointRate");
     return geno_test_joint_rate;
 }
 
 pub unsafe extern "C" fn GenoGame_TestPoseReset(mut v: f32) {
+    melee_core::ct!("GenoGame_TestPoseReset");
     geno_test_rotx = v;
     geno_test_joint_rate = v;
 }
 
 pub unsafe extern "C" fn geno_stick_dz(mut v: f32) -> f32 {
+    melee_core::ct!("geno_stick_dz");
     return if geno_absf(v) < 0.2875f32 {
         0.0f32
     } else {
@@ -7836,6 +8005,7 @@ pub unsafe extern "C" fn geno_helpless(
     mut fp: *mut Fighter,
     mut st: *mut GenoState,
 ) {
+    melee_core::ct!("geno_helpless");
     geno_do_change(
         gobj,
         fp,
@@ -7855,12 +8025,14 @@ pub unsafe extern "C" fn geno_into_wall(
     mut fp: *mut Fighter,
     mut vx: f32,
 ) -> i32 {
+    melee_core::ct!("geno_into_wall");
     let mut f: u32 = (*fp).coll_data.env_flags as u32;
     return (vx >= 0.0f32 && f & Collide_RightWallMask as u32 != 0
         || vx < 0.0f32 && f & Collide_LeftWallMask as u32 != 0) as i32;
 }
 
 pub unsafe extern "C" fn geno_turn(mut fp: *mut Fighter) {
+    melee_core::ct!("geno_turn");
     (*fp).facing_dir = -(*fp).facing_dir;
     if !(*fp).parts.is_null() {
         ftPartSetRotY(
@@ -7877,6 +8049,7 @@ pub unsafe extern "C" fn geno_joint_anim_f(
     mut func: *mut c_void,
     mut v: f32,
 ) {
+    melee_core::ct!("geno_joint_anim_f");
     let mut root: *mut HSD_JObj = HSD_GObjGetHSDObj(gobj as *mut HSD_GObj)
         as *mut HSD_JObj;
     if !root.is_null() {
@@ -7905,6 +8078,7 @@ pub unsafe extern "C" fn geno_joint_anim_loop(
     mut gobj: *mut Fighter_GObj,
     mut fp: *mut Fighter,
 ) {
+    melee_core::ct!("geno_joint_anim_loop");
     let mut root: *mut HSD_JObj = HSD_GObjGetHSDObj(gobj as *mut HSD_GObj)
         as *mut HSD_JObj;
     if !root.is_null() {
@@ -7944,6 +8118,7 @@ pub unsafe extern "C" fn geno_joint_anim_loop(
 }
 
 pub unsafe extern "C" fn geno_tornado_spin_on(mut st: *mut GenoState) -> i32 {
+    melee_core::ct!("geno_tornado_spin_on");
     return (geno_param(st, GENO_P_TORNADO_SPIN_ANIM as i32) != 0.0f32)
         as i32;
 }
@@ -7953,6 +8128,7 @@ pub unsafe extern "C" fn geno_tornado_spin_rate(
     mut fp: *mut Fighter,
     mut st: *mut GenoState,
 ) {
+    melee_core::ct!("geno_tornado_spin_rate");
     let mut rate: f32 = geno_param(st, GENO_P_TORNADO_SPIN_ANIM as i32)
         * (*st).move_f[0 as i32 as usize];
     if geno_tornado_spin_on(st) == 0 {
@@ -7978,6 +8154,7 @@ pub unsafe extern "C" fn geno_tornado_spin_start(
     mut fp: *mut Fighter,
     mut st: *mut GenoState,
 ) {
+    melee_core::ct!("geno_tornado_spin_start");
     let mut period: f32 = geno_param(
         st,
         GENO_P_TORNADO_SPIN_PERIOD as i32,
@@ -8013,6 +8190,7 @@ pub unsafe extern "C" fn geno_tornado_enter(
     mut st: *mut GenoState,
     mut s: i32,
 ) {
+    melee_core::ct!("geno_tornado_enter");
     (*fp).self_vel.x
         *= geno_param(
             st,
@@ -8046,6 +8224,7 @@ pub unsafe extern "C" fn geno_tornado_enter(
 }
 
 pub unsafe extern "C" fn geno_tornado_anim(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_tornado_anim");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
@@ -8077,6 +8256,7 @@ pub unsafe extern "C" fn geno_tornado_anim(mut gobj: *mut Fighter_GObj) {
 }
 
 pub unsafe extern "C" fn geno_tornado_phys(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_tornado_phys");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
@@ -8256,6 +8436,7 @@ pub unsafe extern "C" fn geno_state_nth(
     mut bhv: i32,
     mut n: i32,
 ) -> i32 {
+    melee_core::ct!("geno_state_nth");
     let mut s: i32 = 0;
     let mut k: i32 = 0 as i32;
     let mut c: i32 = if (*st).profile >= 0 as i32 {
@@ -8281,6 +8462,7 @@ pub unsafe extern "C" fn geno_state_order(
     mut bhv: i32,
     mut s: i32,
 ) -> i32 {
+    melee_core::ct!("geno_state_order");
     let mut i: i32 = 0;
     let mut k: i32 = 0 as i32;
     i = 0 as i32;
@@ -8305,6 +8487,7 @@ pub unsafe extern "C" fn geno_pair_swap(
     mut st: *mut GenoState,
     mut bhv: i32,
 ) -> i32 {
+    melee_core::ct!("geno_pair_swap");
     let mut s: i32 = geno_cur_state(fp, st);
     let mut k: i32 = geno_state_order(st, bhv, s);
     let mut want_air: i32 = ((*fp).ground_or_air as i32
@@ -8327,6 +8510,7 @@ pub unsafe extern "C" fn geno_pair_swap(
 }
 
 pub unsafe extern "C" fn geno_drill_pose(mut fp: *mut Fighter, mut st: *mut GenoState) {
+    melee_core::ct!("geno_drill_pose");
     let mut rx: f32 = 0.0f32;
     if geno_param(st, GENO_P_DRILL_PITCH_MODEL as i32) != 0.0f32 {
         rx = (-(*st).move_f[0 as i32 as usize] * GENO_DEG2RAD) as f32;
@@ -8338,6 +8522,7 @@ pub unsafe extern "C" fn geno_drill_pose(mut fp: *mut Fighter, mut st: *mut Geno
 }
 
 pub unsafe extern "C" fn geno_drill_hit(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_drill_hit");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
@@ -8352,6 +8537,7 @@ pub unsafe extern "C" fn geno_drill_hit(mut gobj: *mut Fighter_GObj) {
 }
 
 pub unsafe extern "C" fn geno_drill_shield(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_drill_shield");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
@@ -8369,6 +8555,7 @@ pub unsafe extern "C" fn geno_drill_start_enter(
     mut st: *mut GenoState,
     mut s: i32,
 ) {
+    melee_core::ct!("geno_drill_start_enter");
     if (*st).enter_keep != 0 {
         return;
     }
@@ -8394,6 +8581,7 @@ pub unsafe extern "C" fn geno_drill_start_enter(
 }
 
 pub unsafe extern "C" fn geno_drill_start_phys(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_drill_start_phys");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
@@ -8413,6 +8601,7 @@ pub unsafe extern "C" fn geno_drill_start_phys(mut gobj: *mut Fighter_GObj) {
 }
 
 pub unsafe extern "C" fn geno_drill_start_coll(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_drill_start_coll");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     geno_coll_both(gobj);
@@ -8425,6 +8614,7 @@ pub unsafe extern "C" fn geno_drill_enter(
     mut st: *mut GenoState,
     mut s: i32,
 ) {
+    melee_core::ct!("geno_drill_enter");
     (*st).move_f[0 as i32 as usize] = 0.0f32 as f32;
     (*st).move_f[1 as i32 as usize] = geno_param(
         st,
@@ -8448,6 +8638,7 @@ pub unsafe extern "C" fn geno_drill_end_state(
     mut fp: *mut Fighter,
     mut st: *mut GenoState,
 ) -> i32 {
+    melee_core::ct!("geno_drill_end_state");
     let mut e: i32 = geno_state_nth(
         st,
         GENO_BHV_DRILL_END as i32,
@@ -8470,6 +8661,7 @@ pub unsafe extern "C" fn geno_drill_bounce(
     mut st: *mut GenoState,
     mut reason: i32,
 ) {
+    melee_core::ct!("geno_drill_bounce");
     let mut e: i32 = geno_drill_end_state(fp, st);
     Geno_Event(
         19 as i32,
@@ -8493,6 +8685,7 @@ pub unsafe extern "C" fn geno_drill_bounce(
 }
 
 pub unsafe extern "C" fn geno_drill_anim(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_drill_anim");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
@@ -8523,6 +8716,7 @@ pub unsafe extern "C" fn geno_drill_anim(mut gobj: *mut Fighter_GObj) {
 }
 
 pub unsafe extern "C" fn geno_drill_phys(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_drill_phys");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
@@ -8556,6 +8750,7 @@ pub unsafe extern "C" fn geno_drill_phys(mut gobj: *mut Fighter_GObj) {
 }
 
 pub unsafe extern "C" fn geno_drill_coll(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_drill_coll");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
@@ -8586,6 +8781,7 @@ pub unsafe extern "C" fn geno_drill_end_enter(
     mut st: *mut GenoState,
     mut s: i32,
 ) {
+    melee_core::ct!("geno_drill_end_enter");
     let mut lr: f32 = if (*fp).facing_dir < 0.0f32 { -1.0f32 } else { 1.0f32 };
     geno_drill_pose(fp, st);
     if (*st).enter_keep != 0 {
@@ -8601,6 +8797,7 @@ pub unsafe extern "C" fn geno_drill_end_enter(
 }
 
 pub unsafe extern "C" fn geno_drill_end_anim(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_drill_end_anim");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
@@ -8618,6 +8815,7 @@ pub unsafe extern "C" fn geno_drill_end_anim(mut gobj: *mut Fighter_GObj) {
 }
 
 pub unsafe extern "C" fn geno_drill_end_phys(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_drill_end_phys");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
@@ -8647,6 +8845,7 @@ pub unsafe extern "C" fn geno_cape_enter(
     mut st: *mut GenoState,
     mut s: i32,
 ) {
+    melee_core::ct!("geno_cape_enter");
     if (*st).enter_keep != 0 {
         return;
     }
@@ -8674,12 +8873,14 @@ pub unsafe extern "C" fn geno_cape_steer(
     mut acc: f32,
     mut max: f32,
 ) -> f32 {
+    melee_core::ct!("geno_cape_steer");
     let mut want: f32 = stick * max;
     let mut d: f32 = geno_clampf(want - v, -acc, acc);
     return geno_clampf(v + d, -max, max);
 }
 
 pub unsafe extern "C" fn geno_cape_phys(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_cape_phys");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
@@ -8745,6 +8946,7 @@ pub unsafe extern "C" fn geno_cape_phys(mut gobj: *mut Fighter_GObj) {
 }
 
 pub unsafe extern "C" fn geno_cape_coll(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_cape_coll");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     geno_coll_both(gobj);
@@ -8752,6 +8954,7 @@ pub unsafe extern "C" fn geno_cape_coll(mut gobj: *mut Fighter_GObj) {
 }
 
 pub unsafe extern "C" fn geno_cape_anim(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_cape_anim");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
@@ -8811,6 +9014,7 @@ pub unsafe extern "C" fn geno_cape_anim(mut gobj: *mut Fighter_GObj) {
 }
 
 pub unsafe extern "C" fn geno_cape_after_coll(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_cape_after_coll");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
@@ -8830,10 +9034,12 @@ pub unsafe extern "C" fn GenoGame_TestPairSwap(
     mut fp: *mut Fighter,
     mut bhv: i32,
 ) -> i32 {
+    melee_core::ct!("GenoGame_TestPairSwap");
     return geno_pair_swap((*fp).gobj as *mut Fighter_GObj, fp, geno_state(fp), bhv);
 }
 
 pub unsafe extern "C" fn geno_cb_iasa_interrupt(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_cb_iasa_interrupt");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     if (*fp).allow_interrupt() == 0 {
@@ -8847,18 +9053,21 @@ pub unsafe extern "C" fn geno_cb_iasa_interrupt(mut gobj: *mut Fighter_GObj) {
 }
 
 pub unsafe extern "C" fn geno_lua_fbits(mut f: f32) -> u32 {
+    melee_core::ct!("geno_lua_fbits");
     let mut c: Anon_anon_107 = unsafe { core::mem::zeroed() };
     c.f = f;
     return c.u;
 }
 
 pub unsafe extern "C" fn geno_lua_bitsf(mut u: u32) -> f32 {
+    melee_core::ct!("geno_lua_bitsf");
     let mut c: Anon_anon_107 = unsafe { core::mem::zeroed() };
     c.u = u;
     return c.f;
 }
 
 pub unsafe extern "C" fn geno_lua_block(mut fp: *mut Fighter) -> *mut GenoLuaBlock {
+    melee_core::ct!("geno_lua_block");
     let mut p: i32 = if ((*fp).player_id as i32)
         < GENO_PLAYERS
     {
@@ -8880,6 +9089,7 @@ pub unsafe extern "C" fn geno_lua_block(mut fp: *mut Fighter) -> *mut GenoLuaBlo
 pub unsafe extern "C" fn GenoGame_LuaBlockOf(
     mut fp: *mut Fighter,
 ) -> *mut c_void {
+    melee_core::ct!("GenoGame_LuaBlockOf");
     return geno_lua_block(fp) as *mut c_void;
 }
 
@@ -8887,6 +9097,7 @@ pub unsafe extern "C" fn GenoGame_LuaInfo(
     mut port: i32,
     mut what: i32,
 ) -> i32 {
+    melee_core::ct!("GenoGame_LuaInfo");
     let mut g: *mut Fighter_GObj = ::core::ptr::null_mut::<Fighter_GObj>();
     let mut cur: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     if HSD_GObjPLinkHead.is_null() {
@@ -8932,6 +9143,7 @@ pub unsafe extern "C" fn geno_lua_has(
     mut s: i32,
     mut phase: i32,
 ) -> i32 {
+    melee_core::ct!("geno_lua_has");
     return ((*st).profile >= 0 as i32 && s >= 0 as i32
         && Geno_LuaFn((*st).profile as i32, s, phase) != 0)
         as i32;
@@ -8941,6 +9153,7 @@ pub unsafe extern "C" fn geno_lua_hit_from(
     mut fp: *mut Fighter,
     mut st: *mut GenoState,
 ) -> u32 {
+    melee_core::ct!("geno_lua_hit_from");
     let mut cur: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     if (*st).hit_port < 0 as i32 || HSD_GObjPLinkHead.is_null() {
         return 0 as u32;
@@ -8966,6 +9179,7 @@ pub unsafe extern "C" fn geno_lua_fill(
     mut lb: *mut GenoLuaBlock,
     mut anim_ended: i32,
 ) {
+    melee_core::ct!("geno_lua_fill");
     let mut io: *mut GenoLuaIo = &raw mut geno_lua_io;
     let mut i: i32 = 0;
     i = 0 as i32;
@@ -9058,6 +9272,7 @@ pub unsafe extern "C" fn geno_lua_run(
     mut s: i32,
     mut phase: i32,
 ) -> i32 {
+    melee_core::ct!("geno_lua_run");
     let mut lb: *mut GenoLuaBlock = ::core::ptr::null_mut::<GenoLuaBlock>();
     let mut io: *mut GenoLuaIo = &raw mut geno_lua_io;
     let mut rc: i32 = 0;
@@ -9232,12 +9447,14 @@ pub unsafe extern "C" fn geno_lua_enter(
     mut st: *mut GenoState,
     mut s: i32,
 ) {
+    melee_core::ct!("geno_lua_enter");
     if geno_lua_has(st, s, GENO_LUA_PHASE_ENTER) != 0 {
         geno_lua_run(gobj, fp, st, s, GENO_LUA_PHASE_ENTER);
     }
 }
 
 pub unsafe extern "C" fn geno_cb_anim_lua(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_cb_anim_lua");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
@@ -9258,6 +9475,7 @@ pub unsafe extern "C" fn geno_lua_digest(
     mut fp: *mut Fighter,
     mut st: *mut GenoState,
 ) -> u32 {
+    melee_core::ct!("geno_lua_digest");
     let mut lb: *mut GenoLuaBlock = ::core::ptr::null_mut::<GenoLuaBlock>();
     let mut h: u32 = 0x4c554131 as u32;
     let mut i: i32 = 0;
@@ -9281,6 +9499,7 @@ pub unsafe extern "C" fn geno_cb_def(
     mut slot: i32,
     mut id: i32,
 ) -> *const GenoCbDef {
+    melee_core::ct!("geno_cb_def");
     let mut i: i32 = 0;
     i = 0 as i32;
     while i < GENO_NCBS {
@@ -9294,6 +9513,7 @@ pub unsafe extern "C" fn geno_cb_def(
 }
 
 pub unsafe extern "C" fn geno_bhv_def(mut id: i32) -> *const GenoBhvDef {
+    melee_core::ct!("geno_bhv_def");
     let mut i: i32 = 0;
     i = 0 as i32;
     while i < GENO_NBHVS {
@@ -9310,6 +9530,7 @@ pub unsafe extern "C" fn geno_bhv_def(mut id: i32) -> *const GenoBhvDef {
 pub unsafe extern "C" fn GenoGame_BehaviorFind(
     mut name: *const i8,
 ) -> i32 {
+    melee_core::ct!("GenoGame_BehaviorFind");
     let mut i: i32 = 0;
     i = 1 as i32;
     while i < GENO_NBHVS {
@@ -9325,6 +9546,7 @@ pub unsafe extern "C" fn GenoGame_CallbackFind(
     mut slot: i32,
     mut name: *const i8,
 ) -> i32 {
+    melee_core::ct!("GenoGame_CallbackFind");
     let mut i: i32 = 0;
     if geno_streq(name, b"like\0" as *const u8 as *const i8) != 0 {
         return GENO_CB_LIKE;
@@ -9346,6 +9568,7 @@ pub unsafe extern "C" fn geno_v2_preanim(
     mut fp: *mut Fighter,
     mut st: *mut GenoState,
 ) -> i32 {
+    melee_core::ct!("geno_v2_preanim");
     return geno_glide_entry(gobj, fp, st);
 }
 
@@ -9353,6 +9576,7 @@ pub unsafe extern "C" fn Geno_SpecialEnter(
     mut gobj: *mut Fighter_GObj,
     mut which: i32,
 ) -> i32 {
+    melee_core::ct!("Geno_SpecialEnter");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
@@ -9405,6 +9629,7 @@ pub unsafe extern "C" fn Geno_LabEnterState(
     mut fp: *mut Fighter,
     mut s: i32,
 ) -> i32 {
+    melee_core::ct!("Geno_LabEnterState");
     let mut st: *mut GenoState = geno_state(fp);
     if (*st).profile < 0 as i32 || geno_state_valid(st, s) == 0
         || s >= *Geno_RowCount.offset((*st).profile as isize)
@@ -9424,6 +9649,7 @@ pub unsafe extern "C" fn Geno_MotionRowIfAny(
     mut fp: *mut Fighter,
     mut msid: i32,
 ) -> *mut MotionState {
+    melee_core::ct!("Geno_MotionRowIfAny");
     let mut st: *mut GenoState = geno_state(fp);
     let mut s: i32 = msid - GENO_MOTION_BASE;
     return if geno_state_valid(st, s) != 0
@@ -9442,6 +9668,7 @@ pub unsafe extern "C" fn GenoGame_DefineApplyRows(
     mut specific: *mut MotionState,
     mut subactions: i32,
 ) {
+    melee_core::ct!("GenoGame_DefineApplyRows");
     let mut i: i32 = 0;
     let mut n: i32 = Geno_DefineOverrideCount(kind);
     i = 0 as i32;
@@ -9568,6 +9795,7 @@ pub unsafe extern "C" fn Item_InitSpawnCommonFields(
     mut facing_dir: f32,
     mut initial_collision: i32,
 ) {
+    melee_core::ct!("Item_InitSpawnCommonFields");
     (*spawn).facing_dir = facing_dir;
     (*spawn).x3C_damage = 0 as i16;
     (*spawn).vel.z = 0.0f32 as f32;
@@ -9584,12 +9812,14 @@ pub unsafe extern "C" fn Item_InitSpawnPositionFromParent(
     mut parent: *mut HSD_GObj,
     mut pos: *mut Vec,
 ) {
+    melee_core::ct!("Item_InitSpawnPositionFromParent");
     (*spawn).prev_pos = *pos;
     (*spawn).prev_pos.z = 0.0f32 as f32;
     it_8026BB68(parent as *mut Item_GObj, &raw mut (*spawn).pos);
 }
 
 pub unsafe extern "C" fn geno_art_vars(mut ip: *mut Item) -> *mut GenoArtVars {
+    melee_core::ct!("geno_art_vars");
     return &raw mut (*ip).xDD4_itemVar as *mut GenoArtVars;
 }
 
@@ -9598,6 +9828,7 @@ pub unsafe extern "C" fn geno_art_f(
     mut a: i32,
     mut id: i32,
 ) -> f32 {
+    melee_core::ct!("geno_art_f");
     let mut b: Anon_anon_1134 = unsafe { core::mem::zeroed() };
     b.u = Geno_ArticleParam(p, a, id) as u32;
     return b.f;
@@ -9609,6 +9840,7 @@ pub unsafe extern "C" fn geno_art_hf(
     mut h: i32,
     mut id: i32,
 ) -> f32 {
+    melee_core::ct!("geno_art_hf");
     let mut b: Anon_anon_1134 = unsafe { core::mem::zeroed() };
     b.u = Geno_ArticleHitParam(p, a, h, id) as u32;
     return b.f;
@@ -9619,6 +9851,7 @@ pub unsafe extern "C" fn geno_art_of_kind(
     mut p: *mut i32,
     mut a: *mut i32,
 ) -> i32 {
+    melee_core::ct!("geno_art_of_kind");
     if !(kind >= GENO_ART_KIND_BASE && kind < GENO_ART_KIND_END
         || kind >= GENO_ART_EXTRA_BASE && kind < GENO_ART_EXTRA_END)
     {
@@ -9643,6 +9876,7 @@ pub unsafe extern "C" fn Geno_ArticleStunBonus(
     mut hit: *mut HitCapsule,
     mut vic: *mut Fighter,
 ) {
+    melee_core::ct!("Geno_ArticleStunBonus");
     let mut p: i32 = 0;
     let mut a: i32 = 0;
     let mut slot: i32 = 0;
@@ -9677,6 +9911,7 @@ pub unsafe extern "C" fn Geno_ArticleStunBonus(
 }
 
 pub unsafe extern "C" fn geno_art_prepare(mut p: i32) {
+    melee_core::ct!("geno_art_prepare");
     let mut n: i32 = Geno_ProfileCount();
     let mut i: i32 = 0;
     if n > Geno_ArtProfileCapacity {
@@ -9738,6 +9973,7 @@ pub unsafe extern "C" fn geno_art_build(
     mut p: i32,
     mut a: i32,
 ) {
+    melee_core::ct!("geno_art_build");
     geno_art_prepare(p);
     let mut d: *mut Article = (*Geno_ArtDesc.offset(p as isize)).offset(a as isize)
         as *mut Article;
@@ -9771,14 +10007,17 @@ pub unsafe extern "C" fn geno_art_build(
 }
 
 pub unsafe extern "C" fn geno_art_unref(mut gobj: *mut Item_GObj, mut ref_0: *mut HSD_GObj) {
+    melee_core::ct!("geno_art_unref");
     it_8026B894(gobj, ref_0);
 }
 
 pub unsafe extern "C" fn geno_stun_frame() -> i32 {
+    melee_core::ct!("geno_stun_frame");
     return geno_fx_frame;
 }
 
 pub unsafe extern "C" fn geno_art_destroyed(mut gobj: *mut Item_GObj) {
+    melee_core::ct!("geno_art_destroyed");
     hsd_8039D5DC(HSD_GObjGetHSDObj(gobj as *mut HSD_GObj) as *mut HSD_JObj);
     Fx_Detach(
         HSD_GObjGetHSDObj(gobj as *mut HSD_GObj) as *mut HSD_JObj as i32,
@@ -9786,6 +10025,7 @@ pub unsafe extern "C" fn geno_art_destroyed(mut gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn geno_art_hide_model(mut j: *mut HSD_JObj) {
+    melee_core::ct!("geno_art_hide_model");
     while !j.is_null() {
         let mut d: *mut HSD_DObj = ::core::ptr::null_mut::<HSD_DObj>();
         d = (if (*j).flags & (JOBJ_PTCL | JOBJ_SPLINE | JOBJ_INSTANCE) as u32 != 0 {
@@ -9806,6 +10046,7 @@ pub unsafe extern "C" fn geno_fx_render(
     mut gobj: *mut HSD_GObj,
     mut code: i32,
 ) {
+    melee_core::ct!("geno_fx_render");
     let mut cobj: *mut HSD_CObj = ::core::ptr::null_mut::<HSD_CObj>();
     let mut cur: *mut HSD_CObj = HSD_CObjGetCurrent();
     let mut mc: *mut HSD_CObj = Camera_800310B8();
@@ -9838,6 +10079,7 @@ pub unsafe extern "C" fn geno_fx_render(
 }
 
 pub unsafe extern "C" fn geno_fx_setup_tree(mut j: *mut HSD_JObj) {
+    melee_core::ct!("geno_fx_setup_tree");
     while !j.is_null() {
         HSD_JObjSetupMatrix(j);
         geno_fx_setup_tree((*j).child as *mut HSD_JObj);
@@ -9846,6 +10088,7 @@ pub unsafe extern "C" fn geno_fx_setup_tree(mut j: *mut HSD_JObj) {
 }
 
 pub unsafe extern "C" fn geno_fx_drive(mut frame: i32) {
+    melee_core::ct!("geno_fx_drive");
     let mut slot: i32 = 0;
     slot = 0 as i32;
     while slot < 6 as i32 {
@@ -9900,6 +10143,7 @@ pub unsafe extern "C" fn geno_fx_tree_has(
     mut j: *mut HSD_JObj,
     mut depth: i32,
 ) -> i32 {
+    melee_core::ct!("geno_fx_tree_has");
     while !root.is_null() && depth < 64 as i32 {
         if root == j
             || geno_fx_tree_has(
@@ -9916,6 +10160,7 @@ pub unsafe extern "C" fn geno_fx_tree_has(
 }
 
 pub unsafe extern "C" fn geno_fx_owner_alive(mut j: *mut HSD_JObj) -> i32 {
+    melee_core::ct!("geno_fx_owner_alive");
     let mut cur: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     let mut slot: i32 = 0;
     if !HSD_GObjPLinkHead.is_null() {
@@ -9945,6 +10190,7 @@ pub unsafe extern "C" fn geno_fx_owner_alive(mut j: *mut HSD_JObj) -> i32 {
 }
 
 pub unsafe extern "C" fn Geno_FxFramePost(mut frame: i32) {
+    melee_core::ct!("Geno_FxFramePost");
     if frame <= 1 as i32 {
         geno_fx_gobj = ::core::ptr::null_mut::<HSD_GObj>();
     }
@@ -9992,6 +10238,7 @@ pub unsafe extern "C" fn Geno_FxFramePost(mut frame: i32) {
 pub unsafe extern "C" fn Geno_ArticleDesc(
     mut kind: i32,
 ) -> *mut c_void {
+    melee_core::ct!("Geno_ArticleDesc");
     let mut p: i32 = 0;
     let mut a: i32 = 0;
     if geno_art_of_kind(kind, &raw mut p, &raw mut a) == 0 {
@@ -10005,6 +10252,7 @@ pub unsafe extern "C" fn Geno_ArticleDesc(
 pub unsafe extern "C" fn Geno_ArticleLogic(
     mut kind: i32,
 ) -> *mut c_void {
+    melee_core::ct!("Geno_ArticleLogic");
     return &raw mut geno_art_logic as *mut c_void;
 }
 
@@ -10012,6 +10260,7 @@ pub unsafe extern "C" fn geno_art_live(
     mut owner: *mut HSD_GObj,
     mut article: i32,
 ) -> i32 {
+    melee_core::ct!("geno_art_live");
     let mut cur: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     let mut n: i32 = 0 as i32;
     let mut p: i32 = 0;
@@ -10036,6 +10285,7 @@ pub unsafe extern "C" fn geno_art_live(
 }
 
 pub unsafe extern "C" fn Geno_ArtStableKind(mut kind: i32) -> u32 {
+    melee_core::ct!("Geno_ArtStableKind");
     let mut p: i32 = 0;
     let mut a: i32 = 0;
     let mut id: u32 = 0;
@@ -10047,6 +10297,7 @@ pub unsafe extern "C" fn Geno_ArtStableKind(mut kind: i32) -> u32 {
 }
 
 pub unsafe extern "C" fn geno_art_digest(mut fp: *mut Fighter) -> u32 {
+    melee_core::ct!("geno_art_digest");
     let mut cur: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     let mut sum: u32 = 0 as u32;
     let mut n: i32 = 0 as i32;
@@ -10102,6 +10353,7 @@ pub unsafe extern "C" fn geno_art_hitbox_on(
     mut h: i32,
     mut slot: i32,
 ) {
+    melee_core::ct!("geno_art_hitbox_on");
     let mut hb: *mut ItemHitbox = (&raw mut (*ip).x5D4_hitboxes as *mut ItemHitbox)
         .offset(slot as isize) as *mut ItemHitbox;
     let mut hit: *mut HitCapsule = &raw mut (*hb).hit;
@@ -10211,6 +10463,7 @@ pub unsafe extern "C" fn geno_art_hitboxes(
     mut ip: *mut Item,
     mut v: *mut GenoArtVars,
 ) {
+    melee_core::ct!("geno_art_hitboxes");
     let mut n: i32 = Geno_ArticleHitCount(
         (*v).profile as i32,
         (*v).article as i32,
@@ -10281,6 +10534,7 @@ pub unsafe extern "C" fn GenoGame_ArticleStep(
     mut tx: f32,
     mut ty: f32,
 ) {
+    melee_core::ct!("GenoGame_ArticleStep");
     let mut grav: f32 = geno_art_f(p, a, GENO_AP_GRAVITY as i32);
     let mut mf: f32 = geno_art_f(p, a, GENO_AP_MAX_FALL as i32);
     let mut acc: f32 = geno_art_f(p, a, GENO_AP_ACCEL as i32);
@@ -10345,6 +10599,7 @@ pub unsafe extern "C" fn geno_art_target(
     mut tx: *mut f32,
     mut ty: *mut f32,
 ) -> i32 {
+    melee_core::ct!("geno_art_target");
     let mut cur: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     let mut best: f32 = -1.0f32;
     cur = *HSD_GObjPLinkHead.offset(HSD_GOBJ_PLINK_FIGHTER as isize);
@@ -10381,6 +10636,7 @@ pub unsafe extern "C" fn geno_art_sound(
     mut vol_param: i32,
     mut what: *const i8,
 ) {
+    melee_core::ct!("geno_art_sound");
     let mut id: i32 = Geno_ArticleParam(p, a, id_param);
     let mut vol: i32 = Geno_ArticleParam(p, a, vol_param);
     if id <= 0 as i32 || owner.is_null() {
@@ -10407,6 +10663,7 @@ pub unsafe extern "C" fn geno_art_gone(
     mut v: *mut GenoArtVars,
     mut why: i32,
 ) {
+    melee_core::ct!("geno_art_gone");
     let mut o: *mut HSD_GObj = (*ip).owner;
     (*v).why = why as i32;
     geno_art_sound(
@@ -10438,6 +10695,7 @@ pub unsafe extern "C" fn geno_art_joint(
     mut gobj: *mut Item_GObj,
     mut k: i32,
 ) -> *mut HSD_JObj {
+    melee_core::ct!("geno_art_joint");
     let mut j: *mut HSD_JObj = HSD_GObjGetHSDObj(gobj as *mut HSD_GObj) as *mut HSD_JObj;
     while !j.is_null() && k > 0 as i32 {
         if !HSD_JObjGetChild(j).is_null() {
@@ -10465,6 +10723,7 @@ pub unsafe extern "C" fn geno_art_effects(
     mut frame: i32,
     mut facing: f32,
 ) -> i32 {
+    melee_core::ct!("geno_art_effects");
     static mut zero: Vec = Vec {
         x: 0.0f32,
         y: 0.0f32,
@@ -10544,6 +10803,7 @@ pub unsafe extern "C" fn geno_art_children(
     mut ip: *mut Item,
     mut v: *mut GenoArtVars,
 ) {
+    melee_core::ct!("geno_art_children");
     let mut c: i32 = 0;
     c = 0 as i32;
     while c < GENO_ART_CHILDREN {
@@ -10606,6 +10866,7 @@ pub unsafe extern "C" fn geno_art_fx_census(
     mut gobj: *mut Item_GObj,
     mut v: *mut GenoArtVars,
 ) {
+    melee_core::ct!("geno_art_fx_census");
     let mut g: *mut HSD_Generator = ::core::ptr::null_mut::<HSD_Generator>();
     let mut j0: *mut HSD_JObj = HSD_GObjGetHSDObj(gobj as *mut HSD_GObj)
         as *mut HSD_JObj;
@@ -10716,6 +10977,7 @@ pub unsafe extern "C" fn geno_art_fx_census(
 }
 
 pub unsafe extern "C" fn geno_art_anim(mut gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("geno_art_anim");
     let mut ip: *mut Item = HSD_GObjGetUserData(gobj as *mut HSD_GObj) as *mut Item;
     let mut v: *mut GenoArtVars = geno_art_vars(ip);
     let mut spin: f32 = geno_art_f(
@@ -10787,6 +11049,7 @@ pub unsafe extern "C" fn geno_art_anim(mut gobj: *mut Item_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn geno_art_phys(mut gobj: *mut Item_GObj) {
+    melee_core::ct!("geno_art_phys");
     let mut ip: *mut Item = HSD_GObjGetUserData(gobj as *mut HSD_GObj) as *mut Item;
     let mut v: *mut GenoArtVars = geno_art_vars(ip);
     let mut tx: f32 = 0.0f32;
@@ -10816,6 +11079,7 @@ pub unsafe extern "C" fn geno_art_phys(mut gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn geno_art_coll(mut gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("geno_art_coll");
     let mut ip: *mut Item = HSD_GObjGetUserData(gobj as *mut HSD_GObj) as *mut Item;
     let mut v: *mut GenoArtVars = geno_art_vars(ip);
     if Geno_ArticleParam(
@@ -10848,6 +11112,7 @@ pub unsafe extern "C" fn geno_art_react(
     mut bit: u32,
     mut why: i32,
 ) -> i32 {
+    melee_core::ct!("geno_art_react");
     let mut ip: *mut Item = HSD_GObjGetUserData(gobj as *mut HSD_GObj) as *mut Item;
     let mut v: *mut GenoArtVars = geno_art_vars(ip);
     if Geno_ArticleParam(
@@ -10863,18 +11128,22 @@ pub unsafe extern "C" fn geno_art_react(
 }
 
 pub unsafe extern "C" fn geno_art_hit(mut gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("geno_art_hit");
     return geno_art_react(gobj, GENO_ART_DESPAWN_HIT, 1 as i32);
 }
 
 pub unsafe extern "C" fn geno_art_shield(mut gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("geno_art_shield");
     return geno_art_react(gobj, GENO_ART_DESPAWN_SHIELD, 2 as i32);
 }
 
 pub unsafe extern "C" fn geno_art_clank(mut gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("geno_art_clank");
     return geno_art_react(gobj, GENO_ART_DESPAWN_CLANK, 4 as i32);
 }
 
 pub unsafe extern "C" fn geno_art_reflected(mut gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("geno_art_reflected");
     let mut ip: *mut Item = HSD_GObjGetUserData(gobj as *mut HSD_GObj) as *mut Item;
     let mut v: *mut GenoArtVars = geno_art_vars(ip);
     if !(*ip).owner.is_null() {
@@ -10900,6 +11169,7 @@ pub unsafe extern "C" fn geno_art_reflected(mut gobj: *mut Item_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn geno_art_absorbed(mut gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("geno_art_absorbed");
     geno_art_gone(
         HSD_GObjGetUserData(gobj as *mut HSD_GObj) as *mut Item,
         geno_art_vars(HSD_GObjGetUserData(gobj as *mut HSD_GObj) as *mut Item),
@@ -10917,6 +11187,7 @@ pub unsafe extern "C" fn geno_art_spawn(
     mut base: *mut Vec,
     mut facing: f32,
 ) -> *mut Item_GObj {
+    melee_core::ct!("geno_art_spawn");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(owner) as *mut Fighter;
     let mut kind: i32 = 0;
     let mut max: i32 = 0;
@@ -11138,6 +11409,7 @@ pub unsafe extern "C" fn GenoGame_ArticleSpawn(
     mut gobj: *mut Fighter_GObj,
     mut arg: i32,
 ) -> i32 {
+    melee_core::ct!("GenoGame_ArticleSpawn");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
@@ -11189,6 +11461,7 @@ pub unsafe extern "C" fn hook_article_spawn(
     mut st: *mut GenoState,
     mut arg: i32,
 ) -> i32 {
+    melee_core::ct!("hook_article_spawn");
     if geno_test_capture != 0 {
         (*st).art_spawned += 1;
         return 0 as i32;
@@ -11198,6 +11471,7 @@ pub unsafe extern "C" fn hook_article_spawn(
 }
 
 pub unsafe extern "C" fn Geno_OnHit(mut gobj: *mut Fighter_GObj) -> i32 {
+    melee_core::ct!("Geno_OnHit");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
@@ -11275,6 +11549,7 @@ pub unsafe extern "C" fn Geno_OnHit(mut gobj: *mut Fighter_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn GenoGame_ClearProfileStorage() {
+    melee_core::ct!("GenoGame_ClearProfileStorage");
     Geno_Rows = ::core::ptr::null_mut::<*mut MotionState>();
     Geno_Params = ::core::ptr::null_mut::<*mut f32>();
     Geno_RowCount = ::core::ptr::null_mut::<i32>();
@@ -11292,6 +11567,7 @@ pub unsafe extern "C" fn GenoGame_ClearProfileStorage() {
 }
 
 pub unsafe extern "C" fn geno_sfield(mut off: i32) -> i32 {
+    melee_core::ct!("geno_sfield");
     let mut i: i32 = 0;
     i = 0 as i32;
     while i < GENO_NSF {
@@ -11306,12 +11582,14 @@ pub unsafe extern "C" fn geno_sfield(mut off: i32) -> i32 {
 }
 
 pub unsafe extern "C" fn GenoGame_StateSize() -> i32 {
+    melee_core::ct!("GenoGame_StateSize");
     return ::core::mem::size_of::<GenoState>() as i32;
 }
 
 pub unsafe extern "C" fn GenoGame_StateFieldName(
     mut off: i32,
 ) -> *const i8 {
+    melee_core::ct!("GenoGame_StateFieldName");
     let mut i: i32 = geno_sfield(off);
     return if i >= 0 as i32 {
         geno_sfields[i as usize].name
@@ -11323,6 +11601,7 @@ pub unsafe extern "C" fn GenoGame_StateFieldName(
 pub unsafe extern "C" fn GenoGame_StateFieldBase(
     mut off: i32,
 ) -> i32 {
+    melee_core::ct!("GenoGame_StateFieldBase");
     let mut i: i32 = geno_sfield(off);
     return if i >= 0 as i32 { geno_sfields[i as usize].off } else { off };
 }
@@ -11330,6 +11609,7 @@ pub unsafe extern "C" fn GenoGame_StateFieldBase(
 pub unsafe extern "C" fn Geno_ItemActive(
     mut kind: i32,
 ) -> i32 {
+    melee_core::ct!("Geno_ItemActive");
     let mut d: i32 = kind - GENO_ITEM_KIND_BASE;
     return (d >= 0 as i32 && d < GENO_ITEM_MAX_DEFS
         && Geno_ItemParam(d, GENO_IP_DEFINED as i32) != 0
@@ -11338,12 +11618,14 @@ pub unsafe extern "C" fn Geno_ItemActive(
 }
 
 pub unsafe extern "C" fn geno_item_bits(mut f: f32) -> i32 {
+    melee_core::ct!("geno_item_bits");
     let mut u: Anon_anon_33_2 = unsafe { core::mem::zeroed() };
     u.f = f;
     return u.i;
 }
 
 pub unsafe extern "C" fn geno_item_float(mut i: i32) -> f32 {
+    melee_core::ct!("geno_item_float");
     let mut u: Anon_anon_33_2 = unsafe { core::mem::zeroed() };
     u.i = i;
     return u.f;
@@ -11353,10 +11635,12 @@ pub unsafe extern "C" fn geno_item_paramf(
     mut d: i32,
     mut f: i32,
 ) -> f32 {
+    melee_core::ct!("geno_item_paramf");
     return geno_item_float(Geno_ItemParam(d, f));
 }
 
 pub unsafe extern "C" fn geno_item_def(mut ip: *mut Item) -> i32 {
+    melee_core::ct!("geno_item_def");
     let mut d: i32 = (*ip).kind as i32
         - GENO_ITEM_KIND_BASE;
     return if d >= 0 as i32 && d < GENO_ITEM_MAX_DEFS
@@ -11369,6 +11653,7 @@ pub unsafe extern "C" fn geno_item_def(mut ip: *mut Item) -> i32 {
 }
 
 pub unsafe extern "C" fn geno_item_vars(mut ip: *mut Item) -> *mut GenoItemVars {
+    melee_core::ct!("geno_item_vars");
     return &raw mut (*ip).xDD4_itemVar as *mut GenoItemVars;
 }
 
@@ -11377,6 +11662,7 @@ pub unsafe extern "C" fn geno_item_event(
     mut what: i32,
     mut port: i32,
 ) {
+    melee_core::ct!("geno_item_event");
     let mut v: *mut GenoItemVars = geno_item_vars(ip);
     if (*v).terminal != 0 {
         return;
@@ -11395,6 +11681,7 @@ pub unsafe extern "C" fn geno_item_event(
 }
 
 pub unsafe extern "C" fn geno_item_lift(mut d: i32, mut age: f32) -> f32 {
+    melee_core::ct!("geno_item_lift");
     return geno_item_paramf(d, GENO_IP_HOVER as i32)
         + geno_item_paramf(d, GENO_IP_BOB as i32)
             * sinf(
@@ -11410,6 +11697,7 @@ pub unsafe extern "C" fn geno_item_in_capsule(
     mut radius: f32,
     mut top: f32,
 ) -> i32 {
+    melee_core::ct!("geno_item_in_capsule");
     if top < 0 as i32 as f32 {
         top = 0 as i32 as f32;
     }
@@ -11425,6 +11713,7 @@ pub unsafe extern "C" fn Geno_ItemPressDist(
     mut g: *mut HSD_GObj,
     mut fp: *mut Fighter,
 ) -> f32 {
+    melee_core::ct!("Geno_ItemPressDist");
     let mut ip: *mut Item = ::core::ptr::null_mut::<Item>();
     let mut d: i32 = 0;
     let mut s: f32 = 0.;
@@ -11490,6 +11779,7 @@ pub unsafe extern "C" fn Geno_ItemPressCollect(
     mut g: *mut HSD_GObj,
     mut port: i32,
 ) {
+    melee_core::ct!("Geno_ItemPressCollect");
     let mut ip: *mut Item = ::core::ptr::null_mut::<Item>();
     let mut d: i32 = 0;
     if g.is_null() {
@@ -11508,6 +11798,7 @@ pub unsafe extern "C" fn Geno_ItemPressCollect(
 }
 
 pub unsafe extern "C" fn geno_item_anim(mut g: *mut Item_GObj) -> i32 {
+    melee_core::ct!("geno_item_anim");
     let mut ip: *mut Item = HSD_GObjGetUserData(g as *mut HSD_GObj) as *mut Item;
     let mut v: *mut GenoItemVars = geno_item_vars(ip);
     let mut d: i32 = geno_item_def(ip);
@@ -11589,6 +11880,7 @@ pub unsafe extern "C" fn geno_item_anim(mut g: *mut Item_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn geno_item_phys(mut g: *mut Item_GObj) {
+    melee_core::ct!("geno_item_phys");
     let mut ip: *mut Item = HSD_GObjGetUserData(g as *mut HSD_GObj) as *mut Item;
     let mut v: *mut GenoItemVars = geno_item_vars(ip);
     let mut d: i32 = geno_item_def(ip);
@@ -11613,6 +11905,7 @@ pub unsafe extern "C" fn geno_item_phys(mut g: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn geno_item_floor_response(mut ip: *mut Item, mut y: f32) {
+    melee_core::ct!("geno_item_floor_response");
     let mut d: i32 = geno_item_def(ip);
     let mut bounce: f32 = geno_item_paramf(d, GENO_IP_BOUNCE as i32);
     (*ip).pos.y = y;
@@ -11628,6 +11921,7 @@ pub unsafe extern "C" fn geno_item_floor_response(mut ip: *mut Item, mut y: f32)
 }
 
 pub unsafe extern "C" fn geno_item_coll(mut g: *mut Item_GObj) -> i32 {
+    melee_core::ct!("geno_item_coll");
     let mut ip: *mut Item = HSD_GObjGetUserData(g as *mut HSD_GObj) as *mut Item;
     let mut v: *mut GenoItemVars = geno_item_vars(ip);
     let mut d: i32 = geno_item_def(ip);
@@ -11719,6 +12013,7 @@ pub unsafe extern "C" fn geno_item_coll(mut g: *mut Item_GObj) -> i32 {
 }
 
 pub unsafe extern "C" fn geno_item_destroyed(mut g: *mut Item_GObj) {
+    melee_core::ct!("geno_item_destroyed");
     geno_item_event(
         HSD_GObjGetUserData(g as *mut HSD_GObj) as *mut Item,
         2 as i32,
@@ -11729,6 +12024,7 @@ pub unsafe extern "C" fn geno_item_destroyed(mut g: *mut Item_GObj) {
 pub unsafe extern "C" fn Geno_ItemDesc(
     mut kind: i32,
 ) -> *mut c_void {
+    melee_core::ct!("Geno_ItemDesc");
     let mut d: i32 = kind - GENO_ITEM_KIND_BASE;
     let mut a: *mut Article = ::core::ptr::null_mut::<Article>();
     let mut at: *mut ItemAttr = ::core::ptr::null_mut::<ItemAttr>();
@@ -11773,12 +12069,14 @@ pub unsafe extern "C" fn Geno_ItemDesc(
 pub unsafe extern "C" fn Geno_ItemLogic(
     mut kind: i32,
 ) -> *mut c_void {
+    melee_core::ct!("Geno_ItemLogic");
     return &raw mut geno_item_logic as *mut c_void;
 }
 
 pub unsafe extern "C" fn Geno_ItemCap(
     mut kind: i32,
 ) -> i32 {
+    melee_core::ct!("Geno_ItemCap");
     return if Geno_ItemParam(
         kind - GENO_ITEM_KIND_BASE,
         GENO_IP_CAP as i32,
@@ -11791,6 +12089,7 @@ pub unsafe extern "C" fn Geno_ItemCap(
 }
 
 pub unsafe extern "C" fn geno_item_index(mut index: i32) -> *mut Item {
+    melee_core::ct!("geno_item_index");
     let mut cur: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     if index < 0 as i32 || HSD_GObjPLinkHead.is_null() {
         return ::core::ptr::null_mut::<Item>();
@@ -11816,6 +12115,7 @@ pub unsafe extern "C" fn geno_item_index(mut index: i32) -> *mut Item {
 pub unsafe extern "C" fn Geno_ItemIndexForId(
     mut serial: i32,
 ) -> i32 {
+    melee_core::ct!("Geno_ItemIndexForId");
     let mut i: i32 = 0 as i32;
     let mut cur: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     if HSD_GObjPLinkHead.is_null() {
@@ -11841,6 +12141,7 @@ pub unsafe extern "C" fn Geno_ItemI(
     mut index: i32,
     mut field: i32,
 ) -> i32 {
+    melee_core::ct!("Geno_ItemI");
     let mut ip: *mut Item = geno_item_index(index);
     let mut v: *mut GenoItemVars = ::core::ptr::null_mut::<GenoItemVars>();
     let mut d: i32 = 0;
@@ -11875,6 +12176,7 @@ pub unsafe extern "C" fn Geno_ItemF(
     mut index: i32,
     mut field: i32,
 ) -> i32 {
+    melee_core::ct!("Geno_ItemF");
     let mut ip: *mut Item = geno_item_index(index);
     if ip.is_null() {
         return 0 as i32;
@@ -11894,6 +12196,7 @@ pub unsafe extern "C" fn Geno_ItemVisual(
     mut index: i32,
     mut field: i32,
 ) -> i32 {
+    melee_core::ct!("Geno_ItemVisual");
     let mut ip: *mut Item = geno_item_index(index);
     let mut d: i32 = 0;
     let mut age: f32 = 0.;
@@ -11927,6 +12230,7 @@ pub unsafe extern "C" fn Geno_ItemSpawn(
     mut colour: i32,
     mut amount: i32,
 ) -> i32 {
+    melee_core::ct!("Geno_ItemSpawn");
     let mut s: SpawnItem = unsafe { core::mem::zeroed() };
     let mut g: *mut Item_GObj = ::core::ptr::null_mut::<Item_GObj>();
     let mut ip: *mut Item = ::core::ptr::null_mut::<Item>();
@@ -11995,6 +12299,7 @@ pub unsafe extern "C" fn Geno_ItemDespawn(
     mut handle: i32,
     mut owner: i32,
 ) -> i32 {
+    melee_core::ct!("Geno_ItemDespawn");
     let mut i: i32 = 0;
     let mut ip: *mut Item = ::core::ptr::null_mut::<Item>();
     let mut cur: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
@@ -12048,6 +12353,7 @@ pub unsafe extern "C" fn Geno_ItemDespawn(
 }
 
 pub unsafe extern "C" fn Geno_ItemReleaseOwner(mut owner: i32) {
+    melee_core::ct!("Geno_ItemReleaseOwner");
     let mut i: i32 = 0 as i32;
     let mut ip: *mut Item = ::core::ptr::null_mut::<Item>();
     loop {
@@ -12089,6 +12395,7 @@ pub unsafe extern "C" fn Geno_ItemReleaseOwner(mut owner: i32) {
 }
 
 pub unsafe extern "C" fn Geno_ItemsSceneReset() {
+    melee_core::ct!("Geno_ItemsSceneReset");
     geno_zero(
         &raw mut geno_family_items as *mut GenoFamilyItem as *mut c_void,
         ::core::mem::size_of::<[GenoFamilyItem; 128]>() as i32,
@@ -12106,6 +12413,7 @@ pub unsafe extern "C" fn Geno_ItemSpawnKind(
     mut colour: i32,
     mut amount: i32,
 ) -> i32 {
+    melee_core::ct!("Geno_ItemSpawnKind");
     let mut s: SpawnItem = unsafe { core::mem::zeroed() };
     let mut g: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     let mut i: i32 = 0;
@@ -12206,6 +12514,7 @@ pub unsafe extern "C" fn Geno_ItemMeta(
     mut serial: i32,
     mut field: i32,
 ) -> i32 {
+    melee_core::ct!("Geno_ItemMeta");
     let mut i: i32 = 0;
     let mut ip: *mut Item = ::core::ptr::null_mut::<Item>();
     i = 0 as i32;
@@ -12245,6 +12554,7 @@ pub unsafe extern "C" fn Geno_ItemMeta(
 pub unsafe extern "C" fn Geno_ItemHandleForId(
     mut serial: i32,
 ) -> i32 {
+    melee_core::ct!("Geno_ItemHandleForId");
     return Geno_ItemMeta(serial, GENO_II_HANDLE as i32);
 }
 
@@ -12253,6 +12563,7 @@ pub unsafe extern "C" fn Geno_ItemFamilyEvent(
     mut what: i32,
     mut port: i32,
 ) {
+    melee_core::ct!("Geno_ItemFamilyEvent");
     let mut ip: *mut Item = HSD_GObjGetUserData(g) as *mut Item;
     let mut i: i32 = 0;
     let mut slot: i32 = -(1 as i32);
@@ -12345,6 +12656,7 @@ pub unsafe extern "C" fn Geno_ItemDraw(
     mut g: *mut HSD_GObj,
     mut code: i32,
 ) {
+    melee_core::ct!("Geno_ItemDraw");
     let mut i: i32 = 0;
     let mut ip: *mut Item = ::core::ptr::null_mut::<Item>();
     let mut c: *mut HSD_CObj = ::core::ptr::null_mut::<HSD_CObj>();
@@ -12374,6 +12686,7 @@ pub unsafe extern "C" fn Geno_ItemDraw(
 pub unsafe extern "C" fn Geno_ItemFixture(
     mut def: i32,
 ) -> i32 {
+    melee_core::ct!("Geno_ItemFixture");
     let mut ip: Item = unsafe { core::mem::zeroed() };
     let mut saved: Item = unsafe { core::mem::zeroed() };
     let mut g: HSD_GObj = unsafe { core::mem::zeroed() };
@@ -12676,6 +12989,7 @@ pub unsafe extern "C" fn Geno_ItemFixture(
 pub unsafe extern "C" fn Geno_ItemSnapshotFixture(
     mut def: i32,
 ) -> i32 {
+    melee_core::ct!("Geno_ItemSnapshotFixture");
     let mut old: *mut *mut HSD_GObj = HSD_GObjPLinkHead;
     let mut result: i32 = 0 as i32;
     let mut ip: *mut Item = &raw mut geno_item_snap_fixture;
@@ -12751,6 +13065,7 @@ pub unsafe extern "C" fn Geno_ItemSnapshotFixture(
 pub unsafe extern "C" fn Geno_ItemInterleaveFixture(
     mut def: i32,
 ) -> i32 {
+    melee_core::ct!("Geno_ItemInterleaveFixture");
     let mut saved: [*mut Article; 30] = [::core::ptr::null_mut::<Article>(); 30];
     let mut stale: Article = unsafe { core::mem::zeroed() };
     let mut fresh: Article = unsafe { core::mem::zeroed() };
@@ -12943,6 +13258,7 @@ pub unsafe extern "C" fn Geno_ItemInterleaveFixture(
 }
 
 pub unsafe extern "C" fn geno_combo_block(mut fp: *mut Fighter) -> *mut GenoComboBlock {
+    melee_core::ct!("geno_combo_block");
     let mut p: i32 = if ((*fp).player_id as i32)
         < GENO_PLAYERS
     {
@@ -12964,10 +13280,12 @@ pub unsafe extern "C" fn geno_combo_block(mut fp: *mut Fighter) -> *mut GenoComb
 pub unsafe extern "C" fn GenoGame_ComboBlockOf(
     mut fp: *mut Fighter,
 ) -> *mut c_void {
+    melee_core::ct!("GenoGame_ComboBlockOf");
     return geno_combo_block(fp) as *mut c_void;
 }
 
 pub unsafe extern "C" fn geno_combo_on(mut st: *mut GenoState) -> i32 {
+    melee_core::ct!("geno_combo_on");
     return ((*st).profile >= 0 as i32
         && Geno_ComboParam(
             (*st).profile as i32,
@@ -12976,6 +13294,7 @@ pub unsafe extern "C" fn geno_combo_on(mut st: *mut GenoState) -> i32 {
 }
 
 pub unsafe extern "C" fn geno_combo_end_string(mut cb: *mut GenoComboBlock) {
+    melee_core::ct!("geno_combo_end_string");
     let mut i: i32 = 0;
     (*cb).links = 0 as i32 as i32;
     (*cb).motion = -(1 as i32) as i32;
@@ -12987,6 +13306,7 @@ pub unsafe extern "C" fn geno_combo_end_string(mut cb: *mut GenoComboBlock) {
 }
 
 pub unsafe extern "C" fn geno_combo_reset(mut fp: *mut Fighter, mut st: *mut GenoState) {
+    melee_core::ct!("geno_combo_reset");
     let mut cb: *mut GenoComboBlock = geno_combo_block(fp);
     let mut i: i32 = 0;
     geno_zero(
@@ -13013,6 +13333,7 @@ pub unsafe extern "C" fn geno_combo_ki_add(
     mut st: *mut GenoState,
     mut d: i32,
 ) {
+    melee_core::ct!("geno_combo_ki_add");
     let mut cb: *mut GenoComboBlock = geno_combo_block(fp);
     let mut mx: i32 = Geno_ComboParam(
         (*st).profile as i32,
@@ -13028,6 +13349,7 @@ pub unsafe extern "C" fn geno_combo_ki_add(
 }
 
 pub unsafe extern "C" fn geno_combo_action(mut fp: *mut Fighter, mut st: *mut GenoState) {
+    melee_core::ct!("geno_combo_action");
     let mut cb: *mut GenoComboBlock = ::core::ptr::null_mut::<GenoComboBlock>();
     let mut i: i32 = 0;
     if geno_combo_on(st) == 0 {
@@ -13052,6 +13374,7 @@ pub unsafe extern "C" fn Geno_ComboContact(
     mut fp: *mut Fighter,
     mut kind: i32,
 ) {
+    melee_core::ct!("Geno_ComboContact");
     let mut st: *mut GenoState = ::core::ptr::null_mut::<GenoState>();
     let mut cb: *mut GenoComboBlock = ::core::ptr::null_mut::<GenoComboBlock>();
     if fp.is_null() {
@@ -13088,6 +13411,7 @@ pub unsafe extern "C" fn Geno_ComboContact(
 }
 
 pub unsafe extern "C" fn geno_combo_taken_hit(mut fp: *mut Fighter, mut st: *mut GenoState) {
+    melee_core::ct!("geno_combo_taken_hit");
     if geno_combo_on(st) != 0 {
         (*geno_combo_block(fp)).hits_seen = (*st).hit_count;
         geno_combo_ki_add(
@@ -13106,6 +13430,7 @@ pub unsafe extern "C" fn geno_combo_dir(
     mut x: f32,
     mut y: f32,
 ) -> i32 {
+    melee_core::ct!("geno_combo_dir");
     let mut ax: f32 = if x < 0.0f32 { -x } else { x };
     let mut ay: f32 = if y < 0.0f32 { -y } else { y };
     let mut dz: f32 = if !p_ftCommonData.is_null() {
@@ -13135,6 +13460,7 @@ pub unsafe extern "C" fn geno_combo_smash(
     mut a: i32,
     mut dir: *mut i32,
 ) -> i32 {
+    melee_core::ct!("geno_combo_smash");
     let mut thr: f32 = if !p_ftCommonData.is_null() {
         (*p_ftCommonData).dash_smash_stick_threshold as f32
     } else {
@@ -13212,11 +13538,13 @@ pub unsafe extern "C" fn geno_combo_press(
     mut cls: i32,
     mut dir: i32,
 ) {
+    melee_core::ct!("geno_combo_press");
     (*cb).age[cls as usize] = 0 as i32 as i32;
     (*cb).dir[cls as usize] = dir as i32;
 }
 
 pub unsafe extern "C" fn Geno_ComboInput(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("Geno_ComboInput");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
@@ -13408,6 +13736,7 @@ pub unsafe extern "C" fn geno_combo_dir_ok(
     mut want: i32,
     mut got: i32,
 ) -> i32 {
+    melee_core::ct!("geno_combo_dir_ok");
     if want == GENO_CD_ANY as i32 {
         return 1 as i32;
     }
@@ -13419,6 +13748,7 @@ pub unsafe extern "C" fn geno_combo_dir_ok(
 }
 
 pub unsafe extern "C" fn geno_combo_from_motion(mut from: u32) -> i32 {
+    melee_core::ct!("geno_combo_from_motion");
     if from & 0xffff as u32 == GENO_COMBO_FROM_ANY {
         return -(1 as i32);
     }
@@ -13434,6 +13764,7 @@ pub unsafe extern "C" fn geno_combo_open(
     mut cb: *mut GenoComboBlock,
     mut r: i32,
 ) -> i32 {
+    melee_core::ct!("geno_combo_open");
     let mut p: i32 = (*st).profile as i32;
     let mut from: i32 = geno_combo_from_motion(
         Geno_ComboWord(p, r, GENO_CR_FROM as i32) as u32,
@@ -13525,6 +13856,7 @@ pub unsafe extern "C" fn geno_combo_input_ok(
     mut cb: *mut GenoComboBlock,
     mut r: i32,
 ) -> i32 {
+    melee_core::ct!("geno_combo_input_ok");
     let mut p: i32 = (*st).profile as i32;
     let mut in_0: i32 = Geno_ComboWord(
         p,
@@ -13561,6 +13893,7 @@ pub unsafe extern "C" fn geno_combo_enter(
     mut st: *mut GenoState,
     mut to: u32,
 ) -> i32 {
+    melee_core::ct!("geno_combo_enter");
     if to >> 28 as i32 == GENO_COMBO_TGT_ACT && to != GENO_TGT_AUTO
         && to != GENO_TGT_HELPLESS && to != GENO_NONE_T
     {
@@ -13629,6 +13962,7 @@ pub unsafe extern "C" fn geno_combo_enter(
 pub unsafe extern "C" fn Geno_ComboTick(
     mut gobj: *mut Fighter_GObj,
 ) -> i32 {
+    melee_core::ct!("Geno_ComboTick");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
@@ -13704,6 +14038,7 @@ pub unsafe extern "C" fn geno_combo_digest(
     mut fp: *mut Fighter,
     mut st: *mut GenoState,
 ) -> u32 {
+    melee_core::ct!("geno_combo_digest");
     let mut cb: *mut GenoComboBlock = ::core::ptr::null_mut::<GenoComboBlock>();
     let mut w: *const u32 = ::core::ptr::null::<u32>();
     let mut h: u32 = 0x434f4d42 as u32;
@@ -13728,6 +14063,7 @@ pub unsafe extern "C" fn GenoGame_ComboInfo(
     mut port: i32,
     mut what: i32,
 ) -> i32 {
+    melee_core::ct!("GenoGame_ComboInfo");
     let mut cur: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     if HSD_GObjPLinkHead.is_null() {
         return -(1 as i32);
@@ -13799,6 +14135,7 @@ pub unsafe extern "C" fn GenoGame_ComboSetKi(
     mut port: i32,
     mut ki: i32,
 ) -> i32 {
+    melee_core::ct!("GenoGame_ComboSetKi");
     let mut cur: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     if HSD_GObjPLinkHead.is_null() {
         return -(1 as i32);

@@ -72,10 +72,12 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 
 /// `ftSk_Init_80110198` as a callback entry (the take-damage / death2 callback).
 pub unsafe extern "C" fn cb_ftSk_Init_80110198(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftSk_Init_80110198");
     ftSk_Init_80110198(g);
 }
 
 pub fn ftSk_Init_OnLoad(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_Init_OnLoad");
     unsafe {
         let fp = fpp(gobj);
         let item_list = (*(*fp).ft_data).x48_items;
@@ -92,11 +94,13 @@ pub fn ftSk_Init_OnLoad(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftSk_Init_80110198(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_Init_80110198");
     crate::tu::ftseakspecialn::ftSk_SpecialN_80111FBC(gobj);
     crate::tu::ftseakspecials::ftSk_SpecialS_CheckAndDestroyChain(gobj);
 }
 
 pub fn ftSk_Init_UnkMotionStates4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_Init_UnkMotionStates4");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).u.sk.x0 == 6 {
@@ -106,13 +110,16 @@ pub fn ftSk_Init_UnkMotionStates4(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftSk_Init_OnItemPickup(gobj: *mut HSD_GObj, flag: i32) {
+    melee_core::ct!("ftSk_Init_OnItemPickup");
     crate::tu::ftclink::Fighter_OnItemPickup(gobj, flag, 1, 1);
 }
 
 pub fn ftSk_Init_OnItemDrop(gobj: *mut HSD_GObj, flag: i32) {
+    melee_core::ct!("ftSk_Init_OnItemDrop");
     crate::tu::ftclink::Fighter_OnItemDrop(gobj, flag, 1, 1);
 }
 
 pub fn ftSk_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_Init_LoadSpecialAttrs");
     unsafe { crate::tu::ftfox::copy_attrs::<ftSeakAttributes>(gobj) }
 }

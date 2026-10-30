@@ -35,6 +35,7 @@ pub mod ext {
 }
 
 pub fn ftCo_FallAerial_Enter(g: G) {
+    melee_core::ct!("ftCo_FallAerial_Enter");
     ext::Fighter_ChangeMotionState(g, ftCo_MS_FallAerial, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     let f = fp(g);
     unsafe {
@@ -44,6 +45,7 @@ pub fn ftCo_FallAerial_Enter(g: G) {
 }
 
 pub fn ftCo_FallAerial_Anim(g: G) {
+    melee_core::ct!("ftCo_FallAerial_Anim");
     let f = fp(g);
     let p = unsafe { core::ptr::addr_of_mut!(f.mv.co.fallaerial.x4) };
     ext::ftCo_Fall_Anim_Inner(g, p, ftCo_SM_FallAerial, ftCo_SM_FallAerialF, ftCo_SM_FallAerialB);
@@ -51,9 +53,11 @@ pub fn ftCo_FallAerial_Anim(g: G) {
 }
 
 pub fn ftCo_FallAerial_IASA(g: G) {
+    melee_core::ct!("ftCo_FallAerial_IASA");
     ext::ftCo_Fall_IASA_Inner(g);
 }
 
 pub fn ftCo_FallAerial_Phys(g: G) {
+    melee_core::ct!("ftCo_FallAerial_Phys");
     ext::ft_80084DB0(g);
 }

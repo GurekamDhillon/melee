@@ -242,17 +242,20 @@ with_mtx_dirty!(/** `HSD_JObjSetRotationYWithMtxDirty` (jobj.h; the quaternion f
 
 /// `fn_801A7A44(gobj)`: the stage model's proc.
 pub unsafe fn fn_801A7A44(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801A7A44");
     ext::HSD_JObjAnimAll(GET_JOBJ(gobj));
 }
 
 /// `fn_801A7A68(gobj)`: the character's proc.
 pub unsafe fn fn_801A7A68(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801A7A68");
     ext::HSD_JObjAnimAll(GET_JOBJ(gobj));
 }
 
 /// `fn_801A7A8C(gobj)`: the camera's proc; when its animation reaches the end, free the two models, end the
 /// scene (`mn_8022F0F0(3)`, `gm_801A9630()`) and free itself.
 pub unsafe fn fn_801A7A8C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801A7A8C");
     let cobj = GET_COBJ(gobj);
     ext::HSD_CObjAnim(cobj);
     if (*(*cobj).aobj).curr_frame == (*(*cobj).aobj).end_frame {
@@ -342,6 +345,7 @@ unsafe fn setupCharacter() {
 
 /// `gm_801A7B00()`: build the backdrop: light, camera, stage model, then the character trophy.
 pub unsafe fn gm_801A7B00() {
+    melee_core::ct!("gm_801A7B00");
     setupLight();
     setupCamera();
     setupMain();

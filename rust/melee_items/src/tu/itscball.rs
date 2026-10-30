@@ -66,11 +66,13 @@ pub static mut it_803F6220: [ItemStateTable; 5] = [
 ];
 
 pub unsafe extern "C" fn itScball_Logic30_Spawned(gobj: *mut Item_GObj) {
+    melee_core::ct!("itScball_Logic30_Spawned");
     it_80294B58(gobj);
 }
 
 /// 294AD0
 pub unsafe extern "C" fn it_80294AD0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_80294AD0");
     let item = GET_ITEM(gobj);
 
     itResetVelocity(item);
@@ -79,26 +81,31 @@ pub unsafe extern "C" fn it_80294AD0(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itScball_UnkMotion0_Anim(_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itScball_UnkMotion0_Anim");
     false
 }
 
-pub unsafe extern "C" fn itScball_UnkMotion0_Phys(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itScball_UnkMotion0_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itScball_UnkMotion0_Phys");}
 
 pub unsafe extern "C" fn itScball_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itScball_UnkMotion0_Coll");
     ext::it_8026D62C(gobj, Some(it_80294B58));
     false
 }
 
 /// 294B58
 pub unsafe extern "C" fn it_80294B58(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_80294B58");
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);
 }
 
 pub unsafe extern "C" fn itScball_UnkMotion1_Anim(_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itScball_UnkMotion1_Anim");
     false
 }
 
 pub unsafe extern "C" fn itScball_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itScball_UnkMotion1_Phys");
     let item = GET_ITEM(gobj);
     let attr = (*item).xCC_item_attr;
 
@@ -106,67 +113,82 @@ pub unsafe extern "C" fn itScball_UnkMotion1_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itScball_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itScball_UnkMotion1_Coll");
     ext::it_8026E15C(gobj, Some(it_80294AD0));
     false
 }
 
 pub unsafe extern "C" fn itScball_Logic30_PickedUp(gobj: *mut Item_GObj) {
+    melee_core::ct!("itScball_Logic30_PickedUp");
     ext::Item_80268E5C(gobj, 2, ITEM_ANIM_UPDATE);
 }
 
 pub unsafe extern "C" fn itScball_UnkMotion2_Anim(_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itScball_UnkMotion2_Anim");
     false
 }
 
 pub unsafe extern "C" fn itScball_Logic30_Dropped(gobj: *mut Item_GObj) {
+    melee_core::ct!("itScball_Logic30_Dropped");
     ext::Item_80268E5C(gobj, 1, 6);
 }
 
 pub unsafe extern "C" fn itScball_Logic30_Thrown(gobj: *mut Item_GObj) {
+    melee_core::ct!("itScball_Logic30_Thrown");
     ext::Item_80268E5C(gobj, 3, 6);
 }
 
 pub unsafe extern "C" fn itScball_UnkMotion3_Anim(_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itScball_UnkMotion3_Anim");
     false
 }
 
 pub unsafe extern "C" fn itScball_UnkMotion3_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itScball_UnkMotion3_Phys");
     Item_ApplyFallingPhysics(gobj);
 }
 
 pub unsafe extern "C" fn itScball_UnkMotion3_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itScball_UnkMotion3_Coll");
     ext::it_8026E15C(gobj, Some(it_80294AD0));
     false
 }
 
 pub unsafe extern "C" fn itScball_Logic30_EnteredAir(gobj: *mut Item_GObj) {
+    melee_core::ct!("itScball_Logic30_EnteredAir");
     ext::Item_80268E5C(gobj, 4, ITEM_ANIM_UPDATE);
 }
 
 pub unsafe extern "C" fn itScball_UnkMotion4_Anim(_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("itScball_UnkMotion4_Anim");
     false
 }
 
-pub unsafe extern "C" fn itScball_UnkMotion4_Phys(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn itScball_UnkMotion4_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("itScball_UnkMotion4_Phys");}
 
 pub unsafe extern "C" fn itScball_UnkMotion4_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itScball_UnkMotion4_Coll");
     ext::it_8026E8C4(gobj, Some(it_80294AD0), Some(it_80294B58));
     false
 }
 
 pub unsafe extern "C" fn itScball_Logic30_DmgDealt(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itScball_Logic30_DmgDealt");
     true
 }
 
 pub unsafe extern "C" fn itScball_Logic30_Clanked(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itScball_Logic30_Clanked");
     true
 }
 
 pub unsafe extern "C" fn itScball_Logic30_Reflected(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itScball_Logic30_Reflected");
     ext::it_80273030(gobj) != 0
 }
 
 pub unsafe extern "C" fn itScball_Logic30_HitShield(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itScball_Logic30_HitShield");
     ext::itColl_BounceOffVictim(gobj);
     false
 }

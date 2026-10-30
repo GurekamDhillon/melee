@@ -336,6 +336,7 @@ pub static mut grNLa_StageData: StageData = StageData {
 };
 
 pub unsafe extern "C" fn grLast_OnDemoInit(arg0: enum_t) {
+    melee_core::ct!("grLast_OnDemoInit");
     if arg0 != 26 {
         return;
     }
@@ -357,6 +358,7 @@ pub unsafe extern "C" fn grLast_OnDemoInit(arg0: enum_t) {
 }
 
 pub unsafe extern "C" fn grLast_OnInit() {
+    melee_core::ct!("grLast_OnInit");
     yakumono_param = ext::Ground_GetYakumonoParam() as *mut grLast_YakumonoParam;
     let si = ext::stage_info();
     (*si).unk8C.set_b4(1);
@@ -371,13 +373,15 @@ pub unsafe extern "C" fn grLast_OnInit() {
     ext::Camera_800311CC(30000.0);
 }
 
-pub unsafe extern "C" fn grLast_OnLoad() {}
+pub unsafe extern "C" fn grLast_OnLoad() { melee_core::ct!("grLast_OnLoad");}
 
 pub unsafe extern "C" fn grLast_OnStart() {
+    melee_core::ct!("grLast_OnStart");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
 
 pub unsafe fn grLast_8021A7F4(id: i32) -> *mut HSD_GObj {
+    melee_core::ct!("grLast_8021A7F4");
     let cb: *mut StageCallbacks = &mut grLast_StageCallbacks[id as usize];
     let gobj = ext::Ground_GetStageGObj(id);
     if !gobj.is_null() {
@@ -402,37 +406,42 @@ pub unsafe fn grLast_8021A7F4(id: i32) -> *mut HSD_GObj {
 }
 
 pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj0_OnInit");
     Ground_StartMapAnim(gobj);
 }
 
-pub unsafe extern "C" fn grLast_8021A914(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grLast_8021A914(_gobj: *mut HSD_GObj) { melee_core::ct!("grLast_8021A914");}
 
-pub unsafe extern "C" fn grLast_8021A918(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grLast_8021A918(_gobj: *mut HSD_GObj) { melee_core::ct!("grLast_8021A918");}
 
 pub unsafe extern "C" fn grLast_8021A91C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grLast_8021A91C");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as enum_t, 0);
     (*gp).x11_flags.set_b012(1);
 }
 
-pub unsafe extern "C" fn grLast_8021A968(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grLast_8021A968(_gobj: *mut HSD_GObj) { melee_core::ct!("grLast_8021A968");}
 
-pub unsafe extern "C" fn grLast_8021A96C(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grLast_8021A96C(_gobj: *mut HSD_GObj) { melee_core::ct!("grLast_8021A96C");}
 
 pub unsafe extern "C" fn stageGObj2_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj2_OnInit");
     Ground_StartMapAnim(gobj);
 }
 
-pub unsafe extern "C" fn grLast_8021A9A4(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grLast_8021A9A4(_gobj: *mut HSD_GObj) { melee_core::ct!("grLast_8021A9A4");}
 
-pub unsafe extern "C" fn grLast_8021A9A8(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grLast_8021A9A8(_gobj: *mut HSD_GObj) { melee_core::ct!("grLast_8021A9A8");}
 
 pub unsafe extern "C" fn grLast_8021A9AC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grLast_8021A9AC");
     let gp = GET_GROUND(gobj);
     (*gp).u.map.set_xC4_b0(0);
 }
 
 pub unsafe extern "C" fn grLast_8021A9C4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grLast_8021A9C4");
     let gp = (*gobj).user_data as *mut Ground;
 
     ext::Ground_InitMapColl((*gobj).hsd_obj as *mut HSD_JObj, (*gp).map_id as s32);
@@ -451,6 +460,7 @@ pub unsafe extern "C" fn grLast_8021A9C4(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grLast_8021AAB0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grLast_8021AAB0");
     let gp = GET_GROUND(gobj);
     if (*gp).u.map.xC4_b1() == 0 && (*gp).u.map.xC4_b0() == 0 {
         // TARGET_PC: Slippi online wraps the backdrop think in a save / restore of the RNG seed
@@ -470,37 +480,40 @@ pub unsafe extern "C" fn grLast_8021AAB0(gobj: *mut HSD_GObj) {
     ext::lb_800115F4();
 }
 
-pub unsafe extern "C" fn grLast_8021AB30(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grLast_8021AB30(_gobj: *mut HSD_GObj) { melee_core::ct!("grLast_8021AB30");}
 
 pub unsafe extern "C" fn grLast_8021AB34(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grLast_8021AB34");
     let gp = GET_GROUND(gobj);
     ext::grMaterial_801C94D8(GET_JOBJ(gobj) as *mut c_void);
     (*gp).x11_flags.set_b012(2);
 }
 
-pub unsafe extern "C" fn grLast_8021AB80(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grLast_8021AB80(_gobj: *mut HSD_GObj) { melee_core::ct!("grLast_8021AB80");}
 
-pub unsafe extern "C" fn grLast_8021AB84(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grLast_8021AB84(_gobj: *mut HSD_GObj) { melee_core::ct!("grLast_8021AB84");}
 
 pub unsafe extern "C" fn grLast_8021AB88(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grLast_8021AB88");
     let gp = GET_GROUND(gobj);
     ext::grMaterial_801C94D8(GET_JOBJ(gobj) as *mut c_void);
     (*gp).x11_flags.set_b012(2);
 }
 
-pub unsafe extern "C" fn grLast_8021ABD4(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grLast_8021ABD4(_gobj: *mut HSD_GObj) { melee_core::ct!("grLast_8021ABD4");}
 
-pub unsafe extern "C" fn grLast_8021ABD8(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grLast_8021ABD8(_gobj: *mut HSD_GObj) { melee_core::ct!("grLast_8021ABD8");}
 
 pub unsafe extern "C" fn grLast_8021ABDC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grLast_8021ABDC");
     let gp = GET_GROUND(gobj);
     ext::grMaterial_801C94D8(GET_JOBJ(gobj) as *mut c_void);
     (*gp).x11_flags.set_b012(2);
 }
 
-pub unsafe extern "C" fn grLast_8021AC28(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grLast_8021AC28(_gobj: *mut HSD_GObj) { melee_core::ct!("grLast_8021AC28");}
 
-pub unsafe extern "C" fn grLast_8021AC2C(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grLast_8021AC2C(_gobj: *mut HSD_GObj) { melee_core::ct!("grLast_8021AC2C");}
 
 /// `(M_PI / 180) / 250`, `/ 1000`, `/ 20`, `* 15`, `* 10` (double constants stored as float).
 const C_804DBB80: f32 = ((M_PI / 180.0) / 250.0) as f32;
@@ -513,6 +526,7 @@ const C_804DBB9C: f32 = (M_PI / 180.0 * 10.0) as f32;
 const C_804DBBA0: f32 = (-(M_PI / 180.0) * 10.0) as f32;
 
 pub unsafe extern "C" fn grLast_8021AC30(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grLast_8021AC30");
     let gp = GET_GROUND(gobj);
 
     ext::grMaterial_801C94D8(GET_JOBJ(gobj) as *mut c_void);
@@ -536,6 +550,7 @@ pub unsafe extern "C" fn grLast_8021AC30(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grLast_8021ADD0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grLast_8021ADD0");
     let mut sp38 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp2c = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp20;
@@ -605,29 +620,32 @@ pub unsafe extern "C" fn grLast_8021ADD0(gobj: *mut HSD_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grLast_8021B23C(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grLast_8021B23C(_gobj: *mut HSD_GObj) { melee_core::ct!("grLast_8021B23C");}
 
 pub unsafe extern "C" fn grLast_8021B240(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grLast_8021B240");
     let gp = GET_GROUND(gobj);
     ext::grMaterial_801C94D8(GET_JOBJ(gobj) as *mut c_void);
     (*gp).x11_flags.set_b012(2);
 }
 
-pub unsafe extern "C" fn grLast_8021B28C(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grLast_8021B28C(_gobj: *mut HSD_GObj) { melee_core::ct!("grLast_8021B28C");}
 
-pub unsafe extern "C" fn grLast_8021B290(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grLast_8021B290(_gobj: *mut HSD_GObj) { melee_core::ct!("grLast_8021B290");}
 
 pub unsafe extern "C" fn grLast_8021B294(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grLast_8021B294");
     let gp = GET_GROUND(gobj);
     ext::grMaterial_801C94D8(GET_JOBJ(gobj) as *mut c_void);
     (*gp).x11_flags.set_b012(2);
 }
 
-pub unsafe extern "C" fn grLast_8021B2E0(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grLast_8021B2E0(_gobj: *mut HSD_GObj) { melee_core::ct!("grLast_8021B2E0");}
 
-pub unsafe extern "C" fn grLast_8021B2E4(_gobj: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grLast_8021B2E4(_gobj: *mut HSD_GObj) { melee_core::ct!("grLast_8021B2E4");}
 
 pub unsafe fn grLast_8021B2E8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grLast_8021B2E8");
     let mut sp30 = GXColor { r: 0, g: 0, b: 0, a: 0 };
     let mut sp2c = GXColor { r: 0, g: 0, b: 0, a: 0 };
 
@@ -725,6 +743,7 @@ unsafe fn animate_all(gp: *mut Ground) -> bool {
 }
 
 pub unsafe fn grLast_8021B5C4(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grLast_8021B5C4");
     let mut result = 0;
     let gp = GET_GROUND(gobj);
     match (*gp).u.map.xC4_b2_25() {
@@ -815,6 +834,7 @@ unsafe fn grlib_inline(gp: *mut Ground) {
 }
 
 pub unsafe fn grLast_8021B920(gobj: *mut HSD_GObj, arg1: i32) {
+    melee_core::ct!("grLast_8021B920");
     let gp = (*gobj).user_data as *mut Ground;
     let yp = yakumono_param;
     let mut sp40 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -984,6 +1004,7 @@ pub unsafe fn grLast_8021B920(gobj: *mut HSD_GObj, arg1: i32) {
 }
 
 pub unsafe fn grLast_8021C40C(gobj: *mut HSD_GObj, color: GXColor, arg2: f32) {
+    melee_core::ct!("grLast_8021C40C");
     let mut sp18 = GXColor { r: 0, g: 0, b: 0, a: 0 };
     let gp = GET_GROUND(gobj);
     ext::Ground_801C2090(&mut sp18);
@@ -1004,6 +1025,7 @@ fn f2u8(x: f32) -> u8 {
 }
 
 pub unsafe fn grLast_8021C500(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grLast_8021C500");
     let mut sp10 = GXColor { r: 0, g: 0, b: 0, a: 0 };
     let gp = GET_GROUND(gobj);
 
@@ -1028,6 +1050,7 @@ pub unsafe fn grLast_8021C500(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe fn grLast_8021C640() {
+    melee_core::ct!("grLast_8021C640");
     let mut sp8 = GXColor { r: 0x0C, g: 0x06, b: 0x28, a: 0xFF };
     ext::Ground_801C052C(&mut sp8);
     ext::Ground_801C05D4(&mut sp8);
@@ -1041,6 +1064,7 @@ pub unsafe fn grLast_8021C640() {
 }
 
 pub unsafe fn grLast_8021C6AC() {
+    melee_core::ct!("grLast_8021C6AC");
     let mut sp1c = GXColor { r: 0x8C, g: 0xB4, b: 0xBE, a: 0xFF };
     let mut sp18 = GXColor { r: 0x96, g: 0xB4, b: 0xBE, a: 0xFF };
     let mut sp14 = GXColor { r: 0x6E, g: 0x78, b: 0x8C, a: 0xFF };
@@ -1060,12 +1084,14 @@ pub unsafe fn grLast_8021C6AC() {
 
 /// TARGET_PC (grlast_stage_slots.inc): FD's group-0 callback pair, never an m-ex-overridden table.
 pub unsafe fn Ground_StageSlotProofCallbacks() -> *mut StageCallbacks {
+    melee_core::ct!("Ground_StageSlotProofCallbacks");
     &mut grLast_StageCallbacks[0]
 }
 
 /// TARGET_PC (grlast_stage_slots.inc): case 1 of `grLast_8021B920` without its generator / camera
 /// globals / RNG / backdrop-cycle callbacks.
 pub unsafe fn Ground_StageSlotFDBackdrop() {
+    melee_core::ct!("Ground_StageSlotFDBackdrop");
     for i in 0..5usize {
         let g = ext::Ground_GetMapGObj(grNLa_803E8010[i][0] as i32);
         if g.is_null() {

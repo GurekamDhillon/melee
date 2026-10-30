@@ -113,6 +113,7 @@ unsafe fn start_vars(fp: *mut Fighter) {
 }
 
 pub fn ftNs_SpecialLwStart_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialLwStart_Enter");
     unsafe {
         let fp = fpp(gobj);
         start_vars(fp);
@@ -122,6 +123,7 @@ pub fn ftNs_SpecialLwStart_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_SpecialAirLwStart_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirLwStart_Enter");
     unsafe {
         let fp = fpp(gobj);
         let a = attrs(fp);
@@ -161,16 +163,18 @@ unsafe fn start_anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_SpecialLwStart_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialLwStart_Anim");
     unsafe { start_anim(gobj) }
 }
 
 pub fn ftNs_SpecialAirLwStart_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirLwStart_Anim");
     unsafe { start_anim(gobj) }
 }
 
-pub fn ftNs_SpecialLwStart_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftNs_SpecialLwStart_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftNs_SpecialLwStart_IASA");}
 
-pub fn ftNs_SpecialAirLwStart_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftNs_SpecialAirLwStart_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftNs_SpecialAirLwStart_IASA");}
 
 /// Shared aerial physics: gravity after the delay, quick air deceleration. `ftColl_8007AF10` is
 /// called by every phase except Start and End.
@@ -190,18 +194,21 @@ unsafe fn air_phys(gobj: *mut HSD_GObj, coll: bool) {
 }
 
 pub fn ftNs_SpecialLwStart_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialLwStart_Coll");
     if st::ft_80082708(gobj) == 0 {
         ftNs_SpecialLwStart_GroundToAir(gobj);
     }
 }
 
 pub fn ftNs_SpecialAirLwStart_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirLwStart_Coll");
     if st::ft_80081D0C(gobj) != 0 {
         ftNs_SpecialAirLwStart_AirToGround(gobj);
     }
 }
 
 pub fn ftNs_SpecialLwStart_GroundToAir(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialLwStart_GroundToAir");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, ftNs_MS_SpecialAirLwStart as i32, FTNESS_SPECIALLW_COLL_FLAG);
@@ -209,6 +216,7 @@ pub fn ftNs_SpecialLwStart_GroundToAir(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_SpecialAirLwStart_AirToGround(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirLwStart_AirToGround");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, ftNs_MS_SpecialLwStart as i32, FTNESS_SPECIALLW_COLL_FLAG);
@@ -246,33 +254,39 @@ unsafe fn magnet_hum(fp: *mut Fighter) {
 }
 
 pub fn ftNs_SpecialLwHold_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialLwHold_Anim");
     unsafe { hold_anim(gobj) }
 }
 
 pub fn ftNs_SpecialAirLwHold_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirLwHold_Anim");
     unsafe { hold_anim(gobj) }
 }
 
-pub fn ftNs_SpecialLwHold_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftNs_SpecialLwHold_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftNs_SpecialLwHold_IASA");}
 
-pub fn ftNs_SpecialAirLwHold_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftNs_SpecialAirLwHold_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftNs_SpecialAirLwHold_IASA");}
 
 pub fn ftNs_SpecialLwHold_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialLwHold_Phys");
     st::ft_80084F3C(gobj);
     st::ftColl_8007AF10(gobj);
 }
 
 pub fn ftNs_SpecialAirLwHold_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirLwHold_Phys");
     unsafe { air_phys(gobj, true) }
 }
 
 pub fn ftNs_SpecialLwHold_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialLwHold_Coll");
     if st::ft_80082708(gobj) == 0 {
         ftNs_SpecialLwHold_GroundToAir(gobj);
     }
 }
 
 pub fn ftNs_SpecialAirLwHold_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirLwHold_Coll");
     if st::ft_80081D0C(gobj) != 0 {
         ftNs_SpecialAirLwHold_AirToGround(gobj);
     }
@@ -286,6 +300,7 @@ unsafe fn create_absorb_hit(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_SpecialLwHold_GroundToAir(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialLwHold_GroundToAir");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, ftNs_MS_SpecialAirLwHold as i32, FTNESS_SPECIALLW_COLL_FLAG);
@@ -294,6 +309,7 @@ pub fn ftNs_SpecialLwHold_GroundToAir(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_SpecialAirLwHold_AirToGround(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirLwHold_AirToGround");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, ftNs_MS_SpecialLwHold as i32, FTNESS_SPECIALLW_COLL_FLAG);
@@ -303,6 +319,7 @@ pub fn ftNs_SpecialAirLwHold_AirToGround(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_SpecialLwHold_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialLwHold_Enter");
     unsafe {
         st::Fighter_ChangeMotionState(gobj, ftNs_MS_SpecialLwHold as i32, Ft_MF_KeepGfx, 0.0, 1.0, 0.0, null());
         create_absorb_hit(gobj);
@@ -310,6 +327,7 @@ pub fn ftNs_SpecialLwHold_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_SpecialAirLwHold_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirLwHold_Enter");
     unsafe {
         st::Fighter_ChangeMotionState(gobj, ftNs_MS_SpecialAirLwHold as i32, Ft_MF_KeepGfx, 0.0, 1.0, 0.0, null());
         create_absorb_hit(gobj);
@@ -333,6 +351,7 @@ unsafe fn turn_step(gobj: *mut HSD_GObj) {
 /// `MTXDegToRad(deg) - rot_z` as clang fused it.
 #[inline(always)]
 pub fn turn_rot_y(deg: f32, rot_z: f32) -> f32 {
+    melee_core::ct!("turn_rot_y");
     fmadds(deg, 0.01745329252_f32, -rot_z)
 }
 
@@ -352,39 +371,46 @@ unsafe fn turn_anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_SpecialLwTurn_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialLwTurn_Anim");
     unsafe { turn_anim(gobj) }
 }
 
 pub fn ftNs_SpecialAirLwTurn_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirLwTurn_Anim");
     unsafe { turn_anim(gobj) }
 }
 
-pub fn ftNs_SpecialLwTurn_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftNs_SpecialLwTurn_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftNs_SpecialLwTurn_IASA");}
 
-pub fn ftNs_SpecialAirLwTurn_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftNs_SpecialAirLwTurn_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftNs_SpecialAirLwTurn_IASA");}
 
 pub fn ftNs_SpecialLwTurn_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialLwTurn_Phys");
     st::ft_80084F3C(gobj);
     st::ftColl_8007AF10(gobj);
 }
 
 pub fn ftNs_SpecialAirLwTurn_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirLwTurn_Phys");
     unsafe { air_phys(gobj, true) }
 }
 
 pub fn ftNs_SpecialLwTurn_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialLwTurn_Coll");
     if st::ft_80082708(gobj) == 0 {
         ftNs_SpecialLwTurn_GroundToAir(gobj);
     }
 }
 
 pub fn ftNs_SpecialAirLwTurn_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirLwTurn_Coll");
     if st::ft_80081D0C(gobj) != 0 {
         ftNs_SpecialAirLwTurn_AirToGround(gobj);
     }
 }
 
 pub fn ftNs_SpecialLwTurn_GroundToAir(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialLwTurn_GroundToAir");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, ftNs_MS_SpecialAirLwTurn as i32, FTNESS_SPECIALLW_COLL_FLAG);
@@ -392,6 +418,7 @@ pub fn ftNs_SpecialLwTurn_GroundToAir(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_SpecialAirLwTurn_AirToGround(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirLwTurn_AirToGround");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, ftNs_MS_SpecialLwTurn as i32, FTNESS_SPECIALLW_COLL_FLAG);
@@ -401,6 +428,7 @@ pub fn ftNs_SpecialAirLwTurn_AirToGround(gobj: *mut HSD_GObj) {
 
 /// Decide grounded or aerial Hold after a Turn/Hit; returns C `bool` (false = went to End).
 pub fn ftNs_SpecialLwHold_GroundOrAir(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftNs_SpecialLwHold_GroundOrAir");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).mv.ns.speciallw.releaseLag <= 0 && (*fp).mv.ns.speciallw.isRelease != 0 {
@@ -439,39 +467,46 @@ unsafe fn hit_anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_SpecialLwHit_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialLwHit_Anim");
     unsafe { hit_anim(gobj) }
 }
 
 pub fn ftNs_SpecialAirLwHit_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirLwHit_Anim");
     unsafe { hit_anim(gobj) }
 }
 
-pub fn ftNs_SpecialLwHit_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftNs_SpecialLwHit_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftNs_SpecialLwHit_IASA");}
 
-pub fn ftNs_SpecialAirLwHit_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftNs_SpecialAirLwHit_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftNs_SpecialAirLwHit_IASA");}
 
 pub fn ftNs_SpecialLwHit_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialLwHit_Phys");
     st::ft_80084F3C(gobj);
     st::ftColl_8007AF10(gobj);
 }
 
 pub fn ftNs_SpecialAirLwHit_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirLwHit_Phys");
     unsafe { air_phys(gobj, true) }
 }
 
 pub fn ftNs_SpecialLwHit_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialLwHit_Coll");
     if st::ft_80082708(gobj) == 0 {
         ftNs_SpecialLwHit_GroundToAir(gobj);
     }
 }
 
 pub fn ftNs_SpecialAirLwHit_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirLwHit_Coll");
     if st::ft_80081D0C(gobj) != 0 {
         ftNs_SpecialAirLwHit_AirToGround(gobj);
     }
 }
 
 pub fn ftNs_SpecialLwHit_GroundToAir(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialLwHit_GroundToAir");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, ftNs_MS_SpecialAirLwHit as i32, FTNESS_SPECIALLW_COLL_FLAG);
@@ -480,6 +515,7 @@ pub fn ftNs_SpecialLwHit_GroundToAir(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_SpecialAirLwHit_AirToGround(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirLwHit_AirToGround");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, ftNs_MS_SpecialLwHit as i32, FTNESS_SPECIALLW_COLL_FLAG);
@@ -490,6 +526,7 @@ pub fn ftNs_SpecialAirLwHit_AirToGround(gobj: *mut HSD_GObj) {
 
 /// PSI Magnet `OnAbsorb` hook: heal Ness by the absorbed damage, face the hit and restart Hit.
 pub fn ftNs_AbsorbThink_DecideAction(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AbsorbThink_DecideAction");
     unsafe {
         let fp = fpp(gobj);
         let sa = attrs(fp);
@@ -526,6 +563,7 @@ pub fn ftNs_AbsorbThink_DecideAction(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_SpecialLwEnd_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialLwEnd_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         st::ftCommon_8007DB24(gobj);
         st::ftCommon_8007D92C(gobj);
@@ -533,37 +571,43 @@ pub fn ftNs_SpecialLwEnd_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_SpecialAirLwEnd_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirLwEnd_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         st::ftCommon_8007DB24(gobj);
         st::ftCommon_8007D92C(gobj);
     }
 }
 
-pub fn ftNs_SpecialLwEnd_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftNs_SpecialLwEnd_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftNs_SpecialLwEnd_IASA");}
 
-pub fn ftNs_SpecialAirLwEnd_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftNs_SpecialAirLwEnd_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftNs_SpecialAirLwEnd_IASA");}
 
 pub fn ftNs_SpecialLwEnd_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialLwEnd_Phys");
     st::ft_80084F3C(gobj);
 }
 
 pub fn ftNs_SpecialAirLwEnd_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirLwEnd_Phys");
     unsafe { air_phys(gobj, false) }
 }
 
 pub fn ftNs_SpecialLwEnd_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialLwEnd_Coll");
     if st::ft_80082708(gobj) == 0 {
         ftNs_SpecialLwEnd_GroundToAir(gobj);
     }
 }
 
 pub fn ftNs_SpecialAirLwEnd_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirLwEnd_Coll");
     if st::ft_80081D0C(gobj) != 0 {
         ftNs_SpecialAirLwEnd_AirToGround(gobj);
     }
 }
 
 pub fn ftNs_SpecialLwEnd_GroundToAir(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialLwEnd_GroundToAir");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, ftNs_MS_SpecialAirLwEnd as i32, FTNESS_SPECIALLW_END_FLAG);
@@ -571,6 +615,7 @@ pub fn ftNs_SpecialLwEnd_GroundToAir(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_SpecialAirLwEnd_AirToGround(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirLwEnd_AirToGround");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, ftNs_MS_SpecialLwEnd as i32, FTNESS_SPECIALLW_END_FLAG);
@@ -579,9 +624,11 @@ pub fn ftNs_SpecialAirLwEnd_AirToGround(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_SpecialLwEnd_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialLwEnd_Enter");
     st::Fighter_ChangeMotionState(gobj, ftNs_MS_SpecialLwEnd as i32, 0, 0.0, 1.0, 0.0, null());
 }
 
 pub fn ftNs_SpecialAirLwEnd_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirLwEnd_Enter");
     st::Fighter_ChangeMotionState(gobj, ftNs_MS_SpecialAirLwEnd as i32, 0, 0.0, 1.0, 0.0, null());
 }

@@ -170,6 +170,7 @@ unsafe fn vi_RunCamera(gobj: *mut HSD_GObj, erase_colors: *mut u8, prio: u64) {
 
 /// `void un_8031E110(int, int, int)`
 pub unsafe fn un_8031E110(arg0: i32, arg1: i32, arg2: i32) {
+    melee_core::ct!("un_8031E110");
     *(&raw mut un_804D6FA8 as *mut u8) = arg0 as u8;
     let p = &raw mut un_804D6FA8 as *mut u8;
     *p.add(1) = arg1 as u8;
@@ -178,6 +179,7 @@ pub unsafe fn un_8031E110(arg0: i32, arg1: i32, arg2: i32) {
 
 /// `void vi0502_8031E124(CharacterKind, int, int)`
 pub unsafe fn vi0502_8031E124(player_kind: CharacterKind, player_costume: i32, kirby_costume: i32) {
+    melee_core::ct!("vi0502_8031E124");
     Stage_InitScene(St_Kind_Greens, core::ptr::null_mut());
     ext::Item_80266FA8();
     ext::Item_80266FCC();
@@ -223,6 +225,7 @@ pub unsafe fn vi0502_8031E124(player_kind: CharacterKind, player_costume: i32, k
 
 /// `void vi0502_8031E304(HSD_GObj*)`
 pub unsafe extern "C" fn vi0502_8031E304(gobj: *mut HSD_GObj) {
+    melee_core::ct!("vi0502_8031E304");
     ext::HSD_JObjAnimAll((*gobj).hsd_obj as *mut HSD_JObj);
 }
 
@@ -234,6 +237,7 @@ unsafe extern "C" fn vi0502_GObj_OnRender(gobj: *mut HSD_GObj, _code: i32) {
 
 /// `void vi0502_GObj_OnProc(HSD_GObj*)`
 pub unsafe extern "C" fn vi0502_GObj_OnProc(gobj: *mut HSD_GObj) {
+    melee_core::ct!("vi0502_GObj_OnProc");
     let cobj = (*gobj).hsd_obj as *mut HSD_CObj;
     ext::HSD_CObjAnim(cobj);
 
@@ -249,6 +253,7 @@ pub unsafe extern "C" fn vi0502_GObj_OnProc(gobj: *mut HSD_GObj) {
 
 /// `void vi0502_Scene_OnEnter(void*)`
 pub unsafe fn vi0502_Scene_OnEnter(arg: *mut c_void) {
+    melee_core::ct!("vi0502_Scene_OnEnter");
     let desc = arg as *mut ViCharaDesc;
     let data = &raw mut un_804000D0;
     ext::lbAudioAx_800236DC();
@@ -306,5 +311,6 @@ pub unsafe fn vi0502_Scene_OnEnter(arg: *mut c_void) {
 
 /// `void vi0502_Scene_OnFrame(void)`
 pub unsafe fn vi0502_Scene_OnFrame() {
+    melee_core::ct!("vi0502_Scene_OnFrame");
     vi_8031CAAC();
 }

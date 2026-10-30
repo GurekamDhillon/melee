@@ -55,6 +55,7 @@ const LEDGE_GRAB_MASK: i32 = Collide_LeftLedgeGrab | Collide_RightLedgeGrab;
 
 /// `ftCliffCommon_80081298`: try to grab a ledge; true if CliffCatch was entered.
 pub fn ftcliffcommon_80081298(g: G) -> bool {
+    melee_core::ct!("ftcliffcommon_80081298");
     let f = fp(g);
     if f.input.lstick[0].y <= -crate::hooks::common_data().x480 {
         return false;
@@ -77,6 +78,7 @@ pub fn ftcliffcommon_80081298(g: G) -> bool {
 
 /// `ftCliffCommon_80081370`: enter CliffCatch (motion 252).
 pub fn ftcliffcommon_80081370(g: G) {
+    melee_core::ct!("ftcliffcommon_80081370");
     use crate::ftcommon2 as c2;
     let f = fp(g);
     let mut vec = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -116,16 +118,18 @@ pub fn ftcliffcommon_80081370(g: G) {
 
 /// `ftCo_CliffCatch_Anim`.
 pub fn ftco_cliff_catch_anim(g: G) {
+    melee_core::ct!("ftco_cliff_catch_anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ftCo_8009A804(g);
     }
 }
 
 /// `ftCo_CliffCatch_IASA`: empty.
-pub fn ftco_cliff_catch_iasa(_g: G) {}
+pub fn ftco_cliff_catch_iasa(_g: G) { melee_core::ct!("ftco_cliff_catch_iasa");}
 
 /// `ftCo_CliffCatch_Phys`: snap to the ledge, or fall if it is gone.
 pub fn ftco_cliff_catch_phys(g: G) {
+    melee_core::ct!("ftco_cliff_catch_phys");
     let f = fp(g);
     let lid = unsafe { f.mv.co.cliff.ledge_id };
     if ext::mpLib_80054ED8(lid) {
@@ -145,6 +149,7 @@ pub fn ftco_cliff_catch_phys(g: G) {
 
 /// `ftCo_CliffCatch_Coll`.
 pub fn ftco_cliff_catch_coll(g: G) {
+    melee_core::ct!("ftco_cliff_catch_coll");
     if ext::ft_800821DC(g) {
         ext::ft_80082B1C(g);
         return;
@@ -156,6 +161,7 @@ pub fn ftco_cliff_catch_coll(g: G) {
 
 /// `ftCo_Cliff_Cam`.
 pub fn ftco_cliff_cam(g: G) {
+    melee_core::ct!("ftco_cliff_cam");
     super::ftcamera::ftcamera_update_camera_box(g);
     let f = fp(g);
     if f.ground_or_air as i32 == GA_Air as i32 {

@@ -7,6 +7,7 @@ use crate::types::*;
 
 /// `FTKB_IS_KIRBY(k)` (ft/forward.h, TARGET_PC): Kirby, or an m-ex kind whose clone base is Kirby.
 pub fn ftkb_is_kirby(k: FighterKind) -> bool {
+    melee_core::ct!("ftkb_is_kirby");
     let k = k as i32;
     k == Ft_Kind_Kirby as i32
         || (k >= Ft_Kind_Mex0 as i32 && k < Ft_Kind_Max as i32 && ext::ftKb_MexKirbyLike(k) != 0)
@@ -25,21 +26,25 @@ fn enter(g: G, ms: ftCommon_MotionState) {
 
 /// `ftCo_800C7220(gobj)`: Kirby -> Wait.
 pub fn ftco_800c7220(g: G) {
+    melee_core::ct!("ftco_800c7220");
     enter(g, ftCo_MS_Wait)
 }
 
 /// `ftCo_800C7294(gobj)`: Kirby -> WalkSlow.
 pub fn ftco_800c7294(g: G) {
+    melee_core::ct!("ftco_800c7294");
     enter(g, ftCo_MS_WalkSlow)
 }
 
 /// `ftCo_800C7308(gobj)`: Kirby -> WalkMiddle.
 pub fn ftco_800c7308(g: G) {
+    melee_core::ct!("ftco_800c7308");
     enter(g, ftCo_MS_WalkMiddle)
 }
 
 /// `ftCo_800C737C(gobj)`: `ft_8008521C(gobj)`.
 pub fn ftco_800c737c(g: G) {
+    melee_core::ct!("ftco_800c737c");
     e0d0::ft_8008521C(g)
 }
 

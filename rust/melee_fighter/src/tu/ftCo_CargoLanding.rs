@@ -43,10 +43,12 @@ pub mod ext {
 
 /// `ftCo_8009BD4C` as the C `HSD_GObjEvent` handed to `ft_80082C74`.
 pub unsafe extern "C" fn ftCo_8009BD4C_cb(g: G) {
+    melee_core::ct!("ftCo_8009BD4C_cb");
     ftCo_8009BD4C(g)
 }
 
 pub fn ftCo_8009BD4C(g: G) {
+    melee_core::ct!("ftCo_8009BD4C");
     let f = fp(g);
     let lag = x2cc(f).cargo_hold.x28_LANDING_LAG;
     f.mv.ca.specialhi.vel.x = lag;
@@ -57,6 +59,7 @@ pub fn ftCo_8009BD4C(g: G) {
 }
 
 pub fn ftCo_CargoLanding_Anim(g: G) {
+    melee_core::ct!("ftCo_CargoLanding_Anim");
     if unsafe { fp(g).mv.ca.specialhi.vel.x } <= 0.0 {
         ext::ftCo_8009B518(g);
     }
@@ -64,9 +67,11 @@ pub fn ftCo_CargoLanding_Anim(g: G) {
 }
 
 pub fn ftCo_CargoLanding_Phys(g: G) {
+    melee_core::ct!("ftCo_CargoLanding_Phys");
     ext::ft_80084F3C(g);
 }
 
 pub fn ftCo_CargoLanding_Coll(g: G) {
+    melee_core::ct!("ftCo_CargoLanding_Coll");
     ext::ftCo_CargoWait_Coll(g);
 }

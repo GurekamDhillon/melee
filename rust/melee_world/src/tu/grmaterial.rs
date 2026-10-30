@@ -197,6 +197,7 @@ pub static mut grMaterial_803E0A20: grMaterial_MObjInfo = {
 pub static mut grMaterial_804D456C: [ItCmd; 1] = [Some(grMaterial_801C9470)];
 
 pub unsafe fn grMaterial_801C87D0(jobj: *mut HSD_JObj, flags: u32) {
+    melee_core::ct!("grMaterial_801C87D0");
     if !jobj.is_null() {
         let mut dobj = ext::HSD_JObjGetDObj(jobj);
         while !dobj.is_null() {
@@ -210,6 +211,7 @@ pub unsafe fn grMaterial_801C87D0(jobj: *mut HSD_JObj, flags: u32) {
 }
 
 pub unsafe fn grMaterial_801C8858(jobj: *mut HSD_JObj, arg1: u32) {
+    melee_core::ct!("grMaterial_801C8858");
     let mut jobj = jobj;
     if jobj.is_null() {
         return;
@@ -224,6 +226,7 @@ pub unsafe fn grMaterial_801C8858(jobj: *mut HSD_JObj, arg1: u32) {
 
 /// `static void grMaterial_801C897C(HSD_JObj*, u32)`.
 pub unsafe fn grMaterial_801C897C(jobj: *mut HSD_JObj, flags: u32) {
+    melee_core::ct!("grMaterial_801C897C");
     if !jobj.is_null() {
         let mut dobj = ext::HSD_JObjGetDObj(jobj);
         while !dobj.is_null() {
@@ -237,6 +240,7 @@ pub unsafe fn grMaterial_801C897C(jobj: *mut HSD_JObj, flags: u32) {
 }
 
 pub unsafe fn grMaterial_801C8A04(jobj: *mut HSD_JObj, arg1: u32) {
+    melee_core::ct!("grMaterial_801C8A04");
     let mut jobj = jobj;
     if jobj.is_null() {
         return;
@@ -250,6 +254,7 @@ pub unsafe fn grMaterial_801C8A04(jobj: *mut HSD_JObj, arg1: u32) {
 }
 
 pub unsafe fn grMaterial_801C8B28(jobj: *mut HSD_JObj) -> *mut HSD_JObj {
+    melee_core::ct!("grMaterial_801C8B28");
     let mut jobj = jobj;
     if !jobj.is_null() {
         while !HSD_JObjGetParent(jobj).is_null() {
@@ -275,6 +280,7 @@ unsafe fn flag_4000(jobj: *mut HSD_JObj, arg1: i32) -> i32 {
 }
 
 pub unsafe fn grMaterial_801C8B68(jobj: *mut HSD_JObj, arg1: i32) {
+    melee_core::ct!("grMaterial_801C8B68");
     let mut jobj = jobj;
     if !jobj.is_null() {
         let var_r3 = flag_4000(jobj, arg1);
@@ -303,6 +309,7 @@ pub unsafe fn grMaterial_801C8B68(jobj: *mut HSD_JObj, arg1: i32) {
 }
 
 pub unsafe fn grMaterial_801C8CDC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grMaterial_801C8CDC");
     ext::Item_8026A8EC(gobj);
 }
 
@@ -315,6 +322,7 @@ pub unsafe fn grMaterial_801C8CFC(
     arg5: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut Ground, *mut Vec3, *mut HSD_GObj, f32)>,
     arg6: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut Ground, *mut HSD_GObj)>,
 ) -> *mut HSD_GObj {
+    melee_core::ct!("grMaterial_801C8CFC");
     ext::it_802E6AEC(arg2, arg0, arg1, arg3, null_mut(), 0, arg4, arg5, arg6)
 }
 
@@ -328,16 +336,19 @@ pub unsafe fn grMaterial_801C8D44(
     arg6: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut Ground, *mut Vec3, *mut HSD_GObj, f32)>,
     arg7: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut Ground, *mut HSD_GObj)>,
 ) -> *mut HSD_GObj {
+    melee_core::ct!("grMaterial_801C8D44");
     ext::it_802E6AEC(arg2, arg0, arg1, null_mut(), arg3, arg4, arg5, arg6, arg7)
 }
 
 pub unsafe fn grMaterial_801C8D98(gobj: *mut HSD_GObj, id: i32) {
+    melee_core::ct!("grMaterial_801C8D98");
     ext::it_802725D4(gobj);
     ext::Item_80268E5C(gobj, id, 2);
 }
 
 #[allow(clippy::too_many_arguments)]
 pub unsafe fn grMaterial_801C8DE0(gobj: *mut HSD_GObj, arg8: f32, arg9: f32, arg_a: f32, arg_b: f32, arg_c: f32, arg_d: f32, arg_e: f32) {
+    melee_core::ct!("grMaterial_801C8DE0");
     let it = (*gobj).user_data as *mut Item;
     let hurt: *mut HurtCapsule = (*it).xACC_itemHurtbox.as_mut_ptr();
     (*hurt).a_offset.x = arg8;
@@ -350,14 +361,17 @@ pub unsafe fn grMaterial_801C8DE0(gobj: *mut HSD_GObj, arg8: f32, arg9: f32, arg
 }
 
 pub unsafe fn grMaterial_801C8E08(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grMaterial_801C8E08");
     ext::it_802756E0(gobj);
 }
 
 pub unsafe fn grMaterial_801C8E28(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grMaterial_801C8E28");
     ext::it_802756D0(gobj);
 }
 
 pub unsafe fn grMaterial_801C8E48(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("grMaterial_801C8E48");
     let it = (*gobj).user_data as *mut Item;
     if !(*it).x524_cmd.anon_8.u.is_null() {
         return false;
@@ -366,12 +380,14 @@ pub unsafe fn grMaterial_801C8E48(gobj: *mut HSD_GObj) -> bool {
 }
 
 pub unsafe fn grMaterial_801C8E68(gobj: *mut HSD_GObj, ground_or_air: GroundOrAir) {
+    melee_core::ct!("grMaterial_801C8E68");
     let it = (*gobj).user_data as *mut Item;
     (*it).ground_or_air = ground_or_air;
 }
 
 /// The class-info initialiser of `gr_mobj` (the `info_init` of `grMaterial_803E0A20`).
 pub unsafe extern "C" fn grMaterial_801C8E74() {
+    melee_core::ct!("grMaterial_801C8E74");
     ext::hsdInitClassInfo(
         addr_of_mut!(grMaterial_803E0A20) as *mut HSD_ClassInfo,
         addr_of_mut!(ext::hsdMObj) as *mut HSD_ClassInfo,
@@ -494,6 +510,7 @@ unsafe fn fn_801C8EF8_inline(gp: *mut Ground, mobj: *mut HSD_MObj) {
 
 /// `static void fn_801C8EF8(HSD_MObj*, u32)`: the `gr_mobj` setup.
 pub unsafe extern "C" fn fn_801C8EF8(mobj: *mut HSD_MObj, _rendermode: u32) {
+    melee_core::ct!("fn_801C8EF8");
     ext::HSD_StateInitTev();
     let mobj_rendermode = (*mobj).rendermode;
     ext::HSD_SetMaterialColor((*(*mobj).mat).ambient, (*(*mobj).mat).diffuse, (*(*mobj).mat).specular, (*(*mobj).mat).alpha);
@@ -543,6 +560,7 @@ unsafe fn change_class_dobjs(jobj: *mut HSD_JObj) {
 }
 
 pub unsafe fn grMaterial_801C92C0(jobj: *mut HSD_JObj) {
+    melee_core::ct!("grMaterial_801C92C0");
     let mut jobj = jobj;
     if jobj.is_null() {
         return;
@@ -564,10 +582,12 @@ pub unsafe fn grMaterial_801C92C0(jobj: *mut HSD_JObj) {
 }
 
 pub unsafe extern "C" fn grMaterial_801C9470(gobj: *mut HSD_GObj, cmd: *mut CommandInfo) {
+    melee_core::ct!("grMaterial_801C9470");
     grMaterial_801C9490(gobj, cmd);
 }
 
 pub unsafe fn grMaterial_801C9490(gobj: *mut HSD_GObj, cmd: *mut CommandInfo) {
+    melee_core::ct!("grMaterial_801C9490");
     let gp = (*gobj).user_data as *mut Ground;
     let val: u32 = ((*((*cmd).anon_8.ptr[0] as *const u16) as u32) >> 2) & 0xFF;
     (*gp).xC0 = val as f32;
@@ -575,6 +595,7 @@ pub unsafe fn grMaterial_801C9490(gobj: *mut HSD_GObj, cmd: *mut CommandInfo) {
 }
 
 pub unsafe fn grMaterial_801C94D8(obj: *mut c_void) {
+    melee_core::ct!("grMaterial_801C94D8");
     let hsd_obj = obj as *mut HSD_JObj;
     if !hsd_obj.is_null() {
         change_class_dobjs(hsd_obj);
@@ -587,12 +608,14 @@ pub unsafe fn grMaterial_801C94D8(obj: *mut c_void) {
 }
 
 pub unsafe fn grMaterial_801C95C4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grMaterial_801C95C4");
     let gp = (*gobj).user_data as *mut Ground;
     ext::lb_80014498(addr_of_mut!((*gp).color_overlay));
     (*gp).x10_flags.set_b4(1);
 }
 
 pub unsafe fn grMaterial_801C9604(gobj: *mut HSD_GObj, script: *mut c_void, arg2: bool) {
+    melee_core::ct!("grMaterial_801C9604");
     let gp = (*gobj).user_data as *mut Ground;
     let co = addr_of_mut!((*gp).color_overlay);
     (*co).x4_pri = arg2 as i32;
@@ -606,11 +629,13 @@ pub unsafe fn grMaterial_801C9604(gobj: *mut HSD_GObj, script: *mut c_void, arg2
 }
 
 pub unsafe extern "C" fn fn_801C9664(gobj: *mut HSD_GObj, cmd: *mut CommandInfo, arg2: i32) {
+    melee_core::ct!("fn_801C9664");
     let idx = (arg2 - 21) as usize;
     (grMaterial_804D456C[idx].unwrap())(gobj, cmd);
 }
 
 pub unsafe fn grMaterial_801C9698(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grMaterial_801C9698");
     let gp = (*gobj).user_data as *mut Ground;
     if ext::lb_80014258(gobj, addr_of_mut!((*gp).color_overlay) as *mut c_void, Some(fn_801C9664)) != 0 {
         (*gp).x10_flags.set_b4(1);

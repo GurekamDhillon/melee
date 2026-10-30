@@ -45,6 +45,7 @@ pub mod ext {
 /// # Safety
 /// `arg0`, `arg1`, `arg2` must be valid for reads.
 pub unsafe fn lbGx_8001E2F8(arg0: *const Vec4, arg1: *const Vec3, arg2: *const U8Vec4, arg3: u32, argf1: f32) -> bool {
+    melee_core::ct!("lbGx_8001E2F8");
     if arg3 != 2 {
         return false;
     }

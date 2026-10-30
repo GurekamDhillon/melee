@@ -131,6 +131,7 @@ pub unsafe fn pl_80038144(
     arg5: i32,
     source_ply: i32,
 ) {
+    melee_core::ct!("pl_80038144");
     let _ = arg5;
     let attacker_fp: *mut Fighter = if !attacker_gobj.is_null() { get_fighter(attacker_gobj) } else { core::ptr::null_mut() };
     let victim_fp = get_fighter(victim_gobj);

@@ -208,6 +208,7 @@ unsafe fn set_effect_hitlag_callbacks(fp: *mut Fighter) {
 }
 
 pub fn ftPr_Init_8013C2F8() {
+    melee_core::ct!("ftPr_Init_8013C2F8");
     unsafe {
         ft_8045A1E0[0] = core::ptr::null_mut();
         ft_8045A1E0[1] = core::ptr::null_mut();
@@ -218,10 +219,12 @@ pub fn ftPr_Init_8013C2F8() {
 }
 
 pub fn ftPr_Init_OnUserDataRemove(gobj: G) {
+    melee_core::ct!("ftPr_Init_OnUserDataRemove");
     ftPr_Init_8013C494(gobj);
 }
 
 pub fn ftPr_Init_8013C360(gobj: G) {
+    melee_core::ct!("ftPr_Init_8013C360");
     unsafe {
         let joints = ft_8045A1E0.as_mut_ptr();
         let fp = fpp(gobj);
@@ -262,6 +265,7 @@ pub fn ftPr_Init_8013C360(gobj: G) {
 }
 
 pub fn ftPr_Init_8013C494(gobj: G) {
+    melee_core::ct!("ftPr_Init_8013C494");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.pr.x223C.is_null() {
@@ -274,6 +278,7 @@ pub fn ftPr_Init_8013C494(gobj: G) {
 }
 
 pub fn ftPr_Init_UnkMtxFunc0(gobj: G, arg1: i32, vmtx: *mut [f32; 4]) {
+    melee_core::ct!("ftPr_Init_UnkMtxFunc0");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.pr.x223C.is_null() && (*fp).x2225_b2() != 0 {
@@ -293,6 +298,7 @@ pub fn ftPr_Init_UnkMtxFunc0(gobj: G, arg1: i32, vmtx: *mut [f32; 4]) {
 }
 
 pub fn ftPr_Init_UnkIntBoolFunc0(fp: *mut Fighter, arg1: i32, arg2: i32) {
+    melee_core::ct!("ftPr_Init_UnkIntBoolFunc0");
     unsafe {
         if !(*fp).u.pr.x223C.is_null() {
             if arg2 != 0 {
@@ -306,6 +312,7 @@ pub fn ftPr_Init_UnkIntBoolFunc0(fp: *mut Fighter, arg1: i32, arg2: i32) {
 
 /// Returns the hat joint, or (a correctness hack in the C) the gobj itself when there is none.
 pub fn ftPr_Init_UnkMotionStates6(gobj: G) -> *mut HSD_JObj {
+    melee_core::ct!("ftPr_Init_UnkMotionStates6");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.pr.x223C.is_null() {
@@ -316,6 +323,7 @@ pub fn ftPr_Init_UnkMotionStates6(gobj: G) -> *mut HSD_JObj {
 }
 
 pub fn ftPr_Init_OnLoad(gobj: G) {
+    melee_core::ct!("ftPr_Init_OnLoad");
     unsafe {
         let fp = fpp(gobj);
         push_attrs(fp);
@@ -326,6 +334,7 @@ pub fn ftPr_Init_OnLoad(gobj: G) {
 }
 
 pub fn ftPr_Init_OnItemPickup(gobj: G, flag: i32) {
+    melee_core::ct!("ftPr_Init_OnItemPickup");
     unsafe {
         let fp = fpp(gobj);
         if st::itIsHeavy((*fp).item_gobj) == 0 {
@@ -342,6 +351,7 @@ pub fn ftPr_Init_OnItemPickup(gobj: G, flag: i32) {
 }
 
 pub fn ftPr_Init_OnItemInvisible(gobj: G) {
+    melee_core::ct!("ftPr_Init_OnItemInvisible");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).item_gobj.is_null() && st::itIsHeavy((*fp).item_gobj) == 0 {
@@ -351,6 +361,7 @@ pub fn ftPr_Init_OnItemInvisible(gobj: G) {
 }
 
 pub fn ftPr_Init_OnItemVisible(gobj: G) {
+    melee_core::ct!("ftPr_Init_OnItemVisible");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).item_gobj.is_null() && st::itIsHeavy((*fp).item_gobj) == 0 {
@@ -360,11 +371,13 @@ pub fn ftPr_Init_OnItemVisible(gobj: G) {
 }
 
 pub fn ftPr_Init_OnItemDrop(gobj: G, bool1: i32) {
+    melee_core::ct!("ftPr_Init_OnItemDrop");
     Fighter_OnItemDrop(gobj, bool1, 0, 0);
 }
 
 /// `COPY_ATTRS(gobj, ftPurinAttributes)`.
 pub fn ftPr_Init_LoadSpecialAttrs(gobj: G) {
+    melee_core::ct!("ftPr_Init_LoadSpecialAttrs");
     unsafe {
         let fp = fpp(gobj);
         *((*fp).dat_attrs as *mut ftPurinAttributes) = *((*(*fp).ft_data).ext_attr as *const ftPurinAttributes);
@@ -372,6 +385,7 @@ pub fn ftPr_Init_LoadSpecialAttrs(gobj: G) {
 }
 
 pub fn ftPr_Init_8013C94C(gobj: G) {
+    melee_core::ct!("ftPr_Init_8013C94C");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).x2219_b0() == 0 {

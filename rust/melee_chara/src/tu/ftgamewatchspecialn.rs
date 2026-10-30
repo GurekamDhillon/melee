@@ -60,11 +60,13 @@ const transition_flags: u32 = (Ft_MF_KeepColAnimHitStatus
 
 /// `ftGw_SpecialN_CreateSausage` as a Fighter callback entry (accessory4_cb).
 pub unsafe extern "C" fn cb_ftGw_SpecialN_CreateSausage(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftGw_SpecialN_CreateSausage");
     ftGw_SpecialN_CreateSausage(g);
 }
 
 /// Spawn one Chef sausage (static in the C); picks a sausage kind that is neither of the last two.
 pub fn ftGw_SpecialN_CreateSausage(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialN_CreateSausage");
     unsafe {
         let fp = fpp(gobj);
         let gaw_attrs = (*fp).dat_attrs as *const ftGameWatchAttributes;
@@ -101,6 +103,7 @@ pub fn ftGw_SpecialN_CreateSausage(gobj: *mut HSD_GObj) {
 
 /// Grounded Chef Action State handler.
 pub fn ftGw_SpecialN_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialN_Enter");
     unsafe {
         (*fpp(gobj)).self_vel.y = 0.0;
         st::Fighter_ChangeMotionState(gobj, ftGw_MS_SpecialN as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -111,6 +114,7 @@ pub fn ftGw_SpecialN_Enter(gobj: *mut HSD_GObj) {
 
 /// Aerial Chef Action State handler.
 pub fn ftGw_SpecialAirN_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialAirN_Enter");
     unsafe {
         (*fpp(gobj)).self_vel.y = 0.0;
         st::Fighter_ChangeMotionState(gobj, ftGw_MS_SpecialAirN as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -121,6 +125,7 @@ pub fn ftGw_SpecialAirN_Enter(gobj: *mut HSD_GObj) {
 
 /// Grounded Chef Animation callback.
 pub fn ftGw_SpecialN_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialN_Anim");
     unsafe {
         let fp = fpp(gobj);
         let gaw_attrs = (*fp).dat_attrs as *const ftGameWatchAttributes;
@@ -140,6 +145,7 @@ pub fn ftGw_SpecialN_Anim(gobj: *mut HSD_GObj) {
 
 /// Aerial Chef Animation callback.
 pub fn ftGw_SpecialAirN_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialAirN_Anim");
     unsafe {
         let fp = fpp(gobj);
         let gaw_attrs = (*fp).dat_attrs as *const ftGameWatchAttributes;
@@ -159,6 +165,7 @@ pub fn ftGw_SpecialAirN_Anim(gobj: *mut HSD_GObj) {
 
 /// Grounded Chef IASA callback.
 pub fn ftGw_SpecialN_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialN_IASA");
     unsafe {
         let fp = fpp(gobj);
         let gaw_attrs = (*fp).dat_attrs as *const ftGameWatchAttributes;
@@ -176,6 +183,7 @@ pub fn ftGw_SpecialN_IASA(gobj: *mut HSD_GObj) {
 
 /// Aerial Chef IASA callback.
 pub fn ftGw_SpecialAirN_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialAirN_IASA");
     unsafe {
         let fp = fpp(gobj);
         let gaw_attrs = (*fp).dat_attrs as *const ftGameWatchAttributes;
@@ -193,6 +201,7 @@ pub fn ftGw_SpecialAirN_IASA(gobj: *mut HSD_GObj) {
 
 /// Grounded Chef Collision callback.
 pub fn ftGw_SpecialN_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialN_Coll");
     if st::ft_800827A0(gobj) == 0 {
         ftGw_SpecialN_GroundToAir(gobj);
     }
@@ -200,6 +209,7 @@ pub fn ftGw_SpecialN_Coll(gobj: *mut HSD_GObj) {
 
 /// Aerial Chef Collision callback.
 pub fn ftGw_SpecialAirN_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialAirN_Coll");
     if st::ft_80081D0C(gobj) != 0 {
         ftGw_SpecialAirN_AirToGround(gobj);
     }
@@ -207,6 +217,7 @@ pub fn ftGw_SpecialAirN_Coll(gobj: *mut HSD_GObj) {
 
 /// Ground -> air Chef Motion State handler.
 pub fn ftGw_SpecialN_GroundToAir(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialN_GroundToAir");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, ftGw_MS_SpecialAirN as i32, transition_flags);
@@ -216,6 +227,7 @@ pub fn ftGw_SpecialN_GroundToAir(gobj: *mut HSD_GObj) {
 
 /// Air -> ground Chef Motion State handler.
 pub fn ftGw_SpecialAirN_AirToGround(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialAirN_AirToGround");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, ftGw_MS_SpecialN as i32, transition_flags);
@@ -225,6 +237,7 @@ pub fn ftGw_SpecialAirN_AirToGround(gobj: *mut HSD_GObj) {
 
 /// Re-enter the Chef loop at `anim_frame` (grounded).
 pub fn ftGw_SpecialN_Loop(gobj: *mut HSD_GObj, anim_frame: f32) {
+    melee_core::ct!("ftGw_SpecialN_Loop");
     unsafe {
         st::Fighter_ChangeMotionState(
             gobj,
@@ -246,6 +259,7 @@ pub fn ftGw_SpecialN_Loop(gobj: *mut HSD_GObj, anim_frame: f32) {
 
 /// Re-enter the Chef loop at `anim_frame` (aerial).
 pub fn ftGw_SpecialAirN_Loop(gobj: *mut HSD_GObj, anim_frame: f32) {
+    melee_core::ct!("ftGw_SpecialAirN_Loop");
     unsafe {
         st::Fighter_ChangeMotionState(
             gobj,

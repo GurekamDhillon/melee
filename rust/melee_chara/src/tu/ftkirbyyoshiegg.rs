@@ -102,26 +102,32 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 
 /// `fn_8010AA64` as a Fighter callback entry (`accessory4_cb`).
 pub unsafe extern "C" fn cb_fn_8010AA64(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_8010AA64");
     fn_8010AA64(g);
 }
 /// `fn_8010B16C` as a Fighter callback entry (`take_dmg_2_cb`).
 pub unsafe extern "C" fn cb_fn_8010B16C(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_8010B16C");
     fn_8010B16C(g);
 }
 /// `fn_8010B1D4` as a Fighter callback entry (`take_dmg_cb`).
 pub unsafe extern "C" fn cb_fn_8010B1D4(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_8010B1D4");
     fn_8010B1D4(g);
 }
 /// `fn_8010B124` / `fn_8010B148` as Fighter callback entries (landing / leave-ground).
 pub unsafe extern "C" fn cb_fn_8010B124(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_8010B124");
     fn_8010B124(g);
 }
 pub unsafe extern "C" fn cb_fn_8010B148(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_8010B148");
     fn_8010B148(g);
 }
 
 /// `fn_8010AA64` (static): the egg shrinks back to Kirby's scale over `x10` frames.
 pub fn fn_8010AA64(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8010AA64");
     unsafe {
         let fp = fpp(gobj);
         let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -149,6 +155,7 @@ pub fn fn_8010AA64(gobj: *mut HSD_GObj) {
 
 /// `inlineB0` (static inline): rebuild the victim's single hurtbox around the egg.
 pub fn inlineB0(gobj: *mut HSD_GObj, hurt: &mut ftHurtboxInit) {
+    melee_core::ct!("inlineB0");
     unsafe {
         let fp = fpp(gobj);
         ext::ftColl_8007B0C0(gobj, HurtCapsule_Intangible as i32);
@@ -164,6 +171,7 @@ pub fn inlineB0(gobj: *mut HSD_GObj, hurt: &mut ftHurtboxInit) {
 }
 
 pub fn ftKb_SpecialNYs_8010AC78(victim: *mut HSD_GObj, gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialNYs_8010AC78");
     unsafe {
         let fp = fpp(victim);
         let jobj = (*victim).hsd_obj as *mut HSD_JObj;
@@ -200,6 +208,7 @@ pub fn ftKb_SpecialNYs_8010AC78(victim: *mut HSD_GObj, gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCo_KirbyYoshiEgg_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCo_KirbyYoshiEgg_Anim");
     unsafe {
         let fp = fpp(gobj);
         let temp_ret = ys::ftKb_SpecialNYs_801092DC();
@@ -236,9 +245,10 @@ pub fn ftCo_KirbyYoshiEgg_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftCo_KirbyYoshiEgg_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftCo_KirbyYoshiEgg_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCo_KirbyYoshiEgg_IASA");}
 
 pub fn ftCo_KirbyYoshiEgg_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCo_KirbyYoshiEgg_Phys");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).ground_or_air == GA_Ground {
@@ -250,6 +260,7 @@ pub fn ftCo_KirbyYoshiEgg_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCo_KirbyYoshiEgg_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCo_KirbyYoshiEgg_Coll");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).ground_or_air == GA_Ground {
@@ -261,14 +272,17 @@ pub fn ftCo_KirbyYoshiEgg_Coll(gobj: *mut HSD_GObj) {
 }
 
 pub fn fn_8010B124(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8010B124");
     unsafe { st::ftCommon_8007D7FC(&mut *fpp(gobj)) }
 }
 
 pub fn fn_8010B148(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8010B148");
     unsafe { st::ftCommon_8007D5D4(&mut *fpp(gobj)) }
 }
 
 pub fn fn_8010B16C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8010B16C");
     unsafe {
         let fp = fpp(gobj);
         // `grab_timer -= x1838_percentTemp * f()`: the IR is fmuladd(-x1838, f(), grab_timer).
@@ -282,5 +296,6 @@ pub fn fn_8010B16C(gobj: *mut HSD_GObj) {
 }
 
 pub fn fn_8010B1D4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8010B1D4");
     ext::Fighter_UpdateModelScale(gobj);
 }

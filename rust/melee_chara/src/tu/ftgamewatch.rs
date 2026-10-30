@@ -118,10 +118,12 @@ unsafe fn costume_vis_idx(fp: *mut Fighter) -> usize {
 
 /// `ftGw_Init_OnDamage` as a Fighter callback entry (death2_cb / take_dmg_cb).
 pub unsafe extern "C" fn cb_ftGw_Init_OnDamage(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftGw_Init_OnDamage");
     ftGw_Init_OnDamage(g);
 }
 
 pub fn ftGw_Init_OnLoad(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_Init_OnLoad");
     unsafe {
         let fp = fpp(gobj);
         let items = (*(*fp).ft_data).x48_items;
@@ -158,6 +160,7 @@ pub fn ftGw_Init_OnLoad(gobj: *mut HSD_GObj) {
 
 /// Removes every item G&W owns (damage / death).
 pub fn ftGw_Init_OnDamage(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_Init_OnDamage");
     a11::ftGw_Attack11_ItemGreenhouseRemove(gobj);
     alw3::ftGw_AttackLw3_ItemManholeOnDamage(gobj);
     as4::ftGw_AttackS4_ItemTorchOnDamage(gobj);
@@ -170,6 +173,7 @@ pub fn ftGw_Init_OnDamage(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftGw_Init_8014A538(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_Init_8014A538");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).ground_or_air == GA_Air {
@@ -187,15 +191,18 @@ pub fn ftGw_Init_8014A538(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftGw_Init_OnItemPickup(gobj: *mut HSD_GObj, flag: i32) {
+    melee_core::ct!("ftGw_Init_OnItemPickup");
     Fighter_OnItemPickup(gobj, flag, 1, 1);
 }
 
 pub fn ftGw_Init_OnItemDrop(gobj: *mut HSD_GObj, drop_item_flag: i32) {
+    melee_core::ct!("ftGw_Init_OnItemDrop");
     Fighter_OnItemDrop(gobj, drop_item_flag, 1, 1);
 }
 
 /// Set the Oil Panic color overlay.
 pub fn ftGw_Init_UnkMotionStates4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_Init_UnkMotionStates4");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).u.gw.x2238_panicCharge >= ftGw_Panic_Full as i32 {
@@ -206,6 +213,7 @@ pub fn ftGw_Init_UnkMotionStates4(gobj: *mut HSD_GObj) {
 
 /// `COPY_ATTRS(gobj, ftGameWatchAttributes)`.
 pub fn ftGw_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_Init_LoadSpecialAttrs");
     unsafe {
         let fp = fpp(gobj);
         *((*fp).dat_attrs as *mut ftGameWatchAttributes) =
@@ -215,6 +223,7 @@ pub fn ftGw_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
 
 /// Apply color to G&W's items: `item_mod->x0_unk = attrs.COLOR[FT_COSTUME_VIS_IDX(fp)]`.
 pub fn ftGw_Init_8014A7F4(gobj: *mut HSD_GObj, item_mod: *mut ItemModStruct) {
+    melee_core::ct!("ftGw_Init_8014A7F4");
     unsafe {
         let fp = fpp(gobj);
         let attrs = (*fp).dat_attrs as *const ftGameWatchAttributes;
@@ -224,6 +233,7 @@ pub fn ftGw_Init_8014A7F4(gobj: *mut HSD_GObj, item_mod: *mut ItemModStruct) {
 
 /// Apply the outline color to G&W's items.
 pub fn ftGw_Init_8014A814(gobj: *mut HSD_GObj, item_mod: *mut ItemModStruct) {
+    melee_core::ct!("ftGw_Init_8014A814");
     unsafe {
         let fp = fpp(gobj);
         let attrs = (*fp).dat_attrs as *const ftGameWatchAttributes;
@@ -233,5 +243,6 @@ pub fn ftGw_Init_8014A814(gobj: *mut HSD_GObj, item_mod: *mut ItemModStruct) {
 
 /// OnAbsorb callback.
 pub fn ftGw_Init_OnAbsorb(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_Init_OnAbsorb");
     slw::ftGw_SpecialLw_AbsorbThink_DecideAction(gobj);
 }

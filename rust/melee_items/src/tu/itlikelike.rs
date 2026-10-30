@@ -183,6 +183,7 @@ unsafe fn swapVelocity(gobj: *mut HSD_GObj) {
 
 /// 2D9A2C: scans for a fighter in range; returns the side (-1 / 1) or 0.
 pub unsafe extern "C" fn it_802D9A2C(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("it_802D9A2C");
     let ip = HSD_GObjGetUserData(gobj) as *mut Item;
     let attr = GET_ATTRS(ip);
     let mut sp10: Vec3 = core::mem::zeroed();
@@ -216,11 +217,13 @@ pub unsafe extern "C" fn it_802D9A2C(gobj: *mut Item_GObj) -> i32 {
 
 /// 2D9B78
 pub unsafe extern "C" fn it_802D9B78(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D9B78");
     swapVelocity(gobj);
 }
 
 /// 2D9BA8: spawn setup.
 pub unsafe extern "C" fn it_802D9BA8(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D9BA8");
     let ip = GET_ITEM(gobj);
     let attr = GET_ATTRS(ip);
 
@@ -248,6 +251,7 @@ pub unsafe extern "C" fn it_802D9BA8(gobj: *mut Item_GObj) {
 
 /// Damage reaction (returns false).
 pub unsafe extern "C" fn it_2725_Logic5_DmgReceived(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_2725_Logic5_DmgReceived");
     let ip = GET_ITEM(gobj);
     let attr = GET_ATTRS(ip);
 
@@ -269,6 +273,7 @@ pub unsafe extern "C" fn it_2725_Logic5_DmgReceived(gobj: *mut Item_GObj) -> boo
 
 /// 2D9DDC
 pub unsafe extern "C" fn it_802D9DDC(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D9DDC");
     ext::it_8027CAD8(gobj);
     ext::it_8026D5CC(gobj);
     ext::it_8027C0A8(gobj, 0.0, 5.0);
@@ -277,6 +282,7 @@ pub unsafe extern "C" fn it_802D9DDC(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLikelike_UnkMotion0_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         ext::Item_80268E5C(gobj, 0, 2);
     }
@@ -284,6 +290,7 @@ pub unsafe extern "C" fn itLikelike_UnkMotion0_Anim(gobj: *mut Item_GObj) -> boo
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLikelike_UnkMotion0_Phys");
     let ip = GET_ITEM(gobj);
 
     if (*ip).xDD4_itemVar.likelike.x4C == 0 {
@@ -312,6 +319,7 @@ unsafe fn ceiling_move(gobj: *mut Item_GObj, ip: *mut Item) {
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion0_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLikelike_UnkMotion0_Coll");
     let ip = GET_ITEM(gobj);
 
     if (*ip).xDD4_itemVar.likelike.x38 == 1 {
@@ -323,6 +331,7 @@ pub unsafe extern "C" fn itLikelike_UnkMotion0_Coll(gobj: *mut Item_GObj) -> i32
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion7_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLikelike_UnkMotion7_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         it_802DA104(gobj);
     }
@@ -330,6 +339,7 @@ pub unsafe extern "C" fn itLikelike_UnkMotion7_Anim(gobj: *mut Item_GObj) -> boo
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion7_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLikelike_UnkMotion7_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = GET_ATTRS(ip);
 
@@ -345,6 +355,7 @@ pub unsafe extern "C" fn itLikelike_UnkMotion7_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion7_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLikelike_UnkMotion7_Coll");
     let ip = GET_ITEM(gobj);
 
     if (*ip).xDD4_itemVar.likelike.x38 == 1 {
@@ -357,6 +368,7 @@ pub unsafe extern "C" fn itLikelike_UnkMotion7_Coll(gobj: *mut Item_GObj) -> i32
 
 /// 2DA104
 pub unsafe extern "C" fn it_802DA104(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802DA104");
     let ip = GET_ITEM(gobj);
     let attr = GET_ATTRS(ip);
 
@@ -371,6 +383,7 @@ pub unsafe extern "C" fn it_802DA104(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion1_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLikelike_UnkMotion1_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         ext::Item_80268E5C(gobj, 1, 2 | 16);
     }
@@ -378,6 +391,7 @@ pub unsafe extern "C" fn itLikelike_UnkMotion1_Anim(gobj: *mut Item_GObj) -> boo
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLikelike_UnkMotion1_Phys");
     let ip = GET_ITEM(gobj);
     let article = (*ip).xC4_article_data;
     let attr = (*article).x4_specialAttributes as *mut itLikelikeAttributes;
@@ -439,6 +453,7 @@ unsafe fn likelikeVelocity(gobj: *mut HSD_GObj, ip: *mut Item, attrs: *mut itLik
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion1_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLikelike_UnkMotion1_Coll");
     let ip = GET_ITEM(gobj);
     let attrs = GET_ATTRS(ip);
 
@@ -458,6 +473,7 @@ pub unsafe extern "C" fn itLikelike_UnkMotion1_Coll(gobj: *mut Item_GObj) -> i32
 
 /// 2DA4C0
 pub unsafe extern "C" fn it_802DA4C0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802DA4C0");
     let ip = GET_ITEM(gobj);
     let attr = GET_ATTRS(ip);
 
@@ -472,6 +488,7 @@ pub unsafe extern "C" fn it_802DA4C0(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion2_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLikelike_UnkMotion2_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         ext::Item_80268E5C(gobj, 2, 2 | 16);
     }
@@ -479,6 +496,7 @@ pub unsafe extern "C" fn itLikelike_UnkMotion2_Anim(gobj: *mut Item_GObj) -> boo
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion2_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLikelike_UnkMotion2_Phys");
     let mut sp14: Vec3 = core::mem::zeroed();
     let ip = GET_ITEM(gobj);
     let attr = GET_ATTRS(ip);
@@ -520,6 +538,7 @@ pub unsafe extern "C" fn itLikelike_UnkMotion2_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion2_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLikelike_UnkMotion2_Coll");
     let ip = GET_ITEM(gobj);
     let attr = GET_ATTRS(ip);
 
@@ -559,6 +578,7 @@ pub unsafe extern "C" fn itLikelike_UnkMotion2_Coll(gobj: *mut Item_GObj) -> i32
 
 /// 2DA8D8
 pub unsafe extern "C" fn it_802DA8D8(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802DA8D8");
     let ip = GET_ITEM(gobj);
     ext::it_802762B0(ip);
     let mut ecb: itECB = (*ip).xC1C;
@@ -570,6 +590,7 @@ pub unsafe extern "C" fn it_802DA8D8(gobj: *mut Item_GObj) {
 
 /// 2DA960
 pub unsafe extern "C" fn it_802DA960(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802DA960");
     let ip = GET_ITEM(gobj);
     let mut ecb: itECB;
 
@@ -607,6 +628,7 @@ unsafe fn it_802DC4BC_ptr(gobj: *mut Item_GObj, ecb: *mut itECB) {
 
 /// 2DAA10: lets go of the grabbed fighter and falls.
 pub unsafe extern "C" fn it_802DAA10(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802DAA10");
     let ip = GET_ITEM(gobj);
     let mut ecb: itECB;
     it_802DBAF0(gobj, 1, 1);
@@ -625,10 +647,12 @@ pub unsafe extern "C" fn it_802DAA10(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion5_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLikelike_UnkMotion5_Anim");
     false
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion5_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLikelike_UnkMotion5_Phys");
     let ip = GET_ITEM(gobj);
 
     if (*ip).msid == 5 && it_802D9A2C(gobj) != 0 {
@@ -640,17 +664,20 @@ pub unsafe extern "C" fn itLikelike_UnkMotion5_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion4_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLikelike_UnkMotion4_Coll");
     ext::it_8026E414(gobj, Some(it_802D9DDC));
     ext::it_8027C794(gobj)
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion5_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLikelike_UnkMotion5_Coll");
     ext::it_8026E414(gobj, Some(it_802DABC0));
     ext::it_8027C794(gobj)
 }
 
 /// 2DABC0
 pub unsafe extern "C" fn it_802DABC0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802DABC0");
     let ip = GET_ITEM(gobj);
     (*ip).xDD4_itemVar.likelike.x38 = 0;
     (*ip).xDD4_itemVar.likelike.x4C = 0;
@@ -661,6 +688,7 @@ pub unsafe extern "C" fn it_802DABC0(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion17_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLikelike_UnkMotion17_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         ext::it_8026D5CC(gobj);
         it_802D9DDC(gobj);
@@ -669,18 +697,21 @@ pub unsafe extern "C" fn itLikelike_UnkMotion17_Anim(gobj: *mut Item_GObj) -> bo
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion17_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLikelike_UnkMotion17_Phys");
     let ip = GET_ITEM(gobj);
     ext::it_8027C8D0(&mut (*ip).x40_vel, &mut (*ip).x378_itemColl.floor.normal, (*ip).facing_dir);
     ext::it_8027C0A8(gobj, 0.0, 5.0);
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion17_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLikelike_UnkMotion17_Coll");
     ext::it_8026D564(gobj);
     ext::it_8027C794(gobj)
 }
 
 /// 2DAD18: flips upside down onto the ceiling.
 pub unsafe extern "C" fn it_802DAD18(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802DAD18");
     let ip = GET_ITEM(gobj);
 
     HSD_JObjSetRotationZ(GET_JOBJ(gobj), M_PI as f32);
@@ -689,26 +720,31 @@ pub unsafe extern "C" fn it_802DAD18(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion3_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLikelike_UnkMotion3_Anim");
     false
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion3_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLikelike_UnkMotion3_Phys");
     let ip = GET_ITEM(gobj);
     (*ip).x40_vel.y += (*(*ip).xCC_item_attr).x10_fall_speed;
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion3_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLikelike_UnkMotion3_Coll");
     ext::it_8026E71C(gobj, Some(it_802DA8D8));
     ext::it_8027C794(gobj)
 }
 
 /// 2DAE6C
 pub unsafe extern "C" fn it_802DAE6C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802DAE6C");
     ext::it_80273454(gobj);
     ext::Item_80268E5C(gobj, 0x10, 2);
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion16_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLikelike_UnkMotion16_Anim");
     let ip = GET_ITEM(gobj);
 
     if ext::it_80272C6C(gobj) == 0 {
@@ -740,9 +776,10 @@ pub unsafe extern "C" fn itLikelike_UnkMotion16_Anim(gobj: *mut Item_GObj) -> bo
     false
 }
 
-pub unsafe extern "C" fn itLikelike_UnkMotion16_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itLikelike_UnkMotion16_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itLikelike_UnkMotion16_Phys");}
 
 pub unsafe extern "C" fn itLikelike_UnkMotion16_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLikelike_UnkMotion16_Coll");
     let ip = GET_ITEM(gobj);
 
     if (*ip).xDD4_itemVar.likelike.x38 == 0 {
@@ -755,6 +792,7 @@ pub unsafe extern "C" fn itLikelike_UnkMotion16_Coll(gobj: *mut Item_GObj) -> i3
 
 /// 2DB074: lunges at the fighter found by `it_802D9A2C`.
 pub unsafe extern "C" fn it_802DB074(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802DB074");
     let ip = GET_ITEM(gobj);
     let attr = GET_ATTRS(ip);
     (*ip).facing_dir = (*ip).xDD4_itemVar.likelike.x3C as f32;
@@ -764,6 +802,7 @@ pub unsafe extern "C" fn it_802DB074(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion8_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLikelike_UnkMotion8_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         ext::Item_80268E5C(gobj, 8, 2);
     }
@@ -771,6 +810,7 @@ pub unsafe extern "C" fn itLikelike_UnkMotion8_Anim(gobj: *mut Item_GObj) -> boo
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion8_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLikelike_UnkMotion8_Phys");
     let mut sp30: Vec3 = core::mem::zeroed();
 
     let ip = (*gobj).user_data as *mut Item;
@@ -804,6 +844,7 @@ pub unsafe extern "C" fn itLikelike_UnkMotion8_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion8_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLikelike_UnkMotion8_Coll");
     let ip = GET_ITEM(gobj);
 
     if (*ip).xDD4_itemVar.likelike.x38 == 1 {
@@ -816,6 +857,7 @@ pub unsafe extern "C" fn itLikelike_UnkMotion8_Coll(gobj: *mut Item_GObj) -> i32
 
 /// 2DB358: grab callback.
 pub unsafe extern "C" fn it_802DB358(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802DB358");
     let ip = (*gobj).user_data as *mut Item;
     (*ip).xDD4_itemVar.likelike.x50 = (*ip).grab_victim;
     (*ip).xDD0_flag.anon_0.set_b5(0);
@@ -824,6 +866,7 @@ pub unsafe extern "C" fn it_802DB358(gobj: *mut Item_GObj) {
 
 /// 2DB398
 pub unsafe extern "C" fn it_802DB398(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802DB398");
     let ip = GET_ITEM(gobj);
 
     (*ip).facing_dir = (*ip).xDD4_itemVar.likelike.x3C as f32;
@@ -839,6 +882,7 @@ pub unsafe extern "C" fn it_802DB398(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion12_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLikelike_UnkMotion12_Anim");
     let ip = GET_ITEM(gobj);
 
     if ext::it_80272C6C(gobj) == 0 {
@@ -853,6 +897,7 @@ pub unsafe extern "C" fn itLikelike_UnkMotion12_Anim(gobj: *mut Item_GObj) -> bo
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion12_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLikelike_UnkMotion12_Phys");
     let ip = GET_ITEM(gobj);
 
     if (*ip).ground_or_air == GA_Air {
@@ -865,6 +910,7 @@ pub unsafe extern "C" fn itLikelike_UnkMotion12_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion12_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLikelike_UnkMotion12_Coll");
     let ip = GET_ITEM(gobj);
 
     if (*ip).ground_or_air == GA_Air {
@@ -880,6 +926,7 @@ pub unsafe extern "C" fn itLikelike_UnkMotion12_Coll(gobj: *mut Item_GObj) -> i3
 
 /// 2DB5F0
 pub unsafe extern "C" fn it_802DB5F0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802DB5F0");
     let ip = GET_ITEM(gobj);
 
     ext::it_80273454(gobj);
@@ -890,6 +937,7 @@ pub unsafe extern "C" fn it_802DB5F0(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion9_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLikelike_UnkMotion9_Anim");
     let ip = GET_ITEM(gobj);
 
     if ext::it_80272C6C(gobj) == 0 {
@@ -903,15 +951,17 @@ pub unsafe extern "C" fn itLikelike_UnkMotion9_Anim(gobj: *mut Item_GObj) -> boo
     false
 }
 
-pub unsafe extern "C" fn itLikelike_UnkMotion9_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itLikelike_UnkMotion9_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itLikelike_UnkMotion9_Phys");}
 
 pub unsafe extern "C" fn itLikelike_UnkMotion9_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLikelike_UnkMotion9_Coll");
     ext::it_8026D6F4(gobj, Some(it_802DAA10));
     ext::it_8027C794(gobj)
 }
 
 /// 2DB74C
 pub unsafe extern "C" fn it_802DB74C(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802DB74C");
     let ip = GET_ITEM(gobj);
 
     ext::it_80273454(gobj);
@@ -922,6 +972,7 @@ pub unsafe extern "C" fn it_802DB74C(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion10_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLikelike_UnkMotion10_Anim");
     let ip = GET_ITEM(gobj);
 
     if ext::it_80272C6C(gobj) == 0 {
@@ -935,15 +986,17 @@ pub unsafe extern "C" fn itLikelike_UnkMotion10_Anim(gobj: *mut Item_GObj) -> bo
     false
 }
 
-pub unsafe extern "C" fn itLikelike_UnkMotion10_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itLikelike_UnkMotion10_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itLikelike_UnkMotion10_Phys");}
 
 pub unsafe extern "C" fn itLikelike_UnkMotion10_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLikelike_UnkMotion10_Coll");
     ext::it_8026D6F4(gobj, Some(it_802DAA10));
     ext::it_8027C794(gobj)
 }
 
 /// 2DB8A8
 pub unsafe extern "C" fn it_802DB8A8(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802DB8A8");
     let ip = GET_ITEM(gobj);
     ext::it_80273454(gobj);
     (*ip).xDD4_itemVar.likelike.x4C = 0;
@@ -953,6 +1006,7 @@ pub unsafe extern "C" fn it_802DB8A8(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion13_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLikelike_UnkMotion13_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         ext::Item_80268E5C(gobj, 0xD, 2);
     }
@@ -960,6 +1014,7 @@ pub unsafe extern "C" fn itLikelike_UnkMotion13_Anim(gobj: *mut Item_GObj) -> bo
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion13_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLikelike_UnkMotion13_Phys");
     let ip = GET_ITEM(gobj);
     let attr = GET_ATTRS(ip);
     if (*ip).xDD4_itemVar.likelike.x4C == 0 {
@@ -972,12 +1027,14 @@ pub unsafe extern "C" fn itLikelike_UnkMotion13_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion13_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLikelike_UnkMotion13_Coll");
     ext::it_8026D6F4(gobj, Some(it_802DAA10));
     ext::it_8027C794(gobj)
 }
 
 /// 2DB9F4
 pub unsafe extern "C" fn it_802DB9F4(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802DB9F4");
     let ip = GET_ITEM(gobj);
     ext::it_80273454(gobj);
     (*ip).xDD4_itemVar.likelike.x4C = 0;
@@ -990,6 +1047,7 @@ pub unsafe extern "C" fn it_802DB9F4(gobj: *mut Item_GObj) {
 
 /// 2DBA68
 pub unsafe extern "C" fn it_802DBA68(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802DBA68");
     let ip = GET_ITEM(gobj);
     ext::it_80273454(gobj);
     it_802DBAF0(gobj, 0, 1);
@@ -999,6 +1057,7 @@ pub unsafe extern "C" fn it_802DBA68(gobj: *mut Item_GObj) {
 
 /// 2DBAF0: spits the grabbed fighter out.
 pub unsafe extern "C" fn it_802DBAF0(arg0: *mut Item_GObj, arg1: i32, arg2: i32) {
+    melee_core::ct!("it_802DBAF0");
     let mut vec: Vec3 = core::mem::zeroed();
     let mut sp18: Vec3 = core::mem::zeroed();
     let ip = GET_ITEM(arg0);
@@ -1037,6 +1096,7 @@ pub unsafe extern "C" fn it_802DBAF0(arg0: *mut Item_GObj, arg1: i32, arg2: i32)
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion14_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLikelike_UnkMotion14_Anim");
     let ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.likelike.x4C as f32 == (*GET_ATTRS(ip)).x38 {
         it_802DBAF0(gobj, 1, 0);
@@ -1051,14 +1111,16 @@ pub unsafe extern "C" fn itLikelike_UnkMotion14_Anim(gobj: *mut Item_GObj) -> bo
     false
 }
 
-pub unsafe extern "C" fn itLikelike_UnkMotion14_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itLikelike_UnkMotion14_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itLikelike_UnkMotion14_Phys");}
 
 pub unsafe extern "C" fn itLikelike_UnkMotion14_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLikelike_UnkMotion14_Coll");
     ext::it_8026D6F4(gobj, Some(it_802DAA10));
     ext::it_8027C794(gobj)
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion15_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLikelike_UnkMotion15_Anim");
     let ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.likelike.x4C as f32 == (*GET_ATTRS(ip)).x38 {
         it_802DBAF0(gobj, -1, 0);
@@ -1073,19 +1135,22 @@ pub unsafe extern "C" fn itLikelike_UnkMotion15_Anim(gobj: *mut Item_GObj) -> bo
     false
 }
 
-pub unsafe extern "C" fn itLikelike_UnkMotion15_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itLikelike_UnkMotion15_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itLikelike_UnkMotion15_Phys");}
 
 pub unsafe extern "C" fn itLikelike_UnkMotion15_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLikelike_UnkMotion15_Coll");
     ext::it_8026D6F4(gobj, Some(it_802DAA10));
     ext::it_8027C794(gobj)
 }
 
 pub unsafe extern "C" fn itLikeLike_Logic5_PickedUp(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLikeLike_Logic5_PickedUp");
     it_802DBAF0(gobj, 0, 1);
     ext::Item_80268E5C(gobj, 0x12, 2);
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion18_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLikelike_UnkMotion18_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         it_802DBAF0(gobj, 0, 1);
         ext::Item_80268E5C(gobj, 0x12, 2);
@@ -1093,9 +1158,10 @@ pub unsafe extern "C" fn itLikelike_UnkMotion18_Anim(gobj: *mut Item_GObj) -> bo
     false
 }
 
-pub unsafe extern "C" fn itLikelike_UnkMotion18_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itLikelike_UnkMotion18_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itLikelike_UnkMotion18_Phys");}
 
 pub unsafe extern "C" fn it_2725_Logic5_Dropped(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_2725_Logic5_Dropped");
     let ip = GET_ITEM(gobj);
     let attr = GET_ATTRS(ip);
     let mut ecb: itECB;
@@ -1118,6 +1184,7 @@ pub unsafe extern "C" fn it_2725_Logic5_Dropped(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLikeLike_Logic5_Thrown(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLikeLike_Logic5_Thrown");
     let ip = GET_ITEM(gobj);
     ext::it_8027CB3C(gobj);
     (*ip).xDD4_itemVar.likelike.x4C = 0;
@@ -1125,21 +1192,25 @@ pub unsafe extern "C" fn itLikeLike_Logic5_Thrown(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion19_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLikelike_UnkMotion19_Anim");
     false
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion19_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLikelike_UnkMotion19_Phys");
     let ip = GET_ITEM(gobj);
     let attrs = (*ip).xCC_item_attr;
     ext::it_80272860(gobj, (*attrs).x10_fall_speed, (*attrs).x14_fall_speed_max);
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion19_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLikelike_UnkMotion19_Coll");
     ext::it_8027C824(gobj, None)
 }
 
 /// 2DC0AC
 pub unsafe extern "C" fn it_802DC0AC(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802DC0AC");
     let ip = GET_ITEM(gobj);
     let attr = GET_ATTRS(ip);
     ext::it_80273454(gobj);
@@ -1149,10 +1220,12 @@ pub unsafe extern "C" fn it_802DC0AC(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion6_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLikelike_UnkMotion6_Anim");
     false
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion6_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLikelike_UnkMotion6_Phys");
     let ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.likelike.x4C == 0 {
         if (*ip).xDD4_itemVar.likelike.x38 == 0 {
@@ -1184,6 +1257,7 @@ pub unsafe extern "C" fn itLikelike_UnkMotion6_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion6_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLikelike_UnkMotion6_Coll");
     let ip = GET_ITEM(gobj);
 
     if (*ip).xDD4_itemVar.likelike.x38 == 1 {
@@ -1196,6 +1270,7 @@ pub unsafe extern "C" fn itLikelike_UnkMotion6_Coll(gobj: *mut Item_GObj) -> i32
 
 /// 2DC310
 pub unsafe extern "C" fn it_802DC310(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802DC310");
     let ip = GET_ITEM(gobj);
     ext::it_802762BC(ip);
     ext::it_8027B964(gobj, 0);
@@ -1204,45 +1279,53 @@ pub unsafe extern "C" fn it_802DC310(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion20_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLikelike_UnkMotion20_Anim");
     if ext::it_80272C6C(gobj) == 0 {
         ext::Item_80268E5C(gobj, 0x14, 2);
     }
     false
 }
 
-pub unsafe extern "C" fn itLikelike_UnkMotion20_Phys(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn itLikelike_UnkMotion20_Phys(_gobj: *mut Item_GObj) { melee_core::ct!("itLikelike_UnkMotion20_Phys");}
 
 pub unsafe extern "C" fn itLikelike_UnkMotion20_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLikelike_UnkMotion20_Coll");
     ext::it_8027C79C(gobj)
 }
 
 /// 2DC3DC
 pub unsafe extern "C" fn it_802DC3DC(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802DC3DC");
     let ip = GET_ITEM(gobj);
     Item_UpdateZakoVelocity(gobj, ip);
     ext::Item_80268E5C(gobj, 0x15, 3);
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion21_Anim(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itLikelike_UnkMotion21_Anim");
     false
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion21_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLikelike_UnkMotion21_Phys");
     let ip = GET_ITEM(gobj);
     (*ip).x40_vel.y -= (*(*ip).xCC_item_attr).x10_fall_speed;
 }
 
 pub unsafe extern "C" fn itLikelike_UnkMotion21_Coll(gobj: *mut Item_GObj) -> i32 {
+    melee_core::ct!("itLikelike_UnkMotion21_Coll");
     ext::it_8027C794(gobj)
 }
 
 pub unsafe extern "C" fn itLikeLike_Logic5_Destroyed(gobj: *mut Item_GObj) {
+    melee_core::ct!("itLikeLike_Logic5_Destroyed");
     it_802DBAF0(gobj, 0, 1);
     ext::it_2725_Logic9_Destroyed(gobj);
 }
 
 /// 2DC4BC: spawns a Like Like at `arg1`.
 pub unsafe extern "C" fn it_802DC4BC(arg0: i32, arg1: *mut Vec3, arg2: i32) -> *mut Item_GObj {
+    melee_core::ct!("it_802DC4BC");
     let mut sp50: Vec3 = zero_vec;
     let gobj = ext::it_8027B5B0(It_Kind_Likelike as i32, arg1, null_mut(), &mut sp50, 1);
     let mut ecb: itECB = core::mem::zeroed();

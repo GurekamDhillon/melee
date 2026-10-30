@@ -30,41 +30,48 @@ unsafe fn enter(gobj: G, left_id: u32, right_id: u32) {
 }
 
 pub fn ftPr_SpecialLw_Enter(gobj: G) {
+    melee_core::ct!("ftPr_SpecialLw_Enter");
     unsafe { enter(gobj, ftPr_MS_SpecialLwL as u32, ftPr_MS_SpecialLwR as u32) }
 }
 
 pub fn ftPr_SpecialAirLw_Enter(gobj: G) {
+    melee_core::ct!("ftPr_SpecialAirLw_Enter");
     unsafe { enter(gobj, ftPr_MS_SpecialAirLwL as u32, ftPr_MS_SpecialAirLwR as u32) }
 }
 
 pub fn ftPr_SpecialLw_Anim(fighter_gobj: G) {
+    melee_core::ct!("ftPr_SpecialLw_Anim");
     if st::ftAnim_IsFramesRemaining(fighter_gobj) == 0 {
         st::ft_8008A2BC(fighter_gobj);
     }
 }
 
 pub fn ftPr_SpecialAirLw_Anim(fighter_gobj: G) {
+    melee_core::ct!("ftPr_SpecialAirLw_Anim");
     if st::ftAnim_IsFramesRemaining(fighter_gobj) == 0 {
         st::ftCo_Fall_Enter(fighter_gobj);
     }
 }
 
-pub fn ftPr_SpecialLw_IASA(_gobj: G) {}
-pub fn ftPr_SpecialAirLw_IASA(_gobj: G) {}
+pub fn ftPr_SpecialLw_IASA(_gobj: G) { melee_core::ct!("ftPr_SpecialLw_IASA");}
+pub fn ftPr_SpecialAirLw_IASA(_gobj: G) { melee_core::ct!("ftPr_SpecialAirLw_IASA");}
 
 pub fn ftPr_SpecialLw_Coll(gobj: G) {
+    melee_core::ct!("ftPr_SpecialLw_Coll");
     if st::ft_800827A0(gobj) == 0 {
         ftPr_SpecialLw_8013D104(gobj);
     }
 }
 
 pub fn ftPr_SpecialAirLw_Coll(gobj: G) {
+    melee_core::ct!("ftPr_SpecialAirLw_Coll");
     if st::ft_80081D0C(gobj) != GA_Ground as i32 {
         ftPr_SpecialLw_8013D19C(gobj);
     }
 }
 
 pub fn ftPr_SpecialLw_8013D104(gobj: G) {
+    melee_core::ct!("ftPr_SpecialLw_8013D104");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_8007D5D4(&mut *fp);
@@ -74,6 +81,7 @@ pub fn ftPr_SpecialLw_8013D104(gobj: G) {
 }
 
 pub fn ftPr_SpecialLw_8013D19C(gobj: G) {
+    melee_core::ct!("ftPr_SpecialLw_8013D19C");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_8007D7FC(&mut *fp);

@@ -22,6 +22,7 @@ pub mod ext {
 }
 
 pub fn ftDk_MS_341_800DF938(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftDk_MS_341_800DF938");
     if ext::ft_8008A1FC(gobj) {
         ftDk_MS_341_800DF980(gobj);
         true
@@ -32,6 +33,7 @@ pub fn ftDk_MS_341_800DF938(gobj: *mut HSD_GObj) -> bool {
 
 /// Enter the cargo wait state.
 pub fn ftDk_MS_341_800DF980(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_MS_341_800DF980");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         if (*fp).ground_or_air == GA_Air {
@@ -43,6 +45,7 @@ pub fn ftDk_MS_341_800DF980(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftDk_HeavyWait0_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_HeavyWait0_IASA");
     if !turn_ext::ftCo_80094EA4(gobj)
         && !turn_ext::ftDk_MS_347_800E0378(gobj)
         && !super::ftdonkeyms3450::ftDk_MS_345_800E0134(gobj)

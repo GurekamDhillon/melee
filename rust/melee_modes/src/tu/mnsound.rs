@@ -168,6 +168,7 @@ unsafe extern "C" fn updateCenterText() {
     Menu_InitCenterText(menu, text_id);
 }
 pub unsafe extern "C" fn mnSound_802492CC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnSound_802492CC");
     let mut events: u64 = 0;
     let mut mix: u8 = 0;
     let mut menu: *mut Menu = (*mnSound_804D6C30).user_data as *mut Menu;
@@ -316,6 +317,7 @@ unsafe extern "C" fn chooseVolumeAnim(jobj: *mut HSD_JObj,
     };
 }
 pub unsafe extern "C" fn fn_80249A1C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80249A1C");
     let mut anim: *mut AnimLoopSettings = &raw mut mnSound_803EEED8
         as *mut AnimLoopSettings;
     let mut menu: *mut Menu = HSD_GObjGetUserData(gobj) as *mut Menu;
@@ -385,6 +387,7 @@ unsafe extern "C" fn initUserData(user_data: *mut Menu, gobj: *mut HSD_GObj) {
     (*proc_0).set_flags_3(HSD_GObj_804D783C as u8);
 }
 pub unsafe extern "C" fn mnSound_80249C08(unused: i32) {
+    melee_core::ct!("mnSound_80249C08");
     let mut model: *mut StaticModelDesc = &raw mut mnSound_804A08A8;
     let mut anims: *mut AnimLoopSettings = &raw mut mnSound_803EEED8
         as *mut AnimLoopSettings;
@@ -492,6 +495,7 @@ pub unsafe extern "C" fn mnSound_80249C08(unused: i32) {
     HSD_JObjSetFlagsAll(jobj, JOBJ_HIDDEN as u32);
 }
 pub unsafe extern "C" fn mnSound_8024A09C(arg0: i32) {
+    melee_core::ct!("mnSound_8024A09C");
     let mut proc_0: *mut HSD_GObjProc = null_mut();
     let mut archive: *mut HSD_Archive = null_mut();
     mn_804D6BC8.cooldown = 5;

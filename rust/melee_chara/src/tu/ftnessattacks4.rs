@@ -48,14 +48,17 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 
 /// C-ABI entry for the reflect callback stored by `ftColl_CreateReflectHit`.
 pub unsafe extern "C" fn cb_ftNs_AttackS4_OnReflect(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftNs_AttackS4_OnReflect");
     ftNs_AttackS4_OnReflect(g)
 }
 
 pub fn ftNs_AttackS4_OnReflect(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackS4_OnReflect");
     unsafe { ext::ft_PlaySFX(fpp(gobj), 0xE0, 0x7F, 0x40) }
 }
 
 pub fn ftNs_AttackS4_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackS4_Enter");
     unsafe {
         let fp = fpp(gobj);
         (*fp).set_allow_interrupt(0);
@@ -74,6 +77,7 @@ pub fn ftNs_AttackS4_Enter(gobj: *mut HSD_GObj) {
 
 /// C `bool`: true when Ness is not in the bat swing or has no bat.
 pub fn ftNs_AttackS4_CheckNessBatRemove(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftNs_AttackS4_CheckNessBatRemove");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).motion_id as i32 != ftNs_MS_AttackS4 as i32 {
@@ -84,6 +88,7 @@ pub fn ftNs_AttackS4_CheckNessBatRemove(gobj: *mut HSD_GObj) -> bool {
 }
 
 pub fn ftNs_AttackS4_ItemNessBatRemove(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackS4_ItemNessBatRemove");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.ns.bat_gobj.is_null() {
@@ -94,6 +99,7 @@ pub fn ftNs_AttackS4_ItemNessBatRemove(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_AttackS4_ItemNessBatSetNULL(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackS4_ItemNessBatSetNULL");
     unsafe {
         let fp = fpp(gobj);
         if !(*fp).u.ns.bat_gobj.is_null() {
@@ -103,6 +109,7 @@ pub fn ftNs_AttackS4_ItemNessBatSetNULL(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_AttackS4_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackS4_Anim");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).reflecting() == 0 {
@@ -127,6 +134,7 @@ pub fn ftNs_AttackS4_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_AttackS4_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackS4_IASA");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).allow_interrupt() != 0 {
@@ -140,10 +148,12 @@ pub fn ftNs_AttackS4_IASA(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_AttackS4_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackS4_Phys");
     st::ft_80084FA8(gobj);
     st::ftColl_8007AEF8(gobj);
 }
 
 pub fn ftNs_AttackS4_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackS4_Coll");
     st::ft_80084104(gobj);
 }

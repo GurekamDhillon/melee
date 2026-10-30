@@ -19,6 +19,7 @@ pub mod ext {
 }
 
 pub fn ftCh_Slam_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Slam_Anim");
     if melee_fighter::tu::ftbosslib::ftBossLib_8015C2E0()
         || melee_fighter::tu::ftbosslib::ftBossLib_8015C358()
         || st::ftAnim_IsFramesRemaining(gobj) == 0
@@ -35,9 +36,10 @@ pub fn ftCh_Slam_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftCh_Slam_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftCh_Slam_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_Slam_Coll");}
 
 pub fn ftCh_Fail_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Fail_Anim");
     if melee_fighter::tu::ftbosslib::ftBossLib_8015C31C() || st::ftAnim_IsFramesRemaining(gobj) == 0 {
         unsafe {
             let fp = (*gobj).user_data as *mut Fighter;
@@ -48,17 +50,19 @@ pub fn ftCh_Fail_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftCh_Fail_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftCh_Fail_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_Fail_Coll");}
 
 pub fn ftCh_TagCrush_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_TagCrush_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         ftCh_GrabUnk1_8015BC88(gobj);
     }
 }
 
-pub fn ftCh_TagCrush_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftCh_TagCrush_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_TagCrush_Coll");}
 
 pub fn ftCh_TagApplaud_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_TagApplaud_Anim");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         (*fp).mv.ch.unk0.x24 -= 1.0;
@@ -73,6 +77,7 @@ pub fn ftCh_TagApplaud_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCh_TagApplaud_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_TagApplaud_Phys");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let da = (*(*fp).ft_data).ext_attr as *const ftCrazyHand_DatAttrs;
@@ -81,6 +86,7 @@ pub fn ftCh_TagApplaud_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCh_TagApplaud_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_TagApplaud_Coll");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         if (*fp).mv.ch.unk0.x18 == 0.0 {

@@ -197,6 +197,7 @@ unsafe fn zlist_next(list: *mut HSD_ZList, offset: usize) -> *mut *mut HSD_ZList
 
 /// `HSD_ZListInitAllocData`.
 pub unsafe fn HSD_ZListInitAllocData() {
+    melee_core::ct!("HSD_ZListInitAllocData");
     ext::HSD_ObjAllocInit(addr_of_mut!(zlist_alloc_data), size_of::<HSD_ZList>() as u32, 4);
 }
 
@@ -212,6 +213,7 @@ unsafe fn HSD_ZListFree(ptr: *mut HSD_ZList) {
 
 /// `HSD_StateInitDirect`.
 pub unsafe fn HSD_StateInitDirect(vtxfmt: i32, rendermode: u32) {
+    melee_core::ct!("HSD_StateInitDirect");
     ext::HSD_ClearVtxDesc();
     ext::GXSetVtxAttrFmt(vtxfmt as u32, 9, 1, 4, 0);
     ext::GXSetVtxAttrFmt(vtxfmt as u32, 11, 1, 5, 0);
@@ -322,6 +324,7 @@ unsafe fn mkRBillBoardMtx(jobj: *mut HSD_JObj, src: *mut [f32; 4], dst: *mut [f3
 
 /// `HSD_JObjMakePositionMtx`.
 pub unsafe fn HSD_JObjMakePositionMtx(jobj: *mut HSD_JObj, vmtx: *mut [f32; 4], pmtx: *mut [f32; 4]) {
+    melee_core::ct!("HSD_JObjMakePositionMtx");
     let mut mtx = [[0.0f32; 4]; 3];
     if (*jobj).flags & JOBJ_BILLBOARD_FIELD != 0 {
         ext::PSMTXConcat(vmtx.cast(), (*jobj).mtx.as_mut_ptr().cast(), mtx.as_mut_ptr().cast());
@@ -339,6 +342,7 @@ pub unsafe fn HSD_JObjMakePositionMtx(jobj: *mut HSD_JObj, vmtx: *mut [f32; 4], 
 
 /// `HSD_JObjFindSkeleton`.
 pub unsafe fn HSD_JObjFindSkeleton(mut jobj: *mut HSD_JObj) -> *mut HSD_JObj {
+    melee_core::ct!("HSD_JObjFindSkeleton");
     assert!(!jobj.is_null(), "displayfunc.c:342 jobj");
     while !jobj.is_null() {
         if (*jobj).flags & (JOBJ_SKELETON | JOBJ_SKELETON_ROOT) != 0 {
@@ -371,6 +375,7 @@ pub unsafe fn _HSD_mkEnvelopeModelNodeMtx(m: *mut HSD_JObj, mtx: *mut [f32; 4]) 
 
 /// `HSD_JObjDispSub`.
 pub unsafe extern "C" fn HSD_JObjDispSub(jobj: *mut HSD_JObj, vmtx: *mut [f32; 4], pmtx: *mut [f32; 4], trsp_mask: u32, rendermode: u32) {
+    melee_core::ct!("HSD_JObjDispSub");
     ext::HSD_JObjSetCurrent(jobj);
     let dobj_trsp = trsp_mask << DOBJ_TRSP_SHIFT;
     if rendermode & RENDER_SHADOW == 0 && (*jobj).flags & JOBJ_SPECULAR != 0 {
@@ -392,6 +397,7 @@ pub unsafe extern "C" fn HSD_JObjDispSub(jobj: *mut HSD_JObj, vmtx: *mut [f32; 4
 
 /// `HSD_JObjDispDObj`.
 pub unsafe fn HSD_JObjDispDObj(jobj: *mut HSD_JObj, mut vmtx: *mut [f32; 4], trsp_mask: u32, rendermode: u32) {
+    melee_core::ct!("HSD_JObjDispDObj");
     let mut mtx = [[0.0f32; 4]; 3];
     if (*jobj).flags & JOBJ_HIDDEN == 0 {
         let xlu_bits = (*jobj).flags & (trsp_mask << JOBJ_TRSP_SHIFT);
@@ -476,6 +482,7 @@ unsafe fn zlist_sort(mut list: *mut HSD_ZList, nb: i32, offset: usize) -> *mut H
 
 /// `_HSD_ZListSort`.
 pub unsafe fn _HSD_ZListSort() {
+    melee_core::ct!("_HSD_ZListSort");
     if zsort_sorting != 0 {
         zlist_texedge_top = zlist_sort(zlist_texedge_top, zlist_texedge_nb, ZL_TEXEDGE);
         zlist_xlu_top = zlist_sort(zlist_xlu_top, zlist_xlu_nb, ZL_XLU);
@@ -484,6 +491,7 @@ pub unsafe fn _HSD_ZListSort() {
 
 /// `_HSD_ZListDisp`.
 pub unsafe fn _HSD_ZListDisp() {
+    melee_core::ct!("_HSD_ZListDisp");
     let cobj = ext::HSD_CObjGetCurrent();
     let vmtx = (*cobj).view_mtx.as_mut_ptr();
     let mut list = zlist_texedge_top;
@@ -503,6 +511,7 @@ pub unsafe fn _HSD_ZListDisp() {
 
 /// `_HSD_ZListClear`.
 pub unsafe fn _HSD_ZListClear() {
+    melee_core::ct!("_HSD_ZListClear");
     let mut list = zlist_top;
     while !list.is_null() {
         let next = (*list).next;
@@ -524,6 +533,7 @@ pub unsafe fn _HSD_ZListClear() {
 
 /// `HSD_JObjDisp`.
 pub unsafe fn HSD_JObjDisp(jobj: *mut HSD_JObj, vmtx: *mut [f32; 4], trsp_mask: u32, rendermode: u32) {
+    melee_core::ct!("HSD_JObjDisp");
     if !jobj.is_null() {
         if (*jobj).flags & (JOBJ_PTCL | JOBJ_SPLINE) == 0 {
             HSD_JObjDispDObj(jobj, vmtx, trsp_mask, rendermode);
@@ -545,11 +555,13 @@ pub unsafe fn HSD_JObjDisp(jobj: *mut HSD_JObj, vmtx: *mut [f32; 4], trsp_mask: 
 
 /// `HSD_JObjSetSPtclCallback`.
 pub unsafe fn HSD_JObjSetSPtclCallback(func: Option<unsafe extern "C" fn(i32, i32, i32, *mut HSD_JObj)>) {
+    melee_core::ct!("HSD_JObjSetSPtclCallback");
     sptcl_callback = func;
 }
 
 /// `HSD_SetEraseColor`.
 pub unsafe fn HSD_SetEraseColor(r: u8, g: u8, b: u8, a: u8) {
+    melee_core::ct!("HSD_SetEraseColor");
     erase_color.r = r;
     erase_color.g = g;
     erase_color.b = b;
@@ -562,6 +574,7 @@ static mut depth_image: DepthImage = DepthImage([255; 107]);
 
 /// `HSD_EraseRect`.
 pub unsafe fn HSD_EraseRect(top: f32, bottom: f32, left: f32, right: f32, z: f32, enable_color: i32, enable_alpha: i32, enable_depth: i32) {
+    melee_core::ct!("HSD_EraseRect");
     let mut texobj: GXTexObj = core::mem::zeroed();
     if enable_color == 0 && enable_alpha == 0 && enable_depth == 0 {
         return;
@@ -624,6 +637,7 @@ unsafe fn identity_mtx() -> *mut [f32; 4] {
 
 /// `_HSD_DispForgetMemory`.
 pub unsafe fn _HSD_DispForgetMemory(_lo: *mut c_void, _hi: *mut c_void) {
+    melee_core::ct!("_HSD_DispForgetMemory");
     zlist_top = null_mut();
     zlist_bottom = addr_of_mut!(zlist_top);
     zlist_texedge_top = null_mut();

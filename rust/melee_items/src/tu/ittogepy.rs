@@ -65,6 +65,7 @@ pub static mut it_803F8058: [ItemStateTable; 7] = [
 ];
 
 pub unsafe extern "C" fn itTogepy_Logic21_Spawned(gobj: *mut Item_GObj) {
+    melee_core::ct!("itTogepy_Logic21_Spawned");
     let it = (*gobj).user_data as *mut Item;
     let ap = (*it).xC4_article_data;
     let sa = (*ap).x4_specialAttributes as *mut itPokemonAttributes;
@@ -78,13 +79,15 @@ pub unsafe extern "C" fn itTogepy_Logic21_Spawned(gobj: *mut Item_GObj) {
     ext::Item_8026AE84(it, 0x272C, 0x7F, 0x40);
 }
 
-pub unsafe extern "C" fn it_802D3728(_gobj: *mut Item_GObj) {}
+pub unsafe extern "C" fn it_802D3728(_gobj: *mut Item_GObj) { melee_core::ct!("it_802D3728");}
 
 pub unsafe extern "C" fn itTogepy_Logic21_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("itTogepy_Logic21_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }
 
 pub unsafe extern "C" fn itTogepy_UnkMotion1_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTogepy_UnkMotion1_Anim");
     let it = (*gobj).user_data as *mut Item;
 
     if ext::it_80272C6C(gobj) == 0 {
@@ -99,6 +102,7 @@ pub unsafe extern "C" fn itTogepy_UnkMotion1_Anim(gobj: *mut Item_GObj) -> bool 
 }
 
 pub unsafe extern "C" fn itTogepy_UnkMotion1_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itTogepy_UnkMotion1_Phys");
     let it = (*gobj).user_data as *mut Item;
     if (*it).ground_or_air == GA_Air {
         ext::it_80272860(gobj, (*(*it).xCC_item_attr).x10_fall_speed, (*(*it).xCC_item_attr).x14_fall_speed_max);
@@ -106,6 +110,7 @@ pub unsafe extern "C" fn itTogepy_UnkMotion1_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itTogepy_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTogepy_UnkMotion1_Coll");
     let it = (*gobj).user_data as *mut Item;
     if (*it).ground_or_air == GA_Air {
         ext::it_8026E15C(gobj, Some(it_802D3728));
@@ -116,6 +121,7 @@ pub unsafe extern "C" fn itTogepy_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bool 
 }
 
 pub unsafe extern "C" fn it_802D3848(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D3848");
     let it = (*gobj).user_data as *mut Item;
     let ap = (*it).xC4_article_data;
     let sa = (*ap).x4_specialAttributes as *mut itPokemonAttributes;
@@ -146,6 +152,7 @@ pub unsafe extern "C" fn it_802D3848(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itTogepy_UnkMotion6_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTogepy_UnkMotion6_Anim");
     let it = (*gobj).user_data as *mut Item;
     if ext::it_80272C6C(gobj) == 0 {
         ext::Item_80268D34(gobj, (*it).xD0_itemStateDesc);
@@ -157,6 +164,7 @@ pub unsafe extern "C" fn itTogepy_UnkMotion6_Anim(gobj: *mut Item_GObj) -> bool 
 }
 
 pub unsafe extern "C" fn itTogepy_UnkMotion6_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itTogepy_UnkMotion6_Phys");
     let it = GET_ITEM(gobj);
     if (*it).ground_or_air == GA_Air {
         ext::it_80272860(gobj, (*(*it).xCC_item_attr).x10_fall_speed, (*(*it).xCC_item_attr).x14_fall_speed_max);
@@ -164,6 +172,7 @@ pub unsafe extern "C" fn itTogepy_UnkMotion6_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itTogepy_UnkMotion6_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTogepy_UnkMotion6_Coll");
     let it = GET_ITEM(gobj);
     if (*it).ground_or_air == GA_Air {
         ext::it_8026E15C(gobj, Some(it_802D3728));
@@ -174,6 +183,7 @@ pub unsafe extern "C" fn itTogepy_UnkMotion6_Coll(gobj: *mut Item_GObj) -> bool 
 }
 
 pub unsafe extern "C" fn it_802D39F8(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802D39F8");
     let it = (*gobj).user_data as *mut Item;
     let ap = (*it).xC4_article_data;
     let sa = (*ap).x4_specialAttributes as *mut itPokemonAttributes;
@@ -186,11 +196,13 @@ pub unsafe extern "C" fn it_802D39F8(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itTogepy_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTogepy_UnkMotion0_Anim");
     ext::it_80279FF8(gobj);
     false
 }
 
 pub unsafe extern "C" fn itTogepy_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itTogepy_UnkMotion0_Phys");
     if ext::it_8027A09C(gobj) != 0 {
         let it = (*gobj).user_data as *mut Item;
         ext::it_80273454(gobj);
@@ -201,5 +213,6 @@ pub unsafe extern "C" fn itTogepy_UnkMotion0_Phys(gobj: *mut Item_GObj) {
 }
 
 pub unsafe extern "C" fn itTogepy_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itTogepy_UnkMotion0_Coll");
     ext::it_8027A118(gobj, Some(it_802D3728)) != 0
 }

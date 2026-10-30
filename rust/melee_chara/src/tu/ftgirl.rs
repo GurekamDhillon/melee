@@ -27,6 +27,7 @@ pub const ftGl_Init_CostumeStrings: [[Option<&str>; 3]; 1] =
 pub mod ext {}
 
 pub fn ftGl_Init_OnLoad(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGl_Init_OnLoad");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         ftinl::push_attrs::<i32>(fp);
@@ -34,13 +35,16 @@ pub fn ftGl_Init_OnLoad(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftGl_Init_OnItemPickup(gobj: *mut HSD_GObj, flag: i32) {
+    melee_core::ct!("ftGl_Init_OnItemPickup");
     ftinl::Fighter_OnItemPickup(gobj, flag, 0, 0);
 }
 
 pub fn ftGl_Init_OnItemDrop(gobj: *mut HSD_GObj, flag: i32) {
+    melee_core::ct!("ftGl_Init_OnItemDrop");
     ftinl::Fighter_OnItemDrop(gobj, flag, 0, 0);
 }
 
 pub fn ftGl_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGl_Init_LoadSpecialAttrs");
     unsafe { ftinl::copy_attrs::<i32>(gobj) }
 }

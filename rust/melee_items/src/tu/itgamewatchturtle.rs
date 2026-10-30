@@ -105,6 +105,7 @@ pub static mut it_803F7918: [ItemStateTable; 2] = [
 
 /// `Item_GObj* it_802C6F40(HSD_GObj* parent, Vec3* pos, Fighter_Part arg2, f32 dir)`
 pub unsafe extern "C" fn it_802C6F40(parent: *mut HSD_GObj, pos: *mut Vec, arg2: Fighter_Part, dir: f32) -> *mut HSD_GObj {
+    melee_core::ct!("it_802C6F40");
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = It_Kind_GameWatch_Turtle;
     Item_InitSpawnPosition(&mut spawn, pos, false);
@@ -120,6 +121,7 @@ pub unsafe extern "C" fn it_802C6F40(parent: *mut HSD_GObj, pos: *mut Vec, arg2:
 }
 
 pub unsafe extern "C" fn itGameWatchTurtle_Logic75_Destroyed(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGameWatchTurtle_Logic75_Destroyed");
     let it = GET_ITEM(item_gobj);
     if !(*it).owner.is_null() {
         ext::ftGw_AttackAirN_ItemTurtleSetFlag((*it).owner);
@@ -127,6 +129,7 @@ pub unsafe extern "C" fn itGameWatchTurtle_Logic75_Destroyed(item_gobj: *mut HSD
 }
 
 pub unsafe extern "C" fn it_802C7074(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802C7074");
     let it = GET_ITEM(item_gobj);
     if !it.is_null() {
         if !(*it).owner.is_null() {
@@ -137,14 +140,17 @@ pub unsafe extern "C" fn it_802C7074(item_gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn it_802C70C0(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802C70C0");
     ext::it_8026B724(item_gobj);
 }
 
 pub unsafe extern "C" fn it_802C70E0(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802C70E0");
     ext::it_8026B73C(item_gobj);
 }
 
 pub unsafe extern "C" fn itGameWatchTurtle_Logic75_PickedUp(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("itGameWatchTurtle_Logic75_PickedUp");
     let it = GET_ITEM(item_gobj);
     (*it).xDAC_itcmd_var0 = 0;
     if !(*it).owner.is_null() {
@@ -154,10 +160,12 @@ pub unsafe extern "C" fn itGameWatchTurtle_Logic75_PickedUp(item_gobj: *mut HSD_
 }
 
 pub unsafe extern "C" fn it_802C7158(arg0: *mut HSD_GObj) {
+    melee_core::ct!("it_802C7158");
     ext::Item_80268E5C(arg0, 1, ITEM_ANIM_UPDATE as u32);
 }
 
 pub unsafe extern "C" fn itGamewatchturtle_UnkMotion1_Anim(item_gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("itGamewatchturtle_UnkMotion1_Anim");
     let it = GET_ITEM(item_gobj);
     let cond = if !(*it).owner.is_null() { ext::ftGw_AttackAirN_ItemCheckTurtleRemove((*it).owner) } else { 1 };
     if cond != 0 {
@@ -171,5 +179,6 @@ pub unsafe extern "C" fn itGamewatchturtle_UnkMotion1_Anim(item_gobj: *mut HSD_G
 }
 
 pub unsafe extern "C" fn itGameWatchTurtle_Logic75_EvtUnk(arg0: *mut HSD_GObj, arg1: *mut HSD_GObj) {
+    melee_core::ct!("itGameWatchTurtle_Logic75_EvtUnk");
     ext::it_8026B894(arg0, arg1);
 }

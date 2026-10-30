@@ -460,9 +460,10 @@ fn f2s16(x: f32) -> i16 {
     (x as i32) as i16
 }
 
-pub unsafe extern "C" fn grKongo_801D5238(_arg: i32) {}
+pub unsafe extern "C" fn grKongo_801D5238(_arg: i32) { melee_core::ct!("grKongo_801D5238");}
 
 pub unsafe extern "C" fn grKongo_801D523C() {
+    melee_core::ct!("grKongo_801D523C");
     yakumono_param = ext::Ground_GetYakumonoParam() as *mut grKongo_YakumonoParam;
     let si = ext::stage_info();
     (*si).unk8C.set_b4(0);
@@ -482,15 +483,17 @@ pub unsafe extern "C" fn grKongo_801D523C() {
     }
 }
 
-pub unsafe extern "C" fn grKongo_801D52F8() {}
+pub unsafe extern "C" fn grKongo_801D52F8() { melee_core::ct!("grKongo_801D52F8");}
 
 pub unsafe extern "C" fn grKongo_801D52FC() {
+    melee_core::ct!("grKongo_801D52FC");
     let gobj = ext::Ground_GetMapGObj(5);
     ext::ftCo_800C0764(gobj, 2, fn_801D8134 as usize as *mut c_void);
     ext::grZakoGenerator_801CAE04(null_mut());
 }
 
 pub unsafe fn grKongo_801D5340(gobj_id: i32) -> *mut HSD_GObj {
+    melee_core::ct!("grKongo_801D5340");
     let callbacks: *mut StageCallbacks = &mut grKg_StageCallbacks[gobj_id as usize];
     let gobj = ext::Ground_GetStageGObj(gobj_id);
 
@@ -518,6 +521,7 @@ pub unsafe fn grKongo_801D5340(gobj_id: i32) -> *mut HSD_GObj {
 
 /// `void fn_801D542C(HSD_GObj*)`: the barrel's (Ground_801C10B8) callback.
 pub unsafe extern "C" fn fn_801D542C(arg0: *mut HSD_GObj) {
+    melee_core::ct!("fn_801D542C");
     let gp = (*arg0).user_data as *mut Ground;
     ext::mpJointSetCb1(4, gp as *mut c_void, Some(fn_801D7700));
     let rand = ext::HSD_Randf();
@@ -527,6 +531,7 @@ pub unsafe extern "C" fn fn_801D542C(arg0: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grKongo_801D5490(arg0: *mut HSD_GObj) {
+    melee_core::ct!("grKongo_801D5490");
     let gp = (*arg0).user_data as *mut Ground;
     ext::Ground_InitMapColl((*arg0).hsd_obj as *mut HSD_JObj, (*gp).map_id as s32);
     ext::grAnime_801C8138(arg0, (*gp).map_id as enum_t, 0);
@@ -547,6 +552,7 @@ pub unsafe extern "C" fn grKongo_801D5490(arg0: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grKongo_801D557C(arg0: *mut HSD_GObj) {
+    melee_core::ct!("grKongo_801D557C");
     grKongo_801D7134(arg0, 0);
     grKongo_801D77E0(arg0, 0);
     grKongo_801D7BBC(arg0);
@@ -555,6 +561,7 @@ pub unsafe extern "C" fn grKongo_801D557C(arg0: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grKongo_801D55D8(arg0: *mut HSD_GObj) {
+    melee_core::ct!("grKongo_801D55D8");
     let mut sp14 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let gp = (*arg0).user_data as *mut Ground;
     let temp_r28 = (*arg0).hsd_obj;
@@ -578,6 +585,7 @@ pub unsafe extern "C" fn grKongo_801D55D8(arg0: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grKongo_801D577C(arg0: *mut HSD_GObj) {
+    melee_core::ct!("grKongo_801D577C");
     let gp = (*arg0).user_data as *mut Ground;
     let jobj = ext::Ground_801C3FA4(arg0, 1);
     let mut vec = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -745,37 +753,41 @@ pub unsafe extern "C" fn grKongo_801D577C(arg0: *mut HSD_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grKongo_801D5FA4(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grKongo_801D5FA4(_arg: *mut HSD_GObj) { melee_core::ct!("grKongo_801D5FA4");}
 
 pub unsafe extern "C" fn grKongo_801D5FA8(arg0: *mut HSD_GObj) {
+    melee_core::ct!("grKongo_801D5FA8");
     let gp = (*arg0).user_data as *mut Ground;
     ext::grAnime_801C8138(arg0, (*gp).map_id as enum_t, 0);
 }
 
-pub unsafe extern "C" fn grKongo_801D5FDC(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grKongo_801D5FDC(_arg: *mut HSD_GObj) { melee_core::ct!("grKongo_801D5FDC");}
 
-pub unsafe extern "C" fn grKongo_801D5FE0(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grKongo_801D5FE0(_arg: *mut HSD_GObj) { melee_core::ct!("grKongo_801D5FE0");}
 
 pub unsafe extern "C" fn grKongo_801D5FE4(arg0: *mut HSD_GObj) {
+    melee_core::ct!("grKongo_801D5FE4");
     let gp = (*arg0).user_data as *mut Ground;
     ext::grAnime_801C8138(arg0, (*gp).map_id as enum_t, 0);
     (*gp).x11_flags.set_b012(1);
 }
 
-pub unsafe extern "C" fn grKongo_801D6030(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grKongo_801D6030(_arg: *mut HSD_GObj) { melee_core::ct!("grKongo_801D6030");}
 
-pub unsafe extern "C" fn grKongo_801D6034(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grKongo_801D6034(_arg: *mut HSD_GObj) { melee_core::ct!("grKongo_801D6034");}
 
 pub unsafe extern "C" fn grKongo_801D6038(arg0: *mut HSD_GObj) {
+    melee_core::ct!("grKongo_801D6038");
     let gp = (*arg0).user_data as *mut Ground;
     ext::grAnime_801C8138(arg0, (*gp).map_id as enum_t, 0);
 }
 
-pub unsafe extern "C" fn grKongo_801D606C(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grKongo_801D606C(_arg: *mut HSD_GObj) { melee_core::ct!("grKongo_801D606C");}
 
-pub unsafe extern "C" fn grKongo_801D6070(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grKongo_801D6070(_arg: *mut HSD_GObj) { melee_core::ct!("grKongo_801D6070");}
 
 pub unsafe extern "C" fn grKongo_801D6074(arg0: *mut HSD_GObj) {
+    melee_core::ct!("grKongo_801D6074");
     let gp = (*arg0).user_data as *mut Ground;
     let jobj = (*arg0).hsd_obj as *mut HSD_JObj;
     ext::grAnime_801C8138(arg0, (*gp).map_id as enum_t, 0);
@@ -794,6 +806,7 @@ pub unsafe extern "C" fn grKongo_801D6074(arg0: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grKongo_801D6198(arg0: *mut HSD_GObj) {
+    melee_core::ct!("grKongo_801D6198");
     let gp = (*arg0).user_data as *mut Ground;
     match (*gp).u.kongo3.xC4 {
         0 => {
@@ -843,6 +856,7 @@ pub unsafe extern "C" fn grKongo_801D6198(arg0: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grKongo_801D637C(arg0: *mut HSD_GObj) {
+    melee_core::ct!("grKongo_801D637C");
     let gp = (*arg0).user_data as *mut Ground;
     let jobj = (*arg0).hsd_obj as *mut HSD_JObj;
     ext::grAnime_801C8138(arg0, (*gp).map_id as enum_t, 0);
@@ -858,12 +872,14 @@ pub unsafe extern "C" fn grKongo_801D637C(arg0: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grKongo_801D64BC(arg0: *mut HSD_GObj) {
+    melee_core::ct!("grKongo_801D64BC");
     if ext::grAnime_801C83D0(arg0, 0, 1) != 0 || ext::grAnime_801C84A4(arg0, 0, 1) != 0 {
         ext::Ground_801C4A08(arg0);
     }
 }
 
 pub unsafe extern "C" fn grKongo_801D651C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grKongo_801D651C");
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let mut sp2c = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -880,6 +896,7 @@ pub unsafe extern "C" fn grKongo_801D651C(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grKongo_801D6668(arg0: *mut HSD_GObj) {
+    melee_core::ct!("grKongo_801D6668");
     let mut sp5c = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp50 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp44 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -942,9 +959,10 @@ pub unsafe extern "C" fn grKongo_801D6668(arg0: *mut HSD_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grKongo_801D69AC(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grKongo_801D69AC(_arg: *mut HSD_GObj) { melee_core::ct!("grKongo_801D69AC");}
 
 pub unsafe extern "C" fn grKongo_801D69B0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grKongo_801D69B0");
     for i in 0..15usize {
         grKg_803E188C[i].unk4 = ext::Ground_801C3FA4(gobj, grKg_803E188C[i].unk0 as s32);
         grKg_803E188C[i].unkC = grKg_803E188C[i].unk8;
@@ -973,6 +991,7 @@ fn rad_compare_b(a: f32, b: f32, ret: &mut f32) {
 }
 
 pub unsafe extern "C" fn grKongo_801D6AFC() {
+    melee_core::ct!("grKongo_801D6AFC");
     let yp = yakumono_param;
     let values = [0.0f32; 15];
     for i in 0..15usize {
@@ -1039,6 +1058,7 @@ unsafe fn grKongo_calc_angle(index: usize) -> f32 {
 }
 
 pub unsafe extern "C" fn grKongo_801D7134(gobj: *mut HSD_GObj, _arg1: i32) {
+    melee_core::ct!("grKongo_801D7134");
     let gp = (*gobj).user_data as *mut Ground;
     let yp = yakumono_param;
     grKongo_801D6AFC();
@@ -1093,6 +1113,7 @@ pub unsafe extern "C" fn fn_801D7700(
     ground_kind: mpLib_GroundEnum,
     _delta_y: f32,
 ) {
+    melee_core::ct!("fn_801D7700");
     let cur = &(*coll).cur_pos;
     let ty = (*coll).x34_flags.b1234() as i32;
     let (mut x1, mut y1, mut x2, mut y2) = (0.0f32, 0.0f32, 0.0f32, 0.0f32);
@@ -1120,6 +1141,7 @@ pub unsafe extern "C" fn fn_801D7700(
 }
 
 pub unsafe extern "C" fn grKongo_801D77E0(gobj: *mut HSD_GObj, arg1: i32) {
+    melee_core::ct!("grKongo_801D77E0");
     let gp = (*gobj).user_data as *mut Ground;
     let yp = yakumono_param;
 
@@ -1174,6 +1196,7 @@ pub unsafe extern "C" fn grKongo_801D77E0(gobj: *mut HSD_GObj, arg1: i32) {
 }
 
 pub unsafe extern "C" fn grKongo_801D7BBC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grKongo_801D7BBC");
     let gp = (*gobj).user_data as *mut Ground;
     let yp = yakumono_param;
     let mut gobj_id: i32 = 0;
@@ -1277,6 +1300,7 @@ pub unsafe extern "C" fn fn_801D7E60(
     ground_kind: mpLib_GroundEnum,
     _delta_y: f32,
 ) {
+    melee_core::ct!("fn_801D7E60");
     let gp = user_data as *mut Ground;
     if ground_kind == mpLib_GroundEnum_Unk2 {
         (*gp).u.kongo3.xC6 = ((*gp).u.kongo3.xC8 as i32 + 1) as i16;
@@ -1284,6 +1308,7 @@ pub unsafe extern "C" fn fn_801D7E60(
 }
 
 pub unsafe fn grKongo_801D7E78(gobj: *mut HSD_GObj, pos: *mut Vec3) -> *mut Vec3 {
+    melee_core::ct!("grKongo_801D7E78");
     let gp = (*gobj).user_data as *mut Ground;
     if !gp.is_null() {
         let m = (*gp).map_id;
@@ -1311,6 +1336,7 @@ pub unsafe fn grKongo_801D7E78(gobj: *mut HSD_GObj, pos: *mut Vec3) -> *mut Vec3
 }
 
 pub unsafe fn grKongo_801D7F78(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("grKongo_801D7F78");
     let mut pos1 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut pos2 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
@@ -1336,10 +1362,12 @@ pub unsafe fn grKongo_801D7F78(gobj: *mut HSD_GObj) -> bool {
 }
 
 pub unsafe extern "C" fn grKongo_801D8058(arg: *mut HSD_GObj) {
+    melee_core::ct!("grKongo_801D8058");
     ext::Ground_801C4A08(arg);
 }
 
 pub unsafe fn grKongo_801D8078(_gobj: *mut HSD_GObj) -> *mut HSD_GObj {
+    melee_core::ct!("grKongo_801D8078");
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut unk: f32 = 0.0;
     let mut item_pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -1370,6 +1398,7 @@ pub unsafe fn grKongo_801D8078(_gobj: *mut HSD_GObj) -> *mut HSD_GObj {
 
 /// `static int fn_801D8134(HSD_GObj*, HSD_GObj*)`: the ftCo_800C0764 grab-range callback.
 pub unsafe extern "C" fn fn_801D8134(arg0: *mut HSD_GObj, arg1: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("fn_801D8134");
     let gp = GET_GROUND(arg0);
     let mut pos_gnd = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut pos_ft = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -1402,6 +1431,7 @@ pub unsafe extern "C" fn fn_801D8134(arg0: *mut HSD_GObj, arg1: *mut HSD_GObj) -
 }
 
 pub unsafe extern "C" fn grKongo_801D8270(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grKongo_801D8270");
     let gp = GET_GROUND(gobj);
     if (*gp).u.inishie2.xC6 == 1 {
         (*gp).u.inishie2.xC6 = 2;
@@ -1409,6 +1439,7 @@ pub unsafe extern "C" fn grKongo_801D8270(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grKongo_801D828C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grKongo_801D828C");
     let gp = GET_GROUND(gobj);
     if (*gp).u.kongo3.xC6 != 1 {
         return;
@@ -1422,6 +1453,7 @@ pub unsafe extern "C" fn grKongo_801D828C(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe fn grKongo_801D8314() -> f32 {
+    melee_core::ct!("grKongo_801D8314");
     let yp = yakumono_param;
     let temp_r3: i32 = (*yp).unk44 as i32
         + (*yp).unk46 as i32
@@ -1469,6 +1501,7 @@ pub unsafe fn grKongo_801D8314() -> f32 {
 }
 
 pub unsafe extern "C" fn grKongo_801D844C(a: *mut Vec3, _b: i32, jobj: *mut HSD_JObj) -> i32 {
+    melee_core::ct!("grKongo_801D844C");
     let mut vec = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ext::lb_8000B1CC(jobj, null_mut(), &mut vec);
     if (*a).y > vec.y {

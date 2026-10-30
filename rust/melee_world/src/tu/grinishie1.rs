@@ -231,6 +231,7 @@ unsafe fn GET_GROUND(gobj: *mut HSD_GObj) -> *mut Ground {
 /// `static inline fabsf_inline`
 #[inline(always)]
 pub fn fabsf_inline(x: f32) -> f32 {
+    melee_core::ct!("fabsf_inline");
     if x < 0.0 { -x } else { x }
 }
 
@@ -253,6 +254,7 @@ unsafe fn rand_range(a: i32, b: i32) -> i32 {
 
 /// `static inline grInishie1_SetRespawnTimer`
 pub unsafe fn grInishie1_SetRespawnTimer(gp: *mut Ground, index: u32, min: i32, mut max: i32) {
+    melee_core::ct!("grInishie1_SetRespawnTimer");
     if max > min {
         let difference = max.wrapping_sub(min);
         max = min.wrapping_add(if difference != 0 { ext::HSD_Randi(difference) } else { 0 });
@@ -303,23 +305,27 @@ unsafe fn dobj_clear_all(jobj: *mut HSD_JObj) {
 
 /// `static inline grInishie1_ShowBlock`
 pub unsafe fn grInishie1_ShowBlock(jobj: *mut HSD_JObj) {
+    melee_core::ct!("grInishie1_ShowBlock");
     ext::HSD_JObjClearFlagsAll(jobj, JOBJ_HIDDEN as u32);
 }
 
 /// `static inline grInishie1_801FB3F0_UpdateY`
 pub unsafe fn grInishie1_801FB3F0_UpdateY(block: *mut grInishie1_Block) {
+    melee_core::ct!("grInishie1_801FB3F0_UpdateY");
     let y = (*block).x8 + (*block).xC;
     HSD_JObjSetTranslateY(&mut *(*block).jobj2, y, &mut Dirty);
 }
 
 /// `static inline grInishie1_801FB3F0_IsFar`
 pub unsafe fn grInishie1_801FB3F0_IsFar(jobj: *mut HSD_JObj, pos: *mut Vec3) -> i32 {
+    melee_core::ct!("grInishie1_801FB3F0_IsFar");
     ext::lb_8000B1CC(jobj, null_mut(), pos);
     ext::grLib_801C9EE8(pos, 15.0)
 }
 
 /// `static inline grInishie1_UpdateDObjFlags`
 pub unsafe fn grInishie1_UpdateDObjFlags(jobj: *mut HSD_JObj, walker: *mut *mut HSD_DObj, hidden: bool) {
+    melee_core::ct!("grInishie1_UpdateDObjFlags");
     *walker = ext::HSD_JObjGetDObj(jobj);
     while !(*walker).is_null() {
         if hidden {
@@ -334,14 +340,16 @@ pub unsafe fn grInishie1_UpdateDObjFlags(jobj: *mut HSD_JObj, walker: *mut *mut 
 
 /// `static inline GET_ITEM2`
 pub unsafe fn GET_ITEM2(arg0: *mut Item_GObj) -> *mut Item {
+    melee_core::ct!("GET_ITEM2");
     (*arg0).user_data as *mut Item
 }
 
 /// 1FA908
-pub unsafe extern "C" fn grInishie1_801FA908(_arg: i32) {}
+pub unsafe extern "C" fn grInishie1_801FA908(_arg: i32) { melee_core::ct!("grInishie1_801FA908");}
 
 /// 1FA90C
 pub unsafe extern "C" fn grInishie1_801FA90C() {
+    melee_core::ct!("grInishie1_801FA90C");
     yakumono_param = ext::Ground_GetYakumonoParam() as *mut grInishie1_YakumonoParam;
     ext::stage_info.unk8C.set_b4(0);
     ext::stage_info.unk8C.set_b5(1);
@@ -354,15 +362,17 @@ pub unsafe extern "C" fn grInishie1_801FA90C() {
 }
 
 /// 1FA984
-pub unsafe extern "C" fn grInishie1_801FA984() {}
+pub unsafe extern "C" fn grInishie1_801FA984() { melee_core::ct!("grInishie1_801FA984");}
 
 /// 1FA988
 pub unsafe extern "C" fn grInishie1_801FA988() {
+    melee_core::ct!("grInishie1_801FA988");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
 
 /// 1FA9B4
 pub unsafe extern "C" fn setupStageCallbacks(gobj_id: i32) -> *mut Ground_GObj {
+    melee_core::ct!("setupStageCallbacks");
     let callbacks = &raw mut grI1_StageCallbacks[gobj_id as usize];
     let gobj = ext::Ground_GetStageGObj(gobj_id);
 
@@ -389,17 +399,19 @@ pub unsafe extern "C" fn setupStageCallbacks(gobj_id: i32) -> *mut Ground_GObj {
 
 /// `static stageGObj0_OnInit`
 pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut Ground_GObj) {
+    melee_core::ct!("stageGObj0_OnInit");
     Ground_StartMapAnim(gobj);
 }
 
 /// 1FAAD4
-pub unsafe extern "C" fn grInishie1_801FAAD4(_gobj: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grInishie1_801FAAD4(_gobj: *mut Ground_GObj) { melee_core::ct!("grInishie1_801FAAD4");}
 
 /// 1FAAD8
-pub unsafe extern "C" fn grInishie1_801FAAD8(_gobj: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grInishie1_801FAAD8(_gobj: *mut Ground_GObj) { melee_core::ct!("grInishie1_801FAAD8");}
 
 /// 1FAADC
 pub unsafe extern "C" fn grInishie1_801FAADC(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grInishie1_801FAADC");
     let gp = GET_GROUND(gobj);
 
     Ground_InitMapCollAndAnim(gobj);
@@ -412,6 +424,7 @@ pub unsafe extern "C" fn grInishie1_801FAADC(gobj: *mut Ground_GObj) {
 
 /// 1FAB68
 pub unsafe extern "C" fn grInishie1_801FAB68(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grInishie1_801FAB68");
     grInishie1_801FB3F0(gobj);
     grInishie1_801FC664(gobj);
     grInishie1_801FCB10(gobj);
@@ -419,10 +432,11 @@ pub unsafe extern "C" fn grInishie1_801FAB68(gobj: *mut Ground_GObj) {
 }
 
 /// 1FABB0
-pub unsafe extern "C" fn grInishie1_801FABB0(_gobj: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grInishie1_801FABB0(_gobj: *mut Ground_GObj) { melee_core::ct!("grInishie1_801FABB0");}
 
 /// 1FABB4
 pub unsafe extern "C" fn grInishie1_801FABB4(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grInishie1_801FABB4");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
     (*gp).x8_callback = None;
@@ -430,13 +444,14 @@ pub unsafe extern "C" fn grInishie1_801FABB4(gobj: *mut Ground_GObj) {
 }
 
 /// 1FABFC
-pub unsafe extern "C" fn grInishie1_801FABFC(_gobj: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grInishie1_801FABFC(_gobj: *mut Ground_GObj) { melee_core::ct!("grInishie1_801FABFC");}
 
 /// 1FAC00
-pub unsafe extern "C" fn grInishie1_801FAC00(_gobj: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grInishie1_801FAC00(_gobj: *mut Ground_GObj) { melee_core::ct!("grInishie1_801FAC00");}
 
 /// 1FAC04
 pub unsafe extern "C" fn grInishie1_801FAC04(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grInishie1_801FAC04");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
     (*gp).u.inishie12.xC4 = null_mut();
@@ -446,6 +461,7 @@ pub unsafe extern "C" fn grInishie1_801FAC04(gobj: *mut Ground_GObj) {
 
 /// 1FAC58
 pub unsafe extern "C" fn grInishie1_801FAC58(gobj: *mut Ground_GObj) {
+    melee_core::ct!("grInishie1_801FAC58");
     let gp = GET_GROUND(gobj);
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let jobj2 = jobj;
@@ -471,10 +487,11 @@ pub unsafe extern "C" fn grInishie1_801FAC58(gobj: *mut Ground_GObj) {
 }
 
 /// 1FAD80
-pub unsafe extern "C" fn grInishie1_801FAD80(_gobj: *mut Ground_GObj) {}
+pub unsafe extern "C" fn grInishie1_801FAD80(_gobj: *mut Ground_GObj) { melee_core::ct!("grInishie1_801FAD80");}
 
 /// 1FAD84
 pub unsafe extern "C" fn grInishie1_801FAD84(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grInishie1_801FAD84");
     let gp = (*gobj).user_data as *mut Ground;
 
     (*gp).u.inishie1.block =
@@ -578,6 +595,7 @@ pub unsafe extern "C" fn grInishie1_801FAD84(gobj: *mut HSD_GObj) {
 
 /// 1FB0AC
 pub unsafe extern "C" fn grInishie1_801FB0AC(gobj: *mut HSD_GObj, ix: u32) {
+    melee_core::ct!("grInishie1_801FB0AC");
     let gp = GET_GROUND(gobj);
     let b = (*gp).u.inishie1.block.add(ix as usize);
 
@@ -650,6 +668,7 @@ unsafe fn hatena_appear_checkloop(gobj: *mut HSD_GObj, vars: *mut Ground, countd
 
 /// 1FB3F0
 pub unsafe extern "C" fn grInishie1_801FB3F0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grInishie1_801FB3F0");
     let vars = (*gobj).user_data as *mut Ground;
     let mut index: i32;
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -777,6 +796,7 @@ pub unsafe extern "C" fn grInishie1_801FB3F0(gobj: *mut HSD_GObj) {
 
 /// 1FBA34: gives item from hatena block upwards velocity, maybe handles spawning it as well
 pub unsafe extern "C" fn grInishie1_801FBA34(_gobj: *mut HSD_GObj, jobj: *mut HSD_JObj) {
+    melee_core::ct!("grInishie1_801FBA34");
     let mut sp1c = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ext::lb_8000B1CC(jobj, null_mut(), &mut sp1c);
     let mut vec = grI1_803B8268;
@@ -786,6 +806,7 @@ pub unsafe extern "C" fn grInishie1_801FBA34(_gobj: *mut HSD_GObj, jobj: *mut HS
 
 /// 1FBAA0
 pub unsafe extern "C" fn grInishie1_801FBAA0(gobj: *mut HSD_GObj, ix: i32) {
+    melee_core::ct!("grInishie1_801FBAA0");
     let mut position = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mapgp = (*gobj).user_data as *mut Ground;
     let hatena = setupStageCallbacks(2);
@@ -813,6 +834,7 @@ pub unsafe extern "C" fn grInishie1_801FBAA0(gobj: *mut HSD_GObj, ix: i32) {
 
 /// 1FBC4C
 pub unsafe extern "C" fn grInishie1_801FBC4C(gobj: *mut HSD_GObj, index: u32) {
+    melee_core::ct!("grInishie1_801FBC4C");
     let gp = GET_GROUND(gobj);
     let b = (*gp).u.inishie1.block.add(index as usize);
     let jobj2 = (*b).jobj2;
@@ -823,6 +845,7 @@ pub unsafe extern "C" fn grInishie1_801FBC4C(gobj: *mut HSD_GObj, index: u32) {
 
 /// 1FBCEC
 pub unsafe extern "C" fn grInishie1_801FBCEC(gobj: *mut HSD_GObj, index: u32) {
+    melee_core::ct!("grInishie1_801FBCEC");
     let gp = (*gobj).user_data as *mut Ground;
     let mut effect_pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let b = (*gp).u.inishie1.block.add(index as usize);
@@ -865,6 +888,7 @@ pub unsafe extern "C" fn grInishie1_801FBCEC(gobj: *mut HSD_GObj, index: u32) {
 
 /// `static inline get_block_id`
 pub unsafe fn get_block_id(block_id: i32) -> i32 {
+    melee_core::ct!("get_block_id");
     let mut i = BLOCK_COUNT as i32;
     let mut idx: i32 = 0;
     while i != 0 {
@@ -880,6 +904,7 @@ pub unsafe fn get_block_id(block_id: i32) -> i32 {
 /// 1FBEB8 (`fn_801FBEB8`, an `mpLib_JointCollisionCallback`)
 pub unsafe extern "C" fn fn_801FBEB8(_user_data: *mut c_void, joint_id: i32, _coll: *mut CollData, _coll_x50: i32,
                                      _ground_kind: u32, delta_y: f32) {
+    melee_core::ct!("fn_801FBEB8");
     let id = get_block_id(joint_id);
     if fabsf_inline(delta_y) as f64 > 0.7 {
         let gobj = ext::Ground_GetMapGObj(3);
@@ -891,6 +916,7 @@ pub unsafe extern "C" fn fn_801FBEB8(_user_data: *mut c_void, joint_id: i32, _co
 /// 1FBF6C (`fn_801FBF6C`)
 pub unsafe extern "C" fn fn_801FBF6C(item_gobj: *mut Item_GObj, gp: *mut Ground, _pos: *mut Vec3, _arg3: *mut HSD_GObj,
                                      _arg4: f32) {
+    melee_core::ct!("fn_801FBF6C");
     let ip = GET_ITEM2(item_gobj);
 
     let mut i: i32 = 0;
@@ -915,6 +941,7 @@ pub unsafe extern "C" fn fn_801FBF6C(item_gobj: *mut Item_GObj, gp: *mut Ground,
 
 /// 1FC018
 pub unsafe extern "C" fn grInishie1_801FC018(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grInishie1_801FC018");
     let gp = (*gobj).user_data as *mut Ground;
 
     (*gp).u.inishie1.xEE = 0;
@@ -939,6 +966,7 @@ pub unsafe extern "C" fn grInishie1_801FC018(gobj: *mut HSD_GObj) {
 
 /// 1FC110
 pub unsafe extern "C" fn grInishie1_801FC110(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grInishie1_801FC110");
     let gp = (*gobj).user_data as *mut Ground;
     let yp = yakumono_param;
 
@@ -1026,6 +1054,7 @@ pub unsafe extern "C" fn grInishie1_801FC110(gobj: *mut HSD_GObj) {
 
 /// 1FC4A0
 pub unsafe extern "C" fn grInishie1_801FC4A0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grInishie1_801FC4A0");
     let gp = (*gobj).user_data as *mut Ground;
     let mut reached: i32 = 0;
     let zero: f32 = 0.0;
@@ -1056,6 +1085,7 @@ pub unsafe extern "C" fn grInishie1_801FC4A0(gobj: *mut HSD_GObj) {
 
 /// 1FC664
 pub unsafe extern "C" fn grInishie1_801FC664(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grInishie1_801FC664");
     let gp = (*gobj).user_data as *mut Ground;
     let mut sp24 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp18 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -1103,6 +1133,7 @@ pub unsafe extern "C" fn grInishie1_801FC664(gobj: *mut HSD_GObj) {
 /// 1FC9AC (`fn_801FC9AC`, an `mpLib_JointCollisionCallback`)
 pub unsafe extern "C" fn fn_801FC9AC(user_data: *mut c_void, joint_id: i32, _coll: *mut CollData, coll_x50: i32,
                                      ground_kind: u32, _delta_y: f32) {
+    melee_core::ct!("fn_801FC9AC");
     let gp = user_data as *mut Ground;
     if joint_id == 0x14 {
         (*gp).u.inishie1.xE8 = (*gp).u.inishie1.xE8.wrapping_add(1);
@@ -1123,6 +1154,7 @@ pub unsafe extern "C" fn fn_801FC9AC(user_data: *mut c_void, joint_id: i32, _col
 
 /// 1FCAAC
 pub unsafe extern "C" fn grInishie1_801FCAAC(line_id: i32) -> i32 {
+    melee_core::ct!("grInishie1_801FCAAC");
     if ext::stage_info.grkind == Gr_Kind_Inishie1 && line_id != -1 {
         let joint = (ext::mpJointFromLine(line_id) as u32).wrapping_sub(20);
         let mut result = 1;
@@ -1138,6 +1170,7 @@ pub unsafe extern "C" fn grInishie1_801FCAAC(line_id: i32) -> i32 {
 
 /// 1FCB10
 pub unsafe extern "C" fn grInishie1_801FCB10(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grInishie1_801FCB10");
     let mut time_remaining: u32 = 0;
 
     let gp = GET_GROUND(gobj);

@@ -92,11 +92,13 @@ static YAKUMONO_PARAM: AtomicPtr<YakumonoParam> = AtomicPtr::new(null_mut());
 
 /// The TU-static `yakumono_param` (set by this stage's `OnInit`).
 pub fn yakumono_param() -> *mut YakumonoParam {
+    melee_core::ct!("yakumono_param");
     YAKUMONO_PARAM.load(Ordering::Relaxed)
 }
 
 #[cfg(test)]
 pub fn set_yakumono_param(p: *mut YakumonoParam) {
+    melee_core::ct!("set_yakumono_param");
     YAKUMONO_PARAM.store(p, Ordering::Relaxed);
 }
 
@@ -158,12 +160,14 @@ fn init_tables() {
 
 /// The TU's `StageCallbacks grTGn_StageCallbacks[4]` (built on first use; stable address).
 pub fn stage_callbacks() -> *mut StageCallbacks {
+    melee_core::ct!("stage_callbacks");
     init_tables();
     unsafe { CALLBACKS.as_mut_ptr().cast() }
 }
 
 /// The TU's `StageData grTGn_StageData`.
 pub fn stage_data() -> *mut StageData {
+    melee_core::ct!("stage_data");
     init_tables();
     unsafe { STAGE_DATA.as_mut_ptr() }
 }
@@ -171,15 +175,18 @@ pub fn stage_data() -> *mut StageData {
 pub const STAGE_CALLBACKS_LEN: usize = 4;
 
 pub unsafe extern "C" fn grTGanon_802246DC() {
+    melee_core::ct!("grTGanon_802246DC");
     YAKUMONO_PARAM.store(ext::Ground_GetYakumonoParam().cast(), Ordering::Relaxed);
     inlines::Ground_InitTargetStage(grTGanon_80224784);
 }
 
 pub unsafe extern "C" fn grTganon_UnkStage0_OnStart() {
+    melee_core::ct!("grTganon_UnkStage0_OnStart");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
 
 pub unsafe extern "C" fn grTGanon_80224784(id: i32) -> *mut HSD_GObj {
+    melee_core::ct!("grTGanon_80224784");
     let callbacks = stage_callbacks().add(id as usize);
     let gobj = ext::Ground_GetStageGObj(id);
     if !gobj.is_null() {
@@ -191,27 +198,33 @@ pub unsafe extern "C" fn grTGanon_80224784(id: i32) -> *mut HSD_GObj {
 }
 
 pub unsafe extern "C" fn grTGanon_8022486C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grTGanon_8022486C");
     let gp = inlines::GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
 }
 
 pub unsafe extern "C" fn stageGObj2_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj2_OnInit");
     inlines::Ground_InitMapCollAndAnim(gobj);
 }
 
 pub unsafe extern "C" fn stageGObj2_GObjProc(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj2_GObjProc");
     inlines::Ground_UpdateWindAndMapColl(gobj);
 }
 
 pub unsafe extern "C" fn stageGObj1_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj1_OnInit");
     inlines::Ground_InitMapCollAndAnim(gobj);
 }
 
 pub unsafe extern "C" fn stageGObj1_GObjProc(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj1_GObjProc");
     ext::Ground_UpdateMapColl(gobj);
 }
 
 pub unsafe extern "C" fn grTGanon_802249B4(arg0: i32) -> *mut DynamicsDesc {
+    melee_core::ct!("grTGanon_802249B4");
     if arg0 != -1 {
         let mut i = ext::mpJointFromLine(arg0);
         if i != -1 && i == 0 {

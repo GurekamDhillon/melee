@@ -36,10 +36,12 @@ pub mod ext {
 
 /// `ftCo_800DE508` as the `accessory1_cb` value.
 pub unsafe extern "C" fn ftCo_800DE508_cb(g: G) {
+    melee_core::ct!("ftCo_800DE508_cb");
     ext::ftCo_800DE508(g)
 }
 
 pub fn ftCo_800BD0E8(g: G, msid: i32) {
+    melee_core::ct!("ftCo_800BD0E8");
     let f = fp(g);
     f.facing_dir = fp(f.victim_gobj).facing_dir;
     unsafe { f.mv.co.capturekoopa.x0 = 0 };
@@ -51,11 +53,11 @@ pub fn ftCo_800BD0E8(g: G, msid: i32) {
     ext::ftAnim_8006EBA4(g);
 }
 
-pub fn ftCo_ThrownMewtwo_Anim(_g: G) {}
-pub fn ftCo_ThrownMewtwo_IASA(_g: G) {}
-pub fn ftCo_ThrownMewtwo_Phys(_g: G) {}
-pub fn ftCo_ThrownMewtwo_Coll(_g: G) {}
-pub fn ftCo_ThrownMewtwoAir_Anim(_g: G) {}
-pub fn ftCo_ThrownMewtwoAir_IASA(_g: G) {}
-pub fn ftCo_ThrownMewtwoAir_Phys(_g: G) {}
-pub fn ftCo_ThrownMewtwoAir_Coll(_g: G) {}
+pub fn ftCo_ThrownMewtwo_Anim(_g: G) { melee_core::ct!("ftCo_ThrownMewtwo_Anim");}
+pub fn ftCo_ThrownMewtwo_IASA(_g: G) { melee_core::ct!("ftCo_ThrownMewtwo_IASA");}
+pub fn ftCo_ThrownMewtwo_Phys(_g: G) { melee_core::ct!("ftCo_ThrownMewtwo_Phys");}
+pub fn ftCo_ThrownMewtwo_Coll(_g: G) { melee_core::ct!("ftCo_ThrownMewtwo_Coll");}
+pub fn ftCo_ThrownMewtwoAir_Anim(_g: G) { melee_core::ct!("ftCo_ThrownMewtwoAir_Anim");}
+pub fn ftCo_ThrownMewtwoAir_IASA(_g: G) { melee_core::ct!("ftCo_ThrownMewtwoAir_IASA");}
+pub fn ftCo_ThrownMewtwoAir_Phys(_g: G) { melee_core::ct!("ftCo_ThrownMewtwoAir_Phys");}
+pub fn ftCo_ThrownMewtwoAir_Coll(_g: G) { melee_core::ct!("ftCo_ThrownMewtwoAir_Coll");}

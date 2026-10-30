@@ -179,6 +179,7 @@ unsafe fn joint(fp: *mut Fighter, part: usize) -> *mut HSD_JObj {
 /// nine PK Thunder motions (358..=366).
 #[inline(always)]
 pub fn in_special_hi(msid: i32) -> bool {
+    melee_core::ct!("in_special_hi");
     msid >= ftNs_MS_SpecialHiStart as i32 && msid <= ftNs_MS_SpecialAirHiRebound as i32
 }
 
@@ -198,6 +199,7 @@ unsafe fn on_damage_cb() -> HSD_GObjEvent {
 /// `ftModelPartRotX(fp, 0, (facing * atan2f(vx, vy)) - (float) M_PI_2)`, with the fused subtract.
 #[inline(always)]
 pub fn tilt_rot_x(facing: f32, vx: f32, vy: f32) -> f32 {
+    melee_core::ct!("tilt_rot_x");
     fmadds(facing, atan2f(vx, vy), -M_PI_2_F)
 }
 
@@ -208,6 +210,7 @@ unsafe fn set_tilt(fp: *mut Fighter) {
 
 /// Removes GFX (`ftNs_SpecialHiStopGFX`).
 pub fn ftNs_SpecialHiStopGFX(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialHiStopGFX");
     unsafe {
         let fp = fpp(gobj);
         destroy_gfx_if_special_hi(gobj, fp);
@@ -217,11 +220,13 @@ pub fn ftNs_SpecialHiStopGFX(gobj: *mut HSD_GObj) {
 /// `check_distance` (static inline).
 #[inline(always)]
 pub fn check_distance(pos: &Vec3, pair: &Vec3) -> bool {
+    melee_core::ct!("check_distance");
     abs_c(pos.x - pair.x) < 8.333333015441895_f32 && abs_c(pos.y - pair.y) < 12.333333015441895_f32
 }
 
 /// C `bool`: PK Thunder is touching Ness.
 pub fn ftNs_SpecialHi_ItemPKThunder_CheckNessCollide(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftNs_SpecialHi_ItemPKThunder_CheckNessCollide");
     unsafe {
         let fp = fpp(gobj);
         let mut ret = false;
@@ -258,6 +263,7 @@ pub fn ftNs_SpecialHi_ItemPKThunder_CheckNessCollide(gobj: *mut HSD_GObj) -> boo
 
 /// C `bool`: Ness is in SpecialHiHold / SpecialAirHiHold (the PK Thunder control loop).
 pub fn ftNs_SpecialHi_CheckSpecialHiHold(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftNs_SpecialHi_CheckSpecialHiHold");
     unsafe {
         let fp = fpp(gobj);
         (*fp).motion_id as i32 == ftNs_MS_SpecialHiHold as i32 || (*fp).motion_id as i32 == ftNs_MS_SpecialAirHiHold as i32
@@ -265,6 +271,7 @@ pub fn ftNs_SpecialHi_CheckSpecialHiHold(gobj: *mut HSD_GObj) -> bool {
 }
 
 pub fn ftNs_SpecialHi_ItemPKThunderRemove(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialHi_ItemPKThunderRemove");
     unsafe {
         let temp_fp = fpp(gobj);
         if !(*temp_fp).u.ns.pkthunder_gobj.is_null() {
@@ -278,6 +285,7 @@ pub fn ftNs_SpecialHi_ItemPKThunderRemove(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_SpecialHi_TakeDamage(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialHi_TakeDamage");
     unsafe {
         let temp_fp = fpp(gobj);
         if !(*temp_fp).u.ns.pkthunder_gobj.is_null() {
@@ -293,6 +301,7 @@ pub fn ftNs_SpecialHi_TakeDamage(gobj: *mut HSD_GObj) {
 
 /// Run from PK Thunder's OnReflect callback: forget the thunder if Ness reflects his own.
 pub fn ftNs_SpecialHi_ItemPKThunderCheckOwn(gobj: *mut HSD_GObj, thunder_gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialHi_ItemPKThunderCheckOwn");
     unsafe {
         let temp_fp = fpp(gobj);
         let temp_thunder = (*temp_fp).u.ns.pkthunder_gobj;
@@ -316,6 +325,7 @@ fn wrap_tau(mut v: f32) -> f32 {
 
 /// `ftNs_SpecialAirHi_CollisionModVel` (static): bend the flight direction along a wall.
 pub fn ftNs_SpecialAirHi_CollisionModVel(gobj: *mut HSD_GObj, coll_data: *mut CollData) {
+    melee_core::ct!("ftNs_SpecialAirHi_CollisionModVel");
     unsafe {
         let fp = fpp(gobj);
         // `phi_f1` is uninitialised when no wall flag is set: zero under -ftrivial-auto-var-init.
@@ -391,15 +401,18 @@ unsafe fn start_enter(gobj: *mut HSD_GObj, msid: i32, air: bool) {
 }
 
 pub fn ftNs_SpecialHiStart_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialHiStart_Enter");
     unsafe { start_enter(gobj, ftNs_MS_SpecialHiStart as i32, false) }
 }
 
 pub fn ftNs_SpecialAirHiStart_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirHiStart_Enter");
     unsafe { start_enter(gobj, ftNs_MS_SpecialAirHiStart as i32, true) }
 }
 
 /// Grounded PK Thunder 2 enter: launch along the thunder, or fall back to the air / downed path.
 pub fn ftNs_SpecialHi_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialHi_Enter");
     unsafe {
         let fp = fpp(gobj);
         let ness_attr = attrs(fp);
@@ -451,6 +464,7 @@ pub fn ftNs_SpecialHi_Enter(gobj: *mut HSD_GObj) {
 /// `NessFloatMath_PKThunder2` (static inline): aim along the vector from PK Thunder's contact
 /// point and launch.
 pub fn NessFloatMath_PKThunder2(gobj: *mut HSD_GObj) {
+    melee_core::ct!("NessFloatMath_PKThunder2");
     unsafe {
         let fp = fpp(gobj);
         let temp_f2 = (*fp).cur_pos.x - (*fp).mv.ns.specialhi.collPos1.x;
@@ -466,6 +480,7 @@ pub fn NessFloatMath_PKThunder2(gobj: *mut HSD_GObj) {
 
 /// PK Thunder 2 launch into the air (from SpecialHiHold or a failed ground launch).
 pub fn ftNs_SpecialAirHi_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirHi_Enter");
     unsafe {
         NessFloatMath_PKThunder2(gobj);
         st::Fighter_ChangeMotionState(gobj, ftNs_MS_SpecialAirHi as i32, 0, 0.0, 1.0, 0.0, null());
@@ -506,10 +521,12 @@ unsafe fn start_anim(gobj: *mut HSD_GObj, hold_msid: i32) {
 }
 
 pub fn ftNs_SpecialHiStart_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialHiStart_Anim");
     unsafe { start_anim(gobj, ftNs_MS_SpecialHiHold as i32) }
 }
 
 pub fn ftNs_SpecialAirHiStart_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirHiStart_Anim");
     unsafe { start_anim(gobj, ftNs_MS_SpecialAirHiHold as i32) }
 }
 
@@ -544,10 +561,12 @@ unsafe fn hold_anim(gobj: *mut HSD_GObj, end_msid: i32, air: bool) {
 }
 
 pub fn ftNs_SpecialHiHold_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialHiHold_Anim");
     unsafe { hold_anim(gobj, ftNs_MS_SpecialHiEnd as i32, false) }
 }
 
 pub fn ftNs_SpecialAirHiHold_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirHiHold_Anim");
     unsafe { hold_anim(gobj, ftNs_MS_SpecialAirHiEnd as i32, true) }
 }
 
@@ -563,6 +582,7 @@ unsafe fn jibaku_gfx(gobj: *mut HSD_GObj, fp: *mut Fighter) {
 }
 
 pub fn ftNs_SpecialHi_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialHi_Anim");
     unsafe {
         let temp_fp = fpp(gobj);
         jibaku_gfx(gobj, temp_fp);
@@ -591,6 +611,7 @@ unsafe fn leave_to_fall(gobj: *mut HSD_GObj, ness_attr: *const ftNessAttributes)
 }
 
 pub fn ftNs_SpecialAirHiEnd_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirHiEnd_Anim");
     unsafe {
         let fp = fpp(gobj);
         let ness_attr = attrs(fp);
@@ -603,6 +624,7 @@ pub fn ftNs_SpecialAirHiEnd_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_SpecialAirHi_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirHi_Anim");
     unsafe {
         let fp1 = fpp(gobj);
         let ness_attr = attrs(fp1);
@@ -621,6 +643,7 @@ pub fn ftNs_SpecialAirHi_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_SpecialAirHiRebound_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirHiRebound_Anim");
     unsafe {
         let fp = fpp(gobj);
         let ness_attr = attrs(fp);
@@ -631,7 +654,7 @@ pub fn ftNs_SpecialAirHiRebound_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftNs_SpecialHiStart_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftNs_SpecialHiStart_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftNs_SpecialHiStart_IASA");}
 
 /// `ThunderPhysTimer` (static inline): count the gravity delay down.
 unsafe fn thunder_phys_timer(gobj: *mut HSD_GObj) {
@@ -643,17 +666,20 @@ unsafe fn thunder_phys_timer(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_SpecialHiStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialHiStart_Phys");
     unsafe { thunder_phys_timer(gobj) };
     st::ft_80084F3C(gobj);
 }
 
 pub fn ftNs_SpecialHiHold_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialHiHold_Phys");
     st::ft_80084F3C(gobj);
 }
 
 /// Grounded PK Thunder 2 physics: decelerate the ground speed and keep the vertical speed from
 /// reversing, then tilt the model.
 pub fn ftNs_SpecialHi_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialHi_Phys");
     unsafe {
         let fp0 = fpp(gobj);
         let ground_vel = (*fp0).gr_vel;
@@ -699,24 +725,29 @@ unsafe fn air_thunder_phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_SpecialAirHiStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirHiStart_Phys");
     unsafe { air_thunder_phys(gobj) }
 }
 
 pub fn ftNs_SpecialAirHiHold_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirHiHold_Phys");
     unsafe { air_thunder_phys(gobj) }
 }
 
 pub fn ftNs_SpecialAirHiEnd_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirHiEnd_Phys");
     unsafe { air_thunder_phys(gobj) }
 }
 
 /// `ftNess_atan2` (static inline): tilt the model along the velocity.
 pub fn ftNess_atan2(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNess_atan2");
     unsafe { set_tilt(fpp(gobj)) }
 }
 
 /// Aerial PK Thunder 2 physics.
 pub fn ftNs_SpecialAirHi_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirHi_Phys");
     unsafe {
         let fp = fpp(gobj);
         let ness_attr = attrs(fp);
@@ -744,6 +775,7 @@ pub fn ftNs_SpecialAirHi_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_SpecialAirHiRebound_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirHiRebound_Phys");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_Fall(&mut *fp, (*fp).co_attrs.gravity, (*fp).co_attrs.terminal_velocity);
@@ -762,19 +794,23 @@ unsafe fn ground_coll_to_air(gobj: *mut HSD_GObj, air_msid: i32) {
 }
 
 pub fn ftNs_SpecialHiStart_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialHiStart_Coll");
     unsafe { ground_coll_to_air(gobj, ftNs_MS_SpecialAirHiStart as i32) }
 }
 
 pub fn ftNs_SpecialHiHold_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialHiHold_Coll");
     unsafe { ground_coll_to_air(gobj, ftNs_MS_SpecialAirHiHold as i32) }
 }
 
 pub fn ftNs_SpecialHiEnd_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialHiEnd_Coll");
     unsafe { ground_coll_to_air(gobj, ftNs_MS_SpecialAirHiEnd as i32) }
 }
 
 /// Grounded PK Thunder 2 collision.
 pub fn ftNs_SpecialHi_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialHi_Coll");
     unsafe {
         let fp0 = fpp(gobj);
         if st::ft_80082708(gobj) == 0 {
@@ -839,14 +875,17 @@ unsafe fn air_coll_to_ground(gobj: *mut HSD_GObj, ground_msid: i32) {
 }
 
 pub fn ftNs_SpecialAirHiStart_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirHiStart_Coll");
     unsafe { air_coll_to_ground(gobj, ftNs_MS_SpecialHiStart as i32) }
 }
 
 pub fn ftNs_SpecialAirHiHold_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirHiHold_Coll");
     unsafe { air_coll_to_ground(gobj, ftNs_MS_SpecialHiHold as i32) }
 }
 
 pub fn ftNs_SpecialAirHiEnd_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirHiEnd_Coll");
     unsafe { air_coll_to_ground(gobj, ftNs_MS_SpecialHiEnd as i32) }
 }
 
@@ -883,6 +922,7 @@ unsafe fn rebound(gobj: *mut HSD_GObj, fp: *mut Fighter, normal: *const Vec3) {
 
 /// Aerial PK Thunder 2 collision.
 pub fn ftNs_SpecialAirHi_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirHi_Coll");
     unsafe {
         let fp = fpp(gobj);
         let ness_attr = attrs(fp);
@@ -935,6 +975,7 @@ pub fn ftNs_SpecialAirHi_Coll(gobj: *mut HSD_GObj) {
 
 /// Wall-rebound collision: stop on ground or ledge, else grab the ledge.
 pub fn ftNs_SpecialAirHiRebound_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirHiRebound_Coll");
     unsafe {
         let fp = fpp(gobj);
         if st::ft_CheckGroundAndLedge(gobj, 0) == 1 {

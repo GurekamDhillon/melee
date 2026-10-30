@@ -160,6 +160,7 @@ fn union_type_dobj(j: *mut HSD_JObj) -> bool {
 }
 
 pub unsafe fn grAnime_801C65B0(arg0: *mut UnkArchiveStruct) {
+    melee_core::ct!("grAnime_801C65B0");
     if arg0.is_null() {
         return;
     }
@@ -174,6 +175,7 @@ pub unsafe fn grAnime_801C65B0(arg0: *mut UnkArchiveStruct) {
 }
 
 pub unsafe fn grAnime_801C6620(arg0: *mut HSD_PObj, arg1: *mut HSD_ShapeAnim) {
+    melee_core::ct!("grAnime_801C6620");
     if arg0.is_null() || arg1.is_null() {
         return;
     }
@@ -199,6 +201,7 @@ pub unsafe fn grAnime_801C6620(arg0: *mut HSD_PObj, arg1: *mut HSD_ShapeAnim) {
 
 /// `static inline HSD_TexAnimFindById`.
 pub unsafe fn HSD_TexAnimFindById(cur: *mut HSD_TexAnim, id: i32) -> *mut HSD_TexAnim {
+    melee_core::ct!("HSD_TexAnimFindById");
     let mut cur = cur;
     while !cur.is_null() {
         if (*cur).id as i32 == id {
@@ -210,6 +213,7 @@ pub unsafe fn HSD_TexAnimFindById(cur: *mut HSD_TexAnim, id: i32) -> *mut HSD_Te
 }
 
 pub unsafe fn grAnime_801C6710(tobj: *mut HSD_TObj, texanim: *mut HSD_TexAnim) {
+    melee_core::ct!("grAnime_801C6710");
     if tobj.is_null() {
         return;
     }
@@ -225,6 +229,7 @@ pub unsafe fn grAnime_801C6710(tobj: *mut HSD_TObj, texanim: *mut HSD_TexAnim) {
 
 /// `static inline grAnime_801C6710_all`.
 pub unsafe fn grAnime_801C6710_all(tobj: *mut HSD_TObj, texanim: *mut HSD_TexAnim) {
+    melee_core::ct!("grAnime_801C6710_all");
     let mut tobj = tobj;
     if !tobj.is_null() {
         while !tobj.is_null() {
@@ -235,6 +240,7 @@ pub unsafe fn grAnime_801C6710_all(tobj: *mut HSD_TObj, texanim: *mut HSD_TexAni
 }
 
 pub unsafe fn grAnime_801C67A8(mobj: *mut HSD_MObj, matanim: *mut HSD_MatAnim) {
+    melee_core::ct!("grAnime_801C67A8");
     if !mobj.is_null() && !matanim.is_null() {
         if !(*matanim).aobjdesc.is_null() {
             if !(*mobj).aobj.is_null() {
@@ -247,14 +253,17 @@ pub unsafe fn grAnime_801C67A8(mobj: *mut HSD_MObj, matanim: *mut HSD_MatAnim) {
 }
 
 pub unsafe fn grAnime_801C67A8_inner(mobj: *mut HSD_MObj, matanim: *mut HSD_MatAnim) {
+    melee_core::ct!("grAnime_801C67A8_inner");
     grAnime_801C67A8(mobj, matanim);
 }
 
 pub unsafe fn grAnime_801C67A8_noinline(mobj: *mut HSD_MObj, matanim: *mut HSD_MatAnim) {
+    melee_core::ct!("grAnime_801C67A8_noinline");
     grAnime_801C67A8_inner(mobj, matanim);
 }
 
 pub unsafe fn grAnime_801C683C(arg0: *mut HSD_DObj, arg1: *mut HSD_MatAnim, arg2: *mut HSD_ShapeAnimDObj) {
+    melee_core::ct!("grAnime_801C683C");
     if arg0.is_null() {
         return;
     }
@@ -273,6 +282,7 @@ pub unsafe fn grAnime_801C683C(arg0: *mut HSD_DObj, arg1: *mut HSD_MatAnim, arg2
 }
 
 pub unsafe fn grAnime_801C68F4(robj: *mut HSD_RObj, robjanimjoint: *mut HSD_RObjAnimJoint) {
+    melee_core::ct!("grAnime_801C68F4");
     if robj.is_null() || robjanimjoint.is_null() {
         return;
     }
@@ -285,6 +295,7 @@ pub unsafe fn grAnime_801C68F4(robj: *mut HSD_RObj, robjanimjoint: *mut HSD_RObj
 }
 
 pub unsafe fn grAnime_801C6960(robj: *mut HSD_RObj, arg1: *mut HSD_RObjAnimJoint) {
+    melee_core::ct!("grAnime_801C6960");
     if robj.is_null() || arg1.is_null() {
         return;
     }
@@ -298,6 +309,7 @@ pub unsafe fn grAnime_801C6960(robj: *mut HSD_RObj, arg1: *mut HSD_RObjAnimJoint
 }
 
 pub unsafe fn grAnime_801C69FC(aobj: *mut HSD_AObj) -> *mut HSD_AObj {
+    melee_core::ct!("grAnime_801C69FC");
     if aobj.is_null() || (*aobj).fobj.is_null() {
         return aobj;
     }
@@ -318,6 +330,7 @@ pub unsafe fn grAnime_801C69FC(aobj: *mut HSD_AObj) -> *mut HSD_AObj {
 
 /// `static inline grAnime_801C69FC_for_jobj` (same effect, different register allocation in the C).
 pub unsafe fn grAnime_801C69FC_for_jobj(aobj: *mut HSD_AObj) -> *mut HSD_AObj {
+    melee_core::ct!("grAnime_801C69FC_for_jobj");
     if aobj.is_null() || (*aobj).fobj.is_null() {
         return aobj;
     }
@@ -336,18 +349,22 @@ pub unsafe fn grAnime_801C69FC_for_jobj(aobj: *mut HSD_AObj) -> *mut HSD_AObj {
 }
 
 pub unsafe fn grAnime_801C69FC_inner(aobj: *mut HSD_AObj) -> *mut HSD_AObj {
+    melee_core::ct!("grAnime_801C69FC_inner");
     grAnime_801C69FC(aobj)
 }
 
 pub unsafe fn grAnime_801C69FC_noinline(aobj: *mut HSD_AObj) -> *mut HSD_AObj {
+    melee_core::ct!("grAnime_801C69FC_noinline");
     grAnime_801C69FC_inner(aobj)
 }
 
 pub unsafe fn grAnime_GetAObj(jobj: *mut HSD_JObj) -> *mut HSD_AObj {
+    melee_core::ct!("grAnime_GetAObj");
     (*jobj).aobj
 }
 
 pub unsafe fn grAnime_801C6A54(jobj: *mut HSD_JObj, animjoint: *mut HSD_AnimJoint, matanimjoint: *mut HSD_MatAnimJoint, shapeanimjoint: *mut HSD_ShapeAnimJoint) {
+    melee_core::ct!("grAnime_801C6A54");
     if jobj.is_null() {
         return;
     }
@@ -371,6 +388,7 @@ pub unsafe fn grAnime_801C6A54(jobj: *mut HSD_JObj, animjoint: *mut HSD_AnimJoin
 }
 
 pub unsafe fn grAnime_801C6A54_inner(jobj: *mut HSD_JObj, animjoint: *mut HSD_AnimJoint, matanimjoint: *mut HSD_MatAnimJoint, shapeanimjoint: *mut HSD_ShapeAnimJoint) {
+    melee_core::ct!("grAnime_801C6A54_inner");
     if jobj.is_null() {
         return;
     }
@@ -394,6 +412,7 @@ pub unsafe fn grAnime_801C6A54_inner(jobj: *mut HSD_JObj, animjoint: *mut HSD_An
 }
 
 pub unsafe fn grAnime_801C6A54_noinline(jobj: *mut HSD_JObj, animjoint: *mut HSD_AnimJoint, matanimjoint: *mut HSD_MatAnimJoint, shapeanimjoint: *mut HSD_ShapeAnimJoint) {
+    melee_core::ct!("grAnime_801C6A54_noinline");
     grAnime_801C6A54(jobj, animjoint, matanimjoint, shapeanimjoint);
 }
 
@@ -411,6 +430,7 @@ macro_rules! ch {
 
 /// `static inline grAnime_801C6C0C_inner`: one recursion level of `grAnime_801C6C0C`.
 pub unsafe fn grAnime_801C6C0C_inner(jobj: *mut HSD_JObj, animjoint: *mut HSD_AnimJoint, matanimjoint: *mut HSD_MatAnimJoint, shapeanimjoint: *mut HSD_ShapeAnimJoint) {
+    melee_core::ct!("grAnime_801C6C0C_inner");
     if !jobj.is_null() {
         grAnime_801C6A54_noinline(jobj, animjoint, matanimjoint, shapeanimjoint);
         if (*jobj).flags & 0x1000 == 0 {
@@ -430,6 +450,7 @@ pub unsafe fn grAnime_801C6C0C_inner(jobj: *mut HSD_JObj, animjoint: *mut HSD_An
 }
 
 pub unsafe fn grAnime_801C6C0C(jobj: *mut HSD_JObj, animjoint: *mut HSD_AnimJoint, matanimjoint: *mut HSD_MatAnimJoint, shapeanimjoint: *mut HSD_ShapeAnimJoint) {
+    melee_core::ct!("grAnime_801C6C0C");
     if !jobj.is_null() {
         grAnime_801C6A54_inner(jobj, animjoint, matanimjoint, shapeanimjoint);
         if (*jobj).flags & 0x1000 == 0 {
@@ -449,17 +470,20 @@ pub unsafe fn grAnime_801C6C0C(jobj: *mut HSD_JObj, animjoint: *mut HSD_AnimJoin
 }
 
 pub unsafe extern "C" fn fn_801C6EE4(aobj: *mut HSD_AObj, _obj: *mut c_void, _flags: u32, _arg: u32) {
+    melee_core::ct!("fn_801C6EE4");
     ext::HSD_AObjSetFlags(aobj, AOBJ_LOOP as u32);
     ext::HSD_AObjSetRewindFrame(aobj, grAnime_804D6958);
     ext::HSD_AObjSetEndFrame(aobj, grAnime_804D695C);
 }
 
 pub unsafe extern "C" fn fn_801C6F2C(aobj: *mut HSD_AObj, _obj: *mut c_void, _flags: u32, _arg: u32) {
+    melee_core::ct!("fn_801C6F2C");
     ext::HSD_AObjSetFlags(aobj, AOBJ_LOOP as u32);
 }
 
 /// `grAnime_801C6F50`: call the callback with the argument shape `type` selects. `func` is an [`AnimCallback`].
 pub unsafe fn grAnime_801C6F50(aobj: *mut HSD_AObj, obj: *mut c_void, flags: u32, func: *mut c_void, r#type: u32, param: *mut c_void) {
+    melee_core::ct!("grAnime_801C6F50");
     let f = core::mem::transmute::<*mut c_void, AnimCallback>(func);
     match r#type {
         0 | 4 | 8 => f(aobj, obj, flags, 0),
@@ -472,6 +496,7 @@ pub unsafe fn grAnime_801C6F50(aobj: *mut HSD_AObj, obj: *mut c_void, flags: u32
 }
 
 pub unsafe fn grAnime_801C706C(tobj: *mut HSD_TObj, flags: s32, func: *mut c_void, r#type: u32, param: *mut c_void) {
+    melee_core::ct!("grAnime_801C706C");
     let mut tobj = tobj;
     while !tobj.is_null() {
         if flags & 0x400 != 0 && !(*tobj).aobj.is_null() {
@@ -483,6 +508,7 @@ pub unsafe fn grAnime_801C706C(tobj: *mut HSD_TObj, flags: s32, func: *mut c_voi
 
 /// `static inline grAnime_MObjForeachAnim`.
 pub unsafe fn grAnime_MObjForeachAnim(mobj: *mut HSD_MObj, flags: i32, func: *mut c_void, r#type: u32, param: *mut c_void) {
+    melee_core::ct!("grAnime_MObjForeachAnim");
     if mobj.is_null() {
         return;
     }
@@ -494,6 +520,7 @@ pub unsafe fn grAnime_MObjForeachAnim(mobj: *mut HSD_MObj, flags: i32, func: *mu
 
 /// `static inline grAnime_PObjForeachAnim`.
 pub unsafe fn grAnime_PObjForeachAnim(pobj: *mut HSD_PObj, flags: i32, func: *mut c_void, r#type: u32, param: *mut c_void) {
+    melee_core::ct!("grAnime_PObjForeachAnim");
     if (flags & CALL_ON_POBJ) != 0
         && !pobj.is_null()
         && pobj_type(pobj) == POBJ_SHAPEANIM as u32
@@ -505,6 +532,7 @@ pub unsafe fn grAnime_PObjForeachAnim(pobj: *mut HSD_PObj, flags: i32, func: *mu
 }
 
 pub unsafe fn grAnime_801C70E0(dobj: *mut HSD_DObj, flags: i32, func: *mut c_void, r#type: u32, param: *mut c_void) {
+    melee_core::ct!("grAnime_801C70E0");
     let mut dobj = dobj;
     while !dobj.is_null() {
         if (flags & CALL_ON_DOBJ) != 0 && !(*dobj).aobj.is_null() {
@@ -518,6 +546,7 @@ pub unsafe fn grAnime_801C70E0(dobj: *mut HSD_DObj, flags: i32, func: *mut c_voi
 
 /// `static inline grAnime_801C6F50_wrapped`.
 pub unsafe fn grAnime_801C6F50_wrapped(obj: *mut HSD_JObj, flags: i32, func: *mut c_void, r#type: u32, param: *mut c_void) -> bool {
+    melee_core::ct!("grAnime_801C6F50_wrapped");
     assert_(!obj.is_null(), 0x33A, "obj");
     if flags & 0x20 != 0 {
         if !(*obj).aobj.is_null() {
@@ -529,6 +558,7 @@ pub unsafe fn grAnime_801C6F50_wrapped(obj: *mut HSD_JObj, flags: i32, func: *mu
 
 /// `static inline grAnime_RObjForeachAnim`.
 pub unsafe fn grAnime_RObjForeachAnim(robj: *mut HSD_RObj, flags: i32, func: *mut c_void, r#type: u32, param: *mut c_void) {
+    melee_core::ct!("grAnime_RObjForeachAnim");
     let mut robj = robj;
     while !robj.is_null() {
         if (flags & 0x200) != 0 && !(*robj).aobj.is_null() {
@@ -539,6 +569,7 @@ pub unsafe fn grAnime_RObjForeachAnim(robj: *mut HSD_RObj, flags: i32, func: *mu
 }
 
 pub unsafe fn grAnime_801C7228(obj: *mut HSD_JObj, flags: i32, func: *mut c_void, r#type: u32, param: *mut c_void, arg5: i32) {
+    melee_core::ct!("grAnime_801C7228");
     if grAnime_801C6F50_wrapped(obj, flags, func, r#type, param) {
         grAnime_801C70E0((*obj).u.dobj, flags, func, r#type, param);
     }
@@ -553,24 +584,29 @@ pub unsafe fn grAnime_801C7228(obj: *mut HSD_JObj, flags: i32, func: *mut c_void
 }
 
 pub unsafe fn grAnime_801C70E0_inner(arg0: *mut HSD_DObj, arg1: i32, arg2: *mut c_void, arg3: u32, arg4: *mut c_void) {
+    melee_core::ct!("grAnime_801C70E0_inner");
     grAnime_801C70E0(arg0, arg1, arg2, arg3, arg4);
 }
 
 pub unsafe fn grAnime_801C70E0_noinline(arg0: *mut HSD_DObj, arg1: i32, arg2: *mut c_void, arg3: u32, arg4: *mut c_void) {
+    melee_core::ct!("grAnime_801C70E0_noinline");
     grAnime_801C70E0_inner(arg0, arg1, arg2, arg3, arg4);
 }
 
 pub unsafe fn grAnime_801C7228_inner(arg0: *mut HSD_JObj, arg1: i32, arg2: *mut c_void, arg3: u32, arg4: *mut c_void, arg5: i32) {
+    melee_core::ct!("grAnime_801C7228_inner");
     grAnime_801C7228(arg0, arg1, arg2, arg3, arg4, arg5);
 }
 
 pub unsafe fn grAnime_801C7228_noinline(arg0: *mut HSD_JObj, arg1: i32, arg2: *mut c_void, arg3: u32, arg4: *mut c_void, arg5: i32) {
+    melee_core::ct!("grAnime_801C7228_noinline");
     grAnime_801C7228_inner(arg0, arg1, arg2, arg3, arg4, arg5);
 }
 
 /// `grAnime_801C752C(obj, arg1, flags, func, type, ...)`: `va` is the single vararg's raw 64 bits (a `f64`'s bits for
 /// the float types, a pointer or an integer otherwise). `func` is an [`AnimCallback`].
 pub unsafe fn grAnime_801C752C(obj: *mut HSD_JObj, arg1: s32, flags: s32, func: *mut c_void, r#type: u32, va: &[u64]) {
+    melee_core::ct!("grAnime_801C752C");
     // `callbackArg`: 8 bytes natively; the float case stores the narrowed double in the low 4 bytes
     let mut arg: u64 = 0;
 
@@ -626,6 +662,7 @@ fn anim_flags(arg2: u32) -> i32 {
 }
 
 pub unsafe fn grAnime_801C775C(gobj: *mut HSD_GObj, arg1: i32, arg2: u32, arg8: f32, arg9: f32) {
+    melee_core::ct!("grAnime_801C775C");
     let jobj = ext::Ground_801C3FA4(gobj, arg1);
     if jobj.is_null() {
         return;
@@ -637,6 +674,7 @@ pub unsafe fn grAnime_801C775C(gobj: *mut HSD_GObj, arg1: i32, arg2: u32, arg8: 
 }
 
 pub unsafe fn grAnime_801C77FC(gobj: *mut HSD_GObj, arg1: i32, arg2: u32) {
+    melee_core::ct!("grAnime_801C77FC");
     let jobj = ext::Ground_801C3FA4(gobj, arg1);
     if jobj.is_null() {
         return;
@@ -645,6 +683,7 @@ pub unsafe fn grAnime_801C77FC(gobj: *mut HSD_GObj, arg1: i32, arg2: u32) {
 }
 
 pub unsafe fn grAnime_801C787C(gobj: *mut HSD_GObj, arg1: i32, arg2: u32) {
+    melee_core::ct!("grAnime_801C787C");
     let jobj = ext::Ground_801C3FA4(gobj, arg1);
     if jobj.is_null() {
         return;
@@ -653,6 +692,7 @@ pub unsafe fn grAnime_801C787C(gobj: *mut HSD_GObj, arg1: i32, arg2: u32) {
 }
 
 pub unsafe fn grAnime_801C78FC(gobj: *mut HSD_GObj, arg1: i32, arg2: u32) {
+    melee_core::ct!("grAnime_801C78FC");
     let jobj = ext::Ground_801C3FA4(gobj, arg1);
     if jobj.is_null() {
         return;
@@ -661,6 +701,7 @@ pub unsafe fn grAnime_801C78FC(gobj: *mut HSD_GObj, arg1: i32, arg2: u32) {
 }
 
 pub unsafe fn grAnime_801C7980(gobj: *mut HSD_GObj, arg1: i32, arg2: u32) {
+    melee_core::ct!("grAnime_801C7980");
     let jobj = ext::Ground_801C3FA4(gobj, arg1);
     if jobj.is_null() {
         return;
@@ -669,6 +710,7 @@ pub unsafe fn grAnime_801C7980(gobj: *mut HSD_GObj, arg1: i32, arg2: u32) {
 }
 
 pub unsafe fn grAnime_801C7A04(gobj: *mut HSD_GObj, arg1: i32, arg2: u32, val: f32) {
+    melee_core::ct!("grAnime_801C7A04");
     let jobj = ext::Ground_801C3FA4(gobj, arg1);
     if jobj.is_null() {
         return;
@@ -677,6 +719,7 @@ pub unsafe fn grAnime_801C7A04(gobj: *mut HSD_GObj, arg1: i32, arg2: u32, val: f
 }
 
 pub unsafe fn grAnime_801C7A94(gobj: *mut HSD_GObj, arg1: i32, arg2: u32, val: f32) {
+    melee_core::ct!("grAnime_801C7A94");
     let jobj = ext::Ground_801C3FA4(gobj, arg1);
     if jobj.is_null() {
         return;
@@ -701,6 +744,7 @@ fn req_flags(arg2: u32) -> u32 {
 }
 
 pub unsafe fn grAnime_801C7B24(gobj: *mut HSD_GObj, arg1: i32, arg2: u32, arg8: f32) {
+    melee_core::ct!("grAnime_801C7B24");
     let jobj = ext::Ground_801C3FA4(gobj, arg1);
     if jobj.is_null() {
         return;
@@ -709,6 +753,7 @@ pub unsafe fn grAnime_801C7B24(gobj: *mut HSD_GObj, arg1: i32, arg2: u32, arg8: 
 }
 
 pub unsafe fn grAnime_801C7BA0(gobj: *mut HSD_GObj, arg1: i32, arg2: u32, arg8: f32) {
+    melee_core::ct!("grAnime_801C7BA0");
     let jobj = ext::Ground_801C3FA4(gobj, arg1);
     if jobj.is_null() {
         return;
@@ -722,6 +767,7 @@ unsafe fn x8_of(archive: *mut UnkArchiveStruct, map_id: s32) -> *mut UnkStageDat
 }
 
 pub unsafe fn grAnime_801C7C1C(jobj: *mut HSD_JObj, map_id: s32, arg2: s32, arg3: s32, arg4: s32, arg5: i32, farg0: f32, farg1: f32) {
+    melee_core::ct!("grAnime_801C7C1C");
     let mut req_flags: u32 = 0;
     let mut anim_flags: s32 = 0;
     let aj: *mut HSD_AnimJoint;
@@ -775,6 +821,7 @@ pub unsafe fn grAnime_801C7C1C(jobj: *mut HSD_JObj, map_id: s32, arg2: s32, arg3
 }
 
 pub unsafe fn grAnime_801C7FF8(gobj: *mut Ground_GObj, arg1: i32, arg2: i32, arg3: i32, arg4: f32, arg5: f32) {
+    melee_core::ct!("grAnime_801C7FF8");
     let gr = GET_GROUND(gobj);
     if !gr.is_null() && arg3 >= 0 {
         let temp_r3 = ext::Ground_801C3FA4(gobj, arg1);
@@ -787,6 +834,7 @@ pub unsafe fn grAnime_801C7FF8(gobj: *mut Ground_GObj, arg1: i32, arg2: i32, arg
 }
 
 pub unsafe fn grAnime_801C8098(gobj: *mut Ground_GObj, arg1: i32, arg2: i32, arg3: i32, arg4: f32, arg5: f32) {
+    melee_core::ct!("grAnime_801C8098");
     let gr = GET_GROUND(gobj);
     if !gr.is_null() && arg3 >= 0 {
         let temp_r3 = ext::Ground_801C3FA4(gobj, arg1);
@@ -799,6 +847,7 @@ pub unsafe fn grAnime_801C8098(gobj: *mut Ground_GObj, arg1: i32, arg2: i32, arg
 }
 
 pub unsafe fn grAnime_801C8138(gobj: *mut HSD_GObj, arg1: enum_t, arg2: i32) {
+    melee_core::ct!("grAnime_801C8138");
     let mut jobj = (*gobj).hsd_obj as *mut HSD_JObj;
 
     if arg2 < 0 {
@@ -841,6 +890,7 @@ pub unsafe extern "C-unwind" fn fn_801C82E8(arg0: *mut HSD_AObj, arg1: *mut *mut
 }
 
 pub unsafe fn grAnime_801C8318(gobj: *mut HSD_GObj, arg1: i32, arg2: u32) -> *mut HSD_AObj {
+    melee_core::ct!("grAnime_801C8318");
     let mut var_r30: u32 = 0;
     let mut sp14: *mut HSD_AObj = null_mut();
     let jobj = ext::Ground_801C3FA4(gobj, arg1);
@@ -877,16 +927,19 @@ pub unsafe fn grAnime_801C8318(gobj: *mut HSD_GObj, arg1: i32, arg2: u32) -> *mu
 }
 
 pub unsafe fn grAnime_801C83D0(gobj: *mut HSD_GObj, arg1: i32, arg2: u32) -> bool {
+    melee_core::ct!("grAnime_801C83D0");
     let aobj = grAnime_801C8318(gobj, arg1, arg2);
     ext::HSD_AObjGetFlags(aobj) & 0x40000000 != 0
 }
 
 pub unsafe fn grAnime_801C84A4(gobj: *mut HSD_GObj, arg1: s32, arg2: s32) -> bool {
+    melee_core::ct!("grAnime_801C84A4");
     let aobj = grAnime_801C8318(gobj, arg1, arg2 as u32);
     ext::HSD_AObjGetFlags(aobj) & 0x04000000 != 0
 }
 
 pub unsafe fn grAnime_801C8578(joint: *mut HSD_Joint, counter: *mut s32) -> *mut HSD_Joint {
+    melee_core::ct!("grAnime_801C8578");
     let mut joint = joint;
     if *counter == 0 {
         return joint;
@@ -909,10 +962,12 @@ pub unsafe fn grAnime_801C8578(joint: *mut HSD_Joint, counter: *mut s32) -> *mut
 }
 
 pub unsafe fn grAnime_801C8578_noinline(joint: *mut HSD_Joint, counter: *mut s32) -> *mut HSD_Joint {
+    melee_core::ct!("grAnime_801C8578_noinline");
     grAnime_801C8578(joint, counter)
 }
 
 pub unsafe fn grAnime_801C86D4(arg0: s32, arg1: *mut HSD_GObj, arg2: s32) {
+    melee_core::ct!("grAnime_801C86D4");
     ext::Ground_801C3FA4(arg1, arg2);
     let archive = ext::grDatFiles_801C6330(arg0);
     assert_(!archive.is_null(), 1538, "archive");
@@ -923,6 +978,7 @@ pub unsafe fn grAnime_801C86D4(arg0: s32, arg1: *mut HSD_GObj, arg2: s32) {
 }
 
 pub unsafe fn grAnime_801C8780(_gobj: *mut HSD_GObj, arg1: u32, _arg2: u32, _arg3: f32, _arg4: f32) {
+    melee_core::ct!("grAnime_801C8780");
     ext::Ground_801C498C();
     let archive = ext::grDatFiles_801C6330(arg1 as s32);
     assert_(!archive.is_null(), 0x617, "archive");

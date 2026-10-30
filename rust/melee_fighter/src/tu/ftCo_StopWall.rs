@@ -43,6 +43,7 @@ pub mod ext {
 }
 
 pub fn ftCo_8009EDA4(g: G) -> bool {
+    melee_core::ct!("ftCo_8009EDA4");
     let f = fp(g);
     let env = f.coll_data.env_flags;
     if (f.facing_dir == -1.0 && env & Collide_RightWallHug as i32 != 0)
@@ -58,6 +59,7 @@ pub fn ftCo_8009EDA4(g: G) -> bool {
 
 /// static `ftCo_8009EE30`.
 pub fn ftCo_8009EE30(g: G) {
+    melee_core::ct!("ftCo_8009EE30");
     let f = fp(g);
     let coll = &f.coll_data;
     let mut vec = if coll.env_flags & Collide_RightWallMask as i32 != 0 {
@@ -74,15 +76,17 @@ pub fn ftCo_8009EE30(g: G) {
 }
 
 pub fn ftCo_StopWall_Anim(g: G) {
+    melee_core::ct!("ftCo_StopWall_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ft_8008A2BC(g);
     }
 }
 
-pub fn ftCo_StopWall_IASA(_g: G) {}
+pub fn ftCo_StopWall_IASA(_g: G) { melee_core::ct!("ftCo_StopWall_IASA");}
 
-pub fn ftCo_StopWall_Phys(_g: G) {}
+pub fn ftCo_StopWall_Phys(_g: G) { melee_core::ct!("ftCo_StopWall_Phys");}
 
 pub fn ftCo_StopWall_Coll(g: G) {
+    melee_core::ct!("ftCo_StopWall_Coll");
     ext::ft_800843FC(g);
 }

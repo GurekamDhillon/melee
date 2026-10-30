@@ -79,11 +79,13 @@ pub static mut node2: [*mut LightList; 2] = [&raw mut node1, null_mut()];
 
 /// `ftCo_8009F480`: the GObj proc, animates the light.
 pub unsafe extern "C" fn ftCo_8009F480(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCo_8009F480");
     ext::HSD_LObjAnimAll((*gobj).hsd_obj as *mut HSD_LObj);
 }
 
 /// `ftCo_8009F4A4`: create the light GObj (render hook `ftCo_8009F54C`, proc `ftCo_8009F480`).
 pub unsafe fn ftCo_8009F4A4() {
+    melee_core::ct!("ftCo_8009F4A4");
     let gobj = ext::GObj_Create(12, 3, 0);
     let lobj = ext::lb_80011AC4(ext::Ground_801C49B4());
     lobj0 = lobj;
@@ -97,12 +99,14 @@ pub unsafe fn ftCo_8009F4A4() {
 
 /// `ftCo_8009F54C`: the GObj render hook.
 pub unsafe extern "C" fn ftCo_8009F54C(gobj: *mut HSD_GObj, _code: i32) {
+    melee_core::ct!("ftCo_8009F54C");
     ext::HSD_LObj_803668EC((*gobj).hsd_obj as *mut HSD_LObj);
     ext::HSD_LObjSetupInit(ext::HSD_CObjGetCurrent());
 }
 
 /// `ftCo_8009F578`: the fighter's own light, from the static list.
 pub unsafe fn ftCo_8009F578(fp: *mut Fighter) {
+    melee_core::ct!("ftCo_8009F578");
     (*fp).x588 = ext::lb_80011AC4((&raw mut node2) as *mut *mut LightList);
 }
 
@@ -114,6 +118,7 @@ fn deg_to_rad(a: f32) -> f32 {
 
 /// `ftCo_8009F5AC`: refresh the overlay light from the colour overlay data and make it current.
 pub unsafe fn ftCo_8009F5AC(fp: *mut Fighter) {
+    melee_core::ct!("ftCo_8009F5AC");
     let data = ext::ftCo_800C0658(fp);
     if (*data).x7C_flag2() == 0 {
         return;
@@ -153,6 +158,7 @@ pub unsafe fn ftCo_8009F5AC(fp: *mut Fighter) {
 
 /// `ftCo_8009F75C(fp, set_alpha)`.
 pub unsafe fn ftCo_8009F75C(fp: *mut Fighter, set_alpha: bool) {
+    melee_core::ct!("ftCo_8009F75C");
     let data = ext::ftCo_800C0658(fp);
     if (*data).x7C_flag2() != 0 && (*data).x7C_light_enable() != 0 {
         if set_alpha {
@@ -172,6 +178,7 @@ pub unsafe fn ftCo_8009F75C(fp: *mut Fighter, set_alpha: bool) {
 
 /// `ftCo_8009F7F8`: the plain overlay light, when the overlay is on.
 pub unsafe fn ftCo_8009F7F8(fp: *mut Fighter) {
+    melee_core::ct!("ftCo_8009F7F8");
     if (*ext::ftCo_800C0658(fp)).x7C_flag2() != 0 {
         ext::HSD_LObj_803668EC(lobj0);
         ext::HSD_LObjSetupInit(ext::HSD_CObjGetCurrent());

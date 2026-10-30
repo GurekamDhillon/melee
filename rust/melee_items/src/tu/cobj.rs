@@ -26,6 +26,7 @@ unsafe fn half_tan(c: *mut HSD_CObj) -> f32 {
 }
 
 pub unsafe fn HSD_CObjGetFov(cobj: *mut HSD_CObj) -> f32 {
+    melee_core::ct!("HSD_CObjGetFov");
     if cobj.is_null() || (*cobj).projection_type != PROJ_PERSPECTIVE {
         return 0.0;
     }
@@ -33,6 +34,7 @@ pub unsafe fn HSD_CObjGetFov(cobj: *mut HSD_CObj) -> f32 {
 }
 
 pub unsafe fn HSD_CObjSetFov(cobj: *mut HSD_CObj, fov: f32) {
+    melee_core::ct!("HSD_CObjSetFov");
     if cobj.is_null() || (*cobj).projection_type != PROJ_PERSPECTIVE {
         return;
     }
@@ -40,6 +42,7 @@ pub unsafe fn HSD_CObjSetFov(cobj: *mut HSD_CObj, fov: f32) {
 }
 
 pub unsafe fn HSD_CObjGetTop(cobj: *mut HSD_CObj) -> f32 {
+    melee_core::ct!("HSD_CObjGetTop");
     if cobj.is_null() {
         return 0.0;
     }
@@ -51,6 +54,7 @@ pub unsafe fn HSD_CObjGetTop(cobj: *mut HSD_CObj) -> f32 {
 }
 
 pub unsafe fn HSD_CObjGetBottom(cobj: *mut HSD_CObj) -> f32 {
+    melee_core::ct!("HSD_CObjGetBottom");
     if cobj.is_null() {
         return 0.0;
     }
@@ -63,6 +67,7 @@ pub unsafe fn HSD_CObjGetBottom(cobj: *mut HSD_CObj) -> f32 {
 }
 
 pub unsafe fn HSD_CObjGetLeft(cobj: *mut HSD_CObj) -> f32 {
+    melee_core::ct!("HSD_CObjGetLeft");
     HSD_CObjUpdateView(cobj);
     if cobj.is_null() {
         return 0.0;
@@ -76,6 +81,7 @@ pub unsafe fn HSD_CObjGetLeft(cobj: *mut HSD_CObj) -> f32 {
 }
 
 pub unsafe fn HSD_CObjGetRight(cobj: *mut HSD_CObj) -> f32 {
+    melee_core::ct!("HSD_CObjGetRight");
     HSD_CObjUpdateView(cobj);
     if cobj.is_null() {
         return 0.0;
@@ -89,6 +95,7 @@ pub unsafe fn HSD_CObjGetRight(cobj: *mut HSD_CObj) -> f32 {
 }
 
 pub unsafe fn HSD_CObjSetTop(cobj: *mut HSD_CObj, top: f32) {
+    melee_core::ct!("HSD_CObjSetTop");
     if cobj.is_null() {
         return;
     }
@@ -100,6 +107,7 @@ pub unsafe fn HSD_CObjSetTop(cobj: *mut HSD_CObj, top: f32) {
 }
 
 pub unsafe fn HSD_CObjSetBottom(cobj: *mut HSD_CObj, bottom: f32) {
+    melee_core::ct!("HSD_CObjSetBottom");
     if cobj.is_null() {
         return;
     }
@@ -111,6 +119,7 @@ pub unsafe fn HSD_CObjSetBottom(cobj: *mut HSD_CObj, bottom: f32) {
 }
 
 pub unsafe fn HSD_CObjSetLeft(cobj: *mut HSD_CObj, left: f32) {
+    melee_core::ct!("HSD_CObjSetLeft");
     if cobj.is_null() {
         return;
     }
@@ -122,6 +131,7 @@ pub unsafe fn HSD_CObjSetLeft(cobj: *mut HSD_CObj, left: f32) {
 }
 
 pub unsafe fn HSD_CObjSetRight(cobj: *mut HSD_CObj, right: f32) {
+    melee_core::ct!("HSD_CObjSetRight");
     if cobj.is_null() {
         return;
     }
@@ -133,26 +143,31 @@ pub unsafe fn HSD_CObjSetRight(cobj: *mut HSD_CObj, right: f32) {
 }
 
 pub unsafe fn HSD_CObjGetInterest(cobj: *mut HSD_CObj, interest: *mut Vec) {
+    melee_core::ct!("HSD_CObjGetInterest");
     assert!(!cobj.is_null(), "HSD_ASSERT(709, cobj)");
     HSD_WObjGetPosition(HSD_CObjGetInterestWObj(cobj), interest as *mut _);
 }
 
 pub unsafe fn HSD_CObjSetInterest(cobj: *mut HSD_CObj, interest: *mut Vec) {
+    melee_core::ct!("HSD_CObjSetInterest");
     assert!(!cobj.is_null(), "HSD_ASSERT(721, cobj)");
     HSD_WObjSetPosition(HSD_CObjGetInterestWObj(cobj), interest as *mut _);
 }
 
 pub unsafe fn HSD_CObjGetEyePosition(cobj: *mut HSD_CObj, position: *mut Vec) {
+    melee_core::ct!("HSD_CObjGetEyePosition");
     assert!(!cobj.is_null(), "HSD_ASSERT(733, cobj)");
     HSD_WObjGetPosition(HSD_CObjGetEyePositionWObj(cobj), position as *mut _);
 }
 
 pub unsafe fn HSD_CObjSetEyePosition(cobj: *mut HSD_CObj, position: *mut Vec) {
+    melee_core::ct!("HSD_CObjSetEyePosition");
     assert!(!cobj.is_null(), "HSD_ASSERT(745, cobj)");
     HSD_WObjSetPosition(HSD_CObjGetEyePositionWObj(cobj), position as *mut _);
 }
 
 pub unsafe fn HSD_CObjGetEyeDistance(cobj: *mut HSD_CObj) -> f32 {
+    melee_core::ct!("HSD_CObjGetEyeDistance");
     if cobj.is_null() {
         return 0.0;
     }

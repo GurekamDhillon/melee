@@ -6,11 +6,12 @@ macro_rules! OSReport { ($fmt:expr $(,)?) => { ext::OSReport($fmt, core::ptr::nu
 pub unsafe extern "C" fn HSD_GObjGetHSDObj(
     mut gobj: *mut HSD_GObj,
 ) -> *mut ::core::ffi::c_void {
+    melee_core::ct!("HSD_GObjGetHSDObj");
     return (*gobj).hsd_obj;
 }
 pub const PROJ_ORTHO: ::core::ffi::c_int = 3 as ::core::ffi::c_int;
 #[inline]
-pub unsafe extern "C" fn GXEnd() {}
+pub unsafe extern "C" fn GXEnd() { melee_core::ct!("GXEnd");}
 pub static mut HSD_SObjLib_804D7960: u8 = 0;
 pub static mut HSD_SObjLib_8040C3A0: [GObjFunc; 1] = unsafe {
     [
@@ -32,6 +33,7 @@ pub static mut HSD_SObjLib_8040C3A4: GObjFuncs = GObjFuncs {
 };
 pub static mut HSD_SObjLib_804D10E0: HSD_ObjAllocData = unsafe { core::mem::zeroed() };
 pub unsafe extern "C" fn HSD_SObjLib_803A44A4() {
+    melee_core::ct!("HSD_SObjLib_803A44A4");
     HSD_ObjAllocInit(
         &raw mut HSD_SObjLib_804D10E0,
         ::core::mem::size_of::<HSD_SObj>() as u32,
@@ -43,6 +45,7 @@ pub unsafe extern "C" fn HSD_SObjLib_803A44D4(
     mut sobj: *mut HSD_SObj,
     mut priority: u8,
 ) {
+    melee_core::ct!("HSD_SObjLib_803A44D4");
     let mut cur: *mut HSD_SObj = ::core::ptr::null_mut::<HSD_SObj>();
     let mut next: *mut HSD_SObj = ::core::ptr::null_mut::<HSD_SObj>();
     let _: [::core::ffi::c_uchar; 16] = [0; 16];
@@ -110,6 +113,7 @@ pub unsafe extern "C" fn HSD_SObjLib_803A44D4(
     (*sobj).x44 = priority;
 }
 pub unsafe extern "C" fn HSD_SObjLib_803A466C(mut sobj: *mut HSD_SObj) {
+    melee_core::ct!("HSD_SObjLib_803A466C");
     let _: [::core::ffi::c_uchar; 8] = [0; 8];
     if sobj.is_null() {
         return;
@@ -139,6 +143,7 @@ pub unsafe extern "C" fn HSD_SObjLib_803A466C(mut sobj: *mut HSD_SObj) {
     HSD_ObjFree(&raw mut HSD_SObjLib_804D10E0, sobj as *mut ::core::ffi::c_void);
 }
 pub unsafe extern "C" fn HSD_SObjLib_803A4740(mut sobj: *mut HSD_SObj) {
+    melee_core::ct!("HSD_SObjLib_803A4740");
     let mut next: *mut HSD_SObj = ::core::ptr::null_mut::<HSD_SObj>();
     while !sobj.is_null() {
         next = (*sobj).next;
@@ -154,6 +159,7 @@ pub unsafe extern "C" fn HSD_SObjLib_803A477C(
     mut priority: u8,
     mut use_secondary: u8,
 ) -> *mut HSD_SObj {
+    melee_core::ct!("HSD_SObjLib_803A477C");
     let mut image: *mut HSD_ImageDesc = ::core::ptr::null_mut::<HSD_ImageDesc>();
     let mut tlut: *mut HSD_Tlut = ::core::ptr::null_mut::<HSD_Tlut>();
     let mut image2: *mut HSD_ImageDesc = ::core::ptr::null_mut::<HSD_ImageDesc>();
@@ -253,6 +259,7 @@ pub unsafe extern "C" fn HSD_SObjLib_803A49E0(
     mut gobj: *mut HSD_GObj,
     mut unused: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("HSD_SObjLib_803A49E0");
     let mut sobj: *mut HSD_SObj = ::core::ptr::null_mut::<HSD_SObj>();
     let _: [::core::ffi::c_uchar; 8] = [0; 8];
     sobj = (*gobj).hsd_obj as *mut HSD_SObj;
@@ -275,9 +282,11 @@ pub unsafe extern "C" fn HSD_SObjLib_803A49E0(
 }
 #[inline]
 pub unsafe extern "C" fn discard_color(mut color: GXColor) -> GXColor {
+    melee_core::ct!("discard_color");
     return color;
 }
 pub unsafe extern "C" fn HSD_SObjLib_803A4A68(mut sobj: *mut HSD_SObj) {
+    melee_core::ct!("HSD_SObjLib_803A4A68");
     let mut x_cos: f32 = 0.;
     let mut origin_x: f32 = 0.;
     let mut origin_y: f32 = 0.;
@@ -785,6 +794,7 @@ pub unsafe extern "C" fn HSD_SObjLib_803A54EC(
     mut gobj: *mut HSD_GObj,
     mut unused: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("HSD_SObjLib_803A54EC");
     let mut viewmtx: Mtx = [[0.; 4]; 3];
     if HSD_CObjSetCurrent(HSD_GObjGetHSDObj(gobj) as *mut HSD_CObj) != 0 {
         GXSetCurrentMtx(0 as u32);
@@ -830,6 +840,7 @@ pub unsafe extern "C" fn HSD_SObjLib_803A55DC(
     mut height: u16,
     mut priority: ::core::ffi::c_int,
 ) {
+    melee_core::ct!("HSD_SObjLib_803A55DC");
     let mut cobj: *mut HSD_CObj = ::core::ptr::null_mut::<HSD_CObj>();
     let mut viewport: Scissor = _Scissor {
         left: 0,

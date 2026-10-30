@@ -45,10 +45,12 @@ unsafe fn da(fp: *mut Fighter) -> *mut MarsAttributes {
 
 /// `ftMs_SpecialLw_80139140` as a Fighter callback entry (the shield-hit callback).
 pub unsafe extern "C" fn cb_ftMs_SpecialLw_80139140(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftMs_SpecialLw_80139140");
     ftMs_SpecialLw_80139140(g);
 }
 
 pub fn ftMs_SpecialLw_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialLw_Enter");
     unsafe {
         let fp = fpp(gobj);
         (*fp).self_vel.y = 0.0;
@@ -60,6 +62,7 @@ pub fn ftMs_SpecialLw_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMs_SpecialAirLw_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialAirLw_Enter");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -87,6 +90,7 @@ unsafe fn shield_window(gobj: *mut HSD_GObj, fp: *mut Fighter) {
 }
 
 pub fn ftMs_SpecialLw_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialLw_Anim");
     unsafe {
         let fp = fpp(gobj);
         shield_window(gobj, fp);
@@ -97,6 +101,7 @@ pub fn ftMs_SpecialLw_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMs_SpecialAirLw_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialAirLw_Anim");
     unsafe {
         let fp = fpp(gobj);
         shield_window(gobj, fp);
@@ -106,11 +111,12 @@ pub fn ftMs_SpecialAirLw_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftMs_SpecialLw_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftMs_SpecialLw_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMs_SpecialLw_IASA");}
 
-pub fn ftMs_SpecialAirLw_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftMs_SpecialAirLw_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMs_SpecialAirLw_IASA");}
 
 pub fn ftMs_SpecialAirLw_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialAirLw_Phys");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
@@ -121,12 +127,14 @@ pub fn ftMs_SpecialAirLw_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMs_SpecialLw_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialLw_Coll");
     if st::ft_800827A0(gobj) == 0 {
         ftMs_SpecialLw_80138D38(gobj);
     }
 }
 
 pub fn ftMs_SpecialAirLw_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialAirLw_Coll");
     if st::ft_80081D0C(gobj) != 0 {
         ftMs_SpecialLw_80138DD0(gobj);
     }
@@ -143,6 +151,7 @@ unsafe fn rearm_shield(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMs_SpecialLw_80138D38(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialLw_80138D38");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 371, ftMs_MF_SpecialLw_Coll);
@@ -151,6 +160,7 @@ pub fn ftMs_SpecialLw_80138D38(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMs_SpecialLw_80138DD0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialLw_80138DD0");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 369, ftMs_MF_SpecialLw_Coll);
@@ -161,6 +171,7 @@ pub fn ftMs_SpecialLw_80138DD0(gobj: *mut HSD_GObj) {
 /// `ftMars_SpecialLwHit_ApplyDamage` (static inline): the Emblem (Roy) counter scales the live
 /// hitboxes by the countered damage.
 pub fn ftMars_SpecialLwHit_ApplyDamage(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMars_SpecialLwHit_ApplyDamage");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).mv.ms.speciallw.x0 > 0 && fh::ftlib_get_kind(gobj) == Ft_Kind_Emblem {
@@ -174,6 +185,7 @@ pub fn ftMars_SpecialLwHit_ApplyDamage(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMs_SpecialLwHit_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialLwHit_Anim");
     ftMars_SpecialLwHit_ApplyDamage(gobj);
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         st::ft_8008A2BC(gobj);
@@ -181,19 +193,21 @@ pub fn ftMs_SpecialLwHit_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMs_SpecialAirLwHit_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialAirLwHit_Anim");
     ftMars_SpecialLwHit_ApplyDamage(gobj);
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         st::ftCo_Fall_Enter(gobj);
     }
 }
 
-pub fn ftMs_SpecialLwHit_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftMs_SpecialLwHit_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMs_SpecialLwHit_IASA");}
 
-pub fn ftMs_SpecialAirLwHit_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftMs_SpecialAirLwHit_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMs_SpecialAirLwHit_IASA");}
 
 /// `ftMs_SpecialLw_80139140_inline` (static inline): the counter effect once, then drop the
 /// hitlag and accessory callbacks.
 pub fn ftMs_SpecialLw_80139140_inline(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialLw_80139140_inline");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).x2219_b0() == 0 {
@@ -218,6 +232,7 @@ pub fn ftMs_SpecialLw_80139140_inline(gobj: *mut HSD_GObj) {
 
 /// Shield-hit callback: take the countered damage, spawn the effect and enter the hit state.
 pub fn ftMs_SpecialLw_80139140(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialLw_80139140");
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);

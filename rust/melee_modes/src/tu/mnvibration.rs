@@ -396,6 +396,7 @@ unsafe extern "C" fn mnVibration_FreeNameTexts(mut data: *mut MnVibrationData) {
     }
 }
 pub unsafe extern "C" fn mnVibration_GetNameRowJObj(mut count: i32) -> *mut HSD_JObj {
+    melee_core::ct!("mnVibration_GetNameRowJObj");
     let mut temp_r4: *mut HSD_JObj = null_mut();
     let mut var_r4: *mut HSD_JObj = null_mut();
     let mut data: *mut MnVibrationData = null_mut();
@@ -480,6 +481,7 @@ unsafe extern "C" fn setCursorTranslateZ(mut jobj: *mut HSD_JObj, mut z: f32) {
     }
 }
 pub unsafe extern "C" fn mnVibration_HandleInput(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnVibration_HandleInput");
     let mut data: *mut MnVibrationData = (*mnVibration_804D6C28).user_data
         as *mut MnVibrationData;
     let mut var_ctr: i32 = 0;
@@ -769,6 +771,7 @@ pub unsafe extern "C" fn mnVibration_HandleInput(mut gobj: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn mnVibration_CursorThink(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnVibration_CursorThink");
     if mn_804A04F0.cur_menu as i32 != 0x13 {
         HSD_GObjFree(gobj);
     }
@@ -778,6 +781,7 @@ pub unsafe extern "C" fn mnVibration_UpdatePortPanel(
     mut arg1: u8,
     mut arg2: u8,
 ) {
+    melee_core::ct!("mnVibration_UpdatePortPanel");
     let mut sp14: *mut HSD_JObj = null_mut();
     let mut sp10: *mut HSD_JObj = null_mut();
     let mut temp_ret: u8 = 0;
@@ -822,6 +826,7 @@ pub unsafe extern "C" fn mnVibration_UpdatePortPanel(
     HSD_JObjAnimAll(sp14);
 }
 pub unsafe extern "C" fn mnVibration_CreatePortPanels(mut arg0: *mut HSD_GObj) {
+    melee_core::ct!("mnVibration_CreatePortPanels");
     let mut data: *mut MnVibrationData = null_mut();
     let mut assets: *mut MnVibrationJointAssets = (&raw mut mnVibration_PcAssets
         as *mut MnVibrationJointAssets)
@@ -868,6 +873,7 @@ pub unsafe extern "C" fn mnVibration_CreateNameRow(
     mut arg1: u8,
     mut arg2: u8,
 ) {
+    melee_core::ct!("mnVibration_CreateNameRow");
     let mut sp20: Point3d = Vec3 { x: 0., y: 0., z: 0. };
     let mut data: *mut MnVibrationData = null_mut();
     let mut assets: *mut MnVibrationJointAssets = core::ptr::null_mut::<
@@ -919,6 +925,7 @@ pub unsafe extern "C" fn mnVibration_CreateNameRow(
     HSD_JObjAddChild((*data).jobjs[17 as i32 as usize], new_jobj);
 }
 pub unsafe extern "C" fn mnVibration_RefreshNameRows(mut arg0: *mut HSD_GObj) {
+    melee_core::ct!("mnVibration_RefreshNameRows");
     let mut j: i32 = 0;
     let mut ptr2: *mut MnVibrationData = null_mut();
     let mut data: *mut MnVibrationData = null_mut();
@@ -951,6 +958,7 @@ pub unsafe extern "C" fn mnVibration_RefreshNameRows(mut arg0: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn mnVibration_OnAnimComplete(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnVibration_OnAnimComplete");
     let mut data: *mut MnVibrationData = null_mut();
     let mut jobj: *mut HSD_JObj = null_mut();
     let mut table: *mut AnimLoopSettings = null_mut();
@@ -986,6 +994,7 @@ unsafe extern "C" fn mnVibration_GetPadIndex(mut port: i32) -> u8 {
     return port as u8;
 }
 pub unsafe extern "C" fn mnVibration_Think(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnVibration_Think");
     let mut data: *mut MnVibrationData = (*gobj).user_data as *mut MnVibrationData;
     let mut port_anim_jobj: *mut HSD_JObj = null_mut();
     let mut panel_jobj: *mut HSD_JObj = null_mut();
@@ -1065,6 +1074,7 @@ pub unsafe extern "C" fn mnVibration_Think(mut gobj: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn mnVibration_IntroProc(mut arg0: *mut HSD_GObj) {
+    melee_core::ct!("mnVibration_IntroProc");
     let mut data: *mut MnVibrationData = null_mut();
     let mut frame: f32 = 0.;
     let mut assets: *mut MnVibrationJointAssets = core::ptr::null_mut::<
@@ -1266,6 +1276,7 @@ pub unsafe extern "C" fn mnVibration_IntroProc(mut arg0: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn mnVibration_CreateScreen(mut arg0: i32) {
+    melee_core::ct!("mnVibration_CreateScreen");
     let mut assets: *mut MnVibrationJointAssets = core::ptr::null_mut::<
         MnVibrationJointAssets,
     >();
@@ -1399,6 +1410,7 @@ pub unsafe extern "C" fn mnVibration_CreateScreen(mut arg0: i32) {
     HSD_SisLib_803A6368(text, 0xa7);
 }
 pub unsafe extern "C" fn mnVibration_Init(mut arg0: i32) {
+    melee_core::ct!("mnVibration_Init");
     let mut archive: *mut HSD_Archive = null_mut();
     let mut gobj: *mut HSD_GObj = null_mut();
     let mut proc_0: *mut HSD_GObjProc = null_mut();

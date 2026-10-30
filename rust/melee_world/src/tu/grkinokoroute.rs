@@ -359,9 +359,10 @@ pub static mut grNKr_StageData: StageData = StageData {
     joint_count: 0,
 };
 
-pub unsafe extern "C" fn grKinokoRoute_8020741C(_arg: i32) {}
+pub unsafe extern "C" fn grKinokoRoute_8020741C(_arg: i32) { melee_core::ct!("grKinokoRoute_8020741C");}
 
 pub unsafe extern "C" fn grKinokoRoute_80207420() {
+    melee_core::ct!("grKinokoRoute_80207420");
     yakumono_param = ext::Ground_GetYakumonoParam() as *mut grNKr_YakumonoParam;
     let si = ext::stage_info();
     (*si).unk8C.set_b4(0);
@@ -373,6 +374,7 @@ pub unsafe extern "C" fn grKinokoRoute_80207420() {
 }
 
 pub unsafe extern "C" fn grKinokoRoute_80207490() {
+    melee_core::ct!("grKinokoRoute_80207490");
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let gobj = ext::Ground_GetP1Fighter();
     if !gobj.is_null() {
@@ -383,6 +385,7 @@ pub unsafe extern "C" fn grKinokoRoute_80207490() {
 }
 
 pub unsafe extern "C" fn grKinokoRoute_802074D8() {
+    melee_core::ct!("grKinokoRoute_802074D8");
     ext::grZakoGenerator_801CAE04(&mut (*yakumono_param).x4);
     let mut val = (*yakumono_param).x0;
     if val != 0 {
@@ -397,6 +400,7 @@ pub unsafe extern "C" fn grKinokoRoute_802074D8() {
 }
 
 pub unsafe fn grKinokoRoute_8020754C(gobj_id: i32) -> *mut HSD_GObj {
+    melee_core::ct!("grKinokoRoute_8020754C");
     let callbacks: *mut StageCallbacks = &mut grNKr_StageCallbacks[gobj_id as usize];
     let gobj = ext::Ground_GetStageGObj(gobj_id);
 
@@ -423,6 +427,7 @@ pub unsafe fn grKinokoRoute_8020754C(gobj_id: i32) -> *mut HSD_GObj {
 }
 
 pub unsafe extern "C" fn grKinokoRoute_80207634(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grKinokoRoute_80207634");
     let mut origin = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let gp = (*gobj).user_data as *mut Ground;
     let mut cam_offset = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -455,6 +460,7 @@ pub unsafe extern "C" fn grKinokoRoute_80207634(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grKinokoRoute_802078F0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grKinokoRoute_802078F0");
     // `cursor` walks the Entry array through a Ground*/Entry* union; entry i is entries[i].
     let gp = (*gobj).user_data as *mut Ground;
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -482,34 +488,38 @@ pub unsafe extern "C" fn grKinokoRoute_802078F0(gobj: *mut HSD_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grKinokoRoute_80207A94(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grKinokoRoute_80207A94(_arg: *mut HSD_GObj) { melee_core::ct!("grKinokoRoute_80207A94");}
 
 pub unsafe extern "C" fn grKinokoRoute_80207A98(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grKinokoRoute_80207A98");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as enum_t, 0);
     ext::Ground_801C39C0();
     ext::Ground_801C3BB4();
 }
 
-pub unsafe extern "C" fn grKinokoRoute_80207AD4(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grKinokoRoute_80207AD4(_arg: *mut HSD_GObj) { melee_core::ct!("grKinokoRoute_80207AD4");}
 
-pub unsafe extern "C" fn grKinokoRoute_80207AD8(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grKinokoRoute_80207AD8(_arg: *mut HSD_GObj) { melee_core::ct!("grKinokoRoute_80207AD8");}
 
 pub unsafe extern "C" fn grKinokoRoute_80207ADC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grKinokoRoute_80207ADC");
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as enum_t, 0);
     (*gp).x11_flags.set_b012(2);
 }
 
-pub unsafe extern "C" fn grKinokoRoute_80207B28(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grKinokoRoute_80207B28(_arg: *mut HSD_GObj) { melee_core::ct!("grKinokoRoute_80207B28");}
 
-pub unsafe extern "C" fn grKinokoRoute_80207B2C(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grKinokoRoute_80207B2C(_arg: *mut HSD_GObj) { melee_core::ct!("grKinokoRoute_80207B2C");}
 
 pub unsafe extern "C" fn grKinokoRoute_80207B30(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grKinokoRoute_80207B30");
     ext::ftCo_800C07F8(gobj, 6, grKinokoRoute_80208660 as *mut c_void);
 }
 
 pub unsafe extern "C" fn grKinokoRoute_80207B5C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grKinokoRoute_80207B5C");
     let gp = GET_GROUND(gobj);
 
     ext::Ground_InitMapColl((*gobj).hsd_obj as *mut HSD_JObj, (*gp).map_id as s32);
@@ -530,6 +540,7 @@ pub unsafe extern "C" fn grKinokoRoute_80207B5C(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grKinokoRoute_80207C88(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grKinokoRoute_80207C88");
     let mut fighter_pos: Vec3;
     let mut zone_point = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut cam_target = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -681,9 +692,10 @@ pub unsafe extern "C" fn grKinokoRoute_80207C88(gobj: *mut HSD_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grKinokoRoute_80208368(_arg: *mut HSD_GObj) {}
+pub unsafe extern "C" fn grKinokoRoute_80208368(_arg: *mut HSD_GObj) { melee_core::ct!("grKinokoRoute_80208368");}
 
 pub unsafe fn grKinokoRoute_8020836C(gobj: *mut HSD_GObj, arg1: i32) {
+    melee_core::ct!("grKinokoRoute_8020836C");
     let jobj = ext::Ground_801C3FA4(gobj, 0x53);
 
     if jobj.is_null() {
@@ -728,6 +740,7 @@ pub unsafe fn grKinokoRoute_8020836C(gobj: *mut HSD_GObj, arg1: i32) {
 }
 
 pub unsafe extern "C" fn grKinokoRoute_80208480(arg: i32) -> i32 {
+    melee_core::ct!("grKinokoRoute_80208480");
     if arg == 1 {
         ext::Ground_801C5740(arg);
         return 1;
@@ -738,6 +751,7 @@ pub unsafe extern "C" fn grKinokoRoute_80208480(arg: i32) -> i32 {
 /// Item callback: `gobj` is the item gobj; its `user_data` is cast to a struct whose `jobj` is at
 /// GC +0xDD8, `Item.xDD4_itemVar.yaku.x4`.
 pub unsafe extern "C" fn grKinokoRoute_802084B4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grKinokoRoute_802084B4");
     let mut sp_vec = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let ip = (*gobj).user_data as *mut Item;
     let jobj = (*ip).xDD4_itemVar.yaku.anon_4.x4 as *mut HSD_JObj;
@@ -761,6 +775,7 @@ pub unsafe extern "C" fn grKinokoRoute_802084B4(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe fn grKinokoRoute_80208564(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grKinokoRoute_80208564");
     let gp = GET_GROUND(gobj);
     let depths = grNKr_803B82F4;
 
@@ -780,6 +795,7 @@ pub unsafe fn grKinokoRoute_80208564(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn grKinokoRoute_80208660(_unused: i32, gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("grKinokoRoute_80208660");
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut vel = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
@@ -797,6 +813,7 @@ pub unsafe extern "C" fn grKinokoRoute_80208660(_unused: i32, gobj: *mut HSD_GOb
 }
 
 pub unsafe fn grKinokoRoute_802086EC(arg0: *mut Vec3, arg8: f32) {
+    melee_core::ct!("grKinokoRoute_802086EC");
     let gen = ext::grLib_801C96F8(0x7530, 0x1E, arg0);
     if !gen.is_null() {
         let srt = (*gen).appsrt;
@@ -807,6 +824,7 @@ pub unsafe fn grKinokoRoute_802086EC(arg0: *mut Vec3, arg8: f32) {
 }
 
 pub unsafe extern "C" fn grKinokoRoute_8020875C(a: *mut Vec3, _b: i32, jobj: *mut HSD_JObj) -> i32 {
+    melee_core::ct!("grKinokoRoute_8020875C");
     let mut vec = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ext::lb_8000B1CC(jobj, null_mut(), &mut vec);
     if (*a).y > vec.y {
@@ -817,6 +835,7 @@ pub unsafe extern "C" fn grKinokoRoute_8020875C(a: *mut Vec3, _b: i32, jobj: *mu
 }
 
 pub unsafe fn grKinokoRoute_802087B0() -> f32 {
+    melee_core::ct!("grKinokoRoute_802087B0");
     10.0_f32
 }
 

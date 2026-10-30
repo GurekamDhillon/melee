@@ -220,6 +220,7 @@ fn sfxForward() {
 
 /// `gm_Scene_Congrats_OnEnter(unused)`: start the ending movie for the current mode and character.
 pub fn gm_Scene_Congrats_OnEnter(_unused: *mut c_void) {
+    melee_core::ct!("gm_Scene_Congrats_OnEnter");
     unsafe {
         gmRegend_InputDelayTimer = 0x1E;
         gmRegend_ExitTimer = 0;
@@ -272,6 +273,7 @@ pub fn gm_Scene_Congrats_OnEnter(_unused: *mut c_void) {
 /// `gm_Scene_Congrats_OnFrame()`: count down the input delay; A/Start starts the exit timer (and the flash),
 /// whose expiry ends the scene (to 6 in the debug game-over, 1 otherwise).
 pub fn gm_Scene_Congrats_OnFrame() {
+    melee_core::ct!("gm_Scene_Congrats_OnFrame");
     unsafe {
         if gmRegend_InputDelayTimer != 0 {
             gmRegend_InputDelayTimer -= 1;

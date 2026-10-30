@@ -73,6 +73,7 @@ pub static mut it_803F71D8: [ItemStateTable; 1] = [
 
 /// 2B3EFC
 pub unsafe extern "C" fn it_802B3EFC(gobj: *mut Item_GObj) -> *mut Item_GObj {
+    melee_core::ct!("it_802B3EFC");
     if !gobj.is_null() {
         let ip = GET_ITEM(gobj);
         if !ip.is_null() {
@@ -84,6 +85,7 @@ pub unsafe extern "C" fn it_802B3EFC(gobj: *mut Item_GObj) -> *mut Item_GObj {
 
 /// 2B3F20
 pub unsafe extern "C" fn it_802B3F20(gobj: *mut Item_GObj, v: *mut Vec3) {
+    melee_core::ct!("it_802B3F20");
     let ip = GET_ITEM(gobj);
     if !(*ip).xDD4_itemVar.pikachujoltair.xDD8.is_null() {
         ext::lb_8000B1CC((*(*ip).xBBC_dynamicBoneTable).bones[6], null_mut(), v);
@@ -97,6 +99,7 @@ pub unsafe extern "C" fn it_802B3F20(gobj: *mut Item_GObj, v: *mut Vec3) {
 
 /// 2B3F88
 pub unsafe extern "C" fn it_802B3F88(gobj: *mut Item_GObj, pos: *mut Vec3, coll: *mut CollData, vel: *mut Vec3) {
+    melee_core::ct!("it_802B3F88");
     let ip = GET_ITEM(gobj);
     let jobj = GET_JOBJ(gobj);
 
@@ -127,6 +130,7 @@ pub unsafe extern "C" fn it_802B3F88(gobj: *mut Item_GObj, pos: *mut Vec3, coll:
 
 /// 2B4224
 pub unsafe extern "C" fn it_802B4224(owner: *mut HSD_GObj, gobj: *mut Item_GObj, pos: *mut Vec3, kind: i32, facing_dir: f32) -> *mut Item_GObj {
+    melee_core::ct!("it_802B4224");
     let mut spawn: SpawnItem = core::mem::zeroed();
 
     spawn.kind = kind;
@@ -164,6 +168,7 @@ pub unsafe extern "C" fn it_802B4224(owner: *mut HSD_GObj, gobj: *mut Item_GObj,
 
 /// 2B43B0
 pub unsafe extern "C" fn it_802B43B0(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802B43B0");
     if !gobj.is_null() {
         let ip = GET_ITEM(gobj);
         if !ip.is_null() {
@@ -174,6 +179,7 @@ pub unsafe extern "C" fn it_802B43B0(gobj: *mut Item_GObj) {
 
 /// 2B43D0
 pub unsafe extern "C" fn it_802B43D0(gobj: *mut Item_GObj, owner: *mut HSD_GObj) {
+    melee_core::ct!("it_802B43D0");
     let ip = GET_ITEM(gobj);
     ext::it_8026B3A8(gobj);
     (*ip).xDC8_word.flags.set_x13(0);
@@ -209,6 +215,7 @@ unsafe fn itPikachutjoltair_UnkMotion0_Anim_inline(gobj: *mut Item_GObj) -> bool
 }
 
 pub unsafe extern "C" fn itPikachutjoltair_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPikachutjoltair_UnkMotion0_Anim");
     let ip = GET_ITEM(gobj);
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
 
@@ -226,12 +233,14 @@ pub unsafe extern "C" fn itPikachutjoltair_UnkMotion0_Anim(gobj: *mut Item_GObj)
 }
 
 pub unsafe extern "C" fn itPikachutjoltair_UnkMotion0_Phys(gobj: *mut Item_GObj) {
+    melee_core::ct!("itPikachutjoltair_UnkMotion0_Phys");
     let ip = GET_ITEM(gobj);
     itResetVelocity(ip);
 }
 
 /// 2B45E8 (static)
 pub unsafe extern "C" fn itPikachutjoltair_UnkMotion0_Coll(_gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itPikachutjoltair_UnkMotion0_Coll");
     false
 }
 
@@ -247,18 +256,22 @@ unsafe fn destroy_linked(gobj: *mut Item_GObj) -> bool {
 }
 
 pub unsafe extern "C" fn it_2725_Logic107_DmgDealt(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_2725_Logic107_DmgDealt");
     destroy_linked(gobj)
 }
 
 pub unsafe extern "C" fn it_2725_Logic107_Clanked(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_2725_Logic107_Clanked");
     destroy_linked(gobj)
 }
 
 pub unsafe extern "C" fn it_2725_Logic107_Absorbed(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_2725_Logic107_Absorbed");
     destroy_linked(gobj)
 }
 
 pub unsafe extern "C" fn it_2725_Logic107_Reflected(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_2725_Logic107_Reflected");
     let ip = GET_ITEM(gobj);
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
 
@@ -298,13 +311,16 @@ pub unsafe extern "C" fn it_2725_Logic107_Reflected(gobj: *mut Item_GObj) -> boo
 }
 
 pub unsafe extern "C" fn it_2725_Logic107_HitShield(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_2725_Logic107_HitShield");
     destroy_linked(gobj)
 }
 
 pub unsafe extern "C" fn it_2725_Logic107_ShieldBounced(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("it_2725_Logic107_ShieldBounced");
     destroy_linked(gobj)
 }
 
 pub unsafe extern "C" fn itPikachuTJoltAir_Logic107_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
+    melee_core::ct!("itPikachuTJoltAir_Logic107_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
 }

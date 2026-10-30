@@ -121,17 +121,20 @@ const JOBJ_HIDDEN_U: u32 = JOBJ_HIDDEN as u32;
 
 /// `memzero` (lb_00B0.c): the real behaviour, used unless a test installs a hook.
 pub fn memzero_default(mem: *mut c_void, size: i32) {
+    melee_core::ct!("memzero_default");
     unsafe { core::ptr::write_bytes(mem as *mut u8, 0, size as usize) }
 }
 
 /// `memset` (libc): the real behaviour, used unless a test installs a hook.
 pub fn memset_default(mem: *mut c_void, value: i32, size: u32) -> *mut c_void {
+    melee_core::ct!("memset_default");
     unsafe { core::ptr::write_bytes(mem as *mut u8, value as u8, size as usize) };
     mem
 }
 
 /// `ifStatus_GetHUDInfo` (ifstatus.c, ported in `tu::ifstatus`).
 pub fn hud_info_default() -> *mut HudIndex {
+    melee_core::ct!("hud_info_default");
     unsafe { super::ifstatus::ifStatus_GetHUDInfo() }
 }
 
@@ -197,6 +200,7 @@ unsafe fn HSD_GObjGetUserData(gobj: *mut HSD_GObj) -> *mut c_void {
 
 /// The first two words, or two letters of a single word. UI only.
 pub unsafe fn genoArt_Initials(name: *const i8, out: *mut i8) {
+    melee_core::ct!("genoArt_Initials");
     let mut n: i32 = 0;
     let mut start: i32 = 1;
     let mut second: i8 = 0;
@@ -230,6 +234,7 @@ pub unsafe fn genoArt_Initials(name: *const i8, out: *mut i8) {
 /// One key value of an FObj stream (fobj.c's own reader, restated): the format is the top 3 bits
 /// of `frac`, the fixed-point shift the low 5.
 pub unsafe fn genoArt_FObjValue(p: *mut *mut u8, frac: u8) -> f32 {
+    melee_core::ct!("genoArt_FObjValue");
     let s = *p;
     let scale = 1i32.wrapping_shl((frac & 0x1F) as u32) as f32;
     match frac & 0xE0 {
@@ -258,6 +263,7 @@ pub unsafe fn genoArt_FObjValue(p: *mut *mut u8, frac: u8) -> f32 {
 }
 
 pub unsafe fn genoArt_FObjPacked(p: *mut *mut u8) -> u32 {
+    melee_core::ct!("genoArt_FObjPacked");
     let mut s = *p;
     let mut v: u32 = (*s & 0x7F) as u32;
     let mut shift: i32 = 7;
@@ -278,6 +284,7 @@ pub unsafe fn genoArt_FObjPacked(p: *mut *mut u8) -> u32 {
 /// sits exactly on `frame` (a frame with no key of its own just holds the previous name), and
 /// stores the largest image index any key selects in *max_img (-1 when there is no track).
 pub unsafe fn genoArt_ImageKeyAt(tobj: *mut HSD_TObj, frame: i32, max_img: *mut i32) -> bool {
+    melee_core::ct!("genoArt_ImageKeyAt");
     let mut hit = false;
     *max_img = -1;
     if tobj.is_null() || (*tobj).aobj.is_null() {
@@ -348,6 +355,7 @@ pub unsafe fn genoArt_ImageKeyAt(tobj: *mut HSD_TObj, frame: i32, max_img: *mut 
 // ---------------------------------------------------------------------------- ifstock_geno_art.inc
 
 pub unsafe fn ifStock_GenoReset() {
+    melee_core::ct!("ifStock_GenoReset");
     memset_default(
         (&raw mut ifStock_GenoArt).cast(),
         0,
@@ -361,6 +369,7 @@ pub unsafe fn ifStock_GenoReset() {
 }
 
 pub unsafe fn ifStock_GenoFind(ck: i32, costume: i32, current: *mut HSD_ImageDesc) -> *mut IfStockGenoArt {
+    melee_core::ct!("ifStock_GenoFind");
     let mut handle: i32;
     let mut w: i32 = 0;
     let mut ht: i32 = 0;
@@ -449,6 +458,7 @@ pub unsafe fn ifStock_GenoFind(ck: i32, costume: i32, current: *mut HSD_ImageDes
 /// choosing a new fighter, and size substitutions from TIMG keys, not a fixed
 /// 128-entry table which m-ex animations can index beyond.
 pub unsafe fn ifStock_GenoBinding(tobj: *mut HSD_TObj, create: i32) -> *mut IfStockGenoBinding {
+    melee_core::ct!("ifStock_GenoBinding");
     let mut max_img: i32 = 0;
     let mut b: *mut IfStockGenoBinding = null_mut();
     for i in 0..IFSTOCK_GENO_BINDINGS {
@@ -486,6 +496,7 @@ pub unsafe fn ifStock_GenoBinding(tobj: *mut HSD_TObj, create: i32) -> *mut IfSt
 }
 
 pub unsafe fn ifStock_ReqAnim(tobj: *mut HSD_TObj, mut frame: f32) {
+    melee_core::ct!("ifStock_ReqAnim");
     if tobj.is_null() {
         return;
     }
@@ -514,6 +525,7 @@ pub unsafe fn ifStock_ReqAnim(tobj: *mut HSD_TObj, mut frame: f32) {
 // ---------------------------------------------------------------------------- ifstock.c
 
 pub unsafe fn ifStock_802F7EFC(arg0: i32, arg1: i32) -> i32 {
+    melee_core::ct!("ifStock_802F7EFC");
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let stock = &raw mut ifStock_804A1378;
     let arg0_data = (&raw mut (*stock).x204[arg0 as usize]) as *mut IfStockData;
@@ -575,11 +587,13 @@ pub unsafe fn ifStock_802F7EFC(arg0: i32, arg1: i32) -> i32 {
 
 #[inline]
 pub unsafe fn ifStock_802F8298_tobj_frame(player: u8) -> f32 {
+    melee_core::ct!("ifStock_802F8298_tobj_frame");
     ext::gm_80168BF8(player as i32)
 }
 
 #[inline]
 pub unsafe fn ifStock_802F8298_update_stocks(user_data: *mut IfStockUserData) -> *mut IfStockUserData {
+    melee_core::ct!("ifStock_802F8298_update_stocks");
     let stock = &raw mut ifStock_804A1378;
     let pl = &raw mut (*stock).player[(*user_data).player as usize];
     (*pl).stocks = ext::Player_GetStocks((*user_data).player as i32);
@@ -594,12 +608,14 @@ pub unsafe fn ifStock_802F8298_update_stocks(user_data: *mut IfStockUserData) ->
 
 #[inline]
 pub unsafe fn ifStock_802F8298_step_anim(anim: *mut u8) {
+    melee_core::ct!("ifStock_802F8298_step_anim");
     if *anim < 10 {
         *anim = (*anim).wrapping_add(1);
     }
 }
 
 pub unsafe extern "C" fn ifStock_802F8298(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ifStock_802F8298");
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let stock = &raw mut ifStock_804A1378;
     let jobj_anim = jobj;
@@ -705,11 +721,13 @@ pub unsafe extern "C" fn ifStock_802F8298(gobj: *mut HSD_GObj) {
 
 #[inline]
 pub unsafe fn ifStock_802F89F8_get_data(gobj: *mut HSD_GObj) -> *mut IfStockUserData {
+    melee_core::ct!("ifStock_802F89F8_get_data");
     GET_IFSTOCK(gobj)
 }
 
 #[inline]
 pub fn ifStock_802F89F8_count(mut coins: i32) -> i32 {
+    melee_core::ct!("ifStock_802F89F8_count");
     for i in 0..32 {
         if coins == 0 {
             return i;
@@ -721,6 +739,7 @@ pub fn ifStock_802F89F8_count(mut coins: i32) -> i32 {
 
 #[inline]
 pub fn ifStock_802F89F8_divisor(position: i32) -> i32 {
+    melee_core::ct!("ifStock_802F89F8_divisor");
     let mut divisor: i32 = 1;
     if position != 0 {
         let mut i = 0;
@@ -734,6 +753,7 @@ pub fn ifStock_802F89F8_divisor(position: i32) -> i32 {
 
 #[inline]
 pub fn ifStock_802F89F8_digit(mut coins: i32, position: i32) -> i32 {
+    melee_core::ct!("ifStock_802F89F8_digit");
     let mut divisor: i32 = 1;
     if position - 1 == 0 {
         coins %= 10;
@@ -748,6 +768,7 @@ pub fn ifStock_802F89F8_digit(mut coins: i32, position: i32) -> i32 {
 }
 
 pub unsafe extern "C" fn ifStock_802F89F8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ifStock_802F89F8");
     let user_data = ifStock_802F89F8_get_data(gobj);
     let player = (*user_data).player as i32;
     let pl = &raw mut ifStock_804A1378.player[player as usize];
@@ -785,6 +806,7 @@ pub unsafe extern "C" fn ifStock_802F89F8(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_802F8DB0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_802F8DB0");
     let x = ext::gm_801694A0(gobj);
     if x != ifStock_804A1774.x108 {
         ifStock_802FA2D0(x);
@@ -793,6 +815,7 @@ pub unsafe extern "C" fn fn_802F8DB0(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_802F8E08(_gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_802F8E08");
     let stock = &raw mut ifStock_804A1774;
     let mut counter: i32 = 0;
     let mut x: f32 = -21.0;
@@ -834,6 +857,7 @@ pub unsafe extern "C" fn fn_802F8E08(_gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_802F916C(_gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_802F916C");
     let mut a: i32 = 0;
     let mut b: i32 = 0;
     let mut counter: i32 = 0;
@@ -865,6 +889,7 @@ pub unsafe extern "C" fn fn_802F916C(_gobj: *mut HSD_GObj) {
 
 #[inline]
 pub unsafe fn fn_802F9410_inline(gobj: *mut HSD_GObj, p: *mut IfStockUserData) {
+    melee_core::ct!("fn_802F9410_inline");
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let jobj2 = x4(&raw mut ifStock_804A1378.player[(*p).player as usize], 1);
     ext::HSD_JObjReqAnimAll(jobj2, 0.0);
@@ -874,6 +899,7 @@ pub unsafe fn fn_802F9410_inline(gobj: *mut HSD_GObj, p: *mut IfStockUserData) {
 }
 
 pub unsafe extern "C" fn fn_802F9410(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_802F9410");
     let p = GET_IFSTOCK(gobj);
     match (*p).mode {
         0 => ifStock_802F8298(gobj),
@@ -884,6 +910,7 @@ pub unsafe extern "C" fn fn_802F9410(gobj: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_802F94E0(gobj: *mut HSD_GObj, renderpass: i32) {
+    melee_core::ct!("fn_802F94E0");
     if ext::Script_StatusHUDVisible() == 0 || ext::Ui_RetailHidden(AT_RE_HUD_STOCK) != 0 {
         return;
     }
@@ -895,6 +922,7 @@ pub unsafe extern "C" fn fn_802F94E0(gobj: *mut HSD_GObj, renderpass: i32) {
 }
 
 pub unsafe extern "C" fn fn_802F9548(gobj: *mut HSD_GObj, renderpass: i32) {
+    melee_core::ct!("fn_802F9548");
     if ext::Script_StatusHUDVisible() == 0 || ext::Ui_RetailHidden(AT_RE_HUD_STOCK) != 0 {
         return;
     }
@@ -905,6 +933,7 @@ pub unsafe extern "C" fn fn_802F9548(gobj: *mut HSD_GObj, renderpass: i32) {
 }
 
 pub unsafe extern "C" fn fn_802F9598(gobj: *mut HSD_GObj, renderpass: i32) {
+    melee_core::ct!("fn_802F9598");
     if ext::Script_StatusHUDVisible() == 0 || ext::Ui_RetailHidden(AT_RE_HUD_STOCK) != 0 {
         return;
     }
@@ -915,6 +944,7 @@ pub unsafe extern "C" fn fn_802F9598(gobj: *mut HSD_GObj, renderpass: i32) {
 }
 
 pub unsafe extern "C" fn fn_802F95E8(gobj: *mut HSD_GObj, renderpass: i32) {
+    melee_core::ct!("fn_802F95E8");
     if ext::Script_StatusHUDVisible() == 0 || ext::Ui_RetailHidden(AT_RE_HUD_STOCK) != 0 {
         return;
     }
@@ -932,6 +962,7 @@ pub unsafe extern "C" fn fn_802F95E8(gobj: *mut HSD_GObj, renderpass: i32) {
 }
 
 pub unsafe extern "C" fn fn_802F9680(gobj: *mut HSD_GObj, renderpass: i32) {
+    melee_core::ct!("fn_802F9680");
     if ext::Script_StatusHUDVisible() == 0 || ext::Ui_RetailHidden(AT_RE_HUD_STOCK) != 0 {
         return;
     }
@@ -943,6 +974,7 @@ pub unsafe extern "C" fn fn_802F9680(gobj: *mut HSD_GObj, renderpass: i32) {
 
 /// m-ex "Replace ... Stock Matanim": point one stock-icon joint at Stc_icns (no-op on retail).
 pub unsafe fn ifStock_MexAttach(jobj: *mut HSD_JObj) {
+    melee_core::ct!("ifStock_MexAttach");
     let stc = ext::gm_MexStockMatAnim();
     if !jobj.is_null() && !stc.is_null() {
         ext::HSD_JObjAddAnimAll(jobj, null_mut(), stc, null_mut());
@@ -952,6 +984,7 @@ pub unsafe fn ifStock_MexAttach(jobj: *mut HSD_JObj) {
 /// m-ex "All Star / Multispawn - Change Stock Frame": retail passes arg1 = 0 (ignored by its
 /// formula); m-ex needs the fighter, ftMapping_list[ckind].internal_id.
 pub unsafe fn ifStock_MexFrame(ckind: i32, costume: i32) -> f32 {
+    melee_core::ct!("ifStock_MexFrame");
     let geno = ext::gm_GenoStockFrame(ckind, costume);
     if geno >= 0.0 {
         return geno;
@@ -965,6 +998,7 @@ pub unsafe fn ifStock_MexFrame(ckind: i32, costume: i32) -> f32 {
 }
 
 pub unsafe fn ifStock_802F96D0(a: i32, b: i32, x: f32, y: f32) -> *mut HSD_GObj {
+    melee_core::ct!("ifStock_802F96D0");
     let q = &raw mut ifStock_804A1378;
     let gobj = ext::GObj_Create(14, 15, 0);
     let jobj = ext::HSD_JObjLoadJoint((**(*q).x0).joint);
@@ -987,6 +1021,7 @@ pub unsafe fn ifStock_802F96D0(a: i32, b: i32, x: f32, y: f32) -> *mut HSD_GObj 
 
 #[inline]
 pub unsafe fn ifStock_802F98E8_get_match_info(data: *mut VsSceneState, player: i32) -> *mut lbl_8046B6A0_FighterMatchInfoFlags {
+    melee_core::ct!("ifStock_802F98E8_get_match_info");
     &raw mut (*data).fighters[player as usize].anon_4.flags
 }
 
@@ -994,6 +1029,7 @@ const ifStock_802F98E8_color1: GXColor = GXColor { r: 0x08, g: 0x08, b: 0x08, a:
 const ifStock_802F98E8_color2: GXColor = GXColor { r: 0x3C, g: 0x3C, b: 0x46, a: 0x80 };
 
 pub unsafe extern "C" fn ifStock_802F98E8(player: u8, b: u8) {
+    melee_core::ct!("ifStock_802F98E8");
     let stock = &raw mut ifStock_804A1378;
     let pn = player as usize;
     if !(*stock).x0.is_null() {
@@ -1125,6 +1161,7 @@ pub unsafe extern "C" fn ifStock_802F98E8(player: u8, b: u8) {
 
 #[inline]
 pub unsafe fn ifStock_802F9F48_inline(arg: i32) -> *mut HSD_GObj {
+    melee_core::ct!("ifStock_802F9F48_inline");
     let q = &raw mut ifStock_804A1378;
     let gobj = ext::GObj_Create(14, 15, 0);
     let jobj = ext::HSD_JObjLoadJoint((**(*q).x0).joint);
@@ -1151,10 +1188,12 @@ pub unsafe fn ifStock_802F9F48_inline(arg: i32) -> *mut HSD_GObj {
 }
 
 pub unsafe fn ifStock_802F9F48(arg: i32) -> *mut HSD_GObj {
+    melee_core::ct!("ifStock_802F9F48");
     ifStock_802F9F48_inline(arg)
 }
 
 pub unsafe fn ifStock_802FA118(arg: i32) -> *mut HSD_GObj {
+    melee_core::ct!("ifStock_802FA118");
     let q = &raw mut ifStock_804A1378;
     let gobj = ext::GObj_Create(14, 15, 0);
     let jobj = ext::HSD_JObjLoadJoint((**(*q).x0).joint);
@@ -1177,6 +1216,7 @@ pub unsafe fn ifStock_802FA118(arg: i32) -> *mut HSD_GObj {
 }
 
 pub unsafe fn ifStock_802FA2D0(mut arg: i32) {
+    melee_core::ct!("ifStock_802FA2D0");
     let s = &raw mut ifStock_804A1378;
     let jobj = (*s).jobj;
     if arg > 9999 {
@@ -1204,6 +1244,7 @@ pub unsafe fn ifStock_802FA2D0(mut arg: i32) {
 }
 
 pub unsafe fn ifStock_802FA5BC(arg: i32) {
+    melee_core::ct!("ifStock_802FA5BC");
     let q = &raw mut ifStock_804A1378;
     let gobj = ext::GObj_Create(14, 15, 0);
     let jobj = ext::HSD_JObjLoadJoint((*(*q).x4).joint);
@@ -1220,6 +1261,7 @@ pub unsafe fn ifStock_802FA5BC(arg: i32) {
 }
 
 pub unsafe extern "C" fn fn_802FA6C4(_arg: *mut HSD_GObj) {
+    melee_core::ct!("fn_802FA6C4");
     let s = &raw mut ifStock_804A1774;
     if ext::gm_8016B184() != 0 && ext::gm_8016A1F8() != 0 {
         if (*s).x0 == 0 {
@@ -1259,6 +1301,7 @@ pub unsafe extern "C" fn fn_802FA6C4(_arg: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_802FA8C0(_arg: *mut HSD_GObj) {
+    melee_core::ct!("fn_802FA8C0");
     let stock = &raw mut ifStock_804A1ACC;
     let mut k: i32 = 0;
     let mut x: f32 = -21.0;
@@ -1302,6 +1345,7 @@ pub unsafe extern "C" fn fn_802FA8C0(_arg: *mut HSD_GObj) {
 }
 
 pub unsafe extern "C" fn fn_802FAC34(_arg: *mut HSD_GObj) {
+    melee_core::ct!("fn_802FAC34");
     let s = &raw mut ifStock_804A1ACC;
     if ext::gm_8016A944() != 0 {
         if (*s).x0 == 0 {
@@ -1354,11 +1398,13 @@ pub unsafe extern "C" fn fn_802FAC34(_arg: *mut HSD_GObj) {
 
 #[inline]
 pub unsafe fn ifStock_802FA5BC_noinline(arg: i32) {
+    melee_core::ct!("ifStock_802FA5BC_noinline");
     ifStock_802FA5BC(arg);
 }
 
 #[inline]
 pub unsafe fn ifStock_ClearGObjSlots(slots: *mut *mut HSD_GObj, count: i32) {
+    melee_core::ct!("ifStock_ClearGObjSlots");
     for i in 0..count.max(0) as usize {
         *slots.add(i) = null_mut();
     }
@@ -1366,6 +1412,7 @@ pub unsafe fn ifStock_ClearGObjSlots(slots: *mut *mut HSD_GObj, count: i32) {
 
 #[inline]
 pub unsafe fn ifStock_CreateStockGObjs(mut slots: *mut *mut HSD_GObj) {
+    melee_core::ct!("ifStock_CreateStockGObjs");
     let stock = &raw mut ifStock_804A1378;
     for i in 0..16i32 {
         *slots = null_mut();
@@ -1388,6 +1435,7 @@ pub unsafe fn ifStock_CreateStockGObjs(mut slots: *mut *mut HSD_GObj) {
 }
 
 pub unsafe fn ifStock_802FAEC4() {
+    melee_core::ct!("ifStock_802FAEC4");
     let stock = &raw mut ifStock_804A1378;
     let mut scene_models: *mut *mut DynamicModelDesc = null_mut();
     ifStock_GenoReset();
@@ -1427,6 +1475,7 @@ pub unsafe fn ifStock_802FAEC4() {
 }
 
 pub unsafe fn ifStock_802FB390() {
+    melee_core::ct!("ifStock_802FB390");
     if !ifStock_804A1774.x10C[0].is_null() {
         ext::HSD_GObjFree(ifStock_804A1774.x10C[0]);
         ifStock_804A1774.x10C[0] = null_mut();
@@ -1440,6 +1489,7 @@ pub unsafe fn ifStock_802FB390() {
 }
 
 pub unsafe fn ifStock_802FB41C() {
+    melee_core::ct!("ifStock_802FB41C");
     for i in 0..16usize {
         if !ifStock_804A1A8C[i].is_null() {
             ext::HSD_GObjFree(ifStock_804A1A8C[i]);
@@ -1449,6 +1499,7 @@ pub unsafe fn ifStock_802FB41C() {
 }
 
 pub unsafe fn ifStock_802FB484() {
+    melee_core::ct!("ifStock_802FB484");
     for i in 0..16usize {
         if !ifStock_804A1ACC.x10C[i].is_null() {
             ext::HSD_GObjFree(ifStock_804A1ACC.x10C[i]);
@@ -1459,12 +1510,14 @@ pub unsafe fn ifStock_802FB484() {
 
 #[inline]
 pub unsafe fn copyColor(q: *mut HSD_MObj, arg: *mut GXColor) {
+    melee_core::ct!("copyColor");
     (*(*q).mat).diffuse.r = (*arg).r;
     (*(*q).mat).diffuse.g = (*arg).g;
     (*(*q).mat).diffuse.b = (*arg).b;
 }
 
 pub unsafe fn ifStock_802FB4EC(player: i32, arg: *mut GXColor) {
+    melee_core::ct!("ifStock_802FB4EC");
     for i in 0..7usize {
         copyColor(
             (*(*x4(&raw mut ifStock_804A1378.player[player as usize], i + 1)).u.dobj).mobj,
@@ -1474,6 +1527,7 @@ pub unsafe fn ifStock_802FB4EC(player: i32, arg: *mut GXColor) {
 }
 
 pub unsafe fn ifStock_802FB650(player: i32) {
+    melee_core::ct!("ifStock_802FB650");
     let x = &raw mut ifStock_804A1378;
     if !(*x).player[player as usize].x0.is_null() {
         ext::HSD_GObjFree((*x).player[player as usize].x0);
@@ -1485,6 +1539,7 @@ pub unsafe fn ifStock_802FB650(player: i32) {
 }
 
 pub unsafe fn ifStock_802FB6AC(player: i32) {
+    melee_core::ct!("ifStock_802FB6AC");
     let x = &raw mut ifStock_804A1378;
     if !(*x).player[player as usize].x0.is_null() {
         ext::HSD_GObj_80390CAC((*x).player[player as usize].x0);

@@ -55,6 +55,7 @@ const PAD_MAX_CONTROLLERS: u8 = 4;
 
 /// `mn_8022EC18`
 pub fn mn_8022EC18(arg0: *mut HSD_JObj, arg1: *mut AnimLoopSettings, arg2: HSD_TypeMask) -> f32 {
+    melee_core::ct!("mn_8022EC18");
     unsafe {
         let var_f31: f32;
 
@@ -94,6 +95,7 @@ pub fn mn_8022EC18(arg0: *mut HSD_JObj, arg1: *mut AnimLoopSettings, arg2: HSD_T
 /// `mn_8022ED6C`: updates a jobj animation in accordance to the passed in anim loop setting;
 /// returns the current frame of the jobj animation
 pub fn mn_8022ED6C(jobj: *mut HSD_JObj, anim_loop: *mut AnimLoopSettings) -> f32 {
+    melee_core::ct!("mn_8022ED6C");
     unsafe {
         let mut cur_frame = mn_8022F298(jobj);
         if !((*anim_loop).start_frame <= cur_frame && cur_frame <= (*anim_loop).end_frame) {
@@ -128,6 +130,7 @@ pub fn mn_8022ED6C(jobj: *mut HSD_JObj, anim_loop: *mut AnimLoopSettings) -> f32
 
 /// `mn_8022EE84`
 pub fn mn_8022EE84(arg0: *mut HSD_JObj, arg1: *mut AnimLoopSettings, arg2: HSD_TypeMask) -> f32 {
+    melee_core::ct!("mn_8022EE84");
     unsafe {
         let var_f31: f32;
 
@@ -169,6 +172,7 @@ pub fn mn_8022EE84(arg0: *mut HSD_JObj, arg1: *mut AnimLoopSettings, arg2: HSD_T
 /// `mn_8022EFD8`: updates a jobj looping animation. If the end frame is -0.1f, the animation
 /// will stop after reaching the end frame.
 pub fn mn_8022EFD8(arg0: *mut HSD_JObj, arg1: *mut AnimLoopSettings) -> f32 {
+    melee_core::ct!("mn_8022EFD8");
     unsafe {
         let var_f31: f32;
 
@@ -205,6 +209,7 @@ pub fn mn_8022EFD8(arg0: *mut HSD_JObj, arg1: *mut AnimLoopSettings) -> f32 {
 
 /// `mn_8022F0F0`: frees every GObj in PLink `arg0 & 0xFF`
 pub fn mn_8022F0F0(arg0: i32) {
+    melee_core::ct!("mn_8022F0F0");
     unsafe {
         let mut curr = *ext::HSD_GObjPLinkHead.add(arg0 as u8 as usize);
         while !curr.is_null() {
@@ -217,6 +222,7 @@ pub fn mn_8022F0F0(arg0: i32) {
 
 /// `mn_8022F138`
 pub fn mn_8022F138(arg0: u16, arg1: u16) {
+    melee_core::ct!("mn_8022F138");
     let mut i = arg0 as i32;
     while i <= arg1 as i32 {
         mn_8022F0F0(i);
@@ -238,6 +244,7 @@ fn mn_8022F1A8_inline(arg0: u8) {
 
 /// `mn_8022F1A8`
 pub fn mn_8022F1A8(arg0: u16, arg1: u16) {
+    melee_core::ct!("mn_8022F1A8");
     let mut i = arg0 as i32;
     while i <= arg1 as i32 {
         mn_8022F1A8_inline(i as u8);
@@ -247,6 +254,7 @@ pub fn mn_8022F1A8(arg0: u16, arg1: u16) {
 
 /// `mn_8022F218`
 pub fn mn_8022F218() -> bool {
+    melee_core::ct!("mn_8022F218");
     if ext::gm_GetButtonsTriggered(PAD_MAX_CONTROLLERS) & PAD_LR_START != 0 {
         return true;
     }
@@ -255,11 +263,13 @@ pub fn mn_8022F218() -> bool {
 
 /// `mn_8022F268`
 pub fn mn_8022F268() {
+    melee_core::ct!("mn_8022F268");
     unsafe { (*ext::gmMainLib_GetGameRules()).force_main_menu = 1 };
 }
 
 /// `mn_8022F298`: returns the current frame of a jobj animation (-1.0 when it has none)
 pub fn mn_8022F298(jobj: *mut HSD_JObj) -> f32 {
+    melee_core::ct!("mn_8022F298");
     unsafe {
         let mut jobj = jobj;
         let mut aobj = (*jobj).aobj;
@@ -299,6 +309,7 @@ pub fn mn_8022F298(jobj: *mut HSD_JObj) -> f32 {
 
 /// `mn_8022F360`: the `HSD_ForeachAnim` callback of `mn_8022F3D8`
 pub unsafe extern "C" fn mn_8022F360(aobj: *mut HSD_AObj, obj: *mut c_void, arg2: u32) {
+    melee_core::ct!("mn_8022F360");
     let mut fobj = (*aobj).fobj;
     while !fobj.is_null() {
         if (*fobj).obj_type as u32 == arg2 || arg2 == 0xFF {
@@ -310,12 +321,14 @@ pub unsafe extern "C" fn mn_8022F360(aobj: *mut HSD_AObj, obj: *mut c_void, arg2
 
 /// `mn_8022F3D8`
 pub fn mn_8022F3D8(jobj: *mut HSD_JObj, arg1: u8, mask: HSD_TypeMask) {
+    melee_core::ct!("mn_8022F3D8");
     ext::HSD_ForeachAnim(jobj as *mut c_void, JOBJ_TYPE as u32, mask as u32, mn_8022F360, AOBJ_ARG_AOU as u32, arg1 as i32);
 }
 
 /// `mn_8022F410`: moves `*x` toward `*target` in increments of `dx`. Returns +1 if `*x` was
 /// increased toward the target, -1 if it was decreased, 0 if it was already at the target.
 pub fn mn_8022F410(x: *mut f32, target: *const f32, dx: f32) -> i32 {
+    melee_core::ct!("mn_8022F410");
     unsafe {
         if *x == *target {
             return 0;
@@ -334,6 +347,7 @@ pub fn mn_8022F410(x: *mut f32, target: *const f32, dx: f32) -> i32 {
 
 /// `mn_8022F470`: same as `mn_8022F410`, but for int values.
 pub fn mn_8022F470(x: *mut i32, target: *const i32, dx: i32) -> i32 {
+    melee_core::ct!("mn_8022F470");
     unsafe {
         if *x == *target {
             return 0;
@@ -352,6 +366,7 @@ pub fn mn_8022F470(x: *mut i32, target: *const i32, dx: i32) -> i32 {
 
 /// `mn_8022F4CC`
 pub fn mn_8022F4CC() {
+    melee_core::ct!("mn_8022F4CC");
     if ext::gm_GetCurrentGameMode() as u32 == GM_TOURNAMENT as u32 {
         ext::HSD_SisLib_803A5E70();
         ext::mn_8022EBDC();

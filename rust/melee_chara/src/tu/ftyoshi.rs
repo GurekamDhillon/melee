@@ -140,6 +140,7 @@ unsafe fn attrs(fp: *mut Fighter) -> *mut ftYoshiAttributes {
 
 /// `ftYs_Init_8012B6E8` (static): stop the matanim of one shield set and latch its end frame.
 pub fn ftYs_Init_8012B6E8(fp: *mut Fighter, unk_struct_arg: *mut S_UNK_YOSHI1) {
+    melee_core::ct!("ftYs_Init_8012B6E8");
     unsafe {
         let attr_r26 = (*(*fp).ft_data).ext_attr as *mut ftYoshiAttributes;
         let unk_struct = (*unk_struct_arg).unk_struct;
@@ -166,6 +167,7 @@ pub fn ftYs_Init_8012B6E8(fp: *mut Fighter, unk_struct_arg: *mut S_UNK_YOSHI1) {
 
 /// `ftYs_Init_8012B804` (static): request the shield matanim at `start_frame` and play it.
 pub fn ftYs_Init_8012B804(fp: *mut Fighter, unk_struct_arg: *mut S_UNK_YOSHI1, start_frame: f32) {
+    melee_core::ct!("ftYs_Init_8012B804");
     unsafe {
         if !unk_struct_arg.is_null() {
             let unk_struct = (*unk_struct_arg).unk_struct;
@@ -185,6 +187,7 @@ pub fn ftYs_Init_8012B804(fp: *mut Fighter, unk_struct_arg: *mut S_UNK_YOSHI1, s
 
 /// `ftYs_Init_8012B8A4`: the shield matanim at the damaged fraction of the shield.
 pub fn ftYs_Init_8012B8A4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_Init_8012B8A4");
     unsafe {
         let fp = fpp(gobj);
         let da = attrs(fp);
@@ -201,6 +204,7 @@ pub fn ftYs_Init_8012B8A4(gobj: *mut HSD_GObj) {
 
 /// `ftYs_Init_8012B918`: the shield matanim at frame 0.
 pub fn ftYs_Init_8012B918(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_Init_8012B918");
     unsafe {
         let fp = fpp(gobj);
         ftYs_Init_8012B804(fp, (*fp).x5AC.xC[0] as *mut S_UNK_YOSHI1, 0.0);
@@ -209,6 +213,7 @@ pub fn ftYs_Init_8012B918(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftYs_Init_OnDeath(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_Init_OnDeath");
     unsafe {
         let fp = fpp(gobj);
         st::ftParts_80074A4C(gobj, 0, 0);
@@ -218,6 +223,7 @@ pub fn ftYs_Init_OnDeath(gobj: *mut HSD_GObj) {
 
 /// `ftYs_Init_OnLoad`: the shield latch, the attribute push, and the three item kinds.
 pub fn ftYs_Init_OnLoad(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_Init_OnLoad");
     unsafe {
         let fp = fpp(gobj);
         let temp_r27 = (*fp).x5AC.xC[0] as *mut S_UNK_YOSHI1;
@@ -243,12 +249,14 @@ pub fn ftYs_Init_OnLoad(gobj: *mut HSD_GObj) {
 
 /// `ftYs_Init_8012BA8C`: the two Special S setups.
 pub fn ftYs_Init_8012BA8C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_Init_8012BA8C");
     ext::ftYs_SpecialS_8012E270(gobj);
     ext::ftYs_SpecialS_8012DF18(gobj);
 }
 
 /// `ftYs_Init_8012BAC0`: the attribute at `+0x120`.
 pub fn ftYs_Init_8012BAC0(fp: &Fighter) -> f32 {
+    melee_core::ct!("ftYs_Init_8012BAC0");
     unsafe {
         let da = fp.dat_attrs as *const ftYoshiAttributes;
         (*da).x120
@@ -256,32 +264,39 @@ pub fn ftYs_Init_8012BAC0(fp: &Fighter) -> f32 {
 }
 
 pub fn ftYs_Init_OnItemPickup(gobj: *mut HSD_GObj, flag: bool) {
+    melee_core::ct!("ftYs_Init_OnItemPickup");
     crate::tu::ftclink::Fighter_OnItemPickup(gobj, flag as i32, 1, 1);
 }
 
 pub fn ftYs_Init_OnItemInvisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_Init_OnItemInvisible");
     st::Fighter_OnItemInvisible(gobj, 1);
 }
 
 pub fn ftYs_Init_OnItemVisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_Init_OnItemVisible");
     st::Fighter_OnItemVisible(gobj, 1);
 }
 
 pub fn ftYs_Init_OnItemDrop(gobj: *mut HSD_GObj, bool1: bool) {
+    melee_core::ct!("ftYs_Init_OnItemDrop");
     crate::tu::ftclink::Fighter_OnItemDrop(gobj, bool1 as i32, 1, 1);
 }
 
 pub fn ftYs_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_Init_LoadSpecialAttrs");
     unsafe { crate::tu::ftfox::copy_attrs::<ftYoshiAttributes>(gobj) }
 }
 
 pub fn ftYs_Init_OnKnockbackEnter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_Init_OnKnockbackEnter");
     st::Fighter_OnKnockbackEnter(gobj, 1);
     st::ftAnim_ApplyPartAnim(gobj, 3, 3, 0.0);
     st::ftAnim_ApplyPartAnim(gobj, 4, 3, 0.0);
 }
 
 pub fn ftYs_Init_OnKnockbackExit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_Init_OnKnockbackExit");
     st::Fighter_OnKnockbackExit(gobj, 1);
     st::ftAnim_ApplyPartAnim(gobj, 3, 2, 0.0);
     st::ftAnim_ApplyPartAnim(gobj, 4, 2, 0.0);

@@ -284,6 +284,7 @@ fn get_lang_val(idx: i32) -> i32 {
 /// `gm_801AEE6C(arg0, arg1, arg2)`: rebuild the notice window: kind 0 = text only, 1 = two buttons (Yes/No),
 /// 2 = two buttons (other labels); `arg1` is the message id and `arg2` its row count.
 pub fn gm_801AEE6C(arg0: i32, arg1: i32, arg2: i32) {
+    melee_core::ct!("gm_801AEE6C");
     let scale: f32 = 1.12;
     unsafe {
         match arg0 {
@@ -339,6 +340,7 @@ unsafe fn gm_801AF0D4_inline() -> bool {
 
 /// `gm_801AF0D4()`: the Yes/No cursor (left/up = 0, right/down = 1); true when the card status changed.
 pub fn gm_801AF0D4() -> bool {
+    melee_core::ct!("gm_801AF0D4");
     unsafe {
         let saved_unk1C = enter_data.unk1C as i32;
 
@@ -402,6 +404,7 @@ unsafe fn unk_inline() {
 
 /// `gm_801AF250()`: show the prompt for the card status `lb_8001C87C()` and set the next decision.
 pub fn gm_801AF250() {
+    melee_core::ct!("gm_801AF250");
     unsafe {
         let temp_r3 = ext::lb_8001C87C();
         enter_data.unk18 = 1;
@@ -469,6 +472,7 @@ pub fn gm_801AF250() {
 
 /// `gm_Scene_MemCard_OnFrame()`: one tick of the prompt state machine.
 pub fn gm_Scene_MemCard_OnFrame() {
+    melee_core::ct!("gm_Scene_MemCard_OnFrame");
     unsafe {
         if ext::DbLevel() >= DbLKind_DebugRom && set_gm_804D6870_inline() != 0 {
             if ext::hsd_pad_copy_status0_trigger() & HSD_PAD_L != 0 {
@@ -646,6 +650,7 @@ unsafe fn checkUnk0() -> i32 {
 /// `gm_Scene_MemCard_OnEnter(user_data)`: take the caller's enter data, pick the first prompt, load the card
 /// work area and the notice window.
 pub fn gm_Scene_MemCard_OnEnter(user_data: *mut c_void) {
+    melee_core::ct!("gm_Scene_MemCard_OnEnter");
     unsafe {
         let data = user_data as *mut enterData;
 
@@ -665,6 +670,7 @@ pub fn gm_Scene_MemCard_OnEnter(user_data: *mut c_void) {
 
 /// `gm_Scene_MemCard_OnExit(user_data)`: hand the result back to the caller and tear down the window.
 pub fn gm_Scene_MemCard_OnExit(user_data: *mut c_void) {
+    melee_core::ct!("gm_Scene_MemCard_OnExit");
     unsafe {
         let data = user_data as *mut exitData;
         if !data.is_null() {

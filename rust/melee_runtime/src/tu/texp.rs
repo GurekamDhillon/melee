@@ -64,13 +64,16 @@ pub mod ext {
 }
 #[inline]
 pub unsafe fn IsThroughColor(texp: *mut HSD_TExp) -> i32 {
+    melee_core::ct!("IsThroughColor");
     melee_types::inline::IsThroughColor(&*texp) as i32
 }
 #[inline]
 pub unsafe fn IsThroughAlpha(texp: *mut HSD_TExp) -> i32 {
+    melee_core::ct!("IsThroughAlpha");
     melee_types::inline::IsThroughAlpha(&*texp) as i32
 }
 pub unsafe fn HSD_TExpGetType(mut texp: *mut HSD_TExp) -> HSD_TExpType {
+    melee_core::ct!("HSD_TExpGetType");
     if texp.is_null() {
         return HSD_TE_ZERO;
     }
@@ -83,6 +86,7 @@ pub unsafe fn HSD_TExpGetType(mut texp: *mut HSD_TExp) -> HSD_TExpType {
     return (*texp).r#type;
 }
 pub unsafe fn TevAlloc() -> *mut HSD_TExp {
+    melee_core::ct!("TevAlloc");
     let mut texp: *mut HSD_TExp = hsdAllocMemPiece(::core::mem::size_of::<
         HSD_TETev,
     >() as s32) as *mut HSD_TExp;
@@ -98,6 +102,7 @@ pub unsafe fn TevAlloc() -> *mut HSD_TExp {
     return texp;
 }
 pub unsafe fn CnstAlloc() -> *mut HSD_TExp {
+    melee_core::ct!("CnstAlloc");
     let mut texp: *mut HSD_TExp = hsdAllocMemPiece(::core::mem::size_of::<
         HSD_TECnst,
     >() as s32) as *mut HSD_TExp;
@@ -113,6 +118,7 @@ pub unsafe fn CnstAlloc() -> *mut HSD_TExp {
     return texp;
 }
 pub unsafe fn HSD_TExpFree(mut texp: *mut HSD_TExp) {
+    melee_core::ct!("HSD_TExpFree");
     match HSD_TExpGetType(texp) as ::core::ffi::c_int {
         1 => {
             hsdFreeMemPiece(
@@ -130,6 +136,7 @@ pub unsafe fn HSD_TExpFree(mut texp: *mut HSD_TExp) {
     };
 }
 pub unsafe fn HSD_TExpRef(mut texp: *mut HSD_TExp, mut sel: u8) {
+    melee_core::ct!("HSD_TExpRef");
     let mut r#type: HSD_TExpType = HSD_TExpGetType(texp);
     match r#type as ::core::ffi::c_int {
         1 => {
@@ -150,6 +157,7 @@ pub unsafe fn HSD_TExpRef(mut texp: *mut HSD_TExp, mut sel: u8) {
     };
 }
 pub unsafe fn HSD_TExpUnref(mut texp: *mut HSD_TExp, mut sel: u8) {
+    melee_core::ct!("HSD_TExpUnref");
     let mut i: s32 = 0;
     let mut r#type: HSD_TExpType = HSD_TExpGetType(texp);
     if r#type as ::core::ffi::c_int != HSD_TE_CNST as ::core::ffi::c_int {
@@ -194,6 +202,7 @@ pub unsafe fn HSD_TExpFreeList(
     mut r#type: HSD_TExpType,
     mut all: s32,
 ) -> *mut HSD_TExp {
+    melee_core::ct!("HSD_TExpFreeList");
     let mut handle: *mut *mut HSD_TExp =
         ::core::ptr::null_mut::<*mut HSD_TExp>();
     let mut ptr: *mut HSD_TExp = ::core::ptr::null_mut::<HSD_TExp>();
@@ -300,6 +309,7 @@ pub unsafe fn HSD_TExpFreeList(
     return texp_list;
 }
 pub unsafe fn HSD_TExpTev(mut texp_list: *mut *mut HSD_TExp) -> *mut HSD_TExp {
+    melee_core::ct!("HSD_TExpTev");
     let mut i: ::core::ffi::c_int = 0;
     let mut texp: *mut HSD_TExp = ::core::ptr::null_mut::<HSD_TExp>();
     if !texp_list.is_null() {
@@ -337,6 +347,7 @@ pub unsafe fn HSD_TExpCnst(
     mut r#type: HSD_TEType,
     mut texp_list: *mut *mut HSD_TExp,
 ) -> *mut HSD_TExp {
+    melee_core::ct!("HSD_TExpCnst");
     let mut texp: *mut HSD_TExp = ::core::ptr::null_mut::<HSD_TExp>();
     if !texp_list.is_null() {
     } else {
@@ -393,6 +404,7 @@ pub unsafe fn HSD_TExpColorOp(
     mut scale: GXTevScale,
     mut clamp: u8,
 ) {
+    melee_core::ct!("HSD_TExpColorOp");
     if !texp.is_null() {
     } else {
         __assert(
@@ -435,6 +447,7 @@ pub unsafe fn HSD_TExpAlphaOp(
     mut scale: GXTevScale,
     mut clamp: u8,
 ) {
+    melee_core::ct!("HSD_TExpAlphaOp");
     if !texp.is_null() {
     } else {
         __assert(
@@ -476,6 +489,7 @@ pub unsafe fn HSD_TExpColorInSub(
     mut exp: *mut HSD_TExp,
     mut idx: s32,
 ) {
+    melee_core::ct!("HSD_TExpColorInSub");
     let mut prev: HSD_TEArg = _HSD_TEArg {
         r#type: 0,
         sel: 0,
@@ -835,6 +849,7 @@ pub unsafe fn HSD_TExpColorIn(
     mut sel_d: HSD_TEInput,
     mut exp_d: *mut HSD_TExp,
 ) {
+    melee_core::ct!("HSD_TExpColorIn");
     let mut tev: *mut HSD_TETev = ::core::ptr::null_mut::<HSD_TETev>();
     if !texp.is_null() {
     } else {
@@ -869,6 +884,7 @@ pub unsafe fn HSD_TExpAlphaInSub(
     mut exp: *mut HSD_TExp,
     mut idx: s32,
 ) {
+    melee_core::ct!("HSD_TExpAlphaInSub");
     let mut prev: HSD_TEArg = _HSD_TEArg {
         r#type: 0,
         sel: 0,
@@ -1071,6 +1087,7 @@ pub unsafe fn HSD_TExpAlphaIn(
     mut sel_d: HSD_TEInput,
     mut exp_d: *mut HSD_TExp,
 ) {
+    melee_core::ct!("HSD_TExpAlphaIn");
     let mut tev: *mut HSD_TETev = ::core::ptr::null_mut::<HSD_TETev>();
     if !texp.is_null() {
     } else {
@@ -1104,6 +1121,7 @@ pub unsafe fn HSD_TExpOrder(
     mut tex: *mut HSD_TObj,
     mut chan: GXChannelID,
 ) {
+    melee_core::ct!("HSD_TExpOrder");
     if !texp.is_null() {
     } else {
         __assert(
@@ -1137,6 +1155,7 @@ pub unsafe fn AssignColorReg(
     mut idx: ::core::ffi::c_int,
     mut res: *mut HSD_TExpRes,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("AssignColorReg");
     static mut a_in: [GXTevColorArg; 4] =
         [GX_CC_A0, GX_CC_A1, GX_CC_A2, GX_CC_APREV];
     static mut c_in: [GXTevColorArg; 4] =
@@ -1209,6 +1228,7 @@ pub unsafe fn AssignAlphaReg(
     mut idx: ::core::ffi::c_int,
     mut res: *mut HSD_TExpRes,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("AssignAlphaReg");
     static mut in_0: [GXTevAlphaArg; 4] =
         [GX_CA_A0, GX_CA_A1, GX_CA_A2, GX_CA_APREV];
     let mut cnst: *mut HSD_TECnst = ::core::ptr::null_mut::<HSD_TECnst>();
@@ -1253,6 +1273,7 @@ pub unsafe fn AssignColorKonst(
     mut idx: ::core::ffi::c_int,
     mut res: *mut HSD_TExpRes,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("AssignColorKonst");
     static mut xsel: [[GXTevKColorSel; 4]; 4] = [
         [
             GX_TEV_KCSEL_K0_R,
@@ -1379,6 +1400,7 @@ pub unsafe fn AssignAlphaKonst(
     mut idx: ::core::ffi::c_int,
     mut res: *mut HSD_TExpRes,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("AssignAlphaKonst");
     static mut sel: [[GXTevKAlphaSel; 4]; 4] = [
         [
             GX_TEV_KASEL_K0_R,
@@ -1468,6 +1490,7 @@ pub unsafe fn TExpAssignReg(
     mut texp: *mut HSD_TExp,
     mut res: *mut HSD_TExpRes,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("TExpAssignReg");
     let mut tev: *mut HSD_TETev = texp as *mut HSD_TETev;
     let mut i: ::core::ffi::c_int = 0;
     let mut val: ::core::ffi::c_int = 0;
@@ -1677,6 +1700,7 @@ pub unsafe fn TExp2TevDesc(
     mut init_cprev: *mut ::core::ffi::c_int,
     mut init_aprev: *mut ::core::ffi::c_int,
 ) {
+    melee_core::ct!("TExp2TevDesc");
     static mut dst: [GXTevRegID; 4] =
         [GX_TEVREG0, GX_TEVREG1, GX_TEVREG2, GX_TEVPREV];
     let mut tev: *mut HSD_TETev = ::core::ptr::null_mut::<HSD_TETev>();
@@ -1970,6 +1994,7 @@ static mut id1: [GXTevKColorID; 4] =
     [GX_KCOLOR0, GX_KCOLOR1, GX_KCOLOR2, GX_KCOLOR3];
 static mut id2: [GXTevRegID; 3] = [GX_TEVREG0, GX_TEVREG1, GX_TEVREG2];
 pub unsafe fn HSD_TExpSetReg(mut texp: *mut HSD_TExp) {
+    melee_core::ct!("HSD_TExpSetReg");
     let mut i: ::core::ffi::c_int = 0;
     let mut reg: [GXColor; 8] = [_GXColor {
         r: 0,
@@ -2233,6 +2258,7 @@ pub unsafe fn HSD_TExpSetupTev(
     mut tevdesc: *mut HSD_TExpTevDesc,
     mut texp: *mut HSD_TExp,
 ) {
+    melee_core::ct!("HSD_TExpSetupTev");
     HSD_TExpSetReg(texp);
     while !tevdesc.is_null() {
         if !(*tevdesc).tobj.is_null() {
@@ -2249,6 +2275,7 @@ pub unsafe fn HSD_TExpCompile(
     mut tevdesc: *mut *mut HSD_TExpTevDesc,
     mut texp_list: *mut *mut HSD_TExp,
 ) -> ::core::ffi::c_int {
+    melee_core::ct!("HSD_TExpCompile");
     let mut num: ::core::ffi::c_int = 0;
     let mut i: ::core::ffi::c_int = 0;
     let mut val: ::core::ffi::c_int = 0;
@@ -2355,6 +2382,7 @@ pub unsafe fn HSD_TExpCompile(
     return num;
 }
 pub unsafe fn HSD_TExpFreeTevDesc(mut tdesc: *mut HSD_TExpTevDesc) {
+    melee_core::ct!("HSD_TExpFreeTevDesc");
     let mut next: *mut HSD_TExpTevDesc = tdesc;
     while !next.is_null() {
         let mut temp: *mut HSD_TExpTevDesc =

@@ -92,26 +92,31 @@ pub static mut gm_Mode_Lab_States: [GameModeState; 5] = {
 };
 
 pub unsafe extern "C" fn lab_enter_css(state: *mut GameModeState) {
+    melee_core::ct!("lab_enter_css");
     ext::gmVsMelee_EnterCss(state, &raw mut lab_vs, VS_MELEE);
     ext::gmFrontend_ModeSelect(state, 0, c"LAB".as_ptr());
 }
 pub unsafe extern "C" fn lab_exit_css(state: *mut GameModeState) {
+    melee_core::ct!("lab_exit_css");
     ext::gmVsMelee_ExitCss(state, &raw mut lab_vs);
 }
 pub unsafe extern "C" fn lab_enter_sss(state: *mut GameModeState) {
+    melee_core::ct!("lab_enter_sss");
     ext::gmVsMelee_EnterSss(state, &raw mut lab_vs);
     ext::gmFrontend_ModeSelect(state, 1, c"LAB".as_ptr());
 }
 pub unsafe extern "C" fn lab_exit_sss(state: *mut GameModeState) {
+    melee_core::ct!("lab_exit_sss");
     ext::gmVsMelee_ExitSss(state, &raw mut lab_vs, LAB_STATE_CSS);
     if (*(ext::gm_GetGameModeStateExitData(state) as *mut SSSData)).start_game != 0 {
         ext::gm_SetNextGameModeStateId(LAB_STATE_LOADING);
     }
 }
-pub unsafe extern "C" fn lab_enter_loading(_: *mut GameModeState) { ext::gmFrontend_BeginLoading(); }
-pub unsafe extern "C" fn lab_exit_loading(_: *mut GameModeState) { ext::gm_SetNextGameModeStateId(LAB_STATE_MATCH); }
+pub unsafe extern "C" fn lab_enter_loading(_: *mut GameModeState) { melee_core::ct!("lab_enter_loading"); ext::gmFrontend_BeginLoading(); }
+pub unsafe extern "C" fn lab_exit_loading(_: *mut GameModeState) { melee_core::ct!("lab_exit_loading"); ext::gm_SetNextGameModeStateId(LAB_STATE_MATCH); }
 
 pub unsafe extern "C" fn GenoLab_ApplyRules(start: *mut StartMeleeData) {
+    melee_core::ct!("GenoLab_ApplyRules");
     let rules = &mut (*start).rules;
     rules.set_match_kind(MatchKind_Time as _);
     rules.set_is_stock(0);
@@ -125,9 +130,10 @@ pub unsafe extern "C" fn GenoLab_ApplyRules(start: *mut StartMeleeData) {
     rules.set_x4_2(0);
     for player in &mut (*start).players { player.stocks = 0; }
 }
-pub unsafe extern "C" fn lab_start_cb(start: *mut StartMeleeData, _: *mut StartMeleeData) { GenoLab_ApplyRules(start); }
-pub unsafe extern "C" fn lab_player_cb(player: *mut PlayerInitData, _: *mut PlayerInitData) { (*player).stocks = 0; }
+pub unsafe extern "C" fn lab_start_cb(start: *mut StartMeleeData, _: *mut StartMeleeData) { melee_core::ct!("lab_start_cb"); GenoLab_ApplyRules(start); }
+pub unsafe extern "C" fn lab_player_cb(player: *mut PlayerInitData, _: *mut PlayerInitData) { melee_core::ct!("lab_player_cb"); (*player).stocks = 0; }
 pub unsafe extern "C" fn lab_enter_match(state: *mut GameModeState) {
+    melee_core::ct!("lab_enter_match");
     ext::gmVsMelee_EnterVs(state, &raw mut lab_vs, Some(lab_start_cb), Some(lab_player_cb));
     // EnterVs copies players after the callbacks, so stocks must be cleared again.
     GenoLab_ApplyRules(ext::gm_GetGameModeStateEnterData(state).cast());
@@ -136,8 +142,9 @@ pub unsafe extern "C" fn lab_enter_match(state: *mut GameModeState) {
     ext::Script_LabRequest();
     ext::OSReport("geno lab: LAB match - no timer, no stocks, infinite respawn\n");
 }
-pub unsafe extern "C" fn GenoLab_NextAfterMatch() -> i32 { lab_next }
+pub unsafe extern "C" fn GenoLab_NextAfterMatch() -> i32 { melee_core::ct!("GenoLab_NextAfterMatch"); lab_next }
 pub unsafe extern "C" fn lab_exit_match(_: *mut GameModeState) {
+    melee_core::ct!("lab_exit_match");
     lab_in_match = 0;
     if (lab_vs.start.players[4].slot_type != Gm_PKind_NA as u8 || lab_vs.start.players[5].slot_type != Gm_PKind_NA as u8)
         && lab_next != GENO_LAB_TO_MATCH && lab_next != GENO_LAB_TO_MENU {
@@ -156,16 +163,18 @@ pub unsafe extern "C" fn lab_exit_match(_: *mut GameModeState) {
     }));
     lab_next = GENO_LAB_TO_CSS;
 }
-pub unsafe extern "C" fn gm_Mode_Lab_OnInit() { ext::gm_InitVsMode(&raw mut lab_vs); }
+pub unsafe extern "C" fn gm_Mode_Lab_OnInit() { melee_core::ct!("gm_Mode_Lab_OnInit"); ext::gm_InitVsMode(&raw mut lab_vs); }
 pub unsafe extern "C" fn gm_Mode_Lab_OnLoad() {
+    melee_core::ct!("gm_Mode_Lab_OnLoad");
     lab_in_match = 0;
     lab_next = GENO_LAB_TO_CSS;
     ext::Script_LabRequest();
     if ext::SceneLaunch_BootGameMode() == GM_LAB as i32 { ext::SceneLaunch_SeedVs(&raw mut lab_vs, 0); }
 }
-pub unsafe extern "C" fn GenoLab_ModeActive() -> i32 { (ext::gm_GetCurrentGameMode() as u32 == GM_LAB) as i32 }
-pub unsafe extern "C" fn GenoLab_InMatch() -> i32 { (ext::gm_GetCurrentGameMode() as u32 == GM_LAB && lab_in_match != 0) as i32 }
+pub unsafe extern "C" fn GenoLab_ModeActive() -> i32 { melee_core::ct!("GenoLab_ModeActive"); (ext::gm_GetCurrentGameMode() as u32 == GM_LAB) as i32 }
+pub unsafe extern "C" fn GenoLab_InMatch() -> i32 { melee_core::ct!("GenoLab_InMatch"); (ext::gm_GetCurrentGameMode() as u32 == GM_LAB && lab_in_match != 0) as i32 }
 pub unsafe extern "C" fn GenoLab_Leave(r#where: i32) -> i32 {
+    melee_core::ct!("GenoLab_Leave");
     if ext::gm_GetCurrentGameMode() as u32 != GM_LAB || lab_in_match == 0 { return 0; }
     if (lab_vs.start.players[4].slot_type != Gm_PKind_NA as u8 || lab_vs.start.players[5].slot_type != Gm_PKind_NA as u8)
         && r#where != GENO_LAB_TO_MATCH && r#where != GENO_LAB_TO_MENU {
@@ -178,16 +187,20 @@ pub unsafe extern "C" fn GenoLab_Leave(r#where: i32) -> i32 {
 }
 
 pub unsafe extern "C" fn fly_boundary_blocked(netplay: i32, rollback: i32, replay: i32) -> i32 {
+    melee_core::ct!("fly_boundary_blocked");
     (netplay != 0 || rollback != 0 || replay != 0) as i32
 }
 pub unsafe extern "C" fn GenoFly_OfflineAllowed() -> i32 {
+    melee_core::ct!("GenoFly_OfflineAllowed");
     (fly_boundary_blocked(ext::Netplay_Enabled(), ext::RB_Enabled(), ext::Replay_Active()) == 0) as i32
 }
 pub unsafe extern "C" fn fly_cursor_for(fp: *mut Fighter) -> *mut FlyCursor {
+    melee_core::ct!("fly_cursor_for");
     let slot = (*fp).player_id as usize;
     if slot < 6 && fly_cursor[slot].fighter == fp { &raw mut fly_cursor[slot] } else { null_mut() }
 }
 pub unsafe extern "C" fn fly_cursor_pulse(fp: *mut Fighter, c: *mut FlyCursor) {
+    melee_core::ct!("fly_cursor_pulse");
     for h in &mut (*fp).x914 { h.state = HitCapsule_Disabled; }
     let h = &raw mut (*fp).x914[0];
     // A new attack instance must erase BOTH victim histories and all flags.
@@ -209,6 +222,7 @@ pub unsafe extern "C" fn fly_cursor_pulse(fp: *mut Fighter, c: *mut FlyCursor) {
     if (*c).pulses < i32::MAX { (*c).pulses += 1; }
 }
 pub unsafe extern "C" fn fly_cursor_step(fp: *mut Fighter, c: *mut FlyCursor) {
+    melee_core::ct!("fly_cursor_step");
     let cycle = (*c).active.wrapping_add((*c).gap);
     if (*c).every_frame != 0 || (*c).active < 1 || cycle < 1 { fly_cursor_pulse(fp,c); return; }
     if (*c).phase >= cycle { (*c).phase = 0; }
@@ -217,13 +231,15 @@ pub unsafe extern "C" fn fly_cursor_step(fp: *mut Fighter, c: *mut FlyCursor) {
     (*c).phase = (*c).phase.wrapping_add(1);
 }
 pub unsafe extern "C" fn fly_anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fly_anim");
     let fp = (*gobj).user_data as *mut Fighter;
     if (*fp).motion_id != ftCo_MS_Wait as i32 || ext::ftAnim_IsFramesRemaining(gobj) != 0 { return; }
     ext::Fighter_ChangeMotionState(gobj, ftCo_MS_Wait as i32, 0, 0., 1., 0., null_mut());
     hold_callbacks(fp);
 }
-pub unsafe extern "C" fn fly_input(_: *mut HSD_GObj) {}
+pub unsafe extern "C" fn fly_input(_: *mut HSD_GObj) { melee_core::ct!("fly_input");}
 pub unsafe extern "C" fn fly_phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fly_phys");
     let fp = (*gobj).user_data as *mut Fighter;
     let mut sx = (*fp).input.lstick[0].x;
     let mut sy = (*fp).input.lstick[0].y;
@@ -255,6 +271,7 @@ pub unsafe extern "C" fn fly_phys(gobj: *mut HSD_GObj) {
     hold_step(gobj);
 }
 pub unsafe extern "C" fn fly_coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fly_coll");
     let fp = (*gobj).user_data as *mut Fighter;
     let cursor = fly_cursor_for(fp);
     ext::mpColl_80043680(&raw mut (*fp).coll_data, &raw mut (*fp).cur_pos);
@@ -266,13 +283,16 @@ pub unsafe extern "C" fn fly_coll(gobj: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn hold_callbacks(fp: *mut Fighter) {
+    melee_core::ct!("hold_callbacks");
     (*fp).anim_cb=Some(fly_anim); (*fp).input_cb=Some(fly_input);
     (*fp).phys_cb=Some(fly_phys); (*fp).coll_cb=Some(fly_coll);
 }
 pub unsafe extern "C" fn hold_live(fp: *mut Fighter) -> i32 {
+    melee_core::ct!("hold_live");
     (*fp).x914.iter().any(|h| h.state == HitCapsule_Enabled) as i32
 }
 pub unsafe extern "C" fn hold_step(gobj: *mut HSD_GObj) {
+    melee_core::ct!("hold_step");
     let fp = (*gobj).user_data as *mut Fighter;
     let slot=(*fp).player_id as usize;
     if slot>=6 || hold_on[slot]==0 { return; }
@@ -300,6 +320,7 @@ pub unsafe extern "C" fn hold_step(gobj: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn GenoFly_HoldHitbox(slot:i32,on:i32,action:i32,frame:i32)->i32 {
+    melee_core::ct!("GenoFly_HoldHitbox");
     let gobj=fly_gobj(slot);
     if gobj.is_null() { return -1; }
     let fp=(*gobj).user_data as *mut Fighter;
@@ -319,12 +340,14 @@ pub unsafe extern "C" fn GenoFly_HoldHitbox(slot:i32,on:i32,action:i32,frame:i32
     hold_frame[slot]=frame; hold_tick[slot]=0; hold_frozen[slot]=-1;
     0
 }
-pub unsafe extern "C" fn GenoFly_HoldHits(slot:i32)->i32 { if (0..6).contains(&slot) {hold_hits[slot as usize]} else {0} }
-pub unsafe extern "C" fn GenoFly_Holding(slot:i32)->i32 { ((0..6).contains(&slot) && hold_on[slot as usize]!=0) as i32 }
+pub unsafe extern "C" fn GenoFly_HoldHits(slot:i32)->i32 { melee_core::ct!("GenoFly_HoldHits"); if (0..6).contains(&slot) {hold_hits[slot as usize]} else {0} }
+pub unsafe extern "C" fn GenoFly_Holding(slot:i32)->i32 { melee_core::ct!("GenoFly_Holding"); ((0..6).contains(&slot) && hold_on[slot as usize]!=0) as i32 }
 pub unsafe extern "C" fn GenoFly_Fighter(fp:*mut Fighter)->i32 {
+    melee_core::ct!("GenoFly_Fighter");
     (!fp.is_null() && (*fp).phys_cb.is_some_and(|f| core::ptr::fn_addr_eq(f,fly_phys as unsafe extern "C" fn(*mut HSD_GObj)))) as i32
 }
 pub unsafe extern "C" fn fly_gobj(slot:i32)->*mut HSD_GObj {
+    melee_core::ct!("fly_gobj");
     if !(0..6).contains(&slot) || ext::HSD_GObjPLinkHead.is_null() { return null_mut(); }
     let want=ext::Player_GetEntity(slot);
     let mut g=*ext::HSD_GObjPLinkHead.add(HSD_GOBJ_PLINK_FIGHTER as usize);
@@ -332,6 +355,7 @@ pub unsafe extern "C" fn fly_gobj(slot:i32)->*mut HSD_GObj {
     null_mut()
 }
 pub unsafe extern "C" fn GenoFly_Clear(slot:i32) {
+    melee_core::ct!("GenoFly_Clear");
     if !(0..6).contains(&slot) { return; }
     let c=&raw mut fly_cursor[slot as usize];
     let gobj=fly_gobj(slot);
@@ -341,13 +365,15 @@ pub unsafe extern "C" fn GenoFly_Clear(slot:i32) {
     }
     core::ptr::write_bytes(c,0,1);
 }
-pub unsafe extern "C" fn GenoFly_Reset() { for i in 0..6 {GenoFly_Clear(i);} }
+pub unsafe extern "C" fn GenoFly_Reset() { melee_core::ct!("GenoFly_Reset"); for i in 0..6 {GenoFly_Clear(i);} }
 pub unsafe extern "C" fn fly_cursor_actor(slot:i32)->*mut Fighter {
+    melee_core::ct!("fly_cursor_actor");
     let g=fly_gobj(slot);
     let fp=if g.is_null(){null_mut()}else{(*g).user_data as *mut Fighter};
     if !fp.is_null() && (*fp).is_sub_fighter()==0 && GenoFly_Fighter(fp)!=0 {fp}else{null_mut()}
 }
 pub unsafe extern "C" fn GenoFly_Target(slot:i32,x_bits:i32,y_bits:i32)->i32 {
+    melee_core::ct!("GenoFly_Target");
     let fp=fly_cursor_actor(slot);
     let x=f32::from_bits(x_bits as u32); let y=f32::from_bits(y_bits as u32);
     if fp.is_null(){return -1;}
@@ -356,6 +382,7 @@ pub unsafe extern "C" fn GenoFly_Target(slot:i32,x_bits:i32,y_bits:i32)->i32 {
     0
 }
 pub unsafe extern "C" fn GenoFly_AttackConfig(slot:i32,flags:i32,damage:i32,radius_bits:i32,active_gap:i32,kb_kbg:i32,angle:i32)->i32 {
+    melee_core::ct!("GenoFly_AttackConfig");
     let fp=fly_cursor_actor(slot);
     let active=active_gap&0xffff; let gap=(active_gap>>16)&0xffff;
     let kb=kb_kbg&0xffff; let kbg=(kb_kbg>>16)&0xffff;
@@ -374,8 +401,9 @@ pub unsafe extern "C" fn GenoFly_AttackConfig(slot:i32,flags:i32,damage:i32,radi
     c.kb_base=if kb!=0{kb}else{30}; c.kbg=if kbg!=0{kbg}else{100}; c.angle=if angle!=0{angle}else{45};
     c.phase=0; 0
 }
-pub unsafe extern "C" fn GenoFly_AttackSet(slot:i32,on:i32,damage:i32,radius_bits:i32)->i32 {GenoFly_AttackConfig(slot,(on!=0) as i32,damage,radius_bits,0,0,0)}
+pub unsafe extern "C" fn GenoFly_AttackSet(slot:i32,on:i32,damage:i32,radius_bits:i32)->i32 { melee_core::ct!("GenoFly_AttackSet");GenoFly_AttackConfig(slot,(on!=0) as i32,damage,radius_bits,0,0,0)}
 pub unsafe extern "C" fn GenoFly_State(slot:i32,field:i32)->i32 {
+    melee_core::ct!("GenoFly_State");
     if !(0..6).contains(&slot){return -1;}
     if fly_cursor_actor(slot).is_null(){return 0;}
     let c=&raw const fly_cursor[slot as usize];
@@ -383,8 +411,9 @@ pub unsafe extern "C" fn GenoFly_State(slot:i32,field:i32)->i32 {
     match field {0=>(*c).attack,1=>(*c).target,2=>(*c).damage,3=>(*c).radius.to_bits() as i32,4=>(*c).x.to_bits() as i32,5=>(*c).y.to_bits() as i32,
         6=>(*c).pulses,7=>(*c).every_frame,8=>(*c).active,9=>(*c).gap,10=>(*c).kb_base,11=>(*c).kbg,12=>(*c).angle,13=>(*c).phase,_=>-1}
 }
-pub unsafe extern "C" fn GenoFly_Pulses(slot:i32)->i32 {GenoFly_State(slot,6)}
+pub unsafe extern "C" fn GenoFly_Pulses(slot:i32)->i32 { melee_core::ct!("GenoFly_Pulses");GenoFly_State(slot,6)}
 pub unsafe extern "C" fn fly_refused(fp:*mut Fighter)->i32 {
+    melee_core::ct!("fly_refused");
     if (*fp).x221F_b3()!=0 || (*fp).kind==Ft_Kind_MasterH || (*fp).kind==Ft_Kind_CrezyH {return 1;}
     let motion=(*fp).motion_id;
     for (lo,hi) in [(ftCo_MS_DeadDown,ftCo_MS_RebirthWait),(ftCo_MS_CapturePulledHi,ftCo_MS_CaptureFoot),(ftCo_MS_ThrownF,ftCo_MS_ThrownlwWomen),(ftCo_MS_ShoulderedWait,ftCo_MS_ThrownCrazyHand)] {
@@ -393,12 +422,14 @@ pub unsafe extern "C" fn fly_refused(fp:*mut Fighter)->i32 {
     (!(*fp).victim_gobj.is_null() || !(*fp).x1A5C.is_null()) as i32
 }
 pub unsafe extern "C" fn fly_drop(gobj:*mut HSD_GObj) {
+    melee_core::ct!("fly_drop");
     let fp=(*gobj).user_data as *mut Fighter;
     (*fp).self_vel=Vec3::zeroed(); (*fp).x8c_kb_vel=Vec3::zeroed(); (*fp).prev_pos=(*fp).cur_pos;
     ext::mpColl_80043680(&raw mut (*fp).coll_data,&raw mut (*fp).cur_pos);
     ext::ftCo_Fall_Enter(gobj); (*fp).x1988=0;
 }
 pub unsafe extern "C" fn fly_boundary_fighter(gobj:*mut HSD_GObj,blocked:i32,drop:Option<unsafe extern "C" fn(*mut HSD_GObj)>)->i32 {
+    melee_core::ct!("fly_boundary_fighter");
     let fp=(*gobj).user_data as *mut Fighter;
     if blocked==0 || GenoFly_Fighter(fp)==0{return 0;}
     let c=fly_cursor_for(fp);
@@ -406,6 +437,7 @@ pub unsafe extern "C" fn fly_boundary_fighter(gobj:*mut HSD_GObj,blocked:i32,dro
     drop.expect("fly boundary drop callback")(gobj); 1
 }
 pub unsafe extern "C" fn GenoFly_Watch()->i32 {
+    melee_core::ct!("GenoFly_Watch");
     if GenoFly_OfflineAllowed()!=0{return 0;}
     if !ext::HSD_GObjPLinkHead.is_null(){
         let mut g=*ext::HSD_GObjPLinkHead.add(HSD_GOBJ_PLINK_FIGHTER as usize);
@@ -414,6 +446,7 @@ pub unsafe extern "C" fn GenoFly_Watch()->i32 {
     GenoFly_Reset(); 1
 }
 pub unsafe extern "C" fn GenoFly_Set(slot:i32,mode:i32)->i32 {
+    melee_core::ct!("GenoFly_Set");
     let gobj=fly_gobj(slot); if gobj.is_null(){return -1;}
     let fp=(*gobj).user_data as *mut Fighter;
     if mode==GENO_FLY_ON {
@@ -437,20 +470,23 @@ pub unsafe extern "C" fn GenoFly_Set(slot:i32,mode:i32)->i32 {
     }
     fly_drop(gobj); 0
 }
-pub unsafe extern "C" fn GenoFly_Get(slot:i32)->i32 {let g=fly_gobj(slot); if g.is_null(){-1}else{GenoFly_Fighter((*g).user_data.cast())}}
+pub unsafe extern "C" fn GenoFly_Get(slot:i32)->i32 { melee_core::ct!("GenoFly_Get");let g=fly_gobj(slot); if g.is_null(){-1}else{GenoFly_Fighter((*g).user_data.cast())}}
 pub unsafe extern "C" fn GenoFly_Any()->i32 {
+    melee_core::ct!("GenoFly_Any");
     if ext::HSD_GObjPLinkHead.is_null(){return 0;}
     let mut g=*ext::HSD_GObjPLinkHead.add(HSD_GOBJ_PLINK_FIGHTER as usize);
     while !g.is_null(){if GenoFly_Fighter((*g).user_data.cast())!=0{return 1;}g=(*g).next;}
     0
 }
 pub unsafe extern "C" fn GenoFly_CameraSubject(subject:*mut c_void)->i32 {
+    melee_core::ct!("GenoFly_CameraSubject");
     if ext::HSD_GObjPLinkHead.is_null(){return 0;}
     let mut g=*ext::HSD_GObjPLinkHead.add(HSD_GOBJ_PLINK_FIGHTER as usize);
     while !g.is_null(){let fp=(*g).user_data as *mut Fighter; if GenoFly_Fighter(fp)!=0 && (*fp).x890_cameraBox.cast::<c_void>()==subject{return 1;}g=(*g).next;}
     0
 }
 pub unsafe extern "C" fn GenoFly_Teleport(slot:i32,x_bits:i32,y_bits:i32)->i32 {
+    melee_core::ct!("GenoFly_Teleport");
     let g=fly_gobj(slot); if g.is_null(){return -1;}
     let fp=(*g).user_data as *mut Fighter;
     if GenoFly_Fighter(fp)==0 && fly_refused(fp)!=0{return -2;}
@@ -458,15 +494,16 @@ pub unsafe extern "C" fn GenoFly_Teleport(slot:i32,x_bits:i32,y_bits:i32)->i32 {
     if GenoFly_Fighter(fp)!=0 {ext::mpColl_80043680(&raw mut (*fp).coll_data,&raw mut (*fp).cur_pos);}else{fly_drop(g);}
     0
 }
-pub unsafe extern "C" fn GenoFly_SetSpeed(speed_bits:i32) {let s=f32::from_bits(speed_bits as u32); fly_speed=if s<0.05{0.05}else if s>200.{200.}else{s};}
-pub unsafe extern "C" fn GenoFly_Speed()->f32 {fly_speed}
-pub unsafe extern "C" fn GenoFly_SetSolid(solid:i32) {fly_solid=(solid!=0) as i32;}
-pub unsafe extern "C" fn GenoFly_Solid()->i32 {fly_solid}
-pub unsafe extern "C" fn GenoFly_TestArm(fp:*mut Fighter) {hold_callbacks(fp);}
-pub unsafe extern "C" fn fly_boundary_test_drop(gobj:*mut HSD_GObj) {let fp=(*gobj).user_data as *mut Fighter; (*fp).phys_cb=None;(*fp).x1988=0;}
+pub unsafe extern "C" fn GenoFly_SetSpeed(speed_bits:i32) { melee_core::ct!("GenoFly_SetSpeed");let s=f32::from_bits(speed_bits as u32); fly_speed=if s<0.05{0.05}else if s>200.{200.}else{s};}
+pub unsafe extern "C" fn GenoFly_Speed()->f32 { melee_core::ct!("GenoFly_Speed");fly_speed}
+pub unsafe extern "C" fn GenoFly_SetSolid(solid:i32) { melee_core::ct!("GenoFly_SetSolid");fly_solid=(solid!=0) as i32;}
+pub unsafe extern "C" fn GenoFly_Solid()->i32 { melee_core::ct!("GenoFly_Solid");fly_solid}
+pub unsafe extern "C" fn GenoFly_TestArm(fp:*mut Fighter) { melee_core::ct!("GenoFly_TestArm");hold_callbacks(fp);}
+pub unsafe extern "C" fn fly_boundary_test_drop(gobj:*mut HSD_GObj) { melee_core::ct!("fly_boundary_test_drop");let fp=(*gobj).user_data as *mut Fighter; (*fp).phys_cb=None;(*fp).x1988=0;}
 
 /// The C headless cursor fixture, including its saved/restored TU state.
 pub unsafe extern "C" fn GenoFly_CursorTest() -> i32 {
+    melee_core::ct!("GenoFly_CursorTest");
     static mut fp: Fighter = unsafe { core::mem::zeroed() };
     static mut gobj: HSD_GObj = unsafe { core::mem::zeroed() };
     let saved=fly_cursor[0]; let speed=fly_speed; let solid=fly_solid;
@@ -529,6 +566,7 @@ pub unsafe extern "C" fn GenoFly_CursorTest() -> i32 {
 }
 
 pub unsafe extern "C" fn GenoLab_SixSeedTest(six:i32)->i32 {
+    melee_core::ct!("GenoLab_SixSeedTest");
     static mut fixture:VsModeData=unsafe{core::mem::zeroed()};
     core::ptr::write_bytes(&raw mut fixture,0,1);
     ext::gm_SetupAllPlayerDefaults((&raw mut fixture.start.players).cast());

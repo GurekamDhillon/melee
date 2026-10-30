@@ -99,19 +99,24 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 
 /// `ftCo_800BBB8C` as the grabbed callback (a `void (*)(HSD_GObj*, HSD_GObj*)`).
 pub unsafe extern "C" fn cb_ftCo_800BBB8C(a: *mut HSD_GObj, b: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftCo_800BBB8C");
     ext::ftCo_800BBB8C(a, b);
 }
 /// The statics `fn_8012CEE0` / `fn_8012CF7C` / `fn_8012D004` / `fn_8012D0A0` as callback entries.
 pub unsafe extern "C" fn cb_fn_8012CEE0(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_8012CEE0");
     fn_8012CEE0(g);
 }
 pub unsafe extern "C" fn cb_fn_8012CF7C(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_8012CF7C");
     fn_8012CF7C(g);
 }
 pub unsafe extern "C" fn cb_fn_8012D004(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_8012D004");
     fn_8012D004(g);
 }
 pub unsafe extern "C" fn cb_fn_8012D0A0(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_8012D0A0");
     fn_8012D0A0(g);
 }
 /// `fn_8012D128` / `fn_8012D1AC` as callback entries: the shared `chars::cb` ones, which call them.
@@ -130,6 +135,7 @@ pub const ftYs_MF_SpecialN_Coll: u32 = 0xC4C5092;
 pub const ftYs_MF_SpecialN_CollHit: u32 = ftYs_MF_SpecialN_Coll | Ft_MF_SkipHit;
 
 pub fn ftYs_SpecialN_GetBoneIndex(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("ftYs_SpecialN_GetBoneIndex");
     unsafe { ext::ftParts_GetBoneIndex(fpp(gobj), FtPart_TransN2 as i32) }
 }
 
@@ -140,26 +146,32 @@ unsafe fn ext_attr() -> &'static ftYoshiAttributes {
 }
 
 pub fn ftYs_SpecialN_GetExtAttr28() -> f32 {
+    melee_core::ct!("ftYs_SpecialN_GetExtAttr28");
     unsafe { ext_attr().x28 }
 }
 
 pub fn ftYs_SpecialN_GetExtAttr2C() -> f32 {
+    melee_core::ct!("ftYs_SpecialN_GetExtAttr2C");
     unsafe { ext_attr().x2C }
 }
 
 pub fn ftYs_SpecialN_8012CD40() -> f32 {
+    melee_core::ct!("ftYs_SpecialN_8012CD40");
     unsafe { ext_attr().x30 }
 }
 
 pub fn ftYs_SpecialN_GetExtAttr34() -> f32 {
+    melee_core::ct!("ftYs_SpecialN_GetExtAttr34");
     unsafe { ext_attr().x34 }
 }
 
 pub fn ftYs_SpecialN_GetExtAttr38() -> i32 {
+    melee_core::ct!("ftYs_SpecialN_GetExtAttr38");
     unsafe { ext_attr().x38 as i32 }
 }
 
 pub fn ftYs_SpecialN_8012CD88(arg0: *mut Vec3) {
+    melee_core::ct!("ftYs_SpecialN_8012CD88");
     unsafe {
         let ea = ext_attr();
         (*arg0).x = ea.x3C.x;
@@ -169,6 +181,7 @@ pub fn ftYs_SpecialN_8012CD88(arg0: *mut Vec3) {
 }
 
 pub fn ftYs_SpecialN_8012CDB4() -> f32 {
+    melee_core::ct!("ftYs_SpecialN_8012CDB4");
     unsafe {
         let ea = ext_attr();
         ea.x44 / ea.x18
@@ -176,6 +189,7 @@ pub fn ftYs_SpecialN_8012CDB4() -> f32 {
 }
 
 pub fn ftYs_SpecialN_8012CDD4(gobj: *mut HSD_GObj) -> *mut HSD_Joint {
+    melee_core::ct!("ftYs_SpecialN_8012CDD4");
     unsafe {
         let fp = fpp(gobj);
         let ca = (*fp).ft_data;
@@ -184,6 +198,7 @@ pub fn ftYs_SpecialN_8012CDD4(gobj: *mut HSD_GObj) -> *mut HSD_Joint {
 }
 
 pub fn setupCallbacks(gobj: *mut HSD_GObj, grab_cb: HSD_GObjEvent, arg1: HSD_GObjEvent, grabbed_cb: HSD_GObjInteraction) {
+    melee_core::ct!("setupCallbacks");
     unsafe {
         let fp = fpp(gobj);
         ext::ftCommon_8007E2D0(fp, 4, grab_cb, arg1, grabbed_cb);
@@ -191,6 +206,7 @@ pub fn setupCallbacks(gobj: *mut HSD_GObj, grab_cb: HSD_GObjEvent, arg1: HSD_GOb
 }
 
 pub fn ftYs_SpecialN_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialN_Enter");
     unsafe {
         let fp = fpp(gobj);
         (*fp).cmd_vars[0] = 0;
@@ -201,6 +217,7 @@ pub fn ftYs_SpecialN_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftYs_SpecialAirN_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirN_Enter");
     unsafe {
         let fp = fpp(gobj);
         (*fp).cmd_vars[0] = 0;
@@ -211,6 +228,7 @@ pub fn ftYs_SpecialAirN_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn fn_8012CEE0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8012CEE0");
     unsafe {
         let fp = fpp(gobj);
         ext::it_802F2BFC((*fp).target_item_gobj, gobj);
@@ -224,6 +242,7 @@ pub fn fn_8012CEE0(gobj: *mut HSD_GObj) {
 }
 
 pub fn fn_8012CF7C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8012CF7C");
     unsafe {
         let fp = fpp(gobj);
         ext::Fighter_ChangeMotionState(gobj, ftYs_MS_SpecialN1_0 as i32, motion_flags1, (*fp).cur_anim_frame, 1.0, 0.0, core::ptr::null_mut());
@@ -235,6 +254,7 @@ pub fn fn_8012CF7C(gobj: *mut HSD_GObj) {
 }
 
 pub fn fn_8012D004(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8012D004");
     unsafe {
         let fp = fpp(gobj);
         ext::it_802F2BFC((*fp).target_item_gobj, gobj);
@@ -248,6 +268,7 @@ pub fn fn_8012D004(gobj: *mut HSD_GObj) {
 }
 
 pub fn fn_8012D0A0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8012D0A0");
     unsafe {
         let fp = fpp(gobj);
         ext::Fighter_ChangeMotionState(gobj, ftYs_MS_SpecialAirN1_1 as i32, motion_flags2, (*fp).cur_anim_frame, 1.0, 0.0, core::ptr::null_mut());
@@ -259,6 +280,7 @@ pub fn fn_8012D0A0(gobj: *mut HSD_GObj) {
 }
 
 pub fn fn_8012D128(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8012D128");
     unsafe {
         let fp = fpp(gobj);
         ftinl::ftCommon_GroundToAirStateChange(gobj, fp, ftYs_MS_SpecialAirN1_0 as i32, ftYs_MF_SpecialN_CollHit);
@@ -267,6 +289,7 @@ pub fn fn_8012D128(gobj: *mut HSD_GObj) {
 }
 
 pub fn fn_8012D1AC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8012D1AC");
     unsafe {
         let fp = fpp(gobj);
         ftinl::ftCommon_AirToGroundStateChange(gobj, fp, ftYs_MS_SpecialN1 as i32, ftYs_MF_SpecialN_CollHit);
@@ -276,28 +299,34 @@ pub fn fn_8012D1AC(gobj: *mut HSD_GObj) {
 
 /// `checkAnimEnd(gobj, cb)` (static).
 pub fn checkAnimEnd(gobj: *mut HSD_GObj, cb: fn(*mut HSD_GObj)) {
+    melee_core::ct!("checkAnimEnd");
     if !ext::ftAnim_IsFramesRemaining(gobj) {
         cb(gobj);
     }
 }
 
 pub fn ftYs_SpecialN1_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialN1_Anim");
     checkAnimEnd(gobj, ext::ft_8008A2BC);
 }
 
 pub fn ftYs_SpecialAirN1_0_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirN1_0_Anim");
     checkAnimEnd(gobj, ext::ftCo_Fall_Enter);
 }
 
 /// `getFtTargetItem` / `getFtVictim` (ft/inlines.h).
 pub fn getFtTargetItem(fp: *mut Fighter) -> *mut HSD_GObj {
+    melee_core::ct!("getFtTargetItem");
     unsafe { (*fp).target_item_gobj }
 }
 pub fn getFtVictim(fp: *mut Fighter) -> *mut HSD_GObj {
+    melee_core::ct!("getFtVictim");
     unsafe { (*fp).victim_gobj }
 }
 
 pub fn changeMotionState(gobj: *mut HSD_GObj, msid: i32, target_getter: fn(*mut Fighter) -> *mut HSD_GObj, arg3: bool) {
+    melee_core::ct!("changeMotionState");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).cmd_vars[0] != 0 && !target_getter(fp).is_null() {
@@ -313,23 +342,28 @@ pub fn changeMotionState(gobj: *mut HSD_GObj, msid: i32, target_getter: fn(*mut 
 }
 
 pub fn ftYs_SpecialN1_1_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialN1_1_Anim");
     changeMotionState(gobj, ftYs_MS_SpecialN2_1 as i32, getFtTargetItem, true);
 }
 
 pub fn ftYs_SpecialN1_0_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialN1_0_Anim");
     changeMotionState(gobj, ftYs_MS_SpecialN2_0 as i32, getFtVictim, false);
 }
 
 pub fn ftYs_SpecialAirN1_2_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirN1_2_Anim");
     changeMotionState(gobj, ftYs_MS_SpecialAirN2_1 as i32, getFtTargetItem, true);
 }
 
 pub fn ftYs_SpecialAirN1_1_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirN1_1_Anim");
     changeMotionState(gobj, ftYs_MS_SpecialAirN2_0 as i32, getFtVictim, false);
 }
 
 /// `inlineB0(gobj, on_anim_end)` (static inline): lays the egg.
 pub fn inlineB0(gobj: *mut HSD_GObj, on_anim_end: fn(*mut HSD_GObj)) {
+    melee_core::ct!("inlineB0");
     unsafe {
         let fp = fpp(gobj);
         let mut item_attrs: itYoshiEggLay_DatAttrs = core::mem::zeroed();
@@ -366,11 +400,13 @@ pub fn inlineB0(gobj: *mut HSD_GObj, on_anim_end: fn(*mut HSD_GObj)) {
 }
 
 pub fn ftYs_SpecialN2_1_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialN2_1_Anim");
     inlineB0(gobj, ext::ft_8008A2BC);
 }
 
 /// `inlineA0(fp)` (static): release the grabbed victim.
 pub fn inlineA0(fp: *mut Fighter) {
+    melee_core::ct!("inlineA0");
     unsafe {
         let victim_gobj = getFtVictim(fp);
         if !victim_gobj.is_null() {
@@ -382,6 +418,7 @@ pub fn inlineA0(fp: *mut Fighter) {
 
 /// `inlineA1(gobj, anim_end_cb)` (static): the tongue's victim handling.
 pub fn inlineA1(gobj: *mut HSD_GObj, anim_end_cb: fn(*mut HSD_GObj)) {
+    melee_core::ct!("inlineA1");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).cmd_vars[1] != 0 {
@@ -403,13 +440,16 @@ pub fn inlineA1(gobj: *mut HSD_GObj, anim_end_cb: fn(*mut HSD_GObj)) {
 }
 
 pub fn ftYs_SpecialN2_0_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialN2_0_Anim");
     inlineA1(gobj, ext::ft_8008A2BC);
 }
 
 pub fn ftYs_SpecialAirN2_1_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirN2_1_Anim");
     inlineB0(gobj, ext::ftCo_Fall_Enter);
 }
 
 pub fn ftYs_SpecialAirN2_0_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirN2_0_Anim");
     inlineA1(gobj, ext::ftCo_Fall_Enter);
 }

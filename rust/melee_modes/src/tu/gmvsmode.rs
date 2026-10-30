@@ -59,18 +59,23 @@ pub mod ext {
 
 // The state callbacks of other TUs, as C-ABI function items the state tables can point at.
 pub unsafe extern "C" fn gm_ModeState_Approach_OnEnter(s: *mut GameModeState) {
+    melee_core::ct!("gm_ModeState_Approach_OnEnter");
     ext::gm_ModeState_Approach_OnEnter(s)
 }
 pub unsafe extern "C" fn gm_ModeState_ApproachVs_OnEnter(s: *mut GameModeState) {
+    melee_core::ct!("gm_ModeState_ApproachVs_OnEnter");
     ext::gm_ModeState_ApproachVs_OnEnter(s)
 }
 pub unsafe extern "C" fn gm_ModeState_ApproachVs_OnExit(s: *mut GameModeState) {
+    melee_core::ct!("gm_ModeState_ApproachVs_OnExit");
     ext::gm_ModeState_ApproachVs_OnExit(s)
 }
 pub unsafe extern "C" fn gm_ModeState_Prize_OnEnter(s: *mut GameModeState) {
+    melee_core::ct!("gm_ModeState_Prize_OnEnter");
     ext::gm_ModeState_Prize_OnEnter(s)
 }
 pub unsafe extern "C" fn gm_ModeState_Prize_OnExit(s: *mut GameModeState) {
+    melee_core::ct!("gm_ModeState_Prize_OnExit");
     ext::gm_ModeState_Prize_OnExit(s)
 }
 
@@ -156,6 +161,7 @@ pub static mut gm_Mode_DebugVs_States: [GameModeState; 3] = [
 
 /// 1B13B8
 pub unsafe extern "C" fn onEnterDebugVs(state: *mut GameModeState) {
+    melee_core::ct!("onEnterDebugVs");
     let start = ext::gm_GetGameModeStateEnterData(state) as *mut StartMeleeData;
 
     ext::gm_SetupRulesDefaults(&mut (*start).rules);
@@ -190,23 +196,27 @@ pub unsafe extern "C" fn onEnterDebugVs(state: *mut GameModeState) {
 
 /// 1B14A0
 pub unsafe extern "C" fn onEnterCss(state: *mut GameModeState) {
+    melee_core::ct!("onEnterCss");
     ext::gmVsMelee_EnterCss(state, ext::gmVsMelee_GetVsData(), VS_MELEE);
     ext::gmFrontend_SelectScene(state, 0); // the port's own character select
 }
 
 /// 1B14DC
 pub unsafe extern "C" fn onExitCss(state: *mut GameModeState) {
+    melee_core::ct!("onExitCss");
     ext::gmVsMelee_ExitCss(state, ext::gmVsMelee_GetVsData());
 }
 
 /// 1B1514
 pub unsafe extern "C" fn onEnterSss(state: *mut GameModeState) {
+    melee_core::ct!("onEnterSss");
     ext::gmVsMelee_EnterSss(state, ext::gmVsMelee_GetVsData());
     ext::gmFrontend_SelectScene(state, 1); // the port's own stage select
 }
 
 /// 1B154C
 pub unsafe extern "C" fn onExitSss(state: *mut GameModeState) {
+    melee_core::ct!("onExitSss");
     ext::gmVsMelee_ExitSss(state, ext::gmVsMelee_GetVsData(), gmVsMode_State_Css);
     // Starting the match goes through the loading screen first.
     if (*(ext::gm_GetGameModeStateExitData(state) as *mut SSSData)).start_game != 0 {
@@ -216,21 +226,25 @@ pub unsafe extern "C" fn onExitSss(state: *mut GameModeState) {
 
 /// `onEnterLoading` (static, TARGET_PC)
 pub unsafe extern "C" fn onEnterLoading(_state: *mut GameModeState) {
+    melee_core::ct!("onEnterLoading");
     ext::gmFrontend_BeginLoading();
 }
 
 /// `onExitLoading` (static, TARGET_PC)
 pub unsafe extern "C" fn onExitLoading(_state: *mut GameModeState) {
+    melee_core::ct!("onExitLoading");
     ext::gm_SetNextGameModeStateId(gmVsMode_State_Vs);
 }
 
 /// 1B1588
 pub unsafe extern "C" fn onEnterVs(state: *mut GameModeState) {
+    melee_core::ct!("onEnterVs");
     ext::gmVsMelee_EnterVs(state, ext::gmVsMelee_GetVsData(), None, None);
 }
 
 /// 1B15C8
 pub unsafe extern "C" fn onExitVs(state: *mut GameModeState) {
+    melee_core::ct!("onExitVs");
     ext::gmVsMelee_ExitVs(state, gmVsMode_State_Results, gmVsMode_State_SuddenDeath);
     let mei = ext::gm_GetGameModeStateExitData(state) as *mut MatchExitInfo;
     for i in 0..GM_MAX_PLAYERS as usize {
@@ -244,21 +258,25 @@ pub unsafe extern "C" fn onExitVs(state: *mut GameModeState) {
 
 /// 1B1648
 pub unsafe extern "C" fn onEnterSuddenDeath(state: *mut GameModeState) {
+    melee_core::ct!("onEnterSuddenDeath");
     ext::gmVsMelee_EnterSuddenDeath(state, ext::gmVsMelee_GetVsData(), None, None);
 }
 
 /// 1B1688
 pub unsafe extern "C" fn onExitSuddenDeath(state: *mut GameModeState) {
+    melee_core::ct!("onExitSuddenDeath");
     ext::gmVsMelee_ExitSuddenDeath(state);
 }
 
 /// 1B16A8
 pub unsafe extern "C" fn onEnterResults(state: *mut GameModeState) {
+    melee_core::ct!("onEnterResults");
     ext::gmVsMelee_EnterResults(state);
 }
 
 /// 1B16C8
 pub unsafe extern "C" fn onExitResults(state: *mut GameModeState) {
+    melee_core::ct!("onExitResults");
     ext::gmVsMelee_ExitResults(state, ext::gmVsMelee_GetVsData(), gmVsMode_State_Css);
     if !ext::gm_WasMatchCanceled(gmVsMelee_ResultsEnterData.match_end.outcome) {
         ext::gm_801623A4(&mut gmVsMelee_ResultsEnterData.match_end);

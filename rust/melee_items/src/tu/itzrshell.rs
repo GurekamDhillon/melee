@@ -95,6 +95,7 @@ pub mod ext {
 
 /// Points the `ext` hooks of the functions that live in `itzgshell.rs` at their ports.
 pub fn link() {
+    melee_core::ct!("link");
     unsafe {
         use ext::hook::*;
         itZGShell_Logic11_DmgDealt = Some(|g| unsafe { zg::itZGShell_Logic11_DmgDealt(g) as i32 });
@@ -131,59 +132,73 @@ pub static mut it_803F87F0: [ItemStateTable; 13] = [
 ];
 
 pub unsafe extern "C" fn it_802E02E8(gobj: *mut Item_GObj) {
+    melee_core::ct!("it_802E02E8");
     ext::it_802DE040(gobj);
 }
 
 pub unsafe extern "C" fn itZRShell_Logic12_PickedUp(gobj: *mut Item_GObj) {
+    melee_core::ct!("itZRShell_Logic12_PickedUp");
     ext::it_2725_Logic11_PickedUp(gobj);
 }
 
 pub unsafe extern "C" fn itZRShell_Logic12_Thrown(gobj: *mut Item_GObj) {
+    melee_core::ct!("itZRShell_Logic12_Thrown");
     ext::itZGShell_Logic11_Thrown(gobj);
 }
 
 pub unsafe extern "C" fn itZRShell_Logic12_Dropped(gobj: *mut Item_GObj) {
+    melee_core::ct!("itZRShell_Logic12_Dropped");
     ext::itZGShell_Logic11_Dropped(gobj);
 }
 
 pub unsafe extern "C" fn itZRShell_Logic12_EnteredAir(gobj: *mut Item_GObj) {
+    melee_core::ct!("itZRShell_Logic12_EnteredAir");
     ext::it_2725_Logic11_EnteredAir(gobj);
 }
 
 pub unsafe extern "C" fn itZRShell_Logic12_Destroyed(gobj: *mut Item_GObj) {
+    melee_core::ct!("itZRShell_Logic12_Destroyed");
     ext::grZakoGenerator_801CACB8(gobj);
 }
 
 pub unsafe extern "C" fn itZRShell_Logic12_DmgDealt(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itZRShell_Logic12_DmgDealt");
     ext::itZGShell_Logic11_DmgDealt(gobj) != 0
 }
 
 pub unsafe extern "C" fn itZRShell_Logic12_DmgReceived(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itZRShell_Logic12_DmgReceived");
     ext::itZGShell_Logic11_DmgReceived(gobj) != 0
 }
 
 pub unsafe extern "C" fn itZRShell_Logic12_Reflected(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itZRShell_Logic12_Reflected");
     ext::itZGShell_Logic11_Reflected(gobj) != 0
 }
 
 pub unsafe extern "C" fn itZRShell_Logic12_Clanked(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itZRShell_Logic12_Clanked");
     ext::it_2725_Logic11_Clanked(gobj) != 0
 }
 
 pub unsafe extern "C" fn itZRShell_Logic12_HitShield(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itZRShell_Logic12_HitShield");
     ext::it_2725_Logic11_HitShield(gobj) != 0
 }
 
 pub unsafe extern "C" fn itZRShell_Logic12_ShieldBounced(gobj: *mut Item_GObj) -> bool {
+    melee_core::ct!("itZRShell_Logic12_ShieldBounced");
     ext::itZGShell_Logic11_ShieldBounced(gobj) != 0
 }
 
 pub unsafe extern "C" fn it_802E0468(gobj: *mut Item_GObj, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802E0468");
     ext::it_8026B894(gobj, ref_gobj);
 }
 
 /// 2E0488: spawns a red shell.
 pub unsafe extern "C" fn it_802E0488(arg0: i32, arg1: *mut Vec3, arg2: i32) -> *mut Item_GObj {
+    melee_core::ct!("it_802E0488");
     let mut pos: Vec3 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let it_gp = ext::it_8027B5B0(It_Kind_ZRShell, arg1, null_mut(), &mut pos, 1);
     if !it_gp.is_null() {

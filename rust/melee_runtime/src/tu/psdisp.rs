@@ -203,6 +203,7 @@ pub static mut prevColorMat: GXColor = _GXColor { r: 0, g: 0, b: 0, a: 0 };
 pub static mut HSD_PSDisp_804D7948: [s32; 2] = [0; 2];
 
 pub unsafe fn setVtxDesc(mut fmt: s32) {
+    melee_core::ct!("setVtxDesc");
     GXClearVtxDesc();
     match fmt {
         0 => {
@@ -245,6 +246,7 @@ pub unsafe fn calcTornadoLastPos(
     mut y: *mut f32,
     mut z: *mut f32,
 ) {
+    melee_core::ct!("calcTornadoLastPos");
     let mut radius: f32 = 0.;
     let mut px: f32 = 0.;
     let mut py: f32 = 0.;
@@ -318,6 +320,7 @@ pub unsafe fn getColorPrimEnv(
     mut primCol: *mut GXColor,
     mut envCol: *mut GXColor,
 ) {
+    melee_core::ct!("getColorPrimEnv");
     if (*pp).primColCount != 0 {
         let mut scale: i32 = 65536 as i32
             * (*pp).primColRemain as i32
@@ -378,6 +381,7 @@ pub unsafe fn getColorMatAmb(
     mut matCol: *mut GXColor,
     mut ambCol: *mut GXColor,
 ) {
+    melee_core::ct!("getColorMatAmb");
     if (*pp).matColCount != 0 {
         let mut scale: i32 = 65536 as i32
             * (*pp).matColRemain as i32
@@ -423,6 +427,7 @@ pub unsafe fn getColorMatAmb(
 }
 
 pub unsafe fn getClrTrail(mut pp: *mut HSD_Particle, mut color: *mut GXColor) {
+    melee_core::ct!("getClrTrail");
     let mut env_color: GXColor = _GXColor { r: 0, g: 0, b: 0, a: 0 };
     match (*pp).kind
         & (DispLighting as i32 | PrimEnv as i32) as u32
@@ -441,6 +446,7 @@ pub unsafe fn getClrTrail(mut pp: *mut HSD_Particle, mut color: *mut GXColor) {
 }
 
 pub unsafe fn psSetColor(mut color: *mut GXColor, mut value: u8) {
+    melee_core::ct!("psSetColor");
     (*color).r = value;
     (*color).g = value;
     (*color).b = value;
@@ -453,6 +459,7 @@ pub unsafe fn psSetupVtxFormat(
     mut has_texture: i32,
     mut texture_type: GXCompType,
 ) {
+    melee_core::ct!("psSetupVtxFormat");
     GXSetVtxAttrFmt(format, GX_VA_POS, GX_TEX_ST, GX_RGBA6, 0 as i32 as u8);
     if has_color != 0 {
         GXSetVtxAttrFmt(format, GX_VA_CLR0, GX_TEX_ST, GX_RGBA8, 0 as i32 as u8);
@@ -463,6 +470,7 @@ pub unsafe fn psSetupVtxFormat(
 }
 
 pub unsafe fn setupChanCtrl(mut pp: *mut HSD_Particle) {
+    melee_core::ct!("setupChanCtrl");
     let mut chan_state: u32 = (*pp).kind
         & (DispLighting as i32 | Trail as i32) as u32;
     if chan_state != prevChanCtrl as u32 {
@@ -544,6 +552,7 @@ pub unsafe fn setupChanCtrl(mut pp: *mut HSD_Particle) {
 }
 
 pub unsafe fn setupChanReg(mut pp: *mut HSD_Particle) {
+    melee_core::ct!("setupChanReg");
     let mut prim_color: GXColor = _GXColor { r: 0, g: 0, b: 0, a: 0 };
     let mut amb_color: GXColor = _GXColor { r: 0, g: 0, b: 0, a: 0 };
     let mut mat_color: GXColor = _GXColor { r: 0, g: 0, b: 0, a: 0 };
@@ -589,6 +598,7 @@ pub unsafe fn setupChanReg(mut pp: *mut HSD_Particle) {
 }
 
 pub unsafe fn setupTevReg(mut pp: *mut HSD_Particle) {
+    melee_core::ct!("setupTevReg");
     let mut prim_color: GXColor = _GXColor { r: 0, g: 0, b: 0, a: 0 };
     let mut env_color: GXColor = _GXColor { r: 0, g: 0, b: 0, a: 0 };
     let mut mat_color: GXColor = _GXColor { r: 0, g: 0, b: 0, a: 0 };
@@ -671,6 +681,7 @@ pub unsafe fn particleSort(
     mut arg2: *mut *mut HSD_Particle,
     mut arg3: *mut *mut HSD_Particle,
 ) -> *mut HSD_Particle {
+    melee_core::ct!("particleSort");
     let mut buckets: [psdisp_ParticleSortBucket; 16] = [psdisp_ParticleSortBucket {
         head: ::core::ptr::null_mut::<HSD_Particle>(),
         tail: ::core::ptr::null_mut::<HSD_Particle>(),
@@ -813,6 +824,7 @@ pub unsafe fn particleSort(
 }
 
 pub unsafe fn psDispSubPoint(mut pp: *mut HSD_Particle) -> *mut HSD_Particle {
+    melee_core::ct!("psDispSubPoint");
     let mut buf: [Vec3; 16] = [Vec3 { x: 0., y: 0., z: 0. }; 16];
     let mut p: *mut Vec3 = ::core::ptr::null_mut::<Vec3>();
     let mut last: *mut HSD_Particle = ::core::ptr::null_mut::<HSD_Particle>();
@@ -921,6 +933,7 @@ pub unsafe fn psDispSubPoint(mut pp: *mut HSD_Particle) -> *mut HSD_Particle {
 pub unsafe fn psDispSubPointTrail(
     mut pp: *mut HSD_Particle,
 ) -> *mut HSD_Particle {
+    melee_core::ct!("psDispSubPointTrail");
     let mut vbuf: [Vec3; 32] = [Vec3 { x: 0., y: 0., z: 0. }; 32];
     let mut cbuf: [GXColor; 32] = [_GXColor { r: 0, g: 0, b: 0, a: 0 }; 32];
     let mut p: *mut Vec3 = ::core::ptr::null_mut::<Vec3>();
@@ -1119,6 +1132,7 @@ pub unsafe fn psDispSubPointTrail(
 }
 
 pub unsafe fn setBlendMode(mut blend_mode: i32) {
+    melee_core::ct!("setBlendMode");
     if HSD_PSDisp_804D792C != blend_mode {
         HSD_PSDisp_804D792C = blend_mode as s32;
         match blend_mode {
@@ -1144,6 +1158,7 @@ pub unsafe fn setBlendMode(mut blend_mode: i32) {
 }
 
 pub unsafe fn psSetCurrentMtx(mut idx: GXPosNrmMtx) {
+    melee_core::ct!("psSetCurrentMtx");
     if HSD_PSDisp_804D7948[0 as i32 as usize] != idx as i32
     {
         HSD_PSDisp_804D7948[0 as i32 as usize] = idx as s32;
@@ -1168,6 +1183,7 @@ pub unsafe fn psDispSubMakePolygon(
     mut prev_y: *mut f32,
     mut prev_z: *mut f32,
 ) {
+    melee_core::ct!("psDispSubMakePolygon");
     let mut right: Vec2 = Vec2 { x: 0., y: 0. };
     let mut right_z: f32 = 0.;
     let mut up: Vec2 = Vec2 { x: 0., y: 0. };
@@ -1479,41 +1495,49 @@ pub unsafe fn psDispSubMakePolygon(
 }
 
 pub unsafe fn psMaskAbsF32(mut value: *mut f32) {
+    melee_core::ct!("psMaskAbsF32");
     let ref mut fresh2 = *(value as *mut s32);
     *fresh2 &= 0x7fffffff as i32;
 }
 
 pub unsafe fn psMaskAbsLtF32(mut value: f32, mut limit: f32) -> i32 {
+    melee_core::ct!("psMaskAbsLtF32");
     psMaskAbsF32(&raw mut value);
     return (value < limit) as i32;
 }
 
 pub unsafe fn psMaskAbsGtF32(mut value: f32, mut limit: f64) -> i32 {
+    melee_core::ct!("psMaskAbsGtF32");
     psMaskAbsF32(&raw mut value);
     return (value as f64 > limit) as i32;
 }
 
 pub unsafe fn psAbsLtF32(mut value: f32, mut limit: f32) -> i32 {
+    melee_core::ct!("psAbsLtF32");
     let ref mut fresh1 = *(&raw mut value as *mut s32);
     *fresh1 &= 0x7fffffff as i32;
     return (value < limit) as i32;
 }
 
 pub unsafe fn psAbsGtF32(mut value: f32, mut limit: f64) -> i32 {
+    melee_core::ct!("psAbsGtF32");
     let ref mut fresh0 = *(&raw mut value as *mut s32);
     *fresh0 &= 0x7fffffff as i32;
     return (value as f64 > limit) as i32;
 }
 
 pub unsafe fn psDispSubAbsLtF32(mut value: f32, mut limit: f32) -> i32 {
+    melee_core::ct!("psDispSubAbsLtF32");
     return psAbsLtF32(value, limit);
 }
 
 pub unsafe fn psDispSubAbsGtF32(mut value: f32, mut limit: f64) -> i32 {
+    melee_core::ct!("psDispSubAbsGtF32");
     return psAbsGtF32(value, limit);
 }
 
 pub unsafe fn psDispSub(mut pp: *mut HSD_Particle, mut texform: *mut u8) {
+    melee_core::ct!("psDispSub");
     let mut right_y: f32 = 0.;
     let mut right_x: f32 = 0.;
     let mut right_z: f32 = 0.;
@@ -1883,6 +1907,7 @@ pub unsafe fn psScaleAppSRTAxes(
     mut pp: *mut HSD_Particle,
     mut mtx: *mut [f32; 4],
 ) {
+    melee_core::ct!("psScaleAppSRTAxes");
     let ref mut fresh3 = (*mtx
         .offset(0 as i32 as isize))[0 as i32 as usize];
     *fresh3 *= (*pp).size;
@@ -1913,6 +1938,7 @@ pub unsafe fn psScaleAppSRTAxes(
 }
 
 pub unsafe fn psDispSubAPPSRTPoint(mut pp: *mut HSD_Particle) {
+    melee_core::ct!("psDispSubAPPSRTPoint");
     let mut scratch_mtx: Mtx = [[0.; 4]; 3];
     let mut scratch_scale: Vec3 = Vec3 { x: 0., y: 0., z: 0. };
     let mut cur_x: f32 = 0.;
@@ -2185,6 +2211,7 @@ pub unsafe fn psDispSubAPPSRTPoint(mut pp: *mut HSD_Particle) {
 }
 
 pub unsafe fn psDispSubAppSRT(mut pp: *mut HSD_Particle, mut texform: *mut u8) {
+    melee_core::ct!("psDispSubAppSRT");
     let mut draw_mtx: Mtx = [[0.; 4]; 3];
     let mut pad: Vec3 = Vec3 { x: 0., y: 0., z: 0. };
     let mut scratch_scale: Vec3 = Vec3 { x: 0., y: 0., z: 0. };
@@ -3025,6 +3052,7 @@ pub unsafe fn psDispSubAppSRT(mut pp: *mut HSD_Particle, mut texform: *mut u8) {
 }
 
 pub unsafe fn psUpdateBillboardAxes(mut inv_view: *const [f32; 4]) {
+    melee_core::ct!("psUpdateBillboardAxes");
     let mut right_x: f32 = 0.;
     let mut up_x: f32 = 0.;
     let mut right_y: f32 = 0.;
@@ -3052,6 +3080,7 @@ pub unsafe fn psUpdateBillboardAxes(mut inv_view: *const [f32; 4]) {
 }
 
 pub unsafe fn psDispParticles(mut target_link: u32, mut sw: u32) {
+    melee_core::ct!("psDispParticles");
     let mut sp7B4: s32 = 0;
     let mut sp7B0: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<
         ::core::ffi::c_void,

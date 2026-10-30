@@ -12,6 +12,7 @@ pub use crate::chars::r2::ftCrazyHand::ftcrazyhandsqueeze::ftCh_Squeeze_Phys;
 pub use crate::chars::r8::ftCrazyHand::ftcrazyhandsqueeze::ftCh_Squeeze_IASA;
 
 pub fn ftCh_Init_8015A3F4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Init_8015A3F4");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         (*fp).cmd_vars[1] = 0;
@@ -22,6 +23,7 @@ pub fn ftCh_Init_8015A3F4(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCh_Squeeze_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Squeeze_Anim");
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         if (*fp).cmd_vars[1] != 0 {
@@ -36,4 +38,4 @@ pub fn ftCh_Squeeze_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftCh_Squeeze_Coll(_gobj: *mut HSD_GObj) {}
+pub fn ftCh_Squeeze_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_Squeeze_Coll");}

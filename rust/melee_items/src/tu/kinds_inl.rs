@@ -11,6 +11,7 @@ use melee_types::*;
 /// `HSD_ASSERT(line, cond)`
 #[inline]
 pub fn hsd_assert(cond: bool, what: &str) {
+    melee_core::ct!("hsd_assert");
     if !cond {
         panic!("HSD_ASSERT {what}");
     }
@@ -19,30 +20,35 @@ pub fn hsd_assert(cond: bool, what: &str) {
 /// `HSD_GObjGetUserData` (baselib/gobj.h, static inline).
 #[inline]
 pub unsafe fn HSD_GObjGetUserData(gobj: *mut HSD_GObj) -> *mut core::ffi::c_void {
+    melee_core::ct!("HSD_GObjGetUserData");
     (*gobj).user_data
 }
 
 /// `HSD_GObjGetHSDObj` (baselib/gobj.h, static inline).
 #[inline]
 pub unsafe fn HSD_GObjGetHSDObj(gobj: *mut HSD_GObj) -> *mut core::ffi::c_void {
+    melee_core::ct!("HSD_GObjGetHSDObj");
     (*gobj).hsd_obj
 }
 
 /// `GET_ITEM(gobj)` (it/inlines.h).
 #[inline]
 pub unsafe fn GET_ITEM(gobj: *mut HSD_GObj) -> *mut Item {
+    melee_core::ct!("GET_ITEM");
     HSD_GObjGetUserData(gobj) as *mut Item
 }
 
 /// `GET_JOBJ(gobj)` (gobj.h).
 #[inline]
 pub unsafe fn GET_JOBJ(gobj: *mut HSD_GObj) -> *mut HSD_JObj {
+    melee_core::ct!("GET_JOBJ");
     HSD_GObjGetHSDObj(gobj) as *mut HSD_JObj
 }
 
 /// `itResetVelocity` (it/inlines.h, static inline).
 #[inline]
 pub unsafe fn itResetVelocity(ip: *mut Item) {
+    melee_core::ct!("itResetVelocity");
     (*ip).x40_vel.z = 0.0;
     (*ip).x40_vel.y = 0.0;
     (*ip).x40_vel.x = 0.0;
@@ -51,6 +57,7 @@ pub unsafe fn itResetVelocity(ip: *mut Item) {
 /// `HSD_JObjGetChild` (baselib/jobj.h, static inline): NULL-safe.
 #[inline]
 pub unsafe fn HSD_JObjGetChild(jobj: *mut HSD_JObj) -> *mut HSD_JObj {
+    melee_core::ct!("HSD_JObjGetChild");
     if jobj.is_null() {
         core::ptr::null_mut()
     } else {
@@ -364,6 +371,7 @@ pub use kinds_jobj_inl_dirty;
 /// `ABS(x)` (`x < 0 ? -x : x`; `ABS(-0.0)` is -0.0).
 #[inline]
 pub fn ABS(x: f32) -> f32 {
+    melee_core::ct!("ABS");
     if x < 0.0 { -x } else { x }
 }
 
@@ -373,6 +381,7 @@ pub const M_TAU: f64 = 6.283185307179586;
 /// `Item_ClearCmdVars` (it/inlines.h, static inline).
 #[inline]
 pub unsafe fn Item_ClearCmdVars(ip: *mut Item) {
+    melee_core::ct!("Item_ClearCmdVars");
     (*ip).xDB8_itcmd_var3 = 0;
     (*ip).xDB4_itcmd_var2 = 0;
     (*ip).xDB0_itcmd_var1 = 0;
@@ -382,6 +391,7 @@ pub unsafe fn Item_ClearCmdVars(ip: *mut Item) {
 /// `Item_InitSpawnPosition` (it/kinds/inlines.h, static inline).
 #[inline]
 pub unsafe fn Item_InitSpawnPosition(spawn: *mut SpawnItem, pos: *mut Vec3, on_plane: bool) {
+    melee_core::ct!("Item_InitSpawnPosition");
     (*spawn).prev_pos = *pos;
     if on_plane {
         (*spawn).prev_pos.z = 0.0;
@@ -392,6 +402,7 @@ pub unsafe fn Item_InitSpawnPosition(spawn: *mut SpawnItem, pos: *mut Vec3, on_p
 /// `Item_InitSpawnCommonFields` (it/kinds/inlines.h, static inline).
 #[inline]
 pub unsafe fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD_GObj, facing_dir: f32, initial_collision: bool) {
+    melee_core::ct!("Item_InitSpawnCommonFields");
     (*spawn).facing_dir = facing_dir;
     (*spawn).x3C_damage = 0;
     (*spawn).vel.z = 0.0;
@@ -406,6 +417,7 @@ pub unsafe fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD
 /// `Item_NormalizeAngle` (it/kinds/inlines.h, static inline): `*angle += M_TAU` is a double add.
 #[inline]
 pub unsafe fn Item_NormalizeAngle(angle: *mut f32) {
+    melee_core::ct!("Item_NormalizeAngle");
     while (*angle as f64) < 0.0 {
         *angle = (*angle as f64 + M_TAU) as f32;
     }

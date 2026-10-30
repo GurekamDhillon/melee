@@ -321,6 +321,7 @@ pub fn hsd_80394544(
     font_data: u32,
     color_data: u32,
 ) {
+    melee_core::ct!("hsd_80394544");
     let mode = sp.x0_b7;
     let interlace = sp.x0_b6 as i32;
     let mut r: u32 = 0;
@@ -351,6 +352,7 @@ pub fn hsd_80394544(
 /// `hsd_80394668`: redraw the console: copy the saved screen with the luma lowered, or, with no
 /// saved copy, clear the text grid with blank cells in the AB40 colours.
 pub fn hsd_80394668(sp: &mut ParticleScreenState) {
+    melee_core::ct!("hsd_80394668");
     let src = sp.x2C as u32;
     if src != 0 {
         // Copy XFB data with brightness adjustment.
@@ -406,6 +408,7 @@ fn fmt_e(v: f64) -> String {
 /// # Safety
 /// `ctx` points at a live context.
 pub unsafe fn hsd_80394950(ctx: *mut OSContext) {
+    melee_core::ct!("hsd_80394950");
     const OS_CONTEXT_STATE_FPSAVED: u16 = 1;
     if (*ctx).state & OS_CONTEXT_STATE_FPSAVED == 0 {
         return;
@@ -456,6 +459,7 @@ pub unsafe fn hsd_80394950(ctx: *mut OSContext) {
 /// # Safety
 /// `ctx` points at a live context.
 pub unsafe fn Exception_ReportStackTrace(ctx: *mut OSContext, max_depth: i32) {
+    melee_core::ct!("Exception_ReportStackTrace");
     ext::OSReport("- STACK ---------------------------------------------\n");
     ext::OSReport(" Address:  Back Chain  LR Save\n");
 
@@ -481,6 +485,7 @@ pub unsafe fn Exception_ReportStackTrace(ctx: *mut OSContext, max_depth: i32) {
 /// # Safety
 /// `ctx` points at a live context.
 pub unsafe fn Exception_ReportCodeline(error: u16, dsisr: i32, dar: i32, ctx: *mut OSContext) {
+    melee_core::ct!("Exception_ReportCodeline");
     ext::OSReport("- UNHANDLED EXCEPTION -------------------------------\n");
     ext::OSReport(&format!("DSISR={:08X} DAR={:08X}\n", dsisr as u32, dar as u32));
     ext::OSReport(&format!("ERROR {}: ", error as i32));
@@ -590,15 +595,18 @@ pub unsafe fn Exception_ReportCodeline(error: u16, dsisr: i32, dar: i32, ctx: *m
 
 /// `hsd_80397DA4`: run the debug console thread (`fn_80397814`) on `ctx`.
 pub fn hsd_80397DA4(ctx: *mut OSContext) {
+    melee_core::ct!("hsd_80397DA4");
     ext::OSCreateAndResumeDebugThread(ctx);
 }
 
 /// `Exception_StoreDebugLevel`.
 pub fn Exception_StoreDebugLevel(level: i32) {
+    melee_core::ct!("Exception_StoreDebugLevel");
     unsafe { hsd_804D78C8 = level };
 }
 
 /// `hsd_80397DFC`.
 pub fn hsd_80397DFC(size: u32) {
+    melee_core::ct!("hsd_80397DFC");
     unsafe { hsd_804D78CC = size.wrapping_add(0xF) >> 4 };
 }

@@ -265,6 +265,7 @@ pub static mut cm_803BCCA0: CameraUnkGlobals = CameraUnkGlobals { x0: 83.0f32, x
 
 /// `Camera_LargeMapRestore`
 pub unsafe fn Camera_LargeMapRestore() {
+    melee_core::ct!("Camera_LargeMapRestore");
     if !cm_largemap.primary.is_null() {
         ext::HSD_CObjSetFar(cm_largemap.primary, cm_largemap.primary_far);
     }
@@ -276,6 +277,7 @@ pub unsafe fn Camera_LargeMapRestore() {
 
 /// `cm_script_float`
 pub unsafe fn cm_script_float(mut bits: i32) -> f32 {
+    melee_core::ct!("cm_script_float");
     #[derive(Clone, Copy)] #[repr(C)] union Local5 { i: i32, f: f32 }
     let mut u: Local5 = unsafe { core::mem::zeroed() };
     u.i = bits;
@@ -284,6 +286,7 @@ pub unsafe fn cm_script_float(mut bits: i32) -> f32 {
 
 /// `cm_script_bits`
 pub unsafe fn cm_script_bits(mut value: f32) -> i32 {
+    melee_core::ct!("cm_script_bits");
     #[derive(Clone, Copy)] #[repr(C)] union Local5 { i: i32, f: f32 }
     let mut u: Local5 = unsafe { core::mem::zeroed() };
     u.f = value;
@@ -292,26 +295,31 @@ pub unsafe fn cm_script_bits(mut value: f32) -> i32 {
 
 /// `cm_fly_left`
 pub unsafe fn cm_fly_left() -> f32 {
+    melee_core::ct!("cm_fly_left");
     return if (ext::GenoFly_Any() != 0) || ((cm_script.state != 0) && (cm_script.lift_bounds != 0)) { -1e+05f32 } else { ext::Stage_GetCamBoundsLeftOffset() };
 }
 
 /// `cm_fly_right`
 pub unsafe fn cm_fly_right() -> f32 {
+    melee_core::ct!("cm_fly_right");
     return if (ext::GenoFly_Any() != 0) || ((cm_script.state != 0) && (cm_script.lift_bounds != 0)) { 1e+05f32 } else { ext::Stage_GetCamBoundsRightOffset() };
 }
 
 /// `cm_fly_top`
 pub unsafe fn cm_fly_top() -> f32 {
+    melee_core::ct!("cm_fly_top");
     return if (ext::GenoFly_Any() != 0) || ((cm_script.state != 0) && (cm_script.lift_bounds != 0)) { 1e+05f32 } else { ext::Stage_GetCamBoundsTopOffset() };
 }
 
 /// `cm_fly_bottom`
 pub unsafe fn cm_fly_bottom() -> f32 {
+    melee_core::ct!("cm_fly_bottom");
     return if (ext::GenoFly_Any() != 0) || ((cm_script.state != 0) && (cm_script.lift_bounds != 0)) { -1e+05f32 } else { ext::Stage_GetCamBoundsBottomOffset() };
 }
 
 /// `camera_sdata2_order`
 pub unsafe fn camera_sdata2_order() {
+    melee_core::ct!("camera_sdata2_order");
     -f32::MAX;
     ();
     ();
@@ -361,11 +369,13 @@ pub unsafe fn camera_sdata2_order() {
 
 /// `vec_len`
 pub unsafe fn vec_len(mut offset: *mut Vec) -> f32 {
+    melee_core::ct!("vec_len");
     return melee_runtime::gekko::sqrtf(fmadds((*offset).z, (*offset).z, fmadds((*offset).x, (*offset).x, (*offset).y * (*offset).y)));
 }
 
 /// `Camera_Init`
 pub unsafe fn Camera_Init(mut n_subjects: i32) {
+    melee_core::ct!("Camera_Init");
     let mut cam_box: *mut CmSubject = null_mut();
     let mut interest_pos: *mut Vec = null_mut();
     let mut eye_pos: *mut Vec = null_mut();
@@ -434,6 +444,7 @@ pub unsafe fn Camera_Init(mut n_subjects: i32) {
 
 /// `Camera_80028F5C`
 pub unsafe fn Camera_80028F5C(mut subject: *mut CmSubject, mut state: CmSubjectState) {
+    melee_core::ct!("Camera_80028F5C");
     if !subject.is_null() {
         (*subject).state = state;
         (*subject).pos.z = 0.0f32;
@@ -463,11 +474,13 @@ pub unsafe fn Camera_80028F5C(mut subject: *mut CmSubject, mut state: CmSubjectS
 
 /// `Camera_80029020`
 pub unsafe fn Camera_80029020() -> *mut CmSubject {
+    melee_core::ct!("Camera_80029020");
     return Camera_80029044(0);
 }
 
 /// `Camera_80029044`
 pub unsafe fn Camera_80029044(mut arg0: i32) -> *mut CmSubject {
+    melee_core::ct!("Camera_80029044");
     let mut subject: *mut CmSubject = cm_804D6458;
     if cm_804D6458.is_null() {
         ext::OSReport(&format!("couldn't get CmSubject struct.\n"));
@@ -489,6 +502,7 @@ pub unsafe fn Camera_80029044(mut arg0: i32) -> *mut CmSubject {
 
 /// `Camera_800290D4`
 pub unsafe fn Camera_800290D4(mut subject: *mut CmSubject) {
+    melee_core::ct!("Camera_800290D4");
     if !(*subject).next.is_null() {
         (*(*subject).next).prev = (*subject).prev;
     } else {
@@ -505,6 +519,7 @@ pub unsafe fn Camera_800290D4(mut subject: *mut CmSubject) {
 
 /// `Camera_80029124`
 pub unsafe fn Camera_80029124(mut subject_pos: *mut Vec, mut distance: i32) -> u32 {
+    melee_core::ct!("Camera_80029124");
     let mut _PAD: [u8; 4] = [0; 4];
     let mut cam_bounds_flags: u32 = 0;
     let mut slope: f32 = 0.0;
@@ -541,11 +556,13 @@ pub unsafe fn Camera_80029124(mut subject_pos: *mut Vec, mut distance: i32) -> u
 
 /// `cam_bound`
 pub unsafe fn cam_bound(mut x: f32) -> i32 {
+    melee_core::ct!("cam_bound");
     return ((x > 0.65f32) || (x < 0.35f32)) as i32;
 }
 
 /// `Camera_8002928C`
 pub unsafe fn Camera_8002928C(mut subject: *mut CmSubject) -> i32 {
+    melee_core::ct!("Camera_8002928C");
     let mut left: f32 = 0.0;
     let mut right: f32 = 0.0;
     let mut bottom: f32 = 0.0;
@@ -582,6 +599,7 @@ pub unsafe fn Camera_8002928C(mut subject: *mut CmSubject) -> i32 {
 
 /// `Camera_800293E0`
 pub unsafe fn Camera_800293E0() {
+    melee_core::ct!("Camera_800293E0");
     let mut curr: *mut CmSubject = null_mut();
     let mut temp_f0: f32 = 0.0;
     let mut temp_f1: f32 = 0.0;
@@ -658,6 +676,7 @@ pub unsafe fn Camera_800293E0() {
 
 /// `Camera_8002958C`
 pub unsafe fn Camera_8002958C(mut bounds: *mut CameraBounds, mut transform: *mut CameraTransformState) {
+    melee_core::ct!("Camera_8002958C");
     let mut z_pos: f32 = 0.0;
     let mut z_factor: f32 = 0.0;
     let mut new_bounds: *mut CameraBounds = null_mut();
@@ -853,6 +872,7 @@ pub unsafe fn Camera_8002958C(mut bounds: *mut CameraBounds, mut transform: *mut
 
 /// `get_follow_speed`
 pub unsafe fn get_follow_speed(mut temp_f4: f32, mut spread: f32, mut globals: *mut CameraUnkGlobals) -> f32 {
+    melee_core::ct!("get_follow_speed");
     if spread > temp_f4 {
         return (*globals).x30;
     } else if spread < (*globals).x34 {
@@ -864,6 +884,7 @@ pub unsafe fn get_follow_speed(mut temp_f4: f32, mut spread: f32, mut globals: *
 
 /// `get_delta`
 pub unsafe fn get_delta(mut temp_f: f32) -> f32 {
+    melee_core::ct!("get_delta");
     if temp_f > 0.0001f32 {
         return 1.0f32 / temp_f;
     } else {
@@ -873,6 +894,7 @@ pub unsafe fn get_delta(mut temp_f: f32) -> f32 {
 
 /// `Camera_80029AAC`
 pub unsafe fn Camera_80029AAC(mut bounds: *mut CameraBounds, mut transform: *mut CameraTransformState, mut speed: f32) {
+    melee_core::ct!("Camera_80029AAC");
     let mut globals: *mut CameraUnkGlobals = null_mut();
     let mut follow_speed: f32 = 0.0;
     let mut temp_f: f32 = 0.0;
@@ -911,6 +933,7 @@ pub unsafe fn Camera_80029AAC(mut bounds: *mut CameraBounds, mut transform: *mut
 
 /// `Camera_80029BC4`
 pub unsafe fn Camera_80029BC4(mut bounds: *mut CameraBounds, mut transform: *mut CameraTransformState) {
+    melee_core::ct!("Camera_80029BC4");
     let mut cam_dist: f32 = ((*bounds).y_max - (*bounds).y_min) / ext::tanf((*transform).target_fov * 0.017453292f32);
     let mut x_dist: f32 = ((*bounds).x_max - (*bounds).x_min) / (cm_803BCB64.aspect * ext::tanf((*transform).target_fov * 0.017453292f32));
     if x_dist > cam_dist {
@@ -927,6 +950,7 @@ pub unsafe fn Camera_80029BC4(mut bounds: *mut CameraBounds, mut transform: *mut
 
 /// `Camera_80029C88`
 pub unsafe fn Camera_80029C88(mut unused: *mut CameraBounds, mut transform: *mut CameraTransformState, mut arg_scale: f32) {
+    melee_core::ct!("Camera_80029C88");
     let mut dist: Vec3 = unsafe { core::mem::zeroed() };
     let mut scale: f32 = 0.0;
     let mut camera_speed: f32 = 0.0;
@@ -944,6 +968,7 @@ pub unsafe fn Camera_80029C88(mut unused: *mut CameraBounds, mut transform: *mut
 
 /// `get_y_bias`
 pub unsafe fn get_y_bias(mut spread: f32) -> f32 {
+    melee_core::ct!("get_y_bias");
     if spread > cm_803BCCA0.x28 {
         return cm_803BCCA0.x20;
     } else if spread < cm_803BCCA0.x24 {
@@ -955,6 +980,7 @@ pub unsafe fn get_y_bias(mut spread: f32) -> f32 {
 
 /// `Camera_80029CF8`
 pub unsafe fn Camera_80029CF8(mut bounds: *mut CameraBounds, mut transform: *mut CameraTransformState) {
+    melee_core::ct!("Camera_80029CF8");
     let mut x_center: f32 = 0.0;
     let mut y_angle: f32 = 0.0;
     let mut angle: f32 = 0.0;
@@ -1049,6 +1075,7 @@ pub unsafe fn Camera_80029CF8(mut bounds: *mut CameraBounds, mut transform: *mut
 
 /// `Camera_ApplyQuake`
 pub unsafe fn Camera_ApplyQuake(mut bounds: *mut CameraBounds, mut state: *mut CameraTransformState) {
+    melee_core::ct!("Camera_ApplyQuake");
     let mut viewport_x_scale: f32 = 0.0;
     let mut viewport_y_scale: f32 = 0.0;
     let mut depth_factor_y: f32 = 0.0;
@@ -1089,12 +1116,14 @@ pub unsafe fn Camera_ApplyQuake(mut bounds: *mut CameraBounds, mut state: *mut C
 
 /// `Camera_SetQuakeOffset`
 pub unsafe fn Camera_SetQuakeOffset(mut x: f32, mut y: f32) {
+    melee_core::ct!("Camera_SetQuakeOffset");
     game_camera.quake_offset.x = x;
     game_camera.quake_offset.y = y;
 }
 
 /// `Camera_UpdateQuakes`
 pub unsafe fn Camera_UpdateQuakes(mut bounds: *mut CameraBounds) {
+    melee_core::ct!("Camera_UpdateQuakes");
     let mut __: [u8; 16] = [0; 16];
     let mut quakes_remaining: i32 = 0;
     let mut i: i32 = 0;
@@ -1125,6 +1154,7 @@ pub unsafe fn Camera_UpdateQuakes(mut bounds: *mut CameraBounds) {
 
 /// `get_stage_floor_height`
 pub unsafe fn get_stage_floor_height(mut kind: GrKind) -> f32 {
+    melee_core::ct!("get_stage_floor_height");
     let mut height: f32 = -f32::MAX;
     's49: {
         match kind {
@@ -1155,6 +1185,7 @@ pub unsafe fn get_stage_floor_height(mut kind: GrKind) -> f32 {
 
 /// `Camera_8002A4AC`
 pub unsafe fn Camera_8002A4AC(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("Camera_8002A4AC");
     let mut floor_height: f32 = 0.0;
     let mut pos: Vec3 = unsafe { core::mem::zeroed() };
     let mut cobj: *mut HSD_CObj = null_mut();
@@ -1237,6 +1268,7 @@ pub unsafe fn Camera_8002A4AC(mut gobj: *mut HSD_GObj) {
 
 /// `Camera_8002A768`
 pub unsafe fn Camera_8002A768(mut transform: *mut CameraTransformState, mut arg1: i32) {
+    melee_core::ct!("Camera_8002A768");
     let mut dist: Vec3 = unsafe { core::mem::zeroed() };
     let mut forward: Vec3 = unsafe { core::mem::zeroed() };
     let mut top_left: Vec3 = unsafe { core::mem::zeroed() };
@@ -1481,6 +1513,7 @@ pub unsafe fn Camera_8002A768(mut transform: *mut CameraTransformState, mut arg1
 
 /// `Camera_8002AF68`
 pub unsafe fn Camera_8002AF68(mut cobj: *mut HSD_CObj, mut transform: *mut CameraTransformState) {
+    melee_core::ct!("Camera_8002AF68");
     let mut _1: [u8; 4] = [0; 4];
     let mut vec: Vec3 = unsafe { core::mem::zeroed() };
     let mut eye_y_bound: f32 = 0.0;
@@ -1529,6 +1562,7 @@ pub unsafe fn Camera_8002AF68(mut cobj: *mut HSD_CObj, mut transform: *mut Camer
 
 /// `Camera_8002B0E0`
 pub unsafe fn Camera_8002B0E0() {
+    melee_core::ct!("Camera_8002B0E0");
     let mut var_f1: f32 = 0.0;
     let mut var_f2: f32 = 0.0;
     if (((ext::gm_IsCurrently1PMode_inline() != 0) && (game_camera.x2C0 > 0.0f32)) && (!(ext::gm_CStickSmashTargetTest != 0))) && (!(ext::Mex_Enabled((c"enable_c_stick_always_1p_camera".as_ptr() as *mut i8) as *const i8) != 0)) {
@@ -1563,6 +1597,7 @@ pub unsafe fn Camera_8002B0E0() {
 
 /// `Camera_8002B1F8`
 pub unsafe fn Camera_8002B1F8(mut transform: *mut CameraTransformState) {
+    melee_core::ct!("Camera_8002B1F8");
     let mut vec: Vec3 = unsafe { core::mem::zeroed() };
     let mut temp_r3: *mut HSD_GObj = null_mut();
     let mut temp_r3_2: *mut HSD_GObj = null_mut();
@@ -1597,6 +1632,7 @@ pub unsafe fn Camera_8002B1F8(mut transform: *mut CameraTransformState) {
 
 /// `fighter_z_out_of_range`
 pub unsafe fn fighter_z_out_of_range(mut fighter_pos: *mut Vec) -> i32 {
+    melee_core::ct!("fighter_z_out_of_range");
     let mut gobj: *mut HSD_GObj = null_mut();
     if Camera_80030AF8() != 0 {
         gobj = ext::Ground_GetP1Fighter();
@@ -1612,6 +1648,7 @@ pub unsafe fn fighter_z_out_of_range(mut fighter_pos: *mut Vec) -> i32 {
 
 /// `update_zoom_distance`
 pub unsafe fn update_zoom_distance() {
+    melee_core::ct!("update_zoom_distance");
     let mut target_dx: f32 = 0.0;
     let mut target_dy: f32 = 0.0;
     let mut target_dz: f32 = 0.0;
@@ -1633,6 +1670,7 @@ pub unsafe fn update_zoom_distance() {
 
 /// `update_transform`
 pub unsafe fn update_transform(mut bounds: *mut CameraBounds, mut ts: *mut CameraTransformState) {
+    melee_core::ct!("update_transform");
     let mut fighter_pos: Vec3 = unsafe { core::mem::zeroed() };
     let mut delta: f32 = 0.0;
     Camera_8002958C(bounds, ts);
@@ -1651,6 +1689,7 @@ pub unsafe fn update_transform(mut bounds: *mut CameraBounds, mut ts: *mut Camer
 
 /// `update_avg_bounds_width`
 pub unsafe fn update_avg_bounds_width() {
+    melee_core::ct!("update_avg_bounds_width");
     let mut left_off: f32 = 0.0;
     if (game_camera.x2B8 as i32) > 1000 {
         game_camera.x2B4 = game_camera.x2B0;
@@ -1664,6 +1703,7 @@ pub unsafe fn update_avg_bounds_width() {
 
 /// `update_bounds`
 pub unsafe fn update_bounds(mut bounds: *mut CameraBounds, mut bounds_copy: *mut CameraBounds) {
+    melee_core::ct!("update_bounds");
     Camera_8002B1F8(core::ptr::addr_of_mut!(game_camera.transform) as *mut CameraTransformState);
     Camera_80029AAC(bounds, core::ptr::addr_of_mut!(game_camera.transform) as *mut CameraTransformState, ext::Stage_GetCamTrackSmooth());
     Camera_80029C88(bounds, core::ptr::addr_of_mut!(game_camera.transform) as *mut CameraTransformState, ext::Stage_GetCamTrackSmooth());
@@ -1675,6 +1715,7 @@ pub unsafe fn update_bounds(mut bounds: *mut CameraBounds, mut bounds_copy: *mut
 
 /// `Camera_8002B3D4`
 pub unsafe extern "C" fn Camera_8002B3D4(mut arg0: *mut c_void) {
+    melee_core::ct!("Camera_8002B3D4");
     let mut bounds: CameraBounds = unsafe { core::mem::zeroed() };
     let mut bounds_copy: CameraBounds = unsafe { core::mem::zeroed() };
     Camera_80030DF8();
@@ -1689,21 +1730,25 @@ pub unsafe extern "C" fn Camera_8002B3D4(mut arg0: *mut c_void) {
 
 /// `get_slot_pad`
 pub unsafe fn get_slot_pad(mut arg0: u8) -> *mut HSD_PadStatus {
+    melee_core::ct!("get_slot_pad");
     return core::ptr::addr_of_mut!(ext::HSD_PadCopyStatus[arg0 as usize]) as *mut HSD_PadStatus;
 }
 
 /// `get_stick_x`
 pub unsafe fn get_stick_x(mut arg0: *mut HSD_PadStatus) -> f32 {
+    melee_core::ct!("get_stick_x");
     return (*arg0).nml_stickX;
 }
 
 /// `get_stick_y`
 pub unsafe fn get_stick_y(mut arg0: *mut HSD_PadStatus) -> f32 {
+    melee_core::ct!("get_stick_y");
     return (*arg0).nml_stickY;
 }
 
 /// `Camera_8002B694`
 pub unsafe fn Camera_8002B694(mut inputs: *mut CameraInputs, mut slot: i32) {
+    melee_core::ct!("Camera_8002B694");
     let mut pad: *mut HSD_PadStatus = null_mut();
     let mut stick_x: f32 = 0.0;
     let mut stick_y: f32 = 0.0;
@@ -1803,6 +1848,7 @@ pub unsafe fn Camera_8002B694(mut inputs: *mut CameraInputs, mut slot: i32) {
 
 /// `Camera_8002BA00`
 pub unsafe fn Camera_8002BA00(mut slot: i32, mut arg1: i32) -> i32 {
+    melee_core::ct!("Camera_8002BA00");
     if slot == 10 {
         if arg1 > 0 {
             slot = 0;
@@ -1828,6 +1874,7 @@ pub unsafe fn Camera_8002BA00(mut slot: i32, mut arg1: i32) -> i32 {
 
 /// `Camera_8002BAA8`
 pub unsafe fn Camera_8002BAA8(mut zoom_amt: f32) {
+    melee_core::ct!("Camera_8002BAA8");
     let mut offset: Vec3 = unsafe { core::mem::zeroed() };
     let mut offset_len: f32 = 0.0;
     let mut dist: f32 = 0.0;
@@ -1861,6 +1908,7 @@ pub unsafe fn Camera_8002BAA8(mut zoom_amt: f32) {
 
 /// `OrthonormalizeBasis`
 pub unsafe fn OrthonormalizeBasis(mut forward: *mut Vec, mut up: *mut Vec, mut right: *mut Vec) {
+    melee_core::ct!("OrthonormalizeBasis");
     ext::PSVECCrossProduct(up, forward, right);
     let _ = ext::lbVector_Normalize(right);
     ext::PSVECCrossProduct(forward, right, up);
@@ -1869,6 +1917,7 @@ pub unsafe fn OrthonormalizeBasis(mut forward: *mut Vec, mut up: *mut Vec, mut r
 
 /// `Camera_8002BC78`
 pub unsafe fn Camera_8002BC78(mut forward: *mut Vec, mut up: *mut Vec, mut right: *mut Vec) -> i32 {
+    melee_core::ct!("Camera_8002BC78");
     let mut clamp_result: i32 = 0;
     if (*forward).y > 0.999f32 {
         clamp_result = 1;
@@ -1889,6 +1938,7 @@ pub unsafe fn Camera_8002BC78(mut forward: *mut Vec, mut up: *mut Vec, mut right
 
 /// `Camera_8002BD88`
 pub unsafe fn Camera_8002BD88(mut x: f32, mut y: f32) {
+    melee_core::ct!("Camera_8002BD88");
     let mut scale: f32 = 0.0;
     let mut view_dir: f32 = 0.0;
     let mut clamp_result: i32 = 0;
@@ -1947,6 +1997,7 @@ pub unsafe fn Camera_8002BD88(mut x: f32, mut y: f32) {
 
 /// `Camera_8002C010`
 pub unsafe fn Camera_8002C010(mut farg0: f32, mut farg1: f32) {
+    melee_core::ct!("Camera_8002C010");
     let mut up: Vec3 = unsafe { core::mem::zeroed() };
     let mut forward: Vec3 = unsafe { core::mem::zeroed() };
     let mut right: Vec3 = unsafe { core::mem::zeroed() };
@@ -1986,6 +2037,7 @@ pub unsafe fn Camera_8002C010(mut farg0: f32, mut farg1: f32) {
 
 /// `Camera_8002C1A8_inline`
 pub unsafe fn Camera_8002C1A8_inline() {
+    melee_core::ct!("Camera_8002C1A8_inline");
     if lbVector_Len(core::ptr::addr_of_mut!(game_camera.pause_eye_offset) as *mut Vec) < 1.0f32 {
         game_camera.pause_eye_distance = 1.0f32;
     }
@@ -1993,6 +2045,7 @@ pub unsafe fn Camera_8002C1A8_inline() {
 
 /// `Camera_8002C1A8`
 pub unsafe fn Camera_8002C1A8() {
+    melee_core::ct!("Camera_8002C1A8");
     let mut inputs: CameraInputs = unsafe { core::mem::zeroed() };
     let mut stick_x: f32 = 0.0;
     let mut stick_y: f32 = 0.0;
@@ -2099,11 +2152,13 @@ pub unsafe fn Camera_8002C1A8() {
 
 /// `eye_offset_len`
 pub unsafe fn eye_offset_len(mut offset: *mut Vec) -> f32 {
+    melee_core::ct!("eye_offset_len");
     return melee_runtime::gekko::sqrtf(fmadds((*offset).z, (*offset).z, fmadds((*offset).x, (*offset).x, (*offset).y * (*offset).y)));
 }
 
 /// `Camera_8002C5B4`
 pub unsafe fn Camera_8002C5B4(mut arg0: *mut Camera_x2D0) {
+    melee_core::ct!("Camera_8002C5B4");
     let mut len: f64 = 0.0;
     let mut temp_pos: Vec3 = unsafe { core::mem::zeroed() };
     let mut cross1: Vec3 = unsafe { core::mem::zeroed() };
@@ -2201,6 +2256,7 @@ pub unsafe fn Camera_8002C5B4(mut arg0: *mut Camera_x2D0) {
 
 /// `get_subject_pos`
 pub unsafe fn get_subject_pos(mut pos: *mut Vec, mut slot_ptr: *const i8) -> i32 {
+    melee_core::ct!("get_subject_pos");
     let mut subject: *mut CmSubject = null_mut();
     let mut gobj: *mut HSD_GObj = null_mut();
     let mut slot: i32 = 0;
@@ -2224,6 +2280,7 @@ pub unsafe fn get_subject_pos(mut pos: *mut Vec, mut slot_ptr: *const i8) -> i32
 
 /// `get_subject_pos_out`
 pub unsafe fn get_subject_pos_out(mut pos: *mut Vec, mut slot_ptr: *const i8, mut valid_out: *mut i32) {
+    melee_core::ct!("get_subject_pos_out");
     let mut subject: *mut CmSubject = null_mut();
     let mut gobj: *mut HSD_GObj = null_mut();
     let mut slot: i32 = 0;
@@ -2245,6 +2302,7 @@ pub unsafe fn get_subject_pos_out(mut pos: *mut Vec, mut slot_ptr: *const i8, mu
 
 /// `camera_cddc_select`
 pub unsafe fn camera_cddc_select(mut slot_ptr: *mut i8) {
+    melee_core::ct!("camera_cddc_select");
     let mut pos_ptr: *mut Vec = null_mut();
     let mut valid: i32 = 0;
     let mut gobj: *mut HSD_GObj = null_mut();
@@ -2259,11 +2317,13 @@ pub unsafe fn camera_cddc_select(mut slot_ptr: *mut i8) {
 
 /// `camera_cddc_target_interest`
 pub unsafe fn camera_cddc_target_interest(mut transform: *mut CameraTransformState) -> *mut Vec {
+    melee_core::ct!("camera_cddc_target_interest");
     return core::ptr::addr_of_mut!((*transform).target_interest) as *mut Vec;
 }
 
 /// `track_subject`
 pub unsafe fn track_subject(mut transform: *mut CameraTransformState, mut interest_diff: *mut Vec, mut eye_diff: *mut Vec) {
+    melee_core::ct!("track_subject");
     let mut copy_src: *mut Vec = null_mut();
     let mut target_pos: *mut Vec = null_mut();
     let mut position_ptr: *mut Vec = null_mut();
@@ -2294,6 +2354,7 @@ pub unsafe fn track_subject(mut transform: *mut CameraTransformState, mut intere
 
 /// `Camera_8002C908`
 pub unsafe extern "C" fn Camera_8002C908(mut arg0: *mut c_void) {
+    melee_core::ct!("Camera_8002C908");
     let mut bounds: CameraBounds = unsafe { core::mem::zeroed() };
     let mut pad: [u8; 24] = [0; 24];
     let mut eye_diff: Vec3 = unsafe { core::mem::zeroed() };
@@ -2349,6 +2410,7 @@ pub unsafe extern "C" fn Camera_8002C908(mut arg0: *mut c_void) {
 
 /// `Camera_8002CB0C`
 pub unsafe fn Camera_8002CB0C(mut bounds: *mut CameraBounds) {
+    melee_core::ct!("Camera_8002CB0C");
     let mut camera: *mut Camera = null_mut();
     let mut inputs: CameraInputs = unsafe { core::mem::zeroed() };
     let mut entity: *mut HSD_GObj = null_mut();
@@ -2430,6 +2492,7 @@ pub unsafe fn Camera_8002CB0C(mut bounds: *mut CameraBounds) {
 
 /// `Camera_8002CDDC`
 pub unsafe extern "C" fn Camera_8002CDDC(mut unused: *mut c_void) {
+    melee_core::ct!("Camera_8002CDDC");
     let mut slot_ptr: *mut i8 = null_mut();
     let mut late_transform: *mut CameraTransformState = null_mut();
     let mut gobj: *mut HSD_GObj = null_mut();
@@ -2466,6 +2529,7 @@ pub unsafe extern "C" fn Camera_8002CDDC(mut unused: *mut c_void) {
 
 /// `compute_orbit_distance`
 pub unsafe fn compute_orbit_distance(mut slot: i32) -> f32 {
+    melee_core::ct!("compute_orbit_distance");
     let mut distance: f32 = 0.0;
     let mut gobj: *mut HSD_GObj = null_mut();
     let mut subject: *mut CmSubject = null_mut();
@@ -2479,11 +2543,13 @@ pub unsafe fn compute_orbit_distance(mut slot: i32) -> f32 {
 
 /// `get_subject_x1C`
 pub unsafe fn get_subject_x1C(mut subject: *mut CmSubject) -> *mut Vec {
+    melee_core::ct!("get_subject_x1C");
     return core::ptr::addr_of_mut!((*subject).bone_pos) as *mut Vec;
 }
 
 /// `Camera_8002D318`
 pub unsafe extern "C" fn Camera_8002D318(mut unused: *mut c_void) {
+    melee_core::ct!("Camera_8002D318");
     let mut pos: *mut Vec = null_mut();
     let mut gobj: *mut HSD_GObj = null_mut();
     let mut half_z: f32 = 0.0;
@@ -2556,6 +2622,7 @@ pub unsafe extern "C" fn Camera_8002D318(mut unused: *mut c_void) {
 
 /// `Camera_8002D85C`
 pub unsafe extern "C" fn Camera_8002D85C(mut unused: *mut c_void) {
+    melee_core::ct!("Camera_8002D85C");
     let mut subject: *mut CmSubject = null_mut();
     let mut gobj: *mut HSD_GObj = null_mut();
     let mut subj_pos: *mut Vec = null_mut();
@@ -2636,6 +2703,7 @@ pub unsafe extern "C" fn Camera_8002D85C(mut unused: *mut c_void) {
 
 /// `set_bounds_z`
 pub unsafe fn set_bounds_z(mut bounds: *mut CameraBounds, mut interest: *mut Vec, mut position: *mut Vec) {
+    melee_core::ct!("set_bounds_z");
     let mut diff: Vec3 = unsafe { core::mem::zeroed() };
     let _ = lbVector_Diff(interest, position, core::ptr::addr_of_mut!(diff) as *mut Vec);
     (*bounds).z_pos = lbVector_Len(core::ptr::addr_of_mut!(diff) as *mut Vec);
@@ -2643,6 +2711,7 @@ pub unsafe fn set_bounds_z(mut bounds: *mut CameraBounds, mut interest: *mut Vec
 
 /// `smooth_fixed_camera_interest`
 pub unsafe fn smooth_fixed_camera_interest(mut transform_copy: *mut CameraTransformState, mut cam: *mut Camera, mut globals: *mut CameraUnkGlobals) {
+    melee_core::ct!("smooth_fixed_camera_interest");
     let mut dx: f32 = 0.0;
     let mut dy: f32 = 0.0;
     let mut dz: f32 = 0.0;
@@ -2657,6 +2726,7 @@ pub unsafe fn smooth_fixed_camera_interest(mut transform_copy: *mut CameraTransf
 
 /// `Camera_8002DDC4`
 pub unsafe extern "C" fn Camera_8002DDC4(mut unused: *mut c_void) {
+    melee_core::ct!("Camera_8002DDC4");
     let mut bounds: CameraBounds = unsafe { core::mem::zeroed() };
     let mut target_interest: *mut Vec = null_mut();
     let mut transform: *mut CameraTransformState = null_mut();
@@ -2727,6 +2797,7 @@ pub unsafe extern "C" fn Camera_8002DDC4(mut unused: *mut c_void) {
 
 /// `Camera_8002DFE4`
 pub unsafe fn Camera_8002DFE4(mut arg0: *mut Vec, mut interest: *mut Vec, mut transform: *mut CameraTransformState) -> i32 {
+    melee_core::ct!("Camera_8002DFE4");
     let mut sp14: Vec3 = unsafe { core::mem::zeroed() };
     let mut var_f31: f32 = 0.0;
     let mut var_r31: i32 = 0;
@@ -2768,6 +2839,7 @@ pub unsafe fn Camera_8002DFE4(mut arg0: *mut Vec, mut interest: *mut Vec, mut tr
 
 /// `Camera_8002E158`
 pub unsafe fn Camera_8002E158(mut arg0: *mut f32, mut farg0: f32, mut farg1: f32) -> i32 {
+    melee_core::ct!("Camera_8002E158");
     let mut ret: i32 = 0;
     let mut var_f4: f32 = 0.0;
     ret = 0;
@@ -2803,6 +2875,7 @@ pub unsafe fn Camera_8002E158(mut arg0: *mut f32, mut farg0: f32, mut farg1: f32
 
 /// `Camera_8002E234`
 pub unsafe fn Camera_8002E234() -> i32 {
+    melee_core::ct!("Camera_8002E234");
     let mut sp14: Vec3 = unsafe { core::mem::zeroed() };
     let mut sp10: f32 = 0.0;
     let mut spC: f32 = 0.0;
@@ -2859,6 +2932,7 @@ pub unsafe fn Camera_8002E234() -> i32 {
 
 /// `Camera_8002E490`
 pub unsafe extern "C" fn Camera_8002E490(mut unused: *mut c_void) {
+    melee_core::ct!("Camera_8002E490");
     let mut sp1C: Vec3 = unsafe { core::mem::zeroed() };
     let mut sp10: Vec3 = unsafe { core::mem::zeroed() };
     let mut var_r29: i32 = 0;
@@ -2937,6 +3011,7 @@ pub unsafe extern "C" fn Camera_8002E490(mut unused: *mut c_void) {
 
 /// `Camera_8002E6FC`
 pub unsafe fn Camera_8002E6FC(mut arg0: i32) {
+    melee_core::ct!("Camera_8002E6FC");
     let mut spC: Vec3 = unsafe { core::mem::zeroed() };
     if game_camera.mode != ((CAMERA_BOSS_INTRO as i32) as u32) {
         Camera_8002FE38();
@@ -2976,6 +3051,7 @@ pub unsafe fn Camera_8002E6FC(mut arg0: i32) {
 
 /// `Camera_8002E818`
 pub unsafe fn Camera_8002E818(mut pos: *mut Vec) {
+    melee_core::ct!("Camera_8002E818");
     let mut spC: Vec3 = unsafe { core::mem::zeroed() };
     if game_camera.mode != ((CAMERA_BOSS_INTRO as i32) as u32) {
         Camera_8002FE38();
@@ -3015,6 +3091,7 @@ pub unsafe fn Camera_8002E818(mut pos: *mut Vec) {
 
 /// `Camera_8002E948`
 pub unsafe fn Camera_8002E948(mut cb: Option<unsafe extern "C" fn(*mut Vec) -> i32>) {
+    melee_core::ct!("Camera_8002E948");
     let mut spC: Vec3 = unsafe { core::mem::zeroed() };
     if game_camera.mode != ((CAMERA_BOSS_INTRO as i32) as u32) {
         Camera_8002FE38();
@@ -3053,11 +3130,13 @@ pub unsafe fn Camera_8002E948(mut cb: Option<unsafe extern "C" fn(*mut Vec) -> i
 }
 
 pub unsafe fn Camera_8002EA64(mut arg0: *mut Vec) {
+    melee_core::ct!("Camera_8002EA64");
     todo!("Camera_8002EA64: goto, hand port")
 }
 
 /// `Camera_8002EB5C`
 pub unsafe fn Camera_8002EB5C(mut arg0: f32) {
+    melee_core::ct!("Camera_8002EB5C");
     let mut spC: Vec3 = unsafe { core::mem::zeroed() };
     if game_camera.mode != ((CAMERA_BOSS_INTRO as i32) as u32) {
         Camera_8002FE38();
@@ -3087,6 +3166,7 @@ pub unsafe fn Camera_8002EB5C(mut arg0: f32) {
 
 /// `Camera_8002EC7C`
 pub unsafe fn Camera_8002EC7C(mut arg0: f32) {
+    melee_core::ct!("Camera_8002EC7C");
     let mut spC: Vec3 = unsafe { core::mem::zeroed() };
     if game_camera.mode != ((CAMERA_BOSS_INTRO as i32) as u32) {
         Camera_8002FE38();
@@ -3116,6 +3196,7 @@ pub unsafe fn Camera_8002EC7C(mut arg0: f32) {
 
 /// `Camera_8002ED9C`
 pub unsafe fn Camera_8002ED9C(mut arg0: f32) {
+    melee_core::ct!("Camera_8002ED9C");
     let mut spC: Vec3 = unsafe { core::mem::zeroed() };
     if game_camera.mode != ((CAMERA_BOSS_INTRO as i32) as u32) {
         Camera_8002FE38();
@@ -3145,6 +3226,7 @@ pub unsafe fn Camera_8002ED9C(mut arg0: f32) {
 
 /// `Camera_8002EEC8`
 pub unsafe fn Camera_8002EEC8(mut fov: f32) {
+    melee_core::ct!("Camera_8002EEC8");
     if game_camera.mode != ((CAMERA_BOSS_INTRO as i32) as u32) {
         Camera_8002FE38();
     }
@@ -3153,6 +3235,7 @@ pub unsafe fn Camera_8002EEC8(mut fov: f32) {
 
 /// `Camera_8002EF14`
 pub unsafe fn Camera_8002EF14() {
+    melee_core::ct!("Camera_8002EF14");
     let mut sp24: i32 = 0;
     let mut sp18: Vec3 = unsafe { core::mem::zeroed() };
     let mut sp14: i32 = 0;
@@ -3215,6 +3298,7 @@ pub unsafe fn Camera_8002EF14() {
 
 /// `Camera_8002F0E4`
 pub unsafe fn Camera_8002F0E4(mut arg0: i32) {
+    melee_core::ct!("Camera_8002F0E4");
     let mut sp24: i32 = 0;
     let mut sp20: i32 = 0;
     let mut spC: Vec3 = unsafe { core::mem::zeroed() };
@@ -3258,11 +3342,13 @@ pub unsafe fn Camera_8002F0E4(mut arg0: i32) {
 
 /// `Camera_8002F260`
 pub unsafe fn Camera_8002F260() -> i32 {
+    melee_core::ct!("Camera_8002F260");
     return game_camera.x341_b7() as i32;
 }
 
 /// `Camera_8002F274`
 pub unsafe fn Camera_8002F274() {
+    melee_core::ct!("Camera_8002F274");
     let mut sp8: Vec3 = unsafe { core::mem::zeroed() };
     if game_camera.mode != ((CAMERA_BOSS_INTRO as i32) as u32) {
         Camera_8002FE38();
@@ -3287,6 +3373,7 @@ pub unsafe fn Camera_8002F274() {
 
 /// `fn_8002F360`
 pub unsafe extern "C" fn fn_8002F360(mut x: *mut HSD_GObj) {
+    melee_core::ct!("fn_8002F360");
     if cm_script.state != 0 {
         game_camera.transform = cm_script.normal;
     }
@@ -3298,6 +3385,7 @@ pub unsafe extern "C" fn fn_8002F360(mut x: *mut HSD_GObj) {
 
 /// `Camera_8002F3AC`
 pub unsafe fn Camera_8002F3AC() {
+    melee_core::ct!("Camera_8002F3AC");
     let mut gobj: *mut HSD_GObj = game_camera.gobj;
     if cm_803BCB18.callback[game_camera.mode as usize].is_some() {
         cm_803BCB18.callback[game_camera.mode as usize].unwrap()(gobj as *mut c_void);
@@ -3312,11 +3400,13 @@ pub unsafe fn Camera_8002F3AC() {
 
 /// `Camera_SetModeToStandard`
 pub unsafe fn Camera_SetModeToStandard() {
+    melee_core::ct!("Camera_SetModeToStandard");
     game_camera.mode = (CAMERA_STANDARD as i32) as u32;
 }
 
 /// `Camera_SetBounds`
 pub unsafe extern "C" fn Camera_SetBounds(mut arg0: *mut Quaternion) -> i32 {
+    melee_core::ct!("Camera_SetBounds");
     (*arg0).z = cm_fly_left();
     (*arg0).w = cm_fly_right();
     (*arg0).x = cm_fly_top();
@@ -3326,6 +3416,7 @@ pub unsafe extern "C" fn Camera_SetBounds(mut arg0: *mut Quaternion) -> i32 {
 
 /// `Camera_SetUpPauseCamera`
 pub unsafe fn Camera_SetUpPauseCamera(mut pauserSlot: i8, mut pauserId: i8, mut arg2: i32) {
+    melee_core::ct!("Camera_SetUpPauseCamera");
     let mut target_interest: *mut Vec = null_mut();
     let mut pause_eye_offset: *mut Vec = null_mut();
     let mut transform: *mut CameraTransformState = null_mut();
@@ -3399,16 +3490,19 @@ pub unsafe fn Camera_SetUpPauseCamera(mut pauserSlot: i8, mut pauserId: i8, mut 
 
 /// `Camera_SetUpPauseCameraWithDefaultZoom`
 pub unsafe fn Camera_SetUpPauseCameraWithDefaultZoom(mut pauserSlot: i8, mut pauserId: i8) {
+    melee_core::ct!("Camera_SetUpPauseCameraWithDefaultZoom");
     Camera_SetUpPauseCamera(pauserSlot, pauserId, 0);
 }
 
 /// `Camera_8002F760`
 pub unsafe fn Camera_8002F760(mut arg0: i8, mut arg1: i8) {
+    melee_core::ct!("Camera_8002F760");
     Camera_SetUpPauseCamera(arg0, arg1, 1);
 }
 
 /// `Camera_8002F784`
 pub unsafe fn Camera_8002F784(mut slot: i8, mut arg1: i8) {
+    melee_core::ct!("Camera_8002F784");
     game_camera.mode = (CAMERA_TRAINING_MENU as i32) as u32;
     game_camera.x2C4 = slot;
     game_camera.x2C5 = arg1;
@@ -3418,6 +3512,7 @@ pub unsafe fn Camera_8002F784(mut slot: i8, mut arg1: i8) {
 
 /// `Camera_8002F7AC`
 pub unsafe fn Camera_8002F7AC(mut slot: i8) {
+    melee_core::ct!("Camera_8002F7AC");
     let mut cam_box: *mut CmSubject = null_mut();
     let mut fighter_gobj: *mut HSD_GObj = null_mut();
     let mut direction: f32 = 0.0;
@@ -3465,11 +3560,13 @@ pub unsafe fn Camera_8002F7AC(mut slot: i8) {
 
 /// `Camera_SetModeToFixed`
 pub unsafe fn Camera_SetModeToFixed() {
+    melee_core::ct!("Camera_SetModeToFixed");
     game_camera.mode = (CAMERA_FIXED as i32) as u32;
 }
 
 /// `fn_8002F908`
 pub unsafe extern "C" fn fn_8002F908(mut arg0: *mut _HSD_RectF32) -> i32 {
+    melee_core::ct!("fn_8002F908");
     let mut half_width: f32 = 0.0;
     let mut half_height: f32 = 0.0;
     let mut center_h: f32 = 0.0;
@@ -3487,6 +3584,7 @@ pub unsafe extern "C" fn fn_8002F908(mut arg0: *mut _HSD_RectF32) -> i32 {
 
 /// `Camera_8002F9E4`
 pub unsafe fn Camera_8002F9E4(mut arg0: i8, mut arg1: i8) {
+    melee_core::ct!("Camera_8002F9E4");
     let mut target_interest: *mut Vec = null_mut();
     let mut transform: *mut CameraTransformState = null_mut();
     let mut scale: f32 = 0.0;
@@ -3536,6 +3634,7 @@ pub unsafe fn Camera_8002F9E4(mut arg0: i8, mut arg1: i8) {
 
 /// `fn_8002FBA0`
 pub unsafe extern "C" fn fn_8002FBA0(mut arg0: *mut _HSD_RectF32) -> i32 {
+    melee_core::ct!("fn_8002FBA0");
     let mut half_width: f32 = 0.0;
     let mut half_height: f32 = 0.0;
     let mut center_h: f32 = 0.0;
@@ -3553,6 +3652,7 @@ pub unsafe extern "C" fn fn_8002FBA0(mut arg0: *mut _HSD_RectF32) -> i32 {
 
 /// `Camera_8002FC7C`
 pub unsafe fn Camera_8002FC7C(mut arg0: i8, mut arg1: i8) {
+    melee_core::ct!("Camera_8002FC7C");
     let mut new_var: *mut CameraUnkGlobals = null_mut();
     let mut target_interest: *mut Vec = null_mut();
     let mut transform: *mut CameraTransformState = null_mut();
@@ -3606,6 +3706,7 @@ pub unsafe fn Camera_8002FC7C(mut arg0: i8, mut arg1: i8) {
 
 /// `Camera_8002FE38`
 pub unsafe fn Camera_8002FE38() {
+    melee_core::ct!("Camera_8002FE38");
     game_camera.mode = (CAMERA_BOSS_INTRO as i32) as u32;
     game_camera.set_x341_b1_b2((0 as u8) as u8);
     game_camera.set_x341_b3_b4((0 as u8) as u8);
@@ -3620,6 +3721,7 @@ pub unsafe fn Camera_8002FE38() {
 
 /// `Camera_8002FEEC`
 pub unsafe fn Camera_8002FEEC(mut arg0: i32) {
+    melee_core::ct!("Camera_8002FEEC");
     let mut cobj: *mut HSD_CObj = null_mut();
     let mut r#box: *mut CmSubject = null_mut();
     let mut new_var: f32 = 0.0;
@@ -3664,6 +3766,7 @@ pub unsafe fn Camera_8002FEEC(mut arg0: i32) {
 
 /// `Camera_8003006C`
 pub unsafe fn Camera_8003006C() {
+    melee_core::ct!("Camera_8003006C");
     let mut cobj: *mut HSD_CObj = null_mut();
     if game_camera.mode != ((CAMERA_DEBUG_FREE as i32) as u32) {
         if game_camera.mode <= ((CAMERA_PAUSE as i32) as u32) {
@@ -3679,11 +3782,13 @@ pub unsafe fn Camera_8003006C() {
 
 /// `Camera_800300F0`
 pub unsafe fn Camera_800300F0() {
+    melee_core::ct!("Camera_800300F0");
     game_camera.mode = cm_80453004.last_mode;
 }
 
 /// `Camera_8003010C`
 pub unsafe fn Camera_8003010C() -> i32 {
+    melee_core::ct!("Camera_8003010C");
     if (game_camera.mode as i32) == (CAMERA_FREE as i32) {
         return 1;
     }
@@ -3692,6 +3797,7 @@ pub unsafe fn Camera_8003010C() -> i32 {
 
 /// `Camera_80030130`
 pub unsafe fn Camera_80030130() -> i32 {
+    melee_core::ct!("Camera_80030130");
     if (game_camera.mode as i32) == (CAMERA_BOSS_INTRO as i32) {
         return 1;
     }
@@ -3700,6 +3806,7 @@ pub unsafe fn Camera_80030130() -> i32 {
 
 /// `Camera_80030154`
 pub unsafe fn Camera_80030154() -> i32 {
+    melee_core::ct!("Camera_80030154");
     if (game_camera.mode as i32) == (CAMERA_DEBUG_FOLLOW as i32) {
         return 1;
     }
@@ -3708,6 +3815,7 @@ pub unsafe fn Camera_80030154() -> i32 {
 
 /// `Camera_80030178`
 pub unsafe fn Camera_80030178() -> i32 {
+    melee_core::ct!("Camera_80030178");
     if (game_camera.mode as i32) == (CAMERA_DEBUG_FREE as i32) {
         return 1;
     }
@@ -3716,11 +3824,13 @@ pub unsafe fn Camera_80030178() -> i32 {
 
 /// `Camera_8003019C`
 pub unsafe fn Camera_8003019C() -> *mut Vec {
+    melee_core::ct!("Camera_8003019C");
     return core::ptr::addr_of_mut!((*ext::ftLib_80086B74(ext::Player_GetEntity(cm_80453004.ply_slot))).bone_pos) as *mut Vec;
 }
 
 /// `gxlink_prio8`
 pub unsafe fn gxlink_prio8() -> i64 {
+    melee_core::ct!("gxlink_prio8");
     let mut prio: i64 = 0;
     if ext::Wb_RenderActive() != 0 {
         return (if ext::Wb_RenderOption(WB_RENDER_STAGE as i32, 1) != 0 { 8 } else { 0 }) as i64;
@@ -3735,6 +3845,7 @@ pub unsafe fn gxlink_prio8() -> i64 {
 
 /// `gxlink_prio1`
 pub unsafe fn gxlink_prio1() -> i64 {
+    melee_core::ct!("gxlink_prio1");
     let mut prio: i64 = 0;
     if game_camera.x398_b4() != 0 {
         prio = 0 as i64;
@@ -3746,6 +3857,7 @@ pub unsafe fn gxlink_prio1() -> i64 {
 
 /// `gxlink_prio80`
 pub unsafe fn gxlink_prio80() -> i64 {
+    melee_core::ct!("gxlink_prio80");
     let mut prio: i64 = 0;
     if game_camera.x398_b3() != 0 {
         prio = 0 as i64;
@@ -3757,6 +3869,7 @@ pub unsafe fn gxlink_prio80() -> i64 {
 
 /// `render_gxlink_pass`
 pub unsafe fn render_gxlink_pass(mut gobj: *mut HSD_GObj, mut pass: i32, mut gxlink: i32) {
+    melee_core::ct!("render_gxlink_pass");
     let mut prio8: i64 = 0;
     Camera_800310A0(pass as u8);
     prio8 = gxlink_prio8();
@@ -3766,6 +3879,7 @@ pub unsafe fn render_gxlink_pass(mut gobj: *mut HSD_GObj, mut pass: i32, mut gxl
 
 /// `fn_800301D0`
 pub unsafe extern "C" fn fn_800301D0(mut gobj: *mut HSD_GObj, mut arg1: i32) {
+    melee_core::ct!("fn_800301D0");
     let mut prio8_a: i64 = 0;
     let mut prio1_a: i64 = 0;
     let mut cobj: *mut HSD_CObj = null_mut();
@@ -3857,6 +3971,7 @@ pub unsafe extern "C" fn fn_800301D0(mut gobj: *mut HSD_GObj, mut arg1: i32) {
 
 /// `Camera_800304E0`
 pub unsafe fn Camera_800304E0(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("Camera_800304E0");
     let mut prio8: i64 = 0;
     let mut prio1: i64 = 0;
     let mut cobj: *mut HSD_CObj = null_mut();
@@ -3884,6 +3999,7 @@ pub unsafe fn Camera_800304E0(mut gobj: *mut HSD_GObj) {
 
 /// `Camera_Create`
 pub unsafe fn Camera_Create() {
+    melee_core::ct!("Camera_Create");
     let mut gobj: *mut HSD_GObj = null_mut();
     let mut cobj: *mut HSD_CObj = null_mut();
     gobj = ext::GObj_Create(16 as u16, 18 as u8, 0 as u8);
@@ -3900,11 +4016,13 @@ pub unsafe fn Camera_Create() {
 
 /// `Camera_80030730`
 pub unsafe fn Camera_80030730(mut arg8: f32) {
+    melee_core::ct!("Camera_80030730");
     cm_803BCCA0.x40 = arg8;
 }
 
 /// `Camera_SetBackgroundColor`
 pub unsafe fn Camera_SetBackgroundColor(mut r: u8, mut g: u8, mut b: u8) {
+    melee_core::ct!("Camera_SetBackgroundColor");
     game_camera.background_color.r = r;
     game_camera.background_color.g = g;
     game_camera.background_color.b = b;
@@ -3912,6 +4030,7 @@ pub unsafe fn Camera_SetBackgroundColor(mut r: u8, mut g: u8, mut b: u8) {
 
 /// `Camera_GetBackgroundColor`
 pub unsafe fn Camera_GetBackgroundColor() -> GXColor {
+    melee_core::ct!("Camera_GetBackgroundColor");
     let mut color: GXColor = unsafe { core::mem::zeroed() };
     color.r = game_camera.background_color.r;
     color.g = game_camera.background_color.g;
@@ -3921,26 +4040,31 @@ pub unsafe fn Camera_GetBackgroundColor() -> GXColor {
 
 /// `Camera_GetTransformPosition`
 pub unsafe fn Camera_GetTransformPosition(mut arg0: *mut Vec) {
+    melee_core::ct!("Camera_GetTransformPosition");
     *arg0 = game_camera.transform.position;
 }
 
 /// `Camera_GetTransformInterest`
 pub unsafe fn Camera_GetTransformInterest(mut arg0: *mut Vec) {
+    melee_core::ct!("Camera_GetTransformInterest");
     *arg0 = game_camera.transform.interest;
 }
 
 /// `project_ground_x`
 pub unsafe fn project_ground_x(mut value: *mut f32, mut eye_pos: *mut Vec, mut dir_x: f32, mut dir_z: f32) {
+    melee_core::ct!("project_ground_x");
     *value = -fmadds(dir_x, (*eye_pos).z / dir_z, -(*eye_pos).x);
 }
 
 /// `same_side`
 pub unsafe fn same_side(mut fwd_z: f32, mut dir_z: f32) -> i32 {
+    melee_core::ct!("same_side");
     return (((fwd_z * dir_z) as f64) > 0.0f64) as i32;
 }
 
 /// `Camera_Bounds`
 pub unsafe fn Camera_Bounds(mut left: *mut f32, mut center: *mut f32, mut right: *mut f32, mut logic: i32) -> i32 {
+    melee_core::ct!("Camera_Bounds");
     let mut cobj: *mut HSD_CObj = null_mut();
     let mut half_fov: f32 = 0.0;
     let mut forward: Vec3 = unsafe { core::mem::zeroed() };
@@ -4003,27 +4127,32 @@ pub unsafe fn Camera_Bounds(mut left: *mut f32, mut center: *mut f32, mut right:
 
 /// `Camera_800307D0`
 pub unsafe fn Camera_800307D0(mut left: *mut f32, mut center: *mut f32, mut right: *mut f32) -> i32 {
+    melee_core::ct!("Camera_800307D0");
     return Camera_Bounds(left, center, right, 0);
 }
 
 /// `Camera_LogicBounds`
 pub unsafe fn Camera_LogicBounds(mut left: *mut f32, mut center: *mut f32, mut right: *mut f32) -> i32 {
+    melee_core::ct!("Camera_LogicBounds");
     return Camera_Bounds(left, center, right, 1);
 }
 
 /// `Camera_ForgetGameCamera`
 pub unsafe fn Camera_ForgetGameCamera() {
+    melee_core::ct!("Camera_ForgetGameCamera");
     game_camera.gobj = null_mut();
     core::ptr::write_bytes(((core::ptr::addr_of_mut!(cm_script) as *mut cm_script_t) as *mut c_void) as *mut u8, 0, (2580_u64 as i32) as usize);
 }
 
 /// `cm_script_lerp`
 pub unsafe fn cm_script_lerp(mut a: f32, mut b: f32, mut t: f32) -> f32 {
+    melee_core::ct!("cm_script_lerp");
     return fmadds(b - a, t, a);
 }
 
 /// `cm_script_restore_up`
 pub unsafe fn cm_script_restore_up() {
+    melee_core::ct!("cm_script_restore_up");
     if !game_camera.gobj.is_null() {
         let mut c: *mut HSD_CObj = HSD_GObjGetHSDObj(game_camera.gobj) as *mut HSD_CObj;
         if cm_script.saved_up_vector != 0 {
@@ -4037,6 +4166,7 @@ pub unsafe fn cm_script_restore_up() {
 
 /// `cm_script_blend`
 pub unsafe fn cm_script_blend(mut a: CmScriptPose, mut b: CmScriptPose, mut t: f32) -> CmScriptPose {
+    melee_core::ct!("cm_script_blend");
     let mut p: CmScriptPose = unsafe { core::mem::zeroed() };
     p.eye.x = cm_script_lerp(a.eye.x, b.eye.x, t);
     p.eye.y = cm_script_lerp(a.eye.y, b.eye.y, t);
@@ -4051,6 +4181,7 @@ pub unsafe fn cm_script_blend(mut a: CmScriptPose, mut b: CmScriptPose, mut t: f
 
 /// `cm_script_ease`
 pub unsafe fn cm_script_ease(mut t: f32, mut ease: i32) -> f32 {
+    melee_core::ct!("cm_script_ease");
     if ease == 1 {
         return t * t;
     }
@@ -4065,6 +4196,7 @@ pub unsafe fn cm_script_ease(mut t: f32, mut ease: i32) -> f32 {
 
 /// `cm_script_update`
 pub unsafe fn cm_script_update() {
+    melee_core::ct!("cm_script_update");
     let mut normal: CmScriptPose = unsafe { core::mem::zeroed() };
     let mut target: Vec3 = unsafe { core::mem::zeroed() };
     let mut i: i32 = 0;
@@ -4154,6 +4286,7 @@ pub unsafe fn cm_script_update() {
 
 /// `Camera_ScriptDetach`
 pub unsafe fn Camera_ScriptDetach() -> i32 {
+    melee_core::ct!("Camera_ScriptDetach");
     let mut c: *mut HSD_CObj = null_mut();
     if game_camera.gobj.is_null() {
         return 0;
@@ -4179,6 +4312,7 @@ pub unsafe fn Camera_ScriptDetach() -> i32 {
 
 /// `Camera_ScriptAttach`
 pub unsafe fn Camera_ScriptAttach(mut frames: i32) {
+    melee_core::ct!("Camera_ScriptAttach");
     if !(cm_script.state != 0) {
         return;
     }
@@ -4202,31 +4336,37 @@ pub unsafe fn Camera_ScriptAttach(mut frames: i32) {
 
 /// `Camera_ScriptReset`
 pub unsafe fn Camera_ScriptReset() {
+    melee_core::ct!("Camera_ScriptReset");
     Camera_ScriptAttach(0);
 }
 
 /// `Camera_ScriptState`
 pub unsafe fn Camera_ScriptState() -> i32 {
+    melee_core::ct!("Camera_ScriptState");
     return cm_script.state;
 }
 
 /// `Camera_ScriptMode`
 pub unsafe fn Camera_ScriptMode() -> i32 {
+    melee_core::ct!("Camera_ScriptMode");
     return game_camera.mode as i32;
 }
 
 /// `Camera_ScriptCompletion`
 pub unsafe fn Camera_ScriptCompletion() -> i32 {
+    melee_core::ct!("Camera_ScriptCompletion");
     return cm_script.completion;
 }
 
 /// `Camera_ScriptCompletionKind`
 pub unsafe fn Camera_ScriptCompletionKind() -> i32 {
+    melee_core::ct!("Camera_ScriptCompletionKind");
     return cm_script.completion_kind;
 }
 
 /// `Camera_ScriptGetBits`
 pub unsafe fn Camera_ScriptGetBits(mut field: i32) -> i32 {
+    melee_core::ct!("Camera_ScriptGetBits");
     let mut p: CmScriptPose = unsafe { core::mem::zeroed() };
     let mut c: *mut HSD_CObj = null_mut();
     if game_camera.gobj.is_null() {
@@ -4275,6 +4415,7 @@ pub unsafe fn Camera_ScriptGetBits(mut field: i32) -> i32 {
 
 /// `Camera_ScriptSet`
 pub unsafe fn Camera_ScriptSet(mut field: i32, mut bits: i32) {
+    melee_core::ct!("Camera_ScriptSet");
     let mut v: f32 = cm_script_float(bits);
     if cm_script.state != 1 {
         return;
@@ -4316,6 +4457,7 @@ pub unsafe fn Camera_ScriptSet(mut field: i32, mut bits: i32) {
 
 /// `Camera_ScriptMove`
 pub unsafe fn Camera_ScriptMove(mut frames: i32, mut ease: i32) {
+    melee_core::ct!("Camera_ScriptMove");
     if (cm_script.state != 1) || (frames < 1) {
         return;
     }
@@ -4329,17 +4471,20 @@ pub unsafe fn Camera_ScriptMove(mut frames: i32, mut ease: i32) {
 
 /// `Camera_ScriptMoveBegin`
 pub unsafe fn Camera_ScriptMoveBegin() {
+    melee_core::ct!("Camera_ScriptMoveBegin");
     cm_script.from = cm_script.pose;
 }
 
 /// `Camera_ScriptPathClear`
 pub unsafe fn Camera_ScriptPathClear() {
+    melee_core::ct!("Camera_ScriptPathClear");
     cm_script.path_count = { cm_script.duration = { cm_script.follow_kind = 0; cm_script.follow_kind }; cm_script.duration };
     cm_script.path_building = 1;
 }
 
 /// `Camera_ScriptPathKey`
 pub unsafe fn Camera_ScriptPathKey(mut frame: i32) -> i32 {
+    melee_core::ct!("Camera_ScriptPathKey");
     if (((cm_script.state != 1) || (cm_script.path_count >= 64)) || (frame < 0)) || ((cm_script.path_count != 0) && (frame <= cm_script.path[(cm_script.path_count - 1) as usize].frame)) {
         return 0;
     }
@@ -4351,6 +4496,7 @@ pub unsafe fn Camera_ScriptPathKey(mut frame: i32) -> i32 {
 
 /// `Camera_ScriptPathStart`
 pub unsafe fn Camera_ScriptPathStart() {
+    melee_core::ct!("Camera_ScriptPathStart");
     if (cm_script.state != 1) || (cm_script.path_count < 2) {
         return;
     }
@@ -4362,6 +4508,7 @@ pub unsafe fn Camera_ScriptPathStart() {
 
 /// `Camera_ScriptFollow`
 pub unsafe fn Camera_ScriptFollow(mut kind: i32, mut id: i32, mut px: i32, mut py: i32, mut pz: i32, mut ox: i32, mut oy: i32, mut oz: i32) -> i32 {
+    melee_core::ct!("Camera_ScriptFollow");
     let mut target: Vec3 = unsafe { core::mem::zeroed() };
     if cm_script.state != 1 {
         return 0;
@@ -4389,6 +4536,7 @@ pub unsafe fn Camera_ScriptFollow(mut kind: i32, mut id: i32, mut px: i32, mut p
 
 /// `Camera_ScriptShake`
 pub unsafe fn Camera_ScriptShake(mut intensity_bits: i32, mut frames: i32) {
+    melee_core::ct!("Camera_ScriptShake");
     cm_script.shake_intensity = cm_script_float(intensity_bits);
     cm_script.shake_left = { cm_script.shake_total = frames; cm_script.shake_total };
     cm_script.shake_tick = 1;
@@ -4396,11 +4544,13 @@ pub unsafe fn Camera_ScriptShake(mut intensity_bits: i32, mut frames: i32) {
 
 /// `Camera_ScriptLiftBounds`
 pub unsafe fn Camera_ScriptLiftBounds(mut lift: i32) {
+    melee_core::ct!("Camera_ScriptLiftBounds");
     cm_script.lift_bounds = ((cm_script.state == 1) && (lift != 0)) as i32;
 }
 
 /// `Camera_RefreshViewingMtx`
 pub unsafe fn Camera_RefreshViewingMtx() {
+    melee_core::ct!("Camera_RefreshViewingMtx");
     if !game_camera.gobj.is_null() {
         Camera_8002A4AC(game_camera.gobj);
         let _ = ext::HSD_CObjGetViewingMtxPtr(HSD_GObjGetHSDObj(game_camera.gobj) as *mut HSD_CObj);
@@ -4409,6 +4559,7 @@ pub unsafe fn Camera_RefreshViewingMtx() {
 
 /// `Camera_ScriptCommit`
 pub unsafe fn Camera_ScriptCommit() {
+    melee_core::ct!("Camera_ScriptCommit");
     if (cm_script.state != 1) || (game_camera.gobj.is_null()) {
         return;
     }
@@ -4420,6 +4571,7 @@ pub unsafe fn Camera_ScriptCommit() {
 
 /// `Camera_80030A50`
 pub unsafe fn Camera_80030A50() -> *mut HSD_GObj {
+    melee_core::ct!("Camera_80030A50");
     if !game_camera.gobj.is_null() {
         ext::HSD_CObjUpdateView(HSD_GObjGetHSDObj(game_camera.gobj) as *mut HSD_CObj);
     }
@@ -4428,83 +4580,99 @@ pub unsafe fn Camera_80030A50() -> *mut HSD_GObj {
 
 /// `Camera_80030A60`
 pub unsafe fn Camera_80030A60(mut arg0: i32) {
+    melee_core::ct!("Camera_80030A60");
     game_camera.set_x399_b3((arg0 as u8) as u8);
 }
 
 /// `Camera_80030A78`
 pub unsafe fn Camera_80030A78() -> i32 {
+    melee_core::ct!("Camera_80030A78");
     return game_camera.x399_b3() as i32;
 }
 
 /// `Camera_80030A8C`
 pub unsafe fn Camera_80030A8C(mut arg0: i32) {
+    melee_core::ct!("Camera_80030A8C");
     game_camera.set_x399_b4((arg0 as u8) as u8);
 }
 
 /// `Camera_SetStageVisible`
 pub unsafe fn Camera_SetStageVisible(mut arg0: i32) {
+    melee_core::ct!("Camera_SetStageVisible");
     let mut temp: i32 = 0;
     game_camera.set_x399_b5(((({ temp = 0; temp } == arg0) as i32) as u8) as u8);
 }
 
 /// `Camera_80030AC4`
 pub unsafe fn Camera_80030AC4() -> i32 {
+    melee_core::ct!("Camera_80030AC4");
     let mut temp: i32 = 0;
     return ({ temp = 0; temp } == (game_camera.x399_b5() as i32)) as i32;
 }
 
 /// `Camera_80030AE0`
 pub unsafe fn Camera_80030AE0(mut arg0: i32) {
+    melee_core::ct!("Camera_80030AE0");
     game_camera.set_x399_b2((arg0 as u8) as u8);
 }
 
 /// `Camera_80030AF8`
 pub unsafe fn Camera_80030AF8() -> i32 {
+    melee_core::ct!("Camera_80030AF8");
     return game_camera.x399_b2() as i32;
 }
 
 /// `Camera_80030B0C`
 pub unsafe fn Camera_80030B0C(mut arg0: i32) {
+    melee_core::ct!("Camera_80030B0C");
     game_camera.set_x399_b7((arg0 as u8) as u8);
 }
 
 /// `Camera_80030B24`
 pub unsafe fn Camera_80030B24() -> i32 {
+    melee_core::ct!("Camera_80030B24");
     return game_camera.x399_b7() as i32;
 }
 
 /// `Camera_80030B38`
 pub unsafe fn Camera_80030B38(mut arg0: i32) {
+    melee_core::ct!("Camera_80030B38");
     game_camera.set_x39A_b0((arg0 as u8) as u8);
 }
 
 /// `Camera_80030B50`
 pub unsafe fn Camera_80030B50() -> i32 {
+    melee_core::ct!("Camera_80030B50");
     return game_camera.x39A_b0() as i32;
 }
 
 /// `Camera_80030B64`
 pub unsafe fn Camera_80030B64(mut arg0: i32) {
+    melee_core::ct!("Camera_80030B64");
     game_camera.set_x39A_b1((arg0 as u8) as u8);
 }
 
 /// `Camera_80030B7C`
 pub unsafe fn Camera_80030B7C() -> i32 {
+    melee_core::ct!("Camera_80030B7C");
     return game_camera.x39A_b1() as i32;
 }
 
 /// `Camera_80030B90`
 pub unsafe fn Camera_80030B90(mut arg0: i32) {
+    melee_core::ct!("Camera_80030B90");
     game_camera.set_x39A_b2((arg0 as u8) as u8);
 }
 
 /// `Camera_80030BA8`
 pub unsafe fn Camera_80030BA8() -> i32 {
+    melee_core::ct!("Camera_80030BA8");
     return game_camera.x39A_b2() as i32;
 }
 
 /// `Camera_ProjectToScreen`
 pub unsafe fn Camera_ProjectToScreen(mut cobj: *mut HSD_CObj, mut arg0: *mut Vec, mut arg1: *mut S32Vec2) -> i32 {
+    melee_core::ct!("Camera_ProjectToScreen");
     let mut point: Vec3 = unsafe { core::mem::zeroed() };
     let mut scissor: Scissor = unsafe { core::mem::zeroed() };
     let mut px: i32 = 0;
@@ -4530,11 +4698,13 @@ pub unsafe fn Camera_ProjectToScreen(mut cobj: *mut HSD_CObj, mut arg0: *mut Vec
 
 /// `Camera_80030BBC`
 pub unsafe fn Camera_80030BBC(mut arg0: *mut Vec, mut arg1: *mut S32Vec2) -> i32 {
+    melee_core::ct!("Camera_80030BBC");
     return Camera_ProjectToScreen(HSD_GObjGetHSDObj(game_camera.gobj) as *mut HSD_CObj, arg0, arg1);
 }
 
 /// `Camera_LogicToScreen`
 pub unsafe fn Camera_LogicToScreen(mut subject: *mut CmSubject, mut point: *mut S32Vec2) -> i32 {
+    melee_core::ct!("Camera_LogicToScreen");
     let mut source: *mut HSD_CObj = HSD_GObjGetHSDObj(game_camera.gobj) as *mut HSD_CObj;
     let mut camera: HSD_CObj = *source;
     camera.view_auto = 0 as u8;
@@ -4544,11 +4714,13 @@ pub unsafe fn Camera_LogicToScreen(mut subject: *mut CmSubject, mut point: *mut 
 
 /// `Camera_80030CD8`
 pub unsafe fn Camera_80030CD8(mut arg0: *mut CmSubject, mut arg1: *mut S32Vec2) -> i32 {
+    melee_core::ct!("Camera_80030CD8");
     return Camera_80030BBC(core::ptr::addr_of_mut!((*arg0).bone_pos) as *mut Vec, arg1);
 }
 
 /// `Camera_80030CFC`
 pub unsafe fn Camera_80030CFC(mut cam_box: *mut CmSubject, mut tolerance: f32) -> i32 {
+    melee_core::ct!("Camera_80030CFC");
     let mut cobj: *mut HSD_CObj = null_mut();
     let mut eye_pos: Vec3 = unsafe { core::mem::zeroed() };
     let mut interest: Vec3 = unsafe { core::mem::zeroed() };
@@ -4574,17 +4746,20 @@ pub unsafe fn Camera_80030CFC(mut cam_box: *mut CmSubject, mut tolerance: f32) -
 
 /// `Camera_80030DE4`
 pub unsafe fn Camera_80030DE4(mut arg8: f32, mut arg9: f32) {
+    melee_core::ct!("Camera_80030DE4");
     game_camera.translation.x = arg8;
     game_camera.translation.y = arg9;
 }
 
 /// `Camera_80030DF8`
 pub unsafe fn Camera_80030DF8() {
+    melee_core::ct!("Camera_80030DF8");
     game_camera.translation.x = { game_camera.translation.y = 0 as f32; game_camera.translation.y };
 }
 
 /// `Camera_80030E10`
 pub unsafe fn Camera_80030E10() -> f32 {
+    melee_core::ct!("Camera_80030E10");
     if (game_camera.x2B8 as i32) < 1 {
         return 1e+04f32;
     }
@@ -4593,11 +4768,13 @@ pub unsafe fn Camera_80030E10() -> f32 {
 
 /// `Camera_SetQuakeScale`
 pub unsafe fn Camera_SetQuakeScale(mut scale: f32) {
+    melee_core::ct!("Camera_SetQuakeScale");
     game_camera.quake_scale = scale;
 }
 
 /// `Camera_RequestQuake`
 pub unsafe fn Camera_RequestQuake(mut kind: CmQuakeKind, mut pos: *mut Vec) {
+    melee_core::ct!("Camera_RequestQuake");
     let mut pquake: *mut *mut HSD_GObj = null_mut();
     let mut quake_length: i32 = 0;
     's81: {
@@ -4649,36 +4826,43 @@ pub unsafe fn Camera_RequestQuake(mut kind: CmQuakeKind, mut pos: *mut Vec) {
 
 /// `Camera_StopQuake`
 pub unsafe fn Camera_StopQuake(mut kind: CmQuakeKind) {
+    melee_core::ct!("Camera_StopQuake");
     game_camera.quake_frames_left[kind as usize] = 0;
 }
 
 /// `Camera_PCMainCObj`
 pub unsafe fn Camera_PCMainCObj() -> *mut HSD_CObj {
+    melee_core::ct!("Camera_PCMainCObj");
     return if !game_camera.gobj.is_null() { HSD_GObjGetHSDObj(game_camera.gobj) as *mut HSD_CObj } else { null_mut() };
 }
 
 /// `Camera_80031060`
 pub unsafe fn Camera_80031060() -> i32 {
+    melee_core::ct!("Camera_80031060");
     return game_camera.x398_b6_b7() as i32;
 }
 
 /// `Camera_80031074`
 pub unsafe fn Camera_80031074(mut arg0: u8) {
+    melee_core::ct!("Camera_80031074");
     game_camera.set_x398_b6_b7((arg0) as u8);
 }
 
 /// `Camera_8003108C`
 pub unsafe fn Camera_8003108C() -> i32 {
+    melee_core::ct!("Camera_8003108C");
     return game_camera.x399_b0_b1() as i32;
 }
 
 /// `Camera_800310A0`
 pub unsafe fn Camera_800310A0(mut arg0: u8) {
+    melee_core::ct!("Camera_800310A0");
     game_camera.set_x399_b0_b1((arg0) as u8);
 }
 
 /// `Camera_800310B8`
 pub unsafe fn Camera_800310B8() -> *mut HSD_CObj {
+    melee_core::ct!("Camera_800310B8");
     ext::HSD_CObjSetMtxDirty(cm_804D6464);
     ext::HSD_CObjSetupViewingMtx(cm_804D6464);
     return cm_804D6464;
@@ -4686,6 +4870,7 @@ pub unsafe fn Camera_800310B8() -> *mut HSD_CObj {
 
 /// `Camera_800310E8`
 pub unsafe fn Camera_800310E8() {
+    melee_core::ct!("Camera_800310E8");
     game_camera.set_x398_b0((0 as u8) as u8);
     game_camera.set_x398_b1((0 as u8) as u8);
     game_camera.set_x398_b2((0 as u8) as u8);
@@ -4696,11 +4881,13 @@ pub unsafe fn Camera_800310E8() {
 
 /// `Camera_80031144`
 pub unsafe fn Camera_80031144() -> f32 {
+    melee_core::ct!("Camera_80031144");
     return game_camera.x2BC;
 }
 
 /// `Camera_80031154`
 pub unsafe fn Camera_80031154(mut arg0: *mut Vec) -> i32 {
+    melee_core::ct!("Camera_80031154");
     if Camera_80029124(arg0, 0) == (0 as u32) {
         return 1;
     }
@@ -4709,6 +4896,7 @@ pub unsafe fn Camera_80031154(mut arg0: *mut Vec) -> i32 {
 
 /// `Camera_8003118C`
 pub unsafe fn Camera_8003118C(mut arg0: *mut Vec, mut arg1: f32) -> i32 {
+    melee_core::ct!("Camera_8003118C");
     if Camera_80029124(arg0, arg1 as i32) == (0 as u32) {
         return 1;
     }
@@ -4717,22 +4905,26 @@ pub unsafe fn Camera_8003118C(mut arg0: *mut Vec, mut arg1: f32) -> i32 {
 
 /// `Camera_800311CC`
 pub unsafe fn Camera_800311CC(mut arg8: f32) {
+    melee_core::ct!("Camera_800311CC");
     game_camera.farz = arg8;
 }
 
 /// `Camera_StageSlotClipGet`
 pub unsafe fn Camera_StageSlotClipGet(mut nearz: *mut f32, mut farz: *mut f32) {
+    melee_core::ct!("Camera_StageSlotClipGet");
     *nearz = game_camera.nearz;
     *farz = game_camera.farz;
 }
 
 /// `Camera_800311DC`
 pub unsafe fn Camera_800311DC(mut arg8: f32) {
+    melee_core::ct!("Camera_800311DC");
     game_camera.nearz = arg8;
 }
 
 /// `inline_cam_gx_b0`
 pub unsafe fn inline_cam_gx_b0() -> i64 {
+    melee_core::ct!("inline_cam_gx_b0");
     if game_camera.x398_b0() != 0 {
         return 0 as i64;
     }
@@ -4741,6 +4933,7 @@ pub unsafe fn inline_cam_gx_b0() -> i64 {
 
 /// `inline_cam_gx_b1`
 pub unsafe fn inline_cam_gx_b1() -> i64 {
+    melee_core::ct!("inline_cam_gx_b1");
     if game_camera.x398_b1() != 0 {
         return 0 as i64;
     }
@@ -4749,6 +4942,7 @@ pub unsafe fn inline_cam_gx_b1() -> i64 {
 
 /// `inline_cam_gx_b4`
 pub unsafe fn inline_cam_gx_b4() -> i64 {
+    melee_core::ct!("inline_cam_gx_b4");
     if game_camera.x398_b4() != 0 {
         return 0 as i64;
     }
@@ -4757,6 +4951,7 @@ pub unsafe fn inline_cam_gx_b4() -> i64 {
 
 /// `Camera_800311EC`
 pub unsafe fn Camera_800311EC(mut gobj: *mut HSD_GObj, mut prios: u64) {
+    melee_core::ct!("Camera_800311EC");
     let mut a: i64 = 0;
     let mut b: i64 = 0;
     game_camera.set_x398_b6_b7((1 as u8) as u8);
@@ -4775,6 +4970,7 @@ pub unsafe fn Camera_800311EC(mut gobj: *mut HSD_GObj, mut prios: u64) {
 
 /// `Camera_80031328`
 pub unsafe fn Camera_80031328(mut gobj: *mut HSD_GObj, mut prios: u64) {
+    melee_core::ct!("Camera_80031328");
     let mut a: i64 = 0;
     let mut b: i64 = 0;
     let mut c: u64 = 0;
@@ -4789,6 +4985,7 @@ pub unsafe fn Camera_80031328(mut gobj: *mut HSD_GObj, mut prios: u64) {
 
 /// `Camera_800313E0`
 pub unsafe fn Camera_800313E0(mut gobj: *mut HSD_GObj, mut prios: u64) {
+    melee_core::ct!("Camera_800313E0");
     let mut a: i64 = 0;
     let mut b: i64 = 0;
     let mut c: u64 = 0;
@@ -4815,10 +5012,12 @@ pub unsafe fn Camera_800313E0(mut gobj: *mut HSD_GObj, mut prios: u64) {
 
 /// `HSD_GObjGetHSDObj`
 pub unsafe fn HSD_GObjGetHSDObj(mut gobj: *mut HSD_GObj) -> *mut c_void {
+    melee_core::ct!("HSD_GObjGetHSDObj");
     return (*gobj).hsd_obj;
 }
 
 /// `lbVector_Len`
 pub unsafe fn lbVector_Len(mut vec: *mut Vec) -> f32 {
+    melee_core::ct!("lbVector_Len");
     return melee_runtime::gekko::sqrtf(fmadds((*vec).z, (*vec).z, fmadds((*vec).x, (*vec).x, (*vec).y * (*vec).y)));
 }

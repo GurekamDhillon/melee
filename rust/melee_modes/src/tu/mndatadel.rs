@@ -273,6 +273,7 @@ unsafe extern "C" fn mnDataDel_8024E940_inline(mut arg0: *mut HSD_JObj) -> f32 {
     return mn_8022F298(arg0 as *mut HSD_JObj);
 }
 pub unsafe extern "C" fn mnDataDel_8024E940() {
+    melee_core::ct!("mnDataDel_8024E940");
     let mut pad1: u32 = 0;
     let mut pad2: u32 = 0;
     let mut pad3: u32 = 0;
@@ -340,6 +341,7 @@ unsafe extern "C" fn mnDataDel_8024EA6C_inline(
     HSD_JObjAnimAll(*jobj);
 }
 pub unsafe extern "C" fn mnDataDel_8024EA6C() {
+    melee_core::ct!("mnDataDel_8024EA6C");
     let mut temp_f30: f32 = 0.;
     let mut temp_r31: *mut MnDataDelGObjUserData = ::core::ptr::null_mut::<
         MnDataDelGObjUserData,
@@ -398,6 +400,7 @@ pub unsafe extern "C" fn mnDataDel_8024EBC8(
     mut a: u8,
     mut b: u8,
 ) {
+    melee_core::ct!("mnDataDel_8024EBC8");
     let mut j2: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut j1: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut frame: f32 = 0.;
@@ -493,6 +496,7 @@ unsafe extern "C" fn mnDataDel_AnimateWarning(
     };
 }
 pub unsafe extern "C" fn fn_8024ECCC(mut arg0: *mut HSD_GObj) {
+    melee_core::ct!("fn_8024ECCC");
     let mut panel: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut exclaim: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut data: *mut WarnCmnData = ::core::ptr::null_mut::<WarnCmnData>();
@@ -506,6 +510,7 @@ pub unsafe extern "C" fn fn_8024ECCC(mut arg0: *mut HSD_GObj) {
     mnDataDel_AnimateWarning(root, arg0, data, &raw mut panel, &raw mut exclaim);
 }
 pub unsafe extern "C" fn mnDataDel_8024EEC0() {
+    melee_core::ct!("mnDataDel_8024EEC0");
     let mut child: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut cursor_yes: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut cursor_no: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
@@ -576,6 +581,7 @@ pub unsafe extern "C" fn mnDataDel_8024EEC0() {
     }
 }
 pub unsafe extern "C" fn fn_8024F1D4(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8024F1D4");
     let mut proc_0: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     let mut data: *mut WarnCmnData = ::core::ptr::null_mut::<WarnCmnData>();
     let mut input: u32 = 0;
@@ -624,6 +630,7 @@ unsafe extern "C" fn mnDataDel_GetMenuJObj(
     return (*data).x10[mnDataDel_803EF8AC[idx as usize] as usize] as *mut mn_80231634_t;
 }
 pub unsafe extern "C" fn fn_8024F318(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8024F318");
     let mut _pad0: [u8; 44] = [0; 44];
     let mut sp68: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut _pad1: u32 = 0;
@@ -933,6 +940,7 @@ unsafe extern "C" fn mnDataDel_UpdateDescription(
     HSD_SisLib_803A6368(text, sis_id as i32);
 }
 pub unsafe extern "C" fn fn_8024F840(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8024F840");
     let mut zero: i32 = 0;
     let mut proc_0: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     let mut joint: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
@@ -1007,6 +1015,7 @@ pub unsafe extern "C" fn fn_8024F840(mut gobj: *mut HSD_GObj) {
     fn_8024F840_inline(buttons, &raw mut user_data);
 }
 pub unsafe extern "C" fn fn_8024FBA4(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8024FBA4");
     let mut i: i32 = 0;
     let mut frame: f32 = 0.;
     let mut data: *mut MnDataDelData = ::core::ptr::null_mut::<MnDataDelData>();
@@ -1038,6 +1047,7 @@ unsafe extern "C" fn fn_8024FC48_inline(mut arg0: i32) -> *mut HSD_JObj {
     return arg0 as *mut HSD_JObj;
 }
 pub unsafe extern "C" fn fn_8024FC48(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8024FC48");
     let mut i: i32 = 0;
     let mut jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut user_data: *mut u8 = ::core::ptr::null_mut::<u8>();
@@ -1093,6 +1103,7 @@ unsafe extern "C" fn mnDataDel_GetAnimSettings(
     return &raw mut (*data).x0;
 }
 pub unsafe extern "C" fn fn_8024FD40(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8024FD40");
     let mut frame: f32 = 0.;
     let mut user_data: *mut u8 = ::core::ptr::null_mut::<u8>();
     let mut proc_0: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
@@ -1143,6 +1154,7 @@ pub unsafe extern "C" fn fn_8024FD40(mut gobj: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn mnDataDel_8024FE4C(mut arg0: u8) {
+    melee_core::ct!("mnDataDel_8024FE4C");
     let mut child: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut gobj: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     let mut proc_0: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
@@ -1293,6 +1305,7 @@ pub unsafe extern "C" fn mnDataDel_8024FE4C(mut arg0: u8) {
     HSD_SisLib_803A6368(text, sis_id as i32);
 }
 pub unsafe extern "C" fn mnDataDel_80250170() {
+    melee_core::ct!("mnDataDel_80250170");
     let mut proc_0: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     let mut archive: *mut HSD_Archive = ::core::ptr::null_mut::<HSD_Archive>();
     let mut assets: *mut StaticModelDesc = ::core::ptr::null_mut::<StaticModelDesc>();
@@ -1430,6 +1443,7 @@ unsafe extern "C" fn mnDataDel_RunCall(mut id: i32) {
     };
 }
 pub unsafe extern "C" fn mnDataDel_Erase(mut category: i32) {
+    melee_core::ct!("mnDataDel_Erase");
     at_erase_run(
         category,
         1 as i32,

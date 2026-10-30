@@ -77,6 +77,7 @@ const PAD_CHAN3_BIT: u32 = 0x1000_0000;
 
 /// `default_status_data`: all zero but `cross_dir = 1`.
 pub fn default_status_data() -> HSD_PadStatus {
+    melee_core::ct!("default_status_data");
     let mut s = HSD_PadStatus::zeroed();
     s.cross_dir = 1;
     s
@@ -84,6 +85,7 @@ pub fn default_status_data() -> HSD_PadStatus {
 
 /// `default_libinfo_data`.
 pub fn default_libinfo_data() -> PadLibData {
+    melee_core::ct!("default_libinfo_data");
     let mut p: PadLibData = unsafe { core::mem::zeroed() };
     p.repeat_start = 0x2D;
     p.repeat_interval = 8;
@@ -105,6 +107,7 @@ pub const pad_bit: [u32; 4] = [PAD_CHAN0_BIT, PAD_CHAN1_BIT, PAD_CHAN2_BIT, PAD_
 
 /// `HSD_PadGetRawQueueCount`.
 pub fn HSD_PadGetRawQueueCount() -> u8 {
+    melee_core::ct!("HSD_PadGetRawQueueCount");
     unsafe {
         let intr = ext::OSDisableInterrupts();
         let queue_count = HSD_PadLibData.qcount;
@@ -115,6 +118,7 @@ pub fn HSD_PadGetRawQueueCount() -> u8 {
 
 /// `HSD_PadGetResetSwitch`.
 pub fn HSD_PadGetResetSwitch() -> i32 {
+    melee_core::ct!("HSD_PadGetResetSwitch");
     unsafe { (HSD_PadLibData.reset_switch != 0) as i32 }
 }
 
@@ -137,6 +141,7 @@ unsafe fn queue_stat(p: *mut PadLibData, idx: u8) -> *mut PADStatus {
 
 /// `HSD_PadRenewRawStatus`.
 pub unsafe fn HSD_PadRenewRawStatus(err_check: bool) {
+    melee_core::ct!("HSD_PadRenewRawStatus");
     let p: *mut PadLibData = &mut HSD_PadLibData;
     let mut now = HSD_PadData::zeroed();
 
@@ -213,6 +218,7 @@ pub unsafe fn HSD_PadRenewRawStatus(err_check: bool) {
 
 /// `HSD_PadFlushQueue`.
 pub unsafe fn HSD_PadFlushQueue(ftype: HSD_FlushType) {
+    melee_core::ct!("HSD_PadFlushQueue");
     let p: *mut PadLibData = &mut HSD_PadLibData;
     let intr = ext::OSDisableInterrupts();
     match ftype {
@@ -405,6 +411,7 @@ unsafe fn HSD_PadCrossDir(mp: &mut HSD_PadStatus) {
 
 /// `HSD_PadRenewMasterStatus` (TARGET_PC build).
 pub unsafe fn HSD_PadRenewMasterStatus() {
+    melee_core::ct!("HSD_PadRenewMasterStatus");
     let p: *mut PadLibData = &mut HSD_PadLibData;
     let mut rbpad: [PADStatus; 4] = core::mem::zeroed();
     let mut labpad: [PADStatus; 4] = core::mem::zeroed();
@@ -599,16 +606,19 @@ unsafe fn renew_from_master(dst: &mut [HSD_PadStatus; 4]) {
 
 /// `HSD_PadRenewCopyStatus`.
 pub unsafe fn HSD_PadRenewCopyStatus() {
+    melee_core::ct!("HSD_PadRenewCopyStatus");
     renew_from_master(&mut HSD_PadCopyStatus);
 }
 
 /// `HSD_PadRenewGameStatus`.
 pub unsafe fn HSD_PadRenewGameStatus() {
+    melee_core::ct!("HSD_PadRenewGameStatus");
     renew_from_master(&mut HSD_PadGameStatus);
 }
 
 /// `HSD_PadRenewStatus`.
 pub unsafe fn HSD_PadRenewStatus() {
+    melee_core::ct!("HSD_PadRenewStatus");
     HSD_PadRenewRawStatus(false);
     HSD_PadRenewMasterStatus();
     HSD_PadRenewCopyStatus();
@@ -617,6 +627,7 @@ pub unsafe fn HSD_PadRenewStatus() {
 
 /// `HSD_PadReset`.
 pub unsafe fn HSD_PadReset() {
+    melee_core::ct!("HSD_PadReset");
     let p: *mut PadLibData = &mut HSD_PadLibData;
     let intr = ext::OSDisableInterrupts();
 
@@ -633,6 +644,7 @@ pub unsafe fn HSD_PadReset() {
 
 /// `HSD_PadInit`.
 pub unsafe fn HSD_PadInit(qnum: u8, queue: *mut HSD_PadData, nb_list: u16, listdatap: *mut HSD_PadRumbleListData) {
+    melee_core::ct!("HSD_PadInit");
     let p: *mut PadLibData = &mut HSD_PadLibData;
     *p = default_libinfo_data();
     (*p).qnum = qnum;

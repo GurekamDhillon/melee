@@ -60,6 +60,7 @@ unsafe fn set_effect_hitlag_callbacks(fp: *mut Fighter) {
 
 /// `fn_80134518` (static): the landing-quake effect at the feet, spawned once.
 pub fn fn_80134518(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80134518");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).x2219_b0() == 0 {
@@ -73,6 +74,7 @@ pub fn fn_80134518(gobj: *mut HSD_GObj) {
 
 /// `fn_80134590` (static): the spin effect on the root bone, spawned once.
 pub fn fn_80134590(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80134590");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).x2219_b0() == 0 {
@@ -86,15 +88,18 @@ pub fn fn_80134590(gobj: *mut HSD_GObj) {
 
 /// `fn_80134590` as a Fighter callback entry (`accessory4_cb`).
 pub unsafe extern "C" fn cb_fn_80134590(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_80134590");
     fn_80134590(g);
 }
 
 /// `fn_80134518` as a Fighter callback entry (`accessory4_cb`).
 pub unsafe extern "C" fn cb_fn_80134518(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_80134518");
     fn_80134518(g);
 }
 
 pub fn ftKp_SpecialAirLw_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialAirLw_Enter");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftKoopaAttributes;
@@ -107,6 +112,7 @@ pub fn ftKp_SpecialAirLw_Enter(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKp_SpecialAirLw_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialAirLw_Phys");
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftKoopaAttributes;
@@ -125,10 +131,12 @@ pub fn ftKp_SpecialAirLw_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftKp_SpecialLw_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialLw_Coll");
     ftKp_SpecialAirLw_Coll(gobj);
 }
 
 pub fn ftKp_SpecialAirLw_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_SpecialAirLw_Coll");
     unsafe {
         let fp = fpp(gobj);
         let dir = if (*fp).facing_dir < 0.0 { -1 } else { 1 };

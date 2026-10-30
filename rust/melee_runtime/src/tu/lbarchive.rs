@@ -148,6 +148,7 @@ impl VaList<'_> {
 
 /// `lbArchive_InitializeDAT(archive, data, length)`: parse, then locate every extern symbol to NULL.
 pub unsafe fn lbArchive_InitializeDAT(archive: *mut HSD_Archive, data: *mut c_void, length: usize) {
+    melee_core::ct!("lbArchive_InitializeDAT");
     if ext::HSD_ArchiveParse(archive, data as *mut u8, length) == -1 {
         ext::OSReport(b"HSD_ArchiveParse error!\n\0".as_ptr() as *const c_char, &[]);
         hsd_assert(24, false, b"0\0");
@@ -185,6 +186,7 @@ unsafe fn load_sections(archive: *mut HSD_Archive, va: &mut VaList, fatal: bool)
 /// `lbArchive_LoadSections(archive, symbol, ...)`: fill the symbol pointers; a missing one is reported only.
 /// `rest` = `[symbol, name, symbol, name, ..., NULL]`.
 pub unsafe fn lbArchive_LoadSections(archive: *mut HSD_Archive, rest: &[*mut c_void]) {
+    melee_core::ct!("lbArchive_LoadSections");
     load_sections(archive, &mut VaList { rest, at: 0 }, false);
 }
 
@@ -201,12 +203,14 @@ unsafe fn load_archive(filename: *const c_char) -> *mut HSD_Archive {
 
 /// `lbArchive_LoadArchive(filename)`.
 pub unsafe fn lbArchive_LoadArchive(filename: *const c_char) -> *mut HSD_Archive {
+    melee_core::ct!("lbArchive_LoadArchive");
     load_archive(filename)
 }
 
 /// `lbArchive_LoadSymbols(filename, symbols, ...)`: load, then fill the symbols; a missing one asserts.
 /// `rest` = `[symbols, name, ..., NULL]`.
 pub unsafe fn lbArchive_LoadSymbols(filename: *const c_char, rest: &[*mut c_void]) -> *mut HSD_Archive {
+    melee_core::ct!("lbArchive_LoadSymbols");
     let archive = load_archive(filename);
     load_sections(archive, &mut VaList { rest, at: 0 }, true);
     archive
@@ -214,6 +218,7 @@ pub unsafe fn lbArchive_LoadSymbols(filename: *const c_char, rest: &[*mut c_void
 
 /// `lbArchive_80016DBC(filename, symbols, ...)`: as `LoadSymbols` but a missing symbol is only reported.
 pub unsafe fn lbArchive_80016DBC(filename: *const c_char, rest: &[*mut c_void]) -> *mut HSD_Archive {
+    melee_core::ct!("lbArchive_80016DBC");
     let archive = load_archive(filename);
     load_sections(archive, &mut VaList { rest, at: 0 }, false);
     archive
@@ -221,6 +226,7 @@ pub unsafe fn lbArchive_80016DBC(filename: *const c_char, rest: &[*mut c_void]) 
 
 /// `lbArchive_80016EFC(archive)`: free a loaded archive's data block (at `data - 0x20`) and its header block.
 pub unsafe fn lbArchive_80016EFC(archive: *mut HSD_Archive) {
+    melee_core::ct!("lbArchive_80016EFC");
     hsd_assert(149, !archive.is_null(), b"archive\0");
     hsd_assert(150, (*archive).flags & HSD_ARCHIVE_DONT_FREE as u32 != 0, b"archive->flags & HSD_ARCHIVE_DONT_FREE\0");
     ext::lbHeap_80015CA8(0, (*archive).data.wrapping_sub(0x20) as *mut c_void);
@@ -239,6 +245,7 @@ unsafe fn dvd_or_load(filename: *const c_char) -> (*mut HSD_Archive, bool) {
 
 /// `lbArchive_80016F80(archive, filename)`: the archive from the DVD cache or loaded; returns whether it was cached.
 pub unsafe fn lbArchive_80016F80(archive: *mut *mut HSD_Archive, filename: *const c_char) -> bool {
+    melee_core::ct!("lbArchive_80016F80");
     let (var_r3, result) = dvd_or_load(filename);
     if !archive.is_null() {
         *archive = var_r3;
@@ -249,6 +256,7 @@ pub unsafe fn lbArchive_80016F80(archive: *mut *mut HSD_Archive, filename: *cons
 /// `lbArchive_80017040(dst, filename, symbols, ...)`: `80016F80` plus the symbols (a missing one asserts).
 /// `rest` = `[symbols, name, ..., NULL]`.
 pub unsafe fn lbArchive_80017040(dst: *mut *mut HSD_Archive, filename: *const c_char, rest: &[*mut c_void]) -> bool {
+    melee_core::ct!("lbArchive_80017040");
     let (archive, preloaded) = dvd_or_load(filename);
     load_sections(archive, &mut VaList { rest, at: 0 }, true);
     if !dst.is_null() {
@@ -259,6 +267,7 @@ pub unsafe fn lbArchive_80017040(dst: *mut *mut HSD_Archive, filename: *const c_
 
 /// `lbArchive_800171CC(dst, filename, symbols, ...)`: as `80017040` but a missing symbol is only reported.
 pub unsafe fn lbArchive_800171CC(dst: *mut *mut HSD_Archive, filename: *const c_char, rest: &[*mut c_void]) -> bool {
+    melee_core::ct!("lbArchive_800171CC");
     let (archive, preloaded) = dvd_or_load(filename);
     load_sections(archive, &mut VaList { rest, at: 0 }, false);
     if !dst.is_null() {
@@ -281,6 +290,7 @@ unsafe fn Locate(archive: *mut HSD_Archive, base_addr: isize) {
 /// `lbArchiveRelocate(archive, src, file_size, base_addr)`: set `archive` up over the loaded file `src` and
 /// relocate it; -1 for a null archive or a `file_size` that is not the header's.
 pub unsafe fn lbArchiveRelocate(archive: *mut HSD_Archive, src: *mut u8, file_size: usize, base_addr: isize) -> i32 {
+    melee_core::ct!("lbArchiveRelocate");
     if archive.is_null() {
         return -1;
     }

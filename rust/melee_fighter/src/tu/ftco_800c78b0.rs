@@ -13,6 +13,7 @@ use melee_core::fp::fmadds;
 
 /// `ftCo_800C78B0(gobj, owner)`: enter CaptureLikelike inside item `owner`.
 pub fn ftco_800c78b0(g: G, owner: *mut HSD_GObj) {
+    melee_core::ct!("ftco_800c78b0");
     ftco_release_item_and_victim(g);
     e70::Fighter_ChangeMotionState(g, ftCo_MS_CaptureLikelike, 0x1080, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ext::ftAnim_8006EBA4(g);
@@ -39,6 +40,7 @@ pub fn ftco_800c78b0(g: G, owner: *mut HSD_GObj) {
 
 /// `ftCo_800C7A30(gobj)`: `it_802DBA68(capturelikelike.x0)`.
 pub fn ftco_800c7a30(g: G) {
+    melee_core::ct!("ftco_800c7a30");
     ext::it_802DBA68(unsafe { fp(g).mv.co.capturelikelike.x0 })
 }
 
@@ -49,6 +51,7 @@ unsafe extern "C" fn ftco_800c7a30_cb(g: G) {
 /// `ftCo_CaptureLikelike_Anim(gobj)`: mash; once the timer runs out, tell the Like Like (once,
 /// flag in the int at mv +4).
 pub fn ftco_capture_likelike_anim(g: G) {
+    melee_core::ct!("ftco_capture_likelike_anim");
     let cd = crate::hooks::common_data();
     let f = fp(g);
     f.grab_timer -= cd.x758;
@@ -62,14 +65,15 @@ pub fn ftco_capture_likelike_anim(g: G) {
 }
 
 /// `ftCo_CaptureLikelike_IASA(gobj)`: empty.
-pub fn ftco_capture_likelike_iasa(_g: G) {}
+pub fn ftco_capture_likelike_iasa(_g: G) { melee_core::ct!("ftco_capture_likelike_iasa");}
 /// `ftCo_CaptureLikelike_Phys(gobj)`: empty.
-pub fn ftco_capture_likelike_phys(_g: G) {}
+pub fn ftco_capture_likelike_phys(_g: G) { melee_core::ct!("ftco_capture_likelike_phys");}
 /// `ftCo_CaptureLikelike_Coll(gobj)`: empty.
-pub fn ftco_capture_likelike_coll(_g: G) {}
+pub fn ftco_capture_likelike_coll(_g: G) { melee_core::ct!("ftco_capture_likelike_coll");}
 
 /// `fn_800C7AE0(gobj)`: accessory1_cb, follow the item's position.
 pub unsafe extern "C" fn fn_800c7ae0(g: G) {
+    melee_core::ct!("fn_800c7ae0");
     let f = fp(g);
     let item = unsafe { f.mv.co.captureleadead.x0 };
     ext::it_8026B294(item, &mut f.cur_pos);
@@ -77,6 +81,7 @@ pub unsafe extern "C" fn fn_800c7ae0(g: G) {
 
 /// `ftCo_800C7B0C(gobj, pos, last_pos, hit_desc, angle)`: spat out: place and take the hit.
 pub fn ftco_800c7b0c(g: G, arg1: &Vec3, arg2: &Vec3, arg3: *mut lbColl_80008D30_arg1, arg4: f32) {
+    melee_core::ct!("ftco_800c7b0c");
     let mut hit = HitCapsule::zeroed();
     let f = fp(g);
     f.coll_data.last_pos = *arg2;
@@ -109,6 +114,7 @@ pub fn ftco_800c7b0c(g: G, arg1: &Vec3, arg2: &Vec3, arg3: *mut lbColl_80008D30_
 
 /// `ftCo_800C7C60(gobj, damage)`: `Fighter_TakeDamage_8006CC7C(fp, damage)`.
 pub fn ftco_800c7c60(g: G, damage_amount: i32) {
+    melee_core::ct!("ftco_800c7c60");
     ext::Fighter_TakeDamage_8006CC7C(fp(g), damage_amount as f32)
 }
 

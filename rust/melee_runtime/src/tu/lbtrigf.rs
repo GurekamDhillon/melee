@@ -34,11 +34,13 @@ const INF_BITS: u32 = 0x7F80_0000; // MSL_TrigF_80400774[0]
 /// `lbTrigf_Fmadds`: `(float) ((double) a * (double) c + (double) b)`; the C build contracts the
 /// double expression into one fma.
 pub fn lbTrigf_Fmadds(a: f32, c: f32, b: f32) -> f32 {
+    melee_core::ct!("lbTrigf_Fmadds");
     (a as f64).mul_add(c as f64, b as f64) as f32
 }
 
 /// `lbTrigf_Fnmsubs`: `(float) -((double) a * (double) c - (double) b)` (one fma with the sign folded in).
 pub fn lbTrigf_Fnmsubs(a: f32, c: f32, b: f32) -> f32 {
+    melee_core::ct!("lbTrigf_Fnmsubs");
     (-(a as f64).mul_add(c as f64, -(b as f64))) as f32
 }
 
@@ -50,6 +52,7 @@ fn nr_step_f(g: f32, v: f32) -> f32 {
 
 /// `lb_sqrtf` (static): despite the name it returns the refined reciprocal square root.
 pub fn lb_sqrtf(x: f32) -> f32 {
+    melee_core::ct!("lb_sqrtf");
     if x > 0.0 {
         let mut guess = crate::gekko::frsqrte(x as f64) as f32;
         guess = nr_step_f(guess, x);

@@ -67,6 +67,7 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 pub use crate::tu::ftfox::{copy_attrs, push_attrs};
 
 pub fn ftNs_Init_OnLoad(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_Init_OnLoad");
     unsafe {
         let fp = fpp(gobj);
         let item_list = (*(*fp).ft_data).x48_items;
@@ -86,6 +87,7 @@ pub fn ftNs_Init_OnLoad(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_Init_OnDamage(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_Init_OnDamage");
     crate::tu::ftnessattackhi4::ftNs_AttackHi4_YoyoItemDespawn(gobj);
     crate::tu::ftnessspecialn::ftNs_SpecialN_ItemPKFlushSetNULL(gobj);
     crate::tu::ftnessspecialhi::ftNs_SpecialHi_TakeDamage(gobj);
@@ -93,17 +95,21 @@ pub fn ftNs_Init_OnDamage(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_Init_OnAbsorb(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_Init_OnAbsorb");
     crate::tu::ftnessspeciallw::ftNs_AbsorbThink_DecideAction(gobj);
 }
 
 pub fn ftNs_Init_OnItemPickup(gobj: *mut HSD_GObj, catch_item: i32) {
+    melee_core::ct!("ftNs_Init_OnItemPickup");
     crate::tu::ftclink::Fighter_OnItemPickup(gobj, catch_item, 1, 1);
 }
 
 pub fn ftNs_Init_OnItemDrop(gobj: *mut HSD_GObj, drop_item: i32) {
+    melee_core::ct!("ftNs_Init_OnItemDrop");
     crate::tu::ftclink::Fighter_OnItemDrop(gobj, drop_item, 1, 1);
 }
 
 pub fn ftNs_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_Init_LoadSpecialAttrs");
     unsafe { copy_attrs::<ftNessAttributes>(gobj) }
 }

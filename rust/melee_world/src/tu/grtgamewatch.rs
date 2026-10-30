@@ -117,12 +117,14 @@ fn init_tables() {
 
 /// The TU's `StageCallbacks grTGw_StageCallbacks[4]` (built on first use; stable address).
 pub fn stage_callbacks() -> *mut StageCallbacks {
+    melee_core::ct!("stage_callbacks");
     init_tables();
     unsafe { CALLBACKS.as_mut_ptr().cast() }
 }
 
 /// The TU's `StageData grTGw_StageData`.
 pub fn stage_data() -> *mut StageData {
+    melee_core::ct!("stage_data");
     init_tables();
     unsafe { STAGE_DATA.as_mut_ptr() }
 }
@@ -130,14 +132,17 @@ pub fn stage_data() -> *mut StageData {
 pub const STAGE_CALLBACKS_LEN: usize = 4;
 
 pub unsafe extern "C" fn grTGameWatch_OnInit() {
+    melee_core::ct!("grTGameWatch_OnInit");
     inlines::Ground_InitTargetStage(grTGameWatch_802241B4);
 }
 
 pub unsafe extern "C" fn grTgamewatch_UnkStage0_OnStart() {
+    melee_core::ct!("grTgamewatch_UnkStage0_OnStart");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
 
 pub unsafe extern "C" fn grTGameWatch_802241B4(id: i32) -> *mut HSD_GObj {
+    melee_core::ct!("grTGameWatch_802241B4");
     let callbacks = stage_callbacks().add(id as usize);
     let gobj = ext::Ground_GetStageGObj(id);
     if !gobj.is_null() {
@@ -149,22 +154,27 @@ pub unsafe extern "C" fn grTGameWatch_802241B4(id: i32) -> *mut HSD_GObj {
 }
 
 pub unsafe extern "C" fn grTGameWatch_8022429C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("grTGameWatch_8022429C");
     let gp = inlines::GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
 }
 
 pub unsafe extern "C" fn stageGObj2_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj2_OnInit");
     inlines::Ground_InitMapCollAndAnim(gobj);
 }
 
 pub unsafe extern "C" fn stageGObj2_GObjProc(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj2_GObjProc");
     inlines::Ground_UpdateWindAndMapColl(gobj);
 }
 
 pub unsafe extern "C" fn stageGObj1_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj1_OnInit");
     inlines::Ground_InitMapCollAndAnim(gobj);
 }
 
 pub unsafe extern "C" fn stageGObj1_GObjProc(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj1_GObjProc");
     ext::Ground_UpdateMapColl(gobj);
 }

@@ -41,6 +41,7 @@ pub mod ext {
 }
 
 pub fn ftCo_80098F3C(g: G) {
+    melee_core::ct!("ftCo_80098F3C");
     let msid = if fp(g).motion_id == ftCo_MS_ShieldBreakDownU as _ {
         ftCo_MS_ShieldBreakStandU
     } else {
@@ -58,17 +59,20 @@ pub fn ftCo_80098F3C(g: G) {
 }
 
 pub fn ftCo_ShieldBreakStand_Anim(g: G) {
+    melee_core::ct!("ftCo_ShieldBreakStand_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ftCo_80099010(g);
     }
 }
 
-pub fn ftCo_ShieldBreakStand_IASA(_g: G) {}
+pub fn ftCo_ShieldBreakStand_IASA(_g: G) { melee_core::ct!("ftCo_ShieldBreakStand_IASA");}
 
 pub fn ftCo_ShieldBreakStand_Phys(g: G) {
+    melee_core::ct!("ftCo_ShieldBreakStand_Phys");
     ext::ft_80084F3C(g);
 }
 
 pub fn ftCo_ShieldBreakStand_Coll(g: G) {
+    melee_core::ct!("ftCo_ShieldBreakStand_Coll");
     ext::ft_80083F88(g);
 }

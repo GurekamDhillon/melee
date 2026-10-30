@@ -35,17 +35,20 @@ pub static mut fobj_alloc_data: core::mem::MaybeUninit<HSD_ObjAllocData> = core:
 
 /// `HSD_FObjGetAllocData`.
 pub unsafe fn HSD_FObjGetAllocData() -> *mut HSD_ObjAllocData {
+    melee_core::ct!("HSD_FObjGetAllocData");
     fobj_alloc_data.as_mut_ptr()
 }
 
 /// `HSD_FObjInitAllocData`: pool of `sizeof(HSD_FObj)`, align 4. The native record is 0x40 bytes (8-byte
 /// pointers; 0x30 on the GameCube), and `HSD_FObjAlloc` zeroes the whole native record.
 pub unsafe fn HSD_FObjInitAllocData() {
+    melee_core::ct!("HSD_FObjInitAllocData");
     ext::HSD_ObjAllocInit(HSD_FObjGetAllocData(), core::mem::size_of::<HSD_FObj>() as u32, 4);
 }
 
 /// `HSD_FObjSetState`.
 pub unsafe fn HSD_FObjSetState(fobj: *mut HSD_FObj, state: u32) -> u32 {
+    melee_core::ct!("HSD_FObjSetState");
     if !fobj.is_null() {
         (*fobj).flags = (state & 0xF) as u8 | ((*fobj).flags & 0xF0);
     }
@@ -54,6 +57,7 @@ pub unsafe fn HSD_FObjSetState(fobj: *mut HSD_FObj, state: u32) -> u32 {
 
 /// `HSD_FObjGetState`.
 pub unsafe fn HSD_FObjGetState(fobj: *mut HSD_FObj) -> u32 {
+    melee_core::ct!("HSD_FObjGetState");
     if fobj.is_null() {
         return 0;
     }
@@ -62,6 +66,7 @@ pub unsafe fn HSD_FObjGetState(fobj: *mut HSD_FObj) -> u32 {
 
 /// `HSD_FObjRemove`.
 pub unsafe fn HSD_FObjRemove(fobj: *mut HSD_FObj) {
+    melee_core::ct!("HSD_FObjRemove");
     if fobj.is_null() {
         return;
     }
@@ -70,6 +75,7 @@ pub unsafe fn HSD_FObjRemove(fobj: *mut HSD_FObj) {
 
 /// `HSD_FObjRemoveAll`: frees the tail first, as the C recursion does.
 pub unsafe fn HSD_FObjRemoveAll(fobj: *mut HSD_FObj) {
+    melee_core::ct!("HSD_FObjRemoveAll");
     if fobj.is_null() {
         return;
     }
@@ -79,6 +85,7 @@ pub unsafe fn HSD_FObjRemoveAll(fobj: *mut HSD_FObj) {
 
 /// `HSD_FObjAlloc`: pool alloc, zeroed.
 pub unsafe fn HSD_FObjAlloc() -> *mut HSD_FObj {
+    melee_core::ct!("HSD_FObjAlloc");
     let new = ext::HSD_ObjAlloc(HSD_FObjGetAllocData()) as *mut HSD_FObj;
     assert!(!new.is_null(), "fobj.c:0x2F3 new");
     write_bytes(new, 0, 1);
@@ -87,11 +94,13 @@ pub unsafe fn HSD_FObjAlloc() -> *mut HSD_FObj {
 
 /// `HSD_FObjFree`.
 pub unsafe fn HSD_FObjFree(fobj: *mut HSD_FObj) {
+    melee_core::ct!("HSD_FObjFree");
     ext::HSD_ObjFree(HSD_FObjGetAllocData(), fobj as *mut core::ffi::c_void);
 }
 
 /// `HSD_FObjLoadDesc`: builds the list from a descriptor chain (`next` loaded first, as the C).
 pub unsafe fn HSD_FObjLoadDesc(desc: *mut HSD_FObjDesc) -> *mut HSD_FObj {
+    melee_core::ct!("HSD_FObjLoadDesc");
     if desc.is_null() {
         return null_mut();
     }
@@ -132,6 +141,7 @@ macro_rules! hsd_assert {
 
 /// `HSD_FObjReqAnim` (static inline).
 pub unsafe fn HSD_FObjReqAnim(fobj: *mut HSD_FObj, startframe: f32) {
+    melee_core::ct!("HSD_FObjReqAnim");
     if fobj.is_null() {
         return;
     }
@@ -151,6 +161,7 @@ pub unsafe fn HSD_FObjReqAnim(fobj: *mut HSD_FObj, startframe: f32) {
 
 /// `HSD_FObjReqAnimAll`.
 pub unsafe fn HSD_FObjReqAnimAll(fobj: *mut HSD_FObj, startframe: f32) {
+    melee_core::ct!("HSD_FObjReqAnimAll");
     if fobj.is_null() {
         return;
     }
@@ -163,6 +174,7 @@ pub unsafe fn HSD_FObjReqAnimAll(fobj: *mut HSD_FObj, startframe: f32) {
 
 /// `HSD_FObjStopAnim`: flushes a pending key (`FObj_FlushKeyData`), then stops.
 pub unsafe fn HSD_FObjStopAnim(fobj: *mut HSD_FObj, obj: *mut core::ffi::c_void, obj_update: HSD_ObjUpdateFunc, rate: f32) {
+    melee_core::ct!("HSD_FObjStopAnim");
     if fobj.is_null() {
         return;
     }
@@ -174,6 +186,7 @@ pub unsafe fn HSD_FObjStopAnim(fobj: *mut HSD_FObj, obj: *mut core::ffi::c_void,
 
 /// `HSD_FObjStopAnimAll`.
 pub unsafe fn HSD_FObjStopAnimAll(mut fobj: *mut HSD_FObj, obj: *mut core::ffi::c_void, obj_update: HSD_ObjUpdateFunc, rate: f32) {
+    melee_core::ct!("HSD_FObjStopAnimAll");
     while !fobj.is_null() {
         HSD_FObjStopAnim(fobj, obj, obj_update, rate);
         fobj = (*fobj).next;
@@ -182,6 +195,7 @@ pub unsafe fn HSD_FObjStopAnimAll(mut fobj: *mut HSD_FObj, obj: *mut core::ffi::
 
 /// `parseFloat(&pos, frac)` (static).
 pub unsafe fn parseFloat(pos: *mut *mut u8, frac: u8) -> f32 {
+    melee_core::ct!("parseFloat");
     unsafe fn rd(pos: *mut *mut u8) -> u8 {
         let b = **pos;
         *pos = (*pos).add(1);
@@ -350,6 +364,7 @@ unsafe fn FObjAnimKey(fobj: *mut HSD_FObj) -> u32 {
 
 /// `FObjLoadData` (static inline).
 pub unsafe fn FObjLoadData(fobj: *mut HSD_FObj) -> u32 {
+    melee_core::ct!("FObjLoadData");
     if ((*fobj).ad.offset_from((*fobj).ad_head) as u32) >= (*fobj).length {
         return 6;
     }
@@ -373,6 +388,7 @@ pub unsafe fn FObjLoadData(fobj: *mut HSD_FObj) -> u32 {
 /// `FObjUpdateAnim`. (The TARGET_PC guest-callee branch is not needed: a native callee gets the
 /// host stack address directly.)
 pub unsafe fn FObjUpdateAnim(fobj: *mut HSD_FObj, obj: *mut core::ffi::c_void, obj_update: HSD_ObjUpdateFunc) {
+    melee_core::ct!("FObjUpdateAnim");
     let Some(obj_update) = obj_update else { return };
     let mut fobjdata = HSD_ObjData::zeroed();
     match (*fobj).op_intrp {
@@ -420,6 +436,7 @@ pub unsafe fn FObjUpdateAnim(fobj: *mut HSD_FObj, obj: *mut core::ffi::c_void, o
 
 /// `HSD_FObjInterpretAnim`.
 pub unsafe fn HSD_FObjInterpretAnim(fobj: *mut HSD_FObj, obj: *mut core::ffi::c_void, obj_update: HSD_ObjUpdateFunc, rate: f32) {
+    melee_core::ct!("HSD_FObjInterpretAnim");
     let mut fterm: f32 = 0.0;
     let mut state = if !fobj.is_null() { HSD_FObjGetState(fobj) } else { 0 };
     if state == 0 {
@@ -469,6 +486,7 @@ pub unsafe fn HSD_FObjInterpretAnim(fobj: *mut HSD_FObj, obj: *mut core::ffi::c_
 
 /// `HSD_FObjInterpretAnimAll`.
 pub unsafe fn HSD_FObjInterpretAnimAll(fobj: *mut core::ffi::c_void, obj: *mut core::ffi::c_void, obj_update: HSD_ObjUpdateFunc, rate: f32) {
+    melee_core::ct!("HSD_FObjInterpretAnimAll");
     let mut f = fobj as *mut HSD_FObj;
     while !f.is_null() {
         HSD_FObjInterpretAnim(f, obj, obj_update, rate);

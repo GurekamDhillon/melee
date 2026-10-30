@@ -101,6 +101,7 @@ impl ji::JObjDirty for Dirty {
 }
 /// `HSD_JObjSetTranslate` (jobj.h inline).
 pub(crate) fn set_translate(j: *mut HSD_JObj, t: &Vec3) {
+    melee_core::ct!("set_translate");
     ji::HSD_JObjSetTranslate(unsafe { &mut *j }, t, &mut Dirty);
 }
 
@@ -117,6 +118,7 @@ fn is_kirby(k: i32) -> bool {
 
 /// `ftCo_CaptureCut_Enter`.
 pub fn ftCo_CaptureCut_Enter(g: G) {
+    melee_core::ct!("ftCo_CaptureCut_Enter");
     let f = fp(g);
     ftCo_800DC920(f.victim_gobj, g);
     let f = fp(g);
@@ -130,16 +132,18 @@ pub fn ftCo_CaptureCut_Enter(g: G) {
 
 /// `ftCo_CaptureCut_Anim`.
 pub fn ftCo_CaptureCut_Anim(g: G) {
+    melee_core::ct!("ftCo_CaptureCut_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ftCommon_8007D92C(g);
     }
 }
 
 /// `ftCo_CaptureCut_IASA`.
-pub fn ftCo_CaptureCut_IASA(_g: G) {}
+pub fn ftCo_CaptureCut_IASA(_g: G) { melee_core::ct!("ftCo_CaptureCut_IASA");}
 
 /// `ftCo_CaptureCut_Phys`.
 pub fn ftCo_CaptureCut_Phys(g: G) {
+    melee_core::ct!("ftCo_CaptureCut_Phys");
     let f = fp(g);
     if f.ground_or_air == GA_Ground {
         let fr = cd().x36C * f.co_attrs.ground_friction;
@@ -152,6 +156,7 @@ pub fn ftCo_CaptureCut_Phys(g: G) {
 
 /// `ftCo_CaptureCut_Coll`.
 pub fn ftCo_CaptureCut_Coll(g: G) {
+    melee_core::ct!("ftCo_CaptureCut_Coll");
     if fp(g).ground_or_air == GA_Ground {
         ext::ft_800841B8(g, Some(fn_800DC8D8));
         return;
@@ -161,17 +166,20 @@ pub fn ftCo_CaptureCut_Coll(g: G) {
 
 /// `fn_800DC8D8`.
 pub unsafe extern "C" fn fn_800DC8D8(g: G) {
+    melee_core::ct!("fn_800DC8D8");
     ext::ftCommon_8007D5D4(fp(g));
 }
 
 /// `fn_800DC8FC`.
 pub unsafe extern "C" fn fn_800DC8FC(g: G) {
+    melee_core::ct!("fn_800DC8FC");
     ext::ftCommon_8007D7FC(fp(g));
 }
 
 /// `ftCo_800DC920`: cut the grab between `arg0` and `gobj` (the grabbed one is restored and
 /// placed back onto the stage).
 pub fn ftCo_800DC920(arg0: G, gobj: G) {
+    melee_core::ct!("ftCo_800DC920");
     let mut sp4c = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp48: f32 = 0.0;
     let mut r31: *mut Fighter = fp(arg0);
@@ -263,6 +271,7 @@ pub fn ftCo_800DC920(arg0: G, gobj: G) {
 
 /// `ftCo_800DCE34` (TARGET_PC: a NULL partner means the grab was already cut).
 pub fn ftCo_800DCE34(gobj0: G, gobj1: G) {
+    melee_core::ct!("ftCo_800DCE34");
     if (gobj0.is_null() || gobj1.is_null()) && ext::Mex_Enabled("test_no_capturecut_guard") == 0 {
         return;
     }
@@ -279,6 +288,7 @@ pub fn ftCo_800DCE34(gobj0: G, gobj1: G) {
 
 /// `ftCo_800DCFD4`: the grab-release hit (the grabber's second hitbox).
 pub fn ftCo_800DCFD4(g: G) {
+    melee_core::ct!("ftCo_800DCFD4");
     let f = fp(g);
     let vg = f.victim_gobj;
     let vf = fp(vg);

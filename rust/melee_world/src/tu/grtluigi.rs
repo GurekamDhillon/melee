@@ -110,12 +110,14 @@ fn init_tables() {
 
 /// The TU's `StageCallbacks grTLg_803E8DF0[4]` (built on first use; stable address).
 pub fn stage_callbacks() -> *mut StageCallbacks {
+    melee_core::ct!("stage_callbacks");
     init_tables();
     unsafe { CALLBACKS.as_mut_ptr().cast() }
 }
 
 /// The TU's `StageData grTLg_StageData`.
 pub fn stage_data() -> *mut StageData {
+    melee_core::ct!("stage_data");
     init_tables();
     unsafe { STAGE_DATA.as_mut_ptr() }
 }
@@ -123,22 +125,27 @@ pub fn stage_data() -> *mut StageData {
 pub const STAGE_CALLBACKS_LEN: usize = 4;
 
 pub unsafe extern "C" fn grTLuigi_80221C10(arg0: i32) {
+    melee_core::ct!("grTLuigi_80221C10");
     
 }
 
 pub unsafe extern "C" fn grTLuigi_OnInit() {
+    melee_core::ct!("grTLuigi_OnInit");
     inlines::Ground_InitTargetStage(grTLuigi_80221CB4);
 }
 
 pub unsafe extern "C" fn grTluigi_UnkStage0_OnLoad() {
+    melee_core::ct!("grTluigi_UnkStage0_OnLoad");
     
 }
 
 pub unsafe extern "C" fn grTluigi_UnkStage0_OnStart() {
+    melee_core::ct!("grTluigi_UnkStage0_OnStart");
     ext::grZakoGenerator_801CAE04(null_mut());
 }
 
 pub unsafe extern "C" fn grTLuigi_80221CB4(arg0: i32) -> *mut HSD_GObj {
+    melee_core::ct!("grTLuigi_80221CB4");
     let callbacks = stage_callbacks().add(arg0 as usize);
     let gobj = ext::Ground_GetStageGObj(arg0);
     if !gobj.is_null() {
@@ -150,37 +157,46 @@ pub unsafe extern "C" fn grTLuigi_80221CB4(arg0: i32) -> *mut HSD_GObj {
 }
 
 pub unsafe extern "C" fn stageGObj0_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj0_OnInit");
     inlines::Ground_StartMapAnim(gobj);
 }
 
 pub unsafe extern "C" fn grTLuigi_80221DD0(arg0: *mut HSD_GObj) {
+    melee_core::ct!("grTLuigi_80221DD0");
     
 }
 
 pub unsafe extern "C" fn grTLuigi_80221DD4(arg0: *mut HSD_GObj) {
+    melee_core::ct!("grTLuigi_80221DD4");
     
 }
 
 pub unsafe extern "C" fn stageGObj2_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj2_OnInit");
     inlines::Ground_InitMapCollAndAnim(gobj);
 }
 
 pub unsafe extern "C" fn stageGObj2_GObjProc(arg0: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj2_GObjProc");
     inlines::Ground_UpdateWindAndMapColl(arg0);
 }
 
 pub unsafe extern "C" fn grTLuigi_80221E64(arg0: *mut HSD_GObj) {
+    melee_core::ct!("grTLuigi_80221E64");
     
 }
 
 pub unsafe extern "C" fn stageGObj1_OnInit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj1_OnInit");
     inlines::Ground_InitMapCollAndAnim(gobj);
 }
 
 pub unsafe extern "C" fn stageGObj1_GObjProc(gobj: *mut HSD_GObj) {
+    melee_core::ct!("stageGObj1_GObjProc");
     ext::Ground_UpdateMapColl(gobj);
 }
 
 pub unsafe extern "C" fn grTLuigi_80221EE0(arg0: *mut HSD_GObj) {
+    melee_core::ct!("grTLuigi_80221EE0");
     
 }

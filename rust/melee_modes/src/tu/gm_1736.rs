@@ -76,6 +76,7 @@ pub mod ext {
 const LANG_JP: i32 = 0;
 
 pub unsafe fn gm_GetChallengerData() -> *mut ChallengerData {
+    melee_core::ct!("gm_GetChallengerData");
     core::ptr::addr_of_mut!(challenger_data)
 }
 
@@ -87,6 +88,7 @@ pub unsafe fn gm_InitChallengerData(
     cpu_ckind: u8,
     curr_mode: u8,
 ) {
+    melee_core::ct!("gm_InitChallengerData");
     let tmp = core::ptr::addr_of_mut!(challenger_data);
     ext::memzero(tmp as *mut c_void, core::mem::size_of::<ChallengerData>() as i32);
     (*tmp).human_ckind = human_ckind;
@@ -98,6 +100,7 @@ pub unsafe fn gm_InitChallengerData(
 }
 
 pub unsafe fn gm_80173754(game_mode: u8, arg1: u8) -> i32 {
+    melee_core::ct!("gm_80173754");
     // m-ex "Spoof No Pending Messages 2" (opt-in MELEE_MEX=no_pending_messages_2)
     if ext::Mex_Enabled(b"no_pending_messages_2\0".as_ptr() as *const i8) != 0 {
         return 0;
@@ -118,10 +121,12 @@ pub unsafe fn gm_80173754(game_mode: u8, arg1: u8) -> i32 {
 }
 
 pub unsafe fn gm_801737D8() -> u8 {
+    melee_core::ct!("gm_801737D8");
     challenger_data.prev_mode
 }
 
 pub unsafe fn gm_Mode_ChallengerApproach_OnLoad() {
+    melee_core::ct!("gm_Mode_ChallengerApproach_OnLoad");
     challenger_data.prev_mode = ext::gm_GetPreviousGameMode();
     if challenger_data.human_ckind == ChKind_None as u8 {
         ext::gm_SetGameModeStateId(2);
@@ -131,6 +136,7 @@ pub unsafe fn gm_Mode_ChallengerApproach_OnLoad() {
 }
 
 pub unsafe fn fn_80173834(ckind: u8, major: u8, arg2: i32) {
+    melee_core::ct!("fn_80173834");
     // the C keeps the raw int result of gm_80160474 in a `bool` (int) and passes it on unchanged
     let temp_r30 = ext::gm_80160474(ckind as CharacterKind, major as GameModeKind);
 
@@ -155,6 +161,7 @@ pub unsafe fn fn_80173834(ckind: u8, major: u8, arg2: i32) {
 }
 
 pub unsafe fn gm_8017390C(arg0: i32, arg1: i32) {
+    melee_core::ct!("gm_8017390C");
     match arg0 {
         0 => {
             let temp_r3 = ext::gm_GetAdventureData();
@@ -204,6 +211,7 @@ pub unsafe fn gm_8017390C(arg0: i32, arg1: i32) {
 }
 
 pub unsafe fn gm_80173AA4() {
+    melee_core::ct!("gm_80173AA4");
     let mut var_r30: u32 = 0;
 
     if ext::gmMainLib_8015D640() != 0 {
@@ -221,6 +229,7 @@ pub unsafe fn gm_80173AA4() {
 }
 
 pub unsafe fn gm_80173B30(arg0: u32) {
+    melee_core::ct!("gm_80173B30");
     let mut var_r31: u32 = 0;
 
     if arg0 >= 0x7530 {
@@ -238,6 +247,7 @@ pub unsafe fn gm_80173B30(arg0: u32) {
 }
 
 pub unsafe fn gm_80173BC4(ckind: i8) {
+    melee_core::ct!("gm_80173BC4");
     let mut var_r29: i32 = 0;
     let temp_r28 = (*ext::gmMainLib_8015EDBC()).x114[ext::gm_CKindToSelKind(ckind as u8) as usize];
     for selkind in 0..SELKIND_COUNT as usize {
@@ -255,6 +265,7 @@ pub unsafe fn gm_80173BC4(ckind: i8) {
 }
 
 pub unsafe fn gm_80173C70(_c_kind: i8, arg1: u32, arg2: u32, arg3: i32) {
+    melee_core::ct!("gm_80173C70");
     if arg3 != 0 {
         if ext::gm_GetCurrentGameMode() as i32 == GM_15MIN_VS as i32 {
             ext::fn_80172C78(0x50);
@@ -276,6 +287,7 @@ pub unsafe fn gm_80173C70(_c_kind: i8, arg1: u32, arg2: u32, arg3: i32) {
 
 /// `static inline int inline0(int arg0)`: unlock id for the stage-language table row matching `arg0`.
 pub unsafe fn inline0(arg0: i32) -> i32 {
+    melee_core::ct!("inline0");
     let r30 = &lbl_803D6450;
     for i in 0..r30.len() {
         if r30[i].x1 == 2 || r30[i].x1 as i32 == ext::lbLang_GetLanguageSetting() {
@@ -288,6 +300,7 @@ pub unsafe fn inline0(arg0: i32) -> i32 {
 }
 
 pub unsafe fn gm_80173D3C(arg0: i32) {
+    melee_core::ct!("gm_80173D3C");
     let var_r0 = inline0(arg0);
     if var_r0 != -1 {
         ext::fn_80172C78(var_r0);
@@ -295,6 +308,7 @@ pub unsafe fn gm_80173D3C(arg0: i32) {
 }
 
 pub unsafe fn gm_80173DE4(arg0: *mut MatchEnd) {
+    melee_core::ct!("gm_80173DE4");
     let temp_r30 = (*ext::gmMainLib_8015EDBC()).x0 as u32;
 
     for i in 0..lbl_803D646C.len() {
@@ -322,10 +336,12 @@ pub unsafe fn gm_80173DE4(arg0: *mut MatchEnd) {
 
 #[inline]
 pub unsafe fn gm_80173EEC_inline(arg0: u8, arg1: i32) -> i32 {
+    melee_core::ct!("gm_80173EEC_inline");
     ext::gm_80160474(arg0 as CharacterKind, arg1 as GameModeKind)
 }
 
 pub unsafe fn gm_80173EEC() {
+    melee_core::ct!("gm_80173EEC");
     // m-ex "Disable Special Messages" (opt-in MELEE_MEX=no_special_messages)
     if ext::Mex_Enabled(b"no_special_messages\0".as_ptr() as *const i8) != 0 {
         return;
@@ -418,6 +434,7 @@ pub unsafe fn gm_80173EEC() {
 }
 
 pub unsafe fn gm_80174180() {
+    melee_core::ct!("gm_80174180");
     if ext::fn_80162CCC() != 0 && ext::gm_80162EC8() != 0 {
         ext::Toy_80305918(4, 0, 0);
     }
@@ -430,12 +447,14 @@ pub unsafe fn gm_80174180() {
 }
 
 pub unsafe fn gm_801741FC() {
+    melee_core::ct!("gm_801741FC");
     for i in 0..0x12Cu32 {
         ext::gmMainLib_8015DA40(i);
     }
 }
 
 pub unsafe fn gm_80174238() {
+    melee_core::ct!("gm_80174238");
     for i in 0..0x12Cu32 {
         ext::gmMainLib_8015DA68(i);
     }

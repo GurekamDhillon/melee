@@ -1252,6 +1252,7 @@ static mut mnNameNew_803EE330: Vec3 = Vec3 {
     z: 0.0_f32,
 };
 pub unsafe extern "C" fn mnNameNew_8023B0F8(mut arg0: *mut HSD_GObj, mut arg1: u8) {
+    melee_core::ct!("mnNameNew_8023B0F8");
     let mut jobj: *mut HSD_JObj = null_mut();
     let mut data: *mut NameNewEntry = null_mut();
     data = (*arg0).user_data as *mut NameNewEntry;
@@ -1284,6 +1285,7 @@ pub unsafe extern "C" fn mnNameNew_8023B0F8(mut arg0: *mut HSD_GObj, mut arg1: u
     HSD_JObjAnimAll(jobj);
 }
 pub unsafe extern "C" fn mnNameNew_8023B224(mut arg0: u8) {
+    melee_core::ct!("mnNameNew_8023B224");
     let mut data: *mut NameNewEntry = null_mut();
     let mut name_index: u8 = 0;
     data = (*mnNameNew_804D6C08).user_data as *mut NameNewEntry;
@@ -1322,6 +1324,7 @@ pub unsafe extern "C" fn mnNameNew_8023B224(mut arg0: u8) {
     mnCharSel_802640A0();
 }
 pub unsafe extern "C" fn mnNameNew_8023B314(mut arg0: *mut NameNewEntry, mut arg1: i32) {
+    melee_core::ct!("mnNameNew_8023B314");
     let mut text: *mut HSD_Text = null_mut();
     let mut idx: u8 = 0;
     let mut selection: i32 = 0;
@@ -1432,6 +1435,7 @@ pub unsafe extern "C" fn mnNameNew_KeySetup(
     mut arg0: *mut NameNewEntry,
     mut arg1: u8,
 ) -> *mut HSD_Text {
+    melee_core::ct!("mnNameNew_KeySetup");
     let mut text_pos: Vec3 = Vec3 { x: 0., y: 0., z: 0. };
     let mut key_color: GXColor = _GXColor { r: 0, g: 0, b: 0, a: 0 };
     let mut selected_key_color: GXColor = _GXColor { r: 0, g: 0, b: 0, a: 0 };
@@ -1579,6 +1583,7 @@ pub unsafe extern "C" fn mnNameNew_8023BAA8(
     mut arg1: i32,
     mut arg2: u8,
 ) -> i32 {
+    melee_core::ct!("mnNameNew_8023BAA8");
     let mut mode: u8 = 0;
     if arg2 as u32 >= 0x32
         && (arg2 as u32) < 0x3a
@@ -1774,9 +1779,11 @@ unsafe extern "C" fn PickAutoNameInline(mut arg0: *mut HSD_GObj) -> i32 {
     return null_ch as i32;
 }
 pub unsafe extern "C" fn PickAutoName(mut arg0: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("PickAutoName");
     return PickAutoNameInline(arg0);
 }
 pub unsafe extern "C" fn NameContainsOnlySpaces() -> i32 {
+    melee_core::ct!("NameContainsOnlySpaces");
     let mut null_char: i16 = 0;
     let mut text: *mut c_char = &raw mut mnNameNew_CurrentNameText
         as *mut c_char;
@@ -1842,6 +1849,7 @@ pub unsafe extern "C" fn WriteCharactersForNameAtIndex(
     mut arg0: u8,
     mut arg1: i32,
 ) -> i32 {
+    melee_core::ct!("WriteCharactersForNameAtIndex");
     let mut nametag: *mut NameTagData = null_mut();
     let mut ret: i32 = 0;
     nametag = GetPersistentNameData(arg0 as i32);
@@ -1862,6 +1870,7 @@ pub unsafe extern "C" fn AddCharacterToName(
     mut arg2: u8,
     mut arg3: u8,
 ) -> *mut c_char {
+    melee_core::ct!("AddCharacterToName");
     let mut ch: c_char = 0;
     let mut dest: *mut c_char = core::ptr::null_mut::<
         c_char,
@@ -1954,6 +1963,7 @@ pub unsafe extern "C" fn AddCharacterToName(
     return arg0;
 }
 pub unsafe extern "C" fn mnNameNew_GlyphVariantInput(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("mnNameNew_GlyphVariantInput");
     let mut data: *mut NameNewEntry = null_mut();
     let mut buttons: u32 = 0;
     let mut count: i32 = 0;
@@ -2140,6 +2150,7 @@ unsafe extern "C" fn mnNameNew_CountVariants(
     return count;
 }
 pub unsafe extern "C" fn mnNameNew_MainInput(mut arg0: *mut HSD_GObj) {
+    melee_core::ct!("mnNameNew_MainInput");
     let mut space_lead: c_char = 0;
     let mut unused: [c_char; 12] = [0; 12];
     let mut name_buffer: [c_char; 16] = [0; 16];
@@ -2529,6 +2540,7 @@ unsafe extern "C" fn mnNameNew_GetEntryData() -> *mut NameNewEntry {
     return (*mnNameNew_804D6C08).user_data as *mut NameNewEntry;
 }
 pub unsafe extern "C" fn mnNameNew_8023CE4C() {
+    melee_core::ct!("mnNameNew_8023CE4C");
     let mut text_pos: Vec3 = Vec3 { x: 0., y: 0., z: 0. };
     let mut name_char_color: GXColor = _GXColor { r: 0, g: 0, b: 0, a: 0 };
     let mut name_char_color_ptr: [*mut GXColor; 1] = [core::ptr::null_mut::<
@@ -2590,6 +2602,7 @@ pub unsafe extern "C" fn mnNameNew_8023CE4C() {
     (*data).name_disp_text = text;
 }
 pub unsafe extern "C" fn fn_8023CFC8(mut arg0: *mut HSD_GObj) {
+    melee_core::ct!("fn_8023CFC8");
     let mut jobj: *mut HSD_JObj = null_mut();
     let mut root: *mut HSD_JObj = null_mut();
     let mut new_var: u8 = 0;
@@ -2656,6 +2669,7 @@ pub unsafe extern "C" fn fn_8023CFC8(mut arg0: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn fn_8023D0F8(mut arg0: *mut c_void) {
+    melee_core::ct!("fn_8023D0F8");
     let mut entry: *mut GlyphVariantEntry = arg0 as *mut GlyphVariantEntry;
     HSD_SisLib_803A5CC4((*entry).text);
     HSD_Free(arg0);
@@ -2666,6 +2680,7 @@ pub unsafe extern "C" fn mnNameNew_8023D130(
     mut arg2: u8,
     mut arg3: i32,
 ) -> *mut HSD_Text {
+    melee_core::ct!("mnNameNew_8023D130");
     let mut pos_z: f32 = 0.;
     let mut y_range: f32 = 0.;
     let mut i: i32 = 0;
@@ -2815,6 +2830,7 @@ pub unsafe extern "C" fn mnNameNew_GlyphVariantSetup(
     mut arg1: u16,
     mut arg2: i32,
 ) -> *mut HSD_GObj {
+    melee_core::ct!("mnNameNew_GlyphVariantSetup");
     let mut jobj: *mut HSD_JObj = null_mut();
     let mut variant: *mut HSD_JObj = null_mut();
     let mut key_jobj: *mut HSD_JObj = null_mut();
@@ -2934,6 +2950,7 @@ pub unsafe extern "C" fn mnNameNew_GlyphVariantSetup(
     return gobj as *mut HSD_GObj;
 }
 pub unsafe extern "C" fn mnNameNew_8023DA08(mut arg0: *mut NameNewEntry) -> i32 {
+    melee_core::ct!("mnNameNew_8023DA08");
     let mut anim: *mut AnimLoopSettings = null_mut();
     let mut end_frame: *mut f32 = null_mut();
     let mut frame: f32 = 0.;
@@ -2970,6 +2987,7 @@ pub unsafe extern "C" fn mnNameNew_8023DA08(mut arg0: *mut NameNewEntry) -> i32 
     return all_anims_done;
 }
 pub unsafe extern "C" fn fn_8023DAEC(mut arg0: *mut HSD_GObj) {
+    melee_core::ct!("fn_8023DAEC");
     let mut all_anims_done: i32 = 0;
     let mut data: *mut NameNewEntry = null_mut();
     let mut layout: *mut MnNameNewDataLayout = core::ptr::null_mut::<
@@ -3026,6 +3044,7 @@ pub unsafe extern "C" fn fn_8023DAEC(mut arg0: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn fn_8023DBE8(mut arg0: *mut HSD_GObj) {
+    melee_core::ct!("fn_8023DBE8");
     let mut flow: *mut MenuFlow = null_mut();
     let mut gobj: *mut HSD_GObj = null_mut();
     let mut data: *mut NameNewEntry = null_mut();
@@ -3163,6 +3182,7 @@ pub unsafe extern "C" fn fn_8023DBE8(mut arg0: *mut HSD_GObj) {
     }
 }
 pub unsafe extern "C" fn mnNameNew_8023E0D8(mut arg0: *mut NameNewEntry) {
+    melee_core::ct!("mnNameNew_8023E0D8");
     let mut layout: *mut MnNameNewDataLayout = core::ptr::null_mut::<
         MnNameNewDataLayout,
     >();
@@ -3221,6 +3241,7 @@ pub unsafe extern "C" fn InitNameEntryUIState(
     mut arg0: *mut NameNewEntry,
     mut arg1: i32,
 ) -> i32 {
+    melee_core::ct!("InitNameEntryUIState");
     let mut result: i32 = 0;
     let mut count: i8 = 0;
     let mut names: *mut *mut u8 = core::ptr::null_mut::<*mut u8>();
@@ -3308,6 +3329,7 @@ unsafe extern "C" fn mnNameNew_InitKeyJobjs(
     }
 }
 pub unsafe extern "C" fn mnNameNew_8023E32C(mut arg0: i32) {
+    melee_core::ct!("mnNameNew_8023E32C");
     let mut gobj: *mut HSD_GObj = null_mut();
     let mut root_jobj: *mut HSD_JObj = null_mut();
     let mut user_data: *mut NameNewEntry = null_mut();
@@ -3378,6 +3400,7 @@ pub unsafe extern "C" fn mnNameNew_8023E32C(mut arg0: i32) {
     mnNameNew_8023B0F8(gobj, (*user_data).x1);
 }
 pub unsafe extern "C" fn mnNameNew_EnterFromMnName(mut arg0: *mut c_void) {
+    melee_core::ct!("mnNameNew_EnterFromMnName");
     let mut unused: [c_char; 8] = [0; 8];
     let mut text: *mut c_char = &raw mut mnNameNew_CurrentNameText
         as *mut c_char;
@@ -3402,6 +3425,7 @@ pub unsafe extern "C" fn mnNameNew_EnterFromMnCharSel(
     mut arg0: *mut HSD_Archive,
     mut arg1: i32,
 ) {
+    melee_core::ct!("mnNameNew_EnterFromMnCharSel");
     let mut name_count: u8 = 0;
     let mut proc_0: *mut HSD_GObjProc = null_mut();
     let mut text: *mut c_char = core::ptr::null_mut::<
@@ -3465,6 +3489,7 @@ pub unsafe extern "C" fn mnNameNew_EnterFromMnCharSel(
     lbAudioAx_80023F28(gmMainLib_8015ECB0());
 }
 pub unsafe extern "C" fn mnNameNew_8023EA08(mut arg0: *mut c_void) {
+    melee_core::ct!("mnNameNew_8023EA08");
     mnNameNew_EnterFromMnCharSel(arg0 as *mut HSD_Archive, 4);
 }
 static mut mnNameNew_804D4F98: [u8; 8] = [

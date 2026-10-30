@@ -101,6 +101,7 @@ pub mod ext {
 /// `MTXDegToRad(a)` (dolphin/mtx.h): `a * 0.01745329252f`.
 #[inline(always)]
 pub fn MTXDegToRad(a: f32) -> f32 {
+    melee_core::ct!("MTXDegToRad");
     a * 0.01745329252f32
 }
 
@@ -157,12 +158,15 @@ unsafe fn rot_y(fp: *mut Fighter, part: i32, v: f64) {
 
 // Callback entries (extern "C") stored in Fighter fields.
 pub unsafe extern "C" fn cb_fn_80100E0C(g: G) {
+    melee_core::ct!("cb_fn_80100E0C");
     fn_80100E0C(g)
 }
 pub unsafe extern "C" fn cb_fn_80105978(g: G) {
+    melee_core::ct!("cb_fn_80105978");
     fn_80105978(g)
 }
 pub unsafe extern "C" fn cb_fn_80100F60(g: G) {
+    melee_core::ct!("cb_fn_80100F60");
     fn_80100F60(g)
 }
 
@@ -172,6 +176,7 @@ pub unsafe extern "C" fn cb_fn_80100F60(g: G) {
 
 /// `ftPr_NormalizeAndSetRollAngle` (ftPurin/inlines.h): wrap the roll angle into [0, 2 pi].
 pub fn ftPr_NormalizeAndSetRollAngle(gobj: G) {
+    melee_core::ct!("ftPr_NormalizeAndSetRollAngle");
     unsafe {
         let fp = fpp(gobj);
         while sn!(fp).x14 < 0.0 {
@@ -186,6 +191,7 @@ pub fn ftPr_NormalizeAndSetRollAngle(gobj: G) {
 
 /// `ftPr_SetFacingDir` (ftPurin/inlines.h).
 pub fn ftPr_SetFacingDir(fp: *mut Fighter) {
+    melee_core::ct!("ftPr_SetFacingDir");
     unsafe {
         if sn!(fp).facing_dir != 0.0 {
             (*fp).facing_dir = sn!(fp).facing_dir;
@@ -198,6 +204,7 @@ pub fn ftPr_SetFacingDir(fp: *mut Fighter) {
 
 /// `ftPr_MirrorSpecialN` (ftPurin/inlines.h).
 pub fn ftPr_MirrorSpecialN(fp: *mut Fighter) {
+    melee_core::ct!("ftPr_MirrorSpecialN");
     unsafe {
         (*fp).self_vel.x = -(*fp).self_vel.x;
         (*fp).gr_vel = -(*fp).gr_vel;
@@ -214,6 +221,7 @@ pub fn ftPr_MirrorSpecialN(fp: *mut Fighter) {
 
 /// `ftKb_PrScaleAnimStep` / `ftKb_AirScaleAnimStep` (static inlines): squash-and-stretch for 4 frames.
 pub fn ftKb_PrScaleAnimStep(gobj: G, scale: &mut Vec3) {
+    melee_core::ct!("ftKb_PrScaleAnimStep");
     unsafe {
         let fp = fpp(gobj);
         let jobj = jobj_of(gobj);
@@ -232,11 +240,13 @@ pub fn ftKb_PrScaleAnimStep(gobj: G, scale: &mut Vec3) {
 
 /// `ftKb_AirScaleAnimStep` (static inline): the same table read through `scale_base[frame + 4]`.
 pub fn ftKb_AirScaleAnimStep(gobj: G, scale: &mut Vec3) {
+    melee_core::ct!("ftKb_AirScaleAnimStep");
     ftKb_PrScaleAnimStep(gobj, scale)
 }
 
 /// `ftKb_PrRestoreScale` (static).
 pub fn ftKb_PrRestoreScale(gobj: G) {
+    melee_core::ct!("ftKb_PrRestoreScale");
     unsafe {
         let fp = fpp(gobj);
         let jobj = jobj_of(gobj);
@@ -251,6 +261,7 @@ pub fn ftKb_PrRestoreScale(gobj: G) {
 
 /// `ftKb_PrSetCallbacks` (static inline).
 pub fn ftKb_PrSetCallbacks(gobj: G) {
+    melee_core::ct!("ftKb_PrSetCallbacks");
     unsafe {
         let fp = fpp(gobj);
         ftKb_SpecialN_set_cbs(gobj);
@@ -261,6 +272,7 @@ pub fn ftKb_PrSetCallbacks(gobj: G) {
 
 /// `ftKb_PrHitCapsuleToggle` (static inline): flip hit capsule `x4` every `unk6` frames.
 pub fn ftKb_PrHitCapsuleToggle(gobj: G) {
+    melee_core::ct!("ftKb_PrHitCapsuleToggle");
     unsafe {
         let fp = fpp(gobj);
         let da = &*da_of(fp);
@@ -274,6 +286,7 @@ pub fn ftKb_PrHitCapsuleToggle(gobj: G) {
 
 /// `ftKb_PrPlayRollSFX` (static inline).
 pub fn ftKb_PrPlayRollSFX(gobj: G) {
+    melee_core::ct!("ftKb_PrPlayRollSFX");
     unsafe {
         let fp = fpp(gobj);
         let sfx_id = if (*fp).ground_or_air == GA_Air { 0x3D0D3 } else { 0x3D0D0 };
@@ -283,6 +296,7 @@ pub fn ftKb_PrPlayRollSFX(gobj: G) {
 
 /// `ftKb_PrWallBounceEffect` (static): dust + quake + sfx at the wall.
 pub fn ftKb_PrWallBounceEffect(gobj: G, fp: *mut Fighter, dir: f32, pos: &mut Vec3, angle: &mut f32) {
+    melee_core::ct!("ftKb_PrWallBounceEffect");
     unsafe {
         let fp2 = fpp(gobj);
         *pos = (*fp2).cur_pos;
@@ -309,6 +323,7 @@ pub fn ftKb_PrWallBounceEffect(gobj: G, fp: *mut Fighter, dir: f32, pos: &mut Ve
 
 /// `fn_80100E0C`: deal-damage callback; bounce back with the Hit state.
 pub fn fn_80100E0C(gobj: G) {
+    melee_core::ct!("fn_80100E0C");
     const MF: u32 = (1 << 1) | (1 << 4) | (1 << 7) | (1 << 9) | (1 << 18) | (1 << 19) | (1 << 22) | (1 << 26) | (1 << 27);
     unsafe {
         let fp = fpp(gobj);
@@ -345,12 +360,14 @@ pub fn fn_80100E0C(gobj: G) {
 }
 
 pub fn fn_80100F60(gobj: G) {
+    melee_core::ct!("fn_80100F60");
     ext::ft_80089824(gobj);
     ext::ft_800892A0(gobj);
 }
 
 /// Rollout hit capsule: disable below the speed threshold, otherwise scale damage with speed.
 pub fn ftKb_SpecialNPr_80100F94(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNPr_80100F94");
     unsafe {
         let fp = fpp(gobj);
         let da = &*da_of(fp);
@@ -378,6 +395,7 @@ pub fn ftKb_SpecialNPr_80100F94(gobj: G) {
 
 /// End of the roll: switch to the End state (ground when `!unk`, air when `unk`).
 pub fn ftKb_SpecialNPr_801010D4(gobj: G, unk: bool, flags: u32, anim_start: f32) {
+    melee_core::ct!("ftKb_SpecialNPr_801010D4");
     unsafe {
         let fp = fpp(gobj);
         let da = &*da_of(fp);
@@ -406,6 +424,7 @@ pub fn ftKb_SpecialNPr_801010D4(gobj: G, unk: bool, flags: u32, anim_start: f32)
 
 /// Initialise the roll state (shared by the ground and air entries).
 pub fn ftKb_SpecialNPr_8010131C(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNPr_8010131C");
     unsafe {
         let jobj = jobj_of(gobj);
         let fp = fpp(gobj);
@@ -430,6 +449,7 @@ pub fn ftKb_SpecialNPr_8010131C(gobj: G) {
 
 /// Wrap the roll angle and play the roll sfx when it crosses the turn point.
 pub fn ftKb_SpecialNPr_8010140C(gobj: G, arg1: bool) {
+    melee_core::ct!("ftKb_SpecialNPr_8010140C");
     unsafe {
         let fp = fpp(gobj);
         while sn!(fp).x14 < 0.0 {
@@ -453,6 +473,7 @@ pub fn ftKb_SpecialNPr_8010140C(gobj: G, arg1: bool) {
 
 /// Ground Rollout entry.
 pub fn ftKb_SpecialNPr_80101560(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNPr_80101560");
     unsafe {
         let fp = fpp(gobj);
         let da = &*da_of(fp);
@@ -470,6 +491,7 @@ pub fn ftKb_SpecialNPr_80101560(gobj: G) {
 
 /// Air Rollout entry.
 pub fn ftKb_SpecialNPr_80101618(gobj: G) {
+    melee_core::ct!("ftKb_SpecialNPr_80101618");
     unsafe {
         let fp = fpp(gobj);
         let da = &*da_of(fp);
@@ -492,6 +514,7 @@ const MF_START_LOOP: u32 = (1 << 1) | (1 << 4) | (1 << 18);
 const MF_LOOP_FULL: u32 = (1 << 1) | (1 << 4) | (1 << 7) | (1 << 9) | (1 << 18) | (1 << 19) | (1 << 22) | (1 << 26) | (1 << 27);
 
 pub fn ftKb_PrSpecialNStart_Anim(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialNStart_Anim");
     unsafe {
         let fp = fpp(gobj);
         sn!(fp).facing_dir = 0.0;
@@ -511,6 +534,7 @@ pub fn ftKb_PrSpecialNStart_Anim(gobj: G) {
 }
 
 pub fn ftKb_PrSpecialAirNStart_Anim(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialAirNStart_Anim");
     unsafe {
         let fp = fpp(gobj);
         sn!(fp).facing_dir = 0.0;
@@ -573,18 +597,22 @@ unsafe fn charge_full_anim(gobj: G) {
 }
 
 pub fn ftKb_PrSpecialNLoop_Anim(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialNLoop_Anim");
     unsafe { charge_loop_anim(gobj, ftKb_MS_PrSpecialNFull as i32) }
 }
 
 pub fn ftKb_PrSpecialNFull_Anim(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialNFull_Anim");
     unsafe { charge_full_anim(gobj) }
 }
 
 pub fn ftKb_PrSpecialAirNLoop_Anim(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialAirNLoop_Anim");
     unsafe { charge_loop_anim(gobj, ftKb_MS_PrSpecialAirNFull as i32) }
 }
 
 pub fn ftKb_PrSpecialAirNFull_Anim(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialAirNFull_Anim");
     unsafe { charge_full_anim(gobj) }
 }
 
@@ -627,6 +655,7 @@ unsafe fn roll_end_check(gobj: G, fp: *mut Fighter, old_angle: f32, delta: f32, 
 }
 
 pub fn ftKb_PrSpecialN1_Anim(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialN1_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = &*da_of(fp);
@@ -644,6 +673,7 @@ pub fn ftKb_PrSpecialN1_Anim(gobj: G) {
 }
 
 pub fn ftKb_PrSpecialAirN_Anim(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialAirN_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = &*da_of(fp);
@@ -662,6 +692,7 @@ pub fn ftKb_PrSpecialAirN_Anim(gobj: G) {
 }
 
 pub fn ftKb_PrSpecialNTurn_Anim(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialNTurn_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = &*da_of(fp);
@@ -698,6 +729,7 @@ pub fn ftKb_PrSpecialNTurn_Anim(gobj: G) {
 }
 
 pub fn ftKb_PrSpecialNEnd_Anim(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialNEnd_Anim");
     unsafe {
         let fp = fpp(gobj);
         let mut scale = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -711,6 +743,7 @@ pub fn ftKb_PrSpecialNEnd_Anim(gobj: G) {
 }
 
 pub fn ftKb_PrSpecialN_Anim(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialN_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = &*da_of(fp);
@@ -733,6 +766,7 @@ pub fn ftKb_PrSpecialN_Anim(gobj: G) {
 }
 
 pub fn ftKb_PrSpecialAirNEndR_Anim(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialAirNEndR_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = &*da_of(fp);
@@ -751,6 +785,7 @@ pub fn ftKb_PrSpecialAirNEndR_Anim(gobj: G) {
 }
 
 pub fn ftKb_PrSpecialNHit_Anim(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialNHit_Anim");
     unsafe {
         let fp = fpp(gobj);
         let da = &*da_of(fp);
@@ -767,14 +802,14 @@ pub fn ftKb_PrSpecialNHit_Anim(gobj: G) {
 // IASA
 // ---------------------------------------------------------------------------------------------
 
-pub fn ftKb_PrSpecialNStart_IASA(_gobj: G) {}
-pub fn ftKb_PrSpecialNTurn_IASA(_gobj: G) {}
-pub fn ftKb_PrSpecialNEnd_IASA(_gobj: G) {}
-pub fn ftKb_PrSpecialAirNStart_IASA(_gobj: G) {}
-pub fn ftKb_PrSpecialAirN_IASA(_gobj: G) {}
-pub fn ftKb_PrSpecialN_IASA(_gobj: G) {}
-pub fn ftKb_PrSpecialAirNEndR_IASA(_gobj: G) {}
-pub fn ftKb_PrSpecialNHit_IASA(_gobj: G) {}
+pub fn ftKb_PrSpecialNStart_IASA(_gobj: G) { melee_core::ct!("ftKb_PrSpecialNStart_IASA");}
+pub fn ftKb_PrSpecialNTurn_IASA(_gobj: G) { melee_core::ct!("ftKb_PrSpecialNTurn_IASA");}
+pub fn ftKb_PrSpecialNEnd_IASA(_gobj: G) { melee_core::ct!("ftKb_PrSpecialNEnd_IASA");}
+pub fn ftKb_PrSpecialAirNStart_IASA(_gobj: G) { melee_core::ct!("ftKb_PrSpecialAirNStart_IASA");}
+pub fn ftKb_PrSpecialAirN_IASA(_gobj: G) { melee_core::ct!("ftKb_PrSpecialAirN_IASA");}
+pub fn ftKb_PrSpecialN_IASA(_gobj: G) { melee_core::ct!("ftKb_PrSpecialN_IASA");}
+pub fn ftKb_PrSpecialAirNEndR_IASA(_gobj: G) { melee_core::ct!("ftKb_PrSpecialAirNEndR_IASA");}
+pub fn ftKb_PrSpecialNHit_IASA(_gobj: G) { melee_core::ct!("ftKb_PrSpecialNHit_IASA");}
 
 const MF_RELEASE: u32 = (1 << 1) | (1 << 4) | (1 << 7) | (1 << 12) | (1 << 18);
 
@@ -809,19 +844,24 @@ unsafe fn release_air(gobj: G) {
 }
 
 pub fn ftKb_PrSpecialNLoop_IASA(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialNLoop_IASA");
     unsafe { release_ground(gobj) }
 }
 pub fn ftKb_PrSpecialNFull_IASA(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialNFull_IASA");
     unsafe { release_ground(gobj) }
 }
 pub fn ftKb_PrSpecialAirNLoop_IASA(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialAirNLoop_IASA");
     unsafe { release_air(gobj) }
 }
 pub fn ftKb_PrSpecialAirNFull_IASA(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialAirNFull_IASA");
     unsafe { release_air(gobj) }
 }
 
 pub fn ftKb_PrSpecialN1_IASA(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialN1_IASA");
     unsafe {
         let fp = fpp(gobj);
         let da = &*da_of(fp);
@@ -849,34 +889,44 @@ pub fn ftKb_PrSpecialN1_IASA(gobj: G) {
 
 // The root module's Fighter-only halves, with the C (gobj) signature.
 pub fn ftKb_PrSpecialNStart_Phys(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialNStart_Phys");
     unsafe { half::ftKb_PrSpecialNStart_Phys(&mut *fpp(gobj)) }
 }
 pub fn ftKb_PrSpecialNLoop_Phys(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialNLoop_Phys");
     ftKb_PrSpecialNStart_Phys(gobj);
 }
 pub fn ftKb_PrSpecialNFull_Phys(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialNFull_Phys");
     ftKb_PrSpecialNStart_Phys(gobj);
 }
 pub fn ftKb_PrSpecialNEnd_Phys(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialNEnd_Phys");
     unsafe { half::ftKb_PrSpecialNEnd_Phys(&mut *fpp(gobj)) }
 }
 pub fn ftKb_PrSpecialAirNStart_Phys(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialAirNStart_Phys");
     unsafe { half::ftKb_PrSpecialAirNStart_Phys(&mut *fpp(gobj)) }
 }
 pub fn ftKb_PrSpecialAirNLoop_Phys(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialAirNLoop_Phys");
     unsafe { half::ftKb_PrSpecialAirNLoop_Phys(&mut *fpp(gobj)) }
 }
 pub fn ftKb_PrSpecialAirNFull_Phys(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialAirNFull_Phys");
     unsafe { half::ftKb_PrSpecialAirNFull_Phys(&mut *fpp(gobj)) }
 }
 pub fn ftKb_PrSpecialAirNEndR_Phys(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialAirNEndR_Phys");
     unsafe { half::ftKb_PrSpecialAirNEndR_Phys(&mut *fpp(gobj)) }
 }
 pub fn ftKb_PrSpecialNHit_Phys(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialNHit_Phys");
     unsafe { half::ftKb_PrSpecialNHit_Phys(&mut *fpp(gobj)) }
 }
 
 pub fn ftKb_PrSpecialN1_Phys(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialN1_Phys");
     unsafe {
         let fp = fpp(gobj);
         let da = &*da_of(fp);
@@ -916,6 +966,7 @@ pub fn ftKb_PrSpecialN1_Phys(gobj: G) {
 
 /// `gr_vel += scale * (x1C +- influence)` of `ftKb_PrSpecialNTurn_Phys` (a fused f32 site in every arm).
 pub fn turn_gr_vel(gr_vel: f32, scale: f32, x1c: f32, influence: f32, floor_nx_positive: bool) -> f32 {
+    melee_core::ct!("turn_gr_vel");
     if floor_nx_positive {
         fmadds(scale, x1c + influence, gr_vel)
     } else {
@@ -924,6 +975,7 @@ pub fn turn_gr_vel(gr_vel: f32, scale: f32, x1c: f32, influence: f32, floor_nx_p
 }
 
 pub fn ftKb_PrSpecialNTurn_Phys(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialNTurn_Phys");
     const MF1: u32 = (1 << 4) | (1 << 18) | (1 << 25);
     const MF2: u32 = (1 << 1) | (1 << 4) | (1 << 18) | (1 << 25);
     unsafe {
@@ -958,6 +1010,7 @@ pub fn ftKb_PrSpecialNTurn_Phys(gobj: G) {
 /// Air-roll horizontal speed shaping shared by `AirN_Phys` and `N_Phys`: subtract the decel, floor the
 /// magnitude at `min_vel`.
 pub fn air_decel_floor(vel_x: f32, decel_attr: f32, min_attr: f32) -> f32 {
+    melee_core::ct!("air_decel_floor");
     let decel = if vel_x > 0.0 { decel_attr } else { -decel_attr };
     let mut vx = vel_x - decel;
     let abs_vel = abs_f(vx);
@@ -972,6 +1025,7 @@ pub fn air_decel_floor(vel_x: f32, decel_attr: f32, min_attr: f32) -> f32 {
 }
 
 pub fn ftKb_PrSpecialAirN_Phys(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialAirN_Phys");
     unsafe {
         let fp = fpp(gobj);
         let da = &*da_of(fp);
@@ -987,6 +1041,7 @@ pub fn ftKb_PrSpecialAirN_Phys(gobj: G) {
 }
 
 pub fn ftKb_PrSpecialN_Phys(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialN_Phys");
     unsafe {
         let fp = fpp(gobj);
         let da = &*da_of(fp);
@@ -1002,6 +1057,7 @@ pub fn ftKb_PrSpecialN_Phys(gobj: G) {
 // ---------------------------------------------------------------------------------------------
 
 pub fn ftKb_PrSpecialNStart_Coll(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialNStart_Coll");
     unsafe {
         let fp = fpp(gobj);
         if st::ft_80082708(gobj) == GA_Ground as i32 {
@@ -1034,6 +1090,7 @@ unsafe fn to_ground_charge(gobj: G, ms: i32) {
 }
 
 pub fn ftKb_PrSpecialNLoop_Coll(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialNLoop_Coll");
     unsafe {
         if st::ft_80082708(gobj) == GA_Ground as i32 {
             to_air_charge(gobj, ftKb_MS_PrSpecialAirNLoop as i32);
@@ -1042,6 +1099,7 @@ pub fn ftKb_PrSpecialNLoop_Coll(gobj: G) {
 }
 
 pub fn ftKb_PrSpecialNFull_Coll(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialNFull_Coll");
     unsafe {
         if st::ft_80082708(gobj) == GA_Ground as i32 {
             to_air_charge(gobj, ftKb_MS_PrSpecialAirNFull as i32);
@@ -1069,6 +1127,7 @@ unsafe fn wall_check(gobj: G, fp: *mut Fighter) -> bool {
 }
 
 pub fn ftKb_PrSpecialN1_Coll(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialN1_Coll");
     const MF: u32 = (1 << 1) | (1 << 3) | (1 << 4) | (1 << 7) | (1 << 12) | (1 << 14) | (1 << 18) | (1 << 19) | (1 << 22) | (1 << 26) | (1 << 27);
     unsafe {
         let fp = fpp(gobj);
@@ -1098,6 +1157,7 @@ pub fn ftKb_PrSpecialN1_Coll(gobj: G) {
 }
 
 pub fn ftKb_PrSpecialNTurn_Coll(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialNTurn_Coll");
     unsafe {
         let fp = fpp(gobj);
         let da = &*da_of(fp);
@@ -1119,6 +1179,7 @@ pub fn ftKb_PrSpecialNTurn_Coll(gobj: G) {
 }
 
 pub fn ftKb_PrSpecialNEnd_Coll(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialNEnd_Coll");
     const MF: u32 = (1 << 1) | (1 << 4) | (1 << 7) | (1 << 12) | (1 << 14) | (1 << 18) | (1 << 19) | (1 << 22) | (1 << 26) | (1 << 27);
     unsafe {
         let fp = fpp(gobj);
@@ -1130,6 +1191,7 @@ pub fn ftKb_PrSpecialNEnd_Coll(gobj: G) {
 }
 
 pub fn ftKb_PrSpecialAirNStart_Coll(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialAirNStart_Coll");
     unsafe {
         let fp = fpp(gobj);
         if st::ft_80081D0C(gobj) != GA_Ground as i32 {
@@ -1142,6 +1204,7 @@ pub fn ftKb_PrSpecialAirNStart_Coll(gobj: G) {
 }
 
 pub fn ftKb_PrSpecialAirNLoop_Coll(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialAirNLoop_Coll");
     unsafe {
         if st::ft_80081D0C(gobj) != GA_Ground as i32 {
             to_ground_charge(gobj, ftKb_MS_PrSpecialNLoop as i32);
@@ -1150,6 +1213,7 @@ pub fn ftKb_PrSpecialAirNLoop_Coll(gobj: G) {
 }
 
 pub fn ftKb_PrSpecialAirNFull_Coll(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialAirNFull_Coll");
     unsafe {
         if st::ft_80081D0C(gobj) != GA_Ground as i32 {
             to_ground_charge(gobj, ftKb_MS_PrSpecialNFull as i32);
@@ -1158,6 +1222,7 @@ pub fn ftKb_PrSpecialAirNFull_Coll(gobj: G) {
 }
 
 pub fn ftKb_PrSpecialAirN_Coll(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialAirN_Coll");
     const MF: u32 = (1 << 1) | (1 << 3) | (1 << 4) | (1 << 7) | (1 << 12) | (1 << 14) | (1 << 18) | (1 << 19) | (1 << 22) | (1 << 26) | (1 << 27);
     unsafe {
         let fp = fpp(gobj);
@@ -1223,6 +1288,7 @@ pub fn ftKb_PrSpecialAirN_Coll(gobj: G) {
 }
 
 pub fn ftKb_PrSpecialN_Coll(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialN_Coll");
     unsafe {
         let fp = fpp(gobj);
         if ext::ft_800824A0(gobj, &raw mut ftKb_Init_803CB758) {
@@ -1237,6 +1303,7 @@ pub fn ftKb_PrSpecialN_Coll(gobj: G) {
 }
 
 pub fn ftKb_PrSpecialAirNEndR_Coll(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialAirNEndR_Coll");
     const MF: u32 = (1 << 1) | (1 << 4) | (1 << 7) | (1 << 12) | (1 << 14) | (1 << 18) | (1 << 19) | (1 << 22) | (1 << 26) | (1 << 27);
     unsafe {
         let fp = fpp(gobj);
@@ -1248,6 +1315,7 @@ pub fn ftKb_PrSpecialAirNEndR_Coll(gobj: G) {
 }
 
 pub fn ftKb_PrSpecialNHit_Coll(gobj: G) {
+    melee_core::ct!("ftKb_PrSpecialNHit_Coll");
     unsafe {
         let fp = fpp(gobj);
         let da = &*da_of(fp);
@@ -1265,6 +1333,7 @@ pub fn ftKb_PrSpecialNHit_Coll(gobj: G) {
 
 /// `fn_80105978`: x21F8 callback; mirror the roll when the fighter is mirrored.
 pub fn fn_80105978(gobj: G) {
+    melee_core::ct!("fn_80105978");
     unsafe {
         let fp = fpp(gobj);
         rot_y(fp, 0, M_PI_2 * (*fp).facing_dir as f64);

@@ -61,14 +61,17 @@ pub mod ext {
 }
 
 pub fn ftCo_Squat_CheckInput(g: G) -> bool {
+    melee_core::ct!("ftCo_Squat_CheckInput");
     fp(g).input.lstick[0].y < -cd().x90
 }
 
 pub fn fn_800D5F84(g: G) -> bool {
+    melee_core::ct!("fn_800D5F84");
     ftCo_Squat_CheckInput(g)
 }
 
 pub fn ftCo_800D5FB0(g: G) -> bool {
+    melee_core::ct!("ftCo_800D5FB0");
     if ftCo_Squat_CheckInput(g) {
         ftCo_Squat_Enter(g);
         return true;
@@ -78,6 +81,7 @@ pub fn ftCo_800D5FB0(g: G) -> bool {
 
 /// static `ftCo_Squat_Enter`.
 pub fn ftCo_Squat_Enter(g: G) {
+    melee_core::ct!("ftCo_Squat_Enter");
     ext::Fighter_ChangeMotionState(g, ftCo_MS_Squat as i32, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ext::ftAnim_8006EBA4(g);
     let f = fp(g);
@@ -86,6 +90,7 @@ pub fn ftCo_Squat_Enter(g: G) {
 }
 
 pub fn ftCo_Squat_Anim(g: G) {
+    melee_core::ct!("ftCo_Squat_Anim");
     if !ext::ftAnim_IsFramesRemaining(g) {
         ext::ftCo_800D638C(g);
     }
@@ -107,6 +112,7 @@ fn ftCo_Squat_IASA_inline(g: G) -> bool {
 }
 
 pub fn ftCo_Squat_IASA(g: G) {
+    melee_core::ct!("ftCo_Squat_IASA");
     let _ = ext::ftCo_SpecialS_CheckInput(g)
         || ext::ftCo_Attack100_CheckInput(g)
         || ext::ftCo_800D6824(g)
@@ -127,9 +133,11 @@ pub fn ftCo_Squat_IASA(g: G) {
 }
 
 pub fn ftCo_Squat_Phys(g: G) {
+    melee_core::ct!("ftCo_Squat_Phys");
     ext::ft_80084F3C(g);
 }
 
 pub fn ftCo_Squat_Coll(g: G) {
+    melee_core::ct!("ftCo_Squat_Coll");
     ext::ft_80083F88(g);
 }

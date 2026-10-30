@@ -176,6 +176,7 @@ unsafe fn handle_teleport_collisions(
 
 /// `fn_80112ED8` (static): the accessory callback after the Vanish starts.
 pub fn fn_80112ED8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80112ED8");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).x2219_b0() == 0 {
@@ -189,6 +190,7 @@ pub fn fn_80112ED8(gobj: *mut HSD_GObj) {
 
 /// `ftSk_SpecialHi_80112F48` (static): spawn the vanish item at the hip.
 pub fn ftSk_SpecialHi_80112F48(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialHi_80112F48");
     unsafe {
         let fp = fpp(gobj);
         let mut pos = hip_pos(fp);
@@ -199,6 +201,7 @@ pub fn ftSk_SpecialHi_80112F48(gobj: *mut HSD_GObj) {
 
 /// `ftSk_SpecialHi_80112FA8` (static): the hip effect, once per vanish.
 pub fn ftSk_SpecialHi_80112FA8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialHi_80112FA8");
     unsafe {
         let fp = fpp(gobj);
         let mut pos = hip_pos(fp);
@@ -212,6 +215,7 @@ pub fn ftSk_SpecialHi_80112FA8(gobj: *mut HSD_GObj) {
 
 /// `fn_80113038` (static): the accessory callback while travelling.
 pub fn fn_80113038(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80113038");
     unsafe {
         let fp = fpp(gobj);
         if (*fp).x2219_b0() == 0 {
@@ -226,17 +230,21 @@ pub fn fn_80113038(gobj: *mut HSD_GObj) {
 
 /// The C `fn_80112ED8` / `fn_80113038` / `ftSk_SpecialHi_80113F68` as `HSD_GObjEvent` callbacks.
 pub unsafe extern "C" fn cb_fn_80112ED8(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_80112ED8");
     fn_80112ED8(g);
 }
 pub unsafe extern "C" fn cb_fn_80113038(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_fn_80113038");
     fn_80113038(g);
 }
 pub unsafe extern "C" fn cb_ftSk_SpecialHi_80113F68(g: *mut HSD_GObj) {
+    melee_core::ct!("cb_ftSk_SpecialHi_80113F68");
     ftSk_SpecialHi_80113F68(g);
 }
 
 /// `ftSk_SpecialHiStart_0_Anim`.
 pub fn ftSk_SpecialHiStart_0_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialHiStart_0_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         ftSk_SpecialHi_80113838(gobj);
     }
@@ -244,18 +252,20 @@ pub fn ftSk_SpecialHiStart_0_Anim(gobj: *mut HSD_GObj) {
 
 /// `ftSk_SpecialAirHiStart_0_Anim`.
 pub fn ftSk_SpecialAirHiStart_0_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialAirHiStart_0_Anim");
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         ftSk_SpecialHi_80113A30(gobj);
     }
 }
 
-pub fn ftSk_SpecialHiStart_0_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftSk_SpecialHiStart_0_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftSk_SpecialHiStart_0_IASA");}
 
 /// Interrupt_SheikUpBStartAir
-pub fn ftSk_SpecialAirHiStart_0_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftSk_SpecialAirHiStart_0_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftSk_SpecialAirHiStart_0_IASA");}
 
 /// `ftSk_SpecialAirHiStart_0_Phys`: fall with the file's fall limits, then the drift.
 pub fn ftSk_SpecialAirHiStart_0_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialAirHiStart_0_Phys");
     unsafe {
         let fp = fpp(gobj);
         let attributes = da(fp);
@@ -266,6 +276,7 @@ pub fn ftSk_SpecialAirHiStart_0_Phys(gobj: *mut HSD_GObj) {
 
 /// `ftSk_SpecialHiStart_0_Coll`.
 pub fn ftSk_SpecialHiStart_0_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialHiStart_0_Coll");
     if st::ft_80082708(gobj) == GA_Ground as i32 {
         ftSk_SpecialHi_80113324(gobj);
     }
@@ -273,6 +284,7 @@ pub fn ftSk_SpecialHiStart_0_Coll(gobj: *mut HSD_GObj) {
 
 /// `ftSk_SpecialAirHiStart_0_Coll`.
 pub fn ftSk_SpecialAirHiStart_0_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialAirHiStart_0_Coll");
     unsafe {
         let fp = fpp(gobj);
         let ground_or_ledge = st::ft_CheckGroundAndLedge(gobj, ft_get_facing_dir_int(&*fp)) != 0;
@@ -286,6 +298,7 @@ pub fn ftSk_SpecialAirHiStart_0_Coll(gobj: *mut HSD_GObj) {
 
 /// `ftSk_SpecialHi_80113324` (static): the grounded Vanish landing.
 pub fn ftSk_SpecialHi_80113324(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialHi_80113324");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_8007D60C(&mut *fp);
@@ -296,6 +309,7 @@ pub fn ftSk_SpecialHi_80113324(gobj: *mut HSD_GObj) {
 
 /// `ftSk_SpecialHi_80113390` (static): the aerial Vanish landing.
 pub fn ftSk_SpecialHi_80113390(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialHi_80113390");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 0x163, ftSk_MF_SpecialHi_Coll);
@@ -305,6 +319,7 @@ pub fn ftSk_SpecialHi_80113390(gobj: *mut HSD_GObj) {
 
 /// `ftSk_SpecialHiStart_1_Anim`: the grounded travel timer (reads `mv.sk.specialn.x0`).
 pub fn ftSk_SpecialHiStart_1_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialHiStart_1_Anim");
     unsafe {
         let fp = fpp(gobj);
         (*fp).mv.sk.specialn.x0 -= 1;
@@ -316,6 +331,7 @@ pub fn ftSk_SpecialHiStart_1_Anim(gobj: *mut HSD_GObj) {
 
 /// `ftSk_SpecialAirHiStart_1_Anim`: the aerial travel timer.
 pub fn ftSk_SpecialAirHiStart_1_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialAirHiStart_1_Anim");
     unsafe {
         let fp = fpp(gobj);
         (*fp).mv.sk.specialhi.x0 -= 1;
@@ -325,23 +341,25 @@ pub fn ftSk_SpecialAirHiStart_1_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftSk_SpecialHiStart_1_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftSk_SpecialHiStart_1_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftSk_SpecialHiStart_1_IASA");}
 
 /// Interrupt_SheikUpBTravelAir
-pub fn ftSk_SpecialAirHiStart_1_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftSk_SpecialAirHiStart_1_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftSk_SpecialAirHiStart_1_IASA");}
 
 /// `ftSk_SpecialHiStart_1_Phys`.
 pub fn ftSk_SpecialHiStart_1_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialHiStart_1_Phys");
     unsafe {
         melee_fighter::ftcommon::set_self_movement_from_grounded_movement(&mut *fpp(gobj));
     }
 }
 
 /// `ftSk_SpecialAirHiStart_1_Phys` (empty in the C).
-pub fn ftSk_SpecialAirHiStart_1_Phys(_gobj: *mut HSD_GObj) {}
+pub fn ftSk_SpecialAirHiStart_1_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("ftSk_SpecialAirHiStart_1_Phys");}
 
 /// `ftSk_SpecialHiStart_1_Coll`.
 pub fn ftSk_SpecialHiStart_1_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialHiStart_1_Coll");
     unsafe {
         let fp = fpp(gobj);
         if st::ft_80082708(gobj) == GA_Ground as i32 {
@@ -363,6 +381,7 @@ pub fn ftSk_SpecialHiStart_1_Coll(gobj: *mut HSD_GObj) {
 
 /// `ftSk_SpecialAirHiStart_1_Coll`.
 pub fn ftSk_SpecialAirHiStart_1_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialAirHiStart_1_Coll");
     unsafe {
         let fp = fpp(gobj);
         let attr = da(fp);
@@ -393,6 +412,7 @@ pub fn ftSk_SpecialAirHiStart_1_Coll(gobj: *mut HSD_GObj) {
 
 /// `ftSk_SpecialHi_8011374C` (static): AS_SheikUpBGroundtoAirFall.
 pub fn ftSk_SpecialHi_8011374C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialHi_8011374C");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_8007D60C(&mut *fp);
@@ -404,6 +424,7 @@ pub fn ftSk_SpecialHi_8011374C(gobj: *mut HSD_GObj) {
 
 /// `ftSk_SpecialHi_801137C8` (static): AS_SheikUpBLand.
 pub fn ftSk_SpecialHi_801137C8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialHi_801137C8");
     unsafe {
         let fp = fpp(gobj);
         st::ftCommon_8007D7FC(&mut *fp);
@@ -426,6 +447,7 @@ unsafe fn inline_a0(gobj: *mut HSD_GObj) {
 
 /// `ftSk_SpecialHi_80113838` (static): AS_SheikUpBTravelGround.
 pub fn ftSk_SpecialHi_80113838(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialHi_80113838");
     unsafe {
         let fp = fpp(gobj);
         let attributes = da(fp);
@@ -465,6 +487,7 @@ pub fn ftSk_SpecialHi_80113838(gobj: *mut HSD_GObj) {
 
 /// `ftSk_SpecialHi_80113A30` (static): AS_SheikUpBTravelAir.
 pub fn ftSk_SpecialHi_80113A30(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialHi_80113A30");
     unsafe {
         let fp = fpp(gobj);
         let attributes = da(fp);
@@ -509,6 +532,7 @@ pub fn ftSk_SpecialHi_80113A30(gobj: *mut HSD_GObj) {
 
 /// `ftSk_SpecialAirHi_Anim`: the aerial landing check at the end of the travel.
 pub fn ftSk_SpecialAirHi_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialAirHi_Anim");
     unsafe {
         let fp = fpp(gobj);
         let attributes = da(fp);
@@ -520,13 +544,14 @@ pub fn ftSk_SpecialAirHi_Anim(gobj: *mut HSD_GObj) {
     }
 }
 
-pub fn ftSk_SpecialHi_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftSk_SpecialHi_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftSk_SpecialHi_IASA");}
 
 /// Interrupt_SheikUpBEndAir
-pub fn ftSk_SpecialAirHi_IASA(_gobj: *mut HSD_GObj) {}
+pub fn ftSk_SpecialAirHi_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftSk_SpecialAirHi_IASA");}
 
 /// `ftSk_SpecialAirHi_Phys`: the aerial Vanish physics (the fall gravity is halved in y).
 pub fn ftSk_SpecialAirHi_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialAirHi_Phys");
     unsafe {
         let fp = fpp(gobj);
         let attributes = da(fp);
@@ -557,6 +582,7 @@ unsafe fn ftSk_SpecialHi_80113EAC_inline(gobj: *mut HSD_GObj) {
 
 /// `ftSk_SpecialHi_80113EAC` (static): the grounded Vanish travel after the wall.
 pub fn ftSk_SpecialHi_80113EAC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialHi_80113EAC");
     unsafe {
         let fp = fpp(gobj);
         let attributes = da(fp);
@@ -582,6 +608,7 @@ unsafe fn ftSk_SpecialHi_80113F68_inline(gobj: *mut HSD_GObj) {
 
 /// `ftSk_SpecialHi_80113F68` (static): AS_SheikUpBFall.
 pub fn ftSk_SpecialHi_80113F68(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialHi_80113F68");
     unsafe {
         let fp = fpp(gobj);
         let attributes = da(fp);

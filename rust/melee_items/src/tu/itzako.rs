@@ -186,6 +186,7 @@ unsafe fn jobj_of(gobj: *mut HSD_GObj) -> *mut HSD_JObj {
 
 /// `it_8027B5B0`: spawns a zako item at `pos` (or the jobj's origin when `pos` is NULL).
 pub unsafe extern "C" fn it_8027B5B0(kind: ItemKind, pos: *mut Vec3, jobj: *mut HSD_JObj, vel: *mut Vec3, use_init: i32) -> *mut HSD_GObj {
+    melee_core::ct!("it_8027B5B0");
     let mut spawn: SpawnItem = core::mem::zeroed();
     let mut sp20: Vec3 = core::mem::zeroed();
     let gobj: *mut HSD_GObj;
@@ -234,6 +235,7 @@ pub unsafe extern "C" fn it_8027B5B0(kind: ItemKind, pos: *mut Vec3, jobj: *mut 
 
 /// `it_8027B730`: resets a zako item's motion state.
 pub unsafe extern "C" fn it_8027B730(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_8027B730");
     let item = (*item_gobj).user_data as *mut Item;
     (*item).xDD4_itemVar.zako.jobj = null_mut();
     (*item).xDD4_itemVar.zako.idx = -1;
@@ -268,6 +270,7 @@ unsafe fn it_8027B798_CalcAngle(ground_or_air: GroundOrAir, angle: i32, common_d
 
 /// `it_8027B798`: the knockback velocity for a zako item; true when it leaves along the floor.
 pub unsafe extern "C" fn it_8027B798(gobj: *mut HSD_GObj, out_vel: *mut Vec3) -> bool {
+    melee_core::ct!("it_8027B798");
     let ip = item_of(gobj);
     let mut result = false;
     let knockback = (*ip).xCC8_knockback;
@@ -300,6 +303,7 @@ pub unsafe extern "C" fn it_8027B798(gobj: *mut HSD_GObj, out_vel: *mut Vec3) ->
 
 /// `it_8027B964`: sets the zako item's velocity (a knockback launch, or the reset-on-hit path when `chk`).
 pub unsafe extern "C" fn it_8027B964(item_gobj: *mut HSD_GObj, chk: i32) {
+    melee_core::ct!("it_8027B964");
     let mut sp14: Vec3;
     let item = item_of(item_gobj);
     if chk != 0 {
@@ -326,6 +330,7 @@ pub unsafe extern "C" fn it_8027B964(item_gobj: *mut HSD_GObj, chk: i32) {
 /// `it_8027782C`-style helper of the C file: aims the item velocity at the camera with a random spread.
 /// (The C returns an int without a return statement; the value is not used.)
 pub unsafe extern "C" fn it_8027BA54(item_gobj: *mut HSD_GObj, arg1: *mut Vec3) -> i32 {
+    melee_core::ct!("it_8027BA54");
     let item = item_of(item_gobj);
     let mut sp20: Vec3 = core::mem::zeroed();
     let mut sp14: Vec3 = core::mem::zeroed();
@@ -344,6 +349,7 @@ pub unsafe extern "C" fn it_8027BA54(item_gobj: *mut HSD_GObj, arg1: *mut Vec3) 
 
 /// `it_8027BB1C`: rotates `arg0` by the Euler angles `arg1` (x, then y, then z).
 pub unsafe extern "C" fn it_8027BB1C(arg0: *mut Vec3, arg1: *mut Vec3) {
+    melee_core::ct!("it_8027BB1C");
     let mut cos: f32;
     let mut sin: f32;
     let mut t1: f32;
@@ -377,6 +383,7 @@ pub unsafe extern "C" fn it_8027BB1C(arg0: *mut Vec3, arg1: *mut Vec3) {
 /// `it_8027BBF4`: turns the item's jobj so its local up follows the floor (`arg_chk` false) or the
 /// ceiling (`arg_chk` true) normal, easing toward it over `arg9` frames.
 pub unsafe extern "C" fn it_8027BBF4(item_gobj: *mut HSD_GObj, arg_chk: i32, arg8: f64, arg9: f32) {
+    melee_core::ct!("it_8027BBF4");
     let mut temp_f1: f32;
     let mut temp_f30: f32;
     let mut var_f29: f32;
@@ -451,16 +458,19 @@ pub unsafe extern "C" fn it_8027BBF4(item_gobj: *mut HSD_GObj, arg_chk: i32, arg
 
 /// `it_8027C0A8`: `it_8027BBF4` on the floor normal.
 pub unsafe extern "C" fn it_8027C0A8(item_gobj: *mut HSD_GObj, arg4: f32, arg5: f32) {
+    melee_core::ct!("it_8027C0A8");
     it_8027BBF4(item_gobj, 0, arg4 as f64, arg5);
 }
 
 /// `it_8027C0CC`: `it_8027BBF4` on the ceiling normal.
 pub unsafe extern "C" fn it_8027C0CC(item_gobj: *mut HSD_GObj, arg4: f32, arg5: f32) {
+    melee_core::ct!("it_8027C0CC");
     it_8027BBF4(item_gobj, 1, arg4 as f64, arg5);
 }
 
 /// `it_8027C0F0`: orients the item to `arg1` (or the reference floor direction) while on the floor.
 pub unsafe extern "C" fn it_8027C0F0(item_gobj: *mut HSD_GObj, arg1: *mut Vec3, arg8: f64, arg9: f32) {
+    melee_core::ct!("it_8027C0F0");
     let vecs = &it_803B85A8;
     let item = item_of(item_gobj);
     let item_jobj = jobj_of(item_gobj);
@@ -526,6 +536,7 @@ pub unsafe extern "C" fn it_8027C0F0(item_gobj: *mut HSD_GObj, arg1: *mut Vec3, 
 
 /// `it_8027C56C`: resets the jobj's rotation to face `y_rot` and clears the zako's up vector.
 pub unsafe extern "C" fn it_8027C56C(item_gobj: *mut HSD_GObj, y_rot: f32) {
+    melee_core::ct!("it_8027C56C");
     let item_jobj = jobj_of(item_gobj);
     let item = item_of(item_gobj);
     HSD_JObjSetRotationX(item_jobj, 0.0);
@@ -540,6 +551,7 @@ pub unsafe extern "C" fn it_8027C56C(item_gobj: *mut HSD_GObj, y_rot: f32) {
 
 /// `it_8027C794`: placeholder predicate (always false).
 pub unsafe extern "C" fn it_8027C794(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("it_8027C794");
     let _ = gobj;
     false
 }
@@ -547,6 +559,7 @@ pub unsafe extern "C" fn it_8027C794(gobj: *mut HSD_GObj) -> bool {
 /// `it_8027C79C`: counts the zako's timer while it is in a hit-stun state; destroys it when the timer
 /// passes the table limit.
 pub unsafe extern "C" fn it_8027C79C(item_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("it_8027C79C");
     if ext::it_8026DAA8(item_gobj) & 0xF != 0 {
         let item = item_of(item_gobj);
         it_8027C9D8(item);
@@ -563,6 +576,7 @@ pub unsafe extern "C" fn it_8027C79C(item_gobj: *mut HSD_GObj) -> bool {
 /// `it_8027C824`: runs `arg_func` (when given) once the zako's state is 0xF-masked active; the defeat
 /// path runs otherwise.
 pub unsafe extern "C" fn it_8027C824(item_gobj: *mut HSD_GObj, arg_func: Option<unsafe extern "C" fn(*mut HSD_GObj) -> i32>) -> i32 {
+    melee_core::ct!("it_8027C824");
     if ext::it_8026DAA8(item_gobj) & 0xF != 0 {
         it_8027CC88(item_gobj);
         if let Some(f) = arg_func {
@@ -580,6 +594,7 @@ pub unsafe extern "C" fn it_8027C824(item_gobj: *mut HSD_GObj, arg_func: Option<
 
 /// `it_2725_Logic9_Destroyed`: the enemy's Destroyed hook (scripted enemies have no generator slot).
 pub unsafe extern "C" fn it_2725_Logic9_Destroyed(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_2725_Logic9_Destroyed");
     if ext::ScriptGame_EnemyDestroyed(item_gobj) != 0 {
         return;
     }
@@ -615,6 +630,7 @@ fn return_sqrt_value3(v: &Vec3) -> f32 {
 
 /// `it_8027C8D0`: rotates `arg0` (in the XY plane) by the signed angle `arg8`, keeping its length.
 pub unsafe extern "C" fn it_8027C8D0(arg0: *mut Vec3, arg1: *mut Vec3, arg8: f32) {
+    melee_core::ct!("it_8027C8D0");
     let dir: f32;
     let var_f6: f32;
     let vec_mag = return_sqrt_value3(&*arg0);
@@ -638,6 +654,7 @@ pub unsafe extern "C" fn it_8027C8D0(arg0: *mut Vec3, arg1: *mut Vec3, arg8: f32
 
 /// `it_8027C9D8`: picks a new sound effect (0x131..0x134, never the same one twice) and plays it.
 pub unsafe extern "C" fn it_8027C9D8(item: *mut Item) {
+    melee_core::ct!("it_8027C9D8");
     let spc: [i32; 4] = [0x131, 0x132, 0x133, 0x134];
     let mut var_r3 = spc[ext::HSD_Randi(4) as usize];
     while var_r3 == (*item).xDD4_itemVar.zako.x14.z {
@@ -649,6 +666,7 @@ pub unsafe extern "C" fn it_8027C9D8(item: *mut Item) {
 
 /// `it_8027CA7C`: true for the two motion ids 0x14D and 0x14E.
 pub unsafe extern "C" fn it_8027CA7C(gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("it_8027CA7C");
     let mut chk = false;
     if ext::ftLib_GetMotionId(gobj) == 0x14E {
         chk = true;
@@ -661,6 +679,7 @@ pub unsafe extern "C" fn it_8027CA7C(gobj: *mut HSD_GObj) -> bool {
 
 /// `it_8027CAD8`: clears the zako's velocity and detaches it from its owner.
 pub unsafe extern "C" fn it_8027CAD8(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_8027CAD8");
     let item = item_of(item_gobj);
     (*item).x40_vel.y = 0.0;
     (*item).x40_vel.x = 0.0;
@@ -673,6 +692,7 @@ pub unsafe extern "C" fn it_8027CAD8(item_gobj: *mut HSD_GObj) {
 
 /// `it_8027CB3C`: attaches the zako to its owner (position and facing).
 pub unsafe extern "C" fn it_8027CB3C(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_8027CB3C");
     let item = item_of(item_gobj);
     ext::it_8026C220(item_gobj, (*item).owner);
     (*item).facing_dir = ext::ftLib_800865C0((*item).owner);
@@ -684,6 +704,7 @@ pub unsafe extern "C" fn it_8027CB3C(item_gobj: *mut HSD_GObj) {
 
 /// `it_8027CBA4`: follows the owner's facing without re-attaching.
 pub unsafe extern "C" fn it_8027CBA4(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_8027CBA4");
     let item = item_of(item_gobj);
     (*item).facing_dir = ext::ftLib_800865C0((*item).owner);
     ext::it_802762BC(item);
@@ -693,6 +714,7 @@ pub unsafe extern "C" fn it_8027CBA4(item_gobj: *mut HSD_GObj) {
 
 /// `it_8027CBFC`: the per-kind float the zako uses (from `it_804D6D40`), 0 for other kinds.
 pub unsafe extern "C" fn it_8027CBFC(item_gobj: *mut HSD_GObj) -> f32 {
+    melee_core::ct!("it_8027CBFC");
     let mut ret_val: i32 = 0;
     match (*item_of(item_gobj)).xCC4 {
         6 | 7 => ret_val = (*ext::it_804D6D40).xC as i32,
@@ -705,6 +727,7 @@ pub unsafe extern "C" fn it_8027CBFC(item_gobj: *mut HSD_GObj) -> f32 {
 /// `it_8027CC88`: once per the random counter, spawns a coin (kind chosen from the stage table) at the
 /// zako's position while the 1P mode is on.
 pub unsafe extern "C" fn it_8027CC88(item_gobj_arg: *mut HSD_GObj) -> *mut HSD_GObj {
+    melee_core::ct!("it_8027CC88");
     let mut temp_r3: i32;
     let mut temp_r3_2: i32;
     let mut var_r30: i32;
@@ -744,11 +767,13 @@ pub unsafe extern "C" fn it_8027CC88(item_gobj_arg: *mut HSD_GObj) -> *mut HSD_G
 /// `gm_IsCurrently1PMode` returns bool in the C header.
 #[inline(always)]
 pub unsafe fn gm_IsCurrently1PMode() -> bool {
+    melee_core::ct!("gm_IsCurrently1PMode");
     ext::gm_IsCurrently1PMode() != 0
 }
 
 /// `it_8027CE18`: plays the defeat sound of the item's source player.
 pub unsafe extern "C" fn it_8027CE18(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_8027CE18");
     let item = item_of(item_gobj);
     ext::pl_8004049C((*item).xCB0_source_ply as i32, (*item).kind);
 }
@@ -756,6 +781,7 @@ pub unsafe extern "C" fn it_8027CE18(item_gobj: *mut HSD_GObj) {
 /// `it_8027CE44`: the defeat transition. Scripted enemies are handled by the script game; the stock path
 /// hands the zako to the grZakoGenerator.
 pub unsafe extern "C" fn it_8027CE44(item_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_8027CE44");
     let scripted = ext::ScriptGame_EnemyDefeated(item_gobj);
     if scripted != 0 {
         if scripted == 1 {
@@ -769,6 +795,7 @@ pub unsafe extern "C" fn it_8027CE44(item_gobj: *mut HSD_GObj) {
 /// `it_8027CE64`: the Game&Watch variant: marks the item's flag, copies the fighter's color overlay and
 /// stores the attribute address.
 pub unsafe extern "C" fn it_8027CE64(item_gobj: *mut HSD_GObj, fighter_gobj: *mut HSD_GObj, arg_attr_address: *mut c_void) {
+    melee_core::ct!("it_8027CE64");
     let item = item_of(item_gobj);
     let mut sp18: GXColor = core::mem::zeroed();
     (*item).xDCF_flag.anon_0.set_b3(1);

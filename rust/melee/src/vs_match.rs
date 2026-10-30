@@ -1272,7 +1272,9 @@ impl VsMatch {
                 let p2j = be(pt + 4) as usize;
                 let b4 = [plco.data[p2j + 1] as usize, plco.data[p2j + 0x35] as usize];
                 part_to_joint = plco.data[p2j..p2j + 0x40].to_vec();
-                Skeleton::load(&a.data, at, files.x8_x10(), files.model_scaling(), be(pt + 8), b4)?
+                let mut sk = Skeleton::load(&a.data, at, files.x8_x10(), files.model_scaling(), be(pt + 8), b4)?;
+                sk.set_guard(&files.dat.data, files.guard_pose_root(), files.x8_x11());
+                sk
             };
             let mut fp: Box<Fighter> = Box::new(Fighter::zeroed());
             fp.kind = kind;
@@ -1888,6 +1890,22 @@ impl VsMatch {
                     }
                 }
                 m if (FTCO_MS_ATTACK100_START..=FTCO_MS_ATTACK100_END).contains(&m) => attack100_anim(p, &mut self.rand)?,
+                FTCO_MS_ESCAPE_F | FTCO_MS_ESCAPE_B => {
+                    // ftCo_Escape_Anim: ThrowB3 flips the facing; Wait at the end.
+                    if unsafe { p.fp.anon_2210.anon_0.throw_flags_b3() } != 0 {
+                        unsafe { p.fp.anon_2210.anon_0.set_throw_flags_b3(0) };
+                        p.fp.facing_dir = -p.fp.facing_dir;
+                    }
+                    if !p.skel.frames_remaining() {
+                        p.fp.gr_vel = 0.0;
+                        ft_8008a2bc(p, &mut self.rand)?;
+                    }
+                }
+                FTCO_MS_ESCAPE_N => {
+                    if !p.skel.frames_remaining() {
+                        ft_8008a2bc(p, &mut self.rand)?;
+                    }
+                }
                 m if (FTCO_MS_ATTACK11..=FTCO_MS_ATTACK11 + 2).contains(&m) => {
                     // ftCo_Attack11/12/13_Anim: ft_8008A2BC when the animation ends.
                     if !p.skel.frames_remaining() {
@@ -2120,7 +2138,18 @@ impl VsMatch {
                     fc::calc_ground_accel_deaccel(f, fr);
                     fc::set_self_movement_from_grounded_movement(f);
                 }
-                m if is_tilt_motion(m) => {
+                FTCO_MS_ESCAPE_F | FTCO_MS_ESCAPE_B => {
+                    // ftCo_Escape_Phys -> ft_80085004 -> ft_80085030(ground_friction, facing_dir1).
+                    let f = &mut *p.fp;
+                    if x594_b0(f) {
+                        f.xE4_ground_accel_1 = melee_core::fp::fmadds(f.x6A4_transNOffset.z, f.facing_dir1, -f.gr_vel);
+                    } else {
+                        let fr = f.co_attrs.ground_friction;
+                        fc::calc_ground_accel_deaccel(f, fr);
+                    }
+                    fc::set_self_movement_from_grounded_movement(f);
+                }
+                m if is_tilt_motion(m) || m == FTCO_MS_ESCAPE_N => {
                     // ftCo_AttackS3_Phys / ftCo_AttackHi3_Phys: ft_80084F3C.
                     let f = &mut *p.fp;
                     let mut friction = f.co_attrs.ground_friction;
@@ -2340,7 +2369,7 @@ impl VsMatch {
                         ft_80082b1c(&mut self.ground, p, c_common, &mut self.rand)?;
                     }
                 }
-                m if m == FTCO_MS_CATCH || m == FTCO_MS_CATCH_DASH || is_tilt_motion(m) || is_s4_motion(m) || (FTCO_MS_ATTACK11..=FTCO_MS_ATTACK11 + 2).contains(&m) || (FTCO_MS_ATTACK100_START..=FTCO_MS_ATTACK100_END).contains(&m) => {
+                m if m == FTCO_MS_CATCH || m == FTCO_MS_CATCH_DASH || (FTCO_MS_ESCAPE_F..=FTCO_MS_ESCAPE_N).contains(&m) || is_tilt_motion(m) || is_s4_motion(m) || (FTCO_MS_ATTACK11..=FTCO_MS_ATTACK11 + 2).contains(&m) || (FTCO_MS_ATTACK100_START..=FTCO_MS_ATTACK100_END).contains(&m) => {
                     // ftCo_Attack1x_Coll -> ft_80084104: ft_800827A0 (mpColl_8004B2DC), else Fall;
                     // ftCo_Catch_Coll -> ft_800841B8(fn_800D8E30): the same, the grab cleanup first.
                     let joints = {
@@ -3371,6 +3400,14 @@ fn input_cb(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         m if is_s4_motion(m) => attack_s4_iasa(p, rand),
         m if (FTCO_MS_ATTACK11..=FTCO_MS_ATTACK11 + 2).contains(&m) => attack1_iasa(p, rand),
         FTCO_MS_ATTACK100_START | FTCO_MS_ATTACK100_END => Ok(()), // NULL IASA
+        FTCO_MS_ESCAPE_F | FTCO_MS_ESCAPE_B => {
+            // ftCo_8009563C: only with an item.
+            if !p.fp.item_gobj.is_null() {
+                return Err("ftCo_8009563C with an item not ported".into());
+            }
+            Ok(())
+        }
+        FTCO_MS_ESCAPE_N => Ok(()),
         FTCO_MS_ATTACK100_LOOP => {
             // ftCo_Attack100Loop_IASA: an A press or release arms the next loop.
             let fp = &mut *p.fp;
@@ -4377,8 +4414,96 @@ fn ftco_800921dc(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     fp.lightshield_amount = lsa;
     g.x20 = 0;
     g.x24 = 0;
-    // (ftCo_80091E78: the bubble pose, render only.) The shield-up sound.
+    // The shield bone at the origin, ftCo_80091E78(gobj, 0), the shield-up sound.
+    let sb = p.skel.part(p.skel.x8_x11);
+    p.skel.set_translate(sb, melee_runtime::mtx::Vec3 { x: 0.0, y: 0.0, z: 0.0 });
+    ftco_80091e78(p, 0.0)?;
     sound::play_sfx(p, rand, 110, 127, 64);
+    Ok(())
+}
+
+/// `ftCo_80091BC4`: the shield's stick direction (`guard.x8`, degrees) and magnitude (`guard.x4`) easing.
+fn ftco_80091bc4(p: &mut Player) {
+    use melee_core::fp::fmadds;
+    let cd = melee_fighter::hooks::common_data();
+    let fp = &*p.fp;
+    let (lx, ly) = (fp.input.lstick[0].x, fp.input.lstick[0].y);
+    let mut stick_rad = melee_runtime::tu::lb_00CE::lb_8000D008(ly, lx * fp.facing_dir);
+    if stick_rad < 0.0 {
+        stick_rad += 2.0 * (core::f64::consts::PI as f32);
+    }
+    let mut stick_deg = stick_rad * 57.29577951f32;
+    if stick_deg < 0.0 {
+        stick_deg = 0.0;
+    }
+    if stick_deg > 359.0 {
+        stick_deg = 359.0;
+    }
+    let mut guard_deg = p.guard.x8 - 10.0;
+    let mut deg_delta = stick_deg - guard_deg;
+    if deg_delta > 180.0 {
+        deg_delta -= 360.0;
+    } else if deg_delta < -180.0 {
+        deg_delta += 360.0;
+    }
+    let smoothed = fmadds(deg_delta, cd.x44C, guard_deg);
+    if smoothed > 360.0 {
+        guard_deg = smoothed;
+        guard_deg -= 360.0;
+    } else {
+        guard_deg = smoothed;
+        if guard_deg < 0.0 {
+            guard_deg += 360.0;
+        }
+    }
+    p.guard.x8 = 10.0 + guard_deg;
+    let mut stick_mag = melee_runtime::gekko::sqrtf(fmadds(lx, lx, ly * ly));
+    if stick_mag > 1.0 {
+        stick_mag = 1.0;
+    }
+    p.guard.x4 = fmadds(cd.x44C, stick_mag - p.guard.x4, p.guard.x4);
+}
+
+/// `ftCo_80091E78(gobj, arg1)`: pose the body for the shield (the guard pose blended in by `arg1`, the stick's
+/// direction animation by `guard.x4`) and scale the shield bone.
+fn ftco_80091e78(p: &mut Player, arg1: f32) -> Result<(), String> {
+    if p.fp.reflecting() == 0 && !p.guard.shield_on {
+        return Ok(());
+    }
+    ftco_80091bc4(p);
+    if p.guard.x4 != 0.0 {
+        let (_, tree) = load_row(p, FTCO_SM_GUARD_ON + 1)?.ok_or("Guard row has no figatree")?;
+        let frame = p.guard.x8;
+        p.skel.anim_skeleton_set(&tree, frame, 1.0, false);
+        p.skel.anim_all2(&mut AObjGlobals::default())?;
+        let x4 = p.guard.x4;
+        if x4 < 1.0 {
+            p.skel.guard_pose_blend2(1.0 - x4, x4);
+        }
+        if arg1 < 1.0 {
+            p.skel.blend_from2(arg1, 1.0 - arg1, true);
+        } else {
+            p.skel.blend_from2(0.0, 0.0, false);
+        }
+    } else if arg1 < 1.0 {
+        p.skel.guard_pose_blend(arg1, 1.0 - arg1);
+    } else {
+        p.skel.guard_pose_apply();
+    }
+    // inlineB0: the shield bone's scale.
+    let cd = melee_fighter::hooks::common_data();
+    let fp = &*p.fp;
+    let size = if fp.kind == melee_types::Ft_Kind_Yoshi {
+        fp.co_attrs.initial_shield_size
+    } else {
+        use melee_core::fp::fmadds;
+        let n1 = (fp.shield_health / cd.x260_startShieldHealth) * fmadds(fp.lightshield_amount, cd.x2D8 - cd.x2D4, cd.x2D4);
+        let n2 = 1.0 - cd.x264;
+        let n3 = fmadds(n2, n1, cd.x264);
+        n3 * fp.co_attrs.initial_shield_size
+    };
+    let sb = p.skel.part(p.skel.x8_x11);
+    p.skel.set_scale(sb, melee_runtime::mtx::Vec3 { x: size, y: size, z: size });
     Ok(())
 }
 
@@ -4432,7 +4557,11 @@ fn ftco_80093bc0(p: &mut Player) {
 /// GuardOn_Anim / the inline in GuardReflect_Anim.
 fn guard_on_anim(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     p.guard.x0 += 1.0;
-    if !ftco_800925a4(p)? && p.guard.x0 >= p.fp.x2E8 {
+    let broke = ftco_800925a4(p)?;
+    if !broke && p.guard.x0 < p.fp.x2E8 {
+        return ftco_80091e78(p, p.guard.x0 / p.fp.x2E8);
+    }
+    if !broke && p.guard.x0 >= p.fp.x2E8 {
         // ftCo_800928CC -> ftCo_80092908: Guard (SkipAnim), the bubble 1048.
         guard_kind_check(p)?;
         let row = load_row(p, FTCO_SM_GUARD_ON + 1)?;
@@ -4440,6 +4569,7 @@ fn guard_on_anim(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         p.ef_ops.push(EfOp::Spawn(QueuedEffect { kind: EF_SPAWN_SYNC, gfx: 1048, part: 0, params: Vec3 { x: 0.0, y: 0.0, z: 0.0 }, extra1: 0.0, extra2: 0.0 }));
         p.fp.set_x2219_b0(1);
         guard_shield_up(p);
+        ftco_80091e78(p, 1.0)?;
     }
     Ok(())
 }
@@ -4477,11 +4607,35 @@ fn guard_inputs(p: &mut Player, rand: &mut HsdRand, x800d8b9c: bool) -> Result<b
     }
     // ftCo_8009980C (spot dodge).
     if (i.lstick[0].y <= cd.x314 && (fp.active_timer.lstick.y as i32) < cd.x318) || i.cstick[0].y <= cd.x314 {
-        return Err(format!("player {who}: shield spot dodge (ftCo_80099894) not ported"));
+        if fp.kind == melee_types::Ft_Kind_Yoshi {
+            return Err(format!("player {who}: Yoshi's spot dodge (ftCo_80099954) not ported"));
+        }
+        // ftCo_800998EC.
+        let row = load_row(p, melee_types::ftCo_SM_EscapeN as u32)?;
+        change_motion_state(p, FTCO_MS_ESCAPE_N, row.as_ref(), rand)?;
+        anim_step(p, rand)?;
+        p.fp.set_x221D_b5(1);
+        melee_fighter::ftcommon2::ftcommon_8007ebac(&mut p.fp, 23, 0);
+        return Ok(true);
     }
     // ftCo_8009917C (roll).
     if (fc::abs_c(i.lstick[0].x) >= cd.x31C && (fp.active_timer.lstick.x as i32) < cd.x320) || fc::abs_c(i.cstick[0].x) >= cd.x31C {
-        return Err(format!("player {who}: shield roll (ftCo_800992A8) not ported"));
+        if matches!(fp.kind, melee_types::Ft_Kind_Samus | melee_types::Ft_Kind_Yoshi) {
+            return Err(format!("player {who}: shield roll of kind {} (ftCo_80099390 / 80099438) not ported", fp.kind));
+        }
+        // ftCo_8009917C: the stick that pulled it picks the direction.
+        let stick_x = if fc::abs_c(i.lstick[0].x) >= cd.x31C && (fp.active_timer.lstick.x as i32) < cd.x320 { i.lstick[0].x } else { i.cstick[0].x };
+        let (msid, smid) = if stick_x * fp.facing_dir >= 0.0 { (FTCO_MS_ESCAPE_F, melee_types::ftCo_SM_EscapeF) } else { (FTCO_MS_ESCAPE_B, melee_types::ftCo_SM_EscapeB) };
+        let arg2 = cd.x324 != 0;
+        // ftCo_800992A8 -> ftCo_80099314.
+        p.fp.anon_2210.throw_flags = 0;
+        let row = load_row(p, smid as u32)?;
+        change_motion_state(p, msid, row.as_ref(), rand)?;
+        anim_step(p, rand)?;
+        p.fp.set_x221D_b5(1);
+        unsafe { p.fp.mv.co.escape.x0 = arg2 as _ };
+        melee_fighter::ftcommon2::ftcommon_8007ebac(&mut p.fp, 23, 0);
+        return Ok(true);
     }
     if x800d8b9c {
         if i.pressed_buttons & input::HSD_PAD_A != 0 && p.guard.x24 != 0 {
@@ -4547,7 +4701,10 @@ fn guard_anim(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         }
         FTCO_MS_GUARD => {
             p.guard.x0 += 1.0;
-            ftco_800925a4(p).map(|_| ())
+            if !ftco_800925a4(p)? {
+                ftco_80091e78(p, 1.0)?;
+            }
+            Ok(())
         }
         FTCO_MS_GUARD_OFF => {
             p.guard.x0 += 1.0;
@@ -4769,6 +4926,11 @@ const PAD_STICK_DIRS: u32 = 0xF_0000;
 /// [`VsMatch::hit_guard`]'s margin around a fighter (a fighter's hurtboxes reach about 20
 /// units from its position).
 const HIT_GUARD_MARGIN: f32 = 30.0;
+
+/// `ftCo_MS_EscapeF` (233), EscapeB, EscapeN.
+const FTCO_MS_ESCAPE_F: i32 = 233;
+const FTCO_MS_ESCAPE_B: i32 = 234;
+const FTCO_MS_ESCAPE_N: i32 = 235;
 
 /// `ftCo_MS_Attack100Start` (47), Loop, End.
 const FTCO_MS_ATTACK100_START: i32 = 47;

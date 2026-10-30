@@ -181,6 +181,9 @@ pub struct Skeleton {
     joints: Vec<JointDesc>,
     /// `ftData->x8->x10` (the part `ftCommon_8007F6A4` rescales).
     x8_x10: usize,
+    /// `ftData->x20->x0[2]`: the guard pose descriptors (DFS from TransN), and `ftData->x8->x11` (the shield bone).
+    guard_pose: Vec<JointDesc>,
+    pub x8_x11: usize,
     /// `1 / ftData->x0->model_scaling`.
     inv_model_scaling: f32,
     /// `x8A4_animBlendFrames` / `x8A8_anim_frame`.
@@ -275,6 +278,8 @@ impl Skeleton {
             x8b0: [slot; 5],
             joints,
             x8_x10,
+            guard_pose: Vec::new(),
+            x8_x11: 0,
             inv_model_scaling: 1.0 / model_scaling,
             blend_frames: 0.0,
             blend_frame: 0.0,
@@ -284,6 +289,72 @@ impl Skeleton {
 
     pub fn part(&self, i: usize) -> JObjId {
         self.parts[i].joint
+    }
+
+    /// `ft_data->x20->x0[2]` (rooted at TransN) and `ft_data->x8->x11`.
+    pub fn set_guard(&mut self, d: &[u8], root: u32, x8_x11: usize) {
+        let mut v = Vec::new();
+        let mut stack = vec![root];
+        while let Some(at) = stack.pop() {
+            if at == 0 {
+                continue;
+            }
+            let jd = JointDesc::read(d, at);
+            v.push(jd);
+            stack.push(jd.next);
+            stack.push(jd.child);
+        }
+        self.guard_pose = v;
+        self.x8_x11 = x8_x11;
+    }
+
+    /// `ftAnim_80070010(fp, TransN, t, t_inv, guard_pose)`: the body blended toward the pose descriptors.
+    pub fn guard_pose_blend(&mut self, t: f32, t_inv: f32) {
+        let pose = std::mem::take(&mut self.guard_pose);
+        for (k, jd) in pose.iter().enumerate() {
+            let i = 1 + k;
+            let b = self.parts[i];
+            if !b.b0 && !b.b5 {
+                if self.b4_parts.contains(&i) {
+                    lb_8000b4fc(&mut self.tree, b.joint, jd);
+                } else {
+                    lb_8000c868(jd, &mut self.tree, b.joint, t, t_inv);
+                }
+            }
+        }
+        self.guard_pose = pose;
+    }
+
+    /// `ftAnim_80070108(fp, TransN, t, t_inv, guard_pose)`: the anim skeleton blended toward the pose.
+    pub fn guard_pose_blend2(&mut self, t: f32, t_inv: f32) {
+        let pose = std::mem::take(&mut self.guard_pose);
+        for (k, jd) in pose.iter().enumerate() {
+            let i = 1 + k;
+            let b = self.parts[i];
+            if !b.b0 && !b.b5 {
+                let j2 = self.parts2[i];
+                if self.b4_parts.contains(&i) {
+                    lb_8000b4fc(&mut self.tree2, j2, jd);
+                } else {
+                    lb_8000c868(jd, &mut self.tree2, j2, t, t_inv);
+                }
+            }
+        }
+        self.guard_pose = pose;
+    }
+
+    /// `ftAnim_8006FA58(fp, TransN, guard_pose)`: the body set to the pose descriptors.
+    pub fn guard_pose_apply(&mut self) {
+        let pose = std::mem::take(&mut self.guard_pose);
+        self.apply_descs(&pose, false);
+        self.guard_pose = pose;
+    }
+
+    /// `ftAnim_8006FB88(fp, TransN, costume_joint->child)`: the anim skeleton reset to the costume pose.
+    pub fn reset_anim_skeleton(&mut self) {
+        let joints = std::mem::take(&mut self.joints);
+        self.apply_descs(&joints[1..], true);
+        self.joints = joints;
     }
 
     /// `HSD_JObjSetTranslate`.
@@ -391,13 +462,9 @@ impl Skeleton {
         }
     }
 
-    /// The joints reset from the costume descriptors (`ftAnim_8006FA58` on the body /
-    /// `ftAnim_8006FB88` on the anim skeleton, from TransN) and the figatree's tracks attached
-    /// (`ftAnim_8006F4C8`).
-    fn attach_tracks(&mut self, tree: &FigaTree, to2: bool) {
-        // ftAnim_8006FA58 / ftAnim_8006FB88(fp, FtPart_TransN, costume_joint->child).
-        let joints = std::mem::take(&mut self.joints);
-        for (k, jd) in joints.iter().skip(1).enumerate() {
+    /// `ftAnim_8006FA58` / `ftAnim_8006FB88` from TransN over `descs` (DFS order): the body (`to2` false) or the anim skeleton.
+    fn apply_descs(&mut self, descs: &[JointDesc], to2: bool) {
+        for (k, jd) in descs.iter().enumerate() {
             let i = 1 + k;
             let b = self.parts[i];
             let (t, j) = if to2 { (&mut self.tree2, self.parts2[i]) } else { (&mut self.tree, b.joint) };
@@ -420,6 +487,15 @@ impl Skeleton {
                 lb_8000b4fc(t, j, jd);
             }
         }
+    }
+
+    /// The joints reset from the costume descriptors (`ftAnim_8006FA58` on the body /
+    /// `ftAnim_8006FB88` on the anim skeleton, from TransN) and the figatree's tracks attached
+    /// (`ftAnim_8006F4C8`).
+    fn attach_tracks(&mut self, tree: &FigaTree, to2: bool) {
+        // ftAnim_8006FA58 / ftAnim_8006FB88(fp, FtPart_TransN, costume_joint->child).
+        let joints = std::mem::take(&mut self.joints);
+        self.apply_descs(&joints[1..], to2);
         self.joints = joints;
         // ftAnim_8006FE08 -> ftAnim_8006F4C8(fp, do_blending, x590).
         let mut i = 0usize;
@@ -800,6 +876,45 @@ fn copy_srt(ts: &Tree, src: JObjId, td: &mut Tree, dst: JObjId) {
     } else {
         td.clear_flags(Some(dst), hj::JOBJ_USE_QUATERNION);
     }
+    td.set_flags(Some(dst), hj::JOBJ_MTX_DIRTY);
+}
+
+/// `lb_8000C868(desc, jobj1 = src, jobj2 = dst, t, t_inv)`: like [`lb_8000c490`] with a joint descriptor (Euler angles) as the first operand.
+fn lb_8000c868(jd: &JointDesc, td: &mut Tree, dst: JObjId, t: f32, t_inv: f32) {
+    let b = td.get(dst).clone();
+    let lerp = |x: f32, y: f32| fmadds(x, t, y * t_inv);
+    {
+        let o = td.get_mut(dst);
+        o.translate = Vec3 { x: lerp(jd.position.x, b.translate.x), y: lerp(jd.position.y, b.translate.y), z: lerp(jd.position.z, b.translate.z) };
+        o.scale = Vec3 { x: lerp(jd.scale.x, b.scale.x), y: lerp(jd.scale.y, b.scale.y), z: lerp(jd.scale.z, b.scale.z) };
+    }
+    let q2f = b.flags & hj::JOBJ_USE_QUATERNION != 0;
+    let abs = |x: f32| if x < 0.0 { -x } else { x };
+    if !q2f {
+        let (dx, dy, dz) = (jd.rotation.x - b.rotate.x, jd.rotation.y - b.rotate.y, jd.rotation.z - b.rotate.z);
+        if abs(dx) <= 0.0001 && abs(dy) <= 0.0001 && abs(dz) <= 0.0001 {
+            let o = td.get_mut(dst);
+            o.rotate.x = jd.rotation.x;
+            o.rotate.y = jd.rotation.y;
+            o.rotate.z = jd.rotation.z;
+            td.clear_flags(Some(dst), hj::JOBJ_USE_QUATERNION);
+            td.set_flags(Some(dst), hj::JOBJ_MTX_DIRTY);
+            return;
+        }
+    }
+    let q1 = quatlib::euler_to_quat(&Vec3 { x: jd.rotation.x, y: jd.rotation.y, z: jd.rotation.z });
+    let mut q2 = if q2f { b.rotate } else { quatlib::euler_to_quat(&Vec3 { x: b.rotate.x, y: b.rotate.y, z: b.rotate.z }) };
+    let sq = |x: f32| x * x;
+    let sum_sums = sq(q1.x + q2.x) + sq(q1.y + q2.y) + sq(q1.z + q2.z) + sq(q1.w + q2.w);
+    let sum_diffs = sq(q1.x - q2.x) + sq(q1.y - q2.y) + sq(q1.z - q2.z) + sq(q1.w - q2.w);
+    if sum_diffs > sum_sums {
+        q2.x = -q2.x;
+        q2.y = -q2.y;
+        q2.z = -q2.z;
+        q2.w = -q2.w;
+    }
+    td.get_mut(dst).rotate = quatlib::slerp(&q1, &q2, t_inv);
+    td.set_flags(Some(dst), hj::JOBJ_USE_QUATERNION);
     td.set_flags(Some(dst), hj::JOBJ_MTX_DIRTY);
 }
 

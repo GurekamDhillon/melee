@@ -3622,6 +3622,11 @@ pub(super) fn dash_catch_check(p: &mut Player, rand: &mut HsdRand) -> Result<boo
 /// Each reads its press counter (`x688`, `x686`, `x689`, `x687`: 0 on the frame of the press,
 /// Fighter_Spaghetti_8006AD10); `ftData_Special*[kind]` is set for every kind wired.
 fn special_checks(p: &mut Player, rand: &mut HsdRand) -> Result<bool, String> {
+    special_checks_nb(p, rand, true)
+}
+
+/// [`special_checks`]; `neutral_b` false skips `ftCo_800D6824` (the Turn IASA has no neutral-B check).
+fn special_checks_nb(p: &mut Player, rand: &mut HsdRand, neutral_b: bool) -> Result<bool, String> {
     let fp = &*p.fp;
     let who = p.slot + 1;
     if fp.x688 == 0 {
@@ -3634,7 +3639,7 @@ fn special_checks(p: &mut Player, rand: &mut HsdRand) -> Result<bool, String> {
     if fp.x686 == 0 {
         return Err(format!("player {who}: ftCo_Attack100_CheckInput (up-B, kind {}) not ported", fp.kind));
     }
-    if fp.x689 == 0 {
+    if fp.x689 == 0 && neutral_b {
         if fp.kind == melee_types::Ft_Kind_Seak {
             sheik::special_n_enter(p, false, rand)?;
             return Ok(true);
@@ -4946,12 +4951,26 @@ fn turn_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     if !p.turn.has_turned {
         p.fp.facing_dir = -p.fp.facing_dir;
     }
-    let i = &p.fp.input;
-    if i.pressed_buttons & !PAD_STICK_DIRS != 0 || i.cstick[0].x != 0.0 || i.cstick[0].y != 0.0 || i.triggers[0] != 0.0 || i.held_buttons[0] & (input::HSD_PAD_A | input::HSD_PAD_B | input::HSD_PAD_Z) != 0 {
-        return Err(format!("player {}: ftCo_Turn_IASA with a button / C-stick / trigger: not ported", p.slot + 1));
+    // SpecialS, down-B, up-B, Catch, the smash / tilt checks and the jab check (facing already flipped).
+    if special_checks_nb(p, rand, false)? {
+        return Ok(());
+    }
+    if catch_check(p)? {
+        return catch_enter(p, rand);
+    }
+    if attack_checks(p, rand)? {
+        return Ok(());
     }
     if !p.turn.has_turned {
         p.fp.facing_dir = -p.fp.facing_dir;
+    }
+    // ftCo_80091A4C: the shield.
+    if guard_check(p, rand)? {
+        return Ok(());
+    }
+    let i = &p.fp.input;
+    if i.pressed_buttons & !(PAD_STICK_DIRS | input::HSD_PAD_XY) != 0 || i.cstick[0].x != 0.0 || i.cstick[0].y != 0.0 || i.triggers[0] != 0.0 || i.held_buttons[0] & (input::HSD_PAD_Z | input::HSD_PAD_LR) != 0 {
+        return Err(format!("player {}: ftCo_Turn_IASA with a button / C-stick / trigger: not ported", p.slot + 1));
     }
     if jump_get_input(&p.fp) {
         jump_check_input(p, rand)?;

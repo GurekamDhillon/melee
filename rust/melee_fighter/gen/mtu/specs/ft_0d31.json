@@ -1,0 +1,106 @@
+{
+  "stem": "ft_0d31",
+  "csrc": "src/melee/ft/ft_0D31.c",
+  "rmod": "melee_fighter::tu::ft_0d31",
+  "cases": 500,
+  "stubs": "--skip efSync_Spawn --skip efAsync_Spawn --ret \"Player_GetUnk45=(int) (fv() % 8)|(fv() % 8) as _\"",
+  "ops": [
+    [
+      "ret = ftCo_800D3158(g) != 0",
+      "ret = m::ftCo_800D3158(g) as u32"
+    ],
+    [
+      "ftCo_800D331C(g)",
+      "m::ftCo_800D331C(g)"
+    ],
+    [
+      "ftCo_800D34E0(g)",
+      "m::ftCo_800D34E0(g)"
+    ],
+    [
+      "ftCo_800D35FC(fp)",
+      "m::ftCo_800D35FC(&mut *fp)"
+    ],
+    [
+      "ftCo_800D3680(g)",
+      "m::ftCo_800D3680(g)"
+    ],
+    [
+      "ftCo_800D38B8(fp, (int) (rnd() % 4))",
+      "let a = (rnd() % 4) as i32; m::ftCo_800D38B8(&mut *fp, a)"
+    ],
+    [
+      "ftCo_DeadLeft_Anim(g)",
+      "m::ftCo_DeadLeft_Anim(g)"
+    ],
+    [
+      "ftCo_800D3950(g)",
+      "m::ftCo_800D3950(g)"
+    ],
+    [
+      "ftCo_DeadRight_Anim(g)",
+      "m::ftCo_DeadRight_Anim(g)"
+    ],
+    [
+      "ftCo_800D3BC8(g)",
+      "m::ftCo_800D3BC8(g)"
+    ],
+    [
+      "ftCo_DeadDown_Anim(g)",
+      "m::ftCo_DeadDown_Anim(g)"
+    ],
+    [
+      "ftCo_800D3E40(g)",
+      "m::ftCo_800D3E40(g)"
+    ],
+    [
+      "ftCo_DeadUp_Anim(g)",
+      "m::ftCo_DeadUp_Anim(g)"
+    ],
+    [
+      "ftCo_800D40B8(g)",
+      "m::ftCo_800D40B8(g)"
+    ],
+    [
+      "ftCo_800D41C4(g)",
+      "m::ftCo_800D41C4(g)"
+    ],
+    [
+      "ftCo_DeadUpStar_Anim(g)",
+      "m::ftCo_DeadUpStar_Anim(g)"
+    ],
+    [
+      "ftCo_DeadUpStar_Cam(g)",
+      "m::ftCo_DeadUpStar_Cam(g)"
+    ],
+    [
+      "ftCo_800D4580(g, (int) (rnd() % 4))",
+      "let a = (rnd() % 4) as i32; m::ftCo_800D4580(g, a)"
+    ],
+    [
+      "ftCo_800D4780(g)",
+      "m::ftCo_800D4780(g)"
+    ],
+    [
+      "ftCo_800D47B8(g)",
+      "m::ftCo_800D47B8(g)"
+    ],
+    [
+      "ftCo_800D481C(g, (int) (rnd() % 4))",
+      "let a = (rnd() % 4) as i32; m::ftCo_800D481C(g, a)"
+    ],
+    [
+      "ftCo_DeadUpFall_Anim(g)",
+      "m::ftCo_DeadUpFall_Anim(g)"
+    ],
+    [
+      "ftCo_DeadUpFall_Phys(g)",
+      "m::ftCo_DeadUpFall_Phys(g)"
+    ]
+  ],
+  "c_head": "void* efSync_Spawn(s32 id, HSD_GObj* g, ...) { (void) g; T(2050); T((u32) id); return 0; }\nvoid efAsync_Spawn(HSD_GObj* g, void* q, u32 kind, u32 id, HSD_JObj* j, ...) { T(2051); T(PI(g)); T(PI(q)); T(kind); T(id); T(PI(j)); }",
+  "c_world": "    Fighter_804D650C = PADB[80]; Fighter_804D6508 = PADB[81];",
+  "rs_head": "static mut COL1: [u8; 2048] = [0; 2048];",
+  "rs_hooks": "    melee_fighter::tu::ft_0d4d::ext::H_efSync_Spawn = Some(|id, _g, _va| { t(2050); t(id as u32); null_mut() });\n    m::ext::H_efAsync_Spawn = Some(|g, q, kind, gfx, j, _pos| { t(2051); t(pi(g)); t(pi(q)); t(kind); t(gfx); t(pi(j)); });",
+  "rs_world": "    m::ext::Fighter_804D650C = (*PADB)[80].as_mut_ptr(); m::ext::Fighter_804D6508 = (*PADB)[81].as_mut_ptr();"
+}

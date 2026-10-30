@@ -1,0 +1,17 @@
+{
+  "stem": "ft_0c88",
+  "csrc": "src/melee/ft/ft_0C88.c",
+  "rmod": "melee_fighter::tu::ft_0c88",
+  "cases": 500,
+  "stubs": "",
+  "ops": [
+    [
+      "ftCo_800C884C(g)",
+      "m::ftco_800c884c(g)"
+    ],
+    [
+      "ftCo_800C89A0(g)",
+      "m::ftco_800c89a0(g)"
+    ]
+  ]
+}

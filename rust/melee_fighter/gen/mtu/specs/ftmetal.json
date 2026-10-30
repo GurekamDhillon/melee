@@ -1,0 +1,15 @@
+{
+  "stem": "ftmetal",
+  "csrc": "src/melee/ft/ftmetal.c",
+  "rmod": "melee_fighter::tu::ftmetal",
+  "cases": 500,
+  "stubs": "--skip ftAnim_GetNextJointInTree --notrace HSD_IDInsertToTable:1",
+  "ops": [
+    [
+      "ft_800C85B8(g)",
+      "m::ft_800C85B8(g)"
+    ]
+  ],
+  "c_head": "void ftAnim_GetNextJointInTree(HSD_Joint** j, int* depth) { T(2200); T(PI(j)); T(PI(depth)); *j = 0; }",
+  "rs_hooks": "    m::ext::hook::ftAnim_GetNextJointInTree = Some(|j, d| { t(2200); t(pi(j as *const _ as *const u8)); t(pi(d as *const _ as *const u8)); *j = null_mut(); });"
+}

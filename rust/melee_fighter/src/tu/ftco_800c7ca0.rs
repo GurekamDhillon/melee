@@ -38,8 +38,29 @@ pub mod ext {
         FTCOLL_8007B760 ftColl_8007B760(g: G, v: i32);
         FTCO_80090780 ftCo_80090780(g: G);
         FTCO_80097D88 ftCo_80097D88(g: G);
-        FT_800C8064 ftCo_800C8064_hsd() -> *mut HSD_MObj;
+        FT_HSD_JOBJ_LOAD_JOINT HSD_JObjLoadJoint(j: *mut core::ffi::c_void) -> *mut core::ffi::c_void;
+        FT_HSD_JOBJ_GET_DOBJ HSD_JObjGetDObj(j: *mut core::ffi::c_void) -> *mut core::ffi::c_void;
         FT_800C80A4_BONE ft_800C80A4_bone(jobj: *mut HSD_JObj);
+    }
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? = $d:expr;)*) => {
+            pub mod hook {
+                use super::*;
+                $( #[allow(non_upper_case_globals)] pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( #[allow(unreachable_code, unused_variables)] pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => $d,
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+        fn atan2f(_a0: f32, _a1: f32) -> f32 = { unsafe { (melee_runtime::lbtrigf::atan2f(_a0 as _, _a1 as _)) as _ } };
+        fn ftCo_80090574(_a0: *mut core::ffi::c_void) = { unsafe { let _ = crate::ftdmgfall::ftco_80090574(_a0 as _); } };
+        fn ftCommon_8007D5D4(_a0: *mut core::ffi::c_void) = { unsafe { let _ = crate::ftcommon2::ftcommon_8007d5d4(&mut *(_a0 as *mut Fighter)); } };
+        fn ftCommon_8007EBAC(_a0: *mut core::ffi::c_void, _a1: u32, _a2: u32) = { unsafe { let _ = crate::ftcommon2::ftcommon_8007ebac(&mut *(_a0 as *mut Fighter), _a1 as _, _a2 as _); } };
     }
 }
 
@@ -77,13 +98,13 @@ pub fn ftco_800c7ca0(g: G) -> bool {
 /// read writes it).
 pub fn fn_800c7dc4(g: G, motion_state: i32, normal: &Vec3, offset: &Vec3) {
     let f = fp(g);
-    crate::ftcommon2::ftcommon_8007d5d4(f);
+    ext::ftCommon_8007D5D4(crate::mtu_ptr::ptr(&(f)));
     let spawn = Vec3 {
         x: f.cur_pos.x + offset.x,
         y: f.cur_pos.y + offset.y,
         z: f.cur_pos.z + offset.z,
     };
-    let angle = melee_runtime::lbtrigf::atan2f(-normal.x, normal.y);
+    let angle = (ext::atan2f((-normal.x) as f32, (normal.y) as f32) as ::core::ffi::c_float);
     ext::efAsync_Spawn(g, &mut fp(g).x60C, 5, 0x406, core::ptr::null_mut(), &spawn, &angle);
     ext::Camera_RequestQuake(QuakeKind_Small, &spawn);
     let f = fp(g);
@@ -107,9 +128,9 @@ pub fn fn_800c7dc4(g: G, motion_state: i32, normal: &Vec3, offset: &Vec3) {
     } else {
         f.cur_pos.y = f.x68C_transNPos.y + (f.cur_pos.y + offset.y);
     }
-    crate::ftdmgfall::ftco_80090574(g);
+    ext::ftCo_80090574(crate::mtu_ptr::ptr(&(g)));
     fp(g).dmg.x18A8 = mag;
-    crate::ftcommon2::ftcommon_8007ebac(fp(g), 7, 0);
+    ext::ftCommon_8007EBAC(crate::mtu_ptr::ptr(&(fp(g))), (7) as u32, (0) as u32);
     ext::ftColl_8007B760(g, h::common_data().x1B8);
 }
 
@@ -147,7 +168,10 @@ fn ext_ft_80081dd4(g: G) -> bool {
 /// `ftCo_800C8064`: `ft_804D6580 = first DObj's mobj of HSD_JObjLoadJoint(Fighter_804D6504)`
 /// (HSD calls behind one stub).
 pub fn ftco_800c8064() {
-    unsafe { ft_804D6580 = ext::ftCo_800C8064_hsd() };
+    unsafe {
+        let dobj = ext::HSD_JObjGetDObj(ext::HSD_JObjLoadJoint(crate::tu::fighter::Fighter_804D6504 as *mut core::ffi::c_void)) as *mut HSD_DObj;
+        ft_804D6580 = if !dobj.is_null() { (*dobj).mobj } else { core::ptr::null_mut() };
+    }
 }
 
 /// `ft_800C80A4`: for each visible part bone, set lighting/texgen flags and clear the DObjs'

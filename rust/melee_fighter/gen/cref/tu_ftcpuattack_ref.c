@@ -114,5 +114,17 @@ int main(void)
         printf("%d %08X %08X %08X %08X %08X\n", ret, B(F.cpu.x6C.x), B(F.cpu.x6C.y), B(F.cpu.x74.x),
                B(F.cpu.x74.y), TRC);
     }
+    /* ftCo_800B9704: reaction delay, one HSD_Randf draw (two fused sites) */
+    for (k = 0; k < 4000; k++) {
+        zero(&F, sizeof F);
+        rs = 0x7654321u + (u32) k * 2654435761u;
+        if (rs == 0) rs = 1;
+        rr = (u32) k * 104729u + 3u;
+        F.cpu.level = (int) (rnd() % 12) - 1;
+        F.cpu.kind = rnd() % 3 == 0 ? 7 : (int) (rnd() % 12);
+        F.cpu.x34 = (int) rnd();
+        ftCo_800B9704(&F);
+        printf("R %d %d %d\n", F.cpu.level, F.cpu.kind, F.cpu.x34);
+    }
     return 0;
 }

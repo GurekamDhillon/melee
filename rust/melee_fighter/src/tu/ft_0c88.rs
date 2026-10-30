@@ -16,30 +16,45 @@ fn fp<'a>(g: G) -> &'a mut Fighter {
 pub mod ext {
     use crate::types::*;
     use core::ffi::c_void;
-    pub fn HSD_ObjAlloc_fighter_x2040_alloc_data() -> *mut *mut HSD_DObj {
-        todo!("TODO(group1 HSD) HSD_ObjAlloc(&fighter_x2040_alloc_data)")
-    }
-    pub fn Geno_DefineIsNone(_kind: i32) -> i32 { unsafe { crate::platform::Geno_DefineIsNone(_kind) } }
-    pub fn ftPartsPObjSetDefaultClass() { todo!("TODO(group3 ftparts) ftPartsPObjSetDefaultClass") }
-    pub fn ftPartsPObjClearDefaultClass() { todo!("TODO(group3 ftparts) ftPartsPObjClearDefaultClass") }
-    pub fn ft_800C85B8(_g: *mut HSD_GObj) { { unsafe { let _ = crate::tu::ftmetal::ft_800C85B8(_g as _); } return; } }
-    pub fn ft_800C80A4(_fp: &mut Fighter) { { unsafe { let _ = crate::tu::ftco_800c7ca0::ft_800c80a4(_fp as _); } return; } }
-    pub fn ft_800C8170(_fp: &mut Fighter) { { unsafe { let _ = crate::tu::ftmetal::ft_800C8170(_fp as _); } return; } }
-    pub fn ft_800C0098(_fp: &mut Fighter) { { unsafe { let _ = crate::tu::ftcolanim::ft_800c0098(_fp as _); } return; } }
-    pub fn lbRefract_80022BB8() { { unsafe { let _ = melee_runtime::tu::lbrefract::lbRefract_80022BB8(); } return; } }
-    pub fn lbRefract_800225D4() { { unsafe { let _ = melee_runtime::tu::lbrefract::lbRefract_800225D4(); } return; } }
-    pub fn lbRefSetUnuse() { { unsafe { let _ = melee_runtime::tu::lbrefract::lbRefSetUnuse(); } return; } }
     #[allow(dead_code)]
     fn _unused(_: *mut c_void) {}
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? = $d:expr;)*) => {
+            pub mod hook {
+                use super::*;
+                $( #[allow(non_upper_case_globals)] pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( #[allow(unreachable_code, unused_variables)] pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => $d,
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+        fn HSD_ObjAlloc(_a0: *mut core::ffi::c_void) -> *mut core::ffi::c_void = { todo!("TODO(group1 HSD) HSD_ObjAlloc") };
+        fn Geno_DefineTemplateSkeleton(_a0: i32) -> i32 = { unsafe { (crate::hooks::geno_define_template_skeleton(_a0 as _)) as _ } };
+        fn Geno_DefineIsNone(_kind: i32) -> i32 = { unsafe { crate::platform::Geno_DefineIsNone(_kind) } };
+        fn ftPartsPObjSetDefaultClass() = { todo!("TODO(group3 ftparts) ftPartsPObjSetDefaultClass") };
+        fn ftPartsPObjClearDefaultClass() = { todo!("TODO(group3 ftparts) ftPartsPObjClearDefaultClass") };
+        fn ft_800C85B8(_g: *mut HSD_GObj) = { { unsafe { let _ = crate::tu::ftmetal::ft_800C85B8(_g as _); } return; } };
+        fn ft_800C80A4(_fp: &mut Fighter) = { { unsafe { let _ = crate::tu::ftco_800c7ca0::ft_800c80a4(_fp as _); } return; } };
+        fn ft_800C8170(_fp: &mut Fighter) = { { unsafe { let _ = crate::tu::ftmetal::ft_800C8170(_fp as _); } return; } };
+        fn ft_800C0098(_fp: &mut Fighter) = { { unsafe { let _ = crate::tu::ftcolanim::ft_800c0098(_fp as _); } return; } };
+        fn lbRefract_80022BB8() = { { unsafe { let _ = melee_runtime::tu::lbrefract::lbRefract_80022BB8(); } return; } };
+        fn lbRefract_800225D4() = { { unsafe { let _ = melee_runtime::tu::lbrefract::lbRefract_800225D4(); } return; } };
+        fn lbRefSetUnuse() = { { unsafe { let _ = melee_runtime::tu::lbrefract::lbRefSetUnuse(); } return; } };
+    }
 }
 
 /// `ftCo_800C884C`: allocate the metal DObj list and build the metal model (TARGET_PC: a "none"
 /// Geno define without a template skeleton has none).
 pub fn ftco_800c884c(g: G) {
     let f = fp(g);
-    f.x203C.data = ext::HSD_ObjAlloc_fighter_x2040_alloc_data();
+    f.x203C.data = (ext::HSD_ObjAlloc(unsafe { &raw mut crate::tu::fighter::fighter_x2040_alloc_data } as *mut core::ffi::c_void) as *mut *mut HSD_DObj);
     let kind = f.kind as i32;
-    if ext::Geno_DefineIsNone(kind) != 0 && h::geno_define_template_skeleton(kind) == 0 {
+    if ext::Geno_DefineIsNone(kind) != 0 && ext::Geno_DefineTemplateSkeleton((kind) as i32) == 0 {
         fp(g).x203C.count = 0;
         return;
     }

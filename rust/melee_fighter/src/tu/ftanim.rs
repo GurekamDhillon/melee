@@ -25,61 +25,85 @@ pub mod ext {
     use crate::types::*;
     type G = *mut HSD_GObj;
     type J = *mut HSD_JObj;
-    pub fn HSD_AObjInitEndCallBack() { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjInitEndCallBack(); } }
-    pub fn HSD_AObjInvokeCallBacks() { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjInvokeCallBacks(); } }
-    pub fn HSD_AObjSetRate(_a: *mut HSD_AObj, _r: f32) { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjSetRate(_a as _, _r as _); } }
-    pub fn HSD_AObjReqAnim(_a: *mut HSD_AObj, _f: f32) { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjReqAnim(_a as _, _f as _); } }
-    pub fn HSD_TObjAnim(_t: *mut HSD_TObj) { unsafe { let _ = melee_runtime::tu::tobj::HSD_TObjAnim(_t as _); } }
-    pub fn HSD_JObjAnim(_j: J) { todo!("HSD_JObjAnim (baselib/jobj.c)") }
-    pub fn HSD_JObjAnimAll(_j: J) { todo!("HSD_JObjAnimAll (baselib/jobj.c)") }
-    pub fn HSD_JObjSetMtxDirtySub(_j: J) { todo!("HSD_JObjSetMtxDirtySub (baselib/jobj.c)") }
-    pub fn HSD_JObjClearFlags(_j: J, _f: u32) { todo!("HSD_JObjClearFlags (baselib/jobj.c)") }
-    pub fn HSD_JObjClearFlagsAll(_j: J, _f: u32) { todo!("HSD_JObjClearFlagsAll (baselib/jobj.c)") }
-    pub fn HSD_JObjAddAnim(_j: J, _a: *mut HSD_AnimJoint, _m: *mut HSD_MatAnimJoint, _s: *mut HSD_ShapeAnimJoint) { todo!("HSD_JObjAddAnim (baselib/jobj.c)") }
-    pub fn HSD_JObjAddAnimAll(_j: J, _a: *mut HSD_AnimJoint, _m: *mut HSD_MatAnimJoint, _s: *mut HSD_ShapeAnimJoint) { todo!("HSD_JObjAddAnimAll (baselib/jobj.c)") }
-    pub fn HSD_JObjReqAnimAll(_j: J, _f: f32) { todo!("HSD_JObjReqAnimAll (baselib/jobj.c)") }
-    pub fn HSD_JObjReqAnimAllByFlags(_j: J, _flags: u32, _f: f32) { todo!("HSD_JObjReqAnimAllByFlags (baselib/jobj.c)") }
-    pub fn HSD_JObjReqAnimByFlags(_j: J, _flags: u32, _f: f32) { todo!("HSD_JObjReqAnimByFlags (baselib/jobj.c)") }
-    pub fn HSD_JObjRemoveAnimAllByFlags(_j: J, _flags: u32) { todo!("HSD_JObjRemoveAnimAllByFlags (baselib/jobj.c)") }
     /// `HSD_ForeachAnim(jobj, JOBJ_TYPE, mask, HSD_AObjSetFlags, AOBJ_ARG_AU, AOBJ_LOOP)`.
-    pub fn HSD_ForeachAnim_SetLoop(_j: J, _mask: u32) { todo!("HSD_ForeachAnim (baselib/object.c)") }
     /// `HSD_ForeachAnim(jobj, JOBJ_TYPE, mask, HSD_AObjSetRate, AOBJ_ARG_AF, rate)`.
-    pub fn HSD_ForeachAnim_SetRate(_j: J, _mask: u32, _rate: f32) { todo!("HSD_ForeachAnim (baselib/object.c)") }
-    pub fn HSD_MtxInverse(_src: *mut Mtx, _dst: *mut Mtx) { unsafe { let _ = crate::bridge::hsd_mtx_inverse(_src, _dst); } }
-    pub fn PSMTXMultVec(_m: *mut Mtx, _src: *const Vec3, _dst: *mut Vec3) { unsafe { let _ = crate::bridge::psmtx_mult_vec(_m, _src, _dst); } }
-    pub fn lb_8000B1CC(_j: J, _off: *const Vec3, _out: *mut Vec3) { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(_j as _, _off as _, _out as _); } }
-    pub fn lb_8000B074(_j: J) -> bool { unsafe { melee_runtime::tu::lb_00B0::lb_8000B074(_j as _) } }
-    pub fn lb_8000B4FC(_j: J, _joint: *mut HSD_Joint) { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B4FC(_j as _, _joint as _); } }
-    pub fn lb_8000B5DC(_j: J, _joint: *mut HSD_Joint) { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B5DC(_j as _, _joint as _); } }
-    pub fn lb_8000B6A4(_j: J, _joint: *mut HSD_Joint) { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B6A4(_j as _, _joint as _); } }
-    pub fn lb_8000B760(_j: J, _joint: *mut HSD_Joint) { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B760(_j as _, _joint as _); } }
-    pub fn lb_8000BFF0(_a: *mut HSD_AnimJoint) -> f32 { unsafe { melee_runtime::tu::lb_00B0::lb_8000BFF0(_a as _) } }
-    pub fn lb_8000C490(_a: J, _b: J, _c: J, _t: f32, _ti: f32) { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000C490(_a as _, _b as _, _c as _, _t as _, _ti as _); } }
-    pub fn lb_8000C868(_joint: *mut HSD_Joint, _b: J, _c: J, _t: f32, _ti: f32) { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000C868(_joint as _, _b as _, _c as _, _t as _, _ti as _); } }
-    pub fn lbCopyJObjSRT(_a: J, _b: J) { unsafe { let _ = melee_runtime::tu::lb_00B0::lbCopyJObjSRT(_a as _, _b as _); } }
-    pub fn lbGetJObjFramerate(_j: J) -> f32 { unsafe { melee_runtime::tu::lb_00B0::lbGetJObjFramerate(_j as _) } }
-    pub fn lbGetJObjCurrFrame(_j: J) -> f32 { unsafe { melee_runtime::tu::lb_00B0::lbGetJObjCurrFrame(_j as _) } }
-    pub fn lbGetJObjEndFrame(_j: J) -> f32 { unsafe { melee_runtime::tu::lb_00B0::lbGetJObjEndFrame(_j as _) } }
-    pub fn lbAnim_8001E6D8(_j: J, _t: *mut FigaTree, _tr: *mut FigaTrack, _n: i8) { unsafe { let _ = melee_runtime::tu::lbanim::lbAnim_8001E6D8(_j as _, _t as _, _tr as _, _n as _); } }
-    pub fn lbAnim_8001E7E8(_j: J, _t: *mut FigaTree, _tr: *mut FigaTrack, _n: i8) { unsafe { let _ = melee_runtime::tu::lbanim::lbAnim_8001E7E8(_j as _, _t as _, _tr as _, _n as _); } }
-    pub fn ftCommon_GetModelScale(_fp: *mut Fighter) -> f32 { unsafe { crate::ftcommon2::get_model_scale(&*(_fp as *const _)) } }
-    pub fn ftCommon_8007F6A4(_fp: *mut Fighter, _j: J) { unsafe { let _ = crate::ftcommon3::ftcommon_8007f6a4(&mut *(_fp as *mut _), _j as _); } }
-    pub fn ftParts_8007482C(_joint: *mut HSD_Joint) -> J { unsafe { crate::tu::ftparts_render::ftParts_8007482C(_joint) } }
-    pub fn ftParts_8007462C(_g: G) { unsafe { crate::tu::ftparts::ftParts_8007462C(_g) } }
-    pub fn ftParts_80075240(_d: *mut DObjList, _idx: u16) -> *mut HSD_TObj { unsafe { crate::tu::ftparts::ftParts_80075240(_d, _idx as i32) } }
-    pub fn ftData_80085E50(_fp: *mut Fighter, _id: i32) -> *mut FigaTree { unsafe { crate::tu::ftdata::ftData_80085E50(_fp as _, _id as _) as _ } }
-    pub fn ftData_80085FD4(_fp: *mut Fighter, _id: i32) -> *mut ftData_80085FD4_ret { unsafe { crate::tu::ftdata::ftData_80085FD4(&mut *(_fp as *mut _), _id as _) as _ } }
     /// `ftData_UnkCallbackPairs0[kind].x0` / `.x4`.
-    pub fn ftData_UnkCallbackPairs0_x0(_kind: i32) -> Option<unsafe extern "C" fn(G)> { unsafe { crate::tu::ftdata::ftData_UnkCallbackPairs0[_kind as usize].x0 } }
-    pub fn ftData_UnkCallbackPairs0_x4(_kind: i32) -> Option<unsafe extern "C" fn(G, i32, f32)> { unsafe { crate::tu::ftdata::ftData_UnkCallbackPairs0[_kind as usize].x4 } }
     /// `CostumeListsForeachCharacter[kind].costume_list[costume].x4`.
-    pub fn costume_matanim(_kind: i32, _costume: u8) -> *mut HSD_MatAnimJoint { unsafe { (*crate::tu::ftdata::CostumeListsForeachCharacter[_kind as usize].costume_list.add(_costume as usize)).x4 } }
     /// `FT_COSTUME_VIS_IDX(fp)`.
-    pub fn FT_COSTUME_VIS_IDX(_fp: *mut Fighter) -> u32 { unsafe { melee_runtime::tu::mex_data::Mex_CostumeVisIdx((*_fp).kind as i32, (*_fp).x619_costume_id as i32) as u32 } }
-    pub fn ftAction_80073240(_g: G) { unsafe { let _ = crate::tu::ftaction::ftAction_80073240(_g as _); } }
-    pub fn ftCo_800DB500(_g: G) { unsafe { let _ = crate::tu::ftCo_CapturePulled::ftCo_800DB500(_g as _); } }
-    pub fn Geno_DefineIsNone(_kind: i32) -> i32 { unsafe { crate::platform::Geno_DefineIsNone(_kind) } }
     pub fn OSReport(_s: &str) {}
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? = $d:expr;)*) => {
+            pub mod hook {
+                use super::*;
+                $( #[allow(non_upper_case_globals)] pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( #[allow(unreachable_code, unused_variables)] pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => $d,
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+        fn ftParts_8007506C(_kind: i32, _i: i32) -> u32 = { crate::ftdmgfall::ftparts_8007506c(_kind, _i) };
+        fn ftParts_GetBoneIndex(_fp: *mut Fighter, _part: i32) -> i32 = { unsafe { crate::ftdmgfall::ftparts_get_bone_index(&*_fp, _part) } };
+        fn ftPartsRemap(_a: u32, _b: u32, _c: u32) -> i32 = { crate::ftdmgfall::ftparts_remap(_a, _b, _c) };
+        fn lbVector_Diff(_a: *mut Vec3, _b: *mut Vec3, _out: *mut Vec3) = { unsafe { (*_out).x = (*_a).x - (*_b).x; (*_out).y = (*_a).y - (*_b).y; (*_out).z = (*_a).z - (*_b).z; } };
+        fn lbVector_Sub(_a: *mut Vec3, _b: *mut Vec3) = { unsafe { (*_a).x -= (*_b).x; (*_a).y -= (*_b).y; (*_a).z -= (*_b).z; } };
+        fn HSD_JObjGetFlags(_j: J) -> u32 = { unsafe { (*_j).flags } };
+        fn Geno_DefineTemplateSkeleton(_kind: i32) -> i32 = { crate::hooks::geno_define_template_skeleton(_kind) };
+        fn ftPartGetRotX(_fp: *mut Fighter, _idx: i32) -> f32 = { unsafe { crate::tu::ftparts::ftPartGetRotX(&mut *_fp, _idx) } };
+        fn HSD_AObjInitEndCallBack() = { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjInitEndCallBack(); } };
+        fn HSD_AObjInvokeCallBacks() = { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjInvokeCallBacks(); } };
+        fn HSD_AObjSetRate(_a: *mut HSD_AObj, _r: f32) = { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjSetRate(_a as _, _r as _); } };
+        fn HSD_AObjReqAnim(_a: *mut HSD_AObj, _f: f32) = { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjReqAnim(_a as _, _f as _); } };
+        fn HSD_TObjAnim(_t: *mut HSD_TObj) = { unsafe { let _ = melee_runtime::tu::tobj::HSD_TObjAnim(_t as _); } };
+        fn HSD_JObjAnim(_j: J) = { todo!("HSD_JObjAnim (baselib/jobj.c)") };
+        fn HSD_JObjAnimAll(_j: J) = { todo!("HSD_JObjAnimAll (baselib/jobj.c)") };
+        fn HSD_JObjSetMtxDirtySub(_j: J) = { unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjSetMtxDirtySub(_j as _) } };
+        fn HSD_JObjClearFlags(_j: J, _f: u32) = { todo!("HSD_JObjClearFlags (baselib/jobj.c)") };
+        fn HSD_JObjClearFlagsAll(_j: J, _f: u32) = { todo!("HSD_JObjClearFlagsAll (baselib/jobj.c)") };
+        fn HSD_JObjAddAnim(_j: J, _a: *mut HSD_AnimJoint, _m: *mut HSD_MatAnimJoint, _s: *mut HSD_ShapeAnimJoint) = { todo!("HSD_JObjAddAnim (baselib/jobj.c)") };
+        fn HSD_JObjAddAnimAll(_j: J, _a: *mut HSD_AnimJoint, _m: *mut HSD_MatAnimJoint, _s: *mut HSD_ShapeAnimJoint) = { todo!("HSD_JObjAddAnimAll (baselib/jobj.c)") };
+        fn HSD_JObjReqAnimAll(_j: J, _f: f32) = { todo!("HSD_JObjReqAnimAll (baselib/jobj.c)") };
+        fn HSD_JObjReqAnimAllByFlags(_j: J, _flags: u32, _f: f32) = { todo!("HSD_JObjReqAnimAllByFlags (baselib/jobj.c)") };
+        fn HSD_JObjReqAnimByFlags(_j: J, _flags: u32, _f: f32) = { todo!("HSD_JObjReqAnimByFlags (baselib/jobj.c)") };
+        fn HSD_JObjRemoveAnimAllByFlags(_j: J, _flags: u32) = { todo!("HSD_JObjRemoveAnimAllByFlags (baselib/jobj.c)") };
+        fn HSD_ForeachAnim_SetLoop(_j: J, _mask: u32) = { todo!("HSD_ForeachAnim (baselib/object.c)") };
+        fn HSD_ForeachAnim_SetRate(_j: J, _mask: u32, _rate: f32) = { todo!("HSD_ForeachAnim (baselib/object.c)") };
+        fn HSD_MtxInverse(_src: *mut Mtx, _dst: *mut Mtx) = { unsafe { let _ = crate::bridge::hsd_mtx_inverse(_src, _dst); } };
+        fn PSMTXMultVec(_m: *mut Mtx, _src: *const Vec3, _dst: *mut Vec3) = { unsafe { let _ = crate::bridge::psmtx_mult_vec(_m, _src, _dst); } };
+        fn lb_8000B1CC(_j: J, _off: *const Vec3, _out: *mut Vec3) = { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(_j as _, _off as _, _out as _); } };
+        fn lb_8000B074(_j: J) -> bool = { unsafe { melee_runtime::tu::lb_00B0::lb_8000B074(_j as _) } };
+        fn lb_8000B4FC(_j: J, _joint: *mut HSD_Joint) = { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B4FC(_j as _, _joint as _); } };
+        fn lb_8000B5DC(_j: J, _joint: *mut HSD_Joint) = { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B5DC(_j as _, _joint as _); } };
+        fn lb_8000B6A4(_j: J, _joint: *mut HSD_Joint) = { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B6A4(_j as _, _joint as _); } };
+        fn lb_8000B760(_j: J, _joint: *mut HSD_Joint) = { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B760(_j as _, _joint as _); } };
+        fn lb_8000BFF0(_a: *mut HSD_AnimJoint) -> f32 = { unsafe { melee_runtime::tu::lb_00B0::lb_8000BFF0(_a as _) } };
+        fn lb_8000C490(_a: J, _b: J, _c: J, _t: f32, _ti: f32) = { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000C490(_a as _, _b as _, _c as _, _t as _, _ti as _); } };
+        fn lb_8000C868(_joint: *mut HSD_Joint, _b: J, _c: J, _t: f32, _ti: f32) = { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000C868(_joint as _, _b as _, _c as _, _t as _, _ti as _); } };
+        fn lbCopyJObjSRT(_a: J, _b: J) = { unsafe { let _ = melee_runtime::tu::lb_00B0::lbCopyJObjSRT(_a as _, _b as _); } };
+        fn lbGetJObjFramerate(_j: J) -> f32 = { unsafe { melee_runtime::tu::lb_00B0::lbGetJObjFramerate(_j as _) } };
+        fn lbGetJObjCurrFrame(_j: J) -> f32 = { unsafe { melee_runtime::tu::lb_00B0::lbGetJObjCurrFrame(_j as _) } };
+        fn lbGetJObjEndFrame(_j: J) -> f32 = { unsafe { melee_runtime::tu::lb_00B0::lbGetJObjEndFrame(_j as _) } };
+        fn lbAnim_8001E6D8(_j: J, _t: *mut FigaTree, _tr: *mut FigaTrack, _n: i8) = { unsafe { let _ = melee_runtime::tu::lbanim::lbAnim_8001E6D8(_j as _, _t as _, _tr as _, _n as _); } };
+        fn lbAnim_8001E7E8(_j: J, _t: *mut FigaTree, _tr: *mut FigaTrack, _n: i8) = { unsafe { let _ = melee_runtime::tu::lbanim::lbAnim_8001E7E8(_j as _, _t as _, _tr as _, _n as _); } };
+        fn ftCommon_GetModelScale(_fp: *mut Fighter) -> f32 = { unsafe { crate::ftcommon2::get_model_scale(&*(_fp as *const _)) } };
+        fn ftCommon_8007F6A4(_fp: *mut Fighter, _j: J) = { unsafe { let _ = crate::ftcommon3::ftcommon_8007f6a4(&mut *(_fp as *mut _), _j as _); } };
+        fn ftParts_8007482C(_joint: *mut HSD_Joint) -> J = { unsafe { crate::tu::ftparts_render::ftParts_8007482C(_joint) } };
+        fn ftParts_8007462C(_g: G) = { unsafe { crate::tu::ftparts::ftParts_8007462C(_g) } };
+        fn ftParts_80075240(_d: *mut DObjList, _idx: u16) -> *mut HSD_TObj = { unsafe { crate::tu::ftparts::ftParts_80075240(_d, _idx as i32) } };
+        fn ftData_80085E50(_fp: *mut Fighter, _id: i32) -> *mut FigaTree = { unsafe { crate::tu::ftdata::ftData_80085E50(_fp as _, _id as _) as _ } };
+        fn ftData_80085FD4(_fp: *mut Fighter, _id: i32) -> *mut ftData_80085FD4_ret = { unsafe { crate::tu::ftdata::ftData_80085FD4(&mut *(_fp as *mut _), _id as _) as _ } };
+        fn ftData_UnkCallbackPairs0_x0(_kind: i32) -> Option<unsafe extern "C" fn(G)> = { unsafe { crate::tu::ftdata::ftData_UnkCallbackPairs0[_kind as usize].x0 } };
+        fn ftData_UnkCallbackPairs0_x4(_kind: i32) -> Option<unsafe extern "C" fn(G, i32, f32)> = { unsafe { crate::tu::ftdata::ftData_UnkCallbackPairs0[_kind as usize].x4 } };
+        fn costume_matanim(_kind: i32, _costume: u8) -> *mut HSD_MatAnimJoint = { unsafe { (*crate::tu::ftdata::CostumeListsForeachCharacter[_kind as usize].costume_list.add(_costume as usize)).x4 } };
+        fn Mex_CostumeVisIdx(_kind: i32, _costume: i32) -> i32 = { unsafe { melee_runtime::tu::mex_data::Mex_CostumeVisIdx(_kind, _costume) as i32 } };
+        fn ftAction_80073240(_g: G) = { unsafe { let _ = crate::tu::ftaction::ftAction_80073240(_g as _); } };
+        fn ftCo_800DB500(_g: G) = { unsafe { let _ = crate::tu::ftCo_CapturePulled::ftCo_800DB500(_g as _); } };
+        fn Geno_DefineIsNone(_kind: i32) -> i32 = { unsafe { crate::platform::Geno_DefineIsNone(_kind) } };
+    }
 }
 
 struct Dirty;
@@ -111,10 +135,13 @@ unsafe fn x594(fp: &Fighter) -> &Fighter_anon_1364_anon_1365 { &fp.anon_594.anon
 #[inline(always)]
 unsafe fn x594_bits(fp: &Fighter) -> u32 { fp.anon_594.anon_0_0.x594_bits() }
 unsafe fn parts_num(fp: &Fighter) -> i32 { (**h::ft_parts_table().offset(fp.kind as isize)).parts_num as i32 }
-fn p8007506c(kind: i32, i: i32) -> u32 { crate::ftdmgfall::ftparts_8007506c(kind, i) }
-fn bone_index(fp: &Fighter, part: i32) -> i32 { crate::ftdmgfall::ftparts_get_bone_index(fp, part) }
+fn p8007506c(kind: i32, i: i32) -> u32 { ext::ftParts_8007506C(kind, i) }
+fn bone_index(fp: &Fighter, part: i32) -> i32 { ext::ftParts_GetBoneIndex(fp as *const Fighter as *mut Fighter, part) }
 unsafe fn x8_x10(fp: &Fighter) -> i32 { (*(*fp.ft_data).x8).x10 as i32 }
-unsafe fn set_translate(j: J, v: &Vec3) { HSD_JObjSetTranslate(&mut *j, v, &mut Dirty) }
+unsafe fn set_translate(j: J, v: &Vec3) {
+    if j.is_null() { panic!("jobj.h: HSD_JObjSetTranslate: NULL jobj") } // the C's HSD_ASSERT
+    HSD_JObjSetTranslate(&mut *j, v, &mut Dirty)
+}
 
 /// `ftAnim_AuthorKind` (static inline, TARGET_PC).
 pub unsafe fn ftAnim_AuthorKind(fp: &Fighter) -> i32 {
@@ -199,7 +226,7 @@ unsafe fn model_scale(fp: &mut Fighter) -> f32 {
 /// The C's depth-first jobj step (`!(flags & 0x1000) && child` / next / up), bounded by `stop`.
 unsafe fn next_jobj(jobj: J, stop: J) -> J {
     let j = &*jobj;
-    if j.flags & 0x1000 == 0 && !j.child.is_null() {
+    if ext::HSD_JObjGetFlags(jobj) & 0x1000 == 0 && !j.child.is_null() {
         return j.child;
     }
     if !j.next.is_null() {
@@ -231,7 +258,7 @@ pub unsafe fn ftAnim_8006E054(fp: &mut Fighter, mut jobj: J, arg2: J, arg3: J) {
             let s = model_scale(fp);
             scale3(&mut fp.x68C_transNPos, s);
             fp.x6B0 = fp.x6A4_transNOffset;
-            fp.x6A4_transNOffset = vdiff(&fp.x68C_transNPos, &fp.x698);
+            ext::lbVector_Diff(&raw mut fp.x68C_transNPos, &raw mut fp.x698, &raw mut fp.x6A4_transNOffset);
             set_translate(jobj, &zero);
         } else if x594(fp).x594_b5() != 0 && jobj == arg3 {
             let zero = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -241,7 +268,7 @@ pub unsafe fn ftAnim_8006E054(fp: &mut Fighter, mut jobj: J, arg2: J, arg3: J) {
             let s = model_scale(fp);
             scale3(&mut fp.x6C0, s);
             fp.x6E4 = fp.x6D8;
-            fp.x6D8 = vdiff(&fp.x6C0, &fp.x6CC);
+            ext::lbVector_Diff(&raw mut fp.x6C0, &raw mut fp.x6CC, &raw mut fp.x6D8);
             set_translate(jobj, &zero);
         } else {
             ext::HSD_JObjAnim(jobj);
@@ -268,7 +295,7 @@ pub unsafe fn ftAnim_8006E054(fp: &mut Fighter, mut jobj: J, arg2: J, arg3: J) {
         let mut s = fp.x68C_transNPos;
         let sc = model_scale(fp);
         scale_inline(sc, &mut s);
-        t = vdiff(&t, &s); // lbVector_Sub
+        ext::lbVector_Sub(&mut t, &mut s);
         set_translate(j, &t);
     }
     ext::HSD_AObjInvokeCallBacks();
@@ -312,8 +339,8 @@ pub unsafe fn ftAnim_8006E9B4(gobj: G) {
     if fp.x8A4_animBlendFrames == 0.0 {
         ext::HSD_JObjClearFlagsAll(jobj, JOBJ_USE_QUATERNION as u32);
         if x594(fp).x594_b0() != 0 {
+            let b = bone(fp, bone_index(fp, 0x35)).joint; // C argument order: last first
             let a = bone(fp, bone_index(fp, FtPart_TransN as i32)).joint;
-            let b = bone(fp, bone_index(fp, 0x35)).joint;
             ftAnim_8006E054(fp, jobj, a, b);
         } else {
             ftAnim_8006E7B8(fp, FtPart_TopN as i32);
@@ -334,8 +361,8 @@ pub unsafe fn ftAnim_8006E9B4(gobj: G) {
         }
         ftAnim_8006E7B8(fp, FtPart_TopN as i32);
         if x594(fp).x594_b0() != 0 {
+            let b = bone(fp, bone_index(fp, 0x35)).joint; // C argument order: last first
             let a = bone(fp, bone_index(fp, FtPart_TransN as i32)).x4_jobj2;
-            let b = bone(fp, bone_index(fp, 0x35)).joint;
             ftAnim_8006E054(fp, anim, a, b);
         } else {
             ext::HSD_JObjAnimAll(anim);
@@ -564,7 +591,7 @@ pub unsafe fn ftAnim_8006F628(fp: &mut Fighter, part: i32, do_blending: bool) {
         if xc(bone(fp, i)) <= depth && i != part {
             break;
         }
-        let tmp = crate::ftdmgfall::ftparts_remap(fp.kind as u32, kind as u32, i as u32);
+        let tmp = ext::ftPartsRemap(fp.kind as u32, kind as u32, i as u32);
         if tmp as u32 != 0xFF {
             let b = bone(fp, tmp);
             if b1(b) && !b0(b) && !b5(b) {
@@ -620,7 +647,7 @@ unsafe fn bind_own_tree(ft: &mut Fighter, part: i32, use_jobj2: bool, tree: *mut
             i += 1;
             r22 += 1;
         }
-        if xc(bone(ft, r22)) <= depth && i != part {
+            if xc(bone(ft, r22)) <= depth && i != part {
             break;
         }
         let b = bone(ft, r22);
@@ -719,7 +746,7 @@ pub unsafe fn ftAnim_8006FCE4(fp: &mut Fighter, do_blending: bool) {
             }
             i += 1;
         }
-        let part = crate::ftdmgfall::ftparts_remap(fp.kind as u32, kind as u32, i as u32);
+        let part = ext::ftPartsRemap(fp.kind as u32, kind as u32, i as u32);
         if part as u32 != 0xFF {
             let b = bone(fp, part);
             if b1(b) && !b0(b) && !b5(b) {
@@ -812,7 +839,7 @@ pub unsafe fn ftAnim_80070200(fp: &mut Fighter, r4: *mut ftData_x8_x8, r5: *mut 
     if (*r5).n_costume_tobjs as usize > (*r5).costume_tobjs.len() {
         panic!("ftanim.c:1228: fighter tobj num over!");
     }
-    let vis = ext::FT_COSTUME_VIS_IDX(fp);
+    let vis = ext::Mex_CostumeVisIdx(fp.kind as i32, fp.x619_costume_id as i32) as u32;
     let row = *(*r4).xC.add(vis as usize);
     (*r5).x5D0 = if !row.is_null() { row } else { *(*r4).xC };
     for i in 0..(*r5).n_costume_tobjs as usize {
@@ -948,7 +975,7 @@ pub unsafe fn ftAnim_80070A10(ft: &mut Fighter, part: i32, tree: *mut FigaTree) 
 /// `ftAnim_ApplyPartAnim` (TARGET_PC: ignored on a Geno "none" define without a template skeleton).
 pub unsafe fn ftAnim_ApplyPartAnim(gobj: G, arg1: i32, arg2: i32, arg3: f32) {
     let fp = fpm(gobj);
-    if ext::Geno_DefineIsNone(fp.kind as i32) != 0 && h::geno_define_template_skeleton(fp.kind as i32) == 0 {
+    if ext::Geno_DefineIsNone(fp.kind as i32) != 0 && ext::Geno_DefineTemplateSkeleton(fp.kind as i32) == 0 {
         ext::OSReport("geno: part animation ignored on a none define\n");
         return;
     }
@@ -1032,7 +1059,7 @@ pub unsafe fn ftAnim_80070F28(gobj: G) {
 
 /// `ftAnim_80070FD0`.
 pub unsafe fn ftAnim_80070FD0(fp: &mut Fighter) -> bool {
-    let r = super::ftparts::ftPartGetRotX(fp, bone_index(fp, 0x35));
+    let r = ext::ftPartGetRotX(fp, bone_index(fp, 0x35));
     if fp.x100 != r {
         fp.x100 = r;
         return true;

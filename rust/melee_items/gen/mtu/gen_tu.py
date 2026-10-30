@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """C-oracle generator for the per-TU ports in rust/melee_items/src/tu/.
 
@@ -97,6 +98,8 @@ class Tu:
 
     def in_main(self, c):
         f = c.location.file
+        if f is not None and os.environ.get("MTU_UNITY") and f.name.endswith(".c"):
+            return True  # a unity driver: every #included game .c counts as the TU's own code
         return f is not None and Path(f.name).resolve() == self.main
 
     def uses(self):
